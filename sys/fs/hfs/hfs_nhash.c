@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_nhash.c,v 1.8 2008/05/05 17:11:16 ad Exp $	*/
+/*	$NetBSD: hfs_nhash.c,v 1.9 2008/09/03 22:57:46 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.8 2008/05/05 17:11:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.9 2008/09/03 22:57:46 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ loop:
 	mutex_enter(&hfs_nhash_lock);
 	hpp = &nhashtbl[HNOHASH(dev, cnid, fork)];
 	LIST_FOREACH(hp, hpp, h_hash) {
-		if (cnid == hp->h_rec.cnid && dev == hp->h_dev) {
+		if (cnid == hp->h_rec.u.cnid && dev == hp->h_dev) {
 			vp = HTOV(hp);
 			if (flags == 0) {
 				mutex_exit(&hfs_nhash_lock);
@@ -153,7 +153,7 @@ hfs_nhashinsert(struct hfsnode *hp)
 	vlockmgr(&hp->h_vnode->v_lock, LK_EXCLUSIVE);
 
 	mutex_enter(&hfs_nhash_lock);
-	hpp = &nhashtbl[HNOHASH(hp->h_dev, hp->h_rec.cnid, hp->h_fork)];
+	hpp = &nhashtbl[HNOHASH(hp->h_dev, hp->h_rec.u.cnid, hp->h_fork)];
 	LIST_INSERT_HEAD(hpp, hp, h_hash);
 	mutex_exit(&hfs_nhash_lock);
 }
