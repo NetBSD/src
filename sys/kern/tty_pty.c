@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.111 2008/06/16 10:15:57 ad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.112 2008/09/03 16:47:34 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.111 2008/06/16 10:15:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.112 2008/09/03 16:47:34 drochner Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -1100,7 +1100,13 @@ ptyioctl(dev, cmd, data, flag, l)
 			tp->t_state |= TS_SIGINFO;
 			ttysig(tp, TTYSIG_PG1, sig);
 			mutex_spin_exit(&tty_lock);
-			return(0);
+			return (0);
+
+		case FIONREAD:
+			mutex_spin_enter(&tty_lock);
+			*(int *)data = tp->t_outq.c_cc;
+			mutex_spin_exit(&tty_lock);
+			return (0);
 		}
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
