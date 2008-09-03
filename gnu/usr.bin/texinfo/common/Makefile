@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2008/09/02 08:38:35 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2008/09/03 11:58:30 lukem Exp $
 
 .include "../Makefile.inc"
 LIBISPRIVATE=	yes
@@ -17,6 +17,7 @@ CPPFLAGS+=	-DGNULOCALEDIR=\"/usr/share/locale\" \
 all: ${FILES}
 .SUFFIXES: .gmo .mo
 .gmo.mo:
+	${_MKTARGET_CREATE}
 	@cp $< $@
 
 GEN_SRCS =	funs.h key.c doc.c
@@ -29,6 +30,7 @@ MAKEDOCDIR!=cd ${.CURDIR}/../makedoc && ${PRINTOBJDIR}
 MAKEDOC=${MAKEDOCDIR}/makedoc
 
 ${GEN_SRCS}: ${MAKEDOC} ${CMD_SRCS}
+	${_MKMSG_CREATE} ${GEN_SRCS}
 	${.ALLSRC}
 
 .PATH: ${IDIST}/info ${IDIST}/doc
