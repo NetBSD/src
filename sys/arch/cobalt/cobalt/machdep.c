@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75.4.2.4.1 2008/02/02 23:05:30 riz Exp $	*/
+/*	$NetBSD: machdep.c,v 1.75.4.2.4.2 2008/09/03 17:38:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75.4.2.4.1 2008/02/02 23:05:30 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75.4.2.4.2 2008/09/03 17:38:49 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -672,7 +672,9 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
 	struct cobalt_intrhand *ih;
+	uint32_t handled;
 
+	handled = 0;
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
@@ -704,9 +706,9 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		}
 		mips3_clockintr(&cf);
 
-		cause &= ~MIPS_INT_MASK_5;
+		handled |= MIPS_INT_MASK_5;
 	}
-	_splset((status & MIPS_INT_MASK_5) | MIPS_SR_INT_IE);
+	_splset((status & handled) | MIPS_SR_INT_IE);
 
 	if (__predict_false(ipending & MIPS_INT_MASK_0)) {
 		/* GT64x11 timer0 */
@@ -717,54 +719,56 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 			/* GT64x11 timer is no longer used for hardclock(9) */
 			*irq_src = 0;
 		}
-		cause &= ~MIPS_INT_MASK_0;
+		handled |= MIPS_INT_MASK_0;
 	}
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	_splset((status & handled) | MIPS_SR_INT_IE);
 
 	if (ipending & MIPS_INT_MASK_3) {
 		/* 16650 serial */
 		ih = &cpu_intrtab[3];
 		if (__predict_true(ih->ih_func != NULL)) {
 			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
-				cause &= ~MIPS_INT_MASK_3;
 				ih->ih_evcnt.ev_count++;
 			}
 		}
+		handled |= MIPS_INT_MASK_3;
 	}
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	_splset((status & handled) | MIPS_SR_INT_IE);
 
 	if (ipending & MIPS_INT_MASK_1) {
 		/* tulip primary */
 		ih = &cpu_intrtab[1];
 		if (__predict_true(ih->ih_func != NULL)) {
 			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
-				cause &= ~MIPS_INT_MASK_1;
 				ih->ih_evcnt.ev_count++;
 			}
 		}
+		handled |= MIPS_INT_MASK_1;
 	}
 	if (ipending & MIPS_INT_MASK_2) {
 		/* tulip secondary */
 		ih = &cpu_intrtab[2];
 		if (__predict_true(ih->ih_func != NULL)) {
 			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
-				cause &= ~MIPS_INT_MASK_2;
 				ih->ih_evcnt.ev_count++;
 			}
 		}
+		handled |= MIPS_INT_MASK_2;
 	}
-	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	_splset((status & handled) | MIPS_SR_INT_IE);
 
 	if (ipending & MIPS_INT_MASK_4) {
 		/* ICU interrupts */
 		ih = &cpu_intrtab[4];
 		if (__predict_true(ih->ih_func != NULL)) {
 			if (__predict_true((*ih->ih_func)(ih->ih_arg))) {
-				cause &= ~MIPS_INT_MASK_4;
 				/* evcnt for ICU is done in icu_intr() */
+				;
 			}
 		}
+		handled |= MIPS_INT_MASK_4;
 	}
+	cause &= ~handled;
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
 	/* software interrupt */
