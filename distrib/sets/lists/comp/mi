@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1181 2008/08/31 05:27:22 christos Exp $
+#	$NetBSD: mi,v 1.1182 2008/09/03 03:02:48 erh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8857,6 +8857,9 @@
 ./usr/share/man/cat9/transferlockers.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/trapsignal.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/tsleep.0			comp-sys-catman		.cat
+./usr/share/man/cat9/ttyldisc_add.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ttyldisc_lookup.0		comp-sys-catman		.cat
+./usr/share/man/cat9/ttyldisc_remove.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ttyprintf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uao_create.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uao_detach.0		comp-sys-catman		.cat
