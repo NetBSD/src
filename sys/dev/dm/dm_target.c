@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.1.2.10 2008/08/20 00:45:47 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.1.2.11 2008/09/03 22:50:17 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -10,7 +10,7 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 1. Redistributions of source code must retain the above copyright
+ * 1. Redistributions of source code Must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
@@ -33,11 +33,7 @@
 #include <sys/param.h>
 
 #include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/ioccom.h>
 #include <sys/kmem.h>
-#include <sys/queue.h>
-
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -48,8 +44,6 @@ TAILQ_HEAD(dm_target_head, dm_target);
 
 static struct dm_target_head dm_target_list =
 TAILQ_HEAD_INITIALIZER(dm_target_list);
-
-kmutex_t dm_target_mutex;
 
 /*
  * Search for name in TAIL and return apropriate pointer.
@@ -62,21 +56,15 @@ dm_target_lookup_name(const char *dm_target_name)
 
 	slen = strlen(dm_target_name)+1;
 
-	mutex_enter(&dm_target_mutex);
-	
 	TAILQ_FOREACH (dm_target, &dm_target_list, dm_target_next) {
 		dlen = strlen(dm_target->name)+1;
 
 		if (dlen != slen)
 			continue;
 		
-		if (strncmp(dm_target_name, dm_target->name, slen) == 0){
-			mutex_exit(&dm_target_mutex);
-			return dm_target;
-		}
+		if (strncmp(dm_target_name, dm_target->name, slen) == 0)
+					return dm_target;
 	}
-
-	mutex_exit(&dm_target_mutex);
 
 	return NULL;
 }
@@ -90,28 +78,19 @@ int
 dm_target_insert(struct dm_target *dm_target)
 {
 	struct dm_target *dmt;
-	int r;
 
-	r = 0;
-	
 	dmt = dm_target_lookup_name(dm_target->name);
 
 	if (dmt != NULL) {
 		if (dmt->version[0] >= dm_target->version[0] &&
 		    dmt->version[1] >= dm_target->version[1] &&
-		    dmt->version[2] >= dm_target->version[2]) {
-			r = EEXIST;
-			goto out;
-		}
+		    dmt->version[2] >= dm_target->version[2])
+				return EEXIST;
 	}
-
-	mutex_enter(&dm_target_mutex);
 	
 	TAILQ_INSERT_TAIL(&dm_target_list, dm_target, dm_target_next);
-
-	mutex_exit(&dm_target_mutex);
- out:
-	return r;
+	
+	return 0;
 }
 
 
@@ -129,13 +108,9 @@ dm_target_rem(char *dm_target_name)
 	dm_target = dm_target_lookup_name(dm_target_name);
 	if (dm_target == NULL)
 		return ENOENT;
-
-	mutex_enter(&dm_target_mutex);
 	
 	TAILQ_REMOVE(&dm_target_list,
 	    dm_target, dm_target_next);
-
-	mutex_exit(&dm_target_mutex);
 	
 	(void)kmem_free(dm_target, sizeof(struct dm_target));
 
@@ -153,8 +128,6 @@ dm_target_destroy(void)
 {
 	struct dm_target *dm_target;
 
-	mutex_enter(&dm_target_mutex);
-
 	while (TAILQ_FIRST(&dm_target_list) != NULL){
 
 		dm_target = TAILQ_FIRST(&dm_target_list);
@@ -164,8 +137,6 @@ dm_target_destroy(void)
 		
 		(void)kmem_free(dm_target, sizeof(struct dm_target));
 	}
-
-	mutex_exit(&dm_target_mutex);
 	
 	return 0;
 }
@@ -178,8 +149,7 @@ dm_target_alloc(const char *name)
 {
 	struct dm_target *dmt;
 	
-	if ((dmt = kmem_alloc(sizeof(struct dm_target)+strlen(name)+1,
-		    KM_NOSLEEP)) == NULL)
+	if ((dmt = kmem_alloc(sizeof(struct dm_target), KM_NOSLEEP)) == NULL)
 		return NULL;
 	
 	return dmt;
@@ -200,8 +170,6 @@ dm_target_prop_list(void)
 	j = 0;
 	
 	target_array = prop_array_create();
-
-	mutex_enter(&dm_target_mutex);
 	
 	TAILQ_FOREACH (dm_target, &dm_target_list, dm_target_next){
 
@@ -223,8 +191,6 @@ dm_target_prop_list(void)
 		j++;
 	}
 
-	mutex_exit(&dm_target_mutex);
-
 	return target_array;
 }
 
@@ -236,8 +202,6 @@ dm_target_init(void)
 	int r;
 
 	r = 0;
-
-	mutex_init(&dm_target_mutex, MUTEX_DEFAULT, IPL_NONE);
 	
 	dmt = dm_target_alloc("linear");
 	dmt1 = dm_target_alloc("zero");
@@ -250,7 +214,7 @@ dm_target_init(void)
 	dmt->version[0] = 1;
 	dmt->version[1] = 0;
 	dmt->version[2] = 2;
-	strncpy(dmt->name, "linear", DM_MAX_TYPE_NAME);
+	strlcpy(dmt->name, "linear", DM_MAX_TYPE_NAME);
 	dmt->init = &dm_target_linear_init;
 	dmt->status = &dm_target_linear_status;
 	dmt->strategy = &dm_target_linear_strategy;
@@ -258,12 +222,11 @@ dm_target_init(void)
 	dmt->upcall = &dm_target_linear_upcall;
 	
 	r = dm_target_insert(dmt);
-
 		
 	dmt1->version[0] = 1;
 	dmt1->version[1] = 0;
 	dmt1->version[2] = 0;
-	strncpy(dmt1->name, "zero", DM_MAX_TYPE_NAME);
+	strlcpy(dmt1->name, "zero", DM_MAX_TYPE_NAME);
 	dmt1->init = &dm_target_zero_init;
 	dmt1->status = &dm_target_zero_status;
 	dmt1->strategy = &dm_target_zero_strategy;
@@ -275,7 +238,7 @@ dm_target_init(void)
 	dmt2->version[0] = 1;
 	dmt2->version[1] = 0;
 	dmt2->version[2] = 0;
-	strncpy(dmt2->name, "error", DM_MAX_TYPE_NAME);
+	strlcpy(dmt2->name, "error", DM_MAX_TYPE_NAME);
 	dmt2->init = &dm_target_error_init;
 	dmt2->status = &dm_target_error_status;
 	dmt2->strategy = &dm_target_error_strategy;
@@ -287,12 +250,11 @@ dm_target_init(void)
 	dmt3->version[0] = 1;
 	dmt3->version[1] = 0;
 	dmt3->version[2] = 3;
-	strncpy(dmt3->name, "striped", DM_MAX_TYPE_NAME);
+	strlcpy(dmt3->name, "striped", DM_MAX_TYPE_NAME);
 	dmt3->init = &dm_target_linear_init;
-	dmt3->status = NULL;
+	dmt3->status = &dm_target_linear_status;
 	dmt3->strategy = &dm_target_linear_strategy;
 	dmt3->destroy = &dm_target_linear_destroy;
-	dmt3->destroy = NULL; 
 	dmt3->upcall = NULL;
 	
 	r = dm_target_insert(dmt3);
@@ -300,7 +262,7 @@ dm_target_init(void)
 	dmt4->version[0] = 1;
 	dmt4->version[1] = 0;
 	dmt4->version[2] = 3;
-	strncpy(dmt4->name, "mirror", DM_MAX_TYPE_NAME);
+	strlcpy(dmt4->name, "mirror", DM_MAX_TYPE_NAME);
 	dmt4->init = NULL;
 	dmt4->status = NULL;
 	dmt4->strategy = NULL;
@@ -312,7 +274,7 @@ dm_target_init(void)
 	dmt5->version[0] = 1;
 	dmt5->version[1] = 0;
 	dmt5->version[2] = 5;
-	strncpy(dmt5->name, "snapshot", DM_MAX_TYPE_NAME);
+	strlcpy(dmt5->name, "snapshot", DM_MAX_TYPE_NAME);
 	dmt5->init = &dm_target_snapshot_init;
 	dmt5->status = &dm_target_snapshot_status;
 	dmt5->strategy = &dm_target_snapshot_strategy;
@@ -324,7 +286,7 @@ dm_target_init(void)
 	dmt6->version[0] = 1;
 	dmt6->version[1] = 0;
 	dmt6->version[2] = 5;
-	strncpy(dmt6->name, "snapshot-origin", DM_MAX_TYPE_NAME);
+	strlcpy(dmt6->name, "snapshot-origin", DM_MAX_TYPE_NAME);
 	dmt6->init = &dm_target_snapshot_orig_init;
 	dmt6->status = &dm_target_snapshot_orig_status;
 	dmt6->strategy = &dm_target_snapshot_orig_strategy;

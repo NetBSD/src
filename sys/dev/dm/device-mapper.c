@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.1.2.9 2008/08/19 23:38:25 haad Exp $      */
+/*        $NetBSD: device-mapper.c,v 1.1.2.10 2008/09/03 22:50:17 haad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -36,16 +36,18 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
+#include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/dkio.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/mutex.h>
+
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -85,6 +87,8 @@ const struct cdevsw dm_cdevsw = {
 /* Info about all devices */
 struct dm_softc *dm_sc;
 
+kmutex_t dm_ioctl_mtx;
+
 /*
  * This array is used to translate cmd to function pointer.
  *
@@ -120,10 +124,11 @@ MODULE(MODULE_CLASS_MISC, dm, NULL);
 static int
 dm_modcmd(modcmd_t cmd, void *arg)
 {
+#ifdef _MODULE
 	int bmajor = -1, cmajor = -1;
 
-	printf("DM_modCMD called \n");
-#ifdef _MODULE
+	printf(" Modcmd called \n");
+	
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		dmattach();
@@ -147,17 +152,10 @@ dm_modcmd(modcmd_t cmd, void *arg)
 	return 0;
 #else
 
-	if (cmd == MODULE_CMD_INIT){
-		dmattach();
+	if (cmd == MODULE_CMD_INIT)
 		return 0;
-	}
-
-	if (cmd == MODULE_CMD_FINI){
-		dmdestroy();
-		return 0;
-	}
-	
 	return ENOTTY;
+
 #endif /* _MODULE */
 }
 
@@ -166,6 +164,8 @@ dm_modcmd(modcmd_t cmd, void *arg)
 int
 dmattach(void)
 {
+
+	printf("AttACh called\n");
 
 	dm_sc = (struct dm_softc *)kmem_alloc(sizeof(struct dm_softc), KM_NOSLEEP);
 
@@ -183,6 +183,8 @@ dmattach(void)
 	
 	dm_pdev_init();
 		
+	mutex_init(&dm_ioctl_mtx, MUTEX_DEFAULT, IPL_NONE);
+
 	return 0;
 }
 
@@ -191,6 +193,7 @@ int
 dmdestroy(void)
 {
 
+	printf("destroy called\n");	
 	(void)kmem_free(dm_sc, sizeof(struct dm_softc));
 
 	dm_dev_destroy();
@@ -198,6 +201,8 @@ dmdestroy(void)
 	dm_pdev_destroy();
 	
 	dm_target_destroy();
+	
+	mutex_destroy(&dm_ioctl_mtx);
 	
 	return 0;
 }
@@ -208,8 +213,8 @@ dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	struct dm_dev *dmv;
 
-	aprint_verbose("open routine called %d\n",minor(dev));
-	
+	aprint_verbose("open routine called %d\n", minor(dev));
+
 	if ((dmv = dm_dev_lookup_minor(minor(dev))) != NULL) {
 		if (dmv->dm_dklabel == NULL)
 			dmgetdisklabel(dmv, dev);
@@ -227,7 +232,7 @@ dmclose(dev_t dev, int flags, int mode, struct lwp *l)
 	struct dm_dev *dmv;
 
 	if ((dmv = dm_dev_lookup_minor(minor(dev))) != NULL)
-	dmv->ref_cnt--;
+		dmv->ref_cnt--;
 
 	aprint_verbose("CLOSE routine called\n");
 
@@ -236,6 +241,10 @@ dmclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 /*
  * Called after ioctl call on mapper/control or dm device.
+ * Locking: Use dm_ioctl_mtx to synchronise access to dm driver. 
+ * Only one ioctl can be in dm driver in time. Ioctl's are not 
+ * run many times and they performance is not critical, therefore
+ * I can do it this way.
  */
 static int
 dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
@@ -247,14 +256,16 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 	
 	if (data == NULL)
 		return(EINVAL);
-
+	
+	mutex_enter(&dm_ioctl_mtx);
+	
 	if (disk_ioctl_switch(dev, cmd, data) != 0) {
 		struct plistref *pref = (struct plistref *) data;
 
 		r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in);
 		if (r)
-			return r;
-
+			goto out;
+		
 		dm_check_version(dm_dict_in);
 		
 		/* call cmd selected function */
@@ -272,10 +283,11 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 
 		r = prop_dictionary_copyout_ioctl(pref, cmd, dm_dict_in);
 	}
-
 out:
+	mutex_exit(&dm_ioctl_mtx);
 	return r;
 }
+
 /*
  * Translate command sent from libdevmapper to func.
  */
@@ -335,9 +347,9 @@ dm_ioctl_switch(u_long cmd)
   * Check for disk specific ioctls.
   */
 
- static int
- disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
- {
+static int
+disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
+{
 	 struct dm_dev *dmv;
 
 	 if ((dmv = dm_dev_lookup_minor(minor(dev))) == NULL)
@@ -380,12 +392,12 @@ dm_ioctl_switch(u_long cmd)
 	 }
 
 	 return 0;
- }
+}
 
 /*
  * Do all IO operations on dm logical devices.
  */
- static void
+static void
 dmstrategy(struct buf *bp)
 {
 
@@ -396,6 +408,8 @@ dmstrategy(struct buf *bp)
 
 	struct buf *nestbuf;
 
+	uint32_t dev_type;
+	
 	uint64_t table_start;
 	uint64_t table_end;
 	
@@ -410,23 +424,36 @@ dmstrategy(struct buf *bp)
 	buf_start = bp->b_blkno * DEV_BSIZE;
 	buf_len = bp->b_bcount;
 
-	tbl = NULL; /* XXX gcc uninitialized */
+	tbl = NULL; 
 
 	table_end = 0;
-
+	dev_type = 0;
 	issued_len = 0;
 	
-	/*aprint_verbose("dmstrategy routine called %d--%d\n",
-	  minor(bp->b_dev),bp->b_bcount);*/
-	
-	if ( (dmv = dm_dev_lookup_minor(minor(bp->b_dev))) == NULL) {
+	/* dm_dev are guarded by their own mutex */
+	if ((dmv = dm_dev_lookup_minor(minor(bp->b_dev))) == NULL) {
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		return;
 	} 
+        /*
+	 * Test if deleting flag is not set if it is set fail io
+	 * operation. There is small window between rw_enter and
+	 * dev_rem in dm_dev_remove_ioctl when new IO can be started
+	 * on device (it will wait on dev_rwlock) which will be
+	 * destroyed.
+	 */
+	dev_type = atomic_and_32_nv(&dmv->dev_type, DM_DELETING_DEV);
+	
+	if (dev_type & DM_DELETING_DEV) {
+		bp->b_error = EIO;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+		return;
+	}
 
-	/* Read lock per device rwlock so device can't be changed. */
+        /* Read lock per device rwlock so device can't be changed. */
 	rw_enter(&dmv->dev_rwlock, RW_READER);
 	
 	/* Select active table */
@@ -525,13 +552,17 @@ dmsize(dev_t dev)
 	
 	/* Select active table */
 	tbl = &dmv->tables[dmv->cur_active_table];
-
+	
+	rw_enter(&dmv->dev_rwlock, RW_READER);
+	
 	/*
 	 * Find out what tables I want to select.
 	 * if length => rawblkno then we should used that table.
 	 */
 	SLIST_FOREACH(table_en, tbl, next)
 	    length += table_en->length;
+	
+	rw_exit(&dmv->dev_rwlock);
 	
 	return length;
 }

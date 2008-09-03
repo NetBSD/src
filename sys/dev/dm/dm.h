@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.1.2.11 2008/08/28 21:53:42 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.1.2.12 2008/09/03 22:50:17 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -35,9 +35,9 @@
 
 #ifdef _KERNEL
 
-#include <sys/fcntl.h>
-#include <sys/mutex.h>
-#include <sys/vnode.h>
+#include <sys/errno.h>
+
+#include <sys/rwlock.h>
 #include <sys/queue.h>
 
 #define DM_MAX_TYPE_NAME 16
@@ -115,7 +115,6 @@ struct dm_dev {
 	int minor;
 	uint32_t flags;
 
-	kmutex_t dev_mtx; /* between ioctl routines lock */
 	krwlock_t dev_rwlock; /* dmstrategy -> ioctl routines lock */
 	
 	uint32_t event_nr;
@@ -131,7 +130,9 @@ struct dm_dev {
 #define DM_SNAPSHOT_DEV        (1 << 5)
 #define DM_SNAPSHOT_ORIG_DEV   (1 << 6)
 #define DM_SPARE_DEV           (1 << 7)
-	
+/* Set this device type only during dev remove ioctl. */
+#define DM_DELETING_DEV        (1 << 8) 
+
 	struct dm_pdevs pdevs;
 
 	/* Current active table is selected with this. */
