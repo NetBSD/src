@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.407 2008/09/03 20:34:23 rjs Exp $
+.\"	$NetBSD: main,v 1.408 2008/09/03 23:44:24 ober Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -615,6 +615,9 @@ updated HALs with support for WiSOC (AR531x) and 32bit SPARC.
 .It
 .Xr bge 4 :
 added support for the following chips: BCM5753, BCM5753M, BCM5715, BCM5754, BCM5755 and BCM5787. Numerous improvements and bugfixes were made too.
+.It
+.Xr iwn 4 :
+new driver for Intel Wireless 4965AGN IEEE network cards, from OpenBSD.
 .It
 .Xr kse 4 :
 new driver for Micrel KSZ8842/8841 PCI network cards.
