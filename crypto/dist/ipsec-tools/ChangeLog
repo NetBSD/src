@@ -1,3 +1,10 @@
+2008-09-03  Timo Teras  <timo.teras@iki.fi>
+	* src/libipsec/pfkey.c: no satype check for Linux spdflush messages
+	* src/racoon/pfkey.c: handle SPD dump responses in pfkey_reload()
+	  to make configuration reloading work better
+	* src/racoon/sockmisc.c: it is not an error to call extract_port()
+	  with AF_UNSPEC address (happens with anonymous config blocks)
+
 2008-08-12  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Krzysztof Oledzki <olel@ans.pl>:
 	* src/racoon/isakmp.c: Remove ph1handler if we received an invalid
