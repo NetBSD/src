@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1090 2008/09/02 18:13:49 christos Exp $
+# $NetBSD: mi,v 1.1091 2008/09/03 23:44:24 ober Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1093,6 +1093,7 @@
 ./usr/share/man/cat4/itesio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iwi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iwic.0			man-sys-catman		.cat
+./usr/share/man/cat4/iwn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ix.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ixpide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iy.0			man-sys-catman		.cat
@@ -3563,6 +3564,7 @@
 ./usr/share/man/html4/itesio.html		man-sys-htmlman		html
 ./usr/share/man/html4/iwi.html			man-sys-htmlman		html
 ./usr/share/man/html4/iwic.html			man-sys-htmlman		html
+./usr/share/man/html4/iwn.html			man-sys-htmlman		html
 ./usr/share/man/html4/ix.html			man-sys-htmlman		html
 ./usr/share/man/html4/ixpide.html		man-sys-htmlman		html
 ./usr/share/man/html4/iy.html			man-sys-htmlman		html
@@ -5879,6 +5881,7 @@
 ./usr/share/man/man4/itesio.4			man-sys-man		.man
 ./usr/share/man/man4/iwi.4			man-sys-man		.man
 ./usr/share/man/man4/iwic.4			man-sys-man		.man
+./usr/share/man/man4/iwn.4			man-sys-man		.man
 ./usr/share/man/man4/ix.4			man-sys-man		.man
 ./usr/share/man/man4/ixpide.4			man-sys-man		.man
 ./usr/share/man/man4/iy.4			man-sys-man		.man
