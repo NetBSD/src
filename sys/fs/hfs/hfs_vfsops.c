@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.18 2008/05/10 02:26:09 rumble Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.19 2008/09/03 22:57:46 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.18 2008/05/10 02:26:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.19 2008/09/03 22:57:46 gmcgarry Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -579,7 +579,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	 * to read the disk.
 	 */
 	hnode->h_dev = dev;
-	hnode->h_rec.cnid = cnid;
+	hnode->h_rec.u.cnid = cnid;
 	hnode->h_fork = fork;
 
 	hfs_nhashinsert(hnode);
@@ -619,7 +619,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	VREF(hnode->h_devvp);  /* Increment the ref count to the volume's device. */
 
 	/* Make sure UVM has allocated enough memory. (?) */
-	if (hnode->h_rec.rec_type == HFS_REC_FILE) {
+	if (hnode->h_rec.u.rec_type == HFS_REC_FILE) {
 		if (hnode->h_fork == HFS_DATAFORK)
 			uvm_vnp_setsize(vp,
 			    hnode->h_rec.file.data_fork.logical_size);
