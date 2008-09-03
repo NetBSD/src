@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.6 2008/08/20 00:45:47 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.7 2008/09/03 22:43:10 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -67,13 +67,8 @@
 #include <sys/param.h>
 
 #include <sys/buf.h>
-#include <sys/errno.h>
-#include <sys/ioctl.h>
-#include <sys/ioccom.h>
 #include <sys/kmem.h>
-#include <sys/types.h>
-#include <sys/param.h>
-#include <sys/queue.h>
+#include <sys/vnode.h>
 
 #include "dm.h"
 
