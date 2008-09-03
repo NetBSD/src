@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1182 2008/09/03 03:02:48 erh Exp $
+#	$NetBSD: mi,v 1.1183 2008/09/03 18:30:13 erh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -13997,6 +13997,9 @@
 ./usr/share/man/html9/transferlockers.html	comp-sys-htmlman	html
 ./usr/share/man/html9/trapsignal.html		comp-sys-htmlman	html
 ./usr/share/man/html9/tsleep.html		comp-sys-htmlman	html
+./usr/share/man/html9/ttyldisc_add.9		comp-sys-htmlman		html
+./usr/share/man/html9/ttyldisc_lookup.9		comp-sys-htmlman		html
+./usr/share/man/html9/ttyldisc_remove.9		comp-sys-htmlman		html
 ./usr/share/man/html9/ttyprintf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uao_create.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uao_detach.html		comp-sys-htmlman	html
@@ -19350,6 +19353,9 @@
 ./usr/share/man/man9/transferlockers.9		comp-sys-man		.man
 ./usr/share/man/man9/trapsignal.9		comp-sys-man		.man
 ./usr/share/man/man9/tsleep.9			comp-sys-man		.man
+./usr/share/man/man9/ttyldisc_add.9		comp-sys-man		.man
+./usr/share/man/man9/ttyldisc_lookup.9		comp-sys-man		.man
+./usr/share/man/man9/ttyldisc_remove.9		comp-sys-man		.man
 ./usr/share/man/man9/ttyprintf.9		comp-sys-man		.man
 ./usr/share/man/man9/uao_create.9		comp-sys-man		.man
 ./usr/share/man/man9/uao_detach.9		comp-sys-man		.man
