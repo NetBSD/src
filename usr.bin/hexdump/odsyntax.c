@@ -1,4 +1,4 @@
-/*	$NetBSD: odsyntax.c,v 1.24 2006/08/26 18:17:42 christos Exp $	*/
+/*	$NetBSD: odsyntax.c,v 1.25 2008/09/03 16:32:57 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)odsyntax.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: odsyntax.c,v 1.24 2006/08/26 18:17:42 christos Exp $");
+__RCSID("$NetBSD: odsyntax.c,v 1.25 2008/09/03 16:32:57 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: odsyntax.c,v 1.24 2006/08/26 18:17:42 christos Exp $");
 #include <util.h>
 
 #include "hexdump.h"
+
+#define PADDING "         "
 
 struct odformat {
 	char type;
@@ -70,20 +72,38 @@ int deprecated;
 
 static void odoffset(int, char ***);
 static void posixtypes(char const *);
-static void odprecede(void);
-
 
 void
 oldsyntax(int argc, char ***argvp)
 {
+	static char empty[] = "", padding[] = PADDING;
 	int ch;
 	char *p, **argv;
+
+#define TYPE_OFFSET 7
+	add("\"%07.7_Ao\n\"");
+	add("\"%07.7_ao  \"");
 
 	deprecated = 1;
 	argv = *argvp;
 	while ((ch = getopt(argc, argv,
-	    "aBbcDdeFfHhIij:LlN:OoPpst:wvXx")) != -1)
+	    "A:aBbcDdeFfHhIij:LlN:OoPpst:wvXx")) != -1)
 		switch (ch) {
+		case 'A':
+			switch (*optarg) {
+			case 'd': case 'o': case 'x':
+				fshead->nextfu->fmt[TYPE_OFFSET] = *optarg;
+				fshead->nextfs->nextfu->fmt[TYPE_OFFSET] =
+					*optarg;
+				break;
+			case 'n':
+				fshead->nextfu->fmt = empty;
+				fshead->nextfs->nextfu->fmt = padding;
+				break;
+			default:
+				errx(1, "%s: invalid address base", optarg);
+			}
+			break;
 		case 'a':
 			posixtypes("a");
 			break;
@@ -168,10 +188,8 @@ oldsyntax(int argc, char ***argvp)
 			usage();
 		}
 
-	if (!fshead) {
-		add("\"%07.7_Ao\n\"");
-		add("\"%07.7_ao  \" 8/2 \"%06o \" \"\\n\"");
-	}
+	if (fshead->nextfs->nextfs == NULL)
+		posixtypes("oS");
 
 	argc -= optind;
 	*argvp += optind;
@@ -217,7 +235,6 @@ posixtypes(char const *type_string)
 	struct odformat const *odf;
 
 	while (*type_string) {
-		odprecede();
 		switch ((type = *type_string++)) {
 		case 'a':
 		case 'c':
@@ -377,7 +394,6 @@ odoffset(int argc, char ***argvp)
 	 * If the offset uses a non-octal base, the base of the offset
 	 * is changed as well.  This isn't pretty, but it's easy.
 	 */
-#define	TYPE_OFFSET	7
 	if (base == 16) {
 		fshead->nextfu->fmt[TYPE_OFFSET] = 'x';
 		fshead->nextfs->nextfu->fmt[TYPE_OFFSET] = 'x';
@@ -388,17 +404,4 @@ odoffset(int argc, char ***argvp)
 
 	/* Terminate file list. */
 	(*argvp)[1] = NULL;
-}
-
-static void
-odprecede(void)
-{
-	static int first = 1;
-
-	if (first) {
-		first = 0;
-		add("\"%07.7_Ao\n\"");
-		add("\"%07.7_ao  \"");
-	} else
-		add("\"         \"");
 }
