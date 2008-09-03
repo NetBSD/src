@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.25 2008/07/31 08:44:21 simonb Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.26 2008/09/03 23:43:06 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -44,7 +44,7 @@ typedef struct { int32_t __fsid_val[2]; } fsid_t; /* file system id type */
 struct fid {
 	unsigned short	fid_len;		/* length of data in bytes */
 	unsigned short	fid_reserved;		/* compat: historic align */
-	char		fid_data[];		/* data (variable length) */
+	char		fid_data[0];		/* data (variable length) */
 };
 
 /*
