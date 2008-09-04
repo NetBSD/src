@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.410 2008/09/04 15:14:10 cegger Exp $
+.\"	$NetBSD: main,v 1.411 2008/09/04 16:30:58 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1043,12 +1043,13 @@ Support for Xen 2.0.x. The Xen-3 and hypervisor interface is diverging
 from Xen-2 as development is ongoing, increasing the maintenance cost
 for NetBSD. It is expected that the netbsd-5 branch will get support for
 PCI pass-though to domUs before the Xen-2 support is removed from HEAD.
-.bullet)
+.Pp
 It should be considered as deprecated. Users are expected to not rely
 on it any more beyond this major release.
-.bullet)
+.Pp
 Further, at least version 3.1 of Xen will be required to run NetBSD as
 Dom0 or DomU.
+.bullet)
 .
 .Ss "The Future of NetBSD"
 .Pp
