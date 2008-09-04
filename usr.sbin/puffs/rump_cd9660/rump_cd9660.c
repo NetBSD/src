@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_cd9660.c,v 1.3 2008/09/04 15:34:55 pooka Exp $	*/
+/*	$NetBSD: rump_cd9660.c,v 1.4 2008/09/04 15:38:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -49,7 +49,7 @@ main(int argc, char *argv[])
 
 	mount_cd9660_parseargs(argc, argv, &args, &mntflags,
 	    canon_dev, canon_dir);
-	rv = p2k_run_fs(MOUNT_CD9660, canon_dev, canon_dir, MNT_RDONLY,
+	rv = p2k_run_fs(MOUNT_CD9660, canon_dev, canon_dir, mntflags,
 	    &args, sizeof(args), 0);
 	if (rv)
 		err(1, "mount");
