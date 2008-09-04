@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.444 2008/08/25 07:58:37 lukem Exp $
+# $NetBSD: shl.mi,v 1.445 2008/09/04 12:21:25 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -121,6 +121,7 @@
 ./usr/lib/librumpfs_msdos.so.0.0		base-sys-shlib
 ./usr/lib/librumpfs_ntfs.so.0.0			base-sys-shlib
 ./usr/lib/librumpfs_syspuffs.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_sysvbfs.so.0.0		base-sys-shlib
 ./usr/lib/librumpfs_tmpfs.so.0.0		base-sys-shlib
 ./usr/lib/librumpfs_udf.so.0.0			base-sys-shlib
 ./usr/lib/librumpfs_ufs.so.0.0			base-sys-shlib
