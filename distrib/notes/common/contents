@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.140 2008/05/25 20:17:00 wiz Exp $
+.\"	$NetBSD: contents,v 1.141 2008/09/04 17:24:18 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -817,10 +817,11 @@ This set contains a
 .Li GENERIC32_IP3x
 kernel (for O2), named
 .Pa /netbsd .
+.Pp
 You
 .Em must
 install one of these distribution sets for your machine.
-.showsize 4 8				\" XXX old
+.showsize 4 8
 .\}
 .el \{\
 .ie \n[sparc] \{\
