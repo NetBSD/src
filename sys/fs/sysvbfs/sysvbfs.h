@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.h,v 1.7 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: sysvbfs.h,v 1.8 2008/09/04 12:07:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -32,13 +32,10 @@
 #ifndef _FS_SYSVBFS_SYSVBFS_H_
 #define	_FS_SYSVBFS_SYSVBFS_H_
 
-struct sysvbfs_args {
-	char	*fspec;		/* blocks special holding the fs to mount */
-};
-
-#ifdef _KERNEL
 struct bfs;
 struct buf;
+
+#include <fs/sysvbfs/sysvbfs_args.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
@@ -101,5 +98,4 @@ extern const struct genfs_ops sysvbfs_genfsops;
 int sysvbfs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
 
-#endif /* _KERNEL */
 #endif /* _FS_SYSVBFS_SYSVBFS_H_ */
