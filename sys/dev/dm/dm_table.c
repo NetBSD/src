@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.1.2.7 2008/08/19 13:30:36 haad Exp $      */
+/*        $NetBSD: dm_table.c,v 1.1.2.8 2008/09/04 00:17:38 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include <sys/errno.h>
 #include <sys/kmem.h>
 
 #include "dm.h"
