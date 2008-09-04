@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.20.2.1.2.1 2007/09/03 06:51:12 wrstuden Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.20.2.1.2.2 2008/09/04 08:46:10 skrll Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -211,7 +211,6 @@ isakmp_handler(so_isakmp)
 	unsigned int remote_len = sizeof(remote);
 	unsigned int local_len = sizeof(local);
 	int len = 0, extralen = 0;
-	u_short port;
 	vchar_t *buf = NULL, *tmpbuf = NULL;
 	int error = -1;
 
@@ -353,21 +352,7 @@ isakmp_handler(so_isakmp)
 	plogdump(LLV_DEBUG, buf->v, buf->l);
 
 	/* avoid packets with malicious port/address */
-	switch (remote.ss_family) {
-	case AF_INET:
-		port = ((struct sockaddr_in *)&remote)->sin_port;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		port = ((struct sockaddr_in6 *)&remote)->sin6_port;
-		break;
-#endif
-	default:
-		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid family: %d\n", remote.ss_family);
-		goto end;
-	}
-	if (port == 0) {
+	if (extract_port((struct sockaddr *)&remote) == 0) {
 		plog(LLV_ERROR, LOCATION, (struct sockaddr *)&remote,
 			"src port == 0 (valid as UDP but not with IKE)\n");
 		goto end;
@@ -1053,7 +1038,6 @@ isakmp_ph1begin_i(rmconf, remote, local)
 #endif
 #ifdef ENABLE_HYBRID
 	if ((iph1->mode_cfg = isakmp_cfg_mkstate()) == NULL) {
-		remph1(iph1);
 		delph1(iph1);
 		return -1;
 	}
@@ -1070,7 +1054,6 @@ isakmp_ph1begin_i(rmconf, remote, local)
 
 	/* XXX copy remote address */
 	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0) {
-		remph1(iph1);
 		delph1(iph1);
 		return -1;
 	}
@@ -1172,7 +1155,6 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 #endif
 #ifdef ENABLE_HYBRID
 	if ((iph1->mode_cfg = isakmp_cfg_mkstate()) == NULL) {
-		remph1(iph1);
 		delph1(iph1);
 		return -1;
 	}
@@ -1194,7 +1176,6 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 
 	/* copy remote address */
 	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0) {
-		remph1(iph1);
 		delph1(iph1);
 		return -1;
 	}
@@ -1347,50 +1328,20 @@ isakmp_ph2begin_r(iph1, msg)
 		delph2(iph2);
 		return -1;
 	}
-	switch (iph2->dst->sa_family) {
-	case AF_INET:
-#if (!defined(ENABLE_NATT)) || (defined(BROKEN_NATT))
-		((struct sockaddr_in *)iph2->dst)->sin_port = 0;
-#endif
-		break;
-#ifdef INET6
-	case AF_INET6:
-#if (!defined(ENABLE_NATT)) || (defined(BROKEN_NATT))
-		((struct sockaddr_in6 *)iph2->dst)->sin6_port = 0;
-#endif
-		break;
-#endif
-	default:
-		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid family: %d\n", iph2->dst->sa_family);
-		delph2(iph2);
-		return -1;
-	}
-
 	iph2->src = dupsaddr(iph1->local);	/* XXX should be considered */
 	if (iph2->src == NULL) {
 		delph2(iph2);
 		return -1;
 	}
-	switch (iph2->src->sa_family) {
-	case AF_INET:
 #if (!defined(ENABLE_NATT)) || (defined(BROKEN_NATT))
-		((struct sockaddr_in *)iph2->src)->sin_port = 0;
-#endif
-		break;
-#ifdef INET6
-	case AF_INET6:
-#if (!defined(ENABLE_NATT)) || (defined(BROKEN_NATT))
-		((struct sockaddr_in6 *)iph2->src)->sin6_port = 0;
-#endif
-		break;
-#endif
-	default:
+	if (set_port(iph2->dst, 0) == NULL ||
+	    set_port(iph2->src, 0) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid family: %d\n", iph2->src->sa_family);
+		     "invalid family: %d\n", iph2->dst->sa_family);
 		delph2(iph2);
 		return -1;
 	}
+#endif
 
 	/* add new entry to isakmp status table */
 	insph2(iph2);
@@ -2219,10 +2170,10 @@ isakmp_post_acquire(iph2)
 			set_port(iph2->dst, extract_port(iph1->remote));
 		}
 	} else {
-		iph1 = getph1byaddr(iph2->src, iph2->dst);
+		iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 	}
 #else
-	iph1 = getph1byaddr(iph2->src, iph2->dst);
+	iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 #endif
 
 	/* no ISAKMP-SA found. */
@@ -2354,12 +2305,12 @@ isakmp_chkph1there(iph2)
 		}
 	} else {
 		plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: searching byaddr.\n");
-		iph1 = getph1byaddr(iph2->src, iph2->dst);
+		iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 		if(iph1 != NULL)
 			plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: found byaddr.\n");
 	}
 #else
-	iph1 = getph1byaddr(iph2->src, iph2->dst);
+	iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 #endif
 
 	/* XXX Even if ph1 as responder is there, should we not start
@@ -2526,7 +2477,7 @@ isakmp_newcookie(place, remote, local)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		alen = sizeof(struct in_addr);
+		alen = sizeof(struct in6_addr);
 		sa1 = (caddr_t)&((struct sockaddr_in6 *)remote)->sin6_addr;
 		sa2 = (caddr_t)&((struct sockaddr_in6 *)local)->sin6_addr;
 		break;
@@ -2896,14 +2847,12 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 	struct remoteconf *rmconf;
 	struct sockaddr *remote, *local;
 {
-	u_short *port = NULL;
+	u_int16_t port;
 
 	/* address portion must be grabbed from real remote address "remote" */
 	iph1->remote = dupsaddr(remote);
-	if (iph1->remote == NULL) {
-		delph1(iph1);
+	if (iph1->remote == NULL)
 		return -1;
-	}
 
 	/*
 	 * if remote has no port # (in case of initiator - from ACQUIRE msg)
@@ -2912,73 +2861,27 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 	 * if remote has port # (in case of responder - from recvfrom(2))
 	 * respect content of "remote".
 	 */
-	switch (iph1->remote->sa_family) {
-	case AF_INET:
-		port = &((struct sockaddr_in *)iph1->remote)->sin_port;
-		if (*port)
-			break;
-		*port = ((struct sockaddr_in *)rmconf->remote)->sin_port;
-		if (*port)
-			break;
-		*port = htons(PORT_ISAKMP);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		port = &((struct sockaddr_in6 *)iph1->remote)->sin6_port;
-		if (*port)
-			break;
-		*port = ((struct sockaddr_in6 *)rmconf->remote)->sin6_port;
-		if (*port)
-			break;
-		*port = htons(PORT_ISAKMP);
-		break;
-#endif
-	default:
-		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid family: %d\n", iph1->remote->sa_family);
-		return -1;
+	if (extract_port(iph1->remote) == 0) {
+		port = extract_port(rmconf->remote);
+		if (port == 0)
+			port = PORT_ISAKMP;
+		set_port(iph1->remote, port);
 	}
 
 	if (local == NULL)
 		iph1->local = getlocaladdr(iph1->remote);
 	else
 		iph1->local = dupsaddr(local);
-	if (iph1->local == NULL) {
-		delph1(iph1);
+	if (iph1->local == NULL)
 		return -1;
-	}
-	port = NULL;
-	switch (iph1->local->sa_family) {
-	case AF_INET:
-		port = &((struct sockaddr_in *)iph1->local)->sin_port;
-		if (*port)
-			break;
-		*port = ((struct sockaddr_in *)iph1->local)->sin_port;
-		if (*port)
-			break;
-		*port = getmyaddrsport(iph1->local);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		port = &((struct sockaddr_in6 *)iph1->local)->sin6_port;
-		if (*port)
-			break;
-		*port = ((struct sockaddr_in6 *)iph1->local)->sin6_port;
-		if (*port)
-			break;
-		*port = getmyaddrsport(iph1->local);
-		break;
-#endif
-	default:
-		plog(LLV_ERROR, LOCATION, NULL,
-			"invalid family: %d\n", iph1->local->sa_family);
-		delph1(iph1);
-		return -1;
-	}
+
+	if (extract_port(iph1->local) == 0)
+		set_port(iph1->local, PORT_ISAKMP);
+
 #ifdef ENABLE_NATT
-	if ( port != NULL && *port == htons(lcconf->port_isakmp_natt) ) {
-	    plog (LLV_DEBUG, LOCATION, NULL, "Marking ports as changed\n");
-	    iph1->natt_flags |= NAT_ADD_NON_ESP_MARKER;
+	if (extract_port(iph1->local) == lcconf->port_isakmp_natt) {
+		plog(LLV_DEBUG, LOCATION, NULL, "Marking ports as changed\n");
+		iph1->natt_flags |= NAT_ADD_NON_ESP_MARKER;
 	}
 #endif
 
@@ -3286,7 +3189,7 @@ purge_remote(iph1)
 	iph1->status = PHASE1ST_EXPIRED;
 
 	/* Check if we have another, still valid, phase1 SA. */
-	new_iph1 = getph1byaddr(iph1->local, iph1->remote);
+	new_iph1 = getph1byaddr(iph1->local, iph1->remote, 1);
 
 	/*
 	 * Delete all orphaned or binded to the deleting ph1handle phase2 SAs.

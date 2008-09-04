@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.9.2.1.2.1 2007/09/03 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: oakley.c,v 1.9.2.1.2.2 2008/09/04 08:46:11 skrll Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -1452,8 +1452,15 @@ oakley_validate_auth(iph1)
 				return ISAKMP_NTYPE_INVALID_CERT_AUTHORITY;
 			}
 		}
-
-		plog(LLV_DEBUG, LOCATION, NULL, "CERT validated\n");
+	
+		/* Generate a warning if verify_cert == 0
+		 */
+		if (iph1->rmconf->verify_cert){
+			plog(LLV_DEBUG, LOCATION, NULL, "CERT validated\n");
+		}else{
+			plog(LLV_WARNING, LOCATION, NULL,
+				"CERT validation disabled by configuration\n");
+		}
 
 		/* compute hash */
 		switch (iph1->etype) {

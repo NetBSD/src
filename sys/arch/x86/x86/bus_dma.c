@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.32 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.32.4.1 2008/09/04 08:46:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32.4.1 2008/09/04 08:46:44 skrll Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -732,7 +732,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 */
 	if (len == 0 || cookie == NULL ||
 	    (cookie->id_flags & X86_DMA_IS_BOUNCING) == 0)
-		return;
+		goto end;
 
 	switch (cookie->id_buftype) {
 	case X86_DMA_BUFTYPE_LINEAR:
@@ -853,6 +853,21 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	default:
 		printf("unknown buffer type %d\n", cookie->id_buftype);
 		panic("_bus_dmamap_sync");
+	}
+end:
+	if (ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTWRITE)) {
+		/*
+		 * from the memory POV a load can be reordered before a store
+		 * (a load can fetch data from the write buffers, before
+		 * data hits the cache or memory), a mfence avoids it.
+		 */
+		x86_mfence();
+	} else if (ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_POSTREAD)) {
+		/*
+		 * all past reads should have completed at before this point,
+		 * and futur reads should not have started yet.
+		 */
+		x86_lfence();
 	}
 }
 

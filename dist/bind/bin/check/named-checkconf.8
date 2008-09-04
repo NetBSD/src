@@ -1,4 +1,4 @@
-.\"	$NetBSD: named-checkconf.8,v 1.1.1.4.6.1 2007/06/03 17:19:54 wrstuden Exp $
+.\"	$NetBSD: named-checkconf.8,v 1.1.1.4.6.2 2008/09/04 08:46:12 skrll Exp $
 .\"
 .\" Copyright (C) 2004, 2005, 2007 Internet Systems Consortium, Inc. ("ISC")
 .\" Copyright (C) 2000-2002 Internet Software Consortium.
@@ -15,7 +15,7 @@
 .\" OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" Id: named-checkconf.8,v 1.16.18.11 2007/01/30 00:23:44 marka Exp
+.\" Id: named-checkconf.8,v 1.16.18.13 2007/06/20 02:26:58 marka Exp
 .\"
 .hy 0
 .ad l
@@ -44,7 +44,7 @@ checks the syntax, but not the semantics, of a named configuration file.
 .PP
 \-t \fIdirectory\fR
 .RS 4
-chroot to
+Chroot to
 \fIdirectory\fR
 so that include directives in the configuration file are processed as if run by a similarly chrooted named.
 .RE
@@ -58,7 +58,7 @@ program and exit.
 .PP
 \-z
 .RS 4
-Perform a check load the master zonefiles found in
+Perform a test load of all master zones found in
 \fInamed.conf\fR.
 .RE
 .PP
@@ -79,6 +79,7 @@ returns an exit status of 1 if errors were detected and 0 otherwise.
 .SH "SEE ALSO"
 .PP
 \fBnamed\fR(8),
+\fBnamed\-checkzone\fR(8),
 BIND 9 Administrator Reference Manual.
 .SH "AUTHOR"
 .PP

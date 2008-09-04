@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.4.2.1.2.1 2007/09/03 06:51:10 wrstuden Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.4.2.1.2.2 2008/09/04 08:46:10 skrll Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -726,7 +726,6 @@ autoconf_myaddrsport()
 
 /*
  * get a port number to which racoon binded.
- * NOTE: network byte order returned.
  */
 u_short
 getmyaddrsport(local)
@@ -739,38 +738,23 @@ getmyaddrsport(local)
 	for (p = lcconf->myaddrs; p; p = p->next) {
 		if (!p->addr)
 			continue;
-		if (!cmpsaddrwop(local, p->addr)) {
-			if (! bestmatch) {
-				bestmatch = p;
-				continue;
-			}
-			
-			switch (p->addr->sa_family) {
-			case AF_INET:
-				if (((struct sockaddr_in *)p->addr)->sin_port == PORT_ISAKMP) {
-					bestmatch = p;
-					bestmatch_port = ((struct sockaddr_in *)p->addr)->sin_port;
-					break;
-				}
-				break;
-#ifdef INET6
-			case AF_INET6:
-				if (((struct sockaddr_in6 *)p->addr)->sin6_port == PORT_ISAKMP) {
-					bestmatch = p;
-					bestmatch_port = ((struct sockaddr_in6 *)p->addr)->sin6_port;
-					break;
-				}
-				break;
-#endif
-			default:
-				plog(LLV_ERROR, LOCATION, NULL,
-				     "unsupported AF %d\n", p->addr->sa_family);
-				continue;
-			}
+		if (cmpsaddrwop(local, p->addr))
+			continue;
+
+		/* use first matching address regardless of port */
+		if (!bestmatch) {
+			bestmatch = p;
+			continue;
+		}
+
+		/* matching address with port PORT_ISAKMP */
+		if (extract_port(p->addr) == PORT_ISAKMP) {
+			bestmatch = p;
+			bestmatch_port = PORT_ISAKMP;
 		}
 	}
 
-	return htons(bestmatch_port);
+	return bestmatch_port;
 }
 
 struct myaddrs *

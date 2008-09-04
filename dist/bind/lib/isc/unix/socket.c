@@ -1,10 +1,10 @@
-/*	$NetBSD: socket.c,v 1.1.1.4.6.1 2007/06/03 17:24:57 wrstuden Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.4.6.2 2008/09/04 08:46:37 skrll Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: socket.c,v 1.237.18.24 2006/06/06 00:56:09 marka Exp */
+/* Id: socket.c,v 1.237.18.29.10.6 2008/07/29 04:47:31 each Exp */
 
 /*! \file */
 
@@ -50,6 +50,7 @@
 #include <isc/msgs.h>
 #include <isc/mutex.h>
 #include <isc/net.h>
+#include <isc/once.h>
 #include <isc/platform.h>
 #include <isc/print.h>
 #include <isc/region.h>
@@ -66,11 +67,44 @@
 #endif /* ISC_PLATFORM_USETHREADS */
 
 /*%
+ * Max number of open sockets.  In the vast majority of cases the default size  
+ * of FD_SETSIZE should be fine, and this constant should be increased only
+ * when absolutely necessary and possible, i.e., the server is exhausting all   
+ * available file descriptors (up to FD_SETSIZE) and the select() function
+ * and FD_xxx macros support larger values than FD_SETSIZE (which may not
+ * always by true, but we keep using some of them to ensure as much
+ * portability as possible).  Note also that overall server performance
+ * may be rather worsened with a larger value of this constant due to
+ * inherent scalability problems of select().
+ *
+ * As a special note, this value shouldn't have to be touched if
+ * this is a build for an authoritative only DNS server.
+ */
+
+#ifndef ISC_SOCKET_FDSETSIZE
+#define ISC_SOCKET_FDSETSIZE FD_SETSIZE
+#endif
+
+/*%
+ * Mac OS X needs a special definition to support larger values in select()
+ */
+#if ISC_SOCKET_FDSETSIZE > FD_SETSIZE
+#ifdef __APPLE__
+#define _DARWIN_UNLIMITED_SELECT
+#endif	/* __APPLE__ */
+#endif
+
+/*%
  * Some systems define the socket length argument as an int, some as size_t,
  * some as socklen_t.  This is here so it can be easily changed if needed.
  */
 #ifndef ISC_SOCKADDR_LEN_T
 #define ISC_SOCKADDR_LEN_T unsigned int
+#endif
+
+
+#if defined(SO_BSDCOMPAT) && defined(__linux__)
+#include <sys/utsname.h>
 #endif
 
 /*%
@@ -198,13 +232,18 @@ struct isc_socketmgr {
 	unsigned int		magic;
 	isc_mem_t	       *mctx;
 	isc_mutex_t		lock;
+	int			fd_bufsize;
+	int			fdsize;
 	/* Locked by manager lock. */
 	ISC_LIST(isc_socket_t)	socklist;
-	fd_set			read_fds;
-	fd_set			write_fds;
-	isc_socket_t	       *fds[FD_SETSIZE];
-	int			fdstate[FD_SETSIZE];
+	fd_set			*read_fds;
+	fd_set			*read_fds_copy;
+	fd_set			*write_fds;
+	fd_set			*write_fds_copy;
+	isc_socket_t	       **fds;
+	int			*fdstate;
 	int			maxfd;
+	int			reserved; 	/* unlocked */
 #ifdef ISC_PLATFORM_USETHREADS
 	isc_thread_t		watcher;
 	isc_condition_t		shutdown_ok;
@@ -247,6 +286,8 @@ static void build_msghdr_send(isc_socket_t *, isc_socketevent_t *,
 			      struct msghdr *, struct iovec *, size_t *);
 static void build_msghdr_recv(isc_socket_t *, isc_socketevent_t *,
 			      struct msghdr *, struct iovec *, size_t *);
+static void cleanup_fdsets(isc_socketmgr_t *, isc_mem_t *);
+static isc_result_t create_fdsets(isc_socketmgr_t *, isc_mem_t *);
 
 #define SELECT_POKE_SHUTDOWN		(-1)
 #define SELECT_POKE_NOTHING		(-2)
@@ -325,12 +366,12 @@ wakeup_socket(isc_socketmgr_t *manager, int fd, int msg) {
 	 * or writes.
 	 */
 
-	INSIST(fd >= 0 && fd < (int)FD_SETSIZE);
+	INSIST(fd >= 0 && fd < manager->fdsize);
 
 	if (manager->fdstate[fd] == CLOSE_PENDING) {
 		manager->fdstate[fd] = CLOSED;
-		FD_CLR(fd, &manager->read_fds);
-		FD_CLR(fd, &manager->write_fds);
+		FD_CLR(fd, manager->read_fds);
+		FD_CLR(fd, manager->write_fds);
 		(void)close(fd);
 		return;
 	}
@@ -343,9 +384,9 @@ wakeup_socket(isc_socketmgr_t *manager, int fd, int msg) {
 	 * Set requested bit.
 	 */
 	if (msg == SELECT_POKE_READ)
-		FD_SET(sock->fd, &manager->read_fds);
+		FD_SET(sock->fd, manager->read_fds);
 	if (msg == SELECT_POKE_WRITE)
-		FD_SET(sock->fd, &manager->write_fds);
+		FD_SET(sock->fd, manager->write_fds);
 }
 
 #ifdef ISC_PLATFORM_USETHREADS
@@ -1217,7 +1258,7 @@ destroy(isc_socket_t **sockp) {
 	INSIST(ISC_LIST_EMPTY(sock->recv_list));
 	INSIST(ISC_LIST_EMPTY(sock->send_list));
 	INSIST(sock->connect_ev == NULL);
-	REQUIRE(sock->fd >= 0 && sock->fd < (int)FD_SETSIZE);
+	REQUIRE(sock->fd >= 0 && sock->fd < (int)manager->fdsize);
 
 	LOCK(&manager->lock);
 
@@ -1388,7 +1429,45 @@ free_socket(isc_socket_t **socketp) {
 	*socketp = NULL;
 }
 
+#ifdef SO_BSDCOMPAT
 /*
+ * This really should not be necessary to do.  Having to workout
+ * which kernel version we are on at run time so that we don't cause
+ * the kernel to issue a warning about us using a deprecated socket option.
+ * Such warnings should *never* be on by default in production kernels.
+ *
+ * We can't do this a build time because executables are moved between
+ * machines and hence kernels.
+ *
+ * We can't just not set SO_BSDCOMAT because some kernels require it.
+ */
+
+static isc_once_t         bsdcompat_once = ISC_ONCE_INIT;
+isc_boolean_t bsdcompat = ISC_TRUE;
+
+static void
+clear_bsdcompat(void) {
+#ifdef __linux__
+	 struct utsname buf;
+	 char *endp;
+	 long int major;
+	 long int minor;
+
+	 uname(&buf);    /* Can only fail if buf is bad in Linux. */
+
+	 /* Paranoia in parsing can be increased, but we trust uname(). */
+	 major = strtol(buf.release, &endp, 10);
+	 if (*endp == '.') {
+		minor = strtol(endp+1, &endp, 10);
+		if ((major > 2) || ((major == 2) && (minor >= 4))) {
+			bsdcompat = ISC_FALSE;
+		}
+	 }
+#endif /* __linux __ */
+}
+#endif
+
+/*%
  * Create a new 'type' socket managed by 'manager'.  Events
  * will be posted to 'task' and when dispatched 'action' will be
  * called with 'arg' as the arg value.  The new socket is returned
@@ -1409,6 +1488,7 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 #endif
 	char strbuf[ISC_STRERRORSIZE];
 	const char *err = "socket";
+	int try = 0;
 
 	REQUIRE(VALID_MANAGER(manager));
 	REQUIRE(socketp != NULL && *socketp == NULL);
@@ -1418,6 +1498,7 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 		return (result);
 
 	sock->pf = pf;
+ again:
 	switch (type) {
 	case isc_sockettype_udp:
 		sock->fd = socket(pf, SOCK_DGRAM, IPPROTO_UDP);
@@ -1429,12 +1510,23 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 		sock->fd = socket(pf, SOCK_STREAM, 0);
 		break;
 	}
+	if (sock->fd == -1 && errno == EINTR && try++ < 42)
+		goto again;
 
 #ifdef F_DUPFD
 	/*
-	 * Leave a space for stdio to work in.
+	 * Leave a space for stdio and TCP to work in.
 	 */
-	if (sock->fd >= 0 && sock->fd < 20) {
+	if (manager->reserved != 0 && type == isc_sockettype_udp &&
+	    sock->fd >= 0 && sock->fd < manager->reserved) {
+		int new, tmp;
+		new = fcntl(sock->fd, F_DUPFD, manager->reserved);
+		tmp = errno;
+		(void)close(sock->fd);
+		errno = tmp;
+		sock->fd = new;
+		err = "isc_socket_create: fcntl/reserved";
+	} else if (sock->fd >= 0 && sock->fd < 20) {
 		int new, tmp;
 		new = fcntl(sock->fd, F_DUPFD, 20);
 		tmp = errno;
@@ -1445,7 +1537,7 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 	}
 #endif
 
-	if (sock->fd >= (int)FD_SETSIZE) {
+	if (sock->fd >= (int)manager->fdsize) {
 		(void)close(sock->fd);
 		isc_log_iwrite(isc_lctx, ISC_LOGCATEGORY_GENERAL,
 			       ISC_LOGMODULE_SOCKET, ISC_LOG_ERROR,
@@ -1495,7 +1587,9 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 	}
 
 #ifdef SO_BSDCOMPAT
-	if (type != isc_sockettype_unix &&
+	RUNTIME_CHECK(isc_once_do(&bsdcompat_once,
+				  clear_bsdcompat) == ISC_R_SUCCESS);
+	if (type != isc_sockettype_unix && bsdcompat &&
 	    setsockopt(sock->fd, SOL_SOCKET, SO_BSDCOMPAT,
 		       (void *)&on, sizeof(on)) < 0) {
 		isc__strerror(errno, strbuf, sizeof(strbuf));
@@ -1542,7 +1636,7 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 		}
 #ifdef ISC_PLATFORM_HAVEIN6PKTINFO
 #ifdef IPV6_RECVPKTINFO
-		/* 2292bis */
+		/* RFC 3542 */
 		if ((pf == AF_INET6)
 		    && (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_RECVPKTINFO,
 				   (void *)&on, sizeof(on)) < 0)) {
@@ -1557,7 +1651,7 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 					 strbuf);
 		}
 #else
-		/* 2292 */
+		/* RFC 2292 */
 		if ((pf == AF_INET6)
 		    && (setsockopt(sock->fd, IPPROTO_IPV6, IPV6_PKTINFO,
 				   (void *)&on, sizeof(on)) < 0)) {
@@ -1573,7 +1667,7 @@ isc_socket_create(isc_socketmgr_t *manager, int pf, isc_sockettype_t type,
 		}
 #endif /* IPV6_RECVPKTINFO */
 #endif /* ISC_PLATFORM_HAVEIN6PKTINFO */
-#ifdef IPV6_USE_MIN_MTU        /*2292bis, not too common yet*/
+#ifdef IPV6_USE_MIN_MTU        /* RFC 3542, not too common yet*/
 		/* use minimum MTU */
 		if (pf == AF_INET6) {
 			(void)setsockopt(sock->fd, IPPROTO_IPV6,
@@ -1916,7 +2010,7 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 		(void)close(fd);
 		errno = tmp;
 		fd = new;
-		err = "fcntl";
+		err = "accept/fcntl";
 	}
 #endif
 
@@ -1924,8 +2018,17 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 		if (SOFT_ERROR(errno))
 			goto soft_error;
 		switch (errno) {
-		case ENOBUFS:
 		case ENFILE:
+		case EMFILE:
+			isc_log_iwrite(isc_lctx, ISC_LOGCATEGORY_GENERAL,
+				       ISC_LOGMODULE_SOCKET, ISC_LOG_ERROR,
+				       isc_msgcat, ISC_MSGSET_SOCKET,
+				       ISC_MSG_TOOMANYFDS,
+				       "%s: too many open file descriptors",
+				       err);
+			goto soft_error;
+
+		case ENOBUFS:
 		case ENOMEM:
 		case ECONNRESET:
 		case ECONNABORTED:
@@ -1975,7 +2078,7 @@ internal_accept(isc_task_t *me, isc_event_t *ev) {
 					 sock->pf);
 			(void)close(fd);
 			goto soft_error;
-		} else if (fd >= (int)FD_SETSIZE) {
+		} else if (fd >= (int)manager->fdsize) {
 			isc_log_iwrite(isc_lctx, ISC_LOGCATEGORY_GENERAL,
 				       ISC_LOGMODULE_SOCKET, ISC_LOG_ERROR,
 				       isc_msgcat, ISC_MSGSET_SOCKET,
@@ -2187,7 +2290,7 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 	isc_socket_t *sock;
 	isc_boolean_t unlock_sock;
 
-	REQUIRE(maxfd <= (int)FD_SETSIZE);
+	REQUIRE(maxfd <= (int)manager->fdsize);
 
 	/*
 	 * Process read/writes on other fds here.  Avoid locking
@@ -2201,8 +2304,8 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 
 		if (manager->fdstate[i] == CLOSE_PENDING) {
 			manager->fdstate[i] = CLOSED;
-			FD_CLR(i, &manager->read_fds);
-			FD_CLR(i, &manager->write_fds);
+			FD_CLR(i, manager->read_fds);
+			FD_CLR(i, manager->write_fds);
 
 			(void)close(i);
 
@@ -2213,7 +2316,7 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 		unlock_sock = ISC_FALSE;
 		if (FD_ISSET(i, readfds)) {
 			if (sock == NULL) {
-				FD_CLR(i, &manager->read_fds);
+				FD_CLR(i, manager->read_fds);
 				goto check_write;
 			}
 			unlock_sock = ISC_TRUE;
@@ -2224,12 +2327,12 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 				else
 					dispatch_recv(sock);
 			}
-			FD_CLR(i, &manager->read_fds);
+			FD_CLR(i, manager->read_fds);
 		}
 	check_write:
 		if (FD_ISSET(i, writefds)) {
 			if (sock == NULL) {
-				FD_CLR(i, &manager->write_fds);
+				FD_CLR(i, manager->write_fds);
 				continue;
 			}
 			if (!unlock_sock) {
@@ -2242,7 +2345,7 @@ process_fds(isc_socketmgr_t *manager, int maxfd,
 				else
 					dispatch_send(sock);
 			}
-			FD_CLR(i, &manager->write_fds);
+			FD_CLR(i, manager->write_fds);
 		}
 		if (unlock_sock)
 			UNLOCK(&sock->lock);
@@ -2263,8 +2366,6 @@ watcher(void *uap) {
 	isc_boolean_t done;
 	int ctlfd;
 	int cc;
-	fd_set readfds;
-	fd_set writefds;
 	int msg, fd;
 	int maxfd;
 	char strbuf[ISC_STRERRORSIZE];
@@ -2278,13 +2379,16 @@ watcher(void *uap) {
 	done = ISC_FALSE;
 	while (!done) {
 		do {
-			readfds = manager->read_fds;
-			writefds = manager->write_fds;
+			memcpy(manager->read_fds_copy, manager->read_fds,
+			       manager->fd_bufsize);
+			memcpy(manager->write_fds_copy, manager->write_fds,
+			       manager->fd_bufsize);
 			maxfd = manager->maxfd + 1;
 
 			UNLOCK(&manager->lock);
 
-			cc = select(maxfd, &readfds, &writefds, NULL, NULL);
+			cc = select(maxfd, manager->read_fds_copy,
+				    manager->write_fds_copy, NULL, NULL);
 			if (cc < 0) {
 				if (!SOFT_ERROR(errno)) {
 					isc__strerror(errno, strbuf,
@@ -2306,7 +2410,7 @@ watcher(void *uap) {
 		/*
 		 * Process reads on internal, control fd.
 		 */
-		if (FD_ISSET(ctlfd, &readfds)) {
+		if (FD_ISSET(ctlfd, manager->read_fds_copy)) {
 			for (;;) {
 				select_readmsg(manager, &fd, &msg);
 
@@ -2345,7 +2449,8 @@ watcher(void *uap) {
 			}
 		}
 
-		process_fds(manager, maxfd, &readfds, &writefds);
+		process_fds(manager, maxfd, manager->read_fds_copy,
+			    manager->write_fds_copy);
 	}
 
 	manager_log(manager, TRACE,
@@ -2356,6 +2461,88 @@ watcher(void *uap) {
 	return ((isc_threadresult_t)0);
 }
 #endif /* ISC_PLATFORM_USETHREADS */
+
+void
+isc__socketmgr_setreserved(isc_socketmgr_t *manager, isc_uint32_t reserved) {
+
+	REQUIRE(VALID_MANAGER(manager));
+
+	manager->reserved = reserved;
+}
+
+/*
+ * Initialize fdsets in socketmgr structure.
+ */
+static isc_result_t
+create_fdsets(isc_socketmgr_t *manager, isc_mem_t *mctx) {
+#if ISC_SOCKET_FDSETSIZE > FD_SETSIZE
+	manager->fdsize = ISC_SOCKET_FDSETSIZE;
+	manager->fd_bufsize = howmany(ISC_SOCKET_FDSETSIZE, NFDBITS) *
+		sizeof(fd_mask);
+#else
+	manager->fdsize = FD_SETSIZE;
+	manager->fd_bufsize = sizeof(fd_set);
+#endif
+
+	manager->fds = NULL;
+	manager->fdstate = NULL;
+	manager->read_fds = NULL;
+	manager->read_fds_copy = NULL;
+	manager->write_fds = NULL;
+	manager->write_fds_copy = NULL;
+
+	manager->fds = isc_mem_get(mctx,
+				   manager->fdsize * sizeof(manager->fds[0]));
+	if (manager->fds == NULL)
+		goto fail;
+
+	manager->fdstate = isc_mem_get(mctx, manager->fdsize *
+				       sizeof(manager->fdstate[0]));
+	if (manager->fdstate == NULL)
+		goto fail;
+
+	manager->read_fds = isc_mem_get(mctx, manager->fd_bufsize);
+	if (manager->read_fds == NULL)
+		goto fail;
+	manager->read_fds_copy = isc_mem_get(mctx, manager->fd_bufsize);
+	if (manager->read_fds_copy == NULL)
+		goto fail;
+	manager->write_fds = isc_mem_get(mctx, manager->fd_bufsize);
+	if (manager->write_fds == NULL)
+		goto fail;
+	manager->write_fds_copy = isc_mem_get(mctx, manager->fd_bufsize);
+	if (manager->write_fds_copy == NULL)
+		goto fail;
+
+	return (ISC_R_SUCCESS);
+
+  fail:
+	cleanup_fdsets(manager, mctx);
+	return (ISC_R_NOMEMORY);
+}
+
+/*
+ * Clean up fdsets in socketmgr structure.
+ */
+static void
+cleanup_fdsets(isc_socketmgr_t *manager, isc_mem_t *mctx) {
+	if (manager->fds != NULL) {
+		isc_mem_put(mctx, manager->fds,
+			    manager->fdsize * sizeof(manager->fds[0]));
+	}
+	if (manager->fdstate != NULL) {
+		isc_mem_put(mctx, manager->fdstate,
+			    manager->fdsize * sizeof(manager->fdstate[0]));
+	}
+	if (manager->read_fds != NULL)
+		isc_mem_put(mctx, manager->read_fds, manager->fd_bufsize);
+	if (manager->read_fds_copy != NULL)
+		isc_mem_put(mctx, manager->read_fds_copy, manager->fd_bufsize);
+	if (manager->write_fds != NULL)
+		isc_mem_put(mctx, manager->write_fds, manager->fd_bufsize);
+	if (manager->write_fds_copy != NULL)
+		isc_mem_put(mctx, manager->write_fds_copy, manager->fd_bufsize);
+}
 
 /*
  * Create a new socket manager.
@@ -2382,17 +2569,26 @@ isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
 	if (manager == NULL)
 		return (ISC_R_NOMEMORY);
 
+	result = create_fdsets(manager, mctx);
+	if (result != ISC_R_SUCCESS) {
+		cleanup_fdsets(manager, mctx);
+		isc_mem_put(mctx, manager, sizeof(*manager));
+		return (result);
+	}
+
 	manager->magic = SOCKET_MANAGER_MAGIC;
 	manager->mctx = NULL;
-	memset(manager->fds, 0, sizeof(manager->fds));
+	memset(manager->fds, 0, sizeof(manager->fds[0]) * manager->fdsize);
 	ISC_LIST_INIT(manager->socklist);
 	result = isc_mutex_init(&manager->lock);
 	if (result != ISC_R_SUCCESS) {
+		cleanup_fdsets(manager, mctx);
 		isc_mem_put(mctx, manager, sizeof(*manager));
 		return (result);
 	}
 #ifdef ISC_PLATFORM_USETHREADS
 	if (isc_condition_init(&manager->shutdown_ok) != ISC_R_SUCCESS) {
+		cleanup_fdsets(manager, mctx);
 		DESTROYLOCK(&manager->lock);
 		isc_mem_put(mctx, manager, sizeof(*manager));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -2407,6 +2603,7 @@ isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
 	 * select/poll loop when something internal needs to be done.
 	 */
 	if (pipe(manager->pipe_fds) != 0) {
+		cleanup_fdsets(manager, mctx);
 		DESTROYLOCK(&manager->lock);
 		isc_mem_put(mctx, manager, sizeof(*manager));
 		isc__strerror(errno, strbuf, sizeof(strbuf));
@@ -2430,15 +2627,17 @@ isc_socketmgr_create(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
 	/*
 	 * Set up initial state for the select loop
 	 */
-	FD_ZERO(&manager->read_fds);
-	FD_ZERO(&manager->write_fds);
+	memset(manager->read_fds, 0, manager->fd_bufsize);
+	memset(manager->write_fds, 0, manager->fd_bufsize);
 #ifdef ISC_PLATFORM_USETHREADS
-	FD_SET(manager->pipe_fds[0], &manager->read_fds);
+	FD_SET(manager->pipe_fds[0], manager->read_fds);
 	manager->maxfd = manager->pipe_fds[0];
 #else /* ISC_PLATFORM_USETHREADS */
 	manager->maxfd = 0;
 #endif /* ISC_PLATFORM_USETHREADS */
-	memset(manager->fdstate, 0, sizeof(manager->fdstate));
+	manager->reserved = 0;
+	memset(manager->fdstate, 0,
+	       manager->fdsize * sizeof(manager->fdstate[0]));
 
 #ifdef ISC_PLATFORM_USETHREADS
 	/*
@@ -2544,11 +2743,12 @@ isc_socketmgr_destroy(isc_socketmgr_t **managerp) {
 	(void)isc_condition_destroy(&manager->shutdown_ok);
 #endif /* ISC_PLATFORM_USETHREADS */
 
-	for (i = 0; i < (int)FD_SETSIZE; i++)
+	for (i = 0; i < (int)manager->fdsize; i++)
 		if (manager->fdstate[i] == CLOSE_PENDING)
 			(void)close(i);
 
 	DESTROYLOCK(&manager->lock);
+	cleanup_fdsets(manager, manager->mctx);
 	manager->magic = 0;
 	mctx= manager->mctx;
 	isc_mem_put(mctx, manager, sizeof(*manager));
@@ -3117,7 +3317,8 @@ isc_socket_permunix(isc_sockaddr_t *sockaddr, isc_uint32_t perm,
 }
 
 isc_result_t
-isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr) {
+isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr, 
+		unsigned int options) {
 	char strbuf[ISC_STRERRORSIZE];
 	int on = 1;
 
@@ -3136,7 +3337,8 @@ isc_socket_bind(isc_socket_t *sock, isc_sockaddr_t *sockaddr) {
 	if (sock->pf == AF_UNIX)
 		goto bind_socket;
 #endif
-	if (isc_sockaddr_getport(sockaddr) != (in_port_t)0 &&
+	if ((options & ISC_SOCKET_REUSEADDRESS) != 0 &&
+	    isc_sockaddr_getport(sockaddr) != (in_port_t)0 &&
 	    setsockopt(sock->fd, SOL_SOCKET, SO_REUSEADDR, (void *)&on,
 		       sizeof(on)) < 0) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -3765,12 +3967,17 @@ isc_socket_ipv6only(isc_socket_t *sock, isc_boolean_t yes) {
 
 #ifndef ISC_PLATFORM_USETHREADS
 void
-isc__socketmgr_getfdsets(fd_set *readset, fd_set *writeset, int *maxfd) {
+isc__socketmgr_getfdsets(fd_set **readset, fd_set **writeset, int *maxfd) {
 	if (socketmgr == NULL)
 		*maxfd = 0;
 	else {
-		*readset = socketmgr->read_fds;
-		*writeset = socketmgr->write_fds;
+		/* Prepare duplicates of fd_sets, as select() will modify */
+		memcpy(socketmgr->read_fds_copy, socketmgr->read_fds,
+		       socketmgr->fd_bufsize);
+		memcpy(socketmgr->write_fds_copy, socketmgr->write_fds,
+		       socketmgr->fd_bufsize);
+		*readset = socketmgr->read_fds_copy;
+		*writeset = socketmgr->write_fds_copy;
 		*maxfd = socketmgr->maxfd + 1;
 	}
 }

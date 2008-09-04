@@ -1,7 +1,8 @@
-/* $NetBSD: bioctl.c,v 1.1.2.2 2007/05/08 10:45:03 pavel Exp $ */
-/* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $       */
+/* $NetBSD: bioctl.c,v 1.1.2.2.2.1 2008/09/04 08:46:43 skrll Exp $ */
+/* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $ */
 
 /*
+ * Copyright (c) 2007, 2008 Juan Romero Pardines
  * Copyright (c) 2004, 2005 Marco Peereboom
  * All rights reserved.
  *
@@ -30,20 +31,20 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.1.2.2 2007/05/08 10:45:03 pavel Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.1.2.2.2.1 2008/09/04 08:46:43 skrll Exp $");
 #endif
 
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/queue.h>
-// #include <scsi/scsipi_disk.h>
-// #include <scsi/scsipi_all.h>
 #include <dev/biovar.h>
 
 #include <errno.h>
 #include <err.h>
 #include <fcntl.h>
 #include <util.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,459 +53,888 @@ __RCSID("$NetBSD: bioctl.c,v 1.1.2.2 2007/05/08 10:45:03 pavel Exp $");
 #include <util.h>
 #include "strtonum.h"
 
+struct command {
+	const char *cmd_name;
+	const char *arg_names;
+	void (*cmd_func)(int, int, char **);
+};
+
+struct biotmp {
+	struct bioc_inq *bi;
+	struct bioc_vol *bv;
+	char volname[64];
+	int fd;
+	int volid;
+	int diskid;
+	bool format;
+	bool show_disknovol;
+};
+
 struct locator {
 	int channel;
 	int target;
 	int lun;
 };
 
-void usage(void);
-const char *str2locator(const char *, struct locator *);
-void cleanup(void);
+int   dehumanize_number(const char *, int64_t *);
 
-void bio_inq(char *);
-void bio_alarm(char *);
-void bio_setstate(char *);
-void bio_setblink(char *, char *, int);
-void bio_blink(char *, int, int);
-void bio_createraid(u_int16_t, char *);
 
-int devh = -1;
-int debug;
-int human;
-int verbose;
+static void 	usage(void);
+static void	bio_alarm(int, int, char **);
+static void	bio_show_common(int, int, char **);
+static int	bio_show_volumes(struct biotmp *);
+static void	bio_show_disks(struct biotmp *);
+static void	bio_setblink(int, int, char **);
+static void 	bio_blink(int, char *, int, int);
+static void	bio_setstate_hotspare(int, int, char **);
+static void	bio_setstate_passthru(int, int, char **);
+static void	bio_setstate_common(int, char *, struct bioc_setstate *,
+				    struct locator *);
+static void	bio_setstate_consistency(int, int, char **);
+static void	bio_volops_create(int, int, char **);
+#ifdef notyet
+static void	bio_volops_modify(int, int, char **);
+#endif
+static void	bio_volops_remove(int, int, char **);
 
-struct bio_locate bl;
+static const char *str2locator(const char *, struct locator *);
+
+static struct bio_locate bl;
+static struct command commands[] = {
+	{ 
+	  "show",
+	  "[disks] | [volumes]",
+	  bio_show_common },
+	{ 
+	  "alarm",
+	  "[enable] | [disable] | [silence] | [test]",
+	  bio_alarm },
+	{ 
+	  "blink",
+	  "start [channel:target[.lun]] | stop [channel:target[.lun]]",
+	  bio_setblink },
+	{
+	  "hotspare",
+	  "add channel:target.lun | remove channel:target.lun",
+	  bio_setstate_hotspare },
+	{
+	  "passthru",
+	  "add DISKID channel:target.lun | remove channel:target.lun",
+	  bio_setstate_passthru },
+	{
+	  "check",
+	  "start VOLID | stop VOLID",
+	  bio_setstate_consistency },
+	{
+	  "create",
+	  "volume VOLID DISKIDs [SIZE] STRIPE RAID_LEVEL channel:target.lun",
+	  bio_volops_create },
+#ifdef notyet
+	{
+	  "modify",
+	  "volume VOLID STRIPE RAID_LEVEL channel:target.lun",
+	  bio_volops_modify },
+#endif
+	{
+	  "remove",
+	  "volume VOLID channel:target.lun",
+	  bio_volops_remove },
+
+	{ NULL, NULL, NULL }
+};
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
-	extern char *optarg;
-	u_int64_t func = 0;
-	/* u_int64_t subfunc = 0; XXX */
-	char *bioc_dev = NULL, *sd_dev = NULL;
-	char /* *realname = NULL, XXX */ *al_arg = NULL;
-	char *bl_arg = NULL, *dev_list = NULL;
-	int ch, rv, blink = 0; /* XXX GCC */
-	u_int16_t cr_level = 0; /* XXX GCC */
+	char 		*dvname;
+	const char 	*cmdname;
+	int 		fd = 0, i;
 
-	if (argc < 2)
+	/* Must have at least: device command */
+	if (argc < 3)
 		usage();
 
-	while ((ch = getopt(argc, argv, "b:c:l:u:H:ha:Div")) != -1) {
-		switch (ch) {
-		case 'a': /* alarm */
-			func |= BIOC_ALARM;
-			al_arg = optarg;
-			break;
-		case 'b': /* blink */
-			func |= BIOC_BLINK;
-			blink = BIOC_SBBLINK;
-			bl_arg = optarg;
-			break;
-		case 'c': /* create */
-			func |= BIOC_CREATERAID;
-			cr_level = atoi(optarg);
-			break;
-		case 'u': /* unblink */
-			func |= BIOC_BLINK;
-			blink = BIOC_SBUNBLINK;
-			bl_arg = optarg;
-			break;
-		case 'D': /* debug */
-			debug = 1;
-			break;
-		case 'H': /* set hotspare */
-			func |= BIOC_SETSTATE;
-			al_arg = optarg;
-			break;
-		case 'h':
-			human = 1;
-			break;
-		case 'i': /* inquiry */
-			func |= BIOC_INQ;
-			break;
-		case 'l': /* device list */
-			func |= BIOC_DEVLIST;
-			dev_list = optarg;
-			break;
-		case 'v':
-			verbose = 1;
-			break;
-		default:
-			usage();
-			/* NOTREACHED */
-		}
-	}
-	argc -= optind;
-	argv += optind;
+	/* Skip program name, get and skip device name and command */
+	setprogname(*argv);
+	dvname = argv[1];
+	cmdname = argv[2];
+	argv += 3;
+	argc -= 3;
 
-	if (argc != 1)
-		usage();
+	/* Look up and call the command */
+	for (i = 0; commands[i].cmd_name != NULL; i++)
+		if (strcmp(cmdname, commands[i].cmd_name) == 0)
+			break;
+	if (commands[i].cmd_name == NULL)
+		errx(EXIT_FAILURE, "unknown command: %s", cmdname);
 
-	if (func == 0)
-		func |= BIOC_INQ;
-#if 0
-	/* if at least glob sd[0-9]*, it is a drive identifier */
-	if (strncmp(argv[0], "sd", 2) == 0 && strlen(argv[0]) > 2 &&
-	    isdigit((int)argv[0][2]))
-		sd_dev = argv[0];
-	else
-#endif
-		bioc_dev = argv[0];
+	/* Locate the device by issuing the BIOCLOCATE ioctl */
+	fd = open("/dev/bio", O_RDWR);
+	if (fd == -1)
+		err(EXIT_FAILURE, "Can't open /dev/bio");
 
-	if (bioc_dev) {
-		devh = open("/dev/bio", O_RDWR);
-		if (devh == -1)
-			err(1, "Can't open %s", "/dev/bio");
+	bl.bl_name = dvname;
+	if (ioctl(fd, BIOCLOCATE, &bl) == -1)
+		errx(EXIT_FAILURE, "Can't locate %s device via /dev/bio",
+		    bl.bl_name);
 
-		bl.bl_name = bioc_dev;
-		rv = ioctl(devh, BIOCLOCATE, &bl);
-		if (rv == -1)
-			errx(1, "Can't locate %s device via %s",
-			    bl.bl_name, "/dev/bio");
-	}
-#if 0
-	else if (sd_dev) {
-		devh = opendev(sd_dev, O_RDWR, OPENDEV_PART, &realname);
-		if (devh == -1)
-			err(1, "Can't open %s", sd_dev);
-	}
-#endif
-	else
-		errx(1, "need -d or -f parameter");
+	/* and execute the command */
+	(*commands[i].cmd_func)(fd, argc, argv);
 
-	if (debug)
-		warnx("cookie = %p", bl.bl_cookie);
-
-	if (func & BIOC_INQ) {
-		bio_inq(sd_dev);
-	} else if (func == BIOC_ALARM) {
-		bio_alarm(al_arg);
-	} else if (func == BIOC_BLINK) {
-		bio_setblink(sd_dev, bl_arg, blink);
-	} else if (func == BIOC_SETSTATE) {
-		bio_setstate(al_arg);
-	} else if (func & BIOC_CREATERAID || func & BIOC_DEVLIST) {
-		if (!(func & BIOC_CREATERAID))
-			errx(1, "need -c parameter");
-		if (!(func & BIOC_DEVLIST))
-			errx(1, "need -l parameter");
-		if (sd_dev)
-			errx(1, "can't use sd device");
-		bio_createraid(cr_level, dev_list);
-	}
-
-	return (0);
+	(void)close(fd);
+	exit(EXIT_SUCCESS);
 }
 
-void
+static void
 usage(void)
 {
-	extern char *__progname;
+	int i;
 
-	fprintf(stderr,
-		"usage: %s [-Dhiv] [-a alarm-function] "
-		"[-b channel:target[.lun]]\n"
-		"\t[-c raidlevel] [-H channel:target[.lun]]\n"
-		"\t[-l special[,special[,...]]] "
-		"[-u channel:target[.lun]] device\n", __progname);
-	
-	exit(1);
+	(void)fprintf(stderr, "usage: %s device command [arg [...]]\n",
+	    getprogname());
+
+	(void)fprintf(stderr, "Available commands:\n");
+	for (i = 0; commands[i].cmd_name != NULL; i++)
+		(void)fprintf(stderr, "  %s %s\n", commands[i].cmd_name,
+		    commands[i].arg_names);
+
+	exit(EXIT_FAILURE);
+	/* NOTREACHED */
 }
 
-const char *
+static const char *
 str2locator(const char *string, struct locator *location)
 {
-	const char *errstr;
-	char parse[80], *targ, *lun;
+	const char 	*errstr;
+	char 		parse[80], *targ, *lun;
 
 	strlcpy(parse, string, sizeof parse);
 	targ = strchr(parse, ':');
 	if (targ == NULL)
-		return ("target not specified");
-	*targ++ = '\0';
+		return "target not specified";
 
+	*targ++ = '\0';
 	lun = strchr(targ, '.');
 	if (lun != NULL) {
 		*lun++ = '\0';
 		location->lun = strtonum(lun, 0, 256, &errstr);
 		if (errstr)
-			return (errstr);
+			return errstr;
 	} else
 		location->lun = 0;
 
 	location->target = strtonum(targ, 0, 256, &errstr);
 	if (errstr)
-		return (errstr);
+		return errstr;
 	location->channel = strtonum(parse, 0, 256, &errstr);
 	if (errstr)
-		return (errstr);
-	return (NULL);
+		return errstr;
+	return NULL;
 }
 
-void
-bio_inq(char *name)
+/*
+ * Shows info about available RAID volumes.
+ */
+static int
+bio_show_volumes(struct biotmp *bt)
 {
-	const char *status;
-	char size[64], scsiname[16], volname[32];
-	char percent[10], seconds[20];
-	int rv, i, d, volheader, hotspare, unused;
-	char encname[16], serial[32];
-	struct bioc_disk bd;
-	struct bioc_inq bi;
-	struct bioc_vol bv;
+	struct bioc_vol 	bv;
+	const char 		*status, *rtypestr, *stripestr;
+	char 			size[64], percent[16], seconds[20];
+	char 			rtype[16], stripe[16], tmp[32];
+
+	rtypestr = stripestr = NULL;
+
+	memset(&bv, 0, sizeof(bv));
+	bv.bv_cookie = bl.bl_cookie;
+	bv.bv_volid = bt->volid;
+	bv.bv_percent = -1;
+	bv.bv_seconds = -1;
+
+	if (ioctl(bt->fd, BIOCVOL, &bv) == -1)
+		err(EXIT_FAILURE, "BIOCVOL");
+
+	percent[0] = '\0';
+	seconds[0] = '\0';
+	if (bv.bv_percent != -1)
+		snprintf(percent, sizeof(percent),
+		    " %3.2f%% done", bv.bv_percent / 10.0);
+	if (bv.bv_seconds)
+		snprintf(seconds, sizeof(seconds),
+		    " %u seconds", bv.bv_seconds);
+
+	switch (bv.bv_status) {
+	case BIOC_SVONLINE:
+		status = BIOC_SVONLINE_S;
+		break;
+	case BIOC_SVOFFLINE:
+		status = BIOC_SVOFFLINE_S;
+		break;
+	case BIOC_SVDEGRADED:
+		status = BIOC_SVDEGRADED_S;
+		break;
+	case BIOC_SVBUILDING:
+		status = BIOC_SVBUILDING_S;
+		break;
+	case BIOC_SVREBUILD:
+		status = BIOC_SVREBUILD_S;
+		break;
+	case BIOC_SVMIGRATING:
+		status = BIOC_SVMIGRATING_S;
+		break;
+	case BIOC_SVSCRUB:
+		status = BIOC_SVSCRUB_S;
+		break;
+	case BIOC_SVCHECKING:
+		status = BIOC_SVCHECKING_S;
+		break;
+	case BIOC_SVINVALID:
+	default:
+		status = BIOC_SVINVALID_S;
+		break;
+	}
+
+	snprintf(bt->volname, sizeof(bt->volname), "%u", bv.bv_volid);
+	if (bv.bv_vendor)
+		snprintf(tmp, sizeof(tmp), "%s %s", bv.bv_dev, bv.bv_vendor);
+	else
+		snprintf(tmp, sizeof(tmp), "%s", bv.bv_dev);
+
+	switch (bv.bv_level) {
+	case BIOC_SVOL_HOTSPARE:
+		rtypestr = "Hot spare";
+		stripestr = "N/A";
+		break;
+	case BIOC_SVOL_PASSTHRU:
+		rtypestr = "Pass through";
+		stripestr = "N/A";
+		break;
+	case BIOC_SVOL_RAID01:
+		rtypestr = "RAID 0+1";
+		break;
+	case BIOC_SVOL_RAID10:
+		rtypestr = "RAID 1+0";
+		break;
+	default:
+		snprintf(rtype, sizeof(rtype), "RAID %u", bv.bv_level);
+		if (bv.bv_level == 1 || bv.bv_stripe_size == 0)
+			stripestr = "N/A";
+		break;
+	}
+
+	if (rtypestr)
+		snprintf(rtype, sizeof(rtype), rtypestr);
+	if (stripestr)
+		snprintf(stripe, sizeof(stripe), stripestr);
+	else
+		snprintf(stripe, sizeof(stripe), "%uK", bv.bv_stripe_size);
+
+	humanize_number(size, 5, (int64_t)bv.bv_size, "", HN_AUTOSCALE,
+	    HN_B | HN_NOSPACE | HN_DECIMAL);
+
+	printf("%6s %-12s %4s %20s %8s %6s %s%s\n",
+	    bt->volname, status, size, tmp,
+	    rtype, stripe, percent, seconds);
+
+	bt->bv = &bv;
+
+	return bv.bv_nodisk;
+}
+
+/*
+ * Shows info about physical disks.
+ */
+static void
+bio_show_disks(struct biotmp *bt)
+{
+	struct bioc_disk 	bd;
+	const char 		*status;
+	char 			size[64], serial[32], scsiname[16];
+
+	memset(&bd, 0, sizeof(bd));
+	bd.bd_cookie = bl.bl_cookie;
+	bd.bd_diskid = bt->diskid;
+	bd.bd_volid = bt->volid;
+
+	if (bt->show_disknovol) {
+		if (ioctl(bt->fd, BIOCDISK_NOVOL, &bd) == -1)
+			err(EXIT_FAILURE, "BIOCDISK_NOVOL");
+		if (!bd.bd_disknovol)
+			return;
+	} else {
+		if (ioctl(bt->fd, BIOCDISK, &bd) == -1)
+			err(EXIT_FAILURE, "BIOCDISK");
+	}
+
+	switch (bd.bd_status) {
+	case BIOC_SDONLINE:
+		status = BIOC_SDONLINE_S;
+		break;
+	case BIOC_SDOFFLINE:
+		status = BIOC_SDOFFLINE_S;
+		break;
+	case BIOC_SDFAILED:
+		status = BIOC_SDFAILED_S;
+		break;
+	case BIOC_SDREBUILD:
+		status = BIOC_SDREBUILD_S;
+		break;
+	case BIOC_SDHOTSPARE:
+		status = BIOC_SDHOTSPARE_S;
+		break;
+	case BIOC_SDUNUSED:
+		status = BIOC_SDUNUSED_S;
+		break;
+	case BIOC_SDSCRUB:
+		status = BIOC_SDSCRUB_S;
+		break;
+	case BIOC_SDPASSTHRU:
+		status = BIOC_SDPASSTHRU_S;
+		break;
+	case BIOC_SDINVALID:
+	default:
+		status = BIOC_SDINVALID_S;
+		break;
+	}
+
+	if (bt->format)
+		snprintf(bt->volname, sizeof(bt->volname),
+		    "%u:%u", bt->bv->bv_volid, bd.bd_diskid);
+
+	humanize_number(size, 5, bd.bd_size, "", HN_AUTOSCALE,
+	    HN_B | HN_NOSPACE | HN_DECIMAL);
+
+	if (bd.bd_procdev[0])
+		snprintf(scsiname, sizeof(scsiname), "%u:%u.%u %s",
+	    	    bd.bd_channel, bd.bd_target, bd.bd_lun,
+		    bd.bd_procdev);
+	else
+		snprintf(scsiname, sizeof(scsiname), "%u:%u.%u noencl",
+		    bd.bd_channel, bd.bd_target, bd.bd_lun);
+
+	if (bd.bd_serial[0])
+		strlcpy(serial, bd.bd_serial, sizeof(serial));
+	else
+		strlcpy(serial, "unknown serial", sizeof(serial));
+
+	if (bt->format)
+		printf("%6s %-12s %4s %20s <%s>\n",
+		    bt->volname, status, size, scsiname,
+				    bd.bd_vendor);
+	else
+		printf("%5d [%-28s] %-12s %-6s %12s\n",
+		    bt->diskid, bd.bd_vendor, status, size, scsiname);
+
+}
+
+/*
+ * Shows info about volumes/disks.
+ */
+static void
+bio_show_common(int fd, int argc, char **argv)
+{
+	struct biotmp 		*biot;
+	struct bioc_inq 	bi;
+	int 			i, d, ndisks;
+	bool 			show_all, show_disks;
+	bool 			show_vols, show_caps;
+
+	show_all = show_disks = show_vols = show_caps = false;
+
+	if (argc > 1)
+		usage();
+
+	if (argv[0]) {
+		if (strcmp(argv[0], "disks") == 0)
+			show_disks = true;
+		else if (strcmp(argv[0], "volumes") == 0)
+			show_vols = true;
+		else
+			usage();
+	} else
+		show_all = true;
 
 	memset(&bi, 0, sizeof(bi));
-
-	if (debug)
-		printf("bio_inq\n");
-
 	bi.bi_cookie = bl.bl_cookie;
 
-	rv = ioctl(devh, BIOCINQ, &bi);
-	if (rv == -1) {
-		warn("BIOCINQ");
-		return;
-	}
+	if (ioctl(fd, BIOCINQ, &bi) == -1)
+		err(EXIT_FAILURE, "BIOCINQ");
 
-	if (debug)
-		printf("bio_inq { %p, %s, %d, %d }\n",
-		    bi.bi_cookie,
-		    bi.bi_dev,
-		    bi.bi_novol,
-		    bi.bi_nodisk);
-
-	volheader = 0;
-	for (i = 0; i < bi.bi_novol; i++) {
-		memset(&bv, 0, sizeof(bv));
-		bv.bv_cookie = bl.bl_cookie;
-		bv.bv_volid = i;
-		bv.bv_percent = -1;
-		bv.bv_seconds = 0;
-
-		rv = ioctl(devh, BIOCVOL, &bv);
-		if (rv == -1) {
-			warn("BIOCVOL");
+	/*
+	 * If there are volumes there's no point to continue.
+	 */
+	if (show_all || show_vols) {
+		if (!bi.bi_novol) {
+			warnx("no volumes available");
 			return;
 		}
+	}
 
-		if (name && strcmp(name, bv.bv_dev) != 0)
+	biot = calloc(1, sizeof(*biot));
+	if (!biot)
+		err(EXIT_FAILURE, "biotemp calloc");
+
+	biot->fd = fd;
+	biot->bi = &bi;
+	/*
+	 * Go to the disks section if that was specified.
+	 */
+	if (show_disks)
+		goto disks;
+
+	/* 
+	 * Common code to show only info about volumes and disks
+	 * associated to them.
+	 */
+	printf("%6s %-12s %4s %20s %8s %6s\n",
+	    "Volume", "Status", "Size", "Device/Label",
+	    "Level", "Stripe");
+	printf("=============================================="
+	       "===============\n");
+
+	for (i = 0; i < bi.bi_novol; i++) {
+		biot->format = true;
+		biot->volid = i;
+		ndisks = bio_show_volumes(biot);
+		if (show_vols)
 			continue;
 
-		if (!volheader) {
-			volheader = 1;
-			printf("%-7s %-10s %14s %-8s\n",
-			    "Volume", "Status", "Size", "Device");
+		for (d = 0; d < ndisks; d++) {
+			biot->diskid = d;
+			bio_show_disks(biot);
 		}
 
-		percent[0] = '\0';
-		seconds[0] = '\0';
-		if (bv.bv_percent != -1)
-			snprintf(percent, sizeof percent,
-			    " %d%% done", bv.bv_percent);
-		if (bv.bv_seconds)
-			snprintf(seconds, sizeof seconds,
-			    " %u seconds", bv.bv_seconds);
-		switch (bv.bv_status) {
-		case BIOC_SVONLINE:
-			status = BIOC_SVONLINE_S;
-			break;
-		case BIOC_SVOFFLINE:
-			status = BIOC_SVOFFLINE_S;
-			break;
-		case BIOC_SVDEGRADED:
-			status = BIOC_SVDEGRADED_S;
-			break;
-		case BIOC_SVBUILDING:
-			status = BIOC_SVBUILDING_S;
-			break;
-		case BIOC_SVREBUILD:
-			status = BIOC_SVREBUILD_S;
-			break;
-		case BIOC_SVSCRUB:
-			status = BIOC_SVSCRUB_S;
-			break;
-		case BIOC_SVINVALID:
-		default:
-			status = BIOC_SVINVALID_S;
-		}
+	}
+	goto out;
 
-		snprintf(volname, sizeof volname, "%s %u",
-		    bi.bi_dev, bv.bv_volid);
-
-		if (bv.bv_level == -1 && bv.bv_nodisk == 1) {
-			hotspare = 1;
-			unused = 0;
-		} else if (bv.bv_level == -2 && bv.bv_nodisk == 1) {
-			unused = 1;
-			hotspare = 0;
-		} else {
-			unused = 0;
-			hotspare = 0;
-
-			if (human)
-				humanize_number(size, 5,
-				    (int64_t)bv.bv_size, "", HN_AUTOSCALE,
-				    HN_B | HN_NOSPACE | HN_DECIMAL);
-			else
-				snprintf(size, sizeof size, "%14llu",
-				    (long long unsigned int)bv.bv_size);
-			printf("%7s %-10s %14s %-7s RAID%u%s%s\n",
-			    volname, status, size, bv.bv_dev,
-			    bv.bv_level, percent, seconds);
-		}
-
-		for (d = 0; d < bv.bv_nodisk; d++) {
-			memset(&bd, 0, sizeof(bd));
-			bd.bd_cookie = bl.bl_cookie;
-			bd.bd_diskid = d;
-			bd.bd_volid = i;
-
-			rv = ioctl(devh, BIOCDISK, &bd);
-			if (rv == -1) {
-				warn("BIOCDISK");
-				return;
-			}
-
-			switch (bd.bd_status) {
-			case BIOC_SDONLINE:
-				status = BIOC_SDONLINE_S;
-				break;
-			case BIOC_SDOFFLINE:
-				status = BIOC_SDOFFLINE_S;
-				break;
-			case BIOC_SDFAILED:
-				status = BIOC_SDFAILED_S;
-				break;
-			case BIOC_SDREBUILD:
-				status = BIOC_SDREBUILD_S;
-				break;
-			case BIOC_SDHOTSPARE:
-				status = BIOC_SDHOTSPARE_S;
-				break;
-			case BIOC_SDUNUSED:
-				status = BIOC_SDUNUSED_S;
-				break;
-			case BIOC_SDSCRUB:
-				status = BIOC_SDSCRUB_S;
-				break;
-			case BIOC_SDINVALID:
-			default:
-				status = BIOC_SDINVALID_S;
-			}
-
-			if (hotspare || unused)
-				;	/* use volname from parent volume */
-			else
-				snprintf(volname, sizeof volname, "    %3u",
-				    bd.bd_diskid);
-
-			if (human)
-				humanize_number(size, 5,
-				    bd.bd_size, "", HN_AUTOSCALE,
-				    HN_B | HN_NOSPACE | HN_DECIMAL);
-			else
-				snprintf(size, sizeof size, "%14llu",
-				    (long long unsigned int)bd.bd_size);
-			snprintf(scsiname, sizeof scsiname,
-			    "%u:%u.%u",
-			    bd.bd_channel, bd.bd_target, bd.bd_lun);
-			if (bd.bd_procdev[0])
-				strlcpy(encname, bd.bd_procdev, sizeof encname);
-			else
-				strlcpy(encname, "noencl", sizeof encname);
-			if (bd.bd_serial[0])
-				strlcpy(serial, bd.bd_serial, sizeof serial);
-			else
-				strlcpy(serial, "unknown serial", sizeof serial);
-
-			printf("%7s %-10s %14s %-7s %-6s <%s>\n",
-			    volname, status, size, scsiname, encname,
-			    bd.bd_vendor);
-			if (verbose)
-				printf("%7s %-10s %14s %-7s %-6s '%s'\n",
-				    "", "", "", "", "", serial);
+disks:
+	/* 
+	 * show info about all disks connected to the raid controller,
+	 * even if they aren't associated with a volume or raid set.
+	 */
+	if (show_disks) {
+		printf("%5s %-30s %-12s %-6s %12s\n",
+		    "Disk", "Model/Serial", "Status", "Size", "Location");
+		printf("==============================================="
+		       "======================\n");
+		for (d = 0; d < bi.bi_nodisk; d++) {
+			biot->show_disknovol = true;
+			biot->diskid = d;
+			bio_show_disks(biot);
 		}
 	}
+out:
+	free(biot);
 }
 
-void
-bio_alarm(char *arg)
+/*
+ * To handle the alarm feature.
+ */
+static void
+bio_alarm(int fd, int argc, char **argv)
 {
-	int rv;
-	struct bioc_alarm ba;
+	struct bioc_alarm 	ba;
+	bool 			show = false;
 
+	memset(&ba, 0, sizeof(ba));
 	ba.ba_cookie = bl.bl_cookie;
 
-	switch (arg[0]) {
-	case 'q': /* silence alarm */
-		/* FALLTHROUGH */
-	case 's':
-		ba.ba_opcode = BIOC_SASILENCE;
-		break;
+	if (argc > 1)
+		usage();
 
-	case 'e': /* enable alarm */
-		ba.ba_opcode = BIOC_SAENABLE;
-		break;
-
-	case 'd': /* disable alarm */
-		ba.ba_opcode = BIOC_SADISABLE;
-		break;
-
-	case 't': /* test alarm */
-		ba.ba_opcode = BIOC_SATEST;
-		break;
-
-	case 'g': /* get alarm state */
+	if (argc == 0) {
+		/* show alarm status */
 		ba.ba_opcode = BIOC_GASTATUS;
-		break;
+		show = true;
+	} else if (strcmp(argv[0], "silence") == 0) {
+		/* silence alarm */
+		ba.ba_opcode = BIOC_SASILENCE;
+	} else if (strcmp(argv[0], "enable") == 0) {
+		/* enable alarm */
+		ba.ba_opcode = BIOC_SAENABLE;
+	} else if (strcmp(argv[0], "disable") == 0) {
+		/* disable alarm */
+		ba.ba_opcode = BIOC_SADISABLE;
+	} else if (strcmp(argv[0], "test") == 0) {
+		/* test alarm */
+		ba.ba_opcode = BIOC_SATEST;
+	} else
+		usage();
 
-	default:
-		warnx("invalid alarm function: %s", arg);
-		return;
-	}
+	if (ioctl(fd, BIOCALARM, &ba) == -1)
+		err(EXIT_FAILURE, "BIOCALARM");
 
-	rv = ioctl(devh, BIOCALARM, &ba);
-	if (rv == -1) {
-		warn("BIOCALARM");
-		return;
-	}
-
-	if (arg[0] == 'g') {
+	if (show)
 		printf("alarm is currently %s\n",
 		    ba.ba_status ? "enabled" : "disabled");
-
-	}
 }
 
-void
-bio_setstate(char *arg)
+/*
+ * To add/remove a hotspare disk.
+ */
+static void
+bio_setstate_hotspare(int fd, int argc, char **argv)
 {
 	struct bioc_setstate	bs;
 	struct locator		location;
-	const char		*errstr;
-	int			rv;
 
-	errstr = str2locator(arg, &location);
-	if (errstr)
-		errx(1, "Target %s: %s", arg, errstr);
+	memset(&bs, 0, sizeof(bs));
 
-	bs.bs_cookie = bl.bl_cookie;
-	bs.bs_status = BIOC_SSHOTSPARE;
-	bs.bs_channel = location.channel;
-	bs.bs_target = location.target;
-	bs.bs_lun = location.lun;
+	if (argc != 2)
+		usage();
 
-	rv = ioctl(devh, BIOCSETSTATE, &bs);
-	if (rv == -1) {
-		warn("BIOCSETSTATE");
-		return;
+	if (strcmp(argv[0], "add") == 0)
+		bs.bs_status = BIOC_SSHOTSPARE;
+	else if (strcmp(argv[0], "remove") == 0)
+		bs.bs_status = BIOC_SSDELHOTSPARE;
+	else
+		usage();
+
+	bio_setstate_common(fd, argv[1], &bs, &location);
+}
+
+/*
+ * To add/remove a pass through disk.
+ */
+static void
+bio_setstate_passthru(int fd, int argc, char **argv)
+{
+	struct bioc_setstate	bs;
+	struct locator		location;
+	char			*endptr;
+	bool			rem = false;
+
+	if (argc > 3)
+		usage();
+
+	memset(&bs, 0, sizeof(bs));
+
+	if (strcmp(argv[0], "add") == 0) {
+		if (argv[1] == NULL || argv[2] == NULL)
+			usage();
+
+		bs.bs_status = BIOC_SSPASSTHRU;
+	} else if (strcmp(argv[0], "remove") == 0) {
+		if (argv[1] == NULL)
+			usage();
+
+		bs.bs_status = BIOC_SSDELPASSTHRU;
+		rem = true;
+	} else
+		usage();
+
+	if (rem)
+		bio_setstate_common(fd, argv[1], &bs, &location);
+	else {
+		bs.bs_other_id = (unsigned int)strtoul(argv[1], &endptr, 10);
+		if (*endptr != '\0')
+			errx(EXIT_FAILURE, "Invalid Volume ID value");
+
+		bio_setstate_common(fd, argv[2], &bs, &location);
 	}
 }
 
-void
-bio_setblink(char *name, char *arg, int blink)
+/*
+ * To start/stop a consistency check in a RAID volume.
+ */
+static void
+bio_setstate_consistency(int fd, int argc, char **argv)
+{
+	struct bioc_setstate	bs;
+	char			*endptr;
+
+	if (argc > 2)
+		usage();
+
+	memset(&bs, 0, sizeof(bs));
+
+	if (strcmp(argv[0], "start") == 0)
+		bs.bs_status = BIOC_SSCHECKSTART_VOL;
+	else if (strcmp(argv[0], "stop") == 0)
+		bs.bs_status = BIOC_SSCHECKSTOP_VOL;
+	else
+		usage();
+
+	bs.bs_volid = (unsigned int)strtoul(argv[1], &endptr, 10);
+	if (*endptr != '\0')
+		errx(EXIT_FAILURE, "Invalid Volume ID value");
+
+	bio_setstate_common(fd, NULL, &bs, NULL);
+}
+
+static void
+bio_setstate_common(int fd, char *arg, struct bioc_setstate *bs,
+		    struct locator *location)
+{
+	const char		*errstr;
+
+	if (!arg || !location)
+		goto send;
+
+	errstr = str2locator(arg, location);
+	if (errstr)
+		errx(EXIT_FAILURE, "Target %s: %s", arg, errstr);
+
+	bs->bs_channel = location->channel;
+	bs->bs_target = location->target;
+	bs->bs_lun = location->lun;
+
+send:
+	bs->bs_cookie = bl.bl_cookie;
+
+	if (ioctl(fd, BIOCSETSTATE, bs) == -1)
+		err(EXIT_FAILURE, "BIOCSETSTATE");
+}
+
+/*
+ * To create a RAID volume.
+ */
+static void
+bio_volops_create(int fd, int argc, char **argv)
+{
+	struct bioc_volops	bc;
+	struct bioc_inq 	bi;
+	struct bioc_disk	bd;
+	struct locator		location;
+	uint64_t 		total_size = 0, disksize = 0;
+	int64_t 		volsize = 0;
+	const char 		*errstr;
+	char 			*endptr, *stripe, levelstr[32];
+	char			*scsiname, *raid_level, size[64];
+	int			disk_first = 0, disk_end = 0;
+	int			i, nfreedisks = 0;
+	int			user_disks = 0;
+
+	if (argc < 6 || argc > 7)
+		usage();
+
+	if (strcmp(argv[0], "volume") != 0)
+		usage();
+
+	/* 
+	 * No size requested, use max size depending on RAID level.
+	 */
+	if (argc == 6) {
+		stripe = argv[3];
+		raid_level = argv[4];
+		scsiname = argv[5];
+	} else {
+		stripe = argv[4];
+		raid_level = argv[5];
+		scsiname = argv[6];
+	}
+
+	memset(&bd, 0, sizeof(bd));
+	memset(&bc, 0, sizeof(bc));
+	memset(&bi, 0, sizeof(bi));
+
+	bc.bc_cookie = bd.bd_cookie = bi.bi_cookie = bl.bl_cookie;
+	bc.bc_opcode = BIOC_VCREATE_VOLUME;
+
+	bc.bc_volid = (unsigned int)strtoul(argv[1], &endptr, 10);
+	if (*endptr != '\0')
+		errx(EXIT_FAILURE, "Invalid Volume ID value");
+
+	if (argc == 7)
+		if (dehumanize_number(argv[3], &volsize) == -1)
+			errx(EXIT_FAILURE, "Invalid SIZE value");
+
+	bc.bc_stripe = (unsigned int)strtoul(stripe, &endptr, 10);
+	if (*endptr != '\0')
+		errx(EXIT_FAILURE, "Invalid STRIPE size value");
+
+	bc.bc_level = (unsigned int)strtoul(raid_level, &endptr, 10);
+	if (*endptr != '\0')
+		errx(EXIT_FAILURE, "Invalid RAID_LEVEL value");
+
+	errstr = str2locator(scsiname, &location);
+	if (errstr)
+		errx(EXIT_FAILURE, "Target %s: %s", scsiname, errstr);
+
+	/*
+	 * Parse the device list that will be used for the volume,
+	 * by using a bit field for the disks.
+	 */
+	if ((isdigit((unsigned char)argv[2][0]) == 0) || argv[2][1] != '-' ||
+	    (isdigit((unsigned char)argv[2][2]) == 0))
+		errx(EXIT_FAILURE, "Invalid DISKIDs value");
+
+	disk_first = atoi(&argv[2][0]);
+	disk_end = atoi(&argv[2][2]);
+
+	for (i = disk_first; i < disk_end + 1; i++) {
+		bc.bc_devmask |= (1 << i);
+		user_disks++;
+	}
+
+	/*
+	 * Find out how many disks are free and how much size we
+	 * have available for the new volume.
+	 */
+	if (ioctl(fd, BIOCINQ, &bi) == -1)
+		err(EXIT_FAILURE, "BIOCINQ");
+
+	for (i = 0; i < bi.bi_nodisk; i++) {
+		bd.bd_diskid = i;
+		if (ioctl(fd, BIOCDISK_NOVOL, &bd) == -1)
+			err(EXIT_FAILURE, "BIOCDISK_NOVOL");
+
+		if (bd.bd_status == BIOC_SDUNUSED) {
+			if (i == 0)
+				disksize = bd.bd_size;
+
+			total_size += bd.bd_size;
+			nfreedisks++;
+		}
+	}
+
+	if (user_disks > nfreedisks)
+		errx(EXIT_FAILURE, "specified disks number is higher than "
+		    "available free disks");
+
+	/*
+	 * Basic checks to be sure we don't do something stupid.
+	 */
+	if (nfreedisks == 0)
+		errx(EXIT_FAILURE, "No free disks available");
+
+	switch (bc.bc_level) {
+	case 0:	/* RAID 0 requires at least one disk */
+		if (argc == 7) {
+			if (volsize > (disksize * user_disks))
+				errx(EXIT_FAILURE, "volume size specified "
+				   "is larger than available on free disks");
+			bc.bc_size = (uint64_t)volsize;
+		} else
+			bc.bc_size = disksize * user_disks;
+
+		break;
+	case 1:	/* RAID 1 requires two disks and size is total / 2 */
+		if (nfreedisks < 2 || user_disks < 2)
+			errx(EXIT_FAILURE, "2 disks are required at least for "
+			    "this RAID level");
+
+		/* RAID 1+0 requires three disks at least */
+		if (nfreedisks > 2 && user_disks > 2)
+			bc.bc_level = BIOC_SVOL_RAID10;
+
+		if (argc == 7) {
+			if (volsize > ((disksize * user_disks) / 2))
+				errx(EXIT_FAILURE, "volume size specified "
+				   "is larger than available on free disks");
+			bc.bc_size = (uint64_t)volsize;
+		} else
+			bc.bc_size = ((disksize * user_disks) / 2);
+
+		break;
+	case 3:	/* RAID 3/5 requires three disks and size is total - 1 disk */
+	case 5:
+		if (nfreedisks < 3 || user_disks < 3)
+			errx(EXIT_FAILURE, "3 disks are required at least for "
+			    "this RAID level");
+
+		if (argc == 7) {
+			if (volsize > (disksize * (user_disks - 1)))
+				errx(EXIT_FAILURE, "volume size specified "
+				    "is larger than available on free disks");
+			bc.bc_size = (uint64_t)volsize;
+		} else
+			bc.bc_size = (disksize * (user_disks - 1));
+
+		break;
+	case 6:	/* RAID 6 requires four disks and size is total - 2 disks */
+		if (nfreedisks < 4 || user_disks < 4)
+			errx(EXIT_FAILURE, "4 disks are required at least for "
+			    "this RAID level");
+
+		if (argc == 7) {
+			if (volsize >
+			    ((disksize * user_disks) - (disksize * 2)))
+				err(EXIT_FAILURE, "volume size specified "
+				    "is larger than available on free disks");
+			bc.bc_size = (uint64_t)volsize;
+		} else
+			bc.bc_size =
+			    (((disksize * user_disks) - (disksize * 2)));
+
+		break;
+	default:
+		errx(EXIT_FAILURE, "Unsupported RAID level");
+	}
+
+	bc.bc_channel = location.channel;
+	bc.bc_target = location.target;
+	bc.bc_lun = location.lun;
+
+	if (ioctl(fd, BIOCVOLOPS, &bc) == -1)
+		err(EXIT_FAILURE, "BIOCVOLOPS");
+
+        humanize_number(size, 5, bc.bc_size, "", HN_AUTOSCALE,
+	    HN_B | HN_NOSPACE | HN_DECIMAL);
+
+	if (bc.bc_level == BIOC_SVOL_RAID10)
+		snprintf(levelstr, sizeof(levelstr), "1+0");
+	else
+		snprintf(levelstr, sizeof(levelstr), "%u", bc.bc_level);
+
+	printf("Created volume %u size: %s stripe: %uK level: %s "
+	    "SCSI location: %u:%u.%u\n", bc.bc_volid, size, bc.bc_stripe,
+	    levelstr, bc.bc_channel, bc.bc_target, bc.bc_lun);
+}
+
+#ifdef notyet
+/*
+ * To modify a RAID volume.
+ */
+static void
+bio_volops_modify(int fd, int argc, char **argv)
+{
+	/* XTRAEME: TODO */
+}
+#endif
+
+/*
+ * To remove a RAID volume.
+ */
+static void
+bio_volops_remove(int fd, int argc, char **argv)
+{
+	struct bioc_volops	bc;
+	struct locator		location;
+	const char		*errstr;
+	char			*endptr;
+
+	if (argc != 3 || strcmp(argv[0], "volume") != 0)
+		usage();
+
+	memset(&bc, 0, sizeof(bc));
+	bc.bc_cookie = bl.bl_cookie;
+	bc.bc_opcode = BIOC_VREMOVE_VOLUME;
+
+	bc.bc_volid = (unsigned int)strtoul(argv[1], &endptr, 10);
+	if (*endptr != '\0')
+		errx(EXIT_FAILURE, "Invalid Volume ID value");
+
+	errstr = str2locator(argv[2], &location);
+	if (errstr)
+		errx(EXIT_FAILURE, "Target %s: %s", argv[2], errstr);
+
+	bc.bc_channel = location.channel;
+	bc.bc_target = location.target;
+	bc.bc_lun = location.lun;
+
+	if (ioctl(fd, BIOCVOLOPS, &bc) == -1)
+		err(EXIT_FAILURE, "BIOCVOLOPS");
+
+	printf("Removed volume %u at SCSI location %u:%u.%u\n",
+	    bc.bc_volid, bc.bc_channel, bc.bc_target, bc.bc_lun);
+}
+
+/*
+ * To blink/unblink a disk in enclosures.
+ */
+static void
+bio_setblink(int fd, int argc, char **argv)
 {
 	struct locator		location;
 	struct bioc_inq		bi;
@@ -512,11 +942,21 @@ bio_setblink(char *name, char *arg, int blink)
 	struct bioc_disk	bd;
 	struct bioc_blink	bb;
 	const char		*errstr;
-	int			v, d, rv;
+	int			v, d, rv, blink = 0;
 
-	errstr = str2locator(arg, &location);
+	if (argc != 2)
+		usage();
+
+	if (strcmp(argv[0], "start") == 0)
+		blink = BIOC_SBBLINK;
+	else if (strcmp(argv[0], "stop") == 0)
+		blink = BIOC_SBUNBLINK;
+	else
+		usage();
+
+	errstr = str2locator(argv[1], &location);
 	if (errstr)
-		errx(1, "Target %s: %s", arg, errstr);
+		errx(EXIT_FAILURE, "Target %s: %s", argv[1], errstr);
 
 	/* try setting blink on the device directly */
 	memset(&bb, 0, sizeof(bb));
@@ -524,32 +964,24 @@ bio_setblink(char *name, char *arg, int blink)
 	bb.bb_status = blink;
 	bb.bb_target = location.target;
 	bb.bb_channel = location.channel;
-	rv = ioctl(devh, BIOCBLINK, &bb);
+	rv = ioctl(fd, BIOCBLINK, &bb);
 	if (rv == 0)
 		return;
 
 	/* if the blink didnt work, try to find something that will */
-
 	memset(&bi, 0, sizeof(bi));
 	bi.bi_cookie = bl.bl_cookie;
-	rv = ioctl(devh, BIOCINQ, &bi);
-	if (rv == -1) {
-		warn("BIOCINQ");
-		return;
-	}
+	rv = ioctl(fd, BIOCINQ, &bi);
+	if (rv == -1)
+		err(EXIT_FAILURE, "BIOCINQ");
 
 	for (v = 0; v < bi.bi_novol; v++) {
 		memset(&bv, 0, sizeof(bv));
 		bv.bv_cookie = bl.bl_cookie;
 		bv.bv_volid = v;
-		rv = ioctl(devh, BIOCVOL, &bv);
-		if (rv == -1) {
-			warn("BIOCVOL");
-			return;
-		}
-
-		if (name && strcmp(name, bv.bv_dev) != 0)
-			continue;
+		rv = ioctl(fd, BIOCVOL, &bv);
+		if (rv == -1)
+			err(EXIT_FAILURE, "BIOCVOL");
 
 		for (d = 0; d < bv.bv_nodisk; d++) {
 			memset(&bd, 0, sizeof(bd));
@@ -557,105 +989,43 @@ bio_setblink(char *name, char *arg, int blink)
 			bd.bd_volid = v;
 			bd.bd_diskid = d;
 
-			rv = ioctl(devh, BIOCDISK, &bd);
-			if (rv == -1) {
-				warn("BIOCDISK");
-				return;
-			}
+			rv = ioctl(fd, BIOCDISK, &bd);
+			if (rv == -1)
+				err(EXIT_FAILURE, "BIOCDISK");
 
 			if (bd.bd_channel == location.channel &&
 			    bd.bd_target == location.target &&
 			    bd.bd_lun == location.lun) {
 				if (bd.bd_procdev[0] != '\0') {
-					bio_blink(bd.bd_procdev,
+					bio_blink(fd, bd.bd_procdev,
 					    location.target, blink);
 				} else
-					warnx("Disk %s is not in an enclosure", arg);
+					warnx("Disk %s is not in an enclosure",
+					   argv[1]);
 				return;
 			}
 		}
 	}
 
-	warnx("Disk %s does not exist", arg);
-	return;
+	warnx("Disk %s does not exist", argv[1]);
 }
 
-void
-bio_blink(char *enclosure, int target, int blinktype)
+static void
+bio_blink(int fd, char *enclosure, int target, int blinktype)
 {
-	int			bioh;
 	struct bio_locate	bio;
 	struct bioc_blink	blink;
-	int			rv;
-
-	bioh = open("/dev/bio", O_RDWR);
-	if (bioh == -1)
-		err(1, "Can't open %s", "/dev/bio");
 
 	bio.bl_name = enclosure;
-	rv = ioctl(bioh, BIOCLOCATE, &bio);
-	if (rv == -1)
-		errx(1, "Can't locate %s device via %s", enclosure, "/dev/bio");
+	if (ioctl(fd, BIOCLOCATE, &bio) == -1)
+		errx(EXIT_FAILURE,
+		    "Can't locate %s device via /dev/bio", enclosure);
 
 	memset(&blink, 0, sizeof(blink));
 	blink.bb_cookie = bio.bl_cookie;
 	blink.bb_status = blinktype;
 	blink.bb_target = target;
 
-	rv = ioctl(bioh, BIOCBLINK, &blink);
-	if (rv == -1)
-		warn("BIOCBLINK");
-
-	close(bioh);
-}
-
-void
-bio_createraid(u_int16_t level, char *dev_list)
-{
-	struct bioc_createraid	create;
-	int			rv;
-	u_int16_t		min_disks = 0;
-
-	if (debug)
-		printf("bio_createraid\n");
-
-	if (!dev_list)
-		errx(1, "no devices specified");
-
-	switch (level) {
-	case 0:
-		min_disks = 1;
-		break;
-	case 1:
-		min_disks = 2;
-		break;
-	default:
-		errx(1, "unsuported raid level");
-	}
-
-	/* XXX validate device list for real */
-#if 0
-	if (strncmp(dev_list, "sd", 2) == 0 && strlen(dev_list) > 2 &&
-	    isdigit(dev_list[2])) {
-	    	if (strlen(dev_list) != 3)
-			errx(1, "only one device supported");
-
-		if (debug)
-			printf("bio_createraid: dev_list: %s\n", dev_list);
-	}
-	else
-		errx(1, "no sd device specified");
-#endif
-
-	memset(&create, 0, sizeof(create));
-	create.bc_cookie = bl.bl_cookie;
-	create.bc_level = level;
-	create.bc_dev_list_len = strlen(dev_list);
-	create.bc_dev_list = dev_list;
-
-	rv = ioctl(devh, BIOCCREATERAID, &create);
-	if (rv == -1) {
-		warn("BIOCCREATERAID");
-		return;
-	}
+	if (ioctl(fd, BIOCBLINK, &blink) == -1)
+		err(EXIT_FAILURE, "BIOCBLINK");
 }

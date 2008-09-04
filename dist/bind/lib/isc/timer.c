@@ -1,10 +1,10 @@
-/*	$NetBSD: timer.c,v 1.1.1.3.6.1 2007/06/03 17:24:38 wrstuden Exp $	*/
+/*	$NetBSD: timer.c,v 1.1.1.3.6.2 2008/09/04 08:46:30 skrll Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: timer.c,v 1.73.18.5 2005/11/30 03:44:39 marka Exp */
+/* Id: timer.c,v 1.73.18.7.10.3 2008/07/29 18:35:53 jinmei Exp */
 
 /*! \file */
 
@@ -579,10 +579,11 @@ isc_timer_detach(isc_timer_t **timerp) {
 static void
 dispatch(isc_timermgr_t *manager, isc_time_t *now) {
 	isc_boolean_t done = ISC_FALSE, post_event, need_schedule;
-	isc_event_t *event;
+	isc_timerevent_t *event;
 	isc_eventtype_t type = 0;
 	isc_timer_t *timer;
 	isc_result_t result;
+	isc_boolean_t idle;
 
 	/*!
 	 * The caller must be holding the manager lock.
@@ -614,23 +615,33 @@ dispatch(isc_timermgr_t *manager, isc_time_t *now) {
 				type = ISC_TIMEREVENT_LIFE;
 				post_event = ISC_TRUE;
 				need_schedule = ISC_FALSE;
-			} else if (!isc_time_isepoch(&timer->idle) &&
-				   isc_time_compare(now,
-						    &timer->idle) >= 0) {
-				type = ISC_TIMEREVENT_IDLE;
-				post_event = ISC_TRUE;
-				need_schedule = ISC_FALSE;
 			} else {
-				/*
-				 * Idle timer has been touched; reschedule.
-				 */
-				XTRACEID(isc_msgcat_get(isc_msgcat,
-							ISC_MSGSET_TIMER,
-							ISC_MSG_IDLERESCHED,
-							"idle reschedule"),
-					 timer);
-				post_event = ISC_FALSE;
-				need_schedule = ISC_TRUE;
+				idle = ISC_FALSE;
+
+				LOCK(&timer->lock);
+				if (!isc_time_isepoch(&timer->idle) &&
+				    isc_time_compare(now,
+						     &timer->idle) >= 0) {
+					idle = ISC_TRUE;
+				}
+				UNLOCK(&timer->lock);
+				if (idle) {
+					type = ISC_TIMEREVENT_IDLE;
+					post_event = ISC_TRUE;
+					need_schedule = ISC_FALSE;
+				} else {
+					/*
+					 * Idle timer has been touched;
+					 * reschedule.
+					 */
+					XTRACEID(isc_msgcat_get(isc_msgcat,
+								ISC_MSGSET_TIMER,
+								ISC_MSG_IDLERESCHED,
+								"idle reschedule"),
+						 timer);
+					post_event = ISC_FALSE;
+					need_schedule = ISC_TRUE;
+				}
 			}
 
 			if (post_event) {
@@ -641,16 +652,18 @@ dispatch(isc_timermgr_t *manager, isc_time_t *now) {
 				/*
 				 * XXX We could preallocate this event.
 				 */
-				event = isc_event_allocate(manager->mctx,
+				event = (isc_timerevent_t *)isc_event_allocate(manager->mctx,
 							   timer,
 							   type,
 							   timer->action,
 							   timer->arg,
 							   sizeof(*event));
 
-				if (event != NULL)
-					isc_task_send(timer->task, &event);
-				else
+				if (event != NULL) {
+					event->due = timer->due;
+					isc_task_send(timer->task,
+						      ISC_EVENT_PTR(&event));
+				} else
 					UNEXPECTED_ERROR(__FILE__, __LINE__,
 						 isc_msgcat_get(isc_msgcat,
 							 ISC_MSGSET_TIMER,
