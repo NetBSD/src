@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1184 2008/09/04 01:53:56 pgoyette Exp $
+#	$NetBSD: mi,v 1.1185 2008/09/04 12:07:29 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -624,6 +624,7 @@
 ./usr/include/fs/hfsp/libhfsp.h			comp-obsolete		obsolete
 ./usr/include/fs/puffs/puffs_msgif.h		comp-c-include
 ./usr/include/fs/sysvbfs/bfs.h			comp-c-include
+./usr/include/fs/sysvbfs/sysvbfs_args.h		comp-c-include
 ./usr/include/fs/tmpfs/tmpfs_args.h		comp-c-include
 ./usr/include/fs/udf/ecma167-udf.h		comp-c-include
 ./usr/include/fs/udf/udf_mount.h		comp-c-include
