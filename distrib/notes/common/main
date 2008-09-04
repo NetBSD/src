@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.409 2008/09/04 14:18:04 tsutsui Exp $
+.\"	$NetBSD: main,v 1.410 2008/09/04 15:14:10 cegger Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1046,6 +1046,9 @@ PCI pass-though to domUs before the Xen-2 support is removed from HEAD.
 .bullet)
 It should be considered as deprecated. Users are expected to not rely
 on it any more beyond this major release.
+.bullet)
+Further, at least version 3.1 of Xen will be required to run NetBSD as
+Dom0 or DomU.
 .
 .Ss "The Future of NetBSD"
 .Pp
