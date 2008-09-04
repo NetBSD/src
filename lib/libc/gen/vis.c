@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.37 2008/07/25 22:29:23 dsl Exp $	*/
+/*	$NetBSD: vis.c,v 1.38 2008/09/04 09:41:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.37 2008/07/25 22:29:23 dsl Exp $");
+__RCSID("$NetBSD: vis.c,v 1.38 2008/09/04 09:41:44 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -302,12 +302,14 @@ strsvisx(char *dst, const char *csrc, size_t len, int flag, const char *extra)
 	if (flag & VIS_HTTPSTYLE) {
 		for (start = dst; len > 0; len--) {
 			c = *src++;
-			dst = do_hvis(dst, c, flag, len ? *src : '\0', nextra);
+			dst = do_hvis(dst, c, flag,
+			    len > 1 ? *src : '\0', nextra);
 		}
 	} else {
 		for (start = dst; len > 0; len--) {
 			c = *src++;
-			dst = do_svis(dst, c, flag, len ? *src : '\0', nextra);
+			dst = do_svis(dst, c, flag,
+			    len > 1 ? *src : '\0', nextra);
 		}
 	}
 	free(nextra);
