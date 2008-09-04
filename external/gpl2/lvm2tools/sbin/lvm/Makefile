@@ -22,6 +22,13 @@ SRCS=		dumpconfig.c formats.c lvchange.c lvconvert.c lvcreate.c \
 		vgmknodes.c vgreduce.c vgremove.c vgrename.c vgscan.c \
 		vgsplit.c lvm.c
 
+CFLAGS+= 	-fno-inline
+
+CPPFLAGS+=	-I${LVM2TOOLS_DISTDIR}/lib -I${LVM2TOOLS_DISTDIR}/include \
+		-I. -I${LIBDM_INCLUDE}
+
+CPPFLAGS+=	-DLVM_SHARED_PATH=\"$(BINDIR)/lvm\"
+
 
 MAN= 		lvchange.8 lvconvert.8 lvcreate.8 lvdisplay.8 lvextend.8 \
 		lvm.8 lvm.conf.5 lvmchange.8 lvmdiskscan.8 lvmdump.8 \
@@ -33,12 +40,51 @@ MAN= 		lvchange.8 lvconvert.8 lvcreate.8 lvdisplay.8 lvextend.8 \
 		vgmerge.8 vgmknodes.8 vgreduce.8 vgremove.8 vgrename.8 \
 		vgs.8 vgscan.8 vgsplit.8
 
-CFLAGS+= -fno-inline
 
-CPPFLAGS+=	-I${LVM2TOOLS_DISTDIR}/lib -I${LVM2TOOLS_DISTDIR}/include \
-		-I. -I${LIBDM_INCLUDE}
+MKLINKS+=	lvchange.8 lvchange.1 \
+                lvconvert.8 lvconvert.1 \
+                lvcreate.8 lvcreate.1 \
+                lvdisplay.8 lvdisplay.1 \
+                lvextend.8 lvextend.1 \
+                lvm.8 lvm.1 \
+                lvm.conf lvm.1 \
+                lvmchange.8 lvmchange.1 \
+                lvmdiskscan.8 lvmdiskscan.1 \
+                lvmdump.8 lvmdump.1 \
+                lvreduce.8 lvreduce.1 \
+                lvremove.8 lvremove.1 \
+                lvrename.8 lvrename.1 \
+                lvresize.8 lvresize.1 \
+                lvs.8 lvs.1 \
+                lvscan.8 lvscan.1 \
+                pvchange.8 pvchange.1 \
+                pvck.8 pvck.1 \
+                pvcreate.8 pvcreate.1 \
+                pvdisplay.8 pvdisplay.1 \
+                pvmove.8 pvmove.1 \
+                pvremove.8 pvremove.1 \
+                pvresize.8 pvresize.1 \
+                pvs.8 pvs.1 \
+                pvscan.8 pvscan.1 \
+                vgcfgbackup.8 vgcfgbackup.1 \
+                vgcfgrestore.8 vgcfgrestore.1 \
+                vgchange.8 vgchange.1 \
+                vgck.8 vgck.1 \
+                vgconvert.8 vgconvert.1 \
+                vgcreate.8 vgcreate.1 \
+                vgdisplay.8 vgdisplay.1 \
+                vgexport.8 vgexport.1 \
+                vgextend.8 vgextend.1 \
+                vgimport.8 vgimport.1 \
+                vgmerge.8 vgmerge.1 \
+                vgmknodes.8 vgmknodes.1 \
+                vgreduce.8 vgreduce.1 \
+                vgremove.8 vgremove.1 \
+                vgrename.8 vgrename.1 \
+                vgs.8 vgs.1 \
+                vgscan.8 vgscan.1 \
+                vgsplit.8 vgsplit.1
 
-CPPFLAGS+=	-DLVM_SHARED_PATH=\"$(BINDIR)/lvm\"
 
 LIBLVM_OBJDIR!=	cd ${LVM2TOOLS_SRCDIR}/lib/liblvm && ${PRINTOBJDIR}
 LDADD+=		-L${LIBLVM_OBJDIR} -llvm
@@ -49,6 +95,7 @@ LDADD+=		-L${LIBDM_OBJDIR} -ldevmapper
 DPADD+=		${LIBDM_OBJDIR}/libdevmapper.a
 
 LDADD+=		-lprop
+
 
 .PATH:	${LVM2TOOLS_DISTDIR}/tools
 
