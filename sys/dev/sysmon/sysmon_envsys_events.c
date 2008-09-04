@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.56 2008/08/22 11:27:50 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.57 2008/09/04 21:54:51 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.56 2008/08/22 11:27:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.57 2008/09/04 21:54:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -248,9 +248,31 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	}
 	see->see_type = real_crittype;
 	see->see_sme = sme;
+
+	/* Initialize sensor type and previously-sent state */
+
+	see->see_pes.pes_type = powertype;
+	switch (powertype) {
+	case PENVSYS_TYPE_BATTERY:
+		see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
+		break;
+	case PENVSYS_TYPE_DRIVE:
+		see->see_evsent = ENVSYS_DRIVE_EMPTY;
+		break;
+	case PENVSYS_TYPE_FAN:
+	case PENVSYS_TYPE_INDICATOR:
+	case PENVSYS_TYPE_TEMP:
+	case PENVSYS_TYPE_POWER:
+	case PENVSYS_TYPE_RESISTANCE:
+	case PENVSYS_TYPE_VOLTAGE:
+		see->see_evsent = ENVSYS_SVALID;
+		break;
+	default:
+		see->see_evsent = 0;
+	}
+
 	(void)strlcpy(see->see_pes.pes_dvname, sme->sme_name,
 	    sizeof(see->see_pes.pes_dvname));
-	see->see_pes.pes_type = powertype;
 	(void)strlcpy(see->see_pes.pes_sensname, edata->desc,
 	    sizeof(see->see_pes.pes_sensname));
 
