@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.408 2008/09/03 23:44:24 ober Exp $
+.\"	$NetBSD: main,v 1.409 2008/09/04 14:18:04 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1904,6 +1904,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Daniel Carosone Ta Mt dan@NetBSD.org
 .It Ta Dave Carrel Ta Mt carrel@NetBSD.org
 .It Ta James Chacon Ta Mt jmc@NetBSD.org
+.It Ta Mihai Chelaru Ta Mt kefren@NetBSD.org
 .It Ta Bill Coldwell Ta Mt billc@NetBSD.org
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.org
 .It Ta Ben Collver Ta Mt ben@NetBSD.org
@@ -1998,8 +1999,8 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Chris Jones Ta Mt cjones@NetBSD.org
 .It Ta S\(/oren J\(/orvang Ta Mt soren@NetBSD.org
 .It Ta Takahiro Kambe Ta Mt taca@NetBSD.org
-.It Ta Antti Kantee Ta Mt pooka@NetBSD.org
 .It Ta Masanori Kanaoka Ta Mt kanaoka@NetBSD.org
+.It Ta Antti Kantee Ta Mt pooka@NetBSD.org
 .It Ta Frank Kardel Ta Mt kardel@NetBSD.org
 .It Ta Mattias Karlsson Ta Mt keihan@NetBSD.org
 .It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@NetBSD.org
@@ -2014,6 +2015,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Daniel de Kok Ta Mt daniel@NetBSD.org
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.org
 .It Ta Lubomir Kundrak Ta Mt lkundrak@NetBSD.org
+.It Ta Jochen Kunz Ta Mt jkunz@NetBSD.org
 .It Ta Martti Kuparinen Ta Mt martti@NetBSD.org
 .It Ta Kentaro A. Kurahone Ta Mt kurahone@NetBSD.org
 .It Ta Arnaud Lacombe Ta Mt alc@NetBSD.org
@@ -2135,7 +2137,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Kevin Sullivan Ta Mt sullivan@NetBSD.org
 .It Ta SUNAGAWA Keiki Ta Mt kei@NetBSD.org
 .It Ta Kimmo Suominen Ta Mt kim@NetBSD.org
-.lt Ta Robert Swindells Ta Mt rjs@NetBSD.org
+.It Ta Robert Swindells Ta Mt rjs@NetBSD.org
 .It Ta Shin Takemura Ta Mt takemura@NetBSD.org
 .It Ta TAMURA Kent Ta Mt kent@NetBSD.org
 .It Ta Shin'ichiro TAYA Ta Mt taya@NetBSD.org
