@@ -1,4 +1,4 @@
-#	$NetBSD: printcap,v 1.13 2006/10/08 15:28:49 elad Exp $
+#	$NetBSD: printcap,v 1.14 2008/09/04 18:22:47 wiz Exp $
 #	from: @(#)printcap	8.1 (Berkeley) 6/9/93
 
 #lp|local line printer:\
@@ -8,8 +8,8 @@
 #decwriter|LA-180 DecWriter III:\
 #	:sh:br#1200:fs#06320:tr=\f:of=/usr/libexec/lpr/lpf:lf=/var/log/lpd-errs:
 
-# HP Laserjet with JetDirect ethernet card and a simple filter to encapsulate
-# ascii text into PJL format.
+# HP Laserjet with JetDirect Ethernet card and a simple filter to encapsulate
+# ASCII text into PJL format.
 #hp|HP Laserjet:\
 #	:sh:lp=9100@remote_hp:sd=/var/spool/output/hp:\
 #	:lf=/var/log/lpd-errs:if=/usr/libexec/lpr/pjlfilter:
