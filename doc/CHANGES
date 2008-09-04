@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1107 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1108 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -798,7 +798,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Jeremy Morse as part of his Google Summer of Code 2008 project.
 		[jmcneill 20080802]
 	ip(4): Add accept filters, ported from FreeBSD by Coyote Point Systems.
-		[tls 20080804]
+		See accept_filter(9), accf_data(9) and accf_http(9) for more
+		information. [tls 20080804]
 	libc: Add C99 functions imaxabs(3) and imaxdiv(3). [matt 20080804]
 	build.sh: Add support for using BUILDSEED to yield
 		reproduceable c++ builds [perry 20080805]
