@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.21 2007/12/14 21:15:58 pavel Exp $
+.\"	$NetBSD: prep,v 1.22 2008/09/04 17:15:17 tsutsui Exp $
 .
 There are two installation tools available.
 The traditional miniroot
@@ -138,7 +138,7 @@ Geometry may be calculated from an HP-UX
 .Pa /etc/disktab
 entry, but note that HP-UX geometry is based
 on 1024 byte sectors, while
-.Nx 's
+.Nx Ns 's
 is based on 512 byte sectors.
 You should have all partitions start on cylinder boundaries.
 .Pp
