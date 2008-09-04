@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.24 2008/04/30 14:07:14 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.25 2008/09/04 12:02:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.24 2008/04/30 14:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.25 2008/09/04 12:02:10 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,7 +172,7 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return error;
 
 	/* Open block device */
-	if ((error = VOP_OPEN(devvp, FREAD, NOCRED)) != 0)
+	if ((error = VOP_OPEN(devvp, FREAD | FWRITE, NOCRED)) != 0)
 		return error;
 
 	/* Get partition information */
