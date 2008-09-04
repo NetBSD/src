@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_msdos.c,v 1.3 2008/09/04 15:34:56 pooka Exp $	*/
+/*	$NetBSD: rump_msdos.c,v 1.4 2008/09/04 15:35:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -51,7 +51,7 @@ main(int argc, char *argv[])
 
 	mount_msdos_parseargs(argc, argv, &args, &mntflags,
 	    canon_dev, canon_dir);
-	rv = p2k_run_fs(MOUNT_MSDOS, argv[optind], argv[optind+1], mntflags, 
+	rv = p2k_run_fs(MOUNT_MSDOS, canon_dev, canon_dir, mntflags, 
 		&args, sizeof(args), 0);
 	if (rv)
 		err(1, "mount");
