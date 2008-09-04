@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.13 2008/09/04 16:47:04 mhitch Exp $	*/
+/*	$NetBSD: ciss.c,v 1.14 2008/09/04 19:03:14 he Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.13 2008/09/04 16:47:04 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.14 2008/09/04 19:03:14 he Exp $");
 
 #include "bio.h"
 
@@ -323,7 +323,7 @@ ciss_attach(struct ciss_softc *sc)
 
 	sc->maxunits = inq->numld;
 	sc->nbus = inq->nscsi_bus;
-	sc->ndrives = inq->buswidth;
+	sc->ndrives = inq->buswidth ? inq->buswidth : 256;
 	printf(": %d LD%s, HW rev %d, FW %4.4s/%4.4s\n",
 	    inq->numld, inq->numld == 1? "" : "s",
 	    inq->hw_rev, inq->fw_running, inq->fw_stored);
@@ -890,12 +890,20 @@ ciss_pdscan(struct ciss_softc *sc, int ld)
 
 	mutex_enter(&sc->sc_mutex_scratch);
 	pdid = sc->scratch;
-	for (i = 0; i < sc->nbus; i++)
-		for (j = 0; j < sc->ndrives; j++) {
-			drv = CISS_BIGBIT + i * sc->ndrives + j;
-			if (!ciss_pdid(sc, drv, pdid, XS_CTL_POLL|XS_CTL_NOSLEEP))
-				buf[k++] = drv;
-		}
+	if (sc->ndrives == 256) {
+		for (i = 0; i < CISS_BIGBIT; i++)
+			if (!ciss_pdid(sc, i, pdid, 
+					XS_CTL_POLL|XS_CTL_NOSLEEP) &&
+			    (pdid->present & CISS_PD_PRESENT))
+				buf[k++] = i;
+	} else
+		for (i = 0; i < sc->nbus; i++)
+			for (j = 0; j < sc->ndrives; j++) {
+				drv = CISS_BIGBIT + i * sc->ndrives + j;
+				if (!ciss_pdid(sc, drv, pdid,
+						XS_CTL_POLL|XS_CTL_NOSLEEP))
+					buf[k++] = drv;
+			}
 	mutex_exit(&sc->sc_mutex_scratch);
 
 	if (!k)
@@ -1146,6 +1154,7 @@ ciss_ioctl(struct device *dev, u_long cmd, void *addr)
 	struct ciss_pdid *pdid;
 	struct ciss_blink *blink;
 	struct ciss_ld *ldp;
+	u_int8_t drv;
 	int ld, pd, error = 0;
 
 	switch (cmd) {
@@ -1189,7 +1198,8 @@ ciss_ioctl(struct device *dev, u_long cmd, void *addr)
 			break;
 		}
 		bd->bd_status = -1;
-		if (ldstat->bigrebuild == ldp->tgts[pd])
+		if (ldstat->stat == CISS_LD_REBLD &&
+		    ldstat->bigrebuild == ldp->tgts[pd])
 			bd->bd_status = BIOC_SDREBUILD;
 		if (ciss_bitset(ldp->tgts[pd] & (~CISS_BIGBIT),
 		    ldstat->bigfailed)) {
@@ -1248,10 +1258,14 @@ ciss_ioctl(struct device *dev, u_long cmd, void *addr)
 			ldp = sc->sc_lds[ld];
 			if (!ldp)
 				continue;
-			for (pd = 0; pd < ldp->ndrives; pd++)
-				if (ldp->tgts[pd] == (CISS_BIGBIT +
+			if (sc->ndrives == 256)
+				drv = bb->bb_target;
+			else
+				drv = CISS_BIGBIT +
 				    bb->bb_channel * sc->ndrives +
-				    bb->bb_target))
+				    bb->bb_target;
+			for (pd = 0; pd < ldp->ndrives; pd++)
+				if (ldp->tgts[pd] == drv)
 					error = ciss_blink(sc, ld, pd,
 					    bb->bb_status, blink);
 		}
