@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.42 2008/09/02 11:05:20 njoly Exp $
+# $NetBSD: mi,v 1.43 2008/09/04 08:04:31 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6432,6 +6432,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/xwd.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xwininfo.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xwud.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/libexec/chooser.debug	-unknown-	debug,xorg
 ./usr/libdata/lint/llib-lFS.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-lGL.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-lGLw.ln				-unknown-	lint,x11

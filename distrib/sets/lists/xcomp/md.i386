@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.17 2008/09/02 02:23:11 lukem Exp $
+# $NetBSD: md.i386,v 1.18 2008/09/04 08:04:31 rtr Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -147,3 +147,4 @@
 ./usr/libdata/debug/usr/X11R6/bin/scanpci.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/xf86cfg.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/xf86config.debug	-unknown-	debug,x11
+./usr/libdata/debug/usr/X11R7/bin/xorgconfig.debug	-unknown-	debug,xorg
