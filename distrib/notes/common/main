@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.411 2008/09/04 16:30:58 tsutsui Exp $
+.\"	$NetBSD: main,v 1.412 2008/09/04 16:44:36 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -155,6 +155,7 @@ boot prompt.
 Type 
 .Ic boot -2
 to boot with ACPI disabled.
+.\}
 .if \n[macppc] \{\
 Fetch files necessary to boot your system.
 The files depend on what model you
