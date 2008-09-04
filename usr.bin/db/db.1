@@ -1,6 +1,6 @@
-.\" 	$NetBSD: db.1,v 1.19 2008/04/30 13:11:00 martin Exp $
+.\" 	$NetBSD: db.1,v 1.20 2008/09/04 09:54:56 lukem Exp $
 .\"
-.\" Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 20, 2005
+.Dd September 4, 2008
 .Dt DB 1
 .Os
 .
@@ -246,15 +246,42 @@ The
 .Ar visspec
 option-argument is a string specifying
 .Xr strvis 3
-options.
-The string consists of the specification characters
-.Cm b , c , o ,
-.Cm s , t ,
+flags.
+The string consists of one or more characters:
+.Bl -tag -width 2n -offset indent -compact
+.It Sy b
+.Dv VIS_NOSLASH
+.It Sy c
+.Dv VIS_CSTYLE .
+Overrides
+.Sy h
 and
-.Cm w .
+.Sy o .
+.It Sy h
+.Dv VIS_HTTPSTYLE .
+Overrides
+.Sy c
+and
+.Sy o .
+.It Sy o
+.Dv VIS_OCTAL .
+Overrides
+.Sy c
+and
+.Sy h .
+.It Sy s
+.Dv VIS_SAFE
+.It Sy t
+.Dv VIS_TAB
+.It Sy w
+.Dv VIS_WHITE
+.El
 See
 .Xr vis 1 Ns 's
-corresponding options for the meaning of these characters.
+corresponding options for the meaning of these characters,
+and
+.Xr strvis 3
+for more detail on the flags.
 .
 .It Fl V
 Display value.

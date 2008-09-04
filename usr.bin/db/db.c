@@ -1,7 +1,7 @@
-/*	$NetBSD: db.c,v 1.16 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: db.c,v 1.17 2008/09/04 09:54:56 lukem Exp $	*/
 
 /*-
- * Copyright (c) 2002-2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.16 2008/04/28 20:24:12 martin Exp $");
+__RCSID("$NetBSD: db.c,v 1.17 2008/09/04 09:54:56 lukem Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -606,6 +606,7 @@ int
 parse_encode_option(char **arg)
 {
 	int	r = 0;
+	int	encmask = ~(VIS_CSTYLE | VIS_HTTPSTYLE | VIS_OCTAL);
 
 	for(; **arg; (*arg)++) {
 		switch (**arg) {
@@ -613,9 +614,15 @@ parse_encode_option(char **arg)
 				r |= VIS_NOSLASH;
 				break;
 			case 'c':
+				r &= encmask;
 				r |= VIS_CSTYLE;
 				break;
+			case 'h':
+				r &= encmask;
+				r |= VIS_HTTPSTYLE;
+				break;
 			case 'o':
+				r &= encmask;
 				r |= VIS_OCTAL;
 				break;
 			case 's':
