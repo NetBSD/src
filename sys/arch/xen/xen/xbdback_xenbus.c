@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.3.12.1 2008/06/03 20:47:18 skrll Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.3.12.2 2008/09/04 08:46:44 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.3.12.1 2008/06/03 20:47:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.3.12.2 2008/09/04 08:46:44 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,7 +103,7 @@ struct xbdback_instance {
 	dev_t xbdi_dev;
 	const struct bdevsw *xbdi_bdevsw; /* pointer to the device's bdevsw */
 	struct vnode *xbdi_vp;
-	size_t xbdi_size;
+	uint64_t xbdi_size;
 	int xbdi_ro; /* is device read-only ? */
 	/* parameters for the communication */
 	unsigned int xbdi_evtchn;
@@ -550,7 +550,6 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	struct xenbus_transaction *xbt;
 	const char *devname;
 	int major;
-	struct partinfo dpart;
 
 	err = xenbus_read_ul(NULL, xbusd->xbusd_path, "physical-device",
 	    &dev, 10);
@@ -611,20 +610,43 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 		return;
 	}
 	VOP_UNLOCK(xbdi->xbdi_vp, 0);
-	err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGPART, &dpart, FREAD, 0, NULL);
-	if (err) {
-		printf("xbdback %s: can't ioctl device 0x%x: %d\n",
-		    xbusd->xbusd_path, xbdi->xbdi_dev, err);
-		xbdi->xbdi_size = xbdi->xbdi_dev = 0;
-		vn_close(xbdi->xbdi_vp, FREAD, NOCRED, NULL);
-		xbdi->xbdi_vp = NULL;
-		return;
+	if (strcmp(devname, "dk") == 0) {
+		/* dk device; get wedge data */
+		struct dkwedge_info wi;
+		err = VOP_IOCTL(xbdi->xbdi_vp, DIOCGWEDGEINFO, &wi,
+		    FREAD, NOCRED, NULL);
+		if (err) {
+			printf("xbdback %s: can't DIOCGWEDGEINFO device "
+			    "0x%x: %d\n", xbusd->xbusd_path,
+			    xbdi->xbdi_dev, err);
+			xbdi->xbdi_size = xbdi->xbdi_dev = 0;
+			vn_close(xbdi->xbdi_vp, FREAD, NOCRED, NULL);
+			xbdi->xbdi_vp = NULL;
+			return;
+		}
+		xbdi->xbdi_size = wi.dkw_size;
+		printf("xbd backend: attach device %s (size %" PRIu64 ") "
+		    "for domain %d\n", wi.dkw_devname, xbdi->xbdi_size,
+		    xbdi->xbdi_domid);
+	} else {
+		/* disk device, get partition data */
+		struct partinfo dpart;
+		err =
+		    VOP_IOCTL(xbdi->xbdi_vp, DIOCGPART, &dpart, FREAD, 0, NULL);
+		if (err) {
+			printf("xbdback %s: can't DIOCGPART device 0x%x: %d\n",
+			    xbusd->xbusd_path, xbdi->xbdi_dev, err);
+			xbdi->xbdi_size = xbdi->xbdi_dev = 0;
+			vn_close(xbdi->xbdi_vp, FREAD, NOCRED, NULL);
+			xbdi->xbdi_vp = NULL;
+			return;
+		}
+		xbdi->xbdi_size = dpart.part->p_size;
+		printf("xbd backend: attach device %s%d%c (size %" PRIu64 ") "
+		    "for domain %d\n", devname, DISKUNIT(xbdi->xbdi_dev),
+		    DISKPART(xbdi->xbdi_dev) + 'a', xbdi->xbdi_size,
+		    xbdi->xbdi_domid);
 	}
-	xbdi->xbdi_size = dpart.part->p_size;
-	printf("xbd backend: attach device %s%d%c (size %d) "
-	    "for domain %d\n", devname, DISKUNIT(xbdi->xbdi_dev),
-	    DISKPART(xbdi->xbdi_dev) + 'a', xbdi->xbdi_size, xbdi->xbdi_domid);
-
 again:
 	xbt = xenbus_transaction_start();
 	if (xbt == NULL) {
@@ -632,8 +654,8 @@ again:
 		    xbusd->xbusd_path);
 		    return;
 	}
-	err = xenbus_printf(xbt, xbusd->xbusd_path, "sectors", "%lu",
-	    (u_long)xbdi->xbdi_size);
+	err = xenbus_printf(xbt, xbusd->xbusd_path, "sectors", "%" PRIu64 ,
+	    xbdi->xbdi_size);
 	if (err) {
 		printf("xbdback: failed to write %s/sectors: %d\n",
 		    xbusd->xbusd_path, err);
@@ -843,10 +865,10 @@ xbdback_co_io_gotreq(struct xbdback_instance *xbdi, void *obj)
 	if (xbdi->xbdi_io != NULL) {
 		struct xbdback_request *last_req;
 		last_req = SLIST_FIRST(&xbdi->xbdi_io->xio_rq)->car;
-		XENPRINTF(("xbdback_io domain %d: hoping for sector %ld;"
-		    " got %ld\n", xbdi->xbdi_domid,
-		    (long)xbdi->xbdi_next_sector,
-		    (long)xbdi->xbdi_xen_req->sector_number));
+		XENPRINTF(("xbdback_io domain %d: hoping for sector %" PRIu64
+		    "; got %" PRIu64 "\n", xbdi->xbdi_domid,
+		    xbdi->xbdi_next_sector,
+		    xbdi->xbdi_xen_req.sector_number));
 		if ((xrq->rq_operation != last_req->rq_operation)
 		    || (xbdi->xbdi_xen_req->sector_number !=
 		    xbdi->xbdi_next_sector)) {

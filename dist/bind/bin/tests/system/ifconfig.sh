@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2008  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -15,7 +15,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: ifconfig.sh,v 1.46.18.3 2004/10/05 03:18:21 marka Exp
+# Id: ifconfig.sh,v 1.46.18.3.50.2 2008/07/25 23:48:16 tbox Exp
 
 #
 # Set up interface aliases for bind9 system tests.
@@ -72,7 +72,7 @@ case "$1" in
 		    *-sun-solaris2.[6-7])
 			ifconfig lo0:$int 10.53.0.$ns netmask 0xffffffff up
 			;;
-		    *-*-solaris2.[8-9]|*-*-solaris2.10)
+		    *-*-solaris2.[8-9]|*-*-solaris2.1[0-9])
     			/sbin/ifconfig lo0:$int plumb
 			/sbin/ifconfig lo0:$int 10.53.0.$ns up
 			;;
@@ -132,7 +132,7 @@ case "$1" in
 		    *-sun-solaris2.[6-7])
 			ifconfig lo0:$int 10.53.0.$ns down
 			;;
-		    *-*-solaris2.[8-9]|*-*-solaris2.10)
+		    *-*-solaris2.[8-9]|*-*-solaris2.1[0-9])
 			ifconfig lo0:$int 10.53.0.$ns down
 			ifconfig lo0:$int 10.53.0.$ns unplumb
 			;;

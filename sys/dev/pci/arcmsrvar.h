@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.12.8.2 2008/06/03 20:47:24 skrll Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.12.8.3 2008/09/04 08:46:44 skrll Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -347,6 +347,7 @@ struct arc_fw_diskinfo {
 	uint32_t	capacity;
 	uint32_t	capacity2;
 	uint8_t		device_state;
+#define ARC_FW_DISK_INITIALIZED	0x88	/* disk has been initialized */
 #define ARC_FW_DISK_RAIDMEMBER	0x89	/* disk is member of a raid set */
 #define ARC_FW_DISK_PASSTHRU	0x8b	/* pass through disk */
 #define ARC_FW_DISK_HOTSPARE	0xa9	/* hotspare disk */
@@ -424,15 +425,17 @@ struct arc_softc {
 	void			*sc_shutdownhook;
 
 	int			sc_req_count;
-	u_int			sc_maxdisks;
 
 	struct arc_dmamem	*sc_requests;
 	struct arc_ccb		*sc_ccbs;
 	struct arc_ccb_list	sc_ccb_free;
 
-	struct lwp		*sc_lwp;
 	volatile int		sc_talking;
 	struct lock		sc_lock;
+
+	size_t			sc_maxraidset;	/* max raid sets */
+	size_t 			sc_maxvolset;	/* max volume sets */
+	size_t 			sc_cchans;	/* connected channels */
 
 	struct device		*sc_scsibus_dv;
 };

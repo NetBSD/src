@@ -1,10 +1,10 @@
-/*	$NetBSD: server.c,v 1.1.1.4.6.2 2007/09/03 06:53:00 wrstuden Exp $	*/
+/*	$NetBSD: server.c,v 1.1.1.4.6.3 2008/09/04 08:46:19 skrll Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: server.c,v 1.419.18.49.12.2 2007/07/09 02:23:16 marka Exp */
+/* Id: server.c,v 1.419.18.57.10.3 2008/07/23 12:04:32 marka Exp */
 
 /*! \file */
 
@@ -542,6 +542,14 @@ get_view_querysource_dispatch(const cfg_obj_t **maps,
 		attrs |= DNS_DISPATCHATTR_IPV6;
 		break;
 	}
+
+	if (isc_sockaddr_getport(&sa) != 0) {
+		INSIST(obj != NULL);
+		cfg_obj_log(obj, ns_g_lctx, ISC_LOG_INFO,
+			    "using specific query-source port suppresses port "
+			    "randomization and can be insecure.");
+	}
+
 	attrmask = 0;
 	attrmask |= DNS_DISPATCHATTR_UDP;
 	attrmask |= DNS_DISPATCHATTR_TCP;
@@ -551,7 +559,7 @@ get_view_querysource_dispatch(const cfg_obj_t **maps,
 	disp = NULL;
 	result = dns_dispatch_getudp(ns_g_dispatchmgr, ns_g_socketmgr,
 				     ns_g_taskmgr, &sa, 4096,
-				     1000, 32768, 16411, 16433,
+				     1024, 32768, 16411, 16433,
 				     attrs, attrmask, &disp);
 	if (result != ISC_R_SUCCESS) {
 		isc_sockaddr_t any;
@@ -1775,6 +1783,7 @@ configure_view(dns_view_t *view, const cfg_obj_t *config,
 						     empty_dbtype, mctx);
 				if (zone != NULL) {
 					dns_zone_setview(zone, view);
+					CHECK(dns_view_addzone(view, zone));
 					dns_zone_detach(&zone);
 					continue;
 				}
@@ -2370,7 +2379,9 @@ scan_interfaces(ns_server_t *server, isc_boolean_t verbose) {
 }
 
 static isc_result_t
-add_listenelt(isc_mem_t *mctx, ns_listenlist_t *list, isc_sockaddr_t *addr) {
+add_listenelt(isc_mem_t *mctx, ns_listenlist_t *list, isc_sockaddr_t *addr,
+	      isc_boolean_t wcardport_ok)
+{
 	ns_listenelt_t *lelt = NULL;
 	dns_acl_t *src_acl = NULL;
 	dns_aclelement_t aelt;
@@ -2380,7 +2391,8 @@ add_listenelt(isc_mem_t *mctx, ns_listenlist_t *list, isc_sockaddr_t *addr) {
 	REQUIRE(isc_sockaddr_pf(addr) == AF_INET6);
 
 	isc_sockaddr_any6(&any_sa6);
-	if (!isc_sockaddr_equal(&any_sa6, addr)) {
+	if (!isc_sockaddr_equal(&any_sa6, addr) &&
+	    (wcardport_ok || isc_sockaddr_getport(addr) != 0)) {
 		aelt.type = dns_aclelementtype_ipprefix;
 		aelt.negative = ISC_FALSE;
 		aelt.u.ip_prefix.prefixlen = 128;
@@ -2439,7 +2451,16 @@ adjust_interfaces(ns_server_t *server, isc_mem_t *mctx) {
 		result = dns_dispatch_getlocaladdress(dispatch6, &addr);
 		if (result != ISC_R_SUCCESS)
 			goto fail;
-		result = add_listenelt(mctx, list, &addr);
+
+		/*
+		 * We always add non-wildcard address regardless of whether
+		 * the port is 'any' (the fourth arg is TRUE): if the port is
+		 * specific, we need to add it since it may conflict with a
+		 * listening interface; if it's zero, we'll dynamically open
+		 * query ports, and some of them may override an existing
+		 * wildcard IPv6 port.
+		 */
+		result = add_listenelt(mctx, list, &addr, ISC_TRUE);
 		if (result != ISC_R_SUCCESS)
 			goto fail;
 	}
@@ -2469,12 +2490,12 @@ adjust_interfaces(ns_server_t *server, isc_mem_t *mctx) {
 			continue;
 
 		addrp = dns_zone_getnotifysrc6(zone);
-		result = add_listenelt(mctx, list, addrp);
+		result = add_listenelt(mctx, list, addrp, ISC_FALSE);
 		if (result != ISC_R_SUCCESS)
 			goto fail;
 
 		addrp = dns_zone_getxfrsource6(zone);
-		result = add_listenelt(mctx, list, addrp);
+		result = add_listenelt(mctx, list, addrp, ISC_FALSE);
 		if (result != ISC_R_SUCCESS)
 			goto fail;
 	}
@@ -2677,27 +2698,29 @@ static isc_result_t
 load_configuration(const char *filename, ns_server_t *server,
 		   isc_boolean_t first_time)
 {
-	isc_result_t result;
-	isc_interval_t interval;
-	cfg_parser_t *parser = NULL;
+	cfg_aclconfctx_t aclconfctx;
 	cfg_obj_t *config;
-	const cfg_obj_t *options;
-	const cfg_obj_t *views;
-	const cfg_obj_t *obj;
-	const cfg_obj_t *v4ports, *v6ports;
-	const cfg_obj_t *maps[3];
-	const cfg_obj_t *builtin_views;
+	cfg_parser_t *parser = NULL;
 	const cfg_listelt_t *element;
+	const cfg_obj_t *builtin_views;
+	const cfg_obj_t *maps[3];
+	const cfg_obj_t *obj;
+	const cfg_obj_t *options;
+	const cfg_obj_t *v4ports, *v6ports;
+	const cfg_obj_t *views;
 	dns_view_t *view = NULL;
 	dns_view_t *view_next;
-	dns_viewlist_t viewlist;
 	dns_viewlist_t tmpviewlist;
-	cfg_aclconfctx_t aclconfctx;
-	isc_uint32_t interface_interval;
-	isc_uint32_t heartbeat_interval;
-	isc_uint32_t udpsize;
+	dns_viewlist_t viewlist;
 	in_port_t listen_port;
 	int i;
+	isc_interval_t interval;
+	isc_resourcevalue_t files;
+	isc_result_t result;
+	isc_uint32_t heartbeat_interval;
+	isc_uint32_t interface_interval;
+	isc_uint32_t reserved;
+	isc_uint32_t udpsize;
 
 	cfg_aclconfctx_init(&aclconfctx);
 	ISC_LIST_INIT(viewlist);
@@ -2777,6 +2800,43 @@ load_configuration(const char *filename, ns_server_t *server,
 	 */
 	set_limits(maps);
 
+	/*
+	 * Sanity check on "files" limit.
+	 */
+	result = isc_resource_curlimit(isc_resource_openfiles, &files);
+	if (result == ISC_R_SUCCESS && files < FD_SETSIZE) {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_SERVER, ISC_LOG_WARNING,
+			      "the 'files' limit (%" ISC_PRINT_QUADFORMAT "u) "
+			      "is less than FD_SETSIZE (%d), increase "
+			      "'files' in named.conf or recompile with a "
+			      "smaller FD_SETSIZE.", files, FD_SETSIZE);
+		if (files > FD_SETSIZE)
+			files = FD_SETSIZE;
+	} else
+		files = FD_SETSIZE;
+
+	/*
+	 * Set the number of socket reserved for TCP, stdio etc.
+	 */
+	obj = NULL;
+	result = ns_config_get(maps, "reserved-sockets", &obj);
+	INSIST(result == ISC_R_SUCCESS);
+	reserved = cfg_obj_asuint32(obj);
+	if (files < 128U)			/* Prevent underflow. */
+		reserved = 0;
+	else if (reserved > files - 128U)	/* Mimimum UDP space. */
+		reserved = files - 128;
+	if (reserved < 128U)			/* Mimimum TCP/stdio space. */
+		reserved = 128;
+	if (reserved + 128U > files) {
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+                              NS_LOGMODULE_SERVER, ISC_LOG_WARNING,
+			      "less than 128 UDP sockets available after "
+			      "applying 'reserved-sockets' and 'files'");
+	}
+	isc__socketmgr_setreserved(ns_g_socketmgr, reserved);
+	
 	/*
 	 * Configure various server options.
 	 */
@@ -3979,6 +4039,7 @@ ns_server_reloadcommand(ns_server_t *server, char *args, isc_buffer_t *text) {
 		type = dns_zone_gettype(zone);
 		if (type == dns_zone_slave || type == dns_zone_stub) {
 			dns_zone_refresh(zone);
+			dns_zone_detach(&zone);
 			msg = "zone refresh queued";
 		} else {
 			result = dns_zone_load(zone);
@@ -4595,7 +4656,8 @@ isc_result_t
 ns_server_flushcache(ns_server_t *server, char *args) {
 	char *ptr, *viewname;
 	dns_view_t *view;
-	isc_boolean_t flushed = ISC_FALSE;
+	isc_boolean_t flushed;
+	isc_boolean_t found;
 	isc_result_t result;
 
 	/* Skip the command name. */
@@ -4608,22 +4670,27 @@ ns_server_flushcache(ns_server_t *server, char *args) {
 
 	result = isc_task_beginexclusive(server->task);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+	flushed = ISC_TRUE;
+	found = ISC_FALSE;
 	for (view = ISC_LIST_HEAD(server->viewlist);
 	     view != NULL;
 	     view = ISC_LIST_NEXT(view, link))
 	{
 		if (viewname != NULL && strcasecmp(viewname, view->name) != 0)
 			continue;
+		found = ISC_TRUE;
 		result = dns_view_flushcache(view);
 		if (result != ISC_R_SUCCESS)
-			goto out;
-		flushed = ISC_TRUE;
+			flushed = ISC_FALSE;
 	}
-	if (flushed)
+	if (flushed && found) {
 		result = ISC_R_SUCCESS;
-	else
-		result = ISC_R_FAILURE;
- out:
+	} else {
+		if (!found)
+			result = ISC_R_NOTFOUND;
+		else
+			result = ISC_R_FAILURE;
+	}
 	isc_task_endexclusive(server->task);	
 	return (result);
 }
@@ -4632,7 +4699,8 @@ isc_result_t
 ns_server_flushname(ns_server_t *server, char *args) {
 	char *ptr, *target, *viewname;
 	dns_view_t *view;
-	isc_boolean_t flushed = ISC_FALSE;
+	isc_boolean_t flushed;
+	isc_boolean_t found;
 	isc_result_t result;
 	isc_buffer_t b;
 	dns_fixedname_t fixed;
@@ -4662,18 +4730,22 @@ ns_server_flushname(ns_server_t *server, char *args) {
 	result = isc_task_beginexclusive(server->task);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	flushed = ISC_TRUE;
+	found = ISC_FALSE;
 	for (view = ISC_LIST_HEAD(server->viewlist);
 	     view != NULL;
 	     view = ISC_LIST_NEXT(view, link))
 	{
 		if (viewname != NULL && strcasecmp(viewname, view->name) != 0)
 			continue;
+		found = ISC_TRUE;
 		result = dns_view_flushname(view, name);
 		if (result != ISC_R_SUCCESS)
 			flushed = ISC_FALSE;
 	}
-	if (flushed)
+	if (flushed && found)
 		result = ISC_R_SUCCESS;
+	else if (!found)
+		result = ISC_R_NOTFOUND;
 	else
 		result = ISC_R_FAILURE;
 	isc_task_endexclusive(server->task);	

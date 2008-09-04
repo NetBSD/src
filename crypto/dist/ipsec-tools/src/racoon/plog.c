@@ -1,4 +1,4 @@
-/*	$NetBSD: plog.c,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: plog.c,v 1.4.4.1 2008/09/04 08:46:11 skrll Exp $	*/
 
 /* Id: plog.c,v 1.11 2006/06/20 09:57:31 vanhu Exp */
 
@@ -138,7 +138,7 @@ plog_common(pri, fmt, func)
 }
 
 void
-plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
+_plog(int pri, const char *func, struct sockaddr *sa, const char *fmt, ...)
 {
 	va_list ap;
 

@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.1.1.4.6.1 2007/06/03 17:20:09 wrstuden Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.4.6.2 2008/09/04 08:46:18 skrll Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,14 +17,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.47.18.28 2006/05/03 01:46:40 marka Exp */
+/* Id: config.c,v 1.47.18.32.10.3 2008/07/23 23:48:17 tbox Exp */
 
 /*! \file */
 
 #include <config.h>
 
 #include <stdlib.h>
-#include <string.h>
 
 #include <isc/buffer.h>
 #include <isc/log.h>
@@ -33,6 +32,7 @@
 #include <isc/region.h>
 #include <isc/result.h>
 #include <isc/sockaddr.h>
+#include <isc/string.h>
 #include <isc/util.h>
 
 #include <isccfg/namedconf.h>
@@ -54,7 +54,7 @@ options {\n\
 #ifndef WIN32
 "	coresize default;\n\
 	datasize default;\n\
-	files default;\n\
+	files unlimited;\n\
 	stacksize default;\n"
 #endif
 "	deallocate-on-exit true;\n\
@@ -101,6 +101,7 @@ options {\n\
 	use-ixfr true;\n\
 	edns-udp-size 4096;\n\
 	max-udp-size 4096;\n\
+	reserved-sockets 512;\n\
 \n\
 	/* view */\n\
 	allow-notify {none;};\n\
@@ -184,7 +185,7 @@ options {\n\
 "
 
 "#\n\
-#  Zones in the \"_bind\" view are NOT counted is the count of zones.\n\
+#  Zones in the \"_bind\" view are NOT counted in the count of zones.\n\
 #\n\
 view \"_bind\" chaos {\n\
 	recursion no;\n\

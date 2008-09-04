@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2006  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
 #
-# Permission to use, copy, modify, and distribute this software for any
+# Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
 # copyright notice and this permission notice appear in all copies.
 #
@@ -14,7 +14,7 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
-# Id: updateopenssl.pl,v 1.3.12.3 2006/10/11 03:49:20 marka Exp
+# Id: updateopenssl.pl,v 1.3.12.6 2007/08/28 07:20:06 tbox Exp
 
 # updateopenssl.pl
 # This script locates the latest version of OpenSSL in the grandparent
@@ -25,7 +25,7 @@ $path = "..\\..\\";
 
 # List of files that need to be updated with the actual version of the
 # openssl directory
-@filelist = ("BuildSetup.bat",
+@filelist = ("BuildOpenSSL.bat",
              "../lib/dns/win32/libdns.mak",
              "../lib/dns/win32/libdns.dsp");
 

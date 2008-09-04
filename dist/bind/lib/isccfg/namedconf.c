@@ -1,10 +1,10 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.3.6.1 2007/06/03 17:25:15 wrstuden Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.3.6.2 2008/09/04 08:46:38 skrll Exp $	*/
 
 /*
- * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2006, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.c,v 1.30.18.38 2006/05/03 01:46:40 marka Exp */
+/* Id: namedconf.c,v 1.30.18.38.50.2 2008/07/23 23:48:17 tbox Exp */
 
 /*! \file */
 
@@ -636,6 +636,7 @@ options_clauses[] = {
 	{ "recursing-file", &cfg_type_qstring, 0 },
 	{ "random-device", &cfg_type_qstring, 0 },
 	{ "recursive-clients", &cfg_type_uint32, 0 },
+	{ "reserved-sockets", &cfg_type_uint32, 0 },
 	{ "serial-queries", &cfg_type_uint32, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "serial-query-rate", &cfg_type_uint32, 0 },
 	{ "server-id", &cfg_type_serverid, 0 },

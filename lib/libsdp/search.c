@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.1 2006/06/19 15:44:36 gdamore Exp $	*/
+/*	$NetBSD: search.c,v 1.1.6.1 2008/09/04 08:46:43 skrll Exp $	*/
 
 /*
  * search.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: search.c,v 1.1 2006/06/19 15:44:36 gdamore Exp $
- * $FreeBSD: src/lib/libsdp/search.c,v 1.7 2004/12/09 18:57:12 emax Exp $
+ * $Id: search.c,v 1.1.6.1 2008/09/04 08:46:43 skrll Exp $
+ * $FreeBSD: src/lib/libsdp/search.c,v 1.8 2007/11/16 15:13:12 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: search.c,v 1.1 2006/06/19 15:44:36 gdamore Exp $");
+__RCSID("$NetBSD: search.c,v 1.1.6.1 2008/09/04 08:46:43 skrll Exp $");
 
 #include <sys/uio.h>
 #include <netinet/in.h>
@@ -209,15 +209,18 @@ sdp_search(void *xss,
 			return (-1);
 		}
 
+		rsp += xpdu.len;
+		ss->tid ++;
+
 		/* Save continuation state (if any) */
-		ss->cslen = rsp[xpdu.len];
+		ss->cslen = rsp[0];
 		if (ss->cslen > 0) {
 			if (ss->cslen > sizeof(ss->cs)) {
 				ss->error = ENOBUFS;
 				return (-1);
 			}
 
-			memcpy(ss->cs, rsp + xpdu.len + 1, ss->cslen);
+			memcpy(ss->cs, rsp + 1, ss->cslen);
 
 			/*
 			 * Ensure that we always have ss->imtu bytes
@@ -241,9 +244,6 @@ sdp_search(void *xss,
 				rsp = ss->rsp + offset;
 			}
 		}
-
-		rsp += xpdu.len;
-		ss->tid ++;
 	} while (ss->cslen > 0);
 
 	/*

@@ -1,5 +1,22 @@
 Version history:
 ----------------
+
+0.7.1 - 23 July 2008
+	o Fixes a memory leak when invalid proposal received
+	o Some fixes in DPD
+	o do not set default gss id if xauth is used
+	o fixed hybrid enabled builds
+	o fixed compilation on FreeBSD8
+	o cleanup in network port value manipulation
+	o gets ports from SADB_X_EXT_NAT_T_[SD]PORT if present in purge_ipsec_spi()
+	o Generates a log if cert validation has been disabled by configuration
+	o better handling for pfkey socket read errors
+	o Fixes in yacc / bison stuff
+	o new plog() macro (reduced CPU usage when logging is disabled)
+	o Try to works better with huge SPD/SAD
+	o Corrected modecfg option syntax
+	o Many other various fixes...
+
 0.7	- 09 August 2007
 	o Xauth with pre-shared key PSK
 	o Xauth with certificates

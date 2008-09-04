@@ -33,6 +33,7 @@ isc__mem_putanddetach
 isc__mem_strdup
 isc__mempool_get
 isc__mempool_put
+isc__socketmgr_setreserved
 isc__strerror
 isc_app_block
 isc_app_finish
@@ -124,6 +125,13 @@ isc_hash_ctxdetach
 isc_hash_ctxinit
 isc_hash_destroy
 isc_hash_init
+isc_heap_create
+isc_heap_decreased
+isc_heap_delete
+isc_heap_destroy
+isc_heap_element
+isc_heap_increased
+isc_heap_insert
 isc_hex_decodestring
 isc_hex_tobuffer
 isc_hex_totext
@@ -314,6 +322,7 @@ isc_ratelimiter_setpertic
 isc_ratelimiter_shutdown
 isc_refcount_init
 isc_region_compare
+isc_resource_curlimit
 isc_resource_getlimit
 isc_resource_setlimit
 isc_result_register
@@ -401,6 +410,13 @@ isc_stdio_seek
 isc_stdio_sync
 isc_stdio_write
 isc_stdtime_get
+isc_string_append
+isc_string_append_truncate
+isc_string_copy
+isc_string_copy_truncate
+isc_string_printf
+isc_string_printf_truncate
+isc_string_regiondup
 isc_string_separate
 isc_string_strlcat
 isc_string_strlcpy

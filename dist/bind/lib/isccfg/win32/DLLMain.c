@@ -1,10 +1,10 @@
-/*	$NetBSD: DLLMain.c,v 1.1.1.3.6.1 2007/06/03 17:25:17 wrstuden Exp $	*/
+/*	$NetBSD: DLLMain.c,v 1.1.1.3.6.2 2008/09/04 08:46:38 skrll Exp $	*/
 
 /*
- * Copyright (C) 2004  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,13 +17,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: DLLMain.c,v 1.4 2004/03/05 05:12:42 marka Exp */
+/* Id: DLLMain.c,v 1.4.18.3 2007/08/28 07:20:06 tbox Exp */
 
 #include <windows.h>
 #include <signal.h>
 
-BOOL InitSockets(void);
- 
 /*
  * Called when we enter the DLL
  */

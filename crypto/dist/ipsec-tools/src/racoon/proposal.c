@@ -1,6 +1,6 @@
-/*	$NetBSD: proposal.c,v 1.11.2.1.2.1 2007/09/03 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: proposal.c,v 1.11.2.1.2.2 2008/09/04 08:46:11 skrll Exp $	*/
 
-/* $Id: proposal.c,v 1.11.2.1.2.1 2007/09/03 06:51:20 wrstuden Exp $ */
+/* $Id: proposal.c,v 1.11.2.1.2.2 2008/09/04 08:46:11 skrll Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -503,6 +503,7 @@ cmpsaprop_alloc(ph1, pp1, pp2, side)
 		if (newtr == NULL) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to allocate satrns.\n");
+			racoon_free(newpr);
 			goto err;
 		}
 		newtr->trns_no = tr1->trns_no;
@@ -776,6 +777,7 @@ aproppair2saprop(p0)
 		if (sizeof(newpr->spi) < p->prop->spi_size) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid spi size %d.\n", p->prop->spi_size);
+			racoon_free(newpr);
 			goto err;
 		}
 
@@ -810,6 +812,7 @@ aproppair2saprop(p0)
 			if (newtr == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"failed to allocate satrns.\n");
+				racoon_free(newpr);
 				goto err;
 			}
 
@@ -817,6 +820,7 @@ aproppair2saprop(p0)
 			    newpp, newpr, newtr) < 0) {
 				flushsaprop(newpp);
 				racoon_free(newtr);
+				racoon_free(newpr);
 				return NULL;
 			}
 
@@ -1154,6 +1158,7 @@ set_proposal_from_policy(iph2, sp_main, sp_sub)
 
 	return 0;
 err:
+	flushsaprop(newpp);
 	return -1;
 }
 
@@ -1228,6 +1233,7 @@ set_proposal_from_proposal(iph2)
 			{
 				plog(LLV_ERROR, LOCATION, NULL,
 					"failed to allocate saproto.\n");
+				racoon_free(pp0);
 				goto end;
 			}
 			newpr->proto_id = pr->proto_id;
@@ -1260,6 +1266,7 @@ set_proposal_from_proposal(iph2)
 				plog(LLV_ERROR, LOCATION, NULL,
 					"failed to get algorithms.\n");
 				racoon_free(newpr);
+				racoon_free(pp0);
 				goto end;
 			}
 			inssaproto(pp0, newpr);

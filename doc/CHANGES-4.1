@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.10.2 2008/06/03 20:47:00 skrll Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.10.3 2008/09/04 08:46:41 skrll Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -52,6 +52,7 @@ distrib/sets/lists/man/mi			patch
 	Add the Areca Technology Corporation SATA RAID controller driver,
 	ported from OpenBSD.
 	[christos, ticket #1037]
+
 xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.3
 
 	Apply security fix for CVE-2008-0006.
@@ -126,6 +127,7 @@ sys/dev/usb/if_auereg.h				1.19, 1.20 via patch
 	[is, ticket #1048]
 
 sys/arch/x86/isa/clock.c			1.23 via patch
+
 	fixes clock accounting problem in i8254_get_timecount that caused
 	the auich auich_calibrate() function to get the wrong ac97 freq
 	(may cause audio to play at wrong speed on some systems).
@@ -1102,4 +1104,639 @@ sys/dev/raidframe/rf_states.c			1.43
 	Add in a missing "bp->b_resid = bp->b_bcount" in the EIO case.
 	Spotted by Juergen Hannken-Illjes.  Thanks!
 	[oster, ticket #1154]
+
+distrib/sets/lists/xbase/mi			1.57
+distrib/sets/lists/xbase4/mi			1.21
+share/man/man4/pckbd.4				1.15
+sys/dev/pckbport/wskbdmap_mfii.c		1.15
+sys/dev/sun/wskbdmap_sun.c			1.15
+sys/dev/usb/ukbdmap.c				1.20
+sys/dev/wscons/wsksymdef.h			1.61
+x11/bin/xkbcomp/symbols/Makefile		1.6
+x11/bin/xkbcomp/symbols/pc/Makefile		1.5
+xsrc/xfree/xc/programs/xkbcomp/symbols/colemak	1.1
+xsrc/xfree/xc/programs/xkbcomp/symbols/pc/colemak 1.1
+
+	Add support for the Colemak keyboard layout.
+	[ghen, ticket #1155]
+
+sys/dev/pci/if_ipw.c				1.40
+
+	PR#34477: Don't dereference ni_chan if it points to the special
+	``any channel'' token IEEE80211_CHAN_ANYC
+	[jmcneill, ticket #1156]
+
+bin/sh/eval.c					1.90
+
+	Port revision 1.44 of "src/bin/sh/eval.c" from FreeBSD to fix
+	PR bin/38584: exit if set -e is active an a pipeline fails.
+	[tron, ticket #1157]
+
+sys/arch/m68k/m68k/pmap_motorola.c		1.22
+
+	Allow pmap_enter_ptpage to fail, sometimes. Pass WAIT/NOWAIT flags and
+	fix some obvious locking problems. Fix panic reported in
+	http://mail-index.netbsd.org/tech-kern/2006/12/12/0000.html
+	[hauke, ticket #1158]
+
+src/gnu/dist/binutils/bfd/tekhex.c		1.2
+
+	Fix for PR #33551 (a.k.a CVE-2006-2362)
+	Back port from the binutils CVS tree.
+	Buffer overflow in getsym in tekhex.c in libbfd in Free Software
+	Foundation GNU Binutils before 20060423, as used by GNU strings,
+	allows context-dependent attackers to cause a denial of service
+	(application crash) and possibly execute arbitrary code via a file
+	with a crafted Tektronix Hex Format (TekHex) record in which the
+	length character is not a valid hexadecimal character.
+	[adrianp, ticket #1160]
+
+sys/arch/sparc64/sparc64/locore.s		1.280
+
+	Close unterminated comment.
+	Fix unexpected behavior in case of loadfpstate from unaligned buffer.
+	[nakayama, ticket #1159]
+
+sys/dev/pci/auvia.c				1.66
+
+	VT8233+ uses a different register base for capturing,
+	tested by sborrill
+	[sborrill, ticket #1161]
+
+sys/dev/pci/azalia_codec.c			1.67
+
+	Commit patch from jmcneill@ to fix "No sound on Thinkpad azalia"
+	Definitely fixes a T60p, and hopefully will fix PR#37141
+	for an R61 also
+	[abs, ticket #1162]
+
+dist/bind/CHANGES				patch
+dist/bind/COPYRIGHT				patch
+dist/bind/FAQ					patch
+dist/bind/FAQ.xml				patch
+dist/bind/Makefile.in				patch
+dist/bind/README				patch
+dist/bind/config.h.in				patch
+dist/bind/configure				patch
+dist/bind/configure.in				patch
+dist/bind/version				patch
+dist/bind/bin/check/check-tool.c		patch
+dist/bind/bin/check/named-checkconf.8		patch
+dist/bind/bin/check/named-checkconf.docbook	patch
+dist/bind/bin/check/named-checkconf.html	patch
+dist/bind/bin/check/named-checkzone.8		patch
+dist/bind/bin/check/named-checkzone.c		patch
+dist/bind/bin/check/named-checkzone.docbook	patch
+dist/bind/bin/check/named-checkzone.html	patch
+dist/bind/bin/dig/dig.1				patch
+dist/bind/bin/dig/dig.c				patch
+dist/bind/bin/dig/dig.docbook			patch
+dist/bind/bin/dig/dig.html			patch
+dist/bind/bin/dig/dighost.c			patch
+dist/bind/bin/dig/host.1			patch
+dist/bind/bin/dig/host.c			patch
+dist/bind/bin/dig/host.docbook			patch
+dist/bind/bin/dig/host.html			patch
+dist/bind/bin/dig/nslookup.1			patch
+dist/bind/bin/dig/nslookup.c			patch
+dist/bind/bin/dig/nslookup.docbook		patch
+dist/bind/bin/dig/nslookup.html			patch
+dist/bind/bin/dig/include/dig/dig.h		patch
+dist/bind/bin/dnssec/dnssec-keygen.8		patch
+dist/bind/bin/dnssec/dnssec-keygen.c		patch
+dist/bind/bin/dnssec/dnssec-keygen.docbook	patch
+dist/bind/bin/dnssec/dnssec-keygen.html	patch
+dist/bind/bin/dnssec/dnssec-signzone.8		patch
+dist/bind/bin/dnssec/dnssec-signzone.c		patch
+dist/bind/bin/dnssec/dnssec-signzone.docbook	patch
+dist/bind/bin/dnssec/dnssec-signzone.html	patch
+dist/bind/bin/named/client.c			patch
+dist/bind/bin/named/config.c			patch
+dist/bind/bin/named/control.c			patch
+dist/bind/bin/named/lwresd.8			patch
+dist/bind/bin/named/lwresd.docbook		patch
+dist/bind/bin/named/lwresd.html			patch
+dist/bind/bin/named/named.8			patch
+dist/bind/bin/named/named.conf.5		patch
+dist/bind/bin/named/named.conf.docbook		patch
+dist/bind/bin/named/named.conf.html		patch
+dist/bind/bin/named/named.docbook		patch
+dist/bind/bin/named/named.html			patch
+dist/bind/bin/named/query.c			patch
+dist/bind/bin/named/server.c			patch
+dist/bind/bin/named/update.c			patch
+dist/bind/bin/nsupdate/nsupdate.8		patch
+dist/bind/bin/nsupdate/nsupdate.c		patch
+dist/bind/bin/nsupdate/nsupdate.docbook		patch
+dist/bind/bin/nsupdate/nsupdate.html		patch
+dist/bind/bin/rndc/Makefile.in			patch
+dist/bind/bin/rndc/rndc-confgen.docbook		patch
+dist/bind/bin/rndc/rndc.8			patch
+dist/bind/bin/rndc/rndc.conf.5			patch
+dist/bind/bin/rndc/rndc.conf.docbook		patch
+dist/bind/bin/rndc/rndc.conf.html		patch
+dist/bind/bin/rndc/rndc.docbook			patch
+dist/bind/bin/rndc/rndc.html			patch
+dist/bind/bin/tests/compress_test.c		patch
+dist/bind/bin/tests/journalprint.c		patch
+dist/bind/bin/tests/system/start.sh		patch
+dist/bind/bin/tests/system/stop.sh		patch
+dist/bind/bin/tests/system/checknames/ns2/named.conf patch
+dist/bind/bin/tests/system/checknames/ns3/named.conf patch
+dist/bind/bin/tests/system/dlv/ns5/named.conf	patch
+dist/bind/bin/tests/system/dnssec/ns4/named.conf patch
+dist/bind/bin/tests/system/dnssec/ns5/named.conf patch
+dist/bind/bin/tests/system/dnssec/ns6/named.conf patch
+dist/bind/bin/tests/system/lwresd/lwtest.c	patch
+dist/bind/bin/tests/system/lwresd/tests.sh	patch
+dist/bind/bin/tests/system/notify/ns3/named.conf patch
+dist/bind/bin/tests/system/nsupdate/ns2/named.conf patch
+dist/bind/bin/tests/system/resolver/ns1/named.conf patch
+dist/bind/bin/tests/system/rrsetorder/ns3/named.conf patch
+dist/bind/bin/tests/system/stress/ns3/named.conf patch
+dist/bind/bin/tests/system/stress/ns4/named.conf patch
+dist/bind/bin/tests/system/stub/ns3/named.conf	patch
+dist/bind/bin/tests/system/upforwd/ns1/named.conf patch
+dist/bind/bin/tests/system/upforwd/ns2/named.conf patch
+dist/bind/bin/tests/system/upforwd/ns3/named.conf patch
+dist/bind/bin/tests/system/v6synth/ns2/named.conf patch
+dist/bind/bin/tests/system/v6synth/ns3/named.conf patch
+dist/bind/bin/tests/system/xfer/ns3/named.conf	patch
+dist/bind/bin/win32/BINDInstall/BINDInstallDlg.cpp patch
+dist/bind/contrib/dbus/dbus_mgr.c		patch
+dist/bind/contrib/dbus/dbus_service.c		patch
+dist/bind/contrib/dbus/dbus_service.h		patch
+dist/bind/contrib/dlz/bin/dlzbdb/Makefile.in	patch
+dist/bind/contrib/queryperf/configure		patch
+dist/bind/contrib/queryperf/configure.in	patch
+dist/bind/contrib/queryperf/queryperf.c		patch
+dist/bind/contrib/sdb/pgsql/zonetodb.c		patch
+dist/bind/doc/arm/Bv9ARM-book.xml		patch
+dist/bind/doc/arm/Bv9ARM.ch01.html		patch
+dist/bind/doc/arm/Bv9ARM.ch02.html		patch
+dist/bind/doc/arm/Bv9ARM.ch03.html		patch
+dist/bind/doc/arm/Bv9ARM.ch04.html		patch
+dist/bind/doc/arm/Bv9ARM.ch05.html		patch
+dist/bind/doc/arm/Bv9ARM.ch06.html		patch
+dist/bind/doc/arm/Bv9ARM.ch07.html		patch
+dist/bind/doc/arm/Bv9ARM.ch08.html		patch
+dist/bind/doc/arm/Bv9ARM.ch09.html		patch
+dist/bind/doc/arm/Bv9ARM.ch10.html		patch
+dist/bind/doc/arm/Bv9ARM.html			patch
+dist/bind/doc/arm/Bv9ARM.pdf			patch
+dist/bind/doc/arm/Makefile.in			patch
+dist/bind/doc/arm/man.dig.html			patch
+dist/bind/doc/arm/man.dnssec-keygen.html	patch
+dist/bind/doc/arm/man.dnssec-signzone.html	patch
+dist/bind/doc/arm/man.host.html			patch
+dist/bind/doc/arm/man.named-checkconf.html	patch
+dist/bind/doc/arm/man.named-checkzone.html	patch
+dist/bind/doc/arm/man.named.html		patch
+dist/bind/doc/arm/man.rndc-confgen.html		patch
+dist/bind/doc/arm/man.rndc.conf.html		patch
+dist/bind/doc/arm/man.rndc.html			patch
+dist/bind/doc/misc/Makefile.in			patch
+dist/bind/doc/misc/migration			patch
+dist/bind/doc/rfc/index				patch
+dist/bind/doc/xsl/isc-manpage.xsl.in		patch
+dist/bind/lib/bind/api				patch
+dist/bind/lib/bind/config.h.in			patch
+dist/bind/lib/bind/configure			patch
+dist/bind/lib/bind/configure.in			patch
+dist/bind/lib/bind/port_before.h.in		patch
+dist/bind/lib/bind/dst/dst_api.c		patch
+dist/bind/lib/bind/dst/hmac_link.c		patch
+dist/bind/lib/bind/irs/gai_strerror.c		patch
+dist/bind/lib/bind/irs/irs_data.c		patch
+dist/bind/lib/bind/isc/ctl_clnt.c		patch
+dist/bind/lib/bind/make/rules.in		patch
+dist/bind/lib/bind/nameser/ns_parse.c		patch
+dist/bind/lib/bind/resolv/res_data.c		patch
+dist/bind/lib/bind/resolv/res_init.c		patch
+dist/bind/lib/bind9/api				patch
+dist/bind/lib/bind9/check.c			patch
+dist/bind/lib/bind9/win32/DLLMain.c		patch
+dist/bind/lib/dns/adb.c				patch
+dist/bind/lib/dns/api				patch
+dist/bind/lib/dns/dispatch.c			patch
+dist/bind/lib/dns/dnssec.c			patch
+dist/bind/lib/dns/journal.c			patch
+dist/bind/lib/dns/lookup.c			patch
+dist/bind/lib/dns/master.c			patch
+dist/bind/lib/dns/message.c			patch
+dist/bind/lib/dns/openssl_link.c		patch
+dist/bind/lib/dns/openssldh_link.c		patch
+dist/bind/lib/dns/openssldsa_link.c		patch
+dist/bind/lib/dns/rbtdb.c			patch
+dist/bind/lib/dns/rdataslab.c			patch
+dist/bind/lib/dns/resolver.c			patch
+dist/bind/lib/dns/rootns.c			patch
+dist/bind/lib/dns/sdb.c				patch
+dist/bind/lib/dns/sdlz.c			patch
+dist/bind/lib/dns/tsig.c			patch
+dist/bind/lib/dns/validator.c			patch
+dist/bind/lib/dns/view.c			patch
+dist/bind/lib/dns/xfrin.c			patch
+dist/bind/lib/dns/zone.c			patch
+dist/bind/lib/dns/include/dns/db.h		patch
+dist/bind/lib/dns/include/dns/dispatch.h	patch
+dist/bind/lib/dns/include/dns/validator.h	patch
+dist/bind/lib/dns/rdata/generic/dlv_32769.c	patch
+dist/bind/lib/dns/rdata/generic/ds_43.c		patch
+dist/bind/lib/dns/win32/DLLMain.c		patch
+dist/bind/lib/dns/win32/libdns.def		patch
+dist/bind/lib/isc/Makefile.in			patch
+dist/bind/lib/isc/api				patch
+dist/bind/lib/isc/hmacsha.c			patch
+dist/bind/lib/isc/mem.c				patch
+dist/bind/lib/isc/timer.c			patch
+dist/bind/lib/isc/include/isc/platform.h.in	patch
+dist/bind/lib/isc/include/isc/string.h		patch
+dist/bind/lib/isc/powerpc/include/isc/atomic.h	patch
+dist/bind/lib/isc/unix/ifiter_getifaddrs.c	patch
+dist/bind/lib/isc/unix/ifiter_ioctl.c		patch
+dist/bind/lib/isc/unix/net.c			patch
+dist/bind/lib/isc/unix/socket.c			patch
+dist/bind/lib/isc/unix/syslog.c			patch
+dist/bind/lib/isc/win32/DLLMain.c		patch
+dist/bind/lib/isc/win32/condition.c		patch
+dist/bind/lib/isc/win32/interfaceiter.c		patch
+dist/bind/lib/isc/win32/libisc.def		patch
+dist/bind/lib/isc/win32/net.c			patch
+dist/bind/lib/isc/win32/ntpaths.c		patch
+dist/bind/lib/isc/win32/once.c			patch
+dist/bind/lib/isc/win32/socket.c		patch
+dist/bind/lib/isc/win32/include/isc/condition.h	patch
+dist/bind/lib/isc/win32/include/isc/ipv6.h	patch
+dist/bind/lib/isccc/symtab.c			patch
+dist/bind/lib/isccc/win32/DLLMain.c		patch
+dist/bind/lib/isccfg/api			patch
+dist/bind/lib/isccfg/win32/DLLMain.c		patch
+dist/bind/lib/lwres/api				patch
+dist/bind/lib/lwres/context.c			patch
+dist/bind/lib/lwres/getaddrinfo.c		patch
+dist/bind/lib/lwres/getipnode.c			patch
+dist/bind/lib/lwres/lwres_gnba.c		patch
+dist/bind/lib/lwres/man/lwres.docbook		patch
+dist/bind/lib/lwres/man/lwres_buffer.docbook	patch
+dist/bind/lib/lwres/man/lwres_config.docbook	patch
+dist/bind/lib/lwres/man/lwres_context.docbook	patch
+dist/bind/lib/lwres/man/lwres_gabn.docbook	patch
+dist/bind/lib/lwres/man/lwres_gai_strerror.docbook patch
+dist/bind/lib/lwres/man/lwres_getaddrinfo.docbook patch
+dist/bind/lib/lwres/man/lwres_gethostent.docbook patch
+dist/bind/lib/lwres/man/lwres_getipnode.docbook	patch
+dist/bind/lib/lwres/man/lwres_getnameinfo.docbook patch
+dist/bind/lib/lwres/man/lwres_getrrsetbyname.docbook patch
+dist/bind/lib/lwres/man/lwres_gnba.docbook	patch
+dist/bind/lib/lwres/man/lwres_hstrerror.docbook	patch
+dist/bind/lib/lwres/man/lwres_inetntop.docbook	patch
+dist/bind/lib/lwres/man/lwres_noop.docbook	patch
+dist/bind/lib/lwres/man/lwres_packet.docbook	patch
+dist/bind/lib/lwres/man/lwres_resutil.docbook	patch
+dist/bind/lib/lwres/win32/DLLMain.c		patch
+dist/bind/lib/lwres/win32/liblwres.dsp		patch
+dist/bind/lib/lwres/win32/liblwres.mak		patch
+dist/bind/lib/lwres/win32/lwconfig.c		patch
+dist/bind/lib/lwres/win32/include/lwres/platform.h patch
+dist/bind/make/rules.in				patch
+dist/bind/win32utils/BuildAll.bat		patch
+dist/bind/win32utils/BuildSetup.bat		patch
+dist/bind/win32utils/readme1st.txt		patch
+dist/bind/win32utils/updateopenssl.pl		patch
+doc/3RDPARTY					patch
+usr.sbin/bind/Makefile.inc			patch
+dist/bind/contrib/queryperf/config.h.in		patch
+dist/bind/contrib/sdb/sqlite/README.sdb_sqlite	patch
+dist/bind/contrib/sdb/sqlite/sqlitedb.cx	patch
+dist/bind/contrib/sdb/sqlite/sqlitedb.h		patch
+dist/bind/contrib/sdb/sqlite/zone2sqlite.c	patch
+dist/bind/doc/rfc/rfc4398.txt			patch
+dist/bind/doc/rfc/rfc4408.txt			patch
+dist/bind/doc/rfc/rfc4470.txt			patch
+dist/bind/doc/rfc/rfc4634.txt			patch
+dist/bind/doc/rfc/rfc4641.txt			patch
+dist/bind/lib/bind/port/sunos/include/paths.h	patch
+dist/bind/lib/isc/alpha/Makefile.in		patch
+dist/bind/lib/isc/alpha/include/Makefile.in	patch
+dist/bind/lib/isc/alpha/include/isc/Makefile.in	patch
+dist/bind/lib/isc/ia64/Makefile.in		patch
+dist/bind/lib/isc/ia64/include/Makefile.in	patch
+dist/bind/lib/isc/ia64/include/isc/Makefile.in	patch
+dist/bind/lib/isc/mips/Makefile.in		patch
+dist/bind/lib/isc/mips/include/Makefile.in	patch
+dist/bind/lib/isc/mips/include/isc/Makefile.in	patch
+dist/bind/lib/isc/noatomic/Makefile.in		patch
+dist/bind/lib/isc/noatomic/include/Makefile.in	patch
+dist/bind/lib/isc/noatomic/include/isc/Makefile.in patch
+dist/bind/lib/isc/powerpc/Makefile.in		patch
+dist/bind/lib/isc/powerpc/include/Makefile.in	patch
+dist/bind/lib/isc/powerpc/include/isc/Makefile.in patch
+dist/bind/lib/isc/sparc64/Makefile.in		patch
+dist/bind/lib/isc/sparc64/include/Makefile.in	patch
+dist/bind/lib/isc/sparc64/include/isc/Makefile.in patch
+dist/bind/lib/isc/x86_32/Makefile.in		patch
+dist/bind/lib/isc/x86_32/include/Makefile.in	patch
+dist/bind/lib/isc/x86_32/include/isc/Makefile.in patch
+dist/bind/lib/isc/x86_64/Makefile.in		patch
+dist/bind/lib/isc/x86_64/include/Makefile.in	patch
+dist/bind/lib/isc/x86_64/include/isc/Makefile.in patch
+dist/bind/lib/lwres/win32/socket.c		patch
+dist/bind/win32utils/BuildOpenSSL.bat		patch
+
+	Update BIND to 9.4.2-P1 and turn off pthreads.
+	[adrianp, ticket #1168]	
+
+etc/named.conf					1.5
+
+	The default named.conf should not contain a query-source statement.
+	Comment it out and describe what it's for and why not to use it.
+	[dholland, ticket #1169]
+
+sys/net/if_pppoe.c				1.88
+        Apply patch from Yasuoka Masahiko in PR kern/39321: fix length check
+        when parsing pppoe discovery phase packets.
+	[martin, ticket #1179]
+
+crypto/dist/ipsec-tools/ChangeLog			1.91.4.64
+crypto/dist/ipsec-tools/NEWS				1.1.1.6.6.3
+crypto/dist/ipsec-tools/configure.ac			1.3.4.10
+crypto/dist/ipsec-tools/src/libipsec/Makefile.am	1.2.4.1
+crypto/dist/ipsec-tools/src/libipsec/pfkey.c		1.13.4.2
+crypto/dist/ipsec-tools/src/racoon/Makefile.am		1.3.4.3
+crypto/dist/ipsec-tools/src/racoon/admin.c		1.17.6.2
+crypto/dist/ipsec-tools/src/racoon/cfparse.y		1.18.4.7
+crypto/dist/ipsec-tools/src/racoon/cftoken.l		1.11.4.2
+crypto/dist/ipsec-tools/src/racoon/crypto_openssl.c	1.11.6.4
+crypto/dist/ipsec-tools/src/racoon/eaytest.c		1.7.6.2
+crypto/dist/ipsec-tools/src/racoon/grabmyaddr.c		1.4.6.3
+crypto/dist/ipsec-tools/src/racoon/handler.c		1.9.6.7
+crypto/dist/ipsec-tools/src/racoon/handler.h		1.9.6.1
+crypto/dist/ipsec-tools/src/racoon/ipsec_doi.c		1.23.4.9
+crypto/dist/ipsec-tools/src/racoon/isakmp.c		1.20.6.11
+crypto/dist/ipsec-tools/src/racoon/isakmp_cfg.c		1.12.6.3
+crypto/dist/ipsec-tools/src/racoon/isakmp_inf.c		1.14.4.14
+crypto/dist/ipsec-tools/src/racoon/kmpstat.c		1.4.6.2
+crypto/dist/ipsec-tools/src/racoon/misc.c		1.4.6.1
+crypto/dist/ipsec-tools/src/racoon/misc.h		1.4.6.1
+crypto/dist/ipsec-tools/src/racoon/oakley.c		1.9.6.3
+crypto/dist/ipsec-tools/src/racoon/pfkey.c		1.18.4.5
+crypto/dist/ipsec-tools/src/racoon/plog.c		1.4.6.1
+crypto/dist/ipsec-tools/src/racoon/plog.h		1.4.6.1
+crypto/dist/ipsec-tools/src/racoon/proposal.c		1.13.4.2
+crypto/dist/ipsec-tools/src/racoon/racoon.conf.5	1.34.4.3
+crypto/dist/ipsec-tools/src/racoon/racoonctl.c		1.7.6.1
+crypto/dist/ipsec-tools/src/racoon/remoteconf.c		1.9.4.2
+crypto/dist/ipsec-tools/src/setkey/Makefile.am		1.1.1.2.8.1
+lib/libipsec/package_version.h				1.18.2.2 via patch
+
+	Upgrade ipsec-tools to release 0.7.1.
+	[manu, ticket #1183]
+
+sys/arch/hppa/hppa/copy.S			1.8
+
+	Fix potential kernel / userland memory corruption in copy{in,out}str
+	on hppa.
+	[skrll, ticket #1180]
+
+sys/dev/pci/if_lii.c				1.5
+
+	Fix multicast (multicast hash table were calculated incorrectly).
+	[sborrill, ticket #1164]
+
+gnu/dist/binutils/bfd/elflink.c			1.8
+
+	Set the size of undefined symbols to 0
+	[matt, ticket #1167]
+
+usr.sbin/postinstall/postinstall		1.65
+
+	Make sure to update root.cache too.
+	[matt, ticket #1170]
+
+sys/dev/pci/if_bge.c				1.149
+sys/dev/pci/if_bgereg.h				1.47
+
+	Add support for Broadcom 5722 and identify 5755 ASICs.
+	[sborrill, ticket #1172]
+
+sys/arch/powerpc/powerpc/trap_subr.S		1.65
+
+	Fix bug where SRR1 (%r2) was being accidently misused and modifed
+	in place of segreg (%r1).
+	> From Konrad Karpowicz <konradk at pacomp dot pl>.
+	[matt, ticket #1174]
+
+sys/netbt/l2cap_lower.c				1.8
+
+	drop L2CAP packets that exceed the negotiated MTU
+	[plunky, ticket #1176]
+
+gnu/dist/grep/src/search.c			1.3
+
+	fix grep's -w
+	[perry, ticket #1177]
+
+sys/arch/macppc/dev/ofb.c			1.61
+
+	fix typo, now wsfb on ofb should work properly
+	[macallan, ticket #1178]
+
+sys/arch/mips/mips/mips_machdep.c		1.202
+
+	Add CPU_MIPS_DOUBLE_COUNT to R10K family CPUs and
+	also remove (unused?) MIPS_NOT_SUPP flag from them.
+
+	Problem on R10k O2 is reported by martin@ on port-sgimips.
+	[tsutsui, ticket #1181]
+
+lib/libsdp/search.c				1.2
+
+	Fix problem with handling SDP contination state, from FreeBSD
+
+	(specifically, this manifested itself when reading a long HID
+	descriptor from a Microsoft Mouse.)
+	[plunky, ticket #1182]
+
+sys/net/if_spppsubr.c				1.111
+
+	PR kern/39280: Uninitialized callout stopped in if_spppsubr layer
+	in kernels without options INET6.
+	[martin, ticket #1185]
+
+sys/compat/linux32/common/linux32_ioctl.c	1.10 via patch
+sys/compat/ossaudio/ossaudiovar.h		1.14
+
+	Add ossaudio support for COMPAT_LINUX32, with help from mrg. With this
+	change, audio now works on amd64 with native firefox, nspluginwrapper,
+	and the 32-bit linux flash binaries.
+	[jmcneill, ticket #1051]
+
+lib/libsdp/sdp.h				1.3, 1.4
+usr.sbin/sdpd/Makefile				1.4 via patch
+usr.sbin/sdpd/gn.c				1.1
+usr.sbin/sdpd/nap.c				1.1
+usr.sbin/sdpd/panu.c				1.1
+usr.sbin/sdpd/profile.c				1.5
+usr.sbin/sdpd/profile.h				1.3
+
+	add the knowledge to create service records for "Personal Area
+	Networking" profiles
+		NAP     Network Access Point
+		GN      Group Network
+		PANU    Personal Area Networking User
+	[plunky, ticket #1184]
+
+sys/net/if_pppoe.c				1.89 - 1.92
+
+	pppoe improvements on memory allocation failures and on reconnect.
+	[martin, ticket #1186]
+
+sys/netinet6/mld6.c				1.47
+
+	Fix from matt@ for malformed ICMPv6 MLD query (CVE-2008-2464).
+	[adrianp, ticket #1187]
+
+dist/bind/CHANGES				patch
+dist/bind/COPYRIGHT				patch
+dist/bind/configure				patch
+dist/bind/configure.in				patch
+dist/bind/version				patch
+dist/bind/bin/dig/dighost.c			patch
+dist/bind/bin/named/client.c			patch
+dist/bind/bin/named/config.c			patch
+dist/bind/bin/named/controlconf.c		patch
+dist/bind/bin/named/interfacemgr.c		patch
+dist/bind/bin/named/lwresd.c			patch
+dist/bind/bin/named/named.conf.docbook		patch
+dist/bind/bin/named/server.c			patch
+dist/bind/bin/rndc/rndc.c			patch
+dist/bind/bin/tests/sig0_test.c			patch
+dist/bind/bin/tests/sock_test.c			patch
+dist/bind/bin/tests/system/ifconfig.sh		patch
+dist/bind/doc/arm/Bv9ARM-book.xml		patch
+dist/bind/lib/bind/configure			patch
+dist/bind/lib/bind/configure.in			patch
+dist/bind/lib/dns/api				patch
+dist/bind/lib/dns/dispatch.c			patch
+dist/bind/lib/dns/request.c			patch
+dist/bind/lib/dns/resolver.c			patch
+dist/bind/lib/dns/xfrin.c			patch
+dist/bind/lib/dns/include/dns/dispatch.h	patch
+dist/bind/lib/isc/api				patch
+dist/bind/lib/isc/timer.c			patch
+dist/bind/lib/isc/include/isc/resource.h	patch
+dist/bind/lib/isc/include/isc/socket.h		patch
+dist/bind/lib/isc/include/isc/timer.h		patch
+dist/bind/lib/isc/unix/app.c			patch
+dist/bind/lib/isc/unix/resource.c		patch
+dist/bind/lib/isc/unix/socket.c			patch
+dist/bind/lib/isc/unix/socket_p.h		patch
+dist/bind/lib/isc/win32/libisc.def		patch
+dist/bind/lib/isc/win32/resource.c		patch
+dist/bind/lib/isc/win32/socket.c		patch
+dist/bind/lib/isccfg/api			patch
+dist/bind/lib/isccfg/namedconf.c		patch
+doc/3RDPARTY					patch
+
+	Update BIND to 9.4.2-P2 (performance and bug fixes)
+	[adrianp, ticket #1189]
+
+sys/netinet/if_arp.c				1.141
+
+	Missing "\n" in log(9) messages.
+	[uebayasi, ticket #1191]
+
+sys/dev/bio.c				patch
+sys/dev/biovar.h			patch
+sys/dev/pci/arcmsr.c			patch
+sys/dev/pci/arcmsrvar.h			patch
+sbin/bioctl/Makefile			patch
+sbin/bioctl/bioctl.8			patch
+sbin/bioctl/bioctl.c			patch
+sbin/bioctl/dehumanize_number.c		patch
+sbin/bioctl/strtonum.c			patch
+sbin/bioctl/strtonum.h			patch
+
+	Port bioctl(8) and arcmsr(4) from current:
+        bioctl(8): Rewritten to handle new features like creating/removing
+		hot-spare, pass-through disks and RAID volumes, start/stop
+		consistency checks in volumes and others.
+	arcmsr(4): Added support to create/remove hot-spare, pass-through
+		disks and RAID volumes, start/stop consistency checks
+		in volumes as well as showing information about physical
+		disks (even if they are marked as hot-spare, pass-through
+		or unused).
+	[christos, ticket #1175]
+
+gnu/dist/gcc4/gcc/config.gcc			1.18
+gnu/dist/gcc4/gcc/configure.ac			1.9 via patch
+gnu/dist/gcc4/gcc/configure			regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68000/auto-host.h    regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68000/configargs.h   regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68000/defs.mk        regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68000/tm.h           regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68k/auto-host.h      regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68k/configargs.h     regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68k/defs.mk          regen (via patch)
+src/gnu/usr.bin/gcc4/arch/m68k/tm.h             regen (via patch)
+src/gnu/lib/crtstuff4/arch/m68000.mk            regen (via patch)
+src/gnu/lib/crtstuff4/arch/m68k.mk              regen (via patch)
+src/gnu/lib/libgcc4/arch/m68000.mk              regen (via patch)
+src/gnu/lib/libgcc4/arch/m68k.mk                regen (via patch)
+
+	config.gcc: Do not completely overwrite tm_defines in m68k specific
+	    target selection, it may have been set globaly before for
+	    NETBSD_ENABLE_PTHREADS.  This caused wrong (old, pre NetBSD 2.0)
+	    builtin specs for m68k.  Fixes PR toolchain/38931.
+	configure.ac:
+	    make the AC_CACHE_CHECK(__stack_chk_fail, [ ... ]) cross-compile
+	    friendly.
+	Rerun mknative for m68k after config.gcc and configure changes.
+	[martin, ticket #1188]
+
+sys/arch/xen/include/xenbus.h			1.8 (via patch)
+sys/arch/xen/xen/xbd_xenbus.c			1.24 (via patch)
+sys/arch/xen/xen/xbdback_xenbus.c		1.15 (via patch)
+sys/arch/xen/xenbus/xenbus_xs.c			1.14 (via patch)
+
+	Add swedge support to xbd backed, and make the virtual block device
+	handle sizes larger than 4TB. Tested by Jukka Marin.  PR#37370.
+	[bouyer, ticket #1149]
+
+usr.sbin/ypserv/ypserv/ypserv.8			1.19
+usr.sbin/ypserv/ypserv/ypserv.c			1.22
+
+	Disable hostname lookup for ypserv(8) libwrap access control,
+	as they can cause performance problems while ypserv is blocked
+	waiting for the DNS to respond.  Patch from Doug Needham,
+	initially discussed here:
+          http://mail-index.netbsd.org/tech-userlevel/2006/11/01/0014.html
+	[chuck, ticket #1150]
+
+sys/arch/xen/xen/xbd_xenbus.c			1.30
+	xbd_map_align() can be called from interrupt context (though
+	xbd_handler()->dk_iodone()->dk_start()->xbd_start()), so don't try
+	to sleep in uvm_km_alloc().
+	[bouyer, ticket #1163]
+
+sys/arch/x86/x86/bus_dma.c			1.45
+	port-i386/38935: Add appropriate x86_lfence or x86_mfence calls to
+	bus_dmamap_sync(), depending on the BUS_DMASYNC flag. This makes sure
+	that the kernel reads data from main memory in the intended order.
+	[bouyer, ticket #1165]
+
+sys/dev/usb/ehci.c				1.138 (via patch)
+sys/dev/usb/ehcivar.h				1.31 (via patch)
+sys/dev/usb/ohci.c				1.195 (via patch)
+sys/dev/usb/ohcivar.h				1.45 (via patch)
+sys/dev/usb/uhcivar.h				1.45 (via patch)
+sys/dev/usb/uhci.c				1.223 (via patch)
+sys/dev/usb/usb_mem.c				1.37 (via patch)
+sys/dev/usb/usb_mem.h				1.27 (via patch)
+	Add appropriate bus_dmamap_sync() calls to uhci(4), ohci(4) and
+	ehci(4).  This adds explicit barriers between DMA descriptors
+	reads/writes, fixing race conditions on DMA descriptors access
+	with the controller.
+	[bouyer, ticket #1166]
 

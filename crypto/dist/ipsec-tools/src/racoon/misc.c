@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: misc.c,v 1.4.4.1 2008/09/04 08:46:10 skrll Exp $	*/
 
 /*	$KAME: misc.c,v 1.23 2001/08/16 14:37:29 itojun Exp $	*/
 
@@ -73,7 +73,7 @@ bindump(buf0, len)
 #endif
 
 int
-hexdump(buf0, len)
+racoon_hexdump(buf0, len)
 	void *buf0;
 	size_t len;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_lower.c,v 1.1.24.1 2007/09/03 07:05:10 wrstuden Exp $	*/
+/*	$NetBSD: l2cap_lower.c,v 1.1.24.2 2008/09/04 08:46:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.24.1 2007/09/03 07:05:10 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.1.24.2 2008/09/04 08:46:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -137,6 +137,7 @@ l2cap_recv_frame(struct mbuf *m, struct hci_link *link)
 
 	chan = l2cap_cid_lookup(hdr.dcid);
 	if (chan != NULL && chan->lc_link == link
+	    && chan->lc_imtu >= hdr.length
 	    && chan->lc_state == L2CAP_OPEN) {
 		(*chan->lc_proto->input)(chan->lc_upper, m);
 		return;

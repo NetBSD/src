@@ -1,10 +1,10 @@
-/*	$NetBSD: string.h,v 1.1.1.3.6.1 2007/06/03 17:24:49 wrstuden Exp $	*/
+/*	$NetBSD: string.h,v 1.1.1.3.6.2 2008/09/04 08:46:30 skrll Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,20 +17,24 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: string.h,v 1.12.18.3 2005/08/16 04:39:05 marka Exp */
+/* Id: string.h,v 1.12.18.6 2007/09/13 05:04:01 each Exp */
 
 #ifndef ISC_STRING_H
 #define ISC_STRING_H 1
 
 /*! \file */
 
-#include <string.h>
-
 #include <isc/formatcheck.h>
 #include <isc/int.h>
 #include <isc/lang.h>
 #include <isc/platform.h>
 #include <isc/types.h>
+
+#include <string.h>
+
+#ifdef ISC_PLATFORM_HAVESTRINGSH
+#include <strings.h>
+#endif
 
 #define ISC_STRING_MAGIC 0x5e
 
@@ -136,7 +140,8 @@ isc_string_append_truncate(char *target, size_t size, const char *source);
  */
 
 isc_result_t
-isc_string_printf(char *target, size_t size, const char *format, ...);
+isc_string_printf(char *target, size_t size, const char *format, ...)
+	ISC_FORMAT_PRINTF(3, 4);
 /*
  * Print 'format' to 'target' which is a pointer to a string of at least
  * 'size' bytes.

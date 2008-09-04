@@ -1,4 +1,4 @@
-/*	$NetBSD: wsksymdef.h,v 1.56 2006/04/01 23:02:32 christos Exp $ */
+/*	$NetBSD: wsksymdef.h,v 1.56.24.1 2008/09/04 08:46:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -572,6 +572,7 @@
 #define KB_METAESC		0x0020	/* generate ESC prefix on ALT-key */
 #define KB_IOPENER		0x0040	/* f1-f12 -> ESC,f1-f11 */
 #define KB_MACHDEP		0x0080	/* machine dependent */
+#define KB_COLEMAK	    0x00010000	/* Colemak layout */
 
 /*
  * Define keyboard type and texts all in one table.
@@ -618,6 +619,7 @@ enum { KB_ENC_FUN(KBF_ENUM) KB_NEXT=0x1500 };
 	{ KB_DVORAK,	"dvorak" }, \
 	{ KB_METAESC,	"metaesc" }, \
 	{ KB_IOPENER,	"iopener" }, \
-	{ KB_MACHDEP,	"machdep" }
+	{ KB_MACHDEP,	"machdep" }, \
+	{ KB_COLEMAK,	"colemak" }
 
 #endif /* !_DEV_WSCONS_WSKSYMDEF_H_ */
