@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.4 2007/12/25 18:33:35 perry Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.5 2008/09/04 17:45:00 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -39,6 +39,7 @@ typedef int linux32_pid_t;
 typedef int32_t linux32_clock_t;
 typedef int32_t linux32_time_t;
 typedef int32_t linux32_off_t;
+typedef uint32_t linux32_ino_t;
 
 #define LINUX32_STAT64_HAS_NSEC   1
 struct linux32_stat64 {
