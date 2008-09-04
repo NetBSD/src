@@ -1,4 +1,4 @@
-/*	$NetBSD: ciss.c,v 1.12 2008/05/25 20:08:34 mhitch Exp $	*/
+/*	$NetBSD: ciss.c,v 1.13 2008/09/04 16:47:04 mhitch Exp $	*/
 /*	$OpenBSD: ciss.c,v 1.14 2006/03/13 16:02:23 mickey Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.12 2008/05/25 20:08:34 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciss.c,v 1.13 2008/09/04 16:47:04 mhitch Exp $");
 
 #include "bio.h"
 
@@ -362,7 +362,7 @@ ciss_attach(struct ciss_softc *sc)
 	sc->sc_channel.chan_bustype = &scsi_bustype;
 	sc->sc_channel.chan_channel = 0;
 	sc->sc_channel.chan_ntargets = sc->maxunits;
-	sc->sc_channel.chan_nluns = 8;	/* Maybe should be 1? */
+	sc->sc_channel.chan_nluns = 1;	/* ciss doesn't really have SCSI luns */
 	sc->sc_channel.chan_openings = sc->maxcmd / (sc->maxunits? sc->maxunits : 1);
 #if NBIO > 0
 	/* XXX Reserve some ccb's for sensor and bioctl. */
