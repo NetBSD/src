@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1092 2008/09/04 12:21:26 pooka Exp $
+# $NetBSD: mi,v 1.1093 2008/09/04 20:37:30 agc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4694,6 +4694,7 @@
 ./usr/share/man/html8/rump_msdos.html		man-sysutil-htmlman	puffs,html
 ./usr/share/man/html8/rump_ntfs.html		man-sysutil-htmlman	puffs,html
 ./usr/share/man/html8/rump_syspuffs.html	man-sysutil-htmlman	puffs,html
+./usr/share/man/html8/rump_sysvbfs.html		man-sysutil-htmlman	puffs,html
 ./usr/share/man/html8/rump_tmpfs.html		man-sysutil-htmlman	puffs,html
 ./usr/share/man/html8/rump_udf.html		man-sysutil-htmlman	puffs,html
 ./usr/share/man/html8/rusersd.html		man-netutil-htmlman	html
