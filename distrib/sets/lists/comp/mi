@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1185 2008/09/04 12:07:29 pooka Exp $
+#	$NetBSD: mi,v 1.1186 2008/09/04 12:21:26 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2473,8 +2473,11 @@
 ./usr/lib/librumpfs_ntfs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_syspuffs.a			comp-c-lib
-./usr/lib/librumpfs_syspuffs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_syspuffs_g.a	-unknown-	debuglib
 ./usr/lib/librumpfs_syspuffs_p.a		comp-c-proflib		profile
+./usr/lib/librumpfs_sysvbfs.a			comp-c-lib
+./usr/lib/librumpfs_sysvbfs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_sysvbfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_tmpfs.a			comp-c-lib
 ./usr/lib/librumpfs_tmpfs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_tmpfs_p.a			comp-c-proflib		profile
@@ -3356,6 +3359,7 @@
 ./usr/libdata/debug/usr/sbin/rump_msdos.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_ntfs.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_syspuffs.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_sysvbfs.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_tmpfs.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_udf.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rwhod.debug	comp-netutil-debug	debug
