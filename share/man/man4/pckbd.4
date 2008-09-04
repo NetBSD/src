@@ -1,4 +1,4 @@
-.\" $NetBSD: pckbd.4,v 1.14 2004/07/06 04:00:23 fredb Exp $
+.\" $NetBSD: pckbd.4,v 1.14.14.1 2008/09/04 08:46:43 skrll Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -57,7 +57,7 @@ at runtime.
 Other mappings can be used if the whole keymap is replaced by means of
 .Xr wsconsctl 8 .
 The builtin mappings are at this time:
-.Bl -column " KB_US|KB_DVORAK" "wsconsctl" "language"
+.Bl -column " KB_US|KB_COLEMAK" "wsconsctl" "language"
 .It Sy "option" Ta Sy "wsconsctl" Ta Sy "language"
 .It Li KB_US Ta us Ta English/US keyboard mapping (default)
 .It Li KB_DE Ta de Ta German with
@@ -75,6 +75,8 @@ The builtin mappings are at this time:
 .It Ta Ta interface (e.g., LK461)
 .It Li "KB_US|KB_DVORAK" Ta us.dvorak Ta English/US keyboard with
 .It Ta Ta Do Dvorak Dc layout
+.It Li "KB_US|KB_COLEMAK" Ta us.colemak Ta English/US keyboard with
+.It Ta Ta Do Colemak Dc layout
 .It Li KB_NO Ta no Ta Norwegian with
 .Dq dead accents
 .It Li KB_PT Ta pt Ta Portuguese

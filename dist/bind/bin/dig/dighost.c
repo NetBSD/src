@@ -1,10 +1,10 @@
-/*	$NetBSD: dighost.c,v 1.1.1.4.6.1 2007/06/03 17:19:59 wrstuden Exp $	*/
+/*	$NetBSD: dighost.c,v 1.1.1.4.6.2 2008/09/04 08:46:13 skrll Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dighost.c,v 1.259.18.39 2007/02/14 23:45:43 marka Exp */
+/* Id: dighost.c,v 1.259.18.43.10.3 2008/07/23 23:16:43 marka Exp */
 
 /*! \file
  *  \note
@@ -146,6 +146,7 @@ static idn_result_t	append_textname(char *name, const char *origin,
 static void		idn_check_result(idn_result_t r, const char *msg);
 
 #define MAXDLEN		256
+int  idnoptions	= 0;
 #endif
 
 /*%
@@ -1277,9 +1278,7 @@ clear_query(dig_query_t *query) {
  */
 static isc_boolean_t
 try_clear_lookup(dig_lookup_t *lookup) {
-	dig_server_t *s;
 	dig_query_t *q;
-	void *ptr;
 
 	REQUIRE(lookup != NULL);
 
@@ -1300,7 +1299,16 @@ try_clear_lookup(dig_lookup_t *lookup) {
 	 * At this point, we know there are no queries on the lookup,
 	 * so can make it go away also.
 	 */
-	debug("cleared");
+	destroy_lookup(lookup);
+	return (ISC_TRUE);
+}
+
+void
+destroy_lookup(dig_lookup_t *lookup) {
+	dig_server_t *s;
+	void *ptr;
+
+	debug("destroy");
 	s = ISC_LIST_HEAD(lookup->my_server_list);
 	while (s != NULL) {
 		debug("freeing server %p belonging to %p", s, lookup);
@@ -1325,7 +1333,6 @@ try_clear_lookup(dig_lookup_t *lookup) {
 		dst_context_destroy(&lookup->tsigctx);
 
 	isc_mem_free(mctx, lookup);
-	return (ISC_TRUE);
 }
 
 /*%
@@ -1818,7 +1825,7 @@ setup_lookup(dig_lookup_t *lookup) {
 				     sizeof(utf8_textname));
 		idn_check_result(mr, "append origin to textname");
 	}
-	mr = idn_encodename(IDN_LOCALMAP | IDN_NAMEPREP | IDN_ASCCHECK |
+	mr = idn_encodename(idnoptions | IDN_LOCALMAP | IDN_NAMEPREP |
 			    IDN_IDNCONV | IDN_LENCHECK, utf8_textname,
 			    idn_textname, sizeof(idn_textname));
 	idn_check_result(mr, "convert UTF-8 textname to IDN encoding");
@@ -2212,14 +2219,15 @@ send_tcp_connect(dig_query_t *query) {
 	sockcount++;
 	debug("sockcount=%d", sockcount);
 	if (specified_source)
-		result = isc_socket_bind(query->sock, &bind_address);
+		result = isc_socket_bind(query->sock, &bind_address,
+					 ISC_SOCKET_REUSEADDRESS);
 	else {
 		if ((isc_sockaddr_pf(&query->sockaddr) == AF_INET) &&
 		    have_ipv4)
 			isc_sockaddr_any(&bind_any);
 		else
 			isc_sockaddr_any6(&bind_any);
-		result = isc_socket_bind(query->sock, &bind_any);
+		result = isc_socket_bind(query->sock, &bind_any, 0);
 	}
 	check_result(result, "isc_socket_bind");
 	bringup_timer(query, TCP_TIMEOUT);
@@ -2266,11 +2274,12 @@ send_udp(dig_query_t *query) {
 		sockcount++;
 		debug("sockcount=%d", sockcount);
 		if (specified_source) {
-			result = isc_socket_bind(query->sock, &bind_address);
+			result = isc_socket_bind(query->sock, &bind_address,
+						 ISC_SOCKET_REUSEADDRESS);
 		} else {
 			isc_sockaddr_anyofpf(&bind_any,
 					isc_sockaddr_pf(&query->sockaddr));
-			result = isc_socket_bind(query->sock, &bind_any);
+			result = isc_socket_bind(query->sock, &bind_any, 0);
 		}
 		check_result(result, "isc_socket_bind");
 
@@ -3893,7 +3902,7 @@ get_trusted_key(isc_mem_t *mctx)
 		       filename);
 		return (ISC_R_FAILURE);
 	}
-	while (fgets(buf, 1500, fp) != NULL) {
+	while (fgets(buf, sizeof(buf), fp) != NULL) {
 		result = opentmpkey(mctx,"tmp_file", &filetemp, &fptemp);
 		if (result != ISC_R_SUCCESS) {
 			fclose(fp);

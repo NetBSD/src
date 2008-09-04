@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.h,v 1.2 2006/08/17 20:13:31 plunky Exp $	*/
+/*	$NetBSD: sdp.h,v 1.2.4.1 2008/09/04 08:46:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 /*
  * sdp.h
  *
- * Copyright (c) 2001-2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>
+ * Copyright (c) 2001-2003, 2008 Maksim Yevmenkin <m_evmenkin@yahoo.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,7 +57,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: sdp.h,v 1.2 2006/08/17 20:13:31 plunky Exp $
+ * $Id: sdp.h,v 1.2.4.1 2008/09/04 08:46:43 skrll Exp $
  * $FreeBSD: src/lib/libsdp/sdp.h,v 1.5 2005/05/27 19:11:33 emax Exp $
  */
 
@@ -588,6 +588,42 @@ struct sdp_sp_profile
 };
 typedef struct sdp_sp_profile	sdp_sp_profile_t;
 typedef struct sdp_sp_profile *	sdp_sp_profile_p;
+
+struct sdp_nap_profile
+{
+	uint8_t		reserved;
+	uint8_t		load_factor;
+	uint16_t	psm;
+	uint16_t	security_description;
+	uint16_t	net_access_type;
+	uint32_t	max_net_access_rate;
+};
+typedef struct sdp_nap_profile		sdp_nap_profile_t;
+typedef struct sdp_nap_profile *	sdp_nap_profile_p;
+
+struct sdp_gn_profile
+{
+	uint8_t		reserved;
+	uint8_t		load_factor;
+	uint16_t	psm;
+	uint16_t	security_description;
+	uint16_t	reserved2;
+	uint32_t	reserved3;
+};
+typedef struct sdp_gn_profile		sdp_gn_profile_t;
+typedef struct sdp_gn_profile *		sdp_gn_profile_p;
+
+struct sdp_panu_profile
+{
+	uint8_t		reserved;
+	uint8_t		load_factor;
+	uint16_t	psm;
+	uint16_t	security_description;
+	uint16_t	reserved2;
+	uint32_t	reserved3;
+};
+typedef struct sdp_panu_profile		sdp_panu_profile_t;
+typedef struct sdp_panu_profile *	sdp_panu_profile_p;
 
 int32_t	sdp_register_service	(void *xss, uint16_t uuid,
 				 bdaddr_t *bdaddr, uint8_t *data,

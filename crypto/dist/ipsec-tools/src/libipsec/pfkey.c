@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.11.2.1.2.1 2007/09/03 06:51:06 wrstuden Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.11.2.1.2.2 2008/09/04 08:46:10 skrll Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -1788,7 +1788,7 @@ int
 pfkey_open()
 {
 	int so;
-	const int bufsiz = 128 * 1024;	/*is 128K enough?*/
+	int bufsiz = 128 * 1024;	/*is 128K enough?*/
 
 	if ((so = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) < 0) {
 		__ipsec_set_strerror(strerror(errno));
@@ -1801,7 +1801,12 @@ pfkey_open()
 	 */
 	(void)setsockopt(so, SOL_SOCKET, SO_SNDBUF, &bufsiz, sizeof(bufsiz));
 	(void)setsockopt(so, SOL_SOCKET, SO_RCVBUF, &bufsiz, sizeof(bufsiz));
-
+	bufsiz = 256 * 1024;
+	(void)setsockopt(so, SOL_SOCKET, SO_RCVBUF, &bufsiz, sizeof(bufsiz));
+	bufsiz = 512 * 1024;
+	(void)setsockopt(so, SOL_SOCKET, SO_RCVBUF, &bufsiz, sizeof(bufsiz));
+	bufsiz = 1024 * 1024;
+	(void)setsockopt(so, SOL_SOCKET, SO_RCVBUF, &bufsiz, sizeof(bufsiz));
 	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return so;
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: lwconfig.c,v 1.1.1.1.12.1 2007/06/03 17:25:35 wrstuden Exp $	*/
+/*	$NetBSD: lwconfig.c,v 1.1.1.1.12.2 2008/09/04 08:46:41 skrll Exp $	*/
 
 /*
- * Copyright (C) 2004, 2006  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2006, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2002  Internet Software Consortium.
  *
- * Permission to use, copy, modify, and distribute this software for any
+ * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lwconfig.c,v 1.2.18.2 2006/10/03 23:50:51 marka Exp */
+/* Id: lwconfig.c,v 1.2.18.5 2007/08/28 07:20:06 tbox Exp */
 
 /*
  * We do this so that we may incorporate everything in the main routines
@@ -69,10 +69,9 @@ get_win32_searchlist(lwres_context_t *ctx) {
 		if (RegQueryValueEx(hKey, "SearchList", NULL, NULL,
 			(LPBYTE)searchlist, &searchlen) != ERROR_SUCCESS)
 			keyFound = FALSE;
+		RegCloseKey(hKey);
 	}
 	
-	RegCloseKey(hKey);
-
 	confdata->searchnxt = 0;
 
 	idx = 0;
