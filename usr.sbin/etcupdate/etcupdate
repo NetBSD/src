@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.37 2008/04/30 08:20:03 martin Exp $
+# $NetBSD: etcupdate,v 1.38 2008/09/05 06:04:12 christos Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -45,10 +45,11 @@
 PATH="/sbin:/usr/sbin:/bin:/usr/bin:${PATH}"
 
 # Default settings
+PROG="${0##*/}"
 TEMPROOT="${TEMPROOT:=/tmp/temproot}"
 PAGER="${PAGER:=/usr/bin/more}"
-SWIDTH=`stty size | awk '{w=$2}END{if(w==0){w=80}print w}'`
-WIDTH="${WIDTH:=${SWIDTH}}"
+SWIDTH="$(stty size | awk '{w=$2}END{if(w==0){w=80}print w}')"
+WIDTH="${WIDTH:="${SWIDTH}"}"
 DIFF_COMMAND="diff -u"
 VERBOSE=false
 CONTINUE=false
@@ -62,9 +63,9 @@ TGZLIST=		# colon-separated list for BINARYTGZMODE
 SRC_ARG=		# argument for "-s"
 AUTOMATIC=false
 LOCALSKIP=false
-MACHINE="${MACHINE:=`uname -m`}"
+MACHINE="${MACHINE:="$(uname -m)"}"
 export MACHINE
-MACHINE_ARCH="${MACHINE_ARCH:=`uname -p`}"
+MACHINE_ARCH="${MACHINE_ARCH:="$(uname -p)"}"
 export MACHINE_ARCH
 
 # Settings for post-installation procedures
@@ -74,12 +75,11 @@ NEED_NEWALIASES=false
 NEED_PWD_MKDB=false
 NEED_SERVICES_MKDB=false
 
-myname="${0##*/}"
 
 usage() {
-	cat << EOF
+	cat << EOF >&2
 
-Usage: ${myname} [options]
+Usage: ${PROG} [options]
 
 Options:
 
@@ -107,13 +107,13 @@ EOF
 verbose() {
 	# $* = message to display if in verbose mode
 
-	${VERBOSE} && echo "${*}"
+	${VERBOSE} && echo "${@}"
 }
 
 yesno() {
 	# $* = message to display
 
-	echo -n "${*}? (y/[n]) "
+	echo -n "${@}? (y/[n]) "
 	read ANSWER
 	case "${ANSWER}" in
 		y|Y)
@@ -167,7 +167,7 @@ install_checksum() {
 
 	${AUTOMATIC} || return
 
-	D=`dirname "${1}"`
+	D="$(dirname "${1}")"
 	mkdir -p "/var/etcupdate/${D}"
 	md5 "${1}" > "/var/etcupdate/${1}"
 }
@@ -210,8 +210,8 @@ diff_and_merge_file() {
 	fi
 
 	if ${AUTOMATIC} && [ -f "/var/etcupdate/${1}" ]; then
-		SUM1=`md5 "${1}"`
-		SUM2=`cat "/var/etcupdate/${1}"`
+		SUM1="$(md5 "${1}")"
+		SUM2="$(cat "/var/etcupdate/${1}")"
 		if [ "${SUM1}" = "${SUM2}" ]; then
 			install_file "${1}"
 			install_checksum "${1}"
@@ -220,9 +220,9 @@ diff_and_merge_file() {
 	fi
 
 	if ${LOCALSKIP}; then
-		ID1=`ident -q "${TEMPROOT}${1}" | sed -n 2p`
+		ID1="$(ident -q "${TEMPROOT}${1}" | sed -n 2p)"
 		ID1="${ID1:-0}"
-		ID2=`ident -q "${1}" | sed -n 2p`
+		ID2="$(ident -q "${1}" | sed -n 2p)"
 		ID2="${ID2:-1}"
 		if [ "${ID1}" = "${ID2}" ]; then
 			verbose "===> ${1} (ok:RCS)"
@@ -246,8 +246,8 @@ diff_and_merge_file() {
 	ALREADY_MERGED=false
 
 	# Determine name for the backup file (/foo/._etcupdate.bar)
-	D=`dirname  "${TEMPROOT}${1}"`
-	F=`basename "${TEMPROOT}${1}"`
+	D="$(dirname  "${TEMPROOT}${1}")"
+	F="$(basename "${TEMPROOT}${1}")"
 	B="${D}/.etcupdate.${F}"
 	F="${D}/${F}"
 
@@ -378,18 +378,16 @@ set_makeenv() {
 #
 
 # Read global configuration
-GLOBALRC="/etc/`basename $0`.conf"
+GLOBALRC="/etc/${PROG}.conf"
 [ -r ${GLOBALRC} ] && . ${GLOBALRC}
 
 # Read user configuration
-USERRC="${HOME}/.`basename $0`rc"
+USERRC="${HOME}/.{PROG}rc"
 [ -r ${USERRC} ] && . ${USERRC}
 
 # Read command line arguments
-ARGV=`getopt ab:hlp:s:t:vw: $*`
-[ $? != 0 ] && usage
-set -- ${ARGV}
-for i; do
+while getopts ab:hlp:s:t:vw: i
+do
 	case "${i}" in
 	-a)
 		AUTOMATIC=true
@@ -405,7 +403,7 @@ for i; do
 EOF
 		BINARYMODE=true
 		BINARYDIRMODE=true
-		BINARYDIR="${arg}"
+		BINARYDIR="${OPTARG}"
 		SRC_ARG="${BINARYDIR}"
 		;;
 	-h)
@@ -416,16 +414,14 @@ EOF
 		shift
 		;;
 	-p)
-		PAGER="${2}"
-		shift 2
+		PAGER="${OPTARG}"
 		;;
 	-s)
 		# Three cases:
 		# -s tgzfile
 		# -s srcdir
 		# -s extracted_dir
-		arg="${2}"
-		shift 2
+		arg="${OPTARG}"
 		if [ -f "${arg%%:*}" ]; then
 			# arg refers to a *.tgz file, or a colon-separated
 			# list.
@@ -467,26 +463,24 @@ EOF
 		fi
 		;;
 	-t)
-		TEMPROOT="${2}"
-		shift 2
+		TEMPROOT="${OPTARG}"
 		;;
 	-v)
 		VERBOSE=true
 		shift
 		;;
 	-w)
-		WIDTH="${2}"
-		shift 2
+		WIDTH="${OPTARG}"
 		;;
-	--)
-		shift
+	*)
+		usage
 		break
 		;;
 	esac
 done
 
 # Last minute sanity checks
-if [ `id -u` -ne 0 ]; then
+if [ "$(id -u)" -ne 0 ]; then
 	echo "*** ERROR: You MUST be root"
 	exit 1
 fi
@@ -596,8 +590,8 @@ if ! ${CONTINUE}; then
 
 	# Are there any new directories?
 	echo "*** Checking for new directories"
-	for i in `find ${TEMPROOT} -type d`; do
-		D=`echo ${i} | sed "s#${TEMPROOT}##"`
+	for i in $(find "${TEMPROOT}" -type d); do
+		D="$(echo ${i} | sed "s#${TEMPROOT}##")"
 		[ "x${i}" = "x${TEMPROOT}" ] && continue
 		[ ! -d "${D}" ] && install_dir "${D}"
 	done
@@ -606,13 +600,13 @@ fi
 # Start the comparision
 echo "*** Checking for added/modified files"
 init_diff_extra_options
-for i in `find ${TEMPROOT} -type f  -a ! -name \*.etcupdate.\*`; do
-	D=`echo ${i} | sed "s#${TEMPROOT}##"`
+for i in $(find "${TEMPROOT}" -type f  -a ! -name \*.etcupdate.\*); do
+	D="$(echo ${i} | sed "s#${TEMPROOT}##")"
 	diff_and_merge_file "${D}"
 done
 
 # Do we have files which were not processed?
-REMAINING=`find "${TEMPROOT}" -type f -a ! -name \*.etcupdate.\*`
+REMAINING=$(find "${TEMPROOT}" -type f -a ! -name \*.etcupdate.\*)
 if [ ! -z "${REMAINING}" ]; then
 	echo ""
 	echo "*** The following files need your attention:"
