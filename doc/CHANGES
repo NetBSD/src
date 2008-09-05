@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1110 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1111 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -842,3 +842,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	texinfo(1): Update to 4.8 (last gplv2 version) [christos 20080902]
 	db(1): Add support for encoding or decoding VIS_HTTPSTYLE, and
 		for tuning the page size of the database.  [lukem 20080905]
+	ataraid(4): Add JMicron RAID support contributed by Juan RP.
+		[tron 20080905]
