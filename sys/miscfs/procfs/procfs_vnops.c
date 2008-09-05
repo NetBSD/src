@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.171 2008/09/05 13:21:12 skrll Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.172 2008/09/05 14:01:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.171 2008/09/05 13:21:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.172 2008/09/05 14:01:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -974,6 +974,7 @@ procfs_lookup(void *v)
 	pid_t pid, vnpid;
 	struct pfsnode *pfs;
 	struct proc *p = NULL;
+	struct lwp *plwp;
 	int i, error;
 	pfstype type;
 
@@ -1053,23 +1054,33 @@ procfs_lookup(void *v)
 		if (procfs_proc_lock(pfs->pfs_pid, &p, ESRCH) != 0)
 			break;
 
+		mutex_enter(p->p_lock);
+		LIST_FOREACH(plwp, &p->p_lwps, l_sibling) {
+			if (plwp->l_stat != LSZOMB)
+				break;
+		}
+		/* Process is exiting if no-LWPS or all LWPs are LSZOMB */
+		if (plwp == NULL) {
+			mutex_exit(p->p_lock);
+			procfs_proc_unlock(p);
+			return ESRCH;
+		}
+
+		lwp_addref(plwp);
+		mutex_exit(p->p_lock);
+
 		for (pt = proc_targets, i = 0; i < nproc_targets; pt++, i++) {
-			struct lwp *plwp;
 			int found;
 
-			mutex_enter(p->p_lock);
-			plwp = LIST_FIRST(&p->p_lwps);
-			KASSERT(plwp != NULL);
-			lwp_addref(plwp);
-			mutex_exit(p->p_lock);
 			found = cnp->cn_namelen == pt->pt_namlen &&
 			    memcmp(pt->pt_name, pname, cnp->cn_namelen) == 0 &&
 			    (pt->pt_valid == NULL
 			      || (*pt->pt_valid)(plwp, dvp->v_mount));
-			lwp_delref(plwp);
 			if (found)
 				break;
 		}
+		lwp_delref(plwp);
+
 		if (i == nproc_targets) {
 			procfs_proc_unlock(p);
 			break;
