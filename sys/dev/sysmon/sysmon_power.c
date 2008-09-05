@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.39 2008/08/22 11:27:50 pgoyette Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.40 2008/09/05 21:58:32 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.39 2008/08/22 11:27:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.40 2008/09/05 21:58:32 gmcgarry Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -431,6 +431,7 @@ int
 sysmonread_power(dev_t dev, struct uio *uio, int flags)
 {
 	power_event_t pev;
+	int rv;
 
 	/* We only allow one event to be read at a time. */
 	if (uio->uio_resid != POWER_EVENT_MSG_SIZE)
@@ -439,19 +440,21 @@ sysmonread_power(dev_t dev, struct uio *uio, int flags)
 	mutex_enter(&sysmon_power_event_queue_mtx);
 	for (;;) {
 		if (sysmon_get_power_event(&pev)) {
-			mutex_exit(&sysmon_power_event_queue_mtx);
-			return uiomove(&pev, POWER_EVENT_MSG_SIZE, uio);
+			rv =  uiomove(&pev, POWER_EVENT_MSG_SIZE, uio);
+			break;
 		}
 
 		if (flags & IO_NDELAY) {
-			mutex_exit(&sysmon_power_event_queue_mtx);
-			return EWOULDBLOCK;
+			rv = EWOULDBLOCK;
+			break;
 		}
 
 		cv_wait(&sysmon_power_event_queue_cv,
 			&sysmon_power_event_queue_mtx);
 	}
 	mutex_exit(&sysmon_power_event_queue_mtx);
+
+	return rv;
 }
 
 /*
