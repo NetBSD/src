@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.39 2008/09/05 09:52:38 apb Exp $
+# $NetBSD: etcupdate,v 1.40 2008/09/05 11:14:24 apb Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -388,12 +388,12 @@ USERRC="${HOME}/.{PROG}rc"
 # Read command line arguments
 while getopts ab:hlp:s:t:vw: i
 do
-	case "-${i}" in
-	-a)
+	case "${i}" in
+	a)
 		AUTOMATIC=true
 		shift
 		;;
-	-b)
+	b)
 
 		# Backward compatibility for deprecated "-b tempdir" option.
 		# Remove this after NetBSD-4.0 is released.
@@ -406,17 +406,17 @@ EOF
 		BINARYDIR="${OPTARG}"
 		SRC_ARG="${BINARYDIR}"
 		;;
-	-h)
+	h)
 		usage
 		;;
-	-l)
+	l)
 		LOCALSKIP=true
 		shift
 		;;
-	-p)
+	p)
 		PAGER="${OPTARG}"
 		;;
-	-s)
+	s)
 		# Three cases:
 		# -s tgzfile
 		# -s srcdir
@@ -462,14 +462,14 @@ EOF
 			usage
 		fi
 		;;
-	-t)
+	t)
 		TEMPROOT="${OPTARG}"
 		;;
-	-v)
+	v)
 		VERBOSE=true
 		shift
 		;;
-	-w)
+	w)
 		WIDTH="${OPTARG}"
 		;;
 	*)
