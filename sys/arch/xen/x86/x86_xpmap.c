@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.8 2008/04/14 13:38:03 cegger Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.9 2008/09/05 13:37:24 tron Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.8 2008/04/14 13:38:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.9 2008/09/05 13:37:24 tron Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -819,11 +819,13 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 				pte[pl1_pi(page)] |= PG_RW;
 			}
 				
-			if ((page  >= old_pgd && page < old_pgd + (old_count * PAGE_SIZE)) || page >= new_pgd)
+			if ((page  >= old_pgd && page < old_pgd + (old_count * PAGE_SIZE))
+			    || page >= new_pgd) {
 				__PRINTK(("va 0x%lx pa 0x%lx "
 				    "entry 0x%" PRIx64 " -> L1[0x%x]\n",
 				    page, page - KERNBASE,
 				    (int64_t)pte[pl1_pi(page)], pl1_pi(page)));
+			}
 			page += PAGE_SIZE;
 		}
 

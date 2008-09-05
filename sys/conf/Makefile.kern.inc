@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.115 2008/09/05 11:03:53 tron Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.116 2008/09/05 13:37:25 tron Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -76,7 +76,8 @@ CWARNFLAGS+=	-Wno-unreachable-code
 CWARNFLAGS+=	-Wno-sign-compare
 . if (defined(HAVE_GCC) && ${HAVE_GCC} > 3) || defined(HAVE_PCC)
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
-.  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "prep"
+.  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
+	${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "prep"
 CWARNFLAGS+=	-Wextra -Wno-unused-parameter
 .  endif
 . endif
