@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.950 2008/08/27 05:37:00 christos Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.951 2008/09/05 15:45:28 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.950 2008/08/27 05:35:38 christos Exp
+ *	NetBSD: pcidevs,v 1.951 2008/09/05 15:44:29 cegger Exp
  */
 
 /*
@@ -12116,12 +12116,40 @@ static const struct pci_product pci_products[] = {
 	    "CMIC-SL PCI/AGP bridge",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_PPB0,
+	    "HT1000 PCI/PCI-X bridge",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_X2,
 	    "CIOB-X2 PCI-X bridge",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_BCM5714,
+	    "bcm5714/bcm5715 integral PCI-E to PCI-X bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_PPB1,
+	    "HT1000 PCI/PCI-X bridge",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_E,
 	    "CIOB-E PCI-X bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB0,
+	    "HT2100 PCI-Express Bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB1,
+	    "HT2100 PCI-Express Bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB2,
+	    "HT2100 PCI-Express Bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB3,
+	    "HT2100 PCI-Express Bridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4,
@@ -12176,6 +12204,14 @@ static const struct pci_product pci_products[] = {
 	    "CSB6 ISA/LPC bridge",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_USB,
+	    "HT1000 USB",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_LPC,
+	    "HT1000 LPC",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_K2_SATA,
 	    "K2 SATA",
 	},
@@ -12194,10 +12230,6 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_SATA_2,
 	    "HT-1000 SATA",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_BCM5714,
-	    "bcm5714/bcm5715 integral PCI-E to PCI-X bridge",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
@@ -14288,4 +14320,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2972;
+const int pci_nproducts = 2980;
