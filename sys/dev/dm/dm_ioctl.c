@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.12 2008/09/03 22:50:17 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.13 2008/09/05 01:04:23 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -189,7 +189,6 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	dmv->cur_active_table = 0;
 
 	dmv->dev_type = 0;
-	dmv->dm_dklabel = NULL;
 	
 	/* Initialize tables. */
 	SLIST_INIT(&dmv->tables[0]);

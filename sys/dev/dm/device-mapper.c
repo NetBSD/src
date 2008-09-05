@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.1.2.10 2008/09/03 22:50:17 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.1.2.11 2008/09/05 01:04:23 haad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -69,9 +69,9 @@ static int dm_cmd_to_fun(prop_dictionary_t);
 static int disk_ioctl_switch(dev_t, u_long, void *);
 static int dm_ioctl_switch(u_long);
 static void dmminphys(struct buf *);
-static void dmgetdisklabel(struct dm_dev *, dev_t);
+static void dmgetdisklabel(struct disklabel **, dev_t);
 /* Called to initialize disklabel values for readdisklabel. */
-static void dmgetdefaultdisklabel(struct dm_dev *, dev_t); 
+static void dmgetdefaultdisklabel(struct disklabel *, dev_t); 
 
 /* ***Variable-definitions*** */
 const struct bdevsw dm_bdevsw = {
@@ -127,8 +127,6 @@ dm_modcmd(modcmd_t cmd, void *arg)
 #ifdef _MODULE
 	int bmajor = -1, cmajor = -1;
 
-	printf(" Modcmd called \n");
-	
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		dmattach();
@@ -142,7 +140,6 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		break;
 
 	case MODULE_CMD_STAT:
-		printf("DM module stat called\n");
 		return ENOTTY;
 
 	default:
@@ -164,8 +161,6 @@ dm_modcmd(modcmd_t cmd, void *arg)
 int
 dmattach(void)
 {
-
-	printf("AttACh called\n");
 
 	dm_sc = (struct dm_softc *)kmem_alloc(sizeof(struct dm_softc), KM_NOSLEEP);
 
@@ -192,8 +187,7 @@ dmattach(void)
 int
 dmdestroy(void)
 {
-
-	printf("destroy called\n");	
+	
 	(void)kmem_free(dm_sc, sizeof(struct dm_softc));
 
 	dm_dev_destroy();
@@ -215,13 +209,9 @@ dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	aprint_verbose("open routine called %d\n", minor(dev));
 
-	if ((dmv = dm_dev_lookup_minor(minor(dev))) != NULL) {
-		if (dmv->dm_dklabel == NULL)
-			dmgetdisklabel(dmv, dev);
-		
+	if ((dmv = dm_dev_lookup_minor(minor(dev))) != NULL)
 		dmv->ref_cnt++;
-	}
-	
+       
 	return 0;
 }
 
@@ -270,7 +260,7 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 		
 		/* call cmd selected function */
 		r = dm_ioctl_switch(cmd);
-		if (r < 0)
+		if (r)
 			goto out;
 
 		char *xml;
@@ -278,11 +268,12 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 		aprint_verbose("%s\n",xml);
 				
 		r = dm_cmd_to_fun(dm_dict_in);
-		if (r != 0)
+		if (r)
 			goto out;
 
 		r = prop_dictionary_copyout_ioctl(pref, cmd, dm_dict_in);
 	}
+
 out:
 	mutex_exit(&dm_ioctl_mtx);
 	return r;
@@ -331,12 +322,12 @@ dm_ioctl_switch(u_long cmd)
 	switch(cmd) {
 		
 	case NETBSD_DM_IOCTL:
-		aprint_verbose("NetBSD_DM_IOCTL called\n");
+		aprint_debug("NetBSD_DM_IOCTL called\n");
 		break;
 		
 	default:
-		 aprint_verbose("unknown ioctl called\n");
-		 return EPASSTHROUGH;
+		 aprint_debug("unknown ioctl called\n");
+		 return ENOTTY;
 		 break; /* NOT REACHED */
 	}
 
@@ -361,7 +352,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	 {
 		 struct dkwedge_info *dkw = (void *) data;
 
-		 aprint_verbose("DIOCGWEDGEINFO ioctl called\n");
+		 aprint_debug("DIOCGWEDGEINFO ioctl called\n");
 
 		 strlcpy(dkw->dkw_devname, dmv->name, 16);
 		 strlcpy(dkw->dkw_wname, dmv->name, DM_NAME_LEN);
@@ -375,10 +366,27 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	 }
 
 	 case DIOCGDINFO:
-		 *(struct disklabel *)data = *(dmv->dm_dklabel);
+	 {
+		 struct disklabel *dk_label;
+		 dk_label = NULL;
+		 aprint_debug("DIOCGDINFO called\n");
+		 dmgetdisklabel(&dk_label, dev);
+	
+		 *(struct disklabel *)data = *(dk_label);
 		 break;
+	 }
+	 
+	 case DIOCGPART:
+	 {
+		 struct disklabel *dk_label;
+		 dk_label = NULL;
+		 aprint_debug("DIOCGDINFO called\n");
+		 dmgetdisklabel(&dk_label, dev);
 
-	 case DIOCGPART:	
+		 ((struct partinfo *)data)->disklab = dk_label;
+		 ((struct partinfo *)data)->part = &dk_label->d_partitions[DISKPART(dev)];
+		 break;
+	 }
 	 case DIOCWDINFO:
 	 case DIOCSDINFO:
 	 case DIOCKLABEL:
@@ -545,8 +553,6 @@ dmsize(dev_t dev)
 	
 	length = 0;
 	
-	aprint_debug("dmsize routine called %d\n", minor(dev));
-	
 	if ( (dmv = dm_dev_lookup_minor(minor(dev))) == NULL)
 		return ENODEV;
 	
@@ -564,7 +570,7 @@ dmsize(dev_t dev)
 	
 	rw_exit(&dmv->dev_rwlock);
 	
-	return length;
+	return length / DEV_BSIZE;
 }
 
 static void
@@ -572,30 +578,24 @@ dmminphys(struct buf *bp)
 {
 	bp->b_bcount = MIN(bp->b_bcount, MAXPHYS);
 }
+
  /*
   * Load the label information on the named device
   * Actually fabricate a disklabel
   *
   * EVENTUALLY take information about different
   * data tracks from the TOC and put it in the disklabel
+  *
+  * Copied from vnd code.
   */
-
-
 static void
-dmgetdisklabel(struct dm_dev *dmv, dev_t dev)
+dmgetdisklabel(struct disklabel **dk_label, dev_t dev)
 {
-	struct cpu_disklabel cpulp;
-	struct dm_pdev *dmp;
-	
-	if ((dmv->dm_dklabel = kmem_zalloc(sizeof(struct disklabel), KM_NOSLEEP))
+	if ((*dk_label = kmem_zalloc(sizeof(struct disklabel), KM_NOSLEEP))
 	    == NULL)
 		return;
 
-	memset(&cpulp, 0, sizeof(cpulp));
-	
-	dmp = SLIST_FIRST(&dmv->pdevs);
-	
-	dmgetdefaultdisklabel(dmv, dev);
+	dmgetdefaultdisklabel(*dk_label, dev);
 	
 	return;
 }
@@ -604,9 +604,8 @@ dmgetdisklabel(struct dm_dev *dmv, dev_t dev)
  * Initialize disklabel values, so we can use it for readdisklabel.
  */
 static void
-dmgetdefaultdisklabel(struct dm_dev *dmv, dev_t dev)
+dmgetdefaultdisklabel(struct disklabel *lp, dev_t dev)
 {
-	struct disklabel *lp = dmv->dm_dklabel;
 	struct partition *pp;
 	int dmp_size;
 
@@ -631,13 +630,13 @@ dmgetdefaultdisklabel(struct dm_dev *dmv, dev_t dev)
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
 
-	pp = &lp->d_partitions[RAW_PART];
+	pp = &lp->d_partitions[1];
 	/*
 	 * This is logical offset and therefore it can be 0
 	 * I will consider table offsets later in dmstrategy.
 	 */
 	pp->p_offset = 0; 
-	pp->p_size = lp->d_secperunit;
+	pp->p_size = dmp_size * DEV_BSIZE;
 	pp->p_fstype = FS_BSDFFS;  /* default value */
 	lp->d_npartitions = RAW_PART + 1;
 
