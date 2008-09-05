@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidvar.h,v 1.6 2008/08/20 15:00:34 tacha Exp $	*/
+/*	$NetBSD: ata_raidvar.h,v 1.7 2008/09/05 12:37:13 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -52,7 +52,8 @@
 #define	ATA_RAID_TYPE_ADAPTEC	1
 #define	ATA_RAID_TYPE_VIA	2
 #define	ATA_RAID_TYPE_NVIDIA	3
-#define	ATA_RAID_TYPE_MAX	3
+#define ATA_RAID_TYPE_JMICRON	4
+#define	ATA_RAID_TYPE_MAX	4
 
 /*
  * Max # of disks supported by a single array.  This is limited by
@@ -82,7 +83,7 @@ struct ataraid_array_info {
 	u_int	aai_type;		/* array type */
 	u_int	aai_arrayno;		/* array number */
 	int	aai_level;		/* RAID level */
-	int	aai_generation;		/* config generaion # */
+	int	aai_generation;		/* config generation # */
 	int	aai_status;		/* array status */
 
 	/* Geometry info. */
@@ -133,5 +134,8 @@ int	ata_raid_read_config_via(struct wd_softc *);
 
 /* nVidia MediaShield support */
 int	ata_raid_read_config_nvidia(struct wd_softc *);
+
+/* JMicron RAID support */
+int	ata_raid_read_config_jmicron(struct wd_softc *);
 
 #endif /* _DEV_ATA_ATA_RAIDVAR_H_ */
