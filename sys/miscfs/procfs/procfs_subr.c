@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.91 2008/07/02 19:49:58 rmind Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.92 2008/09/05 14:01:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.91 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.92 2008/09/05 14:01:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,8 +372,17 @@ procfs_rw(v)
 #undef	M2K
 
 	mutex_enter(p->p_lock);
-	l = LIST_FIRST(&p->p_lwps);
-	KASSERT(l != NULL);
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		if (l->l_stat != LSZOMB)
+			break;
+	}
+	/* Process is exiting if no-LWPS or all LWPs are LSZOMB */
+	if (l == NULL) {
+		mutex_exit(p->p_lock);
+		procfs_proc_unlock(p);
+		return ESRCH;
+	}
+
 	lwp_addref(l);
 	mutex_exit(p->p_lock);
 
