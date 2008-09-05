@@ -1,4 +1,4 @@
-.\" 	$NetBSD: db.1,v 1.20 2008/09/04 09:54:56 lukem Exp $
+.\" 	$NetBSD: db.1,v 1.21 2008/09/05 05:04:40 lukem Exp $
 .\"
 .\" Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 4, 2008
+.Dd September 5, 2008
 .Dt DB 1
 .Os
 .
@@ -78,6 +78,9 @@ databases
 .Op Fl f Ar infile
 .Ek
 .Bk -words
+.Op Fl T Ar visspec
+.Ek
+.Bk -words
 .Op Fl U Ar unvisitem
 .Ek
 .Ar type
@@ -100,6 +103,9 @@ databases
 .Ek
 .Bk -words
 .Op Fl m Ar mode
+.Ek
+.Bk -words
+.Op Fl T Ar visspec
 .Ek
 .Bk -words
 .Op Fl U Ar unvisitem
@@ -210,42 +216,17 @@ and write
 modes,
 the result of various operations is suppressed.
 .
-.El
-.
-.Pp
-Read mode specific options are:
-.
-.Bl -tag -width Fl -offset indent
-.It Fl K
-Display key.
-.
-.It Fl O Ar outsep
-Field separator string between key and value.
-Defaults to a single tab
-.Pq Sq \et .
-.
-.It Fl S Ar visitem
-Specify items to
-.Xr strvis 3
-encode.
-The
-.Ar visitem
-option-argument is a character specifying if the key
-.Pq Ar k ,
-the value
-.Pq Ar v
-or both
-.Pq Ar b
-should be encoded.
-.
 .It Fl T Ar visspec
 Control how the items specified by the
 .Fl S
-option are encoded.
+option are encoded
+and
+.Fl U
+option are decoded.
 The
 .Ar visspec
 option-argument is a string specifying
-.Xr strvis 3
+.Xr strsvisx 3
 flags.
 The string consists of one or more characters:
 .Bl -tag -width 2n -offset indent -compact
@@ -276,12 +257,47 @@ and
 .It Sy w
 .Dv VIS_WHITE
 .El
+.Pp
+.Fl U
+only supports
+.Fl T
+.Sy h .
+.Pp
 See
 .Xr vis 1 Ns 's
 corresponding options for the meaning of these characters,
 and
-.Xr strvis 3
+.Xr strsvisx 3
 for more detail on the flags.
+.
+.El
+.
+.Pp
+Read mode specific options are:
+.
+.Bl -tag -width Fl -offset indent
+.It Fl K
+Display key.
+.
+.It Fl O Ar outsep
+Field separator string between key and value.
+Defaults to a single tab
+.Pq Sq \et .
+.
+.It Fl S Ar visitem
+Specify items to
+.Xr strsvisx 3
+encode.
+The
+.Ar visitem
+option-argument is a character specifying if the key
+.Pq Ar k ,
+the value
+.Pq Ar v
+or both
+.Pq Ar b
+should be encoded.
+.
 .
 .It Fl V
 Display value.
@@ -292,7 +308,7 @@ When encoding items with
 option also encode characters in
 .Ar extravis ,
 per
-.Xr svis 3 .
+.Xr strsvisx 3 .
 .
 .El
 .Pp
@@ -339,7 +355,7 @@ Write and delete mode specific options are:
 .
 .It Fl U Ar unvisitem
 Specify items to
-.Xr strunvis 3
+.Xr strunvisx 3
 decode.
 The
 .Ar unvisitem
@@ -358,9 +374,8 @@ should be decoded.
 .Xr btree 3 ,
 .Xr db 3 ,
 .Xr hash 3 ,
-.Xr strunvis 3 ,
-.Xr strvis 3 ,
-.Xr svis 3
+.Xr strunvisx 3 ,
+.Xr strsvisx 3
 .\" .Xr makemap 8
 .
 .Sh HISTORY
