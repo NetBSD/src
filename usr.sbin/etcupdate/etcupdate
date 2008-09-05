@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.40 2008/09/05 11:14:24 apb Exp $
+# $NetBSD: etcupdate,v 1.41 2008/09/05 11:29:42 apb Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -473,7 +473,7 @@ EOF
 		WIDTH="${OPTARG}"
 		;;
 	*)
-		echo "OPTIND='$OPTIND' i='$i' OPTARG='$OPTARG'"
+		# getopts should already have printed an error message
 		usage
 		break
 		;;
