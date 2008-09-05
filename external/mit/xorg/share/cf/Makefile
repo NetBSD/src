@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/05 12:12:05 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,8 @@ FILES=	Amoeba.cf DGUX.cf FreeBSD.cf Imake.cf Imake.rules Imake.tmpl \
 	sgiLib.tmpl site.def sony.cf sun.cf sunLib.rules sunLib.tmpl \
 	sv3Lib.rules sv3Lib.tmpl sv4Lib.rules sv4Lib.tmpl svr3.cf \
 	svr4.cf ultrix.cf usl.cf version.def x386.cf xf86.rules \
-	xf86.tmpl xf86site.def xfree86.cf xorg.cf xorgsite.def
+	xf86.tmpl xf86site.def xfree86.cf xorg.cf xorgsite.def \
+	xorgversion.def
 
 # Note: acts as '#define InstallEmptyHostDef'
 #
