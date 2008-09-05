@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.223 2008/08/31 05:40:15 christos Exp $
+#	$NetBSD: bsd.README,v 1.224 2008/09/05 22:26:28 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -71,7 +71,7 @@ MKxxx		Can be set to "no" to disable functionality, or
 		Usually defaults to "yes", although some variables
 		default to "no".
 		Due to make(1) implementation issues, if a temporary
-		command-line override of a mk.conf or <bsd.own.mk>
+		command-line override of a mk.conf(5) or <bsd.own.mk>
 		setting is required whilst still honoring a particular
 		Makefile's setting of MKxxx, use
 			env MKxxx=value make
@@ -87,8 +87,8 @@ NOxxx		If defined, disables a feature.
 
 The following variables that control how things are made/installed that
 are not set by default. These should not be set by Makefiles; they're for
-the user to define in MAKECONF (see <bsd.own.mk>, below) or on the make(1)
-command line:
+the user to define in MAKECONF (see <bsd.own.mk>, below, or mk.conf(5))
+or on the make(1) command line:
 
 BUILD 		If defined, 'make install' checks that the targets in the
 		source directories are up-to-date and remakes them if they
