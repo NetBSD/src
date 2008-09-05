@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.170 2008/07/02 19:49:58 rmind Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.171 2008/09/05 13:21:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.170 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.171 2008/09/05 13:21:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,8 +299,7 @@ const struct vnodeopv_desc procfs_vnodeop_opv_desc =
  * memory images.
  */
 int
-procfs_open(v)
-	void *v;
+procfs_open(void *v)
 {
 	struct vop_open_args /* {
 		struct vnode *a_vp;
@@ -375,8 +374,7 @@ procfs_open(v)
  * any exclusive open flag (see _open above).
  */
 int
-procfs_close(v)
-	void *v;
+procfs_close(void *v)
 {
 	struct vop_close_args /* {
 		struct vnode *a_vp;
@@ -408,8 +406,7 @@ procfs_close(v)
  * (vp) is locked on entry, but must be unlocked on exit.
  */
 int
-procfs_inactive(v)
-	void *v;
+procfs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
@@ -435,8 +432,7 @@ procfs_inactive(v)
  * from any private lists.
  */
 int
-procfs_reclaim(v)
-	void *v;
+procfs_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
@@ -449,8 +445,7 @@ procfs_reclaim(v)
  * Return POSIX pathconf information applicable to special devices.
  */
 int
-procfs_pathconf(v)
-	void *v;
+procfs_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -492,8 +487,7 @@ procfs_pathconf(v)
  * of (vp).
  */
 int
-procfs_print(v)
-	void *v;
+procfs_print(void *v)
 {
 	struct vop_print_args /* {
 		struct vnode *a_vp;
@@ -506,8 +500,7 @@ procfs_print(v)
 }
 
 int
-procfs_link(v)
-	void *v;
+procfs_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -521,8 +514,7 @@ procfs_link(v)
 }
 
 int
-procfs_symlink(v)
-	void *v;
+procfs_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;
@@ -619,8 +611,7 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
  * this is relatively minimal for procfs.
  */
 int
-procfs_getattr(v)
-	void *v;
+procfs_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -929,8 +920,7 @@ procfs_setattr(void *v)
  * that the operation really does make sense.
  */
 int
-procfs_access(v)
-	void *v;
+procfs_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -968,8 +958,7 @@ procfs_access(v)
  * We try to exit with the parent locked in error cases.
  */
 int
-procfs_lookup(v)
-	void *v;
+procfs_lookup(void *v)
 {
 	struct vop_lookup_args /* {
 		struct vnode * a_dvp;
@@ -1160,9 +1149,7 @@ procfs_validfile(struct lwp *l, struct mount *mp)
 }
 
 static int
-procfs_validfile_linux(l, mp)
-	struct lwp *l;
-	struct mount *mp;
+procfs_validfile_linux(struct lwp *l, struct mount *mp)
 {
 	int flags;
 
@@ -1238,8 +1225,7 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
  * this should just be done through read()
  */
 int
-procfs_readdir(v)
-	void *v;
+procfs_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
@@ -1513,8 +1499,7 @@ procfs_readdir(v)
  * readlink reads the link of `curproc' and others
  */
 int
-procfs_readlink(v)
-	void *v;
+procfs_readlink(void *v)
 {
 	struct vop_readlink_args *ap = v;
 	char bf[16];		/* should be enough */
@@ -1621,9 +1606,7 @@ procfs_readlink(v)
  * convert decimal ascii to int
  */
 static int
-atoi(b, len)
-	const char *b;
-	size_t len;
+atoi(const char *b, size_t len)
 {
 	int p = 0;
 
