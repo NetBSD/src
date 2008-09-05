@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.1.2.6 2008/08/28 21:59:19 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.1.2.7 2008/09/05 01:04:23 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -244,12 +244,8 @@ dm_dev_alloc()
 int
 dm_dev_free(struct dm_dev *dmv)
 {
-	if (dmv != NULL){
-		if (dmv->dm_dklabel != NULL)
-			(void)kmem_free(dmv->dm_dklabel, sizeof(struct disklabel));
-
+	if (dmv != NULL)
 		(void)kmem_free(dmv, sizeof(struct dm_dev));
-	}
 	
 	return 0;
 }
@@ -294,11 +290,13 @@ dm_dev_prop_list(void)
 }
 
 /*
- *Initialize global device mutex.
+ * Initialize global device mutex.
  */
 int
 dm_dev_init()
 {
+	TAILQ_INIT(&dm_dev_list); /* initialize global dev list */
+	
 	mutex_init(&dm_dev_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	return 0;
