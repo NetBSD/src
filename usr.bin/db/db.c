@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.19 2008/09/05 05:04:40 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.20 2008/09/05 07:55:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.19 2008/09/05 05:04:40 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.20 2008/09/05 07:55:33 lukem Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: db.c,v 1.19 2008/09/05 05:04:40 lukem Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -79,22 +80,23 @@ void	parse_encode_decode_arg(const char *, int);
 int	parse_encode_option(char **);
 void	usage(void);
 
-flags_t	 flags = 0;
-DB	*db;
-char	*outputsep = "\t";
-int	visflags = 0;
-char	*extra_echars = NULL;
+flags_t	 	 flags = 0;
+DB		*db;
+const char	*outputsep = "\t";
+int		 visflags = 0;
+const char	*extra_echars = NULL;
 
 int
 main(int argc, char *argv[])
 {
 	struct {
-		char	*file;
-		char	*type;
-		DBTYPE	 dbtype;
-		void	*info;
-		int	 flags;
-		mode_t	 mode;
+		char		*file;
+		char		*type;
+		DBTYPE	 	dbtype;
+		void		*info;
+		int	 	flags;
+		mode_t	 	mode;
+		unsigned int	pagesize;
 	} oi;
 	BTREEINFO	btreeinfo;
 	HASHINFO	hashinfo;
@@ -102,6 +104,7 @@ main(int argc, char *argv[])
 	const char	*infile, *fieldsep;
 	char		*p, *key, *val;
 	int		ch, rv;
+	long		lval;
 
 	setprogname(argv[0]);
 
@@ -110,10 +113,11 @@ main(int argc, char *argv[])
 	infp = NULL;
 	memset(&oi, 0, sizeof(oi));
 	oi.mode = 0644;
+	oi.pagesize = 4096;
 
 				/* parse arguments */
 	while ( (ch = getopt(argc, argv,
-			     "CDdE:F:f:iKm:NO:qRS:T:U:VwX:")) != -1) {
+			     "CDdE:F:f:iKm:NO:P:qRS:T:U:VwX:")) != -1) {
 		switch (ch) {
 
 		case 'C':
@@ -167,9 +171,12 @@ main(int argc, char *argv[])
 			break;
 
 		case 'm':
-			oi.mode = (int)strtol(optarg, &p, 8);
+			lval = strtol(optarg, &p, 8);
 			if (p == optarg || *p != '\0')
 				errx(1, "Invalid octal number `%s'", optarg);
+			if (lval < 0 || lval > 07777)
+				errx(1, "Invalid mode `%s'", optarg);
+			oi.mode = (mode_t)lval;
 			break;
 
 		case 'N':
@@ -178,6 +185,15 @@ main(int argc, char *argv[])
 
 		case 'O':
 			outputsep = optarg;
+			break;
+
+		case 'P':
+			lval = strtol(optarg, &p, 10);
+			if (p == optarg || *p != '\0')
+				errx(1, "Invalid pagesize `%s'", optarg);
+			if (lval < 0 || lval >= UINT_MAX)
+				errx(1, "Pagesize `%s' out of range", optarg);
+			oi.pagesize = (unsigned int)lval;
 			break;
 
 		case 'q':
@@ -270,6 +286,7 @@ main(int argc, char *argv[])
 			btreeinfo.lorder = 1234;
 		if (flags & F_DUPLICATES)
 			btreeinfo.flags = R_DUP;
+		btreeinfo.psize = oi.pagesize;
 		btreeinfo.cachesize = 1024 * 1024;
 		oi.info = &btreeinfo;
 		oi.dbtype = DB_BTREE;
@@ -279,6 +296,7 @@ main(int argc, char *argv[])
 			hashinfo.lorder = 4321;
 		else if (flags & F_ENDIAN_LITTLE)
 			hashinfo.lorder = 1234;
+		hashinfo.bsize = oi.pagesize;
 		hashinfo.cachesize = 1024 * 1024;
 		oi.info = &hashinfo;
 		oi.dbtype = DB_HASH;
@@ -657,7 +675,8 @@ usage(void)
 "       %s -d [-iNq] [-E endian] [-f infile] [-T visspec] [-U unvisitem]\n"
 "             type dbfile [key [...]]\n"
 "       %s -w [-CDiNqR] [-E endian] [-F isep] [-f infile] [-m mode]\n"
-"             [-T visspec] [-U unvisitem] type dbfile [key value [...]]\n"
+"             [-P pagesize] [-T visspec] [-U unvisitem]\n"
+"             type dbfile [key value [...]]\n"
 	    ,p ,p ,p );
 	fprintf(stderr,
 "Supported modes:\n"
@@ -668,13 +687,14 @@ usage(void)
 "   -C           create empty (truncated) database\n"
 "   -D           allow duplicates\n"
 "   -E endian    database endian: `B'ig, `L'ittle, `H'ost  [default: H]\n"
-"   -F isep      input field separator string  [default: ' ']\n"
+"   -F isep      input field separator string  [default: a space]\n"
 "   -f infile    file of keys (read|delete) or keys/vals (write)\n"
 "   -i           ignore case of key by converting to lower case\n"
 "   -K           print key\n"
 "   -m mode      mode of created database  [default: 0644]\n"
 "   -N           don't NUL terminate key\n"
-"   -O outsep    output field separator string [default: '\t']\n"
+"   -O outsep    output field separator string  [default: a tab]\n"
+"   -P pagesize  database page size  [default: 4096]\n"
 "   -q           quiet operation (missing keys aren't errors)\n"
 "   -R           replace existing keys\n"
 "   -S visitem   items to strvis(3) encode: 'k'ey, 'v'alue, 'b'oth\n"
