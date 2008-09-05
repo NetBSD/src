@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.6 2008/09/02 19:38:25 pooka Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.7 2008/09/05 10:42:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.6 2008/09/02 19:38:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.7 2008/09/05 10:42:09 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -136,7 +136,7 @@ writethread(void *arg)
 			n = rumpuser_read(pap->comfd, buf+off, toread, &error);
 			if (n <= 0) {
 				if (n == 0)
-					break;
+					goto out;
 				panic("rumpuser_read %zd %d", n, error);
 			}
 			off += n;
@@ -152,9 +152,10 @@ writethread(void *arg)
 		error = dofilewrite(pap->fpfd, fp, buf, phdr->pth_framelen,
 		    &off, 0, &rv);
 		if (error == ENXIO)
-			break;
+			goto out;
 		KASSERT(rv == phdr->pth_framelen);
 	}
+ out:
 
 	kthread_exit(0);
 }
