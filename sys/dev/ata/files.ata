@@ -1,4 +1,4 @@
-#	$NetBSD: files.ata,v 1.17 2008/08/20 15:00:34 tacha Exp $
+#	$NetBSD: files.ata,v 1.18 2008/09/05 12:37:13 tron Exp $
 #
 # Config file and device description for machine-independent devices
 # which attach to ATA busses.  Included by ports that need it.  Ports
@@ -22,6 +22,7 @@ file	dev/ata/ata_raid_promise.c	ataraid
 file	dev/ata/ata_raid_adaptec.c	ataraid
 file	dev/ata/ata_raid_nvidia.c	ataraid
 file	dev/ata/ata_raid_via.c		ataraid
+file	dev/ata/ata_raid_jmicron.c	ataraid
 
 attach	ld at ataraid with ld_ataraid
 file	dev/ata/ld_ataraid.c		ld_ataraid
