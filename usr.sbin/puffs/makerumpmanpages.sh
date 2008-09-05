@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.2 2008/08/06 20:18:19 pooka Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.3 2008/09/05 09:07:40 wiz Exp $
 #
 
 IFS=' '
@@ -106,6 +106,6 @@ do
 	fi
 
 	fsc=`echo $fs | tr '[:lower:]' '[:upper:]'`
-	echo ${MANTMPL} | sed "s/xxxfsxxx/$fs/g;s/XXXFSXXX/$fsc/g" > \
+	echo ${MANTMPL} | sed "s/xxxfsxxx/$fs/g;s/XXXFSXXX/$fsc/g" > \
 	    rump_${fs}/rump_${fs}.8
 done
