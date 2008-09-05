@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.18 2008/09/05 03:41:35 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.19 2008/09/05 05:04:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.18 2008/09/05 03:41:35 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.19 2008/09/05 05:04:40 lukem Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -82,7 +82,7 @@ void	usage(void);
 flags_t	 flags = 0;
 DB	*db;
 char	*outputsep = "\t";
-int	encflags = 0;
+int	visflags = 0;
 char	*extra_echars = NULL;
 
 int
@@ -196,9 +196,9 @@ main(int argc, char *argv[])
 			break;
 
 		case 'T':
-			encflags = parse_encode_option(&optarg);
-			if (! encflags)
-				errx(1, "Invalid encoding option `%s'",
+			visflags = parse_encode_option(&optarg);
+			if (! visflags)
+				errx(1, "Invalid encoding/decoding option `%s'",
 				    optarg);
 			break;
 
@@ -242,6 +242,8 @@ main(int argc, char *argv[])
 			usage();
 		if ((!infile && argc < 2) || (argc % 2))
 			usage();
+		if (0 != (visflags & ~(VIS_HTTPSTYLE)))
+			errx(1, "Unsupported decoding option provided to -T");
 		oi.flags = O_RDWR | O_CREAT | O_EXLOCK;
 		if (flags & F_CREATENEW)
 			oi.flags |= O_TRUNC;
@@ -250,6 +252,8 @@ main(int argc, char *argv[])
 			usage();
 		if (!infile && argc < 1)
 			usage();
+		if (0 != (visflags & ~(VIS_HTTPSTYLE)))
+			errx(1, "Unsupported decoding option provided to -T");
 		oi.flags = O_RDWR | O_CREAT | O_EXLOCK;
 	} else {
 		if (! (flags & (F_SHOW_KEY | F_SHOW_VALUE)))
@@ -565,9 +569,9 @@ encode_data(size_t len, char *data, char **edata)
 	}
 	*edata = buf;
 	if (extra_echars) {
-		return (strsvisx(buf, data, len, encflags, extra_echars));
+		return (strsvisx(buf, data, len, visflags, extra_echars));
 	} else {
-		return (strvisx(buf, data, len, encflags));
+		return (strvisx(buf, data, len, visflags));
 	}
 }
 
@@ -579,7 +583,7 @@ decode_data(char *data, char **ddata)
 	if ((buf = malloc(strlen(data) + 1)) == NULL)
 		err(1, "Cannot allocate decoding buffer");
 	*ddata = buf;
-	return (strunvis(buf, data));
+	return (strunvisx(buf, data, (visflags & VIS_HTTPSTYLE)));
 }
 
 void
@@ -650,10 +654,10 @@ usage(void)
 	fprintf(stderr,
 "usage: %s    [-KiNqV] [-E endian] [-f infile] [-O outsep] [-S visitem]\n"
 "             [-T visspec] [-X extravis] type dbfile [key [...]]\n"
-"       %s -d [-iNq] [-E endian] [-f infile] [-U unvisitem]\n"
+"       %s -d [-iNq] [-E endian] [-f infile] [-T visspec] [-U unvisitem]\n"
 "             type dbfile [key [...]]\n"
 "       %s -w [-CDiNqR] [-E endian] [-F isep] [-f infile] [-m mode]\n"
-"             [-U unvisitem] type dbfile [key value [...]]\n"
+"             [-T visspec] [-U unvisitem] type dbfile [key value [...]]\n"
 	    ,p ,p ,p );
 	fprintf(stderr,
 "Supported modes:\n"
@@ -674,7 +678,7 @@ usage(void)
 "   -q           quiet operation (missing keys aren't errors)\n"
 "   -R           replace existing keys\n"
 "   -S visitem   items to strvis(3) encode: 'k'ey, 'v'alue, 'b'oth\n"
-"   -T visspec   options to control -S encoding like vis(1) options\n"
+"   -T visspec   options to control -S and -U; like vis(1) options\n"
 "   -U unvisitem items to strunvis(3) decode: 'k'ey, 'v'alue, 'b'oth\n"
 "   -V           print value\n"
 "   -X extravis  extra characters to encode with -S\n"
