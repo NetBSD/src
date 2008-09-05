@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.38 2008/09/05 06:04:12 christos Exp $
+# $NetBSD: etcupdate,v 1.39 2008/09/05 09:52:38 apb Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -388,7 +388,7 @@ USERRC="${HOME}/.{PROG}rc"
 # Read command line arguments
 while getopts ab:hlp:s:t:vw: i
 do
-	case "${i}" in
+	case "-${i}" in
 	-a)
 		AUTOMATIC=true
 		shift
@@ -473,6 +473,7 @@ EOF
 		WIDTH="${OPTARG}"
 		;;
 	*)
+		echo "OPTIND='$OPTIND' i='$i' OPTARG='$OPTARG'"
 		usage
 		break
 		;;
