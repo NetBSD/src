@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/09/02 01:39:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2008/09/05 05:20:39 lukem Exp $
 
 NOMAN=	1
 
@@ -15,14 +15,15 @@ CPPFLAGS+=-I${X11SRCDIR.xc}/programs/Xserver/include
 FILES=	rgb.txt rgb.db
 FILESDIR=${X11LIBDIR}
 
-CLEANFILES+=rgb.db rgb.dir rgb.pag
+CLEANFILES+=rgb.db
 realall: rgb.db
 
-rgb.db: ${RGBSRCDIR}/rgb.txt
+rgb.db: ${RGBSRCDIR}/rgb.txt rgb_mkdb.sh
 	${_MKTARGET_CREATE}
-	${RGB} rgb < ${RGBSRCDIR}/rgb.txt
+	rm -f ${.TARGET}
+	TOOL_AWK=${AWK:Q} TOOL_DB=${TOOL_DB:Q} ${HOST_SH} \
+	    ${.CURDIR}/rgb_mkdb.sh ${RGBSRCDIR}/rgb.txt ${.TARGET} \
+	    || rm -f ${.TARGET}
 
-
-.include "${NETBSDSRCDIR}/x11/tools/rgb/Makefile.rgb"
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
