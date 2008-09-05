@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.412 2008/09/04 16:44:36 tsutsui Exp $
+.\"	$NetBSD: main,v 1.413 2008/09/05 21:17:20 tron Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2112,6 +2112,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta SATO Kazumi Ta Mt sato@NetBSD.org
 .It Ta Jan Schaumann Ta Mt jschauma@NetBSD.org
 .It Ta Matthias Scheler Ta Mt tron@NetBSD.org
+.It Ta Silke Scheler Ta Mt silke@NetBSD.org
 .It Ta Karl Schilke (rAT) Ta Mt rat@NetBSD.org
 .It Ta Amitai Schlair Ta Mt schmonz@NetBSD.org
 .It Ta Konrad Schroder Ta Mt perseant@NetBSD.org
