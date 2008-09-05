@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidreg.h,v 1.6 2008/08/20 15:00:34 tacha Exp $	*/
+/*	$NetBSD: ata_raidreg.h,v 1.7 2008/09/05 12:37:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -254,5 +254,43 @@ struct nvidia_raid_conf {
 
     u_int32_t           filler[98];
 } __packed;
+
+/* JMicron Technology Corp Metadata */
+#define JMICRON_LBA(wd) 	((wd)->sc_capacity - 1)
+#define JM_MAX_DISKS            8
+
+struct jmicron_raid_conf {
+	uint8_t 	signature[2];
+#define JMICRON_MAGIC 		"JM"
+	uint16_t 	version;
+#define JMICRON_VERSION 	0x0001
+	uint16_t 	checksum;
+	uint8_t 	filler_1[10];
+	uint32_t 	disk_id;
+	uint32_t 	offset;
+	uint32_t 	disk_sectors_high;
+	uint16_t 	disk_sectors_low;
+	uint8_t 	filler_2[2];
+	uint8_t 	name[16];
+	uint8_t 	type;
+#define JM_T_RAID0 		0
+#define JM_T_RAID1 		1
+#define JM_T_RAID01 		2
+#define JM_T_JBOD 		3
+#define JM_T_RAID5 		5
+	uint8_t 	stripe_shift;
+	uint16_t 	flags;
+#define JM_F_READY 		0x0001
+#define JM_F_BOOTABLE 		0x0002
+#define JM_F_BAD 		0x0004
+#define JM_F_ACTIVE 		0x0010
+#define JM_F_UNSYNC 		0x0020
+#define JM_F_NEWEST 		0x0040
+	uint8_t 	filler_3[4];
+	uint32_t 	spare[2];
+	uint32_t 	disks[JM_MAX_DISKS];
+	uint8_t 	filler_4[32];
+	uint8_t 	filler_5[384];
+};
 
 #endif /* _DEV_PCI_PCIIDE_PROMISE_RAID_H_ */
