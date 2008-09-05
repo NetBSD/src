@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1186 2008/09/04 12:21:26 pooka Exp $
+#	$NetBSD: mi,v 1.1187 2008/09/05 04:52:35 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7460,6 +7460,7 @@
 ./usr/share/man/cat3/strtoumax.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strtouq.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strunvis.0			comp-c-catman		.cat
+./usr/share/man/cat3/strunvisx.0		comp-c-catman		.cat
 ./usr/share/man/cat3/strvis.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strvisx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/strxfrm.0			comp-c-catman		.cat
@@ -12689,6 +12690,7 @@
 ./usr/share/man/html3/strtoumax.html		comp-c-htmlman		html
 ./usr/share/man/html3/strtouq.html		comp-c-htmlman		html
 ./usr/share/man/html3/strunvis.html		comp-c-htmlman		html
+./usr/share/man/html3/strunvisx.html		comp-c-htmlman		html
 ./usr/share/man/html3/strvis.html		comp-c-htmlman		html
 ./usr/share/man/html3/strvisx.html		comp-c-htmlman		html
 ./usr/share/man/html3/strxfrm.html		comp-c-htmlman		html
@@ -17957,6 +17959,7 @@
 ./usr/share/man/man3/strtoumax.3		comp-c-man		.man
 ./usr/share/man/man3/strtouq.3			comp-c-man		.man
 ./usr/share/man/man3/strunvis.3			comp-c-man		.man
+./usr/share/man/man3/strunvisx.3		comp-c-man		.man
 ./usr/share/man/man3/strvis.3			comp-c-man		.man
 ./usr/share/man/man3/strvisx.3			comp-c-man		.man
 ./usr/share/man/man3/strxfrm.3			comp-c-man		.man
