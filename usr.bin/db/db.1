@@ -1,4 +1,4 @@
-.\" 	$NetBSD: db.1,v 1.21 2008/09/05 05:04:40 lukem Exp $
+.\" 	$NetBSD: db.1,v 1.22 2008/09/05 07:55:33 lukem Exp $
 .\"
 .\" Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -103,6 +103,9 @@ databases
 .Ek
 .Bk -words
 .Op Fl m Ar mode
+.Ek
+.Bk -words
+.Op Fl P Ar pagesize
 .Ek
 .Bk -words
 .Op Fl T Ar visspec
@@ -343,6 +346,17 @@ Defaults to a single space
 Octal mode of created database.
 Defaults to
 .Sq 0644 .
+.
+.It Fl P Ar pagesize
+Set the page size of the table to
+.Ar pagesize
+bytes.
+If set to
+.Sq 0 ,
+a database-specific default is determined,
+based on the block-size of the underlying file-system.
+Defaults to
+.Sq 4096 .
 .
 .It Fl R
 Overwrite existing entries.
