@@ -1,7 +1,0 @@
-#	$NetBSD: Makefile.rgb,v 1.2 2008/09/02 01:31:22 lukem Exp $
-
-RGBDIR!=	cd ${NETBSDSRCDIR}/x11/tools/rgb && ${PRINTOBJDIR}
-RGB=		${RGBDIR}/rgb
-
-${RGB}:
-	(cd ${NETBSDSRCDIR}/x11/tools/rgb && ${MAKE})
