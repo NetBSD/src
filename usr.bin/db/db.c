@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.17 2008/09/04 09:54:56 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.18 2008/09/05 03:41:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.17 2008/09/04 09:54:56 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.18 2008/09/05 03:41:35 lukem Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
@@ -244,7 +244,7 @@ main(int argc, char *argv[])
 			usage();
 		oi.flags = O_RDWR | O_CREAT | O_EXLOCK;
 		if (flags & F_CREATENEW)
-			flags |= O_TRUNC;
+			oi.flags |= O_TRUNC;
 	} else if (flags & F_DELETE) {
 		if (flags & (F_SHOW_KEY | F_SHOW_VALUE | F_WRITE))
 			usage();
