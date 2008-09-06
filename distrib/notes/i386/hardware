@@ -1,6 +1,7 @@
-.\"	$NetBSD: hardware,v 1.122 2008/09/03 15:12:48 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.123 2008/09/06 21:25:33 tsutsui Exp $
 .
-.Nx \*V
+.Nx
+\*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.
 The minimal configuration is said to require 4 MB of RAM and 50 MB of disk
