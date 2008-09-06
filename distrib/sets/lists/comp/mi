@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1187 2008/09/05 04:52:35 lukem Exp $
+#	$NetBSD: mi,v 1.1188 2008/09/06 19:04:53 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2064,6 +2064,7 @@
 ./usr/include/sys/vadvise.h			comp-c-include
 ./usr/include/sys/vcmd.h			comp-obsolete		obsolete
 ./usr/include/sys/verified_exec.h		comp-c-include
+./usr/include/sys/videoio.h			comp-c-include
 ./usr/include/sys/vlimit.h			comp-obsolete		obsolete
 ./usr/include/sys/vmmeter.h			comp-c-include
 ./usr/include/sys/vnode.h			comp-c-include
