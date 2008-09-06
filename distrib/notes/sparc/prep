@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.22 2004/06/12 16:41:14 mbw Exp $
+.\"	$NetBSD: prep,v 1.23 2008/09/06 19:53:44 tsutsui Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -44,11 +44,11 @@ Next, you should set your system to always use the OpenBoot PROM
 if it defaults to sunmon. The
 .Nx
 kernel relies on some of the functionality provided by the OpenBoot PROM.
-If your machine gives you a `\*>' prompt instead of an `ok' prompt,
+If your machine gives you a `\*[Gt]' prompt instead of an `ok' prompt,
 type:
 .Pp
 .(disp
-.No \*> Ic n
+.No \*[Gt] Ic n
 .No ok Ic "setenv sunmon-compat? false"
 .No ok
 .disp)
@@ -205,10 +205,7 @@ to
 Again, it may be advantageous to use a fixed
 .Dq SCSI target
 to
-.Do
-.Nx
-disk unit
-.Dc
+.Dq Nx "" disk unit
 mapping in your kernel configuration file (such as is done in the
 .Li GENERIC_SCSI3
 kernel) to ensure that your disks remain showing up at the same
@@ -231,16 +228,14 @@ the hexadecimal number obtained from evaluating
 the expression
 .Em (8 * TARGET) + LUN
 .It Ar p
-the partition number from which to boot
-.Po
+the partition number from which to boot (
 .Sq Li 0
 =
 .Sq Li a ,
 .Sq Li 1
 =
 .Sq Li b ,
-etc.
-.Pc
+etc.)
 .tag)
 .Pp
 Therefore, to boot from the swap partition on the internal hard drive
