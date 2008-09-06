@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.8 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: install,v 1.9 2008/09/06 21:46:14 tsutsui Exp $
 .\"
 .\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,13 +42,13 @@ evbarm/installation/instkernel/netbsd-TS7200_INSTALL.srec.gz
 Load the kernel from the TFTP server.
 .Pp
 .Bd -literal
-RedBoot\*> load netbsd-TS7200_INSTALL
+RedBoot\*[Gt] load netbsd-TS7200_INSTALL
 .Ed
 .It
 Start the kernel running.
 .Pp
 .Bd -literal
-RedBoot\*> go
+RedBoot\*[Gt] go
 .Ed
 .Pp
 The kernel will display boot messages, probe for devices, and invoke the
@@ -88,9 +88,9 @@ Unpack the distribution sets into the target's root directory.
 Load the kernel from the TFTP server.
 .Pp
 .Bd -literal
-RedBoot\*> load netbsd-iq80310-fxp0
+RedBoot\*[Gt] load netbsd-iq80310-fxp0
 Entry point: 0xa0200000, address range: 0xa0200000-0xa035e07c
-RedBoot\*>
+RedBoot\*[Gt]
 .Ed
 .It
 Start the kernel running.
@@ -104,12 +104,12 @@ Since the system's run-time environment has not yet been configured,
 the system should boot into single-user mode.
 .Pp
 .Bd -literal
-RedBoot\*> go
+RedBoot\*[Gt] go
 
 NetBSD/evbarm (IQ80310) booting ...
 Resetting secondary PCI bus...
 initarm: Configuring system ...
-physmemory: 65536 pages at 0xa0000000 -\*> 0xafffffff
+physmemory: 65536 pages at 0xa0000000 -\*[Gt] 0xafffffff
 init subsystems: stacks vectors undefined pmap irq done.
 [ using 155084 bytes of netbsd ELF symbol table ]
 Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002
@@ -144,7 +144,7 @@ fxp0: Ethernet address 00:80:4d:46:0b:b9
 inphy0 at fxp0 phy 1: i82555 10/100 media interface, rev. 4
 inphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto
 clock: hz=100 stathz=0 profhz=0
-boot device: \*<unknown\*>
+boot device: \*[Lt]unknown\*[Gt]
 root on fxp0
 nfs_boot: trying DHCP/BOOTP
 nfs_boot: DHCP next-server: 192.168.0.1
@@ -183,9 +183,9 @@ Unpack the distribution sets into the target's root directory.
 Load the kernel from the TFTP server.
 .Pp
 .Bd -literal
-RedBoot\*> load netbsd-iq80321-wm0
+RedBoot\*[Gt] load netbsd-iq80321-wm0
 Entry point: 0x00200000, address range: 0x00200000-0x00396a40
-RedBoot\*>
+RedBoot\*[Gt]
 .Ed
 .It
 Start the kernel running.
@@ -199,11 +199,11 @@ Since the system's run-time environment has not yet been configured,
 the system should boot into single-user mode.
 .Pp
 .Bd -literal
-RedBoot\*> go
+RedBoot\*[Gt] go
 
 NetBSD/evbarm (IQ80321) booting ...
 initarm: Configuring system ...
-physmemory: 32768 pages at 0xa0000000 -\*> 0xa7ffffff
+physmemory: 32768 pages at 0xa0000000 -\*[Gt] 0xa7ffffff
 init subsystems: stacks vectors undefined pmap irq done.
 [ using 156468 bytes of netbsd ELF symbol table ]
 Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001, 2002
@@ -234,7 +234,7 @@ wm0: Ethernet address 00:07:e9:03:38:40
 makphy0 at wm0 phy 1: Marvell 88E1000 Gigabit PHY, rev. 0
 makphy0: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, 1000baseT, 1000baseT-FDX, auto
 clock: hz=100 stathz=0 profhz=0
-boot device: \*<unknown\*>
+boot device: \*[Lt]unknown\*[Gt]
 root on wm0
 nfs_boot: trying DHCP/BOOTP
 nfs_boot: DHCP next-server: 192.168.0.1
