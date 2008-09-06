@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.508 2008/09/06 21:38:44 rmind Exp $
+$NetBSD: usbdevs,v 1.509 2008/09/06 21:42:05 rmind Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1956,6 +1956,10 @@ product SCANLOGIC 336CX		0x0300	Phantom 336CX - C3 scanner
 
 /* Sealevel products */
 product SEALEVEL USBSERIAL	0x2101	USB-Serial converter
+product SEALEVEL SEAPORT4P1	0x2413	SeaPort+4 Port 1
+product SEALEVEL SEAPORT4P2	0x2423	SeaPort+4 Port 2
+product SEALEVEL SEAPORT4P3	0x2433	SeaPort+4 Port 3
+product SEALEVEL SEAPORT4P4	0x2443	SeaPort+4 Port 4
 
 /* Senao products */
 product SENAO NUB8301		0x2000	NUB-8301
