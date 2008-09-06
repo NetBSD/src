@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.1 2008/09/06 19:00:54 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.2 2008/09/06 21:21:49 rmind Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.1 2008/09/06 19:00:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.2 2008/09/06 21:21:49 rmind Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -1618,9 +1618,10 @@ video_stream_teardown_bufs(struct video_stream *vs)
 
 	mutex_enter(&vs->vs_lock);
 
-	if (vs->vs_streaming)
+	if (vs->vs_streaming) {
 		DPRINTF(("video_stream_teardown_bufs: "
 			 "tearing down bufs while streaming\n"));
+	}
 
 	/* dequeue all buffers */
 	while (SIMPLEQ_FIRST(&vs->vs_ingress) != NULL)
@@ -1629,11 +1630,11 @@ video_stream_teardown_bufs(struct video_stream *vs)
 		SIMPLEQ_REMOVE_HEAD(&vs->vs_egress, entries);
 	
 	err = video_stream_free_bufs(vs);
-	if (err != 0)
+	if (err != 0) {
 		DPRINTF(("video_stream_teardown_bufs: "
 			 "error releasing buffers: %d\n",
 			 err));
-	
+	}
 	vs->vs_method = VIDEO_STREAM_METHOD_NONE;
 
 	mutex_exit(&vs->vs_lock);
