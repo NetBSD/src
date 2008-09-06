@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.509 2008/09/06 21:42:05 rmind Exp $
+$NetBSD: usbdevs,v 1.510 2008/09/06 21:49:00 rmind Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2119,6 +2119,7 @@ product SONY CLIE_NX60		0x00da	Sony Clie nx60
 product SONY PS2EYETOY4		0x0154	PlayStation2 EyeToy v154
 product SONY PS2EYETOY5		0x0155	PlayStation2 EyeToy v155
 product SONY CLIE_TJ25		0x0169	Sony Clie tj25
+product SONY GPS_CS1		0x0298	Sony GPS GPS-CS1
 
 /* SOURCENEXT products */
 product SOURCENEXT KEIKAI8_CHG	0x012e	KeikaiDenwa 8 with charger
