@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.415 2008/09/06 13:14:56 tsutsui Exp $
+.\"	$NetBSD: main,v 1.416 2008/09/06 20:59:42 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -319,7 +319,7 @@ part of installation \(em you may want to read the section below on
 .Sx Older Open Firmware System Preparation
 .Pp
 You should have the Open Firmware
-.Dq Pa "0 \*>"
+.Dq Pa "0 \*[Gt]"
 prompt on your screen before attempting to boot
 .Nx*M .
 .\}
