@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.90 2008/09/06 13:12:22 tsutsui Exp $
+.\"	$NetBSD: sysinst,v 1.91 2008/09/06 21:00:15 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1082,7 +1082,7 @@ the rest of the partitions in AHDI order
 .if \n[macppc] \{\
 .Pp
 You can skip a few steps, down to
-.Em Sq "Getting the distribution sets" ,
+.Sq Em "Getting the distribution sets" ,
 if you are installing onto a drive with an Apple Partition Map (Open 
 Firmware 3), i.e. you selected
 .Me "Re-install sets or install additional sets"
