@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.45 2008/09/06 05:20:58 bjs Exp $
+# $NetBSD: mi,v 1.46 2008/09/06 06:37:58 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6387,6 +6387,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/xgc.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xhost.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xinit.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/xinput.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xkbbell.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xkbcomp.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xkbevd.debug		-unknown-	debug,xorg
