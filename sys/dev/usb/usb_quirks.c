@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.60 2008/08/28 21:43:11 jmcneill Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.61 2008/09/06 21:34:49 rmind Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.60 2008/08/28 21:43:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.61 2008/09/06 21:34:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_MGE, USB_PRODUCT_MGE_UPS2,	    ANY,   { UQ_HID_IGNORE }},
  { USB_VENDOR_TRIPPLITE2, USB_PRODUCT_TRIPPLITE2_UPS,	    
 	ANY,   { UQ_HID_IGNORE }},
+
+ { USB_VENDOR_METAGEEK, USB_PRODUCT_METAGEEK_WISPY_24X, ANY, { UQ_HID_IGNORE }},
 
  { USB_VENDOR_KYE, USB_PRODUCT_KYE_NICHE,	    0x100, { UQ_NO_SET_PROTO}},
  { USB_VENDOR_INSIDEOUT, USB_PRODUCT_INSIDEOUT_EDGEPORT4,

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.506 2008/08/30 03:27:48 matt Exp $
+$NetBSD: usbdevs,v 1.507 2008/09/06 21:34:49 rmind Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -468,6 +468,7 @@ vendor ANYDATA		0x16d5	AnyDATA Inc.
 vendor JABLOTRON	0x16d6	Jablotron
 vendor LINKSYS4		0x1737	Linksys
 vendor SENAO		0x1740	Senao
+vendor METAGEEK		0x1781	MetaGeek
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
@@ -1485,6 +1486,9 @@ product MELCO NINWIFI		0x008b	Nintendo Wi-Fi
 product MELCO SG54HP		0x00d8	WLI-U2-SG54HP
 product MELCO G54HP		0x00d9	WLI-U2-G54HP
 product MELCO KG54L		0x00da	WLI-U2-KG54L
+
+/* MetaGeek products */
+product METAGEEK WISPY_24X	0x083f	Wi-Spy 2.4x
 
 /* Metricom products */
 product METRICOM RICOCHET_GS	0x0001	Ricochet GS
