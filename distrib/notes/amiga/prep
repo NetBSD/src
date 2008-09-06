@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.26 2002/06/29 09:36:23 lukem Exp $
+.\"	$NetBSD: prep,v 1.27 2008/09/06 21:38:13 tsutsui Exp $
 .
 You will need an
 .Tn AmigaDOS
@@ -209,9 +209,9 @@ On
 .Tn AmigaDOS ,
 the command:
 .Pp
-.Dl Ic "xstreamtodev --input=miniroot.fs --rdb-name=\*<swap partition\*>"
+.Dl Ic "xstreamtodev --input=miniroot.fs --rdb-name=\*[Lt]swap partition\*[Gt]"
 .Pp
-where \*<swap partition\*> is the name you gave to the
+where \*[Lt]swap partition\*[Gt] is the name you gave to the
 .Nx
 partition to be used for swapping.
 If
@@ -221,11 +221,11 @@ to determine the SCSI driver device name or the unit number
 of the specified partition, you may also need to include the
 option
 .Pp
-.Dl Ic --device=\*<driver.name\*>
+.Dl Ic --device=\*[Lt]driver.name\*[Gt]
 .Pp
 and/or
 .Pp
-.Dl Ic --unit=\*<SCSI unit number\*>
+.Dl Ic --unit=\*[Lt]SCSI unit number\*[Gt]
 .Pp
 To transfer the miniroot using
 .Nx ,
