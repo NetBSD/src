@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.951 2008/09/05 15:44:29 cegger Exp $
+$NetBSD: pcidevs,v 1.952 2008/09/06 22:36:40 rmind Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -601,6 +601,7 @@ vendor ARECA		0x17d3	Areca
 vendor S2IO		0x17d5	S2io Technologies
 vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
+vendor BBELEC		0x1896	B & B Electronics
 vendor ATTANSIC		0x1969	Attansic Technologies
 vendor EVE		0x1adb	EVE
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
@@ -1371,6 +1372,16 @@ product AVM FRITZ_CARD		0x0a00	Fritz! Card ISDN Interface
 product AVM FRITZ_PCI_V2_ISDN	0x0e00	Fritz!PCI v2.0 ISDN Interface
 product AVM B1			0x0700	Basic Rate B1 ISDN Interface
 product AVM T1			0x1200	Primary Rate T1 ISDN Interface
+
+/* B & B Electronics Products */
+product BBELEC NON_ISOLATED_1_PORT	0x4201	single-channel RS-485 PCI UART
+product BBELEC NON_ISOLATED_2_PORT	0x4202	dual-channel RS-485 PCI UART
+product BBELEC NON_ISOLATED_4_PORT	0x4204	quad-channel RS-485 PCI UART
+product BBELEC NON_ISOLATED_8_PORT	0x4208	octal-channel RS-485 PCI UART
+product BBELEC ISOLATED_1_PORT		0x4211	single-channel Isolated RS-485 PCI UART
+product BBELEC ISOLATED_2_PORT		0x4212	dual-channel Isolated RS-485 PCI UART
+product BBELEC ISOLATED_4_PORT		0x4214	quad-channel Isolated RS-485 PCI UART
+product BBELEC ISOLATED_8_PORT		0x4218	octal-channel Isolated RS-485 PCI UART
 
 /* Belkin products */
 product BELKIN F5D6001		0x6001	F5D6001
