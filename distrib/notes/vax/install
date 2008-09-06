@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.16 2008/04/30 13:10:49 martin Exp $
+.\"	$NetBSD: install,v 1.17 2008/09/06 22:32:07 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ of which VAX you have.
 To just boot from a device, type
 .Sq Ic B
 at the
-.Li \*>\*>\*>
+.Li \*[Gt]\*[Gt]\*[Gt]
 prompt.
 Device naming in the console monitor differs a lot from the
 .Ux
