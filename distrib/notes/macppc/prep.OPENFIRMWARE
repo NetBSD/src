@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.10 2008/09/06 21:03:05 tsutsui Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.11 2008/09/06 22:14:45 tsutsui Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -67,13 +67,13 @@ Welcome to Open Firmware.
 To continue booting, type "mac-boot" and press return.
 To shut down, type "shut-down" and press return.
  ok
-0 \*>
+0 \*[Gt]
 .disp)
 .Pp
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
 .(disp
-.No 0 \*> Ic "setenv auto-boot? false
+.No 0 \*[Gt] Ic "setenv auto-boot? false
 .disp)
 .Pp
 Alternatively, if you are currently running
@@ -122,7 +122,7 @@ until you see some introductory text and the Open Firmware
 command prompt on your serial terminal:
 .Pp
 .(disp
-.No 0 \*>
+.No 0 \*[Gt]
 .disp)
 .Pp
 Your Apple Network Server's screen will remain black.
@@ -130,7 +130,7 @@ Your Apple Network Server's screen will remain black.
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
 .(disp
-.No 0 \*> Ic "setenv auto-boot? false
+.No 0 \*[Gt] Ic "setenv auto-boot? false
 .disp)
 .Pp
 Skip down to the section on
@@ -260,11 +260,11 @@ You should now see the Open Firmware command prompt on your screen:
 .(disp
 Open Firmware, 1.0.5
 To continue booting the MacOS type:
-BYE\*<return\*>
+BYE\*[Lt]return\*[Gt]
 To continue booting from the default boot device type:
-BOOT\*<return\*>
+BOOT\*[Lt]return\*[Gt]
  ok
-0 \*>
+0 \*[Gt]
 .disp)
 .Pp
 If your screen is black, then your model has defaulted to using a serial
@@ -319,11 +319,11 @@ You should now see the Open Firmware command prompt on your screen:
 .(disp
 Open Firmware, 1.0.5
 To continue booting the MacOS type:
-BYE\*<return\*>
+BYE\*[Lt]return\*[Gt]
 To continue booting from the default boot device type:
-BOOT\*<return\*>
+BOOT\*[Lt]return\*[Gt]
  ok
-0 \*>
+0 \*[Gt]
 .disp)
 .Pp
 If your screen is black, then your model does not support using the
@@ -340,7 +340,7 @@ setting is persistent.
 It is equivalent to the Open Firmware command
 .Pp
 .(disp
-.No 0 \*> Ic "setenv auto-boot? false
+.No 0 \*[Gt] Ic "setenv auto-boot? false
 .disp)
 .Note)
 .(Note
@@ -349,8 +349,8 @@ Disk patches.
 If you find that your machine doesn't boot, then try:
 .Pp
 .(disp
-.No 0 \*> Ic "setenv use-nvramrc? false"
-.No 0 \*> Ic "reset-all"
+.No 0 \*[Gt] Ic "setenv use-nvramrc? false"
+.No 0 \*[Gt] Ic "reset-all"
 .disp)
 .Note)
 .
@@ -429,11 +429,11 @@ You should now see the Open Firmware command prompt on your screen:
 .(disp
 Open Firmware, 1.0.5
 To continue booting the MacOS type:
-BYE\*<return\*>
+BYE\*[Lt]return\*[Gt]
 To continue booting from the default boot device type:
-BOOT\*<return\*>
+BOOT\*[Lt]return\*[Gt]
  ok
-0 \*>
+0 \*[Gt]
 .disp)
 .Pp
 If your screen is black, then your model has defaulted to using a serial
@@ -450,7 +450,7 @@ Your system will always stop at the Open Firmware prompt.
 It is equivalent to the Open Firmware command
 .Pp
 .(disp
-.No 0 \*> Ic "setenv auto-boot? false
+.No 0 \*[Gt] Ic "setenv auto-boot? false
 .disp)
 .Note)
 .
@@ -487,11 +487,11 @@ your screen or serial console:
 .(disp
 Open Firmware, 1.0.5
 To continue booting the MacOS type:
-BYE\*<return\*>
+BYE\*[Lt]return\*[Gt]
 To continue booting from the default boot device type:
-BOOT\*<return\*>
+BOOT\*[Lt]return\*[Gt]
  ok
-0 \*>
+0 \*[Gt]
 .disp)
 .Pp
 If your screen is black, then your system has defaulted to using a serial
@@ -504,7 +504,7 @@ You must hook up a serial console
 Now, set your system to always stop at the Open Firmware prompt.
 .Pp
 .(disp
-.No 0 \*> Ic "setenv auto-boot? false
+.No 0 \*[Gt] Ic "setenv auto-boot? false
 .disp)
 .Pp
 To use your on-board video and keyboard, look up the proper
@@ -522,9 +522,9 @@ with the correct
 for your model):
 .Pp
 .(disp
-.No 0 \*> Ic "setenv output-device screen"
-.No 0 \*> Ic "setenv input-device kbd"
-.No 0 \*> Ic "reset-all"
+.No 0 \*[Gt] Ic "setenv output-device screen"
+.No 0 \*[Gt] Ic "setenv input-device kbd"
+.No 0 \*[Gt] Ic "reset-all"
 .disp)
 .Pp
 Now you should see the Open Firmware prompt on your screen.
@@ -554,8 +554,8 @@ you may be using:
 Double-check your Open Firmware version:
 .Pp
 .(disp
-.No 0 \*> Ic "dev /openprom"
-.No 0 \*> Ic ".properties"
+.No 0 \*[Gt] Ic "dev /openprom"
+.No 0 \*[Gt] Ic ".properties"
 name                    openprom
 model                   Open Firmware, 1.0.5
 relative-addressing
@@ -572,9 +572,9 @@ run these commands on Open Firmware 3 machines, as you may overwrite your
 firmware requiring a trip to Apple for repairs.
 .Pp
 .(disp
-.No 0 \*> Ic "setenv load-base 600000"
-.No 0 \*> Ic "setenv real-base F00000"
-.No 0 \*> Ic "reset-all"
+.No 0 \*[Gt] Ic "setenv load-base 600000"
+.No 0 \*[Gt] Ic "setenv real-base F00000"
+.No 0 \*[Gt] Ic "reset-all"
 .disp)
 .Pp
 The last command reboots your machine so that the
@@ -583,8 +583,8 @@ settings are stored.
 If you will be netbooting your system, you can look up your MAC address.
 .Pp
 .(disp
-.No 0 \*> Ic "dev enet"
-.No 0 \*> Ic ".properties"
+.No 0 \*[Gt] Ic "dev enet"
+.No 0 \*[Gt] Ic ".properties"
 [...]
 local-mac-address   CCCCCCCC CCCC
 [...]
@@ -603,7 +603,7 @@ You can check your Open Firmware settings with the
 .Pa printenv
 command:
 .(disp
-.No 0 \*> Ic "printenv"
+.No 0 \*[Gt] Ic "printenv"
 little-endian?      false               false
 real-mode?          false               false
 auto-boot?          false               true
@@ -653,8 +653,8 @@ you may be using:
 Double-check your Open Firmware version:
 .Pp
 .(disp
-.No 0 \*> Ic "dev /openprom"
-.No 0 \*> Ic ".properties"
+.No 0 \*[Gt] Ic "dev /openprom"
+.No 0 \*[Gt] Ic ".properties"
 name                    openprom
 device_type             BootROM
 model                   OpenFirmware 3
@@ -666,8 +666,8 @@ supports-bootinfo
 If you will be netbooting your system, you can look up your MAC address.
 .Pp
 .(disp
-.No 0 \*> Ic "dev enet"
-.No 0 \*> Ic ".properties"
+.No 0 \*[Gt] Ic "dev enet"
+.No 0 \*[Gt] Ic ".properties"
 [...]
 local-mac-address   CCCCCCCC CCCC
 [...]
@@ -688,7 +688,7 @@ You can check your Open Firmware settings with the
 .Pa printenv
 command:
 .(disp
-.No 0 \*> Ic "printenv"
+.No 0 \*[Gt] Ic "printenv"
 -------------- Partition: common -------- Signature: 0x70 ---------------
 little-endian?      false               false
 real-mode?          false               false
