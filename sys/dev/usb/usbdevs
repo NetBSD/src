@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.507 2008/09/06 21:34:49 rmind Exp $
+$NetBSD: usbdevs,v 1.508 2008/09/06 21:38:44 rmind Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1672,6 +1672,7 @@ product NOVATEL2 MERLINU740	0x1400	Novatel Merlin U740
 product NOVATEL2 XU870		0x1430	XU870
 product NOVATEL2 ES620		0x2100	ES620 CDMA
 product NOVATEL2 U720		0x2110	U720
+product NOVATEL2 U727		0x4100	U727
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
