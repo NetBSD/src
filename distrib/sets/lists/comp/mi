@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1188 2008/09/06 19:04:53 jmcneill Exp $
+#	$NetBSD: mi,v 1.1189 2008/09/06 19:14:45 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8977,6 +8977,7 @@
 ./usr/share/man/cat9/vgone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vgonel.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vhold.0			comp-sys-catman		.cat
+./usr/share/man/cat9/video.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vinvalbuf.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vme.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vme_dmamap_create.0	comp-sys-catman		.cat
@@ -14102,6 +14103,7 @@
 ./usr/share/man/html9/vgone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vgonel.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vhold.html		comp-sys-htmlman	html
+./usr/share/man/html9/video.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vinvalbuf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vme.html			comp-sys-htmlman	html
 ./usr/share/man/html9/vme_dmamap_create.html	comp-sys-htmlman	html
@@ -19475,6 +19477,7 @@
 ./usr/share/man/man9/vgone.9			comp-sys-man		.man
 ./usr/share/man/man9/vgonel.9			comp-sys-man		.man
 ./usr/share/man/man9/vhold.9			comp-sys-man		.man
+./usr/share/man/man9/video.9			comp-sys-man		.man
 ./usr/share/man/man9/vinvalbuf.9		comp-sys-man		.man
 ./usr/share/man/man9/vme.9			comp-sys-man		.man
 ./usr/share/man/man9/vme_dmamap_create.9	comp-sys-man		.man
