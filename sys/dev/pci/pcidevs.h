@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.952 2008/09/05 15:45:28 cegger Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.953 2008/09/06 22:44:42 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.951 2008/09/05 15:44:29 cegger Exp
+ *	NetBSD: pcidevs,v 1.953 2008/09/06 22:42:59 rmind Exp
  */
 
 /*
@@ -608,6 +608,7 @@
 #define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
 #define	PCI_VENDOR_LINKSYS2	0x17fe		/* Linksys */
 #define	PCI_VENDOR_RALINK	0x1814		/* Ralink Technologies */
+#define	PCI_VENDOR_BBELEC	0x1896		/* B & B Electronics */
 #define	PCI_VENDOR_ATTANSIC	0x1969		/* Attansic Technologies */
 #define	PCI_VENDOR_EVE	0x1adb		/* EVE */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
@@ -1378,6 +1379,16 @@
 #define	PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN	0x0e00		/* Fritz!PCI v2.0 ISDN Interface */
 #define	PCI_PRODUCT_AVM_B1	0x0700		/* Basic Rate B1 ISDN Interface */
 #define	PCI_PRODUCT_AVM_T1	0x1200		/* Primary Rate T1 ISDN Interface */
+
+/* B & B Electronics Products */
+#define	PCI_PRODUCT_BBELEC_NON_ISOLATED_1_PORT	0x4201		/* single-channel RS-485 PCI UART */
+#define	PCI_PRODUCT_BBELEC_NON_ISOLATED_2_PORT	0x4202		/* dual-channel RS-485 PCI UART */
+#define	PCI_PRODUCT_BBELEC_NON_ISOLATED_4_PORT	0x4204		/* quad-channel RS-485 PCI UART */
+#define	PCI_PRODUCT_BBELEC_NON_ISOLATED_8_PORT	0x4208		/* octal-channel RS-485 PCI UART */
+#define	PCI_PRODUCT_BBELEC_ISOLATED_1_PORT	0x4211		/* single-channel Isolated RS-485 PCI UART */
+#define	PCI_PRODUCT_BBELEC_ISOLATED_2_PORT	0x4212		/* dual-channel Isolated RS-485 PCI UART */
+#define	PCI_PRODUCT_BBELEC_ISOLATED_4_PORT	0x4214		/* quad-channel Isolated RS-485 PCI UART */
+#define	PCI_PRODUCT_BBELEC_ISOLATED_8_PORT	0x4218		/* octal-channel Isolated RS-485 PCI UART */
 
 /* Belkin products */
 #define	PCI_PRODUCT_BELKIN_F5D6001	0x6001		/* F5D6001 */
@@ -3961,6 +3972,7 @@
 #define	PCI_PRODUCT_VIATECH_VT8237A_HB	0x337b		/* VT8237A Host Bridge */
 #define	PCI_PRODUCT_VIATECH_KT880_4	0x4269		/* KT880 CPU to PCI Bridge */
 #define	PCI_PRODUCT_VIATECH_VT3351_HB_4351	0x4351		/* VT3351 Host Bridge */
+#define	PCI_PRODUCT_VIATECH_CX700M2_IDE	0x5324		/* CX700M2/VX700 IDE Controller */
 #define	PCI_PRODUCT_VIATECH_VT3351_IOAPIC	0x5351		/* VT3351 I/O APIC Interrupt Controller */
 #define	PCI_PRODUCT_VIATECH_VT86C100A	0x6100		/* VT86C100A (Rhine-II) 10/100 Ethernet */
 #define	PCI_PRODUCT_VIATECH_VT8378_IG	0x7205		/* VT8378 KM400 UniChrome Integrated Graphics */

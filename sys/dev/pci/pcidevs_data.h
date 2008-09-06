@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.951 2008/09/05 15:45:28 cegger Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.952 2008/09/06 22:44:42 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.951 2008/09/05 15:44:29 cegger Exp
+ *	NetBSD: pcidevs,v 1.953 2008/09/06 22:42:59 rmind Exp
  */
 
 /*
@@ -2244,6 +2244,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Ralink Technologies",
 	},
 	{
+	    PCI_VENDOR_BBELEC,
+	    "B & B Electronics",
+	},
+	{
 	    PCI_VENDOR_ATTANSIC,
 	    "Attansic Technologies",
 	},
@@ -2396,7 +2400,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 589;
+const int pci_nvendors = 590;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -4990,6 +4994,38 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1,
 	    "Primary Rate T1 ISDN Interface",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_1_PORT,
+	    "single-channel RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_2_PORT,
+	    "dual-channel RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_4_PORT,
+	    "quad-channel RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_8_PORT,
+	    "octal-channel RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_1_PORT,
+	    "single-channel Isolated RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_2_PORT,
+	    "dual-channel Isolated RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_4_PORT,
+	    "quad-channel Isolated RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_8_PORT,
+	    "octal-channel Isolated RS-485 PCI UART",
 	},
 	{
 	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6001,
@@ -13728,6 +13764,10 @@ static const struct pci_product pci_products[] = {
 	    "VT3351 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700M2_IDE,
+	    "CX700M2/VX700 IDE Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_IOAPIC,
 	    "VT3351 I/O APIC Interrupt Controller",
 	},
@@ -14320,4 +14360,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2980;
+const int pci_nproducts = 2989;
