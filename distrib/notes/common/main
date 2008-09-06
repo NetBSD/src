@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.414 2008/09/06 04:27:47 tsutsui Exp $
+.\"	$NetBSD: main,v 1.415 2008/09/06 13:14:56 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,8 @@
 .nr DOC_XR 1
 .ds MACHINE_LIST acorn26 acorn32 algor alpha amd64 amiga amigappc arc atari
 .as MACHINE_LIST " bebox cats cesfic cobalt dreamcast evbarm evbmips evbppc
-.as MACHINE_LIST " evbsh3 ews4800mips hp300 hp700 hpcarm hpcmips hpcsh
-.as MACHINE_LIST " hppa i386 ibmnws iyonix luna68k mac68k macppc mipsco mmeye
+.as MACHINE_LIST " evbsh3 ews4800mips hp300 hp700 hpcarm hpcmips hpcsh hppa
+.as MACHINE_LIST " i386 ibmnws iyonix landisk luna68k mac68k macppc mipsco mmeye
 .as MACHINE_LIST " mvme68k mvmeppc netwinder news68k newsmips next68k ofppc
 .as MACHINE_LIST " pdp10 playstation2 pmax prep sandpoint sbmips
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
