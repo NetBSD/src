@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.h,v 1.33 2007/12/07 14:59:22 pooka Exp $	*/
+/*	$NetBSD: psshfs.h,v 1.34 2008/09/06 12:29:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -151,6 +151,7 @@ struct psshfs_ctx {
 	int sshfd;
 	pid_t sshpid;
 	const char *mountpath;
+	char **sshargs;
 
 	int protover;
 	uint32_t nextreq;
@@ -166,7 +167,7 @@ struct psshfs_ctx {
 	int refreshival;
 };
 
-int	psshfs_domount(struct puffs_usermount *);
+int	psshfs_handshake(struct puffs_usermount *);
 
 int	psbuf_read(struct puffs_usermount *, struct puffs_framebuf *,int,int*);
 int	psbuf_write(struct puffs_usermount *, struct puffs_framebuf *,int,int*);
