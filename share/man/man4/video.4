@@ -1,4 +1,4 @@
-.\"	$NetBSD: video.4,v 1.2 2008/09/06 20:32:27 wiz Exp $
+.\"	$NetBSD: video.4,v 1.3 2008/09/06 20:49:27 jmcneill Exp $
 .\"
 .\" Copyright (c) 2008 Patrick Mahoney
 .\" All rights reserved.
@@ -254,6 +254,13 @@ at most the remaining data in that video sample.
 .\" .Sh SEE ALSO
 .\" .Ss USB
 .\" .Xr uvideo 4
+.Sh HISTORY
+The
+.Nm
+device driver first appeared in
+.Nx 5.0 .
+.Sh AUTHORS
+.An Patrick Mahoney Aq pat@polycrystal.org
 .Sh BUGS
 Does not support the complete V4L2 API.
 Only supports the capture interface.
