@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.64 2008/09/02 02:20:12 lukem Exp $
+# $NetBSD: mi,v 1.65 2008/09/06 06:37:58 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1254,6 +1254,7 @@
 ./usr/X11R7/bin/xgc					-unknown-	xorg
 ./usr/X11R7/bin/xhost					-unknown-	xorg
 ./usr/X11R7/bin/xinit					-unknown-	xorg
+./usr/X11R7/bin/xinput					-unknown-	xorg
 ./usr/X11R7/bin/xkbbell					-unknown-	xorg
 ./usr/X11R7/bin/xkbcomp					-unknown-	xorg
 ./usr/X11R7/bin/xkbcomp					-unknown-	xorg
@@ -1973,6 +1974,7 @@
 ./usr/X11R7/man/cat1/xgc.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xhost.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xinit.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xinput.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xkbcomp.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xkbevd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xkbprint.0				-unknown-	.cat,xorg
@@ -2090,6 +2092,7 @@
 ./usr/X11R7/man/html1/xgc.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/xhost.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xinit.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/xinput.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xkbcomp.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xkbevd.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xkbprint.html			-unknown-	html,xorg
@@ -2208,6 +2211,7 @@
 ./usr/X11R7/man/man1/xgc.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xhost.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xinit.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/xinput.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xkbcomp.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xkbevd.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xkbprint.1				-unknown-	.man,xorg
