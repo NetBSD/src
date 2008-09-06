@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.413 2008/09/05 21:17:20 tron Exp $
+.\"	$NetBSD: main,v 1.414 2008/09/06 04:27:47 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2209,10 +2209,8 @@ the software that we have mentioned in this document:
 .vs 9
 .Ht <font size=-1>
 .(item -compact
-.nh
 .so ../common/legal.common -----------------------------------------------
 .so legal -----------------------------------------------
-.hy
 .item)
 .Ht </font>
 .ps
