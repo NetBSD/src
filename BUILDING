@@ -193,6 +193,11 @@ CONFIGURATION
 
                  Default: ``yes''
 
+     MKHTML      Can be set to ``yes'' or ``no''.  Indicates whether prefor-
+                 matted HTML manual pages will be built and installed
+
+                 Default: ``yes''
+
      MKHOSTOBJ   Can be set to ``yes'' or ``no''.  If set to ``yes'', then for
                  programs intended to be run on the compile host, the name,
                  release, and architecture of the host operating system will
