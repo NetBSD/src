@@ -1,4 +1,4 @@
-.\"	$NetBSD: video.4,v 1.1 2008/09/06 19:08:29 jmcneill Exp $
+.\"	$NetBSD: video.4,v 1.2 2008/09/06 20:32:27 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Patrick Mahoney
 .\" All rights reserved.
@@ -37,28 +37,33 @@ The
 .Nm
 driver provides support for various video peripherals.
 It provides a uniform programming interface layer above different
-underlying video hardware drivers.  The video layer provides a Video4Linux2
-compatible API.  A number of
+underlying video hardware drivers.
+The video layer provides a
+.Tn Video4Linux2
+compatible API.
+A number of
 .Xr ioctl 2
-commands are supported controling the device.
-See http://v4l2spec.bytesex.org/ for the official V4L2
-specification.
+commands are supported controlling the device.
+See
+.Pa http://v4l2spec.bytesex.org/
+for the official V4L2 specification.
 .Pp
-The device file for video operation is:
-.Pa /dev/video 
+The device file for video operation is
+.Pa /dev/video .
 .Sh READING VIDEO SAMPLES
 Video data is separated into logical video samples which will
-typically be one complete video frame.  With compressed formats, a
-video sample may be one logical chunk and not one complete frame
-depending on the compression format.  Video samples may be read from
+typically be one complete video frame.
+With compressed formats, a video sample may be one logical chunk
+and not one complete frame depending on the compression format.
+Video samples may be read from
 .Pa /dev/video
-in one of several different modes.  
+in one of several different modes.
 .Pp
 In read mode, calls to
 .Xr read 2
-will return at most the data of one video sample.  If the entire
-sample is not read, then subsequent reads will return at most the
-remaining data in that video sample.
+will return at most the data of one video sample.
+If the entire sample is not read, then subsequent reads will return
+at most the remaining data in that video sample.
 .Pp
 Video samples may be mapped into memory with
 .Xr mmap 2 .
@@ -78,8 +83,8 @@ to queue the buffers for receiving video data,
 .Dv VIDIOC_STREAMON
 to begin streaming of video data, and
 .Dv VIDIOC_DQBUF
-to remove a filled buffer from the queue.  At this point the video
-data from the dequeued buffer is valid.
+to remove a filled buffer from the queue.
+At this point the video data from the dequeued buffer is valid.
 .Sh DEVICE CAPABILITIES
 .Bl -tag -width indent
 .It Dv VIDIOC_QUERYCAP (struct v4l2_capabilities)
@@ -151,16 +156,19 @@ struct v4l2_requestbuffers {
 .It Dv VIDIOC_QUERYBUF (struct v4l2_buffer)
 This command should be called for each buffer in
 .Va count
-above.  The fields
+above.
+The fields
 .Va index ,
-.Va type , and
+.Va type ,
+and
 .Va memory
 must be set to a valid index from 0 to
 .Va count-1 ,
 and the same type and memory as used in
 .Dv VIDIOC_QUERYBUF .
 The driver returns
-.Va m.offset and
+.Va m.offset
+and
 .Va length .
 .Bd -literal
 struct v4l2_buffer {
@@ -189,56 +197,65 @@ passing the
 .Va length
 and
 .Va m.offset
-values obtained above.  The prot
+values obtained above.
+The prot
 .Dv PROT_READ|PROT_WRITE
 and flags
 .Dv MAP_SHARED
 are recommended.
 .It Dv VIDIOC_QBUF (struct v4l2_buffer)
 This command indicates to the driver that the buffer is ready to
-receive a video sample.  The following fields must be set:
+receive a video sample.
+The following fields must be set:
 .Va index ,
-set to a valid buffer index from 0 to 
+set to a valid buffer index from 0 to
 .Va count
-- 1;
+\- 1;
 .Va type ,
-set to the same type used above; and 
+set to the same type used above; and
 .Va memory ,
-set to the same memory used above.  Each buffer should be queued with
-this command.  Order is not important.
+set to the same memory used above.
+Each buffer should be queued with this command.
+Order is not important.
 .It Dv VIDIOC_STREAMON (int)
-This command starts streaming.  Queued buffers will be filled with data.
+This command starts streaming.
+Queued buffers will be filled with data.
 .Xr select 2
 will indicate that a buffer is done and available for reading.
 .It Dv VIDIOC_DQBUF (struct v4l2_buffer)
-This command dequeues an available buffer from the driver.  If no
-buffer is available, it blocks until one is, unless O_NONBLOCK was
-specified to
+This command dequeues an available buffer from the driver.
+If no buffer is available, it blocks until one is, unless
+.Dv O_NONBLOCK
+was specified to
 .Xr open 2 ,
 in which case it returns
-.Dv EAGAIN .
-.Xr select 2 , or
+.Er EAGAIN .
+.Xr select 2 ,
+or
 .Xr poll 2
 prior to initiating any other mode will begin streaming of video for
 reading with
 .Xr read 2 .
 In this streaming mode
-.Xr select 2 or
+.Xr select 2
+or
 .Xr poll 2
-indicate the availability of a video frame. Calls to
+indicate the availability of a video frame.
+Calls to
 .Xr read 2
-will return at most the video data of one video sample.  If the entire
-sample is not read, then subsequent reads will return at most the
-remaining data in that video sample.
+will return at most the video data of one video sample.
+If the entire sample is not read, then subsequent reads will return
+at most the remaining data in that video sample.
 .El
 .Sh FILES
 .Bl -tag -width /dev/video -compact
 .It Pa /dev/video
 .El
-.Sh SEE ALSO
-.Ss USB
-.Xr uvideo 4
+.\" .Sh SEE ALSO
+.\" .Ss USB
+.\" .Xr uvideo 4
 .Sh BUGS
-Does not support all of V4L2 api.  Only supports the capture
-interface.  Does not support writing, overlay, VBI, tuner, audio,
-radio, or asyncio
+Does not support the complete V4L2 API.
+Only supports the capture interface.
+Does not support writing, overlay, VBI, tuner, audio, radio, or
+asyncio.
