@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.223 2008/08/25 15:27:47 cegger Exp $
+# $NetBSD: GENERIC,v 1.224 2008/09/06 20:08:13 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.223 $"
+#ident 		"GENERIC-$Revision: 1.224 $"
 
 maxusers	64		# estimated number of users
 
@@ -948,6 +948,12 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # Radio support
 #radio*	at gtp?
+
+
+# Video capture devices
+
+pseye* at uhub?		# Sony PLAYSTATION(R) Eye webcam
+video* at videobus?
 
 
 # TV cards
