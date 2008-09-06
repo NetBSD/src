@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.89 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: sysinst,v 1.90 2008/09/06 13:12:22 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1654,10 +1654,10 @@ you have selected.
 In the latter case, you will be shown the currently selected sets,
 and given the opportunity to select the sets you want.
 Some sets always need to be installed
-.Po Sy kern, base,
+.Sy kern ,
+.Sy base ,
 and
 .Sy etc
-.Pc
 they will not be shown in this selection menu.
 .Pp
 Before extraction begins, you can elect to watch the files being
