@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep.OPENFIRMWARE,v 1.9 2007/12/14 21:15:59 pavel Exp $
+.\"	$NetBSD: prep.OPENFIRMWARE,v 1.10 2008/09/06 21:03:05 tsutsui Exp $
 .if \*[OF_VERSION_3] \{\
 .
 .Ss2 Updating your BootROM
@@ -759,7 +759,7 @@ The following bootable media are available for loading the bootloader:
 .(bullet -offset indent
 .
 .if \*[OF_VERSION_12] \{\
-.Em Sq "Partition zero"
+.Sq Em "Partition zero"
 .Pp
 This method loads the primary bootloader
 .Pa bootxx
@@ -922,8 +922,7 @@ You can use the instructions in this section to partition a disk that may
 also be used with
 .Tn MacOS ,
 although a disk prepared in this way
-.Em "will not boot"
-.Em Nx .
+.Em "will not boot" Nx .
 That means, your root partition
 .Pq Pa /
 must be on a drive prepared with the
@@ -1095,7 +1094,7 @@ or
 .Pa /usr/pkg .
 .Nx
 interprets these partitions as normal
-.Nx No Ns -style
+.Nx Ns -style
 partitions.
 These partitions are not readable from
 .Tn MacOS .
