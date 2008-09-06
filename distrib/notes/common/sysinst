@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.91 2008/09/06 21:00:15 tsutsui Exp $
+.\"	$NetBSD: sysinst,v 1.92 2008/09/06 21:43:38 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -395,7 +395,7 @@ the computer.
 .if \n[alpha] \{\
 Type
 .Pp
-.Dl \&\*>\*>\*> Ic "B DVA0"
+.Dl \&\*[Gt]\*[Gt]\*[Gt] Ic "B DVA0"
 .Pp
 .\}
 .if \n[ews4800mips] \{\
@@ -406,17 +406,17 @@ pressing ESC key right after hardware checks, and boot the computer again.
 .if \n[news68k] \{\
 Type
 .Pp
-.Dl \&NEWS\*> Ic "bo fh"
+.Dl \&NEWS\*[Gt] Ic "bo fh"
 .Pp
 .\}
 .if \n[newsmips] \{\
 Type
 .Pp
-.Dl \&\*> Ic "bo fd" (in case of NWS-5000)
+.Dl \&\*[Gt] Ic "bo fd" (in case of NWS-5000)
 .Pp
 or
 .Pp
-.Dl \&\*> Ic "bo fh" (in case of NWS-3xxx)
+.Dl \&\*[Gt] Ic "bo fh" (in case of NWS-3xxx)
 .Pp
 .\}
 After language selection, the main menu will be displayed.
@@ -905,7 +905,7 @@ and
 .Pa swap ) ,
 for example:
 .Dl # Ic "mkdir /mnt/etc"
-.Dl # Ic "cat \*> /mnt/etc/fstab"
+.Dl # Ic "cat \*[Gt] /mnt/etc/fstab"
 .Dl "/dev/wd0a / ffs rw 1 1"
 .Dl "/dev/wd0b none swap sw 0 0"
 .Dl "/dev/wd0g /usr ffs rw 1 2"
@@ -1781,7 +1781,7 @@ As the a.out format kernel is not named in such a way that the
 Cyclone firmware will automatically find it the following command
 should be issued as the firmware prompt.
 .Pp
-.Dl boot> Ic "set boot wd0:/netbsd.aout"
+.Dl boot\*[Gt] Ic "set boot wd0:/netbsd.aout"
 .Pp
 .\}
 .if !\n[macppc] \{\
