@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.229 2008/06/19 18:21:32 imp Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.230 2008/09/06 22:08:38 rmind Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.226 2008/06/19 18:20:33 imp Exp
+ *	NetBSD: pcmciadevs,v 1.227 2008/09/06 22:07:11 rmind Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -79,6 +79,7 @@
 #define	PCMCIA_VENDOR_PSION	0x016c	/* Psion */
 #define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_KINGSTON	0x0186	/* Kingston */
+#define	PCMCIA_VENDOR_SIERRA	0x0192	/* Sierra Wireless */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_RAYTHEON	0x01a6	/* Raytheon */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
@@ -525,6 +526,10 @@
 /* Sharp Products */
 #define	PCMCIA_CIS_SHARP_PALDIO611S	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SHARP_PALDIO611S	0x0000
+
+/* Sierra Wireless */
+#define	PCMCIA_CIS_SIERRA_AC850	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SIERRA_AC850	0x0710
 
 /* Simple Technology Products */
 #define	PCMCIA_CIS_SIMPLETECH_COMMUNICATOR288	{ NULL, NULL, NULL, NULL }
