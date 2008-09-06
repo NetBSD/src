@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.43 2008/09/04 08:04:31 rtr Exp $
+# $NetBSD: mi,v 1.44 2008/09/06 03:22:04 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5922,6 +5922,7 @@
 ./usr/X11R7/lib/X11/config/xfree86.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/xorg.cf			-unknown-	xorg
 ./usr/X11R7/lib/X11/config/xorgsite.def			-unknown-	xorg
+./usr/X11R7/lib/X11/config/xorgversion.def		-unknown-	xorg
 ./usr/X11R7/lib/libFS.a					-unknown-	xorg
 ./usr/X11R7/lib/libFS_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libFS_p.a				-unknown-	xorg
