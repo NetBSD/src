@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.268 2008/09/03 03:02:48 erh Exp $
+#       $NetBSD: Makefile,v 1.269 2008/09/06 19:08:29 jmcneill Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -51,7 +51,8 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	store.9 suspendsched.9 \
 	sysctl.9 sysmon_envsys.9 tc.9 tcp_congctl.9 timecounter.9 \
 	time_second.9 todr.9 uiomove.9 ucom.9 userret.9 \
-	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 vme.9 \
+	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
+	video.9 vme.9 \
 	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
 	usbdi.9 uvm.9 \
 	vmem.9 vmem_alloc.9 vmem_create.9 vmem_destroy.9 vmem_free.9 \
