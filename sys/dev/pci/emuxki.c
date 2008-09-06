@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.53 2008/09/06 02:52:39 gmcgarry Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.54 2008/09/06 03:00:32 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.53 2008/09/06 02:52:39 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.54 2008/09/06 03:00:32 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -362,7 +362,7 @@ emuxki_scinit(struct emuxki_softc *sc)
 	}
 
 	/* No multiple voice support for now */
-	sc->pvoice = sc->vvoice = NULL;
+	sc->pvoice = sc->rvoice = NULL;
 
 	return 0;
 }
