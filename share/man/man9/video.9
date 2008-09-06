@@ -1,4 +1,4 @@
-.\"	$NetBSD: video.9,v 1.1 2008/09/06 19:08:29 jmcneill Exp $
+.\"	$NetBSD: video.9,v 1.2 2008/09/06 20:36:47 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Patrick Mahoney
 .\" All rights reserved.
@@ -36,11 +36,11 @@
 .Ft device_t
 .Fn video_attach_mi "const struct video_hw_if *hw_if" "device_t hw_dev"
 .Ft void
-.Fn video_submit_payload "devict_t vl_dev" "const struct video_payload *payload"
+.Fn video_submit_payload "device_t vl_dev" "const struct video_payload *payload"
 .Sh DESCRIPTION
 The video device driver is divided into a high level, machine
-independent layer, and a low level hardware dependent layer.  The
-interface between these is the
+independent layer, and a low level hardware dependent layer.
+The interface between these is the
 .Fa video_hw_if
 structure function pointers called by the video layer, and video layer
 functions called by the hardware driver.
@@ -52,8 +52,8 @@ The
 .Fa video_hw_if
 struct is as shown below.
 .Fa dev
-is the device struct for the hardware device.  Return value is the
-video layer device.
+is the device struct for the hardware device.
+Return value is the video layer device.
 .Bd -literal
 struct video_hw_if {
 	int	(*open)(void *, int); /* open hardware */
@@ -79,7 +79,8 @@ struct video_hw_if {
 .Ed
 .Pp
 The upper layer of the video driver allocates buffers for video
-samples.  The hardware driver submits data to the video layer with
+samples.
+The hardware driver submits data to the video layer with
 .Fa video_submit_payload .
 .Fa vl_dev
 is the video layer device returned by
@@ -94,16 +95,18 @@ struct video_payload {
 };
 .Ed
 .It Fa data
-Pointer to the video data for this payload.  This may only be a
+Pointer to the video data for this payload.
+This may only be a
 portion of the data in one video sample or frame.
 .It Fa size
 Size in bytes of the video data in this payload
 .It Fa frameno
-Frame number to which this payload belongs.  The hardware driver must
-toggle the frame number between 0 and 1 so the video layer can detect
-sample or frame boundaries.
+Frame number to which this payload belongs.
+The hardware driver must toggle the frame number between 0 and 1
+so the video layer can detect sample or frame boundaries.
 .It Fa end_of_frame
-Optional end of frame marker.  If the hardware layer sets this, the
+Optional end of frame marker.
+If the hardware layer sets this, the
 video layer can immediately pass the completed sample or frame to
 userspace rather than waiting for the next payload to toggle
 .Fa frameno .
@@ -112,7 +115,9 @@ userspace rather than waiting for the next payload to toggle
 The fields of
 .Va video_hw_if
 are described in some more detail below.
-Some fields are optional and can be set to NULL if not needed.
+Some fields are optional and can be set to
+.Dv NULL
+if not needed.
 .Bl -tag -width indent
 .It Dv int open(void *hdl, int flags)
 optional, is called when the video device is opened.
@@ -125,23 +130,24 @@ Return 0 on success, otherwise an error code.
 .It Dv void close(void *hdl)
 optional, is called when the audio device is closed.
 .It Dv const char * get_devname(void *hdl)
-mandatory, returns a NULL-terminated string naming the device, e.g. a
+mandatory, returns a NUL-terminated string naming the device, e.g. a
 vendor and product model name.
 .It Dv int enum_format(void *hdl, uint32_t index, struct video_format *format);
 mandatory, called with an
 .Va index
 from 0 to
-.Va max_index - 1 .
+.Va max_index \- 1 .
 Fills
 .Va format
-with the format description at that index.  Returns 0 on success,
-otherwise an error code.
+with the format description at that index.
+Returns 0 on success, otherwise an error code.
 .It Dv int get_format(void *hdl, struct video_format *format)
 mandatory, fills
 .Va format
-with the current video format.  There should be a default format so
-this function works before and streaming has begun.  Returns 0 on
-success, otherwise an error code.
+with the current video format.
+There should be a default format so
+this function works before and streaming has begun.
+Returns 0 on success, otherwise an error code.
 .It Dv int set_format(void *hdl, struct video_format *format)
 mandatory, sets the format of the video stream based on
 .Va format .
@@ -153,11 +159,13 @@ Returns 0 on success, otherwise an error code.
 optional, like
 .Va set_format
 but does not actually change the stream format, just checks what is
-available.  Returns 0 on success, otherwise an error code.
+available.
+Returns 0 on success, otherwise an error code.
 .It Dv int start_transfer(void *hdl)
-mandatory, starts the capture of video frames.  Incoming video data
+mandatory, starts the capture of video frames.
+Incoming video data
 must be submitted to the video layer with repeated calls to
-.Va video_submit_payload() .
+.Fn video_submit_payload .
 .It Dv int stop_transfer(void *hdl)
 .It Dv int control_iter_init(void *hdl, struct video_control_iter *)
 Does nothing at this time.
@@ -166,11 +174,12 @@ Does nothing at this time.
 .It Dv int get_control_group(void *hdl, struct video_control_group *)
 .It Dv int set_control_group(void *hdl, struct video_control_group *)
 .El
-.Pp
 .Sh SEE ALSO
 .Xr video 4
 .Sh BUGS
-Incomplete.  Only supports a single video capture stream.  Does not
-support output streams.  Format handling may change in the future.
-Control handling may change.  Current design requires copying all
-incoming video data.
+Incomplete.
+Only supports a single video capture stream.
+Does not support output streams.
+Format handling may change in the future.
+Control handling may change.
+Current design requires copying all incoming video data.
