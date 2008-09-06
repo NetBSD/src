@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.45 2008/09/06 18:18:32 tsutsui Exp $
+.\"$NetBSD: hardware,v 1.46 2008/09/06 21:02:34 tsutsui Exp $
 .
 Currently,
 .Nx*M
@@ -257,7 +257,7 @@ and Realtek
 .Pq Em rtk
 .It
 Many USB Ethernet interfaces
-.Pq Em aue , No Em cue No and Em kue
+.Pq Em aue , Em cue No and Em kue
 .bullet)
 .It
 Wireless
