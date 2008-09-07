@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.57 2008/09/04 21:54:51 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.58 2008/09/07 12:13:00 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.57 2008/09/04 21:54:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.58 2008/09/07 12:13:00 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -55,7 +55,6 @@ struct sme_sensor_event {
 
 static const struct sme_sensor_event sme_sensor_event[] = {
 	{ ENVSYS_SVALID, 	PENVSYS_EVENT_NORMAL },
-	{ ENVSYS_SCRITICAL, 	PENVSYS_EVENT_CRITICAL },
 	{ ENVSYS_SCRITOVER, 	PENVSYS_EVENT_CRITOVER },
 	{ ENVSYS_SCRITUNDER, 	PENVSYS_EVENT_CRITUNDER },
 	{ ENVSYS_SWARNOVER, 	PENVSYS_EVENT_WARNOVER },
@@ -606,23 +605,43 @@ sme_events_worker(struct work *wk, void *arg)
 	/*
 	 * For hardware and user range limits, send event if state has changed
 	 */
-	case PENVSYS_EVENT_CRITICAL:
 	case PENVSYS_EVENT_HW_LIMITS:
-		if (edata->state != see->see_evsent) {
-			for (i = 0; sse[i].state != -1; i++)
-				if (sse[i].state == edata->state)
-					break;
+		if (edata->state == see->see_evsent)
+			break;
 
-			if (sse[i].state == -1)
+		for (i = 0; sse[i].state != -1; i++)
+			if (sse[i].state == edata->state)
 				break;
 
-			if (edata->state == ENVSYS_SVALID)
-				sysmon_penvsys_event(&see->see_pes,
-						     PENVSYS_EVENT_NORMAL);
-			else
-				sysmon_penvsys_event(&see->see_pes,
-						     sse[i].event);
+		if (sse[i].state == -1)
+			break;
 
+		if (edata->state == ENVSYS_SVALID)
+			sysmon_penvsys_event(&see->see_pes,
+					     PENVSYS_EVENT_NORMAL);
+		else
+			sysmon_penvsys_event(&see->see_pes, sse[i].event);
+
+		see->see_evsent = edata->state;
+
+		break;
+
+	/*
+	 * For critical state monitoring, only two event values are valid:
+	 *	ENVSYS_SVALID or ENVSYS_SCRITICAL
+	 * Send corresponding event if state has changed.
+	 */
+	case PENVSYS_EVENT_CRITICAL:
+		if (edata->state == see->see_evsent)
+			break;
+
+		if (edata->state == ENVSYS_SVALID) {
+			sysmon_penvsys_event(&see->see_pes,
+					     PENVSYS_EVENT_NORMAL);
+			see->see_evsent = edata->state;
+		} else if (edata->state == ENVSYS_SCRITICAL) {
+			sysmon_penvsys_event(&see->see_pes,
+					     PENVSYS_EVENT_CRITICAL);
 			see->see_evsent = edata->state;
 		}
 		break;
