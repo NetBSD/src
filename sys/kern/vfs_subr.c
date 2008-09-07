@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.355 2008/07/31 05:38:05 simonb Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.356 2008/09/07 13:09:36 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.355 2008/07/31 05:38:05 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.356 2008/09/07 13:09:36 tron Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -161,7 +161,6 @@ kmutex_t mountlist_lock;
 kmutex_t mntid_lock;
 kmutex_t mntvnode_lock;
 kmutex_t vnode_free_list_lock;
-kmutex_t specfs_lock;
 kmutex_t vfs_list_lock;
 
 static pool_cache_t vnode_cache;
