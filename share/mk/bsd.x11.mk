@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.62 2008/09/07 13:10:22 rtr Exp $
+#	$NetBSD: bsd.x11.mk,v 1.63 2008/09/07 14:29:38 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -235,6 +235,7 @@ cleanx11man: .PHONY
 	sed -e 's/\\$$/\\ /' ${.IMPSRC} \
 	| ${CPP} -undef -traditional \
 	    -D__apploaddir__=${X11ROOTDIR}/lib/X11/app-defaults \
+	    -D__appmansuffix__=1 \
 	    -D__libmansuffix__=3 \
 	    -D__filemansuffix__=5 \
 	    -D__miscmansuffix__=7 \
