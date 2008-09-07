@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.84 2008/06/29 18:45:20 rumble Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.85 2008/09/07 13:13:04 tron Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.84 2008/06/29 18:45:20 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.85 2008/09/07 13:13:04 tron Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -74,7 +74,6 @@ static struct sysctllog *smbfs_sysctl_log;
 
 static int smbfs_setroot(struct mount *);
 
-struct pool smbfs_node_pool;
 extern struct vnodeopv_desc smbfs_vnodeop_opv_desc;
 
 static const struct vnodeopv_desc *smbfs_vnodeopv_descs[] = {

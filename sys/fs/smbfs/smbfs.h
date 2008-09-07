@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.16 2008/01/26 14:25:38 ad Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.17 2008/09/07 13:13:04 tron Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -70,6 +70,7 @@ struct smb_share;
 struct u_cred;
 struct vop_ioctl_args;
 struct buf;
+struct pool;
 
 struct smbmount {
 	struct smbfs_args	sm_args;
@@ -95,6 +96,9 @@ struct smbmount {
 int smbfs_doio(struct buf *, kauth_cred_t, struct lwp *);
 int smbfs_vinvalbuf(struct vnode *, int, kauth_cred_t, struct lwp *, int);
 int smbfs_kqfilter(void *);
+
+extern struct pool smbfs_node_pool;
+
 #endif	/* KERNEL */
 
 #endif /* _FS_SMBFS_SMBFS_H_ */
