@@ -1,4 +1,4 @@
-/* $NetBSD: videoio.h,v 1.1 2008/09/06 19:00:54 jmcneill Exp $ */
+/* $NetBSD: videoio.h,v 1.2 2008/09/07 16:13:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -544,6 +544,8 @@ struct v4l2_requestbuffers {
 #define V4L2_CID_VFLIP			(V4L2_CID_BASE + 21)
 #define V4L2_CID_HCENTER_DEPRECATED	(V4L2_CID_BASE + 22)
 #define V4L2_CID_VCENTER_DEPRECATED	(V4L2_CID_BASE + 23)
+#define V4L2_CID_HCENTER	V4L2_CID_HCENTER_DEPRECATED
+#define V4L2_CID_VCENTER	V4L2_CID_VCENTER_DEPRECATED
 #define V4L2_CID_POWER_LINE_FREQUENCY	(V4L2_CID_BASE + 24)
 #define V4L2_CID_HUE_AUTO		(V4L2_CID_BASE + 25)
 #define V4L2_CID_WHITE_BALANCE_TEMPERATURE (V4L2_CID_BASE + 26)
