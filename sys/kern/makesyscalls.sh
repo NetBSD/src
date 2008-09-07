@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.70 2008/07/23 21:17:25 apb Exp $
+#	$NetBSD: makesyscalls.sh,v 1.71 2008/09/07 19:27:58 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -544,7 +544,7 @@ function putent(type, compatwrap) {
 		printf("%s %s, ", argtype[i], argname[i]) > rumpcalls
 	}
 	printf("int *error)\n") > rumpcalls
-	printf("{\n\tregister_t retval;\n") > rumpcalls
+	printf("{\n\tregister_t retval = 0;\n") > rumpcalls
 	argarg = "NULL"
 	if (argc) {
 		argarg = "&arg"
@@ -560,6 +560,7 @@ function putent(type, compatwrap) {
 	}
 	printf("\t*error = %s(curlwp, %s, &retval);\n", funcname, argarg) \
 	    > rumpcalls
+	printf("\tif (*error)\n\t\tretval = -1;\n") > rumpcalls
 	if (returntype != "void")
 		printf("\treturn retval;\n") > rumpcalls
 	printf("}\n\n") > rumpcalls
