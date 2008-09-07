@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.362 2008/09/07 12:01:25 tron Exp $
+.\"	$NetBSD: options.4,v 1.363 2008/09/07 12:07:21 tron Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -999,6 +999,12 @@ Disable the
 support in FFS file systems.
 Maybe useful for install media kernels, small memory systems and
 embedded systems which don't require the snapshot support.
+.It Cd options WAPBL
+Enable ``Write Ahead Physical Block Logging file system journaling''.
+This provides rapid file system consistency checking after a system outage.
+It also provides better general use performance over regular FFS.
+See also
+.Xr wapbl 4
 .It Cd options NVNODE=integer
 This option sets the size of the cache used by the name-to-inode translation
 routines, (a.k.a. the
