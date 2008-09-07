@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7463.c,v 1.15 2008/04/04 09:55:58 xtraeme Exp $ */
+/*	$NetBSD: adt7463.c,v 1.16 2008/09/07 19:07:21 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,10 +32,14 @@
  * Analog devices AD7463 remote thermal controller and voltage monitor
  * Data sheet at:
  * http://www.analog.com/UploadedFiles/Data_Sheets/272624927ADT7463_c.pdf
+ *
+ * Above URL appears to be no longer valid as of 2008-09-07.  An
+ * earlier version of the data sheet can be found at
+ * http://www.datasheetcatalog.org/datasheet/analogdevices/15792721ADT7463_0.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.15 2008/04/04 09:55:58 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7463.c,v 1.16 2008/09/07 19:07:21 pgoyette Exp $");
 
 /* Fan speed control added by Hanns Hartman */
 #include <sys/param.h>
