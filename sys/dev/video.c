@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.4 2008/09/07 19:06:14 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.5 2008/09/07 20:05:13 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.4 2008/09/07 19:06:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.5 2008/09/07 20:05:13 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -304,6 +304,9 @@ video_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dying = false;
 
 	video_stream_init(&sc->sc_stream_in);
+
+	aprint_naive("\n");
+	aprint_normal(": %s\n", sc->hw_if->get_devname(sc->hw_softc));
 
 	DPRINTF(("video_attach: sc=%p hwif=%p\n", sc, sc->hw_if));
 }
