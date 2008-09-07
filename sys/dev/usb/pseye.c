@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.1 2008/09/06 19:37:21 jmcneill Exp $ */
+/* $NetBSD: pseye.c,v 1.2 2008/09/07 17:12:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.1 2008/09/06 19:37:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.2 2008/09/07 17:12:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,8 @@ static usbd_status	pseye_get_frame(struct pseye_softc *);
 static int		pseye_open(void *, int);
 static void		pseye_close(void *);
 static const char *	pseye_get_devname(void *);
+static int		pseye_enum_format(void *, uint32_t,
+					  struct video_format *);
 static int		pseye_get_format(void *, struct video_format *);
 static int		pseye_set_format(void *, struct video_format *);
 static int		pseye_start_transfer(void *);
@@ -126,6 +128,7 @@ static const struct video_hw_if pseye_hw_if = {
 	.open = pseye_open,
 	.close = pseye_close,
 	.get_devname = pseye_get_devname,
+	.enum_format = pseye_enum_format,
 	.get_format = pseye_get_format,
 	.set_format = pseye_set_format,
 	.try_format = NULL,
@@ -684,6 +687,14 @@ static const char *
 pseye_get_devname(void *opaque)
 {
 	return "PLAYSTATION(R) Eye";
+}
+
+static int
+pseye_enum_format(void *opaque, uint32_t index, struct video_format *format)
+{
+	if (index != 0)
+		return EINVAL;
+	return pseye_get_format(opaque, format);
 }
 
 static int
