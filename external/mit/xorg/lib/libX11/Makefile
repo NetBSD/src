@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/06 07:34:24 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/09/07 13:15:11 rtr Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=		dynamic static
+SUBDIR=		dynamic static \
+		ximcp xlcDef xlcUTF8Load xlibi18n xlocale xomGeneric
 
 INCS=		ImUtil.h XKBlib.h Xcms.h Xlib.h XlibConf.h Xlibint.h \
 		Xlocale.h Xregion.h Xresource.h Xutil.h cursorfont.h \
