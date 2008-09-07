@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.39 2008/07/21 19:13:45 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.40 2008/09/07 18:30:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.39 2008/07/21 19:13:45 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.40 2008/09/07 18:30:18 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1102,6 +1102,8 @@ int
 sys_sa_preempt(struct lwp *l, const struct sys_sa_preempt_args *uap,
     register_t *retval)
 {
+/* Not yet ready */
+#if 0
 	struct proc		*p = l->l_proc;
 	struct sadata		*sa = p->p_sa;
 	struct lwp		*t;
@@ -1145,6 +1147,10 @@ exit_lock:
 	mutex_exit(p->p_lock);
 
 	return error;
+#else
+	/* Just return an error */
+	return (sys_nosys(l, v, retval));
+#endif
 }
 
 
