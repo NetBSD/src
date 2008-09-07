@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.7 2008/09/06 22:30:14 tsutsui Exp $
+.\"	$NetBSD: install,v 1.8 2008/09/07 04:45:18 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@ At the PROM monitor prompt, use one of the commands:
 The first example will use the tape on SCSI target 4, where the
 second will use SCSI target 5.
 The
-.Li \[Gt]*
+.Li \*[Gt]
 is the monitor prompt.
 .Pp
 After the tape loads, you should see many lines of configuration
