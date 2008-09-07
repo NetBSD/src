@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/08/28 08:36:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2008/09/07 14:52:48 lukem Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -44,7 +44,9 @@ xf86Build.h: .PHONY
 #
 xf86Init.c xf86Init.o: xf86Build.h
 
+CLEANFILES+=	xf86DefModeSet.c
 xf86DefModeSet.c:
+	${_MKTARGET_CREATE}
 	cat \
 	${X11SRCDIR.xorg-server}/hw/xfree86/common/vesamodes \
 	${X11SRCDIR.xorg-server}/hw/xfree86/common/extramodes | \
