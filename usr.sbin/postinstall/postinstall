@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.66 2008/09/07 12:34:06 apb Exp $
+# $NetBSD: postinstall,v 1.67 2008/09/07 15:22:47 apb Exp $
 #
-# Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
+# Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -87,6 +87,31 @@ mkdtemp()
 	done
 	echo "${_dir}"
 }
+
+# Quote args to make them safe in the shell.
+# Usage: quotedlist="$(shell_quote args...)"
+#
+# After building up a quoted list, use it by evaling it inside
+# double quotes, like this:
+#    eval "set -- $quotedlist"
+# or like this:
+#    eval "\$command $quotedlist \$filename"
+shell_quote()
+{
+	local result=''
+	local arg
+	for arg in "$@" ; do
+		# Append a space if necessary
+		result="${result}${result:+ }"
+		# Convert each embedded ' to '\'',
+		# then insert ' at the beginning of the first line,
+		# and append ' at the end of the last line.
+		result="${result}$(printf "%s\n" "$arg" | \
+			sed -e "s/'/'\\\\''/g" -e "1s/^/'/" -e "\$s/\$/'/")"
+	done
+	printf "%s\n" "$result"
+}
+
 
 # additem item description
 #	Add item to list of supported items to check/fix,
@@ -1282,18 +1307,31 @@ list()
 
 main()
 {
+	TGZLIST=		# quoted list list of tgz files
+	SRC_ARGLIST=		# quoted list of one or more "-s" args
+	N_SRC_ARGS=0		# number of "-s" args
+	TGZMODE=false		# true if "-s" specifies a tgz file
+	DIRMODE=false		# true if "-s" specified a directory
+
 	while getopts s:d:m:a: ch; do
 		case "${ch}" in
 		s)
-			if [ -f "${OPTARG%%:*}" ]; then
-				# arg refers to a *.tgz file, or a
-				# colon-separated list.
-				# This may happen twice, for both etc.tgz and
-				# xetc.tgz, so we build up a colon-separated
-				# list in TGZLIST.
-				TGZLIST="${TGZLIST}${TGZLIST:+:}${OPTARG}"
+			qarg="$(shell_quote "${OPTARG}")"
+			N_SRC_ARGS=$(( N_SRC_ARGS + 1 ))
+			SRC_ARGLIST="${SRC_ARGLIST}${SRC_ARGLIST:+ }-s ${qarg}"
+			if [ -f "${OPTARG}" ]; then
+				# arg refers to a *.tgz file.
+				# This may happen twice, for both
+				# etc.tgz and xetc.tgz, so we build up a
+				# quoted list in TGZLIST.
+				TGZMODE=true
+				TGZLIST="${TGZLIST}${TGZLIST:+ }${qarg}"
+				# Note that, when TGZMODE is true,
+				# SRC_ARG is used only for printing
+				# human-readable messages.
 				SRC_ARG="${TGZLIST}"
 			elif [ -d "${OPTARG}" ]; then
+				DIRMODE=true
 				SRC_ARG="${OPTARG}"
 			else
 				err 2 "Invalid argument for -s option"
@@ -1316,26 +1354,35 @@ main()
 	shift $((${OPTIND} - 1))
 	[ $# -gt 0 ] || usage
 
+	if [ "$N_SRC_ARGS" -gt 1 ] && $DIRMODE; then
+		err 2 "Multiple -s args are allowed only with tgz files"
+	fi
+	if [ "$N_SRC_ARGS" -eq 0 ]; then
+		# The default SRC_ARG was set elsewhere
+		DIRMODE=true
+		SRC_ARGLIST="-s $(shell_quote "${SRC_ARG}")"
+	fi
+
 	#
-	# If '-s etc.tgz' or '-s etc.tgz:xetc.tgz', extract tgz files
+	# If '-s' arg or args specified tgz files, extract them
 	# to a scratch directory.
 	#
-	if [ -n "${TGZLIST}" ]; then
+	if $TGZMODE; then
 		ETCTGZDIR="${SCRATCHDIR}/etc.tgz"
-		echo "Note: -s ${SRC_ARG} is a file,"
-		echo "      temporarily extracting to ${ETCTGZDIR}"
+		echo "Note: Creating temporary directory ${ETCTGZDIR}"
 		if ! mkdir "${ETCTGZDIR}"; then
 			err 2 "Can't create ${ETCTGZDIR}"
 		fi
-		oldIFS="${IFS}"
-		IFS=:
-		for tgz in ${TGZLIST}; do
-			cat "${tgz}" | (
-				cd "${ETCTGZDIR}" &&
-				tar -zxf -
-			) || err 2 "Can't extract ${tgz}"
-		done
-		IFS="${oldIFS}"
+		( # subshell to localise changes to "$@"
+			eval "set -- ${TGZLIST}"
+			for tgz in "$@"; do
+				echo "Note: Extracting files from ${tgz}"
+				cat "${tgz}" | (
+					cd "${ETCTGZDIR}" &&
+					tar -zxf -
+				) || err 2 "Can't extract ${tgz}"
+			done
+		)
 		SRC_DIR="${ETCTGZDIR}"
 	else
 		SRC_DIR="${SRC_ARG}"
@@ -1441,7 +1488,7 @@ main()
 			[ "$MACHINE" = "$(uname -m)" ] && m= || m=" -m $MACHINE"
 			cat <<_Fix_me_
 To fix, run:
-    ${0} -s ${SRC_ARG} -d ${DEST_DIR:-/}$m fix${items_failed}
+    ${0} ${SRC_ARGLIST} -d ${DEST_DIR:-/}$m fix${items_failed}
 Note that this may overwrite local changes.
 _Fix_me_
 		    fi
