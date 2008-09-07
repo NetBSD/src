@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.61 2008/08/28 23:32:51 lukem Exp $
+#	$NetBSD: bsd.x11.mk,v 1.62 2008/09/07 13:10:22 rtr Exp $
 
 .include <bsd.init.mk>
 
@@ -136,6 +136,8 @@ XVENDORNAMESHORT=	'"X.Org"'
 XVENDORNAME=		'"The X.Org Foundation"'
 XORG_RELEASE=		'"Release 1.4.2"'
 __XKBDEFRULES__=	'"xorg"'
+XLOCALE.DEFINES=	-DXLOCALEDIR=\"${X11LIBDIR}/locale\" \
+			-DXLOCALELIBDIR=\"${X11LIBDIR}/locale\"
 
 # XXX oh yeah, fix me later
 XORG_VERSION_CURRENT="(((1) * 10000000) + ((4) * 100000) + ((2) * 1000) + 0)"
