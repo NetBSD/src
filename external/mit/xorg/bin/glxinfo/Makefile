@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/07 14:07:21 lukem Exp $
+
+NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 PROG=	glxinfo
-MAN=	# defined
 
 CPPFLAGS+=${X11FLAGS.THREADS} -DDO_GLU
 
