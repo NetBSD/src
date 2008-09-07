@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.13 2008/09/02 21:45:42 lukem Exp $
+# $NetBSD: shl.elf,v 1.14 2008/09/07 13:15:49 rtr Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2	-unknown-		x11
@@ -97,6 +97,18 @@
 ./usr/X11R6/lib/libxkbfile.so.1			-unknown-		x11
 ./usr/X11R6/lib/libxkbui.so			-unknown-		x11
 ./usr/X11R6/lib/libxkbui.so.1			-unknown-		x11
+./usr/X11R7/lib/X11/locale/lib/common/ximcp.so	-unknown-		xorg
+./usr/X11R7/lib/X11/locale/lib/common/ximcp.so.2	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlcDef.so	-unknown-		xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlcDef.so.2	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlcUTF8Load.so	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlcUTF8Load.so.2	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so.2	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlocale.so	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlocale.so.2	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2	-unknown-	xorg
 ./usr/X11R7/lib/libFS.so			-unknown-		xorg
 ./usr/X11R7/lib/libFS.so.6			-unknown-		xorg
 ./usr/X11R7/lib/libGL.so			-unknown-		xorg
