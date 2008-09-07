@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/07 14:30:28 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -37,8 +37,7 @@ TARGETS+=	configinstall
 .PATH:		${X11SRCDIR.${PROG}}
 .PATH:		${X11SRCDIR.${PROG}}/greeter
 
-xdm.man: xdm.man.cpp
-	$(CC) -E ${.ALLSRC} > ${.TARGET}
+BUILDSYMLINKS+=	xdm.man.cpp xdm.man
 
 .include "Makefile.xdm"
 
