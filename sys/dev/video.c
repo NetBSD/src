@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.2 2008/09/06 21:21:49 rmind Exp $ */
+/* $NetBSD: video.c,v 1.3 2008/09/07 17:13:21 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.2 2008/09/06 21:21:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.3 2008/09/07 17:13:21 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -659,7 +659,7 @@ video_enum_format(struct video_softc *sc, struct v4l2_fmtdesc *fmtdesc)
 
 	hw = sc->hw_if;
 	if (hw->enum_format == NULL)
-		return EINVAL;
+		return ENOTTY;
 
 	err = hw->enum_format(sc->hw_softc, fmtdesc->index, &vfmt);
 	if (err != 0)
@@ -688,7 +688,7 @@ video_get_format(struct video_softc *sc,
 
 	hw = sc->hw_if;
 	if (hw->get_format == NULL)
-		return EINVAL;
+		return ENOTTY;
 
 	err = hw->get_format(sc->hw_softc, &vfmt);
 	if (err != 0)
@@ -708,7 +708,7 @@ video_set_format(struct video_softc *sc, struct v4l2_format *fmt)
 
 	hw = sc->hw_if;
 	if (hw->get_format == NULL)
-		return EINVAL;
+		return ENOTTY;
 
 	v4l2_format_to_video_format(fmt, &vfmt);
 
@@ -732,7 +732,7 @@ video_try_format(struct video_softc *sc,
 
 	hw = sc->hw_if;
 	if (hw->try_format == NULL)
-		return EINVAL;
+		return ENOTTY;
 
 	v4l2_format_to_video_format(format, &vfmt);
 
@@ -1307,7 +1307,7 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	default:
 		DPRINTF(("videoioctl: invalid cmd %s (%lx)\n",
 			 video_ioctl_str(cmd), cmd));
-		return EINVAL;
+		return ENOTTY;
 	}
 }
 
