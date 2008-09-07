@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.50 2008/08/10 15:31:21 tls Exp $
+#	$NetBSD: GENERIC,v 1.51 2008/09/07 12:01:26 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.50 $"
+#ident 		"GENERIC-$Revision: 1.51 $"
 
 maxusers	32		# estimated number of users
 
@@ -42,8 +42,6 @@ options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
-#options 	NO_TSC_TIME	# Don't use TSC microtime, even if available.
-				# Improves time behavior under VMware.
 
 #options 	KTRACE		# system call tracing via ktrace(1)
 
