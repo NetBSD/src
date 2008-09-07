@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.55 2008/09/02 19:38:25 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.56 2008/09/07 20:17:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -169,7 +169,7 @@ rump_init()
 
 	sigemptyset(&sigcantmask);
 
-	fd_init(&rump_filedesc0);
+	lwp0.l_fd = proc0.p_fd = fd_init(&rump_filedesc0);
 	rump_cwdi.cwdi_cdir = rootvnode;
 }
 
@@ -196,6 +196,7 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 int
 rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
 {
+	struct vnode *rvp;
 	int rv;
 
 	rv = VFS_MOUNT(mp, path, data, dlen);
@@ -206,6 +207,15 @@ rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
 	rv = VFS_START(mp, 0);
 	if (rv)
 		VFS_UNMOUNT(mp, MNT_FORCE);
+
+	/*
+	 * XXX: set a root for lwp0.  This is strictly not correct,
+	 * but makes things works for single fs case without having
+	 * to manually call rump_rcvp_set().
+	 */
+	VFS_ROOT(mp, &rvp);
+	rump_rcvp_set(rvp, rvp);
+	vput(rvp);
 
 	return rv;
 }
