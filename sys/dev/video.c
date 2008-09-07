@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.3 2008/09/07 17:13:21 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.4 2008/09/07 19:06:14 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.3 2008/09/07 17:13:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.4 2008/09/07 19:06:14 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -1307,7 +1307,7 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	default:
 		DPRINTF(("videoioctl: invalid cmd %s (%lx)\n",
 			 video_ioctl_str(cmd), cmd));
-		return ENOTTY;
+		return EINVAL;
 	}
 }
 
