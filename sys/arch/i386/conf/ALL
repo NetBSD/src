@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.176 2008/07/31 23:56:00 cegger Exp $
+# $NetBSD: ALL,v 1.177 2008/09/07 12:01:25 tron Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.176 $"
+#ident 		"ALL-$Revision: 1.177 $"
 
 maxusers	32		# estimated number of users
 
@@ -74,8 +74,6 @@ options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
-options 	NO_TSC_TIME	# Don't use TSC microtime, even if available.
-				# Improves time behavior under VMware.
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
