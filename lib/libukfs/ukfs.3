@@ -1,4 +1,4 @@
-.\"     $NetBSD: ukfs.3,v 1.3 2008/08/01 19:52:10 pooka Exp $
+.\"     $NetBSD: ukfs.3,v 1.4 2008/09/07 15:14:31 pooka Exp $
 .\"
 .\" Copyright (c) 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 1, 2008
+.Dd September 7, 2008
 .Dt UKFS 3
 .Os
 .Sh NAME
@@ -206,14 +206,14 @@ to prior activity, otherwise 0 should be passed.
 .Fa "uint8_t *buf" "size_t bufsize"
 .Fc
 .Pp
-.Ft int
+.Ft ssize_t
 .br
 .Fo ukfs_read
 .Fa "struct ukfs *ukfs" "const char *filename" "off_t off"
 .Fa "uint8_t *buf" "size_t bufsize"
 .Fc
 .Pp
-.Ft int
+.Ft ssize_t
 .br
 .Fo ukfs_write
 .Fa "struct ukfs *ukfs" "const char *filename" "off_t off"
@@ -254,7 +254,7 @@ to prior activity, otherwise 0 should be passed.
 .Fa "struct ukfs *ukfs" "const char *filename" "const char *linkname"
 .Fc
 .Pp
-.Ft int
+.Ft ssize_t
 .br
 .Fo ukfs_readlink
 .Fa "struct ukfs *ukfs" "const char *filename" "char *linkbuf" "size_t buflen"
