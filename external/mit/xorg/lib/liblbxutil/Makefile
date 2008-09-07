@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/07 14:43:49 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,10 @@ SRCS=	lbx_zlib_io.c lbx_zlib.c reqstats.c \
 
 dfaxg42d.c: g3states.h
 g3states.h: ${X11SRCDIR.lbxutil}/src/image/mkg3states.c
+	${_MKTARGET_CREATE}
 	${MKG3STATES} -c > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+
+CLEANFILES+=	g3states.h
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB} -I.
 
