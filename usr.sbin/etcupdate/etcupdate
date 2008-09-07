@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.41 2008/09/05 11:29:42 apb Exp $
+# $NetBSD: etcupdate,v 1.42 2008/09/07 14:31:10 apb Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -391,7 +391,6 @@ do
 	case "${i}" in
 	a)
 		AUTOMATIC=true
-		shift
 		;;
 	b)
 
@@ -411,7 +410,6 @@ EOF
 		;;
 	l)
 		LOCALSKIP=true
-		shift
 		;;
 	p)
 		PAGER="${OPTARG}"
@@ -467,7 +465,6 @@ EOF
 		;;
 	v)
 		VERBOSE=true
-		shift
 		;;
 	w)
 		WIDTH="${OPTARG}"
