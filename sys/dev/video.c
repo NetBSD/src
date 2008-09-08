@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.5 2008/09/07 20:05:13 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.6 2008/09/08 00:39:27 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.5 2008/09/07 20:05:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.6 2008/09/08 00:39:27 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -75,7 +75,7 @@ int	videodebug = VIDEO_DEBUG;
 #define splvideo()	splvm()
 
 #define VIDEO_MIN_BUFS 2
-#define VIDEO_MAX_BUFS 255
+#define VIDEO_MAX_BUFS 32
 #define VIDEO_NUM_BUFS 4
 
 /* Scatter Buffer - an array of fixed size (PAGE_SIZE) chunks
