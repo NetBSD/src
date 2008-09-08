@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.52 2008/09/08 21:44:22 christos Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.53 2008/09/08 21:54:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.52 2008/09/08 21:44:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.53 2008/09/08 21:54:10 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -404,7 +404,7 @@ sk_vpd_read(struct sk_softc *sc)
 int
 sk_xmac_miibus_readreg(device_t dev, int phy, int reg)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	int i;
 
 	DPRINTFN(9, ("sk_xmac_miibus_readreg\n"));
@@ -435,7 +435,7 @@ sk_xmac_miibus_readreg(device_t dev, int phy, int reg)
 void
 sk_xmac_miibus_writereg(device_t dev, int phy, int reg, int val)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	int i;
 
 	DPRINTFN(9, ("sk_xmac_miibus_writereg\n"));
@@ -465,7 +465,7 @@ sk_xmac_miibus_writereg(device_t dev, int phy, int reg, int val)
 void
 sk_xmac_miibus_statchg(device_t dev)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	struct mii_data *mii = &sc_if->sk_mii;
 
 	DPRINTFN(9, ("sk_xmac_miibus_statchg\n"));
@@ -485,7 +485,7 @@ sk_xmac_miibus_statchg(device_t dev)
 int
 sk_marv_miibus_readreg(device_t dev, int phy, int reg)
 {
-	struct sk_if_softc *sc_if = (struct sk_if_softc *)dev;
+	struct sk_if_softc *sc_if = device_private(dev);
 	u_int16_t val;
 	int i;
 
