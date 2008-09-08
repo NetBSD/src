@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.1.2.8 2008/09/03 22:50:17 haad Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.1.2.9 2008/09/08 11:34:01 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 
 static struct dm_pdev *dm_pdev_alloc(const char *);
 static int dm_pdev_rem(struct dm_pdev *);
+/*static int dm_pdev_dump_list(void);*/
 
 /*
  * Find used pdev with name == dm_pdev_name.
@@ -104,12 +105,12 @@ dm_pdev_insert(const char *dev_name)
 {
 	struct dm_pdev *dmp;
 	int error;
-
+	
 	dmp = dm_pdev_lookup_name(dev_name);
 	
 	if (dmp != NULL) {
 		dmp->ref_cnt++;
-
+		aprint_verbose("dmp_pdev_insert pdev %s already in tree\n",dev_name);
 		return dmp;
 	}
 
@@ -119,7 +120,7 @@ dm_pdev_insert(const char *dev_name)
 	error = dk_lookup(dev_name, curlwp, &dmp->pdev_vnode, UIO_SYSSPACE);
 
 	if (error) {
-		aprint_normal("dk_lookup on device: %s failed with error %d!\n",
+		aprint_verbose("dk_lookup on device: %s failed with error %d!\n",
 		    dev_name, error);
 
 		kmem_free(dmp, sizeof(struct dm_pdev));
@@ -155,8 +156,7 @@ dm_pdev_alloc(const char *name)
 {
 	struct dm_pdev *dmp;
 
-	if ((dmp = kmem_alloc(sizeof(struct dm_pdev)+strlen(name)+1,
-		    KM_NOSLEEP)) == NULL)
+	if ((dmp = kmem_zalloc(sizeof(struct dm_pdev), KM_NOSLEEP)) == NULL)
 		return NULL;
 
 	strlcpy(dmp->name, name, MAX_DEV_NAME);
@@ -175,9 +175,10 @@ static int
 dm_pdev_rem(struct dm_pdev *dmp)
 {
 	int err;
-	
+
 	if (dmp == NULL)
 		return ENOENT;
+		
 	if (dmp->pdev_vnode != NULL) {
 		err = vn_close(dmp->pdev_vnode, FREAD | FWRITE, FSCRED);
 		if (err != 0)
@@ -240,3 +241,19 @@ dm_pdev_decr(struct dm_pdev *dmp)
 
 	return 0;
 }
+
+/*static int
+  dm_pdev_dump_list()
+  {
+  struct dm_pdev *dmp;
+	
+  aprint_verbose("Dumping dm_pdev_list \n");
+	
+  SLIST_FOREACH(dmp, &dm_pdev_list, next_pdev) {
+  aprint_verbose("dm_pdev_name %s ref_cnt %d list_rf_cnt %d\n",
+  dmp->name, dmp->ref_cnt, dmp->list_ref_cnt);
+  }
+	
+  return 0;	
+	
+  }*/
