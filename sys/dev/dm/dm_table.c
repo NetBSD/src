@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.1.2.8 2008/09/04 00:17:38 haad Exp $      */
+/*        $NetBSD: dm_table.c,v 1.1.2.9 2008/09/08 11:36:24 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,8 +37,7 @@
 #include "dm.h"
 
 /*
- * Destroy all table data. This function should be called with held
- * dev_mtx.
+ * Destroy all table data.
  */
 
 int
