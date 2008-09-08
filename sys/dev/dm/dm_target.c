@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.1.2.11 2008/09/03 22:50:17 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.1.2.12 2008/09/08 11:36:24 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -147,12 +147,7 @@ dm_target_destroy(void)
 struct dm_target*
 dm_target_alloc(const char *name)
 {
-	struct dm_target *dmt;
-	
-	if ((dmt = kmem_alloc(sizeof(struct dm_target), KM_NOSLEEP)) == NULL)
-		return NULL;
-	
-	return dmt;
+	return kmem_zalloc(sizeof(struct dm_target), KM_NOSLEEP);
 }
 
 /*
