@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.1.2.7 2008/09/05 01:04:23 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.1.2.8 2008/09/08 11:08:02 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -44,12 +44,8 @@
 #include "netbsd-dm.h"
 #include "dm.h"
 
-/*TAILQ_HEAD(dm_dev_head, dm_dev);*/
-
 static struct dm_dev_head dm_dev_list =
 TAILQ_HEAD_INITIALIZER(dm_dev_list);
-/*static struct db_cmd_tbl_en db_base_cmd_builtins =
-  { .db_cmd = db_command_table };*/
 
 kmutex_t dm_dev_mutex;
 
@@ -75,7 +71,6 @@ dm_dev_lookup_minor(int dm_dev_minor)
 			return dm_dev;
 		}
 	}
-		
 
 	mutex_exit(&dm_dev_mutex);
 	
@@ -91,10 +86,8 @@ dm_dev_lookup_name(const char *dm_dev_name)
 	struct dm_dev *dm_dev;
 	int dlen; int slen;
 
-	if (dm_dev_name == NULL)
+	if ((dm_dev_name == NULL) || (slen = strlen(dm_dev_name) == 0))
 		return NULL;
-	
-	slen = strlen(dm_dev_name);
 
 	mutex_enter(&dm_dev_mutex);
 	
@@ -127,11 +120,9 @@ dm_dev_lookup_uuid(const char *dm_dev_uuid)
 	
 	len = 0;
 	
-	if (dm_dev_uuid == NULL)
+	if ((dm_dev_uuid == NULL) || (strlen(dm_dev_uuid) == 0))
 		return NULL;
 
-	len = strlen(dm_dev_uuid);
-	
 	mutex_enter(&dm_dev_mutex);
 	
 	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
@@ -200,6 +191,7 @@ dm_dev_destroy(void)
 {
 	struct dm_dev *dm_dev;
 
+	/* XXX should I get rw_lock here ? */
 	mutex_enter(&dm_dev_mutex);
 
 	while (TAILQ_FIRST(&dm_dev_list) != NULL){
@@ -210,7 +202,8 @@ dm_dev_destroy(void)
 		next_devlist);
 
 		/* Destroy active table first.  */
-		dm_table_destroy(&dm_dev->tables[dm_dev->cur_active_table]);
+		if (!SLIST_EMPTY(&dm_dev->tables[dm_dev->cur_active_table]))
+			dm_table_destroy(&dm_dev->tables[dm_dev->cur_active_table]);
 
 		/* Destroy unactive table if exits, too. */
 		if (!SLIST_EMPTY(&dm_dev->tables[1 - dm_dev->cur_active_table]))
@@ -229,13 +222,8 @@ dm_dev_destroy(void)
  */
 struct dm_dev*
 dm_dev_alloc()
-{
-	struct dm_dev *dmv;
-	
-	if ((dmv = kmem_alloc(sizeof(struct dm_dev), KM_NOSLEEP)) == NULL)
-		return NULL;
-	
-	return dmv;
+{	
+	return kmem_zalloc(sizeof(struct dm_dev), KM_NOSLEEP);
 }
 
 /*
