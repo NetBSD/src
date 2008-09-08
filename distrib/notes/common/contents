@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.142 2008/09/06 20:59:00 tsutsui Exp $
+.\"	$NetBSD: contents,v 1.143 2008/09/08 16:10:14 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -379,16 +379,6 @@ Tape boot program, and two shell scripts used to prepare tapes.
 Two programs needed to boot \*M kernels over the network.
 .		It Pa tapeimage/
 Tape boot programs, and a RAMDISK kernel.
-.\}
-.
-.if \n[xen-i386] \{\
-.		It Pa xen12load/
-.		(tag xen12load.gz -compact
-.			It Pa xen12load.gz
-The kernel loader needed to boot
-.Nx*M
-as domain-0.
-.		tag)
 .\}
 .
 .	tag)
