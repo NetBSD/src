@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.226 2008/05/31 20:27:24 dyoung Exp $	*/
+/*	$NetBSD: systm.h,v 1.227 2008/09/08 23:36:55 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -218,7 +218,7 @@ void	twiddle(void);
 #endif /* _KERNEL */
 
 void	panic(const char *, ...)
-    __attribute__((__noreturn__,__format__(__printf__,1,2)));
+    __dead __attribute__((__format__(__printf__,1,2)));
 void	uprintf(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	uprintf_locked(const char *, ...)

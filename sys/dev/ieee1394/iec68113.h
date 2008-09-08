@@ -1,4 +1,4 @@
-/*	$NetBSD: iec68113.h,v 1.2 2005/12/11 12:22:02 christos Exp $	*/
+/*	$NetBSD: iec68113.h,v 1.3 2008/09/08 23:36:54 gmcgarry Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -93,7 +93,7 @@ struct ciphdr {
 #define	CIP_STYPE_SDL	1
 #define	CIP_STYPE_HD	2
 	  		uint16_t cyc:16;	/* take care of byte order! */
-		} __attribute__ ((packed)) dv;
+		} __packed dv;
 		uint8_t bytes[3];
 	} fdf;
 

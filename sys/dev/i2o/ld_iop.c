@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.30 2008/08/11 06:43:37 simonb Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.31 2008/09/08 23:36:54 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.30 2008/08/11 06:43:37 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.31 2008/09/08 23:36:54 gmcgarry Exp $");
 
 #include "rnd.h"
 
@@ -135,7 +135,7 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 			struct	i2o_param_rbs_cache_control cc;
 			struct	i2o_param_rbs_device_info bdi;
 		} p;
-	} __attribute__ ((__packed__)) param;
+	} __packed param;
 
 	sc = device_private(self);
 	ld = &sc->sc_ld;

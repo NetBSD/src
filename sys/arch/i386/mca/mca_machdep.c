@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.35 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.36 2008/09/08 23:36:54 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.35 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.36 2008/09/08 23:36:54 gmcgarry Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,7 +78,7 @@ struct bios_config {
 #define FEATURE_DMA3	0x80	/* DMA channel 3 used by hard disk BIOS	*/
 	uint8_t		feature2;
 	uint8_t		pad[9];
-} __attribute__ ((packed));
+} __packed;
 
 /*
  * Used to encode DMA channel into ISA DMA cookie. We use upper 4 bits of

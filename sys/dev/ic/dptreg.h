@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.18 2007/03/04 06:01:54 christos Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.19 2008/09/08 23:36:54 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -104,7 +104,7 @@ struct eata_cp {
 	u_int32_t	cp_dataaddr;		/* Addr of data/SG list */
 	u_int32_t	cp_stataddr;		/* Addr of status packet */
 	u_int32_t	cp_senseaddr;		/* Addr of req. sense */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct eata_ucp {
 	u_int8_t	ucp_cp[sizeof(struct eata_cp) - 5*4];	/* XXX */
@@ -118,7 +118,7 @@ struct eata_ucp {
 	u_int8_t	ucp_tstatus;
 	u_int8_t	ucp_retries;
 	u_int8_t	ucp_padding;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define CP_C0_SCSI_RESET	0x01	/* Cause a bus reset */
 #define CP_C0_HBA_INIT		0x02	/* Reinitialize HBA */
@@ -163,7 +163,7 @@ struct eata_sp {
 	u_int8_t	sp_que_message;
 	u_int8_t	sp_tag_message;
 	u_int8_t	sp_messages[9];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * HBA status as returned by status packet.  Bit 7 signals end of command.
@@ -198,7 +198,7 @@ struct eata_sp {
 struct eata_sg {
 	u_int32_t	sg_addr;
 	u_int32_t	sg_len;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * EATA configuration data as returned by HBA.  XXX This is bogus - it
@@ -226,7 +226,7 @@ struct eata_cfg {
 	u_int8_t	ec_maxlun;		/* Maximum LUN supported */
 	u_int8_t	ec_feat4;		/* 5th feature byte */
 	u_int8_t	ec_raidnum;		/* RAID host adapter humber */
-} __attribute__ ((__packed__));
+} __packed;
 
 #define EC_F0_OVERLAP_CMDS	0x01	/* Overlapped cmds supported */
 #define EC_F0_TARGET_MODE	0x02	/* Target mode supported */
@@ -284,6 +284,6 @@ struct eata_inquiry_data {
 	char		ei_fw[3];		/* Firmware */
 	char		ei_fwrev[1];		/* Firmware revision */
 	u_int8_t	ei_extra[8];
-} __attribute__ ((__packed__));
+} __packed;
 
 #endif	/* !defined _IC_DPTREG_H_ */

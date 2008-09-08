@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.13 2008/06/27 00:53:41 gmcgarry Exp $
+ * $NetBSD: if_lmc.h,v 1.14 2008/09/08 23:36:54 gmcgarry Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -814,7 +814,7 @@ struct synth				/* programmable oscillator params  */
   unsigned x:2;				/* div by 1|2|4|8                  */
   unsigned r:2;				/* div by 1|2|4|8                  */
   unsigned prescale:13;			/* log(final divisor): 2, 4 or 9   */
-  } __attribute__ ((packed));
+  } __packed;
 
 #define SYNTH_FREF	        20e6	/* reference xtal =  20 MHz        */
 #define SYNTH_FMIN	        50e6	/* internal VCO min  50 MHz        */
@@ -1178,7 +1178,7 @@ struct dma_desc
 #else					/* BUS_DMA */
 # define TLP_BUS_DSL_VAL	0
 #endif
-  } __attribute__ ((packed));
+  } __packed;
 
 /* Tulip DMA descriptor status bits */
 #define TLP_DSTS_OWNER		0x80000000
