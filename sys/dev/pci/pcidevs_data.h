@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.952 2008/09/06 22:44:42 rmind Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.953 2008/09/08 07:07:53 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.953 2008/09/06 22:42:59 rmind Exp
+ *	NetBSD: pcidevs,v 1.954 2008/09/08 07:06:48 cegger Exp
  */
 
 /*
@@ -12232,16 +12232,16 @@ static const struct pci_product pci_products[] = {
 	    "CSB6 USB Host Controller",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_USB,
+	    "HT1000 USB",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5_LPC,
 	    "CSB5 ISA/LPC bridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_LPC,
 	    "CSB6 ISA/LPC bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_USB,
-	    "HT1000 USB",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_LPC,
