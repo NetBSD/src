@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467.c,v 1.13 2008/05/08 02:03:22 macallan Exp $	*/
+/*	$NetBSD: adt7467.c,v 1.14 2008/09/08 23:07:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -27,6 +27,9 @@
 /* 
  * a driver for the ADT7467 environmental controller found in the iBook G4 
  * and probably other Apple machines 
+ *
+ * Data sheet available at
+ * http://www.onsemi.com/pub_link/Collateral/ADT7467-D.PDF
  */
 
 /* 
@@ -35,7 +38,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.13 2008/05/08 02:03:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.14 2008/09/08 23:07:51 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

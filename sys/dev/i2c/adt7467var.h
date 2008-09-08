@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467var.h,v 1.6 2008/05/08 02:03:22 macallan Exp $	*/
+/*	$NetBSD: adt7467var.h,v 1.7 2008/09/08 23:07:52 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -29,11 +29,11 @@
  * and probably other Apple machines 
  */
 
-#ifndef ADT7456VAR_H
-#define ADT7456VAR_H
+#ifndef ADT7467VAR_H
+#define ADT7467VAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.6 2008/05/08 02:03:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.7 2008/09/08 23:07:52 pgoyette Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
