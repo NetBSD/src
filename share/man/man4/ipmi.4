@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipmi.4,v 1.4 2007/07/02 15:49:50 xtraeme Exp $
+.\"	$NetBSD: ipmi.4,v 1.5 2008/09/08 14:46:15 pgoyette Exp $
 .\"
 .\" Copyright (c) 2006 Manuel Bouyer.
 .\"
@@ -60,8 +60,12 @@ event when the Power Supply unit is not installed and
 when the Power Supply unit is installed but not powered on.
 Fan, temperature and voltage sensors will send
 .Em critical-over
+or
+.Em critical-under
 when the value is very critical, or
 .Em warning-over
+or
+.Em warning-under
 if it's in a warning alert.
 .Sh SEE ALSO
 .Xr envsys 4 ,
