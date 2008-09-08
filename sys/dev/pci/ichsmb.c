@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.14 2008/09/08 20:37:38 njoly Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.15 2008/09/08 20:47:09 njoly Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.14 2008/09/08 20:37:38 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.15 2008/09/08 20:47:09 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -148,7 +148,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_poll = 1;
 	if (conf & LPCIB_SMB_HOSTC_SMIEN) {
 		/* No PCI IRQ */
-		aprint_normal_dev(self, "SMI\n");
+		aprint_normal_dev(self, "interrupting at SMI\n");
 	} else {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
