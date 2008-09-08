@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.19 2008/04/24 18:39:23 ad Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.20 2008/09/08 11:29:42 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.19 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.20 2008/09/08 11:29:42 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,36 +156,41 @@ timeval_to_clock_t(struct timeval *tv)
 	return tv->tv_sec * hz + tv->tv_usec / (1000000 / hz);
 }
 
+#define	CONVTCK(r)	(r.tv_sec * hz + r.tv_usec / (1000000 / hz))
+
 int
 linux32_sys_times(struct lwp *l, const struct linux32_sys_times_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(linux32_tmsp_t) tms;
 	} */
-	struct linux32_tms ltms32;
+	struct proc *p = l->l_proc;
+	struct timeval t;
+	int error;
 
-	struct timeval		 t;
-	struct rusage		 ru;
-	struct proc		 *p = l->l_proc;
+	if (SCARG_P32(uap, tms)) {
+		struct linux32_tms ltms32;
+		struct rusage ru;
 
-	mutex_enter(p->p_lock);
-	ru = p->p_stats->p_ru;
-	calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
-	rulwps(p, &ru);
-	mutex_exit(p->p_lock);
+		mutex_enter(p->p_lock);
+		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
+		ltms32.ltms32_utime = CONVTCK(ru.ru_utime);
+		ltms32.ltms32_stime = CONVTCK(ru.ru_stime);
+		ltms32.ltms32_cutime = CONVTCK(p->p_stats->p_cru.ru_utime);
+		ltms32.ltms32_cstime = CONVTCK(p->p_stats->p_cru.ru_stime);
+		mutex_exit(p->p_lock);
 
-	ltms32.ltms32_utime = timeval_to_clock_t(&ru.ru_utime);
-	ltms32.ltms32_stime = timeval_to_clock_t(&ru.ru_stime);
+		if ((error = copyout(&ltms32, SCARG(uap, tms), sizeof ltms32)))
+			return error;
+	}
 
-	ru = p->p_stats->p_cru;
-	ltms32.ltms32_cutime = timeval_to_clock_t(&ru.ru_utime);
-	ltms32.ltms32_cstime = timeval_to_clock_t(&ru.ru_stime);
+	getmicrouptime(&t);
 
-	microtime(&t);
-	*retval = timeval_to_clock_t(&t);
-
-	return copyout(&ltms32, SCARG_P32(uap, tms), sizeof(ltms32));
+	retval[0] = ((linux32_clock_t)(CONVTCK(t)));
+	return 0;
 }
+
+#undef CONVTCK
 
 int
 linux32_sys_stime(struct lwp *l, const struct linux32_sys_stime_args *uap, register_t *retval)
