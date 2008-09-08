@@ -1,4 +1,4 @@
-/* $NetBSD: vesabios.c,v 1.26 2008/07/09 20:40:16 joerg Exp $ */
+/* $NetBSD: vesabios.c,v 1.27 2008/09/08 23:36:53 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 2002, 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.26 2008/07/09 20:40:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesabios.c,v 1.27 2008/09/08 23:36:53 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ struct vbeinfoblock
 	uint16_t OemSoftwareRev;
 	uint32_t OemVendorNamePtr, OemProductNamePtr, OemProductRevPtr;
 	/* data area, in total max 512 bytes for VBE 2.0 */
-} __attribute__ ((packed));
+} __packed;
 
 #define FAR2FLATPTR(p) ((p & 0xffff) + ((p >> 12) & 0xffff0))
 
