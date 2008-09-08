@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.30 2008/06/12 22:29:03 cegger Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.31 2008/09/08 23:36:54 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.30 2008/06/12 22:29:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.31 2008/09/08 23:36:54 gmcgarry Exp $");
 
 #include "opt_kgdb.h"
 
@@ -220,9 +220,9 @@ STATIC void     gtmpsc_kgdb_putc(void *, int);
 STATIC unsigned int gtmpsccninit_done = 0;
 STATIC gtmpsc_softc_t gtmpsc_fake_softc;
 STATIC unsigned char gtmpsc_earlybuf[PAGE_SIZE]
-    __attribute__ ((aligned(PAGE_SIZE)));
+    __aligned(PAGE_SIZE);
 STATIC unsigned char gtmpsc_fake_dmapage[PAGE_SIZE]
-    __attribute__ ((aligned(PAGE_SIZE)));
+    __aligned(PAGE_SIZE);
 
 
 #define GTMPSC_PRINT_BUF_SIZE	4096

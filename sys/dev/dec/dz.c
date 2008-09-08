@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.37 2008/05/27 14:13:41 ad Exp $	*/
+/*	$NetBSD: dz.c,v 1.38 2008/09/08 23:36:54 gmcgarry Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.37 2008/05/27 14:13:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.38 2008/09/08 23:36:54 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.37 2008/05/27 14:13:41 ad Exp $");
 
 #ifdef __mips__
 #define	DZ_DELAY(x)	DELAY(x)
-#define control		__attribute ((noinline))
+#define control		__noinline
 #else	/* presumably vax */
 #define	DZ_DELAY(x)	/* nothing */
 #define	control		inline
