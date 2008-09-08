@@ -1,4 +1,4 @@
-/* $NetBSD: videoio.h,v 1.2 2008/09/07 16:13:05 jmcneill Exp $ */
+/* $NetBSD: videoio.h,v 1.3 2008/09/08 18:40:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -585,6 +585,7 @@ struct v4l2_requestbuffers {
 #define V4L2_PIX_FMT_DV		v4l2_fourcc('d', 'v', 's', 'd')
 #define V4L2_PIX_FMT_MPEG	v4l2_fourcc('M', 'P', 'E', 'G')
 #define V4L2_PIX_FMT_WNVA	v4l2_fourcc('W', 'N', 'V', 'A')
+#define V4L2_PIX_FMT_SN9C10X	v4l2_fourcc('S', '9', '1', '0')
 
 /* Video standards */
 #define V4L2_STD_PAL_B		((v4l2_std_id)0x00000001)
