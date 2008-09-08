@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.79 2008/09/02 08:51:46 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.80 2008/09/08 14:22:31 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.79 2008/09/02 08:51:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.80 2008/09/08 14:22:31 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -225,11 +225,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 * touch up the few cylinder groups that changed during
 	 * the suspension period.
 	 */
-	error = UFS_WAPBL_BEGIN(mp);
-	if (error)
-		goto out;
 	error = cgaccount(vp, 1, NULL);
-	UFS_WAPBL_END(mp);
 	if (error)
 		goto out;
 	/*
@@ -253,11 +249,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	/*
 	 * First, copy all the cylinder group maps that have changed.
 	 */
-	error = UFS_WAPBL_BEGIN(mp);
-	if (error)
-		goto out;
 	error = cgaccount(vp, 2, &redo);
-	UFS_WAPBL_END(mp);
 	if (error)
 		goto out;
 	/*
@@ -570,6 +562,7 @@ static int
 snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
     daddr_t *snaplistsize, daddr_t **snaplist)
 {
+	bool has_wapbl = false;
 	int cg, error, len, loc;
 	daddr_t blkno, *blkp;
 	struct fs *fs = VFSTOUFS(mp)->um_fs;
@@ -579,9 +572,6 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	struct vnode *logvp = NULL, *mvp = NULL, *xvp;
 
 	*snaplist = NULL;
-	error = UFS_WAPBL_BEGIN(mp);
-	if (error)
-		return error;
 	/*
 	 * Get the log inode if any.
 	 */
@@ -604,6 +594,10 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	 */
 	*snaplistsize = fs->fs_ncg + howmany(fs->fs_cssize, fs->fs_bsize) +
 	    FSMAXSNAP + 1 /* superblock */ + 1 /* last block */ + 1 /* size */;
+	error = UFS_WAPBL_BEGIN(mp);
+	if (error)
+		goto out;
+	has_wapbl = true;
 	mutex_enter(&mntvnode_lock);
 	/*
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
@@ -694,11 +688,12 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		*blkp++ = fragstoblks(fs, cgtod(fs, cg));
 
 out:
+	if (has_wapbl)
+		UFS_WAPBL_END(mp);
 	if (mvp != NULL)
 		vnfree(mvp);
 	if (logvp != NULL)
 		vput(logvp);
-	UFS_WAPBL_END(mp);
 	if (error && *snaplist != NULL) {
 		free(*snaplist, M_UFSMNT);
 		*snaplist = NULL;
@@ -771,11 +766,11 @@ snapshot_expunge_snap(struct mount *mp, struct vnode *vp,
 	for (i = 0; i < snaplistsize; i++)
 		snaplist[i] = ufs_rw64(snaplist[i], UFS_FSNEEDSWAP(fs));
 out:
+	UFS_WAPBL_END(mp);
 	if (error && snaplist != NULL) {
 		free(snaplist, M_UFSMNT);
 		ip->i_snapblklist = NULL;
 	}
-	UFS_WAPBL_END(mp);
 	return error;
 }
 
@@ -868,6 +863,9 @@ cgaccount(struct vnode *vp, int passno, int *redo)
 	struct buf *nbp;
 	struct fs *fs = VTOI(vp)->i_fs;
 
+	error = UFS_WAPBL_BEGIN(vp->v_mount);
+	if (error)
+		return error;
 	if (redo != NULL)
 		*redo = 0;
 	if (passno == 1)
@@ -881,13 +879,14 @@ cgaccount(struct vnode *vp, int passno, int *redo)
 		error = ffs_balloc(vp, lfragtosize(fs, cgtod(fs, cg)),
 		    fs->fs_bsize, curlwp->l_cred, 0, &nbp);
 		if (error)
-			return error;
+			break;
 		error = cgaccount1(cg, vp, nbp->b_data, passno);
 		bawrite(nbp);
 		if (error)
-			return error;
+			break;
 	}
-	return 0;
+	UFS_WAPBL_END(vp->v_mount);
+	return error;
 }
 
 /*
