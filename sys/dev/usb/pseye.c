@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.3 2008/09/08 22:13:26 jmcneill Exp $ */
+/* $NetBSD: pseye.c,v 1.4 2008/09/08 22:28:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.3 2008/09/08 22:13:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.4 2008/09/08 22:28:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.3 2008/09/08 22:13:26 jmcneill Exp $");
 #include <dev/usb/usbdevs.h>
 
 #include <dev/video_if.h>
+
+#define PRI_PSEYE	PRI_BIO
 
 /* Bulk-in buffer length */
 #define PSEYE_BULKIN_BUFLEN	(640 * 480 * 2)
@@ -745,7 +747,7 @@ pseye_start_transfer(void *opaque)
 	mutex_enter(&sc->sc_mtx);
 	if (sc->sc_running == 0) {
 		sc->sc_running = 1;
-		err = kthread_create(PRI_NONE, 0, NULL, pseye_transfer_thread,
+		err = kthread_create(PRI_PSEYE, 0, NULL, pseye_transfer_thread,
 		    opaque, NULL, device_xname(sc->sc_dev));
 	} else
 		aprint_error_dev(sc->sc_dev, "transfer already in progress\n");
