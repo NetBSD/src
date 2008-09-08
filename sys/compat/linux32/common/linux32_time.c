@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.20 2008/09/08 11:29:42 christos Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.21 2008/09/08 15:31:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.20 2008/09/08 11:29:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.21 2008/09/08 15:31:19 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -180,7 +180,8 @@ linux32_sys_times(struct lwp *l, const struct linux32_sys_times_args *uap, regis
 		ltms32.ltms32_cstime = CONVTCK(p->p_stats->p_cru.ru_stime);
 		mutex_exit(p->p_lock);
 
-		if ((error = copyout(&ltms32, SCARG(uap, tms), sizeof ltms32)))
+		error = copyout(&ltms32, SCARG_P32(uap, tms), sizeof(ltms32));
+		if (error)
 			return error;
 	}
 
