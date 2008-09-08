@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.51 2008/09/08 21:20:03 christos Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.52 2008/09/08 21:44:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.51 2008/09/08 21:20:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.52 2008/09/08 21:44:22 christos Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -729,7 +729,7 @@ sk_init_tx_ring(struct sk_if_softc *sc_if)
 	struct sk_ring_data	*rd = sc_if->sk_rdata;
 	int			i;
 
-	bzero((char *)sc_if->sk_rdata->sk_tx_ring,
+	memset(sc_if->sk_rdata->sk_tx_ring, 0,
 	    sizeof(struct sk_tx_desc) * SK_TX_RING_CNT);
 
 	for (i = 0; i < SK_TX_RING_CNT; i++) {
@@ -2215,7 +2215,7 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 	 * Read the PHY interrupt register to make sure
 	 * we clear any pending interrupts.
 	 */
-	status = sk_xmac_miibus_readreg((device_t)sc_if,
+	status = sk_xmac_miibus_readreg(sc_if->sk_dev,
 	    SK_PHYADDR_BCOM, BRGPHY_MII_ISR);
 
 	if (!(ifp->if_flags & IFF_RUNNING)) {
@@ -2225,7 +2225,7 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 
 	if (status & (BRGPHY_ISR_LNK_CHG|BRGPHY_ISR_AN_PR)) {
 		int lstat;
-		lstat = sk_xmac_miibus_readreg((device_t)sc_if,
+		lstat = sk_xmac_miibus_readreg(sc_if->sk_dev,
 		    SK_PHYADDR_BCOM, BRGPHY_MII_AUXSTS);
 
 		if (!(lstat & BRGPHY_AUXSTS_LINK) && sc_if->sk_link) {
@@ -2235,7 +2235,7 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 			    SK_LINKLED1_CTL, SK_LINKLED_OFF);
 			sc_if->sk_link = 0;
 		} else if (status & BRGPHY_ISR_LNK_CHG) {
-			sk_xmac_miibus_writereg((device_t)sc_if,
+			sk_xmac_miibus_writereg(sc_if->sk_dev,
 			    SK_PHYADDR_BCOM, BRGPHY_MII_IMR, 0xFF00);
 			mii_tick(mii);
 			sc_if->sk_link = 1;
@@ -2426,10 +2426,10 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 		/* Enable GMII mode on the XMAC. */
 		SK_XM_SETBIT_2(sc_if, XM_HWCFG, XM_HWCFG_GMIIMODE);
 
-		sk_xmac_miibus_writereg((device_t)sc_if,
+		sk_xmac_miibus_writereg(sc_if->sk_dev,
 		    SK_PHYADDR_BCOM, MII_BMCR, BMCR_RESET);
 		DELAY(10000);
-		sk_xmac_miibus_writereg((device_t)sc_if,
+		sk_xmac_miibus_writereg(sc_if->sk_dev,
 		    SK_PHYADDR_BCOM, BRGPHY_MII_IMR, 0xFFF0);
 
 		/*
@@ -2438,10 +2438,10 @@ sk_init_xmac(struct sk_if_softc	*sc_if)
 		 * registers initialized to some magic values. I don't
 		 * know what the numbers do, I'm just the messenger.
 		 */
-		if (sk_xmac_miibus_readreg((device_t)sc_if,
+		if (sk_xmac_miibus_readreg(sc_if->sk_dev,
 		    SK_PHYADDR_BCOM, 0x03) == 0x6041) {
 			while (bhack[i].reg) {
-				sk_xmac_miibus_writereg((device_t)sc_if,
+				sk_xmac_miibus_writereg(sc_if->sk_dev,
 				    SK_PHYADDR_BCOM, bhack[i].reg,
 				    bhack[i].val);
 				i++;
