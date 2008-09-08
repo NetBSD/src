@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.13 2008/09/05 01:04:23 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.14 2008/09/08 11:34:01 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -105,12 +105,6 @@ dm_dbg_print_flags(int flags)
 int
 dm_get_version_ioctl(prop_dictionary_t dm_dict)
 {
-	int r;
-
-	r = 0;
-
-	aprint_verbose("dm_get_version_ioctl called\n");
-
 	return 0;
 }
 
@@ -122,12 +116,9 @@ int
 dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 {
 	prop_array_t target_list;
-	
-	int r;
 	uint32_t flags;
 
 	flags = 0;
-	r = 0;
 
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	
@@ -137,7 +128,7 @@ dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 
 	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, target_list);
 	
-	return r;
+	return 0;
 }
 
 /*
@@ -173,11 +164,12 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	if ((dmv = dm_dev_alloc()) == NULL)
 		return ENOMEM;
-	
+		
 	if (uuid)
 		strncpy(dmv->uuid, uuid, DM_UUID_LEN);
-	
-	printf("%s\n",name);
+	else 
+		dmv->uuid[0] = '\0';
+		
 	if (name)
 		strlcpy(dmv->name, name, DM_NAME_LEN);
 
@@ -252,11 +244,9 @@ int
 dm_dev_list_ioctl(prop_dictionary_t dm_dict)
 {
 	prop_array_t dev_list;
-	
-	int r;
+
 	uint32_t flags;
 	
-	r = 0;
 	flags = 0;
 	
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
@@ -350,13 +340,13 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	
 	dm_dbg_print_flags(flags);
 	
-	if (((dmv = dm_dev_lookup_uuid(uuid)) == NULL) &&
-	    ((dmv = dm_dev_lookup_name(name)) == NULL) &&
+	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
+		((dmv = dm_dev_lookup_uuid(uuid)) == NULL) &&
 	    ((dmv = dm_dev_lookup_minor(minor)) == NULL)){
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
-	
+		
 	/*
 	 * Write lock rw lock firs and then remove all stuff.
 	 */
@@ -370,8 +360,11 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	 */
 	(void)dm_dev_rem(dmv);
 	
+	rw_exit(&dmv->dev_rwlock);
+	
 	/* Destroy active table first.  */
-	dm_table_destroy(&dmv->tables[dmv->cur_active_table]);
+	if (!SLIST_EMPTY(&dmv->tables[dmv->cur_active_table]))
+		dm_table_destroy(&dmv->tables[dmv->cur_active_table]);
 	
 	/* Destroy inactive table if exits, too. */
 	if (!SLIST_EMPTY(&dmv->tables[1 - dmv->cur_active_table]))
@@ -380,17 +373,15 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	/* Decrement reference counters for all pdevs from this
 	   device if they are unused close vnode and remove them
 	   from global pdev list, too. */
-	
+
 	while (!SLIST_EMPTY(&dmv->pdevs)) {  
 		
 		dmp = SLIST_FIRST(&dmv->pdevs);
 		
-		SLIST_REMOVE_HEAD(&dmv->pdevs, next_pdev);
+		SLIST_REMOVE_HEAD(&dmv->pdevs, next_dev_pdev);
 		
 		dm_pdev_decr(dmp);
-	}
-	
-	rw_exit(&dmv->dev_rwlock);
+	}	
 		
 	rw_destroy(&dmv->dev_rwlock);
 	
@@ -403,7 +394,6 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 /*
  * Return actual state of device to libdevmapper.
  *
- * Locking: dev_mutex ??
  */
 int
 dm_dev_status_ioctl(prop_dictionary_t dm_dict)
@@ -554,7 +544,7 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 	
 	rw_exit(&dmv->dev_rwlock);
 	
-	/* Destroy inctive table after resume. */
+	/* Destroy inactive table after resume. */
 	dm_table_destroy(&dmv->tables[1 - dmv->cur_active_table]);
 	
 	return 0;
@@ -638,7 +628,7 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	dmv  = NULL;
 	flags = 0;
 	
-	i=0;
+	i = 0;
 
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
@@ -663,7 +653,7 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	/* XXX DO I really need to write lock it here */
 	rw_enter(&dmv->dev_rwlock, RW_WRITER);
 	
-	SLIST_FOREACH(dmp, &dmv->pdevs, next_pdev){
+	SLIST_FOREACH(dmp, &dmv->pdevs, next_dev_pdev){
 
 		if ((error = VOP_GETATTR(dmp->pdev_vnode, &va, curlwp->l_cred)) != 0)
 			return error;
@@ -713,9 +703,9 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	dmv = NULL;
 	last_table = NULL;
 
-	char *xml;
+/*	char *xml;
 	xml = prop_dictionary_externalize(dm_dict);
-	printf("%s\n",xml);
+	printf("%s\n",xml);*/
 		
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
@@ -794,21 +784,19 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		 * therfore I have to pass it to target init
 		 * routine and parse parameters there.
 		 */
-		if (target->init != NULL && strlen(str) != 0)
-			ret = target->init(dmv, &table_en->target_config,
-			    str);
+		if (strlen(str) != 0) {
+			if ((ret = target->init(dmv, &table_en->target_config, str)) != 0) {	
+				dm_table_destroy(tbl);
 
-		if (ret != 0) {
-			dm_table_destroy(tbl);
-
-			return ret;
+				return ret;
+			}
 		}
 				
 		last_table = table_en;
 				
 		prop_object_release(str);
 	}
-
+	
 	prop_object_release(cmd_array);
 
 	DM_ADD_FLAG(flags, DM_INACTIVE_PRESENT_FLAG);
@@ -958,9 +946,6 @@ dm_check_version(prop_dictionary_t dm_dict)
 	size_t i;
 	int dm_version[3];
 	prop_array_t ver;
-	int r;
-
-	r = 0;
 	
 	ver = prop_dictionary_get(dm_dict, DM_IOCTL_VERSION);
 	
@@ -968,22 +953,18 @@ dm_check_version(prop_dictionary_t dm_dict)
 		prop_array_get_uint32(ver, i, &dm_version[i]);
 	
 
-	if (DM_VERSION_MAJOR != dm_version[0] ||
-	    DM_VERSION_MINOR < dm_version[1])
-	{
+	if (DM_VERSION_MAJOR != dm_version[0] || DM_VERSION_MINOR < dm_version[1]){
 		aprint_verbose("libdevmapper/kernel version mismatch "
 		    "kernel: %d.%d.%d libdevmapper: %d.%d.%d\n",
 		    DM_VERSION_MAJOR, DM_VERSION_MINOR, DM_VERSION_PATCHLEVEL,
 		    dm_version[0], dm_version[1], dm_version[2]);
 		
-		r = EIO;
-		goto out;
+		return EIO;
 	}
 
 	prop_array_set_uint32(ver, 0, DM_VERSION_MAJOR);
 	prop_array_set_uint32(ver, 1, DM_VERSION_MINOR);
 	prop_array_set_uint32(ver, 2, DM_VERSION_PATCHLEVEL);
 
-out:	
-	return r;
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.7 2008/09/03 22:43:10 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.8 2008/09/08 11:34:01 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -74,15 +74,17 @@
 
 /*
  * Init function called from dm_table_load_ioctl.
- * argv:  /dev/mapper/my_data_org /dev/mapper/cow_dev p 64 
+ * argv:  /dev/mapper/my_data_org /dev/mapper/tsc_cow_dev p 64 
  *        snapshot_origin device, cow device, persistent flag, chunk size
  */
 int
 dm_target_snapshot_init(struct dm_dev *dmv, void **target_config, char *params)
 {
 	struct target_snapshot_config *tsc;
-
+	struct dm_pdev *dmp_snap, *dmp_cow;
 	char **ap, *argv[5];
+
+	dmp_cow = NULL;
 
 	/*
 	 * Parse a string, containing tokens delimited by white space,
@@ -95,22 +97,42 @@ dm_target_snapshot_init(struct dm_dev *dmv, void **target_config, char *params)
 	}
 	
 	printf("Snapshot target init function called!!\n");
-	printf("Snapshotted device: %s, cow device %s, persistent flag: %s,"
+	printf("Snapshotted device: %s, cow device %s,\n\t persistent flag: %s, "
 	    "chunk size: %s\n", argv[0], argv[1], argv[2], argv[3]);
+	
+	/* Insert snap device to global pdev list */
+	if ((dmp_snap = dm_pdev_insert(argv[0])) == NULL)
+		return ENOENT;
+	
+	/* Lookup for snapshot pdev entry in device list and insert */
+	if ((dm_pdev_lookup_name_list(dmp_snap->name, &dmv->pdevs)) == NULL)
+		SLIST_INSERT_HEAD(&dmv->pdevs, dmp_snap, next_dev_pdev);
 	
 	if ((tsc = kmem_alloc(sizeof(struct target_snapshot_config), KM_NOSLEEP))
 	    == NULL)
 		return 1;
-
-	tsc->persistent_dev = 0;
+		
+	tsc->tsc_persistent_dev = 0;
 	
-	tsc->chunk_size = atoi(argv[3]);
+	/* There is now cow device for nonpersistent snapshot devices */
+	if (strcmp(argv[2], "p") == 0) {
+		tsc->tsc_persistent_dev = 1;
+		
+		/* Insert cow device to global pdev list */
+		if ((dmp_cow = dm_pdev_insert(argv[1])) == NULL)
+			return ENOENT;	
 
-	if (strcmp(argv[2], "p") == 0)
-		tsc->persistent_dev = 1;
+		/* Lookup for cow pdev entry in device list and insert */
+		if ((dm_pdev_lookup_name_list(dmp_cow->name, &dmv->pdevs)) == NULL)
+			SLIST_INSERT_HEAD(&dmv->pdevs, dmp_cow, next_dev_pdev);
+	}
+	
+	tsc->tsc_chunk_size = atoi(argv[3]);
+	
+	tsc->tsc_snap_dev = dmp_snap;
+	tsc->tsc_cow_dev = dmp_cow;
 	
 	*target_config = tsc;
-
 	
 	dmv->dev_type = DM_SNAPSHOT_DEV;
 	
@@ -125,13 +147,46 @@ dm_target_snapshot_init(struct dm_dev *dmv, void **target_config, char *params)
 char *
 dm_target_snapshot_status(void *target_config)
 {
-	struct target_snapshot_config *tlc;
+	struct target_snapshot_config *tsc;
 	
-	tlc = target_config;
+	uint32_t i;
+	uint32_t count;
+	size_t prm_len, cow_len;
+	char *params, *cow_name;
 	
+	tsc = target_config;
+	
+	prm_len = 0;
+	cow_len = 0;
+	count = 0;
+
+	cow_name = NULL;
+
 	printf("Snapshot target status function called\n");
 
-	return 0;
+	/* count number of chars in offset */
+	for(i = tsc->tsc_chunk_size; i != 0; i /= 10)
+		count++;
+	
+	if(tsc->tsc_persistent_dev)
+		cow_len = strlen(tsc->tsc_cow_dev->name);
+	
+	/* length of names + count of chars + spaces and null char */
+	prm_len = strlen(tsc->tsc_snap_dev->name) + cow_len + count + 5;
+	
+	if ((params = kmem_alloc(prm_len, KM_NOSLEEP)) == NULL)
+		return NULL;
+
+	printf("%s %s %s %"PRIu64"\n", tsc->tsc_snap_dev->name, 
+		tsc->tsc_cow_dev->name, tsc->tsc_persistent_dev ? "p":"n", 
+		tsc->tsc_chunk_size);
+	
+	snprintf(params, prm_len, "%s %s %s %"PRIu64, tsc->tsc_snap_dev->name, 
+		tsc->tsc_persistent_dev ? tsc->tsc_cow_dev->name : "", 
+		tsc->tsc_persistent_dev ? "p":"n", 
+		tsc->tsc_chunk_size);
+	
+	return params;
 }
 
 /* Strategy routine called from dm_strategy. */
@@ -153,6 +208,41 @@ dm_target_snapshot_strategy(struct dm_table_entry *table_en, struct buf *bp)
 int
 dm_target_snapshot_destroy(struct dm_table_entry *table_en)
 {
+	struct target_snapshot_config *tsc;
+	
+	/*
+	 * Destroy function is called for every target even if it
+	 * doesn't have target_config.
+	 */
+	
+	if (table_en->target_config == NULL)
+		return 0;
+	
+	printf("Snapshot target destroy function called\n");
+	
+	tsc = table_en->target_config;
+	
+	/* Decrement device list reference counter */
+	tsc->tsc_snap_dev->list_ref_cnt--;
+	
+	/* If there is no other table which reference this pdev remove it. */
+	if (tsc->tsc_snap_dev->list_ref_cnt == 0)
+		SLIST_REMOVE(&table_en->dm_dev->pdevs, tsc->tsc_snap_dev, dm_pdev, next_dev_pdev);
+		
+	/* Decrement pdev ref counter if 0 remove it */
+	dm_pdev_decr(tsc->tsc_snap_dev);
+		
+	if (tsc->tsc_persistent_dev) {
+		tsc->tsc_cow_dev->list_ref_cnt--;
+		
+		if (tsc->tsc_cow_dev->list_ref_cnt == 0)
+			SLIST_REMOVE(&table_en->dm_dev->pdevs, tsc->tsc_cow_dev, dm_pdev, next_dev_pdev);	
+	
+		dm_pdev_decr(tsc->tsc_cow_dev);
+	}
+	
+	kmem_free(table_en->target_config, sizeof(struct target_snapshot_config));
+
 	table_en->target_config = NULL;
 
 	return 0;
@@ -162,8 +252,15 @@ dm_target_snapshot_destroy(struct dm_table_entry *table_en)
 int
 dm_target_snapshot_upcall(struct dm_table_entry *table_en, struct buf *bp)
 {
+	printf("dm_target_snapshot_upcall called\n");
+	
+	printf("upcall buf flags %s %s\n", 
+		(bp->b_flags & B_WRITE) ? "B_WRITE":"",
+		(bp->b_flags & B_READ) ? "B_READ":"");
+	
 	return 0;
 }
+
 /*
  * dm target snapshot origin routines.
  *
@@ -173,17 +270,38 @@ dm_target_snapshot_upcall(struct dm_table_entry *table_en, struct buf *bp)
  * snapshot device when write is done on master device.
  */
 
-/* Init function called from dm_table_load_ioctl. */
+/* 
+ * Init function called from dm_table_load_ioctl. 
+ * 
+ * argv: /dev/mapper/my_data_real
+ */
 int
-dm_target_snapshot_orig_init(struct dm_dev *dmv, void **target_config, char *argv)
+dm_target_snapshot_orig_init(struct dm_dev *dmv, void **target_config, 
+	char *params)
 {
+	struct target_snapshot_origin_config *tsoc;
+	struct dm_pdev *dmp_real;
+	
+	printf("Snapshot origin target init function called!!\n");
+	printf("Parent device: %s\n", params);
 
-	printf("Snapshot_Orig target init function called!!\n");
+	/* Insert snap device to global pdev list */
+	if ((dmp_real = dm_pdev_insert(params)) == NULL)
+		return ENOENT;
+	
+	/* Lookup for snapshot pdev entry in device list and insert */
+	if ((dm_pdev_lookup_name_list(dmp_real->name, &dmv->pdevs)) == NULL)
+		SLIST_INSERT_HEAD(&dmv->pdevs, dmp_real, next_dev_pdev);
+	
+	if ((tsoc = kmem_alloc(sizeof(struct target_snapshot_origin_config), KM_NOSLEEP))
+	    == NULL)
+		return 1;
 
-	*target_config = NULL;
-
+	tsoc->tsoc_real_dev = dmp_real;
 	
 	dmv->dev_type = DM_SNAPSHOT_ORIG_DEV;
+	
+	*target_config = tsoc;
 	
 	return 0;
 }
@@ -196,13 +314,30 @@ dm_target_snapshot_orig_init(struct dm_dev *dmv, void **target_config, char *arg
 char *
 dm_target_snapshot_orig_status(void *target_config)
 {
-	struct target_snapshot_orig_config *tlc;
-	
-	tlc = target_config;
-	
-	printf("Snapshot_Orig target status function called\n");
+	struct target_snapshot_origin_config *tsoc;
 
-	return 0;
+	size_t prm_len;
+	char *params;
+	
+	tsoc = target_config;
+	
+	prm_len = 0;
+	
+	printf("Snapshot origin target status function called\n");
+	
+	/* length of names + count of chars + spaces and null char */
+	prm_len = strlen(tsoc->tsoc_real_dev->name) + 1;
+		
+	printf("real_dev name %s\n",tsoc->tsoc_real_dev->name);
+	
+	if ((params = kmem_alloc(prm_len, KM_NOSLEEP)) == NULL)
+		return NULL;
+
+	printf("%s\n", tsoc->tsoc_real_dev->name);
+	
+	snprintf(params, prm_len, "%s", tsoc->tsoc_real_dev->name);
+	
+	return params;
 }
 
 /* Strategy routine called from dm_strategy. */

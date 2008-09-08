@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.1.2.13 2008/09/05 01:04:23 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.1.2.14 2008/09/08 11:34:01 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -98,6 +98,8 @@ struct dm_pdev {
 	int list_ref_cnt; /* device list reference counter */
 
 	SLIST_ENTRY(dm_pdev) next_pdev;
+	
+	SLIST_ENTRY(dm_pdev) next_dev_pdev;
 };
 SLIST_HEAD(dm_pdevs, dm_pdev) dm_pdev_list;
 
@@ -176,14 +178,18 @@ struct target_mirror_config {
 
 /* for snapshot : */
 struct target_snapshot_config {
-	struct dm_dev *orig;
+	struct dm_pdev *tsc_snap_dev;
+	/* cow dev is set only for persistent snapshot devices */
+	struct dm_pdev *tsc_cow_dev;
+	
+	uint64_t tsc_chunk_size;
+	uint32_t tsc_persistent_dev;
+};
 
-	/* modified blocks bitmaps administration etc*/
-	struct dm_pdev *cow_pdev;
-	uint64_t log_regionsize;
-	/* list of sector renames to the log device */
-	uint64_t chunk_size;
-	uint32_t persistent_dev;
+/* for snapshot-origin devices */
+struct target_snapshot_origin_config {
+	struct dm_pdev *tsoc_real_dev;
+	/* list of snapshots ? */
 };
 
 /* constant dm_target structures for error, zero, linear, stripes etc. */

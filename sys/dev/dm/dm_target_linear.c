@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.1.2.13 2008/09/03 22:43:10 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.1.2.14 2008/09/08 11:34:01 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -48,9 +48,8 @@
 /*
  * Allocate target specific config data, and link them to table.
  * This function is called only when, flags is not READONLY and
- * therefore we can add things to pdev list. This function have to
- * be called with held dev_mtx. This should not e a problem because
- * this routine is called onyl from dm_table_load_ioctl.
+ * therefore we can add things to pdev list. This should not a 
+ * problem because this routine is called onyl from dm_table_load_ioctl.
  * @argv[0] is name,
  * @argv[1] is physical data offset.
  */
@@ -78,7 +77,7 @@ dm_target_linear_init(struct dm_dev *dmv, void **target_config, char *params)
 	
 	/* Lookup for pdev entry in device pdev list and insert */
 	if ((dm_pdev_lookup_name_list(dmp->name, &dmv->pdevs)) == NULL)
-		SLIST_INSERT_HEAD(&dmv->pdevs, dmp, next_pdev); 
+		SLIST_INSERT_HEAD(&dmv->pdevs, dmp, next_dev_pdev); 
 		
 	dmp->list_ref_cnt++;	
 	
@@ -184,7 +183,7 @@ dm_target_linear_destroy(struct dm_table_entry *table_en)
 	
 	/* If there is no other table which reference this pdev remove it. */
 	if (tlc->pdev->list_ref_cnt == 0)
-		SLIST_REMOVE(&table_en->dm_dev->pdevs, tlc->pdev, dm_pdev, next_pdev);
+		SLIST_REMOVE(&table_en->dm_dev->pdevs, tlc->pdev, dm_pdev, next_dev_pdev);
 			
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tlc->pdev);
