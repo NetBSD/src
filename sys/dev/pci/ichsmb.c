@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.15 2008/09/08 20:47:09 njoly Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.16 2008/09/08 20:49:41 njoly Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.15 2008/09/08 20:47:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.16 2008/09/08 20:49:41 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,7 +131,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_SMB_HOSTC);
-	DPRINTF(("%s: conf 0x%08x", device_xname(sc->sc_dev), conf));
+	DPRINTF(("%s: conf 0x%08x\n", device_xname(sc->sc_dev), conf));
 
 	if ((conf & LPCIB_SMB_HOSTC_HSTEN) == 0) {
 		aprint_error_dev(self, "SMBus disabled\n");
