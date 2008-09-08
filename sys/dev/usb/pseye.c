@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.2 2008/09/07 17:12:21 jmcneill Exp $ */
+/* $NetBSD: pseye.c,v 1.3 2008/09/08 22:13:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.2 2008/09/07 17:12:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.3 2008/09/08 22:13:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +117,7 @@ static int		pseye_enum_format(void *, uint32_t,
 					  struct video_format *);
 static int		pseye_get_format(void *, struct video_format *);
 static int		pseye_set_format(void *, struct video_format *);
+static int		pseye_try_format(void *, struct video_format *);
 static int		pseye_start_transfer(void *);
 static int		pseye_stop_transfer(void *);
 
@@ -131,7 +132,7 @@ static const struct video_hw_if pseye_hw_if = {
 	.enum_format = pseye_enum_format,
 	.get_format = pseye_get_format,
 	.set_format = pseye_set_format,
-	.try_format = NULL,
+	.try_format = pseye_try_format,
 	.start_transfer = pseye_start_transfer,
 	.stop_transfer = pseye_stop_transfer,
 	.control_iter_init = NULL,
@@ -726,6 +727,12 @@ pseye_set_format(void *opaque, struct video_format *format)
 		return EINVAL;
 #endif
 	/* XXX */
+	return pseye_get_format(opaque, format);
+}
+
+static int
+pseye_try_format(void *opaque, struct video_format *format)
+{
 	return pseye_get_format(opaque, format);
 }
 
