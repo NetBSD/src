@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.5 2008/08/05 13:39:29 pooka Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.6 2008/09/08 03:16:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.5 2008/08/05 13:39:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.6 2008/09/08 03:16:43 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -131,9 +131,11 @@ ffs_wapbl_replay_finish(struct mount *mp)
 		}
 		ip = VTOI(vp);
 		KDASSERT(wr->wr_inodes[i].wr_inumber == ip->i_number);
+#ifdef WAPBL_DEBUG
 		printf("ffs_wapbl_replay_finish: "
 		    "cleaning inode %" PRIu64 " size=%" PRIu64 " mode=%o nlink=%d\n",
 		    ip->i_number, ip->i_size, ip->i_mode, ip->i_nlink);
+#endif
 		KASSERT(ip->i_nlink == 0);
 
 		/*
