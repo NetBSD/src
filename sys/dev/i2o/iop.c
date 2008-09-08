@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.73 2008/06/08 12:43:52 tsutsui Exp $	*/
+/*	$NetBSD: iop.c,v 1.74 2008/09/08 23:36:54 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.73 2008/06/08 12:43:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.74 2008/09/08 23:36:54 gmcgarry Exp $");
 
 #include "iop.h"
 
@@ -2370,7 +2370,7 @@ iop_print_ident(struct iop_softc *sc, int tid)
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
 		struct	i2o_param_device_identity di;
-	} __attribute__ ((__packed__)) p;
+	} __packed p;
 	char buf[32];
 	int rv;
 

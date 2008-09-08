@@ -1,4 +1,4 @@
-/*	$NetBSD: bluetooth.h,v 1.7 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: bluetooth.h,v 1.8 2008/09/08 23:36:55 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -52,7 +52,7 @@
  */
 typedef struct {
 	uint8_t	b[BLUETOOTH_BDADDR_SIZE];
-} __attribute__ ((packed)) bdaddr_t;
+} __packed bdaddr_t;
 
 /*
  * bdaddr utility functions

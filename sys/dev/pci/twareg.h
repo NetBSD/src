@@ -1,4 +1,4 @@
-/*	$NetBSD: twareg.h,v 1.9 2008/05/08 11:27:54 joerg Exp $ */
+/*	$NetBSD: twareg.h,v 1.10 2008/09/08 23:36:54 gmcgarry Exp $ */
 /*	$wasabi: twareg.h,v 1.14 2006/07/28 18:29:51 wrstuden Exp $ */
 
 /*-
@@ -241,7 +241,7 @@ struct twa_sg {
 	uint32_t	xx_address_xx;	/* Fail if userland tries to use this */
 #endif
 	uint32_t	length;
-} __attribute__ ((packed));
+} __packed;
 
 
 /* 7000 structures. */
@@ -260,7 +260,7 @@ struct twa_command_init_connect {
 	uint16_t	fw_branch;
 	uint16_t	fw_build;
 	uint32_t	result;
-}__attribute__ ((packed));
+}__packed;
 
 struct twa_command_download_firmware {
 	uint8_t		opcode:5;	/* TWA_DOWNLOAD_FIRMWARE */
@@ -272,7 +272,7 @@ struct twa_command_download_firmware {
 	uint8_t		flags;
 	uint16_t	param;
 	uint8_t		sgl[1];
-} __attribute__ ((packed));
+} __packed;
 
 
 struct twa_command_reset_firmware {
@@ -285,7 +285,7 @@ struct twa_command_reset_firmware {
 	uint8_t		flags;
 	uint8_t		res2;
 	uint8_t		param;
-} __attribute__ ((packed));
+} __packed;
 
 
 struct twa_command_io {
@@ -300,7 +300,7 @@ struct twa_command_io {
 	uint16_t	block_count;
 	uint32_t	lba;
 	struct twa_sg	sgl[TWA_MAX_SG_ELEMENTS];
-} __attribute__ ((packed));
+} __packed;
 
 
 struct twa_command_hotswap {
@@ -317,7 +317,7 @@ struct twa_command_hotswap {
 #define TWA_OP_HOTSWAP_ADD_CBOD		0x01	/* add CBOD to empty port */
 #define TWA_OP_HOTSWAP_ADD_SPARE	0x02	/* add spare to empty port */
 	uint8_t		aport;
-} __attribute__ ((packed));
+} __packed;
 
 
 struct twa_command_param {
@@ -331,7 +331,7 @@ struct twa_command_param {
 	uint8_t		flags;
 	uint16_t	param_count;
 	uint8_t		sgl[1];
-} __attribute__ ((packed));
+} __packed;
 
 
 struct twa_command_rebuildunit {
@@ -350,7 +350,7 @@ struct twa_command_rebuildunit {
 #define TWA_OP_REBUILDUNIT_STARTUNIT	5	/* rebuild src_unit (not supported) */
 	uint8_t		cs:1;			/* request state change on src_unit */
 	uint8_t		logical_subunit;	/* for RAID10 rebuild of logical subunit */
-} __attribute__ ((packed));
+} __packed;
 
 
 struct twa_command_ata {
@@ -371,7 +371,7 @@ struct twa_command_ata {
 	uint8_t		drive_head;
 	uint8_t		command;
 	struct twa_sg	sgl[TWA_MAX_ATA_SG_ELEMENTS];
-} __attribute__ ((packed));
+} __packed;
 
 
 struct twa_command_generic {
@@ -389,7 +389,7 @@ struct twa_command_generic {
 #define TWA_FLAGS_FATAL		0x03
 #define TWA_FLAGS_PERCENTAGE	(1<<8)	/* bits 0-6 indicate completion percentage */
 	uint16_t	count;		/* block count, parameter count, message credits */
-} __attribute__ ((packed));
+} __packed;
 
 /* Command packet header. */
 #pragma pack(1)
@@ -410,7 +410,7 @@ struct twa_command_header {
 		uint16_t	reserved;
 		uint8_t		size_sense;
 	} header_desc;
-} __attribute__ ((packed));
+} __packed;
 #pragma pack()
 
 
@@ -422,7 +422,7 @@ union twa_command_7k {
 	struct twa_command_param		param;
 	struct twa_command_generic		generic;
 	uint8_t padding[1024 - sizeof(struct twa_command_header)];
-} __attribute__ ((packed));
+} __packed;
 
 
 /* 9000 structures. */
@@ -441,7 +441,7 @@ struct twa_command_9k {
 	uint8_t		cdb[16];
 	struct twa_sg	sg_list[TWA_MAX_SG_ELEMENTS];
 	uint8_t		padding[32];
-} __attribute__ ((packed));
+} __packed;
 
 
 
@@ -452,7 +452,7 @@ struct twa_command_packet {
 		union twa_command_7k	cmd_pkt_7k;
 		struct twa_command_9k 	cmd_pkt_9k;
 	} command;
-} __attribute__ ((packed));
+} __packed;
 
 
 /* Response queue entry. */
@@ -463,7 +463,7 @@ union twa_response_queue {
 		uint32_t	undefined_2:20;
 	} u;
 	uint32_t	value;
-} __attribute__ ((packed));
+} __packed;
 
 
 #define TWA_AEN_QUEUE_EMPTY		0x00
@@ -511,6 +511,6 @@ struct twa_param_9k {
 	uint16_t	parameter_size_bytes;
 	uint16_t	parameter_actual_size_bytes;
 	uint8_t		data[1];
-} __attribute__ ((packed));
+} __packed;
 
 #endif	/* !_PCI_TWAREG_H_ */

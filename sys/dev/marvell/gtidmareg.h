@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmareg.h,v 1.5 2006/02/16 20:17:19 perry Exp $	*/
+/*	$NetBSD: gtidmareg.h,v 1.6 2008/09/08 23:36:54 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -78,7 +78,7 @@ typedef struct idma_desc {
 	u_int32_t idd_dst_addr;
 	u_int32_t idd_next;
 	u_int32_t idd_pad[4];	/* pad to CACHELINESIZE */
-} idma_desc_t __attribute__ ((aligned(CACHELINESIZE)));
+} idma_desc_t __aligned(CACHELINESIZE);
 
 #define IDMA_DESC_CTL_CNT	IDMA_BITS(23,0)
 #define IDMA_DESC_CTL_RES	IDMA_BITS(29,24)
