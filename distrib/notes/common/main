@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.416 2008/09/06 20:59:42 tsutsui Exp $
+.\"	$NetBSD: main,v 1.417 2008/09/08 14:54:09 ginsbach Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1957,6 +1957,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Justin Gibbs Ta Mt gibbs@NetBSD.org
 .It Ta Chris Gilbert Ta Mt chris@NetBSD.org
 .It Ta Eric Gillespie Ta Mt epg@NetBSD.org
+.It Ta Brian Ginsbach Ta Mt ginsbach@NetBSD.org
 .It Ta Paul Goyette Ta Mt pgoyette@NetBSD.org
 .It Ta Michael Graff Ta Mt explorer@NetBSD.org
 .It Ta Brian C. Grayson Ta Mt bgrayson@NetBSD.org
