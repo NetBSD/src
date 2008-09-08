@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.953 2008/09/08 07:07:53 cegger Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.954 2008/09/08 08:03:45 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.954 2008/09/08 07:06:48 cegger Exp
+ *	NetBSD: pcidevs,v 1.955 2008/09/08 08:02:48 cegger Exp
  */
 
 /*
@@ -12248,6 +12248,14 @@ static const struct pci_product pci_products[] = {
 	    "HT1000 LPC",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_XIOAPIC,
+	    "HT1000 XIOAPIC",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_WDTIMER,
+	    "HT1000 Watchdog Timer",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_K2_SATA,
 	    "K2 SATA",
 	},
@@ -14360,4 +14368,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2989;
+const int pci_nproducts = 2991;
