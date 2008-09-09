@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.109 2008/09/09 16:23:33 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.110 2008/09/09 16:50:52 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.109 2008/09/09 16:23:33 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.110 2008/09/09 16:50:52 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -419,7 +419,7 @@ netmask_length(struct sockaddr *nm, int family)
 }
 
 char *
-netmask_string(struct sockaddr *mask, int len, int family)
+netmask_string(const struct sockaddr *mask, int len, int family)
 {
 	static char smask[INET6_ADDRSTRLEN];
 	struct sockaddr_in nsin;
@@ -450,7 +450,7 @@ netmask_string(struct sockaddr *mask, int len, int family)
 }
 
 const char *
-routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
+routename(const struct sockaddr *sa, struct sockaddr *nm, int flags)
 {
 	const char *cp;
 	static char line[50];
@@ -477,7 +477,7 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 	else switch (sa->sa_family) {
 
 	case AF_INET:
-		in = ((struct sockaddr_in *)sa)->sin_addr;
+		in = ((const struct sockaddr_in *)sa)->sin_addr;
 		nml = netmask_length(nm, AF_INET);
 
 		cp = 0;
@@ -511,7 +511,7 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 		break;
 
 	case AF_LINK:
-		return (link_ntoa((struct sockaddr_dl *)sa));
+		return link_ntoa((const struct sockaddr_dl *)sa);
 
 #ifdef INET6
 	case AF_INET6:
@@ -563,13 +563,13 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 #ifndef SMALL
 	case AF_ISO:
 		(void)snprintf(line, sizeof line, "iso %s",
-		    iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr));
+		    iso_ntoa(&((const struct sockaddr_iso *)sa)->siso_addr));
 		break;
 
 	case AF_APPLETALK:
 		(void)snprintf(line, sizeof(line), "atalk %d.%d",
-		    ((struct sockaddr_at *)sa)->sat_addr.s_net,
-		    ((struct sockaddr_at *)sa)->sat_addr.s_node);
+		    ((const struct sockaddr_at *)sa)->sat_addr.s_net,
+		    ((const struct sockaddr_at *)sa)->sat_addr.s_node);
 		break;
 #endif /* SMALL */
 
@@ -579,7 +579,7 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
 		break;
 
 	}
-	return (line);
+	return line;
 }
 
 /*
@@ -587,7 +587,7 @@ routename(struct sockaddr *sa, struct sockaddr *nm, int flags)
  * The address is assumed to be that of a net or subnet, not a host.
  */
 const char *
-netname(struct sockaddr *sa, struct sockaddr *nm)
+netname(const struct sockaddr *sa, struct sockaddr *nm)
 {
 	const char *cp = 0;
 	static char line[50];
@@ -600,7 +600,7 @@ netname(struct sockaddr *sa, struct sockaddr *nm)
 	switch (sa->sa_family) {
 
 	case AF_INET:
-		in = ((struct sockaddr_in *)sa)->sin_addr;
+		in = ((const struct sockaddr_in *)sa)->sin_addr;
 		i = ntohl(in.s_addr);
 		nml = netmask_length(nm, AF_INET);
 		if (i == 0) {
@@ -658,7 +658,7 @@ netname(struct sockaddr *sa, struct sockaddr *nm)
 		break;
 
 	case AF_LINK:
-		return (link_ntoa((struct sockaddr_dl *)sa));
+		return link_ntoa((const struct sockaddr_dl *)sa);
 
 #ifdef INET6
 	case AF_INET6:
@@ -702,13 +702,13 @@ netname(struct sockaddr *sa, struct sockaddr *nm)
 #ifndef SMALL
 	case AF_ISO:
 		(void)snprintf(line, sizeof line, "iso %s",
-		    iso_ntoa(&((struct sockaddr_iso *)sa)->siso_addr));
+		    iso_ntoa(&((const struct sockaddr_iso *)sa)->siso_addr));
 		break;
 
 	case AF_APPLETALK:
 		(void)snprintf(line, sizeof(line), "atalk %d.%d",
-		    ((struct sockaddr_at *)sa)->sat_addr.s_net,
-		    ((struct sockaddr_at *)sa)->sat_addr.s_node);
+		    ((const struct sockaddr_at *)sa)->sat_addr.s_net,
+		    ((const struct sockaddr_at *)sa)->sat_addr.s_node);
 		break;
 #endif /* SMALL */
 
@@ -717,7 +717,7 @@ netname(struct sockaddr *sa, struct sockaddr *nm)
 			sa->sa_family, any_ntoa(sa));
 		break;
 	}
-	return (line);
+	return line;
 }
 
 static const char *
@@ -976,7 +976,7 @@ newroute(int argc, char **argv)
 			break;
 	}
 	if (*cmd == 'g')
-		return (ret != 0);
+		return ret != 0;
 	if (!qflag) {
 		oerrno = errno;
 		(void)printf("%s %s %s", cmd, ishost? "host" : "net", dest);
@@ -991,7 +991,7 @@ newroute(int argc, char **argv)
 		else
 			(void)printf(": %s\n", route_strerror(oerrno));
 	}
-	return (ret != 0);
+	return ret != 0;
 }
 
 static void
@@ -1142,7 +1142,7 @@ getaddr(int which, char *s, struct hostent **hpp)
 		case RTA_GENMASK:
 			su->sa.sa_len = 0;
 		}
-		return (0);
+		return 0;
 	}
 	switch (afamily) {
 #ifdef INET6
@@ -1187,12 +1187,12 @@ getaddr(int which, char *s, struct hostent **hpp)
 #endif
 		if (hints.ai_flags == AI_NUMERICHOST) {
 			if (slash)
-				return (prefixlen(slash + 1));
+				return prefixlen(slash + 1);
 			if (which == RTA_DST)
-				return (inet6_makenetandmask(&su->sin6));
-			return (0);
+				return inet6_makenetandmask(&su->sin6);
+			return 0;
 		} else
-			return (1);
+			return 1;
 	    }
 #endif
 
@@ -1205,13 +1205,13 @@ getaddr(int which, char *s, struct hostent **hpp)
 			do {--cp ;} while ((cp > (char *)su) && (*cp == 0));
 			su->siso.siso_len = 1 + cp - (char *)su;
 		}
-		return (1);
+		return 1;
 #endif /* SMALL */
 
 	case PF_ROUTE:
 		su->sa.sa_len = sizeof(*su);
 		sockaddr(s, &su->sa);
-		return (1);
+		return 1;
 
 #ifndef SMALL
 	case AF_APPLETALK:
@@ -1234,7 +1234,7 @@ badataddr:
 
 	case AF_LINK:
 		link_addr(s, &su->sdl);
-		return (1);
+		return 1;
 
 	case AF_INET:
 	default:
@@ -1264,7 +1264,7 @@ badataddr:
 	    (which != RTA_DST || forcenet == 0)) {
 		val = su->sin.sin_addr.s_addr;
 		if (inet_lnaof(su->sin.sin_addr) != INADDR_ANY)
-			return (1);
+			return 1;
 		else {
 			val = ntohl(val);
 			goto netdone;
@@ -1275,14 +1275,14 @@ badataddr:
 netdone:
 		if (which == RTA_DST)
 			inet_makenetandmask(val, &su->sin);
-		return (0);
+		return 0;
 	}
 	hp = gethostbyname(s);
 	if (hp) {
 		*hpp = hp;
 		su->sin.sin_family = hp->h_addrtype;
 		memmove(&su->sin.sin_addr, hp->h_addr, hp->h_length);
-		return (1);
+		return 1;
 	}
 	errx(EXIT_FAILURE, "%s: bad value", s);
 	/*NOTREACHED*/
@@ -1336,7 +1336,7 @@ prefixlen(const char *s)
 		break;
 #endif
 	}
-	return (len == max);
+	return len == max;
 }
 
 #ifndef SMALL
@@ -1425,7 +1425,7 @@ rtmsg(int cmd, int flags)
 		cmd = RTM_CHANGE;
 	else if (cmd == 'g') {
 #ifdef	SMALL
-		return (-1);
+		return -1;
 #else	/* SMALL */
 		cmd = RTM_GET;
 		if (so_ifp.sa.sa_family == 0) {
@@ -1460,10 +1460,10 @@ rtmsg(int cmd, int flags)
 		print_rtmsg(&rtm, l);
 	}
 	if (debugonly)
-		return (0);
+		return 0;
 	if ((rlen = write(sock, (char *)&m_rtmsg, l)) < 0) {
 		warnx("writing to routing socket: %s", route_strerror(errno));
-		return (-1);
+		return -1;
 	}
 	if (rlen < l) {
 		warnx("write to routing socket, got %d for rlen", rlen);
@@ -1481,7 +1481,7 @@ rtmsg(int cmd, int flags)
 	}
 #endif	/* SMALL */
 #undef rtm
-	return (0);
+	return 0;
 }
 
 static void
@@ -1792,7 +1792,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 		name = routename(gate, NULL, RTF_HOST);
 		if (shortoutput) {
 			if (*name == '\0')
-				return (1);
+				return 1;
 			(void)printf("%s\n", name);
 		} else
 			(void)printf("    gateway: %s\n", name);
@@ -1830,7 +1830,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 #define	RTA_IGN	(RTA_DST|RTA_GATEWAY|RTA_NETMASK|RTA_IFP|RTA_IFA|RTA_BRD)
 
 	if (shortoutput)
-		return ((rtm->rtm_addrs & RTF_GATEWAY) == 0);
+		return (rtm->rtm_addrs & RTF_GATEWAY) == 0;
 	else if (verbose)
 		pmsg_common(rtm);
 	else if (rtm->rtm_addrs &~ RTA_IGN) {
@@ -1850,13 +1850,13 @@ pmsg_common(struct rt_msghdr *rtm)
 	bprintf(stdout, rtm->rtm_rmx.rmx_locks, metricnames);
 	(void)printf(" inits: ");
 	bprintf(stdout, rtm->rtm_inits, metricnames);
-	pmsg_addrs(((char *)(rtm + 1)), rtm->rtm_addrs);
+	pmsg_addrs((char *)(rtm + 1), rtm->rtm_addrs);
 }
 
 static void
 pmsg_addrs(char *cp, int addrs)
 {
-	struct sockaddr *sa[RTAX_MAX];
+	const struct sockaddr *sa[RTAX_MAX];
 	int i, nmf;
 
 	if (addrs != 0) {
@@ -1875,14 +1875,15 @@ pmsg_addrs(char *cp, int addrs)
 				sa[i] = NULL;
 		}
 		for (i = 0; i < RTAX_MAX; i++) {
-			if (sa[i] != NULL) {
-				if (i == RTAX_NETMASK && sa[i]->sa_len)
-					(void)printf(" %s",
-					    netmask_string(sa[i], -1, nmf));
-				else
-					(void)printf(" %s",
-					    routename(sa[i], NULL, RTF_HOST));
-			}
+			if (sa[i] == NULL)
+				continue;
+
+			if (i == RTAX_NETMASK && sa[i]->sa_len)
+				(void)printf(" %s",
+				    netmask_string(sa[i], -1, nmf));
+			else
+				(void)printf(" %s",
+				    routename(sa[i], NULL, RTF_HOST));
 		}
 	}
 	(void)putchar('\n');
