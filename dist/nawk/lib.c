@@ -615,7 +615,6 @@ void error()
 void eprint(void)	/* try to print context around error */
 {
 	char *p, *q;
-	int c;
 	static int been_here = 0;
 	extern char ebuf[], *ep;
 
@@ -639,11 +638,25 @@ void eprint(void)	/* try to print context around error */
 		if (*p)
 			putc(*p, stderr);
 	fprintf(stderr, " <<< ");
-	if (*ep)
+#if 0
+	/*
+	 * The following code was used to print the rest of the line of
+	 * error context. It naively counts brackets, parens and braces in
+	 * order to minimize the parsing effect of dropping the rest of the
+	 * line but it does not work in all the cases. It is too much work
+	 * to save the current program input point and restore it in all the
+	 * cases just for the benefit of error printing so for now this
+	 * code is disabled. In particular this code is confused if the
+	 * [ { ( ) } ] is inside a quoted string or a pattern.
+	 */
+	if (*ep) {
+		int c;
 		while ((c = input()) != '\n' && c != '\0' && c != EOF) {
 			putc(c, stderr);
 			bclass(c);
 		}
+	}
+#endif
 	putc('\n', stderr);
 	ep = ebuf;
 }
