@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.1 2008/09/09 01:13:42 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.2 2008/09/09 05:44:08 cegger Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.1 2008/09/09 01:13:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.2 2008/09/09 05:44:08 cegger Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -574,9 +574,10 @@ USB_ATTACH(uvideo)
 	USB_ATTACH_SUCCESS_RETURN;
 
 bad:
-	if (err != USBD_NORMAL_COMPLETION)
+	if (err != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uvideo_attach: error: %s (%d)\n",
 			 usbd_errstr(err), err));
+	}
 	USB_ATTACH_ERROR_RETURN;
 }
 
@@ -1667,9 +1668,10 @@ uvideo_set_format(void *addr, struct video_format *format)
 	 * for FormatIndex, FrameIndex, and FrameInterval.  For now,
 	 * initialize with the default values. */
 	err = uvideo_stream_probe(vs, UR_GET_DEF, &probe);
-	if (err != USBD_NORMAL_COMPLETION)
+	if (err != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uvideo: error probe/GET_DEF: %s (%d)\n",
 			 usbd_errstr(err), err));
+	}
 	DPRINTFN(15, ("uvideo_set_format: default format is: "
 		      "bmHint=0x%04x bFormatIndex=%d bFrameIndex=%d "
 		      "dwFrameInterval=%d wKeyFrameRate=%d wPFrameRate=%d "
