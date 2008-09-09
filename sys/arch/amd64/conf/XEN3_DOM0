@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.26 2008/08/25 15:27:47 cegger Exp $
+# $NetBSD: XEN3_DOM0,v 1.27 2008/09/09 03:26:42 ober Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -301,6 +301,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
+iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
