@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.4 2008/09/08 22:28:53 jmcneill Exp $ */
+/* $NetBSD: pseye.c,v 1.5 2008/09/09 00:19:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.4 2008/09/08 22:28:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.5 2008/09/09 00:19:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.4 2008/09/08 22:28:53 jmcneill Exp $");
 #include <sys/mutex.h>
 #include <sys/kthread.h>
 #include <sys/condvar.h>
-#include <sys/videoio.h>
 
 #include <uvm/uvm_extern.h>
 
