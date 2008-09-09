@@ -11,7 +11,9 @@
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
+#ifndef HOSTTOOL
 #define ENABLE_NLS 1
+#endif
 
 /* Define to 1 if `TIOCGWINSZ' requires <sys/ioctl.h>. */
 /* #undef GWINSZ_IN_SYS_IOCTL */
