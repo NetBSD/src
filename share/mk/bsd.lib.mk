@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.285 2008/08/13 16:36:15 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.286 2008/09/09 11:54:19 joerg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -508,6 +508,9 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 .endif
 	${HOST_LN} -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.tmp
 	mv -f lib${LIB}.so.tmp lib${LIB}.so
+.endif
+.if ${MKSTRIPIDENT} != "no"
+	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 
 .if !empty(LOBJS)							# {
