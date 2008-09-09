@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.53 2008/09/08 21:54:10 christos Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.54 2008/09/09 05:54:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.53 2008/09/08 21:54:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.54 2008/09/09 05:54:23 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -551,7 +551,8 @@ void
 sk_marv_miibus_statchg(device_t dev)
 {
 	DPRINTFN(9, ("sk_marv_miibus_statchg: gpcr=%x\n",
-		     SK_YU_READ_2((device_private(dev)), YUKON_GPCR)));
+		     SK_YU_READ_2(((struct sk_if_softc *)device_private(dev)),
+		     YUKON_GPCR)));
 }
 
 #define SK_HASH_BITS		6
