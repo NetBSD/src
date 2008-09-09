@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.160 2008/09/08 21:20:03 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.161 2008/09/09 05:54:23 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.160 2008/09/08 21:20:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.161 2008/09/09 05:54:23 cegger Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2776,7 +2776,7 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 			sc->sc_tbi_linkup = 1;
 		} else {
 			DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
-			    device_xname(&sc->sc_dev)));
+			    device_xname(sc->sc_dev)));
 			sc->sc_tbi_linkup = 0;
 		}
 		sc->sc_tbi_anstate = 2;
