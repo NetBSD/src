@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.108 2008/09/09 16:18:17 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.109 2008/09/09 16:23:33 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.108 2008/09/09 16:18:17 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.109 2008/09/09 16:23:33 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -1376,7 +1376,10 @@ static void
 monitor(void)
 {
 	int n;
-	char msg[2048];
+	union {
+		char msg[2048];
+		struct rt_msghdr hdr;
+	} u;
 
 	verbose = 1;
 	if (debugonly) {
@@ -1385,10 +1388,10 @@ monitor(void)
 	}
 	for(;;) {
 		time_t now;
-		n = read(sock, msg, 2048);
+		n = read(sock, &u, sizeof(u));
 		now = time(NULL);
 		(void)printf("got message of size %d on %s", n, ctime(&now));
-		print_rtmsg((struct rt_msghdr *)msg, n);
+		print_rtmsg(&u.hdr, n);
 	}
 }
 
