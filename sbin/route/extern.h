@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2008/09/09 16:50:52 dyoung Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2008/09/09 16:55:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -40,7 +40,7 @@ void show(int, char **);
 /* route.c */
 extern int nflag, Sflag;
 #define NOTDEFSTRING "0.0.0.0/xxx.xxx.xxx.xxx\0"
-int keyword(char *);
+int keyword(const char *);
 int netmask_length(struct sockaddr *, int);
 char *netmask_string(const struct sockaddr *, int, int);
 const char *routename(const struct sockaddr *, struct sockaddr *, int);

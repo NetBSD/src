@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.110 2008/09/09 16:50:52 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.111 2008/09/09 16:55:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.110 2008/09/09 16:50:52 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.111 2008/09/09 16:55:28 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ static int rtmsg(int, int );
 static void mask_addr(void);
 static void print_rtmsg(struct rt_msghdr *, int);
 static void pmsg_common(struct rt_msghdr *);
-static void pmsg_addrs(char *, int);
+static void pmsg_addrs(const char *, int);
 static void bprintf(FILE *, int, const char *);
 static void sodump(sup, const char *);
 static void sockaddr(char *, struct sockaddr *);
@@ -1854,7 +1854,7 @@ pmsg_common(struct rt_msghdr *rtm)
 }
 
 static void
-pmsg_addrs(char *cp, int addrs)
+pmsg_addrs(const char *cp, int addrs)
 {
 	const struct sockaddr *sa[RTAX_MAX];
 	int i, nmf;
@@ -1866,7 +1866,7 @@ pmsg_addrs(char *cp, int addrs)
 		nmf = -1;
 		for (i = 0; i < RTAX_MAX; i++) {
 			if ((1 << i) & addrs) {
-				sa[i] = (struct sockaddr *)cp;
+				sa[i] = (const struct sockaddr *)cp;
 				if ((i == RTAX_DST || i == RTAX_IFA) &&
 				    nmf == -1)
 					nmf = sa[i]->sa_family;
@@ -1918,7 +1918,7 @@ bprintf(FILE *fp, int b, const char *f)
 }
 
 int
-keyword(char *cp)
+keyword(const char *cp)
 {
 	struct keytab *kt = keywords;
 
