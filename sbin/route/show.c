@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.36 2008/09/09 16:18:17 dyoung Exp $	*/
+/*	$NetBSD: show.c,v 1.37 2008/09/09 16:35:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.36 2008/09/09 16:18:17 dyoung Exp $");
+__RCSID("$NetBSD: show.c,v 1.37 2008/09/09 16:35:15 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,13 +183,13 @@ show(int argc, char **argv)
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		err(1, "route-sysctl-estimate");
+		err(EXIT_FAILURE, "route-sysctl-estimate");
 	buf = lim = NULL;
 	if (needed) {
 		if ((buf = malloc(needed)) == 0)
-			err(1, "malloc");
+			err(EXIT_FAILURE, "malloc");
 		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-			err(1, "sysctl of routing table");
+			err(EXIT_FAILURE, "sysctl of routing table");
 		lim  = buf + needed;
 	}
 
