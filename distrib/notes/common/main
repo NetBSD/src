@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.417 2008/09/08 14:54:09 ginsbach Exp $
+.\"	$NetBSD: main,v 1.418 2008/09/09 15:39:04 jakllsch Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2019,6 +2019,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Takayoshi Kochi Ta Mt kochi@NetBSD.org
 .It Ta John Kohl Ta Mt jtk@NetBSD.org
 .It Ta Daniel de Kok Ta Mt daniel@NetBSD.org
+.It Ta Jonathan A. Kollasch Ta Mt jakllsch@NetBSD.org
 .It Ta Paul Kranenburg Ta Mt pk@NetBSD.org
 .It Ta Lubomir Kundrak Ta Mt lkundrak@NetBSD.org
 .It Ta Jochen Kunz Ta Mt jkunz@NetBSD.org
