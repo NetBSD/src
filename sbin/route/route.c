@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.107 2008/07/20 01:20:23 lukem Exp $	*/
+/*	$NetBSD: route.c,v 1.108 2008/09/09 16:18:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.107 2008/07/20 01:20:23 lukem Exp $");
+__RCSID("$NetBSD: route.c,v 1.108 2008/09/09 16:18:17 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,7 +253,7 @@ flushroutes(int argc, char *argv[], int doall)
 	flags = 0;
 	af = AF_UNSPEC;
 	shutdown(sock, SHUT_RD); /* Don't want to read back our messages */
-	parse_show_opts(argc, argv, &af, &flags, &afname, 0);
+	parse_show_opts(argc, argv, &af, &flags, &afname, false);
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
 	mib[2] = 0;		/* protocol */
