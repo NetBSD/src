@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.28 2008/08/24 09:19:03 hannken Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.29 2008/09/09 12:45:39 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.28 2008/08/24 09:19:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.29 2008/09/09 12:45:39 tron Exp $");
 
 #include "rnd.h"
 
@@ -130,6 +130,8 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 	char unklev[32];
 	u_int i;
 
+	ld->sc_dv = self;
+
 	if (ld_ataraid_initialized == 0) {
 		ld_ataraid_initialized = 1;
 		pool_init(&ld_ataraid_cbufpl, sizeof(struct cbuf), 0,
@@ -180,7 +182,7 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 	    ata_raid_type_name(aai->aai_type), level);
 
 	if (ld->sc_start == NULL) {
-		aprint_error_dev(&ld->sc_dv, "unsupported array type\n");
+		aprint_error_dev(ld->sc_dv, "unsupported array type\n");
 		return;
 	}
 
@@ -472,7 +474,7 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 		adi->adi_status &= ~ADI_S_ONLINE;
 
 		printf("%s: error %d on component %d (%s)\n",
-		    device_xname(&sc->sc_ld.sc_dv), bp->b_error, cbp->cb_comp,
+		    device_xname(sc->sc_ld.sc_dv), bp->b_error, cbp->cb_comp,
 		    device_xname(adi->adi_dev));
 
 		/*

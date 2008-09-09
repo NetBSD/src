@@ -1,5 +1,5 @@
 /*	$wasabi: ld_twa.c,v 1.9 2006/02/14 18:44:37 jordanr Exp $	*/
-/*	$NetBSD: ld_twa.c,v 1.12 2008/08/11 06:43:38 simonb Exp $ */
+/*	$NetBSD: ld_twa.c,v 1.13 2008/09/09 12:45:40 tron Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.12 2008/08/11 06:43:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twa.c,v 1.13 2008/09/09 12:45:40 tron Exp $");
 
 #include "rnd.h"
 
@@ -76,22 +76,22 @@ struct ld_twa_softc {
 	int	sc_hwunit;
 };
 
-static void	ld_twa_attach(struct device *, struct device *, void *);
-static int	ld_twa_detach(struct device *, int);
+static void	ld_twa_attach(device_t, device_t, void *);
+static int	ld_twa_detach(device_t, int);
 static int	ld_twa_dobio(struct ld_twa_softc *, void *, size_t, daddr_t,
 			     struct buf *);
 static int	ld_twa_dump(struct ld_softc *, void *, int, int);
 static int	ld_twa_flush(struct ld_softc *, int);
 static void	ld_twa_handler(struct twa_request *);
-static int	ld_twa_match(struct device *, struct cfdata *, void *);
+static int	ld_twa_match(device_t, cfdata_t, void *);
 static int	ld_twa_start(struct ld_softc *, struct buf *);
 
-static void	ld_twa_adjqparam(struct device *, int);
+static void	ld_twa_adjqparam(device_t, int);
 
 static int ld_twa_scsicmd(struct ld_twa_softc *,
 	struct twa_request *, struct buf *);
 
-CFATTACH_DECL(ld_twa, sizeof(struct ld_twa_softc),
+CFATTACH_DECL_NEW(ld_twa, sizeof(struct ld_twa_softc),
     ld_twa_match, ld_twa_attach, ld_twa_detach, NULL);
 
 static const struct twa_callbacks ld_twa_callbacks = {
@@ -99,24 +99,21 @@ static const struct twa_callbacks ld_twa_callbacks = {
 };
 
 static int
-ld_twa_match(struct device *parent, struct cfdata *match, void *aux)
+ld_twa_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (1);
 }
 
 static void
-ld_twa_attach(struct device *parent, struct device *self, void *aux)
+ld_twa_attach(device_t parent, device_t self, void *aux)
 {
-	struct twa_attach_args *twa_args;
-	struct ld_twa_softc *sc;
-	struct ld_softc *ld;
-	struct twa_softc *twa;
+	struct twa_attach_args *twa_args = aux;
+	struct ld_twa_softc *sc = device_private(self);
+	struct ld_softc *ld = &sc->sc_ld;
+	struct twa_softc *twa = device_private(parent);
 
-	sc = (struct ld_twa_softc *)self;
-	ld = &sc->sc_ld;
-	twa = (struct twa_softc *)parent;
-	twa_args = aux;
+	ld->sc_dv = self;
 
 	twa_register_callbacks(twa, twa_args->twaa_unit, &ld_twa_callbacks);
 
@@ -133,13 +130,15 @@ ld_twa_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ld_twa_detach(struct device *self, int flags)
+ld_twa_detach(device_t self, int flags)
 {
+	struct ld_twa_softc *sc = device_private(self);
+	struct ld_softc *ld = &sc->sc_ld;
 	int error;
 
-	if ((error = ldbegindetach((struct ld_softc *)self, flags)) != 0)
+	if ((error = ldbegindetach(ld, flags)) != 0)
 		return (error);
-	ldenddetach((struct ld_softc *)self);
+	ldenddetach(ld);
 
 	return (0);
 }
@@ -152,7 +151,7 @@ ld_twa_dobio(struct ld_twa_softc *sc, void *data, size_t datasize,
 	struct twa_request	*tr;
 	struct twa_softc *twa;
 
-	twa = (struct twa_softc *)sc->sc_ld.sc_dv.dv_parent;
+	twa = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	if ((tr = twa_get_request(twa, 0)) == NULL) {
 		return (EAGAIN);
@@ -211,7 +210,7 @@ ld_twa_handler(struct twa_request *tr)
 
 	bp = tr->bp;
 	sc = (struct ld_twa_softc *)tr->tr_ld_sc;
-	twa = (struct twa_softc *)sc->sc_ld.sc_dv.dv_parent;
+	twa = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	status = tr->tr_command->command.cmd_pkt_9k.status;
 
@@ -247,7 +246,7 @@ ld_twa_flush(struct ld_softc *ld, int flags)
 {
 	int s, rv = 0;
 	struct twa_request *tr;
-	struct twa_softc *twa = (void *)ld->sc_dv.dv_parent;
+	struct twa_softc *twa = device_private(device_parent(ld->sc_dv));
 	struct ld_twa_softc *sc = (void *)ld;
 	struct twa_command_generic *generic_cmd;
 
@@ -285,10 +284,12 @@ ld_twa_flush(struct ld_softc *ld, int flags)
 }
 
 static void
-ld_twa_adjqparam(struct device *self, int openings)
+ld_twa_adjqparam(device_t self, int openings)
 {
+	struct ld_twa_softc *sc = device_private(self);
+	struct ld_softc *ld = &sc->sc_ld;
 
-	ldadjqparam((struct ld_softc *)self, openings);
+	ldadjqparam(ld, openings);
 }
 
 

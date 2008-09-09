@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.14 2008/08/11 06:43:37 simonb Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.15 2008/09/09 12:45:39 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/mutex.h>
 
 struct ld_softc {
-	struct	device sc_dv;
+	struct	device *sc_dv;
 	struct	disk sc_dk;
 	struct	bufq_state *sc_bufq;
 	kmutex_t sc_mutex;
