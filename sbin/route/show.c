@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.35 2006/10/16 02:55:10 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.36 2008/09/09 16:18:17 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.35 2006/10/16 02:55:10 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.36 2008/09/09 16:18:17 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: show.c,v 1.35 2006/10/16 02:55:10 christos Exp $");
 #include <sys/sysctl.h>
 
 #include <netdb.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -100,7 +101,7 @@ static void p_flags(int);
 
 void
 parse_show_opts(int argc, char **argv, int *afp, int *flagsp,
-    const char **afnamep, int nolink)
+    const char **afnamep, bool nolink)
 {
 	const char *afname = "unspec";
 	int af, flags;
@@ -174,7 +175,7 @@ show(int argc, char **argv)
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
 
-	parse_show_opts(argc, argv, &af, &flags, NULL, 1);
+	parse_show_opts(argc, argv, &af, &flags, NULL, true);
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
 	mib[2] = 0;
