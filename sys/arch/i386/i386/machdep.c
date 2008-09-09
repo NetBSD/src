@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.640 2008/08/26 08:43:00 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.641 2008/09/09 12:09:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.640 2008/08/26 08:43:00 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.641 2008/09/09 12:09:31 tron Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -298,7 +298,6 @@ void	add_mem_cluster(uint64_t, uint64_t, uint32_t);
 
 extern int time_adjusted;
 
-struct bootinfo	bootinfo;
 int *esym;
 int *eblob;
 extern int boothowto;
