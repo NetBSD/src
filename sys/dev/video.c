@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.9 2008/09/09 04:23:53 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.10 2008/09/09 04:28:54 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.9 2008/09/09 04:23:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.10 2008/09/09 04:28:54 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -1205,7 +1205,7 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case VIDIOC_QUERYCAP:
 		cap = data;
 		memset(cap, 0, sizeof(*cap));
-		strlcpy(cap->driver, device_xname(sc->hw_softc),
+		strlcpy(cap->driver, device_xname(sc->hw_dev),
 			sizeof(cap->driver));
 		strlcpy(cap->card, hw->get_devname(sc->hw_softc),
 			sizeof(cap->card));
