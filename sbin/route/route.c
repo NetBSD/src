@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.111 2008/09/09 16:55:28 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.112 2008/09/09 19:58:46 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.111 2008/09/09 16:55:28 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.112 2008/09/09 19:58:46 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -1428,7 +1428,7 @@ rtmsg(int cmd, int flags)
 		return -1;
 #else	/* SMALL */
 		cmd = RTM_GET;
-		if (so_ifp.sa.sa_family == 0) {
+		if (so_ifp.sa.sa_family == AF_UNSPEC) {
 			so_ifp.sa.sa_family = AF_LINK;
 			so_ifp.sa.sa_len = sizeof(struct sockaddr_dl);
 			rtm_addrs |= RTA_IFP;
@@ -1854,6 +1854,26 @@ pmsg_common(struct rt_msghdr *rtm)
 }
 
 static void
+extract_addrs(const char *cp, int addrs, const struct sockaddr *sa[], int *nmfp)
+{
+	int i, nmf = -1;
+
+	for (i = 0; i < RTAX_MAX; i++) {
+		if ((1 << i) & addrs) {
+			sa[i] = (const struct sockaddr *)cp;
+			if ((i == RTAX_DST || i == RTAX_IFA) &&
+			    nmf == -1)
+				nmf = sa[i]->sa_family;
+			ADVANCE(cp, sa[i]);
+		} else
+			sa[i] = NULL;
+	}
+
+	if (nmfp != NULL)
+		*nmfp = nmf;
+}
+
+static void
 pmsg_addrs(const char *cp, int addrs)
 {
 	const struct sockaddr *sa[RTAX_MAX];
@@ -1863,17 +1883,7 @@ pmsg_addrs(const char *cp, int addrs)
 		(void)printf("\nsockaddrs: ");
 		bprintf(stdout, addrs, addrnames);
 		(void)putchar('\n');
-		nmf = -1;
-		for (i = 0; i < RTAX_MAX; i++) {
-			if ((1 << i) & addrs) {
-				sa[i] = (const struct sockaddr *)cp;
-				if ((i == RTAX_DST || i == RTAX_IFA) &&
-				    nmf == -1)
-					nmf = sa[i]->sa_family;
-				ADVANCE(cp, sa[i]);
-			} else
-				sa[i] = NULL;
-		}
+		extract_addrs(cp, addrs, sa, &nmf);
 		for (i = 0; i < RTAX_MAX; i++) {
 			if (sa[i] == NULL)
 				continue;
