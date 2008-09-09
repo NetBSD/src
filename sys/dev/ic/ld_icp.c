@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_icp.c,v 1.21 2008/08/11 06:43:38 simonb Exp $	*/
+/*	$NetBSD: ld_icp.c,v 1.22 2008/09/09 12:45:39 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.21 2008/08/11 06:43:38 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_icp.c,v 1.22 2008/09/09 12:45:39 tron Exp $");
 
 #include "rnd.h"
 
@@ -65,19 +65,19 @@ struct ld_icp_softc {
 	int	sc_hwunit;
 };
 
-void	ld_icp_attach(struct device *, struct device *, void *);
-int	ld_icp_detach(struct device *, int);
+void	ld_icp_attach(device_t, device_t, void *);
+int	ld_icp_detach(device_t, int);
 int	ld_icp_dobio(struct ld_icp_softc *, void *, int, int, int,
 		     struct buf *);
 int	ld_icp_dump(struct ld_softc *, void *, int, int);
 int	ld_icp_flush(struct ld_softc *, int);
 void	ld_icp_intr(struct icp_ccb *);
-int	ld_icp_match(struct device *, struct cfdata *, void *);
+int	ld_icp_match(device_t, cfdata_t, void *);
 int	ld_icp_start(struct ld_softc *, struct buf *);
 
-void	ld_icp_adjqparam(struct device *, int);
+void	ld_icp_adjqparam(device_t, int);
 
-CFATTACH_DECL(ld_icp, sizeof(struct ld_icp_softc),
+CFATTACH_DECL_NEW(ld_icp, sizeof(struct ld_icp_softc),
     ld_icp_match, ld_icp_attach, ld_icp_detach, NULL);
 
 static const struct icp_servicecb ld_icp_servicecb = {
@@ -85,8 +85,7 @@ static const struct icp_servicecb ld_icp_servicecb = {
 };
 
 int
-ld_icp_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ld_icp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct icp_attach_args *icpa;
 
@@ -96,22 +95,18 @@ ld_icp_match(struct device *parent, struct cfdata *match,
 }
 
 void
-ld_icp_attach(struct device *parent, struct device *self, void *aux)
+ld_icp_attach(device_t parent, device_t self, void *aux)
 {
-	struct icp_attach_args *icpa;
-	struct ld_icp_softc *sc;
-	struct ld_softc *ld;
-	struct icp_softc *icp;
-	struct icp_cachedrv *cd;
+	struct icp_attach_args *icpa = aux;
+	struct ld_icp_softc *sc = device_private(self);
+	struct ld_softc *ld = &sc->sc_ld;
+	struct icp_softc *icp = device_private(parent);
+	struct icp_cachedrv *cd = &icp->icp_cdr[icpa->icpa_unit];
 	struct icp_cdevinfo *cdi;
 	const char *str;
 	int t;
 
-	sc = (struct ld_icp_softc *)self;
-	ld = &sc->sc_ld;
-	icp = (struct icp_softc *)parent;
-	icpa = aux;
-	cd = &icp->icp_cdr[icpa->icpa_unit];
+	ld->sc_dv = self;
 
 	icp_register_servicecb(icp, icpa->icpa_unit, &ld_icp_servicecb);
 
@@ -174,7 +169,7 @@ ld_icp_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-ld_icp_detach(struct device *dv, int flags)
+ld_icp_detach(device_t dv, int flags)
 {
 	int rv;
 
@@ -194,7 +189,7 @@ ld_icp_dobio(struct ld_icp_softc *sc, void *data, int datasize, int blkno,
 	struct icp_softc *icp;
 	int s, rv;
 
-	icp = (struct icp_softc *)device_parent(&sc->sc_ld.sc_dv);
+	icp = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	/*
 	 * Allocate a command control block.
@@ -241,7 +236,7 @@ ld_icp_dobio(struct ld_icp_softc *sc, void *data, int datasize, int blkno,
 	} else {
  		ic->ic_intr = ld_icp_intr;
 		ic->ic_context = bp;
-		ic->ic_dv = &sc->sc_ld.sc_dv;
+		ic->ic_dv = sc->sc_ld.sc_dv;
 		icp_ccb_enqueue(icp, ic);
 	}
 
@@ -274,7 +269,7 @@ ld_icp_flush(struct ld_softc *ld, int flags)
 	int rv;
 
 	sc = (struct ld_icp_softc *)ld;
-	icp = (struct icp_softc *)device_parent(&ld->sc_dv);
+	icp = device_private(device_parent(ld->sc_dv));
 
 	ic = icp_ccb_alloc_wait(icp);
 	ic->ic_cmd.cmd_opcode = htole16(ICP_FLUSH);
@@ -304,7 +299,7 @@ ld_icp_intr(struct icp_ccb *ic)
 
 	bp = ic->ic_context;
 	sc = (struct ld_icp_softc *)ic->ic_dv;
-	icp = (struct icp_softc *)device_parent(&sc->sc_ld.sc_dv);
+	icp = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	if (ic->ic_status != ICP_S_OK) {
 		aprint_error_dev(ic->ic_dv, "request failed; status=0x%04x\n",
@@ -332,7 +327,7 @@ ld_icp_intr(struct icp_ccb *ic)
 }
 
 void
-ld_icp_adjqparam(struct device *dv, int openings)
+ld_icp_adjqparam(device_t dv, int openings)
 {
 
 	ldadjqparam((struct ld_softc *) dv, openings);
