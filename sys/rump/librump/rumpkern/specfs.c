@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.25 2008/08/12 10:04:57 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.26 2008/09/09 19:22:00 tron Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -53,6 +53,8 @@ static int rump_specbmap(void *);
 static int rump_specputpages(void *);
 static int rump_specstrategy(void *);
 static int rump_specsimpleul(void *);
+
+kmutex_t specfs_lock;
 
 int (**spec_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
