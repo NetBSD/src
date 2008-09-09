@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.6 2008/09/08 00:39:27 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.7 2008/09/09 01:36:48 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.6 2008/09/08 00:39:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.7 2008/09/09 01:36:48 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: video.c,v 1.6 2008/09/08 00:39:27 jmcneill Exp $");
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
+#include <sys/select.h>
 #include <sys/kmem.h>
 #include <sys/pool.h>
 #include <sys/conf.h>
@@ -164,6 +165,7 @@ struct video_stream {
 					  * buffers. */
 	kcondvar_t		vs_sample_cv; /* signaled on new
 					       * ingress sample */
+	struct selinfo		vs_sel;
 
 	uint32_t		vs_bytesread; /* bytes read() from current
 					       * sample thus far */
@@ -1509,6 +1511,8 @@ videopoll(dev_t dev, int events, struct lwp *l)
 
 	if (!SIMPLEQ_EMPTY(&sc->sc_stream_in.vs_egress))
 		revents |= events & (POLLIN | POLLRDNORM);
+	else
+		selrecord(l, &vs->vs_sel);
 
 	return (revents);
 }
@@ -1552,6 +1556,7 @@ video_stream_init(struct video_stream *vs)
 
 	mutex_init(&vs->vs_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&vs->vs_sample_cv, "video");
+	selinit(&vs->vs_sel);
 
 	scatter_buf_init(&vs->vs_data);
 }
@@ -1567,6 +1572,7 @@ video_stream_fini(struct video_stream *vs)
 	
 	mutex_destroy(&vs->vs_lock);
 	cv_destroy(&vs->vs_sample_cv);
+	seldestroy(&vs->vs_sel);
 
 	scatter_buf_destroy(&vs->vs_data);
 }
@@ -1860,6 +1866,7 @@ video_stream_sample_done(struct video_stream *vs)
 
 		SIMPLEQ_INSERT_TAIL(&vs->vs_egress, vb, entries);
 		cv_signal(&vs->vs_sample_cv);
+		selnotify(&vs->vs_sel, 0, 0);
 	} else {
 		DPRINTF(("video_stream_sample_done: no sample\n"));
 	}
