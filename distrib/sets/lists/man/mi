@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1095 2008/09/06 19:41:38 jmcneill Exp $
+# $NetBSD: mi,v 1.1096 2008/09/09 01:17:23 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1544,6 +1544,7 @@
 ./usr/share/man/cat4/usscanner.0		man-sys-catman		.cat
 ./usr/share/man/cat4/ustir.0			man-sys-catman		.cat
 ./usr/share/man/cat4/utoppy.0			man-sys-catman		.cat
+./usr/share/man/cat4/uvideo.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uvisor.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uvscom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uyap.0			man-sys-catman		.cat
@@ -3976,6 +3977,7 @@
 ./usr/share/man/html4/usscanner.html		man-sys-htmlman		html
 ./usr/share/man/html4/ustir.html		man-sys-htmlman		html
 ./usr/share/man/html4/utoppy.html		man-sys-htmlman		html
+./usr/share/man/html4/uvideo.html		man-sys-htmlman		html
 ./usr/share/man/html4/uvisor.html		man-sys-htmlman		html
 ./usr/share/man/html4/uvscom.html		man-sys-htmlman		html
 ./usr/share/man/html4/uyap.html			man-sys-htmlman		html
@@ -6338,6 +6340,7 @@
 ./usr/share/man/man4/usscanner.4		man-sys-man		.man
 ./usr/share/man/man4/ustir.4			man-sys-man		.man
 ./usr/share/man/man4/utoppy.4			man-sys-man		.man
+./usr/share/man/man4/uvideo.4			man-sys-man		.man
 ./usr/share/man/man4/uvisor.4			man-sys-man		.man
 ./usr/share/man/man4/uvscom.4			man-sys-man		.man
 ./usr/share/man/man4/uyap.4			man-sys-man		.man
