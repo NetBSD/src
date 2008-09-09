@@ -1,0 +1,2719 @@
+/*	$NetBSD: uvideo.c,v 1.1 2008/09/09 01:13:42 jmcneill Exp $	*/
+
+/*
+ * Copyright (c) 2008 Patrick Mahoney
+ * All rights reserved.
+ *
+ * This code was written by Patrick Mahoney (pat@polycrystal.org) as
+ * part of Google Summer of Code 2008.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * USB video specs:
+ *      http://www.usb.org/developers/devclass_docs/USB_Video_Class_1_1.zip
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.1 2008/09/09 01:13:42 jmcneill Exp $");
+
+#ifdef _MODULE
+#include <sys/module.h>
+#endif
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+/* #include <sys/malloc.h> */
+#include <sys/kmem.h>
+#include <sys/device.h>
+#include <sys/ioctl.h>
+#include <sys/uio.h>
+#include <sys/tty.h>
+#include <sys/file.h>
+#include <sys/select.h>
+#include <sys/proc.h>
+#include <sys/conf.h>
+#include <sys/vnode.h>
+#include <sys/poll.h>
+#include <sys/queue.h>	/* SLIST */
+
+#include <sys/videoio.h>
+#include <dev/video_if.h>
+
+#include <dev/usb/usb.h>
+#include <dev/usb/usbdi.h>
+#include <dev/usb/usbdi_util.h>
+#include <dev/usb/usb_quirks.h>
+
+#include <dev/usb/uvideoreg.h>
+
+/* #define UVIDEO_DEBUG */
+
+#ifdef UVIDEO_DEBUG
+#define DPRINTF(x)	do { if (uvideodebug) logprintf x; } while (0)
+#define DPRINTFN(n,x)	do { if (uvideodebug>(n)) logprintf x; } while (0)
+int	uvideodebug = 20;
+#else
+#define DPRINTF(x)
+#define DPRINTFN(n,x)
+#endif
+
+typedef enum {
+	UVIDEO_STATE_CLOSED,
+	UVIDEO_STATE_OPENING,
+	UVIDEO_STATE_IDLE
+} uvideo_state;
+
+struct uvideo_camera_terminal {
+	uint16_t	ct_objective_focal_min;
+	uint16_t	ct_objective_focal_max;
+	uint16_t	ct_ocular_focal_length;
+};
+
+struct uvideo_processing_unit {
+	uint16_t	pu_max_multiplier; /* digital zoom */
+	uint8_t		pu_video_standards;
+};
+
+struct uvideo_extension_unit {
+	guid_t		xu_guid;
+};
+
+/* For simplicity, we consider a Terminal a special case of Unit
+ * rather than a separate entity. */
+struct uvideo_unit {
+	uint8_t		vu_id;
+	uint8_t		vu_type;
+	uint8_t		vu_dst_id;
+	uint8_t		vu_nsrcs;
+	union {
+		uint8_t	vu_src_id;	/* vu_nsrcs = 1 */
+		uint8_t	*vu_src_id_ary; /* vu_nsrcs > 1 */
+	} s;
+
+	/* fields for individual unit/terminal types */
+	union {
+		struct uvideo_camera_terminal	vu_camera;
+		struct uvideo_processing_unit	vu_processing;
+		struct uvideo_extension_unit	vu_extension;
+	} u;
+
+	/* Used by camera terminal, processing and extention units. */
+	uint8_t		vu_control_size; /* number of bytes in vu_controls */
+	uint8_t		*vu_controls;	 /* array of bytes. bits are
+					  * numbered from 0 at least
+					  * significant bit to
+					  * (8*vu_control_size - 1)*/
+};
+
+struct uvideo_alternate {
+	uint8_t		altno;
+	uint8_t		interval;
+	uint16_t	max_packet_size;
+	SLIST_ENTRY(uvideo_alternate)	entries;
+};
+SLIST_HEAD(altlist, uvideo_alternate);
+
+#define UVIDEO_FORMAT_GET_FORMAT_INDEX(fmt)	\
+	((fmt)->format.priv & 0xff)
+#define UVIDEO_FORMAT_GET_FRAME_INDEX(fmt)	\
+	(((fmt)->format.priv >> 8) & 0xff)
+/* TODO: find a better way to set bytes within this 32 bit value? */
+#define UVIDEO_FORMAT_SET_FORMAT_INDEX(fmt, index) do {	\
+		(fmt)->format.priv &= ~0xff;		\
+		(fmt)->format.priv |= ((index) & 0xff);	\
+	} while (0)
+#define UVIDEO_FORMAT_SET_FRAME_INDEX(fmt, index) do {			\
+		(fmt)->format.priv &= ~(0xff << 8);			\
+		((fmt)->format.priv |= (((index) & 0xff) << 8));	\
+	} while (0)
+
+struct uvideo_format {
+	struct video_format	format;
+	SIMPLEQ_ENTRY(uvideo_format) entries;
+};
+SIMPLEQ_HEAD(uvideo_format_list, uvideo_format);
+
+struct uvideo_isoc_xfer {
+	uint8_t			ix_endpt;
+	usbd_pipe_handle	ix_pipe;
+	usbd_xfer_handle	ix_xfer;
+	uint8_t			*ix_buf;
+	uint32_t		ix_nframes;
+	uint16_t		*ix_frlengths;
+	uint32_t		ix_uframe_len;
+
+	struct altlist		ix_altlist;
+};
+
+struct uvideo_bulk_xfer {
+	uint8_t			bx_endpt;
+	usbd_pipe_handle	bx_pipe;
+	usbd_xfer_handle	bx_xfer;
+	uint8_t			*bx_buffer;
+	int			bx_buflen;
+	int			bx_datalen;
+};
+
+struct uvideo_stream {
+	struct uvideo_softc	*vs_parent;
+	usbd_interface_handle	vs_iface;
+	uint8_t			vs_ifaceno;
+	uint8_t			vs_subtype;  /* input or output */
+	uint16_t		vs_probelen; /* length of probe and
+					      * commit data; varies
+					      * depending on version
+					      * of spec. */
+	struct uvideo_format_list vs_formats;
+	struct video_format	*vs_default_format;
+	struct video_format	vs_current_format;
+
+	/* usb transfer details */
+	uint8_t			vs_xfer_type;
+	union {
+		struct uvideo_bulk_xfer	bulk;
+		struct uvideo_isoc_xfer isoc;
+	} vs_xfer;
+
+	int			vs_frameno;	/* toggles between 0 and 1 */
+
+	/* current video format */
+	uint32_t		vs_max_payload_size;
+	uint32_t		vs_max_frame_size;
+	uint32_t		vs_frame_interval;
+	SLIST_ENTRY(uvideo_stream) entries;
+};
+SLIST_HEAD(uvideo_stream_list, uvideo_stream);
+
+struct uvideo_softc {
+        USBBASEDEVICE   	sc_dev;		/* base device */
+        usbd_device_handle      sc_udev;	/* device */
+	usbd_interface_handle   sc_iface;	/* interface handle */
+        int     		sc_ifaceno;	/* interface number */
+	char			*sc_devname;
+
+	device_ptr_t		sc_videodev;
+	
+	int			sc_dying;
+	uvideo_state		sc_state;
+
+	uint8_t			sc_nunits;
+	struct uvideo_unit	**sc_unit;
+
+	struct uvideo_stream	*sc_stream_in;
+
+	struct uvideo_stream_list sc_stream_list;
+};
+
+int	uvideo_match(device_t, cfdata_t, void *);
+void	uvideo_attach(device_t, device_t, void *);
+int	uvideo_detach(device_t, int);
+void	uvideo_childdet(device_t, device_t);
+int	uvideo_activate(device_t, enum devact);
+
+static int	uvideo_open(void *, int);
+static void	uvideo_close(void *);
+static const char * uvideo_get_devname(void *);
+
+static int	uvideo_enum_format(void *, uint32_t, struct video_format *);
+static int	uvideo_get_format(void *, struct video_format *);
+static int	uvideo_set_format(void *, struct video_format *);
+static int	uvideo_start_transfer(void *);
+static int	uvideo_stop_transfer(void *);
+
+static int	uvideo_get_control_group(void *,
+					 struct video_control_group *);
+static int	uvideo_set_control_group(void *,
+					 const struct video_control_group *);
+
+static usbd_status	uvideo_init_control(
+	struct uvideo_softc *,
+	const usb_interface_descriptor_t *,
+	usbd_desc_iter_t *);
+static usbd_status	uvideo_init_collection(
+	struct uvideo_softc *,
+	const usb_interface_descriptor_t *,
+	usbd_desc_iter_t *);
+
+/* Functions for unit & terminal descriptors */
+static struct uvideo_unit *	uvideo_unit_alloc(const uvideo_descriptor_t *);
+static usbd_status		uvideo_unit_init(struct uvideo_unit *,
+						 const uvideo_descriptor_t *);
+static void			uvideo_unit_free(struct uvideo_unit *);
+static usbd_status		uvideo_unit_alloc_controls(struct uvideo_unit *,
+							   uint8_t,
+							   const uint8_t *);
+static void			uvideo_unit_free_controls(struct uvideo_unit *);
+static usbd_status		uvideo_unit_alloc_sources(struct uvideo_unit *,
+							  uint8_t,
+							  const uint8_t *);
+static void			uvideo_unit_free_sources(struct uvideo_unit *);
+
+
+
+
+/* Functions for uvideo_stream, primary unit associated with a video
+ * driver or device file. */
+static struct uvideo_stream *	uvideo_find_stream(struct uvideo_softc *,
+						   uint8_t);
+static struct uvideo_format *	uvideo_stream_find_format(
+	struct uvideo_stream *,
+	uint8_t, uint8_t);
+static struct uvideo_stream *	uvideo_stream_alloc(void);
+static usbd_status		uvideo_stream_init(
+	struct uvideo_stream *stream,
+	struct uvideo_softc *sc,
+	const usb_interface_descriptor_t *ifdesc,
+	uint8_t idx);
+static usbd_status		uvideo_stream_init_desc(
+	struct uvideo_stream *,
+	const usb_interface_descriptor_t *ifdesc,
+	usbd_desc_iter_t *iter);
+static usbd_status		uvideo_stream_init_frame_based_format(
+	struct uvideo_stream *,
+	const uvideo_descriptor_t *,
+	usbd_desc_iter_t *);
+static void			uvideo_stream_free(struct uvideo_stream *);
+
+static int		uvideo_stream_start_xfer(struct uvideo_stream *);
+static int		uvideo_stream_stop_xfer(struct uvideo_stream *);
+static usbd_status	uvideo_stream_recv_isoc_start(struct uvideo_stream *);
+static void		uvideo_stream_recv_isoc_complete(usbd_xfer_handle,
+							 usbd_private_handle,
+							 usbd_status);
+
+/* format probe and commit */
+#define uvideo_stream_probe(vs, act, data)				\
+	(uvideo_stream_probe_and_commit((vs), (act),			\
+					UVIDEO_VS_PROBE_CONTROL, (data)))
+#define uvideo_stream_commit(vs, act, data)				\
+	(uvideo_stream_probe_and_commit((vs), (act),			\
+					UVIDEO_VS_COMMIT_CONTROL, (data)))
+static usbd_status	uvideo_stream_probe_and_commit(struct uvideo_stream *,
+						       uint8_t, uint8_t,
+						       void *);
+static void		uvideo_init_probe_data(uvideo_probe_and_commit_data_t *);
+
+
+static const usb_descriptor_t * usb_desc_iter_peek_next(usbd_desc_iter_t *);
+static const usb_interface_descriptor_t * usb_desc_iter_next_interface(
+	usbd_desc_iter_t *);
+static const usb_descriptor_t * usb_desc_iter_next_non_interface(
+	usbd_desc_iter_t *);
+
+static int	usb_guid_cmp(const usb_guid_t *, const guid_t *);
+
+
+CFATTACH_DECL2_NEW(uvideo, sizeof(struct uvideo_softc),
+    uvideo_match, uvideo_attach, uvideo_detach, uvideo_activate, NULL,
+    uvideo_childdet);
+
+extern struct cfdriver uvideo_cd;
+
+
+static const struct video_hw_if uvideo_hw_if = {
+	.open = uvideo_open,
+	.close = uvideo_close,
+	.get_devname = uvideo_get_devname,
+	.enum_format = uvideo_enum_format,
+	.get_format = uvideo_get_format,
+	.set_format = uvideo_set_format,
+	.try_format = NULL,
+	.start_transfer = uvideo_start_transfer,
+	.stop_transfer = uvideo_stop_transfer,
+	.control_iter_init = NULL,
+	.control_iter_next = NULL,
+	.get_control_desc_group = NULL,
+	.get_control_group = uvideo_get_control_group,
+	.set_control_group = uvideo_set_control_group,
+};
+
+#ifdef UVIDEO_DEBUG
+/* Some functions to print out descriptors.  Mostly useless other than
+ * debugging/exploration purposes. */
+static void usb_guid_print(const usb_guid_t *);
+static void print_descriptor(const usb_descriptor_t *);
+static void print_interface_descriptor(const usb_interface_descriptor_t *);
+static void print_endpoint_descriptor(const usb_endpoint_descriptor_t *);
+
+static void print_vc_descriptor(const usb_descriptor_t *);
+static void print_vs_descriptor(const usb_descriptor_t *);
+
+static void print_vc_header_descriptor(
+	const uvideo_vc_header_descriptor_t *);
+static void print_input_terminal_descriptor(
+	const uvideo_input_terminal_descriptor_t *);
+static void print_output_terminal_descriptor(
+	const uvideo_output_terminal_descriptor_t *);
+static void print_camera_terminal_descriptor(
+	const uvideo_camera_terminal_descriptor_t *);
+static void print_selector_unit_descriptor(
+	const uvideo_selector_unit_descriptor_t *);
+static void print_processing_unit_descriptor(
+	const uvideo_processing_unit_descriptor_t *);
+static void print_extension_unit_descriptor(
+	const uvideo_extension_unit_descriptor_t *);
+static void print_interrupt_endpoint_descriptor(
+	const uvideo_vc_interrupt_endpoint_descriptor_t *);
+
+static void print_vs_input_header_descriptor(
+	const uvideo_vs_input_header_descriptor_t *);
+static void print_vs_output_header_descriptor(
+	const uvideo_vs_output_header_descriptor_t *);
+
+static void print_vs_format_uncompressed_descriptor(
+	const uvideo_vs_format_uncompressed_descriptor_t *);
+static void print_vs_frame_uncompressed_descriptor(
+	const uvideo_vs_frame_uncompressed_descriptor_t *);
+static void print_vs_format_mjpeg_descriptor(
+	const uvideo_vs_format_mjpeg_descriptor_t *);
+static void print_vs_frame_mjpeg_descriptor(
+	const uvideo_vs_frame_mjpeg_descriptor_t *);
+static void print_vs_format_dv_descriptor(
+	const uvideo_vs_format_dv_descriptor_t *);
+#endif /* !UVIDEO_DEBUG */
+
+#define GET(type, descp, field) (((const type *)(descp))->field)
+#define GETP(type, descp, field) (&(((const type *)(descp))->field))
+
+/* Given a format descriptor and frame descriptor, copy values common
+ * to all formats into a struct uvideo_format. */
+#define UVIDEO_FORMAT_INIT_FRAME_BASED(format_type, format_desc,	\
+				       frame_type, frame_desc,		\
+				       format)				\
+	do {								\
+		UVIDEO_FORMAT_SET_FORMAT_INDEX(				\
+			format,						\
+			GET(format_type, format_desc, bFormatIndex));	\
+		UVIDEO_FORMAT_SET_FRAME_INDEX(				\
+			format,						\
+			GET(frame_type, frame_desc, bFrameIndex));	\
+		format->format.width =					\
+		    UGETW(GET(frame_type, frame_desc, wWidth));		\
+		format->format.height =					\
+		    UGETW(GET(frame_type, frame_desc, wHeight));	\
+		format->format.aspect_x =				\
+		    GET(format_type, format_desc, bAspectRatioX);	\
+		format->format.aspect_y =				\
+		    GET(format_type, format_desc, bAspectRatioY);	\
+	} while (0)
+
+
+USB_MATCH(uvideo)
+{
+	USB_IFMATCH_START(uvideo, uaa);
+
+        /* TODO: May need to change in the future to work with
+         * Interface Association Descriptor. */
+
+	/* Trigger on the Video Control Interface which must be present */
+	if (uaa->class == UICLASS_VIDEO &&
+	    uaa->subclass == UISUBCLASS_VIDEOCONTROL)
+		return UMATCH_IFACECLASS_IFACESUBCLASS;
+
+	return UMATCH_NONE;
+}
+
+USB_ATTACH(uvideo)
+{
+	USB_IFATTACH_START(uvideo, sc, uaa);
+	usbd_desc_iter_t iter;
+	const usb_interface_descriptor_t *ifdesc;
+	struct uvideo_stream *vs;
+	usbd_status err;
+	uint8_t ifaceidx;
+
+	sc->sc_dev = self;
+
+	sc->sc_devname = usbd_devinfo_alloc(uaa->device, 0);
+
+	aprint_naive("\n");
+	aprint_normal(": %s\n", sc->sc_devname);
+	
+	sc->sc_udev = uaa->device;
+	sc->sc_iface = uaa->iface;
+	sc->sc_ifaceno = uaa->ifaceno;
+	sc->sc_dying = 0;
+	sc->sc_state = UVIDEO_STATE_CLOSED;
+	SLIST_INIT(&sc->sc_stream_list);
+
+#ifdef UVIDEO_DEBUG
+	/* Debugging dump of descriptors. TODO: move this to userspace
+	 * via a custom IOCTL or something. */
+	const usb_descriptor_t *desc;
+	usb_desc_iter_init(sc->sc_udev, &iter);
+	while ((desc = usb_desc_iter_next(&iter)) != NULL) {
+		/* print out all descriptors */
+		printf("uvideo_attach: ");
+		print_descriptor(desc);
+	}
+#endif /* !UVIDEO_DEBUG */
+
+	/* iterate through interface descriptors and initialize softc */
+	usb_desc_iter_init(sc->sc_udev, &iter);
+	for (ifaceidx = 0;
+	     (ifdesc = usb_desc_iter_next_interface(&iter)) != NULL;
+	     ++ifaceidx)
+	{
+		if (ifdesc->bInterfaceClass != UICLASS_VIDEO) {
+			DPRINTFN(50, ("uvideo_attach: "
+				      "ignoring non-uvc interface: "
+				      "len=%d type=0x%02x "
+				      "class=0x%02x subclass=0x%02x\n",
+				      ifdesc->bLength,
+				      ifdesc->bDescriptorType,
+				      ifdesc->bInterfaceClass,
+				      ifdesc->bInterfaceSubClass));
+			continue;
+		}
+
+		switch (ifdesc->bInterfaceSubClass) {
+		case UISUBCLASS_VIDEOCONTROL:
+			err = uvideo_init_control(sc, ifdesc, &iter);
+			if (err != USBD_NORMAL_COMPLETION) {
+				DPRINTF(("uvideo_attach: error with interface "
+					 "%d, VideoControl, "
+					 "descriptor len=%d type=0x%02x: "
+					 "%s (%d)\n",
+					 ifdesc->bInterfaceNumber,
+					 ifdesc->bLength,
+					 ifdesc->bDescriptorType,
+					 usbd_errstr(err), err));
+			}
+			break;
+		case UISUBCLASS_VIDEOSTREAMING:
+			vs = uvideo_find_stream(sc, ifdesc->bInterfaceNumber);
+			if (vs == NULL) {
+				vs = uvideo_stream_alloc();
+				if (vs == NULL) {
+					DPRINTF(("uvideo_attach: "
+						 "failed to alloc stream\n"));
+					err = USBD_NOMEM;
+					goto bad;
+				}
+				err = uvideo_stream_init(vs, sc, ifdesc,
+							 ifaceidx);
+				if (err != USBD_NORMAL_COMPLETION) {
+					DPRINTF(("uvideo_attach: "
+						 "error initializing stream: "
+						 "%s (%d)\n",
+						 usbd_errstr(err), err));
+					goto bad;
+				}
+			}
+			err = uvideo_stream_init_desc(vs, ifdesc, &iter);
+			if (err != USBD_NORMAL_COMPLETION) {
+				DPRINTF(("uvideo_attach: "
+					 "error initializing stream descriptor: "
+					 "%s (%d)\n",
+					 usbd_errstr(err), err));
+				goto bad;
+			}
+			/* TODO: for now, set (each) stream to stream_in. */
+			sc->sc_stream_in = vs;
+			break;
+		case UISUBCLASS_VIDEOCOLLECTION:
+			err = uvideo_init_collection(sc, ifdesc, &iter);
+			if (err != USBD_NORMAL_COMPLETION) {
+				DPRINTF(("uvideo_attach: error with interface "
+				       "%d, VideoCollection, "
+				       "descriptor len=%d type=0x%02x: "
+				       "%s (%d)\n",
+				       ifdesc->bInterfaceNumber,
+				       ifdesc->bLength,
+				       ifdesc->bDescriptorType,
+				       usbd_errstr(err), err));
+				goto bad;
+			}
+			break;
+		default:
+			DPRINTF(("uvideo_attach: unknown UICLASS_VIDEO "
+				 "subclass=0x%02x\n",
+				 ifdesc->bInterfaceSubClass));
+			break;
+		}
+
+	}
+
+	
+	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
+			   USBDEV(sc->sc_dev));
+
+	sc->sc_videodev = video_attach_mi(&uvideo_hw_if, sc->sc_dev);
+	DPRINTF(("uvideo_attach: attached video driver at %p\n",
+		 sc->sc_videodev));
+
+	USB_ATTACH_SUCCESS_RETURN;
+
+bad:
+	if (err != USBD_NORMAL_COMPLETION)
+		DPRINTF(("uvideo_attach: error: %s (%d)\n",
+			 usbd_errstr(err), err));
+	USB_ATTACH_ERROR_RETURN;
+}
+
+
+int
+uvideo_activate(device_t self, enum devact act)
+{
+	struct uvideo_softc *sc;
+	int rv;
+	
+	sc = device_private(self);
+	rv = 0;
+	switch (act) {
+	case DVACT_ACTIVATE:
+		return EOPNOTSUPP;
+
+	case DVACT_DEACTIVATE:
+		DPRINTF(("uvideo_activate: deactivating\n"));
+		if (sc->sc_videodev != NULL)
+			rv = config_deactivate(sc->sc_videodev);
+		sc->sc_dying = 1;
+		break;
+	}
+	return rv;
+}
+
+
+/* Detach child (video interface) */
+void
+uvideo_childdet(device_t self, device_t child)
+{
+	struct uvideo_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_videodev == child);
+	sc->sc_videodev = NULL;
+}
+
+
+int
+uvideo_detach(device_t self, int flags)
+{
+	struct uvideo_softc *sc;
+	struct uvideo_stream *vs;
+	int rv;
+
+	sc = device_private(self);
+	rv = 0;
+	
+	sc->sc_dying = 1;
+
+	usbd_devinfo_free(sc->sc_devname);
+
+	/* TODO: close the device if it is currently opened?  Or will
+	 * close be called automatically? */
+
+	while (!SLIST_EMPTY(&sc->sc_stream_list)) {
+		vs = SLIST_FIRST(&sc->sc_stream_list);
+		SLIST_REMOVE_HEAD(&sc->sc_stream_list, entries);
+		uvideo_stream_free(vs);
+	}
+
+	/* Wait for outstanding request to complete.  TODO: what is
+	 * appropriate here? */
+	usbd_delay_ms(sc->sc_udev, 1000);
+
+	DPRINTFN(15, ("uvideo: detaching from %s\n",
+		USBDEVNAME(sc->sc_dev)));
+
+	if (sc->sc_videodev != NULL)
+		rv = config_detach(sc->sc_videodev, flags);
+
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
+	    USBDEV(sc->sc_dev));
+
+	return rv;
+}
+
+/* Search the stream list for a stream matching the interface number.
+ * This is an O(n) search, but most devices should have only one or at
+ * most two streams. */
+static struct uvideo_stream *
+uvideo_find_stream(struct uvideo_softc *sc, uint8_t ifaceno)
+{
+	struct uvideo_stream *vs;
+	
+	SLIST_FOREACH(vs, &sc->sc_stream_list, entries) {
+		if (vs->vs_ifaceno == ifaceno)
+			return vs;
+	}
+
+	return NULL;
+}
+
+/* Search the format list for the given format and frame index.  This
+ * might be improved through indexing, but the format and frame count
+ * is unknown ahead of time (only after iterating through the
+ * usb device descriptors). */
+static struct uvideo_format *
+uvideo_stream_find_format(struct uvideo_stream *vs,
+			  uint8_t format_index, uint8_t frame_index)
+{
+	struct uvideo_format *format;
+	
+	SIMPLEQ_FOREACH(format, &vs->vs_formats, entries) {
+		if (UVIDEO_FORMAT_GET_FORMAT_INDEX(format) == format_index &&
+		    UVIDEO_FORMAT_GET_FRAME_INDEX(format) == frame_index)
+			return format;
+	}
+	return NULL;
+}
+
+static struct uvideo_stream *
+uvideo_stream_alloc(void)
+{
+	return (kmem_alloc(sizeof(struct uvideo_stream), KM_NOSLEEP));
+}
+
+
+static usbd_status
+uvideo_init_control(struct uvideo_softc *sc,
+		    const usb_interface_descriptor_t *ifdesc,
+		    usbd_desc_iter_t *iter)
+{
+	const usb_descriptor_t *desc;
+	const uvideo_descriptor_t *uvdesc;
+	usbd_desc_iter_t orig;
+	uint8_t i, j, nunits;
+	
+	/* save original iterator state */
+	memcpy(&orig, iter, sizeof(orig));
+	
+	/* count number of units and terminals */
+	nunits = 0;
+	while ((desc = usb_desc_iter_next_non_interface(iter)) != NULL) {
+		uvdesc = (const uvideo_descriptor_t *)desc;
+
+		if (uvdesc->bDescriptorType != UDESC_CS_INTERFACE)
+			continue;
+
+		switch (uvdesc->bDescriptorSubtype) {
+		case UDESC_INPUT_TERMINAL:
+		case UDESC_OUTPUT_TERMINAL:
+		case UDESC_SELECTOR_UNIT:
+		case UDESC_PROCESSING_UNIT:
+		case UDESC_EXTENSION_UNIT:
+			++nunits;
+			break;
+		default:
+			break;
+		}
+	}
+
+	/* allocate space for units */
+	sc->sc_nunits = nunits;
+	sc->sc_unit = kmem_alloc(sizeof(*sc->sc_unit) * nunits, KM_SLEEP);
+	if (sc->sc_unit == NULL)
+		goto enomem;
+
+	/* restore original iterator state */
+	memcpy(iter, &orig, sizeof(orig));
+	
+	/* iterate again, initializing the units */
+	i = 0;
+	while ((desc = usb_desc_iter_next_non_interface(iter)) != NULL) {
+		uvdesc = (const uvideo_descriptor_t *)desc;
+
+		sc->sc_unit[i] = uvideo_unit_alloc(uvdesc);
+		/* TODO: free other units before returning? */
+		if (sc->sc_unit[i] == NULL)
+			goto enomem;
+		++i;
+	}
+	
+	return USBD_NORMAL_COMPLETION;
+
+enomem:
+	if (sc->sc_unit != NULL) {
+		for (j = 0; j < i; ++j) {
+			uvideo_unit_free(sc->sc_unit[j]);
+			sc->sc_unit[j] = NULL;
+		}
+		kmem_free(sc->sc_unit, sizeof(*sc->sc_unit) * nunits);
+		sc->sc_unit = NULL;
+	}
+	sc->sc_nunits = 0;
+	
+	return USBD_NOMEM;
+}
+
+static usbd_status
+uvideo_init_collection(struct uvideo_softc *sc,
+		       const usb_interface_descriptor_t *ifdesc,
+		       usbd_desc_iter_t *iter)
+{
+	DPRINTF(("uvideo: ignoring Video Collection\n"));
+	return USBD_NORMAL_COMPLETION;
+}
+
+/* Allocates space for and initializes a uvideo unit based on the
+ * given descriptor.  Returns NULL with bad descriptor or ENOMEM. */
+static struct uvideo_unit *
+uvideo_unit_alloc(const uvideo_descriptor_t *desc)
+{
+	struct uvideo_unit *vu;
+	usbd_status err;
+	
+	if (desc->bDescriptorType != UDESC_CS_INTERFACE)
+		return NULL;
+
+	vu = kmem_alloc(sizeof(*vu), KM_SLEEP);
+	if (vu == NULL)
+		return NULL;
+
+	err = uvideo_unit_init(vu, desc);
+	if (err != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("uvideo_unit_alloc: error initializing unit: "
+			 "%s (%d)\n", usbd_errstr(err), err));
+		kmem_free(vu, sizeof(*vu));
+		return NULL;
+	}
+
+	return vu;
+}
+
+static usbd_status
+uvideo_unit_init(struct uvideo_unit *vu, const uvideo_descriptor_t *desc)
+{
+	struct uvideo_camera_terminal *ct;
+	struct uvideo_processing_unit *pu;
+	struct uvideo_extension_unit *xu;
+	
+	const uvideo_input_terminal_descriptor_t *input;
+	const uvideo_output_terminal_descriptor_t *output;
+	const uvideo_camera_terminal_descriptor_t *camera;
+	const uvideo_selector_unit_descriptor_t *selector;
+	const uvideo_processing_unit_descriptor_t *processing;
+	const uvideo_extension_unit_descriptor_t *extension;
+
+	memset(vu, 0, sizeof(*vu));
+
+	switch (desc->bDescriptorSubtype) {
+	case UDESC_INPUT_TERMINAL:
+		input = (const uvideo_input_terminal_descriptor_t *)desc;
+		switch (UGETW(input->wTerminalType)) {
+		case UVIDEO_ITT_CAMERA:
+			camera =
+			    (const uvideo_camera_terminal_descriptor_t *)desc;
+			ct = &vu->u.vu_camera;
+			
+			ct->ct_objective_focal_min =
+			    UGETW(camera->wObjectiveFocalLengthMin);
+			ct->ct_objective_focal_max =
+			    UGETW(camera->wObjectiveFocalLengthMax);
+			ct->ct_ocular_focal_length =
+			    UGETW(camera->wOcularFocalLength);
+
+			uvideo_unit_alloc_controls(vu, camera->bControlSize,
+						   camera->bmControls);
+			break;
+		default:
+			DPRINTF(("uvideo_unit_init: "
+				 "unknown input terminal type 0x%04x\n",
+				 UGETW(input->wTerminalType)));
+			return USBD_INVAL;
+		}
+		break;
+	case UDESC_OUTPUT_TERMINAL:
+		output = (const uvideo_output_terminal_descriptor_t *)desc;
+		break;
+	case UDESC_SELECTOR_UNIT:
+		selector = (const uvideo_selector_unit_descriptor_t *)desc;
+
+		uvideo_unit_alloc_sources(vu, selector->bNrInPins,
+					  selector->baSourceID);
+		break;
+	case UDESC_PROCESSING_UNIT:
+		processing = (const uvideo_processing_unit_descriptor_t *)desc;
+		pu = &vu->u.vu_processing;
+
+		pu->pu_video_standards = PU_GET_VIDEO_STANDARDS(processing);
+		pu->pu_max_multiplier = UGETW(processing->wMaxMultiplier);
+
+		uvideo_unit_alloc_sources(vu, 1, &processing->bSourceID);
+		uvideo_unit_alloc_controls(vu, processing->bControlSize,
+					   processing->bmControls);
+		break;
+	case UDESC_EXTENSION_UNIT:
+		extension = (const uvideo_extension_unit_descriptor_t *)desc;
+		xu = &vu->u.vu_extension;
+		/* TODO: copy guid */
+
+		uvideo_unit_alloc_sources(vu, extension->bNrInPins,
+					  extension->baSourceID);
+		uvideo_unit_alloc_controls(vu, XU_GET_CONTROL_SIZE(extension),
+					   XU_GET_CONTROLS(extension));
+		break;
+	default:
+		DPRINTF(("uvideo_unit_alloc: unknown descriptor "
+			 "type=0x%02x subtype=0x%02x\n",
+			 desc->bDescriptorType, desc->bDescriptorSubtype));
+		return USBD_INVAL;
+	}
+
+	return USBD_NORMAL_COMPLETION;
+}
+
+static void
+uvideo_unit_free(struct uvideo_unit *vu)
+{
+	uvideo_unit_free_sources(vu);
+	uvideo_unit_free_controls(vu);
+	kmem_free(vu, sizeof(*vu));
+}
+
+static usbd_status
+uvideo_unit_alloc_sources(struct uvideo_unit *vu,
+			  uint8_t nsrcs, const uint8_t *src_ids)
+{
+	vu->vu_nsrcs = nsrcs;
+	
+	if (nsrcs == 0) {
+		/* do nothing */
+	} else if (nsrcs == 1) {
+		vu->s.vu_src_id = src_ids[0];
+	} else {
+		vu->s.vu_src_id_ary =
+		    kmem_alloc(sizeof(*vu->s.vu_src_id_ary) * nsrcs, KM_SLEEP);
+		if (vu->s.vu_src_id_ary == NULL) {
+			vu->vu_nsrcs = 0;
+			return USBD_NOMEM;
+		}
+
+		memcpy(vu->s.vu_src_id_ary, src_ids, nsrcs);
+	}
+
+	return USBD_NORMAL_COMPLETION;
+}
+
+static void
+uvideo_unit_free_sources(struct uvideo_unit *vu)
+{
+	if (vu->vu_nsrcs == 1)
+		return;
+
+	kmem_free(vu->s.vu_src_id_ary,
+		  sizeof(*vu->s.vu_src_id_ary) * vu->vu_nsrcs);
+	vu->vu_nsrcs = 0;
+	vu->s.vu_src_id_ary = NULL;
+}
+
+static usbd_status
+uvideo_unit_alloc_controls(struct uvideo_unit *vu, uint8_t size,
+			   const uint8_t *controls)
+{
+	vu->vu_controls = kmem_alloc(sizeof(*vu->vu_controls) * size, KM_SLEEP);
+	if (vu->vu_controls == NULL)
+		return USBD_NOMEM;
+
+	vu->vu_control_size = size;
+	memcpy(vu->vu_controls, controls, size);
+
+	return USBD_NORMAL_COMPLETION;
+}
+
+static void
+uvideo_unit_free_controls(struct uvideo_unit *vu)
+{
+	kmem_free(vu->vu_controls,
+		  sizeof(*vu->vu_controls) * vu->vu_control_size);
+	vu->vu_controls = NULL;
+	vu->vu_control_size = 0;
+}
+
+
+/* Initialize a stream from a Video Streaming interface
+ * descriptor. Adds the stream to the stream_list in uvideo_softc.
+ * This should be called once for new streams, and
+ * uvideo_stream_init_desc() should then be called for this and each
+ * additional interface with the same interface number. */
+static usbd_status
+uvideo_stream_init(struct uvideo_stream *vs,
+		   struct uvideo_softc *sc,
+		   const usb_interface_descriptor_t *ifdesc,
+		   uint8_t idx)
+{
+	uWord len;
+	usbd_status err;
+
+	SLIST_INSERT_HEAD(&sc->sc_stream_list, vs, entries);
+	memset(vs, 0, sizeof(*vs));
+	vs->vs_parent = sc;
+	vs->vs_ifaceno = ifdesc->bInterfaceNumber;
+	vs->vs_subtype = 0;
+	SIMPLEQ_INIT(&vs->vs_formats);
+	vs->vs_default_format = NULL;
+	vs->vs_current_format.priv = -1;
+	vs->vs_xfer_type = 0;
+
+	err = usbd_device2interface_handle(sc->sc_udev, idx, &vs->vs_iface);
+	if (err != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("uvideo_stream_init: "
+			 "error getting vs interface: "
+			 "%s (%d)\n",
+			 usbd_errstr(err), err));
+		return err;
+	}
+
+	/* For Xbox Live Vision camera, linux-uvc folk say we need to
+	 * set an alternate interface and wait ~3 seconds prior to
+	 * doing the format probe/commit.  We set to alternate
+	 * interface 0, which is the default, zero bandwidth
+	 * interface.  This should not have adverse affects on other
+	 * cameras.  Errors are ignored. */
+	err = usbd_set_interface(vs->vs_iface, 0);
+	if (err != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("uvideo_stream_init: error setting alt interface: "
+			 "%s (%d)\n",
+			 usbd_errstr(err), err));
+	}
+
+	/* Initialize probe and commit data size.  This value is
+	 * dependent on the version of the spec the hardware
+	 * implements. */
+	err = uvideo_stream_probe(vs, UR_GET_LEN, len);
+	if (err != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("uvideo_stream_init: "
+			 "error getting probe data len: "
+			 "%s (%d)\n",
+			 usbd_errstr(err), err));
+		vs->vs_probelen = 26; /* conservative v1.0 length */
+	} else {
+		DPRINTFN(15,("uvideo_stream_init: probelen=%d\n", UGETW(len)));
+		vs->vs_probelen = UGETW(len);
+	}
+	
+	return USBD_NORMAL_COMPLETION;
+}
+
+/* Further stream initialization based on a Video Streaming interface
+ * descriptor and following descriptors belonging to that interface.
+ * Iterates through all descriptors belonging to this particular
+ * interface descriptor, modifying the iterator.  This may be called
+ * multiple times because there may be several alternate interfaces
+ * associated with the same interface number. */
+static usbd_status
+uvideo_stream_init_desc(struct uvideo_stream *vs,
+			const usb_interface_descriptor_t *ifdesc,
+			usbd_desc_iter_t *iter)
+{
+	const usb_descriptor_t *desc;
+	const uvideo_descriptor_t *uvdesc;
+	struct uvideo_bulk_xfer *bx;
+	struct uvideo_isoc_xfer *ix;
+	struct uvideo_alternate *alt;
+	uint8_t xfer_type;
+
+	/* Iterate until the next interface descriptor.  All
+	 * descriptors until then belong to this streaming
+	 * interface. */
+	while ((desc = usb_desc_iter_next_non_interface(iter)) != NULL) {
+		uvdesc = (const uvideo_descriptor_t *)desc;
+	
+		switch (uvdesc->bDescriptorType) {
+		case UDESC_ENDPOINT:
+			xfer_type = UE_GET_XFERTYPE(GET(usb_endpoint_descriptor_t,
+							desc, bmAttributes));
+			if (xfer_type == UE_BULK) {
+				bx = &vs->vs_xfer.bulk;
+				if (vs->vs_xfer_type == 0) {
+					DPRINTFN(15, ("uvideo_attach: "
+						      "BULK stream *\n"));
+					vs->vs_xfer_type = UE_BULK;
+					bx->bx_endpt =
+					    GET(usb_endpoint_descriptor_t,
+						desc, bEndpointAddress);
+				}
+			} else if (xfer_type == UE_ISOCHRONOUS) {
+				ix = &vs->vs_xfer.isoc;
+				if (vs->vs_xfer_type == 0) {
+					DPRINTFN(15, ("uvideo_attach: "
+						      "ISOC stream *\n"));
+					SLIST_INIT(&ix->ix_altlist);
+					vs->vs_xfer_type = UE_ISOCHRONOUS;
+					ix->ix_endpt =
+					    GET(usb_endpoint_descriptor_t,
+						desc, bEndpointAddress);
+				}
+
+				alt = kmem_alloc(sizeof(*alt), KM_NOSLEEP);
+				if (alt == NULL)
+					return USBD_NOMEM;
+
+				alt->altno = ifdesc->bAlternateSetting;
+				alt->interval =
+				    GET(usb_endpoint_descriptor_t,
+					desc, bInterval);
+				alt->max_packet_size =
+				    UGETW(GET(usb_endpoint_descriptor_t,
+					      desc, wMaxPacketSize));
+				SLIST_INSERT_HEAD(&ix->ix_altlist,
+						  alt, entries);
+			}
+			break;
+		case UDESC_CS_INTERFACE:
+			if (ifdesc->bAlternateSetting != 0) {
+				DPRINTF(("uvideo_stream_init_alternate: "
+					 "unexpected class-specific descriptor "
+					 "len=%d type=0x%02x subtype=0x%02x\n",
+					 uvdesc->bLength,
+					 uvdesc->bDescriptorType,
+					 uvdesc->bDescriptorSubtype));
+				break;
+			}
+
+			switch (uvdesc->bDescriptorSubtype) {
+			case UDESC_VS_INPUT_HEADER:
+				vs->vs_subtype = UDESC_VS_INPUT_HEADER;
+				break;
+			case UDESC_VS_OUTPUT_HEADER:
+				/* TODO: handle output stream */
+				DPRINTF(("uvideo: VS output not implemented\n"));
+				vs->vs_subtype = UDESC_VS_OUTPUT_HEADER;
+				return USBD_INVAL;
+			case UDESC_VS_FORMAT_UNCOMPRESSED:
+			case UDESC_VS_FORMAT_FRAME_BASED:
+			case UDESC_VS_FORMAT_MJPEG:
+				uvideo_stream_init_frame_based_format(vs,
+								      uvdesc,
+								      iter);
+				break;
+			case UDESC_VS_FORMAT_MPEG2TS:
+			case UDESC_VS_FORMAT_DV:
+			case UDESC_VS_FORMAT_STREAM_BASED:
+			default:
+				DPRINTF(("uvideo: unimplemented VS CS "
+					 "descriptor len=%d type=0x%02x "
+					 "subtype=0x%02x\n",
+					 uvdesc->bLength,
+					 uvdesc->bDescriptorType,
+					 uvdesc->bDescriptorSubtype));
+				break;
+			}
+			break;
+		default:
+			DPRINTF(("uvideo_stream_init_desc: "
+				 "unknown descriptor "
+				 "len=%d type=0x%02x\n",
+				 uvdesc->bLength,
+				 uvdesc->bDescriptorType));
+			break;
+		}
+	}
+
+	return USBD_NORMAL_COMPLETION;
+}
+
+/* Finialize and free memory associated with this stream. */
+static void
+uvideo_stream_free(struct uvideo_stream *vs)
+{
+	struct uvideo_alternate *alt;
+	struct uvideo_format *format;
+
+	/* free linked list of alternate interfaces */
+	if (vs->vs_xfer_type == UE_ISOCHRONOUS) {
+		while (!SLIST_EMPTY(&vs->vs_xfer.isoc.ix_altlist)) {
+			alt = SLIST_FIRST(&vs->vs_xfer.isoc.ix_altlist);
+			SLIST_REMOVE_HEAD(&vs->vs_xfer.isoc.ix_altlist,
+					  entries);
+			kmem_free(alt, sizeof(*alt));
+		}
+	}
+
+	/* free linked-list of formats */
+	while ((format = SIMPLEQ_FIRST(&vs->vs_formats)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&vs->vs_formats, entries);
+		kmem_free(format, sizeof(struct uvideo_format));
+	}
+
+	kmem_free(vs, sizeof(*vs));
+}
+
+
+static usbd_status
+uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
+				      const uvideo_descriptor_t *format_desc,
+				      usbd_desc_iter_t *iter)
+{
+	struct uvideo_format *format;
+	const uvideo_descriptor_t *uvdesc;
+	uint8_t subtype, default_index, index;
+	const usb_guid_t *guid;
+
+	switch (format_desc->bDescriptorSubtype) {
+	case UDESC_VS_FORMAT_UNCOMPRESSED:
+		subtype = UDESC_VS_FRAME_UNCOMPRESSED;
+		default_index = GET(uvideo_vs_format_uncompressed_descriptor_t,
+				    format_desc,
+				    bDefaultFrameIndex);
+		break;
+	case UDESC_VS_FORMAT_FRAME_BASED:
+		subtype = UDESC_VS_FRAME_FRAME_BASED;
+		default_index = GET(uvideo_format_frame_based_descriptor_t,
+				    format_desc,
+				    bDefaultFrameIndex);
+		break;
+
+		break;
+	case UDESC_VS_FORMAT_MJPEG:
+		subtype = UDESC_VS_FRAME_MJPEG;
+		default_index = GET(uvideo_vs_format_mjpeg_descriptor_t,
+				    format_desc,
+				    bDefaultFrameIndex);
+		break;
+	default:
+		DPRINTF(("uvideo: unknown frame based format %d\n",
+			 format_desc->bDescriptorSubtype));
+		return USBD_INVAL;
+	}
+
+	/* Iterate through frame descriptors directly following the
+	 * format descriptor, and add a format to the format list for
+	 * each frame descriptor. */
+	while ((uvdesc = (const uvideo_descriptor_t *) usb_desc_iter_peek_next(iter)) &&
+	       (uvdesc != NULL) && (uvdesc->bDescriptorSubtype == subtype))
+	{
+		uvdesc = (const uvideo_descriptor_t *) usb_desc_iter_next(iter);
+
+		format = kmem_alloc(sizeof(struct uvideo_format), KM_NOSLEEP);
+		if (format == NULL) {
+			DPRINTF(("uvideo: failed to alloc video format\n"));
+			return USBD_NOMEM;
+		}
+		
+		switch (format_desc->bDescriptorSubtype) {
+		case UDESC_VS_FORMAT_UNCOMPRESSED:
+			guid = GETP(uvideo_vs_format_uncompressed_descriptor_t,
+				    format_desc,
+				    guidFormat);
+
+			if (usb_guid_cmp(guid,
+					 &uvideo_guid_format_yuy2) == 0) {
+				format->format.pixel_format =
+				    VIDEO_FORMAT_YUY2;
+			} else if (usb_guid_cmp(guid,
+						&uvideo_guid_format_nv12) == 0) {
+				format->format.pixel_format =
+				    VIDEO_FORMAT_NV12;
+			} else {
+				format->format.pixel_format =
+				    VIDEO_FORMAT_UNDEFINED;
+#ifdef UVIDEO_DEBUG
+				if (uvideodebug) {
+					DPRINTF(("uvideo: format undefined "));
+					usb_guid_print(guid);
+					DPRINTF(("\n"));
+				}
+#endif
+			}
+
+			UVIDEO_FORMAT_INIT_FRAME_BASED(
+				uvideo_vs_format_uncompressed_descriptor_t,
+				format_desc,
+				uvideo_vs_frame_uncompressed_descriptor_t,
+				uvdesc,
+				format);
+			index = GET(uvideo_vs_frame_uncompressed_descriptor_t,
+				    uvdesc,
+				    bFrameIndex);
+			break;
+		case UDESC_VS_FORMAT_MJPEG:
+			format->format.pixel_format = VIDEO_FORMAT_MJPEG;
+			UVIDEO_FORMAT_INIT_FRAME_BASED(
+				uvideo_vs_format_mjpeg_descriptor_t,
+				format_desc,
+				uvideo_vs_frame_mjpeg_descriptor_t,
+				uvdesc,
+				format);
+			index = GET(uvideo_vs_frame_mjpeg_descriptor_t,
+				    uvdesc,
+				    bFrameIndex);
+			break;
+		case UDESC_VS_FORMAT_FRAME_BASED:
+			format->format.pixel_format = VIDEO_FORMAT_UNDEFINED;
+			UVIDEO_FORMAT_INIT_FRAME_BASED(
+				uvideo_format_frame_based_descriptor_t,
+				format_desc,
+				uvideo_frame_frame_based_descriptor_t,
+				uvdesc,
+				format);
+			index = GET(uvideo_frame_frame_based_descriptor_t,
+				    uvdesc,
+				    bFrameIndex);
+			break;
+		default:
+			/* shouldn't ever get here */
+			DPRINTF(("uvideo: unknown frame based format %d\n",
+				 format_desc->bDescriptorSubtype));
+			kmem_free(format, sizeof(struct uvideo_format));
+			return USBD_INVAL;
+		}
+
+		SIMPLEQ_INSERT_TAIL(&vs->vs_formats, format, entries);
+
+		if (vs->vs_default_format == NULL && index == default_index)
+			vs->vs_default_format = &format->format;
+	}
+	
+	return USBD_NORMAL_COMPLETION;
+}
+
+static int
+uvideo_stream_start_xfer(struct uvideo_stream *vs)
+{
+	struct uvideo_softc *sc = vs->vs_parent;
+	struct uvideo_bulk_xfer *bx;
+	struct uvideo_isoc_xfer *ix;
+	uint32_t vframe_len;	/* rough bytes per video frame */
+	uint32_t uframe_len;	/* bytes per usb frame (TODO: or microframe?) */
+	uint32_t nframes;	/* number of usb frames (TODO: or microframs?) */
+
+	struct uvideo_alternate *alt, *alt_maybe;
+	usbd_status err;
+
+	switch (vs->vs_xfer_type) {
+	case UE_BULK:
+		bx = &vs->vs_xfer.bulk;
+		return 0;
+	case UE_ISOCHRONOUS:
+		ix = &vs->vs_xfer.isoc;
+
+		vframe_len = vs->vs_max_frame_size; /* + nframes * HEADER */
+		uframe_len = UVIDEO_FRAME_INTERVAL_UNITS_PER_USB_FRAME *
+		    vframe_len / vs->vs_frame_interval;
+		nframes = (vframe_len / uframe_len);
+		if (nframes == 0)
+			nframes++;
+		
+		nframes = 64;	/* ehci requires power of 2. doesn't
+				 * work well with logitech/uhci */
+		
+		/* Choose an alternate interface most suitable for
+		 * this format.  Choose the smallest size that can
+		 * contain max_payload_size.
+		 *
+		 * It is assumed that the list is sorted in descending
+		 * order from largest to smallest packet size.
+		 *
+		 * TODO: what should the strategy be for choosing an
+		 * alt interface?
+		 */
+		alt = NULL;
+		SLIST_FOREACH(alt_maybe, &ix->ix_altlist, entries) {
+			/* TODO: define "packet" and "payload".  I think
+			 * several packets can make up one payload which would
+			 * call into question this method of selecting an
+			 * alternate interface... */
+			if (alt_maybe->max_packet_size >=
+			    vs->vs_max_payload_size)
+				alt = alt_maybe;
+			else
+				break;
+		}
+		
+		if (alt == NULL) {
+			DPRINTF(("uvideo_stream_start_xfer: "
+				 "no suitable alternate interface found\n"));
+			return EINVAL;
+		}
+
+		DPRINTFN(15,("uvideo_stream_start_xfer: "
+			     "choosing alternate interface "
+			     "%d wMaxPacketSize=%d bInterval=%d\n",
+			     alt->altno, alt->max_packet_size, alt->interval));
+		
+		err = usbd_set_interface(vs->vs_iface, alt->altno);
+		if (err != USBD_NORMAL_COMPLETION) {
+			DPRINTF(("uvideo_open: error setting alt interface: %s (%d)\n",
+				 usbd_errstr(err), err));
+			return EIO;
+		}
+
+		/* TODO: "packet" not same as frame */
+		uframe_len = alt->max_packet_size;
+		
+		ix->ix_nframes = nframes;
+		ix->ix_uframe_len = uframe_len;
+		ix->ix_frlengths =
+		    kmem_alloc(sizeof(ix->ix_frlengths[0]) * nframes, KM_SLEEP);
+		if (ix->ix_frlengths == NULL) {
+			DPRINTF(("uvideo: failed to alloc frlengths: %s (%d)\n",
+				 usbd_errstr(err), err));
+			return ENOMEM;
+		}
+	
+		err = usbd_open_pipe(vs->vs_iface, ix->ix_endpt,
+				     USBD_EXCLUSIVE_USE, &ix->ix_pipe);
+		if (err != USBD_NORMAL_COMPLETION) {
+			DPRINTF(("uvideo: error opening pipe: %s (%d)\n",
+				 usbd_errstr(err), err));
+			return EIO;
+		}
+
+		ix->ix_xfer = usbd_alloc_xfer(sc->sc_udev);
+		if (ix->ix_xfer == NULL) {
+			DPRINTF(("uvideo: failed to alloc xfer: %s (%d)\n",
+				 usbd_errstr(err), err));
+			return ENOMEM;
+		}
+
+		ix->ix_buf = usbd_alloc_buffer(ix->ix_xfer,
+					       nframes * uframe_len);
+		if (ix->ix_xfer == NULL) {
+			DPRINTF(("uvideo: failed to alloc buf: %s (%d)\n",
+				 usbd_errstr(err), err));
+			return ENOMEM;
+		}
+
+		uvideo_stream_recv_isoc_start(vs);
+
+		return 0;
+	default:
+		/* should never get here */
+		DPRINTF(("uvideo_stream_start_xfer: unknown xfer type 0x%x\n",
+			 vs->vs_xfer_type));
+		return EINVAL;
+	}
+}
+
+static int
+uvideo_stream_stop_xfer(struct uvideo_stream *vs)
+{
+	struct uvideo_bulk_xfer *bx;
+	struct uvideo_isoc_xfer *ix;
+	usbd_status err;
+
+	switch (vs->vs_xfer_type) {
+	case UE_BULK:
+		bx = &vs->vs_xfer.bulk;
+		return 0;
+	case UE_ISOCHRONOUS:
+		ix = &vs->vs_xfer.isoc;
+		if (ix->ix_pipe != NULL) {
+			usbd_abort_pipe(ix->ix_pipe);
+			usbd_close_pipe(ix->ix_pipe);
+			ix->ix_pipe = NULL;
+		}
+
+		if (ix->ix_xfer != NULL) {
+			usbd_free_buffer(ix->ix_xfer);
+			usbd_free_xfer(ix->ix_xfer);
+			ix->ix_xfer = NULL;
+		}
+
+		if (ix->ix_frlengths != NULL) {
+			kmem_free(ix->ix_frlengths,
+				  sizeof(ix->ix_frlengths[0]) * ix->ix_nframes);
+			ix->ix_frlengths = NULL;
+		}
+
+		/* Set to zero bandwidth alternate interface zero */
+		err = usbd_set_interface(vs->vs_iface, 0);
+		if (err != USBD_NORMAL_COMPLETION) {
+			DPRINTF(("uvideo_stream_stop_transfer: "
+				 "error setting zero bandwidth interface: "
+				 "%s (%d)\n",
+				 usbd_errstr(err), err));
+			return EIO;
+		}
+
+		return 0;
+	default:
+		/* should never get here */
+		DPRINTF(("uvideo_stream_stop_xfer: unknown xfer type 0x%x\n",
+			 vs->vs_xfer_type));
+		return EINVAL;
+	}
+}
+
+/* Initiate a usb transfer. */
+static usbd_status
+uvideo_stream_recv_isoc_start(struct uvideo_stream *vs)
+{
+	struct uvideo_isoc_xfer *ix;
+	int i, s;
+	usbd_status err;
+
+	ix = &vs->vs_xfer.isoc;
+		
+	for (i = 0; i < ix->ix_nframes; ++i)
+		ix->ix_frlengths[i] = ix->ix_uframe_len;
+
+	s = splusb();
+	usbd_setup_isoc_xfer(ix->ix_xfer,
+			     ix->ix_pipe,
+			     vs,
+			     ix->ix_frlengths,
+			     ix->ix_nframes,
+			     USBD_NO_COPY | USBD_SHORT_XFER_OK,
+			     uvideo_stream_recv_isoc_complete);
+	splx(s);
+
+	err = usbd_transfer(ix->ix_xfer);
+	if (err != USBD_IN_PROGRESS) {
+		DPRINTF(("uvideo_stream_recv_start: "
+			 "usbd_transfer status=%s (%d)\n",
+			 usbd_errstr(err), err));
+	}
+	return err;
+}
+
+/* Callback on completion of usb isoc transfer */
+static void
+uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
+				 usbd_private_handle priv,
+				 usbd_status status)
+{
+	struct uvideo_stream *vs;
+	struct uvideo_isoc_xfer *ix;
+	int i;
+	uint32_t count;
+	const uvideo_payload_header_t *hdr;
+	uint8_t *buf;
+	struct video_payload payload;
+
+	vs = priv;
+	ix = &vs->vs_xfer.isoc;
+
+	if (status != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("uvideo_stream_recv_isoc_complete: status=%s (%d)\n",
+			usbd_errstr(status), status));
+		
+		if (status == USBD_STALLED)
+			usbd_clear_endpoint_stall_async(ix->ix_pipe);
+		else
+			return;
+	} else {
+		usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
+
+		if (count == 0) {
+			/* DPRINTF(("uvideo: zero length transfer\n")); */
+			/* return; */	/* TODO: what to do here?  restarting
+				 * can lead to infinite loop */
+		}
+		
+		hdr = (const uvideo_payload_header_t *)ix->ix_buf;
+			
+		for (i = 0, buf = ix->ix_buf;
+		     i < ix->ix_nframes;
+		     ++i, buf += ix->ix_uframe_len)
+		{
+			if (ix->ix_frlengths[i] == 0)
+				continue;
+				
+			hdr = (uvideo_payload_header_t *)buf;
+
+			payload.data = buf + hdr->bHeaderLength;
+			payload.size = ix->ix_frlengths[i] - hdr->bHeaderLength;
+			payload.frameno = hdr->bmHeaderInfo & UV_FRAME_ID;
+			payload.end_of_frame =
+			    hdr->bmHeaderInfo & UV_END_OF_FRAME;
+			
+			video_submit_payload(vs->vs_parent->sc_videodev,
+					     &payload);
+		}
+	}
+
+	uvideo_stream_recv_isoc_start(vs);
+}
+
+
+/*
+ * uvideo_open - probe and commit video format and start receiving
+ * video data
+ */
+static int
+uvideo_open(void *addr, int flags)
+{
+	struct uvideo_softc *sc;
+
+	sc = addr;
+
+	DPRINTF(("uvideo_open: sc=%p\n", sc));
+	if (sc->sc_dying)
+		return EIO;
+
+	return 0;
+}
+
+
+static void
+uvideo_close(void *addr)
+{
+	struct uvideo_softc *sc;
+
+	sc = addr;
+	
+	if (sc->sc_state != UVIDEO_STATE_CLOSED) {
+		sc->sc_state = UVIDEO_STATE_CLOSED;
+	}
+}
+
+static const char *
+uvideo_get_devname(void *addr)
+{
+	struct uvideo_softc *sc = addr;
+	return sc->sc_devname;
+}
+
+static int
+uvideo_enum_format(void *addr, uint32_t index, struct video_format *format)
+{
+	struct uvideo_softc *sc = addr;
+	struct uvideo_stream *vs = sc->sc_stream_in;
+
+	if (sc->sc_dying)
+		return EIO;
+
+	if (index != 0)
+		return EINVAL;
+
+	/* TODO: actually enumerate formats */
+	*format = *vs->vs_default_format;
+
+	return 0;
+}
+
+/*
+ * uvideo_get_format
+ */
+static int
+uvideo_get_format(void *addr, struct video_format *format)
+{
+	struct uvideo_softc *sc = addr;
+	struct uvideo_stream *vs = sc->sc_stream_in;
+
+	if (sc->sc_dying)
+		return EIO;
+
+	if (vs->vs_current_format.priv != -1)
+		*format = vs->vs_current_format;
+	else
+		*format = *vs->vs_default_format;
+
+	return 0;
+}       
+
+
+/*
+ * uvideo_set_format - TODO: this is boken and does nothing
+ */
+static int
+uvideo_set_format(void *addr, struct video_format *format)
+{
+	struct uvideo_softc *sc;
+	struct uvideo_stream *vs;
+	struct uvideo_format *uvfmt;
+	uvideo_probe_and_commit_data_t probe;
+	uint8_t ifaceno;
+	usbd_status err;
+
+	sc = addr;
+
+	DPRINTF(("uvideo_set_format: sc=%p\n", sc));
+	if (sc->sc_dying)
+		return EIO;
+
+	vs = sc->sc_stream_in;
+	ifaceno = vs->vs_ifaceno;
+	
+	uvideo_init_probe_data(&probe);
+
+	/* If format comes from a previously enumerated format from
+	   this driver then it should have format and frame
+	   indicies. */
+	/*
+	probe.bFormatIndex = UVIDEO_FORMAT_GET_FORMAT_INDEX(
+		(struct uvideo_format *)format);
+	probe.bFrameIndex = UVIDEO_FORMAT_GET_FRAME_INDEX(
+		(struct uvideo_format *)format);
+	*/
+
+	/* First step is to probe/SET_CUR.  Prior to this, state is
+	 * undefined.  TODO: this should be moved or changed so that
+	 * it isn't done on every set_format, only the first one.*/
+
+	/* Xbox camera does not like zeros during SET_CUR, at least
+	 * for FormatIndex, FrameIndex, and FrameInterval.  For now,
+	 * initialize with the default values. */
+	err = uvideo_stream_probe(vs, UR_GET_DEF, &probe);
+	if (err != USBD_NORMAL_COMPLETION)
+		DPRINTF(("uvideo: error probe/GET_DEF: %s (%d)\n",
+			 usbd_errstr(err), err));
+	DPRINTFN(15, ("uvideo_set_format: default format is: "
+		      "bmHint=0x%04x bFormatIndex=%d bFrameIndex=%d "
+		      "dwFrameInterval=%d wKeyFrameRate=%d wPFrameRate=%d "
+		      "wCompQuality=%d wCompWindowSize=%d wDelay=%d "
+		      "dwMaxVideoFrameSize=%d dwMaxPayloadTransferSize=%d\n",
+		      UGETW(probe.bmHint),
+		      probe.bFormatIndex,
+		      probe.bFrameIndex,
+		      UGETDW(probe.dwFrameInterval),
+		      UGETW(probe.wKeyFrameRate),
+		      UGETW(probe.wPFrameRate),
+		      UGETW(probe.wCompQuality),
+		      UGETW(probe.wCompWindowSize),
+		      UGETW(probe.wDelay),
+		      UGETDW(probe.dwMaxVideoFrameSize),
+		      UGETDW(probe.dwMaxPayloadTransferSize)));
+
+	err = uvideo_stream_probe(vs, UR_SET_CUR, &probe);
+	if (err != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("uvideo_open: error initializing format: %s (%d)\n",
+			 usbd_errstr(err), err));
+		return EIO;
+	}
+
+	/* Second step is probe/GET_CUR to see what the hardware is
+	 * offering. */
+	uvideo_init_probe_data(&probe);
+	err = uvideo_stream_probe(vs, UR_GET_CUR, &probe);
+	if (err != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("uvideo: error probe/GET_CUR: %s (%d)\n",
+			 usbd_errstr(err), err));
+	}
+
+	/* Third step is commit/SET_CUR. Fourth step is to set the
+	 * alternate interface.  Currently the fourth step is in
+	 * uvideo_start_transfer.  Maybe move it here? */
+	err = uvideo_stream_commit(vs, UR_SET_CUR, &probe);
+	if (err != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("uvideo: error commit/SET_CUR: %s (%d)\n",
+			 usbd_errstr(err), err));
+		return EIO;
+	}
+
+	DPRINTFN(15, ("uvideo_set_format: committing to format: "
+		      "bmHint=0x%04x bFormatIndex=%d bFrameIndex=%d "
+		      "dwFrameInterval=%d wKeyFrameRate=%d wPFrameRate=%d "
+		      "wCompQuality=%d wCompWindowSize=%d wDelay=%d "
+		      "dwMaxVideoFrameSize=%d dwMaxPayloadTransferSize=%d",
+		      UGETW(probe.bmHint),
+		      probe.bFormatIndex,
+		      probe.bFrameIndex,
+		      UGETDW(probe.dwFrameInterval),
+		      UGETW(probe.wKeyFrameRate),
+		      UGETW(probe.wPFrameRate),
+		      UGETW(probe.wCompQuality),
+		      UGETW(probe.wCompWindowSize),
+		      UGETW(probe.wDelay),
+		      UGETDW(probe.dwMaxVideoFrameSize),
+		      UGETDW(probe.dwMaxPayloadTransferSize)));
+	if (vs->vs_probelen == 34) {
+		DPRINTFN(15, (" dwClockFrequency=%d bmFramingInfo=0x%02x "
+			      "bPreferedVersion=%d bMinVersion=%d "
+			      "bMaxVersion=%d",
+			      UGETDW(probe.dwClockFrequency),
+			      probe.bmFramingInfo,
+			      probe.bPreferedVersion,
+			      probe.bMinVersion,
+			      probe.bMaxVersion));
+	}
+	DPRINTFN(15, ("\n"));
+
+	vs->vs_frame_interval = UGETDW(probe.dwFrameInterval);
+	vs->vs_max_payload_size = UGETDW(probe.dwMaxPayloadTransferSize);
+
+	uvfmt =	uvideo_stream_find_format(vs, probe.bFormatIndex,
+					  probe.bFrameIndex);
+	if (uvfmt != NULL) {
+		*format = uvfmt->format;
+	} else {
+		DPRINTF(("uvideo_set_format: matching format not found\n"));
+		*format = *vs->vs_default_format;
+	}
+
+	DPRINTF(("uvideo_set_format: pixeltype is %d\n", format->pixel_format));
+
+	format->sample_size = UGETDW(probe.dwMaxVideoFrameSize);
+	/* format->stride = width * bits_per_px / 8 */
+	/* format->color.primaries = */
+	/* format->color.gamma_function = */
+	/* format->color.matrix_coeff = */
+	/* format->interlace_flags = */
+
+	vs->vs_current_format = *format;
+	
+	return 0;
+}
+
+
+static int
+uvideo_start_transfer(void *addr)
+{
+	struct uvideo_softc *sc = addr;
+	struct uvideo_stream *vs;
+
+	/* FIXME: this functions should be stream specific */
+	vs = SLIST_FIRST(&sc->sc_stream_list);
+	return uvideo_stream_start_xfer(vs);
+}
+
+static int
+uvideo_stop_transfer(void *addr)
+{
+	struct uvideo_softc *sc;
+	int err;
+
+	sc = addr;
+
+	err = uvideo_stream_stop_xfer(sc->sc_stream_in);
+	return err;
+}
+
+
+static int
+uvideo_get_control_group(void *addr, struct video_control_group *group)
+{
+	struct uvideo_softc *sc;
+	usb_device_request_t req;
+	usbd_status err;
+	uint8_t control_id, ent_id, data[16];
+	uint16_t len;
+	int s;
+
+	sc = addr;
+
+	/* request setup */
+	switch (group->group_id) {
+	case VIDEO_CONTROL_PANTILT_RELATIVE:
+		if (group->length != 4)
+			return EINVAL;
+		
+		return EINVAL;
+	case VIDEO_CONTROL_SHARPNESS:
+		if (group->length != 1)
+			return EINVAL;
+
+		control_id = UVIDEO_PU_SHARPNESS_CONTROL;
+		ent_id = 2; /* TODO: hardcoded logitech processing unit */
+		len = 2;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	/* do request */
+	req.bmRequestType = UVIDEO_REQUEST_TYPE_INTERFACE |
+	    UVIDEO_REQUEST_TYPE_CLASS_SPECIFIC |
+	    UVIDEO_REQUEST_TYPE_GET;
+	req.bRequest = UR_GET_CUR;
+	USETW(req.wValue, control_id << 8);
+	USETW(req.wIndex, (ent_id << 8) | sc->sc_ifaceno);
+	USETW(req.wLength, len);
+
+	s = splusb();
+	err = usbd_do_request(sc->sc_udev, &req, data);
+	splx(s);
+	if (err != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("uvideo_set_control: error %s (%d)\n",
+			 usbd_errstr(err), err));
+		return EIO;	/* TODO: more detail here? */
+	}
+
+	/* extract request data */
+	switch (group->group_id) {
+	case VIDEO_CONTROL_SHARPNESS:
+		group->control[0].value = UGETW(data);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+
+static int
+uvideo_set_control_group(void *addr, const struct video_control_group *group)
+{
+	struct uvideo_softc *sc;
+	usb_device_request_t req;
+	usbd_status err;
+	uint8_t control_id, ent_id, data[16]; /* long enough for all controls */
+	uint16_t len;
+	int s;
+
+	sc = addr;
+	
+	switch (group->group_id) {
+	case VIDEO_CONTROL_PANTILT_RELATIVE:
+		if (group->length != 4)
+			return EINVAL;
+		
+		if (group->control[0].value != 0 ||
+		    group->control[0].value != 1 ||
+		    group->control[0].value != 0xff)
+			return ERANGE;
+		
+		if (group->control[2].value != 0 ||
+		    group->control[2].value != 1 ||
+		    group->control[2].value != 0xff)
+			return ERANGE;
+
+		control_id = UVIDEO_CT_PANTILT_RELATIVE_CONTROL;
+		ent_id = 1;	/* TODO: hardcoded logitech camera terminal  */
+		len = 4;
+		data[0] = group->control[0].value;
+		data[1] = group->control[1].value;
+		data[2] = group->control[2].value;
+		data[3] = group->control[3].value;
+		break;
+	case VIDEO_CONTROL_BRIGHTNESS:
+		if (group->length != 1)
+			return EINVAL;
+		control_id = UVIDEO_PU_BRIGHTNESS_CONTROL;
+		ent_id = 2;
+		len = 2;
+		USETW(data, group->control[0].value);
+		break;
+	case VIDEO_CONTROL_GAIN:
+		if (group->length != 1)
+			return EINVAL;
+		control_id = UVIDEO_PU_GAIN_CONTROL;
+		ent_id = 2;
+		len = 2;
+		USETW(data, group->control[0].value);
+		break;
+	case VIDEO_CONTROL_SHARPNESS:
+		if (group->length != 1)
+			return EINVAL;
+		control_id = UVIDEO_PU_SHARPNESS_CONTROL;
+		ent_id = 2; /* TODO: hardcoded logitech processing unit */
+		len = 2;
+		USETW(data, group->control[0].value);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	req.bmRequestType = UVIDEO_REQUEST_TYPE_INTERFACE |
+	    UVIDEO_REQUEST_TYPE_CLASS_SPECIFIC |
+	    UVIDEO_REQUEST_TYPE_SET;
+	req.bRequest = UR_SET_CUR;
+	USETW(req.wValue, control_id << 8);
+	USETW(req.wIndex, (ent_id << 8) | sc->sc_ifaceno);
+	USETW(req.wLength, len);
+
+	s = splusb();
+	err = usbd_do_request(sc->sc_udev, &req, data);
+	splx(s);
+	if (err != USBD_NORMAL_COMPLETION) {
+		DPRINTF(("uvideo_set_control: error %s (%d)\n",
+			 usbd_errstr(err), err));
+		return EIO;	/* TODO: more detail here? */
+	}
+
+	return 0;
+}
+
+static usbd_status
+uvideo_stream_probe_and_commit(struct uvideo_stream *vs,
+			       uint8_t action, uint8_t control,
+			       void *data)
+{
+	usb_device_request_t req;
+	
+	switch (action) {
+	case UR_SET_CUR:
+		req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+		USETW(req.wLength, vs->vs_probelen);
+		break;
+	case UR_GET_CUR:
+	case UR_GET_MIN:
+	case UR_GET_MAX:
+	case UR_GET_DEF:
+		req.bmRequestType = UT_READ_CLASS_INTERFACE;
+		USETW(req.wLength, vs->vs_probelen);
+		break;
+	case UR_GET_INFO:
+		req.bmRequestType = UT_READ_CLASS_INTERFACE;
+		USETW(req.wLength, sizeof(uByte));
+		break;
+	case UR_GET_LEN:
+		req.bmRequestType = UT_READ_CLASS_INTERFACE;
+		USETW(req.wLength, sizeof(uWord)); /* is this right? */
+		break;
+	default:
+		DPRINTF(("uvideo_probe_and_commit: "
+			 "unknown request action %d\n", action));
+		return USBD_NOT_STARTED;
+	}
+	
+	req.bRequest = action;
+	USETW2(req.wValue, control, 0);
+	USETW2(req.wIndex, 0, vs->vs_ifaceno);
+
+	return (usbd_do_request_flags(vs->vs_parent->sc_udev, &req, data,
+				      0, 0,
+				      USBD_DEFAULT_TIMEOUT));
+}
+
+static void
+uvideo_init_probe_data(uvideo_probe_and_commit_data_t *probe)
+{
+	/* all zeroes tells camera to choose what it wants */
+	memset(probe, 0, sizeof(*probe));
+}
+
+
+#ifdef _MODULE
+
+MODULE(MODULE_CLASS_DRIVER, uvideo, "usb");
+
+CFDRIVER_DECL(uvideo, DV_DULL, NULL);
+extern struct cfattach uvideo_ca;
+static struct cfdata uvideo_cfdata[] = {
+	{
+		.cf_name = "uvideo",
+		.cf_atname = "uvideo",
+		.cf_unit = 0,
+		.cf_fstate = FSTATE_STAR,
+		.cf_loc = NULL,
+		.cf_flags = 0,
+		.cf_pspec = NULL,
+	},
+	{ NULL }
+};
+
+static int
+uvideo_modcmd(modcmd_t cmd, void *arg)
+{
+	int err;
+
+	
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		DPRINTF(("uvideo: attempting to load\n"));
+
+		err = config_cfdriver_attach(&uvideo_cd);
+		if (err)
+			return err;
+		err = config_cfattach_attach("uvideo", &uvideo_ca);
+		if (err) {
+			config_cfdriver_detach(&uvideo_cd);
+			return err;
+		}
+		err = config_cfdata_attach(uvideo_cfdata, 1);
+		if (err) {
+			config_cfattach_detach("uvideo", &uvideo_ca);
+			config_cfdriver_detach(&uvideo_cd);
+			return err;
+		}
+		DPRINTF(("uvideo: loaded module\n"));
+		return 0;
+	case MODULE_CMD_FINI:
+		DPRINTF(("uvideo: attempting to unload module\n"));
+		err = config_cfdriver_detach(&uvideo_cd);
+		if (err)
+			return err;
+		config_cfattach_detach("uvideo", &uvideo_ca);
+		config_cfdriver_detach(&uvideo_cd);
+		DPRINTF(("uvideo: module unload\n"));
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
+
+#endif	/* _MODULE */
+
+
+#ifdef UVIDEO_DEBUG
+/* Some functions to print out descriptors.  Mostly useless other than
+ * debugging/exploration purposes. */
+
+
+static void
+print_bitmap(const uByte *start, uByte nbytes)
+{
+	int byte, bit;
+
+	/* most significant first */
+	for (byte = nbytes-1; byte >= 0; --byte) {
+		if (byte < nbytes-1) printf("-");
+		for (bit = 7; bit >= 0; --bit)
+			printf("%01d", (start[byte] >> bit) &1);
+	}
+}
+
+static void
+print_descriptor(const usb_descriptor_t *desc)
+{
+	static int current_class = -1;
+	static int current_subclass = -1;
+
+	if (desc->bDescriptorType == UDESC_INTERFACE) {
+		const usb_interface_descriptor_t *id;
+		id = (const usb_interface_descriptor_t *)desc;
+		current_class = id->bInterfaceClass;
+		current_subclass = id->bInterfaceSubClass;
+		print_interface_descriptor(id);
+		printf("\n");
+		return;
+	}
+
+	printf("  ");		/* indent */
+	
+	if (current_class == UICLASS_VIDEO) {
+		switch (current_subclass) {
+		case UISUBCLASS_VIDEOCONTROL:
+			print_vc_descriptor(desc);
+			break;
+		case UISUBCLASS_VIDEOSTREAMING:
+			print_vs_descriptor(desc);
+			break;
+		case UISUBCLASS_VIDEOCOLLECTION:
+			printf("uvc collection: len=%d type=0x%02x",
+			    desc->bLength, desc->bDescriptorType);
+			break;
+		}
+	} else {
+		printf("non uvc descriptor len=%d type=0x%02x",
+		    desc->bLength, desc->bDescriptorType);
+	}
+
+	printf("\n");
+}
+
+static void
+print_vc_descriptor(const usb_descriptor_t *desc)
+{
+	const uvideo_descriptor_t *vcdesc;
+
+	printf("VC ");
+	
+	switch (desc->bDescriptorType) {
+	case UDESC_ENDPOINT:
+		print_endpoint_descriptor(
+			(const usb_endpoint_descriptor_t *)desc);
+		break;
+	case UDESC_CS_INTERFACE:
+		vcdesc = (const uvideo_descriptor_t *)desc;
+		switch (vcdesc->bDescriptorSubtype) {
+		case UDESC_VC_HEADER:
+			print_vc_header_descriptor(
+			  (const uvideo_vc_header_descriptor_t *)
+				vcdesc);
+			break;
+		case UDESC_INPUT_TERMINAL:
+			switch (UGETW(
+			   ((const uvideo_input_terminal_descriptor_t *)
+				    vcdesc)->wTerminalType)) {
+			case UVIDEO_ITT_CAMERA:
+				print_camera_terminal_descriptor(
+			  (const uvideo_camera_terminal_descriptor_t *)vcdesc);
+				break;
+			default:
+				print_input_terminal_descriptor(
+			  (const uvideo_input_terminal_descriptor_t *)vcdesc);
+				break;
+			}
+			break;
+		case UDESC_OUTPUT_TERMINAL:
+			print_output_terminal_descriptor(
+				(const uvideo_output_terminal_descriptor_t *)
+				vcdesc);
+			break;
+		case UDESC_SELECTOR_UNIT:
+			print_selector_unit_descriptor(
+				(const uvideo_selector_unit_descriptor_t *)
+				vcdesc);
+			break;
+		case UDESC_PROCESSING_UNIT:
+			print_processing_unit_descriptor(
+				(const uvideo_processing_unit_descriptor_t *)
+				vcdesc);
+			break;
+		case UDESC_EXTENSION_UNIT:
+			print_extension_unit_descriptor(
+				(const uvideo_extension_unit_descriptor_t *)
+				vcdesc);
+			break;
+		default:
+			printf("class specific interface "
+			    "len=%d type=0x%02x subtype=0x%02x",
+			    vcdesc->bLength,
+			    vcdesc->bDescriptorType,
+			    vcdesc->bDescriptorSubtype);
+			break;
+		}
+		break;
+	case UDESC_CS_ENDPOINT:
+		vcdesc = (const uvideo_descriptor_t *)desc;
+		switch (vcdesc->bDescriptorSubtype) {
+		case UDESC_VC_INTERRUPT_ENDPOINT:
+			print_interrupt_endpoint_descriptor(
+			    (const uvideo_vc_interrupt_endpoint_descriptor_t *)
+				vcdesc);
+			break;
+		default:
+			printf("class specific endpoint "
+			    "len=%d type=0x%02x subtype=0x%02x",
+			    vcdesc->bLength,
+			    vcdesc->bDescriptorType,
+			    vcdesc->bDescriptorSubtype);
+			break;
+		}
+		break;
+	default:
+		printf("unknown: len=%d type=0x%02x",
+		    desc->bLength, desc->bDescriptorType);
+		break;
+	}
+}
+
+static void
+print_vs_descriptor(const usb_descriptor_t *desc)
+{
+	const uvideo_descriptor_t * vsdesc;
+	printf("VS ");
+
+	switch (desc->bDescriptorType) {
+	case UDESC_ENDPOINT:
+		print_endpoint_descriptor(
+			(const usb_endpoint_descriptor_t *)desc);
+		break;
+	case UDESC_CS_INTERFACE:
+		vsdesc = (const uvideo_descriptor_t *)desc;
+		switch (vsdesc->bDescriptorSubtype) {
+		case UDESC_VS_INPUT_HEADER:
+			print_vs_input_header_descriptor(
+			 (const uvideo_vs_input_header_descriptor_t *)
+				vsdesc);
+			break;
+		case UDESC_VS_OUTPUT_HEADER:
+			print_vs_output_header_descriptor(
+			(const uvideo_vs_output_header_descriptor_t *)
+				vsdesc);
+			break;
+		case UDESC_VS_FORMAT_UNCOMPRESSED:
+			print_vs_format_uncompressed_descriptor(
+			   (const uvideo_vs_format_uncompressed_descriptor_t *)
+				vsdesc);
+			break;
+		case UDESC_VS_FRAME_UNCOMPRESSED:
+			print_vs_frame_uncompressed_descriptor(
+			    (const uvideo_vs_frame_uncompressed_descriptor_t *)
+				vsdesc);
+			break;
+		case UDESC_VS_FORMAT_MJPEG:
+			print_vs_format_mjpeg_descriptor(
+				(const uvideo_vs_format_mjpeg_descriptor_t *)
+				vsdesc);
+			break;
+		case UDESC_VS_FRAME_MJPEG:
+			print_vs_frame_mjpeg_descriptor(
+				(const uvideo_vs_frame_mjpeg_descriptor_t *)
+				vsdesc);
+			break;
+		case UDESC_VS_FORMAT_DV:
+			print_vs_format_dv_descriptor(
+				(const uvideo_vs_format_dv_descriptor_t *)
+				vsdesc);
+			break;
+		default:
+			printf("unknown cs interface: len=%d type=0x%02x "
+			    "subtype=0x%02x",
+			    vsdesc->bLength, vsdesc->bDescriptorType,
+			    vsdesc->bDescriptorSubtype);
+		}
+		break;
+	default:
+		printf("unknown: len=%d type=0x%02x",
+		    desc->bLength, desc->bDescriptorType);
+		break;
+	}
+}
+
+static void
+print_interface_descriptor(const usb_interface_descriptor_t *id)
+{
+	printf("Interface: Len=%d Type=0x%02x "
+	    "bInterfaceNumber=0x%02x "
+	    "bAlternateSetting=0x%02x bNumEndpoints=0x%02x "
+	    "bInterfaceClass=0x%02x bInterfaceSubClass=0x%02x "
+	    "bInterfaceProtocol=0x%02x iInterface=0x%02x",
+	    id->bLength,
+	    id->bDescriptorType,
+	    id->bInterfaceNumber,
+	    id->bAlternateSetting,
+	    id->bNumEndpoints,
+	    id->bInterfaceClass,
+	    id->bInterfaceSubClass,
+	    id->bInterfaceProtocol,
+	    id->iInterface);
+}
+
+static void
+print_endpoint_descriptor(const usb_endpoint_descriptor_t *desc)
+{
+	printf("Endpoint: Len=%d Type=0x%02x "
+	    "bEndpointAddress=0x%02x ",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bEndpointAddress);
+	printf("bmAttributes=");
+	print_bitmap(&desc->bmAttributes, 1);
+	printf(" wMaxPacketSize=%d bInterval=%d",
+	    UGETW(desc->wMaxPacketSize),
+	    desc->bInterval);
+}
+
+static void
+print_vc_header_descriptor(
+	const uvideo_vc_header_descriptor_t *desc)
+{
+	printf("Interface Header: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bcdUVC=%d wTotalLength=%d "
+	    "dwClockFrequency=%d bInCollection=%d",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    UGETW(desc->bcdUVC),
+	    UGETW(desc->wTotalLength),
+	    UGETDW(desc->dwClockFrequency),
+	    desc->bInCollection);
+}
+
+static void
+print_input_terminal_descriptor(
+	const uvideo_input_terminal_descriptor_t *desc)
+{
+	printf("Input Terminal: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bTerminalID=%d wTerminalType=%x bAssocTerminal=%d "
+	    "iTerminal=%d",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bTerminalID,
+	    UGETW(desc->wTerminalType),
+	    desc->bAssocTerminal,
+	    desc->iTerminal);
+}
+	    
+static void
+print_output_terminal_descriptor(
+	const uvideo_output_terminal_descriptor_t *desc)
+{
+	printf("Output Terminal: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bTerminalID=%d wTerminalType=%x bAssocTerminal=%d "
+	    "bSourceID=%d iTerminal=%d",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bTerminalID,
+	    UGETW(desc->wTerminalType),
+	    desc->bAssocTerminal,
+	    desc->bSourceID,
+	    desc->iTerminal);
+}
+
+static void
+print_camera_terminal_descriptor(
+	const uvideo_camera_terminal_descriptor_t *desc)
+{
+	printf("Camera Terminal: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bTerminalID=%d wTerminalType=%x bAssocTerminal=%d "
+	    "iTerminal=%d "
+	    "wObjectiveFocalLengthMin/Max=%d/%d "
+	    "wOcularFocalLength=%d "
+	    "bControlSize=%d ",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bTerminalID,
+	    UGETW(desc->wTerminalType),
+	    desc->bAssocTerminal,
+	    desc->iTerminal,
+	    UGETW(desc->wObjectiveFocalLengthMin),
+	    UGETW(desc->wObjectiveFocalLengthMax),
+	    UGETW(desc->wOcularFocalLength),
+	    desc->bControlSize);
+	printf("bmControls=");
+	print_bitmap(desc->bmControls, desc->bControlSize);
+}
+
+static void
+print_selector_unit_descriptor(
+	const uvideo_selector_unit_descriptor_t *desc)
+{
+	int i;
+	const uByte *b;
+	printf("Selector Unit: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bUnitID=%d bNrInPins=%d ",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bUnitID,
+	    desc->bNrInPins);
+	printf("baSourceIDs=");
+	b = &desc->baSourceID[0];
+	for (i = 0; i < desc->bNrInPins; ++i)
+		printf("%d ", *b++);
+	printf("iSelector=%d", *b);
+}
+
+static void
+print_processing_unit_descriptor(
+	const uvideo_processing_unit_descriptor_t *desc)
+{
+	const uByte *b;
+
+	printf("Processing Unit: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bUnitID=%d bSourceID=%d wMaxMultiplier=%d bControlSize=%d ",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bUnitID,
+	    desc->bSourceID,
+	    UGETW(desc->wMaxMultiplier),
+	    desc->bControlSize);
+	printf("bmControls=");
+	print_bitmap(desc->bmControls, desc->bControlSize);
+	b = &desc->bControlSize + desc->bControlSize + 1;
+	printf(" iProcessing=%d bmVideoStandards=", *b);
+	b += 1;
+	print_bitmap(b, 1);
+}
+
+static void
+print_extension_unit_descriptor(
+	const uvideo_extension_unit_descriptor_t *desc)
+{
+	const uByte * byte;
+	uByte controlbytes;
+	int i;
+	
+	printf("Extension Unit: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bUnitID=%d ",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bUnitID);
+
+	printf("guidExtensionCode=");
+	usb_guid_print(&desc->guidExtensionCode);
+	printf(" ");
+
+	printf("bNumControls=%d bNrInPins=%d ",
+	    desc->bNumControls,
+	    desc->bNrInPins);
+
+	printf("baSourceIDs=");
+	byte = &desc->baSourceID[0];
+	for (i = 0; i < desc->bNrInPins; ++i)
+		printf("%d ", *byte++);
+	
+	controlbytes = *byte++;
+	printf("bControlSize=%d ", controlbytes);
+	printf("bmControls=");
+	print_bitmap(byte, controlbytes);
+
+	byte += controlbytes;
+	printf(" iExtension=%d", *byte);
+}
+
+static void
+print_interrupt_endpoint_descriptor(
+	const uvideo_vc_interrupt_endpoint_descriptor_t *desc)
+{
+	printf("Interrupt Endpoint: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "wMaxTransferSize=%d ",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    UGETW(desc->wMaxTransferSize));
+}
+
+
+static void
+print_vs_output_header_descriptor(
+	const uvideo_vs_output_header_descriptor_t *desc)
+{
+	printf("Interface Output Header: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bNumFormats=%d wTotalLength=%d bEndpointAddress=%d "
+	    "bTerminalLink=%d bControlSize=%d",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bNumFormats,
+	    UGETW(desc->wTotalLength),
+	    desc->bEndpointAddress,
+	    desc->bTerminalLink,
+	    desc->bControlSize);
+}
+
+static void
+print_vs_input_header_descriptor(
+	const uvideo_vs_input_header_descriptor_t *desc)
+{
+	printf("Interface Input Header: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bNumFormats=%d wTotalLength=%d bEndpointAddress=%d "
+	    "bmInfo=%x bTerminalLink=%d bStillCaptureMethod=%d "
+	    "bTriggerSupport=%d bTriggerUsage=%d bControlSize=%d ",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bNumFormats,
+	    UGETW(desc->wTotalLength),
+	    desc->bEndpointAddress,
+	    desc->bmInfo,
+	    desc->bTerminalLink,
+	    desc->bStillCaptureMethod,
+	    desc->bTriggerSupport,
+	    desc->bTriggerUsage,
+	    desc->bControlSize);
+	print_bitmap(desc->bmaControls, desc->bControlSize);
+}
+
+static void
+print_vs_format_uncompressed_descriptor(
+	const uvideo_vs_format_uncompressed_descriptor_t *desc)
+{
+	printf("Format Uncompressed: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bFormatIndex=%d bNumFrameDescriptors=%d ",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bFormatIndex,
+	    desc->bNumFrameDescriptors);
+	usb_guid_print(&desc->guidFormat);
+	printf(" bBitsPerPixel=%d bDefaultFrameIndex=%d "
+	    "bAspectRatioX=%d bAspectRatioY=%d "
+	    "bmInterlaceFlags=0x%02x bCopyProtect=%d",
+	    desc->bBitsPerPixel,
+	    desc->bDefaultFrameIndex,
+	    desc->bAspectRatioX,
+	    desc->bAspectRatioY,
+	    desc->bmInterlaceFlags,
+	    desc->bCopyProtect);
+}
+
+static void
+print_vs_frame_uncompressed_descriptor(
+	const uvideo_vs_frame_uncompressed_descriptor_t *desc)
+{
+	printf("Frame Uncompressed: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bFrameIndex=%d bmCapabilities=0x%02x "
+	    "wWidth=%d wHeight=%d dwMinBitRate=%d dwMaxBitRate=%d "
+	    "dwMaxVideoFrameBufferSize=%d dwDefaultFrameInterval=%d "
+	    "bFrameIntervalType=%d",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bFrameIndex,
+	    desc->bmCapabilities,
+	    UGETW(desc->wWidth),
+	    UGETW(desc->wHeight),
+	    UGETDW(desc->dwMinBitRate),
+	    UGETDW(desc->dwMaxBitRate),
+	    UGETDW(desc->dwMaxVideoFrameBufferSize),
+	    UGETDW(desc->dwDefaultFrameInterval),
+	    desc->bFrameIntervalType);
+}
+
+static void
+print_vs_format_mjpeg_descriptor(
+	const uvideo_vs_format_mjpeg_descriptor_t *desc)
+{
+	printf("MJPEG format: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bFormatIndex=%d bNumFrameDescriptors=%d bmFlags=0x%02x "
+	    "bDefaultFrameIndex=%d bAspectRatioX=%d bAspectRatioY=%d "
+	    "bmInterlaceFlags=0x%02x bCopyProtect=%d",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bFormatIndex,
+	    desc->bNumFrameDescriptors,
+	    desc->bmFlags,
+	    desc->bDefaultFrameIndex,
+	    desc->bAspectRatioX,
+	    desc->bAspectRatioY,
+	    desc->bmInterlaceFlags,
+	    desc->bCopyProtect);
+}
+
+static void
+print_vs_frame_mjpeg_descriptor(
+	const uvideo_vs_frame_mjpeg_descriptor_t *desc)
+{
+	printf("MJPEG frame: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bFrameIndex=%d bmCapabilities=0x%02x "
+	    "wWidth=%d wHeight=%d dwMinBitRate=%d dwMaxBitRate=%d "
+	    "dwMaxVideoFrameBufferSize=%d dwDefaultFrameInterval=%d "
+	    "bFrameIntervalType=%d",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bFrameIndex,
+	    desc->bmCapabilities,
+	    UGETW(desc->wWidth),
+	    UGETW(desc->wHeight),
+	    UGETDW(desc->dwMinBitRate),
+	    UGETDW(desc->dwMaxBitRate),
+	    UGETDW(desc->dwMaxVideoFrameBufferSize),
+	    UGETDW(desc->dwDefaultFrameInterval),
+	    desc->bFrameIntervalType);
+}
+
+static void
+print_vs_format_dv_descriptor(
+	const uvideo_vs_format_dv_descriptor_t *desc)
+{
+	printf("MJPEG format: "
+	    "Len=%d Type=0x%02x Subtype=0x%02x "
+	    "bFormatIndex=%d dwMaxVideoFrameBufferSize=%d "
+	    "bFormatType/Rate=%d bFormatType/Format=%d",
+	    desc->bLength,
+	    desc->bDescriptorType,
+	    desc->bDescriptorSubtype,
+	    desc->bFormatIndex,
+	    UGETDW(desc->dwMaxVideoFrameBufferSize),
+	    UVIDEO_GET_DV_FREQ(desc->bFormatType),
+	    UVIDEO_GET_DV_FORMAT(desc->bFormatType));
+}
+
+#endif /* !UVIDEO_DEBUG */
+
+static const usb_descriptor_t *
+usb_desc_iter_peek_next(usbd_desc_iter_t *iter)
+{
+        const usb_descriptor_t *desc;
+         
+        if (iter->cur + sizeof(usb_descriptor_t) >= iter->end) {
+                if (iter->cur != iter->end)
+                        printf("usb_desc_iter_peek_next: bad descriptor\n");
+                return NULL;
+        }
+        desc = (const usb_descriptor_t *)iter->cur;
+        if (desc->bLength == 0) {
+                printf("usb_desc_iter_peek_next: descriptor length = 0\n");
+                return NULL;
+        }
+        if (iter->cur + desc->bLength > iter->end) {
+                printf("usb_desc_iter_peek_next: descriptor length too large\n");
+                return NULL;
+        }
+        return desc;
+}
+
+/* Return the next interface descriptor, skipping over any other
+ * descriptors.  Returns NULL at the end or on error. */
+static const usb_interface_descriptor_t *
+usb_desc_iter_next_interface(usbd_desc_iter_t *iter)
+{
+	const usb_descriptor_t *desc;
+
+	while ((desc = usb_desc_iter_peek_next(iter)) != NULL &&
+	       desc->bDescriptorType != UDESC_INTERFACE)
+	{
+		usb_desc_iter_next(iter);
+	}
+
+	return (const usb_interface_descriptor_t *)usb_desc_iter_next(iter);
+}
+
+/* Returns the next non-interface descriptor, returning NULL when the
+ * next descriptor would be an interface descriptor. */
+static const usb_descriptor_t *
+usb_desc_iter_next_non_interface(usbd_desc_iter_t *iter)
+{
+	const usb_descriptor_t *desc;
+
+	if ((desc = usb_desc_iter_peek_next(iter)) != NULL &&
+	    desc->bDescriptorType != UDESC_INTERFACE)
+	{
+		return (usb_desc_iter_next(iter));
+	} else {
+		return NULL;
+	}
+}
+
+#ifdef UVIDEO_DEBUG
+static void
+usb_guid_print(const usb_guid_t *guid)
+{
+	printf("%04X-%02X-%02X-",
+	       UGETDW(guid->data1),
+	       UGETW(guid->data2),
+	       UGETW(guid->data3));
+	printf("%02X%02X-",
+	       guid->data4[0],
+	       guid->data4[1]);
+	printf("%02X%02X%02X%02X%02X%02X",
+	       guid->data4[2],
+	       guid->data4[3],
+	       guid->data4[4],
+	       guid->data4[5],
+	       guid->data4[6],
+	       guid->data4[7]);
+}
+#endif /* !UVIDEO_DEBUG */
+
+/* Returns less than zero, zero, or greater than zero if uguid is less
+ * than, equal to, or greater than guid. */
+static int
+usb_guid_cmp(const usb_guid_t *uguid, const guid_t *guid)
+{
+	if (guid->data1 > UGETDW(uguid->data1))
+		return 1;
+	else if (guid->data1 < UGETDW(uguid->data1))
+		return -1;
+
+	if (guid->data2 > UGETW(uguid->data2))
+		return 1;
+	else if (guid->data2 < UGETW(uguid->data2))
+		return -1;
+
+	if (guid->data3 > UGETW(uguid->data3))
+		return 1;
+	else if (guid->data3 < UGETW(uguid->data3))
+		return -1;
+
+	return (memcmp(guid->data4, uguid->data4, 8));
+}
