@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.31 2008/09/03 16:08:26 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.32 2008/09/09 11:50:42 vanhu Exp $	*/
 
-/* $Id: pfkey.c,v 1.31 2008/09/03 16:08:26 vanhu Exp $ */
+/* $Id: pfkey.c,v 1.32 2008/09/09 11:50:42 vanhu Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -920,8 +920,8 @@ pk_sendgetspi(iph2)
 #ifdef ENABLE_NATT
 		if (! pr->udp_encap) {
 			/* Remove port information, that SA doesn't use it */
-			set_port(src, 0);
-			set_port(dst, 0);
+			set_port(iph2->src, 0);
+			set_port(iph2->dst, 0);
 		}
 #endif
 		plog(LLV_DEBUG, LOCATION, NULL, "call pfkey_send_getspi\n");

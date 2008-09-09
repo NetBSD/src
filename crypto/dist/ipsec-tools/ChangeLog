@@ -1,3 +1,7 @@
+2008-09-09  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/pfkey.c: Some calls to set_port() were not correctly
+	updated in the previous commit.
+
 2008-09-03  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Tomas Mraz <tmraz@redhat.com>:
 	* src/racoon/pfkey.c: Duplicate addresses in pk_sendxxx functions, as
