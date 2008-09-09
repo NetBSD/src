@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.7 2008/09/09 01:36:48 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.8 2008/09/09 04:23:02 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.7 2008/09/09 01:36:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.8 2008/09/09 04:23:02 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -591,7 +591,7 @@ video_format_to_v4l2_format(const struct video_format *src,
 		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
 		break;
 	case VIDEO_FORMAT_MJPEG:
-		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_JPEG;
+		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
 		break;
 	case VIDEO_FORMAT_DV:
 		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_DV;
