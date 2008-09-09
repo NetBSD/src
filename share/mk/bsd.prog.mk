@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.234 2008/08/28 07:17:06 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.235 2008/09/09 11:54:19 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -307,6 +307,9 @@ ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${D
 	    ${_PROGLDOPTS}
 .if defined(PAXCTL_FLAGS.${_P})
 	${PAXCTL} ${PAXCTL_FLAGS.${_P}} ${.TARGET}
+.endif
+.if ${MKSTRIPIDENT} != "no"
+	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 .endif	# !commands(${_P})
 
