@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.145 2008/08/28 23:08:00 drochner Exp $ */
+/*	$NetBSD: ehci.c,v 1.146 2008/09/09 00:46:45 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.145 2008/08/28 23:08:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.146 2008/09/09 00:46:45 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1605,9 +1605,13 @@ ehci_open(usbd_pipe_handle pipe)
 	default: panic("ehci_open: bad device speed %d", dev->speed);
 	}
 	if (speed != EHCI_QH_SPEED_HIGH && xfertype == UE_ISOCHRONOUS) {
-		printf("%s: *** Error: opening low/full speed isoc device on"
-		       "ehci, this does not work yet. Feel free to implement\n",
-		       device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "error opening low/full speed "
+		    "isoc endpoint.\n");
+		aprint_normal_dev(sc->sc_dev, "a low/full speed device is "
+		    "attached to a USB2 hub, and transaction translations are "
+		    "not yet supported.\n");
+		aprint_normal_dev(sc->sc_dev, "reattach the device to the "
+		    "root hub instead.\n");
 		DPRINTFN(1,("ehci_open: hshubaddr=%d hshubport=%d\n",
 			    hshubaddr, hshubport));
 		return USBD_INVAL;
@@ -4089,7 +4093,7 @@ ehci_device_isoc_abort(usbd_xfer_handle xfer)
 Static void
 ehci_device_isoc_close(usbd_pipe_handle pipe)
 {
-	printf("ehci_device_isoc_close: nothing in the pipe to free?\n");
+	DPRINTFN(1, ("ehci_device_isoc_close: nothing in the pipe to free?\n"));
 }
 
 Static void
