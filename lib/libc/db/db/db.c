@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.14 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.15 2008/09/10 17:52:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -30,13 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)db.c	8.4 (Berkeley) 2/21/94";
-#else
-__RCSID("$NetBSD: db.c,v 1.14 2007/02/03 23:46:09 christos Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: db.c,v 1.15 2008/09/10 17:52:35 joerg Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>

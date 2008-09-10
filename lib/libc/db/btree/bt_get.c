@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_get.c,v 1.11 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: bt_get.c,v 1.12 2008/09/10 17:52:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,13 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)bt_get.c	8.6 (Berkeley) 7/20/94";
-#else
-__RCSID("$NetBSD: bt_get.c,v 1.11 2007/02/03 23:46:09 christos Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: bt_get.c,v 1.12 2008/09/10 17:52:35 joerg Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
