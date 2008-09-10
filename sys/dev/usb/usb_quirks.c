@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.61 2008/09/06 21:34:49 rmind Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.62 2008/09/10 20:34:40 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.61 2008/09/06 21:34:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.62 2008/09/10 20:34:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,6 +77,8 @@ Static const struct usbd_quirk_entry {
 	0x000, { UQ_BAD_AUDIO }},
  { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMPRO4K,
 	0x000, { UQ_BAD_AUDIO }},
+ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMMESS,
+	0x100, { UQ_BAD_ADC }},
  { USB_VENDOR_QTRONIX, USB_PRODUCT_QTRONIX_980N,    0x110, { UQ_SPUR_BUT_UP }},
  { USB_VENDOR_ALCOR2, USB_PRODUCT_ALCOR2_KBD_HUB,   0x001, { UQ_SPUR_BUT_UP }},
  { USB_VENDOR_METRICOM, USB_PRODUCT_METRICOM_RICOCHET_GS,
