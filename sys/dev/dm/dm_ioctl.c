@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.14 2008/09/08 11:34:01 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.15 2008/09/10 18:43:27 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -156,8 +156,7 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	dm_dbg_print_flags(flags);
 
 	/* Lookup name and uuid if device already exist quit. */
-	if ((dm_dev_lookup_name(name) != NULL) &&
-	    (dm_dev_lookup_uuid(uuid) != NULL)) {
+	if ((dmv = dm_dev_lookup(name, uuid, -1)) != NULL) {
 		DM_ADD_FLAG(flags, DM_EXISTS_FLAG); /* Device already exists */
 		return EEXIST;
 	}
@@ -278,15 +277,17 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 	struct dm_dev *dmv;
 	
 	const char *name, *uuid, *n_name;
-	uint32_t flags;
+	uint32_t flags, minor;
 
 	name = NULL;
 	uuid = NULL;
+	minor = 0;
 	
 	/* Get needed values from dictionary. */
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 
 	dm_dbg_print_flags(flags);
 	
@@ -297,8 +298,7 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 	if (strlen(n_name) + 1 > DM_NAME_LEN)
 		return EINVAL;
 	
-	if (((dmv = dm_dev_lookup_uuid(uuid)) == NULL) ||
-	    (dmv = dm_dev_lookup_name(name)) == NULL) {
+	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL) {
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
@@ -340,9 +340,7 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	
 	dm_dbg_print_flags(flags);
 	
-	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
-		((dmv = dm_dev_lookup_uuid(uuid)) == NULL) &&
-	    ((dmv = dm_dev_lookup_minor(minor)) == NULL)){
+	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL){
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
@@ -414,9 +412,7 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 		
-	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
-	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL) &&
-		((dmv = dm_dev_lookup_minor(minor)) == NULL)) {
+	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL) {
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
@@ -478,9 +474,7 @@ dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 	
-	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
-	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL) &&
-		((dmv = dm_dev_lookup_minor(minor)) == NULL)){
+	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL){
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
@@ -522,9 +516,7 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 	
-	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
-	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL) &&
-		((dmv = dm_dev_lookup_minor(minor)) == NULL)){
+	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL){
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
@@ -570,21 +562,23 @@ dm_table_clear_ioctl(prop_dictionary_t dm_dict)
 	struct dm_table  *tbl;
 
 	const char *name, *uuid;
-	int flags;
+	uint32_t flags, minor;
 
 	dmv  = NULL;
 	name = NULL;
 	uuid = NULL;
+	flags = 0;
+	minor = 0;
 	
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
+	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 	
 	aprint_verbose("Clearing inactive table from device: %s--%s\n",
 	    name, uuid);
 	
-	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
-	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL)) {
+	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL){
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
@@ -619,7 +613,7 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	prop_array_t cmd_array;
 	
 	const char *name, *uuid;
-	int flags, minor;
+	uint32_t flags, minor;
 	
 	size_t i;
 
@@ -637,9 +631,7 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	
 	cmd_array = prop_dictionary_get(dm_dict,DM_IOCTL_CMD_DATA);
 
-	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
-	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL) &&
-	    ((dmv = dm_dev_lookup_minor(minor)) == NULL)) {
+	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL){
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
@@ -717,14 +709,14 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	
 	dm_dbg_print_flags(flags);	
 
-	aprint_verbose("Loading table to device: %s--%s\n",name,uuid);
+	aprint_normal("Loading table to device: %s--%s\n",name,uuid);
 	
-	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
-	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL) &&
-	    ((dmv = dm_dev_lookup_minor(minor)) == NULL)) {
+	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL){
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}
+
+	printf("dmv->name = %s\n",dmv->name);
 	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 	
@@ -860,9 +852,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 
 	cmd_array = prop_dictionary_get(dm_dict, DM_IOCTL_CMD_DATA);
 	
-	if (((dmv = dm_dev_lookup_name(name)) == NULL) &&
-	    ((dmv = dm_dev_lookup_uuid(uuid)) == NULL) &&
-	    ((dmv = dm_dev_lookup_minor(minor))) == NULL) {
+	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL){
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
 	}

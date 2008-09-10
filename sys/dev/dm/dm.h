@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.1.2.14 2008/09/08 11:34:01 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.1.2.15 2008/09/10 18:43:27 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -305,9 +305,7 @@ int dm_dev_destroy(void);
 int dm_dev_free(struct dm_dev *);
 int dm_dev_init(void);
 int dm_dev_insert(struct dm_dev *);
-struct dm_dev* dm_dev_lookup_name(const char *);
-struct dm_dev* dm_dev_lookup_uuid(const char *);
-struct dm_dev* dm_dev_lookup_minor(int);
+struct dm_dev* dm_dev_lookup(const char *, const char *, int);
 prop_array_t dm_dev_prop_list(void);
 int dm_dev_rem(struct dm_dev *);
 
