@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 2008/09/09 16:55:28 dyoung Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2008/09/10 01:06:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -33,9 +33,9 @@ struct sockaddr;
 struct sockaddr_x25;
 struct sockaddr_ns;
 
-void parse_show_opts(int, char **, int *, int *, const char **, bool);
+void parse_show_opts(int, char * const *, int *, int *, const char **, bool);
 /* show.c */
-void show(int, char **);
+void show(int, char * const *);
 
 /* route.c */
 extern int nflag, Sflag;
