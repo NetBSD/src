@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_jmicron.c,v 1.1 2008/09/05 12:37:13 tron Exp $	*/
+/*	$NetBSD: ata_raid_jmicron.c,v 1.2 2008/09/10 16:59:32 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.1 2008/09/05 12:37:13 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_jmicron.c,v 1.2 2008/09/10 16:59:32 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -177,19 +177,31 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 #ifdef ATA_RAID_DEBUG
 	ata_raid_jmicron_print_info(info);
 #endif
+	/*
+	 * Check that there aren't stale config blocks without
+	 * any array set configured.
+	 */
+	for (total_disks = 0, disk = 0; disk < JM_MAX_DISKS; disk++)
+		if (info->disks[disk] == info->disk_id)
+			total_disks++;
+	if (total_disks <= 1) {
+		error = EINVAL;
+		goto out;
+	}
+
+	/*
+	 * Check volume's state and bail out if it's not acceptable.
+	 */
+	if ((info->flags & (JM_F_READY|JM_F_BOOTABLE|JM_F_ACTIVE)) == 0) {
+		error = EINVAL;
+		goto out;
+	}
 
 	/*
 	 * Lookup or allocate a new array info structure for
 	 * this array.
 	 */
 	aai = ata_raid_get_array_info(ATA_RAID_TYPE_JMICRON, 0); 
-
-	for (total_disks = 0, disk = 0; disk < JM_MAX_DISKS; disk++)
-		if (info->disks[disk])
-			total_disks++;
-	if (total_disks == 0)
-		goto out;
-
 	aai->aai_status = AAI_S_READY;
 
 	switch (info->type) {
@@ -227,7 +239,7 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 	aai->aai_cylinders =
 	    aai->aai_capacity / (aai->aai_heads * aai->aai_sectors);
 	aai->aai_offset = info->offset * 16;
-	aai->aai_reserved = 0;
+	aai->aai_reserved = 2;
 
 	atabus = device_private(device_parent(sc->sc_dev));
 	drive = atabus->sc_chan->ch_channel;
@@ -244,7 +256,7 @@ ata_raid_read_config_jmicron(struct wd_softc *sc)
 		adi->adi_dev = sc->sc_dev;
 		adi->adi_status = ADI_S_ONLINE | ADI_S_ASSIGNED;
 		adi->adi_sectors = aai->aai_capacity;
-		adi->adi_compsize = disk_size;
+		adi->adi_compsize = disk_size - aai->aai_reserved;
 	}
 
 	error = 0;
