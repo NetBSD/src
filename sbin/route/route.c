@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.114 2008/09/10 01:00:02 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.115 2008/09/10 01:06:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.114 2008/09/10 01:00:02 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.115 2008/09/10 01:06:58 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,13 +78,13 @@ typedef union sockunion *sup;
 static char *any_ntoa(const struct sockaddr *);
 static const char *route_strerror(int);
 static void set_metric(const char *, int);
-static int newroute(int, char **);
+static int newroute(int, char *const *);
 static void inet_makenetandmask(u_int32_t, struct sockaddr_in *);
 #ifdef INET6
 static int inet6_makenetandmask(const struct sockaddr_in6 *);
 #endif
 static int getaddr(int, const char *, struct hostent **);
-static int flushroutes(int, char *[], int);
+static int flushroutes(int, char *const [], int);
 static int prefixlen(const char *);
 #ifndef SMALL
 static void interfaces(void);
@@ -146,7 +146,7 @@ usage(const char *cp)
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 int
-main(int argc, char **argv)
+main(int argc, char * const *argv)
 {
 	int ch;
 
@@ -241,7 +241,7 @@ main(int argc, char **argv)
  * associated with network interfaces.
  */
 static int
-flushroutes(int argc, char *argv[], int doall)
+flushroutes(int argc, char * const argv[], int doall)
 {
 	struct sockaddr *sa;
 	size_t needed;
@@ -762,7 +762,7 @@ set_metric(const char *value, int key)
 }
 
 static int
-newroute(int argc, char **argv)
+newroute(int argc, char *const *argv)
 {
 	const char *cmd, *dest = "", *gateway = "";
 	int ishost = 0, ret, attempts, oerrno, flags = RTF_STATIC;
