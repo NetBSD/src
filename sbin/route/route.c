@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.113 2008/09/10 00:57:57 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.114 2008/09/10 01:00:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.113 2008/09/10 00:57:57 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.114 2008/09/10 01:00:02 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ typedef union sockunion *sup;
 
 static char *any_ntoa(const struct sockaddr *);
 static const char *route_strerror(int);
-static void set_metric(char *, int);
+static void set_metric(const char *, int);
 static int newroute(int, char **);
 static void inet_makenetandmask(u_int32_t, struct sockaddr_in *);
 #ifdef INET6
@@ -737,7 +737,7 @@ route_strerror(int error)
 }
 
 static void
-set_metric(char *value, int key)
+set_metric(const char *value, int key)
 {
 	int flag = 0;
 	u_long noval, *valp = &noval;
