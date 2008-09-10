@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_bigkey.c,v 1.21 2008/08/26 21:18:38 joerg Exp $	*/
+/*	$NetBSD: hash_bigkey.c,v 1.22 2008/09/10 17:52:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,13 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)hash_bigkey.c	8.3 (Berkeley) 5/31/94";
-#else
-__RCSID("$NetBSD: hash_bigkey.c,v 1.21 2008/08/26 21:18:38 joerg Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: hash_bigkey.c,v 1.22 2008/09/10 17:52:35 joerg Exp $");
 
 /*
  * PACKAGE: hash
