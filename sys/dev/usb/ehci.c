@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.147 2008/09/09 21:51:32 hubertf Exp $ */
+/*	$NetBSD: ehci.c,v 1.148 2008/09/10 06:08:27 cegger Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -44,18 +44,15 @@
  * TODO:
  * 1) hold off explorations by companion controllers until ehci has started.
  *
- * 2) The EHCI driver lacks support for isochronous transfers, so
- *    devices using them don't work.
- *
- * 3) The hub driver needs to handle and schedule the transaction translator,
+ * 2) The hub driver needs to handle and schedule the transaction translator,
  *    to assign place in frame where different devices get to go. See chapter
  *    on hubs in USB 2.0 for details.
  *
- * 4) command failures are not recovered correctly
-*/
+ * 3) command failures are not recovered correctly
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.147 2008/09/09 21:51:32 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.148 2008/09/10 06:08:27 cegger Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
