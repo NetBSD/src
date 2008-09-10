@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.109 2008/07/20 08:50:20 blymn Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.110 2008/09/10 16:36:54 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.109 2008/07/20 08:50:20 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.110 2008/09/10 16:36:54 blymn Exp $");
 
 #include "opt_veriexec.h"
 
@@ -585,6 +585,9 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 #define VFE_NEEDS_EVAL(vfe) ((vfe->status == FINGERPRINT_NOTEVAL) || \
 			     (vfe->type & VERIEXEC_UNTRUSTED))
 
+	if (vfep != NULL)
+		*vfep = NULL;
+
 	if (vp->v_type != VREG)
 		return (0);
 
@@ -930,7 +933,8 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 		if (tvfe != NULL)
 			(void)veriexec_file_delete(l, tovp);
 
-	}
+	} else
+		rw_exit(&veriexec_op_lock);
 
 	return (0);
 }
@@ -1312,7 +1316,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 					 vfe, digest);
 		if (error) {
 			kmem_free(digest, vfe->ops->hash_len);
-			goto out;
+			goto unlock_out;
 		}
 
 		if (veriexec_fp_cmp(vfe->ops, vfe->fp, digest) == 0)
