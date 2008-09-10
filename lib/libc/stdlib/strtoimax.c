@@ -27,8 +27,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoimax.c,v 1.6 2008/08/20 12:42:26 joerg Exp $");
+__RCSID("$NetBSD: strtoimax.c,v 1.7 2008/09/10 18:08:58 joerg Exp $");
 
 #include <assert.h>
 #include <ctype.h>
