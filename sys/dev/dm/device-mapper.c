@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.1.2.11 2008/09/05 01:04:23 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.1.2.12 2008/09/10 18:43:27 haad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -161,12 +161,11 @@ dm_modcmd(modcmd_t cmd, void *arg)
 int
 dmattach(void)
 {
-
-	dm_sc = (struct dm_softc *)kmem_alloc(sizeof(struct dm_softc), KM_NOSLEEP);
+		dm_sc = (struct dm_softc *)kmem_zalloc(sizeof(struct dm_softc), KM_NOSLEEP);
 
 	if (dm_sc == NULL){
 		aprint_error("Not enough memory for dm device.\n");
-		return(ENOMEM);
+		return ENOMEM;
 	}
 
 	dm_sc->sc_minor_num = 0;
@@ -187,7 +186,6 @@ dmattach(void)
 int
 dmdestroy(void)
 {
-	
 	(void)kmem_free(dm_sc, sizeof(struct dm_softc));
 
 	dm_dev_destroy();
@@ -209,7 +207,7 @@ dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	aprint_verbose("open routine called %d\n", minor(dev));
 
-	if ((dmv = dm_dev_lookup_minor(minor(dev))) != NULL)
+	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) != NULL)
 		dmv->ref_cnt++;
        
 	return 0;
@@ -221,7 +219,7 @@ dmclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct dm_dev *dmv;
 
-	if ((dmv = dm_dev_lookup_minor(minor(dev))) != NULL)
+	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) != NULL)
 		dmv->ref_cnt--;
 
 	aprint_verbose("CLOSE routine called\n");
@@ -263,9 +261,9 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 		if (r)
 			goto out;
 
-		char *xml;
+	/*	char *xml;
 		xml = prop_dictionary_externalize(dm_dict_in);
-		aprint_verbose("%s\n",xml);
+		aprint_verbose("%s\n",xml);*/
 				
 		r = dm_cmd_to_fun(dm_dict_in);
 		if (r)
@@ -295,14 +293,14 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict){
 
 	len = strlen(command);
 		
-	for(i=0;cmd_fn[i].cmd != NULL;i++){
+	for(i=0; cmd_fn[i].cmd != NULL; i++){
 		slen = strlen(cmd_fn[i].cmd);
 
 		if (len != slen)
 			continue;
 
 		if ((strncmp(command, cmd_fn[i].cmd, slen)) == 0) {
-			aprint_verbose("ioctl command: %s\n", command);
+			printf("ioctl command: %s\n", command);
 			r = cmd_fn[i].fn(dm_dict);
 			break;
 		}
@@ -341,14 +339,9 @@ dm_ioctl_switch(u_long cmd)
 static int
 disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 {
-	 struct dm_dev *dmv;
-
-	 if ((dmv = dm_dev_lookup_minor(minor(dev))) == NULL)
-		 return 1;
-
 	 switch(cmd) {
 
-	 case DIOCGWEDGEINFO:
+	 /*case DIOCGWEDGEINFO:
 	 {
 		 struct dkwedge_info *dkw = (void *) data;
 
@@ -363,7 +356,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		 strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
 
 		 break;
-	 }
+	 }*/
 
 	 case DIOCGDINFO:
 	 {
@@ -439,7 +432,7 @@ dmstrategy(struct buf *bp)
 	issued_len = 0;
 	
 	/* dm_dev are guarded by their own mutex */
-	if ((dmv = dm_dev_lookup_minor(minor(bp->b_dev))) == NULL) {
+	if ((dmv = dm_dev_lookup(NULL, NULL, minor(bp->b_dev))) == NULL) {
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
@@ -553,7 +546,7 @@ dmsize(dev_t dev)
 	
 	length = 0;
 	
-	if ( (dmv = dm_dev_lookup_minor(minor(dev))) == NULL)
+	if ( (dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 		return ENODEV;
 	
 	/* Select active table */
