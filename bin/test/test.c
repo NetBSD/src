@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.36 2008/06/20 23:29:36 christos Exp $ */
+/* $NetBSD: test.c,v 1.37 2008/09/10 19:00:51 christos Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.36 2008/06/20 23:29:36 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.37 2008/09/10 19:00:51 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -681,7 +681,7 @@ getn(const char *s)
 	while (isspace((unsigned char)*p))
 	      p++;
 	
-	if (*p)
+	if (*p || p == s)
 	      error("%s: bad number", s);
 
 	return r;
