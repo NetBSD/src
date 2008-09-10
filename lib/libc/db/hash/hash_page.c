@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.21 2008/08/26 21:18:38 joerg Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.22 2008/09/10 17:52:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,13 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)hash_page.c	8.7 (Berkeley) 8/16/94";
-#else
-__RCSID("$NetBSD: hash_page.c,v 1.21 2008/08/26 21:18:38 joerg Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: hash_page.c,v 1.22 2008/09/10 17:52:35 joerg Exp $");
 
 /*
  * PACKAGE:  hashing
