@@ -1,4 +1,4 @@
-/* $NetBSD: strtoumax.c,v 1.4 2008/08/22 03:00:02 matt Exp $ */
+/* $NetBSD: strtoumax.c,v 1.5 2008/09/10 18:08:58 joerg Exp $ */
 
 /*-
  * Copyright (c) 2005 The DragonFly Project.  All rights reserved.
@@ -27,8 +27,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoumax.c,v 1.4 2008/08/22 03:00:02 matt Exp $");
+__RCSID("$NetBSD: strtoumax.c,v 1.5 2008/09/10 18:08:58 joerg Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
