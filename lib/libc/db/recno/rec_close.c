@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_close.c,v 1.13 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: rec_close.c,v 1.14 2008/09/10 17:52:36 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -30,13 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)rec_close.c	8.6 (Berkeley) 8/18/94";
-#else
-__RCSID("$NetBSD: rec_close.c,v 1.13 2007/02/03 23:46:09 christos Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: rec_close.c,v 1.14 2008/09/10 17:52:36 joerg Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>

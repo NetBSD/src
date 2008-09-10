@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbmdatum.c,v 1.2 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: ndbmdatum.c,v 1.3 2008/09/10 17:52:35 joerg Exp $	*/
 /*	from: NetBSD: ndbm.c,v 1.18 2004/04/27 20:03:45 kleink Exp 	*/
 
 /*-
@@ -34,13 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)ndbm.c	8.4 (Berkeley) 7/21/94";
-#else
-__RCSID("$NetBSD: ndbmdatum.c,v 1.2 2007/02/03 23:46:09 christos Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: ndbmdatum.c,v 1.3 2008/09/10 17:52:35 joerg Exp $");
 
 /*
  * This package provides a dbm compatible interface to the new hashing
