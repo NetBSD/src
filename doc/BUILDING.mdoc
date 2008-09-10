@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.65 2008/09/06 23:22:46 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.66 2008/09/10 11:16:41 joerg Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd August 18, 2008
+.Dd September 10, 2008
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -506,6 +506,13 @@ will be set to
 .Dq no
 unconditionally.
 .DFLTy
+.
+.It Sy MKSTRIPIDENT
+.YorN
+Indicates whether program binaries and shared libraries should be built
+to include RCS IDs for use with
+.Xr ident 1 .
+.DFLTn
 .
 .It Sy MKTTINTERP
 .YorN
