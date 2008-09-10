@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.37 2008/09/09 16:35:15 dyoung Exp $	*/
+/*	$NetBSD: show.c,v 1.38 2008/09/10 01:06:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.37 2008/09/09 16:35:15 dyoung Exp $");
+__RCSID("$NetBSD: show.c,v 1.38 2008/09/10 01:06:58 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ static void p_sockaddr(struct sockaddr *, struct sockaddr *, int, int );
 static void p_flags(int);
 
 void
-parse_show_opts(int argc, char **argv, int *afp, int *flagsp,
+parse_show_opts(int argc, char * const *argv, int *afp, int *flagsp,
     const char **afnamep, bool nolink)
 {
 	const char *afname = "unspec";
@@ -167,7 +167,7 @@ parse_show_opts(int argc, char **argv, int *afp, int *flagsp,
  * Print routing tables.
  */
 void
-show(int argc, char **argv)
+show(int argc, char *const *argv)
 {
 	size_t needed;
 	int af, flags, mib[6];
