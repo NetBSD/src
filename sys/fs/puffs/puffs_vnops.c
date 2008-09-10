@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.128 2008/01/30 09:50:21 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.129 2008/09/10 19:25:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.128 2008/01/30 09:50:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.129 2008/09/10 19:25:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1228,7 +1228,7 @@ puffs_vnop_poll(void *v)
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
 		int a_events;
-	} */ *ap = v;
+	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, poll);
 	struct vnode *vp = ap->a_vp;
 	struct puffs_mount *pmp = MPTOPUFFSMP(vp->v_mount);
@@ -1554,7 +1554,7 @@ puffs_vnop_link(void *v)
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
-	} */ *ap = v;
+	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, link);
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
@@ -1604,7 +1604,7 @@ puffs_vnop_symlink(void *v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 		char *a_target;
-	} */ *ap = v;
+	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, symlink);
 	struct vnode *dvp = ap->a_dvp;
 	struct puffs_node *dpn = VPTOPP(dvp);
@@ -1700,7 +1700,7 @@ puffs_vnop_rename(void *v)
 		struct vnode *a_tdvp;
 		struct vnode *a_tvp;
 		struct componentname *a_tcnp;
-	} */ *ap = v;
+	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, rename);
 	struct vnode *fdvp = ap->a_fdvp;
 	struct puffs_node *fpn = ap->a_fvp->v_data;
@@ -2521,7 +2521,7 @@ puffs_vnop_lock(void *v)
 	struct vop_lock_args /* {
 		struct vnode *a_vp;
 		int a_flags;
-	} */ *ap = v;
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
 	int flags = ap->a_flags;
@@ -2614,7 +2614,7 @@ puffs_vnop_spec_write(void *v)
 		struct uio *a_uio;
 		int a_ioflag;
 		kauth_cred_t a_cred;
-	} */ *ap = v;
+	} */ *ap = v;
 
 	puffs_updatenode(VPTOPP(ap->a_vp), PUFFS_UPDATEMTIME, 0);
 	return VOCALL(spec_vnodeop_p, VOFFSET(vop_write), v);
@@ -2644,7 +2644,7 @@ puffs_vnop_fifo_write(void *v)
 		struct uio *a_uio;
 		int a_ioflag;
 		kauth_cred_t a_cred;
-	} */ *ap = v;
+	} */ *ap = v;
 
 	puffs_updatenode(VPTOPP(ap->a_vp), PUFFS_UPDATEMTIME, 0);
 	return VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), v);
