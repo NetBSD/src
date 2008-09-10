@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.112 2008/09/09 19:58:46 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.113 2008/09/10 00:57:57 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.112 2008/09/09 19:58:46 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.113 2008/09/10 00:57:57 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,9 +81,9 @@ static void set_metric(char *, int);
 static int newroute(int, char **);
 static void inet_makenetandmask(u_int32_t, struct sockaddr_in *);
 #ifdef INET6
-static int inet6_makenetandmask(struct sockaddr_in6 *);
+static int inet6_makenetandmask(const struct sockaddr_in6 *);
 #endif
-static int getaddr(int, char *, struct hostent **);
+static int getaddr(int, const char *, struct hostent **);
 static int flushroutes(int, char *[], int);
 static int prefixlen(const char *);
 #ifndef SMALL
@@ -99,7 +99,7 @@ static void pmsg_common(struct rt_msghdr *);
 static void pmsg_addrs(const char *, int);
 static void bprintf(FILE *, int, const char *);
 static void sodump(sup, const char *);
-static void sockaddr(char *, struct sockaddr *);
+static void sockaddr(const char *, struct sockaddr *);
 
 union	sockunion {
 	struct	sockaddr sa;
@@ -995,8 +995,9 @@ newroute(int argc, char **argv)
 }
 
 static void
-inet_makenetandmask(u_int32_t net, struct sockaddr_in *isin)
+inet_makenetandmask(const u_int32_t net, struct sockaddr_in * const isin)
 {
+	struct sockaddr_in *sin;
 	u_int32_t addr, mask = 0;
 	char *cp;
 
@@ -1042,15 +1043,15 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *isin)
 			mask = -1;
 	}
 	isin->sin_addr.s_addr = htonl(addr);
-	isin = &so_mask.sin;
-	isin->sin_addr.s_addr = htonl(mask);
-	isin->sin_len = 0;
-	isin->sin_family = 0;
-	cp = (char *)(&isin->sin_addr + 1);
-	while (*--cp == 0 && cp > (char *)isin)
+	sin = &so_mask.sin;
+	sin->sin_addr.s_addr = htonl(mask);
+	sin->sin_len = 0;
+	sin->sin_family = 0;
+	cp = (char *)(&sin->sin_addr + 1);
+	while (*--cp == 0 && cp > (char *)sin)
 		;
-	isin->sin_len = 1 + cp - (char *)isin;
-	isin->sin_family = AF_INET;
+	sin->sin_len = 1 + cp - (char *)sin;
+	sin->sin_family = AF_INET;
 }
 
 #ifdef INET6
@@ -1058,7 +1059,7 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *isin)
  * XXX the function may need more improvement...
  */
 static int
-inet6_makenetandmask(struct sockaddr_in6 *sin6)
+inet6_makenetandmask(const struct sockaddr_in6 * const sin6)
 {
 	const char *plen;
 	struct in6_addr in6;
@@ -1089,7 +1090,7 @@ inet6_makenetandmask(struct sockaddr_in6 *sin6)
  * returning 1 if a host address, 0 if a network address.
  */
 static int
-getaddr(int which, char *s, struct hostent **hpp)
+getaddr(int which, const char *s, struct hostent **hpp)
 {
 	sup su;
 	struct hostent *hp;
@@ -1989,7 +1990,7 @@ sodump(sup su, const char *which)
 #define DELIM	(4*2)
 
 static void
-sockaddr(char *addr, struct sockaddr *sa)
+sockaddr(const char *addr, struct sockaddr *sa)
 {
 	char *cp = (char *)sa;
 	int size = sa->sa_len;
