@@ -1,4 +1,4 @@
-.\" $NetBSD: wpa_passphrase.8,v 1.2 2006/06/28 21:10:08 wiz Exp $
+.\" $NetBSD: wpa_passphrase.8,v 1.3 2008/09/10 20:49:52 reed Exp $
 .\"
 .Dd May 14, 2006
 .Dt WPA_PASSPHRASE 8
@@ -17,6 +17,7 @@ utility
 pre-computes PSK entries for network configuration blocks of a
 .Xr wpa_supplicant.conf 5
 file.
+It prints a single network configuration block to standard output.
 .Pp
 The following arguments must be specified on the command line:
 .Bl -tag -width passphrase
@@ -25,6 +26,7 @@ The SSID whose passphrase should be derived.
 .It Ar passphrase
 The passphrase to use. If not included on the command line,
 passphrase will be read from standard input.
+The passphrase must be 8 to 63 characters in length.
 .El
 .Sh SEE ALSO
 .Xr wpa_supplicant.conf 5 ,
