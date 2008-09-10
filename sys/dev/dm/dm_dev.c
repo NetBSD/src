@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.1.2.8 2008/09/08 11:08:02 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.1.2.9 2008/09/10 18:43:27 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -44,6 +44,10 @@
 #include "netbsd-dm.h"
 #include "dm.h"
 
+static struct dm_dev* dm_dev_lookup_name(const char *);
+static struct dm_dev* dm_dev_lookup_uuid(const char *);
+static struct dm_dev* dm_dev_lookup_minor(int);
+
 static struct dm_dev_head dm_dev_list =
 TAILQ_HEAD_INITIALIZER(dm_dev_list);
 
@@ -56,9 +60,38 @@ kmutex_t dm_dev_mutex;
  */
 
 /*
+ * Generic function used to lookup struct dm_dev. Calling with dm_dev_name 
+ * and dm_dev_uuid NULL is allowed.
+ */
+
+struct dm_dev*
+dm_dev_lookup(const char *dm_dev_name, const char *dm_dev_uuid,
+ 	int dm_dev_minor) 
+{
+	struct dm_dev *dmv;
+	
+	dmv = NULL;
+	
+	if (dm_dev_minor > 0)
+		if ((dmv = dm_dev_lookup_minor(dm_dev_minor)) != NULL)
+			return dmv;
+	
+	if (dm_dev_name != NULL)	
+		if ((dmv = dm_dev_lookup_name(dm_dev_name)) != NULL)
+			return dmv;	
+	
+	if (dm_dev_uuid != NULL)
+		if ((dmv = dm_dev_lookup_name(dm_dev_uuid)) != NULL)
+			return dmv;
+		
+	return NULL;	
+}
+
+
+/*
  * Lookup device with its minor number.
  */
-struct dm_dev*
+static struct dm_dev*
 dm_dev_lookup_minor(int dm_dev_minor)
 {
 	struct dm_dev *dm_dev;
@@ -80,24 +113,26 @@ dm_dev_lookup_minor(int dm_dev_minor)
 /*
  * Lookup device with it's device name.
  */
-struct dm_dev*
+static struct dm_dev*
 dm_dev_lookup_name(const char *dm_dev_name)
 {
 	struct dm_dev *dm_dev;
 	int dlen; int slen;
 
-	if ((dm_dev_name == NULL) || (slen = strlen(dm_dev_name) == 0))
+	slen = strlen(dm_dev_name);
+
+	if (slen == 0)
 		return NULL;
 
 	mutex_enter(&dm_dev_mutex);
 	
 	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
-
+		
 		dlen = strlen(dm_dev->name);
-
+		
 		if(slen != dlen)
 			continue;
-		
+
 		if (strncmp(dm_dev_name, dm_dev->name, slen) == 0) {
 			mutex_exit(&dm_dev_mutex);
 			return dm_dev;
@@ -112,15 +147,17 @@ dm_dev_lookup_name(const char *dm_dev_name)
 /*
  * Lookup device with it's device uuid. Used mostly by LVM2tools.
  */
-struct dm_dev*
+static struct dm_dev*
 dm_dev_lookup_uuid(const char *dm_dev_uuid)
 {
 	struct dm_dev *dm_dev;
 	size_t len;
 	
 	len = 0;
+
+	len = strlen(dm_dev_uuid);
 	
-	if ((dm_dev_uuid == NULL) || (strlen(dm_dev_uuid) == 0))
+	if (len == 0)
 		return NULL;
 
 	mutex_enter(&dm_dev_mutex);
@@ -128,12 +165,12 @@ dm_dev_lookup_uuid(const char *dm_dev_uuid)
 	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
 			
 		if (strlen(dm_dev->uuid) != len)
-				continue;
+			continue;
 	
-	    if (strncmp(dm_dev_uuid, dm_dev->uuid, strlen(dm_dev->uuid)) == 0){
-		    mutex_exit(&dm_dev_mutex);
-		    return dm_dev;
-	    }
+		if (strncmp(dm_dev_uuid, dm_dev->uuid, strlen(dm_dev->uuid)) == 0){
+			mutex_exit(&dm_dev_mutex);
+			return dm_dev;
+		}
 	}
 		mutex_exit(&dm_dev_mutex);
 	
