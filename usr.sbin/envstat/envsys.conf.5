@@ -1,4 +1,4 @@
-.\" $NetBSD: envsys.conf.5,v 1.9 2008/08/31 09:40:00 wiz Exp $
+.\" $NetBSD: envsys.conf.5,v 1.10 2008/09/10 19:41:40 reed Exp $
 .\"
 .\" -
 .\" Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -41,7 +41,7 @@ The
 file configures all the features provided by the
 .Xr envsys 4
 framework.
-It consists of a series of device and sensor blocks .
+It consists of a series of device and sensor blocks.
 Each sensor block defines a group of
 .Em properties .
 The file format is free-form: new line markers and indentation are
@@ -204,7 +204,7 @@ when the
 option is specified.
 .It critical-max = 70C;
 .Pp
-Sets a critical max limit property in a sensor.
+Sets a critical maximum limit property in a sensor.
 Note that in this example, we are specifying the
 .Ql C
 keyword at the end; that means that this will only be valid for
@@ -258,7 +258,7 @@ unless the
 option is specified.
 .It critical-min = 1.230;
 .Pp
-Sets a critical min limit property in a sensor.
+Sets a critical minimum limit property in a sensor.
 The rules for
 .Em critical-max ,
 .Em critical-min ,
