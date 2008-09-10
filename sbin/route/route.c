@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.115 2008/09/10 01:06:58 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.116 2008/09/10 01:08:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.115 2008/09/10 01:06:58 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.116 2008/09/10 01:08:39 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -1327,10 +1327,10 @@ prefixlen(const char *s)
 	case AF_INET6:
 		so_mask.sin6.sin6_family = AF_INET6;
 		so_mask.sin6.sin6_len = sizeof(struct sockaddr_in6);
-		memset((void *)&so_mask.sin6.sin6_addr, 0,
+		memset(&so_mask.sin6.sin6_addr, 0,
 			sizeof(so_mask.sin6.sin6_addr));
 		if (q > 0)
-			memset((void *)&so_mask.sin6.sin6_addr, 0xff, q);
+			memset(&so_mask.sin6.sin6_addr, 0xff, q);
 		if (r > 0)
 			*((u_char *)&so_mask.sin6.sin6_addr + q) =
 			    (0xff00 >> r) & 0xff;
