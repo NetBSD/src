@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.116 2008/09/10 01:08:39 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.117 2008/09/10 01:14:59 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.116 2008/09/10 01:08:39 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.117 2008/09/10 01:14:59 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -1733,7 +1733,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 
 	if (! shortoutput)
 		(void)printf("   route to: %s\n",
-		    routename((struct sockaddr *) &so_dst, NULL, RTF_HOST));
+		    routename(&so_dst.sa, NULL, RTF_HOST));
 	if (rtm->rtm_version != RTM_VERSION) {
 		warnx("routing message version %d not understood",
 		    rtm->rtm_version);
