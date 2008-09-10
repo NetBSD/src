@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.117 2008/09/10 01:14:59 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.118 2008/09/10 01:56:22 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.117 2008/09/10 01:14:59 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.118 2008/09/10 01:56:22 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,35 +73,7 @@ __RCSID("$NetBSD: route.c,v 1.117 2008/09/10 01:14:59 dyoung Exp $");
 #include "keywords.h"
 #include "extern.h"
 
-typedef union sockunion *sup;
-
-static char *any_ntoa(const struct sockaddr *);
-static const char *route_strerror(int);
-static void set_metric(const char *, int);
-static int newroute(int, char *const *);
-static void inet_makenetandmask(u_int32_t, struct sockaddr_in *);
-#ifdef INET6
-static int inet6_makenetandmask(const struct sockaddr_in6 *);
-#endif
-static int getaddr(int, const char *, struct hostent **);
-static int flushroutes(int, char *const [], int);
-static int prefixlen(const char *);
-#ifndef SMALL
-static void interfaces(void);
-static void monitor(void);
-static int print_getmsg(struct rt_msghdr *, int);
-static const char *linkstate(struct if_msghdr *);
-#endif /* SMALL */
-static int rtmsg(int, int );
-static void mask_addr(void);
-static void print_rtmsg(struct rt_msghdr *, int);
-static void pmsg_common(struct rt_msghdr *);
-static void pmsg_addrs(const char *, int);
-static void bprintf(FILE *, int, const char *);
-static void sodump(sup, const char *);
-static void sockaddr(const char *, struct sockaddr *);
-
-union	sockunion {
+union sockunion {
 	struct	sockaddr sa;
 	struct	sockaddr_in sin;
 #ifdef INET6
@@ -112,7 +84,39 @@ union	sockunion {
 #ifndef SMALL
 	struct	sockaddr_iso siso;
 #endif /* SMALL */
-} so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp;
+};
+
+typedef union sockunion *sup;
+
+struct sou {
+	union sockunion so_dst, so_gate, so_mask, so_genmask, so_ifa, so_ifp;
+};
+
+static char *any_ntoa(const struct sockaddr *);
+static const char *route_strerror(int);
+static void set_metric(const char *, int);
+static int newroute(int, char *const *);
+static void inet_makenetandmask(u_int32_t, struct sockaddr_in *, struct sou *);
+#ifdef INET6
+static int inet6_makenetandmask(const struct sockaddr_in6 *, struct sou *);
+#endif
+static int getaddr(int, const char *, struct hostent **, struct sou *);
+static int flushroutes(int, char *const [], int);
+static int prefixlen(const char *, struct sou *);
+#ifndef SMALL
+static void interfaces(void);
+static void monitor(void);
+static int print_getmsg(struct rt_msghdr *, int, struct sou *);
+static const char *linkstate(struct if_msghdr *);
+#endif /* SMALL */
+static int rtmsg(int, int, struct sou *);
+static void mask_addr(struct sou *);
+static void print_rtmsg(struct rt_msghdr *, int);
+static void pmsg_common(struct rt_msghdr *);
+static void pmsg_addrs(const char *, int);
+static void bprintf(FILE *, int, const char *);
+static void sodump(sup, const char *);
+static void sockaddr(const char *, struct sockaddr *);
 
 int	pid, rtm_addrs;
 int	sock;
@@ -768,6 +772,9 @@ newroute(int argc, char *const *argv)
 	int ishost = 0, ret, attempts, oerrno, flags = RTF_STATIC;
 	int key;
 	struct hostent *hp = 0;
+	struct sou sou, *soup = &sou;
+
+	memset(&sou, 0, sizeof(sou));
 
 	cmd = argv[0];
 	af = AF_UNSPEC;
@@ -866,33 +873,33 @@ newroute(int argc, char *const *argv)
 			case K_IFA:
 				if (!--argc)
 					usage(1+*argv);
-				(void)getaddr(RTA_IFA, *++argv, 0);
+				(void)getaddr(RTA_IFA, *++argv, 0, soup);
 				break;
 			case K_IFP:
 				if (!--argc)
 					usage(1+*argv);
-				(void)getaddr(RTA_IFP, *++argv, 0);
+				(void)getaddr(RTA_IFP, *++argv, 0, soup);
 				break;
 			case K_GENMASK:
 				if (!--argc)
 					usage(1+*argv);
-				(void)getaddr(RTA_GENMASK, *++argv, 0);
+				(void)getaddr(RTA_GENMASK, *++argv, 0, soup);
 				break;
 			case K_GATEWAY:
 				if (!--argc)
 					usage(1+*argv);
-				(void)getaddr(RTA_GATEWAY, *++argv, 0);
+				(void)getaddr(RTA_GATEWAY, *++argv, 0, soup);
 				break;
 			case K_DST:
 				if (!--argc)
 					usage(1+*argv);
-				ishost = getaddr(RTA_DST, *++argv, &hp);
+				ishost = getaddr(RTA_DST, *++argv, &hp, soup);
 				dest = *argv;
 				break;
 			case K_NETMASK:
 				if (!--argc)
 					usage(1+*argv);
-				(void)getaddr(RTA_NETMASK, *++argv, 0);
+				(void)getaddr(RTA_NETMASK, *++argv, 0, soup);
 				/* FALLTHROUGH */
 			case K_NET:
 				forcenet++;
@@ -900,7 +907,7 @@ newroute(int argc, char *const *argv)
 			case K_PREFIXLEN:
 				if (!--argc)
 					usage(1+*argv);
-				ishost = prefixlen(*++argv);
+				ishost = prefixlen(*++argv, soup);
 				break;
 			case K_MTU:
 			case K_HOPCOUNT:
@@ -920,10 +927,10 @@ newroute(int argc, char *const *argv)
 		} else {
 			if ((rtm_addrs & RTA_DST) == 0) {
 				dest = *argv;
-				ishost = getaddr(RTA_DST, *argv, &hp);
+				ishost = getaddr(RTA_DST, *argv, &hp, soup);
 			} else if ((rtm_addrs & RTA_GATEWAY) == 0) {
 				gateway = *argv;
-				(void)getaddr(RTA_GATEWAY, *argv, &hp);
+				(void)getaddr(RTA_GATEWAY, *argv, &hp, soup);
 			} else {
 				ret = atoi(*argv);
 
@@ -947,7 +954,7 @@ newroute(int argc, char *const *argv)
 				    iflag = 0;
 				    continue;
 				}
-				(void)getaddr(RTA_NETMASK, *argv, 0);
+				(void)getaddr(RTA_NETMASK, *argv, 0, soup);
 			}
 		}
 	}
@@ -964,13 +971,13 @@ newroute(int argc, char *const *argv)
 		flags |= RTF_GATEWAY;
 	for (attempts = 1; ; attempts++) {
 		errno = 0;
-		if ((ret = rtmsg(*cmd, flags)) == 0)
+		if ((ret = rtmsg(*cmd, flags, soup)) == 0)
 			break;
 		if (errno != ENETUNREACH && errno != ESRCH)
 			break;
 		if (af == AF_INET && *gateway && hp && hp->h_addr_list[1]) {
 			hp->h_addr_list++;
-			memmove(&so_gate.sin.sin_addr, hp->h_addr_list[0],
+			memmove(&soup->so_gate.sin.sin_addr, hp->h_addr_list[0],
 			    hp->h_length);
 		} else
 			break;
@@ -984,7 +991,7 @@ newroute(int argc, char *const *argv)
 			(void)printf(": gateway %s", gateway);
 			if (attempts > 1 && ret == 0 && af == AF_INET)
 			    (void)printf(" (%s)",
-			        inet_ntoa(so_gate.sin.sin_addr));
+			        inet_ntoa(soup->so_gate.sin.sin_addr));
 		}
 		if (ret == 0)
 			(void)printf("\n");
@@ -995,7 +1002,8 @@ newroute(int argc, char *const *argv)
 }
 
 static void
-inet_makenetandmask(const u_int32_t net, struct sockaddr_in * const isin)
+inet_makenetandmask(const u_int32_t net, struct sockaddr_in * const isin,
+    struct sou *soup)
 {
 	struct sockaddr_in *sin;
 	u_int32_t addr, mask = 0;
@@ -1043,7 +1051,7 @@ inet_makenetandmask(const u_int32_t net, struct sockaddr_in * const isin)
 			mask = -1;
 	}
 	isin->sin_addr.s_addr = htonl(addr);
-	sin = &so_mask.sin;
+	sin = &soup->so_mask.sin;
 	sin->sin_addr.s_addr = htonl(mask);
 	sin->sin_len = 0;
 	sin->sin_family = 0;
@@ -1059,7 +1067,7 @@ inet_makenetandmask(const u_int32_t net, struct sockaddr_in * const isin)
  * XXX the function may need more improvement...
  */
 static int
-inet6_makenetandmask(const struct sockaddr_in6 * const sin6)
+inet6_makenetandmask(const struct sockaddr_in6 * const sin6, struct sou *soup)
 {
 	const char *plen;
 	struct in6_addr in6;
@@ -1079,7 +1087,7 @@ inet6_makenetandmask(const struct sockaddr_in6 * const sin6)
 		return 1;
 	else {
 		rtm_addrs |= RTA_NETMASK;
-		(void)prefixlen(plen);
+		(void)prefixlen(plen, soup);
 		return 0;
 	}
 }
@@ -1090,7 +1098,7 @@ inet6_makenetandmask(const struct sockaddr_in6 * const sin6)
  * returning 1 if a host address, 0 if a network address.
  */
 static int
-getaddr(int which, const char *s, struct hostent **hpp)
+getaddr(int which, const char *s, struct hostent **hpp, struct sou *soup)
 {
 	sup su;
 	struct hostent *hp;
@@ -1107,23 +1115,23 @@ getaddr(int which, const char *s, struct hostent **hpp)
 	rtm_addrs |= which;
 	switch (which) {
 	case RTA_DST:
-		su = &so_dst;
+		su = &soup->so_dst;
 		break;
 	case RTA_GATEWAY:
-		su = &so_gate;
+		su = &soup->so_gate;
 		break;
 	case RTA_NETMASK:
-		su = &so_mask;
+		su = &soup->so_mask;
 		break;
 	case RTA_GENMASK:
-		su = &so_genmask;
+		su = &soup->so_genmask;
 		break;
 	case RTA_IFP:
-		su = &so_ifp;
+		su = &soup->so_ifp;
 		afamily = AF_LINK;
 		break;
 	case RTA_IFA:
-		su = &so_ifa;
+		su = &soup->so_ifa;
 		su->sa.sa_family = af;
 		break;
 	default:
@@ -1137,7 +1145,7 @@ getaddr(int which, const char *s, struct hostent **hpp)
 		switch (which) {
 		case RTA_DST:
 			forcenet++;
-			(void)getaddr(RTA_NETMASK, s, 0);
+			(void)getaddr(RTA_NETMASK, s, 0, soup);
 			break;
 		case RTA_NETMASK:
 		case RTA_GENMASK:
@@ -1188,9 +1196,9 @@ getaddr(int which, const char *s, struct hostent **hpp)
 #endif
 		if (hints.ai_flags == AI_NUMERICHOST) {
 			if (slash)
-				return prefixlen(slash + 1);
+				return prefixlen(slash + 1, soup);
 			if (which == RTA_DST)
-				return inet6_makenetandmask(&su->sin6);
+				return inet6_makenetandmask(&su->sin6, soup);
 			return 0;
 		} else
 			return 1;
@@ -1250,13 +1258,13 @@ badataddr:
 		*t = '\0';
 		if (forcenet == 0) {
 			if ((val = inet_addr(s)) != INADDR_NONE) {
-				inet_makenetandmask(htonl(val), &su->sin);
-				return prefixlen(&t[1]);
+				inet_makenetandmask(htonl(val), &su->sin, soup);
+				return prefixlen(&t[1], soup);
 			}
 		} else {
 			if ((val = inet_network(s)) != INADDR_NONE) {
-				inet_makenetandmask(val, &su->sin);
-				return prefixlen(&t[1]);
+				inet_makenetandmask(val, &su->sin, soup);
+				return prefixlen(&t[1], soup);
 			}
 		}
 		*t = '/';
@@ -1275,7 +1283,7 @@ badataddr:
 	    ((np = getnetbyname(s)) != NULL && (val = np->n_net) != 0)) {
 netdone:
 		if (which == RTA_DST)
-			inet_makenetandmask(val, &su->sin);
+			inet_makenetandmask(val, &su->sin, soup);
 		return 0;
 	}
 	hp = gethostbyname(s);
@@ -1290,7 +1298,7 @@ netdone:
 }
 
 int
-prefixlen(const char *s)
+prefixlen(const char *s, struct sou *soup)
 {
 	int len = atoi(s), q, r;
 	int max;
@@ -1317,22 +1325,22 @@ prefixlen(const char *s)
 	r = len & 7;
 	switch (af) {
 	case AF_INET:
-		memset(&so_mask, 0, sizeof(so_mask));
-		so_mask.sin.sin_family = AF_INET;
-		so_mask.sin.sin_len = sizeof(struct sockaddr_in);
-		so_mask.sin.sin_addr.s_addr = (len == 0 ? 0
+		memset(&soup->so_mask, 0, sizeof(soup->so_mask));
+		soup->so_mask.sin.sin_family = AF_INET;
+		soup->so_mask.sin.sin_len = sizeof(struct sockaddr_in);
+		soup->so_mask.sin.sin_addr.s_addr = (len == 0 ? 0
 				: htonl(0xffffffff << (32 - len)));
 		break;
 #ifdef INET6
 	case AF_INET6:
-		so_mask.sin6.sin6_family = AF_INET6;
-		so_mask.sin6.sin6_len = sizeof(struct sockaddr_in6);
-		memset(&so_mask.sin6.sin6_addr, 0,
-			sizeof(so_mask.sin6.sin6_addr));
+		soup->so_mask.sin6.sin6_family = AF_INET6;
+		soup->so_mask.sin6.sin6_len = sizeof(struct sockaddr_in6);
+		memset(&soup->so_mask.sin6.sin6_addr, 0,
+			sizeof(soup->so_mask.sin6.sin6_addr));
 		if (q > 0)
-			memset(&so_mask.sin6.sin6_addr, 0xff, q);
+			memset(&soup->so_mask.sin6.sin6_addr, 0xff, q);
 		if (r > 0)
-			*((u_char *)&so_mask.sin6.sin6_addr + q) =
+			*((u_char *)&soup->so_mask.sin6.sin6_addr + q) =
 			    (0xff00 >> r) & 0xff;
 		break;
 #endif
@@ -1405,7 +1413,7 @@ struct {
 } m_rtmsg;
 
 static int
-rtmsg(int cmd, int flags)
+rtmsg(int cmd, int flags, struct sou *soup)
 {
 	static int seq;
 	int rlen;
@@ -1429,9 +1437,9 @@ rtmsg(int cmd, int flags)
 		return -1;
 #else	/* SMALL */
 		cmd = RTM_GET;
-		if (so_ifp.sa.sa_family == AF_UNSPEC) {
-			so_ifp.sa.sa_family = AF_LINK;
-			so_ifp.sa.sa_len = sizeof(struct sockaddr_dl);
+		if (soup->so_ifp.sa.sa_family == AF_UNSPEC) {
+			soup->so_ifp.sa.sa_family = AF_LINK;
+			soup->so_ifp.sa.sa_len = sizeof(struct sockaddr_dl);
 			rtm_addrs |= RTA_IFP;
 		}
 #endif	/* SMALL */
@@ -1447,13 +1455,13 @@ rtmsg(int cmd, int flags)
 	rtm.rtm_inits = rtm_inits;
 
 	if (rtm_addrs & RTA_NETMASK)
-		mask_addr();
-	NEXTADDR(RTA_DST, so_dst);
-	NEXTADDR(RTA_GATEWAY, so_gate);
-	NEXTADDR(RTA_NETMASK, so_mask);
-	NEXTADDR(RTA_GENMASK, so_genmask);
-	NEXTADDR(RTA_IFP, so_ifp);
-	NEXTADDR(RTA_IFA, so_ifa);
+		mask_addr(soup);
+	NEXTADDR(RTA_DST, soup->so_dst);
+	NEXTADDR(RTA_GATEWAY, soup->so_gate);
+	NEXTADDR(RTA_NETMASK, soup->so_mask);
+	NEXTADDR(RTA_GENMASK, soup->so_genmask);
+	NEXTADDR(RTA_IFP, soup->so_ifp);
+	NEXTADDR(RTA_IFA, soup->so_ifa);
 	rtm.rtm_msglen = l = cp - (char *)&m_rtmsg;
 	if (verbose && ! shortoutput) {
 		if (rtm_addrs)
@@ -1478,7 +1486,7 @@ rtmsg(int cmd, int flags)
 		if (l < 0)
 			err(EXIT_FAILURE, "read from routing socket");
 		else
-			return print_getmsg(&rtm, l);
+			return print_getmsg(&rtm, l, soup);
 	}
 #endif	/* SMALL */
 #undef rtm
@@ -1486,19 +1494,19 @@ rtmsg(int cmd, int flags)
 }
 
 static void
-mask_addr(void)
+mask_addr(struct sou *soup)
 {
-	int olen = so_mask.sa.sa_len;
-	char *cp1 = olen + (char *)&so_mask, *cp2;
+	int olen = soup->so_mask.sa.sa_len;
+	char *cp1 = olen + (char *)&soup->so_mask, *cp2;
 
-	for (so_mask.sa.sa_len = 0; cp1 > (char *)&so_mask; )
+	for (soup->so_mask.sa.sa_len = 0; cp1 > (char *)&soup->so_mask; )
 		if (*--cp1 != 0) {
-			so_mask.sa.sa_len = 1 + cp1 - (char *)&so_mask;
+			soup->so_mask.sa.sa_len = 1 + cp1 - (char *)&soup->so_mask;
 			break;
 		}
 	if ((rtm_addrs & RTA_DST) == 0)
 		return;
-	switch (so_dst.sa.sa_family) {
+	switch (soup->so_dst.sa.sa_family) {
 	case AF_INET:
 #ifdef INET6
 	case AF_INET6:
@@ -1510,22 +1518,22 @@ mask_addr(void)
 		return;
 #ifndef SMALL
 	case AF_ISO:
-		olen = MIN(so_dst.siso.siso_nlen,
-			   MAX(so_mask.sa.sa_len - 6, 0));
+		olen = MIN(soup->so_dst.siso.siso_nlen,
+			   MAX(soup->so_mask.sa.sa_len - 6, 0));
 		break;
 #endif /* SMALL */
 	}
-	cp1 = so_mask.sa.sa_len + 1 + (char *)&so_dst;
-	cp2 = so_dst.sa.sa_len + 1 + (char *)&so_dst;
+	cp1 = soup->so_mask.sa.sa_len + 1 + (char *)&soup->so_dst;
+	cp2 = soup->so_dst.sa.sa_len + 1 + (char *)&soup->so_dst;
 	while (cp2 > cp1)
 		*--cp2 = 0;
-	cp2 = so_mask.sa.sa_len + 1 + (char *)&so_mask;
-	while (cp1 > so_dst.sa.sa_data)
+	cp2 = soup->so_mask.sa.sa_len + 1 + (char *)&soup->so_mask;
+	while (cp1 > soup->so_dst.sa.sa_data)
 		*--cp1 &= *--cp2;
 #ifndef SMALL
-	switch (so_dst.sa.sa_family) {
+	switch (soup->so_dst.sa.sa_family) {
 	case AF_ISO:
-		so_dst.siso.siso_nlen = olen;
+		soup->so_dst.siso.siso_nlen = olen;
 		break;
 	}
 #endif /* SMALL */
@@ -1723,7 +1731,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 
 #ifndef	SMALL
 static int
-print_getmsg(struct rt_msghdr *rtm, int msglen)
+print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 {
 	struct sockaddr *dst = NULL, *gate = NULL, *mask = NULL, *ifa = NULL;
 	struct sockaddr_dl *ifp = NULL;
@@ -1733,7 +1741,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen)
 
 	if (! shortoutput)
 		(void)printf("   route to: %s\n",
-		    routename(&so_dst.sa, NULL, RTF_HOST));
+		    routename(&soup->so_dst.sa, NULL, RTF_HOST));
 	if (rtm->rtm_version != RTM_VERSION) {
 		warnx("routing message version %d not understood",
 		    rtm->rtm_version);
