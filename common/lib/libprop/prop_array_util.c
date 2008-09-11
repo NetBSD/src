@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array_util.c,v 1.1 2008/06/03 20:18:24 haad Exp $	*/
+/*	$NetBSD: prop_array_util.c,v 1.2 2008/09/11 13:15:13 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -156,6 +156,38 @@ prop_array_set_uint ## size (prop_array_t array,			\
 	if (num == NULL)						\
 		return (false);						\
 	rv = prop_array_set(array, indx, num);				\
+	prop_object_release(num);					\
+									\
+	return (rv);							\
+}									\
+									\
+bool									\
+prop_array_add_int ## size (prop_array_t array,				\
+				 int ## size ## _t val)			\
+{									\
+	prop_number_t num;						\
+	int rv;								\
+									\
+	num = prop_number_create_integer((int64_t) val);		\
+	if (num == NULL)						\
+		return (false);						\
+	rv = prop_array_add(array, num);				\
+	prop_object_release(num);					\
+									\
+	return (rv);							\
+}									\
+									\
+bool									\
+prop_array_add_uint ## size (prop_array_t array,			\
+				  uint ## size ## _t val)		\
+{									\
+	prop_number_t num;						\
+	int rv;								\
+									\
+	num = prop_number_create_integer((int64_t) val);		\
+	if (num == NULL)						\
+		return (false);						\
+	rv = prop_array_add(array, num);				\
 	prop_object_release(num);					\
 									\
 	return (rv);							\
