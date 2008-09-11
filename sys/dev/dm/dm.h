@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.1.2.15 2008/09/10 18:43:27 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.1.2.16 2008/09/11 13:40:47 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -95,11 +95,8 @@ struct dm_pdev {
 	struct vnode *pdev_vnode;
 	
 	int ref_cnt;
-	int list_ref_cnt; /* device list reference counter */
 
 	SLIST_ENTRY(dm_pdev) next_pdev;
-	
-	SLIST_ENTRY(dm_pdev) next_dev_pdev;
 };
 SLIST_HEAD(dm_pdevs, dm_pdev) dm_pdev_list;
 
@@ -135,8 +132,6 @@ struct dm_dev {
 /* Set this device type only during dev remove ioctl. */
 #define DM_DELETING_DEV        (1 << 8) 
 
-	struct dm_pdevs pdevs;
-
 	/* Current active table is selected with this. */
 	int cur_active_table; 
 	struct dm_table tables[2];
@@ -149,7 +144,7 @@ struct dm_dev {
 };
 
 
-/* for zero,error : dm_target->target_config == NULL */
+/* for zero, error : dm_target->target_config == NULL */
 				
 /*
  * Target config is initiated with target_init function.
@@ -201,6 +196,7 @@ struct dm_target {
 	/* Destroy target_config area */
 	int (*destroy)(struct dm_table_entry *);
 	
+	int (*deps) (struct dm_table_entry *, prop_array_t);
 	/*
 	 * Status routine is called to get params string, which is target
 	 * specific. When dm_table_status_ioctl is called with flag
@@ -209,7 +205,7 @@ struct dm_target {
 	char * (*status)(void *);
 	int (*strategy)(struct dm_table_entry *, struct buf *);
 	int (*upcall)(struct dm_table_entry *, struct buf *);
-
+	
 	uint32_t version[3];
 
 	TAILQ_ENTRY(dm_target) dm_target_next;
@@ -263,12 +259,14 @@ int dm_target_zero_init(struct dm_dev *, void**,  char *);
 char * dm_target_zero_status(void *);
 int dm_target_zero_strategy(struct dm_table_entry *, struct buf *);
 int dm_target_zero_destroy(struct dm_table_entry *);
+int dm_target_zero_deps(struct dm_table_entry *, prop_array_t);
 int dm_target_zero_upcall(struct dm_table_entry *, struct buf *);
 
 /* dm_target_error.c */
 int dm_target_error_init(struct dm_dev *, void**, char *);
 char * dm_target_error_status(void *);
 int dm_target_error_strategy(struct dm_table_entry *, struct buf *);
+int dm_target_error_deps(struct dm_table_entry *, prop_array_t);
 int dm_target_error_destroy(struct dm_table_entry *);
 int dm_target_error_upcall(struct dm_table_entry *, struct buf *);
 
@@ -276,6 +274,7 @@ int dm_target_error_upcall(struct dm_table_entry *, struct buf *);
 int dm_target_linear_init(struct dm_dev *, void**, char *);
 char * dm_target_linear_status(void *);
 int dm_target_linear_strategy(struct dm_table_entry *, struct buf *);
+int dm_target_linear_deps(struct dm_table_entry *, prop_array_t);
 int dm_target_linear_destroy(struct dm_table_entry *);
 int dm_target_linear_upcall(struct dm_table_entry *, struct buf *);
 
@@ -286,6 +285,7 @@ uint64_t atoi(const char *);
 int dm_target_snapshot_init(struct dm_dev *, void**, char *);
 char * dm_target_snapshot_status(void *);
 int dm_target_snapshot_strategy(struct dm_table_entry *, struct buf *);
+int dm_target_snapshot_deps(struct dm_table_entry *, prop_array_t);
 int dm_target_snapshot_destroy(struct dm_table_entry *);
 int dm_target_snapshot_upcall(struct dm_table_entry *, struct buf *);
 
@@ -293,6 +293,7 @@ int dm_target_snapshot_upcall(struct dm_table_entry *, struct buf *);
 int dm_target_snapshot_orig_init(struct dm_dev *, void**, char *);
 char * dm_target_snapshot_orig_status(void *);
 int dm_target_snapshot_orig_strategy(struct dm_table_entry *, struct buf *);
+int dm_target_snapshot_orig_deps(struct dm_table_entry *, prop_array_t);
 int dm_target_snapshot_orig_destroy(struct dm_table_entry *);
 int dm_target_snapshot_orig_upcall(struct dm_table_entry *, struct buf *);
 
@@ -315,7 +316,6 @@ int dm_pdev_destroy(void);
 int dm_pdev_init(void);
 struct dm_pdev* dm_pdev_insert(const char *);
 struct dm_pdev* dm_pdev_lookup_name(const char *);
-struct dm_pdev* dm_pdev_lookup_name_list(const char *, struct dm_pdevs *);
 
 #endif /*_KERNEL*/
 

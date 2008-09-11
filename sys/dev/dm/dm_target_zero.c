@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.1.2.7 2008/09/03 22:43:10 haad Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.1.2.8 2008/09/11 13:40:47 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -89,6 +89,13 @@ dm_target_zero_destroy(struct dm_table_entry *table_en)
 {
 	table_en->target_config = NULL;
 	
+	return 0;
+}
+
+/* Doesn't not need to do anything here. */
+int
+dm_target_zero_deps(struct dm_table_entry *table_en, prop_array_t prop_array)
+{	
 	return 0;
 }
 
