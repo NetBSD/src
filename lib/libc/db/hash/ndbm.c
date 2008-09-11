@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.c,v 1.22 2008/09/10 17:52:35 joerg Exp $	*/
+/*	$NetBSD: ndbm.c,v 1.23 2008/09/11 12:58:00 joerg Exp $	*/
 /*	from: NetBSD: ndbm.c,v 1.18 2004/04/27 20:03:45 kleink Exp 	*/
 
 /*-
@@ -33,8 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ndbm.c,v 1.22 2008/09/10 17:52:35 joerg Exp $");
+__RCSID("$NetBSD: ndbm.c,v 1.23 2008/09/11 12:58:00 joerg Exp $");
 
 /*
  * This package provides a dbm compatible interface to the new hashing

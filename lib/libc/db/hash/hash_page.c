@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.22 2008/09/10 17:52:35 joerg Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.23 2008/09/11 12:58:00 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -32,8 +32,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_page.c,v 1.22 2008/09/10 17:52:35 joerg Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.23 2008/09/11 12:58:00 joerg Exp $");
 
 /*
  * PACKAGE:  hashing
