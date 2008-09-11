@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_page.c,v 1.12 2008/09/10 17:52:35 joerg Exp $	*/
+/*	$NetBSD: bt_page.c,v 1.13 2008/09/11 12:58:00 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -29,8 +29,12 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_page.c,v 1.12 2008/09/10 17:52:35 joerg Exp $");
+__RCSID("$NetBSD: bt_page.c,v 1.13 2008/09/11 12:58:00 joerg Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
