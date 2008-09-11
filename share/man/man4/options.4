@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.364 2008/09/07 12:40:11 wiz Exp $
+.\"	$NetBSD: options.4,v 1.365 2008/09/11 20:49:29 pgoyette Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1524,6 +1524,8 @@ Support for
 Number of storage slots per file for
 .Xr fileassoc 9 .
 Default is 4.
+.It Cd options I2C_SCAN
+Scan each i2c bus to determine which addresses respond.
 .El
 .Ss Networking Options
 .Bl -ohang
