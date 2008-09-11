@@ -1,4 +1,4 @@
-/*	$NetBSD: qop_wfq.c,v 1.5 2002/03/05 04:11:53 itojun Exp $	*/
+/*	$NetBSD: qop_wfq.c,v 1.6 2008/09/11 17:58:59 joerg Exp $	*/
 /*	$KAME: qop_wfq.c,v 1.6 2001/12/03 08:20:56 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -118,6 +118,8 @@ wfq_interface_parser(const char *ifname, int argc, char **argv)
 					hash_policy = WFQ_HASH_FULL;
 				else if (EQUAL(*argv, "srcport"))
 					hash_policy = WFQ_HASH_SRCPORT;
+				else if (EQUAL(*argv, "srcaddr"))
+					hash_policy = WFQ_HASH_SRCADDR;
 				else {
 					LOG(LOG_ERR, 0,
 					    "Unknown hash policy '%s'", *argv);

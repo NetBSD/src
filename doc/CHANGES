@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1113 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1114 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -852,3 +852,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	uvideo(4): Add support for USB Video Class capture devices, part of
 		Patrick Mahoney's Google Summer of Code 2008 project.
 		[jmcneill 20080908]
+	altq(4): Add support for source address hashing in the WFQ scheduler.
+		[joerg 20080911]
