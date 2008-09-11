@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.1.2.9 2008/09/08 11:34:01 haad Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.1.2.10 2008/09/11 13:40:47 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -71,31 +71,6 @@ dm_pdev_lookup_name(const char *dm_pdev_name)
 }
 
 /*
- * Lookup dm_pdev_name in general pdev list. This is used to fo device pdevs 
- * list.
- */
-struct dm_pdev*
-dm_pdev_lookup_name_list(const char *dm_pdev_name, struct dm_pdevs *pdev_list)
-{
-	struct dm_pdev *dm_pdev;
-	int dlen; int slen;
-	
-	slen = strlen(dm_pdev_name);
-	
-	SLIST_FOREACH(dm_pdev, pdev_list, next_pdev) {
-		dlen = strlen(dm_pdev->name);	
-		
-		if (slen != dlen)
-			continue;
-		
-		if (strncmp(dm_pdev_name, dm_pdev->name, slen) == 0)
-			return dm_pdev;
-	}
-	
-	return NULL;
-}
-
-/*
  * Create entry for device with name dev_name and open vnode for it.
  * If entry already exists in global SLIST I will only increment
  * reference counter.
@@ -162,7 +137,6 @@ dm_pdev_alloc(const char *name)
 	strlcpy(dmp->name, name, MAX_DEV_NAME);
 	
 	dmp->ref_cnt = 0;
-	dmp->list_ref_cnt = 0;
 	dmp->pdev_vnode = NULL;
 	
 	return dmp;

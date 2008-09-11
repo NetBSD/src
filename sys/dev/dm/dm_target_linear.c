@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.1.2.14 2008/09/08 11:34:01 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.1.2.15 2008/09/11 13:40:47 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -74,12 +74,6 @@ dm_target_linear_init(struct dm_dev *dmv, void **target_config, char *params)
 	/* Insert dmp to global pdev list */
 	if ((dmp = dm_pdev_insert(argv[0])) == NULL)
 		return ENOENT;
-	
-	/* Lookup for pdev entry in device pdev list and insert */
-	if ((dm_pdev_lookup_name_list(dmp->name, &dmv->pdevs)) == NULL)
-		SLIST_INSERT_HEAD(&dmv->pdevs, dmp, next_dev_pdev); 
-		
-	dmp->list_ref_cnt++;	
 	
 	printf("Linear target init function called %s--%s!!\n",
 	    argv[0], argv[1]);
@@ -177,13 +171,6 @@ dm_target_linear_destroy(struct dm_table_entry *table_en)
 		return 0;
 	
 	tlc = table_en->target_config;
-	
-	/* Decrement device list reference counter */
-	tlc->pdev->list_ref_cnt--;
-	
-	/* If there is no other table which reference this pdev remove it. */
-	if (tlc->pdev->list_ref_cnt == 0)
-		SLIST_REMOVE(&table_en->dm_dev->pdevs, tlc->pdev, dm_pdev, next_dev_pdev);
 			
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tlc->pdev);
@@ -191,6 +178,28 @@ dm_target_linear_destroy(struct dm_table_entry *table_en)
 	kmem_free(table_en->target_config, sizeof(struct target_linear_config));
 
 	table_en->target_config = NULL;
+	
+	return 0;
+}
+
+/* Add this target pdev dependiences to prop_array_t */
+int
+dm_target_linear_deps(struct dm_table_entry *table_en, prop_array_t prop_array)
+{
+	struct target_linear_config *tlc;
+	struct vattr va;
+	
+	int error;
+	
+	if (table_en->target_config == NULL)
+		return ENOENT;
+	
+	tlc = table_en->target_config;
+	
+	if ((error = VOP_GETATTR(tlc->pdev->pdev_vnode, &va, curlwp->l_cred)) != 0)
+		return error;
+	
+	prop_array_add_uint64(prop_array, (uint64_t)va.va_rdev);
 	
 	return 0;
 }

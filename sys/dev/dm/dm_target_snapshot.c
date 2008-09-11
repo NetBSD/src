@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.8 2008/09/08 11:34:01 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.9 2008/09/11 13:40:47 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -104,10 +104,6 @@ dm_target_snapshot_init(struct dm_dev *dmv, void **target_config, char *params)
 	if ((dmp_snap = dm_pdev_insert(argv[0])) == NULL)
 		return ENOENT;
 	
-	/* Lookup for snapshot pdev entry in device list and insert */
-	if ((dm_pdev_lookup_name_list(dmp_snap->name, &dmv->pdevs)) == NULL)
-		SLIST_INSERT_HEAD(&dmv->pdevs, dmp_snap, next_dev_pdev);
-	
 	if ((tsc = kmem_alloc(sizeof(struct target_snapshot_config), KM_NOSLEEP))
 	    == NULL)
 		return 1;
@@ -121,10 +117,6 @@ dm_target_snapshot_init(struct dm_dev *dmv, void **target_config, char *params)
 		/* Insert cow device to global pdev list */
 		if ((dmp_cow = dm_pdev_insert(argv[1])) == NULL)
 			return ENOENT;	
-
-		/* Lookup for cow pdev entry in device list and insert */
-		if ((dm_pdev_lookup_name_list(dmp_cow->name, &dmv->pdevs)) == NULL)
-			SLIST_INSERT_HEAD(&dmv->pdevs, dmp_cow, next_dev_pdev);
 	}
 	
 	tsc->tsc_chunk_size = atoi(argv[3]);
@@ -222,24 +214,11 @@ dm_target_snapshot_destroy(struct dm_table_entry *table_en)
 	
 	tsc = table_en->target_config;
 	
-	/* Decrement device list reference counter */
-	tsc->tsc_snap_dev->list_ref_cnt--;
-	
-	/* If there is no other table which reference this pdev remove it. */
-	if (tsc->tsc_snap_dev->list_ref_cnt == 0)
-		SLIST_REMOVE(&table_en->dm_dev->pdevs, tsc->tsc_snap_dev, dm_pdev, next_dev_pdev);
-		
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tsc->tsc_snap_dev);
 		
-	if (tsc->tsc_persistent_dev) {
-		tsc->tsc_cow_dev->list_ref_cnt--;
-		
-		if (tsc->tsc_cow_dev->list_ref_cnt == 0)
-			SLIST_REMOVE(&table_en->dm_dev->pdevs, tsc->tsc_cow_dev, dm_pdev, next_dev_pdev);	
-	
+	if (tsc->tsc_persistent_dev)
 		dm_pdev_decr(tsc->tsc_cow_dev);
-	}
 	
 	kmem_free(table_en->target_config, sizeof(struct target_snapshot_config));
 
@@ -248,7 +227,40 @@ dm_target_snapshot_destroy(struct dm_table_entry *table_en)
 	return 0;
 }
 
-/* Unsupported for this target. */
+/* Add this target dependiences to prop_array_t */
+int
+dm_target_snapshot_deps(struct dm_table_entry *table_en, 
+	prop_array_t prop_array)
+{
+	struct target_snapshot_config *tsc;
+	struct vattr va;
+	
+	int error;
+	
+	if (table_en->target_config == NULL)
+		return 0;
+
+	tsc = table_en->target_config;
+	
+	if ((error = VOP_GETATTR(tsc->tsc_snap_dev->pdev_vnode, &va, curlwp->l_cred)) != 0)
+		return error;
+	
+	prop_array_add_uint64(prop_array, (uint64_t)va.va_rdev);
+	
+	if (tsc->tsc_persistent_dev) {
+	
+		if ((error = VOP_GETATTR(tsc->tsc_cow_dev->pdev_vnode, &va, 
+				curlwp->l_cred)) != 0)
+			return error;
+
+		prop_array_add_uint64(prop_array, (uint64_t)va.va_rdev);
+	
+	}
+	
+	return 0;
+}
+
+/* Upcall is used to inform other depended devices about IO. */
 int
 dm_target_snapshot_upcall(struct dm_table_entry *table_en, struct buf *bp)
 {
@@ -288,10 +300,6 @@ dm_target_snapshot_orig_init(struct dm_dev *dmv, void **target_config,
 	/* Insert snap device to global pdev list */
 	if ((dmp_real = dm_pdev_insert(params)) == NULL)
 		return ENOENT;
-	
-	/* Lookup for snapshot pdev entry in device list and insert */
-	if ((dm_pdev_lookup_name_list(dmp_real->name, &dmv->pdevs)) == NULL)
-		SLIST_INSERT_HEAD(&dmv->pdevs, dmp_real, next_dev_pdev);
 	
 	if ((tsoc = kmem_alloc(sizeof(struct target_snapshot_origin_config), KM_NOSLEEP))
 	    == NULL)
@@ -355,12 +363,55 @@ dm_target_snapshot_orig_strategy(struct dm_table_entry *table_en, struct buf *bp
 	return 0;
 }
 
-/* Doesn't do anything here. */
+/* Decrement pdev and free allocated space. */
 int
 dm_target_snapshot_orig_destroy(struct dm_table_entry *table_en)
 {
+	struct target_snapshot_origin_config *tsoc;
+	
+	/*
+	 * Destroy function is called for every target even if it
+	 * doesn't have target_config.
+	 */
+	
+	if (table_en->target_config == NULL)
+		return 0;
+	
+	tsoc = table_en->target_config;
+	
+	/* Decrement pdev ref counter if 0 remove it */
+	dm_pdev_decr(tsoc->tsoc_real_dev);
+	
+	kmem_free(table_en->target_config, sizeof(struct target_snapshot_origin_config));
+
 	table_en->target_config = NULL;
 
+	return 0;
+}
+
+/*
+ * Get target deps and add them to prop_array_t.
+ */
+int
+dm_target_snapshot_orig_deps(struct dm_table_entry *table_en,
+ 	prop_array_t prop_array)
+{
+	struct target_snapshot_origin_config *tsoc;
+	struct vattr va;
+	
+	int error;
+	
+	if (table_en->target_config == NULL)
+		return 0;
+
+	tsoc = table_en->target_config;
+	
+	if ((error = VOP_GETATTR(tsoc->tsoc_real_dev->pdev_vnode, &va, 
+			curlwp->l_cred)) != 0)
+		return error;
+	
+	prop_array_add_uint64(prop_array, (uint64_t)va.va_rdev);
+	
 	return 0;
 }
 
