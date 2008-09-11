@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.15 2008/09/10 18:43:27 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.16 2008/09/11 13:40:48 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -188,9 +188,6 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	if (flags & DM_READONLY_FLAG)
 		dmv->flags |= DM_READONLY_FLAG;
 
-	/* init device list of physical devices. */
-	SLIST_INIT(&dmv->pdevs);
-
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 	
 	/*
@@ -315,8 +312,7 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 
 /*
  * Remove device from global list I have to remove active
- * and inactive tables first and decrement reference_counters
- * for used pdevs.
+ * and inactive tables first.
  *
  * Locking: dev_rwlock
  */
@@ -324,7 +320,6 @@ int
 dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 {
 	struct dm_dev *dmv;
-	struct dm_pdev *dmp;
 	const char *name, *uuid;
 	uint32_t flags, minor;
 	
@@ -367,19 +362,6 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 	/* Destroy inactive table if exits, too. */
 	if (!SLIST_EMPTY(&dmv->tables[1 - dmv->cur_active_table]))
 		dm_table_destroy(&dmv->tables[1 - dmv->cur_active_table]);
-	
-	/* Decrement reference counters for all pdevs from this
-	   device if they are unused close vnode and remove them
-	   from global pdev list, too. */
-
-	while (!SLIST_EMPTY(&dmv->pdevs)) {  
-		
-		dmp = SLIST_FIRST(&dmv->pdevs);
-		
-		SLIST_REMOVE_HEAD(&dmv->pdevs, next_dev_pdev);
-		
-		dm_pdev_decr(dmp);
-	}	
 		
 	rw_destroy(&dmv->dev_rwlock);
 	
@@ -605,10 +587,8 @@ dm_table_clear_ioctl(prop_dictionary_t dm_dict)
 int
 dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 {
-	int error;
 	struct dm_dev *dmv;
-	struct dm_pdev *dmp;
-	struct vattr va;
+	struct dm_table_entry *table_en;
 	
 	prop_array_t cmd_array;
 	
@@ -645,15 +625,8 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	/* XXX DO I really need to write lock it here */
 	rw_enter(&dmv->dev_rwlock, RW_WRITER);
 	
-	SLIST_FOREACH(dmp, &dmv->pdevs, next_dev_pdev){
-
-		if ((error = VOP_GETATTR(dmp->pdev_vnode, &va, curlwp->l_cred)) != 0)
-			return error;
-		
-		prop_array_set_uint64(cmd_array, i, (uint64_t)va.va_rdev);
-
-		i++;
-	}
+	SLIST_FOREACH(table_en, &dmv->tables[dmv->cur_active_table], next)
+		table_en->target->deps(table_en, cmd_array);
 
 	rw_exit(&dmv->dev_rwlock);
 	

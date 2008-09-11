@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.1.2.12 2008/09/08 11:36:24 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.1.2.13 2008/09/11 13:40:47 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -213,6 +213,7 @@ dm_target_init(void)
 	dmt->init = &dm_target_linear_init;
 	dmt->status = &dm_target_linear_status;
 	dmt->strategy = &dm_target_linear_strategy;
+	dmt->deps = &dm_target_linear_deps;
 	dmt->destroy = &dm_target_linear_destroy;
 	dmt->upcall = &dm_target_linear_upcall;
 	
@@ -225,6 +226,7 @@ dm_target_init(void)
 	dmt1->init = &dm_target_zero_init;
 	dmt1->status = &dm_target_zero_status;
 	dmt1->strategy = &dm_target_zero_strategy;
+	dmt1->deps = &dm_target_zero_deps; 
 	dmt1->destroy = &dm_target_zero_destroy; 
 	dmt1->upcall = &dm_target_zero_upcall;
 	
@@ -237,6 +239,7 @@ dm_target_init(void)
 	dmt2->init = &dm_target_error_init;
 	dmt2->status = &dm_target_error_status;
 	dmt2->strategy = &dm_target_error_strategy;
+	dmt2->deps = &dm_target_error_deps; 
 	dmt2->destroy = &dm_target_error_destroy; 
 	dmt2->upcall = &dm_target_error_upcall;
 	
@@ -249,6 +252,7 @@ dm_target_init(void)
 	dmt3->init = &dm_target_linear_init;
 	dmt3->status = &dm_target_linear_status;
 	dmt3->strategy = &dm_target_linear_strategy;
+	dmt3->deps = &dm_target_linear_deps;
 	dmt3->destroy = &dm_target_linear_destroy;
 	dmt3->upcall = NULL;
 	
@@ -261,7 +265,8 @@ dm_target_init(void)
 	dmt4->init = NULL;
 	dmt4->status = NULL;
 	dmt4->strategy = NULL;
-	dmt4->destroy = NULL; 
+	dmt4->deps = NULL;
+	dmt4->destroy = NULL;
 	dmt4->upcall = NULL;
 	
 	r = dm_target_insert(dmt4);
@@ -273,6 +278,7 @@ dm_target_init(void)
 	dmt5->init = &dm_target_snapshot_init;
 	dmt5->status = &dm_target_snapshot_status;
 	dmt5->strategy = &dm_target_snapshot_strategy;
+	dmt5->deps = &dm_target_snapshot_deps;
 	dmt5->destroy = &dm_target_snapshot_destroy;
 	dmt5->upcall = &dm_target_snapshot_upcall;
 	
@@ -285,6 +291,7 @@ dm_target_init(void)
 	dmt6->init = &dm_target_snapshot_orig_init;
 	dmt6->status = &dm_target_snapshot_orig_status;
 	dmt6->strategy = &dm_target_snapshot_orig_strategy;
+	dmt6->deps = &dm_target_snapshot_orig_deps;
 	dmt6->destroy = &dm_target_snapshot_orig_destroy;
 	dmt6->upcall = &dm_target_snapshot_orig_upcall;
 
