@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.19 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.20 2008/09/11 09:37:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -130,8 +130,6 @@ typedef enum {
 
 struct fss_cache {
 	fss_cache_type	fc_type;	/* Current state */
-	struct fss_softc *fc_softc;	/* Backlink to our softc */
-	volatile int	fc_xfercount;	/* Number of outstanding transfers */
 	u_int32_t	fc_cluster;	/* Cluster number of this entry */
 	void *		fc_data;	/* Data */
 };

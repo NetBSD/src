@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.52 2008/08/26 13:04:55 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.53 2008/09/11 09:37:53 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.52 2008/08/26 13:04:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.53 2008/09/11 09:37:53 hannken Exp $");
 
 #include "fss.h"
 
@@ -131,8 +131,7 @@ static int fss_create_snapshot(struct fss_softc *, struct fss_set *,
 static int fss_delete_snapshot(struct fss_softc *, struct lwp *);
 static int fss_softc_alloc(struct fss_softc *);
 static void fss_softc_free(struct fss_softc *);
-static void fss_cluster_iodone(struct buf *);
-static void fss_read_cluster(struct fss_softc *, u_int32_t);
+static int fss_read_cluster(struct fss_softc *, u_int32_t);
 static void fss_bs_thread(void *);
 static int fss_bs_io(struct fss_softc *, fss_io_type,
     u_int32_t, off_t, int, void *);
@@ -393,8 +392,6 @@ fss_softc_alloc(struct fss_softc *sc)
 	len = FSS_CLSIZE(sc);
 	for (i = 0; i < sc->sc_cache_size; i++) {
 		sc->sc_cache[i].fc_type = FSS_CACHE_FREE;
-		sc->sc_cache[i].fc_softc = sc;
-		sc->sc_cache[i].fc_xfercount = 0;
 		sc->sc_cache[i].fc_data = malloc(len, M_TEMP,
 		    M_WAITOK|M_CANFAIL);
 		if (sc->sc_cache[i].fc_data == NULL)
@@ -490,7 +487,7 @@ fss_umount_hook(struct mount *mp, int forced)
 static int
 fss_copy_on_write(void *v, struct buf *bp, bool data_valid)
 {
-	int s;
+	int error, s;
 	u_int32_t cl, ch, c;
 	struct fss_softc *sc = v;
 
@@ -504,22 +501,24 @@ fss_copy_on_write(void *v, struct buf *bp, bool data_valid)
 
 	cl = FSS_BTOCL(sc, dbtob(bp->b_blkno));
 	ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
-
+	error = 0;
 	if (curlwp == uvm.pagedaemon_lwp) {
 		for (c = cl; c <= ch; c++)
 			if (isclr(sc->sc_copied, c)) {
-				FSS_UNLOCK(sc, s);
-
-				return ENOMEM;
+				error = ENOMEM;
+				break;
 			}
 	}
-
 	FSS_UNLOCK(sc, s);
 
-	for (c = cl; c <= ch; c++)
-		fss_read_cluster(sc, c);
+	if (error == 0)
+		for (c = cl; c <= ch; c++) {
+			error = fss_read_cluster(sc, c);
+			if (error)
+				break;
+		}
 
-	return 0;
+	return error;
 }
 
 /*
@@ -815,39 +814,14 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 }
 
 /*
- * A read from the snapshotted block device has completed.
- */
-static void
-fss_cluster_iodone(struct buf *bp)
-{
-	int s;
-	struct fss_cache *scp = bp->b_private;
-
-	KASSERT(bp->b_vp == NULL);
-
-	FSS_LOCK(scp->fc_softc, s);
-
-	if (bp->b_error != 0)
-		fss_error(scp->fc_softc, "fs read error %d", bp->b_error);
-
-	if (--scp->fc_xfercount == 0)
-		wakeup(&scp->fc_data);
-
-	FSS_UNLOCK(scp->fc_softc, s);
-
-	putiobuf(bp);
-}
-
-/*
  * Read a cluster from the snapshotted block device to the cache.
  */
-static void
+static int
 fss_read_cluster(struct fss_softc *sc, u_int32_t cl)
 {
-	int s, todo, len;
-	char *addr;
+	int error, s, todo, offset, len;
 	daddr_t dblk;
-	struct buf *bp;
+	struct buf *bp, *mbp;
 	struct fss_cache *scp, *scl;
 
 	/*
@@ -860,7 +834,7 @@ fss_read_cluster(struct fss_softc *sc, u_int32_t cl)
 restart:
 	if (isset(sc->sc_copied, cl) || !FSS_ISVALID(sc)) {
 		FSS_UNLOCK(sc, s);
-		return;
+		return 0;
 	}
 
 	for (scp = sc->sc_cache; scp < scl; scp++)
@@ -891,53 +865,50 @@ restart:
 	FSS_STAT_INC(sc, cow_copied);
 
 	dblk = btodb(FSS_CLTOB(sc, cl));
-	addr = scp->fc_data;
 	if (cl == sc->sc_clcount-1) {
 		todo = sc->sc_clresid;
-		memset((char *)addr + todo, 0, FSS_CLSIZE(sc) - todo);
+		memset((char *)scp->fc_data + todo, 0, FSS_CLSIZE(sc) - todo);
 	} else
 		todo = FSS_CLSIZE(sc);
+	offset = 0;
+	mbp = getiobuf(NULL, true);
+	mbp->b_bufsize = todo;
+	mbp->b_data = scp->fc_data;
+	mbp->b_resid = mbp->b_bcount = todo;
+	mbp->b_flags = B_READ;
+	mbp->b_cflags = BC_BUSY;
+	mbp->b_dev = sc->sc_bdev;
 	while (todo > 0) {
 		len = todo;
 		if (len > MAXPHYS)
 			len = MAXPHYS;
-
-		bp = getiobuf(NULL, true);
-		bp->b_flags = B_READ;
-		bp->b_bcount = len;
-		bp->b_bufsize = bp->b_bcount;
-		bp->b_error = 0;
-		bp->b_data = addr;
+		if (btodb(FSS_CLTOB(sc, cl)) == dblk && len == todo)
+			bp = mbp;
+		else {
+			bp = getiobuf(NULL, true);
+			nestiobuf_setup(mbp, bp, offset, len);
+		}
+		bp->b_lblkno = 0;
 		bp->b_blkno = dblk;
-		bp->b_proc = NULL;
-		bp->b_dev = sc->sc_bdev;
-		bp->b_private = scp;
-		bp->b_iodone = fss_cluster_iodone;
-		SET(bp->b_cflags, BC_BUSY);	/* mark buffer busy */
-
 		bdev_strategy(bp);
-
-		FSS_LOCK(sc, s);
-		scp->fc_xfercount++;
-		FSS_UNLOCK(sc, s);
-
 		dblk += btodb(len);
-		addr += len;
+		offset += len;
 		todo -= len;
 	}
+	error = biowait(mbp);
+	putiobuf(mbp);
 
-	/*
-	 * Wait for all read requests to complete.
-	 */
 	FSS_LOCK(sc, s);
-	while (scp->fc_xfercount > 0)
-		ltsleep(&scp->fc_data, PRIBIO, "cowwait", 0, &sc->sc_slock);
-
-	scp->fc_type = FSS_CACHE_VALID;
-	setbit(sc->sc_copied, scp->fc_cluster);
+	scp->fc_type = (error ? FSS_CACHE_FREE : FSS_CACHE_VALID);
+	if (error)
+		wakeup(&scp->fc_type);
+	else {
+		setbit(sc->sc_copied, scp->fc_cluster);
+		wakeup(&sc->sc_bs_lwp);
+	}
 	FSS_UNLOCK(sc, s);
 
-	wakeup(&sc->sc_bs_lwp);
+	return error;
 }
 
 /*
@@ -1145,41 +1116,46 @@ fss_bs_thread(void *arg)
 		}
 
 		/*
-		 * First read from the snapshotted block device.
-		 * XXX Split to only read those parts that have not
-		 * been saved to backing store?
+		 * First read from the snapshotted block device unless
+		 * this request is completely covered by backing store.
 		 */
 
 		FSS_UNLOCK(sc, s);
 
-		nbp = getiobuf(NULL, true);
-		nbp->b_flags = B_READ;
-		nbp->b_bcount = bp->b_bcount;
-		nbp->b_bufsize = bp->b_bcount;
-		nbp->b_error = 0;
-		nbp->b_data = bp->b_data;
-		nbp->b_blkno = bp->b_blkno;
-		nbp->b_proc = bp->b_proc;
-		nbp->b_dev = sc->sc_bdev;
-		SET(nbp->b_cflags, BC_BUSY);	/* mark buffer busy */
-
-		bdev_strategy(nbp);
-
-		if (biowait(nbp) != 0) {
-			bp->b_resid = bp->b_bcount;
-			bp->b_error = nbp->b_error;
-			biodone(bp);
-			putiobuf(nbp);
-			FSS_LOCK(sc, s);
-			continue;
-		}
-
 		cl = FSS_BTOCL(sc, dbtob(bp->b_blkno));
 		off = FSS_CLOFF(sc, dbtob(bp->b_blkno));
 		ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
-		bp->b_resid = bp->b_bcount;
-		addr = bp->b_data;
-		putiobuf(nbp);
+
+		error = 0;
+		for (c = cl; c <= ch; c++) {
+			if (isset(sc->sc_copied, c))
+				continue;
+			/* Not on backing store, read from device. */
+			nbp = getiobuf(NULL, true);
+			nbp->b_flags = B_READ;
+			nbp->b_resid = nbp->b_bcount = bp->b_bcount;
+			nbp->b_bufsize = bp->b_bcount;
+			nbp->b_data = bp->b_data;
+			nbp->b_blkno = bp->b_blkno;
+			nbp->b_lblkno = 0;
+			nbp->b_dev = sc->sc_bdev;
+			SET(nbp->b_cflags, BC_BUSY);	/* mark buffer busy */
+
+			bdev_strategy(nbp);
+
+			error = biowait(nbp);
+			if (error != 0) {
+				bp->b_resid = bp->b_bcount;
+				bp->b_error = nbp->b_error;
+				biodone(bp);
+			}
+			putiobuf(nbp);
+			break;
+		}
+		if (error) {
+			FSS_LOCK(sc, s);
+			continue;
+		}
 
 		FSS_LOCK(sc, s);
 
@@ -1187,6 +1163,8 @@ fss_bs_thread(void *arg)
 		 * Replace those parts that have been saved to backing store.
 		 */
 
+		addr = bp->b_data;
+		bp->b_resid = bp->b_bcount;
 		for (c = cl; c <= ch;
 		    c++, off = 0, bp->b_resid -= len, addr += len) {
 			len = FSS_CLSIZE(sc)-off;
