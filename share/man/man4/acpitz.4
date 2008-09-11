@@ -1,4 +1,4 @@
-.\" $NetBSD: acpitz.4,v 1.7 2008/04/30 13:10:53 martin Exp $
+.\" $NetBSD: acpitz.4,v 1.8 2008/09/11 21:53:12 reed Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,12 @@ command.
 .Sh EVENTS
 The
 .Nm
-driver is able to send events to powerd(8) when sensor's state has changed.
+driver knows about the active cooling levels, the current
+temperatures, and critical, hot, and passive temperature thresholds
+(as supported by the hardware).
+The driver is able to send events to
+.Xr powerd 8
+when the sensor's state has changed.
 When a Thermal Zone is critical, a
 .Em critical
 event will be sent or if the Thermal Zone is hot, a
@@ -53,6 +58,16 @@ event will be sent or if the Thermal Zone is hot, a
 event will be sent to the
 .Pa /etc/powerd/scripts/sensor_temperature
 script.
+.Pp
+The critical temperature is the threshold for system shutdown.
+Depending on the hardware, the mainboard will take down the system
+instantly and no event will have a chance to be sent.
+.\" The hot temperature is the temperature threshold for S4 sleep.
+.\" S4 is only supported on small subset of machines and is not known to work.
+The passive temperature is the passive cooling temperature threshold.
+Passive cooling means the Thermal Zone hardware
+doesn't have any software control.
+On capable hardware, active cooling can power on and off fans, for example.
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr envsys 4 ,
