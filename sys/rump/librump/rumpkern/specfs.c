@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.26 2008/09/09 19:22:00 tron Exp $	*/
+/*	$NetBSD: specfs.c,v 1.27 2008/09/11 13:42:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -236,7 +236,7 @@ rump_specstrategy(void *v)
 	off = bp->b_blkno << DEV_BSHIFT;
 	DPRINTF(("specstrategy: 0x%x bytes %s off 0x%" PRIx64
 	    " (0x%" PRIx64 " - 0x%" PRIx64")\n",
-	    bp->b_bcount, bp->b_flags & B_READ ? "READ" : "WRITE",
+	    bp->b_bcount, BUF_ISREAD(bp) "READ" : "WRITE",
 	    off, off, (off + bp->b_bcount)));
 
 	/*
@@ -262,7 +262,7 @@ rump_specstrategy(void *v)
 		rua->rua_dlen = bp->b_bcount;
 		rua->rua_off = off;
 		rua->rua_bp = bp;
-		rua->rua_op = bp->b_flags & B_READ;
+		rua->rua_op = BUF_ISREAD(bp);
 
 		rumpuser_mutex_enter(&rua_mtx);
 
@@ -288,15 +288,20 @@ rump_specstrategy(void *v)
 		rumpuser_mutex_exit(&rua_mtx);
 	} else {
  syncfallback:
-		if (bp->b_flags & B_READ) {
+		if (BUF_ISREAD(bp)) {
 			rumpuser_read_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		} else {
 			rumpuser_write_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		}
-		if (!async)
+		if (!async) {
+			int error;
+
+			if (BUF_ISWRITE(bp))
+				rumpuser_fsync(sp->rsp_fd, &error);
 			biowait(bp);
+		}
 	}
 
 	return 0;
