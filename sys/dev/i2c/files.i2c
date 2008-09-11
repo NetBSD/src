@@ -1,5 +1,6 @@
-#	$NetBSD: files.i2c,v 1.17 2008/08/26 16:29:14 macallan Exp $
+#	$NetBSD: files.i2c,v 1.18 2008/09/11 20:48:50 pgoyette Exp $
 
+defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
 define	i2cexec
 
