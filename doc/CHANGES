@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1114 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1115 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -854,3 +854,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[jmcneill 20080908]
 	altq(4): Add support for source address hashing in the WFQ scheduler.
 		[joerg 20080911]
+	cgd(4): Change default iv to encblkno1; encblkno (the old iv) used
+		to encrypt things 8 times leading to a 20% performance loss
+		for no real security benefit [christos 20080912]
