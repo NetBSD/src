@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/08/31 09:58:47 rtr Exp $
+#	$NetBSD: Makefile,v 1.6 2008/09/12 07:47:39 mrg Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -26,10 +26,12 @@ SRCS.bsd+=	i386_video.c stdResource.c lnx_agp.c
 .if ${MACHINE} == "i386"
 CPPFLAGS.${_FN}+=	-DPCCONS_SUPPORT -DHAS_APERTURE_DRV \
 			-DUSE_I386_IOPL
+.else
+CPPFLAGS.${_FN}+=	-DUSE_AMD64_IOPL
 .endif
 CPPFLAGS.${_FN}+=	-DPCVT_SUPPORT -DWSCONS_SUPPORT \
 			-DUSESTDRES -DHAVE_SYSV_IPC \
-			-DHAS_MTRR_BUILTIN -DUSE_I386_IOPL 
+			-DHAS_MTRR_BUILTIN
 .endfor
 .endif
 
