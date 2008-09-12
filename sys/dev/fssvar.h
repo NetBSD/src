@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.20 2008/09/11 09:37:53 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.21 2008/09/12 10:56:14 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -64,18 +64,6 @@ struct fss_get {
 					   sc_copied map uses up to
 					   FSS_CLUSTER_MAX/NBBY bytes */
 
-#define FSS_LOCK(sc, s) \
-	do { \
-		(s) = splbio(); \
-		simple_lock(&(sc)->sc_slock); \
-	} while (/*CONSTCOND*/0)
-
-#define FSS_UNLOCK(sc, s) \
-	do { \
-		simple_unlock(&(sc)->sc_slock); \
-		splx((s)); \
-	} while (/*CONSTCOND*/0)
-
 /* Device to softc, NULL on error */
 #define FSS_DEV_TO_SOFTC(dev) \
 	(minor((dev)) < 0 || minor((dev)) >= NFSS ? NULL : \
@@ -131,13 +119,16 @@ typedef enum {
 struct fss_cache {
 	fss_cache_type	fc_type;	/* Current state */
 	u_int32_t	fc_cluster;	/* Cluster number of this entry */
+	kcondvar_t	fc_state_cv;	/* Signals state change from busy */
 	void *		fc_data;	/* Data */
 };
 
 struct fss_softc {
 	int		sc_unit;	/* Logical unit number */
-	struct simplelock sc_slock;	/* Protect this softc */
+	kmutex_t	sc_slock;	/* Protect this softc */
 	kmutex_t	sc_lock;	/* Sleep lock for fss_ioctl */
+	kcondvar_t	sc_work_cv;	/* Signals work for the kernel thread */
+	kcondvar_t	sc_cache_cv;	/* Signals free cache slot */
 	volatile int	sc_flags;	/* Flags */
 #define FSS_ACTIVE	0x01		/* Snapshot is active */
 #define FSS_ERROR	0x02		/* I/O error occurred */
