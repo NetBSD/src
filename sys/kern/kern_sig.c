@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.286 2008/06/25 11:05:46 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.287 2008/09/12 21:33:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.286 2008/06/25 11:05:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.287 2008/09/12 21:33:39 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -492,14 +492,8 @@ sigget(sigpend_t *sp, ksiginfo_t *out, int signo, const sigset_t *mask)
 	sigset_t tset;
 
 	/* If there's no pending set, the signal is from the debugger. */
-	if (sp == NULL) {
-		if (out != NULL) {
-			KSI_INIT(out);
-			out->ksi_info._signo = signo;
-			out->ksi_info._code = SI_USER;
-		}
-		return signo;
-	}
+	if (sp == NULL)
+		goto out;
 
 	/* Construct mask from signo, and 'mask'. */
 	if (signo == 0) {
@@ -511,7 +505,7 @@ sigget(sigpend_t *sp, ksiginfo_t *out, int signo, const sigset_t *mask)
 		
 		/* If there are no signals pending, that's it. */
 		if ((signo = firstsig(&tset)) == 0)
-			return 0;
+			goto out;
 	} else {
 		KASSERT(sigismember(&sp->sp_set, signo));
 	}
@@ -534,11 +528,12 @@ sigget(sigpend_t *sp, ksiginfo_t *out, int signo, const sigset_t *mask)
 		}
 	}
 
+out:
 	/* If there's no siginfo, then manufacture it. */
 	if (out != NULL) {
 		KSI_INIT(out);
 		out->ksi_info._signo = signo;
-		out->ksi_info._code = SI_USER;
+		out->ksi_info._code = SI_NOINFO;
 	}
 
 	return signo;
@@ -562,10 +557,11 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 	sigaddset(&sp->sp_set, ksi->ksi_signo);
 
 	/*
-	 * If siginfo is not required, or there is none, then just mark the
-	 * signal as pending.
+	 * If there is no siginfo, or is not required (and we don't add
+	 * it for the benefit of ktrace, we are done).
 	 */
-	if ((sa->sa_flags & SA_SIGINFO) == 0 || KSI_EMPTY_P(ksi))
+	if (KSI_EMPTY_P(ksi) ||
+	    (!KTRPOINT(p, KTR_PSIG) && (sa->sa_flags & SA_SIGINFO) == 0))
 		return;
 
 	KASSERT((ksi->ksi_flags & KSI_FROMPOOL) != 0);
@@ -1786,7 +1782,7 @@ postsig(int signo)
 
 	if (ktrpoint(KTR_PSIG)) {
 		mutex_exit(p->p_lock);
-		ktrpsig(signo, action, returnmask, NULL);
+		ktrpsig(signo, action, returnmask, &ksi);
 		mutex_enter(p->p_lock);
 	}
 
