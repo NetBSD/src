@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mksiginfos,v 1.3 2008/04/30 13:11:01 martin Exp $
+#	$NetBSD: mksiginfos,v 1.4 2008/09/12 20:44:40 christos Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -58,8 +58,8 @@ BEGIN {
 	    sig[1], $i, $i);
 }
 END {
-	print "\n\tsnprintf(number, sizeof(number), \"%d\", code);\n";
-	print "\n\treturn NULL;"
+	print "\n\tsnprintf(number, sizeof(number), \"[%d]\", code);\n";
+	print "\n\treturn number;"
 	print "}";
 }
 ' $DESTDIR/usr/include/sys/siginfo.h
