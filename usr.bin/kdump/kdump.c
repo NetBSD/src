@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.98 2008/07/21 14:19:23 lukem Exp $	*/
+/*	$NetBSD: kdump.c,v 1.99 2008/09/12 20:46:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.98 2008/07/21 14:19:23 lukem Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.99 2008/09/12 20:46:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -894,6 +894,11 @@ ktrpsig(void *v, int len)
 			else
 				printf(": code=%d unimplemented)\n",
 				    si->si_code);
+			return;
+		}
+
+		if (si->si_code == SI_NOINFO) {
+			printf(": code=SI_NOINFO\n");
 			return;
 		}
 
