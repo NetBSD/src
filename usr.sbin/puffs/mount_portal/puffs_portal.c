@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.16 2007/11/30 19:02:39 pooka Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.17 2008/09/12 14:40:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.16 2007/11/30 19:02:39 pooka Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.17 2008/09/12 14:40:47 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -69,7 +69,7 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-o options] /path/portal.conf mount_point",
+	errx(1, "usage: %s [-o options] /path/portal.conf mount_point",
 	    getprogname());
 }
 
