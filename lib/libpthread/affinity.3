@@ -1,4 +1,4 @@
-.\"	$NetBSD: affinity.3,v 1.1 2008/06/16 14:25:49 rmind Exp $
+.\"	$NetBSD: affinity.3,v 1.2 2008/09/12 13:39:04 rmind Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 15, 2008
+.Dd September 12, 2008
 .Dt AFFINITY 3
 .Os
 .Sh NAME
@@ -60,6 +60,7 @@ function gets the affinity mask of
 into
 .Fa set .
 .Pp
+Note that
 .Fa set
 must be created and initialized using the
 .Xr cpuset 3
@@ -84,7 +85,7 @@ thread to the CPU whose ID is 0:
 		err(EXIT_FAILURE, "cpuset_create");
 	}
 	ci = 0;
-	cpuset_set(ci);
+	cpuset_set(ci, cset);
 
 	pth = pthread_self();
 	error = pthread_setaffinity_np(pth, cpuset_size(cset), cset);
