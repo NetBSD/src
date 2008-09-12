@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.8 2007/11/30 19:02:41 pooka Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.9 2008/09/12 14:40:47 christos Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.8 2007/11/30 19:02:41 pooka Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.9 2008/09/12 14:40:47 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -226,7 +226,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	if (argc < 2)
-		errx(1, "usage: %s sysctlfs [-o mntopts] mountpath",
+		errx(1, "usage: %s sysctlfs [-o mntopts] mountpath",
 		    getprogname());
 
 	mntflags = pflags = 0;
@@ -252,7 +252,7 @@ main(int argc, char *argv[])
 		detach = 0;
 
 	if (argc != 2)
-		errx(1, "usage: %s [-o mntopts] mountpath", getprogname());
+		errx(1, "usage: %s [-o mntopts] mountpath", getprogname());
 
 	PUFFSOP_INIT(pops);
 
