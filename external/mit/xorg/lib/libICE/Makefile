@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,8 @@ CONN_DEFINES=	${X11FLAGS.CONNECTION} -DICE_t=1 -DTRANS_CLIENT -DTRANS_SERVER
 SOCK_DEFINES=	-DBSD44SOCKETS
 
 CPPFLAGS+=	$(TRANS_INCLUDES) $(CONN_DEFINES) $(SOCK_DEFINES)
+
+PKGDIST=	${LIB}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

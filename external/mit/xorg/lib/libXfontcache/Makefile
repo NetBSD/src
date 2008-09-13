@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,8 @@ MLINKS=	Xfontcache.3 FontCacheChangeCacheSettings.3 \
 	Xfontcache.3 FontCacheQueryVersion.3
 
 #CPPFLAGS+=	${X11FLAGS.THREADS}
+
+PKGDIST=	${LIB}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

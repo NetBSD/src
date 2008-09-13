@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:31 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -10,6 +10,9 @@ INCS=	map-ISO8859-1 map-ISO8859-2 map-ISO8859-3 map-ISO8859-4 \
 	map-KOI8-R
 
 .include "../Makefile.font"
+
+PKGCONFIG=	fontutil
+PKGDIST=	font-util
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

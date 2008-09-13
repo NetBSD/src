@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:29 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,8 @@ INCS=	xtrapbits.h xtrapddmi.h xtrapdi.h xtrapemacros.h xtraplib.h \
 INCSDIR=${X11INCDIR}/X11/extensions
 
 NOOBJ=	# defined
+
+PKGCONFIG=	trapproto
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

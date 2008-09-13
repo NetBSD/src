@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:31 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts
 
 LDADD+=	-lz
 DPADD+=	${LIBZ}
+
+PKGCONFIG=	fontenc
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

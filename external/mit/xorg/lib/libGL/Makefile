@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/02 13:26:26 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/09/13 04:32:29 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -90,6 +90,10 @@ COPTS.dri_glx.c=			-Wno-error
 COPTS.glxext.c=				-Wno-error
 COPTS.indirect_vertex_program.c=	-Wno-error
 MKLINT=no
+
+PKGCONFIG=	gl
+PKGDIST.gl=	${X11SRCDIR.MesaLib}/src/mesa
+PKGCONFIG_VERSION.gl=	7.0.3
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

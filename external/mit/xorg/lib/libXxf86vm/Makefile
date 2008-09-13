@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/30 06:38:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/09/13 04:32:31 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -29,6 +29,8 @@ MLINKS=	XF86VM.3 XF86VidModeQueryExtension.3 \
 	XF86VM.3 XF86VidModeSetGammaRamp.3 \
 	XF86VM.3 XF86VidModeGetGammaRampSize.3 \
 	XF86VM.3 XF86VidModeGetPermissions.3
+
+PKGDIST=	${LIB}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

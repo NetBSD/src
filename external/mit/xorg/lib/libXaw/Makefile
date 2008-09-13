@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -64,6 +64,9 @@ LIBDPLIBS=\
 	Xpm	${.CURDIR}/../libXpm \
 	Xext	${.CURDIR}/../libXext \
 	X11	${.CURDIR}/../libX11/dynamic
+
+PKGCONFIG=	xaw8
+PKGDIST=	${LIBOLD}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
