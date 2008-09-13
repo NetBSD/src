@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.186 2008/07/20 01:09:07 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.187 2008/09/13 03:30:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.186 2008/07/20 01:09:07 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.187 2008/09/13 03:30:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2888,6 +2888,7 @@ static int
 handleoobcmd()
 {
 	char *cp;
+	int ret;
 
 	if (!urgflag)
 		return (0);
@@ -2896,9 +2897,14 @@ handleoobcmd()
 	if (!transflag)
 		return (0);
 	cp = tmpline;
-	if (getline(cp, sizeof(tmpline), stdin) == NULL) {
+	ret = getline(cp, sizeof(tmpline)-1, stdin);
+	if (ret == -1) {
 		reply(221, "You could at least say goodbye.");
 		dologout(0);
+	} else if (ret == -2) {
+		/* Ignore truncated command */
+		/* XXX: abort xfer with "500 command too long", & return 1 ? */
+		return 0;
 	}
 		/*
 		 * Manually parse OOB commands, because we can't
@@ -3686,7 +3692,7 @@ static int
 auth_conv(int num_msg, const struct pam_message **msg,
     struct pam_response **resp, void *appdata)
 {
-	int i;
+	int i, ret;
 	size_t n;
 	ftpd_cred_t *cred = (ftpd_cred_t *) appdata;
 	struct pam_response *myreply;
@@ -3739,18 +3745,23 @@ auth_conv(int num_msg, const struct pam_message **msg,
 			reply(331, "User %s accepted, provide %s.",
 			    cred->uname, pbuf);
 			(void) alarm(curclass.timeout);
-			if (getline(pbuf, sizeof(pbuf)-1, stdin) == NULL) {
+			ret = getline(pbuf, sizeof(pbuf)-1, stdin);
+			(void) alarm(0);
+			if (ret == -1) {
 				reply(221, "You could at least say goodbye.");
 				dologout(0);
+			} else if (ret == -2) {
+			    /* XXX: should we do this reply(-530, ..) ? */
+				reply(-530, "Command too long.");
+				goto fail;
 			}
-			(void) alarm(0);
 				/* Ensure it is PASS */
 			if (strncasecmp(pbuf, "PASS ", 5) != 0) {
-			    syslog(LOG_ERR,
-				"auth_conv: unexpected reply '%.4s'", pbuf);
-			    /* XXX: should we do this reply(-530, ..) ? */
-			    reply(-530, "Unexpected reply '%.4s'.", pbuf);
-			    goto fail;
+				syslog(LOG_ERR,
+				    "auth_conv: unexpected reply '%.4s'", pbuf);
+				/* XXX: should we do this reply(-530, ..) ? */
+				reply(-530, "Unexpected reply '%.4s'.", pbuf);
+				goto fail;
 			}
 				/* Strip CRLF from "PASS" reply */
 			n = strlen(pbuf);
