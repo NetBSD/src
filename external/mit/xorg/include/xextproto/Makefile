@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:29 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,8 @@ INCS=	MITMisc.h XEVI.h XEVIstr.h XLbx.h XShm.h XTest.h Xag.h Xagstr.h \
 INCSDIR=${X11INCDIR}/X11/extensions
 
 NOOBJ=	# defined
+
+PKGCONFIG=	xextproto
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
