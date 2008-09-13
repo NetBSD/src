@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.5 2008/09/09 00:19:10 jmcneill Exp $ */
+/* $NetBSD: pseye.c,v 1.6 2008/09/13 18:51:10 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.5 2008/09/09 00:19:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.6 2008/09/13 18:51:10 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -752,7 +752,7 @@ pseye_start_transfer(void *opaque)
 		aprint_error_dev(sc->sc_dev, "transfer already in progress\n");
 	mutex_exit(&sc->sc_mtx);
 
-	return 0;
+	return err;
 }
 
 static int
