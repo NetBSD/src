@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.637 2008/09/13 07:03:21 apb Exp $
+#	$NetBSD: 3RDPARTY,v 1.638 2008/09/13 22:25:10 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -233,7 +233,7 @@ top of the current tree.
 
 Package:	dhcpcd
 Version:	4.0.0-rc3
-Current Vers:	4.0.0-rc3
+Current Vers:	4.0.0
 Maintainer:	joerg
 Home Page:	http://roy.marples.name/dhcpcd/
 License:	BSD (2-clause)
@@ -625,7 +625,7 @@ Next import will need $ Id removal..
 Package:	OpenPAM
 Version:	20071221
 Current Vers:	20071221
-Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
+Maintainer:	Dag-Erling SmÃ¸rgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
 Mailing List:
