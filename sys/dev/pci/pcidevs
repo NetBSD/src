@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.955 2008/09/08 08:02:48 cegger Exp $
+$NetBSD: pcidevs,v 1.956 2008/09/13 15:39:01 njoly Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3079,6 +3079,8 @@ product NVIDIA	GEFORCE3	0x0200	GeForce3
 product NVIDIA	GEFORCE3_TI200	0x0201	GeForce3 Ti 200
 product NVIDIA	GEFORCE3_TI500	0x0202	GeForce3 Ti 500
 product NVIDIA	QUADRO_DCC	0x0203	Quadro DCC
+product NVIDIA	GEFORCE_6150	0x0240	GeForce 6150
+product NVIDIA	GEFORCE_6150LE	0x0241	GeForce 6150 LE
 product NVIDIA	GEFORCE4_TI4600	0x0250	GeForce4 Ti 4600
 product NVIDIA	GEFORCE4_TI4400	0x0251	GeForce4 Ti 4400
 product NVIDIA	GEFORCE4_TI4200	0x0253	GeForce4 Ti 4200
