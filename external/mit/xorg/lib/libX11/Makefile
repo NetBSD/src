@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/09/07 14:40:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2008/09/13 04:32:30 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -97,6 +97,8 @@ XlibConf.h: XlibConf.h.in
 		< ${.ALLSRC} > ${.TARGET}
 
 CLEANFILES+=	XlibConf.h
+
+PKGDIST=	X11
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

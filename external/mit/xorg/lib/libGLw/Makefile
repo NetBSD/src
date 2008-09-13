@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,10 @@ LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 		ICE	${.CURDIR}/../libICE \
 		SM	${.CURDIR}/../libSM \
 		Xt	${.CURDIR}/../libXt
+
+PKGCONFIG=	glw
+PKGDIST.glw=	${X11SRCDIR.MesaLib}/src/glw
+PKGCONFIG_VERSION.glw=	1.0.0
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:29 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -89,6 +89,10 @@ CPPFLAGS+=	-DTT_CONFIG_OPTION_BYTECODE_INTERPRETER
 
 LIBDPLIBS= \
 	z ${.CURDIR}/../../../../../lib/libz
+
+PKGCONFIG=	freetype2
+PKGDIST.freetype2=	${.CURDIR}
+PKGCONFIG_VERSION.freetype2=	9.17.3
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

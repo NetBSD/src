@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/07/31 01:37:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/09/13 04:32:30 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -62,6 +62,8 @@ LIBDPLIBS=\
 # XXX
 COPTS.ffcheck.c+=	-Wno-error
 COPTS.register.c+=	-Wno-error
+
+PKGDIST=	${LIB}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
