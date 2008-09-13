@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.23 2008/02/22 18:33:51 christos Exp $	*/
+/*	$NetBSD: glob.h,v 1.24 2008/09/13 17:05:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -92,7 +92,7 @@ typedef struct {
 #define	GLOB_TILDE	0x0800	/* Expand tilde names from the passwd file. */
 /*	GLOB_NOESCAPE	0x1000	above */
 #define	GLOB_PERIOD	0x2000	/* Allow metachars to match leading periods. */
-#define	GLOB_NO_DOTDIRS	0x4000	/* Make . and .. vanish from wildcards. *=
+#define	GLOB_NO_DOTDIRS	0x4000	/* Make . and .. vanish from wildcards. */
 #define	GLOB_QUOTE	0	/* source compatibility */
 
 #define	GLOB_ABEND	GLOB_ABORTED	/* source compatibility */
