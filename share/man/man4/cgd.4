@@ -1,4 +1,4 @@
-.\" $NetBSD: cgd.4,v 1.11 2008/09/12 16:51:55 christos Exp $
+.\" $NetBSD: cgd.4,v 1.12 2008/09/13 09:13:14 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,10 +90,10 @@ when configuring new
 .It encblkno8
 This is the original IV method used by
 .Nm
-and provided for backward compatibility. It repeatedly encrypts the block
-number of the physical disk block eight times and uses the result as the IV
-for CBC mode.
-This method should ensure that each block has a different IV and that the IV 
+and provided for backward compatibility.
+It repeatedly encrypts the block number of the physical disk block
+eight times and uses the result as the IV for CBC mode.
+This method should ensure that each block has a different IV and that the IV
 is reasonably unpredictable.
 The eightfold encryption was not intended and causes a notable
 performance loss with little (if any) increase in security over a
