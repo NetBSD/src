@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.8 2007/10/17 19:54:40 garbled Exp $	*/
+/*	$NetBSD: limits.h,v 1.9 2008/09/13 07:30:22 skrll Exp $	*/
 
 /*	$OpenBSD: limits.h,v 1.2 2000/07/31 20:06:02 millert Exp $	*/
 
@@ -55,6 +55,9 @@
  *
  *	@(#)limits.h	8.3 (Berkeley) 1/4/94
  */
+
+#ifndef	_MACHINE_LIMITS_H_
+#define	_MACHINE_LIMITS_H_
 
 #include <sys/featuretest.h>
 
@@ -123,3 +126,5 @@
 #define FLT_MAX		3.40282347E+38F 
 #define FLT_MIN		1.17549435E-38F 
 #endif
+
+#endif /* _MACHINE_LIMITS_H_ */
