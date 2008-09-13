@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/09/13 20:50:42 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2008/09/13 20:51:34 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -26,7 +26,7 @@ CONFIG_SUBST=	sed -e 's%@prefix@%${X11ROOTDIR}%' \
 		-e 's%@libdir@%${X11USRLIBDIR}%g' \
 		-e 's%@includedir@%${X11INCDIR}%' \
 		-e 's%@ft_version@%9.17.3%' \
-		-s 's%@FT2_EXTRA_LIBS@%%' \
+		-e 's%@FT2_EXTRA_LIBS@%%' \
 		-e 's%@hardcode_libdir_flag_spec@%-Wl,-rpath,${X11USRLIBDIR}%' \
 		-e 's%@LIBZ@%-lz%' \
 
