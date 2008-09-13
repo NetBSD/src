@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.10 2008/09/09 04:28:54 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.11 2008/09/13 23:50:54 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.10 2008/09/09 04:28:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.11 2008/09/13 23:50:54 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -404,6 +404,7 @@ video_pixel_format_str(enum video_pixel_format px)
 	switch (px) {
 	case VIDEO_FORMAT_YUY2: 	return "YUYV";
 	case VIDEO_FORMAT_NV12:		return "NV12";
+	case VIDEO_FORMAT_RGB24:	return "RGB24";
 	case VIDEO_FORMAT_MJPEG:	return "MJPEG";
 	case VIDEO_FORMAT_DV:		return "DV";
 	case VIDEO_FORMAT_MPEG:		return "MPEG";
@@ -590,6 +591,9 @@ video_format_to_v4l2_format(const struct video_format *src,
 	case VIDEO_FORMAT_NV12:
 		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_NV12;
 		break;
+	case VIDEO_FORMAT_RGB24:
+		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+		break;
 	case VIDEO_FORMAT_MJPEG:
 		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
 		break;
@@ -629,6 +633,9 @@ v4l2_format_to_video_format(const struct v4l2_format *src,
 			break;
 		case V4L2_PIX_FMT_NV12:
 			dest->pixel_format = VIDEO_FORMAT_NV12;
+			break;
+		case V4L2_PIX_FMT_RGB24:
+			dest->pixel_format = VIDEO_FORMAT_RGB24;
 			break;
 		case V4L2_PIX_FMT_MJPEG:
 			dest->pixel_format = VIDEO_FORMAT_MJPEG;
@@ -1696,6 +1703,9 @@ video_stream_realloc_bufs(struct video_stream *vs, uint8_t nbufs)
 	off_t offset;
 	struct video_buffer **oldbuf;
 	struct v4l2_buffer *buf;
+
+	if (nbufs == 0 && vs->vs_buf == NULL)
+		return 0;
 
 	size = vs->vs_format.sample_size * nbufs;
 	err = scatter_buf_set_size(&vs->vs_data, size);
