@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 21:37:07 hubertf Exp $
 
 NOMAN=		1
 
@@ -78,7 +78,7 @@ SRCS+=	${SRCS.mkfontscale} ${SRCS.freetype} ${SRCS.fontenc}
 LDADD=	-lz
 
 HOST_CPPFLAGS=	-DFONTENC_NO_LIBFONT -DXFREE86_FT2 -DFONTENC_NO_LIBFONT \
-		-DFT2_BUILD_LIBRARY \
+		-DFT2_BUILD_LIBRARY -DDARWIN_NO_CARBON \
 		-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\"
 HOST_CPPFLAGS+=	-I${FREETYPE}/include -I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/freetype2
