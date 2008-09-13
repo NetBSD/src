@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.54 2008/06/13 08:27:38 cegger Exp $	*/
+/*	$NetBSD: pccons.c,v 1.55 2008/09/13 16:08:02 tsutsui Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.54 2008/06/13 08:27:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.55 2008/09/13 16:08:02 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -792,6 +792,7 @@ pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 void
 pcstart(struct tty *tp)
 {
+	struct clist *cl;
 	int s, len;
 	u_char buf[PCBURST];
 
@@ -804,6 +805,7 @@ pcstart(struct tty *tp)
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
 	 */
+	cl = &tp->t_outq;
 	len = q_to_b(cl, buf, PCBURST);
 	sput(buf, len);
 	s = spltty();
