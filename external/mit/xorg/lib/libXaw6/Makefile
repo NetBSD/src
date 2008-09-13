@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
 
 NOCHECKVER=	yes	# we want to install an older version ...
 MKLINKLIB=	no
@@ -33,6 +33,9 @@ LIBDPLIBS=\
 	ICE	${.CURDIR}/../libICE \
 	Xext	${.CURDIR}/../libXext \
 	X11	${.CURDIR}/../libX11/dynamic
+
+PKGCONFIG=	xaw6
+PKGDIST=	${LIBOLD}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

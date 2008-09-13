@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2008/09/01 10:15:08 rtr Exp $
+#	$NetBSD: Makefile,v 1.16 2008/09/13 04:32:31 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -56,6 +56,8 @@ SUBDIR+=	hw
 #bin/xorgconfig
 
 .PATH:	${X11SRCDIR.xorg-server}
+
+PKGCONFIG=	xorg-server
 
 .include <bsd.x11.mk>
 .include <bsd.man.mk>

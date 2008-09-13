@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:31 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -56,6 +56,8 @@ strings_files.stamp: ${MAKESTRS} ${STRINGS_LIST} ${STRINGS_TMPLS}
 	touch ${.TARGET}
 CLEANFILES+=	${STRINGS_FILES} util strings_files.stamp
 DPSRCS+=	${STRINGS_FILES}
+
+PKGDIST=	${LIB}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
