@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.110 2008/09/06 19:21:21 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.111 2008/09/13 11:46:18 tsutsui Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -714,7 +714,6 @@ all)
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
 	makedev pad pad0 pad1 pad2 pad3
 	makedev bthub
-	makedev cfs
 	makedev putter
 	makedev drvctl
 	makedev local # do this last
