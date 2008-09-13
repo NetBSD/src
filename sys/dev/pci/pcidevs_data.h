@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.954 2008/09/08 08:03:45 cegger Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.955 2008/09/13 15:40:51 njoly Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.955 2008/09/08 08:02:48 cegger Exp
+ *	NetBSD: pcidevs,v 1.956 2008/09/13 15:39:01 njoly Exp
  */
 
 /*
@@ -10764,6 +10764,14 @@ static const struct pci_product pci_products[] = {
 	    "Quadro DCC",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6150,
+	    "GeForce 6150",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6150LE,
+	    "GeForce 6150 LE",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_TI4600,
 	    "GeForce4 Ti 4600",
 	},
@@ -14368,4 +14376,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2991;
+const int pci_nproducts = 2993;
