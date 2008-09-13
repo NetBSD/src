@@ -1,4 +1,4 @@
-/* $NetBSD: opms_jazzio.c,v 1.7 2008/07/05 08:46:25 tsutsui Exp $ */
+/* $NetBSD: opms_jazzio.c,v 1.8 2008/09/13 16:02:17 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms_jazzio.c,v 1.7 2008/07/05 08:46:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms_jazzio.c,v 1.8 2008/09/13 16:02:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ opms_jazzio_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	print_normal("\n");
+	aprint_normal("\n");
 
 	jazzio_intr_establish(ja->ja_intr, opmsintr, self);
 	opms_common_attach(sc, ja->ja_bust, &pccons_jazzio_conf);
