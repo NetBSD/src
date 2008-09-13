@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.c,v 1.26 2008/06/09 00:33:39 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.27 2008/09/13 02:41:52 lukem Exp $	*/
 
 /*
- * Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -90,7 +90,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.26 2008/06/09 00:33:39 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.27 2008/09/13 02:41:52 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
