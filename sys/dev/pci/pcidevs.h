@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.955 2008/09/08 08:03:44 cegger Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.956 2008/09/13 15:40:51 njoly Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.955 2008/09/08 08:02:48 cegger Exp
+ *	NetBSD: pcidevs,v 1.956 2008/09/13 15:39:01 njoly Exp
  */
 
 /*
@@ -3086,6 +3086,8 @@
 #define	PCI_PRODUCT_NVIDIA_GEFORCE3_TI200	0x0201		/* GeForce3 Ti 200 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE3_TI500	0x0202		/* GeForce3 Ti 500 */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_DCC	0x0203		/* Quadro DCC */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_6150	0x0240		/* GeForce 6150 */
+#define	PCI_PRODUCT_NVIDIA_GEFORCE_6150LE	0x0241		/* GeForce 6150 LE */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE4_TI4600	0x0250		/* GeForce4 Ti 4600 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE4_TI4400	0x0251		/* GeForce4 Ti 4400 */
 #define	PCI_PRODUCT_NVIDIA_GEFORCE4_TI4200	0x0253		/* GeForce4 Ti 4200 */
