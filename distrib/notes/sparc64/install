@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.26.2.3 2007/12/15 19:34:14 bouyer Exp $
+.\"	$NetBSD: install,v 1.26.2.3.2.1 2008/09/14 21:10:44 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -191,9 +191,9 @@ installation kernel.
 .(disp
 Rebooting with command: boot disk:a /ofwboot -a
 Boot device: /pci@1f,4000/scsi@3/disk@0,0:a  File and args: /ofwboot -a
-.No Enter filename [/ofwboot]: Ic "\*<return\*>
-\*>\*> NetBSD/sparc64 OpenFirmware Boot, Revision 1.7
-\*>\*> (autobuild@tgm.netbsd.org, Thu May 20 16:29:20 UTC 2004)
+.No Enter filename [/ofwboot]: Ic "\*[Lt]return\*[Gt]
+\*[Gt]\*[Gt] NetBSD/sparc64 OpenFirmware Boot, Revision 1.7
+\*[Gt]\*[Gt] (autobuild@tgm.netbsd.org, Thu May 20 16:29:20 UTC 2004)
 .No Boot: Ic netbsd-INSTALL.gz
 .disp)
 After the initial probe messages you'll be
@@ -225,7 +225,7 @@ Skip down to the section on
 .
 .Ss2 Manual Installation of NetBSD using Solaris
 .
-(Adapted from Murray Stokely's \*<murray@osd.bsdi.com\*> instructions)
+(Adapted from Murray Stokely's \*[Lt]murray@osd.bsdi.com\*[Gt] instructions)
 .Pp
 You can use 
 .Tn Solaris 
@@ -273,16 +273,16 @@ done
 c0t1d0: configured with capacity of 16.95GB
 
 AVAILABLE DISK SELECTIONS:
-       0. c0t0d0 \*<SUN4.2G cyl 3880 alt 2 hd 16 sec 135\*>
+       0. c0t0d0 \*[Lt]SUN4.2G cyl 3880 alt 2 hd 16 sec 135\*[Gt]
           /pci@1f,4000/scsi@3/sd@0,0
-       1. c0t1d0 \*<IBM-DXHS18Y-0430 cyl 8152 alt 2 hd 20 sec 218\*>
+       1. c0t1d0 \*[Lt]IBM-DXHS18Y-0430 cyl 8152 alt 2 hd 20 sec 218\*[Gt]
           /pci@1f,4000/scsi@3/sd@1,0
 .No "Specify disk (enter its number):" Ic 1
 selecting c0t1d0
 [disk formatted]
 .No "Disk not labeled.  Label it now?" Ic y
 
-.No "format\*>" Ic format
+.No "format\*[Gt]" Ic format
 Ready to format.  Formatting cannot be interrupted
 and takes 114 minutes (estimated). Continue? y
 Beginning format. The current time is Sat May 29 22:15:13 2004
@@ -296,8 +296,8 @@ Verifying media...
    8151/19/208  
 
 Total of 0 defective blocks repaired.
-.No "format\*>" Ic partition
-.No "partition\*>" Ic print
+.No "format\*[Gt]" Ic partition
+.No "partition\*[Gt]" Ic print
 Current partition table (original):
 Total disk cylinders available: 8152 + 2 (reserved cylinders)
 
@@ -311,10 +311,10 @@ Part      Tag    Flag     Cylinders        Size            Blocks
   6        usr    wm     122 - 8151       16.69GB    (8030/0/0) 35010800
   7 unassigned    wm       0               0         (0/0/0)           0
 
-.No "partition\*>" Ic label
+.No "partition\*[Gt]" Ic label
 .No "Ready to label disk, continue?" Ic y
-.No "partition\*>" Ic quit
-.No "format\*>" Ic quit
+.No "partition\*[Gt]" Ic quit
+.No "format\*[Gt]" Ic quit
 .disp)
 .Pp
 After your disk has been labeled you need to create file systems on
