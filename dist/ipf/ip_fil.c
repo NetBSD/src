@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.7.4.4 2007/07/16 11:03:52 liamjfoy Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.7.4.5 2008/09/14 21:27:33 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -812,4 +812,19 @@ struct in_addr *inp, *inpmask;
 int ipfsync()
 {
 	return 0;
+}
+
+
+u_32_t ipf_random()
+{
+	static int seeded = 0;
+
+	/*
+	 * Choose a non-random seed so that "randomness" can be "tested."
+	 */
+	if (seeded == 0) {
+		srand(0);
+		seeded = 1;
+	}
+	return rand();
 }
