@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.55 2008/09/14 10:12:14 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.56 2008/09/14 16:10:19 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,15 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.55 2008/09/14 10:12:14 hannken Exp $");
-
-#include "fss.h"
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.56 2008/09/14 16:10:19 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
@@ -65,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.55 2008/09/14 10:12:14 hannken Exp $");
 #include <dev/fssvar.h>
 
 #include <uvm/uvm.h>
-
-static struct fss_softc fss_softc[NFSS];
 
 void fssattach(int);
 
@@ -104,34 +101,87 @@ const struct cdevsw fss_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
+static int fss_match(device_t, cfdata_t, void *);
+static void fss_attach(device_t, device_t, void *);
+static int fss_detach(device_t, int);
+
+CFATTACH_DECL_NEW(fss, sizeof(struct fss_softc),
+    fss_match, fss_attach, fss_detach, NULL);
+extern struct cfdriver fss_cd;
+
 void
 fssattach(int num)
 {
-	int i;
-	struct fss_softc *sc;
 
-	for (i = 0; i < NFSS; i++) {
-		sc = &fss_softc[i];
-		sc->sc_unit = i;
-		sc->sc_bdev = NODEV;
-		mutex_init(&sc->sc_slock, MUTEX_DEFAULT, IPL_NONE);
-		mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-		cv_init(&sc->sc_work_cv, "fssbs");
-		cv_init(&sc->sc_cache_cv, "cowwait");
-		bufq_alloc(&sc->sc_bufq, "fcfs", 0);
-	}
+	if (config_cfattach_attach(fss_cd.cd_name, &fss_ca))
+		aprint_error("%s: unable to register\n", fss_cd.cd_name);
+}
+
+static int
+fss_match(device_t self, cfdata_t cfdata, void *aux)
+{
+	return 1;
+}
+
+static void
+fss_attach(device_t parent, device_t self, void *aux)
+{
+	struct fss_softc *sc = device_private(self);
+
+	sc->sc_dev = self;
+	sc->sc_bdev = NODEV;
+	mutex_init(&sc->sc_slock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_work_cv, "fssbs");
+	cv_init(&sc->sc_cache_cv, "cowwait");
+	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
+	sc->sc_dkdev = malloc(sizeof(*sc->sc_dkdev), M_DEVBUF, M_WAITOK);
+	sc->sc_dkdev->dk_info = NULL;
+	disk_init(sc->sc_dkdev, device_xname(self), NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static int
+fss_detach(device_t self, int flags)
+{
+	struct fss_softc *sc = device_private(self);
+
+	if (sc->sc_flags & FSS_ACTIVE)
+		return EBUSY;
+
+	pmf_device_deregister(self);
+	mutex_destroy(&sc->sc_slock);
+	mutex_destroy(&sc->sc_lock);
+	cv_destroy(&sc->sc_work_cv);
+	cv_destroy(&sc->sc_cache_cv);
+	bufq_free(sc->sc_bufq);
+	disk_destroy(sc->sc_dkdev);
+	free(sc->sc_dkdev, M_DEVBUF);
+
+	return 0;
 }
 
 int
 fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int mflag;
+	cfdata_t cf;
 	struct fss_softc *sc;
 
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 
-	if ((sc = FSS_DEV_TO_SOFTC(dev)) == NULL)
-		return ENODEV;
+	sc = device_lookup_private(&fss_cd, minor(dev));
+	if (sc == NULL) {
+		cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+		cf->cf_name = fss_cd.cd_name;
+		cf->cf_atname = fss_cd.cd_name;
+		cf->cf_unit = minor(dev);
+		cf->cf_fstate = FSTATE_STAR;
+		sc = device_private(config_attach_pseudo(cf));
+		if (sc == NULL)
+			return ENOMEM;
+	}
 
 	mutex_enter(&sc->sc_slock);
 
@@ -146,12 +196,10 @@ int
 fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int mflag, error;
-	struct fss_softc *sc;
+	cfdata_t cf;
+	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
 
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
-
-	if ((sc = FSS_DEV_TO_SOFTC(dev)) == NULL)
-		return ENODEV;
 
 	mutex_enter(&sc->sc_slock);
 
@@ -171,15 +219,21 @@ fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 
 	mutex_exit(&sc->sc_slock);
 
+	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN|FSS_ACTIVE)) == 0) {
+		cf = device_cfdata(sc->sc_dev);
+		error = config_detach(sc->sc_dev, DETACH_QUIET);
+		if (error)
+			return error;
+		free(cf, M_DEVBUF);
+	}
+
 	return 0;
 }
 
 void
 fss_strategy(struct buf *bp)
 {
-	struct fss_softc *sc;
-
-	sc = FSS_DEV_TO_SOFTC(bp->b_dev);
+	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(bp->b_dev));
 
 	mutex_enter(&sc->sc_slock);
 
@@ -217,12 +271,9 @@ int
 fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
-	struct fss_softc *sc;
+	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
 	struct fss_set *fss = (struct fss_set *)data;
 	struct fss_get *fsg = (struct fss_get *)data;
-
-	if ((sc = FSS_DEV_TO_SOFTC(dev)) == NULL)
-		return ENODEV;
 
 	switch (cmd) {
 	case FSSIOCSET:
@@ -307,14 +358,14 @@ fss_dump(dev_t dev, daddr_t blkno, void *va,
 /*
  * An error occurred reading or writing the snapshot or backing store.
  * If it is the first error log to console.
- * The caller holds the simplelock.
+ * The caller holds the mutex.
  */
 static inline void
 fss_error(struct fss_softc *sc, const char *msg)
 {
 
 	if ((sc->sc_flags & (FSS_ACTIVE|FSS_ERROR)) == FSS_ACTIVE)
-		printf("fss%d: snapshot invalid: %s\n", sc->sc_unit, msg);
+		aprint_error_dev(sc->sc_dev, "snapshot invalid: %s\n", msg);
 	if ((sc->sc_flags & FSS_ACTIVE) == FSS_ACTIVE)
 		sc->sc_flags |= FSS_ERROR;
 }
@@ -358,10 +409,13 @@ fss_softc_alloc(struct fss_softc *sc)
 		return(ENOMEM);
 
 	if ((error = kthread_create(PRI_BIO, 0, NULL, fss_bs_thread, sc,
-	    &sc->sc_bs_lwp, "fssbs%d", sc->sc_unit)) != 0)
+	    &sc->sc_bs_lwp, device_xname(sc->sc_dev))) != 0)
 		return error;
 
 	sc->sc_flags |= FSS_BS_THREAD;
+
+	disk_attach(sc->sc_dkdev);
+
 	return 0;
 }
 
@@ -381,6 +435,8 @@ fss_softc_free(struct fss_softc *sc)
 			kpause("fssdetach", false, 1, &sc->sc_slock);
 		mutex_exit(&sc->sc_slock);
 	}
+
+	disk_detach(sc->sc_dkdev);
 
 	if (sc->sc_copied != NULL)
 		kmem_free(sc->sc_copied, howmany(sc->sc_clcount, NBBY));
@@ -414,19 +470,22 @@ int
 fss_umount_hook(struct mount *mp, int forced)
 {
 	int i;
+	struct fss_softc *sc;
 
-	for (i = 0; i < NFSS; i++) {
-		mutex_enter(&fss_softc[i].sc_slock);
-		if ((fss_softc[i].sc_flags & FSS_ACTIVE) != 0 &&
-		    fss_softc[i].sc_mount == mp) {
+	for (i = 0; i < fss_cd.cd_ndevs; i++) {
+		if ((sc = device_lookup_private(&fss_cd, i)) == NULL)
+			continue;
+		mutex_enter(&sc->sc_slock);
+		if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
+		    sc->sc_mount == mp) {
 			if (forced)
-				fss_error(&fss_softc[i], "forced unmount");
+				fss_error(sc, "forced unmount");
 			else {
-				mutex_exit(&fss_softc[i].sc_slock);
+				mutex_exit(&sc->sc_slock);
 				return EBUSY;
 			}
 		}
-		mutex_exit(&fss_softc[i].sc_slock);
+		mutex_exit(&sc->sc_slock);
 	}
 
 	return 0;
@@ -707,12 +766,11 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 	if (error != 0)
 		goto bad;
 
-#ifdef DEBUG
-	printf("fss%d: %s snapshot active\n", sc->sc_unit, sc->sc_mntname);
-	printf("fss%d: %u clusters of %u, %u cache slots, %u indir clusters\n",
-	    sc->sc_unit, sc->sc_clcount, FSS_CLSIZE(sc),
+	aprint_debug_dev(sc->sc_dev, "%s snapshot active\n", sc->sc_mntname);
+	aprint_debug_dev(sc->sc_dev,
+	    "%u clusters of %u, %u cache slots, %u indir clusters\n",
+	    sc->sc_clcount, FSS_CLSIZE(sc),
 	    sc->sc_cache_size, sc->sc_indir_size);
-#endif
 
 	return 0;
 
@@ -961,6 +1019,8 @@ fss_bs_thread(void *arg)
 
 			thread_idle = false;
 
+			disk_busy(sc->sc_dkdev);
+
 			if (FSS_ISVALID(sc)) {
 				mutex_exit(&sc->sc_slock);
 
@@ -977,6 +1037,9 @@ fss_bs_thread(void *arg)
 				bp->b_resid = bp->b_bcount;
 			} else
 				bp->b_resid = 0;
+
+			disk_unbusy(sc->sc_dkdev, bp->b_bcount - bp->b_resid,
+			    (bp->b_flags & B_READ));
 
 			biodone(bp);
 
@@ -1024,9 +1087,12 @@ fss_bs_thread(void *arg)
 
 		thread_idle = false;
 
+		disk_busy(sc->sc_dkdev);
+
 		if (!FSS_ISVALID(sc)) {
 			bp->b_error = ENXIO;
 			bp->b_resid = bp->b_bcount;
+			disk_unbusy(sc->sc_dkdev, 0, (bp->b_flags & B_READ));
 			biodone(bp);
 			continue;
 		}
@@ -1063,6 +1129,8 @@ fss_bs_thread(void *arg)
 			if (error != 0) {
 				bp->b_resid = bp->b_bcount;
 				bp->b_error = nbp->b_error;
+				disk_unbusy(sc->sc_dkdev, 0,
+				    (bp->b_flags & B_READ));
 				biodone(bp);
 			}
 			putiobuf(nbp);
@@ -1125,6 +1193,9 @@ fss_bs_thread(void *arg)
 			mutex_enter(&sc->sc_slock);
 
 		}
+
+		disk_unbusy(sc->sc_dkdev, bp->b_bcount - bp->b_resid,
+		    (bp->b_flags & B_READ));
 
 		biodone(bp);
 	}
