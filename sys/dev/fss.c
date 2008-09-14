@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.54 2008/09/12 10:56:14 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.55 2008/09/14 10:12:14 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.54 2008/09/12 10:56:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.55 2008/09/14 10:12:14 hannken Exp $");
 
 #include "fss.h"
 
@@ -66,48 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.54 2008/09/12 10:56:14 hannken Exp $");
 
 #include <uvm/uvm.h>
 
-#include <machine/stdarg.h>
-
-#ifdef DEBUG
-#define FSS_STATISTICS
-#endif
-
-#ifdef FSS_STATISTICS
-struct fss_stat {
-	u_int64_t	cow_calls;
-	u_int64_t	cow_copied;
-	u_int64_t	cow_cache_full;
-	u_int64_t	indir_read;
-	u_int64_t	indir_write;
-};
-
-static struct fss_stat fss_stat[NFSS];
-
-#define FSS_STAT_INC(sc, field)	\
-			do { \
-				fss_stat[sc->sc_unit].field++; \
-			} while (0)
-#define FSS_STAT_SET(sc, field, value) \
-			do { \
-				fss_stat[sc->sc_unit].field = value; \
-			} while (0)
-#define FSS_STAT_ADD(sc, field, value) \
-			do { \
-				fss_stat[sc->sc_unit].field += value; \
-			} while (0)
-#define FSS_STAT_VAL(sc, field) fss_stat[sc->sc_unit].field
-#define FSS_STAT_CLEAR(sc) \
-			do { \
-				memset(&fss_stat[sc->sc_unit], 0, \
-				    sizeof(struct fss_stat)); \
-			} while (0)
-#else /* FSS_STATISTICS */
-#define FSS_STAT_INC(sc, field)
-#define FSS_STAT_SET(sc, field, value)
-#define FSS_STAT_ADD(sc, field, value)
-#define FSS_STAT_CLEAR(sc)
-#endif /* FSS_STATISTICS */
-
 static struct fss_softc fss_softc[NFSS];
 
 void fssattach(int);
@@ -122,7 +80,7 @@ dev_type_dump(fss_dump);
 dev_type_size(fss_size);
 
 static int fss_copy_on_write(void *, struct buf *, bool);
-static inline void fss_error(struct fss_softc *, const char *, ...);
+static inline void fss_error(struct fss_softc *, const char *);
 static int fss_create_files(struct fss_softc *, struct fss_set *,
     off_t *, struct lwp *);
 static int fss_create_snapshot(struct fss_softc *, struct fss_set *,
@@ -352,17 +310,11 @@ fss_dump(dev_t dev, daddr_t blkno, void *va,
  * The caller holds the simplelock.
  */
 static inline void
-fss_error(struct fss_softc *sc, const char *fmt, ...)
+fss_error(struct fss_softc *sc, const char *msg)
 {
-	va_list ap;
 
-	if ((sc->sc_flags & (FSS_ACTIVE|FSS_ERROR)) == FSS_ACTIVE) {
-		va_start(ap, fmt);
-		printf("fss%d: snapshot invalid: ", sc->sc_unit);
-		vprintf(fmt, ap);
-		printf("\n");
-		va_end(ap);
-	}
+	if ((sc->sc_flags & (FSS_ACTIVE|FSS_ERROR)) == FSS_ACTIVE)
+		printf("fss%d: snapshot invalid: %s\n", sc->sc_unit, msg);
 	if ((sc->sc_flags & FSS_ACTIVE) == FSS_ACTIVE)
 		sc->sc_flags |= FSS_ERROR;
 }
@@ -496,8 +448,6 @@ fss_copy_on_write(void *v, struct buf *bp, bool data_valid)
 		mutex_exit(&sc->sc_slock);
 		return 0;
 	}
-
-	FSS_STAT_INC(sc, cow_calls);
 
 	cl = FSS_BTOCL(sc, dbtob(bp->b_blkno));
 	ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
@@ -803,8 +753,6 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 	sc->sc_bs_vp = NULL;
 	sc->sc_flags &= ~FSS_PERSISTENT;
 
-	FSS_STAT_CLEAR(sc);
-
 	return 0;
 }
 
@@ -850,7 +798,6 @@ restart:
 			break;
 		}
 	if (scp >= scl) {
-		FSS_STAT_INC(sc, cow_cache_full);
 		cv_wait(&sc->sc_cache_cv, &sc->sc_slock);
 		goto restart;
 	}
@@ -860,8 +807,6 @@ restart:
 	/*
 	 * Start the read.
 	 */
-	FSS_STAT_INC(sc, cow_copied);
-
 	dblk = btodb(FSS_CLTOB(sc, cl));
 	if (cl == sc->sc_clcount-1) {
 		todo = sc->sc_clresid;
@@ -953,7 +898,6 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 		return &sc->sc_indir_data[ioff];
 
 	if (sc->sc_indir_dirty) {
-		FSS_STAT_INC(sc, indir_write);
 		if (fss_bs_io(sc, FSS_WRITE, sc->sc_indir_cur, 0,
 		    FSS_CLSIZE(sc), (void *)sc->sc_indir_data) != 0)
 			return NULL;
@@ -964,7 +908,6 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 	sc->sc_indir_cur = icl;
 
 	if (isset(sc->sc_indir_valid, sc->sc_indir_cur)) {
-		FSS_STAT_INC(sc, indir_read);
 		if (fss_bs_io(sc, FSS_READ, sc->sc_indir_cur, 0,
 		    FSS_CLSIZE(sc), (void *)sc->sc_indir_data) != 0)
 			return NULL;
@@ -1004,22 +947,6 @@ fss_bs_thread(void *arg)
 		thread_idle = true;
 		if ((sc->sc_flags & FSS_BS_THREAD) == 0) {
 			sc->sc_bs_lwp = NULL;
-#ifdef FSS_STATISTICS
-			if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
-				printf("fss%d: cow called %" PRId64 " times,"
-				    " copied %" PRId64 " clusters,"
-				    " cache full %" PRId64 " times\n",
-				    sc->sc_unit,
-				    FSS_STAT_VAL(sc, cow_calls),
-				    FSS_STAT_VAL(sc, cow_copied),
-				    FSS_STAT_VAL(sc, cow_cache_full));
-				printf("fss%d: %" PRId64 " indir reads,"
-				    " %" PRId64 " indir writes\n",
-				    sc->sc_unit,
-				    FSS_STAT_VAL(sc, indir_read),
-				    FSS_STAT_VAL(sc, indir_write));
-			}
-#endif /* FSS_STATISTICS */
 			mutex_exit(&sc->sc_slock);
 			kthread_exit(0);
 		}
@@ -1082,7 +1009,7 @@ fss_bs_thread(void *arg)
 				*indirp = sc->sc_clnext++;
 				sc->sc_indir_dirty = 1;
 			} else
-				fss_error(sc, "write bs error %d", error);
+				fss_error(sc, "write error on backing store");
 
 			scp->fc_type = FSS_CACHE_FREE;
 			cv_signal(&sc->sc_cache_cv);
