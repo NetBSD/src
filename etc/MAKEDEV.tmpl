@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.111 2008/09/13 11:46:18 tsutsui Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.112 2008/09/14 13:58:25 jmcneill Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -750,7 +750,6 @@ radio)
 
 video)
 	makedev video0 video1 video2 video3
-	lndev video0 video
 	;;
 
 ramdisk)
