@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.11 2008/09/13 23:50:54 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.12 2008/09/14 03:33:44 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.11 2008/09/13 23:50:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.12 2008/09/14 03:33:44 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -1703,9 +1703,6 @@ video_stream_realloc_bufs(struct video_stream *vs, uint8_t nbufs)
 	off_t offset;
 	struct video_buffer **oldbuf;
 	struct v4l2_buffer *buf;
-
-	if (nbufs == 0 && vs->vs_buf == NULL)
-		return 0;
 
 	size = vs->vs_format.sample_size * nbufs;
 	err = scatter_buf_set_size(&vs->vs_data, size);
