@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ulimit.c,v 1.8 2006/10/16 00:07:32 christos Exp $	*/
+/*	$NetBSD: c_ulimit.c,v 1.9 2008/09/14 05:00:23 sjg Exp $	*/
 
 /*
 	ulimit -- handle "ulimit" builtin
@@ -20,7 +20,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ulimit.c,v 1.8 2006/10/16 00:07:32 christos Exp $");
+__RCSID("$NetBSD: c_ulimit.c,v 1.9 2008/09/14 05:00:23 sjg Exp $");
 #endif
 
 
@@ -193,7 +193,7 @@ c_ulimit(wp)
 			    bi_errorf("invalid limit: %s", wp[0]);
 			    return 1;
 			}
-			val = rval * l->factor;
+			val = (u_long)rval * l->factor;
 		}
 	}
 	if (all) {
