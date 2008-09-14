@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.18 2006/11/25 22:53:35 mishka Exp $
+.\"	$NetBSD: install,v 1.18.12.1 2008/09/14 21:10:44 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,9 +63,9 @@ entitled
 .Sx "Preparing a boot tape" .
 Then, with the tape in the drive, type the following at the Bug prompt:
 .Pp
-.Dl 147-Bug\*> Ic "bo 5"
+.Dl 147-Bug\*[Gt] Ic "bo 5"
 .Pp
-.Dl 16x-Bug\*> Ic "bo 0,50"
+.Dl 16x-Bug\*[Gt] Ic "bo 0,50"
 .Pp
 As mentioned earlier, this assumes your tape is jumpered for SCSI-ID 5.
 .Pp
@@ -78,7 +78,7 @@ geometry of the SCSI disks detected by
 .Nx .
 They are of the form:
 .(disp
-sd0 at scsibus0 targ 0 lun 0: \*<Maker, Disk, Foo\*> SCSI1 0/direct fixed
+sd0 at scsibus0 targ 0 lun 0: \*[Lt]Maker, Disk, Foo\*[Gt] SCSI1 0/direct fixed
 sd0: 800 MB, 800 cyl, 16 head, 128 sec, 512 bytes/sect x 1638400 sectors
 .disp)
 .Pp
@@ -96,7 +96,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
-\*>\*> BSD MVME147 tapeboot [$Revision: 1.18 $]
+\*[Gt]\*[Gt] BSD MVME147 tapeboot [$Revision: 1.18.12.1 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997, 1998, 1999, 2000
@@ -148,7 +148,7 @@ To reboot using the swap partition after running installboot, first
 use
 .Ic halt ,
 then at the Bug monitor prompt use a command like:
-        	1x7Bug\*> bo 0,,b:
+        	1x7Bug\*[Gt] bo 0,,b:
 
 To view this message again, type:  cat /.welcome
 #
@@ -236,7 +236,7 @@ program, passing it the name of the Raw Partition of your root/boot disk.
 .Dl modify  - prompt for changes to the label
 .Dl write   - write the new label to disk
 .Dl quit    - terminate program
-.Dl edlabel\*>
+.Dl edlabel\*[Gt]
 .Pp
 The program shows what commands it recognizes;
 .Ic print ,
@@ -252,19 +252,19 @@ To start creating the basic partitions, you should enter
 at the edlabel prompt, then enter the letter corresponding to the first
 .No partition, Sy a .
 .Pp
-.Dl edlabel\*> Ic m
+.Dl edlabel\*[Gt] Ic m
 .Pp
 .Dl modify subcommands:
 .Dl @   : modify disk parameters
 .Dl a-h : modify partition
 .Dl s   : standardize geometry
 .Dl q   : quit this subcommand
-.Dl edlabel/modify\*> Ic a
+.Dl edlabel/modify\*[Gt] Ic a
 .Dl a (root)          0       (0/00/00)          0       (0/00/00)  unused
-.Dl start as \*<blkno\*> or \*<cyls/trks/sects\*> : Ic 0
-.Dl length as \*<nblks\*> or \*<cyls/trks/sects\*> : Ic 65536
+.Dl start as \*[Lt]blkno\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 0
+.Dl length as \*[Lt]nblks\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 65536
 .Dl type: Ic 4.2BSD
-.Dl edlabel/modify\*>
+.Dl edlabel/modify\*[Gt]
 .Pp
 When you enter the start and length of a partition, you can use either
 blocks or cylinder/track/sector notation.
@@ -291,12 +291,12 @@ otherwise you won't be able to use a miniroot to complete the
 .Nx
 installation!
 .Pp
-.Dl edlabel/modify\*> Ic b
+.Dl edlabel/modify\*[Gt] Ic b
 .Dl b (swap)          0       (0/00/00)          0       (0/00/00)  unused
-.Dl start as \*<blkno\*> or \*<cyls/trks/sects\*> : Ic 65536
-.Dl length as \*<nblks\*> or \*<cyls/trks/sects\*> : Ic 32768
+.Dl start as \*[Lt]blkno\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 65536
+.Dl length as \*[Lt]nblks\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 32768
 .Dl type: Ic swap
-.Dl edlabel/modify\*>
+.Dl edlabel/modify\*[Gt]
 .Pp
 Here, we specify a value for
 .Li start
@@ -315,13 +315,13 @@ file system.
 (Note that for a busy system, or a system with more
 than 8 MB of RAM, you'll be better off with a 32 or 64 MB swap partition.)
 .Pp
-.Dl edlabel/modify\*> Ic d
+.Dl edlabel/modify\*[Gt] Ic d
 .Dl d (user)          0       (0/00/00)          0       (0/00/00)  unused
-.Dl start as \*<blkno\*> or \*<cyls/trks/sects\*> : Ic 98304
-.Dl length as \*<nblks\*> or \*<cyls/trks/sects\*> : Ic 1540096
+.Dl start as \*[Lt]blkno\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 98304
+.Dl length as \*[Lt]nblks\*[Gt] or \*[Lt]cyls/trks/sects\*[Gt] : Ic 1540096
 .Dl type: Ic 4.2BSD
-.Dl edlabel/modify\*> Ic q
-.Dl edlabel\*>
+.Dl edlabel/modify\*[Gt] Ic q
+.Dl edlabel\*[Gt]
 .Pp
 As you can see, we've chosen to assign the remainder of the disk to
 .Pa /usr .
@@ -345,7 +345,7 @@ to view the partitions.
 Once written, you can quit back to the shell using
 .Sq Ic q .
 .Pp
-.Dl edlabel\*> Ic p
+.Dl edlabel\*[Gt] Ic p
 .(disp
 	type_num: 4
 	sub_type: 0
@@ -364,8 +364,8 @@ partition      start         (c/t/s)      nblks         (c/t/s)  type
  d (user)      98304      (48/00/00)    1540096     (752/00/00)  4.2BSD
 .disp)
 .Pp
-.Dl edlabel\*> Ic w
-.Dl edlabel\*> Ic q
+.Dl edlabel\*[Gt] Ic w
+.Dl edlabel\*[Gt] Ic q
 .Dl #
 .Pp
 Now that your disk's partitioned, you need to get the proper installation
@@ -397,7 +397,7 @@ You can now shutdown the system.
 .Dl unmounting / (root_device)...
 .Dl halted
 .Pp
-.Dl 147-Bug\*> Ic reset
+.Dl 147-Bug\*[Gt] Ic reset
 .Dl Reset Local SCSI Bus [Y,N] N? Ic y
 .Dl Automatic reset of known SCSI Buses on RESET [Y,N] Y?
 .Dl Cold/Warm Reset flag [C,W] = C?
@@ -439,24 +439,24 @@ go 4000
 .Pp
 Which will look like this:
 .Pp
-.Dl 147-Bug\*> Ic "lo 0"
+.Dl 147-Bug\*[Gt] Ic "lo 0"
 .Dl ~CLocal command? Ic "cat sboot"
 .Pp
 .Em away for 11 seconds
 .Pp
 .Dl !
 .Pp
-.Dl 147-Bug\*> Ic "g 4000"
+.Dl 147-Bug\*[Gt] Ic "g 4000"
 .Dl Effective address: 00004000
 .Pp
 .Dl sboot: serial line bootstrap program (end = 6018)
 .Pp
-.Dl \*>\*>\*>
+.Dl \*[Gt]\*[Gt]\*[Gt]
 .Pp
 Now, if you want to do it through serial line 1, then connect serial
 line one to a machine.
 At the
-.Li 147-Bug\*> No prompt type Ic \&tm 1
+.Li 147-Bug\*[Gt] No prompt type Ic \&tm 1
 You should then login to the machine it is connected to.
 Then press
 .Key CONTROL-A
@@ -467,17 +467,17 @@ then when that is done you can reconnect
 .Ic tm 1 No and logout.
 .No Then do Ic go 4000
 and you've got the
-.Li "\*>\*>\*> "
+.Li "\*[Gt]\*[Gt]\*[Gt] "
 prompt of
 .Ic sboot .
 .Pp
 Once you've got the
-.Li "\*>\*>\*> "
+.Li "\*[Gt]\*[Gt\*[Gt] "
 prompt, you can boot the
 .Li RAMDISK
 kernel from the server:
 .Pp
-.Dl \*>\*>\*> Ic b
+.Dl \*[Gt]\*[Gt]\*[Gt] Ic b
 .Pp
 .(disp
 le0: ethernet address: 8:0:3e:20:cb:87
@@ -498,13 +498,13 @@ for
 Installation.
 On a properly configured MVME162/172 or MVME167/177, all you need to type is:
 .Pp
-.Dl 1xx-Bug\*> Ic nbo
+.Dl 1xx-Bug\*[Gt] Ic nbo
 .Pp
 For all board types, the boot messages are very similar:
 .Pp
 .(disp
 Start @ 0x8000 ...
-\*>\*> BSD MVME147 netboot (via sboot) [$Revision: 1.18 $]
+\*[Gt]\*[Gt] BSD MVME147 netboot (via sboot) [$Revision: 1.18.12.1 $]
 device: le0 attached to 08:00:3e:20:cb:87
 boot: client IP address: 192.168.1.4
 boot: client name: soapy
@@ -602,7 +602,7 @@ Assuming the miniroot is installed on partition
 of the disk with
 SCSI-ID 0, then the boot command is:
 .Pp
-.Dl 1xx-Bug\*> Ic "bo 0,,b:"
+.Dl 1xx-Bug\*[Gt] Ic "bo 0,,b:"
 .Pp
 The command line parameters above are:
 .Pp

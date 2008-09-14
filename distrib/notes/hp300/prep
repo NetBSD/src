@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.20.2.1.2.1 2008/09/14 20:53:08 bouyer Exp $
+.\"	$NetBSD: prep,v 1.20.2.1.2.2 2008/09/14 21:10:44 bouyer Exp $
 .
 There are two installation tools available.
 The traditional miniroot
@@ -386,7 +386,7 @@ back of the machine.
 Press
 .Key RETURN
 to get the Domain boot prompt
-.No ( Li \*> No ) .
+.No ( Li \*[Gt] No ) .
 .br
 You can type
 .Key H
@@ -396,7 +396,7 @@ Type the following sequence of commands to convert to
 .Sq Li "HP-UX Compatible Boot Mode" .
 .br
 .(disp
-.No "\*>" Ic "CF"
+.No "\*[Gt]" Ic "CF"
 .No "Type [key] RETURN ?" Ic 2
 .No "Type [key] RETURN ?" Ic 2
 .No "Type T or P  RETURN ?" Ic P
@@ -569,7 +569,7 @@ code 16, unit numbers might be something like the following:
 You will need to place a disklabel on the disk.
 .Pp
 .(disp
-.No "sys_inst\*>" Ic disklabel
+.No "sys_inst\*[Gt]" Ic disklabel
 .disp)
 .(Note
 It may be worth selecting the
@@ -639,7 +639,7 @@ disk.
 Boot from the miniroot file system.
 .Pp
 .(disp
-.No "sys_inst\*>" Ic boot
+.No "sys_inst\*[Gt]" Ic boot
 .disp)
 .Pp
 Enter the disk from which to boot.
@@ -652,10 +652,10 @@ Once the bootstrap program
 has started, it will pause and let you chose a kernel location, name, and
 options:
 .(disp
-\*>\*> NetBSD/hp300 Primary Boot, Revision 1.13
-\*>\*> (gregm@mcgarry, Mon Apr 15 08:46:32 NZST 2002)
-\*>\*> HP 9000/425e SPU
-\*>\*> Enter "reset" to reset system.
+\*[Gt]\*[Gt] NetBSD/hp300 Primary Boot, Revision 1.13
+\*[Gt]\*[Gt] (gregm@mcgarry, Mon Apr 15 08:46:32 NZST 2002)
+\*[Gt]\*[Gt] HP 9000/425e SPU
+\*[Gt]\*[Gt] Enter "reset" to reset system.
 Boot: [[[le0a:]netbsd][-a][-c][-d][-s][-v][-q]] :-
 .disp)
 .Pp

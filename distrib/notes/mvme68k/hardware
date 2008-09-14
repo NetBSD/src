@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.9 2002/06/30 00:46:48 lukem Exp $
+.\"	$NetBSD: hardware,v 1.9.26.1 2008/09/14 21:10:44 bouyer Exp $
 .
 .Nx*M
 \*V runs on Motorola
@@ -47,7 +47,7 @@ installation procedure uses a
 .Em miniroot
 image which is placed into the swap area of the disk.
 The swap partition must be large enough to hold this miniroot image
-(\*> 7.5 MB).
+(\*[Gt] 7.5 MB).
 .
 .Ss2 Supported VME147 hardware
 .(bullet -offset indent

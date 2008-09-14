@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.9 2006/03/09 18:10:07 wiz Exp $
+.\"	$NetBSD: prep,v 1.9.14.1 2008/09/14 21:10:44 bouyer Exp $
 .
 A \*M machine usually needs little or no preparation before installing
 .Nx ,
@@ -63,5 +63,5 @@ correct device for your system (for i386 it would be
 To boot from a CD-ROM simply issue the following command
 .Pp
 .(disp
-.No boot> Ic "boot cd0:/netbsd"
+.No boot\*[Gt] Ic "boot cd0:/netbsd"
 .disp)
