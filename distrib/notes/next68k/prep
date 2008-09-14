@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.6 2005/01/15 17:39:45 jmc Exp $
+.\"	$NetBSD: prep,v 1.6.20.1 2008/09/14 21:10:43 bouyer Exp $
 .
 .Ss2 Get to the ROM Monitor prompt
 .
@@ -14,7 +14,7 @@ CPU MC68040 25 MHz, memory 100 nS
 Backplane slot #0
 Ethernet address:  0:0:f:0:fb:90
 Memory size 40 MB
-NeXT\*>
+NeXT\*[Gt]
 .disp)
 .Pp
 Write down the ethernet address.
@@ -51,7 +51,7 @@ You should not set the
 as the system will try to boot a diagnostic kernel.
 Here is an example configuration session:
 .(disp
-.No "NeXT\*>" Ic p
+.No "NeXT\*[Gt]" Ic p
 .No "boot command: sd()?" Ic "en()netbsd"
 .No "DRAM tests:  yes?" Ic "yes"
 .No "perform power-on system test:  yes?" Ic "yes"

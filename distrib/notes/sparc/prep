@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.22 2004/06/12 16:41:14 mbw Exp $
+.\"	$NetBSD: prep,v 1.22.20.1 2008/09/14 21:10:44 bouyer Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -44,11 +44,11 @@ Next, you should set your system to always use the OpenBoot PROM
 if it defaults to sunmon. The
 .Nx
 kernel relies on some of the functionality provided by the OpenBoot PROM.
-If your machine gives you a `\*>' prompt instead of an `ok' prompt,
+If your machine gives you a `\*[Gt]' prompt instead of an `ok' prompt,
 type:
 .Pp
 .(disp
-.No \*> Ic n
+.No \*[Gt] Ic n
 .No ok Ic "setenv sunmon-compat? false"
 .No ok
 .disp)
@@ -126,10 +126,10 @@ it is always
 regardless of its SCSI target ID or its PROM
 .Sq unit
 number, and there are no problems. If you have two disks, one at
-SCSI ID 2 (
-.Sq unit
-2) and SCSI ID 3 (
-.Sq unit
+SCSI ID 2
+.Pf ( Sq unit
+2) and SCSI ID 3
+.Pf ( Sq unit
 0), then they are recognized as
 .Li sd0
 and
@@ -205,10 +205,7 @@ to
 Again, it may be advantageous to use a fixed
 .Dq SCSI target
 to
-.Do
-.Nx
-disk unit
-.Dc
+.Dq Nx "" disk unit
 mapping in your kernel configuration file (such as is done in the
 .Li GENERIC_SCSI3
 kernel) to ensure that your disks remain showing up at the same
@@ -232,15 +229,13 @@ the expression
 .Em (8 * TARGET) + LUN
 .It Ar p
 the partition number from which to boot
-.Po
-.Sq Li 0
+.Pf ( Sq Li 0
 =
 .Sq Li a ,
 .Sq Li 1
 =
 .Sq Li b ,
-etc.
-.Pc
+etc.)
 .tag)
 .Pp
 Therefore, to boot from the swap partition on the internal hard drive
@@ -259,8 +254,8 @@ lun 0, partition dynamically determined), one would use:
 .Pp
 And, to boot from a kernel named
 .Li netbsd-GENERIC
-on the fourth partition (
-.Sq Li d ,
+on the fourth partition
+.Pf ( Sq Li d ,
 often the
 .Pa /usr
 partition) on an external hard drive (first SCSI bus, target 2, lun 0,
@@ -294,8 +289,8 @@ one would use:
 .Pp
 And, to boot from a kernel named
 .Li netbsd-GENERIC
-on the fourth partition (
-.Sq Li d ,
+on the fourth partition
+.Pf ( Sq Li d ,
 often the
 .Pa /usr
 partition) on an external hard drive (target 2, partition 3), one would use:

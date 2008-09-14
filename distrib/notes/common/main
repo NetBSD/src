@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.320.2.10.2.1 2008/09/14 20:53:08 bouyer Exp $
+.\"	$NetBSD: main,v 1.320.2.10.2.2 2008/09/14 21:10:44 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -325,7 +325,7 @@ part of installation \(em you may want to read the section below on
 .Sx Older Open Firmware System Preparation
 .Pp
 You should have the Open Firmware
-.Dq Pa "0 \*>"
+.Dq Pa "0 \*[Gt]"
 prompt on your screen before attempting to boot
 .Nx*M .
 .\}
