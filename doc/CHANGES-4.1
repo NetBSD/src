@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.81 2008/09/14 21:16:06 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.82 2008/09/14 21:28:25 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1810,4 +1810,23 @@ distrib/notes/vax/install			1.17
 
 	Cosmetics or mdoc warning fixes
 	[tsutsui, ticket #1198]
+
+dist/ipf/ip_fil.c				1.16
+dist/ipf/lib/printnat.c				1.1.1.7, 1.2
+dist/ipf/test/regress/n12			1.2
+dist/ipf/tools/ipnat_y.y			1.17
+regress/sys/kern/ipf/regress/n12		1.2
+regress/sys/kern/ipf/regress/n2			1.2
+regress/sys/kern/ipf/regress/n5			1.2
+regress/sys/kern/ipf/regress/ni1.nat		1.2
+regress/sys/kern/ipf/regress/ni2.nat		1.2
+regress/sys/kern/ipf/regress/ni4.nat		1.2
+sys/dist/ipf/netinet/ip_compat.h		1.22
+sys/dist/ipf/netinet/ip_fil.h			1.17
+sys/dist/ipf/netinet/ip_nat.c			1.37, 1.38
+sys/dist/ipf/netinet/ip_nat.h			1.14
+sys/dist/ipf/netinet/ip_state.c			1.33
+
+	2020447 IPFilter's NAT can undo name server random port selection
+	[darrenr, ticket #1171]
 
