@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.44.4.3 2007/09/29 17:05:16 pavel Exp $
+.\"	$NetBSD: legal.common,v 1.44.4.4 2008/09/14 20:53:16 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -659,6 +659,7 @@ International, Inc.
 .\" For compliance with term (b) of
 .\" localsrc/legal/TheOpenGroup/TOG_LICENSE:
 .\"
+.nh
 The Institute of Electrical and Electronics Engineers and The Open Group,
 have given us permission to reprint portions of their documentation.
 .Pp
