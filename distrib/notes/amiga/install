@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.32 2002/08/16 12:01:39 is Exp $
+.\"	$NetBSD: install,v 1.32.16.1 2008/09/14 21:09:57 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -109,11 +109,7 @@ option to enable the use of all memory segments.
 You should see the screen clear and some information about
 your system as the kernel configures the hardware.
 Note which hard disk device(s) are configured
-.Po
-.Li sd0 ,
-.Li sd1 ,
-etc.
-.Pc
+.Pq Li sd0 , Li sd1 , No etc.
 Then you will be prompted for a root device.
 At this time type
 .Li sd0b ,
