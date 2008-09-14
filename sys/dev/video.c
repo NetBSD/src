@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.12 2008/09/14 03:33:44 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.13 2008/09/14 14:31:33 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.12 2008/09/14 03:33:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.13 2008/09/14 14:31:33 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -1229,10 +1229,6 @@ videoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		fmtdesc = data;
 		if (fmtdesc->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
 			return EINVAL;
-		if (fmtdesc->index != 0)
-			return EINVAL;
-		fmtdesc->index = fmtdesc->flags = 0;
-		fmtdesc->type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 		return video_enum_format(sc, fmtdesc);
 	case VIDIOC_G_FMT:
 		fmt = data;
