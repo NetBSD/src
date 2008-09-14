@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1115 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1116 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -857,3 +857,9 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	cgd(4): Change default iv to encblkno1; encblkno (the old iv) used
 		to encrypt things 8 times leading to a 20% performance loss
 		for no real security benefit [christos 20080912]
+	etcupdate(8): Remove the "-b binarydir" and "-s srcdir/etc"
+		options which were deprecated in NetBSD-4.0.  Deprecate
+		the "-s tgz1:tgz2" option; please use "-s tgz1 -s tgz2"
+		instead.  [apb 20080914]
+	postinstall(8): Deprecate the "-s tgz1:tgz2" option; please use
+		"-s tgz1 -s tgz2" instead.  [apb 20080914]
