@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.32.10.1 2007/12/15 19:34:13 bouyer Exp $
+.\"	$NetBSD: hardware,v 1.32.10.2 2008/09/14 21:09:57 bouyer Exp $
 .
 .Pp
 The minimum configuration requires 4 MB of RAM and 60 MB of disk space.
@@ -443,6 +443,7 @@ Parallel ports
 Bi-directional parallel port.
 .br
 On-board and Sbus card
+.bullet)
 .bullet)
 .Ss2 Unsupported devices
 .(bullet -offset indent

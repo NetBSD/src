@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.1 2003/10/10 23:53:21 mbw Exp $
+.\"	$NetBSD: prep,v 1.1.16.1 2008/09/14 21:09:57 bouyer Exp $
 .
 .Ss2 Get to the Boot Administration prompt
 .
@@ -9,7 +9,7 @@ device to try booting from first, determine the ethernet MAC address, set
 up a serial console, and possibly do some low level hardware access.  
 .Pp
 To get to the 
-.Li BOOT_ADMIN\*>
+.Li BOOT_ADMIN\*[Gt]
 prompt, you must press the
 .Key ESCAPE
 key before it tries to boot an OS.  Since these machines often take a 
@@ -27,7 +27,7 @@ and
 you need to type the
 .Key Sq a
 key to get to the 
-.Li BOOT_ADMIN\*>
+.Li BOOT_ADMIN\*[Gt]
 prompt.  Now, use the online help with the 
 .Ic help
 command.
@@ -40,7 +40,7 @@ system.
 .(disp
 Selecting a system to boot.
 To stop selection process, press and hold the ESCAPE key.
-.Ic \*<ESC\*>
+.Ic \*[Lt]ESC\*[Gt]
 Booting from:     scsi.6.0     SEAGATE ST3600N
 
 Selection process stopped.
@@ -52,7 +52,7 @@ Device Selection      Device Path              Device Type
 ----------------------------------------------------------------------------
 
 P0                    scsi.6.0                 SEAGATE ST3600N
-.Ic \*<ESC\*>
+.Ic \*[Lt]ESC\*[Gt]
 Search terminated.
 
 
@@ -63,9 +63,9 @@ x)    Exit and continue boot sequence
 ?)    Help
 
 .No Select from menu: Ic a
-.No BOOT_ADMIN\*> Ic lan_addr
+.No BOOT_ADMIN\*[Gt] Ic lan_addr
 LAN Station Address:  080009-123456
-.No BOOT_ADMIN\*> Ic help
+.No BOOT_ADMIN\*[Gt] Ic help
 .disp)
 .
 .Ss2 Change the configuration parameters to netboot
@@ -78,9 +78,9 @@ and
 commands to learn about how to configure your system.
 On a 735/99, you would type:
 .(disp
-.No BOOT_ADMIN\*> Ic "path primary lan"
-.No BOOT_ADMIN\*> Ic "autoselect on"
-.No BOOT_ADMIN\*> Ic "reset"
+.No BOOT_ADMIN\*[Gt] Ic "path primary lan"
+.No BOOT_ADMIN\*[Gt] Ic "autoselect on"
+.No BOOT_ADMIN\*[Gt] Ic "reset"
 .disp)
 .Pp
 The first command sets the primary boot device to be the network 
@@ -91,7 +91,7 @@ command stores the new settings and resets the machine.
 To return to using the SCSI disk at ID 6 as your primary boot device, you 
 would use something like the following command:
 .(disp
-.No BOOT_ADMIN\*> Ic "path primary scsi.6.0"
+.No BOOT_ADMIN\*[Gt] Ic "path primary scsi.6.0"
 .disp)
 .
 .Ss2 Determine netboot method
