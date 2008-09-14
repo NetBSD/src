@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.45 2008/09/14 13:46:51 apb Exp $
+# $NetBSD: etcupdate,v 1.46 2008/09/14 14:22:45 apb Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -411,26 +411,11 @@ USERRC="${HOME}/.{PROG}rc"
 [ -r ${USERRC} ] && . ${USERRC}
 
 # Read command line arguments
-while getopts ab:hlp:s:t:vw: i
+while getopts ahlp:s:t:vw: i
 do
 	case "${i}" in
 	a)
 		AUTOMATIC=true
-		;;
-	b)
-
-		# Backward compatibility for deprecated "-b tempdir" option.
-		# Remove this after NetBSD-4.0 is released.
-		cat <<EOF
-*** WARNING: The "-b tempdir" option is deprecated.
-             Please use "-s tempdir" in future.
-EOF
-		BINARYMODE=true
-		BINARYDIRMODE=true
-		BINARYDIR="${OPTARG}"
-		qarg="$(shell_quote "${OPTARG}")"
-		N_SRC_ARGS=$(( N_SRC_ARGS + 1 ))
-		SRC_ARGLIST="${SRC_ARGLIST}${SRC_ARGLIST:+ }-s ${qarg}"
 		;;
 	h)
 		usage
@@ -461,16 +446,6 @@ EOF
 			# arg refers to a source directory
 			SOURCEMODE=true
 			SRCDIR="${arg}"
-		elif [ -d "${arg}" ] && [ -f "${arg}/../etc/Makefile" ]; then
-			# backward compatibility: allow arg to refer to
-			# etc subdirectory within source dir.
-			# Remove this after NetBSD-4.0 is released.
-			cat <<EOF
-*** WARNING: The "-s srcdir" option should refer to the top level
-             source directory, not to the etc subdirectory.
-EOF
-			SOURCEMODE=true
-			SRCDIR="${arg}/.."
 		elif [ -d "${arg}" ] && [ -d "${ARG}/etc" ] \
 			&& ! [ -f "${arg}/etc/Makefile" ]
 		then
