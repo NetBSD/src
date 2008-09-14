@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.58 2008/09/10 10:07:36 apb Exp $
+.\" $NetBSD: doc2html,v 1.59 2008/09/14 20:29:10 apb Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -321,17 +321,15 @@ TODO:
 .de Sh
 .	end-preformat
 .	init-html
-	<h3>
+	<h3 id="\\$*">
 	\\$*
 	</h3>
 ..
 .de Ss
 .	end-preformat
 .	init-html
-	<h4>
-	   <a name="\\$*">
+	<h4 id="\\$*">
 	\\$*
-	   </a>
 	</h4>
 ..
 .
@@ -1439,12 +1437,12 @@ AT&T UNIX\\$*
 .de SH
 .	end-preformat
 .	mo-end-dl
-<h3> \\$* </h3>
+<h3 id="\\$*"> \\$* </h3>
 ..
 .de SS
 .	end-preformat
 .	mo-end-dl
-<h4> \\$* </h4>
+<h4 id="\\$*"> \\$* </h4>
 ..
 .de B
 .	ie \\n(.$ <b>\&\\$*</b>
