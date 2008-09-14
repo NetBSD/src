@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.21 2008/09/12 10:56:14 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.22 2008/09/14 16:10:19 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -64,11 +64,6 @@ struct fss_get {
 					   sc_copied map uses up to
 					   FSS_CLUSTER_MAX/NBBY bytes */
 
-/* Device to softc, NULL on error */
-#define FSS_DEV_TO_SOFTC(dev) \
-	(minor((dev)) < 0 || minor((dev)) >= NFSS ? NULL : \
-	    &fss_softc[minor((dev))])
-
 /* Check if still valid */
 #define FSS_ISVALID(sc) \
 	(((sc)->sc_flags & (FSS_ACTIVE|FSS_ERROR)) == FSS_ACTIVE)
@@ -124,7 +119,7 @@ struct fss_cache {
 };
 
 struct fss_softc {
-	int		sc_unit;	/* Logical unit number */
+	struct device	*sc_dev;	/* Self */
 	kmutex_t	sc_slock;	/* Protect this softc */
 	kmutex_t	sc_lock;	/* Sleep lock for fss_ioctl */
 	kcondvar_t	sc_work_cv;	/* Signals work for the kernel thread */
@@ -137,6 +132,7 @@ struct fss_softc {
 #define FSS_CDEV_OPEN	0x40		/* character device open */
 #define FSS_BDEV_OPEN	0x80		/* block device open */
 	int		sc_uflags;	/* User visible flags */
+	struct disk	*sc_dkdev;	/* Generic disk device info */
 	struct mount	*sc_mount;	/* Mount point */
 	char		sc_mntname[MNAMELEN]; /* Mount point */
 	struct timeval	sc_time;	/* Time this snapshot was taken */
