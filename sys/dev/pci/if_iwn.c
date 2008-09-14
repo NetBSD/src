@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.17 2008/08/18 21:19:22 cube Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.18 2008/09/14 10:09:39 freza Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.17 2008/08/18 21:19:22 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.18 2008/09/14 10:09:39 freza Exp $");
 
 
 /*
@@ -1459,7 +1459,7 @@ iwn_rx_intr(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 	 * See comment in if_wpi.c:wpi_rx_intr() about locking
 	 * nb_free_entries here.  In short:  it's not required.
 	 */
-	if (sc->rxq.nb_free_entries >= 0) {
+	if (sc->rxq.nb_free_entries > 0) {
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 		if (mnew == NULL) {
 			ic->ic_stats.is_rx_nobuf++;
