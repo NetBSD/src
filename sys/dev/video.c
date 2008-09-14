@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.13 2008/09/14 14:31:33 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.14 2008/09/14 16:03:27 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.13 2008/09/14 14:31:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.14 2008/09/14 16:03:27 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -402,6 +402,7 @@ static const char *
 video_pixel_format_str(enum video_pixel_format px)
 {
 	switch (px) {
+	case VIDEO_FORMAT_YUV420:	return "YUV420";
 	case VIDEO_FORMAT_YUY2: 	return "YUYV";
 	case VIDEO_FORMAT_NV12:		return "NV12";
 	case VIDEO_FORMAT_RGB24:	return "RGB24";
@@ -585,6 +586,9 @@ video_format_to_v4l2_format(const struct video_format *src,
 	/* dest->colorspace =  */
 	
 	switch (src->pixel_format) {
+	case VIDEO_FORMAT_YUV420:
+		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
+		break;
 	case VIDEO_FORMAT_YUY2:
 		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
 		break;
@@ -628,6 +632,9 @@ v4l2_format_to_video_format(const struct v4l2_format *src,
 		dest->sample_size = src->fmt.pix.sizeimage;
 
 		switch (src->fmt.pix.pixelformat) {
+		case V4L2_PIX_FMT_YUV420:
+			dest->pixel_format = VIDEO_FORMAT_YUV420;
+			break;
 		case V4L2_PIX_FMT_YUYV:
 			dest->pixel_format = VIDEO_FORMAT_YUY2;
 			break;
