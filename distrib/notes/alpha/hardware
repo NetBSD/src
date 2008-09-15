@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.14 2003/07/26 17:06:54 salo Exp $
+.\"	$NetBSD: hardware,v 1.14.18.1 2008/09/15 08:09:56 skrll Exp $
 .
 .Nx*M
 \*V runs on most of the
@@ -15,7 +15,7 @@ boot
 by the fact that it has a command line interface,
 rather than a menu-driven interface.
 The SRM prompt is
-.Sq Li \*>\*>\*> .
+.Sq Li \*[Gt]\*[Gt]\*[Gt] .
 .Pp
 Some platforms have both the SRM console and
 the ARC console, and can switch between them, and other platforms have
@@ -279,7 +279,7 @@ DEC DE200,201,202 EtherWORKS II/Turbo ISA Ethernet boards
 
 	You should enter the following SRM console command to enable the
 	le device:
-	\*>\*>\*> isacfg -mk -slot ? -dev 0 -handle DE200-LE -irq0 5
+	\*[Gt]\*[Gt]\*[Gt] isacfg -mk -slot ? -dev 0 -handle DE200-LE -irq0 5
 	    -membase0 d0000 -memlen0 10000 -iobase0 300 -etyp 1 -enadev 1
 
 DEC DE203,204,205 EtherWORKS III ISA Ethernet boards
@@ -288,5 +288,5 @@ DEC DE203,204,205 EtherWORKS III ISA Ethernet boards
 
 	You should enter the following SRM console command to enable
 	the device:
-	\*>\*>\*> add_de205
+	\*[Gt]\*[Gt]\*[Gt] add_de205
 .disp)
