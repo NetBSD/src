@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.10 2002/06/29 22:37:40 lukem Exp $
+.\"	$NetBSD: install,v 1.10.18.1 2008/09/15 08:09:56 skrll Exp $
 .
 Boot with bootloader and
 .Pa netbsd
@@ -18,7 +18,7 @@ memory to be used.
 If bootloader failed with a
 .Dq cannot allocate heap
 error, configure more RAM for memory and less for disk with the dialog at
-[Setting]-\*>[ControlPanel]-\*>[System]-\*>[Memory] under
+[Setting]-\*[Gt][ControlPanel]-\*[Gt][System]-\*[Gt][Memory] under
 .Tn "Windows CE" .
 .Pp
 .

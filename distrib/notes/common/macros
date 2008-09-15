@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.31.6.1 2007/09/03 06:57:28 wrstuden Exp $
+.\"	$NetBSD: macros,v 1.31.6.2 2008/09/15 08:09:56 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -260,7 +260,7 @@
 .di C2         \" open second-page (C2) diversion
 ..
 .de Bc
-.in +\n(Dsu	\" Indent to match Bd
+.in +\\n(Dsu	\" Indent to match Bd
 .nr CN 2		\" Number of columns
 .if !"\\$1"" .nr CN \\$1
 .ne 2v	\" we need at least two lines of space on the page.
@@ -316,7 +316,7 @@
 .in \\n(CIu	\" restore indent
 .po \\n(COu	\" restore offset
 .fi                             \" fill again.
-.in -\n(Dsu	\" revert prior indent
+.in -\\n(Dsu	\" revert prior indent
 ..
 .\" Unfortunately, none of the above works with -mdoc2html; so we'll
 .\" just replace columns with a regular Bd -unfilled -offset indent.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.77.2.1.2.4 2008/06/03 20:46:57 skrll Exp $
+.\"	$NetBSD: sysinst,v 1.77.2.1.2.5 2008/09/15 08:09:56 skrll Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -402,7 +402,7 @@ the computer.
 .if \n[alpha] \{\
 Type
 .Pp
-.Dl \&\*>\*>\*> Ic "B DVA0"
+.Dl \&\*[Gt]\*[Gt]\*[Gt] Ic "B DVA0"
 .Pp
 .\}
 .if \n[ews4800mips] \{\
@@ -413,27 +413,27 @@ pressing ESC key right after hardware checks, and boot the computer again.
 .if \n[news68k] \{\
 Type
 .Pp
-.Dl \&NEWS\*> Ic "bo fh"
+.Dl \&NEWS\*[Gt] Ic "bo fh"
 .Pp
 .\}
 .if \n[newsmips] \{\
 Type
 .Pp
-.Dl \&\*> Ic "bo fd" (in case of NWS-5000)
+.Dl \&\*[Gt] Ic "bo fd" (in case of NWS-5000)
 .Pp
 or
 .Pp
-.Dl \&\*> Ic "bo fh" (in case of NWS-3xxx)
+.Dl \&\*[Gt] Ic "bo fh" (in case of NWS-3xxx)
 .Pp
 .\}
 After language selection, the main menu will be displayed.
 .\}\}
 .(disp
-.ne 10
+.if t .ne 10
 . cs \n(.f 22
 .\" )   - appease vi showmatch
   .***********************************************.
-  * NetBSD-\*V Install System                     *
+                                                  *\h'|0'  * NetBSD-\*V Install System
   *                                               *
   *\*[Gt]a: Install NetBSD to hard disk                *
   * b: Upgrade NetBSD on a hard disk              *
@@ -912,7 +912,7 @@ and
 .Pa swap ) ,
 for example:
 .Dl # Ic "mkdir /mnt/etc"
-.Dl # Ic "cat \*> /mnt/etc/fstab"
+.Dl # Ic "cat \*[Gt] /mnt/etc/fstab"
 .Dl "/dev/wd0a / ffs rw 1 1"
 .Dl "/dev/wd0b none swap sw 0 0"
 .Dl "/dev/wd0g /usr ffs rw 1 2"
@@ -1089,7 +1089,7 @@ the rest of the partitions in AHDI order
 .if \n[macppc] \{\
 .Pp
 You can skip a few steps, down to
-.Em Sq "Getting the distribution sets" ,
+.Sq Em "Getting the distribution sets" ,
 if you are installing onto a drive with an Apple Partition Map (Open 
 Firmware 3), i.e. you selected
 .Me "Re-install sets or install additional sets"
@@ -1788,7 +1788,7 @@ As the a.out format kernel is not named in such a way that the
 Cyclone firmware will automatically find it the following command
 should be issued as the firmware prompt.
 .Pp
-.Dl boot> Ic "set boot wd0:/netbsd.aout"
+.Dl boot\*[Gt] Ic "set boot wd0:/netbsd.aout"
 .Pp
 .\}
 .if !\n[macppc] \{\
