@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.65 2008/09/15 02:37:54 cube Exp $
+#	$NetBSD: bsd.x11.mk,v 1.66 2008/09/15 08:05:19 rtr Exp $
 
 .include <bsd.init.mk>
 
@@ -295,7 +295,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@DEP_CFLAGS@,,; \
 		s,@DEP_LIBS@,,; \
 		s,@X11_EXTRA_DEPS@,,; \
-		s,@XTHREAD_CFLAGS@,-D_POSIX_THREAD_SAFE_FUNCTIONS,; \
+		s,@XTHREAD_CFLAGS@,-D_REENTRANT,; \
 		s,@XTHREADLIB@,-lpthread,; \
 		s,@fchown_define@,-DHAS_FCHOWN,; \
 		s,@sticky_bit_define@,-DHAS_STICKY_DIR_BIT," \
