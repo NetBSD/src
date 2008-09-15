@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1117 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1118 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -471,7 +471,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	msdosfs: Add large read / readahead support by Paul Ripke
 		(introduce run-length detection to msdosfs_bmap(),
 		from FreeBSD).  [christos 20080105]
-	gem(4): Add support for Sun SX fibre cards.  [jdc 20080105]
+	gem(4): Add support for Sun PCI SX fibre cards.  [jdc 20080105]
 	amiga: Add timecounter(9) support and coutner-based delay(9) from i386.
 		[mhitch 20080106]
 	mvme68k: Add timecounter(9) support. [tsutsui 20080107]
@@ -867,3 +867,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		"-s tgz1 -s tgz2" instead.  [apb 20080914]
 	ataraid(8): Add support for status reports via bio(4) contributed
 		by Juan RP. [tron 20080915]
+	gem(4): Add support for Sun SBus SX fibre cards.  [jdc 20080915]
