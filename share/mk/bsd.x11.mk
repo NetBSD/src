@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.64 2008/09/13 04:28:37 cube Exp $
+#	$NetBSD: bsd.x11.mk,v 1.65 2008/09/15 02:37:54 cube Exp $
 
 .include <bsd.init.mk>
 
@@ -267,7 +267,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		_pkg_version=$$(${PRINT_PACKAGE_VERSION} \
 		    ${PKGDIST.${.PREFIX}}/configure); \
 	fi; \
-	${TOOL_SED} \
+	${TOOL_SED} -E \
 		-e "s,@prefix@,${X11ROOTDIR},; \
 		s,@INSTALL_DIR@,${X11ROOTDIR},; \
 		s,@exec_prefix@,\\$$\{prefix\},; \
@@ -299,6 +299,7 @@ pkgconfig-install: ${_PKGDEST.${_pkg}}
 		s,@XTHREADLIB@,-lpthread,; \
 		s,@fchown_define@,-DHAS_FCHOWN,; \
 		s,@sticky_bit_define@,-DHAS_STICKY_DIR_BIT," \
+		-e '/^Libs:/ s%-L([^[:space:]]+)%-Wl,-R\1 &%g' \
 		< ${.IMPSRC} > ${.TARGET}.tmp && \
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
