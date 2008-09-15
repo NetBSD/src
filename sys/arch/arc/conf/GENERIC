@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.156 2008/09/15 04:08:55 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.157 2008/09/15 04:42:58 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.156 $"
+#ident		"GENERIC-$Revision: 1.157 $"
 
 maxusers	32		# estimated number of users
 
@@ -302,8 +302,11 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 #vga*	 	at pci? dev ? function ?
 tga*		at pci? dev ? function ?	# DEC ZLXp-E[123] Graphics
 
+# PCI SCSI controllers
+adv*		at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA]
 ahc*		at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 iha*		at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+njs*		at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*		at pci? dev ? function ?	# AMD Am53c974 PCscsi-PCI SCSI
 siop*		at pci? dev ? function ?	# NCR/Symbios 53c8xx SCSI
 esiop*		at pci? dev ? function ?	# NCR/Symbios 53c875/95/1010
@@ -326,25 +329,59 @@ pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 #siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
-#viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
+viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
+# PCI network devices
+#an*		at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+bge*		at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
+#en*		at pci? dev ? function ?	# ENI/Adaptec ATM
+ep*		at pci? dev ? function ?	# 3Com 3c59x
 epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
+#esh*		at pci? dev ? function ?	# Essential HIPPI card
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
+#fpa*		at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
+gsip*		at pci? dev ? function ?	# NS83820 Gigabit Ethernet
+#hme*		at pci? dev ? function ?	# Sun STP2002-STQ
+#le*		at pci? dev ? function ?	# PCnet-PCI Ethernet
+lmc*		at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+#mtd*		at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*		at pci? dev ? function ?	# NE2000-compatible
+#ntwoc*		at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*		at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+re*		at pci? dev ? function ?	# Realtek 8139C+/8169/8110S
 rtk*		at pci? dev ? function ?	# Realtek 8129/8139
+sf*		at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*		at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
+#skc*		at pci? dev ? function ?	# SysKonnect SK9821
+#sk*		at skc?				# SysKonnect SK9821
+ste*		at pci? dev ? function ?	# Sundance ST-201 Ethernet
+#stge*		at pci? dev ? function ?	# Sundance/Tamarack TC9021
+ti*		at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
+tl*		at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
+vge*		at pci? dev ? function ?	# VIA VT612X Gigabit Ethernet
+vr*		at pci? dev ? function ?        # VIA Rhine Fast Ethernet
+wi*		at pci? dev ? function ?	# Intersil Prism Mini-PCI
+wm*		at pci? dev ? function ?	# Intel 82543/82544 gigabit
 
 #### MII/PHY support
-
+acphy*		at mii? phy ?		# Altima AC101 and AMD Am79c874 PHYs
+amhphy* 	at mii? phy ?		# AMD 79c901 Ethernet PHYs
 bmtphy*		at mii? phy ?		# Broadcom BCM5201 and BCM5202 PHYs
+brgphy* 	at mii? phy ?		# Broadcom BCM5400-family PHYs
+ciphy*		at mii? phy ?		# Cicada CS8201 Gig-E PHYs
+dmphy*		at mii? phy ?		# Davicom DM9101 PHYs
 exphy*		at mii? phy ?		# 3Com internal PHYs
+gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
+glxtphy* 	at mii? phy ?		# Level One LXT-1000 PHYs
+gphyter* 	at mii? phy ?		# NS83861 Gig-E PHY
 icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
+ikphy*		at mii? phy ?		# Intel 82563 PHYs
 inphy*		at mii? phy ?		# Intel 82555 PHYs
 iophy*		at mii? phy ?		# Intel 82553 PHYs
 lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
+makphy* 	at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
 nsphy*		at mii? phy ?		# NS83840 PHYs
 nsphyter*	at mii? phy ?		# NS83843 PHYs
 qsphy*		at mii? phy ?		# Quality Semiconductor QS6612 PHYs
@@ -352,6 +389,7 @@ sqphy*		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
 tlphy*		at mii? phy ?		# ThunderLAN PHYs
 tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
 ukphy*		at mii? phy ?		# generic unknown PHYs
+#urlphy* 	at mii? phy ?		# Realtek RTL8150L internal PHYs
 
 # SCSI bus support
 scsibus*	at scsi?
