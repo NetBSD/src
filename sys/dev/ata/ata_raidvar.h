@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidvar.h,v 1.8 2008/09/11 11:08:50 tron Exp $	*/
+/*	$NetBSD: ata_raidvar.h,v 1.9 2008/09/15 11:44:50 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -97,6 +97,8 @@ struct ataraid_array_info {
 	u_int	aai_capacity;		/* in sectors */
 	u_int	aai_offset;		/* component start offset */
 	u_int	aai_reserved;		/* component reserved sectors */
+
+	char	aai_name[32];		/* array volume name */
 
 	struct ataraid_disk_info aai_disks[ATA_RAID_MAX_DISKS];
 };
