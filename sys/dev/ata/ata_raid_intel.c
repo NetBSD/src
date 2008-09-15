@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_intel.c,v 1.1 2008/09/11 11:08:50 tron Exp $	*/
+/*	$NetBSD: ata_raid_intel.c,v 1.2 2008/09/15 11:44:50 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.1 2008/09/11 11:08:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.2 2008/09/15 11:44:50 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -252,6 +252,8 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 	    aai->aai_capacity / (aai->aai_heads * aai->aai_sectors);
 	aai->aai_offset = map->offset;
 	aai->aai_reserved = 3;
+	if (map->name)
+		strlcpy(aai->aai_name, map->name, sizeof(aai->aai_name));
 
 	/* Fill in disk info */
 	adi = &aai->aai_disks[curdrive];
