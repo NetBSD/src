@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.30 2008/09/15 11:44:50 tron Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.31 2008/09/15 11:53:52 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.30 2008/09/15 11:44:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.31 2008/09/15 11:53:52 tron Exp $");
 
 #include "bio.h"
 #include "rnd.h"
@@ -641,9 +641,8 @@ ld_ataraid_biovol(struct ld_ataraid_softc *sc, struct bioc_vol *bv)
 
 	bv->bv_nodisk = aai->aai_ndisks;
 	strlcpy(bv->bv_dev, device_xname(ld->sc_dv), sizeof(bv->bv_dev));
-	if (aai->aai_name)
-		strlcpy(bv->bv_vendor, aai->aai_name,
-		    sizeof(bv->bv_vendor));
+	if (aai->aai_name[0] != '\0')
+		strlcpy(bv->bv_vendor, aai->aai_name, sizeof(bv->bv_vendor));
 
 	return 0;
 }
