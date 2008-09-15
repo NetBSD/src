@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/05 12:12:05 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/09/15 03:51:43 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -34,5 +34,8 @@ FILES+=	host.def
 BUILDSYMLINKS=\
 	${X11SRCDIR.xorg-server}//hw/xfree86/common/xf86Version.h version.def \
         ${X11SRCDIR.xorg-server}//hw/xfree86/common/xf86Date.h	date.def
+
+site.def:	site.def.in
+	${TOOL_SED} -e 's,@prefix@,${X11ROOTDIR},' <${.ALLSRC} >${.TARGET}
 
 .include <bsd.prog.mk>
