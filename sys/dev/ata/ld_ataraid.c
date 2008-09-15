@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.29 2008/09/09 12:45:39 tron Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.30 2008/09/15 11:44:50 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -42,11 +42,14 @@
  * controllers we're dealing with (Promise, etc.) only support
  * configuration data on the component disks, with the BIOS supporting
  * booting from the RAID volumes.
+ *
+ * bio(4) support was written by Juan Romero Pardines <xtraeme@gmail.com>.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.29 2008/09/09 12:45:39 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.30 2008/09/15 11:44:50 tron Exp $");
 
+#include "bio.h"
 #include "rnd.h"
 
 #include <sys/param.h>
@@ -65,6 +68,13 @@ __KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.29 2008/09/09 12:45:39 tron Exp $")
 #include <sys/kauth.h>
 #if NRND > 0
 #include <sys/rnd.h>
+#endif
+#if NBIO > 0
+#include <dev/ata/atavar.h>
+#include <dev/ata/atareg.h>
+#include <dev/ata/wdvar.h>
+#include <dev/biovar.h>
+#include <dev/scsipi/scsipiconf.h> /* for scsipi_strvis() */
 #endif
 
 #include <miscfs/specfs/specdev.h>
@@ -91,6 +101,14 @@ static int	ld_ataraid_start_span(struct ld_softc *, struct buf *);
 
 static int	ld_ataraid_start_raid0(struct ld_softc *, struct buf *);
 static void	ld_ataraid_iodone_raid0(struct buf *);
+
+#if NBIO > 0
+static int	ld_ataraid_bioctl(device_t, u_long, void *);
+static int	ld_ataraid_bioinq(struct ld_ataraid_softc *, struct bioc_inq *);
+static int	ld_ataraid_biovol(struct ld_ataraid_softc *, struct bioc_vol *);
+static int	ld_ataraid_biodisk(struct ld_ataraid_softc *,
+				   struct bioc_disk *);
+#endif
 
 CFATTACH_DECL_NEW(ld_ataraid, sizeof(struct ld_ataraid_softc),
     ld_ataraid_match, ld_ataraid_attach, NULL, NULL);
@@ -233,6 +251,11 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 	}
 
  finish:
+#if NBIO > 0
+	if (bio_register(self, ld_ataraid_bioctl) != 0)
+		panic("%s: bioctl registration failed\n",
+		    device_xname(ld->sc_dv));
+#endif
 	ldattach(ld);
 }
 
@@ -541,3 +564,139 @@ ld_ataraid_dump(struct ld_softc *sc, void *data,
 
 	return (EIO);
 }
+
+#if NBIO > 0
+static int
+ld_ataraid_bioctl(device_t self, u_long cmd, void *addr)
+{
+	struct ld_ataraid_softc *sc = device_private(self);
+	int error = 0;
+
+	switch (cmd) {
+	case BIOCINQ:
+		error = ld_ataraid_bioinq(sc, (struct bioc_inq *)addr);
+		break;
+	case BIOCVOL:
+		error = ld_ataraid_biovol(sc, (struct bioc_vol *)addr);
+		break;
+	case BIOCDISK:
+		error = ld_ataraid_biodisk(sc, (struct bioc_disk *)addr);
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return error;
+}
+
+static int
+ld_ataraid_bioinq(struct ld_ataraid_softc *sc, struct bioc_inq *bi)
+{
+	struct ataraid_array_info *aai = sc->sc_aai;
+
+	/* there's always one volume per ld device */
+	bi->bi_novol = 1;
+	bi->bi_nodisk = aai->aai_ndisks;
+
+	return 0;
+}
+
+static int
+ld_ataraid_biovol(struct ld_ataraid_softc *sc, struct bioc_vol *bv)
+{
+	struct ataraid_array_info *aai = sc->sc_aai;
+	struct ld_softc *ld = &sc->sc_ld;
+
+	/* Fill in data for _this_ volume */
+	bv->bv_percent = -1;
+	bv->bv_seconds = 0;
+
+	switch (aai->aai_status) {
+	case AAI_S_READY:
+		bv->bv_status = BIOC_SVONLINE;
+		break;
+	case AAI_S_DEGRADED:
+		bv->bv_status = BIOC_SVDEGRADED;
+		break;
+	}
+
+	bv->bv_size = ld->sc_secsize * ld->sc_secperunit;
+
+	switch (aai->aai_level) {
+	case AAI_L_SPAN:
+	case AAI_L_RAID0:
+		bv->bv_stripe_size = aai->aai_interleave;
+		bv->bv_level = 0;
+		break;
+	case AAI_L_RAID1:
+		bv->bv_stripe_size = 0;
+		bv->bv_level = 1;
+		break;
+	case AAI_L_RAID5:
+		bv->bv_stripe_size = aai->aai_interleave;
+		bv->bv_level = 5;
+		break;
+	}
+
+	bv->bv_nodisk = aai->aai_ndisks;
+	strlcpy(bv->bv_dev, device_xname(ld->sc_dv), sizeof(bv->bv_dev));
+	if (aai->aai_name)
+		strlcpy(bv->bv_vendor, aai->aai_name,
+		    sizeof(bv->bv_vendor));
+
+	return 0;
+}
+
+static int
+ld_ataraid_biodisk(struct ld_ataraid_softc *sc, struct bioc_disk *bd)
+{
+	struct ataraid_array_info *aai = sc->sc_aai;
+	struct ataraid_disk_info *adi;
+	struct ld_softc *ld = &sc->sc_ld;
+	struct atabus_softc *atabus;
+	struct wd_softc *wd;
+	char model[81], serial[41], rev[17];
+
+	/* sanity check */
+	if (bd->bd_diskid > aai->aai_ndisks)
+		return EINVAL;
+
+	adi = &aai->aai_disks[bd->bd_diskid];
+	atabus = device_private(device_parent(adi->adi_dev));
+	wd = device_private(adi->adi_dev);
+
+	/* fill in data for _this_ disk */
+	switch (adi->adi_status) {
+	case ADI_S_ONLINE | ADI_S_ASSIGNED:
+		bd->bd_status = BIOC_SDONLINE;
+		break;
+	case ADI_S_SPARE:
+		bd->bd_status = BIOC_SDHOTSPARE;
+		break;
+	default:
+		bd->bd_status = BIOC_SDOFFLINE;
+		break;
+	}
+
+	bd->bd_channel = 0;
+	bd->bd_target = atabus->sc_chan->ch_channel;
+	bd->bd_lun = 0;
+	bd->bd_size = (wd->sc_capacity * ld->sc_secsize) - aai->aai_reserved;
+
+	strlcpy(bd->bd_procdev, device_xname(adi->adi_dev),
+	    sizeof(bd->bd_procdev));
+
+	scsipi_strvis(serial, sizeof(serial), wd->sc_params.atap_serial,
+	    sizeof(wd->sc_params.atap_serial));
+	scsipi_strvis(model, sizeof(model), wd->sc_params.atap_model,
+	    sizeof(wd->sc_params.atap_model));
+	scsipi_strvis(rev, sizeof(rev), wd->sc_params.atap_revision,
+	    sizeof(wd->sc_params.atap_revision));
+
+	snprintf(bd->bd_vendor, sizeof(bd->bd_vendor), "%s %s", model, rev);
+	strlcpy(bd->bd_serial, serial, sizeof(bd->bd_serial));
+
+	return 0;
+}
+#endif /* NBIO > 0 */
