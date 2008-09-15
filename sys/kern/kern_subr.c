@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.190 2008/06/11 10:40:21 drochner Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.191 2008/09/15 18:12:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.190 2008/06/11 10:40:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.191 2008/09/15 18:12:56 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -271,7 +271,7 @@ copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
 	iov.iov_len = len;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
-	uio.uio_offset = (off_t)(intptr_t)uaddr;
+	uio.uio_offset = (off_t)(uintptr_t)uaddr;
 	uio.uio_resid = len;
 	uio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&uio);
@@ -304,7 +304,7 @@ copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
 	iov.iov_len = len;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
-	uio.uio_offset = (off_t)(intptr_t)uaddr;
+	uio.uio_offset = (off_t)(uintptr_t)uaddr;
 	uio.uio_resid = len;
 	uio.uio_rw = UIO_WRITE;
 	UIO_SETUP_SYSSPACE(&uio);

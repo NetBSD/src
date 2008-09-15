@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.135 2008/07/18 21:29:48 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.136 2008/09/15 18:12:56 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.135 2008/07/18 21:29:48 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.136 2008/09/15 18:12:56 rmind Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -255,7 +255,7 @@ elf_copyargs(struct lwp *l, struct exec_package *pack,
 
 	if (execname) {
 		char *path = pack->ep_path;
-		execname->a_v = (intptr_t)(*stackp + vlen);
+		execname->a_v = (uintptr_t)(*stackp + vlen);
 		len = strlen(path) + 1;
 		if ((error = copyout(path, (*stackp + vlen), len)) != 0)
 			return error;
