@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1191 2008/09/16 17:34:53 pgoyette Exp $
+#	$NetBSD: mi,v 1.1192 2008/09/16 17:52:53 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -13345,7 +13345,7 @@
 ./usr/share/man/html9/cn_init_magic.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cn_set_magic.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cn_get_magic.html		comp-sys-htmlman	html
-./usr/share/man/cat9/cn_destroy_magic.html	comp-sys-htmlman	html
+./usr/share/man/html9/cn_destroy_magic.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cnpollc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cnputc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/condvar.html		comp-sys-htmlman	html
