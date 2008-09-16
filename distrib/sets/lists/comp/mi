@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1189 2008/09/06 19:14:45 jmcneill Exp $
+#	$NetBSD: mi,v 1.1190 2008/09/16 17:18:01 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8142,6 +8142,13 @@
 ./usr/share/man/cat9/cngetc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cngetsn.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cnmagic.0			comp-sys-catman		.cat
+./usr/share/man/cat9/cn_trap.0			comp-sys-catman		.cat
+./usr/share/man/cat9/cn_isconsole.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_check_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_init_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_set_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_get_magic.0		comp-sys-catman		.cat
+./usr/share/man/cat9/cn_destroy_magic.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/cnpollc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/cnputc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/condvar.0			comp-sys-catman		.cat
@@ -13332,6 +13339,13 @@
 ./usr/share/man/html9/cngetc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cngetsn.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cnmagic.html		comp-sys-htmlman	html
+./usr/share/man/cat9/cn_trap.html		comp-sys-htmlman	html
+./usr/share/man/cat9/cn_isconsole.html		comp-sys-htmlman	html
+./usr/share/man/cat9/cn_check_magic.htm		comp-sys-htmlman	html
+./usr/share/man/cat9/cn_init_magic.html		comp-sys-htmlman	html
+./usr/share/man/cat9/cn_set_magic.html		comp-sys-htmlman	html
+./usr/share/man/cat9/cn_get_magic.html		comp-sys-htmlman	html
+./usr/share/man/cat9/cn_destroy_magic.html	comp-sys-htmlman	html
 ./usr/share/man/html9/cnpollc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/cnputc.html		comp-sys-htmlman	html
 ./usr/share/man/html9/condvar.html		comp-sys-htmlman	html
@@ -18642,6 +18656,13 @@
 ./usr/share/man/man9/cngetc.9			comp-sys-man		.man
 ./usr/share/man/man9/cngetsn.9			comp-sys-man		.man
 ./usr/share/man/man9/cnmagic.9			comp-sys-man		.man
+./usr/share/man/man9/cn_trap.9			comp-sys-man		.man
+./usr/share/man/man9/cn_isconsole.9		comp-sys-man		.man
+./usr/share/man/man9/cn_check_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_init_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_set_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_get_magic.9		comp-sys-man		.man
+./usr/share/man/man9/cn_destroy_magic.9		comp-sys-man		.man
 ./usr/share/man/man9/cnpollc.9			comp-sys-man		.man
 ./usr/share/man/man9/cnputc.9			comp-sys-man		.man
 ./usr/share/man/man9/condvar.9			comp-sys-man		.man
