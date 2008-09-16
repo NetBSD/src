@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1118 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1119 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -865,6 +865,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		instead.  [apb 20080914]
 	postinstall(8): Deprecate the "-s tgz1:tgz2" option; please use
 		"-s tgz1 -s tgz2" instead.  [apb 20080914]
-	ataraid(8): Add support for status reports via bio(4) contributed
+	ataraid(4): Add support for status reports via bio(4) contributed
 		by Juan RP. [tron 20080915]
 	gem(4): Add support for Sun SBus SX fibre cards.  [jdc 20080915]
