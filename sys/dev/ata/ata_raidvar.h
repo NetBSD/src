@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidvar.h,v 1.9 2008/09/15 11:44:50 tron Exp $	*/
+/*	$NetBSD: ata_raidvar.h,v 1.10 2008/09/16 11:45:30 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -125,6 +125,8 @@ const char *ata_raid_type_name(u_int);
 struct ataraid_array_info *ata_raid_get_array_info(u_int, u_int);
 int	ata_raid_config_block_rw(struct vnode *, daddr_t, void *,
 	    size_t, int);
+
+struct vnode *ata_raid_disk_vnode_find(struct ataraid_disk_info *);
 
 /* Promise RAID support */
 int	ata_raid_read_config_promise(struct wd_softc *);

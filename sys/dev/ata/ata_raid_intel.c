@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_intel.c,v 1.2 2008/09/15 11:44:50 tron Exp $	*/
+/*	$NetBSD: ata_raid_intel.c,v 1.3 2008/09/16 11:45:30 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.2 2008/09/15 11:44:50 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.3 2008/09/16 11:45:30 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -140,7 +140,7 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 	struct vnode *vp;
 	uint32_t checksum, *ptr;
 	static int curdrive;
-	int bmajor, count, error = 0;
+	int bmajor, count, curvol = 0, error = 0;
 	char *tmp;
 	dev_t dev;
 
@@ -203,14 +203,11 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 	/* This one points to the first volume */
 	map = (struct intel_raid_mapping *)&info->disk[info->total_disks];
 
+findvol:
 	/*
 	 * Lookup or allocate a new array info structure for this array.
-	 *
-	 * TODO:
-	 * We only look at the first volume. Need to solve a few issues before
-	 * multiple volumes are working correctly.
 	 */
-	aai = ata_raid_get_array_info(ATA_RAID_TYPE_INTEL, 0); 
+	aai = ata_raid_get_array_info(ATA_RAID_TYPE_INTEL, curvol); 
 
 	/* Fill in array info */
 	aai->aai_generation = info->generation;
@@ -244,7 +241,7 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 
 	aai->aai_type = ATA_RAID_TYPE_INTEL;
 	aai->aai_capacity = map->total_sectors;
-	aai->aai_interleave = map->stripe_sectors;
+	aai->aai_interleave = map->stripe_sectors / 2;
 	aai->aai_ndisks = map->total_disks;
 	aai->aai_heads = 255;
 	aai->aai_sectors = 63;
@@ -274,6 +271,16 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 		adi->adi_dev = sc->sc_dev;
 		adi->adi_sectors = info->disk[curdrive].sectors;
 		adi->adi_compsize = adi->adi_sectors - aai->aai_reserved;
+		/*
+		 * Check if that is the only volume, otherwise repeat
+		 * the process to find more.
+		 */
+		if ((curvol + 1) < info->total_volumes) {
+			curvol++;
+			map = (struct intel_raid_mapping *)
+			    &map->disk_idx[map->total_disks];
+			goto findvol;
+		}
 		curdrive++;
 	}
 
