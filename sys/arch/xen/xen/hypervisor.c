@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.37 2008/05/27 17:01:07 explorer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.38 2008/09/16 19:55:32 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.37 2008/05/27 17:01:07 explorer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.38 2008/09/16 19:55:32 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,6 +393,8 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		ctrl_if_register_receiver(CMSG_SHUTDOWN,
 		    hypervisor_shutdown_handler, CALLBACK_IN_BLOCKING_CONTEXT);
 #endif
+
+	hypervisor_machdep_attach();
 }
 
 static int
