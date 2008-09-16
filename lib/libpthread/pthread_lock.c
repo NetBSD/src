@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.14 2005/03/17 17:23:21 jwise Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.14.4.1 2008/09/16 18:49:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_lock.c,v 1.14 2005/03/17 17:23:21 jwise Exp $");
+__RCSID("$NetBSD: pthread_lock.c,v 1.14.4.1 2008/09/16 18:49:32 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/lock.h>
@@ -207,6 +207,10 @@ pthread_spinlock(pthread_t thread, pthread_spin_t *lock)
 }
 
 
+/*
+ * pthread_spintrylock - try to get a spinlock
+ *	Return 0 on failure, non-zero on success
+ */
 int
 pthread_spintrylock(pthread_t thread, pthread_spin_t *lock)
 {

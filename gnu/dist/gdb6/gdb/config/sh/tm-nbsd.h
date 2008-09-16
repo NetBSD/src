@@ -25,4 +25,9 @@
 #include "sh/tm-sh.h"
 #include "solib.h"
 
+#define SOFTWARE_SINGLE_STEP_P() 1
+
+extern void shnbsd_software_single_step (enum target_signal, int);
+#define SOFTWARE_SINGLE_STEP(sig,bp_p) shnbsd_software_single_step (sig,bp_p)
+
 #endif /* TM_NBSD_H */

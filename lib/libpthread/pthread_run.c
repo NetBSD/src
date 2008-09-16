@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_run.c,v 1.18 2005/01/06 17:40:22 mycroft Exp $	*/
+/*	$NetBSD: pthread_run.c,v 1.18.10.1 2008/09/16 18:49:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_run.c,v 1.18 2005/01/06 17:40:22 mycroft Exp $");
+__RCSID("$NetBSD: pthread_run.c,v 1.18.10.1 2008/09/16 18:49:33 bouyer Exp $");
 
 #include <ucontext.h>
 #include <errno.h>
@@ -73,7 +73,16 @@ sched_yield(void)
 		self = pthread__self();
 		SDPRINTF(("(sched_yield %p) yielding\n", self));
 		pthread_spinlock(self, &pthread__runqueue_lock);
+		pthread_spinlock(self, &self->pt_statelock);
+		while (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &pthread__runqueue_lock);
+			pthread__signal_deferred(self, self);
+			pthread_spinlock(self, &pthread__runqueue_lock);
+			pthread_spinlock(self, &self->pt_statelock);
+		}
 		self->pt_state = PT_STATE_RUNNABLE;
+		pthread_spinunlock(self, &self->pt_statelock);
 		PTQ_INSERT_TAIL(&pthread__runqueue, self, pt_runq);
 		/*
 		 * There will always be at least one thread on the runqueue,
@@ -81,13 +90,18 @@ sched_yield(void)
 		 */
 	        next = PTQ_FIRST(&pthread__runqueue);
 		PTQ_REMOVE(&pthread__runqueue, next, pt_runq);
+		pthread_spinlock(self, &next->pt_statelock);
 		next->pt_state = PT_STATE_RUNNING;
 		if (next != self) {
 			next->pt_vpid = self->pt_vpid;
+			next->pt_lastlwp = self->pt_lastlwp;
+			pthread_spinunlock(self, &next->pt_statelock);
 			pthread__locked_switch(self, next,
 			    &pthread__runqueue_lock);
-		} else
+		} else {
 			pthread_spinunlock(self, &pthread__runqueue_lock);
+			pthread_spinunlock(self, &next->pt_statelock);
+		}
 	}
 
 	return 0;
@@ -101,7 +115,6 @@ pthread__block(pthread_t self, pthread_spin_t *queuelock)
 	pthread_t next;
 
 	next = pthread__next(self);
-	next->pt_state = PT_STATE_RUNNING;
 	SDPRINTF(("(calling locked_switch %p, %p) spinlock %d, %d\n",
  		self, next, self->pt_spinlocks, next->pt_spinlocks));
 	pthread__locked_switch(self, next, queuelock);
@@ -110,7 +123,11 @@ pthread__block(pthread_t self, pthread_spin_t *queuelock)
 }
 
 
-/* Get the next thread to switch to. Will never return NULL. */
+/*
+ * Get the next thread to switch to. Will never return NULL.
+ * Will lock pthread__runqueue_lock. Expects we are about
+ * to switch to the returned thread.
+ */
 pthread_t
 pthread__next(pthread_t self)
 {
@@ -132,14 +149,25 @@ pthread__next(pthread_t self)
 		pthread__assert(next->pt_type == PT_THREAD_IDLE);
 		SDPRINTF(("(next %p) returning idle thread %p\n", self, next));
 	}
+	/* Now set this thread up to run on our VP */
+	pthread_spinlock(self, &next->pt_statelock);
+	next->pt_state = PT_STATE_RUNNING;
 	next->pt_vpid = self->pt_vpid;
+	next->pt_lastlwp = self->pt_lastlwp;
+	pthread_spinunlock(self, &next->pt_statelock);
+
 	pthread_spinunlock(self, &pthread__runqueue_lock);
 
 	return next;
 }
 
 
-/* Put a thread on the suspended queue */
+/*
+ * Put a thread on the suspended queue
+ *
+ * Called and returns with both thread->pt_statelock and
+ * pthread__runqueue_lock locked.
+ */
 void
 pthread__suspend(pthread_t self, pthread_t thread)
 {
@@ -148,16 +176,17 @@ pthread__suspend(pthread_t self, pthread_t thread)
 	thread->pt_state = PT_STATE_SUSPENDED;
 	pthread__assert(thread->pt_type == PT_THREAD_NORMAL);
 	pthread__assert(thread->pt_spinlocks == 0);
-	pthread_spinlock(self, &pthread__runqueue_lock);
 	PTQ_INSERT_TAIL(&pthread__suspqueue, thread, pt_runq);
-	pthread_spinunlock(self, &pthread__runqueue_lock);
 	/* XXX flaglock? */
 	thread->pt_flags &= ~PT_FLAG_SUSPENDED;
 }
 
-/* Put a thread back on the run queue */
+/*
+ * Put a thread back on the run queue. Will lock and unlock the
+ * run queue unless rq_locked is non-zero.
+ */
 void
-pthread__sched(pthread_t self, pthread_t thread)
+pthread__sched(pthread_t self, pthread_t thread, int rq_locked)
 {
 
 	SDPRINTF(("(sched %p) scheduling %p\n", self, thread));
@@ -169,9 +198,11 @@ pthread__sched(pthread_t self, pthread_t thread)
 #endif
 	pthread__assert(PTQ_LAST(&pthread__runqueue, pthread_queue_t) != thread);
 	pthread__assert(PTQ_FIRST(&pthread__runqueue) != thread);
-	pthread_spinlock(self, &pthread__runqueue_lock);
+	if (rq_locked == 0)
+		pthread_spinlock(self, &pthread__runqueue_lock);
 	PTQ_INSERT_TAIL(&pthread__runqueue, thread, pt_runq);
-	pthread_spinunlock(self, &pthread__runqueue_lock);
+	if (rq_locked == 0)
+		pthread_spinunlock(self, &pthread__runqueue_lock);
 }
 
 /* Put a bunch of sleeping threads on the run queue */
@@ -183,7 +214,9 @@ pthread__sched_sleepers(pthread_t self, struct pthread_queue_t *threadq)
 	pthread_spinlock(self, &pthread__runqueue_lock);
 	PTQ_FOREACH(thread, threadq, pt_sleep) {
 		SDPRINTF(("(sched_sleepers %p) scheduling %p\n", self, thread));
+		pthread_spinlock(self, &thread->pt_statelock);
 		thread->pt_state = PT_STATE_RUNNABLE;
+		pthread_spinunlock(self, &thread->pt_statelock);
 		pthread__assert(thread->pt_type == PT_THREAD_NORMAL);
 		pthread__assert(thread->pt_spinlocks == 0);
 #ifdef PTHREAD__DEBUG
@@ -195,7 +228,9 @@ pthread__sched_sleepers(pthread_t self, struct pthread_queue_t *threadq)
 }
 
 
-/* Make a thread a candidate idle thread. */
+/*
+ * Make a thread a candidate idle thread. Locks??
+ */
 void
 pthread__sched_idle(pthread_t self, pthread_t thread)
 {

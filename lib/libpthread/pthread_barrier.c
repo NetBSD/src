@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_barrier.c,v 1.6 2003/03/08 08:03:35 lukem Exp $	*/
+/*	$NetBSD: pthread_barrier.c,v 1.6.16.1 2008/09/16 18:49:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_barrier.c,v 1.6 2003/03/08 08:03:35 lukem Exp $");
+__RCSID("$NetBSD: pthread_barrier.c,v 1.6.16.1 2008/09/16 18:49:32 bouyer Exp $");
 
 #include <errno.h>
 #include <sys/cdefs.h>
@@ -188,6 +188,16 @@ pthread_barrier_wait(pthread_barrier_t *barrier)
 		    self, barrier));
 
 		pthread_spinlock(self, &self->pt_statelock);
+
+		if (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &barrier->ptb_lock);
+			SDPRINTF(("(barrier wait %p) Caught defsig on %p\n",
+			    self, barrier));
+			pthread__signal_deferred(self, self);
+			pthread_spinlock(self, &barrier->ptb_lock);
+			continue;
+		}
 
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;
 		self->pt_sleepobj = barrier;

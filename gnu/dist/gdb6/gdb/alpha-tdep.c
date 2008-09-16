@@ -1271,67 +1271,74 @@ alpha_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
    targets don't supply this value in their core files.  */
 
 void
-alpha_supply_int_regs (int regno, const void *r0_r30,
-		       const void *pc, const void *unique)
+alpha_supply_int_regs (struct regcache *regcache, int regno,
+		       const void *r0_r30, const void *pc, const void *unique)
 {
+  const gdb_byte *regs = r0_r30;
   int i;
 
   for (i = 0; i < 31; ++i)
     if (regno == i || regno == -1)
-      regcache_raw_supply (current_regcache, i, (const char *)r0_r30 + i*8);
+      regcache_raw_supply (regcache, i, regs + i * 8);
 
   if (regno == ALPHA_ZERO_REGNUM || regno == -1)
-    regcache_raw_supply (current_regcache, ALPHA_ZERO_REGNUM, NULL);
+    regcache_raw_supply (regcache, ALPHA_ZERO_REGNUM, NULL);
 
   if (regno == ALPHA_PC_REGNUM || regno == -1)
-    regcache_raw_supply (current_regcache, ALPHA_PC_REGNUM, pc);
+    regcache_raw_supply (regcache, ALPHA_PC_REGNUM, pc);
 
   if (regno == ALPHA_UNIQUE_REGNUM || regno == -1)
-    regcache_raw_supply (current_regcache, ALPHA_UNIQUE_REGNUM, unique);
+    regcache_raw_supply (regcache, ALPHA_UNIQUE_REGNUM, unique);
 }
 
 void
-alpha_fill_int_regs (int regno, void *r0_r30, void *pc, void *unique)
+alpha_fill_int_regs (const struct regcache *regcache,
+		     int regno, void *r0_r30, void *pc, void *unique)
 {
+  gdb_byte *regs = r0_r30;
   int i;
 
   for (i = 0; i < 31; ++i)
     if (regno == i || regno == -1)
-      regcache_raw_collect (current_regcache, i, (char *)r0_r30 + i*8);
+      regcache_raw_collect (regcache, i, regs + i * 8);
 
   if (regno == ALPHA_PC_REGNUM || regno == -1)
-    regcache_raw_collect (current_regcache, ALPHA_PC_REGNUM, pc);
+    regcache_raw_collect (regcache, ALPHA_PC_REGNUM, pc);
 
   if (unique && (regno == ALPHA_UNIQUE_REGNUM || regno == -1))
-    regcache_raw_collect (current_regcache, ALPHA_UNIQUE_REGNUM, unique);
+    regcache_raw_collect (regcache, ALPHA_UNIQUE_REGNUM, unique);
 }
 
 void
-alpha_supply_fp_regs (int regno, const void *f0_f30, const void *fpcr)
+alpha_supply_fp_regs (struct regcache *regcache, int regno,
+		      const void *f0_f30, const void *fpcr)
 {
+  const gdb_byte *regs = f0_f30;
   int i;
 
   for (i = ALPHA_FP0_REGNUM; i < ALPHA_FP0_REGNUM + 31; ++i)
     if (regno == i || regno == -1)
-      regcache_raw_supply (current_regcache, i,
-			   (const char *)f0_f30 + (i - ALPHA_FP0_REGNUM) * 8);
+      regcache_raw_supply (regcache, i,
+			   regs + (i - ALPHA_FP0_REGNUM) * 8);
 
   if (regno == ALPHA_FPCR_REGNUM || regno == -1)
-    regcache_raw_supply (current_regcache, ALPHA_FPCR_REGNUM, fpcr);
+    regcache_raw_supply (regcache, ALPHA_FPCR_REGNUM, fpcr);
 }
 
 void
-alpha_fill_fp_regs (int regno, void *f0_f30, void *fpcr)
+alpha_fill_fp_regs (const struct regcache *regcache,
+		    int regno, void *f0_f30, void *fpcr)
 {
+  gdb_byte *regs = f0_f30;
   int i;
 
   for (i = ALPHA_FP0_REGNUM; i < ALPHA_FP0_REGNUM + 31; ++i)
     if (regno == i || regno == -1)
-      regcache_raw_collect (current_regcache, i,
-			    (char *)f0_f30 + (i - ALPHA_FP0_REGNUM) * 8);
+      regcache_raw_collect (regcache, i,
+			    regs + (i - ALPHA_FP0_REGNUM) * 8);
 
   if (regno == ALPHA_FPCR_REGNUM || regno == -1)
-    regcache_raw_collect (current_regcache, ALPHA_FPCR_REGNUM, fpcr);
+    regcache_raw_collect (regcache, ALPHA_FPCR_REGNUM, fpcr);
 }
 
 

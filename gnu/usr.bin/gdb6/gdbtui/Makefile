@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2006/05/29 19:20:05 nathanw Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2008/09/16 18:49:30 bouyer Exp $
 
 .include "../Makefile.inc"
 
@@ -49,7 +49,7 @@ DPADD+= ${LIBGDBDIR}/libgdb.a
 SIMOBJ!=	cd ${.CURDIR}/../sim/ppc && ${PRINTOBJDIR}
 LDADD+=		-L${SIMOBJ} -lsim
 DPADD+=		${SIMOBJ}/libsim.a
-.elif ${MACHINE_ARCH} == mipseb || ${MACHINE_ARCH} == mipsel
+.elif ${MACHINE_CPU} == xxmips
 SIMOBJ!=	cd ${.CURDIR}/../sim/mips && ${PRINTOBJDIR}
 LDADD+=		-L${SIMOBJ} -lsim
 DPADD+=		${SIMOBJ}/libsim.a

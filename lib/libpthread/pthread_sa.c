@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.37 2005/03/17 17:23:21 jwise Exp $	*/
+/*     $NetBSD: pthread_sa.c,v 1.37.4.1 2008/09/16 18:49:33 bouyer Exp $    */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.37 2005/03/17 17:23:21 jwise Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.37.4.1 2008/09/16 18:49:33 bouyer Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -103,6 +103,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		pthread__maxlwps = sas[0]->sa_id;
 
 	self->pt_vpid = sas[0]->sa_cpu;
+	self->pt_lastlwp = sas[0]->sa_id;
 
 	SDPRINTF(("(up %p) type %d LWP %d ev %d intr %d\n", self, 
 	    type, sas[0]->sa_id, ev, intr));
@@ -132,11 +133,11 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		SDPRINTF(("(up %p) blocker %d %p(%d)\n", self,
 			     sas[1]->sa_id, t, t->pt_type));
 		pthread__assert(t->pt_vpid == sas[1]->sa_cpu);
-		t->pt_blockedlwp = sas[1]->sa_id;
+		t->pt_lastlwp = sas[1]->sa_id;
 		t->pt_blockgen += 2;
 		/* pthread__assert(t->pt_blockgen <= t->pt_unblockgen + 2); */
 		if (t->pt_cancel)
-			_lwp_wakeup(t->pt_blockedlwp);
+			_lwp_wakeup(t->pt_lastlwp);
 #ifdef PTHREAD__DEBUG
 		t->blocks++;
 #endif
@@ -204,7 +205,18 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		 */
 		break;
 	case SA_UPCALL_USER:
-		/* We don't send ourselves one of these. */
+		PTHREADD_ADD(PTHREADD_UP_USER);
+		/*
+		 * We send these so that we can deliver signals to running
+		 * threads. So check for pending signals.
+		 */
+		t = pthread__sa_id(sas[1]);
+		pthread_spinlock(self, &t->pt_flaglock);
+		flags = t->pt_flags;
+		pthread_spinunlock(self, &t->pt_flaglock);
+		if (flags & PT_FLAG_SIGDEFERRED)
+			pthread__signal_deferred(self, t);
+		break;
 	default:
 		pthread__abort();
 	}
@@ -229,7 +241,6 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 		pthread__abort();
 	}
 	next = pthread__next(self);
-	next->pt_state = PT_STATE_RUNNING;
 	SDPRINTF(("(up %p) switching to %p (uc: %c %p pc: %lx)\n", 
 		     self, next, PUC(next), pthread__uc_pc(UC(next))));
 	pthread__upcall_switch(self, next);

@@ -32,6 +32,8 @@
 #include "m68k-tdep.h"
 #include "inf-ptrace.h"
 
+#include "nbsd-nat.h"
+
 static int
 m68kbsd_gregset_supplies_p (int regnum)
 {
@@ -115,7 +117,7 @@ m68kbsd_fetch_inferior_registers (int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       m68kbsd_supply_gregset (current_regcache, &regs);
@@ -126,7 +128,7 @@ m68kbsd_fetch_inferior_registers (int regnum)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       m68kbsd_supply_fpregset (current_regcache, &fpregs);
@@ -144,13 +146,13 @@ m68kbsd_store_inferior_registers (int regnum)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-                  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+                  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't get registers"));
 
       m68kbsd_collect_gregset (current_regcache, &regs, regnum);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	          (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+	          (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
         perror_with_name (_("Couldn't write registers"));
     }
 
@@ -159,13 +161,13 @@ m68kbsd_store_inferior_registers (int regnum)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       m68kbsd_collect_fpregset (current_regcache, &fpregs, regnum);
 
       if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
@@ -229,6 +231,9 @@ _initialize_m68kbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = m68kbsd_fetch_inferior_registers;
   t->to_store_registers = m68kbsd_store_inferior_registers;
+
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
+
   add_target (t);
 
   /* Support debugging kernel virtual memory images.  */
