@@ -21,13 +21,20 @@
 #ifndef ALPHABSD_TDEP_H
 #define ALPHABSD_TDEP_H
 
-void alphabsd_supply_reg (char *, int);
-void alphabsd_fill_reg (char *, int);
+struct regcache;
 
-void alphabsd_supply_fpreg (char *, int);
-void alphabsd_fill_fpreg (char *, int);
+void alphabsd_supply_reg (struct regcache *, const char *, int);
+void alphabsd_fill_reg (const struct regcache *, char *, int);
 
-#define SIZEOF_STRUCT_REG	(32 * 8)
-#define SIZEOF_STRUCT_FPREG	(33 * 8)
+void alphabsd_supply_fpreg (struct regcache *, const char *, int);
+void alphabsd_fill_fpreg (const struct regcache *, char *, int);
 
-#endif /* ALPHABSD_TDEP_H */
+/* Functions exported from alphanbsd-tdep.c.  */
+ 
+/* Return the appropriate register set for the core section identified
+   by SECT_NAME and SECT_SIZE.  */
+extern const struct regset *
+  alphanbsd_regset_from_core_section (struct gdbarch *gdbarch,
+				      const char *sect_name, size_t len);
+ 
+#endif /* alphabsd-tdep.h */

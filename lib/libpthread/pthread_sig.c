@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.47.2.1 2007/09/25 00:38:27 xtraeme Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.47.2.2 2008/09/16 18:49:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.47.2.1 2007/09/25 00:38:27 xtraeme Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.47.2.2 2008/09/16 18:49:33 bouyer Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -65,6 +65,10 @@ __RCSID("$NetBSD: pthread_sig.c,v 1.47.2.1 2007/09/25 00:38:27 xtraeme Exp $");
 #define SDPRINTF(x) DPRINTF(x)
 #else
 #define SDPRINTF(x)
+#endif
+
+#ifdef PTHREAD__DEBUG
+int __pthread_running_kills;
 #endif
 
 extern int pthread__started;
@@ -100,6 +104,7 @@ static struct pthread_queue_t pt_sigwaiting;
 static pthread_spin_t pt_sigwaiting_lock = __SIMPLELOCK_UNLOCKED;
 static pthread_t pt_sigwmaster;
 static pthread_cond_t pt_sigwaiting_cond = PTHREAD_COND_INITIALIZER;
+static int pt_sig_selfsent;	/* non-zero if sending sig to sigwmaster */
 
 static void pthread__make_siginfo(siginfo_t *, int);
 static void pthread__kill(pthread_t, pthread_t, siginfo_t *);
@@ -140,6 +145,9 @@ pthread__signal_start(void)
 		__sigemptyset14(&act.sa_mask);
 		__libc_sigaction14(i, &act, NULL);
 	}
+
+	/* And re-enable any signals we may have masked up to now */
+	_sys___sigprocmask14(SIG_UNBLOCK, &pt_process_sigmask, NULL);
 }
 
 static void
@@ -266,6 +274,9 @@ __sigsuspend14(const sigset_t *sigmask)
 		pthread_spinunlock(self, &pt_sigsuspended_lock);
 		pthread_exit(PTHREAD_CANCELED);
 	}
+	if (pthread_check_defsig(self)) {
+		/* WRS Hmmm... how to handle... */
+	}
 	pthread_sigmask(SIG_SETMASK, sigmask, &oldmask);
 
 	self->pt_state = PT_STATE_BLOCKED_QUEUE;
@@ -295,7 +306,7 @@ int _sigtimedwait(const sigset_t * __restrict, siginfo_t * __restrict,
 static void
 pthread_sigtimedwait__callback(void *arg)
 {
-	pthread__sched(pthread__self(), (pthread_t) arg);
+	pthread__sched(pthread__self(), (pthread_t) arg, 0);
 }
 
 int
@@ -381,7 +392,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 			 * Some new signal in set, wakeup master. It will
 			 * rebuild its wait set.
 			 */
-			_lwp_wakeup(pt_sigwmaster->pt_blockedlwp);
+			_lwp_wakeup(pt_sigwmaster->pt_lastlwp);
 		}
 
 		/* Save our wait set and info pointer */
@@ -399,6 +410,9 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 
  block:
 		pthread_spinlock(self, &self->pt_statelock);
+		if (pthread_check_defsig(self)) {
+			/* WRS Hmmm... how to handle... */
+		}
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;
 		self->pt_sleepobj = &pt_sigwaiting_cond;
 		self->pt_sleepq = &pt_sigwaiting;
@@ -432,7 +446,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 				/*
 				 * Signal master. It will rebuild its wait set.
 				 */
-				_lwp_wakeup(pt_sigwmaster->pt_blockedlwp);
+				_lwp_wakeup(pt_sigwmaster->pt_lastlwp);
 
 				pthread_spinunlock(self, &pt_sigwaiting_lock);
 				errno = EAGAIN;
@@ -478,6 +492,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 				__sigplusset(target->pt_sigwait, &wset);
 		}
 
+		pt_sig_selfsent = 0;
 		pthread_spinunlock(self, &pt_sigwaiting_lock);
 
 		/*
@@ -489,6 +504,36 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 		SDPRINTF(("(stw %p) master unblocking\n", self));
 
 		pthread_spinlock(self, &pt_sigwaiting_lock);
+
+		/*
+		 * If we haven't been canceled and another thread sent us a
+		 * signal (noted in pt_sig_selfsent), if it is one _we_ are
+		 * interested in, turn either a canceled system call or a
+		 * timeout into reporting that signal.
+		 */
+		if ((pt_sig_selfsent) && !(self->pt_cancel) && (error)
+		    && (errno == ECANCELED || errno == EAGAIN)) {
+			sigset_t scratchset;
+			scratchset = *set;
+			__sigandset(&self->pt_siglist, &scratchset);
+			sig = firstsig(&scratchset);
+			if (sig) {
+				/* Turn this into a successful return */
+				error = 0;
+				info->si_signo = sig;
+				/* clear it */
+				__sigdelset14(&self->pt_siglist, sig);
+				SDPRINTF(("(stw %p) master noticing %d\n",
+					self, sig));
+			} else {
+				/*
+				 * Someone sent us a signal we don't care
+				 * about. How sweet. We'll ignore that for
+				 * now.
+				 */
+			}
+		}
+
 		if ((error && (errno != ECANCELED || self->pt_cancel))
 		    || (!error && __sigismember14(set, info->si_signo)) ) {
 
@@ -506,7 +551,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 					  pt_sigwmaster));
 				PTQ_REMOVE(&pt_sigwaiting, pt_sigwmaster,
 					pt_sleep);
-				pthread__sched(self, pt_sigwmaster);
+				pthread__sched(self, pt_sigwmaster, 0);
 			}
 
 			pthread_spinunlock(self, &pt_sigwaiting_lock);
@@ -532,7 +577,7 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 				/* copy to waiter siginfo */
 				memcpy(target->pt_wsig, info, sizeof(*info));
 				PTQ_REMOVE(&pt_sigwaiting, target, pt_sleep);
-				pthread__sched(self, target);
+				pthread__sched(self, target, 0);
 				break;
 			    }
 			}
@@ -715,6 +760,23 @@ pthread__signal(pthread_t self, pthread_t t, siginfo_t *si)
 		pthread_spinlock(self, &target->pt_siglock);
 	} else {
 		/*
+		 * Check to see if a thread's waiting for this
+		 * signal.
+		 */
+		pthread_spinlock(self, &pt_sigwaiting_lock);
+		if ((pt_sigwmaster) &&
+		    __sigismember14(pt_sigwmaster->pt_sigwait, si->si_signo)) {
+			/*
+			 * Someone, the sigwait master or otherwise, is waiting
+			 * for this signal. Deliver it.
+			 */
+			target = pt_sigwmaster;
+			pthread_spinlock(self, &target->pt_siglock);
+			pthread_spinunlock(self, &pt_sigwaiting_lock);
+			goto got_target;
+		}
+		pthread_spinunlock(self, &pt_sigwaiting_lock);
+		/*
 		 * Pick a thread that doesn't have the signal blocked
 		 * and can be reasonably forced to run. 
 		 */
@@ -772,6 +834,7 @@ pthread__signal(pthread_t self, pthread_t t, siginfo_t *si)
 			return;
 		}
 	}
+got_target:
 
 	/*
 	 * We now have a signal and a victim. 
@@ -798,7 +861,7 @@ pthread__signal(pthread_t self, pthread_t t, siginfo_t *si)
 /* 
  * Call the signal handler in the context of this thread. Not quite as
  * suicidal as it sounds.
- * Must be called with target's siglock held.
+ * Must be called with target's (our) siglock held.
  */
 static void
 pthread__kill_self(pthread_t self, siginfo_t *si)
@@ -825,7 +888,7 @@ pthread__kill_self(pthread_t self, siginfo_t *si)
 	self->pt_sigmask = oldmask;
 }
 
-/* Must be called with target's siglock held */
+/* Must be called with target's pt_siglock held */
 static void
 pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 {
@@ -834,6 +897,7 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 	SDPRINTF(("(pthread__kill %p) target %p sig %d code %d\n", self, target,
 	    si->si_signo, si->si_code));
 
+try_again:
 	if (__sigismember14(&target->pt_sigmask, si->si_signo)) {
 		SDPRINTF(("(pthread__kill %p) target masked\n", target));
 
@@ -841,20 +905,29 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		 * If the target is waiting for this signal in sigtimedwait(),
 		 * make the target runnable but do not deliver the signal.
 		 * Otherwise record the signal for later delivery.
-		 * XXX not MPsafe.
+		 * Note: since we are running, we implcitily know that
+		 * target != self here. So in the deliver = 0 case, we will
+		 * not exit this routine w/ locks held.
 		 */
+		pthread_spinlock(self, &pthread__runqueue_lock);
 		pthread_spinlock(self, &target->pt_statelock);
 		if (target->pt_state == PT_STATE_BLOCKED_QUEUE &&
 		    target->pt_sleepq == &pt_sigwaiting &&
 		    __sigismember14(target->pt_sigwait, si->si_signo)) {
 			SDPRINTF(("(pthread__kill %p) stw\n", target));
 			target->pt_wsig->si_signo = si->si_signo;
-			pthread_spinunlock(self, &target->pt_statelock);
 			deliver = 0;
 		} else {
 			SDPRINTF(("(pthread__kill %p) deferring\n", target));
 			pthread_spinunlock(self, &target->pt_statelock);
+			pthread_spinunlock(self, &pthread__runqueue_lock);
 			__sigaddset14(&target->pt_siglist, si->si_signo);
+			if (target == pt_sigwmaster) {
+				SDPRINTF(("(pthread__kill %p) sigmaster, "
+						"waking master\n", target));
+				_lwp_wakeup(pt_sigwmaster->pt_lastlwp);
+				pt_sig_selfsent = 1;
+			}
 			return;
 		}
 	} else {
@@ -869,20 +942,25 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 	}
 
 	/*
+	 * Holding the state lock blocks out cancellation and any other
+	 * attempts to set this thread up to take a signal. Grab it if
+	 * we didn't grab it above.
+	 */
+	if (deliver == 1) {
+		pthread_spinlock(self, &pthread__runqueue_lock);
+		pthread_spinlock(self, &target->pt_statelock);
+	}
+	/*
 	 * Ensure the victim is not running.
 	 * In a MP world, it could be on another processor somewhere.
 	 *
-	 * XXX As long as this is uniprocessor, encountering a running
-	 * target process is a bug.
+	 * Encountering a target process running on our virtual CPU
+	 * is a bug.
 	 */
 	pthread__assert(target->pt_state != PT_STATE_RUNNING ||
-		target->pt_blockgen != target->pt_unblockgen);
+		target->pt_blockgen != target->pt_unblockgen ||
+		self->pt_vpid != target->pt_vpid);
 
-	/*
-	 * Holding the state lock blocks out cancellation and any other
-	 * attempts to set this thread up to take a signal.
-	 */
-	pthread_spinlock(self, &target->pt_statelock);
 	if (target->pt_blockgen != target->pt_unblockgen) {
 		SDPRINTF(("(pthread__kill %p) target blocked\n", target));
 
@@ -891,36 +969,107 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 		 * won't run again for a while. Try to wake it
 		 * from its torpor, then mark the signal for
 		 * later processing.
+		 *
+		 * WRS - are we supposed to mask the signal here?
 		 */
 		__sigaddset14(&target->pt_sigblocked, si->si_signo);
 		__sigaddset14(&target->pt_sigmask, si->si_signo);
+
 		pthread_spinlock(self, &target->pt_flaglock);
 		target->pt_flags |= PT_FLAG_SIGDEFERRED;
 		pthread_spinunlock(self, &target->pt_flaglock);
 		pthread_spinunlock(self, &target->pt_statelock);
-		_lwp_wakeup(target->pt_blockedlwp);
+		pthread_spinunlock(self, &pthread__runqueue_lock);
+		_lwp_wakeup(target->pt_lastlwp);
 		return;
 	}
 	SDPRINTF(("(pthread__kill %p) target state %d\n", target,
 		  target->pt_state));
 	switch (target->pt_state) {
-	case PT_STATE_SUSPENDED:
-		pthread_spinlock(self, &pthread__runqueue_lock);
-		PTQ_REMOVE(&pthread__suspqueue, target, pt_runq);
+	case PT_STATE_RUNNING:
+		/*
+		 * The target is alive on another CPU. Mark the
+		 * signal for delivery then ask the kernel to
+		 * preempt it.
+		 *
+		 * WRS - are we supposed to mask the signal here?
+		 */
+		__sigaddset14(&target->pt_sigblocked, si->si_signo);
+		__sigaddset14(&target->pt_sigmask, si->si_signo);
+
+		pthread_spinlock(self, &target->pt_flaglock);
+		target->pt_flags |= PT_FLAG_SIGDEFERRED;
+		pthread_spinunlock(self, &target->pt_flaglock);
+		pthread_spinunlock(self, &target->pt_statelock);
 		pthread_spinunlock(self, &pthread__runqueue_lock);
+		/*
+		 * For the moment (while testing), we don't actually have
+		 * the kernel send the preempt. Both because the upcall
+		 * handler doesn't handle it (easy to add), and more
+		 * importantly so that we can test signal capture points.
+		 */
+#ifdef PTHREAD__DEBUG
+		__pthread_running_kills++;
+#endif
+		//sa_preempt(target->pt_lastlwp);
+		return;
+	case PT_STATE_SUSPENDED:
+		PTQ_REMOVE(&pthread__suspqueue, target, pt_runq);
 		break;
 	case PT_STATE_RUNNABLE:
-		pthread_spinlock(self, &pthread__runqueue_lock);
 		PTQ_REMOVE(&pthread__runqueue, target, pt_runq);
-		pthread_spinunlock(self, &pthread__runqueue_lock);
 		break;
 	case PT_STATE_BLOCKED_QUEUE:
-		pthread_spinlock(self, target->pt_sleeplock);
+		if (__predict_false(pthread_spintrylock(self,
+		    target->pt_sleeplock) == 0)) {
+			/* Gotta climb locks the hard way */
+			pthread_spinunlock(self, &target->pt_statelock);
+			pthread_spinunlock(self, &pthread__runqueue_lock);
+			pthread_spinunlock(self, &self->pt_siglock);
+			/* Now lock */
+			pthread_spinlock(self, target->pt_sleeplock);
+			pthread_spinlock(self, &self->pt_siglock);
+			pthread_spinlock(self, &pthread__runqueue_lock);
+			pthread_spinlock(self, &target->pt_statelock);
+			if (target->pt_state != PT_STATE_BLOCKED_QUEUE) {
+				/* Ick! Thread changed state quite a lot
+				 * while we were dancing with locks.
+				 * Try all this again...
+				 */
+				pthread_spinunlock(self, target->pt_sleeplock);
+				pthread_spinunlock(self, &target->pt_statelock);
+				pthread_spinunlock(self,
+						&pthread__runqueue_lock);
+				if (deliver) {
+					/*
+					 * Check everything out again. All
+					 * we know is that the signal
+					 * wasn't masked. But unfortunately
+					 * it could be now, so look at
+					 * everything again.
+					 */
+					SDPRINTF(("(pthread__kill %p) target %p"
+						" retrying sigtimedwait kill\n",
+						self, target));
+					goto try_again;
+				}
+				/*
+				 * Ok, the signal was blocked and the thread
+				 * WAS in sigtimedwait(). It isn't now. Well,
+				 * the main reason we wandered into this
+				 * code path was to kick the thread out of
+				 * sigtimedwait(), which has happened. So
+				 * we can go now.
+				 */
+				return;
+			}
+		}
 		PTQ_REMOVE(target->pt_sleepq, target, pt_sleep);
 		pthread_spinunlock(self, target->pt_sleeplock);
 		break;
 	case PT_STATE_ZOMBIE:
 		pthread_spinunlock(self, &target->pt_statelock);
+		pthread_spinunlock(self, &pthread__runqueue_lock);
 		return;
 	default:
 		;
@@ -928,11 +1077,16 @@ pthread__kill(pthread_t self, pthread_t target, siginfo_t *si)
 
 	if (deliver)
 		pthread__deliver_signal(self, target, si);
-	pthread__sched(self, target);
+	pthread__sched(self, target, 1);
 	pthread_spinunlock(self, &target->pt_statelock);
+	pthread_spinunlock(self, &pthread__runqueue_lock);
 }
 
-/* Must be called with target's siglock held */
+/*
+ * pthread__deliver_signal -- set up context for signal deliveryt
+ *	Must be called with target's siglock held. May be called with
+ * pthread__runqueue_lock and target->pt_siglock locked.
+ */
 void
 pthread__deliver_signal(pthread_t self, pthread_t target, siginfo_t *si)
 {
@@ -1019,9 +1173,14 @@ pthread__signal_deferred(pthread_t self, pthread_t t)
 	while ((i = firstsig(&t->pt_sigblocked)) != 0) {
 		__sigdelset14(&t->pt_sigblocked, i);
 		si.si_signo = i;
-		pthread__deliver_signal(self, t, &si);
+		if (self == t)
+			pthread__kill_self(self, &si);
+		else
+			pthread__deliver_signal(self, t, &si);
 	}
+	pthread_spinlock(self, &t->pt_flaglock);
 	t->pt_flags &= ~PT_FLAG_SIGDEFERRED;
+	pthread_spinunlock(self, &t->pt_flaglock);
 
 	pthread_spinunlock(self, &t->pt_siglock);
 }

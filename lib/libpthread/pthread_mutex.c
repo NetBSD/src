@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.22 2006/08/22 21:46:09 wrstuden Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.22.2.1 2008/09/16 18:49:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.22 2006/08/22 21:46:09 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.22.2.1 2008/09/16 18:49:32 bouyer Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -268,6 +268,13 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 			 * retry.
 			 */
 			pthread_spinlock(self, &self->pt_statelock);
+			if (pthread_check_defsig(self)) {
+				pthread_spinunlock(self, &self->pt_statelock);
+				PTQ_REMOVE(&mutex->ptm_blocked, self, pt_sleep);
+				pthread_spinunlock(self, &mutex->ptm_interlock);
+				pthread__signal_deferred(self, self);
+				continue;
+			}
 			self->pt_state = PT_STATE_BLOCKED_QUEUE;
 			self->pt_sleepobj = mutex;
 			self->pt_sleepq = &mutex->ptm_blocked;
@@ -386,7 +393,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 			PTQ_REMOVE(&mutex->ptm_blocked, blocked, pt_sleep);
 			PTHREADD_ADD(PTHREADD_MUTEX_UNLOCK_UNBLOCK);
 			/* Give the head of the blocked queue another try. */
-			pthread__sched(self, blocked);
+			pthread__sched(self, blocked, 0);
 		}
 	}
 	pthread_spinunlock(self, &mutex->ptm_interlock);

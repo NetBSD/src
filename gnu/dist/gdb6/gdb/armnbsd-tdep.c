@@ -67,6 +67,9 @@ arm_netbsd_init_abi_common (struct gdbarch_info info,
 		      _("arm_gdbarch_init: bad byte order for float format"));
     }
 
+  set_gdbarch_regset_from_core_section
+   (gdbarch, armbsd_regset_from_core_section);
+
   tdep->jb_pc = ARM_NBSD_JB_PC;
   tdep->jb_elt_size = ARM_NBSD_JB_ELEMENT_SIZE;
 }

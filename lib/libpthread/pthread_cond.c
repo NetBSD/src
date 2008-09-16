@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.18 2005/01/06 17:33:36 mycroft Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.18.10.1 2008/09/16 18:49:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.18 2005/01/06 17:33:36 mycroft Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.18.10.1 2008/09/16 18:49:32 bouyer Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -134,6 +134,21 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 		    "Multiple mutexes used for condition wait", 
 		    cond->ptc_mutex == mutex);
 #endif
+	if (pthread_check_defsig(self)) {
+		pthread_spinunlock(self, &self->pt_statelock);
+		pthread_spinunlock(self, &cond->ptc_lock);
+		SDPRINTF(("(cond wait %p) Caught defsig on %p, mutex %p\n",
+		    self, cond, mutex));
+		/* mutex still locked. Isn't supposed to matter for
+		 * signal hanlders. */
+		pthread__signal_deferred(self, self);
+		/*
+		 * We can return from spurious wakeups. So to make life simple,
+		 * do so. Coveres anything that may have happened while we
+		 * were delivering signals
+		 */
+		return 0;
+	}
 	self->pt_state = PT_STATE_BLOCKED_QUEUE;
 	self->pt_sleepobj = cond;
 	self->pt_sleepq = &cond->ptc_waiters;
@@ -213,6 +228,21 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		    "Multiple mutexes used for condition wait",
 		    cond->ptc_mutex == mutex);
 #endif
+	if (pthread_check_defsig(self)) {
+		pthread_spinunlock(self, &self->pt_statelock);
+		pthread_spinunlock(self, &cond->ptc_lock);
+		/* mutex still locked. Isn't supposed to matter for
+		 * signal hanlders. */
+		SDPRINTF(("(cond timed wait %p) Caught defsig on %p, mutex %p"
+		    "\n", self, cond));
+		pthread__signal_deferred(self, self);
+		/*
+		 * We can return from spurious wakeups. So to make life simple,
+		 * do so. Coveres anything that may have happened while we
+		 * were delivering signals
+		 */
+		return 0;
+	}
 	
 	pthread__alarm_add(self, &alarm, abstime, pthread_cond_wait__callback,
 	    &wait);
@@ -269,7 +299,7 @@ pthread_cond_wait__callback(void *arg)
 		if (PTQ_EMPTY(&a->ptw_cond->ptc_waiters))
 			a->ptw_cond->ptc_mutex = NULL;
 #endif
-		pthread__sched(self, a->ptw_thread);
+		pthread__sched(self, a->ptw_thread, 0);
 	}
 	pthread_spinunlock(self, &a->ptw_cond->ptc_lock);
 }
@@ -292,7 +322,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 		signaled = PTQ_FIRST(&cond->ptc_waiters);
 		if (signaled != NULL) {
 			PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
-			pthread__sched(self, signaled);
+			pthread__sched(self, signaled, 0);
 			PTHREADD_ADD(PTHREADD_COND_WOKEUP);
 		}
 #ifdef ERRORCHECK

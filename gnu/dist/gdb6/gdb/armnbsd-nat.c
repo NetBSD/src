@@ -35,6 +35,8 @@
 #include "arm-tdep.h"
 #include "inf-ptrace.h"
 
+#include "nbsd-nat.h"
+
 extern int arm_apcs_32;
 
 static void
@@ -83,7 +85,7 @@ fetch_register (int regno)
   int ret;
 
   ret = ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -134,7 +136,7 @@ fetch_regs (void)
   int regno;
 
   ret = ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -152,7 +154,7 @@ fetch_fp_register (int regno)
   int ret;
 
   ret = ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -182,7 +184,7 @@ fetch_fp_regs (void)
   int regno;
 
   ret = ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -218,7 +220,7 @@ store_register (int regno)
   int ret;
 
   ret = ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -280,7 +282,7 @@ store_register (int regno)
     }
 
   ret = ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -327,7 +329,7 @@ store_regs (void)
     }
 
   ret = ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to store general registers"));
@@ -340,7 +342,7 @@ store_fp_register (int regno)
   int ret;
 
   ret = ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     {
@@ -362,7 +364,7 @@ store_fp_register (int regno)
     }
 
   ret = ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to write register %d to inferior"), regno);
@@ -384,7 +386,7 @@ store_fp_regs (void)
 			(char *) &inferior_fp_registers.fpr_fpsr);
 
   ret = ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		(PTRACE_TYPE_ARG3) &inferior_fp_registers, 0);
+		(PTRACE_TYPE_ARG3) &inferior_fp_registers, TIDGET (inferior_ptid));
 
   if (ret < 0)
     warning (_("unable to store floating-point registers"));
@@ -407,81 +409,6 @@ armnbsd_store_registers (int regno)
     }
 }
 
-struct md_core
-{
-  struct reg intreg;
-  struct fpreg freg;
-};
-
-static void
-fetch_core_registers (char *core_reg_sect, unsigned core_reg_size,
-		      int which, CORE_ADDR ignore)
-{
-  struct md_core *core_reg = (struct md_core *) core_reg_sect;
-  int regno;
-  CORE_ADDR r_pc;
-
-  supply_gregset (&core_reg->intreg);
-  supply_fparegset (&core_reg->freg);
-}
-
-static void
-fetch_elfcore_registers (char *core_reg_sect, unsigned core_reg_size,
-			 int which, CORE_ADDR ignore)
-{
-  struct reg gregset;
-  struct fpreg fparegset;
-
-  switch (which)
-    {
-    case 0:	/* Integer registers.  */
-      if (core_reg_size != sizeof (struct reg))
-	warning (_("wrong size of register set in core file"));
-      else
-	{
-	  /* The memcpy may be unnecessary, but we can't really be sure
-	     of the alignment of the data in the core file.  */
-	  memcpy (&gregset, core_reg_sect, sizeof (gregset));
-	  supply_gregset (&gregset);
-	}
-      break;
-
-    case 2:
-      if (core_reg_size != sizeof (struct fpreg))
-	warning (_("wrong size of FPA register set in core file"));
-      else
-	{
-	  /* The memcpy may be unnecessary, but we can't really be sure
-	     of the alignment of the data in the core file.  */
-	  memcpy (&fparegset, core_reg_sect, sizeof (fparegset));
-	  supply_fparegset (&fparegset);
-	}
-      break;
-
-    default:
-      /* Don't know what kind of register request this is; just ignore it.  */
-      break;
-    }
-}
-
-static struct core_fns arm_netbsd_core_fns =
-{
-  bfd_target_unknown_flavour,		/* core_flovour.  */
-  default_check_format,			/* check_format.  */
-  default_core_sniffer,			/* core_sniffer.  */
-  fetch_core_registers,			/* core_read_registers.  */
-  NULL
-};
-
-static struct core_fns arm_netbsd_elfcore_fns =
-{
-  bfd_target_elf_flavour,		/* core_flovour.  */
-  default_check_format,			/* check_format.  */
-  default_core_sniffer,			/* core_sniffer.  */
-  fetch_elfcore_registers,		/* core_read_registers.  */
-  NULL
-};
-
 void
 _initialize_arm_netbsd_nat (void)
 {
@@ -490,8 +417,7 @@ _initialize_arm_netbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = armnbsd_fetch_registers;
   t->to_store_registers = armnbsd_store_registers;
-  add_target (t);
 
-  deprecated_add_core_fns (&arm_netbsd_core_fns);
-  deprecated_add_core_fns (&arm_netbsd_elfcore_fns);
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
+  add_target (t);
 }

@@ -21,12 +21,17 @@
    Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
-#include "gdbcore.h"
 #include "frame.h"
+#include "gdbcore.h"
+#include "osabi.h"
 #include "regcache.h"
+#include "regset.h"
 #include "value.h"
 #include "osabi.h"
+#include "trad-frame.h"
+#include "tramp-frame.h"
 
+#include "gdb_assert.h"
 #include "gdb_string.h"
 
 #include "alpha-tdep.h"
@@ -34,14 +39,78 @@
 #include "nbsd-tdep.h"
 #include "solib-svr4.h"
 
-static void
-fetch_core_registers (char *core_reg_sect, unsigned core_reg_size, int which,
-                      CORE_ADDR ignore)
-{
-  char *regs, *fpregs;
-  int regno;
+/* Core file support.  */
 
-  /* Table to map a gdb register number to a trapframe register index.  */
+/* Even though NetBSD/alpha used ELF since day one, it used the
+   traditional a.out-style core dump format before NetBSD 1.6.  */
+
+/* Sizeof `struct reg' in <machine/reg.h>.  */
+#define ALPHANBSD_SIZEOF_GREGS	(32 * 8)
+
+/* Sizeof `struct fpreg' in <machine/reg.h.  */
+#define ALPHANBSD_SIZEOF_FPREGS	((32 * 8) + 8)
+
+/* Supply register REGNUM from the buffer specified by FPREGS and LEN
+   in the floating-point register set REGSET to register cache
+   REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
+
+static void
+alphanbsd_supply_fpregset (const struct regset *regset,
+			   struct regcache *regcache,
+			   int regnum, const void *fpregs, size_t len)
+{
+  const gdb_byte *regs = fpregs;
+  int i;
+
+  gdb_assert (len >= ALPHANBSD_SIZEOF_FPREGS);
+
+  for (i = ALPHA_FP0_REGNUM; i < ALPHA_FP0_REGNUM + 31; i++)
+    {
+      if (regnum == i || regnum == -1)
+	regcache_raw_supply (regcache, i, regs + (i - ALPHA_FP0_REGNUM) * 8);
+    }
+
+  if (regnum == ALPHA_FPCR_REGNUM || regnum == -1)
+    regcache_raw_supply (regcache, ALPHA_FPCR_REGNUM, regs + 32 * 8);
+}
+
+/* Supply register REGNUM from the buffer specified by GREGS and LEN
+   in the general-purpose register set REGSET to register cache
+   REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
+
+static void
+alphanbsd_supply_gregset (const struct regset *regset,
+			  struct regcache *regcache,
+			  int regnum, const void *gregs, size_t len)
+{
+  const gdb_byte *regs = gregs;
+  int i;
+
+  gdb_assert (len >= ALPHANBSD_SIZEOF_GREGS);
+
+  for (i = 0; i < ALPHA_ZERO_REGNUM; i++)
+    {
+      if (regnum == i || regnum == -1)
+	regcache_raw_supply (regcache, i, regs + i * 8);
+    }
+
+  if (regnum == ALPHA_PC_REGNUM || regnum == -1)
+    regcache_raw_supply (regcache, ALPHA_PC_REGNUM, regs + 31 * 8);
+}
+
+/* Supply register REGNUM from the buffer specified by GREGS and LEN
+   in the general-purpose register set REGSET to register cache
+   REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
+
+static void
+alphanbsd_aout_supply_gregset (const struct regset *regset,
+			       struct regcache *regcache,
+			       int regnum, const void *gregs, size_t len)
+{
+  const gdb_byte *regs = gregs;
+  int i;
+
+  /* Table to map a GDB register number to a trapframe register index.  */
   static const int regmap[] =
   {
      0,   1,   2,   3,
@@ -53,145 +122,201 @@ fetch_core_registers (char *core_reg_sect, unsigned core_reg_size, int which,
     21,  22,  23,  24,
     25,  29,  26
   };
-#define SIZEOF_TRAPFRAME (33 * 8)
 
-  /* We get everything from one section.  */
-  if (which != 0)
-    return;
+  gdb_assert (len >= ALPHANBSD_SIZEOF_GREGS);
 
-  regs = core_reg_sect;
-  fpregs = core_reg_sect + SIZEOF_TRAPFRAME;
-
-  if (core_reg_size < (SIZEOF_TRAPFRAME + SIZEOF_STRUCT_FPREG))
+  for (i = 0; i < ARRAY_SIZE(regmap); i++)
     {
-      warning (_("Wrong size register set in core file."));
-      return;
+      if (regnum == i || regnum == -1)
+	regcache_raw_supply (regcache, i, regs + regmap[i] * 8);
     }
 
-  /* Integer registers.  */
-  for (regno = 0; regno < ALPHA_ZERO_REGNUM; regno++)
-    regcache_raw_supply (current_regcache, regno, regs + (regmap[regno] * 8));
-  regcache_raw_supply (current_regcache, ALPHA_ZERO_REGNUM, NULL);
-  regcache_raw_supply (current_regcache, PC_REGNUM, regs + (28 * 8));
+  if (regnum == ALPHA_PC_REGNUM || regnum == -1)
+    regcache_raw_supply (regcache, ALPHA_PC_REGNUM, regs + 31 * 8);
 
-  /* Floating point registers.  */
-  alphabsd_supply_fpreg (fpregs, -1);
+  if (len >= ALPHANBSD_SIZEOF_GREGS + ALPHANBSD_SIZEOF_FPREGS)
+    {
+      regs += ALPHANBSD_SIZEOF_GREGS;
+      len -= ALPHANBSD_SIZEOF_GREGS;
+      alphanbsd_supply_fpregset (regset, regcache, regnum, regs, len);
+    }
 }
 
 static void
-fetch_elfcore_registers (char *core_reg_sect, unsigned core_reg_size, int which,
-                         CORE_ADDR ignore)
+alphanbsd_collect_fpregset (const struct regset *regset,
+			    const struct regcache *regcache,
+			    int regnum, void *fpregs, size_t len)
 {
-  switch (which)
-    {
-    case 0:  /* Integer registers.  */
-      if (core_reg_size != SIZEOF_STRUCT_REG)
-	warning (_("Wrong size register set in core file."));
-      else
-	alphabsd_supply_reg (core_reg_sect, -1);
-      break;
-
-    case 2:  /* Floating point registers.  */
-      if (core_reg_size != SIZEOF_STRUCT_FPREG)
-	warning (_("Wrong size FP register set in core file."));
-      else
-	alphabsd_supply_fpreg (core_reg_sect, -1);
-      break;
-
-    default:
-      /* Don't know what kind of register request this is; just ignore it.  */
-      break;
-    }
-}
-
-static struct core_fns alphanbsd_core_fns =
-{
-  bfd_target_unknown_flavour,		/* core_flavour */
-  default_check_format,			/* check_format */
-  default_core_sniffer,			/* core_sniffer */
-  fetch_core_registers,			/* core_read_registers */
-  NULL					/* next */
-};
-
-static struct core_fns alphanbsd_elfcore_fns =
-{
-  bfd_target_elf_flavour,		/* core_flavour */
-  default_check_format,			/* check_format */
-  default_core_sniffer,			/* core_sniffer */
-  fetch_elfcore_registers,		/* core_read_registers */
-  NULL					/* next */
-};
-
-/* Under NetBSD/alpha, signal handler invocations can be identified by the
-   designated code sequence that is used to return from a signal handler.
-   In particular, the return address of a signal handler points to the
-   following code sequence:
-
-	ldq	a0, 0(sp)
-	lda	sp, 16(sp)
-	lda	v0, 295(zero)	# __sigreturn14
-	call_pal callsys
-
-   Each instruction has a unique encoding, so we simply attempt to match
-   the instruction the PC is pointing to with any of the above instructions.
-   If there is a hit, we know the offset to the start of the designated
-   sequence and can then check whether we really are executing in the
-   signal trampoline.  If not, -1 is returned, otherwise the offset from the
-   start of the return sequence is returned.  */
-static const unsigned char sigtramp_retcode[] =
-{
-  0x00, 0x00, 0x1e, 0xa6,	/* ldq a0, 0(sp) */
-  0x10, 0x00, 0xde, 0x23,	/* lda sp, 16(sp) */
-  0x27, 0x01, 0x1f, 0x20,	/* lda v0, 295(zero) */
-  0x83, 0x00, 0x00, 0x00,	/* call_pal callsys */
-};
-#define RETCODE_NWORDS		4
-#define RETCODE_SIZE		(RETCODE_NWORDS * 4)
-
-LONGEST
-alphanbsd_sigtramp_offset (CORE_ADDR pc)
-{
-  unsigned char ret[RETCODE_SIZE], w[4];
-  LONGEST off;
+  gdb_byte *regs = fpregs;
   int i;
 
-  if (deprecated_read_memory_nobpt (pc, (char *) w, 4) != 0)
-    return -1;
+  gdb_assert (len >= ALPHANBSD_SIZEOF_FPREGS);
 
-  for (i = 0; i < RETCODE_NWORDS; i++)
+  for (i = ALPHA_FP0_REGNUM; i < ALPHA_FP0_REGNUM + 31; i++)
     {
-      if (memcmp (w, sigtramp_retcode + (i * 4), 4) == 0)
-	break;
+      if (regnum == i || regnum == -1)
+	regcache_raw_collect (regcache, i, regs + (i - ALPHA_FP0_REGNUM) * 8);
     }
-  if (i == RETCODE_NWORDS)
-    return (-1);
 
-  off = i * 4;
-  pc -= off;
-
-  if (deprecated_read_memory_nobpt (pc, (char *) ret, sizeof (ret)) != 0)
-    return -1;
-
-  if (memcmp (ret, sigtramp_retcode, RETCODE_SIZE) == 0)
-    return off;
-
-  return -1;
+  if (regnum == ALPHA_FPCR_REGNUM || regnum == -1)
+    regcache_raw_collect (regcache, ALPHA_FPCR_REGNUM, regs + 32 * 8);
 }
 
-static int
-alphanbsd_pc_in_sigtramp (CORE_ADDR pc, char *func_name)
+
+/* Collect register REGNUM from the buffer specified by GREGS and LEN
+   in the general-purpose register set REGSET to register cache
+   REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
+
+static void
+alphanbsd_collect_gregset (const struct regset *regset,
+			   const struct regcache *regcache,
+			   int regnum, void *gregs, size_t len)
 {
-  return (nbsd_pc_in_sigtramp (pc, func_name)
-	  || alphanbsd_sigtramp_offset (pc) >= 0);
+  gdb_byte *regs = gregs;
+  int i;
+
+  gdb_assert (len >= ALPHANBSD_SIZEOF_GREGS);
+
+  for (i = 0; i < ALPHA_ZERO_REGNUM; i++)
+    {
+      if (regnum == i || regnum == -1)
+	regcache_raw_collect (regcache, i, regs + i * 8);
+    }
+
+  if (regnum == ALPHA_PC_REGNUM || regnum == -1)
+    regcache_raw_collect (regcache, ALPHA_PC_REGNUM, regs + 31 * 8);
 }
 
-static CORE_ADDR
-alphanbsd_sigcontext_addr (struct frame_info *frame)
+/* NetBSD/alpha register sets.  */
+
+static struct regset alphanbsd_gregset =
 {
-  /* FIXME: This is not correct for all versions of NetBSD/alpha.
-     We will probably need to disassemble the trampoline to figure
-     out which trampoline frame type we have.  */
-  return get_frame_base (frame);
+  NULL,
+  alphanbsd_supply_gregset,
+  alphanbsd_collect_gregset
+};
+
+static struct regset alphanbsd_fpregset =
+{
+  NULL,
+  alphanbsd_supply_fpregset,
+  alphanbsd_collect_fpregset
+};
+
+static struct regset alphanbsd_aout_gregset =
+{
+  NULL,
+  alphanbsd_aout_supply_gregset
+};
+
+/* Return the appropriate register set for the core section identified
+   by SECT_NAME and SECT_SIZE.  */
+
+const struct regset *
+alphanbsd_regset_from_core_section (struct gdbarch *gdbarch,
+				    const char *sect_name, size_t sect_size)
+{
+  if (strcmp (sect_name, ".reg") == 0 && sect_size >= ALPHANBSD_SIZEOF_GREGS)
+    {
+      if (sect_size >= ALPHANBSD_SIZEOF_GREGS + ALPHANBSD_SIZEOF_FPREGS)
+	return &alphanbsd_aout_gregset;
+      else
+	return &alphanbsd_gregset;
+    }
+
+  if (strcmp (sect_name, ".reg2") == 0 && sect_size >= ALPHANBSD_SIZEOF_FPREGS)
+    return &alphanbsd_fpregset;
+
+  return NULL;
+}
+
+static void
+alphanbsd_sigtramp_cache_init (const struct tramp_frame *,
+			     struct frame_info *,
+			     struct trad_frame_cache *,
+			     CORE_ADDR);
+
+/* Under NetBSD/alpha signal handler invocations can be identified by the
+   designated code sequence that is used to return from a signal handler.
+   In particular, the return address of a signal handler points to the
+   following code sequences. */
+static const struct tramp_frame alphanbsd_sigtramp_sc1 =
+{
+  SIGTRAMP_FRAME,
+  4,
+  {
+    { 0xa61e0000, 0xffffffff },		/* ldq a0, 0(sp) */
+    { 0x23de0010, 0xffffffff },		/* lda sp, 16(sp) */
+    { 0x201f0127, 0xffffffff },		/* lda v0, 295 */
+    { 0x00000083, 0xffffffff },		/* call_pal callsys */
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  alphanbsd_sigtramp_cache_init
+};
+
+/* The siginfo signal trampoline for NetBSD/alpha introduced in 2.0 */
+static const struct tramp_frame alphanbsd_sigtramp_si2 =
+{
+  SIGTRAMP_FRAME,
+  4,
+  {
+    { 0x221e0080, -1 },		/* lda	a0,128(sp) */
+    { 0x201f0134, -1 },		/* lda	v0,308 */
+    { 0x00000083, -1 },		/* callsys */
+    { 0x47e00410, -1 },		/* mov	v0,a0 */
+    { 0x201f0001, -1 },		/* lda	v0,1 */
+    { 0x00000083, -1 },		/* callsys */
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  alphanbsd_sigtramp_cache_init
+};
+
+/* The siginfo signal trampoline for NetBSD/alpha introduced in 4.0 */
+static const struct tramp_frame alphanbsd_sigtramp_si4 =
+{
+  SIGTRAMP_FRAME,
+  4,
+  {
+    { 0x27ba0000, 0xffff0000 },
+    { 0x23bd0000, 0xffff0000 },	/* ldgp	gp,0(ra) */
+    { 0x221e0080, -1 },		/* lda	a0,128(sp) */
+    { 0x201f0134, -1 },		/* lda	v0,308 */
+    { 0x00000083, -1 },		/* callsys */
+    { 0x221fffff, -1 },		/* lda	a0,-1 */
+    { 0x201f0001, -1 },		/* lda	v0,1 */
+    { 0x00000083, -1 },		/* callsys */
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  alphanbsd_sigtramp_cache_init
+};
+
+static void
+alphanbsd_sigtramp_cache_init (const struct tramp_frame *self,
+			     struct frame_info *next_frame,
+			     struct trad_frame_cache *this_cache,
+			     CORE_ADDR func)
+{
+  struct gdbarch *gdbarch = get_frame_arch (next_frame);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  CORE_ADDR addr, sp;
+  int i;
+
+  sp = frame_unwind_register_unsigned (next_frame, SP_REGNUM);
+
+  if (self == &alphanbsd_sigtramp_sc1) {
+    addr = sp;
+  } else {
+    addr = sp + 128 + 56;
+  }
+
+  for (i = 0; i < 32; i++, addr += ALPHA_REGISTER_SIZE)
+    {
+      trad_frame_set_reg_addr (this_cache, i, addr);
+    }
+  trad_frame_set_reg_addr (this_cache, ALPHA_PC_REGNUM, addr);
+
+  /* Construct the frame ID using the function start.  */
+  trad_frame_set_id (this_cache, frame_id_build (sp, func));
 }
 
 static void
@@ -210,15 +335,19 @@ alphanbsd_init_abi (struct gdbarch_info info,
      must use software single-stepping.  */
   set_gdbarch_software_single_step (gdbarch, alpha_software_single_step);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-                                 nbsd_lp64_solib_svr4_fetch_link_map_offsets);
-
-  tdep->dynamic_sigtramp_offset = alphanbsd_sigtramp_offset;
-  tdep->pc_in_sigtramp = alphanbsd_pc_in_sigtramp;
-  tdep->sigcontext_addr = alphanbsd_sigcontext_addr;
+  /* NetBSD/alpha has SVR4-style shared libraries.  */
+  set_solib_svr4_fetch_link_map_offsets
+    (gdbarch, svr4_lp64_fetch_link_map_offsets);
 
   tdep->jb_pc = 2;
   tdep->jb_elt_size = 8;
+
+  set_gdbarch_regset_from_core_section
+    (gdbarch, alphanbsd_regset_from_core_section);
+
+  tramp_frame_prepend_unwinder (gdbarch, &alphanbsd_sigtramp_sc1);
+  tramp_frame_prepend_unwinder (gdbarch, &alphanbsd_sigtramp_si2);
+  tramp_frame_prepend_unwinder (gdbarch, &alphanbsd_sigtramp_si4);
 }
 
 void
@@ -228,7 +357,4 @@ _initialize_alphanbsd_tdep (void)
                           alphanbsd_init_abi);
   gdbarch_register_osabi (bfd_arch_alpha, 0, GDB_OSABI_OPENBSD_ELF,
                           alphanbsd_init_abi);
-
-  deprecated_add_core_fns (&alphanbsd_core_fns);
-  deprecated_add_core_fns (&alphanbsd_elfcore_fns);
 }

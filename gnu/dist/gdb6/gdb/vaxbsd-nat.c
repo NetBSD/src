@@ -31,6 +31,8 @@
 #include "vax-tdep.h"
 #include "inf-ptrace.h"
 
+#include "nbsd-nat.h"
+
 /* Supply the general-purpose registers stored in GREGS to REGCACHE.  */
 
 static void
@@ -70,7 +72,7 @@ vaxbsd_fetch_inferior_registers (int regnum)
   struct reg regs;
 
   if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+	      (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   vaxbsd_supply_gregset (current_regcache, &regs);
@@ -85,13 +87,13 @@ vaxbsd_store_inferior_registers (int regnum)
   struct reg regs;
 
   if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+	      (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   vaxbsd_collect_gregset (current_regcache, &regs, regnum);
 
   if (ptrace (PT_SETREGS, PIDGET (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+	      (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
     perror_with_name (_("Couldn't write registers"));
 }
 
@@ -137,9 +139,11 @@ _initialize_vaxbsd_nat (void)
 {
   struct target_ops *t;
 
+  /* Add some extra features to the common *BSD/vax target.  */
   t = inf_ptrace_target ();
   t->to_fetch_registers = vaxbsd_fetch_inferior_registers;
   t->to_store_registers = vaxbsd_store_inferior_registers;
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
   add_target (t);
 
   /* Support debugging kernel virtual memory images.  */

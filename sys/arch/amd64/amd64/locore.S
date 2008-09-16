@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18 2006/05/14 21:55:09 elad Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.12.1 2008/09/16 18:49:33 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -710,6 +710,27 @@ ENTRY(longjmp)
 	ret
 
 /*****************************************************************************/
+
+ENTRY(dumpsys)
+	# mimic cpu_switch() for postmortem debugging.
+
+	# build a fake switch frame.
+	pushq	%rbx
+	pushq	%rbp
+	pushq	%r12
+	pushq	%r13
+	pushq	%r14
+	pushq	%r15
+	
+	# save a context.
+	movq	$dumppcb, %rax
+	movq	%rsp, PCB_RSP(%rax)
+	movq	%rbp, PCB_RBP(%rax)
+
+	call	_C_LABEL(dodumpsys)
+
+	addq	$(6*8), %rsp	# sizeof(switchframe) - sizeof(%rip)
+	ret
 
 /*
  * The following primitives manipulate the run queues.

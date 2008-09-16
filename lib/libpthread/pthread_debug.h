@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.h,v 1.8 2004/03/14 01:19:42 cl Exp $	*/
+/*	$NetBSD: pthread_debug.h,v 1.8.16.1 2008/09/16 18:49:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,22 +48,23 @@
 #define PTHREADD_UP_PREEMPT	6
 #define PTHREADD_UP_SIGNAL	7
 #define PTHREADD_UP_SIGEV	8
-#define PTHREADD_SPINLOCKS	9
-#define PTHREADD_SPINUNLOCKS	10
-#define PTHREADD_SPINPREEMPT	11
-#define PTHREADD_RESOLVELOCKS	12
-#define PTHREADD_SWITCHTO	13
-#define PTHREADD_MUTEX_LOCK	14
-#define PTHREADD_MUTEX_LOCK_SLOW	15
-#define PTHREADD_MUTEX_TRYLOCK	16
-#define PTHREADD_MUTEX_UNLOCK	17
-#define PTHREADD_MUTEX_UNLOCK_UNBLOCK	18
-#define PTHREADD_COND_WAIT	19
-#define PTHREADD_COND_TIMEDWAIT	20
-#define PTHREADD_COND_SIGNAL	21
-#define PTHREADD_COND_BROADCAST	22
-#define PTHREADD_COND_WOKEUP	23
-#define PTHREADD_NCOUNTERS	24
+#define PTHREADD_UP_USER	9
+#define PTHREADD_SPINLOCKS	10
+#define PTHREADD_SPINUNLOCKS	11
+#define PTHREADD_SPINPREEMPT	12
+#define PTHREADD_RESOLVELOCKS	13
+#define PTHREADD_SWITCHTO	14
+#define PTHREADD_MUTEX_LOCK	15
+#define PTHREADD_MUTEX_LOCK_SLOW	16
+#define PTHREADD_MUTEX_TRYLOCK	17
+#define PTHREADD_MUTEX_UNLOCK	18
+#define PTHREADD_MUTEX_UNLOCK_UNBLOCK	19
+#define PTHREADD_COND_WAIT	20
+#define PTHREADD_COND_TIMEDWAIT	21
+#define PTHREADD_COND_SIGNAL	22
+#define PTHREADD_COND_BROADCAST	23
+#define PTHREADD_COND_WOKEUP	24
+#define PTHREADD_NCOUNTERS	25
 
 #define PTHREADD_INITCOUNTERNAMES { \
 	"pthread_create()",	/*  0 CREATE */		\
@@ -75,21 +76,22 @@
 	"upcall: preempt",	/*  6 UP_PREEMPT */	\
 	"upcall: signal",	/*  7 UP_SIGNAL */	\
 	"upcall: sigev",	/*  8 UP_SIGEV */	\
-	"spinlock",		/*  9 SPINLOCKS */	\
-	"spinunlock",		/* 10 SPINUNLOCKS */	\
-	"spin preemption",     	/* 11 SPINPREEMPT */	\
-	"resolvelocks",		/* 12 RESOLVELOCKS */	\
-	"switchto",		/* 13 SPINUNLOCKS */	\
-	"mutex lock",		/* 14 MUTEX_LOCK */	\
-	"mutex lock (slow)",   	/* 15 MUTEX_LOCK_SLOW */	\
-	"mutex trylock",	/* 16 MUTEX_TRYLOCK */	\
-	"mutex unlock",		/* 17 MUTEX_UNLOCK */	\
-	"mutex unlock (wake)",  /* 18 MUTEX_UNLOCK_UNBLOCK */	\
-	"cond wait",		/* 19 COND_WAIT */	\
-	"cond timedwait",      	/* 20 COND_TIMEDWAIT */	\
-	"cond broadcast",	/* 21 COND_BROADCAST */	\
-	"cond signal",		/* 22 COND_SIGNAL */	\
-	"cond wokeup",		/* 23 COND_WOKEUP */	\
+	"upcall: user", 	/*  9 UP_SIGEV */	\
+	"spinlock",		/* 10 SPINLOCKS */	\
+	"spinunlock",		/* 11 SPINUNLOCKS */	\
+	"spin preemption",     	/* 12 SPINPREEMPT */	\
+	"resolvelocks",		/* 13 RESOLVELOCKS */	\
+	"switchto",		/* 14 SPINUNLOCKS */	\
+	"mutex lock",		/* 15 MUTEX_LOCK */	\
+	"mutex lock (slow)",   	/* 16 MUTEX_LOCK_SLOW */	\
+	"mutex trylock",	/* 17 MUTEX_TRYLOCK */	\
+	"mutex unlock",		/* 18 MUTEX_UNLOCK */	\
+	"mutex unlock (wake)",  /* 19 MUTEX_UNLOCK_UNBLOCK */	\
+	"cond wait",		/* 20 COND_WAIT */	\
+	"cond timedwait",      	/* 21 COND_TIMEDWAIT */	\
+	"cond broadcast",	/* 22 COND_BROADCAST */	\
+	"cond signal",		/* 23 COND_SIGNAL */	\
+	"cond wokeup",		/* 24 COND_WOKEUP */	\
 }
 
 #define PTHREAD__DEBUG_SHMKEY	(0x000f)

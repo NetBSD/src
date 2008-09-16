@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.9 2005/10/19 02:15:03 chs Exp $	*/
+/*	$NetBSD: sem.c,v 1.9.4.1 2008/09/16 18:49:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.9 2005/10/19 02:15:03 chs Exp $");
+__RCSID("$NetBSD: sem.c,v 1.9.4.1 2008/09/16 18:49:33 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -332,6 +332,13 @@ sem_wait(sem_t *sem)
 			break;
 		}
 
+		if (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &(*sem)->usem_interlock);
+			pthread__signal_deferred(self, self);
+			continue;
+		}
+
 		PTQ_INSERT_TAIL(&(*sem)->usem_waiters, self, pt_sleep);
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;
 		self->pt_sleepobj = *sem;
@@ -424,7 +431,7 @@ sem_post(sem_t *sem)
 	if (blocked) {
 		PTQ_REMOVE(&(*sem)->usem_waiters, blocked, pt_sleep);
 		/* Give the head of the blocked queue another try. */
-		pthread__sched(self, blocked);
+		pthread__sched(self, blocked, 0);
 	}
 	pthread_spinunlock(self, &(*sem)->usem_interlock);
 

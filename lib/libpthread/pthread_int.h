@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.34 2006/10/03 09:37:07 yamt Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.34.2.1 2008/09/16 18:49:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ struct	__pthread_st {
 	pthread_spin_t pt_flaglock;	/* lock on pt_flag */
 	int	pt_cancel;	/* Deferred cancellation */
 	int	pt_spinlocks;	/* Number of spinlocks held. */
-	int	pt_blockedlwp;	/* LWP/SA number when blocked */
+	int	pt_lastlwp;	/* LWP/SA number when running or blocked */
 	int	pt_vpid;	/* VP number */
 	int	pt_blockgen;	/* SA_UPCALL_BLOCKED counter */
 	int	pt_unblockgen;	/* SA_UPCALL_UNBLOCKED counter */
@@ -173,6 +173,41 @@ struct	__pthread_st {
 	int	rescheds;
 #endif
 };
+
+/*
+ * Thread locking hierarcy. In order to avoid deadlocks when concurrency
+ * is enabled, locks must be aquired in a consistent order. Locks are
+ * divided into groups, and no lock in a "higher" group may be taken while
+ * holding a lock in a "lower" group. Also, only one lock in a group may
+ * be taken at once, as otherwise the locks need to be listed separately
+ * to avoid an issue between them. Some locks listed are per-thread
+ * and some are global. A thread may take some per-thread locks on itself
+ * and per-thread locks on other threads, but any such locking must still
+ * respect the hierarcy. All per-thread locks of a given type are considered
+ * in the same group and thus only one may be taken at once by a given thread.
+ * It is believed that the current code never tries to take the same lock
+ * in more than one thread at once (other than group 6).
+ *
+ * "Top" group: pt_join_lock, pthread__deadqueue_lock, &barrier->ptb_lock,
+ * cond->ptc_lock, mutex->ptm_interlock, rwlock->ptr_interlock,
+ * pt_sigsuspended_lock, pt_sigwaiting_lock, pt_nanosleep_lock,
+ * pthread__allqueue_lock, pt_siglock, usem_interlock.
+ *
+ * Note that "Top" group includes all of the locks that can be assigned to
+ * pt_sleeplock.
+ *
+ * Group 2: pthread__runqueue_lock
+ *
+ * Group 3: pt_statelock
+ *
+ * Group 4: pthread_alarmqlock
+ *
+ * Group 5: pt_flag_lock
+ *
+ * Group 6: alarm->pta_lock -- all locked in acending time order.
+ *
+ * Group 7: [misc globals] pt_sigacts_lock, pt_process_siglock
+ */
 
 struct pthread_lock_ops {
 	void	(*plo_init)(__cpu_simple_lock_t *);
@@ -259,7 +294,7 @@ void	pthread__block(pthread_t self, pthread_spin_t* queuelock);
 /* Put a thread back on the suspended queue */
 void	pthread__suspend(pthread_t self, pthread_t thread);
 /* Put a thread back on the run queue */
-void	pthread__sched(pthread_t self, pthread_t thread);
+void	pthread__sched(pthread_t self, pthread_t thread, int);
 void	pthread__sched_sleepers(pthread_t self, struct pthread_queue_t *threadq);
 void	pthread__sched_idle(pthread_t self, pthread_t thread);
 void	pthread__sched_idle2(pthread_t self);
@@ -351,6 +386,12 @@ int	pthread__find(pthread_t self, pthread_t target);
 	       return (err);						\
 	} 								\
         } while (/*CONSTCOND*/0)
+
+/*
+ * You must hold t->pt_statelock when making this check.
+ */
+#define pthread_check_defsig(t) 					\
+	__predict_false((t)->pt_flags & PT_FLAG_SIGDEFERRED)
 
 
 

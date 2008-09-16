@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc64.c,v 1.10.16.1 2008/02/01 05:35:12 riz Exp $	*/
+/*	$NetBSD: kvm_sparc64.c,v 1.10.16.2 2008/09/16 18:49:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc64.c,v 1.10.16.1 2008/02/01 05:35:12 riz Exp $");
+__RCSID("$NetBSD: kvm_sparc64.c,v 1.10.16.2 2008/09/16 18:49:32 bouyer Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -119,7 +119,7 @@ _kvm_kvatop(kd, va, pa)
 	if (va < kernbase)
 		goto lose;
 
-	/* Handle the wired 4MB TTEs */
+	/* Handle the wired 4MB TTEs and per-CPU mappings */
 	if (cpup->memsegoffset > sizeof(cpu_kcore_hdr_t) &&
 	    cpup->newmagic == SPARC64_KCORE_NEWMAGIC) {
 		/*
@@ -135,6 +135,19 @@ _kvm_kvatop(kd, va, pa)
 			return (int)(start+PAGE_SIZE_4M - va);
 		}
 
+		if (cpup->numcpuinfos > 0) {
+			/* we have per-CPU mapping info */
+			uint64_t start, base;
+
+			base = cpup->cpubase - 32*1024;
+			if (va >= base && va < (base + cpup->percpusz)) {
+				start = va - base;
+				*pa = cpup->cpusp
+				    + cpup->thiscpu*cpup->percpusz
+				    + start;
+				return cpup->percpusz - start;
+			}
+		}
 	} else {
 		/*
 		 * old format: just a textbase/size and database/size

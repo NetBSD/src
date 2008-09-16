@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gdb,v 1.1 2006/05/29 19:10:58 nathanw Exp $
+#	$NetBSD: mknative-gdb,v 1.1.4.1 2008/09/16 18:49:34 bouyer Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gdb6.
@@ -111,7 +111,7 @@ get_gdb () {
 		write_c gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/cconfig.h \
 			<$_TMPDIR/sim/common/cconfig.h
 		;;
-	mips*)
+	xxmips*)
 		mkdir -p $_TOP/gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH
 		write_c gnu/usr.bin/gdb6/sim/arch/$MACHINE_ARCH/config.h \
 			<$_TMPDIR/sim/mips/config.h

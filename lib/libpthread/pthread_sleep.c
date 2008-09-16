@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sleep.c,v 1.7 2005/04/19 16:38:57 nathanw Exp $ */
+/*	$NetBSD: pthread_sleep.c,v 1.7.4.1 2008/09/16 18:49:33 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sleep.c,v 1.7 2005/04/19 16:38:57 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sleep.c,v 1.7.4.1 2008/09/16 18:49:33 bouyer Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -117,6 +117,13 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 			pthread_spinunlock(self, &pt_nanosleep_lock);
 			pthread_exit(PTHREAD_CANCELED);
 		}
+		if (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &pt_nanosleep_lock);
+			pthread__signal_deferred(self, self);
+			pthread_spinlock(self, &pt_nanosleep_lock);
+			pthread_spinlock(self, &self->pt_statelock);
+		}
 		pthread__alarm_add(self, &alarm, &sleeptime,
 		    pthread__nanosleep_callback, self);
 		
@@ -165,7 +172,7 @@ pthread__nanosleep_callback(void *arg)
 	pthread_spinlock(self, &pt_nanosleep_lock);
 	if (thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
 		PTQ_REMOVE(&pthread__nanosleeping, thread, pt_sleep);
-		pthread__sched(self, thread);
+		pthread__sched(self, thread, 0);
 	}
 	pthread_spinunlock(self, &pt_nanosleep_lock);
 }

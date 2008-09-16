@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2006/11/25 16:06:04 skrll Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2008/09/16 18:49:34 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -37,7 +37,7 @@ MKNATIVE_CONFIGURE_PRESET= \
 # enable sim if supported).
 CONFIGURE_ARGS_SIM=
 .if \
-    ${MACHINE_CPU} != "mips" && \
+    ${MACHINE_CPU} != "xxmips" && \
     ${MACHINE_CPU} != "powerpc" && \
     ${MACHINE_CPU} != "powerpc64"
 CONFIGURE_ARGS_SIM+= --disable-sim
