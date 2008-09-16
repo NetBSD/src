@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.83 2008/09/15 21:12:49 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.84 2008/09/16 18:50:52 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -1829,4 +1829,243 @@ sys/dist/ipf/netinet/ip_state.c			1.33
 
 	2020447 IPFilter's NAT can undo name server random port selection
 	[darrenr, ticket #1171]
+
+gnu/dist/gdb						removed
+gnu/usr.bin/gdb53					removed
+distrib/cats/instkernel/Makefile		 sync with 1.14.6.1
+gnu/dist/gdb6/bfd/config.bfd			 sync with 1.3.6.1
+gnu/dist/gdb6/bfd/elfxx-sparc.c			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/bfd/elfxx-sparc.h			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/Makefile.in			 sync with 1.2.2.1.2.2
+gnu/dist/gdb6/gdb/alpha-tdep.c			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/alpha-tdep.h			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/alphabsd-nat.c		 sync with 1.1.1.2.6.2
+gnu/dist/gdb6/gdb/alphabsd-nat.h		 sync with 1.1.2.1
+gnu/dist/gdb6/gdb/alphabsd-tdep.c		 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/alphabsd-tdep.h		 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/alphanbsd-nat.c		 sync with 1.1.2.1
+gnu/dist/gdb6/gdb/alphanbsd-tdep.c		 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/amd64-nat.c			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/amd64bsd-nat.c		 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/amd64nbsd-nat.c		 sync with 1.1.1.2.6.3
+gnu/dist/gdb6/gdb/amd64nbsd-tdep.c		 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/arm-tdep.h			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/armbsd-tdep.c			 sync with 1.1.2.1
+gnu/dist/gdb6/gdb/armnbsd-nat.c			 sync with 1.1.1.2.6.2
+gnu/dist/gdb6/gdb/armnbsd-tdep.c		 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/configure			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/configure.ac			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/i386bsd-nat.c			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/i386nbsd-tdep.c		 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/m68kbsd-nat.c			 sync with 1.1.1.2.6.2
+gnu/dist/gdb6/gdb/mipsnbsd-nat.c		 sync with 1.1.1.2.6.2
+gnu/dist/gdb6/gdb/nbsd-thread.c			 sync with 1.1.2.3
+gnu/dist/gdb6/gdb/ppcnbsd-nat.c			 sync with 1.1.1.2.6.2
+gnu/dist/gdb6/gdb/ppcnbsd-tdep.c		 sync with 1.3.6.1
+gnu/dist/gdb6/gdb/sh-tdep.c			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/shnbsd-nat.c			 sync with 1.1.1.2.6.3
+gnu/dist/gdb6/gdb/shnbsd-tdep.c			 sync with 1.1.1.2.6.4
+gnu/dist/gdb6/gdb/shnbsd-tdep.h			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/sparc-nat.c			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/sparc64nbsd-nat.c		 sync with 1.1.1.2.6.2
+gnu/dist/gdb6/gdb/sparcnbsd-nat.c		 sync with 1.1.1.2.6.2
+gnu/dist/gdb6/gdb/tramp-frame.h			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/vaxbsd-nat.c			 sync with 1.1.1.2.6.2
+gnu/dist/gdb6/gdb/config/alpha/nbsd.mh		 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/config/arm/nbsd.mt		 sync with 1.1.1.1.6.1
+gnu/dist/gdb6/gdb/config/arm/nbsdelf.mh		 sync with 1.1.1.1.6.1
+gnu/dist/gdb6/gdb/config/i386/nbsd64.mh		 sync with 1.1.1.1.6.1
+gnu/dist/gdb6/gdb/config/m68k/nbsdelf.mh	 sync with 1.1.1.1.6.1
+gnu/dist/gdb6/gdb/config/mips/nbsd.mh		 sync with 1.1.1.1.6.1
+gnu/dist/gdb6/gdb/config/powerpc/nbsd.mh	 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/gdb/config/sh/nbsd.mh		 sync with 1.1.1.1.6.2
+gnu/dist/gdb6/gdb/config/sh/tm-nbsd.h		 sync with 1.1.1.1.6.1
+gnu/dist/gdb6/gdb/config/sparc/nbsd64.mh	 sync with 1.1.1.1.6.1
+gnu/dist/gdb6/gdb/config/sparc/nbsdelf.mh	 sync with 1.1.1.1.6.1
+gnu/dist/gdb6/gdb/config/vax/nbsdelf.mh		 sync with 1.1.1.1.6.1
+gnu/dist/gdb6/opcodes/configure			 sync with 1.1.1.2.6.1
+gnu/dist/gdb6/opcodes/configure.in		 sync with 1.1.1.2.6.1
+gnu/usr.bin/Makefile				 sync with 1.126.4.1
+gnu/usr.bin/gdb6/arch/alpha/config.h		 sync with 1.3.4.1
+gnu/usr.bin/gdb6/arch/alpha/defs.mk		 sync with 1.2.6.1
+gnu/usr.bin/gdb6/arch/alpha/init.c		 sync with 1.2.6.1
+gnu/usr.bin/gdb6/arch/alpha/nm.h		 sync with 1.2.6.1
+gnu/usr.bin/gdb6/arch/arm/defs.mk		 sync with 1.2.6.2
+gnu/usr.bin/gdb6/arch/arm/init.c		 sync with 1.1.6.1
+gnu/usr.bin/gdb6/arch/armeb/config.h		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/armeb/defs.mk		 sync with 1.1.6.3
+gnu/usr.bin/gdb6/arch/armeb/init.c		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/armeb/tm.h		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/armeb/version.c		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/i386/defs.mk		 sync with 1.4.4.1
+gnu/usr.bin/gdb6/arch/i386/init.c		 sync with 1.3.6.1
+gnu/usr.bin/gdb6/arch/m68000/config.h		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/m68000/defs.mk		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/m68000/init.c		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/m68000/tm.h		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/m68000/version.c		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/m68k/defs.mk		 sync with 1.1.4.1
+gnu/usr.bin/gdb6/arch/m68k/init.c		 sync with 1.1.4.1
+gnu/usr.bin/gdb6/arch/mipseb/config.h		 sync with 1.3.4.1
+gnu/usr.bin/gdb6/arch/mipseb/defs.mk		 sync with 1.2.6.2
+gnu/usr.bin/gdb6/arch/mipseb/init.c		 sync with 1.2.6.2
+gnu/usr.bin/gdb6/arch/mipsel/config.h		 sync with 1.2.6.3
+gnu/usr.bin/gdb6/arch/mipsel/defs.mk		 sync with 1.2.6.3
+gnu/usr.bin/gdb6/arch/mipsel/init.c		 sync with 1.2.6.3
+gnu/usr.bin/gdb6/arch/mipsel/tm.h		 sync with 1.2.6.2
+gnu/usr.bin/gdb6/arch/mipsel/version.c		 sync with 1.2.6.2
+gnu/usr.bin/gdb6/arch/powerpc/defs.mk		 sync with 1.3.6.1
+gnu/usr.bin/gdb6/arch/powerpc/init.c		 sync with 1.3.6.1
+gnu/usr.bin/gdb6/arch/sh3eb/config.h		 sync with 1.2.2.2
+gnu/usr.bin/gdb6/arch/sh3eb/defs.mk		 sync with 1.2.8.3
+gnu/usr.bin/gdb6/arch/sh3eb/init.c		 sync with 1.1.8.3
+gnu/usr.bin/gdb6/arch/sh3eb/nm.h		 sync with 1.1.8.2
+gnu/usr.bin/gdb6/arch/sh3eb/tm.h		 sync with 1.1.8.2
+gnu/usr.bin/gdb6/arch/sh3eb/version.c		 sync with 1.1.8.2
+gnu/usr.bin/gdb6/arch/sh3el/config.h		 sync with 1.2.2.2
+gnu/usr.bin/gdb6/arch/sh3el/defs.mk		 sync with 1.2.8.3
+gnu/usr.bin/gdb6/arch/sh3el/init.c		 sync with 1.1.8.3
+gnu/usr.bin/gdb6/arch/sh3el/nm.h		 sync with 1.1.8.2
+gnu/usr.bin/gdb6/arch/sh3el/tm.h		 sync with 1.1.8.2
+gnu/usr.bin/gdb6/arch/sh3el/version.c		 sync with 1.1.8.2
+gnu/usr.bin/gdb6/arch/sparc/defs.mk		 sync with 1.2.6.1
+gnu/usr.bin/gdb6/arch/sparc/init.c		 sync with 1.1.6.1
+gnu/usr.bin/gdb6/arch/sparc64/defs.mk		 sync with 1.2.6.1
+gnu/usr.bin/gdb6/arch/sparc64/init.c		 sync with 1.1.6.1
+gnu/usr.bin/gdb6/arch/vax/config.h		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/vax/defs.mk		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/vax/init.c		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/vax/tm.h			 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/vax/version.c		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/arch/x86_64/defs.mk		 sync with 1.2.6.1
+gnu/usr.bin/gdb6/arch/x86_64/init.c		 sync with 1.1.6.1
+gnu/usr.bin/gdb6/bfd/arch/armeb/bfd.h		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/armeb/bfdver.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/armeb/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/armeb/defs.mk		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/m68000/bfd.h		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/m68000/bfdver.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/m68000/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/m68000/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/mipsel/bfd.h		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/mipsel/bfdver.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/mipsel/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/mipsel/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/sh3eb/bfd.h		 sync with 1.1.8.3
+gnu/usr.bin/gdb6/bfd/arch/sh3eb/bfdver.h	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/bfd/arch/sh3eb/config.h	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/bfd/arch/sh3eb/defs.mk		 sync with 1.1.8.3
+gnu/usr.bin/gdb6/bfd/arch/sh3el/bfd.h		 sync with 1.1.8.3
+gnu/usr.bin/gdb6/bfd/arch/sh3el/bfdver.h	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/bfd/arch/sh3el/config.h	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/bfd/arch/sh3el/defs.mk		 sync with 1.1.8.3
+gnu/usr.bin/gdb6/bfd/arch/vax/bfd.h		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/vax/bfdver.h		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/vax/config.h		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/bfd/arch/vax/defs.mk		 sync with 1.1.6.2
+gnu/usr.bin/gdb6/gdb/Makefile			 sync with 1.5.2.1.2.2
+gnu/usr.bin/gdb6/gdbtui/Makefile		 sync with 1.2.6.1
+gnu/usr.bin/gdb6/libiberty/arch/armeb/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/libiberty/arch/armeb/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/libiberty/arch/m68000/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/libiberty/arch/m68000/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/libiberty/arch/mipsel/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/libiberty/arch/mipsel/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/libiberty/arch/sh3eb/config.h	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/libiberty/arch/sh3eb/defs.mk	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/libiberty/arch/sh3el/config.h	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/libiberty/arch/sh3el/defs.mk	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/libiberty/arch/vax/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/libiberty/arch/vax/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/opcodes/arch/armeb/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/opcodes/arch/armeb/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/opcodes/arch/m68000/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/opcodes/arch/m68000/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/opcodes/arch/mipsel/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/opcodes/arch/mipsel/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/opcodes/arch/sh3eb/config.h	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/opcodes/arch/sh3eb/defs.mk	 sync with 1.1.8.3
+gnu/usr.bin/gdb6/opcodes/arch/sh3el/config.h	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/opcodes/arch/sh3el/defs.mk	 sync with 1.1.8.3
+gnu/usr.bin/gdb6/opcodes/arch/vax/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/opcodes/arch/vax/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/readline/arch/armeb/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/readline/arch/armeb/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/readline/arch/m68000/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/readline/arch/m68000/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/readline/arch/mipsel/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/readline/arch/mipsel/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/readline/arch/sh3eb/config.h	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/readline/arch/sh3eb/defs.mk	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/readline/arch/sh3el/config.h	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/readline/arch/sh3el/defs.mk	 sync with 1.1.8.2
+gnu/usr.bin/gdb6/readline/arch/vax/config.h	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/readline/arch/vax/defs.mk	 sync with 1.1.6.2
+gnu/usr.bin/gdb6/sim/arch/mipseb/cconfig.h	 sync with 1.1.2.1
+gnu/usr.bin/gdb6/sim/arch/mipseb/config.h	 sync with 1.1.2.1
+gnu/usr.bin/gdb6/sim/arch/mipseb/defs.mk	 sync with 1.1.2.1
+gnu/usr.bin/gdb6/sim/arch/mipsel/cconfig.h	 sync with 1.1.2.1
+gnu/usr.bin/gdb6/sim/arch/mipsel/config.h	 sync with 1.1.2.1
+gnu/usr.bin/gdb6/sim/arch/mipsel/defs.mk	 sync with 1.1.2.1
+lib/libkvm/kvm_sparc64.c			 sync with 1.10.18.2
+lib/libpthread/pthread.c			 sync with 1.48.6.4
+lib/libpthread/pthread_barrier.c		 sync with 1.6.18.1
+lib/libpthread/pthread_cond.c			 sync with 1.18.12.2
+lib/libpthread/pthread_debug.h			 sync with 1.8.18.1
+lib/libpthread/pthread_int.h			 sync with 1.34.4.5
+lib/libpthread/pthread_lock.c			 sync with 1.14.6.1
+lib/libpthread/pthread_mutex.c			 sync with 1.22.4.2
+lib/libpthread/pthread_run.c			 sync with 1.18.12.4
+lib/libpthread/pthread_rwlock.c			 sync with 1.13.6.2
+lib/libpthread/pthread_sa.c			 sync with 1.37.6.5
+lib/libpthread/pthread_sig.c			 sync with 1.47.4.8
+lib/libpthread/pthread_sleep.c			 sync with 1.7.6.2
+lib/libpthread/sem.c				 sync with 1.9.6.2
+lib/libpthread/arch/sh3/pthread_md.h		 sync with 1.3.6.1
+regress/lib/libpthread/resolv/Makefile		 sync with 1.1.12.1
+regress/lib/libpthread/sigrunning/Makefile	 sync with 1.1.2.1
+regress/lib/libpthread/sigrunning/sigrunning.c	 sync with 1.1.2.1
+share/mk/bsd.own.mk				 sync with 1.489.4.3
+sys/arch/amd64/amd64/locore.S			 sync with 1.18.14.1
+sys/arch/amd64/amd64/machdep.c			 sync with 1.44.2.3.2.1
+sys/arch/amd64/conf/kern.ldscript		 sync with 1.1.70.1
+sys/arch/cats/conf/Makefile.cats.inc		 sync with 1.17.30.1
+sys/arch/shark/conf/Makefile.shark.inc		 sync with 1.6.30.1
+sys/arch/sparc64/conf/kern.ldscript		 sync with 1.7.26.2
+sys/arch/sparc64/conf/kern32.ldscript		 sync with 1.6.26.2
+sys/arch/sparc64/include/kcore.h		 sync with 1.4.92.2
+sys/arch/sparc64/sparc64/locore.s		 sync with 1.232.4.4
+sys/arch/sparc64/sparc64/machdep.c		 sync with 1.193.4.3
+sys/arch/sparc64/sparc64/pmap.c			 sync with 1.184.2.1.2.4
+sys/conf/newvers.sh				 sync with 1.42.26.2
+sys/kern/kern_sa.c				 sync with 1.87.4.11
+sys/kern/kern_synch.c				 sync with 1.173.4.2
+sys/sys/savar.h					 sync with 1.20.10.2
+tools/gdb/Makefile				 sync with 1.9.4.1
+tools/gdb/mknative-gdb				 sync with 1.1.6.1
+
+	pullup the wrstuden-fixsa CVS branch to netbsd-4:
+	toolchain/35540 - GDB 6 support for pthreads.
+	port-sparc64/37534 - ktrace firefox gives
+	    kernel trap 30: data access expection
+	GDB changes:
+	- delete gdb53
+	- enable gdb6 on all architectures
+	- add support for amd64 crash dumps
+	- add support for sparc64 crash dumps
+	- add support for /proc pid to executable filename for all archs
+	- enable thread support for all architectures
+	- add a note section to kernels to all platforms
+	- support detection/unwinding of signals for most architectures.
+	- Fix PTHREAD_UCONTEXT_TO_REG / PTHREAD_REG_TO_UCONTEXT on sh3.
+	- Apply fix from binutils-current so that sparc gdb can be cross built
+	  on a 64bit host.
+	SA/pthread changes:
+	Pre-allocate memory needed for event delivery. Eliminates dropped
+	interrupts under load. 
+	Deliver intra-process signals to running threads
+	Eliminate some deadlock scenarios
+	Fix intra-process signal delivery when delivering to a thread waiting
+	for signals. Makes afs work again!
+	[skrll, ticket #1196]
 
