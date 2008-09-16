@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1119 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1120 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -854,8 +854,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[jmcneill 20080908]
 	altq(4): Add support for source address hashing in the WFQ scheduler.
 		[joerg 20080911]
-	ataraid(4): Add Intel MatrixRAID support contributed by Juan RP.
-		[tron 20080911]
+	ataraid(4): Add Intel MatrixRAID controller support contributed
+		by Juan RP. [tron 20080911]
 	cgd(4): Change default iv to encblkno1; encblkno (the old iv) used
 		to encrypt things 8 times leading to a 20% performance loss
 		for no real security benefit [christos 20080912]
@@ -868,3 +868,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	ataraid(4): Add support for status reports via bio(4) contributed
 		by Juan RP. [tron 20080915]
 	gem(4): Add support for Sun SBus SX fibre cards.  [jdc 20080915]
+	ataraid(4): Add support for multiple volumes attached to
+		Intel MatrixRAID controllers contributed by Juan RP.
+		[tron 20080916]
