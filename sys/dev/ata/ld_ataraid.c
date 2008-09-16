@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.31 2008/09/15 11:53:52 tron Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.32 2008/09/16 11:45:30 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.31 2008/09/15 11:53:52 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.32 2008/09/16 11:45:30 tron Exp $");
 
 #include "bio.h"
 #include "rnd.h"
@@ -143,6 +143,7 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 	struct ld_ataraid_softc *sc = device_private(self);
 	struct ld_softc *ld = &sc->sc_ld;
 	struct ataraid_array_info *aai = aux;
+	struct ataraid_disk_info *adi = NULL;
 	const char *level;
 	struct vnode *vp;
 	char unklev[32];
@@ -215,18 +216,9 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 	 * Configure all the component disks.
 	 */
 	for (i = 0; i < aai->aai_ndisks; i++) {
-		struct ataraid_disk_info *adi = &aai->aai_disks[i];
-		int bmajor, error;
-		dev_t dev;
-
-		bmajor = devsw_name2blk(device_xname(adi->adi_dev), NULL, 0);
-		dev = MAKEDISKDEV(bmajor, device_unit(adi->adi_dev), RAW_PART);
-		error = bdevvp(dev, &vp);
-		if (error)
-			break;
-		error = VOP_OPEN(vp, FREAD|FWRITE, NOCRED);
-		if (error) {
-			vput(vp);
+		adi = &aai->aai_disks[i];
+		vp = ata_raid_disk_vnode_find(adi);
+		if (vp == NULL) {
 			/*
 			 * XXX This is bogus.  We should just mark the
 			 * XXX component as FAILED, and write-back new
@@ -234,8 +226,6 @@ ld_ataraid_attach(device_t parent, device_t self, void *aux)
 			 */
 			break;
 		}
-
-		VOP_UNLOCK(vp, 0);
 		sc->sc_vnodes[i] = vp;
 	}
 	if (i == aai->aai_ndisks) {
