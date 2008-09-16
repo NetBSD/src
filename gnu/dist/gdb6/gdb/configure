@@ -19615,6 +19615,134 @@ echo "${ECHO_T}$gdb_cv_bigtoc" >&6
 esac
 
 
+case ${host_os} in
+netbsd*)
+   # See if libpthread_dbg library header is around for NetBSD thread
+   # debugging.
+   echo "$as_me:$LINENO: checking for NetBSD thread debugging library" >&5
+echo $ECHO_N "checking for NetBSD thread debugging library... $ECHO_C" >&6
+   if test "${gdb_cv_have_netbsd_thread_debug+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <pthread_dbg.h>
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  gdb_cv_have_netbsd_thread_debug=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+gdb_cv_have_netbsd_thread_debug=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+   echo "$as_me:$LINENO: result: $gdb_cv_have_netbsd_thread_debug" >&5
+echo "${ECHO_T}$gdb_cv_have_netbsd_thread_debug" >&6
+   if test $gdb_cv_have_netbsd_thread_debug = yes; then
+      echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+      CONFIG_OBS="${CONFIG_OBS} nbsd-thread.o"
+      CONFIG_SRCS="${CONFIG_SRCS} nbsd-thread.c"
+      if test "$GCC" = "yes" ; then
+         # The GNU linker requires the -export-dynamic option to make
+         # all symbols visible in the dynamic symbol table.
+         hold_ldflags=$LDFLAGS
+         echo "$as_me:$LINENO: checking for the ld -export-dynamic flag" >&5
+echo $ECHO_N "checking for the ld -export-dynamic flag... $ECHO_C" >&6
+         LDFLAGS="${LDFLAGS} -Wl,-export-dynamic"
+         cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+int
+main ()
+{
+int i;
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  found=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+found=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+         LDFLAGS=$hold_ldflags
+         echo "$as_me:$LINENO: result: $found" >&5
+echo "${ECHO_T}$found" >&6
+         if test $found = yes; then
+            CONFIG_LDFLAGS="${CONFIG_LDFLAGS} -Wl,-export-dynamic"
+         fi
+      fi
+   fi
+   ;;
+
+esac
+
 
 if test ${build} = ${host} -a ${host} = ${target} ; then
    case ${host_os} in

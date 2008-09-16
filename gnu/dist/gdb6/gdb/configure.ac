@@ -955,6 +955,43 @@ esac
 
 
 dnl For certain native configurations, we need to check whether thread
+dnl support is available using the existance of a header file as
+dnl indication.
+dnl
+case ${host_os} in
+netbsd*)
+   # See if libpthread_dbg library header is around for NetBSD thread
+   # debugging.
+   AC_MSG_CHECKING(for NetBSD thread debugging library)
+   AC_CACHE_VAL(gdb_cv_have_netbsd_thread_debug,
+                [AC_TRY_COMPILE([#include <pthread_dbg.h>],
+                                [],
+                                gdb_cv_have_netbsd_thread_debug=yes,
+                                gdb_cv_have_netbsd_thread_debug=no)])
+   AC_MSG_RESULT($gdb_cv_have_netbsd_thread_debug)
+   if test $gdb_cv_have_netbsd_thread_debug = yes; then
+      AC_MSG_RESULT(yes)
+      CONFIG_OBS="${CONFIG_OBS} nbsd-thread.o"
+      CONFIG_SRCS="${CONFIG_SRCS} nbsd-thread.c"
+      if test "$GCC" = "yes" ; then
+         # The GNU linker requires the -export-dynamic option to make
+         # all symbols visible in the dynamic symbol table.
+         hold_ldflags=$LDFLAGS
+         AC_MSG_CHECKING(for the ld -export-dynamic flag)
+         LDFLAGS="${LDFLAGS} -Wl,-export-dynamic"
+         AC_TRY_LINK(, [int i;], found=yes, found=no)
+         LDFLAGS=$hold_ldflags
+         AC_MSG_RESULT($found)
+         if test $found = yes; then
+            CONFIG_LDFLAGS="${CONFIG_LDFLAGS} -Wl,-export-dynamic"
+         fi
+      fi
+   fi
+   ;;
+   AC_SUBST(CONFIG_LDFLAGS)
+esac
+
+dnl For certain native configurations, we need to check whether thread
 dnl support can be built in or not.
 dnl
 dnl Note that we only want this if we are both native (host == target),

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2007/02/11 13:30:38 tron Exp $
+#	$NetBSD: Makefile,v 1.5.2.2 2008/09/16 18:49:30 bouyer Exp $
 
 .include "../Makefile.inc"
 
@@ -51,7 +51,7 @@ DPADD+= ${LIBGDBDIR}/libgdb.a
 SIMOBJ!=	cd ${.CURDIR}/../sim/ppc && ${PRINTOBJDIR}
 LDADD+=		-L${SIMOBJ} -lsim
 DPADD+=		${SIMOBJ}/libsim.a
-.elif ${MACHINE_ARCH} == mipseb || ${MACHINE_ARCH} == mipsel
+.elif ${MACHINE_CPU} == xxmips
 SIMOBJ!=	cd ${.CURDIR}/../sim/mips && ${PRINTOBJDIR}
 LDADD+=		-L${SIMOBJ} -lsim
 DPADD+=		${SIMOBJ}/libsim.a
@@ -71,10 +71,6 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 
 LDADD+=		-lcurses -lintl -lm -lkvm
 DPADD+=		${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
-
-.if ${SRCS:Mnbsd-thread.c} != ""
-LDADD+=                -lpthread_dbg
-.endif
 
 .include <bsd.prog.mk>
 

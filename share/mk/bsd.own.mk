@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.489.2.3 2008/04/19 16:07:22 bouyer Exp $
+#	$NetBSD: bsd.own.mk,v 1.489.2.4 2008/09/16 18:49:33 bouyer Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -54,18 +54,8 @@ HAVE_GCC?=	3
 # default to GCC4
 HAVE_GCC?=	4
 
-#
-# Transitional for toolchain upgrade to GDB6
-#
-.if \
-    ${MACHINE_CPU} == "arm" || \
-    ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "powerpc" || \
-    ${MACHINE_ARCH} == "sparc64"
+# default to GDB6
 HAVE_GDB?=	6
-.endif
-
-HAVE_GDB?=	5
 
 CPPFLAG_ISYSTEM=	-isystem
 .if ${HAVE_GCC} == 3

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.87.2.1 2008/04/11 06:35:02 jdc Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.87.2.2 2008/09/16 18:49:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.2.1 2008/04/11 06:35:02 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.87.2.2 2008/09/16 18:49:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,21 @@ int	sadebug = 0;
 SPLAY_PROTOTYPE(sasttree, sastack, sast_node, sast_compare);
 SPLAY_GENERATE(sasttree, sastack, sast_node, sast_compare);
 
+/*
+ * sa_critpath API
+ * permit other parts of the kernel to make SA_LWP_STATE_{UN,}LOCK calls.
+ */
+void
+sa_critpath_enter(struct lwp *l1, sa_critpath_t *f1)
+{
+	SA_LWP_STATE_LOCK(l1, *f1);
+}
+void
+sa_critpath_exit(struct lwp *l1, sa_critpath_t *f1)
+{
+	SA_LWP_STATE_UNLOCK(l1, *f1);
+}
+
 
 /*
  * sadata_upcall_alloc:
@@ -147,13 +162,30 @@ sadata_upcall_free(struct sadata_upcall *sau)
 	pool_put(&saupcall_pool, sau);
 }
 
+/*
+ * sa_newsavp
+ *
+ * Allocate a new virtual processor structure, do some simple
+ * initialization and add it to the passed-in sa. Pre-allocate
+ * an upcall event data structure for when the main thread on
+ * this vp blocks.
+ *
+ * We lock sa_lock while manipulating the list of vp's.
+ *
+ * We allocate the lwp to run on this separately. In the case of the
+ * first lwp/vp for a process, the lwp already exists. It's the
+ * main (only) lwp of the process.
+ */
 static struct sadata_vp *
 sa_newsavp(struct sadata *sa)
 {
 	struct sadata_vp *vp, *qvp;
+	struct sadata_upcall *sau;
 
 	/* Allocate virtual processor data structure */
 	vp = pool_get(&savp_pool, PR_WAITOK);
+	/* And preallocate an upcall data structure for sleeping */
+	sau = sadata_upcall_alloc(1);
 	/* Initialize. */
 	memset(vp, 0, sizeof(*vp));
 	simple_lock_init(&vp->savp_lock);
@@ -163,6 +195,7 @@ sa_newsavp(struct sadata *sa)
 	vp->savp_ofaultaddr = 0;
 	LIST_INIT(&vp->savp_lwpcache);
 	vp->savp_ncached = 0;
+	vp->savp_sleeper_upcall = sau;
 	SIMPLEQ_INIT(&vp->savp_upcalls);
 
 	simple_lock(&sa->sa_lock);
@@ -186,6 +219,11 @@ sa_newsavp(struct sadata *sa)
 	return (vp);
 }
 
+/*
+ * sys_sa_register
+ *	Handle copyin and copyout of info for registering the
+ * upcall handler address.
+ */
 int
 sys_sa_register(struct lwp *l, void *v, register_t *retval)
 {
@@ -209,6 +247,25 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 	return 0;
 }
 
+/*
+ * dosa_register
+ *
+ *	Change the upcall address for the process. If needed, allocate
+ * an sadata structure (and initialize it) for the process. If initializing,
+ * set the flags in the sadata structure to those passed in. Flags will
+ * be ignored if the sadata structure already exists (dosa_regiister was
+ * already called).
+ *
+ * Note: changing the upcall handler address for a process that has
+ * concurrency greater than one can yield ambiguous results. The one
+ * guarantee we can offer is that any upcalls generated on all CPUs
+ * after this routine finishes will use the new upcall handler. Note
+ * that any upcalls delivered upon return to user level by the
+ * sys_sa_register() system call that called this routine will use the
+ * new upcall handler. Note that any such upcalls will be delivered
+ * before the old upcall handling address has been returned to
+ * the application.
+ */
 int
 dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
     ssize_t stackinfo_offset)
@@ -269,6 +326,10 @@ sa_release(struct proc *p)
 	p->p_flag &= ~P_SA;
 	while ((vp = SLIST_FIRST(&p->p_sa->sa_vps)) != NULL) {
 		SLIST_REMOVE_HEAD(&p->p_sa->sa_vps, savp_next);
+		if (vp->savp_sleeper_upcall) {
+			sadata_upcall_free(vp->savp_sleeper_upcall);
+			vp->savp_sleeper_upcall = NULL;
+		}
 		pool_put(&savp_pool, vp);
 	}
 	pool_put(&sadata_pool, sa);
@@ -280,6 +341,14 @@ sa_release(struct proc *p)
 	}
 }
 
+/*
+ * sa_fetchstackgen
+ *
+ *	copyin the generation number for the stack in question.
+ *
+ * WRS: I think this routine needs the SA_LWP_STATE_LOCK() dance, either
+ * here or in its caller.
+ */
 static int
 sa_fetchstackgen(struct sastack *sast, struct sadata *sa, unsigned int *gen)
 {
@@ -293,6 +362,15 @@ sa_fetchstackgen(struct sastack *sast, struct sadata *sa, unsigned int *gen)
 	return error;
 }
 
+/*
+ * sa_stackused
+ *
+ *	Convenience routine to determine if a given stack has been used
+ * or not. We consider a stack to be unused if the kernel's concept
+ * of its generation number matches that of userland.
+ *	We kill the application with SIGILL if there is an error copying
+ * in the userland generation number.
+ */
 static inline int
 sa_stackused(struct sastack *sast, struct sadata *sa)
 {
@@ -308,6 +386,15 @@ sa_stackused(struct sastack *sast, struct sadata *sa)
 	return (sast->sast_gen != gen);
 }
 
+/*
+ * sa_setstackfree
+ *
+ *	Convenience routine to mark a stack as unused in the kernel's
+ * eyes. We do this by setting the kernel's generation number for the stack
+ * to that of userland.
+ *	We kill the application with SIGILL if there is an error copying
+ * in the userland generation number.
+ */
 static inline void
 sa_setstackfree(struct sastack *sast, struct sadata *sa)
 {
@@ -324,7 +411,13 @@ sa_setstackfree(struct sastack *sast, struct sadata *sa)
 }
 
 /*
+ * sa_getstack
+ *
  * Find next free stack, starting at sa->sa_stacknext.
+ *
+ * Caller must have the splay tree locked and should have cleared L_SA for
+ * our thread. This is not the time to go generating upcalls as we aren't
+ * in a position to deliver another one.
  */
 static struct sastack *
 sa_getstack(struct sadata *sa)
@@ -344,6 +437,13 @@ sa_getstack(struct sadata *sa)
 	return sast;
 }
 
+/*
+ * sa_getstack0 -- get the lowest numbered sa stack
+ *
+ *	We walk the splay tree in order and find the lowest-numbered
+ * (as defined by SPLAY_MIN() and SPLAY_NEXT() ordering) stack that
+ * is unused.
+ */
 static inline struct sastack *
 sa_getstack0(struct sadata *sa)
 {
@@ -368,6 +468,12 @@ sa_getstack0(struct sadata *sa)
 	return sa->sa_stacknext;
 }
 
+/*
+ * sast_compare - compare two sastacks
+ *
+ *	We sort stacks according to their userspace addresses.
+ * Stacks are "equal" if their start + size overlap.
+ */
 static inline int
 sast_compare(struct sastack *a, struct sastack *b)
 {
@@ -380,12 +486,21 @@ sast_compare(struct sastack *a, struct sastack *b)
 	return (0);
 }
 
+/*
+ * sa_copyin_stack -- copyin a stack.
+ */
 static int
 sa_copyin_stack(stack_t *stacks, int index, stack_t *dest)
 {
 	return copyin(stacks + index, dest, sizeof(stack_t));
 }
 
+/*
+ * sys_sa_stacks -- the user level threading library is passing us stacks
+ *
+ * We copy in some arguments then call sa_stacks1() to do the main
+ * work. NETBSD32 has its own front-end for this call.
+ */
 int
 sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 {
@@ -397,6 +512,16 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	return sa_stacks1(l, retval, SCARG(uap, num), SCARG(uap, stacks), sa_copyin_stack);
 }
 
+/*
+ * sa_stacks1
+ *	Process stacks passed-in by the user threading library. At
+ * present we use the kernel lock to lock the SPLAY tree, which we
+ * manipulate to load in the stacks.
+ *
+ * 	It is an error to pass in a stack that we already know about
+ * and which hasn't been used. Passing in a known-but-used one is fine.
+ * We accept up to SA_MAXNUMSTACKS per desired vp (concurrency level).
+ */
 int
 sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
     sa_copyin_stack_t do_sa_copyin_stack)
@@ -461,6 +586,13 @@ sa_stacks1(struct lwp *l, register_t *retval, int num, stack_t *stacks,
 }
 
 
+/*
+ * sys_sa_enable - throw the switch & enable SA
+ *
+ * Fairly simple. Make sure the sadata and vp've been set up for this
+ * process, assign this thread to the vp and initiate the first upcall
+ * (SA_UPCALL_NEWPROC).
+ */
 int
 sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 {
@@ -489,11 +621,22 @@ sys_sa_enable(struct lwp *l, void *v, register_t *retval)
 	p->p_flag |= P_SA;
 	l->l_flag |= L_SA; /* We are now an activation LWP */
 
-	/* This will not return to the place in user space it came from. */
+	/*
+	 * This will return to the SA handler previously registered.
+	 */
 	return (0);
 }
 
 
+/*
+ * sa_increaseconcurrency
+ *	Raise the process's maximum concurrency level to the
+ * requested level. Does nothing if the current maximum councurrency
+ * is greater than the requested.
+ *	Uses the kernel lock to implicitly lock operations. Also
+ * uses sa_lock to lock the vp list and uses SCHED_LOCK() to lock the
+ * scheduler.
+ */
 #ifdef MULTIPROCESSOR
 static int
 sa_increaseconcurrency(struct lwp *l, int concurrency)
@@ -504,6 +647,7 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 	vaddr_t uaddr;
 	boolean_t inmem;
 	int addedconcurrency, error, s;
+	struct sadata_vp *vp;
 
 	p = l->l_proc;
 	sa = p->p_sa;
@@ -527,22 +671,27 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 			newlwp(l, p, uaddr, inmem, 0, NULL, 0,
 			    child_return, 0, &l2);
 			l2->l_flag |= L_SA;
-			l2->l_savp = sa_newsavp(sa);
-			if (l2->l_savp) {
-				l2->l_savp->savp_lwp = l2;
+			l2->l_savp = vp = sa_newsavp(sa);
+			if (vp) {
+				vp->savp_lwp = l2;
 				cpu_setfunc(l2, sa_switchcall, NULL);
 				error = sa_upcall(l2, SA_UPCALL_NEWPROC,
 				    NULL, NULL, 0, NULL, NULL);
 				if (error) {
 					/* free new savp */
-					SLIST_REMOVE(&sa->sa_vps, l2->l_savp,
+					SLIST_REMOVE(&sa->sa_vps, vp,
 					    sadata_vp, savp_next);
-					pool_put(&savp_pool, l2->l_savp);
+					if (vp->savp_sleeper_upcall) {
+						sadata_upcall_free(
+						    vp->savp_sleeper_upcall);
+						vp->savp_sleeper_upcall = NULL;
+					}
+					pool_put(&savp_pool, vp);
 				}
 			} else
 				error = 1;
 			if (error) {
-				/* put l2 into l's LWP cache */
+				/* put l2 into l's VP LWP cache */
 				l2->l_savp = l->l_savp;
 				PHOLD(l2);
 				SCHED_LOCK(s);
@@ -568,6 +717,18 @@ sa_increaseconcurrency(struct lwp *l, int concurrency)
 }
 #endif
 
+/*
+ * sys_sa_setconcurrency
+ *	The user threading library wants to increase the number
+ * of active virtual CPUS we assign to it. We return the number of virt
+ * CPUs we assigned to the process. We limit concurrency to the number
+ * of CPUs in the system.
+ *
+ * WRS: at present, this system call serves two purposes. The first is
+ * for an application to indicate that it wants a certain concurrency
+ * level. The second is for the application to request that the kernel
+ * reactivate previously allocated virtual CPUs.
+ */
 int
 sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 {
@@ -647,6 +808,11 @@ sys_sa_setconcurrency(struct lwp *l, void *v, register_t *retval)
 	return (0);
 }
 
+/*
+ * sys_sa_yield
+ *	application has nothing for this lwp to do, so let it linger in
+ * the kernel.
+ */
 int
 sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 {
@@ -665,6 +831,12 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 	return (EJUSTRETURN);
 }
 
+/*
+ * sa_yield
+ *	This lwp has nothing to do, so hang around. Assuming we
+ * are the lwp "on" our vp, tsleep in "sawait" until there's something
+ * to do. If there are upcalls, we deliver them explicitly.
+ */
 void
 sa_yield(struct lwp *l)
 {
@@ -739,12 +911,60 @@ sa_yield(struct lwp *l)
 }
 
 
+/*
+ * sys_sa_preempt - preempt a running thread
+ *
+ * Given an lwp id, send it a user upcall. This is a way for libpthread to
+ * kick something into the upcall handler.
+ */
 int
 sys_sa_preempt(struct lwp *l, void *v, register_t *retval)
 {
+	struct sys_sa_preempt_args /* {
+		syscallarg(int) sa_id;
+	} */ *uap = v;
+	struct sadata		*sa = l->l_proc->p_sa;
+	struct lwp		*t;
+	int			target, s, error;
 
-	/* XXX Implement me. */
-	return (ENOSYS);
+	DPRINTFN(11,("sys_sa_preempt(%d.%d)\n", l->l_proc->p_pid,
+		     l->l_lid));
+
+	/* We have to be using scheduler activations */
+	if (sa == NULL)
+		return (EINVAL);
+
+	if ((l->l_proc->p_flag & P_SA) == 0)
+		return (EINVAL);
+
+	if ((target = SCARG(uap, sa_id)) < 1)
+		return (EINVAL);
+
+	SCHED_LOCK(s);
+
+	LIST_FOREACH(t, &l->l_proc->p_lwps, l_sibling)
+		if (t->l_lid == target)
+			break;
+
+	if (t == NULL) {
+		error = ESRCH;
+		goto exit_lock;
+	}
+
+	/* XXX WRS We really need all of this locking documented */
+	SCHED_UNLOCK(s);
+
+	error = sa_upcall(l, SA_UPCALL_USER | SA_UPCALL_DEFER_EVENT, l, NULL,
+		0, NULL, NULL);
+	if (error)
+		return error;
+
+	return 0;
+
+exit_lock:
+	SCHED_UNLOCK(s);
+
+	return error;
 }
 
 
@@ -837,6 +1057,11 @@ sa_upcall0(struct sadata_upcall *sau, int type, struct lwp *event,
 	sau->sau_argfreefunc = func;
 }
 
+/*
+ * sa_ucsp
+ *	return the stack pointer (??) for a given context as
+ * reported by the _UC_MACHINE_SP() macro.
+ */
 void *
 sa_ucsp(void *arg)
 {
@@ -845,6 +1070,14 @@ sa_ucsp(void *arg)
 	return (void *)(uintptr_t)_UC_MACHINE_SP(uc);
 }
 
+/*
+ * sa_upcall_getstate
+ *	Fill in the given sau_state with info for the passed-in
+ * lwp, and update the lwp accordingly.
+ * WRS: unwaware of any locking before entry!
+ *	We set L_SA_SWITCHING on the target lwp. We assume that l_flag is
+ * protected by the kernel lock and untouched in interrupt context.
+ */
 static void
 sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 {
@@ -872,6 +1105,8 @@ sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 
 
 /*
+ * sa_pagefault
+ *
  * Detect double pagefaults and pagefaults on upcalls.
  * - double pagefaults are detected by comparing the previous faultaddr
  *   against the current faultaddr
@@ -913,20 +1148,35 @@ sa_pagefault(struct lwp *l, ucontext_t *l_ctx)
 
 
 /*
- * Called by tsleep(). Block current LWP and switch to another.
+ * sa_switch
+ *
+ * Called by tsleep() when it wants to call mi_switch().
+ * Block current LWP and switch to another.
  *
  * WE ARE NOT ALLOWED TO SLEEP HERE!  WE ARE CALLED FROM WITHIN
  * TSLEEP() ITSELF!  We are called with sched_lock held, and must
  * hold it right through the mi_switch() call.
+ *
+ * We return with the scheduler unlocked.
+ *
+ * We are called in one of three conditions:
+ *
+ * 1:		We are an sa_yield thread. If there are any UNBLOCKED
+ *	upcalls to deliver, deliver them (by exiting) instead of sleeping.
+ * 2:		We are the main lwp (we're the lwp on our vp). Trigger
+ *	delivery of a BLOCKED upcall.
+ * 3:		We are not the main lwp on our vp. Chances are we got
+ *	woken up but the sleeper turned around and went back to sleep.
+ *	It seems that select and poll do this a lot. So just go back to sleep.
  */
 
 void
-sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
+sa_switch(struct lwp *l, int type)
 {
 	struct proc *p = l->l_proc;
 	struct sadata_vp *vp = l->l_savp;
+	struct sadata_upcall *sau = NULL;
 	struct lwp *l2;
-	struct sadata_upcall *freesau = NULL;
 	int s;
 
 	DPRINTFN(4,("sa_switch(%d.%d type %d VP %d)\n", p->p_pid, l->l_lid,
@@ -936,7 +1186,6 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 
 	if (p->p_flag & P_WEXIT) {
 		mi_switch(l, NULL);
-		sadata_upcall_free(sau);
 		return;
 	}
 
@@ -956,7 +1205,6 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 			s = splsched();
 			SCHED_UNLOCK(s);
 		}
-		sadata_upcall_free(sau);
 		return;
 	} else if (vp->savp_lwp == l) {
 		/*
@@ -964,12 +1212,18 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 		 * a SA_BLOCKED upcall and allocate resources for the
 		 * UNBLOCKED upcall.
 		 */
+		if (vp->savp_sleeper_upcall) {
+			sau = vp->savp_sleeper_upcall;
+			vp->savp_sleeper_upcall = NULL;
+		}
 
 		if (sau == NULL) {
 #ifdef DIAGNOSTIC
 			printf("sa_switch(%d.%d): no upcall data.\n",
 			    p->p_pid, l->l_lid);
 #endif
+panic("Oops! Don't have a sleeper!\n");
+			/* XXXWRS Shouldn't we just kill the app here? */
 			mi_switch(l, NULL);
 			return;
 		}
@@ -1016,7 +1270,14 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 			cpu_setfunc(l2, sa_switchcall, NULL);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 			mi_switch(l, NULL);
-			sadata_upcall_free(sau);
+			/*
+			 * WRS Not sure how vp->savp_sleeper_upcall != NULL
+			 * but be careful none the less
+			 */
+			if (vp->savp_sleeper_upcall == NULL)
+				vp->savp_sleeper_upcall = sau;
+			else
+				sadata_upcall_free(sau);
 			DPRINTFN(10,("sa_switch(%d.%d) page fault resolved\n",
 				     p->p_pid, l->l_lid));
 			if (vp->savp_faultaddr == vp->savp_ofaultaddr)
@@ -1044,7 +1305,6 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 		 * SA_UNBLOCKED upcall (select and poll cause this
 		 * kind of behavior a lot).
 		 */
-		freesau = sau;
 		l2 = NULL;
 	} else {
 		/* NOTREACHED */
@@ -1054,7 +1314,6 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 	DPRINTFN(4,("sa_switch(%d.%d) switching to LWP %d.\n",
 	    p->p_pid, l->l_lid, l2 ? l2->l_lid : 0));
 	mi_switch(l, l2);
-	sadata_upcall_free(freesau);
 	DPRINTFN(4,("sa_switch(%d.%d flag %x) returned.\n",
 	    p->p_pid, l->l_lid, l->l_flag));
 	KDASSERT(l->l_wchan == 0);
@@ -1062,6 +1321,14 @@ sa_switch(struct lwp *l, struct sadata_upcall *sau, int type)
 	SCHED_ASSERT_UNLOCKED();
 }
 
+/*
+ * sa_switchcall
+ *
+ * We need to pass an upcall to userland. We are now
+ * running on a spare stack and need to allocate a new
+ * one. Also, if we are passed an sa upcall, we need to dispatch
+ * it to the app.
+ */
 static void
 sa_switchcall(void *arg)
 {
@@ -1100,11 +1367,26 @@ sa_switchcall(void *arg)
 			SIMPLEQ_INSERT_TAIL(&vp->savp_upcalls, sau, sau_next);
 			l2->l_flag |= L_SA_UPCALL;
 		} else {
+			/*
+			 * Oops! We're in trouble. The app hasn't
+			 * passeed us in any stacks on which to deliver
+			 * the upcall.
+			 *
+			 * WRS: I think this code is wrong. If we can't
+			 * get a stack, we are dead. We either need
+			 * to block waiting for one (assuming there's a
+			 * live vp still in userland so it can hand back
+			 * stacks, or we should just kill the process
+			 * as we're deadlocked.
+			 */
 #ifdef DIAGNOSTIC
 			printf("sa_switchcall(%d.%d flag %x): Not enough stacks.\n",
 			    p->p_pid, l->l_lid, l->l_flag);
 #endif
-			sadata_upcall_free(sau);
+			if (vp->savp_sleeper_upcall == NULL)
+				vp->savp_sleeper_upcall = sau;
+			else
+				sadata_upcall_free(sau);
 			PHOLD(l2);
 			SCHED_LOCK(s);
 			sa_putcachelwp(p, l2); /* sets L_SA */
@@ -1122,6 +1404,15 @@ sa_switchcall(void *arg)
 	upcallret(l2);
 }
 
+/*
+ * sa_newcachelwp
+ *	Allocate a new lwp, attach it to l's vp, and add it to
+ * the vp's idle cache.
+ *	Assumes no locks (other than kernel lock) on entry and exit.
+ * Locks scheduler lock during operation.
+ *	Returns 0 on success or if process is exiting. Returns ENOMEM
+ * if it is unable to allocate a new uarea.
+ */
 static int
 sa_newcachelwp(struct lwp *l)
 {
@@ -1155,8 +1446,10 @@ sa_newcachelwp(struct lwp *l)
 }
 
 /*
- * Take a normal process LWP and place it in the SA cache.
+ * sa_putcachelwp
+ *	Take a normal process LWP and place it in the SA cache.
  * LWP must not be running!
+ *	Scheduler lock held on entry and exit.
  */
 void
 sa_putcachelwp(struct proc *p, struct lwp *l)
@@ -1180,7 +1473,9 @@ sa_putcachelwp(struct proc *p, struct lwp *l)
 }
 
 /*
- * Fetch a LWP from the cache.
+ * sa_getcachelwp
+ *	Fetch a LWP from the cache.
+ * Scheduler lock held on entry and exit.
  */
 struct lwp *
 sa_getcachelwp(struct sadata_vp *vp)
@@ -1286,6 +1581,22 @@ sa_unblock_userret(struct lwp *l)
 	KERNEL_PROC_UNLOCK(l);
 }
 
+/*
+ * sa_upcall_userret
+ *	We are about to exit the kernel and return to userland, and
+ * userret() noticed we have upcalls pending. So deliver them.
+ *
+ *	This is the place where unblocking upcalls get generated. We
+ * allocate the stack & upcall event here. We may block doing so, but
+ * we lock our LWP state (clear L_SA for the moment) while doing so.
+ *
+ *	In the case of delivering multiple upcall events, we will end up
+ * writing multiple stacks out to userland at once. The last one we send
+ * out will be the first one run, then it will notice the others and
+ * run them.
+ *
+ * No locks held on entry or exit. We lock the scheduler during processing.
+ */
 void
 sa_upcall_userret(struct lwp *l)
 {
@@ -1378,6 +1689,18 @@ sa_upcall_userret(struct lwp *l)
 	(*(sae)->sae_sacopyout)((type), (kp), (void *)(up)) : \
 	copyout((kp), (void *)(up), sizeof(*(kp))))
 
+/*
+ * sa_makeupcalls
+ *	We're delivering the first upcall on lwp l, so
+ * copy everything out. We assigned the stack for this upcall
+ * when we enqueued it.
+ *
+ *	KERNEL_PROC_LOCK should be held on entry and exit, and
+ * SA_LWP_STATE should also be locked (L_SA temporarily disabled).
+ *
+ *	If the enqueued event was DEFERRED, this is the time when we set
+ * up the upcall event's state.
+ */
 static inline void
 sa_makeupcalls(struct lwp *l)
 {
@@ -1596,7 +1919,10 @@ sa_makeupcalls(struct lwp *l)
 	}
 	type = sau->sau_type;
 
-	sadata_upcall_free(sau);
+	if (vp->savp_sleeper_upcall == NULL)
+		vp->savp_sleeper_upcall = sau;
+	else
+		sadata_upcall_free(sau);
 
 	DPRINTFN(7,("sa_makeupcalls(%d.%d): type %d\n", p->p_pid,
 	    l->l_lid, type));

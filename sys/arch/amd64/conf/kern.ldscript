@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.1 2003/04/26 18:39:35 fvdl Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.1.54.1 2008/09/16 18:49:33 bouyer Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/amd64.  This script is based on
@@ -41,6 +41,10 @@ SECTIONS
   .rel.got        : { *(.rel.got) }
   .rela.got       : { *(.rela.got) }
   .rel.bss        : { *(.rel.bss .rel.bss.* .rel.gnu.linkonce.b.*) }
+  .note.netbsd.ident :
+  {
+    KEEP(*(.note.netbsd.ident));
+  }
   .rela.bss       : { *(.rela.bss .rela.bss.* .rela.gnu.linkonce.b.*) }
   .rel.plt        : { *(.rel.plt) }
   .rela.plt       : { *(.rela.plt) }

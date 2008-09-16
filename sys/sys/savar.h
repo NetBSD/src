@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.20 2006/06/25 08:12:54 yamt Exp $	*/
+/*	$NetBSD: savar.h,v 1.20.8.1 2008/09/16 18:49:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -110,6 +110,7 @@ struct sadata_vp {
 	vaddr_t	savp_ofaultaddr;	/* old page fault address */
 	LIST_HEAD(, lwp)	savp_lwpcache; /* list of available lwps */
 	int	savp_ncached;		/* list length */
+	struct sadata_upcall	*savp_sleeper_upcall; /* cached upcall data */
 	SIMPLEQ_HEAD(, sadata_upcall)	savp_upcalls; /* pending upcalls */
 };
 
@@ -134,7 +135,7 @@ struct sadata_upcall *sadata_upcall_alloc(int);
 void	sadata_upcall_free(struct sadata_upcall *);
 
 void	sa_release(struct proc *);
-void	sa_switch(struct lwp *, struct sadata_upcall *, int);
+void	sa_switch(struct lwp *, int);
 void	sa_preempt(struct lwp *);
 void	sa_yield(struct lwp *);
 int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *,
@@ -142,6 +143,19 @@ int	sa_upcall(struct lwp *, int, struct lwp *, struct lwp *, size_t, void *,
 
 void	sa_putcachelwp(struct proc *, struct lwp *);
 struct lwp *sa_getcachelwp(struct sadata_vp *);
+
+/*
+ * API permitting other parts of the kernel to indicate that they
+ * are entering code paths in which blocking events should NOT generate
+ * upcalls to an SA process. These routines should ONLY be used by code
+ * involved in scheduling or process/thread initialization (such as
+ * stack copying). These calls must be balanced. They may be nested, but
+ * MUST be released in a LIFO order. These calls assume that the lwp is
+ * locked.
+ */
+typedef int sa_critpath_t;
+void	sa_critpath_enter(struct lwp *, sa_critpath_t *);
+void	sa_critpath_exit(struct lwp *, sa_critpath_t *);
 
 
 void	sa_unblock_userret(struct lwp *);

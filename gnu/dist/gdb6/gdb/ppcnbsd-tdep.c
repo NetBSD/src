@@ -101,7 +101,9 @@ ppcnbsd_return_value (struct gdbarch *gdbarch, struct type *valtype,
 
 /* Signal trampolines.  */
 
+static const struct tramp_frame ppcnbsd_sigtramp;
 static const struct tramp_frame ppcnbsd2_sigtramp;
+static const struct tramp_frame ppcnbsd_sigtramp_si2;
 
 static void
 ppcnbsd_sigtramp_cache_init (const struct tramp_frame *self,
@@ -114,26 +116,56 @@ ppcnbsd_sigtramp_cache_init (const struct tramp_frame *self,
   CORE_ADDR addr, base;
   int i;
 
-  base = frame_unwind_register_unsigned (next_frame, SP_REGNUM);
-  if (self == &ppcnbsd2_sigtramp)
-    addr = base + 0x10 + 2 * tdep->wordsize;
+  if (self == &ppcnbsd_sigtramp_si2)
+    {
+       /* pointer to ucontext is in r30 */
+       base = frame_unwind_register_unsigned (next_frame, 30);
+       /* offsetof(ucontext_t, uc_mcontext) == 48 */
+       addr = base + 48; /* tdep->wordsize */
+    }
   else
-    addr = base + 0x18 + 2 * tdep->wordsize;
+    {
+       base = frame_unwind_register_unsigned (next_frame, SP_REGNUM);
+
+       if (self == &ppcnbsd2_sigtramp)
+         addr = base + 0x10 + 2 * tdep->wordsize;
+       else
+         addr = base + 0x18 + 2 * tdep->wordsize;
+    }
+
   for (i = 0; i < ppc_num_gprs; i++, addr += tdep->wordsize)
     {
       int regnum = i + tdep->ppc_gp0_regnum;
       trad_frame_set_reg_addr (this_cache, regnum, addr);
     }
-  trad_frame_set_reg_addr (this_cache, tdep->ppc_lr_regnum, addr);
-  addr += tdep->wordsize;
-  trad_frame_set_reg_addr (this_cache, tdep->ppc_cr_regnum, addr);
-  addr += tdep->wordsize;
-  trad_frame_set_reg_addr (this_cache, tdep->ppc_xer_regnum, addr);
-  addr += tdep->wordsize;
-  trad_frame_set_reg_addr (this_cache, tdep->ppc_ctr_regnum, addr);
-  addr += tdep->wordsize;
-  trad_frame_set_reg_addr (this_cache, PC_REGNUM, addr); /* SRR0? */
-  addr += tdep->wordsize;
+
+  if (self == &ppcnbsd2_sigtramp || self == &ppcnbsd_sigtramp)
+    {
+      trad_frame_set_reg_addr (this_cache, tdep->ppc_lr_regnum, addr);
+      addr += tdep->wordsize;
+      trad_frame_set_reg_addr (this_cache, tdep->ppc_cr_regnum, addr);
+      addr += tdep->wordsize;
+      trad_frame_set_reg_addr (this_cache, tdep->ppc_xer_regnum, addr);
+      addr += tdep->wordsize;
+      trad_frame_set_reg_addr (this_cache, tdep->ppc_ctr_regnum, addr);
+      addr += tdep->wordsize;
+      trad_frame_set_reg_addr (this_cache, PC_REGNUM, addr); /* SRR0? */
+      addr += tdep->wordsize;
+    }
+  else
+    {
+      trad_frame_set_reg_addr (this_cache, tdep->ppc_cr_regnum, addr);
+      addr += tdep->wordsize;
+      trad_frame_set_reg_addr (this_cache, tdep->ppc_lr_regnum, addr);
+      addr += tdep->wordsize;
+      trad_frame_set_reg_addr (this_cache, PC_REGNUM, addr); /* SRR0? */
+      addr += tdep->wordsize;
+      addr += tdep->wordsize;	/* SRR1 */
+      trad_frame_set_reg_addr (this_cache, tdep->ppc_ctr_regnum, addr);
+      addr += tdep->wordsize;
+      trad_frame_set_reg_addr (this_cache, tdep->ppc_xer_regnum, addr);
+      addr += tdep->wordsize;
+    }
 
   /* Construct the frame ID using the function start.  */
   trad_frame_set_id (this_cache, frame_id_build (base, func));
@@ -174,8 +206,22 @@ static const struct tramp_frame ppcnbsd2_sigtramp =
   },
   ppcnbsd_sigtramp_cache_init
 };
-
 
+static const struct tramp_frame ppcnbsd_sigtramp_si2 =
+{
+  SIGTRAMP_FRAME,
+  4,
+  {
+    { 0x7fc3f378, -1 },		/* mr r3, r30 */
+    { 0x38000134, -1 },		/* li r0,308 */
+    { 0x44000002, -1 },		/* sc */
+    { 0x38000001, -1 },		/* li r0,1 */
+    { 0x44000002, -1 },		/* sc */
+    { TRAMP_SENTINEL_INSN, -1 }
+  },
+  ppcnbsd_sigtramp_cache_init
+};
+
 static void
 ppcnbsd_init_abi (struct gdbarch_info info,
                   struct gdbarch *gdbarch)
@@ -193,6 +239,7 @@ ppcnbsd_init_abi (struct gdbarch_info info,
 
   tramp_frame_prepend_unwinder (gdbarch, &ppcnbsd_sigtramp);
   tramp_frame_prepend_unwinder (gdbarch, &ppcnbsd2_sigtramp);
+  tramp_frame_prepend_unwinder (gdbarch, &ppcnbsd_sigtramp_si2);
 }
 
 

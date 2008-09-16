@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.13 2005/10/19 02:15:03 chs Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.13.4.1 2008/09/16 18:49:33 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.13 2005/10/19 02:15:03 chs Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.13.4.1 2008/09/16 18:49:33 bouyer Exp $");
 
 #include <errno.h>
 
@@ -119,6 +119,14 @@ pthread_rwlock_rdlock(pthread_rwlock_t *rwlock)
 		PTQ_INSERT_TAIL(&rwlock->ptr_rblocked, self, pt_sleep);
 		/* Locking a rwlock is not a cancellation point; don't check */
 		pthread_spinlock(self, &self->pt_statelock);
+		if (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			PTQ_REMOVE(&rwlock->ptr_rblocked, self, pt_sleep);
+			pthread_spinunlock(self, &rwlock->ptr_interlock);
+			pthread__signal_deferred(self, self);
+			pthread_spinlock(self, &rwlock->ptr_interlock);
+			continue;
+		}
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;
 		self->pt_sleepobj = rwlock;
 		self->pt_sleepq = &rwlock->ptr_rblocked;
@@ -198,6 +206,14 @@ pthread_rwlock_wrlock(pthread_rwlock_t *rwlock)
 		PTQ_INSERT_TAIL(&rwlock->ptr_wblocked, self, pt_sleep);
 		/* Locking a rwlock is not a cancellation point; don't check */
 		pthread_spinlock(self, &self->pt_statelock);
+		if (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			PTQ_REMOVE(&rwlock->ptr_wblocked, self, pt_sleep);
+			pthread_spinunlock(self, &rwlock->ptr_interlock);
+			pthread__signal_deferred(self, self);
+			pthread_spinlock(self, &rwlock->ptr_interlock);
+			continue;
+		}
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;
 		self->pt_sleepobj = rwlock;
 		self->pt_sleepq = &rwlock->ptr_wblocked;
@@ -287,11 +303,18 @@ pthread_rwlock_timedrdlock(pthread_rwlock_t *rwlock,
 		wait.ptw_thread = self;
 		wait.ptw_rwlock = rwlock;
 		wait.ptw_queue = &rwlock->ptr_rblocked;
+		/* Locking a rwlock is not a cancellation point; don't check */
+		pthread_spinlock(self, &self->pt_statelock);
+		if (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &rwlock->ptr_interlock);
+			pthread__signal_deferred(self, self);
+			pthread_spinlock(self, &rwlock->ptr_interlock);
+			continue;
+		}
 		pthread__alarm_add(self, &alarm, abs_timeout,
 		    pthread_rwlock__callback, &wait);
 		PTQ_INSERT_TAIL(&rwlock->ptr_rblocked, self, pt_sleep);
-		/* Locking a rwlock is not a cancellation point; don't check */
-		pthread_spinlock(self, &self->pt_statelock);
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;
 		self->pt_sleepobj = rwlock;
 		self->pt_sleepq = &rwlock->ptr_rblocked;
@@ -364,11 +387,18 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 		wait.ptw_thread = self;
 		wait.ptw_rwlock = rwlock;
 		wait.ptw_queue = &rwlock->ptr_wblocked;
+		/* Locking a rwlock is not a cancellation point; don't check */
+		pthread_spinlock(self, &self->pt_statelock);
+		if (pthread_check_defsig(self)) {
+			pthread_spinunlock(self, &self->pt_statelock);
+			pthread_spinunlock(self, &rwlock->ptr_interlock);
+			pthread__signal_deferred(self, self);
+			pthread_spinlock(self, &rwlock->ptr_interlock);
+			continue;
+		}
 		pthread__alarm_add(self, &alarm, abs_timeout,
 		    pthread_rwlock__callback, &wait);
 		PTQ_INSERT_TAIL(&rwlock->ptr_wblocked, self, pt_sleep);
-		/* Locking a rwlock is not a cancellation point; don't check */
-		pthread_spinlock(self, &self->pt_statelock);
 		self->pt_state = PT_STATE_BLOCKED_QUEUE;
 		self->pt_sleepobj = rwlock;
 		self->pt_sleepq = &rwlock->ptr_wblocked;
@@ -410,7 +440,7 @@ pthread_rwlock__callback(void *arg)
 	 */
 	if (a->ptw_thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
 		PTQ_REMOVE(a->ptw_queue, a->ptw_thread, pt_sleep);
-		pthread__sched(self, a->ptw_thread);
+		pthread__sched(self, a->ptw_thread, 0);
 	}
 	pthread_spinunlock(self, &a->ptw_rwlock->ptr_interlock);
 
@@ -468,7 +498,7 @@ pthread_rwlock_unlock(pthread_rwlock_t *rwlock)
 	}
 
 	if (writer != NULL)
-		pthread__sched(self, writer);
+		pthread__sched(self, writer, 0);
 	else
 		pthread__sched_sleepers(self, &blockedq);
 	
