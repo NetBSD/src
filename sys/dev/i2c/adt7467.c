@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467.c,v 1.14 2008/09/08 23:07:51 pgoyette Exp $	*/
+/*	$NetBSD: adt7467.c,v 1.15 2008/09/17 15:39:05 pgoyette Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -38,7 +38,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.14 2008/09/08 23:07:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.15 2008/09/17 15:39:05 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: adt7467.c,v 1.14 2008/09/08 23:07:51 pgoyette Exp $"
 
 static void adt7467c_attach(device_t, device_t, void *);
 static int adt7467c_match(device_t, cfdata_t, void *);
+static int adt7467c_verify(struct adt7467c_softc *);
 
 static uint8_t adt7467c_readreg(struct adt7467c_softc *, uint8_t);
 static void adt7467c_writereg(struct adt7467c_softc *, uint8_t, uint8_t);
@@ -68,8 +69,16 @@ CFATTACH_DECL_NEW(adt7467c, sizeof(struct adt7467c_softc),
 int
 adt7467c_match(device_t parent, cfdata_t cf, void *aux)
 {
-	/* no probing if we attach to iic */
-	return 1;
+	struct i2c_attach_args *ia = aux;
+	struct adt7467c_softc sc;
+	sc.sc_i2c = (struct i2c_controller *)ia->ia_tag;
+	sc.address = ia->ia_addr;
+
+	/* no probing if we attach to iic, but verify chip id */
+	if (adt7467c_verify(&sc))
+		return 1;
+
+	return 0;
 }
 
 void
@@ -291,3 +300,19 @@ adt7467c_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	edata->state = ENVSYS_SVALID;
 }
 #endif /* NSYSMON_ENVSYS > 0 */
+
+static int
+adt7467c_verify(struct adt7467c_softc *sc)
+{
+	/* verify this is an adt7467 */
+	uint8_t c_id, d_id;
+
+	c_id = adt7467c_readreg(sc, ADT7467_COMPANYID_REG);
+	d_id = adt7467c_readreg(sc, ADT7467_DEVICEID_REG);
+    
+	if ((c_id == ADT7467_COMPANYID) && (d_id == ADT7467_DEVICEID))
+		return 1;
+
+	return 0;
+}  
+
