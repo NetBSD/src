@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.22 2008/09/14 16:10:19 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.23 2008/09/17 14:49:25 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ struct fss_cache {
 };
 
 struct fss_softc {
-	struct device	*sc_dev;	/* Self */
+	device_t	sc_dev;		/* Self */
 	kmutex_t	sc_slock;	/* Protect this softc */
 	kmutex_t	sc_lock;	/* Sleep lock for fss_ioctl */
 	kcondvar_t	sc_work_cv;	/* Signals work for the kernel thread */
@@ -157,8 +157,6 @@ struct fss_softc {
 	int		sc_indir_dirty;	/* Current indir cluster modified */
 	u_int32_t	*sc_indir_data;	/* Current indir cluster data */
 };
-
-int fss_umount_hook(struct mount *, int);
 
 #endif /* _KERNEL */
 
