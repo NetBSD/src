@@ -1,5 +1,3 @@
-/*	$NetBSD: upass_listen.c,v 1.1.1.2 2007/05/19 16:28:49 heas Exp $	*/
-
 /*++
 /* NAME
 /*	upass_listen 3

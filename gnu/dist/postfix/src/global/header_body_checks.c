@@ -1,5 +1,3 @@
-/*	$NetBSD: header_body_checks.c,v 1.1.1.1.2.2 2008/06/23 05:02:08 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	header_body_checks 3

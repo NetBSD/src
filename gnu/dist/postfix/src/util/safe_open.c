@@ -1,5 +1,3 @@
-/*	$NetBSD: safe_open.c,v 1.1.1.6 2006/07/19 01:17:55 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	safe_open 3
@@ -85,6 +83,7 @@
 #include <msg.h>
 #include <vstream.h>
 #include <vstring.h>
+#include <stringops.h>
 #include <safe_open.h>
 
 /* safe_open_exist - open existing file */
@@ -140,13 +139,29 @@ static VSTREAM *safe_open_exist(const char *path, int flags,
      * for symlinks owned by root. NEVER, NEVER, make exceptions for symlinks
      * owned by a non-root user. This would open a security hole when
      * delivering mail to a world-writable mailbox directory.
+     * 
+     * Sebastian Krahmer of SuSE brought to my attention that some systems have
+     * changed their semantics of link(symlink, newpath), such that the
+     * result is a hardlink to the symlink. For this reason, we now also
+     * require that the symlink's parent directory is writable only by root.
      */
     else if (lstat(path, &lstat_st) < 0) {
 	vstring_sprintf(why, "file status changed unexpectedly: %m");
 	errno = EPERM;
     } else if (S_ISLNK(lstat_st.st_mode)) {
-	if (lstat_st.st_uid == 0)
-	    return (fp);
+	if (lstat_st.st_uid == 0) {
+	    VSTRING *parent_buf = vstring_alloc(100);
+	    const char *parent_path = sane_dirname(parent_buf, path);
+	    struct stat parent_st;
+	    int     parent_ok;
+
+	    parent_ok = (stat(parent_path, &parent_st) == 0	/* not lstat */
+			 && parent_st.st_uid == 0
+			 && (parent_st.st_mode & (S_IWGRP | S_IWOTH)) == 0);
+	    vstring_free(parent_buf);
+	    if (parent_ok)
+		return (fp);
+	}
 	vstring_sprintf(why, "file is a symbolic link");
 	errno = EPERM;
     } else if (fstat_st->st_dev != lstat_st.st_dev

@@ -1,5 +1,3 @@
-/*	$NetBSD: find_inet.c,v 1.1.1.5 2006/07/19 01:17:52 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	find_inet 3

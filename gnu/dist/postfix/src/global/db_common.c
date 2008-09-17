@@ -1,5 +1,3 @@
-/*	$NetBSD: db_common.c,v 1.1.1.2.20.1 2008/06/23 04:29:15 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	db_common 3

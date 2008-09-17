@@ -1,5 +1,3 @@
-/*	$NetBSD: dsn_mask.c,v 1.1.1.1.22.1 2008/06/23 04:29:15 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	dsn_mask 3

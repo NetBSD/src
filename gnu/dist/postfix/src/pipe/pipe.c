@@ -1,5 +1,3 @@
-/*	$NetBSD: pipe.c,v 1.1.1.10.12.1 2008/06/23 04:29:19 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	pipe 8

@@ -1,5 +1,3 @@
-/*	$NetBSD: stringops.h,v 1.1.1.5 2006/07/19 01:17:55 rpaulo Exp $	*/
-
 #ifndef _STRINGOPS_H_INCLUDED_
 #define _STRINGOPS_H_INCLUDED_
 

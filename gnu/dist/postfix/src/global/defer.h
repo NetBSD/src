@@ -1,5 +1,3 @@
-/*	$NetBSD: defer.h,v 1.1.1.5 2006/07/19 01:17:22 rpaulo Exp $	*/
-
 #ifndef _DEFER_H_INCLUDED_
 #define _DEFER_H_INCLUDED_
 

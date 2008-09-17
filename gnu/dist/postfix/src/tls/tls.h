@@ -1,5 +1,3 @@
-/*	$NetBSD: tls.h,v 1.1.1.4.12.1 2008/06/23 04:29:25 wrstuden Exp $	*/
-
 #ifndef _TLS_H_INCLUDED_
 #define _TLS_H_INCLUDED_
 

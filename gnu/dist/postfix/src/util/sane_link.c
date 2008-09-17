@@ -1,5 +1,3 @@
-/*	$NetBSD: sane_link.c,v 1.1.1.4 2006/07/19 01:17:55 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	sane_link 3

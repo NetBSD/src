@@ -1,5 +1,3 @@
-/*	$NetBSD: maps.c,v 1.1.1.6 2006/07/19 01:17:23 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	maps 3

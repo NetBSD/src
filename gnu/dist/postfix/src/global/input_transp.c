@@ -1,5 +1,3 @@
-/*	$NetBSD: input_transp.c,v 1.1.1.5.20.1 2008/06/23 04:29:15 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	input_transp 3

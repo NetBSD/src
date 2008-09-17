@@ -1,5 +1,3 @@
-/*	$NetBSD: write_wait.c,v 1.1.1.3 2007/05/19 16:28:50 heas Exp $	*/
-
 /*++
 /* NAME
 /*	write_wait 3

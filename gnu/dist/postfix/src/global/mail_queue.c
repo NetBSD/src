@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_queue.c,v 1.1.1.7 2006/07/19 01:17:25 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mail_queue 3

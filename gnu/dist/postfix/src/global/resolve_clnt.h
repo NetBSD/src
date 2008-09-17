@@ -1,5 +1,3 @@
-/*	$NetBSD: resolve_clnt.h,v 1.1.1.6 2006/07/19 01:17:28 rpaulo Exp $	*/
-
 #ifndef _RESOLVE_CLNT_H_INCLUDED_
 #define _RESOLVE_CLNT_H_INCLUDED_
 

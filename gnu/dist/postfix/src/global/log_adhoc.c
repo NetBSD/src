@@ -1,5 +1,3 @@
-/*	$NetBSD: log_adhoc.c,v 1.1.1.3 2006/07/19 01:17:24 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	log_adhoc 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: mask_addr.c,v 1.1.1.2 2006/07/19 01:17:54 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mask_addr 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_conf.h,v 1.1.1.5.12.1 2008/06/23 04:29:15 wrstuden Exp $	*/
-
 #ifndef _MAIL_CONF_H_INCLUDED_
 #define _MAIL_CONF_H_INCLUDED_
 

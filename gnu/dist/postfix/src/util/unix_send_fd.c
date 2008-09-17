@@ -1,5 +1,3 @@
-/*	$NetBSD: unix_send_fd.c,v 1.1.1.2 2006/07/19 01:17:56 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	unix_send_fd 3

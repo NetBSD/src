@@ -1,5 +1,3 @@
-/*	$NetBSD: make_dirs.c,v 1.1.1.5 2005/08/18 21:10:30 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	make_dirs 3

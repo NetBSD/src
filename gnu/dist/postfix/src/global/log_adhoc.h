@@ -1,5 +1,3 @@
-/*	$NetBSD: log_adhoc.h,v 1.1.1.3 2006/07/19 01:17:24 rpaulo Exp $	*/
-
 #ifndef _LOG_ADHOC_H_INCLUDED_
 #define _LOG_ADHOC_H_INCLUDED_
 

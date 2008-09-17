@@ -1,5 +1,3 @@
-/*	$NetBSD: xsasl_cyrus_client.c,v 1.1.1.3.10.1 2008/06/23 04:29:28 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	xsasl_cyrus_client 3

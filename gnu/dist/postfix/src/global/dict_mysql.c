@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_mysql.c,v 1.1.1.6 2007/05/19 16:28:10 heas Exp $	*/
-
 /*++
 /* NAME
 /*	dict_mysql 3

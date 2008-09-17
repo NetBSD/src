@@ -1,5 +1,3 @@
-/*	$NetBSD: pipe_command.h,v 1.1.1.6 2006/07/19 01:17:27 rpaulo Exp $	*/
-
 #ifndef _PIPE_COMMAND_H_INCLUDED_
 #define _PIPE_COMMAND_H_INCLUDED_
 

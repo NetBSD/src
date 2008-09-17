@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream_tweak.c,v 1.1.1.1.14.1 2008/06/23 04:29:26 wrstuden Exp $	*/
+/*	$NetBSD: vstream_tweak.c,v 1.1.1.1.14.2 2008/09/17 04:51:09 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -87,7 +87,7 @@ int     vstream_tweak_sock(VSTREAM *fp)
 int     vstream_tweak_tcp(VSTREAM *fp)
 {
     const char *myname = "vstream_tweak_tcp";
-    ssize_t mss;
+    int mss;
     SOCKOPT_SIZE mss_len = sizeof(mss);
     int     err;
 
@@ -117,7 +117,7 @@ int     vstream_tweak_tcp(VSTREAM *fp)
      */
 #ifdef VSTREAM_CTL_BUFSIZE
     if (mss > 0) {
-	if (mss < __MAXINT__(ssize_t) /2)
+	if (mss < INT_MAX / 2)
 	    mss *= 2;
 	vstream_control(fp,
 			VSTREAM_CTL_BUFSIZE, (ssize_t) mss,

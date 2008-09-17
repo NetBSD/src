@@ -1,5 +1,3 @@
-/*	$NetBSD: trigger.h,v 1.1.1.3.20.1 2008/06/23 04:29:26 wrstuden Exp $	*/
-
 #ifndef _TRIGGER_H_INCLUDED_
 #define _TRIGGER_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: argv.c,v 1.1.1.6 2006/07/19 01:17:50 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	argv 3

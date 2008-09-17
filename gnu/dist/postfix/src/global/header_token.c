@@ -1,5 +1,3 @@
-/*	$NetBSD: header_token.c,v 1.1.1.4 2006/07/19 01:17:24 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	header_token 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_alloc.c,v 1.1.1.5 2006/07/19 01:17:50 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	dict_alloc 3

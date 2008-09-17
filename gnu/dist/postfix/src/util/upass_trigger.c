@@ -1,5 +1,3 @@
-/*	$NetBSD: upass_trigger.c,v 1.1.1.1.2.2 2008/06/23 05:02:09 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	upass_trigger 3

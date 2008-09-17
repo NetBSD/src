@@ -1,5 +1,3 @@
-/*	$NetBSD: bounce_log.c,v 1.1.1.6 2006/07/19 01:17:21 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	bounce_log 3

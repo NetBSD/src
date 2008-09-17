@@ -1,4 +1,4 @@
-/*	$NetBSD: mynetworks.c,v 1.7.20.1 2008/06/23 04:29:16 wrstuden Exp $	*/
+/*	$NetBSD: mynetworks.c,v 1.7.20.2 2008/09/17 04:51:00 wrstuden Exp $	*/
 
 /*++
 /* NAME

@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_milter.c,v 1.1.1.8.10.1 2008/06/23 04:29:09 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_milter 3

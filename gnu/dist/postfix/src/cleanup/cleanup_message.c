@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_message.c,v 1.1.1.15.10.1 2008/06/23 04:29:09 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_message 3

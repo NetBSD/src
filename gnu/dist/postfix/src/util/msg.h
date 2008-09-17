@@ -1,5 +1,3 @@
-/*	$NetBSD: msg.h,v 1.1.1.3 2004/05/31 00:25:00 heas Exp $	*/
-
 #ifndef _MSG_H_INCLUDED_
 #define _MSG_H_INCLUDED_
 

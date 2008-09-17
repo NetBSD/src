@@ -1,5 +1,3 @@
-/*	$NetBSD: sys_exits.h,v 1.1.1.3.20.1 2008/06/23 04:29:16 wrstuden Exp $	*/
-
 #ifndef _SYS_EXITS_H_INCLUDED_
 #define _SYS_EXITS_H_INCLUDED_
 

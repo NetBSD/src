@@ -1,5 +1,3 @@
-/*	$NetBSD: attr_scan64.c,v 1.1.1.7.12.1 2008/06/23 04:29:25 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	attr_scan64 3

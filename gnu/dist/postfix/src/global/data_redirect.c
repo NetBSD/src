@@ -1,5 +1,3 @@
-/*	$NetBSD: data_redirect.c,v 1.1.1.1.2.2 2008/06/23 05:02:08 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	data_redirect 3

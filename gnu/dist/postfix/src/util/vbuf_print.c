@@ -1,5 +1,3 @@
-/*	$NetBSD: vbuf_print.c,v 1.1.1.5 2006/12/21 02:35:19 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	vbuf_print 3

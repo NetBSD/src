@@ -1,5 +1,3 @@
-/*	$NetBSD: multi_server.c,v 1.1.1.9.12.1 2008/06/23 04:29:16 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	multi_server 3

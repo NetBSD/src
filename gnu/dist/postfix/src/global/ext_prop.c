@@ -1,5 +1,3 @@
-/*	$NetBSD: ext_prop.c,v 1.1.1.5.20.1 2008/06/23 04:29:15 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	ext_prop 3

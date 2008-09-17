@@ -1,5 +1,3 @@
-/*	$NetBSD: vstream_popen.c,v 1.1.1.4 2006/07/19 01:17:57 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	vstream_popen 3

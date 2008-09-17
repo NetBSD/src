@@ -1,5 +1,3 @@
-/*	$NetBSD: strcasecmp.c,v 1.1.1.3 2006/07/19 01:17:55 rpaulo Exp $	*/
-
 /*
  * Copyright (c) 1987, 1993
  *	The Regents of the University of California.  All rights reserved.
