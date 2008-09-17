@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.6 2008/09/13 18:51:10 mjf Exp $ */
+/* $NetBSD: pseye.c,v 1.7 2008/09/17 03:57:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,18 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Sony PLAYSTATION(R) Eye Driver
+ *
+ * The only documentation we have for this part is based on a series
+ * of forum postings by Jim Paris on ps2dev.org. Many thanks for
+ * figuring this one out.
+ *
+ * URL: http://forums.ps2dev.org/viewtopic.php?t=9238
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.6 2008/09/13 18:51:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.7 2008/09/17 03:57:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
