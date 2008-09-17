@@ -1,5 +1,3 @@
-/*	$NetBSD: split_nameval.c,v 1.1.1.2 2004/05/31 00:25:01 heas Exp $	*/
-
 /*++
 /* NAME
 /*	split_nameval 3

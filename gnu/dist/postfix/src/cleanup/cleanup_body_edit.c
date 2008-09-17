@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_body_edit.c,v 1.1.1.1 2007/05/19 16:28:07 heas Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_body_edit 3

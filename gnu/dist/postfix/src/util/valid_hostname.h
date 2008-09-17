@@ -1,5 +1,3 @@
-/*	$NetBSD: valid_hostname.h,v 1.1.1.4 2005/08/18 21:10:45 rpaulo Exp $	*/
-
 #ifndef _VALID_HOSTNAME_H_INCLUDED_
 #define _VALID_HOSTNAME_H_INCLUDED_
 

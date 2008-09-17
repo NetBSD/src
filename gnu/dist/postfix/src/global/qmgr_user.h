@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_user.h,v 1.1.1.3 2006/07/19 01:17:27 rpaulo Exp $	*/
-
 #ifndef _QMGR_USER_H_INCLUDED_
 #define _QMGR_USER_H_INCLUDED_
 

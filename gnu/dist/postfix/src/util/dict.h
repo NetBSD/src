@@ -1,5 +1,3 @@
-/*	$NetBSD: dict.h,v 1.1.1.9.12.1 2008/06/23 04:29:26 wrstuden Exp $	*/
-
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
 

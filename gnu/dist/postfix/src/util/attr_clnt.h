@@ -1,5 +1,3 @@
-/*	$NetBSD: attr_clnt.h,v 1.1.1.2 2004/05/31 00:24:55 heas Exp $	*/
-
 #ifndef _ATTR_CLNT_H_INCLUDED_
 #define _ATTR_CLNT_H_INCLUDED_
 

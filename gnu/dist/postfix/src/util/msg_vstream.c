@@ -1,5 +1,3 @@
-/*	$NetBSD: msg_vstream.c,v 1.1.1.3 2006/07/19 01:17:54 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	msg_vstream 3

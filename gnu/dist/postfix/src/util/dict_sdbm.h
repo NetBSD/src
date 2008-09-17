@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_sdbm.h,v 1.1.1.1 2005/08/18 21:10:54 rpaulo Exp $	*/
-
 #ifndef _DICT_SDBM_H_INCLUDED_
 #define _DICT_SDBM_H_INCLUDED_
 

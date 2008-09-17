@@ -1,5 +1,3 @@
-/*	$NetBSD: deliver_pass.h,v 1.1.1.4 2006/07/19 01:17:22 rpaulo Exp $	*/
-
 #ifndef _DELIVER_PASS_H_INCLUDED_
 #define _DELIVER_PASS_H_INCLUDED_
 

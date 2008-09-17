@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_static.c,v 1.1.1.3 2004/05/31 00:24:58 heas Exp $	*/
-
 /*++
 /* NAME
 /*	dict_static 3

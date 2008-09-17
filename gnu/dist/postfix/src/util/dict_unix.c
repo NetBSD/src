@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_unix.c,v 1.1.1.6 2007/05/19 16:28:45 heas Exp $	*/
-
 /*++
 /* NAME
 /*	dict_unix 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_out.c,v 1.1.1.7 2007/05/19 16:28:07 heas Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_out 3

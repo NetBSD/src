@@ -1,5 +1,3 @@
-/*	$NetBSD: discard.c,v 1.1.1.4 2007/08/02 08:05:06 heas Exp $	*/
-
 /*++
 /* NAME
 /*	discard 8

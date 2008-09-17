@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_task.c,v 1.1.1.5 2007/05/19 16:28:13 heas Exp $	*/
-
 /*++
 /* NAME
 /*	mail_task 3

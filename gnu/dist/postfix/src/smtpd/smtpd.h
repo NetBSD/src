@@ -1,5 +1,3 @@
-/*	$NetBSD: smtpd.h,v 1.1.1.9.20.1 2008/06/23 04:29:23 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	smtpd 3h

@@ -1,5 +1,3 @@
-/*	$NetBSD: master_status.c,v 1.1.1.5 2006/07/19 01:17:32 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	master_status 3

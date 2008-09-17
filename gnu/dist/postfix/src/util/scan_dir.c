@@ -1,5 +1,3 @@
-/*	$NetBSD: scan_dir.c,v 1.1.1.3 2006/07/19 01:17:55 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	scan_dir 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: msg_stats.h,v 1.1.1.1 2006/07/19 01:17:27 rpaulo Exp $	*/
-
 #ifndef _MSG_STATS_H_INCLUDED_
 #define _MSG_STATS_H_INCLUDED_
 

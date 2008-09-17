@@ -1,5 +1,3 @@
-/*	$NetBSD: hex_quote.h,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
-
 #ifndef _HEX_QUOTE_H_INCLUDED_
 #define _HEX_QUOTE_H_INCLUDED_
 

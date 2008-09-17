@@ -1,5 +1,3 @@
-/*	$NetBSD: master_flow.c,v 1.1.1.3 2006/07/19 01:17:31 rpaulo Exp $	*/
-
 /* System library. */
 
 #include <sys_defs.h>

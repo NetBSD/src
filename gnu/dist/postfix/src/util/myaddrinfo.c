@@ -1,5 +1,3 @@
-/*	$NetBSD: myaddrinfo.c,v 1.1.1.3 2006/11/07 02:59:27 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	myaddrinfo 3

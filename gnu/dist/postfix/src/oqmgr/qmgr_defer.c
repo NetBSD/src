@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_defer.c,v 1.1.1.4 2007/05/19 16:28:24 heas Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_defer

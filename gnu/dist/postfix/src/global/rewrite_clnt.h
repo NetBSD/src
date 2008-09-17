@@ -1,5 +1,3 @@
-/*	$NetBSD: rewrite_clnt.h,v 1.1.1.3 2005/08/18 21:07:01 rpaulo Exp $	*/
-
 #ifndef _REWRITE_CLNT_H_INCLUDED_
 #define _REWRITE_CLNT_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: dir_forest.h,v 1.1.1.2 2004/05/31 00:24:58 heas Exp $	*/
-
 #ifndef _DIR_FOREST_H_INCLUDED_
 #define _DIR_FOREST_H_INCLUDED_
 

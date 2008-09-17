@@ -1,5 +1,3 @@
-/*	$NetBSD: mymalloc.c,v 1.1.1.6 2007/05/19 16:28:47 heas Exp $	*/
-
 /*++
 /* NAME
 /*	mymalloc 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: qmqpd_state.c,v 1.1.1.4 2006/07/19 01:17:40 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	qmqpd_state 3

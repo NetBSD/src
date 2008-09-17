@@ -1,5 +1,3 @@
-/*	$NetBSD: bounce_one_service.c,v 1.1.1.4 2006/07/19 01:17:17 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	bounce_one_service 3

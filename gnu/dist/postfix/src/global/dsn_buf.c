@@ -1,5 +1,3 @@
-/*	$NetBSD: dsn_buf.c,v 1.1.1.1 2006/07/19 01:17:23 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	dsn_buf 3

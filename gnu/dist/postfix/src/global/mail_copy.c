@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_copy.c,v 1.1.1.7.20.1 2008/06/23 04:29:15 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	mail_copy 3

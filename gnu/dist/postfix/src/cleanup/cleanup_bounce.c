@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_bounce.c,v 1.1.1.3.12.1 2008/06/23 04:29:09 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_bounce 3

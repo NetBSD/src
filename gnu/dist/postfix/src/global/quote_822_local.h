@@ -1,5 +1,3 @@
-/*	$NetBSD: quote_822_local.h,v 1.1.1.3 2004/05/31 00:24:34 heas Exp $	*/
-
 #ifndef _QUOTE_822_H_INCLUDED_
 #define _QUOTE_822_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: name_mask.c,v 1.1.1.4.20.1 2008/06/23 04:29:26 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	name_mask 3

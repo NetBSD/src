@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_peer.c,v 1.16.10.1 2008/06/23 04:29:23 wrstuden Exp $	*/
+/*	$NetBSD: smtpd_peer.c,v 1.16.10.2 2008/09/17 04:51:04 wrstuden Exp $	*/
 
 /*++
 /* NAME

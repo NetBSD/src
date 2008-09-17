@@ -1,5 +1,3 @@
-/*	$NetBSD: ring.h,v 1.1.1.4 2005/08/18 21:10:35 rpaulo Exp $	*/
-
 #ifndef _RING_H_INCLUDED_
 #define _RING_H_INCLUDED_
 

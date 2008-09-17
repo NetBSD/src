@@ -1,5 +1,3 @@
-/*	$NetBSD: test_dns_lookup.c,v 1.1.1.5 2006/07/19 01:17:20 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	test_dns_lookup 1

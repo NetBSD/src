@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp_stream.c,v 1.1.1.6 2006/07/19 01:17:29 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	smtp_stream 3

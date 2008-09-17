@@ -1,5 +1,3 @@
-/*	$NetBSD: anvil_clnt.c,v 1.1.1.2 2006/07/19 01:17:21 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	anvil_clnt 3

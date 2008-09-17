@@ -1,5 +1,3 @@
-/*	$NetBSD: tls_scache.c,v 1.1.1.2 2006/07/19 01:17:40 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	tls_scache 3

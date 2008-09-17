@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.22.12.1 2008/06/23 04:29:26 wrstuden Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.22.12.2 2008/09/17 04:51:08 wrstuden Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_

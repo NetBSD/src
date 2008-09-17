@@ -1,5 +1,3 @@
-/*	$NetBSD: exec_command.c,v 1.1.1.3 2005/08/18 21:10:18 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	exec_command 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: file.c,v 1.1.1.5 2006/07/19 01:17:30 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	file 3

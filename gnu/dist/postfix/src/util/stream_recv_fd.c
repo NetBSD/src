@@ -1,5 +1,3 @@
-/*	$NetBSD: stream_recv_fd.c,v 1.1.1.2 2006/07/19 01:17:55 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	stream_recv_fd 3

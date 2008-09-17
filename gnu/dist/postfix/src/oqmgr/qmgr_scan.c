@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_scan.c,v 1.1.1.4 2007/05/19 16:28:25 heas Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_scan 3

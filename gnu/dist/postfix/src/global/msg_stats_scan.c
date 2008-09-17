@@ -1,5 +1,3 @@
-/*	$NetBSD: msg_stats_scan.c,v 1.1.1.1 2006/07/19 01:17:27 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	msg_stats_scan

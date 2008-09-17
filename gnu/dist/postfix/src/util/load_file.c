@@ -1,5 +1,3 @@
-/*	$NetBSD: load_file.c,v 1.1.1.1 2006/07/19 01:17:53 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	load_file 3

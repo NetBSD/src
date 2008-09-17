@@ -1,5 +1,3 @@
-/*	$NetBSD: rec2stream.c,v 1.1.1.4 2006/07/19 01:17:28 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	rec2stream 1

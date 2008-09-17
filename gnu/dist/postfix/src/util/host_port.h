@@ -1,5 +1,3 @@
-/*	$NetBSD: host_port.h,v 1.1.1.3 2005/08/18 21:10:20 rpaulo Exp $	*/
-
 #ifndef _HOST_PORT_H_INCLUDED_
 #define _HOST_PORT_H_INCLUDED_
 

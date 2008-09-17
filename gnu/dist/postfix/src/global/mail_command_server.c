@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_command_server.c,v 1.1.1.2 2004/05/31 00:24:30 heas Exp $	*/
-
 /*++
 /* NAME
 /*	mail_command_server 3

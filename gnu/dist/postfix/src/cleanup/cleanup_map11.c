@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_map11.c,v 1.1.1.3 2005/08/18 21:05:54 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_map11 3

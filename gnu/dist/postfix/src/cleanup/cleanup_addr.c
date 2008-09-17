@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_addr.c,v 1.1.1.4 2006/07/19 01:17:18 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_addr 3

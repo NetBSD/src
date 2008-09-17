@@ -1,5 +1,3 @@
-/*	$NetBSD: iostuff.h,v 1.1.1.4 2006/07/19 01:17:53 rpaulo Exp $	*/
-
 #ifndef _IOSTUFF_H_INCLUDED_
 #define _IOSTUFF_H_INCLUDED_
 

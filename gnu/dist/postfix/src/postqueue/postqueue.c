@@ -1,5 +1,3 @@
-/*	$NetBSD: postqueue.c,v 1.1.1.11.12.1 2008/06/23 04:29:19 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	postqueue 1

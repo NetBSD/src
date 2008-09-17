@@ -1,5 +1,3 @@
-/*	$NetBSD: bounce_templates.c,v 1.1.1.3 2006/12/21 02:31:26 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	bounce_templates 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: attr.h,v 1.1.1.6 2006/07/19 01:17:50 rpaulo Exp $	*/
-
 #ifndef _ATTR_H_INCLUDED_
 #define _ATTR_H_INCLUDED_
 

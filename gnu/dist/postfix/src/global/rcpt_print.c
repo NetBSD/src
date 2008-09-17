@@ -1,5 +1,3 @@
-/*	$NetBSD: rcpt_print.c,v 1.1.1.1.22.1 2008/06/23 04:29:16 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	rcpt_print

@@ -1,5 +1,3 @@
-/*	$NetBSD: string_list.c,v 1.1.1.6 2007/05/19 16:28:18 heas Exp $	*/
-
 /*++
 /* NAME
 /*	string_list 3

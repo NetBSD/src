@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_job.c,v 1.1.1.5 2007/05/19 16:28:29 heas Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_job 3

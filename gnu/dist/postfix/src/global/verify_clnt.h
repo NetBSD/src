@@ -1,5 +1,3 @@
-/*	$NetBSD: verify_clnt.h,v 1.1.1.3 2006/07/19 01:17:29 rpaulo Exp $	*/
-
 #ifndef _VRFY_CLNT_H_INCLUDED_
 #define _VRFY_CLNT_H_INCLUDED_
 

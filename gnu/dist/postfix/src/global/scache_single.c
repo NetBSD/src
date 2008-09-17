@@ -1,5 +1,3 @@
-/*	$NetBSD: scache_single.c,v 1.1.1.1 2005/08/18 21:07:15 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	scache_single 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: printable.c,v 1.1.1.3 2005/08/18 21:10:35 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	printable 3

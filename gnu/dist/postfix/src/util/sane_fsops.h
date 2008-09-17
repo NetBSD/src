@@ -1,5 +1,3 @@
-/*	$NetBSD: sane_fsops.h,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
-
 #ifndef _SANE_FSOPS_H_
 #define _SANE_FSOPS_H_
 

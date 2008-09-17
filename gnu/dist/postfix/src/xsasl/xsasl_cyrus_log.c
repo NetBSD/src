@@ -1,5 +1,3 @@
-/*	$NetBSD: xsasl_cyrus_log.c,v 1.1.1.1 2006/07/19 01:17:58 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	xsasl_cyrus_log 3

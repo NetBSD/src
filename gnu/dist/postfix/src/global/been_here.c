@@ -1,5 +1,3 @@
-/*	$NetBSD: been_here.c,v 1.1.1.2 2004/05/31 00:24:29 heas Exp $	*/
-
 /*++
 /* NAME
 /*	been_here 3

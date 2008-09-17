@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.17.12.1 2008/06/23 04:29:22 wrstuden Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.17.12.2 2008/09/17 04:51:03 wrstuden Exp $	*/
 
 /*++
 /* NAME

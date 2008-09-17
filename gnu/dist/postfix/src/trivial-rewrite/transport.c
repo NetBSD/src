@@ -1,5 +1,3 @@
-/*	$NetBSD: transport.c,v 1.1.1.8.20.1 2008/06/23 04:29:25 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	transport 3

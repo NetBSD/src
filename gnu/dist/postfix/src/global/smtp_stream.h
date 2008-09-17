@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp_stream.h,v 1.1.1.6 2006/07/19 01:17:29 rpaulo Exp $	*/
-
 #ifndef _SMTP_STREAM_H_INCLUDED_
 #define _SMTP_STREAM_H_INCLUDED_
 

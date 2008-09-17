@@ -1,5 +1,3 @@
-/*	$NetBSD: tls_misc.c,v 1.1.1.4.12.1 2008/06/23 04:29:25 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	tls_misc 3

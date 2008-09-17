@@ -1,5 +1,3 @@
-/*	$NetBSD: msg_output.h,v 1.1.1.2 2004/05/31 00:25:00 heas Exp $	*/
-
 #ifndef _MSG_OUTPUT_FN_
 #define _MSG_OUTPUT_FN_
 

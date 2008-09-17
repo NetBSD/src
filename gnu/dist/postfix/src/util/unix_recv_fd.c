@@ -1,5 +1,3 @@
-/*	$NetBSD: unix_recv_fd.c,v 1.1.1.2 2006/07/19 01:17:56 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	unix_recv_fd 3

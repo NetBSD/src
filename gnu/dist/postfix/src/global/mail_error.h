@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_error.h,v 1.1.1.2.26.1 2008/06/23 04:29:16 wrstuden Exp $	*/
-
 #ifndef _MAIL_ERROR_H_INCLUDED_
 #define _MAIL_ERROR_H_INCLUDED_
 

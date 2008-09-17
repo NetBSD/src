@@ -1,5 +1,3 @@
-/*	$NetBSD: mac_expand.h,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
-
 #ifndef _MAC_EXPAND_H_INCLUDED_
 #define _MAC_EXPAND_H_INCLUDED_
 

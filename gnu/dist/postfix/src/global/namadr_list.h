@@ -1,5 +1,3 @@
-/*	$NetBSD: namadr_list.h,v 1.1.1.3 2004/05/31 00:24:34 heas Exp $	*/
-
 #ifndef _NAMADR_LIST_H_INCLUDED_
 #define _NAMADR_LIST_H_INCLUDED_
 

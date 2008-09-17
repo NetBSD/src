@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_params.c,v 1.1.1.8.10.1 2008/06/23 04:29:16 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	mail_params 3

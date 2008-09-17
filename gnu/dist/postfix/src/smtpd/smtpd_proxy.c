@@ -1,5 +1,3 @@
-/*	$NetBSD: smtpd_proxy.c,v 1.1.1.6.12.1 2008/06/23 04:29:23 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	smtpd_proxy 3

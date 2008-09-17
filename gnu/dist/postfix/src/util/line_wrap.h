@@ -1,5 +1,3 @@
-/*	$NetBSD: line_wrap.h,v 1.1.1.2 2004/05/31 00:24:59 heas Exp $	*/
-
 #ifndef _LINE_WRAP_H_INCLUDED_
 #define _LINE_WRAP_H_INCLUDED_
 

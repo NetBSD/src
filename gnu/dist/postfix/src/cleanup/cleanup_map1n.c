@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_map1n.c,v 1.1.1.6 2004/05/31 00:24:27 heas Exp $	*/
-
 /*++
 /* NAME
 /*	cleanup_map1n 3

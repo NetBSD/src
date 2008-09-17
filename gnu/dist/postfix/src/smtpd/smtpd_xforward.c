@@ -1,5 +1,3 @@
-/*	$NetBSD: smtpd_xforward.c,v 1.1.1.3.20.1 2008/06/23 04:29:23 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	smtpd_xforward 3

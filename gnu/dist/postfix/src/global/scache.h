@@ -1,5 +1,3 @@
-/*	$NetBSD: scache.h,v 1.1.1.2 2006/07/19 01:17:28 rpaulo Exp $	*/
-
 #ifndef _SCACHE_H_INCLUDED_
 #define _SCACHE_H_INCLUDED_
 

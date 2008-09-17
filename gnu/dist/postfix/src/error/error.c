@@ -1,5 +1,3 @@
-/*	$NetBSD: error.c,v 1.1.1.8.10.1 2008/06/23 04:29:15 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	error 8

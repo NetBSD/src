@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.21.6.1 2008/06/23 04:29:23 wrstuden Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.21.6.2 2008/09/17 04:51:04 wrstuden Exp $	*/
 
 /*++
 /* NAME
@@ -2508,6 +2508,7 @@ static void comment_sanitize(VSTRING *comment_string)
     }
     while (pc-- > 0)
 	VSTRING_ADDCH(comment_string, ')');
+    VSTRING_TERMINATE(comment_string);
 }
 
 /* data_cmd - process DATA command */
@@ -2689,7 +2690,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	if (state->rcpt_count == 1 && state->recipient) {
 	    out_fprintf(out_stream, REC_TYPE_NORM,
 			state->cleanup ? "\tby %s (%s) with %s%s%s id %s" :
-			"\tby %s (%s) with %s",
+			"\tby %s (%s) with %s%s%s",
 			var_myhostname, var_mail_name,
 			state->protocol, rfc3848_sess,
 			rfc3848_auth, state->queue_id);
@@ -2700,7 +2701,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
 	} else {
 	    out_fprintf(out_stream, REC_TYPE_NORM,
 			state->cleanup ? "\tby %s (%s) with %s%s%s id %s;" :
-			"\tby %s (%s) with %s;",
+			"\tby %s (%s) with %s%s%s;",
 			var_myhostname, var_mail_name,
 			state->protocol, rfc3848_sess,
 			rfc3848_auth, state->queue_id);

@@ -1,5 +1,3 @@
-/*	$NetBSD: msg.c,v 1.1.1.5 2006/12/21 02:35:05 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	msg 3

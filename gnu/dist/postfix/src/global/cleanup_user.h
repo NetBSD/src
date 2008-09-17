@@ -1,5 +1,3 @@
-/*	$NetBSD: cleanup_user.h,v 1.1.1.6.20.1 2008/06/23 04:29:15 wrstuden Exp $	*/
-
 #ifndef _CLEANUP_USER_H_INCLUDED_
 #define _CLEANUP_USER_H_INCLUDED_
 
