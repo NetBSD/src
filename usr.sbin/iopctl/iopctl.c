@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.17 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.18 2008/09/17 16:03:28 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.17 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.18 2008/09/17 16:03:28 mhitch Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -306,7 +306,7 @@ showstatus(char **argv)
 	show("i2o version", "%d", (segnumber >> 12) & 15);
 	show("iop state", "%d", (segnumber >> 16) & 255);
 	show("messenger type", "%d", segnumber >> 24);
-	show("inbound frame sz", "%d", le32toh(status.inboundmframesize));
+	show("inbound frame sz", "%d", le16toh(status.inboundmframesize));
 	show("init code", "%d", status.initcode);
 	show("max inbound queue depth", "%d",
 	    le32toh(status.maxinboundmframes));
