@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_ipccall.c,v 1.1 2008/05/20 17:31:56 njoly Exp $ */
+/* $NetBSD: linux32_ipccall.c,v 1.2 2008/09/17 20:11:51 scw Exp $ */
 
 /*
  * Copyright (c) 2008 Nicolas Joly
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.1 2008/05/20 17:31:56 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ipccall.c,v 1.2 2008/09/17 20:11:51 scw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -403,8 +403,8 @@ linux32_shmat(struct lwp *l, const struct linux32_sys_ipc_args *uap,
     register_t *retval)
 {
 	struct sys_shmat_args ua;
+	netbsd32_pointer_t addr32;
 	int error;
-	void *raddr;
 
 	SCARG(&ua, shmid) = SCARG(uap, a1);
 	SCARG(&ua, shmaddr) = SCARG_P32(uap, ptr);
@@ -413,12 +413,13 @@ linux32_shmat(struct lwp *l, const struct linux32_sys_ipc_args *uap,
 	if ((error = sys_shmat(l, &ua, retval)))
 		return error;
 
-	raddr = NETBSD32IPTR64(SCARG(uap, a3));
-	if ((error = copyout(&retval[0], raddr, sizeof retval[0])))
-		return error;
-	retval[0] = 0;
+	NETBSD32PTR32(addr32, (const void *)(uintptr_t)retval[0]);
 
-	return 0;
+	error = copyout(&addr32, NETBSD32IPTR64(SCARG(uap, a3)), sizeof addr32);
+	if (error == 0)
+		retval[0] = 0;
+
+	return error;
 }
 
 static int
