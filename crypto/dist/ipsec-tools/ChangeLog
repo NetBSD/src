@@ -1,3 +1,7 @@
+2008-09-17  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp_inf.c: Fixed port match in purge_ipsec_spi()
+	  when NAT-T enabled and trying to purge non NAT-T SAs.
+
 2008-09-09  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/pfkey.c: Some calls to set_port() were not correctly
 	updated in the previous commit.
