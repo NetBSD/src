@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.56 2008/09/14 16:10:19 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.57 2008/09/17 14:49:25 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.56 2008/09/14 16:10:19 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.57 2008/09/17 14:49:25 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ dev_type_strategy(fss_strategy);
 dev_type_dump(fss_dump);
 dev_type_size(fss_size);
 
+static void fss_unmount_hook(struct mount *);
 static int fss_copy_on_write(void *, struct buf *, bool);
 static inline void fss_error(struct fss_softc *, const char *);
 static int fss_create_files(struct fss_softc *, struct fss_set *,
@@ -90,6 +91,12 @@ static void fss_bs_thread(void *);
 static int fss_bs_io(struct fss_softc *, fss_io_type,
     u_int32_t, off_t, int, void *);
 static u_int32_t *fss_bs_indir(struct fss_softc *, u_int32_t);
+
+static kmutex_t fss_device_lock;	/* Protect fss_num_attached. */
+static int fss_num_attached = 0;	/* Number of attached devices. */
+static struct vfs_hooks fss_vfs_hooks = {
+	.vh_unmount = fss_unmount_hook
+};
 
 const struct bdevsw fss_bdevsw = {
 	fss_open, fss_close, fss_strategy, fss_ioctl,
@@ -113,6 +120,7 @@ void
 fssattach(int num)
 {
 
+	mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
 	if (config_cfattach_attach(fss_cd.cd_name, &fss_ca))
 		aprint_error("%s: unable to register\n", fss_cd.cd_name);
 }
@@ -140,6 +148,11 @@ fss_attach(device_t parent, device_t self, void *aux)
 	disk_init(sc->sc_dkdev, device_xname(self), NULL);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	mutex_enter(&fss_device_lock);
+	if (fss_num_attached++ == 0)
+		vfs_hooks_attach(&fss_vfs_hooks);
+	mutex_exit(&fss_device_lock);
 }
 
 static int
@@ -149,6 +162,11 @@ fss_detach(device_t self, int flags)
 
 	if (sc->sc_flags & FSS_ACTIVE)
 		return EBUSY;
+
+	mutex_enter(&fss_device_lock);
+	if (--fss_num_attached == 0)
+		vfs_hooks_detach(&fss_vfs_hooks);
+	mutex_exit(&fss_device_lock);
 
 	pmf_device_deregister(self);
 	mutex_destroy(&sc->sc_slock);
@@ -464,10 +482,10 @@ fss_softc_free(struct fss_softc *sc)
 }
 
 /*
- * Check if an unmount is ok. If forced, set this snapshot into ERROR state.
+ * Set all active snapshots on this file system into ERROR state.
  */
-int
-fss_umount_hook(struct mount *mp, int forced)
+static void
+fss_unmount_hook(struct mount *mp)
 {
 	int i;
 	struct fss_softc *sc;
@@ -477,18 +495,10 @@ fss_umount_hook(struct mount *mp, int forced)
 			continue;
 		mutex_enter(&sc->sc_slock);
 		if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
-		    sc->sc_mount == mp) {
-			if (forced)
-				fss_error(sc, "forced unmount");
-			else {
-				mutex_exit(&sc->sc_slock);
-				return EBUSY;
-			}
-		}
+		    sc->sc_mount == mp)
+			fss_error(sc, "forced unmount");
 		mutex_exit(&sc->sc_slock);
 	}
-
-	return 0;
 }
 
 /*
