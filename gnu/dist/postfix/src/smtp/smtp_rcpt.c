@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp_rcpt.c,v 1.1.1.3 2006/07/19 01:17:43 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	smtp_rcpt 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: mac_parse.c,v 1.1.1.5 2006/07/19 01:17:54 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	mac_parse 3

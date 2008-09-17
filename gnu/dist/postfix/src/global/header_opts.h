@@ -1,5 +1,3 @@
-/*	$NetBSD: header_opts.h,v 1.1.1.4.26.1 2008/06/23 04:29:15 wrstuden Exp $	*/
-
 #ifndef _HEADER_OPTS_H_INCLUDED_
 #define _HEADER_OPTS_H_INCLUDED_
 

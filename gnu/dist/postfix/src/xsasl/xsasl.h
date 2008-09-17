@@ -1,5 +1,3 @@
-/*	$NetBSD: xsasl.h,v 1.1.1.1 2006/07/19 01:17:58 rpaulo Exp $	*/
-
 #ifndef _XSASL_H_INCLUDED_
 #define _XSASL_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: dsn_util.h,v 1.1.1.1 2006/07/19 01:17:23 rpaulo Exp $	*/
-
 #ifndef _DSN_UTIL_H_INCLUDED_
 #define _DSN_UTIL_H_INCLUDED_
 

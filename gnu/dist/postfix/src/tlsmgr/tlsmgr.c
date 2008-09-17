@@ -1,5 +1,3 @@
-/*	$NetBSD: tlsmgr.c,v 1.1.1.3.12.1 2008/06/23 04:29:25 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	tlsmgr 8

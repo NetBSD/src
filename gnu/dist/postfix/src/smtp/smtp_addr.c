@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_addr.c,v 1.12.20.1 2008/06/23 04:29:22 wrstuden Exp $	*/
+/*	$NetBSD: smtp_addr.c,v 1.12.20.2 2008/09/17 04:51:04 wrstuden Exp $	*/
 
 /*++
 /* NAME

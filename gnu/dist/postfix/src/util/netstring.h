@@ -1,5 +1,3 @@
-/*	$NetBSD: netstring.h,v 1.1.1.3 2006/07/19 01:17:54 rpaulo Exp $	*/
-
 #ifndef _NETSTRING_H_INCLUDED_
 #define _NETSTRING_H_INCLUDED_
 

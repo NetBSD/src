@@ -1,5 +1,3 @@
-/*	$NetBSD: alias.c,v 1.1.1.7 2006/07/19 01:17:30 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	alias 3

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_local.c,v 1.6.20.1 2008/06/23 04:29:26 wrstuden Exp $	*/
+/*	$NetBSD: inet_addr_local.c,v 1.6.20.2 2008/09/17 04:51:07 wrstuden Exp $	*/
 
 /*++
 /* NAME

@@ -1,5 +1,3 @@
-/*	$NetBSD: dict_db.c,v 1.1.1.10 2007/02/05 17:43:02 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	dict_db 3

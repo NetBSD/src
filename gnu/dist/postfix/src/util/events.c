@@ -1,5 +1,3 @@
-/*	$NetBSD: events.c,v 1.1.1.7.12.1 2008/06/23 04:29:26 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	events 3

@@ -1,5 +1,3 @@
-/*	$NetBSD: stream_send_fd.c,v 1.1.1.3 2007/05/19 16:28:48 heas Exp $	*/
-
 /*++
 /* NAME
 /*	stream_send_fd 3

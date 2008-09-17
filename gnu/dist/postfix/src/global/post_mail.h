@@ -1,5 +1,3 @@
-/*	$NetBSD: post_mail.h,v 1.1.1.5 2006/07/19 01:17:27 rpaulo Exp $	*/
-
 #ifndef _POST_MAIL_H_INCLUDED_
 #define _POST_MAIL_H_INCLUDED_
 

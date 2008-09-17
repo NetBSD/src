@@ -1,5 +1,3 @@
-/*	$NetBSD: quote_flags.h,v 1.1.1.2 2004/05/31 00:24:34 heas Exp $	*/
-
 /*++
 /* NAME
 /*	quote_flags 3h

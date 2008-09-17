@@ -1,5 +1,3 @@
-/*	$NetBSD: resolve_clnt.c,v 1.1.1.11.12.1 2008/06/23 04:29:16 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	resolve_clnt 3

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.20.10.1 2008/06/23 04:29:22 wrstuden Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.20.10.2 2008/09/17 04:51:04 wrstuden Exp $	*/
 
 /*++
 /* NAME

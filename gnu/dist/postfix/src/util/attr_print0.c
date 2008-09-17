@@ -1,5 +1,3 @@
-/*	$NetBSD: attr_print0.c,v 1.1.1.6 2007/05/19 16:28:42 heas Exp $	*/
-
 /*++
 /* NAME
 /*	attr_print0 3

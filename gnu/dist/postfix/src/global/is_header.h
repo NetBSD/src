@@ -1,5 +1,3 @@
-/*	$NetBSD: is_header.h,v 1.1.1.3 2006/07/19 01:17:24 rpaulo Exp $	*/
-
 #ifndef _IS_HEADER_H_INCLUDED_
 #define _IS_HEADER_H_INCLUDED_
 

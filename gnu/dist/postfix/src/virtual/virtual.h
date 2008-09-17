@@ -1,5 +1,3 @@
-/*	$NetBSD: virtual.h,v 1.1.1.5 2006/07/19 01:17:58 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	virtual 3h

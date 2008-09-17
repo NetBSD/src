@@ -1,5 +1,3 @@
-/*	$NetBSD: watchdog.h,v 1.1.1.2 2004/05/31 00:25:02 heas Exp $	*/
-
 #ifndef _WATCHDOG_H_INCLUDED_
 #define _WATCHDOG_H_INCLUDED_
 

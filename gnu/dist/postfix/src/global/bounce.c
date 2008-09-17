@@ -1,5 +1,3 @@
-/*	$NetBSD: bounce.c,v 1.1.1.8.20.1 2008/06/23 04:29:15 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	bounce 3

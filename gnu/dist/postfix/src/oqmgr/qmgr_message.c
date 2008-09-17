@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_message.c,v 1.1.1.7.12.1 2008/06/23 04:29:19 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_message 3

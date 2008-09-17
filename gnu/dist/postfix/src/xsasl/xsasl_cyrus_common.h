@@ -1,5 +1,3 @@
-/*	$NetBSD: xsasl_cyrus_common.h,v 1.1.1.1 2006/07/19 01:17:58 rpaulo Exp $	*/
-
 #ifndef _CYRUS_COMMON_H_INCLUDED_
 #define _CYRUS_COMMON_H_INCLUDED_
 

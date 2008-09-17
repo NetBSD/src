@@ -1,5 +1,3 @@
-/*	$NetBSD: msg_output.c,v 1.1.1.4 2007/02/05 17:43:16 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	msg_output 3

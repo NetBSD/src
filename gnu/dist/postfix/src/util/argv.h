@@ -1,5 +1,3 @@
-/*	$NetBSD: argv.h,v 1.1.1.5 2006/07/19 01:17:50 rpaulo Exp $	*/
-
 #ifndef _ARGV_H_INCLUDED_
 #define _ARGV_H_INCLUDED_
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: valid_mailhost_addr.c,v 1.1.1.1 2005/08/18 21:07:15 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	valid_mailhost_addr 3

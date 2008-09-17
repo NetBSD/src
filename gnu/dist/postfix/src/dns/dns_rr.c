@@ -1,5 +1,3 @@
-/*	$NetBSD: dns_rr.c,v 1.1.1.6 2006/07/19 01:17:20 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	dns_rr 3

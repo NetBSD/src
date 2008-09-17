@@ -1,5 +1,3 @@
-/*	$NetBSD: dns.h,v 1.1.1.7 2006/07/19 01:17:20 rpaulo Exp $	*/
-
 #ifndef _DNS_H_INCLUDED_
 #define _DNS_H_INCLUDED_
 

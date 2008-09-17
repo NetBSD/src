@@ -1,5 +1,3 @@
-/*	$NetBSD: transport.h,v 1.1.1.4.26.1 2008/06/23 04:29:25 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	transport 3h

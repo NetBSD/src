@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_envelope.c,v 1.11.10.1 2008/06/23 04:29:09 wrstuden Exp $	*/
+/*	$NetBSD: cleanup_envelope.c,v 1.11.10.2 2008/09/17 04:50:57 wrstuden Exp $	*/
 
 /*++
 /* NAME

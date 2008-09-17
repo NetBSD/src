@@ -1,5 +1,3 @@
-/*	$NetBSD: bounce_notify_util.c,v 1.1.1.10 2006/07/19 01:17:17 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	bounce_notify_util 3

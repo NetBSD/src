@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp-sink.c,v 1.1.1.10.12.1 2008/06/23 04:29:25 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	smtp-sink 1

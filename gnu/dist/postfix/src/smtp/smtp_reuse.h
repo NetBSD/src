@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp_reuse.h,v 1.1.1.2 2006/07/19 01:17:43 rpaulo Exp $	*/
-
 /*++
 /* NAME
 /*	smtp_reuse 3h

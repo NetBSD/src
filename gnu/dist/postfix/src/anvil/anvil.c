@@ -1,5 +1,3 @@
-/*	$NetBSD: anvil.c,v 1.1.1.4.12.1 2008/06/23 04:29:09 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	anvil 8

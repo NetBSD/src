@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.15.10.1 2008/06/23 04:29:16 wrstuden Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.15.10.2 2008/09/17 04:51:00 wrstuden Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -267,7 +267,7 @@ extern char *var_pid_dir;
   */
 #define VAR_DATA_DIR		"data_directory"
 #ifndef DEF_DATA_DIR
-#define DEF_DATA_DIR		"/var/lib/postfix"
+#define DEF_DATA_DIR		"/var/db/postfix"
 #endif
 extern char *var_data_dir;
 
@@ -2933,6 +2933,13 @@ extern int var_dest_rate_delay;
 #define VAR_STRESS		"stress"
 #define DEF_STRESS		""
 extern char *var_stress;
+
+ /*
+  * Mailbox ownership.
+  */
+#define VAR_STRICT_MBOX_OWNER	"strict_mailbox_ownership"
+#define DEF_STRICT_MBOX_OWNER	1
+extern bool var_strict_mbox_owner;
 
 /* LICENSE
 /* .ad

@@ -1,5 +1,3 @@
-/*	$NetBSD: smtp-source.c,v 1.1.1.10.10.1 2008/06/23 04:29:25 wrstuden Exp $	*/
-
 /*++
 /* NAME
 /*	smtp-source 1

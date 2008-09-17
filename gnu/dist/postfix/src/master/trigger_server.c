@@ -1,5 +1,3 @@
-/*	$NetBSD: trigger_server.c,v 1.1.1.8 2007/05/19 16:28:21 heas Exp $	*/
-
 /*++
 /* NAME
 /*	trigger_server 3

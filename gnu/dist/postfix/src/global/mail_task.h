@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_task.h,v 1.1.1.2 2004/05/31 00:24:32 heas Exp $	*/
-
 #ifndef _MAIL_TASK_H_INCLUDED_
 #define _MAIL_TASK_H_INCLUDED_
 

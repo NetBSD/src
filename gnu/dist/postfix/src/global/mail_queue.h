@@ -1,5 +1,3 @@
-/*	$NetBSD: mail_queue.h,v 1.1.1.7 2007/05/19 16:28:13 heas Exp $	*/
-
 #ifndef _MAIL_QUEUE_H_INCLUDED_
 #define _MAIL_QUEUE_H_INCLUDED_
 

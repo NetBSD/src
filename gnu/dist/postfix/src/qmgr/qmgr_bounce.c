@@ -1,5 +1,3 @@
-/*	$NetBSD: qmgr_bounce.c,v 1.1.1.6 2007/05/19 16:28:28 heas Exp $	*/
-
 /*++
 /* NAME
 /*	qmgr_bounce
