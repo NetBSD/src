@@ -1,3 +1,7 @@
+2008-09-17  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp_inf.c: Fixed port match in purge_ipsec_spi()
+	  when NAT-T enabled and trying to purge non NAT-T SAs.
+
 2008-08-12  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Krzysztof Oledzki <olel@ans.pl>:
 	* src/racoon/isakmp.c: Remove ph1handler if we received an invalid
