@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpd.c,v 1.177.2.2 2008/09/18 18:12:57 bouyer Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.177.2.3 2008/09/18 18:18:32 bouyer Exp $	*/
 
 /*
- * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.177.2.2 2008/09/18 18:12:57 bouyer Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.177.2.3 2008/09/18 18:18:32 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,7 @@ off_t	byte_count;
 static char ttyline[20];
 
 #ifdef USE_PAM
-static int	auth_pam(struct passwd **, const char *);
+static int	auth_pam(void);
 pam_handle_t	*pamh = NULL;
 #endif
 
@@ -249,6 +249,7 @@ static int	 bind_pasv_addr(void);
 static int	 checkuser(const char *, const char *, int, int, char **);
 static int	 checkaccess(const char *);
 static int	 checkpassword(const struct passwd *, const char *);
+static void	 do_pass(int, int, const char *);
 static void	 end_login(void);
 static FILE	*getdatasock(const char *);
 static char	*gunique(const char *);
@@ -842,6 +843,9 @@ user(const char *name)
 #ifdef	LOGIN_CAP
 	login_cap_t *lc = NULL;
 #endif
+#ifdef USE_PAM
+	int e;
+#endif
 
 	class = NULL;
 	if (logged_in) {
@@ -921,6 +925,7 @@ user(const char *name)
 		}
 		curclass.type = CLASS_CHROOT;
 	}
+
 			/* determine default class */
 	if (class == NULL) {
 		switch (curclass.type) {
@@ -970,6 +975,11 @@ user(const char *name)
 			/* if haven't asked yet (i.e, not anon), ask now */
 	if (!askpasswd) {
 		askpasswd = 1;
+#ifdef USE_PAM
+		e = auth_pam();		/* this does reply(331, ...) */
+		do_pass(1, e, "");
+		goto cleanup_user;
+#else /* !USE_PAM */
 #ifdef SKEY
 		if (skey_haskey(curname) == 0) {
 			const char *myskey;
@@ -981,6 +991,7 @@ user(const char *name)
 		} else
 #endif
 			reply(331, "Password required for %s.", curname);
+#endif /* !USE_PAM */
 	}
 
  cleanup_user:
@@ -1265,6 +1276,22 @@ end_login(void)
 void
 pass(const char *passwd)
 {
+	do_pass(0, 0, passwd);
+}
+
+/*
+ * Perform the passwd confirmation and login.
+ *
+ * If pass_checked is zero, confirm passwd is correct, & ignore pass_rval.
+ * This is the traditional PASS implementation.
+ *
+ * If pass_checked is non-zero, use pass_rval and ignore passwd.
+ * This is used by auth_pam() which has already parsed PASS.
+ * This only applies to curclass.type != CLASS_GUEST.
+ */
+static void
+do_pass(int pass_checked, int pass_rval, const char *passwd)
+{
 	int		 rval;
 	char		 root[MAXPATHLEN];
 #ifdef	LOGIN_CAP
@@ -1273,6 +1300,9 @@ pass(const char *passwd)
 #ifdef USE_PAM
 	int e;
 #endif
+
+	rval = 1;
+
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
 		return;
@@ -1284,17 +1314,14 @@ pass(const char *passwd)
 			rval = 1;	/* failure below */
 			goto skip;
 		}
-#ifdef USE_PAM
-		rval = auth_pam(&pw, passwd);
-#ifdef notdef
-		/* If PAM fails, we proceed with other authentications */
-		if (rval >= 0) {
+		if (pass_checked) {	/* password validated in user() */
+			rval = pass_rval;
 			goto skip;
 		}
-#else
-		/* If PAM fails, that's it */
+#ifdef USE_PAM
+		syslog(LOG_ERR, "do_pass: USE_PAM shouldn't get here");
+		rval = 1;
 		goto skip;
-#endif
 #endif
 #if defined(KERBEROS)
 		if (klogin(pw, "", hostname, (char *)passwd) == 0) {
@@ -2174,7 +2201,7 @@ send_data_with_mmap(int filefd, int netfd, const struct stat *st, int isdata)
 }
 
 /*
- * Tranfer the contents of "instr" to "outstr" peer using the appropriate
+ * Transfer the contents of "instr" to "outstr" peer using the appropriate
  * encapsulation of the data subject to Mode, Structure, and Type.
  *
  * NB: Form isn't handled.
@@ -3653,11 +3680,9 @@ cprintf(FILE *fd, const char *fmt, ...)
  * the following code is stolen from imap-uw PAM authentication module and
  * login.c
  */
-#define COPY_STRING(s) (s ? strdup(s) : NULL)
-
 typedef struct {
-	const char *uname;		/* user name */
-	const char *pass;		/* password */
+	const char *uname;	/* user name */
+	int	    triedonce;	/* if non-zero, tried before */
 } ftpd_cred_t;
 
 static int
@@ -3665,38 +3690,90 @@ auth_conv(int num_msg, const struct pam_message **msg,
     struct pam_response **resp, void *appdata)
 {
 	int i;
+	size_t n;
 	ftpd_cred_t *cred = (ftpd_cred_t *) appdata;
 	struct pam_response *myreply;
+	char pbuf[FTP_BUFLEN];
 
+	if (num_msg <= 0 || num_msg > PAM_MAX_NUM_MSG)
+		return (PAM_CONV_ERR);
 	myreply = calloc(num_msg, sizeof *myreply);
 	if (myreply == NULL)
 		return PAM_BUF_ERR;
 
 	for (i = 0; i < num_msg; i++) {
+		myreply[i].resp_retcode = 0;
+		myreply[i].resp = NULL;
 		switch (msg[i]->msg_style) {
-		case PAM_PROMPT_ECHO_ON:	/* assume want user name */
-			myreply[i].resp_retcode = PAM_SUCCESS;
-			myreply[i].resp = COPY_STRING(cred->uname);
+		case PAM_PROMPT_ECHO_ON:	/* user */
+			myreply[i].resp = ftpd_strdup(cred->uname);
 			/* PAM frees resp. */
 			break;
-		case PAM_PROMPT_ECHO_OFF:	/* assume want password */
-			myreply[i].resp_retcode = PAM_SUCCESS;
-			myreply[i].resp = COPY_STRING(cred->pass);
-			/* PAM frees resp. */
+		case PAM_PROMPT_ECHO_OFF:	/* authtok (password) */
+				/*
+				 * Only send a single 331 reply and
+				 * then expect a PASS.
+				 */
+			if (cred->triedonce) {
+				syslog(LOG_ERR,
+			"auth_conv: already performed PAM_PROMPT_ECHO_OFF");
+				goto fail;
+			}
+			cred->triedonce++;
+			if (msg[i]->msg[0] == '\0') {
+				(void)strlcpy(pbuf, "password", sizeof(pbuf));
+			} else {
+				/* Uncapitalize msg, remove trailing ':' */
+				(void)strlcpy(pbuf, msg[i]->msg, sizeof(pbuf));
+				n = strlen(pbuf);
+				if (isupper((unsigned char)pbuf[0]))
+					pbuf[0] = tolower(
+					    (unsigned char)pbuf[0]);
+				n = strlen(pbuf) - 1;
+				if (pbuf[n] == ':')
+					pbuf[n] = '\0';
+			}
+				/* Send reply, wait for a response. */
+			reply(331, "User %s accepted, provide %s.",
+			    cred->uname, pbuf);
+			(void) alarm(curclass.timeout);
+			if (getline(pbuf, sizeof(pbuf)-1, stdin) == NULL) {
+				reply(221, "You could at least say goodbye.");
+				dologout(0);
+			}
+			(void) alarm(0);
+				/* Ensure it is PASS */
+			if (strncasecmp(pbuf, "PASS ", 5) != 0) {
+			    syslog(LOG_ERR,
+				"auth_conv: unexpected reply '%.4s'", pbuf);
+			    /* XXX: should we do this reply(-530, ..) ? */
+			    reply(-530, "Unexpected reply '%.4s'.", pbuf);
+			    goto fail;
+			}
+				/* Strip CRLF from "PASS" reply */
+			n = strlen(pbuf);
+			while (--n >= 5 &&
+			    (pbuf[n] == '\r' || pbuf[n] == '\n'))
+			    pbuf[n] = '\0';
+				/* Copy password into reply */
+			myreply[i].resp = ftpd_strdup(pbuf+5);
+				/* PAM frees resp. */
 			break;
 		case PAM_TEXT_INFO:
 		case PAM_ERROR_MSG:
-			myreply[i].resp_retcode = PAM_SUCCESS;
-			myreply[i].resp = NULL;
 			break;
 		default:			/* unknown message style */
-			free(myreply);
-			return PAM_CONV_ERR;
+			goto fail;
 		}
 	}
 
 	*resp = myreply;
 	return PAM_SUCCESS;
+
+ fail:
+	free(myreply);
+	*resp = NULL;
+	return PAM_CONV_ERR;
 }
 
 /*
@@ -3705,18 +3782,19 @@ auth_conv(int num_msg, const struct pam_message **msg,
  * error occurs (e.g., the "/etc/pam.conf" file is missing) then this
  * function returns -1.  This can be used as an indication that we should
  * fall back to a different authentication mechanism.
+ * pw maybe be updated to a new user if PAM_USER changes from curname.
  */
 static int
-auth_pam(struct passwd **ppw, const char *pwstr)
+auth_pam(void)
 {
 	const char *tmpl_user;
 	const void *item;
 	int rval;
 	int e;
-	ftpd_cred_t auth_cred = { (*ppw)->pw_name, pwstr };
+	ftpd_cred_t auth_cred = { curname, 0 };
 	struct pam_conv conv = { &auth_conv, &auth_cred };
 
-	e = pam_start("ftpd", (*ppw)->pw_name, &conv, &pamh);
+	e = pam_start("ftpd", curname, &conv, &pamh);
 	if (e != PAM_SUCCESS) {
 		/*
 		 * In OpenPAM, it's OK to pass NULL to pam_strerror()
@@ -3771,8 +3849,16 @@ auth_pam(struct passwd **ppw, const char *pwstr)
 		if ((e = pam_get_item(pamh, PAM_USER, &item)) ==
 		    PAM_SUCCESS) {
 			tmpl_user = (const char *) item;
-			if (strcmp((*ppw)->pw_name, tmpl_user) != 0)
-				*ppw = sgetpwnam(tmpl_user);
+			if (pw == NULL
+			    || strcmp(pw->pw_name, tmpl_user) != 0) {
+				pw = sgetpwnam(tmpl_user);
+				if (ftpd_debug)
+					syslog(LOG_DEBUG,
+					    "PAM changed user from %s to %s",
+					    curname, pw->pw_name);
+				(void)strlcpy(curname, pw->pw_name,
+				    curname_len);
+			}
 		} else
 			syslog(LOG_ERR, "Couldn't get PAM_USER: %s",
 			    pam_strerror(pamh, e));
