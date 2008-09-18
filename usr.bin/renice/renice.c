@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.17 2007/12/15 19:44:52 perry Exp $	*/
+/*	$NetBSD: renice.c,v 1.17.6.1 2008/09/18 04:29:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -31,13 +31,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.17 2007/12/15 19:44:52 perry Exp $");
+__RCSID("$NetBSD: renice.c,v 1.17.6.1 2008/09/18 04:29:19 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/resource.h>

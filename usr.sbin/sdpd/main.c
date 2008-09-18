@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2007/03/18 15:53:55 plunky Exp $	*/
+/*	$NetBSD: main.c,v 1.3.12.1 2008/09/18 04:30:15 wrstuden Exp $	*/
 
 /*
  * main.c
@@ -27,15 +27,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: main.c,v 1.3 2007/03/18 15:53:55 plunky Exp $
+ * $Id: main.c,v 1.3.12.1 2008/09/18 04:30:15 wrstuden Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/main.c,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
-	    "@(#) Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>\n"
-	    "All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.3 2007/03/18 15:53:55 plunky Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\
+  Copyright (c) 2004 Maksim Yevmenkin <m_evmenkin@yahoo.com>.\
+  All rights reserved.\n");
+__RCSID("$NetBSD: main.c,v 1.3.12.1 2008/09/18 04:30:15 wrstuden Exp $");
 
 #include <sys/select.h>
 #include <bluetooth.h>

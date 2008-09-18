@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.18 2007/12/15 19:44:53 perry Exp $	*/
+/*	$NetBSD: tput.c,v 1.18.6.1 2008/09/18 04:29:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.18 2007/12/15 19:44:53 perry Exp $");
+__RCSID("$NetBSD: tput.c,v 1.18.6.1 2008/09/18 04:29:24 wrstuden Exp $");
 #endif /* not lint */
 
 #include <termios.h>

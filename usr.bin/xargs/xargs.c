@@ -1,4 +1,4 @@
-/*	$NetBSD: xargs.c,v 1.18 2008/01/07 08:20:52 apb Exp $	*/
+/*	$NetBSD: xargs.c,v 1.18.6.1 2008/09/18 04:29:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -36,13 +36,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #if 0
 static char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 __FBSDID("$FreeBSD: src/usr.bin/xargs/xargs.c,v 1.62 2006/01/01 22:59:54 jmallett Exp $");
 #endif
-__RCSID("$NetBSD: xargs.c,v 1.18 2008/01/07 08:20:52 apb Exp $");
+__RCSID("$NetBSD: xargs.c,v 1.18.6.1 2008/09/18 04:29:27 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

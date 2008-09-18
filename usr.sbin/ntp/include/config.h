@@ -443,7 +443,7 @@
 /* #undef HAVE_LIBREADLINE */
 
 /* Define to 1 if you have the `rt' library (-lrt). */
-/* #undef HAVE_LIBRT */
+#define HAVE_LIBRT 1
 
 /* Define to 1 if you have the `socket' library (-lsocket). */
 /* #undef HAVE_LIBSOCKET */
@@ -530,7 +530,7 @@
 /* #undef HAVE_NET_IF6_H */
 
 /* Define to 1 if you have the <net/if.h> header file. */
-/* #undef HAVE_NET_IF_H */
+#define HAVE_NET_IF_H 1
 
 /* Define to 1 if you have the <net/route.h> header file. */
 #define HAVE_NET_ROUTE_H 1
@@ -599,7 +599,7 @@
 #define HAVE_SCHED_H 1
 
 /* Define to 1 if you have the `sched_setscheduler' function. */
-/* #undef HAVE_SCHED_SETSCHEDULER */
+#define HAVE_SCHED_SETSCHEDULER 1
 
 /* Define to 1 if you have the <setjmp.h> header file. */
 #define HAVE_SETJMP_H 1
@@ -1127,13 +1127,13 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.4p2"
+#define PACKAGE_STRING "ntp 4.2.4p5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.4p2"
+#define PACKAGE_VERSION "4.2.4p5"
 
 /* Do we have the ppsclock streams module? */
 /* #undef PPS */
@@ -1259,7 +1259,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.4p2"
+#define VERSION "4.2.4p5"
 
 /* ISC: Want IPv6? */
 /* #define WANT_IPV6  */

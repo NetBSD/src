@@ -1,4 +1,4 @@
-.\"	$NetBSD: tunefs.8,v 1.36 2004/12/20 10:28:47 hubertf Exp $
+.\"	$NetBSD: tunefs.8,v 1.36.30.1 2008/09/18 04:28:30 wrstuden Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,6 +41,7 @@
 .Op Fl e Ar maxbpg
 .Op Fl g Ar avgfilesize
 .Op Fl h Ar avgfpdir
+.Op Fl l Ar logsize
 .Op Fl m Ar minfree
 .Bk -words
 .\" .Op Fl n Ar soft_dependency_enabling
@@ -97,6 +98,13 @@ this parameter should be set higher.
 This specifies the expected average file size.
 .It Fl h Ar avgfpdir
 This specifies the expected number of files per directory.
+.It Fl l Ar logsize
+This value specifies the size of the in-filesystem journaling log file.
+The default journaling log file size is described in
+.Xr wapbl 4 .
+Specifying a size of zero will cause the in-filesystem journaling log file
+to be removed the next time the filesystem is mounted.
+The size of an existing in-filesystem journaling log file can not be changed.
 .It Fl m Ar minfree
 This value specifies the percentage of space held back
 from normal users; the minimum free space threshold.
@@ -145,6 +153,7 @@ or
 .Li time .
 .El
 .Sh SEE ALSO
+.Xr wapbl 4 ,
 .Xr fs 5 ,
 .Xr dumpfs 8 ,
 .Xr fsck_ffs 8 ,

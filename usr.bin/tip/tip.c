@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.c,v 1.48 2007/03/09 23:45:21 hubertf Exp $	*/
+/*	$NetBSD: tip.c,v 1.48.12.1 2008/09/18 04:29:23 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,15 +34,15 @@
 #include <libgen.h>
 
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: tip.c,v 1.48 2007/03/09 23:45:21 hubertf Exp $");
+__RCSID("$NetBSD: tip.c,v 1.48.12.1 2008/09/18 04:29:23 wrstuden Exp $");
 #endif /* not lint */
 
 /*

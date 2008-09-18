@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.15 2005/09/25 18:56:33 rpaulo Exp $	*/
+/*	$NetBSD: showmount.c,v 1.15.22.1 2008/09/18 04:29:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.15 2005/09/25 18:56:33 rpaulo Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.15.22.1 2008/09/18 04:29:20 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

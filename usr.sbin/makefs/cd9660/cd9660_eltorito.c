@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.11 2006/04/22 17:38:20 christos Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.11.20.1 2008/09/18 04:30:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.11 2006/04/22 17:38:20 christos Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.11.20.1 2008/09/18 04:30:07 wrstuden Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -484,7 +484,7 @@ cd9660_setup_boot(int first_sector)
 }
 
 int
-cd9660_setup_boot_volume_descritpor(volume_descriptor *bvd)
+cd9660_setup_boot_volume_descriptor(volume_descriptor *bvd)
 {
 	boot_volume_descriptor *bvdData =
 	    (boot_volume_descriptor*)bvd->volumeDescriptorData;

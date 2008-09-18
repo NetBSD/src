@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.46 2008/01/10 14:16:27 seanb Exp $ */
+/*	$NetBSD: arp.c,v 1.46.6.1 2008/09/18 04:30:00 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1984, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.46 2008/01/10 14:16:27 seanb Exp $");
+__RCSID("$NetBSD: arp.c,v 1.46.6.1 2008/09/18 04:30:00 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

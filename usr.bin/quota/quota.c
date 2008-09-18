@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.31 2007/07/17 21:36:18 christos Exp $	*/
+/*	$NetBSD: quota.c,v 1.31.12.1 2008/09/18 04:29:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.31 2007/07/17 21:36:18 christos Exp $");
+__RCSID("$NetBSD: quota.c,v 1.31.12.1 2008/09/18 04:29:19 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

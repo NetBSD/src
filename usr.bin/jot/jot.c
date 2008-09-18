@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.23 2008/04/21 20:33:41 dsl Exp $	*/
+/*	$NetBSD: jot.c,v 1.23.2.1 2008/09/18 04:29:13 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.23 2008/04/21 20:33:41 dsl Exp $");
+__RCSID("$NetBSD: jot.c,v 1.23.2.1 2008/09/18 04:29:13 wrstuden Exp $");
 #endif /* not lint */
 
 /*

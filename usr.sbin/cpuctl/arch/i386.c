@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.1.2.1 2008/06/23 04:32:12 wrstuden Exp $	*/
+/*	$NetBSD: i386.c,v 1.1.2.2 2008/09/18 04:30:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.1.2.1 2008/06/23 04:32:12 wrstuden Exp $");
+__RCSID("$NetBSD: i386.c,v 1.1.2.2 2008/09/18 04:30:02 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -690,7 +690,7 @@ via_cpu_probe(struct cpu_info *ci)
 	 */
 	if (lfunc >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature_flags |= descs[3];
+		ci->ci_feature3_flags |= descs[3];
 	}
 
 	if (model < 0x9)
@@ -1081,7 +1081,7 @@ amd_family6_probe(struct cpu_info *ci)
 	 */
 	if (descs[0] >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature_flags |= descs[3];
+		ci->ci_feature3_flags |= descs[3];
 	}
 
 	if (*cpu_brand_string == '\0')
@@ -1184,7 +1184,7 @@ identifycpu(const char *cpuname)
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
 	char *buf;
-	const char *feature_str[3];
+	const char *feature_str[4];
 	struct cpu_info *ci, cistore;
 	extern int cpu;
 	extern int cpu_info_level;
@@ -1322,14 +1322,13 @@ identifycpu(const char *cpuname)
 	if (ci->ci_info)
 		(*ci->ci_info)(ci);
 
+	feature_str[0] = CPUID_FLAGS1;
+	feature_str[1] = CPUID_FLAGS2;
+	feature_str[2] = CPUID_FLAGS3;
 	if (cpu_vendor == CPUVENDOR_INTEL) {
-		feature_str[0] = CPUID_FLAGS1;
-		feature_str[1] = CPUID_FLAGS2;
-		feature_str[2] = CPUID_FLAGS3;
+		feature_str[3] = CPUID_FLAGS4;
 	} else {
-		feature_str[0] = CPUID_FLAGS1;
-		feature_str[1] = CPUID_EXT_FLAGS2;
-		feature_str[2] = CPUID_EXT_FLAGS3;
+		feature_str[3] = CPUID_EXT_FLAGS;
 	}	
 	
 	if (ci->ci_feature_flags) {
@@ -1358,7 +1357,7 @@ identifycpu(const char *cpuname)
 
 	if (ci->ci_feature3_flags) {
 		bitmask_snprintf(ci->ci_feature3_flags,
-			CPUID_FLAGS4, buf, MAXPATHLEN);
+			feature_str[3], buf, MAXPATHLEN);
 		aprint_verbose("%s: features3 %s\n", cpuname, buf);
 	}
 

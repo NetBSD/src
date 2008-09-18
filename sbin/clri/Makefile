@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2006/05/11 23:16:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.13.24.1 2008/09/18 04:28:22 wrstuden Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -10,6 +10,6 @@ SRCS=	clri.c ffs_bswap.c
 
 .include <bsd.prog.mk>
 
-.if ${HAVE_GCC} == 4
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
 COPTS.clri.c+=	-fno-strict-aliasing
 .endif

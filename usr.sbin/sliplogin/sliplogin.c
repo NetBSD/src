@@ -1,4 +1,4 @@
-/*	$NetBSD: sliplogin.c,v 1.21 2004/10/30 15:44:04 dsl Exp $	*/
+/*	$NetBSD: sliplogin.c,v 1.21.26.1 2008/09/18 04:30:15 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)sliplogin.c	8.2 (Berkeley) 2/1/94";
 #else
-__RCSID("$NetBSD: sliplogin.c,v 1.21 2004/10/30 15:44:04 dsl Exp $");
+__RCSID("$NetBSD: sliplogin.c,v 1.21.26.1 2008/09/18 04:30:15 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

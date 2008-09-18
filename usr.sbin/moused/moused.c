@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.16 2007/01/16 17:32:05 hubertf Exp $ */
+/* $NetBSD: moused.c,v 1.16.12.1 2008/09/18 04:30:07 wrstuden Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.16 2007/01/16 17:32:05 hubertf Exp $");
+__RCSID("$NetBSD: moused.c,v 1.16.12.1 2008/09/18 04:30:07 wrstuden Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -357,23 +357,23 @@ static struct rodentparam {
     float accelx;		/* Acceleration in the X axis */
     float accely;		/* Acceleration in the Y axis */
 } rodent = { 
-    flags : 0, 
-    portname : NULL,
-    rtype : MOUSE_PROTO_UNKNOWN,
-    level : -1,
-    baudrate : 1200, 
-    rate : 0,
-    resolution : MOUSE_RES_UNKNOWN, 
-    zmap: { 0, 0, 0, 0 },
-    wmode: 0,
-    mfd : -1,
-    cfd : -1,
-    mremsfd : -1,
-    mremcfd : -1,
-    clickthreshold : DFLT_CLICKTHRESHOLD,
-    button2timeout : DFLT_BUTTON2TIMEOUT,
-    accelx : 1.0,
-    accely : 1.0,
+    .flags = 0, 
+    .portname = NULL,
+    .rtype = MOUSE_PROTO_UNKNOWN,
+    .level = -1,
+    .baudrate = 1200, 
+    .rate = 0,
+    .resolution = MOUSE_RES_UNKNOWN, 
+    .zmap = { 0, 0, 0, 0 },
+    .wmode = 0,
+    .mfd = -1,
+    .cfd = -1,
+    .mremsfd = -1,
+    .mremcfd = -1,
+    .clickthreshold = DFLT_CLICKTHRESHOLD,
+    .button2timeout = DFLT_BUTTON2TIMEOUT,
+    .accelx = 1.0,
+    .accely = 1.0,
 };
 
 /* button status */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fdesc.c,v 1.21 2007/07/16 17:06:53 pooka Exp $	*/
+/*	$NetBSD: mount_fdesc.c,v 1.21.16.1 2008/09/18 04:28:26 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -69,15 +69,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_fdesc.c	8.3 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_fdesc.c,v 1.21 2007/07/16 17:06:53 pooka Exp $");
+__RCSID("$NetBSD: mount_fdesc.c,v 1.21.16.1 2008/09/18 04:28:26 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

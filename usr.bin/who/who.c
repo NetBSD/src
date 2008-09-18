@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.21 2007/12/15 19:44:54 perry Exp $	*/
+/*	$NetBSD: who.c,v 1.21.6.1 2008/09/18 04:29:27 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,16 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.21 2007/12/15 19:44:54 perry Exp $");
+__RCSID("$NetBSD: who.c,v 1.21.6.1 2008/09/18 04:29:27 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -207,6 +206,22 @@ main(int argc, char *argv[])
 	return 0;
 }
 
+static char *
+strrstr(const char *str, const char *pat)
+{
+	const char *estr;
+	size_t len;
+	if (*pat == '\0')
+		return __UNCONST(str);
+
+	len = strlen(pat);
+
+	for (estr = str + strlen(str); str < estr; estr--)
+		if (strncmp(estr, pat, len) == 0)
+			return __UNCONST(estr);
+	return NULL;
+}
+
 static void
 who_am_i(const char *fname, int show_labels)
 {
@@ -219,8 +234,9 @@ who_am_i(const char *fname, int show_labels)
 	/* search through the utmp and find an entry for this tty */
 	if ((p = ttyname(STDIN_FILENO)) != NULL) {
 
-		/* strip any directory component */
-		if ((t = strrchr(p, '/')) != NULL)
+		/* strip directory prefixes for ttys */
+		if ((t = strrstr(p, "/pts/")) != NULL ||
+		    (t = strrchr(p, '/')) != NULL)
 			p = t + 1;
 
 		(void)getutentries(fname, &ehead);

@@ -29,9 +29,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 2005\n\
-	The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: seq.c,v 1.4 2008/04/30 14:22:14 ginsbach Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2005\
+ The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: seq.c,v 1.4.2.1 2008/09/18 04:29:20 wrstuden Exp $");
 #endif /* not lint */
 
 #include <ctype.h>

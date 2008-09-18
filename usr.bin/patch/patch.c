@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.25 2007/10/14 04:54:34 lukem Exp $	*/
+/*	$NetBSD: patch.c,v 1.25.8.1 2008/09/18 04:29:18 wrstuden Exp $	*/
 
 /* patch - a program to apply diffs to original files
  *
@@ -25,7 +25,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: patch.c,v 1.25 2007/10/14 04:54:34 lukem Exp $");
+__RCSID("$NetBSD: patch.c,v 1.25.8.1 2008/09/18 04:29:18 wrstuden Exp $");
 #endif /* not lint */
 
 #include "INTERN.h"
@@ -680,7 +680,26 @@ abort_hunk(void)
     }
 }
 
+/*
+ * Version of fputs that aborts, to replace version used in apply_hunk
+ * without checking return values.
+ */
+
+/* pacify -Wstrict-prototypes */
+int safe_fputs(const char * str, FILE * stream);
+
+int safe_fputs(const char * str, FILE * stream)
+{
+    int ret = fputs(str, stream);
+    if ( ret != 0)
+	    pfatal("write(fputs) failed: %s", strerror(errno));
+    return ret;			/* NOTREACHED, pacify gcc */
+}
+
 /* We found where to apply it (we hope), so do it. */
+
+/* Use aborting version of fputs.*/
+#define fputs safe_fputs
 
 static void
 apply_hunk(LINENUM where)
@@ -798,6 +817,9 @@ apply_hunk(LINENUM where)
 	fputs(end_defined, ofp);
     }
 }
+
+/* Limit scope of fix. */
+#undef fputs
 
 /* Open the new file. */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.123 2008/04/29 06:53:01 martin Exp $ */
+/*	$NetBSD: sysctl.c,v 1.123.2.1 2008/09/18 04:28:30 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -60,16 +60,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.123 2008/04/29 06:53:01 martin Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.123.2.1 2008/09/18 04:28:30 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

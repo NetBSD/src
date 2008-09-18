@@ -1,4 +1,4 @@
-/*	$NetBSD: nohup.c,v 1.12 2003/08/07 11:15:25 agc Exp $	*/
+/*	$NetBSD: nohup.c,v 1.12.34.1 2008/09/18 04:29:18 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -31,16 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-    "@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-__RCSID("$NetBSD: nohup.c,v 1.12 2003/08/07 11:15:25 agc Exp $");
+__RCSID("$NetBSD: nohup.c,v 1.12.34.1 2008/09/18 04:29:18 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

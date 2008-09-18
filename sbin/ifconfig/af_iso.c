@@ -1,4 +1,4 @@
-/*	$NetBSD: af_iso.c,v 1.9.2.1 2008/06/23 04:29:57 wrstuden Exp $	*/
+/*	$NetBSD: af_iso.c,v 1.9.2.2 2008/09/18 04:28:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -29,18 +29,10 @@
  * SUCH DAMAGE.
  */
 
-#ifndef INET_ONLY
-
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_iso.c,v 1.9.2.1 2008/06/23 04:29:57 wrstuden Exp $");
+__RCSID("$NetBSD: af_iso.c,v 1.9.2.2 2008/09/18 04:28:24 wrstuden Exp $");
 #endif /* not lint */
-
-#include <sys/param.h> 
-#include <sys/ioctl.h> 
-#include <sys/socket.h>
-
-#include <net/if.h> 
 
 #include <err.h>
 #include <errno.h>
@@ -50,26 +42,35 @@ __RCSID("$NetBSD: af_iso.c,v 1.9.2.1 2008/06/23 04:29:57 wrstuden Exp $");
 #include <stdio.h>
 #include <util.h>
 
+#include <sys/param.h> 
+#include <sys/ioctl.h> 
+#include <sys/socket.h>
+
+#include <net/if.h> 
+
+#define EON
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
+
 #include "env.h"
 #include "parse.h"
 #include "extern.h"
-#include "af_iso.h"
+#include "af_inetany.h"
 
 #define	DEFNSELLEN	1
 
-struct	iso_ifreq	iso_ridreq = {.ifr_Addr = {.siso_tlen = DEFNSELLEN}};
-struct	iso_aliasreq	iso_addreq = {.ifra_dstaddr = {.siso_tlen = DEFNSELLEN},
-			              .ifra_addr = {.siso_tlen = DEFNSELLEN}};
+static void iso_constructor(void) __attribute__((constructor));
+static int setnsellength(prop_dictionary_t, prop_dictionary_t);
+static void iso_status(prop_dictionary_t, prop_dictionary_t, bool);
+static void iso_commit_address(prop_dictionary_t, prop_dictionary_t);
 
-#define SISO(x) ((struct sockaddr_iso *) &(x))
-struct sockaddr_iso *sisotab[] = {
-    SISO(iso_ridreq.ifr_Addr), SISO(iso_addreq.ifra_addr),
-    SISO(iso_addreq.ifra_mask), SISO(iso_addreq.ifra_dstaddr)};
-
-static void adjust_nsellength(uint8_t);
+static struct afswtch isoaf = {
+	.af_name = "iso", .af_af = AF_ISO, .af_status = iso_status,
+	.af_addr_commit = iso_commit_address
+};
 
 struct pinteger parse_snpaoffset = PINTEGER_INITIALIZER1(&snpaoffset,
-    "snpaoffset", INT_MIN, INT_MAX, 10, setsnpaoffset, "snpaoffset",
+    "snpaoffset", INT_MIN, INT_MAX, 10, NULL, "snpaoffset",
     &command_root.pb_parser);
 struct pinteger parse_nsellength = PINTEGER_INITIALIZER1(&nsellength,
     "nsellength", 0, UINT8_MAX, 10, setnsellength, "nsellength",
@@ -83,49 +84,7 @@ static const struct kwinst isokw[] = {
 struct pkw iso = PKW_INITIALIZER(&iso, "ISO", NULL, NULL,
     isokw, __arraycount(isokw), NULL);
 
-void
-iso_getaddr(const struct paddr_prefix *pfx, int which)
-{
-	struct sockaddr_iso *siso = sisotab[which];
-
-	siso->siso_addr =
-	    ((const struct sockaddr_iso *)&pfx->pfx_addr)->siso_addr;
-
-	if (which == MASK) {
-		siso->siso_len = TSEL(siso) - (char *)(siso);
-		siso->siso_nlen = 0;
-	}
-}
-
-int
-setsnpaoffset(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	int64_t snpaoffset;
-
-	if (!prop_dictionary_get_int64(env, "snpaoffset", &snpaoffset)) {
-		errno = ENOENT;
-		return -1;
-	}
-	iso_addreq.ifra_snpaoffset = snpaoffset;
-	return 0;
-}
-
-int
-setnsellength(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	int af;
-	uint8_t nsellength;
-
-	if ((af = getaf(env)) == -1 || af != AF_ISO)
-		errx(EXIT_FAILURE, "Setting NSEL length valid only for iso");
-
-	if (!prop_dictionary_get_uint8(env, "nsellength", &nsellength)) {
-		errno = ENOENT;
-		return -1;
-	}
-	adjust_nsellength(nsellength);
-	return 0;
-}
+static cmdloop_branch_t branch;
 
 static void
 fixnsel(struct sockaddr_iso *siso, uint8_t nsellength)
@@ -133,15 +92,73 @@ fixnsel(struct sockaddr_iso *siso, uint8_t nsellength)
 	siso->siso_tlen = nsellength;
 }
 
-static void
-adjust_nsellength(uint8_t nsellength)
+/* fixup mask */
+static int
+iso_pre_aifaddr(prop_dictionary_t env, const struct afparam *param)
 {
-	fixnsel(sisotab[RIDADDR], nsellength);
-	fixnsel(sisotab[ADDR], nsellength);
-	fixnsel(sisotab[DSTADDR], nsellength);
+	struct sockaddr_iso *siso;
+
+	siso = param->mask.buf;
+	siso->siso_len = TSEL(siso) - (char *)(siso);
+	siso->siso_nlen = 0;
+	return 0;
 }
 
-void
+static void
+iso_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
+{
+	uint8_t nsellength;
+	struct iso_ifreq ifr = {.ifr_Addr = {.siso_tlen = DEFNSELLEN}};
+	struct iso_aliasreq ifra = {
+		.ifra_dstaddr = {.siso_tlen = DEFNSELLEN},
+		.ifra_addr = {.siso_tlen = DEFNSELLEN}
+	};
+	struct afparam isoparam = {
+		  .req = BUFPARAM(ifra)
+		, .dgreq = BUFPARAM(ifr)
+		, .name = {
+			  {.buf = ifr.ifr_name,
+			   .buflen = sizeof(ifr.ifr_name)}
+			, {.buf = ifra.ifra_name,
+			   .buflen = sizeof(ifra.ifra_name)}
+		  }
+		, .dgaddr = BUFPARAM(ifr.ifr_Addr)
+		, .addr = BUFPARAM(ifra.ifra_addr)
+		, .dst = BUFPARAM(ifra.ifra_dstaddr)
+		, .brd = BUFPARAM(ifra.ifra_broadaddr)
+		, .mask = BUFPARAM(ifra.ifra_mask)
+		, .aifaddr = IFADDR_PARAM(SIOCAIFADDR_ISO)
+		, .difaddr = IFADDR_PARAM(SIOCDIFADDR_ISO)
+		, .gifaddr = IFADDR_PARAM(SIOCGIFADDR_ISO)
+		, .defmask = {.buf = NULL, .buflen = 0}
+		, .pre_aifaddr = iso_pre_aifaddr
+	};
+	int64_t snpaoffset;
+
+	if (prop_dictionary_get_int64(env, "snpaoffset", &snpaoffset))
+		ifra.ifra_snpaoffset = snpaoffset;
+
+	if (prop_dictionary_get_uint8(env, "nsellength", &nsellength)) {
+		fixnsel(&ifr.ifr_Addr, nsellength);
+		fixnsel(&ifra.ifra_addr, nsellength);
+		fixnsel(&ifra.ifra_dstaddr, nsellength);
+	}
+	commit_address(env, oenv, &isoparam);
+}
+
+static int
+setnsellength(prop_dictionary_t env, prop_dictionary_t oenv)
+{
+	int af;
+
+	if ((af = getaf(env)) == -1 || af != AF_ISO)
+		errx(EXIT_FAILURE, "Setting NSEL length valid only for ISO");
+
+	return 0;
+
+}
+
+static void
 iso_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	struct sockaddr_iso *siso;
@@ -164,14 +181,13 @@ iso_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 		if (errno == EADDRNOTAVAIL || errno == EAFNOSUPPORT) {
 			if (!force)
 				return;
-			(void) memset(&isoifr.ifr_Addr, 0,
-			    sizeof(isoifr.ifr_Addr));
+			memset(&isoifr.ifr_Addr, 0, sizeof(isoifr.ifr_Addr));
 		} else
 			warn("SIOCGIFADDR_ISO");
 	}
-	strlcpy(isoifr.ifr_name, ifname, sizeof isoifr.ifr_name);
+	strlcpy(isoifr.ifr_name, ifname, sizeof(isoifr.ifr_name));
 	siso = &isoifr.ifr_Addr;
-	printf("\tiso %s ", iso_ntoa(&siso->siso_addr));
+	printf("\tiso %s", iso_ntoa(&siso->siso_addr));
 	if (ioctl(s, SIOCGIFNETMASK_ISO, &isoifr) == -1) {
 		if (errno == EADDRNOTAVAIL)
 			memset(&isoifr.ifr_Addr, 0, sizeof(isoifr.ifr_Addr));
@@ -181,7 +197,7 @@ iso_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 		if (siso->siso_len > offsetof(struct sockaddr_iso, siso_addr))
 			siso->siso_addr.isoa_len = siso->siso_len
 			    - offsetof(struct sockaddr_iso, siso_addr);
-		printf("\n\t\tnetmask %s ", iso_ntoa(&siso->siso_addr));
+		printf(" netmask %s", iso_ntoa(&siso->siso_addr));
 	}
 
 	if (flags & IFF_POINTOPOINT) {
@@ -192,11 +208,17 @@ iso_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 			else
 			    warn("SIOCGIFDSTADDR_ISO");
 		}
-		strlcpy(isoifr.ifr_name, ifname, sizeof (isoifr.ifr_name));
+		strlcpy(isoifr.ifr_name, ifname, sizeof(isoifr.ifr_name));
 		siso = &isoifr.ifr_Addr;
-		printf("--> %s ", iso_ntoa(&siso->siso_addr));
+		printf(" --> %s", iso_ntoa(&siso->siso_addr));
 	}
 	printf("\n");
 }
 
-#endif /* ! INET_ONLY */
+static void
+iso_constructor(void)
+{
+	register_family(&isoaf);
+	cmdloop_branch_init(&branch, &iso.pk_parser);
+	register_cmdloop_branch(&branch);
+}

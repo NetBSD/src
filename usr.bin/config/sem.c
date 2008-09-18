@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.28.12.1 2008/06/23 04:32:10 wrstuden Exp $	*/
+/*	$NetBSD: sem.c,v 1.28.12.2 2008/09/18 04:29:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -368,9 +368,6 @@ defdev(struct devbase *dev, struct nvlist *loclist, struct nvlist *attrs,
 					cfgerror("interface attribute on "
 					 "non-device pseudo `%s'", dev->d_name);
 				else {
-					cfgwarn("warning: `%s' should be "
-						"defined \"defpseudodev\"",
-						dev->d_name);
 					ispseudo = 2;
 				}
 			}

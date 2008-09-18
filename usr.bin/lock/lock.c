@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.28.4.1 2008/06/23 04:32:11 wrstuden Exp $	*/
+/*	$NetBSD: lock.c,v 1.28.4.2 2008/09/18 04:29:15 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.28.4.1 2008/06/23 04:32:11 wrstuden Exp $");
+__RCSID("$NetBSD: lock.c,v 1.28.4.2 2008/09/18 04:29:15 wrstuden Exp $");
 #endif /* not lint */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfontedpr.c,v 1.12 2004/04/23 22:14:57 christos Exp $	*/
+/*	$NetBSD: vfontedpr.c,v 1.12.28.1 2008/09/18 04:29:25 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)vfontedpr.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vfontedpr.c,v 1.12 2004/04/23 22:14:57 christos Exp $");
+__RCSID("$NetBSD: vfontedpr.c,v 1.12.28.1 2008/09/18 04:29:25 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

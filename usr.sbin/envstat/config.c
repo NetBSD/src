@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.7 2008/02/02 01:44:04 xtraeme Exp $	*/
+/* 	$NetBSD: config.c,v 1.7.6.1 2008/09/18 04:30:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.7 2008/02/02 01:44:04 xtraeme Exp $");
+__RCSID("$NetBSD: config.c,v 1.7.6.1 2008/09/18 04:30:04 wrstuden Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -474,6 +474,34 @@ config_devblock_check_sensorprops(prop_dictionary_t ksdict,
 	}
 
 	/*
+	 * warning-capacity property set?
+	 */
+	obj = prop_dictionary_get(csdict, "warning-capacity");
+	if (obj) {
+		obj2 = prop_dictionary_get(ksdict, "want-percentage");
+		obj3 = prop_dictionary_get(ksdict, "monitoring-supported");
+		if (prop_bool_true(obj2) && prop_bool_true(obj3)) {
+			strval = prop_string_cstring(obj);
+			val = strtod(strval, &endptr);
+			if ((*endptr != '\0') || (val < 0 || val > 100))
+				config_errmsg(VALUE_ERR,
+					      "warning-capacity",
+					      sensor);
+			/*
+			 * Convert the value to a valid percentage.
+			 */
+			obj = prop_dictionary_get(ksdict, "max-value");
+			val = (val / 100) * prop_number_integer_value(obj);
+
+			if (!prop_dictionary_set_uint32(csdict,
+						       "warning-capacity",
+						       val))
+				err(EXIT_FAILURE, "dict_set warncap");
+		} else
+			config_errmsg(PROP_ERR, "warning-capacity", sensor);
+	}
+
+	/*
 	 * critical-max property set?
 	 */
 	obj = prop_dictionary_get(csdict, "critical-max");
@@ -503,6 +531,37 @@ config_devblock_check_sensorprops(prop_dictionary_t ksdict,
 					     sensor, strval);
 		if (!prop_dictionary_set(csdict, "critical-min", obj))
 			err(EXIT_FAILURE, "prop_dict_set cmin");
+	}
+
+	/*
+	 * warning-max property set?
+	 */
+	obj = prop_dictionary_get(csdict, "warning-max");
+	if (obj) {
+		obj2 = prop_dictionary_get(ksdict, "monitoring-supported");
+		if (!prop_bool_true(obj2))
+			config_errmsg(PROP_ERR, "warning-max", sensor);
+
+		strval = prop_string_cstring(obj);
+		obj = convert_val_to_pnumber(ksdict, "warning-max",
+					     sensor, strval);
+		if (!prop_dictionary_set(csdict, "warning-max", obj))
+			err(EXIT_FAILURE, "prop_dict_set wmax");
+	}
+	/*
+	 * warning-min property set?
+	 */
+	obj = prop_dictionary_get(csdict, "warning-min");
+	if (obj) {
+		obj2 = prop_dictionary_get(ksdict, "monitoring-supported");
+		if (!prop_bool_true(obj2))
+			config_errmsg(PROP_ERR, "warning-min", sensor);
+
+		strval = prop_string_cstring(obj);
+		obj = convert_val_to_pnumber(ksdict, "warning-min",
+					     sensor, strval);
+		if (!prop_dictionary_set(csdict, "warning-min", obj))
+			err(EXIT_FAILURE, "prop_dict_set wmin");
 	}
 }
 

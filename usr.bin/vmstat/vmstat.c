@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.158.2.1 2008/06/23 04:32:12 wrstuden Exp $ */
+/* $NetBSD: vmstat.c,v 1.158.2.2 2008/09/18 04:29:26 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -62,15 +62,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.158.2.1 2008/06/23 04:32:12 wrstuden Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.158.2.2 2008/09/18 04:29:26 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -784,6 +784,27 @@ dosum(void)
 {
 	struct nchstats nchstats;
 	u_long nchtotal;
+	int mib[2];
+	struct uvmexp_sysctl uvmexp2;
+	size_t ssize;
+	int active_kernel;
+
+	/*
+	 * The "active" and "inactive" variables
+	 * are now estimated by the kernel and sadly
+	 * can not easily be dug out of a crash dump.
+	 */
+	ssize = sizeof(uvmexp2);
+	memset(&uvmexp2, 0, ssize);
+	active_kernel = (memf == NULL);
+	if (active_kernel) {
+		/* only on active kernel */
+		mib[0] = CTL_VM;
+		mib[1] = VM_UVMEXP2;
+		if (sysctl(mib, 2, &uvmexp2, &ssize, NULL, 0) < 0)
+			fprintf(stderr, "%s: sysctl vm.uvmexp2 failed: %s",
+				getprogname(), strerror(errno));
+	}
 
 	kread(namelist, X_UVMEXP, &uvmexp, sizeof(uvmexp));
 
@@ -794,6 +815,10 @@ dosum(void)
 
 	(void)printf("%9u pages managed\n", uvmexp.npages);
 	(void)printf("%9u pages free\n", uvmexp.free);
+	if (active_kernel) {
+		(void)printf("%9" PRIu64 " pages active\n", uvmexp2.active);
+		(void)printf("%9" PRIu64 " pages inactive\n", uvmexp2.inactive);
+	}
 	(void)printf("%9u pages paging\n", uvmexp.paging);
 	(void)printf("%9u pages wired\n", uvmexp.wired);
 	(void)printf("%9u zero pages\n", uvmexp.zeropages);
@@ -1133,9 +1158,9 @@ domem(void)
 	}
 
 	(void)printf(
-	    "\nMemory statistics by type                           Type  Kern\n");
+	    "\nMemory statistics by type                                Type  Kern\n");
 	(void)printf(
-"         Type  InUse MemUse HighUse  Limit  Requests Limit Limit Size(s)\n");
+"           Type InUse  MemUse HighUse   Limit   Requests Limit Limit Size(s)\n");
 	for (kread(namelist, X_KMEMSTAT, &ksp, sizeof(ksp));
 	     ksp != NULL; ksp = ks.ks_next) {
 		deref_kptr(ksp, &ks, sizeof(ks), "malloc type");
@@ -1143,7 +1168,7 @@ domem(void)
 			continue;
 		deref_kptr(ks.ks_shortdesc, memname,
 		    sizeof(memname), "malloc type name");
-		(void)printf("%14s%6ld%6ldK%7ldK%6ldK%10ld%5u%6u",
+		(void)printf("%15s %5ld %6ldK %6ldK %6ldK %10ld %5u %5u",
 		    memname,
 		    ks.ks_inuse, howmany(ks.ks_memuse, KILO),
 		    howmany(ks.ks_maxused, KILO),
@@ -1154,7 +1179,7 @@ domem(void)
 			if ((ks.ks_size & j) == 0)
 				continue;
 			if (first)
-				(void)printf("  %d", j);
+				(void)printf(" %d", j);
 			else
 				(void)printf(",%d", j);
 			first = 0;

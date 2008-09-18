@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2006/05/11 23:16:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.37.22.1 2008/09/18 04:29:23 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -71,7 +71,7 @@ CLEANFILES+=	TMPfunc.out kbd.tmp kbd.out
 
 .include <bsd.prog.mk>
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 .for f in api commands system telnet terminal termout tn3270 utilities
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
