@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.8 2008/09/18 17:47:09 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.9 2008/09/18 21:52:41 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.8 2008/09/18 17:47:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.9 2008/09/18 21:52:41 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -75,7 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.8 2008/09/18 17:47:09 jmcneill Exp $");
 
 #include <dev/usb/uvideoreg.h>
 
+#if !defined(_MODULE)
 #include "opt_uvideo.h"
+#endif
 
 #define UVIDEO_NXFERS	3
 
@@ -2051,19 +2053,31 @@ uvideo_init_probe_data(uvideo_probe_and_commit_data_t *probe)
 
 #ifdef _MODULE
 
-MODULE(MODULE_CLASS_DRIVER, uvideo, "usb");
-
-CFDRIVER_DECL(uvideo, DV_DULL, NULL);
+MODULE(MODULE_CLASS_DRIVER, uvideo, NULL);
+static const struct cfiattrdata videobuscf_iattrdata = {
+        "videobus", 0, { 
+		{ NULL, NULL, 0 },
+	}
+};
+static const struct cfiattrdata * const uvideo_attrs[] = {
+	&videobuscf_iattrdata, NULL
+};      
+CFDRIVER_DECL(uvideo, DV_DULL, uvideo_attrs);
 extern struct cfattach uvideo_ca;
+extern struct cfattach uvideo_ca;
+static int uvideoloc[6] = { -1, -1, -1, -1, -1, -1 };
+static struct cfparent uhubparent = {
+        "usbifif", NULL, DVUNIT_ANY
+};
 static struct cfdata uvideo_cfdata[] = {
 	{
 		.cf_name = "uvideo",
 		.cf_atname = "uvideo",
 		.cf_unit = 0,
 		.cf_fstate = FSTATE_STAR,
-		.cf_loc = NULL,
+		.cf_loc = uvideoloc,
 		.cf_flags = 0,
-		.cf_pspec = NULL,
+		.cf_pspec = &uhubparent,
 	},
 	{ NULL }
 };
@@ -2096,7 +2110,7 @@ uvideo_modcmd(modcmd_t cmd, void *arg)
 		return 0;
 	case MODULE_CMD_FINI:
 		DPRINTF(("uvideo: attempting to unload module\n"));
-		err = config_cfdriver_detach(&uvideo_cd);
+		err = config_cfdata_detach(uvideo_cfdata);
 		if (err)
 			return err;
 		config_cfattach_detach("uvideo", &uvideo_ca);
