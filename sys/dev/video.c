@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.14 2008/09/14 16:03:27 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.15 2008/09/18 02:47:57 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.14 2008/09/14 16:03:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.15 2008/09/18 02:47:57 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -406,6 +406,7 @@ video_pixel_format_str(enum video_pixel_format px)
 	case VIDEO_FORMAT_YUY2: 	return "YUYV";
 	case VIDEO_FORMAT_NV12:		return "NV12";
 	case VIDEO_FORMAT_RGB24:	return "RGB24";
+	case VIDEO_FORMAT_SBGGR8:	return "SBGGR8";
 	case VIDEO_FORMAT_MJPEG:	return "MJPEG";
 	case VIDEO_FORMAT_DV:		return "DV";
 	case VIDEO_FORMAT_MPEG:		return "MPEG";
@@ -583,7 +584,8 @@ video_format_to_v4l2_format(const struct video_format *src,
 						  * progressive */
 	dest->fmt.pix.bytesperline = src->stride;
 	dest->fmt.pix.sizeimage = src->sample_size;
-	/* dest->colorspace =  */
+	dest->fmt.pix.colorspace = 0;	/* XXX */
+	dest->fmt.pix.priv = src->priv;
 	
 	switch (src->pixel_format) {
 	case VIDEO_FORMAT_YUV420:
@@ -597,6 +599,9 @@ video_format_to_v4l2_format(const struct video_format *src,
 		break;
 	case VIDEO_FORMAT_RGB24:
 		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+		break;
+	case VIDEO_FORMAT_SBGGR8:
+		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
 		break;
 	case VIDEO_FORMAT_MJPEG:
 		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_MJPEG;
@@ -643,6 +648,9 @@ v4l2_format_to_video_format(const struct v4l2_format *src,
 			break;
 		case V4L2_PIX_FMT_RGB24:
 			dest->pixel_format = VIDEO_FORMAT_RGB24;
+			break;
+		case V4L2_PIX_FMT_SBGGR8:
+			dest->pixel_format = VIDEO_FORMAT_SBGGR8;
 			break;
 		case V4L2_PIX_FMT_MJPEG:
 			dest->pixel_format = VIDEO_FORMAT_MJPEG;
@@ -908,13 +916,21 @@ video_dequeue_buf(struct video_softc *sc, struct v4l2_buffer *buf)
 	struct video_buffer *vb;
 	int err;
 	
-	if (buf->type != vs->vs_type)
+	if (buf->type != vs->vs_type) {
+		aprint_debug_dev(sc->sc_dev,
+		    "requested type %d (expected %d)\n",
+		    buf->type, vs->vs_type);
 		return EINVAL;
+	}
 	
 	switch (vs->vs_method) {
 	case VIDEO_STREAM_METHOD_MMAP:
-		if (buf->memory != V4L2_MEMORY_MMAP)
+		if (buf->memory != V4L2_MEMORY_MMAP) {
+			aprint_debug_dev(sc->sc_dev,
+			    "requested memory %d (expected %d)\n",
+			    buf->memory, V4L2_MEMORY_MMAP);
 			return EINVAL;
+		}
 		
 		mutex_enter(&vs->vs_lock);
 
@@ -941,6 +957,8 @@ video_dequeue_buf(struct video_softc *sc, struct v4l2_buffer *buf)
 		mutex_exit(&vs->vs_lock);
 		break;
 	default:
+		aprint_debug_dev(sc->sc_dev, "unknown vs_method %d\n",
+		    vs->vs_method);
 		return EINVAL;
 	}
 
@@ -1043,8 +1061,8 @@ videoopen(dev_t dev, int flags, int ifmt, struct lwp *l)
 	 * "read" is desired? */
 	vs = &sc->sc_stream_in;
 
-	if (hw->set_format != NULL) {
-		err = hw->set_format(sc->hw_softc, &vs->vs_format);
+	if (hw->get_format != NULL) {
+		err = hw->get_format(sc->hw_softc, &vs->vs_format);
 		if (err != 0)
 			return err;
 	}
@@ -1828,7 +1846,7 @@ video_stream_write(struct video_stream *vs,
 		/* DPRINTF(("video_stream_write: dropping sample %d\n",
 		   vs->vs_sequence)); */
 		vs->vs_drop = true;
-	} else {
+	} else if (payload->size > 0) {
 		vb = SIMPLEQ_FIRST(&vs->vs_ingress);
 		buf = vb->vb_buf;
 		if (payload->size > buf->length - buf->bytesused) {
