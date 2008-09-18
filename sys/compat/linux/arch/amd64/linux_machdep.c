@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.29.4.3 2008/06/23 04:30:52 wrstuden Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.29.4.4 2008/09/18 04:36:45 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.4.3 2008/06/23 04:30:52 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.4.4 2008/09/18 04:36:45 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -473,11 +473,11 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	 * And the stack
 	 */
 	uctx.uc_stack.ss_flags = 0;
-	if (luctx->luc_stack.ss_flags & LINUX_SS_ONSTACK);
-		uctx.uc_stack.ss_flags = SS_ONSTACK;
+	if (luctx->luc_stack.ss_flags & LINUX_SS_ONSTACK)
+		uctx.uc_stack.ss_flags |= SS_ONSTACK;
 
-	if (luctx->luc_stack.ss_flags & LINUX_SS_DISABLE);
-		uctx.uc_stack.ss_flags = SS_DISABLE;
+	if (luctx->luc_stack.ss_flags & LINUX_SS_DISABLE)
+		uctx.uc_stack.ss_flags |= SS_DISABLE;
 
 	uctx.uc_stack.ss_sp = luctx->luc_stack.ss_sp;
 	uctx.uc_stack.ss_size = luctx->luc_stack.ss_size;

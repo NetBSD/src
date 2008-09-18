@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.30 2006/09/15 15:51:13 yamt Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.30.56.1 2008/09/18 04:37:07 wrstuden Exp $	 */
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.30 2006/09/15 15:51:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.30.56.1 2008/09/18 04:37:07 wrstuden Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -88,7 +88,7 @@ uvmhist_dump(struct uvm_history *l)
 	lcv = l->f;
 	do {
 		if (l->e[lcv].fmt)
-			uvmhist_print(&l->e[lcv]);
+			uvmhist_entry_print(&l->e[lcv]);
 		lcv = (lcv + 1) % l->n;
 	} while (lcv != l->f);
 	splx(s);
@@ -155,7 +155,7 @@ restart:
 			break;
 
 		/* print and move to the next entry */
-		uvmhist_print(&hists[hi]->e[cur[hi]]);
+		uvmhist_entry_print(&hists[hi]->e[cur[hi]]);
 		cur[hi] = (cur[hi] + 1) % (hists[hi]->n);
 		if (cur[hi] == hists[hi]->f)
 			cur[hi] = -1;
@@ -189,6 +189,16 @@ uvm_hist(u_int32_t bitmask)	/* XXX only support 32 hists */
 
 	uvmhist_dump_histories(hists);
 }
+
+/*
+ * uvmhist_print: ddb hook to print uvm history
+ */
+void
+uvmhist_print(void (*pr)(const char *, ...))
+{
+	uvmhist_dump(LIST_FIRST(&uvm_histories));
+}
+
 #endif /* UVMHIST */
 
 /*

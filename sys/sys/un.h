@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.43 2008/04/24 11:38:39 ad Exp $	*/
+/*	$NetBSD: un.h,v 1.43.4.1 2008/09/18 04:37:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -73,10 +73,11 @@ struct unpcbid {
 #ifdef _KERNEL
 struct unpcb;
 struct socket;
+struct sockopt;
 
 int	uipc_usrreq(struct socket *, int, struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct lwp *);
-int	uipc_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	uipc_ctloutput(int, struct socket *, struct sockopt *);
 void	uipc_init (void);
 kmutex_t *uipc_dgramlock (void);
 kmutex_t *uipc_streamlock (void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.54.2.2 2008/05/14 01:35:05 wrstuden Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.54.2.3 2008/09/18 04:36:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.54.2.2 2008/05/14 01:35:05 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.54.2.3 2008/09/18 04:36:45 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -88,6 +88,23 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 	case 'P':
 		error = oss_ioctl_audio(l, LINUX_TO_OSS(uap), retval);
 		break;
+	case 'V':	/* video4linux2 */
+	case 'd':	/* drm */
+	{
+		struct sys_ioctl_args ua;
+		u_long com = 0;
+		if (SCARG(uap, com) & IOC_IN)
+			com |= IOC_OUT;
+		if (SCARG(uap, com) & IOC_OUT)
+			com |= IOC_IN;
+		SCARG(&ua, fd) = SCARG(uap, fd);
+		SCARG(&ua, com) = SCARG(uap, com);
+		SCARG(&ua, com) &= ~IOC_DIRMASK;
+		SCARG(&ua, com) |= com;
+		SCARG(&ua, data) = SCARG(uap, data);
+		error = sys_ioctl(l, (const void *)&ua, retval);
+		break;
+	}
 	case 'r': /* VFAT ioctls; not yet supported */
 		error = ENOSYS;
 		break;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.186.12.1 2008/06/23 04:30:30 wrstuden Exp $
+# $NetBSD: GENERIC,v 1.186.12.2 2008/09/18 04:33:29 wrstuden Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.186.12.1 $"
+#ident 		"GENERIC-$Revision: 1.186.12.2 $"
 
 maxusers	16		# estimated number of users
 
@@ -124,6 +124,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -336,6 +337,11 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	grf		2	# grf emulation for wscons

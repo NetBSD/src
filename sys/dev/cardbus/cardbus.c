@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.91.6.1 2008/06/23 04:31:01 wrstuden Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.91.6.2 2008/09/18 04:35:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.91.6.1 2008/06/23 04:31:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.91.6.2 2008/09/18 04:35:02 wrstuden Exp $");
 
 #include "opt_cardbus.h"
 
@@ -91,7 +91,7 @@ static void disable_function(struct cardbus_softc *, int);
 
 static bool cardbus_child_register(device_t);
 
-CFATTACH_DECL2(cardbus, sizeof(struct cardbus_softc),
+CFATTACH_DECL2_NEW(cardbus, sizeof(struct cardbus_softc),
     cardbusmatch, cardbusattach, cardbusdetach, NULL,
     cardbus_rescan, cardbus_childdetached);
 
@@ -105,13 +105,6 @@ struct cfdriver cardbus_cd = {
 STATIC int
 cardbusmatch(device_t parent, struct cfdata *cf, void *aux)
 {
-	struct cbslot_attach_args *cba = aux;
-
-	if (strcmp(cba->cba_busname, cf->cf_name)) {
-		DPRINTF(("cardbusmatch: busname differs %s <=> %s\n",
-		    cba->cba_busname, cf->cf_name));
-		return (0);
-	}
 
 	return (1);
 }
@@ -121,6 +114,8 @@ cardbusattach(device_t parent, device_t self, void *aux)
 {
 	struct cardbus_softc *sc = device_private(self);
 	struct cbslot_attach_args *cba = aux;
+
+	sc->sc_dev = self;
 
 	sc->sc_bus = cba->cba_bus;
 	sc->sc_intrline = cba->cba_intrline;
@@ -186,7 +181,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 	switch (cardbus_space) {
 	case CARDBUS_CIS_ASI_TUPLE:
 		DPRINTF(("%s: reading CIS data from configuration space\n",
-		    device_xname(&sc->sc_dev)));
+		    device_xname(sc->sc_dev)));
 		for (i = cis_ptr, j = 0; i < 0xff; i += 4) {
 			u_int32_t e = (*cf->cardbus_conf_read)(cc, tag, i);
 			tuples[j] = 0xff & e;
@@ -211,11 +206,11 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 		if (cardbus_space == CARDBUS_CIS_ASI_ROM) {
 			reg = CARDBUS_ROM_REG;
 			DPRINTF(("%s: reading CIS data from ROM\n",
-			    device_xname(&sc->sc_dev)));
+			    device_xname(sc->sc_dev)));
 		} else {
 			reg = CARDBUS_CIS_ASI_BAR(cardbus_space);
 			DPRINTF(("%s: reading CIS data from BAR%d\n",
-			    device_xname(&sc->sc_dev), cardbus_space - 1));
+			    device_xname(sc->sc_dev), cardbus_space - 1));
 		}
 
 		/*
@@ -226,10 +221,10 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 		if (Cardbus_mapreg_map(ca->ca_ct, reg,
 		    CARDBUS_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 		    0, &bar_tag, &bar_memh, &bar_addr, &bar_size)) {
-			aprint_error_dev(&sc->sc_dev, "failed to map memory\n");
+			aprint_error_dev(sc->sc_dev, "failed to map memory\n");
 			return (1);
 		}
-		aprint_debug_dev(&sc->sc_dev, "mapped %ju bytes at 0x%jx\n",
+		aprint_debug_dev(sc->sc_dev, "mapped %ju bytes at 0x%jx\n",
 		    (uintmax_t)bar_size, (uintmax_t)bar_addr);
 
 		if (cardbus_space == CARDBUS_CIS_ASI_ROM) {
@@ -294,7 +289,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 
 #ifdef DIAGNOSTIC
 	default:
-		panic("%s: bad CIS space (%d)", device_xname(&sc->sc_dev),
+		panic("%s: bad CIS space (%d)", device_xname(sc->sc_dev),
 		    cardbus_space);
 #endif
 	}
@@ -413,17 +408,17 @@ cardbus_attach_card(struct cardbus_softc *sc)
 	cf = sc->sc_cf;
 
 	DPRINTF(("cardbus_attach_card: cb%d start\n",
-		 device_unit(&sc->sc_dev)));
+		 device_unit(sc->sc_dev)));
 
 	/* inspect initial voltage */
 	if ((cdstatus = (*cf->cardbus_ctrl)(cc, CARDBUS_CD)) == 0) {
 		DPRINTF(("%s: no CardBus card on cb%d\n", __func__,
-		    device_unit(&sc->sc_dev)));
+		    device_unit(sc->sc_dev)));
 		return (0);
 	}
 
-	device_pmf_driver_set_child_register(&sc->sc_dev, cardbus_child_register);
-	cardbus_rescan(&sc->sc_dev, "cardbus", wildcard);
+	device_pmf_driver_set_child_register(sc->sc_dev, cardbus_child_register);
+	cardbus_rescan(sc->sc_dev, "cardbus", wildcard);
 	return (1); /* XXX */
 }
 
@@ -448,7 +443,7 @@ cardbus_rescan(device_t self, const char *ifattr,
 	/* inspect initial voltage */
 	if ((cdstatus = (*cf->cardbus_ctrl)(cc, CARDBUS_CD)) == 0) {
 		DPRINTF(("%s: no CardBus card on cb%d\n", __func__,
-		    device_unit(&sc->sc_dev)));
+		    device_unit(sc->sc_dev)));
 		return (0);
 	}
 
@@ -491,7 +486,7 @@ cardbus_rescan(device_t self, const char *ifattr,
 	}
 
 	bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
-	DPRINTF(("%s bhlc 0x%08x -> ", device_xname(&sc->sc_dev), bhlc));
+	DPRINTF(("%s bhlc 0x%08x -> ", device_xname(sc->sc_dev), bhlc));
 	nfunction = CARDBUS_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
 
 	for (function = 0; function < nfunction; function++) {
@@ -536,7 +531,7 @@ cardbus_rescan(device_t self, const char *ifattr,
 		bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
 		icr = cardbus_conf_read(cc, cf, tag, CARDBUS_INTERRUPT_REG);
 		DPRINTF(("%s func%d icr 0x%08x bhlc 0x%08x -> ",
-		    device_xname(&sc->sc_dev), function, icr, bhlc));
+		    device_xname(sc->sc_dev), function, icr, bhlc));
 		bhlc &= ~(CARDBUS_CACHELINE_MASK << CARDBUS_CACHELINE_SHIFT);
 		bhlc |= (sc->sc_cacheline & CARDBUS_CACHELINE_MASK) <<
 		    CARDBUS_CACHELINE_SHIFT;
@@ -625,7 +620,7 @@ cardbus_rescan(device_t self, const char *ifattr,
 
 		locs[CARDBUSCF_FUNCTION] = function;
 
-		if ((csc = config_found_sm_loc((void *)sc, "cardbus", locs,
+		if ((csc = config_found_sm_loc(sc->sc_dev, "cardbus", locs,
 		    &ca, cardbusprint, config_stdsubmatch)) == NULL) {
 			/* do not match */
 			disable_function(sc, function);
@@ -691,12 +686,12 @@ cardbus_detach_card(struct cardbus_softc *sc)
 		if (!ct)
 			continue;
 
-		DPRINTF(("%s: detaching %s\n", device_xname(&sc->sc_dev),
+		DPRINTF(("%s: detaching %s\n", device_xname(sc->sc_dev),
 		    device_xname(ct->ct_device)));
 		/* call device detach function */
 
 		if (config_detach(ct->ct_device, 0) != 0) {
-			aprint_error_dev(&sc->sc_dev,
+			aprint_error_dev(sc->sc_dev,
 			    "cannot detach dev %s, function %d\n",
 			    device_xname(ct->ct_device), ct->ct_func);
 		}
@@ -730,7 +725,7 @@ cardbus_childdetached(device_t self, device_t child)
  */
 void *
 cardbus_intr_establish(cardbus_chipset_tag_t cc, cardbus_function_tag_t cf,
-    cardbus_intr_handle_t irq, int level, int (*func)(void *), void *arg)
+    cardbus_intr_line_t irq, int level, int (*func)(void *), void *arg)
 {
 
 	DPRINTF(("- cardbus_intr_establish: irq %d\n", irq));

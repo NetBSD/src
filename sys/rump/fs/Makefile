@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2007/08/05 22:28:01 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.36.1 2008/09/18 04:37:03 wrstuden Exp $
 #
 
-SUBDIR=	lib .WAIT bin
+SUBDIR=	lib .WAIT rumptest
 
 .include <bsd.subdir.mk>

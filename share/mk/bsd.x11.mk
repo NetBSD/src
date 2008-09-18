@@ -1,6 +1,16 @@
-#	$NetBSD: bsd.x11.mk,v 1.57 2008/03/08 10:39:39 phx Exp $
+#	$NetBSD: bsd.x11.mk,v 1.57.6.1 2008/09/18 04:38:10 wrstuden Exp $
 
 .include <bsd.init.mk>
+
+.if make(depend) || make(all) || make(dependall)
+.if (${MKX11} != "no" && ${MKXORG} != "no")
+.BEGIN:
+	@echo
+	@echo "ERROR: \$$MKX11 and \$$MKXORG are mutually exclusive."
+	@echo
+	@false
+.endif
+.endif
 
 BINDIR=			${X11BINDIR}
 LIBDIR=			${X11USRLIBDIR}
@@ -27,10 +37,43 @@ X11FLAGS.CONNECTION+=	-DIPv6
 .endif
 
 #	 EXT_DEFINES
+.if ${MKXORG} != "no"
+X11FLAGS.BASE_EXTENSION=	-DMITMISC -DXTEST -DXTRAP -DXSYNC -DXCMISC \
+				-DXRECORD -DMITSHM -DBIGREQS -DXF86VIDMODE \
+				-DXF86MISC -DDPMSExtension -DEVI \
+				-DSCREENSAVER -DXV -DXVMC -DGLXEXT \
+				-DFONTCACHE -DRES
+
+X11FLAGS.PERVASIVE_EXTENSION=	-DSHAPE -DXINPUT -DXKB -DLBX -DXAPPGROUP \
+				-DXCSECURITY -DTOGCUP -DXF86BIGFONT \
+				-DDPMSExtension -DPIXPRIV -DPANORAMIX \
+				-DRENDER -DRANDR -DXFIXES -DDAMAGE \
+				-DCOMPOSITE -DXEVIE
+X11FLAGS.EXTENSION=	${X11FLAGS.BASE_EXTENSION} \
+			${X11FLAGS.PERVASIVE_EXTENSION}
+
+X11FLAGS.DIX=		-DHAVE_DIX_CONFIG_H -D_BSD_SOURCE -DHAS_FCHOWN \
+			-DHAS_STICKY_DIR_BIT -D_POSIX_THREAD_SAFE_FUNCTIONS
+X11INCS.DIX=		-I${X11INCSDIR}/freetype2  \
+			-I${X11INCSDIR}/pixman-1 \
+			-I$(X11SRCDIR.xorg-server)/include \
+			-I$(X11SRCDIR.xorg-server)/Xext \
+			-I$(X11SRCDIR.xorg-server)/composite \
+			-I$(X11SRCDIR.xorg-server)/damageext \
+			-I$(X11SRCDIR.xorg-server)/xfixes \
+			-I$(X11SRCDIR.xorg-server)/Xi \
+			-I$(X11SRCDIR.xorg-server)/mi \
+			-I$(X11SRCDIR.xorg-server)/miext/shadow \
+			-I$(X11SRCDIR.xorg-server)/miext/damage \
+			-I$(X11SRCDIR.xorg-server)/render \
+			-I$(X11SRCDIR.xorg-server)/randr \
+			-I$(X11SRCDIR.xorg-server)/fb
+.else
 X11FLAGS.EXTENSION=	-DMITMISC -DXTEST -DXTRAP -DXSYNC -DXCMISC -DXRECORD \
 			-DMITSHM -DBIGREQS -DXF86MISC -DDBE -DDPMSExtension \
 			-DEVI -DSCREENSAVER -DXV -DXVMC -DGLXEXT \
 			-DGLX_USE_MESA -DFONTCACHE -DRES
+.endif
 
 X11FLAGS.DRI=		-DGLXEXT -DXF86DRI -DGLX_DIRECT_RENDERING \
 			-DGLX_USE_DLOPEN -DGLX_USE_MESA
@@ -85,6 +128,19 @@ X11FLAGS.EXTENSION+=	-D__GLX_ALIGN64
 #	LOADABLE
 X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
 			-fno-merge-constants
+.endif
+  
+# XXX FIX ME
+.if ${MKXORG} != "no"
+XVENDORNAMESHORT=	'"X.Org"'
+XVENDORNAME=		'"The X.Org Foundation"'
+XORG_RELEASE=		'"Release 1.4.2"'
+__XKBDEFRULES__=	'"xorg"'
+XLOCALE.DEFINES=	-DXLOCALEDIR=\"${X11LIBDIR}/locale\" \
+			-DXLOCALELIBDIR=\"${X11LIBDIR}/locale\"
+
+# XXX oh yeah, fix me later
+XORG_VERSION_CURRENT="(((1) * 10000000) + ((4) * 100000) + ((2) * 1000) + 0)"
 .endif
 
 # Extract X11VERSION
@@ -179,6 +235,7 @@ cleanx11man: .PHONY
 	sed -e 's/\\$$/\\ /' ${.IMPSRC} \
 	| ${CPP} -undef -traditional \
 	    -D__apploaddir__=${X11ROOTDIR}/lib/X11/app-defaults \
+	    -D__appmansuffix__=1 \
 	    -D__libmansuffix__=3 \
 	    -D__filemansuffix__=5 \
 	    -D__miscmansuffix__=7 \

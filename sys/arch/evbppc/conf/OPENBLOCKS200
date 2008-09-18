@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.18 2006/09/27 21:42:05 manu Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.18.58.1 2008/09/18 04:33:24 wrstuden Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -82,6 +82,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

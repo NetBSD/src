@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqreg.h,v 1.18 2005/12/11 12:21:28 christos Exp $	*/
+/*	$NetBSD: pdqreg.h,v 1.18.76.1 2008/09/18 04:35:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -80,17 +80,6 @@ struct _pdq_lanaddr_t {
 typedef struct {
     pdq_uint8_t fwrev_bytes[4];
 } pdq_fwrev_t;
-
-enum _pdq_state_t {
-    PDQS_RESET=0,
-    PDQS_UPGRADE=1,
-    PDQS_DMA_UNAVAILABLE=2,
-    PDQS_DMA_AVAILABLE=3,
-    PDQS_LINK_AVAILABLE=4,
-    PDQS_LINK_UNAVAILABLE=5,
-    PDQS_HALTED=6,
-    PDQS_RING_MEMBER=7
-};
 
 struct _pdq_csrs_t {
     pdq_bus_memoffset_t csr_port_reset;			/* 0x00 [RW] */
@@ -582,11 +571,6 @@ typedef enum {
     PDQSNMP_EOL=0,
     PDQSNMP_FULL_DUPLEX_ENABLE=0x2F11
 } pdq_snmp_item_code_t;
-
-enum _pdq_boolean_t {
-    PDQ_FALSE=0,
-    PDQ_TRUE=1
-};
 
 typedef enum {
     PDQ_FILTER_BLOCK=0,

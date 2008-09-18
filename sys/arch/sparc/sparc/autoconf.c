@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.227 2008/02/12 17:30:58 joerg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.227.12.1 2008/09/18 04:33:33 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.227 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.227.12.1 2008/09/18 04:33:33 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1767,12 +1767,12 @@ device_register(struct device *dev, void *aux)
 		struct scsipi_periph *periph = sa->sa_periph;
 		struct scsipi_channel *chan = periph->periph_channel;
 		struct scsibus_softc *sbsc =
-			(struct scsibus_softc *)device_parent(dev);
+			device_private(device_parent(dev));
 		u_int target = bp->val[0];
 		u_int lun = bp->val[1];
 
 		/* Check the controller that this scsibus is on */
-		if ((bp-1)->dev != device_parent(&sbsc->sc_dev))
+		if ((bp-1)->dev != device_parent(sbsc->sc_dev))
 			return;
 
 		/*

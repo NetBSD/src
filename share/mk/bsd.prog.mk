@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.227.4.1 2008/06/23 04:30:03 wrstuden Exp $
+#	$NetBSD: bsd.prog.mk,v 1.227.4.2 2008/09/18 04:38:10 wrstuden Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -84,7 +84,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 #
 #	E.g.
 #		LIBC?=${DESTDIR}/usr/lib/libc.a
-#		LIBX11?=${DESTDIR}/usr/X11R6/lib/libX11.a
+#		LIBX11?=${DESTDIR}/usr/X11R7/lib/libX11.a
 #	etc..
 
 .for _lib in \
@@ -94,8 +94,12 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	form fl g2c gcc gnumalloc gssapi hdb heimntlm hx509 intl ipsec \
 	kadm5clnt kadm5srv kafs krb5 kvm l lber ldap ldap_r \
 	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
-	puffs radius resolv rmt roken rpcsvc rt sdp skey sl ss ssh ssl termcap \
-	usbhid util wrap y z bind9 dns lwres isccfg isccc isc
+	puffs radius resolv rmt roken rpcsvc rt rump rumpuser sdp skey sl ss \
+	ssh ssl termcap usbhid util wrap y z bind9 dns lwres isccfg isccc isc \
+	\
+	rumpfs_cd9660fs rumpfs_efs rumpfs_ext2fs rumpfs_ffs rumpfs_hfs \
+	rumpfs_lfs rumpfs_msdosfs rumpfs_nfs rumpfs_ntfs rumpfs_syspuffs \
+	rumpfs_tmpfs rumpfs_udf rumpfs_ufs
 .ifndef LIB${_lib:tu}
 LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
@@ -141,7 +145,7 @@ LIBSUPCXX=	${DESTDIR}/usr/lib/libsupc++.a
 	Xi Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt \
 	XTrap Xtst Xv Xxf86dga Xxf86misc Xxf86vm
 .ifndef LIB${_lib:tu}
-LIB${_lib:tu}=	${DESTDIR}/usr/X11R6/lib/lib${_lib}.a
+LIB${_lib:tu}=	${DESTDIR}${X11USRLIBDIR}/lib${_lib}.a
 .MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
 .endif
 .endfor
@@ -157,13 +161,15 @@ _PROGLDOPTS+=	-Wl,-dynamic-linker=${_SHLINKER}
 .endif
 .endif
 .if ${SHLIBDIR} != "/usr/lib"
-_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR}:${DESTDIR}/usr/lib \
+_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBDIR} \
 		-R${SHLIBDIR} \
 		-L${DESTDIR}${SHLIBDIR}
 .elif ${SHLIBINSTALLDIR} != "/usr/lib"
-_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
+_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
 		-L${DESTDIR}${SHLIBINSTALLDIR}
 .endif
+_PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}/usr/lib \
+		-L${DESTDIR}/usr/lib
 
 __proginstall: .USE
 	${_MKTARGET_INSTALL}
@@ -185,13 +191,18 @@ __progdebuginstall: .USE
 _APPEND_MANS=yes
 _APPEND_SRCS=yes
 
+_CCLINKFLAGS=
+.if defined(DESTDIR)
+_CCLINKFLAGS+=	-B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/
+.endif
+
 .if defined(PROG_CXX)
 PROG=		${PROG_CXX}
-_CCLINK=	${CXX} # XXX Some Makefiles rely on this being public.
+_CCLINK=	${CXX} ${_CCLINKFLAGS}
 .endif
 
 .if defined(PROG)
-_CCLINK?=	${CC} # XXX Some Makefiles rely on this being public.
+_CCLINK?=	${CC} ${_CCLINKFLAGS}
 .  if defined(MAN)
 MAN.${PROG}=	${MAN}
 _APPEND_MANS=	no
@@ -225,13 +236,13 @@ PROGS=		${PROG}
 # Definitions specific to C programs.
 .for _P in ${PROGS}
 SRCS.${_P}?=	${_P}.c
-_CCLINK.${_P}=	${CC}
+_CCLINK.${_P}=	${CC} ${_CCLINKFLAGS}
 .endfor
 
 # Definitions specific to C++ programs.
 .for _P in ${PROGS_CXX}
 SRCS.${_P}?=	${_P}.cc
-_CCLINK.${_P}=	${CXX}
+_CCLINK.${_P}=	${CXX} ${_CCLINKFLAGS}
 .endfor
 
 # Language-independent definitions.
@@ -288,15 +299,12 @@ ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 ${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 .if !commands(${_P})
 	${_MKTARGET_LINK}
-.if defined(DESTDIR)
-	${_CCLINK.${_P}} -Wl,-nostdlib \
-	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} ${_PROGLDOPTS} \
-	    -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/  \
+	${_CCLINK.${_P}} \
+	    ${DESTDIR:D-Wl,-nostdlib} \
+	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} \
 	    ${OBJS.${_P}} ${_LDADD.${_P}} \
-	    -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib
-.else
-	${_CCLINK.${_P}} ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS.${_P}} ${_LDADD.${_P}}
-.endif	# defined(DESTDIR)
+	    ${DESTDIR:D-L${_GCC_LIBGCCDIR}} \
+	    ${_PROGLDOPTS}
 .if defined(PAXCTL_FLAGS.${_P})
 	${PAXCTL} ${PAXCTL_FLAGS.${_P}} ${.TARGET}
 .endif

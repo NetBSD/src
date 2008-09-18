@@ -1,50 +1,105 @@
-# $NetBSD: shl.mi,v 1.10 2008/01/03 20:48:03 jdc Exp $
+# $NetBSD: shl.mi,v 1.10.10.1 2008/09/18 04:41:14 wrstuden Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
-./usr/X11R6/lib/libFS.so.6.0
-./usr/X11R6/lib/libGL.so.1.2
-./usr/X11R6/lib/libGLU.so.1.3
-./usr/X11R6/lib/libGLw.so.1.0
-./usr/X11R6/lib/libICE.so.6.3
-./usr/X11R6/lib/libOSMesa.so.4.0
-./usr/X11R6/lib/libSM.so.6.0
-./usr/X11R6/lib/libX11.so.6.2
-./usr/X11R6/lib/libXRes.so.1.0
-./usr/X11R6/lib/libXTrap.so.6.4
-./usr/X11R6/lib/libXau.so.6.0
-./usr/X11R6/lib/libXaw.so.6.1
-./usr/X11R6/lib/libXaw.so.7.0
-./usr/X11R6/lib/libXcursor.so.1.0
-./usr/X11R6/lib/libXdmcp.so.6.0
-./usr/X11R6/lib/libXext.so.6.4
-./usr/X11R6/lib/libXfont.so.1.5
-./usr/X11R6/lib/libXfontcache.so.1.2
-./usr/X11R6/lib/libXft.so.2.1
-./usr/X11R6/lib/libXi.so.6.0
-./usr/X11R6/lib/libXinerama.so.1.0
-./usr/X11R6/lib/libXmu.so.6.2
-./usr/X11R6/lib/libXmuu.so.1.0
-./usr/X11R6/lib/libXp.so.6.2
-./usr/X11R6/lib/libXpm.so.4.11
-./usr/X11R6/lib/libXrandr.so.2.0
-./usr/X11R6/lib/libXrender.so.1.2
-./usr/X11R6/lib/libXss.so.1.0
-./usr/X11R6/lib/libXt.so.6.0
-./usr/X11R6/lib/libXtst.so.6.1
-./usr/X11R6/lib/libXv.so.1.0
-./usr/X11R6/lib/libXvMC.so.1.0
-./usr/X11R6/lib/libXxf86dga.so.1.1
-./usr/X11R6/lib/libXxf86misc.so.1.1
-./usr/X11R6/lib/libXxf86vm.so.1.0
-./usr/X11R6/lib/libdmx.so.1.0
-./usr/X11R6/lib/libdps.so.1.0
-./usr/X11R6/lib/libdpstk.so.1.0
-./usr/X11R6/lib/libexpat.so.4.0
-./usr/X11R6/lib/libfontconfig.so.1.0
-./usr/X11R6/lib/libfontenc.so.1.0
-./usr/X11R6/lib/libfreetype.so.9.0
-./usr/X11R6/lib/liboldX.so.6.0
-./usr/X11R6/lib/libpsres.so.1.0
-./usr/X11R6/lib/libxkbfile.so.1.0
-./usr/X11R6/lib/libxkbui.so.1.0
+./usr/X11R6/lib/libFS.so.6.0			-unknown-		x11
+./usr/X11R6/lib/libGL.so.1.2			-unknown-		x11
+./usr/X11R6/lib/libGLU.so.1.3			-unknown-		x11
+./usr/X11R6/lib/libGLw.so.1.0			-unknown-		x11
+./usr/X11R6/lib/libICE.so.6.3			-unknown-		x11
+./usr/X11R6/lib/libOSMesa.so.4.0		-unknown-		x11
+./usr/X11R6/lib/libSM.so.6.0			-unknown-		x11
+./usr/X11R6/lib/libX11.so.6.2			-unknown-		x11
+./usr/X11R6/lib/libXRes.so.1.0			-unknown-		x11
+./usr/X11R6/lib/libXTrap.so.6.4			-unknown-		x11
+./usr/X11R6/lib/libXau.so.6.0			-unknown-		x11
+./usr/X11R6/lib/libXaw.so.6.1			-unknown-		x11
+./usr/X11R6/lib/libXaw.so.7.0			-unknown-		x11
+./usr/X11R6/lib/libXcursor.so.1.0		-unknown-		x11
+./usr/X11R6/lib/libXdmcp.so.6.0			-unknown-		x11
+./usr/X11R6/lib/libXext.so.6.4			-unknown-		x11
+./usr/X11R6/lib/libXfont.so.1.5			-unknown-		x11
+./usr/X11R6/lib/libXfontcache.so.1.2		-unknown-		x11
+./usr/X11R6/lib/libXft.so.1.1			-unknown-		x11
+./usr/X11R6/lib/libXft.so.2.1			-unknown-		x11
+./usr/X11R6/lib/libXi.so.6.0			-unknown-		x11
+./usr/X11R6/lib/libXinerama.so.1.0		-unknown-		x11
+./usr/X11R6/lib/libXmu.so.6.2			-unknown-		x11
+./usr/X11R6/lib/libXmuu.so.1.0			-unknown-		x11
+./usr/X11R6/lib/libXp.so.6.2			-unknown-		x11
+./usr/X11R6/lib/libXpm.so.4.11			-unknown-		x11
+./usr/X11R6/lib/libXrandr.so.2.0		-unknown-		x11
+./usr/X11R6/lib/libXrender.so.1.2		-unknown-		x11
+./usr/X11R6/lib/libXss.so.1.0			-unknown-		x11
+./usr/X11R6/lib/libXt.so.6.0			-unknown-		x11
+./usr/X11R6/lib/libXtst.so.6.1			-unknown-		x11
+./usr/X11R6/lib/libXv.so.1.0			-unknown-		x11
+./usr/X11R6/lib/libXvMC.so.1.0			-unknown-		x11
+./usr/X11R6/lib/libXxf86dga.so.1.1		-unknown-		x11
+./usr/X11R6/lib/libXxf86misc.so.1.1		-unknown-		x11
+./usr/X11R6/lib/libXxf86vm.so.1.0		-unknown-		x11
+./usr/X11R6/lib/libdmx.so.1.0			-unknown-		x11
+./usr/X11R6/lib/libdps.so.1.0			-unknown-		x11
+./usr/X11R6/lib/libdpstk.so.1.0			-unknown-		x11
+./usr/X11R6/lib/libexpat.so.4.0			-unknown-		x11
+./usr/X11R6/lib/libfontconfig.so.1.0		-unknown-		x11
+./usr/X11R6/lib/libfontenc.so.1.0		-unknown-		x11
+./usr/X11R6/lib/libfreetype.so.9.0		-unknown-		x11
+./usr/X11R6/lib/liboldX.so.6.0			-unknown-		x11
+./usr/X11R6/lib/libpsres.so.1.0			-unknown-		x11
+./usr/X11R6/lib/libxkbfile.so.1.0		-unknown-		x11
+./usr/X11R6/lib/libxkbui.so.1.0			-unknown-		x11
+./usr/X11R7/lib/X11/locale/lib/common/ximcp.so.2.0	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlcDef.so.2.0	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlcUTF8Load.so.2.0	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlibi18n.so.2.0	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xlocale.so.2.0	-unknown-	xorg
+./usr/X11R7/lib/X11/locale/lib/common/xomGeneric.so.2.0	-unknown-	xorg
+./usr/X11R7/lib/libFS.so.6.0			-unknown-		xorg
+./usr/X11R7/lib/libGL.so.1.0.2			-unknown-		xorg
+./usr/X11R7/lib/libGLU.so.1.0.3			-unknown-		xorg
+./usr/X11R7/lib/libGLw.so.1.0			-unknown-		xorg
+./usr/X11R7/lib/libICE.so.6.3			-unknown-		xorg
+./usr/X11R7/lib/libSM.so.6.0			-unknown-		xorg
+./usr/X11R7/lib/libX11.so.6.2			-unknown-		xorg
+./usr/X11R7/lib/libXTrap.so.6.4			-unknown-		xorg
+./usr/X11R7/lib/libXau.so.6.0			-unknown-		xorg
+./usr/X11R7/lib/libXaw6.so.6.1			-unknown-		xorg
+./usr/X11R7/lib/libXaw7.so.7.0			-unknown-		xorg
+./usr/X11R7/lib/libXaw8.so.8.0			-unknown-		xorg
+./usr/X11R7/lib/libXcomposite.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libXcursor.so.1.0.2		-unknown-		xorg
+./usr/X11R7/lib/libXdamage.so.1.1		-unknown-		xorg
+./usr/X11R7/lib/libXdmcp.so.6.0			-unknown-		xorg
+./usr/X11R7/lib/libXevie.so.1.0			-unknown-		xorg
+./usr/X11R7/lib/libXext.so.6.4			-unknown-		xorg
+./usr/X11R7/lib/libXfixes.so.3.1		-unknown-		xorg
+./usr/X11R7/lib/libXfont.so.1.4.1		-unknown-		xorg
+./usr/X11R7/lib/libXfontcache.so.1.2		-unknown-		xorg
+./usr/X11R7/lib/libXft.so.2.1.2			-unknown-		xorg
+./usr/X11R7/lib/libXi.so.6.0			-unknown-		xorg
+./usr/X11R7/lib/libXinerama.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libXmu.so.6.2			-unknown-		xorg
+./usr/X11R7/lib/libXmuu.so.1.0			-unknown-		xorg
+./usr/X11R7/lib/libXp.so.6.2			-unknown-		xorg
+./usr/X11R7/lib/libXpm.so.4.11			-unknown-		xorg
+./usr/X11R7/lib/libXrandr.so.2.1		-unknown-		xorg
+./usr/X11R7/lib/libXrender.so.1.3		-unknown-		xorg
+./usr/X11R7/lib/libXres.so.1.0			-unknown-		xorg
+./usr/X11R7/lib/libXss.so.1.0			-unknown-		xorg
+./usr/X11R7/lib/libXt.so.6.0			-unknown-		xorg
+./usr/X11R7/lib/libXtst.so.6.1			-unknown-		xorg
+./usr/X11R7/lib/libXv.so.1.0			-unknown-		xorg
+./usr/X11R7/lib/libXvMC.so.1.0			-unknown-		xorg
+./usr/X11R7/lib/libXxf86dga.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libXxf86misc.so.1.1		-unknown-		xorg
+./usr/X11R7/lib/libXxf86vm.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libdrm.so.2.3			-unknown-		xorg
+./usr/X11R7/lib/libexpat.so.1.5.2		-unknown-		xorg
+./usr/X11R7/lib/libfontconfig.so.1.3		-unknown-		xorg
+./usr/X11R7/lib/libfontenc.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libfreetype.so.6.3.17		-unknown-		xorg
+./usr/X11R7/lib/liblbxutil.so.1.0		-unknown-		xorg
+./usr/X11R7/lib/libpixman-1.so.0.11.2		-unknown-		xorg
+./usr/X11R7/lib/libxkbfile.so.1.0.2		-unknown-		xorg
+./usr/X11R7/lib/libxkbui.so.1.0			-unknown-		xorg

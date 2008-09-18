@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91 2008/01/19 13:11:18 chris Exp $
+# $NetBSD: GENERIC,v 1.91.12.1 2008/09/18 04:33:30 wrstuden Exp $
 #
 # GENERIC machine description file
 # 
@@ -78,6 +78,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
 # Networking options
@@ -301,6 +302,11 @@ pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	loop			# network loopback
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

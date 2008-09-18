@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay.h,v 1.7 2005/12/11 12:24:51 christos Exp $	*/
+/*	$NetBSD: overlay.h,v 1.7.76.1 2008/09/18 04:36:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -122,9 +122,5 @@ extern struct vnode *layer_checkvp(struct vnode *vp, char *fil, int lno);
 
 extern int (**overlay_vnodeop_p)(void *);
 extern struct vfsops overlay_vfsops;
-
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_overlay_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 
 #endif /* _KERNEL */

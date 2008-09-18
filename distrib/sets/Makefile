@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.58 2008/05/02 19:25:42 apb Exp $
+#	$NetBSD: Makefile,v 1.58.2.1 2008/09/18 04:41:12 wrstuden Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -23,7 +23,7 @@ SETSCMD=	cd ${.CURDIR} && \
 		${HOST_SH}
 
 MAKETARS_FLAGS=
-.if ${MKX11} != "no"
+.if ${MKX11} != "no" || ${MKXORG} != "no"
 MAKEFLIST_FLAGS=	-b
 MAKESRCTARS_FLAGS=	-x ${X11SRCDIR} -N ${NETBSDSRCDIR}/etc
 .else
@@ -57,9 +57,6 @@ print_object_fmt: .PHONY
 
 print_toolchain_missing: .PHONY
 	@echo "${TOOLCHAIN_MISSING}"
-
-print_x11_version: .PHONY
-	${HOST_SH} -c '. ${.CURDIR}/sets.subr; echo $$x11_version'
 
 # This target has debugging value only, really.
 makeflist: .PHONY .PRECIOUS check_DESTDIR
@@ -209,16 +206,16 @@ REGPKG.update:= ${MKUPDATE:tl:Nno:C/..*/-u/}
 SYSPKGSETS?= all
 makesyspkgs: .PHONY check_DESTDIR check_RELEASEDIR \
 		sanitise_METALOG checkflist_if_DESTDIR
-	mkdir -p ${RELEASEDIR}/${MACHINE}/binary/syspkgs
+	mkdir -p ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/syspkgs
 	${SETSCMD} ${.CURDIR}/regpkgset \
 	    ${REGPKG.verbose} ${REGPKG.force} ${REGPKG.sloppy} \
 	    ${REGPKG.cache} ${REGPKG.update} \
 	    -d ${DESTDIR:S,^$,/,} ${METALOG.sanitised.unpriv} \
 	    -N ${NETBSDSRCDIR}/etc \
-	    -t ${RELEASEDIR}/${MACHINE}/binary/syspkgs ${SYSPKGSETS}
+	    -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/syspkgs ${SYSPKGSETS}
 
 makesyspkgsums: .PHONY check_RELEASEDIR
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/binary/syspkgs
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/syspkgs
 
 # Update the "deps" file.
 # XXX: Why is "deps" checked in to the source tree, instead of

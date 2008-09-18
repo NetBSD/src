@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.19 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.19.2.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.19 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.19.2.1 2008/09/18 04:39:24 wrstuden Exp $");
+
+#ifndef lint
+
 
 /*
  * This is necessary because the names are always weak (they are not
@@ -562,3 +565,5 @@ __strong_alias(_select, select)
 __strong_alias(_wait4, wait4)
 __strong_alias(_write, write)
 __strong_alias(_writev, writev)
+
+#endif	/* !lint */

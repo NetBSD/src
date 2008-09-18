@@ -1,7 +1,7 @@
-/*	$NetBSD: unistd.h,v 1.116 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: unistd.h,v 1.116.2.1 2008/09/18 04:39:55 wrstuden Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -113,6 +113,7 @@ uid_t	 geteuid(void);
 gid_t	 getgid(void);
 int	 getgroups(int, gid_t []);
 __aconst char *getlogin(void);
+int	 getlogin_r(char *, int);
 pid_t	 getpgrp(void);
 pid_t	 getpid(void);
 pid_t	 getppid(void);
@@ -195,6 +196,7 @@ int	 fsync(int);
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_REENTRANT) || defined(_NETBSD_SOURCE)
 int	 ttyname_r(int, char *, size_t);
+int	 pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
 #endif
 
 /*

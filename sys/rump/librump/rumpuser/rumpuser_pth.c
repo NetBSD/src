@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.12 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.12.6.1 2008/09/18 04:37:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,8 +28,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/lwp.h>
+#ifdef __linux__
+#define _XOPEN_SOURCE 500
+#define _BSD_SOURCE
+#define _FILE_OFFSET_BITS 64
+#endif
 
 #include <assert.h>
 #include <errno.h>
@@ -37,6 +40,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "rumpuser.h"
 
@@ -73,7 +77,6 @@ struct rumpuser_aio *rua_aios[N_AIOS];
 
 struct rumpuser_rw rumpspl;
 
-#ifndef RUMP_WITHOUT_THREADS
 static void *
 iothread(void *arg)
 {
@@ -101,14 +104,12 @@ iothread(void *arg)
 		NOFAIL_ERRNO(pthread_mutex_lock(&rua_mtx.pthmtx));
 	}
 }
-#endif /* RUMP_WITHOUT_THREADS */
 
 int
 rumpuser_thrinit()
 {
-#ifndef RUMP_WITHOUT_THREADS
+	extern int rump_threads;
 	pthread_t iothr;
-#endif
 
 	pthread_mutex_init(&rua_mtx.pthmtx, NULL);
 	pthread_cond_init(&rua_cv.pthcv, NULL);
@@ -117,9 +118,8 @@ rumpuser_thrinit()
 	pthread_key_create(&curlwpkey, NULL);
 	pthread_key_create(&isintr, NULL);
 
-#ifndef RUMP_WITHOUT_THREADS
-	pthread_create(&iothr, NULL, iothread, NULL);
-#endif
+	if (rump_threads)
+		pthread_create(&iothr, NULL, iothread, NULL);
 
 	return 0;
 }
@@ -324,6 +324,13 @@ rumpuser_cv_broadcast(struct rumpuser_cv *cv)
 {
 
 	NOFAIL_ERRNO(pthread_cond_broadcast(&cv->pthcv));
+}
+
+int
+rumpuser_cv_has_waiters(struct rumpuser_cv *cv)
+{
+
+	return pthread_cond_has_waiters_np(&cv->pthcv);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.95 2006/03/04 08:58:46 skrll Exp $	 */
+/*	$NetBSD: reloc.c,v 1.95.20.1 2008/09/18 04:39:17 wrstuden Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.95 2006/03/04 08:58:46 skrll Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.95.20.1 2008/09/18 04:39:17 wrstuden Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -198,6 +198,7 @@ _rtld_relocate_objects(Obj_Entry *first, bool bind_now)
 		if (!ok)
 			return -1;
 
+		(void)dlerror(); /* clear any errors since all is good */
 
 		/* Set some sanity-checking numbers in the Obj_Entry. */
 		obj->magic = RTLD_MAGIC;

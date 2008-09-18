@@ -1,4 +1,4 @@
-.\"	$NetBSD: mutex.9,v 1.16 2008/04/30 13:10:58 martin Exp $
+.\"	$NetBSD: mutex.9,v 1.16.2.1 2008/09/18 04:38:09 wrstuden Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 4, 2007
+.Dd July 19, 2008
 .Dt MUTEX 9
 .Os
 .Sh NAME
@@ -75,10 +75,7 @@ consumers.
 Mutexes replace the
 .Xr spl 9
 system traditionally used to provide synchronization between interrupt
-handlers and LWPs, and in combination with reader / writer locks replace
-the
-.Xr lockmgr 9
-facility.
+handlers and LWPs.
 .Sh OPTIONS
 .Bl -tag -width abcd
 .It Cd "options DIAGNOSTIC"
@@ -184,7 +181,7 @@ For example:
 .Ed
 .Pp
 It should not be used to make locking decisions at run time, or to
-verify that a lock is unheld.
+verify that a lock is not held.
 .It Fn mutex_spin_enter "mtx"
 .Pp
 Equivalent to
@@ -202,7 +199,7 @@ but may only be used when it is known that
 .Ar mtx
 is a spin mutex.
 On some architectures, this can substantially reduce the cost of releasing
-an unheld spin mutex.
+a spin mutex.
 .It Fn mutex_tryenter "mtx"
 .Pp
 Try to acquire a mutex, but do not block if the mutex is already held.
@@ -249,8 +246,9 @@ The header file
 describes the public interface, and interfaces that machine-dependent
 code must provide to support mutexes.
 .Sh SEE ALSO
+.Xr atomic_ops 3 ,
+.Xr membar_ops 3 ,
 .Xr condvar 9 ,
-.Xr mb 9 ,
 .Xr rwlock 9 ,
 .Xr spl 9
 .Pp

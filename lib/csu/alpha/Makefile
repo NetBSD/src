@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.23 2006/05/19 19:11:12 christos Exp $
+#	$NetBSD: Makefile,v 1.23.20.1 2008/09/18 04:39:18 wrstuden Exp $
+
+.include <bsd.own.mk>
 
 ELFSIZE=	64
 
@@ -10,7 +12,7 @@ OBJS+=	crtfm.o
 .include "${.CURDIR}/../common_elf/Makefile.inc"
 
 crtfm.o: crtfm.c
-	@echo "${COMPILE.c} ${.ALLSRC} -o ${.TARGET}"
-	@${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
-	@${LD} -x -r -o ${.TARGET} ${.TARGET}.o
-	@rm -f ${.TARGET}.o
+	${_MKTARGET_COMPILE}
+	${COMPILE.c} ${.ALLSRC} -o ${.TARGET}.o
+	${LD} -x -r -o ${.TARGET} ${.TARGET}.o
+	rm -f ${.TARGET}.o

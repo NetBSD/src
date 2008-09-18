@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.29.2.2 2008/05/14 01:35:02 wrstuden Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.29.2.3 2008/09/18 04:36:44 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.29.2.2 2008/05/14 01:35:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.29.2.3 2008/09/18 04:36:44 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,7 +124,8 @@ darwin_tracesig(struct proc *p, int signo)
 
 	code[0] = MACH_SOFT_SIGNAL;
 	code[1] = signo;
-	l = proc_representative_lwp(p, NULL, 0);
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
 	error = mach_exception(l, MACH_EXC_SOFTWARE, code);
 
 	/* Inhibit normal signal delivery */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.93.2.1 2008/06/23 04:31:59 wrstuden Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.93.2.2 2008/09/18 04:37:01 wrstuden Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.93.2.1 2008/06/23 04:31:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.93.2.2 2008/09/18 04:37:01 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "opt_mrouting.h"
@@ -161,7 +161,6 @@ static int ip6_mdq(struct mbuf *, struct ifnet *, struct mf6c *);
 static void phyint_send(struct ip6_hdr *, struct mif6 *, struct mbuf *);
 
 static int set_pim6(int *);
-static int get_pim6(struct mbuf *);
 static int socket_send(struct socket *, struct mbuf *,
 	    struct sockaddr_in6 *);
 static int register_send(struct ip6_hdr *, struct mif6 *, struct mbuf *);
@@ -308,72 +307,90 @@ pim6_init(void)
  * Handle MRT setsockopt commands to modify the multicast routing tables.
  */
 int
-ip6_mrouter_set(int cmd, struct socket *so, struct mbuf *m)
+ip6_mrouter_set(struct socket *so, struct sockopt *sopt)
 {
-	if (cmd != MRT6_INIT && so != ip6_mrouter)
+	int error, optval;
+	struct mif6ctl mifc;
+	struct mf6cctl mfcc;
+	mifi_t mifi;
+
+	if (sopt->sopt_name != MRT6_INIT && so != ip6_mrouter)
 		return (EACCES);
 
-	switch (cmd) {
+	error = 0;
+
+	switch (sopt->sopt_name) {
 #ifdef MRT6_OINIT
 	case MRT6_OINIT:
 #endif
 	case MRT6_INIT:
-		if (m == NULL || m->m_len != sizeof(int))
-			return (EINVAL);
-		return (ip6_mrouter_init(so, *mtod(m, int *), cmd));
+		error = sockopt_getint(sopt, &optval);
+		if (error)
+			break;
+		return (ip6_mrouter_init(so, optval, sopt->sopt_name));
 	case MRT6_DONE:
 		return (ip6_mrouter_done());
 	case MRT6_ADD_MIF:
-		if (m == NULL || m->m_len != sizeof(struct mif6ctl))
-			return (EINVAL);
-		return (add_m6if(mtod(m, struct mif6ctl *)));
+		error = sockopt_get(sopt, &mifc, sizeof(mifc));
+		if (error)
+			break;
+		return (add_m6if(&mifc));
 	case MRT6_DEL_MIF:
-		if (m == NULL || m->m_len != sizeof(mifi_t))
-			return (EINVAL);
-		return (del_m6if(mtod(m, mifi_t *)));
+		error = sockopt_get(sopt, &mifi, sizeof(mifi));
+		if (error)
+			break;
+		return (del_m6if(&mifi));
 	case MRT6_ADD_MFC:
-		if (m == NULL || m->m_len != sizeof(struct mf6cctl))
-			return (EINVAL);
-		return (add_m6fc(mtod(m, struct mf6cctl *)));
+		error = sockopt_get(sopt, &mfcc, sizeof(mfcc));
+		if (error)
+			break;
+		return (add_m6fc(&mfcc));
 	case MRT6_DEL_MFC:
-		if (m == NULL || m->m_len != sizeof(struct mf6cctl))
-			return (EINVAL);
-		return (del_m6fc(mtod(m,  struct mf6cctl *)));
+		error = sockopt_get(sopt, &mfcc, sizeof(mfcc));
+		if (error)
+			break;
+		return (del_m6fc(&mfcc));
 	case MRT6_PIM:
-		if (m == NULL || m->m_len != sizeof(int))
-			return (EINVAL);
-		return (set_pim6(mtod(m, int *)));
+		error = sockopt_getint(sopt, &optval);
+		if (error)
+			break;
+		return (set_pim6(&optval));
 	default:
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
 	}
+
+	return (error);
 }
 
 /*
  * Handle MRT getsockopt commands
  */
 int
-ip6_mrouter_get(int cmd, struct socket *so, struct mbuf **m)
+ip6_mrouter_get(struct socket *so, struct sockopt *sopt)
 {
-	struct mbuf *mb;
+	int error;
 
 	if (so != ip6_mrouter) return EACCES;
 
-	*m = mb = m_get(M_WAIT, MT_SOOPTS);
+	error = 0;
 
-	switch (cmd) {
+	switch (sopt->sopt_name) {
 	case MRT6_PIM:
-		return get_pim6(mb);
+		error = sockopt_set(sopt, &pim6, sizeof(pim6));
+		break;
 	default:
-		m_free(mb);
-		return EOPNOTSUPP;
+		error = EOPNOTSUPP;
+		break;
 	}
+
+	return (error);
 }
 
 /*
  * Handle ioctl commands to obtain information from the cache
  */
 int
-mrt6_ioctl(int cmd, void *data)
+mrt6_ioctl(u_long cmd, void *data)
 {
 
 	switch (cmd) {
@@ -426,21 +443,6 @@ get_mif6_cnt(struct sioc_mif_req6 *req)
 	req->ocount = mif6table[mifi].m6_pkt_out;
 	req->ibytes = mif6table[mifi].m6_bytes_in;
 	req->obytes = mif6table[mifi].m6_bytes_out;
-
-	return 0;
-}
-
-/*
- * Get PIM processiong global
- */
-static int
-get_pim6(struct mbuf *m)
-{
-	int *i;
-
-	i = mtod(m, int *);
-
-	*i = pim6;
 
 	return 0;
 }

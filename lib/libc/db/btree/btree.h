@@ -1,4 +1,4 @@
-/*	$NetBSD: btree.h,v 1.15 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: btree.h,v 1.15.12.1 2008/09/18 04:39:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -78,7 +78,7 @@ typedef struct _page {
 #define	P_RLEAF		0x10		/* leaf page */
 #define P_TYPE		0x1f		/* type mask */
 #define	P_PRESERVE	0x20		/* never delete this chain of pages */
-	u_int32_t flags;
+	uint32_t flags;
 
 	indx_t	lower;			/* lower bound of free space on page */
 	indx_t	upper;			/* upper bound of free space on page */
@@ -88,7 +88,7 @@ typedef struct _page {
 /* First and next index. */
 #define	BTDATAOFF							\
 	(sizeof(pgno_t) + sizeof(pgno_t) + sizeof(pgno_t) +		\
-	    sizeof(u_int32_t) + sizeof(indx_t) + sizeof(indx_t))
+	    sizeof(uint32_t) + sizeof(indx_t) + sizeof(indx_t))
 
 #define	_NEXTINDEX(p) (((p)->lower - BTDATAOFF) / sizeof(indx_t))
 #ifdef _DIAGNOSTIC
@@ -119,7 +119,7 @@ NEXTINDEX(const PAGE *p) {
  * manipulated on this system.)
  */
 #define	BTLALIGN(n)	(((n) + sizeof(pgno_t) - 1) & ~(sizeof(pgno_t) - 1))
-#define	NOVFLSIZE	(sizeof(pgno_t) + sizeof(u_int32_t))
+#define	NOVFLSIZE	(sizeof(pgno_t) + sizeof(uint32_t))
 
 /*
  * For the btree internal pages, the item is a key.  BINTERNALs are {key, pgno}
@@ -131,11 +131,11 @@ NEXTINDEX(const PAGE *p) {
  * some minor modifications of the above rule.
  */
 typedef struct _binternal {
-	u_int32_t ksize;		/* key size */
+	uint32_t ksize;			/* key size */
 	pgno_t	pgno;			/* page number stored on */
 #define	P_BIGDATA	0x01		/* overflow data */
 #define	P_BIGKEY	0x02		/* overflow key */
-	u_char	flags;
+	uint8_t	flags;
 	char	bytes[1];		/* data */
 } BINTERNAL;
 
@@ -145,27 +145,27 @@ typedef struct _binternal {
 
 /* Get the number of bytes in the entry. */
 #define _NBINTERNAL(len)						\
-    BTLALIGN(sizeof(u_int32_t) + sizeof(pgno_t) + sizeof(u_char) + (len))
+    BTLALIGN(sizeof(uint32_t) + sizeof(pgno_t) + sizeof(uint8_t) + (len))
 #ifdef _DIAGNOSTIC
-static __inline u_int32_t
-NBINTERNAL(u_int32_t len) {
+static __inline uint32_t
+NBINTERNAL(uint32_t len) {
 	size_t x = _NBINTERNAL(len);
-	_DBFIT(x, u_int32_t);
-	return (u_int32_t)x;
+	_DBFIT(x, uint32_t);
+	return (uint32_t)x;
 }
 #else
-#define NBINTERNAL(len)	(u_int32_t)_NBINTERNAL(len)
+#define NBINTERNAL(len)	(uint32_t)_NBINTERNAL(len)
 #endif
 
 /* Copy a BINTERNAL entry to the page. */
 #define	WR_BINTERNAL(p, size, pgno, flags) do {				\
-	_DBFIT(size, u_int32_t);					\
-	*(u_int32_t *)(void *)p = (u_int32_t)size;			\
-	p += sizeof(u_int32_t);						\
+	_DBFIT(size, uint32_t);						\
+	*(uint32_t *)(void *)p = (uint32_t)size;			\
+	p += sizeof(uint32_t);						\
 	*(pgno_t *)(void *)p = pgno;					\
 	p += sizeof(pgno_t);						\
-	*(u_char *)(void *)p = flags;					\
-	p += sizeof(u_char);						\
+	*(uint8_t *)(void *)p = flags;					\
+	p += sizeof(uint8_t);						\
 } while (/*CONSTCOND*/0)
 
 /*
@@ -194,9 +194,9 @@ typedef struct _rinternal {
 
 /* For the btree leaf pages, the item is a key and data pair. */
 typedef struct _bleaf {
-	u_int32_t	ksize;		/* size of key */
-	u_int32_t	dsize;		/* size of data */
-	u_char	flags;			/* P_BIGDATA, P_BIGKEY */
+	uint32_t	ksize;		/* size of key */
+	uint32_t	dsize;		/* size of data */
+	uint8_t	flags;			/* P_BIGDATA, P_BIGKEY */
 	char	bytes[1];		/* data */
 } BLEAF;
 
@@ -207,17 +207,17 @@ typedef struct _bleaf {
 
 /* Get the number of bytes in the user's key/data pair. */
 #define _NBLEAFDBT(ksize, dsize)					\
-    BTLALIGN(sizeof(u_int32_t) + sizeof(u_int32_t) + sizeof(u_char) +	\
+    BTLALIGN(sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint8_t) +	\
 	    (ksize) + (dsize))
 #ifdef _DIAGNOSTIC
-static __inline u_int32_t
+static __inline uint32_t
 NBLEAFDBT(size_t k, size_t d) {
 	size_t x = _NBLEAFDBT(k, d);
-	_DBFIT(x, u_int32_t);
-	return (u_int32_t)x;
+	_DBFIT(x, uint32_t);
+	return (uint32_t)x;
 }
 #else
-#define NBLEAFDBT(p, q)	(u_int32_t)_NBLEAFDBT(p, q)
+#define NBLEAFDBT(p, q)	(uint32_t)_NBLEAFDBT(p, q)
 #endif
 
 /* Get the number of bytes in the entry. */
@@ -225,14 +225,14 @@ NBLEAFDBT(size_t k, size_t d) {
 
 /* Copy a BLEAF entry to the page. */
 #define	WR_BLEAF(p, key, data, flags) do {				\
-	_DBFIT(key->size, u_int32_t);					\
-	*(u_int32_t *)(void *)p = (u_int32_t)key->size;			\
-	p += sizeof(u_int32_t);						\
-	_DBFIT(data->size, u_int32_t);					\
-	*(u_int32_t *)(void *)p = (u_int32_t)data->size;		\
-	p += sizeof(u_int32_t);						\
-	*(u_char *)(void *)p = flags;					\
-	p += sizeof(u_char);						\
+	_DBFIT(key->size, uint32_t);					\
+	*(uint32_t *)(void *)p = (uint32_t)key->size;			\
+	p += sizeof(uint32_t);						\
+	_DBFIT(data->size, uint32_t);					\
+	*(uint32_t *)(void *)p = (uint32_t)data->size;			\
+	p += sizeof(uint32_t);						\
+	*(uint8_t *)(void *)p = flags;					\
+	p += sizeof(uint8_t);						\
 	(void)memmove(p, key->data, key->size);				\
 	p += key->size;							\
 	(void)memmove(p, data->data, data->size);			\
@@ -240,8 +240,8 @@ NBLEAFDBT(size_t k, size_t d) {
 
 /* For the recno leaf pages, the item is a data entry. */
 typedef struct _rleaf {
-	u_int32_t	dsize;		/* size of data */
-	u_char	flags;			/* P_BIGDATA */
+	uint32_t	dsize;		/* size of data */
+	uint8_t	flags;			/* P_BIGDATA */
 	char	bytes[1];
 } RLEAF;
 
@@ -250,17 +250,17 @@ typedef struct _rleaf {
 	((RLEAF *)(void *)((char *)(void *)(pg) + (pg)->linp[indx]))
 
 #define	_NRLEAFDBT(dsize)						\
-	BTLALIGN(sizeof(u_int32_t) + sizeof(u_char) + (dsize))
+	BTLALIGN(sizeof(uint32_t) + sizeof(uint8_t) + (dsize))
 
 #ifdef _DIAGNOSTIC
-static __inline u_int32_t
+static __inline uint32_t
 NRLEAFDBT(size_t d) {
 	size_t x = _NRLEAFDBT(d);
-	_DBFIT(x, u_int32_t);
-	return (u_int32_t)x;
+	_DBFIT(x, uint32_t);
+	return (uint32_t)x;
 }
 #else
-#define NRLEAFDBT(d)	(u_int32_t)_NRLEAFDBT(d)
+#define NRLEAFDBT(d)	(uint32_t)_NRLEAFDBT(d)
 #endif
 
 /* Get the number of bytes in the entry. */
@@ -270,11 +270,11 @@ NRLEAFDBT(size_t d) {
 
 /* Copy a RLEAF entry to the page. */
 #define	WR_RLEAF(p, data, flags) do {					\
-	_DBFIT(data->size, u_int32_t);					\
-	*(u_int32_t *)(void *)p = (u_int32_t)data->size;		\
-	p += sizeof(u_int32_t);						\
-	*(u_char *)(void *)p = flags;					\
-	p += sizeof(u_char);						\
+	_DBFIT(data->size, uint32_t);					\
+	*(uint32_t *)(void *)p = (uint32_t)data->size;			\
+	p += sizeof(uint32_t);						\
+	*(uint8_t *)(void *)p = flags;					\
+	p += sizeof(uint8_t);						\
 	memmove(p, data->data, data->size);				\
 } while (/*CONSTCOND*/0)
 
@@ -331,7 +331,7 @@ typedef struct _cursor {
 #define	CURS_AFTER	0x02		/*  B: Unreturned cursor after key. */
 #define	CURS_BEFORE	0x04		/*  B: Unreturned cursor before key. */
 #define	CURS_INIT	0x08		/* RB: Cursor initialized. */
-	u_int8_t flags;
+	uint8_t flags;
 } CURSOR;
 
 /*
@@ -340,14 +340,14 @@ typedef struct _cursor {
  * put or delete call modify the metadata.
  */
 typedef struct _btmeta {
-	u_int32_t	magic;		/* magic number */
-	u_int32_t	version;	/* version */
-	u_int32_t	psize;		/* page size */
-	u_int32_t	free;		/* page number of first free page */
-	u_int32_t	nrecs;		/* R: number of records */
+	uint32_t	magic;		/* magic number */
+	uint32_t	version;	/* version */
+	uint32_t	psize;		/* page size */
+	uint32_t	free;		/* page number of first free page */
+	uint32_t	nrecs;		/* R: number of records */
 
 #define	SAVEMETA	(B_NODUPS | R_RECNO)
-	u_int32_t	flags;		/* bt_flags & SAVEMETA */
+	uint32_t	flags;		/* bt_flags & SAVEMETA */
 } BTMETA;
 
 /* The in-memory btree/recno data structure. */
@@ -377,7 +377,7 @@ typedef struct _btree {
 	int	  bt_fd;		/* tree file descriptor */
 
 	pgno_t	  bt_free;		/* next free page */
-	u_int32_t bt_psize;		/* page size */
+	uint32_t bt_psize;		/* page size */
 	indx_t	  bt_ovflsize;		/* cut-off for key/data overflow */
 	int	  bt_lorder;		/* byte order */
 					/* sorted order */
@@ -401,7 +401,7 @@ typedef struct _btree {
 
 	recno_t	  bt_nrecs;		/* R: number of records */
 	size_t	  bt_reclen;		/* R: fixed record length */
-	u_char	  bt_bval;		/* R: delimiting byte/pad character */
+	uint8_t	  bt_bval;		/* R: delimiting byte/pad character */
 
 /*
  * NB:
@@ -427,7 +427,7 @@ typedef struct _btree {
 #define	B_DB_LOCK	0x04000		/* DB_LOCK specified. */
 #define	B_DB_SHMEM	0x08000		/* DB_SHMEM specified. */
 #define	B_DB_TXN	0x10000		/* DB_TXN specified. */
-	u_int32_t flags;
+	uint32_t flags;
 } BTREE;
 
 #include "extern.h"

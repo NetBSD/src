@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.87.12.1 2008/06/23 04:31:56 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.87.12.2 2008/09/18 04:36:56 wrstuden Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -56,7 +56,6 @@ SRCS+=	strtoll.c strtoull.c strtoumax.c
 SRCS+=	xlat_mbr_fstype.c
 
 SRCS+=	rb.c
-COPTS.rb.c+=	-Wno-missing-field-initializers
 
 # Files to clean up
 CLEANFILES+= lib${LIB}.o lib${LIB}.po

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.2.2.1 2008/06/23 04:30:18 wrstuden Exp $
+#	$NetBSD: TISDP2420,v 1.2.2.2 2008/09/18 04:33:23 wrstuden Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -19,6 +19,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	CPU_ARM1136
 options 	OMAP_2420
+options 	PMAPCOUNTERS
 
 # Architecture options
 
@@ -47,6 +48,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 #options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options
@@ -215,11 +217,11 @@ options CONSADDR=0x4806a000, CONSPEED=57600
 ##omap2430intc0	at obio?	# Interrupt controller
 
 # Operating System Timer
-omap2430mputmr0	at obio? addr 0x4802a000 intr 38	# GP Timer 2
+omapmputmr0	at obio? addr 0x4802a000 intr 38	# GP Timer 2
 # Statistics Timer
-omap2430mputmr1	at obio? addr 0x48078000 intr 39	# GP Timer 3
+omapmputmr1	at obio? addr 0x48078000 intr 39	# GP Timer 3
 # Microtime Reference Timer
-omap2430mputmr2	at obio? addr 0x4807A000 intr 40	# GP Timer 4
+omapmputmr2	at obio? addr 0x4807A000 intr 40	# GP Timer 4
 options OMAP_MPU_TIMER_CLOCK_FREQ=12000000
 
 # Watchdog timers

@@ -1,4 +1,4 @@
-/*	$NetBSD: llabs.S,v 1.4 2003/08/07 16:42:07 agc Exp $	*/
+/*	$NetBSD: llabs.S,v 1.4.32.1 2008/09/18 04:39:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,16 +36,18 @@
 
 #include <machine/asm.h>
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: llabs.S,v 1.4 2003/08/07 16:42:07 agc Exp $")
+	RCSID("$NetBSD: llabs.S,v 1.4.32.1 2008/09/18 04:39:19 wrstuden Exp $")
 #endif
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(llabs, _llabs)
+WEAK_ALIAS(imaxabs, _llabs)
 #endif
 
 #ifdef WEAK_ALIAS
 ENTRY(_llabs)
 #else
+STRONG_ALIAS(imaxabs, llabs)
 ENTRY(llabs)
 #endif
 	movl	8(%esp),%edx

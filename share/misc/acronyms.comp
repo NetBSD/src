@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.84.6.1 2008/06/23 04:30:03 wrstuden Exp $
+$NetBSD: acronyms.comp,v 1.84.6.2 2008/09/18 04:38:09 wrstuden Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -34,6 +34,7 @@ BAR	base address register
 BEDO	burst extended data output
 BER	basic encoding rules
 BER	bit error rate
+BFD	binary formats descriptor
 BFKL	big fscking kernel lock
 BGP	border gateway protocol
 BIOS	basic input/output system
@@ -119,11 +120,14 @@ FAT	file allocation table
 FBRAM	frame buffer random access memory
 FCS	frame check sequence
 FDDI	fiber distributed data interface
+FFI	foreign function interface
 FFS	fast file system
+FFS	find first set
 FHSS	frequency hop spread spectrum
 FIR	fast infrared
 FLOPS	floating [point] operations per second
 FM	frequency modulation
+FOSS	free / open source software
 FPM	fast page mode
 FQDN	fully qualified domain name
 FTP	file transfer protocol
@@ -231,11 +235,14 @@ OCL	object constraint language
 OCR	optical character recognition
 OEM	original equipment manufacturer
 OFDM	orthogonal frequency division multiplexing
+OOB	out of band
 OS	operating system
+OSD	open source definition
 OSF	open software foundation
 OSI	open systems interconnection
 OSI	open-source initiative
 OSPF	open shortest path first
+OSS	open source software
 OTP	one time password
 PA	physical address
 PAE	physical address extension
@@ -270,6 +277,7 @@ PPP	point-to-point protocol
 PPPOA	point-to-point protocol over ATM
 PPPOE	point-to-point protocol over ethernet
 PRML	partial response, maximum likelihood
+PRNG	pseudo random number generator
 PROM	programmable read only memory
 PSK	pre-shared key
 PSTN	public switched telephone network
@@ -289,6 +297,7 @@ RIR	regional internet registry
 RISC	reduced instruction set computing
 RLE	run length encoding
 RLL	run length limited
+RNG	random number generator
 ROM	read only memory
 RPC	remote procedure call
 RPM	revolutions per minute
@@ -341,6 +350,7 @@ TLD	top level domain
 TLS	transport layer security
 TMDS	transition minimized differential signaling
 TR	token ring
+TRNG	true random number generator
 TTL	time to live
 TTY	teletype
 TZ	time zone

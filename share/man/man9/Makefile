@@ -1,8 +1,9 @@
-#       $NetBSD: Makefile,v 1.264 2008/05/06 11:32:46 yamt Exp $
+#       $NetBSD: Makefile,v 1.264.2.1 2008/09/18 04:38:09 wrstuden Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
+MAN=	accept_filter.9 accf_data.9 accf_http.9 \
+	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	bcdtobin.9 bitmask_snprintf.9 bcmp.9 bcopy.9 bluetooth.9 bzero.9 \
 	buffercache.9 bufq.9 bus_dma.9 bus_space.9 \
 	callout.9 cardbus.9 cnmagic.9 condvar.9 config.9 cons.9 copy.9 \
@@ -46,10 +47,12 @@ MAN=	altq.9 arc4random.9 arp.9 audio.9 autoconf.9 \
 	sched_4bsd.9 scsipi.9 \
 	secmodel.9 secmodel_bsd44.9 secmodel_overlay.9 secmodel_securelevel.9 \
 	setjmp.9 shutdownhook_establish.9 \
-	signal.9 softintr.9 spl.9 splraiseipl.9 store.9 suspendsched.9 \
-	sysctl.9 sysmon_envsys.9 tc.9 tcp_congctl.9 timecounter.9 time_second.9 \
-	todr.9 uiomove.9 ucom.9 userret.9 \
-	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 vme.9 \
+	signal.9 sockopt.9 softintr.9 spl.9 splraiseipl.9 \
+	store.9 suspendsched.9 \
+	sysctl.9 sysmon_envsys.9 tc.9 tcp_congctl.9 timecounter.9 \
+	time_second.9 todr.9 uiomove.9 ucom.9 userret.9 \
+	vattr.9 veriexec.9 vcons.9 vfs.9 vfs_hooks.9 vfsops.9 vfssubr.9 \
+	video.9 vme.9 \
 	vnfileops.9 vnode.9 vnodeops.9 vnsubr.9 \
 	usbdi.9 uvm.9 \
 	vmem.9 vmem_alloc.9 vmem_create.9 vmem_destroy.9 vmem_free.9 \
@@ -70,6 +73,11 @@ MLINKS+=dmover.9 dmover_backend_register.9 \
 
 MAN+=	KASSERT.9
 MLINKS+=KASSERT.9 KDASSERT.9
+
+MLINKS+=accept_filter.9 accept_filt_add.9
+MLINKS+=accept_filter.9 accept_filt_del.9
+MLINKS+=accept_filter.9 accept_filt_generic_mod_event.9
+MLINKS+=accept_filter.9 accept_filt_get.9
 
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=autoconf.9 config_search_loc.9 \
@@ -323,6 +331,9 @@ MLINKS+=kprintf.9 printf.9 kprintf.9 printf_nolog.9 kprintf.9 sprintf.9 \
 MLINKS+=kthread.9 kthread_exit.9 \
 	kthread.9 kthread_create.9 \
 	kthread.9 kthread_destroy.9
+MLINKS+=linedisc.9 ttyldisc_add.9 \
+	linedisc.9 ttyldisc_lookup.9 \
+	linedisc.9 ttyldisc_remove.9
 MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 simple_lock_try.9 lock.9 simple_unlock.9 \
 	lock.9 simple_lock_freecheck.9 lock.9 simple_lock_dump.9  \
@@ -536,6 +547,12 @@ MLINKS+=signal.9 siginit.9 \
 	signal.9 sendsig.9 \
 	signal.9 sigcode.9 \
 	signal.9 sigtramp.9
+MLINKS+=sockopt.9 sockopt_init.9 \
+	sockopt.9 sockopt_destroy.9 \
+	sockopt.9 sockopt_get.9 \
+	sockopt.9 sockopt_getint.9 \
+	sockopt.9 sockopt_set.9 \
+	sockopt.9 sockopt_setint.9
 MLINKS+=softintr.9 softintr_establish.9 softintr.9 softintr_disestablish.9 \
 	softintr.9 softintr_schedule.9 softintr.9 softint.9 \
 	softintr.9 softint_establish.9 softintr.9 softint_disestablish.9 \

@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.16.6.1 2008/06/23 04:31:50 wrstuden Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.16.6.2 2008/09/18 04:31:41 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.16.6.1 2008/06/23 04:31:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.16.6.2 2008/09/18 04:31:41 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ drvctlopen(dev_t dev, int flags, int mode, struct lwp *l)
 }
 
 static int
-pmdevbyname(int cmd, struct devpmargs *a)
+pmdevbyname(u_long cmd, struct devpmargs *a)
 {
 	struct device *d;
 

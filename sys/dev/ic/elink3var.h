@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.34 2006/07/11 22:49:47 peter Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.34.60.1 2008/09/18 04:35:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -40,7 +40,7 @@
  * Ethernet software status per interface.
  */
 struct ep_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 
 	struct ethercom sc_ethercom;	/* Ethernet common part		*/
@@ -122,7 +122,7 @@ int	epintr(void *);
 int	epenable(struct ep_softc *);
 void	epdisable(struct ep_softc *);
 
-int	ep_activate(struct device *, enum devact);
-int	ep_detach(struct device *, int);
+int	ep_activate(device_t, enum devact);
+int	ep_detach(device_t, int);
 
 void	ep_power(int, void *);

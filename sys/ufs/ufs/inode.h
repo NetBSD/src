@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.51 2008/01/09 16:15:23 ad Exp $	*/
+/*	$NetBSD: inode.h,v 1.51.12.1 2008/09/18 04:37:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #ifndef _UFS_UFS_INODE_H_
-#define _UFS_UFS_INODE_H_
+#define	_UFS_UFS_INODE_H_
 
 #include <sys/vnode.h>
 #include <ufs/ufs/dinode.h>
@@ -51,6 +51,9 @@
  */
 struct ffs_inode_ext {
 	daddr_t *ffs_snapblklist;	/* Collect expunged snapshot blocks. */
+	/* follow two fields are used by contiguous allocation code only. */
+	daddr_t ffs_first_data_blk;	/* first indirect block on disk. */
+	daddr_t ffs_first_indir_blk;	/* first data block on disk. */
 };
 
 struct ext2fs_inode_ext {
@@ -113,6 +116,8 @@ struct inode {
 		struct  lfs_inode_ext *lfs;
 	} inode_ext;
 #define	i_snapblklist		inode_ext.ffs.ffs_snapblklist
+#define	i_ffs_first_data_blk	inode_ext.ffs.ffs_first_data_blk
+#define	i_ffs_first_indir_blk	inode_ext.ffs.ffs_first_indir_blk
 #define	i_e2fs_last_lblk	inode_ext.e2fs.ext2fs_last_lblk
 #define	i_e2fs_last_blk		inode_ext.e2fs.ext2fs_last_blk
 	/*
@@ -159,15 +164,15 @@ struct inode {
 #define	i_ffs1_rdev		i_din.ffs1_din->di_rdev
 #define	i_ffs1_size		i_din.ffs1_din->di_size
 #define	i_ffs1_uid		i_din.ffs1_din->di_uid
-#define i_ffs1_ouid		i_din.ffs1_din->di_u.oldids[0]
-#define i_ffs1_ogid		i_din.ffs1_din->di_u.oldids[1]
+#define	i_ffs1_ouid		i_din.ffs1_din->di_u.oldids[0]
+#define	i_ffs1_ogid		i_din.ffs1_din->di_u.oldids[1]
 
 #define	i_ffs2_atime		i_din.ffs2_din->di_atime
 #define	i_ffs2_atimensec	i_din.ffs2_din->di_atimensec
-#define i_ffs2_birthtime	i_din.ffs2_din->di_birthtime
-#define i_ffs2_birthnsec	i_din.ffs2_din->di_birthnsec
+#define	i_ffs2_birthtime	i_din.ffs2_din->di_birthtime
+#define	i_ffs2_birthnsec	i_din.ffs2_din->di_birthnsec
 #define	i_ffs2_blocks		i_din.ffs2_din->di_blocks
-#define i_ffs2_blksize		i_din.ffs2_din->di_blksize
+#define	i_ffs2_blksize		i_din.ffs2_din->di_blksize
 #define	i_ffs2_ctime		i_din.ffs2_din->di_ctime
 #define	i_ffs2_ctimensec	i_din.ffs2_din->di_ctimensec
 #define	i_ffs2_db		i_din.ffs2_din->di_db
@@ -182,9 +187,9 @@ struct inode {
 #define	i_ffs2_rdev		i_din.ffs2_din->di_rdev
 #define	i_ffs2_size		i_din.ffs2_din->di_size
 #define	i_ffs2_uid		i_din.ffs2_din->di_uid
-#define i_ffs2_kernflags	i_din.ffs2_din->di_kernflags
-#define i_ffs2_extsize		i_din.ffs2_din->di_extsize
-#define i_ffs2_extb		i_din.ffs2_din->di_extb
+#define	i_ffs2_kernflags	i_din.ffs2_din->di_kernflags
+#define	i_ffs2_extsize		i_din.ffs2_din->di_extsize
+#define	i_ffs2_extb		i_din.ffs2_din->di_extb
 
 #define	i_e2fs_mode		i_din.e2fs_din->e2di_mode
 #define	i_e2fs_uid		i_din.e2fs_din->e2di_uid
@@ -218,8 +223,8 @@ struct inode {
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
 #define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
 #define	IN_ADIROP	0x0200		/* LFS: dirop in progress */
-#define IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
-#define IN_PAGING       0x1000          /* LFS: file is on paging queue */
+#define	IN_SPACECOUNTED	0x0400		/* Blocks to be freed in free count. */
+#define	IN_PAGING       0x1000		/* LFS: file is on paging queue */
 
 #if defined(_KERNEL)
 
@@ -227,11 +232,11 @@ struct inode {
  * The DIP macro is used to access fields in the dinode that are
  * not cached in the inode itself.
  */
-#define DIP(ip, field) \
+#define	DIP(ip, field) \
 	(((ip)->i_ump->um_fstype == UFS1) ? \
 	(ip)->i_ffs1_##field : (ip)->i_ffs2_##field)
 
-#define DIP_ASSIGN(ip, field, value)					\
+#define	DIP_ASSIGN(ip, field, value)					\
 	do {								\
 		if ((ip)->i_ump->um_fstype == UFS1)			\
 			(ip)->i_ffs1_##field = (value);			\
@@ -239,7 +244,7 @@ struct inode {
 			(ip)->i_ffs2_##field = (value);			\
 	} while(0)
 
-#define DIP_ADD(ip, field, value)					\
+#define	DIP_ADD(ip, field, value)					\
 	do {								\
 		if ((ip)->i_ump->um_fstype == UFS1)			\
 			(ip)->i_ffs1_##field += (value);		\
@@ -247,7 +252,7 @@ struct inode {
 			(ip)->i_ffs2_##field += (value);		\
 	} while(0)
 
-#define  SHORTLINK(ip) \
+#define	 SHORTLINK(ip) \
 	(((ip)->i_ump->um_fstype == UFS1) ? \
 	(void *)(ip)->i_ffs1_db : (void *)(ip)->i_ffs2_db)
 

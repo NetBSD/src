@@ -1,4 +1,4 @@
-/* $NetBSD: drm_irq.c,v 1.10.2.1 2008/06/23 04:31:01 wrstuden Exp $ */
+/* $NetBSD: drm_irq.c,v 1.10.2.2 2008/09/18 04:35:03 wrstuden Exp $ */
 
 /* drm_irq.c -- IRQ IOCTL and function support
  * Created: Fri Oct 18 2003 by anholt@FreeBSD.org
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.10.2.1 2008/06/23 04:31:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.10.2.2 2008/09/18 04:35:03 wrstuden Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_irq.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -68,9 +68,9 @@ drm_irq_handler_wrap(DRM_IRQ_ARGS)
 	irqreturn_t ret;
 	drm_device_t *dev = (drm_device_t *)arg;
 
-	mutex_spin_enter(&dev->irq_lock);
+	DRM_SPINLOCK(&dev->irq_lock);
 	ret = dev->driver.irq_handler(arg);
-	mutex_spin_exit(&dev->irq_lock);
+	DRM_SPINUNLOCK(&dev->irq_lock);
 	return ret;
 }
 
@@ -83,7 +83,7 @@ int drm_irq_install(drm_device_t *dev)
 	if (dev->irq == 0 || dev->dev_private == NULL)
 		return DRM_ERR(EINVAL);
 
-	DRM_DEBUG( "%s: irq=%d\n", __func__, dev->irq );
+	DRM_DEBUG( "%s: irq=%d\n", __FUNCTION__, dev->irq );
 
 	DRM_LOCK();
 	if (dev->irq_enabled) {
@@ -94,7 +94,7 @@ int drm_irq_install(drm_device_t *dev)
 
 	dev->context_flag = 0;
 
-	mutex_init(&dev->irq_lock, MUTEX_SPIN, IPL_VM);
+	DRM_SPININIT(&dev->irq_lock, "DRM IRQ lock");
 
 				/* Before installing handler */
 
@@ -113,7 +113,7 @@ int drm_irq_install(drm_device_t *dev)
 		retcode = ENOENT;
 		goto err;
 	}
-	aprint_normal_dev(&dev->device, "interrupting at %s\n", istr);
+	aprint_normal_dev(dev->device, "interrupting at %s\n", istr);
 
 				/* After installing handler */
 	DRM_LOCK();
@@ -124,7 +124,7 @@ int drm_irq_install(drm_device_t *dev)
 err:
 	DRM_LOCK();
 	dev->irq_enabled = 0;
-	mutex_destroy(&dev->irq_lock);
+	DRM_SPINUNINIT(&dev->irq_lock);
 	DRM_UNLOCK();
 	return retcode;
 }
@@ -136,12 +136,12 @@ int drm_irq_uninstall(drm_device_t *dev)
 
 	dev->irq_enabled = 0;
 
-	DRM_DEBUG( "%s: irq=%d\n", __func__, dev->irq );
+	DRM_DEBUG( "%s: irq=%d\n", __FUNCTION__, dev->irq );
 
 	dev->driver.irq_uninstall(dev);
 
 	pci_intr_disestablish(dev->pa.pa_pc, dev->irqh);
-	mutex_destroy(&dev->irq_lock);
+	DRM_SPINUNINIT(&dev->irq_lock);
 
 	return 0;
 }
@@ -209,9 +209,9 @@ int drm_wait_vblank(DRM_IOCTL_ARGS)
 
 		vblwait.reply.sequence = atomic_read(&dev->vbl_received);
 		
-		mutex_spin_enter(&dev->irq_lock);
+		DRM_SPINLOCK(&dev->irq_lock);
 		TAILQ_INSERT_HEAD(&dev->vbl_sig_list, vbl_sig, link);
-		mutex_spin_exit(&dev->irq_lock);
+		DRM_SPINUNLOCK(&dev->irq_lock);
 		ret = 0;
 #endif
 		ret = EINVAL;

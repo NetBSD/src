@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.23 2008/01/27 00:29:24 pooka Exp $	*/
+/*	$NetBSD: opdump.c,v 1.23.6.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.23 2008/01/27 00:29:24 pooka Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.23.6.1 2008/09/18 04:39:24 wrstuden Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -233,7 +233,7 @@ puffsdump_rv(struct puffs_req *preq)
 }
 
 void
-puffsdump_cookie(void *c, const char *cookiename)
+puffsdump_cookie(puffs_cookie_t c, const char *cookiename)
 {
 	
 	printf("\t%scookie: at %p\n", cookiename, c);

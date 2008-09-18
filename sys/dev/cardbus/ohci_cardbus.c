@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.29 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.29.2.1 2008/09/18 04:35:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.29 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.29.2.1 2008/09/18 04:35:02 wrstuden Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -131,10 +131,6 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Disable interrupts, so we don't can any spurious ones. */
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
-			  OHCI_ALL_INTRS);
-
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
@@ -154,13 +150,16 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 		       csr | CARDBUS_COMMAND_MASTER_ENABLE
 			   | CARDBUS_COMMAND_MEM_ENABLE);
 
+	/* Disable interrupts, so we don't can any spurious ones. */
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
+			  OHCI_ALL_INTRS);
+
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
 					   IPL_USB, ohci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n", devname);
 		return;
 	}
-	printf("%s: interrupting at %d\n", devname, ca->ca_intrline);
 
 	/* Figure out vendor for root hub descriptor. */
 	vendor = cardbus_findvendor(ca->ca_id);

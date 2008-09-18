@@ -1,4 +1,4 @@
-/*	$NetBSD: printching.c,v 1.2 2005/06/30 13:44:48 martin Exp $	*/
+/*	$NetBSD: printching.c,v 1.2.20.1 2008/09/18 04:39:56 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,15 +38,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ching.phx.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: printching.c,v 1.2 2005/06/30 13:44:48 martin Exp $");
+__RCSID("$NetBSD: printching.c,v 1.2.20.1 2008/09/18 04:39:56 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

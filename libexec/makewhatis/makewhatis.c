@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.41.2.1 2008/06/23 04:29:56 wrstuden Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.41.2.2 2008/09/18 04:39:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,9 +35,9 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
-	All rights reserved.\n");
-__RCSID("$NetBSD: makewhatis.c,v 1.41.2.1 2008/06/23 04:29:56 wrstuden Exp $");
+__COPYRIGHT("@(#) Copyright (c) 1999\
+ The NetBSD Foundation, Inc.  All rights reserved.\n");
+__RCSID("$NetBSD: makewhatis.c,v 1.41.2.2 2008/09/18 04:39:18 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

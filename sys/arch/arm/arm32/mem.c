@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.20 2008/01/01 14:06:42 chris Exp $	*/
+/*	$NetBSD: mem.c,v 1.20.12.1 2008/09/18 04:33:18 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,9 +73,10 @@
  */
 
 #include "opt_compat_netbsd.h"
+#include "opt_arm32_pmap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.20 2008/01/01 14:06:42 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.20.12.1 2008/09/18 04:33:18 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -111,9 +112,9 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vaddr_t o, v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t o, v, m;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 	vm_prot_t prot;
 
@@ -143,14 +144,25 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
-			pmap_enter(pmap_kernel(), memhook,
+			m = memhook;
+#ifdef PMAP_CACHE_VIPT
+			{
+				struct vm_page *pg;
+				pg = PHYS_TO_VM_PAGE(trunc_page(v));
+				if (pg != NULL && pmap_is_page_colored_p(pg))
+					o = pg->mdpage.pvh_attrs;
+				else
+					o = v;
+				m += o & arm_cache_prefer_mask;
+			}
+#endif
+			pmap_enter(pmap_kernel(), m,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
-			error = uiomove((char *)memhook + o, c, uio);
-			pmap_remove(pmap_kernel(), memhook,
-			    memhook + PAGE_SIZE);
+			error = uiomove((char *)m + o, c, uio);
+			pmap_remove(pmap_kernel(), m, m + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			break;
 

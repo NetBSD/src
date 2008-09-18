@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.130 2008/05/04 07:22:15 thorpej Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.130.2.1 2008/09/18 04:37:01 wrstuden Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.130 2008/05/04 07:22:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.130.2.1 2008/09/18 04:37:01 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.130 2008/05/04 07:22:15 thorpej Exp $");
 #include <netinet/udp_var.h>
 #include <netinet/ip_ecn.h>
 #include <netinet/tcp.h>
+#include <netinet/ip_icmp.h>
 
 #include <netinet/ip6.h>
 #ifdef INET6
@@ -973,6 +974,7 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	int off;
 	struct tcphdr th;
 	struct udphdr uh;
+	struct icmp icmph;
 
 	/* sanity check */
 	if (m == NULL)
@@ -1025,6 +1027,15 @@ ipsec4_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 			nxt = ip6e.ip6e_nxt;
 			break;
 		case IPPROTO_ICMP:
+			spidx->ul_proto = nxt;
+			if (off + sizeof(struct icmp) > m->m_pkthdr.len)
+				return;
+			m_copydata(m, off, sizeof(icmph), &icmph);
+			((struct sockaddr_in *)&spidx->src)->sin_port =
+			    htons((uint16_t)icmph.icmp_type);
+			((struct sockaddr_in *)&spidx->dst)->sin_port =
+			    htons((uint16_t)icmph.icmp_code);
+			return;
 		default:
 			/* XXX intermediate headers??? */
 			spidx->ul_proto = nxt;
@@ -1071,6 +1082,7 @@ ipsec6_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	int off, nxt;
 	struct tcphdr th;
 	struct udphdr uh;
+	struct icmp6_hdr icmph;
 
 	/* sanity check */
 	if (m == NULL)
@@ -1111,6 +1123,15 @@ ipsec6_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		((struct sockaddr_in6 *)&spidx->dst)->sin6_port = uh.uh_dport;
 		break;
 	case IPPROTO_ICMPV6:
+		spidx->ul_proto = nxt;
+		if (off + sizeof(struct icmp6_hdr) > m->m_pkthdr.len)
+			break;
+		m_copydata(m, off, sizeof(icmph), &icmph);
+		((struct sockaddr_in6 *)&spidx->src)->sin6_port =
+		    htons((uint16_t)icmph.icmp6_type);
+		((struct sockaddr_in6 *)&spidx->dst)->sin6_port =
+		    htons((uint16_t)icmph.icmp6_code);
+		break;
 	default:
 		/* XXX intermediate headers??? */
 		spidx->ul_proto = nxt;

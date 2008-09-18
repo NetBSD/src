@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.201.2.3 2008/06/22 18:12:03 wrstuden Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.201.2.4 2008/09/18 04:33:30 wrstuden Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.201.2.3 2008/06/22 18:12:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.201.2.4 2008/09/18 04:33:30 wrstuden Exp $");
 
 #include "opt_cputype.h"
 
@@ -298,11 +298,14 @@ static const struct pridtab cputab[] = {
 	{ 0, MIPS_R8000, -1, -1,		CPU_ARCH_MIPS4, 384,
 	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R8000 Blackbird/TFP CPU" },
 	{ 0, MIPS_R10000, -1, -1,		CPU_ARCH_MIPS4, 64,
-	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R10000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R10000 CPU"	},
 	{ 0, MIPS_R12000, -1, -1,		CPU_ARCH_MIPS4, 64,
-	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R12000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R12000 CPU"	},
 	{ 0, MIPS_R14000, -1, -1,		CPU_ARCH_MIPS4, 64,
-	  MIPS_NOT_SUPP | CPU_MIPS_R4K_MMU,	"MIPS R14000 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"MIPS R14000 CPU"	},
 
 	/* XXX
 	 * If the Processor Revision ID of the 4650 isn't 0, the following

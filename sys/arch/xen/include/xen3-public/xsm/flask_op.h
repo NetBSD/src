@@ -32,10 +32,12 @@
 #define FLASK_AVC_CACHESTATS    19
 #define FLASK_MEMBER            20
 
+#define FLASK_LAST              FLASK_MEMBER
+
 typedef struct flask_op {
-    int   cmd;
-    int   size;
-    char *buf;
+    uint32_t  cmd;
+    uint32_t  size;
+    char      *buf;
 } flask_op_t;
 
 DEFINE_XEN_GUEST_HANDLE(flask_op_t);

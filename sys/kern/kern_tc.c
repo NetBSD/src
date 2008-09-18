@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.34.2.1 2008/06/23 04:31:51 wrstuden Exp $ */
+/* $NetBSD: kern_tc.c,v 1.34.2.2 2008/09/18 04:31:42 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.34.2.1 2008/06/23 04:31:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.34.2.2 2008/09/18 04:31:42 wrstuden Exp $");
 
 #include "opt_ntp.h"
 
@@ -964,7 +964,7 @@ inittimecounter(void)
 {
 	u_int p;
 
-	mutex_init(&timecounter_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&timecounter_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	/*
 	 * Set the initial timeout to

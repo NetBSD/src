@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.141.2.1 2008/06/23 04:31:50 wrstuden Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.141.2.2 2008/09/18 04:31:42 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.141.2.1 2008/06/23 04:31:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.141.2.2 2008/09/18 04:31:42 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -59,7 +59,6 @@ __cpu_simple_lock_t kernel_lock[CACHE_LINE_SIZE / sizeof(__cpu_simple_lock_t)]
 void
 assert_sleepable(void)
 {
-#if !defined(_RUMPKERNEL)
 	const char *reason;
 
 	if (panicstr != NULL) {
@@ -83,18 +82,9 @@ assert_sleepable(void)
 		panic("%s: %s caller=%p", __func__, reason,
 		    (void *)RETURN_ADDRESS);
 	}
-#endif /* !defined(_RUMPKERNEL) */
 }
 #endif /* defined(DEBUG) || defined(LKM) */
 
-/*
- * rump doesn't need the kernel lock so force it out.  We cannot
- * currently easily include it for compilation because of
- * a) SPINLOCK_* b) membar_producer().  They are defined in different
- * places / way for each arch, so just simply do not bother to
- * fight a lot for no gain (i.e. pain but still no gain).
- */
-#ifndef _RUMPKERNEL
 /*
  * Functions for manipulating the kernel_lock.  We put them here
  * so that they show up in profiles.
@@ -128,7 +118,7 @@ void
 kernel_lock_init(void)
 {
 
-	KASSERT(CACHE_LINE_SIZE >= sizeof(__cpu_simple_lock_t));
+	CTASSERT(CACHE_LINE_SIZE >= sizeof(__cpu_simple_lock_t));
 	__cpu_simple_lock_init(kernel_lock);
 	kernel_lock_dodebug = LOCKDEBUG_ALLOC(kernel_lock, &_kernel_lock_ops,
 	    RETURN_ADDRESS);
@@ -307,4 +297,3 @@ _kernel_unlock(int nlocks, int *countp)
 	if (countp != NULL)
 		*countp = olocks;
 }
-#endif /* !_RUMPKERNEL */

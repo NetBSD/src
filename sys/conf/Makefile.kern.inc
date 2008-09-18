@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.111.6.1 2008/06/23 04:30:57 wrstuden Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.111.6.2 2008/09/18 04:36:46 wrstuden Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -74,20 +74,21 @@ CWARNFLAGS+=	-Wno-unreachable-code
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
-. if ${HAVE_GCC} > 3
+. if (defined(HAVE_GCC) && ${HAVE_GCC} > 3) || defined(HAVE_PCC)
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
-.  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "prep"
+.  if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
+	${MACHINE_ARCH} == "sparc64" || ${MACHINE} == "prep"
 CWARNFLAGS+=	-Wextra -Wno-unused-parameter
 .  endif
 . endif
 .endif
 
 CFLAGS+=	-ffreestanding -fno-zero-initialized-in-bss
-CFLAGS+=	${CPUFLAGS} ${DEBUG} ${COPTS} ${CWARNFLAGS}
-AFLAGS+=	${CPUFLAGS} -D_LOCORE -Wa,-fatal-warnings
+CFLAGS+=	${DEBUG} ${COPTS}
+AFLAGS+=	-D_LOCORE -Wa,-fatal-warnings
 
 # XXX
-.if ${HAVE_GCC} > 3
+.if defined(HAVE_GCC) && ${HAVE_GCC} > 3
 CFLAGS+=	-fno-strict-aliasing
 .endif
 
@@ -99,7 +100,8 @@ LDFLAGS+=-fstack-protector -Wstack-protector --param ssp-buffer-size=1
 # If we want the bpendtsleep: label in kern_synch.c, we need to use
 # -fno-reorder-blocks.  Don't make this a config(1) defflag without
 # making sure this fragment remains valid.
-.if ${HAVE_GCC} > 3 && !empty(${CFLAGS:M-DKERN_SYNCH_BPENDTSLEEP_LABEL})
+.if defined(HAVE_GCC) && ${HAVE_GCC} > 3 && \
+	!empty(${CFLAGS:M-DKERN_SYNCH_BPENDTSLEEP_LABEL})
 COPTS.kern_synch.c+=	-fno-reorder-blocks
 .endif
 
@@ -471,7 +473,7 @@ VARSTACK=dev/cgd.c kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
     uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c \
     dev/ofw/ofw_subr.c
 
-. if ${HAVE_GCC} > 3
+. if (defined(HAVE_GCC) && ${HAVE_GCC} > 3) || defined(HAVE_PCC)
 .for __varstack in ${VARSTACK}
 COPTS.${__varstack:T} += -Wno-stack-protector
 .endfor

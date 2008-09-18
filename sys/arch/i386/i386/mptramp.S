@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.14.2.1 2008/06/23 04:30:26 wrstuden Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.14.2.2 2008/09/18 04:33:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.14.2.1 2008/06/23 04:30:26 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.14.2.2 2008/09/18 04:33:27 wrstuden Exp $");
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
 		
@@ -111,15 +111,9 @@ __KERNEL_RCSID(0, "$NetBSD: mptramp.S,v 1.14.2.1 2008/06/23 04:30:26 wrstuden Ex
 #define HALTT(x,y) /**/
 #endif
 
-        .globl  _C_LABEL(cpu),_C_LABEL(cpu_id),_C_LABEL(cpu_vendor)
-	.globl  _C_LABEL(cpuid_level)
-	.globl  _C_LABEL(idle_loop)
-
 	.global _C_LABEL(cpu_spinup_trampoline)
 	.global _C_LABEL(cpu_spinup_trampoline_end)
-	.global _C_LABEL(cpu_hatch)
 	.global _C_LABEL(mp_pdirpa)
-	.global _C_LABEL(gdt), _C_LABEL(local_apic)
 
 	.text
 	.align 4,0x0
@@ -174,15 +168,18 @@ _TRMP_LABEL(mp_startup)
         movl    %cr0,%eax               # get control word
                                         # enable paging & NPX emulation
         orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_EM|CR0_MP|CR0_WP),%eax
-        movl    %eax,%cr0               # and let's page NOW!
+        movl    %eax,%cr0               # and page NOW!
 
 #ifdef MPDEBUG
 	leal    _C_LABEL(cpu_trace),%edi
 #endif
 	HALT(0x6)
 
-# ok, we're now running with paging enabled and sharing page tables with cpu0.
-# figure out which processor we really are, what stack we should be on, etc.
+/*
+ * ok, we are now running with paging enabled and sharing page tables
+ * with cpu0.  figure out which processor we really are, what stack we
+ * should be on, etc.
+ */
 
 	/* Don't touch lapic until BP has done init sequence. */
 1:
@@ -193,7 +190,7 @@ _TRMP_LABEL(mp_startup)
 	
 	HALTT(0x7, %ecx)
 
-# %ecx points at our cpu_info structure..
+	/* %ecx points at our cpu_info structure. */
 
 	movw    $((MAXGDTSIZ*8) - 1), 6(%esp)	# prepare segment descriptor
 	movl    CPU_INFO_GDT(%ecx), %eax	# for our real gdt
@@ -215,7 +212,7 @@ _TRMP_LABEL(mp_startup)
 	lret
 	.align 4,0x0
 _TRMP_LABEL(gdt_table)   
-	.word   0x0,0x0,0x0,0x0  # null GDTE
+	.word   0x0,0x0,0x0,0x0  # null gdte
 	 GDTE(0x9f,0xcf)         # Kernel text
 	 GDTE(0x93,0xcf)         # Kernel data
 _TRMP_LABEL(gdt_desc)	
@@ -229,7 +226,7 @@ mp_cont:
 	movl	CPU_INFO_IDLELWP(%ecx),%esi
 	movl	L_ADDR(%esi),%esi
 	
-# %esi now points at our PCB.
+	/* %esi now points at our PCB. */
 		
 	HALTT(0x19, %esi)
 	

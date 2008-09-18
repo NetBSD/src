@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.28.2.1 2008/06/23 04:30:58 wrstuden Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.28.2.2 2008/09/18 04:35:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.28.2.1 2008/06/23 04:30:58 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.28.2.2 2008/09/18 04:35:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -115,9 +115,11 @@ ata_raid_type_name(u_int type)
 		"Promise",
 		"Adaptec",
 		"VIA V-RAID",
+		"nVidia",
+		"JMicron"
 	};
 
-	if (type < sizeof(ata_raid_type_names) / sizeof(ata_raid_type_names[0]))
+	if (type < __arraycount(ata_raid_type_names))
 		return (ata_raid_type_names[type]);
 
 	return (NULL);
@@ -243,6 +245,10 @@ ata_raid_check_component(device_t self)
 	if (ata_raid_read_config_promise(sc) == 0)
 		return;
 	if (ata_raid_read_config_via(sc) == 0)
+		return;
+	if (ata_raid_read_config_nvidia(sc) == 0)
+		return;
+	if (ata_raid_read_config_jmicron(sc) == 0)
 		return;
 }
 

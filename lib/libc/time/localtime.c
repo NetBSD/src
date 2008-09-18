@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.39.20.1 2008/06/23 04:29:36 wrstuden Exp $	*/
+/*	$NetBSD: localtime.c,v 1.39.20.2 2008/09/18 04:39:23 wrstuden Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.78";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.39.20.1 2008/06/23 04:29:36 wrstuden Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.39.20.2 2008/09/18 04:39:23 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -955,7 +955,9 @@ tzsetwall_unlocked P((void))
 
 #ifdef ALL_STATE
 	if (lclptr == NULL) {
+		int saveerrno = errno;
 		lclptr = (struct state *) malloc(sizeof *lclptr);
+		errno = saveerrno;
 		if (lclptr == NULL) {
 			settzname();	/* all we can do */
 			return;
@@ -986,8 +988,11 @@ static void
 tzset_unlocked P((void))
 {
 	register const char *	name;
+	int saveerrno;
 
+	saveerrno = errno;
 	name = getenv("TZ");
+	errno = saveerrno;
 	if (name == NULL) {
 		tzsetwall_unlocked();
 		return;
@@ -1001,7 +1006,9 @@ tzset_unlocked P((void))
 
 #ifdef ALL_STATE
 	if (lclptr == NULL) {
+		saveerrno = errno;
 		lclptr = (struct state *) malloc(sizeof *lclptr);
+		errno = saveerrno;
 		if (lclptr == NULL) {
 			settzname();	/* all we can do */
 			return;
@@ -1132,9 +1139,14 @@ struct tm * const	tmp;
 
 	mutex_lock(&gmt_mutex);
 	if (!gmt_is_set) {
+#ifdef ALL_STATE
+		int saveerrno;
+#endif
 		gmt_is_set = TRUE;
 #ifdef ALL_STATE
+		saveerrno = errno;
 		gmtptr = (struct state *) malloc(sizeof *gmtptr);
+		errno = saveerrno;
 		if (gmtptr != NULL)
 #endif /* defined ALL_STATE */
 			gmtload(gmtptr);

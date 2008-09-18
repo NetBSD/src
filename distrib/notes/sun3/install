@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.15 2008/04/30 13:10:49 martin Exp $
+.\"	$NetBSD: install,v 1.15.2.1 2008/09/18 04:41:12 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,13 +58,13 @@ entitled
 and boot the tape.
 At the PROM monitor prompt, use one of the commands:
 .Pp
-.Dl \*> Ns Ic "b st()"
-.Dl \*> Ns Ic "b st(0,8,0)"
+.Dl \*[Gt] Ns Ic "b st()"
+.Dl \*[Gt] Ns Ic "b st(0,8,0)"
 .Pp
 The first example will use the tape on SCSI target 4, where the
 second will use SCSI target 5.
 The
-.Li \*>
+.Li \*[Gt]
 is the monitor prompt.
 .Pp
 After the tape loads, you should see many lines of configuration
@@ -126,8 +126,8 @@ and
 on the others.
 Examples:
 .Pp
-.Dl \*> Ns Ic "b le() -s"
-.Dl \*> Ns Ic "b ie() -s"
+.Dl \*[Gt] Ns Ic "b le() -s"
+.Dl \*[Gt] Ns Ic "b ie() -s"
 .Pp
 After the boot program loads the RAMDISK kernel, you should
 see the welcome screen as shown in the
@@ -137,7 +137,7 @@ You must configure the network interface before you
 can use any network resources.
 For example the command:
 .Pp
-.Dl ssh\*> Ic "ifconfig le0 inet 192.233.20.198 up"
+.Dl ssh\*[Gt] Ic "ifconfig le0 inet 192.233.20.198 up"
 .Pp
 will bring up the network interface with that address.
 The next step is to copy the miniroot from your server.
@@ -146,21 +146,21 @@ This can be done using either NFS or remote shell.
 You may then need to add a default route if the server is on
 a different subnet:
 .Pp
-.Dl ssh\*> Ic "route add default 192.233.20.255 1"
+.Dl ssh\*[Gt] Ic "route add default 192.233.20.255 1"
 .Pp
 You can look at the route table using:
 .Pp
-.Dl ssh\*> Ic "route show"
+.Dl ssh\*[Gt] Ic "route show"
 .Pp
 Now mount the NFS file system containing the miniroot image:
 .Pp
-.Dl ssh\*> Ic "mount -r 192.233.20.195:/server/path /mnt"
+.Dl ssh\*[Gt] Ic "mount -r 192.233.20.195:/server/path /mnt"
 .Pp
 The procedure is simpler if you have space for an expanded
 (not compressed) copy of the miniroot image.
 In that case:
 .Pp
-.Dl ssh\*> Ic "dd if=/mnt/miniroot.fs of=/dev/rsd0b bs=8k"
+.Dl ssh\*[Gt] Ic "dd if=/mnt/miniroot.fs of=/dev/rsd0b bs=8k"
 .Pp
 Otherwise, you will need to use
 .Ic zcat
@@ -178,15 +178,15 @@ and then run the other program in the foreground with its output to
 .Pa /dev/pipe .
 The result looks like this:
 .Pp
-.Dl ssh\*> Ic "run -bg dd if=/dev/pipe of=/dev/rsd0b obs=8k"
-.Dl ssh\*> Ic "run -o /dev/pipe zcat /mnt/install/miniroot.fs.gz"
+.Dl ssh\*[Gt] Ic "run -bg dd if=/dev/pipe of=/dev/rsd0b obs=8k"
+.Dl ssh\*[Gt] Ic "run -o /dev/pipe zcat /mnt/install/miniroot.fs.gz"
 .Pp
 To load the miniroot using rsh to the server, you would use a
 pair of commands similar to the above.
 Here is another example:
 .Pp
-.Dl ssh\*> Ic "run -b dd if=/dev/pipe of=/dev/rsd0b obs=8k"
-.Dl ssh\*> Ic "run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.fs.gz"
+.Dl ssh\*[Gt] Ic "run -b dd if=/dev/pipe of=/dev/rsd0b obs=8k"
+.Dl ssh\*[Gt] Ic "run -o /dev/pipe rsh 192.233.20.195 zcat miniroot.fs.gz"
 .
 .Ss2 Installing from SunOS
 .
@@ -237,11 +237,11 @@ If the miniroot was installed on partition
 of the disk with
 SCSI target ID=0 then the PROM boot command would be:
 .Pp
-.Dl \*> Ns Ic "b sd(0,0,1) -s"
+.Dl \*[Gt] Ns Ic "b sd(0,0,1) -s"
 .Pp
 With SCSI target ID=2, the PROM is:
 .Pp
-.Dl \*> Ns Ic "b sd(0,10,1) -s"
+.Dl \*[Gt] Ns Ic "b sd(0,10,1) -s"
 .Pp
 The numbers in parentheses above are:
 .(enum -compact -offset indent

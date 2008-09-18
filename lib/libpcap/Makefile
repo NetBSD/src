@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2007/05/28 12:06:20 tls Exp $	
+# $NetBSD: Makefile,v 1.30.12.1 2008/09/18 04:39:24 wrstuden Exp $	
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,12 @@ YPREFIX=	pcap_
 YHEADER=	1
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
+
+.if defined(HAVE_PCC)
+CPPFLAGS+=	-D_U_=""
+.elif defined(HAVE_GCC)
 CPPFLAGS+=	-D_U_="__attribute__((unused))"
+.endif
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=	-DINET6

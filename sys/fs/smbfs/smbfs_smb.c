@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_smb.c,v 1.36 2008/04/28 20:24:02 martin Exp $	*/
+/*	$NetBSD: smbfs_smb.c,v 1.36.2.1 2008/09/18 04:36:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.36 2008/04/28 20:24:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_smb.c,v 1.36.2.1 2008/09/18 04:36:55 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,7 +481,7 @@ smbfs_smb_setftime(struct smbnode *np, struct timespec *mtime,
 	smb_rq_bstart(rqp);
 	smb_rq_bend(rqp);
 	error = smb_rq_simple(rqp);
-	SMBSDEBUG("%d\n", error);
+	SMBSDEBUG(("%d\n", error));
 	smb_rq_done(rqp);
 	return error;
 }

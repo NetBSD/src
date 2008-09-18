@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.52 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.52.2.1 2008/09/18 04:35:06 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.52 2008/04/28 20:23:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.52.2.1 2008/09/18 04:35:06 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1724,11 +1724,12 @@ static uint32_t
 emuxki_voice_curaddr(struct emuxki_voice *voice)
 {
 	int idxreg;
+	int rv;
 
 	/* XXX different semantics in these cases */
 	if (voice->use & EMU_VOICE_USE_PLAY) {
 		/* returns number of samples (an l/r pair counts 1) */
-		return emuxki_read(voice->sc,
+		rv = emuxki_read(voice->sc,
 		    voice->dataloc.chan[0]->num, EMU_CHAN_CCCA_CURRADDR) -
 		    voice->dataloc.chan[0]->loop.start;
 	} else {
@@ -1752,10 +1753,10 @@ emuxki_voice_curaddr(struct emuxki_voice *voice)
 #endif
 				break;
 		}
-		return emuxki_read(voice->sc, 0, EMU_RECIDX(idxreg)
+		rv = emuxki_read(voice->sc, 0, EMU_RECIDX(idxreg)
 				& EMU_RECIDX_MASK);
 	}
-	return 0;
+	return rv;
 }
 
 static void

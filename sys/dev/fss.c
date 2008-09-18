@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.45.2.1 2008/06/23 04:30:58 wrstuden Exp $	*/
+/*	$NetBSD: fss.c,v 1.45.2.2 2008/09/18 04:35:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.45.2.1 2008/06/23 04:30:58 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.45.2.2 2008/09/18 04:35:01 wrstuden Exp $");
 
 #include "fss.h"
 
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.45.2.1 2008/06/23 04:30:58 wrstuden Exp $"
 #include <miscfs/specfs/specdev.h>
 
 #include <dev/fssvar.h>
+
+#include <uvm/uvm.h>
 
 #include <machine/stdarg.h>
 
@@ -498,12 +500,21 @@ fss_copy_on_write(void *v, struct buf *bp, bool data_valid)
 		return 0;
 	}
 
-	FSS_UNLOCK(sc, s);
-
 	FSS_STAT_INC(sc, cow_calls);
 
 	cl = FSS_BTOCL(sc, dbtob(bp->b_blkno));
 	ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
+
+	if (curlwp == uvm.pagedaemon_lwp) {
+		for (c = cl; c <= ch; c++)
+			if (isclr(sc->sc_copied, c)) {
+				FSS_UNLOCK(sc, s);
+
+				return ENOMEM;
+			}
+	}
+
+	FSS_UNLOCK(sc, s);
 
 	for (c = cl; c <= ch; c++)
 		fss_read_cluster(sc, c);
@@ -525,6 +536,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
     off_t *bsize, struct lwp *l)
 {
 	int error, bits, fsbsize;
+	const struct bdevsw *bdev;
 	struct timespec ts;
 	struct partinfo dpart;
 	struct vattr va;
@@ -552,17 +564,12 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Check for file system internal snapshot.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fss->fss_bstore);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
 	if (nd.ni_vp->v_type == VREG && nd.ni_vp->v_mount == sc->sc_mount) {
-		vrele(nd.ni_vp);
 		sc->sc_flags |= FSS_PERSISTENT;
-
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
-		if ((error = vn_open(&nd, FREAD, 0)) != 0)
-			return error;
 		sc->sc_bs_vp = nd.ni_vp;
 
 		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
@@ -586,7 +593,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 
 		return error;
 	}
-	vrele(nd.ni_vp);
+	vput(nd.ni_vp);
 
 	/*
 	 * Get the block device it is mounted on.
@@ -602,15 +609,21 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 	}
 
-	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD, l->l_cred);
-	if (error) {
-		vrele(nd.ni_vp);
-		return error;
-	}
-
 	sc->sc_bdev = nd.ni_vp->v_rdev;
-	*bsize = (off_t)dpart.disklab->d_secsize*dpart.part->p_size;
 	vrele(nd.ni_vp);
+
+	/*
+	 * Get the block device size.
+	 */
+
+	bdev = bdevsw_lookup(sc->sc_bdev);
+	if (bdev == NULL)
+		return ENXIO;
+	error = (*bdev->d_ioctl)(sc->sc_bdev, DIOCGPART, &dpart, FREAD, l);
+	if (error)
+		return error;
+
+	*bsize = (off_t)dpart.disklab->d_secsize*dpart.part->p_size;
 
 	/*
 	 * Get the backing store
@@ -1013,8 +1026,6 @@ fss_bs_thread(void *arg)
 
 	scl = sc->sc_cache+sc->sc_cache_size;
 
-	nbp = getiobuf(NULL, true);
-
 	nfreed = nio = 1;		/* Dont sleep the first time */
 
 	FSS_LOCK(sc, s);
@@ -1030,7 +1041,6 @@ fss_bs_thread(void *arg)
 
 			FSS_UNLOCK(sc, s);
 
-			putiobuf(nbp);
 #ifdef FSS_STATISTICS
 			if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
 				printf("fss%d: cow called %" PRId64 " times,"
@@ -1142,7 +1152,7 @@ fss_bs_thread(void *arg)
 
 		FSS_UNLOCK(sc, s);
 
-		buf_init(nbp);
+		nbp = getiobuf(NULL, true);
 		nbp->b_flags = B_READ;
 		nbp->b_bcount = bp->b_bcount;
 		nbp->b_bufsize = bp->b_bcount;
@@ -1159,6 +1169,7 @@ fss_bs_thread(void *arg)
 			bp->b_resid = bp->b_bcount;
 			bp->b_error = nbp->b_error;
 			biodone(bp);
+			putiobuf(nbp);
 			FSS_LOCK(sc, s);
 			continue;
 		}
@@ -1168,6 +1179,7 @@ fss_bs_thread(void *arg)
 		ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
 		bp->b_resid = bp->b_bcount;
 		addr = bp->b_data;
+		putiobuf(nbp);
 
 		FSS_LOCK(sc, s);
 

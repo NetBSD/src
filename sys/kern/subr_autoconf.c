@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.147.2.1 2008/06/23 04:31:51 wrstuden Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.147.2.2 2008/09/18 04:31:43 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.147.2.1 2008/06/23 04:31:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.147.2.2 2008/09/18 04:31:43 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.147.2.1 2008/06/23 04:31:51 wrst
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/errno.h>
@@ -232,8 +233,6 @@ static kcondvar_t config_misc_cv;
 static int config_initialized;		/* config_init() has been called. */
 
 static int config_do_twiddle;
-
-MALLOC_DEFINE(M_PMFPRIV, "pmfpriv", "device pmf private storage");
 
 struct vnode *
 opendisk(struct device *dv)
@@ -400,7 +399,7 @@ config_interrupts_thread(void *cookie)
 	while ((dc = TAILQ_FIRST(&interrupt_config_queue)) != NULL) {
 		TAILQ_REMOVE(&interrupt_config_queue, dc, dc_queue);
 		(*dc->dc_func)(dc->dc_dev);
-		free(dc, M_DEVBUF);
+		kmem_free(dc, sizeof(*dc));
 		config_pending_decr();
 	}
 	kthread_exit(0);
@@ -830,7 +829,7 @@ config_cfdata_attach(cfdata_t cf, int scannow)
 {
 	struct cftable *ct;
 
-	ct = malloc(sizeof(struct cftable), M_DEVBUF, M_WAITOK);
+	ct = kmem_alloc(sizeof(*ct), KM_SLEEP);
 	ct->ct_cfdata = cf;
 	TAILQ_INSERT_TAIL(&allcftables, ct, ct_list);
 
@@ -884,7 +883,7 @@ config_cfdata_detach(cfdata_t cf)
 	TAILQ_FOREACH(ct, &allcftables, ct_list) {
 		if (ct->ct_cfdata == cf) {
 			TAILQ_REMOVE(&allcftables, ct, ct_list);
-			free(ct, M_DEVBUF);
+			kmem_free(ct, sizeof(*ct));
 			return (0);
 		}
 	}
@@ -1100,6 +1099,7 @@ number(char *ep, int n)
 static void
 config_makeroom(int n, struct cfdriver *cd)
 {
+	const km_flag_t kmflags = (cold ? KM_NOSLEEP : KM_SLEEP);
 	int old, new;
 	device_t *nsp;
 
@@ -1117,15 +1117,14 @@ config_makeroom(int n, struct cfdriver *cd)
 	while (new <= n)
 		new *= 2;
 	cd->cd_ndevs = new;
-	nsp = malloc(new * sizeof(device_t), M_DEVBUF,
-	    cold ? M_NOWAIT : M_WAITOK);
+	nsp = kmem_alloc(sizeof(device_t [new]), kmflags);
 	if (nsp == NULL)
 		panic("config_attach: %sing dev array",
 		    old != 0 ? "expand" : "creat");
-	memset(nsp + old, 0, (new - old) * sizeof(device_t));
+	memset(nsp + old, 0, sizeof(device_t [new - old]));
 	if (old != 0) {
-		memcpy(nsp, cd->cd_devs, old * sizeof(device_t));
-		free(cd->cd_devs, M_DEVBUF);
+		memcpy(nsp, cd->cd_devs, sizeof(device_t [old]));
+		kmem_free(cd->cd_devs, sizeof(device_t [old]));
 	}
 	cd->cd_devs = nsp;
 }
@@ -1168,14 +1167,14 @@ config_devunlink(device_t dev)
 	/*
 	 * If the device now has no units in use, deallocate its softc array.
 	 */
-	for (i = 0; i < cd->cd_ndevs; i++)
+	for (i = 0; i < cd->cd_ndevs; i++) {
 		if (cd->cd_devs[i] != NULL)
-			break;
-	if (i == cd->cd_ndevs) {		/* nothing found; deallocate */
-		free(cd->cd_devs, M_DEVBUF);
-		cd->cd_devs = NULL;
-		cd->cd_ndevs = 0;
+			return;
 	}
+	/* nothing found; deallocate */
+	kmem_free(cd->cd_devs, sizeof(device_t [cd->cd_ndevs]));
+	cd->cd_devs = NULL;
+	cd->cd_ndevs = 0;
 }
 	
 static device_t
@@ -1190,6 +1189,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	device_t dev;
 	void *dev_private;
 	const struct cfiattrdata *ia;
+	const km_flag_t kmflags = (cold ? KM_NOSLEEP : KM_SLEEP);
 
 	cd = config_cfdriver_lookup(cf->cf_name);
 	if (cd == NULL)
@@ -1231,8 +1231,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	/* get memory for all device vars */
 	KASSERT((ca->ca_flags & DVF_PRIV_ALLOC) || ca->ca_devsize >= sizeof(struct device));
 	if (ca->ca_devsize > 0) {
-		dev_private = malloc(ca->ca_devsize, M_DEVBUF,
-				     M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
+		dev_private = kmem_zalloc(ca->ca_devsize, kmflags);
 		if (dev_private == NULL)
 			panic("config_devalloc: memory allocation for device softc failed");
 	} else {
@@ -1241,10 +1240,10 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	}
 
 	if ((ca->ca_flags & DVF_PRIV_ALLOC) != 0) {
-		dev = malloc(sizeof(struct device), M_DEVBUF, 
-			     M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
+		dev = kmem_zalloc(sizeof(*dev), kmflags);
 	} else {
 		dev = dev_private;
+		printf("%s is not split\n", cd->cd_name);
 	}
 	if (dev == NULL)
 		panic("config_devalloc: memory allocation for device_t failed");
@@ -1270,9 +1269,10 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		KASSERT(parent); /* no locators at root */
 		ia = cfiattr_lookup(cf->cf_pspec->cfp_iattr,
 				    parent->dv_cfdriver);
-		dev->dv_locators = malloc(ia->ci_loclen * sizeof(int),
-					  M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-		memcpy(dev->dv_locators, locs, ia->ci_loclen * sizeof(int));
+		dev->dv_locators =
+		    kmem_alloc(sizeof(int [ia->ci_loclen + 1]), kmflags);
+		*dev->dv_locators++ = sizeof(int [ia->ci_loclen + 1]);
+		memcpy(dev->dv_locators, locs, sizeof(int [ia->ci_loclen]));
 	}
 	dev->dv_properties = prop_dictionary_create();
 	KASSERT(dev->dv_properties != NULL);
@@ -1288,6 +1288,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 static void
 config_devdealloc(device_t dev)
 {
+	int priv = (dev->dv_flags & DVF_PRIV_ALLOC);
 
 	KASSERT(dev->dv_properties != NULL);
 	prop_object_release(dev->dv_properties);
@@ -1295,13 +1296,15 @@ config_devdealloc(device_t dev)
 	if (dev->dv_activity_handlers)
 		panic("config_devdealloc with registered handlers");
 
-	if (dev->dv_locators)
-		free(dev->dv_locators, M_DEVBUF);
+	if (dev->dv_locators) {
+		size_t amount = *--dev->dv_locators;
+		kmem_free(dev->dv_locators, amount);
+	}
 
-	if ((dev->dv_flags & DVF_PRIV_ALLOC) != 0 && dev->dv_private != NULL)
-		free(dev->dv_private, M_DEVBUF);
-
-	free(dev, M_DEVBUF);
+	if (dev->dv_cfattach->ca_devsize > 0)
+		kmem_free(dev->dv_private, dev->dv_cfattach->ca_devsize);
+	if (priv)
+		kmem_free(dev, sizeof(*dev));
 }
 
 /*
@@ -1462,10 +1465,11 @@ config_detach(device_t dev, int flags)
 	int rv = 0;
 
 #ifdef DIAGNOSTIC
-	if (dev->dv_cfdata != NULL &&
-	    dev->dv_cfdata->cf_fstate != FSTATE_FOUND &&
-	    dev->dv_cfdata->cf_fstate != FSTATE_STAR)
-		panic("config_detach: bad device fstate");
+	cf = dev->dv_cfdata;
+	if (cf != NULL && cf->cf_fstate != FSTATE_FOUND &&
+	    cf->cf_fstate != FSTATE_STAR)
+		panic("config_detach: %s: bad device fstate %d",
+		    device_xname(dev), cf ? cf->cf_fstate : -1);
 #endif
 	cd = dev->dv_cfdriver;
 	KASSERT(cd != NULL);
@@ -1643,6 +1647,7 @@ config_deactivate(device_t dev)
 void
 config_defer(device_t dev, void (*func)(device_t))
 {
+	const km_flag_t kmflags = (cold ? KM_NOSLEEP : KM_SLEEP);
 	struct deferred_config *dc;
 
 	if (dev->dv_parent == NULL)
@@ -1656,7 +1661,7 @@ config_defer(device_t dev, void (*func)(device_t))
 	}
 #endif
 
-	dc = malloc(sizeof(*dc), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	dc = kmem_alloc(sizeof(*dc), kmflags);
 	if (dc == NULL)
 		panic("config_defer: unable to allocate callback");
 
@@ -1673,6 +1678,7 @@ config_defer(device_t dev, void (*func)(device_t))
 void
 config_interrupts(device_t dev, void (*func)(device_t))
 {
+	const km_flag_t kmflags = (cold ? KM_NOSLEEP : KM_SLEEP);
 	struct deferred_config *dc;
 
 	/*
@@ -1691,7 +1697,7 @@ config_interrupts(device_t dev, void (*func)(device_t))
 	}
 #endif
 
-	dc = malloc(sizeof(*dc), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+	dc = kmem_alloc(sizeof(*dc), kmflags);
 	if (dc == NULL)
 		panic("config_interrupts: unable to allocate callback");
 
@@ -1715,7 +1721,7 @@ config_process_deferred(struct deferred_config_head *queue,
 		if (parent == NULL || dc->dc_dev->dv_parent == parent) {
 			TAILQ_REMOVE(queue, dc, dc_queue);
 			(*dc->dc_func)(dc->dc_dev);
-			free(dc, M_DEVBUF);
+			kmem_free(dc, sizeof(*dc));
 			config_pending_decr();
 		}
 	}
@@ -1774,7 +1780,7 @@ config_finalize_register(device_t dev, int (*fn)(device_t))
 			return (EEXIST);
 	}
 
-	f = malloc(sizeof(*f), M_TEMP, M_WAITOK);
+	f = kmem_alloc(sizeof(*f), KM_SLEEP);
 	f->f_func = fn;
 	f->f_dev = dev;
 	TAILQ_INSERT_TAIL(&config_finalize_list, f, f_list);
@@ -1815,7 +1821,7 @@ config_finalize(void)
 	/* Now free all the hooks. */
 	while ((f = TAILQ_FIRST(&config_finalize_list)) != NULL) {
 		TAILQ_REMOVE(&config_finalize_list, f, f_list);
-		free(f, M_TEMP);
+		kmem_free(f, sizeof(*f));
 	}
 
 	errcnt = aprint_get_error_count();
@@ -2086,7 +2092,7 @@ device_pmf_driver_register(device_t dev,
 {
 	pmf_private_t *pp;
 
-	if ((pp = malloc(sizeof(*pp), M_PMFPRIV, M_NOWAIT|M_ZERO)) == NULL)
+	if ((pp = kmem_zalloc(sizeof(*pp), KM_NOSLEEP)) == NULL)
 		return false;
 	mutex_init(&pp->pp_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&pp->pp_cv, "pmfsusp");
@@ -2113,6 +2119,10 @@ device_pmf_driver_deregister(device_t dev)
 {
 	pmf_private_t *pp = dev->dv_pmf_private;
 
+	/* XXX avoid crash in case we are not initialized */
+	if (!pp)
+		return;
+
 	dev->dv_driver_suspend = NULL;
 	dev->dv_driver_resume = NULL;
 
@@ -2134,7 +2144,7 @@ device_pmf_driver_deregister(device_t dev)
 
 	cv_destroy(&pp->pp_cv);
 	mutex_destroy(&pp->pp_mtx);
-	free(pp, M_PMFPRIV);
+	kmem_free(pp, sizeof(*pp));
 }
 
 bool
@@ -2403,8 +2413,11 @@ device_active(device_t dev, devactive_t type)
 	if (dev->dv_activity_count == 0)
 		return false;
 
-	for (i = 0; i < dev->dv_activity_count; ++i)
+	for (i = 0; i < dev->dv_activity_count; ++i) {
+		if (dev->dv_activity_handlers[i] == NULL)
+			break;
 		(*dev->dv_activity_handlers[i])(dev, type);
+	}
 
 	return true;
 }
@@ -2414,22 +2427,27 @@ device_active_register(device_t dev, void (*handler)(device_t, devactive_t))
 {
 	void (**new_handlers)(device_t, devactive_t);
 	void (**old_handlers)(device_t, devactive_t);
-	size_t i, new_size;
+	size_t i, old_size, new_size;
 	int s;
 
 	old_handlers = dev->dv_activity_handlers;
+	old_size = dev->dv_activity_count;
 
-	for (i = 0; i < dev->dv_activity_count; ++i) {
-		if (old_handlers[i] == handler)
-			panic("Double registering of idle handlers");
+	for (i = 0; i < old_size; ++i) {
+		KASSERT(old_handlers[i] != handler);
+		if (old_handlers[i] == NULL) {
+			old_handlers[i] = handler;
+			return true;
+		}
 	}
 
-	new_size = dev->dv_activity_count + 1;
-	new_handlers = malloc(sizeof(void *) * new_size, M_DEVBUF, M_WAITOK);
+	new_size = old_size + 4;
+	new_handlers = kmem_alloc(sizeof(void *[new_size]), KM_SLEEP);
 
-	memcpy(new_handlers, old_handlers,
-	    sizeof(void *) * dev->dv_activity_count);
-	new_handlers[new_size - 1] = handler;
+	memcpy(new_handlers, old_handlers, sizeof(void *[old_size]));
+	new_handlers[old_size] = handler;
+	memset(new_handlers + old_size + 1, 0,
+	    sizeof(int [new_size - (old_size+1)]));
 
 	s = splhigh();
 	dev->dv_activity_count = new_size;
@@ -2437,7 +2455,7 @@ device_active_register(device_t dev, void (*handler)(device_t, devactive_t))
 	splx(s);
 
 	if (old_handlers != NULL)
-		free(old_handlers, M_DEVBUF);
+		kmem_free(old_handlers, sizeof(int [old_size]));
 
 	return true;
 }
@@ -2445,39 +2463,37 @@ device_active_register(device_t dev, void (*handler)(device_t, devactive_t))
 void
 device_active_deregister(device_t dev, void (*handler)(device_t, devactive_t))
 {
-	void (**new_handlers)(device_t, devactive_t);
 	void (**old_handlers)(device_t, devactive_t);
-	size_t i, new_size;
+	size_t i, old_size;
 	int s;
 
 	old_handlers = dev->dv_activity_handlers;
+	old_size = dev->dv_activity_count;
 
-	for (i = 0; i < dev->dv_activity_count; ++i) {
+	for (i = 0; i < old_size; ++i) {
 		if (old_handlers[i] == handler)
 			break;
+		if (old_handlers[i] == NULL)
+			return; /* XXX panic? */
 	}
 
-	if (i == dev->dv_activity_count)
+	if (i == old_size)
 		return; /* XXX panic? */
 
-	new_size = dev->dv_activity_count - 1;
+	for (; i < old_size - 1; ++i) {
+		if ((old_handlers[i] = old_handlers[i + 1]) != NULL)
+			continue;
 
-	if (new_size == 0) {
-		new_handlers = NULL;
-	} else {
-		new_handlers = malloc(sizeof(void *) * new_size, M_DEVBUF,
-		    M_WAITOK);
-		memcpy(new_handlers, old_handlers, sizeof(void *) * i);
-		memcpy(new_handlers + i, old_handlers + i + 1,
-		    sizeof(void *) * (new_size - i));
+		if (i == 0) {
+			s = splhigh();
+			dev->dv_activity_count = 0;
+			dev->dv_activity_handlers = NULL;
+			splx(s);
+			kmem_free(old_handlers, sizeof(void *[old_size]));
+		}
+		return;
 	}
-
-	s = splhigh();
-	dev->dv_activity_count = new_size;
-	dev->dv_activity_handlers = new_handlers;
-	splx(s);
-
-	free(old_handlers, M_DEVBUF);
+	old_handlers[i] = NULL;
 }
 
 /*

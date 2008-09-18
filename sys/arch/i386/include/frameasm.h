@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.13 2008/04/21 15:15:34 cegger Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.13.4.1 2008/09/18 04:33:27 wrstuden Exp $	*/
 
 #ifndef _I386_FRAMEASM_H_
 #define _I386_FRAMEASM_H_
@@ -66,19 +66,19 @@
  */
 #define	INTRENTRY \
 	subl	$TF_PUSHSIZE,%esp	; \
-	movl	%gs,TF_GS(%esp)	; \
-	movl	%fs,TF_FS(%esp) ; \
+	movw	%gs,TF_GS(%esp)	; \
+	movw	%fs,TF_FS(%esp) ; \
 	movl	%eax,TF_EAX(%esp)	; \
-	movl	%es,TF_ES(%esp) ; \
-	movl	%ds,TF_DS(%esp) ; \
+	movw	%es,TF_ES(%esp) ; \
+	movw	%ds,TF_DS(%esp) ; \
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	; \
 	movl	%edi,TF_EDI(%esp)	; \
 	movl	%esi,TF_ESI(%esp)	; \
-	movl	%eax,%ds	; \
+	movw	%ax,%ds	; \
 	movl	%ebp,TF_EBP(%esp)	; \
-	movl	%eax,%es	; \
+	movw	%ax,%es	; \
 	movl	%ebx,TF_EBX(%esp)	; \
-	movl	%eax,%gs	; \
+	movw	%ax,%gs	; \
 	movl	%edx,TF_EDX(%esp)	; \
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
 	movl	%ecx,TF_ECX(%esp)	; \
@@ -90,10 +90,10 @@
  * INTRFASTEXIT should be in sync with trap(), resume_iret and friends.
  */
 #define	INTRFASTEXIT \
-	movl	TF_GS(%esp),%gs	; \
-	movl	TF_FS(%esp),%fs	; \
-	movl	TF_ES(%esp),%es	; \
-	movl	TF_DS(%esp),%ds	; \
+	movw	TF_GS(%esp),%gs	; \
+	movw	TF_FS(%esp),%fs	; \
+	movw	TF_ES(%esp),%es	; \
+	movw	TF_DS(%esp),%ds	; \
 	movl	TF_EDI(%esp),%edi	; \
 	movl	TF_ESI(%esp),%esi	; \
 	movl	TF_EBP(%esp),%ebp	; \

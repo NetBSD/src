@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.17 2007/09/24 00:42:12 rumble Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.17.24.1 2008/09/18 04:36:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -109,10 +109,6 @@ struct filecore_mnt {
 extern struct pool filecore_node_pool;
 
 VFS_PROTOS(filecore);
-
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_filecore_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 
 extern int (**filecore_vnodeop_p) __P((void *));
 

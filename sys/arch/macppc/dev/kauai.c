@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.23.6.1 2008/06/23 04:30:31 wrstuden Exp $	*/
+/*	$NetBSD: kauai.c,v 1.23.6.2 2008/09/18 04:33:29 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.23.6.1 2008/06/23 04:30:31 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.23.6.2 2008/09/18 04:33:29 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.23.6.1 2008/06/23 04:30:31 wrstuden Exp 
 #define WDC_AUXREG_OFFSET	0x16
 #define WDC_AUXREG_NPORTS	1
 
-#define PIO_CONFIG_REG (0x200 >> 4)	/* PIO and DMA access timing */
-#define DMA_CONFIG_REG (0x210 >> 4)	/* UDMA access timing */
+#define PIO_CONFIG_REG	0x200	/* PIO and DMA access timing */
+#define DMA_CONFIG_REG	0x210	/* UDMA access timing */
 
 struct kauai_softc {
 	struct wdc_softc sc_wdcdev;
@@ -80,7 +80,6 @@ static void kauai_dma_start(void *, int, int);
 static int kauai_dma_finish(void *, int, int, int);
 static void kauai_set_modes(struct ata_channel *);
 static void calc_timing_kauai(struct kauai_softc *, int);
-static int getnodebypci(pci_chipset_tag_t, pcitag_t);
 
 CFATTACH_DECL_NEW(kauai, sizeof(struct kauai_softc),
     kauai_match, kauai_attach, NULL, wdcactivate);
@@ -116,14 +115,9 @@ kauai_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
-#ifdef DIAGNOSTIC
-	if ((vaddr_t)sc->sc_dmacmd & 0x0f) {
-		aprint_error(": bad dbdma alignment\n");
-		return;
-	}
-#endif
+	sc->sc_dmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 20);
 
-	node = getnodebypci(pa->pa_pc, pa->pa_tag);
+	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 	if (node == 0) {
 		aprint_error(": cannot find kauai node\n");
 		return;
@@ -351,39 +345,5 @@ kauai_dma_finish(void *v, int channel, int drive, int read)
 	struct kauai_softc *sc = v;
 
 	dbdma_stop(sc->sc_dmareg);
-	return 0;
-}
-
-/*
- * Find OF-device corresponding to the PCI device.
- */
-int
-getnodebypci(pci_chipset_tag_t pc, pcitag_t tag)
-{
-	int bus, dev, func;
-	u_int reg[5];
-	int p, q;
-	int l, b, d, f;
-
-	pci_decompose_tag(pc, tag, &bus, &dev, &func);
-
-	for (q = OF_peer(0); q; q = p) {
-		l = OF_getprop(q, "assigned-addresses", reg, sizeof(reg));
-		if (l > 4) {
-			b = (reg[0] >> 16) & 0xff;
-			d = (reg[0] >> 11) & 0x1f;
-			f = (reg[0] >> 8) & 0x07;
-
-			if (b == bus && d == dev && f == func)
-				return q;
-		}
-		if ((p = OF_child(q)))
-			continue;
-		while (q) {
-			if ((p = OF_peer(q)))
-				break;
-			q = OF_parent(q);
-		}
-	}
 	return 0;
 }

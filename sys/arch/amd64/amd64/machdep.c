@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92.2.4 2008/06/23 04:30:05 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92.2.5 2008/09/18 04:33:17 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.4 2008/06/23 04:30:05 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.5 2008/09/18 04:33:17 wrstuden Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -264,7 +264,6 @@ static struct vm_map lkm_map_store;
 extern struct vm_map *lkm_map;
 vaddr_t kern_end;
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -346,13 +345,6 @@ cpu_startup(void)
 	minaddr = 0;
 
 	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
-
-	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
@@ -396,16 +388,15 @@ x86_64_switch_context(struct pcb *new)
 {
 	struct cpu_info *ci;
 	ci = curcpu();
-	if (/* XXX ! ci->ci_fpused */ 1) {
-		HYPERVISOR_fpu_taskswitch(0);
-		/* XXX ci->ci_fpused = 0; */
-	}
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
 	if (xen_start_info.flags & SIF_PRIVILEGED) {
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
 		physop.u.set_iopl.iopl = new->pcb_iopl;
 		HYPERVISOR_physdev_op(&physop);
+	}
+	if (new->pcb_fpcpu != ci) {
+		HYPERVISOR_fpu_taskswitch(1);
 	}
 }
 
@@ -438,7 +429,7 @@ x86_64_proc0_tss_ldt_init(void)
 #else
 	xen_set_ldt((vaddr_t) ldtstore, LDT_SIZE >> 3);
 	/* Reset TS bit and set kernel stack for interrupt handlers */
-	HYPERVISOR_fpu_taskswitch(0);
+	HYPERVISOR_fpu_taskswitch(1);
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_rsp0);
 #endif /* XEN */
 }
@@ -673,7 +664,6 @@ struct pcb dumppcb;
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	int s;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -691,20 +681,15 @@ cpu_reboot(int howto, char *bootstr)
 		resettodr();
 	}
 
+	/* Disable interrupts. */
+	splhigh();
 
 	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
-		/* Disable interrupts. */
-		s = splhigh();
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-		splx(s);
-	}
 
 haltsys:
 	doshutdownhooks();
-
-	/* Disable interrupts. */
-	(void)splhigh();
 
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
@@ -1802,8 +1787,21 @@ init_x86_64(paddr_t first_avail)
 		    GSEL(GCODE_SEL, SEL_KPL));
 #else /* XEN */
 		xen_idt[xen_idt_idx].vector = x;
-		xen_idt[xen_idt_idx].flags =
-		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL;
+
+		switch (x) {
+		case 2:  /* NMI */
+		case 18: /* MCA */
+			TI_SET_IF(&(xen_idt[xen_idt_idx]), 2);
+			break;
+		case 3:
+		case 4:
+			xen_idt[xen_idt_idx].flags = SEL_UPL;
+			break;
+		default:
+			xen_idt[xen_idt_idx].flags = SEL_KPL;
+			break;
+		}
+
 		xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 		xen_idt[xen_idt_idx].address =
 		    (unsigned long)IDTVEC(exceptions)[x];

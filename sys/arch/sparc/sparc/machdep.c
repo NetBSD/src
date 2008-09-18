@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.278.2.5 2008/06/23 04:30:43 wrstuden Exp $ */
+/*	$NetBSD: machdep.c,v 1.278.2.6 2008/09/18 04:33:34 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278.2.5 2008/06/23 04:30:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278.2.6 2008/09/18 04:33:34 wrstuden Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -131,7 +131,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278.2.5 2008/06/23 04:30:43 wrstuden E
 #include <sparc/dev/power.h>
 #endif
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 extern paddr_t avail_end;
 
@@ -308,14 +307,7 @@ cpu_startup(void)
 #endif
 	}
 
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
 	minaddr = 0;
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
-
 	if (CPU_ISSUN4 || CPU_ISSUN4C) {
 		/*
 		 * Allocate DMA map for 24-bit devices (le, ie)

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2008/03/22 08:37:26 mlelstv Exp $
+# $NetBSD: Makefile,v 1.22.4.1 2008/09/18 04:39:23 wrstuden Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -92,22 +92,23 @@ CPPFLAGS+= -I.					\
 CPPFLAGS+=-DHAVE_IPV6
 .endif
 
-.if ${HAVE_GCC} == 4
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
 .for f in mkey
 COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
 .endif
 
-${gen_files} hdb_asn1.h: hdb_asn1_files
-
-${SRCS:.c=.o}: hdb_err.h hdb_asn1.h
+${gen_files} hdb_asn1.hx: hdb_asn1_files
 
 CLEANFILES=	${gen_files} ${BUILT_SOURCES} \
-		hdb_asn1.h hdb_asn1_files hdb_err.h
+		hdb_asn1.h hdb_asn1.hx hdb_asn1_files hdb_err.h
 
 .include <bsd.lib.mk>
 
-.SUFFIXES: .x
+.SUFFIXES: .hx .x
+
+.hx.h:
+	@cmp -s $< $@ 2> /dev/null || cp $< $@
 
 .x.c:
 	@cmp -s $< $@ 2> /dev/null || cp $< $@

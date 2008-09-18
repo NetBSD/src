@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.13 2007/11/16 18:36:52 dyoung Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.13.20.1 2008/09/18 04:35:07 wrstuden Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -36,6 +36,7 @@
 
 
 #define PCI_SOCKBASE 0x10	/* Socket Base Address Register */
+#define PCI_CBB_SECSTATUS 0x14	/* secondary status (starts at 0x16) */
 #define PCI_BUSNUM   0x18	/* latency timer, Subordinate bus number */
 #define PCI_LEGACY 0x44		/* legacy IO register address (32 bits) */
 #define	PCI_SYSCTRL 0x80	/* System control */
@@ -43,6 +44,8 @@
 
 #define PCI_CLASS_INTERFACE_MASK  0xffffff00
 #define PCI_CLASS_INTERFACE_YENTA 0x06070000
+
+#define CBB_SECSTATUS_CBMABORT	0x20000000
 
 #define CB_SOCKET_EVENT 0x00	/* offset of cardbus socket event reg */
 #define CB_SOCKET_MASK  0x04	/* offset of cardbus socket mask register */

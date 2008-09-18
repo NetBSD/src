@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2007/03/06 21:57:26 bouyer Exp $
+#	$NetBSD: Makefile,v 1.17.16.1 2008/09/18 04:41:22 wrstuden Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,7 +8,7 @@ TARGETS+=	release
 
 release: check_RELEASEDIR .WAIT ${DESTDIR}/usr/mdec/boot
 	${RELEASE_INSTALL} ${DESTDIR}/usr/mdec/boot \
-	    ${RELEASEDIR}/${MACHINE}/installation/netboot
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/netboot
 
 iso_image:
 	${MAKEDIRTARGET} cdroms iso_image

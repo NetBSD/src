@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.39 2008/01/28 18:35:50 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.39.6.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -104,18 +104,22 @@ struct puffs_usermount {
 	uint32_t		pu_flags;
 	int			pu_cc_stackshift;
 
-	struct puffs_cc		*pu_cc_main;
+	ucontext_t		pu_mainctx;
 #define PUFFS_CCMAXSTORE 32
 	int			pu_cc_nstored;
 
 	int			pu_kq;
 	int			pu_state;
-#define PU_STATEMASK	0xff
-#define PU_INLOOP	0x100
-#define PU_ASYNCFD	0x200
-#define PU_HASKQ	0x400
-#define PU_PUFFSDAEMON	0x800
+#define PU_STATEMASK	0x00ff
+#define PU_INLOOP	0x0100
+#define PU_ASYNCFD	0x0200
+#define PU_HASKQ	0x0400
+#define PU_PUFFSDAEMON	0x0800
+#define PU_MAINRESTORE	0x1000
 #define PU_SETSTATE(pu, s) (pu->pu_state = (s) | (pu->pu_state & ~PU_STATEMASK))
+#define PU_SETSFLAG(pu, s) (pu->pu_state |= (s))
+#define PU_CLRSFLAG(pu, s) \
+    (pu->pu_state = ((pu->pu_state &= ~(s)) | (pu->pu_state & PU_STATEMASK)))
 	int			pu_dpipe[2];
 
 	struct puffs_node	*pu_pn_root;
@@ -239,6 +243,9 @@ void	puffs__cc_cont(struct puffs_cc *);
 void	puffs__cc_destroy(struct puffs_cc *, int);
 void	puffs__cc_setcaller(struct puffs_cc *, pid_t, lwpid_t);
 void	puffs__goto(struct puffs_cc *);
+int	puffs__cc_savemain(struct puffs_usermount *);
+int	puffs__cc_restoremain(struct puffs_usermount *);
+void	puffs__cc_exit(struct puffs_usermount *);
 
 int	puffs__fsframe_read(struct puffs_usermount *, struct puffs_framebuf *,
 			    int, int *);

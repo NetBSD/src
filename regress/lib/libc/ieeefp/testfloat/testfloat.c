@@ -1,4 +1,4 @@
-/*	$NetBSD: testfloat.c,v 1.6 2008/04/28 20:23:04 martin Exp $	*/
+/*	$NetBSD: testfloat.c,v 1.6.2.1 2008/09/18 04:38:42 wrstuden Exp $	*/
 
 /* This is a derivative work. */
 
@@ -57,9 +57,9 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__COPYRIGHT("@(#) Copyright (c) 2001\n\
-	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: testfloat.c,v 1.6 2008/04/28 20:23:04 martin Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2001\
+  The NetBSD Foundation, inc. All rights reserved.");
+__RCSID("$NetBSD: testfloat.c,v 1.6.2.1 2008/09/18 04:38:42 wrstuden Exp $");
 #endif /* !__lint */
 
 #include <stdlib.h>

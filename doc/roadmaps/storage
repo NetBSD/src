@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.1 2008/03/19 20:12:53 agc Exp $
+$NetBSD: storage,v 1.1.10.1 2008/09/18 04:40:19 wrstuden Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -73,7 +73,7 @@ Responsible: mjf
 -------------------------------------
 
 Contributed by Wasabi Systems, Inc, technical review on tech-kern
-in March 2008.
+in March 2008, merged to HEAD in July 2008, will be in NetBSD 5.0.
 
 12. Logical Volume Management
 -----------------------------

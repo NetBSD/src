@@ -1,4 +1,4 @@
-#	$NetBSD: list.crypto,v 1.5.12.1 2008/06/23 04:29:56 wrstuden Exp $
+#	$NetBSD: list.crypto,v 1.5.12.2 2008/09/18 04:38:22 wrstuden Exp $
 
 PROG	cgdconfig
 
@@ -7,4 +7,4 @@ PROG	ssh		slogin
 SPECIAL	scp	srcdir	usr.bin/ssh/scp
 SPECIAL	ssh	srcdir	usr.bin/ssh/ssh
 
-LIBS	-lssh -lcrypto -lpthread
+LIBS	-lssh -lcrypto

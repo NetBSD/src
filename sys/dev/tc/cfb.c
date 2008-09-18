@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.53.22.1 2008/06/23 04:31:30 wrstuden Exp $ */
+/* $NetBSD: cfb.c,v 1.53.22.2 2008/09/18 04:35:10 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.53.22.1 2008/06/23 04:31:30 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.53.22.2 2008/09/18 04:35:10 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,6 @@ struct hwcursor64 {
 };
 
 struct cfb_softc {
-	struct device sc_dev;
 	vaddr_t sc_vaddr;
 	size_t sc_size;
 	struct rasops_info *sc_ri;
@@ -137,10 +136,10 @@ struct cfb_softc {
 #define	CX_BT459_OFFSET	0x200000
 #define	CX_OFFSET_IREQ	0x300000	/* Interrupt req. control */
 
-static int  cfbmatch(struct device *, struct cfdata *, void *);
-static void cfbattach(struct device *, struct device *, void *);
+static int  cfbmatch(device_t, cfdata_t, void *);
+static void cfbattach(device_t, device_t, void *);
 
-CFATTACH_DECL(cfb, sizeof(struct cfb_softc),
+CFATTACH_DECL_NEW(cfb, sizeof(struct cfb_softc),
     cfbmatch, cfbattach, NULL, NULL);
 
 static void cfb_common_init(struct rasops_info *);
@@ -234,7 +233,7 @@ static const u_int8_t shuffle[256] = {
 };
 
 static int
-cfbmatch(struct device *parent, struct cfdata *match, void *aux)
+cfbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -245,7 +244,7 @@ cfbmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-cfbattach(struct device *parent, struct device *self, void *aux)
+cfbattach(device_t parent, device_t self, void *aux)
 {
 	struct cfb_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;

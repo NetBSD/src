@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.36 2007/12/14 21:15:59 pavel Exp $
+.\"	$NetBSD: install,v 1.36.10.1 2008/09/18 04:41:11 wrstuden Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -80,8 +80,8 @@ command and is used to list the contents of the current device node.
 To get a listing of all the devices available in your system, use the
 following commands:
 .(disp
-.No 0 \*> Ic "dev /"
-.No 0 \*> Ic "ls"
+.No 0 \*[Gt] Ic "dev /"
+.No 0 \*[Gt] Ic "ls"
 .disp)
 .Pp
 Open Firmware has device aliases which are simple names for the full
@@ -96,7 +96,7 @@ command.
 For example, here are the devaliases on a PowerMacintosh 7300:
 .Pp
 .(disp
-.No 0 \*> Ic devalias
+.No 0 \*[Gt] Ic devalias
 vci0                /chaos@F0000000
 pci1                /bandit@F2000000
 pci2                /bandit@F4000000
@@ -113,16 +113,16 @@ scsi-int            /bandit/gc/mesh
 On most systems, you'll find the devices you're looking for.
 Typical aliases are:
 .Bl -column xxx "scsi-intxxxxxx" "internal scsi bus (on system with multiple SCSI busses)"
-.It Ta Dl hd Ta No "internal hard drive"
-.It Ta Dl cd Ta No "CD-ROM drive"
-.It Ta Dl zip Ta No "internal Zip drive"
-.It Ta Dl enet Ta No ethernet
-.It Ta Dl fd Ta No "floppy drive"
-.It Ta Dl scsi Ta No "SCSI bus"
-.It Ta Dl scsi-int Ta No "internal SCSI bus (on systems with multiple SCSI busses)"
-.It Ta Dl ata Ta No "ATA/IDE bus"
-.It Ta Dl ideN Ta No "ATA/IDE bus number N"
-.It Ta Dl ultraN Ta No "Ultra/66 or Ultra/100 IDE bus number N"
+.It Ta Li hd Ta No "internal hard drive"
+.It Ta Li cd Ta No "CD-ROM drive"
+.It Ta Li zip Ta No "internal Zip drive"
+.It Ta Li enet Ta No ethernet
+.It Ta Li fd Ta No "floppy drive"
+.It Ta Li scsi Ta No "SCSI bus"
+.It Ta Li scsi-int Ta No "internal SCSI bus (on systems with multiple SCSI busses)"
+.It Ta Li ata Ta No "ATA/IDE bus"
+.It Ta Li ideN Ta No "ATA/IDE bus number N"
+.It Ta Li ultraN Ta No "Ultra/66 or Ultra/100 IDE bus number N"
 .El
 .Pp
 Note that some of these items are the device itself, and some are a bus.
@@ -134,8 +134,8 @@ commands.
 For example, here are the devices on the internal SCSI bus of a
 PowerMacintosh 7300:
 .(disp
-.No 0 \*> Ic "dev scsi-int"
-.No 0 \*> Ic "ls"
+.No 0 \*[Gt] Ic "dev scsi-int"
+.No 0 \*[Gt] Ic "ls"
 FF83C850: /sd@0,0
 FF83D480: /st@0,0
  ok
@@ -160,8 +160,8 @@ You can find out the devices on your SCSI bus with the
 .Ic show-children
 command:
 .(disp
-.No 0 \*> Ic "dev scsi-int"
-.No 0 \*> Ic "show-children"
+.No 0 \*[Gt] Ic "dev scsi-int"
+.No 0 \*[Gt] Ic "show-children"
 Target 0
   Unit 0  Disk     IBM     DCAS-32160      S65A
 Target 3
@@ -188,8 +188,8 @@ in this system
 To determine if a device is bootable, type:
 .Pp
 .(disp
-.No 0 \*> Ic dev scsi-int/sd@3
-.No 0 \*> Ic words
+.No 0 \*[Gt] Ic dev scsi-int/sd@3
+.No 0 \*[Gt] Ic words
 load          write        read          seek        close     open
 write-blocks  read-blocks  max-transfer  block-size  dma-sync  dma-map-out
 dma-map-in    dma-free     dma-alloc
@@ -197,7 +197,7 @@ dma-map-in    dma-free     dma-alloc
 .disp)
 .Pp
 If the
-.Ic word Li Dq open
+.Ic word Dq Li open
 is present in the list, then the device is almost certainly bootable.
 .Pp
 Next, you need to figure out what partition Open Firmware thinks your
@@ -265,7 +265,7 @@ bootloader (including the
 .Nx*M
 CD-R image and installation floppies).
 .(disp
-.No 0 \*> Ic "dir fd:,\e"
+.No 0 \*[Gt] Ic "dir fd:,\e"
 FINDER  .DAT 022 2 2B8
 DESKTOP .    022 0 0
 RESOURCE.FRK 012 3 0
@@ -295,7 +295,7 @@ to the filename when using a ISO 9660 file system.  This
 is part of the ISO 9660 specification and will show up in the directory 
 listing if it is present on the disk.  For example:
 .(disp
-.No 0 \*> Ic "boot cd:,\eOFWBOOT.XCF;1 NETBSD.MACPPC;1"
+.No 0 \*[Gt] Ic "boot cd:,\eOFWBOOT.XCF;1 NETBSD.MACPPC;1"
 .disp)
 .Note)
 .Pp
@@ -334,11 +334,11 @@ Here are some examples of what you might use to boot from CD-ROM (Apple
 usually sets their CD-ROM drives to SCSI ID 3):
 .Pp
 .(disp
-.No 0 \*> Ic "boot cd:0 NETBSD.MACPPC"
-.No 0 \*> Ic "boot scsi-int/sd@3:0 NETBSD.MACPPC"
-.No 0 \*> Ic "boot scsi/sd@3:0 NETBSD.MACPPC"
-.No 0 \*> Ic "boot ata/atapi-disk:0 NETBSD.MACPPC"
-.No 0 \*> Ic "boot ide1/disk@0:0 NETBSD.MACPPC"
+.No 0 \*[Gt] Ic "boot cd:0 NETBSD.MACPPC"
+.No 0 \*[Gt] Ic "boot scsi-int/sd@3:0 NETBSD.MACPPC"
+.No 0 \*[Gt] Ic "boot scsi/sd@3:0 NETBSD.MACPPC"
+.No 0 \*[Gt] Ic "boot ata/atapi-disk:0 NETBSD.MACPPC"
+.No 0 \*[Gt] Ic "boot ide1/disk@0:0 NETBSD.MACPPC"
 .disp)
 .Pp
 .It
@@ -347,7 +347,7 @@ usually sets their CD-ROM drives to SCSI ID 3):
 (Open Firmware 3)
 .Pp
 .(disp
-.No 0 \*> Ic "boot cd:,\eofwboot.xcf netbsd.macppc"
+.No 0 \*[Gt] Ic "boot cd:,\eofwboot.xcf netbsd.macppc"
 .disp)
 .It
 .To 2 "Booting the NetBSD install floppies"
@@ -368,7 +368,7 @@ boot floppy -- you must enter Open Firmware and type a boot command.
 All you need to do is:
 .Pp
 .(disp
-.No 0 \*> Ic boot fd:0
+.No 0 \*[Gt] Ic boot fd:0
 .disp)
 .Pp
 It is common to see
@@ -381,7 +381,7 @@ for more information about this and what you can do to get a successful boot.
 You can eject a floppy by typing:
 .Pp
 .(disp
-.No 0 \*> Ic eject fd
+.No 0 \*[Gt] Ic eject fd
 .disp)
 .It
 .To 2 "Booting an IDE or SCSI drive with an HFS partition"
@@ -416,10 +416,10 @@ Here are some examples of what you might use to boot the installer kernel
 located on an HFS or HFS+ partition:
 .Pp
 .(disp
-.No 0 \*> Ic "boot hd:9,\eofwboot.xcf netbsd-GENERIC_MD.gz"
-.No 0 \*> Ic "boot scsi/sd@0:9,\eofwboot.xcf netbsd-GENERIC_MD.gz"
-.No 0 \*> Ic "boot ide0/disk@0:10,\eofwboot.xcf netbsd-GENERIC_MD.gz"
-.No 0 \*> Ic "boot ultra1:9,ofwboot.xcf netbsd-GENERIC_MD.gz"
+.No 0 \*[Gt] Ic "boot hd:9,\eofwboot.xcf netbsd-GENERIC_MD.gz"
+.No 0 \*[Gt] Ic "boot scsi/sd@0:9,\eofwboot.xcf netbsd-GENERIC_MD.gz"
+.No 0 \*[Gt] Ic "boot ide0/disk@0:10,\eofwboot.xcf netbsd-GENERIC_MD.gz"
+.No 0 \*[Gt] Ic "boot ultra1:9,ofwboot.xcf netbsd-GENERIC_MD.gz"
 .disp)
 .Pp
 .It
@@ -467,11 +467,11 @@ Here are some examples of what you might use to boot from CD-ROM
 (Apple usually sets their CD-ROM drives to SCSI ID 3):
 .Pp
 .(disp
-.No 0 \*> Ic "boot cd:,\eofwboot.xcf netbsd.gz"
-.No 0 \*> Ic "boot scsi-int/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
-.No 0 \*> Ic "boot scsi/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
-.No 0 \*> Ic "boot ata/atapi-disk:,\eOFWBOOT.XCF NETBSD.GZ"
-.No 0 \*> Ic "boot ide1/disk@0:,\eOFWBOOT.XCF NETBSD.GZ"
+.No 0 \*[Gt] Ic "boot cd:,\eofwboot.xcf netbsd.gz"
+.No 0 \*[Gt] Ic "boot scsi-int/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
+.No 0 \*[Gt] Ic "boot scsi/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
+.No 0 \*[Gt] Ic "boot ata/atapi-disk:,\eOFWBOOT.XCF NETBSD.GZ"
+.No 0 \*[Gt] Ic "boot ide1/disk@0:,\eOFWBOOT.XCF NETBSD.GZ"
 .disp)
 .It
 .To 2 "Booting an MS-DOS floppy"
@@ -491,13 +491,13 @@ command to get a listing of the files on the floppy.
 Typically you'll find filenames like
 .Li OFWBOOT.XCF No and Li NETBSD~1.GZ .
 .(disp
-.No 0 \*> Ic "boot fd:,\eOFWBOOT.XCF NETBSD~1.GZ"
+.No 0 \*[Gt] Ic "boot fd:,\eOFWBOOT.XCF NETBSD~1.GZ"
 .disp)
 .Pp
 You can eject a floppy by typing:
 .Pp
 .(disp
-.No 0 \*> Ic eject fd
+.No 0 \*[Gt] Ic eject fd
 .disp)
 .It
 .To 2 "Booting over the ethernet"
@@ -509,14 +509,14 @@ Firmware 2.4)
 You can try the simple form (i.e. that you are booting from ethernet):
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:,ofwboot.xcf"
+.No 0 \*[Gt] Ic "boot enet:,ofwboot.xcf"
 .disp)
 .Pp
 Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:,ofwboot.xcf enet:,/netbsd-GENERIC_MD.gz"
+.No 0 \*[Gt] Ic "boot enet:,ofwboot.xcf enet:,/netbsd-GENERIC_MD.gz"
 .disp)
 .(Note
 Some Open Firmware 1.0.5 machines have their MAC address stored
@@ -539,18 +539,20 @@ Uncompress them first.
 You can try the simple form (i.e. that you are booting from ethernet):
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:0"
+.No 0 \*[Gt] Ic "boot enet:0"
 .disp)
 .Pp
 Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:0,ofwboot.xcf enet:0,/netbsd-GENERIC_MD.gz"
+.No 0 \*[Gt] Ic "boot enet:0,ofwboot.xcf enet:0,/netbsd-GENERIC_MD.gz"
 .disp)
 .It
 .To 2 "Booting an IDE or SCSI drive with 'partition zero'"
-.Em "Booting an IDE or SCSI drive with a" Sq "partition zero" No Em bootloader
+.Em "Booting an IDE or SCSI drive with a"
+.Sq Em "partition zero"
+.Em bootloader
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
 Firmware 2.4)
@@ -569,12 +571,12 @@ Internal hard drives are usually SCSI ID 0.
 Here are some examples of what you might use to boot from such a drive:
 .Pp
 .(disp
-.No 0 \*> Ic "boot zip:0"
-.No 0 \*> Ic "boot scsi-int/sd@0:0"
-.No 0 \*> Ic "boot scsi/sd@0:0"
-.No 0 \*> Ic "boot ata/ata-disk@0:0"
-.No 0 \*> Ic "boot ata/ATA-Disk@0:0"
-.No 0 \*> Ic "boot ide0/disk@0:0"
+.No 0 \*[Gt] Ic "boot zip:0"
+.No 0 \*[Gt] Ic "boot scsi-int/sd@0:0"
+.No 0 \*[Gt] Ic "boot scsi/sd@0:0"
+.No 0 \*[Gt] Ic "boot ata/ata-disk@0:0"
+.No 0 \*[Gt] Ic "boot ata/ATA-Disk@0:0"
+.No 0 \*[Gt] Ic "boot ide0/disk@0:0"
 .disp)
 .bullet)
 .
@@ -593,7 +595,7 @@ get an idea of what to expect (user-typed commands are in
  To continue booting, type "mac-boot" and press return.
  To shut down, type "shut-down" and press return.
   ok
-.No  0 \*> Ic "boot enet:,ofwboot.xcf netbsd-GENERIC_MD.gz"
+.No  0 \*[Gt] Ic "boot enet:,ofwboot.xcf netbsd-GENERIC_MD.gz"
  loading XCOFF
  tsize=C280 dsize=14AC bsize=2620 entry=600000
  SECTIONS:
@@ -604,8 +606,8 @@ get an idea of what to expect (user-typed commands are in
  loading .data, done..
  clearing .bss, done..
 
- \*>\*> NetBSD/macppc OpenFirmware Boot, Revision 1.3
- \*>\*> (tsubai@mint.iri.co.jp, Sun Nov 26 01:41:27 JST 2000)
+ \*[Gt]\*[Gt] NetBSD/macppc OpenFirmware Boot, Revision 1.3
+ \*[Gt]\*[Gt] (tsubai@mint.iri.co.jp, Sun Nov 26 01:41:27 JST 2000)
  1701508+177748 [100+68176+55886]=0x1e9468
 
   start=0x100000
@@ -732,7 +734,7 @@ on an Open Firmware 3 system.
 Reset your system and try using a different boot command (this is the 
 only way some people have gotten their Open Firmware 2.4 systems to work):
 .(disp
-.No 0 \*> Ic "0 bootr boot-device boot-file"
+.No 0 \*[Gt] Ic "0 bootr boot-device boot-file"
 .disp)
 .Pp
 If you tried one boot command and it failed, then you tried a second and
@@ -779,9 +781,7 @@ Make sure that you have use binary mode to FTP the files, and
 that they are properly uncompressed.
 .It
 .To 2 "bad partition number, using 0no bootable HFS partition"
-.Do
-.Li "bad partition number, using 0no bootable HFS partition"
-.Dc
+.Dq Li "bad partition number, using 0no bootable HFS partition"
 .Pp
 If you're trying to boot an Open Firmware 1.0.5, 1.1.22, or 2.0.x system,
 this probably means that your media (i.e. hard drive or CD-ROM) has an HFS
@@ -821,7 +821,7 @@ gets confused and doesn't work right unless you load it explicitly from the
 even if the bootp or DHCP server provides the correct information.
 You need to boot with a command like:
 .(disp
-.No 0 \*> Ic "boot enet:,ofwboot.xcf"
+.No 0 \*[Gt] Ic "boot enet:,ofwboot.xcf"
 .disp)
 .It
 .To 2 "enet:,/netbsd.ram.gz: Inappropriate file type or format"
@@ -912,10 +912,10 @@ style boot scheme (e.g. Open Firmware 3 models), then you would type
 something like the following:
 .Pp
 .(disp
-.No 0 \*> Ic "setenv auto-boot? true"
-.No 0 \*> Ic "setenv boot-device ide0/disk@0:8,\eofwboot.xcf"
-.No 0 \*> Ic "setenv boot-file ide0/disk@0:13,/netbsd"
-.No 0 \*> Ic "reset-all"
+.No 0 \*[Gt] Ic "setenv auto-boot? true"
+.No 0 \*[Gt] Ic "setenv boot-device ide0/disk@0:8,\eofwboot.xcf"
+.No 0 \*[Gt] Ic "setenv boot-file ide0/disk@0:13,/netbsd"
+.No 0 \*[Gt] Ic "reset-all"
 .disp)
 .Pp
 The last command resets the system so that these settings are stored.
@@ -925,10 +925,10 @@ If you are using a
 style boot scheme, you would type something like the following:
 .Pp
 .(disp
-.No 0 \*> Ic "setenv auto-boot? true"
-.No 0 \*> Ic "setenv boot-device scsi/sd@0:0"
-.No 0 \*> Ic "setenv boot-file netbsd"
-.No 0 \*> Ic "reset-all"
+.No 0 \*[Gt] Ic "setenv auto-boot? true"
+.No 0 \*[Gt] Ic "setenv boot-device scsi/sd@0:0"
+.No 0 \*[Gt] Ic "setenv boot-file netbsd"
+.No 0 \*[Gt] Ic "reset-all"
 .disp)
 .Pp
 Replace
@@ -944,8 +944,8 @@ spun up, try one of the two following
 settings:
 .Pp
 .(disp
-.No 0 \*> Ic "setenv boot-command catch 5000 ms boot"
-.No 0 \*> Ic "setenv boot-command begin ['] boot catch 1000 ms cr again"
+.No 0 \*[Gt] Ic "setenv boot-command catch 5000 ms boot"
+.No 0 \*[Gt] Ic "setenv boot-command begin ['] boot catch 1000 ms cr again"
 .disp)
 .Pp
 Also, you may be able to pause a system at the Open Firmware prompt
@@ -961,7 +961,7 @@ interrupt booting, even when holding down any key while using a serial
 console):
 .Pp
 .(disp
-.No 0 \*> Ic "setenv boot-command key? invert if boot then"
+.No 0 \*[Gt] Ic "setenv boot-command key? invert if boot then"
 .disp)
 .It
 .To 2 "Booting NetBSD and MacOS X or Darwin"
@@ -988,21 +988,21 @@ HOW-TO for more help:
 .Lk http://www.NetBSD.org/ports/macppc/nvedit.html
 .Pp
 .(disp
-.No 0 \*> Ic "printenv boot-device"
+.No 0 \*[Gt] Ic "printenv boot-device"
 boot-device /pci@f2000000/mac-io@17/ata-4@1f000/@0:10,\e\e:tbxi
  ok
-.No 0 \*> Ic "nvalias osx /pci@f2000000/mac-io@17/ata-4@1f000/@0:10,\e\e:tbxi"
-.No 0 \*> Ic "nvalias bsd /pci@f2000000/mac-io@17/ata-4@1f000/@0:9,ofwboot.xcf"
-.No 0 \*> Ic "nvstore"
-.No 0 \*> Ic "setenv use-nvramrc? true"
-.No 0 \*> Ic "reset-all"
+.No 0 \*[Gt] Ic "nvalias osx /pci@f2000000/mac-io@17/ata-4@1f000/@0:10,\e\e:tbxi"
+.No 0 \*[Gt] Ic "nvalias bsd /pci@f2000000/mac-io@17/ata-4@1f000/@0:9,ofwboot.xcf"
+.No 0 \*[Gt] Ic "nvstore"
+.No 0 \*[Gt] Ic "setenv use-nvramrc? true"
+.No 0 \*[Gt] Ic "reset-all"
 .disp)
 .Pp
 Now, when the system is reset, it will stop at the Open Firmware prompt 
 and you can type one of the following to boot an operating system:
 .(disp
-.No 0 \*> Ic "boot osx"
-.No 0 \*> Ic "boot bsd"
+.No 0 \*[Gt] Ic "boot osx"
+.No 0 \*[Gt] Ic "boot bsd"
 .disp)
 .It
 .To 2 "Booting NetBSD and MacOS 9 or earlier"

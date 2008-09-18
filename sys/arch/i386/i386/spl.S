@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.30.2.1 2008/06/23 04:30:26 wrstuden Exp $	*/
+/*	$NetBSD: spl.S,v 1.30.2.2 2008/09/18 04:33:27 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.30.2.1 2008/06/23 04:30:26 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.30.2.2 2008/09/18 04:33:27 wrstuden Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -319,6 +319,23 @@ ENTRY(call_evtchn_do_event)
 	IDEPTH_DECR
 	ret
 END(call_evtchn_do_event)
+#ifdef DOM0OPS
+/*
+ * void xenevt_event(int port)
+ */
+
+ENTRY(call_xenevt_event)
+	IDEPTH_INCR
+	/*
+	 * IDEPTH_INCR leaves old %esp in %eax.
+	 */
+	pushl	4(%eax)	/* evtch */
+	call	_C_LABEL(xenevt_event)
+	addl	$4, %esp
+	IDEPTH_DECR
+	ret
+END(call_xenevt_event)
+#endif /* DOM0OPS */
 #endif /* XEN */
 
 #ifndef XEN
