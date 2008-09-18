@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.164.2.1.4.2 2008/09/18 19:13:48 bouyer Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.164.2.1.4.3 2008/09/18 19:15:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.164.2.1.4.2 2008/09/18 19:13:48 bouyer Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.164.2.1.4.3 2008/09/18 19:15:15 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -2384,11 +2384,12 @@ statcmd(void)
 		ispassive = 1;
 		goto printaddr;
 	} else if (usedefault == 0) {
+		su = (struct sockinet *)&data_dest;
+
 		if (epsvall) {
 			reply(0, "EPSV only mode (EPSV ALL)");
 			goto epsvonly;
 		}
-		su = (struct sockinet *)&data_dest;
  printaddr:
 							/* PASV/PORT */
 		if (su->su_family == AF_INET) {
