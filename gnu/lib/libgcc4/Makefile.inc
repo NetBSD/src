@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.12 2008/08/17 07:47:48 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2008/09/18 12:20:19 skrll Exp $
 
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
-.include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
+.if exists(${.CURDIR}/../arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
+.include "${.CURDIR}/../arch/${MACHINE_ARCH}.mk"
 .endif
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/gcc4
