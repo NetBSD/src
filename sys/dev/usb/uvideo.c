@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.6 2008/09/18 13:34:56 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.7 2008/09/18 16:40:37 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.6 2008/09/18 13:34:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.7 2008/09/18 16:40:37 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -75,9 +75,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.6 2008/09/18 13:34:56 jmcneill Exp $");
 
 #include <dev/usb/uvideoreg.h>
 
-#define UVIDEO_NXFERS	3
+#include "opt_uvideo.h"
 
-/* #define UVIDEO_DEBUG */
+#define UVIDEO_NXFERS	3
 
 #ifdef UVIDEO_DEBUG
 #define DPRINTF(x)	do { if (uvideodebug) logprintf x; } while (0)
