@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.142 2008/08/29 20:38:18 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.143 2008/09/18 19:09:56 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -4929,4 +4929,9 @@ sys/netinet/if_arp.c				1.141
 
 	Missing "\n" in log(9) messages.
 	[uebayasi, ticket #1956]
+
+crypto/dist/heimdal/lib/krb5/crypto.c		patch
+	Fix a file descriptor leak in seed_something().
+	This prevents pam_krb5 from leaking file descriptors.
+	[bad, ticket #1957]
 
