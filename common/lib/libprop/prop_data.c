@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.11.2.1 2008/06/23 04:26:46 wrstuden Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.11.2.2 2008/09/18 04:54:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -62,11 +62,13 @@ _PROP_POOL_INIT(_prop_data_pool, sizeof(struct _prop_data), "propdata")
 _PROP_MALLOC_DEFINE(M_PROP_DATA, "prop data",
 		    "property data container object")
 
-static int		_prop_data_free(prop_stack_t, prop_object_t *);
+static _prop_object_free_rv_t
+		_prop_data_free(prop_stack_t, prop_object_t *);
 static bool	_prop_data_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_data_equals(prop_object_t, prop_object_t,
+static _prop_object_equals_rv_t
+		_prop_data_equals(prop_object_t, prop_object_t,
 				  void **, void **,
 				  prop_object_t *, prop_object_t *);
 
@@ -81,7 +83,7 @@ static const struct _prop_object_type _prop_object_type_data = {
 	((x) != NULL && (x)->pd_obj.po_type == &_prop_object_type_data)
 
 /* ARGSUSED */
-static int
+static _prop_object_free_rv_t
 _prop_data_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_data_t pd = *obj;
@@ -173,7 +175,7 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 }
 
 /* ARGSUSED */
-static bool
+static _prop_object_equals_rv_t
 _prop_data_equals(prop_object_t v1, prop_object_t v2,
     void **stored_pointer1, void **stored_pointer2,
     prop_object_t *next_obj1, prop_object_t *next_obj2)

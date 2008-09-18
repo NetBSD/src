@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.27.4.1 2008/06/23 04:26:46 wrstuden Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.27.4.2 2008/09/18 04:54:19 wrstuden Exp $	*/
 
-/* $Id: pfkey.c,v 1.27.4.1 2008/06/23 04:26:46 wrstuden Exp $ */
+/* $Id: pfkey.c,v 1.27.4.2 2008/09/18 04:54:19 wrstuden Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -270,7 +270,7 @@ pfkey_handler()
 	if ((pkrecvf[msg->sadb_msg_type])(mhp) < 0)
 		goto end;
 
-	error = 0;
+	error = 1;
 end:
 	if (msg)
 		racoon_free(msg);
@@ -460,6 +460,9 @@ pfkey_reload()
 			ipsec_strerror());
 		return -1;
 	}
+
+	while (pfkey_handler() > 0)
+		continue;
 
 	return 0;
 }
@@ -871,13 +874,19 @@ pk_sendgetspi(iph2)
 	/* for mobile IPv6 */
 	if (proxy && iph2->src_id && iph2->dst_id &&
 	    ipsecdoi_transportmode(pp)) {
-		src = iph2->src_id;
-		dst = iph2->dst_id;
+		src = dupsaddr(iph2->src_id);
+		dst = dupsaddr(iph2->dst_id);
 	} else {
-		src = iph2->src;
-		dst = iph2->dst;
+		src = dupsaddr(iph2->src);
+		dst = dupsaddr(iph2->dst);
 	}
-
+	
+	if (src == NULL || dst == NULL) {
+		racoon_free(src);
+		racoon_free(dst);
+		return -1;
+	}
+	
 	for (pr = pp->head; pr != NULL; pr = pr->next) {
 
 		/* validity check */
@@ -885,6 +894,8 @@ pk_sendgetspi(iph2)
 		if (satype == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid proto_id %d\n", pr->proto_id);
+			racoon_free(src);
+			racoon_free(dst);
 			return -1;
 		}
 		/* this works around a bug in Linux kernel where it allocates 4 byte
@@ -901,12 +912,12 @@ pk_sendgetspi(iph2)
 		if (mode == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid encmode %d\n", pr->encmode);
+			racoon_free(src);
+			racoon_free(dst);
 			return -1;
 		}
 
 #ifdef ENABLE_NATT
-		/* XXX should we do a copy of src/dst for each pr ?
-		 */
 		if (! pr->udp_encap) {
 			/* Remove port information, that SA doesn't use it */
 			set_port(src, 0);
@@ -925,6 +936,8 @@ pk_sendgetspi(iph2)
 			plog(LLV_ERROR, LOCATION, NULL,
 				"ipseclib failed send getspi (%s)\n",
 				ipsec_strerror());
+			racoon_free(src);
+			racoon_free(dst);
 			return -1;
 		}
 		plog(LLV_DEBUG, LOCATION, NULL,
@@ -932,6 +945,8 @@ pk_sendgetspi(iph2)
 			sadbsecas2str(dst, src, satype, 0, mode));
 	}
 
+	racoon_free(src);
+	racoon_free(dst);
 	return 0;
 }
 
@@ -1058,18 +1073,27 @@ pk_sendupdate(iph2)
 	/* fill in some needed for pfkey_send_update2 */
 	memset (&sa_args, 0, sizeof (sa_args));
 	sa_args.so = lcconf->sock_pfkey;
-	sa_args.l_addtime = iph2->approval->lifetime;
+	if (iph2->lifetime_secs)
+		sa_args.l_addtime = iph2->lifetime_secs;
+	else
+		sa_args.l_addtime = iph2->approval->lifetime;
 	sa_args.seq = iph2->seq; 
 	sa_args.wsize = 4;
 
 	/* for mobile IPv6 */
 	if (proxy && iph2->src_id && iph2->dst_id &&
 	    ipsecdoi_transportmode(iph2->approval)) {
-		sa_args.dst = iph2->src_id;
-		sa_args.src = iph2->dst_id;
+		sa_args.dst = dupsaddr(iph2->src_id);
+		sa_args.src = dupsaddr(iph2->dst_id);
 	} else {
-		sa_args.dst = iph2->src;
-		sa_args.src = iph2->dst;
+		sa_args.dst = dupsaddr(iph2->src);
+		sa_args.src = dupsaddr(iph2->dst);
+	}
+
+	if (sa_args.src == NULL || sa_args.dst == NULL) {
+		racoon_free(sa_args.src);
+		racoon_free(sa_args.dst);
+		return -1;
 	}
 
 	for (pr = iph2->approval->head; pr != NULL; pr = pr->next) {
@@ -1078,6 +1102,8 @@ pk_sendupdate(iph2)
 		if (sa_args.satype == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid proto_id %d\n", pr->proto_id);
+			racoon_free(sa_args.src);
+			racoon_free(sa_args.dst);
 			return -1;
 		}
 		else if (sa_args.satype == SADB_X_SATYPE_IPCOMP) {
@@ -1091,6 +1117,8 @@ pk_sendupdate(iph2)
 		if (sa_args.mode == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid encmode %d\n", pr->encmode);
+			racoon_free(sa_args.src);
+			racoon_free(sa_args.dst);
 			return -1;
 		}
 #endif
@@ -1102,8 +1130,11 @@ pk_sendupdate(iph2)
 				pr->head->authtype,
 				&sa_args.e_type, &sa_args.e_keylen,
 				&sa_args.a_type, &sa_args.a_keylen, 
-				&sa_args.flags) < 0)
+				&sa_args.flags) < 0){
+			racoon_free(sa_args.src);
+			racoon_free(sa_args.dst);
 			return -1;
+		}
 
 #if 0
 		sa_args.l_bytes = iph2->approval->lifebyte * 1024,
@@ -1146,6 +1177,8 @@ pk_sendupdate(iph2)
 			plog(LLV_ERROR, LOCATION, NULL,
 				"libipsec failed send update (%s)\n",
 				ipsec_strerror());
+			racoon_free(sa_args.src);
+			racoon_free(sa_args.dst);
 			return -1;
 		}
 
@@ -1175,6 +1208,8 @@ pk_sendupdate(iph2)
 			sa_args.satype, sa_args.spi, sa_args.mode));
 	}
 
+	racoon_free(sa_args.src);
+	racoon_free(sa_args.dst);
 	return 0;
 }
 
@@ -1344,19 +1379,28 @@ pk_sendadd(iph2)
 	/* fill in some needed for pfkey_send_update2 */
 	memset (&sa_args, 0, sizeof (sa_args));
 	sa_args.so = lcconf->sock_pfkey;
-	sa_args.l_addtime = iph2->approval->lifetime;
+	if (iph2->lifetime_secs)
+		sa_args.l_addtime = iph2->lifetime_secs;
+	else
+		sa_args.l_addtime = iph2->approval->lifetime;
 	sa_args.seq = iph2->seq;
 	sa_args.wsize = 4;
 
 	/* for mobile IPv6 */
 	if (proxy && iph2->src_id && iph2->dst_id &&
 	    ipsecdoi_transportmode(iph2->approval)) {
-		sa_args.src = iph2->src_id;
-		sa_args.dst = iph2->dst_id;
+		sa_args.src = dupsaddr(iph2->src_id);
+		sa_args.dst = dupsaddr(iph2->dst_id);
 	} else {
-		sa_args.src = iph2->src;
-		sa_args.dst = iph2->dst;
+		sa_args.src = dupsaddr(iph2->src);
+		sa_args.dst = dupsaddr(iph2->dst);
 	}
+
+	if (sa_args.src == NULL || sa_args.dst == NULL) {
+		racoon_free(sa_args.src);
+		racoon_free(sa_args.dst);
+		return -1;
+ 	}
 
 	for (pr = iph2->approval->head; pr != NULL; pr = pr->next) {
 		/* validity check */
@@ -1364,6 +1408,8 @@ pk_sendadd(iph2)
 		if (sa_args.satype == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid proto_id %d\n", pr->proto_id);
+			racoon_free(sa_args.src);
+			racoon_free(sa_args.dst);
 			return -1;
 		}
 		else if (sa_args.satype == SADB_X_SATYPE_IPCOMP) {
@@ -1377,6 +1423,8 @@ pk_sendadd(iph2)
 		if (sa_args.mode == ~0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid encmode %d\n", pr->encmode);
+			racoon_free(sa_args.src);
+			racoon_free(sa_args.dst);
 			return -1;
 		}
 #endif
@@ -1389,8 +1437,11 @@ pk_sendadd(iph2)
 				pr->head->authtype,
 				&sa_args.e_type, &sa_args.e_keylen,
 				&sa_args.a_type, &sa_args.a_keylen, 
-				&sa_args.flags) < 0)
+				&sa_args.flags) < 0){
+			racoon_free(sa_args.src);
+			racoon_free(sa_args.dst);
 			return -1;
+		}
 
 #if 0
 		sa_args.l_bytes = iph2->approval->lifebyte * 1024,
@@ -1441,6 +1492,8 @@ pk_sendadd(iph2)
 			plog(LLV_ERROR, LOCATION, NULL,
 				"libipsec failed send add (%s)\n",
 				ipsec_strerror());
+			racoon_free(sa_args.src);
+			racoon_free(sa_args.dst);
 			return -1;
 		}
 
@@ -1464,6 +1517,8 @@ pk_sendadd(iph2)
 			sadbsecas2str(sa_args.src, sa_args.dst,
 			sa_args.satype, sa_args.spi, sa_args.mode));
 	}
+	racoon_free(sa_args.src);
+	racoon_free(sa_args.dst);
 	return 0;
 }
 

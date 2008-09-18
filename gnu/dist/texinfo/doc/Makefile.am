@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.1.1.1 2003/12/06 01:31:15 karl Exp
+# Id: Makefile.am,v 1.20 2004/11/18 01:10:59 karl Exp
 # Makefile.am for texinfo/doc.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -17,9 +17,10 @@ DISTCLEANFILES = texinfo texinfo-* info*.info*
 man_MANS = info.1 infokey.1 install-info.1 makeinfo.1 texindex.1 texi2dvi.1 \
            info.5 texinfo.5
 
-# Use the programs built in our distribution.
-MAKEINFO = ../makeinfo/makeinfo
-INSTALL_INFO = ../util/install-info
+# Use the programs built in our distribution, taking account of possible
+# cross-compiling.
+MAKEINFO = $(top_builddir)/$(native_tools)/makeinfo/makeinfo
+INSTALL_INFO = $(top_builddir)/$(native_tools)/util/install-info
 
 TXI_XLATE = txi-cs.tex txi-de.tex txi-en.tex txi-es.tex txi-fr.tex \
 	    txi-it.tex txi-nl.tex txi-no.tex txi-pl.tex txi-pt.tex txi-tr.tex
@@ -29,9 +30,12 @@ EXTRA_DIST = epsf.tex pdfcolor.tex texinfo.tex \
              fdl.texi \
 	     $(man_MANS) $(TXI_XLATE)
 
+if INSTALL_WARNINGS
 install-data-local:
 	@echo
-	@echo "WARNING: You must install texinfo.tex and txi-??.tex manually,"
+	@echo "WARNING: If your texmf tree does not already contain"
+	@echo "         up-to-date versions, you must install"
+	@echo "             texinfo.tex and txi-??.tex manually,"
 	@echo "         perhaps in TEXMF/tex/texinfo/,"
 	@echo "         where TEXMF is a root of your TeX tree."
 	@echo "         See doc/README for some considerations."
@@ -41,6 +45,7 @@ install-data-local:
 	@echo "         use pdftex) pdfcolor.tex in TEXMF/tex/generic/dvips"
 	@echo "         and TEXMF/pdftex/plain/misc/pdfcolor.tex respectively,"
 	@echo "         if your TeX installation did not include them."
+endif
 
 texmf_texinfo = $(TEXMF)/tex/texinfo
 texmf_dvips = $(TEXMF)/tex/generic/dvips
@@ -58,17 +63,17 @@ install-tex:
 if MAINTAINER_MODE
 common_mandeps = $(top_srcdir)/configure.ac
 info.1: $(top_srcdir)/info/info.c $(common_mandeps)
-	$(HELP2MAN) --name="read Info documents" `basename $< .c` >$@
+	$(HELP2MAN) --name="read Info documents" `basename $@ .1` >$@
 infokey.1: $(top_srcdir)/info/infokey.c $(common_mandeps)
-	$(HELP2MAN) --name="compile customizations for Info" `basename $< .c` >$@
+	$(HELP2MAN) --name="compile customizations for Info" `basename $@ .1` >$@
 install-info.1: $(top_srcdir)/util/install-info.c $(common_mandeps)
-	$(HELP2MAN) --name="update info/dir entries" `basename $< .c` >$@
+	$(HELP2MAN) --name="update info/dir entries" `basename $@ .1` >$@
 makeinfo.1: $(top_srcdir)/makeinfo/makeinfo.c $(common_mandeps)
-	$(HELP2MAN) --name="translate Texinfo documents" `basename $< .c` >$@
+	$(HELP2MAN) --name="translate Texinfo documents" `basename $@ .1` >$@
 texi2dvi.1: $(top_srcdir)/util/texi2dvi $(common_mandeps)
-	$(HELP2MAN) --name="print Texinfo documents" `basename $< .c` >$@
+	$(HELP2MAN) --name="print Texinfo documents" `basename $@ .1` >$@
 texindex.1: $(top_srcdir)/util/texindex.c $(common_mandeps)
-	$(HELP2MAN) --name="sort Texinfo index files" `basename $< .c` >$@
+	$(HELP2MAN) --name="sort Texinfo index files" `basename $@ .1` >$@
 endif
 
 # Do not create info files for distribution.

@@ -70,10 +70,6 @@
 "4"*		AKA,TTLS,TLS,PEAP,SIM
 "5"*		SIM,TTLS,TLS,PEAP,AKA
 
-# Wi-Fi Protected Setup
-"WFA-SimpleConfig-Registrar-1-0"	WSC
-"WFA-SimpleConfig-Enrollee-1-0"		WSC
-
 # Wildcard for all other identities
 *		PEAP,TTLS,TLS,SIM,AKA
 
@@ -85,3 +81,11 @@
 "user"		MD5,GTC,MSCHAPV2	"password"	[2]
 "test user"	MSCHAPV2	hash:000102030405060708090a0b0c0d0e0f	[2]
 "ttls-user"	TTLS-PAP,TTLS-CHAP,TTLS-MSCHAP,TTLS-MSCHAPV2	"password"	[2]
+
+# Default to EAP-SIM and EAP-AKA based on fixed identity prefixes in phase 2
+"0"*		AKA	[2]
+"1"*		SIM	[2]
+"2"*		AKA	[2]
+"3"*		SIM	[2]
+"4"*		AKA	[2]
+"5"*		SIM	[2]

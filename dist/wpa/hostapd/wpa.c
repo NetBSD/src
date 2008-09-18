@@ -1,6 +1,6 @@
 /*
  * hostapd - IEEE 802.11i-2004 / WPA Authenticator
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -148,6 +148,16 @@ int wpa_auth_for_each_sta(struct wpa_authenticator *wpa_auth,
 	if (wpa_auth->cb.for_each_sta == NULL)
 		return 0;
 	return wpa_auth->cb.for_each_sta(wpa_auth->cb.ctx, cb, cb_ctx);
+}
+
+
+int wpa_auth_for_each_auth(struct wpa_authenticator *wpa_auth,
+			   int (*cb)(struct wpa_authenticator *a, void *ctx),
+			   void *cb_ctx)
+{
+	if (wpa_auth->cb.for_each_auth == NULL)
+		return 0;
+	return wpa_auth->cb.for_each_auth(wpa_auth->cb.ctx, cb, cb_ctx);
 }
 
 
@@ -874,11 +884,11 @@ void __wpa_send_eapol(struct wpa_authenticator *wpa_auth,
 
 	if (force_version)
 		version = force_version;
-	else if (sm->pairwise == WPA_CIPHER_CCMP) {
+	else if (wpa_use_aes_cmac(sm))
+		version = WPA_KEY_INFO_TYPE_AES_128_CMAC;
+	else if (sm->pairwise == WPA_CIPHER_CCMP)
 		version = WPA_KEY_INFO_TYPE_HMAC_SHA1_AES;
-		if (wpa_use_aes_cmac(sm))
-			version = WPA_KEY_INFO_TYPE_AES_128_CMAC;
-	} else
+	else
 		version = WPA_KEY_INFO_TYPE_HMAC_MD5_RC4;
 
 	pairwise = key_info & WPA_KEY_INFO_KEY_TYPE;
@@ -1171,14 +1181,6 @@ SM_STATE(WPA_PTK, DISCONNECT)
 SM_STATE(WPA_PTK, DISCONNECTED)
 {
 	SM_ENTRY_MA(WPA_PTK, DISCONNECTED, wpa_ptk);
-	if (sm->sta_counted) {
-		sm->group->GNoStations--;
-		sm->sta_counted = 0;
-	} else {
-		wpa_printf(MSG_DEBUG, "WPA: WPA_PTK::DISCONNECTED - did not "
-			   "decrease GNoStations (STA " MACSTR ")",
-			   MAC2STR(sm->addr));
-	}
 	sm->DeauthenticationRequest = FALSE;
 }
 
@@ -1186,14 +1188,6 @@ SM_STATE(WPA_PTK, DISCONNECTED)
 SM_STATE(WPA_PTK, AUTHENTICATION)
 {
 	SM_ENTRY_MA(WPA_PTK, AUTHENTICATION, wpa_ptk);
-	if (!sm->sta_counted) {
-		sm->group->GNoStations++;
-		sm->sta_counted = 1;
-	} else {
-		wpa_printf(MSG_DEBUG, "WPA: WPA_PTK::DISCONNECTED - did not "
-			   "increase GNoStations (STA " MACSTR ")",
-			   MAC2STR(sm->addr));
-	}
 	os_memset(&sm->PTK, 0, sizeof(sm->PTK));
 	sm->PTK_valid = FALSE;
 	wpa_auth_set_eapol(sm->wpa_auth, sm->addr, WPA_EAPOL_portControl_Auto,
@@ -1729,8 +1723,9 @@ SM_STATE(WPA_PTK_GROUP, REKEYESTABLISHED)
 {
 	SM_ENTRY_MA(WPA_PTK_GROUP, REKEYESTABLISHED, wpa_ptk_group);
 	sm->EAPOLKeyReceived = FALSE;
+	if (sm->GUpdateStationKeys)
+		sm->group->GKeyDoneStations--;
 	sm->GUpdateStationKeys = FALSE;
-	sm->group->GKeyDoneStations--;
 	sm->GTimeoutCtr = 0;
 	/* FIX: MLME.SetProtection.Request(TA, Tx_Rx) */
 	wpa_auth_vlogger(sm->wpa_auth, sm->addr, LOGGER_INFO,
@@ -1743,7 +1738,8 @@ SM_STATE(WPA_PTK_GROUP, REKEYESTABLISHED)
 SM_STATE(WPA_PTK_GROUP, KEYERROR)
 {
 	SM_ENTRY_MA(WPA_PTK_GROUP, KEYERROR, wpa_ptk_group);
-	sm->group->GKeyDoneStations--;
+	if (sm->GUpdateStationKeys)
+		sm->group->GKeyDoneStations--;
 	sm->GUpdateStationKeys = FALSE;
 	sm->Disconnect = TRUE;
 }
@@ -1830,6 +1826,12 @@ static void wpa_group_gtk_init(struct wpa_authenticator *wpa_auth,
 
 static int wpa_group_update_sta(struct wpa_state_machine *sm, void *ctx)
 {
+	if (sm->wpa_ptk_state != WPA_PTK_PTKINITDONE) {
+		wpa_auth_logger(sm->wpa_auth, sm->addr, LOGGER_DEBUG,
+				"Not in PTKINITDONE; skip Group Key update");
+		return 0;
+	}
+	sm->group->GKeyDoneStations++;
 	sm->GUpdateStationKeys = TRUE;
 	wpa_sm_step(sm);
 	return 0;
@@ -1854,10 +1856,14 @@ static void wpa_group_setkeys(struct wpa_authenticator *wpa_auth,
 	group->GM_igtk = group->GN_igtk;
 	group->GN_igtk = tmp;
 #endif /* CONFIG_IEEE80211W */
-	group->GKeyDoneStations = group->GNoStations;
+	/* "GKeyDoneStations = GNoStations" is done in more robust way by
+	 * counting the STAs that are marked with GUpdateStationKeys instead of
+	 * including all STAs that could be in not-yet-completed state. */
 	wpa_gtk_update(wpa_auth, group);
 
 	wpa_auth_for_each_sta(wpa_auth, wpa_group_update_sta, NULL);
+	wpa_printf(MSG_DEBUG, "wpa_group_setkeys: GKeyDoneStations=%d",
+		   group->GKeyDoneStations);
 }
 
 
@@ -2306,13 +2312,6 @@ int wpa_auth_sta_set_vlan(struct wpa_state_machine *sm, int vlan_id)
 
 	wpa_printf(MSG_DEBUG, "WPA: Moving STA " MACSTR " to use group state "
 		   "machine for VLAN ID %d", MAC2STR(sm->addr), vlan_id);
-
-	if (sm->group && sm->group != group && sm->sta_counted) {
-		sm->group->GNoStations--;
-		sm->sta_counted = 0;
-		wpa_printf(MSG_DEBUG, "WLA: Decreased GNoStations for the "
-			   "previously used group state machine");
-	}
 
 	sm->group = group;
 	return 0;

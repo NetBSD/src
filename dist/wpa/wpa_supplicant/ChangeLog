@@ -1,5 +1,48 @@
 ChangeLog for wpa_supplicant
 
+2008-08-10 - v0.6.4
+	* added support for EAP Sequences in EAP-FAST Phase 2
+	* added support for using TNC with EAP-FAST
+	* added driver_ps3 for the PS3 Linux wireless driver
+	* added support for optional cryptobinding with PEAPv0
+	* fixed the OpenSSL patches (0.9.8g and 0.9.9) for EAP-FAST to
+	  allow fallback to full handshake if server rejects PAC-Opaque
+	* added fragmentation support for EAP-TNC
+	* added support for parsing PKCS #8 formatted private keys into the
+	  internal TLS implementation (both PKCS #1 RSA key and PKCS #8
+	  encapsulated RSA key can now be used)
+	* added option of using faster, but larger, routines in the internal
+	  LibTomMath (for internal TLS implementation) to speed up DH and RSA
+	  calculations (CONFIG_INTERNAL_LIBTOMMATH_FAST=y)
+	* fixed race condition between disassociation event and group key
+	  handshake to avoid getting stuck in incorrect state [Bug 261]
+	* fixed opportunistic key caching (proactive_key_caching)
+
+2008-02-22 - v0.6.3
+	* removed 'nai' and 'eappsk' network configuration variables that were
+	  previously used for configuring user identity and key for EAP-PSK,
+	  EAP-PAX, EAP-SAKE, and EAP-GPSK. 'identity' field is now used as the
+	  replacement for 'nai' (if old configuration used a separate
+	  'identity' value, that would now be configured as
+	  'anonymous_identity'). 'password' field is now used as the
+	  replacement for 'eappsk' (it can also be set using hexstring to
+	  present random binary data)
+	* removed '-w' command line parameter (wait for interface to be added,
+	  if needed); cleaner way of handling this functionality is to use an
+	  external mechanism (e.g., hotplug scripts) that start wpa_supplicant
+	  when an interface is added
+	* updated FT support to use the latest draft, IEEE 802.11r/D9.0
+	* added ctrl_iface monitor event (CTRL-EVENT-SCAN-RESULTS) for
+	  indicating when new scan results become available
+	* added new ctrl_iface command, BSS, to allow scan results to be
+	  fetched without hitting the message size limits (this command
+	  can be used to iterate through the scan results one BSS at the time)
+	* fixed EAP-SIM not to include AT_NONCE_MT and AT_SELECTED_VERSION
+	  attributes in EAP-SIM Start/Response when using fast reauthentication
+	* fixed EAPOL not to end up in infinite loop when processing dynamic
+	  WEP keys with IEEE 802.1X
+	* fixed problems in getting NDIS events from WMI on Windows 2000
+
 2008-01-01 - v0.6.2
 	* added support for Makefile builds to include debug-log-to-a-file
 	  functionality (CONFIG_DEBUG_FILE=y and -f<path> on command line)

@@ -332,6 +332,8 @@ struct eap_sm {
 
 	int num_rounds;
 	int force_disabled;
+
+	u8 mac_addr[ETH_ALEN];
 };
 
 const u8 * eap_get_config_identity(struct eap_sm *sm, size_t *len);
@@ -340,7 +342,9 @@ const u8 * eap_get_config_password2(struct eap_sm *sm, size_t *len, int *hash);
 const u8 * eap_get_config_new_password(struct eap_sm *sm, size_t *len);
 const u8 * eap_get_config_otp(struct eap_sm *sm, size_t *len);
 void eap_clear_config_otp(struct eap_sm *sm);
-struct wpa_ssid * eap_get_config(struct eap_sm *sm);
+const char * eap_get_config_phase1(struct eap_sm *sm);
+const char * eap_get_config_phase2(struct eap_sm *sm);
+struct eap_peer_config * eap_get_config(struct eap_sm *sm);
 void eap_set_config_blob(struct eap_sm *sm, struct wpa_config_blob *blob);
 const struct wpa_config_blob *
 eap_get_config_blob(struct eap_sm *sm, const char *name);

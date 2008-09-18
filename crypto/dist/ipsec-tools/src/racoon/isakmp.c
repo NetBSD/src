@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.33.4.1 2008/06/23 04:26:46 wrstuden Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.33.4.2 2008/09/18 04:54:19 wrstuden Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -137,7 +137,7 @@ extern caddr_t val2str(const char *, size_t);
 static int (*ph1exchange[][2][PHASE1ST_MAX])
 	__P((struct ph1handle *, vchar_t *)) = {
  /* error */
- { {}, {}, },
+ { { 0 }, { 0 }, },
  /* Identity Protection exchange */
  {
   { nostate1, ident_i1send, nostate1, ident_i2recv, ident_i2send,
@@ -164,7 +164,7 @@ static int (*ph1exchange[][2][PHASE1ST_MAX])
 static int (*ph2exchange[][2][PHASE2ST_MAX])
 	__P((struct ph2handle *, vchar_t *)) = {
  /* error */
- { {}, {}, },
+ { { 0 }, { 0 }, },
  /* Quick mode for IKE */
  {
   { nostate2, nostate2, quick_i1prep, nostate2, quick_i1send,
@@ -801,20 +801,24 @@ ph1_main(iph1, msg)
 			    [iph1->side]
 			    [iph1->status])(iph1, msg);
 	if (error != 0) {
-#if 0
+
 		/* XXX
 		 * When an invalid packet is received on phase1, it should
 		 * be selected to process this packet.  That is to respond
 		 * with a notify and delete phase 1 handler, OR not to respond
-		 * and keep phase 1 handler.
+		 * and keep phase 1 handler. However, in PHASE1ST_START when
+		 * acting as RESPONDER we must not keep phase 1 handler or else
+		 * it will stay forever.
 		 */
-		plog(LLV_ERROR, LOCATION, iph1->remote,
-			"failed to pre-process packet.\n");
-		return -1;
-#else
-		/* ignore the error and keep phase 1 handler */
-		return 0;
-#endif
+
+		if (iph1->side == RESPONDER && iph1->status == PHASE1ST_START) {
+			plog(LLV_ERROR, LOCATION, iph1->remote,
+				"failed to pre-process packet.\n");
+			return -1;
+		} else {
+			/* ignore the error and keep phase 1 handler */
+			return 0;
+		}
 	}
 
 #ifndef ENABLE_FRAG
@@ -901,6 +905,8 @@ ph1_main(iph1, msg)
 				/* ignore */
 			}
 		}
+		if (iph1->initial_contact_received)
+			isakmp_info_recv_initialcontact(iph1, NULL);
 
 		log_ph1established(iph1);
 		plog(LLV_DEBUG, LOCATION, NULL, "===\n");
@@ -1041,7 +1047,6 @@ isakmp_ph1begin_i(rmconf, remote, local)
 #endif
 #ifdef ENABLE_HYBRID
 	if ((iph1->mode_cfg = isakmp_cfg_mkstate()) == NULL) {
-		remph1(iph1);
 		delph1(iph1);
 		return NULL;
 	}
@@ -1058,7 +1063,6 @@ isakmp_ph1begin_i(rmconf, remote, local)
 
 	/* XXX copy remote address */
 	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0) {
-		remph1(iph1);
 		delph1(iph1);
 		return NULL;
 	}
@@ -1160,7 +1164,6 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 #endif
 #ifdef ENABLE_HYBRID
 	if ((iph1->mode_cfg = isakmp_cfg_mkstate()) == NULL) {
-		remph1(iph1);
 		delph1(iph1);
 		return -1;
 	}
@@ -1182,7 +1185,6 @@ isakmp_ph1begin_r(msg, remote, local, etype)
 
 	/* copy remote address */
 	if (copy_ph1addresses(iph1, rmconf, remote, local) < 0) {
-		remph1(iph1);
 		delph1(iph1);
 		return -1;
 	}
@@ -2936,10 +2938,8 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 
 	/* address portion must be grabbed from real remote address "remote" */
 	iph1->remote = dupsaddr(remote);
-	if (iph1->remote == NULL) {
-		delph1(iph1);
+	if (iph1->remote == NULL)
 		return -1;
-	}
 
 	/*
 	 * if remote has no port # (in case of initiator - from ACQUIRE msg)
@@ -2959,10 +2959,8 @@ copy_ph1addresses(iph1, rmconf, remote, local)
 		iph1->local = getlocaladdr(iph1->remote);
 	else
 		iph1->local = dupsaddr(local);
-	if (iph1->local == NULL) {
-		delph1(iph1);
+	if (iph1->local == NULL)
 		return -1;
-	}
 
 	if (extract_port(iph1->local) == 0)
 		set_port(iph1->local, PORT_ISAKMP);

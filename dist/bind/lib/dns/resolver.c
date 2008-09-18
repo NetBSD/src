@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.4.12.1 2008/06/23 04:28:06 wrstuden Exp $	*/
+/*	$NetBSD: resolver.c,v 1.4.12.2 2008/09/18 04:44:37 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resolver.c,v 1.355.12.15 2008/05/06 01:11:30 each Exp */
+/* Id: resolver.c,v 1.355.12.16.2.2 2008/07/24 04:52:26 jinmei Exp */
 
 /*! \file */
 
@@ -1187,7 +1187,7 @@ fctx_query(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
 			goto cleanup_query;
 
 #ifndef BROKEN_TCP_BIND_BEFORE_CONNECT
-		result = isc_socket_bind(query->tcpsocket, &addr);
+		result = isc_socket_bind(query->tcpsocket, &addr, 0);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup_socket;
 #endif
@@ -1223,43 +1223,52 @@ fctx_query(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
 			if (result != ISC_R_SUCCESS)
 				goto cleanup_query;
 		} else {
-			int did = 0;
-			isc_uint32_t val;
+			isc_sockaddr_t localaddr;
+			unsigned int attrs, attrmask;
+			dns_dispatch_t *disp_base;
 
-			if (res->ndisps > 0) {
-				isc_random_get(&val);
-				did = val % res->ndisps;
-			}
+			attrs = 0;
+			attrs |= DNS_DISPATCHATTR_UDP;
+			attrs |= DNS_DISPATCHATTR_RANDOMPORT;
+
+			attrmask = 0;
+			attrmask |= DNS_DISPATCHATTR_UDP;
+			attrmask |= DNS_DISPATCHATTR_TCP;
+			attrmask |= DNS_DISPATCHATTR_IPV4;
+			attrmask |= DNS_DISPATCHATTR_IPV6;
+
 			switch (isc_sockaddr_pf(&addrinfo->sockaddr)) {
-			case PF_INET:
-				if (res->dispatchv4pool != NULL) {
-					RES_LOCK(&res->poollock,
-						 isc_rwlocktype_read);
-					dns_dispatch_attach(res->dispatchv4pool[did],
-							    &query->dispatch);
-					RES_UNLOCK(&res->poollock,
-						   isc_rwlocktype_read);
-				} else {
-					dns_dispatch_attach(res->dispatchv4,
-							    &query->dispatch);
-				}
+			case AF_INET:
+				disp_base = res->dispatchv4;
+				attrs |= DNS_DISPATCHATTR_IPV4;
 				break;
-			case PF_INET6:
-				if (res->dispatchv6pool != NULL) {
-					RES_LOCK(&res->poollock,
-						 isc_rwlocktype_read);
-					dns_dispatch_attach(res->dispatchv6pool[did],
-							    &query->dispatch);
-					RES_UNLOCK(&res->poollock,
-						   isc_rwlocktype_read);
-				} else {
-					dns_dispatch_attach(res->dispatchv6,
-							    &query->dispatch);
-				}
+			case AF_INET6:
+				disp_base = res->dispatchv6;
+				attrs |= DNS_DISPATCHATTR_IPV6;
 				break;
 			default:
 				result = ISC_R_NOTIMPLEMENTED;
 				goto cleanup_query;
+			}
+
+			result = dns_dispatch_getlocaladdress(disp_base,
+							      &localaddr);
+			if (result != ISC_R_SUCCESS)
+				goto cleanup_query;
+			if (isc_sockaddr_getport(&localaddr) == 0) {
+				result = dns_dispatch_getudp(res->dispatchmgr,
+							     res->socketmgr,
+							     res->taskmgr,
+							     &localaddr,
+							     4096, 1000, 32768,
+							     16411, 16433,
+							     attrs, attrmask,
+							     &query->dispatch);
+				if (result != ISC_R_SUCCESS)
+					goto cleanup_query;
+			} else {
+				dns_dispatch_attach(disp_base,
+						    &query->dispatch);
 			}
 		}
 		/*
@@ -1392,6 +1401,8 @@ static inline void
 log_edns(fetchctx_t *fctx) {
 	char domainbuf[DNS_NAME_FORMATSIZE];
 
+	if (!isc_log_wouldlog(dns_lctx, ISC_LOG_DEBUG(3)))
+		return;
 	dns_name_format(&fctx->domain, domainbuf, sizeof(domainbuf));
 	isc_log_write(dns_lctx, DNS_LOGCATEGORY_EDNS_DISABLED,
 		      DNS_LOGMODULE_RESOLVER, ISC_LOG_INFO,
@@ -2781,6 +2792,8 @@ fctx_destroy(fetchctx_t *fctx) {
 static void
 fctx_timeout(isc_task_t *task, isc_event_t *event) {
 	fetchctx_t *fctx = event->ev_arg;
+	isc_timerevent_t *tevent = (isc_timerevent_t *)event;
+	resquery_t *query;
 
 	REQUIRE(VALID_FCTX(fctx));
 
@@ -2796,8 +2809,18 @@ fctx_timeout(isc_task_t *task, isc_event_t *event) {
 		fctx->timeouts++;
 		/*
 		 * We could cancel the running queries here, or we could let
-		 * them keep going.  Right now we choose the latter...
+		 * them keep going.  Since we normally use separate sockets for
+		 * different queries, we adopt the former approach to reduce
+		 * the number of open sockets: cancel the oldest query if it
+		 * expired after the query had started (this is usually the
+		 * case but is not always so, depending on the task schedule
+		 * timing).
 		 */
+		query = ISC_LIST_HEAD(fctx->queries);
+		if (query != NULL &&
+		    isc_time_compare(&tevent->due, &query->start) >= 0) {
+			fctx_cancelquery(&query, NULL, NULL, ISC_TRUE);
+		}
 		fctx->attributes &= ~FCTX_ATTR_ADDRWAIT;
 		/*
 		 * Our timer has triggered.  Reestablish the fctx lifetime

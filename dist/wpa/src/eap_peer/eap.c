@@ -1,6 +1,6 @@
 /*
  * EAP peer state machines (RFC 4137)
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -25,7 +25,7 @@
 
 #include "common.h"
 #include "eap_i.h"
-#include "config_ssid.h"
+#include "eap_config.h"
 #include "tls.h"
 #include "crypto.h"
 #include "pcsc_funcs.h"
@@ -107,7 +107,7 @@ static void eap_deinit_prev_method(struct eap_sm *sm, const char *txt)
  */
 static int eap_allowed_method(struct eap_sm *sm, int vendor, u32 method)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 	int i;
 	struct eap_method_type *m;
 
@@ -269,7 +269,7 @@ SM_STATE(EAP, GET_METHOD)
 		sm->eap_method_priv = sm->m->init(sm);
 
 	if (sm->eap_method_priv == NULL) {
-		struct wpa_ssid *config = eap_get_config(sm);
+		struct eap_peer_config *config = eap_get_config(sm);
 		wpa_msg(sm->msg_ctx, MSG_INFO,
 			"EAP: Failed to initialize EAP method: vendor %u "
 			"method %u (%s)",
@@ -863,12 +863,13 @@ static void eap_sm_processIdentity(struct eap_sm *sm, const struct wpabuf *req)
 
 
 #ifdef PCSC_FUNCS
-static int eap_sm_imsi_identity(struct eap_sm *sm, struct wpa_ssid *ssid)
+static int eap_sm_imsi_identity(struct eap_sm *sm,
+				struct eap_peer_config *conf)
 {
 	int aka = 0;
 	char imsi[100];
 	size_t imsi_len;
-	struct eap_method_type *m = ssid->eap_methods;
+	struct eap_method_type *m = conf->eap_methods;
 	int i;
 
 	imsi_len = sizeof(imsi);
@@ -888,40 +889,41 @@ static int eap_sm_imsi_identity(struct eap_sm *sm, struct wpa_ssid *ssid)
 		}
 	}
 
-	os_free(ssid->identity);
-	ssid->identity = os_malloc(1 + imsi_len);
-	if (ssid->identity == NULL) {
+	os_free(conf->identity);
+	conf->identity = os_malloc(1 + imsi_len);
+	if (conf->identity == NULL) {
 		wpa_printf(MSG_WARNING, "Failed to allocate buffer for "
 			   "IMSI-based identity");
 		return -1;
 	}
 
-	ssid->identity[0] = aka ? '0' : '1';
-	os_memcpy(ssid->identity + 1, imsi, imsi_len);
-	ssid->identity_len = 1 + imsi_len;
+	conf->identity[0] = aka ? '0' : '1';
+	os_memcpy(conf->identity + 1, imsi, imsi_len);
+	conf->identity_len = 1 + imsi_len;
 
 	return 0;
 }
 #endif /* PCSC_FUNCS */
 
 
-static int eap_sm_get_scard_identity(struct eap_sm *sm, struct wpa_ssid *ssid)
+static int eap_sm_get_scard_identity(struct eap_sm *sm,
+				     struct eap_peer_config *conf)
 {
 #ifdef PCSC_FUNCS
-	if (scard_set_pin(sm->scard_ctx, ssid->pin)) {
+	if (scard_set_pin(sm->scard_ctx, conf->pin)) {
 		/*
 		 * Make sure the same PIN is not tried again in order to avoid
 		 * blocking SIM.
 		 */
-		os_free(ssid->pin);
-		ssid->pin = NULL;
+		os_free(conf->pin);
+		conf->pin = NULL;
 
 		wpa_printf(MSG_WARNING, "PIN validation failed");
 		eap_sm_request_pin(sm);
 		return -1;
 	}
 
-	return eap_sm_imsi_identity(sm, ssid);
+	return eap_sm_imsi_identity(sm, conf);
 #else /* PCSC_FUNCS */
 	return -1;
 #endif /* PCSC_FUNCS */
@@ -941,7 +943,7 @@ static int eap_sm_get_scard_identity(struct eap_sm *sm, struct wpa_ssid *ssid)
  */
 struct wpabuf * eap_sm_buildIdentity(struct eap_sm *sm, int id, int encrypted)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 	struct wpabuf *resp;
 	const u8 *identity;
 	size_t identity_len;
@@ -1160,6 +1162,8 @@ struct eap_sm * eap_peer_sm_init(void *eapol_ctx,
 	sm->eapol_cb = eapol_cb;
 	sm->msg_ctx = msg_ctx;
 	sm->ClientTimeout = 60;
+	if (conf->mac_addr)
+		os_memcpy(sm->mac_addr, conf->mac_addr, ETH_ALEN);
 
 	os_memset(&tlsconf, 0, sizeof(tlsconf));
 	tlsconf.opensc_engine_path = conf->opensc_engine_path;
@@ -1397,12 +1401,8 @@ typedef enum {
 static void eap_sm_request(struct eap_sm *sm, eap_ctrl_req_type type,
 			   const char *msg, size_t msglen)
 {
-	struct wpa_ssid *config;
-	char *buf;
-	size_t buflen;
-	int len;
-	char *field;
-	char *txt, *tmp;
+	struct eap_peer_config *config;
+	char *field, *txt, *tmp;
 
 	if (sm == NULL)
 		return;
@@ -1460,25 +1460,8 @@ static void eap_sm_request(struct eap_sm *sm, eap_ctrl_req_type type,
 		return;
 	}
 
-	buflen = 100 + os_strlen(txt) + config->ssid_len;
-	buf = os_malloc(buflen);
-	if (buf == NULL)
-		return;
-	len = os_snprintf(buf, buflen,
-			  WPA_CTRL_REQ "%s-%d:%s needed for SSID ",
-			  field, config->id, txt);
-	if (len < 0 || (size_t) len >= buflen) {
-		os_free(buf);
-		return;
-	}
-	if (config->ssid && buflen > len + config->ssid_len) {
-		os_memcpy(buf + len, config->ssid, config->ssid_len);
-		len += config->ssid_len;
-		buf[len] = '\0';
-	}
-	buf[buflen - 1] = '\0';
-	wpa_msg(sm->msg_ctx, MSG_INFO, "%s", buf);
-	os_free(buf);
+	if (sm->eapol_cb->eap_param_needed)
+		sm->eapol_cb->eap_param_needed(sm->eapol_ctx, field, txt);
 }
 #else /* CONFIG_CTRL_IFACE || !CONFIG_NO_STDOUT_DEBUG */
 #define eap_sm_request(sm, type, msg, msglen) do { } while (0)
@@ -1585,7 +1568,7 @@ void eap_sm_request_passphrase(struct eap_sm *sm)
  */
 void eap_sm_notify_ctrl_attached(struct eap_sm *sm)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 
 	if (config == NULL)
 		return;
@@ -1650,7 +1633,7 @@ u32 eap_get_phase2_type(const char *name, int *vendor)
  * This function generates an array of allowed EAP phase 2 (tunneled) types for
  * the given network configuration.
  */
-struct eap_method_type * eap_get_phase2_types(struct wpa_ssid *config,
+struct eap_method_type * eap_get_phase2_types(struct eap_peer_config *config,
 					      size_t *count)
 {
 	struct eap_method_type *buf;
@@ -1715,23 +1698,23 @@ void eap_set_workaround(struct eap_sm *sm, unsigned int workaround)
  * EAP peer methods should avoid using this function if they can use other
  * access functions, like eap_get_config_identity() and
  * eap_get_config_password(), that do not require direct access to
- * struct wpa_ssid.
+ * struct eap_peer_config.
  */
-struct wpa_ssid * eap_get_config(struct eap_sm *sm)
+struct eap_peer_config * eap_get_config(struct eap_sm *sm)
 {
 	return sm->eapol_cb->get_config(sm->eapol_ctx);
 }
 
 
 /**
- * eap_get_config_password - Get identity from the network configuration
+ * eap_get_config_identity - Get identity from the network configuration
  * @sm: Pointer to EAP state machine allocated with eap_peer_sm_init()
  * @len: Buffer for the length of the identity
  * Returns: Pointer to the identity or %NULL if not found
  */
 const u8 * eap_get_config_identity(struct eap_sm *sm, size_t *len)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 	if (config == NULL)
 		return NULL;
 	*len = config->identity_len;
@@ -1747,7 +1730,7 @@ const u8 * eap_get_config_identity(struct eap_sm *sm, size_t *len)
  */
 const u8 * eap_get_config_password(struct eap_sm *sm, size_t *len)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 	if (config == NULL)
 		return NULL;
 	*len = config->password_len;
@@ -1766,12 +1749,12 @@ const u8 * eap_get_config_password(struct eap_sm *sm, size_t *len)
  */
 const u8 * eap_get_config_password2(struct eap_sm *sm, size_t *len, int *hash)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 	if (config == NULL)
 		return NULL;
 	*len = config->password_len;
 	if (hash)
-		*hash = !!(config->flags & WPA_CONFIG_FLAGS_PASSWORD_NTHASH);
+		*hash = !!(config->flags & EAP_CONFIG_FLAGS_PASSWORD_NTHASH);
 	return config->password;
 }
 
@@ -1784,7 +1767,7 @@ const u8 * eap_get_config_password2(struct eap_sm *sm, size_t *len, int *hash)
  */
 const u8 * eap_get_config_new_password(struct eap_sm *sm, size_t *len)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 	if (config == NULL)
 		return NULL;
 	*len = config->new_password_len;
@@ -1800,7 +1783,7 @@ const u8 * eap_get_config_new_password(struct eap_sm *sm, size_t *len)
  */
 const u8 * eap_get_config_otp(struct eap_sm *sm, size_t *len)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 	if (config == NULL)
 		return NULL;
 	*len = config->otp_len;
@@ -1818,13 +1801,41 @@ const u8 * eap_get_config_otp(struct eap_sm *sm, size_t *len)
  */
 void eap_clear_config_otp(struct eap_sm *sm)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 	if (config == NULL)
 		return;
 	os_memset(config->otp, 0, config->otp_len);
 	os_free(config->otp);
 	config->otp = NULL;
 	config->otp_len = 0;
+}
+
+
+/**
+ * eap_get_config_phase1 - Get phase1 data from the network configuration
+ * @sm: Pointer to EAP state machine allocated with eap_peer_sm_init()
+ * Returns: Pointer to the phase1 data or %NULL if not found
+ */
+const char * eap_get_config_phase1(struct eap_sm *sm)
+{
+	struct eap_peer_config *config = eap_get_config(sm);
+	if (config == NULL)
+		return NULL;
+	return config->phase1;
+}
+
+
+/**
+ * eap_get_config_phase2 - Get phase2 data from the network configuration
+ * @sm: Pointer to EAP state machine allocated with eap_peer_sm_init()
+ * Returns: Pointer to the phase1 data or %NULL if not found
+ */
+const char * eap_get_config_phase2(struct eap_sm *sm)
+{
+	struct eap_peer_config *config = eap_get_config(sm);
+	if (config == NULL)
+		return NULL;
+	return config->phase2;
 }
 
 

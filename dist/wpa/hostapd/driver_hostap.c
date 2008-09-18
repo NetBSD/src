@@ -16,6 +16,11 @@
 #include <sys/ioctl.h>
 
 #ifdef USE_KERNEL_HEADERS
+/* compat-wireless does not include linux/compiler.h to define __user, so
+ * define it here */
+#ifndef __user
+#define __user
+#endif /* __user */
 #include <asm/types.h>
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>   /* The L2 protocols */
@@ -47,6 +52,9 @@ struct hostap_driver_data {
 	int wext_sock; /* socket for wireless events */
 
 	int we_version;
+
+	u8 *generic_ie;
+	size_t generic_ie_len;
 };
 
 
@@ -652,7 +660,8 @@ static int hostap_read_sta_data(void *priv,
 
 static int hostap_sta_add(const char *ifname, void *priv, const u8 *addr,
 			  u16 aid, u16 capability, u8 *supp_rates,
-			  size_t supp_rates_len, int flags)
+			  size_t supp_rates_len, int flags,
+			  u16 listen_interval)
 {
 	struct hostap_driver_data *drv = priv;
 	struct prism2_hostapd_param param;
@@ -750,13 +759,14 @@ static int hostap_set_assoc_ap(void *priv, const u8 *addr)
 }
 
 
-static int hostap_set_generic_elem(const char *ifname, void *priv,
-				   const u8 *elem, size_t elem_len)
+static int hostapd_ioctl_set_generic_elem(struct hostap_driver_data *drv)
 {
-	struct hostap_driver_data *drv = priv;
 	struct prism2_hostapd_param *param;
 	int res;
-	size_t blen = PRISM2_HOSTAPD_GENERIC_ELEMENT_HDR_LEN + elem_len;
+	size_t blen, elem_len;
+
+	elem_len = drv->generic_ie_len;
+	blen = PRISM2_HOSTAPD_GENERIC_ELEMENT_HDR_LEN + elem_len;
 	if (blen < sizeof(*param))
 		blen = sizeof(*param);
 
@@ -766,12 +776,37 @@ static int hostap_set_generic_elem(const char *ifname, void *priv,
 
 	param->cmd = PRISM2_HOSTAPD_SET_GENERIC_ELEMENT;
 	param->u.generic_elem.len = elem_len;
-	memcpy(param->u.generic_elem.data, elem, elem_len);
+	if (drv->generic_ie) {
+		os_memcpy(param->u.generic_elem.data, drv->generic_ie,
+			  drv->generic_ie_len);
+	}
+	wpa_hexdump(MSG_DEBUG, "hostap: Set generic IE",
+		    param->u.generic_elem.data, elem_len);
 	res = hostapd_ioctl(drv, param, blen);
 
-	free(param);
+	os_free(param);
 
 	return res;
+}
+
+
+static int hostap_set_generic_elem(const char *ifname, void *priv,
+				   const u8 *elem, size_t elem_len)
+{
+	struct hostap_driver_data *drv = priv;
+
+	os_free(drv->generic_ie);
+	drv->generic_ie = NULL;
+	drv->generic_ie_len = 0;
+	if (elem) {
+		drv->generic_ie = os_malloc(elem_len);
+		if (drv->generic_ie == NULL)
+			return -1;
+		os_memcpy(drv->generic_ie, elem, elem_len);
+		drv->generic_ie_len = elem_len;
+	}
+
+	return hostapd_ioctl_set_generic_elem(drv);
 }
 
 
@@ -1087,7 +1122,9 @@ static void hostap_driver_deinit(void *priv)
 
 	if (drv->sock >= 0)
 		close(drv->sock);
-	
+
+	os_free(drv->generic_ie);
+
 	free(drv);
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: info-utils.c,v 1.1.1.5 2004/07/12 23:26:55 wiz Exp $	*/
+/*	$NetBSD: info-utils.c,v 1.1.1.5.26.1 2008/09/18 04:48:27 wrstuden Exp $	*/
 
 /* info-utils.c -- miscellanous.
-   Id: info-utils.c,v 1.6 2004/03/27 13:26:39 karl Exp
+   Id: info-utils.c,v 1.4 2004/04/11 17:56:45 karl Exp
 
    Copyright (C) 1993, 1998, 2003, 2004 Free Software Foundation, Inc.
 

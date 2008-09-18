@@ -1,4 +1,4 @@
-/*	$NetBSD: sockmisc.c,v 1.11 2008/04/02 19:02:50 manu Exp $	*/
+/*	$NetBSD: sockmisc.c,v 1.11.4.1 2008/09/18 04:54:20 wrstuden Exp $	*/
 
 /* Id: sockmisc.c,v 1.24 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1068,6 +1068,8 @@ extract_port (const struct sockaddr *addr)
     return port;
 
   switch (addr->sa_family) {
+    case AF_UNSPEC:
+      break;
     case AF_INET:
       port = ((struct sockaddr_in *)addr)->sin_port;
       break;

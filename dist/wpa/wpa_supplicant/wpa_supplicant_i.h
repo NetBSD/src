@@ -96,17 +96,6 @@ struct wpa_params {
 	int daemonize;
 
 	/**
-	 * wait_for_interface - Wait for the network interface to appear
-	 *
-	 * If set, %wpa_supplicant will wait until all the configured network
-	 * interfaces are available before starting processing. Please note
-	 * that in many cases, a better alternative would be to start
-	 * %wpa_supplicant without network interfaces and add the interfaces
-	 * dynamically whenever they become available.
-	 */
-	int wait_for_interface;
-
-	/**
 	 * wait_for_monitor - Wait for a monitor program before starting
 	 */
 	int wait_for_monitor;
@@ -184,6 +173,8 @@ struct wpa_client_mlme {
 	u16 ap_capab, capab;
 	u8 *extra_ie; /* to be added to the end of AssocReq */
 	size_t extra_ie_len;
+	u8 *extra_probe_ie; /* to be added to the end of ProbeReq */
+	size_t extra_probe_ie_len;
 	wpa_key_mgmt key_mgmt;
 
 	/* The last AssocReq/Resp IEs */
@@ -290,6 +281,7 @@ struct wpa_supplicant {
 	int disconnected; /* all connections disabled; i.e., do no reassociate
 			   * before this has been cleared */
 	struct wpa_ssid *current_ssid;
+	int ap_ies_from_associnfo;
 
 	/* Selected configuration (based on Beacon/ProbeResp WPA IE) */
 	int pairwise_cipher;
@@ -349,8 +341,7 @@ struct wpa_supplicant {
 int wpa_supplicant_reload_configuration(struct wpa_supplicant *wpa_s);
 
 const char * wpa_supplicant_state_txt(int state);
-int wpa_supplicant_driver_init(struct wpa_supplicant *wpa_s,
-			       int wait_for_interface);
+int wpa_supplicant_driver_init(struct wpa_supplicant *wpa_s);
 int wpa_supplicant_set_suites(struct wpa_supplicant *wpa_s,
 			      struct wpa_scan_res *bss,
 			      struct wpa_ssid *ssid,
@@ -715,6 +706,15 @@ static inline int wpa_drv_send_ft_action(struct wpa_supplicant *wpa_s,
 	if (wpa_s->driver->send_ft_action)
 		return wpa_s->driver->send_ft_action(wpa_s->drv_priv, action,
 						     target_ap, ies, ies_len);
+	return -1;
+}
+
+static inline int wpa_drv_set_probe_req_ie(struct wpa_supplicant *wpa_s,
+					   const u8 *ies, size_t ies_len)
+{
+	if (wpa_s->driver->set_probe_req_ie)
+		return wpa_s->driver->set_probe_req_ie(wpa_s->drv_priv, ies,
+						       ies_len);
 	return -1;
 }
 

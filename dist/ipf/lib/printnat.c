@@ -1,4 +1,4 @@
-/*	$NetBSD: printnat.c,v 1.1.1.6.12.1 2008/06/23 04:28:46 wrstuden Exp $	*/
+/*	$NetBSD: printnat.c,v 1.1.1.6.12.2 2008/09/18 04:44:42 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2002-2005 by Darren Reed.
@@ -217,6 +217,8 @@ int opts;
 			putchar(' ');
 			printproto(pr, np->in_p, np);
 		}
+		if (np->in_flags & IPN_SEQUENTIAL)
+			printf(" sequential");
 		printf("\n");
 		if (opts & OPT_DEBUG) {
 			struct in_addr nip;

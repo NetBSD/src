@@ -66,6 +66,8 @@ struct eapol_test_data {
 
 	char *connect_info;
 	u8 own_addr[ETH_ALEN];
+	int cui_flag;
+	char *cui_str;
 };
 
 static struct eapol_test_data eapol_test;
@@ -162,6 +164,23 @@ static void ieee802_1x_encapsulate_radius(struct eapol_test_data *e,
 				 (u8 *) buf, os_strlen(buf))) {
 		printf("Could not add Connect-Info\n");
 		goto fail;
+	}
+
+	if (e->cui_flag) {
+		int l = 0;
+		if (e->cui_flag == 1) {
+			l = 1;
+			buf[0] = '\0';
+		} else if (e->cui_flag == 2) {
+			os_snprintf(buf, sizeof(buf), "%s", e->cui_str);
+			l = os_strlen(buf);
+		}
+		if (!radius_msg_add_attr(msg,
+					 RADIUS_ATTR_CHARGEABLE_USER_IDENTITY,
+					 (u8 *) buf, l)) {
+			printf("Could not add Chargeable-User-Identity\n");
+			goto fail;
+		}
 	}
 
 	if (eap && !radius_msg_add_eap(msg, eap, len)) {
@@ -331,7 +350,7 @@ static int test_eapol(struct eapol_test_data *e, struct wpa_supplicant *wpa_s,
 	eapol_conf.required_keys = 0;
 	eapol_conf.fast_reauth = wpa_s->conf->fast_reauth;
 	eapol_conf.workaround = ssid->eap_workaround;
-	eapol_sm_notify_config(wpa_s->eapol, ssid, &eapol_conf);
+	eapol_sm_notify_config(wpa_s->eapol, &ssid->eap, &eapol_conf);
 	eapol_sm_register_scard_ctx(wpa_s->eapol, wpa_s->scard);
 
 
@@ -616,7 +635,8 @@ ieee802_1x_receive_auth(struct radius_msg *msg, struct radius_msg *req,
 
 static void wpa_init_conf(struct eapol_test_data *e,
 			  struct wpa_supplicant *wpa_s, const char *authsrv,
-			  int port, const char *secret)
+			  int port, const char *secret,
+			  const char *cli_addr)
 {
 	struct hostapd_radius_server *as;
 	int res;
@@ -652,6 +672,16 @@ static void wpa_init_conf(struct eapol_test_data *e,
 	e->radius_conf->auth_server = as;
 	e->radius_conf->auth_servers = as;
 	e->radius_conf->msg_dumps = 1;
+	if (cli_addr) {
+		if (hostapd_parse_ip_addr(cli_addr,
+					  &e->radius_conf->client_addr) == 0)
+			e->radius_conf->force_client_addr = 1;
+		else {
+			wpa_printf(MSG_ERROR, "Invalid IP address '%s'",
+				   cli_addr);
+			assert(0);
+		}
+	}
 
 	e->radius = radius_client_init(wpa_s, e->radius_conf);
 	assert(e->radius != NULL);
@@ -846,9 +876,10 @@ static void usage(void)
 {
 	printf("usage:\n"
 	       "eapol_test [-nWS] -c<conf> [-a<AS IP>] [-p<AS port>] "
-	       "[-s<AS secret>] \\\n"
+	       "[-s<AS secret>]\\\n"
 	       "           [-r<count>] [-t<timeout>] [-C<Connect-Info>] \\\n"
-	       "           [-M<client MAC address>]\n"
+	       "           [-M<client MAC address>] \\\n"
+	       "           [-I<CUI>] [-i] [-A<client IP>]\n"
 	       "eapol_test scard\n"
 	       "eapol_test sim <PIN> <num triplets> [debug]\n"
 	       "\n");
@@ -860,6 +891,8 @@ static void usage(void)
 	       "default 1812\n"
 	       "  -s<AS secret> = shared secret with the authentication "
 	       "server, default 'radius'\n"
+	       "  -A<client IP> = IP address of the client, default: select "
+	       "automatically\n"
 	       "  -r<count> = number of re-authentications\n"
 	       "  -W = wait for a control interface monitor before starting\n"
 	       "  -S = save configuration after authentiation\n"
@@ -869,7 +902,10 @@ static void usage(void)
 	       "CONNECT 11Mbps 802.11b)\n"
 	       "  -M<client MAC address> = Set own MAC address "
 	       "(Calling-Station-Id,\n"
-	       "                           default: 02:00:00:00:00:01)\n");
+	       "                           default: 02:00:00:00:00:01)\n"
+	       "  -I<CUI> = send Chargeable-User-Identity containing the "
+	       "value of CUI\n"
+	       "  -i = send NUL value in Chargeable-User-Identity\n");
 }
 
 
@@ -880,6 +916,7 @@ int main(int argc, char *argv[])
 	char *as_addr = "127.0.0.1";
 	int as_port = 1812;
 	char *as_secret = "radius";
+	char *cli_addr = NULL;
 	char *conf = NULL;
 	int timeout = 30;
 
@@ -896,18 +933,28 @@ int main(int argc, char *argv[])
 	wpa_debug_show_keys = 1;
 
 	for (;;) {
-		c = getopt(argc, argv, "a:c:C:M:np:r:s:St:W");
+		c = getopt(argc, argv, "a:A:c:C:iI:M:np:r:s:St:W");
 		if (c < 0)
 			break;
 		switch (c) {
 		case 'a':
 			as_addr = optarg;
 			break;
+		case 'A':
+			cli_addr = optarg;
+			break;
 		case 'c':
 			conf = optarg;
 			break;
 		case 'C':
 			eapol_test.connect_info = optarg;
+			break;
+		case 'i':
+			eapol_test.cui_flag = 1;
+			break;
+		case 'I':
+			eapol_test.cui_flag = 2;
+			eapol_test.cui_str = optarg;
 			break;
 		case 'M':
 			if (hwaddr_aton(optarg, eapol_test.own_addr)) {
@@ -979,7 +1026,8 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	wpa_init_conf(&eapol_test, &wpa_s, as_addr, as_port, as_secret);
+	wpa_init_conf(&eapol_test, &wpa_s, as_addr, as_port, as_secret,
+		      cli_addr);
 	wpa_s.ctrl_iface = wpa_supplicant_ctrl_iface_init(&wpa_s);
 	if (wpa_s.ctrl_iface == NULL) {
 		printf("Failed to initialize control interface '%s'.\n"
@@ -1007,6 +1055,9 @@ int main(int argc, char *argv[])
 	eloop_register_signal_terminate(eapol_test_terminate, NULL);
 	eloop_register_signal_reconfig(eapol_test_terminate, NULL);
 	eloop_run();
+
+	eloop_cancel_timeout(eapol_test_timeout, &eapol_test, NULL);
+	eloop_cancel_timeout(eapol_sm_reauth, &eapol_test, NULL);
 
 	if (eapol_test_compare_pmk(&eapol_test) == 0 ||
 	    eapol_test.no_mppe_keys)

@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1.1.6.12.1 2008/06/23 04:27:22 wrstuden Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.6.12.2 2008/09/18 04:44:34 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.250.16.5 2008/04/03 06:20:33 tbox Exp */
+/* Id: client.c,v 1.250.16.6 2008/05/27 22:36:09 each Exp */
 
 #include <config.h>
 
@@ -1514,14 +1514,6 @@ client_request(isc_task_t *task, isc_event_t *event) {
 	if (TCP_CLIENT(client))
 		dns_generalstats_increment(ns_g_server->nsstats,
 					   dns_nsstatscounter_tcp);
-
-	/*
-	 * Hash the incoming request here as it is after
-	 * dns_dispatch_importrecv().
-	 */
-	dns_dispatch_hash(&client->now, sizeof(client->now));
-	dns_dispatch_hash(isc_buffer_base(buffer),
-			  isc_buffer_usedlength(buffer));
 
 	/*
 	 * It's a request.  Parse it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.1.1.4.12.1 2008/06/23 04:28:37 wrstuden Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.1.1.4.12.2 2008/09/18 04:44:38 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: namedconf.c,v 1.78.46.6 2008/04/03 02:12:22 marka Exp */
+/* Id: namedconf.c,v 1.78.46.7.2.1 2008/07/23 11:46:02 marka Exp */
 
 /*! \file */
 
@@ -641,6 +641,7 @@ options_clauses[] = {
 	{ "recursing-file", &cfg_type_qstring, 0 },
 	{ "random-device", &cfg_type_qstring, 0 },
 	{ "recursive-clients", &cfg_type_uint32, 0 },
+	{ "reserved-sockets", &cfg_type_uint32, 0 },
 	{ "serial-queries", &cfg_type_uint32, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "serial-query-rate", &cfg_type_uint32, 0 },
 	{ "server-id", &cfg_type_serverid, 0 },
@@ -783,8 +784,9 @@ view_clauses[] = {
 	 */
 	{ "query-source", &cfg_type_querysource4, 0 },
 	{ "query-source-v6", &cfg_type_querysource6, 0 },
-	{ "queryport-pool-ports", &cfg_type_uint32, 0 },
-	{ "queryport-pool-updateinterval", &cfg_type_uint32, 0 },
+	{ "queryport-pool-ports", &cfg_type_uint32, CFG_CLAUSEFLAG_OBSOLETE },
+	{ "queryport-pool-updateinterval", &cfg_type_uint32,
+	  CFG_CLAUSEFLAG_OBSOLETE},
 	{ "recursion", &cfg_type_boolean, 0 },
 	{ "request-ixfr", &cfg_type_boolean, 0 },
 	{ "request-nsid", &cfg_type_boolean, 0 },
@@ -795,7 +797,7 @@ view_clauses[] = {
 	{ "suppress-initial-notify", &cfg_type_boolean, CFG_CLAUSEFLAG_NYI },
 	{ "topology", &cfg_type_bracketed_aml, CFG_CLAUSEFLAG_NOTIMP },
 	{ "transfer-format", &cfg_type_transferformat, 0 },
-	{ "use-queryport-pool", &cfg_type_boolean, 0 },
+	{ "use-queryport-pool", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "zero-no-soa-ttl-cache", &cfg_type_boolean, 0 },
 	{ NULL, NULL, 0 }
 };

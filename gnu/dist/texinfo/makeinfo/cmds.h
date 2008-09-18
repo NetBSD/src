@@ -1,7 +1,7 @@
-/*	$NetBSD: cmds.h,v 1.1.1.3 2004/07/12 23:26:51 wiz Exp $	*/
+/*	$NetBSD: cmds.h,v 1.1.1.3.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* cmds.h -- declarations for cmds.c.
-   Id: cmds.h,v 1.5 2004/04/07 20:17:38 karl Exp
+   Id: cmds.h,v 1.9 2004/11/26 00:48:35 karl Exp
 
    Copyright (C) 1998, 1999, 2002, 2003, 2004 Free Software Foundation,
    Inc.
@@ -111,6 +111,7 @@ extern void cm_LaTeX (int arg),
 
 /* Emphasis and markup.  */
 extern void cm_acronym (int arg),
+  cm_abbr (int arg),
   cm_b (int arg),
   cm_cite (int arg, int position),
   cm_code (int arg),
@@ -124,7 +125,9 @@ extern void cm_acronym (int arg),
   cm_math (int arg),
   cm_not_fixed_width (int arg, int start, int end),
   cm_r (int arg),
+  cm_sansserif (int arg),
   cm_sc (int arg, int start_pos, int end_pos),
+  cm_slanted (int arg),
   cm_strong (int arg, int start_pos, int end_pos),
   cm_tt (int arg),
   cm_indicate_url (int arg, int start, int end),

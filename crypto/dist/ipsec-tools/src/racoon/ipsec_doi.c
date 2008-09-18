@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.34.4.1 2008/06/23 04:26:46 wrstuden Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.34.4.2 2008/09/18 04:54:19 wrstuden Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -1823,6 +1823,96 @@ ipsecdoi_set_ld(buf)
 
 	return ld;
 }
+
+/*
+ * parse responder-lifetime attributes from payload
+ */
+int
+ipsecdoi_parse_responder_lifetime(notify, lifetime_sec, lifetime_kb)
+	struct isakmp_pl_n *notify;
+	u_int32_t *lifetime_sec;
+	u_int32_t *lifetime_kb;
+{
+	struct isakmp_data *d;
+	int flag, type, tlen, ld_type = -1;
+	u_int16_t lorv;
+	u_int32_t value;
+
+	tlen = ntohs(notify->h.len) - sizeof(*notify) - notify->spi_size;
+        d = (struct isakmp_data *)((char *)(notify + 1) +
+		notify->spi_size);
+
+	while (tlen >= sizeof(struct isakmp_data)) {
+		type = ntohs(d->type) & ~ISAKMP_GEN_MASK;
+		flag = ntohs(d->type) & ISAKMP_GEN_MASK;
+		lorv = ntohs(d->lorv);
+
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"type=%s, flag=0x%04x, lorv=%s\n",
+			s_ipsecdoi_attr(type), flag,
+			s_ipsecdoi_attr_v(type, lorv));
+
+		switch (type) {
+		case IPSECDOI_ATTR_SA_LD_TYPE:
+			if (! flag) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"must be TV when LD_TYPE.\n");
+				return -1;
+			}
+			ld_type = lorv;
+			break;
+		case IPSECDOI_ATTR_SA_LD:
+			if (flag)
+				value = lorv;
+			else if (lorv == 2)
+				value = ntohs(*(u_int16_t *)(d + 1));
+			else if (lorv == 4)
+				value = ntohl(*(u_int32_t *)(d + 1));
+			else {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"payload length %d for lifetime "
+					"data length is unsupported.\n", lorv);
+				return -1;
+			}
+
+			switch (ld_type) {
+			case IPSECDOI_ATTR_SA_LD_TYPE_SEC:
+				if (lifetime_sec != NULL)
+					*lifetime_sec = value;
+				plog(LLV_INFO, LOCATION, NULL,
+					"received RESPONDER-LIFETIME: %d "
+					"seconds\n", value);
+				break;
+			case IPSECDOI_ATTR_SA_LD_TYPE_KB:
+				if (lifetime_kb != NULL)
+					*lifetime_kb = value;
+				plog(LLV_INFO, LOCATION, NULL,
+					"received RESPONDER-LIFETIME: %d "
+					"kbytes\n", value);
+				break;
+			default:
+				plog(LLV_ERROR, LOCATION, NULL,
+					"lifetime data received without "
+					"lifetime data type.\n");
+				return -1;
+			}
+			break;
+		}
+
+		if (flag) {
+			tlen -= sizeof(*d);
+			d = (struct isakmp_data *)((char *)d
+				+ sizeof(*d));
+		} else {
+			tlen -= (sizeof(*d) + lorv);
+			d = (struct isakmp_data *)((char *)d
+				+ sizeof(*d) + lorv);
+		}
+	}
+
+	return 0;
+}
+
 
 /*%%%*/
 /*

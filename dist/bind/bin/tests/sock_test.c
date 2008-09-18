@@ -1,7 +1,7 @@
-/*	$NetBSD: sock_test.c,v 1.1.1.5.12.1 2008/06/23 04:27:29 wrstuden Exp $	*/
+/*	$NetBSD: sock_test.c,v 1.1.1.5.12.2 2008/09/18 04:44:34 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sock_test.c,v 1.52 2007/06/19 23:46:59 tbox Exp */
+/* Id: sock_test.c,v 1.52.232.3 2008/07/23 22:51:53 marka Exp */
 
 #include <config.h>
 
@@ -323,7 +323,7 @@ main(int argc, char *argv[]) {
 	}
 	RUNTIME_CHECK(isc_socket_create(socketmgr, pf, isc_sockettype_tcp,
 					&so1) == ISC_R_SUCCESS);
-	result = isc_socket_bind(so1, &sockaddr);
+	result = isc_socket_bind(so1, &sockaddr, ISC_SOCKET_REUSEADDRESS);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_socket_listen(so1, 0) == ISC_R_SUCCESS);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.17.2.1 2008/06/23 04:26:46 wrstuden Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.17.2.2 2008/09/18 04:54:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -64,11 +64,13 @@ struct _prop_number {
 
 _PROP_POOL_INIT(_prop_number_pool, sizeof(struct _prop_number), "propnmbr")
 
-static int		_prop_number_free(prop_stack_t, prop_object_t *);
+static _prop_object_free_rv_t
+		_prop_number_free(prop_stack_t, prop_object_t *);
 static bool	_prop_number_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_number_equals(prop_object_t, prop_object_t,
+static _prop_object_equals_rv_t
+		_prop_number_equals(prop_object_t, prop_object_t,
 				    void **, void **,
 				    prop_object_t *, prop_object_t *);
 
@@ -145,7 +147,7 @@ static bool _prop_number_tree_initialized;
 _PROP_MUTEX_DECL_STATIC(_prop_number_tree_mutex)
 
 /* ARGSUSED */
-static int
+static _prop_object_free_rv_t
 _prop_number_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_number_t pn = *obj;
@@ -184,7 +186,7 @@ _prop_number_externalize(struct _prop_object_externalize_context *ctx,
 }
 
 /* ARGSUSED */
-static bool
+static _prop_object_equals_rv_t
 _prop_number_equals(prop_object_t v1, prop_object_t v2,
     void **stored_pointer1, void **stored_pointer2,
     prop_object_t *next_obj1, prop_object_t *next_obj2)
@@ -205,7 +207,7 @@ _prop_number_equals(prop_object_t v1, prop_object_t v2,
 	 * cannot be equal because they would have had pointer equality.
 	 */
 	if (num1->pn_value.pnv_is_unsigned == num2->pn_value.pnv_is_unsigned)
-		return (_PROP_OBJECT_EQUALS_TRUE);
+		return (_PROP_OBJECT_EQUALS_FALSE);
 
 	/*
 	 * We now have one signed value and one unsigned value.  We can

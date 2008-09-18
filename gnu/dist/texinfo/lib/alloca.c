@@ -1,4 +1,4 @@
-/*	$NetBSD: alloca.c,v 1.1.1.4 2004/07/12 23:26:57 wiz Exp $	*/
+/*	$NetBSD: alloca.c,v 1.1.1.4.26.1 2008/09/18 04:48:28 wrstuden Exp $	*/
 
 /* alloca.c -- allocate automatically reclaimed memory
    (Mostly) portable public-domain implementation -- D A Gwyn
@@ -26,6 +26,8 @@
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif
+
+#include <alloca.h>
 
 #include <string.h>
 #include <stdlib.h>

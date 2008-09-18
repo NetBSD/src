@@ -1,6 +1,6 @@
 /*
  * EAP peer method: EAP-SAKE (RFC 4763)
- * Copyright (c) 2006-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2006-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -16,7 +16,6 @@
 
 #include "common.h"
 #include "eap_peer/eap_i.h"
-#include "config_ssid.h"
 #include "eap_common/eap_sake_common.h"
 
 struct eap_sake_data {
@@ -73,18 +72,14 @@ static void eap_sake_deinit(struct eap_sm *sm, void *priv);
 
 static void * eap_sake_init(struct eap_sm *sm)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
 	struct eap_sake_data *data;
+	const u8 *identity, *password;
+	size_t identity_len, password_len;
 
-	if (config == NULL) {
-		wpa_printf(MSG_INFO, "EAP-SAKE: No configuration found");
-		return NULL;
-	}
-
-	if (!config->eappsk ||
-	    config->eappsk_len != 2 * EAP_SAKE_ROOT_SECRET_LEN) {
-		wpa_printf(MSG_INFO, "EAP-SAKE: No key (eappsk) of correct "
-			   "length configured");
+	password = eap_get_config_password(sm, &password_len);
+	if (!password || password_len != 2 * EAP_SAKE_ROOT_SECRET_LEN) {
+		wpa_printf(MSG_INFO, "EAP-SAKE: No key of correct length "
+			   "configured");
 		return NULL;
 	}
 
@@ -93,20 +88,20 @@ static void * eap_sake_init(struct eap_sm *sm)
 		return NULL;
 	data->state = IDENTITY;
 
-	if (config->nai) {
-		data->peerid = os_malloc(config->nai_len);
+	identity = eap_get_config_identity(sm, &identity_len);
+	if (identity) {
+		data->peerid = os_malloc(identity_len);
 		if (data->peerid == NULL) {
 			eap_sake_deinit(sm, data);
 			return NULL;
 		}
-		os_memcpy(data->peerid, config->nai, config->nai_len);
-		data->peerid_len = config->nai_len;
+		os_memcpy(data->peerid, identity, identity_len);
+		data->peerid_len = identity_len;
 	}
 
-	os_memcpy(data->root_secret_a, config->eappsk,
-		  EAP_SAKE_ROOT_SECRET_LEN);
+	os_memcpy(data->root_secret_a, password, EAP_SAKE_ROOT_SECRET_LEN);
 	os_memcpy(data->root_secret_b,
-		  config->eappsk + EAP_SAKE_ROOT_SECRET_LEN,
+		  password + EAP_SAKE_ROOT_SECRET_LEN,
 		  EAP_SAKE_ROOT_SECRET_LEN);
 
 	return data;

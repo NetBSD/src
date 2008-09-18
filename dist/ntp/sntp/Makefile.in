@@ -218,8 +218,8 @@ ACLOCAL_AMFLAGS = -I libopts/m4
 AM_CPPFLAGS = $(LIBOPTS_CFLAGS)
 LDADD = $(LIBOPTS_LDADD)
 NULL = 
-#run_ag=         cd $(srcdir) && autogen -L $(top_srcdir)/include
-run_ag = cd $(srcdir) && autogen
+#run_ag=         cd $(srcdir) && autogen --writable -L $(top_srcdir)/include
+run_ag = cd $(srcdir) && autogen --writable
 SUBDIRS = $(am__append_1) .
 sntp_SOURCES = \
 	header.h \

@@ -1,6 +1,6 @@
 /*
  * EAP peer method: EAP-MSCHAPV2 (draft-kamath-pppext-eap-mschapv2-00.txt)
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -23,13 +23,11 @@
 
 #include "common.h"
 #include "eap_i.h"
-#include "config_ssid.h"
+#include "eap_config.h"
 #include "ms_funcs.h"
 #include "wpa_ctrl.h"
+#include "mschapv2.h"
 
-
-#define MSCHAPV2_CHAL_LEN 16
-#define MSCHAPV2_NT_RESPONSE_LEN 24
 
 #ifdef _MSC_VER
 #pragma pack(push, 1)
@@ -83,7 +81,7 @@ struct ms_change_password {
 
 
 struct eap_mschapv2_data {
-	u8 auth_response[20];
+	u8 auth_response[MSCHAPV2_AUTH_RESPONSE_LEN];
 	int auth_response_valid;
 
 	int prev_error;
@@ -98,7 +96,7 @@ struct eap_mschapv2_data {
 	int full_key;
 
 	int phase2;
-	u8 master_key[16];
+	u8 master_key[MSCHAPV2_MASTER_KEY_LEN];
 	int master_key_valid;
 	int success;
 
@@ -155,86 +153,6 @@ static void eap_mschapv2_deinit(struct eap_sm *sm, void *priv)
 }
 
 
-static const u8 * eap_mschapv2_remove_domain(const u8 *username, size_t *len)
-{
-	size_t i;
-
-	/*
-	 * MSCHAPv2 does not include optional domain name in the
-	 * challenge-response calculation, so remove domain prefix
-	 * (if present).
-	 */
-
-	for (i = 0; i < *len; i++) {
-		if (username[i] == '\\') {
-			*len -= i + 1;
-			return username + i + 1;
-		}
-	}
-
-	return username;
-}
-
-
-static void eap_mschapv2_derive_response(
-	struct eap_mschapv2_data *data,
-	const u8 *username, size_t username_len,
-	const u8 *password, size_t password_len, int pwhash,
-	const u8 *auth_challenge, const u8 *peer_challenge,
-	u8 *nt_response)
-{
-	u8 password_hash[16], password_hash_hash[16];
-
-	wpa_hexdump(MSG_DEBUG, "EAP-MSCHAPV2: auth_challenge",
-		    auth_challenge, MSCHAPV2_CHAL_LEN);
-	wpa_hexdump(MSG_DEBUG, "EAP-MSCHAPV2: peer_challenge",
-		    peer_challenge, MSCHAPV2_CHAL_LEN);
-	wpa_hexdump_ascii(MSG_DEBUG, "EAP-MSCHAPV2: username",
-			  username, username_len);
-	if (pwhash) {
-		wpa_hexdump_key(MSG_DEBUG, "EAP-MSCHAPV2: password hash",
-				password, password_len);
-		generate_nt_response_pwhash(auth_challenge, peer_challenge,
-					    username, username_len,
-					    password, nt_response);
-	} else {
-		wpa_hexdump_ascii_key(MSG_DEBUG, "EAP-MSCHAPV2: password",
-				      password, password_len);
-		generate_nt_response(auth_challenge, peer_challenge,
-				     username, username_len,
-				     password, password_len, nt_response);
-	}
-	wpa_hexdump(MSG_DEBUG, "EAP-MSCHAPV2: response", nt_response,
-		    MSCHAPV2_NT_RESPONSE_LEN);
-	/* Authenticator response is not really needed yet, but calculate it
-	 * here so that challenges need not be saved. */
-	if (pwhash) {
-		generate_authenticator_response_pwhash(
-			password, peer_challenge, auth_challenge,
-			username, username_len, nt_response,
-			data->auth_response);
-	} else {
-		generate_authenticator_response(password, password_len,
-						peer_challenge, auth_challenge,
-						username, username_len,
-						nt_response,
-						data->auth_response);
-	}
-	data->auth_response_valid = 1;
-
-	/* Likewise, generate master_key here since we have the needed data
-	 * available. */
-	if (pwhash) {
-		hash_nt_password_hash(password, password_hash_hash);
-	} else {
-		nt_password_hash(password, password_len, password_hash);
-		hash_nt_password_hash(password_hash, password_hash_hash);
-	}
-	get_master_key(password_hash_hash, nt_response, data->master_key);
-	data->master_key_valid = 1;
-}
-
-
 static struct wpabuf * eap_mschapv2_challenge_reply(
 	struct eap_sm *sm, struct eap_mschapv2_data *data, u8 id,
 	u8 mschapv2_id, const u8 *auth_challenge)
@@ -244,8 +162,8 @@ static struct wpabuf * eap_mschapv2_challenge_reply(
 	u8 *peer_challenge;
 	int ms_len;
 	struct ms_response *r;
-	size_t username_len, identity_len, password_len;
-	const u8 *username, *identity, *password;
+	size_t identity_len, password_len;
+	const u8 *identity, *password;
 	int pwhash;
 
 	wpa_printf(MSG_DEBUG, "EAP-MSCHAPV2: Generating Challenge Response");
@@ -254,9 +172,6 @@ static struct wpabuf * eap_mschapv2_challenge_reply(
 	password = eap_get_config_password2(sm, &password_len, &pwhash);
 	if (identity == NULL || password == NULL)
 		return NULL;
-
-	username_len = identity_len;
-	username = eap_mschapv2_remove_domain(identity, &username_len);
 
 	ms_len = sizeof(*ms) + 1 + sizeof(*r) + identity_len;
 	resp = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_MSCHAPV2, ms_len,
@@ -298,10 +213,12 @@ static struct wpabuf * eap_mschapv2_challenge_reply(
 			   "in Phase 1");
 		auth_challenge = data->auth_challenge;
 	}
-	eap_mschapv2_derive_response(data, username, username_len,
-				     password, password_len, pwhash,
-				     auth_challenge, peer_challenge,
-				     r->nt_response);
+	mschapv2_derive_response(identity, identity_len, password,
+				 password_len, pwhash, auth_challenge,
+				 peer_challenge, r->nt_response,
+				 data->auth_response, data->master_key);
+	data->auth_response_valid = 1;
+	data->master_key_valid = 1;
 
 	r->flags = 0; /* reserved, must be zero */
 
@@ -384,14 +301,14 @@ static struct wpabuf * eap_mschapv2_challenge(
 static void eap_mschapv2_password_changed(struct eap_sm *sm,
 					  struct eap_mschapv2_data *data)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 	if (config && config->new_password) {
 		wpa_msg(sm->msg_ctx, MSG_INFO,
 			WPA_EVENT_PASSWORD_CHANGED
 			"EAP-MSCHAPV2: Password changed successfully");
 		data->prev_error = 0;
 		os_free(config->password);
-		if (config->flags & WPA_CONFIG_FLAGS_PASSWORD_NTHASH) {
+		if (config->flags & EAP_CONFIG_FLAGS_PASSWORD_NTHASH) {
 			config->password = os_malloc(16);
 			config->password_len = 16;
 			if (config->password) {
@@ -429,24 +346,21 @@ static struct wpabuf * eap_mschapv2_success(struct eap_sm *sm,
 {
 	struct wpabuf *resp;
 	const u8 *pos;
-	u8 recv_response[20];
 	size_t len;
 
 	wpa_printf(MSG_DEBUG, "EAP-MSCHAPV2: Received success");
 	len = req_len - sizeof(*req);
 	pos = (const u8 *) (req + 1);
-	if (!data->auth_response_valid || len < 42 ||
-	    pos[0] != 'S' || pos[1] != '=' ||
-	    hexstr2bin((char *) (pos + 2), recv_response, 20) ||
-	    os_memcmp(data->auth_response, recv_response, 20) != 0) {
+	if (!data->auth_response_valid ||
+	    mschapv2_verify_auth_response(data->auth_response, pos, len)) {
 		wpa_printf(MSG_WARNING, "EAP-MSCHAPV2: Invalid authenticator "
 			   "response in success request");
 		ret->methodState = METHOD_DONE;
 		ret->decision = DECISION_FAIL;
 		return NULL;
 	}
-	pos += 42;
-	len -= 42;
+	pos += 2 + 2 * MSCHAPV2_AUTH_RESPONSE_LEN;
+	len -= 2 + 2 * MSCHAPV2_AUTH_RESPONSE_LEN;
 	while (len > 0 && *pos == ' ') {
 		pos++;
 		len--;
@@ -485,7 +399,7 @@ static int eap_mschapv2_failure_txt(struct eap_sm *sm,
 {
 	char *pos, *msg = "";
 	int retry = 1;
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 
 	/* For example:
 	 * E=691 R=1 C=<32 octets hex challenge> V=3 M=Authentication Failure
@@ -602,7 +516,7 @@ static struct wpabuf * eap_mschapv2_change_password(
 	if (username == NULL || password == NULL || new_password == NULL)
 		return NULL;
 
-	username = eap_mschapv2_remove_domain(username, &username_len);
+	username = mschapv2_remove_domain(username, &username_len);
 
 	ret->ignore = FALSE;
 	ret->methodState = METHOD_MAY_CONT;
@@ -747,7 +661,7 @@ static struct wpabuf * eap_mschapv2_failure(struct eap_sm *sm,
 
 	if (data->prev_error == ERROR_PASSWD_EXPIRED &&
 	    data->passwd_change_version == 3) {
-		struct wpa_ssid *config = eap_get_config(sm);
+		struct eap_peer_config *config = eap_get_config(sm);
 		if (config && config->new_password)
 			return eap_mschapv2_change_password(sm, data, ret, req,
 							    id);
@@ -843,7 +757,7 @@ static struct wpabuf * eap_mschapv2_process(struct eap_sm *sm, void *priv,
 					    const struct wpabuf *reqData)
 {
 	struct eap_mschapv2_data *data = priv;
-	struct wpa_ssid *config = eap_get_config(sm);
+	struct eap_peer_config *config = eap_get_config(sm);
 	const struct eap_mschapv2_hdr *ms;
 	int using_prev_challenge = 0;
 	const u8 *pos;

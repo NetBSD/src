@@ -2,6 +2,7 @@
  * hostapd / IEEE 802.11 Management: Beacon and Probe Request/Response
  * Copyright (c) 2002-2004, Instant802 Networks, Inc.
  * Copyright (c) 2005-2006, Devicescape Software, Inc.
+ * Copyright (c) 2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -177,18 +178,18 @@ void handle_probe_req(struct hostapd_data *hapd, struct ieee80211_mgmt *mgmt,
 	struct ieee80211_mgmt *resp;
 	struct ieee802_11_elems elems;
 	char *ssid;
-	u8 *pos, *epos;
-	size_t ssid_len;
+	u8 *pos, *epos, *ie;
+	size_t ssid_len, ie_len;
 	struct sta_info *sta = NULL;
+
+	ie = mgmt->u.probe_req.variable;
+	ie_len = len - (IEEE80211_HDRLEN + sizeof(mgmt->u.probe_req));
 
 	if (!hapd->iconf->send_probe_response)
 		return;
 
-	if (ieee802_11_parse_elems(hapd, mgmt->u.probe_req.variable,
-				   len - (IEEE80211_HDRLEN +
-					  sizeof(mgmt->u.probe_req)), &elems,
-				   0)
-	    == ParseFailed) {
+	if (ieee802_11_parse_elems(hapd, ie, ie_len, &elems, 0) == ParseFailed)
+	{
 		wpa_printf(MSG_DEBUG, "Could not parse ProbeReq from " MACSTR,
 			   MAC2STR(mgmt->sa));
 		return;
@@ -236,7 +237,7 @@ void handle_probe_req(struct hostapd_data *hapd, struct ieee80211_mgmt *mgmt,
 
 	/* TODO: verify that supp_rates contains at least one matching rate
 	 * with AP configuration */
-#define MAX_PROBERESP_LEN 512
+#define MAX_PROBERESP_LEN 768
 	resp = os_zalloc(MAX_PROBERESP_LEN);
 	if (resp == NULL)
 		return;
@@ -306,7 +307,7 @@ void ieee802_11_set_beacon(struct hostapd_data *hapd)
 			      ERP_INFO_USE_PROTECTION) ? 1 : 0);
 
 #define BEACON_HEAD_BUF_SIZE 256
-#define BEACON_TAIL_BUF_SIZE 256
+#define BEACON_TAIL_BUF_SIZE 512
 	head = os_zalloc(BEACON_HEAD_BUF_SIZE);
 	tailpos = tail = os_malloc(BEACON_TAIL_BUF_SIZE);
 	if (head == NULL || tail == NULL) {

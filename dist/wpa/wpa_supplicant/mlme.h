@@ -35,14 +35,15 @@ void ieee80211_sta_free_hw_features(struct wpa_hw_modes *hw_features,
 				    size_t num_hw_features);
 void ieee80211_sta_rx(struct wpa_supplicant *wpa_s, const u8 *buf, size_t len,
 		      struct ieee80211_rx_status *rx_status);
-int ieee80211_sta_get_scan_results(struct wpa_supplicant *wpa_s,
-				   struct wpa_scan_result *results,
-				   size_t max_size);
+struct wpa_scan_results *
+ieee80211_sta_get_scan_results(struct wpa_supplicant *wpa_s);
 int ieee80211_sta_update_ft_ies(struct wpa_supplicant *wpa_s, const u8 *md,
 				const u8 *ies, size_t ies_len);
 int ieee80211_sta_send_ft_action(struct wpa_supplicant *wpa_s, u8 action,
 				 const u8 *target_ap,
 				 const u8 *ies, size_t ies_len);
+int ieee80211_sta_set_probe_req_ie(struct wpa_supplicant *wpa_s, const u8 *ies,
+				   size_t ies_len);
 
 #else /* CONFIG_CLIENT_MLME */
 
@@ -98,12 +99,10 @@ ieee80211_sta_rx(struct wpa_supplicant *wpa_s, const u8 *buf, size_t len,
 {
 }
 
-static inline int
-ieee80211_sta_get_scan_results(struct wpa_supplicant *wpa_s,
-			       struct wpa_scan_result *results,
-			       size_t max_size)
+static inline struct wpa_scan_results *
+ieee80211_sta_get_scan_results(struct wpa_supplicant *wpa_s)
 {
-	return -1;
+	return NULL;
 }
 
 static inline int
@@ -117,6 +116,13 @@ static inline int
 ieee80211_sta_send_ft_action(struct wpa_supplicant *wpa_s, u8 action,
 			     const u8 *target_ap,
 			     const u8 *ies, size_t ies_len)
+{
+	return -1;
+}
+
+static inline int
+ieee80211_sta_set_probe_req_ie(struct wpa_supplicant *wpa_s, const u8 *ies,
+			       size_t ies_len)
 {
 	return -1;
 }

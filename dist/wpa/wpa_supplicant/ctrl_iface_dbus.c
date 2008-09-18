@@ -21,10 +21,10 @@
 #include "ctrl_iface_dbus.h"
 #include "ctrl_iface_dbus_handlers.h"
 
-#define DBUS_VERSION (DBUS_VERSION_MAJOR << 8 | DBUS_VERSION_MINOR)
+#define _DBUS_VERSION (DBUS_VERSION_MAJOR << 8 | DBUS_VERSION_MINOR)
 #define DBUS_VER(major, minor) ((major) << 8 | (minor))
 
-#if DBUS_VERSION < DBUS_VER(1,1)
+#if _DBUS_VERSION < DBUS_VER(1,1)
 #define dbus_watch_get_unix_fd dbus_watch_get_fd
 #endif
 
@@ -534,8 +534,15 @@ static DBusHandlerResult wpas_iface_message_handler(DBusConnection *connection,
 			reply = wpas_dbus_iface_disconnect(message, wpa_s);
 		else if (!strcmp(method, "setAPScan"))
 			reply = wpas_dbus_iface_set_ap_scan(message, wpa_s);
+		else if (!strcmp(method, "setSmartcardModules"))
+			reply = wpas_dbus_iface_set_smartcard_modules(message,
+								      wpa_s);
 		else if (!strcmp(method, "state"))
 			reply = wpas_dbus_iface_get_state(message, wpa_s);
+		else if (!strcmp(method, "setBlobs"))
+			reply = wpas_dbus_iface_set_blobs(message, wpa_s);
+		else if (!strcmp(method, "removeBlobs"))
+			reply = wpas_dbus_iface_remove_blobs(message, wpa_s);
 	}
 
 	/* If the message was handled, send back the reply */

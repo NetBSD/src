@@ -1,7 +1,7 @@
-/*	$NetBSD: footnote.c,v 1.1.1.3 2004/07/12 23:26:51 wiz Exp $	*/
+/*	$NetBSD: footnote.c,v 1.1.1.3.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* footnote.c -- footnotes for Texinfo.
-   Id: footnote.c,v 1.7 2004/04/06 20:15:42 dirt Exp
+   Id: footnote.c,v 1.7 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 1998, 1999, 2002 Free Software Foundation, Inc.
 

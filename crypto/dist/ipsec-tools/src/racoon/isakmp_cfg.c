@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.15.4.1 2008/06/23 04:26:46 wrstuden Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.15.4.2 2008/09/18 04:54:19 wrstuden Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1154,7 +1154,7 @@ isakmp_cfg_send(iph1, payload, np, flags, new_exchange)
 	if (set_port(iph2->dst, 0) == NULL ||
 	    set_port(iph2->src, 0) == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
-		     "invalid family: %d\n", iph2->remote->sa_family);
+		     "invalid family: %d\n", iph1->remote->sa_family);
 		delph2(iph2);
 		goto end;
 	}
@@ -1491,24 +1491,6 @@ isakmp_cfg_accounting_radius(iph1, inout)
 	struct ph1handle *iph1;
 	int inout;
 {
-	/* For first time use, initialize Radius */
-	if (radius_acct_state == NULL) {
-		if ((radius_acct_state = rad_acct_open()) == NULL) {
-			plog(LLV_ERROR, LOCATION, NULL,
-			    "Cannot init librradius\n");
-			return -1;
-		}
-
-		if (rad_config(radius_acct_state, NULL) != 0) {
-			 plog(LLV_ERROR, LOCATION, NULL,
-			     "Cannot open librarius config file: %s\n",
-			     rad_strerror(radius_acct_state));
-			  rad_close(radius_acct_state);
-			  radius_acct_state = NULL;
-			  return -1;
-		}
-	}
-
 	if (rad_create_request(radius_acct_state, 
 	    RAD_ACCOUNTING_REQUEST) != 0) {
 		plog(LLV_ERROR, LOCATION, NULL,

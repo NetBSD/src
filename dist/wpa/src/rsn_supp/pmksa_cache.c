@@ -17,7 +17,6 @@
 #include "common.h"
 #include "wpa.h"
 #include "eloop.h"
-#include "config_ssid.h"
 #include "sha1.h"
 #include "wpa_i.h"
 #include "eapol_supp/eapol_supp_sm.h"

@@ -91,7 +91,7 @@
 # .IP data_directory
 #	The final destination directory for Postfix-writable data files such
 #	as caches. This directory should not be shared with non-Postfix
-#	software. The built-in default directory name is /var/lib/postfix.
+#	software. The built-in default directory name is /var/db/postfix.
 #	This parameter setting is recorded in the installed main.cf file.
 # .IP daemon_directory
 #	The final destination directory for Postfix daemon programs. This

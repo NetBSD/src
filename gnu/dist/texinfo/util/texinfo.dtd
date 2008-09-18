@@ -1,4 +1,4 @@
-<!-- Id: texinfo.dtd,v 1.6 2004/03/01 15:48:51 dirt Exp
+<!-- Id: texinfo.dtd,v 1.4 2004/12/19 15:08:55 karl Exp
    Document Type Definition for Texinfo.
 
    Author: Philippe Martin (feloy@free.fr)
@@ -6,7 +6,7 @@
            Karl Eichwalder (keichwa@gmx.net)
            Alper Ersoy (dirt@gtk.org)
 
-   Copyright (C) 2001, 2002, 2003 Free Software Foundation, Inc.
+   Copyright (C) 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright
@@ -17,7 +17,8 @@
 <!-- ENTITIES -->
 
 <!-- Meta-information -->
-<!ENTITY % metainformation "setfilename | settitle | dircategory">
+<!ENTITY % metainformation "setfilename | settitle | dircategory
+                            | documentdescription">
 <!ENTITY % variables "setvalue | clearvalue">
 
 <!-- Document language -->
@@ -38,7 +39,7 @@
                   | smalllisp | cartouche | copying
                   | format | smallformat | display
                   | smalldisplay | itemize | enumerate | sp | center | group
-                  | float | table | multitable | definition | verbatim">
+                  | table | multitable | definition">
 
 <!-- API definitions -->
 <!-- *************** -->
@@ -60,7 +61,7 @@
 
 <!ENTITY % section.level3 "subsection | unnumberedsubsec | appendixsubsec">
 
-<!ENTITY % section.level4 "subsubsection | unnumberedsubsubsec
+<!ENTITY % section.level4 "subsubsection | unnumberedsubsubsec 
                            | appendixsubsubsec">
 
 <!ENTITY % section.all "%section.level1; | %section.level2; | %section.level3;
@@ -71,39 +72,40 @@
                                    | %section.level2;
                                    | %section.level3;
                                    | %section.level4;
-                                   | titlepage | image
-                                   | %toc; | %lang; | %variables;
+                                   | verbatim | titlepage | %toc;
+                                   | %lang; | %variables;
                                    | %headings;
-                                   | printindex | listoffloats)*">
+                                   | printindex)*">
 
 <!ENTITY % section.level2.content "(%block;
                                    | %section.level3;
                                    | %section.level4;
-                                   | titlepage | image
-                                   | %toc; | %lang; | %variables;
+                                   | verbatim | titlepage | %toc;
+                                   | %lang; | %variables;
                                    | %headings;)*">
 
 <!ENTITY % section.level3.content "(%block;
                                    | %section.level4;
-                                   | titlepage | image
-                                   | %toc; | %lang; | %variables;
+                                   | verbatim | titlepage | %toc;
+                                   | %lang; | %variables;
                                    | %headings;)*">
 
 <!ENTITY % section.level4.content "(%block;
-                                    | titlepage | image
-                                    | %toc; | %lang; | %variables;
+                                    | verbatim | titlepage | %toc;
+                                    | %lang; | %variables;
                                     | %headings;)*">
 
 
 <!-- Inline -->
 <!-- ****** -->
 <!ENTITY % Inline.emphasize "strong | emph">
-<!ENTITY % Inline.smallcaps "sc">
-<!ENTITY % Inline.fonts "i | b | tt | r | titlefont">
-<!ENTITY % Inline.markup "code | command | env | file | option | samp | dfn | cite | key | kbd | var | acronym | url | dmn">
-<!ENTITY % Inline.math "math">
-<!ENTITY % Inline.reference "xref | inforef | indexterm | email | uref | anchor">
+<!ENTITY % Inline.fonts "b | i | r | sansserif | slanted | titlefont | tt">
 <!ENTITY % Inline.footnote "footnote">
+<!ENTITY % Inline.markup "code | command | env | file | option | samp
+                          | dfn | cite | key | kbd | var | acronym | url"> 
+<!ENTITY % Inline.math "math">
+<!ENTITY % Inline.reference "xref | inforef | indexterm | email | uref">
+<!ENTITY % Inline.smallcaps "sc">
 
 <!ENTITY % Inline.phrase
            "%Inline.emphasize; | %Inline.smallcaps; | %Inline.fonts;
@@ -123,7 +125,7 @@
 
 <!-- meta-information -->
 <!ELEMENT setfilename (#PCDATA)>
-<!ELEMENT settitle    (#PCDATA | %Inline.phrase;)*>
+<!ELEMENT settitle    (#PCDATA | %Inline.phrase; | footnote)*>
 <!ELEMENT dircategory (#PCDATA)>
 
 <!ELEMENT setvalue    (#PCDATA | %Inline.phrase;)*>
@@ -150,7 +152,7 @@
 <!-- NODES -->
 <!-- ***** -->
 <!ELEMENT node (nodename, nodenext?, nodeprev?, nodeup?,
-                (%section.all; | %block; | image | %toc; | %lang;)*) >
+                (%section.all; | %block; | %toc; | %lang; | image)*) >
 
 <!ELEMENT nodename (#PCDATA)>
 <!ELEMENT nodenext (#PCDATA)>
@@ -178,12 +180,12 @@
 <!ELEMENT appendixsubsubsec (title?, (%section.level4.content;))>
 
 <!-- Headings and titles -->
-<!ELEMENT majorheading  (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT chapheading   (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT heading       (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT subheading    (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT subsubheading (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT title         (#PCDATA | %Inline.phrase;)*>
+<!ELEMENT majorheading  (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT chapheading   (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT heading       (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT subheading    (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT subsubheading (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT title         (#PCDATA | %Inline.phrase; | footnote)*>
 
 <!-- Negative Indentation in Blocks -->
 <!ELEMENT exdent       (#PCDATA | %Inline.phrase;)*>
@@ -191,7 +193,8 @@
 <!-- BLOCK Elements -->
 <!-- ************** -->
 
-<!ELEMENT quotation    (%block; | %Inline.phrase; | exdent )*>
+<!ELEMENT quotation    (%block; | %Inline.phrase; | exdent)*>
+<!ELEMENT documentdescription (#PCDATA | %block; | %Inline.phrase;)*>
 <!ELEMENT example      (#PCDATA | %block; | %Inline.phrase; | exdent)*>
 <!ELEMENT smallexample (#PCDATA | %block; | %Inline.phrase; | exdent)*>
 <!ELEMENT lisp         (#PCDATA | %block; | %Inline.phrase; | exdent)*>
@@ -226,7 +229,7 @@
 <!ELEMENT verbatim     (#PCDATA)>
 <!ATTLIST verbatim     xml:space (preserve) #FIXED 'preserve'>
 
-<!ELEMENT para         (#PCDATA | %Inline.phrase;)*>
+<!ELEMENT para         (#PCDATA | %Inline.phrase; | footnote | %lang;)*>
 <!ATTLIST para
           role CDATA #IMPLIED>
 
@@ -235,7 +238,7 @@
 <!ELEMENT menuentry (menunode?, menutitle?, menucomment?)>
 <!ELEMENT menunode (#PCDATA)>
 <!ELEMENT menutitle (#PCDATA)>
-<!ELEMENT menucomment (#PCDATA | %Inline.phrase;)*>
+<!ELEMENT menucomment (#PCDATA | para)*>
 
 <!-- Floating displays -->
 <!ELEMENT float (floattype, floatpos, (%block;)*, caption?)>
@@ -276,17 +279,17 @@
 <!ELEMENT definitionterm (%definition.cmds; | indexterm)+>
 <!ELEMENT definitionitem (%block;)*>
 
-<!ELEMENT defcategory  (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT deffunction  (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT defvariable  (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT defparam     (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT defdelimiter (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT deftype      (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT defparamtype (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT defdatatype  (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT defclass     (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT defclassvar  (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT defoperation (#PCDATA | %Inline.phrase;)*>
+<!ELEMENT defcategory  (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT deffunction  (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT defvariable  (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT defparam     (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT defdelimiter (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT deftype      (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT defparamtype (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT defdatatype  (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT defclass     (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT defclassvar  (#PCDATA | %Inline.phrase; | footnote)*>
+<!ELEMENT defoperation (#PCDATA | %Inline.phrase; | footnote)*>
 
 <!-- INLINE Elements -->
 <!-- *************** -->
@@ -319,11 +322,14 @@
 <!ELEMENT kbd     (#PCDATA | %Inline.phrase;)*>
 <!ELEMENT var     (#PCDATA | %Inline.phrase;)*>
 <!ELEMENT url     (#PCDATA | %Inline.phrase;)*>
-<!ELEMENT dmn     (#PCDATA | %Inline.phrase;)*>
 
 <!ELEMENT acronym (acronymword, acronymdesc?)>
 <!ELEMENT acronymword (#PCDATA | %Inline.phrase;)*>
 <!ELEMENT acronymdesc (#PCDATA | %Inline.phrase;)*>
+
+<!ELEMENT abbrev (abbrevword, abbrevdesc?)>
+<!ELEMENT abbrevword (#PCDATA | %Inline.phrase;)*>
+<!ELEMENT abbrevdesc (#PCDATA | %Inline.phrase;)*>
 
 <!-- math -->
 <!ELEMENT math    (#PCDATA | %Inline.phrase;)*>
@@ -362,108 +368,111 @@
 <!ELEMENT footnote (para)>
 
 
+<!ELEMENT neos      EMPTY>
 
-<!ENTITY tex        "TeX">
-<!ENTITY latex      "LaTeX">
-<!ENTITY ellipsis   "">
-<!ENTITY lt         "">
-<!ENTITY gt         "">
-<!ENTITY bullet     "">
-<!ENTITY copyright  "">
-<!ENTITY registered "">
-<!ENTITY minus      "">
-<!ENTITY linebreak  "">
-<!ENTITY space      "">
-<!ENTITY dots       "">
-<!ENTITY enddots    "">
-<!ENTITY amp        "">
-<!ENTITY ldquo      "">
-<!ENTITY rdquo      "">
-<!ENTITY mdash      "">
-<!ENTITY ndash      "">
-<!ENTITY period     "">
-<!ENTITY eosperiod  "">
-<!ENTITY quest      "">
-<!ENTITY eosquest   "">
-<!ENTITY excl       "">
-<!ENTITY eosexcl    "">
+<!ENTITY tex        "TeX">        <!-- Should become an element. -->
+<!ENTITY latex      "LaTeX">      <!-- Should become an element. -->
+<!ENTITY ellipsis   "&#x2026;">
+<!ENTITY lt         "&#x3c;">
+<!ENTITY gt         "&#x3e;">
+<!ENTITY bullet     "&#x2022;">
+<!ENTITY copyright  "&#xa9;">
+<!ENTITY registered "&#xae;">
+<!ENTITY euro       "&#x20ac;">
+<!ENTITY pounds     "&#xa3;">
+<!ENTITY minus      "&#x2212;">
+<!ENTITY linebreak  "&#xa;">      <!-- Should become an element. -->
+<!ENTITY space      " ">          <!-- Should become an element. -->
+<!ENTITY dots       "&#x2026;<neos/>">
+<!ENTITY enddots    "&#x2026;">
+<!ENTITY amp        "&#x26;">
+<!ENTITY ldquo      "&#x201c;">
+<!ENTITY rdquo      "&#x201d;">
+<!ENTITY mdash      "&#x2014;">
+<!ENTITY ndash      "&#x2013;">
+<!ENTITY period     ".<neos/>">
+<!ENTITY eosperiod  ".">
+<!ENTITY quest      "?<neos/>">
+<!ENTITY eosquest   "?">
+<!ENTITY excl       "!<neos/>">
+<!ENTITY eosexcl    "!">
 
-<!ENTITY auml "">
-<!ENTITY ouml "">
-<!ENTITY uuml "">
-<!ENTITY Auml "">
-<!ENTITY Ouml "">
-<!ENTITY Uuml "">
-<!ENTITY Euml "">
-<!ENTITY euml "">
-<!ENTITY Iuml "">
-<!ENTITY iuml "">
-<!ENTITY yuml "">
-<!ENTITY uml  "">
+<!ENTITY auml "&#xe4;">
+<!ENTITY ouml "&#xf6;">
+<!ENTITY uuml "&#xfc;">
+<!ENTITY Auml "&#xc4;">
+<!ENTITY Ouml "&#xd6;">
+<!ENTITY Uuml "&#xdc;">
+<!ENTITY Euml "&#xcb;">
+<!ENTITY euml "&#xeb;">
+<!ENTITY Iuml "&#xcf;">
+<!ENTITY iuml "&#xef;">
+<!ENTITY yuml "&#xff;">
+<!ENTITY uml  "&#xa8;">
 
-<!ENTITY Aacute "">
-<!ENTITY Eacute "">
-<!ENTITY Iacute "">
-<!ENTITY Oacute "">
-<!ENTITY Uacute "">
-<!ENTITY Yacute "">
-<!ENTITY aacute "">
-<!ENTITY eacute "">
-<!ENTITY iacute "">
-<!ENTITY oacute "">
-<!ENTITY uacute "">
-<!ENTITY yacute "">
+<!ENTITY Aacute "&#xc1;">
+<!ENTITY Eacute "&#xc9;">
+<!ENTITY Iacute "&#xcd;">
+<!ENTITY Oacute "&#xd3;">
+<!ENTITY Uacute "&#xda;">
+<!ENTITY Yacute "&#xdd;">
+<!ENTITY aacute "&#xe1;">
+<!ENTITY eacute "&#xe9;">
+<!ENTITY iacute "&#xed;">
+<!ENTITY oacute "&#xf3;">
+<!ENTITY uacute "&#xfa;">
+<!ENTITY yacute "&#xfd;">
 
-<!ENTITY ccedil "">
-<!ENTITY Ccedil "">
+<!ENTITY ccedil "&#xe7;">
+<!ENTITY Ccedil "&#xc7;">
 
-<!ENTITY Acirc "">
-<!ENTITY Ecirc "">
-<!ENTITY Icirc "">
-<!ENTITY Ocirc "">
-<!ENTITY Ucirc "">
-<!ENTITY acirc "">
-<!ENTITY ecirc "">
-<!ENTITY icirc "">
-<!ENTITY ocirc "">
-<!ENTITY ucirc "">
+<!ENTITY Acirc "&#xc2;">
+<!ENTITY Ecirc "&#xca;">
+<!ENTITY Icirc "&#xc3;">
+<!ENTITY Ocirc "&#xd4;">
+<!ENTITY Ucirc "&#xdb;">
+<!ENTITY acirc "&#xe2;">
+<!ENTITY ecirc "&#xea;">
+<!ENTITY icirc "&#xee;">
+<!ENTITY ocirc "&#xf4;">
+<!ENTITY ucirc "&#xfb;">
 
-<!ENTITY Agrave "">
-<!ENTITY Egrave "">
-<!ENTITY Igrave "">
-<!ENTITY Ograve "">
-<!ENTITY Ugrave "">
-<!ENTITY agrave "">
-<!ENTITY egrave "">
-<!ENTITY igrave "">
-<!ENTITY ograve "">
-<!ENTITY ugrave "">
+<!ENTITY Agrave "&#xc0;">
+<!ENTITY Egrave "&#xc8;">
+<!ENTITY Igrave "&#xcc;">
+<!ENTITY Ograve "&#xd2;">
+<!ENTITY Ugrave "&#xd9;">
+<!ENTITY agrave "&#xe0;">
+<!ENTITY egrave "&#xe8;">
+<!ENTITY igrave "&#xec;">
+<!ENTITY ograve "&#xf2;">
+<!ENTITY ugrave "&#xf9;">
 
-<!ENTITY Atilde "">
-<!ENTITY Ntilde "">
-<!ENTITY Otilde "">
-<!ENTITY atilde "">
-<!ENTITY ntilde "">
-<!ENTITY otilde "">
+<!ENTITY Atilde "&#xc3;">
+<!ENTITY Ntilde "&#xd1;">
+<!ENTITY Otilde "&#xd5;">
+<!ENTITY atilde "&#xe3;">
+<!ENTITY ntilde "&#xf1;">
+<!ENTITY otilde "&#xf5;">
 
-<!ENTITY oslash "">
-<!ENTITY Oslash "">
+<!ENTITY oslash "&#xf8;">
+<!ENTITY Oslash "&#xd8;">
 
-<!ENTITY ordm "">
-<!ENTITY ordf "">
+<!ENTITY ordm "&#xba;">
+<!ENTITY ordf "&#xaa;">
 
-<!ENTITY iexcl "">
-<!ENTITY pound "">
-<!ENTITY iquest "">
-<!ENTITY AElig "">
-<!ENTITY aelig "">
-<!ENTITY OElig "">
-<!ENTITY oelig "">
-<!ENTITY Aring "">
-<!ENTITY aring "">
-<!ENTITY szlig "">
+<!ENTITY iexcl "&#xa1;">
+<!ENTITY pound "&#xa3;">
+<!ENTITY iquest "&#xbf;">
+<!ENTITY AElig "&#xc6;">
+<!ENTITY aelig "&#xe6;">
+<!ENTITY OElig "&#x152;">
+<!ENTITY oelig "&#x153;">
+<!ENTITY Aring "&#xc5;">
+<!ENTITY aring "&#xe5;">
+<!ENTITY szlig "&#xdf;">
 
-<!ENTITY macr "">
+<!ENTITY macr "&#xaf;">
 
 
 <!-- fixxme: not yet classified -->
@@ -473,4 +482,3 @@
           lines CDATA #IMPLIED>
 <!ELEMENT printindex (#PCDATA)>
 
-<!-- vim: set expandtab: -->

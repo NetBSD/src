@@ -46,6 +46,8 @@ extern "C" {
 #define WPA_EVENT_EAP_SUCCESS "CTRL-EVENT-EAP-SUCCESS "
 /** EAP authentication failed (EAP-Failure received) */
 #define WPA_EVENT_EAP_FAILURE "CTRL-EVENT-EAP-FAILURE "
+/** New scan results available */
+#define WPA_EVENT_SCAN_RESULTS "CTRL-EVENT-SCAN-RESULTS "
 
 
 /* wpa_supplicant/hostapd control interface access */

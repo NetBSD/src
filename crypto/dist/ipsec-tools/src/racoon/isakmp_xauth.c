@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.14 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.14.4.1 2008/09/18 04:54:19 wrstuden Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -40,6 +40,7 @@
 
 #include <netinet/in.h>
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -95,9 +96,9 @@
 
 #ifdef HAVE_LIBRADIUS
 #include <radlib.h>
-
 struct rad_handle *radius_auth_state = NULL;
 struct rad_handle *radius_acct_state = NULL;
+struct xauth_rad_config xauth_rad_config;
 #endif
 
 #ifdef HAVE_LIBPAM
@@ -447,6 +448,31 @@ xauth_sendstatus(iph1, status, id)
 
 #ifdef HAVE_LIBRADIUS
 int
+xauth_radius_init_conf(int free)
+{
+	/* free radius config resources */
+	if (free) {
+		int i;
+		for (i = 0; i < xauth_rad_config.auth_server_count; i++) {
+			vfree(xauth_rad_config.auth_server_list[i].host);
+			vfree(xauth_rad_config.auth_server_list[i].secret);
+		}
+		for (i = 0; i < xauth_rad_config.acct_server_count; i++) {
+			vfree(xauth_rad_config.acct_server_list[i].host);
+			vfree(xauth_rad_config.acct_server_list[i].secret);
+		}
+		if (radius_auth_state != NULL)
+			rad_close(radius_auth_state);
+		if (radius_acct_state != NULL)
+			rad_close(radius_acct_state);
+	}
+
+	/* initialize radius config */
+	memset(&xauth_rad_config, 0, sizeof(xauth_rad_config));
+	return 0;
+}
+
+int
 xauth_radius_init(void)
 {
 	/* For first time use, initialize Radius */
@@ -458,13 +484,35 @@ xauth_radius_init(void)
 			return -1;
 		}
 
-		if (rad_config(radius_auth_state, NULL) != 0) {
-			plog(LLV_ERROR, LOCATION, NULL, 
-			    "Cannot open librarius config file: %s\n", 
-			    rad_strerror(radius_auth_state));
-			rad_close(radius_auth_state);
-			radius_auth_state = NULL;
-			return -1;
+		int auth_count = xauth_rad_config.auth_server_count;
+		int auth_added = 0;
+		if (auth_count) {
+			int i;
+			for (i = 0; i < auth_count; i++) {
+				if(!rad_add_server(
+					radius_auth_state,
+					xauth_rad_config.auth_server_list[i].host->v,
+					xauth_rad_config.auth_server_list[i].port,
+					xauth_rad_config.auth_server_list[i].secret->v,
+					xauth_rad_config.timeout,
+					xauth_rad_config.retries ))
+					auth_added++;
+				else
+					plog(LLV_WARNING, LOCATION, NULL,
+						"could not add radius auth server %s\n",
+						xauth_rad_config.auth_server_list[i].host->v);
+			}
+		}
+
+		if (!auth_added) {
+			if (rad_config(radius_auth_state, NULL) != 0) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "Cannot open librarius config file: %s\n", 
+				    rad_strerror(radius_auth_state));
+				rad_close(radius_auth_state);
+				radius_auth_state = NULL;
+				return -1;
+			}
 		}
 	}
 
@@ -476,13 +524,35 @@ xauth_radius_init(void)
 			return -1;
 		}
 
-		if (rad_config(radius_acct_state, NULL) != 0) {
-			plog(LLV_ERROR, LOCATION, NULL, 
-			    "Cannot open librarius config file: %s\n", 
-			    rad_strerror(radius_acct_state));
-			rad_close(radius_acct_state);
-			radius_acct_state = NULL;
-			return -1;
+		int acct_count = xauth_rad_config.acct_server_count;
+		int acct_added = 0;
+		if (acct_count) {
+			int i;
+			for (i = 0; i < acct_count; i++) {
+				if(!rad_add_server(
+					radius_acct_state,
+					xauth_rad_config.acct_server_list[i].host->v,
+					xauth_rad_config.acct_server_list[i].port,
+					xauth_rad_config.acct_server_list[i].secret->v,
+					xauth_rad_config.timeout,
+					xauth_rad_config.retries ))
+					acct_added++;
+				else
+					plog(LLV_WARNING, LOCATION, NULL,
+						"could not add radius account server %s\n",
+						xauth_rad_config.acct_server_list[i].host->v);
+			}
+		}
+
+		if (!acct_added) {
+			if (rad_config(radius_acct_state, NULL) != 0) {
+				plog(LLV_ERROR, LOCATION, NULL, 
+				    "Cannot open librarius config file: %s\n", 
+				    rad_strerror(radius_acct_state));
+				rad_close(radius_acct_state);
+				radius_acct_state = NULL;
+				return -1;
+			}
 		}
 	}
 
@@ -727,7 +797,7 @@ out:
 
 #ifdef HAVE_LIBLDAP
 int 
-xauth_ldap_init(void)
+xauth_ldap_init_conf(void)
 {
 	int tmplen;
 	int error = -1;

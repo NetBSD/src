@@ -1,7 +1,7 @@
-/*	$NetBSD: float.h,v 1.1.1.1 2004/07/12 23:26:51 wiz Exp $	*/
+/*	$NetBSD: float.h,v 1.1.1.1.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* float.h -- declarations for the float environment.
-   Id: float.h,v 1.7 2004/02/13 22:01:38 dirt Exp
+   Id: float.h,v 1.5 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 2003, 2004 Free Software Foundation, Inc.
 
