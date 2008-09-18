@@ -1,0 +1,23 @@
+#	$Id: Makefile.in,v 1.1.1.1.2.2 2008/09/18 05:15:42 wrstuden Exp $
+#
+# top-level Makefile
+#
+
+VPATH = @srcdir@
+
+SUBDIR = libsoftfloat libpcc csu
+
+all: $(SUBDIR)
+
+install clean:
+	for f in $(SUBDIR); do (cd $$f && $(MAKE) $@); done
+
+distclean: clean
+	for f in $(SUBDIR); do (cd $$f && $(MAKE) distclean); done
+	/bin/rm -rf Makefile config.log config.status \
+		configure.lineno config.h autom4te.cache
+
+$(SUBDIR): nonexistant
+	cd $@; $(MAKE) all $(MFLAGS)
+
+nonexistant:

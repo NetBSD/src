@@ -1,0 +1,52 @@
+Let's say we have an LV, made up of three segments of different PV's,
+I've also added in the device major:minor as this will be useful
+later:
+
++-----------------------------+
+|  PV1     |   PV2   |   PV3  | 254:3
++----------+---------+--------+
+
+
+Now our hero decides to PV move PV2 to PV4:
+
+1. Suspend our LV (254:3), this starts queueing all io, and flushes
+   all pending io.  Once the suspend has completed we are free to change
+   the mapping table.
+
+2. Set up *another* (254:4) device with the mapping table of our LV.
+
+3. Load a new mapping table into (254:3) that has identity targets for
+   parts that aren't moving, and a mirror target for parts that are.
+
+4. Unsuspend (254:3)
+
+So now we have:
+                           destination of copy
+               +--------------------->--------------+
+               |                                    |
++-----------------------------+               + -----------+
+| Identity | mirror  | Ident. | 254:3         |    PV4     |
++----------+---------+--------+               +------------+
+     |         |         |
+     \/        \/        \/
++-----------------------------+
+|  PV1     |   PV2   |   PV3  | 254:4
++----------+---------+--------+
+
+Any writes to segment2 of the LV get intercepted by the mirror target
+who checks that that chunk has been copied to the new destination, if
+it hasn't it queues the initial copy and defers the current io until
+it has finished.  Then the current io is written to *both* PV2 and the
+PV4.
+
+5. When the copying has completed 254:3 is suspended/pending flushed.
+
+6. 254:4 is taken down
+
+7. metadata is updated on disk
+
+8. 254:3 has new mapping table loaded:
+
++-----------------------------+
+|  PV1     |   PV4   |   PV3  | 254:3
++----------+---------+--------+
