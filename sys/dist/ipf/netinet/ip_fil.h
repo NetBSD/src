@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.6.12.5 2007/07/21 12:56:46 liamjfoy Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.6.12.5.4.1 2008/09/18 17:58:27 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1509,6 +1509,12 @@ extern	void		ipf_freetoken __P((ipftoken_t *));
 extern	int		ipf_deltoken __P((int,int, void *));
 extern	int		ipfsync __P((void));
 extern	int		ipf_genericiter __P((void *, int, void *));
+#ifndef ipf_random
+extern	u_32_t		ipf_random __P((void));
+#endif
+#ifdef NEED_LOCAL_RAND
+extern	void		ipf_rand_push __P((void *, int));
+#endif
 
 extern	int	fr_running;
 extern	u_long	fr_frouteok[2];
