@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.84 2008/09/16 18:50:52 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.85 2008/09/18 18:27:02 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2068,4 +2068,40 @@ tools/gdb/mknative-gdb				 sync with 1.1.6.1
 	Fix intra-process signal delivery when delivering to a thread waiting
 	for signals. Makes afs work again!
 	[skrll, ticket #1196]
+
+libexec/ftpd/ftpd.c				1.179
+
+	PR/35449: Shigeya Suzuki: ftpd does not register socket address
+	into PAM
+	[lukem, ticket #1199]
+
+libexec/ftpd/ftpd.c				1.182
+
+	Rename cred_t to ftpd_cred_t; the former causes a nameclash on Solaris.
+	[lukem, ticket #1200]
+
+libexec/ftpd/Makefile				1.58
+libexec/ftpd/ftpd.c				1.183
+libexec/ftpd/version.h				1.66
+
+	Reorganize USE_PAM support so that the reply(331,) from USER is
+	performed by the pam_conv (PAM conversation) callback, which then
+	getline()s the PASS reply internally.  This involves calling
+	auth_pam() from user() and caching the result to use later in pass().
+	This allows the PAM modules to present a different password prompt
+	dialog if necesary (for example, for a OTP password).
+	[lukem, ticket #1201]
+
+libexec/ftpd/extern.h				1.58
+libexec/ftpd/ftpcmd.y				1.88
+libexec/ftpd/ftpd.c				1.187
+libexec/ftpd/version.h				patch
+
+	Don't split large commands into multiple commands; just fail on them.
+	This prevents CSRF-like attacks, when a web browser is used to access
+	an ftp server.
+	Reported by Maksymilian Arciemowicz <cxib@securityreason.com>.
+	Fix mostly derived from OpenBSD, written by
+	Moritz Jodeit <moritz@OpenBSD.org>
+	[lukem, ticket #1202]
 
