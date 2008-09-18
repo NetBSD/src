@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.17 2008/04/24 18:39:23 ad Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.18 2008/09/18 15:57:04 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.18 2008/09/18 15:57:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 	tf->tf_rip = ((long)p->p_sigctx.ps_sigcode) & 0xffffffff;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL) & 0xffffffff;
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC) & 0xffffffff;
+	tf->tf_rflags &= ~PSL_CLEARSIG & 0xffffffff;
 	tf->tf_rsp = (long)fp & 0xffffffff;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 
@@ -271,7 +271,7 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_rip = (((long)p->p_sigctx.ps_sigcode) +
 	    (linux32_rt_sigcode - linux32_sigcode)) & 0xffffffff;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL) & 0xffffffff;
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC) & 0xffffffff;
+	tf->tf_rflags &= ~PSL_CLEARSIG & 0xffffffff;
 	tf->tf_rsp = (long)fp & 0xffffffff;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 
