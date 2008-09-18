@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.14 2008/09/07 13:15:49 rtr Exp $
+# $NetBSD: shl.elf,v 1.15 2008/09/18 15:29:15 cube Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2	-unknown-		x11
@@ -168,6 +168,10 @@
 ./usr/X11R7/lib/libXp.so.6			-unknown-		xorg
 ./usr/X11R7/lib/libXpm.so			-unknown-		xorg
 ./usr/X11R7/lib/libXpm.so.4			-unknown-		xorg
+./usr/X11R7/lib/libXprintAppUtil.so		-unknown-		xorg
+./usr/X11R7/lib/libXprintAppUtil.so.1		-unknown-		xorg
+./usr/X11R7/lib/libXprintUtil.so		-unknown-		xorg
+./usr/X11R7/lib/libXprintUtil.so.1		-unknown-		xorg
 ./usr/X11R7/lib/libXrandr.so			-unknown-		xorg
 ./usr/X11R7/lib/libXrandr.so.2			-unknown-		xorg
 ./usr/X11R7/lib/libXrender.so			-unknown-		xorg
