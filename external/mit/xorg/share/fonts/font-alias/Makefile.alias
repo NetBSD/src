@@ -1,0 +1,9 @@
+#	$NetBSD: Makefile.alias,v 1.1.1.1.2.2 2008/09/18 05:18:50 wrstuden Exp $
+
+FILES=		fonts.alias
+FILESDIR=	${X11FONTDIR}/${ALIASSUBDIR}
+
+.include <bsd.x11.mk>
+.include <bsd.prog.mk>
+
+.PATH: ${X11SRCDIR.font-alias}/${ALIASSUBDIR}

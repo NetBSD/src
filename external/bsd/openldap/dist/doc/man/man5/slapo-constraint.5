@@ -1,0 +1,94 @@
+.TH SLAPO-CONSTRAINT 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2005-2006 Hewlett-Packard Company
+.\" Copyright 2006-2008 The OpenLDAP Foundation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-constraint.5,v 1.2.2.5 2008/05/27 19:59:47 quanah Exp $
+.SH NAME
+slapo-constraint \- Attribute Constraint Overlay to slapd
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.SH DESCRIPTION
+The constraint overlay is used to ensure that attribute values match
+some constraints beyond basic LDAP syntax.  Attributes can
+have multiple constraints placed upon them, and all must be satisfied
+when modifying an attribute value under constraint.
+.LP
+This overlay is intended to be used to force syntactic regularity upon
+certain string represented data which have well known canonical forms,
+like telephone numbers, post codes, FQDNs, etc.
+.LP
+It constrains only LDAP adds and modify commands and only seeks to
+control the add and modify value of a modify request.
+.SH CONFIGURATION
+This
+.B slapd.conf
+option applies to the constraint overlay.
+It should appear after the
+.B overlay
+directive.
+.TP
+.B constraint_attribute <attribute_name> <type> <value>
+Specifies the constraint which should apply to the attribute named as
+the first parameter.
+Two types of constraint are currently supported -
+.B regex ,
+.B size ,
+.B count ,
+and
+.BR uri .
+
+The parameter following the
+.B regex
+type is a Unix style regular expression (See
+.BR regex (7)
+). The parameter following the
+.B uri
+type is an LDAP URI. The URI will be evaluated using an internal search.
+It must not include a hostname, and it must include a list of attributes
+to evaluate.
+
+The 
+.B size
+type can be used to enfore a limit on an attribute length, and the
+.B count
+type limits the count of an attribute.
+
+Any attempt to add or modify an attribute named as part of the
+constraint overlay specification which does not fit the 
+constraint listed will fail with a
+LDAP_CONSTRAINT_VIOLATION error.
+.SH EXAMPLES
+.LP
+.RS
+.nf
+overlay constraint
+constraint_attribute jpegPhoto size 131072
+constraint_attribute userPassword count 3
+constraint_attribute mail regex ^[:alnum:]+@mydomain.com$
+constraint_attribute title uri
+  ldap:///dc=catalog,dc=example,dc=com?title?sub?(objectClass=titleCatalog)
+.fi
+
+A specification like the above would reject any
+.B mail
+attribute which did not look like
+.B
+<alpha-numeric string>@mydomain.com
+It would also reject any
+.B title
+attribute whose values were not listed in the
+.B title
+attribute of any
+.B titleCatalog
+entries in the given scope.
+.RE
+.SH FILES
+.TP
+ETCDIR/slapd.conf
+default slapd configuration file
+.SH SEE ALSO
+.BR slapd.conf (5).
+.SH ACKNOWLEDGEMENTS
+This module was written in 2005 by Neil Dunbar of Hewlett-Packard and subsequently
+extended by Howard Chu and Emmanuel Dreyfus.
+.so ../Project

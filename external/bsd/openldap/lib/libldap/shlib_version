@@ -1,0 +1,4 @@
+#	$NetBSD: shlib_version,v 1.1.6.2 2008/09/18 05:15:32 wrstuden Exp $
+#
+major=2
+minor=5
