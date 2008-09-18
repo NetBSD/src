@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.28 2008/08/29 20:40:22 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.29 2008/09/18 19:31:59 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -1033,4 +1033,53 @@ sys/netinet/if_arp.c				1.141
 
 	Missing "\n" in log(9) messages.
 	[uebayasi, ticket #1956]
+
+libexec/ftpd/ftpd.c				1.169
+
+	logxfer(): don't use the same buffer to store the results of two
+	separate concurrent realpath(3)s, otherwise we'll log the wrong
+	information for a rename.
+	[lukem, ticket #1958]
+
+libexec/ftpd/ftpd.c				1.170
+
+	NLST should return 450 instead of 550 upon error, per RFC 959.
+	[lukem, ticket #1959]
+
+libexec/ftpd/ftpd.c				1.173
+
+	Make sure that "su" is initialized before dereferencing it.
+	Fixes Coverity CID 1075.
+	[lukem, ticket #1960]
+
+libexec/ftpd/ftpd.c				1.174
+
+	Set file to NULL after calling fclose().
+	Fixes Coverity CID 2669.
+	[lukem, ticket #1961]
+
+libexec/ftpd/ftpd.c				1.175
+
+	Remove unreachable code (res could never be NULL here).
+	Fixes Coverity CID 712.
+	[lukem, ticket #1962]
+
+libexec/ftpd/ftpd.c				1.179
+
+	PR/35449: Shigeya Suzuki: ftpd does not register socket address
+	into PAM
+	[lukem, ticket #1963]
+
+libexec/ftpd/extern.h				1.58 via patch
+libexec/ftpd/ftpcmd.y				1.88 via patch
+libexec/ftpd/ftpd.c				1.187 via patch
+libexec/ftpd/version.h				patch
+
+	Don't split large commands into multiple commands; just fail on them.
+	This prevents CSRF-like attacks, when a web browser is used to access
+	an ftp server.
+	Reported by Maksymilian Arciemowicz <cxib@securityreason.com>.
+	Fix mostly derived from OpenBSD, written by
+	Moritz Jodeit <moritz@OpenBSD.org>
+	[lukem, ticket #1964]
 
