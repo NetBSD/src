@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.22 2007/12/19 14:01:16 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.22.6.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: subr.c,v 1.22 2007/12/19 14:01:16 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.22.6.1 2008/09/18 04:39:24 wrstuden Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -112,7 +112,7 @@ puffs_fsnop_statvfs(struct puffs_usermount *dontuse1, struct statvfs *sbp)
 
 /*ARGSUSED3*/
 int
-puffs_genfs_node_getattr(struct puffs_usermount *pu, void *opc,
+puffs_genfs_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct vattr *va, const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = PU_CMAP(pu, opc);
@@ -127,7 +127,7 @@ puffs_genfs_node_getattr(struct puffs_usermount *pu, void *opc,
  */
 /*ARGSUSED2*/
 int
-puffs_genfs_node_reclaim(struct puffs_usermount *pu, void *opc)
+puffs_genfs_node_reclaim(struct puffs_usermount *pu, puffs_cookie_t opc)
 {
 
 	puffs_pn_put(PU_CMAP(pu, opc));

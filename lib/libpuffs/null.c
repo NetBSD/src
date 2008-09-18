@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.24 2007/11/30 19:02:28 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.24.8.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.24 2007/11/30 19:02:28 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.24.8.1 2008/09/18 04:39:24 wrstuden Exp $");
 #endif /* !lint */
 
 /*
@@ -197,7 +197,7 @@ puffs_null_fs_statvfs(struct puffs_usermount *pu, struct statvfs *svfsb)
 }
 
 int
-puffs_null_node_lookup(struct puffs_usermount *pu, void *opc,
+puffs_null_node_lookup(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn = opc, *pn_res;
@@ -236,7 +236,7 @@ puffs_null_node_lookup(struct puffs_usermount *pu, void *opc,
 
 /*ARGSUSED*/
 int
-puffs_null_node_create(struct puffs_usermount *pu, void *opc,
+puffs_null_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
 	const struct vattr *va)
 {
@@ -255,7 +255,7 @@ puffs_null_node_create(struct puffs_usermount *pu, void *opc,
 
 /*ARGSUSED*/
 int
-puffs_null_node_mknod(struct puffs_usermount *pu, void *opc,
+puffs_null_node_mknod(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
 	const struct vattr *va)
 {
@@ -274,8 +274,8 @@ puffs_null_node_mknod(struct puffs_usermount *pu, void *opc,
 
 /*ARGSUSED*/
 int
-puffs_null_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
-	const struct puffs_cred *pcred)
+puffs_null_node_getattr(struct puffs_usermount *pu, puffs_cookie_t opc,
+	struct vattr *va, const struct puffs_cred *pcred)
 {
 	struct puffs_node *pn = opc;
 	struct stat sb;
@@ -289,7 +289,7 @@ puffs_null_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
 
 /*ARGSUSED*/
 int
-puffs_null_node_setattr(struct puffs_usermount *pu, void *opc,
+puffs_null_node_setattr(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct vattr *va, const struct puffs_cred *pcred)
 {
 	struct puffs_node *pn = opc;
@@ -306,7 +306,7 @@ puffs_null_node_setattr(struct puffs_usermount *pu, void *opc,
 
 /*ARGSUSED*/
 int
-puffs_null_node_fsync(struct puffs_usermount *pu, void *opc,
+puffs_null_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct puffs_cred *pcred, int how,
 	off_t offlo, off_t offhi)
 {
@@ -336,8 +336,8 @@ puffs_null_node_fsync(struct puffs_usermount *pu, void *opc,
 
 /*ARGSUSED*/
 int
-puffs_null_node_remove(struct puffs_usermount *pu, void *opc, void *targ,
-	const struct puffs_cn *pcn)
+puffs_null_node_remove(struct puffs_usermount *pu, puffs_cookie_t opc,
+	puffs_cookie_t targ, const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_targ = targ;
 
@@ -350,8 +350,8 @@ puffs_null_node_remove(struct puffs_usermount *pu, void *opc, void *targ,
 
 /*ARGSUSED*/
 int
-puffs_null_node_link(struct puffs_usermount *pu, void *opc, void *targ,
-	const struct puffs_cn *pcn)
+puffs_null_node_link(struct puffs_usermount *pu, puffs_cookie_t opc,
+	puffs_cookie_t targ, const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_targ = targ;
 
@@ -363,8 +363,9 @@ puffs_null_node_link(struct puffs_usermount *pu, void *opc, void *targ,
 
 /*ARGSUSED*/
 int
-puffs_null_node_rename(struct puffs_usermount *pu, void *opc, void *src,
-	const struct puffs_cn *pcn_src, void *targ_dir, void *targ,
+puffs_null_node_rename(struct puffs_usermount *pu, puffs_cookie_t opc,
+	puffs_cookie_t src, const struct puffs_cn *pcn_src,
+	puffs_cookie_t targ_dir, puffs_cookie_t targ,
 	const struct puffs_cn *pcn_targ)
 {
 
@@ -376,7 +377,7 @@ puffs_null_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 
 /*ARGSUSED*/
 int
-puffs_null_node_mkdir(struct puffs_usermount *pu, void *opc,
+puffs_null_node_mkdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
 	const struct vattr *va)
 {
@@ -393,8 +394,8 @@ puffs_null_node_mkdir(struct puffs_usermount *pu, void *opc,
 
 /*ARGSUSED*/
 int
-puffs_null_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
-	const struct puffs_cn *pcn)
+puffs_null_node_rmdir(struct puffs_usermount *pu, puffs_cookie_t opc,
+	puffs_cookie_t targ, const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_targ = targ;
 
@@ -407,7 +408,7 @@ puffs_null_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 
 /*ARGSUSED*/
 int
-puffs_null_node_symlink(struct puffs_usermount *pu, void *opc,
+puffs_null_node_symlink(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
 	const struct vattr *va, const char *linkname)
 {
@@ -424,7 +425,7 @@ puffs_null_node_symlink(struct puffs_usermount *pu, void *opc,
 
 /*ARGSUSED*/
 int
-puffs_null_node_readlink(struct puffs_usermount *pu, void *opc,
+puffs_null_node_readlink(struct puffs_usermount *pu, puffs_cookie_t opc,
 	const struct puffs_cred *pcred, char *linkname, size_t *linklen)
 {
 	struct puffs_node *pn = opc;
@@ -440,7 +441,7 @@ puffs_null_node_readlink(struct puffs_usermount *pu, void *opc,
 
 /*ARGSUSED*/
 int
-puffs_null_node_readdir(struct puffs_usermount *pu, void *opc,
+puffs_null_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	struct dirent *de, off_t *off, size_t *reslen,
 	const struct puffs_cred *pcred, int *eofflag, off_t *cookies,
 	size_t *ncookies)
@@ -493,9 +494,9 @@ puffs_null_node_readdir(struct puffs_usermount *pu, void *opc,
 
 /*ARGSUSED*/
 int
-puffs_null_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
-	off_t offset, size_t *buflen, const struct puffs_cred *pcred,
-	int ioflag)
+puffs_null_node_read(struct puffs_usermount *pu, puffs_cookie_t opc,
+	uint8_t *buf, off_t offset, size_t *buflen,
+	const struct puffs_cred *pcred, int ioflag)
 {
 	struct puffs_node *pn = opc;
 	ssize_t n;
@@ -525,9 +526,9 @@ puffs_null_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 
 /*ARGSUSED*/
 int
-puffs_null_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
-	off_t offset, size_t *buflen, const struct puffs_cred *pcred,
-	int ioflag)
+puffs_null_node_write(struct puffs_usermount *pu, puffs_cookie_t opc,
+	uint8_t *buf, off_t offset, size_t *buflen,
+	const struct puffs_cred *pcred, int ioflag)
 {
 	struct puffs_node *pn = opc;
 	ssize_t n;

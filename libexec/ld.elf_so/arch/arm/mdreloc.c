@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.27 2005/12/24 20:59:30 perry Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.27.20.1 2008/09/18 04:39:17 wrstuden Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.27 2005/12/24 20:59:30 perry Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.27.20.1 2008/09/18 04:39:17 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -217,10 +217,10 @@ _rtld_relocate_plt_lazy(const Obj_Entry *obj)
 	return 0;
 }
 
-caddr_t
-_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
+static int
+_rtld_relocate_plt_object(const Obj_Entry *obj, const Elf_Rel *rel,
+	Elf_Addr *tp)
 {
-	const Elf_Rel *rel = (const Elf_Rel *)((caddr_t)obj->pltrel + reloff);
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
 	Elf_Addr new_value;
 	const Elf_Sym  *def;
@@ -230,7 +230,7 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 
 	def = _rtld_find_symdef(ELF_R_SYM(rel->r_info), obj, &defobj, true);
 	if (def == NULL)
-		_rtld_die();
+		return -1;
 
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
 	/* Set the Thumb bit, if needed.  */
@@ -240,37 +240,36 @@ _rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
 	if (*where != new_value)
 		*where = new_value;
+	if (tp)
+		*tp = new_value;
+
+	return 0;
+}
+
+caddr_t
+_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
+{
+	const Elf_Rel *rel = (const Elf_Rel *)((caddr_t)obj->pltrel + reloff);
+	Elf_Addr new_value;
+	int err;
+
+	err = _rtld_relocate_plt_object(obj, rel, &new_value);
+	if (err || new_value == 0)
+		_rtld_die();
 
 	return (caddr_t)new_value;
 }
-
 int
 _rtld_relocate_plt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rel *rel;
+	int err = 0;
 	
 	for (rel = obj->pltrel; rel < obj->pltrellim; rel++) {
-		Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rel->r_offset);
-		Elf_Addr target;
-		const Elf_Sym *def;
-		const Obj_Entry *defobj;
-		
-		assert(ELF_R_TYPE(rel->r_info) == R_TYPE(JUMP_SLOT));
-		
-		def = _rtld_find_symdef(ELF_R_SYM(rel->r_info), obj, &defobj,
-		    true);
-		if (def == NULL)
-			return -1;
-		target = (Elf_Addr)(defobj->relocbase + def->st_value);
-		/* Set the Thumb bit, if needed.  */
-		if (ELF_ST_TYPE(def->st_info) == STT_ARM_TFUNC)
-			target |= 1;
-
-		rdbg(("bind now/fixup in %s --> old=%p new=%p",
-		    defobj->strtab + def->st_name, (void *)*where, 
-		    (void *)target));
-		if (*where != target)
-			*where = target;
+		err = _rtld_relocate_plt_object(obj, rel, NULL);
+		if (err)
+			break;
 	}
-	return 0;
+
+	return err;
 }

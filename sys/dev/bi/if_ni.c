@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.35 2008/04/06 07:23:57 cegger Exp $ */
+/*	$NetBSD: if_ni.c,v 1.35.6.1 2008/09/18 04:35:02 wrstuden Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.35 2008/04/06 07:23:57 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.35.6.1 2008/09/18 04:35:02 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -126,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.35 2008/04/06 07:23:57 cegger Exp $");
 #define bbd	sc->sc_bbd
 
 struct	ni_softc {
-	struct device	sc_dev;		/* Configuration common part	*/
+	device_t 	sc_dev;		/* Configuration common part	*/
 	struct evcnt	sc_intrcnt;	/* Interrupt coounting		*/
 	struct ethercom sc_ec;		/* Ethernet common part		*/
 #define sc_if	sc_ec.ec_if		/* network-visible interface	*/
@@ -155,7 +155,7 @@ static	int failtest(struct ni_softc *, int, int, int, const char *);
 
 volatile int endwait, retry;	/* Used during autoconfig */
 
-CFATTACH_DECL(ni, sizeof(struct ni_softc),
+CFATTACH_DECL_NEW(ni, sizeof(struct ni_softc),
     nimatch, niattach, NULL, NULL);
 
 #define NI_WREG(csr, val) \
@@ -167,11 +167,8 @@ CFATTACH_DECL(ni, sizeof(struct ni_softc),
 /*
  * Check for present device.
  */
-int
-nimatch(parent, cf, aux)
-	struct	device *parent;
-	struct	cfdata *cf;
-	void	*aux;
+static int
+nimatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct bi_attach_args *ba = aux;
 	u_short type;
@@ -220,7 +217,7 @@ failtest(struct ni_softc *sc, int reg, int mask, int test, const char *str)
 	} while (((NI_RREG(reg) & mask) != test) && --i);
 
 	if (i == 0) {
-		printf("%s: %s\n", device_xname(&sc->sc_dev), str);
+		printf("%s: %s\n", device_xname(sc->sc_dev), str);
 		return 1;
 	}
 	return 0;
@@ -232,19 +229,19 @@ failtest(struct ni_softc *sc, int reg, int mask, int test, const char *str)
  * record.  System will initialize the interface when it is ready
  * to accept packets.
  */
-void
-niattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+static void
+niattach(device_t parent, device_t self, void *aux)
 {
 	struct bi_attach_args *ba = aux;
-	struct ni_softc *sc = (struct ni_softc *)self;
+	struct ni_softc *sc = device_private(self);
 	struct ifnet *ifp = (struct ifnet *)&sc->sc_if;
 	struct ni_msg *msg;
 	struct ni_ptdb *ptdb;
 	void *va;
 	int i, j, s, res;
 	u_short type;
+
+	sc->sc_dev = self;
 
 	type = bus_space_read_2(ba->ba_iot, ba->ba_ioh, BIREG_DTYPE);
 	printf(": DEBN%c\n", type == BIDT_DEBNA ? 'A' : type == BIDT_DEBNT ?
@@ -256,7 +253,7 @@ niattach(parent, self, aux)
 	bi_intr_establish(ba->ba_icookie, ba->ba_ivec,
 		niintr, sc, &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		device_xname(&sc->sc_dev), "intr");
+		device_xname(self), "intr");
 
 	ni_getpgs(sc, sizeof(struct ni_gvppqb), (void **)&sc->sc_gvppqb,
 	    (paddr_t *)&sc->sc_pgvppqb);
@@ -287,7 +284,7 @@ niattach(parent, self, aux)
 	fqb->nf_dlen = PKTHDR+TXADD;
 	fqb->nf_rlen = PKTHDR+RXADD;
 
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = nistart;
@@ -306,7 +303,7 @@ niattach(parent, self, aux)
 	while ((NI_RREG(BIREG_VAXBICSR) & BICSR_BROKE) && --i)
 		DELAY(500000);
 	if (i == 0) {
-		printf("%s: BROKE bit set after reset\n", device_xname(&sc->sc_dev));
+		printf("%s: BROKE bit set after reset\n", device_xname(self));
 		return;
 	}
 
@@ -429,7 +426,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	if (endwait == 0) {
 		if (++retry < 3)
 			goto retry;
-		printf("%s: no response to set params\n", device_xname(&sc->sc_dev));
+		printf("%s: no response to set params\n", device_xname(self));
 		return;
 	}
 
@@ -467,7 +464,7 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	/* Wait for everything to finish */
 	WAITREG(NI_PSR, PSR_OWN);
 
-	printf("%s: hardware address %s\n", device_xname(&sc->sc_dev),
+	printf("%s: hardware address %s\n", device_xname(self),
 	    ether_sprintf(sc->sc_enaddr));
 
 	/*
@@ -476,17 +473,16 @@ retry:	WAITREG(NI_PCR, PCR_OWN);
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
 	if (shutdownhook_establish(ni_shutdown, sc) == 0)
-		aprint_error_dev(&sc->sc_dev, "WARNING: unable to establish shutdown hook\n");
+		aprint_error_dev(self, "WARNING: unable to establish shutdown hook\n");
 }
 
 /*
  * Initialization of interface.
  */
 void
-niinit(sc)
-	struct ni_softc *sc;
+niinit(struct ni_softc *sc)
 {
-	struct ifnet *ifp = (struct ifnet *)&sc->sc_if;
+	struct ifnet *ifp = &sc->sc_if;
 
 	/*
 	 * Set flags (so ni_setup() do the right thing).
@@ -505,8 +501,7 @@ niinit(sc)
  * Start output on interface.
  */
 void
-nistart(ifp)
-	struct ifnet *ifp;
+nistart(struct ifnet *ifp)
 {
 	struct ni_softc *sc = ifp->if_softc;
 	struct ni_dg *data;
@@ -518,7 +513,7 @@ nistart(ifp)
 		return;
 #ifdef DEBUG
 	if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: nistart\n", device_xname(&sc->sc_dev));
+		printf("%s: nistart\n", device_xname(sc->sc_dev));
 #endif
 
 	while (fqb->nf_dforw) {
@@ -573,7 +568,7 @@ nistart(ifp)
 #ifdef DEBUG
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("%s: sending %d bytes (%d segments)\n",
-			    device_xname(&sc->sc_dev), mlen, i);
+			    device_xname(sc->sc_dev), mlen, i);
 #endif
 
 		res = INSQTI(data, &gvp->nc_forw0);
@@ -599,7 +594,7 @@ niintr(void *arg)
 		return;
 
 	if ((NI_RREG(NI_PSR) & PSR_ERR))
-		printf("%s: PSR %x\n", device_xname(&sc->sc_dev), NI_RREG(NI_PSR));
+		printf("%s: PSR %x\n", device_xname(sc->sc_dev), NI_RREG(NI_PSR));
 
 	KERNEL_LOCK(1, NULL);
 	/* Got any response packets?  */
@@ -694,10 +689,7 @@ niintr(void *arg)
  * Process an ioctl request.
  */
 int
-niioctl(ifp, cmd, data)
-	register struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+niioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ni_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -863,8 +855,7 @@ ni_setup(struct ni_softc *sc)
  * Check for dead transmit logic. Not uncommon.
  */
 void
-nitimeout(ifp)
-	struct ifnet *ifp;
+nitimeout(struct ifnet *ifp)
 {
 #if 0
 	struct ni_softc *sc = ifp->if_softc;
@@ -872,7 +863,7 @@ nitimeout(ifp)
 	if (sc->sc_inq == 0)
 		return;
 
-	printf("%s: xmit logic died, resetting...\n", device_xname(&sc->sc_dev));
+	printf("%s: xmit logic died, resetting...\n", device_xname(sc->sc_dev));
 	/*
 	 * Do a reset of interface, to get it going again.
 	 * Will it work by just restart the transmit logic?
@@ -885,8 +876,7 @@ nitimeout(ifp)
  * Shutdown hook.  Make sure the interface is stopped at reboot.
  */
 void
-ni_shutdown(arg)
-	void *arg;
+ni_shutdown(void *arg)
 {
 	struct ni_softc *sc = arg;
 
@@ -894,6 +884,4 @@ ni_shutdown(arg)
         NI_WREG(NI_PCR, PCR_OWN|PCR_SHUTDOWN);
         WAITREG(NI_PCR, PCR_OWN);
         WAITREG(NI_PSR, PSR_OWN);
-
 }
-

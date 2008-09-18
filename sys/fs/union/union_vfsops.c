@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.53.2.1 2008/06/23 04:31:50 wrstuden Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.53.2.2 2008/09/18 04:36:56 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.53.2.1 2008/06/23 04:31:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.53.2.2 2008/09/18 04:36:56 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.53.2.1 2008/06/23 04:31:50 wrstud
 MODULE(MODULE_CLASS_VFS, union, NULL);
 
 VFS_PROTOS(union);
+
+static struct sysctllog *union_sysctl_log;
 
 /*
  * Mount union filesystem
@@ -496,27 +498,6 @@ union_renamelock_exit(struct mount *mp)
 	VFS_RENAMELOCK_EXIT(um->um_uppervp->v_mount);
 }
 
-SYSCTL_SETUP(sysctl_vfs_union_setup, "sysctl vfs.union subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "union",
-		       SYSCTL_DESCR("Union file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 15, CTL_EOL);
-	/*
-	 * XXX the "15" above could be dynamic, thereby eliminating
-	 * one more instance of the "number to vfs" mapping problem,
-	 * but "15" is the order as taken from sys/mount.h
-	 */
-}
-
 extern const struct vnodeopv_desc union_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const union_vnodeopv_descs[] = {
@@ -555,13 +536,40 @@ struct vfsops union_vfsops = {
 static int
 union_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&union_vfsops);
+		error = vfs_attach(&union_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&union_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&union_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "union",
+			       SYSCTL_DESCR("Union file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 15, CTL_EOL);
+		/*
+		 * XXX the "15" above could be dynamic, thereby eliminating
+		 * one more instance of the "number to vfs" mapping problem,
+		 * but "15" is the order as taken from sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&union_vfsops);
+		error = vfs_detach(&union_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&union_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }

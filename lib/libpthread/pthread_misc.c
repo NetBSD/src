@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.8 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.8.2.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.8 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.8.2.1 2008/09/18 04:39:24 wrstuden Exp $");
 
 #include <errno.h>
 #include <string.h>
@@ -136,17 +136,21 @@ pthread_kill(pthread_t thread, int sig)
 		return EINVAL;
 	if (pthread__find(thread) != 0)
 		return ESRCH;
-
-	return _lwp_kill(thread->pt_lid, sig);
+	if (_lwp_kill(thread->pt_lid, sig))
+		return errno;
+	return 0;
 }
 
 int
 pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 {
 
-	return _sys___sigprocmask14(how, set, oset);
+	if (_sys___sigprocmask14(how, set, oset))
+		return errno;
+	return 0;
 }
 
+#ifndef lint
 int
 nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 {
@@ -157,6 +161,7 @@ nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
 	 */
 	return  _sys_nanosleep(rqtp, rmtp);
 }
+#endif
 
 int
 pthread__sched_yield(void)

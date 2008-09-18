@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.25 2008/04/14 13:38:03 cegger Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.25.6.1 2008/09/18 04:33:38 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -128,7 +128,7 @@ extern union start_info_union start_info_union;
 #define xen_start_info (start_info_union.start_info)
 
 /* For use in guest OSes. */
-volatile extern shared_info_t *HYPERVISOR_shared_info;
+extern volatile shared_info_t *HYPERVISOR_shared_info;
 
 /* hypervisor.c */
 struct intrframe;

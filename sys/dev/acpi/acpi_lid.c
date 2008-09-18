@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.25 2008/03/26 15:31:59 xtraeme Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.25.6.1 2008/09/18 04:35:01 wrstuden Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.25 2008/03/26 15:31:59 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.25.6.1 2008/09/18 04:35:01 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,10 @@ static const char * const lid_hid[] = {
 
 static int	acpilid_match(device_t, cfdata_t, void *);
 static void	acpilid_attach(device_t, device_t, void *);
+static int	acpilid_detach(device_t, int);
 
 CFATTACH_DECL_NEW(acpilid, sizeof(struct acpilid_softc),
-    acpilid_match, acpilid_attach, NULL, NULL);
+    acpilid_match, acpilid_attach, acpilid_detach, NULL);
 
 static void	acpilid_status_changed(void *);
 static void	acpilid_notify_handler(ACPI_HANDLE, UINT32, void *);
@@ -127,6 +128,29 @@ acpilid_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, acpilid_suspend, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static int
+acpilid_detach(device_t self, int flags)
+{
+	struct acpilid_softc *sc = device_private(self);
+	ACPI_STATUS rv;
+
+	acpi_clear_wake_gpe(sc->sc_node->ad_handle);
+
+	rv = AcpiRemoveNotifyHandler(sc->sc_node->ad_handle,
+	    ACPI_DEVICE_NOTIFY, acpilid_notify_handler);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(self,
+		    "unable to deregister DEVICE NOTIFY handler: %s\n",
+		    AcpiFormatException(rv));
+		return EBUSY;
+	}
+
+	pmf_device_deregister(self);
+	sysmon_pswitch_unregister(&sc->sc_smpsw);
+
+	return 0;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14.2.1 2008/06/23 04:30:50 wrstuden Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14.2.2 2008/09/18 04:33:37 wrstuden Exp $	*/
 
 /*
  *
@@ -232,6 +232,7 @@ void	pmap_tlb_shootdown(pmap_t, vaddr_t, vaddr_t, pt_entry_t);
 void	pmap_tlb_shootwait(void);
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+#define PMAP_FORK		/* turn on pmap_fork interface */
 
 /*
  * Do idle page zero'ing uncached to avoid polluting the cache.

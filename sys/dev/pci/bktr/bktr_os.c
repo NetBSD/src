@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.51.6.1 2008/06/23 04:31:25 wrstuden Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.51.6.2 2008/09/18 04:35:08 wrstuden Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.51.6.1 2008/06/23 04:31:25 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.51.6.2 2008/09/18 04:35:08 wrstuden Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -165,7 +165,7 @@ SYSCTL_INT(_hw_bt848, OID_AUTO, slow_msp_audio, CTLFLAG_RW, &bt848_slow_msp_audi
 #define BKTR_DEBUG
 #ifdef BKTR_DEBUG
 int bktr_debug = 0;
-#define DPR(x)	(bktr_debug ? printf x : 0)
+#define DPR(x)	if (bktr_debug) printf x
 #else
 #define DPR(x)
 #endif

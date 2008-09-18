@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.14.4.2 2008/05/14 01:35:13 wrstuden Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.14.4.3 2008/09/18 04:31:43 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.14.4.2 2008/05/14 01:35:13 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.14.4.3 2008/09/18 04:31:43 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -57,9 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.14.4.2 2008/05/14 01:35:13 wrstuden 
  * Note that the generator state is itself an UUID, but the time and clock
  * sequence fields are written in the native byte order.
  */
-
-/* XXX Do we have a similar ASSERT()? */
-#define CTASSERT(x)
 
 CTASSERT(sizeof(struct uuid) == 16);
 

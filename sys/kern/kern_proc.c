@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.141.2.2 2008/06/23 04:31:51 wrstuden Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.141.2.3 2008/09/18 04:31:42 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.141.2.2 2008/06/23 04:31:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.141.2.3 2008/09/18 04:31:42 wrstuden Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -158,16 +158,7 @@ struct cwdinfo cwdi0 = {
 	.cwdi_cmask = CMASK,		/* see cmask below */
 	.cwdi_refcnt = 1,
 };
-struct plimit limit0 = {
-	.pl_corename = defcorename,
-	.pl_refcnt = 1,
-	.pl_rlimit = {
-		[0 ... __arraycount(limit0.pl_rlimit) - 1] = {
-			.rlim_cur = RLIM_INFINITY,
-			.rlim_max = RLIM_INFINITY,
-		},
-	},
-};
+struct plimit limit0;
 struct pstats pstat0;
 struct vmspace vmspace0;
 struct sigacts sigacts0;
@@ -292,6 +283,7 @@ proc0_init(void)
 	struct session *sess;
 	struct lwp *l;
 	rlim_t lim;
+	int i;
 
 	p = &proc0;
 	pg = &pgrp0;
@@ -337,6 +329,9 @@ proc0_init(void)
 
 	/* Create the limits structures. */
 	mutex_init(&limit0.pl_lock, MUTEX_DEFAULT, IPL_NONE);
+	for (i = 0; i < __arraycount(limit0.pl_rlimit); i++)
+		limit0.pl_rlimit[i].rlim_cur =	 
+		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
 
 	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = maxfiles;
 	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur =
@@ -350,6 +345,9 @@ proc0_init(void)
 	limit0.pl_rlimit[RLIMIT_RSS].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_max = lim;
 	limit0.pl_rlimit[RLIMIT_MEMLOCK].rlim_cur = lim / 3;
+	limit0.pl_corename = defcorename;	 
+	limit0.pl_refcnt = 1;	 
+	limit0.pl_sv_limit = NULL;
 
 	/* Configure virtual memory system, set vm rlimits. */
 	uvm_init_limits(p);

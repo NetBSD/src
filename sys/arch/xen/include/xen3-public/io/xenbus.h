@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.5 2007/10/17 19:58:32 garbled Exp $ */
+/* $NetBSD: xenbus.h,v 1.5.22.1 2008/09/18 04:33:39 wrstuden Exp $ */
 /*****************************************************************************
  * xenbus.h
  *
@@ -57,7 +57,14 @@ enum xenbus_state {
      */
     XenbusStateClosing       = 5,
 
-    XenbusStateClosed        = 6
+    XenbusStateClosed        = 6,
+
+    /*
+     * Reconfiguring: The device is being reconfigured.
+     */
+    XenbusStateReconfiguring = 7,
+
+    XenbusStateReconfigured  = 8
 };
 typedef enum xenbus_state XenbusState;
 

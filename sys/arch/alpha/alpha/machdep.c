@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.305.2.4 2008/06/22 18:12:01 wrstuden Exp $ */
+/* $NetBSD: machdep.c,v 1.305.2.5 2008/09/18 04:33:16 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.4 2008/06/22 18:12:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.5 2008/09/18 04:33:16 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.305.2.4 2008/06/22 18:12:01 wrstuden E
 
 #include "ksyms.h"
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -839,13 +838,6 @@ cpu_startup()
 	}
 
 	minaddr = 0;
-
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16 * NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio

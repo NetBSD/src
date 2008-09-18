@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.59 2008/04/30 13:10:49 martin Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.59.4.1 2008/09/18 04:40:18 wrstuden Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd March 18, 2008
+.Dd August 18, 2008
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -220,14 +220,23 @@ Directory to use as the
 for the current directory.
 The value is subjected to variable expansion by
 .Xr make 1 .
+Typical usage is to set this variable to a value involving the use of
+.Sq ${.CURDIR:S...}
+or
+.Sq ${.CURDIR:C...} ,
+to derive the value of
+.Sy .OBJDIR
+from the value of
+.Sy .CURDIR .
 Used only if
 .Sy MAKEOBJDIRPREFIX
 is not defined.
 .Sy MAKEOBJDIR
-can only be provided in the environment or via the
+can be provided only in the environment or via the
 .Fl O
 flag of
-.Nm build.sh .
+.Nm build.sh ;
+it cannot usefully be set inside a Makefile.
 .
 .It Sy MAKEOBJDIRPREFIX
 Top level directory of the object directory tree.
@@ -239,10 +248,11 @@ is used as the
 for the current directory.
 The current directory may be read only.
 .Sy MAKEOBJDIRPREFIX
-can only be provided in the environment or via the
+can be provided only in the environment or via the
 .Fl M
 flag of
-.Nm build.sh .
+.Nm build.sh ;
+it cannot usefully be set inside a Makefile.
 .
 .El
 .
@@ -288,6 +298,16 @@ object directory names, and can be consulted in the
 .Xr make 1
 configuration file in order to set additional build parameters,
 such as compiler flags.
+.
+.It Sy BUILDSEED
+GCC uses random numbers when compiling C++ code.
+This variable seeds the gcc random number generator using
+the -frandom-seed flag with this value.
+By default, it is set to NetBSD-(majorversion).
+Using a fixed value causes C++ binaries to be the same when
+built from the same sources.
+Additional information is available in the GCC
+documentation of -frandom-seed.
 .
 .It Sy DESTDIR
 Directory to contain the built
@@ -369,6 +389,12 @@ Will not affect use of the standard low-security password encryption system,
 Indicates whether system documentation destined for
 .Sy DESTDIR Ns Pa /usr/share/doc
 will be installed during a build.
+.DFLTy
+.
+.It Sy MKHTML
+.YorN
+Indicates whether preformatted HTML manual pages will be built
+and installed
 .DFLTy
 .
 .It Sy MKHOSTOBJ
@@ -518,6 +544,18 @@ This also has implications on full builds (see next subsection).
 .YorN
 Indicates whether X11R6 is built from
 .Sy X11SRCDIR .
+.Pp
+Mutually exclusive to 
+.Sy MKXORG != no .
+.DFLTn
+.
+.It Sy MKXORG
+.YorN
+Indicates whether X11R7 (modular Xorg) is built from
+.Sy X11SRCDIR .
+.Pp
+Mutually exclusive to 
+.Sy MKX11 != no .
 .DFLTn
 .
 .It Sy TOOLDIR
@@ -734,8 +772,6 @@ Run up to
 subjobs in parallel.
 Makefiles should use .WAIT or have explicit dependencies 
 as necessary to enforce build ordering.
-If you see build failures with -j, please save complete build logs 
-so the failures can be analyzed.
 .
 .It Fl m Ar dir
 Specify the default directory for searching for system Makefile
@@ -1010,7 +1046,7 @@ utility, which is not part of
 but which can be installed from
 .Pa pkgsrc/sysutils/cdrtools .
 .
-.It iso-image-source
+.It Sy iso-image-source
 Create a
 .Nx
 installation CD-ROM image in the
@@ -1142,6 +1178,10 @@ Create the
 wrapper.
 This operation is automatically performed for any of the other
 operations.
+.
+.It Sy cleandir
+Perform
+.Dq make cleandir .
 .
 .It Sy obj
 Perform
@@ -1321,20 +1361,41 @@ Run up to
 subjobs in parallel;
 passed through to 
 .Xr make 1 .
-Makefiles should use .WAIT or have explicit dependancies 
-as necessary to enforce build ordering.
-If you see build failures with -j, please save complete build logs 
+If you see failures for reasons other than running out of memory
+while using
+.Sy build.sh
+with
+.Fl j ,
+please save complete build logs 
 so the failures can be analyzed.
+.Pp
+To achieve the fastest builds,
+.Fl j
+values between (1 + the number of CPUs) and (2 * the number of CPUs)
+are recommended.
+Use lower values on machines with limited memory or I/O bandwidth.
 .
 .It Fl M Ar obj
 Set
 .Sy MAKEOBJDIRPREFIX
 to
 .Ar obj .
+For instance, if the source directory is
+.Pa /usr/src ,
+a setting of
+.Dq Fl M Pa /usr/obj
+will place build-time files under
+.Pa /usr/obj/usr/src/bin ,
+.Pa /usr/obj/usr/src/lib ,
+.Pa /usr/obj/usr/src/usr.bin ,
+and so forth.
 If a relative path is specified, it will be converted to an
 absolute path before being used.
 Unsets
 .Sy MAKEOBJDIR .
+See
+.Dq Fl O obj
+for more information.
 .
 .It Fl m Ar mach
 Set the value of
@@ -1398,18 +1459,36 @@ Create an appropriate transform macro for
 .Sy MAKEOBJDIR
 that will place the built object files under
 .Ar obj .
+For instance, a setting of
+.Dq Fl O Pa /usr/obj
+will place build-time files under
+.Pa /usr/obj/bin ,
+.Pa /usr/obj/lib ,
+.Pa /usr/obj/usr.bin ,
+and so forth.
 If a relative path is specified, it will be converted to an
 absolute path before being used.
-For instance, a setting of
-.Sy /usr/obj
-will place build-time files under
-.Sy /usr/obj/bin ,
-.Sy /usr/obj/lib ,
-.Sy /usr/obj/usr.bin ,
-and so forth.
 Unsets
 .Sy MAKEOBJDIRPREFIX .
-.
+.Pp
+In normal use, exactly one of the
+.Fl M
+or
+.Fl O
+options should be specified.
+If the source directory is
+.Pa /usr/src
+and neither
+.Fl M
+nor
+.Fl O
+is specified, then a default object directory will be chosen
+according to rules in
+.Aq bsd.obj.mk ;
+this default is usually either
+.Pa /usr/obj
+or
+.Pa /usr/obj. Ns Sy MACHINE .
 .It Fl o
 Set the value of
 .Sy MKOBJDIRS
@@ -1437,6 +1516,13 @@ before building (provides a clean starting point).
 This will skip deleting
 .Sy DESTDIR
 if building on a native system to the root directory.
+.
+.It Fl S Ar seed
+Change the value of
+.Sy BUILDSEED
+to
+.Ar seed .
+This should rarely be necessary.
 .
 .It Fl T Ar tools
 Set the value of
@@ -1634,7 +1720,3 @@ as
 and re-worked to
 .Sy TOOLCHAIN_MISSING
 after that.
-.
-.Sh BUGS
-.
-A few platforms are not yet using this build system.

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.10.12.1 2008/09/18 04:39:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,23 +38,23 @@ int	 __bt_cmp(BTREE *, const DBT *, EPG *);
 int	 __bt_crsrdel(BTREE *, EPGNO *);
 int	 __bt_defcmp(const DBT *, const DBT *);
 size_t	 __bt_defpfx(const DBT *, const DBT *);
-int	 __bt_delete(const DB *, const DBT *, u_int);
-int	 __bt_dleaf(BTREE *, const DBT *, PAGE *, u_int);
+int	 __bt_delete(const DB *, const DBT *, unsigned int);
+int	 __bt_dleaf(BTREE *, const DBT *, PAGE *, unsigned int);
 int	 __bt_fd(const DB *);
 int	 __bt_free(BTREE *, PAGE *);
-int	 __bt_get(const DB *, const DBT *, DBT *, u_int);
+int	 __bt_get(const DB *, const DBT *, DBT *, unsigned int);
 PAGE	*__bt_new(BTREE *, pgno_t *);
 void	 __bt_pgin(void *, pgno_t, void *);
 void	 __bt_pgout(void *, pgno_t, void *);
 int	 __bt_push(BTREE *, pgno_t, int);
-int	 __bt_put(const DB *dbp, DBT *, const DBT *, u_int);
+int	 __bt_put(const DB *dbp, DBT *, const DBT *, unsigned int);
 int	 __bt_ret(BTREE *, EPG *, DBT *, DBT *, DBT *, DBT *, int);
 EPG	*__bt_search(BTREE *, const DBT *, int *);
-int	 __bt_seq(const DB *, DBT *, DBT *, u_int);
-void	 __bt_setcur(BTREE *, pgno_t, u_int);
+int	 __bt_seq(const DB *, DBT *, DBT *, unsigned int);
+void	 __bt_setcur(BTREE *, pgno_t, unsigned int);
 int	 __bt_split(BTREE *, PAGE *,
-	    const DBT *, const DBT *, int, size_t, u_int32_t);
-int	 __bt_sync(const DB *, u_int);
+	    const DBT *, const DBT *, int, size_t, unsigned int32_t);
+int	 __bt_sync(const DB *, unsigned int);
 
 int	 __ovfl_delete(BTREE *, void *);
 int	 __ovfl_get(BTREE *, void *, size_t *, void **, size_t *);

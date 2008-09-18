@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.38.4.1 2008/06/23 04:32:02 wrstuden Exp $	*/
+/*	$NetBSD: emul.c,v 1.38.4.2 2008/09/18 04:37:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -50,10 +50,11 @@
 
 #include <machine/stdarg.h>
 
+#include <rump/rumpuser.h>
+
 #include <uvm/uvm_map.h>
 
 #include "rump_private.h"
-#include "rumpuser.h"
 
 time_t time_second = 1;
 
@@ -62,7 +63,6 @@ struct lwp lwp0;
 struct vnode *rootvp;
 struct device *root_device;
 dev_t rootdev;
-struct vm_map *kernel_map;
 int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 int ncpu = 1;
@@ -113,6 +113,13 @@ log(int level, const char *fmt, ...)
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
+}
+
+void
+vlog(int level, const char *fmt, va_list ap)
+{
+
+	vprintf(fmt, ap);
 }
 
 void
@@ -175,6 +182,14 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	strlcpy(kaddr, uaddr, len);
 	if (done)
 		*done = strlen(kaddr)+1; /* includes termination */
+	return 0;
+}
+
+int
+kcopy(const void *src, void *dst, size_t len)
+{
+
+	memcpy(dst, src, len);
 	return 0;
 }
 
@@ -362,19 +377,19 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct lwp *l;
 	int rv;
 
-#ifdef RUMP_WITHOUT_THREADS
-	/* fake them */
-	if (strcmp(fmt, "vrele") == 0) {
-		printf("rump warning: threads not enabled, not starting "
-		   "vrele thread\n");
-		return 0;
-	} else if (strcmp(fmt, "cachegc") == 0) {
-		printf("rump warning: threads not enabled, not starting "
-		   "namecache g/c thread\n");
-		return 0;
-	} else
-		panic("threads not available, undef RUMP_WITHOUT_THREADS");
-#endif
+	if (!rump_threads) {
+		/* fake them */
+		if (strcmp(fmt, "vrele") == 0) {
+			printf("rump warning: threads not enabled, not starting"
+			   " vrele thread\n");
+			return 0;
+		} else if (strcmp(fmt, "cachegc") == 0) {
+			printf("rump warning: threads not enabled, not starting"
+			   " namecache g/c thread\n");
+			return 0;
+		} else
+			panic("threads not available, setenv RUMP_THREADS 1");
+	}
 
 	KASSERT(fmt != NULL);
 	if (ci != NULL)
@@ -416,6 +431,20 @@ callout_reset(callout_t *c, int ticks, void (*func)(void *), void *arg)
 
 bool
 callout_stop(callout_t *c)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+callout_schedule(callout_t *c, int ticks)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+callout_setfunc(callout_t *c, void (*func)(void *), void *arg)
 {
 
 	panic("%s: not implemented", __func__);
@@ -482,10 +511,16 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 {
 	extern int hz;
 	int rv, error;
-
+	struct timespec time;
+	
 	if (mtx)
 		mutex_exit(mtx);
-	rv = rumpuser_usleep(timeo * (1000000 / hz), &error);
+
+	time.tv_sec = timeo / hz;
+	time.tv_nsec = (timeo % hz) * (1000000000 / hz);
+
+	rv = rumpuser_nanosleep(&time, NULL, &error);
+	
 	if (mtx)
 		mutex_enter(mtx);
 
@@ -561,4 +596,26 @@ const char *
 device_xname(device_t dv)
 {
 	return "bogus0";
+}
+
+void
+assert_sleepable(void)
+{
+
+	/* always sleepable, although we should improve this */
+}
+
+int
+devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
+	const struct cdevsw *cdev, int *cmajor)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+devsw_detach(const struct bdevsw *bdev, const struct cdevsw *cdev)
+{
+
+	panic("%s: not implemented", __func__);
 }

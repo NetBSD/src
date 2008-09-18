@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.30.2.1 2008/06/23 04:30:27 wrstuden Exp $	*/
+/*	$NetBSD: boot2.c,v 1.30.2.2 2008/09/18 04:33:28 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -88,8 +88,7 @@
 
 extern struct x86_boot_params boot_params;
 
-extern	const char bootprog_name[], bootprog_rev[], bootprog_date[],
-	bootprog_maker[];
+extern	const char bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 int errno;
 
@@ -109,7 +108,7 @@ static const char * const names[][2] = {
 
 #ifndef SMALL
 #define BOOTCONF "boot.cfg"
-#define MAXMENU 10
+#define MAXMENU 20
 #define MAXBANNER 12
 #define COMMAND_SEPARATOR ';'
 #endif /* !SMALL */
@@ -152,6 +151,11 @@ const struct bootblk_command commands[] = {
 };
 
 #ifndef SMALL
+
+#define MENUFORMAT_AUTO 0
+#define MENUFORMAT_NUMBER 1
+#define MENUFORMAT_LETTER 2
+
 struct bootconf_def {
 	char *banner[MAXBANNER];	/* Banner text */
 	char *command[MAXMENU];		/* Menu commands per entry*/
@@ -160,6 +164,7 @@ struct bootconf_def {
 	char *desc[MAXMENU];		/* Menu text per entry */
 	int nummenu;			/* Number of menu items */
 	int timeout;		 	/* Timeout in seconds */
+	int menuformat;			/* Print letters instead of numbers? */
 } bootconf;
 #endif /* !SMALL */
 
@@ -273,10 +278,11 @@ print_banner(void)
 			printf("%s\n", bootconf.banner[n]);
 	} else {
 #endif /* !SMALL */
-		printf("\n");
-		printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-		printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
-		printf(">> Memory: %d/%d k\n", getbasemem(), getextmem());
+		printf("\n"
+		       ">> %s, Revision %s (from NetBSD %s)\n"
+		       ">> Memory: %d/%d k\n",
+		       bootprog_name, bootprog_rev, bootprog_kernrev,
+		       getbasemem(), getextmem());
 
 #ifndef SMALL
 	}
@@ -305,7 +311,7 @@ atoi(const char *in)
  * (if present) and populates the global boot configuration.
  * 
  * The file consists of a number of lines each terminated by \n
- * The lines are in the format keyword=value. There should be spaces
+ * The lines are in the format keyword=value. There should not be spaces
  * around the = sign.
  *
  * The recognised keywords are:
@@ -314,6 +320,7 @@ atoi(const char *in)
  * timeout: Timeout in seconds (overrides that set by installboot)
  * default: the default menu option to use if Return is pressed
  * consdev: the console device to use
+ * format: how menu choices are displayed: (a)utomatic, (n)umbers or (l)etters
  *
  * Example boot.cfg file:
  * banner=Welcome to NetBSD
@@ -343,6 +350,9 @@ parsebootconf(const char *conf)
 	
 	/* Set timeout to configured */
 	bootconf.timeout = boot_params.bp_timeout;
+
+	/* automatically switch between letter and numbers on menu */
+	bootconf.menuformat = MENUFORMAT_AUTO;
 
 	/* don't try to open BOOTCONF if the target fs is ustarfs */
 #ifdef SUPPORT_USTARFS
@@ -442,10 +452,44 @@ parsebootconf(const char *conf)
 			bootconf.def = atoi(value) - 1;
 		} else if (!strncmp(key, "consdev", 7)) {
 			bootconf.consdev = value;
-		} else if (!strncmp(key, "load", 6)) {
+		} else if (!strncmp(key, "load", 4)) {
 			command_load(value);
+		} else if (!strncmp(key, "format", 6)) {
+			printf("value:%c\n", *value);
+			switch (*value) {
+			case 'a':
+			case 'A':
+				bootconf.menuformat = MENUFORMAT_AUTO;
+				break;
+
+			case 'n':
+			case 'N':
+			case 'd':
+			case 'D':
+				bootconf.menuformat = MENUFORMAT_NUMBER;
+				break;
+
+			case 'l':
+			case 'L':
+				bootconf.menuformat = MENUFORMAT_LETTER;
+				break;
+			}
 		}
 	}
+	switch (bootconf.menuformat) {
+	case MENUFORMAT_AUTO:
+		if (cmenu > 9 && bootconf.timeout > 0)
+			bootconf.menuformat = MENUFORMAT_LETTER;
+		else
+			bootconf.menuformat = MENUFORMAT_NUMBER;
+		break;
+	
+	case MENUFORMAT_NUMBER:
+		if (cmenu > 9 && bootconf.timeout > 0)
+			cmenu = 9;
+		break;
+	}
+	 
 	bootconf.nummenu = cmenu;
 	if (bootconf.def < 0)
 		bootconf.def = 0;
@@ -457,46 +501,75 @@ parsebootconf(const char *conf)
  * doboottypemenu will render the menu and parse any user input
  */
 
+static int getchoicefrominput(char *input, int def)
+{
+	int choice;
+	choice = -1;
+	if (*input == '\0' || *input == '\r' || *input == '\n')
+		choice = def;
+	else if (*input >= 'A' && *input < bootconf.nummenu + 'A')
+		choice = (*input) - 'A';
+	else if (*input >= 'a' && *input < bootconf.nummenu + 'a')
+		choice = (*input) - 'a';
+	else if (isnum(*input)) {
+		choice = atoi(input) - 1;
+		if (choice < 0 || choice >= bootconf.nummenu)
+			choice = -1;
+	}
+	return choice;
+}
+
 void
 doboottypemenu(void)
 {
 	int choice;
-	char input[80], c, *ic, *oc;
+	char input[80], *ic, *oc;
 		
 	printf("\n");
 	/* Display menu */
-	for (choice = 0; bootconf.desc[choice]; choice++)
-		printf("    %d. %s\n", choice+1, bootconf.desc[choice]);
-
+	if (bootconf.menuformat == MENUFORMAT_LETTER) {
+		for (choice = 0; choice < bootconf.nummenu; choice++)
+			printf("    %c. %s\n", choice + 'A',
+			    bootconf.desc[choice]);
+	} else {
+		/* Can't use %2d format string with libsa */
+		for (choice = 0; choice < bootconf.nummenu; choice++)
+			printf("    %s%d. %s\n",
+			    (choice < 9) ?  " " : "",
+			    choice + 1,
+			    bootconf.desc[choice]);
+	}		
 	choice = -1;
 	for(;;) {
 		input[0] = '\0';
 		
 		if (bootconf.timeout < 0) {
-			printf("\nOption: [%d]:", bootconf.def + 1);
+			if (bootconf.menuformat == MENUFORMAT_LETTER)
+				printf("\nOption: [%c]:",
+				    bootconf.def + 'A');
+			else
+				printf("\nOption: [%d]:",
+				    bootconf.def + 1);
+				
 			gets(input);
-			if (input[0] == '\0') choice = bootconf.def;
-			if (input[0] >= '1' && 
-				input[0] <= bootconf.nummenu + '0')
-				    choice = input[0] - '1';
+			choice = getchoicefrominput(input, bootconf.def);
 		} else if (bootconf.timeout == 0)
 			choice = bootconf.def;
 		else  {
 			printf("\nChoose an option; RETURN for default; "
 			       "SPACE to stop countdown.\n");
-			printf("Option %d will be chosen in ",
-			      bootconf.def + 1);
-			c = awaitkey(bootconf.timeout, 1);
-			if (c >= '1' && c <= bootconf.nummenu + '0')
-				choice = c - '1';
-			else if (c ==  '\r' || c == '\n' || c == '\0')
-				/* default if timed out or Return pressed */
-				choice = bootconf.def;
-			else {
-				/* If any other key pressed, drop to menu */
+			if (bootconf.menuformat == MENUFORMAT_LETTER)
+				printf("Option %c will be chosen in ",
+				    bootconf.def + 'A');
+			else
+				printf("Option %d will be chosen in ",
+				    bootconf.def + 1);
+			input[0] = awaitkey(bootconf.timeout, 1);
+			input[1] = '\0';
+			choice = getchoicefrominput(input, bootconf.def);
+			/* If invalid key pressed, drop to menu */
+			if (choice == -1)
 				bootconf.timeout = -1;
-				choice = -1;
-			}
 		}
 		if (choice < 0)
 			continue;

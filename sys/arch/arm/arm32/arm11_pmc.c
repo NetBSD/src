@@ -1,4 +1,4 @@
-/*	$NetBSD: arm11_pmc.c,v 1.2 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: arm11_pmc.c,v 1.2.2.1 2008/09/18 04:33:18 wrstuden Exp $	*/
 
 /* Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm11_pmc.c,v 1.2 2008/04/27 18:58:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm11_pmc.c,v 1.2.2.1 2008/09/18 04:33:18 wrstuden Exp $");
 #include "opt_perfctrs.h"
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,13 +129,13 @@ delay(u_int arg)
 		if (ctrl & ARM11_PMCCTL_CCR) {
 			/*
 			 * reset CCR, do not reset other write-to-clear flags;
-			 * maintain the rest of the PMC Control Reg configuration
+			 * keep the rest of the PMC Control Reg configuration
 			 */
 			ctrl &= ~(ARM11_PMCCTL_CR0|ARM11_PMCCTL_CR1);
 			arm11_pmc_ctrl_write(ctrl);
 			delta += (last + (counts_per_wrap - cur));
 		} else {
-			delta += (last - cur);
+			delta += (cur - last);
 		}
 		last = cur;
 		if (delta >= COUNTS_PER_USEC) {

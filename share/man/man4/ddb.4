@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.113.2.1 2008/06/23 04:30:00 wrstuden Exp $
+.\"	$NetBSD: ddb.4,v 1.113.2.2 2008/09/18 04:38:08 wrstuden Exp $
 .\"
 .\" Copyright (c) 1997 - 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd May 23, 2008
+.Dd August 23, 2008
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -687,6 +687,20 @@ If
 .Cm /f
 is specified, all event counters with a count of zero are printed as well.
 .It Xo
+.Ic show files
+.Ar address
+.Xc
+Display information about the vnodes of the files that are currently
+open by the process associated with the proc structure at
+.Ar address .
+This address can be found using the
+.Ic show all procs /a
+command.
+If the kernel is compiled with
+.Cd options LOCKDEBUG
+then details about the locking of the underlying uvm object will also
+be displayed.
+.It Xo
 .Ic show lock
 .Ar address
 .Xc
@@ -788,6 +802,12 @@ queue, the queue index will be prefixed with a
 .Sq \&! .
 .It Ic show uvmexp
 Print a selection of UVM counters and statistics.
+.It Xo
+.Ic uvmhist
+.Xc
+Dumps the UVM histories.
+This command is available only if a kernel is compiled with
+.Cd options UVMHIST .
 .It Xo
 .Ic show vnode Ns Op Cm /f
 .Ar address
@@ -1147,8 +1167,6 @@ Use the
 and
 .Dq f
 modifiers to get reversed and full information, respectively.
-.It Ic uvmdump
-Dumps the UVM histories.
 .It Ic watch
 Set or clear a physical or virtual hardware watchpoint.
 Pass the address to be watched, or

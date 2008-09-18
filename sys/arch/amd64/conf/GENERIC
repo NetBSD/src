@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.210.2.1 2008/06/23 04:30:08 wrstuden Exp $
+# $NetBSD: GENERIC,v 1.210.2.2 2008/09/18 04:33:17 wrstuden Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.210.2.1 $"
+#ident 		"GENERIC-$Revision: 1.210.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -157,6 +157,7 @@ file-system 	TMPFS		# Efficient memory file-system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -251,7 +252,7 @@ config		netbsd	root on ? type ?
 #
 
 #IPMI support
-#ipmi0		at mainbus?
+ipmi0		at mainbus?
 
 # ACPI will be used if present. If not it will fall back to MPBIOS
 acpi0 		at mainbus0
@@ -263,6 +264,7 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+options 	VGA_POST		# in-kernel support for VGA POST
 
 # ACPI devices
 acpiacad* 	at acpi?		# ACPI AC Adapter
@@ -893,6 +895,7 @@ sbp*	at ieee1394if? euihi ? euilo ?
 # Audio Devices
 
 # PCI audio devices
+auacer* at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel/AMD/nVidia AC'97 Audio
 auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
@@ -945,6 +948,12 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # Radio support
 #radio*	at gtp?
+
+
+# Video capture devices
+
+pseye* at uhub?		# Sony PLAYSTATION(R) Eye webcam
+video* at videobus?
 
 
 # TV cards
@@ -1042,6 +1051,11 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

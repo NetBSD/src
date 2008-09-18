@@ -1,4 +1,4 @@
-/* $NetBSD: dummy_pci_drv.c,v 1.2 2005/12/11 12:24:47 christos Exp $ */
+/* $NetBSD: dummy_pci_drv.c,v 1.2.76.1 2008/09/18 04:36:56 wrstuden Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -8,32 +8,32 @@
 #include <dev/pci/pcivar.h>
 
 struct mist_softc {
-	struct device sc_dev;
 };
 
-static int mist_match(struct device *, struct cfdata *, void *);
-static void mist_attach(struct device *, struct device *, void *);
-static int mist_detach(struct device*, int);
+static int mist_match(device_t, cfdata_t, void *);
+static void mist_attach(device_t, device_t, void *);
+static int mist_detach(device_t, int);
 
-CFATTACH_DECL(mist, sizeof(struct mist_softc),
-	      mist_match, mist_attach, mist_detach, NULL);
+CFATTACH_DECL_NEW(mist, sizeof(struct mist_softc),
+    mist_match, mist_attach, mist_detach, NULL);
 
 int
-mist_match(struct device *parent, struct cfdata *match, void *aux)
+mist_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (1);
 }
 
 static void
-mist_attach(struct device *parent, struct device *self, void *aux)
+mist_attach(device_t parent, device_t self, void *aux)
 {
 
-	printf(": dummy catch-all PCI device\n");
+	aprint_naive(": dummy catch-all PCI device\n");
+	aprint_normal(": dummy catch-all PCI device\n");
 }
 
 static int
-mist_detach(struct device* self, int flags)
+mist_detach(device_t self, int flags)
 {
 
 	return (0);

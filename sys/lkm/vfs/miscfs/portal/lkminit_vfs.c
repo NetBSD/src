@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.10 2008/04/28 20:24:08 martin Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.10.2.1 2008/09/18 04:36:57 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.10 2008/04/28 20:24:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.10.2.1 2008/09/18 04:36:57 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -83,7 +83,22 @@ load(lkmtp, cmd)
 	int cmd;
 {
 
-	sysctl_vfs_portal_setup(&_portal_log);
+	sysctl_createv(&_portal_log, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(&_portal_log, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "portal",
+		       SYSCTL_DESCR("Portal daemon file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, 8, CTL_EOL);
+	/*
+	 * XXX the "8" above could be dynamic, thereby eliminating one
+	 * more instance of the "number to vfs" mapping problem, but
+	 * "8" is the order as taken from sys/mount.h
+	 */
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113.6.4 2008/06/24 04:15:51 wrstuden Exp $     */
+/*	$NetBSD: trap.c,v 1.113.6.5 2008/09/18 04:33:36 wrstuden Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.6.4 2008/06/24 04:15:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113.6.5 2008/09/18 04:33:36 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -284,6 +284,11 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 
 	case T_ARITHFLT|T_USER:
 		sig = SIGFPE;
+		switch (frame->code) {
+		case AFLT_FLTDIV: code = FPE_FLTDIV; break;
+		case AFLT_FLTUND: code = FPE_FLTUND; break;
+		case AFLT_FLTOVF: code = FPE_FLTOVF; break;
+		}
 		break;
 
 	case T_ASTFLT|T_USER:

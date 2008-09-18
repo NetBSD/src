@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.89 2008/01/28 18:35:50 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.89.6.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.89 2008/01/28 18:35:50 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.89.6.1 2008/09/18 04:39:24 wrstuden Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -122,7 +122,7 @@ finalpush(struct puffs_usermount *pu)
 /*ARGSUSED*/
 static void
 puffs_defaulterror(struct puffs_usermount *pu, uint8_t type,
-	int error, const char *str, void *cookie)
+	int error, const char *str, puffs_cookie_t cookie)
 {
 
 	fprintf(stderr, "abort: type %d, error %d, cookie %p (%s)\n",
@@ -458,7 +458,7 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 
 int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
-	void *cookie)
+	puffs_cookie_t cookie)
 {
 	char rp[MAXPATHLEN];
 	ssize_t n;
@@ -671,6 +671,7 @@ puffs_exit(struct puffs_usermount *pu, int force)
 
 	finalpush(pu);
 	puffs__framev_exit(pu);
+	puffs__cc_exit(pu);
 	if (pu->pu_state & PU_HASKQ)
 		close(pu->pu_kq);
 	free(pu);
@@ -832,6 +833,9 @@ puffs__theloop(struct puffs_cc *pcc)
 			free(fio);
 		}
 	}
+
+	if (puffs__cc_restoremain(pu) == -1)
+		warn("cannot restore main context.  impending doom");
 }
 
 int
@@ -840,7 +844,7 @@ puffs_mainloop(struct puffs_usermount *pu)
 	struct puffs_fctrl_io *fio;
 	struct puffs_cc *pcc;
 	struct kevent *curev;
-	int sverrno, rv;
+	int sverrno;
 
 	assert(puffs_getstate(pu) >= PUFFS_STATE_RUNNING);
 
@@ -873,11 +877,22 @@ puffs_mainloop(struct puffs_usermount *pu)
 
 	pu->pu_state |= PU_INLOOP;
 
-	/* Create alternate execution context and jump to it */
-	rv = puffs__cc_create(pu, puffs__theloop, &pcc);
-	if (rv)
+	/*
+	 * Create alternate execution context and jump to it.  Note
+	 * that we come "out" of savemain twice.  Where we come out
+	 * of it depends on the architecture.  If the return address is
+	 * stored on the stack, we jump out from puffs_cc_continue(),
+	 * for a register return address from puffs__cc_savemain().
+	 * PU_MAINRESTORE makes sure we DTRT in both cases.
+	 */
+	if (puffs__cc_create(pu, puffs__theloop, &pcc) == -1) {
 		goto out;
-	puffs_cc_continue(pcc);
+	}
+	if (puffs__cc_savemain(pu) == -1) {
+		goto out;
+	}
+	if ((pu->pu_state & PU_MAINRESTORE) == 0)
+		puffs_cc_continue(pcc);
 
 	finalpush(pu);
 	errno = 0;

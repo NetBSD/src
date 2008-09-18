@@ -1,4 +1,4 @@
-.\"	$NetBSD: printcap.5,v 1.22 2006/01/21 23:36:31 wiz Exp $
+.\"	$NetBSD: printcap.5,v 1.22.24.1 2008/09/18 04:38:09 wrstuden Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)printcap.5	8.2 (Berkeley) 12/11/93
 .\"
-.Dd January 20, 2006
+.Dd July 18, 2008
 .Dt PRINTCAP 5
 .Os
 .Sh NAME
@@ -180,6 +180,7 @@ filter is invoked with arguments:
 .Fl l Ns Ar length
 .Fl i Ns Ar indent
 .Fl n Ar login
+.Op Fl j Ar jobname
 .Fl h Ar host acct-file
 .Ed
 .Pp
@@ -206,6 +207,10 @@ and
 .Fl h
 parameters specify the login name and host name of the owner
 of the job respectively.
+The
+.Fl j
+parameter is optional and specifies the name of the print
+job if available.
 The
 .Ar acct-file
 option is passed from the
@@ -241,6 +246,7 @@ All other filters are called as:
 .Fl x Ns Ar width
 .Fl y Ns Ar length
 .Fl n Ar login
+.Op Fl j Ar jobname
 .Fl h Ar host acct-file
 .Ed
 .Pp

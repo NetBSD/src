@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.905.2.3 2008/07/21 19:13:45 wrstuden Exp $
+#	$NetBSD: files,v 1.905.2.4 2008/09/18 04:36:46 wrstuden Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -109,6 +109,10 @@ defparam opt_pax.h		PAX_MPROTECT
 defflag	opt_fileassoc.h		FILEASSOC
 
 defflag	opt_gre.h		GRE_DEBUG
+
+# Write Ahead Physical Block Logging
+defflag opt_wapbl.h		WAPBL WAPBL_DEBUG
+defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
 
 # compatibility options
 #
@@ -262,6 +266,7 @@ include "conf/majors"
 define	audiobus	{ }
 define	midibus		{ }
 define	midisyn
+define	videobus	{ }
 define	ata	        {[channel = -1]}
 define	sata
 define	scsi_core
@@ -292,6 +297,11 @@ attach	midi at midibus
 # console bell via audio device
 #
 define	audiobell
+
+# video devices, attaches to video hardware driver
+#
+device	video
+attach	video at videobus
 
 # I2C device support
 include "dev/i2c/files.i2c"
@@ -1068,8 +1078,8 @@ define	fwbus	{ }			# IEEE 1394 attachment
 define	vmebus	{ }			# VME bus attachment
 define	acpibus	{ }			# ACPI "bus" attachment
 define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA bus attachment
-define	cbbus	{[slot = -1]}		# CardBus attachment
-define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
+define	cbbus	{ }			# CardBus attachment
+define	pcmciaslot { }			# PCMCIA slot itself
 
 # We need the USB bus controllers here so different busses can
 # use them in an 'attach-with'.
@@ -1217,6 +1227,12 @@ defpseudo clockctl
 defpseudo irix_kmem
 defpseudo irix_usema
 
+#
+# Accept filters.  XXX should use another registration/initialization method.
+#
+defpseudo accf_data
+defpseudo accf_http
+
 # ISDN userland pseudo devices
 #
 defpseudo isdntrc:	isdndev, tty
@@ -1329,6 +1345,7 @@ file	dev/radio.c			radio			needs-flag
 file	dev/rnd.c			rnd			needs-flag
 file	dev/rndpool.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
+file	dev/video.c			video			needs-flag
 file	dev/vnd.c			vnd			needs-flag
 file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
@@ -1456,6 +1473,7 @@ file	kern/tty_pty.c			pty 			needs-flag
 file	kern/tty_ptm.c			pty
 file	kern/tty_subr.c
 file	kern/tty_tty.c
+file	kern/uipc_accf.c		inet
 file	kern/uipc_domain.c
 file	kern/uipc_mbuf.c
 file	kern/uipc_mbuf2.c
@@ -1474,10 +1492,10 @@ file	kern/vfs_init.c
 file	kern/vfs_lockf.c
 file	kern/vfs_lookup.c
 file	kern/vfs_subr.c
-file	kern/vfs_subr2.c
 file	kern/vfs_syscalls.c
 file	kern/vfs_trans.c
 file	kern/vfs_vnops.c
+file	kern/vfs_wapbl.c		wapbl
 file	kern/vfs_xattr.c
 file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c
@@ -1533,6 +1551,8 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
+file	netinet/accf_data.c		inet & accf_data
+file	netinet/accf_http.c		inet & accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm

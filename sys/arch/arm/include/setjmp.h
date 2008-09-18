@@ -1,14 +1,10 @@
-/*	$NetBSD: setjmp.h,v 1.2 2001/08/25 14:45:59 bjh21 Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.2.134.1 2008/09/18 04:33:21 wrstuden Exp $	*/
 
 /*
  * machine/setjmp.h: machine dependent setjmp-related information.
  */
 
-#ifdef __ELF__
 #define	_JBLEN	64		/* size, in longs, of a jmp_buf */
-#else
-#define	_JBLEN	29		/* size, in longs, of a jmp_buf */
-#endif
 
 /*
  * NOTE: The internal structure of a jmp_buf is *PRIVATE*

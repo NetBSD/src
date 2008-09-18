@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 2008/04/27 18:58:44 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.11.2.1 2008/09/18 04:33:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,15 +39,7 @@
 
 #include <arm/cdefs.h>
 
-#ifdef __ELF__
-# define _C_LABEL(x)	x
-#else
-# ifdef __STDC__
-#  define _C_LABEL(x)	_ ## x
-# else
-#  define _C_LABEL(x)	_/**/x
-# endif
-#endif
+#define _C_LABEL(x)	x
 #define	_ASM_LABEL(x)	x
 
 #ifdef __STDC__
@@ -80,13 +72,8 @@
 #define	_END(x)		.size x,.-x
 
 #ifdef GPROF
-# ifdef __ELF__
-#  define _PROF_PROLOGUE	\
+# define _PROF_PROLOGUE	\
 	mov ip, lr; bl __mcount
-# else
-#  define _PROF_PROLOGUE	\
-	mov ip,lr; bl mcount
-# endif
 #else
 # define _PROF_PROLOGUE
 #endif
@@ -100,7 +87,7 @@
 
 #define	ASMSTR		.asciz
 
-#if defined(__ELF__) && defined(PIC)
+#if defined(PIC)
 #ifdef __thumb__
 #define	PLT_SYM(x)	x
 #define	GOT_SYM(x)	PIC_SYM(x, GOTOFF)
@@ -137,19 +124,13 @@
 #define	GOT_INIT(got,gotsym,pclabel)
 #define	GOT_INITSYM(gotsym,pclabel)
 #define	PIC_SYM(x,y)	x
-#endif	/* ELF && PIC */
+#endif	/* PIC */
 
-#ifdef __ELF__
-#define RCSID(x)	.section ".ident"; .asciz x
-#else
-#define RCSID(x)	.text; .asciz x
-#endif
+#define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
 
-#ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#endif
 
 /*
  * STRONG_ALIAS: create a strong alias.
@@ -158,19 +139,9 @@
 	.globl alias;							\
 	alias = sym
 
-#ifdef __STDC__
-#define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg ## ,30,0,0,0 ;					\
-	.stabs __STRING(_C_LABEL(sym)) ## ,1,0,0,0
-#elif defined(__ELF__)
 #define	WARN_REFERENCES(sym,msg)					\
 	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(sym),1,0,0,0
-#else
-#define	WARN_REFERENCES(sym,msg)					\
-	.stabs msg,30,0,0,0 ;						\
-	.stabs __STRING(_/**/sym),1,0,0,0
-#endif /* __STDC__ */
+	.stabs __STRING(_C_LABEL(sym)),1,0,0,0
 
 #ifdef __thumb__
 # define XPUSH		push

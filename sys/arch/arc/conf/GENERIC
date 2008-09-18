@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.152 2007/12/31 15:31:48 ad Exp $
+# $NetBSD: GENERIC,v 1.152.12.1 2008/09/18 04:33:18 wrstuden Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.152 $"
+#ident		"GENERIC-$Revision: 1.152.12.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -38,6 +38,9 @@ options 	PLATFORM_NEC_R96	# NEC Express RISCserver, RISCserver 2200
 options 	PLATFORM_NEC_RAX94		# NEC RISCstation 2200 PCI
 options 	PLATFORM_NEC_RD94		# NEC RISCstation 2250
 options 	PLATFORM_SNI_RM200PCI
+
+# CPU related options
+makeoptions	CPUFLAGS="-march=mips3 -mabi=32"
 
 # Standard system options
 
@@ -119,6 +122,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -438,6 +442,11 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

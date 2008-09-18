@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2005/06/05 18:56:51 chs Exp $
+#	$NetBSD: Makefile,v 1.2.24.1 2008/09/18 04:41:09 wrstuden Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -19,6 +19,6 @@ MDSET_POST = \
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
 release::
-	${RELEASE_INSTALL} ${LIF} ${RELEASEDIR}/${MACHINE}/installation
+	${RELEASE_INSTALL} ${LIF} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 
 .include <bsd.prog.mk>

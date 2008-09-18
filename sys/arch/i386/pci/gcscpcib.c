@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcib.c,v 1.4 2008/01/09 15:44:33 xtraeme Exp $ */
+/* $NetBSD: gcscpcib.c,v 1.4.20.1 2008/09/18 04:33:28 wrstuden Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  * AMD CS5535/CS5536 series LPC bridge also containing timer, watchdog and GPIO.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.4 2008/01/09 15:44:33 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.4.20.1 2008/09/18 04:33:28 wrstuden Exp $");
 
 #include "gpio.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.4 2008/01/09 15:44:33 xtraeme Exp $")
 #include <dev/sysmon/sysmonvar.h>
 
 #include <arch/i386/pci/gcscpcibreg.h>
+#include <arch/x86/pci/pcibvar.h>
 
 /* define if you need to select MFGPT for watchdog manually (0-5). */
 /* #define AMD553X_WDT_FORCEUSEMFGPT 	0 */
@@ -73,8 +74,9 @@ __KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.4 2008/01/09 15:44:33 xtraeme Exp $")
 #define AMD553X_WDT_COUNTMAX	(0xffff / AMD553X_WDT_TICK)
 
 struct gcscpcib_softc {
-	pci_chipset_tag_t	sc_pc;
-	pcitag_t		sc_pcitag; 
+	/* we call pcibattach() which assumes softc starts like this: */
+	struct pcib_softc	sc_pcib;
+
 	pcireg_t		sc_pirqrc;
 
 	struct timecounter	sc_timecounter;
@@ -106,9 +108,6 @@ static void	gcscpcib_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(gcscpcib, sizeof(struct gcscpcib_softc),
 	gcscpcib_match, gcscpcib_attach, NULL, NULL);
-
-/* from arch/<*>/pci/pcib.c */
-void		pcibattach(device_t, device_t, void *aux);
 
 static u_int	gcscpcib_get_timecount(struct timecounter *tc);
 static int	gscspcib_scan_mfgpt(struct gcscpcib_softc *sc);
@@ -157,8 +156,8 @@ gcscpcib_attach(device_t parent, device_t self, void *aux)
 	int i, gpio;
 #endif
 
-	sc->sc_pc = pa->pa_pc;
-	sc->sc_pcitag = pa->pa_tag;
+	sc->sc_pcib.sc_pc = pa->pa_pc;
+	sc->sc_pcib.sc_tag = pa->pa_tag;
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_gpio_iot = pa->pa_iot;
 

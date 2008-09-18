@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi_quirks.c,v 1.15 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: umidi_quirks.c,v 1.15.2.1 2008/09/18 04:35:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.15 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi_quirks.c,v 1.15.2.1 2008/09/18 04:35:12 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,12 +74,13 @@ int	umidiquirkdebug = 1;
  *  --- this is a typical yamaha device, but has a broken descriptor :-<
  */
 
-UMQ_FIXED_EP_DEF(YAMAHA, YAMAHA_UX256, ANYIFACE, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(YAMAHA, YAMAHA_UX256, ANYIFACE, 1, 1) = {
 	/* out */
 	{ 0, 16 },
 	/* in */
 	{ 1, 8 }
 };
+UMQ_FIXED_EP_DEF(YAMAHA, YAMAHA_UX256, ANYIFACE, 1, 1);
 
 UMQ_DEF(YAMAHA, YAMAHA_UX256, ANYIFACE) = {
 	UMQ_FIXED_EP_REG(YAMAHA, YAMAHA_UX256, ANYIFACE),
@@ -102,12 +103,13 @@ UMQ_DEF(YAMAHA, ANYPRODUCT, ANYIFACE) = {
 /*
  * ROLAND UM-1
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM1, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UM1, 2, 1, 1) = {
 	/* out */
 	{ 0, 1 },
 	/* in */
 	{ 1, 1 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM1, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UM1, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UM1, 2),
@@ -117,12 +119,13 @@ UMQ_DEF(ROLAND, ROLAND_UM1, 2) = {
 /*
  * ROLAND SC-8850
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SC8850, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_SC8850, 2, 1, 1) = {
 	/* out */
 	{ 0, 6 },
 	/* in */
 	{ 1, 6 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SC8850, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_SC8850, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SC8850, 2),
@@ -132,12 +135,13 @@ UMQ_DEF(ROLAND, ROLAND_SC8850, 2) = {
 /*
  * ROLAND SD-90
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SD90, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_SD90, 2, 1, 1) = {
 	/* out */
 	{ 0, 4 },
 	/* in */
 	{ 1, 4 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SD90, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_SD90, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SD90, 2),
@@ -148,12 +152,13 @@ UMQ_DEF(ROLAND, ROLAND_SD90, 2) = {
 /*
  * ROLAND UM-880 (native mode)
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM880N, 0, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UM880N, 0, 1, 1) = {
 	/* out */
 	{ 0, 9 },
 	/* in */
 	{ 1, 9 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM880N, 0, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UM880N, 0) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UM880N, 0),
@@ -163,12 +168,13 @@ UMQ_DEF(ROLAND, ROLAND_UM880N, 0) = {
 /*
  * ROLAND UA-100
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA100, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UA100, 2, 1, 1) = {
 	/* out */
 	{ 0, 3 },
 	/* in */
 	{ 1, 3 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA100, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UA100, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA100, 2),
@@ -178,12 +184,13 @@ UMQ_DEF(ROLAND, ROLAND_UA100, 2) = {
 /*
  * ROLAND UM-4
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM4, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UM4, 2, 1, 1) = {
 	/* out */
 	{ 0, 4 },
 	/* in */
 	{ 1, 4 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM4, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UM4, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UM4, 2),
@@ -193,12 +200,13 @@ UMQ_DEF(ROLAND, ROLAND_UM4, 2) = {
 /*
  * ROLAND U-8
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_U8, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_U8, 2, 1, 1) = {
 	/* out */
 	{ 0, 2 },
 	/* in */
 	{ 1, 2 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_U8, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_U8, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_U8, 2),
@@ -208,12 +216,13 @@ UMQ_DEF(ROLAND, ROLAND_U8, 2) = {
 /*
  * ROLAND UM-2
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM2, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UM2, 2, 1, 1) = {
 	/* out */
 	{ 0, 2 },
 	/* in */
 	{ 1, 2 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM2, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UM2, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UM2, 2),
@@ -223,12 +232,13 @@ UMQ_DEF(ROLAND, ROLAND_UM2, 2) = {
 /*
  * ROLAND SC-8820
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SC8820, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_SC8820, 2, 1, 1) = {
 	/* out */
 	{ 0, 5 }, /* cables 0, 1, 4 only */
 	/* in */
 	{ 1, 5 } /* do. */
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SC8820, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_SC8820, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SC8820, 2),
@@ -238,12 +248,13 @@ UMQ_DEF(ROLAND, ROLAND_SC8820, 2) = {
 /*
  * ROLAND PC-300
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_PC300, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_PC300, 2, 1, 1) = {
 	/* out */
 	{ 0, 1 },
 	/* in */
 	{ 1, 1 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_PC300, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_PC300, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_PC300, 2),
@@ -253,12 +264,13 @@ UMQ_DEF(ROLAND, ROLAND_PC300, 2) = {
 /*
  * ROLAND SK-500
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SK500, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_SK500, 2, 1, 1) = {
 	/* out */
 	{ 0, 5 }, /* cables 0, 1, 4 only */
 	/* in */
 	{ 1, 5 } /* do. */
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SK500, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_SK500, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SK500, 2),
@@ -268,12 +280,13 @@ UMQ_DEF(ROLAND, ROLAND_SK500, 2) = {
 /*
  * ROLAND SC-D70
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SCD70, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_SCD70, 2, 1, 1) = {
 	/* out */
 	{ 0, 3 },
 	/* in */
 	{ 1, 3 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SCD70, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_SCD70, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SCD70, 2),
@@ -283,12 +296,13 @@ UMQ_DEF(ROLAND, ROLAND_SCD70, 2) = {
 /*
  * ROLAND XV-5050
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_XV5050, 0, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_XV5050, 0, 1, 1) = {
 	/* out */
 	{ 0, 1 },
 	/* in */
 	{ 1, 1 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_XV5050, 0, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_XV5050, 0) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_XV5050, 0),
@@ -298,12 +312,13 @@ UMQ_DEF(ROLAND, ROLAND_XV5050, 0) = {
 /*
  * ROLAND UM-550
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM550, 0, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UM550, 0, 1, 1) = {
 	/* out */
 	{ 0, 6 },
 	/* in */
 	{ 1, 6 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM550, 0, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UM550, 0) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UM550, 0),
@@ -313,12 +328,13 @@ UMQ_DEF(ROLAND, ROLAND_UM550, 0) = {
 /*
  * ROLAND SD-20
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SD20, 0, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_SD20, 0, 1, 1) = {
 	/* out */
 	{ 0, 2 },
 	/* in */
 	{ 1, 3 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SD20, 0, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_SD20, 0) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SD20, 0),
@@ -328,12 +344,13 @@ UMQ_DEF(ROLAND, ROLAND_SD20, 0) = {
 /*
  * ROLAND SD-80
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SD80, 0, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_SD80, 0, 1, 1) = {
 	/* out */
 	{ 0, 4 },
 	/* in */
 	{ 1, 4 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SD80, 0, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_SD80, 0) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SD80, 0),
@@ -343,12 +360,13 @@ UMQ_DEF(ROLAND, ROLAND_SD80, 0) = {
 /*
  * ROLAND UA-700
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA700, 3, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UA700, 3, 1, 1) = {
 	/* out */
 	{ 0, 2 },
 	/* in */
 	{ 1, 2 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA700, 3, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UA700, 3) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA700, 3),
@@ -358,12 +376,13 @@ UMQ_DEF(ROLAND, ROLAND_UA700, 3) = {
 /*
  * ROLAND UA-1000
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA1000, 3, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UA1000, 3, 1, 1) = {
 	/* out */
 	{ 0, 2 },
 	/* in */
 	{ 1, 2 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA1000, 3, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UA1000, 3) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA1000, 3),
@@ -373,24 +392,26 @@ UMQ_DEF(ROLAND, ROLAND_UA1000, 3) = {
 /*
  * ROLAND UA-101
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA101, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UA101, 2, 1, 1) = {
 	/* out */
 	{ 0, 2 },
 	/* in */
 	{ 1, 2 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA101, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UA101, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA101, 2),
 	UMQ_TERMINATOR
 };
 
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA101F, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UA101F, 2, 1, 1) = {
 	/* out */
 	{ 0, 2 },
 	/* in */
 	{ 1, 2 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA101F, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UA101F, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA101F, 2),
@@ -400,12 +421,13 @@ UMQ_DEF(ROLAND, ROLAND_UA101F, 2) = {
 /*
  * ROLAND Fantom-X
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_FANTOMX, 0, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_FANTOMX, 0, 1, 1) = {
 	/* out */
 	{ 0, 1 },
 	/* in */
 	{ 1, 1 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_FANTOMX, 0, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_FANTOMX, 0) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_FANTOMX, 0),
@@ -415,12 +437,13 @@ UMQ_DEF(ROLAND, ROLAND_FANTOMX, 0) = {
 /*
  * ROLAND PCR
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_PCR, 0, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_PCR, 0, 1, 1) = {
 	/* out */
 	{ 0, 3 },
 	/* in */
 	{ 1, 3 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_PCR, 0, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_PCR, 0) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_PCR, 0),
@@ -430,12 +453,13 @@ UMQ_DEF(ROLAND, ROLAND_PCR, 0) = {
 /*
  * ROLAND UM-3EX
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM3, 0, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UM3, 0, 1, 1) = {
 	/* out */
 	{ 0, 3 },
 	/* in */
 	{ 1, 3 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UM3, 0, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UM3, 0) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UM3, 0),
@@ -445,12 +469,13 @@ UMQ_DEF(ROLAND, ROLAND_UM3, 0) = {
 /*
  * ROLAND UA-25
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA25, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UA25, 2, 1, 1) = {
 	/* out */
 	{ 0, 1 },
 	/* in */
 	{ 1, 1 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA25, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UA25, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA25, 2),
@@ -460,12 +485,13 @@ UMQ_DEF(ROLAND, ROLAND_UA25, 2) = {
 /*
  * ROLAND UA-4FX
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA4FX, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_UA4FX, 2, 1, 1) = {
 	/* out */
 	{ 0, 1 },
 	/* in */
 	{ 1, 1 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_UA4FX, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_UA4FX, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_UA4FX, 2),
@@ -475,12 +501,13 @@ UMQ_DEF(ROLAND, ROLAND_UA4FX, 2) = {
 /*
  * ROLAND SonicCell
  */
-UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SONICCELL, 2, 1, 1) = {
+UMQ_FIXED_EP_DATA_DEF(ROLAND, ROLAND_SONICCELL, 2, 1, 1) = {
 	/* out */
 	{ 0, 1 },
 	/* in */
 	{ 1, 1 }
 };
+UMQ_FIXED_EP_DEF(ROLAND, ROLAND_SONICCELL, 2, 1, 1);
 
 UMQ_DEF(ROLAND, ROLAND_SONICCELL, 2) = {
 	UMQ_FIXED_EP_REG(ROLAND, ROLAND_SONICCELL, 2),
@@ -506,17 +533,24 @@ UMQ_DEF(ROLAND, ROLAND_SONICCELL, 2) = {
  * on the other), and then the fixed mididev-assignment quirk (to match jacks
  * to mididevs so the rmidi devices match the order of the blinkenlights).
  */
-UMQ_FIXED_EP_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE, 2, 1) = {
+UMQ_FIXED_EP_DATA_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE, 2, 1) = {
 	/* out: ep# jacks */
 	{ 2, 2 },
 	{ 4, 2 },
 	/* in: ep# jacks */
 	{ 0, 2 }
 };
+UMQ_FIXED_EP_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE, 2, 1);
+UMQ_FIXED_CN_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE) = {
+	0, 2, 1, 3, 0, 1
+};
+UMQ_FIXED_MD_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE) = {
+	 0, 0, 2, 1, 1, -1, 3, -1
+};
 UMQ_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE) = {
 	UMQ_FIXED_EP_REG(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE),
-	UMQ_CN_FIXED_REG(0, 2, 1, 3, 0, 1),
-	UMQ_MD_FIXED_REG(0, 0, 2, 1, 1, -1, 3, -1),
+	UMQ_FIXED_CN_REG(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE),
+	UMQ_FIXED_MD_REG(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE),
 	UMQ_TYPE(MIDIMAN_GARBLE),
 	UMQ_TERMINATOR
 };
@@ -524,7 +558,7 @@ UMQ_DEF(MIDIMAN, MIDIMAN_MIDISPORT2X4, ANYIFACE) = {
 /*
  * quirk list
  */
-struct umidi_quirk umidi_quirklist[] = {
+static struct umidi_quirk umidi_quirklist[] = {
 	UMQ_REG(YAMAHA, YAMAHA_UX256, ANYIFACE),
 	UMQ_REG(YAMAHA, ANYPRODUCT, ANYIFACE),
 	UMQ_REG(ROLAND, ROLAND_UM1, 2),
@@ -562,11 +596,11 @@ struct umidi_quirk umidi_quirklist[] = {
  * quirk utilities
  */
 
-struct umidi_quirk *
+const struct umidi_quirk *
 umidi_search_quirk(int vendor, int product, int ifaceno)
 {
 	struct umidi_quirk *p;
-	struct umq_data *q;
+	const struct umq_data *q;
 
 	DPRINTF(("umidi_search_quirk: v=%d, p=%d, i=%d\n",
 		 vendor, product, ifaceno));
@@ -602,9 +636,9 @@ static const char *quirk_name[] = {
 };
 
 void
-umidi_print_quirk(struct umidi_quirk *q)
+umidi_print_quirk(const struct umidi_quirk *q)
 {
-	struct umq_data *qd;
+	const struct umq_data *qd;
 	if (q) {
 		printf("(");
 		for (qd=q->quirks; qd->type; qd++)
@@ -615,10 +649,10 @@ umidi_print_quirk(struct umidi_quirk *q)
 	}
 }
 
-void *
-umidi_get_quirk_data_from_type(struct umidi_quirk *q, u_int32_t type)
+const void *
+umidi_get_quirk_data_from_type(const struct umidi_quirk *q, u_int32_t type)
 {
-	struct umq_data *qd;
+	const struct umq_data *qd;
 	if (q) {
 		for (qd=q->quirks; qd->type; qd++)
 			if (qd->type == type)

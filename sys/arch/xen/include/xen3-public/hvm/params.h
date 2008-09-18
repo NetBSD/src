@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.3 2008/05/04 19:56:29 cegger Exp $ */
+/* $NetBSD: params.h,v 1.3.2.1 2008/09/18 04:33:39 wrstuden Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -82,6 +82,18 @@
 #define HVMPTM_no_missed_ticks_pending   2
 #define HVMPTM_one_missed_tick_pending   3
 
-#define HVM_NR_PARAMS          11
+/* Boolean: Enable virtual HPET (high-precision event timer)? (x86-only) */
+#define HVM_PARAM_HPET_ENABLED 11
+
+/* Identity-map page directory used by Intel EPT when CR0.PG=0. */
+#define HVM_PARAM_IDENT_PT     12
+
+/* Device Model domain, defaults to 0. */
+#define HVM_PARAM_DM_DOMAIN    13
+
+/* ACPI S state: currently support S0 and S3 on x86. */
+#define HVM_PARAM_ACPI_S_STATE 14
+
+#define HVM_NR_PARAMS          15
 
 #endif /* __XEN_PUBLIC_HVM_PARAMS_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.30 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.30.2.1 2008/09/18 04:35:07 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.30 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.30.2.1 2008/09/18 04:35:07 wrstuden Exp $");
 
 #include "rnd.h"
 
@@ -71,7 +71,7 @@ static int	ld_twe_detach(struct device *, int);
 static int	ld_twe_dobio(struct ld_twe_softc *, void *, int, int, int,
 			     struct buf *);
 static int	ld_twe_dump(struct ld_softc *, void *, int, int);
-static int	ld_twe_flush(struct ld_softc *);
+static int	ld_twe_flush(struct ld_softc *, int);
 static void	ld_twe_handler(struct twe_ccb *, int);
 static int	ld_twe_match(struct device *, struct cfdata *, void *);
 static int	ld_twe_start(struct ld_softc *, struct buf *);
@@ -274,7 +274,7 @@ ld_twe_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 }
 
 static int
-ld_twe_flush(struct ld_softc *ld)
+ld_twe_flush(struct ld_softc *ld, int flags)
 {
 	struct ld_twe_softc *sc = (void *) ld;
 	struct twe_softc *twe = (void *) device_parent(&ld->sc_dv);
@@ -287,9 +287,6 @@ ld_twe_flush(struct ld_softc *ld)
 
 	ccb->ccb_data = NULL;
 	ccb->ccb_datasize = 0;
-	ccb->ccb_tx.tx_handler = twe_ccb_wait_handler;
-	ccb->ccb_tx.tx_context = NULL;
-	ccb->ccb_tx.tx_dv = &ld->sc_dv;
 
 	tc = ccb->ccb_cmd;
 	tc->tc_size = 2;
@@ -297,14 +294,31 @@ ld_twe_flush(struct ld_softc *ld)
 	tc->tc_unit = sc->sc_hwunit;
 	tc->tc_count = 0;
 
-	rv = 0;
-	twe_ccb_enqueue(twe, ccb);
-	s = splbio();
-	while ((ccb->ccb_flags & TWE_CCB_COMPLETE) == 0)
-		if ((rv = tsleep(ccb, PRIBIO, "tweflush", 60 * hz)) != 0)
-			break;
-	twe_ccb_free(twe, ccb);
-	splx(s);
+	if (flags & LDFL_POLL) {
+		/*
+		 * Polled commands must not sit on the software queue.  Wait
+		 * up to 2 seconds for the command to complete.
+		 */
+		s = splbio();
+		rv = twe_ccb_poll(twe, ccb, 2000);
+		twe_ccb_unmap(twe, ccb);
+		twe_ccb_free(twe, ccb);
+		splx(s);
+	} else {
+		ccb->ccb_tx.tx_handler = twe_ccb_wait_handler;
+		ccb->ccb_tx.tx_context = NULL;
+		ccb->ccb_tx.tx_dv = &ld->sc_dv;
+		twe_ccb_enqueue(twe, ccb);
+
+		rv = 0;
+		s = splbio();
+		while ((ccb->ccb_flags & TWE_CCB_COMPLETE) == 0)
+			if ((rv = tsleep(ccb, PRIBIO, "tweflush",
+			    60 * hz)) != 0)
+				break;
+		twe_ccb_free(twe, ccb);
+		splx(s);
+	}
 
 	return (rv);
 }

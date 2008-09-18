@@ -1,4 +1,4 @@
-/*	$NetBSD: vme.c,v 1.14 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: vme.c,v 1.14.2.1 2008/09/18 04:33:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.14 2008/04/28 20:23:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme.c,v 1.14.2.1 2008/09/18 04:33:36 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,13 +74,13 @@ static int  vme_match(struct device *, struct cfdata *, void *);
 static void vme_attach(struct device *, struct device *, void *);
 
 struct vme_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t	sc_dmatag;
 	int		sc_bustype;
 };
 
-CFATTACH_DECL(vme, sizeof(struct vme_softc),
+CFATTACH_DECL_NEW(vme, sizeof(struct vme_softc),
     vme_match, vme_attach, NULL, NULL);
 
 static int vme_bus_map(bus_space_tag_t, bus_type_t, bus_addr_t, bus_size_t,
@@ -106,34 +106,36 @@ static struct sun68k_bus_space_tag vme_space_tag = {
 static struct sun68k_bus_dma_tag vme_dma_tag;
 
 static int 
-vme_match(struct device *parent, struct cfdata *cf, void *aux)
+vme_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct confargs *ca = aux;
 	int unit;
 
 	if (cpu_has_vme == 0)
-		return (0);
+		return 0;
 
 	unit = cf->cf_unit;
 	if (unit >= VME_UNITS)
-		return (0);
+		return 0;
 
 	if (ca->ca_bustype != vme_info[unit].bustype)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void 
-vme_attach(struct device *parent, struct device *self, void *args)
+vme_attach(device_t parent, device_t self, void *args)
 {
 	struct confargs *ca = aux;
-	struct vme_softc *sc = (void *)self;
+	struct vme_softc *sc = device_private(self);
 	struct confargs vmea;
 	int unit;
 
+	sc->sc_dev = self;
+
 	unit = device_unit(self);
-	printf(": (%s)\n", vme_info[unit].name);
+	aprint_normal(": (%s)\n", vme_info[unit].name);
 
 	sc->sc_bustag = ca->ca_bustag;
 	sc->sc_dmatag = ca->ca_dmatag;

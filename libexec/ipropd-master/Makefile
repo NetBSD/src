@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2008/04/10 14:26:33 tsutsui Exp $
+# $NetBSD: Makefile,v 1.2.4.1 2008/09/18 04:39:17 wrstuden Exp $
 
 NOLINT=		# defined
 
@@ -26,7 +26,7 @@ CPPFLAGS+= -I.					\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.server.c+=	-Wno-pointer-sign
 .endif
 

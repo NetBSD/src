@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.20 2007/12/16 19:10:58 pooka Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.20.6.1 2008/09/18 04:39:24 wrstuden Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -48,7 +48,8 @@
 .Fc
 .Ft int
 .Fo puffs_fs_nodetofh
-.Fa "struct puffs_usermount *pu" "void *cookie" "void *fid" "size_t *fidsize"
+.Fa "struct puffs_usermount *pu" "puffs_cooie_t cookie" "void *fid"
+.Fa "size_t *fidsize"
 .Fc
 .Ft void
 .Fn puffs_fs_suspend "struct puffs_usermount *pu" "int status"
@@ -58,130 +59,134 @@
 .Fc
 .Ft int
 .Fo puffs_node_lookup
-.Fa "struct puffs_usermount *pu" "void *opc" "struct puffs_newinfo *pni"
-.Fa "const struct puffs_cn *pcn"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "struct puffs_newinfo *pni" "const struct puffs_cn *pcn"
 .Fc
 .Ft int
 .Fo puffs_node_create
-.Fa "struct puffs_usermount *pu" "void *opc" "struct puffs_newinfo *pni"
-.Fa "const struct puffs_cn *pcn" "const struct vattr *vap"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "struct puffs_newinfo *pni" "const struct puffs_cn *pcn"
+.Fa "const struct vattr *vap"
 .Fc
 .Ft int
 .Fo puffs_node_mknod
-.Fa "struct puffs_usermount *pu" "void *opc" "struct puffs_newinfo *pni"
-.Fa "const struct puffs_cn *pcn" "const struct vattr *vap"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "struct puffs_newinfo *pni" "const struct puffs_cn *pcn"
+.Fa "const struct vattr *vap"
 .Fc
 .Ft int
 .Fo puffs_node_open
-.Fa "struct puffs_usermount *pu" "void *opc" "int mode"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int mode"
 .Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_close
-.Fa "struct puffs_usermount *pu" "void *opc" "int flags"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int flags"
 .Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_access
-.Fa "struct puffs_usermount *pu" "void *opc" "int mode"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int mode"
 .Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_getattr
-.Fa "struct puffs_usermount *pu" "void *opc" "struct vattr *vap"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "struct vattr *vap"
 .Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_setattr
-.Fa "struct puffs_usermount *pu" "void *opc" "const struct vattr *vap"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "const struct vattr *vap"
 .Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_poll
-.Fa "struct puffs_usermount *pu" "void *opc" "int *events"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int *events"
 .Fc
 .Ft int
 .Fo puffs_node_mmap
-.Fa "struct puffs_usermount *pu" "void *opc" "int flags"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int flags"
 .Fa "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_fsync
-.Fa "struct puffs_usermount *pu" "void *opc" "const struct puffs_cred *pcr"
-.Fa "int flags" "off_t offlo" "off_t offhi"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "const struct puffs_cred *pcr" "int flags" "off_t offlo" "off_t offhi"
 .Fc
 .Ft int
 .Fo puffs_node_seek
-.Fa "struct puffs_usermount *pu" "void *opc" "off_t oldoff" "off_t newoff"
-.Fa "const struct puffs_cred *pcr"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "off_t oldoff"
+.Fa "off_t newoff" "const struct puffs_cred *pcr"
 .Fc
 .Ft int
 .Fo puffs_node_remove
-.Fa "struct puffs_usermount *pu" "void *opc" "void *targ"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "puffs_cookie_t targ"
 .Fa "const struct puffs_cn *pcn"
 .Fc
 .Ft int
 .Fo puffs_node_link
-.Fa "struct puffs_usermount *pu" "void *opc" "void *targ"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "puffs_cookie_t targ"
 .Fa "const struct puffs_cn *pcn"
 .Fc
 .Ft int
 .Fo puffs_node_rename
-.Fa "struct puffs_usermount *pu" "void *opc" "void *src"
-.Fa "const struct puffs_cn *pcn_src" "void *targ_dir" "void *targ"
-.Fa "const struct puffs_cn *pcn_targ"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "puffs_cookie_t src"
+.Fa "const struct puffs_cn *pcn_src" "puffs_cookie_t targ_dir"
+.Fa "puffs_cookie_t targ" "const struct puffs_cn *pcn_targ"
 .Fc
 .Ft int
 .Fo puffs_node_mkdir
-.Fa "struct puffs_usermount *pu" "void *opc" "struct puffs_newinfo *pni"
-.Fa "const struct puffs_cn *pcn" "const struct vattr *vap"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "struct puffs_newinfo *pni" "const struct puffs_cn *pcn"
+.Fa "const struct vattr *vap"
 .Fc
 .Ft int
 .Fo puffs_node_rmdir
-.Fa "struct puffs_usermount *pu" "void *opc" "void *targ"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "puffs_cookie_t targ"
 .Fa "const struct puffs_cn *pcn"
 .Fc
 .Ft int
 .Fo puffs_node_readdir
-.Fa "struct puffs_usermount *pu" "void *opc" "struct dirent *dent"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "struct dirent *dent"
 .Fa "off_t *readoff" "size_t *reslen" "const struct puffs_cred *pcr"
 .Fa "int *eofflag" "off_t *cookies" "size_t *ncookies"
 .Fc
 .Ft int
 .Fo puffs_node_symlink
-.Fa "struct puffs_usermount *pu" "void *opc" "struct puffs_newinfo *pni"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "struct puffs_newinfo *pni"
 .Fa "const struct puffs_cn *pcn_src" "const struct vattr *vap"
 .Fa "const char *link_target"
 .Fc
 .Ft int
 .Fo puffs_node_readlink
-.Fa "struct puffs_usermount *pu" "void *opc" "const struct puffs_cred *pcr"
-.Fa "char *link" "size_t *linklen"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
+.Fa "const struct puffs_cred *pcr" "char *link" "size_t *linklen"
 .Fc
 .Ft int
 .Fo puffs_node_read
-.Fa "struct puffs_usermount *pu" "void *opc" "uint8_t *buf"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "uint8_t *buf"
 .Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
 .Fc
 .Ft int
 .Fo puffs_node_write
-.Fa "struct puffs_usermount *pu" "void *opc" "uint8_t *buf"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "uint8_t *buf"
 .Fa "off_t offset" "size_t *resid" "const struct puffs_cred *pcr" "int ioflag"
 .Fc
 .Ft int
-.Fn puffs_node_print "struct puffs_usermount *pu" "void *opc"
+.Fn puffs_node_print "struct puffs_usermount *pu" "puffs_cookie_t opc"
 .Ft int
 .Fo puffs_node_reclaim
-.Fa "struct puffs_usermount *pu" "void *opc"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
 .Fc
 .Ft int
 .Fo puffs_node_inactive
-.Fa "struct puffs_usermount *pu" "void *opc"
+.Fa "struct puffs_usermount *pu" "puffs_cookie_t opc"
 .Fc
 .Ft void
 .Fn puffs_setback "struct puffs_cc *pcc" "int op"
 .Ft void
-.Fn puffs_newinfo_setcookie "struct puffs_newinfo *pni" "void *cookie"
+.Fn puffs_newinfo_setcookie "struct puffs_newinfo *pni" "puffs_cookie_t cookie"
 .Ft void
 .Fn puffs_newinfo_setvtype "struct puffs_newinfo *pni" "enum vtype vtype"
 .Ft void

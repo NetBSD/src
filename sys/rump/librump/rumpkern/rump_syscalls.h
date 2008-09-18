@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.7.4.4 2008/06/23 04:32:02 wrstuden Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.7.4.5 2008/09/18 04:37:04 wrstuden Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -19,17 +19,23 @@ int rump_sys_mknod(const char *, mode_t, dev_t, int *);
 int rump_sys_chmod(const char *, mode_t, int *);
 int rump_sys_chown(const char *, uid_t, gid_t, int *);
 int rump_sys_unmount(const char *, int, int *);
-int rump_sys_access(const char *, int, int *);
 int rump_sys_chflags(const char *, u_long, int *);
-int rump_sys_fchflags(int, u_long, int *);
 void rump_sys_sync(int *);
 int rump_sys_symlink(const char *, const char *, int *);
 ssize_t rump_sys_readlink(const char *, char *, size_t, int *);
+int rump_sys_fsync(int, int *);
 int rump_sys_rename(const char *, const char *, int *);
+int rump_sys_mkfifo(const char *, mode_t, int *);
 int rump_sys_mkdir(const char *, mode_t, int *);
 int rump_sys_rmdir(const char *, int *);
+int rump_sys_utimes(const char *, const struct timeval *, int *);
 ssize_t rump_sys_pread(int, void *, size_t, int, off_t, int *);
 ssize_t rump_sys_pwrite(int, const void *, size_t, int, off_t, int *);
 int rump_sys_truncate(const char *, int, off_t, int *);
+int rump_sys___sysctl(const int *, u_int, void *, size_t *, const void *, size_t, int *);
 int rump_sys_lchmod(const char *, mode_t, int *);
 int rump_sys_lchown(const char *, uid_t, gid_t, int *);
+int rump_sys_lutimes(const char *, const struct timeval *, int *);
+int rump_sys_lchflags(const char *, u_long, int *);
+int rump_sys___stat30(const char *, struct stat *, int *);
+int rump_sys___lstat30(const char *, struct stat *, int *);

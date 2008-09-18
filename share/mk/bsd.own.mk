@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.509.2.1 2008/06/23 04:30:03 wrstuden Exp $
+#	$NetBSD: bsd.own.mk,v 1.509.2.2 2008/09/18 04:38:10 wrstuden Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -41,16 +41,20 @@ NEED_OWN_INSTALL_TARGET?=	yes
 TOOLCHAIN_MISSING?=	no
 
 # default to GCC4
-HAVE_GCC?=	4
+.if !defined(HAVE_GCC) && !defined(HAVE_PCC)
+HAVE_GCC=	4
+.endif
 
 # default to GDB6
 HAVE_GDB?=	6
 
 CPPFLAG_ISYSTEM=	-isystem
+.if defined(HAVE_GCC)
 .if ${HAVE_GCC} == 3
 CPPFLAG_ISYSTEMXX=	-isystem-cxx
 .else	# GCC 4
 CPPFLAG_ISYSTEMXX=	-cxx-isystem
+.endif
 .endif
 
 .if empty(.MAKEFLAGS:M-V*)
@@ -175,13 +179,22 @@ SIZE=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-size
 STRIP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-strip
 .endif									#  }
 
-.if ${USETOOLS_GCC:Uyes} == "yes"					#  {
+.if defined(HAVE_GCC) && ${USETOOLS_GCC:Uyes} == "yes"			#  {
 CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
 CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
 FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
 OBJC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 .endif									#  }
+
+.if defined(HAVE_PCC) && ${USETOOLS_PCC:Uyes} == "yes"
+CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-pcc
+CPP=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-cpp
+CXX=		false
+FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-f77
+OBJC=		false
+.endif
+
 .endif	# EXTERNAL_TOOLCHAIN						# }
 
 HOST_MKDEP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
@@ -326,7 +339,7 @@ MANDIR?=	/usr/share/man
 MANGRP?=	wheel
 MANOWN?=	root
 MANMODE?=	${NONBINMODE}
-MANINSTALL?=	maninstall catinstall
+MANINSTALL?=	catinstall htmlinstall maninstall
 
 INFODIR?=	/usr/share/info
 INFOGRP?=	wheel
@@ -412,7 +425,7 @@ NOPIC=		# defined
 MKISCSI=	no
 # XXX GCC 4 outputs mcount() calling sequences that try to load values
 # from over 64KB away and this fails to assemble.
-.if ${HAVE_GCC} == 4
+.if defined(HAVE_GCC) && (${HAVE_GCC} == 4)
 NOPROFILE=	# defined
 .endif
 .endif
@@ -478,11 +491,11 @@ MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsd
 .endif
 
 TARGETS+=	all clean cleandir depend dependall includes \
-		install lint obj regress tags html installhtml cleanhtml
+		install lint obj regress tags html
 PHONY_NOTMAIN =	all clean cleandir depend dependall distclean includes \
 		install lint obj regress tags beforedepend afterdepend \
 		beforeinstall afterinstall realinstall realdepend realall \
-		html installhtml cleanhtml subdir-all subdir-install subdir-depend
+		html subdir-all subdir-install subdir-depend
 .PHONY:		${PHONY_NOTMAIN}
 .NOTMAIN:	${PHONY_NOTMAIN}
 
@@ -545,8 +558,9 @@ MK${var}:=	yes
 # MK* options which default to "yes".
 #
 .for var in \
+	MKATF \
 	MKBFD MKBINUTILS \
-	MKCATPAGES MKCRYPTO MKCVS \
+	MKCATPAGES MKCRYPTO MKCOMPLEX MKCVS \
 	MKDOC \
 	MKGCC MKGCCCMDS MKGDB \
 	MKHESIOD MKHTML \
@@ -556,7 +570,8 @@ MK${var}:=	yes
 	MKMAN \
 	MKNLS \
 	MKOBJ \
-	MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
+	MKPAM \
+	MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
 	MKSHARE MKSKEY MKSTATICLIB \
 	MKYP
 ${var}?=	yes
@@ -567,8 +582,10 @@ ${var}?=	yes
 #
 .for var in \
 	MKCRYPTO_IDEA MKCRYPTO_MDC2 MKCRYPTO_RC5 MKDEBUG MKDEBUGLIB \
-	MKMANZ MKMODULAR MKOBJDIRS MKPUFFS MKSOFTFLOAT \
-	MKUNPRIVED MKUPDATE MKX11
+	MKMANZ MKMODULAR MKOBJDIRS \
+	MKPCC MKPCCCMDS \
+	MKPUFFS MKSOFTFLOAT \
+	MKUNPRIVED MKUPDATE MKX11 MKXORG
 ${var}?=no
 .endfor
 
@@ -686,12 +703,16 @@ ${var}?= yes
 #.endfor
 
 #
-# Where X11R6 sources are and where it is installed to.
+# Where X11 sources are and where it is installed to.
 #
 X11SRCDIR?=		/usr/xsrc
 X11SRCDIR.xc?=		${X11SRCDIR}/xfree/xc
 X11SRCDIR.local?=	${X11SRCDIR}/local
+.if ${MKXORG} != "no"
+X11ROOTDIR?=		/usr/X11R7
+.else
 X11ROOTDIR?=		/usr/X11R6
+.endif
 X11BINDIR?=		${X11ROOTDIR}/bin
 X11ETCDIR?=		/etc/X11
 X11FONTDIR?=		${X11ROOTDIR}/lib/X11/fonts
@@ -700,8 +721,74 @@ X11LIBDIR?=		${X11ROOTDIR}/lib/X11
 X11MANDIR?=		${X11ROOTDIR}/man
 X11USRLIBDIR?=		${X11ROOTDIR}/lib
 
-X11DRI?=		no
-X11LOADABLE?=		yes
+#
+# New modular-xorg based builds
+#
+X11SRCDIRMIT?=		${X11SRCDIR}/external/mit
+.for _lib in \
+	FS ICE SM X11 XScrnSaver XTrap Xau Xcomposite Xcursor Xdamage \
+	Xdmcp Xevie Xext Xfixes Xfont Xft Xi Xinerama Xmu Xp Xpm XprintUtil \
+	Xrandr Xrender Xres Xt Xtst Xv XvMC Xxf86dga Xxf86misc Xxf86vm drm \
+	fontenc xkbfile xkbui Xaw lbxutil Xfontcache XprintAppUtil
+X11SRCDIR.${_lib}?=		${X11SRCDIRMIT}/lib${_lib}/dist
+.endfor
+
+.for _proto in \
+	xcmisc xext xf86bigfont bigreqs input kb x fonts fixes scrnsaver \
+	xinerama print render resource record video xf86dga xf86misc \
+	xf86vidmode composite damage trap gl randr fontcache xf86dri
+X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
+.endfor
+
+.for _dir in \
+	xtrans fontconfig expat freetype evieext mkfontscale bdftopcf \
+	xkbcomp xorg-cf-files imake xorg-server xbiff xkbdata \
+	xbitmaps appres xeyes xev xedit sessreg pixman \
+	beforelight bitmap editres makedepend fonttosfnt fslsfonts \
+	fstobdf MesaDemos MesaLib ico iceauth lbxproxy listres lndir \
+	luit xproxymanagementprotocol mkfontdir oclock proxymngr rgb \
+	setxkbmap smproxy twm viewres x11perf xauth xcalc xclipboard \
+	xclock xcmsdb xconsole xcutsel xditview xdpyinfo xdriinfo xdm \
+	xfd xf86dga xfindproxy xfontsel xfwp xgamma xgc xhost xinit \
+	xkill xload xlogo xlsatoms xlsclients xlsfonts xmag xmessage \
+	xmh xmodmap xmore xman xprop xrandr xrdb xrefresh xset \
+	xsetmode xsetpointer xsetroot xsm xstdcmap xvidtune xvinfo \
+	xwininfo xwud xprehashprinterlist xplsprinters xkbprint xkbevd \
+	xterm xwd xfs xfsinfo xphelloworld xtrap xkbutils xkbcomp \
+	xkeyboard-config xinput \
+	font-adobe-100dpi font-adobe-75dpi font-adobe-utopia-100dpi \
+	font-adobe-utopia-75dpi font-adobe-utopia-type1 \
+	font-alias \
+	font-bh-100dpi font-bh-75dpi font-bh-lucidatypewriter-100dpi \
+	font-bh-lucidatypewriter-75dpi font-bh-ttf font-bh-type1 \
+	font-bitstream-100dpi font-bitstream-75dpi font-bitstream-type1 \
+	font-cursor-misc font-daewoo-misc font-dec-misc font-ibm-type1 \
+	font-isas-misc font-jis-misc font-misc-misc font-mutt-misc \
+	font-util ttf-bitstream-vera encodings
+X11SRCDIR.${_dir}?=		${X11SRCDIRMIT}/${_dir}/dist
+.endfor
+
+.for _i in \
+	keyboard mouse vmmouse void
+X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
+.endfor
+
+.for _v in \
+	apm ark ast ati chips cirrus cyrix glint i128 i740 imstt intel \
+	mga neomagic nsc nv radeonhd rendition s3 s3virge savage \
+	siliconmotion sis tdfx tga trident tseng vesa vga via vmware wsfb
+X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
+.endfor
+
+# Default to no old Xserver builds for now
+MKXORG_WITH_XSRC_XSERVER?=	no
+
+.if ${MKXORG} != no
+X11DRI?=			yes
+.endif
+
+X11DRI?=			no
+X11LOADABLE?=			yes
 
 
 #

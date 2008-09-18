@@ -1,4 +1,4 @@
-/*	$NetBSD: wcswidth.c,v 1.3 2005/02/09 21:35:47 kleink Exp $	*/
+/*	$NetBSD: wcswidth.c,v 1.3.26.1 2008/09/18 04:39:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: wcswidth.c,v 1.3 2005/02/09 21:35:47 kleink Exp $");
+__RCSID("$NetBSD: wcswidth.c,v 1.3.26.1 2008/09/18 04:39:22 wrstuden Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -42,13 +42,16 @@ wcswidth(s, n)
 	const wchar_t *s;
 	size_t n;
 {
-	int w;
+	int w, x;
 
 	_DIAGASSERT(s != NULL);
 
 	w = 0;
 	while (n && *s) {
-		w += wcwidth(*s);
+		x = wcwidth(*s);
+		if (x < 0)
+			return -1;
+		w += x;
 		s++;
 		n--;
 	}

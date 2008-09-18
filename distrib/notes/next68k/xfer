@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.6 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: xfer,v 1.6.2.1 2008/09/18 04:41:11 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,6 +38,6 @@ You may want to keep the following information handy:
 .(disp
 IP Address: ftp.NetBSD.org
 Login: anonymous
-Password: \*<your e-mail address\*>
+Password: \*[Lt]your e-mail address\*[Gt]
 Server path: /pub/NetBSD/NetBSD-\*V/\*M/binary/sets
 .disp)

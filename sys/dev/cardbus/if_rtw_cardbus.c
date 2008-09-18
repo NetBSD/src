@@ -1,4 +1,4 @@
-/* $NetBSD: if_rtw_cardbus.c,v 1.25.2.1 2008/06/23 04:31:01 wrstuden Exp $ */
+/* $NetBSD: if_rtw_cardbus.c,v 1.25.2.2 2008/09/18 04:35:02 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.25.2.1 2008/06/23 04:31:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtw_cardbus.c,v 1.25.2.2 2008/09/18 04:35:02 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -137,7 +137,7 @@ struct rtw_cardbus_softc {
 	int			sc_bar_reg;	/* which BAR to use */
 	pcireg_t		sc_bar_val;	/* value of the BAR */
 
-	int			sc_intrline;	/* interrupt line */
+	cardbus_intr_line_t	sc_intrline;	/* interrupt line */
 };
 
 int	rtw_cardbus_match(device_t, struct cfdata *, void *);
@@ -294,7 +294,6 @@ rtw_cardbus_attach(device_t parent, device_t self, void *aux)
 	/* Remember which interrupt line. */
 	csc->sc_intrline = ca->ca_intrline;
 
-	aprint_normal_dev(self, "interrupting at %d\n", csc->sc_intrline);
 	/*
 	 * Finish off the attach.
 	 */
@@ -365,7 +364,7 @@ rtw_cardbus_resume(device_t self PMF_FN_ARGS)
 	    rtw_intr, sc);
 	if (csc->sc_ih == NULL) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to establish interrupt at %d\n", csc->sc_intrline);
+		    "unable to establish interrupt\n");
 		return false;
 	}
 

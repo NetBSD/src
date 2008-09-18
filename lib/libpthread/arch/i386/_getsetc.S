@@ -1,4 +1,4 @@
-/*	$NetBSD: _getsetc.S,v 1.7 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: _getsetc.S,v 1.7.2.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,8 +33,8 @@
 #undef SETC
 
 #define GETC \
-	movl	%gs,  (UC_REGS + _REG_GS * 4)(%ecx)	; \
-	movl	%fs,  (UC_REGS + _REG_FS * 4)(%ecx)	; \
+	movw	%gs,  (UC_REGS + _REG_GS * 4)(%ecx)	; \
+	movw	%fs,  (UC_REGS + _REG_FS * 4)(%ecx)	; \
 	movl	%edi,  (UC_REGS + _REG_EDI * 4)(%ecx)	; \
 	movl	%esi,  (UC_REGS + _REG_ESI * 4)(%ecx)	; \
 	movl	%ebp,  (UC_REGS + _REG_EBP * 4)(%ecx)	; \
@@ -50,8 +50,8 @@
 	jnc	1f					; \
 							; \
 	FPLOAD(%ecx)					; \
-	movl	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
-	movl	(UC_REGS + _REG_FS * 4)(%ecx), %fs	; \
+	movw	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
+	movw	(UC_REGS + _REG_FS * 4)(%ecx), %fs	; \
 	movl	(UC_REGS + _REG_EDI * 4)(%ecx), %edi	; \
 	movl	(UC_REGS + _REG_ESI * 4)(%ecx), %esi	; \
 	movl	(UC_REGS + _REG_EBP * 4)(%ecx), %ebp	; \
@@ -69,9 +69,9 @@
 2:	and 	$_UC_FPU, %eax				; \
 	jz	3f					; \
 	FPLOAD(%ecx)					; \
-3:	movl	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
-	movl	(UC_REGS + _REG_FS * 4)(%ecx), %fs	; \
-	movl	(UC_REGS + _REG_ES * 4)(%ecx), %es	; \
+3:	movw	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
+	movw	(UC_REGS + _REG_FS * 4)(%ecx), %fs	; \
+	movw	(UC_REGS + _REG_ES * 4)(%ecx), %es	; \
 	movl	(UC_REGS + _REG_EDI * 4)(%ecx), %edi	; \
 	movl	(UC_REGS + _REG_ESI * 4)(%ecx), %esi	; \
 	movl	(UC_REGS + _REG_EBP * 4)(%ecx), %ebp	; \
@@ -91,7 +91,7 @@
 	movl	%eax, -24(%edx)				; \
 	movl	(UC_REGS + _REG_EFL * 4)(%ecx), %eax	; \
 	movl	%eax, -28(%edx)				; \
-	movl	(UC_REGS + _REG_SS * 4)(%ecx), %ss	; \
+	movw	(UC_REGS + _REG_SS * 4)(%ecx), %ss	; \
 	leal	-28(%edx), %esp				; \
 	popfl						; \
 	popl	%eax					; \

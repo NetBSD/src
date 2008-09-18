@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD2,v 1.2.22.1 2008/06/23 04:30:19 wrstuden Exp $
+#	$NetBSD: VIRTEX_GSRD2,v 1.2.22.2 2008/09/18 04:33:25 wrstuden Exp $
 #
 # VIRTEX_GSRD2
 #
@@ -101,6 +101,7 @@ file-system 	TMPFS 		# virtual memory file system
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

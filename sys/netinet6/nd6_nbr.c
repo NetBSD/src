@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.86.4.1 2008/06/23 04:31:59 wrstuden Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.86.4.2 2008/09/18 04:37:01 wrstuden Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.86.4.1 2008/06/23 04:31:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.86.4.2 2008/09/18 04:37:01 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -146,7 +146,17 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 			    "(wrong ip6 dst)\n"));
 			goto bad;
 		}
+	} else {
+		/*
+		 * Make sure the source address is from a neighbor's address.
+		 */
+		if (in6ifa_ifplocaladdr(ifp, &saddr6) == NULL) {
+			nd6log((LOG_INFO, "nd6_ns_input: "
+			    "NS packet from non-neighbor\n"));
+			goto bad;
+		}
 	}
+
 
 	if (IN6_IS_ADDR_MULTICAST(&taddr6)) {
 		nd6log((LOG_INFO, "nd6_ns_input: bad NS target (multicast)\n"));
@@ -543,9 +553,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct ifnet *ifp = m->m_pkthdr.rcvif;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_neighbor_advert *nd_na;
-#if 0
 	struct in6_addr saddr6 = ip6->ip6_src;
-#endif
 	struct in6_addr daddr6 = ip6->ip6_dst;
 	struct in6_addr taddr6;
 	int flags;
@@ -632,6 +640,14 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		    "nd6_na_input: duplicate IP6 address %s\n",
 		    ip6_sprintf(&taddr6));
 		goto freeit;
+	}
+	/*
+	 * Make sure the source address is from a neighbor's address.
+	 */
+	if (in6ifa_ifplocaladdr(ifp, &saddr6) == NULL) {
+		nd6log((LOG_INFO, "nd6_ns_input: "
+		    "ND packet from non-neighbor\n"));
+		goto bad;
 	}
 
 	if (lladdr && ((ifp->if_addrlen + 2 + 7) & ~7) != lladdrlen) {

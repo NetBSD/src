@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.25 2007/05/28 15:01:54 blymn Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.25.12.1 2008/09/18 04:39:23 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.25 2007/05/28 15:01:54 blymn Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.25.12.1 2008/09/18 04:39:23 wrstuden Exp $");
 #endif
 #endif				/* not lint */
 
@@ -411,8 +411,9 @@ dontcr:while (outline < destline) {
 #else
 				if ((curscr->lines[outline]->line[outcol].attr
 				    & WA_ATTRIBUTES)
-				    == curscr->wattr ) {
-					if (WCOL(curscr->lines[outline]->line[outcol]) > 0) {
+				    == curscr->wattr) {
+					switch (WCOL(curscr->lines[outline]->line[outcol])) {
+					case 1:
 						__cputwchar(curscr->lines[outline]->line[outcol].ch);
 						__cursesi_putnsp(curscr->lines[outline]->line[outcol].nsp,
 								outline,
@@ -425,6 +426,11 @@ dontcr:while (outline < destline) {
 						    WCOL(curscr->lines[outline]->line[outcol]),
 						    curscr->lines[outline]->line[outcol].ch);
 #endif /* DEBUG */
+					/*FALLTHROUGH*/
+					case 0:
+						break;
+					default:
+						goto nondes;
 					}
 				}
 #endif /* HAVE_WCHAR */

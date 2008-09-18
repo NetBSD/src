@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.80 2007/12/31 15:31:48 ad Exp $
+# $NetBSD: INSTALL,v 1.80.12.1 2008/09/18 04:33:17 wrstuden Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.62 2007/08/20 07:40:29 is Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.67 2008/07/31 07:45:04 simonb Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.80 $"
+#ident 		"GENERIC-$Revision: 1.80.12.1 $"
 
 makeoptions	COPTS="-Os"
 
@@ -108,6 +108,7 @@ file-system 	KERNFS		# kernel data-structure filesystem
 # Filesystem options
 
 #options 	FFS_EI		# FFS Endian Independant support
+options 	WAPBL		# File system journaling support - Experimental
 
 
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

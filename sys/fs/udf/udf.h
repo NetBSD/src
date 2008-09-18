@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.10.24.1 2008/06/23 04:31:50 wrstuden Exp $ */
+/* $NetBSD: udf.h,v 1.10.24.2 2008/09/18 04:36:56 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -64,22 +64,17 @@ extern int udf_verbose;
 #define UDF_DEBUG_EXTATTR	0x002000
 #define UDF_DEBUG_ALLOC		0x004000
 #define UDF_DEBUG_ADWLK		0x008000
-#define UDF_DEBUG_NOTIMPL	0x010000
-#define UDF_DEBUG_SHEDULE	0x020000
-#define UDF_DEBUG_ECCLINE	0x040000
-#define UDF_DEBUG_SYNC		0x080000
-#define UDF_DEBUG_PARANOIA	0x100000
+#define UDF_DEBUG_DIRHASH	0x010000
+#define UDF_DEBUG_NOTIMPL	0x020000
+#define UDF_DEBUG_SHEDULE	0x040000
+#define UDF_DEBUG_ECCLINE	0x080000
+#define UDF_DEBUG_SYNC		0x100000
+#define UDF_DEBUG_PARANOIA	0x200000
+#define UDF_DEBUG_PARANOIDADWLK	0x400000
+#define UDF_DEBUG_NODEDUMP	0x800000
 
 /* initial value of udf_verbose */
 #define UDF_DEBUGGING		0
-
-
-#ifdef DEBUG
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
-#endif /* SYSCTL_SETUP_PROTO */
-#endif
-
 
 #ifdef DEBUG
 #define DPRINTF(name, arg) { \
@@ -121,6 +116,11 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
 #define UDF_ECCBUF_HASHSIZE	(1<<UDF_ECCBUF_HASHBITS)
 #define UDF_ECCBUF_HASHMASK	(UDF_ECCBUF_HASHSIZE -1)
 
+#define UDF_DIRHASH_DEFAULTMEM	(1024*1024)
+#define UDF_DIRHASH_HASHBITS	5
+#define UDF_DIRHASH_HASHSIZE	(1<<UDF_DIRHASH_HASHBITS)
+#define UDF_DIRHASH_HASHMASK	(UDF_DIRHASH_HASHSIZE -1)
+
 #define UDF_ECCLINE_MAXFREE	10			/* picked */
 #define UDF_ECCLINE_MAXBUSY	100			/* picked */
 
@@ -135,7 +135,7 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
 #define UDF_PMAPS		5	/* overkill */
 #define UDF_LVDINT_SEGMENTS	100	/* big overkill */
 #define UDF_LVINT_LOSSAGE	4	/* lose 2 openings */
-#define UDF_MAX_ALLOC_EXTENTS	10	/* overkill */
+#define UDF_MAX_ALLOC_EXTENTS	50	/* overkill */
 
 
 /* constants */
@@ -147,14 +147,14 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
 
 
 /* RW content hint for allocation and other purposes */
-#define UDF_C_PROCESSED	 0	/* not relevant */
-#define UDF_C_USERDATA	 1	/* all but userdata is metadata */
-//#define UDF_C_METADATA	 2	/* unspecified metadata */
-#define UDF_C_DSCR	 3	/* update sectornr and CRC */
-#define UDF_C_NODE	 4	/* file/dir node, update sectornr and CRC */
-#define UDF_C_EXTATTRS	 5	/* dunno what to do yet */
-#define UDF_C_FIDS	 6	/* update all contained fids */
-
+#define UDF_C_INVALID		 0	/* not relevant */
+#define UDF_C_PROCESSED		 0	/* not relevant */
+#define UDF_C_USERDATA		 1	/* all but userdata is metadata */
+#define UDF_C_DSCR		 2	/* update sectornr and CRC */
+#define UDF_C_NODE		 3	/* file/dir node, update sectornr and CRC */
+#define UDF_C_FIDS		 4	/* update all contained fids */
+#define UDF_C_METADATA_SBM	 5	/* space bitmap, update sectornr and CRC */
+#define UDF_C_EXTATTRS		 6	/* dunno what to do yet */
 
 /* use unused b_freelistindex for our UDF_C_TYPE */
 #define b_udf_c_type	b_freelistindex
@@ -172,6 +172,7 @@ SYSCTL_SETUP_PROTO(sysctl_vfs_udf_setup);
 
 
 /* allocation strategies */
+#define UDF_ALLOC_INVALID            0
 #define UDF_ALLOC_SEQUENTIAL         1  /* linear on NWA                 */
 #define UDF_ALLOC_VAT                2  /* VAT handling                  */
 #define UDF_ALLOC_SPACEMAP           3  /* spacemaps                     */
@@ -206,6 +207,8 @@ MALLOC_DECLARE(M_UDFVOLD);
 MALLOC_DECLARE(M_UDFTEMP);
 
 struct pool udf_node_pool;
+struct pool udf_dirhash_pool;
+struct pool udf_dirhash_entry_pool;
 struct udf_node;
 struct udf_strategy;
 
@@ -281,17 +284,17 @@ struct udf_mount {
 	int			 lvopen;		/* logvol actions    */
 	int			 lvclose;		/* logvol actions    */
 
-	/* disc allocation / writing method */
-	int			 lvreadwrite;		/* bits */
-	int			 data_alloc;		/* all userdata */
-	int			 meta_alloc;		/* all metadata */
-	int			 data_part;
-	int			 metadata_part;
-	kmutex_t		 allocate_mutex;
-
 	/* logical to physical translations */
 	int 			 vtop[UDF_PMAPS+1];	/* vpartnr trans     */
 	int			 vtop_tp[UDF_PMAPS+1];	/* type of trans     */
+
+	/* disc allocation / writing method */
+	kmutex_t		 allocate_mutex;
+	int			 lvreadwrite;		/* error handling    */
+	int			 vtop_alloc[UDF_PMAPS+1]; /* alloc scheme    */
+	int			 data_part;
+	int			 node_part;
+	int			 fids_part;
 
 	/* sequential track info */
 	struct mmc_trackinfo	 data_track;
@@ -309,7 +312,7 @@ struct udf_mount {
 	uint8_t			*vat_pages;		/* TODO */
 	struct udf_node		*vat_node;		/* system node       */
 
-	/* space bitmaps */
+	/* space bitmaps for physical partitions */
 	struct space_bitmap_desc*part_unalloc_dscr[UDF_PARTITIONS];
 	struct space_bitmap_desc*part_freed_dscr  [UDF_PARTITIONS];
 	struct udf_bitmap	 part_unalloc_bits[UDF_PARTITIONS];
@@ -324,7 +327,8 @@ struct udf_mount {
 	struct udf_node 	*metadata_node;		/* system node       */
 	struct udf_node 	*metadatamirror_node;	/* system node       */
 	struct udf_node 	*metadatabitmap_node;	/* system node       */
-	struct udf_bitmap	 metadata_bitmap;	/* TODO : readin */
+	struct space_bitmap_desc*metadata_unalloc_dscr;
+	struct udf_bitmap	 metadata_unalloc_bits;
 
 	/* hash table to lookup icb -> udf_node and sorted list for sync */
 	kmutex_t	ihash_lock;
@@ -348,6 +352,38 @@ struct udf_mount {
 	struct udf_strategy	*strategy;
 	void			*strategy_private;
 };
+
+
+/* dirent's d_namlen is to avoid useless costly fid->dirent translations */
+struct udf_dirhash_entry {
+	uint32_t		 hashvalue;
+	uint64_t		 offset;
+	uint32_t		 d_namlen;
+	uint32_t		 fid_size;
+	LIST_ENTRY(udf_dirhash_entry) next;
+};
+
+
+struct udf_dirhash {
+	uint32_t		 flags;
+	uint32_t		 size;			/* in bytes */
+	uint32_t		 refcnt;
+	LIST_HEAD(, udf_dirhash_entry) entries[UDF_DIRHASH_HASHSIZE];
+	LIST_HEAD(, udf_dirhash_entry) free_entries;
+	TAILQ_ENTRY(udf_dirhash) next;
+};
+
+#define UDF_DIRH_PURGED		0x0001	/* dirhash has been purged */
+#define	UDF_DIRH_COMPLETE	0x0002	/* dirhash is complete */
+#define	UDF_DIRH_BROKEN		0x0004	/* dirhash is broken on readin */
+#define UDF_DIRH_FLAGBITS \
+	"\10\1DIRH_PURGED\2DIRH_COMPLETE\3DIRH_BROKEN"
+
+extern kmutex_t udf_dirhashmutex;
+extern uint32_t udf_maxdirhashsize;
+extern uint32_t udf_dirhashsize;
+extern TAILQ_HEAD(_udf_dirhash, udf_dirhash) udf_dirhash_queue;
+
 
 /*
  * UDF node describing a file/directory.
@@ -376,7 +412,7 @@ struct udf_node {
 	int			 needs_indirect;	/* has missing indr. */
 	struct long_ad		 ext_loc[UDF_MAX_ALLOC_EXTENTS];
 
-	uint64_t		 last_diroffset;	/* speeding up lookup*/
+	struct udf_dirhash	*dir_hash;
 
 	/* misc */
 	uint32_t		 i_flags;		/* associated flags  */
@@ -395,22 +431,23 @@ struct udf_node {
 
 
 /* misc. flags stored in i_flags (XXX needs cleaning up) */
-#define	IN_ACCESS	0x0001		/* Inode access time update request. */
-#define	IN_CHANGE	0x0002		/* Inode change time update request. */
-#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime*/
-#define	IN_MODIFY	0x0008		/* Modification time update request. */
-#define	IN_MODIFIED	0x0010		/* node has been modified. */
-#define	IN_ACCESSED	0x0020		/* node has been accessed. */
-#define	IN_RENAME	0x0040		/* node is being renamed. XXX ?? */
-#define IN_DELETED	0x0080		/* node is unlinked, no FID reference */
-#define IN_LOCKED	0x0100		/* node is locked by condvar */
-#define IN_SYNCED	0x0200		/* node is being used by sync */
-#define IN_CALLBACK_ULK	0x0400		/* node will be unlocked by callback */
+#define	IN_ACCESS		0x0001	/* Inode access time update request  */
+#define	IN_CHANGE		0x0002	/* Inode change time update request  */
+#define	IN_UPDATE		0x0004	/* Inode was written to; update mtime*/
+#define	IN_MODIFY		0x0008	/* Modification time update request  */
+#define	IN_MODIFIED		0x0010	/* node has been modified */
+#define	IN_ACCESSED		0x0020	/* node has been accessed */
+#define	IN_RENAME		0x0040	/* node is being renamed. XXX ?? */
+#define	IN_DELETED		0x0080	/* node is unlinked, no FID reference*/
+#define	IN_LOCKED		0x0100	/* node is locked by condvar */
+#define	IN_SYNCED		0x0200	/* node is being used by sync */
+#define	IN_CALLBACK_ULK		0x0400	/* node will be unlocked by callback */
+#define	IN_NODE_REBUILD		0x0800	/* node is rebuild */
 
 
 #define IN_FLAGBITS \
 	"\10\1IN_ACCESS\2IN_CHANGE\3IN_UPDATE\4IN_MODIFY\5IN_MODIFIED" \
 	"\6IN_ACCESSED\7IN_RENAME\10IN_DELETED\11IN_LOCKED\12IN_SYNCED" \
-	"\13IN_CALLBACK_ULK"
+	"\13IN_CALLBACK_ULK\14IN_NODE_REBUILD"
 
 #endif /* !_FS_UDF_UDF_H_ */

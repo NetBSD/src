@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.33.2.1 2008/06/23 04:31:49 wrstuden Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.33.2.2 2008/09/18 04:36:55 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -33,13 +33,14 @@
 #ifndef _FS_TMPFS_TMPFS_H_
 #define _FS_TMPFS_TMPFS_H_
 
-/* ---------------------------------------------------------------------
- * KERNEL-SPECIFIC DEFINITIONS
- * --------------------------------------------------------------------- */
 #include <sys/dirent.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
 #include <sys/vnode.h>
+
+/* --------------------------------------------------------------------- */
+/* For the kernel and anyone who likes peeking into kernel memory        */
+/* --------------------------------------------------------------------- */
 
 #if defined(_KERNEL)
 #include <fs/tmpfs/tmpfs_pool.h>
@@ -272,7 +273,6 @@ struct tmpfs_node {
 };
 
 #if defined(_KERNEL)
-
 LIST_HEAD(tmpfs_node_list, tmpfs_node);
 
 /* --------------------------------------------------------------------- */
@@ -497,26 +497,4 @@ VP_TO_TMPFS_DIR(struct vnode *vp)
 }
 
 #endif /* defined(_KERNEL) */
-
-/* ---------------------------------------------------------------------
- * USER AND KERNEL DEFINITIONS
- * --------------------------------------------------------------------- */
-
-/*
- * This structure is used to communicate mount parameters between userland
- * and kernel space.
- */
-#define TMPFS_ARGS_VERSION	1
-struct tmpfs_args {
-	int			ta_version;
-
-	/* Size counters. */
-	ino_t			ta_nodes_max;
-	off_t			ta_size_max;
-
-	/* Root node attributes. */
-	uid_t			ta_root_uid;
-	gid_t			ta_root_gid;
-	mode_t			ta_root_mode;
-};
 #endif /* _FS_TMPFS_TMPFS_H_ */

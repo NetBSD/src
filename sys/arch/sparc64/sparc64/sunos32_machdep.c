@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_machdep.c,v 1.26.4.4 2008/06/23 04:30:46 wrstuden Exp $	*/
+/*	$NetBSD: sunos32_machdep.c,v 1.26.4.5 2008/09/18 04:33:34 wrstuden Exp $	*/
 /* from: NetBSD: sunos_machdep.c,v 1.14 2001/01/29 01:37:56 mrg Exp 	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.26.4.4 2008/06/23 04:30:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.26.4.5 2008/09/18 04:33:34 wrstuden Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_machdep.c,v 1.26.4.4 2008/06/23 04:30:46 wrs
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/malloc.h>
 #include <sys/select.h>
 
 #include <sys/syscallargs.h>
@@ -146,7 +145,7 @@ sunos32_setregs(l, pack, stack)
 			savefpstate(fs);
 			fplwp = NULL;
 		}
-		free((void *)fs, M_SUBPROC);
+		pool_cache_put(fpstate_cache, fs);
 		l->l_md.md_fpstate = NULL;
 	}
 	memset(tf, 0, sizeof *tf);

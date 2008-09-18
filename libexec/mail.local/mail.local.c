@@ -1,4 +1,4 @@
-/*	$NetBSD: mail.local.c,v 1.24 2008/05/04 03:03:11 manu Exp $	*/
+/*	$NetBSD: mail.local.c,v 1.24.2.1 2008/09/18 04:39:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -31,12 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #if 0
 static char sccsid[] = "@(#)mail.local.c	8.22 (Berkeley) 6/21/95";
 #else
-__RCSID("$NetBSD: mail.local.c,v 1.24 2008/05/04 03:03:11 manu Exp $");
+__RCSID("$NetBSD: mail.local.c,v 1.24.2.1 2008/09/18 04:39:18 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

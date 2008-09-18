@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.38.6.3 2008/06/23 04:30:55 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.38.6.4 2008/09/18 04:36:46 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.38.6.3 2008/06/23 04:30:55 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.38.6.4 2008/09/18 04:36:46 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,13 +351,13 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 
 	ff = fdp->fd_ofiles[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
-	case FIONCLEX:
-		ff->ff_exclose = 0;
+	case FIOCLEX:
+		ff->ff_exclose = true;
+		fdp->fd_exclose = true;
 		goto out;
 
-	case FIOCLEX:
-		ff->ff_exclose = 1;
-		fdp->fd_exclose = 1;
+	case FIONCLEX:
+		ff->ff_exclose = false;
 		goto out;
 	}
 
@@ -490,6 +490,8 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		IOCTL_STRUCT_CONV_TO(SIOCPHASE2, ifreq);
 #endif
 
+	case OOSIOCGIFCONF32:
+		IOCTL_STRUCT_CONV_TO(OOSIOCGIFCONF, ifconf);
 	case OSIOCGIFCONF32:
 		IOCTL_STRUCT_CONV_TO(OSIOCGIFCONF, ifconf);
 	case SIOCGIFCONF32:

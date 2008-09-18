@@ -1,4 +1,4 @@
-/*	$NetBSD: llabs.S,v 1.3 2003/08/07 16:42:12 agc Exp $	*/
+/*	$NetBSD: llabs.S,v 1.3.32.1 2008/09/18 04:39:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,12 +39,13 @@
 #if 0
 	RCSID("from: @(#)abs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: llabs.S,v 1.3 2003/08/07 16:42:12 agc Exp $")
+	RCSID("$NetBSD: llabs.S,v 1.3.32.1 2008/09/18 04:39:19 wrstuden Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(llabs, _llabs)
+WEAK_ALIAS(imaxabs, _llabs)
 #endif
 /* llabs - long long int absolute value */
 

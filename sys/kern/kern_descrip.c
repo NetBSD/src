@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.179.2.2 2008/05/14 01:35:12 wrstuden Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.179.2.3 2008/09/18 04:31:41 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.179.2.2 2008/05/14 01:35:12 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.179.2.3 2008/09/18 04:31:41 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,7 +570,7 @@ fd_close(unsigned fd)
 	 */
 	fp = ff->ff_file;
 	ff->ff_file = NULL;
-	ff->ff_exclose = 0;
+	ff->ff_exclose = false;
 
 	/*
 	 * We expect the caller to hold a descriptor reference - drop it.
@@ -645,7 +645,7 @@ fd_close(unsigned fd)
  * Duplicate a file descriptor.
  */
 int
-fd_dup(file_t *fp, int minfd, int *newp, int exclose)
+fd_dup(file_t *fp, int minfd, int *newp, bool exclose)
 {
 	proc_t *p;
 	int error;
@@ -1237,7 +1237,7 @@ filedesc_ctor(void *arg, void *obj, int flag)
 	fdp->fd_lastfile = -1;
 	fdp->fd_lastkqfile = -1;
 
-	KASSERT(sizeof(fdp->fd_dfdfile[0]) >= sizeof(fdfile_t));
+	CTASSERT(sizeof(fdp->fd_dfdfile[0]) >= sizeof(fdfile_t));
 	for (i = 0; i < NDFDFILE; i++) {
 		fdfile_ctor(NULL, fdp->fd_dfdfile[i], PR_WAITOK);
 	}
@@ -1422,7 +1422,7 @@ fd_copy(void)
 		}
 		ff2->ff_file = fp;
 		ff2->ff_exclose = ff->ff_exclose;
-		ff2->ff_allocated = 1;
+		ff2->ff_allocated = true;
 		mutex_exit(&ff->ff_lock);
 		if (i > newlast) {
 			newlast = i;
@@ -1641,7 +1641,7 @@ fd_closeexec(void)
 	if (!fdp->fd_exclose) {
 		return;
 	}
-	fdp->fd_exclose = 0;
+	fdp->fd_exclose = false;
 
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
 		if ((ff = fdp->fd_ofiles[fd]) == NULL) {
@@ -1732,7 +1732,7 @@ fd_checkstd(void)
  * 'pgid' is set to -pg_id.
  */
 int
-fsetown(pid_t *pgid, int cmd, const void *data)
+fsetown(pid_t *pgid, u_long cmd, const void *data)
 {
 	int id = *(const int *)data;
 	int error;
@@ -1762,7 +1762,7 @@ fsetown(pid_t *pgid, int cmd, const void *data)
  * needs the sign removed before use.
  */
 int
-fgetown(pid_t pgid, int cmd, void *data)
+fgetown(pid_t pgid, u_long cmd, void *data)
 {
 
 	switch (cmd) {

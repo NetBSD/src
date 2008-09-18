@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.39 2008/05/04 17:06:09 xtraeme Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.39.2.1 2008/09/18 04:35:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.39 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.39.2.1 2008/09/18 04:35:05 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,6 +183,9 @@ static const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5754,
 	  MII_STR_BROADCOM2_BCM5754 },
 
+	{ MII_OUI_xxBROADCOM_ALT1,	MII_MODEL_xxBROADCOM_ALT1_BCM5906,
+	  MII_STR_xxBROADCOM_ALT1_BCM5906 },
+
 	{ 0,				0,
 	  NULL },
 };
@@ -226,57 +229,62 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = MII_ANEGTICKS;
 
-	switch (MII_MODEL(ma->mii_id2)) {
-	case MII_MODEL_BROADCOM_BCM5400:
-		sc->mii_funcs = &brgphy_5401_funcs;
-		aprint_normal_dev(self, "using BCM5401 DSP patch\n");
-		break;
-
-	case MII_MODEL_BROADCOM_BCM5401:
-		if (MII_REV(ma->mii_id2) == 1 || MII_REV(ma->mii_id2) == 3) {
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxBROADCOM_ALT1) {
+		sc->mii_funcs = &brgphy_5750_funcs;
+		aprint_normal_dev(self, "using BCM5750 DSP patch\n");
+	} else {
+		switch (MII_MODEL(ma->mii_id2)) {
+		case MII_MODEL_BROADCOM_BCM5400:
 			sc->mii_funcs = &brgphy_5401_funcs;
 			aprint_normal_dev(self, "using BCM5401 DSP patch\n");
-		} else
+			break;
+
+		case MII_MODEL_BROADCOM_BCM5401:
+			if (MII_REV(ma->mii_id2) == 1 || MII_REV(ma->mii_id2) == 3) {
+				sc->mii_funcs = &brgphy_5401_funcs;
+				aprint_normal_dev(self, "using BCM5401 DSP patch\n");
+			} else
+				sc->mii_funcs = &brgphy_funcs;
+			break;
+
+		case MII_MODEL_BROADCOM_BCM5411:
+			sc->mii_funcs = &brgphy_5411_funcs;
+			aprint_normal_dev(self, "using BCM5411 DSP patch\n");
+			break;
+
+	#ifdef notyet /* unverified, untested */
+		case MII_MODEL_BROADCOM_BCM5703:
+			sc->mii_funcs = &brgphy_5703_funcs;
+			aprint_normal_dev(self, "using BCM5703 DSP patch\n");
+			break;
+	#endif
+
+		case MII_MODEL_BROADCOM_BCM5704:
+			sc->mii_funcs = &brgphy_5704_funcs;
+			aprint_normal_dev(self, "using BCM5704 DSP patch\n");
+			break;
+
+		case MII_MODEL_BROADCOM_BCM5705:
+			sc->mii_funcs = &brgphy_5705_funcs;
+			break;
+
+		case MII_MODEL_BROADCOM_BCM5714:
+		case MII_MODEL_BROADCOM_BCM5780:
+		case MII_MODEL_BROADCOM_BCM5708C:
+		case MII_MODEL_BROADCOM_BCM5750:
+		case MII_MODEL_BROADCOM_BCM5752:
+			sc->mii_funcs = &brgphy_5750_funcs;
+			break;
+
+		case MII_MODEL_BROADCOM2_BCM5754:
+		case MII_MODEL_BROADCOM2_BCM5755:
+			sc->mii_funcs = &brgphy_5755_funcs;
+			break;
+
+		default:
 			sc->mii_funcs = &brgphy_funcs;
-		break;
-
-	case MII_MODEL_BROADCOM_BCM5411:
-		sc->mii_funcs = &brgphy_5411_funcs;
-		aprint_normal_dev(self, "using BCM5411 DSP patch\n");
-		break;
-
-#ifdef notyet /* unverified, untested */
-	case MII_MODEL_BROADCOM_BCM5703:
-		sc->mii_funcs = &brgphy_5703_funcs;
-		aprint_normal_dev(self, "using BCM5703 DSP patch\n");
-		break;
-#endif
-
-	case MII_MODEL_BROADCOM_BCM5704:
-		sc->mii_funcs = &brgphy_5704_funcs;
-		aprint_normal_dev(self, "using BCM5704 DSP patch\n");
-		break;
-
-	case MII_MODEL_BROADCOM_BCM5705:
-		sc->mii_funcs = &brgphy_5705_funcs;
-		break;
-
-	case MII_MODEL_BROADCOM_BCM5714:
-	case MII_MODEL_BROADCOM_BCM5780:
-	case MII_MODEL_BROADCOM_BCM5708C:
-	case MII_MODEL_BROADCOM_BCM5750:
-	case MII_MODEL_BROADCOM_BCM5752:
-		sc->mii_funcs = &brgphy_5750_funcs;
-		break;
-
-	case MII_MODEL_BROADCOM2_BCM5754:
-	case MII_MODEL_BROADCOM2_BCM5755:
-		sc->mii_funcs = &brgphy_5755_funcs;
-		break;
-
-	default:
-		sc->mii_funcs = &brgphy_funcs;
-		break;
+			break;
+		}
 	}
 
 	PHY_RESET(sc);

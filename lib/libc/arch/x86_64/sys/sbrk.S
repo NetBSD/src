@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.2 2003/08/07 16:42:37 agc Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.2.32.1 2008/09/18 04:39:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: sbrk.S,v 1.2 2003/08/07 16:42:37 agc Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.2.32.1 2008/09/18 04:39:20 wrstuden Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -56,24 +56,30 @@ ENTRY(_sbrk)
 #ifdef PIC
 	movq	PIC_GOT(CURBRK),%rdx
 	movq	(%rdx),%rax
+	test	%rdi,%rdi
+	jz	out
 	addq	%rax,%rdi
 	SYSTRAP(break)
 	jc	err
 	movq	PIC_GOT(CURBRK),%rdx
 	movq	(%rdx),%rax
 	movq	%rdi,(%rdx)
+out:
 	ret
 err:
 	mov	PIC_GOT(CERROR),%rdx
 	jmp	*%rdx
 #else
 	movq	CURBRK(%rip),%rax
+	test	%rdi,%rdi
+	jz	out
 	movq	%rdi,%rsi
 	addq	%rax,%rdi
 	SYSTRAP(break)
 	jc	err
 	movq	CURBRK(%rip),%rax
 	addq	%rsi,CURBRK(%rip)
+out:
 	ret
 err:
 	jmp	CERROR

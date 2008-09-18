@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.h,v 1.12 2005/12/26 19:01:47 perry Exp $	*/
+/*	$NetBSD: mpool.h,v 1.12.20.1 2008/09/18 04:39:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -66,7 +66,7 @@ typedef struct MPOOL {
 	pgno_t	curcache;		/* current number of cached pages */
 	pgno_t	maxcache;		/* max number of cached pages */
 	pgno_t	npages;			/* number of pages in the file */
-	u_long	pagesize;		/* file page size */
+	unsigned long	pagesize;		/* file page size */
 	int	fd;			/* file descriptor */
 					/* page in conversion routine */
 	void    (*pgin)(void *, pgno_t, void *);
@@ -74,15 +74,15 @@ typedef struct MPOOL {
 	void    (*pgout)(void *, pgno_t, void *);
 	void	*pgcookie;		/* cookie for page in/out routines */
 #ifdef STATISTICS
-	u_long	cachehit;
-	u_long	cachemiss;
-	u_long	pagealloc;
-	u_long	pageflush;
-	u_long	pageget;
-	u_long	pagenew;
-	u_long	pageput;
-	u_long	pageread;
-	u_long	pagewrite;
+	unsigned long	cachehit;
+	unsigned long	cachemiss;
+	unsigned long	pagealloc;
+	unsigned long	pageflush;
+	unsigned long	pageget;
+	unsigned long	pagenew;
+	unsigned long	pageput;
+	unsigned long	pageread;
+	unsigned long	pagewrite;
 #endif
 } MPOOL;
 
@@ -91,8 +91,8 @@ MPOOL	*mpool_open(void *, int, pgno_t, pgno_t);
 void	 mpool_filter(MPOOL *, void (*)(void *, pgno_t, void *),
 	    void (*)(void *, pgno_t, void *), void *);
 void	*mpool_new(MPOOL *, pgno_t *);
-void	*mpool_get(MPOOL *, pgno_t, u_int);
-int	 mpool_put(MPOOL *, void *, u_int);
+void	*mpool_get(MPOOL *, pgno_t, unsigned int);
+int	 mpool_put(MPOOL *, void *, unsigned int);
 int	 mpool_sync(MPOOL *);
 int	 mpool_close(MPOOL *);
 #ifdef STATISTICS

@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.14 2007/03/06 21:56:47 bouyer Exp $
+#	$NetBSD: Makefile,v 1.14.16.1 2008/09/18 04:41:08 wrstuden Exp $
 
 .include <bsd.own.mk>
 
+.if ${MKMAN} != "no"
 SUBDIR=	notes .WAIT
+.endif
 
 .if exists(${MACHINE}/miniroot/Makefile.inc)
 SUBDIR+= miniroot .WAIT

@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcic.c,v 1.3 2007/10/17 19:53:40 garbled Exp $	*/
+/*	$NetBSD: eppcic.c,v 1.3.22.1 2008/09/18 04:33:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.3 2007/10/17 19:53:40 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.3.22.1 2008/09/18 04:33:21 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,8 +218,6 @@ static void
 eppcic_attach_socket(struct eppcic_handle *ph)
 {
 	struct eppcic_softc *sc = ph->ph_sc;
-	eppcic_chipset_tag_t pcic = sc->sc_pcic;
-	int wait;
 
 	ph->ph_width = 16;
 	ph->ph_vcc = 3;
@@ -233,13 +231,6 @@ eppcic_attach_socket(struct eppcic_handle *ph)
 	epgpio_in(sc->sc_gpio, ph->ph_port, ph->ph_vs[1]);
 	ph->ph_status[0] = epgpio_read(sc->sc_gpio, ph->ph_port, ph->ph_cd[0]);
 	ph->ph_status[1] = epgpio_read(sc->sc_gpio, ph->ph_port, ph->ph_cd[1]);
-	wait = (pcic->power_ctl)(sc, ph->ph_socket, POWER_OFF);
-	delay(wait);
-	eppcic_set_pcreg(ph, ph->ph_space[IO].reg);
-	eppcic_set_pcreg(ph, ph->ph_space[COMMON].reg);
-	eppcic_set_pcreg(ph, ph->ph_space[ATTRIBUTE].reg);
-	wait = (pcic->power_ctl)(sc, ph->ph_socket, POWER_ON);
-	delay(wait);
 }
 
 static void
@@ -273,9 +264,6 @@ eppcic_config_socket(struct eppcic_handle *ph)
 
 	DPRINTFN(1, ("eppcic_config_socket: cd1=%d, cd2=%d\n",ph->ph_status[0],ph->ph_status[1]));
 
-	if (!(ph->ph_status[0] | ph->ph_status[1]))
-		pcmcia_card_attach(ph->ph_card);
-
 	ph->ph_run = 1;
 	kthread_create(PRI_NONE, 0, NULL, eppcic_event_thread, ph,
 	    &ph->ph_event_thread, "%s,%d", sc->sc_dev.dv_xname,
@@ -292,6 +280,9 @@ static void
 eppcic_event_thread(void *arg)
 {
 	struct eppcic_handle *ph = arg;
+
+	if (!(ph->ph_status[0] | ph->ph_status[1]))
+		pcmcia_card_attach(ph->ph_card);
 
 	for (;;) {
 		tsleep(ph, PWAIT, "CSC wait", 0);
@@ -333,10 +324,11 @@ eppcic_intr_carddetect(void *arg)
 
 	DPRINTFN(1, ("eppcic_intr: cd1=%#x, cd2=%#x\n",nstatus[0],nstatus[1]));
 
-	if (nstatus[0] != ph->ph_status[0] || nstatus[1] != ph->ph_status[1])
+	if (nstatus[0] != ph->ph_status[0] || nstatus[1] != ph->ph_status[1]) {
+		ph->ph_status[0] = nstatus[0];
+		ph->ph_status[1] = nstatus[1];
 		wakeup(ph);
-	ph->ph_status[0] = nstatus[0];
-	ph->ph_status[1] = nstatus[1];
+	}
 	return 0;
 }
 
@@ -381,11 +373,11 @@ eppcic_mem_map(pcmcia_chipset_handle_t pch, int kind, bus_addr_t addr,
 		ph->ph_width = 16;
 	switch (kind & ~PCMCIA_WIDTH_MEM_MASK) {
 	case PCMCIA_MEM_ATTR:
-		eppcic_set_pcreg(ph, ph->ph_space[ATTRIBUTE].reg);
+		eppcic_set_pcreg(ph, ATTRIBUTE);
 		pa += ph->ph_space[ATTRIBUTE].base;
 		break;
 	case PCMCIA_MEM_COMMON:
-		eppcic_set_pcreg(ph, ph->ph_space[COMMON].reg);
+		eppcic_set_pcreg(ph, COMMON);
 		pa += ph->ph_space[COMMON].base;
 		break;
 	default:
@@ -460,7 +452,7 @@ eppcic_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 		DPRINTFN(1, ("(unknown)\n"));
 		return -1;
 	}
-	eppcic_set_pcreg(ph, ph->ph_space[IO].reg);
+	eppcic_set_pcreg(ph, IO);
 	*windowp = 0; /* unused */
 	return 0;
 }
@@ -686,4 +678,5 @@ eppcic_set_pcreg(struct eppcic_handle *ph, int kind)
 			  | (atiming<<EP93XX_PCMCIA_ACCESS_SHIFT)
 			  | (htiming<<EP93XX_PCMCIA_HOLD_SHIFT)
 			  | (ptiming<<EP93XX_PCMCIA_PRECHARGE_SHIFT));
+	tsleep(ph->ph_space, PWAIT, "eppcic_set_pcreg", hz / 4);
 }

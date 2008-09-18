@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.76 2008/04/28 20:23:53 martin Exp $
+$NetBSD: miidevs,v 1.76.2.1 2008/09/18 04:35:05 wrstuden Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@ oui xxCICADA			0x00c08f	Cicada Semiconductor
 /* bad bitorder (bits "g" and "h" (= MSBs byte 1) lost) */
 oui yyAMD			0x000058	Advanced Micro Devices
 oui xxBROADCOM			0x000818	Broadcom Corporation
+oui xxBROADCOM_ALT1		0x0050ef	Broadcom Corporation
 oui xxDAVICOM			0x000676	Davicom Semiconductor
 oui yyINTEL			0x005500	Intel
 oui xxMARVELL			0x000ac2	Marvell Semiconductor
@@ -138,6 +139,7 @@ model BROADCOM BCM5780		0x0035 BCM5780 1000BASE-T media interface
 model BROADCOM BCM5708C		0x0036 BCM5708C 1000BASE-T media interface
 model BROADCOM2 BCM5755		0x000c BCM5755 1000BASE-T media interface
 model BROADCOM2 BCM5754		0x000e BCM5754/5787 1000BASE-T media interface
+model xxBROADCOM_ALT1 BCM5906		0x0004 BCM5906 10/100baseTX media interface
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 model CICADA CS8201		0x0001 Cicada CS8201 10/100/1000TX PHY

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.16 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.16.6.1 2008/09/18 04:37:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,16 +27,14 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_RUMPUSER_H_
-#define _SYS_RUMPUSER_H_
+#ifndef _RUMP_RUMPUSER_H_
+#define _RUMP_RUMPUSER_H_
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/proc.h>
+struct stat;
 
 int rumpuser_stat(const char *, struct stat *, int *);
 int rumpuser_lstat(const char *, struct stat *, int *);
-int rumpuser_usleep(unsigned long, int *);
+int rumpuser_nanosleep(const struct timespec *, struct timespec *, int *);
 
 #define rumpuser_malloc(a,b) _rumpuser_malloc(a,b,__func__,__LINE__);
 #define rumpuser_realloc(a,b,c) _rumpuser_realloc(a,b,c,__func__,__LINE__);
@@ -107,6 +105,9 @@ void rumpuser_cv_wait(struct rumpuser_cv *, struct rumpuser_mtx *);
 int  rumpuser_cv_timedwait(struct rumpuser_cv *, struct rumpuser_mtx *, int);
 void rumpuser_cv_signal(struct rumpuser_cv *);
 void rumpuser_cv_broadcast(struct rumpuser_cv *);
+int  rumpuser_cv_has_waiters(struct rumpuser_cv *);
+
+struct lwp;
 
 void rumpuser_set_curlwp(struct lwp *);
 struct lwp *rumpuser_get_curlwp(void);
@@ -139,4 +140,4 @@ void rumpuser_set_ipl(int);
 int  rumpuser_whatis_ipl(void);
 void rumpuser_clear_ipl(int);
 
-#endif /* _SYS_RUMPUSER_H_ */
+#endif /* _RUMP_RUMPUSER_H_ */

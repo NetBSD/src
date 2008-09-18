@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.21 2006/06/25 16:46:15 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21.64.1 2008/09/18 04:33:18 wrstuden Exp $	*/
 /*	$OpenBSD: mainbus.c,v 1.4 1998/10/15 21:30:15 imp Exp $	*/
 /*	NetBSD: mainbus.c,v 1.3 1995/06/28 02:45:10 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2006/06/25 16:46:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21.64.1 2008/09/18 04:33:18 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,17 +41,17 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2006/06/25 16:46:15 tsutsui Exp $")
 #include <machine/platform.h>
 
 /* Definition of the mainbus driver. */
-static int	mbmatch(struct device *, struct cfdata *, void *);
-static void	mbattach(struct device *, struct device *, void *);
+static int	mbmatch(device_t, cfdata_t, void *);
+static void	mbattach(device_t, device_t, void *);
 static int	mbprint(void *, const char *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(mainbus, 0,
     mbmatch, mbattach, NULL, NULL);
 
 static int mainbus_found;
 
 static int
-mbmatch(struct device *parent, struct cfdata *match, void *aux)
+mbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (mainbus_found)
@@ -61,14 +61,14 @@ mbmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-mbattach(struct device *parent, struct device *self, void *aux)
+mbattach(device_t parent, device_t self, void *aux)
 {
 	struct confargs nca;
 	int i;
 
 	mainbus_found = 1;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/*
 	 * Try to find and attach all of the CPUs in the machine.

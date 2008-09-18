@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/04/26 17:42:09 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2008/09/18 04:41:10 wrstuden Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -24,9 +24,9 @@ hpcboot-sh4.exe.uue:
 
 release:: ${UUDECODE_FILES}
 	${INSTALL} -c -m ${NONBINMODE} \
-		${HPCBOOT_SH3} ${RELEASEDIR}/${MACHINE}/installation
+		${HPCBOOT_SH3} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 	${INSTALL} -c -m ${NONBINMODE} \
-		${HPCBOOT_SH4} ${RELEASEDIR}/${MACHINE}/installation
+		${HPCBOOT_SH4} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 
 .include <bsd.files.mk>
 .include <bsd.obj.mk>

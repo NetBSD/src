@@ -1,12 +1,12 @@
 #
-# $NetBSD: HADES,v 1.75 2007/10/17 19:53:46 garbled Exp $
+# $NetBSD: HADES,v 1.75.22.1 2008/09/18 04:33:22 wrstuden Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: HADES.in,v 1.8 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.67 2007/07/16 06:26:54 he Exp $
+#		NetBSD: GENERIC.in,v 1.73 2008/07/31 07:47:43 simonb Exp $
 include "arch/atari/conf/std.hades"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -18,7 +18,6 @@ options FPSP # 68040 Floatingpoint support
 options M060SP # MC68060 software support (Required for 060)
 options INET # IP + ICMP + TCP + UDP
 options INET6 # IPV6
-options ISO,TPIP # OSI
 options NETATALK # AppleTalk networking protocols
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
 options PPP_DEFLATE # Deflate compression support for PPP
@@ -42,6 +41,7 @@ file-system PORTAL # portal file system
 file-system EXT2FS # second extended file system (linux)
 file-system LFS # log-structured file system
 file-system PTYFS # /dev/pts/N support
+options WAPBL # File system journaling support - Experimental
 options QUOTA # Disk quotas for local disks
 options SOFTDEP # FFS soft updates support.
 options NFSSERVER # Network File System server side code

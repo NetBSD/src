@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.1.10.2 2008/06/23 05:02:14 wrstuden Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.1.10.3 2008/09/18 04:36:56 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.1.10.2 2008/06/23 05:02:14 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.1.10.3 2008/09/18 04:36:56 wrstuden Exp $");
 #endif /* not lint */
 
 
@@ -61,10 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.1.10.2 2008/06/23 05:02:14 wrstu
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
-
-#if defined(_KERNEL_OPT)
-#include "opt_udf.h"
-#endif
 
 #include "udf.h"
 #include "udf_subr.h"
@@ -132,7 +128,7 @@ udf_fixup_internal_extattr(uint8_t *blob, uint32_t lb_num)
 	struct file_entry      *fe;
 	struct extfile_entry   *efe;
 	struct extattrhdr_desc *eahdr;
-	int l_ea, error;
+	int l_ea;
 
 	/* get information from fe/efe */
 	tag = (struct desc_tag *) blob;
@@ -152,13 +148,14 @@ udf_fixup_internal_extattr(uint8_t *blob, uint32_t lb_num)
 	case TAGID_EXTATTR_HDR :
 		return;
 	default:
-		panic("%s: passed bad tag\n", __FUNCTION__);
+		panic("%s: passed bad tag\n", __func__);
 	}
 
 	/* something recorded here? (why am i called?) */
 	if (l_ea == 0)
 		return;
 
+#if 0
 	/* check extended attribute tag */
 	/* TODO XXX what to do when we encounter an error here? */
 	error = udf_check_tag(eahdr);
@@ -169,25 +166,27 @@ udf_fixup_internal_extattr(uint8_t *blob, uint32_t lb_num)
 	error = udf_check_tag_payload(eahdr, sizeof(struct extattrhdr_desc));
 	if (error)
 		return; /* for now */
+#endif
 
 	DPRINTF(EXTATTR, ("node fixup: found %d bytes of extended attributes\n",
 		l_ea));
 
 	/* fixup eahdr tag */
 	eahdr->tag.tag_loc = udf_rw32(lb_num);
-	udf_validate_tag_sum((union dscrptr *) eahdr);
+	udf_validate_tag_and_crc_sums((union dscrptr *) eahdr);
 }
 
 
 void
 udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 {
-	struct desc_tag *tag;
+	struct desc_tag *tag, *sbm_tag;
 	struct file_entry *fe;
 	struct extfile_entry *efe;
+	struct alloc_ext_entry *ext;
 	uint32_t lb_size, lb_num;
-	uint32_t rfid_pos, max_rfid_pos;
-	int icbflags, addr_type, has_fids, l_ea;
+	uint32_t intern_pos, max_intern_pos;
+	int icbflags, addr_type, file_type, intern, has_fids, has_sbm, l_ea;
 
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
 	/* if its not a node we're done */
@@ -196,8 +195,12 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 
 	/* NOTE this could also be done in write_internal */
 	/* start of a descriptor */
-	has_fids = 0;
-	max_rfid_pos = rfid_pos = lb_num = 0;	/* shut up gcc! */
+	l_ea      = 0;
+	has_fids  = 0;
+	has_sbm   = 0;
+	intern    = 0;
+	file_type = 0;
+	max_intern_pos = intern_pos = lb_num = 0;	/* shut up gcc! */
 
 	tag = (struct desc_tag *) blob;
 	switch (udf_rw16(tag->id)) {
@@ -206,9 +209,10 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 		l_ea = udf_rw32(fe->l_ea);
 		icbflags  = udf_rw16(fe->icbtag.flags);
 		addr_type = (icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK);
-		has_fids  = (addr_type == UDF_ICB_INTERN_ALLOC);
-		rfid_pos  = UDF_FENTRY_SIZE + l_ea;
-		max_rfid_pos = rfid_pos + udf_rw64(fe->inf_len);
+		file_type = fe->icbtag.file_type;
+		intern = (addr_type == UDF_ICB_INTERN_ALLOC);
+		intern_pos  = UDF_FENTRY_SIZE + l_ea;
+		max_intern_pos = intern_pos + udf_rw64(fe->inf_len);
 		lb_num = udf_rw32(fe->tag.tag_loc);
 		break;
 	case TAGID_EXTFENTRY :
@@ -216,30 +220,49 @@ udf_fixup_node_internals(struct udf_mount *ump, uint8_t *blob, int udf_c_type)
 		l_ea = udf_rw32(efe->l_ea);
 		icbflags  = udf_rw16(efe->icbtag.flags);
 		addr_type = (icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK);
-		has_fids  = (addr_type == UDF_ICB_INTERN_ALLOC);
-		rfid_pos  = UDF_EXTFENTRY_SIZE + l_ea;
-		max_rfid_pos = rfid_pos + udf_rw64(efe->inf_len);
+		file_type = efe->icbtag.file_type;
+		intern = (addr_type == UDF_ICB_INTERN_ALLOC);
+		intern_pos  = UDF_EXTFENTRY_SIZE + l_ea;
+		max_intern_pos = intern_pos + udf_rw64(efe->inf_len);
 		lb_num = udf_rw32(efe->tag.tag_loc);
 		break;
 	case TAGID_INDIRECTENTRY :
-	case TAGID_ALLOCEXTENT :
 	case TAGID_EXTATTR_HDR :
-		l_ea     = 0;
-		has_fids = 0;
+		break;
+	case TAGID_ALLOCEXTENT :
+		/* force crclen to 8 for UDF version < 2.01 */
+		ext = (struct alloc_ext_entry *) tag;
+		if (udf_rw16(ump->logvol_info->min_udf_readver) <= 0x200)
+			ext->tag.desc_crc_len = udf_rw16(8);
 		break;
 	default:
-		panic("%s: passed bad tag\n", __FUNCTION__);
+		panic("%s: passed bad tag\n", __func__);
 		break;
+	}
+
+	/* determine what to fix if its internally recorded */
+	if (intern) {
+		has_fids = (file_type == UDF_ICB_FILETYPE_DIRECTORY) ||
+			   (file_type == UDF_ICB_FILETYPE_STREAMDIR);
+		has_sbm  = (file_type == UDF_ICB_FILETYPE_META_BITMAP);
 	}
 
 	/* fixup internal extended attributes if present */
 	if (l_ea)
 		udf_fixup_internal_extattr(blob, lb_num);
 
-	if (has_fids) {
-		udf_fixup_fid_block(blob, lb_size, rfid_pos,
-			max_rfid_pos, lb_num);
+	/* fixup fids lb numbers */
+	if (has_fids)
+		udf_fixup_fid_block(blob, lb_size, intern_pos,
+			max_intern_pos, lb_num);
+
+	/* fixup space bitmap descriptor */
+	if (has_sbm) {
+		sbm_tag = (struct desc_tag *) (blob + intern_pos);
+		sbm_tag->tag_loc = tag->tag_loc;
+		udf_validate_tag_and_crc_sums((uint8_t *) sbm_tag);
 	}
+
 	udf_validate_tag_and_crc_sums(blob);
 }
 
@@ -556,6 +579,7 @@ udf_create_logvol_dscr(struct udf_mount *ump, struct udf_node *udf_node, struct 
 	struct udf_strat_args args;
 	int error;
 
+	KASSERT(strategy);
 	args.ump  = ump;
 	args.udf_node = udf_node;
 	args.icb  = icb;
@@ -575,6 +599,7 @@ udf_free_logvol_dscr(struct udf_mount *ump, struct long_ad *icb,
 	struct udf_strategy *strategy = ump->strategy;
 	struct udf_strat_args args;
 
+	KASSERT(strategy);
 	args.ump  = ump;
 	args.icb  = icb;
 	args.dscr = dscr;
@@ -591,6 +616,7 @@ udf_read_logvol_dscr(struct udf_mount *ump, struct long_ad *icb,
 	struct udf_strat_args args;
 	int error;
 
+	KASSERT(strategy);
 	args.ump  = ump;
 	args.icb  = icb;
 	args.dscr = NULL;
@@ -610,6 +636,7 @@ udf_write_logvol_dscr(struct udf_node *udf_node, union dscrptr *dscr,
 	struct udf_strat_args args;
 	int error;
 
+	KASSERT(strategy);
 	args.ump      = udf_node->ump;
 	args.udf_node = udf_node;
 	args.icb      = icb;
@@ -627,6 +654,7 @@ udf_discstrat_queuebuf(struct udf_mount *ump, struct buf *nestbuf)
 	struct udf_strategy *strategy = ump->strategy;
 	struct udf_strat_args args;
 
+	KASSERT(strategy);
 	args.ump = ump;
 	args.nestbuf = nestbuf;
 
@@ -640,6 +668,7 @@ udf_discstrat_init(struct udf_mount *ump)
 	struct udf_strategy *strategy = ump->strategy;
 	struct udf_strat_args args;
 
+	KASSERT(strategy);
 	args.ump = ump;
 	(strategy->discstrat_init)(&args);
 }
@@ -650,8 +679,11 @@ void udf_discstrat_finish(struct udf_mount *ump)
 	struct udf_strategy *strategy = ump->strategy;
 	struct udf_strat_args args;
 
-	args.ump = ump;
-	(strategy->discstrat_finish)(&args);
+	/* strategy might not have been set, so ignore if not set */
+	if (strategy) {
+		args.ump = ump;
+		(strategy->discstrat_finish)(&args);
+	}
 }
 
 /* --------------------------------------------------------------------- */

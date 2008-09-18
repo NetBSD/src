@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwscanf.c,v 1.2 2005/06/12 05:48:41 lukem Exp $	*/
+/*	$NetBSD: vfwscanf.c,v 1.2.20.1 2008/09/18 04:39:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwscanf.c,v 1.12 2004/05/02 20:13:29 obrien Exp $");
 #else
-__RCSID("$NetBSD: vfwscanf.c,v 1.2 2005/06/12 05:48:41 lukem Exp $");
+__RCSID("$NetBSD: vfwscanf.c,v 1.2.20.1 2008/09/18 04:39:22 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -123,6 +123,16 @@ vfwscanf(FILE * __restrict fp, const wchar_t * __restrict fmt, va_list ap)
 	return (ret);
 }
 
+#define SCANF_SKIP_SPACE() \
+do { \
+	wint_t tc; \
+ \
+	while ((tc = __fgetwc_unlock(fp)) != WEOF && iswspace(tc)) \
+		continue; \
+	if (tc != WEOF) \
+		ungetwc(tc, fp); \
+} while (/*CONSTCOND*/ 0)
+
 /*
  * Non-MT-safe version.
  */
@@ -184,6 +194,7 @@ __vfwscanf_unlocked(FILE * __restrict fp, const wchar_t * __restrict fmt, va_lis
 again:		c = *fmt++;
 		switch (c) {
 		case '%':
+			SCANF_SKIP_SPACE();
 literal:
 			if ((wi = __fgetwc_unlock(fp)) == WEOF)
 				goto input_failure;

@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.71 2008/03/13 15:40:00 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.71.4.1 2008/09/18 04:39:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -360,6 +360,22 @@ __END_DECLS
 #endif /* _XOPEN_SOURCE >= 500 || _LARGEFILE_SOURCE || _NETBSD_SOURCE */
 
 /*
+ * Functions defined in ISO C99.  Still put under _NETBSD_SOURCE due to
+ * backward compatible.
+ */
+#if defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+__BEGIN_DECLS
+int	 vscanf(const char * __restrict, _BSD_VA_LIST_)
+	    __attribute__((__format__(__scanf__, 1, 0)));
+int	 vfscanf(FILE * __restrict, const char * __restrict, _BSD_VA_LIST_)
+	    __attribute__((__format__(__scanf__, 2, 0)));
+int	 vsscanf(const char * __restrict, const char * __restrict,
+	    _BSD_VA_LIST_)
+	    __attribute__((__format__(__scanf__, 2, 0)));
+__END_DECLS
+#endif /* _ISOC99_SOURCE || _NETBSD_SOURCE */
+
+/*
  * Routines that are purely local.
  */
 #if defined(_NETBSD_SOURCE)
@@ -381,14 +397,6 @@ int	 setlinebuf(FILE *);
 int	 vasprintf(char ** __restrict, const char * __restrict,
 	    _BSD_VA_LIST_)
 	    __attribute__((__format__(__printf__, 2, 0)));
-int	 vscanf(const char * __restrict, _BSD_VA_LIST_)
-	    __attribute__((__format__(__scanf__, 1, 0)));
-int	 vfscanf(FILE * __restrict, const char * __restrict,
-	    _BSD_VA_LIST_)
-	    __attribute__((__format__(__scanf__, 2, 0)));
-int	 vsscanf(const char * __restrict, const char * __restrict,
-	    _BSD_VA_LIST_)
-	    __attribute__((__format__(__scanf__, 2, 0)));
 const char *fmtcheck(const char *, const char *)
 	    __attribute__((__format_arg__(2)));
 __END_DECLS

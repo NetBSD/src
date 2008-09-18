@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.44 2008/01/14 08:53:42 yamt Exp $	 */
+/*	$NetBSD: symbol.c,v 1.44.6.1 2008/09/18 04:39:17 wrstuden Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.44 2008/01/14 08:53:42 yamt Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.44.6.1 2008/09/18 04:39:17 wrstuden Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -249,9 +249,14 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	 * symbol as having the value zero.
 	 */
 	if (def == NULL && ELF_ST_BIND(ref->st_info) == STB_WEAK) {
-		rdbg(("  returning _rtld_sym_zero@_rtld_objmain"));
+		if (in_plt) {
+			_rtld_error(
+			    "%s: Trying to call undefined weak symbol `%s'",
+			    refobj->path, name);
+		}
+		rdbg(("  returning _rtld_sym_zero@_rtld_objself"));
 		def = &_rtld_sym_zero;
-		defobj = _rtld_objmain;
+		defobj = &_rtld_objself;
 	}
 
 	if (def != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.20 2005/07/02 08:32:32 jmc Exp $	*/
+/*	$NetBSD: crib.c,v 1.20.20.1 2008/09/18 04:39:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.20 2005/07/02 08:32:32 jmc Exp $");
+__RCSID("$NetBSD: crib.c,v 1.20.20.1 2008/09/18 04:39:56 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,8 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-	initscr();
+	if (!initscr())
+		errx(0, "couldn't initialize screen");
 	(void)signal(SIGINT, receive_intr);
 	cbreak();
 	noecho();

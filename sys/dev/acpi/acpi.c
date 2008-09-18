@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.115.2.1 2008/06/23 04:30:58 wrstuden Exp $	*/
+/*	$NetBSD: acpi.c,v 1.115.2.2 2008/09/18 04:35:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.115.2.1 2008/06/23 04:30:58 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.115.2.2 2008/09/18 04:35:01 wrstuden Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1148,12 +1148,12 @@ acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
 }
 
 /*
- * acpi_set_wake_gpe
+ * acpi_wake_gpe_helper
  *
- *	Set GPE as both Runtime and Wake
+ *	Set/unset GPE as both Runtime and Wake
  */
-void
-acpi_set_wake_gpe(ACPI_HANDLE handle)
+static void
+acpi_wake_gpe_helper(ACPI_HANDLE handle, bool enable)
 {
 	ACPI_BUFFER buf;
 	ACPI_STATUS rv;
@@ -1170,11 +1170,37 @@ acpi_set_wake_gpe(ACPI_HANDLE handle)
 	elt = p->Package.Elements;
 
 	/* TBD: package support */
-	AcpiSetGpeType(NULL, elt[0].Integer.Value, ACPI_GPE_TYPE_WAKE_RUN);
-	AcpiEnableGpe(NULL, elt[0].Integer.Value, ACPI_NOT_ISR);
+	if (enable) {
+		AcpiSetGpeType(NULL, elt[0].Integer.Value,
+		    ACPI_GPE_TYPE_WAKE_RUN);
+		AcpiEnableGpe(NULL, elt[0].Integer.Value, ACPI_NOT_ISR);
+	} else
+		AcpiDisableGpe(NULL, elt[0].Integer.Value, ACPI_NOT_ISR);
 
  out:
 	AcpiOsFree(buf.Pointer);
+}
+
+/*
+ * acpi_clear_wake_gpe
+ *
+ *	Clear GPE as both Runtime and Wake
+ */
+void
+acpi_clear_wake_gpe(ACPI_HANDLE handle)
+{
+	acpi_wake_gpe_helper(handle, false);
+}
+
+/*
+ * acpi_set_wake_gpe
+ *
+ *	Set GPE as both Runtime and Wake
+ */
+void
+acpi_set_wake_gpe(ACPI_HANDLE handle)
+{
+	acpi_wake_gpe_helper(handle, true);
 }
 
 

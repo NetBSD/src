@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.39.2.1 2008/06/23 04:31:51 wrstuden Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.39.2.2 2008/09/18 04:31:43 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.39.2.1 2008/06/23 04:31:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.39.2.2 2008/09/18 04:31:43 wrstuden Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -232,7 +232,7 @@ callout_init_cpu(struct cpu_info *ci)
 	struct callout_cpu *cc;
 	int b;
 
-	KASSERT(sizeof(callout_impl_t) <= sizeof(callout_t));
+	CTASSERT(sizeof(callout_impl_t) <= sizeof(callout_t));
 
 	if ((cc = ci->ci_data.cpu_callout) == NULL) {
 		cc = kmem_zalloc(sizeof(*cc), KM_SLEEP);
@@ -380,6 +380,7 @@ callout_reset(callout_t *cs, int to_ticks, void (*func)(void *), void *arg)
 	kmutex_t *lock;
 
 	KASSERT(c->c_magic == CALLOUT_MAGIC);
+	KASSERT(func != NULL);
 
 	lock = callout_lock(c);
 	c->c_func = func;
@@ -556,6 +557,7 @@ callout_setfunc(callout_t *cs, void (*func)(void *), void *arg)
 	kmutex_t *lock;
 
 	KASSERT(c->c_magic == CALLOUT_MAGIC);
+	KASSERT(func != NULL);
 
 	lock = callout_lock(c);
 	c->c_func = func;
@@ -722,6 +724,7 @@ callout_softclock(void *v)
 		cc->cc_active = c;
 
 		mutex_spin_exit(&cc->cc_lock);
+		KASSERT(func != NULL);
 		if (!mpsafe) {
 			KERNEL_LOCK(1, NULL);
 			(*func)(arg);

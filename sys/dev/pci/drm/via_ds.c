@@ -1,4 +1,4 @@
-/*	$NetBSD: via_ds.c,v 1.2 2007/12/11 11:48:48 lukem Exp $	*/
+/*	$NetBSD: via_ds.c,v 1.2.14.1 2008/09/18 04:35:09 wrstuden Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -26,10 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_ds.c,v 1.2 2007/12/11 11:48:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_ds.c,v 1.2.14.1 2008/09/18 04:35:09 wrstuden Exp $");
 
-#include <dev/drm/drmP.h>
-#include <dev/pci/drm/via_ds.h>
+#include "drmP.h"
+#include "via_ds.h"
 
 extern unsigned int VIA_DEBUG;
 

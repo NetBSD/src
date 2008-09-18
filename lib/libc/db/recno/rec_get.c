@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_get.c,v 1.13 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: rec_get.c,v 1.13.12.1 2008/09/18 04:39:21 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_get.c	8.9 (Berkeley) 8/18/94";
 #else
-__RCSID("$NetBSD: rec_get.c,v 1.13 2007/02/03 23:46:09 christos Exp $");
+__RCSID("$NetBSD: rec_get.c,v 1.13.12.1 2008/09/18 04:39:21 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -126,7 +126,7 @@ __rec_fpipe(BTREE *t, recno_t top)
 	recno_t nrec;
 	size_t len;
 	int ch;
-	u_char *p;
+	uint8_t *p;
 
 	if (t->bt_rdata.size < t->bt_reclen) {
 		t->bt_rdata.data = t->bt_rdata.data == NULL ?
@@ -181,7 +181,7 @@ __rec_vpipe(BTREE *t, recno_t top)
 	ptrdiff_t len;
 	size_t sz;
 	int bval, ch;
-	u_char *p;
+	uint8_t *p;
 
 	bval = t->bt_bval;
 	for (nrec = t->bt_nrecs; nrec < top; ++nrec) {
@@ -189,7 +189,7 @@ __rec_vpipe(BTREE *t, recno_t top)
 		    sz = t->bt_rdata.size;; *p++ = ch, --sz) {
 			if ((ch = getc(t->bt_rfp)) == EOF || ch == bval) {
 				data.data = t->bt_rdata.data;
-				data.size = p - (u_char *)t->bt_rdata.data;
+				data.size = p - (uint8_t *)t->bt_rdata.data;
 				if (ch == EOF && data.size == 0)
 					break;
 				if (__rec_iput(t, nrec, &data, 0)
@@ -198,14 +198,14 @@ __rec_vpipe(BTREE *t, recno_t top)
 				break;
 			}
 			if (sz == 0) {
-				len = p - (u_char *)t->bt_rdata.data;
+				len = p - (uint8_t *)t->bt_rdata.data;
 				t->bt_rdata.size += (sz = 256);
 				t->bt_rdata.data = t->bt_rdata.data == NULL ?
 				    malloc(t->bt_rdata.size) :
 				    realloc(t->bt_rdata.data, t->bt_rdata.size);
 				if (t->bt_rdata.data == NULL)
 					return (RET_ERROR);
-				p = (u_char *)t->bt_rdata.data + len;
+				p = (uint8_t *)t->bt_rdata.data + len;
 			}
 		}
 		if (ch == EOF)
@@ -233,7 +233,7 @@ __rec_fmap(BTREE *t, recno_t top)
 {
 	DBT data;
 	recno_t nrec;
-	u_char *sp, *ep, *p;
+	uint8_t *sp, *ep, *p;
 	size_t len;
 
 	if (t->bt_rdata.size < t->bt_reclen) {
@@ -247,8 +247,8 @@ __rec_fmap(BTREE *t, recno_t top)
 	data.data = t->bt_rdata.data;
 	data.size = t->bt_reclen;
 
-	sp = (u_char *)t->bt_cmap;
-	ep = (u_char *)t->bt_emap;
+	sp = (uint8_t *)t->bt_cmap;
+	ep = (uint8_t *)t->bt_emap;
 	for (nrec = t->bt_nrecs; nrec < top; ++nrec) {
 		if (sp >= ep) {
 			F_SET(t, R_EOF);
@@ -280,12 +280,12 @@ int
 __rec_vmap(BTREE *t, recno_t top)
 {
 	DBT data;
-	u_char *sp, *ep;
+	uint8_t *sp, *ep;
 	recno_t nrec;
 	int bval;
 
-	sp = (u_char *)t->bt_cmap;
-	ep = (u_char *)t->bt_emap;
+	sp = (uint8_t *)t->bt_cmap;
+	ep = (uint8_t *)t->bt_emap;
 	bval = t->bt_bval;
 
 	for (nrec = t->bt_nrecs; nrec < top; ++nrec) {
@@ -294,7 +294,7 @@ __rec_vmap(BTREE *t, recno_t top)
 			return (RET_SPECIAL);
 		}
 		for (data.data = sp; sp < ep && *sp != bval; ++sp);
-		data.size = sp - (u_char *)data.data;
+		data.size = sp - (uint8_t *)data.data;
 		if (__rec_iput(t, nrec, &data, 0) != RET_SUCCESS)
 			return (RET_ERROR);
 		++sp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: acs.c,v 1.15 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: acs.c,v 1.15.2.1 2008/09/18 04:39:23 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: acs.c,v 1.15 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: acs.c,v 1.15.2.1 2008/09/18 04:39:23 wrstuden Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -39,8 +39,9 @@ __RCSID("$NetBSD: acs.c,v 1.15 2008/04/28 20:23:01 martin Exp $");
 
 chtype _acs_char[NUM_ACS];
 #ifdef HAVE_WCHAR
-#include <locale.h>
-#include <string.h>
+#include <assert.h>
+#include <langinfo.h>
+#include <strings.h>
 
 cchar_t _wacs_char[ NUM_ACS ];
 #endif /* HAVE_WCHAR */
@@ -157,8 +158,9 @@ __init_wacs(SCREEN *screen)
 	}
 
 	/* Add the SUSv2 defaults (those that are not '+') */
-	lstr = setlocale( LC_ALL, "" );
-	if ((lstr != NULL) && !strcasestr( lstr, "UTF-8" )) {
+	lstr = nl_langinfo(CODESET);
+	_DIAGASSERT(lstr);
+	if (!strcasecmp(lstr, "UTF-8")) {
 #ifdef DEBUG
 		__CTRACE(__CTRACE_INIT, "__init_wacs: setting defaults\n" );
 #endif /* DEBUG */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpalvar.h,v 1.8 2007/10/19 12:00:02 ad Exp $	*/
+/*	$NetBSD: sunscpalvar.h,v 1.8.22.1 2008/09/18 04:35:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -130,7 +130,7 @@
 struct sunscpal_dma_handle {
 	int		dh_flags;
 #define	SUNSCDH_BUSY	0x01		/* This DH is in use */
-	u_char *	dh_mapaddr;	/* Original data pointer */
+	uint8_t *	dh_mapaddr;	/* Original data pointer */
 	int		dh_maplen;	/* Original data length */
 	bus_dmamap_t	dh_dmamap;
 #define	dh_dvma dh_dmamap->dm_segs[0].ds_addr /* VA of buffer in DVMA space */
@@ -145,7 +145,7 @@ struct sunscpal_req {
 	struct		scsipi_xfer *sr_xs;	/* Pointer to xfer struct, NULL=unused */
 	int		sr_target, sr_lun;	/* For fast access */
 	sunscpal_dma_handle_t sr_dma_hand;	/* Current DMA handle */
-	u_char		*sr_dataptr;		/* Saved data pointer */
+	uint8_t		*sr_dataptr;		/* Saved data pointer */
 	int		sr_datalen;
 	int		sr_flags;		/* Internal error code */
 #define	SR_IMMED			1	/* Immediate command */
@@ -157,7 +157,7 @@ struct sunscpal_req {
 
 
 struct sunscpal_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct scsipi_adapter	sc_adapter;
 	struct scsipi_channel	sc_channel;
 
@@ -176,13 +176,13 @@ struct sunscpal_softc {
 	bus_size_t	sunscpal_intvec;
 #else
 	/* Pointers to PAL registers.  See sunscpalreg.h */
-	volatile u_char		*sunscpal_data;
-	volatile u_char		*sunscpal_cmd_stat;
-	volatile u_short	*sunscpal_icr;
-	volatile u_short	*sunscpal_dma_addr_h;
-	volatile u_short	*sunscpal_dma_addr_l;
-	volatile u_short	*sunscpal_dma_count;
-	volatile u_char		*sunscpal_intvec;
+	volatile uint8_t	*sunscpal_data;
+	volatile uint8_t	*sunscpal_cmd_stat;
+	volatile uint16_t	*sunscpal_icr;
+	volatile uint16_t	*sunscpal_dma_addr_h;
+	volatile uint16_t	*sunscpal_dma_addr_l;
+	volatile uint16_t	*sunscpal_dma_count;
+	volatile uint8_t	*sunscpal_intvec;
 #endif
 
 	/* Pointers to DMA-related structures */
@@ -223,7 +223,7 @@ struct sunscpal_softc {
 	struct		sunscpal_req *sc_current;
 
 	/* Active data pointer for current SCSI command. */
-	u_char		*sc_dataptr;
+	uint8_t		*sc_dataptr;
 	int		sc_datalen;
 	int		sc_reqlen;
 
@@ -254,10 +254,10 @@ struct sunscpal_softc {
 #define SEND_SDTR		0x40
 #define	SEND_WDTR		0x80
 #define SUNSCPAL_MAX_MSG_LEN 8
-	u_char  sc_omess[SUNSCPAL_MAX_MSG_LEN];
-	u_char	*sc_omp;		/* Outgoing message pointer */
-	u_char	sc_imess[SUNSCPAL_MAX_MSG_LEN];
-	u_char	*sc_imp;		/* Incoming message pointer */
+	uint8_t	sc_omess[SUNSCPAL_MAX_MSG_LEN];
+	uint8_t	*sc_omp;		/* Outgoing message pointer */
+	uint8_t	sc_imess[SUNSCPAL_MAX_MSG_LEN];
+	uint8_t	*sc_imp;		/* Incoming message pointer */
 	int	sc_rev;			/* Chip revision */
 #define SUNSCPAL_VARIANT_501_1006	0
 #define SUNSCPAL_VARIANT_501_1045	1
@@ -269,8 +269,8 @@ int	sunscpal_detach(struct sunscpal_softc *, int);
 int 	sunscpal_intr(void *);
 void 	sunscpal_scsipi_request(struct scsipi_channel *,
 		scsipi_adapter_req_t, void *);
-int 	sunscpal_pio_in(struct sunscpal_softc *, int, int, u_char *);
-int 	sunscpal_pio_out(struct sunscpal_softc *, int, int, u_char *);
+int 	sunscpal_pio_in(struct sunscpal_softc *, int, int, uint8_t *);
+int 	sunscpal_pio_out(struct sunscpal_softc *, int, int, uint8_t *);
 void	sunscpal_init(struct sunscpal_softc *);
 
 /* Options for no-parity, DMA, and interrupts. */

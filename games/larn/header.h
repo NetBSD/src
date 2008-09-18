@@ -1,4 +1,4 @@
-/* $NetBSD: header.h,v 1.21 2008/02/03 20:11:05 dholland Exp $	 */
+/* $NetBSD: header.h,v 1.21.6.1 2008/09/18 04:39:57 wrstuden Exp $	 */
 
 /* header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -429,7 +429,7 @@ extern int      rmst, lasttime;
 #endif	/* VT100 */
 
 /* macro to output one byte to the output buffer */
-#define lprc(ch) ((lpnt>=lpend)?(*lpnt++ =(ch), lflush()):(*lpnt++ =(ch)))
+#define lprc(ch) ((lpnt>=lpend)?(void)(*lpnt++ = (ch), lflush()):(void)(*lpnt++ = (ch)))
 
 /* macro to seed the random number generator */
 #define seedrand(x) (randx=x)

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2008/05/02 11:27:08 lukem Exp $
+# $NetBSD: Makefile,v 1.7.2.1 2008/09/18 04:39:25 wrstuden Exp $
 
 NOLINKLIB=	# defined
 NOPIC=		# defined
@@ -34,6 +34,7 @@ make-print-version: make-print-version.lo
 	${HOST_CC} ${HOST_LDFLAGS} -o ${.TARGET} ${.ALLSRC}
 
 print_version.h: make-print-version
+	${_MKTARGET_CREATE}
 	./make-print-version print_version.h
 
 print_version.o print_version.ln: print_version.h

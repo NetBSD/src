@@ -1,4 +1,4 @@
-/*	$NetBSD: flush.c,v 1.15 2007/12/05 18:55:19 pooka Exp $	*/
+/*	$NetBSD: flush.c,v 1.15.8.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: flush.c,v 1.15 2007/12/05 18:55:19 pooka Exp $");
+__RCSID("$NetBSD: flush.c,v 1.15.8.1 2008/09/18 04:39:24 wrstuden Exp $");
 #endif /* !lint */
 
 /*
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: flush.c,v 1.15 2007/12/05 18:55:19 pooka Exp $");
 
 #if 0
 int
-puffs_inval_namecache_node(struct puffs_usermount *pu, void *cookie,
+puffs_inval_namecache_node(struct puffs_usermount *pu, puffs_cookie_t cookie,
 	const char *name)
 {
 
@@ -56,7 +56,7 @@ puffs_inval_namecache_node(struct puffs_usermount *pu, void *cookie,
 #endif
 
 static int
-doflush(struct puffs_usermount *pu, void *cookie, int op,
+doflush(struct puffs_usermount *pu, puffs_cookie_t cookie, int op,
 	off_t start, off_t end)
 {
 	struct puffs_framebuf *pb;
@@ -91,7 +91,7 @@ doflush(struct puffs_usermount *pu, void *cookie, int op,
 }
 
 int
-puffs_inval_namecache_dir(struct puffs_usermount *pu, void *cookie)
+puffs_inval_namecache_dir(struct puffs_usermount *pu, puffs_cookie_t cookie)
 {
 
 	return doflush(pu, cookie, PUFFS_INVAL_NAMECACHE_DIR, 0, 0);
@@ -105,30 +105,30 @@ puffs_inval_namecache_all(struct puffs_usermount *pu)
 }
 
 int
-puffs_inval_pagecache_node(struct puffs_usermount *pu, void *cookie)
+puffs_inval_pagecache_node(struct puffs_usermount *pu, puffs_cookie_t cookie)
 {
 
 	return doflush(pu, cookie, PUFFS_INVAL_PAGECACHE_NODE_RANGE, 0, 0);
 }
 
 int
-puffs_inval_pagecache_node_range(struct puffs_usermount *pu, void *cookie,
-	off_t start, off_t end)
+puffs_inval_pagecache_node_range(struct puffs_usermount *pu,
+	puffs_cookie_t cookie, off_t start, off_t end)
 {
 
 	return doflush(pu, cookie, PUFFS_INVAL_PAGECACHE_NODE_RANGE, start,end);
 }
 
 int
-puffs_flush_pagecache_node(struct puffs_usermount *pu, void *cookie)
+puffs_flush_pagecache_node(struct puffs_usermount *pu, puffs_cookie_t cookie)
 {
 
 	return doflush(pu, cookie, PUFFS_FLUSH_PAGECACHE_NODE_RANGE, 0, 0);
 }
 
 int
-puffs_flush_pagecache_node_range(struct puffs_usermount *pu, void *cookie,
-	off_t start, off_t end)
+puffs_flush_pagecache_node_range(struct puffs_usermount *pu,
+	puffs_cookie_t cookie, off_t start, off_t end)
 {
 
 	return doflush(pu, cookie, PUFFS_FLUSH_PAGECACHE_NODE_RANGE, start,end);

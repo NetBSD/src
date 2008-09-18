@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.28.2.4 2008/07/21 19:13:45 wrstuden Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.28.2.5 2008/09/18 04:31:42 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.28.2.4 2008/07/21 19:13:45 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.28.2.5 2008/09/18 04:31:42 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -236,6 +236,7 @@ sleepq_block(int timo, bool catch)
 	struct proc *p;
 	lwp_t *l = curlwp;
 	bool early = false;
+	int biglocks = l->l_biglocks;
 
 	ktrcsw(1, 0);
 
@@ -298,8 +299,8 @@ sleepq_block(int timo, bool catch)
 	}
 
 	ktrcsw(0, 0);
-	if (__predict_false(l->l_biglocks != 0)) {
-		KERNEL_LOCK(l->l_biglocks, NULL);
+	if (__predict_false(biglocks != 0)) {
+		KERNEL_LOCK(biglocks, NULL);
 	}
 	return error;
 }

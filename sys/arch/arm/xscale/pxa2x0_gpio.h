@@ -1,4 +1,4 @@
-/*	$wasabi$	*/
+/*	$NetBSD: pxa2x0_gpio.h,v 1.3.28.1 2008/09/18 04:33:22 wrstuden Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.

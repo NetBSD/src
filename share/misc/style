@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.42 2008/02/16 14:22:16 apb Exp $ */
+/* $NetBSD: style,v 1.42.8.1 2008/09/18 04:38:09 wrstuden Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -27,9 +27,9 @@
  * Only one instance of each of these macros can occur in each file.
  */
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2000\n\
-	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.42 2008/02/16 14:22:16 apb Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2000\
+ The NetBSD Foundation, inc. All rights reserved.");
+__RCSID("$NetBSD: style,v 1.42.8.1 2008/09/18 04:38:09 wrstuden Exp $");
 
 /*
  * VERY important single-line comments look like this.

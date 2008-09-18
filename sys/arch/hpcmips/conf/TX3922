@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.82.12.1 2008/06/23 04:30:23 wrstuden Exp $
+#	$NetBSD: TX3922,v 1.82.12.2 2008/09/18 04:33:26 wrstuden Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -86,6 +86,7 @@ options 	INET6		# IPV6
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	QUOTA		# UFS quotas
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

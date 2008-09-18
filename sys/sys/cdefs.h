@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.66.20.1 2008/06/23 04:32:02 wrstuden Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.66.20.2 2008/09/18 04:37:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -192,7 +192,7 @@
 #endif
 
 #if __GNUC_PREREQ__(3, 0)
-#define	__noinline	__attribute ((__noinline__))
+#define	__noinline	__attribute__((__noinline__))
 #else
 #define	__noinline	/* nothing */
 #endif
@@ -214,9 +214,9 @@
 #define	__aligned(x)	__attribute__((__aligned__(x)))
 #define	__section(x)	__attribute__((__section__(x)))
 #elif defined(__PCC__)
-#define	__packed	/* XXX ignore for now */
-#define	__aligned(x)   	/* XXX ignore for now */
-#define	__section(x)   	/* XXX ignore for now */
+#define	__packed	_Pragma("packed")
+#define	__aligned(x)   	_Pragma("aligned " #x)
+#define	__section(x)   	_Pragma("section " ## x)
 #elif defined(__lint__)
 #define	__packed	/* delete */
 #define	__aligned(x)	/* delete */
@@ -231,12 +231,12 @@
  * C99 defines the restrict type qualifier keyword, which was made available
  * in GCC 2.92.
  */
-#if __STDC_VERSION__ >= 199901L
-#define	__restrict	restrict
-#else
-#if !__GNUC_PREREQ__(2, 92)
+#if defined(__lint__)
 #define	__restrict	/* delete __restrict when not supported */
-#endif
+#elif __STDC_VERSION__ >= 199901L
+#define	__restrict	restrict
+#elif !__GNUC_PREREQ__(2, 92)
+#define	__restrict	/* delete __restrict when not supported */
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.23 2007/12/15 19:44:43 perry Exp $	*/
+/*	$NetBSD: snake.c,v 1.23.6.1 2008/09/18 04:39:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif				/* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.23 2007/12/15 19:44:43 perry Exp $");
+__RCSID("$NetBSD: snake.c,v 1.23.6.1 2008/09/18 04:39:58 wrstuden Exp $");
 #endif
 #endif				/* not lint */
 
@@ -191,7 +191,8 @@ main(argc, argv)
 	srandom((int) tv);
 
 	penalty = loot = 0;
-	initscr();
+	if (!initscr())
+		errx(0, "couldn't initialize screen");;
 	cbreak();
 	noecho();
 #ifdef KEY_LEFT

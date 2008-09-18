@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.21 2008/02/25 10:00:45 nakayama Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.21.6.1 2008/09/18 04:33:34 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2008/02/25 10:00:45 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21.6.1 2008/09/18 04:33:34 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,8 +202,8 @@ process_set_pc(struct lwp *l, void *addr)
 int
 process_read_fpregs(struct lwp *l, struct fpreg *regs)
 {
-	extern struct fpstate64	initfpstate;
-	struct fpstate64	*statep = &initfpstate;
+	extern const struct fpstate64 initfpstate;
+	const struct fpstate64	*statep = &initfpstate;
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 

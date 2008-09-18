@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mdset,v 1.31 2008/05/02 23:13:05 ad Exp $
+#	$NetBSD: Makefile.mdset,v 1.31.2.1 2008/09/18 04:41:09 wrstuden Exp $
 #
 # Makefile snippet to ${TOOL_MDSETIMAGE} file system images into kernels
 #
@@ -124,12 +124,22 @@ CLEANFILES+=	${_KERNEL.${_K}.${_F}}
 ${_I}=
 .endif
 
+# Darwin requires a special hack - this is documented in
+# doc/HACKS, and just works around the problems described more
+# fully in http://mail-index.netbsd.org/current-users/2008/06/27/msg003242.html
+OPSYS!= uname -s
+.if ${OPSYS} == "Darwin"
+MDSETIMAGEFLAGS=
+.else
+MDSETIMAGEFLAGS=-v
+.endif
+
 ${_KERNEL.${_K}.${_F}}: .NOTMAIN ${_KERNNAME.${_K}.${_F}} ${_I}
 	${_MKTARGET_CREATE} "(from: ${.ALLSRC})"
 	@rm -f ${.TARGET} ${.TARGET}.tmp ${.TARGET}.symbols.gz
 	@cp ${_KERNNAME.${_K}.${_F}} ${.TARGET}.tmp
 .if !defined(MDSET_NOIMAGE.${_FILENAME})
-	${TOOL_MDSETIMAGE} -v ${.TARGET}.tmp ${_I}
+	${TOOL_MDSETIMAGE} ${MDSETIMAGEFLAGS} ${.TARGET}.tmp ${_I}
 .endif
 .if !defined(MDSET_NOSYMBOLS.${_FILENAME}) && !defined(MDSET_NOSYMBOLS)
 	${NM} ${.TARGET}.tmp | gzip -9 > ${.TARGET}.symbols.gz
@@ -162,7 +172,7 @@ realall: ${KERNELS}
 .if defined(MDSET_RELEASEDIR)
 release:: check_RELEASEDIR .WAIT ${KERNELS}
 	${RELEASE_INSTALL} ${KERNELS} ${KERNELSYMS} \
-	    ${RELEASEDIR}/${MACHINE}/${MDSET_RELEASEDIR}
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/${MDSET_RELEASEDIR}
 .endif
 
 

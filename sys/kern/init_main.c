@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.355.2.3 2008/06/23 04:31:50 wrstuden Exp $	*/
+/*	$NetBSD: init_main.c,v 1.355.2.4 2008/09/18 04:31:41 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.355.2.3 2008/06/23 04:31:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.355.2.4 2008/09/18 04:31:41 wrstuden Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.355.2.3 2008/06/23 04:31:50 wrstuden
 #include "opt_fileassoc.h"
 #include "opt_ktrace.h"
 #include "opt_pax.h"
+#include "opt_wapbl.h"
 
 #include "rnd.h"
 #include "sysmon_envsys.h"
@@ -192,6 +193,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.355.2.3 2008/06/23 04:31:50 wrstuden
 #include <sys/ktrace.h>
 #endif
 #include <sys/kauth.h>
+#ifdef WAPBL
+#include <sys/wapbl.h>
+#endif
 #include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
@@ -372,7 +376,7 @@ main(void)
 	 */
 	evcnt_init();		/* initialize event counters */
 #if NRND > 0
-	rnd_init();		/* initialize RNG */
+	rnd_init();		/* initialize random number generator */
 #endif
 
 	/* Initialize process and pgrp structures. */
@@ -569,6 +573,11 @@ main(void)
 
 	/* Initialize the UUID system calls. */
 	uuid_init();
+
+#ifdef WAPBL
+	/* Initialize write-ahead physical block logging. */
+	wapbl_init();
+#endif
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has

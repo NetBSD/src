@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.14 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.14.2.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ pthread__sp(void)
 	} while (/*CONSTCOND*/0)
 
 #define	pthread__smt_pause()	__asm __volatile("rep; nop" ::: "memory")
-/* #define	PTHREAD__HAVE_THREADREG */
+/* #define	PTHREAD__HAVE_THREADREG */ 
 
 /* Don't need additional memory barriers. */
 #define	PTHREAD__ATOMIC_IS_MEMBAR
@@ -183,6 +183,9 @@ pthread__sp(void)
 void	pthread__threadreg_set(pthread_t);
 
 static inline pthread_t
+#ifdef __GNUC__
+__attribute__ ((__const__))
+#endif
 pthread__threadreg_get(void)
 {
 	pthread_t self;

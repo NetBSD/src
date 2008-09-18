@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.28 2008/01/29 10:07:29 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.28.6.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.28 2008/01/29 10:07:29 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.28.6.1 2008/09/18 04:39:24 wrstuden Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -680,10 +680,6 @@ puffs__framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 		if (rv) {
 			puffs__framev_readclose(pu, fio, rv);
 			fio->cur_in = NULL;
-			if ((pufbuf->istat & ISTAT_DIRECT) == 0) {
-				assert((pufbuf->istat & ISTAT_NODESTROY) == 0);
-				puffs_framebuf_destroy(pufbuf);
-			}
 			return;
 		}
 

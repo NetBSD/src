@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2007/08/07 10:16:57 pooka Exp $
+#	$NetBSD: Makefile,v 1.2.36.1 2008/09/18 04:37:03 wrstuden Exp $
 #
 
-.include <bsd.own.mk>
+.PATH:  ${.CURDIR}/../../../../nfs
 
-LIB=	nfs
-
-.PATH:  ${NETBSDSRCDIR}/sys/nfs
+LIB=	rumpfs_nfs
 
 SRCS=	krpc_subr.c nfs_bio.c nfs_boot.c nfs_kq.c nfs_node.c		\
 	nfs_socket.c nfs_subs.c nfs_syscalls.c nfs_vfsops.c nfs_vnops.c

@@ -1,15 +1,19 @@
-#	$NetBSD: Makefile,v 1.123.2.1 2008/06/23 04:29:29 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.123.2.2 2008/09/18 04:39:18 wrstuden Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
 
-SUBDIR=	csu libc .WAIT libarch libatf-c libatf-c++ \
+SUBDIR=	csu libc .WAIT libarch \
 	libbsdmalloc libbluetooth libbz2 \
 	libcompat libcrypt \
 	libcurses libevent libintl libkvm libl libm \
 	libossaudio libpcap libpci libpmc libposix libprop libpthread \
 	libpthread_dbg libpuffs libresolv librmt librpcsvc librt libsdp \
 	libterm libusbhid libutil libwrap liby libz
+
+.if (${MKATF} != "no")
+SUBDIR+= libatf-c libatf-c++
+.endif
 
 # libform and libmenu need libcurses
 SUBDIR+=	.WAIT libform libmenu 
@@ -86,6 +90,8 @@ SUBDIR+=	libkrb5		# depends on libcrypto and more
 SUBDIR+=	librefuse	# depends on libpuffs
 .endif
 
+SUBDIR+=	librumpuser	# depends on libpthread
+
 # XXX These bind9/ISC libraries should depend on each other but the
 # XXX dependency ordering requires considerable investigation.
 # XXX Please preserve the order below so we know the order ISC links
@@ -107,12 +113,21 @@ SUBDIR+=	.WAIT libkadm5srv libkadm5clnt libkafs libsl libss
 SUBDIR+=	../external/bsd/openldap/lib
 .endif
 
+SUBDIR+=	librump		# depends on librumpuser
 
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
 .if (${MKPAM} != "no")
 SUBDIR+=	libpam		# depends on libkrb5, libkafs and more
+.endif
+
+SUBDIR+=	libukfs		# depends on librump
+
+#==================== 4th library dependency barrier ====================
+.if (${MKPUFFS} != "no")
+SUBDIR+=	.WAIT
+SUBDIR+=	libp2k		# depends on libpuffs and libukfs
 .endif
 
 .include <bsd.subdir.mk>

@@ -1,8 +1,3 @@
-/*	$NetBSD: ieeefp.h,v 1.1 2006/09/01 21:26:18 uwe Exp $	*/
-
-#ifndef _LANDISK_IEEEFP_H_
-#define _LANDISK_IEEEFP_H_
+/*	$NetBSD: ieeefp.h,v 1.1.68.1 2008/09/18 04:33:29 wrstuden Exp $	*/
 
 #include <sh3/ieeefp.h>
-
-#endif /* _LANDISK_IEEEFP_H_ */

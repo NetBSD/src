@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.29 2007/02/17 22:00:25 he Exp $
+# $NetBSD: md.bebox,v 1.29.16.1 2008/09/18 04:41:12 wrstuden Exp $
 ./usr/include/bebox				comp-c-include
 ./usr/include/bebox/_G_config.h			comp-obsolete		obsolete
 ./usr/include/bebox/ansi.h			comp-c-include
@@ -66,3 +66,4 @@
 ./usr/include/bebox/vmparam.h			comp-c-include
 ./usr/include/bebox/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug

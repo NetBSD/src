@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.64 2007/05/24 00:37:40 agc Exp $	*/
+/*	$NetBSD: procfs.h,v 1.64.34.1 2008/09/18 04:36:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -259,7 +259,4 @@ int	procfs_machdep_rw(struct lwp *, struct lwp *, struct pfsnode *,
 int	procfs_machdep_getattr(struct vnode *, struct vattr *, struct proc *);
 #endif
 
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_procfs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 #endif /* _KERNEL */

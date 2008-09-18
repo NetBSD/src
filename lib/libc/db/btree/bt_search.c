@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_search.c,v 1.14 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: bt_search.c,v 1.14.12.1 2008/09/18 04:39:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_search.c	8.8 (Berkeley) 7/31/94";
 #else
-__RCSID("$NetBSD: bt_search.c,v 1.14 2007/02/03 23:46:09 christos Exp $");
+__RCSID("$NetBSD: bt_search.c,v 1.14.12.1 2008/09/18 04:39:20 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,7 +83,7 @@ __bt_search(BTREE *t, const DBT *key, int *exactp)
 		/* Do a binary search on the current page. */
 		t->bt_cur.page = h;
 		for (base = 0, lim = NEXTINDEX(h); lim; lim >>= 1) {
-			t->bt_cur.index = idx = base + ((u_int32_t)lim >> 1);
+			t->bt_cur.index = idx = base + ((uint32_t)lim >> 1);
 			if ((cmp = __bt_cmp(t, key, &t->bt_cur)) == 0) {
 				if (h->flags & P_BLEAF) {
 					*exactp = 1;

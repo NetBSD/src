@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2006/10/27 19:39:11 drochner Exp $
+#	$NetBSD: Makefile,v 1.19.18.1 2008/09/18 04:39:23 wrstuden Exp $
 
 USE_SHLIBDIR=	yes
 
@@ -25,6 +25,6 @@ LDSTATIC?= -static
 .include <bsd.lib.mk>
 .endif
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.crypt-sha1.c+=	-Wno-pointer-sign
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.25 2008/04/28 20:23:30 martin Exp $ */
+/*	$NetBSD: isr.c,v 1.25.2.1 2008/09/18 04:33:31 wrstuden Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.25 2008/04/28 20:23:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.25.2.1 2008/09/18 04:33:31 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,19 +400,13 @@ spurintr(void *arg)
 }
 #endif
 
-const int ipl2psl_table[NIPL] = {
-	[IPL_NONE]       = PSL_IPL0,
-	[IPL_SOFTCLOCK]  = PSL_IPL1,
-	[IPL_SOFTNET]    = PSL_IPL1,
-	[IPL_SOFTSERIAL] = PSL_IPL1,
-	[IPL_SOFTBIO]    = PSL_IPL1,
-	[IPL_VM]         = PSL_IPL6,
-	[IPL_SCHED]      = PSL_IPL7,
+const uint16_t ipl2psl_table[NIPL] = {
+	[IPL_NONE]       = PSL_S | PSL_IPL0,
+	[IPL_SOFTCLOCK]  = PSL_S | PSL_IPL1,
+	[IPL_SOFTNET]    = PSL_S | PSL_IPL1,
+	[IPL_SOFTSERIAL] = PSL_S | PSL_IPL1,
+	[IPL_SOFTBIO]    = PSL_S | PSL_IPL1,
+	[IPL_VM]         = PSL_S | PSL_IPL6,
+	[IPL_SCHED]      = PSL_S | PSL_IPL7,
+	[IPL_HIGH]       = PSL_S | PSL_IPL7,
 };
-
-ipl_cookie_t
-makeiplcookie(ipl_t ipl)
-{
-
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl] | PSL_S};
-}

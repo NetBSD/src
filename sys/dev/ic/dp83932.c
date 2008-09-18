@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.26 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.26.2.1 2008/09/18 04:35:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.26 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.26.2.1 2008/09/18 04:35:03 wrstuden Exp $");
 
 #include "bpfilter.h"
 
@@ -209,7 +209,7 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
-	 * We can suport 802.1Q VLAN-sized frames.
+	 * We can support 802.1Q VLAN-sized frames.
 	 */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 

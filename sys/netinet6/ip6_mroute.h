@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.h,v 1.13 2007/11/01 20:33:57 dyoung Exp $	*/
+/*	$NetBSD: ip6_mroute.h,v 1.13.22.1 2008/09/18 04:37:01 wrstuden Exp $	*/
 /*	$KAME: ip6_mroute.h,v 1.17 2001/02/10 02:05:52 itojun Exp $	*/
 
 /*
@@ -267,11 +267,11 @@ struct rtdetq {		/* XXX: rtdetq is also defined in ip_mroute.h */
 
 #define MAX_UPQ6	4		/* max. no of pkts in upcall Q */
 
-int	ip6_mrouter_set(int, struct socket *, struct mbuf *);
-int	ip6_mrouter_get(int, struct socket *, struct mbuf **);
+int	ip6_mrouter_set(struct socket *, struct sockopt *);
+int	ip6_mrouter_get(struct socket *, struct sockopt *);
 int	ip6_mrouter_done(void);
 void	ip6_mrouter_detach(struct ifnet *);
-int	mrt6_ioctl(int, void *);
+int	mrt6_ioctl(u_long, void *);
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IP6_MROUTE_H_ */

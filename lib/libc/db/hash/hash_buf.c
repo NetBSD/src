@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_buf.c,v 1.12 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: hash_buf.c,v 1.12.12.1 2008/09/18 04:39:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
 #else
-__RCSID("$NetBSD: hash_buf.c,v 1.12 2007/02/03 23:46:09 christos Exp $");
+__RCSID("$NetBSD: hash_buf.c,v 1.12.12.1 2008/09/18 04:39:20 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +74,7 @@ __RCSID("$NetBSD: hash_buf.c,v 1.12 2007/02/03 23:46:09 christos Exp $");
 #include "page.h"
 #include "extern.h"
 
-static BUFHEAD *newbuf(HTAB *, u_int32_t, BUFHEAD *);
+static BUFHEAD *newbuf(HTAB *, uint32_t, BUFHEAD *);
 
 /* Unlink B from its place in the lru */
 #define BUF_REMOVE(B) { \
@@ -108,13 +108,13 @@ static BUFHEAD *newbuf(HTAB *, u_int32_t, BUFHEAD *);
 BUFHEAD *
 __get_buf(
 	HTAB *hashp,
-	u_int32_t addr,
+	uint32_t addr,
 	BUFHEAD *prev_bp,
 	int newpage	/* If prev_bp set, indicates a new overflow page. */
 )
 {
 	BUFHEAD *bp;
-	u_int32_t is_disk_mask;
+	uint32_t is_disk_mask;
 	int is_disk, segment_ndx = 0;	/* pacify gcc */
 	SEGMENT segp = NULL;	/* pacify gcc */
 
@@ -160,14 +160,14 @@ __get_buf(
  * If newbuf finds an error (returning NULL), it also sets errno.
  */
 static BUFHEAD *
-newbuf(HTAB *hashp, u_int32_t addr, BUFHEAD *prev_bp)
+newbuf(HTAB *hashp, uint32_t addr, BUFHEAD *prev_bp)
 {
 	BUFHEAD *bp;		/* The buffer we're going to use */
 	BUFHEAD *xbp;		/* Temp pointer */
 	BUFHEAD *next_xbp;
 	SEGMENT segp;
 	int segment_ndx;
-	u_int16_t oaddr, *shortp;
+	uint16_t oaddr, *shortp;
 
 	oaddr = 0;
 	bp = LRU;
@@ -197,7 +197,7 @@ newbuf(HTAB *hashp, u_int32_t addr, BUFHEAD *prev_bp)
 			 * Set oaddr before __put_page so that you get it
 			 * before bytes are swapped.
 			 */
-			shortp = (u_int16_t *)(void *)bp->page;
+			shortp = (uint16_t *)(void *)bp->page;
 			if (shortp[0])
 				oaddr = shortp[shortp[0] - 1];
 			if ((bp->flags & BUF_MOD) && __put_page(hashp, bp->page,
@@ -238,7 +238,7 @@ newbuf(HTAB *hashp, u_int32_t addr, BUFHEAD *prev_bp)
 				    (oaddr != xbp->addr))
 					break;
 
-				shortp = (u_int16_t *)(void *)xbp->page;
+				shortp = (uint16_t *)(void *)xbp->page;
 				if (shortp[0])
 					/* set before __put_page */
 					oaddr = shortp[shortp[0] - 1];

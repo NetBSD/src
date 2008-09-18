@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.32.12.1 2008/06/23 04:31:52 wrstuden Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.32.12.2 2008/09/18 04:31:44 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.32.12.1 2008/06/23 04:31:52 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.32.12.2 2008/09/18 04:31:44 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,6 +129,7 @@ getc(struct clist *clp)
 			c |= TTY_QUOTE;
 #endif
 	}
+	*clp->c_cf = 0; /* wipe out to avoid information disclosure */
 	if (++clp->c_cf == clp->c_ce)
 		clp->c_cf = clp->c_cs;
 	if (--clp->c_cc == 0)

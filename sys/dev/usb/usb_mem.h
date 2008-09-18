@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.25.2.1 2008/06/23 04:31:37 wrstuden Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.25.2.2 2008/09/18 04:35:12 wrstuden Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ typedef struct usb_dma_block {
 
 usbd_status	usb_allocmem(usbd_bus_handle,size_t,size_t, usb_dma_t *);
 void		usb_freemem(usbd_bus_handle, usb_dma_t *);
+void		usb_syncmem(usb_dma_t *, bus_addr_t, bus_size_t, int ops);
 
 #ifdef __NetBSD__
 struct extent;

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2008/04/21 21:30:59 veego Exp $
+# $NetBSD: Makefile,v 1.31.2.1 2008/09/18 04:39:19 wrstuden Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -27,7 +27,18 @@ ${ASN1COMPILEOBJ}/asn1_compile:
 	@cd ${.CURDIR}/asn1_compile && ${MAKE}
 .endif
 
-DPSRCS+=	asn1_err.h
+DPSRCS += \
+	krb5_asn1.h \
+	cms_asn1.h \
+	rfc2459_asn1.h \
+	pkinit_asn1.h \
+	pkcs12_asn1.h \
+	pkcs8_asn1.h \
+	pkcs9_asn1.h \
+	digest_asn1.h \
+	kx509_asn1.h \
+	asn1_err.h
+
 CLEANFILES+=	asn1_err.h
 
 asn1_err.h asn1_err.c: asn1_err.et ${TOOL_COMPILE_ET}
@@ -480,15 +491,15 @@ CPPFLAGS+= -I.					\
 CPPFLAGS+=-DHAVE_IPV6
 .endif
 
-${gen_files_k5} krb5_asn1.h: krb5_asn1_files
-${gen_files_cms} cms_asn1.h: cms_asn1_files
-${gen_files_rfc2459} rfc2459_asn1.h: rfc2459_asn1_files
-${gen_files_pkinit} pkinit_asn1.h: pkinit_asn1_files
-${gen_files_pkcs12} pkcs12_asn1.h: pkcs12_asn1_files
-${gen_files_pkcs8} pkcs8_asn1.h: pkcs8_asn1_files
-${gen_files_pkcs9} pkcs9_asn1.h: pkcs9_asn1_files
-${gen_files_digest} digest_asn1.h: digest_asn1_files
-${gen_files_kx509} kx509_asn1.h: kx509_asn1_files
+${gen_files_k5} krb5_asn1.hx: krb5_asn1_files
+${gen_files_cms} cms_asn1.hx: cms_asn1_files
+${gen_files_rfc2459} rfc2459_asn1.hx: rfc2459_asn1_files
+${gen_files_pkinit} pkinit_asn1.hx: pkinit_asn1_files
+${gen_files_pkcs12} pkcs12_asn1.hx: pkcs12_asn1_files
+${gen_files_pkcs8} pkcs8_asn1.hx: pkcs8_asn1_files
+${gen_files_pkcs9} pkcs9_asn1.hx: pkcs9_asn1_files
+${gen_files_digest} digest_asn1.hx: digest_asn1_files
+${gen_files_kx509} kx509_asn1.hx: kx509_asn1_files
 
 krb5_asn1_files: k5.asn1 ${TOOL_ASN1_COMPILE}
 	${TOOL_ASN1_COMPILE} \
@@ -523,32 +534,20 @@ digest_asn1_files: digest.asn1 ${TOOL_ASN1_COMPILE}
 kx509_asn1_files: kx509.asn1 ${TOOL_ASN1_COMPILE}
 	${TOOL_ASN1_COMPILE} ${DIST}/heimdal/lib/asn1/kx509.asn1 kx509_asn1
 
-${SRCS}: \
-	krb5_asn1.h \
-	cms_asn1.h \
-	rfc2459_asn1.h \
-	pkinit_asn1.h \
-	pkcs12_asn1.h \
-	pkcs8_asn1.h \
-	pkcs9_asn1.h \
-	digest_asn1.h \
-	kx509_asn1.h
-	
-
 CLEANFILES=	${BUILT_SOURCES} ${gen_files_k5} \
 	${gen_files_cms} ${gen_files_rfc2459} \
 	${gen_files_pkinit} ${gen_files_pkcs12} \
 	${gen_files_pkcs8} ${gen_files_pkcs9} \
 	${gen_files_digest} ${gen_files_kx509} \
-	krb5_asn1_files krb5_asn1.h \
-	cms_asn1_files cms_asn1.h \
-	rfc2459_asn1_files rfc2459_asn1.h \
-	pkinit_asn1_files pkinit_asn1.h \
-	pkcs12_asn1_files pkcs12_asn1.h \
-	pkcs8_asn1_files pkcs8_asn1.h \
-	pkcs9_asn1_files pkcs9_asn1.h \
-	digest_asn1_files digest_asn1.h \
-	kx509_asn1_files kx509_asn1.h
+	krb5_asn1_files krb5_asn1.h krb5_asn1.hx \
+	cms_asn1_files cms_asn1.h cms_asn1.hx \
+	rfc2459_asn1_files rfc2459_asn1.h rfc2459_asn1.hx \
+	pkinit_asn1_files pkinit_asn1.h pkinit_asn1.hx \
+	pkcs12_asn1_files pkcs12_asn1.h pkcs12_asn1.hx \
+	pkcs8_asn1_files pkcs8_asn1.h pkcs8_asn1.hx \
+	pkcs9_asn1_files pkcs9_asn1.h pkcs9_asn1.hx \
+	digest_asn1_files digest_asn1.h digest_asn1.hx \
+	kx509_asn1_files kx509_asn1.h kx509_asn1.hx
 
 .if ${USETOOLS} != "yes"
 SUBDIR=	asn1_compile
@@ -559,7 +558,10 @@ SUBDIR=	asn1_compile
 .include <bsd.subdir.mk>
 .endif
 
-.SUFFIXES: .x
+.SUFFIXES: .hx .x
+
+.hx.h:
+	@cmp -s $< $@ 2> /dev/null || cp $< $@
 
 .x.c:
 	@cmp -s $< $@ 2> /dev/null || cp $< $@

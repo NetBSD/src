@@ -1,4 +1,4 @@
-/*	$NetBSD: isabrvar.h,v 1.5 2006/06/25 16:46:15 tsutsui Exp $	*/
+/*	$NetBSD: isabrvar.h,v 1.5.64.1 2008/09/18 04:33:18 wrstuden Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -77,7 +77,7 @@
 #define ICU_LEN		16
 
 struct isabr_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct	arc_isa_bus arc_isa_cs;
 	struct arc_bus_dma_tag sc_dmat;
 };

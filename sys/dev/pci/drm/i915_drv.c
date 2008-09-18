@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.3.6.1 2008/06/23 04:31:25 wrstuden Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.3.6.2 2008/09/18 04:35:08 wrstuden Exp $	*/
 
 /* i915_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.3.6.1 2008/06/23 04:31:25 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.3.6.2 2008/09/18 04:35:08 wrstuden Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_drv.c,v 1.5 2006/05/17 06:36:28 anholt Exp $");
 */
@@ -41,8 +41,8 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/i915_drv.c,v 1.5 2006/05/17 06:36:28 anholt 
 #include <sys/module.h>
 #endif
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
+#include "drmP.h"
+#include "drm.h"
 #include "i915_drm.h"
 #include "i915_drv.h"
 #include "drm_pciids.h"
@@ -139,7 +139,7 @@ static void
 i915drm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	drm_device_t *dev = device_private(self);
 
 	i915_configure(dev);
 
@@ -148,7 +148,7 @@ i915drm_attach(struct device *parent, struct device *self, void *aux)
 	drm_attach(self, pa, i915_pciidlist);
 }
 
-CFATTACH_DECL(i915drm, sizeof(drm_device_t), i915drm_probe, i915drm_attach,
+CFATTACH_DECL_NEW(i915drm, sizeof(drm_device_t), i915drm_probe, i915drm_attach,
 	drm_detach, drm_activate);
 
 #ifdef _MODULE

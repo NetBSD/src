@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.20 2008/01/14 20:46:11 pooka Exp $ */
+/* $NetBSD: fuse.h,v 1.20.6.1 2008/09/18 04:39:24 wrstuden Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -175,10 +175,14 @@ void fuse_unmount_compat22(const char *);
 #if FUSE_USE_VERSION >= 26
 #define fuse_main(argc, argv, op, arg) \
             fuse_main_real(argc, argv, op, sizeof(*(op)), arg)
+#define fuse_setup	fuse_setup26
 #else
 #define fuse_main(argc, argv, op) \
             fuse_main_real(argc, argv, op, sizeof(*(op)), NULL)
 #endif
+
+struct fuse *fuse_setup26(int, char **, const struct fuse_operations *,
+	size_t, char **, int *, void *);
 
 #ifdef __cplusplus
 }

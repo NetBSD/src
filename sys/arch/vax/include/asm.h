@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.19 2008/04/13 15:07:39 matt Exp $ */
+/*	$NetBSD: asm.h,v 1.19.6.1 2008/09/18 04:33:36 wrstuden Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -46,15 +46,7 @@
 #define R10	0x400
 #define R11	0x800
 
-#ifdef __ELF__
-# define _C_LABEL(x)	x
-#else
-# ifdef __STDC__
-#  define _C_LABEL(x)	_ ## x
-# else
-#  define _C_LABEL(x)	_/**/x
-# endif
-#endif
+#define _C_LABEL(x)	x
 
 #define	_ASM_LABEL(x)	x
 
@@ -68,24 +60,15 @@
 
 /* let kernels and others override entrypoint alignment */
 #ifndef _ALIGN_TEXT
-# ifdef __ELF__
-#  define _ALIGN_TEXT .align 4
-# else
-#  define _ALIGN_TEXT .align 2
-# endif
+# define _ALIGN_TEXT .align 4
 #endif
 
 #define	_ENTRY(x, regs) \
 	.text; _ALIGN_TEXT; .globl x; .type x@function; x: .word regs
 
 #ifdef GPROF
-# ifdef __ELF__
-#  define _PROF_PROLOGUE	\
+# define _PROF_PROLOGUE	\
 	.data; 1:; .long 0; .text; moval 1b,%r0; jsb _ASM_LABEL(__mcount)
-# else 
-#  define _PROF_PROLOGUE	\
-	.data; 1:; .long 0; .text; moval 1b,r0; jsb _ASM_LABEL(mcount)
-# endif
 #else
 # define _PROF_PROLOGUE
 #endif
@@ -98,11 +81,10 @@
 #define RCSID(name)		.pushsection ".ident"; .asciz name; .popsection
 
 
-#ifdef __ELF__
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#endif
+
 /*
  * STRONG_ALIAS: create a strong alias.
  */

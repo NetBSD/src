@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.h,v 1.8 2005/12/11 06:25:32 christos Exp $	*/
+/*	$NetBSD: iconv.h,v 1.8.76.1 2008/09/18 04:37:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -151,9 +151,9 @@ int iconv_converter_handler(module_t, int, void *);
 #endif /* !NetBSD */
 
 #ifdef ICONV_DEBUG
-#define ICDEBUG(format, ...) printf("%s: "format, __func__ , __VA_ARGS__)
+#define ICDEBUG(x)	aprint_debug x
 #else
-#define ICDEBUG(format, ...)
+#define ICDEBUG(x)	/* nothing */
 #endif
 
 #endif /* !_KERNEL */

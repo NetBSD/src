@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.42.2.1 2008/06/23 04:29:54 wrstuden Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.42.2.2 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.42.2.1 2008/06/23 04:29:54 wrstuden Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.42.2.2 2008/09/18 04:39:24 wrstuden Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -61,6 +61,10 @@ extern int pthread__started;
 
 static int pthread_cond_wait_nothread(pthread_t, pthread_mutex_t *,
     const struct timespec *);
+
+int	_pthread_cond_has_waiters_np(pthread_cond_t *);
+
+__weak_alias(pthread_cond_has_waiters_np,_pthread_cond_has_waiters_np);
 
 __strong_alias(__libc_cond_init,pthread_cond_init)
 __strong_alias(__libc_cond_signal,pthread_cond_signal)
@@ -189,15 +193,12 @@ pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
 	return pthread_cond_timedwait(cond, mutex, NULL);
 }
 
-int
-pthread_cond_signal(pthread_cond_t *cond)
+static int __noinline
+pthread__cond_wake_one(pthread_cond_t *cond)
 {
 	pthread_t self, signaled;
 	pthread_mutex_t *mutex;
 	lwpid_t lid;
-
-	if (PTQ_EMPTY(&cond->ptc_waiters))
-		return 0;
 
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
@@ -215,6 +216,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 	}
 	signaled = PTQ_FIRST(&cond->ptc_waiters);
 	if (__predict_false(signaled == NULL)) {
+		cond->ptc_mutex = NULL;
 		pthread__spinunlock(self, &cond->ptc_lock);
 		return 0;
 	}
@@ -248,14 +250,21 @@ pthread_cond_signal(pthread_cond_t *cond)
 }
 
 int
-pthread_cond_broadcast(pthread_cond_t *cond)
+pthread_cond_signal(pthread_cond_t *cond)
+{
+
+	if (__predict_true(PTQ_EMPTY(&cond->ptc_waiters)))
+		return 0;
+	return pthread__cond_wake_one(cond);
+}
+
+static int __noinline
+pthread__cond_wake_all(pthread_cond_t *cond)
 {
 	pthread_t self, signaled;
 	pthread_mutex_t *mutex;
-	u_int max, nwaiters;
-
-	if (PTQ_EMPTY(&cond->ptc_waiters))
-		return 0;
+	u_int max;
+	size_t nwaiters;
 
 	pthread__error(EINVAL, "Invalid condition variable",
 	    cond->ptc_magic == _PT_COND_MAGIC);
@@ -288,6 +297,21 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	return 0;
 }
 
+int
+pthread_cond_broadcast(pthread_cond_t *cond)
+{
+
+	if (__predict_true(PTQ_EMPTY(&cond->ptc_waiters)))
+		return 0;
+	return pthread__cond_wake_all(cond);
+}
+
+int
+_pthread_cond_has_waiters_np(pthread_cond_t *cond)
+{
+
+	return !PTQ_EMPTY(&cond->ptc_waiters);
+}
 
 int
 pthread_condattr_init(pthread_condattr_t *attr)
@@ -297,7 +321,6 @@ pthread_condattr_init(pthread_condattr_t *attr)
 
 	return 0;
 }
-
 
 int
 pthread_condattr_destroy(pthread_condattr_t *attr)

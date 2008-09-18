@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.31.2.1 2008/06/23 04:31:36 wrstuden Exp $	*/
+/*	$NetBSD: ubt.c,v 1.31.2.2 2008/09/18 04:35:11 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.31.2.1 2008/06/23 04:31:36 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.31.2.2 2008/09/18 04:35:11 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -305,7 +305,6 @@ static void ubt_abortdealloc(struct ubt_softc *);
  */
 static const struct usb_devno ubt_ignore[] = {
 	{ USB_VENDOR_BROADCOM, USB_PRODUCT_BROADCOM_BCM2033NF },
-	{ 0, 0 }	/* end of list */
 };
 
 USB_MATCH(ubt)
@@ -520,10 +519,8 @@ USB_ATTACH(ubt)
 	}
 
 	sc->sc_ok = 1;
-        if (!device_pmf_is_registered(self))
-		if (!pmf_device_register(self, NULL, NULL))
-			aprint_error_dev(self,
-			    "couldn't establish power handler\n"); 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
@@ -534,7 +531,8 @@ USB_DETACH(ubt)
 
 	DPRINTF("sc=%p flags=%d\n", sc, flags);
 
-	pmf_device_deregister(self);
+	if (device_pmf_is_registered(self))
+		pmf_device_deregister(self);
 
 	sc->sc_dying = 1;
 
@@ -826,7 +824,6 @@ ubt_abortdealloc(struct ubt_softc *sc)
  *
  * Bluetooth Unit/USB callbacks
  *
- * All of this will be called at the IPL_ we specified above
  */
 static int
 ubt_enable(device_ptr_t self)

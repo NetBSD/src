@@ -1,0 +1,81 @@
+#	$Id: files.at91,v 1.2.4.2 2008/09/18 04:33:20 wrstuden Exp $
+
+#
+# Configuration info for AT91 based CPUs
+#
+defflag opt_at91types.h			AT91RM9200
+defflag opt_at91types.h			AT91SAM9261
+
+file	arch/arm/arm32/irq_dispatch.S
+
+# standard memory-mapped bus ops
+file	arch/arm/at91/at91_bus_space.c
+file	arch/arm/at91/at91_bus_dma.c
+
+# generic PDC code:
+file	arch/arm/at91/at91pdc.c
+
+# AT91 MCU:
+device	at91bus { [addr=-1], [size=0], [pid=-1], [index=0] }: bus_space_generic
+attach	at91bus at mainbus
+file	arch/arm/at91/at91bus.c		at91bus needs-flag
+
+# chips:
+file	arch/arm/at91/at91rm9200bus.c	at91rm9200
+file	arch/arm/at91/at91sam9261bus.c	at91sam9261
+
+# AT91 Advanced Interrupt controller:
+device	at91aic
+attach	at91aic at at91bus
+file	arch/arm/at91/at91aic.c		at91aic needs-flag
+
+# AT91 debug serial port
+device	at91dbgu: tty
+attach	at91dbgu at at91bus
+file	arch/arm/at91/at91dbgu.c	at91dbgu needs-flag
+
+# AT91(RM9200) system timer
+device	at91st
+attach	at91st at at91bus
+file	arch/arm/at91/at91st.c		at91st needs-flag
+
+# Timer counter based timer:
+device	at91tctmr
+attach	at91tctmr at at91bus
+file	arch/arm/at91/at91tctmr.c	at91tctmr needs-flag
+
+# AT91 Power Management Controller
+file	arch/arm/at91/at91pmc.c		at91rm9200 | at91sam9261
+
+# AT91 serial port
+device	at91usart: tty
+file	arch/arm/at91/at91usart.c	at91usart needs-flag
+
+# OHCI USB Controller
+device	at91ohci
+attach	ohci at at91bus with at91ohci
+file	arch/arm/at91/at91ohci.c	at91ohci needs-flag
+
+# CF interface (needs machine specific part)
+device	at91cf: pcmciabus
+file	arch/arm/at91/at91cf.c		at91cf needs-flag
+
+# PIO
+device	at91pio { [pid=-1], [bit=-1] }: gpiobus
+attach	at91pio at at91bus
+file	arch/arm/at91/at91pio.c		at91pio needs-flag
+
+# SPI
+device	at91spi: spibus
+file	arch/arm/at91/at91spi.c		at91spi needs-flag
+
+# I2C
+device	at91twi: i2cbus
+attach	at91twi at at91bus
+file	arch/arm/at91/at91twi.c		at91twi needs-flag
+
+# ethernet device
+device	at91emac: ether, ifnet, arp, mii
+attach	at91emac at at91bus
+file	arch/arm/at91/at91emac.c	at91emac
+

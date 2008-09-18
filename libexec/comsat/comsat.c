@@ -1,4 +1,4 @@
-/*	$NetBSD: comsat.c,v 1.36 2007/05/03 15:09:41 christos Exp $	*/
+/*	$NetBSD: comsat.c,v 1.36.12.1 2008/09/18 04:39:17 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,12 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #if 0
 static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: comsat.c,v 1.36 2007/05/03 15:09:41 christos Exp $");
+__RCSID("$NetBSD: comsat.c,v 1.36.12.1 2008/09/18 04:39:17 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,7 +82,6 @@ __RCSID("$NetBSD: comsat.c,v 1.36 2007/05/03 15:09:41 christos Exp $");
 static int	logging;
 static int	debug;
 static char	hostname[MAXHOSTNAMELEN + 1];
-static time_t	utmpmtime;		/* last modification time for utmp/x */
 static int	nutmp;
 static struct	utmpentry *utmp = NULL;
 static time_t	lastmsgtime;
@@ -173,9 +172,6 @@ onalrm(int signo)
 static void
 checkutmp(void)
 {
-	struct stat statbf;
-	time_t newtime = 0;
-
 	if (!needupdate)
 		return;
 	needupdate = 0;
@@ -183,21 +179,7 @@ checkutmp(void)
 	if (time(NULL) - lastmsgtime >= MAXIDLE)
 		exit(0);
 	(void)alarm((u_int)15);
-#ifdef SUPPORT_UTMP
-	if (stat(_PATH_UTMP, &statbf) != -1)
-		if (statbf.st_mtime > newtime)
-			newtime = statbf.st_mtime;
-#endif
-#ifdef SUPPORT_UTMPX
-	if (stat(_PATH_UTMPX, &statbf) != -1)
-		if (statbf.st_mtime > newtime)
-			newtime = statbf.st_mtime;
-#endif
-	if (newtime > utmpmtime) {
-		freeutentries(utmp);
-		nutmp = getutentries(NULL, &utmp);
-		utmpmtime = newtime;
-	}
+	nutmp = getutentries(NULL, &utmp);
 }
 
 static void

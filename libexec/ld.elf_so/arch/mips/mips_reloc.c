@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_reloc.c,v 1.52 2006/06/28 16:48:38 simonb Exp $	*/
+/*	$NetBSD: mips_reloc.c,v 1.52.20.1 2008/09/18 04:39:18 wrstuden Exp $	*/
 
 /*
  * Copyright 1997 Michael L. Hitch <mhitch@montana.edu>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mips_reloc.c,v 1.52 2006/06/28 16:48:38 simonb Exp $");
+__RCSID("$NetBSD: mips_reloc.c,v 1.52.20.1 2008/09/18 04:39:18 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -360,7 +360,7 @@ _rtld_bind(Elf_Word a0, Elf_Addr a1, Elf_Addr a2, Elf_Addr a3)
 	int err;
 
 	err = _rtld_relocate_plt_object(obj, a0, &new_value);
-	if (err)
+	if (err || new_value == 0)
 		_rtld_die();
 
 	return (caddr_t)new_value;

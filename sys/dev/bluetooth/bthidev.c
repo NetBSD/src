@@ -1,4 +1,4 @@
-/*	$NetBSD: bthidev.c,v 1.15 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: bthidev.c,v 1.15.4.1 2008/09/18 04:35:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.15 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.15.4.1 2008/09/18 04:35:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: bthidev.c,v 1.15 2008/04/24 11:38:36 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/socketvar.h>
 #include <sys/systm.h>
 
 #include <prop/proplib.h>
@@ -72,7 +73,7 @@ struct bthidev_softc {
 
 	bdaddr_t		sc_laddr;	/* local address */
 	bdaddr_t		sc_raddr;	/* remote address */
-	int			sc_mode;	/* link mode */
+	struct sockopt		sc_mode;	/* link mode sockopt */
 
 	uint16_t		sc_ctlpsm;	/* control PSM */
 	struct l2cap_channel	*sc_ctl;	/* control channel */
@@ -193,6 +194,8 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ctlpsm = L2CAP_PSM_HID_CNTL;
 	sc->sc_intpsm = L2CAP_PSM_HID_INTR;
 
+	sockopt_init(&sc->sc_mode, BTPROTO_L2CAP, SO_L2CAP_LM, 0);
+
 	/*
 	 * extract config from proplist
 	 */
@@ -205,11 +208,11 @@ bthidev_attach(device_t parent, device_t self, void *aux)
 	obj = prop_dictionary_get(dict, BTDEVmode);
 	if (prop_object_type(obj) == PROP_TYPE_STRING) {
 		if (prop_string_equals_cstring(obj, BTDEVauth))
-			sc->sc_mode = L2CAP_LM_AUTH;
+			sockopt_setint(&sc->sc_mode, L2CAP_LM_AUTH);
 		else if (prop_string_equals_cstring(obj, BTDEVencrypt))
-			sc->sc_mode = L2CAP_LM_ENCRYPT;
+			sockopt_setint(&sc->sc_mode, L2CAP_LM_ENCRYPT);
 		else if (prop_string_equals_cstring(obj, BTDEVsecure))
-			sc->sc_mode = L2CAP_LM_SECURE;
+			sockopt_setint(&sc->sc_mode, L2CAP_LM_SECURE);
 		else  {
 			aprint_error(" unknown %s\n", BTDEVmode);
 			return;
@@ -356,6 +359,8 @@ bthidev_detach(device_t self, int flags)
 		config_detach(hidev->sc_dev, flags);
 	}
 
+	sockopt_destroy(&sc->sc_mode);
+
 	return 0;
 }
 
@@ -449,7 +454,7 @@ bthidev_listen(struct bthidev_softc *sc)
 	if (err)
 		return err;
 
-	err = l2cap_setopt(sc->sc_ctl_l, SO_L2CAP_LM, &sc->sc_mode);
+	err = l2cap_setopt(sc->sc_ctl_l, &sc->sc_mode);
 	if (err)
 		return err;
 
@@ -469,7 +474,7 @@ bthidev_listen(struct bthidev_softc *sc)
 	if (err)
 		return err;
 
-	err = l2cap_setopt(sc->sc_int_l, SO_L2CAP_LM, &sc->sc_mode);
+	err = l2cap_setopt(sc->sc_int_l, &sc->sc_mode);
 	if (err)
 		return err;
 
@@ -508,7 +513,7 @@ bthidev_connect(struct bthidev_softc *sc)
 		return err;
 	}
 
-	err = l2cap_setopt(sc->sc_ctl, SO_L2CAP_LM, &sc->sc_mode);
+	err = l2cap_setopt(sc->sc_ctl, &sc->sc_mode);
 	if (err)
 		return err;
 
@@ -565,7 +570,7 @@ bthidev_ctl_connected(void *arg)
 		if (err)
 			goto fail;
 
-		err = l2cap_setopt(sc->sc_int, SO_L2CAP_LM, &sc->sc_mode);
+		err = l2cap_setopt(sc->sc_int, &sc->sc_mode);
 		if (err)
 			goto fail;
 
@@ -734,12 +739,15 @@ static void
 bthidev_linkmode(void *arg, int new)
 {
 	struct bthidev_softc *sc = arg;
+	int mode;
 
-	if ((sc->sc_mode & L2CAP_LM_AUTH) && !(new & L2CAP_LM_AUTH))
+	(void)sockopt_getint(&sc->sc_mode, &mode);
+
+	if ((mode & L2CAP_LM_AUTH) && !(new & L2CAP_LM_AUTH))
 		aprint_error_dev(sc->sc_dev, "auth failed\n");
-	else if ((sc->sc_mode & L2CAP_LM_ENCRYPT) && !(new & L2CAP_LM_ENCRYPT))
+	else if ((mode & L2CAP_LM_ENCRYPT) && !(new & L2CAP_LM_ENCRYPT))
 		aprint_error_dev(sc->sc_dev, "encrypt off\n");
-	else if ((sc->sc_mode & L2CAP_LM_SECURE) && !(new & L2CAP_LM_SECURE))
+	else if ((mode & L2CAP_LM_SECURE) && !(new & L2CAP_LM_SECURE))
 		aprint_error_dev(sc->sc_dev, "insecure\n");
 	else
 		return;

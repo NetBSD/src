@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.42 2008/03/21 21:09:48 reed Exp $
+# $NetBSD: mi,v 1.42.4.1 2008/09/18 04:41:13 wrstuden Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -239,6 +239,57 @@
 ./usr/share/man/cat6/wump.0			games-games-catman	.cat
 ./usr/share/man/cat8/dm.0			games-games-catman	.cat
 ./usr/share/man/cat8/strfile.0			games-utils-catman	.cat
+./usr/share/man/html5/dm.conf.html		games-games-htmlman	html
+./usr/share/man/html6/adventure.html		games-games-htmlman	html
+./usr/share/man/html6/arithmetic.html		games-games-htmlman	html
+./usr/share/man/html6/atc.html			games-games-htmlman	html
+./usr/share/man/html6/backgammon.html		games-games-htmlman	html
+./usr/share/man/html6/banner.html		games-utils-htmlman	html
+./usr/share/man/html6/battlestar.html		games-games-htmlman	html
+./usr/share/man/html6/bcd.html			games-games-htmlman	html
+./usr/share/man/html6/boggle.html		games-games-htmlman	html
+./usr/share/man/html6/caesar.html		games-utils-htmlman	html
+./usr/share/man/html6/canfield.html		games-games-htmlman	html
+./usr/share/man/html6/ching.html		games-games-htmlman	html
+./usr/share/man/html6/countmail.html		games-utils-htmlman	html
+./usr/share/man/html6/cribbage.html		games-games-htmlman	html
+./usr/share/man/html6/dab.html			games-games-htmlman	html
+./usr/share/man/html6/factor.html		games-utils-htmlman	html
+./usr/share/man/html6/fish.html			games-games-htmlman	html
+./usr/share/man/html6/fortune.html		games-utils-htmlman	html
+./usr/share/man/html6/gomoku.html		games-games-htmlman	html
+./usr/share/man/html6/hack.html			games-games-htmlman	html
+./usr/share/man/html6/hangman.html		games-games-htmlman	html
+./usr/share/man/html6/hunt.html			games-games-htmlman	html
+./usr/share/man/html6/huntd.html		games-games-htmlman	html
+./usr/share/man/html6/intro.html		games-games-htmlman	html
+./usr/share/man/html6/larn.html			games-games-htmlman	html
+./usr/share/man/html6/mille.html		games-games-htmlman	html
+./usr/share/man/html6/monop.html		games-games-htmlman	html
+./usr/share/man/html6/morse.html		games-games-htmlman	html
+./usr/share/man/html6/number.html		games-utils-htmlman	html
+./usr/share/man/html6/phantasia.html		games-games-htmlman	html
+./usr/share/man/html6/pig.html			games-games-htmlman	html
+./usr/share/man/html6/pom.html			games-games-htmlman	html
+./usr/share/man/html6/ppt.html			games-games-htmlman	html
+./usr/share/man/html6/primes.html		games-utils-htmlman	html
+./usr/share/man/html6/quiz.html			games-games-htmlman	html
+./usr/share/man/html6/rain.html			games-games-htmlman	html
+./usr/share/man/html6/random.html		games-utils-htmlman	html
+./usr/share/man/html6/robots.html		games-games-htmlman	html
+./usr/share/man/html6/rogue.html		games-games-htmlman	html
+./usr/share/man/html6/rot13.html		games-utils-htmlman	html
+./usr/share/man/html6/sail.html			games-games-htmlman	html
+./usr/share/man/html6/snake.html		games-games-htmlman	html
+./usr/share/man/html6/tetris.html		games-games-htmlman	html
+./usr/share/man/html6/trek.html			games-games-htmlman	html
+./usr/share/man/html6/wargames.html		games-games-htmlman	html
+./usr/share/man/html6/worm.html			games-games-htmlman	html
+./usr/share/man/html6/worms.html		games-games-htmlman	html
+./usr/share/man/html6/wtf.html			games-utils-htmlman	html
+./usr/share/man/html6/wump.html			games-games-htmlman	html
+./usr/share/man/html8/dm.html			games-games-htmlman	html
+./usr/share/man/html8/strfile.html		games-utils-htmlman	html
 ./usr/share/man/man5/dm.conf.5			games-games-man		.man
 ./usr/share/man/man6/adventure.6		games-games-man		.man
 ./usr/share/man/man6/arithmetic.6		games-games-man		.man

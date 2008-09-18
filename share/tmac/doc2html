@@ -1,6 +1,6 @@
-.\" $NetBSD: doc2html,v 1.53 2008/04/30 13:10:59 martin Exp $
+.\" $NetBSD: doc2html,v 1.53.2.1 2008/09/18 04:38:10 wrstuden Exp $
 .\"
-.\" Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -255,7 +255,7 @@ TODO:
 .	if \\w\\n[.z] .ab ERROR, unclosed quotation from line \
 \\n[quotation_line]
 .	br-real	\" should be unnecessary...we have fill turned off
-.	fl     	\" more paranoia
+.	fl	\" more paranoia
 </body>
 </html>
 .	br-real
@@ -269,16 +269,16 @@ TODO:
 		\\*[document-title]\\$*
 		\\*[title-section]
 	</title>
-        <style type="text/css">
-        <!--
+	<style type="text/css">
+	<!--
 		body { margin-left:4%; }
 		H1, H2, H3, H4, H5 {
 			color: maroon; padding: 4pt; margin-left: -4%;
 			border: solid; border-width: thin; width: 100%;
 			background: rgb(204,204,255)
 		}
-        -->
-        </style>
+	-->
+	</style>
 </head>
 <body \\*[body-params]>
 \\*[dot-de] init-html
@@ -456,6 +456,11 @@ TODO:
 .			shift
 .			continue
 .		\}
+.		if '\\$1'-nested' \{\
+.			\" this should suffice
+.			shift
+.			continue
+.		\}
 .		if '\\$1'-hyphen' \{\
 .			ds list-start <dl>
 .			ds list-end   </dl>
@@ -522,7 +527,7 @@ TODO:
 .			ds list-pp-prefix <dd>
 .			shift
 .			continue
-.	 	\}
+.		\}
 .		ab Unknown .Bl list parameter \\$1 (#\\n(.c)
 .		break
 .	\}
@@ -844,9 +849,9 @@ AT&T UNIX\\$*
 ..
 .
 .de doc-start-quote 
-.       if \\n[r-lvl]&\\n[doc-dosep] .as doc-pcresult \\*[sepstring]
-.       as doc-pcresult \\$1
-.       nr doc-dosep 0
+.	if \\n[r-lvl]&\\n[doc-dosep] .as doc-pcresult \\*[sepstring]
+.	as doc-pcresult \\$1
+.	nr doc-dosep 0
 ..
 .
 .de safe-blm
@@ -1092,160 +1097,200 @@ AT&T UNIX\\$*
 .	\}
 .	el \{\
 .		ds std-tmp1 ERROR
-.	       if "\\$1"-p1003.1-2001" \{\
-.			ds std-tmp1 \&IEEE Std1003.1-2001
+.\" ANSI/ISO C
+.		if "\\$1"-ansiC" \{\
+.			ds std-tmp1 \&ANSI X3.159-1989
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(Px'')
-.	       \}
-.	       if "\\$1"-p1003.1-96" \{\
-.			ds std-tmp1 \&ISO/IEC 9945-1:1996
+.			as std-tmp1 (``ANSI C89'')
+.		\}
+.		if "\\$1"-ansiC-89" \{\
+.			ds std-tmp1 \&ANSI X3.159-1989
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(Px'')
-.	       \}
-.	       if "\\$1"-p1003.1g-2000" \{\
-.			ds std-tmp1 \&IEEE Std1003.1g-2000
-.			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(Px'')
-.	       \}
-.	       if "\\$1"-p1003.1c-95" \{\
-.			ds std-tmp1 \&IEEE Std1003.1c-1995
-.			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(Px'')
-.	       \}
-.	       if "\\$1"-p1003.1b-93" \{\
-.			ds std-tmp1 \&IEEE Std1003.1b-1993
-.			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(Px'')
-.	       \}
-.	       if "\\$1"-p1003.1-90" \{\
-.			ds std-tmp1 \&IEEE Std1003.1-1990
-.			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(Px'')
-.	       \}
-.	       if "\\$1"-p1003.1-88" \{\
-.			ds std-tmp1 \&IEEE Std1003.1-1988
-.			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(Px'')
-.	       \}
-.	       if "\\$1"-p1003.1" \{\
-.			ds std-tmp1 \&IEEE Std1003.1
-.			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(Px'')
-.	       \}
-.	       if "\\$1"-p1003.2-92" \{\
-.			ds std-tmp1 \&IEEE Std1003.2-1992
-.			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(Px.2'')
-.	       \}
-.	       if "\\$1"-p1003.2" \{\
-.			ds std-tmp1 \&IEEE Std1003.2
-.			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(Px.2'')
-.	       \}
-.	       if "\\$1"-isoC-90" \{\
+.			as std-tmp1 (``ANSI C89'')
+.		\}
+.		if "\\$1"-isoC" \{\
 .			ds std-tmp1 \&ISO/IEC 9899:1990
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``ISO C90'')
-.	       \}
-.	       if "\\$1"-isoC-amd1" \{\
+.		\}
+.		if "\\$1"-isoC-90" \{\
+.			ds std-tmp1 \&ISO/IEC 9899:1990
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``ISO C90'')
+.		\}
+.		if "\\$1"-isoC-amd1" \{\
 .			ds std-tmp1 \&ISO/IEC 9899/AMD1:1990
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``ISO C90'')
-.	       \}
-.	       if "\\$1"-isoC-amd2" \{\
-.			ds std-tmp1 \&ISO/IEC 9899/AMD2:1990
-.			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``ISO C90'')
-.	       \}
-.	       if "\\$1"-isoC-tcor1" \{\
+.		\}
+.		if "\\$1"-isoC-tcor1" \{\
 .			ds std-tmp1 \&ISO/IEC 9899/TCOR1:1990
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``ISO C90'')
-.	       \}
-.	       if "\\$1"-isoC-tcor2" \{\
+.		\}
+.		if "\\$1"-isoC-tcor2" \{\
 .			ds std-tmp1 \&ISO/IEC 9899/TCOR2:1990
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``ISO C90'')
-.	       \}
-.	       if "\\$1"-isoC-99" \{\
+.		\}
+.		if "\\$1"-isoC-99" \{\
 .			ds std-tmp1 \&ISO/IEC 9899:1999
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``ISO C99'')
-.	       \}
-.	       if "\\$1"-ansiC" \{\
-.			ds std-tmp1 \&ANSI X3.159-1989
+.		\}
+.\" POSIX Part 1: System API
+.		if "\\$1"-p1003.1" \{\
+.			ds std-tmp1 \&IEEE Std 1003.1
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``ANSI C'')
-.	       \}
-.	       if "\\$1"-ansiC-89" \{\
-.			ds std-tmp1 \&ANSI X3.159-1989
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-p1003.1-88" \{\
+.			ds std-tmp1 \&IEEE Std 1003.1-1988
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``ANSI C'')
-.	       \}
-.	       if "\\$1"-ieee754" \{\
-.			ds std-tmp1 \&IEEE Std754-1985
-.	       \}
-.	       if "\\$1"-ieee754" \{\
-.			ds std-tmp1 \&IEEE Std1275-1994
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-p1003.1-90" \{\
+.			ds std-tmp1 \&ISO/IEC 9945-1:1990
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``Open Firmware'')
-.	       \}
-.	       if "\\$1"-iso8802-3" \{\
-.			ds std-tmp1 \&ISO/IEC 8802-3:1989
-.	       \}
-.	       if "\\$1"-xpg3" \{\
-.			ds std-tmp1 X/Open Portability Guide Issue 3
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-iso9945-1-90" \{\
+.			ds std-tmp1 \&ISO/IEC 9945-1:1990
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``XPG3'')
-.	       \}
-.	       if "\\$1"-xpg4" \{\
-.			ds std-tmp1 X/Open Portability Guide Issue 4
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-p1003.1b-93" \{\
+.			ds std-tmp1 \&IEEE Std 1003.1b-1993
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``XPG4'')
-.	       \}
-.	       if "\\$1"-xpg4.2" \{\
-.			ds std-tmp1 X/Open Portability Guide Issue 4, Version 2
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-p1003.1c-95" \{\
+.			ds std-tmp1 \&IEEE Std 1003.1c-1995
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``XPG4.2'')
-.	       \}
-.	       if "\\$1"-xbd5" \{\
-.			ds std-tmp1 X/Open System Interface Definitions Issue 5
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-p1003.1i-95" \{\
+.			ds std-tmp1 \&IEEE Std 1003.1i-1995
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(tNXBD5\\*(aa'')
-.	       \}
-.	       if "\\$1"-xcu5" \{\
-.			ds std-tmp1 X/Open Commands and Utilities Issue 5
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-p1003.1-96" \{\
+.			ds std-tmp1 \&ISO/IEC 9945-1:1996
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(tNXCU5\\*(aa'')
-.	       \}
-.	       if "\\$1"-xsh5" \{\
-.			ds std-tmp1 X/Open System Interfaces and Headers Issue 5
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-iso9945-1-96" \{\
+.			ds std-tmp1 \&ISO/IEC 9945-1:1996
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(tNXSH5\\*(aa'')
-.	       \}
-.	       if "\\$1"-xns5" \{\
-.			ds std-tmp1 X/Open Networking Services Issue 5
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-p1003.1g-2000" \{\
+.			ds std-tmp1 \&IEEE Std 1003.1g-2000
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(tNXNS5\\*(aa'')
-.	       \}
-.	       if "\\$1"-xns5.2d2.0" \{\
-.			ds std-tmp1 X/Open Networking Services Issue 5.2 Draft 2.0
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-p1003.1-2001" \{\
+.			ds std-tmp1 \&IEEE Std 1003.1-2001
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(tNXNS5.2D2.0\\*(aa'')
-.	       \}
-.	       if "\\$1"-xcurses4.2" \{\
-.			ds std-tmp1 X/Open Curses, Issue 4, Version 2
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.		if "\\$1"-p1003.1-2004" \{\
+.			ds std-tmp1 \&IEEE Std 1003.1-2004
 .			as std-tmp1 " \"exactly one space
-.			as std-tmp1 (``\\*(tNXCURSES4.2\\*(aa'')
-.	       \}
-.	       if "\\$1"-svid4" \{\
+.			as std-tmp1 (``\\*(Px.1'')
+.		\}
+.\" POSIX Part 2: Shell and Utilities
+.		if "\\$1"-p1003.2" \{\
+.			ds std-tmp1 \&IEEE Std 1003.2
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(Px.2'')
+.		\}
+.		if "\\$1"-p1003.2-92" \{\
+.			ds std-tmp1 \&IEEE Std 1003.2-1992
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(Px.2'')
+.		\}
+.		if "\\$1"-p1003.2a-92" \{\
+.			ds std-tmp1 \&IEEE Std 1003.2a-1992
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(Px.2'')
+.		\}
+.		if "\\$1"-iso9945-2-93" \{\
+.			ds std-tmp1 \&ISO/IEC 9945-2:1993
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(Px.2'')
+.		\}
+.\" X/Open
+.		if "\\$1"-susv2" \{\
+.			ds std-tmp1 \&Version 2 of the Single UNIX Specification
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``SUSv2'')
+.		\}
+.		if "\\$1"-svid4" \{\
 .			ds std-tmp1 \&System V Interface Definition,
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 \&Fourth Edition
 .			as std-tmp1 " \"exactly one space
 .			as std-tmp1 (``SVID4'')
-.	       \}
-.		if "\\*[std-tmp1]"ERROR" .tm ERROR, no such std: .St \\$*
+.		\}
+.		if "\\$1"-xbd5" \{\
+.			ds std-tmp1 X/Open System Interface Definitions Issue 5
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(tNXBD5\\*(aa'')
+.		\}
+.		if "\\$1"-xcu5" \{\
+.			ds std-tmp1 X/Open Commands and Utilities Issue 5
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(tNXCU5\\*(aa'')
+.		\}
+.		if "\\$1"-xcurses4.2" \{\
+.			ds std-tmp1 X/Open Curses, Issue 4, Version 2
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(tNXCURSES4.2\\*(aa'')
+.		\}
+.		if "\\$1"-xns5" \{\
+.			ds std-tmp1 X/Open Networking Services Issue 5
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(tNXNS5\\*(aa'')
+.		\}
+.		if "\\$1"-xns5.2" \{\
+.			ds std-tmp1 X/Open Networking Services Issue 5.2
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(tNXNS5.2\\*(aa'')
+.		\}
+.		if "\\$1"-xpg3" \{\
+.			ds std-tmp1 X/Open Portability Guide Issue 3
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``XPG3'')
+.		\}
+.		if "\\$1"-xpg4" \{\
+.			ds std-tmp1 X/Open Portability Guide Issue 4
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``XPG4'')
+.		\}
+.		if "\\$1"-xpg4.2" \{\
+.			ds std-tmp1 X/Open Portability Guide Issue 4, Version 2
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``XPG4.2'')
+.		\}
+.		if "\\$1"-xsh5" \{\
+.			ds std-tmp1 X/Open System Interfaces and Headers Issue 5
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``\\*(tNXSH5\\*(aa'')
+.		\}
+.\" Miscellaneous
+.		if "\\$1"-ieee754" \{\
+.			ds std-tmp1 \&IEEE Std 754-1985
+.		\}
+.		if "\\$1"-ieee1275-94" \{\
+.			ds std-tmp1 \&IEEE Std 1275-1994
+.			as std-tmp1 " \"exactly one space
+.			as std-tmp1 (``Open Firmware'')
+.		\}
+.		if "\\$1"-iso8802-3" \{\
+.			ds std-tmp1 \&ISO/IEC 8802-3:1989
+.		\}
+.		if "\\*[std-tmp1]"ERROR" .Error no such std: .St \\$*
 .		shift
 .		as doc-pcresult \~\\*[std-tmp1]\~
 .		recurse \\$@

@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.7 2008/04/28 20:24:08 martin Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.7.2.1 2008/09/18 04:36:57 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.7 2008/04/28 20:24:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.7.2.1 2008/09/18 04:36:57 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.7 2008/04/28 20:24:08 martin Exp $
 #include <netsmb/smb.h>
 #include <netsmb/smb_conn.h>
 
+#include <fs/smbfs/smbfs.h>
 #include <fs/smbfs/smbfs_subr.h>
 
 int smbfs_lkmentry(struct lkm_table *, int, int);
@@ -85,8 +86,28 @@ load(lkmtp, cmd)
 	struct lkm_table *lkmtp;
 	int cmd;
 {
+	const struct sysctlnode *smb = NULL;
 
-	sysctl_vfs_samba_setup(&_smbfs_log);
+	sysctl_createv(&_smbfs_log, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(&_smbfs_log, 0, NULL, &smb,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "samba",
+		       SYSCTL_DESCR("SMB/CIFS remote file system"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_CREATE, CTL_EOL);
+
+	if (smb != NULL) {
+		sysctl_createv(&_smbfs_log, 0, &smb, NULL,
+			       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+			       CTLTYPE_INT, "version",
+			       SYSCTL_DESCR("smbfs version"),
+			       NULL, SMBFS_VERSION, NULL, 0,
+			       CTL_CREATE, CTL_EOL);
+	}
 	return (0);
 }
 

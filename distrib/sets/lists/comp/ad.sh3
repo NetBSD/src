@@ -1,4 +1,4 @@
-	# $NetBSD: ad.sh3,v 1.23 2007/02/09 22:22:32 ad Exp $
+# $NetBSD: ad.sh3,v 1.23.16.1 2008/09/18 04:41:12 wrstuden Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh3				comp-c-include
 ./usr/include/sh3/ansi.h			comp-c-include

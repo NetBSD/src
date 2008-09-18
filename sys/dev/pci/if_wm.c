@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.158 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.158.6.1 2008/09/18 04:35:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.158 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.158.6.1 2008/09/18 04:35:07 wrstuden Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2575,10 +2575,8 @@ wm_rxintr(struct wm_softc *sc)
 			continue;
 		}
 
-		WM_RXCHAIN_LINK(sc, m);
-
 		m->m_len = len;
-
+		sc->sc_rxlen += len;
 		DPRINTF(WM_DEBUG_RX,
 		    ("%s: RX: buffer at %p len %d\n",
 		    device_xname(&sc->sc_dev), m->m_data, len));
@@ -2588,7 +2586,7 @@ wm_rxintr(struct wm_softc *sc)
 		 * looking.
 		 */
 		if ((status & WRX_ST_EOP) == 0) {
-			sc->sc_rxlen += len;
+			WM_RXCHAIN_LINK(sc, m);
 			DPRINTF(WM_DEBUG_RX,
 			    ("%s: RX: not yet EOP, rxlen -> %d\n",
 			    device_xname(&sc->sc_dev), sc->sc_rxlen));
@@ -2599,11 +2597,20 @@ wm_rxintr(struct wm_softc *sc)
 		 * Okay, we have the entire packet now.  The chip is
 		 * configured to include the FCS (not all chips can
 		 * be configured to strip it), so we need to trim it.
+		 * May need to adjust length of previous mbuf in the
+		 * chain if the current mbuf is too short.
 		 */
-		m->m_len -= ETHER_CRC_LEN;
+		if (m->m_len < ETHER_CRC_LEN) {
+			sc->sc_rxtail->m_len -= (ETHER_CRC_LEN - m->m_len);
+			m->m_len = 0;
+		} else {
+			m->m_len -= ETHER_CRC_LEN;
+		}
+		len = sc->sc_rxlen - ETHER_CRC_LEN;
+
+		WM_RXCHAIN_LINK(sc, m);
 
 		*sc->sc_rxtailp = NULL;
-		len = m->m_len + sc->sc_rxlen;
 		m = sc->sc_rxhead;
 
 		WM_RXCHAIN_RESET(sc);

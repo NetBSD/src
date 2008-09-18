@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.19 2008/04/24 11:38:37 ad Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.19.4.1 2008/09/18 04:36:59 wrstuden Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.19 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.19.4.1 2008/09/18 04:36:59 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -148,7 +148,7 @@ static int  etherip_match(struct device *, struct cfdata *, void *);
 static void etherip_attach(struct device *, struct device *, void *);
 static int  etherip_detach(struct device *, int);
 
-CFATTACH_DECL(etherip, sizeof(struct etherip_softc),
+CFATTACH_DECL_NEW(etherip, sizeof(struct etherip_softc),
 	      etherip_match, etherip_attach, etherip_detach, NULL);
 extern struct cfdriver etherip_cd;
 
@@ -197,9 +197,9 @@ etherip_match(struct device *self, struct cfdata *cfdata, void *arg)
 }
 
 static void
-etherip_attach(struct device *parent, struct device *self, void *aux)
+etherip_attach(device_t parent, device_t self, void *aux)
 {
-	struct etherip_softc *sc = (struct etherip_softc *)self;
+	struct etherip_softc *sc = device_private(self);
 	struct ifnet *ifp;
 	const struct sysctlnode *node;
 	uint8_t enaddr[ETHER_ADDR_LEN] =
@@ -222,7 +222,7 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 	ui = (tv.tv_sec ^ tv.tv_usec) & 0xffffff;
 	memcpy(enaddr+3, (uint8_t *)&ui, 3);
 	
-	aprint_verbose_dev(&sc->sc_dev, "Ethernet address %s\n",
+	aprint_verbose_dev(self, "Ethernet address %s\n",
 		       ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));
 
 	/*
@@ -247,7 +247,7 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 	 * to support IPv6.
 	 */
 	ifp = &sc->sc_ec.ec_if;
-	strlcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = etherip_ioctl;
@@ -274,12 +274,12 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 	 * etherip_sysctl_handler for details.
 	 */
 	error = sysctl_createv(NULL, 0, NULL, &node, CTLFLAG_READWRITE, 
-			       CTLTYPE_STRING, device_xname(&sc->sc_dev), NULL,
+			       CTLTYPE_STRING, device_xname(self), NULL,
 			       etherip_sysctl_handler, 0, sc, 18, CTL_NET,
-			       AF_LINK, etherip_node, device_unit(&sc->sc_dev),
+			       AF_LINK, etherip_node, device_unit(self),
 			       CTL_EOL);
 	if (error)
-		aprint_error_dev(&sc->sc_dev, "sysctl_createv returned %d, ignoring\n",
+		aprint_error_dev(self, "sysctl_createv returned %d, ignoring\n",
 			     error);
 
 	/* insert into etherip_softc_list */
@@ -291,9 +291,9 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
  * routine, in reversed order.
  */
 static int
-etherip_detach(struct device* self, int flags)
+etherip_detach(device_t self, int flags)
 {
-	struct etherip_softc *sc = (struct etherip_softc *)self;
+	struct etherip_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int error, s;
 
@@ -308,9 +308,9 @@ etherip_detach(struct device* self, int flags)
 	 * CTL_EOL.
 	 */
 	error = sysctl_destroyv(NULL, CTL_NET, AF_LINK, etherip_node,
-				device_unit(&sc->sc_dev), CTL_EOL);
+				device_unit(self), CTL_EOL);
 	if (error)
-		aprint_error_dev(&sc->sc_dev, "sysctl_destroyv returned %d, ignoring\n",
+		aprint_error_dev(self, "sysctl_destroyv returned %d, ignoring\n",
 			     error);
 
 	LIST_REMOVE(sc, etherip_list);
@@ -357,8 +357,8 @@ etherip_start(struct ifnet *ifp)
 static void
 etheripintr(void *arg)
 {
-	struct etherip_softc *sc = (struct etherip_softc *)arg;;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;;
+	struct etherip_softc *sc = (struct etherip_softc *)arg;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mbuf *m;
 	int s, error;
 

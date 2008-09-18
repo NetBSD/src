@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.133.2.1 2008/06/23 04:31:50 wrstuden Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.133.2.2 2008/09/18 04:31:41 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.133.2.1 2008/06/23 04:31:50 wrstuden Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf32.c,v 1.133.2.2 2008/09/18 04:31:41 wrstuden Exp $");
 
 /* If not included by exec_elf64.c, ELFSIZE won't be defined. */
 #ifndef ELFSIZE
@@ -155,8 +155,8 @@ pax_aslr_elf(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 		ph[i].p_vaddr += pax_offset;
 	eh->e_entry += pax_offset;
 #ifdef DEBUG_ASLR
-	uprintf("pax offset=0x%x entry=0x%x\n",
-	    pax_offset, eh->e_entry);
+	uprintf("pax offset=0x%zx entry=0x%llx\n",
+	    pax_offset, (unsigned long long)eh->e_entry);
 #endif
 }
 #endif /* PAX_ASLR */

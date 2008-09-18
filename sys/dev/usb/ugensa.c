@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.19.2.1 2008/06/23 04:31:36 wrstuden Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.19.2.2 2008/09/18 04:35:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.19.2.1 2008/06/23 04:31:36 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.19.2.2 2008/09/18 04:35:11 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,7 @@ static const struct ugensa_type ugensa_devs[] = {
 	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_MERLINV620 }, UNTESTED },
 	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_S720 }, UNTESTED },
 	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_U720 }, UNTESTED },
+	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_U727 }, UNTESTED },
 	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_XU870 }, UNTESTED },
 	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_ES620 }, UNTESTED },
 	{{ USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_MSM_HSDPA }, UNTESTED },

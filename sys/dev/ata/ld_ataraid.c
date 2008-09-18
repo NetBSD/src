@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.27 2008/05/04 13:59:41 xtraeme Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.27.2.1 2008/09/18 04:35:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.27 2008/05/04 13:59:41 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.27.2.1 2008/09/18 04:35:02 wrstuden Exp $");
 
 #include "rnd.h"
 
@@ -515,6 +515,7 @@ ld_ataraid_iodone_raid0(struct buf *vbp)
 			other_cbp->cb_flags |= CBUF_IODONE;
 	}
 	count = cbp->cb_buf.b_bcount;
+	buf_destroy(&cbp->cb_buf);
 	CBUF_PUT(cbp);
 
 	if (other_cbp != NULL)

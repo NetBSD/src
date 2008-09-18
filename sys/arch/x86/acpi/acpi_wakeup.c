@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.5.2.1 2008/06/23 04:30:50 wrstuden Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.5.2.2 2008/09/18 04:33:37 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.5.2.1 2008/06/23 04:30:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.5.2.2 2008/09/18 04:33:37 wrstuden Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -109,7 +109,7 @@ static paddr_t acpi_wakeup_paddr = 3 * PAGE_SIZE;
 static vaddr_t acpi_wakeup_vaddr;
 
 static int acpi_md_node = CTL_EOL;
-static int acpi_md_vbios_reset = 1;
+int acpi_md_vbios_reset = 1; /* Referenced by dev/pci/vga_pci.c */
 static int acpi_md_beep_on_reset = 0;
 
 static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
@@ -446,7 +446,7 @@ sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	if (t < 0 || t > 1)
+	if (t < 0 || t > 2)
 		return EINVAL;
 
 	acpi_md_vbios_reset = t;

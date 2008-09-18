@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2006/05/11 23:16:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.5.20.1 2008/09/18 04:39:56 wrstuden Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	bcd
@@ -8,6 +8,6 @@ HIDEGAME=hidegame
 
 .include <bsd.prog.mk>
 
-.if ${HAVE_GCC} == 4
-COPTS+=	-Wno-pointer-sign
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
+COPTS.bcd.c+=	-Wno-pointer-sign
 .endif

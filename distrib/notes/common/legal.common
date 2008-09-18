@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.48.2.1 2008/06/23 04:28:54 wrstuden Exp $
+.\"	$NetBSD: legal.common,v 1.48.2.2 2008/09/18 04:41:10 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -264,8 +264,6 @@ This product includes software developed by Herb Peyerl.
 .It
 This product includes software developed by Hubert Feyrer
 for the NetBSD Project.
-.It
-This product includes software developed by Iain Hibbert
 .It
 This product includes software developed by Ian F. Darwin and others.
 .It
@@ -646,6 +644,7 @@ International, Inc.
 .\" For compliance with term (b) of
 .\" localsrc/legal/TheOpenGroup/TOG_LICENSE:
 .\"
+.nh
 The Institute of Electrical and Electronics Engineers and The Open Group,
 have given us permission to reprint portions of their documentation.
 .Pp

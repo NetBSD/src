@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.17.12.1 2008/06/23 04:31:50 wrstuden Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.17.12.2 2008/09/18 04:36:56 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.17.12.1 2008/06/23 04:31:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.17.12.2 2008/09/18 04:36:56 wrstuden Exp $");
 #endif /* not lint */
 
 
@@ -694,15 +694,18 @@ udf_lookup(void *v)
 		/* special case 2 '..' */
 		DPRINTF(LOOKUP, ("\tlookup '..'\n"));
 
-		/* first unlock parent */
-		VOP_UNLOCK(dvp, 0);
-
 		/* get our node */
 		name    = "..";
 		namelen = 2;
-		found = udf_lookup_name_in_dir(dvp, name, namelen, &icb_loc);
+		error = udf_lookup_name_in_dir(dvp, name, namelen,
+				&icb_loc, &found);
+		if (error)
+			goto out;
 		if (!found)
 			error = ENOENT;
+
+		/* first unlock parent */
+		VOP_UNLOCK(dvp, 0);
 
 		if (error == 0) {
 			DPRINTF(LOOKUP, ("\tfound '..'\n"));
@@ -710,7 +713,8 @@ udf_lookup(void *v)
 			error = udf_get_node(ump, &icb_loc, &res_node);
 
 			if (!error) {
-			DPRINTF(LOOKUP, ("\tnode retrieved/created OK\n"));
+				DPRINTF(LOOKUP,
+					("\tnode retrieved/created OK\n"));
 				*vpp = res_node->vnode;
 			}
 		}
@@ -723,7 +727,10 @@ udf_lookup(void *v)
 		/* lookup filename in the directory; location icb_loc */
 		name    = cnp->cn_nameptr;
 		namelen = cnp->cn_namelen;
-		found = udf_lookup_name_in_dir(dvp, name, namelen, &icb_loc);
+		error = udf_lookup_name_in_dir(dvp, name, namelen,
+				&icb_loc, &found);
+		if (error)
+			goto out;
 		if (!found) {
 			DPRINTF(LOOKUP, ("\tNOT found\n"));
 			/*
@@ -767,6 +774,7 @@ udf_lookup(void *v)
 		}
 	}	
 
+out:
 	/*
 	 * Store result in the cache if requested. If we are creating a file,
 	 * the file might not be found and thus putting it into the namecache
@@ -796,12 +804,13 @@ udf_getattr(void *v)
 	struct udf_mount *ump = udf_node->ump;
 	struct file_entry    *fe  = udf_node->fe;
 	struct extfile_entry *efe = udf_node->efe;
+	struct filetimes_extattr_entry *ft_extattr;
 	struct device_extattr_entry *devattr;
 	struct vattr *vap = ap->a_vap;
 	struct timestamp *atime, *mtime, *attrtime, *creatime;
 	uint64_t filesize, blkssize;
 	uint32_t nlink;
-	uint32_t offset, l_a;
+	uint32_t offset, a_l;
 	uint8_t *filedata;
 	uid_t uid;
 	gid_t gid;
@@ -822,8 +831,20 @@ udf_getattr(void *v)
 		atime    = &fe->atime;
 		mtime    = &fe->mtime;
 		attrtime = &fe->attrtime;
-		creatime = mtime;
 		filedata = fe->data;
+
+		/* initial guess */
+		creatime = mtime;
+
+		/* check our extended attribute if present */
+		error = udf_extattr_search_intern(udf_node,
+			UDF_FILETIMES_ATTR_NO, "", &offset, &a_l);
+		if (!error) {
+			ft_extattr = (struct filetimes_extattr_entry *)
+				(filedata + offset);
+			if (ft_extattr->existence & UDF_FILETIMES_FILE_CREATION)
+				creatime = &ft_extattr->times[0];
+		}
 	} else {
 		assert(udf_node->efe);
 		nlink    = udf_rw16(efe->link_cnt);
@@ -880,7 +901,7 @@ udf_getattr(void *v)
 	if ((vap->va_type == VBLK) || (vap->va_type == VCHR)) {
 		error = udf_extattr_search_intern(udf_node,
 				UDF_DEVICESPEC_ATTR_NO, "",
-				&offset, &l_a);
+				&offset, &a_l);
 		/* if error, deny access */
 		if (error || (filedata == NULL)) {
 			vap->va_mode = 0;	/* or v_type = VNON?  */
@@ -1114,11 +1135,11 @@ udf_chtimes(struct vnode *vp,
 	if (!issuperuser) {
 		if (euid != uid)
 			return EPERM;
-		if ((setattrflags & VA_UTIMES_NULL) == 0)
-			return error;
-		error = VOP_ACCESS(vp, VWRITE, cred);
-		if (error)
-			return error;
+		if ((setattrflags & VA_UTIMES_NULL) == 0) {
+			error = VOP_ACCESS(vp, VWRITE, cred);
+			if (error)
+				return error;
+		}
 	}
 
 	/* update node flags depending on what times are passed */
@@ -1743,13 +1764,15 @@ udf_readlink(void *v)
 		l_ci = pathcomp.l_ci;
 		switch (pathcomp.type) {
 		case UDF_PATH_COMP_ROOT :
-			if (l_ci || (targetlen < 1) || !first) {
+			/* XXX should check for l_ci; bugcompatible now */
+			if ((targetlen < 1) || !first) {
 				error = EINVAL;
 				break;
 			}
 			*targetpos++ = '/'; targetlen--;
 			break;
 		case UDF_PATH_COMP_MOUNTROOT :
+			/* XXX what should it be if l_ci > 0 ? [4/48.16.1.2] */
 			if (l_ci || (targetlen < mntonnamelen+1) || !first) {
 				error = EINVAL;
 				break;
@@ -1762,7 +1785,8 @@ udf_readlink(void *v)
 			}
 			break;
 		case UDF_PATH_COMP_PARENTDIR :
-			if (l_ci || (targetlen < 3)) {
+			/* XXX should check for l_ci; bugcompatible now */
+			if (targetlen < 3) {
 				error = EINVAL;
 				break;
 			}
@@ -1771,7 +1795,8 @@ udf_readlink(void *v)
 			*targetpos++ = '/'; targetlen--;
 			break;
 		case UDF_PATH_COMP_CURDIR :
-			if (l_ci || (targetlen < 2)) {
+			/* XXX should check for l_ci; bugcompatible now */
+			if (targetlen < 2) {
 				error = EINVAL;
 				break;
 			}
@@ -1779,6 +1804,10 @@ udf_readlink(void *v)
 			*targetpos++ = '/'; targetlen--;
 			break;
 		case UDF_PATH_COMP_NAME :
+			if (l_ci == 0) {
+				error = EINVAL;
+				break;
+			}
 			memset(tmpname, 0, PATH_MAX);
 			memcpy(&pathcomp, pathpos, len + l_ci);
 			udf_to_unix_name(tmpname, MAXPATHLEN,
@@ -1843,7 +1872,7 @@ udf_rename(void *v)
 	struct componentname *tcnp = ap->a_tcnp;
 	struct componentname *fcnp = ap->a_fcnp;
 	struct udf_node *fnode, *fdnode, *tnode, *tdnode;
-	struct vattr vap;
+	struct vattr fvap, tvap;
 	int error;
 
 	DPRINTF(CALL, ("udf_rename called\n"));
@@ -1860,34 +1889,67 @@ udf_rename(void *v)
 	tnode  = (tvp == NULL) ? NULL : VTOI(tvp);
 	tdnode = VTOI(tdvp);
 
-	/* dont allow directories for now */
-	if (fvp->v_type == VDIR) {
-		error = EINVAL;
-		goto out_unlocked;
+	/* lock our source dir */
+	if (fdnode != tdnode) {
+		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
+		if (error != 0)
+			goto out_unlocked;
 	}
 
-	/* do we need to delete the old entry? */
-	if (tvp)
-		udf_dir_detach(tdnode->ump, tdnode, tnode, tcnp);
-
-	/* create new directory entry */
-	error = VOP_GETATTR(fvp, &vap, FSCRED);
+	/* get info about the node to be moved */
+	error = VOP_GETATTR(fvp, &fvap, FSCRED);
 	KASSERT(error == 0);
 
-	error = udf_dir_attach(tdnode->ump, tdnode, fnode, &vap, tcnp);
-	if (error)
-		goto out_unlocked;
+	/* check when to delete the old already existing entry */
+	if (tvp) {
+		/* get info about the node to be moved to */
+		error = VOP_GETATTR(fvp, &tvap, FSCRED);
+		KASSERT(error == 0);
 
-	/* unlink old directory entry */
+		/* if both dirs, make sure the destination is empty */
+		if (fvp->v_type == VDIR && tvp->v_type == VDIR) {
+			if (tvap.va_nlink > 2) {
+				error = ENOTEMPTY;
+				goto out;
+			}
+		}
+		/* if moving dir, make sure destination is dir too */
+		if (fvp->v_type == VDIR && tvp->v_type != VDIR) {
+			error = ENOTDIR;
+			goto out;
+		}
+		/* if we're moving a non-directory, make sure dest is no dir */
+		if (fvp->v_type != VDIR && tvp->v_type == VDIR) {
+			error = EISDIR;
+			goto out;
+		}
+	}
+
+	/* dont allow renaming directories acros directory for now */
+	if (fdnode != tdnode) {
+		if (fvp->v_type == VDIR) {
+			error = EINVAL;
+			goto out;
+		}
+	}
+
+	/* remove existing entry if present */
+	if (tvp) 
+		udf_dir_detach(tdnode->ump, tdnode, tnode, tcnp);
+
+	/* create new directory entry for the node */
+	error = udf_dir_attach(tdnode->ump, tdnode, fnode, &fvap, tcnp);
+	if (error)
+		goto out;
+
+	/* unlink old directory entry for the node, if failing, unattach new */
 	error = udf_dir_detach(tdnode->ump, fdnode, fnode, fcnp);
 	if (error)
 		udf_dir_detach(tdnode->ump, tdnode, fnode, tcnp);
 
-#if 0
 out:
         if (fdnode != tdnode)
                 VOP_UNLOCK(fdvp, 0);
-#endif
 
 out_unlocked:
 	VOP_ABORTOP(tdvp, tcnp);
@@ -2028,6 +2090,15 @@ udf_fsync(void *v)
 	/* flush data and wait for it when requested */
 	wait = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
 	vflushbuf(vp, wait);
+
+	if (udf_node == NULL) {
+		printf("udf_fsync() called on NULL udf_node!\n");
+		return 0;
+	}
+	if (vp->v_tag != VT_UDF) {
+		printf("udf_fsync() called on node not tagged as UDF node!\n");
+		return 0;
+	}
 
 	/* set our times */
 	udf_itimes(udf_node, NULL, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $	*/
+/*	$NetBSD: iswctype.c,v 1.15.26.1 2008/09/18 04:39:22 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iswctype.c,v 1.15 2005/02/09 21:35:46 kleink Exp $");
+__RCSID("$NetBSD: iswctype.c,v 1.15.26.1 2008/09/18 04:39:22 wrstuden Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -212,7 +212,14 @@ int
 wcwidth(c)
 	wchar_t c;
 {
-        return (((unsigned)__runetype_w(c) & _CTYPE_SWM) >> _CTYPE_SWS);
+	_RuneType x;
+
+	if (c == L'\0')
+		return 0;
+	x = __runetype_w(c);
+	if (x & _CTYPE_R)
+		return ((unsigned)x & _CTYPE_SWM) >> _CTYPE_SWS;
+	return -1;
 }
 
 #undef wctrans

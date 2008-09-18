@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_pci.c,v 1.8 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: njs_pci.c,v 1.8.2.1 2008/09/18 04:35:07 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.8 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_pci.c,v 1.8.2.1 2008/09/18 04:35:07 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,11 +62,11 @@ struct njsc32_pci_softc {
 	bus_size_t		sc_regmap_size;
 };
 
-static int	njs_pci_match(struct device *, struct cfdata *, void *);
-static void	njs_pci_attach(struct device *, struct device *, void *);
-static int	njs_pci_detach(struct device *, int);
+static int	njs_pci_match(device_t, cfdata_t, void *);
+static void	njs_pci_attach(device_t, device_t, void *);
+static int	njs_pci_detach(device_t, int);
 
-CFATTACH_DECL(njs_pci, sizeof(struct njsc32_pci_softc),
+CFATTACH_DECL_NEW(njs_pci, sizeof(struct njsc32_pci_softc),
     njs_pci_match, njs_pci_attach, njs_pci_detach, NULL);
 
 static const struct njsc32_pci_product {
@@ -104,8 +104,7 @@ njs_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-njs_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+njs_pci_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -116,10 +115,10 @@ njs_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-njs_pci_attach(struct device *parent, struct device *self, void *aux)
+njs_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct njsc32_pci_softc *psc = (void *) self;
+	struct njsc32_pci_softc *psc = device_private(self);
 	struct njsc32_softc *sc = &psc->sc_njsc32;
 	const struct njsc32_pci_product *prod;
 	pci_intr_handle_t ih;
@@ -132,6 +131,7 @@ njs_pci_attach(struct device *parent, struct device *self, void *aux)
 		panic("njs_pci_attach");
 
 	aprint_normal(": Workbit NinjaSCSI-32 SCSI adapter\n");
+	sc->sc_dev = self;
 	sc->sc_model = prod->p_model;
 	sc->sc_clk = prod->p_clk;
 
@@ -158,7 +158,7 @@ njs_pci_attach(struct device *parent, struct device *self, void *aux)
 			goto try_io;
 		}
 #ifdef NJSC32_DEBUG
-		printf("%s: memory space mapped\n", device_xname(&sc->sc_dev));
+		printf("%s: memory space mapped\n", device_xname(self));
 #endif
 		sc->sc_flags = NJSC32_MEM_MAPPED;
 	} else {
@@ -167,11 +167,11 @@ njs_pci_attach(struct device *parent, struct device *self, void *aux)
 		    PCI_MAPREG_TYPE_IO, 0, &sc->sc_regt, &sc->sc_regh,
 		    NULL, &psc->sc_regmap_size) == 0) {
 #ifdef NJSC32_DEBUG
-			printf("%s: io space mapped\n", device_xname(&sc->sc_dev));
+			printf("%s: io space mapped\n", device_xname(self));
 #endif
 			sc->sc_flags = NJSC32_IO_MAPPED;
 		} else {
-			aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+			aprint_error_dev(self, "unable to map device registers\n");
 			return;
 		}
 	}
@@ -180,7 +180,7 @@ njs_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* map interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 
@@ -192,21 +192,20 @@ njs_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* setup interrupt handler */
 	if ((sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, njsc32_intr, sc))
 	    == NULL) {
-		aprint_error_dev(&sc->sc_dev, "unable to establish interrupt%s%s\n",
+		aprint_error_dev(self, "unable to establish interrupt%s%s\n",
 		    str_at, str_intr);
 		return;
 	}
-	printf("%s: interrupting%s%s\n",
-		device_xname(&sc->sc_dev), str_at, str_intr);
+	printf("%s: interrupting%s%s\n", device_xname(self), str_at, str_intr);
 
 	/* attach */
 	njsc32_attach(sc);
 }
 
 static int
-njs_pci_detach(struct device *self, int flags)
+njs_pci_detach(device_t self, int flags)
 {
-	struct njsc32_pci_softc *psc = (void *) self;
+	struct njsc32_pci_softc *psc = device_private(self);
 	struct njsc32_softc *sc = &psc->sc_njsc32;
 	int rv;
 

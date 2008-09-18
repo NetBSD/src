@@ -1,4 +1,4 @@
-/*	$NetBSD: tod.c,v 1.13 2006/09/03 21:34:33 gdamore Exp $	*/
+/*	$NetBSD: tod.c,v 1.13.62.1 2008/09/18 04:33:35 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.13 2006/09/03 21:34:33 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.13.62.1 2008/09/18 04:33:35 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,22 +108,22 @@ __KERNEL_RCSID(0, "$NetBSD: tod.c,v 1.13 2006/09/03 21:34:33 gdamore Exp $");
 #include <dev/clock_subr.h>
 #include <dev/ic/mm58167var.h>
 
-static int  tod_obio_match(struct device *, struct cfdata *, void *args);
-static void tod_obio_attach(struct device *, struct device *, void *);
-static int  tod_vme_match(struct device *, struct cfdata *, void *args);
-static void tod_vme_attach(struct device *, struct device *, void *);
+static int  tod_obio_match(device_t, cfdata_t, void *args);
+static void tod_obio_attach(device_t, device_t, void *);
+static int  tod_vme_match(device_t, cfdata_t, void *args);
+static void tod_vme_attach(device_t, device_t, void *);
 static void tod_attach(struct mm58167_softc *);
 
-CFATTACH_DECL(tod_obio, sizeof(struct mm58167_softc),
+CFATTACH_DECL_NEW(tod_obio, sizeof(struct mm58167_softc),
     tod_obio_match, tod_obio_attach, NULL, NULL);
 
-CFATTACH_DECL(tod_vme, sizeof(struct mm58167_softc),
+CFATTACH_DECL_NEW(tod_vme, sizeof(struct mm58167_softc),
     tod_vme_match, tod_vme_attach, NULL, NULL);
 
 static int tod_attached;
 
 static int 
-tod_obio_match(struct device *parent, struct cfdata *cf, void *args)
+tod_obio_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct obio_attach_args *oba = args;
 	bus_space_handle_t bh;
@@ -131,37 +131,39 @@ tod_obio_match(struct device *parent, struct cfdata *cf, void *args)
 
 	/* This driver only supports one unit. */
 	if (tod_attached)
-		return (0);
+		return 0;
 
 	/* Make sure there is something there... */
 	if (bus_space_map(oba->oba_bustag, oba->oba_paddr, MM58167REG_BANK_SZ, 
-			  0, &bh))
-		return (0);
+	    0, &bh))
+		return 0;
 	matched = (bus_space_peek_1(oba->oba_bustag, bh, 0, NULL) == 0);
 	bus_space_unmap(oba->oba_bustag, bh, MM58167REG_BANK_SZ);
-	return (matched);
+	return matched;
 }
 
 static void 
-tod_obio_attach(struct device *parent, struct device *self, void *args)
+tod_obio_attach(device_t parent, device_t self, void *args)
 {
 	struct obio_attach_args *oba = args;
 	struct mm58167_softc *sc;
 
 	tod_attached = 1;
 
-	sc = (struct mm58167_softc *) self;
+	sc = device_private(self);
+	sc->mm58167_dev = self;
 
 	/* Map the device. */
 	sc->mm58167_regt = oba->oba_bustag;
-	if (bus_space_map(oba->oba_bustag, oba->oba_paddr, MM58167REG_BANK_SZ, 0, &sc->mm58167_regh))
-		panic("tod_obio_attach: can't map");
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr, MM58167REG_BANK_SZ,
+	    0, &sc->mm58167_regh))
+		panic("%s: can't map", __func__);
 
 	tod_attach(sc);
 }
 
 static int 
-tod_vme_match(struct device *parent, struct cfdata *cf, void *aux)
+tod_vme_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vme_attach_args	*va = aux;
 	vme_chipset_tag_t	ct = va->va_vct;
@@ -173,13 +175,13 @@ tod_vme_match(struct device *parent, struct cfdata *cf, void *aux)
 	vme_addr = va->r[0].offset;
 
 	if (vme_probe(ct, vme_addr, 1, mod, VME_D8, NULL, 0) != 0)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 static void 
-tod_vme_attach(struct device *parent, struct device *self, void *aux)
+tod_vme_attach(device_t parent, device_t self, void *aux)
 {
 	struct mm58167_softc *sc;
 	struct vme_attach_args	*va = aux;
@@ -189,13 +191,14 @@ tod_vme_attach(struct device *parent, struct device *self, void *aux)
 	vme_am_t		mod;
 	vme_mapresc_t resc;
 
-	sc = (struct mm58167_softc *) self;
+	sc = device_private(self);
+	sc->mm58167_dev = self;
 
 	mod = VME_AM_A24 | VME_AM_MBO | VME_AM_SUPER | VME_AM_DATA;
 
 	if (vme_space_map(ct, va->r[0].offset, MM58167REG_BANK_SZ,
-			  mod, VME_D8, 0, &bt, &bh, &resc) != 0)
-		panic("tod_vme_attach: can't map");
+	    mod, VME_D8, 0, &bt, &bh, &resc) != 0)
+		panic("%s: can't map", __func__);
 
 	sc->mm58167_regt = bt;
 	sc->mm58167_regh = bh;
@@ -220,9 +223,8 @@ tod_attach(struct mm58167_softc *sc)
 	sc->mm58167_status = MM58167REG_STATUS;
 	sc->mm58167_go = MM58167REG_GO;
 	if ((tch = mm58167_attach(sc)) == NULL)
-		panic("tod_attach: can't attach ic");
+		panic("%s: can't attach ic", __func__);
 
 	todr_attach(tch);
-	printf("\n");
+	aprint_normal("\n");
 }
-

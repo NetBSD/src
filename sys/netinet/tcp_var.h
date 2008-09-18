@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.157 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.157.2.1 2008/09/18 04:37:01 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -822,7 +822,7 @@ int	 tcp_isdead(struct tcpcb *);
 void	 *tcp6_ctlinput(int, const struct sockaddr *, void *);
 #endif
 void	 *tcp_ctlinput(int, const struct sockaddr *, void *);
-int	 tcp_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	 tcp_ctloutput(int, struct socket *, struct sockopt *);
 struct tcpcb *
 	 tcp_disconnect(struct tcpcb *);
 struct tcpcb *

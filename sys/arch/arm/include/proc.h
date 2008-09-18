@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 2008/03/15 10:16:43 rearnsha Exp $	*/
+/*	$NetBSD: proc.h,v 1.7.6.1 2008/09/18 04:33:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -51,7 +51,7 @@ struct mdlwp {
 
 
 struct mdproc {
-	void	(*md_syscall)(struct trapframe *, struct lwp *, u_int32_t);
+	void	(*md_syscall)(struct trapframe *, struct lwp *, uint32_t);
 	int	pmc_enabled;		/* bitfield of enabled counters */
 	void	*pmc_state;		/* port-specific pmc state */
 };

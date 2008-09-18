@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.82 2007/12/03 15:34:26 ad Exp $	*/
+/*	$NetBSD: locore.s,v 1.82.20.1 2008/09/18 04:33:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -560,7 +560,7 @@ ENTRY_NOPROFILE(powtrap)
 	jbsr	_C_LABEL(powintr)
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+48
+	addql	#1,_C_LABEL(intrcnt)+36
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -573,7 +573,7 @@ ENTRY_NOPROFILE(com0trap)
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+52
+	addql	#1,_C_LABEL(intrcnt)+40
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -585,7 +585,7 @@ ENTRY_NOPROFILE(com1trap)
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+52
+	addql	#1,_C_LABEL(intrcnt)+40
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -623,7 +623,7 @@ Lnotdma:
 
 ENTRY_NOPROFILE(timertrap)
 	moveml	#0xC0C0,%sp@-		| save scratch registers
-	addql	#1,_C_LABEL(intrcnt)+36	| count hardclock interrupts
+	addql	#1,_C_LABEL(intrcnt)+32	| count hardclock interrupts
 	lea	%sp@(16),%a1		| a1 = &clockframe
 	movl	%a1,%sp@-
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
@@ -1312,17 +1312,12 @@ GLOBAL(intrnames)
 	.asciz	"lev5"
 	.asciz	"lev6"
 	.asciz	"nmi"
-	.asciz	"audioerr"
 	.asciz	"clock"
-	.asciz	"scsi"
-	.asciz	"audio"
 	.asciz	"pow"
 	.asciz	"com"
-	.space	200
 GLOBAL(eintrnames)
 	.even
 
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	.space	50
+	.long	0,0,0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.254.4.1 2008/06/23 04:32:06 wrstuden Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.254.4.2 2008/09/18 04:37:06 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.4.1 2008/06/23 04:32:06 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.4.2 2008/09/18 04:37:06 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -95,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.254.4.1 2008/06/23 04:32:06 wrstuden E
 #endif
 
 #include <uvm/uvm.h>
-#undef RB_AUGMENT
-#define	RB_AUGMENT(x)	uvm_rb_augment(x)
 
 #ifdef DDB
 #include <uvm/uvm_ddb.h>
@@ -131,6 +129,10 @@ UVMMAP_EVCNT_DEFINE(knomerge)
 UVMMAP_EVCNT_DEFINE(map_call)
 UVMMAP_EVCNT_DEFINE(mlk_call)
 UVMMAP_EVCNT_DEFINE(mlk_hint)
+UVMMAP_EVCNT_DEFINE(mlk_list)
+UVMMAP_EVCNT_DEFINE(mlk_tree)
+UVMMAP_EVCNT_DEFINE(mlk_treeloop)
+UVMMAP_EVCNT_DEFINE(mlk_listloop)
 
 UVMMAP_EVCNT_DEFINE(uke_alloc)
 UVMMAP_EVCNT_DEFINE(uke_free)
@@ -297,99 +299,179 @@ static void	uvm_map_unreference_amap(struct vm_map_entry *, int);
 
 int _uvm_map_sanity(struct vm_map *);
 int _uvm_tree_sanity(struct vm_map *);
-static vsize_t uvm_rb_subtree_space(const struct vm_map_entry *);
+static vsize_t uvm_rb_maxgap(const struct vm_map_entry *);
 
-static inline int
-uvm_compare(const struct vm_map_entry *a, const struct vm_map_entry *b)
+CTASSERT(offsetof(struct vm_map_entry, rb_node) == 0);
+#define	ROOT_ENTRY(map)		((struct vm_map_entry *)(map)->rb_tree.rbt_root)
+#define	LEFT_ENTRY(entry)	((struct vm_map_entry *)(entry)->rb_node.rb_left)
+#define	RIGHT_ENTRY(entry)	((struct vm_map_entry *)(entry)->rb_node.rb_right)
+#define	PARENT_ENTRY(map, entry) \
+	(ROOT_ENTRY(map) == (entry) \
+	    ? NULL \
+	    : (struct vm_map_entry *)RB_FATHER(&(entry)->rb_node))
+
+static int
+uvm_map_compare_nodes(const struct rb_node *nparent,
+	const struct rb_node *nkey)
 {
+	const struct vm_map_entry *eparent = (const void *) nparent;
+	const struct vm_map_entry *ekey = (const void *) nkey;
 
-	if (a->start < b->start)
-		return (-1);
-	else if (a->start > b->start)
-		return (1);
+	KASSERT(eparent->start < ekey->start || eparent->start >= ekey->end);
+	KASSERT(ekey->start < eparent->start || ekey->start >= eparent->end);
 
-	return (0);
+	if (ekey->start < eparent->start)
+		return -1;
+	if (ekey->start >= eparent->end)
+		return 1;
+	return 0;
 }
 
-static inline void
-uvm_rb_augment(struct vm_map_entry *entry)
+static int
+uvm_map_compare_key(const struct rb_node *nparent, const void *vkey)
 {
+	const struct vm_map_entry *eparent = (const void *) nparent;
+	const vaddr_t va = *(const vaddr_t *) vkey;
 
-	entry->space = uvm_rb_subtree_space(entry);
+	if (va < eparent->start)
+		return -1;
+	if (va >= eparent->end)
+		return 1;
+	return 0;
 }
 
-RB_PROTOTYPE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
-
-RB_GENERATE(uvm_tree, vm_map_entry, rb_entry, uvm_compare);
+static const struct rb_tree_ops uvm_map_tree_ops = {
+	.rbto_compare_nodes = uvm_map_compare_nodes,
+	.rbto_compare_key = uvm_map_compare_key,
+};
 
 static inline vsize_t
-uvm_rb_space(const struct vm_map *map, const struct vm_map_entry *entry)
+uvm_rb_gap(const struct vm_map_entry *entry)
 {
-	/* XXX map is not used */
-
 	KASSERT(entry->next != NULL);
 	return entry->next->start - entry->end;
 }
 
 static vsize_t
-uvm_rb_subtree_space(const struct vm_map_entry *entry)
+uvm_rb_maxgap(const struct vm_map_entry *entry)
 {
-	vaddr_t space, tmp;
+	struct vm_map_entry *child;
+	vsize_t maxgap = entry->gap;
 
-	space = entry->ownspace;
-	if (RB_LEFT(entry, rb_entry)) {
-		tmp = RB_LEFT(entry, rb_entry)->space;
-		if (tmp > space)
-			space = tmp;
-	}
+	/*
+	 * We need maxgap to be the largest gap of us or any of our
+	 * descendents.  Since each of our children's maxgap is the
+	 * cached value of their largest gap of themselves or their
+	 * descendents, we can just use that value and avoid recursing
+	 * down the tree to calculate it.
+	 */
+	if ((child = LEFT_ENTRY(entry)) != NULL && maxgap < child->maxgap)
+		maxgap = child->maxgap;
 
-	if (RB_RIGHT(entry, rb_entry)) {
-		tmp = RB_RIGHT(entry, rb_entry)->space;
-		if (tmp > space)
-			space = tmp;
-	}
+	if ((child = RIGHT_ENTRY(entry)) != NULL && maxgap < child->maxgap)
+		maxgap = child->maxgap;
 
-	return (space);
+	return maxgap;
 }
 
-static inline void
+static void
 uvm_rb_fixup(struct vm_map *map, struct vm_map_entry *entry)
 {
-	/* We need to traverse to the very top */
-	do {
-		entry->ownspace = uvm_rb_space(map, entry);
-		entry->space = uvm_rb_subtree_space(entry);
-	} while ((entry = RB_PARENT(entry, rb_entry)) != NULL);
+	struct vm_map_entry *parent;
+
+	KASSERT(entry->gap == uvm_rb_gap(entry));
+	entry->maxgap = uvm_rb_maxgap(entry);
+
+	while ((parent = PARENT_ENTRY(map, entry)) != NULL) {
+		struct vm_map_entry *brother;
+		vsize_t maxgap = parent->gap;
+
+		KDASSERT(parent->gap == uvm_rb_gap(parent));
+		if (maxgap < entry->maxgap)
+			maxgap = entry->maxgap;
+		/*
+		 * Since we work our towards the root, we know entry's maxgap
+		 * value is ok but its brothers may now be out-of-date due
+		 * rebalancing.  So refresh it.
+		 */
+		brother = (struct vm_map_entry *)parent->rb_node.rb_nodes[RB_POSITION(&entry->rb_node) ^ RB_DIR_OTHER];
+		if (brother != NULL) {
+			KDASSERT(brother->gap == uvm_rb_gap(brother));
+			brother->maxgap = uvm_rb_maxgap(brother);
+			if (maxgap < brother->maxgap)
+				maxgap = brother->maxgap;
+		}
+
+		parent->maxgap = maxgap;
+		entry = parent;
+	}
 }
 
 static void
 uvm_rb_insert(struct vm_map *map, struct vm_map_entry *entry)
 {
-	vaddr_t space = uvm_rb_space(map, entry);
-	struct vm_map_entry *tmp;
-
-	entry->ownspace = entry->space = space;
-	tmp = RB_INSERT(uvm_tree, &(map)->rbhead, entry);
-#ifdef DIAGNOSTIC
-	if (tmp != NULL)
-		panic("uvm_rb_insert: duplicate entry?");
-#endif
-	uvm_rb_fixup(map, entry);
+	entry->gap = entry->maxgap = uvm_rb_gap(entry);
 	if (entry->prev != &map->header)
-		uvm_rb_fixup(map, entry->prev);
+		entry->prev->gap = uvm_rb_gap(entry->prev);
+
+	if (!rb_tree_insert_node(&map->rb_tree, &entry->rb_node))
+		panic("uvm_rb_insert: map %p: duplicate entry?", map);
+
+	/*
+	 * If the previous entry is not our immediate left child, then it's an
+	 * ancestor and will be fixed up on the way to the root.  We don't
+	 * have to check entry->prev against &map->header since &map->header
+	 * will never be in the tree.
+	 */
+	uvm_rb_fixup(map,
+	    LEFT_ENTRY(entry) == entry->prev ? entry->prev : entry);
 }
 
 static void
 uvm_rb_remove(struct vm_map *map, struct vm_map_entry *entry)
 {
-	struct vm_map_entry *parent;
+	struct vm_map_entry *prev_parent = NULL, *next_parent = NULL;
 
-	parent = RB_PARENT(entry, rb_entry);
-	RB_REMOVE(uvm_tree, &(map)->rbhead, entry);
+	/*
+	 * If we are removing an interior node, then an adjacent node will
+	 * be used to replace its position in the tree.  Therefore we will
+	 * need to fixup the tree starting at the parent of the replacement
+	 * node.  So record their parents for later use.
+	 */
 	if (entry->prev != &map->header)
+		prev_parent = PARENT_ENTRY(map, entry->prev);
+	if (entry->next != &map->header)
+		next_parent = PARENT_ENTRY(map, entry->next);
+
+	rb_tree_remove_node(&map->rb_tree, &entry->rb_node);
+
+	/*
+	 * If the previous node has a new parent, fixup the tree starting
+	 * at the previous node's old parent.
+	 */
+	if (entry->prev != &map->header) {
+		/*
+		 * Update the previous entry's gap due to our absence.
+		 */
+		entry->prev->gap = uvm_rb_gap(entry->prev);
 		uvm_rb_fixup(map, entry->prev);
-	if (parent)
-		uvm_rb_fixup(map, parent);
+		if (prev_parent != NULL
+		    && prev_parent != entry
+		    && prev_parent != PARENT_ENTRY(map, entry->prev))
+			uvm_rb_fixup(map, prev_parent);
+	}
+
+	/*
+	 * If the next node has a new parent, fixup the tree starting
+	 * at the next node's old parent.
+	 */
+	if (entry->next != &map->header) {
+		uvm_rb_fixup(map, entry->next);
+		if (next_parent != NULL
+		    && next_parent != entry
+		    && next_parent != PARENT_ENTRY(map, entry->next))
+			uvm_rb_fixup(map, next_parent);
+	}
 }
 
 #if defined(DEBUG)
@@ -455,31 +537,20 @@ _uvm_tree_sanity(struct vm_map *map)
 	struct vm_map_entry *tmp, *trtmp;
 	int n = 0, i = 1;
 
-	RB_FOREACH(tmp, uvm_tree, &map->rbhead) {
-		if (tmp->ownspace != uvm_rb_space(map, tmp)) {
-			printf("%d/%d ownspace %lx != %lx %s\n",
+	for (tmp = map->header.next; tmp != &map->header; tmp = tmp->next) {
+		if (tmp->gap != uvm_rb_gap(tmp)) {
+			printf("%d/%d gap %lx != %lx %s\n",
 			    n + 1, map->nentries,
-			    (ulong)tmp->ownspace, (ulong)uvm_rb_space(map, tmp),
+			    (ulong)tmp->gap, (ulong)uvm_rb_gap(tmp),
 			    tmp->next == &map->header ? "(last)" : "");
 			goto error;
 		}
-	}
-	trtmp = NULL;
-	RB_FOREACH(tmp, uvm_tree, &map->rbhead) {
-		if (tmp->space != uvm_rb_subtree_space(tmp)) {
-			printf("space %lx != %lx\n",
-			    (ulong)tmp->space,
-			    (ulong)uvm_rb_subtree_space(tmp));
-			goto error;
-		}
-		if (trtmp != NULL && trtmp->start >= tmp->start) {
-			printf("corrupt: 0x%lx >= 0x%lx\n",
-			    trtmp->start, tmp->start);
-			goto error;
-		}
+		/*
+		 * If any entries are out of order, tmp->gap will be unsigned
+		 * and will likely exceed the size of the map.
+		 */
+		KASSERT(tmp->gap < map->size);
 		n++;
-
-		trtmp = tmp;
 	}
 
 	if (n != map->nentries) {
@@ -487,12 +558,47 @@ _uvm_tree_sanity(struct vm_map *map)
 		goto error;
 	}
 
-	for (tmp = map->header.next; tmp && tmp != &map->header;
+	trtmp = NULL;
+	for (tmp = map->header.next; tmp != &map->header; tmp = tmp->next) {
+		if (tmp->maxgap != uvm_rb_maxgap(tmp)) {
+			printf("maxgap %lx != %lx\n",
+			    (ulong)tmp->maxgap,
+			    (ulong)uvm_rb_maxgap(tmp));
+			goto error;
+		}
+		if (trtmp != NULL && trtmp->start >= tmp->start) {
+			printf("corrupt: 0x%lx >= 0x%lx\n",
+			    trtmp->start, tmp->start);
+			goto error;
+		}
+
+		trtmp = tmp;
+	}
+
+	for (tmp = map->header.next; tmp != &map->header;
 	    tmp = tmp->next, i++) {
-		trtmp = RB_FIND(uvm_tree, &map->rbhead, tmp);
+		trtmp = (void *) rb_tree_iterate(&map->rb_tree, &tmp->rb_node,
+		    RB_DIR_LEFT);
+		if (trtmp == NULL)
+			trtmp = &map->header;
+		if (tmp->prev != trtmp) {
+			printf("lookup: %d: %p->prev=%p: %p\n",
+			    i, tmp, tmp->prev, trtmp);
+			goto error;
+		}
+		trtmp = (void *) rb_tree_iterate(&map->rb_tree, &tmp->rb_node,
+		    RB_DIR_RIGHT);
+		if (trtmp == NULL)
+			trtmp = &map->header;
+		if (tmp->next != trtmp) {
+			printf("lookup: %d: %p->next=%p: %p\n",
+			    i, tmp, tmp->next, trtmp);
+			goto error;
+		}
+		trtmp = (void *)rb_tree_find_node(&map->rb_tree, &tmp->start);
 		if (trtmp != tmp) {
 			printf("lookup: %d: %p - %p: %p\n", i, tmp, trtmp,
-			    RB_PARENT(tmp, rb_entry));
+			    PARENT_ENTRY(map, tmp));
 			goto error;
 		}
 	}
@@ -1064,7 +1170,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	 * for pager_map, allocate the new entry first to avoid sleeping
 	 * for memory while we have the map locked.
 	 *
-	 * besides, because we allocates entries for in-kernel maps
+	 * Also, because we allocate entries for in-kernel maps
 	 * a bit differently (cf. uvm_kmapent_alloc/free), we need to
 	 * allocate them before locking the map.
 	 */
@@ -1338,7 +1444,12 @@ uvm_map_enter(struct vm_map *map, const struct uvm_map_args *args,
 		if (uobj && uobj->pgops->pgo_detach)
 			uobj->pgops->pgo_detach(uobj);
 
+		/*
+		 * Now that we've merged the entries, note that we've grown
+		 * and our gap has shrunk.  Then fix the tree.
+		 */
 		prev_entry->end += size;
+		prev_entry->gap -= size;
 		uvm_rb_fixup(map, prev_entry);
 
 		uvm_map_check(map, "map backmerged");
@@ -1465,8 +1576,11 @@ forwardmerge:
 			}
 		} else {
 			prev_entry->next->start -= size;
-			if (prev_entry != &map->header)
+			if (prev_entry != &map->header) {
+				prev_entry->gap -= size;
+				KASSERT(prev_entry->gap == uvm_rb_gap(prev_entry));
 				uvm_rb_fixup(map, prev_entry);
+			}
 			if (uobj)
 				prev_entry->next->offset = uoffset;
 		}
@@ -1582,23 +1696,24 @@ done:
  * uvm_map_lookup_entry_bytree: lookup an entry in tree
  */
 
-static bool
+static inline bool
 uvm_map_lookup_entry_bytree(struct vm_map *map, vaddr_t address,
     struct vm_map_entry **entry	/* OUT */)
 {
 	struct vm_map_entry *prev = &map->header;
-	struct vm_map_entry *cur = RB_ROOT(&map->rbhead);
+	struct vm_map_entry *cur = ROOT_ENTRY(map);
 
 	while (cur) {
+		UVMMAP_EVCNT_INCR(mlk_treeloop);
 		if (address >= cur->start) {
 			if (address < cur->end) {
 				*entry = cur;
 				return true;
 			}
 			prev = cur;
-			cur = RB_RIGHT(cur, rb_entry);
+			cur = RIGHT_ENTRY(cur);
 		} else
-			cur = RB_LEFT(cur, rb_entry);
+			cur = LEFT_ENTRY(cur);
 	}
 	*entry = prev;
 	return false;
@@ -1658,7 +1773,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 			return (true);
 		}
 
-		if (map->nentries > 30)
+		if (map->nentries > 15)
 			use_tree = true;
 	} else {
 
@@ -1675,6 +1790,7 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 		 * Simple lookup in the tree.  Happens when the hint is
 		 * invalid, or nentries reach a threshold.
 		 */
+		UVMMAP_EVCNT_INCR(mlk_tree);
 		if (uvm_map_lookup_entry_bytree(map, address, entry)) {
 			goto got;
 		} else {
@@ -1686,7 +1802,9 @@ uvm_map_lookup_entry(struct vm_map *map, vaddr_t address,
 	 * search linearly
 	 */
 
+	UVMMAP_EVCNT_INCR(mlk_list);
 	while (cur != &map->header) {
+		UVMMAP_EVCNT_INCR(mlk_listloop);
 		if (cur->end > address) {
 			if (address >= cur->start) {
 				/*
@@ -1914,47 +2032,47 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 nextgap:
 	KDASSERT((flags & UVM_FLAG_FIXED) == 0);
 	/* If there is not enough space in the whole tree, we fail */
-	tmp = RB_ROOT(&map->rbhead);
-	if (tmp == NULL || tmp->space < length)
+	tmp = ROOT_ENTRY(map);
+	if (tmp == NULL || tmp->maxgap < length)
 		goto notfound;
 
 	prev = NULL; /* previous candidate */
 
 	/* Find an entry close to hint that has enough space */
 	for (; tmp;) {
-		KASSERT(tmp->next->start == tmp->end + tmp->ownspace);
+		KASSERT(tmp->next->start == tmp->end + tmp->gap);
 		if (topdown) {
 			if (tmp->next->start < hint + length &&
 			    (prev == NULL || tmp->end > prev->end)) {
-				if (tmp->ownspace >= length)
+				if (tmp->gap >= length)
 					prev = tmp;
-				else if ((child = RB_LEFT(tmp, rb_entry))
-				    != NULL && child->space >= length)
+				else if ((child = LEFT_ENTRY(tmp)) != NULL
+				    && child->maxgap >= length)
 					prev = tmp;
 			}
 		} else {
 			if (tmp->end >= hint &&
 			    (prev == NULL || tmp->end < prev->end)) {
-				if (tmp->ownspace >= length)
+				if (tmp->gap >= length)
 					prev = tmp;
-				else if ((child = RB_RIGHT(tmp, rb_entry))
-				    != NULL && child->space >= length)
+				else if ((child = RIGHT_ENTRY(tmp)) != NULL
+				    && child->maxgap >= length)
 					prev = tmp;
 			}
 		}
 		if (tmp->next->start < hint + length)
-			child = RB_RIGHT(tmp, rb_entry);
+			child = RIGHT_ENTRY(tmp);
 		else if (tmp->end > hint)
-			child = RB_LEFT(tmp, rb_entry);
+			child = LEFT_ENTRY(tmp);
 		else {
-			if (tmp->ownspace >= length)
+			if (tmp->gap >= length)
 				break;
 			if (topdown)
-				child = RB_LEFT(tmp, rb_entry);
+				child = LEFT_ENTRY(tmp);
 			else
-				child = RB_RIGHT(tmp, rb_entry);
+				child = RIGHT_ENTRY(tmp);
 		}
-		if (child == NULL || child->space < length)
+		if (child == NULL || child->maxgap < length)
 			break;
 		tmp = child;
 	}
@@ -1979,7 +2097,7 @@ nextgap:
 		case -1:
 			goto wraparound;
 		}
-		if (tmp->ownspace >= length)
+		if (tmp->gap >= length)
 			goto listsearch;
 	}
 	if (prev == NULL)
@@ -2001,29 +2119,29 @@ nextgap:
 	case -1:
 		goto wraparound;
 	}
-	if (prev->ownspace >= length)
+	if (prev->gap >= length)
 		goto listsearch;
 
 	if (topdown)
-		tmp = RB_LEFT(prev, rb_entry);
+		tmp = LEFT_ENTRY(prev);
 	else
-		tmp = RB_RIGHT(prev, rb_entry);
+		tmp = RIGHT_ENTRY(prev);
 	for (;;) {
-		KASSERT(tmp && tmp->space >= length);
+		KASSERT(tmp && tmp->maxgap >= length);
 		if (topdown)
-			child = RB_RIGHT(tmp, rb_entry);
+			child = RIGHT_ENTRY(tmp);
 		else
-			child = RB_LEFT(tmp, rb_entry);
-		if (child && child->space >= length) {
+			child = LEFT_ENTRY(tmp);
+		if (child && child->maxgap >= length) {
 			tmp = child;
 			continue;
 		}
-		if (tmp->ownspace >= length)
+		if (tmp->gap >= length)
 			break;
 		if (topdown)
-			tmp = RB_LEFT(tmp, rb_entry);
+			tmp = LEFT_ENTRY(tmp);
 		else
-			tmp = RB_RIGHT(tmp, rb_entry);
+			tmp = RIGHT_ENTRY(tmp);
 	}
 
 	if (topdown) {
@@ -4516,7 +4634,8 @@ again:
 
 	va = args.uma_start;
 
-	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE);
 	pmap_update(vm_map_pmap(map));
 
 	ukh = (void *)va;
@@ -5032,7 +5151,7 @@ uvm_map_setup(struct vm_map *map, vaddr_t vmin, vaddr_t vmax, int flags)
 {
 	int ipl;
 
-	RB_INIT(&map->rbhead);
+	rb_tree_init(&map->rb_tree, &uvm_map_tree_ops);
 	map->header.next = map->header.prev = &map->header;
 	map->nentries = 0;
 	map->size = 0;

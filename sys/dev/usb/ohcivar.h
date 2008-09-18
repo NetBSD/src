@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.44 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.44.2.1 2008/09/18 04:35:11 wrstuden Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -35,6 +35,8 @@ typedef struct ohci_soft_ed {
 	ohci_ed_t ed;
 	struct ohci_soft_ed *next;
 	ohci_physaddr_t physaddr;
+	usb_dma_t dma;
+	int offs;
 } ohci_soft_ed_t;
 #define OHCI_SED_SIZE ((sizeof (struct ohci_soft_ed) + OHCI_ED_ALIGN - 1) / OHCI_ED_ALIGN * OHCI_ED_ALIGN)
 #define OHCI_SED_CHUNK 128
@@ -45,6 +47,8 @@ typedef struct ohci_soft_td {
 	struct ohci_soft_td *nexttd; /* mirrors nexttd in TD */
 	struct ohci_soft_td *dnext; /* next in done list */
 	ohci_physaddr_t physaddr;
+	usb_dma_t dma;
+	int offs;
 	LIST_ENTRY(ohci_soft_td) hnext;
 	usbd_xfer_handle xfer;
 	u_int16_t len;
@@ -61,6 +65,8 @@ typedef struct ohci_soft_itd {
 	struct ohci_soft_itd *nextitd; /* mirrors nexttd in ITD */
 	struct ohci_soft_itd *dnext; /* next in done list */
 	ohci_physaddr_t physaddr;
+	usb_dma_t dma;
+	int offs;
 	LIST_ENTRY(ohci_soft_itd) hnext;
 	usbd_xfer_handle xfer;
 	u_int16_t flags;

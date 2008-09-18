@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.20 2008/04/24 11:38:36 ad Exp $	*/
+/*	$NetBSD: btsco.c,v 1.20.4.1 2008/09/18 04:35:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.20 2008/04/24 11:38:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.20.4.1 2008/09/18 04:35:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.20 2008/04/24 11:38:36 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/socketvar.h>
 #include <sys/systm.h>
 #include <sys/intr.h>
 
@@ -560,6 +561,7 @@ btsco_open(void *hdl, int flags)
 {
 	struct sockaddr_bt sa;
 	struct btsco_softc *sc = hdl;
+	struct sockopt sopt;
 	int err, timo;
 
 	DPRINTF("%s flags 0x%x\n", sc->sc_name, flags);
@@ -633,7 +635,10 @@ btsco_open(void *hdl, int flags)
 		break;
 
 	case BTSCO_OPEN:		/* hurrah */
-		sco_getopt(sc->sc_sco, SO_SCO_MTU, &sc->sc_mtu);
+		sockopt_init(&sopt, BTPROTO_SCO, SO_SCO_MTU, 0);
+		(void)sco_getopt(sc->sc_sco, &sopt);
+		(void)sockopt_get(&sopt, &sc->sc_mtu, sizeof(sc->sc_mtu));
+		sockopt_destroy(&sopt);
 		break;
 
 	default:
@@ -1123,6 +1128,7 @@ btsco_intr(void *arg)
 	sc->sc_tx_block = NULL;
 	sc->sc_tx_size = 0;
 
+	mutex_enter(bt_lock);
 	while (size > 0) {
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL)
@@ -1149,6 +1155,7 @@ btsco_intr(void *arg)
 		block += mlen;
 		size -= mlen;
 	}
+	mutex_exit(bt_lock);
 }
 
 /*

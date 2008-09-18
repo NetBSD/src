@@ -1,4 +1,4 @@
-/*	$NetBSD: via_verifier.c,v 1.2 2007/12/11 11:48:48 lukem Exp $	*/
+/*	$NetBSD: via_verifier.c,v 1.2.14.1 2008/09/18 04:35:09 wrstuden Exp $	*/
 
 /*
  * Copyright 2004 The Unichrome Project. All Rights Reserved.
@@ -31,14 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_verifier.c,v 1.2 2007/12/11 11:48:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_verifier.c,v 1.2.14.1 2008/09/18 04:35:09 wrstuden Exp $");
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/via_3d_reg.h>
-#include <dev/pci/drm/via_drm.h>
-#include <dev/pci/drm/via_verifier.h>
-#include <dev/pci/drm/via_drv.h>
+#include "drmP.h"
+#include "drm.h"
+#include "via_3d_reg.h"
+#include "via_drm.h"
+#include "via_verifier.h"
+#include "via_drv.h"
 
 typedef enum {
 	state_command,

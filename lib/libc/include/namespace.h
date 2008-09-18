@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.131 2008/04/28 20:23:00 martin Exp $	*/
+/*	$NetBSD: namespace.h,v 1.131.2.1 2008/09/18 04:39:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
 #define ftello		_ftello
 #define getcontext	_getcontext
 #define getenv_r	_getenv_r
+#define imaxabs		_imaxabs
+#define imaxdiv		_imaxdiv
 #define inet_aton	_inet_aton
 #define inet_pton	_inet_pton
 #define pipe		_pipe
@@ -281,6 +283,7 @@
 #define getifaddrs		_getifaddrs
 #define getloadavg		_getloadavg
 #define getlogin		_getlogin
+#define getlogin_r		_getlogin_r
 #define getmntinfo		_getmntinfo
 #define getmode			_getmode
 #define getnameinfo		_getnameinfo

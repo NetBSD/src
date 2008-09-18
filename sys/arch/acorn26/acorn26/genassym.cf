@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.9 2007/10/17 19:52:52 garbled Exp $
+# $NetBSD: genassym.cf,v 1.9.22.1 2008/09/18 04:33:16 wrstuden Exp $
 #
 # Copyright (c) 1999 Ben Harris
 # All rights reserved.
@@ -74,3 +74,8 @@ define	EFS_RX_FLAGS	offsetof(struct eca_fiqstate, efs_rx_flags)
 define	EFS_RX_MYADDR	offsetof(struct eca_fiqstate, efs_rx_myaddr)
 define	EFS_TX_CURMBUF	offsetof(struct eca_fiqstate, efs_tx_curmbuf)
 endif
+
+define	CI_ASTPENDING	offsetof(struct cpu_info, ci_astpending)
+define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
+define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
+

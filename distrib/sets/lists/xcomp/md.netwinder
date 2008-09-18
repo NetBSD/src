@@ -1,3 +1,3 @@
-# $NetBSD: md.netwinder,v 1.1 2006/04/03 11:15:17 uwe Exp $
-./usr/X11R6/include/xf86Optrec.h
-./usr/X11R6/include/xf86Parser.h
+# $NetBSD: md.netwinder,v 1.1.26.1 2008/09/18 04:41:14 wrstuden Exp $
+./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
+./usr/X11R6/include/xf86Parser.h			-unknown-	x11

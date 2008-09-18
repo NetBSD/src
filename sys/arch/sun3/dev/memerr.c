@@ -1,4 +1,4 @@
-/*	$NetBSD: memerr.c,v 1.20 2005/12/11 12:19:20 christos Exp $ */
+/*	$NetBSD: memerr.c,v 1.20.80.1 2008/09/18 04:33:35 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.20 2005/12/11 12:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.20.80.1 2008/09/18 04:33:35 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,12 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: memerr.c,v 1.20 2005/12/11 12:19:20 christos Exp $")
 
 #define	ME_PRI	7	/* Interrupt level (NMI) */
 
-extern unsigned char cpu_machine_id;
-
 enum memerr_type { ME_PAR = 0, ME_ECC = 1 };
 
 struct memerr_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct memerr *sc_reg;
 	enum memerr_type sc_type;
 	const char *sc_typename;	/* "Parity" or "ECC" */
@@ -71,42 +69,44 @@ struct memerr_softc {
 	/* XXX: counters? */
 };
 
-static int  memerr_match(struct device *, struct cfdata *, void *);
-static void memerr_attach(struct device *, struct device *, void *);
+static int  memerr_match(device_t, cfdata_t, void *);
+static void memerr_attach(device_t, device_t, void *);
 static int  memerr_interrupt(void *);
 static void memerr_correctable(struct memerr_softc *);
 
-CFATTACH_DECL(memerr, sizeof(struct memerr_softc),
+CFATTACH_DECL_NEW(memerr, sizeof(struct memerr_softc),
     memerr_match, memerr_attach, NULL, NULL);
 
-int memerr_attached;
+static int memerr_attached;
 
 static int 
-memerr_match(struct device *parent, struct cfdata *cf, void *args)
+memerr_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct confargs *ca = args;
 
 	/* This driver only supports one instance. */
 	if (memerr_attached)
-		return (0);
+		return 0;
 
 	/* Make sure there is something there... */
 	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
-		return (0);
+		return 0;
 
 	/* Default interrupt priority. */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = ME_PRI;
 
-	return (1);
+	return 1;
 }
 
 static void 
-memerr_attach(struct device *parent, struct device *self, void *args)
+memerr_attach(device_t parent, device_t self, void *args)
 {
-	struct memerr_softc *sc = (void *)self;
+	struct memerr_softc *sc = device_private(self);
 	struct confargs *ca = args;
 	struct memerr *mer;
+
+	sc->sc_dev = self;
 
 	/*
 	 * Which type of memory subsystem do we have?
@@ -126,11 +126,11 @@ memerr_attach(struct device *parent, struct device *self, void *args)
 		sc->sc_csrbits = ME_PAR_STR;
 		break;
 	}
-	printf(": (%s memory)\n", sc->sc_typename);
+	aprint_normal(": (%s memory)\n", sc->sc_typename);
 
 	mer = bus_mapin(ca->ca_bustype, ca->ca_paddr, sizeof(*mer));
 	if (mer == NULL)
-		panic("memerr: can not map register");
+		panic("%s: can not map register", device_xname(self));
 	sc->sc_reg = mer;
 
 	/* Install interrupt handler. */
@@ -159,14 +159,14 @@ memerr_interrupt(void *arg)
 {
 	struct memerr_softc *sc = arg;
 	volatile struct memerr *me = sc->sc_reg;
-	u_char csr, ctx;
+	uint8_t csr, ctx;
 	u_int pa, va;
 	int pte;
-	char bits[64];
+	uint8_t bits[64];
 
 	csr = me->me_csr;
 	if ((csr & ME_CSR_IPEND) == 0)
-		return (0);
+		return 0;
 
 	va = me->me_vaddr;
  	ctx = (va >> 28) & 0xF;
@@ -175,9 +175,9 @@ memerr_interrupt(void *arg)
 	pa = PG_PA(pte);
 
 	printf("\nMemory error on %s cycle!\n",
-		(ctx & 8) ? "DVMA" : "CPU");
+	    (ctx & 8) ? "DVMA" : "CPU");
 	printf(" ctx=%d, vaddr=0x%x, paddr=0x%x\n",
-		   (ctx & 7), va, pa);
+	    (ctx & 7), va, pa);
 	printf(" csr=%s\n", bitmask_snprintf(csr, sc->sc_csrbits,
 	    bits, sizeof(bits)));
 
@@ -222,7 +222,7 @@ noerror:
 recover:
 	/* Clear the error by writing the address register. */
 	me->me_vaddr = 0;
-	return (1);
+	return 1;
 }
 
 /*
@@ -233,5 +233,6 @@ recover:
 void 
 memerr_correctable(struct memerr_softc *sc)
 {
+
 	/* XXX: Not yet... */
 }

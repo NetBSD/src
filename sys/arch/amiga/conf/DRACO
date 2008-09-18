@@ -1,9 +1,9 @@
-# $NetBSD: DRACO,v 1.124 2007/12/31 15:31:47 ad Exp $
+# $NetBSD: DRACO,v 1.124.12.1 2008/09/18 04:33:17 wrstuden Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.62 2007/08/20 07:40:29 is Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.67 2008/07/31 07:45:04 simonb Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.124 $"
+#ident 		"GENERIC-$Revision: 1.124.12.1 $"
 
 
 maxusers	8
@@ -113,6 +113,7 @@ file-system	PTYFS		# /dev/pts/N support
 # Filesystem options
 
 #options 	FFS_EI		# FFS Endian Independant support
+options 	WAPBL		# File system journaling support - Experimental
 
 options 	QUOTA		# User and group quotas in FFS
 options 	SOFTDEP		# FFS soft updates support.
@@ -154,10 +155,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 options 	SYSVSHM		# System V-like shared memory
 options 	SYSVMSG		# System V-like messages
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 #

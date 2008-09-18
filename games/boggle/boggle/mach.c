@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.17 2007/12/15 19:44:39 perry Exp $	*/
+/*	$NetBSD: mach.c,v 1.17.6.1 2008/09/18 04:39:56 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.17 2007/12/15 19:44:39 perry Exp $");
+__RCSID("$NetBSD: mach.c,v 1.17.6.1 2008/09/18 04:39:56 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -558,7 +558,10 @@ prompt(const char *mesg)
 static int
 tty_setup(void)
 {
-	initscr();
+	if (!initscr()) {
+		fprintf(stderr, "couldn't initialize screen\n");
+		exit (0);
+	}
 	raw();
 	noecho();
 

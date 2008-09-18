@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.64.6.1 2008/06/23 04:32:05 wrstuden Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.64.6.2 2008/09/18 04:37:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -84,9 +84,10 @@ __BEGIN_DECLS
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/wapbl.h>
 
 /* ffs_alloc.c */
-int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, kauth_cred_t,
+int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, int, kauth_cred_t,
 		  daddr_t *);
 int	ffs_realloccg(struct inode *, daddr_t, daddr_t, int, int ,
 		      kauth_cred_t, struct buf **, daddr_t *);
@@ -94,8 +95,9 @@ int	ffs_realloccg(struct inode *, daddr_t, daddr_t, int, int ,
 int	ffs_reallocblks(void *);
 #endif
 int	ffs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
-daddr_t	ffs_blkpref_ufs1(struct inode *, daddr_t, int, int32_t *);
-daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int64_t *);
+daddr_t	ffs_blkpref_ufs1(struct inode *, daddr_t, int, int, int32_t *);
+daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int, int64_t *);
+int	ffs_blkalloc(struct inode *, daddr_t, long);
 void	ffs_blkfree(struct fs *, struct vnode *, daddr_t, long, ino_t);
 int	ffs_vfree(struct vnode *, ino_t, int);
 void	ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
@@ -126,6 +128,7 @@ int	ffs_fsync(void *);
 int	ffs_reclaim(void *);
 int	ffs_getpages(void *);
 void	ffs_gop_size(struct vnode *, off_t, off_t *, int);
+int	ffs_gop_write(struct vnode *, struct vm_page **, int, int);
 int	ffs_openextattr(void *);
 int	ffs_closeextattr(void *);
 int	ffs_getextattr(void *);
@@ -136,10 +139,6 @@ int	ffs_lock(void *);
 int	ffs_unlock(void *);
 int	ffs_islocked(void *);
 int	ffs_full_fsync(struct vnode *, int);
-
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 
 /*
  * Snapshot function prototypes.
@@ -152,6 +151,7 @@ int	ffs_snapshot(struct mount *, struct vnode *, struct timespec *);
 void	ffs_snapshot_mount(struct mount *);
 void	ffs_snapshot_unmount(struct mount *);
 void	ffs_snapgone(struct inode *);
+int	ffs_snapshot_read(struct vnode *, struct uio *, int);
 
 /*
  * Soft dependency function prototypes.
@@ -178,6 +178,17 @@ void	softdep_setup_allocindir_page(struct inode *, daddr_t,
 				      struct buf *);
 void	softdep_fsync_mountdev(struct vnode *);
 int	softdep_sync_metadata(struct vnode *);
+
+/* Write Ahead Physical Block Logging */
+void	ffs_wapbl_verify_inodes(struct mount *, const char *);
+void	ffs_wapbl_replay_finish(struct mount *);
+int	ffs_wapbl_start(struct mount *);
+int	ffs_wapbl_stop(struct mount *, int);
+int	ffs_wapbl_replay_start(struct mount *, struct fs *, struct vnode *);
+void	ffs_wapbl_blkalloc(struct fs *, struct vnode *, daddr_t, int);
+
+void	ffs_wapbl_sync_metadata(struct mount *, daddr_t *, int *, int);
+void	ffs_wapbl_abort_sync_metadata(struct mount *, daddr_t *, int *, int);
 
 extern int (**ffs_vnodeop_p)(void *);
 extern int (**ffs_specop_p)(void *);

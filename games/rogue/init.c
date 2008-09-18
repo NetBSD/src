@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.17 2008/01/14 03:50:01 dholland Exp $	*/
+/*	$NetBSD: init.c,v 1.17.6.1 2008/09/18 04:39:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.17 2008/01/14 03:50:01 dholland Exp $");
+__RCSID("$NetBSD: init.c,v 1.17.6.1 2008/09/18 04:39:58 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,10 @@ init(int argc, char *argv[])
 		fflush(stdout);
 	}
 
-	initscr();
+	if (!initscr()) {
+		fprintf(stderr, "couldn't initialize screen\n");
+		exit (0);
+	}
 	if ((LINES < DROWS) || (COLS < DCOLS)) {
 		clean_up("must be played on at least 80 x 24 screen");
 	}

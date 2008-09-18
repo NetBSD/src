@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.49 2007/12/25 18:33:49 perry Exp $	*/
+/*	$NetBSD: fs.h,v 1.49.12.1 2008/09/18 04:37:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -86,23 +86,23 @@
 #define	BBOFF		((off_t)(0))
 #define	BBLOCK		((daddr_t)(0))
 
-#define SBLOCK_FLOPPY      0
-#define SBLOCK_UFS1     8192
-#define SBLOCK_UFS2    65536
-#define SBLOCK_PIGGY  262144
-#define SBLOCKSIZE      8192
+#define	SBLOCK_FLOPPY      0
+#define	SBLOCK_UFS1     8192
+#define	SBLOCK_UFS2    65536
+#define	SBLOCK_PIGGY  262144
+#define	SBLOCKSIZE      8192
 /*
  * NB: Do not, under any circumstances, look for an ffsv1 filesystem at
  * SBLOCK_UFS2.  Doing so will find the wrong superblock for filesystems
  * with a 64k block size.
  */
-#define SBLOCKSEARCH \
+#define	SBLOCKSEARCH \
 	{ SBLOCK_UFS2, SBLOCK_UFS1, SBLOCK_FLOPPY, SBLOCK_PIGGY, -1 }
 
 /*
  * Max number of fragments per block. This value is NOT tweakable.
  */
-#define MAXFRAG		8
+#define	MAXFRAG		8
 
 
 
@@ -148,7 +148,7 @@
  * MAXVOLLEN defines the length of the buffer allocated.
  * This space used to be part of of fs_fsmnt.
  */
-#define MAXVOLLEN	32
+#define	MAXVOLLEN	32
 
 /*
  * There is a 128-byte region in the superblock reserved for in-core
@@ -181,7 +181,7 @@
  * maintaining too many will slow the filesystem performance, so
  * having this limit is a good idea.
  */
-#define FSMAXSNAP 20
+#define	FSMAXSNAP 20
 
 /*
  * Used to identify special blocks in snapshots:
@@ -194,8 +194,8 @@
  *      identify blocks that are in use by other snapshots (which are
  *      expunged from this snapshot).
  */
-#define BLK_NOCOPY	((daddr_t)(1))
-#define BLK_SNAP	((daddr_t)(2))
+#define	BLK_NOCOPY	((daddr_t)(1))
+#define	BLK_SNAP	((daddr_t)(2))
 
 /*
  * MINFREE gives the minimum acceptable percentage of file system
@@ -327,7 +327,12 @@ struct fs {
 	int32_t	 fs_old_cpc;		/* cyl per cycle in postbl */
 /* this area is otherwise allocated unless fs_old_flags & FS_FLAGS_UPDATED */
 	int32_t	 fs_maxbsize;		/* maximum blocking factor permitted */
-	int64_t	 fs_sparecon64[17];	/* old rotation block list head */
+	uint8_t	 fs_journal_version;	/* journal format version */
+	uint8_t	 fs_journal_location;	/* journal location type */
+	uint8_t	 fs_journal_reserved[2];/* reserved for future use */
+	uint32_t fs_journal_flags;	/* journal flags */
+	uint64_t fs_journallocs[4];	/* location info for journal */
+	int64_t	 fs_sparecon64[12];	/* reserved for future use */
 	int64_t	 fs_sblockloc;		/* byte offset of standard superblock */
 	struct	csum_total fs_cstotal;	/* cylinder summary information */
 	int64_t  fs_time;		/* last time written */
@@ -358,16 +363,16 @@ struct fs {
 	int32_t	 fs_magic;		/* magic number */
 };
 
-#define fs_old_postbloff	fs_spare5[0]
-#define fs_old_rotbloff		fs_spare5[1]
-#define fs_old_postbl_start	fs_maxbsize
-#define fs_old_headswitch	fs_id[0]
-#define fs_old_trkseek	fs_id[1]
-#define fs_old_csmask	fs_spare1[0]
-#define fs_old_csshift	fs_spare1[1]
+#define	fs_old_postbloff	fs_spare5[0]
+#define	fs_old_rotbloff		fs_spare5[1]
+#define	fs_old_postbl_start	fs_maxbsize
+#define	fs_old_headswitch	fs_id[0]
+#define	fs_old_trkseek	fs_id[1]
+#define	fs_old_csmask	fs_spare1[0]
+#define	fs_old_csshift	fs_spare1[1]
 
-#define FS_42POSTBLFMT		-1	/* 4.2BSD rotational table format */
-#define FS_DYNAMICPOSTBLFMT	1	/* dynamic rotational table format */
+#define	FS_42POSTBLFMT		-1	/* 4.2BSD rotational table format */
+#define	FS_DYNAMICPOSTBLFMT	1	/* dynamic rotational table format */
 
 #define	old_fs_postbl(fs_, cylno, opostblsave) \
     ((((fs_)->fs_old_postblformat == FS_42POSTBLFMT) || \
@@ -385,8 +390,8 @@ struct fs {
  */
 #define	FS_UFS1_MAGIC	0x011954	/* UFS1 fast file system magic number */
 #define	FS_UFS2_MAGIC	0x19540119	/* UFS2 fast file system magic number */
-#define FS_UFS1_MAGIC_SWAPPED	0x54190100
-#define FS_UFS2_MAGIC_SWAPPED	0x19015419
+#define	FS_UFS1_MAGIC_SWAPPED	0x54190100
+#define	FS_UFS2_MAGIC_SWAPPED	0x19015419
 #define	FS_OKAY		0x7c269d38	/* superblock checksum */
 #define	FS_42INODEFMT	-1		/* 4.2BSD inode format */
 #define	FS_44INODEFMT	2		/* 4.4BSD inode format */
@@ -406,13 +411,17 @@ struct fs {
 /*
  * File system flags
  */
-#define	FS_UNCLEAN	0x01	/* file system not clean at mount (unused) */
-#define	FS_DOSOFTDEP	0x02	/* file system using soft dependencies */
-#define FS_NEEDSFSCK	0x04	/* needs sync fsck (FreeBSD compat, unused) */
-#define FS_INDEXDIRS	0x08	/* kernel supports indexed directories */
-#define FS_ACLS		0x10	/* file system has ACLs enabled */
-#define FS_MULTILABEL	0x20	/* file system is MAC multi-label */
-#define FS_FLAGS_UPDATED 0x80	/* flags have been moved to new location */
+#define	FS_UNCLEAN	0x001	/* file system not clean at mount (unused) */
+#define	FS_DOSOFTDEP	0x002	/* file system using soft dependencies */
+#define	FS_NEEDSFSCK	0x004	/* needs sync fsck (FreeBSD compat, unused) */
+#define	FS_INDEXDIRS	0x008	/* kernel supports indexed directories */
+#define	FS_ACLS		0x010	/* file system has ACLs enabled */
+#define	FS_MULTILABEL	0x020	/* file system is MAC multi-label */
+#define	FS_FLAGS_UPDATED 0x80	/* flags have been moved to new location */
+#define	FS_DOWAPBL	0x100	/* Write ahead physical block logging */
+
+/* File system flags that are ok for NetBSD if set in fs_flags */
+#define	FS_KNOWN_FLAGS	(FS_DOSOFTDEP | FS_DOWAPBL)
 
 /*
  * File system internal flags, also in fs_flags.
@@ -424,17 +433,17 @@ struct fs {
 /*
  * Macros to access bits in the fs_active array.
  */
-#define ACTIVECG_SET(fs, cg)				\
+#define	ACTIVECG_SET(fs, cg)				\
 	do {						\
 		if ((fs)->fs_active != NULL)		\
 			setbit((fs)->fs_active, (cg));	\
 	} while (/*CONSTCOND*/ 0)
-#define ACTIVECG_CLR(fs, cg)				\
+#define	ACTIVECG_CLR(fs, cg)				\
 	do {						\
 		if ((fs)->fs_active != NULL)		\
 			clrbit((fs)->fs_active, (cg));	\
 	} while (/*CONSTCOND*/ 0)
-#define ACTIVECG_ISSET(fs, cg)				\
+#define	ACTIVECG_ISSET(fs, cg)				\
 	((fs)->fs_active != NULL && isset((fs)->fs_active, (cg)))
 
 /*
@@ -458,7 +467,7 @@ struct fs {
 /*
  * The minimal number of cylinder groups that should be created.
  */
-#define MINCYLGRPS	4
+#define	MINCYLGRPS	4
 
 
 /*
@@ -529,22 +538,22 @@ struct ocg {
 /*
  * Macros for access to cylinder group array structures.
  */
-#define old_cg_blktot_old(cgp, ns) \
+#define	old_cg_blktot_old(cgp, ns) \
     (((struct ocg *)(cgp))->cg_btot)
-#define old_cg_blks_old(fs, cgp, cylno, ns) \
+#define	old_cg_blks_old(fs, cgp, cylno, ns) \
     (((struct ocg *)(cgp))->cg_b[cylno])
 
-#define old_cg_blktot_new(cgp, ns) \
+#define	old_cg_blktot_new(cgp, ns) \
     ((int32_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_old_btotoff, (ns))))
-#define old_cg_blks_new(fs, cgp, cylno, ns) \
+#define	old_cg_blks_new(fs, cgp, cylno, ns) \
     ((int16_t *)((u_int8_t *)(cgp) + \
 	ufs_rw32((cgp)->cg_old_boff, (ns))) + (cylno) * (fs)->fs_old_nrpos)
 
-#define old_cg_blktot(cgp, ns) \
+#define	old_cg_blktot(cgp, ns) \
     ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) ? \
       old_cg_blktot_old(cgp, ns) : old_cg_blktot_new(cgp, ns))
-#define old_cg_blks(fs, cgp, cylno, ns) \
+#define	old_cg_blks(fs, cgp, cylno, ns) \
     ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) ? \
       old_cg_blks_old(fs, cgp, cylno, ns) : old_cg_blks_new(fs, cgp, cylno, ns))
 
@@ -557,20 +566,20 @@ struct ocg {
 #define	cg_chkmagic_new(cgp, ns) \
     (ufs_rw32((cgp)->cg_magic, (ns)) == CG_MAGIC)
 
-#define cg_inosused_old(cgp, ns) \
+#define	cg_inosused_old(cgp, ns) \
     (((struct ocg *)(cgp))->cg_iused)
-#define cg_blksfree_old(cgp, ns) \
+#define	cg_blksfree_old(cgp, ns) \
     (((struct ocg *)(cgp))->cg_free)
-#define cg_chkmagic_old(cgp, ns) \
+#define	cg_chkmagic_old(cgp, ns) \
     (ufs_rw32(((struct ocg *)(cgp))->cg_magic, (ns)) == CG_MAGIC)
 
-#define cg_inosused(cgp, ns) \
+#define	cg_inosused(cgp, ns) \
     ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) ? \
       cg_inosused_old(cgp, ns) : cg_inosused_new(cgp, ns))
-#define cg_blksfree(cgp, ns) \
+#define	cg_blksfree(cgp, ns) \
     ((ufs_rw32((cgp)->cg_magic, (ns)) != CG_MAGIC) ? \
       cg_blksfree_old(cgp, ns) : cg_blksfree_new(cgp, ns))
-#define cg_chkmagic(cgp, ns) \
+#define	cg_chkmagic(cgp, ns) \
     (cg_chkmagic_new(cgp, ns) || cg_chkmagic_old(cgp, ns))
 
 #define	cg_clustersfree(cgp, ns) \
@@ -645,7 +654,7 @@ struct ocg {
 	((loc) & (fs)->fs_qbmask)
 #define	fragoff(fs, loc)	/* calculates (loc % fs->fs_fsize) */ \
 	((loc) & (fs)->fs_qfmask)
-#define lfragtosize(fs, frag)	/* calculates ((off_t)frag * fs->fs_fsize) */ \
+#define	lfragtosize(fs, frag)	/* calculates ((off_t)frag * fs->fs_fsize) */ \
 	(((off_t)(frag)) << (fs)->fs_fshift)
 #define	lblktosize(fs, blk)	/* calculates ((off_t)blk * fs->fs_bsize) */ \
 	(((off_t)(blk)) << (fs)->fs_bshift)
@@ -683,7 +692,7 @@ struct ocg {
 	    ? (fs)->fs_bsize \
 	    : (fragroundup(fs, blkoff(fs, (ip)->i_size))))
 
-#define sblksize(fs, size, lbn) \
+#define	sblksize(fs, size, lbn) \
 	(((lbn) >= NDADDR || (size) >= ((lbn) + 1) << (fs)->fs_bshift) \
 	  ? (fs)->fs_bsize \
 	  : (fragroundup(fs, blkoff(fs, (size)))))
@@ -704,11 +713,11 @@ struct ocg {
  * Apple UFS Label:
  *  We check for this to decide to use APPLEUFS_DIRBLKSIZ
  */
-#define APPLEUFS_LABEL_MAGIC		0x4c41424c /* LABL */
-#define APPLEUFS_LABEL_SIZE		1024
-#define APPLEUFS_LABEL_OFFSET	(BBSIZE - APPLEUFS_LABEL_SIZE) /* located at 7k */
-#define APPLEUFS_LABEL_VERSION	1
-#define APPLEUFS_MAX_LABEL_NAME	512
+#define	APPLEUFS_LABEL_MAGIC		0x4c41424c /* LABL */
+#define	APPLEUFS_LABEL_SIZE		1024
+#define	APPLEUFS_LABEL_OFFSET	(BBSIZE - APPLEUFS_LABEL_SIZE) /* located at 7k */
+#define	APPLEUFS_LABEL_VERSION	1
+#define	APPLEUFS_MAX_LABEL_NAME	512
 
 struct appleufslabel {
 	u_int32_t	ul_magic;

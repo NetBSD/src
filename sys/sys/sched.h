@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.55.2.1 2008/06/23 04:32:03 wrstuden Exp $	*/
+/*	$NetBSD: sched.h,v 1.55.2.2 2008/09/18 04:37:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -89,8 +89,9 @@ struct sched_param {
 #define	SCHED_FIFO	1
 #define	SCHED_RR	2
 
-__BEGIN_DECLS
 #if defined(_NETBSD_SOURCE)
+__BEGIN_DECLS
+
 /*
  * Interface of CPU-sets.
  */
@@ -265,7 +266,6 @@ void		sched_print_runqueue(void (*pr)(const char *, ...));
 bool		kpreempt(uintptr_t);
 void		preempt(void);
 int		mi_switch(struct lwp *);
-void		resched_cpu(struct lwp *);
 void		updatertime(lwp_t *, const struct bintime *);
 void		sched_idle(void);
 

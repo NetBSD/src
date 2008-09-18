@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.17.4.1 2008/06/23 04:29:32 wrstuden Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.17.4.2 2008/09/18 04:39:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.17.4.1 2008/06/23 04:29:32 wrstuden Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.17.4.2 2008/09/18 04:39:22 wrstuden Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -1529,16 +1529,11 @@ chunk_dealloc(void *chunk, size_t size)
  * amongst threads.  To accomplish this, next_arena advances only in
  * ncpu steps.
  */
-static inline arena_t *
-choose_arena(void)
+static __noinline arena_t *
+choose_arena_hard(void)
 {
 	unsigned i, curcpu;
 	arena_t **map;
-
-	map = get_arenas_map();
-	curcpu = thr_curcpu();
-	if (__predict_true(map != NULL && map[curcpu] != NULL))
-		return map[curcpu];
 
 	/* Initialize the current block of arenas and advance to next. */
 	malloc_mutex_lock(&arenas_mtx);
@@ -1561,6 +1556,20 @@ choose_arena(void)
 	if (map[curcpu] != NULL)
 		return map[curcpu];
 	return arenas[0];
+}
+
+static inline arena_t *
+choose_arena(void)
+{
+	unsigned curcpu;
+	arena_t **map;
+
+	map = get_arenas_map();
+	curcpu = thr_curcpu();
+	if (__predict_true(map != NULL && map[curcpu] != NULL))
+		return map[curcpu];
+
+        return choose_arena_hard();
 }
 
 #ifndef lint

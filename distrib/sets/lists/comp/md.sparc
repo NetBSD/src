@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.66 2007/02/09 22:49:47 ad Exp $
+# $NetBSD: md.sparc,v 1.66.16.1 2008/09/18 04:41:12 wrstuden Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -132,3 +132,11 @@
 ./usr/include/sparc64/vuid_event.h		comp-c-include
 ./usr/include/sparc64/wchar_limits.h		comp-c-include
 ./usr/include/sparc64/z8530var.h		comp-c-include
+./usr/libdata/debug/sbin/edlabel.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug	debug
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/eeprom.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ofctl.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/tadpolectl.debug	comp-sysutil-debug	debug

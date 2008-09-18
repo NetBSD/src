@@ -1,4 +1,4 @@
-/*	$NetBSD: inttypes.h,v 1.5 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: inttypes.h,v 1.5.2.1 2008/09/18 04:39:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,6 +50,15 @@ intmax_t	wcstoimax(const wchar_t * __restrict,
 		    wchar_t ** __restrict, int);
 uintmax_t	wcstoumax(const wchar_t * __restrict,
 		    wchar_t ** __restrict, int);
+
+intmax_t	imaxabs(intmax_t);
+
+typedef struct {
+	intmax_t quot;
+	intmax_t rem;
+} imaxdiv_t;
+
+imaxdiv_t	imaxdiv(intmax_t, intmax_t);
 __END_DECLS
 
 #endif /* !_INTTYPES_H_ */

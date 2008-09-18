@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.208 2008/01/06 18:50:30 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.208.12.1 2008/09/18 04:33:17 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208 2008/01/06 18:50:30 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208.12.1 2008/09/18 04:33:17 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,6 @@ void fdintr(int);
 
 volatile unsigned int interrupt_depth = 0;
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -291,13 +290,6 @@ cpu_startup()
 
 
 	minaddr = 0;
-
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio

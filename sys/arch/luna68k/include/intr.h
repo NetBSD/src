@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.11 2008/04/28 20:23:26 martin Exp $ */
+/* $NetBSD: intr.h,v 1.11.2.1 2008/09/18 04:33:29 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 #include <machine/psl.h>
 
 #define splnone()	spl0()
-#define splsoftbio()	splraise1()
 #define splsoftclock()	splraise1()
+#define splsoftbio()	splraise1()
 #define splsoftnet()	splraise1()
 #define splsoftserial()	splraise1()
 #define splvm()		spl7()
@@ -51,7 +51,7 @@
 /* watch out for side effects */
 #define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
 
-int spl0 __P((void));
+int spl0(void);
 
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
@@ -63,25 +63,25 @@ int spl0 __P((void));
 #define	IPL_HIGH	7
 #define	NIPL		8
 
-extern const int ipl2spl_table[NIPL];
+extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
 typedef struct {
-	uint16_t _spl;
+	uint16_t _psl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._spl = ipl2spl_table[ipl]};
+	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
 }
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return _splraise(icookie._spl);
+	return _splraise(icookie._psl);
 }
 
 #endif /* _KERNEL */

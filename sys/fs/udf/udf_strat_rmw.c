@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.4.2.2 2008/06/23 05:02:14 wrstuden Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.4.2.3 2008/09/18 04:36:56 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.4.2.2 2008/06/23 05:02:14 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.4.2.3 2008/09/18 04:36:56 wrstuden Exp $");
 #endif /* not lint */
 
 
@@ -61,10 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.4.2.2 2008/06/23 05:02:14 wrstud
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
-
-#if defined(_KERNEL_OPT)
-#include "opt_udf.h"
-#endif
 
 #include "udf.h"
 #include "udf_subr.h"
@@ -505,7 +501,7 @@ udf_puteccline(struct udf_eccline *eccline)
 /* --------------------------------------------------------------------- */
 
 static int
-udf_create_logvol_dscr_rmw(struct udf_strat_args *args)
+udf_create_nodedscr_rmw(struct udf_strat_args *args)
 {
 	union dscrptr   **dscrptr  = &args->dscr;
 	struct udf_mount *ump      = args->ump;
@@ -545,7 +541,7 @@ udf_create_logvol_dscr_rmw(struct udf_strat_args *args)
 
 
 static void
-udf_free_logvol_dscr_rmw(struct udf_strat_args *args)
+udf_free_nodedscr_rmw(struct udf_strat_args *args)
 {
 	struct udf_mount *ump  = args->ump;
 	struct long_ad   *icb  = args->icb;
@@ -573,7 +569,7 @@ udf_free_logvol_dscr_rmw(struct udf_strat_args *args)
 
 
 static int
-udf_read_logvol_dscr_rmw(struct udf_strat_args *args)
+udf_read_nodedscr_rmw(struct udf_strat_args *args)
 {
 	union dscrptr   **dscrptr = &args->dscr;
 	struct udf_mount *ump = args->ump;
@@ -660,7 +656,7 @@ udf_read_logvol_dscr_rmw(struct udf_strat_args *args)
 
 
 static int
-udf_write_logvol_dscr_rmw(struct udf_strat_args *args)
+udf_write_nodedscr_rmw(struct udf_strat_args *args)
 {
 	union dscrptr    *dscrptr = args->dscr;
 	struct udf_mount *ump = args->ump;
@@ -681,6 +677,9 @@ udf_write_logvol_dscr_rmw(struct udf_strat_args *args)
 	if (error)
 		return error;
 
+	/* add reference to the vnode to prevent recycling */
+	vhold(udf_node->vnode);
+
 	/* get our eccline */
 	eccline = udf_geteccline(ump, sectornr, 0);
 	eccsect = sectornr - eccline->start_sector;
@@ -689,15 +688,13 @@ udf_write_logvol_dscr_rmw(struct udf_strat_args *args)
 
 	/* old callback still pending? */
 	if (eccline->bufs[eccsect]) {
-		DPRINTF(WRITE, ("udf_write_logvol_dscr_rmw: writing descriptor"
+		DPRINTF(WRITE, ("udf_write_nodedscr_rmw: writing descriptor"
 					" over buffer?\n"));
 		nestiobuf_done(eccline->bufs[eccsect],
 				eccline->bufs_len[eccsect],
 				0);
 		eccline->bufs[eccsect] = NULL;
 	}
-
-	UDF_LOCK_NODE(udf_node, IN_CALLBACK_ULK);
 
 	/* set sector number in the descriptor and validate */
 	dscrptr = (union dscrptr *)
@@ -715,9 +712,15 @@ udf_write_logvol_dscr_rmw(struct udf_strat_args *args)
 	eccline->dirty |= bit;
 
 	KASSERT(udf_tagsize(dscrptr, sector_size) <= sector_size);
-	UDF_UNLOCK_NODE(udf_node, IN_CALLBACK_ULK);
 
 	udf_puteccline(eccline);
+
+	holdrele(udf_node->vnode);
+	udf_node->outstanding_nodedscr--;
+	if (udf_node->outstanding_nodedscr == 0) {
+		UDF_UNLOCK_NODE(udf_node, udf_node->i_flags & IN_CALLBACK_ULK);
+		wakeup(&udf_node->outstanding_nodedscr);
+	}
 
 	/* XXX waitfor not used */
 	return 0;
@@ -729,12 +732,14 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 {
 	struct udf_mount *ump = args->ump;
 	struct buf *buf = args->nestbuf;
+	struct desc_tag *tag;
 	struct strat_private *priv = PRIV(ump);
 	struct udf_eccline *eccline;
 	struct long_ad *node_ad_cpy;
 	uint64_t bit, *lmapping, *pmapping, *lmappos, *pmappos, blknr;
-	uint32_t buf_len, len, sectornr, our_sectornr;
+	uint32_t buf_len, len, sectors, sectornr, our_sectornr;
 	uint32_t bpos;
+	uint16_t vpart_num;
 	uint8_t *fidblk, *src, *dst;
 	int sector_size = ump->discinfo.sector_size;
 	int blks = sector_size / DEV_BSIZE;
@@ -884,21 +889,18 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 	 * Note that it *looks* like the normal writing but its different in
 	 * the details.
 	 *
-	 * lmapping contains lb_num relative to base partition.  pmapping
-	 * contains lb_num as used for disc adressing.
+	 * lmapping contains lb_num relative to base partition.
+	 *
+	 * XXX should we try to claim/organize the allocated memory to
+	 * block-aligned pieces?
 	 */
 	mutex_enter(&priv->seqwrite_mutex);
 
 	lmapping    = ump->la_lmapping;
-	pmapping    = ump->la_pmapping;
 	node_ad_cpy = ump->la_node_ad_cpy;
 
-	/*
-	 * XXX should we try to claim/organize the allocated memory to block
-	 * aligned pieces?
-	 */
-	/* allocate buf and get its logical and physical mappings */
-	udf_late_allocate_buf(ump, buf, lmapping, pmapping, node_ad_cpy);
+	/* logically allocate buf and map it in the file */
+	udf_late_allocate_buf(ump, buf, lmapping, node_ad_cpy, &vpart_num);
 
 	/* if we have FIDs, fixup using the new allocation table */
 	if (buf->b_udf_c_type == UDF_C_FIDS) {
@@ -915,7 +917,23 @@ udf_queuebuf_rmw(struct udf_strat_args *args)
 			buf_len -= len;
 		}
 	}
+	if (buf->b_udf_c_type == UDF_C_METADATA_SBM) {
+		if (buf->b_lblkno == 0) {
+			/* update the tag location inside */
+			tag = (struct desc_tag *) buf->b_data;
+			tag->tag_loc = udf_rw32(*lmapping);
+			udf_validate_tag_and_crc_sums(buf->b_data);
+		}
+	}
 	udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
+
+	/*
+	 * Translate new mappings in lmapping to pmappings.
+	 * pmapping to contain lb_nums as used for disc adressing.
+	 */
+	pmapping = ump->la_pmapping;
+	sectors  = (buf->b_bcount + sector_size -1) / sector_size;
+	udf_translate_vtop_list(ump, sectors, vpart_num, lmapping, pmapping);
 
 	/* copy parts into the bufs and set for writing */
 	pmappos = pmapping;
@@ -979,11 +997,9 @@ udf_shedule_read_callback(struct buf *buf)
 		dst = (uint8_t *) eccline->blob + i * sector_size;
 		if (eccline->present & bit)
 			continue;
-		if (error) {
+		eccline->present |= bit;
+		if (error)
 			eccline->error |= bit;
-		} else {
-			eccline->present |= bit;
-		}
 		if (eccline->bufs[i]) {
 			dst = (uint8_t *) eccline->bufs[i]->b_data +
 				eccline->bufs_bpos[i];
@@ -1400,10 +1416,10 @@ udf_discstrat_finish_rmw(struct udf_strat_args *args)
 
 struct udf_strategy udf_strat_rmw =
 {
-	udf_create_logvol_dscr_rmw,
-	udf_free_logvol_dscr_rmw,
-	udf_read_logvol_dscr_rmw,
-	udf_write_logvol_dscr_rmw,
+	udf_create_nodedscr_rmw,
+	udf_free_nodedscr_rmw,
+	udf_read_nodedscr_rmw,
+	udf_write_nodedscr_rmw,
 	udf_queuebuf_rmw,
 	udf_discstrat_init_rmw,
 	udf_discstrat_finish_rmw

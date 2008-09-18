@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcvar.h,v 1.5 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: fdcvar.h,v 1.5.2.1 2008/09/18 04:33:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ enum fdc_state {
 
 /* software state, per controller */
 struct fdc_softc {
-	struct device sc_dev;		/* boilerplate */
+	device_t sc_dev;		/* boilerplate */
 	void *sc_ih;
 
 	bus_space_tag_t sc_iot;		/* I/O space identifier */

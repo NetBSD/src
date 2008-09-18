@@ -1,4 +1,4 @@
-/* $NetBSD: p64h2apic.c,v 1.13 2008/04/28 20:23:25 martin Exp $ */
+/* $NetBSD: p64h2apic.c,v 1.13.2.1 2008/09/18 04:33:28 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.13 2008/04/28 20:23:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p64h2apic.c,v 1.13.2.1 2008/09/18 04:33:28 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,19 +53,14 @@ static int	p64h2match(struct device *, struct cfdata *, void *);
 static void	p64h2attach(struct device *, struct device *, void *);
 
 struct p64h2apic_softc {
-	struct device sc_dev;
 	pcitag_t sc_tag;
 };
 
-CFATTACH_DECL(p64h2apic, sizeof(struct p64h2apic_softc),
+CFATTACH_DECL_NEW(p64h2apic, sizeof(struct p64h2apic_softc),
     p64h2match, p64h2attach, NULL, NULL);
 
-int	p64h2print(void *, const char *pnp);
-
-
 static int
-p64h2match(struct device *parent, struct cfdata *match,
-    void *aux)
+p64h2match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -77,9 +72,9 @@ p64h2match(struct device *parent, struct cfdata *match,
 }
 
 static void
-p64h2attach(struct device *parent, struct device *self, void *aux)
+p64h2attach(device_t parent, device_t self, void *aux)
 {
-	struct p64h2apic_softc *sc = (void *) self;
+	struct p64h2apic_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 
@@ -87,7 +82,7 @@ p64h2attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal_dev(&sc->sc_dev, "%s (rev. 0x%02x)\n", devinfo,
+	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_tag = pa->pa_tag;

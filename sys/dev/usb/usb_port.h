@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.82.2.1 2008/06/23 04:31:37 wrstuden Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.82.2.2 2008/09/18 04:35:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,8 +36,6 @@
 /*
  * Macro's to cope with the differences between operating systems.
  */
-
-#include "opt_usbverbose.h"
 
 #if defined(_KERNEL)
 #include <sys/mallocvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.14 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.14.6.1 2008/09/18 04:37:04 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -45,11 +45,7 @@
 
 
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/queue.h>
-#include <sys/stat.h>
-#include <sys/time.h>
 
 #include <err.h>
 #include <errno.h>
@@ -58,20 +54,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "rumpuser.h"
 
 #define DOCALL(rvtype, call)						\
-do {									\
 	rvtype rv;							\
 	rv = call;							\
 	if (rv == -1)							\
 		*error = errno;						\
 	else								\
 		*error = 0;						\
-	return rv;							\
-} while (/*CONSTCOND*/0)
+	return rv;
 
 int
 rumpuser_stat(const char *path, struct stat *sb, int *error)
@@ -88,10 +83,11 @@ rumpuser_lstat(const char *path, struct stat *sb, int *error)
 }
 
 int
-rumpuser_usleep(unsigned long sec, int *error)
+rumpuser_nanosleep(const struct timespec *rqtp, struct timespec *rmtp, 
+		   int *error)
 {
 
-	DOCALL(int, (usleep(sec)));
+	DOCALL(int, (nanosleep(rqtp, rmtp)));
 }
 
 void *
@@ -197,6 +193,7 @@ rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
 	if (rv < 0)
 		rv = 0;
 		
+	/* LINTED: see above */
 	rump_biodone(biodonecookie, rv, error);
 }
 
@@ -236,6 +233,7 @@ rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 	if (rv < 0)
 		rv = 0;
 
+	/* LINTED: see above */
 	rump_biodone(biodonecookie, rv, error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.108.2.1 2008/06/23 04:32:03 wrstuden Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.108.2.2 2008/09/18 04:37:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#ifdef ACCEPT_FILTER_MOD
+#include <sys/lkm.h>
+#endif
 
 #if !defined(_KERNEL) || defined(LKM)
 struct uio;
@@ -167,6 +170,11 @@ struct socket {
 	struct uidinfo	*so_uidinfo;	/* who opened the socket */
 	gid_t		so_egid;	/* creator effective gid */
 	pid_t		so_cpid;	/* creator pid */
+	struct so_accf {
+		struct accept_filter	*so_accept_filter;
+		void	*so_accept_filter_arg;	/* saved filter args */
+		char	*so_accept_filter_str;	/* saved user args */
+	} *so_accf;
 };
 
 #define	SB_EMPTY_FIXUP(sb)						\
@@ -200,6 +208,25 @@ do {									\
 
 #ifdef _KERNEL
 
+struct accept_filter {
+	char	accf_name[16];
+	void	(*accf_callback)
+		(struct socket *so, void *arg, int waitflag);
+	void *	(*accf_create)
+		(struct socket *so, char *arg);
+	void	(*accf_destroy)
+		(struct socket *so);
+	SLIST_ENTRY(accept_filter) accf_next;
+};
+
+struct sockopt {
+	int		sopt_level;		/* option level */
+	int		sopt_name;		/* option name */
+	size_t		sopt_size;		/* data length */
+	void *		sopt_data;		/* data pointer */
+	uint8_t		sopt_buf[sizeof(int)];	/* internal storage */
+};
+
 extern u_long		sb_max;
 extern int		somaxkva;
 extern int		sock_loan_thresh;
@@ -212,7 +239,6 @@ struct msghdr;
 struct stat;
 struct knote;
 
-struct	mbuf *m_intopt(struct socket *, int);
 struct	mbuf *getsombuf(struct socket *, int);
 
 /*
@@ -261,7 +287,7 @@ int	socreate(int, struct socket **, int, int, struct lwp *,
 int	fsocreate(int, struct socket **, int, int, struct lwp *, int *);
 int	sodisconnect(struct socket *);
 void	sofree(struct socket *);
-int	sogetopt(struct socket *, int, int, struct mbuf **);
+int	sogetopt(struct socket *, struct sockopt *);
 void	sohasoutofband(struct socket *);
 void	soisconnected(struct socket *);
 void	soisconnecting(struct socket *);
@@ -278,7 +304,8 @@ int	soreserve(struct socket *, u_long, u_long);
 void	sorflush(struct socket *);
 int	sosend(struct socket *, struct mbuf *, struct uio *,
 	    struct mbuf *, struct mbuf *, int, struct lwp *);
-int	sosetopt(struct socket *, int, int, struct mbuf *);
+int	sosetopt(struct socket *, struct sockopt *);
+int	so_setsockopt(struct lwp *, struct socket *, int, int, const void *, size_t);
 int	soshutdown(struct socket *, int);
 void	sowakeup(struct socket *, struct sockbuf *, int);
 int	sockargs(struct mbuf **, const void *, size_t, int);
@@ -293,6 +320,15 @@ int	sowait(struct socket *, int);
 void	solockretry(struct socket *, kmutex_t *);
 void	sosetlock(struct socket *);
 void	solockreset(struct socket *, kmutex_t *);
+
+void	sockopt_init(struct sockopt *, int, int, size_t);
+void	sockopt_destroy(struct sockopt *);
+int	sockopt_set(struct sockopt *, const void *, size_t);
+int	sockopt_setint(struct sockopt *, int);
+int	sockopt_get(const struct sockopt *, void *, size_t);
+int	sockopt_getint(const struct sockopt *, int *);
+int	sockopt_setmbuf(struct sockopt *, struct mbuf *);
+struct mbuf *sockopt_getmbuf(const struct sockopt *);
 
 int	copyout_sockname(struct sockaddr *, unsigned int *, int, struct mbuf *);
 int	copyout_msg_control(struct lwp *, struct msghdr *, struct mbuf *);
@@ -489,6 +525,22 @@ void	soloanfree(struct mbuf *, void *, size_t, void *);
 #define SB_PRIO_ONESHOT_OVERFLOW 1
 #define SB_PRIO_OVERDRAFT	2
 #define SB_PRIO_BESTEFFORT	3
+
+/*
+ * Accept filter functions (duh).
+ */
+int	do_getopt_accept_filter(struct socket *, struct sockopt *);
+int	do_setopt_accept_filter(struct socket *, const struct sockopt *);
+int	accept_filt_add(struct accept_filter *);
+int	accept_filt_del(char *);
+struct	accept_filter *accept_filt_get(char *);
+#ifdef ACCEPT_FILTER_MOD
+#ifdef SYSCTL_DECL
+SYSCTL_DECL(_net_inet_accf);
+#endif
+void	accept_filter_init(void);
+int	accept_filt_generic_mod_event(struct lkm_table *lkmtp, int event, void *data);
+#endif
 
 #endif /* _KERNEL */
 

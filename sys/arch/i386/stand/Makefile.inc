@@ -1,10 +1,5 @@
-#	$NetBSD: Makefile.inc,v 1.5 2006/05/12 16:45:12 dogcow Exp $
+#	$NetBSD: Makefile.inc,v 1.5.68.1 2008/09/18 04:33:28 wrstuden Exp $
 
 .include <bsd.own.mk>
 
 BINDIR=	/usr/mdec
-
-.if ${HAVE_GCC} == 4
-CFLAGS+=	-Wno-pointer-sign
-.endif
-

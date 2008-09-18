@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.163 2008/04/30 21:15:33 garbled Exp $
+#	$NetBSD: bsd.sys.mk,v 1.163.2.1 2008/09/18 04:38:10 wrstuden Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -16,6 +16,10 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # differently in traditional and ansi environments' which is the warning
 # we wanted, and now we don't get anymore.
 CFLAGS+=	-Wno-sign-compare -Wno-traditional
+.if !defined(NOGCCERROR)
+# Set assembler warnings to be fatal
+CFLAGS+=	-Wa,--fatal-warnings
+.endif
 # Set linker warnings to be fatal
 # XXX no proper way to avoid "FOO is a patented algorithm" warnings
 # XXX on linking static libs
@@ -36,7 +40,7 @@ CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 		-Wno-deprecated -Wno-non-template-friend \
 		-Woverloaded-virtual -Wno-pmf-conversions -Wsign-promo -Wsynth
 .endif
-.if ${WARNS} > 3 && ${HAVE_GCC} >= 3
+.if ${WARNS} > 3 && defined(HAVE_GCC) && ${HAVE_GCC} >= 3
 CFLAGS+=	-std=gnu99
 .endif
 .endif
@@ -78,8 +82,10 @@ FFLAGS+=	-mieee
 .endif
 
 .if defined(MKPIE) && (${MKPIE} != "no")
+.if !defined(KERNEL_BUILD)
 CFLAGS+=	-fPIC
 LDFLAGS+=	-Wl,-pie -shared-libgcc
+.endif
 .endif
 
 .if ${MACHINE} == "sparc64" && ${MACHINE_ARCH} == "sparc"

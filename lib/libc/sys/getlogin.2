@@ -1,4 +1,4 @@
-.\"	$NetBSD: getlogin.2,v 1.19 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: getlogin.2,v 1.19.26.1 2008/09/18 04:39:22 wrstuden Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,11 +29,12 @@
 .\"
 .\"	@(#)getlogin.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd August 11, 2002
+.Dd June 25, 2008
 .Dt GETLOGIN 2
 .Os
 .Sh NAME
 .Nm getlogin ,
+.Nm getlogin_r ,
 .Nm setlogin
 .Nd get/set login name
 .Sh LIBRARY
@@ -42,6 +43,8 @@
 .In unistd.h
 .Ft char *
 .Fn getlogin void
+.Ft int
+.Fn getlogin_r "char *name" "int len"
 .Ft int
 .Fn setlogin "const char *name"
 .Sh DESCRIPTION
@@ -58,6 +61,21 @@ and is inherited by all processes descended from the login shell.
 for example when
 .Xr su 1
 is used.)
+.Pp
+The
+.Fn getlogin_r
+function
+provides the same service as
+.Fn getlogin ,
+however the caller must provide the buffer
+.Fa name
+with length
+.Fa len
+bytes
+to hold the result.
+The buffer should be at least
+.Dv MAXLOGNAME
+bytes in length.
 .Pp
 .Fn setlogin
 sets the login name of the user associated with the current session to
@@ -119,6 +137,7 @@ If a call to
 succeeds, it returns a pointer to a null-terminated string in a static buffer.
 If the name has not been set, it returns
 .Dv NULL .
+.Pp
 If a call to
 .Fn setlogin
 succeeds, a value of 0 is returned.
@@ -127,6 +146,11 @@ If
 fails, a value of \-1 is returned and an error code is
 placed in the global location
 .Va errno .
+.Pp
+The
+.Fn getlogin_r
+function
+returns zero if successful, or the error number upon failure.
 .Sh ERRORS
 The following errors may be returned by these calls:
 .Bl -tag -width Er
@@ -147,14 +171,18 @@ Login names are limited to
 characters, currently 16.
 .It Bq Er EPERM
 The caller tried to set the login name and was not the super-user.
+.It Bq Er ERANGE
+The size of the buffer is smaller than the result to be returned.
 .El
 .Sh SEE ALSO
 .Xr setsid 2
 .Sh STANDARDS
 The
 .Fn getlogin
-function conforms to
-.St -p1003.1-90 .
+and
+.Fn getlogin_r
+functions conform to
+.St -p1003.1-96 .
 .Sh HISTORY
 The
 .Fn getlogin

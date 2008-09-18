@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_mount.c,v 1.17.2.2 2008/05/14 01:35:02 wrstuden Exp $ */
+/*	$NetBSD: darwin_mount.c,v 1.17.2.3 2008/09/18 04:36:44 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.17.2.2 2008/05/14 01:35:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mount.c,v 1.17.2.3 2008/09/18 04:36:44 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,7 +68,7 @@ darwin_sys_fstatfs(struct lwp *l, const struct darwin_sys_fstatfs_args *uap, reg
 	struct darwin_statfs ds;
 	int error;
 
-	/* getvnode() will use the descriptor for us */
+	/* fd_getvnode() will use the descriptor for us */
 	if ((error = fd_getvnode(SCARG(uap, fd), &fp)))
 		return (error);
 

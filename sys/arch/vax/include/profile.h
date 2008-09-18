@@ -1,4 +1,4 @@
-/*      $NetBSD: profile.h,v 1.11 2005/12/24 23:24:07 perry Exp $ */
+/*      $NetBSD: profile.h,v 1.11.80.1 2008/09/18 04:33:36 wrstuden Exp $ */
 /*
  * Copyright (c) 1992 The Regents of the University of California.
  * All rights reserved.
@@ -41,13 +41,8 @@
  * push previous pc _and_ tell calls that it is only one argument
  * to __mcount, so that our return address won't get popped from stack.
  */
-#ifdef __ELF__
 #define MCOUNT \
 __asm(".text; .globl __mcount; __mcount: pushl 16(%fp); calls $1,_mcount; rsb");
-#else
-#define MCOUNT \
-__asm(".text; .globl mcount; mcount: pushl 16(%fp); calls $1,__mcount; rsb");
-#endif
 
 #ifdef _KERNEL
 /*

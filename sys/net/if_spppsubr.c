@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.109 2008/02/20 17:05:53 matt Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.109.12.1 2008/09/18 04:37:00 wrstuden Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.109 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.109.12.1 2008/09/18 04:37:00 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -371,7 +371,7 @@ static const char *sppp_lcp_opt_name(u_char opt);
 static const char *sppp_phase_name(int phase);
 static const char *sppp_proto_name(u_short proto);
 static const char *sppp_state_name(int state);
-static int sppp_params(struct sppp *sp, int cmd, void *data);
+static int sppp_params(struct sppp *sp, u_long cmd, void *data);
 #ifdef INET
 static void sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst,
 			      uint32_t *srcmask);
@@ -939,7 +939,6 @@ void
 sppp_detach(struct ifnet *ifp)
 {
 	struct sppp **q, *p, *sp = (struct sppp *) ifp;
-	int i;
 
 	/* Remove the entry from the keepalive list. */
 	for (q = &spppq; (p = *q); q = &p->pp_next)
@@ -953,9 +952,13 @@ sppp_detach(struct ifnet *ifp)
 		callout_stop(&keepalive_ch);
 	}
 
-	for (i = 0; i < IDX_COUNT; i++) {
-		callout_stop(&sp->ch[i]);
-	}
+	callout_stop(&sp->ch[IDX_LCP]);
+	callout_stop(&sp->ch[IDX_IPCP]);
+	callout_stop(&sp->ch[IDX_PAP]);
+	callout_stop(&sp->ch[IDX_CHAP]);
+#ifdef INET6
+	callout_stop(&sp->ch[IDX_IPV6CP]);
+#endif
 	callout_stop(&sp->pap_my_to_ch);
 
 	/* free authentication info */
@@ -5102,7 +5105,7 @@ sppp_suggest_ip6_addr(struct sppp *sp, struct in6_addr *suggest)
  * Permissions have already been checked.
  */
 static int
-sppp_params(struct sppp *sp, int cmd, void *data)
+sppp_params(struct sppp *sp, u_long cmd, void *data)
 {
 	switch (cmd) {
 	case SPPPGETAUTHCFG:

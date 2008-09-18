@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59.2.1 2008/06/23 04:30:51 wrstuden Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59.2.2 2008/09/18 04:33:38 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59.2.1 2008/06/23 04:30:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59.2.2 2008/09/18 04:33:38 wrstuden Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1019,6 +1019,8 @@ void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 {
 	pt_entry_t *pte, opte, npte;
+
+	KASSERT(!(prot & ~VM_PROT_ALL));
 
 	if (va < VM_MIN_KERNEL_ADDRESS)
 		pte = vtopte(va);
@@ -2335,18 +2337,18 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 	}
 
 	if ((uintptr_t) pmap1 < (uintptr_t) pmap2) {
-		mutex_enter(&pmap1->pm_obj.vmobjlock);
-		mutex_enter(&pmap2->pm_obj.vmobjlock);
+		mutex_enter(&pmap1->pm_lock);
+		mutex_enter(&pmap2->pm_lock);
 	} else {
-		mutex_enter(&pmap2->pm_obj.vmobjlock);
-		mutex_enter(&pmap1->pm_obj.vmobjlock);
+		mutex_enter(&pmap2->pm_lock);
+		mutex_enter(&pmap1->pm_lock);
 	}
 
  	/* Copy the LDT, if necessary. */
  	if (pmap1->pm_flags & PMF_USER_LDT) {
 		if (len != pmap1->pm_ldt_len * sizeof(union descriptor)) {
-			mutex_exit(&pmap2->pm_obj.vmobjlock);
-			mutex_exit(&pmap1->pm_obj.vmobjlock);
+			mutex_exit(&pmap2->pm_lock);
+			mutex_exit(&pmap1->pm_lock);
 			if (len != -1) {
 				ldt_free(sel);
 				uvm_km_free(kernel_map, (vaddr_t)new_ldt,
@@ -2363,8 +2365,8 @@ pmap_fork(struct pmap *pmap1, struct pmap *pmap2)
 		len = -1;
 	}
 
-	mutex_exit(&pmap2->pm_obj.vmobjlock);
-	mutex_exit(&pmap1->pm_obj.vmobjlock);
+	mutex_exit(&pmap2->pm_lock);
+	mutex_exit(&pmap1->pm_lock);
 
 	if (len != -1) {
 		ldt_free(sel);
@@ -2962,7 +2964,7 @@ vaddr_t
 pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, vm_prot_t prot)
 {
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
+		pmap_kenter_pa(va, spa, prot);
 		va += PAGE_SIZE;
 		spa += PAGE_SIZE;
 	}
@@ -3089,11 +3091,13 @@ pmap_map_ptp(struct vm_page *ptp)
 	id = cpu_number();
 	ptppte = PTESLEW(ptp_pte, id);
 	ptpva = VASLEW(ptpp, id);
-	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
 #if !defined(XEN)
-	    PG_RW |
-#endif
+	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
+	    PG_RW | PG_U | PG_k);
+#else
+	pmap_pte_set(ptppte, pmap_pa2pte(VM_PAGE_TO_PHYS(ptp)) | PG_V | PG_M |
 	    PG_U | PG_k);
+#endif
 	pmap_pte_flush();
 	pmap_update_pg((vaddr_t)ptpva);
 

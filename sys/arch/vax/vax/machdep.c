@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.164.6.3 2008/06/22 18:12:04 wrstuden Exp $	 */
+/* $NetBSD: machdep.c,v 1.164.6.4 2008/09/18 04:33:36 wrstuden Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164.6.3 2008/06/22 18:12:04 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.164.6.4 2008/09/18 04:33:36 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -162,7 +162,6 @@ static long iomap_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) / sizeof(long)];
 static struct extent *iomap_ex;
 static int iomap_ex_malloc_safe;
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -198,13 +197,6 @@ cpu_startup(void)
 	spl0();
 
 	minaddr = 0;
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively limits
-	 * the number of processes exec'ing at any time.
-	 * At most one process with the full length is allowed.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 #if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	/*

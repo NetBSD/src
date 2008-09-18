@@ -1,0 +1,111 @@
+#	$NetBSD: Makefile.rumpkern,v 1.6.2.2 2008/09/18 04:37:04 wrstuden Exp $
+#
+
+.include "${RUMPTOP}/Makefile.rump"
+
+LIB=		rump
+LDFLAGS+=	-Wl,--wrap=malloc
+
+INCSDIR=/usr/include/rump
+INCS+=	rump.h rumpdefs.h rump_syscalls.h rumpvnode_if.h
+
+.PATH:	${RUMPTOP}/librump/rumpkern				\
+	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern		\
+	${RUMPTOP}/../conf ${RUMPTOP}/../dev			\
+	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs
+
+# implement something
+SRCS=	rump.c atomic.c auth.c emul.c intr.c genfs_io.c locks.c		\
+	ltsleep.c pool.c specfs.c vfs.c vm.c
+
+# just stubs
+SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
+
+# sys/kern
+SRCS+=	clock_subr.c kern_descrip.c kern_module.c kern_stub.c		\
+	kern_sysctl.c param.c subr_bufq.c subr_callback.c subr_hash.c	\
+	subr_kobj.c subr_prf2.c subr_specificdata.c subr_time.c		\
+	subr_workqueue.c sys_descrip.c sys_generic.c vfs_bio.c		\
+	vfs_cache.c vfs_getcwd.c vfs_hooks.c vfs_init.c vfs_lookup.c	\
+	vfs_subr.c vfs_syscalls.c vfs_vnops.c vfs_wapbl.c vnode_if.c
+
+# sys/miscfs
+SRCS+=	genfs_vfsops.c genfs_vnops.c sync_subr.c
+
+# src/kern bufq
+SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
+	bufq_readprio.c
+
+# src/lib/libkern
+SRCS+=	__assert.c scanc.c skpc.c
+
+SRCS+=	rumpvnode_if.c rump_syscalls.c
+
+# uncomment these lines if you want to use the real kmem code
+#CPPFLAGS+=	-DRUMP_USE_REAL_KMEM
+#SRCS+=		subr_kmem.c subr_once.c subr_vmem.c
+
+.if ${MACHINE_ARCH} == "vax"
+.PATH:	${RUMPTOP}/../lib/libkern/arch/vax
+SRCS+=	blkset.S
+.endif
+
+# no shlib_version because this is automatically in sync with lib/librump
+SHLIB_MAJOR=    0
+SHLIB_MINOR=    0
+
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt -DMAXUSERS=32
+CFLAGS+=	-Wno-pointer-sign
+
+# Create a few files.  We can't include them directly, because that
+# would create hideous namespace lossage.  So just do some clever
+# (or less clever) renaming.
+#
+# Yes, this is borderline disgusting not to mention seriously
+# labile, but what are you gonna do for a quick hack?
+#
+VOPTORUMPVOP="-e s/vop/rump_vop/g;/VOPARG/!s/VOP/RUMP_VOP/g;/vfs_op_desc/,\$$d"
+VOPTORUMPVOP+="-e s/vm_prot_t/int/g"
+VOPTORUMPVOP+="-e s/voff_t/off_t/g;/sys\/buf\.h/s/.*/struct buf;/"
+RVNH=\#include \<rump\/rump.h\>
+
+rumpvnode_if.h: ${RUMPTOP}/../sys/vnode_if.h \
+		${RUMPTOP}/librump/rumpkern/Makefile.rumpkern
+	echo Generating rumpvnode_if.h
+	sed ${VOPTORUMPVOP}";s/SYS_VNODE_IF_H/SYS_RUMPVNODE_IF_H/g"	\
+	    < ${RUMPTOP}/../sys/vnode_if.h > rumpvnode_if.h
+
+rumpvnode_if.c: ${RUMPTOP}/../kern/vnode_if.c \
+		${RUMPTOP}/librump/rumpkern/Makefile.rumpkern
+	echo Generating rumpvnode_if.c
+	# XXX: some creative kludging to simulate 'a\' (I have no
+	# clue how to make it work in a Makefile
+	sed ${VOPTORUMPVOP}";/sys\/vnode.h/{x;s/.*/${RVNH}/;x;G;n;}"	\
+	    < ${RUMPTOP}/../kern/vnode_if.c > rumpvnode_if.c
+
+rumpdefs.h: ${RUMPTOP}/../sys/namei.h \
+	    ${RUMPTOP}/../sys/fcntl.h \
+	    ${RUMPTOP}/../sys/vnode.h \
+	    ${RUMPTOP}/../sys/errno.h \
+	    ${RUMPTOP}/librump/rumpkern/Makefile.rumpkern
+	echo Generating rumpdefs.h
+	sed -n '/#define NAMEI_/s/NAMEI_/RUMP_NAMEI_/gp'		\
+	    < ${RUMPTOP}/../sys/namei.h > rumpdefs.h
+	sed -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp'	\
+	    < ${RUMPTOP}/../sys/fcntl.h >> rumpdefs.h
+	printf "#ifndef __VTYPE_DEFINED\n#define __VTYPE_DEFINED\n"	\
+	    >> rumpdefs.h
+	sed -n '/enum vtype.*{/p'					\
+	    < ${RUMPTOP}/../sys/vnode.h >> rumpdefs.h
+	printf "#endif /* __VTYPE_DEFINED */\n" >> rumpdefs.h
+	printf "#ifndef EJUSTRETURN\n" >> rumpdefs.h
+	sed -n '/EJUSTRETURN/p'						\
+	    < ${RUMPTOP}/../sys/errno.h >> rumpdefs.h
+	printf "#endif /* EJUSTRETURN */\n" >> rumpdefs.h
+
+CLEANFILES+=	rumpvnode_if.c rumpvnode_if.h rumpdefs.h
+
+beforedepend: rumpvnode_if.c rumpvnode_if.h rumpdefs.h
+
+.include <bsd.lib.mk>
+.include <bsd.klinks.mk>

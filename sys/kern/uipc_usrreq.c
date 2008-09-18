@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.114.2.1 2008/06/23 04:31:52 wrstuden Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.114.2.2 2008/09/18 04:31:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.114.2.1 2008/06/23 04:31:52 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.114.2.2 2008/09/18 04:31:44 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -639,43 +639,37 @@ release:
  * Unix domain socket option processing.
  */
 int
-uipc_ctloutput(int op, struct socket *so, int level, int optname,
-	struct mbuf **mp)
+uipc_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	struct unpcb *unp = sotounpcb(so);
-	struct mbuf *m = *mp;
 	int optval = 0, error = 0;
 
 	KASSERT(solocked(so));
 
-	if (level != 0) {
+	if (sopt->sopt_level != 0) {
 		error = ENOPROTOOPT;
-		if (op == PRCO_SETOPT && m)
-			(void) m_free(m);
 	} else switch (op) {
 
 	case PRCO_SETOPT:
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case LOCAL_CREDS:
 		case LOCAL_CONNWAIT:
-			if (m == NULL || m->m_len != sizeof(int))
-				error = EINVAL;
-			else {
-				optval = *mtod(m, int *);
-				switch (optname) {
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+			switch (sopt->sopt_name) {
 #define	OPTSET(bit) \
 	if (optval) \
 		unp->unp_flags |= (bit); \
 	else \
 		unp->unp_flags &= ~(bit);
 
-				case LOCAL_CREDS:
-					OPTSET(UNP_WANTCRED);
-					break;
-				case LOCAL_CONNWAIT:
-					OPTSET(UNP_CONNWAIT);
-					break;
-				}
+			case LOCAL_CREDS:
+				OPTSET(UNP_WANTCRED);
+				break;
+			case LOCAL_CONNWAIT:
+				OPTSET(UNP_CONNWAIT);
+				break;
 			}
 			break;
 #undef OPTSET
@@ -684,30 +678,24 @@ uipc_ctloutput(int op, struct socket *so, int level, int optname,
 			error = ENOPROTOOPT;
 			break;
 		}
-		if (m)
-			(void) m_free(m);
 		break;
 
 	case PRCO_GETOPT:
 		sounlock(so);
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case LOCAL_PEEREID:
 			if (unp->unp_flags & UNP_EIDSVALID) {
-				*mp = m = m_get(M_WAIT, MT_SOOPTS);
-				m->m_len = sizeof(struct unpcbid);
-				*mtod(m, struct unpcbid *) = unp->unp_connid;
+				error = sockopt_set(sopt,
+				    &unp->unp_connid, sizeof(unp->unp_connid));
 			} else {
 				error = EINVAL;
 			}
 			break;
 		case LOCAL_CREDS:
-			*mp = m = m_get(M_WAIT, MT_SOOPTS);
-			m->m_len = sizeof(int);
-
 #define	OPTBIT(bit)	(unp->unp_flags & (bit) ? 1 : 0)
 
 			optval = OPTBIT(UNP_WANTCRED);
-			*mtod(m, int *) = optval;
+			error = sockopt_setint(sopt, optval);
 			break;
 #undef OPTBIT
 

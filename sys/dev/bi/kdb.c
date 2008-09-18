@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.42.6.1 2008/06/23 04:30:58 wrstuden Exp $ */
+/*	$NetBSD: kdb.c,v 1.42.6.2 2008/09/18 04:35:02 wrstuden Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.42.6.1 2008/06/23 04:30:58 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.42.6.2 2008/09/18 04:35:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -99,7 +99,7 @@ int	kdbprint(void *, const char *);
 void	kdbsaerror(device_t, int);
 void	kdbgo(device_t, struct mscp_xi *);
 
-CFATTACH_DECL(kdb, sizeof(struct kdb_softc),
+CFATTACH_DECL_NEW(kdb, sizeof(struct kdb_softc),
     kdbmatch, kdbattach, NULL, NULL);
 
 /*
@@ -123,10 +123,7 @@ kdbprint(void *aux, const char *name)
  * Poke at a supposed KDB to see if it is there.
  */
 int
-kdbmatch(parent, cf, aux)
-	device_t parent;
-	cfdata_t cf;
-	void *aux;
+kdbmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct bi_attach_args *ba = aux;
 
@@ -149,6 +146,8 @@ kdbattach(device_t parent, device_t self, void *aux)
 	volatile int i = 10000;
 	int error, rseg;
 	bus_dma_segment_t seg;
+
+	sc->sc_dev = self;
 
 	printf("\n");
 	bi_intr_establish(ba->ba_icookie, ba->ba_ivec,
@@ -333,7 +332,6 @@ kdbreset(int ctlr)
 #endif
 
 void
-kdbctlrdone(usc)
-	device_t usc;
+kdbctlrdone(device_t usc)
 {
 }

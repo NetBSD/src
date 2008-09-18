@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.25.8.2 2008/05/14 01:35:02 wrstuden Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.25.8.3 2008/09/18 04:36:44 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.25.8.2 2008/05/14 01:35:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.25.8.3 2008/09/18 04:36:44 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,8 @@ compat_12_sys_getdirentries(struct lwp *l, const struct compat_12_sys_getdirentr
 	int error, done;
 	long loff;
 
-	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
+	/* fd_getvnode() will use the descriptor for us */
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return error;
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;

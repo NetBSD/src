@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pcmcia.c,v 1.58 2008/04/28 20:23:56 martin Exp $	 */
+/*	$NetBSD: com_pcmcia.c,v 1.58.2.1 2008/09/18 04:35:09 wrstuden Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.58 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pcmcia.c,v 1.58.2.1 2008/09/18 04:35:09 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,10 @@ com_pcmcia_attach(device_t parent, device_t self, void *aux)
 
 	com_attach_subr(sc);
 
+	if (!pmf_device_register1(self, com_suspend, com_resume,
+	    com_cleanup))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	sc->enabled = 0;
 
 	psc->sc_attached = 1;
@@ -225,6 +229,8 @@ com_pcmcia_detach(device_t self, int flags)
 
 	if (!psc->sc_attached)
 		return (0);
+
+	pmf_device_deregister(self);
 
 	if ((error = com_detach(self, flags)) != 0)
 		return error;

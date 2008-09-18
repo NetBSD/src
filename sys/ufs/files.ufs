@@ -1,4 +1,4 @@
-#	$NetBSD: files.ufs,v 1.17 2007/12/12 02:56:03 lukem Exp $
+#	$NetBSD: files.ufs,v 1.17.12.1 2008/09/18 04:37:05 wrstuden Exp $
 
 deffs	fs_ffs.h			FFS
 deffs					EXT2FS
@@ -34,6 +34,7 @@ file	ufs/ffs/ffs_subr.c		ffs | mfs | ext2fs
 file	ufs/ffs/ffs_tables.c		ffs | mfs | ext2fs
 file	ufs/ffs/ffs_vfsops.c		ffs | mfs | ext2fs
 file	ufs/ffs/ffs_vnops.c		ffs | mfs | ext2fs
+file	ufs/ffs/ffs_wapbl.c		ffs & wapbl
 file	ufs/ffs/ffs_appleufs.c		ffs & apple_ufs
 
 file	ufs/lfs/lfs_alloc.c		lfs
@@ -62,3 +63,4 @@ file	ufs/ufs/ufs_lookup.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_quota.c		quota & (ffs | lfs | mfs | ext2fs)
 file	ufs/ufs/ufs_vfsops.c		ffs | lfs | mfs | ext2fs
 file	ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
+file	ufs/ufs/ufs_wapbl.c		ffs & wapbl

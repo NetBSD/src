@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.92.2.1 2008/06/23 04:31:52 wrstuden Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.92.2.2 2008/09/18 04:31:44 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,8 +58,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.92.2.1 2008/06/23 04:31:52 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.92.2.2 2008/09/18 04:31:44 wrstuden Exp $");
 
+#include "opt_inet.h"
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
 
@@ -177,10 +178,20 @@ soisconnected(struct socket *so)
 
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING|SS_ISCONFIRMING);
 	so->so_state |= SS_ISCONNECTED;
-	if (head && soqremque(so, 0)) {
-		soqinsque(head, so, 1);
-		sorwakeup(head);
-		cv_broadcast(&head->so_cv);
+	if (head && so->so_onq == &head->so_q0) {
+		if ((so->so_options & SO_ACCEPTFILTER) == 0) {
+			soqremque(so, 0);
+			soqinsque(head, so, 1);
+			sorwakeup(head);
+			cv_broadcast(&head->so_cv);
+		} else {
+			so->so_upcall =
+			    head->so_accf->so_accept_filter->accf_callback;
+			so->so_upcallarg = head->so_accf->so_accept_filter_arg;
+			so->so_rcv.sb_flags |= SB_UPCALL;
+			so->so_options &= ~SO_ACCEPTFILTER;
+			so->so_upcall(so, so->so_upcallarg, M_DONTWAIT);
+		}
 	} else {
 		cv_broadcast(&so->so_cv);
 		sorwakeup(so);
@@ -238,6 +249,8 @@ sonewconn(struct socket *head, int connstatus)
 
 	KASSERT(solocked(head));
 
+	if ((head->so_options & SO_ACCEPTFILTER) != 0)
+		connstatus = 0;
 	soqueue = connstatus ? 1 : 0;
 	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2)
 		return ((struct socket *)0);
@@ -277,6 +290,12 @@ sonewconn(struct socket *head, int connstatus)
 	KASSERT(solocked(so));
 	if (error != 0) {
 		(void) soqremque(so, soqueue);
+
+#ifdef INET
+		/* remove acccept filter if one is present. */
+		if (so->so_accf != NULL)
+			do_setopt_accept_filter(so, NULL);
+#endif
 		soput(so);
 		return (NULL);
 	}

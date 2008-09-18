@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.16 2006/03/02 03:38:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.16.70.1 2008/09/18 04:37:00 wrstuden Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -44,9 +44,9 @@ enum ieee80211_state {
 	IEEE80211_S_SCAN	= 1,	/* scanning */
 	IEEE80211_S_AUTH	= 2,	/* try to authenticate */
 	IEEE80211_S_ASSOC	= 3,	/* try to assoc */
-	IEEE80211_S_RUN		= 4,	/* associated */
+	IEEE80211_S_RUN		= 4	/* associated */
 };
-#define	IEEE80211_S_MAX		(IEEE80211_S_RUN+1)
+#define	IEEE80211_S_MAX		((int)IEEE80211_S_RUN + 1)
 
 #define	IEEE80211_SEND_MGMT(_ic,_ni,_type,_arg) \
 	((*(_ic)->ic_send_mgmt)(_ic, _ni, _type, _arg))

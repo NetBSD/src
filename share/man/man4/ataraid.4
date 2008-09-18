@@ -1,4 +1,4 @@
-.\"	$NetBSD: ataraid.4,v 1.6 2008/04/30 13:10:53 martin Exp $
+.\"	$NetBSD: ataraid.4,v 1.6.2.1 2008/09/18 04:38:08 wrstuden Exp $
 .\"
 .\" Copyright (c) 2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 5, 2007
+.Dd September 5, 2008
 .Dt ATARAID 4
 .Os
 .Sh NAME
@@ -48,9 +48,13 @@ so that it may be a boot device.
 The driver currently supports RAID formats from:
 .Bl -bullet -offset indent -compact
 .It
-Promise FastTrak
-.It
 Adaptec HostRAID (found in Intel 6300ESB)
+.It
+JMicron RAID
+.It
+nVidia MediaShield
+.It
+Promise FastTrak
 .It
 Via V-RAID (found in many VIA-based motherboards)
 .El

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_cardbus.c,v 1.10 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: uhci_cardbus.c,v 1.10.2.1 2008/09/18 04:35:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998-2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.10 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_cardbus.c,v 1.10.2.1 2008/09/18 04:35:02 wrstuden Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -121,9 +121,6 @@ uhci_cardbus_attach(device_t parent, device_t self,
 		return;
 	}
 
-	/* Disable interrupts, so we don't get any spurious ones. */
-	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
-
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
@@ -143,6 +140,9 @@ XXX	(ct->ct_cf->cardbus_io_open)(cc, 0, iob, iob + 0x40);
 		       csr | CARDBUS_COMMAND_MASTER_ENABLE
 			   | CARDBUS_COMMAND_IO_ENABLE);
 
+	/* Disable interrupts, so we don't get any spurious ones. */
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
+
 	/* Map and establish the interrupt. */
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
 					   IPL_USB, uhci_intr, sc);
@@ -150,7 +150,6 @@ XXX	(ct->ct_cf->cardbus_io_open)(cc, 0, iob, iob + 0x40);
 		printf("%s: couldn't establish interrupt\n", devname);
 		return;
 	}
-	printf("%s: interrupting at %d\n", devname, ca->ca_intrline);
 
 	/* Set LEGSUP register to its default value. */
 	cardbus_conf_write(cc, cf, tag, PCI_LEGSUP, PCI_LEGSUP_USBPIRQDEN);

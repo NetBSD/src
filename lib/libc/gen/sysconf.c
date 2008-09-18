@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.29 2008/04/09 18:37:04 njoly Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.29.4.1 2008/09/18 04:39:21 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.29 2008/04/09 18:37:04 njoly Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.29.4.1 2008/09/18 04:39:21 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,8 @@ __RCSID("$NetBSD: sysconf.c,v 1.29 2008/04/09 18:37:04 njoly Exp $");
 #include <limits.h>
 #include <time.h>
 #include <unistd.h>
+#include <paths.h>
+#include <pwd.h>
 
 #ifdef __weak_alias
 __weak_alias(sysconf,__sysconf)
@@ -335,13 +337,23 @@ sysconf(int name)
 	case _SC_GETPW_R_SIZE_MAX:
 		return _GETPW_R_SIZE_MAX;
 
+/* Unsorted */
+	case _SC_HOST_NAME_MAX:
+		return MAXHOSTNAMELEN;
+	case _SC_PASS_MAX:
+		return _PASSWORD_LEN;
+	case _SC_REGEXP:
+		return _POSIX_REGEXP;
+	case _SC_SHELL:
+		return _POSIX_SHELL;
+	case _SC_SYMLOOP_MAX:
+		return MAXSYMLINKS;
+
 yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 			return (-1);
 		if (value == 0)
 			return (-1);
 		return (value);
-		/*NOTREACHED*/
-		break;
 
 /* Extensions */
 	case _SC_NPROCESSORS_CONF:
@@ -369,7 +381,30 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 		    NULL, NULL, NULL, SYSCTL_VERSION))
 			return -1;
 		break;
-
+	case _SC_THREAD_DESTRUCTOR_ITERATIONS:
+		return _POSIX_THREAD_DESTRUCTOR_ITERATIONS;
+	case _SC_THREAD_KEYS_MAX:
+		return _POSIX_THREAD_KEYS_MAX;
+	case _SC_THREAD_STACK_MIN:
+		return _getpagesize();
+	case _SC_THREAD_THREADS_MAX:
+		if (sysctlgetmibinfo("kern.maxproc", &mib[0], &mib_len,
+		    NULL, NULL, NULL, SYSCTL_VERSION))	/* XXX */
+			return -1;
+		goto yesno;
+	case _SC_THREAD_ATTR_STACKADDR:
+		return _POSIX_THREAD_ATTR_STACKADDR;
+	case _SC_THREAD_ATTR_STACKSIZE:
+		return _POSIX_THREAD_ATTR_STACKSIZE;
+	case _SC_THREAD_SAFE_FUNCTIONS:
+		return _POSIX_THREAD_SAFE_FUNCTIONS;
+	case _SC_THREAD_PRIORITY_SCHEDULING:
+	case _SC_THREAD_PRIO_INHERIT:
+	case _SC_THREAD_PRIO_PROTECT:
+	case _SC_THREAD_PROCESS_SHARED:
+		return -1;
+	case _SC_TTY_NAME_MAX:
+		return pathconf(_PATH_DEV, _PC_NAME_MAX);
 	default:
 		errno = EINVAL;
 		return (-1);

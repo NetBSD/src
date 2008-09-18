@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.h,v 1.7 2008/02/20 17:05:53 matt Exp $        */
+/*      $NetBSD: if_etherip.h,v 1.7.12.1 2008/09/18 04:36:59 wrstuden Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -41,7 +41,6 @@
 #include <netinet/in.h>
 
 struct etherip_softc {
-	struct device   sc_dev;
 	struct ifmedia  sc_im;
 	struct ethercom sc_ec;
 	struct sockaddr *sc_src;                /* tunnel source address      */

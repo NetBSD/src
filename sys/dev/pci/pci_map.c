@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.23 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.23.2.1 2008/09/18 04:35:07 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.23 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.23.2.1 2008/09/18 04:35:07 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,6 +271,15 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type,
     int busflags, bus_space_tag_t *tagp, bus_space_handle_t *handlep,
     bus_addr_t *basep, bus_size_t *sizep)
 {
+	return pci_mapreg_submap(pa, reg, type, busflags, 0, 0, tagp, 
+	    handlep, basep, sizep);
+}
+
+int
+pci_mapreg_submap(struct pci_attach_args *pa, int reg, pcireg_t type,
+    int busflags, bus_size_t maxsize, bus_size_t offset, bus_space_tag_t *tagp,
+	bus_space_handle_t *handlep, bus_addr_t *basep, bus_size_t *sizep)
+{
 	bus_space_tag_t tag;
 	bus_space_handle_t handle;
 	bus_addr_t base;
@@ -304,7 +313,17 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type,
 		splx(s);
 	}
 
-	if (bus_space_map(tag, base, size, busflags | flags, &handle))
+	/* If we're called with maxsize/offset of 0, behave like 
+	 * pci_mapreg_map.
+	 */
+
+	maxsize = (maxsize && offset) ? maxsize : size;
+	base += offset;
+
+	if ((maxsize < size && offset + maxsize <= size) || offset != 0)
+		return (1);
+
+	if (bus_space_map(tag, base, maxsize, busflags | flags, &handle))
 		return (1);
 
 	if (tagp != 0)
@@ -314,7 +333,7 @@ pci_mapreg_map(struct pci_attach_args *pa, int reg, pcireg_t type,
 	if (basep != 0)
 		*basep = base;
 	if (sizep != 0)
-		*sizep = size;
+		*sizep = maxsize;
 
 	return (0);
 }

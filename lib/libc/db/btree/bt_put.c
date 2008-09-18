@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_put.c,v 1.15 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: bt_put.c,v 1.15.12.1 2008/09/18 04:39:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_put.c	8.8 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: bt_put.c,v 1.15 2007/02/03 23:46:09 christos Exp $");
+__RCSID("$NetBSD: bt_put.c,v 1.15.12.1 2008/09/18 04:39:20 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,7 +77,7 @@ __bt_put(const DB *dbp, DBT *key, const DBT *data, u_int flags)
 	PAGE *h;
 	indx_t idx, nxtindex;
 	pgno_t pg;
-	u_int32_t nbytes, temp;
+	uint32_t nbytes, temp;
 	int dflags, exact, status;
 	char *dest, db[NOVFLSIZE], kb[NOVFLSIZE];
 
@@ -131,7 +131,7 @@ storekey:		if (__ovfl_put(t, key, &pg) == RET_ERROR)
 			tkey.size = NOVFLSIZE;
 			memmove(kb, &pg, sizeof(pgno_t));
 			memmove(kb + sizeof(pgno_t),
-			    &key->size, sizeof(u_int32_t));
+			    &key->size, sizeof(uint32_t));
 			dflags |= P_BIGKEY;
 			key = &tkey;
 		}
@@ -141,10 +141,10 @@ storekey:		if (__ovfl_put(t, key, &pg) == RET_ERROR)
 			tdata.data = db;
 			tdata.size = NOVFLSIZE;
 			memmove(db, &pg, sizeof(pgno_t));
-			_DBFIT(data->size, u_int32_t);
-			temp = (u_int32_t)data->size;
+			_DBFIT(data->size, uint32_t);
+			temp = (uint32_t)data->size;
 			(void)memmove(db + sizeof(pgno_t),
-			    &temp, sizeof(u_int32_t));
+			    &temp, sizeof(uint32_t));
 			dflags |= P_BIGDATA;
 			data = &tdata;
 		}
@@ -253,7 +253,7 @@ success:
 }
 
 #ifdef STATISTICS
-u_long bt_cache_hit, bt_cache_miss;
+unsigned long bt_cache_hit, bt_cache_miss;
 #endif
 
 /*
@@ -270,7 +270,7 @@ static EPG *
 bt_fast(BTREE *t, const DBT *key, const DBT *data, int *exactp)
 {
 	PAGE *h;
-	u_int32_t nbytes;
+	uint32_t nbytes;
 	int cmp;
 
 	if ((h = mpool_get(t->bt_mp, t->bt_last.pgno, 0)) == NULL) {

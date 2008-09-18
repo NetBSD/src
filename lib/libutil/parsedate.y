@@ -17,6 +17,7 @@
 #include <string.h>
 #include <time.h>
 #include <util.h>
+#include <stdlib.h>
 
 /* NOTES on rebuilding parsedate.c (particularly for inclusion in CVS
    releases):
