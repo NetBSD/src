@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.55 2006/02/01 14:20:12 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.55.8.1 2008/09/18 18:24:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -32,7 +32,7 @@
  */
 
 /*-
- * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -139,7 +139,7 @@ void	feat(void);
 void	format_path(char *, const char *);
 int	ftpd_pclose(FILE *);
 FILE   *ftpd_popen(char *[], const char *, int);
-char   *getline(char *, int, FILE *);
+int	getline(char *, int, FILE *);
 void	init_curclass(void);
 void	logxfer(const char *, off_t, const char *, const char *,
 	    const struct timeval *, const char *);
