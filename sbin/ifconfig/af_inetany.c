@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inetany.c,v 1.4.2.1 2008/06/23 04:29:57 wrstuden Exp $	*/
+/*	$NetBSD: af_inetany.c,v 1.4.2.2 2008/09/18 04:28:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inetany.c,v 1.4.2.1 2008/06/23 04:29:57 wrstuden Exp $");
+__RCSID("$NetBSD: af_inetany.c,v 1.4.2.2 2008/09/18 04:28:24 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -53,12 +53,10 @@ __RCSID("$NetBSD: af_inetany.c,v 1.4.2.1 2008/06/23 04:29:57 wrstuden Exp $");
 
 #include "env.h"
 #include "extern.h"
-#include "af_inet.h"
-#include "af_inet6.h"
 #include "af_inetany.h"
 
 static void *
-loadbuf(struct apbuf *b, const struct paddr_prefix *pfx)
+loadbuf(const struct apbuf *b, const struct paddr_prefix *pfx)
 {
 	return memcpy(b->buf, &pfx->pfx_addr,
 	              MIN(b->buflen, pfx->pfx_addr.sa_len));
@@ -66,7 +64,7 @@ loadbuf(struct apbuf *b, const struct paddr_prefix *pfx)
 
 void
 commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
-    struct afparam *param)
+    const struct afparam *param)
 {
 	const char *ifname;
 	int af, rc, s;
@@ -135,20 +133,20 @@ commit_address(prop_dictionary_t env, prop_dictionary_t oenv,
 	case 0:
 		break;
 	case IFF_POINTOPOINT:
-		if (dst == NULL) {
-			errx(EXIT_FAILURE, "no point-to-point "
-			     "destination address");
-		}
 		if (brd != NULL) {
 			errx(EXIT_FAILURE, "%s is not a broadcast interface",
 			    ifname);
 		}
-		loadbuf(&param->dst, dst);
+		if (dst != NULL)
+			loadbuf(&param->dst, dst);
 		break;
 	case IFF_BROADCAST|IFF_POINTOPOINT:
 		errx(EXIT_FAILURE, "unsupported interface flags");
 	}
-	if (mask != NULL)
+	if (param->mask.buf == NULL) {
+		if (mask != NULL)
+			errx(EXIT_FAILURE, "netmask not supported");
+	} else if (mask != NULL)
 		loadbuf(&param->mask, mask);
 	else if (param->defmask.buf != NULL) {
 		memcpy(param->mask.buf, param->defmask.buf,

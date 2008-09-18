@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2008/01/07 16:10:57 christos Exp $	
+#	$NetBSD: Makefile,v 1.46.6.1 2008/09/18 04:30:15 wrstuden Exp $	
 
 .include <bsd.own.mk>
 
@@ -86,7 +86,7 @@ LDADD+=	-lcrypto -lcrypt
 DPADD+=	${LIBCRYPTO} ${LIBCRYPT}
 .endif
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS+=	-fno-strict-aliasing
 .for f in print-802_11 print-esp print-fr print-radius print-telnet tcpdump util
 COPTS.${f}.c+=  -Wno-pointer-sign

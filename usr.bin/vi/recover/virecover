@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: virecover,v 1.2 2001/04/11 21:00:21 aymeric Exp $
+#	$NetBSD: virecover,v 1.2.36.1 2008/09/18 04:29:26 wrstuden Exp $
 #
 #	@(#)recover.in	8.8 (Berkeley) 10/10/96
 #
@@ -14,7 +14,7 @@ vibackup=`echo $RECDIR/vi.*`
 if [ "$vibackup" != "$RECDIR/vi.*" ]; then
 	for i in $vibackup; do
 		# Only test files that are readable.
-		if test ! -r $i; then
+		if test ! -f $i || test ! -r $i; then
 			continue
 		fi
 

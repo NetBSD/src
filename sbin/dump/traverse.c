@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.47 2006/06/24 05:28:54 perseant Exp $	*/
+/*	$NetBSD: traverse.c,v 1.47.24.1 2008/09/18 04:28:23 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.47 2006/06/24 05:28:54 perseant Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.47.24.1 2008/09/18 04:28:23 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,11 @@ mapfileino(ino_t ino, u_int64_t *tape_size, int *dirskipped)
 		return;
 	dp = getino(ino);
 	if (dp == NULL || (mode = (DIP(dp, mode) & IFMT)) == 0)
+		return;
+	/*
+	 * Skip WAPBL log file inodes.
+	 */
+	if (DIP(dp, flags) & SF_LOG)
 		return;
 	/*
 	 * Put all dirs in dumpdirmap, inodes that are to be dumped in the

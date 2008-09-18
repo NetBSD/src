@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2006/10/16 00:00:48 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.19.18.1 2008/09/18 04:27:40 wrstuden Exp $	*/
 
 /* main.c: This file contains the main control and user-interface routines
    for the ed line editor. */
@@ -31,15 +31,15 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
-"@(#) Copyright (c) 1993 Andrew Moore, Talke Studio. \n\
- All rights reserved.\n");
+"@(#) Copyright (c) 1993 Andrew Moore, Talke Studio.\
+ All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char *rcsid = "@(#)main.c,v 1.1 1994/02/01 00:34:42 alm Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.19 2006/10/16 00:00:48 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.19.18.1 2008/09/18 04:27:40 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

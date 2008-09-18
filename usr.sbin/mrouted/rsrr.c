@@ -1,4 +1,4 @@
-/*	$NetBSD: rsrr.c,v 1.9 2003/05/16 22:59:50 dsl Exp $	*/
+/*	$NetBSD: rsrr.c,v 1.9.32.1 2008/09/18 04:30:08 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1993, 1998-2001.
@@ -68,7 +68,7 @@ char rsrr_recv_buf[RSRR_MAX_LEN];	/* RSRR receive buffer */
 char rsrr_send_buf[RSRR_MAX_LEN];	/* RSRR send buffer */
 
 struct sockaddr_un client_addr;
-int client_length = sizeof(client_addr);
+socklen_t client_length = sizeof(client_addr);
 
 
 /*
@@ -180,7 +180,7 @@ rsrr_accept(recvlen)
 	    logit(LOG_INFO, 0,
 		"Received Route Query for src %s grp %s notification %d",
 		inet_fmt(route_query->source_addr.s_addr),
-		inet_fmt(route_query->dest_addr.s_addr,s2),
+		inet_fmt(route_query->dest_addr.s_addr),
 		BIT_TST(rsrr->flags,RSRR_NOTIFICATION_BIT));
 	    /* Send Route Reply to client */
 	    rsrr_accept_rq(route_query,rsrr->flags,NULL);
@@ -215,7 +215,7 @@ rsrr_accept_iq()
      */
     if (numvifs > RSRR_MAX_VIFS) {
 	logit(LOG_WARNING, 0,
-	    "Can't send RSRR Route Reply because %d is too many vifs %d",
+	    "Can't send RSRR Route Reply because %d is too many vifs",
 	    numvifs);
 	return;
     }
@@ -364,10 +364,10 @@ rsrr_accept_rq(route_query,flags,gt_notify)
     else
 	logit(LOG_INFO, 0, "Send RSRR Route Reply");
 
-    logit(LOG_INFO, 0, "for src %s dst %s in vif %d out vif %d\n",
-	inet_fmt(route_reply->source_addr.s_addr,s1),
-	inet_fmt(route_reply->dest_addr.s_addr,s2),
-	route_reply->in_vif,route_reply->out_vif_bm);
+    logit(LOG_INFO, 0, "for src %s dst %s in vif %d out vif %lu\n",
+	inet_fmt(route_reply->source_addr.s_addr),
+	inet_fmt(route_reply->dest_addr.s_addr),
+	route_reply->in_vif, route_reply->out_vif_bm);
     
     /* Send it. */
     return rsrr_send(sendlen);

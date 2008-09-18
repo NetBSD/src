@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.12 2003/10/16 06:26:06 itojun Exp $	*/
+/*	$NetBSD: run.c,v 1.12.32.1 2008/09/18 04:30:15 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -104,7 +104,7 @@ makearglist(va_list ap)
 	static size_t ns = 0;
 	static char **np = NULL;
 	char **nnp;
-	int i = 0;
+	size_t i = 0;
 
 	do {
 		if (i >= ns) {

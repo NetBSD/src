@@ -1,4 +1,4 @@
-/*	$NetBSD: driver_netbsd.c,v 1.5.6.1 2008/06/23 04:32:13 wrstuden Exp $	*/
+/*	$NetBSD: driver_netbsd.c,v 1.5.6.2 2008/09/18 04:30:16 wrstuden Exp $	*/
 
 /*
  * WPA Supplicant - driver interaction with BSD net80211 layer
@@ -24,13 +24,6 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 
-#include "common.h"
-#include "driver.h"
-#include "eloop.h"
-#include "ieee802_11_defs.h"
-#include "l2_packet.h"
-#include "wpa.h"
-
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -38,6 +31,15 @@
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_crypto.h>
 #include <net80211/ieee80211_ioctl.h>
+
+#undef WPA_OUI_TYPE		/* defined in sys headers and local header */
+
+#include "common.h"
+#include "driver.h"
+#include "eloop.h"
+#include "ieee802_11_defs.h"
+#include "l2_packet.h"
+#include "wpa.h"
 
 struct wpa_driver_bsd_data {
 	int	sock;			/* open socket for 802.11 ioctls */
@@ -695,8 +697,8 @@ wpa_driver_bsd_get_scan_results(void *priv,
 		wsr->ssid_len = sr->isr_ssid_len;
 		wsr->freq = sr->isr_freq;
 		wsr->noise = sr->isr_noise;
-		wsr->qual = sr->isr_rssi;
-		wsr->level = 0;		/* XXX? */
+		wsr->qual = 0;
+		wsr->level = sr->isr_rssi;
 		wsr->caps = sr->isr_capinfo;
 		wsr->maxrate = getmaxrate(sr->isr_rates, sr->isr_nrates);
 		vp = (u_int8_t *)(sr+1);

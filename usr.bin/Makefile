@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.163.4.1 2008/06/23 04:32:10 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.163.4.2 2008/09/18 04:29:07 wrstuden Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
 
-SUBDIR= apply apropos asa at atf-compile atf-config atf-report atf-run \
-	atf-version audio awk \
+SUBDIR= apply apropos asa at audio awk \
 	banner basename biff bthset btkey btpin \
 	bzip2 bzip2recover cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp col colcrt colrm \
@@ -18,19 +17,22 @@ SUBDIR= apply apropos asa at atf-compile atf-config atf-report atf-run \
 	lex locale locate lock logger login logname look lorder m4 \
 	machine mail make man menuc mesg midiplay mixerctl mkcsmapper \
 	mkdep mkesdb mkfifo mklocale mkstr mktemp moduli msgc msgs \
-	netgroup netstat newgrp newsyslog nfsstat nice nl nohup \
-	nvi \
+	netgroup netstat newgrp newsyslog nfsstat nice nl nohup nvi \
 	pagesize passwd paste patch pathchk pkill pmap pmc pr \
 	printenv printf progress pwhash qsubst quota radioctl rdist \
 	renice rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh rup \
 	ruptime rusers rwall rwho script sdiff sdpquery sed seq shar shlock \
 	showmount shuffle sockstat soelim sort spell split stat su systat \
-	tail talk tcopy tee telnet tftp time tip tn3270 top touch tput \
+	tail talk tcopy tee telnet tftp time tip tn3270 touch tput \
 	tr true tset tsort tty ul uname unexpand unifdef \
 	uniq units unvis usbhidaction usbhidctl users utoppya \
 	uudecode uuencode uuidgen vacation vgrind vi vis vmstat vndcompress w \
 	wall wc what whatis whereis who whois window \
 	write xargs xinstall xlint xstr yacc yes
+
+.if (${MKATF} != "no")
+SUBDIR+= atf-compile atf-config atf-report atf-run atf-version
+.endif
 
 .if (${MKHESIOD} != "no")
 SUBDIR+= hesinfo

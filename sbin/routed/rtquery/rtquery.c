@@ -1,4 +1,4 @@
-/*	$NetBSD: rtquery.c,v 1.20 2007/12/15 19:44:47 perry Exp $	*/
+/*	$NetBSD: rtquery.c,v 1.20.8.1 2008/09/18 04:28:29 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -60,11 +60,10 @@
 #ifndef __COPYRIGHT
 #define __COPYRIGHT(_s) static const char copyright[] UNUSED = _s
 #endif
-__COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n"
-	    "The Regents of the University of California."
-	    "  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #ifdef __NetBSD__
-__RCSID("$NetBSD: rtquery.c,v 1.20 2007/12/15 19:44:47 perry Exp $");
+__RCSID("$NetBSD: rtquery.c,v 1.20.8.1 2008/09/18 04:28:29 wrstuden Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else

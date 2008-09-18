@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2008/03/27 22:01:56 mlelstv Exp $
+# $NetBSD: Makefile,v 1.4.4.1 2008/09/18 04:29:14 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,8 @@ WARNS?=		1
 
 SCRIPTS=	krb5-config
 MAN=		krb5-config.1
+
+CLEANFILES+=	krb5-config
 
 krb5-config: krb5-config.in
 	sed     -e "s!@PACKAGE\@!heimdal!g" \

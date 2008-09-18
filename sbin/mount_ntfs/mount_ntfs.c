@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ntfs.c,v 1.20 2007/12/15 19:44:46 perry Exp $ */
+/* $NetBSD: mount_ntfs.c,v 1.20.8.1 2008/09/18 04:28:27 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ntfs.c,v 1.20 2007/12/15 19:44:46 perry Exp $");
+__RCSID("$NetBSD: mount_ntfs.c,v 1.20.8.1 2008/09/18 04:28:27 wrstuden Exp $");
 #endif
 
 #include <sys/param.h>
@@ -53,7 +53,9 @@ __RCSID("$NetBSD: mount_ntfs.c,v 1.20 2007/12/15 19:44:46 perry Exp $");
 #include <util.h>
 
 #include <mntopts.h>
-#include <fattr.h>
+
+#include "mountprog.h"
+#include "mount_ntfs.h"
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -62,50 +64,52 @@ static const struct mntopt mopts[] = {
 };
 
 static void	usage(void) __dead;
-int mount_ntfs(int argc, char **argv);
 
 #ifndef MOUNT_NOMAIN
 int
 main(int argc, char **argv)
 {
+
+	setprogname(argv[0]);
 	return mount_ntfs(argc, argv);
 }
 #endif
 
-int
-mount_ntfs(int argc, char **argv)
+void
+mount_ntfs_parseargs(int argc, char **argv,
+	struct ntfs_args *args, int *mntflags,
+	char *canon_dev, char *canon_dir)
 {
-	struct ntfs_args args;
 	struct stat sb;
-	int c, mntflags, set_gid, set_uid, set_mask;
-	char *dev, *dir, canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	int c, set_gid, set_uid, set_mask;
+	char *dev, *dir;
 	mntoptparse_t mp;
 
-	mntflags = set_gid = set_uid = set_mask = 0;
-	(void)memset(&args, '\0', sizeof(args));
+	*mntflags = set_gid = set_uid = set_mask = 0;
+	(void)memset(args, '\0', sizeof(*args));
 
 	while ((c = getopt(argc, argv, "aiu:g:m:o:")) !=  -1) {
 		switch (c) {
 		case 'u':
-			args.uid = a_uid(optarg);
+			args->uid = a_uid(optarg);
 			set_uid = 1;
 			break;
 		case 'g':
-			args.gid = a_gid(optarg);
+			args->gid = a_gid(optarg);
 			set_gid = 1;
 			break;
 		case 'm':
-			args.mode = a_mask(optarg);
+			args->mode = a_mask(optarg);
 			set_mask = 1;
 			break;
 		case 'i':
-			args.flag |= NTFS_MFLAG_CASEINS;
+			args->flag |= NTFS_MFLAG_CASEINS;
 			break;
 		case 'a':
-			args.flag |= NTFS_MFLAG_ALLNAMES;
+			args->flag |= NTFS_MFLAG_ALLNAMES;
 			break;
 		case 'o':
-			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, mntflags, 0);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
@@ -123,37 +127,35 @@ mount_ntfs(int argc, char **argv)
 	dev = argv[optind];
 	dir = argv[optind + 1];
 
-	if (realpath(dev, canon_dev) == NULL)        /* Check device path */
-		err(1, "realpath %s", dev);
-	if (strncmp(dev, canon_dev, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", dev);
-		dev = canon_dev;
-		warnx("using \"%s\" instead.", dev);
-	}
+	pathadj(dev, canon_dev);
+	pathadj(dir, canon_dir);
 
-	if (realpath(dir, canon_dir) == NULL)        /* Check mounton path */
-		err(1, "realpath %s", dir);
-	if (strncmp(dir, canon_dir, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", dir);
-		dir = canon_dir;
-		warnx("using \"%s\" instead.", dir);
-	}
-
-	args.fspec = dev;
+	args->fspec = dev;
 	if (!set_gid || !set_uid || !set_mask) {
 		if (stat(dir, &sb) == -1)
 			err(EX_OSERR, "stat %s", dir);
 
 		if (!set_uid)
-			args.uid = sb.st_uid;
+			args->uid = sb.st_uid;
 		if (!set_gid)
-			args.gid = sb.st_gid;
+			args->gid = sb.st_gid;
 		if (!set_mask)
-			args.mode = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
+			args->mode = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
+}
 
-	if (mount(MOUNT_NTFS, dir, mntflags, &args, sizeof args) == -1)
-		err(EX_OSERR, "%s on %s", dev, dir);
+int
+mount_ntfs(int argc, char *argv[])
+{
+	struct ntfs_args args;
+	int mntflags;
+	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+
+	mount_ntfs_parseargs(argc, argv, &args, &mntflags,
+	    canon_dev, canon_dir);
+
+	if (mount(MOUNT_NTFS, canon_dir, mntflags, &args, sizeof args) == -1)
+		err(EX_OSERR, "%s on %s", canon_dev, canon_dir);
 
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];
@@ -167,6 +169,7 @@ mount_ntfs(int argc, char **argv)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: mount_ntfs [-a] [-i] [-u user] [-g group] [-m mask] bdev dir\n");
+	fprintf(stderr, "usage: %s [-a] [-i] [-u user] [-g group] [-m mask] "
+	    "bdev dir\n", getprogname());
 	exit(EX_USAGE);
 }

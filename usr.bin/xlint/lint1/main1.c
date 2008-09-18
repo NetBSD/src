@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.18 2008/05/02 15:10:05 christos Exp $	*/
+/*	$NetBSD: main1.c,v 1.18.2.1 2008/09/18 04:29:28 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.18 2008/05/02 15:10:05 christos Exp $");
+__RCSID("$NetBSD: main1.c,v 1.18.2.1 2008/09/18 04:29:28 wrstuden Exp $");
 #endif
 
 #include <sys/types.h>
@@ -106,6 +106,10 @@ int	tflag;
 
 /* Enable C9X extensions */
 int	Sflag;
+
+/* Picky flag */
+int	Pflag;
+
 /*
  * Complain about functions and external variables used and not defined,
  * or defined and not used.
@@ -142,7 +146,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	ERR_ZERO(&msgset);
-	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFSX:")) != -1) {
+	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFPSX:")) != -1) {
 		switch (c) {
 		case 'a':	aflag++;	break;
 		case 'b':	bflag = 1;	break;
@@ -153,6 +157,7 @@ main(int argc, char *argv[])
 		case 'g':	gflag = 1;	break;
 		case 'h':	hflag = 1;	break;
 		case 'p':	pflag = 1;	break;
+		case 'P':	Pflag = 1;	break;
 		case 'r':	rflag = 1;	break;
 		case 's':	sflag = 1;	break;
 		case 'S':	Sflag = 1;	break;

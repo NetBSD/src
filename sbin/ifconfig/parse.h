@@ -2,6 +2,8 @@
 #define _IFCONFIG_PARSE_H
 
 #include <inttypes.h>
+#include <stdbool.h>
+#include <stddef.h>
 #include <sys/queue.h>
 #include <prop/proplib.h>
 #include <sys/socket.h>
@@ -35,15 +37,8 @@ struct parser {
 	parser_exec_t			p_exec;
 	const char			*p_name;
 	struct parser			*p_nextparser;
+	bool				p_initialized;
 };
-
-static inline int
-parser_init(struct parser *p)
-{
-	if (p->p_methods->pm_init == NULL)
-		return 0;
-	return (*p->p_methods->pm_init)(p);
-}
 
 struct branch {
 	SIMPLEQ_ENTRY(branch)	b_next;
@@ -120,7 +115,8 @@ extern const struct parser_methods pterm_methods;
 {									\
 	.pi_parser = {.p_name = (__name), .p_methods = &pinteger_methods,\
 	              .p_exec = (__defexec),				\
-	               .p_nextparser = (__defnext)},			\
+	              .p_nextparser = (__defnext),			\
+	              .p_initialized = false},				\
 	.pi_min = (__min),						\
 	.pi_max = (__max),						\
 	.pi_base = (__base),						\
@@ -137,7 +133,8 @@ extern const struct parser_methods pterm_methods;
 {									\
 	.pk_parser = {.p_name = (__name),				\
 		      .p_exec = (__defexec),				\
-		      .p_methods = &pkw_methods},			\
+		      .p_methods = &pkw_methods,			\
+		      .p_initialized = false},				\
 	.pk_keywords = SIMPLEQ_HEAD_INITIALIZER((__pk)->pk_keywords),	\
 	.pk_kwinit = (__kws),						\
 	.pk_nkwinit = (__nkw),						\
@@ -233,6 +230,12 @@ struct paddr_prefix {
 	struct sockaddr	pfx_addr;
 };
 
+static inline size_t
+paddr_prefix_size(const struct paddr_prefix *pfx)
+{
+	return offsetof(struct paddr_prefix, pfx_addr) + pfx->pfx_addr.sa_len;
+}
+
 struct paddr {
 	struct parser		pa_parser;
 	const char		*pa_addrkey;
@@ -263,10 +266,12 @@ struct pranges *pranges_create(const char *, parser_exec_t, const char *,
     const struct intrange *, size_t, struct parser *);
 struct pbranch *pbranch_create(const char *, const struct branch *, size_t,
     bool);
+int pbranch_addbranch(struct pbranch *, struct parser *);
 int pbranch_setbranches(struct pbranch *, const struct branch *, size_t);
 
 int parse(int, char **, const struct parser *, struct match *, size_t *, int *);
 
 int matches_exec(const struct match *, prop_dictionary_t, size_t);
+int parser_init(struct parser *);
 
 #endif /* _IFCONFIG_PARSE_H */

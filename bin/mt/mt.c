@@ -1,4 +1,4 @@
-/* $NetBSD: mt.c,v 1.43 2006/10/16 00:09:20 christos Exp $ */
+/* $NetBSD: mt.c,v 1.43.18.1 2008/09/18 04:27:41 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.43 2006/10/16 00:09:20 christos Exp $");
+__RCSID("$NetBSD: mt.c,v 1.43.18.1 2008/09/18 04:27:41 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: mt.c,v 1.43 2006/10/16 00:09:20 christos Exp $");
 struct commands {
 	const char *c_name;		/* command */
 	size_t c_namelen;		/* command len */
-	int c_spcl;			/* ioctl request */
+	u_long c_spcl;			/* ioctl request */
 	int c_code;			/* ioctl code for MTIOCTOP command */
 	int c_ronly;			/* open tape read-only */
 	int c_mincount;			/* min allowed count value */
@@ -218,7 +218,7 @@ main(int argc, char *argv[])
 		break;
 
 	default:
-		errx(1, "internal error: unknown request %d", comp->c_spcl);
+		errx(1, "internal error: unknown request %ld", comp->c_spcl);
 	}
 
 	exit(0);

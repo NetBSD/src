@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.32 2007/12/15 19:44:54 perry Exp $   */
+/*      $NetBSD: whois.c,v 1.32.6.1 2008/09/18 04:29:27 wrstuden Exp $   */
 /*	$OpenBSD: whois.c,v 1.28 2003/09/18 22:16:15 fgsch Exp $	*/
 
 /*
@@ -33,15 +33,15 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.32 2007/12/15 19:44:54 perry Exp $");
+__RCSID("$NetBSD: whois.c,v 1.32.6.1 2008/09/18 04:29:27 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

@@ -32,15 +32,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)repquota.c	8.2 (Berkeley) 11/22/94";
 #else
-__RCSID("$NetBSD: repquota.c,v 1.22 2005/03/05 14:46:29 jdolecek Exp $");
+__RCSID("$NetBSD: repquota.c,v 1.22.26.1 2008/09/18 04:30:14 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

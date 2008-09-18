@@ -1,4 +1,4 @@
-/*	$NetBSD: grfconfig.c,v 1.12 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: grfconfig.c,v 1.12.2.1 2008/09/18 04:30:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,12 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1997 The NetBSD Foundation, Inc.\n\
-	All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1997\
+ The NetBSD Foundation, Inc.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: grfconfig.c,v 1.12 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: grfconfig.c,v 1.12.2.1 2008/09/18 04:30:04 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>

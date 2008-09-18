@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.8 2008/04/29 06:53:04 martin Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.8.2.1 2008/09/18 04:30:09 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -32,9 +32,9 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 2006, 2007\n"
-"The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: ofctl.c,v 1.8 2008/04/29 06:53:04 martin Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2006, 2007\
+ The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: ofctl.c,v 1.8.2.1 2008/09/18 04:30:09 wrstuden Exp $");
 #endif /* not lint */
 
 #include <stdio.h>

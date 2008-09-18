@@ -1,4 +1,4 @@
-/*	$NetBSD: btkey.c,v 1.1 2007/11/09 21:18:25 plunky Exp $	*/
+/*	$NetBSD: btkey.c,v 1.1.10.1 2008/09/18 04:29:08 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007 Iain Hibbert
@@ -28,9 +28,8 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2007 Iain Hibbert\n"
-	    "All rights reserved.\n");
-__RCSID("$NetBSD: btkey.c,v 1.1 2007/11/09 21:18:25 plunky Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2007 Iain Hibbert.  All rights reserved.");
+__RCSID("$NetBSD: btkey.c,v 1.1.10.1 2008/09/18 04:29:08 wrstuden Exp $");
 
 #include <bluetooth.h>
 #include <err.h>

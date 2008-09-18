@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.24 2008/02/23 21:41:48 christos Exp $	*/
+/*	$NetBSD: pass4.c,v 1.24.4.1 2008/09/18 04:28:23 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.24 2008/02/23 21:41:48 christos Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.24.4.1 2008/09/18 04:28:23 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,14 @@ pass4(void)
 			case DFOUND:
 				n = info->ino_linkcnt;
 				if (n) {
-					adjust(&idesc, (short)n);
+					if (is_journal_inode(inumber)) {
+						if (debug)
+							printf(
+    "skipping unreferenced journal inode %" PRId64 "\n", inumber);
+						break;
+					} else {
+						adjust(&idesc, (short)n);
+					}
 					break;
 				}
 				for (zlnp = zlnhead; zlnp; zlnp = zlnp->next)

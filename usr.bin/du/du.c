@@ -1,4 +1,4 @@
-/*	$NetBSD: du.c,v 1.31 2006/09/24 07:19:57 wiz Exp $	*/
+/*	$NetBSD: du.c,v 1.31.18.1 2008/09/18 04:29:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: du.c,v 1.31 2006/09/24 07:19:57 wiz Exp $");
+__RCSID("$NetBSD: du.c,v 1.31.18.1 2008/09/18 04:29:10 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ main(int argc, char *argv[])
 	FTS *fts;
 	FTSENT *p;
 	int64_t totalblocks;
-	int ftsoptions, listdirs, listfiles;
+	int ftsoptions, listfiles;
 	int depth;
 	int Hflag, Lflag, aflag, ch, cflag, dflag, gkmflag, nflag, rval, sflag;
 	const char *noargv[2];
@@ -162,17 +162,15 @@ main(int argc, char *argv[])
 		ftsoptions |= FTS_LOGICAL;
 	}
 
+	listfiles = 0;
 	if (aflag) {
 		if (sflag || dflag)
 			usage();
-		listdirs = listfiles = 1;
+		listfiles = 1;
 	} else if (sflag) {
 		if (dflag)
 			usage();
-		listdirs = listfiles = depth = 0;
-	} else {
-		listfiles = 0;
-		listdirs = 1;
+		depth = 0;
 	}
 
 	if (!*argv) {
@@ -208,12 +206,6 @@ main(int argc, char *argv[])
 		case FTS_DP:
 			p->fts_parent->fts_number += 
 			    p->fts_number += p->fts_statp->st_blocks;
-
-			if (p->fts_level > depth) {
-				fts_set(fts, p, FTS_SKIP);
-				continue;
-			}
-
 			if (cflag)
 				totalblocks += p->fts_statp->st_blocks;
 			/*
@@ -221,7 +213,8 @@ main(int argc, char *argv[])
 			 * or directories and this is post-order of the
 			 * root of a traversal, display the total.
 			 */
-			if (listdirs || (!listfiles && !p->fts_level))
+			if (p->fts_level <= depth
+			    || (!listfiles && !p->fts_level))
 				prstat(p->fts_path, p->fts_number);
 			break;
 		case FTS_DC:			/* Ignore. */

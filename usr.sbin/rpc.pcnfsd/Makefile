@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2006/05/11 23:16:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.17.20.1 2008/09/18 04:30:14 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ RPC_SVCFILES=	pcnfsd_svc.c
 RPC_SVCCLASS=	udp tcp
 RPC_SVCFLAGS=	-I
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.pcnfsd_v1.c+=	-Wno-pointer-sign
 COPTS.pcnfsd_v2.c+=	-Wno-pointer-sign
 .endif

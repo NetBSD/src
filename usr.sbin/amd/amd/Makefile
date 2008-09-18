@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28.6.1 2008/06/23 04:32:12 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.28.6.2 2008/09/18 04:30:00 wrstuden Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -43,7 +43,7 @@ LDADD+=	-lssl -lcrypto
 SRCS+=	info_nis.c
 .endif
 
-.if ${HAVE_GCC} == 4
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
 COPTS.amq_subr.c+=	-fno-strict-aliasing
 .endif
 
@@ -65,9 +65,9 @@ get_args.o get_args.d: build_version.h
 build_version.h: get_args.c
 	${_MKTARGET_CREATE}
 	echo '#define AMU_BUILD_VERSION	1' > ${.TARGET}
-	echo '#define BUILD_USER "'$$(whoami)'"' >> ${.TARGET}
-	echo '#define BUILD_HOST "'$$(hostname)'"' >> ${.TARGET}
-	echo '#define BUILD_DATE "'$$(date)'"' >> ${.TARGET}
+	echo '#define BUILD_USER "'unknown'"' >> ${.TARGET}
+	echo '#define BUILD_HOST "'unknown'"' >> ${.TARGET}
+	echo '#define BUILD_DATE "'unknown'"' >> ${.TARGET}
 
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.28 2007/08/01 21:39:36 ad Exp $	*/
+/*	$NetBSD: dump.c,v 1.28.10.1 2008/09/18 04:29:14 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1988, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.28 2007/08/01 21:39:36 ad Exp $");
+__RCSID("$NetBSD: dump.c,v 1.28.10.1 2008/09/18 04:29:14 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

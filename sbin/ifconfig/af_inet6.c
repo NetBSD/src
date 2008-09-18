@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.10.2.1 2008/06/23 04:29:57 wrstuden Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.10.2.2 2008/09/18 04:28:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.10.2.1 2008/06/23 04:29:57 wrstuden Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.10.2.2 2008/09/18 04:28:24 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -53,10 +53,28 @@ __RCSID("$NetBSD: af_inet6.c,v 1.10.2.1 2008/06/23 04:29:57 wrstuden Exp $");
 #include <util.h>
 
 #include "env.h"
+#include "extern.h"
 #include "parse.h"
 #include "extern.h"
-#include "af_inet6.h"
 #include "af_inetany.h"
+
+static void in6_constructor(void) __attribute__((constructor));
+static void in6_alias(const char *, prop_dictionary_t, prop_dictionary_t,
+    struct in6_ifreq *);
+static void in6_commit_address(prop_dictionary_t, prop_dictionary_t);
+
+static int setia6eui64_impl(prop_dictionary_t, struct in6_aliasreq *);
+static int setia6flags_impl(prop_dictionary_t, struct in6_aliasreq *);
+static int setia6pltime_impl(prop_dictionary_t, struct in6_aliasreq *);
+static int setia6vltime_impl(prop_dictionary_t, struct in6_aliasreq *);
+
+static int setia6lifetime(prop_dictionary_t, int64_t, time_t *, uint32_t *);
+
+static void in6_delscopeid(struct sockaddr_in6 *sin6);
+static void in6_status(prop_dictionary_t, prop_dictionary_t, bool);
+
+static struct usage_func usage;
+static cmdloop_branch_t branch[2];
 
 static const struct kwinst ia6flagskw[] = {
 	  IFKW("anycast",	IN6_IFF_ANYCAST)
@@ -82,10 +100,10 @@ struct pkw ia6flags = PKW_INITIALIZER(&ia6flags, "ia6flags", NULL,
 struct pkw inet6 = PKW_INITIALIZER(&inet6, "IPv6 keywords", NULL,
     NULL, inet6kw, __arraycount(inet6kw), NULL);
 
-static void in6_delscopeid(struct sockaddr_in6 *sin6);
-static int setia6lifetime(prop_dictionary_t, int64_t, time_t *, uint32_t *);
-static void in6_alias(const char *, prop_dictionary_t, prop_dictionary_t,
-    struct in6_ifreq *);
+static struct afswtch in6af = {
+	.af_name = "inet6", .af_af = AF_INET6, .af_status = in6_status,
+	.af_addr_commit = in6_commit_address
+};
 
 static int
 prefix(void *val, int size)
@@ -250,17 +268,6 @@ in6_delscopeid(struct sockaddr_in6 *sin6)
 	sin6->sin6_scope_id = 0;
 }
 
-/* KAME idiosyncrasy */
-void
-in6_fillscopeid(struct sockaddr_in6 *sin6)
-{
-	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
-		sin6->sin6_scope_id =
-			ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
-		sin6->sin6_addr.s6_addr[2] = sin6->sin6_addr.s6_addr[3] = 0;
-	}
-}
-
 /* XXX not really an alias */
 void
 in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
@@ -341,7 +348,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 	if (scopeid)
 		printf(" scopeid 0x%x", scopeid);
 
-	if (Lflag) {
+	if (get_flag('L')) {
 		struct in6_addrlifetime *lifetime;
 		ifr6 = *creq;
 		lifetime = &ifr6.ifr_ifru.ifru_lifetime;
@@ -371,7 +378,7 @@ in6_alias(const char *ifname, prop_dictionary_t env, prop_dictionary_t oenv,
 	printf("\n");
 }
 
-void
+static void
 in6_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 {
 	struct ifaddrs *ifap, *ifa;
@@ -400,7 +407,7 @@ in6_status(prop_dictionary_t env, prop_dictionary_t oenv, bool force)
 }
 
 static int
-in6_pre_aifaddr(prop_dictionary_t env, struct afparam *param)
+in6_pre_aifaddr(prop_dictionary_t env, const struct afparam *param)
 {
 	struct in6_aliasreq *ifra = param->req.buf;
 
@@ -414,7 +421,7 @@ in6_pre_aifaddr(prop_dictionary_t env, struct afparam *param)
 	return 0;
 }
 
-void
+static void
 in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct in6_ifreq in6_ifr = {
@@ -471,4 +478,27 @@ in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 		, .pre_aifaddr = in6_pre_aifaddr
 	};
 	commit_address(env, oenv, &in6param);
+}
+
+static void
+in6_usage(prop_dictionary_t env)
+{
+	fprintf(stderr,
+	    "\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"
+	    "\t[ tentative | -tentative ] [ pltime n ] [ vltime n ] "
+	    "[ eui64 ]\n");
+}
+
+static void
+in6_constructor(void)
+{
+	if (register_flag('L') != 0)
+		err(EXIT_FAILURE, __func__);
+	register_family(&in6af);
+	usage_func_init(&usage, in6_usage);
+	register_usage(&usage);
+	cmdloop_branch_init(&branch[0], &ia6flags.pk_parser);
+	cmdloop_branch_init(&branch[1], &inet6.pk_parser);
+	register_cmdloop_branch(&branch[0]);
+	register_cmdloop_branch(&branch[1]);
 }

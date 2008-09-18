@@ -1,8 +1,8 @@
-/*	$NetBSD: veriexecctl.c,v 1.31 2008/02/15 15:33:56 elad Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.31.8.1 2008/09/18 04:28:30 wrstuden Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
- * Copyright 2005 Brett Lymn <blymn@netbsd.org> 
+ * Copyright 2005 Brett Lymn <blymn@netbsd.org>
  *
  * All rights reserved.
  *
@@ -144,7 +144,7 @@ print_query(prop_dictionary_t qp, char *file)
 	 v = dict_getd(qp, "fp");
 	for (i = 0; i < prop_data_size(prop_dictionary_get(qp, "fp")); i++)
 		printf("%02x", v[i] & 0xff);
-	printf("\n");	
+	printf("\n");
 }
 
 static char *
@@ -233,7 +233,7 @@ main(int argc, char **argv)
 	/*
 	 * Handle the different commands we can do.
 	 */
-	if (argc <= 2 && strcasecmp(argv[0], "load") == 0) {
+	if ((argc == 1 || argc == 2) && strcasecmp(argv[0], "load") == 0) {
 		extern FILE *yyin;
 		const char *file;
 		int lfd;

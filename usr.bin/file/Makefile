@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.54 2007/05/28 12:06:26 tls Exp $
+#	$NetBSD: Makefile,v 1.54.12.1 2008/09/18 04:29:11 wrstuden Exp $
 
 .include <bsd.own.mk>
 .include <bsd.sys.mk>
@@ -9,7 +9,7 @@ DIST=		${NETBSDSRCDIR}/dist/file
 .PATH:		${DIST}/src ${DIST}/doc
 
 MFILESDIR=	/usr/share/misc
-MFILES=		magic magic.mgc ${DIST}/magic/magic.mime magic.mime.mgc
+MFILES=		magic magic.mgc 
 MAGIC=		${MFILESDIR}/magic
 TOOL_MKMAGIC?=	${.OBJDIR}/file
 
@@ -27,9 +27,9 @@ LDADD+=		-lmagic -lz
 DPADD+=		${LIBMAGIC} ${LIBZ}
 MAN=		file.1 magic.5
 
-CLEANFILES+=	magic magic.mgc magic.mime magic.mime.mgc
+CLEANFILES+=	magic magic.mgc
 .if ${MKSHARE} != "no"
-realall:	file magic magic.mgc magic.mime.mgc
+realall:	file magic magic.mgc
 .endif
 
 MAGDIRF:sh=	LANG=C ${HOST_SH} -c 'echo ${DIST}/magic/magdir/[0-9a-z]*'
@@ -47,10 +47,6 @@ magic.mgc: magic
 	${_MKTARGET_CREATE}
 	${TOOL_MKMAGIC} -C -m magic
 
-magic.mime.mgc:
-	${_MKTARGET_CREATE}
-	cp ${DIST}/magic/magic.mime ${.OBJDIR}
-	${TOOL_MKMAGIC} -C -m magic.mime
 .else
 magic:
 .endif

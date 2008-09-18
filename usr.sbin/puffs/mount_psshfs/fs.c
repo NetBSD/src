@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.c,v 1.15 2007/11/30 19:02:39 pooka Exp $	*/
+/*	$NetBSD: fs.c,v 1.15.8.1 2008/09/18 04:30:10 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fs.c,v 1.15 2007/11/30 19:02:39 pooka Exp $");
+__RCSID("$NetBSD: fs.c,v 1.15.8.1 2008/09/18 04:30:10 wrstuden Exp $");
 #endif /* !lint */
 
 #include <err.h>
@@ -42,21 +42,31 @@ __RCSID("$NetBSD: fs.c,v 1.15 2007/11/30 19:02:39 pooka Exp $");
 #include "sftp_proto.h"
 
 #define DO_IO(fname, a1, a2, a3, a4, rv)				\
+do {									\
 	puffs_framebuf_seekset(a2, 0);					\
 	*(a4) = 0;							\
 	rv = fname(a1, a2, a3, a4);					\
-	if (rv || a4 == 0) errx(1, "psshfs_domount io failed %d, %d", rv, *a4) 
+	if (rv || a4 == 0) {						\
+		fprintf(stderr, "psshfs_handshake failed %d (%s) %d\n",	\
+		    rv, strerror(rv), *a4);				\
+		return rv ? rv : EPROTO;				\
+	}								\
+} while (/*CONSTCOND*/0)
+
+#define reterr(str, rv)							\
+do {									\
+	fprintf str;							\
+	return rv;							\
+} while (/*CONSTCOND*/0)
 
 int
-psshfs_domount(struct puffs_usermount *pu)
+psshfs_handshake(struct puffs_usermount *pu)
 {
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
-	struct psshfs_node *root = &pctx->psn_root;
+	struct puffs_framebuf *pb;
 	struct puffs_pathobj *po_root;
 	struct puffs_node *pn_root;
-	struct vattr va;
-	struct vattr *rva;
-	struct puffs_framebuf *pb;
+	struct vattr va, *rva;
 	char *rootpath;
 	uint32_t count;
 	int rv, done;
@@ -69,7 +79,8 @@ psshfs_domount(struct puffs_usermount *pu)
 	puffs_framebuf_recycle(pb);
 	DO_IO(psbuf_read, pu, pb, pctx->sshfd, &done, rv);
 	if (psbuf_get_type(pb) != SSH_FXP_VERSION)
-		errx(1, "invalid server response: %d", psbuf_get_type(pb));
+		reterr((stderr, "invalid server response: %d",
+		    psbuf_get_type(pb)), EPROTO);
 	pctx->protover = psbuf_get_reqid(pb);
 	/* might contain some other stuff, but we're not interested */
 
@@ -83,12 +94,12 @@ psshfs_domount(struct puffs_usermount *pu)
 	puffs_framebuf_recycle(pb);
 	DO_IO(psbuf_read, pu, pb, pctx->sshfd, &done, rv);
 	if (psbuf_get_type(pb) != SSH_FXP_NAME)
-		errx(1, "invalid server realpath response for \"%s\"",
-		    pctx->mountpath);
+		reterr((stderr, "invalid server realpath response for \"%s\"",
+		    pctx->mountpath), EPROTO);
 	if (psbuf_get_4(pb, &count) == -1)
-		errx(1, "invalid realpath response: count");
+		reterr((stderr, "invalid realpath response: count"), EPROTO);
 	if (psbuf_get_str(pb, &rootpath, NULL) == -1)
-		errx(1, "invalid realpath response: rootpath");
+		reterr((stderr, "invalid realpath response: rootpath"), EPROTO);
 
 	/* stat the rootdir so that we know it's a dir */
 	psbuf_recycleout(pb);
@@ -100,30 +111,22 @@ psshfs_domount(struct puffs_usermount *pu)
 
 	rv = psbuf_expect_attrs(pb, &va);
 	if (rv)
-		errx(1, "couldn't stat rootpath");
+		reterr((stderr, "couldn't stat rootpath"), rv);
 	puffs_framebuf_destroy(pb);
 
 	if (puffs_mode2vt(va.va_mode) != VDIR)
-		errx(1, "remote path (%s) not a directory", rootpath);
+		reterr((stderr, "remote path (%s) not a directory", rootpath),
+		    ENOTDIR);
 
-	pctx->nextino = 2;
-
-	memset(root, 0, sizeof(struct psshfs_node));
-	pn_root = puffs_pn_new(pu, root);
-	if (pn_root == NULL)
-		return errno;
-	puffs_setroot(pu, pn_root);
+	pn_root = puffs_getroot(pu);
+	rva = &pn_root->pn_va;
+	puffs_setvattr(rva, &va);
 
 	po_root = puffs_getrootpathobj(pu);
 	if (po_root == NULL)
 		err(1, "getrootpathobj");
 	po_root->po_path = rootpath;
 	po_root->po_len = strlen(rootpath);
-
-	rva = &pn_root->pn_va;
-	puffs_setvattr(rva, &va);
-	rva->va_fileid = pctx->nextino++;
-	rva->va_nlink = 0156; /* XXX */
 
 	return 0;
 }
@@ -139,7 +142,7 @@ psshfs_fs_unmount(struct puffs_usermount *pu, int flags)
 }
 
 int
-psshfs_fs_nodetofh(struct puffs_usermount *pu, void *cookie,
+psshfs_fs_nodetofh(struct puffs_usermount *pu, puffs_cookie_t cookie,
 	void *fid, size_t *fidsize)
 {
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);

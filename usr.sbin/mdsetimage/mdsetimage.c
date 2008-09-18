@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.17 2007/12/15 19:44:55 perry Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.17.6.1 2008/09/18 04:30:07 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -31,13 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-    "@(#) Copyright (c) 1996 Christopher G. Demetriou.\
-  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1996\
+ Christopher G. Demetriou.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.17 2007/12/15 19:44:55 perry Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.17.6.1 2008/09/18 04:30:07 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

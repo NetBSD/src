@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ados.c,v 1.27 2007/07/16 17:06:52 pooka Exp $ */
+/* $NetBSD: mount_ados.c,v 1.27.16.1 2008/09/18 04:28:26 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.27 2007/07/16 17:06:52 pooka Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.27.16.1 2008/09/18 04:28:26 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,7 +55,8 @@ __RCSID("$NetBSD: mount_ados.c,v 1.27 2007/07/16 17:06:52 pooka Exp $");
 
 #include <mntopts.h>
 #include <errno.h>
-#include <fattr.h>
+
+#include "mountprog.h"
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,

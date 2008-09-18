@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.35 2007/12/15 19:44:56 perry Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.35.6.1 2008/09/18 04:30:14 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.35 2007/12/15 19:44:56 perry Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.35.6.1 2008/09/18 04:30:14 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -373,8 +373,8 @@ send_host_information(int s)
 	count++;
 
 	(void)getutentries(NULL, &ep);
+	/* XXX probably should expose utmp mtime, check that instead */
 	if (ep != ohead) {
-		freeutentries(ep);
 		wlast = &mywd.wd_we[1024 / sizeof(struct whoent) - 1];
 		for (; ep; ep = ep->next) {
 			(void)strncpy(we->we_utmp.out_line, ep->line,

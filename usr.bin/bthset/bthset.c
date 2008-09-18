@@ -1,4 +1,4 @@
-/*	$NetBSD: bthset.c,v 1.3 2007/09/16 18:44:19 ragge Exp $	*/
+/*	$NetBSD: bthset.c,v 1.3.8.1 2008/09/18 04:29:07 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,9 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc\n"
-	    "All rights reserved.\n");
-__RCSID("$NetBSD: bthset.c,v 1.3 2007/09/16 18:44:19 ragge Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
+__RCSID("$NetBSD: bthset.c,v 1.3.8.1 2008/09/18 04:29:07 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>

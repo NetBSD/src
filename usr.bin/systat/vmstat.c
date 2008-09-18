@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.70 2008/02/11 03:51:17 dyoung Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.70.6.1 2008/09/18 04:29:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.70 2008/02/11 03:51:17 dyoung Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.70.6.1 2008/09/18 04:29:22 wrstuden Exp $");
 #endif /* not lint */
 
 /*
@@ -680,15 +680,10 @@ static int
 ucount(void)
 {
 	static int onusers = -1;
-	static struct utmpentry *oehead = NULL;
 	int nusers = 0;
 	struct utmpentry *ehead;
 
 	nusers = getutentries(NULL, &ehead);
-	if (oehead != ehead) {
-		freeutentries(oehead);
-		oehead = ehead;
-	}
 
 	if (nusers != onusers) {
 		if (nusers == 1)

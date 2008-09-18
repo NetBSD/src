@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.45 2008/04/30 13:11:02 martin Exp $
+.\"	$NetBSD: envstat.8,v 1.45.2.1 2008/09/18 04:30:04 wrstuden Exp $
 .\"
 .\" Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Nd utility to handle environmental sensors
 .Sh SYNOPSIS
 .Nm
-.Op Fl DfIlSTx
+.Op Fl DfIlSTWx
 .Op Fl c Ar file
 .Op Fl d Ar device
 .Op Fl i Ar interval
@@ -123,6 +123,9 @@ Use
 as the column width for the output.
 Each column is additionally separated by a single space.
 The default is the length of the longest sensor name.
+.It Fl W
+Display the warning alarm minimum and maximum levels instead of the critical
+alarm levels.
 .It Fl x
 Shows the property list used by the
 .Xr sysmon_envsys 9

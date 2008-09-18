@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2006/05/11 01:19:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.9.22.1 2008/09/18 04:29:07 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ CPPFLAGS+=	-I${DIST}/nawk -I. -DHAS_ISBLANK
 LDADD+=	-lm
 DPADD+=	${LIBM}
 YHEADER=	yes
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS=	-Wno-pointer-sign
 .endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.19.12.1 2008/06/23 04:32:13 wrstuden Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.19.12.2 2008/09/18 04:30:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.19.12.1 2008/06/23 04:32:13 wrstuden Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.19.12.2 2008/09/18 04:30:07 wrstuden Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -751,7 +751,7 @@ cd9660_setup_volume_descriptors(void)
 		t->sector = 17;
 		if (diskStructure.verbose_level > 0)
 			printf("Setting up boot volume descriptor\n");
-		cd9660_setup_boot_volume_descritpor(t);
+		cd9660_setup_boot_volume_descriptor(t);
 		sector++;
 	}
 

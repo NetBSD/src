@@ -1,4 +1,4 @@
-/*	$NetBSD: btpin.c,v 1.3 2007/04/14 09:28:39 plunky Exp $	*/
+/*	$NetBSD: btpin.c,v 1.3.12.1 2008/09/18 04:29:08 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,9 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc\n"
-	    "All rights reserved.\n");
-__RCSID("$NetBSD: btpin.c,v 1.3 2007/04/14 09:28:39 plunky Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
+__RCSID("$NetBSD: btpin.c,v 1.3.12.1 2008/09/18 04:29:08 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/un.h>

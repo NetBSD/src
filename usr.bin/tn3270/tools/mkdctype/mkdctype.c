@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdctype.c,v 1.9 2007/01/17 00:21:44 hubertf Exp $	*/
+/*	$NetBSD: mkdctype.c,v 1.9.12.1 2008/09/18 04:29:23 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -30,16 +30,15 @@
  */
 
 #if defined(__COPYRIGHT) && !defined(lint)
-__COPYRIGHT(
-"@(#) Copyright (c) 1988 The Regents of the University of California.\n\
- All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1988\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)mkdctype.c	4.2 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: mkdctype.c,v 1.9 2007/01/17 00:21:44 hubertf Exp $");
+__RCSID("$NetBSD: mkdctype.c,v 1.9.12.1 2008/09/18 04:29:23 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

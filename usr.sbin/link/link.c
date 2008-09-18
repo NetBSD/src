@@ -1,4 +1,4 @@
-/*	$NetBSD: link.c,v 1.3 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: link.c,v 1.3.2.1 2008/09/18 04:30:05 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,8 +33,8 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1999\
-	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: link.c,v 1.3 2008/04/28 20:24:16 martin Exp $");
+ The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: link.c,v 1.3.2.1 2008/09/18 04:30:05 wrstuden Exp $");
 #endif
 
 #include <locale.h>

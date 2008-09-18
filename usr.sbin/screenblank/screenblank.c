@@ -1,4 +1,4 @@
-/*	$NetBSD: screenblank.c,v 1.27 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: screenblank.c,v 1.27.2.1 2008/09/18 04:30:14 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -35,10 +35,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 1996-2002 \
-	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: screenblank.c,v 1.27 2008/04/28 20:24:17 martin Exp $");
+__COPYRIGHT("@(#) Copyright (c) 1996-2002\
+ The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: screenblank.c,v 1.27.2.1 2008/09/18 04:30:14 wrstuden Exp $");
 #endif
 
 #include <sys/types.h>

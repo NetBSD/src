@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_efs.c,v 1.3 2007/07/16 17:06:52 pooka Exp $	*/
+/*	$NetBSD: mount_efs.c,v 1.3.16.1 2008/09/18 04:28:26 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -31,6 +31,9 @@
 
 #include <mntopts.h>
 
+#include "mountprog.h"
+#include "mount_efs.h"
+
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	MOPT_GETARGS,
@@ -39,7 +42,6 @@ static const struct mntopt mopts[] = {
 };
 
 static void	usage(void);
-int		mount_efs(int, char **);
 
 static void
 usage()
@@ -49,24 +51,23 @@ usage()
 	exit(1);
 }
 
-int
-mount_efs(int argc, char **argv)
+void
+mount_efs_parseargs(int argc, char **argv,
+	struct efs_args *args, int *mntflags,
+	char *canon_dev, char *canon_dir)
 {
-	int ch, mntflags;
+	int ch;
 	extern int optind;
 	extern char *optarg;
-	struct efs_args args;
-	char special[MAXPATHLEN], node[MAXPATHLEN];
 	mntoptparse_t mp;
 
-	setprogname(argv[0]);
-	memset(&args, 0, sizeof(args));
-	mntflags = 0;
+	memset(args, 0, sizeof(*args));
+	*mntflags = 0;
 
 	while ((ch = getopt(argc, argv, "o:")) != -1) {
 		switch (ch) {
 		case 'o':
-			mp = getmntopts(optarg, mopts, &mntflags, NULL);
+			mp = getmntopts(optarg, mopts, mntflags, NULL);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
@@ -82,14 +83,22 @@ mount_efs(int argc, char **argv)
 	if (argc != 2)
 		usage();
 
-	if (realpath(argv[0], special) == NULL)
-		err(EXIT_FAILURE, "realpath %s", argv[0]);
+	pathadj(argv[0], canon_dev);
+	pathadj(argv[1], canon_dir);
 
-	if (realpath(argv[1], node) == NULL)
-		err(EXIT_FAILURE, "realpath %s", argv[1]);
+	args->fspec = canon_dev;
+	args->version = EFS_MNT_VERSION;
+}
 
-	args.fspec = special;
-	args.version = EFS_MNT_VERSION;
+int
+mount_efs(int argc, char **argv)
+{
+	char special[MAXPATHLEN], node[MAXPATHLEN];
+	struct efs_args args;
+	int mntflags;
+
+	mount_efs_parseargs(argc, argv, &args, &mntflags, special, node);
+
 	if (mount(MOUNT_EFS, node, mntflags, &args, sizeof args) == -1)
 		err(EXIT_FAILURE, "%s on %s", special, node);
 
@@ -101,6 +110,7 @@ int
 main(int argc, char **argv)
 {
 
+	setprogname(argv[0]);
 	return (mount_efs(argc, argv));
 }
 #endif

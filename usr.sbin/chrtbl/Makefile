@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2006/05/11 23:16:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.6.20.1 2008/09/18 04:30:02 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,6 @@ SRCS=	chrtbl.c ctypeio.c
 
 .include <bsd.prog.mk>
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.chrtbl.c+=	-Wno-pointer-sign
 .endif

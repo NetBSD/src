@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.44 2007/12/15 19:44:46 perry Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.44.8.1 2008/09/18 04:28:27 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.44 2007/12/15 19:44:46 perry Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.44.8.1 2008/09/18 04:28:27 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,7 +54,9 @@ __RCSID("$NetBSD: mount_msdos.c,v 1.44 2007/12/15 19:44:46 perry Exp $");
 #include <util.h>
 
 #include <mntopts.h>
-#include <fattr.h>
+
+#include "mountprog.h"
+#include "mount_msdos.h"
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -65,69 +67,71 @@ static const struct mntopt mopts[] = {
 	MOPT_NULL,
 };
 
-int	mount_msdos(int argc, char **argv);
 static void	usage(void) __dead;
 
 #ifndef MOUNT_NOMAIN
 int
 main(int argc, char **argv)
 {
+
+	setprogname(argv[0]);
 	return mount_msdos(argc, argv);
 }
 #endif
 
-int
-mount_msdos(int argc, char **argv)
+void
+mount_msdos_parseargs(int argc, char **argv,
+	struct msdosfs_args *args, int *mntflags,
+	char *canon_dev, char *canon_dir)
 {
-	struct msdosfs_args args;
 	struct stat sb;
-	int c, mntflags, set_gid, set_uid, set_mask, set_dirmask, set_gmtoff;
-	char *dev, *dir, canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	int c, set_gid, set_uid, set_mask, set_dirmask, set_gmtoff;
+	char *dev, *dir;
 	time_t now;
 	struct tm *tm;
 	mntoptparse_t mp;
 
-	mntflags = set_gid = set_uid = set_mask = set_dirmask = set_gmtoff = 0;
-	(void)memset(&args, '\0', sizeof(args));
+	*mntflags = set_gid = set_uid = set_mask = set_dirmask = set_gmtoff = 0;
+	(void)memset(args, '\0', sizeof(*args));
 
 	while ((c = getopt(argc, argv, "Gsl9u:g:m:M:o:t:")) != -1) {
 		switch (c) {
 		case 'G':
-			args.flags |= MSDOSFSMNT_GEMDOSFS;
+			args->flags |= MSDOSFSMNT_GEMDOSFS;
 			break;
 		case 's':
-			args.flags |= MSDOSFSMNT_SHORTNAME;
+			args->flags |= MSDOSFSMNT_SHORTNAME;
 			break;
 		case 'l':
-			args.flags |= MSDOSFSMNT_LONGNAME;
+			args->flags |= MSDOSFSMNT_LONGNAME;
 			break;
 		case '9':
-			args.flags |= MSDOSFSMNT_NOWIN95;
+			args->flags |= MSDOSFSMNT_NOWIN95;
 			break;
 		case 'u':
-			args.uid = a_uid(optarg);
+			args->uid = a_uid(optarg);
 			set_uid = 1;
 			break;
 		case 'g':
-			args.gid = a_gid(optarg);
+			args->gid = a_gid(optarg);
 			set_gid = 1;
 			break;
 		case 'm':
-			args.mask = a_mask(optarg);
+			args->mask = a_mask(optarg);
 			set_mask = 1;
 			break;
 		case 'M':
-			args.dirmask = a_mask(optarg);
+			args->dirmask = a_mask(optarg);
 			set_dirmask = 1;
 			break;
 		case 'o':
-			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, mntflags, 0);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
 			break;
 		case 't':
-			args.gmtoff = atoi(optarg);
+			args->gmtoff = atoi(optarg);
 			set_gmtoff = 1;
 			break;
 		case '?':
@@ -141,43 +145,30 @@ mount_msdos(int argc, char **argv)
 		usage();
 
 	if (set_mask && !set_dirmask) {
-		args.dirmask = args.mask;
+		args->dirmask = args->mask;
 		set_dirmask = 1;
 	} else if (set_dirmask && !set_mask) {
-		args.mask = args.dirmask;
+		args->mask = args->dirmask;
 		set_mask = 1;
 	}
 
 	dev = argv[optind];
 	dir = argv[optind + 1];
 
-	if (realpath(dev, canon_dev) == NULL)        /* Check device path */
-		err(1, "realpath %s", dev);
-	if (strncmp(dev, canon_dev, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", dev);
-		dev = canon_dev;
-		warnx("using \"%s\" instead.", dev);
-	}
+	pathadj(dev, canon_dev);
+	pathadj(dir, canon_dir);
 
-	if (realpath(dir, canon_dir) == NULL)        /* Check mounton path */
-		err(1, "realpath %s", dir);
-	if (strncmp(dir, canon_dir, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", dir);
-		dir = canon_dir;
-		warnx("using \"%s\" instead.", dir);
-	}
-
-	args.fspec = dev;
+	args->fspec = dev;
 	if (!set_gid || !set_uid || !set_mask) {
 		if (stat(dir, &sb) == -1)
 			err(1, "stat %s", dir);
 
 		if (!set_uid)
-			args.uid = sb.st_uid;
+			args->uid = sb.st_uid;
 		if (!set_gid)
-			args.gid = sb.st_gid;
+			args->gid = sb.st_gid;
 		if (!set_mask) {
-			args.mask = args.dirmask =
+			args->mask = args->dirmask =
 				sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 		}
 	}
@@ -186,14 +177,25 @@ mount_msdos(int argc, char **argv)
 		/* use user's time zone as default */
 		time(&now);
 		tm = localtime(&now);
-		args.gmtoff = tm->tm_gmtoff;
+		args->gmtoff = tm->tm_gmtoff;
 
 	}
-	args.flags |= MSDOSFSMNT_VERSIONED;
-	args.version = MSDOSFSMNT_VERSION;
+	args->flags |= MSDOSFSMNT_VERSIONED;
+	args->version = MSDOSFSMNT_VERSION;
+}
 
-	if (mount(MOUNT_MSDOS, dir, mntflags, &args, sizeof args) == -1)
-		err(1, "%s on %s", dev, dir);
+int
+mount_msdos(int argc, char **argv)
+{
+	struct msdosfs_args args;
+	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	int mntflags;
+
+	mount_msdos_parseargs(argc, argv, &args, &mntflags,
+	    canon_dev, canon_dir);
+
+	if (mount(MOUNT_MSDOS, canon_dir, mntflags, &args, sizeof args) == -1)
+		err(1, "%s on %s", canon_dev, canon_dir);
 
 	if (mntflags & MNT_GETARGS) {
 		char buf[1024];
@@ -209,7 +211,8 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: mount_msdos [-9Gls] [-g gid] [-M mask] [-m mask] [-o options]\n"
-			"\t[-t gmtoff] [-u uid] special node\n");
+	fprintf(stderr, "usage: %s [-9Gls] [-g gid] [-M mask] [-m mask] "
+	    "[-o options]\n\t[-t gmtoff] [-u uid] special mountpath\n",
+	    getprogname());
 	exit(1);
 }

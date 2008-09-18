@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.3 2007/12/15 19:44:47 perry Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.3.10.1 2008/09/18 04:28:28 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.3 2007/12/15 19:44:47 perry Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.3.10.1 2008/09/18 04:28:28 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

@@ -1,9 +1,9 @@
 %{
-/*	$NetBSD: veriexecctl_parse.y,v 1.23 2007/10/01 17:01:55 xtraeme Exp $	*/
+/*	$NetBSD: veriexecctl_parse.y,v 1.23.12.1 2008/09/18 04:28:30 wrstuden Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
- * Copyright 2005 Brett Lymn <blymn@netbsd.org> 
+ * Copyright 2005 Brett Lymn <blymn@netbsd.org>
  *
  * All rights reserved.
  *
@@ -127,7 +127,7 @@ type		:	STRING {
 
 
 fingerprint	:	STRING {
-	char *fp;
+	u_char *fp;
 	size_t n;
 
 	fp = malloc(strlen($1) / 2);
@@ -194,13 +194,13 @@ eol		:	EOL
 %%
 
 /*
- * Takes the hexadecimal string pointed to by "fp" and converts it to a 
+ * Takes the hexadecimal string pointed to by "fp" and converts it to a
  * "count" byte binary number which is stored in the array pointed to
  * by "out".  Returns the number of bytes converted or -1 if the conversion
  * fails.
  */
 static size_t
-convert(u_char *fp, u_char *out)
+convert(char *fp, u_char *out)
 {
 	size_t i, count;
 	u_char value;
@@ -213,14 +213,14 @@ convert(u_char *fp, u_char *out)
 	 */
 	if ((count % 2) != 0)
 		return -1;
-	
+
 	count /= 2;
 
 #define cvt(cv) \
-	if (isdigit(cv)) \
+	if (isdigit((unsigned char) cv)) \
 		value += (cv) - '0'; \
-	else if (isxdigit(cv)) \
-		value += 10 + tolower(cv) - 'a'; \
+	else if (isxdigit((unsigned char) cv)) \
+		value += 10 + tolower((unsigned char) cv) - 'a'; \
 	else \
 		return -1
 

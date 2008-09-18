@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.21 2007/12/15 19:44:56 perry Exp $ */
+/* $NetBSD: main.c,v 1.21.6.1 2008/09/18 04:30:14 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,10 +36,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
- All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1994\
+ Christopher G. Demetriou.  All rights reserved.");
 
-__RCSID("$NetBSD: main.c,v 1.21 2007/12/15 19:44:56 perry Exp $");
+__RCSID("$NetBSD: main.c,v 1.21.6.1 2008/09/18 04:30:14 wrstuden Exp $");
 #endif
 
 /*

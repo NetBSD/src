@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.23 2007/12/15 19:44:49 perry Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.23.6.1 2008/09/18 04:29:08 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,12 +35,12 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.23 2007/12/15 19:44:49 perry Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.23.6.1 2008/09/18 04:29:08 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

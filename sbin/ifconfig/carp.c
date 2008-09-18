@@ -1,4 +1,4 @@
-/* $NetBSD: carp.c,v 1.7.2.1 2008/06/23 04:29:57 wrstuden Exp $ */
+/* $NetBSD: carp.c,v 1.7.2.2 2008/09/18 04:28:24 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -26,6 +26,11 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: carp.c,v 1.7.2.2 2008/09/18 04:28:24 wrstuden Exp $");
+#endif /* not lint */
+
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -46,11 +51,22 @@
 #include "env.h"
 #include "parse.h"
 #include "extern.h"
-#include "carp.h"
+
+static status_func_t status;
+static usage_func_t usage;
+static cmdloop_branch_t branch;
+
+static void carp_constructor(void) __attribute__((constructor));
+static void carp_status(prop_dictionary_t, prop_dictionary_t);
+static int setcarp_advbase(prop_dictionary_t, prop_dictionary_t);
+static int setcarp_advskew(prop_dictionary_t, prop_dictionary_t);
+static int setcarp_passwd(prop_dictionary_t, prop_dictionary_t);
+static int setcarp_vhid(prop_dictionary_t, prop_dictionary_t);
+static int setcarp_state(prop_dictionary_t, prop_dictionary_t);
+static int setcarpdev(prop_dictionary_t, prop_dictionary_t);
 
 static const char *carp_states[] = { CARP_STATES };
 
-#ifndef INET_ONLY
 struct kwinst carpstatekw[] = {
 	  {.k_word = "INIT", .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "BACKUP", .k_nextparser = &command_root.pb_parser}
@@ -66,7 +82,7 @@ struct pinteger parse_advskew = PINTEGER_INITIALIZER1(&parse_advskew, "advskew",
 struct piface carpdev = PIFACE_INITIALIZER(&carpdev, "carpdev", setcarpdev,
     "carpdev", &command_root.pb_parser);
 
-struct pkw carpstate = PKW_INITIALIZER(&carpstate, "carp state", NULL,
+struct pkw carpstate = PKW_INITIALIZER(&carpstate, "carp state", setcarp_state,
     "carp_state", carpstatekw, __arraycount(carpstatekw),
     &command_root.pb_parser);
 
@@ -91,17 +107,35 @@ static const struct kwinst carpkw[] = {
 struct pkw carp = PKW_INITIALIZER(&carp, "CARP", NULL, NULL,
     carpkw, __arraycount(carpkw), NULL);
 
-#endif
+static void
+carp_set(prop_dictionary_t env, struct carpreq *carpr)
+{
+	if (indirect_ioctl(env, SIOCSVH, carpr) == -1)
+		err(EXIT_FAILURE, "SIOCSVH");
+}
 
-void
+static int
+carp_get1(prop_dictionary_t env, struct carpreq *carpr)
+{
+	memset(carpr, 0, sizeof(*carpr));
+
+	return indirect_ioctl(env, SIOCGVH, carpr);
+}
+
+static void
+carp_get(prop_dictionary_t env, struct carpreq *carpr)
+{
+	if (carp_get1(env, carpr) == -1)
+		err(EXIT_FAILURE, "SIOCGVH");
+}
+
+static void
 carp_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const char *state;
 	struct carpreq carpr;
 
-	memset(&carpr, 0, sizeof(carpr));
-
-	if (indirect_ioctl(env, SIOCGVH, &carpr) == -1)
+	if (carp_get1(env, &carpr) == -1)
 		return;
 
 	if (carpr.carpr_vhid <= 0)
@@ -118,7 +152,7 @@ carp_status(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 int
-setcarp_passwd(prop_dictionary_t env, prop_dictionary_t xenv)
+setcarp_passwd(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	prop_data_t data;
@@ -129,23 +163,19 @@ setcarp_passwd(prop_dictionary_t env, prop_dictionary_t xenv)
 		return -1;
 	}
 
-	memset(&carpr, 0, sizeof(carpr));
-
-	if (indirect_ioctl(env, SIOCGVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCGVH");
+	carp_get(env, &carpr);
 
 	memset(carpr.carpr_key, 0, sizeof(carpr.carpr_key));
 	/* XXX Should hash the password into the key here, perhaps? */
 	strlcpy((char *)carpr.carpr_key, prop_data_data_nocopy(data),
 	    MIN(CARP_KEY_LEN, prop_data_size(data)));
 
-	if (indirect_ioctl(env, SIOCSVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCSVH");
+	carp_set(env, &carpr);
 	return 0;
 }
 
 int
-setcarp_vhid(prop_dictionary_t env, prop_dictionary_t xenv)
+setcarp_vhid(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	int64_t vhid;
@@ -155,20 +185,16 @@ setcarp_vhid(prop_dictionary_t env, prop_dictionary_t xenv)
 		return -1;
 	}
 
-	memset(&carpr, 0, sizeof(struct carpreq));
-
-	if (indirect_ioctl(env, SIOCGVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCGVH");
+	carp_get(env, &carpr);
 
 	carpr.carpr_vhid = vhid;
 
-	if (indirect_ioctl(env, SIOCSVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCSVH");
+	carp_set(env, &carpr);
 	return 0;
 }
 
 int
-setcarp_advskew(prop_dictionary_t env, prop_dictionary_t xenv)
+setcarp_advskew(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	int64_t advskew;
@@ -178,21 +204,17 @@ setcarp_advskew(prop_dictionary_t env, prop_dictionary_t xenv)
 		return -1;
 	}
 
-	memset(&carpr, 0, sizeof(carpr));
-
-	if (indirect_ioctl(env, SIOCGVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCGVH");
+	carp_get(env, &carpr);
 
 	carpr.carpr_advskew = advskew;
 
-	if (indirect_ioctl(env, SIOCSVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCSVH");
+	carp_set(env, &carpr);
 	return 0;
 }
 
 /* ARGSUSED */
 int
-setcarp_advbase(prop_dictionary_t env, prop_dictionary_t xenv)
+setcarp_advbase(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	int64_t advbase;
@@ -202,21 +224,17 @@ setcarp_advbase(prop_dictionary_t env, prop_dictionary_t xenv)
 		return -1;
 	}
 
-	memset(&carpr, 0, sizeof(carpr));
-
-	if (indirect_ioctl(env, SIOCGVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCGVH");
+	carp_get(env, &carpr);
 
 	carpr.carpr_advbase = advbase;
 
-	if (indirect_ioctl(env, SIOCSVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCSVH");
+	carp_set(env, &carpr);
 	return 0;
 }
 
 /* ARGSUSED */
-int
-setcarp_state(prop_dictionary_t env, prop_dictionary_t xenv)
+static int
+setcarp_state(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	int64_t carp_state;
@@ -226,21 +244,17 @@ setcarp_state(prop_dictionary_t env, prop_dictionary_t xenv)
 		return -1;
 	}
 
-	memset(&carpr, 0, sizeof(carpr));
-
-	if (indirect_ioctl(env, SIOCGVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCGVH");
+	carp_get(env, &carpr);
 
 	carpr.carpr_state = carp_state;
 
-	if (indirect_ioctl(env, SIOCSVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCSVH");
+	carp_set(env, &carpr);
 	return 0;
 }
 
 /* ARGSUSED */
 int
-setcarpdev(prop_dictionary_t env, prop_dictionary_t xenv)
+setcarpdev(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct carpreq carpr;
 	prop_data_t data;
@@ -251,15 +265,31 @@ setcarpdev(prop_dictionary_t env, prop_dictionary_t xenv)
 		return -1;
 	}
 
-	memset(&carpr, 0, sizeof(carpr));
-
-	if (indirect_ioctl(env, SIOCGVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCGVH");
+	carp_get(env, &carpr);
 
 	strlcpy(carpr.carpr_carpdev, prop_data_data_nocopy(data),
 	    MIN(sizeof(carpr.carpr_carpdev), prop_data_size(data)));
 
-	if (indirect_ioctl(env, SIOCSVH, &carpr) == -1)
-		err(EXIT_FAILURE, "SIOCSVH");
+	carp_set(env, &carpr);
 	return 0;
+}
+
+static void
+carp_usage(prop_dictionary_t env)
+{
+	fprintf(stderr,
+	    "\t[ advbase n ] [ advskew n ] [ carpdev iface ] "
+	    "[ pass passphrase ] [ state state ] [ vhid n ]\n");
+
+}
+
+static void
+carp_constructor(void)
+{
+	cmdloop_branch_init(&branch, &carp.pk_parser);
+	register_cmdloop_branch(&branch);
+	status_func_init(&status, carp_status);
+	usage_func_init(&usage, carp_usage);
+	register_status(&status);
+	register_usage(&usage);
 }

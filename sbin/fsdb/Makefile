@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2008/05/04 15:37:19 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.22.2.1 2008/09/18 04:28:24 wrstuden Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -16,12 +16,16 @@ FSCK_FFS=${NETBSDSRCDIR}/sbin/fsck_ffs
 CPPFLAGS+= -I${FSCK} -I${FSCK_FFS}
 .PATH:	${FSCK} ${FSCK_FFS} ${NETBSDSRCDIR}/sys/ufs/ffs
 
+SRCS+=	vfs_wapbl.c wapbl.c
+.PATH:	${NETBSDSRCDIR}/sys/kern
+CPPFLAGS+=-DWAPBL_DEBUG_PRINT=0
+
 LDADD+= -lutil -ledit -ltermcap
 .ifndef HOSTPROG
 DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMCAP}
 .endif
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 .for f in fsdb ffs_appleufs
 COPTS.${f}.c+=	-Wno-pointer-sign
 .endfor

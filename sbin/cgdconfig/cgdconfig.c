@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.21.2.1 2008/06/23 04:29:57 wrstuden Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.21.2.2 2008/09/18 04:28:22 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,10 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 2002, 2003\
-	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.21.2.1 2008/06/23 04:29:57 wrstuden Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2002, 2003\
+  The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: cgdconfig.c,v 1.21.2.2 2008/09/18 04:28:22 wrstuden Exp $");
 #endif
 
 #include <err.h>
@@ -396,13 +395,14 @@ getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, size_t keylen,
     int compat)
 {
 	bits_t		*ret;
-	u_int8_t	*passp;
+	char		*passp;
 	char		 buf[1024];
 	u_int8_t	*tmp;
 
 	snprintf(buf, sizeof(buf), "%s's passphrase:", target);
-	passp = (u_int8_t *)maybe_getpass(buf);
-	if (pkcs5_pbkdf2(&tmp, BITS2BYTES(keylen), passp, strlen(passp),
+	passp = maybe_getpass(buf);
+	if (pkcs5_pbkdf2(&tmp, BITS2BYTES(keylen), (uint8_t *)passp,
+	    strlen(passp),
 	    bits_getbuf(kg->kg_salt), BITS2BYTES(bits_len(kg->kg_salt)),
 	    kg->kg_iterations, compat)) {
 		warnx("failed to generate PKCS#5 PBKDF2 key");
@@ -411,6 +411,7 @@ getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, size_t keylen,
 
 	ret = bits_new(tmp, keylen);
 	kg->kg_key = bits_dup(ret);
+	memset(passp, 0, strlen(passp));
 	free(passp);
 	free(tmp);
 	return ret;

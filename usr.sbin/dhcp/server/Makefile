@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2002/04/24 08:18:54 lukem Exp $
+# $NetBSD: Makefile,v 1.13.34.1 2008/09/18 04:30:03 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,10 @@ DHCPSRCDIR=	server
 FILESDIR= /usr/share/examples/dhcp
 
 FILES=	dhcpd.conf
+.endif
+
+.if defined(HAVE_PCC)
+COPTS += -Wno-unreachable-code
 .endif
 
 .include <bsd.prog.mk>

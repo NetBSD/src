@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.170.6.1 2008/06/23 04:26:44 wrstuden Exp $
+$NetBSD: UPDATING,v 1.170.6.2 2008/09/18 04:27:24 wrstuden Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,32 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+
+20080827:
+	If you built and installed a libc from sources between
+	2008/08/20 and 2008/08/26 you got a broken strtouq(3)
+	which results in false errors reported by lint(1).
+	Since this breaks the libc build itself, manual help is
+	needed -- lint must be disabled temporarily, e.g:
+	  $ (cd lib/libc && make MKLINT=no dependall install)
+
+20080813:
+	MKDEBUG build was broken because the .depend files did not know
+	about .go files. You need to remove all .depend files and rebuild.
+
+20080731:
+	WAPBL (metadata journaling support) has been added, but at this
+	time isn't backwards compatible with pre-WAPBL aware kernels
+	and userland (fsck_ffs in particular).  Please make sure you
+	don't use a journaled filesystem with an older kernel/userland,
+	especially an uncleanly mounted journaled filesystem.  WAPBL
+	also requires the super block to be in the UFS2 format.  You
+	can use fsck_ffs -c 4 to update the superblock format.
+
+20080721:
+	Assembler warnings are now fatal if $WARNS>0 and $NOGCCERROR
+	isn't defined.
 
 20080531:
 	The ioctl number of DRVSUSPENDDEV command on /dev/drvctl changed 
@@ -38,6 +64,9 @@ Recent changes:
 	problem was committed to share/mk/bsd.kmodule.mk, revision 1.9.
 	If you already hit this problem, update the .mk file,
 	remove ${DESTDIR}/stand/<arch>, and re-run the build.
+
+20080303:
+	Linker warnings are now fatal if $WARNS>0.
 
 20080126:
 	The posix_fadvise system call has been changed from an assembly

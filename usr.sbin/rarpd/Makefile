@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2007/05/28 12:06:39 tls Exp $
+#	$NetBSD: Makefile,v 1.11.12.1 2008/09/18 04:30:14 wrstuden Exp $
 
 USE_FORT?= yes	# network server
 
@@ -16,6 +16,6 @@ DPADD+=	${LIBUTIL}
 
 .include <bsd.prog.mk>
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.mkarp.c+=	-Wno-pointer-sign
 .endif

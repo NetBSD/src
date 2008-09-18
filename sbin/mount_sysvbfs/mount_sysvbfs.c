@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_sysvbfs.c,v 1.5 2007/07/16 17:06:54 pooka Exp $	*/
+/*	$NetBSD: mount_sysvbfs.c,v 1.5.16.1 2008/09/18 04:28:28 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -31,12 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mount_sysvbfs.c,v 1.5 2007/07/16 17:06:54 pooka Exp $");
+__RCSID("$NetBSD: mount_sysvbfs.c,v 1.5.16.1 2008/09/18 04:28:28 wrstuden Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,10 +51,9 @@ __RCSID("$NetBSD: mount_sysvbfs.c,v 1.5 2007/07/16 17:06:54 pooka Exp $");
 #include <unistd.h>
 
 #include <mntopts.h>
-#include <fs/sysvbfs/sysvbfs.h>
 
-static void	sysvbfs_usage(void);
-int	mount_sysvbfs(int argc, char **argv);
+#include "mountprog.h"
+#include "mount_sysvbfs.h"
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -62,6 +61,15 @@ static const struct mntopt mopts[] = {
 	MOPT_GETARGS,
 	MOPT_NULL,
 };
+
+static void
+sysvbfs_usage(void)
+{
+
+	(void)fprintf(stderr, "usage: %s [-o options] special node\n",
+	    getprogname());
+	exit(EXIT_FAILURE);
+}
 
 #ifndef MOUNT_NOMAIN
 int
@@ -72,21 +80,20 @@ main(int argc, char **argv)
 }
 #endif
 
-int
-mount_sysvbfs(int argc, char *argv[])
+void
+mount_sysvbfs_parseargs(int argc, char **argv,
+	struct sysvbfs_args *args, int *mntflags,
+	char *canon_dev, char *canon_dir)
 {
-	struct sysvbfs_args args;
-	int ch, mntflags;
-	char fs_name[MAXPATHLEN], canon_dev[MAXPATHLEN];
-	const char *errcause;
+	int ch;
 	mntoptparse_t mp;
 
-	mntflags = 0;
+	*mntflags = 0;
 	optind = optreset = 1;		/* Reset for parse of new argv. */
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
-			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, mntflags, 0);
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
@@ -101,22 +108,23 @@ mount_sysvbfs(int argc, char *argv[])
 	if (argc != 2)
 		sysvbfs_usage();
 
-	if (realpath(argv[0], canon_dev) == NULL)     /* Check device path */
-		err(EXIT_FAILURE, "realpath %s", argv[0]);
-	if (strncmp(argv[0], canon_dev, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", argv[0]);
-		warnx("using \"%s\" instead.", canon_dev);
-	}
-        args.fspec = canon_dev;
+	pathadj(argv[0], canon_dev);
+	args->fspec = canon_dev;
+	pathadj(argv[1], canon_dir);
+}
 
-	if (realpath(argv[1], fs_name) == NULL)      /* Check mounton path */
-		err(EXIT_FAILURE, "realpath %s", argv[1]);
-	if (strncmp(argv[1], fs_name, MAXPATHLEN)) {
-		warnx("\"%s\" is a relative path.", argv[1]);
-		warnx("using \"%s\" instead.", fs_name);
-	}
+int
+mount_sysvbfs(int argc, char *argv[])
+{
+	struct sysvbfs_args args;
+	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	const char *errcause;
+	int mntflags;
 
-	if (mount(MOUNT_SYSVBFS, fs_name, mntflags, &args, sizeof args) == -1) {
+	mount_sysvbfs_parseargs(argc, argv, &args, &mntflags,
+	    canon_dev, canon_dir);
+
+	if (mount(MOUNT_SYSVBFS, canon_dir, mntflags, &args, sizeof args)==-1) {
 		switch (errno) {
 		case EMFILE:
 			errcause = "mount table full";
@@ -133,16 +141,7 @@ mount_sysvbfs(int argc, char *argv[])
 			break;
 		}
 		errx(EXIT_FAILURE, "%s on %s: %s",
-		    args.fspec, fs_name, errcause);
+		    canon_dev, canon_dir, errcause);
 	}
 	exit(EXIT_SUCCESS);
-}
-
-static void
-sysvbfs_usage(void)
-{
-
-	(void)fprintf(stderr, "usage: %s [-o options] special node\n",
-	    getprogname());
-	exit(EXIT_FAILURE);
 }

@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.52 2008/05/02 18:11:05 martin Exp $
+.\"     $NetBSD: raidctl.8,v 1.52.2.1 2008/09/18 04:28:29 wrstuden Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd August 6, 2007
+.Dd August 26, 2008
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -253,6 +253,8 @@ The output indicates the amount of progress
 achieved in each of these areas.
 .It Fl u Ar dev
 Unconfigure the RAIDframe device.
+This does not remove any component labels or change any configuration
+settings (e.g. auto-configuration settings) for the RAID set.
 .It Fl v
 Be more verbose.
 For operations such as reconstructions, parity
@@ -730,7 +732,7 @@ the existing data mirrored, and normal operation resumed.
 .Pp
 The size of the resulting RAID set will depend on the number of data
 components in the set.
-Space is automatically reserved for the component labels, and 
+Space is automatically reserved for the component labels, and
 the actual amount of space used
 for data on a component will be rounded down to the largest possible
 multiple of the sectors per stripe unit (sectPerSU) value.
@@ -1120,7 +1122,7 @@ START array
 1 4 0
 
 START drives
-/dev/sd6e
+absent
 /dev/sd2e
 /dev/sd3e
 /dev/sd4e
@@ -1133,9 +1135,7 @@ START queue
 fifo 100
 .Ed
 .Pp
-(where
-.Pa /dev/sd6e
-has no physical device) can be used with
+can be used with
 .Bd -literal -offset indent
 raidctl -C recover_raid0.conf raid0
 .Ed

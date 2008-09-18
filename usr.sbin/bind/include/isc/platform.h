@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.5.12.1 2008/06/23 04:32:12 wrstuden Exp $	*/
+/*	$NetBSD: platform.h,v 1.5.12.2 2008/09/18 04:30:00 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -244,7 +244,7 @@
  * If the "xaddq" operation (64bit xadd) is available on this architecture,
  * ISC_PLATFORM_HAVEXADDQ will be defined.
  */
-#if defined(_LP64) || defined(__i386__)
+#if defined(_LP64)
 #define ISC_PLATFORM_HAVEXADDQ 1
 #endif
 

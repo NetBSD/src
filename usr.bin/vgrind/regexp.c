@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.10 2006/05/01 05:14:22 christos Exp $	*/
+/*	$NetBSD: regexp.c,v 1.10.22.1 2008/09/18 04:29:25 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -32,15 +32,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)regexp.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: regexp.c,v 1.10 2006/05/01 05:14:22 christos Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.10.22.1 2008/09/18 04:29:25 wrstuden Exp $");
 #endif /* not lint */
 
 #include <assert.h>

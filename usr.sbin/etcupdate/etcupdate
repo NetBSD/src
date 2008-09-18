@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.37 2008/04/30 08:20:03 martin Exp $
+# $NetBSD: etcupdate,v 1.37.2.1 2008/09/18 04:30:04 wrstuden Exp $
 #
-# Copyright (c) 2001 The NetBSD Foundation, Inc.
+# Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -45,10 +45,11 @@
 PATH="/sbin:/usr/sbin:/bin:/usr/bin:${PATH}"
 
 # Default settings
+PROG="${0##*/}"
 TEMPROOT="${TEMPROOT:=/tmp/temproot}"
 PAGER="${PAGER:=/usr/bin/more}"
-SWIDTH=`stty size | awk '{w=$2}END{if(w==0){w=80}print w}'`
-WIDTH="${WIDTH:=${SWIDTH}}"
+SWIDTH="$(stty size | awk '{w=$2}END{if(w==0){w=80}print w}')"
+WIDTH="${WIDTH:="${SWIDTH}"}"
 DIFF_COMMAND="diff -u"
 VERBOSE=false
 CONTINUE=false
@@ -58,13 +59,14 @@ BINARYMODE=false	# true for both BINARYDIRMODE and BINARYTGZMODE
 BINARYDIRMODE=false	# true for "-s extracted_dir"
 BINARYDIR=		# directory name for BINARYDIRMODE
 BINARYTGZMODE=false	# true for "-s etc.tgz"
-TGZLIST=		# colon-separated list for BINARYTGZMODE
-SRC_ARG=		# argument for "-s"
+TGZLIST=		# quoted list list of files for BINARYTGZMODE
+SRC_ARGLIST=		# quoted list of one or more "-s" args
+N_SRC_ARGS=0		# number of "-s" args
 AUTOMATIC=false
 LOCALSKIP=false
-MACHINE="${MACHINE:=`uname -m`}"
+MACHINE="${MACHINE:="$(uname -m)"}"
 export MACHINE
-MACHINE_ARCH="${MACHINE_ARCH:=`uname -p`}"
+MACHINE_ARCH="${MACHINE_ARCH:="$(uname -p)"}"
 export MACHINE_ARCH
 
 # Settings for post-installation procedures
@@ -74,12 +76,11 @@ NEED_NEWALIASES=false
 NEED_PWD_MKDB=false
 NEED_SERVICES_MKDB=false
 
-myname="${0##*/}"
 
 usage() {
-	cat << EOF
+	cat << EOF >&2
 
-Usage: ${myname} [options]
+Usage: ${PROG} [options]
 
 Options:
 
@@ -107,13 +108,13 @@ EOF
 verbose() {
 	# $* = message to display if in verbose mode
 
-	${VERBOSE} && echo "${*}"
+	${VERBOSE} && echo "${@}"
 }
 
 yesno() {
 	# $* = message to display
 
-	echo -n "${*}? (y/[n]) "
+	echo -n "${@}? (y/[n]) "
 	read ANSWER
 	case "${ANSWER}" in
 		y|Y)
@@ -123,6 +124,30 @@ yesno() {
 			return 1
 			;;
 	esac
+}
+
+# Quote args to make them safe in the shell.
+# Usage: quotedlist="$(shell_quote args...)"
+#
+# After building up a quoted list, use it by evaling it inside
+# double quotes, like this:
+#    eval "set -- $quotedlist"
+# or like this:
+#    eval "\$command $quotedlist \$filename"
+shell_quote()
+{
+	local result=''
+	local arg
+	for arg in "$@" ; do
+		# Append a space if necessary
+		result="${result}${result:+ }"
+		# Convert each embedded ' to '\'',
+		# then insert ' at the beginning of the first line,
+		# and append ' at the end of the last line.
+		result="${result}$(printf "%s\n" "$arg" | \
+			sed -e "s/'/'\\\\''/g" -e "1s/^/'/" -e "\$s/\$/'/")"
+	done
+	printf "%s\n" "$result"
 }
 
 install_dir() {
@@ -167,7 +192,7 @@ install_checksum() {
 
 	${AUTOMATIC} || return
 
-	D=`dirname "${1}"`
+	D="$(dirname "${1}")"
 	mkdir -p "/var/etcupdate/${D}"
 	md5 "${1}" > "/var/etcupdate/${1}"
 }
@@ -210,8 +235,8 @@ diff_and_merge_file() {
 	fi
 
 	if ${AUTOMATIC} && [ -f "/var/etcupdate/${1}" ]; then
-		SUM1=`md5 "${1}"`
-		SUM2=`cat "/var/etcupdate/${1}"`
+		SUM1="$(md5 "${1}")"
+		SUM2="$(cat "/var/etcupdate/${1}")"
 		if [ "${SUM1}" = "${SUM2}" ]; then
 			install_file "${1}"
 			install_checksum "${1}"
@@ -220,9 +245,9 @@ diff_and_merge_file() {
 	fi
 
 	if ${LOCALSKIP}; then
-		ID1=`ident -q "${TEMPROOT}${1}" | sed -n 2p`
+		ID1="$(ident -q "${TEMPROOT}${1}" | sed -n 2p)"
 		ID1="${ID1:-0}"
-		ID2=`ident -q "${1}" | sed -n 2p`
+		ID2="$(ident -q "${1}" | sed -n 2p)"
 		ID2="${ID2:-1}"
 		if [ "${ID1}" = "${ID2}" ]; then
 			verbose "===> ${1} (ok:RCS)"
@@ -246,8 +271,8 @@ diff_and_merge_file() {
 	ALREADY_MERGED=false
 
 	# Determine name for the backup file (/foo/._etcupdate.bar)
-	D=`dirname  "${TEMPROOT}${1}"`
-	F=`basename "${TEMPROOT}${1}"`
+	D="$(dirname  "${TEMPROOT}${1}")"
+	F="$(basename "${TEMPROOT}${1}")"
 	B="${D}/.etcupdate.${F}"
 	F="${D}/${F}"
 
@@ -363,8 +388,8 @@ set_makeenv() {
 	# BUILD=1 allows building of files that are wanted.
 	#
 	MAKE_ENV=" 			\
-		NETBSDSRCDIR=${SRCDIR}	\
-		DESTDIR=${TEMPROOT}	\
+		NETBSDSRCDIR=$(shell_quote "${SRCDIR}")	\
+		DESTDIR=$(shell_quote "${TEMPROOT}")	\
 		MAKE=make		\
 		MTREE=mtree		\
 		TOOL_MTREE=mtree	\
@@ -378,24 +403,21 @@ set_makeenv() {
 #
 
 # Read global configuration
-GLOBALRC="/etc/`basename $0`.conf"
+GLOBALRC="/etc/${PROG}.conf"
 [ -r ${GLOBALRC} ] && . ${GLOBALRC}
 
 # Read user configuration
-USERRC="${HOME}/.`basename $0`rc"
+USERRC="${HOME}/.{PROG}rc"
 [ -r ${USERRC} ] && . ${USERRC}
 
 # Read command line arguments
-ARGV=`getopt ab:hlp:s:t:vw: $*`
-[ $? != 0 ] && usage
-set -- ${ARGV}
-for i; do
+while getopts ab:hlp:s:t:vw: i
+do
 	case "${i}" in
-	-a)
+	a)
 		AUTOMATIC=true
-		shift
 		;;
-	-b)
+	b)
 
 		# Backward compatibility for deprecated "-b tempdir" option.
 		# Remove this after NetBSD-4.0 is released.
@@ -405,42 +427,40 @@ for i; do
 EOF
 		BINARYMODE=true
 		BINARYDIRMODE=true
-		BINARYDIR="${arg}"
-		SRC_ARG="${BINARYDIR}"
+		BINARYDIR="${OPTARG}"
+		qarg="$(shell_quote "${OPTARG}")"
+		N_SRC_ARGS=$(( N_SRC_ARGS + 1 ))
+		SRC_ARGLIST="${SRC_ARGLIST}${SRC_ARGLIST:+ }-s ${qarg}"
 		;;
-	-h)
+	h)
 		usage
 		;;
-	-l)
+	l)
 		LOCALSKIP=true
-		shift
 		;;
-	-p)
-		PAGER="${2}"
-		shift 2
+	p)
+		PAGER="${OPTARG}"
 		;;
-	-s)
+	s)
 		# Three cases:
-		# -s tgzfile
-		# -s srcdir
-		# -s extracted_dir
-		arg="${2}"
-		shift 2
-		if [ -f "${arg%%:*}" ]; then
-			# arg refers to a *.tgz file, or a colon-separated
-			# list.
+		# -s tgzfile       (may be repeated)
+		# -s srcdir        (may not be repeated)
+		# -s extracted_dir (may not be repeated)
+		arg="${OPTARG}"
+		qarg="$(shell_quote "${OPTARG}")"
+		N_SRC_ARGS=$(( N_SRC_ARGS + 1 ))
+		SRC_ARGLIST="${SRC_ARGLIST}${SRC_ARGLIST:+ }-s ${qarg}"
+		if [ -f "${arg}" ]; then
+			# arg refers to a *.tgz file.
 			# This may happen twice, for both etc.tgz and
-			# xetc.tgz, so we build up a colon-separated
-			# list in TGZLIST.
+			# xetc.tgz, so we build up a list in TGZLIST.
 			BINARYMODE=true
 			BINARYTGZMODE=true
-			TGZLIST="${TGZLIST}${TGZLIST:+:}${arg}"
-			SRC_ARG="${TGZLIST}"
+			TGZLIST="${TGZLIST}${TGZLIST:+ }${qarg}"
 		elif [ -d "${arg}" ] && [ -f "${arg}/etc/Makefile" ]; then
 			# arg refers to a source directory
 			SOURCEMODE=true
 			SRCDIR="${arg}"
-			SRC_ARG="${SRCDIR}"
 		elif [ -d "${arg}" ] && [ -f "${arg}/../etc/Makefile" ]; then
 			# backward compatibility: allow arg to refer to
 			# etc subdirectory within source dir.
@@ -451,7 +471,6 @@ EOF
 EOF
 			SOURCEMODE=true
 			SRCDIR="${arg}/.."
-			SRC_ARG="${SRCDIR}"
 		elif [ -d "${arg}" ] && [ -d "${ARG}/etc" ] \
 			&& ! [ -f "${arg}/etc/Makefile" ]
 		then
@@ -460,40 +479,35 @@ EOF
 			BINARYMODE=true
 			BINARYDIRMODE=true
 			BINARYDIR="${arg}"
-			SRC_ARG="${BINARYDIR}"
 		else
-			echo "*** Cannot understand -s ${arg}"
+			echo "*** Nonexistent file or directory for -s ${arg}"
 			usage
 		fi
 		;;
-	-t)
-		TEMPROOT="${2}"
-		shift 2
+	t)
+		TEMPROOT="${OPTARG}"
 		;;
-	-v)
+	v)
 		VERBOSE=true
-		shift
 		;;
-	-w)
-		WIDTH="${2}"
-		shift 2
+	w)
+		WIDTH="${OPTARG}"
 		;;
-	--)
-		shift
+	*)
+		# getopts should already have printed an error message
+		usage
 		break
 		;;
 	esac
 done
 
 # Last minute sanity checks
-if [ `id -u` -ne 0 ]; then
+if [ "$(id -u)" -ne 0 ]; then
 	echo "*** ERROR: You MUST be root"
 	exit 1
 fi
-if ${SOURCEMODE} && ${BINARYMODE}; then
-	usage
-fi
-if ${BINARYDIRMODE} && ${BINARYTGZMODE}; then
+if [ "${N_SRC_ARGS}" -gt 1 ] && ( ${SOURCEMODE} || ${BINARYDIRMODE} ); then
+	echo "*** ERROR: Multiple -s args are allowed only with tgz files"
 	usage
 fi
 if ${BINARYDIRMODE}; then
@@ -502,11 +516,11 @@ fi
 if ${BINARYTGZMODE}; then
 	SRCDIR="${TEMPROOT}"
 fi
-if ! ${SOURCEMODE} && ! ${BINARYMODE}; then
+if [ "${N_SRC_ARGS}" -eq 0 ]; then
 	# default if no "-s" option was specified
 	SOURCEMODE=true
-	SRCDIR=/usr/src
-	SRC_ARG="${SRCDIR}"
+	SRCDIR="/usr/src"
+	SRC_ARGLIST="-s $(shell_quote "${SRCDIR}")"
 fi
 if [ -z "${SRCDIR}" -o -z "${TEMPROOT}" ]; then
 	echo "*** ERROR: One of the following variables is undefined"
@@ -539,9 +553,8 @@ if ! ${CONTINUE}; then
 	# Are we using the sources or binaries?
 	if ${BINARYTGZMODE}; then
 		# Populate ${TEMPROOT} from ${TGZLIST}
-		oldIFS="${IFS}"
-		IFS=:
-		for tgz in ${TGZLIST}; do
+		eval "set -- ${TGZLIST}"
+		for tgz in "$@"; do
 			if [ ! -f "${tgz}" ]; then
 				echo "*** ERROR: Unable to find ${tgz}"
 				exit 1
@@ -550,7 +563,6 @@ if ! ${CONTINUE}; then
 			tar -zxpf "${tgz}" -C "${TEMPROOT}"
 			[ $? -ne 0 ] && exit 1
 		done
-		IFS="${oldIFS}"
 	elif ${BINARYDIRMODE}; then
 		# Populate ${TEMPROOT} from ${SRCDIR} by copying
 		echo "*** Populating ${TEMPROOT} from ${BINARYDIR} (copying)"
@@ -566,9 +578,9 @@ if ! ${CONTINUE}; then
 		echo "*** Populating ${TEMPROOT} from ${SRCDIR} (make distribution)"
 		cd ${SRCDIR}/etc
 		if ! ${VERBOSE}; then
-			eval ${MAKE_ENV} make distribution > /dev/null
+			eval "${MAKE_ENV} make distribution > /dev/null"
 		else
-			eval ${MAKE_ENV} make distribution
+			eval "${MAKE_ENV} make distribution"
 		fi
 		[ $? -ne 0 ] && exit 1
 	fi
@@ -596,30 +608,32 @@ if ! ${CONTINUE}; then
 
 	# Are there any new directories?
 	echo "*** Checking for new directories"
-	for i in `find ${TEMPROOT} -type d`; do
-		D=`echo ${i} | sed "s#${TEMPROOT}##"`
+	exec 3<&0
+	find "${TEMPROOT}" -type d | \
+	while read i; do
+		D="${i#"${TEMPROOT}"}"
 		[ "x${i}" = "x${TEMPROOT}" ] && continue
-		[ ! -d "${D}" ] && install_dir "${D}"
+		[ ! -d "${D}" ] && install_dir "${D}" <&3
 	done
 fi
 
 # Start the comparision
 echo "*** Checking for added/modified files"
 init_diff_extra_options
-for i in `find ${TEMPROOT} -type f  -a ! -name \*.etcupdate.\*`; do
-	D=`echo ${i} | sed "s#${TEMPROOT}##"`
-	diff_and_merge_file "${D}"
+exec 3<&0
+find "${TEMPROOT}" -type f  -a ! -name \*.etcupdate.\* | \
+while read i; do
+	D="${i#"${TEMPROOT}"}"
+	diff_and_merge_file "${D}" <&3
 done
 
 # Do we have files which were not processed?
-REMAINING=`find "${TEMPROOT}" -type f -a ! -name \*.etcupdate.\*`
+REMAINING="$(find "${TEMPROOT}" -type f -a ! -name \*.etcupdate.\*)"
 if [ ! -z "${REMAINING}" ]; then
 	echo ""
 	echo "*** The following files need your attention:"
 	echo ""
-	for i in ${REMAINING}; do
-		echo "  ${i}"
-	done
+	echo "${REMAINING}" | sed -e 's/^/  /'
 	echo ""
 fi
 if yesno "Remove ${TEMPROOT}"; then
@@ -635,9 +649,9 @@ if ${SOURCEMODE}; then
 	set_makeenv
 	cd ${SRCDIR}/etc
 	if ! ${VERBOSE}; then
-		eval ${MAKE_ENV} make clean > /dev/null
+		"eval ${MAKE_ENV} make clean > /dev/null"
 	else
-		eval ${MAKE_ENV} make clean
+		"eval ${MAKE_ENV} make clean"
 	fi
 fi
 
@@ -704,6 +718,6 @@ if ${NEED_NEWALIASES}; then
 fi
 if [ -x /usr/sbin/postinstall ]; then
 	echo "*** Running /usr/sbin/postinstall"
-	/usr/sbin/postinstall -s "${SRC_ARG}" check
+	eval "/usr/sbin/postinstall ${SRC_ARGLIST} check"
 fi
 echo "*** All done"
