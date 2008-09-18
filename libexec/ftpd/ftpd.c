@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.177 2006/09/26 06:47:20 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.177.2.1 2008/09/18 18:10:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.177 2006/09/26 06:47:20 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.177.2.1 2008/09/18 18:10:30 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -3730,6 +3730,17 @@ auth_pam(struct passwd **ppw, const char *pwstr)
 	e = pam_set_item(pamh, PAM_RHOST, remotehost);
 	if (e != PAM_SUCCESS) {
 		syslog(LOG_ERR, "pam_set_item(PAM_RHOST): %s",
+			pam_strerror(pamh, e));
+		if ((e = pam_end(pamh, e)) != PAM_SUCCESS) {
+			syslog(LOG_ERR, "pam_end: %s", pam_strerror(pamh, e));
+		}
+		pamh = NULL;
+		return -1;
+	}
+
+	e = pam_set_item(pamh, PAM_SOCKADDR, &his_addr);
+	if (e != PAM_SUCCESS) {
+		syslog(LOG_ERR, "pam_set_item(PAM_SOCKADDR): %s",
 			pam_strerror(pamh, e));
 		if ((e = pam_end(pamh, e)) != PAM_SUCCESS) {
 			syslog(LOG_ERR, "pam_end: %s", pam_strerror(pamh, e));
