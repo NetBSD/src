@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.164.2.1 2005/07/05 21:48:49 tron Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.164.2.1.2.1 2008/09/18 19:12:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.164.2.1 2005/07/05 21:48:49 tron Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.164.2.1.2.1 2008/09/18 19:12:08 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -3321,7 +3321,8 @@ void
 logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
     const struct timeval *elapsed, const char *error)
 {
-	char		 buf[MAXPATHLEN * 2 + 100], realfile[MAXPATHLEN];
+	char		 buf[MAXPATHLEN * 2 + 100];
+	char		 realfile1[MAXPATHLEN], realfile2[MAXPATHLEN];
 	const char	*r1, *r2;
 	char		 direction;
 	size_t		 len;
@@ -3331,10 +3332,10 @@ logxfer(const char *command, off_t bytes, const char *file1, const char *file2,
 		return;
 
 	r1 = r2 = NULL;
-	if ((r1 = realpath(file1, realfile)) == NULL)
+	if ((r1 = realpath(file1, realfile1)) == NULL)
 		r1 = file1;
 	if (file2 != NULL)
-		if ((r2 = realpath(file2, realfile)) == NULL)
+		if ((r2 = realpath(file2, realfile2)) == NULL)
 			r2 = file2;
 
 		/*
