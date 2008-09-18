@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.51 2008/05/21 14:10:28 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.52 2008/09/18 21:28:45 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.51 2008/05/21 14:10:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.52 2008/09/18 21:28:45 dsl Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -265,7 +265,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rflags &= ~PSL_CLEARSIG;
 	tf->tf_rsp = (uint64_t)fp;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 
@@ -350,7 +350,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rflags &= ~CLEARSIG;
 	tf->tf_rsp = (uint64_t)fp;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 
