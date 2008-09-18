@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.5 2008/09/18 04:37:06 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.6 2008/09/18 13:34:56 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.5 2008/09/18 04:37:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.6 2008/09/18 13:34:56 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1632,6 +1632,7 @@ static int
 uvideo_open(void *addr, int flags)
 {
 	struct uvideo_softc *sc;
+	struct video_format fmt;
 
 	sc = addr;
 
@@ -1639,7 +1640,9 @@ uvideo_open(void *addr, int flags)
 	if (sc->sc_dying)
 		return EIO;
 
-	return 0;
+	/* XXX select default format */
+	memset(&fmt, 0, sizeof(fmt));	/* uvideo_set_format doesn't care */
+	return uvideo_set_format(addr, &fmt);
 }
 
 
