@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.9 2008/09/18 21:52:41 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.10 2008/09/18 23:20:52 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.9 2008/09/18 21:52:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.10 2008/09/18 23:20:52 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -261,6 +261,7 @@ static const char * uvideo_get_devname(void *);
 static int	uvideo_enum_format(void *, uint32_t, struct video_format *);
 static int	uvideo_get_format(void *, struct video_format *);
 static int	uvideo_set_format(void *, struct video_format *);
+static int	uvideo_try_format(void *, struct video_format *);
 static int	uvideo_start_transfer(void *);
 static int	uvideo_stop_transfer(void *);
 
@@ -299,9 +300,14 @@ static void			uvideo_unit_free_sources(struct uvideo_unit *);
  * driver or device file. */
 static struct uvideo_stream *	uvideo_find_stream(struct uvideo_softc *,
 						   uint8_t);
+#if 0
 static struct uvideo_format *	uvideo_stream_find_format(
 	struct uvideo_stream *,
 	uint8_t, uint8_t);
+#endif
+static struct uvideo_format *	uvideo_stream_guess_format(
+	struct uvideo_stream *,
+	enum video_pixel_format, uint32_t, uint32_t);
 static struct uvideo_stream *	uvideo_stream_alloc(void);
 static usbd_status		uvideo_stream_init(
 	struct uvideo_stream *stream,
@@ -362,7 +368,7 @@ static const struct video_hw_if uvideo_hw_if = {
 	.enum_format = uvideo_enum_format,
 	.get_format = uvideo_get_format,
 	.set_format = uvideo_set_format,
-	.try_format = NULL,
+	.try_format = uvideo_try_format,
 	.start_transfer = uvideo_start_transfer,
 	.stop_transfer = uvideo_stop_transfer,
 	.control_iter_init = NULL,
@@ -691,6 +697,7 @@ uvideo_find_stream(struct uvideo_softc *sc, uint8_t ifaceno)
  * might be improved through indexing, but the format and frame count
  * is unknown ahead of time (only after iterating through the
  * usb device descriptors). */
+#if 0
 static struct uvideo_format *
 uvideo_stream_find_format(struct uvideo_stream *vs,
 			  uint8_t format_index, uint8_t frame_index)
@@ -703,6 +710,29 @@ uvideo_stream_find_format(struct uvideo_stream *vs,
 			return format;
 	}
 	return NULL;
+}
+#endif
+
+static struct uvideo_format *
+uvideo_stream_guess_format(struct uvideo_stream *vs,
+			   enum video_pixel_format pixel_format,
+			   uint32_t width, uint32_t height)
+{
+	struct uvideo_format *format, *gformat = NULL;
+
+	SIMPLEQ_FOREACH(format, &vs->vs_formats, entries) {
+		if (format->format.pixel_format != pixel_format)
+			continue;
+		if (format->format.width <= width &&
+		    format->format.height <= height) {
+			if (gformat == NULL ||
+			    (gformat->format.width < format->format.width &&
+			     gformat->format.height < format->format.height))
+				gformat = format;
+		}
+	}
+
+	return gformat;
 }
 
 static struct uvideo_stream *
@@ -1266,6 +1296,12 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 				uvideo_vs_frame_uncompressed_descriptor_t,
 				uvdesc,
 				format);
+			format->format.sample_size =
+			    UGETDW(
+			     ((const uvideo_vs_frame_uncompressed_descriptor_t *)
+			      uvdesc)->dwMaxVideoFrameBufferSize);
+			format->format.stride =
+			    format->format.sample_size / format->format.height;
 			index = GET(uvideo_vs_frame_uncompressed_descriptor_t,
 				    uvdesc,
 				    bFrameIndex);
@@ -1283,6 +1319,11 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 				uvideo_vs_frame_mjpeg_descriptor_t,
 				uvdesc,
 				format);
+			format->format.sample_size =
+			    UGETDW(((const uvideo_vs_frame_mjpeg_descriptor_t *)
+			     uvdesc)->dwMaxVideoFrameBufferSize);
+			format->format.stride =
+			    format->format.sample_size / format->format.height;
 			index = GET(uvideo_vs_frame_mjpeg_descriptor_t,
 				    uvdesc,
 				    bFrameIndex);
@@ -1303,6 +1344,11 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			index = GET(uvideo_frame_frame_based_descriptor_t,
 				    uvdesc,
 				    bFrameIndex);
+			format->format.stride =
+			    UGETDW(((const uvideo_frame_frame_based_descriptor_t *)
+			     uvdesc)->dwBytesPerLine);
+			format->format.sample_size =
+			    format->format.stride * format->format.height;
 			frame_interval =
 			    UGETDW(
 				GET(uvideo_frame_frame_based_descriptor_t,
@@ -1644,16 +1690,18 @@ static int
 uvideo_open(void *addr, int flags)
 {
 	struct uvideo_softc *sc;
+	struct uvideo_stream *vs;
 	struct video_format fmt;
 
 	sc = addr;
+	vs = sc->sc_stream_in;
 
 	DPRINTF(("uvideo_open: sc=%p\n", sc));
 	if (sc->sc_dying)
 		return EIO;
 
 	/* XXX select default format */
-	memset(&fmt, 0, sizeof(fmt));	/* uvideo_set_format doesn't care */
+	fmt = *vs->vs_default_format;
 	return uvideo_set_format(addr, &fmt);
 }
 
@@ -1707,10 +1755,7 @@ uvideo_get_format(void *addr, struct video_format *format)
 	if (sc->sc_dying)
 		return EIO;
 
-	if (vs->vs_current_format.priv != -1)
-		*format = vs->vs_current_format;
-	else
-		*format = *vs->vs_default_format;
+	*format = vs->vs_current_format;
 
 	return 0;
 }       
@@ -1737,16 +1782,6 @@ uvideo_set_format(void *addr, struct video_format *format)
 	vs = sc->sc_stream_in;
 	ifaceno = vs->vs_ifaceno;
 
-	/* TODO: If format comes from a previously enumerated format from
-	   this driver then it should have format and frame
-	   indicies. */
-	/*
-	probe.bFormatIndex = UVIDEO_FORMAT_GET_FORMAT_INDEX(
-		(struct uvideo_format *)format);
-	probe.bFrameIndex = UVIDEO_FORMAT_GET_FRAME_INDEX(
-		(struct uvideo_format *)format);
-	 */
-
 	/* probe/GET_CUR to see what the hardware is offering */
 	uvideo_init_probe_data(&probe);
 
@@ -1756,11 +1791,18 @@ uvideo_set_format(void *addr, struct video_format *format)
 			 usbd_errstr(err), err));
 	}
 
-	probe.bFormatIndex = UVIDEO_FORMAT_GET_FORMAT_INDEX(
-		(struct uvideo_format *)vs->vs_default_format);
-	probe.bFrameIndex = UVIDEO_FORMAT_GET_FRAME_INDEX(
-		(struct uvideo_format *)vs->vs_default_format);
-	USETDW(probe.dwFrameInterval, vs->vs_frame_interval);
+	uvfmt =	uvideo_stream_guess_format(vs, format->pixel_format,
+					   format->width, format->height);
+	if (uvfmt == NULL) {
+		DPRINTF(("uvideo: uvideo_stream_guess_format couldn't find "
+			 "%dx%d format %d\n", format->width, format->height,
+			 format->pixel_format));
+		return EINVAL;
+	}
+
+	probe.bFormatIndex = UVIDEO_FORMAT_GET_FORMAT_INDEX(uvfmt);
+	probe.bFrameIndex = UVIDEO_FORMAT_GET_FRAME_INDEX(uvfmt);
+	USETDW(probe.dwFrameInterval, vs->vs_frame_interval);	/* XXX */
 
 	/* commit/SET_CUR. Fourth step is to set the alternate
 	 * interface.  Currently the fourth step is in
@@ -1803,6 +1845,7 @@ uvideo_set_format(void *addr, struct video_format *format)
 	vs->vs_frame_interval = UGETDW(probe.dwFrameInterval);
 	vs->vs_max_payload_size = UGETDW(probe.dwMaxPayloadTransferSize);
 
+#if 0
 	uvfmt =	uvideo_stream_find_format(vs, probe.bFormatIndex,
 					  probe.bFrameIndex);
 	if (uvfmt != NULL) {
@@ -1811,11 +1854,14 @@ uvideo_set_format(void *addr, struct video_format *format)
 		DPRINTF(("uvideo_set_format: matching format not found\n"));
 		*format = *vs->vs_default_format;
 	}
+#else
+	*format = uvfmt->format;
+#endif
 
 	DPRINTF(("uvideo_set_format: pixeltype is %d\n", format->pixel_format));
 
-	format->sample_size = UGETDW(probe.dwMaxVideoFrameSize);
-	format->stride = format->sample_size / format->height;
+	/* format->sample_size = UGETDW(probe.dwMaxVideoFrameSize); */
+	/* format->stride = format->sample_size / format->height; */
 	/* format->color.primaries = */
 	/* format->color.gamma_function = */
 	/* format->color.matrix_coeff = */
@@ -1826,6 +1872,21 @@ uvideo_set_format(void *addr, struct video_format *format)
 	return 0;
 }
 
+static int
+uvideo_try_format(void *addr, struct video_format *format)
+{
+	struct uvideo_softc *sc = addr;
+	struct uvideo_stream *vs = sc->sc_stream_in;
+	struct uvideo_format *uvfmt;
+
+	uvfmt =	uvideo_stream_guess_format(vs, format->pixel_format,
+					   format->width, format->height);
+	if (uvfmt == NULL)
+		return EINVAL;
+
+	*format = uvfmt->format;
+	return 0;
+}
 
 static int
 uvideo_start_transfer(void *addr)
@@ -1847,11 +1908,14 @@ static int
 uvideo_stop_transfer(void *addr)
 {
 	struct uvideo_softc *sc;
-	int err;
+	int err, s;
 
 	sc = addr;
 
+	s = splusb();
 	err = uvideo_stream_stop_xfer(sc->sc_stream_in);
+	splx(s);
+
 	return err;
 }
 
