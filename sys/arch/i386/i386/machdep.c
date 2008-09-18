@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.641 2008/09/09 12:09:31 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.642 2008/09/18 15:57:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.641 2008/09/09 12:09:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.642 2008/09/18 15:57:04 christos Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -764,7 +764,7 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)catcher;
 	tf->tf_cs = GSEL(sel, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC|PSL_D);
+	tf->tf_eflags &= ~PSL_CLEARSIG;
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
