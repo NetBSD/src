@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.12 2008/04/28 20:23:44 martin Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.12.2.1 2008/09/18 04:36:45 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1995-2006, 2008  The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.12 2008/04/28 20:23:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.12.2.1 2008/09/18 04:36:45 wrstuden Exp $");
 
 #include "opt_compat_linux32.h"
 
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.12 2008/04/28 20:23:44 martin 
 #include <sys/filedesc.h>
 #include <sys/fcntl.h>
 #include <sys/termios.h>
+#include <sys/kernel.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -295,7 +296,20 @@ linux32_ioctl_termios(struct lwp *l, const struct linux32_sys_ioctl_args *uap, r
 		SCARG(&ia, com) = TIOCNOTTY;
 		break;
 	case LINUX32_TCSBRK:
-		SCARG(&ia, com) = SCARG_P32(uap, data) ? TIOCDRAIN : TIOCSBRK;
+		idat = (u_long)SCARG_P32(uap, data);
+		if (idat != 0)
+			SCARG(&ia, com) = TIOCDRAIN;
+		else {
+			if ((error = (*bsdioctl)(fp, TIOCSBRK, NULL)) != 0)
+				goto out;
+			error = tsleep(&idat, PZERO | PCATCH, "linux_tcsbrk", hz / 4);
+			if (error == EINTR || error == ERESTART) {
+				(void)(*bsdioctl)(fp, TIOCCBRK, NULL);
+				error = EINTR;
+			} else
+				error = (*bsdioctl)(fp, TIOCCBRK, NULL);
+			goto out;
+		}
 		break;
 	case LINUX32_TIOCMGET:
 		SCARG(&ia, com) = TIOCMGET;

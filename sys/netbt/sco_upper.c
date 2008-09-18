@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.7 2008/03/16 23:28:10 plunky Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.7.6.1 2008/09/18 04:37:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,12 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.7 2008/03/16 23:28:10 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.7.6.1 2008/09/18 04:37:00 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/socketvar.h>
 #include <sys/systm.h>
 
 #include <netbt/bluetooth.h>
@@ -311,16 +312,16 @@ sco_send(struct sco_pcb *pcb, struct mbuf *m)
 }
 
 /*
- * sco_setopt(pcb, option, addr)
+ * sco_setopt(pcb, sopt)
  *
  *	Set SCO pcb options
  */
 int
-sco_setopt(struct sco_pcb *pcb, int opt, void *addr)
+sco_setopt(struct sco_pcb *pcb, const struct sockopt *sopt)
 {
 	int err = 0;
 
-	switch (opt) {
+	switch (sopt->sopt_name) {
 	default:
 		err = ENOPROTOOPT;
 		break;
@@ -330,28 +331,28 @@ sco_setopt(struct sco_pcb *pcb, int opt, void *addr)
 }
 
 /*
- * sco_getopt(pcb, option, addr)
+ * sco_getopt(pcb, sopt)
  *
  *	Get SCO pcb options
  */
 int
-sco_getopt(struct sco_pcb *pcb, int opt, void *addr)
+sco_getopt(struct sco_pcb *pcb, struct sockopt *sopt)
 {
 
-	switch (opt) {
+	switch (sopt->sopt_name) {
 	case SO_SCO_MTU:
-		*(uint16_t *)addr = pcb->sp_mtu;
-		return sizeof(uint16_t);
+		return sockopt_set(sopt, &pcb->sp_mtu, sizeof(uint16_t));
 
 	case SO_SCO_HANDLE:
-		if (pcb->sp_link) {
-			*(uint16_t *)addr = pcb->sp_link->hl_handle;
-			return sizeof(uint16_t);
-		}
-		break;
+		if (pcb->sp_link)
+			return sockopt_set(sopt,
+			    &pcb->sp_link->hl_handle, sizeof(uint16_t));
+
+		return ENOTCONN;
 
 	default:
 		break;
 	}
-	return 0;
+
+	return ENOPROTOOPT;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.100.2.1 2008/06/23 04:29:53 wrstuden Exp $	*/
+/*	$NetBSD: pthread.c,v 1.100.2.2 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.100.2.1 2008/06/23 04:29:53 wrstuden Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.100.2.2 2008/09/18 04:39:24 wrstuden Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -415,7 +415,8 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	    newthread, startfunc, arg);
 
 	flag = LWP_DETACHED;
-	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0)
+	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0 ||
+	    (nattr.pta_flags & PT_FLAG_EXPLICIT_SCHED) != 0)
 		flag |= LWP_SUSPENDED;
 	ret = _lwp_create(&newthread->pt_uc, flag, &newthread->pt_lid);
 	if (ret != 0) {
@@ -425,6 +426,16 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		PTQ_INSERT_HEAD(&pthread__deadqueue, newthread, pt_deadq);
 		pthread_mutex_unlock(&pthread__deadqueue_lock);
 		return ret;
+	}
+
+	if ((nattr.pta_flags & PT_FLAG_EXPLICIT_SCHED) != 0) {
+		if (p != NULL) {
+			(void)pthread_setschedparam(newthread, p->ptap_policy,
+			    &p->ptap_sp);
+		}
+		if ((newthread->pt_flags & PT_FLAG_SUSPENDED) == 0) {
+			(void)_lwp_continue(newthread->pt_lid);
+		}
 	}
 
 	*thread = newthread;
@@ -594,6 +605,7 @@ pthread_join(pthread_t thread, void **valptr)
 		}
 
 	}
+	pthread__testcancel(self);
 	if (valptr != NULL)
 		*valptr = thread->pt_exitval;
 	/* pthread__reap() will drop the lock. */
@@ -1103,7 +1115,8 @@ pthread__unpark(pthread_queue_t *queue, pthread_t self,
 		pthread_mutex_t *interlock)
 {
 	pthread_t target;
-	u_int max, nwaiters;
+	u_int max;
+	size_t nwaiters;
 
 	max = pthread__unpark_max;
 	nwaiters = self->pt_nwaiters;
@@ -1126,7 +1139,8 @@ pthread__unpark_all(pthread_queue_t *queue, pthread_t self,
 		    pthread_mutex_t *interlock)
 {
 	pthread_t target;
-	u_int max, nwaiters;
+	u_int max;
+	size_t nwaiters;
 
 	max = pthread__unpark_max;
 	nwaiters = self->pt_nwaiters;
@@ -1289,4 +1303,18 @@ pthread__hashlock(volatile const void *p)
 
 	v = (uintptr_t)p;
 	return &hashlocks[((v >> 9) ^ (v >> 3)) & (NHASHLOCK - 1)].mutex;
+}
+
+int
+pthread__checkpri(int pri)
+{
+	static int havepri;
+	static long min, max;
+
+	if (!havepri) {
+		min = sysconf(_SC_SCHED_PRI_MIN);
+		max = sysconf(_SC_SCHED_PRI_MAX);
+		havepri = 1;
+	}
+	return (pri < min || pri > max) ? EINVAL : 0;
 }

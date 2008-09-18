@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.278.6.1 2008/06/23 04:30:46 wrstuden Exp $	*/
+/*	$NetBSD: locore.s,v 1.278.6.2 2008/09/18 04:33:34 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -703,8 +703,8 @@ _C_LABEL(trapbase):
 	UTRAP(0x019); UTRAP(0x01a); UTRAP(0x01b); UTRAP(0x01c); UTRAP(0x01d)
 	UTRAP(0x01e); UTRAP(0x01f)
 	TRAP(T_FPDISABLED)		! 020 = fp instr, but EF bit off in psr
-	VTRAP(T_FP_IEEE_754, fp_exception)	! 021 = ieee 754 exception
-	VTRAP(T_FP_OTHER, fp_exception)		! 022 = other fp exception
+	TRAP(T_FP_IEEE_754)		! 021 = ieee 754 exception
+	TRAP(T_FP_OTHER)		! 022 = other fp exception
 	TRAP(T_TAGOF)			! 023 = tag overflow
 	TRACEWIN			! DEBUG -- 4 insns
 	rdpr %cleanwin, %o7		! 024-027 = clean window trap
@@ -958,8 +958,8 @@ ktextfault:
 	UTRAP(0x019); UTRAP(0x01a); UTRAP(0x01b); UTRAP(0x01c); UTRAP(0x01d)
 	UTRAP(0x01e); UTRAP(0x01f)
 	TRAP(T_FPDISABLED)		! 020 = fp instr, but EF bit off in psr
-	VTRAP(T_FP_IEEE_754, fp_exception) ! 021 = ieee 754 exception
-	VTRAP(T_FP_OTHER, fp_exception)	! 022 = other fp exception
+	TRAP(T_FP_IEEE_754)		! 021 = ieee 754 exception
+	TRAP(T_FP_OTHER)		! 022 = other fp exception
 	TRAP(T_TAGOF)			! 023 = tag overflow
 	TRACEWIN			! DEBUG
 	clr	%l0
@@ -2962,30 +2962,6 @@ text_error:
 	NOTREACHED
 
 /*
- * fp_exception has to check to see if we are trying to save
- * the FP state, and if so, continue to save the FP state.
- *
- * We do not even bother checking to see if we were in kernel mode,
- * since users have no access to the special_fp_store instruction.
- *
- * This whole idea was stolen from Sprite.
- */
-/*
- * XXX I don't think this is at all relevant for V9.
- */
-fp_exception:
-	rdpr	%tpc, %g1
-	set	special_fp_store, %g4	! see if we came from the special one
-	cmp	%g1, %g4		! pc == special_fp_store?
-	bne	slowtrap		! no, go handle per usual
-	 sethi	%hi(savefpcont), %g4	! yes, "return" to the special code
-	or	%lo(savefpcont), %g4, %g4
-	wrpr	%g0, %g4, %tnpc
-	 done
-	NOTREACHED
-
-
-/*
  * We're here because we took an alignment fault in NUCLEUS context.
  * This could be a kernel bug or it could be due to saving a user
  * window to an invalid stack pointer.  
@@ -3641,6 +3617,7 @@ interrupt_vector:
 
 	btst	IRSR_BUSY, %g1
 	bz,pn	%icc, 3f		! spurious interrupt
+#ifdef MULTIPROCESSOR
 	 sethi	%hi(KERNBASE), %g1
 
 	cmp	%g7, %g1
@@ -3657,6 +3634,9 @@ interrupt_vector:
 
 	jmpl	%g7, %g0
 	 nop
+#else
+	 cmp	%g7, MAXINTNUM
+#endif
 
 Lsoftint_regular:
 	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
@@ -3683,7 +3663,7 @@ setup_sparcintr:
 	mov	%g5, %g7
 	CASPTR	[%g1] ASI_N, %g3, %g7
 	cmp	%g7, %g3		! Did it work?
-	bne,pn	%xcc, 1b		! No, try again
+	bne,pn	CCCR, 1b		! No, try again
 	 nop
 2:
 	mov	1, %g7
@@ -4147,7 +4127,7 @@ sparc_intr_retry:
 	membar	#LoadStore
 	CASPTR	[%l4] ASI_N, %l2, %l7	! Grab the entire list
 	cmp	%l7, %l2
-	bne,pn	%icc, 1b
+	bne,pn	CCCR, 1b
 	 nop
 2:
 	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
@@ -9512,120 +9492,76 @@ ENTRY(sparc64_ipi_save_fpstate)
 	sethi	%hi(FPLWP), %g1
 	LDPTR	[%g1 + %lo(FPLWP)], %g3
 	cmp	%g3, %g2
-	bne,pn	CCCR, 7f		! skip if fplwp != %g2
+	bne,pn	CCCR, 7f		! skip if fplwp has changed
 
-	 mov	CTX_SECONDARY, %g5
-	ldxa	[%g5] ASI_DMMU, %g6
-	membar	#LoadStore
-	stxa	%g0, [%g5] ASI_DMMU
-	membar	#Sync
-
-	LDPTR	[%g3 + L_FPSTATE], %g3
-
-	rdpr	%pstate, %g2		! enable FP before we begin
+	 rdpr	%pstate, %g2		! enable FP before we begin
 	rd	%fprs, %g5
 	wr	%g0, FPRS_FEF, %fprs
 	or	%g2, PSTATE_PEF, %g2
 	wrpr	%g2, 0, %pstate
 
+	LDPTR	[%g3 + L_FPSTATE], %g3
 	stx	%fsr, [%g3 + FS_FSR]	! f->fs_fsr = getfsr();
-
 	rd	%gsr, %g2		! Save %gsr
 	st	%g2, [%g3 + FS_GSR]
-
+#if FS_REGS > 0
 	add	%g3, FS_REGS, %g3
+#endif
+#ifdef DIAGNOSTIC
 	btst	BLOCK_ALIGN, %g3	! Needs to be re-executed
-	bnz,pn	%icc, 3f		! Check alignment
+	bnz,pn	%icc, 6f		! Check alignment
+#endif
 	 st	%g0, [%g3 + FS_QSIZE - FS_REGS]	! f->fs_qsize = 0;
-	btst	FPRS_DL, %g5		! Lower FPU clean?
-	bz,a,pt	%icc, 1f		! Then skip it
-	 add	%g3, 128, %g3		! Skip a block
+	btst	FPRS_DL|FPRS_DU, %g5	! Both FPU halves clean?
+	bz,pt	%icc, 5f		! Then skip it
+
+	 mov	CTX_PRIMARY, %g2
+	ldxa	[%g2] ASI_DMMU, %g6
+	membar	#LoadStore
+	stxa	%g0, [%g2] ASI_DMMU	! Switch MMU to kernel primary context
 	membar	#Sync
-	stda	%f0, [%g3] ASI_BLK_S	! f->fs_f0 = etc;
+
+	btst	FPRS_DL, %g5		! Lower FPU clean?
+	bz,a,pt	%icc, 1f		! Then skip it, but upper FPU not clean
+	 add	%g3, 2*BLOCK_SIZE, %g3	! Skip a block
+
+	stda	%f0, [%g3] ASI_BLK_P	! f->fs_f0 = etc;
 	inc	BLOCK_SIZE, %g3
-	stda	%f16, [%g3] ASI_BLK_S
-	inc	BLOCK_SIZE, %g3
-1:
+	stda	%f16, [%g3] ASI_BLK_P
+
 	btst	FPRS_DU, %g5		! Upper FPU clean?
 	bz,pt	%icc, 2f		! Then skip it
-	 nop
-
-	membar	#Sync
-	stda	%f32, [%g3] ASI_BLK_S
+	 inc	BLOCK_SIZE, %g3
+1:
+	stda	%f32, [%g3] ASI_BLK_P
 	inc	BLOCK_SIZE, %g3
-	stda	%f48, [%g3] ASI_BLK_S
+	stda	%f48, [%g3] ASI_BLK_P
 2:
 	membar	#Sync			! Finish operation so we can
-	wr	%g0, FPRS_FEF, %fprs	! Mark FPU clean
-
-	mov	CTX_SECONDARY, %g5
-	STPTR	%g0, [%g1 + %lo(FPLWP)]	! fplwp = NULL
-	stxa	%g6, [%g5] ASI_DMMU
+	brz,pn	%g6, 5f			! Skip if context 0
+	 nop
+	stxa	%g6, [%g2] ASI_DMMU	! Restore primary context
 	membar	#Sync
+5:
+	wr	%g0, FPRS_FEF, %fprs	! Mark FPU clean
+	STPTR	%g0, [%g1 + %lo(FPLWP)]	! fplwp = NULL
 7:
 	IPIEVC_INC(IPI_EVCNT_FPU_SYNCH,%g2,%g3)
 	ba,a	ret_from_intr_vector
 	 nop
 
-3:
-#ifdef DIAGONSTIC
-	btst	7, %g3			! 32-bit aligned!?!?
-	bnz,pn	%icc, 6f
-#endif
-	 btst	FPRS_DL, %g5		! Lower FPU clean?
-	bz,a,pt	%icc, 4f		! Then skip it
-	 add	%g3, 128, %g3
-
-	membar	#Sync
-	std	%f0, [%g3 + FS_REGS + (4*0)]	! f->fs_f0 = etc;
-	std	%f2, [%g3 + FS_REGS + (4*2)]
-	std	%f4, [%g3 + FS_REGS + (4*4)]
-	std	%f6, [%g3 + FS_REGS + (4*6)]
-	std	%f8, [%g3 + FS_REGS + (4*8)]
-	std	%f10, [%g3 + FS_REGS + (4*10)]
-	std	%f12, [%g3 + FS_REGS + (4*12)]
-	std	%f14, [%g3 + FS_REGS + (4*14)]
-	std	%f16, [%g3 + FS_REGS + (4*16)]
-	std	%f18, [%g3 + FS_REGS + (4*18)]
-	std	%f20, [%g3 + FS_REGS + (4*20)]
-	std	%f22, [%g3 + FS_REGS + (4*22)]
-	std	%f24, [%g3 + FS_REGS + (4*24)]
-	std	%f26, [%g3 + FS_REGS + (4*26)]
-	std	%f28, [%g3 + FS_REGS + (4*28)]
-	std	%f30, [%g3 + FS_REGS + (4*30)]
-4:
-	btst	FPRS_DU, %g5		! Upper FPU clean?
-	bz,pt	%icc, 2b		! Then skip it
-	 nop
-
-	membar	#Sync
-	std	%f32, [%g3 + FS_REGS + (4*32)]
-	std	%f34, [%g3 + FS_REGS + (4*34)]
-	std	%f36, [%g3 + FS_REGS + (4*36)]
-	std	%f38, [%g3 + FS_REGS + (4*38)]
-	std	%f40, [%g3 + FS_REGS + (4*40)]
-	std	%f42, [%g3 + FS_REGS + (4*42)]
-	std	%f44, [%g3 + FS_REGS + (4*44)]
-	std	%f46, [%g3 + FS_REGS + (4*46)]
-	std	%f48, [%g3 + FS_REGS + (4*48)]
-	std	%f50, [%g3 + FS_REGS + (4*50)]
-	std	%f52, [%g3 + FS_REGS + (4*52)]
-	std	%f54, [%g3 + FS_REGS + (4*54)]
-	std	%f56, [%g3 + FS_REGS + (4*56)]
-	std	%f58, [%g3 + FS_REGS + (4*58)]
-	std	%f60, [%g3 + FS_REGS + (4*60)]
-	ba	2b
-	 std	%f62, [%g3 + FS_REGS + (4*62)]
-
+#ifdef DIAGNOSTIC
 	!!
 	!! Damn thing is *NOT* aligned on a 64-byte boundary
 	!! 
 6:
 	wr	%g0, FPRS_FEF, %fprs
+	! XXX -- we should panic instead of silently entering debugger
 	ta	1
 	 nop
 	ba,a	ret_from_intr_vector
 	 nop
+#endif
 
 /*
  * IPI handler to drop the current FPU state.
@@ -9661,8 +9597,7 @@ ENTRY(clearfpstate)
 /*
  * savefpstate(f) struct fpstate *f;
  *
- * Store the current FPU state.  The first `st %fsr' may cause a trap;
- * our trap handler knows how to recover (by `returning' to savefpcont).
+ * Store the current FPU state.
  *
  * Since the kernel may need to use the FPU and we have problems atomically
  * testing and enabling the FPU, we leave here with the FPRS_FEF bit set.
@@ -9676,144 +9611,53 @@ ENTRY(savefpstate)
 	wr	%g0, FPRS_FEF, %fprs
 	or	%o1, PSTATE_PEF, %o1
 	wrpr	%o1, 0, %pstate
-	/* do some setup work while we wait for PSR_EF to turn on */
-	set	FSR_QNE, %o2		! QNE = 0x2000, too big for immediate
-	clr	%o3			! qsize = 0;
-special_fp_store:
-	/* This may need to be done w/rdpr/stx combo */
+
 	stx	%fsr, [%o0 + FS_FSR]	! f->fs_fsr = getfsr();
-	/*
-	 * Even if the preceding instruction did not trap, the queue
-	 * is not necessarily empty: this state save might be happening
-	 * because user code tried to store %fsr and took the FPU
-	 * from `exception pending' mode to `exception' mode.
-	 * So we still have to check the blasted QNE bit.
-	 * With any luck it will usually not be set.
-	 */
 	rd	%gsr, %o4		! Save %gsr
 	st	%o4, [%o0 + FS_GSR]
 
-	ldx	[%o0 + FS_FSR], %o4	! if (f->fs_fsr & QNE)
-	btst	%o2, %o4
-	bnz	Lfp_storeq		!	goto storeq;
-	 nop
-Lfp_finish:
 	add	%o0, FS_REGS, %o2
+#ifdef DIAGNOSTIC
 	btst	BLOCK_ALIGN, %o2	! Needs to be re-executed
-	bnz,pn	%icc, 3f		! Check alignment
-	 st	%o3, [%o0 + FS_QSIZE]	! f->fs_qsize = qsize;
-	btst	FPRS_DL, %o5		! Lower FPU clean?
-	bz,a,pt	%icc, 1f		! Then skip it
-	 add	%o2, 128, %o2		! Skip a block
+	bnz,pn	%icc, 6f		! Check alignment
+#endif
+	 st	%g0, [%o0 + FS_QSIZE]	! f->fs_qsize = 0;
+	btst	FPRS_DL|FPRS_DU, %o5	! Both FPU halves clean?
+	bz,pt	%icc, 5f		! Then skip it
 
+	 btst	FPRS_DL, %o5		! Lower FPU clean?
 	membar	#Sync
-	stda	%f0, [%o2] ASI_BLK_COMMIT_P	! f->fs_f0 = etc;
+	bz,a,pt	%icc, 1f		! Then skip it, but upper FPU not clean
+	 add	%o2, 2*BLOCK_SIZE, %o2	! Skip a block
+
+	stda	%f0, [%o2] ASI_BLK_P	! f->fs_f0 = etc;
 	inc	BLOCK_SIZE, %o2
-	stda	%f16, [%o2] ASI_BLK_COMMIT_P
-	inc	BLOCK_SIZE, %o2
-1:
+	stda	%f16, [%o2] ASI_BLK_P
+
 	btst	FPRS_DU, %o5		! Upper FPU clean?
 	bz,pt	%icc, 2f		! Then skip it
-	 nop
-
-	membar	#Sync
-	stda	%f32, [%o2] ASI_BLK_COMMIT_P
+	 inc	BLOCK_SIZE, %o2
+1:
+	stda	%f32, [%o2] ASI_BLK_P
 	inc	BLOCK_SIZE, %o2
-	stda	%f48, [%o2] ASI_BLK_COMMIT_P
+	stda	%f48, [%o2] ASI_BLK_P
 2:
 	membar	#Sync			! Finish operation so we can
+5:
 	retl
 	 wr	%g0, FPRS_FEF, %fprs	! Mark FPU clean
-3:
-#ifdef DIAGONSTIC
-	btst	7, %o2			! 32-bit aligned!?!?
-	bnz,pn	%icc, 6f
-#endif
-	 btst	FPRS_DL, %o5		! Lower FPU clean?
-	bz,a,pt	%icc, 4f		! Then skip it
-	 add	%o0, 128, %o0
 
-	membar	#Sync
-	std	%f0, [%o0 + FS_REGS + (4*0)]	! f->fs_f0 = etc;
-	std	%f2, [%o0 + FS_REGS + (4*2)]
-	std	%f4, [%o0 + FS_REGS + (4*4)]
-	std	%f6, [%o0 + FS_REGS + (4*6)]
-	std	%f8, [%o0 + FS_REGS + (4*8)]
-	std	%f10, [%o0 + FS_REGS + (4*10)]
-	std	%f12, [%o0 + FS_REGS + (4*12)]
-	std	%f14, [%o0 + FS_REGS + (4*14)]
-	std	%f16, [%o0 + FS_REGS + (4*16)]
-	std	%f18, [%o0 + FS_REGS + (4*18)]
-	std	%f20, [%o0 + FS_REGS + (4*20)]
-	std	%f22, [%o0 + FS_REGS + (4*22)]
-	std	%f24, [%o0 + FS_REGS + (4*24)]
-	std	%f26, [%o0 + FS_REGS + (4*26)]
-	std	%f28, [%o0 + FS_REGS + (4*28)]
-	std	%f30, [%o0 + FS_REGS + (4*30)]
-4:
-	btst	FPRS_DU, %o5		! Upper FPU clean?
-	bz,pt	%icc, 5f		! Then skip it
-	 nop
-
-	membar	#Sync
-	std	%f32, [%o0 + FS_REGS + (4*32)]
-	std	%f34, [%o0 + FS_REGS + (4*34)]
-	std	%f36, [%o0 + FS_REGS + (4*36)]
-	std	%f38, [%o0 + FS_REGS + (4*38)]
-	std	%f40, [%o0 + FS_REGS + (4*40)]
-	std	%f42, [%o0 + FS_REGS + (4*42)]
-	std	%f44, [%o0 + FS_REGS + (4*44)]
-	std	%f46, [%o0 + FS_REGS + (4*46)]
-	std	%f48, [%o0 + FS_REGS + (4*48)]
-	std	%f50, [%o0 + FS_REGS + (4*50)]
-	std	%f52, [%o0 + FS_REGS + (4*52)]
-	std	%f54, [%o0 + FS_REGS + (4*54)]
-	std	%f56, [%o0 + FS_REGS + (4*56)]
-	std	%f58, [%o0 + FS_REGS + (4*58)]
-	std	%f60, [%o0 + FS_REGS + (4*60)]
-	std	%f62, [%o0 + FS_REGS + (4*62)]
-5:
-	membar	#Sync
-	retl
-	 wr	%g0, FPRS_FEF, %fprs		! Mark FPU clean
-
+#ifdef DIAGNOSTIC
 	!!
-	!! Damn thing is *NOT* aligned on a 64-bit boundary
+	!! Damn thing is *NOT* aligned on a 64-byte boundary
 	!! 
 6:
 	wr	%g0, FPRS_FEF, %fprs
+	! XXX -- we should panic instead of silently entering debugger
 	ta	1
 	retl
 	 nop
-	
-/*
- * Store the (now known nonempty) FP queue.
- * We have to reread the fsr each time in order to get the new QNE bit.
- *
- * UltraSPARCs don't have floating point queues.
- */
-Lfp_storeq:
-	add	%o0, FS_QUEUE, %o1	! q = &f->fs_queue[0];
-1:
-	rdpr	%fq, %o4
-	stx	%o4, [%o1 + %o3]	! q[qsize++] = fsr_qfront();
-	stx	%fsr, [%o0 + FS_FSR] 	! reread fsr
-	ldx	[%o0 + FS_FSR], %o4	! if fsr & QNE, loop
-	btst	%o2, %o4
-	bnz	1b
-	 inc	8, %o3
-	b	Lfp_finish		! set qsize and finish storing fregs
-	 srl	%o3, 3, %o3		! (but first fix qsize)
-
-/*
- * The fsr store trapped.  Do it again; this time it will not trap.
- * We could just have the trap handler return to the `st %fsr', but
- * if for some reason it *does* trap, that would lock us into a tight
- * loop.  This way we panic instead.  Whoopee.
- */
-savefpcont:
-	b	special_fp_store + 4	! continue
-	 stx	%fsr, [%o0 + FS_FSR]	! but first finish the %fsr store
+#endif
 
 /*
  * Load FPU state.
@@ -9829,8 +9673,10 @@ ENTRY(loadfpstate)
 	wrpr	%o1, 0, %pstate
 	ldx	[%o0 + FS_FSR], %fsr	! setfsr(f->fs_fsr);
 	add	%o0, FS_REGS, %o3	! This is zero...
+#ifdef DIAGNOSTIC
 	btst	BLOCK_ALIGN, %o3
-	bne,pt	%icc, 1f	! Only use block loads on aligned blocks
+	bne,pn	%icc, 1f	! Only use block loads on aligned blocks
+#endif
 	 wr	%o4, %g0, %gsr
 	membar	#Sync
 	ldda	[%o3] ASI_BLK_P, %f0
@@ -9843,55 +9689,19 @@ ENTRY(loadfpstate)
 	membar	#Sync			! Make sure loads are complete
 	retl
 	 wr	%g0, FPRS_FEF, %fprs	! Clear dirty bits
-1:
-#ifdef DIAGNOSTIC
-	btst	7, %o3
-	bne,pn	%icc, 1f
-	 nop
-#endif
-	/* Unaligned -- needs to be done the long way */
-	membar	#Sync
-	ldd	[%o3 + (4*0)], %f0
-	ldd	[%o3 + (4*2)], %f2
-	ldd	[%o3 + (4*4)], %f4
-	ldd	[%o3 + (4*6)], %f6
-	ldd	[%o3 + (4*8)], %f8
-	ldd	[%o3 + (4*10)], %f10
-	ldd	[%o3 + (4*12)], %f12
-	ldd	[%o3 + (4*14)], %f14
-	ldd	[%o3 + (4*16)], %f16
-	ldd	[%o3 + (4*18)], %f18
-	ldd	[%o3 + (4*20)], %f20
-	ldd	[%o3 + (4*22)], %f22
-	ldd	[%o3 + (4*24)], %f24
-	ldd	[%o3 + (4*26)], %f26
-	ldd	[%o3 + (4*28)], %f28
-	ldd	[%o3 + (4*30)], %f30
-	ldd	[%o3 + (4*32)], %f32
-	ldd	[%o3 + (4*34)], %f34
-	ldd	[%o3 + (4*36)], %f36
-	ldd	[%o3 + (4*38)], %f38
-	ldd	[%o3 + (4*40)], %f40
-	ldd	[%o3 + (4*42)], %f42
-	ldd	[%o3 + (4*44)], %f44
-	ldd	[%o3 + (4*46)], %f46
-	ldd	[%o3 + (4*48)], %f48
-	ldd	[%o3 + (4*50)], %f50
-	ldd	[%o3 + (4*52)], %f52
-	ldd	[%o3 + (4*54)], %f54
-	ldd	[%o3 + (4*56)], %f56
-	ldd	[%o3 + (4*58)], %f58
-	ldd	[%o3 + (4*60)], %f60
- 	ldd	[%o3 + (4*62)], %f62
-	membar	#Sync
-	retl
-	 wr	%g0, FPRS_FEF, %fprs	! Clear dirty bits
 
+#ifdef DIAGNOSTIC
+	!!
+	!! Damn thing is *NOT* aligned on a 64-byte boundary
+	!! 
 1:
 	wr	%g0, FPRS_FEF, %fprs	! Clear dirty bits
+	! XXX -- we should panic instead of silently entering debugger
 	ta	1
 	retl
 	 nop
+#endif
+
 /*
  * ienab_bis(bis) int bis;
  * ienab_bic(bic) int bic;
@@ -9937,7 +9747,7 @@ ENTRY(send_softint)
 	mov	%o2, %o4
 	CASPTR	[%o3] ASI_N, %o5, %o4
 	cmp	%o4, %o5		! Did it work?
-	bne,pn	%xcc, 2b		! No, try again
+	bne,pn	CCCR, 2b		! No, try again
 	 nop
 
 	mov	1, %o3			! Change from level to bitmask

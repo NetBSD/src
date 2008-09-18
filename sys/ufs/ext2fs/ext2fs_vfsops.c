@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.134.2.1 2008/06/23 04:32:05 wrstuden Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.134.2.2 2008/09/18 04:37:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.134.2.1 2008/06/23 04:32:05 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.134.2.2 2008/09/18 04:37:05 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -113,6 +113,8 @@ extern kmutex_t ufs_hashlock;
 
 int ext2fs_sbupdate(struct ufsmount *, int);
 static int ext2fs_checksb(struct ext2fs *, int);
+
+static struct sysctllog *ext2fs_sysctl_log;
 
 extern const struct vnodeopv_desc ext2fs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc ext2fs_specop_opv_desc;
@@ -169,15 +171,42 @@ static const struct ufs_ops ext2fs_ufsops = {
 static int
 ext2fs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&ext2fs_vfsops);
+		error = vfs_attach(&ext2fs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_createv(&ext2fs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "vfs", NULL,
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, CTL_EOL);
+		sysctl_createv(&ext2fs_sysctl_log, 0, NULL, NULL,
+			       CTLFLAG_PERMANENT,
+			       CTLTYPE_NODE, "ext2fs",
+			       SYSCTL_DESCR("Linux EXT2FS file system"),
+			       NULL, 0, NULL, 0,
+			       CTL_VFS, 17, CTL_EOL);
+		/*
+		 * XXX the "17" above could be dynamic, thereby eliminating
+		 * one more instance of the "number to vfs" mapping problem,
+		 * but "17" is the order as taken from sys/mount.h
+		 */
+		break;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&ext2fs_vfsops);
+		error = vfs_detach(&ext2fs_vfsops);
+		if (error != 0)
+			break;
+		sysctl_teardown(&ext2fs_sysctl_log);
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
+		break;
 	}
+
+	return (error);
 }
 
 /*
@@ -1138,27 +1167,6 @@ ext2fs_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 	ufh.ufid_gen = ip->i_e2fs_gen;
 	memcpy(fhp, &ufh, sizeof(ufh));
 	return (0);
-}
-
-SYSCTL_SETUP(sysctl_vfs_ext2fs_setup, "sysctl vfs.ext2fs subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ext2fs",
-		       SYSCTL_DESCR("Linux EXT2FS file system"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, 17, CTL_EOL);
-	/*
-	 * XXX the "17" above could be dynamic, thereby eliminating
-	 * one more instance of the "number to vfs" mapping problem,
-	 * but "17" is the order as taken from sys/mount.h
-	 */
 }
 
 /*

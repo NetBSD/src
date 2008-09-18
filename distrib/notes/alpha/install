@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.33 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: install,v 1.33.2.1 2008/09/18 04:41:10 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -161,7 +161,7 @@ is available there as well.
 Once the floppy has been made, you simply need to put it in the
 drive and type
 .Pp
-.Dl \*>\*>\*> Ic "B DVA0"
+.Dl \*[Gt]\*[Gt]\*[Gt] Ic "B DVA0"
 .Pp
 .It
 CD boot
@@ -379,13 +379,13 @@ will not.
 .Pp
 Once you're set up, you should be able to boot with:
 .Pp
-.Dl \*>\*>\*> Ic "boot -proto bootp ewa0"
+.Dl \*[Gt]\*[Gt]\*[Gt] Ic "boot -proto bootp ewa0"
 .Pp
 You should permanently set your protocol to
 .Tn BOOTP
 with:
 .Pp
-.Dl \*>\*>\*> Ic "set ewa0_protocols bootp"
+.Dl \*[Gt]\*[Gt]\*[Gt] Ic "set ewa0_protocols bootp"
 .Pp
 The 3000 series of Turbochannel systems and certain other models use
 .Em old SRM ,
@@ -412,7 +412,7 @@ boot program.
 .It
 Example:
 .Pp
-.Dl \*>\*>\*> Ic "boot ez0"
+.Dl \*[Gt]\*[Gt]\*[Gt] Ic "boot ez0"
 .bullet)
 .bullet)
 .
@@ -653,7 +653,7 @@ If the host you are getting the data files from is not on the
 local network, you will also have to configure a gateway into your system.
 Do this with
 .Pp
-.Dl # Ic "route add default \*<gateway-IP-address\*>"
+.Dl # Ic "route add default \*[Lt]gateway-IP-address\*[Gt]"
 .Pp
 One improvement over the good old days is that the resolver is now
 present; by configuring
@@ -665,7 +665,7 @@ with the install files via NFS, or download them via FTP.
 .Pp
 To mount them via nfs, type
 .Pp
-.Dl # Ic "mount -t nfs \*<hostname:/path/to/nfs/volume\*> /mnt2"
+.Dl # Ic "mount -t nfs \*[Lt]hostname:/path/to/nfs/volume\*[Gt] /mnt2"
 .Pp
 If this volume has been exported read-only, you may need the
 .Fl r
@@ -681,10 +681,10 @@ A typical session might be:
 .Dl # Ic cd /mnt/usr/release
 .Dl # Ic ftp ftp.NetBSD.org
 .D1 Em "the following commands are given to the " Ic ftp Em "program after logging in"
-.Dl ftp\*> Ic "prompt"
-.Dl ftp\*> Ic "cd /pub/NetBSD/NetBSD-\*V/\*M/binary/sets"
-.Dl ftp\*> Ic "mget *"
-.Dl ftp\*> Ic "quit"
+.Dl ftp\*[Gt] Ic "prompt"
+.Dl ftp\*[Gt] Ic "cd /pub/NetBSD/NetBSD-\*V/\*M/binary/sets"
+.Dl ftp\*[Gt] Ic "mget *"
+.Dl ftp\*[Gt] Ic "quit"
 .Pp
 Feel free, of course, to leave off the sets that you don't need
 if you don't plan to install everything.
@@ -742,12 +742,12 @@ you created, but typically the commands are:
 .Dl # Ic "halt"
 .Pp
 You should now be at the SRM console's
-.Li \*>\*>\*>
+.Li \*[Gt]\*[Gt]\*[Gt]
 prompt and can reboot
 into the new configuration (possibly after an optional power cycle)
 with a command such as:
 .Pp
-.Dl \*>\*>\*> Ic "boot dka0"
+.Dl \*[Gt]\*[Gt]\*[Gt] Ic "boot dka0"
 .Pp
 This command might be:
 .Ic "boot dka100"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.58.4.1 2008/06/23 04:30:50 wrstuden Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.58.4.2 2008/09/18 04:33:38 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.58.4.1 2008/06/23 04:30:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.58.4.2 2008/09/18 04:33:38 wrstuden Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -203,7 +203,7 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		mpi->redir = (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
 #if NIOAPIC > 0
 		if (pic->pic_type == PIC_IOAPIC) {
-			((struct ioapic_softc *)pic)->sc_pins[pin].ip_map = mpi;
+			pic->pic_ioapic->sc_pins[pin].ip_map = mpi;
 			mpi->ioapic_ih = APIC_INT_VIA_APIC |
 			    (pic->pic_apicid << APIC_INT_APIC_SHIFT) |
 			    (pin << APIC_INT_PIN_SHIFT);
@@ -299,7 +299,7 @@ mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		mpi->flags = isa_ovr->IntiFlags;
 #if NIOAPIC > 0
 		if (pic->pic_type == PIC_IOAPIC)
-			((struct ioapic_softc *)pic)->sc_pins[pin].ip_map = mpi;
+			pic->pic_ioapic->sc_pins[pin].ip_map = mpi;
 #endif
 		if (isa_ovr->SourceIrq == AcpiGbl_FADT.SciInterrupt)
 			mpacpi_sci_override = mpi;
@@ -750,8 +750,14 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 			break;
 		dev = ACPI_HIWORD(ptrp->Address);
 
+		if (ptrp->Source[0] == 0 &&
+		    (ptrp->SourceIndex == 14 || ptrp->SourceIndex == 15)) {
+			printf("Skipping PCI routing entry for PCI IDE compat IRQ");
+			continue;
+		}
+
 		mpi = &mp_intrs[mpacpi_intr_index];
-		mpi->bus_pin = (dev << 2) | ptrp->Pin;
+		mpi->bus_pin = (dev << 2) | (ptrp->Pin & 3);
 		mpi->bus = mpb;
 		mpi->type = MPS_INTTYPE_INT;
 
@@ -772,7 +778,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		if (ptrp->Source[0] != 0) {
 			if (mp_verbose > 1)
 				printf("pciroute: dev %d INT%c on lnkdev %s\n",
-				    dev, 'A' + ptrp->Pin, ptrp->Source);
+				    dev, 'A' + (ptrp->Pin & 3), ptrp->Source);
 			mpi->global_int = -1;
 			mpi->sourceindex = ptrp->SourceIndex;
 			if (AcpiGetHandle(ACPI_ROOT_OBJECT, ptrp->Source,
@@ -785,7 +791,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 			mpi->ioapic_pin = -1;
 			mpi->linkdev = acpi_pci_link_devbyhandle(linkdev);
 			acpi_pci_link_add_reference(mpi->linkdev, 0,
-			    mpr->mpr_bus, dev, ptrp->Pin);
+			    mpr->mpr_bus, dev, ptrp->Pin & 3);
 			mpi->ioapic = NULL;
 			mpi->flags = MPS_INTPO_ACTLO | (MPS_INTTR_LEVEL << 2);
 			if (mp_verbose > 1)
@@ -793,7 +799,8 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 		} else {
 			if (mp_verbose > 1)
 				printf("pciroute: dev %d INT%c on globint %d\n",
-				    dev, 'A' + ptrp->Pin, ptrp->SourceIndex);
+				    dev, 'A' + (ptrp->Pin & 3),
+				    ptrp->SourceIndex);
 			mpi->sourceindex = 0;
 			mpi->global_int = ptrp->SourceIndex;
 			pic = intr_findpic(ptrp->SourceIndex);
@@ -810,7 +817,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 			mpi->ioapic_pin = pin;
 #if NIOAPIC > 0
 			if (pic->pic_type == PIC_IOAPIC) {
-				((struct ioapic_softc *)pic)->sc_pins[pin].ip_map = mpi;
+				pic->pic_ioapic->sc_pins[pin].ip_map = mpi;
 				mpi->ioapic_ih = APIC_INT_VIA_APIC |
 				    (pic->pic_apicid << APIC_INT_APIC_SHIFT) |
 				    (pin << APIC_INT_PIN_SHIFT);
@@ -938,7 +945,7 @@ mpacpi_config_irouting(struct acpi_softc *acpi)
 			    (i << APIC_INT_PIN_SHIFT);
 			mpi->redir =
 			    (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
-			((struct ioapic_softc *)pic)->sc_pins[i].ip_map = mpi;
+			pic->pic_ioapic->sc_pins[i].ip_map = mpi;
 		} else
 #endif
 			mpi->ioapic_ih = i;
@@ -1027,7 +1034,7 @@ mpacpi_print_intr(struct mp_intr_map *mpi)
 		    acpi_pci_link_name(mpi->linkdev), busname);
 	else
 		printf("%s: pin %d attached to %s",
-		    sc ? device_xname(&sc->pic_dev) : "local apic",
+		    sc ? sc->pic_name : "local apic",
 		    pin, busname);
 
 	if (mpi->bus != NULL) {
@@ -1144,7 +1151,7 @@ mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 	mpb->mb_pci_chipset_tag = pba->pba_pc;
 
 	if (mp_verbose)
-		printf("%s: added to list as bus %d\n", device_xname(parent),
+		printf("\n%s: added to list as bus %d", device_xname(parent),
 		    pba->pba_bus);
 
 
@@ -1227,7 +1234,7 @@ mpacpi_findintr_linkdev(struct mp_intr_map *mip)
 		mip->ioapic_ih = APIC_INT_VIA_APIC |
 		    (pic->pic_apicid << APIC_INT_APIC_SHIFT) |
 		    (pin << APIC_INT_PIN_SHIFT);
-		((struct ioapic_softc *)pic)->sc_pins[pin].ip_map = mip;
+		pic->pic_ioapic->sc_pins[pin].ip_map = mip;
 		mip->ioapic_pin = pin;
 #else
 		return ENOENT;

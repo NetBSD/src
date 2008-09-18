@@ -1,7 +1,3 @@
-/*	$NetBSD: ieeefp.h,v 1.1 2000/12/11 18:19:15 marcus Exp $	*/
-#ifndef _DREAMCAST_IEEEFP_H_
-#define _DREAMCAST_IEEEFP_H_
+/*	$NetBSD: ieeefp.h,v 1.1.134.1 2008/09/18 04:33:23 wrstuden Exp $	*/
 
 #include <sh3/ieeefp.h>
-
-#endif /* _DREAMCAST_IEEEFP_H_ */

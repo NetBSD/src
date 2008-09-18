@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.9.2.1 2008/06/23 04:30:03 wrstuden Exp $
+.\"	$NetBSD: sysctl.9,v 1.9.2.2 2008/09/18 04:38:09 wrstuden Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 20, 2005
+.Dd August 15, 2008
 .Dt SYSCTL 9
 .Os
 .Sh NAME
@@ -523,6 +523,12 @@ Setup functions are declared using the
 .Dv SYSCTL_SETUP
 macro, which takes the name of the function and a short string
 description of the function as arguments.
+.Po
+See the
+.Dv SYSCTL_DEBUG_SETUP
+kernel configuration in
+.Xr options 4 .
+.Pc
 The address of the function is added to a list of functions that
 .Fn sysctl_init
 traverses during initialization.

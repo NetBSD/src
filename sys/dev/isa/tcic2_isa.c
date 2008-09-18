@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.20 2008/04/08 20:08:50 cegger Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.20.6.1 2008/09/18 04:35:05 wrstuden Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.20 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.20.6.1 2008/09/18 04:35:05 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ void	tcic_isa_chip_intr_disestablish(pcmcia_chipset_handle_t, void *);
 CFATTACH_DECL(tcic_isa, sizeof(struct tcic_softc),
     tcic_isa_probe, tcic_isa_attach, NULL, NULL);
 
-static struct pcmcia_chip_functions tcic_isa_functions = {
+static const struct pcmcia_chip_functions tcic_isa_functions = {
 	tcic_chip_mem_alloc,
 	tcic_chip_mem_free,
 	tcic_chip_mem_map,

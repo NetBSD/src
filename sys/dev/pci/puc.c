@@ -1,4 +1,4 @@
-/*	$NetBSD: puc.c,v 1.30 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: puc.c,v 1.30.6.1 2008/09/18 04:35:08 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998, 1999
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.30 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.30.6.1 2008/09/18 04:35:08 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: puc.c,v 1.30 2008/04/10 19:13:37 cegger Exp $");
 #include "opt_puccn.h"
 
 struct puc_softc {
-	struct device		sc_dev;
-
 	/* static configuration data */
 	const struct puc_device_description *sc_desc;
 
@@ -87,7 +85,7 @@ struct puc_softc {
 
 	/* per-port dynamic data */
         struct {
-		struct device	*dev;
+		device_t 	dev;
 
                 /* filled in by port attachments */
                 int             (*ihand)(void *);
@@ -100,8 +98,7 @@ static int	puc_print(void *, const char *);
 static const char *puc_port_type_name(int);
 
 static int
-puc_match(struct device *parent, struct cfdata *match,
-    void *aux)
+puc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct puc_device_description *desc;
@@ -141,9 +138,9 @@ puc_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-puc_attach(struct device *parent, struct device *self, void *aux)
+puc_attach(device_t parent, device_t self, void *aux)
 {
-	struct puc_softc *sc = (struct puc_softc *)self;
+	struct puc_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct puc_attach_args paa;
 	pci_intr_handle_t intrhandle;
@@ -170,11 +167,11 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 #else
 		printf(": unknown PCI communications device\n");
 		printf("%s: compile kernel with PUC_PRINT_REGS and larger\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(self));
 		printf("%s: mesage buffer (via 'options MSGBUFSIZE=...'),\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(self));
 		printf("%s: and report the result with send-pr\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(self));
 #endif
 		return;
 	}
@@ -223,13 +220,13 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 		if (sc->sc_bar_mappings[i].mapped)
 			continue;
 
-		aprint_error_dev(&sc->sc_dev, "couldn't map BAR at offset 0x%lx\n",
+		aprint_error_dev(self, "couldn't map BAR at offset 0x%lx\n",
 		    (long)(PCI_MAPREG_START + 4 * i));
 	}
 
 	/* Map interrupt. */
 	if (pci_intr_map(pa, &intrhandle)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
 	/*
@@ -256,7 +253,7 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 		barindex = PUC_PORT_BAR_INDEX(sc->sc_desc->ports[i].bar);
 		if (!sc->sc_bar_mappings[barindex].mapped) {
 			printf("%s: %s port uses unmapped BAR (0x%x)\n",
-			    device_xname(&sc->sc_dev),
+			    device_xname(self),
 			    puc_port_type_name(sc->sc_desc->ports[i].type),
 			    sc->sc_desc->ports[i].bar);
 			continue;
@@ -286,14 +283,14 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_bar_mappings[barindex].s -
 		      sc->sc_desc->ports[i].offset,
 		    &subregion_handle) != 0) {
-			aprint_error_dev(&sc->sc_dev, "couldn't get subregion for port %d\n", i);
+			aprint_error_dev(self, "couldn't get subregion for port %d\n", i);
 			continue;
 		}
 		paa.h = subregion_handle;
 
 #if 0
 		printf("%s: port %d: %s @ (index %d) 0x%x (0x%lx, 0x%lx)\n",
-		    device_xname(&sc->sc_dev), paa.port,
+		    device_xname(self), paa.port,
 		    puc_port_type_name(paa.type), barindex, (int)paa.a,
 		    (long)paa.t, (long)paa.h);
 #endif
@@ -306,7 +303,7 @@ puc_attach(struct device *parent, struct device *self, void *aux)
 	}
 }
 
-CFATTACH_DECL(puc, sizeof(struct puc_softc),
+CFATTACH_DECL_NEW(puc, sizeof(struct puc_softc),
     puc_match, puc_attach, NULL, NULL);
 
 static int

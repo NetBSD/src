@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.2 2006/01/18 13:19:01 is Exp $
+#       $NetBSD: Makefile,v 1.2.24.1 2008/09/18 04:41:08 wrstuden Exp $
 #
 
 MISC_FILES=	runbootblock.README
@@ -13,9 +13,9 @@ release: check_RELEASEDIR .WAIT ${MISC_FILES} ${UUDECODE_FILES}
 	${_MKMSG_INSTALL} ${MISC_FILES}
 	cd ${.CURDIR} && \
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${MISC_FILES} \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 	${_MKMSG_INSTALL} ${UUDECODE_FILES}
 	cd ${.OBJDIR} && \
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${UUDECODE_FILES} \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 

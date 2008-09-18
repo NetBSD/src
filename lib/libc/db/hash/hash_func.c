@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_func.c,v 1.11 2007/02/03 23:46:09 christos Exp $	*/
+/*	$NetBSD: hash_func.c,v 1.11.12.1 2008/09/18 04:39:21 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash_func.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: hash_func.c,v 1.11 2007/02/03 23:46:09 christos Exp $");
+__RCSID("$NetBSD: hash_func.c,v 1.11.12.1 2008/09/18 04:39:21 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,14 +53,14 @@ __RCSID("$NetBSD: hash_func.c,v 1.11 2007/02/03 23:46:09 christos Exp $");
 #include "extern.h"
 
 #if 0
-static u_int32_t hash1(const void *, size_t) __attribute__((__unused__));
-static u_int32_t hash2(const void *, size_t) __attribute__((__unused__));
-static u_int32_t hash3(const void *, size_t) __attribute__((__unused__));
+static uint32_t hash1(const void *, size_t) __attribute__((__unused__));
+static uint32_t hash2(const void *, size_t) __attribute__((__unused__));
+static uint32_t hash3(const void *, size_t) __attribute__((__unused__));
 #endif
-static u_int32_t hash4(const void *, size_t) __attribute__((__unused__));
+static uint32_t hash4(const void *, size_t) __attribute__((__unused__));
 
 /* Global default hash function */
-u_int32_t (*__default_hash)(const void *, size_t) = hash4;
+uint32_t (*__default_hash)(const void *, size_t) = hash4;
 #if 0
 /*
  * HASH FUNCTIONS
@@ -74,11 +74,11 @@ u_int32_t (*__default_hash)(const void *, size_t) = hash4;
 #define PRIME1		37
 #define PRIME2		1048583
 
-static u_int32_t
+static uint32_t
 hash1(const void *keyarg, size_t len)
 {
-	const u_char *key;
-	u_int32_t h;
+	const uint8_t *key;
+	uint32_t h;
 
 	/* Convert string to integer */
 	for (key = keyarg, h = 0; len--;)
@@ -92,12 +92,12 @@ hash1(const void *keyarg, size_t len)
  */
 #define dcharhash(h, c)	((h) = 0x63c63cd9*(h) + 0x9c39c33d + (c))
 
-static u_int32_t
+static uint32_t
 hash2(const void *keyarg, size_t len)
 {
-	const u_char *e, *key;
-	u_int32_t h;
-	u_char c;
+	const uint8_t *e, *key;
+	uint32_t h;
+	uint8_t c;
 
 	key = keyarg;
 	e = key + len;
@@ -119,12 +119,12 @@ hash2(const void *keyarg, size_t len)
  *
  * OZ's original sdbm hash
  */
-static u_int32_t
+static uint32_t
 hash3(const void *keyarg, size_t len)
 {
-	const u_char *key;
+	const uint8_t *key;
 	size_t loop;
-	u_int32_t h;
+	uint32_t h;
 
 #define HASHC   h = *key++ + 65599 * h
 
@@ -166,12 +166,12 @@ hash3(const void *keyarg, size_t len)
 #endif
 
 /* Hash function from Chris Torek. */
-static u_int32_t
+static uint32_t
 hash4(const void *keyarg, size_t len)
 {
-	const u_char *key;
+	const uint8_t *key;
 	size_t loop;
-	u_int32_t h;
+	uint32_t h;
 
 #define HASH4a   h = (h << 5) - h + *key++;
 #define HASH4b   h = (h << 5) + h + *key++;

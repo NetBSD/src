@@ -1,4 +1,9 @@
-# $NetBSD: ad.powerpc,v 1.1 2004/03/28 09:35:37 jmc Exp $
-./usr/X11R6/bin/Xvfb
-./usr/X11R6/man/cat1/Xvfb.0			-unknown-		.cat
-./usr/X11R6/man/man1/Xvfb.1			-unknown-		.man
+# $NetBSD: ad.powerpc,v 1.1.40.1 2008/09/18 04:41:15 wrstuden Exp $
+./usr/X11R6/bin/Xvfb					-unknown-	x11
+./usr/X11R6/man/cat1/Xvfb.0				-unknown-	.cat,x11
+./usr/X11R6/man/html1/Xvfb.html				-unknown-	html,x11
+./usr/X11R6/man/man1/Xvfb.1				-unknown-	.man,x11
+./usr/X11R7/bin/Xvfb					-unknown-	xorg
+./usr/X11R7/man/cat1/Xvfb.0				-unknown-	.cat,xorg
+./usr/X11R7/man/html1/Xvfb.html				-unknown-	html,xorg
+./usr/X11R7/man/man1/Xvfb.1				-unknown-	.man,xorg

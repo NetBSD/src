@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.36 2008/04/28 13:24:38 ad Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.36.2.1 2008/09/18 04:37:02 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.36 2008/04/28 13:24:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.36.2.1 2008/09/18 04:37:02 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -789,6 +789,7 @@ tp_confirm(struct tp_pcb *tpcb)
 int
 tp_snd_control(struct mbuf *m, struct socket *so, struct mbuf **data)
 {
+	struct sockopt sopt;
 	struct cmsghdr *ch;
 	int             error = 0;
 
@@ -796,8 +797,13 @@ tp_snd_control(struct mbuf *m, struct socket *so, struct mbuf **data)
 		ch = mtod(m, struct cmsghdr *);
 		m->m_len -= sizeof(*ch);
 		m->m_data += sizeof(*ch);
-		error = tp_ctloutput(PRCO_SETOPT,
-				     so, ch->cmsg_level, ch->cmsg_type, &m);
+
+		sockopt_init(&sopt, ch->cmsg_level, ch->cmsg_type, 0);
+		sockopt_setmbuf(&sopt, m);
+		error = tp_ctloutput(PRCO_SETOPT, so, &sopt);
+		sockopt_destroy(&sopt);
+		m = NULL;
+
 		if (ch->cmsg_type == TPOPT_DISC_DATA) {
 			if (data && *data) {
 				m_freem(*data);

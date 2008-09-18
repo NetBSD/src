@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.27.4.1 2008/06/23 04:30:51 wrstuden Exp $      */
+/*      $NetBSD: xenevt.c,v 1.27.4.2 2008/09/18 04:33:39 wrstuden Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.27.4.1 2008/06/23 04:30:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.27.4.2 2008/09/18 04:33:39 wrstuden Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -95,7 +95,7 @@ dev_type_read(xenevtread);
 dev_type_mmap(xenevtmmap);
 const struct cdevsw xenevt_cdevsw = {
 	xenevtopen, nullclose, xenevtread, nowrite, noioctl,
-	nostop, notty, nopoll, xenevtmmap, nokqfilter,
+	nostop, notty, nopoll, xenevtmmap, nokqfilter, D_OTHER
 };
 
 /* minor numbers */
@@ -387,7 +387,7 @@ xenevt_fclose(struct file *fp)
 	for (i = 0; i < NR_EVENT_CHANNELS; i++ ) {
 		if (devevent[i] == d) {
 #ifdef XEN3
-			evtchn_op_t op = { 0 };
+			evtchn_op_t op = { .cmd = 0 };
 			int error;
 #endif
 			hypervisor_mask_event(i);
@@ -519,7 +519,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 {
 	struct xenevt_d *d = fp->f_data;
 #ifdef XEN3
-	evtchn_op_t op = { 0 };
+	evtchn_op_t op = { .cmd = 0 };
 	int error;
 #else
 	u_int *arg = addr;

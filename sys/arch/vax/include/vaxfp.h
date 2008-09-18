@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxfp.h,v 1.7 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: vaxfp.h,v 1.7.2.1 2008/09/18 04:33:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,6 +37,18 @@
 #ifndef _VAX_VAXFP_H_
 #define	_VAX_VAXFP_H_
 
+#include <sys/featuretest.h>
+
+#if defined(_NETBSD_SOURCE) || defined(_ISOC99_SOURCE)
+
+typedef int fenv_t;
+typedef int fexcept_t;
+
+#define	FE_UNDERFLOW	0x01	/* underflow exception */
+
+#define	FE_ALL_EXCEPT	0x01
+
+#if !defined(_ISOC99_SOURCE)
 
 #define	FFLT_EXPBITS	8
 #define	FFLT_FRACHBITS	7
@@ -83,5 +95,9 @@ union vax_dfloating_u {
 	double			dfltu_d;
 	struct vax_d_floating	dfltu_dflt;
 };
+
+#endif /* !_ISOC99_SOURCE */
+
+#endif /* _NETBSD_SOURCE || _ISOC99_SOURCE */
 
 #endif /* _VAX_VAXFP_H_ */

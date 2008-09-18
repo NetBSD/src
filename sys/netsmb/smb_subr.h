@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_subr.h,v 1.17 2008/01/02 11:49:03 ad Exp $	*/
+/*	$NetBSD: smb_subr.h,v 1.17.12.1 2008/09/18 04:37:02 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -42,19 +42,19 @@
 
 MALLOC_DECLARE(M_SMBTEMP);
 
-#define SMBERROR(format, args...) printf("%s: "format, __func__ ,## args)
-#define SMBPANIC(format, args...) printf("%s: "format, __func__ ,## args)
+#define SMBERROR(x)	aprint_error x
+#define SMBPANIC(x)	aprint_error x
 
 #ifdef SMB_SOCKET_DEBUG
-#define SMBSDEBUG(format, args...) printf("%s: "format, __func__ ,## args)
+#define SMBSDEBUG(x)	aprint_debug x
 #else
-#define SMBSDEBUG(format, args...)
+#define SMBSDEBUG(x)	/* nothing */
 #endif
 
 #ifdef SMB_IOD_DEBUG
-#define SMBIODEBUG(format, args...) printf("%s: "format, __func__ ,## args)
+#define SMBIODEBUG(x)	aprint_debug x
 #else
-#define SMBIODEBUG(format, args...)
+#define SMBIODEBUG(x)	/* nothing */
 #endif
 
 #ifdef SMB_SOCKETDATA_DEBUG

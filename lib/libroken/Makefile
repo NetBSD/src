@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2008/03/22 08:37:26 mlelstv Exp $
+# $NetBSD: Makefile,v 1.16.4.1 2008/09/18 04:39:24 wrstuden Exp $
 
 NOLINT=		# defined
 
@@ -19,6 +19,8 @@ SRCS+=	efun.c
 .endif
 
 BUILT_SRCS=vis.h
+
+CLEANFILES+=	${BUILT_SRCS}
 
 SRCS=						\
 	base64.c				\

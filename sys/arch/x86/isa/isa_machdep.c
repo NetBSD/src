@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.19.2.1 2008/06/23 04:30:50 wrstuden Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.19.2.2 2008/09/18 04:33:37 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19.2.1 2008/06/23 04:30:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.19.2.2 2008/09/18 04:33:37 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,6 +227,7 @@ isa_intr_establish(
 	int pin;
 #if NIOAPIC > 0
 	int mpih;
+	struct ioapic_softc *ioapic;
 #endif
 
 	pin = irq;
@@ -238,14 +239,14 @@ isa_intr_establish(
 		    intr_find_mpmapping(mp_eisa_bus, irq, &mpih) == 0) {
 			if (!APIC_IRQ_ISLEGACY(mpih)) {
 				pin = APIC_IRQ_PIN(mpih);
-				pic = (struct pic *)
-				    ioapic_find(APIC_IRQ_APIC(mpih));
-				if (pic == NULL) {
+				ioapic = ioapic_find(APIC_IRQ_APIC(mpih));
+				if (ioapic == NULL) {
 					printf("isa_intr_establish: "
 					       "unknown apic %d\n",
 					    APIC_IRQ_APIC(mpih));
 					return NULL;
 				}
+				pic = &ioapic->sc_pic;
 			}
 		} else
 			printf("isa_intr_establish: no MP mapping found\n");
@@ -269,7 +270,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 }
 
 void
-isa_attach_hook(struct device *parent, struct device *self,
+isa_attach_hook(device_t parent, device_t self,
     struct isabus_attach_args *iba)
 {
 	extern struct x86_isa_chipset x86_isa_chipset;
@@ -292,13 +293,8 @@ isa_attach_hook(struct device *parent, struct device *self,
 }
 
 int
-isa_mem_alloc(t, size, align, boundary, flags, addrp, bshp)
-	bus_space_tag_t t;
-	bus_size_t size, align;
-	bus_addr_t boundary;
-	int flags;
-	bus_addr_t *addrp;
-	bus_space_handle_t *bshp;
+isa_mem_alloc(bus_space_tag_t t, bus_size_t size, bus_size_t align,
+		bus_addr_t boundary, int flags, bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
 
 	/*
@@ -309,10 +305,7 @@ isa_mem_alloc(t, size, align, boundary, flags, addrp, bshp)
 }
 
 void
-isa_mem_free(t, bsh, size)
-	bus_space_tag_t t;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+isa_mem_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	bus_space_free(t, bsh, size);

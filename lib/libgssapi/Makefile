@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2008/03/29 17:51:42 wiz Exp $
+# $NetBSD: Makefile,v 1.19.4.1 2008/09/18 04:39:23 wrstuden Exp $
 
 USE_FORT?= yes        # network protocol library
 
@@ -47,7 +47,7 @@ spnego_files = \
 	asn1_NegTokenInitWin.x		\
 	asn1_NegTokenResp.x
 
-DPSRCS=         gkrb5_err.h
+DPSRCS=         spnego_asn1.h gssapi_asn1.h gkrb5_err.h
 
 BUILT_SOURCES= \
 	${gssapi_files:.x=.c}		\
@@ -261,13 +261,15 @@ INCS+=		gssapi/gssapi.h gssapi/gssapi_krb5.h gssapi/gssapi_spnego.h
 INCSDIR=	/usr/include
 
 CLEANFILES+= ${BUILT_SOURCES} \
-		${spnego_files} spnego_asn1_files spnego_asn1.h \
-		${gssapi_files} gssapi_asn1_files gssapi_asn1.h \
+		${spnego_files} spnego_asn1_files \
+		spnego_asn1.h spnego_asn1.hx \
+		${gssapi_files} gssapi_asn1_files \
+		gssapi_asn1.h gssapi_asn1.hx \
 		gkrb5_err.h  \
 		${krb5src} ${mechsrc} ${spnegosrc} ${ntlmsrc}
 
-${spnego_files} spnego_asn1.h: spnego_asn1_files
-${gssapi_files} gssapi_asn1.h: gssapi_asn1_files
+${spnego_files} spnego_asn1.hx: spnego_asn1_files
+${gssapi_files} gssapi_asn1.hx: gssapi_asn1_files
 
 spnego_asn1_files: spnego/spnego.asn1 ${TOOL_ASN1_COMPILE}
 	${TOOL_ASN1_COMPILE} \
@@ -299,13 +301,16 @@ CPPFLAGS+= -I.					\
 CPPFLAGS+=-DHAVE_IPV6
 .endif
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS+=	-Wno-pointer-sign
 .endif
 
 .include <bsd.lib.mk>
 
-.SUFFIXES: .x
+.SUFFIXES: .hx .x
+
+.hx.h:
+	@cmp -s $< $@ 2> /dev/null || cp $< $@
 
 .x.c:       
 	@cmp -s $< $@ 2> /dev/null || cp $< $@

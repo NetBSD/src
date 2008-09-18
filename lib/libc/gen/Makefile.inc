@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.159.6.1 2008/06/23 04:29:31 wrstuden Exp $
+#	$NetBSD: Makefile.inc,v 1.159.6.2 2008/09/18 04:39:21 wrstuden Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -20,7 +20,7 @@ SRCS+= 	_errno.c alarm.c alphasort.c arc4random.c assert.c basename.c clock.c \
 	nice.c nlist.c nlist_aout.c \
 	nlist_coff.c nlist_ecoff.c nlist_elf32.c nlist_elf64.c opendir.c \
 	pause.c popen.c psignal.c pthread_atfork.c pwcache.c \
-	pw_scan.c raise.c randomid.c readdir.c rewinddir.c \
+	pw_scan.c raise.c randomid.c rb.c readdir.c rewinddir.c \
 	scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
@@ -150,6 +150,6 @@ MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 MLINKS+=syslog.3 closelog_r.3 syslog.3 openlog_r.3 syslog.3 setlogmask_r.3 \
 	syslog.3 syslog_r.3 syslog.3 vsyslog_r.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3 ttyname.3 ttyname_r.3
-MLINKS+=unvis.3 strunvis.3
+MLINKS+=unvis.3 strunvis.3 unvis.3 strunvisx.3
 MLINKS+=vis.3 svis.3 vis.3 strvis.3 vis.3 strvisx.3 vis.3 strsvis.3 \
 	vis.3 strsvisx.3

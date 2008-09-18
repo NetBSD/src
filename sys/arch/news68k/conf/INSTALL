@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.44 2008/04/27 06:26:04 tsutsui Exp $
+# 	$NetBSD: INSTALL,v 1.44.4.1 2008/09/18 04:33:30 wrstuden Exp $
 
 #	config for bootable floppy kernel
 #
@@ -69,6 +69,7 @@ file-system	MSDOSFS		# MS-DOS FAT file system
 #options 	FFS_EI		# ffs endian independent support
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
 
 # Networking options
 options 	INET		# Internet protocols

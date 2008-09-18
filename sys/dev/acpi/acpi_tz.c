@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.36 2008/04/14 00:30:30 jmcneill Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.36.6.1 2008/09/18 04:35:01 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.36 2008/04/14 00:30:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.36.6.1 2008/09/18 04:35:01 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,19 +354,22 @@ acpitz_switch_cooler(ACPI_OBJECT *obj, void *arg)
 	case ACPI_TYPE_STRING:
 		rv = AcpiGetHandle(NULL, obj->String.Pointer, &cooler);
 		if (ACPI_FAILURE(rv)) {
-			printf("failed to get handler from %s\n",
+			printf("acpitz_switch_cooler: "
+			    "failed to get handler from %s\n",
 			    obj->String.Pointer);
 			return rv;
 		}
 		break;
 	default:
-		printf("unknown power type: %d\n", obj->Type);
+		printf("acpitz_switch_cooler: "
+		    "unknown power type: %d\n", obj->Type);
 		return AE_OK;
 	}
 
 	rv = acpi_pwr_switch_consumer(cooler, pwr_state);
 	if (rv != AE_BAD_PARAMETER && ACPI_FAILURE(rv)) {
-		printf("failed to change state for %s: %s\n",
+		printf("acpitz_switch_cooler: "
+		    "failed to change state for %s: %s\n",
 		    acpi_name(obj->Reference.Handle),
 		    AcpiFormatException(rv));
 	}

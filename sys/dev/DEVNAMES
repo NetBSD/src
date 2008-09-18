@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.239 2008/04/03 23:09:59 xtraeme Exp $
+#	$NetBSD: DEVNAMES,v 1.239.6.1 2008/09/18 04:35:01 wrstuden Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -710,7 +710,6 @@ kue			MI
 latches			acorn26
 lc			MI
 lca			alpha
-lcspx			vax
 ld			MI
 le			MI
 le24			MI		Attribute
@@ -1217,6 +1216,7 @@ spifi			newsmips
 splash			MI		Attribute
 spkr			MI
 sppp			MI		Attribute
+spx			vax
 sqphy			MI
 ss			MI
 st			MI

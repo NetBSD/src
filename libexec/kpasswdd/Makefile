@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2008/04/10 14:26:33 tsutsui Exp $
+# $NetBSD: Makefile,v 1.15.4.1 2008/09/18 04:39:17 wrstuden Exp $
 
 NOLINT=		# defined
 
@@ -23,7 +23,7 @@ CPPFLAGS+= -I.					\
 CPPFLAGS+=-DHAVE_IPV6
 .endif
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.kpasswdd.c+=	-fno-strict-aliasing
 .endif
 

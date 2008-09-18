@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.10.6.1 2008/06/23 04:30:46 wrstuden Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.10.6.2 2008/09/18 04:33:34 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.10.6.1 2008/06/23 04:30:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.10.6.2 2008/09/18 04:33:34 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,7 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.10.6.1 2008/06/23 04:30:46 wrstud
 #include <sparc64/dev/psychovar.h>
 
 #include <dev/cardbus/rbus.h>
-#include <dev/ic/i82365var.h>
+#include <dev/pcmcia/pcmciachip.h>
+#include <dev/ic/i82365reg.h>
 #include <dev/pci/pccbbreg.h>
 #include <dev/pci/pccbbvar.h>
 
@@ -55,12 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.10.6.1 2008/06/23 04:30:46 wrstud
 static int pccbb_cardbus_isvalid(void *);
 
 int
-md_space_map(t, bpa, size, flags, bshp)
-	bus_space_tag_t t;
-	bus_addr_t bpa;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+md_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
+	     bus_space_handle_t *bshp)
 {
 	DPRINTF("md_space_map: 0x%" PRIxPTR ", 0x%" PRIx64 ", 0x%" PRIx64 "\n",
 		(u_long)t->cookie, bpa, size);
@@ -85,8 +82,7 @@ md_space_unmap(t, bsh, size, adrp)
 }
 
 rbus_tag_t
-rbus_pccbb_parent_mem(pa)
-	struct pci_attach_args *pa;
+rbus_pccbb_parent_mem(struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct psycho_pbm *pp = pc->cookie;
@@ -104,8 +100,7 @@ rbus_pccbb_parent_mem(pa)
 }
 
 rbus_tag_t
-rbus_pccbb_parent_io(pa)
-	struct pci_attach_args *pa;
+rbus_pccbb_parent_io(struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct psycho_pbm *pp = pc->cookie;
@@ -127,10 +122,7 @@ rbus_pccbb_parent_io(pa)
  * This function is called from pccbb_attach() in sys/dev/pci/pccbb.c.
  */
 void
-pccbb_attach_hook(parent, self, pa)
-	struct device *parent;
-	struct device *self;
-	struct pci_attach_args *pa;
+pccbb_attach_hook(device_t parent, device_t self, struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct psycho_pbm *pp = pc->cookie;
@@ -160,7 +152,7 @@ pccbb_attach_hook(parent, self, pa)
 				       " node %08x -> %08x\n",
 				       bus, (*pp->pp_busnode)[bus].node, node);
 #endif
-			(*pp->pp_busnode)[bus].arg = self;
+			(*pp->pp_busnode)[bus].arg = device_private(self);
 			(*pp->pp_busnode)[bus].valid = pccbb_cardbus_isvalid;
 			(*pp->pp_busnode)[bus].node = node;
 		}
@@ -180,7 +172,7 @@ pccbb_attach_hook(parent, self, pa)
 				       " node %08x -> %08x\n",
 				       bus, (*pp->pp_busnode)[bus].node, node);
 #endif
-			(*pp->pp_busnode)[bus].arg = self;
+			(*pp->pp_busnode)[bus].arg = device_private(self);
 			(*pp->pp_busnode)[bus].valid = pccbb_cardbus_isvalid;
 			(*pp->pp_busnode)[bus].node = node;
 		}
@@ -221,7 +213,7 @@ pccbb_cardbus_isvalid(void *arg)
 	/* check CardBus card is present */
 	sockstat = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 	DPRINTF("%s: pccbb_cardbus_isvalid: sockstat %08x\n",
-		device_xname(&sc->sc_dev), sockstat);
+		device_xname(sc->sc_dev), sockstat);
 	if ((sockstat & CB_SOCKET_STAT_CB) == 0 ||
 	    (sockstat & CB_SOCKET_STAT_CD) != 0)
 		return 0;
@@ -229,7 +221,7 @@ pccbb_cardbus_isvalid(void *arg)
 	/* check card is powered on */
 	sockctrl = bus_space_read_4(memt, memh, CB_SOCKET_CTRL);
 	DPRINTF("%s: pccbb_cardbus_isvalid: sockctrl %08x\n",
-		device_xname(&sc->sc_dev), sockctrl);
+		device_xname(sc->sc_dev), sockctrl);
 	if ((sockctrl & CB_SOCKET_CTRL_VCCMASK) == 0)
 		return 0;
 

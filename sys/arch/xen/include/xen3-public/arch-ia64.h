@@ -1,4 +1,4 @@
-/* $NetBSD: arch-ia64.h,v 1.6 2008/05/04 19:56:28 cegger Exp $ */
+/* $NetBSD: arch-ia64.h,v 1.6.2.1 2008/09/18 04:33:38 wrstuden Exp $ */
 /******************************************************************************
  * arch-ia64/hypervisor-if.h
  * 
@@ -43,7 +43,9 @@
 #endif
 
 #define __DEFINE_XEN_GUEST_HANDLE(name, type) \
-    ___DEFINE_XEN_GUEST_HANDLE(name, type)
+    ___DEFINE_XEN_GUEST_HANDLE(name, type);   \
+    ___DEFINE_XEN_GUEST_HANDLE(const_##name, const type)
+
 #define DEFINE_XEN_GUEST_HANDLE(name)   __DEFINE_XEN_GUEST_HANDLE(name, name)
 #define XEN_GUEST_HANDLE(name)          __guest_handle_ ## name
 #define XEN_GUEST_HANDLE_64(name)       XEN_GUEST_HANDLE(name)
@@ -54,18 +56,7 @@
 #endif
 
 #ifndef __ASSEMBLY__
-/* Guest handles for primitive C types. */
-__DEFINE_XEN_GUEST_HANDLE(uchar, unsigned char);
-__DEFINE_XEN_GUEST_HANDLE(uint,  unsigned int);
-__DEFINE_XEN_GUEST_HANDLE(ulong, unsigned long);
-__DEFINE_XEN_GUEST_HANDLE(u64,   unsigned long);
-DEFINE_XEN_GUEST_HANDLE(char);
-DEFINE_XEN_GUEST_HANDLE(int);
-DEFINE_XEN_GUEST_HANDLE(long);
-DEFINE_XEN_GUEST_HANDLE(void);
-
 typedef unsigned long xen_pfn_t;
-DEFINE_XEN_GUEST_HANDLE(xen_pfn_t);
 #define PRI_xen_pfn "lx"
 #endif
 
@@ -78,6 +69,10 @@ DEFINE_XEN_GUEST_HANDLE(xen_pfn_t);
 /* WARNING: before changing this, check that shared_info fits on a page */
 #define MAX_VIRT_CPUS 64
 
+/* IO ports location for PV.  */
+#define IO_PORTS_PADDR          0x00000ffffc000000UL
+#define IO_PORTS_SIZE           0x0000000004000000UL
+
 #ifndef __ASSEMBLY__
 
 typedef unsigned long xen_ulong_t;
@@ -89,54 +84,6 @@ typedef unsigned long xen_ulong_t;
 #endif
 
 #define INVALID_MFN       (~0UL)
-
-#define MEM_G   (1UL << 30)
-#define MEM_M   (1UL << 20)
-#define MEM_K   (1UL << 10)
-
-/* Guest physical address of IO ports space.  */
-#define IO_PORTS_PADDR          0x00000ffffc000000UL
-#define IO_PORTS_SIZE           0x0000000004000000UL
-
-#define MMIO_START       (3 * MEM_G)
-#define MMIO_SIZE        (512 * MEM_M)
-
-#define VGA_IO_START     0xA0000UL
-#define VGA_IO_SIZE      0x20000
-
-#define LEGACY_IO_START  (MMIO_START + MMIO_SIZE)
-#define LEGACY_IO_SIZE   (64*MEM_M)
-
-#define IO_PAGE_START (LEGACY_IO_START + LEGACY_IO_SIZE)
-#define IO_PAGE_SIZE  XEN_PAGE_SIZE
-
-#define STORE_PAGE_START (IO_PAGE_START + IO_PAGE_SIZE)
-#define STORE_PAGE_SIZE  XEN_PAGE_SIZE
-
-#define BUFFER_IO_PAGE_START (STORE_PAGE_START + STORE_PAGE_SIZE)
-#define BUFFER_IO_PAGE_SIZE  XEN_PAGE_SIZE
-
-#define BUFFER_PIO_PAGE_START (BUFFER_IO_PAGE_START + BUFFER_IO_PAGE_SIZE)
-#define BUFFER_PIO_PAGE_SIZE  XEN_PAGE_SIZE
-
-#define IO_SAPIC_START   0xfec00000UL
-#define IO_SAPIC_SIZE    0x100000
-
-#define PIB_START 0xfee00000UL
-#define PIB_SIZE 0x200000
-
-#define GFW_START        (4*MEM_G -16*MEM_M)
-#define GFW_SIZE         (16*MEM_M)
-
-/* Nvram belongs to GFW memory space  */
-#define NVRAM_SIZE       (MEM_K * 64)
-#define NVRAM_START      (GFW_START + 10 * MEM_M)
-
-#define NVRAM_VALID_SIG 0x4650494e45584948 		// "HIXENIPF"
-struct nvram_save_addr {
-    unsigned long addr;
-    unsigned long signature;
-};
 
 struct pt_fpreg {
     union {
@@ -445,6 +392,7 @@ struct vcpu_guest_context_regs {
 struct vcpu_guest_context {
 #define VGCF_EXTRA_REGS (1UL << 1)	/* Set extra regs.  */
 #define VGCF_SET_CR_IRR (1UL << 2)	/* Set cr_irr[0:3]. */
+#define VGCF_online     (1UL << 3)  /* make this vcpu online */
     unsigned long flags;       /* VGCF_* flags */
 
     struct vcpu_guest_context_regs regs;
@@ -519,6 +467,9 @@ DEFINE_XEN_GUEST_HANDLE(vcpu_guest_context_t);
 /* Internal only: associated with PGC_allocated bit */
 #define _ASSIGN_pgc_allocated           3
 #define ASSIGN_pgc_allocated            (1UL << _ASSIGN_pgc_allocated)
+/* Page is an IO page.  */
+#define _ASSIGN_io                      4
+#define ASSIGN_io                       (1UL << _ASSIGN_io)
 
 /* This structure has the same layout of struct ia64_boot_param, defined in
    <asm/system.h>.  It is redefined here to ease use.  */
@@ -653,6 +604,10 @@ DEFINE_XEN_GUEST_HANDLE(pfarg_reg_t);
 DEFINE_XEN_GUEST_HANDLE(pfarg_load_t);
 #endif /* __ASSEMBLY__ */
 #endif /* XEN */
+
+#ifndef __ASSEMBLY__
+#include "arch-ia64/hvm/memmap.h"
+#endif
 
 #endif /* __HYPERVISOR_IF_IA64_H__ */
 

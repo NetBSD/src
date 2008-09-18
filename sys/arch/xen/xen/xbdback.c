@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.32 2008/04/16 18:41:48 cegger Exp $      */
+/*      $NetBSD: xbdback.c,v 1.32.6.1 2008/09/18 04:33:39 wrstuden Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.32 2008/04/16 18:41:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.32.6.1 2008/09/18 04:33:39 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.32 2008/04/16 18:41:48 cegger Exp $");
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/workqueue.h>
 
 #include <machine/pmap.h>
 #include <xen/hypervisor.h>
@@ -180,6 +181,7 @@ struct xbdback_request {
  * can be coalesced.
  */
 struct xbdback_io {
+	struct work xio_work;
 	struct buf xio_buf; /* our I/O */
 	/* The instance pointer is duplicated for convenience. */
 	struct xbdback_instance *xio_xbdi; /* our xbd instance */
@@ -249,7 +251,7 @@ static void *xbdback_co_probe_gotvm(struct xbdback_instance *, void *);
 
 static int  xbdback_shm_callback(void *);
 static void xbdback_io_error(struct xbdback_io *, int);
-static void xbdback_do_io(struct xbdback_io *);
+static void xbdback_do_io(struct work *, void *);
 static void xbdback_iodone(struct buf *);
 static void xbdback_send_reply(struct xbdback_instance *, int , int , int);
 
@@ -261,6 +263,7 @@ static void *xbdback_pool_get(struct xbdback_pool *,
 static void xbdback_pool_put(struct xbdback_pool *, void *);
 static void xbdback_trampoline(struct xbdback_instance *, void *);
 
+struct workqueue *xbdback_workqueue;
 
 void
 xbdback_init(void)
@@ -298,6 +301,9 @@ xbdback_init(void)
 	if (pool_prime(&xbdback_fragment_pool.p,
             BLKIF_MAX_SEGMENTS_PER_REQUEST * BLKIF_RING_SIZE) != 0)
 		printf("xbdback: failed to prime fragment pool\n");
+	if (workqueue_create(&xbdback_workqueue, "xbdbackd",
+	    xbdback_do_io, NULL, PRI_BIO, IPL_BIO, 0))
+		printf("xbdback: failed to init workqueue\n");
 
 	(void)ctrl_if_register_receiver(CMSG_BLKIF_BE, xbdback_ctrlif_rx,
 	    CALLBACK_IN_BLOCKING_CONTEXT);
@@ -1042,7 +1048,7 @@ static void *
 xbdback_co_flush_done(struct xbdback_instance *xbdi, void *obj)
 {
 	(void)obj;
-	xbdback_do_io(xbdi->io);
+	workqueue_enqueue(xbdback_workqueue, &xbdi->io->xio_work, NULL);
 	xbdi->io = NULL;
 	xbdi->cont = xbdi->cont_aux;
 	return xbdi;
@@ -1056,8 +1062,11 @@ xbdback_io_error(struct xbdback_io *xbd_io, int error)
 }
 
 static void
-xbdback_do_io(struct xbdback_io *xbd_io)
+xbdback_do_io(struct work *wk, void *dummy)
 {
+	struct xbdback_io *xbd_io = (void *)wk;
+	KASSERT(&xbd_io->xio_work == wk);
+
 	xbd_io->xio_buf.b_data =
 	    (void *)((vaddr_t)xbd_io->xio_buf.b_data + xbd_io->xio_vaddr);
 #ifdef DIAGNOSTIC
@@ -1079,8 +1088,11 @@ xbdback_do_io(struct xbdback_io *xbd_io)
 	}
 	}
 #endif
-	if ((xbd_io->xio_buf.b_flags & B_READ) == 0)
+	if ((xbd_io->xio_buf.b_flags & B_READ) == 0) {
+		mutex_enter(&xbd_io->xio_buf.b_vp->v_interlock);
 		xbd_io->xio_buf.b_vp->v_numoutput++;
+		mutex_exit(&xbd_io->xio_buf.b_vp->v_interlock);
+	}
 	bdev_strategy(&xbd_io->xio_buf);
 }
 

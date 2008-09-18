@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.7.4.4 2008/06/23 04:32:02 wrstuden Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.7.4.5 2008/09/18 04:37:04 wrstuden Exp $ */
 
 /*
  * System call marshalling for rump.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.7.4.4 2008/06/23 04:32:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.7.4.5 2008/09/18 04:37:04 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -180,19 +180,6 @@ rump_sys_unmount(const char * path, int flags, int *error)
 }
 
 int
-rump_sys_access(const char * path, int flags, int *error)
-{
-	register_t retval;
-	struct sys_access_args arg;
-
-	SPARG(&arg, path) = path;
-	SPARG(&arg, flags) = flags;
-
-	*error = sys_access(curlwp, &arg, &retval);
-	return retval;
-}
-
-int
 rump_sys_chflags(const char * path, u_long flags, int *error)
 {
 	register_t retval;
@@ -202,19 +189,6 @@ rump_sys_chflags(const char * path, u_long flags, int *error)
 	SPARG(&arg, flags) = flags;
 
 	*error = sys_chflags(curlwp, &arg, &retval);
-	return retval;
-}
-
-int
-rump_sys_fchflags(int fd, u_long flags, int *error)
-{
-	register_t retval;
-	struct sys_fchflags_args arg;
-
-	SPARG(&arg, fd) = fd;
-	SPARG(&arg, flags) = flags;
-
-	*error = sys_fchflags(curlwp, &arg, &retval);
 	return retval;
 }
 
@@ -254,6 +228,18 @@ rump_sys_readlink(const char * path, char * buf, size_t count, int *error)
 }
 
 int
+rump_sys_fsync(int fd, int *error)
+{
+	register_t retval;
+	struct sys_fsync_args arg;
+
+	SPARG(&arg, fd) = fd;
+
+	*error = sys_fsync(curlwp, &arg, &retval);
+	return retval;
+}
+
+int
 rump_sys_rename(const char * from, const char * to, int *error)
 {
 	register_t retval;
@@ -263,6 +249,19 @@ rump_sys_rename(const char * from, const char * to, int *error)
 	SPARG(&arg, to) = to;
 
 	*error = sys_rename(curlwp, &arg, &retval);
+	return retval;
+}
+
+int
+rump_sys_mkfifo(const char * path, mode_t mode, int *error)
+{
+	register_t retval;
+	struct sys_mkfifo_args arg;
+
+	SPARG(&arg, path) = path;
+	SPARG(&arg, mode) = mode;
+
+	*error = sys_mkfifo(curlwp, &arg, &retval);
 	return retval;
 }
 
@@ -288,6 +287,19 @@ rump_sys_rmdir(const char * path, int *error)
 	SPARG(&arg, path) = path;
 
 	*error = sys_rmdir(curlwp, &arg, &retval);
+	return retval;
+}
+
+int
+rump_sys_utimes(const char * path, const struct timeval * tptr, int *error)
+{
+	register_t retval;
+	struct sys_utimes_args arg;
+
+	SPARG(&arg, path) = path;
+	SPARG(&arg, tptr) = tptr;
+
+	*error = sys_utimes(curlwp, &arg, &retval);
 	return retval;
 }
 
@@ -338,6 +350,23 @@ rump_sys_truncate(const char * path, int pad, off_t length, int *error)
 }
 
 int
+rump_sys___sysctl(const int * name, u_int namelen, void * old, size_t * oldlenp, const void * new, size_t newlen, int *error)
+{
+	register_t retval;
+	struct sys___sysctl_args arg;
+
+	SPARG(&arg, name) = name;
+	SPARG(&arg, namelen) = namelen;
+	SPARG(&arg, old) = old;
+	SPARG(&arg, oldlenp) = oldlenp;
+	SPARG(&arg, new) = new;
+	SPARG(&arg, newlen) = newlen;
+
+	*error = sys___sysctl(curlwp, &arg, &retval);
+	return retval;
+}
+
+int
 rump_sys_lchmod(const char * path, mode_t mode, int *error)
 {
 	register_t retval;
@@ -361,6 +390,58 @@ rump_sys_lchown(const char * path, uid_t uid, gid_t gid, int *error)
 	SPARG(&arg, gid) = gid;
 
 	*error = sys_lchown(curlwp, &arg, &retval);
+	return retval;
+}
+
+int
+rump_sys_lutimes(const char * path, const struct timeval * tptr, int *error)
+{
+	register_t retval;
+	struct sys_lutimes_args arg;
+
+	SPARG(&arg, path) = path;
+	SPARG(&arg, tptr) = tptr;
+
+	*error = sys_lutimes(curlwp, &arg, &retval);
+	return retval;
+}
+
+int
+rump_sys_lchflags(const char * path, u_long flags, int *error)
+{
+	register_t retval;
+	struct sys_lchflags_args arg;
+
+	SPARG(&arg, path) = path;
+	SPARG(&arg, flags) = flags;
+
+	*error = sys_lchflags(curlwp, &arg, &retval);
+	return retval;
+}
+
+int
+rump_sys___stat30(const char * path, struct stat * ub, int *error)
+{
+	register_t retval;
+	struct sys___stat30_args arg;
+
+	SPARG(&arg, path) = path;
+	SPARG(&arg, ub) = ub;
+
+	*error = sys___stat30(curlwp, &arg, &retval);
+	return retval;
+}
+
+int
+rump_sys___lstat30(const char * path, struct stat * ub, int *error)
+{
+	register_t retval;
+	struct sys___lstat30_args arg;
+
+	SPARG(&arg, path) = path;
+	SPARG(&arg, ub) = ub;
+
+	*error = sys___lstat30(curlwp, &arg, &retval);
 	return retval;
 }
 

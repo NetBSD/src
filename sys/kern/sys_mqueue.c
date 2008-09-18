@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.10 2008/04/24 15:35:30 ad Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.10.4.1 2008/09/18 04:31:43 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.10 2008/04/24 15:35:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.10.4.1 2008/09/18 04:31:43 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -381,14 +381,16 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 		return error;
 	}
 	fp->f_type = DTYPE_MQUEUE;
-	fp->f_flag = (oflag & O_RDWR) ? (VREAD | VWRITE) :
-	    ((oflag & O_RDONLY) ? VREAD : VWRITE);
+	fp->f_flag = FFLAGS(oflag) & (FREAD | FWRITE);
 	fp->f_ops = &mqops;
 
 	/* Look up for mqueue with such name */
 	mutex_enter(&mqlist_mtx);
 	mq = mqueue_lookup(name);
 	if (mq) {
+		const int acc_mode = (oflag & O_RDWR) ? (VREAD | VWRITE) :
+		    ((oflag & O_RDONLY) ? VREAD : VWRITE);
+
 		KASSERT(mutex_owned(&mq->mq_mtx));
 		/* Check if mqueue is not marked as unlinking */
 		if (mq->mq_attrib.mq_flags & MQ_UNLINK) {
@@ -401,7 +403,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 			goto exit;
 		}
 		/* Check the permission */
-		if (mqueue_access(l, mq, fp->f_flag)) {
+		if (mqueue_access(l, mq, acc_mode)) {
 			error = EACCES;
 			goto exit;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.68.2.1 2008/06/23 04:29:54 wrstuden Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.68.2.2 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@ struct pthread_attr_private {
 	void *ptap_stackaddr;
 	size_t ptap_stacksize;
 	size_t ptap_guardsize;
+	struct sched_param ptap_sp;
+	int ptap_policy;
 };
 
 struct pthread_lock_ops {
@@ -288,6 +290,7 @@ void	pthread__errorfunc(const char *, int, const char *, const char *)
 char	*pthread__getenv(const char *) PTHREAD_HIDE;
 void	pthread__cancelled(void) PTHREAD_HIDE;
 void	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
+int	pthread__checkpri(int) PTHREAD_HIDE;
 
 #ifndef pthread__smt_pause
 #define	pthread__smt_pause()	/* nothing */

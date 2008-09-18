@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ievar.h,v 1.14 2007/03/04 06:00:53 christos Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.14.46.1 2008/09/18 04:33:35 wrstuden Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -54,7 +54,7 @@ enum ie_hardware {
  * The Sun PROM leaves a page for us at the end of KVA space.
  */
 struct ie_softc {
-	struct device sc_dev;	/* device structure */
+	device_t sc_dev;	/* device structure */
 
 	struct ethercom sc_ethercom;/* system ethercom structure */
 #define	sc_if	sc_ethercom.ec_if 		/* network-visible interface */
@@ -97,7 +97,7 @@ struct ie_softc {
 	 * pointer and size of a block of KVA where the buffers
 	 * are to be allocated from
 	 */
-	char * buf_area;
+	uint8_t *buf_area;
 	int     buf_area_sz;
 
 	/*

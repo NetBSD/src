@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.30.2.1 2008/06/23 04:31:50 wrstuden Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.30.2.2 2008/09/18 04:31:41 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.30.2.1 2008/06/23 04:31:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.30.2.2 2008/09/18 04:31:41 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,24 +273,14 @@ cpu_xc_offline(struct cpu_info *ci)
 	 * be handled by sched_takecpu().
 	 */
 	mutex_enter(proc_lock);
-	spc_dlock(ci, mci);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		lwp_lock(l);
-		if (l->l_cpu != ci || (l->l_pflag & LP_BOUND) != 0) {
-			lwp_unlock(l);
-			continue;
-		}
-		if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM) != 0) {
-			sched_dequeue(l);
-			l->l_cpu = mci;
-			lwp_setlock(l, mspc->spc_mutex);
-			sched_enqueue(l, false);
-			lwp_unlock(l);
-		} else {
+		if ((l->l_pflag & LP_BOUND) == 0 && l->l_cpu == ci) {
 			lwp_migrate(l, mci);
+		} else {
+			lwp_unlock(l);
 		}
 	}
-	spc_dunlock(ci, mci);
 	mutex_exit(proc_lock);
 
 #ifdef __HAVE_MD_CPU_OFFLINE

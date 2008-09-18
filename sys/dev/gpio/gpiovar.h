@@ -1,4 +1,4 @@
-/* $NetBSD: gpiovar.h,v 1.5.2.1 2008/06/23 04:31:01 wrstuden Exp $ */
+/* $NetBSD: gpiovar.h,v 1.5.2.2 2008/09/18 04:35:03 wrstuden Exp $ */
 /*	$OpenBSD: gpiovar.h,v 1.3 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ int gpiobus_print(void *, const char *);
 #define gpiobus_open(gc, dev) \
     ((gc)->gp_gc_open ? ((gc)->gp_gc_open((gc)->gp_cookie, dev)) : 0)
 #define gpiobus_close(gc, dev) \
-    ((gc)->gp_gc_close ? ((gc)->gp_gc_close((gc)->gp_cookie, dev)) : 0)
+    ((gc)->gp_gc_close ? ((gc)->gp_gc_close((gc)->gp_cookie, dev)), 1 : 0)
 #define gpiobus_pin_read(gc, pin) \
     ((gc)->gp_pin_read((gc)->gp_cookie, (pin)))
 #define gpiobus_pin_write(gc, pin, value) \

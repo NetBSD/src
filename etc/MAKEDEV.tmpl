@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.107.2.1 2008/06/23 04:29:01 wrstuden Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.107.2.2 2008/09/18 04:41:08 wrstuden Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -160,7 +160,7 @@
 #	dn*	UNIBUS DN11 and emulations (e.g. Able Quadracall)
 #
 # Pseudo terminals:
-#	ptm	pty multiplexor device.
+#	ptm	pty multiplexor device, and pts directory
 #	pty*	set of 16 master and slave pseudo terminals
 #	opty	first 16 ptys, to save inodes on install media
 #	ipty	first 2 ptys, for install media use only
@@ -279,8 +279,9 @@
 #	twe	3ware Escalade control interface
 #	uk*	unknown SCSI device
 #	veriexec verified executable fingerprint loader
-#	vmegen*	generic VME access
+#	video*	video capture devices
 #	view*	generic interface to graphic displays (Amiga)
+#	vmegen*	generic VME access
 #	wsfont*	console font control
 #	wsmux*	wscons event multiplexor
 #	xenevt	Xen event interface
@@ -746,6 +747,11 @@ pad)
 radio)
 	makedev radio0 radio1
 	lndev radio0 radio
+	;;
+
+video)
+	makedev video0 video1 video2 video3
+	lndev video0 video
 	;;
 
 ramdisk)
@@ -1292,6 +1298,12 @@ radio*)
 	mkdev radio$unit c %radio_chr% $unit 666
 	;;
 
+video*)
+	unit=${i#video}
+	: ${unit:-0}
+	mkdev video$unit c %video_chr% $unit 666
+	;;
+
 amr*)
 	unit=${i#amr}
 	mkdev amr$unit c %amr_chr% $unit
@@ -1635,6 +1647,7 @@ ipty)
 	;;
 
 ptm)
+	makedir pts 755
 	mkdev ptmx c %ptm_chr% 0 666
 	mkdev ptm c %ptm_chr% 1 666
 	;;

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.63 2006/12/29 21:49:03 yamt Exp $
+# 	$NetBSD: INSTALL,v 1.63.50.1 2008/09/18 04:33:31 wrstuden Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -55,6 +55,7 @@ file-system 	KERNFS			# kernel data-structure filesystem
 # Filesystem options
 #options 	NFS_V2_ONLY		# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
 
 
 # Networking options

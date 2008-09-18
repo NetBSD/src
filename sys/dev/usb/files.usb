@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.82.12.1 2008/06/23 04:31:36 wrstuden Exp $
+#	$NetBSD: files.usb,v 1.82.12.2 2008/09/18 04:35:11 wrstuden Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -130,8 +130,19 @@ device	ubt: btbus, bluetooth
 attach	ubt at usbdevif
 file	dev/usb/ubt.c			ubt
 
+#
+# Capture devices
+#
 
+# Sony PLAYSTATION(R) Eye
+device	pseye: videobus
+attach	pseye at usbifif
+file	dev/usb/pseye.c			pseye
+
+#
 # Misc
+#
+
 # Diamond Multimedia Rio 500
 device	urio
 attach	urio at usbdevif
@@ -237,8 +248,7 @@ file	dev/usb/uvscom.c		uvscom
 define	ubsa_common
 file	dev/usb/ubsa_common.c		ubsa_common
 device	ubsa: ucombus, ubsa_common
-#attach	ubsa at usbdevif
-attach	ubsa at usbifif
+attach	ubsa at usbdevif
 file	dev/usb/ubsa.c			ubsa
 
 # Huawei E220 3G/HSDPA modem (ubsa)

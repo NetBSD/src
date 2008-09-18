@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.3.2.1 2008/09/18 04:37:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,9 +34,6 @@
 #include <sys/intr.h>
 #include <sys/kmem.h>
 #include <sys/cpu.h>
-
-#include "rump.h"
-#include "rumpuser.h"
 
 struct v_dodgy {
 	void	(*func)(void *);

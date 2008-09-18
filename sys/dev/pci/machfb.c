@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.52.6.1 2008/06/23 04:31:11 wrstuden Exp $	*/
+/*	$NetBSD: machfb.c,v 1.52.6.2 2008/09/18 04:35:07 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.52.6.1 2008/06/23 04:31:11 wrstuden Exp $");
+	"$NetBSD: machfb.c,v 1.52.6.2 2008/09/18 04:35:07 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,6 +179,7 @@ static struct {
 	{ PCI_PRODUCT_ATI_RAGE_IIC_PCI, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_IIC_AGP_B, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_IIC_AGP_P, 230000 },
+#if 0
 	{ PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_MOB_M3_PCI, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP, 230000 },
@@ -186,6 +187,7 @@ static struct {
 	{ PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_MOBILITY, 230000 },
 	{ PCI_PRODUCT_ATI_RAGE_LT_PRO, 230000 },
+#endif
 	{ PCI_PRODUCT_ATI_MACH64_VT, 170000 },
 	{ PCI_PRODUCT_ATI_MACH64_VTB, 200000 },
 	{ PCI_PRODUCT_ATI_MACH64_VT4, 230000 }
@@ -219,8 +221,8 @@ static struct videomode mach64_modes[] = {
 
 extern const u_char rasops_cmap[768];
 
-static int	mach64_match(struct device *, struct cfdata *, void *);
-static void	mach64_attach(struct device *, struct device *, void *);
+static int	mach64_match(device_t, cfdata_t, void *);
+static void	mach64_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(machfb, sizeof(struct mach64_softc), mach64_match, mach64_attach,
     NULL, NULL);
@@ -366,7 +368,7 @@ static const struct wsscreen_descr *_mach64_scrlist[] = {
 };
 
 static struct wsscreen_list mach64_screenlist = {
-	sizeof(_mach64_scrlist) / sizeof(struct wsscreen_descr *),
+	__arraycount(_mach64_scrlist),
 	_mach64_scrlist
 };
 
@@ -394,7 +396,7 @@ static struct vcons_screen mach64_console_screen;
 /* framebuffer device, SPARC-only so far */
 #ifdef __sparc__
 
-static void	machfb_unblank(struct device *);
+static void	machfb_unblank(device_t);
 static void	machfb_fbattach(struct mach64_softc *);
 
 extern struct cfdriver machfb_cd;
@@ -468,8 +470,7 @@ wait_for_idle(struct mach64_softc *sc)
 }
 
 static int
-mach64_match(struct device *parent, struct cfdata *match,
-    void *aux)
+mach64_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	int i;
@@ -478,7 +479,7 @@ mach64_match(struct device *parent, struct cfdata *match,
 	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_DISPLAY_VGA)
 		return 0;
 
-	for (i = 0; i < sizeof(mach64_info) / sizeof(mach64_info[0]); i++)
+	for (i = 0; i < __arraycount(mach64_info); i++)
 		if (PCI_PRODUCT(pa->pa_id) == mach64_info[i].chip_id) {
 			mach64_chip_id = PCI_PRODUCT(pa->pa_id);
 			mach64_chip_rev = PCI_REVISION(pa->pa_class);
@@ -489,9 +490,9 @@ mach64_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-mach64_attach(struct device *parent, struct device *self, void *aux)
+mach64_attach(device_t parent, device_t self, void *aux)
 {
-	struct mach64_softc *sc = (void *)self;
+	struct mach64_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct rasops_info *ri;
 	char devinfo[256];
@@ -790,7 +791,7 @@ mach64_get_max_ramdac(struct mach64_softc *sc)
 	     (mach64_chip_rev & 0x07))
 		return 170000;
 
-	for (i = 0; i < sizeof(mach64_info) / sizeof(mach64_info[0]); i++)
+	for (i = 0; i < __arraycount(mach64_info); i++)
 		if (mach64_chip_id == mach64_info[i].chip_id)
 			return mach64_info[i].ramdac_freq;
 
@@ -1774,9 +1775,9 @@ machfb_blank(struct mach64_softc *sc, int blank)
 #ifdef __sparc__
 
 static void	
-machfb_unblank(struct device *dev)
+machfb_unblank(device_t dev)
 {
-	struct mach64_softc *sc = (struct mach64_softc *)dev;
+	struct mach64_softc *sc = device_private(dev);
 	
 	machfb_blank(sc, 0);
 }

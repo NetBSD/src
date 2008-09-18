@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.h,v 1.6 2007/08/08 09:21:34 pooka Exp $	*/
+/*	$NetBSD: hfs.h,v 1.6.30.1 2008/09/18 04:36:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ struct hfsnode {
 			uint16_t		flags;
 			uint32_t		valence;
 			hfs_cnid_t		cnid;
-		}; /* convenience for accessing common record info */
+		} u; /* convenience for accessing common record info */
 	} h_rec; /* catalog record for this hnode */
 	
 	/*

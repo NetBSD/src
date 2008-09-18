@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.50 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.50.4.1 2008/09/18 04:37:01 wrstuden Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -64,6 +64,7 @@
 #ifndef _NETINET6_IP6_VAR_H_
 #define _NETINET6_IP6_VAR_H_
 
+#include <sys/socketvar.h>
 #include <net/route.h>
 
 /*
@@ -307,7 +308,7 @@ extern int	ip6_hashsize;		/* size of hash table */
 
 struct in6pcb;
 
-int	icmp6_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	icmp6_ctloutput(int, struct socket *, struct sockopt *);
 
 void	ip6_init(void);
 void	ip6intr(void);
@@ -341,8 +342,8 @@ int	ip6_output(struct mbuf *, struct ip6_pktopts *,
 			struct route *, int,
 			struct ip6_moptions *, struct socket *,
 			struct ifnet **);
-int	ip6_ctloutput(int, struct socket *, int, int, struct mbuf **);
-int	ip6_raw_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	ip6_ctloutput(int, struct socket *, struct sockopt *);
+int	ip6_raw_ctloutput(int, struct socket *, struct sockopt *);
 void	ip6_initpktopts(struct ip6_pktopts *);
 int	ip6_setpktopts(struct mbuf *, struct ip6_pktopts *,
 			    struct ip6_pktopts *, int, int);
@@ -368,7 +369,7 @@ int	ip6flow_invalidate_all(int);
 void	rip6_init(void);
 int	rip6_input(struct mbuf **, int *, int);
 void	*rip6_ctlinput(int, const struct sockaddr *, void *);
-int	rip6_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int	rip6_ctloutput(int, struct socket *, struct sockopt *);
 int	rip6_output(struct mbuf *, struct socket *, struct sockaddr_in6 *,
 			 struct mbuf *);
 int	rip6_usrreq(struct socket *,

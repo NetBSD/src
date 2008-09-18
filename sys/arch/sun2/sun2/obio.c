@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.17 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: obio.c,v 1.17.2.1 2008/09/18 04:33:35 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.17 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.17.2.1 2008/09/18 04:33:35 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,16 +48,16 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.17 2008/04/28 20:23:37 martin Exp $");
 /* Does this machine have a Multibus? */
 extern int cpu_has_multibus;
 
-static int  obio_match(struct device *, struct cfdata *, void *);
-static void obio_attach(struct device *, struct device *, void *);
+static int  obio_match(device_t, cfdata_t, void *);
+static void obio_attach(device_t, device_t, void *);
 
 struct obio_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 	bus_space_tag_t	sc_bustag;	/* parent bus tag */
 	bus_dma_tag_t	sc_dmatag;	/* parent bus dma tag */
 };
 
-CFATTACH_DECL(obio, sizeof(struct obio_softc),
+CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
     obio_match, obio_attach, NULL, NULL);
 
 static int obio_attached;
@@ -87,21 +87,21 @@ static struct sun68k_bus_space_tag obio_space_tag = {
 }; 
 
 static int 
-obio_match(struct device *parent, struct cfdata *cf, void *aux)
+obio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
 	if (obio_attached)
 		return 0;
 
-	return (ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0);
+	return ma->ma_name == NULL || strcmp(cf->cf_name, ma->ma_name) == 0;
 }
 
 static void 
-obio_attach(struct device *parent, struct device *self, void *aux)
+obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	struct obio_softc *sc = (struct obio_softc *)self;
+	struct obio_softc *sc = device_private(self);
 	struct obio_attach_args oba;
 	const char *const *cpp;
 	static const char *const special[] = {
@@ -111,7 +111,8 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 
 	obio_attached = 1;
 
-	printf("\n");
+	sc->sc_dev = self;
+	aprint_normal("\n");
 
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_dmatag = ma->ma_dmatag;
@@ -147,8 +148,8 @@ _obio_bus_map(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr,
 {
 	struct obio_softc *sc = t->cookie;
 
-	return (bus_space_map2(sc->sc_bustag, PMAP_OBIO, paddr, size,
-			       flags | _SUN68K_BUS_MAP_USE_PROM, vaddr, hp));
+	return bus_space_map2(sc->sc_bustag, PMAP_OBIO, paddr, size,
+	    flags | _SUN68K_BUS_MAP_USE_PROM, vaddr, hp);
 }
 
 paddr_t
@@ -157,8 +158,8 @@ obio_bus_mmap(bus_space_tag_t t, bus_type_t btype, bus_addr_t paddr, off_t off,
 {
 	struct obio_softc *sc = t->cookie;
 
-	return (bus_space_mmap2(sc->sc_bustag, PMAP_OBIO, paddr, off,
-				prot, flags));
+	return bus_space_mmap2(sc->sc_bustag, PMAP_OBIO, paddr, off,
+	    prot, flags);
 }
 
 /*
@@ -173,8 +174,8 @@ _obio_addr_bad(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, size_t s)
 
 	/* Get the physical address for this page. */
 	pte = get_pte((vaddr_t) (h + o));
-	if (!(pte & PG_VALID))
-		return (-1);
+	if ((pte & PG_VALID) == 0)
+		return -1;
 	pa = PG_PA(pte);
 
 	/*
@@ -183,7 +184,7 @@ _obio_addr_bad(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, size_t s)
 	 * and 0x4000, and all sun2 VME machines have all 
 	 * obio devices outside of this range.
 	 */
-	return ((!!cpu_has_multibus) != (pa >= 0x2000 && pa < 0x4000));
+	return (!!cpu_has_multibus) != (pa >= 0x2000 && pa < 0x4000);
 }
 	
 int
@@ -192,8 +193,8 @@ _obio_bus_peek(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, size_t s,
 {
 	struct obio_softc *sc = t->cookie;
 
-	return (_obio_addr_bad(t, h, o, s) ||
-		_bus_space_peek(sc->sc_bustag, h, o, s, vp));
+	return _obio_addr_bad(t, h, o, s) ||
+	    _bus_space_peek(sc->sc_bustag, h, o, s, vp);
 }
 
 int
@@ -202,6 +203,6 @@ _obio_bus_poke(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o, size_t s,
 {
 	struct obio_softc *sc = t->cookie;
 
-	return (_obio_addr_bad(t, h, o, s) ||
-		_bus_space_poke(sc->sc_bustag, h, o, s, v));
+	return _obio_addr_bad(t, h, o, s) ||
+	    _bus_space_poke(sc->sc_bustag, h, o, s, v);
 }

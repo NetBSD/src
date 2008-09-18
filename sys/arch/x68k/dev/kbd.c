@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.33.20.1 2008/06/23 04:30:47 wrstuden Exp $	*/
+/*	$NetBSD: kbd.c,v 1.33.20.2 2008/09/18 04:33:37 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.33.20.1 2008/06/23 04:30:47 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.33.20.2 2008/09/18 04:33:37 wrstuden Exp $");
 
 #include "ite.h"
 #include "bell.h"
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.33.20.1 2008/06/23 04:30:47 wrstuden Exp $
 #include <machine/vuid_event.h>
 
 struct kbd_softc {
-	struct device	sc_dev;
-
 	int sc_event_mode;	/* if true, collect events, else pass to ite */
 	struct evvar sc_events; /* event queue state */
 	void *sc_softintr_cookie;
@@ -79,10 +77,10 @@ void	kbd_setLED(void);
 int	kbd_send_command(int);
 
 
-static int kbdmatch(struct device *, struct cfdata *, void *);
-static void kbdattach(struct device *, struct device *, void *);
+static int kbdmatch(device_t, cfdata_t, void *);
+static void kbdattach(device_t, device_t, void *);
 
-CFATTACH_DECL(kbd, sizeof(struct kbd_softc),
+CFATTACH_DECL_NEW(kbd, sizeof(struct kbd_softc),
     kbdmatch, kbdattach, NULL, NULL);
 
 static int kbd_attached;
@@ -100,7 +98,7 @@ const struct cdevsw kbd_cdevsw = {
 };
 
 static int
-kbdmatch(struct device *parent, struct cfdata *cf, void *aux)
+kbdmatch(device_t parent, cfdata_t cf, void *aux)
 {
 
 	if (strcmp(aux, "kbd") != 0)
@@ -112,10 +110,10 @@ kbdmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-kbdattach(struct device *parent, struct device *self, void *aux)
+kbdattach(device_t parent, device_t self, void *aux)
 {
-	struct kbd_softc *sc = (void *)self;
-	struct mfp_softc *mfp = (void *)parent;
+	struct kbd_softc *sc = device_private(self);
+	struct mfp_softc *mfp = device_private(parent);
 	int s;
 
 	kbd_attached = 1;
@@ -132,7 +130,7 @@ kbdattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_events.ev_io = 0;
 	splx(s);
 
-	printf("\n");
+	aprint_normal("\n");
 }
 
 
@@ -167,7 +165,7 @@ kbdenable(int mode)	/* 1: interrupt, 0: poll */
 	kbd_setLED();
 
 	if (!(intio_get_sysport_keyctrl() & 8))
-		printf(" (no connected keyboard)");
+		aprint_normal(" (no connected keyboard)");
 }
 
 extern struct cfdriver kbd_cd;

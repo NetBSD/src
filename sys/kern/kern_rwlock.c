@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.23.2.1 2008/06/23 04:31:51 wrstuden Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.23.2.2 2008/09/18 04:31:42 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.23.2.1 2008/06/23 04:31:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.23.2.2 2008/09/18 04:31:42 wrstuden Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -498,7 +498,7 @@ rw_vector_exit(krwlock_t *rw)
 			/* Give the lock to the longest waiting writer. */
 			l = TS_FIRST(ts, TS_WRITER_Q);
 			new = (uintptr_t)l | RW_WRITE_LOCKED | RW_HAS_WAITERS;
-			if (wcnt != 0)
+			if (wcnt > 1)
 				new |= RW_WRITE_WANTED;
 			rw_swap(rw, owner, new);
 			turnstile_wakeup(ts, TS_WRITER_Q, 1, l);
@@ -633,7 +633,7 @@ rw_downgrade(krwlock_t *rw)
 
 			new = RW_READ_INCR | RW_HAS_WAITERS | RW_WRITE_WANTED;
 			next = rw_cas(rw, owner, new);
-			turnstile_exit(ts);
+			turnstile_exit(rw);
 			if (__predict_true(next == owner))
 				break;
 		} else {
@@ -653,7 +653,7 @@ rw_downgrade(krwlock_t *rw)
 				turnstile_wakeup(ts, TS_READER_Q, rcnt, NULL);
 				break;
 			}
-			turnstile_exit(ts);
+			turnstile_exit(rw);
 		}
 	}
 

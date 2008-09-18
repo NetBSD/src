@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.107.12.2 2008/06/24 04:15:50 wrstuden Exp $
+# $NetBSD: GENERIC,v 1.107.12.3 2008/09/18 04:33:22 wrstuden Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.107.12.2 $"
+#ident 		"GENERIC-$Revision: 1.107.12.3 $"
 
 maxusers	32
 
@@ -104,6 +104,7 @@ file-system	UNION		# union file system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -309,6 +310,11 @@ pseudo-device	tun			# network tunneling over tty
 #pseudo-device	pflog			# PF log if
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

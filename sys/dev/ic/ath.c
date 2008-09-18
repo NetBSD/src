@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.100.2.1 2008/06/23 04:31:04 wrstuden Exp $	*/
+/*	$NetBSD: ath.c,v 1.100.2.2 2008/09/18 04:35:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.100.2.1 2008/06/23 04:31:04 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.100.2.2 2008/09/18 04:35:03 wrstuden Exp $");
 #endif
 
 /*
@@ -272,7 +272,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: devid 0x%x\n", __func__, devid);
 
-	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 
 	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
 	if (ah == NULL) {
@@ -290,7 +290,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	}
 	sc->sc_ah = ah;
 
-	if (!prop_dictionary_set_bool(device_properties(&sc->sc_dev),
+	if (!prop_dictionary_set_bool(device_properties(sc->sc_dev),
 	    "pmf-powerdown", false))
 		goto bad;
 
@@ -609,7 +609,7 @@ bad:
 	if (ah)
 		ath_hal_detach(ah);
 	/* XXX don't get under the abstraction like this */
-	sc->sc_dev.dv_flags &= ~DVF_ACTIVE;
+	sc->sc_dev->dv_flags &= ~DVF_ACTIVE;
 	return error;
 }
 
@@ -711,7 +711,7 @@ ath_intr(void *arg)
 	struct ath_hal *ah = sc->sc_ah;
 	HAL_INT status;
 
-	if (!device_is_active(&sc->sc_dev)) {
+	if (!device_is_active(sc->sc_dev)) {
 		/*
 		 * The hardware is not ready/present, don't touch anything.
 		 * Note this can happen early on if the IRQ is shared.
@@ -933,9 +933,9 @@ ath_init(struct ath_softc *sc)
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags 0x%x\n",
 		__func__, ifp->if_flags);
 
-	if (device_is_active(&sc->sc_dev)) {
+	if (device_is_active(sc->sc_dev)) {
 		ATH_LOCK(sc);
-	} else if (!pmf_device_resume_self(&sc->sc_dev))
+	} else if (!pmf_device_resume_self(sc->sc_dev))
 		return ENXIO;
 	else
 		ATH_LOCK(sc);
@@ -1033,7 +1033,7 @@ ath_stop_locked(struct ifnet *ifp, int disable)
 	struct ath_hal *ah = sc->sc_ah;
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: invalid %d if_flags 0x%x\n",
-		__func__, !device_is_enabled(&sc->sc_dev), ifp->if_flags);
+		__func__, !device_is_enabled(sc->sc_dev), ifp->if_flags);
 
 	ATH_LOCK_ASSERT(sc);
 	if (ifp->if_flags & IFF_RUNNING) {
@@ -1059,7 +1059,7 @@ ath_stop_locked(struct ifnet *ifp, int disable)
 		ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 		ifp->if_flags &= ~IFF_RUNNING;
 		ifp->if_timer = 0;
-		if (device_is_enabled(&sc->sc_dev)) {
+		if (device_is_enabled(sc->sc_dev)) {
 			if (sc->sc_softled) {
 				callout_stop(&sc->sc_ledtimer);
 				ath_hal_gpioset(ah, sc->sc_ledpin,
@@ -1069,7 +1069,7 @@ ath_stop_locked(struct ifnet *ifp, int disable)
 			ath_hal_intrset(ah, 0);
 		}
 		ath_draintxq(sc);
-		if (device_is_enabled(&sc->sc_dev)) {
+		if (device_is_enabled(sc->sc_dev)) {
 			ath_stoprecv(sc);
 			ath_hal_phydisable(ah);
 		} else
@@ -1077,7 +1077,7 @@ ath_stop_locked(struct ifnet *ifp, int disable)
 		IF_PURGE(&ifp->if_snd);
 		ath_beacon_free(sc);
 		if (disable)
-			pmf_device_suspend_self(&sc->sc_dev);
+			pmf_device_suspend_self(sc->sc_dev);
 	}
 }
 
@@ -1222,7 +1222,7 @@ ath_start(struct ifnet *ifp)
 	ath_bufhead frags;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    !device_is_active(&sc->sc_dev))
+	    !device_is_active(sc->sc_dev))
 		return;
 	for (;;) {
 		/*
@@ -1703,8 +1703,8 @@ ath_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 
 	DPRINTF(sc, ATH_DEBUG_KEYCACHE, "%s: delete key %u\n", __func__, keyix);
 
-	if (!device_has_power(&sc->sc_dev)) {
-		aprint_error_dev(&sc->sc_dev, "deleting keyix %d w/o power\n",
+	if (!device_has_power(sc->sc_dev)) {
+		aprint_error_dev(sc->sc_dev, "deleting keyix %d w/o power\n",
 		    k->wk_keyix);
 	}
 
@@ -1742,8 +1742,8 @@ ath_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 {
 	struct ath_softc *sc = ic->ic_ifp->if_softc;
 
-	if (!device_has_power(&sc->sc_dev)) {
-		aprint_error_dev(&sc->sc_dev, "setting keyix %d w/o power\n",
+	if (!device_has_power(sc->sc_dev)) {
+		aprint_error_dev(sc->sc_dev, "setting keyix %d w/o power\n",
 		    k->wk_keyix);
 	}
 	return ath_keyset(sc, k, mac, ic->ic_bss);
@@ -1972,7 +1972,7 @@ ath_beaconq_config(struct ath_softc *sc)
 	}
 
 	if (!ath_hal_settxqueueprops(ah, sc->sc_bhalq, &qi)) {
-		device_printf(&sc->sc_dev, "unable to update parameters for "
+		device_printf(sc->sc_dev, "unable to update parameters for "
 			"beacon hardware queue!\n");
 		return 0;
 	} else {
@@ -3164,7 +3164,7 @@ ath_txq_setup(struct ath_softc *sc, int qtype, int subtype)
 		return NULL;
 	}
 	if (qnum >= N(sc->sc_txq)) {
-		device_printf(&sc->sc_dev,
+		device_printf(sc->sc_dev,
 			"hal qnum %u out of range, max %zu!\n",
 			qnum, N(sc->sc_txq));
 		ath_hal_releasetxqueue(ah, qnum);
@@ -3201,7 +3201,7 @@ ath_tx_setup(struct ath_softc *sc, int ac, int haltype)
 	struct ath_txq *txq;
 
 	if (ac >= N(sc->sc_ac2q)) {
-		device_printf(&sc->sc_dev, "AC %u out of range, max %zu!\n",
+		device_printf(sc->sc_dev, "AC %u out of range, max %zu!\n",
 			ac, N(sc->sc_ac2q));
 		return 0;
 	}
@@ -3235,7 +3235,7 @@ ath_txq_update(struct ath_softc *sc, int ac)
 	qi.tqi_burstTime = ATH_TXOP_TO_US(wmep->wmep_txopLimit);
 
 	if (!ath_hal_settxqueueprops(ah, txq->axq_qnum, &qi)) {
-		device_printf(&sc->sc_dev, "unable to update hardware queue "
+		device_printf(sc->sc_dev, "unable to update hardware queue "
 			"parameters for %s traffic!\n",
 			ieee80211_wme_acnames[ac]);
 		return 0;
@@ -4174,7 +4174,7 @@ ath_draintxq(struct ath_softc *sc)
 	int i;
 
 	/* XXX return value */
-	if (device_is_active(&sc->sc_dev)) {
+	if (device_is_active(sc->sc_dev)) {
 		/* don't touch the hardware if marked invalid */
 		(void) ath_hal_stoptxdma(ah, sc->sc_bhalq);
 		DPRINTF(sc, ATH_DEBUG_RESET,
@@ -5048,7 +5048,7 @@ ath_watchdog(struct ifnet *ifp)
 
 	ifp->if_timer = 0;
 	if ((ifp->if_flags & IFF_RUNNING) == 0 ||
-	    !device_is_active(&sc->sc_dev))
+	    !device_is_active(sc->sc_dev))
 		return;
 	for (i = 0; i < HAL_NUM_TX_QUEUES; i++) {
 		if (!ATH_TXQ_SETUP(sc, i))
@@ -5166,7 +5166,7 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			 * probably a better way to deal with this.
 			 */
 			error = ath_init(sc);
-		} else if (device_is_active(&sc->sc_dev))
+		} else if (device_is_active(sc->sc_dev))
 			ath_stop_locked(ifp, 1);
 		break;
 	case SIOCADDMULTI:

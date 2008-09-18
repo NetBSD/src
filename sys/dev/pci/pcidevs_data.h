@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.938.2.1 2008/06/23 04:31:12 wrstuden Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.938.2.2 2008/09/18 04:35:08 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.942 2008/05/25 15:58:48 chs Exp
+ *	NetBSD: pcidevs,v 1.953 2008/09/06 22:42:59 rmind Exp
  */
 
 /*
@@ -2244,6 +2244,10 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Ralink Technologies",
 	},
 	{
+	    PCI_VENDOR_BBELEC,
+	    "B & B Electronics",
+	},
+	{
 	    PCI_VENDOR_ATTANSIC,
 	    "Attansic Technologies",
 	},
@@ -2396,7 +2400,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 589;
+const int pci_nvendors = 590;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -4992,6 +4996,38 @@ static const struct pci_product pci_products[] = {
 	    "Primary Rate T1 ISDN Interface",
 	},
 	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_1_PORT,
+	    "single-channel RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_2_PORT,
+	    "dual-channel RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_4_PORT,
+	    "quad-channel RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_8_PORT,
+	    "octal-channel RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_1_PORT,
+	    "single-channel Isolated RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_2_PORT,
+	    "dual-channel Isolated RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_4_PORT,
+	    "quad-channel Isolated RS-485 PCI UART",
+	},
+	{
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_8_PORT,
+	    "octal-channel Isolated RS-485 PCI UART",
+	},
+	{
 	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6001,
 	    "F5D6001",
 	},
@@ -6474,6 +6510,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7130,
 	    "Integrated MS/xD/SM Controller",
+	},
+	{
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7223,
+	    "OZ711E0 PCI-CardBus Bridge",
 	},
 	{
 	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
@@ -8524,6 +8564,14 @@ static const struct pci_product pci_products[] = {
 	    "82945GM/PM/GMS Integrated Graphics Device",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GME_HB,
+	    "82945GME Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GME_IGD,
+	    "82945GME Integrated Graphics Device",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_LPC,
 	    "82801GB/GR LPC Interface Bridge",
 	},
@@ -8856,6 +8904,14 @@ static const struct pci_product pci_products[] = {
 	    "82801I (C) LAN Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_HB,
+	    "82946GZ Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_IGD,
+	    "82946GZ Integrated Graphics Device",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_HB,
 	    "82965Q Host Bridge",
 	},
@@ -8942,6 +8998,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_HB,
 	    "82965PM Host Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80862A01,
+	    "80862A01 Mobile PCI Express Root Port",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IGD,
@@ -10277,7 +10337,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800LE,
-	    "GeForce 6800LE",
+	    "GeForce 6800 LE",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800GT,
@@ -10652,6 +10712,10 @@ static const struct pci_product pci_products[] = {
 	    "nForce Ethernet",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_7300LE,
+	    "GeForce 7300 LE",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCHB,
 	    "nForce2 Host-PCI Bridge",
 	},
@@ -10978,6 +11042,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_8400M_GS,
 	    "GeForce 8400M GS",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_NVS140M,
+	    "Quadro NVS 140M",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA,
@@ -11740,6 +11808,10 @@ static const struct pci_product pci_products[] = {
 	    "8029 Ethernet",
 	},
 	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139D,
+	    "8139D 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8100,
 	    "8100 10/100 Ethernet",
 	},
@@ -11754,10 +11826,6 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138,
 	    "8138 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139B,
-	    "8139B 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
@@ -12084,12 +12152,40 @@ static const struct pci_product pci_products[] = {
 	    "CMIC-SL PCI/AGP bridge",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_PPB0,
+	    "HT1000 PCI/PCI-X bridge",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_X2,
 	    "CIOB-X2 PCI-X bridge",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_BCM5714,
+	    "bcm5714/bcm5715 integral PCI-E to PCI-X bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_PPB1,
+	    "HT1000 PCI/PCI-X bridge",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_E,
 	    "CIOB-E PCI-X bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB0,
+	    "HT2100 PCI-Express Bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB1,
+	    "HT2100 PCI-Express Bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB2,
+	    "HT2100 PCI-Express Bridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB3,
+	    "HT2100 PCI-Express Bridge",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4,
@@ -12144,6 +12240,14 @@ static const struct pci_product pci_products[] = {
 	    "CSB6 ISA/LPC bridge",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_USB,
+	    "HT1000 USB",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_LPC,
+	    "HT1000 LPC",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_K2_SATA,
 	    "K2 SATA",
 	},
@@ -12162,10 +12266,6 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_SATA_2,
 	    "HT-1000 SATA",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_BCM5714,
-	    "bcm5714/bcm5715 integral PCI-E to PCI-X bridge",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
@@ -13060,6 +13160,10 @@ static const struct pci_product pci_products[] = {
 	    "PCI2040 PCI-DSP Bridge",
 	},
 	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7420YENTA,
+	    "PCI7420 PCI-Cardbus Bridge w/ IEEE 1394 Host controller",
+	},
+	{
 	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800L,
 	    "PCI-800L",
 	},
@@ -13660,6 +13764,10 @@ static const struct pci_product pci_products[] = {
 	    "VT3351 Host Bridge",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700M2_IDE,
+	    "CX700M2/VX700 IDE Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_IOAPIC,
 	    "VT3351 I/O APIC Interrupt Controller",
 	},
@@ -14252,4 +14360,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2963;
+const int pci_nproducts = 2989;

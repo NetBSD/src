@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_bci.c,v 1.3 2007/12/11 11:48:46 lukem Exp $	*/
+/*	$NetBSD: savage_bci.c,v 1.3.14.1 2008/09/18 04:35:09 wrstuden Exp $	*/
 
 /* savage_bci.c -- BCI support for Savage
  *
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: savage_bci.c,v 1.3 2007/12/11 11:48:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: savage_bci.c,v 1.3.14.1 2008/09/18 04:35:09 wrstuden Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_bci.c,v 1.3 2006/04/09 20:45:45 anholt Exp $");
 */
-#include <dev/drm/drmP.h>
-#include <dev/pci/drm/savage_drm.h>
-#include <dev/pci/drm/savage_drv.h>
+#include "drmP.h"
+#include "savage_drm.h"
+#include "savage_drv.h"
 
 /* Need a long timeout for shadow status updates can take a while
  * and so can waiting for events when the queue is full. */

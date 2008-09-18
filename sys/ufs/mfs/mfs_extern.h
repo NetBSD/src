@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_extern.h,v 1.29 2008/05/06 18:43:45 ad Exp $	*/
+/*	$NetBSD: mfs_extern.h,v 1.29.2.1 2008/09/18 04:37:06 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,10 +67,6 @@ int	mfs_fsync(void *);
 #ifdef _KERNEL
 
 #include <sys/mutex.h>
-
-#ifdef SYSCTL_SETUP_PROTO
-SYSCTL_SETUP_PROTO(sysctl_vfs_mfs_setup);
-#endif /* SYSCTL_SETUP_PROTO */
 
 extern kmutex_t	mfs_lock;
 

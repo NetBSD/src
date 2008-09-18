@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.21 2008/01/28 18:51:03 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.21.6.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.21 2008/01/28 18:51:03 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.21.6.1 2008/09/18 04:39:24 wrstuden Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -46,6 +46,12 @@ __RCSID("$NetBSD: callcontext.c,v 1.21 2008/01/28 18:51:03 pooka Exp $");
 #include <unistd.h>
 
 #include "puffs_priv.h"
+
+#if 0
+#define DPRINTF(x) printf x
+#else
+#define DPRINTF(x)
+#endif
 
 /*
  * Set the following to 1 to not handle each request on a separate
@@ -75,14 +81,18 @@ puffs_cc_yield(struct puffs_cc *pcc)
 	pcc->pcc_flags &= ~PCC_BORROWED;
 
 	/* romanes eunt domus */
+	DPRINTF(("puffs_cc_yield: ")); 
 	if ((pcc->pcc_flags & PCC_MLCONT) == 0) {
+		DPRINTF(("no mlcont, pcc %p\n", pcc));
 		swapcontext(&pcc->pcc_uc, &pcc->pcc_uc_ret);
 	} else {
+		DPRINTF(("mlcont, pcc %p\n", pcc));
 		pcc->pcc_flags &= ~PCC_MLCONT;
 		rv = puffs__cc_create(pcc->pcc_pu, puffs__theloop, &jumpcc);
 		if (rv)
 			abort(); /* p-p-p-pa-pa-panic (XXX: fixme) */
 		swapcontext(&pcc->pcc_uc, &jumpcc->pcc_uc);
+		DPRINTF(("puffs_cc_yield: post swap pcc %p\n", pcc));
 	}
 }
 
@@ -97,6 +107,7 @@ puffs__cc_cont(struct puffs_cc *pcc)
 	struct puffs_cc *mycc;
 
 	mycc = puffs_cc_getcc(pcc->pcc_pu);
+	DPRINTF(("puffs__cc_cont: pcc %p, mycc %p\n", pcc, mycc));
 
 	/*
 	 * XXX: race between setcontenxt() and recycle if
@@ -112,10 +123,12 @@ puffs_cc_continue(struct puffs_cc *pcc)
 {
 
 	/* ramble on */
-	if (puffs_fakecc)
+	DPRINTF(("puffs_cc_continue: pcc %p\n", pcc));
+	if (puffs_fakecc) {
 		pcc->pcc_func(pcc->pcc_farg);
-	else 
+	} else {
 		swapcontext(&pcc->pcc_uc_ret, &pcc->pcc_uc);
+	}
 }
 
 /*
@@ -209,12 +222,14 @@ puffs__cc_create(struct puffs_usermount *pu, puffs_ccfunc func,
 		if (pcc == NULL)
 			return -1;
 		pcc->pcc_pu = pu;
+		DPRINTF(("puffs__cc_create: allocated pcc %p\n", pcc));
 	} else {
 		pcc = LIST_FIRST(&pu->pu_ccmagazin);
 		assert(pcc != NULL);
 
 		LIST_REMOVE(pcc, pcc_rope);
 		pu->pu_cc_nstored--;
+		DPRINTF(("puffs__cc_create: magazin pcc %p\n", pcc));
 	}
 	assert(pcc->pcc_pu == pu);
 
@@ -260,22 +275,44 @@ puffs__cc_setcaller(struct puffs_cc *pcc, pid_t pid, lwpid_t lid)
 	pcc->pcc_flags |= PCC_HASCALLER;
 }
 
-void
-puffs__cc_destroy(struct puffs_cc *pcc, int nonuke)
+static void
+cc_free(struct puffs_cc *pcc)
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	size_t stacksize = 1<<pu->pu_cc_stackshift;
 
+	DPRINTF(("invalidating pcc %p\n", pcc));
+	assert(!puffs_fakecc);
+	munmap(pcc, stacksize);
+}
+
+void
+puffs__cc_destroy(struct puffs_cc *pcc, int nonuke)
+{
+	struct puffs_usermount *pu = pcc->pcc_pu;
+
 	assert(pcc->pcc_flags == 0);
+	assert(!puffs_fakecc);
 
 	/* not over limit?  stuff away in the store, otherwise nuke */
 	if (nonuke || pu->pu_cc_nstored < PUFFS_CCMAXSTORE) {
 		pcc->pcc_pb = NULL;
+		DPRINTF(("puffs__cc_destroy: storing pcc %p\n", pcc));
 		LIST_INSERT_HEAD(&pu->pu_ccmagazin, pcc, pcc_rope);
 		pu->pu_cc_nstored++;
 	} else {
-		assert(!puffs_fakecc);
-		munmap(pcc, stacksize);
+		cc_free(pcc);
+	}
+}
+
+void
+puffs__cc_exit(struct puffs_usermount *pu)
+{
+	struct puffs_cc *pcc;
+
+	while ((pcc = LIST_FIRST(&pu->pu_ccmagazin)) != NULL) {
+		LIST_REMOVE(pcc, pcc_rope);
+		cc_free(pcc);
 	}
 }
 
@@ -290,4 +327,27 @@ puffs_cc_getcc(struct puffs_usermount *pu)
 
 	bottom = ((uintptr_t)&bottom) & ~(stacksize-1);
 	return (struct puffs_cc *)bottom;
+}
+
+int
+puffs__cc_savemain(struct puffs_usermount *pu)
+{
+
+	if (puffs_fakecc)
+		return 0;
+
+	PU_CLRSFLAG(pu, PU_MAINRESTORE);
+	return getcontext(&pu->pu_mainctx);
+}
+
+int
+puffs__cc_restoremain(struct puffs_usermount *pu)
+{
+
+	if (puffs_fakecc)
+		return 0;
+
+	puffs__cc_destroy(puffs_cc_getcc(pu), 1);
+	PU_SETSFLAG(pu, PU_MAINRESTORE);
+	return setcontext(&pu->pu_mainctx);
 }

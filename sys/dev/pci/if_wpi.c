@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.38 2008/04/28 18:33:31 drochner Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.38.2.1 2008/09/18 04:35:07 wrstuden Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.38 2008/04/28 18:33:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.38.2.1 2008/09/18 04:35:07 wrstuden Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.38 2008/04/28 18:33:31 drochner Exp $")
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/callout.h>
@@ -515,11 +516,13 @@ wpi_alloc_rbuf(struct wpi_softc *sc)
 {
 	struct wpi_rbuf *rbuf;
 
+	mutex_enter(&sc->rxq.freelist_mtx);
 	rbuf = SLIST_FIRST(&sc->rxq.freelist);
-	if (rbuf == NULL)
-		return NULL;
-	SLIST_REMOVE_HEAD(&sc->rxq.freelist, next);
-	sc->rxq.nb_free_entries --;
+	if (rbuf != NULL) {
+		SLIST_REMOVE_HEAD(&sc->rxq.freelist, next);
+		sc->rxq.nb_free_entries --;
+	}
+	mutex_exit(&sc->rxq.freelist_mtx);
 
 	return rbuf;
 }
@@ -536,7 +539,10 @@ wpi_free_rbuf(struct mbuf* m, void *buf, size_t size, void *arg)
 
 	/* put the buffer back in the free list */
 
+	mutex_enter(&sc->rxq.freelist_mtx);
 	SLIST_INSERT_HEAD(&sc->rxq.freelist, rbuf, next);
+	mutex_exit(&sc->rxq.freelist_mtx);
+	/* No need to protect this with a mutex, see wpi_rx_intr */
 	sc->rxq.nb_free_entries ++;
 
 	if (__predict_true(m != NULL))
@@ -560,6 +566,7 @@ wpi_alloc_rpool(struct wpi_softc *sc)
 	}
 
 	/* ..and split it into 3KB chunks */
+	mutex_init(&ring->freelist_mtx, MUTEX_DEFAULT, IPL_NET);
 	SLIST_INIT(&ring->freelist);
 	for (i = 0; i < WPI_RBUF_COUNT; i++) {
 		rbuf = &ring->rbuf[i];
@@ -1357,6 +1364,11 @@ wpi_rx_intr(struct wpi_softc *sc, struct wpi_rx_desc *desc,
 	/* 
 	 * If the number of free entry is too low
 	 * just dup the data->m socket and reuse the same rbuf entry
+	 * Note that thi test is not protected by a mutex because the
+	 * only path that causes nb_free_entries to decrease is through
+	 * this interrupt routine, which is not re-entrent.
+	 * What may not be obvious is that the safe path is if that test
+	 * evaluates as true, so nb_free_entries can grow any time.
 	 */
 	if (sc->rxq.nb_free_entries <= WPI_RBUF_LOW_LIMIT) {
 		

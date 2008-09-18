@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2007/03/06 21:57:25 bouyer Exp $
+#	$NetBSD: Makefile,v 1.9.16.1 2008/09/18 04:41:22 wrstuden Exp $
 
 SUBDIR=		ramdisk miniroot .WAIT cdroms
 TARGETS+=	release
@@ -11,13 +11,13 @@ release: check_RELEASEDIR .WAIT \
 	    MakeBootTape MakeInstTape
 	${RELEASE_INSTALL} \
 	    ${DESTDIR}/usr/mdec/netboot \
-	    ${RELEASEDIR}/${MACHINE}/installation/netboot
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/netboot
 	${RELEASE_INSTALL} \
 	    ${DESTDIR}/usr/mdec/tapeboot \
-	    ${RELEASEDIR}/${MACHINE}/installation/tapeimage
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/tapeimage
 	${RELEASE_INSTALL} \
 	    ${.CURDIR}/MakeBootTape ${.CURDIR}/MakeInstTape \
-	    ${RELEASEDIR}/${MACHINE}/installation/tapeimage
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/tapeimage
 
 iso_image:
 	${MAKEDIRTARGET} cdroms iso_image

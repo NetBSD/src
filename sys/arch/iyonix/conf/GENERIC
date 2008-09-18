@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.47.12.1 2008/06/23 04:30:29 wrstuden Exp $
+#	$NetBSD: GENERIC,v 1.47.12.2 2008/09/18 04:33:28 wrstuden Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.47.12.1 $"
+#ident 		"GENERIC-$Revision: 1.47.12.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -42,8 +42,6 @@ options 	XSCALE_CACHE_READ_WRITE_ALLOCATE
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	NTP		# NTP phase/frequency locked loop
-#options 	NO_TSC_TIME	# Don't use TSC microtime, even if available.
-				# Improves time behavior under VMware.
 
 #options 	KTRACE		# system call tracing via ktrace(1)
 
@@ -144,6 +142,7 @@ file-system     FILECORE        # Acorn filecore file system
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -808,6 +807,11 @@ pseudo-device	loop			# network loopback
 #pseudo-device	pflog			# PF log if
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

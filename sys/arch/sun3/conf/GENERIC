@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.143 2008/04/05 22:08:41 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.143.6.1 2008/09/18 04:33:35 wrstuden Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include 	"arch/sun3/conf/std.sun3"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.143 $"
+#ident		"GENERIC-$Revision: 1.143.6.1 $"
 
 makeoptions	COPTS="-Os"		# bootloader has size limit (~2MB)
 
@@ -108,6 +108,7 @@ options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -251,6 +252,11 @@ cd* at scsibus? target ? lun ?		# SCSI CD-ROMs
 #ch* at scsibus? target ? lun ?		# SCSI changer devices
 #ss* at scsibus? target ? lun ?		# SCSI scanners
 uk* at scsibus? target ? lun ?		# unknown SCSI devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # Memory-disk drivers
 pseudo-device	md		1

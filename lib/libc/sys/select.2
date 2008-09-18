@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.31.4.1 2008/06/23 04:29:36 wrstuden Exp $
+.\"	$NetBSD: select.2,v 1.31.4.2 2008/09/18 04:39:23 wrstuden Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -116,7 +116,7 @@ selection to complete.
 If
 .Fa timeout
 is a null pointer, the select blocks indefinitely.
-To affect a poll, the
+To poll without blocking, the
 .Fa timeout
 argument should be non-null, pointing to a zero-valued timeval or timespec
 structure, as appropriate.

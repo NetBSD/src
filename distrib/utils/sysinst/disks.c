@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.99 2008/02/02 09:26:45 tsutsui Exp $ */
+/*	$NetBSD: disks.c,v 1.99.10.1 2008/09/18 04:41:22 wrstuden Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -348,7 +348,10 @@ make_filesystems(void)
 			    lbl->pi_flags & PIF_FFSv2 ? 2 : 1,
 			    lbl->pi_fsize * lbl->pi_frag, lbl->pi_fsize,
 			    lbl->pi_isize != 0 ? " -i " : "", lbl->pi_isize);
-			mnt_opts = "-tffs -o async";
+			if (lbl->pi_flags & PIF_LOG)
+				mnt_opts = "-tffs -o log";
+			else
+				mnt_opts = "-tffs -o async";
 			fsname = "ffs";
 			break;
 		case FS_BSDLFS:
@@ -502,8 +505,11 @@ make_fstab(void)
 		if (strcmp(mp, "/") == 0 && !(bsdlabel[i].pi_flags & PIF_MOUNT))
 			s = "# ";
 
- 		scripting_fprintf(f, "%s/dev/%s%c\t\t%s\t%s\trw%s%s%s%s%s%s%s%s\t\t %d %d\n",
+ 		scripting_fprintf(f,
+		  "%s/dev/%s%c\t\t%s\t%s\trw%s%s%s%s%s%s%s%s%s\t\t %d %d\n",
 		   s, diskdev, 'a' + i, mp, fstype,
+		   bsdlabel[i].pi_flags & PIF_LOG ? ",log" : "",
+		   bsdlabel[i].pi_flags & PIF_SOFTDEP ? ",softdep" : "",
 		   bsdlabel[i].pi_flags & PIF_MOUNT ? "" : ",noauto",
 		   bsdlabel[i].pi_flags & PIF_ASYNC ? ",async" : "",
 		   bsdlabel[i].pi_flags & PIF_NOATIME ? ",noatime" : "",
@@ -511,7 +517,6 @@ make_fstab(void)
 		   bsdlabel[i].pi_flags & PIF_NODEVMTIME ? ",nodevmtime" : "",
 		   bsdlabel[i].pi_flags & PIF_NOEXEC ? ",noexec" : "",
 		   bsdlabel[i].pi_flags & PIF_NOSUID ? ",nosuid" : "",
-		   bsdlabel[i].pi_flags & PIF_SOFTDEP ? ",softdep" : "",
 		   dump_freq, fsck_pass);
 	}
 

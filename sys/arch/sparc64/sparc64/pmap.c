@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.217.6.1 2008/06/23 04:30:46 wrstuden Exp $	*/
+/*	$NetBSD: pmap.c,v 1.217.6.2 2008/09/18 04:33:34 wrstuden Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217.6.1 2008/06/23 04:30:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.217.6.2 2008/09/18 04:33:34 wrstuden Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -500,9 +500,8 @@ pmap_mp_init(void)
 				1, /* valid */
 				0 /* ie */);
 		tp[i].data |= TLB_L | TLB_CV;
-		printf("xtlb[%d]: Tag: %" PRIx64 " Data: %" PRIx64 "\n",
-				i, tp[i].tag,
-				   tp[i].data);
+		DPRINTF(PDB_BOOT1, ("xtlb[%d]: Tag: %" PRIx64 " Data: %"
+				PRIx64 "\n", i, tp[i].tag, tp[i].data));
 	}
 
 	for (i = 0; i < PAGE_SIZE; i += sizeof(long))

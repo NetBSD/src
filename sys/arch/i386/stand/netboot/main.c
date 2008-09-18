@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2001/07/05 00:58:45 itojun Exp $	 */
+/*	$NetBSD: main.c,v 1.10.132.1 2008/09/18 04:33:28 wrstuden Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -45,8 +45,7 @@
 
 int errno;
 
-extern char	bootprog_name[], bootprog_rev[], bootprog_date[],
-		bootprog_maker[];
+extern char	bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 #define TIMEOUT 5
 
@@ -79,13 +78,11 @@ print_banner(void)
 {
 
 	printf("\n"
-	       ">> %s, Revision %s\n"
-	       ">> (%s, %s)\n"
+	       ">> %s, Revision %s (from NetBSD %s)\n"
 	       ">> Memory: %d/%d k\n"
 	       "Press return to boot now, any other key for boot menu\n"
 	       "starting in ",
-	       bootprog_name, bootprog_rev,
-	       bootprog_maker, bootprog_date,
+	       bootprog_name, bootprog_rev, bootprog_kernrev,
 	       getbasemem(), getextmem());
 }
 

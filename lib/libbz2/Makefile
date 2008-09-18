@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12.4.1 2008/06/23 04:29:30 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.12.4.2 2008/09/18 04:39:19 wrstuden Exp $
 
 USE_FORT?= yes	# data driven bugs?
 
@@ -22,7 +22,7 @@ COPTS+=		-O0
 
 # XXX blocksort.c gets mis-compiled with 4.1
 .if (${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb") && \
-    ${HAVE_GCC} == 4
+    (defined(HAVE_GCC) && ${HAVE_GCC} == 4)
 COPTS.blocksort.c+=	-fno-loop-optimize
 .endif
 

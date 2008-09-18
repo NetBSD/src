@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsavar.h,v 1.4.2.1 2008/06/23 04:31:36 wrstuden Exp $	*/
+/*	$NetBSD: ubsavar.h,v 1.4.2.2 2008/09/18 04:35:11 wrstuden Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -55,7 +55,7 @@
 
 #define	UBSA_MODVER		1	/* module version */
 
-#define	UBSA_DEFAULT_CONFIG_INDEX	1
+#define	UBSA_DEFAULT_CONFIG_INDEX	0
 #define	UBSA_IFACE_INDEX_OFFSET	0
 
 #define	UBSA_INTR_INTERVAL	100	/* ms */

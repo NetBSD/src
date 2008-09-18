@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.33 2008/04/08 20:09:27 cegger Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.33.6.1 2008/09/18 04:35:05 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isapnp.c,v 1.33 2008/04/08 20:09:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isapnp.c,v 1.33.6.1 2008/09/18 04:35:05 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,15 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_isapnp.c,v 1.33 2008/04/08 20:09:27 cegger Exp
 #include <dev/ic/elink3var.h>
 #include <dev/ic/elink3reg.h>
 
-int ep_isapnp_match(struct device *, struct cfdata *, void *);
-void ep_isapnp_attach(struct device *, struct device *, void *);
+int ep_isapnp_match(device_t , cfdata_t , void *);
+void ep_isapnp_attach(device_t , device_t , void *);
 
-CFATTACH_DECL(ep_isapnp, sizeof(struct ep_softc),
+CFATTACH_DECL_NEW(ep_isapnp, sizeof(struct ep_softc),
     ep_isapnp_match, ep_isapnp_attach, NULL, NULL);
 
 int
-ep_isapnp_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ep_isapnp_match(device_t parent, cfdata_t match, void *aux)
 {
 	int pri, variant;
 
@@ -82,7 +81,7 @@ ep_isapnp_match(struct device *parent, struct cfdata *match,
 }
 
 void
-ep_isapnp_attach(struct device *parent, struct device *self, void *aux)
+ep_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct ep_softc *sc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;
@@ -90,12 +89,13 @@ ep_isapnp_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	sc->sc_dev = self;
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		aprint_error_dev(&sc->sc_dev, "error in region allocation\n");
+		aprint_error_dev(sc->sc_dev, "error in region allocation\n");
 		return;
 	}
 
-	printf("%s: %s %s\n", device_xname(&sc->sc_dev), ipa->ipa_devident,
+	printf("%s: %s %s\n", device_xname(sc->sc_dev), ipa->ipa_devident,
 	    ipa->ipa_devclass);
 
 	sc->sc_iot = ipa->ipa_iot;

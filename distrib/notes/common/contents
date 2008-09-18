@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.139.2.1 2008/06/23 04:28:54 wrstuden Exp $
+.\"	$NetBSD: contents,v 1.139.2.2 2008/09/18 04:41:10 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -487,7 +487,7 @@ distribution tree.
 If you want to install 32-bit only binaries, you will 
 still need to boot using the sparc64 installation tools.  When it 
 asks you for the distribution set to install, provide the
-.Nx /sparc
+.Nx Ns /sparc
 .Pa binary/sets .
 Be sure to use the 32 bit sparc
 .Pa kern-GENERIC_SUN4U.tgz 
@@ -817,10 +817,11 @@ This set contains a
 .Li GENERIC32_IP3x
 kernel (for O2), named
 .Pa /netbsd .
+.Pp
 You
 .Em must
 install one of these distribution sets for your machine.
-.showsize 4 8				\" XXX old
+.showsize 4 8
 .\}
 .el \{\
 .ie \n[sparc] \{\

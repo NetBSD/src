@@ -1,4 +1,4 @@
-#	$NetBSD: std.smdk2800,v 1.12 2008/01/27 12:37:12 chris Exp $
+#	$NetBSD: std.smdk2800,v 1.12.12.1 2008/09/18 04:33:24 wrstuden Exp $
 #
 # standard NetBSD/evbarm for SMDK2800 options
 
@@ -24,5 +24,6 @@ options 	SSCOM_S3C2800
 makeoptions	BOARDTYPE="smdk2800"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.smdk2xx0"
 makeoptions	KERNEL_BASE_PHYS=0x08200000
+options 	KERNEL_BASE_EXT=0xc0000000
 
 options 	ARM_INTR_IMPL="<arch/arm/s3c2xx0/s3c2800_intr.h>"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.12 2008/01/19 13:11:09 chris Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.12.12.1 2008/09/18 04:33:21 wrstuden Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.12 2008/01/19 13:11:09 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.12.12.1 2008/09/18 04:33:21 wrstuden Exp $");
 
 #include "opt_ddb.h"
 
@@ -203,17 +203,7 @@ initarm(void *cookie)
 	irq_init();
 
 #if NKSYMS || defined(DDB) || defined(LKM)
-#ifdef __ELF__
 	ksyms_init(0, NULL, NULL);	/* XXX */
-#else
-	{
-		struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
-		extern int end;
-		extern char *esym;
-
-		ksyms_init(kernexec->a_syms, &end, esym);
-	}
-#endif /* __ELF__ */
 #endif
 
 #ifdef DDB

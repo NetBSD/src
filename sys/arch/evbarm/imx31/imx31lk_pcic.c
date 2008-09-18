@@ -1,5 +1,5 @@
-/*	$Id: imx31lk_pcic.c,v 1.2 2008/04/27 18:58:46 matt Exp $	*/
-/*	$NetBSD: imx31lk_pcic.c,v 1.2 2008/04/27 18:58:46 matt Exp $	*/
+/*	$Id: imx31lk_pcic.c,v 1.2.2.1 2008/09/18 04:33:24 wrstuden Exp $	*/
+/*	$NetBSD: imx31lk_pcic.c,v 1.2.2.1 2008/09/18 04:33:24 wrstuden Exp $	*/
 /*	$OpenBSD: pxapcic.c,v 1.1 2005/07/01 23:51:55 uwe Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$Id: imx31lk_pcic.c,v 1.2 2008/04/27 18:58:46 matt Exp $");
+__KERNEL_RCSID(0, "$Id: imx31lk_pcic.c,v 1.2.2.1 2008/09/18 04:33:24 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ imx31lk_pcic_intr_establish(struct imx_pcic_socket *so, int ipl,
     int (*func)(void *), void *arg)
 {
 #ifdef NOTYET
-printf("%s: irqpin %d\n", __FUNCTION__, so->irqpin);
+printf("%s: irqpin %d\n", __func__, so->irqpin);
 	return (imx_gpio_intr_establish(so->irqpin, IST_EDGE_FALLING,
 	    ipl, "pcic", func, arg));
 #else

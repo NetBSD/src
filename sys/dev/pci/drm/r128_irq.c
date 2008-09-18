@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_irq.c,v 1.3 2007/12/11 11:48:44 lukem Exp $	*/
+/*	$NetBSD: r128_irq.c,v 1.3.14.1 2008/09/18 04:35:09 wrstuden Exp $	*/
 
 /* r128_irq.c -- IRQ handling for radeon -*- linux-c -*-
  */
@@ -34,15 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128_irq.c,v 1.3 2007/12/11 11:48:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128_irq.c,v 1.3.14.1 2008/09/18 04:35:09 wrstuden Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r128_irq.c,v 1.6 2005/11/28 23:13:53 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/r128_drm.h>
-#include <dev/pci/drm/r128_drv.h>
+#include "drmP.h"
+#include "drm.h"
+#include "r128_drm.h"
+#include "r128_drv.h"
 
 irqreturn_t r128_driver_irq_handler(DRM_IRQ_ARGS)
 {

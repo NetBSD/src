@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.59.2.1 2008/06/23 04:30:18 wrstuden Exp $
+#	$NetBSD: IQ80310,v 1.59.2.2 2008/09/18 04:33:23 wrstuden Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -50,6 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

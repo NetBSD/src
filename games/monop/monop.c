@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.23 2008/02/24 06:03:35 dholland Exp $	*/
+/*	$NetBSD: monop.c,v 1.23.4.1 2008/09/18 04:39:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.23 2008/02/24 06:03:35 dholland Exp $");
+__RCSID("$NetBSD: monop.c,v 1.23.4.1 2008/09/18 04:39:57 wrstuden Exp $");
 #endif
 #endif /* not lint */
 

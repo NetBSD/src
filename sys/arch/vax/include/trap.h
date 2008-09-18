@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.20 2005/12/11 12:19:34 christos Exp $     */
+/*      $NetBSD: trap.h,v 1.20.80.1 2008/09/18 04:33:36 wrstuden Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,6 +60,10 @@
 /* These gets ORed with the word for page handling routines */
 #define	T_WRITE		0x80
 #define	T_PTEFETCH	0x40
+
+#define	AFLT_FLTOVF	0x8	/* floating overflow */
+#define	AFLT_FLTDIV	0x9	/* floating divide-by-zero */
+#define	AFLT_FLTUND	0xa	/* floating underflow */
 
 /* Trap's coming from user mode */
 #define	T_USER	0x100

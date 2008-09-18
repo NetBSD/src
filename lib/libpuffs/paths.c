@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.7 2007/06/06 01:55:01 pooka Exp $	*/
+/*	$NetBSD: paths.c,v 1.7.12.1 2008/09/18 04:39:24 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: paths.c,v 1.7 2007/06/06 01:55:01 pooka Exp $");
+__RCSID("$NetBSD: paths.c,v 1.7.12.1 2008/09/18 04:39:24 wrstuden Exp $");
 #endif /* !lint */
 
 #include <sys/hash.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: paths.c,v 1.7 2007/06/06 01:55:01 pooka Exp $");
 
 int
 puffs_path_pcnbuild(struct puffs_usermount *pu, struct puffs_cn *pcn,
-	void *parent)
+	puffs_cookie_t parent)
 {
 	struct puffs_node *pn_parent = PU_CMAP(pu, parent);
 	struct puffs_cn pcn_orig;

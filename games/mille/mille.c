@@ -1,4 +1,4 @@
-/*	$NetBSD: mille.c,v 1.14 2007/12/15 19:44:41 perry Exp $	*/
+/*	$NetBSD: mille.c,v 1.14.6.1 2008/09/18 04:39:57 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1982, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1982, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mille.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: mille.c,v 1.14 2007/12/15 19:44:41 perry Exp $");
+__RCSID("$NetBSD: mille.c,v 1.14.6.1 2008/09/18 04:39:57 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,8 @@ main(ac, av)
 		/* NOTREACHED */
 	}
 	Play = PLAYER;
-	initscr();
+	if (!initscr())
+		errx(0, "couldn't initialize screen");
 	delwin(stdscr);
 	stdscr = Board = newwin(BOARD_Y, BOARD_X, 0, 0);
 	Score = newwin(SCORE_Y, SCORE_X, 0, 40);

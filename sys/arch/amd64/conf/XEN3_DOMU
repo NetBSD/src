@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.8.6.1 2008/06/23 04:30:08 wrstuden Exp $
+# $NetBSD: XEN3_DOMU,v 1.8.6.2 2008/09/18 04:33:17 wrstuden Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -31,12 +31,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V-like memory sharing
-#options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
@@ -58,17 +53,18 @@ makeoptions 	COPTS="-O2 -fno-omit-frame-pointer"
 options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options
-options 	COMPAT_15	# NetBSD 1.5
-options 	COMPAT_16	# NetBSD 1.6
-options 	COMPAT_20	# NetBSD 2.0
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_40	# NetBSD 4.0
-options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
+options 	COMPAT_15	# compatibility with NetBSD 1.5,
+options 	COMPAT_16	# NetBSD 1.6,
+options 	COMPAT_20	# NetBSD 2.0,
+options 	COMPAT_30	# NetBSD 3.0,
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
+options 	COMPAT_43	# and 4.3BSD
+#options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
-options 	COMPAT_OSSAUDIO	# OSS (Voxware) audio driver compatibility
-options 	COMPAT_LINUX	# binary compatibility with Linux
-options 	COMPAT_LINUX32	# binary compatibility with Linux
+options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
+options 	COMPAT_LINUX
+options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 options 	EXEC_ELF32
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
@@ -98,6 +94,7 @@ file-system 	TMPFS		# Efficient memory file-system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -164,6 +161,11 @@ xencons*	at hypervisor?		# Xen virtual console
 cinclude "arch/amd64/conf/GENERIC.local"
 
 # Pseudo-Devices
+
+#
+# accept filters
+pseudo-device	accf_data	# "dataready" accept filter
+pseudo-device	accf_http	# "httpready" accept filter
 
 pseudo-device 	crypto		# /dev/crypto device
 pseudo-device	swcrypto	# software crypto implementation

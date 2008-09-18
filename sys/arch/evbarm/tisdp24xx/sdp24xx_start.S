@@ -96,10 +96,10 @@
 #include <arm/armreg.h>
 #undef DOMAIN_CLIENT	/* assym.h defines as 1, but pte.h defines as 0x01 */
 #include <arm/arm32/pmap.h>
-#include <arm/omap/omap2430obioreg.h>
+#include <arm/omap/omap2_obioreg.h>
 #include <evbarm/tisdp24xx/sdp24xx.h>  
 
-RCSID("$NetBSD: sdp24xx_start.S,v 1.2 2008/04/27 18:58:47 matt Exp $")
+RCSID("$NetBSD: sdp24xx_start.S,v 1.2.2.1 2008/09/18 04:33:24 wrstuden Exp $")
 
 #if 0
 #define Invalidate_I_cache(reg) \

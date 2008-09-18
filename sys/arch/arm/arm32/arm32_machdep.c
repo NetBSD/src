@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.56 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.56.2.1 2008/09/18 04:33:18 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.56 2008/04/27 18:58:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.56.2.1 2008/09/18 04:33:18 wrstuden Exp $");
 
 #include "opt_md.h"
 #include "opt_cpuoptions.h"
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.56 2008/04/27 18:58:43 matt Exp 
 
 #include "md.h"
 
-struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
@@ -185,11 +184,11 @@ halt()
 void
 bootsync(void)
 {
-	static int bootsyncdone = 0;
+	static bool bootsyncdone = false;
 
 	if (bootsyncdone) return;
 
-	bootsyncdone = 1;
+	bootsyncdone = true;
 
 	/* Make sure we can still manage to do things */
 	if (GetCPSR() & I32_bit) {
@@ -213,7 +212,7 @@ bootsync(void)
  *
  */
 void
-cpu_startup()
+cpu_startup(void)
 {
 	vaddr_t minaddr;
 	vaddr_t maxaddr;
@@ -253,13 +252,6 @@ cpu_startup()
 	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
-
-	/*
-	 * Allocate a submap for exec arguments.  This map effectively
-	 * limits the number of processes exec'ing at any time.
-	 */
-	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 
 	/*
 	 * Allocate a submap for physio
@@ -446,30 +438,29 @@ cpu_intr_p(void)
 #ifdef __HAVE_FAST_SOFTINTS
 #if IPL_SOFTSERIAL != IPL_SOFTNET + 1
 #error IPLs are screwed up
-#endif
-#if IPL_SOFTNET != IPL_SOFTBIO + 1
+#elif IPL_SOFTNET != IPL_SOFTBIO + 1
+#error IPLs are screwed up
+#elif IPL_SOFTBIO != IPL_SOFTCLOCK + 1
+#error IPLs are screwed up
+#elif !(IPL_SOFTCLOCK > IPL_NONE)
+#error IPLs are screwed up
+#elif (IPL_NONE != 0)
 #error IPLs are screwed up
 #endif
-#if IPL_SOFTBIO != IPL_SOFTCLOCK + 1
-#error IPLs are screwed up
-#endif
-#if !(IPL_SOFTCLOCK > IPL_NONE)
-#error IPLs are screwed up
-#endif
+
 #define	SOFTINT2IPLMAP \
-	((IPL_SOFTSERIAL << (SOFTINT_SERIAL * 4)) | \
-	 (IPL_SOFTNET    << (SOFTINT_NET    * 4)) | \
-	 (IPL_SOFTBIO    << (SOFTINT_BIO    * 4)) | \
-	 (IPL_SOFTCLOCK  << (SOFTINT_CLOCK  * 4)))
+	(((IPL_SOFTSERIAL - IPL_SOFTCLOCK) << (SOFTINT_SERIAL * 4)) | \
+	 ((IPL_SOFTNET    - IPL_SOFTCLOCK) << (SOFTINT_NET    * 4)) | \
+	 ((IPL_SOFTBIO    - IPL_SOFTCLOCK) << (SOFTINT_BIO    * 4)) | \
+	 ((IPL_SOFTCLOCK  - IPL_SOFTCLOCK) << (SOFTINT_CLOCK  * 4)))
 #define	SOFTINT2IPL(l)	((SOFTINT2IPLMAP >> ((l) * 4)) & 0x0f)
 
 /*
  * This returns a mask of softint IPLs that be dispatch at <ipl>
- * We want to shift 2 since we want a mask of <ipl> + 1.
- * SOFTIPLMASK(IPL_NONE)	= 0xfffffffe
- * SOFTIPLMASK(IPL_SOFTCLOCK)	= 0xffffffe0
+ * SOFTIPLMASK(IPL_NONE)	= 0xffffffff
+ * SOFTIPLMASK(IPL_SOFTCLOCK)	= 0xfffffff0
  */
-#define	SOFTIPLMASK(ipl) ((~((2 << (ipl)) - 1)) & (15 << IPL_SOFTCLOCK))
+#define	SOFTIPLMASK(ipl) (~0 << (ipl))
 
 void softint_switch(lwp_t *, int);
 
@@ -501,8 +492,9 @@ dosoftints(void)
 			return;
 		ci->ci_cpl = IPL_HIGH;
 #define	DOSOFTINT(n) \
-		if (softints & (1 << IPL_SOFT ## n)) { \
-			ci->ci_softints &= ~(1 << IPL_SOFT ## n); \
+		if (softints & (1 << (IPL_SOFT ## n - IPL_SOFTCLOCK))) { \
+			ci->ci_softints &= \
+			    ~(1 << (IPL_SOFT ## n - IPL_SOFTCLOCK)); \
 			softint_switch(ci->ci_softlwps[SOFTINT_ ## n], \
 			    IPL_SOFT ## n); \
 			ci->ci_cpl = opl; \

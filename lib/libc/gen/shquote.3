@@ -1,4 +1,4 @@
-.\" $NetBSD: shquote.3,v 1.8 2003/07/26 19:24:44 salo Exp $
+.\" $NetBSD: shquote.3,v 1.8.32.1 2008/09/18 04:39:21 wrstuden Exp $
 .\"
 .\" Copyright (c) 2001 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd March 1, 2001
+.Dd September 7, 2008
 .Dt SHQUOTE 3
 .Os
 .Sh NAME
@@ -157,11 +157,11 @@ int argc;
  * Buffer of length one given to snprintf() for portability.
  */
 cmdlen = snprintf(\*[Am]c, 1, "${PROG-%s} ", PROG_DEFAULT);
-qlen = shquotev(argc, argv, NULL, 0) + 1;
+qlen = shquotev(argc, argv, NULL, 0);
 if (qlen == (size_t)-1) {
 	\&...
 }
-cmdlen += qlen;
+cmdlen += qlen + 1;
 cmd = malloc(cmdlen);
 if (cmd == NULL) {
 	\&...
@@ -196,11 +196,11 @@ int argc, i;
  */
 cmdlen = snprintf(\*[Am]c, 1, "${PROG-%s} ", PROG_DEFAULT);
 for (i = 0; i \*[Lt] argc; i++) {
-	qlen = shquote(argv[i], NULL, 0) + 1;
+	qlen = shquote(argv[i], NULL, 0);
 	if (qlen == (size_t)-1) {
 		\&...
 	}
-	cmdlen += qlen;
+	cmdlen += qlen + 1;
 }
 cmd = malloc(cmdlen);
 if (cmd == NULL) {
@@ -220,7 +220,7 @@ for (i = 0; i \*[Lt] argc; i++) {
 	len += qlen;
 	cmd[len++] = ' ';
 }
-cmd[--len] = '\0';
+cmd[--len] = '\e0';
 
 /* "cmd" can now be passed to system(). */
 .Ed

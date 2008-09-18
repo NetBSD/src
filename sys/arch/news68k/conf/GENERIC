@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.92 2007/12/31 15:32:01 ad Exp $
+# $NetBSD: GENERIC,v 1.92.12.1 2008/09/18 04:33:30 wrstuden Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.92 $"
+#ident 		"GENERIC-$Revision: 1.92.12.1 $"
 
 maxusers	8
 
@@ -102,6 +102,7 @@ options 	NFSSERVER	# nfs server support
 options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independent support
 options 	SOFTDEP		# ffs soft updates support
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
@@ -215,6 +216,11 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?		# SCSI changer devices
 ss*	at scsibus? target ? lun ?		# SCSI scanners
 uk*	at scsibus? target ? lun ?		# unknown SCSI devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # Misc.
 pseudo-device	loop			# loopback interface; required

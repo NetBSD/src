@@ -1,4 +1,4 @@
-.\"	$NetBSD: system.3,v 1.16 2007/08/02 23:45:10 wiz Exp $
+.\"	$NetBSD: system.3,v 1.16.10.1 2008/09/18 04:39:22 wrstuden Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,8 @@ is a
 .Dv NULL
 pointer,
 .Fn system
-will return non-zero.
+will return non-zero, if the command interpreter is available, or zero if none
+is available.
 Otherwise,
 .Fn system
 returns the termination status of the shell in the format specified by

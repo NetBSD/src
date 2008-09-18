@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_warp.c,v 1.3 2007/12/11 11:48:43 lukem Exp $	*/
+/*	$NetBSD: mga_warp.c,v 1.3.14.1 2008/09/18 04:35:09 wrstuden Exp $	*/
 
 /* mga_warp.c -- Matrox G200/G400 WARP engine management -*- linux-c -*-
  * Created: Thu Jan 11 21:29:32 2001 by gareth@valinux.com
@@ -31,16 +31,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_warp.c,v 1.3 2007/12/11 11:48:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_warp.c,v 1.3.14.1 2008/09/18 04:35:09 wrstuden Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_warp.c,v 1.8 2005/11/28 23:13:53 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/mga_drm.h>
-#include <dev/pci/drm/mga_drv.h>
-#include <dev/pci/drm/mga_ucode.h>
+#include "drmP.h"
+#include "drm.h"
+#include "mga_drm.h"
+#include "mga_drv.h"
+#include "mga_ucode.h"
 
 #define MGA_WARP_CODE_ALIGN		256	/* in bytes */
 

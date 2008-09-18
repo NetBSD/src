@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.10 2006/10/31 08:12:46 mjf Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.10.18.1 2008/09/18 04:39:55 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -55,6 +55,7 @@ struct mntopt {
 #define MOPT_NOATIME		{ "atime",	1, MNT_NOATIME, 0 }
 #define MOPT_SYMPERM		{ "symperm",	0, MNT_SYMPERM, 0 }
 #define MOPT_SOFTDEP		{ "softdep",	0, MNT_SOFTDEP, 0 }
+#define MOPT_LOG		{ "log",	0, MNT_LOG, 0 }
 #define MOPT_IGNORE		{ "hidden",	0, MNT_IGNORE, 0 }
 
 /* Control flags. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.48 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.48.2.1 2008/09/18 04:37:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -90,21 +90,27 @@
 #define	NDFDFILE	3		/* first 3 descriptors are free */
 
 /*
- * locks:
+ * Process-private descriptor reference, one for each descriptor slot
+ * in use.  Locks:
  *
  * :	unlocked
- * a	update using atomic ops
- * d	filedesc::fd_lock
- * f	fdfile::ff_lock, but stable if reference held
+ * d	filedesc_t::fd_lock
+ * f	fdfile_t::ff_lock, may be stable if reference held
+ *
+ * Note that ff_exclose and ff_allocated are likely to be byte sized
+ * (bool).  In general adjacent sub-word sized fields must be locked
+ * the same way, but in this case it's ok: ff_exclose can only be
+ * modified while the descriptor slot is live, and ff_allocated when
+ * it's invalid.
  */
 typedef struct fdfile {
 	kmutex_t	ff_lock;	/* :: lock on structure */
+	bool		ff_exclose;	/* :: close on exec flag */
+	bool		ff_allocated;	/* d: descriptor slot is allocated */
+	u_int		ff_refcnt;	/* f: reference count on structure */
 	struct file	*ff_file;	/* f: pointer to file if open */
 	SLIST_HEAD(,knote) ff_knlist;	/* f: knotes attached to this fd */
 	kcondvar_t	ff_closing;	/* f: notifier for close */
-	u_int		ff_refcnt;	/* f: reference count on structure */
-	u_int		ff_exclose;	/* :: close on exec flag */
-	u_int		ff_allocated;	/* d: descriptor slot is allocated */
 } fdfile_t;
 
 /* Reference count */
@@ -134,7 +140,7 @@ typedef struct filedesc {
 #define fd_startzero	fd_freefile	/* area to zero on return to cache */
 	int		fd_freefile;	/* approx. next free file */
 	int		fd_nused;	/* number of slots in use */
-	int		fd_exclose;	/* non-zero if >0 fd with EXCLOSE */
+	bool		fd_exclose;	/* non-zero if >0 fd with EXCLOSE */
 	/*
 	 * These arrays are used when the number of open files is
 	 * <= NDFILE, and are then pointed to by the pointers above.
@@ -192,7 +198,7 @@ int	fd_close(unsigned);
 void	fd_used(filedesc_t *, unsigned);
 void	fd_unused(filedesc_t *, unsigned);
 bool	fd_isused(filedesc_t *, unsigned);
-int	fd_dup(file_t *, int, int *, int);
+int	fd_dup(file_t *, int, int *, bool);
 int	fd_dup2(file_t *, unsigned);
 int	fd_clone(file_t *, unsigned, int, const struct fileops *, void *);
 
@@ -207,7 +213,6 @@ int	vnode_to_path(char *, size_t, struct vnode *, struct lwp *,
 
 void	ffree(file_t *);
 int	closef(file_t *);
-int	getsock(int, file_t **);
 file_t *fgetdummy(void);
 void	fputdummy(file_t *);
 

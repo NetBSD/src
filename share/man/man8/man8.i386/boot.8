@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.40 2007/12/14 12:03:53 apb Exp $
+.\"	$NetBSD: boot.8,v 1.40.8.1 2008/09/18 04:38:09 wrstuden Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd December 14, 2007
+.Dd July 31, 2008
 .Os
 .Dt BOOT 8 i386
 .Sh NAME
@@ -210,10 +210,16 @@ Alternate system images can be loaded by just specifying the name of the image.
 .Pp
 Options are:
 .Bl -tag -width xxx
+.It Fl 1
+Disable multiprocessor boot; boot uniprocessor.
+.It Fl 2
+Disable acpi.
 .It Fl a
 Prompt for the root file system device, the system crash dump
 device, and the path to
 .Xr init 8 .
+.It Fl b
+Always halt, never reboot.
 .It Fl c
 Bring the system up into the device configuration manager.
 From here the device locators can be tuned to the hardware; see
@@ -222,6 +228,8 @@ From here the device locators can be tuned to the hardware; see
 Bring the system up in debug mode.
 Here it waits for a kernel debugger connect; see
 .Xr ddb 4 .
+.It Fl m
+Miniroot is present in memory.
 .It Fl q
 Boot the system in quiet mode.
 .It Fl s

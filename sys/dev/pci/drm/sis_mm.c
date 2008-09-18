@@ -1,4 +1,4 @@
-/*	$NetBSD: sis_mm.c,v 1.3 2007/12/11 11:48:47 lukem Exp $	*/
+/*	$NetBSD: sis_mm.c,v 1.3.14.1 2008/09/18 04:35:09 wrstuden Exp $	*/
 
 /* sis_mm.c -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by sclin@sis.com.tw
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sis_mm.c,v 1.3 2007/12/11 11:48:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sis_mm.c,v 1.3.14.1 2008/09/18 04:35:09 wrstuden Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/sis_mm.c,v 1.9 2006/04/09 20:45:45 anholt Exp $");
 */
@@ -43,10 +43,10 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/sis_mm.c,v 1.9 2006/04/09 20:45:45 anholt Ex
 #include <linux/sisfb.h>
 #endif
 #endif
-#include <dev/drm/drmP.h>
-#include <dev/pci/drm/sis_drm.h>
-#include <dev/pci/drm/sis_drv.h>
-#include <dev/pci/drm/sis_ds.h>
+#include "drmP.h"
+#include "sis_drm.h"
+#include "sis_drv.h"
+#include "sis_ds.h"
 
 #define MAX_CONTEXT 100
 #define VIDEO_TYPE 0

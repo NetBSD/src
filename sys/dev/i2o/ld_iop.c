@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.28.2.1 2008/06/23 04:31:02 wrstuden Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.28.2.2 2008/09/18 04:35:03 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.28.2.1 2008/06/23 04:31:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.28.2.2 2008/09/18 04:35:03 wrstuden Exp $");
 
 #include "rnd.h"
 
@@ -78,7 +78,7 @@ static void	ld_iop_adjqparam(struct device *, int);
 static void	ld_iop_attach(struct device *, struct device *, void *);
 static int	ld_iop_detach(struct device *, int);
 static int	ld_iop_dump(struct ld_softc *, void *, int, int);
-static int	ld_iop_flush(struct ld_softc *);
+static int	ld_iop_flush(struct ld_softc *, int);
 static void	ld_iop_intr(struct device *, struct iop_msg *, void *);
 static void	ld_iop_intr_event(struct device *, struct iop_msg *, void *);
 static int	ld_iop_match(struct device *, struct cfdata *, void *);
@@ -446,7 +446,7 @@ ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 }
 
 static int
-ld_iop_flush(struct ld_softc *ld)
+ld_iop_flush(struct ld_softc *ld, int flags)
 {
 	struct iop_msg *im;
 	struct iop_softc *iop;
