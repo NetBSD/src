@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.7 2008/09/18 16:40:37 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.8 2008/09/18 17:47:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.7 2008/09/18 16:40:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.8 2008/09/18 17:47:09 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.7 2008/09/18 16:40:37 jmcneill Exp $");
 #include "opt_uvideo.h"
 
 #define UVIDEO_NXFERS	3
+
+/* #define UVIDEO_DISABLE_MJPEG */
 
 #ifdef UVIDEO_DEBUG
 #define DPRINTF(x)	do { if (uvideodebug) logprintf x; } while (0)
@@ -1319,7 +1321,11 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 
 		SIMPLEQ_INSERT_TAIL(&vs->vs_formats, format, entries);
 
-		if (vs->vs_default_format == NULL && index == default_index) {
+		if (vs->vs_default_format == NULL && index == default_index
+#ifdef UVIDEO_DISABLE_MJPEG
+		    && subtype != UDESC_VS_FRAME_MJPEG
+#endif
+		    ) {
 			DPRINTF((" ^ picking this one\n"));
 			vs->vs_default_format = &format->format;
 			vs->vs_frame_interval = frame_interval;
@@ -1351,16 +1357,15 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 	case UE_ISOCHRONOUS:
 		ix = &vs->vs_xfer.isoc;
 
-		vframe_len = vs->vs_max_frame_size; /* + nframes * HEADER */
+		vframe_len = vs->vs_current_format.sample_size;
 		uframe_len = UVIDEO_FRAME_INTERVAL_UNITS_PER_USB_FRAME *
 		    vframe_len / vs->vs_frame_interval;
 		nframes = (vframe_len / uframe_len);
 		if (nframes == 0)
 			nframes++;
-		
-		nframes = 64;	/* ehci requires power of 2. doesn't
-				 * work well with logitech/uhci */
-		
+
+		DPRINTF(("uvideo_stream_start_xfer: nframes=%d\n", nframes));
+
 		/* Choose an alternate interface most suitable for
 		 * this format.  Choose the smallest size that can
 		 * contain max_payload_size.
@@ -1400,13 +1405,16 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 		
 		err = usbd_set_interface(vs->vs_iface, alt->altno);
 		if (err != USBD_NORMAL_COMPLETION) {
-			DPRINTF(("uvideo_open: error setting alt interface: %s (%d)\n",
+			DPRINTF(("uvideo_stream_start_xfer: "
+				 "error setting alt interface: %s (%d)\n",
 				 usbd_errstr(err), err));
 			return EIO;
 		}
 
 		/* TODO: "packet" not same as frame */
 		uframe_len = alt->max_packet_size;
+		nframes = (vframe_len + uframe_len - 1) / uframe_len;
+		DPRINTF(("uvideo_stream_start_xfer: nframes2=%d\n", nframes));
 		
 		ix->ix_nframes = nframes;
 		ix->ix_uframe_len = uframe_len;
@@ -1607,6 +1615,8 @@ uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
 				continue;
 				
 			hdr = (uvideo_payload_header_t *)buf;
+			if (hdr->bHeaderLength == 0)
+				continue;
 
 			payload.data = buf + hdr->bHeaderLength;
 			payload.size = isoc->i_frlengths[i] -
