@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.57 2008/09/17 14:49:25 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.58 2008/09/18 10:52:14 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.57 2008/09/17 14:49:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.58 2008/09/18 10:52:14 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,31 +400,40 @@ fss_softc_alloc(struct fss_softc *sc)
 {
 	int i, error;
 
-	sc->sc_copied = kmem_zalloc(howmany(sc->sc_clcount, NBBY), KM_SLEEP);
-	if (sc->sc_copied == NULL)
-		return(ENOMEM);
-
-	sc->sc_cache =
-	    kmem_alloc(sc->sc_cache_size*sizeof(struct fss_cache), KM_SLEEP);
-	if (sc->sc_cache == NULL)
-		return(ENOMEM);
-
-	for (i = 0; i < sc->sc_cache_size; i++) {
-		sc->sc_cache[i].fc_type = FSS_CACHE_FREE;
-		sc->sc_cache[i].fc_data = kmem_alloc(FSS_CLSIZE(sc), KM_SLEEP);
-		if (sc->sc_cache[i].fc_data == NULL)
+	if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
+		sc->sc_copied =
+		    kmem_zalloc(howmany(sc->sc_clcount, NBBY), KM_SLEEP);
+		if (sc->sc_copied == NULL)
 			return(ENOMEM);
-		cv_init(&sc->sc_cache[i].fc_state_cv, "cowwait1");
+
+		sc->sc_cache = kmem_alloc(sc->sc_cache_size *
+		    sizeof(struct fss_cache), KM_SLEEP);
+		if (sc->sc_cache == NULL)
+			return(ENOMEM);
+
+		for (i = 0; i < sc->sc_cache_size; i++) {
+			sc->sc_cache[i].fc_type = FSS_CACHE_FREE;
+			sc->sc_cache[i].fc_data =
+			    kmem_alloc(FSS_CLSIZE(sc), KM_SLEEP);
+			if (sc->sc_cache[i].fc_data == NULL)
+				return(ENOMEM);
+			cv_init(&sc->sc_cache[i].fc_state_cv, "cowwait1");
+		}
+
+		sc->sc_indir_valid =
+		    kmem_zalloc(howmany(sc->sc_indir_size, NBBY), KM_SLEEP);
+		if (sc->sc_indir_valid == NULL)
+			return(ENOMEM);
+
+		sc->sc_indir_data = kmem_zalloc(FSS_CLSIZE(sc), KM_SLEEP);
+		if (sc->sc_indir_data == NULL)
+			return(ENOMEM);
+	} else {
+		sc->sc_copied = NULL;
+		sc->sc_cache = NULL;
+		sc->sc_indir_valid = NULL;
+		sc->sc_indir_data = NULL;
 	}
-
-	sc->sc_indir_valid =
-	    kmem_zalloc(howmany(sc->sc_indir_size, NBBY), KM_SLEEP);
-	if (sc->sc_indir_valid == NULL)
-		return(ENOMEM);
-
-	sc->sc_indir_data = kmem_zalloc(FSS_CLSIZE(sc), KM_SLEEP);
-	if (sc->sc_indir_data == NULL)
-		return(ENOMEM);
 
 	if ((error = kthread_create(PRI_BIO, 0, NULL, fss_bs_thread, sc,
 	    &sc->sc_bs_lwp, device_xname(sc->sc_dev))) != 0)
