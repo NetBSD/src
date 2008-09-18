@@ -1,0 +1,154 @@
+
+This document tries to describe the software layout and design of the library.
+It should provide some help for contributing code to this package.
+
+CONTRIBUTING TO NSS-LDAPD
+=========================
+
+Contributions to nss-ldapd are most welcome. However not all contributions
+will be automatically integrated. Some notes:
+
+* for large changes it is a good idea to send an email first
+* send your patches in unified diff (diff -u) format
+* try to use the svn version of the software to develop the patch
+* clearly state which problem you're trying to solve and how this is
+  accomplished
+* please follow the existing coding conventions
+* patches will be integrated on a best-effort bases
+* please test the patch and include information on testing with the patch
+  (platforms tested, etc)
+* contributions will be acknowledged in the AUTHORS file
+* include a copyright statement in the patched code if you feel the
+  contribution is significant enough (e.g. more than a few lines)
+* when including third-party code, retain copyright information (copyright
+  holder and license) and ensure that the license is LGPL compatible
+
+Please contact Arthur de Jong <arthur@ch.tudelft.nl> if you want to
+contribute or use the Debian BTS if you're using the Debian package.
+
+
+BUILD DEPENDENCIES
+==================
+
+For building svn snapshots the following tools are needed:
+
+* autoconf (2.61 is used but 2.59 is minimal)
+* automake (1.10 is used)
+* check (0.9.5 is used)
+
+and of course the usual build tools (gcc/make/etc). Also see debian/control
+(Build-Depends field) for libraries you need.
+
+To build the svn snapshot run the autogen.sh shell script to build the
+configure script. When developing patches please use --enable-warnings with
+configure and don't introduce too many new warnings. For building the manual
+pages docbook2x is used.
+
+
+RELEASE VERSIONING
+==================
+
+A new versioning scheme was chosen over the nss_ldap release scheme. The
+scheme is a simple major.minor numbering starting with 0.1. Until a 1.0
+release is made the code will be considered work in progress. The interfaces
+may change and features may be added and removed.
+
+
+GENERAL DESIGN
+==============
+
+The basic design splits the functionality in two parts. The NSS part
+interfaces with libc and translates the NSS requests into simple generic
+requests (e.g. "get user with name test", "get group with gid 101" or "get all
+shadow entries"). Translating these requests into LDAP requests is then the
+job of the daemon (nslcd) so that the NSS part won't have to know anything
+about LDAP (in fact replacing it with another lookup method is very simple).
+
+                nslcd  -> OpenLDAP -> LDAP server
+                  ^
+    libc NSS -> libnss_ldap.so
+
+design goals
+------------
+* make it as simple as possible
+* design as specified above
+* simpler configuration and semantics
+* simpler, clearer and completer documentation
+* split source code into directories (src, src/hacks, src/aix, src/irs, etc)
+* get rid of unneeded code and complexity
+* split complexity in two parts (LDAP interface in server, NSS interface in
+  library)
+* have a stable, easily maintainable piece of quality software
+
+
+NSS PART
+========
+
+The NSS part is implemented in files in the nss directory. The functions are
+split into files according to the database they support. All functions look
+like:
+
+_nss_ldap_FUNCTION_r(...)
+  This function opens the connection to the nslcd (with a time-out) builds the
+  correct data structures and does a request (write()) to the nslcd waiting
+  for an answer (again with a time-out)
+
+Currently a number of macros are used to build most of the function bodies for
+these functions. A more elegant solution is welcome.
+
+Some handy links:
+http://mirrors.usc.edu/pub/gnu/Manuals/glibc-2.2.3/html_chapter/libc_28.html#SEC596
+http://www.gnu.org/software/libc/manual/html_node/index.html
+
+
+THE COMMUNICATIONS PROTOCOL
+===========================
+
+The protocol used for communicating between the NSS library and the nslcd
+daemon is very simple and almost fully described in the nslcd.h header file.
+The nslcd-common.h header file defines some macros that are used for reading
+and writing protocol entities (strings, 32-bit integers, etc).
+
+Some of the protocol handling code is automatically generated from the macros
+defined in nslcd.h. This cannot be done automatically in every case though so
+changing the protocol requires manual checking in the relevant source files in
+both the nss and the nslcd directories.
+
+If the protocol is changed in an incompatible way the protocol version should
+be incremented in nslcd.h. There is currently no versioning scheme available
+for this.
+
+A special module (common/tio.c) was made so we can define simpler semantics
+for time-out values and buffer sizes. Both tha NSS library and nslcd use this
+module which means that it includes functionality that is needed for both
+(e.g. large write buffers for the server part and large resettable read
+buffers for the NSS part). Maybe building two modules from the same source
+with different features in them is an option (e.g. the NSS part needs the
+read buffers and handling of SIGPIPE and the nslcd part needs the write
+buffers and possibly flushing in the background).
+
+
+SERVER PART
+===========
+
+At the server end a dispatcher picks up the request and delegates it to one of
+the database specific functions.
+
+nslcd_FUNCION(...)
+  This functions fills in the correct parameters from the request. This
+  function should write responses to the stream. Almost all these functions
+  are generated from a macro in common.h.
+
+
+SECURITY NOTES
+==============
+
+This design does open up the system to more potential security issues as there
+is now a local interface to a daemon with privileges. Before processes could
+only potentially exploit bugs in the library and gain the privileges of the
+process that was doing the name lookups. In this case the privileges of the
+daemon are potentially exposed.
+
+The deamon should be changed to set a specific less-privileged user and
+group to minimize the riscs. Code for this is already in place. Configuration
+options should be added and the Debian packaging should use this.

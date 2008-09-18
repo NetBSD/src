@@ -1,0 +1,31 @@
+OpenLDAP Contributed Software README
+
+OpenLDAP Project provides a number of freely-distributable LDAP
+software packages.  Though distributed with OpenLDAP Software, they
+are not part of OpenLDAP Software.  Some packages may be out of
+date.  Each package in this directory has it's own use and
+redistribution restrictions as documented within the package.
+
+Current contributions:
+	ldapc++
+		LDAP C++ API
+		Contributed by SuSE Gmbh.
+
+	ldaptcl
+		LDAP TCL API
+		Contributed by NeoSoft
+
+	slapd-modules
+		Native-API modules
+
+	slapd-tools
+		Tools to use with slapd
+
+	slapi-plugins
+		SLAPI plugins
+
+
+OpenLDAP Contributing Guidelines are available at:
+  <http://www.openldap.org/devel/contributing.html>.
+
+$OpenLDAP: pkg/ldap/contrib/README,v 1.19 2006/01/25 21:13:14 kurt Exp $

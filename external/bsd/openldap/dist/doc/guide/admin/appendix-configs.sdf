@@ -1,0 +1,14 @@
+# $OpenLDAP: pkg/openldap-guide/admin/appendix-configs.sdf,v 1.2.2.4 2008/02/11 23:26:39 kurt Exp $
+# Copyright 2007-2008 The OpenLDAP Foundation, All Rights Reserved.
+# COPYING RESTRICTIONS APPLY, see COPYRIGHT.
+
+H1: Configuration File Examples
+
+
+H2: slapd.conf
+
+
+H2: ldap.conf
+
+
+H2: a-n-other.conf

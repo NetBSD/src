@@ -1,0 +1,7 @@
+#	$NetBSD: Makefile.bdftopcf,v 1.1.1.1.2.2 2008/09/18 05:18:54 wrstuden Exp $
+
+BDFTOPCFDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/tools/bdftopcf && ${PRINTOBJDIR}
+BDFTOPCF=	${BDFTOPCFDIR}/bdftopcf
+
+${BDFTOPCF}:
+	(cd ${NETBSDSRCDIR}/external/mit/xorg/tools/bdftopcf && ${MAKE})

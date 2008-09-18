@@ -1,0 +1,67 @@
+#	$NetBSD: Makefile,v 1.3.2.2 2008/09/18 05:18:37 wrstuden Exp $
+
+.include <bsd.own.mk>
+
+LIB=	Xfont
+XFONTDIR= ${X11SRCDIR.${LIB}}
+.PATH:	${XFONTDIR}/src
+.PATH:	${XFONTDIR}/src/FreeType
+.PATH:	${XFONTDIR}/src/Speedo
+.PATH:	${XFONTDIR}/src/Type1
+.PATH:	${XFONTDIR}/src/bitmap
+.PATH:	${XFONTDIR}/src/builtins
+.PATH:	${XFONTDIR}/src/fc
+.PATH:	${XFONTDIR}/src/fontcache
+.PATH:	${XFONTDIR}/src/fontfile
+.PATH:	${XFONTDIR}/src/stubs
+.PATH:	${XFONTDIR}/src/util
+.PATH:	${XFONTDIR}/include/X11/fonts
+.PATH:	${XFONTDIR}/../include
+
+SRCS=	ftenc.c ftfuncs.c fttools.c xttcap.c bics-unicode.c do_char.c \
+	do_trns.c out_bl2d.c out_blk.c out_outl.c out_scrn.c out_util.c \
+	reset.c set_spcs.c set_trns.c spencode.c sperr.c spfile.c spfont.c \
+	spfuncs.c spglyph.c spinfo.c arith.c curves.c fontfcn.c hints.c \
+	lines.c objects.c paths.c regions.c scanfont.c spaces.c t1funcs.c \
+	t1info.c t1io.c t1malloc.c t1snap.c t1unicode.c token.c type1.c \
+	util.c bdfread.c bdfutils.c bitmap.c bitmapfunc.c bitmaputil.c \
+	bitscale.c fontink.c pcfread.c pcfwrite.c snfread.c dir.c file.c \
+	fonts.c fpe.c render.c fsconvert.c fserve.c fsio.c fstrans.c \
+	fontcache.c bitsource.c bufio.c catalogue.c decompress.c defaults.c \
+	dirfile.c ffcheck.c fileio.c filewr.c fontdir.c fontencc.c fontfile.c \
+	fontscale.c gunzip.c printerfont.c register.c renderers.c cauthgen.c \
+	csignal.c delfntcid.c errorf.c fatalerror.c findoldfnt.c fontmod.c \
+	getcres.c getdefptsize.c getnewfntcid.c gettime.c initfshdl.c \
+	regfpefunc.c rmfshdl.c servclient.c setfntauth.c stfntcfnt.c \
+	xpstubs.c atom.c fontaccel.c fontnames.c fontutil.c fontxlfd.c \
+	format.c miscutil.c patcache.c private.c utilbitmap.c
+
+INCS=	bdfint.h bitmap.h bufio.h fntfil.h fntfilio.h fntfilst.h \
+	fontconf.h fontencc.h fontmisc.h fontmod.h fontshow.h \
+	fontutil.h fontxlfd.h ft.h ftfuncs.h pcf.h
+INCSDIR=${X11INCDIR}/X11/fonts
+
+CPPFLAGS+=	${X11FLAGS.THREADLIB} ${X11FLAGS.CONNECTION}
+CPPFLAGS+=	-DHAS_SNPRINTF -DHAVE_CONFIG_H
+CPPFLAGS+=      -DBDFFORMAT -DSNFFORMAT -DPCFFORMAT -DX_GZIP_FONT_COMPRESSION
+CPPFLAGS+=	-DFONT_ENCODINGS_DIRECTORY=\"${X11LIBDIR}/X11/fonts/encodings/encodings.dir\" 
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts
+CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2
+CPPFLAGS+=	-I${XFONTDIR}/src/stubs
+CPPFLAGS+=	-I${XFONTDIR}/../include
+
+
+LIBDPLIBS=\
+	Xt	${.CURDIR}/../libXt \
+	SM	${.CURDIR}/../libSM \
+	ICE	${.CURDIR}/../libICE \
+	Xext	${.CURDIR}/../libXext \
+	X11	${.CURDIR}/../libX11/dynamic
+
+# XXX
+COPTS.ffcheck.c+=	-Wno-error
+COPTS.register.c+=	-Wno-error
+
+.include <bsd.x11.mk>
+.include <bsd.lib.mk>

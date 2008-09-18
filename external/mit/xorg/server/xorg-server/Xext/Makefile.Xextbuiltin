@@ -1,0 +1,12 @@
+#	$NetBSD: Makefile.Xextbuiltin,v 1.4.2.2 2008/09/18 05:18:43 wrstuden Exp $
+
+SRCS.Xextbuiltin=	shape.c sleepuntil.c xtest.c	
+SRCS.Xextbuiltin+=	shm.c
+SRCS.Xextbuiltin+=	panoramiX.c panoramiXprocs.c panoramiXSwap.c
+SRCS.Xextbuiltin+=	xace.c
+SRCS.Xextbuiltin+=	security.c
+#SRCS.Xextbuiltin+=	xcalibrate.c
+SRCS.Xextbuiltin+=	xevie.c
+#SRCS.Xextbuiltin+=	xprint.c
+SRCS.Xextbuiltin+=	appgroup.c
+SRCS.Xextbuiltin+=	xf86bigfont.c
