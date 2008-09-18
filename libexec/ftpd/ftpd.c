@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.164.2.1.2.3 2008/09/18 19:15:04 bouyer Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.164.2.1.2.4 2008/09/18 19:16:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.164.2.1.2.3 2008/09/18 19:15:04 bouyer Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.164.2.1.2.4 2008/09/18 19:16:51 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -1854,6 +1854,7 @@ dataconn(const char *name, off_t size, const char *fmode)
 			break;
 		conerrno = errno;
 		(void) fclose(file);
+		file = NULL;
 		data = -1;
 		if (conerrno == EADDRINUSE) {
 			sleep((unsigned) swaitint);
