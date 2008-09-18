@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2006/03/23 20:14:16 wiz Exp $
+#	$NetBSD: Makefile,v 1.56.8.1 2008/09/18 18:17:00 bouyer Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/4/94
 
 .include <bsd.own.mk>
@@ -21,16 +21,17 @@ CPPFLAGS+=-DINET6
 
 WARNS=2
 
+.if (${USE_PAM} != "no")
+CPPFLAGS+=-DUSE_PAM
+DPADD+= ${LIBPAM} ${PAM_STATIC_DPADD}
+LDADD+= -lpam ${PAM_STATIC_LDADD}
+.else	# USE_PAM == no
 .if (${USE_SKEY} != "no")
 CPPFLAGS+=-DSKEY
 DPADD+= ${LIBSKEY}
 LDADD+= -lskey
 .endif
-.if (${USE_PAM} != "no")
-CPPFLAGS+=-DUSE_PAM
-DPADD+= ${LIBPAM} ${PAM_STATIC_DPADD}
-LDADD+= -lpam ${PAM_STATIC_LDADD}
-.endif
+.endif	# USE_PAM == no
 
 ftpd.o ftpcmd.o: version.h
 
