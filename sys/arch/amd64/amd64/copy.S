@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.11 2008/05/30 11:03:29 ad Exp $	*/
+/*	$NetBSD: copy.S,v 1.12 2008/09/18 21:35:17 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -146,6 +146,11 @@ ENTRY(kcopy)
 	xorq	%rax,%rax
 	ret
 
+# Using 'rep movs' to copy backwards is not as fast as for forwards copies
+# and ought not be done when the copy doesn't acually overlap.
+# However kcopy() isn't used any that looks even vaguely used often.
+# I'm also not sure it is ever asked to do overlapping copies!
+
 1:	addq	%rcx,%rdi		# copy backward
 	addq	%rcx,%rsi
 	std
@@ -169,30 +174,29 @@ ENTRY(kcopy)
 
 ENTRY(copyout)
 	DEFERRED_SWITCH_CHECK
-	pushq	$0
+	pushq	$0			# Restored to PCB_ONFAULT(%rdx)
 
-	xchgq	%rdi,%rsi
-	movq	%rdx,%rax
+	xchgq	%rdi,%rsi		# kernel address to %rsi, user to %rdi
+	movq	%rdx,%rax		# save transfer length (bytes)
 	
-	movq	%rdi,%rdx
-	addq	%rax,%rdx
-	jc	_C_LABEL(copy_efault)
+	addq	%rdi,%rdx		# end address to %rdx
+	jc	_C_LABEL(copy_efault)	# jump if wraps
 	movq	$VM_MAXUSER_ADDRESS,%r8
 	cmpq	%r8,%rdx
-	ja	_C_LABEL(copy_efault)
+	ja	_C_LABEL(copy_efault)	# jump if end in kernel space
 
 	GET_CURPCB(%rdx)
 	leaq	_C_LABEL(copy_fault)(%rip),%r11
-	movq	%r11,PCB_ONFAULT(%rdx)
+	movq	%r11,PCB_ONFAULT(%rdx)	# prime fault handler
 
-	movq	%rax,%rcx
-	shrq	$3,%rcx
+	movq	%rax,%rcx		# length
+	shrq	$3,%rcx			# count of 8-byte words
 	rep
-	movsq
+	movsq				# copy from %rsi to %rdi
 	movb	%al,%cl
-	andb	$7,%cl
+	andb	$7,%cl			# remaining number of bytes
 	rep
-	movsb
+	movsb				# copy remaining bytes
 
 	popq	PCB_ONFAULT(%rdx)
 	xorl	%eax,%eax
@@ -209,12 +213,11 @@ ENTRY(copyin)
 	xchgq	%rdi,%rsi
 	movq	%rdx,%rax
 
-	movq	%rsi,%rdx
-	addq	%rax,%rdx
+	addq	%rsi,%rdx		# Check source address not wrapped
 	jc	_C_LABEL(copy_efault)
-	movq	$VM_MAXUSER_ADDRESS,%r8
+	movq	$VM_MAXUSER_ADDRESS,%r8	
 	cmpq	%r8,%rdx
-	ja	_C_LABEL(copy_efault)
+	ja	_C_LABEL(copy_efault)	# j if end in kernel space
 
 3:	/* bcopy(%rsi, %rdi, %rax); */
 	movq	%rax,%rcx
