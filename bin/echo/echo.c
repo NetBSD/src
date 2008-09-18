@@ -1,4 +1,4 @@
-/* $NetBSD: echo.c,v 1.17 2008/07/20 00:52:39 lukem Exp $	*/
+/* $NetBSD: echo.c,v 1.18 2008/09/18 05:42:08 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)echo.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: echo.c,v 1.17 2008/07/20 00:52:39 lukem Exp $");
+__RCSID("$NetBSD: echo.c,v 1.18 2008/09/18 05:42:08 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,9 @@ main(int argc, char *argv[])
 	}
 	if (nflag == 0)
 		(void)putchar('\n');
+	fflush(stdout);
+	if (ferror(stdout))
+		exit(1);
 	exit(0);
 	/* NOTREACHED */
 }
