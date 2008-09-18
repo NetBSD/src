@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.164.2.1.2.1 2008/09/18 19:12:08 bouyer Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.164.2.1.2.2 2008/09/18 19:13:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.164.2.1.2.1 2008/09/18 19:12:08 bouyer Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.164.2.1.2.2 2008/09/18 19:13:44 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -3172,11 +3172,11 @@ send_file_list(const char *whichf)
 		memset(&gl, 0, sizeof(gl));
 		freeglob = 1;
 		if (glob(whichf, flags, 0, &gl)) {
-			reply(550, "not found");
+			reply(450, "Not found");
 			goto cleanup_send_file_list;
 		} else if (gl.gl_pathc == 0) {
 			errno = ENOENT;
-			perror_reply(550, whichf);
+			perror_reply(450, whichf);
 			goto cleanup_send_file_list;
 		}
 		dirlist = gl.gl_pathv;
@@ -3205,7 +3205,7 @@ send_file_list(const char *whichf)
 				retrieve(argv, dirname);
 				goto cleanup_send_file_list;
 			}
-			perror_reply(550, whichf);
+			perror_reply(450, whichf);
 			goto cleanup_send_file_list;
 		}
 
@@ -3275,9 +3275,9 @@ send_file_list(const char *whichf)
 	}
 
 	if (dout == NULL)
-		reply(550, "No files found.");
+		reply(450, "No files found.");
 	else if (ferror(dout) != 0)
-		perror_reply(550, "Data connection");
+		perror_reply(451, "Data connection");
 	else
 		reply(226, "Transfer complete.");
 
