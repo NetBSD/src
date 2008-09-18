@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.4 2008/09/18 02:57:07 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.5 2008/09/18 04:37:06 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.4 2008/09/18 02:57:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.5 2008/09/18 04:37:06 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1186,6 +1186,7 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 	struct uvideo_format *format;
 	const uvideo_descriptor_t *uvdesc;
 	uint8_t subtype, default_index, index;
+	uint32_t frame_interval;
 	const usb_guid_t *guid;
 
 	switch (format_desc->bDescriptorSubtype) {
@@ -1223,7 +1224,7 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 	{
 		uvdesc = (const uvideo_descriptor_t *) usb_desc_iter_next(iter);
 
-		format = kmem_alloc(sizeof(struct uvideo_format), KM_NOSLEEP);
+		format = kmem_zalloc(sizeof(struct uvideo_format), KM_SLEEP);
 		if (format == NULL) {
 			DPRINTF(("uvideo: failed to alloc video format\n"));
 			return USBD_NOMEM;
@@ -1264,6 +1265,11 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			index = GET(uvideo_vs_frame_uncompressed_descriptor_t,
 				    uvdesc,
 				    bFrameIndex);
+			frame_interval =
+			    UGETDW(
+				GET(uvideo_vs_frame_uncompressed_descriptor_t,
+				uvdesc,
+				dwDefaultFrameInterval));
 			break;
 		case UDESC_VS_FORMAT_MJPEG:
 			format->format.pixel_format = VIDEO_FORMAT_MJPEG;
@@ -1276,6 +1282,11 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			index = GET(uvideo_vs_frame_mjpeg_descriptor_t,
 				    uvdesc,
 				    bFrameIndex);
+			frame_interval =
+			    UGETDW(
+				GET(uvideo_vs_frame_mjpeg_descriptor_t,
+				uvdesc,
+				dwDefaultFrameInterval));
 			break;
 		case UDESC_VS_FORMAT_FRAME_BASED:
 			format->format.pixel_format = VIDEO_FORMAT_UNDEFINED;
@@ -1288,6 +1299,11 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			index = GET(uvideo_frame_frame_based_descriptor_t,
 				    uvdesc,
 				    bFrameIndex);
+			frame_interval =
+			    UGETDW(
+				GET(uvideo_frame_frame_based_descriptor_t,
+				uvdesc,
+				dwDefaultFrameInterval));
 			break;
 		default:
 			/* shouldn't ever get here */
@@ -1297,10 +1313,18 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			return USBD_INVAL;
 		}
 
+		DPRINTF(("UVC: Found format (index %d) %d: %dx%d\n",
+		    index, format->format.pixel_format, format->format.width,
+		    format->format.height));
+
 		SIMPLEQ_INSERT_TAIL(&vs->vs_formats, format, entries);
 
-		if (vs->vs_default_format == NULL && index == default_index)
+		if (vs->vs_default_format == NULL && index == default_index) {
+			DPRINTF((" ^ picking this one\n"));
 			vs->vs_default_format = &format->format;
+			vs->vs_frame_interval = frame_interval;
+		}
+
 	}
 	
 	return USBD_NORMAL_COMPLETION;
@@ -1353,11 +1377,14 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 			 * several packets can make up one payload which would
 			 * call into question this method of selecting an
 			 * alternate interface... */
-			if (alt_maybe->max_packet_size >=
-			    vs->vs_max_payload_size)
+
+			/* XXXJDM don't allow packet size > 1024 for now */
+			if (alt_maybe->max_packet_size > 1024)
+				continue;
+
+			if (alt == NULL ||
+			    alt_maybe->max_packet_size >= alt->max_packet_size)
 				alt = alt_maybe;
-			else
-				break;
 		}
 		
 		if (alt == NULL) {
@@ -1673,7 +1700,6 @@ uvideo_get_format(void *addr, struct video_format *format)
 	return 0;
 }       
 
-
 /*
  * uvideo_set_format - TODO: this is boken and does nothing
  */
@@ -1695,10 +1721,8 @@ uvideo_set_format(void *addr, struct video_format *format)
 
 	vs = sc->sc_stream_in;
 	ifaceno = vs->vs_ifaceno;
-	
-	uvideo_init_probe_data(&probe);
 
-	/* If format comes from a previously enumerated format from
+	/* TODO: If format comes from a previously enumerated format from
 	   this driver then it should have format and frame
 	   indicies. */
 	/*
@@ -1706,55 +1730,25 @@ uvideo_set_format(void *addr, struct video_format *format)
 		(struct uvideo_format *)format);
 	probe.bFrameIndex = UVIDEO_FORMAT_GET_FRAME_INDEX(
 		(struct uvideo_format *)format);
-	*/
+	 */
 
-	/* First step is to probe/SET_CUR.  Prior to this, state is
-	 * undefined.  TODO: this should be moved or changed so that
-	 * it isn't done on every set_format, only the first one.*/
-
-	/* Xbox camera does not like zeros during SET_CUR, at least
-	 * for FormatIndex, FrameIndex, and FrameInterval.  For now,
-	 * initialize with the default values. */
-	err = uvideo_stream_probe(vs, UR_GET_DEF, &probe);
-	if (err != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("uvideo: error probe/GET_DEF: %s (%d)\n",
-			 usbd_errstr(err), err));
-	}
-	DPRINTFN(15, ("uvideo_set_format: default format is: "
-		      "bmHint=0x%04x bFormatIndex=%d bFrameIndex=%d "
-		      "dwFrameInterval=%d wKeyFrameRate=%d wPFrameRate=%d "
-		      "wCompQuality=%d wCompWindowSize=%d wDelay=%d "
-		      "dwMaxVideoFrameSize=%d dwMaxPayloadTransferSize=%d\n",
-		      UGETW(probe.bmHint),
-		      probe.bFormatIndex,
-		      probe.bFrameIndex,
-		      UGETDW(probe.dwFrameInterval),
-		      UGETW(probe.wKeyFrameRate),
-		      UGETW(probe.wPFrameRate),
-		      UGETW(probe.wCompQuality),
-		      UGETW(probe.wCompWindowSize),
-		      UGETW(probe.wDelay),
-		      UGETDW(probe.dwMaxVideoFrameSize),
-		      UGETDW(probe.dwMaxPayloadTransferSize)));
-
-	err = uvideo_stream_probe(vs, UR_SET_CUR, &probe);
-	if (err != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("uvideo_open: error initializing format: %s (%d)\n",
-			 usbd_errstr(err), err));
-		return EIO;
-	}
-
-	/* Second step is probe/GET_CUR to see what the hardware is
-	 * offering. */
+	/* probe/GET_CUR to see what the hardware is offering */
 	uvideo_init_probe_data(&probe);
+
 	err = uvideo_stream_probe(vs, UR_GET_CUR, &probe);
 	if (err != USBD_NORMAL_COMPLETION) {
 		DPRINTF(("uvideo: error probe/GET_CUR: %s (%d)\n",
 			 usbd_errstr(err), err));
 	}
 
-	/* Third step is commit/SET_CUR. Fourth step is to set the
-	 * alternate interface.  Currently the fourth step is in
+	probe.bFormatIndex = UVIDEO_FORMAT_GET_FORMAT_INDEX(
+		(struct uvideo_format *)vs->vs_default_format);
+	probe.bFrameIndex = UVIDEO_FORMAT_GET_FRAME_INDEX(
+		(struct uvideo_format *)vs->vs_default_format);
+	USETDW(probe.dwFrameInterval, vs->vs_frame_interval);
+
+	/* commit/SET_CUR. Fourth step is to set the alternate
+	 * interface.  Currently the fourth step is in
 	 * uvideo_start_transfer.  Maybe move it here? */
 	err = uvideo_stream_commit(vs, UR_SET_CUR, &probe);
 	if (err != USBD_NORMAL_COMPLETION) {
@@ -1806,7 +1800,7 @@ uvideo_set_format(void *addr, struct video_format *format)
 	DPRINTF(("uvideo_set_format: pixeltype is %d\n", format->pixel_format));
 
 	format->sample_size = UGETDW(probe.dwMaxVideoFrameSize);
-	/* format->stride = width * bits_per_px / 8 */
+	format->stride = format->sample_size / format->height;
 	/* format->color.primaries = */
 	/* format->color.gamma_function = */
 	/* format->color.matrix_coeff = */
