@@ -1,5 +1,6 @@
-Id: NEWS,v 1.24 2004/04/07 20:18:21 karl Exp
-This file records noteworthy changes.
+Id: NEWS,v 1.103 2004/12/24 16:43:58 karl Exp
+This file records noteworthy changes, very tersely.
+See the manual for detailed information.
 
   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
   2001, 2002, 2003, 2004 Free Software Foundation, Inc.
@@ -18,10 +19,37 @@ because the historical method of doing copyright permissions using
 @ifinfo failed to output copyright information in the HTML (or XML)
 formats.  The manual has detailed explanations and examples.  For
 convenience, here's a url to one of the relevant sections:
-  http://texinfo.org/manual/Document-Permissions.html
+  http://www.gnu.org/software/texinfo/manual/texinfo/html_node/Document-Permissions.html
 
 -------------------------------------------------------------------------------
+
+4.8 (31 December 2004)
+* Language:
+  . new command @euro for the Euro currency symbol, and
+    @documentencoding has some support for ISO-8859-15.
+  . new command @abbr for general abbreviations.
+  . new command @slanted to typeset text in a slanted font,
+    and @sansserif to typeset in a sans serif font.
+* makeinfo:
+  . An empty first argument to cross-reference commands, such as @xref,
+    causes an error.  This change was made in 4.1, but not mentioned in NEWS.
+  . HTML output:
+    - <a name="..."> constructs are added for the old-style
+      conversion of node names to HTML names, so that external references
+      to them can continue to work.
+    - "g_t" prefixed to targets for node names beginning with a
+      nonletter, for XHTML compatibility.
+  . Docbook output: recognize more image formats.
+* texi2dvi:
+  . new option --recode, to call recode for input character translation.
+* Distribution:
+  . new convenience script texi2pdf, equivalent to texi2dvi --pdf (from tetex).
+  . some cross-compiling support in configure && make.
+  . new configure option --disable-install-warnings, for TeX.
+    distributions which do have the files installed.
+  . automake 1.9.4.
 
+
 4.7 (9 April 2004)
 * Language:
   . new commands @float, @caption, @shortcaption, @listoffloats for
@@ -86,7 +114,7 @@ convenience, here's a url to one of the relevant sections:
 * Distribution:
   . new script gendocs.sh (not installed), for use by GNU maintainers in
     getting their manuals on the GNU web site.  Documented in
-    maintain.texi (http://www.gnu.org/prep/maintain_toc.html).
+    maintain.texi (http://www.gnu.org/prep/maintain/).
   . Most code uses ANSI C prototypes, to some extent.
   . New translation: nb.
   . automake 1.8.3, autoconf 2.59, gettext 0.14.1.

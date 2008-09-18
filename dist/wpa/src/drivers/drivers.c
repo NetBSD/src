@@ -18,6 +18,9 @@
 #ifdef CONFIG_DRIVER_WEXT
 extern struct wpa_driver_ops wpa_driver_wext_ops; /* driver_wext.c */
 #endif /* CONFIG_DRIVER_WEXT */
+#ifdef CONFIG_DRIVER_NL80211
+extern struct wpa_driver_ops wpa_driver_nl80211_ops; /* driver_nl80211.c */
+#endif /* CONFIG_DRIVER_NL80211 */
 #ifdef CONFIG_DRIVER_HOSTAP
 extern struct wpa_driver_ops wpa_driver_hostap_ops; /* driver_hostap.c */
 #endif /* CONFIG_DRIVER_HOSTAP */
@@ -61,6 +64,9 @@ extern struct wpa_driver_ops wpa_driver_ralink_ops; /* driver_ralink.c */
 #ifdef CONFIG_DRIVER_OSX
 extern struct wpa_driver_ops wpa_driver_osx_ops; /* driver_osx.m */
 #endif /* CONFIG_DRIVER_OSX */
+#ifdef CONFIG_DRIVER_PS3
+extern struct wpa_driver_ops wpa_driver_ps3_ops; /* driver_ps3.c */
+#endif /* CONFIG_DRIVER_PS3 */
 #ifdef CONFIG_DRIVER_IPHONE
 extern struct wpa_driver_ops wpa_driver_iphone_ops; /* driver_iphone.m */
 #endif /* CONFIG_DRIVER_IPHONE */
@@ -71,6 +77,9 @@ struct wpa_driver_ops *wpa_supplicant_drivers[] =
 #ifdef CONFIG_DRIVER_WEXT
 	&wpa_driver_wext_ops,
 #endif /* CONFIG_DRIVER_WEXT */
+#ifdef CONFIG_DRIVER_NL80211
+	&wpa_driver_nl80211_ops,
+#endif /* CONFIG_DRIVER_NL80211 */
 #ifdef CONFIG_DRIVER_HOSTAP
 	&wpa_driver_hostap_ops,
 #endif /* CONFIG_DRIVER_HOSTAP */
@@ -113,6 +122,9 @@ struct wpa_driver_ops *wpa_supplicant_drivers[] =
 #ifdef CONFIG_DRIVER_OSX
 	&wpa_driver_osx_ops,
 #endif /* CONFIG_DRIVER_OSX */
+#ifdef CONFIG_DRIVER_PS3
+	&wpa_driver_ps3_ops,
+#endif /* CONFIG_DRIVER_PS3 */
 #ifdef CONFIG_DRIVER_IPHONE
 	&wpa_driver_iphone_ops,
 #endif /* CONFIG_DRIVER_IPHONE */

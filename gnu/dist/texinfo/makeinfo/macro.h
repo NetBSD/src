@@ -1,7 +1,7 @@
-/*	$NetBSD: macro.h,v 1.1.1.3 2004/07/12 23:26:49 wiz Exp $	*/
+/*	$NetBSD: macro.h,v 1.1.1.3.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* macro.h -- declarations for macro.c.
-   Id: macro.h,v 1.2 2004/02/13 22:01:38 dirt Exp
+   Id: macro.h,v 1.2 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 1998, 99 Free Software Foundation, Inc.
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: dir.c,v 1.1.1.4 2004/07/12 23:26:56 wiz Exp $	*/
+/*	$NetBSD: dir.c,v 1.1.1.4.26.1 2008/09/18 04:48:27 wrstuden Exp $	*/
 
 /* dir.c -- how to build a special "dir" node from "localdir" files.
-   Id: dir.c,v 1.3 2004/03/14 00:57:29 karl Exp
+   Id: dir.c,v 1.3 2004/04/11 17:56:45 karl Exp
 
    Copyright (C) 1993, 1997, 1998, 2004 Free Software Foundation, Inc.
 

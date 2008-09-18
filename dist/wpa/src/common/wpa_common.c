@@ -1,6 +1,6 @@
 /*
  * WPA/RSN - Shared functions for supplicant and authenticator
- * Copyright (c) 2002-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -124,8 +124,7 @@ void wpa_pmk_to_ptk(const u8 *pmk, size_t pmk_len, const char *label,
 
 
 #ifdef CONFIG_IEEE80211R
-int wpa_ft_mic(const u8 *kck, int use_aes_cmac,
-	       const u8 *sta_addr, const u8 *ap_addr,
+int wpa_ft_mic(const u8 *kck, const u8 *sta_addr, const u8 *ap_addr,
 	       u8 transaction_seqnum, const u8 *mdie, size_t mdie_len,
 	       const u8 *ftie, size_t ftie_len,
 	       const u8 *rsnie, size_t rsnie_len,
@@ -170,13 +169,10 @@ int wpa_ft_mic(const u8 *kck, int use_aes_cmac,
 	}
 
 	wpa_hexdump(MSG_MSGDUMP, "FT: MIC data", buf, pos - buf);
-	if (use_aes_cmac) {
-		if (omac1_aes_128(kck, buf, pos - buf, mic)) {
-			os_free(buf);
-			return -1;
-		}
-	} else
-		hmac_md5(kck, 16, buf, pos - buf, mic);
+	if (omac1_aes_128(kck, buf, pos - buf, mic)) {
+		os_free(buf);
+		return -1;
+	}
 
 	os_free(buf);
 
@@ -398,7 +394,7 @@ int wpa_parse_wpa_ie_rsn(const u8 *rsn_ie, size_t rsn_ie_len,
 /**
  * wpa_derive_pmk_r0 - Derive PMK-R0 and PMKR0Name
  *
- * IEEE 802.11r/D8.0 - 8.5.1.5.3
+ * IEEE 802.11r/D9.0 - 8.5.1.5.3
  */
 void wpa_derive_pmk_r0(const u8 *xxkey, size_t xxkey_len,
 		       const u8 *ssid, size_t ssid_len,
@@ -438,10 +434,10 @@ void wpa_derive_pmk_r0(const u8 *xxkey, size_t xxkey_len,
 	os_memcpy(pmk_r0, r0_key_data, PMK_LEN);
 
 	/*
-	 * PMKR0Name = Truncate-128(SHA-256("FT-R0" || PMK-R0Name-Salt)
+	 * PMKR0Name = Truncate-128(SHA-256("FT-R0N" || PMK-R0Name-Salt)
 	 */
-	addr[0] = (const u8 *) "FT-R0";
-	len[0] = 5;
+	addr[0] = (const u8 *) "FT-R0N";
+	len[0] = 6;
 	addr[1] = r0_key_data + PMK_LEN;
 	len[1] = 16;
 
@@ -453,7 +449,7 @@ void wpa_derive_pmk_r0(const u8 *xxkey, size_t xxkey_len,
 /**
  * wpa_derive_pmk_r1_name - Derive PMKR1Name
  *
- * IEEE 802.11r/D8.0 - 8.5.1.5.4
+ * IEEE 802.11r/D9.0 - 8.5.1.5.4
  */
 void wpa_derive_pmk_r1_name(const u8 *pmk_r0_name, const u8 *r1kh_id,
 			    const u8 *s1kh_id, u8 *pmk_r1_name)
@@ -463,11 +459,11 @@ void wpa_derive_pmk_r1_name(const u8 *pmk_r0_name, const u8 *r1kh_id,
 	size_t len[4];
 
 	/*
-	 * PMKR1Name = Truncate-128(SHA-256("FT-R1" || PMKR0Name ||
+	 * PMKR1Name = Truncate-128(SHA-256("FT-R1N" || PMKR0Name ||
 	 *                                  R1KH-ID || S1KH-ID))
 	 */
-	addr[0] = (const u8 *) "FT-R1";
-	len[0] = 5;
+	addr[0] = (const u8 *) "FT-R1N";
+	len[0] = 6;
 	addr[1] = pmk_r0_name;
 	len[1] = WPA_PMK_NAME_LEN;
 	addr[2] = r1kh_id;
@@ -483,7 +479,7 @@ void wpa_derive_pmk_r1_name(const u8 *pmk_r0_name, const u8 *r1kh_id,
 /**
  * wpa_derive_pmk_r1 - Derive PMK-R1 and PMKR1Name from PMK-R0
  *
- * IEEE 802.11r/D8.0 - 8.5.1.5.4
+ * IEEE 802.11r/D9.0 - 8.5.1.5.4
  */
 void wpa_derive_pmk_r1(const u8 *pmk_r0, const u8 *pmk_r0_name,
 		       const u8 *r1kh_id, const u8 *s1kh_id,
@@ -508,7 +504,7 @@ void wpa_derive_pmk_r1(const u8 *pmk_r0, const u8 *pmk_r0_name,
 /**
  * wpa_pmk_r1_to_ptk - Derive PTK and PTKName from PMK-R1
  *
- * IEEE 802.11r/D8.0 - 8.5.1.5.5
+ * IEEE 802.11r/D9.0 - 8.5.1.5.5
  */
 void wpa_pmk_r1_to_ptk(const u8 *pmk_r1, const u8 *snonce, const u8 *anonce,
 		       const u8 *sta_addr, const u8 *bssid,
@@ -537,13 +533,13 @@ void wpa_pmk_r1_to_ptk(const u8 *pmk_r1, const u8 *snonce, const u8 *anonce,
 	sha256_prf(pmk_r1, PMK_LEN, "FT-PTK", buf, pos - buf, ptk, ptk_len);
 
 	/*
-	 * PTKName = Truncate-128(SHA-256(PMKR1Name || "FT-PTK" || SNonce ||
+	 * PTKName = Truncate-128(SHA-256(PMKR1Name || "FT-PTKN" || SNonce ||
 	 *                                ANonce || BSSID || STA-ADDR))
 	 */
 	addr[0] = pmk_r1_name;
 	len[0] = WPA_PMK_NAME_LEN;
-	addr[1] = (const u8 *) "FT-PTK";
-	len[1] = 6;
+	addr[1] = (const u8 *) "FT-PTKN";
+	len[1] = 7;
 	addr[2] = snonce;
 	len[2] = WPA_NONCE_LEN;
 	addr[3] = anonce;

@@ -1,6 +1,6 @@
 /*
  * WPA Supplicant - driver interface definition
- * Copyright (c) 2003-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2003-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -920,6 +920,15 @@ struct wpa_driver_ops {
 	 * freeing the data structure) on success, NULL on failure
 	 */
 	 struct wpa_scan_results * (*get_scan_results2)(void *priv);
+
+	/**
+	 * * set_probe_req_ie - Set information element(s) for Probe Request
+	 * @priv: private driver interface data
+	 * @ies: Information elements to append or %NULL to remove extra IEs
+	 * @ies_len: Length of the IE buffer in octets
+	 * Returns: 0 on success, -1 on failure
+	 */
+	int (*set_probe_req_ie)(void *, const u8 *ies, size_t ies_len);
 };
 
 /**
@@ -1202,9 +1211,13 @@ void wpa_supplicant_event(void *ctx, wpa_event_type event,
 void wpa_supplicant_rx_eapol(void *ctx, const u8 *src_addr,
 			     const u8 *buf, size_t len);
 
+void wpa_supplicant_sta_rx(void *ctx, const u8 *buf, size_t len,
+			   struct ieee80211_rx_status *rx_status);
+void wpa_supplicant_sta_free_hw_features(struct wpa_hw_modes *hw_features,
+					 size_t num_hw_features);
+
 const u8 * wpa_scan_get_ie(const struct wpa_scan_res *res, u8 ie);
 #define WPA_IE_VENDOR_TYPE 0x0050f201
-#define WPS_IE_VENDOR_TYPE 0x0050f204
 const u8 * wpa_scan_get_vendor_ie(const struct wpa_scan_res *res,
 				  u32 vendor_type);
 int wpa_scan_get_max_rate(const struct wpa_scan_res *res);

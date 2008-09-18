@@ -1,4 +1,4 @@
-/*	$NetBSD: racoonctl.c,v 1.10.4.1 2008/06/23 04:26:46 wrstuden Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.10.4.2 2008/09/18 04:54:19 wrstuden Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
@@ -291,7 +291,7 @@ main(ac, av)
 		err(1, "kmpstat");
 
 	if (loglevel)
-		hexdump(combuf, ((struct admin_com *)combuf)->ac_len);
+		racoon_hexdump(combuf, ((struct admin_com *)combuf)->ac_len);
 
 	com_init();
 

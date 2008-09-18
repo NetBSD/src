@@ -1,6 +1,6 @@
 /*
  * EAP-FAST server (RFC 4851)
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -31,6 +31,7 @@ static void eap_fast_reset(struct eap_sm *sm, void *priv);
 #define PAC_OPAQUE_TYPE_PAD 0
 #define PAC_OPAQUE_TYPE_KEY 1
 #define PAC_OPAQUE_TYPE_LIFETIME 2
+#define PAC_OPAQUE_TYPE_IDENTITY 3
 
 /* PAC-Key lifetime in seconds (hard limit) */
 #define PAC_KEY_LIFETIME (7 * 24 * 60 * 60)
@@ -62,7 +63,7 @@ struct eap_fast_data {
 	struct eap_fast_key_block_provisioning *key_block_p;
 
 	u8 simck[EAP_FAST_SIMCK_LEN];
-	u8 cmk[20];
+	u8 cmk[EAP_FAST_CMK_LEN];
 	int simck_idx;
 
 	u8 pac_opaque_encr[16];
@@ -70,6 +71,11 @@ struct eap_fast_data {
 
 	int anon_provisioning;
 	int send_new_pac; /* server triggered re-keying of Tunnel PAC */
+	struct wpabuf *pending_phase2_resp;
+	u8 *identity; /* from PAC-Opaque */
+	size_t identity_len;
+	int eap_seq;
+	int tnc_started;
 };
 
 
@@ -124,22 +130,17 @@ static int eap_fast_session_ticket_cb(void *ctx, const u8 *ticket, size_t len,
 				      u8 *master_secret)
 {
 	struct eap_fast_data *data = ctx;
-#define TLS_RANDOM_LEN 32
-#define TLS_MASTER_SECRET_LEN 48
-	u8 seed[2 * TLS_RANDOM_LEN];
 	const u8 *pac_opaque;
 	size_t pac_opaque_len;
 	u8 *buf, *pos, *end, *pac_key = NULL;
 	os_time_t lifetime = 0;
 	struct os_time now;
+	u8 *identity = NULL;
+	size_t identity_len = 0;
 
 	wpa_printf(MSG_DEBUG, "EAP-FAST: SessionTicket callback");
 	wpa_hexdump(MSG_DEBUG, "EAP-FAST: SessionTicket (PAC-Opaque)",
 		    ticket, len);
-	wpa_hexdump(MSG_DEBUG, "EAP-FAST: client_random",
-		    client_random, TLS_RANDOM_LEN);
-	wpa_hexdump(MSG_DEBUG, "EAP-FAST: server_random",
-		    server_random, TLS_RANDOM_LEN);
 
 	if (len < 4 || WPA_GET_BE16(ticket) != PAC_TYPE_PAC_OPAQUE) {
 		wpa_printf(MSG_DEBUG, "EAP-FAST: Ignore invalid "
@@ -216,6 +217,10 @@ static int eap_fast_session_ticket_cb(void *ctx, const u8 *ticket, size_t len,
 			}
 			lifetime = WPA_GET_BE32(pos + 2);
 			break;
+		case PAC_OPAQUE_TYPE_IDENTITY:
+			identity = pos + 2;
+			identity_len = pos[1];
+			break;
 		}
 
 		pos += 2 + pos[1];
@@ -228,6 +233,17 @@ static int eap_fast_session_ticket_cb(void *ctx, const u8 *ticket, size_t len,
 		return -1;
 	}
 
+	if (identity) {
+		wpa_hexdump_ascii(MSG_DEBUG, "EAP-FAST: Identity from "
+				  "PAC-Opaque", identity, identity_len);
+		os_free(data->identity);
+		data->identity = os_malloc(identity_len);
+		if (data->identity) {
+			os_memcpy(data->identity, identity, identity_len);
+			data->identity_len = identity_len;
+		}
+	}
+
 	if (os_get_time(&now) < 0 || lifetime <= 0 || now.sec > lifetime) {
 		wpa_printf(MSG_DEBUG, "EAP-FAST: PAC-Key not valid anymore "
 			   "(lifetime=%ld now=%ld)", lifetime, now.sec);
@@ -238,72 +254,12 @@ static int eap_fast_session_ticket_cb(void *ctx, const u8 *ticket, size_t len,
 	if (lifetime - now.sec < PAC_KEY_REFRESH_TIME)
 		data->send_new_pac = 1;
 
-	/*
-	 * RFC 4851, Section 5.1:
-	 * master_secret = T-PRF(PAC-Key, "PAC to master secret label hash", 
-	 *                       server_random + client_random, 48)
-	 */
-	os_memcpy(seed, server_random, TLS_RANDOM_LEN);
-	os_memcpy(seed + TLS_RANDOM_LEN, client_random, TLS_RANDOM_LEN);
-	sha1_t_prf(pac_key, EAP_FAST_PAC_KEY_LEN,
-		   "PAC to master secret label hash",
-		   seed, sizeof(seed), master_secret, TLS_MASTER_SECRET_LEN);
-
-	wpa_hexdump_key(MSG_DEBUG, "EAP-FAST: master_secret",
-			master_secret, TLS_MASTER_SECRET_LEN);
+	eap_fast_derive_master_secret(pac_key, server_random, client_random,
+				      master_secret);
 
 	os_free(buf);
 
 	return 1;
-}
-
-
-static u8 * eap_fast_derive_key(struct eap_sm *sm, struct eap_ssl_data *data,
-				char *label, size_t len)
-{
-	struct tls_keys keys;
-	u8 *rnd = NULL, *out;
-	int block_size;
-
-	block_size = tls_connection_get_keyblock_size(sm->ssl_ctx, data->conn);
-	if (block_size < 0)
-		return NULL;
-
-	out = os_malloc(block_size + len);
-	if (out == NULL)
-		return NULL;
-
-	if (tls_connection_prf(sm->ssl_ctx, data->conn, label, 1, out,
-			       block_size + len) == 0) {
-		os_memmove(out, out + block_size, len);
-		return out;
-	}
-
-	if (tls_connection_get_keys(sm->ssl_ctx, data->conn, &keys))
-		goto fail;
-
-	rnd = os_malloc(keys.client_random_len + keys.server_random_len);
-	if (rnd == NULL)
-		goto fail;
-
-	os_memcpy(rnd, keys.server_random, keys.server_random_len);
-	os_memcpy(rnd + keys.server_random_len, keys.client_random,
-		  keys.client_random_len);
-
-	wpa_hexdump_key(MSG_MSGDUMP, "EAP-FAST: master_secret for key "
-			"expansion", keys.master_key, keys.master_key_len);
-	if (tls_prf(keys.master_key, keys.master_key_len,
-		    label, rnd, keys.client_random_len +
-		    keys.server_random_len, out, block_size + len))
-		goto fail;
-	os_free(rnd);
-	os_memmove(out, out + block_size, len);
-	return out;
-
-fail:
-	os_free(rnd);
-	os_free(out);
-	return NULL;
 }
 
 
@@ -316,7 +272,7 @@ static void eap_fast_derive_key_auth(struct eap_sm *sm,
 	 * Extra key material after TLS key_block: session_key_seed[40]
 	 */
 
-	sks = eap_fast_derive_key(sm, &data->ssl, "key expansion",
+	sks = eap_fast_derive_key(sm->ssl_ctx, data->ssl.conn, "key expansion",
 				  EAP_FAST_SKS_LEN);
 	if (sks == NULL) {
 		wpa_printf(MSG_DEBUG, "EAP-FAST: Failed to derive "
@@ -342,7 +298,8 @@ static void eap_fast_derive_key_provisioning(struct eap_sm *sm,
 {
 	os_free(data->key_block_p);
 	data->key_block_p = (struct eap_fast_key_block_provisioning *)
-		eap_fast_derive_key(sm, &data->ssl, "key expansion",
+		eap_fast_derive_key(sm->ssl_ctx, data->ssl.conn,
+				    "key expansion",
 				    sizeof(*data->key_block_p));
 	if (data->key_block_p == NULL) {
 		wpa_printf(MSG_DEBUG, "EAP-FAST: Failed to derive key block");
@@ -427,8 +384,9 @@ static int eap_fast_update_icmk(struct eap_sm *sm, struct eap_fast_data *data)
 	os_memcpy(data->simck, imck, EAP_FAST_SIMCK_LEN);
 	wpa_hexdump_key(MSG_MSGDUMP, "EAP-FAST: S-IMCK[j]",
 			data->simck, EAP_FAST_SIMCK_LEN);
-	os_memcpy(data->cmk, imck + EAP_FAST_SIMCK_LEN, 20);
-	wpa_hexdump_key(MSG_MSGDUMP, "EAP-FAST: CMK[j]", data->cmk, 20);
+	os_memcpy(data->cmk, imck + EAP_FAST_SIMCK_LEN, EAP_FAST_CMK_LEN);
+	wpa_hexdump_key(MSG_MSGDUMP, "EAP-FAST: CMK[j]",
+			data->cmk, EAP_FAST_CMK_LEN);
 
 	return 0;
 }
@@ -515,6 +473,8 @@ static void eap_fast_reset(struct eap_sm *sm, void *priv)
 	eap_server_tls_ssl_deinit(sm, &data->ssl);
 	os_free(data->srv_id);
 	os_free(data->key_block_p);
+	wpabuf_free(data->pending_phase2_resp);
+	os_free(data->identity);
 	os_free(data);
 }
 
@@ -523,11 +483,10 @@ static struct wpabuf * eap_fast_build_start(struct eap_sm *sm,
 					    struct eap_fast_data *data, u8 id)
 {
 	struct wpabuf *req;
-	struct pac_tlv_hdr *a_id;
 	size_t srv_id_len = os_strlen(data->srv_id);
 
 	req = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_FAST,
-			    1 + sizeof(*a_id) + srv_id_len,
+			    1 + sizeof(struct pac_tlv_hdr) + srv_id_len,
 			    EAP_CODE_REQUEST, id);
 	if (req == NULL) {
 		wpa_printf(MSG_ERROR, "EAP-FAST: Failed to allocate memory for"
@@ -537,10 +496,9 @@ static struct wpabuf * eap_fast_build_start(struct eap_sm *sm,
 	}
 
 	wpabuf_put_u8(req, EAP_TLS_FLAGS_START | data->fast_version);
-	a_id = wpabuf_put(req, sizeof(*a_id));
-	a_id->type = host_to_be16(PAC_TYPE_A_ID);
-	a_id->len = host_to_be16(srv_id_len);
-	wpabuf_put_data(req, data->srv_id, srv_id_len);
+
+	/* RFC 4851, 4.1.1. Authority ID Data */
+	eap_fast_put_tlv(req, PAC_TYPE_A_ID, data->srv_id, srv_id_len);
 
 	eap_fast_state(data, PHASE1);
 
@@ -575,96 +533,17 @@ static int eap_fast_phase1_done(struct eap_sm *sm, struct eap_fast_data *data)
 }
 
 
-static struct wpabuf * eap_fast_build_req(struct eap_sm *sm,
-					  struct eap_fast_data *data, u8 id)
-{
-	int res;
-	struct wpabuf *req;
-
-	res = eap_server_tls_buildReq_helper(sm, &data->ssl, EAP_TYPE_FAST,
-					     data->fast_version, id, &req);
-
-	if (tls_connection_established(sm->ssl_ctx, data->ssl.conn)) {
-		if (eap_fast_phase1_done(sm, data) < 0) {
-			os_free(req);
-			return NULL;
-		}
-	}
-
-	if (res == 1)
-		return eap_server_tls_build_ack(id, EAP_TYPE_FAST,
-						data->fast_version);
-	return req;
-}
-
-
-static struct wpabuf * eap_fast_encrypt(struct eap_sm *sm,
-					struct eap_fast_data *data,
-					u8 id, u8 *plain, size_t plain_len)
-{
-	int res;
-	struct wpabuf *buf;
-
-	/* TODO: add support for fragmentation, if needed. This will need to
-	 * add TLS Message Length field, if the frame is fragmented. */
-	buf = eap_msg_alloc(EAP_VENDOR_IETF, EAP_TYPE_FAST,
-			    1 + data->ssl.tls_out_limit,
-			    EAP_CODE_REQUEST, id);
-	if (buf == NULL)
-		return NULL;
-
-	wpabuf_put_u8(buf, data->fast_version);
-
-	res = tls_connection_encrypt(sm->ssl_ctx, data->ssl.conn,
-				     plain, plain_len, wpabuf_put(buf, 0),
-				     data->ssl.tls_out_limit);
-	if (res < 0) {
-		wpa_printf(MSG_INFO, "EAP-FAST: Failed to encrypt Phase 2 "
-			   "data");
-		wpabuf_free(buf);
-		return NULL;
-	}
-
-	wpabuf_put(buf, res);
-	eap_update_len(buf);
-
-	return buf;
-}
-
-
-static struct wpabuf * eap_fast_tlv_eap_payload(struct wpabuf *buf)
-{
-	struct wpabuf *e;
-	struct eap_tlv_hdr *tlv;
-
-	if (buf == NULL)
-		return NULL;
-
-	/* Encapsulate EAP packet in EAP-Payload TLV */
-	wpa_printf(MSG_DEBUG, "EAP-FAST: Add EAP-Payload TLV");
-	e = wpabuf_alloc(sizeof(*tlv) + wpabuf_len(buf));
-	if (e == NULL) {
-		wpa_printf(MSG_DEBUG, "EAP-FAST: Failed to allocate memory "
-			   "for TLV encapsulation");
-		wpabuf_free(buf);
-		return NULL;
-	}
-	tlv = wpabuf_put(e, sizeof(*tlv));
-	tlv->tlv_type = host_to_be16(EAP_TLV_TYPE_MANDATORY |
-				     EAP_TLV_EAP_PAYLOAD_TLV);
-	tlv->length = host_to_be16(wpabuf_len(buf));
-	wpabuf_put_buf(e, buf);
-	wpabuf_free(buf);
-	return e;
-}
-
-
 static struct wpabuf * eap_fast_build_phase2_req(struct eap_sm *sm,
 						 struct eap_fast_data *data,
 						 u8 id)
 {
 	struct wpabuf *req;
 
+	if (data->phase2_priv == NULL) {
+		wpa_printf(MSG_DEBUG, "EAP-FAST: Phase 2 method not "
+			   "initialized");
+		return NULL;
+	}
 	req = data->phase2_method->buildReq(sm, data->phase2_priv, id);
 	if (req == NULL)
 		return NULL;
@@ -679,32 +558,45 @@ static struct wpabuf * eap_fast_build_crypto_binding(
 {
 	struct wpabuf *buf;
 	struct eap_tlv_result_tlv *result;
-	struct eap_tlv_crypto_binding__tlv *binding;
-	int type;
+	struct eap_tlv_crypto_binding_tlv *binding;
 
-	buf = wpabuf_alloc(sizeof(*result) + sizeof(*binding));
+	buf = wpabuf_alloc(2 * sizeof(*result) + sizeof(*binding));
 	if (buf == NULL)
 		return NULL;
 
-	if (data->send_new_pac || data->anon_provisioning) {
-		type = EAP_TLV_INTERMEDIATE_RESULT_TLV;
+	if (data->send_new_pac || data->anon_provisioning ||
+	    data->phase2_method)
 		data->final_result = 0;
-	} else {
-		type = EAP_TLV_RESULT_TLV;
+	else
 		data->final_result = 1;
+
+	if (!data->final_result || data->eap_seq > 1) {
+		/* Intermediate-Result */
+		wpa_printf(MSG_DEBUG, "EAP-FAST: Add Intermediate-Result TLV "
+			   "(status=SUCCESS)");
+		result = wpabuf_put(buf, sizeof(*result));
+		result->tlv_type = host_to_be16(
+			EAP_TLV_TYPE_MANDATORY |
+			EAP_TLV_INTERMEDIATE_RESULT_TLV);
+		result->length = host_to_be16(2);
+		result->status = host_to_be16(EAP_TLV_RESULT_SUCCESS);
 	}
 
-	/* Result TLV */
-	wpa_printf(MSG_DEBUG, "EAP-FAST: Add Result TLV (status=SUCCESS)");
-	result = wpabuf_put(buf, sizeof(*result));
-	result->tlv_type = host_to_be16(EAP_TLV_TYPE_MANDATORY | type);
-	result->length = host_to_be16(2);
-	result->status = host_to_be16(EAP_TLV_RESULT_SUCCESS);
+	if (data->final_result) {
+		/* Result TLV */
+		wpa_printf(MSG_DEBUG, "EAP-FAST: Add Result TLV "
+			   "(status=SUCCESS)");
+		result = wpabuf_put(buf, sizeof(*result));
+		result->tlv_type = host_to_be16(EAP_TLV_TYPE_MANDATORY |
+						EAP_TLV_RESULT_TLV);
+		result->length = host_to_be16(2);
+		result->status = host_to_be16(EAP_TLV_RESULT_SUCCESS);
+	}
 
 	/* Crypto-Binding TLV */
 	binding = wpabuf_put(buf, sizeof(*binding));
 	binding->tlv_type = host_to_be16(EAP_TLV_TYPE_MANDATORY |
-					 EAP_TLV_CRYPTO_BINDING_TLV_);
+					 EAP_TLV_CRYPTO_BINDING_TLV);
 	binding->length = host_to_be16(sizeof(*binding) -
 				       sizeof(struct eap_tlv_hdr));
 	binding->version = EAP_FAST_VERSION;
@@ -730,7 +622,8 @@ static struct wpabuf * eap_fast_build_crypto_binding(
 	 * Compound-MAC = HMAC-SHA1( CMK, Crypto-Binding TLV )
 	 */
 
-	hmac_sha1(data->cmk, 20, (u8 *) binding, sizeof(*binding),
+	hmac_sha1(data->cmk, EAP_FAST_CMK_LEN,
+		  (u8 *) binding, sizeof(*binding),
 		  binding->compound_mac);
 
 	wpa_printf(MSG_DEBUG, "EAP-FAST: Add Crypto-Binding TLV: Version %d "
@@ -749,45 +642,80 @@ static struct wpabuf * eap_fast_build_crypto_binding(
 static struct wpabuf * eap_fast_build_pac(struct eap_sm *sm,
 					  struct eap_fast_data *data)
 {
-	u8 pac_key[2 + EAP_FAST_PAC_KEY_LEN + 6];
-	u8 pac_opaque[8 + EAP_FAST_PAC_KEY_LEN + 8];
+	u8 pac_key[EAP_FAST_PAC_KEY_LEN];
+	u8 *pac_buf, *pac_opaque;
 	struct wpabuf *buf;
 	u8 *pos;
-	size_t buf_len, srv_id_len;
+	size_t buf_len, srv_id_len, pac_len;
 	struct eap_tlv_hdr *pac_tlv;
-	struct pac_tlv_hdr *hdr, *pac_info;
+	struct pac_tlv_hdr *pac_info;
 	struct eap_tlv_result_tlv *result;
 	struct os_time now;
 
-	srv_id_len = os_strlen(data->srv_id);
-
-	pac_key[0] = PAC_OPAQUE_TYPE_KEY;
-	pac_key[1] = EAP_FAST_PAC_KEY_LEN;
-	if (os_get_random(pac_key + 2, EAP_FAST_PAC_KEY_LEN) < 0)
-		return NULL;
-	if (os_get_time(&now) < 0)
+	if (os_get_random(pac_key, EAP_FAST_PAC_KEY_LEN) < 0 ||
+	    os_get_time(&now) < 0)
 		return NULL;
 	wpa_hexdump_key(MSG_DEBUG, "EAP-FAST: Generated PAC-Key",
-			pac_key + 2, EAP_FAST_PAC_KEY_LEN);
-	pos = pac_key + 2 + EAP_FAST_PAC_KEY_LEN;
+			pac_key, EAP_FAST_PAC_KEY_LEN);
+
+	pac_len = (2 + EAP_FAST_PAC_KEY_LEN) + (2 + 4) +
+		(2 + sm->identity_len) + 8;
+	pac_buf = os_malloc(pac_len);
+	if (pac_buf == NULL)
+		return NULL;
+
+	srv_id_len = os_strlen(data->srv_id);
+
+	pos = pac_buf;
+	*pos++ = PAC_OPAQUE_TYPE_KEY;
+	*pos++ = EAP_FAST_PAC_KEY_LEN;
+	os_memcpy(pos, pac_key, EAP_FAST_PAC_KEY_LEN);
+	pos += EAP_FAST_PAC_KEY_LEN;
+
 	*pos++ = PAC_OPAQUE_TYPE_LIFETIME;
 	*pos++ = 4;
 	WPA_PUT_BE32(pos, now.sec + PAC_KEY_LIFETIME);
+	pos += 4;
 
-	if (aes_wrap(data->pac_opaque_encr, sizeof(pac_key) / 8, pac_key,
-		     pac_opaque) < 0)
+	if (sm->identity) {
+		*pos++ = PAC_OPAQUE_TYPE_IDENTITY;
+		*pos++ = sm->identity_len;
+		os_memcpy(pos, sm->identity, sm->identity_len);
+		pos += sm->identity_len;
+	}
+
+	pac_len = pos - pac_buf;
+	if (pac_len % 8) {
+		*pos++ = PAC_OPAQUE_TYPE_PAD;
+		pac_len++;
+	}
+
+	pac_opaque = os_malloc(pac_len + 8);
+	if (pac_opaque == NULL) {
+		os_free(pac_buf);
 		return NULL;
+	}
+	if (aes_wrap(data->pac_opaque_encr, pac_len / 8, pac_buf,
+		     pac_opaque) < 0) {
+		os_free(pac_buf);
+		os_free(pac_opaque);
+		return NULL;
+	}
+	os_free(pac_buf);
 
+	pac_len += 8;
 	wpa_hexdump(MSG_DEBUG, "EAP-FAST: PAC-Opaque",
-		    pac_opaque, sizeof(pac_opaque));
+		    pac_opaque, pac_len);
 
 	buf_len = sizeof(*pac_tlv) +
-		sizeof(*hdr) + EAP_FAST_PAC_KEY_LEN +
-		sizeof(*hdr) + sizeof(pac_opaque) +
+		sizeof(struct pac_tlv_hdr) + EAP_FAST_PAC_KEY_LEN +
+		sizeof(struct pac_tlv_hdr) + pac_len +
 		2 * srv_id_len + 100 + sizeof(*result);
 	buf = wpabuf_alloc(buf_len);
-	if (buf == NULL)
+	if (buf == NULL) {
+		os_free(pac_opaque);
 		return NULL;
+	}
 
 	/* PAC TLV */
 	wpa_printf(MSG_DEBUG, "EAP-FAST: Add PAC TLV");
@@ -796,45 +724,30 @@ static struct wpabuf * eap_fast_build_pac(struct eap_sm *sm,
 					 EAP_TLV_PAC_TLV);
 
 	/* PAC-Key */
-	hdr = wpabuf_put(buf, sizeof(*hdr));
-	hdr->type = host_to_be16(PAC_TYPE_PAC_KEY);
-	hdr->len = host_to_be16(EAP_FAST_PAC_KEY_LEN);
-	wpabuf_put_data(buf, pac_key + 2, EAP_FAST_PAC_KEY_LEN);
+	eap_fast_put_tlv(buf, PAC_TYPE_PAC_KEY, pac_key, EAP_FAST_PAC_KEY_LEN);
 
 	/* PAC-Opaque */
-	hdr = wpabuf_put(buf, sizeof(*hdr));
-	hdr->type = host_to_be16(PAC_TYPE_PAC_OPAQUE);
-	hdr->len = host_to_be16(sizeof(pac_opaque));
-	wpabuf_put_data(buf, pac_opaque, sizeof(pac_opaque));
+	eap_fast_put_tlv(buf, PAC_TYPE_PAC_OPAQUE, pac_opaque, pac_len);
+	os_free(pac_opaque);
 
 	/* PAC-Info */
 	pac_info = wpabuf_put(buf, sizeof(*pac_info));
 	pac_info->type = host_to_be16(PAC_TYPE_PAC_INFO);
 
 	/* PAC-Lifetime (inside PAC-Info) */
-	hdr = wpabuf_put(buf, sizeof(*hdr));
-	hdr->type = host_to_be16(PAC_TYPE_CRED_LIFETIME);
-	hdr->len = host_to_be16(4);
+	eap_fast_put_tlv_hdr(buf, PAC_TYPE_CRED_LIFETIME, 4);
 	wpabuf_put_be32(buf, now.sec + PAC_KEY_LIFETIME);
 
 	/* A-ID (inside PAC-Info) */
-	hdr = wpabuf_put(buf, sizeof(*hdr));
-	hdr->type = host_to_be16(PAC_TYPE_A_ID);
-	hdr->len = host_to_be16(srv_id_len);
-	wpabuf_put_data(buf, data->srv_id, srv_id_len);
+	eap_fast_put_tlv(buf, PAC_TYPE_A_ID, data->srv_id, srv_id_len);
 	
 	/* Note: headers may be misaligned after A-ID */
 
 	/* A-ID-Info (inside PAC-Info) */
-	hdr = wpabuf_put(buf, sizeof(*hdr));
-	WPA_PUT_BE16((u8 *) &hdr->type, PAC_TYPE_A_ID_INFO);
-	WPA_PUT_BE16((u8 *) &hdr->len, srv_id_len);
-	wpabuf_put_data(buf, data->srv_id, srv_id_len);
+	eap_fast_put_tlv(buf, PAC_TYPE_A_ID_INFO, data->srv_id, srv_id_len);
 
 	/* PAC-Type (inside PAC-Info) */
-	hdr = wpabuf_put(buf, sizeof(*hdr));
-	WPA_PUT_BE16((u8 *) &hdr->type, PAC_TYPE_PAC_TYPE);
-	WPA_PUT_BE16((u8 *) &hdr->len, 2);
+	eap_fast_put_tlv_hdr(buf, PAC_TYPE_PAC_TYPE, 2);
 	wpabuf_put_be16(buf, PAC_TYPE_TUNNEL_PAC);
 
 	/* Update PAC-Info and PAC TLV Length fields */
@@ -857,22 +770,45 @@ static struct wpabuf * eap_fast_build_pac(struct eap_sm *sm,
 static struct wpabuf * eap_fast_buildReq(struct eap_sm *sm, void *priv, u8 id)
 {
 	struct eap_fast_data *data = priv;
-	struct wpabuf *req;
+	struct wpabuf *req = NULL;
 	struct wpabuf *encr;
 
-	if (data->state == START)
-		return eap_fast_build_start(sm, data, id);
+	if (data->ssl.state == FRAG_ACK) {
+		return eap_server_tls_build_ack(id, EAP_TYPE_FAST,
+						data->fast_version);
+	}
 
-	if (data->state == PHASE1)
-		return eap_fast_build_req(sm, data, id);
+	if (data->ssl.state == WAIT_FRAG_ACK) {
+		return eap_server_tls_build_msg(&data->ssl, EAP_TYPE_FAST,
+						data->fast_version, id);
+	}
 
 	switch (data->state) {
+	case START:
+		return eap_fast_build_start(sm, data, id);
+	case PHASE1:
+		if (tls_connection_established(sm->ssl_ctx, data->ssl.conn)) {
+			if (eap_fast_phase1_done(sm, data) < 0)
+				return NULL;
+		}
+		break;
 	case PHASE2_ID:
 	case PHASE2_METHOD:
 		req = eap_fast_build_phase2_req(sm, data, id);
 		break;
 	case CRYPTO_BINDING:
 		req = eap_fast_build_crypto_binding(sm, data);
+		if (data->phase2_method) {
+			/*
+			 * Include the start of the next EAP method in the
+			 * sequence in the same message with Crypto-Binding to
+			 * save a round-trip.
+			 */
+			struct wpabuf *eap;
+			eap = eap_fast_build_phase2_req(sm, data, id);
+			req = wpabuf_concat(req, eap);
+			eap_fast_state(data, PHASE2_METHOD);
+		}
 		break;
 	case REQUEST_PAC:
 		req = eap_fast_build_pac(sm, data);
@@ -883,16 +819,21 @@ static struct wpabuf * eap_fast_buildReq(struct eap_sm *sm, void *priv, u8 id)
 		return NULL;
 	}
 
-	if (req == NULL)
-		return NULL;
+	if (req) {
+		wpa_hexdump_buf_key(MSG_DEBUG, "EAP-FAST: Encrypting Phase 2 "
+				    "TLVs", req);
+		encr = eap_server_tls_encrypt(sm, &data->ssl,
+					      wpabuf_mhead(req),
+					      wpabuf_len(req));
+		wpabuf_free(req);
 
-	wpa_hexdump_buf_key(MSG_DEBUG, "EAP-FAST: Encrypting Phase 2 TLVs",
-			    req);
-	encr = eap_fast_encrypt(sm, data, id, wpabuf_mhead(req),
-				wpabuf_len(req));
-	wpabuf_free(req);
+		wpabuf_free(data->ssl.out_buf);
+		data->ssl.out_used = 0;
+		data->ssl.out_buf = encr;
+	}
 
-	return encr;
+	return eap_server_tls_build_msg(&data->ssl, EAP_TYPE_FAST,
+					data->fast_version, id);
 }
 
 
@@ -964,6 +905,16 @@ static void eap_fast_process_phase2_response(struct eap_sm *sm,
 		left = in_len - sizeof(*hdr);
 		wpa_hexdump(MSG_DEBUG, "EAP-FAST: Phase2 type Nak'ed; "
 			    "allowed types", pos + 1, left - 1);
+#ifdef EAP_TNC
+		if (m && m->vendor == EAP_VENDOR_IETF &&
+		    m->method == EAP_TYPE_TNC) {
+			wpa_printf(MSG_DEBUG, "EAP-FAST: Peer Nak'ed required "
+				   "TNC negotiation");
+			next_type = eap_fast_req_failure(sm, data);
+			eap_fast_phase2_init(sm, data, next_type);
+			return;
+		}
+#endif /* EAP_TNC */
 		eap_sm_process_nak(sm, pos + 1, left - 1);
 		if (sm->user && sm->user_eap_method_index < EAP_MAX_METHODS &&
 		    sm->user->methods[sm->user_eap_method_index].method !=
@@ -1026,9 +977,18 @@ static void eap_fast_process_phase2_response(struct eap_sm *sm,
 		wpa_printf(MSG_DEBUG, "EAP-FAST: try EAP type %d", next_type);
 		break;
 	case PHASE2_METHOD:
+	case CRYPTO_BINDING:
 		eap_fast_update_icmk(sm, data);
 		eap_fast_state(data, CRYPTO_BINDING);
+		data->eap_seq++;
 		next_type = EAP_TYPE_NONE;
+#ifdef EAP_TNC
+		if (sm->tnc && !data->tnc_started) {
+			wpa_printf(MSG_DEBUG, "EAP-FAST: Initialize TNC");
+			next_type = EAP_TYPE_TNC;
+			data->tnc_started = 1;
+		}
+#endif /* EAP_TNC */
 		break;
 	case FAILURE:
 		break;
@@ -1075,144 +1035,6 @@ static void eap_fast_process_phase2_eap(struct eap_sm *sm,
 			   "Phase 2 EAP header", hdr->code);
 		break;
 	}
-}
-
-
-struct eap_fast_tlv_parse {
-	u8 *eap_payload_tlv;
-	size_t eap_payload_tlv_len;
-	struct eap_tlv_crypto_binding__tlv *crypto_binding;
-	size_t crypto_binding_len;
-	int iresult;
-	int result;
-	int request_action;
-	u8 *pac;
-	size_t pac_len;
-};
-
-
-static int eap_fast_parse_tlv(struct eap_fast_tlv_parse *tlv,
-			      int tlv_type, u8 *pos, int len)
-{
-	switch (tlv_type) {
-	case EAP_TLV_EAP_PAYLOAD_TLV:
-		wpa_hexdump(MSG_MSGDUMP, "EAP-FAST: EAP-Payload TLV",
-			    pos, len);
-		if (tlv->eap_payload_tlv) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: More than one "
-				   "EAP-Payload TLV in the message");
-			tlv->iresult = EAP_TLV_RESULT_FAILURE;
-			return -2;
-		}
-		tlv->eap_payload_tlv = pos;
-		tlv->eap_payload_tlv_len = len;
-		break;
-	case EAP_TLV_RESULT_TLV:
-		wpa_hexdump(MSG_MSGDUMP, "EAP-FAST: Result TLV", pos, len);
-		if (tlv->result) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: More than one "
-				   "Result TLV in the message");
-			tlv->result = EAP_TLV_RESULT_FAILURE;
-			return -2;
-		}
-		if (len < 2) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: Too short "
-				   "Result TLV");
-			tlv->result = EAP_TLV_RESULT_FAILURE;
-			break;
-		}
-		tlv->result = WPA_GET_BE16(pos);
-		if (tlv->result != EAP_TLV_RESULT_SUCCESS &&
-		    tlv->result != EAP_TLV_RESULT_FAILURE) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: Unknown Result %d",
-				   tlv->result);
-			tlv->result = EAP_TLV_RESULT_FAILURE;
-		}
-		wpa_printf(MSG_DEBUG, "EAP-FAST: Result: %s",
-			   tlv->result == EAP_TLV_RESULT_SUCCESS ?
-			   "Success" : "Failure");
-		break;
-	case EAP_TLV_INTERMEDIATE_RESULT_TLV:
-		wpa_hexdump(MSG_MSGDUMP, "EAP-FAST: Intermediate Result TLV",
-			    pos, len);
-		if (len < 2) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: Too short "
-				   "Intermediate-Result TLV");
-			tlv->iresult = EAP_TLV_RESULT_FAILURE;
-			break;
-		}
-		if (tlv->iresult) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: More than one "
-				   "Intermediate-Result TLV in the message");
-			tlv->iresult = EAP_TLV_RESULT_FAILURE;
-			return -2;
-		}
-		tlv->iresult = WPA_GET_BE16(pos);
-		if (tlv->iresult != EAP_TLV_RESULT_SUCCESS &&
-		    tlv->iresult != EAP_TLV_RESULT_FAILURE) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: Unknown Intermediate "
-				   "Result %d", tlv->iresult);
-			tlv->iresult = EAP_TLV_RESULT_FAILURE;
-		}
-		wpa_printf(MSG_DEBUG, "EAP-FAST: Intermediate Result: %s",
-			   tlv->iresult == EAP_TLV_RESULT_SUCCESS ?
-			   "Success" : "Failure");
-		break;
-	case EAP_TLV_CRYPTO_BINDING_TLV_:
-		wpa_hexdump(MSG_MSGDUMP, "EAP-FAST: Crypto-Binding TLV",
-			    pos, len);
-		if (tlv->crypto_binding) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: More than one "
-				   "Crypto-Binding TLV in the message");
-			tlv->iresult = EAP_TLV_RESULT_FAILURE;
-			return -2;
-		}
-		tlv->crypto_binding_len = sizeof(struct eap_tlv_hdr) + len;
-		if (tlv->crypto_binding_len < sizeof(*tlv->crypto_binding)) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: Too short "
-				   "Crypto-Binding TLV");
-			tlv->iresult = EAP_TLV_RESULT_FAILURE;
-			return -2;
-		}
-		tlv->crypto_binding = (struct eap_tlv_crypto_binding__tlv *)
-			(pos - sizeof(struct eap_tlv_hdr));
-		break;
-	case EAP_TLV_REQUEST_ACTION_TLV:
-		wpa_hexdump(MSG_MSGDUMP, "EAP-FAST: Request-Action TLV",
-			    pos, len);
-		if (tlv->request_action) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: More than one "
-				   "Request-Action TLV in the message");
-			tlv->iresult = EAP_TLV_RESULT_FAILURE;
-			return -2;
-		}
-		if (len < 2) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: Too short "
-				   "Request-Action TLV");
-			tlv->iresult = EAP_TLV_RESULT_FAILURE;
-			break;
-		}
-		tlv->request_action = WPA_GET_BE16(pos);
-		wpa_printf(MSG_DEBUG, "EAP-FAST: Request-Action: %d",
-			   tlv->request_action);
-		break;
-	case EAP_TLV_PAC_TLV:
-		wpa_hexdump(MSG_MSGDUMP, "EAP-FAST: PAC TLV", pos, len);
-		if (tlv->pac) {
-			wpa_printf(MSG_DEBUG, "EAP-FAST: More than one "
-				   "PAC TLV in the message");
-			tlv->iresult = EAP_TLV_RESULT_FAILURE;
-			return -2;
-		}
-		tlv->pac = pos;
-		tlv->pac_len = len;
-		break;
-	default:
-		/* Unknown TLV */
-		return -1;
-	}
-
-	return 0;
 }
 
 
@@ -1264,10 +1086,10 @@ static int eap_fast_parse_tlvs(u8 *data, size_t data_len,
 
 
 static int eap_fast_validate_crypto_binding(
-	struct eap_fast_data *data, struct eap_tlv_crypto_binding__tlv *b,
+	struct eap_fast_data *data, struct eap_tlv_crypto_binding_tlv *b,
 	size_t bind_len)
 {
-	u8 cmac[20];
+	u8 cmac[SHA1_MAC_LEN];
 
 	wpa_printf(MSG_DEBUG, "EAP-FAST: Reply Crypto-Binding TLV: "
 		   "Version %d Received Version %d SubType %d",
@@ -1304,7 +1126,8 @@ static int eap_fast_validate_crypto_binding(
 	wpa_hexdump(MSG_MSGDUMP, "EAP-FAST: Crypto-Binding TLV for "
 		    "Compound MAC calculation",
 		    (u8 *) b, bind_len);
-	hmac_sha1(data->cmk, 20, (u8 *) b, bind_len, b->compound_mac);
+	hmac_sha1(data->cmk, EAP_FAST_CMK_LEN, (u8 *) b, bind_len,
+		  b->compound_mac);
 	if (os_memcmp(cmac, b->compound_mac, sizeof(cmac)) != 0) {
 		wpa_hexdump(MSG_MSGDUMP,
 			    "EAP-FAST: Calculated Compound MAC",
@@ -1341,7 +1164,7 @@ static void eap_fast_process_phase2_tlvs(struct eap_sm *sm,
 	int check_crypto_binding = data->state == CRYPTO_BINDING;
 
 	if (eap_fast_parse_tlvs(in_data, in_len, &tlv) < 0) {
-		wpa_printf(MSG_DEBUG, "EAP-FAST: Failed to parse receivede "
+		wpa_printf(MSG_DEBUG, "EAP-FAST: Failed to parse received "
 			   "Phase 2 TLVs");
 		return;
 	}
@@ -1381,11 +1204,6 @@ static void eap_fast_process_phase2_tlvs(struct eap_sm *sm,
 		return;
 	}
 
-	if (tlv.eap_payload_tlv) {
-		eap_fast_process_phase2_eap(sm, data, tlv.eap_payload_tlv,
-					    tlv.eap_payload_tlv_len);
-	}
-
 	if (check_crypto_binding) {
 		if (tlv.crypto_binding == NULL) {
 			wpa_printf(MSG_DEBUG, "EAP-FAST: No Crypto-Binding "
@@ -1417,7 +1235,11 @@ static void eap_fast_process_phase2_tlvs(struct eap_sm *sm,
 		}
 
 		wpa_printf(MSG_DEBUG, "EAP-FAST: Valid Crypto-Binding TLV "
-			   "received - authentication completed successfully");
+			   "received");
+		if (data->final_result) {
+			wpa_printf(MSG_DEBUG, "EAP-FAST: Authentication "
+				   "completed successfully");
+		}
 
 		if (data->anon_provisioning ||
 		    (tlv.request_action == EAP_TLV_ACTION_PROCESS_TLV &&
@@ -1430,37 +1252,55 @@ static void eap_fast_process_phase2_tlvs(struct eap_sm *sm,
 			wpa_printf(MSG_DEBUG, "EAP-FAST: Server triggered "
 				   "re-keying of Tunnel PAC");
 			eap_fast_state(data, REQUEST_PAC);
-		} else
+		} else if (data->final_result)
 			eap_fast_state(data, SUCCESS);
+	}
+
+	if (tlv.eap_payload_tlv) {
+		eap_fast_process_phase2_eap(sm, data, tlv.eap_payload_tlv,
+					    tlv.eap_payload_tlv_len);
 	}
 }
 
 
 static void eap_fast_process_phase2(struct eap_sm *sm,
 				    struct eap_fast_data *data,
-				    const u8 *in_data, size_t in_len)
+				    struct wpabuf *in_buf)
 {
 	u8 *in_decrypted;
-	int len_decrypted, res;
+	int len_decrypted;
 	size_t buf_len;
+	u8 *in_data;
+	size_t in_len;
+
+	in_data = wpabuf_mhead(in_buf);
+	in_len = wpabuf_len(in_buf);
 
 	wpa_printf(MSG_DEBUG, "EAP-FAST: Received %lu bytes encrypted data for"
 		   " Phase 2", (unsigned long) in_len);
 
-	/* FIX: get rid of const -> non-const typecast */
-	res = eap_server_tls_data_reassemble(sm, &data->ssl, (u8 **) &in_data,
-					     &in_len);
-	if (res < 0 || res == 1)
+	if (data->pending_phase2_resp) {
+		wpa_printf(MSG_DEBUG, "EAP-PEAP: Pending Phase 2 response - "
+			   "skip decryption and use old data");
+		eap_fast_process_phase2_tlvs(
+			sm, data, wpabuf_mhead(data->pending_phase2_resp),
+			wpabuf_len(data->pending_phase2_resp));
+		wpabuf_free(data->pending_phase2_resp);
+		data->pending_phase2_resp = NULL;
 		return;
+	}
 
 	buf_len = in_len;
-	if (data->ssl.tls_in_total > buf_len)
-		buf_len = data->ssl.tls_in_total;
+	/*
+	 * Even though we try to disable TLS compression, it is possible that
+	 * this cannot be done with all TLS libraries. Add extra buffer space
+	 * to handle the possibility of the decrypted data being longer than
+	 * input data.
+	 */
+	buf_len += 500;
+	buf_len *= 3;
 	in_decrypted = os_malloc(buf_len);
 	if (in_decrypted == NULL) {
-		os_free(data->ssl.tls_in);
-		data->ssl.tls_in = NULL;
-		data->ssl.tls_in_len = 0;
 		wpa_printf(MSG_WARNING, "EAP-FAST: Failed to allocate memory "
 			   "for decryption");
 		return;
@@ -1469,9 +1309,6 @@ static void eap_fast_process_phase2(struct eap_sm *sm,
 	len_decrypted = tls_connection_decrypt(sm->ssl_ctx, data->ssl.conn,
 					       in_data, in_len,
 					       in_decrypted, buf_len);
-	os_free(data->ssl.tls_in);
-	data->ssl.tls_in = NULL;
-	data->ssl.tls_in_len = 0;
 	if (len_decrypted < 0) {
 		wpa_printf(MSG_INFO, "EAP-FAST: Failed to decrypt Phase 2 "
 			   "data");
@@ -1485,7 +1322,126 @@ static void eap_fast_process_phase2(struct eap_sm *sm,
 
 	eap_fast_process_phase2_tlvs(sm, data, in_decrypted, len_decrypted);
 
+	if (sm->method_pending == METHOD_PENDING_WAIT) {
+		wpa_printf(MSG_DEBUG, "EAP-FAST: Phase2 method is in "
+			   "pending wait state - save decrypted response");
+		wpabuf_free(data->pending_phase2_resp);
+		data->pending_phase2_resp = wpabuf_alloc_copy(in_decrypted,
+							      len_decrypted);
+	}
+
 	os_free(in_decrypted);
+}
+
+
+static int eap_fast_process_version(struct eap_sm *sm, void *priv,
+				    int peer_version)
+{
+	struct eap_fast_data *data = priv;
+
+	data->peer_version = peer_version;
+
+	if (data->force_version >= 0 && peer_version != data->force_version) {
+		wpa_printf(MSG_INFO, "EAP-FAST: peer did not select the forced"
+			   " version (forced=%d peer=%d) - reject",
+			   data->force_version, peer_version);
+		return -1;
+	}
+
+	if (peer_version < data->fast_version) {
+		wpa_printf(MSG_DEBUG, "EAP-FAST: peer ver=%d, own ver=%d; "
+			   "use version %d",
+			   peer_version, data->fast_version, peer_version);
+		data->fast_version = peer_version;
+	}
+
+	return 0;
+}
+
+
+static int eap_fast_process_phase1(struct eap_sm *sm,
+				   struct eap_fast_data *data)
+{
+	if (eap_server_tls_phase1(sm, &data->ssl) < 0) {
+		wpa_printf(MSG_INFO, "EAP-FAST: TLS processing failed");
+		eap_fast_state(data, FAILURE);
+		return -1;
+	}
+
+	if (!tls_connection_established(sm->ssl_ctx, data->ssl.conn) ||
+	    wpabuf_len(data->ssl.out_buf) > 0)
+		return 1;
+
+	/*
+	 * Phase 1 was completed with the received message (e.g., when using
+	 * abbreviated handshake), so Phase 2 can be started immediately
+	 * without having to send through an empty message to the peer.
+	 */
+
+	return eap_fast_phase1_done(sm, data);
+}
+
+
+static void eap_fast_process_phase2_start(struct eap_sm *sm,
+					  struct eap_fast_data *data)
+{
+	u8 next_type;
+
+	if (data->identity) {
+		os_free(sm->identity);
+		sm->identity = data->identity;
+		data->identity = NULL;
+		sm->identity_len = data->identity_len;
+		data->identity_len = 0;
+		sm->require_identity_match = 1;
+		if (eap_user_get(sm, sm->identity, sm->identity_len, 1) != 0) {
+			wpa_hexdump_ascii(MSG_DEBUG, "EAP-FAST: "
+					  "Phase2 Identity not found "
+					  "in the user database",
+					  sm->identity, sm->identity_len);
+			next_type = eap_fast_req_failure(sm, data);
+		} else {
+			wpa_printf(MSG_DEBUG, "EAP-FAST: Identity already "
+				   "known - skip Phase 2 Identity Request");
+			next_type = sm->user->methods[0].method;
+			sm->user_eap_method_index = 1;
+		}
+
+		eap_fast_state(data, PHASE2_METHOD);
+	} else {
+		eap_fast_state(data, PHASE2_ID);
+		next_type = EAP_TYPE_IDENTITY;
+	}
+
+	eap_fast_phase2_init(sm, data, next_type);
+}
+
+
+static void eap_fast_process_msg(struct eap_sm *sm, void *priv,
+				 const struct wpabuf *respData)
+{
+	struct eap_fast_data *data = priv;
+
+	switch (data->state) {
+	case PHASE1:
+		if (eap_fast_process_phase1(sm, data))
+			break;
+
+		/* fall through to PHASE2_START */
+	case PHASE2_START:
+		eap_fast_process_phase2_start(sm, data);
+		break;
+	case PHASE2_ID:
+	case PHASE2_METHOD:
+	case CRYPTO_BINDING:
+	case REQUEST_PAC:
+		eap_fast_process_phase2(sm, data, data->ssl.in_buf);
+		break;
+	default:
+		wpa_printf(MSG_DEBUG, "EAP-FAST: Unexpected state %d in %s",
+			   data->state, __func__);
+		break;
+	}
 }
 
 
@@ -1493,101 +1449,10 @@ static void eap_fast_process(struct eap_sm *sm, void *priv,
 			     struct wpabuf *respData)
 {
 	struct eap_fast_data *data = priv;
-	const u8 *pos;
-	u8 flags;
-	size_t left;
-	unsigned int tls_msg_len;
-	int peer_version;
-
-	pos = eap_hdr_validate(EAP_VENDOR_IETF, EAP_TYPE_FAST, respData,
-			       &left);
-	if (pos == NULL || left < 1)
-		return;
-	flags = *pos++;
-	left--;
-	wpa_printf(MSG_DEBUG, "EAP-FAST: Received packet(len=%lu) - "
-		   "Flags 0x%02x", (unsigned long) wpabuf_len(respData),
-		   flags);
-	data->peer_version = peer_version = flags & EAP_PEAP_VERSION_MASK;
-	if (data->force_version >= 0 && peer_version != data->force_version) {
-		wpa_printf(MSG_INFO, "EAP-FAST: peer did not select the forced"
-			   " version (forced=%d peer=%d) - reject",
-			   data->force_version, peer_version);
+	if (eap_server_tls_process(sm, &data->ssl, respData, data,
+				   EAP_TYPE_FAST, eap_fast_process_version,
+				   eap_fast_process_msg) < 0)
 		eap_fast_state(data, FAILURE);
-		return;
-	}
-	if (peer_version < data->fast_version) {
-		wpa_printf(MSG_DEBUG, "EAP-FAST: peer ver=%d, own ver=%d; "
-			   "use version %d",
-			   peer_version, data->fast_version, peer_version);
-		data->fast_version = peer_version;
-	}
-	if (flags & EAP_TLS_FLAGS_LENGTH_INCLUDED) {
-		if (left < 4) {
-			wpa_printf(MSG_INFO, "EAP-FAST: Short frame with TLS "
-				   "length");
-			eap_fast_state(data, FAILURE);
-			return;
-		}
-		tls_msg_len = WPA_GET_BE32(pos);
-		wpa_printf(MSG_DEBUG, "EAP-FAST: TLS Message Length: %d",
-			   tls_msg_len);
-		if (data->ssl.tls_in_left == 0) {
-			data->ssl.tls_in_total = tls_msg_len;
-			data->ssl.tls_in_left = tls_msg_len;
-			os_free(data->ssl.tls_in);
-			data->ssl.tls_in = NULL;
-			data->ssl.tls_in_len = 0;
-		}
-		pos += 4;
-		left -= 4;
-	}
-
-	switch (data->state) {
-	case PHASE1:
-		if (eap_server_tls_process_helper(sm, &data->ssl, pos, left) <
-		    0) {
-			wpa_printf(MSG_INFO, "EAP-FAST: TLS processing "
-				   "failed");
-			eap_fast_state(data, FAILURE);
-		}
-
-		if (!tls_connection_established(sm->ssl_ctx, data->ssl.conn) ||
-		    data->ssl.tls_out_len > 0)
-			break;
-
-		/*
-		 * Phase 1 was completed with the received message (e.g., when
-		 * using abbreviated handshake), so Phase 2 can be started
-		 * immediately without having to send through an empty message
-		 * to the peer.
-		 */
-
-		if (eap_fast_phase1_done(sm, data) < 0)
-			break;
-
-		/* fall through to PHASE2_START */
-	case PHASE2_START:
-		eap_fast_state(data, PHASE2_ID);
-		eap_fast_phase2_init(sm, data, EAP_TYPE_IDENTITY);
-		break;
-	case PHASE2_ID:
-	case PHASE2_METHOD:
-	case CRYPTO_BINDING:
-	case REQUEST_PAC:
-		eap_fast_process_phase2(sm, data, pos, left);
-		break;
-	default:
-		wpa_printf(MSG_DEBUG, "EAP-FAST: Unexpected state %d in %s",
-			   data->state, __func__);
-		break;
-	}
-
-	if (tls_connection_get_write_alerts(sm->ssl_ctx, data->ssl.conn) > 1) {
-		wpa_printf(MSG_INFO, "EAP-FAST: Locally detected fatal error "
-			   "in TLS processing");
-		eap_fast_state(data, FAILURE);
-	}
 }
 
 
@@ -1606,20 +1471,11 @@ static u8 * eap_fast_getKey(struct eap_sm *sm, void *priv, size_t *len)
 	if (data->state != SUCCESS)
 		return NULL;
 
-	/*
-	 * RFC 4851, Section 5.4: EAP Master Session Key Genreration
-	 * MSK = T-PRF(S-IMCK[j], "Session Key Generating Function", 64)
-	 */
-
 	eapKeyData = os_malloc(EAP_FAST_KEY_LEN);
 	if (eapKeyData == NULL)
 		return NULL;
 
-	sha1_t_prf(data->simck, EAP_FAST_SIMCK_LEN,
-		   "Session Key Generating Function", (u8 *) "", 0,
-		   eapKeyData, EAP_FAST_KEY_LEN);
-	wpa_hexdump_key(MSG_DEBUG, "EAP-FAST: Derived key (MSK)",
-			eapKeyData, EAP_FAST_KEY_LEN);
+	eap_fast_derive_eap_msk(data->simck, eapKeyData);
 	*len = EAP_FAST_KEY_LEN;
 
 	return eapKeyData;
@@ -1634,22 +1490,11 @@ static u8 * eap_fast_get_emsk(struct eap_sm *sm, void *priv, size_t *len)
 	if (data->state != SUCCESS)
 		return NULL;
 
-	/*
-	 * RFC 4851, Section 5.4: EAP Master Session Key Genreration
-	 * EMSK = T-PRF(S-IMCK[j],
-	 *        "Extended Session Key Generating Function", 64)
-	 */
-
 	eapKeyData = os_malloc(EAP_EMSK_LEN);
 	if (eapKeyData == NULL)
 		return NULL;
 
-	sha1_t_prf(data->simck, EAP_FAST_SIMCK_LEN,
-		   "Extended Session Key Generating Function",
-		   (u8 *) "", 0, eapKeyData, EAP_EMSK_LEN);
-	wpa_hexdump_key(MSG_DEBUG, "EAP-FAST: Derived key (EMSK)",
-			eapKeyData, EAP_EMSK_LEN);
-
+	eap_fast_derive_eap_emsk(data->simck, eapKeyData);
 	*len = EAP_EMSK_LEN;
 
 	return eapKeyData;

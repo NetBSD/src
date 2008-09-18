@@ -71,6 +71,8 @@ struct madwifi_driver_data {
 	int	we_version;
 	u8	acct_mac[ETH_ALEN];
 	struct hostap_sta_driver_data acct_data;
+
+	struct l2_packet_data *sock_raw; /* raw 802.11 management frames */
 };
 
 static int madwifi_sta_deauth(void *priv, const u8 *addr, int reason_code);
@@ -79,10 +81,16 @@ static int
 set80211priv(struct madwifi_driver_data *drv, int op, void *data, int len)
 {
 	struct iwreq iwr;
+	int do_inline = len < IFNAMSIZ;
 
 	memset(&iwr, 0, sizeof(iwr));
 	os_strlcpy(iwr.ifr_name, drv->iface, IFNAMSIZ);
-	if (len < IFNAMSIZ) {
+#ifdef IEEE80211_IOCTL_FILTERFRAME
+	/* FILTERFRAME must be NOT inline, regardless of size. */
+	if (op == IEEE80211_IOCTL_FILTERFRAME)
+		do_inline = 0;
+#endif /* IEEE80211_IOCTL_FILTERFRAME */
+	if (do_inline) {
 		/*
 		 * Argument data fits inline; put it there.
 		 */
@@ -100,7 +108,6 @@ set80211priv(struct madwifi_driver_data *drv, int op, void *data, int len)
 	if (ioctl(drv->ioctl_sock, op, &iwr) < 0) {
 #ifdef MADWIFI_NG
 		int first = IEEE80211_IOCTL_SETPARAM;
-		int last = IEEE80211_IOCTL_KICKMAC;
 		static const char *opnames[] = {
 			"ioctl[IEEE80211_IOCTL_SETPARAM]",
 			"ioctl[IEEE80211_IOCTL_GETPARAM]",
@@ -111,10 +118,10 @@ set80211priv(struct madwifi_driver_data *drv, int op, void *data, int len)
 			"ioctl[IEEE80211_IOCTL_SETCHANLIST]",
 			"ioctl[IEEE80211_IOCTL_GETCHANLIST]",
 			"ioctl[IEEE80211_IOCTL_CHANSWITCH]",
-			NULL,
-			NULL,
+			"ioctl[IEEE80211_IOCTL_GET_APPIEBUF]",
+			"ioctl[IEEE80211_IOCTL_SET_APPIEBUF]",
 			"ioctl[IEEE80211_IOCTL_GETSCANRESULTS]",
-			NULL,
+			"ioctl[IEEE80211_IOCTL_FILTERFRAME]",
 			"ioctl[IEEE80211_IOCTL_GETCHANINFO]",
 			"ioctl[IEEE80211_IOCTL_SETOPTIE]",
 			"ioctl[IEEE80211_IOCTL_GETOPTIE]",
@@ -132,11 +139,10 @@ set80211priv(struct madwifi_driver_data *drv, int op, void *data, int len)
 			NULL,
 			"ioctl[IEEE80211_IOCTL_WDSDELMAC]",
 			NULL,
-			"ioctl[IEEE80211_IOCTL_KICMAC]",
+			"ioctl[IEEE80211_IOCTL_KICKMAC]",
 		};
 #else /* MADWIFI_NG */
 		int first = IEEE80211_IOCTL_SETPARAM;
-		int last = IEEE80211_IOCTL_CHANLIST;
 		static const char *opnames[] = {
 			"ioctl[IEEE80211_IOCTL_SETPARAM]",
 			"ioctl[IEEE80211_IOCTL_GETPARAM]",
@@ -160,7 +166,7 @@ set80211priv(struct madwifi_driver_data *drv, int op, void *data, int len)
 		};
 #endif /* MADWIFI_NG */
 		int idx = op - first;
-		if (first <= op && op <= last &&
+		if (first <= op &&
 		    idx < (int) (sizeof(opnames) / sizeof(opnames[0])) &&
 		    opnames[idx])
 			perror(opnames[idx]);
@@ -761,12 +767,22 @@ madwifi_process_wpa_ie(struct madwifi_driver_data *drv, struct sta_info *sta)
 		printf("Failed to get WPA/RSN information element.\n");
 		return -1;		/* XXX not right */
 	}
+	wpa_hexdump(MSG_MSGDUMP, "madwifi req WPA IE",
+		    ie.wpa_ie, IEEE80211_MAX_OPT_IE);
+	wpa_hexdump(MSG_MSGDUMP, "madwifi req RSN IE",
+		    ie.rsn_ie, IEEE80211_MAX_OPT_IE);
 	iebuf = ie.wpa_ie;
+	/* madwifi seems to return some random data if WPA/RSN IE is not set.
+	 * Assume the IE was not included if the IE type is unknown. */
+	if (iebuf[0] != WLAN_EID_VENDOR_SPECIFIC)
+		iebuf[1] = 0;
 #ifdef MADWIFI_NG
 	if (iebuf[1] == 0 && ie.rsn_ie[1] > 0) {
 		/* madwifi-ng svn #1453 added rsn_ie. Use it, if wpa_ie was not
 		 * set. This is needed for WPA2. */
 		iebuf = ie.rsn_ie;
+		if (iebuf[0] != WLAN_EID_RSN)
+			iebuf[1] = 0;
 	}
 #endif /* MADWIFI_NG */
 	ielen = iebuf[1];
@@ -1188,7 +1204,7 @@ madwifi_init(struct hostapd_data *hapd)
 	drv = os_zalloc(sizeof(struct madwifi_driver_data));
 	if (drv == NULL) {
 		printf("Could not allocate memory for madwifi driver data\n");
-		goto bad;
+		return NULL;
 	}
 
 	drv->hapd = hapd;
@@ -1262,6 +1278,8 @@ madwifi_deinit(void *priv)
 		l2_packet_deinit(drv->sock_recv);
 	if (drv->sock_xmit != NULL)
 		l2_packet_deinit(drv->sock_xmit);
+	if (drv->sock_raw)
+		l2_packet_deinit(drv->sock_raw);
 	free(drv);
 }
 

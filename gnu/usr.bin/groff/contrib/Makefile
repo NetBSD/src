@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2006/02/06 18:29:48 wiz Exp $
+# $NetBSD: Makefile,v 1.3.20.1 2008/09/18 04:49:46 wrstuden Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/contrib/Makefile,v 1.1 2001/04/17 12:36:32 ru Exp $
 
@@ -8,6 +8,6 @@
 # groffer depends on lots of other non-base programs
 # pdfmark depends on ghostscript
 # pic2graph depends on convert(1)
-SUBDIR=		gdiffmk mm mom
+SUBDIR=		gdiffmk mm
 
 .include <bsd.subdir.mk>

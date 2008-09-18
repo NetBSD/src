@@ -18,7 +18,6 @@
 
 #include "common.h"
 #include "sha1.h"
-#include "config_ssid.h"
 #include "eloop.h"
 #include "wpa.h"
 #include "wpa_i.h"
@@ -180,7 +179,6 @@ static int wpa_supplicant_process_smk_m2(
 	struct wpa_sm *sm, const unsigned char *src_addr,
 	const struct wpa_eapol_key *key, size_t extra_len, int ver)
 {
-	struct wpa_ssid *ssid = sm->cur_ssid;
 	struct wpa_peerkey *peerkey;
 	struct wpa_eapol_ie_parse kde;
 	struct wpa_ie_data ie;
@@ -190,7 +188,7 @@ static int wpa_supplicant_process_smk_m2(
 
 	wpa_printf(MSG_DEBUG, "RSN: Received SMK M2");
 
-	if (ssid == NULL || !ssid->peerkey || sm->proto != WPA_PROTO_RSN) {
+	if (!sm->peerkey_enabled || sm->proto != WPA_PROTO_RSN) {
 		wpa_printf(MSG_INFO, "RSN: SMK handshake not allowed for "
 			   "the current network");
 		return -1;
@@ -223,7 +221,7 @@ static int wpa_supplicant_process_smk_m2(
 		return -1;
 	}
 
-	cipher = ie.pairwise_cipher & ssid->pairwise_cipher;
+	cipher = ie.pairwise_cipher & sm->allowed_pairwise_cipher;
 	if (cipher & WPA_CIPHER_CCMP) {
 		wpa_printf(MSG_DEBUG, "RSN: Using CCMP for PeerKey");
 		cipher = WPA_CIPHER_CCMP;
@@ -464,7 +462,6 @@ static int wpa_supplicant_process_smk_m5(struct wpa_sm *sm,
 {
 	int cipher;
 	struct wpa_ie_data ie;
-	struct wpa_ssid *ssid = sm->cur_ssid;
 
 	wpa_printf(MSG_DEBUG, "RSN: Received SMK M5 (Peer " MACSTR ")",
 		   MAC2STR(kde->mac_addr));
@@ -492,7 +489,7 @@ static int wpa_supplicant_process_smk_m5(struct wpa_sm *sm,
 	peerkey->rsnie_p_len = kde->rsn_ie_len;
 	os_memcpy(peerkey->pnonce, kde->nonce, WPA_NONCE_LEN);
 
-	cipher = ie.pairwise_cipher & ssid->pairwise_cipher;
+	cipher = ie.pairwise_cipher & sm->allowed_pairwise_cipher;
 	if (cipher & WPA_CIPHER_CCMP) {
 		wpa_printf(MSG_DEBUG, "RSN: Using CCMP for PeerKey");
 		peerkey->cipher = WPA_CIPHER_CCMP;
@@ -517,13 +514,12 @@ static int wpa_supplicant_process_smk_m45(
 	struct wpa_sm *sm, const unsigned char *src_addr,
 	const struct wpa_eapol_key *key, size_t extra_len, int ver)
 {
-	struct wpa_ssid *ssid = sm->cur_ssid;
 	struct wpa_peerkey *peerkey;
 	struct wpa_eapol_ie_parse kde;
 	u32 lifetime;
 	struct os_time now;
 
-	if (ssid == NULL || !ssid->peerkey || sm->proto != WPA_PROTO_RSN) {
+	if (!sm->peerkey_enabled || sm->proto != WPA_PROTO_RSN) {
 		wpa_printf(MSG_DEBUG, "RSN: SMK handshake not allowed for "
 			   "the current network");
 		return -1;
@@ -598,7 +594,6 @@ static int wpa_supplicant_process_smk_error(
 	struct wpa_sm *sm, const unsigned char *src_addr,
 	const struct wpa_eapol_key *key, size_t extra_len)
 {
-	struct wpa_ssid *ssid = sm->cur_ssid;
 	struct wpa_eapol_ie_parse kde;
 	struct rsn_error_kde error;
 	u8 peer[ETH_ALEN];
@@ -606,7 +601,7 @@ static int wpa_supplicant_process_smk_error(
 
 	wpa_printf(MSG_DEBUG, "RSN: Received SMK Error");
 
-	if (ssid == NULL || !ssid->peerkey || sm->proto != WPA_PROTO_RSN) {
+	if (!sm->peerkey_enabled || sm->proto != WPA_PROTO_RSN) {
 		wpa_printf(MSG_DEBUG, "RSN: SMK handshake not allowed for "
 			   "the current network");
 		return -1;
@@ -872,8 +867,8 @@ static void wpa_supplicant_process_stk_3_of_4(struct wpa_sm *sm,
 	if (peerkey->cipher == WPA_CIPHER_TKIP) {
 		/* Swap Tx/Rx keys for Michael MIC */
 		os_memcpy(key_buf, _key, 16);
-		os_memcpy(key_buf + 16, _key + 24, 8);
-		os_memcpy(key_buf + 24, _key + 16, 8);
+		os_memcpy(key_buf + 16, peerkey->stk.u.auth.rx_mic_key, 8);
+		os_memcpy(key_buf + 24, peerkey->stk.u.auth.tx_mic_key, 8);
 		_key = key_buf;
 		key_len = 32;
 	} else
@@ -994,13 +989,11 @@ int wpa_sm_stkstart(struct wpa_sm *sm, const u8 *peer)
 	int key_info, ver;
 	u8 bssid[ETH_ALEN], *rbuf, *pos, *count_pos;
 	u16 count;
-	struct wpa_ssid *ssid = sm->cur_ssid;
 	struct rsn_ie_hdr *hdr;
 	struct wpa_peerkey *peerkey;
 	struct wpa_ie_data ie;
 
-	if (sm->proto != WPA_PROTO_RSN || !sm->ptk_set ||
-	    ssid == NULL || !ssid->peerkey)
+	if (sm->proto != WPA_PROTO_RSN || !sm->ptk_set || !sm->peerkey_enabled)
 		return -1;
 
 	if (sm->ap_rsn_ie &&
@@ -1047,12 +1040,12 @@ int wpa_sm_stkstart(struct wpa_sm *sm, const u8 *peer)
 	pos += 2;
 
 	count = 0;
-	if (ssid->pairwise_cipher & WPA_CIPHER_CCMP) {
+	if (sm->allowed_pairwise_cipher & WPA_CIPHER_CCMP) {
 		RSN_SELECTOR_PUT(pos, RSN_CIPHER_SUITE_CCMP);
 		pos += RSN_SELECTOR_LEN;
 		count++;
 	}
-	if (ssid->pairwise_cipher & WPA_CIPHER_TKIP) {
+	if (sm->allowed_pairwise_cipher & WPA_CIPHER_TKIP) {
 		RSN_SELECTOR_PUT(pos, RSN_CIPHER_SUITE_TKIP);
 		pos += RSN_SELECTOR_LEN;
 		count++;

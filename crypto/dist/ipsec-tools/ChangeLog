@@ -1,3 +1,106 @@
+2008-09-03  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Tomas Mraz <tmraz@redhat.com>:
+	* src/racoon/pfkey.c: Duplicate addresses in pk_sendxxx functions, as
+	  they may be altered for NAT-T stuff.
+
+2008-09-03  Timo Teras  <timo.teras@iki.fi>
+	* src/libipsec/pfkey.c: no satype check for Linux spdflush messages
+	* src/racoon/pfkey.c: handle SPD dump responses in pfkey_reload()
+	  to make configuration reloading work better
+	* src/racoon/sockmisc.c: it is not an error to call extract_port()
+	  with AF_UNSPEC address (happens with anonymous config blocks)
+
+2008-08-12  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Krzysztof Oledzki <olel@ans.pl>:
+	* src/racoon/isakmp.c: Remove ph1handler if we received an invalid
+	  first exchange from initiator.
+
+2008-08-06  Timo Teras  <timo.teras@iki.fi>
+	From Krzysztof Piotr Oledzki <olel@ans.pl>:
+	* src/racoon/{privsep.c|session.c|session.h}: make privileged
+	  process exit if unprivileged process is terminated, spelling fixes
+
+2008-07-23  Matthew Grooms
+	* src/racoon/cfparse.y
+	  src/racoon/session.c : add missing ifdefs for non-radius builds
+
+2008-07-23  Timo Teras  <timo.teras@iki.fi>
+	* src/libipsec/Makefile.am
+	  src/racoon/Makefile.am
+	  src/setkey/Makefile.am : do not remove flex/bison generated files
+	  in distclean, also add the generated header file as BUILT_SOURCES
+	  and use the standard autotools rule for generating them
+	* src/racoon/Makefile.am : do not use GNU make specific extension
+
+2008-07-22  Yvan Vanhullebus  <vanhu@netasq.com>
+	From Kohki Ohhira <ohhira@src.ricoh.co.jp>:
+	* src/racoon/proposal.c: fixed some memory leaks, when malloc
+	  fails or when peer sends invalid proposals.
+
+2008-07-21  Matthew Grooms
+	* src/racoon/cfparse.y
+	  src/racoon/cftoken.l
+	  src/racoon/isakmp_cfg.c
+	  src/racoon/isakmp_xauth.c
+	  src/racoon/isakmp_xauth.h
+	  src/racoon/main.c
+	  src/racoon/racoon.conf.5
+	  src/racoon/session.c : add radius config options for racoon.conf
+
+src/racoon/isakmp_cfg.c : fix hybrid enabled builds
+
+2008-07-21  Timo Teras  <timo.teras@iki.fi>
+	* src/racoon/cfparse.y : do not set default gss id if xauth is used
+	* src/racoon/isakmp_agg.c
+	  src/racoon/isakmp_base.c
+	  src/racoon/isakmp_ident.c
+	  src/racoon/vendorid.c
+	  src/racoon/vendorid.h : separate generic vendor id handling to
+	  a new function and use it
+
+2008-07-14  Matthew Grooms
+	* src/racoon/isakmp_cfg.c : fix hybrid enabled builds
+
+2008-07-14  Matthew Grooms
+	* src/racoon/crypto_openssl.c
+	  src/racoon/eaytest.c
+	  src/racoon/misc.c
+	  src/racoon/misc.h
+	  src/racoon/racoonctl.c : fix conflict with freebsd8 hexdump()
+
+2008-07-14  Timo Teras  <timo.teras@iki.fi>
+	* src/racoon/handler.h
+	  src/racoon/isakmp.c
+	  src/racoon/isakmp_agg.c
+	  src/racoon/isakmp_ident.c
+	  src/racoon/isakmp_inf.c
+	  src/racoon/isakmp_inf.h
+	  src/racoon/isakmp_quick.c
+	  src/racoon/strnames.c : clean ups to notification payload handling,
+          and handle INITIAL-CONTACT notification in last main mode exchange
+	  (delayed) and during quick mode exchanges (Track:264)
+	* src/racoon/handler.h
+	  src/racoon/ipsec_doi.c
+	  src/racoon/ipsec_doi.h
+	  src/racoon/isakmp_quick.c
+	  src/racoon/pfkey.c : handle RESPONDER-LIFETIME notification
+	  according to proposal check level (Track:265)
+
+2008-07-11  Timo Teras  <timo.teras@iki.fi>
+	Track:259, original patch from Atis Elsts <the.kfx@gmail.com>:
+	* src/racoon/isakmp.c, src/racoon/isakmp_inf.c: fix double memfree
+	  by changing copy_ph1addresses() to not free ph1 on failure
+	  and remove misplaced remph1() calls causing memory corruption
+
+2008-07-09  Timo Teras  <timo.teras@iki.fi>
+	Track:269, from Chong Peng <chongpeng@gmail.com>:
+	* src/racoon/cfparse.y: remove parser initialization causing
+	  fd leak from cfreparse() since cfparse() initializes it anyway
+
+2008-07-02  Yvan Vanhullebus  <vanhu@netasq.com>
+	Track:266, from Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/isakmp_inf.c: fixed some %d to %zu (size_t values)
+
 2008-06-18  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/admin.h

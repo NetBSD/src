@@ -133,7 +133,7 @@
 		<dt><tt>addpeer <i>peer_address</i> [
 		<i>keyid</i> ] [ <i>version</i> ] [
 		<tt>minpoll# | prefer | iburst  | burst | minpoll
-		<i>N</i> | <tt>maxpoll</tt> <i>N</i> [ <i>dynamic</i> ] [...] ]</tt>
+		<i>N</i> | <tt>maxpoll</tt> <i>N</i> [...] ]</tt>
 		<dt><tt>addpeer <i>peer_address</i> [
 		<tt>prefer | iburst | burst | minpoll
 		<i>N</i> | <tt>maxpoll</tt> <i>N</i> | <tt>keyid</tt>
@@ -162,7 +162,6 @@
 			ntpd.  See the <a href="confopt.html">Server Options</a> page for further information.
 			Each flag (or its absence) replaces the
 			previous setting. The <tt>prefer</tt> keyword indicates a preferred peer (and thus will be used primarily for clock synchronisation if possible). The preferred peer also determines the validity of the PPS signal - if the preferred peer is suitable for synchronisation so is the PPS signal.
-			The <tt>dynamic</tt> keyword allows association configuration even when no suitable network interface is found at configuration time. The dynamic interface update mechanism may complete the configuration when new interfaces appear (e.g. WLAN/PPP interfaces) at a later time and thus render the association operable.
 			<dt><tt>addserver <i>peer_address</i> [
 		<i>keyid</i> ] [ <i>version</i> ] [
 		<tt>minpoll# | prefer | iburst  | burst | minpoll
@@ -170,7 +169,7 @@
 		<dt><tt>addserver <i>peer_address</i> [
 		<tt>prefer | iburst | burst | minpoll
 		<i>N</i> | <tt>maxpoll</tt> <i>N</i> | <tt>keyid</tt>
-			<i>N</i> | <tt>version</tt> <i>N</i> [...] [ <i>dynamic</i> ] ]</tt>
+			<i>N</i> | <tt>version</tt> <i>N</i> [...] ]</tt>
 			<dd>Identical to the addpeer command, except that the operating mode is client.
 			<dt><tt>broadcast <i>peer_address</i> [
 			<i>keyid</i> ] [ <i>version</i> ] [ <i>prefer</i> ]</tt>

@@ -43,18 +43,6 @@ struct preauth_test_data {
 };
 
 
-static void _wpa_supplicant_req_scan(void *wpa_s, int sec, int usec)
-{
-	wpa_supplicant_req_scan(wpa_s, sec, usec);
-}
-
-
-static void _wpa_supplicant_cancel_scan(void *wpa_s)
-{
-	wpa_supplicant_cancel_scan(wpa_s);
-}
-
-
 static void _wpa_supplicant_disassociate(void *wpa_s, int reason_code)
 {
 	wpa_supplicant_disassociate(wpa_s, reason_code);
@@ -124,7 +112,7 @@ static int wpa_ether_send(void *wpa_s, const u8 *dest, u16 proto,
 }
 
 
-static struct wpa_ssid * _wpa_supplicant_get_ssid(void *wpa_s)
+static void * wpa_supplicant_get_network_ctx(void *wpa_s)
 {
 	return wpa_supplicant_get_ssid(wpa_s);
 }
@@ -253,12 +241,10 @@ static void wpa_init_conf(struct wpa_supplicant *wpa_s, const char *ifname)
 	ctx->ctx = wpa_s;
 	ctx->set_state = _wpa_supplicant_set_state;
 	ctx->get_state = _wpa_supplicant_get_state;
-	ctx->req_scan = _wpa_supplicant_req_scan;
-	ctx->cancel_scan = _wpa_supplicant_cancel_scan;
 	ctx->deauthenticate = _wpa_supplicant_deauthenticate;
 	ctx->disassociate = _wpa_supplicant_disassociate;
 	ctx->set_key = wpa_supplicant_set_key;
-	ctx->get_ssid = _wpa_supplicant_get_ssid;
+	ctx->get_network_ctx = wpa_supplicant_get_network_ctx;
 	ctx->get_bssid = wpa_supplicant_get_bssid;
 	ctx->ether_send = wpa_ether_send;
 	ctx->get_beacon_ie = wpa_supplicant_get_beacon_ie;
@@ -361,7 +347,7 @@ int main(int argc, char *argv[])
 	if (wpa_supplicant_scard_init(&wpa_s, wpa_s.conf->ssid))
 		return -1;
 
-	if (rsn_preauth_init(wpa_s.wpa, bssid, wpa_s.conf->ssid))
+	if (rsn_preauth_init(wpa_s.wpa, bssid, &wpa_s.conf->ssid->eap))
 		return -1;
 
 	eloop_register_timeout(30, 0, eapol_test_timeout, &preauth_test, NULL);

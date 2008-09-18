@@ -50,6 +50,7 @@ struct eapol_auth_config {
 	u8 *pac_opaque_encr_key;
 	char *eap_fast_a_id;
 	int eap_sim_aka_result_ind;
+	int tnc;
 
 	/*
 	 * Pointer to hostapd data. This is a temporary workaround for
@@ -200,6 +201,7 @@ struct eapol_state_machine {
 	/* Other variables - not defined in IEEE 802.1X */
 	u8 addr[ETH_ALEN]; /* Supplicant address */
 #define EAPOL_SM_PREAUTH BIT(0)
+#define EAPOL_SM_WAIT_START BIT(1)
 	int flags; /* EAPOL_SM_* */
 
 	/* EAPOL/AAA <-> EAP full authenticator interface */

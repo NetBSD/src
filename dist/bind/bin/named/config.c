@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.5.12.1 2008/06/23 04:27:22 wrstuden Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.5.12.2 2008/09/18 04:44:34 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: config.c,v 1.82.38.4 2008/05/01 18:32:31 jinmei Exp */
+/* Id: config.c,v 1.82.38.5.2.2 2008/07/23 11:46:01 marka Exp */
 
 /*! \file */
 
@@ -54,7 +54,7 @@ options {\n\
 #ifndef WIN32
 "	coresize default;\n\
 	datasize default;\n\
-	files default;\n\
+	files unlimited;\n\
 	stacksize default;\n"
 #endif
 "	deallocate-on-exit true;\n\
@@ -102,6 +102,7 @@ options {\n\
 	edns-udp-size 4096;\n\
 	max-udp-size 4096;\n\
 	request-nsid false;\n\
+	reserved-sockets 512;\n\
 \n\
 	/* view */\n\
 	allow-notify {none;};\n\
@@ -141,7 +142,7 @@ options {\n\
 	acache-cleaning-interval 60;\n\
 	max-acache-size 16M;\n\
 	dnssec-enable yes;\n\
-	dnssec-validation no; /* Make yes for 9.5. */ \n\
+	dnssec-validation yes; \n\
 	dnssec-accept-expired no;\n\
 	clients-per-query 10;\n\
 	max-clients-per-query 100;\n\

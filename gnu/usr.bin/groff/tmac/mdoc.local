@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.40.2.1 2008/06/23 04:29:28 wrstuden Exp $
+.\" $NetBSD: mdoc.local,v 1.40.2.2 2008/09/18 04:49:46 wrstuden Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,6 +66,7 @@
 .ds doc-volume-as-ews4800mips           ews4800mips
 .ds doc-volume-as-ibmnws                ibmnws
 .ds doc-volume-as-iyonix                iyonix
+.ds doc-volume-as-landisk               landisk
 .
 .\" Bluetooth libraries
 .ds doc-str-Lb-libarchive       Reading and Writing Streaming Archives Library (libarchive, \-larchive)

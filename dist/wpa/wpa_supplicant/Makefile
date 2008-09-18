@@ -6,7 +6,6 @@ ifndef CFLAGS
 CFLAGS = -MMD -O2 -Wall -g
 endif
 
-CFLAGS += -I.
 CFLAGS += -I../src
 CFLAGS += -I../src/crypto
 CFLAGS += -I../src/utils
@@ -128,6 +127,12 @@ CFLAGS += -DCONFIG_DRIVER_WEXT
 CONFIG_WIRELESS_EXTENSION=y
 endif
 
+ifdef CONFIG_DRIVER_NL80211
+CFLAGS += -DCONFIG_DRIVER_NL80211
+OBJS_d += ../src/drivers/driver_nl80211.o
+LIBS += -lnl
+endif
+
 ifdef CONFIG_DRIVER_PRISM54
 CFLAGS += -DCONFIG_DRIVER_PRISM54
 OBJS_d += ../src/drivers/driver_prism54.o
@@ -184,7 +189,10 @@ endif
 
 ifdef CONFIG_DRIVER_NDIS
 CFLAGS += -DCONFIG_DRIVER_NDIS
-OBJS_d += ../src/drivers/driver_ndis.o ../src/drivers/driver_ndis_.o
+OBJS_d += ../src/drivers/driver_ndis.o
+ifdef CONFIG_NDIS_EVENTS_INTEGRATED
+OBJS_d += ../src/drivers/driver_ndis_.o
+endif
 ifndef CONFIG_L2_PACKET
 CONFIG_L2_PACKET=pcap
 endif
@@ -209,6 +217,12 @@ CFLAGS += -DCONFIG_DRIVER_OSX
 OBJS_d += ../src/drivers/driver_osx.o
 LDFLAGS += -framework CoreFoundation
 LDFLAGS += -F/System/Library/PrivateFrameworks -framework Apple80211
+endif
+
+ifdef CONFIG_DRIVER_PS3
+CFLAGS += -DCONFIG_DRIVER_PS3 -m64
+OBJS_d += ../src/drivers/driver_ps3.o
+LDFLAGS += -m64
 endif
 
 ifdef CONFIG_DRIVER_IPHONE
@@ -265,11 +279,11 @@ EAPDYN += ../src/eap_peer/eap_peap.so
 else
 CFLAGS += -DEAP_PEAP
 OBJS += ../src/eap_peer/eap_peap.o
+OBJS += ../src/eap_common/eap_peap_common.o
 OBJS_h += ../src/eap_server/eap_peap.o
 endif
 TLS_FUNCS=y
 CONFIG_IEEE8021X_EAPOL=y
-CONFIG_EAP_TLV=y
 endif
 
 ifdef CONFIG_EAP_TTLS
@@ -314,9 +328,11 @@ ifdef CONFIG_EAP_MSCHAPV2
 ifeq ($(CONFIG_EAP_MSCHAPV2), dyn)
 CFLAGS += -DEAP_MSCHAPv2_DYNAMIC
 EAPDYN += ../src/eap_peer/eap_mschapv2.so
+EAPDYN += ../src/eap_peer/mschapv2.so
 else
 CFLAGS += -DEAP_MSCHAPv2
 OBJS += ../src/eap_peer/eap_mschapv2.o
+OBJS += ../src/eap_peer/mschapv2.o
 OBJS_h += ../src/eap_server/eap_mschapv2.o
 endif
 MS_FUNCS=y
@@ -410,21 +426,16 @@ NEED_AES=y
 NEED_FIPS186_2_PRF=y
 endif
 
-ifdef CONFIG_EAP_TLV
-# EAP-TLV
-CFLAGS += -DEAP_TLV
-OBJS += ../src/eap_peer/eap_tlv.o
-OBJS_h += ../src/eap_server/eap_tlv.o
-endif
-
 ifdef CONFIG_EAP_FAST
 # EAP-FAST
 ifeq ($(CONFIG_EAP_FAST), dyn)
 CFLAGS += -DEAP_FAST_DYNAMIC
 EAPDYN += ../src/eap_peer/eap_fast.so
+EAPDYN += ../src/eap_common/eap_fast_common.o
 else
 CFLAGS += -DEAP_FAST
 OBJS += ../src/eap_peer/eap_fast.o ../src/eap_peer/eap_fast_pac.o
+OBJS += ../src/eap_common/eap_fast_common.o
 OBJS_h += ../src/eap_server/eap_fast.o
 endif
 TLS_FUNCS=y
@@ -474,20 +485,6 @@ endif
 NEED_SHA256=y
 endif
 
-ifdef CONFIG_EAP_WSC
-# EAP-WSC
-ifeq ($(CONFIG_EAP_WSC), dyn)
-CFLAGS += -DEAP_WSC_DYNAMIC
-EAPDYN += ../src/eap_peer/eap_wsc.so
-else
-CFLAGS += -DEAP_WSC
-OBJS += ../src/eap_peer/eap_wsc.o ../src/eap_common/eap_wsc_common.o
-OBJS += ../src/wps/wps.o
-OBJS_h += ../src/eap_server/eap_wsc.o
-endif
-CONFIG_IEEE8021X_EAPOL=y
-endif
-
 ifdef CONFIG_EAP_IKEV2
 # EAP-IKEv2
 ifeq ($(CONFIG_EAP_IKEV2), dyn)
@@ -498,6 +495,8 @@ else
 CFLAGS += -DEAP_IKEV2
 OBJS += ../src/eap_peer/eap_ikev2.o ../src/eap_peer/ikev2.o
 OBJS += ../src/eap_common/eap_ikev2_common.o ../src/eap_common/ikev2_common.o
+OBJS_h += ../src/eap_server/eap_ikev2.o
+OBJS_h += ../src/eap_server/ikev2.o
 endif
 CONFIG_IEEE8021X_EAPOL=y
 NEED_DH_GROUPS=y
@@ -632,6 +631,9 @@ CFLAGS += -DCONFIG_TLS_INTERNAL_CLIENT
 ifeq ($(CONFIG_CRYPTO), internal)
 ifdef CONFIG_INTERNAL_LIBTOMMATH
 CFLAGS += -DCONFIG_INTERNAL_LIBTOMMATH
+ifdef CONFIG_INTERNAL_LIBTOMMATH_FAST
+CFLAGS += -DLTM_FAST
+endif
 else
 LIBS += -ltommath
 LIBS_p += -ltommath
@@ -834,7 +836,7 @@ ifdef CONFIG_NATIVE_WINDOWS
 CFLAGS += -DCONFIG_NATIVE_WINDOWS
 LIBS += -lws2_32 -lgdi32 -lcrypt32
 LIBS_c += -lws2_32
-LIBS_p += -lws2_32
+LIBS_p += -lws2_32 -lgdi32
 ifeq ($(CONFIG_CRYPTO), cryptoapi)
 LIBS_p += -lcrypt32
 endif
@@ -1049,10 +1051,6 @@ eap_pax.so: ../src/eap_peer/eap_pax.c ../src/eap_common/eap_pax_common.c
 eap_sake.so: ../src/eap_peer/eap_sake.c ../src/eap_common/eap_sake_common.c
 	$(CC) -o $@ $(CFLAGS) -shared -rdynamic -fPIC $^ \
 		-Deap_peer_sake_register=eap_peer_method_dynamic_init
-
-eap_wsc.so: ../src/eap_peer/eap_wsc.c ../src/eap_common/eap_wsc_common.c ../src/wps/wps.c
-	$(CC) -o $@ $(CFLAGS) -shared -rdynamic -fPIC $^ \
-		-Deap_peer_wsc_register=eap_peer_method_dynamic_init
 
 eap_ikev2.so: ../src/eap_peer/eap_ikev2.c ../src/eap_peer/ikev2.c ../src/eap_common/eap_ikev2_common.o ../src/eap_common/ikev2_common.c
 	$(CC) -o $@ $(CFLAGS) -shared -rdynamic -fPIC $^ \

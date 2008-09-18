@@ -24,6 +24,7 @@
 #include "radius/radius_client.h"
 #include "wpa_common.h"
 #include "wpa.h"
+#include "uuid.h"
 
 
 #define MAX_STA_COUNT 2007
@@ -177,6 +178,8 @@ static void hostapd_config_defaults_bss(struct hostapd_bss_config *bss)
 	bss->radius_server_auth_port = 1812;
 	bss->ap_max_inactivity = AP_MAX_INACTIVITY;
 	bss->eapol_version = EAPOL_VERSION;
+
+	bss->max_listen_interval = 65535;
 }
 
 
@@ -366,7 +369,7 @@ static int hostapd_config_read_wpa_psk(const char *fname,
 			ret = -1;
 			break;
 		}
-		if (os_memcmp(addr, "\x00\x00\x00\x00\x00\x00", ETH_ALEN) == 0)
+		if (is_zero_ether_addr(addr))
 			psk->group = 1;
 		else
 			os_memcpy(psk->addr, addr, ETH_ALEN);
@@ -444,8 +447,6 @@ int hostapd_setup_wpa_psk(struct hostapd_bss_config *conf)
 		if (hostapd_config_read_wpa_psk(ssid->wpa_psk_file,
 						&conf->ssid))
 			return -1;
-		os_free(ssid->wpa_psk_file);
-		ssid->wpa_psk_file = NULL;
 	}
 
 	return 0;
@@ -1473,6 +1474,10 @@ struct hostapd_config * hostapd_config_read(const char *fname)
 		} else if (os_strcmp(buf, "eap_sim_aka_result_ind") == 0) {
 			bss->eap_sim_aka_result_ind = atoi(pos);
 #endif /* EAP_SIM */
+#ifdef EAP_TNC
+		} else if (os_strcmp(buf, "tnc") == 0) {
+			bss->tnc = atoi(pos);
+#endif /* EAP_TNC */
 #endif /* EAP_SERVER */
 		} else if (os_strcmp(buf, "eap_message") == 0) {
 			char *term;
@@ -1928,6 +1933,10 @@ struct hostapd_config * hostapd_config_read(const char *fname)
 		} else if (os_strcmp(buf, "ieee80211w") == 0) {
 			bss->ieee80211w = atoi(pos);
 #endif /* CONFIG_IEEE80211W */
+		} else if (os_strcmp(buf, "max_listen_interval") == 0) {
+			bss->max_listen_interval = atoi(pos);
+		} else if (os_strcmp(buf, "okc") == 0) {
+			bss->okc = atoi(pos);
 		} else {
 			printf("Line %d: unknown configuration item '%s'\n",
 			       line, buf);
@@ -2220,7 +2229,7 @@ hostapd_get_eap_user(const struct hostapd_bss_config *conf, const u8 *identity,
 			break;
 		}
 
-		if (!phase2 && user->wildcard_prefix &&
+		if (user->phase2 == !!phase2 && user->wildcard_prefix &&
 		    identity_len >= user->identity_len &&
 		    os_memcmp(user->identity, identity, user->identity_len) ==
 		    0) {

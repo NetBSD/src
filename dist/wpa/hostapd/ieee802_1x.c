@@ -1,6 +1,6 @@
 /*
  * hostapd / IEEE 802.1X-2004 Authenticator
- * Copyright (c) 2002-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -747,6 +747,7 @@ void ieee802_1x_receive(struct hostapd_data *hapd, const u8 *sa, const u8 *buf,
 		hostapd_logger(hapd, sta->addr, HOSTAPD_MODULE_IEEE8021X,
 			       HOSTAPD_LEVEL_DEBUG, "received EAPOL-Start "
 			       "from STA");
+		sta->eapol_sm->flags &= ~EAPOL_SM_WAIT_START;
 		pmksa = wpa_auth_sta_get_pmksa(sta->wpa_sm);
 		if (pmksa) {
 			hostapd_logger(hapd, sta->addr, HOSTAPD_MODULE_WPA,
@@ -798,8 +799,9 @@ void ieee802_1x_new_station(struct hostapd_data *hapd, struct sta_info *sta)
 {
 	struct rsn_pmksa_cache_entry *pmksa;
 	int reassoc = 1;
+	int force_1x = 0;
 
-	if (!hapd->conf->ieee802_1x ||
+	if ((!force_1x && !hapd->conf->ieee802_1x) ||
 	    wpa_auth_sta_key_mgmt(sta->wpa_sm) == WPA_KEY_MGMT_PSK ||
 	    wpa_auth_sta_key_mgmt(sta->wpa_sm) == WPA_KEY_MGMT_FT_PSK)
 		return;
@@ -871,7 +873,7 @@ void ieee802_1x_free_radius_class(struct radius_class_data *class)
 
 
 int ieee802_1x_copy_radius_class(struct radius_class_data *dst,
-				 struct radius_class_data *src)
+				 const struct radius_class_data *src)
 {
 	size_t i;
 
@@ -1606,6 +1608,7 @@ int ieee802_1x_init(struct hostapd_data *hapd)
 	conf.pac_opaque_encr_key = hapd->conf->pac_opaque_encr_key;
 	conf.eap_fast_a_id = hapd->conf->eap_fast_a_id;
 	conf.eap_sim_aka_result_ind = hapd->conf->eap_sim_aka_result_ind;
+	conf.tnc = hapd->conf->tnc;
 
 	os_memset(&cb, 0, sizeof(cb));
 	cb.eapol_send = ieee802_1x_eapol_send;

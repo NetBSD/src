@@ -25,6 +25,7 @@
 #include "pmksa_cache.h"
 #include "mlme.h"
 #include "ieee802_11_defs.h"
+#include "wpa_ctrl.h"
 #include "wpas_glue.h"
 
 
@@ -142,13 +143,11 @@ static int wpa_supplicant_eapol_send(void *ctx, int type, const u8 *buf,
 		return -1;
 	}
 
-	if (os_memcmp(wpa_s->bssid, "\x00\x00\x00\x00\x00\x00", ETH_ALEN) == 0)
-	{
+	if (is_zero_ether_addr(wpa_s->bssid)) {
 		wpa_printf(MSG_DEBUG, "BSSID not set when trying to send an "
 			   "EAPOL frame");
 		if (wpa_drv_get_bssid(wpa_s, bssid) == 0 &&
-		    os_memcmp(bssid, "\x00\x00\x00\x00\x00\x00", ETH_ALEN) !=
-		    0) {
+		    !is_zero_ether_addr(bssid)) {
 			dst = bssid;
 			wpa_printf(MSG_DEBUG, "Using current BSSID " MACSTR
 				   " from the driver as the EAPOL destination",
@@ -270,7 +269,6 @@ static void wpa_supplicant_notify_eapol_done(void *ctx)
 	    wpa_s->key_mgmt == WPA_KEY_MGMT_FT_IEEE8021X) {
 		wpa_supplicant_set_state(wpa_s, WPA_4WAY_HANDSHAKE);
 	} else {
-		wpa_supplicant_cancel_scan(wpa_s);
 		wpa_supplicant_cancel_auth_timeout(wpa_s);
 		wpa_supplicant_set_state(wpa_s, WPA_COMPLETED);
 	}
@@ -354,18 +352,6 @@ static int _wpa_ether_send(void *wpa_s, const u8 *dest, u16 proto,
 }
 
 
-static void _wpa_supplicant_req_scan(void *wpa_s, int sec, int usec)
-{
-	wpa_supplicant_req_scan(wpa_s, sec, usec);
-}
-
-
-static void _wpa_supplicant_cancel_scan(void *wpa_s)
-{
-	wpa_supplicant_cancel_scan(wpa_s);
-}
-
-
 static void _wpa_supplicant_cancel_auth_timeout(void *wpa_s)
 {
 	wpa_supplicant_cancel_auth_timeout(wpa_s);
@@ -398,16 +384,20 @@ static wpa_states _wpa_supplicant_get_state(void *wpa_s)
 static void _wpa_supplicant_disassociate(void *wpa_s, int reason_code)
 {
 	wpa_supplicant_disassociate(wpa_s, reason_code);
+	/* Schedule a scan to make sure we continue looking for networks */
+	wpa_supplicant_req_scan(wpa_s, 0, 0);
 }
 
 
 static void _wpa_supplicant_deauthenticate(void *wpa_s, int reason_code)
 {
 	wpa_supplicant_deauthenticate(wpa_s, reason_code);
+	/* Schedule a scan to make sure we continue looking for networks */
+	wpa_supplicant_req_scan(wpa_s, 0, 0);
 }
 
 
-static struct wpa_ssid * _wpa_supplicant_get_ssid(void *wpa_s)
+static void * wpa_supplicant_get_network_ctx(void *wpa_s)
 {
 	return wpa_supplicant_get_ssid(wpa_s);
 }
@@ -483,6 +473,44 @@ static int wpa_supplicant_send_ft_action(void *ctx, u8 action,
 #endif /* CONFIG_NO_WPA */
 
 
+#if defined(CONFIG_CTRL_IFACE) || !defined(CONFIG_NO_STDOUT_DEBUG)
+static void wpa_supplicant_eap_param_needed(void *ctx, const char *field,
+					    const char *txt)
+{
+	struct wpa_supplicant *wpa_s = ctx;
+	struct wpa_ssid *ssid = wpa_s->current_ssid;
+	char *buf;
+	size_t buflen;
+	int len;
+
+	if (ssid == NULL)
+		return;
+
+	buflen = 100 + os_strlen(txt) + ssid->ssid_len;
+	buf = os_malloc(buflen);
+	if (buf == NULL)
+		return;
+	len = os_snprintf(buf, buflen,
+			  WPA_CTRL_REQ "%s-%d:%s needed for SSID ",
+			  field, ssid->id, txt);
+	if (len < 0 || (size_t) len >= buflen) {
+		os_free(buf);
+		return;
+	}
+	if (ssid->ssid && buflen > len + ssid->ssid_len) {
+		os_memcpy(buf + len, ssid->ssid, ssid->ssid_len);
+		len += ssid->ssid_len;
+		buf[len] = '\0';
+	}
+	buf[buflen - 1] = '\0';
+	wpa_msg(wpa_s, MSG_INFO, "%s", buf);
+	os_free(buf);
+}
+#else /* CONFIG_CTRL_IFACE || !CONFIG_NO_STDOUT_DEBUG */
+#define wpa_supplicant_eap_param_needed NULL
+#endif /* CONFIG_CTRL_IFACE || !CONFIG_NO_STDOUT_DEBUG */
+
+
 int wpa_supplicant_init_eapol(struct wpa_supplicant *wpa_s)
 {
 #ifdef IEEE8021X_EAPOL
@@ -508,6 +536,7 @@ int wpa_supplicant_init_eapol(struct wpa_supplicant *wpa_s)
 	ctx->pkcs11_engine_path = wpa_s->conf->pkcs11_engine_path;
 	ctx->pkcs11_module_path = wpa_s->conf->pkcs11_module_path;
 #endif /* EAP_TLS_OPENSSL */
+	ctx->eap_param_needed = wpa_supplicant_eap_param_needed;
 	ctx->cb = wpa_supplicant_eapol_cb;
 	ctx->cb_ctx = wpa_s;
 	wpa_s->eapol = eapol_sm_init(ctx);
@@ -536,12 +565,10 @@ int wpa_supplicant_init_wpa(struct wpa_supplicant *wpa_s)
 	ctx->ctx = wpa_s;
 	ctx->set_state = _wpa_supplicant_set_state;
 	ctx->get_state = _wpa_supplicant_get_state;
-	ctx->req_scan = _wpa_supplicant_req_scan;
-	ctx->cancel_scan = _wpa_supplicant_cancel_scan;
 	ctx->deauthenticate = _wpa_supplicant_deauthenticate;
 	ctx->disassociate = _wpa_supplicant_disassociate;
 	ctx->set_key = wpa_supplicant_set_key;
-	ctx->get_ssid = _wpa_supplicant_get_ssid;
+	ctx->get_network_ctx = wpa_supplicant_get_network_ctx;
 	ctx->get_bssid = wpa_supplicant_get_bssid;
 	ctx->ether_send = _wpa_ether_send;
 	ctx->get_beacon_ie = wpa_supplicant_get_beacon_ie;
@@ -568,4 +595,24 @@ int wpa_supplicant_init_wpa(struct wpa_supplicant *wpa_s)
 #endif /* CONFIG_NO_WPA */
 
 	return 0;
+}
+
+
+void wpa_supplicant_rsn_supp_set_config(struct wpa_supplicant *wpa_s,
+					struct wpa_ssid *ssid)
+{
+	struct rsn_supp_config conf;
+	if (ssid) {
+		os_memset(&conf, 0, sizeof(conf));
+		conf.network_ctx = ssid;
+		conf.peerkey_enabled = ssid->peerkey;
+		conf.allowed_pairwise_cipher = ssid->pairwise_cipher;
+#ifdef IEEE8021X_EAPOL
+		conf.eap_workaround = ssid->eap_workaround;
+		conf.eap_conf_ctx = &ssid->eap;
+#endif /* IEEE8021X_EAPOL */
+		conf.ssid = ssid->ssid;
+		conf.ssid_len = ssid->ssid_len;
+	}
+	wpa_sm_set_config(wpa_s->wpa, ssid ? &conf : NULL);
 }

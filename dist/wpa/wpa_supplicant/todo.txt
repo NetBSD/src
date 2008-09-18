@@ -32,9 +32,6 @@ To do:
 - use doc/docbook/*.sgml and docbook2{txt,html,pdf} to replace README and
   web pages including the same information.. i.e., have this information only
   in one page; how to build a PDF file with all the SGML included?
-- test wait-for-interface and daemonize combinations with number of driver
-  interfaces
-  * 'test' worked with WPA-PSK
 - EAP-POTP/RSA SecurID profile (RFC 4793)
 - document wpa_gui build and consider adding it to 'make install'
 - test madwifi with pairwise=TKIP group=WEP104
@@ -60,15 +57,8 @@ To do:
   now IMSI is read only after receiving EAP-Identity/Request, but since it is
   really needed for all cases, reading IMSI and generating Identity string
   could very well be done before EAP has been started
-- test all allowed EAP Phase 2 methods (i.e., anything else than PEAP, TTLS,
-  FAST): SIM AKA LEAP; if these work, include in eap_testing.txt; if
-  not, either fix or make eap_allowed_phase2_type reject
-  (EAP-TTLS/EAP-AKA and EAP-TTLS/EAP-SIM worked fine in wpa_supplicant, but
-  hostapd did not support this due to pending data from hlr_auth_gw
-  triggering a TLS error)
 - try to work around race in receiving association event and first EAPOL
   message
-- helper function to do memcmp(addr, "\x00\x00\x00\x00\x00\x00", ETH_ALEN)
 - add wpa_secure_memzero() macro and secure implementation (volatile u8*) to
   clear memory; this would be used to clear temporary buffers containing
   private data (e.g., keys); the macro can be defined to NOP in order to save
@@ -91,7 +81,7 @@ To do:
   requiring every TLS wrapper to implement all functions
 - add support for encrypted configuration fields (e.g., password, psk,
   passphrase, pin)
-- wpa_gui: add support for setting and showing priority, id_str, auth_alg
+- wpa_gui: add support for setting and showing priority, auth_alg
   (open/shared for static WEP)
 
 - cleanup TLS/PEAP/TTLS/FAST fragmentation: both the handshake and Appl. Data

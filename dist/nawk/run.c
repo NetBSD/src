@@ -324,14 +324,18 @@ Cell *copycell(Cell *x)	/* make a copy of a cell in a temp */
 {
 	Cell *y;
 
+	/* copy is not constant or field */
+
 	y = gettemp();
+	y->tval = x->tval & ~(CON|FLD|REC);
 	y->csub = CCOPY;	/* prevents freeing until call is over */
 	y->nval = x->nval;	/* BUG? */
-	if (isstr(x))
+	if (isstr(x) /* || x->ctype == OCELL */) {
 		y->sval = tostring(x->sval);
+		y->tval &= ~DONTFREE;
+	} else
+		y->tval |= DONTFREE;
 	y->fval = x->fval;
-	y->tval = x->tval & ~(CON|FLD|REC|DONTFREE);	/* copy is not constant or field */
-							/* is DONTFREE right? */
 	return y;
 }
 
@@ -817,6 +821,8 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 	int fmtsz = recsize;
 	uschar *buf = *pbuf;
 	int bufsize = *pbufsize;
+#define FMTSZ(a)   (fmtsz - ((a) - fmt))
+#define BUFSZ(a)   (bufsize - ((a) - buf))
 
 	os = s;
 	p = buf;
@@ -841,7 +847,9 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		for (t = fmt; (*t++ = *s) != '\0'; s++) {
 			if (!adjbuf(&fmt, &fmtsz, MAXNUMSIZE+1+t-fmt, recsize, &t, "format3"))
 				FATAL("format item %.30s... ran format() out of memory", os);
-			if (isalpha((uschar)*s) && *s != 'l' && *s != 'h' && *s != 'L')
+			if (*s == 'l' || *s == 'h' || *s == 'L')
+				goto weird;
+			if (isalpha((uschar)*s))
 				break;	/* the ansi panoply */
 			if (*s == '*') {
 				if (a == NULL)
@@ -849,7 +857,8 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 					    "\"%.30s\")", os);
 				x = execute(a);
 				a = a->nnext;
-				sprintf(t-1, "%d", fmtwd=(int) getfval(x));
+				snprintf(t - 1, FMTSZ(t - 1), 
+				    "%d", fmtwd=(int) getfval(x));
 				if (fmtwd < 0)
 					fmtwd = -fmtwd;
 				adjbuf(&buf, &bufsize, fmtwd+1+p-buf, recsize, &p, "format");
@@ -883,6 +892,7 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			flag = 'c';
 			break;
 		default:
+		weird:
 			WARNING("weird printf conversion %s", fmt);
 			flag = '?';
 			break;
@@ -896,18 +906,18 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			n = fmtwd;
 		adjbuf(&buf, &bufsize, 1+n+p-buf, recsize, &p, "format5");
 		switch (flag) {
-		case '?':	sprintf(p, "%s", fmt);	/* unknown, so dump it too */
+		case '?':	snprintf(p, BUFSZ(p), "%s", fmt);	/* unknown, so dump it too */
 			t = getsval(x);
 			n = strlen(t);
 			if (fmtwd > n)
 				n = fmtwd;
 			adjbuf(&buf, &bufsize, 1+strlen(p)+n+p-buf, recsize, &p, "format6");
 			p += strlen(p);
-			sprintf(p, "%s", t);
+			snprintf(p, BUFSZ(p), "%s", t);
 			break;
-		case 'f':	sprintf(p, fmt, getfval(x)); break;
-		case 'd':	sprintf(p, fmt, (long) getfval(x)); break;
-		case 'u':	sprintf(p, fmt, (int) getfval(x)); break;
+		case 'f':	snprintf(p, BUFSZ(p), fmt, getfval(x)); break;
+		case 'd':	snprintf(p, BUFSZ(p), fmt, (long) getfval(x)); break;
+		case 'u':	snprintf(p, BUFSZ(p), fmt, (int) getfval(x)); break;
 		case 's':
 			t = getsval(x);
 			n = strlen(t);
@@ -915,18 +925,18 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 				n = fmtwd;
 			if (!adjbuf(&buf, &bufsize, 1+n+p-buf, recsize, &p, "format7"))
 				FATAL("huge string/format (%d chars) in printf %.30s... ran format() out of memory", n, t);
-			sprintf(p, fmt, t);
+			snprintf(p, BUFSZ(p), fmt, t);
 			break;
 		case 'c':
 			if (isnum(x)) {
 				if (getfval(x))
-					sprintf(p, fmt, (int) getfval(x));
+					snprintf(p, BUFSZ(p), fmt, (int) getfval(x));
 				else {
 					*p++ = '\0'; /* explicit null byte */
 					*p = '\0';   /* next output will start here */
 				}
 			} else
-				sprintf(p, fmt, getsval(x)[0]);
+				snprintf(p, BUFSZ(p), fmt, getsval(x)[0]);
 			break;
 		default:
 			FATAL("can't happen: bad conversion %c in format()", flag);
@@ -1252,7 +1262,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 			pfa->initstat = 2;
 			do {
 				n++;
-				sprintf(num, "%d", n);
+				snprintf(num, sizeof(num), "%d", n);
 				temp = *patbeg;
 				*patbeg = '\0';
 				if (is_number(s))
@@ -1263,7 +1273,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 				s = patbeg + patlen;
 				if (*(patbeg+patlen-1) == 0 || *s == 0) {
 					n++;
-					sprintf(num, "%d", n);
+					snprintf(num, sizeof(num), "%d", n);
 					setsymtab(num, "", 0.0, STR, (Array *) ap->sval);
 					pfa->initstat = tempstat;
 					goto spdone;
@@ -1273,7 +1283,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 							/* cf gsub and refldbld */
 		}
 		n++;
-		sprintf(num, "%d", n);
+		snprintf(num, sizeof(num), "%d", n);
 		if (is_number(s))
 			setsymtab(num, s, atof(s), STR|NUM, (Array *) ap->sval);
 		else
@@ -1293,7 +1303,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 			while (*s!=' ' && *s!='\t' && *s!='\n' && *s!='\0');
 			temp = *s;
 			*s = '\0';
-			sprintf(num, "%d", n);
+			snprintf(num, sizeof(num), "%d", n);
 			if (is_number(t))
 				setsymtab(num, t, atof(t), STR|NUM, (Array *) ap->sval);
 			else
@@ -1306,7 +1316,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 		for (n = 0; *s != 0; s++) {
 			char buf[2];
 			n++;
-			sprintf(num, "%d", n);
+			snprintf(num, sizeof(num), "%d", n);
 			buf[0] = *s;
 			buf[1] = 0;
 			if (isdigit((uschar)buf[0]))
@@ -1322,7 +1332,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 				s++;
 			temp = *s;
 			*s = '\0';
-			sprintf(num, "%d", n);
+			snprintf(num, sizeof(num), "%d", n);
 			if (is_number(t))
 				setsymtab(num, t, atof(t), STR|NUM, (Array *) ap->sval);
 			else

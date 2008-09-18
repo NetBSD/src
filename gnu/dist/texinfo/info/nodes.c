@@ -1,7 +1,7 @@
-/*	$NetBSD: nodes.c,v 1.6 2004/07/12 23:41:53 wiz Exp $	*/
+/*	$NetBSD: nodes.c,v 1.6.26.1 2008/09/18 04:48:28 wrstuden Exp $	*/
 
 /* nodes.c -- how to get an Info file and node.
-   Id: nodes.c,v 1.4 2004/04/04 16:08:04 karl Exp
+   Id: nodes.c,v 1.4 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1993, 1998, 1999, 2000, 2002, 2003, 2004 Free Software
    Foundation, Inc.

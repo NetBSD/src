@@ -1,7 +1,7 @@
-/*	$NetBSD: display.h,v 1.1.1.3 2004/07/12 23:26:56 wiz Exp $	*/
+/*	$NetBSD: display.h,v 1.1.1.3.26.1 2008/09/18 04:48:27 wrstuden Exp $	*/
 
 /* display.h -- How the display in Info is done.
-   Id: display.h,v 1.3 2004/03/14 00:57:29 karl Exp
+   Id: display.h,v 1.3 2004/04/11 17:56:45 karl Exp
 
    This file is part of GNU Info, a program for reading online documentation
    stored in Info format.

@@ -58,7 +58,9 @@ EAP-PEAPv0/MSCHAPv2	+   +   +   +   +   +   +   +   +   -   +   +
 EAP-PEAPv0/GTC		+   -   +   -   +   +   +   +   -   -   +   +
 EAP-PEAPv0/OTP		-   -   -   -   -   +   -   -   -   -   -   -
 EAP-PEAPv0/MD5		+   -   -   +   +   +   +   +   -   -   +   -
-EAP-PEAPv0/TLS		+   +   -   +   +   +   F   +   -   -   -   -
+EAP-PEAPv0/TLS		+   +   -   +   +   +   F   +   -   -   +   -
+EAP-PEAPv0/SIM		-   -   -   -   -   -   -   -   -   -   +   -
+EAP-PEAPv0/AKA		-   -   -   -   -   -   -   -   -   -   +   -
 EAP-PEAPv0/PSK		-   -   -   -   -   -   -   -   -   -   +   -
 EAP-PEAPv0/PAX		-   -   -   -   -   -   -   -   -   -   +   -
 EAP-PEAPv0/SAKE		-   -   -   -   -   -   -   -   -   -   +   -
@@ -67,7 +69,9 @@ EAP-PEAPv1/MSCHAPv2	-   -   +   +   +   +1  +   +5  +8  -   +   +
 EAP-PEAPv1/GTC		-   -   +   +   +   +1  +   +5  +8  -   +   +
 EAP-PEAPv1/OTP		-   -   -   -   -   +1  -   -   -   -   -   -
 EAP-PEAPv1/MD5		-   -   -   +   +   +1  +   +5  -   -   +   -
-EAP-PEAPv1/TLS		-   -   -   +   +   +1  F   +5  -   -   -   -
+EAP-PEAPv1/TLS		-   -   -   +   +   +1  F   +5  -   -   +   -
+EAP-PEAPv1/SIM		-   -   -   -   -   -   -   -   -   -   +   -
+EAP-PEAPv1/AKA		-   -   -   -   -   -   -   -   -   -   +   -
 EAP-PEAPv1/PSK		-   -   -   -   -   -   -   -   -   -   +   -
 EAP-PEAPv1/PAX		-   -   -   -   -   -   -   -   -   -   +   -
 EAP-PEAPv1/SAKE		-   -   -   -   -   -   -   -   -   -   +   -
@@ -80,11 +84,14 @@ EAP-TTLS/EAP-MD5	+   -   +2  +   +   +   +   +   +   -   +   -
 EAP-TTLS/EAP-GTC	+   -   +2  ?   +   +   +   +   -   -   +   -
 EAP-TTLS/EAP-OTP	-   -   -   -   -   +   -   -   -   -   -   -
 EAP-TTLS/EAP-MSCHAPv2	+   -   +2  +   +   +   +   +   +   -   +   -
-EAP-TTLS/EAP-TLS	+   -   +2  +   F   +   +   +   -   -   -   -
+EAP-TTLS/EAP-TLS	+   -   +2  +   F   +   +   +   -   -   +   -
+EAP-TTLS/EAP-SIM	-   -   -   -   -   -   -   -   -   -   +   -
+EAP-TTLS/EAP-AKA	-   -   -   -   -   -   -   -   -   -   +   -
 EAP-TTLS/EAP-PSK	-   -   -   -   -   -   -   -   -   -   +   -
 EAP-TTLS/EAP-PAX	-   -   -   -   -   -   -   -   -   -   +   -
 EAP-TTLS/EAP-SAKE	-   -   -   -   -   -   -   -   -   -   +   -
 EAP-TTLS/EAP-GPSK	-   -   -   -   -   -   -   -   -   -   +   -
+EAP-TTLS + TNC		-   -   -   -   -   +   -   -   -   -   +   -
 EAP-SIM			+   -   -   ?   -   +   -   ?   -   -   +   -
 EAP-AKA			-   -   -   -   -   +   -   -   -   -   +   -
 EAP-PSK			+7  -   -   -   -   +   -   -   -   -   +   -
@@ -95,11 +102,19 @@ EAP-FAST/MSCHAPv2(prov)	-   -   -   +   -   -   -   -   -   +   +   +
 EAP-FAST/GTC(auth)	-   -   -   +   -   -   -   -   -   +   +   +
 EAP-FAST/MSCHAPv2(aprov)-   -   -   -   -   -   -   -   -   -   +   +
 EAP-FAST/GTC(aprov)	-   -   -   -   -   -   -   -   -   -   +   +
-EAP-FAST/TLS(aprov)	-   -   -   -   -   -   -   -   -   -   -   +
+EAP-FAST/MD5(aprov)	-   -   -   -   -   -   -   -   -   -   +   -
+EAP-FAST/TLS(aprov)	-   -   -   -   -   -   -   -   -   -   +   +
+EAP-FAST/SIM(aprov)	-   -   -   -   -   -   -   -   -   -   +   -
+EAP-FAST/AKA(aprov)	-   -   -   -   -   -   -   -   -   -   +   -
 EAP-FAST/MSCHAPv2(auth)	-   -   -   -   -   -   -   -   -   -   +   +
-EAP-FAST/TLS(auth)	-   -   -   -   -   -   -   -   -   -   -   +
+EAP-FAST/MD5(auth)	-   -   -   -   -   -   -   -   -   -   +   -
+EAP-FAST/TLS(auth)	-   -   -   -   -   -   -   -   -   -   +   +
+EAP-FAST/SIM(auth)	-   -   -   -   -   -   -   -   -   -   +   -
+EAP-FAST/AKA(auth)	-   -   -   -   -   -   -   -   -   -   +   -
+EAP-FAST + TNC		-   -   -   -   -   -   -   -   -   -   +   -
 LEAP			+   -   +   +   +   +   F   +6  -   +   -   +
-EAP-TNC			+9  -   -   -   -   +   -   -   -   -   -   -
+EAP-TNC			+9  -   -   -   -   +   -   -   -   -   +   -
+EAP-IKEv2		+10 -   -   -   -   -   -   -   -   -   +   -
 
 1) PEAPv1 required new label, "client PEAP encryption" instead of "client EAP
    encryption", during key derivation (requires phase1="peaplabel=1" in the
@@ -116,6 +131,8 @@ EAP-TNC			+9  -   -   -   -   +   -   -   -   -   -   -
    though server reported v0 as the highest supported version)
 9) only EAP-TTLS/EAP-TNC tested, i.e., test did not include proper sequence of
    client authentication followed by TNC inside the tunnel
+10) worked only with special compatibility code to match the IKEv2 server
+    implementation
 
 
 Automated tests:

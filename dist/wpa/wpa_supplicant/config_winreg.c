@@ -726,7 +726,9 @@ static int wpa_config_write_network(HKEY hk, struct wpa_ssid *ssid, int id)
 
 #define STR(t) write_str(netw, #t, ssid)
 #define INT(t) write_int(netw, #t, ssid->t, 0)
+#define INTe(t) write_int(netw, #t, ssid->eap.t, 0)
 #define INT_DEF(t, def) write_int(netw, #t, ssid->t, def)
+#define INT_DEFe(t, def) write_int(netw, #t, ssid->eap.t, def)
 
 	STR(ssid);
 	INT(scan_ssid);
@@ -741,8 +743,6 @@ static int wpa_config_write_network(HKEY hk, struct wpa_ssid *ssid, int id)
 	write_eap(netw, ssid);
 	STR(identity);
 	STR(anonymous_identity);
-	STR(eappsk);
-	STR(nai);
 	STR(password);
 	STR(ca_cert);
 	STR(ca_path);
@@ -766,7 +766,12 @@ static int wpa_config_write_network(HKEY hk, struct wpa_ssid *ssid, int id)
 	STR(pin);
 	STR(engine_id);
 	STR(key_id);
-	INT(engine);
+	STR(cert_id);
+	STR(ca_cert_id);
+	STR(key2_id);
+	STR(cert2_id);
+	STR(ca_cert2_id);
+	INTe(engine);
 	INT_DEF(eapol_flags, DEFAULT_EAPOL_FLAGS);
 #endif /* IEEE8021X_EAPOL */
 	for (i = 0; i < 4; i++)
@@ -776,7 +781,7 @@ static int wpa_config_write_network(HKEY hk, struct wpa_ssid *ssid, int id)
 #ifdef IEEE8021X_EAPOL
 	INT_DEF(eap_workaround, DEFAULT_EAP_WORKAROUND);
 	STR(pac_file);
-	INT_DEF(fragment_size, DEFAULT_FRAGMENT_SIZE);
+	INT_DEFe(fragment_size, DEFAULT_FRAGMENT_SIZE);
 #endif /* IEEE8021X_EAPOL */
 	INT(mode);
 	INT(proactive_key_caching);

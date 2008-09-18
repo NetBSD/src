@@ -6526,6 +6526,14 @@ elf_link_output_extsym (struct elf_link_hash_entry *h, void *data)
       sym.st_info = ELF_ST_INFO (bindtype, ELF_ST_TYPE (sym.st_info));
     }
 
+  /* If this symbol's definition was in a dynamic library, make sure its size
+     is reset to 0 since only the dynamic linker will decide from where the
+     symbol is actually resolved.  */
+  if (sym.st_shndx == SHN_UNDEF
+      && !h->def_regular
+      && h->def_dynamic)
+    sym.st_size = 0;
+
   /* If a non-weak symbol with non-default visibility is not defined
      locally, it is a fatal error.  */
   if (! finfo->info->relocatable

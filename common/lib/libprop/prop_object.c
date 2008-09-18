@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.21 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.21.2.1 2008/09/18 04:54:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -1035,7 +1035,8 @@ prop_object_release_emergency(prop_object_t obj)
 			break;
 
 		_PROP_ASSERT(po->po_type);		
-		if ((po->po_type->pot_free)(NULL, &obj) == 0)
+		if ((po->po_type->pot_free)(NULL, &obj) ==
+						_PROP_OBJECT_FREE_DONE)
 			break;
 
 		parent = po;
@@ -1129,7 +1130,7 @@ prop_object_equals_with_error(prop_object_t obj1, prop_object_t obj2,
 	void *stored_pointer1, *stored_pointer2;
 	prop_object_t next_obj1, next_obj2;
 	struct _prop_stack stack;
-	int ret;
+	_prop_object_equals_rv_t ret;
 
 	_prop_stack_init(&stack);
 	if (error_flag)
@@ -1145,8 +1146,9 @@ prop_object_equals_with_error(prop_object_t obj1, prop_object_t obj2,
 		return (false);
     
  continue_subtree:
-	ret = (*po1->po_type->pot_equals)(obj1, obj2, &stored_pointer1, &stored_pointer2,
-	    &next_obj1, &next_obj2);
+	ret = (*po1->po_type->pot_equals)(obj1, obj2,
+					  &stored_pointer1, &stored_pointer2,
+					  &next_obj1, &next_obj2);
 	if (ret == _PROP_OBJECT_EQUALS_FALSE)
 		goto finish;
 	if (ret == _PROP_OBJECT_EQUALS_TRUE) {

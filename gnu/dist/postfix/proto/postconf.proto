@@ -212,8 +212,8 @@ Examples:
 </p>
 
 <pre>
-address_verify_map = hash:/var/lib/postfix/verify
-address_verify_map = btree:/var/lib/postfix/verify
+address_verify_map = hash:/var/db/postfix/verify
+address_verify_map = btree:/var/db/postfix/verify
 </pre>
 
 <p>
@@ -8576,7 +8576,7 @@ data_directory, and a warning is logged. </p>
 <p> Example: </p>
 
 <pre>
-smtpd_tls_session_cache_database = btree:/var/lib/postfix/smtpd_scache
+smtpd_tls_session_cache_database = btree:/var/db/postfix/smtpd_scache
 </pre>
 
 <p> This feature is available in Postfix 2.2 and later.  </p>
@@ -8842,7 +8842,7 @@ data_directory, and a warning is logged. </p>
 <p> Example: </p>
 
 <pre>
-smtp_tls_session_cache_database = btree:/var/lib/postfix/smtp_scache
+smtp_tls_session_cache_database = btree:/var/db/postfix/smtp_scache
 </pre>
 
 <p> This feature is available in Postfix 2.2 and later.  </p>
@@ -11484,7 +11484,7 @@ passwords, and requires that Postfix is compiled with TLS support.
 <p> Example: </p>
 
 <pre>
-smtp_sasl_auth_cache_name = proxy:btree:/var/lib/postfix/sasl_auth_cache
+smtp_sasl_auth_cache_name = proxy:btree:/var/db/postfix/sasl_auth_cache
 </pre>
 
 <p> This feature is available in Postfix 2.5 and later. </p>
@@ -11517,3 +11517,9 @@ configuration parameter.  See there for details. </p>
 
 <p> This feature is available in Postfix 2.5 and later. </p>
 
+%PARAM strict_mailbox_ownership yes
+
+<p> Defer delivery when a mailbox file is not owned by its recipient.
+The default setting is not backwards compatible.  </p>
+
+<p> This feature is available in Postfix 2.5.3 and later. </p>

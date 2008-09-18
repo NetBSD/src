@@ -32,6 +32,11 @@ public:
 
 	virtual int ctrlRequest(const char *cmd, char *buf, size_t *buflen);
 	virtual void triggerUpdate();
+	virtual void editNetwork(const QString &sel);
+	virtual void removeNetwork(const QString &sel);
+	virtual void enableNetwork(const QString &sel);
+	virtual void disableNetwork(const QString &sel);
+	virtual int getNetworkDisabled(const QString &sel);
 
 public slots:
 	virtual void parse_argv();
@@ -49,13 +54,23 @@ public slots:
 	virtual void receiveMsgs();
 	virtual void connectB();
 	virtual void selectNetwork(const QString &sel);
-	virtual void editNetwork();
+	virtual void editSelectedNetwork();
+	virtual void editListedNetwork();
+	virtual void removeSelectedNetwork();
+	virtual void removeListedNetwork();
 	virtual void addNetwork();
+	virtual void enableAllNetworks();
+	virtual void disableAllNetworks();
+	virtual void removeAllNetworks();
+	virtual void saveConfig();
 	virtual void selectAdapter(const QString &sel);
-	virtual void exitApp();
+	virtual void updateNetworkDisabledStatus();
+	virtual void enableListedNetwork(bool);
+	virtual void disableListedNetwork(bool);
 
 protected slots:
 	virtual void languageChange();
+	virtual void closeEvent(QCloseEvent *event);
 
 private:
 	ScanResults *scanres;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8.6.1 2008/06/23 04:29:28 wrstuden Exp $
+#	$NetBSD: Makefile.inc,v 1.8.6.2 2008/09/18 04:49:43 wrstuden Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -54,17 +54,18 @@ CLEANFILES+=	${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} cs-tconfig.h \
 CLEANFILES+=	${LIB1ASMFUNCS}
 .endif
 
+.for file in ${G_LIB2ADD:M${GNUHOSTDIST}*}
+BUILDSYMLINKS+=	${file} ${file:T:S/.asm$/.S/}
+.endfor
+
 # XXX
 .if ${MACHINE_ARCH} == "m68000"
 CPICFLAGS:=
 COMPILE.S=	${CC} ${AFLAGS} ${CPPFLAGS} -c
 _TRADITIONAL_CPP=
-fpgnulib.c:	${DIST}/gcc/config/m68k/fpgnulib.c
-	cp ${DIST}/gcc/config/m68k/fpgnulib.c fpgnulib.c
-xfgnulib.c:	${DIST}/gcc/config/m68k/fpgnulib.c
-	echo '#define EXTFLOAT' > xfgnulib.c
-	cat ${DIST}/gcc/config/m68k/fpgnulib.c >> xfgnulib.c
-CLEANFILES+=	fpgnulib.c xfgnulib.c
+BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c fpgnulib.c
+BUILDSYMLINKS+=	${DIST}/gcc/config/m68k/fpgnulib.c xfgnulib.c
+CPPFLAGS.xfgnulib.c+=-DEXTFLOAT=1
 .endif
 
 .if ${MACHINE_ARCH} == "powerpc" || \
@@ -91,15 +92,6 @@ ${LIB1ASMFUNCS}: ${.CURDIR}/Makefile
 	${_MKTARGET_CREATE}
 	printf '#define L${.PREFIX}\n#include <${G_LIB1ASMSRC}>\n' >${.TARGET}
 .endif
-
-${G_LIB2ADD:M${GNUHOSTDIST}/*:T:S/.asm/.S/}: ${.CURDIR}/Makefile ${G_LIB2ADD}
-	@echo copying ${G_LIB2ADD}
-	for i in ${G_LIB2ADD}; do \
-		j=$${i##*/}; \
-		j=`echo $$j | sed 's/\.asm$$/\.S/'`; \
-		cp $$i $$j; \
-	done
-	@echo copying ${G_LIB2ADD} complete
 
 ${LIB2_EH:.c=.o}:
 	${_MKTARGET_COMPILE}
@@ -130,10 +122,13 @@ tconfig.h:
 	HEADERS="$(G_xm_include_list)" DEFINES="USED_FOR_TARGET $(G_xm_defines)" \
 	${HOST_SH} $(GNUHOSTDIST)/gcc/mkconfig.sh tconfig.h
 
+BUILDSYMLINKS+=	${G_UNWIND_H} unwind.h
+DPSRCS+=	unwind.h
+
 # these aren't necessary but are #include'd
 FAKEHEADERS=options.h insn-flags.h insn-constants.h
 ${FAKEHEADERS}:
 	${_MKTARGET_CREATE}
 	touch ${.TARGET}
-tm.h ${SRCS}: ${FAKEHEADERS}
+DPSRCS+=	${FAKEHEADERS}
 CLEANFILES+=	${FAKEHEADERS}

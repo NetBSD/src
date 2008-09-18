@@ -1,7 +1,7 @@
-/*	$NetBSD: insertion.c,v 1.1.1.5 2004/07/12 23:26:50 wiz Exp $	*/
+/*	$NetBSD: insertion.c,v 1.1.1.5.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* insertion.c -- insertions for Texinfo.
-   Id: insertion.c,v 1.39 2004/04/09 13:09:54 dirt Exp
+   Id: insertion.c,v 1.55 2004/11/11 18:34:28 karl Exp
 
    Copyright (C) 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free Software
    Foundation, Inc.
@@ -1054,7 +1054,6 @@ end_insertion (int type)
       line_number--;
       break;
 
-    case documentdescription:
     case ifclear:
     case ifdocbook:
     case ifinfo:
@@ -1106,6 +1105,12 @@ end_insertion (int type)
       close_insertion_paragraph ();
       break;
 
+    case documentdescription:
+      if (xml)
+        insert_string (document_description);
+        xml_insert_element (DOCUMENTDESCRIPTION, END);
+      break;
+      
     case menu:
       in_menu--;                /* No longer hacking menus. */
       if (html && !no_headers)
@@ -1550,8 +1555,15 @@ cm_direntry (void)
 void
 cm_documentdescription (void)
 {
-  if (html || xml)
+  if (html)
     begin_insertion (documentdescription);
+
+  else if (xml)
+    {
+      xml_insert_element (DOCUMENTDESCRIPTION, START);
+      begin_insertion (documentdescription);
+    }
+
   else
     command_name_condition ();
 }

@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: subr.c,v 1.4 2003/04/11 17:31:58 jdolecek Exp $");
+__RCSID("$NetBSD: subr.c,v 1.4.32.1 2008/09/18 04:44:46 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -92,7 +92,7 @@ smb_lib_init(void)
 	}
 #endif
 	if ((error = nls_setlocale("")) != 0) {
-		warnx("%s: can't initialise locale\n", __FUNCTION__);
+		warnx("%s: can't initialise locale\n", __func__);
 		return error;
 	}
 	smblib_initialized++;

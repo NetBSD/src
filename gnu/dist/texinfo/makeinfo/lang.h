@@ -1,7 +1,7 @@
-/*	$NetBSD: lang.h,v 1.1.1.4 2004/07/12 23:26:50 wiz Exp $	*/
+/*	$NetBSD: lang.h,v 1.1.1.4.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* lang.h -- declarations for language codes etc.
-   Id: lang.h,v 1.4 2004/02/28 12:46:51 dirt Exp
+   Id: lang.h,v 1.6 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 1999, 2001, 2002, 2003 Free Software Foundation, Inc.
 

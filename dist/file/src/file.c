@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.19 2008/03/29 09:40:41 ragge Exp $	*/
+/*	$NetBSD: file.c,v 1.19.4.1 2008/09/18 04:44:42 wrstuden Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -63,9 +63,12 @@
 #endif
 
 #ifdef HAVE_GETOPT_H
-#include <getopt.h>	/* for long options (is this portable?)*/
+#include <getopt.h>
 #else
-#undef HAVE_GETOPT_LONG
+#include "mygetopt.h"
+#endif
+#ifndef HAVE_GETOPT_LONG
+int getopt_long(int argc, char * const *argv, const char *optstring, const struct option *longopts, int *longindex);
 #endif
 
 #include <netinet/in.h>		/* for byte swapping */
@@ -74,9 +77,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: file.c,v 1.111 2007/05/08 14:44:18 christos Exp $")
+FILE_RCSID("@(#)$File: file.c,v 1.121 2008/07/03 15:48:18 christos Exp $")
 #else
-__RCSID("$NetBSD: file.c,v 1.19 2008/03/29 09:40:41 ragge Exp $");
+__RCSID("$NetBSD: file.c,v 1.19.4.1 2008/09/18 04:44:42 wrstuden Exp $");
 #endif
 #endif	/* lint */
 
@@ -109,13 +112,7 @@ private struct magic_set *magic;
 
 private void unwrap(char *);
 private void usage(void);
-#ifdef HAVE_GETOPT_LONG
 private void help(void);
-#endif
-#if 0
-private int byteconv4(int, int, int);
-private short byteconv2(int, int, int);
-#endif
 
 int main(int, char *[]);
 private void process(const char *, int);
@@ -128,45 +125,26 @@ private void load(const char *, int);
 int
 main(int argc, char *argv[])
 {
-	int c, i;
+	int c;
+	size_t i;
 	int action = 0, didsomefiles = 0, errflg = 0;
 	int flags = 0;
 	char *home, *usermagic;
 	struct stat sb;
 	static const char hmagic[] = "/.magic";
 #define OPTSTRING	"bcCde:f:F:hikLm:nNprsvz0"
-#ifdef HAVE_GETOPT_LONG
 	int longindex;
 	static const struct option long_options[] =
 	{
-		{"version", 0, 0, 'v'},
-		{"help", 0, 0, 0},
-		{"brief", 0, 0, 'b'},
-		{"checking-printout", 0, 0, 'c'},
-		{"debug", 0, 0, 'd'},
-		{"exclude", 1, 0, 'e' },
-		{"files-from", 1, 0, 'f'},
-		{"separator", 1, 0, 'F'},
-		{"mime", 0, 0, 'i'},
-		{"keep-going", 0, 0, 'k'},
-#ifdef S_IFLNK
-		{"dereference", 0, 0, 'L'},
-		{"no-dereference", 0, 0, 'h'},
-#endif
-		{"magic-file", 1, 0, 'm'},
-#if defined(HAVE_UTIME) || defined(HAVE_UTIMES)
-		{"preserve-date", 0, 0, 'p'},
-#endif
-		{"uncompress", 0, 0, 'z'},
-		{"raw", 0, 0, 'r'},
-		{"no-buffer", 0, 0, 'n'},
-		{"no-pad", 0, 0, 'N'},
-		{"special-files", 0, 0, 's'},
-		{"compile", 0, 0, 'C'},
-		{"print0", 0, 0, '0'},
-		{0, 0, 0, 0},
-	};
-#endif
+#define OPT(shortname, longname, opt, doc)      \
+    {longname, opt, NULL, shortname},
+#define OPT_LONGONLY(longname, opt, doc)        \
+    {longname, opt, NULL, 0},
+#include "file_opts.h"
+#undef OPT
+#undef OPT_LONGONLY
+    {0, 0, NULL, 0}
+};
 
 	static const struct {
 		const char *name;
@@ -176,17 +154,13 @@ main(int argc, char *argv[])
 		{ "ascii",	MAGIC_NO_CHECK_ASCII },
 		{ "compress",	MAGIC_NO_CHECK_COMPRESS },
 		{ "elf",	MAGIC_NO_CHECK_ELF },
-		{ "fortran",	MAGIC_NO_CHECK_FORTRAN },
 		{ "soft",	MAGIC_NO_CHECK_SOFT },
 		{ "tar",	MAGIC_NO_CHECK_TAR },
 		{ "tokens",	MAGIC_NO_CHECK_TOKENS },
-		{ "troff",	MAGIC_NO_CHECK_TROFF },
 	};
 
-#ifdef LC_CTYPE
 	/* makes islower etc work for other langs */
 	(void)setlocale(LC_CTYPE, "");
-#endif
 
 #ifdef __EMX__
 	/* sh-like wildcard expansion! Shouldn't hurt at least ... */
@@ -217,24 +191,27 @@ main(int argc, char *argv[])
 #ifdef S_IFLNK
 	flags |= getenv("POSIXLY_CORRECT") ? MAGIC_SYMLINK : 0;
 #endif
-#ifndef HAVE_GETOPT_LONG
-	while ((c = getopt(argc, argv, OPTSTRING)) != -1)
-#else
 	while ((c = getopt_long(argc, argv, OPTSTRING, long_options,
 	    &longindex)) != -1)
-#endif
 		switch (c) {
-#ifdef HAVE_GETOPT_LONG
 		case 0 :
-			if (longindex == 1)
+			switch (longindex) {
+			case 0:
 				help();
+				break;
+			case 10:
+				flags |= MAGIC_MIME_TYPE;
+				break;
+			case 11:
+				flags |= MAGIC_MIME_ENCODING;
+				break;
+			}
 			break;
-#endif
 		case '0':
 			nulsep = 1;
 			break;
 		case 'b':
-			++bflag;
+			bflag++;
 			break;
 		case 'c':
 			action = FILE_CHECK;
@@ -293,9 +270,9 @@ main(int argc, char *argv[])
 			flags |= MAGIC_DEVICES;
 			break;
 		case 'v':
-			(void)fprintf(stdout, "%s-%d.%.2d\n", progname,
+			(void)fprintf(stderr, "%s-%d.%.2d\n", progname,
 				       FILE_VERSION_MAJOR, patchlevel);
-			(void)fprintf(stdout, "magic file from %s\n",
+			(void)fprintf(stderr, "magic file from %s\n",
 				       magicfile);
 			return 1;
 		case 'z':
@@ -347,18 +324,26 @@ main(int argc, char *argv[])
 		}
 	}
 	else {
-		int i, wid, nw;
-		for (wid = 0, i = optind; i < argc; i++) {
-			nw = file_mbswidth(argv[i]);
+		size_t j, wid, nw;
+		for (wid = 0, j = (size_t)optind; j < (size_t)argc; j++) {
+			nw = file_mbswidth(argv[j]);
 			if (nw > wid)
 				wid = nw;
+		}
+		/*
+		 * If bflag is only set twice, set it depending on
+		 * number of files [this is undocumented, and subject to change]
+		 */
+		if (bflag == 2) {
+			bflag = optind >= argc - 1;
 		}
 		for (; optind < argc; optind++)
 			process(argv[optind], wid);
 	}
 
+	c = magic->haderr ? 1 : 0;
 	magic_close(magic);
-	return 0;
+	return c;
 }
 
 
@@ -389,7 +374,6 @@ unwrap(char *fn)
 	char buf[MAXPATHLEN];
 	FILE *f;
 	int wid = 0, cwid;
-	size_t len;
 
 	if (strcmp("-", fn) == 0) {
 		f = stdin;
@@ -401,10 +385,8 @@ unwrap(char *fn)
 			exit(1);
 		}
 
-		while (fgets(buf, MAXPATHLEN, f) != NULL) {
-			len = strlen(buf);
-			if (len > 0 && buf[len - 1] == '\n')
-				buf[len - 1] = '\0';
+		while (fgets(buf, sizeof(buf), f) != NULL) {
+			buf[strcspn(buf, "\n")] = '\0';
 			cwid = file_mbswidth(buf);
 			if (cwid > wid)
 				wid = cwid;
@@ -413,10 +395,8 @@ unwrap(char *fn)
 		rewind(f);
 	}
 
-	while (fgets(buf, MAXPATHLEN, f) != NULL) {
-		len = strlen(buf);
-		if (len > 0 && buf[len - 1] == '\n')
-			buf[len - 1] = '\0';
+	while (fgets(buf, sizeof(buf), f) != NULL) {
+		buf[strcspn(buf, "\n")] = '\0';
 		process(buf, wid);
 		if(nobuffer)
 			(void)fflush(stdout);
@@ -450,64 +430,6 @@ process(const char *inname, int wid)
 	else
 		(void)printf("%s\n", type);
 }
-
-
-#if 0
-/*
- * byteconv4
- * Input:
- *	from		4 byte quantity to convert
- *	same		whether to perform byte swapping
- *	big_endian	whether we are a big endian host
- */
-private int
-byteconv4(int from, int same, int big_endian)
-{
-	if (same)
-		return from;
-	else if (big_endian) {		/* lsb -> msb conversion on msb */
-		union {
-			int i;
-			char c[4];
-		} retval, tmpval;
-
-		tmpval.i = from;
-		retval.c[0] = tmpval.c[3];
-		retval.c[1] = tmpval.c[2];
-		retval.c[2] = tmpval.c[1];
-		retval.c[3] = tmpval.c[0];
-
-		return retval.i;
-	}
-	else
-		return ntohl(from);	/* msb -> lsb conversion on lsb */
-}
-
-/*
- * byteconv2
- * Same as byteconv4, but for shorts
- */
-private short
-byteconv2(int from, int same, int big_endian)
-{
-	if (same)
-		return from;
-	else if (big_endian) {		/* lsb -> msb conversion on msb */
-		union {
-			short s;
-			char c[2];
-		} retval, tmpval;
-
-		tmpval.s = (short) from;
-		retval.c[0] = tmpval.c[1];
-		retval.c[1] = tmpval.c[0];
-
-		return retval.s;
-	}
-	else
-		return ntohs(from);	/* msb -> lsb conversion on lsb */
-}
-#endif
 
 size_t
 file_mbswidth(const char *s)
@@ -547,48 +469,23 @@ private void
 usage(void)
 {
 	(void)fprintf(stderr, USAGE, progname, progname);
-#ifdef HAVE_GETOPT_LONG
 	(void)fputs("Try `file --help' for more information.\n", stderr);
-#endif
 	exit(1);
 }
 
-#ifdef HAVE_GETOPT_LONG
 private void
 help(void)
 {
-	(void)puts(
-"Usage: file [OPTION]... [FILE]...\n"
-"Determine file type of FILEs.\n"
-"\n"
-"  -m, --magic-file LIST      use LIST as a colon-separated list of magic\n"
-"                               number files\n"
-"  -z, --uncompress           try to look inside compressed files\n"
-"  -b, --brief                do not prepend filenames to output lines\n"
-"  -c, --checking-printout    print the parsed form of the magic file, use in\n"
-"                               conjunction with -m to debug a new magic file\n"
-"                               before installing it\n"
-"  -e, --exclude              exclude test from the list of test to be\n"
-"                               performed for file. Valid tests are:\n"
-"                               ascii, apptype, elf, compress, soft, tar\n"
-"  -f, --files-from FILE      read the filenames to be examined from FILE\n"
-"  -F, --separator string     use string as separator instead of `:'\n"
-"  -i, --mime                 output mime type strings\n"
-"  -k, --keep-going           don't stop at the first match\n"
-"  -L, --dereference          causes symlinks to be followed\n"
-"  -n, --no-buffer            do not buffer output\n"
-"  -N, --no-pad               do not pad output\n"
-"  -p, --preserve-date        preserve access times on files\n"
-"  -r, --raw                  don't translate unprintable chars to \\ooo\n"
-"  -s, --special-files        treat special (block/char devices) files as\n"
-"                             ordinary ones\n"
-"or\n"
-"      --help                 display this help and exit\n"
-"or\n"
-"      --version              output version information and exit\n"
-"or\n"
-"  -C, --compile              compile file specified by -m\n"
-);
+	(void)fputs(
+"Usage: file [OPTION...] [FILE...]\n"
+"Determine type of FILEs.\n"
+"\n", stderr);
+#define OPT(shortname, longname, opt, doc)      \
+        fprintf(stderr, "  -%c, --" longname doc, shortname);
+#define OPT_LONGONLY(longname, opt, doc)        \
+        fprintf(stderr, "      --" longname doc);
+#include "file_opts.h"
+#undef OPT
+#undef OPT_LONGONLY
 	exit(0);
 }
-#endif

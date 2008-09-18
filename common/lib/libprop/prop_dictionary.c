@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.28.2.1 2008/06/23 04:26:46 wrstuden Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.28.2.2 2008/09/18 04:54:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -104,23 +104,26 @@ _PROP_POOL_INIT(_prop_dictionary_pool, sizeof(struct _prop_dictionary),
 _PROP_MALLOC_DEFINE(M_PROP_DICT, "prop dictionary",
 		    "property dictionary container object")
 
-static int		_prop_dictionary_free(prop_stack_t, prop_object_t *);
-static void		_prop_dictionary_emergency_free(prop_object_t);
+static _prop_object_free_rv_t
+		_prop_dictionary_free(prop_stack_t, prop_object_t *);
+static void	_prop_dictionary_emergency_free(prop_object_t);
 static bool	_prop_dictionary_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_dictionary_equals(prop_object_t, prop_object_t,
+static _prop_object_equals_rv_t
+		_prop_dictionary_equals(prop_object_t, prop_object_t,
 				        void **, void **,
 					prop_object_t *, prop_object_t *);
 static void	_prop_dictionary_equals_finish(prop_object_t, prop_object_t);
-static prop_object_iterator_t _prop_dictionary_iterator_locked(
-				prop_dictionary_t);
-static prop_object_t _prop_dictionary_iterator_next_object_locked(void *);
-static prop_object_t _prop_dictionary_get_keysym(prop_dictionary_t,
-						 prop_dictionary_keysym_t,
-						 bool);
-static prop_object_t _prop_dictionary_get(prop_dictionary_t, const char *,
-					  bool);
+static prop_object_iterator_t
+		_prop_dictionary_iterator_locked(prop_dictionary_t);
+static prop_object_t
+		_prop_dictionary_iterator_next_object_locked(void *);
+static prop_object_t
+		_prop_dictionary_get_keysym(prop_dictionary_t,
+					    prop_dictionary_keysym_t, bool);
+static prop_object_t
+		_prop_dictionary_get(prop_dictionary_t, const char *, bool);
 
 static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_type		=	PROP_TYPE_DICTIONARY,
@@ -131,11 +134,13 @@ static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_equals_finish	=	_prop_dictionary_equals_finish,
 };
 
-static int		_prop_dict_keysym_free(prop_stack_t, prop_object_t *);
+static _prop_object_free_rv_t
+		_prop_dict_keysym_free(prop_stack_t, prop_object_t *);
 static bool	_prop_dict_keysym_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_dict_keysym_equals(prop_object_t, prop_object_t,
+static _prop_object_equals_rv_t
+		_prop_dict_keysym_equals(prop_object_t, prop_object_t,
 					 void **, void **,
 					 prop_object_t *, prop_object_t *);
 
@@ -210,7 +215,7 @@ _prop_dict_keysym_put(prop_dictionary_keysym_t pdk)
 }
 
 /* ARGSUSED */
-static int
+static _prop_object_free_rv_t
 _prop_dict_keysym_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_dictionary_keysym_t pdk = *obj;
@@ -244,7 +249,7 @@ _prop_dict_keysym_externalize(struct _prop_object_externalize_context *ctx,
 }
 
 /* ARGSUSED */
-static bool
+static _prop_object_equals_rv_t
 _prop_dict_keysym_equals(prop_object_t v1, prop_object_t v2,
     void **stored_pointer1, void **stored_pointer2,
     prop_object_t *next_obj1, prop_object_t *next_obj2)
@@ -332,9 +337,7 @@ _prop_dict_keysym_alloc(const char *key)
 	return (pdk);
 }
 
-int dont_free = 1;
-
-static int
+static _prop_object_free_rv_t
 _prop_dictionary_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_dictionary_t pd = *obj;
@@ -458,7 +461,7 @@ _prop_dictionary_externalize(struct _prop_object_externalize_context *ctx,
 }
 
 /* ARGSUSED */
-static bool
+static _prop_object_equals_rv_t
 _prop_dictionary_equals(prop_object_t v1, prop_object_t v2,
     void **stored_pointer1, void **stored_pointer2,
     prop_object_t *next_obj1, prop_object_t *next_obj2)
@@ -466,7 +469,7 @@ _prop_dictionary_equals(prop_object_t v1, prop_object_t v2,
 	prop_dictionary_t dict1 = v1;
 	prop_dictionary_t dict2 = v2;
 	uintptr_t idx;
-	bool rv = _PROP_OBJECT_EQUALS_FALSE;
+	_prop_object_equals_rv_t rv = _PROP_OBJECT_EQUALS_FALSE;
 
 	if (dict1 == dict2)
 		return (_PROP_OBJECT_EQUALS_TRUE);
@@ -1163,7 +1166,7 @@ prop_dictionary_keysym_equals(prop_dictionary_keysym_t pdk1,
 {
 	if (!prop_object_is_dictionary_keysym(pdk1) ||
 	    !prop_object_is_dictionary_keysym(pdk2))
-		return (_PROP_OBJECT_EQUALS_FALSE);
+		return (false);
 
 	return (prop_object_equals(pdk1, pdk2));
 }

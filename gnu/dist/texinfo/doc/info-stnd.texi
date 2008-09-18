@@ -1,6 +1,6 @@
 \input texinfo.tex    @c -*-texinfo-*-
-@c $NetBSD: info-stnd.texi,v 1.1.1.5 2004/07/12 23:26:41 wiz Exp $
-@comment Id: info-stnd.texi,v 1.7 2004/03/24 01:41:06 karl Exp
+@c $NetBSD: info-stnd.texi,v 1.1.1.5.26.1 2008/09/18 04:48:26 wrstuden Exp $
+@comment Id: info-stnd.texi,v 1.9 2004/12/14 16:58:15 karl Exp
 @c We must \input texinfo.tex instead of texinfo, otherwise make
 @c distcheck in the Texinfo distribution fails, because the texinfo Info
 @c file is made first, and texi2dvi must include . first in the path.
@@ -711,7 +711,7 @@ Select the `Up' node.
 @end table
 
 You can easily select a node that you have already viewed in this window
-by using the @samp{l} command -- this name stands for "last", and
+by using the @samp{l} command---this name stands for ``last'', and
 actually moves backwards through the history of visited nodes for this
 window.  This is handy when you followed a reference to another node,
 possibly to read about a related issue, and would like then to resume
@@ -1303,8 +1303,7 @@ Split the current window into two windows, both showing the same node.
 Each window is one half the size of the original window, and the cursor
 remains in the original window.  The variable @code{automatic-tiling}
 can cause all of the windows on the screen to be resized for you
-automatically, please @pxref{Variables, , automatic-tiling} for more
-information.
+automatically (@pxref{Variables, , automatic-tiling}).
 
 @item @kbd{C-x @key{0}} (@code{delete-window})
 @cindex windows, deleting
@@ -1324,7 +1323,7 @@ Delete all of the windows excepting the current one.
 @findex scroll-other-window
 Scroll the other window, in the same fashion that @samp{C-v} might
 scroll the current window.  Given a negative argument, scroll the
-"other" window backward.
+``other'' window backward.
 
 @item @kbd{C-x @key{^}} (@code{grow-window})
 @kindex C-x ^
@@ -1580,7 +1579,7 @@ with @samp{fol}.
 @item @key{ESC C-v} (@code{echo-area-scroll-completions-window})
 @kindex ESC C-v, in the echo area
 @findex echo-area-scroll-completions-window
-Scroll the completions window, if that is visible, or the "other"
+Scroll the completions window, if that is visible, or the ``other''
 window if not.
 @end table
 
@@ -1907,7 +1906,7 @@ nonzero value, Info attempts to scroll the node text by that many lines;
 if that is enough to bring the cursor back into the window, that is what
 is done.  The default value of this variable is 0, thus placing the
 cursor (and the text it is attached to) in the center of the window.
-Setting this variable to 1 causes a kind of "smooth scrolling" which
+Setting this variable to 1 causes a kind of ``smooth scrolling'' which
 some people prefer.
 
 @item show-index-match

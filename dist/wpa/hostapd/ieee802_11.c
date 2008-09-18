@@ -1,6 +1,6 @@
 /*
  * hostapd / IEEE 802.11 Management
- * Copyright (c) 2002-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -855,6 +855,15 @@ static void handle_assoc(struct hostapd_data *hapd,
 		goto fail;
 	}
 
+	if (listen_interval > hapd->conf->max_listen_interval) {
+		hostapd_logger(hapd, mgmt->sa, HOSTAPD_MODULE_IEEE80211,
+			       HOSTAPD_LEVEL_DEBUG,
+			       "Too large Listen Interval (%d)",
+			       listen_interval);
+		resp = WLAN_STATUS_ASSOC_DENIED_LISTEN_INT_TOO_LARGE;
+		goto fail;
+	}
+
 	if (reassoc) {
 		os_memcpy(sta->previous_ap, mgmt->u.reassoc_req.current_ap,
 			  ETH_ALEN);
@@ -952,7 +961,7 @@ static void handle_assoc(struct hostapd_data *hapd,
 		goto fail;
 	}
 
-	if (hapd->conf->wpa) {
+	if (hapd->conf->wpa && wpa_ie) {
 		int res;
 		wpa_ie -= 2;
 		wpa_ie_len += 2;
@@ -987,6 +996,12 @@ static void handle_assoc(struct hostapd_data *hapd,
 			resp = WLAN_STATUS_INVALID_IE;
 		if (resp != WLAN_STATUS_SUCCESS)
 			goto fail;
+#ifdef CONFIG_IEEE80211W
+		if (wpa_auth_uses_mfp(sta->wpa_sm))
+			sta->flags |= WLAN_STA_MFP;
+		else
+			sta->flags &= ~WLAN_STA_MFP;
+#endif /* CONFIG_IEEE80211W */
 
 #ifdef CONFIG_IEEE80211R
 		if (sta->auth_alg == WLAN_AUTH_FT) {
@@ -1545,8 +1560,8 @@ static void handle_assoc_cb(struct hostapd_data *hapd,
 		return;
 	}
 
-	if (len < IEEE80211_HDRLEN + (reassoc ? sizeof(mgmt->u.reassoc_req) :
-				      sizeof(mgmt->u.assoc_req))) {
+	if (len < IEEE80211_HDRLEN + (reassoc ? sizeof(mgmt->u.reassoc_resp) :
+				      sizeof(mgmt->u.assoc_resp))) {
 		printf("handle_assoc_cb(reassoc=%d) - too short payload "
 		       "(len=%lu)\n", reassoc, (unsigned long) len);
 		return;
@@ -1589,7 +1604,8 @@ static void handle_assoc_cb(struct hostapd_data *hapd,
 
 	if (hostapd_sta_add(hapd->conf->iface, hapd, sta->addr, sta->aid,
 			    sta->capability, sta->supported_rates,
-			    sta->supported_rates_len, 0)) {
+			    sta->supported_rates_len, 0, sta->listen_interval))
+	{
 		hostapd_logger(hapd, sta->addr, HOSTAPD_MODULE_IEEE80211,
 			       HOSTAPD_LEVEL_NOTICE,
 			       "Could not add STA to kernel driver");
@@ -1651,6 +1667,9 @@ void ieee802_11_mgmt_cb(struct hostapd_data *hapd, u8 *buf, size_t len,
 		break;
 	case WLAN_FC_STYPE_PROBE_RESP:
 		wpa_printf(MSG_DEBUG, "mgmt::proberesp cb");
+		break;
+	case WLAN_FC_STYPE_DEAUTH:
+		/* ignore */
 		break;
 	default:
 		printf("unknown mgmt cb frame subtype %d\n", stype);

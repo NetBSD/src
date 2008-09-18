@@ -27,7 +27,7 @@
 #include <net/if.h>
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>   /* The L2 protocols */
-#include <linux/wireless.h>
+#include "wireless_copy.h"
 #include <net/if_arp.h>
 
 #include "hostapd.h"
@@ -38,141 +38,25 @@
 #include "sta_info.h"
 #include "hw_features.h"
 #include "mlme.h"
-
-/*
- * old definitions from the prism2/hostap driver interface that
- * we still use temporarily
- */
-#define PRISM2_IOCTL_PRISM2_PARAM (SIOCIWFIRSTPRIV + 0)
-#define PRISM2_IOCTL_GET_PRISM2_PARAM (SIOCIWFIRSTPRIV + 1)
-#define PRISM2_IOCTL_HOSTAPD (SIOCIWFIRSTPRIV + 3)
-
-#define PRISM2_PARAM_AP_BRIDGE_PACKETS	10
-#define PRISM2_PARAM_IEEE_802_1X	23
-#define PRISM2_PARAM_MGMT_IF		1046
-#define PRISM2_HOSTAPD_GET_HW_FEATURES	1002
-#define PRISM2_HOSTAPD_MAX_BUF_SIZE	2048
-
-#ifndef ALIGNED
-#define ALIGNED __attribute__ ((aligned))
-#endif
-
-struct prism2_hostapd_param {
-	u32 cmd;
-	u8 sta_addr[ETH_ALEN];
-	u8 pad[2];
-	union {
-		struct {
-			u16 num_modes;
-			u16 flags;
-			u8 data[0] ALIGNED; /* num_modes * feature data */
-		} hw_features;
-		struct {
-			u16 mode; /* MODE_* */
-			u16 num_supported_rates;
-			u16 num_basic_rates;
-			u8 data[0] ALIGNED; /* num_supported_rates * u16 +
-					     * num_basic_rates * u16 */
-		} set_rate_sets;
-		struct {
-			u16 mode; /* MODE_* */
-			u16 chan;
-			u32 flag;
-			u8 power_level; /* regulatory limit in dBm */
-			u8 antenna_max;
-		} set_channel_flag;
-		struct {
-			u32 rd;
-		} set_regulatory_domain;
-		struct {
-			u32 queue;
-			s32 aifs;
-			u32 cw_min;
-			u32 cw_max;
-			u32 burst_time; /* maximum burst time in 0.1 ms, i.e.,
-					 * 10 = 1 ms */
-		} tx_queue_params;
-	} u;
-};
-
-/* PRISM2_IOCTL_HOSTAPD ioctl() cmd: */
-enum {
-	PRISM2_HOSTAPD_SET_RATE_SETS = 1005,
-	PRISM2_HOSTAPD_SET_CHANNEL_FLAG = 1012,
-	PRISM2_HOSTAPD_SET_REGULATORY_DOMAIN = 1013,
-	PRISM2_HOSTAPD_SET_TX_QUEUE_PARAMS = 1014,
-};
-
-enum {
-	PRISM2_PARAM_CTS_PROTECT_ERP_FRAMES = 1001,
-	PRISM2_PARAM_PREAMBLE = 1003,
-	PRISM2_PARAM_SHORT_SLOT_TIME = 1006,
-	PRISM2_PARAM_NEXT_MODE = 1008,
-};
-
-struct hostapd_ioctl_hw_modes_hdr {
-	int mode;
-	int num_channels;
-	int num_rates;
-};
-
-/*
- * frame format for the management interface that is slated
- * to be replaced by "cooked monitor" with radiotap
- */
-#define IEEE80211_FI_VERSION 0x80211001
-struct ieee80211_frame_info {
-	__be32 version;
-	__be32 length;
-	__be64 mactime;
-	__be64 hosttime;
-	__be32 phytype;
-	__be32 channel;
-	__be32 datarate;
-	__be32 antenna;
-	__be32 priority;
-	__be32 ssi_type;
-	__be32 ssi_signal;
-	__be32 ssi_noise;
-	__be32 preamble;
-	__be32 encoding;
-
-	/* Note: this structure is otherwise identical to capture format used
-	 * in linux-wlan-ng, but this additional field is used to provide meta
-	 * data about the frame to hostapd. This was the easiest method for
-	 * providing this information, but this might change in the future. */
-	__be32 msg_type;
-} __attribute__ ((packed));
+#include "radiotap.h"
+#include "radiotap_iter.h"
 
 enum ieee80211_msg_type {
 	ieee80211_msg_normal = 0,
 	ieee80211_msg_tx_callback_ack = 1,
 	ieee80211_msg_tx_callback_fail = 2,
-	ieee80211_msg_passive_scan = 3,
-	ieee80211_msg_sta_not_assoc = 7,
 };
-
-/* old mode definitions */
-enum {
-	MODE_IEEE80211A = 0 /* IEEE 802.11a */,
-	MODE_IEEE80211B = 1 /* IEEE 802.11b only */,
-	MODE_ATHEROS_TURBO = 2 /* Atheros Turbo mode (2x.11a at 5 GHz) */,
-	MODE_IEEE80211G = 3 /* IEEE 802.11g (and 802.11b compatibility) */,
-	MODE_ATHEROS_TURBOG = 4 /* Atheros Turbo mode (2x.11g at 2.4 GHz) */,
-	NUM_IEEE80211_MODES = 5
-};
-
 
 struct i802_driver_data {
 	struct hostapd_data *hapd;
 
 	char iface[IFNAMSIZ + 1];
-	char mgmt_iface[IFNAMSIZ + 1];
-	int mgmt_ifindex;
-	int sock; /* raw packet socket for driver access */
+	int bridge;
 	int ioctl_sock; /* socket for ioctl() use */
 	int wext_sock; /* socket for wireless events */
 	int eapol_sock; /* socket for EAPOL frames */
+	int monitor_sock; /* socket for monitor */
+	int monitor_ifidx;
 
 	int default_if_indices[16];
 	int *if_indices;
@@ -181,9 +65,11 @@ struct i802_driver_data {
 	int we_version;
 	struct nl_handle *nl_handle;
 	struct nl_cache *nl_cache;
+	struct nl_cb *nl_cb;
 	struct genl_family *nl80211;
-	int dtim_period;
+	int dtim_period, beacon_int;
 	unsigned int beacon_set:1;
+	unsigned int ieee802_1x_active:1;
 };
 
 
@@ -238,6 +124,9 @@ static int have_ifidx(struct i802_driver_data *drv, int ifidx)
 {
 	int i;
 
+	if (ifidx == drv->bridge)
+		return 1;
+
 	for (i = 0; i < drv->num_if_indices; i++)
 		if (drv->if_indices[i] == ifidx)
 			return 1;
@@ -270,7 +159,7 @@ static int hostapd_set_iface_flags(struct i802_driver_data *drv,
 	if (ioctl(drv->ioctl_sock, SIOCGIFFLAGS, &ifr) != 0) {
 		perror("ioctl[SIOCGIFFLAGS]");
 		wpa_printf(MSG_DEBUG, "Could not read interface flags (%s)",
-			   drv->mgmt_iface);
+			   drv->iface);
 		return -1;
 	}
 
@@ -284,52 +173,14 @@ static int hostapd_set_iface_flags(struct i802_driver_data *drv,
 		return -1;
 	}
 
-	if (dev_up) {
-		memset(&ifr, 0, sizeof(ifr));
-		os_strlcpy(ifr.ifr_name, drv->mgmt_iface, IFNAMSIZ);
-		ifr.ifr_mtu = HOSTAPD_MTU;
-		if (ioctl(drv->ioctl_sock, SIOCSIFMTU, &ifr) != 0) {
-			perror("ioctl[SIOCSIFMTU]");
-			printf("Setting MTU failed - trying to survive with "
-			       "current value\n");
-		}
-	}
-
 	return 0;
 }
 
 
-static int hostapd_ioctl_iface(const char *iface, struct i802_driver_data *drv,
-			       struct prism2_hostapd_param *param, int len)
+static int nl_set_encr(int ifindex, struct i802_driver_data *drv,
+		       const char *alg, const u8 *addr, int idx, const u8 *key,
+		       size_t key_len, int txkey)
 {
-	struct iwreq iwr;
-
-	memset(&iwr, 0, sizeof(iwr));
-	os_strlcpy(iwr.ifr_name, iface, IFNAMSIZ);
-	iwr.u.data.pointer = (caddr_t) param;
-	iwr.u.data.length = len;
-
-	if (ioctl(drv->ioctl_sock, PRISM2_IOCTL_HOSTAPD, &iwr) < 0) {
-		/* perror("ioctl[PRISM2_IOCTL_HOSTAPD]"); */
-		return -1;
-	}
-
-	return 0;
-}
-
-
-static int hostapd_ioctl(struct i802_driver_data *drv,
-			 struct prism2_hostapd_param *param, int len)
-{
-	return hostapd_ioctl_iface(drv->iface, drv, param, len);
-}
-
-
-static int i802_set_encryption(const char *iface, void *priv, const char *alg,
-			       const u8 *addr, int idx, const u8 *key,
-			       size_t key_len, int txkey)
-{
-	struct i802_driver_data *drv = priv;
 	struct nl_msg *msg;
 	int ret = -1;
 	int err = 0;
@@ -356,19 +207,24 @@ static int i802_set_encryption(const char *iface, void *priv, const char *alg,
 			NLA_PUT_U32(msg, NL80211_ATTR_KEY_CIPHER, 0x000FAC02);
 		else if (strcmp(alg, "CCMP") == 0)
 			NLA_PUT_U32(msg, NL80211_ATTR_KEY_CIPHER, 0x000FAC04);
-		else
+		else if (strcmp(alg, "IGTK") == 0)
+			NLA_PUT_U32(msg, NL80211_ATTR_KEY_CIPHER, 0x000FAC06);
+		else {
+			wpa_printf(MSG_ERROR, "%s: Unsupported encryption "
+				   "algorithm '%s'", __func__, alg);
 			goto out;
+		}
 	}
 
 	if (addr)
 		NLA_PUT(msg, NL80211_ATTR_MAC, ETH_ALEN, addr);
 	NLA_PUT_U8(msg, NL80211_ATTR_KEY_IDX, idx);
-	NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, if_nametoindex(iface));
+	NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, ifindex);
 
 	if (nl_send_auto_complete(drv->nl_handle, msg) < 0 ||
 	    (err = nl_wait_for_ack(drv->nl_handle)) < 0) {
 		if (err != -ENOENT) {
-			err = 0;
+			ret = 0;
 			goto out;
 		}
 	}
@@ -391,13 +247,20 @@ static int i802_set_encryption(const char *iface, void *priv, const char *alg,
 	genlmsg_put(msg, 0, 0, genl_family_get_id(drv->nl80211), 0,
 		    0, NL80211_CMD_SET_KEY, 0);
 	NLA_PUT_U8(msg, NL80211_ATTR_KEY_IDX, idx);
-	NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, if_nametoindex(iface));
+	NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, ifindex);
+#ifdef NL80211_MFP_PENDING
+	if (strcmp(alg, "IGTK") == 0)
+		NLA_PUT_FLAG(msg, NL80211_ATTR_KEY_DEFAULT_MGMT);
+	else
+		NLA_PUT_FLAG(msg, NL80211_ATTR_KEY_DEFAULT);
+#else /* NL80211_MFP_PENDING */
 	NLA_PUT_FLAG(msg, NL80211_ATTR_KEY_DEFAULT);
+#endif /* NL80211_MFP_PENDING */
 
 	if (nl_send_auto_complete(drv->nl_handle, msg) < 0 ||
 	    (err = nl_wait_for_ack(drv->nl_handle)) < 0) {
 		if (err != -ENOENT) {
-			err = 0;
+			ret = 0;
 			goto out;
 		}
 	}
@@ -407,6 +270,27 @@ static int i802_set_encryption(const char *iface, void *priv, const char *alg,
  out:
  nla_put_failure:
 	nlmsg_free(msg);
+	return ret;
+}
+
+
+static int i802_set_encryption(const char *iface, void *priv, const char *alg,
+			       const u8 *addr, int idx, const u8 *key,
+			       size_t key_len, int txkey)
+{
+	struct i802_driver_data *drv = priv;
+	int ret;
+
+	ret = nl_set_encr(if_nametoindex(iface), drv, alg, addr, idx, key,
+			  key_len, txkey);
+	if (ret < 0)
+		return ret;
+
+	if (strcmp(alg, "IGTK") == 0) {
+		ret = nl_set_encr(drv->monitor_ifidx, drv, alg, addr, idx, key,
+				  key_len, txkey);
+	}
+
 	return ret;
 }
 
@@ -421,7 +305,7 @@ static inline int min_int(int a, int b)
 
 static int get_key_handler(struct nl_msg *msg, void *arg)
 {
-	struct nlattr *tb[NL80211_ATTR_MAX];
+	struct nlattr *tb[NL80211_ATTR_MAX + 1];
 	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
 
 	nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
@@ -462,7 +346,7 @@ static int i802_get_seqnum(const char *iface, void *priv, const u8 *addr,
 	NLA_PUT_U8(msg, NL80211_ATTR_KEY_IDX, idx);
 	NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, if_nametoindex(iface));
 
-	cb = nl_cb_alloc(NL_CB_CUSTOM);
+	cb = nl_cb_clone(drv->nl_cb);
 	if (!cb)
 		goto out;
 
@@ -495,118 +379,7 @@ static int i802_get_seqnum(const char *iface, void *priv, const u8 *addr,
 static int i802_set_rate_sets(void *priv, int *supp_rates, int *basic_rates,
 			      int mode)
 {
-	struct i802_driver_data *drv = priv;
-	struct prism2_hostapd_param *param;
-	u8 *buf;
-	u16 *pos;
-	size_t blen;
-	int ret = 0;
-	int i, num_supp = 0, num_basic = 0;
-
-	if (supp_rates)
-		for (i = 0; supp_rates[i] >= 0; i++)
-			num_supp++;
-	if (basic_rates)
-		for (i = 0; basic_rates[i] >= 0; i++)
-			num_basic++;
-
-	blen = sizeof(*param) + (num_supp + num_basic) * 2;
-	buf = os_zalloc(blen);
-	if (buf == NULL)
-		return -1;
-
-	param = (struct prism2_hostapd_param *) buf;
-	param->cmd = PRISM2_HOSTAPD_SET_RATE_SETS;
-	switch (mode) {
-	case HOSTAPD_MODE_IEEE80211A:
-		param->u.set_rate_sets.mode = MODE_IEEE80211A;
-		break;
-	case HOSTAPD_MODE_IEEE80211B:
-		param->u.set_rate_sets.mode = MODE_IEEE80211B;
-		break;
-	case HOSTAPD_MODE_IEEE80211G:
-		param->u.set_rate_sets.mode = MODE_IEEE80211G;
-		break;
-	}
-	param->u.set_rate_sets.num_supported_rates = num_supp;
-	param->u.set_rate_sets.num_basic_rates = num_basic;
-	pos = (u16 *) param->u.set_rate_sets.data;
-
-	for (i = 0; i < num_supp; i++)
-		*pos++ = supp_rates[i];
-	for (i = 0; i < num_basic; i++)
-		*pos++ = basic_rates[i];
-
-	if (hostapd_ioctl(drv, param, blen)) {
-		printf("Failed to set rate sets.\n");
-		ret = -1;
-	}
-	free(buf);
-
-	return ret;
-}
-
-
-static int hostap_ioctl_prism2param_iface(const char *iface,
-					  struct i802_driver_data *drv,
-					  int param, int value)
-{
-	struct iwreq iwr;
-	int *i;
-
-	memset(&iwr, 0, sizeof(iwr));
-	os_strlcpy(iwr.ifr_name, iface, IFNAMSIZ);
-	i = (int *) iwr.u.name;
-	*i++ = param;
-	*i++ = value;
-
-	if (ioctl(drv->ioctl_sock, PRISM2_IOCTL_PRISM2_PARAM, &iwr) < 0) {
-		char buf[128];
-		snprintf(buf, sizeof(buf),
-			 "%s: ioctl[PRISM2_IOCTL_PRISM2_PARAM]", iface);
-		perror(buf);
-		return -1;
-	}
-
-	return 0;
-}
-
-
-static int hostap_ioctl_prism2param(struct i802_driver_data *drv, int param,
-				    int value)
-{
-	return hostap_ioctl_prism2param_iface(drv->iface, drv, param, value);
-}
-
-
-static int hostap_ioctl_get_prism2param_iface(const char *iface,
-					      struct i802_driver_data *drv,
-					      int param)
-{
-	struct iwreq iwr;
-	int *i;
-
-	memset(&iwr, 0, sizeof(iwr));
-	os_strlcpy(iwr.ifr_name, iface, IFNAMSIZ);
-	i = (int *) iwr.u.name;
-	*i = param;
-
-	if (ioctl(drv->ioctl_sock, PRISM2_IOCTL_GET_PRISM2_PARAM, &iwr) < 0) {
-		char buf[128];
-		snprintf(buf, sizeof(buf),
-			 "%s: ioctl[PRISM2_IOCTL_GET_PRISM2_PARAM]", iface);
-		perror(buf);
-		return -1;
-	}
-
-	return *i;
-}
-
-
-static int hostap_ioctl_get_prism2param(struct i802_driver_data *drv,
-					int param)
-{
-	return hostap_ioctl_get_prism2param_iface(drv->iface, drv, param);
+	return -1;
 }
 
 
@@ -632,12 +405,46 @@ static int i802_set_ssid(const char *ifname, void *priv, const u8 *buf,
 }
 
 
-static int i802_send_mgmt_frame(void *priv, const void *msg, size_t len,
+static int i802_send_mgmt_frame(void *priv, const void *data, size_t len,
 				int flags)
 {
+	struct ieee80211_hdr *hdr = (void*) data;
+	__u8 rtap_hdr[] = {
+		0x00, 0x00, /* radiotap version */
+		0x0e, 0x00, /* radiotap length */
+		0x02, 0xc0, 0x00, 0x00, /* bmap: flags, tx and rx flags */
+		0x0c,       /* F_WEP | F_FRAG (encrypt/fragment if required) */
+		0x00,       /* padding */
+		0x00, 0x00, /* RX and TX flags to indicate that */
+		0x00, 0x00, /* this is the injected frame directly */
+	};
 	struct i802_driver_data *drv = priv;
+	struct iovec iov[2] = {
+		{
+			.iov_base = &rtap_hdr,
+			.iov_len = sizeof(rtap_hdr),
+		},
+		{
+			.iov_base = (void*)data,
+			.iov_len = len,
+		}
+	};
+	struct msghdr msg = {
+		.msg_name = NULL,
+		.msg_namelen = 0,
+		.msg_iov = iov,
+		.msg_iovlen = 2,
+		.msg_control = NULL,
+		.msg_controllen = 0,
+		.msg_flags = 0,
+	};
 
-	return send(drv->sock, msg, len, flags);
+	/*
+	 * ugh, guess what, the generic code sets one of the version
+	 * bits to request tx callback
+	 */
+	hdr->frame_control &= ~host_to_le16(BIT(1));
+	return sendmsg(drv->monitor_sock, &msg, flags);
 }
 
 
@@ -646,20 +453,6 @@ static int i802_set_freq(void *priv, int mode, int freq)
 {
 	struct i802_driver_data *drv = priv;
 	struct iwreq iwr;
-
-	switch (mode) {
-	case HOSTAPD_MODE_IEEE80211A:
-		mode = MODE_IEEE80211A;
-		break;
-	case HOSTAPD_MODE_IEEE80211B:
-		mode = MODE_IEEE80211B;
-		break;
-	case HOSTAPD_MODE_IEEE80211G:
-		mode = MODE_IEEE80211G;
-		break;
-	}
-
-	hostap_ioctl_prism2param(drv, PRISM2_PARAM_NEXT_MODE, mode);
 
 	memset(&iwr, 0, sizeof(iwr));
 	os_strlcpy(iwr.ifr_name, drv->hapd->conf->iface, IFNAMSIZ);
@@ -814,7 +607,7 @@ static int i802_flush(void *priv)
 		goto out;
 
 	genlmsg_put(msg, 0, 0, genl_family_get_id(drv->nl80211), 0,
-		    0, NL80211_CMD_NEW_STATION, 0);
+		    0, NL80211_CMD_DEL_STATION, 0);
 
 	/*
 	 * XXX: FIX! this needs to flush all VLANs too
@@ -842,11 +635,11 @@ static int get_sta_handler(struct nl_msg *msg, void *arg)
 	struct nlattr *tb[NL80211_ATTR_MAX + 1];
 	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
 	struct hostap_sta_driver_data *data = arg;
-	struct nlattr *stats[NL80211_STA_STAT_MAX + 1];
-	static struct nla_policy stats_policy[NL80211_STA_STAT_MAX + 1] = {
-		[NL80211_STA_STAT_INACTIVE_TIME] = { .type = NLA_U32 },
-		[NL80211_STA_STAT_RX_BYTES] = { .type = NLA_U32 },
-		[NL80211_STA_STAT_TX_BYTES] = { .type = NLA_U32 },
+	struct nlattr *stats[NL80211_STA_INFO_MAX + 1];
+	static struct nla_policy stats_policy[NL80211_STA_INFO_MAX + 1] = {
+		[NL80211_STA_INFO_INACTIVE_TIME] = { .type = NLA_U32 },
+		[NL80211_STA_INFO_RX_BYTES] = { .type = NLA_U32 },
+		[NL80211_STA_INFO_TX_BYTES] = { .type = NLA_U32 },
 	};
 
 	nla_parse(tb, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
@@ -858,24 +651,24 @@ static int get_sta_handler(struct nl_msg *msg, void *arg)
 	 * the kernel starts sending station notifications.
 	 */
 
-	if (!tb[NL80211_ATTR_STA_STATS]) {
+	if (!tb[NL80211_ATTR_STA_INFO]) {
 		wpa_printf(MSG_DEBUG, "sta stats missing!");
 		return NL_SKIP;
 	}
-	if (nla_parse_nested(stats, NL80211_STA_STAT_MAX,
-			     tb[NL80211_ATTR_STA_STATS],
+	if (nla_parse_nested(stats, NL80211_STA_INFO_MAX,
+			     tb[NL80211_ATTR_STA_INFO],
 			     stats_policy)) {
 		wpa_printf(MSG_DEBUG, "failed to parse nested attributes!");
 		return NL_SKIP;
 	}
 
-	if (stats[NL80211_STA_STAT_INACTIVE_TIME])
+	if (stats[NL80211_STA_INFO_INACTIVE_TIME])
 		data->inactive_msec =
-			nla_get_u32(stats[NL80211_STA_STAT_INACTIVE_TIME]);
-	if (stats[NL80211_STA_STAT_RX_BYTES])
-		data->rx_bytes = nla_get_u32(stats[NL80211_STA_STAT_RX_BYTES]);
-	if (stats[NL80211_STA_STAT_TX_BYTES])
-		data->rx_bytes = nla_get_u32(stats[NL80211_STA_STAT_TX_BYTES]);
+			nla_get_u32(stats[NL80211_STA_INFO_INACTIVE_TIME]);
+	if (stats[NL80211_STA_INFO_RX_BYTES])
+		data->rx_bytes = nla_get_u32(stats[NL80211_STA_INFO_RX_BYTES]);
+	if (stats[NL80211_STA_INFO_TX_BYTES])
+		data->rx_bytes = nla_get_u32(stats[NL80211_STA_INFO_TX_BYTES]);
 
 	return NL_SKIP;
 }
@@ -900,7 +693,7 @@ static int i802_read_sta_data(void *priv, struct hostap_sta_driver_data *data,
 	NLA_PUT(msg, NL80211_ATTR_MAC, ETH_ALEN, addr);
 	NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, if_nametoindex(drv->iface));
 
-	cb = nl_cb_alloc(NL_CB_CUSTOM);
+	cb = nl_cb_clone(drv->nl_cb);
 	if (!cb)
 		goto out;
 
@@ -955,8 +748,6 @@ static int i802_send_eapol(void *priv, const u8 *addr, const u8 *data,
 	hdr->frame_control =
 		IEEE80211_FC(WLAN_FC_TYPE_DATA, WLAN_FC_STYPE_DATA);
 	hdr->frame_control |= host_to_le16(WLAN_FC_FROMDS);
-	/* Request TX callback */
-	hdr->frame_control |= host_to_le16(BIT(1));
 	if (encrypt)
 		hdr->frame_control |= host_to_le16(WLAN_FC_ISWEP);
 #if 0 /* To be enabled if qos determination is added above */
@@ -1001,7 +792,7 @@ static int i802_send_eapol(void *priv, const u8 *addr, const u8 *data,
 
 static int i802_sta_add(const char *ifname, void *priv, const u8 *addr,
 			u16 aid, u16 capability, u8 *supp_rates,
-			size_t supp_rates_len, int flags)
+			size_t supp_rates_len, int flags, u16 listen_interval)
 {
 	struct i802_driver_data *drv = priv;
 	struct nl_msg *msg;
@@ -1020,7 +811,7 @@ static int i802_sta_add(const char *ifname, void *priv, const u8 *addr,
 	NLA_PUT_U16(msg, NL80211_ATTR_STA_AID, aid);
 	NLA_PUT(msg, NL80211_ATTR_STA_SUPPORTED_RATES, supp_rates_len,
 		supp_rates);
-	NLA_PUT_U16(msg, NL80211_ATTR_STA_LISTEN_INTERVAL, 0);
+	NLA_PUT_U16(msg, NL80211_ATTR_STA_LISTEN_INTERVAL, listen_interval);
 
 	ret = nl_send_auto_complete(drv->nl_handle, msg);
 	if (ret < 0)
@@ -1093,7 +884,7 @@ static int i802_sta_set_flags(void *priv, const u8 *addr,
 		    if_nametoindex(drv->iface));
 	NLA_PUT(msg, NL80211_ATTR_MAC, ETH_ALEN, addr);
 
-	if (total_flags & WLAN_STA_AUTHORIZED)
+	if (total_flags & WLAN_STA_AUTHORIZED || !drv->ieee802_1x_active)
 		NLA_PUT_FLAG(flags, NL80211_STA_FLAG_AUTHORIZED);
 
 	if (total_flags & WLAN_STA_WME)
@@ -1101,6 +892,11 @@ static int i802_sta_set_flags(void *priv, const u8 *addr,
 
 	if (total_flags & WLAN_STA_SHORT_PREAMBLE)
 		NLA_PUT_FLAG(flags, NL80211_STA_FLAG_SHORT_PREAMBLE);
+
+#ifdef NL80211_MFP_PENDING
+	if (total_flags & WLAN_STA_MFP)
+		NLA_PUT_FLAG(flags, NL80211_STA_FLAG_MFP);
+#endif /* NL80211_MFP_PENDING */
 
 	if (nla_put_nested(msg, NL80211_ATTR_STA_FLAGS, flags))
 		goto nla_put_failure;
@@ -1127,74 +923,20 @@ static int i802_set_channel_flag(void *priv, int mode, int chan, int flag,
 				 unsigned char power_level,
 				 unsigned char antenna_max)
 {
-	struct i802_driver_data *drv = priv;
-	struct prism2_hostapd_param param;
-
-	memset(&param, 0, sizeof(param));
-	param.cmd = PRISM2_HOSTAPD_SET_CHANNEL_FLAG;
-	switch (mode) {
-	case HOSTAPD_MODE_IEEE80211A:
-		param.u.set_channel_flag.mode = MODE_IEEE80211A;
-		break;
-	case HOSTAPD_MODE_IEEE80211B:
-		param.u.set_channel_flag.mode = MODE_IEEE80211B;
-		break;
-	case HOSTAPD_MODE_IEEE80211G:
-		param.u.set_channel_flag.mode = MODE_IEEE80211G;
-		break;
-	}
-
-	param.u.set_channel_flag.chan = chan;
-	param.u.set_channel_flag.flag = flag;
-	param.u.set_channel_flag.power_level = power_level;
-	param.u.set_channel_flag.antenna_max = antenna_max;
-
-	if (hostapd_ioctl(drv, &param, sizeof(param))) {
-		printf("Failed to set channel flag (mode=%d chan=%d flag=0x%x)"
-		       "\n", mode, chan, flag);
-		return -1;
-	}
-
-	return 0;
+	return -1;
 }
 
 
 static int i802_set_regulatory_domain(void *priv, unsigned int rd)
 {
-	struct i802_driver_data *drv = priv;
-	struct prism2_hostapd_param param;
-
-	memset(&param, 0, sizeof(param));
-	param.cmd = PRISM2_HOSTAPD_SET_REGULATORY_DOMAIN;
-	param.u.set_regulatory_domain.rd = rd;
-
-	if (hostapd_ioctl(drv, &param, sizeof(param))) {
-		printf("Failed to set regulatory domain (%x)\n", rd);
-		return -1;
-	}
-
-	return 0;
+	return -1;
 }
 
 
 static int i802_set_tx_queue_params(void *priv, int queue, int aifs,
 				    int cw_min, int cw_max, int burst_time)
 {
-	struct i802_driver_data *drv = priv;
-	struct prism2_hostapd_param param;
-
-	memset(&param, 0, sizeof(param));
-	param.cmd = PRISM2_HOSTAPD_SET_TX_QUEUE_PARAMS;
-	param.u.tx_queue_params.queue = queue;
-	param.u.tx_queue_params.aifs = aifs;
-	param.u.tx_queue_params.cw_min = cw_min;
-	param.u.tx_queue_params.cw_max = cw_max;
-	param.u.tx_queue_params.burst_time = burst_time;
-
-	if (hostapd_ioctl(drv, &param, sizeof(param)))
-		return -1;
-
-	return 0;
+	return -1;
 }
 
 
@@ -1225,7 +967,7 @@ static int nl80211_create_iface(struct i802_driver_data *drv,
 				enum nl80211_iftype iftype,
 				const u8 *addr)
 {
-	struct nl_msg *msg;
+	struct nl_msg *msg, *flags = NULL;
 	int ifidx;
 	struct ifreq ifreq;
 	struct iwreq iwr;
@@ -1240,6 +982,23 @@ static int nl80211_create_iface(struct i802_driver_data *drv,
 		    if_nametoindex(drv->hapd->conf->iface));
 	NLA_PUT_STRING(msg, NL80211_ATTR_IFNAME, ifname);
 	NLA_PUT_U32(msg, NL80211_ATTR_IFTYPE, iftype);
+
+	if (iftype == NL80211_IFTYPE_MONITOR) {
+		int err;
+
+		flags = nlmsg_alloc();
+		if (!flags)
+			goto nla_put_failure;
+
+		NLA_PUT_FLAG(flags, NL80211_MNTR_FLAG_COOK_FRAMES);
+
+		err = nla_put_nested(msg, NL80211_ATTR_MNTR_FLAGS, flags);
+
+		nlmsg_free(flags);
+
+		if (err)
+			goto nla_put_failure;
+	}
 
 	if (nl_send_auto_complete(drv->nl_handle, msg) < 0 ||
 	    nl_wait_for_ack(drv->nl_handle) < 0) {
@@ -1293,6 +1052,13 @@ static int i802_bss_add(void *priv, const char *ifname, const u8 *bssid)
 {
 	int ifidx;
 
+	/*
+	 * The kernel supports that when the low-level driver does,
+	 * but we currently don't because we need per-BSS data that
+	 * currently we can't handle easily.
+	 */
+	return -1;
+
 	ifidx = nl80211_create_iface(priv, ifname, NL80211_IFTYPE_AP, bssid);
 	if (ifidx < 0)
 		return -1;
@@ -1332,7 +1098,7 @@ static int i802_set_beacon(const char *iface, void *priv,
 	NLA_PUT(msg, NL80211_ATTR_BEACON_HEAD, head_len, head);
 	NLA_PUT(msg, NL80211_ATTR_BEACON_TAIL, tail_len, tail);
 	NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, if_nametoindex(iface));
-	NLA_PUT_U32(msg, NL80211_ATTR_BEACON_INTERVAL, 1000);
+	NLA_PUT_U32(msg, NL80211_ATTR_BEACON_INTERVAL, drv->beacon_int);
 
 	if (!drv->dtim_period)
 		drv->dtim_period = 2;
@@ -1383,13 +1149,10 @@ static int i802_set_ieee8021x(const char *ifname, void *priv, int enabled)
 {
 	struct i802_driver_data *drv = priv;
 
-	if (hostap_ioctl_prism2param_iface(ifname, drv,
-					   PRISM2_PARAM_IEEE_802_1X, enabled))
-	{
-		printf("%s: Could not %s IEEE 802.1X PAE support in kernel "
-		       "driver.\n", ifname, enabled ? "enable" : "disable");
-		return -1;
-	}
+	/*
+	 * FIXME: This needs to be per interface (BSS)
+	 */
+	drv->ieee802_1x_active = enabled;
 	return 0;
 }
 
@@ -1414,9 +1177,7 @@ static int i802_set_privacy(const char *ifname, void *priv, int enabled)
 
 static int i802_set_internal_bridge(void *priv, int value)
 {
-	struct i802_driver_data *drv = priv;
-	return hostap_ioctl_prism2param(drv, PRISM2_PARAM_AP_BRIDGE_PACKETS,
-					value);
+	return -1;
 }
 
 
@@ -1425,6 +1186,11 @@ static int i802_set_beacon_int(void *priv, int value)
 	struct i802_driver_data *drv = priv;
 	struct nl_msg *msg;
 	int ret = -1;
+
+	drv->beacon_int = value;
+
+	if (!drv->beacon_set)
+		return 0;
 
 	msg = nlmsg_alloc();
 	if (!msg)
@@ -1479,27 +1245,63 @@ static int i802_set_dtim_period(const char *iface, void *priv, int value)
 }
 
 
+static int i802_set_bss(void *priv, int cts, int preamble, int slot)
+{
+#ifdef NL80211_CMD_SET_BSS
+	struct i802_driver_data *drv = priv;
+	struct nl_msg *msg;
+	int ret = -1;
+
+	msg = nlmsg_alloc();
+	if (!msg)
+		goto out;
+
+	genlmsg_put(msg, 0, 0, genl_family_get_id(drv->nl80211), 0, 0,
+		    NL80211_CMD_SET_BSS, 0);
+
+	if (cts >= 0)
+		NLA_PUT_U8(msg, NL80211_ATTR_BSS_CTS_PROT, cts);
+	if (preamble >= 0)
+		NLA_PUT_U8(msg, NL80211_ATTR_BSS_SHORT_PREAMBLE, preamble);
+	if (slot >= 0)
+		NLA_PUT_U8(msg, NL80211_ATTR_BSS_SHORT_SLOT_TIME, slot);
+
+	ret = 0;
+
+	/* TODO: multi-BSS support */
+	NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, if_nametoindex(drv->iface));
+
+	if (nl_send_auto_complete(drv->nl_handle, msg) < 0 ||
+	    nl_wait_for_ack(drv->nl_handle) < 0) {
+		ret = -1;
+	}
+
+nla_put_failure:
+	nlmsg_free(msg);
+
+out:
+	return ret;
+#else /* NL80211_CMD_SET_BSS */
+	return -1;
+#endif /* NL80211_CMD_SET_BSS */
+}
+
+
 static int i802_set_cts_protect(void *priv, int value)
 {
-	struct i802_driver_data *drv = priv;
-	return hostap_ioctl_prism2param(drv,
-					PRISM2_PARAM_CTS_PROTECT_ERP_FRAMES,
-					value);
+	return i802_set_bss(priv, value, -1, -1);
 }
 
 
 static int i802_set_preamble(void *priv, int value)
 {
-	struct i802_driver_data *drv = priv;
-	return hostap_ioctl_prism2param(drv, PRISM2_PARAM_PREAMBLE, value);
+	return i802_set_bss(priv, -1, value, -1);
 }
 
 
 static int i802_set_short_slot_time(void *priv, int value)
 {
-	struct i802_driver_data *drv = priv;
-	return hostap_ioctl_prism2param(drv, PRISM2_PARAM_SHORT_SLOT_TIME,
-					value);
+	return i802_set_bss(priv, -1, -1, value);
 }
 
 
@@ -1541,92 +1343,207 @@ static int i802_if_remove(void *priv, enum hostapd_driver_if_type type,
 }
 
 
-static struct hostapd_hw_modes * i802_get_hw_feature_data(void *priv,
-							  u16 *num_modes,
-							  u16 *flags)
+struct phy_info_arg {
+	u16 *num_modes;
+	struct hostapd_hw_modes *modes;
+	int error;
+};
+
+static int phy_info_handler(struct nl_msg *msg, void *arg)
+{
+	struct nlattr *tb_msg[NL80211_ATTR_MAX + 1];
+	struct genlmsghdr *gnlh = nlmsg_data(nlmsg_hdr(msg));
+	struct phy_info_arg *phy_info = arg;
+
+	struct nlattr *tb_band[NL80211_BAND_ATTR_MAX + 1];
+
+	struct nlattr *tb_freq[NL80211_FREQUENCY_ATTR_MAX + 1];
+	static struct nla_policy freq_policy[NL80211_FREQUENCY_ATTR_MAX + 1] = {
+		[NL80211_FREQUENCY_ATTR_FREQ] = { .type = NLA_U32 },
+		[NL80211_FREQUENCY_ATTR_DISABLED] = { .type = NLA_FLAG },
+		[NL80211_FREQUENCY_ATTR_PASSIVE_SCAN] = { .type = NLA_FLAG },
+		[NL80211_FREQUENCY_ATTR_NO_IBSS] = { .type = NLA_FLAG },
+		[NL80211_FREQUENCY_ATTR_RADAR] = { .type = NLA_FLAG },
+	};
+
+	struct nlattr *tb_rate[NL80211_BITRATE_ATTR_MAX + 1];
+	static struct nla_policy rate_policy[NL80211_BITRATE_ATTR_MAX + 1] = {
+		[NL80211_BITRATE_ATTR_RATE] = { .type = NLA_U32 },
+		[NL80211_BITRATE_ATTR_2GHZ_SHORTPREAMBLE] = { .type = NLA_FLAG },
+	};
+
+	struct nlattr *nl_band;
+	struct nlattr *nl_freq;
+	struct nlattr *nl_rate;
+	int rem_band, rem_freq, rem_rate;
+	struct hostapd_hw_modes *mode;
+	int idx, mode_is_set;
+
+	nla_parse(tb_msg, NL80211_ATTR_MAX, genlmsg_attrdata(gnlh, 0),
+		  genlmsg_attrlen(gnlh, 0), NULL);
+
+	if (!tb_msg[NL80211_ATTR_WIPHY_BANDS])
+		return NL_SKIP;
+
+	nla_for_each_nested(nl_band, tb_msg[NL80211_ATTR_WIPHY_BANDS], rem_band) {
+		mode = realloc(phy_info->modes, (*phy_info->num_modes + 1) * sizeof(*mode));
+		if (!mode)
+			return NL_SKIP;
+		phy_info->modes = mode;
+
+		mode_is_set = 0;
+
+		mode = &phy_info->modes[*(phy_info->num_modes)];
+		memset(mode, 0, sizeof(*mode));
+		*(phy_info->num_modes) += 1;
+
+		nla_parse(tb_band, NL80211_BAND_ATTR_MAX, nla_data(nl_band),
+			  nla_len(nl_band), NULL);
+
+		nla_for_each_nested(nl_freq, tb_band[NL80211_BAND_ATTR_FREQS], rem_freq) {
+			nla_parse(tb_freq, NL80211_FREQUENCY_ATTR_MAX, nla_data(nl_freq),
+				  nla_len(nl_freq), freq_policy);
+			if (!tb_freq[NL80211_FREQUENCY_ATTR_FREQ])
+				continue;
+			mode->num_channels++;
+		}
+
+		mode->channels = calloc(mode->num_channels, sizeof(struct hostapd_channel_data));
+		if (!mode->channels)
+			return NL_SKIP;
+
+		idx = 0;
+
+		nla_for_each_nested(nl_freq, tb_band[NL80211_BAND_ATTR_FREQS], rem_freq) {
+			nla_parse(tb_freq, NL80211_FREQUENCY_ATTR_MAX, nla_data(nl_freq),
+				  nla_len(nl_freq), freq_policy);
+			if (!tb_freq[NL80211_FREQUENCY_ATTR_FREQ])
+				continue;
+
+			mode->channels[idx].freq = nla_get_u32(tb_freq[NL80211_FREQUENCY_ATTR_FREQ]);
+			mode->channels[idx].flag |= HOSTAPD_CHAN_W_SCAN |
+						    HOSTAPD_CHAN_W_ACTIVE_SCAN |
+						    HOSTAPD_CHAN_W_IBSS;
+
+			if (!mode_is_set) {
+				/* crude heuristic */
+				if (mode->channels[idx].freq < 4000)
+					mode->mode = HOSTAPD_MODE_IEEE80211B;
+				else
+					mode->mode = HOSTAPD_MODE_IEEE80211A;
+				mode_is_set = 1;
+			}
+
+			/* crude heuristic */
+			if (mode->channels[idx].freq < 4000)
+				if (mode->channels[idx].freq == 2848)
+					mode->channels[idx].chan = 14;
+				else
+					mode->channels[idx].chan = (mode->channels[idx].freq - 2407) / 5;
+			else
+				mode->channels[idx].chan = mode->channels[idx].freq/5 - 1000;
+
+			if (tb_freq[NL80211_FREQUENCY_ATTR_DISABLED])
+				mode->channels[idx].flag &= ~HOSTAPD_CHAN_W_SCAN;
+			if (tb_freq[NL80211_FREQUENCY_ATTR_PASSIVE_SCAN])
+				mode->channels[idx].flag &= ~HOSTAPD_CHAN_W_ACTIVE_SCAN;
+			if (tb_freq[NL80211_FREQUENCY_ATTR_NO_IBSS])
+				mode->channels[idx].flag &= ~HOSTAPD_CHAN_W_IBSS;
+			idx++;
+		}
+
+		nla_for_each_nested(nl_rate, tb_band[NL80211_BAND_ATTR_RATES], rem_rate) {
+			nla_parse(tb_rate, NL80211_BITRATE_ATTR_MAX, nla_data(nl_rate),
+				  nla_len(nl_rate), rate_policy);
+			if (!tb_rate[NL80211_BITRATE_ATTR_RATE])
+				continue;
+			mode->num_rates++;
+		}
+
+		mode->rates = calloc(mode->num_rates, sizeof(struct hostapd_rate_data));
+		if (!mode->rates)
+			return NL_SKIP;
+
+		idx = 0;
+
+		nla_for_each_nested(nl_rate, tb_band[NL80211_BAND_ATTR_RATES], rem_rate) {
+			nla_parse(tb_rate, NL80211_BITRATE_ATTR_MAX, nla_data(nl_rate),
+				  nla_len(nl_rate), rate_policy);
+			if (!tb_rate[NL80211_BITRATE_ATTR_RATE])
+				continue;
+			mode->rates[idx].rate = nla_get_u32(tb_rate[NL80211_BITRATE_ATTR_RATE]);
+
+			/* crude heuristic */
+			if (mode->mode == HOSTAPD_MODE_IEEE80211B &&
+			    mode->rates[idx].rate > 200)
+				mode->mode = HOSTAPD_MODE_IEEE80211G;
+
+			if (tb_rate[NL80211_BITRATE_ATTR_2GHZ_SHORTPREAMBLE])
+				mode->rates[idx].flags |= HOSTAPD_RATE_PREAMBLE2;
+
+			idx++;
+		}
+	}
+
+	phy_info->error = 0;
+
+	return NL_SKIP;
+}
+
+static struct hostapd_hw_modes *i802_get_hw_feature_data(void *priv,
+							 u16 *num_modes,
+							 u16 *flags)
 {
 	struct i802_driver_data *drv = priv;
-	struct prism2_hostapd_param *param;
-	u8 *pos, *end;
-	struct hostapd_hw_modes *modes;
-	int i;
+	struct nl_msg *msg;
+	int err = -1;
+	struct nl_cb *cb = NULL;
+	int finished = 0;
+	struct phy_info_arg result = {
+		.num_modes = num_modes,
+		.modes = NULL,
+		.error = 1,
+	};
 
-	param = os_zalloc(PRISM2_HOSTAPD_MAX_BUF_SIZE);
-	if (param == NULL)
+	*num_modes = 0;
+	*flags = 0;
+
+	msg = nlmsg_alloc();
+	if (!msg)
 		return NULL;
-	param->cmd = PRISM2_HOSTAPD_GET_HW_FEATURES;
-	if (hostapd_ioctl(drv, param, PRISM2_HOSTAPD_MAX_BUF_SIZE)) {
-		free(param);
-		return NULL;
+
+	genlmsg_put(msg, 0, 0, genl_family_get_id(drv->nl80211), 0,
+		    0, NL80211_CMD_GET_WIPHY, 0);
+
+	NLA_PUT_U32(msg, NL80211_ATTR_IFINDEX, if_nametoindex(drv->iface));
+
+	cb = nl_cb_clone(drv->nl_cb);
+	if (!cb)
+		goto out;
+
+	if (nl_send_auto_complete(drv->nl_handle, msg) < 0)
+		goto out;
+
+	nl_cb_set(cb, NL_CB_VALID, NL_CB_CUSTOM, phy_info_handler, &result);
+	nl_cb_set(cb, NL_CB_ACK, NL_CB_CUSTOM, ack_wait_handler, &finished);
+
+	err = nl_recvmsgs(drv->nl_handle, cb);
+
+	if (!finished)
+		err = nl_wait_for_ack(drv->nl_handle);
+
+	if (err < 0 || result.error) {
+		hostapd_free_hw_features(result.modes, *num_modes);
+		result.modes = NULL;
 	}
 
-	*num_modes = param->u.hw_features.num_modes;
-	*flags = param->u.hw_features.flags;
-
-	pos = param->u.hw_features.data;
-	end = pos + PRISM2_HOSTAPD_MAX_BUF_SIZE -
-		(param->u.hw_features.data - (u8 *) param);
-
-	modes = os_zalloc(*num_modes * sizeof(struct hostapd_hw_modes));
-	if (modes == NULL) {
-		free(param);
-		return NULL;
-	}
-
-	for (i = 0; i < *num_modes; i++) {
-		struct hostapd_ioctl_hw_modes_hdr *hdr;
-		struct hostapd_hw_modes *feature;
-		int clen, rlen;
-
-		hdr = (struct hostapd_ioctl_hw_modes_hdr *) pos;
-		feature = &modes[i];
-		switch (hdr->mode) {
-		case MODE_IEEE80211A:
-			feature->mode = HOSTAPD_MODE_IEEE80211A;
-			break;
-		case MODE_IEEE80211B:
-			feature->mode = HOSTAPD_MODE_IEEE80211B;
-			break;
-		case MODE_IEEE80211G:
-			feature->mode = HOSTAPD_MODE_IEEE80211G;
-			break;
-		default:
-			wpa_printf(MSG_ERROR, "Unknown hw_mode=%d in "
-				   "get_hw_features data", hdr->mode);
-			hostapd_free_hw_features(modes, *num_modes);
-			modes = NULL;
-			break;
-		}
-		feature->num_channels = hdr->num_channels;
-		feature->num_rates = hdr->num_rates;
-
-		pos = (u8 *) (hdr + 1);
-
-		clen = hdr->num_channels *
-			sizeof(struct hostapd_channel_data);
-		rlen = hdr->num_rates *
-			sizeof(struct hostapd_rate_data);
-
-		feature->channels = malloc(clen);
-		feature->rates = malloc(rlen);
-		if (!feature->channels || !feature->rates ||
-		    pos + clen + rlen > end) {
-			wpa_printf(MSG_ERROR, "%s: Could not parse data",
-				   __func__);
-			hostapd_free_hw_features(modes, *num_modes);
-			modes = NULL;
-			break;
-		}
-
-		memcpy(feature->channels, pos, clen);
-		pos += clen;
-		memcpy(feature->rates, pos, rlen);
-		pos += rlen;
-	}
-
-	free(param);
-
-	return modes;
+ out:
+	nl_cb_put(cb);
+ nla_put_failure:
+	if (err)
+		fprintf(stderr, "failed to get information: %d\n", err);
+	nlmsg_free(msg);
+	return result.modes;
 }
 
 
@@ -1653,7 +1570,7 @@ static int i802_set_sta_vlan(void *priv, const u8 *addr,
 	ret = 0;
 
 	if (nl_send_auto_complete(drv->nl_handle, msg) < 0 ||
-	    nl_wait_for_ack(drv->nl_handle) < 0) {
+	    (errno = nl_wait_for_ack(drv->nl_handle) < 0)) {
 		ret = -1;
 	}
 
@@ -1665,73 +1582,22 @@ static int i802_set_sta_vlan(void *priv, const u8 *addr,
 }
 
 
-static void handle_data(struct hostapd_data *hapd, u8 *buf, size_t len,
-			u16 stype, struct ieee80211_frame_info *fi)
+static void handle_unknown_sta(struct hostapd_data *hapd, u8 *ta)
 {
-	struct ieee80211_hdr *hdr;
-	u16 fc, ethertype;
-	u8 *pos, *sa;
-	size_t left;
 	struct sta_info *sta;
 
-	if (len < sizeof(struct ieee80211_hdr))
-		return;
-
-	hdr = (struct ieee80211_hdr *) buf;
-	fc = le_to_host16(hdr->frame_control);
-
-	if ((fc & (WLAN_FC_FROMDS | WLAN_FC_TODS)) != WLAN_FC_TODS) {
-		printf("Not ToDS data frame (fc=0x%04x)\n", fc);
-		return;
-	}
-
-	sa = hdr->addr2;
-	sta = ap_get_sta(hapd, sa);
+	sta = ap_get_sta(hapd, ta);
 	if (!sta || !(sta->flags & WLAN_STA_ASSOC)) {
-		printf("Data frame from not associated STA " MACSTR "\n",
-		       MAC2STR(sa));
+		printf("Data/PS-poll frame from not associated STA "
+		       MACSTR "\n", MAC2STR(ta));
 		if (sta && (sta->flags & WLAN_STA_AUTH))
 			hostapd_sta_disassoc(
-				hapd, sa,
+				hapd, ta,
 				WLAN_REASON_CLASS3_FRAME_FROM_NONASSOC_STA);
 		else
 			hostapd_sta_deauth(
-				hapd, sa,
+				hapd, ta,
 				WLAN_REASON_CLASS3_FRAME_FROM_NONASSOC_STA);
-		return;
-	}
-
-	pos = (u8 *) (hdr + 1);
-	left = len - sizeof(*hdr);
-
-	if (left < sizeof(rfc1042_header)) {
-		printf("Too short data frame\n");
-		return;
-	}
-
-	if (memcmp(pos, rfc1042_header, sizeof(rfc1042_header)) != 0) {
-		printf("Data frame with no RFC1042 header\n");
-		return;
-	}
-	pos += sizeof(rfc1042_header);
-	left -= sizeof(rfc1042_header);
-
-	if (left < 2) {
-		printf("No ethertype in data frame\n");
-		return;
-	}
-
-	ethertype = WPA_GET_BE16(pos);
-	pos += 2;
-	left -= 2;
-	switch (ethertype) {
-	case ETH_P_PAE:
-		ieee802_1x_receive(hapd, sa, pos, left);
-		break;
-
-	default:
-		printf("Unknown ethertype 0x%04x in data frame\n", ethertype);
-		break;
 	}
 }
 
@@ -1780,34 +1646,9 @@ static void handle_tx_callback(struct hostapd_data *hapd, u8 *buf, size_t len,
 }
 
 
-static void dump_frame_info(struct ieee80211_frame_info *fi, size_t len)
-{
-	u64 ts, tus;
-
-	tus = ts = be_to_host64(fi->hosttime);
-	ts /= 1000000;
-	tus -= ts * 1000000;
-	wpa_hexdump(MSG_DEBUG, "Frame info dump", (u8 *) fi, len);
-        printf("version:\t0x%08x\n", ntohl(fi->version));
-        printf("length:\t%d\n", ntohl(fi->length));
-        printf("mactime:\t%lld\n", be_to_host64(fi->mactime));
-        printf("hosttime:\t%lld.%06lld\n", ts, tus);
-        printf("phytype:\t%d\n", ntohl(fi->phytype));
-        printf("channel:\t%d\n", ntohl(fi->channel));
-        printf("datarate:\t%d\n", ntohl(fi->datarate));
-        printf("antenna:\t%d\n", ntohl(fi->antenna));
-        printf("priority\t%d\n", ntohl(fi->priority));
-        printf("ssi_type:\t%d\n", ntohl(fi->ssi_type));
-        printf("ssi_signal:\t%d\n", ntohl(fi->ssi_signal));
-        printf("ssi_noise:\t%d\n", ntohl(fi->ssi_noise));
-        printf("preamble:\t%d\n", ntohl(fi->preamble));
-        printf("encoding:\t%d\n", ntohl(fi->encoding));
-        printf("msg_type:\t%d\n", ntohl(fi->msg_type));
-}
-
-
 static void handle_frame(struct hostapd_iface *iface, u8 *buf, size_t len,
-			 struct ieee80211_frame_info *fi)
+			 struct hostapd_frame_info *hfi,
+			 enum ieee80211_msg_type msg_type)
 {
 	struct ieee80211_hdr *hdr;
 	u16 fc, type, stype;
@@ -1816,77 +1657,68 @@ static void handle_frame(struct hostapd_iface *iface, u8 *buf, size_t len,
 	int broadcast_bssid = 0;
 	size_t i;
 	u8 *bssid;
-	int msg_type = ntohl(fi->msg_type);
-	struct hostapd_frame_info hfi;
 
-#if 0 /* TODO */
-	/* special handling for message types without IEEE 802.11 header */
-	if (msg_type == ieee80211_msg_set_aid_for_sta) {
-		ieee802_11_set_aid_for_sta(iface->bss[0], buf, data_len);
-		return;
-	}
-#endif
-# if 0
-/* TODO
- * get key notification from kernel again... it doesn't give one now
- * because this code doesn't care
- */
-	if (msg_type == ieee80211_msg_key_threshold_notification) {
-		ieee802_11_key_threshold_notification(iface->bss[0], buf,
-						      data_len);
-		return;
-	}
-#endif
-
-	/* PS-Poll frame from not associated is 16 bytes. All other frames
-	 * passed to hostapd are 24 bytes or longer.
-	 * Right now, the kernel doesn't send us any frames from not-associated
-	 * because the code here doesn't care. TODO: add support to kernel
-	 * and send DEAUTH/DISASSOC to them...
+	/*
+	 * PS-Poll frames are 16 bytes. All other frames are
+	 * 24 bytes or longer.
 	 */
-	if (len < 24) {
-		printf("handle_frame: too short (%lu), type %d\n",
-		       (unsigned long) len, msg_type);
+	if (len < 16)
 		return;
-	}
 
 	hdr = (struct ieee80211_hdr *) buf;
 	fc = le_to_host16(hdr->frame_control);
-	bssid = hdr->addr3;
 
 	type = WLAN_FC_GET_TYPE(fc);
 	stype = WLAN_FC_GET_STYPE(fc);
 
-	if (type == WLAN_FC_TYPE_DATA) {
+	switch (type) {
+	case WLAN_FC_TYPE_DATA:
+		if (len < 24)
+			return;
 		switch (fc & (WLAN_FC_FROMDS | WLAN_FC_TODS)) {
 		case WLAN_FC_TODS:
 			bssid = hdr->addr1;
 			break;
-		case WLAN_FC_FROMDS:
-			bssid = hdr->addr2;
-			break;
+		default:
+			/* discard */
+			return;
 		}
+		break;
+	case WLAN_FC_TYPE_CTRL:
+		/* discard non-ps-poll frames */
+		if (stype != WLAN_FC_STYPE_PSPOLL)
+			return;
+		bssid = hdr->addr1;
+		break;
+	case WLAN_FC_TYPE_MGMT:
+		bssid = hdr->addr3;
+		break;
+	default:
+		/* discard */
+		return;
 	}
 
+	/* find interface frame belongs to */
 	for (i = 0; i < iface->num_bss; i++) {
 		if (memcmp(bssid, iface->bss[i]->own_addr, ETH_ALEN) == 0) {
 			hapd = iface->bss[i];
 			break;
 		}
 	}
+
 	if (hapd == NULL) {
 		hapd = iface->bss[0];
 
 		if (bssid[0] != 0xff || bssid[1] != 0xff ||
 		    bssid[2] != 0xff || bssid[3] != 0xff ||
 		    bssid[4] != 0xff || bssid[5] != 0xff) {
-			/* Unknown BSSID - drop frame if this is not from
-			 * passive scanning or a beacon
-			 * (at least ProbeReq frames to other APs may be
-			 * allowed through RX filtering in the wlan hw/driver)
+			/*
+			 * Unknown BSSID - drop frame if this is not from
+			 * passive scanning or a beacon (at least ProbeReq
+			 * frames to other APs may be allowed through RX
+			 * filtering in the wlan hw/driver)
 			 */
-			if (msg_type != ieee80211_msg_passive_scan &&
-			    (type != WLAN_FC_TYPE_MGMT ||
+			if ((type != WLAN_FC_TYPE_MGMT ||
 			     stype != WLAN_FC_STYPE_BEACON))
 				return;
 		} else
@@ -1895,7 +1727,6 @@ static void handle_frame(struct hostapd_iface *iface, u8 *buf, size_t len,
 
 	switch (msg_type) {
 	case ieee80211_msg_normal:
-	case ieee80211_msg_passive_scan:
 		/* continue processing */
 		break;
 	case ieee80211_msg_tx_callback_ack:
@@ -1904,27 +1735,6 @@ static void handle_frame(struct hostapd_iface *iface, u8 *buf, size_t len,
 	case ieee80211_msg_tx_callback_fail:
 		handle_tx_callback(hapd, buf, data_len, 0);
 		return;
-/*
- * TODO
- * the kernel never sends this any more, add new nl80211
- * notification if you need this.
-
-	case ieee80211_msg_wep_frame_unknown_key:
-		ieee802_11_rx_unknown_key(hapd, buf, data_len);
-		return;
- */
-/*
- * TODO
- * We should be telling them to go away. But we don't support that now.
- * See also below and above for other TODO items related to this.
-
- 	case ieee80211_msg_sta_not_assoc:
-		ieee802_11_rx_sta_not_assoc(hapd, buf, data_len);
-		return;
- */
-	default:
-		printf("handle_frame: unknown msg_type %d\n", msg_type);
-		return;
 	}
 
 	switch (type) {
@@ -1932,67 +1742,23 @@ static void handle_frame(struct hostapd_iface *iface, u8 *buf, size_t len,
 		if (stype != WLAN_FC_STYPE_BEACON &&
 		    stype != WLAN_FC_STYPE_PROBE_REQ)
 			wpa_printf(MSG_MSGDUMP, "MGMT");
-		memset(&hfi, 0, sizeof(hfi));
-		hfi.phytype = ntohl(fi->phytype);
-		hfi.channel = ntohl(fi->channel);
-		hfi.datarate = ntohl(fi->datarate);
-		hfi.ssi_signal = ntohl(fi->ssi_signal);
-		hfi.passive_scan = ntohl(fi->msg_type) ==
-			ieee80211_msg_passive_scan;
 		if (broadcast_bssid) {
 			for (i = 0; i < iface->num_bss; i++)
 				ieee802_11_mgmt(iface->bss[i], buf, data_len,
-						stype, &hfi);
+						stype, hfi);
 		} else
-			ieee802_11_mgmt(hapd, buf, data_len, stype, &hfi);
+			ieee802_11_mgmt(hapd, buf, data_len, stype, hfi);
 		break;
 	case WLAN_FC_TYPE_CTRL:
-		/* TODO: send deauth/disassoc if not associated STA sends
-		 * PS-Poll */
+		/* can only get here with PS-Poll frames */
 		wpa_printf(MSG_DEBUG, "CTRL");
+		handle_unknown_sta(hapd, hdr->addr2);
 		break;
 	case WLAN_FC_TYPE_DATA:
 		wpa_printf(MSG_DEBUG, "DATA");
-		handle_data(hapd, buf, data_len, stype, fi);
-		break;
-	default:
-		printf("unknown frame type %d\n", type);
+		handle_unknown_sta(hapd, hdr->addr2);
 		break;
 	}
-}
-
-
-static void handle_read(int sock, void *eloop_ctx, void *sock_ctx)
-{
-	struct hostapd_iface *iface = eloop_ctx;
-	int len;
-	unsigned char buf[3000];
-	struct ieee80211_frame_info *fi;
-
-	len = recv(sock, buf, sizeof(buf), 0);
-	if (len < 0) {
-		perror("recv");
-		return;
-	}
-	wpa_hexdump(MSG_MSGDUMP, "Received management frame", buf, len);
-
-	if (len < (int) sizeof(struct ieee80211_frame_info)) {
-		printf("handle_read: too short (%d)\n", len);
-		return;
-	}
-
-	fi = (struct ieee80211_frame_info *) buf;
-
-	if (ntohl(fi->version) != IEEE80211_FI_VERSION) {
-		printf("Invalid frame info version!\n");
-		dump_frame_info(fi, len);
-		return;
-	}
-
-	handle_frame(iface,
-		     buf + sizeof(struct ieee80211_frame_info),
-		     len - sizeof(struct ieee80211_frame_info),
-		     fi);
 }
 
 
@@ -2006,7 +1772,7 @@ static void handle_eapol(int sock, void *eloop_ctx, void *sock_ctx)
 	socklen_t fromlen = sizeof(lladdr);
 
 	len = recvfrom(sock, buf, sizeof(buf), 0,
-		       (struct sockaddr *) &lladdr, &fromlen);
+		       (struct sockaddr *)&lladdr, &fromlen);
 	if (len < 0) {
 		perror("recv");
 		return;
@@ -2014,6 +1780,138 @@ static void handle_eapol(int sock, void *eloop_ctx, void *sock_ctx)
 
 	if (have_ifidx(drv, lladdr.sll_ifindex))
 		ieee802_1x_receive(hapd, lladdr.sll_addr, buf, len);
+}
+
+
+static void handle_monitor_read(int sock, void *eloop_ctx, void *sock_ctx)
+{
+	struct i802_driver_data *drv = eloop_ctx;
+	int len;
+	unsigned char buf[3000];
+	struct hostapd_data *hapd = drv->hapd;
+	struct ieee80211_radiotap_iterator iter;
+	int ret;
+	struct hostapd_frame_info hfi;
+	int injected = 0, failed = 0, msg_type, rxflags = 0;
+
+	len = recv(sock, buf, sizeof(buf), 0);
+	if (len < 0) {
+		perror("recv");
+		return;
+	}
+
+	if (ieee80211_radiotap_iterator_init(&iter, (void*)buf, len)) {
+		printf("received invalid radiotap frame\n");
+		return;
+	}
+
+	memset(&hfi, 0, sizeof(hfi));
+
+	while (1) {
+		ret = ieee80211_radiotap_iterator_next(&iter);
+		if (ret == -ENOENT)
+			break;
+		if (ret) {
+			printf("received invalid radiotap frame (%d)\n", ret);
+			return;
+		}
+		switch (iter.this_arg_index) {
+		case IEEE80211_RADIOTAP_FLAGS:
+			if (*iter.this_arg & IEEE80211_RADIOTAP_F_FCS)
+				len -= 4;
+			break;
+		case IEEE80211_RADIOTAP_RX_FLAGS:
+			rxflags = 1;
+			break;
+		case IEEE80211_RADIOTAP_TX_FLAGS:
+			injected = 1;
+			failed = le_to_host16((*(uint16_t *) iter.this_arg)) &
+					IEEE80211_RADIOTAP_F_TX_FAIL;
+			break;
+		case IEEE80211_RADIOTAP_DATA_RETRIES:
+			break;
+		case IEEE80211_RADIOTAP_CHANNEL:
+			/* TODO convert from freq/flags to channel number
+			hfi.channel = XXX;
+			hfi.phytype = XXX;
+			 */
+			break;
+		case IEEE80211_RADIOTAP_RATE:
+			hfi.datarate = *iter.this_arg * 5;
+			break;
+		case IEEE80211_RADIOTAP_DB_ANTSIGNAL:
+			hfi.ssi_signal = *iter.this_arg;
+			break;
+		}
+	}
+
+	if (rxflags && injected)
+		return;
+
+	if (!injected)
+		msg_type = ieee80211_msg_normal;
+	else if (failed)
+		msg_type = ieee80211_msg_tx_callback_fail;
+	else
+		msg_type = ieee80211_msg_tx_callback_ack;
+
+	handle_frame(hapd->iface, buf + iter.max_length,
+		     len - iter.max_length, &hfi, msg_type);
+}
+
+
+static int nl80211_create_monitor_interface(struct i802_driver_data *drv)
+{
+	char buf[IFNAMSIZ];
+	struct sockaddr_ll ll;
+	int optval;
+	socklen_t optlen;
+
+	snprintf(buf, IFNAMSIZ, "mon.%s", drv->iface);
+	buf[IFNAMSIZ - 1] = '\0';
+
+	drv->monitor_ifidx =
+		nl80211_create_iface(drv, buf, NL80211_IFTYPE_MONITOR, NULL);
+
+	if (drv->monitor_ifidx < 0)
+		return -1;
+
+	if (hostapd_set_iface_flags(drv, buf, 1))
+		goto error;
+
+	memset(&ll, 0, sizeof(ll));
+	ll.sll_family = AF_PACKET;
+	ll.sll_ifindex = drv->monitor_ifidx;
+	drv->monitor_sock = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
+	if (drv->monitor_sock < 0) {
+		perror("socket[PF_PACKET,SOCK_RAW]");
+		goto error;
+	}
+
+	if (bind(drv->monitor_sock, (struct sockaddr *) &ll,
+		 sizeof(ll)) < 0) {
+		perror("monitor socket bind");
+		goto error;
+	}
+
+	optlen = sizeof(optval);
+	optval = 20;
+	if (setsockopt
+	    (drv->monitor_sock, SOL_SOCKET, SO_PRIORITY, &optval, optlen)) {
+		perror("Failed to set socket priority");
+		goto error;
+	}
+
+	if (eloop_register_read_sock(drv->monitor_sock, handle_monitor_read,
+				     drv, NULL)) {
+		printf("Could not register monitor read socket\n");
+		goto error;
+	}
+
+	return 0;
+ error:
+	nl80211_remove_iface(drv, drv->monitor_ifidx);
+	return -1;
 }
 
 
@@ -2045,16 +1943,14 @@ static int nl80211_set_master_mode(struct i802_driver_data *drv,
 
 	return 0;
 }
-  
+
 
 static int i802_init_sockets(struct i802_driver_data *drv, const u8 *bssid)
 {
-	struct hostapd_data *hapd = drv->hapd;
-	struct hostapd_iface *iface = hapd->iface;
 	struct ifreq ifr;
 	struct sockaddr_ll addr;
 
-	drv->sock = drv->ioctl_sock = -1;
+	drv->ioctl_sock = -1;
 
 	drv->ioctl_sock = socket(PF_INET, SOCK_DGRAM, 0);
 	if (drv->ioctl_sock < 0) {
@@ -2082,7 +1978,13 @@ static int i802_init_sockets(struct i802_driver_data *drv, const u8 *bssid)
 	/*
 	 * initialise generic netlink and nl80211
 	 */
-	drv->nl_handle = nl_handle_alloc();
+	drv->nl_cb = nl_cb_alloc(NL_CB_DEFAULT);
+	if (!drv->nl_cb) {
+		printf("Failed to allocate netlink callbacks.\n");
+		return -1;
+	}
+
+	drv->nl_handle = nl_handle_alloc_cb(drv->nl_cb);
 	if (!drv->nl_handle) {
 		printf("Failed to allocate netlink handle.\n");
 		return -1;
@@ -2105,26 +2007,9 @@ static int i802_init_sockets(struct i802_driver_data *drv, const u8 *bssid)
 		return -1;
 	}
 
-	/* Enable management interface */
-	if (hostap_ioctl_prism2param(drv, PRISM2_PARAM_MGMT_IF, 1) < 0) {
-		printf("Failed to enable management interface.\n");
+	/* Initialise a monitor interface */
+	if (nl80211_create_monitor_interface(drv))
 		return -1;
-	}
-	drv->mgmt_ifindex =
-		hostap_ioctl_get_prism2param(drv, PRISM2_PARAM_MGMT_IF);
-	if (drv->mgmt_ifindex < 0) {
-		printf("Failed to get ifindex for the management "
-		       "interface.\n");
-		return -1;
-	}
-
-	memset(&ifr, 0, sizeof(ifr));
-	ifr.ifr_ifindex = drv->mgmt_ifindex;
-	if (ioctl(drv->ioctl_sock, SIOCGIFNAME, &ifr) != 0) {
-		perror("ioctl(SIOCGIFNAME)");
-		return -1;
-	}
-	os_strlcpy(drv->mgmt_iface, ifr.ifr_name, sizeof(drv->mgmt_iface));
 
 	if (nl80211_set_master_mode(drv, drv->iface))
 		return -1;
@@ -2138,22 +2023,6 @@ static int i802_init_sockets(struct i802_driver_data *drv, const u8 *bssid)
 	wpa_printf(MSG_DEBUG, "Opening raw packet socket for ifindex %d",
 		   addr.sll_ifindex);
 
-	drv->sock = socket(PF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
-	if (drv->sock < 0) {
-		perror("socket[PF_PACKET,SOCK_RAW]");
-		return -1;
-	}
-
-	if (bind(drv->sock, (struct sockaddr *) &addr, sizeof(addr)) < 0) {
-		perror(__FILE__ ":bind");
-		return -1;
-	}
-
-	if (eloop_register_read_sock(drv->sock, handle_read, iface, NULL)) {
-		printf("Could not register read socket\n");
-		return -1;
-	}
-
 	drv->eapol_sock = socket(PF_PACKET, SOCK_DGRAM, htons(ETH_P_PAE));
 	if (drv->eapol_sock < 0) {
 		perror("socket(PF_PACKET, SOCK_DGRAM, ETH_P_PAE)");
@@ -2166,12 +2035,12 @@ static int i802_init_sockets(struct i802_driver_data *drv, const u8 *bssid)
 		return -1;
 	}
 
-        memset(&ifr, 0, sizeof(ifr));
-        os_strlcpy(ifr.ifr_name, drv->iface, sizeof(ifr.ifr_name));
-        if (ioctl(drv->sock, SIOCGIFHWADDR, &ifr) != 0) {
+	memset(&ifr, 0, sizeof(ifr));
+	os_strlcpy(ifr.ifr_name, drv->iface, sizeof(ifr.ifr_name));
+	if (ioctl(drv->ioctl_sock, SIOCGIFHWADDR, &ifr) != 0) {
 		perror("ioctl(SIOCGIFHWADDR)");
 		return -1;
-        }
+	}
 
 	if (ifr.ifr_hwaddr.sa_family != ARPHRD_ETHER) {
 		printf("Invalid HW-addr family 0x%04x\n",
@@ -2506,6 +2375,7 @@ static void *i802_init_bssid(struct hostapd_data *hapd, const u8 *bssid)
 
 	drv->num_if_indices = sizeof(drv->default_if_indices) / sizeof(int);
 	drv->if_indices = drv->default_if_indices;
+	drv->bridge = if_nametoindex(hapd->conf->bridge);
 
 	if (i802_init_sockets(drv, bssid))
 		goto failed;
@@ -2530,14 +2400,14 @@ static void i802_deinit(void *priv)
 
 	i802_del_beacon(drv);
 
-	/* Disable management interface */
-	(void) hostap_ioctl_prism2param(drv, PRISM2_PARAM_MGMT_IF, 0);
+	/* remove monitor interface */
+	nl80211_remove_iface(drv, drv->monitor_ifidx);
 
 	(void) hostapd_set_iface_flags(drv, drv->iface, 0);
 
-	if (drv->sock >= 0) {
-		eloop_unregister_read_sock(drv->sock);
-		close(drv->sock);
+	if (drv->monitor_sock >= 0) {
+		eloop_unregister_read_sock(drv->monitor_sock);
+		close(drv->monitor_sock);
 	}
 	if (drv->ioctl_sock >= 0)
 		close(drv->ioctl_sock);
@@ -2549,6 +2419,7 @@ static void i802_deinit(void *priv)
 	genl_family_put(drv->nl80211);
 	nl_cache_free(drv->nl_cache);
 	nl_handle_destroy(drv->nl_handle);
+	nl_cb_put(drv->nl_cb);
 
 	if (drv->if_indices != drv->default_if_indices)
 		free(drv->if_indices);

@@ -10,6 +10,7 @@
 ** destructor.
 *****************************************************************************/
 
+#include <stdlib.h>
 
 enum {
     AUTH_NONE = 0,
@@ -360,7 +361,7 @@ void NetworkConfig::paramsFromConfig( int network_id )
     reply_len = sizeof(reply) - 1;
     if (wpagui->ctrlRequest(cmd, reply, &reply_len) >= 0) {
 	reply[reply_len] = '\0';
-	if (strstr(reply, "CCMP"))
+	if (strstr(reply, "CCMP") && auth != AUTH_NONE)
 	    encr = 1;
 	else if (strstr(reply, "TKIP"))
 	    encr = 0;

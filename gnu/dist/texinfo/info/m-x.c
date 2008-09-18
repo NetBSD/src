@@ -1,7 +1,7 @@
-/*	$NetBSD: m-x.c,v 1.1.1.4 2004/07/12 23:26:54 wiz Exp $	*/
+/*	$NetBSD: m-x.c,v 1.1.1.4.26.1 2008/09/18 04:48:28 wrstuden Exp $	*/
 
 /* m-x.c -- Meta-x minibuffer reader.
-   Id: m-x.c,v 1.4 2004/03/20 22:15:57 karl Exp
+   Id: m-x.c,v 1.3 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1993, 1997, 1998, 2001, 2002, 2004 Free Software
    Foundation, Inc.

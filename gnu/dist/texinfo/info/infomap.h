@@ -1,7 +1,7 @@
-/*	$NetBSD: infomap.h,v 1.1.1.3 2004/07/12 23:26:54 wiz Exp $	*/
+/*	$NetBSD: infomap.h,v 1.1.1.3.26.1 2008/09/18 04:48:28 wrstuden Exp $	*/
 
 /* infomap.h -- description of a keymap in Info and related functions.
-   Id: infomap.h,v 1.3 2004/03/14 00:57:29 karl Exp
+   Id: infomap.h,v 1.3 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1993, 2001, 2004 Free Software Foundation, Inc.
 

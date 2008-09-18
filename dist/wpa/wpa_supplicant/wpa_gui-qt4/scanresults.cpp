@@ -12,8 +12,6 @@
  * See README and COPYING for more details.
  */
 
-#include <QTimer>
-
 #include "scanresults.h"
 #include "wpagui.h"
 #include "networkconfig.h"
@@ -38,7 +36,6 @@ ScanResults::ScanResults(QWidget *parent, const char *, bool, Qt::WFlags)
 
 ScanResults::~ScanResults()
 {
-	delete timer;
 }
 
 
@@ -52,46 +49,53 @@ void ScanResults::setWpaGui(WpaGui *_wpagui)
 {
 	wpagui = _wpagui;
 	updateResults();
-    
-	timer = new QTimer(this);
-	connect(timer, SIGNAL(timeout()), SLOT(getResults()));
-	timer->setSingleShot(FALSE);
-	timer->start(10000);
 }
 
 
 void ScanResults::updateResults()
 {
-	char reply[8192];
+	char reply[2048];
 	size_t reply_len;
-    
-	if (wpagui == NULL)
-		return;
-
-	reply_len = sizeof(reply) - 1;
-	if (wpagui->ctrlRequest("SCAN_RESULTS", reply, &reply_len) < 0)
-		return;
-	reply[reply_len] = '\0';
+	int index;
+	char cmd[20];
 
 	scanResultsWidget->clear();
 
-	QString res(reply);
-	QStringList lines = res.split(QChar('\n'));
-	bool first = true;
-	for (QStringList::Iterator it = lines.begin(); it != lines.end(); it++)
-	{
-		if (first) {
-			first = false;
-			continue;
-		}
+	index = 0;
+	while (wpagui) {
+		snprintf(cmd, sizeof(cmd), "BSS %d", index++);
+		if (index > 1000)
+			break;
 
-		QStringList cols = (*it).split(QChar('\t'));
+		reply_len = sizeof(reply) - 1;
+		if (wpagui->ctrlRequest(cmd, reply, &reply_len) < 0)
+			break;
+		reply[reply_len] = '\0';
+
+		QString bss(reply);
+		if (bss.isEmpty() || bss.startsWith("FAIL"))
+			break;
+
 		QString ssid, bssid, freq, signal, flags;
-		bssid = cols.count() > 0 ? cols[0] : "";
-		freq = cols.count() > 1 ? cols[1] : "";
-		signal = cols.count() > 2 ? cols[2] : "";
-		flags = cols.count() > 3 ? cols[3] : "";
-		ssid = cols.count() > 4 ? cols[4] : "";
+
+		QStringList lines = bss.split(QRegExp("\\n"));
+		for (QStringList::Iterator it = lines.begin();
+		     it != lines.end(); it++) {
+			int pos = (*it).indexOf('=') + 1;
+			if (pos < 1)
+				continue;
+
+			if ((*it).startsWith("bssid="))
+				bssid = (*it).mid(pos);
+			else if ((*it).startsWith("freq="))
+				freq = (*it).mid(pos);
+			else if ((*it).startsWith("qual="))
+				signal = (*it).mid(pos);
+			else if ((*it).startsWith("flags="))
+				flags = (*it).mid(pos);
+			else if ((*it).startsWith("ssid="))
+				ssid = (*it).mid(pos);
+		}
 
 		QTreeWidgetItem *item = new QTreeWidgetItem(scanResultsWidget);
 		if (item) {
@@ -101,6 +105,9 @@ void ScanResults::updateResults()
 			item->setText(3, signal);
 			item->setText(4, flags);
 		}
+
+		if (bssid.isEmpty())
+			break;
 	}
 }
 

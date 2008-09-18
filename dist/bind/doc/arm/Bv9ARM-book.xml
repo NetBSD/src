@@ -18,7 +18,7 @@
  - PERFORMANCE OF THIS SOFTWARE.
 -->
 
-<!-- File: $Id: Bv9ARM-book.xml,v 1.1.1.7.12.1 2008/06/23 04:27:45 wrstuden Exp $ -->
+<!-- File: $Id: Bv9ARM-book.xml,v 1.1.1.7.12.2 2008/09/18 04:44:35 wrstuden Exp $ -->
 <book xmlns:xi="http://www.w3.org/2001/XInclude">
   <title>BIND 9 Administrator Reference Manual</title>
 
@@ -4512,6 +4512,7 @@ category notify { null; };
     <optional> max-transfer-idle-in <replaceable>number</replaceable>; </optional>
     <optional> max-transfer-idle-out <replaceable>number</replaceable>; </optional>
     <optional> tcp-clients <replaceable>number</replaceable>; </optional>
+    <optional> reserved-sockets <replaceable>number</replaceable>; </optional>
     <optional> recursive-clients <replaceable>number</replaceable>; </optional>
     <optional> serial-query-rate <replaceable>number</replaceable>; </optional>
     <optional> serial-queries <replaceable>number</replaceable>; </optional>
@@ -5641,7 +5642,7 @@ options {
                   Enable DNSSEC validation in named.
 		  Note <command>dnssec-enable</command> also needs to be
 		  set to <userinput>yes</userinput> to be effective.
-                  The default is <userinput>no</userinput>.
+                  The default is <userinput>yes</userinput>.
                 </para>
               </listitem>
             </varlistentry>
@@ -6243,11 +6244,17 @@ listen-on-v6 port 1234 { !2001:db8::/32; any; };
             a wildcard IP address (<command>INADDR_ANY</command>)
             will be used.
             If <command>port</command> is <command>*</command> or is omitted,
-            a pool of random unprivileged ports will be used.  See the
-	    <command>use-queryport-pool</command>,
-	    <command>queryport-pool-ports</command> and
-	    <command>queryport-pool-updateinterval</command> options below for how the pool
-	    is configured.
+	    a random unprivileged port number is picked up and will be
+            used for each query.
+	    Previously, the <command>use-queryport-pool</command> was provided
+	    to support a pool of such random ports, but this option is now
+	    obsolete because reusing the same ports in the pool is not
+            sufficiently secure.
+	    For the same reason, it is generally strongly discouraged to
+            specify a particular port for the
+	    <command>query-source</command> or
+	    <command>query-source-v6</command> options;
+	    it implicitly disables the use of randomized port numbers.
 	    The <command>avoid-v4-udp-ports</command>
             and <command>avoid-v6-udp-ports</command> options can be used
             to prevent named
@@ -6264,10 +6271,7 @@ query-source-v6 address * port *;
               <term><command>use-queryport-pool</command></term>
               <listitem>
                 <para>
-		  Enable the use of query port pools.  By default query port
-		  pools are enabled unless there is a explicit port defined
-		  in <command>query-source</command> or
-		  <command>query-source-v6</command>.
+		  This option is obsolete.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6276,7 +6280,7 @@ query-source-v6 address * port *;
               <term><command>queryport-pool-ports</command></term>
               <listitem>
                 <para>
-		  Specify how many pool ports to use.  The default is 8.
+		  This option is obsolete.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6285,9 +6289,7 @@ query-source-v6 address * port *;
               <term><command>queryport-pool-updateinterval</command></term>
               <listitem>
                 <para>
-		  Specify how often, in minutes, that the queryport pool
-		  should be recreated (new ports selected).  The default
-		  is 15 minutes.
+		  This option is obsolete.
 		</para>
 	      </listitem>
 	    </varlistentry>
@@ -6808,6 +6810,23 @@ query-source-v6 address * port *;
                   The maximum number of simultaneous client TCP
                   connections that the server will accept.
                   The default is <literal>100</literal>.
+                </para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term><command>reserved-sockets</command></term>
+              <listitem>
+                <para>
+		  The number of file descriptors reserved for TCP, stdio,
+		  etc.  This needs to be big enough to cover the number of
+		  interfaces named listens on, tcp-clients as well as
+		  to provide room for outgoing TCP queries and incoming zone
+		  transfers.  The default is <literal>512</literal>.
+		  The minimum value is <literal>128</literal> and the
+		  maximum value is <literal>128</literal> less than
+		  'files' or FD_SETSIZE (whichever is smaller).  This
+		  option may be removed in the future.
                 </para>
               </listitem>
             </varlistentry>

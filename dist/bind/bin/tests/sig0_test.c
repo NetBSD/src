@@ -1,7 +1,7 @@
-/*	$NetBSD: sig0_test.c,v 1.1.1.4.12.1 2008/06/23 04:27:29 wrstuden Exp $	*/
+/*	$NetBSD: sig0_test.c,v 1.1.1.4.12.2 2008/09/18 04:44:34 wrstuden Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: sig0_test.c,v 1.15 2007/06/19 23:46:59 tbox Exp */
+/* Id: sig0_test.c,v 1.15.232.2 2008/07/23 07:32:56 tbox Exp */
 
 #include <config.h>
 
@@ -191,7 +191,7 @@ buildquery(void) {
 
 	isc_buffer_usedregion(&qbuffer, &r);
 	isc_sockaddr_any(&sa);
-	result = isc_socket_bind(s, &sa);
+	result = isc_socket_bind(s, &sa, 0);
 	CHECK("isc_socket_bind", result);
 	result = isc_socket_sendto(s, &r, task1, senddone, NULL, &address,
 				   NULL);

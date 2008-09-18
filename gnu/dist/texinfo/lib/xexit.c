@@ -1,7 +1,7 @@
-/*	$NetBSD: xexit.c,v 1.1.1.4 2004/07/12 23:26:56 wiz Exp $	*/
+/*	$NetBSD: xexit.c,v 1.1.1.4.26.1 2008/09/18 04:48:28 wrstuden Exp $	*/
 
 /* xexit.c -- exit with attention to return values and closing stdout.
-   Id: xexit.c,v 1.2 2004/02/19 00:13:00 karl Exp
+   Id: xexit.c,v 1.5 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1999, 2003, 2004 Free Software Foundation, Inc.
 

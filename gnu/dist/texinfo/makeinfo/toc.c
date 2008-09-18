@@ -1,7 +1,7 @@
-/*	$NetBSD: toc.c,v 1.1.1.3 2004/07/12 23:26:48 wiz Exp $	*/
+/*	$NetBSD: toc.c,v 1.1.1.3.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* toc.c -- table of contents handling.
-   Id: toc.c,v 1.8 2004/03/10 23:28:43 dirt Exp
+   Id: toc.c,v 1.6 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 1999, 2000, 2001, 2002, 2003 Free Software Foundation, Inc.
 

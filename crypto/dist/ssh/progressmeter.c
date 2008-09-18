@@ -1,4 +1,4 @@
-/*	$NetBSD: progressmeter.c,v 1.7.18.1 2008/06/23 04:27:02 wrstuden Exp $	*/
+/*	$NetBSD: progressmeter.c,v 1.7.18.2 2008/09/18 04:54:20 wrstuden Exp $	*/
 /* $OpenBSD: progressmeter.c,v 1.37 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: progressmeter.c,v 1.7.18.1 2008/06/23 04:27:02 wrstuden Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.7.18.2 2008/09/18 04:54:20 wrstuden Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -283,7 +283,6 @@ start_progress_meter(char *f, off_t filesize, off_t *ctr)
 void
 stop_progress_meter(void)
 {
-	char lbuf[10];
 	alarm(0);
 
 	if (!can_output())
@@ -293,8 +292,6 @@ stop_progress_meter(void)
 	if (cur_pos != end_pos)
 		refresh_progress_meter();
 
-	format_rate(lbuf, sizeof(lbuf), max_delta_pos);
-	printf("\nMax throughput: %s/s\n", lbuf);
 	atomicio(vwrite, STDOUT_FILENO, "\n", 1);
 }
 

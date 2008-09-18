@@ -1,9 +1,9 @@
-/*	$NetBSD: files.h,v 1.2 2004/07/14 00:12:28 wiz Exp $	*/
+/*	$NetBSD: files.h,v 1.2.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* files.h -- declarations for files.c.
-   Id: files.h,v 1.7 2004/02/28 10:42:50 dirt Exp
+   Id: files.h,v 1.4 2004/07/27 00:06:31 karl Exp
 
-   Copyright (C) 1998, 2002 Free Software Foundation, Inc.
+   Copyright (C) 1998, 2002, 2004 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

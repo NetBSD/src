@@ -1,6 +1,6 @@
 /*
  * hostapd / EAP-AKA (RFC 4187)
- * Copyright (c) 2005-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2005-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -219,6 +219,14 @@ static struct wpabuf * eap_aka_build_identity(struct eap_sm *sm,
 				      sm->identity_len)) {
 		wpa_printf(MSG_DEBUG, "   AT_PERMANENT_ID_REQ");
 		eap_sim_msg_add(msg, EAP_SIM_AT_PERMANENT_ID_REQ, 0, NULL, 0);
+	} else {
+		/*
+		 * RFC 4187, Chap. 4.1.4 recommends that identity from EAP is
+		 * ignored and the AKA/Identity is used to request the
+		 * identity.
+		 */
+		wpa_printf(MSG_DEBUG, "   AT_ANY_ID_REQ");
+		eap_sim_msg_add(msg, EAP_SIM_AT_ANY_ID_REQ, 0, NULL, 0);
 	}
 	buf = eap_sim_msg_finish(msg, NULL, NULL, 0);
 	if (eap_aka_add_id_msg(data, buf) < 0) {
@@ -373,24 +381,27 @@ static struct wpabuf * eap_aka_build_notification(struct eap_sm *sm,
 	wpa_printf(MSG_DEBUG, "EAP-AKA: Generating Notification");
 	msg = eap_sim_msg_init(EAP_CODE_REQUEST, id, EAP_TYPE_AKA,
 			       EAP_AKA_SUBTYPE_NOTIFICATION);
-	wpa_printf(MSG_DEBUG, "   AT_NOTIFICATION");
+	wpa_printf(MSG_DEBUG, "   AT_NOTIFICATION (%d)", data->notification);
 	eap_sim_msg_add(msg, EAP_SIM_AT_NOTIFICATION, data->notification,
 			NULL, 0);
 	if (data->use_result_ind) {
-		wpa_printf(MSG_DEBUG, "   AT_IV");
-		wpa_printf(MSG_DEBUG, "   AT_ENCR_DATA");
-		eap_sim_msg_add_encr_start(msg, EAP_SIM_AT_IV,
-					   EAP_SIM_AT_ENCR_DATA);
-		wpa_printf(MSG_DEBUG, "   *AT_COUNTER (%u)", data->counter);
-		eap_sim_msg_add(msg, EAP_SIM_AT_COUNTER, data->counter, NULL,
-				0);
+		if (data->reauth) {
+			wpa_printf(MSG_DEBUG, "   AT_IV");
+			wpa_printf(MSG_DEBUG, "   AT_ENCR_DATA");
+			eap_sim_msg_add_encr_start(msg, EAP_SIM_AT_IV,
+						   EAP_SIM_AT_ENCR_DATA);
+			wpa_printf(MSG_DEBUG, "   *AT_COUNTER (%u)",
+				   data->counter);
+			eap_sim_msg_add(msg, EAP_SIM_AT_COUNTER, data->counter,
+					NULL, 0);
 
-		if (eap_sim_msg_add_encr_end(msg, data->k_encr,
-					     EAP_SIM_AT_PADDING)) {
-			wpa_printf(MSG_WARNING, "EAP-AKA: Failed to encrypt "
-				   "AT_ENCR_DATA");
-			eap_sim_msg_free(msg);
-			return NULL;
+			if (eap_sim_msg_add_encr_end(msg, data->k_encr,
+						     EAP_SIM_AT_PADDING)) {
+				wpa_printf(MSG_WARNING, "EAP-AKA: Failed to "
+					   "encrypt AT_ENCR_DATA");
+				eap_sim_msg_free(msg);
+				return NULL;
+			}
 		}
 
 		wpa_printf(MSG_DEBUG, "   AT_MAC");
@@ -576,10 +587,16 @@ static void eap_aka_determine_identity(struct eap_sm *sm,
 		sm->method_pending = METHOD_PENDING_NONE;
 	}
 
+	identity_len = sm->identity_len;
+	while (identity_len > 0 && sm->identity[identity_len - 1] == '\0') {
+		wpa_printf(MSG_DEBUG, "EAP-AKA: Workaround - drop last null "
+			   "character from identity");
+		identity_len--;
+	}
 	wpa_hexdump_ascii(MSG_DEBUG, "EAP-AKA: Identity for MK derivation",
-			  sm->identity, sm->identity_len);
+			  sm->identity, identity_len);
 
-	eap_aka_derive_mk(sm->identity, sm->identity_len, data->ik, data->ck,
+	eap_aka_derive_mk(sm->identity, identity_len, data->ik, data->ck,
 			  data->mk);
 	eap_sim_derive_keys(data->mk, data->k_encr, data->k_aut, data->msk,
 			    data->emsk);
@@ -834,7 +851,10 @@ static void eap_aka_process_client_error(struct eap_sm *sm,
 {
 	wpa_printf(MSG_DEBUG, "EAP-AKA: Client reported error %d",
 		   attr->client_error_code);
-	eap_aka_state(data, FAILURE);
+	if (data->notification == EAP_SIM_SUCCESS && data->use_result_ind)
+		eap_aka_state(data, SUCCESS);
+	else
+		eap_aka_state(data, FAILURE);
 }
 
 

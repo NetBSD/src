@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.12 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: handler.h,v 1.12.4.1 2008/09/18 04:54:19 wrstuden Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -191,6 +191,7 @@ struct ph1handle {
 	struct isakmp_pl_hash *pl_hash;	/* pointer to hash payload */
 
 	time_t created;			/* timestamp for establish */
+	int initial_contact_received;	/* set if initial contact received */
 #ifdef ENABLE_STATS
 	struct timeval start;
 	struct timeval end;
@@ -293,6 +294,8 @@ struct ph2handle {
 	struct sainfo *sainfo;		/* place holder of sainfo */
 	struct saprop *proposal;	/* SA(s) proposal. */
 	struct saprop *approval;	/* SA(s) approved. */
+	u_int32_t lifetime_secs;	/* responder lifetime (seconds) */
+	u_int32_t lifetime_kb;		/* responder lifetime (kbytes) */
 	caddr_t spidx_gen;		/* policy from peer's proposal */
 
 	struct dhgroup *pfsgrp;		/* DH; prime number */

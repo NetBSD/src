@@ -1,6 +1,6 @@
 /*
  * hostapd / RADIUS message processing
- * Copyright (c) 2002-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2002-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -142,6 +142,7 @@ static struct radius_attr_type radius_attrs[] =
 	{ RADIUS_ATTR_CALLING_STATION_ID, "Calling-Station-Id",
 	  RADIUS_ATTR_TEXT },
 	{ RADIUS_ATTR_NAS_IDENTIFIER, "NAS-Identifier", RADIUS_ATTR_TEXT },
+	{ RADIUS_ATTR_PROXY_STATE, "Proxy-State", RADIUS_ATTR_UNDIST },
 	{ RADIUS_ATTR_ACCT_STATUS_TYPE, "Acct-Status-Type",
 	  RADIUS_ATTR_INT32 },
 	{ RADIUS_ATTR_ACCT_DELAY_TIME, "Acct-Delay-Time", RADIUS_ATTR_INT32 },
@@ -180,6 +181,8 @@ static struct radius_attr_type radius_attrs[] =
 	  RADIUS_ATTR_HEXDUMP },
 	{ RADIUS_ATTR_ACCT_INTERIM_INTERVAL, "Acct-Interim-Interval",
 	  RADIUS_ATTR_INT32 },
+	{ RADIUS_ATTR_CHARGEABLE_USER_IDENTITY, "Chargable-User-Identity",
+	  RADIUS_ATTR_TEXT },
 	{ RADIUS_ATTR_NAS_IPV6_ADDRESS, "NAS-IPv6-Address", RADIUS_ATTR_IPV6 },
 };
 #define RADIUS_ATTRS (sizeof(radius_attrs) / sizeof(radius_attrs[0]))
@@ -667,25 +670,21 @@ int radius_msg_verify(struct radius_msg *msg, const u8 *secret,
 int radius_msg_copy_attr(struct radius_msg *dst, struct radius_msg *src,
 			 u8 type)
 {
-	struct radius_attr_hdr *attr = NULL, *tmp;
+	struct radius_attr_hdr *attr;
 	size_t i;
+	int count = 0;
 
 	for (i = 0; i < src->attr_used; i++) {
-		tmp = radius_get_attr_hdr(src, i);
-		if (tmp->type == type) {
-			attr = tmp;
-			break;
+		attr = radius_get_attr_hdr(src, i);
+		if (attr->type == type) {
+			if (!radius_msg_add_attr(dst, type, (u8 *) (attr + 1),
+						 attr->length - sizeof(*attr)))
+				return -1;
+			count++;
 		}
 	}
 
-	if (attr == NULL)
-		return 0;
-
-	if (!radius_msg_add_attr(dst, type, (u8 *) (attr + 1),
-				 attr->length - sizeof(*attr)))
-		return -1;
-
-	return 1;
+	return count;
 }
 
 
@@ -806,6 +805,7 @@ static u8 * decrypt_ms_key(const u8 *key, size_t len,
 	ppos = plain = os_malloc(plen);
 	if (plain == NULL)
 		return NULL;
+	plain[0] = 0;
 
 	while (left > 0) {
 		/* b(1) = MD5(Secret + Request-Authenticator + Salt)
@@ -830,7 +830,7 @@ static u8 * decrypt_ms_key(const u8 *key, size_t len,
 		left -= MD5_MAC_LEN;
 	}
 
-	if (plain[0] > plen - 1) {
+	if (plain[0] == 0 || plain[0] > plen - 1) {
 		printf("Failed to decrypt MPPE key\n");
 		os_free(plain);
 		return NULL;

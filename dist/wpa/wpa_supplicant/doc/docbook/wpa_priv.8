@@ -3,7 +3,7 @@
 .\" <http://shell.ipoline.com/~elmert/comp/docbook2X/> 
 .\" Please send any bug reports, improvements, comments, patches, 
 .\" etc. to Steve Cheng <steve@ggi-project.org>.
-.TH "WPA_PRIV" "8" "01 January 2008" "" ""
+.TH "WPA_PRIV" "8" "10 August 2008" "" ""
 
 .SH NAME
 wpa_priv \- wpa_supplicant privilege separation helper
@@ -36,9 +36,9 @@ to user files even further).
 .SH "EXAMPLE CONFIGURATION"
 .PP
 The following steps are an example of how to configure
-\fBwpa_priv\fR to allow users in the 'wpapriv' group
-to communicate with \fBwpa_supplicant\fR with privilege
-separation:
+\fBwpa_priv\fR to allow users in the
+\fBwpapriv\fR group to communicate with
+\fBwpa_supplicant\fR with privilege separation:
 .PP
 Create user group (e.g., wpapriv) and assign users that
 should be able to use wpa_supplicant into that group.
@@ -94,7 +94,7 @@ The <driver> string dictates which of the
 supported \fBwpa_supplicant\fR driver backends is to be
 used. To get a list of supported driver types see wpa_supplicant help
 (e.g, wpa_supplicant -h). The driver backend supported by most good
-drivers is 'wext'.
+drivers is \fBwext\fR\&.
 
 The <ifname> string specifies which network
 interface is to be managed by \fBwpa_supplicant\fR

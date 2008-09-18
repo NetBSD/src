@@ -291,7 +291,7 @@ EXTRA_DIST = ntpd-opts.def ntpdbase-opts.def ntpdsim-opts.def	\
 	$(BUILT_SOURCES)
 
 ETAGS_ARGS = Makefile.am
-run_ag = cd $(srcdir) && autogen -L ../include
+run_ag = cd $(srcdir) && autogen -L ../include --writable
 std_def_list = $(top_srcdir)/include/debug-opt.def		\
 		$(top_srcdir)/include/autogen-version.def 	\
 		$(top_srcdir)/include/copyright.def 		\

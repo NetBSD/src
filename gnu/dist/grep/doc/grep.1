@@ -1,4 +1,4 @@
-.\"	$NetBSD: grep.1,v 1.13 2006/10/18 20:46:30 pavel Exp $
+.\"	$NetBSD: grep.1,v 1.13.18.1 2008/09/18 04:48:24 wrstuden Exp $
 .\"
 .\" grep man page
 .if !\n(.g \{\
@@ -303,11 +303,12 @@ within its input file.
 .BR \-o ", " \-\^\-only-matching
 Show only the part of a matching line that matches
 .I PATTERN.
-.TP
-.BR \-P ", " \-\^\-perl-regexp
-Interpret
-.I PATTERN
-as a Perl regular expression.
+.\" NetBSD doesn't support perl regexps
+.\" .TP
+.\" .BR \-P ", " \-\^\-perl-regexp
+.\" Interpret
+.\" .I PATTERN
+.\" as a Perl regular expression.
 .TP
 .BR \-q ", " \-\^\-quiet ", " \-\^\-silent
 Quiet; do not write anything to standard output.

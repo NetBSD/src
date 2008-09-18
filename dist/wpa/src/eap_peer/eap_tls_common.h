@@ -98,7 +98,7 @@ struct eap_ssl_data {
 
 
 int eap_peer_tls_ssl_init(struct eap_sm *sm, struct eap_ssl_data *data,
-			  struct wpa_ssid *config);
+			  struct eap_peer_config *config);
 void eap_peer_tls_ssl_deinit(struct eap_sm *sm, struct eap_ssl_data *data);
 u8 * eap_peer_tls_derive_key(struct eap_sm *sm, struct eap_ssl_data *data,
 			     const char *label, size_t len);
@@ -129,7 +129,8 @@ int eap_peer_tls_encrypt(struct eap_sm *sm, struct eap_ssl_data *data,
 			 EapType eap_type, int peap_version, u8 id,
 			 const struct wpabuf *in_data,
 			 struct wpabuf **out_data);
-int eap_peer_select_phase2_methods(struct wpa_ssid *config, const char *prefix,
+int eap_peer_select_phase2_methods(struct eap_peer_config *config,
+				   const char *prefix,
 				   struct eap_method_type **types,
 				   size_t *num_types);
 int eap_peer_tls_phase2_nak(struct eap_method_type *types, size_t num_types,

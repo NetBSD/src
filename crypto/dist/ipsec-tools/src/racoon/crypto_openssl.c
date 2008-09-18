@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.14 2008/01/11 14:09:05 vanhu Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.14.6.1 2008/09/18 04:54:19 wrstuden Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -676,7 +676,7 @@ eay_get_x509subjectaltname(cert, altname, type, pos)
 		{
 			plog(LLV_ERROR, LOCATION, NULL,
 				 "data is not terminated by NUL.");
-			hexdump(gen->d.ia5->data, gen->d.ia5->length + 1);
+			racoon_hexdump(gen->d.ia5->data, gen->d.ia5->length + 1);
 			goto end;
 		}
 		

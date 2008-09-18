@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.17 2007/12/12 05:08:28 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.17.6.1 2008/09/18 04:54:19 wrstuden Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -98,6 +98,7 @@
 static vchar_t *quick_ir1mx __P((struct ph2handle *, vchar_t *, vchar_t *));
 static int get_sainfo_r __P((struct ph2handle *));
 static int get_proposal_r __P((struct ph2handle *));
+static int ph2_recv_n __P((struct ph2handle *, struct isakmp_gen *));
 
 /* %%%
  * Quick Mode
@@ -493,7 +494,7 @@ quick_i2recv(iph2, msg0)
 			break;
 
 		case ISAKMP_NPTYPE_N:
-			isakmp_check_notify(pa->ptr, iph2->ph1);
+			ph2_recv_n(iph2, pa->ptr);
 			break;
 
 #ifdef ENABLE_NATT
@@ -917,7 +918,7 @@ quick_i3recv(iph2, msg0)
 				    "Ignoring multiples notifications\n");
 				break;
 			}
-			isakmp_check_notify(pa->ptr, iph2->ph1);
+			ph2_recv_n(iph2, pa->ptr);
 			notify = vmalloc(pa->len);
 			if (notify == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL,
@@ -1173,7 +1174,7 @@ quick_r1recv(iph2, msg0)
 			break;
 
 		case ISAKMP_NPTYPE_N:
-			isakmp_check_notify(pa->ptr, iph2->ph1);
+			ph2_recv_n(iph2, pa->ptr);
 			break;
 
 #ifdef ENABLE_NATT
@@ -1696,7 +1697,7 @@ quick_r3recv(iph2, msg0)
 			hash = (struct isakmp_pl_hash *)pa->ptr;
 			break;
 		case ISAKMP_NPTYPE_N:
-			isakmp_check_notify(pa->ptr, iph2->ph1);
+			ph2_recv_n(iph2, pa->ptr);
 			break;
 		default:
 			/* don't send information, see ident_r1recv() */
@@ -2468,6 +2469,74 @@ get_proposal_r(iph2)
 	}
 #endif /* HAVE_SECCTX */
 
+	return 0;
+}
+
+/*
+ * handle a notification payload inside phase2 exchange.
+ * phase2 is always encrypted, so it does not need to be checked
+ * for explicitely.
+ */
+static int
+ph2_recv_n(iph2, gen)
+	struct ph2handle *iph2;
+	struct isakmp_gen *gen;
+{
+	struct ph1handle *iph1 = iph2->ph1;
+	struct isakmp_pl_n *notify = (struct isakmp_pl_n *) gen;
+	u_int type;
+	int check_level;
+
+	type = ntohs(notify->type);
+	switch (type) {
+	case ISAKMP_NTYPE_CONNECTED:
+		break;
+	case ISAKMP_NTYPE_INITIAL_CONTACT:
+		return isakmp_info_recv_initialcontact(iph1, iph2);
+	case ISAKMP_NTYPE_RESPONDER_LIFETIME:
+		ipsecdoi_parse_responder_lifetime(notify,
+			&iph2->lifetime_secs, &iph2->lifetime_kb);
+
+		if (iph1 != NULL && iph1->rmconf != NULL) {
+			check_level = iph1->rmconf->pcheck_level;
+		} else {
+			if (iph1 != NULL)
+				plog(LLV_DEBUG, LOCATION, NULL,
+					"No phase1 rmconf found !\n");
+			else
+				plog(LLV_DEBUG, LOCATION, NULL,
+					"No phase1 found !\n");
+			check_level = PROP_CHECK_EXACT;
+		}
+
+		switch (check_level) {
+		case PROP_CHECK_OBEY:
+			break;
+		case PROP_CHECK_STRICT:
+		case PROP_CHECK_CLAIM:
+			if (iph2->sainfo == NULL
+			 || iph2->sainfo->lifetime <= iph2->lifetime_secs) {
+				plog(LLV_WARNING, LOCATION, NULL,
+					"RESPONDER-LIFETIME: lifetime mismatch\n");
+				iph2->lifetime_secs = 0;
+			}
+			break;
+		case PROP_CHECK_EXACT:
+			if (iph2->sainfo == NULL
+			 || iph2->sainfo->lifetime != iph2->lifetime_secs) {
+				plog(LLV_WARNING, LOCATION, NULL,
+					"RESPONDER-LIFETIME: lifetime mismatch\n");
+				iph2->lifetime_secs = 0;
+			}
+			break;
+		}
+		break;
+	default:
+		isakmp_log_notify(iph2->ph1, notify, "phase2 exchange");
+		isakmp_info_send_n2(iph2, ISAKMP_NTYPE_INVALID_PAYLOAD_TYPE,
+			NULL);
+		break;
+	}
 	return 0;
 }
 

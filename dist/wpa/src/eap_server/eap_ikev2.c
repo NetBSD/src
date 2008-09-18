@@ -1,5 +1,5 @@
 /*
- * EAP-IKEv2 server (draft-tschofenig-eap-ikev2-15.txt)
+ * EAP-IKEv2 server (RFC 5106)
  * Copyright (c) 2007, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -383,8 +383,8 @@ static void eap_ikev2_process(struct eap_sm *sm, void *priv,
 
 		if (message_length < (u32) (end - pos)) {
 			wpa_printf(MSG_DEBUG, "EAP-IKEV2: Invalid Message "
-				   "Length (%d; %d remaining in this msg)",
-				   message_length, end - pos);
+				   "Length (%d; %ld remaining in this msg)",
+				   message_length, (long) (end - pos));
 			eap_ikev2_state(data, FAIL);
 			return;
 		}
@@ -416,6 +416,9 @@ static void eap_ikev2_process(struct eap_sm *sm, void *priv,
 		else
 			eap_ikev2_state(data, FRAG_ACK);
 		return;
+	} else if (data->state == FRAG_ACK) {
+		wpa_printf(MSG_DEBUG, "EAP-TNC: All fragments received");
+		data->state = MSG;
 	}
 
 	if (data->in_buf == NULL) {

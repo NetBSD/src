@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.4 2007/06/24 19:39:06 kardel Exp $	*/
+/*	$NetBSD: save.c,v 1.4.16.1 2008/09/18 04:44:44 wrstuden Exp $	*/
 
 
 /*
@@ -439,8 +439,17 @@ optionSaveFile( tOptions* pOpts )
          *  THEN just print the name and continue
          */
         if (OPTST_GET_ARGTYPE(pOD->fOptState) == OPARG_TYPE_NONE) {
-            fprintf( fp, "%s\n",
-                     (DISABLED_OPT( p )) ? p->pz_DisableName : p->pz_Name );
+            char const * pznm =
+                (DISABLED_OPT( p )) ? p->pz_DisableName : p->pz_Name;
+            /*
+             *  If the option was disabled and the disablement name is NULL,
+             *  then the disablement was caused by aliasing.
+             *  Use the name as the string to emit.
+             */
+            if (pznm == NULL)
+                pznm = p->pz_Name;
+
+            fprintf(fp, "%s\n", pznm);
             continue;
         }
 

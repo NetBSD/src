@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.c,v 1.1.1.4.12.1 2008/06/23 04:28:31 wrstuden Exp $	*/
+/*	$NetBSD: resource.c,v 1.1.1.4.12.2 2008/09/18 04:44:38 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: resource.c,v 1.14.128.3 2008/01/26 23:46:50 tbox Exp */
+/* Id: resource.c,v 1.14.128.3.12.5 2008/07/29 07:04:16 jinmei Exp */
 
 #include <config.h>
 
@@ -29,6 +29,14 @@
 #include <isc/resource.h>
 #include <isc/result.h>
 #include <isc/util.h>
+
+#ifdef __linux__
+#include <linux/fs.h>	/* To get the large NR_OPEN. */
+#endif
+
+#ifdef __hpux
+#include <sys/dyntune.h>
+#endif
 
 #include "errno2result.h"
 
@@ -153,7 +161,36 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 		if (unixresult == 0)
 			return (ISC_R_SUCCESS);
 	}
+#elif defined(NR_OPEN) && defined(__linux__)
+	/*
+	 * Some Linux kernels don't accept RLIM_INFINIT; the maximum
+	 * possible value is the NR_OPEN defined in linux/fs.h.
+	 */
+	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {
+		rl.rlim_cur = rl.rlim_max = NR_OPEN;
+		unixresult = setrlimit(unixresource, &rl);
+		if (unixresult == 0)
+			return (ISC_R_SUCCESS);
+	}
+#elif defined(__hpux)
+	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {
+		uint64_t maxfiles;
+		if (gettune("maxfiles_lim", &maxfiles) == 0) {
+			rl.rlim_cur = rl.rlim_max = maxfiles;
+			unixresult = setrlimit(unixresource, &rl);
+			if (unixresult == 0)
+				return (ISC_R_SUCCESS);
+		}
+	}
 #endif
+	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {
+		if (getrlimit(unixresource, &rl) == 0) {
+			rl.rlim_cur = rl.rlim_max;
+			unixresult = setrlimit(unixresource, &rl);
+			if (unixresult == 0)
+				return (ISC_R_SUCCESS);
+		}
+	}
 	return (isc__errno2result(errno));
 }
 
@@ -169,6 +206,23 @@ isc_resource_getlimit(isc_resource_t resource, isc_resourcevalue_t *value) {
 		unixresult = getrlimit(unixresource, &rl);
 		INSIST(unixresult == 0);
 		*value = rl.rlim_max;
+	}
+
+	return (result);
+}
+
+isc_result_t
+isc_resource_curlimit(isc_resource_t resource, isc_resourcevalue_t *value) {
+	int unixresult;
+	int unixresource;
+	struct rlimit rl;
+	isc_result_t result;
+
+	result = resource2rlim(resource, &unixresource);
+	if (result == ISC_R_SUCCESS) {
+		unixresult = getrlimit(unixresource, &rl);
+		INSIST(unixresult == 0);
+		*value = rl.rlim_cur;
 	}
 
 	return (result);

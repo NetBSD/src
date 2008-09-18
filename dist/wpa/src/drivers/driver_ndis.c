@@ -40,7 +40,9 @@ int close(int fd);
 #include "driver_ndis.h"
 
 int wpa_driver_register_event_cb(struct wpa_driver_ndis_data *drv);
+#ifdef CONFIG_NDIS_EVENTS_INTEGRATED
 void wpa_driver_ndis_event_pipe_cb(void *eloop_data, void *user_data);
+#endif /* CONFIG_NDIS_EVENTS_INTEGRATED */
 
 static void wpa_driver_ndis_deinit(void *priv);
 static void wpa_driver_ndis_poll(void *drv);
@@ -1317,8 +1319,7 @@ static void wpa_driver_ndis_poll_timeout(void *eloop_ctx, void *timeout_ctx)
 
 	if (wpa_driver_ndis_get_bssid(drv, bssid)) {
 		/* Disconnected */
-		if (os_memcmp(drv->bssid, "\x00\x00\x00\x00\x00\x00", ETH_ALEN)
-		    != 0) {
+		if (!is_zero_ether_addr(drv->bssid)) {
 			os_memset(drv->bssid, 0, ETH_ALEN);
 			wpa_supplicant_event(drv->ctx, EVENT_DISASSOC, NULL);
 		}

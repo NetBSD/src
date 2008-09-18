@@ -777,7 +777,8 @@ void tls_deinit(void *ssl_ctx)
 
 
 static int tls_engine_init(struct tls_connection *conn, const char *engine_id,
-			   const char *pin, const char *key_id)
+			   const char *pin, const char *key_id,
+			   const char *cert_id, const char *ca_cert_id)
 {
 #ifndef OPENSSL_NO_ENGINE
 	int ret = -1;
@@ -814,6 +815,7 @@ static int tls_engine_init(struct tls_connection *conn, const char *engine_id,
 			   ERR_error_string(ERR_get_error(), NULL));
 		goto err;
 	}
+	/* load private key first in-case PIN is required for cert */
 	conn->private_key = ENGINE_load_private_key(conn->engine,
 						    key_id, NULL, NULL);
 	if (!conn->private_key) {
@@ -823,6 +825,21 @@ static int tls_engine_init(struct tls_connection *conn, const char *engine_id,
 		ret = TLS_SET_PARAMS_ENGINE_PRV_INIT_FAILED;
 		goto err;
 	}
+
+	/* handle a certificate and/or CA certificate */
+	if (cert_id || ca_cert_id) {
+		const char *cmd_name = "LOAD_CERT_CTRL";
+
+		/* test if the engine supports a LOAD_CERT_CTRL */
+		if (!ENGINE_ctrl(conn->engine, ENGINE_CTRL_GET_CMD_FROM_NAME,
+				 0, (void *)cmd_name, NULL)) {
+			wpa_printf(MSG_ERROR, "ENGINE: engine does not support"
+				   " loading certificates");
+			ret = TLS_SET_PARAMS_ENGINE_PRV_INIT_FAILED;
+			goto err;
+		}
+	}
+
 	return 0;
 
 err:
@@ -877,6 +894,7 @@ struct tls_connection * tls_connection_init(void *ssl_ctx)
 {
 	SSL_CTX *ssl = ssl_ctx;
 	struct tls_connection *conn;
+	long options;
 
 	conn = os_zalloc(sizeof(*conn));
 	if (conn == NULL)
@@ -890,9 +908,12 @@ struct tls_connection * tls_connection_init(void *ssl_ctx)
 	}
 
 	SSL_set_app_data(conn->ssl, conn);
-	SSL_set_options(conn->ssl,
-			SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
-			SSL_OP_SINGLE_DH_USE);
+	options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
+		SSL_OP_SINGLE_DH_USE;
+#ifdef SSL_OP_NO_COMPRESSION
+	options |= SSL_OP_NO_COMPRESSION;
+#endif /* SSL_OP_NO_COMPRESSION */
+	SSL_set_options(conn->ssl, options);
 
 	conn->ssl_in = BIO_new(BIO_s_mem());
 	if (!conn->ssl_in) {
@@ -1261,6 +1282,8 @@ static int tls_connection_set_subject_match(struct tls_connection *conn,
 int tls_connection_set_verify(void *ssl_ctx, struct tls_connection *conn,
 			      int verify_peer)
 {
+	static int counter = 0;
+
 	if (conn == NULL)
 		return -1;
 
@@ -1273,6 +1296,19 @@ int tls_connection_set_verify(void *ssl_ctx, struct tls_connection *conn,
 	}
 
 	SSL_set_accept_state(conn->ssl);
+
+	/*
+	 * Set session id context in order to avoid fatal errors when client
+	 * tries to resume a session. However, set the context to a unique
+	 * value in order to effectively disable session resumption for now
+	 * since not all areas of the server code are ready for it (e.g.,
+	 * EAP-TTLS needs special handling for Phase 2 after abbreviated TLS
+	 * handshake).
+	 */
+	counter++;
+	SSL_set_session_id_context(conn->ssl,
+				   (const unsigned char *) &counter,
+				   sizeof(counter));
 
 	return 0;
 }
@@ -1488,6 +1524,110 @@ static int tls_read_pkcs12_blob(SSL_CTX *ssl_ctx, SSL *ssl,
 		   "p12/pfx blobs");
 	return -1;
 #endif  /* PKCS12_FUNCS */
+}
+
+
+#ifndef OPENSSL_NO_ENGINE
+static int tls_engine_get_cert(struct tls_connection *conn,
+			       const char *cert_id,
+			       X509 **cert)
+{
+	/* this runs after the private key is loaded so no PIN is required */
+	struct {
+		const char *cert_id;
+		X509 *cert;
+	} params;
+	params.cert_id = cert_id;
+	params.cert = NULL;
+
+	if (!ENGINE_ctrl_cmd(conn->engine, "LOAD_CERT_CTRL",
+			     0, &params, NULL, 1)) {
+		wpa_printf(MSG_ERROR, "ENGINE: cannot load client cert with id"
+			   " '%s' [%s]", cert_id,
+			   ERR_error_string(ERR_get_error(), NULL));
+		return TLS_SET_PARAMS_ENGINE_PRV_INIT_FAILED;
+	}
+	if (!params.cert) {
+		wpa_printf(MSG_ERROR, "ENGINE: did not properly cert with id"
+			   " '%s'", cert_id);
+		return TLS_SET_PARAMS_ENGINE_PRV_INIT_FAILED;
+	}
+	*cert = params.cert;
+	return 0;
+}
+#endif /* OPENSSL_NO_ENGINE */
+
+
+static int tls_connection_engine_client_cert(struct tls_connection *conn,
+					     const char *cert_id)
+{
+#ifndef OPENSSL_NO_ENGINE
+	X509 *cert;
+
+	if (tls_engine_get_cert(conn, cert_id, &cert))
+		return -1;
+
+	if (!SSL_use_certificate(conn->ssl, cert)) {
+		tls_show_errors(MSG_ERROR, __func__,
+				"SSL_use_certificate failed");
+                X509_free(cert);
+		return -1;
+	}
+	X509_free(cert);
+	wpa_printf(MSG_DEBUG, "ENGINE: SSL_use_certificate --> "
+		   "OK");
+	return 0;
+
+#else /* OPENSSL_NO_ENGINE */
+	return -1;
+#endif /* OPENSSL_NO_ENGINE */
+}
+
+
+static int tls_connection_engine_ca_cert(void *_ssl_ctx,
+					 struct tls_connection *conn,
+					 const char *ca_cert_id)
+{
+#ifndef OPENSSL_NO_ENGINE
+	X509 *cert;
+	SSL_CTX *ssl_ctx = _ssl_ctx;
+
+	if (tls_engine_get_cert(conn, ca_cert_id, &cert))
+		return -1;
+
+	/* start off the same as tls_connection_ca_cert */
+	X509_STORE_free(ssl_ctx->cert_store);
+	ssl_ctx->cert_store = X509_STORE_new();
+	if (ssl_ctx->cert_store == NULL) {
+		wpa_printf(MSG_DEBUG, "OpenSSL: %s - failed to allocate new "
+			   "certificate store", __func__);
+		X509_free(cert);
+		return -1;
+	}
+	if (!X509_STORE_add_cert(ssl_ctx->cert_store, cert)) {
+		unsigned long err = ERR_peek_error();
+		tls_show_errors(MSG_WARNING, __func__,
+				"Failed to add CA certificate from engine "
+				"to certificate store");
+		if (ERR_GET_LIB(err) == ERR_LIB_X509 &&
+		    ERR_GET_REASON(err) == X509_R_CERT_ALREADY_IN_HASH_TABLE) {
+			wpa_printf(MSG_DEBUG, "OpenSSL: %s - ignoring cert"
+				   " already in hash table error",
+				   __func__);
+		} else {
+			X509_free(cert);
+			return -1;
+		}
+	}
+	X509_free(cert);
+	wpa_printf(MSG_DEBUG, "OpenSSL: %s - added CA certificate from engine "
+		   "to certificate store", __func__);
+	SSL_set_verify(conn->ssl, SSL_VERIFY_PEER, tls_verify_cb);
+	return 0;
+
+#else /* OPENSSL_NO_ENGINE */
+	return -1;
+#endif /* OPENSSL_NO_ENGINE */
 }
 
 
@@ -1976,8 +2116,11 @@ u8 * tls_connection_server_handshake(void *ssl_ctx,
 {
 	int res;
 	u8 *out_data;
-	char buf[10];
 
+	/*
+	 * Give TLS handshake data from the client (if available) to OpenSSL
+	 * for processing.
+	 */
 	if (in_data &&
 	    BIO_write(conn->ssl_in, in_data, in_len) < 0) {
 		tls_show_errors(MSG_INFO, __func__,
@@ -1985,12 +2128,23 @@ u8 * tls_connection_server_handshake(void *ssl_ctx,
 		return NULL;
 	}
 
-	res = SSL_read(conn->ssl, buf, sizeof(buf));
-	if (res >= 0) {
-		wpa_printf(MSG_DEBUG, "SSL: Unexpected data from SSL_read "
-			   "(res=%d)", res);
+	/* Initiate TLS handshake or continue the existing handshake */
+	res = SSL_accept(conn->ssl);
+	if (res != 1) {
+		int err = SSL_get_error(conn->ssl, res);
+		if (err == SSL_ERROR_WANT_READ)
+			wpa_printf(MSG_DEBUG, "SSL: SSL_accept - want "
+				   "more data");
+		else if (err == SSL_ERROR_WANT_WRITE)
+			wpa_printf(MSG_DEBUG, "SSL: SSL_accept - want to "
+				   "write");
+		else {
+			tls_show_errors(MSG_INFO, __func__, "SSL_accept");
+			return NULL;
+		}
 	}
 
+	/* Get the TLS handshake data to be sent to the client */
 	res = BIO_ctrl_pending(conn->ssl_out);
 	wpa_printf(MSG_DEBUG, "SSL: %d bytes pending from ssl_out", res);
 	out_data = os_malloc(res == 0 ? 1 : res);
@@ -2229,26 +2383,39 @@ int tls_connection_set_params(void *tls_ctx, struct tls_connection *conn,
 			   __func__, ERR_error_string(err, NULL));
 	}
 
+	if (params->engine) {
+		wpa_printf(MSG_DEBUG, "SSL: Initializing TLS engine");
+		ret = tls_engine_init(conn, params->engine_id, params->pin,
+				      params->key_id, params->cert_id,
+				      params->ca_cert_id);
+		if (ret)
+			return ret;
+	}
 	if (tls_connection_set_subject_match(conn,
 					     params->subject_match,
 					     params->altsubject_match))
 		return -1;
-	if (tls_connection_ca_cert(tls_ctx, conn, params->ca_cert,
-				   params->ca_cert_blob,
-				   params->ca_cert_blob_len,
-				   params->ca_path))
-		return -1;
-	if (tls_connection_client_cert(conn, params->client_cert,
-				       params->client_cert_blob,
-				       params->client_cert_blob_len))
+
+	if (params->engine && params->ca_cert_id) {
+		if (tls_connection_engine_ca_cert(tls_ctx, conn,
+						  params->ca_cert_id))
+			return TLS_SET_PARAMS_ENGINE_PRV_VERIFY_FAILED;
+	} else if (tls_connection_ca_cert(tls_ctx, conn, params->ca_cert,
+					  params->ca_cert_blob,
+					  params->ca_cert_blob_len,
+					  params->ca_path))
 		return -1;
 
-	if (params->engine) {
-		wpa_printf(MSG_DEBUG, "SSL: Initializing TLS engine");
-		ret = tls_engine_init(conn, params->engine_id, params->pin,
-				      params->key_id);
-		if (ret)
-			return ret;
+	if (params->engine && params->cert_id) {
+		if (tls_connection_engine_client_cert(conn, params->cert_id))
+			return TLS_SET_PARAMS_ENGINE_PRV_VERIFY_FAILED;
+	} else if (tls_connection_client_cert(conn, params->client_cert,
+					      params->client_cert_blob,
+					      params->client_cert_blob_len))
+		return -1;
+
+	if (params->engine && params->key_id) {
+		wpa_printf(MSG_DEBUG, "TLS: Using private key from engine");
 		if (tls_connection_engine_private_key(conn))
 			return TLS_SET_PARAMS_ENGINE_PRV_VERIFY_FAILED;
 	} else if (tls_connection_private_key(tls_ctx, conn,

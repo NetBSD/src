@@ -213,6 +213,10 @@ mail is delivered via the $virtual_transport mail delivery transport.
 .IP "\fBvirtual_transport (virtual)\fR"
 The default mail delivery transport and next-hop destination for
 final delivery to domains listed with $virtual_mailbox_domains.
+.PP
+Available in Postfix version 2.5.3 and later:
+.IP "\fBstrict_mailbox_ownership (yes)\fR"
+Defer delivery when a mailbox file is not owned by its recipient.
 .SH "LOCKING CONTROLS"
 .na
 .nf

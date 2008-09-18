@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.20.4.1 2008/06/23 04:26:46 wrstuden Exp $	*/
+/*	$NetBSD: admin.c,v 1.20.4.2 2008/09/18 04:54:19 wrstuden Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -178,7 +178,7 @@ admin_process(so2, combuf)
 	vchar_t *id = NULL;
 	vchar_t *key = NULL;
 	int idtype = 0;
-	int error = 0, ac_errno = 0;
+	int error = 0, l_ac_errno = 0;
 	struct evt_listener_list *event_list = NULL;
 
 	if (com->ac_cmd & ADMIN_FLAG_VERSION)
@@ -200,17 +200,17 @@ admin_process(so2, combuf)
 			if (buf != NULL)
 				memcpy(buf->v, p, len);
 			else
-				ac_errno = ENOMEM;
+				l_ac_errno = ENOMEM;
 			racoon_free(p);
 		} else
-			ac_errno = ENOMEM;
+			l_ac_errno = ENOMEM;
 		break;
 	}
 
 	case ADMIN_SHOW_EVT:
 		if (com->ac_version == 0) {
 			buf = evt_dump();
-			ac_errno = 0;
+			l_ac_errno = 0;
 		}
 		break;
 
@@ -219,7 +219,7 @@ admin_process(so2, combuf)
 		case ADMIN_PROTO_ISAKMP:
 			buf = dumpph1();
 			if (buf == NULL)
-				ac_errno = ENOMEM;
+				l_ac_errno = ENOMEM;
 			break;
 		case ADMIN_PROTO_IPSEC:
 		case ADMIN_PROTO_AH:
@@ -229,14 +229,14 @@ admin_process(so2, combuf)
 			if (p != -1) {
 				buf = pfkey_dump_sadb(p);
 				if (buf == NULL)
-					ac_errno = ENOMEM;
+					l_ac_errno = ENOMEM;
 			} else
-				ac_errno = EINVAL;
+				l_ac_errno = EINVAL;
 			break;
 		}
 		case ADMIN_PROTO_INTERNAL:
 		default:
-			ac_errno = ENOTSUP;
+			l_ac_errno = ENOTSUP;
 			break;
 		}
 		break;
@@ -251,13 +251,13 @@ admin_process(so2, combuf)
 		dst = (struct sockaddr *) &ndx->dst;
 
 		if (com->ac_proto != ADMIN_PROTO_ISAKMP) {
-			ac_errno = ENOTSUP;
+			l_ac_errno = ENOTSUP;
 			break;
 		}
 
 		iph1 = getph1byaddrwop(src, dst);
 		if (iph1 == NULL) {
-			ac_errno = ENOENT;
+			l_ac_errno = ENOENT;
 			break;
 		}
 
@@ -279,7 +279,7 @@ admin_process(so2, combuf)
 		case ADMIN_PROTO_INTERNAL:
 			/*XXX flushph2();*/
 		default:
-			ac_errno = ENOTSUP;
+			l_ac_errno = ENOTSUP;
 			break;
 		}
 		break;
@@ -415,16 +415,16 @@ admin_process(so2, combuf)
 			struct sockaddr *local = NULL;
 			u_int16_t port;
 
-			ac_errno = -1;
+			l_ac_errno = -1;
 
 			/* connected already? */
 			ph1 = getph1byaddrwop(src, dst);
 			if (ph1 != NULL) {
 				event_list = &ph1->evt_listeners;
 				if (ph1->status == PHASE1ST_ESTABLISHED)
-					ac_errno = EEXIST;
+					l_ac_errno = EEXIST;
 				else
-					ac_errno = 0;
+					l_ac_errno = 0;
 				break;
 			}
 
@@ -483,7 +483,7 @@ admin_process(so2, combuf)
 				goto out1;
 
 			event_list = &ph1->evt_listeners;
-			ac_errno = 0;
+			l_ac_errno = 0;
 out1:
 			if (local != NULL)
 				racoon_free(local);
@@ -497,7 +497,7 @@ out1:
 			struct secpolicy *sp_out = NULL, *sp_in = NULL;
 			struct policyindex spidx;
 
-			ac_errno = -1;
+			l_ac_errno = -1;
 
 			/* got outbound policy */
 			memset(&spidx, 0, sizeof(spidx));
@@ -514,7 +514,7 @@ out1:
 					"suitable outbound SP found: %s.\n",
 					spidx2str(&sp_out->spidx));
 			} else {
-				ac_errno = ENOENT;
+				l_ac_errno = ENOENT;
 				plog(LLV_NOTIFY, LOCATION, NULL,
 					"no outbound policy found: %s\n",
 					spidx2str(&spidx));
@@ -525,9 +525,9 @@ out1:
 			if (iph2 != NULL) {
 				event_list = &iph2->evt_listeners;
 				if (iph2->status == PHASE2ST_ESTABLISHED)
-					ac_errno = EEXIST;
+					l_ac_errno = EEXIST;
 				else
-					ac_errno = 0;
+					l_ac_errno = 0;
 				break;
 			}
 
@@ -546,7 +546,7 @@ out1:
 					"suitable inbound SP found: %s.\n",
 					spidx2str(&sp_in->spidx));
 			} else {
-				ac_errno = ENOENT;
+				l_ac_errno = ENOENT;
 				plog(LLV_NOTIFY, LOCATION, NULL,
 					"no inbound policy found: %s\n",
 				spidx2str(&spidx));
@@ -588,12 +588,12 @@ out1:
 			}
 
 			event_list = &iph2->evt_listeners;
-			ac_errno = 0;
+			l_ac_errno = 0;
 			break;
 		}
 		default:
 			/* ignore */
-			ac_errno = ENOTSUP;
+			l_ac_errno = ENOTSUP;
 		}
 		break;
 	}
@@ -601,14 +601,14 @@ out1:
 	default:
 		plog(LLV_ERROR, LOCATION, NULL,
 			"invalid command: %d\n", com->ac_cmd);
-		ac_errno = ENOTSUP;
+		l_ac_errno = ENOTSUP;
 	}
 
-	if ((error = admin_reply(so2, com, ac_errno, buf)) != 0)
+	if ((error = admin_reply(so2, com, l_ac_errno, buf)) != 0)
 		goto out;
 
 	/* start pushing events if so requested */
-	if ((ac_errno == 0) &&
+	if ((l_ac_errno == 0) &&
 	    (com->ac_version >= 1) &&
 	    (com->ac_cmd == ADMIN_SHOW_EVT || event_list != NULL))
 		error = evt_subscribe(event_list, so2);
@@ -620,8 +620,8 @@ out:
 }
 
 static int
-admin_reply(so, req, ac_errno, buf)
-	int so, ac_errno;
+admin_reply(so, req, l_ac_errno, buf)
+	int so, l_ac_errno;
 	struct admin_com *req;
 	vchar_t *buf;
 {
@@ -644,7 +644,7 @@ admin_reply(so, req, ac_errno, buf)
 	combuf = (struct admin_com *) retbuf;
 	combuf->ac_len = tlen;
 	combuf->ac_cmd = req->ac_cmd & ~ADMIN_FLAG_VERSION;
-	combuf->ac_errno = ac_errno;
+	combuf->ac_errno = l_ac_errno;
 	combuf->ac_proto = req->ac_proto;
 
 	if (buf != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.12 2008/03/06 04:29:20 manu Exp $	*/
+/*	$NetBSD: session.c,v 1.12.4.1 2008/09/18 04:54:20 wrstuden Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -77,6 +77,7 @@
 #include "evt.h"
 #include "cfparse_proto.h"
 #include "isakmp_var.h"
+#include "isakmp_xauth.h"
 #include "isakmp_xauth.h"
 #include "isakmp_cfg.h"
 #include "admin_var.h"
@@ -249,7 +250,8 @@ close_session()
 	close_sockets();
 	backupsa_clean();
 
-	plog(LLV_INFO, LOCATION, NULL, "racoon shutdown\n");
+	plog(LLV_INFO, LOCATION, NULL, "racoon process %d shutdown\n", getpid());
+
 	exit(0);
 }
 
@@ -368,6 +370,11 @@ static void reload_conf(){
 	save_rmconf();
 	initrmconf();
 
+#ifdef HAVE_LIBRADIUS
+	/* free and init radius configuration */
+	xauth_radius_init_conf(1);
+#endif
+
 	pfkey_reload();
 
 	save_params();
@@ -382,6 +389,11 @@ static void reload_conf(){
 #if 0	
 	if (dump_config)
 		dumprmconf ();
+#endif
+
+#ifdef HAVE_LIBRADIUS
+	/* re-initialize radius state */
+	xauth_radius_init();
 #endif
 
 	/* 
@@ -402,6 +414,14 @@ static void reload_conf(){
 
 	save_sainfotree_flush();
 	save_rmconf_flush();
+}
+
+int get_sigreq(int sig)
+{
+	if (sig <= NSIG)
+		return sigreq[sig];
+
+	return 0;
 }
 
 static void

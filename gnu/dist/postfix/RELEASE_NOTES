@@ -11,8 +11,16 @@ instead, a new snapshot is released.
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
-Incompatibility with Postfix 2.3 and earlier
---------------------------------------------
+Incompatibility with Postfix 2.5.3
+==================================
+
+When a mailbox file is not owned by its recipient, the local and
+virtual delivery agents now log a warning and defer delivery.
+Specify "strict_mailbox_ownership = no" to ignore such ownership
+discrepancies.
+
+Postfix 2.5.0 Release Notes
+===========================
 
 If you upgrade from Postfix 2.3 or earlier, read RELEASE_NOTES-2.4
 before proceeding.
@@ -38,7 +46,7 @@ to be bounced later instead of being rejected immediately.
 [Incompat 20071206] The "make install" and "make upgrade" procedures
 now create a Postfix-owned directory for Postfix-writable data files
 such as caches and random numbers. The location is specified with
-the "data_directory" parameter (default: "/var/lib/postfix"), and
+the "data_directory" parameter (default: "/var/db/postfix"), and
 the ownership is specified with the "mail_owner" parameter.
 
 [Incompat 20071206] The tlsmgr(8) and verify(8) servers no longer
@@ -61,7 +69,7 @@ This is an example of the warning messages:
 	/etc/postfix
 
     Dec  6 12:56:22 bristle postfix/tlsmgr[7899]: warning: redirecting
-	the request to postfix-owned data_directory /var/lib/postfix
+	the request to postfix-owned data_directory /var/db/postfix
 
 If you wish to continue using a pre-existing tls_random_exchange_name
 or address_verify_map file, move it to the Postfix-owned data_directory
@@ -71,7 +79,7 @@ to the account specified with the mail_owner configuration parameter).
 [Feature 20071205] The "make install" and "make upgrade" procedures
 now create a Postfix-owned directory for Postfix-writable data files
 such as caches and random numbers. The location is specified with
-the "data_directory" parameter (default: "/var/lib/postfix"), and
+the "data_directory" parameter (default: "/var/db/postfix"), and
 the ownership is specified with the "mail_owner" parameter.
 
 [Incompat 20071203] The "make upgrade" procedure adds a new service
@@ -235,7 +243,7 @@ behavior.
 [Feature 20080114] The Postfix SMTP client can now avoid making
 repeated SASL login failures with the same server, username and
 password.  To enable this safety feature, specify for example
-"smtp_sasl_auth_cache_name = proxy:btree:/var/lib/postfix/sasl_auth_cache"
+"smtp_sasl_auth_cache_name = proxy:btree:/var/db/postfix/sasl_auth_cache"
 (access through the proxy service is required). Instead of trying
 to SASL authenticate, the Postfix SMTP client defers or bounces
 mail as controlled with the new smtp_sasl_auth_soft_bounce configuration

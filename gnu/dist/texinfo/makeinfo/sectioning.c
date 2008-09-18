@@ -1,7 +1,7 @@
-/*	$NetBSD: sectioning.c,v 1.1.1.4 2004/07/12 23:26:48 wiz Exp $	*/
+/*	$NetBSD: sectioning.c,v 1.1.1.4.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* sectioning.c -- for @chapter, @section, ..., @contents ...
-   Id: sectioning.c,v 1.15 2004/04/06 22:48:30 karl Exp
+   Id: sectioning.c,v 1.25 2004/07/05 22:23:23 karl Exp
 
    Copyright (C) 1999, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
 
@@ -395,7 +395,7 @@ sectioning_underscore (char *cmd)
 
 	  xml_insert_element (TITLE, START);
 	  xml_open_section (level, secname);
-	  execute_string (temp);
+	  execute_string ("%s", temp);
 	  xml_insert_element (TITLE, END);
 
 	  free (temp);

@@ -41,6 +41,80 @@ struct ndis_events_data {
 	WCHAR *adapter_desc;
 };
 
+#define BstrAlloc(x) (x) ? SysAllocString(x) : NULL
+#define BstrFree(x) if (x) SysFreeString(x)
+
+/* WBEM / WMI wrapper functions, to perform in-place conversion of WCHARs to
+ * BSTRs */
+HRESULT STDMETHODCALLTYPE call_IWbemServices_ExecQuery(
+	IWbemServices *pSvc, LPCWSTR strQueryLanguage, LPCWSTR strQuery,
+	long lFlags, IWbemContext *pCtx, IEnumWbemClassObject **ppEnum)
+{
+	BSTR bsQueryLanguage, bsQuery;
+	HRESULT hr;
+
+	bsQueryLanguage = BstrAlloc(strQueryLanguage);
+	bsQuery = BstrAlloc(strQuery);
+
+	hr = IWbemServices_ExecQuery(pSvc, bsQueryLanguage, bsQuery, lFlags,
+				     pCtx, ppEnum);
+
+	BstrFree(bsQueryLanguage);
+	BstrFree(bsQuery);
+
+	return hr;
+}
+
+
+HRESULT STDMETHODCALLTYPE call_IWbemServices_ExecNotificationQueryAsync(
+	IWbemServices *pSvc, LPCWSTR strQueryLanguage, LPCWSTR strQuery,
+	long lFlags, IWbemContext *pCtx, IWbemObjectSink *pResponseHandler)
+{
+	BSTR bsQueryLanguage, bsQuery;
+	HRESULT hr;
+
+	bsQueryLanguage = BstrAlloc(strQueryLanguage);
+	bsQuery = BstrAlloc(strQuery);
+
+	hr = IWbemServices_ExecNotificationQueryAsync(pSvc, bsQueryLanguage,
+						      bsQuery, lFlags, pCtx,
+						      pResponseHandler);
+
+	BstrFree(bsQueryLanguage);
+	BstrFree(bsQuery);
+
+	return hr;
+}
+
+
+HRESULT STDMETHODCALLTYPE call_IWbemLocator_ConnectServer(
+	IWbemLocator *pLoc, LPCWSTR strNetworkResource, LPCWSTR strUser,
+	LPCWSTR strPassword, LPCWSTR strLocale, long lSecurityFlags,
+	LPCWSTR strAuthority, IWbemContext *pCtx, IWbemServices **ppNamespace)
+{
+	BSTR bsNetworkResource, bsUser, bsPassword, bsLocale, bsAuthority;
+	HRESULT hr;
+
+	bsNetworkResource = BstrAlloc(strNetworkResource);
+	bsUser = BstrAlloc(strUser);
+	bsPassword = BstrAlloc(strPassword);
+	bsLocale = BstrAlloc(strLocale);
+	bsAuthority = BstrAlloc(strAuthority);
+
+	hr = IWbemLocator_ConnectServer(pLoc, bsNetworkResource, bsUser,
+					bsPassword, bsLocale, lSecurityFlags,
+					bsAuthority, pCtx, ppNamespace);
+
+	BstrFree(bsNetworkResource);
+	BstrFree(bsUser);
+	BstrFree(bsPassword);
+	BstrFree(bsLocale);
+	BstrFree(bsAuthority);
+
+	return hr;
+}
+
+
 enum event_types { EVENT_CONNECT, EVENT_DISCONNECT, EVENT_MEDIA_SPECIFIC,
 		   EVENT_ADAPTER_ARRIVAL, EVENT_ADAPTER_REMOVAL };
 
@@ -332,8 +406,8 @@ static int notification_query(IWbemObjectSink *pDestSink,
 	_snwprintf(query, 256,
 		  L"SELECT * FROM %S", class_name);
 	wpa_printf(MSG_DEBUG, "ndis_events: WMI: %S", query);
-	hr = IWbemServices_ExecNotificationQueryAsync(pSvc, L"WQL", query, 0,
-						      0, pDestSink);
+	hr = call_IWbemServices_ExecNotificationQueryAsync(
+		pSvc, L"WQL", query, 0, 0, pDestSink);
 	if (FAILED(hr)) {
 		wpa_printf(MSG_DEBUG, "ExecNotificationQueryAsync for %s "
 			   "failed with hresult of 0x%x",
@@ -434,8 +508,8 @@ static int ndis_events_get_adapter(struct ndis_events_data *events,
 	os_free(events->adapter_desc);
 	events->adapter_desc = NULL;
 
-	hr = IWbemLocator_ConnectServer(events->pLoc, L"ROOT\\CIMV2", NULL,
-					NULL, 0, 0, 0, 0, &pSvc);
+	hr = call_IWbemLocator_ConnectServer(
+		events->pLoc, L"ROOT\\CIMV2", NULL, NULL, 0, 0, 0, 0, &pSvc);
 	if (FAILED(hr)) {
 		wpa_printf(MSG_ERROR, "ndis_events: Could not connect to WMI "
 			   "server (ROOT\\CIMV2) - error 0x%x", (int) hr);
@@ -448,10 +522,10 @@ static int ndis_events_get_adapter(struct ndis_events_data *events,
 		  L"WHERE SettingID='%S'", ifname);
 	wpa_printf(MSG_DEBUG, "ndis_events: WMI: %S", query);
 
-	hr = IWbemServices_ExecQuery(pSvc, L"WQL", query,
-				     WBEM_FLAG_FORWARD_ONLY |
-				     WBEM_FLAG_RETURN_IMMEDIATELY,
-				     NULL, &pEnumerator);
+	hr = call_IWbemServices_ExecQuery(
+		pSvc, L"WQL", query,
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		NULL, &pEnumerator);
 	if (!SUCCEEDED(hr)) {
 		wpa_printf(MSG_DEBUG, "ndis_events: Failed to query interface "
 			   "GUID from Win32_NetworkAdapterConfiguration: "
@@ -491,10 +565,10 @@ static int ndis_events_get_adapter(struct ndis_events_data *events,
 	VariantClear(&vt);
 	IWbemClassObject_Release(pObj);
 
-	hr = IWbemServices_ExecQuery(pSvc, L"WQL", query,
-				     WBEM_FLAG_FORWARD_ONLY |
-				     WBEM_FLAG_RETURN_IMMEDIATELY,
-				     NULL, &pEnumerator);
+	hr = call_IWbemServices_ExecQuery(
+		pSvc, L"WQL", query,
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		NULL, &pEnumerator);
 	if (!SUCCEEDED(hr)) {
 		wpa_printf(MSG_DEBUG, "ndis_events: Failed to query interface "
 			   "from Win32_NetworkAdapter: 0x%x", (int) hr);
@@ -575,10 +649,10 @@ static int ndis_events_get_adapter(struct ndis_events_data *events,
 	IWbemClassObject_Release(pObj);
 	wpa_printf(MSG_DEBUG, "ndis_events: WMI: %S", query);
 
-	hr = IWbemServices_ExecQuery(pSvc, L"WQL", query,
-				     WBEM_FLAG_FORWARD_ONLY |
-				     WBEM_FLAG_RETURN_IMMEDIATELY,
-				     NULL, &pEnumerator);
+	hr = call_IWbemServices_ExecQuery(
+		pSvc, L"WQL", query,
+		WBEM_FLAG_FORWARD_ONLY | WBEM_FLAG_RETURN_IMMEDIATELY,
+		NULL, &pEnumerator);
 	if (!SUCCEEDED(hr)) {
 		wpa_printf(MSG_DEBUG, "ndis_events: Failed to query interface "
 			   "Name from Win32_PnPEntity: 0x%x", (int) hr);
@@ -695,8 +769,9 @@ ndis_events_init(HANDLE *read_pipe, HANDLE *event_avail,
 	wpa_printf(MSG_DEBUG, "ndis_events: use adapter descriptor '%S'",
 		   events->adapter_desc);
 
-	hr = IWbemLocator_ConnectServer(events->pLoc, L"ROOT\\WMI", NULL, NULL,
-					0, 0, 0, 0, &events->pSvc);
+	hr = call_IWbemLocator_ConnectServer(
+		events->pLoc, L"ROOT\\WMI", NULL, NULL,
+		0, 0, 0, 0, &events->pSvc);
 	if (FAILED(hr)) {
 		wpa_printf(MSG_ERROR, "Could not connect to server - error "
 			   "0x%x", (int) hr);

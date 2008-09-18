@@ -80,7 +80,7 @@ struct wpa_driver_ops {
 	int (*set_assoc_ap)(void *priv, const u8 *addr);
 	int (*sta_add)(const char *ifname, void *priv, const u8 *addr, u16 aid,
 		       u16 capability, u8 *supp_rates, size_t supp_rates_len,
-		       int flags);
+		       int flags, u16 listen_interval);
 	int (*get_inact_sec)(void *priv, const u8 *addr);
 	int (*sta_clear_stats)(void *priv, const u8 *addr);
 
@@ -159,6 +159,10 @@ struct wpa_driver_ops {
 
 	int (*send_ether)(void *priv, const u8 *dst, const u8 *src, u16 proto,
 			  const u8 *data, size_t data_len);
+
+	int (*set_radius_acl_auth)(void *priv, const u8 *mac, int accepted, 
+				   u32 session_timeout);
+	int (*set_radius_acl_expire)(void *priv, const u8 *mac);
 };
 
 static inline void *
@@ -359,13 +363,13 @@ hostapd_set_countermeasures(struct hostapd_data *hapd, int enabled)
 static inline int
 hostapd_sta_add(const char *ifname, struct hostapd_data *hapd, const u8 *addr,
 		u16 aid, u16 capability, u8 *supp_rates, size_t supp_rates_len,
-		int flags)
+		int flags, u16 listen_interval)
 {
 	if (hapd->driver == NULL || hapd->driver->sta_add == NULL)
 		return 0;
 	return hapd->driver->sta_add(ifname, hapd->drv_priv, addr, aid,
 				     capability, supp_rates, supp_rates_len,
-				     flags);
+				     flags, listen_interval);
 }
 
 static inline int
@@ -676,6 +680,25 @@ hostapd_driver_commit(struct hostapd_data *hapd)
 	if (hapd->driver == NULL || hapd->driver->commit == NULL)
 		return 0;
 	return hapd->driver->commit(hapd->drv_priv);
+}
+
+static inline int
+hostapd_set_radius_acl_auth(struct hostapd_data *hapd, const u8 *mac,
+			    int accepted, u32 session_timeout)
+{
+	if (hapd->driver == NULL || hapd->driver->set_radius_acl_auth == NULL)
+		return 0;
+	return hapd->driver->set_radius_acl_auth(hapd->drv_priv, mac, accepted,
+						 session_timeout);
+}
+
+static inline int
+hostapd_set_radius_acl_expire(struct hostapd_data *hapd, const u8 *mac)
+{
+	if (hapd->driver == NULL ||
+	    hapd->driver->set_radius_acl_expire == NULL)
+		return 0;
+	return hapd->driver->set_radius_acl_expire(hapd->drv_priv, mac);
 }
 
 #endif /* DRIVER_H */

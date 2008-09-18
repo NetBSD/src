@@ -34,7 +34,7 @@
 
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
-#define HAVE_DCGETTEXT 1
+/* #undef HAVE_DCGETTEXT */
 
 /* Define to 1 if you have the declaration of `feof_unlocked', and to 0 if you
    don't. */
@@ -79,7 +79,7 @@
 #define HAVE_FCNTL_H 1
 
 /* Define to 1 if you have the `fwprintf' function. */
-/* #undef HAVE_FWPRINTF */
+#define HAVE_FWPRINTF 1
 
 /* Define to 1 if you have the `getcwd' function. */
 #define HAVE_GETCWD 1
@@ -97,7 +97,7 @@
 #define HAVE_GETPAGESIZE 1
 
 /* Define if the GNU gettext() function is already present or preinstalled. */
-#define HAVE_GETTEXT 1
+/* #undef HAVE_GETTEXT */
 
 /* Define to 1 if you have the `gettimeofday' function. */
 /* #undef HAVE_GETTIMEOFDAY */
@@ -176,7 +176,7 @@
 #define HAVE_NL_TYPES_H 1
 
 /* Define if your printf() function supports format strings with positions. */
-/* #undef HAVE_POSIX_PRINTF */
+#define HAVE_POSIX_PRINTF 1
 
 /* Define to 1 if you have the `putenv' function. */
 #define HAVE_PUTENV 1
@@ -343,13 +343,13 @@
 #define PACKAGE_NAME "GNU Texinfo"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "GNU Texinfo 4.7"
+#define PACKAGE_STRING "GNU Texinfo 4.8"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "texinfo"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.7"
+#define PACKAGE_VERSION "4.8"
 
 /* Define if <inttypes.h> exists and defines unusable PRI* macros. */
 /* #undef PRI_MACROS_BROKEN */
@@ -379,7 +379,7 @@
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "4.7"
+#define VERSION "4.8"
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */

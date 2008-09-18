@@ -57,6 +57,8 @@
 /* #define CIPHER_BYTE_XOR */
 /*-------------------- END TUNABLES --------------------*/
 
+#ifdef AES_CTR_MT
+
 
 const EVP_CIPHER *evp_aes_ctr_mt(void);
 
@@ -468,3 +470,4 @@ evp_aes_ctr_mt(void)
 #endif
 	return (&aes_ctr);
 }
+#endif

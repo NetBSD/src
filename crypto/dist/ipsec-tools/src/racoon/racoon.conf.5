@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.43 2007/12/01 19:24:47 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.43.8.1 2008/09/18 04:54:19 wrstuden Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -1116,8 +1116,9 @@ means to use a RADIUS server.
 It works only if
 .Xr racoon 8
 was built with libradius support.
-Radius configuration is handled by
-.Xr radius.conf 5 .
+Radius configuration is handled by statements in the
+.Ic radiuscfg
+section.
 .Ar pam
 means to use PAM.
 It works only if
@@ -1163,8 +1164,9 @@ means to use a RADIUS server.
 It works only if
 .Xr racoon 8
 was built with libradius support and requires RADIUS authentication.
-RADIUS configuration is handled by
-.Xr radius.conf 5 .
+RADIUS configuration is handled by statements in the
+.Ic radiuscfg
+section.
 .Ar ldap
 means to use an LDAP server.
 It works only if
@@ -1189,8 +1191,9 @@ enables RADIUS accounting.
 It works only if
 .Xr racoon 8
 was built with libradius support and requires RADIUS authentication.
-RADIUS configuration is handled by
-.Xr radius.conf 5 .
+RADIUS configuration is handled by statements in the
+.Ic radiuscfg
+section.
 Specifying
 .Ar pam
 enables PAM accounting.
@@ -1325,6 +1328,39 @@ The default value is
 The attribute used to specify group membership in an ldap directory.
 The default value is
 .Ic member .
+.El
+.El
+.Ss Radius configuration settings
+.Bl -tag -width Ds -compact
+.It Ic radiuscfg { Ar statements Ic }
+Defines the parameters that will be used to communicate with radius
+servers for
+.Ic xauth
+authentication. If radius is selected as the xauth authentication or
+accounting source and no servers are defined in this section, settings
+from the system
+.Xr radius.conf 5
+configuration file will be used instead.
+.Pp
+The following are valid statements:
+.Bl -tag -width Ds -compact
+.It Ic auth Ar (hostname | address) [port] sharedsecret;
+The host name or ip address, optional port value and shared secret value
+of a radius authentication server. Up to 5 radius authentication servers
+may be specified using multiple lines.
+.It Ic acct Ar (hostname | address) [port] sharedsecret;
+The host name or ip address, optional port value and shared secret value
+of a radius accounting server. Up to 5 radius accounting servers may be
+specified using multiple lines.
+.It Ic timeout Ar seconds ;
+The timeout for receiving replies from radius servers.
+The default is
+.Ic 3 .
+.It Ic retries Ar count ;
+The maximum number of repeated requests to make before giving up
+on a radius server.
+The default is
+.Ic 3 .
 .El
 .El
 .Ss Special directives

@@ -1,7 +1,7 @@
-/*	$NetBSD: makeinfo.c,v 1.13 2004/07/14 00:12:28 wiz Exp $	*/
+/*	$NetBSD: makeinfo.c,v 1.13.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* makeinfo -- convert Texinfo source into other formats.
-   Id: makeinfo.c,v 1.63 2004/04/09 21:17:17 karl Exp
+   Id: makeinfo.c,v 1.74 2004/12/19 17:15:42 karl Exp
 
    Copyright (C) 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
    2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
@@ -185,7 +185,8 @@ remember_error (void)
     {
       fprintf (stderr, _("Too many errors!  Gave up.\n"));
       flush_file_stack ();
-      cm_bye ();
+      if (errors_printed - max_error_level < 2)
+	cm_bye ();
       xexit (1);
     }
 }
@@ -438,6 +439,8 @@ Conditional processing in input:\n\
   --no-ifplaintext  do not process @ifplaintext text.\n\
   --no-iftex        do not process @iftex and @tex text.\n\
   --no-ifxml        do not process @ifxml and @xml text.\n\
+\n\
+  Also, for the --no-ifFORMAT options, do process @ifnotFORMAT text.\n\
 "));
 
     puts (_("\
@@ -517,6 +520,19 @@ struct option long_options[] =
   {NULL, 0, NULL, 0}
 };
 
+/* We use handle_variable_internal for -D and -U, and it depends on
+   execute_string, which depends on input_filename, which is not defined
+   while we are handling options. :-\  So we save these defines in this
+   struct, and handle them later.  */
+typedef struct command_line_define
+{
+  struct command_line_define *next;
+  int action;
+  char *define;
+} COMMAND_LINE_DEFINE;
+
+static COMMAND_LINE_DEFINE *command_line_defines = NULL;
+
 /* For each file mentioned in the command line, process it, turning
    Texinfo commands into wonderfully formatted output text. */
 int
@@ -529,7 +545,9 @@ main (int argc, char **argv)
   /* Do not use LC_ALL, because LC_NUMERIC screws up the scanf parsing
      of the argument to @multicolumn.  */
   setlocale (LC_TIME, "");
+#ifdef LC_MESSAGES /* ultrix */
   setlocale (LC_MESSAGES, "");
+#endif
   setlocale (LC_CTYPE, "");
   setlocale (LC_COLLATE, "");
 #endif
@@ -604,7 +622,16 @@ main (int argc, char **argv)
         case 'D':
         case 'U':
           /* User specified variable to set or clear. */
-          handle_variable_internal ((c == 'D') ? SET : CLEAR, optarg);
+          if (xml && !docbook)
+            {
+              COMMAND_LINE_DEFINE *new = xmalloc (sizeof (COMMAND_LINE_DEFINE));
+              new->action = (c == 'D') ? SET : CLEAR;
+              new->define = xstrdup (optarg);
+              new->next = command_line_defines;
+              command_line_defines = new;
+            }
+          else
+            handle_variable_internal ((c == 'D' ? SET : CLEAR), optarg);
           break;
 
         case 'd': /* --docbook */
@@ -960,6 +987,8 @@ discard_until (char *string)
 
   if (temp < 0)
     {
+      /* not found, move current position to end of string */
+      input_text_offset = input_text_length;
       if (strcmp (string, "\n") != 0)
         { /* Give a more descriptive feedback, if we are looking for ``@end ''
              during macro execution.  That means someone used a multiline
@@ -970,18 +999,14 @@ discard_until (char *string)
             line_error (_("Multiline command %c%s used improperly"), 
                 COMMAND_PREFIX, command);
           else
-            {
-              line_error (_("Expected `%s'"), string);
-              input_text_offset = input_text_length - strlen (string);
-            }
+            line_error (_("Expected `%s'"), string);
           free (end_block);
           return;
         }
     }
   else
-    input_text_offset = temp;
-
-  input_text_offset += strlen (string);
+    /* found, move current position to after the found string */
+    input_text_offset = temp + strlen (string);
 }
 
 /* Read characters from the file until we are at MATCH.
@@ -1651,6 +1676,19 @@ convert_from_loaded_file (char *name)
                    output_filename, VERSION, input_filename);
 
   close_paragraph ();
+
+  if (xml && !docbook)
+    {
+      /* Just before the real main loop, let's handle the defines.  */
+      COMMAND_LINE_DEFINE *temp;
+
+      for (temp = command_line_defines; temp; temp = temp->next)
+        {
+          handle_variable_internal (temp->action, temp->define);
+          free(temp->define);
+        }
+    }
+
   reader_loop ();
   if (xml)
     xml_end_document ();
@@ -1803,7 +1841,7 @@ init_internals (void)
 void
 init_paragraph (void)
 {
-  free_and_clear ((char **) &output_paragraph);
+  free (output_paragraph);
   output_paragraph = xmalloc (paragraph_buffer_len);
   output_paragraph[0] = 0;
   output_paragraph_offset = 0;
@@ -2111,12 +2149,18 @@ reader_loop (void)
                   {
                     if (dash_count >= 2)
                       {
-                        html ? add_word ("&mdash;") : xml_insert_entity ("mdash");
+                        if (html)
+                          add_word ("&mdash;");
+                        else
+                          xml_insert_entity ("mdash");
                         dash_count -= 2;
                       }
                     else if (dash_count >= 1)
                       {
-                        html ? add_word ("&ndash;") : xml_insert_entity ("ndash");
+                        if (html)
+                          add_word ("&ndash;");
+                        else
+                          xml_insert_entity ("ndash");
                         dash_count--;
                       }
                   }
@@ -2613,6 +2657,7 @@ add_char (int character)
            any order and with any omissions, and we'll still output
            the html <head> `just in time'.  */
         if ((executing_macro || !executing_string)
+            && !only_macro_expansion
             && html && !html_output_head_p && !defining_copying ())
           html_output_head ();
 
@@ -2785,7 +2830,7 @@ insert (int character)
 
 /* Insert the null-terminated string STRING into `output_paragraph'.  */
 void
-insert_string (char *string)
+insert_string (const char *string)
 {
   while (*string)
     insert (*string++);
@@ -3241,18 +3286,20 @@ cm_image (int arg)
       else
         {
           sprintf (fullname, "%s.png", name_arg);
-          if (access (fullname, R_OK) != 0)
-            {
-              pathname = get_file_info_in_path (fullname,
-                                               include_files_path, &file_info);
-              if (pathname == NULL)
-                {
-                  sprintf (fullname, "%s.jpg", name_arg);
-                  if (access (fullname, R_OK) != 0)
-                    pathname = get_file_info_in_path (fullname,
+          if (access (fullname, R_OK) != 0) {
+            pathname = get_file_info_in_path (fullname,
+                                              include_files_path, &file_info);
+            if (pathname == NULL) {
+              sprintf (fullname, "%s.jpg", name_arg);
+              if (access (fullname, R_OK) != 0) {
+                sprintf (fullname, "%s.gif", name_arg);
+                if (access (fullname, R_OK) != 0) {
+                  pathname = get_file_info_in_path (fullname,
                                                include_files_path, &file_info);
                 }
+              }
             }
+          }
         }
 
       if (html)
@@ -3617,7 +3664,14 @@ cm_value (int arg, int start_pos, int end_pos)
          among other things.  */
 
       if (value)
-        execute_string ("%s", value);
+	{
+	  /* We need to get past the closing brace since the value may
+	     expand to a context-sensitive macro (e.g. @xref) and produce
+	     spurious warnings */
+	  input_text_offset++; 
+	  execute_string ("%s", value);
+	  input_text_offset--;
+	}
       else
 	{
           warning (_("undefined flag: %s"), name);
@@ -3953,12 +4007,22 @@ execute_string (format, va_alist)
 
 
 /* Return what would be output for STR (in newly-malloced memory), i.e.,
-   expand Texinfo commands.  If IMPLICIT_CODE is set, expand @code{STR}.
-   This is generally used for short texts; filling, indentation, and
-   html escapes are disabled.  */
+   expand Texinfo commands according to the current output format.  If
+   IMPLICIT_CODE is set, expand @code{STR}.  This is generally used for
+   short texts; filling, indentation, and html escapes are disabled.  */
 
 char *
 expansion (char *str, int implicit_code)
+{
+  return maybe_escaped_expansion (str, implicit_code, 0);
+}
+
+
+/* Do HTML escapes according to DO_HTML_ESCAPE.  Needed in
+   cm_printindex, q.v.  */
+
+char *
+maybe_escaped_expansion (char *str, int implicit_code, int do_html_escape)
 {
   char *result;
 
@@ -3973,7 +4037,7 @@ expansion (char *str, int implicit_code)
   filling_enabled = 0;
   indented_fill = 0;
   no_indent = 1;
-  escape_html = 0;
+  escape_html = do_html_escape;
 
   result = full_expansion (str, implicit_code);
 
@@ -3988,7 +4052,7 @@ expansion (char *str, int implicit_code)
 
 /* Expand STR (or @code{STR} if IMPLICIT_CODE is nonzero).  No change to
    any formatting parameters -- filling, indentation, html escapes,
-   etc., are not reset.  */
+   etc., are not reset.  Always returned in new memory.  */
 
 char *
 full_expansion (char *str, int implicit_code)

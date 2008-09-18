@@ -1,7 +1,7 @@
-/*	$NetBSD: echo-area.c,v 1.2 2004/07/13 18:30:49 he Exp $	*/
+/*	$NetBSD: echo-area.c,v 1.2.26.1 2008/09/18 04:48:27 wrstuden Exp $	*/
 
 /* echo-area.c -- how to read a line in the echo area.
-   Id: echo-area.c,v 1.3 2004/03/14 00:57:29 karl Exp
+   Id: echo-area.c,v 1.7 2004/12/14 00:15:36 karl Exp
 
    Copyright (C) 1993, 1997, 1998, 1999, 2001, 2004 Free Software
    Foundation, Inc.
@@ -938,7 +938,8 @@ DECLARE_INFO_COMMAND (ea_possible_completions, _("List possible completions"))
       printf_to_message_buffer (completions_found_index == 1
                                 ? (char *) _("One completion:\n")
                                 : (char *) _("%d completions:\n"),
-				(void*)((intptr_t)completions_found_index), NULL, NULL);
+				(void*)((intptr_t)completions_found_index),
+				NULL, NULL);
 
       /* Find the maximum length of a label. */
       for (i = 0; i < completions_found_index; i++)
@@ -1501,13 +1502,14 @@ pause_or_input (void)
    for input or a couple of seconds, whichever comes first.  Then flush the
    informational message that was printed. */
 void
-inform_in_echo_area (char *message)
+inform_in_echo_area (const char *message)
 {
-  register int i;
+  int i;
   char *text;
+  int avail = EA_MAX_INPUT + 1 - input_line_end;
 
   text = xstrdup (message);
-  for (i = 0; text[i] && text[i] != '\n'; i++)
+  for (i = 0; text[i] && text[i] != '\n' && i < avail; i++)
     ;
   text[i] = 0;
 
