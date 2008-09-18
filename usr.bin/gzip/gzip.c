@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.90.12.1 2008/06/23 04:32:11 wrstuden Exp $	*/
+/*	$NetBSD: gzip.c,v 1.90.12.2 2008/09/18 04:29:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green
@@ -28,9 +28,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006 Matthew R. Green\n\
-     All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.90.12.1 2008/06/23 04:32:11 wrstuden Exp $");
+__COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006\
+ Matthew R. Green.  All rights reserved.");
+__RCSID("$NetBSD: gzip.c,v 1.90.12.2 2008/09/18 04:29:12 wrstuden Exp $");
 #endif /* not lint */
 
 /*
@@ -1261,8 +1261,9 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	ssize_t rbytes;
 	unsigned char header1[4];
 	enum filetype method;
-	int rv, fd, ofd, zfd = -1;
+	int fd, ofd, zfd = -1;
 #ifndef SMALL
+	int rv;
 	time_t timestamp = 0;
 	unsigned char name[PATH_MAX + 1];
 #endif

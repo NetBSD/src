@@ -108,17 +108,21 @@ CONFIGURATION
 
      MAKEOBJDIR        Directory to use as the .OBJDIR for the current direc-
                        tory.  The value is subjected to variable expansion by
-                       make(1).  Used only if MAKEOBJDIRPREFIX is not defined.
-                       MAKEOBJDIR can only be provided in the environment or
-                       via the -O flag of build.sh.
+                       make(1).  Typical usage is to set this variable to a
+                       value involving the use of `${.CURDIR:S...}' or
+                       `${.CURDIR:C...}', to derive the value of .OBJDIR from
+                       the value of .CURDIR.  Used only if MAKEOBJDIRPREFIX is
+                       not defined.  MAKEOBJDIR can be provided only in the
+                       environment or via the -O flag of build.sh; it cannot
+                       usefully be set inside a Makefile.
 
      MAKEOBJDIRPREFIX  Top level directory of the object directory tree.  If
                        specified, must be an absolute path.  If this is
                        defined, ${MAKEOBJDIRPREFIX}/${.CURDIR} is used as the
                        .OBJDIR for the current directory.  The current direc-
-                       tory may be read only.  MAKEOBJDIRPREFIX can only be
-                       provided in the environment or via the -M flag of
-                       build.sh.
+                       tory may be read only.  MAKEOBJDIRPREFIX can be pro-
+                       vided only in the environment or via the -M flag of
+                       build.sh; it cannot usefully be set inside a Makefile.
 
    "make" variables
      Several variables control the behavior of NetBSD builds.  Unless other-
@@ -129,6 +133,14 @@ CONFIGURATION
                  object directory names, and can be consulted in the make(1)
                  configuration file in order to set additional build parame-
                  ters, such as compiler flags.
+
+     BUILDSEED   GCC uses random numbers when compiling C++ code.  This vari-
+                 able seeds the gcc random number generator using the -fran-
+                 dom-seed flag with this value.  By default, it is set to
+                 NetBSD-(majorversion).  Using a fixed value causes C++ bina-
+                 ries to be the same when built from the same sources.  Addi-
+                 tional information is available in the GCC documentation of
+                 -frandom-seed.
 
      DESTDIR     Directory to contain the built NetBSD system.  If set, spe-
                  cial options are passed to the compilation tools to prevent
@@ -178,6 +190,11 @@ CONFIGURATION
      MKDOC       Can be set to ``yes'' or ``no''.  Indicates whether system
                  documentation destined for DESTDIR/usr/share/doc will be
                  installed during a build.
+
+                 Default: ``yes''
+
+     MKHTML      Can be set to ``yes'' or ``no''.  Indicates whether prefor-
+                 matted HTML manual pages will be built and installed
 
                  Default: ``yes''
 
@@ -283,6 +300,15 @@ CONFIGURATION
 
      MKX11       Can be set to ``yes'' or ``no''.  Indicates whether X11R6 is
                  built from X11SRCDIR.
+
+                 Mutually exclusive to MKXORG != no.
+
+                 Default: ``no''
+
+     MKXORG      Can be set to ``yes'' or ``no''.  Indicates whether X11R7
+                 (modular Xorg) is built from X11SRCDIR.
+
+                 Mutually exclusive to MKX11 != no.
 
                  Default: ``no''
 
@@ -401,9 +427,7 @@ BUILDING
 
      -j njob    Run up to njob make(1) subjobs in parallel.  Makefiles should
                 use .WAIT or have explicit dependencies as necessary to
-                enforce build ordering.  If you see build failures with -j,
-                please save complete build logs so the failures can be ana-
-                lyzed.
+                enforce build ordering.
 
      -m dir     Specify the default directory for searching for system Make-
                 file segments, mainly the <bsd.*.mk> files.  When building any
@@ -612,6 +636,8 @@ BUILDING
      makewrapper   Create the nbmake-MACHINE wrapper.  This operation is auto-
                    matically performed for any of the other operations.
 
+     cleandir      Perform ``make cleandir''.
+
      obj           Perform ``make obj''.
 
      tools         Build and install the host tools from src/tools.  This com-
@@ -691,14 +717,21 @@ BUILDING
      -h        Print a help message.
 
      -j njob   Run up to njob make(1) subjobs in parallel; passed through to
-               make(1).  Makefiles should use .WAIT or have explicit dependan-
-               cies as necessary to enforce build ordering.  If you see build
-               failures with -j, please save complete build logs so the fail-
-               ures can be analyzed.
+               make(1).  If you see failures for reasons other than running
+               out of memory while using build.sh with -j, please save com-
+               plete build logs so the failures can be analyzed.
 
-     -M obj    Set MAKEOBJDIRPREFIX to obj.  If a relative path is specified,
-               it will be converted to an absolute path before being used.
-               Unsets MAKEOBJDIR.
+               To achieve the fastest builds, -j values between (1 + the num-
+               ber of CPUs) and (2 * the number of CPUs) are recommended.  Use
+               lower values on machines with limited memory or I/O bandwidth.
+
+     -M obj    Set MAKEOBJDIRPREFIX to obj.  For instance, if the source
+               directory is /usr/src, a setting of ``-M /usr/obj'' will place
+               build-time files under /usr/obj/usr/src/bin,
+               /usr/obj/usr/src/lib, /usr/obj/usr/src/usr.bin, and so forth.
+               If a relative path is specified, it will be converted to an
+               absolute path before being used.  Unsets MAKEOBJDIR.  See ``-O
+               -obj'' for more information.
 
      -m mach   Set the value of MACHINE to mach, except in some special cases
                listed below.  This will also override any value of
@@ -734,11 +767,17 @@ BUILDING
                -n''.
 
      -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
-               place the built object files under obj.  If a relative path is
-               specified, it will be converted to an absolute path before
-               being used.  For instance, a setting of /usr/obj will place
-               build-time files under /usr/obj/bin, /usr/obj/lib,
-               /usr/obj/usr.bin, and so forth.  Unsets MAKEOBJDIRPREFIX.
+               place the built object files under obj.  For instance, a set-
+               ting of ``-O /usr/obj'' will place build-time files under
+               /usr/obj/bin, /usr/obj/lib, /usr/obj/usr.bin, and so forth.  If
+               a relative path is specified, it will be converted to an abso-
+               lute path before being used.  Unsets MAKEOBJDIRPREFIX.
+
+               In normal use, exactly one of the -M or -O options should be
+               specified.  If the source directory is /usr/src and neither -M
+               nor -O is specified, then a default object directory will be
+               chosen according to rules in <bsd.obj.mk>; this default is usu-
+               ally either /usr/obj or /usr/obj.MACHINE.
 
      -o        Set the value of MKOBJDIRS to ``no''.  Otherwise, it will be
                automatically set to ``yes''.  This default is opposite to the
@@ -751,6 +790,9 @@ BUILDING
      -r        Remove the contents of DESTDIR and TOOLDIR before building
                (provides a clean starting point).  This will skip deleting
                DESTDIR if building on a native system to the root directory.
+
+     -S seed   Change the value of BUILDSEED to seed.  This should rarely be
+               necessary.
 
      -T tools  Set the value of TOOLDIR to tools.  If a relative path is spec-
                ified, it will be converted to an absolute path before being
@@ -838,7 +880,4 @@ HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as
      USE_NEW_TOOLCHAIN, and re-worked to TOOLCHAIN_MISSING after that.
 
-BUGS
-     A few platforms are not yet using this build system.
-
-NetBSD                          March 18, 2008                          NetBSD
+NetBSD                          August 18, 2008                         NetBSD

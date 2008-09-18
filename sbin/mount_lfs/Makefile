@@ -1,11 +1,15 @@
-#	$NetBSD: Makefile,v 1.8 2003/03/22 12:43:59 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.8.36.1 2008/09/18 04:28:27 wrstuden Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
 
 PROG=	mount_lfs
-SRCS=	mount_lfs.c
+SRCS=	mount_lfs.c pathadj.c
 MAN=	mount_lfs.8
+
+MOUNT=	${NETBSDSRCDIR}/sbin/mount
+CPPFLAGS+=-I${MOUNT} -DWANT_CLEANER
+.PATH:	${MOUNT}
 
 DPADD+=${LIBUTIL}
 LDADD+=-lutil

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2006/05/12 01:18:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.9.22.1 2008/09/18 04:29:10 wrstuden Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	ctags
@@ -10,7 +10,7 @@ WARNS=	3
 .include <bsd.prog.mk>
 
 .if !defined(HOSTPROGNAME)
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.ctags.c+=	-Wno-pointer-sign
 .endif
 .endif

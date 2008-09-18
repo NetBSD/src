@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.12 2008/02/11 11:26:15 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.12.6.1 2008/09/18 04:30:01 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,9 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
-	    "All rights reserved.\n");
-__RCSID("$NetBSD: btconfig.c,v 1.12 2008/02/11 11:26:15 plunky Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
+__RCSID("$NetBSD: btconfig.c,v 1.12.6.1 2008/09/18 04:30:01 wrstuden Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>

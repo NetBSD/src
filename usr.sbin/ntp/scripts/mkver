@@ -3,7 +3,7 @@ PROG=${1-UNKNOWN}
 
 ConfStr="$PROG"
 
-ConfStr="$ConfStr 4.2.4p2"
+ConfStr="$ConfStr 4.2.4p5"
 
 case "$CSET" in
  '') ;;
@@ -17,16 +17,22 @@ case "-lcrypto" in
  *) ConfStr="${ConfStr}-?" ;;
 esac
 
-ConfStr="$ConfStr `LC_TIME=C TZ= date`"
+ifile="`dirname $0`/../importdate"
 
-if [ ! -f .version ]; then
-  echo 0 > .version
+if [ -f "$ifile" ]; then
+  ConfStr="$ConfStr "`cat "$ifile"`
+else
+  ConfStr="$ConfStr `LC_TIME=C TZ= date`"
+
+  if [ ! -f .version ]; then
+    echo 0 > .version
+  fi
+  RUN="`cat .version`"
+  RUN="`expr $RUN + 1`"
+  echo $RUN > .version
+
+  ConfStr="$ConfStr (${RUN})"
 fi
-RUN="`cat .version`"
-RUN="`expr $RUN + 1`"
-echo $RUN > .version
-
-ConfStr="$ConfStr (${RUN})"
 
 echo "Version <${ConfStr}>";
 

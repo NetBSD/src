@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.48 2006/04/24 21:20:44 dsl Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.48.20.1 2008/09/18 04:30:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.48 2006/04/24 21:20:44 dsl Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.48.20.1 2008/09/18 04:30:03 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -379,6 +379,13 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 		    fs->fs_old_csshift, fs->fs_old_csmask);
 	printf("\ncgrotor\t%d\tfmod\t%d\tronly\t%d\tclean\t0x%02x\n",
 	    fs->fs_cgrotor, fs->fs_fmod, fs->fs_ronly, fs->fs_clean);
+	printf("wapbl version 0x%x\tlocation %u\tflags 0x%x\n",
+	    fs->fs_journal_version, fs->fs_journal_location,
+	    fs->fs_journal_flags);
+	printf("wapbl loc0 %" PRIu64 "\tloc1 %" PRIu64,
+	    fs->fs_journallocs[0], fs->fs_journallocs[1]);
+	printf("\tloc2 %" PRIu64 "\tloc3 %" PRIu64 "\n",
+	    fs->fs_journallocs[2], fs->fs_journallocs[3]);
 	printf("flags\t");
 	if (fs->fs_flags == 0)
 		printf("none");
@@ -396,8 +403,11 @@ print_superblock(struct fs *fs, uint16_t *opostbl,
 		printf("multilabel ");
 	if (fs->fs_flags & FS_FLAGS_UPDATED)
 		printf("fs_flags expanded ");
-	fsflags = fs->fs_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP | FS_NEEDSFSCK | FS_INDEXDIRS |
-			FS_ACLS | FS_MULTILABEL | FS_FLAGS_UPDATED);
+	if (fs->fs_flags & FS_DOWAPBL)
+		printf("wapbl ");
+	fsflags = fs->fs_flags & ~(FS_UNCLEAN | FS_DOSOFTDEP | FS_NEEDSFSCK |
+			FS_INDEXDIRS | FS_ACLS | FS_MULTILABEL |
+			FS_FLAGS_UPDATED | FS_DOWAPBL);
 	if (fsflags != 0)
 		printf("unknown flags (%#x)", fsflags);
 	printf("\nfsmnt\t%s\n", fs->fs_fsmnt);

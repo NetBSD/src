@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.116 2008/02/27 16:41:11 ad Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.116.4.1 2008/09/18 04:30:07 wrstuden Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif				/* not lint */
 
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.116 2008/02/27 16:41:11 ad Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.116.4.1 2008/09/18 04:30:07 wrstuden Exp $");
 #endif
 #endif				/* not lint */
 
@@ -224,7 +224,7 @@ static struct uucred def_anon = {
 	(uid_t) -2,
 	(gid_t) -2,
 	0,
-	{}
+	{ 0 }
 };
 
 static int      opt_flags;

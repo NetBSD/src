@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.146.2.1 2008/06/23 04:32:11 wrstuden Exp $	*/
+/*	$NetBSD: util.c,v 1.146.2.2 2008/09/18 04:29:12 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.146.2.1 2008/06/23 04:32:11 wrstuden Exp $");
+__RCSID("$NetBSD: util.c,v 1.146.2.2 2008/09/18 04:29:12 wrstuden Exp $");
 #endif /* not lint */
 
 /*
@@ -1215,7 +1215,7 @@ isipv6addr(const char *addr)
 	struct addrinfo hints, *res;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_INET6;
+	hints.ai_family = AF_INET6;
 	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(addr, "0", &hints, &res) != 0)

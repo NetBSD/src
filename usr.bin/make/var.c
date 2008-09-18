@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.128.4.1 2008/06/23 04:32:11 wrstuden Exp $	*/
+/*	$NetBSD: var.c,v 1.128.4.2 2008/09/18 04:29:16 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.128.4.1 2008/06/23 04:32:11 wrstuden Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.128.4.2 2008/09/18 04:29:16 wrstuden Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.128.4.1 2008/06/23 04:32:11 wrstuden Exp $");
+__RCSID("$NetBSD: var.c,v 1.128.4.2 2008/09/18 04:29:16 wrstuden Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2053,19 +2053,26 @@ VarQuote(char *str)
 
     Buffer  	  buf;
     /* This should cover most shells :-( */
-    static char meta[] = "\n \t'`\";&<>()|*?{}[]\\$!#^~";
+    static const char meta[] = "\n \t'`\";&<>()|*?{}[]\\$!#^~";
     const char	*newline;
+    size_t len, nlen;
 
-    newline = Shell_GetNewline();
+    if ((newline = Shell_GetNewline()) == NULL)
+	    newline = "\\\n";
+    nlen = strlen(newline);
 
     buf = Buf_Init(0);
-    for (; *str; str++) {
-	if (*str == '\n' && newline != NULL) {
-	    Buf_AddBytes(buf, strlen(newline), newline);
+    while (*str != '\0') {
+	if ((len = strcspn(str, meta)) != 0) {
+	    Buf_AddBytes(buf, len, str);
+	    str += len;
+	} else if (*str == '\n') {
+	    Buf_AddBytes(buf, nlen, newline);
+	    ++str;
 	} else {
-	    if (strchr(meta, *str) != NULL)
-		Buf_AddByte(buf, (Byte)'\\');
+	    Buf_AddByte(buf, (Byte)'\\');
 	    Buf_AddByte(buf, (Byte)*str);
+	    ++str;
 	}
     }
     Buf_AddByte(buf, (Byte)'\0');

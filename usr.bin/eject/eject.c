@@ -1,4 +1,4 @@
-/*	$NetBSD: eject.c,v 1.21 2008/04/28 20:24:12 martin Exp $	*/
+/*	$NetBSD: eject.c,v 1.21.2.1 2008/09/18 04:29:10 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,12 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
-	All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1999\
+ The NetBSD Foundation, Inc.  All rights reserved.");
 #endif				/* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: eject.c,v 1.21 2008/04/28 20:24:12 martin Exp $");
+__RCSID("$NetBSD: eject.c,v 1.21.2.1 2008/09/18 04:29:10 wrstuden Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>

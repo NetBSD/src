@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2008/04/10 15:05:24 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.28.4.1 2008/09/18 04:29:21 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,7 @@ SRCS=	ssh.c readconf.c clientloop.c sshtty.c \
 	sshconnect.c sshconnect1.c sshconnect2.c
 
 COPTS.sshconnect1.c=	-fno-strict-aliasing
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.sshconnect2.c=	-Wno-pointer-sign
 .endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2006/08/26 22:03:47 christos Exp $
+#	$NetBSD: Makefile,v 1.31.22.1 2008/09/18 04:28:28 wrstuden Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 .include <bsd.own.mk>
@@ -19,6 +19,6 @@ MLINKS=	mount_mfs.8 mfs.8
 
 .include <bsd.prog.mk>
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS.ffs_appleufs.c+=	-Wno-pointer-sign
 .endif

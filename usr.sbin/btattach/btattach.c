@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.1 2008/04/15 11:17:48 plunky Exp $	*/
+/*	$NetBSD: btattach.c,v 1.1.4.1 2008/09/18 04:30:00 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,9 +26,8 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert\n"
-	    "All rights reserved.\n");
-__RCSID("$NetBSD: btattach.c,v 1.1 2008/04/15 11:17:48 plunky Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
+__RCSID("$NetBSD: btattach.c,v 1.1.4.1 2008/09/18 04:30:00 wrstuden Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.3.2.1 2008/06/23 04:29:57 wrstuden Exp $	*/
+/*	$NetBSD: env.c,v 1.3.2.2 2008/09/18 04:28:24 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -24,6 +24,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: env.c,v 1.3.2.2 2008/09/18 04:28:24 wrstuden Exp $");
+#endif /* not lint */
 
 #include <errno.h>
 #include <string.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.22 2006/10/14 21:08:50 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.22.18.1 2008/09/18 04:29:28 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -51,6 +51,7 @@ extern	int	yflag;
 extern	int	wflag;
 extern	int	zflag;
 extern	int	Sflag;
+extern	int	Pflag;
 
 extern	void	norecover(void);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: mkconf,v 1.4 2005/08/09 21:49:23 nakayama Exp $
+#	$NetBSD: mkconf,v 1.4.20.1 2008/09/18 04:30:00 wrstuden Exp $
 #
 # mkconf
 # Generate local configuration parameters for amd
@@ -17,7 +17,7 @@ cat << __EOF
 #define HOST_HEADER_VERSION "$1"
 
 /* Define name of host */
-#define HOST_NAME "`hostname`"
+#define HOST_NAME "unknown"
 
 /* Define name and version of host machine (eg. solaris2.5.1) */
 #define HOST_OS "netbsd$1"
@@ -32,9 +32,9 @@ cat << __EOF
 #define HOST_VENDOR "The NetBSD Foundation, Inc."
 
 /* Define user name */
-#define USER_NAME "`whoami`"
+#define USER_NAME "unknown"
 
 /* Define configuration date */
-#define CONFIG_DATE "`date`"
+#define CONFIG_DATE "unknown"
 
 __EOF

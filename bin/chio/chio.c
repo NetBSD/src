@@ -1,4 +1,4 @@
-/* $NetBSD: chio.c,v 1.29 2008/04/28 20:22:51 martin Exp $ */
+/* $NetBSD: chio.c,v 1.29.2.1 2008/09/18 04:27:39 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,8 +38,8 @@
 #ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1998, 1999\
-	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: chio.c,v 1.29 2008/04/28 20:22:51 martin Exp $");
+The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: chio.c,v 1.29.2.1 2008/09/18 04:27:39 wrstuden Exp $");
 #endif
 
 #include <sys/param.h>

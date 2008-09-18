@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25.6.1 2008/06/23 04:32:10 wrstuden Exp $	*/
+/*	$NetBSD: main.c,v 1.25.6.2 2008/09/18 04:29:09 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,8 +52,8 @@
 #endif
 
 #ifndef lint
-COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+COPYRIGHT("@(#) Copyright (c) 1992, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -668,7 +668,7 @@ find_declared_option(const char *name)
 	if ((option = ht_lookup(defopttab, name)) != NULL ||
 	    (option = ht_lookup(defparamtab, name)) != NULL ||
 	    (option = ht_lookup(defflagtab, name)) != NULL ||
-	    (option = ht_lookup(fsopttab, name)) != NULL) {
+	    (option = ht_lookup(deffstab, name)) != NULL) {
 		return (option);
 	}
 
