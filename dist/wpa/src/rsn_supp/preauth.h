@@ -21,7 +21,7 @@ struct wpa_scan_results;
 
 void pmksa_candidate_free(struct wpa_sm *sm);
 int rsn_preauth_init(struct wpa_sm *sm, const u8 *dst,
-		     struct wpa_ssid *config);
+		     struct eap_peer_config *eap_conf);
 void rsn_preauth_deinit(struct wpa_sm *sm);
 void rsn_preauth_scan_results(struct wpa_sm *sm,
 			      struct wpa_scan_results *results);
@@ -43,7 +43,7 @@ static inline void rsn_preauth_candidate_process(struct wpa_sm *sm)
 }
 
 static inline int rsn_preauth_init(struct wpa_sm *sm, const u8 *dst,
-				   struct wpa_ssid *config)
+				   struct eap_peer_config *eap_conf)
 {
 	return -1;
 }

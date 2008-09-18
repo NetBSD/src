@@ -1,9 +1,9 @@
-/*	$NetBSD: makeinfo.h,v 1.1.1.6 2004/07/12 23:26:49 wiz Exp $	*/
+/*	$NetBSD: makeinfo.h,v 1.1.1.6.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* makeinfo.h -- declarations for Makeinfo.
-   Id: makeinfo.h,v 1.8 2004/03/10 22:34:21 dirt Exp
+   Id: makeinfo.h,v 1.17 2004/11/30 02:03:23 karl Exp
 
-   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003 Free
+   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004 Free
    Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
@@ -271,8 +271,15 @@ DECLARE (int, expensive_validation, 0);
 #define digit_value(c) ((c) - '0')
 #endif
 
-/* #define HTML_SAFE "$-_.+!*'()" */
-/* #define URL_SAFE_CHAR(ch) (isalnum (ch) || strchr (HTML_SAFE, ch)) */
+/* These characters are not really HTML-safe (with strict XHTML),
+   and also there are possible collisions.  That's the whole reason we
+   designed a new conversion scheme in the first place.  But we
+   nevertheless need to generate the old names.  See
+   `add_escaped_anchor_name' in html.c.  */
+#define OLD_HTML_SAFE "$-_.+!*'()"
+#define OLD_URL_SAFE_CHAR(ch) (strchr (OLD_HTML_SAFE, ch))
+
+/* For the current/stable scheme.  */
 #define URL_SAFE_CHAR(ch) (isalnum (ch))
 
 #define COMMAND_PREFIX '@'
@@ -318,6 +325,7 @@ extern GENERIC_LIST * reverse_list (GENERIC_LIST *list);
 extern char *info_trailer (void),
   *expansion (char *str, int implicit_code),
   *text_expansion (char *str),
+  *maybe_escaped_expansion (char *str, int implicit_code, int do_escape_html),
   *full_expansion (char *str, int implicit_code);
 
 extern void free_and_clear (char **pointer),
@@ -325,7 +333,7 @@ extern void free_and_clear (char **pointer),
   add_char (int character),
   add_meta_char (int character),
   close_single_paragraph (void),
-  insert_string (char *string),
+  insert_string (const char *),
   insert (int character),
   get_rest_of_line (int expand, char **string),
   add_html_block_elt (char *string),

@@ -18,7 +18,7 @@ EXTRA_DIST=	ntp-keygen-opts.def ntp-keygen.1 ntp-keygen-opts.texi ntp-keygen-opt
 BUILT_SOURCES=	ntp-keygen-opts.c ntp-keygen-opts.h ntp-keygen.1	\
 		ntp-keygen-opts.texi ntp-keygen-opts.menu
 man_MANS=	ntp-keygen.1
-run_ag=         cd $(srcdir) && autogen -L ../include
+run_ag=         cd $(srcdir) && autogen -L ../include --writable
 std_def_list=	$(top_srcdir)/include/debug-opt.def		\
 		$(top_srcdir)/include/autogen-version.def 	\
 		$(top_srcdir)/include/copyright.def 		\

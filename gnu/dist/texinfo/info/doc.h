@@ -1,7 +1,7 @@
-/*	$NetBSD: doc.h,v 1.1.1.3 2004/07/12 23:26:56 wiz Exp $	*/
+/*	$NetBSD: doc.h,v 1.1.1.3.26.1 2008/09/18 04:48:27 wrstuden Exp $	*/
 
 /* doc.h -- Structures associating function pointers with documentation.
-   Id: doc.h,v 1.4 2004/03/21 18:58:27 karl Exp
+   Id: doc.h,v 1.3 2004/04/11 17:56:45 karl Exp
 
    Copyright (C) 1993, 2001, 2004 Free Software Foundation, Inc.
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.13.10.1 2008/06/23 04:29:08 wrstuden Exp $
+.\"	$NetBSD: postconf.5,v 1.13.10.2 2008/09/18 04:48:25 wrstuden Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -103,8 +103,8 @@ Examples:
 .nf
 .na
 .ft C
-address_verify_map = hash:/var/lib/postfix/verify
-address_verify_map = btree:/var/lib/postfix/verify
+address_verify_map = hash:/var/db/postfix/verify
+address_verify_map = btree:/var/db/postfix/verify
 .fi
 .ad
 .ft R
@@ -4636,7 +4636,7 @@ Example:
 .nf
 .na
 .ft C
-smtp_sasl_auth_cache_name = proxy:btree:/var/lib/postfix/sasl_auth_cache
+smtp_sasl_auth_cache_name = proxy:btree:/var/db/postfix/sasl_auth_cache
 .fi
 .ad
 .ft R
@@ -5692,7 +5692,7 @@ Example:
 .nf
 .na
 .ft C
-smtp_tls_session_cache_database = btree:/var/lib/postfix/smtp_scache
+smtp_tls_session_cache_database = btree:/var/db/postfix/smtp_scache
 .fi
 .ad
 .ft R
@@ -7684,7 +7684,7 @@ Example:
 .nf
 .na
 .ft C
-smtpd_tls_session_cache_database = btree:/var/lib/postfix/smtpd_scache
+smtpd_tls_session_cache_database = btree:/var/db/postfix/smtpd_scache
 .fi
 .ad
 .ft R
@@ -7773,6 +7773,11 @@ This feature should not be enabled on a general purpose mail server,
 because it is likely to reject legitimate email.
 .PP
 This feature is available in Postfix 2.0 and later.
+.SH strict_mailbox_ownership (default: yes)
+Defer delivery when a mailbox file is not owned by its recipient.
+The default setting is not backwards compatible.
+.PP
+This feature is available in Postfix 2.5.3 and later.
 .SH strict_mime_encoding_domain (default: no)
 Reject mail with invalid Content-Transfer-Encoding: information
 for the message/* or multipart/* MIME content types.  This blocks

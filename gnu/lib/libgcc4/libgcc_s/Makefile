@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/11/09 04:08:50 christos Exp $
+#	$NetBSD: Makefile,v 1.3.18.1 2008/09/18 04:49:44 wrstuden Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -32,8 +32,6 @@ DPADD+=		libgcc.map
 CLEANFILES+=	libgcc.map
 
 .include <bsd.lib.mk>
-
-.include "../Makefile.unwind_h"
 
 .if ${MKPICLIB} != "no"
 LIBGCC_S_OBJS=	${SOBJS}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16.12.1 2008/06/23 04:29:29 wrstuden Exp $
+#	$NetBSD: Makefile.inc,v 1.16.12.2 2008/09/18 04:49:46 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,11 @@ CPPFLAGS+= -DNETBSD4 -DUSE_SASL_AUTH -DDEF_SERVER_SASL_TYPE=\"dovecot\" \
 	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \
 	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
 	-I${PFIX_DISTDIR}/src/xsasl
+
+.if defined(HAVE_PCC)
+# code uses gcc-specific aggregate dynamic array
+CPPFLAGS+=	-DCANT_USE_SEND_RECV_MSG
+.endif
 
 # TLS support.
 .if ${MKCRYPTO} != "no"

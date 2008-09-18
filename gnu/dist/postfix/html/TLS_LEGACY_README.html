@@ -564,7 +564,7 @@ the cost of repeatedly negotiating TLS session keys is high.</p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = btree:/var/lib/postfix/smtpd_scache
+    <a href="postconf.5.html#smtpd_tls_session_cache_database">smtpd_tls_session_cache_database</a> = btree:/var/db/postfix/smtpd_scache
 </pre>
 </blockquote>
 
@@ -938,7 +938,7 @@ is allowed to negotiate per unit time.</p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = btree:/var/lib/postfix/smtp_scache
+    <a href="postconf.5.html#smtp_tls_session_cache_database">smtp_tls_session_cache_database</a> = btree:/var/db/postfix/smtp_scache
 </pre>
 </blockquote>
 

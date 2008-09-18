@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.c,v 1.10.2.3 2008/06/24 06:05:40 wrstuden Exp $	*/
+/*	$NetBSD: cpuset.c,v 1.10.2.4 2008/09/18 04:54:18 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef _STANDALONE
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: cpuset.c,v 1.10.2.3 2008/06/24 06:05:40 wrstuden Exp $");
+__RCSID("$NetBSD: cpuset.c,v 1.10.2.4 2008/09/18 04:54:18 wrstuden Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -98,9 +98,9 @@ _cpuset_zero(cpuset_t *c)
 int
 _cpuset_isset(cpuid_t i, const cpuset_t *c)
 {
-	const int j = i >> CPUSET_SHIFT;
+	const unsigned long j = i >> CPUSET_SHIFT;
 
-	if (j >= cpuset_nentries || j < 0) {
+	if (j >= cpuset_nentries) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -110,9 +110,9 @@ _cpuset_isset(cpuid_t i, const cpuset_t *c)
 int
 _cpuset_set(cpuid_t i, cpuset_t *c)
 {
-	const int j = i >> CPUSET_SHIFT;
+	const unsigned long j = i >> CPUSET_SHIFT;
 
-	if (j >= cpuset_nentries || j < 0) {
+	if (j >= cpuset_nentries) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -123,9 +123,9 @@ _cpuset_set(cpuid_t i, cpuset_t *c)
 int
 _cpuset_clr(cpuid_t i, cpuset_t *c)
 {
-	const int j = i >> CPUSET_SHIFT;
+	const unsigned long j = i >> CPUSET_SHIFT;
 
-	if (j >= cpuset_nentries || j < 0) {
+	if (j >= cpuset_nentries) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -139,12 +139,12 @@ _cpuset_create(void)
 	if (cpuset_size == 0) {
 		static int mib[2] = { CTL_HW, HW_NCPU };
 		size_t len;
-		int nc;
+		u_int nc;
 
 		if (sysctl(mib, __arraycount(mib), &nc, &len, NULL, 0) == -1)
 			return NULL;
 
-		cpuset_nentries = nc;
+		cpuset_nentries = CPUSET_NENTRIES(nc);
 		cpuset_size = CPUSET_SIZE();
 	}
 	return calloc(1, cpuset_size);
@@ -243,10 +243,12 @@ kcpuset_zero(kcpuset_t *c)
 int
 kcpuset_isset(cpuid_t i, const kcpuset_t *c)
 {
-	const int j = i >> CPUSET_SHIFT;
+	const unsigned long j = i >> CPUSET_SHIFT;
 
+	KASSERT(c != NULL);
 	KASSERT(c->nused > 0);
 	KASSERT(c->next == NULL);
+	KASSERT(j < cpuset_nentries);
 	return ((1 << (i & CPUSET_MASK)) & c->bits[j]) != 0;
 }
 

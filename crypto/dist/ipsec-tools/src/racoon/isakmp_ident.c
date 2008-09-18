@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_ident.c,v 1.7 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_ident.c,v 1.7.4.1 2008/09/18 04:54:19 wrstuden Exp $	*/
 
 /* Id: isakmp_ident.c,v 1.21 2006/04/06 16:46:08 manubsd Exp */
 
@@ -92,6 +92,7 @@
 
 static vchar_t *ident_ir2mx __P((struct ph1handle *));
 static vchar_t *ident_ir3mx __P((struct ph1handle *));
+static int ident_recv_n __P((struct ph1handle *, struct isakmp_gen *));
 
 /* %%%
  * begin Identity Protection Mode as initiator.
@@ -300,30 +301,7 @@ ident_i2recv(iph1, msg)
 		switch (pa->type) {
 		case ISAKMP_NPTYPE_VID:
 			vid_numeric = check_vendorid(pa->ptr);
-#ifdef ENABLE_NATT
-			if (iph1->rmconf->nat_traversal && natt_vendorid(vid_numeric))
-			  natt_handle_vendorid(iph1, vid_numeric);
-#endif
-#ifdef ENABLE_HYBRID
-			switch (vid_numeric) {
-			case VENDORID_XAUTH:
-				iph1->mode_cfg->flags |=
-				    ISAKMP_CFG_VENDORID_XAUTH;
-				break;
-	
-			case VENDORID_UNITY:
-				iph1->mode_cfg->flags |=
-				    ISAKMP_CFG_VENDORID_UNITY;
-				break;
-	
-			default:
-				break;
-			}
-#endif  
-#ifdef ENABLE_DPD
-			if (vid_numeric == VENDORID_DPD && iph1->rmconf->dpd)
-				iph1->dpd_support=1;
-#endif
+			handle_vendorid(iph1, vid_numeric);
 			break;
 		default:
 			/* don't send information, see ident_r1recv() */
@@ -450,7 +428,7 @@ ident_i3recv(iph1, msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
-	int error = -1;
+	int error = -1, vid_numeric;
 #ifdef HAVE_GSSAPI
 	vchar_t *gsstoken = NULL;
 #endif
@@ -485,7 +463,8 @@ ident_i3recv(iph1, msg)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			(void)check_vendorid(pa->ptr);
+			vid_numeric = check_vendorid(pa->ptr);
+			handle_vendorid(iph1, vid_numeric);
 			break;
 		case ISAKMP_NPTYPE_CR:
 			if (oakley_savecr(iph1, pa->ptr) < 0)
@@ -696,7 +675,7 @@ ident_i4recv(iph1, msg0)
 	struct isakmp_parse_t *pa;
 	vchar_t *msg = NULL;
 	int error = -1;
-	int type;
+	int type, vid_numeric;
 #ifdef HAVE_GSSAPI
 	vchar_t *gsstoken = NULL;
 #endif
@@ -754,10 +733,11 @@ ident_i4recv(iph1, msg0)
 			break;
 #endif
 		case ISAKMP_NPTYPE_VID:
-			(void)check_vendorid(pa->ptr);
+			vid_numeric = check_vendorid(pa->ptr);
+			handle_vendorid(iph1, vid_numeric);
 			break;
 		case ISAKMP_NPTYPE_N:
-			isakmp_check_notify(pa->ptr, iph1);
+			ident_recv_n(iph1, pa->ptr);
 			break;
 		default:
 			/* don't send information, see ident_r1recv() */
@@ -921,34 +901,11 @@ ident_r1recv(iph1, msg)
 		switch (pa->type) {
 		case ISAKMP_NPTYPE_VID:
 			vid_numeric = check_vendorid(pa->ptr);
-#ifdef ENABLE_NATT
-			if (iph1->rmconf->nat_traversal && natt_vendorid(vid_numeric))
-				natt_handle_vendorid(iph1, vid_numeric);
-#endif
+			handle_vendorid(iph1, vid_numeric);
 #ifdef ENABLE_FRAG
 			if ((vid_numeric == VENDORID_FRAG) &&
 			    (vendorid_frag_cap(pa->ptr) & VENDORID_FRAG_IDENT))
 				iph1->frag = 1;
-#endif   
-#ifdef ENABLE_HYBRID
-			switch (vid_numeric) {
-			case VENDORID_XAUTH:
-				iph1->mode_cfg->flags |=
-				    ISAKMP_CFG_VENDORID_XAUTH;
-				break;
-		
-			case VENDORID_UNITY:
-				iph1->mode_cfg->flags |=
-				    ISAKMP_CFG_VENDORID_UNITY;
-				break;
-	
-			default:  
-				break;
-			}
-#endif
-#ifdef ENABLE_DPD
-			if (vid_numeric == VENDORID_DPD && iph1->rmconf->dpd)
-				iph1->dpd_support=1;
 #endif
 			break;
 		default:
@@ -1169,7 +1126,7 @@ ident_r2recv(iph1, msg)
 {
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
-	int error = -1;
+	int error = -1, vid_numeric;
 #ifdef HAVE_GSSAPI
 	vchar_t *gsstoken = NULL;
 #endif
@@ -1202,7 +1159,8 @@ ident_r2recv(iph1, msg)
 				goto end;
 			break;
 		case ISAKMP_NPTYPE_VID:
-			(void)check_vendorid(pa->ptr);
+			vid_numeric = check_vendorid(pa->ptr);
+			handle_vendorid(iph1, vid_numeric);
 			break;
 		case ISAKMP_NPTYPE_CR:
 			plog(LLV_WARNING, LOCATION, iph1->remote,
@@ -1390,7 +1348,7 @@ ident_r3recv(iph1, msg0)
 	vchar_t *pbuf = NULL;
 	struct isakmp_parse_t *pa;
 	int error = -1;
-	int type;
+	int type, vid_numeric;
 #ifdef HAVE_GSSAPI
 	vchar_t *gsstoken = NULL;
 #endif
@@ -1452,10 +1410,11 @@ ident_r3recv(iph1, msg0)
 			break;
 #endif
 		case ISAKMP_NPTYPE_VID:
-			(void)check_vendorid(pa->ptr);
+			vid_numeric = check_vendorid(pa->ptr);
+			handle_vendorid(iph1, vid_numeric);
 			break;
 		case ISAKMP_NPTYPE_N:
-			isakmp_check_notify(pa->ptr, iph1);
+			ident_recv_n(iph1, pa->ptr);
 			break;
 		default:
 			/* don't send information, see ident_r1recv() */
@@ -1955,3 +1914,28 @@ end:
 
 	return buf;
 }
+
+/*
+ * handle a notification payload inside identity exchange.
+ * called only when the packet has been verified to be encrypted.
+ */
+static int
+ident_recv_n(iph1, gen)
+	struct ph1handle *iph1;
+	struct isakmp_gen *gen;
+{
+	struct isakmp_pl_n *notify = (struct isakmp_pl_n *) gen;
+	u_int type;
+
+	type = ntohs(notify->type);
+	switch (type) {
+	case ISAKMP_NTYPE_INITIAL_CONTACT:
+		iph1->initial_contact_received = TRUE;
+		break;
+	default:
+		isakmp_log_notify(iph1, notify, "identity exchange");
+		break;
+	}
+	return 0;
+}
+

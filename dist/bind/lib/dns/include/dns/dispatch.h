@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.h,v 1.1.1.5.12.1 2008/06/23 04:28:15 wrstuden Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.1.1.5.12.2 2008/09/18 04:44:37 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: dispatch.h,v 1.56.128.2 2008/04/03 06:20:34 tbox Exp */
+/* Id: dispatch.h,v 1.56.128.3 2008/05/27 22:36:11 each Exp */
 
 #ifndef DNS_DISPATCH_H
 #define DNS_DISPATCH_H 1
@@ -117,7 +117,7 @@ struct dns_dispatchevent {
  *	accept replies from them.
  *
  * _RANDOMPORT
- *	TBD
+ *	Allocate UDP port randomly.
  */
 #define DNS_DISPATCHATTR_PRIVATE	0x00000001U
 #define DNS_DISPATCHATTR_TCP		0x00000002U
@@ -458,13 +458,6 @@ dns_dispatch_importrecv(dns_dispatch_t *disp, isc_event_t *event);
  * Requires:
  *\li 	disp is valid, and the attribute DNS_DISPATCHATTR_NOLISTEN is set.
  * 	event != NULL
- */
-
-void
-dns_dispatch_hash(void *data, size_t len);
-/*%<
- * Feed 'data' to the dispatch query id generator where 'len' is the size
- * of 'data'.
  */
 
 ISC_LANG_ENDDECLS

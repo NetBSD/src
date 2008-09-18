@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.11 2008/05/03 14:48:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2008/09/18 04:49:46 wrstuden Exp $
 
+.include "../Makefile.inc"
 LIBISPRIVATE=	yes
 
 LIB=		common
-SRCS+=		substring.c xexit.c xmalloc.c xstrdup.c
+SRCS+=		substring.c xexit.c xmalloc.c xstrdup.c key.c doc.c
 
 CPPFLAGS+=	-DGNULOCALEDIR=\"/usr/share/locale\" \
-		-DLOCALE_ALIAS_PATH=\"/usr/share/locale:.\"
+		-DLOCALE_ALIAS_PATH=\"/usr/share/locale:.\" \
+		-I${IDIST}/info
 
 .include <bsd.lib.mk>
 
@@ -15,4 +17,20 @@ CPPFLAGS+=	-DGNULOCALEDIR=\"/usr/share/locale\" \
 all: ${FILES}
 .SUFFIXES: .gmo .mo
 .gmo.mo:
+	${_MKTARGET_CREATE}
 	@cp $< $@
+
+GEN_SRCS =	funs.h key.c doc.c
+CLEANFILES+=	${GEN_SRCS}
+
+CMD_SRCS = session.c echo-area.c infodoc.c m-x.c indices.c nodemenu.c \
+    footnotes.c variables.c
+
+MAKEDOCDIR!=cd ${.CURDIR}/../makedoc && ${PRINTOBJDIR}
+MAKEDOC=${MAKEDOCDIR}/makedoc
+
+${GEN_SRCS}: ${MAKEDOC} ${CMD_SRCS}
+	${_MKMSG_CREATE} ${GEN_SRCS}
+	${.ALLSRC}
+
+.PATH: ${IDIST}/info ${IDIST}/doc

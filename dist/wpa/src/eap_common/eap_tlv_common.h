@@ -1,6 +1,6 @@
 /*
- * EAP-TLV definitions (draft-josefsson-pppext-eap-tls-eap-07.txt)
- * Copyright (c) 2004-2007, Jouni Malinen <j@w1.fi>
+ * EAP-TLV definitions (draft-josefsson-pppext-eap-tls-eap-10.txt)
+ * Copyright (c) 2004-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -15,11 +15,10 @@
 #ifndef EAP_TLV_COMMON_H
 #define EAP_TLV_COMMON_H
 
-/* EAP-TLV TLVs (draft-josefsson-ppext-eap-tls-eap-07.txt) */
+/* EAP-TLV TLVs (draft-josefsson-ppext-eap-tls-eap-10.txt) */
 #define EAP_TLV_RESULT_TLV 3 /* Acknowledged Result */
 #define EAP_TLV_NAK_TLV 4
-/* Note: RFC 4851, Section 4.2.4 defines 5 as Error TLV */
-#define EAP_TLV_CRYPTO_BINDING_TLV 5
+#define EAP_TLV_ERROR_CODE_TLV 5
 #define EAP_TLV_CONNECTION_BINDING_TLV 6
 #define EAP_TLV_VENDOR_SPECIFIC_TLV 7
 #define EAP_TLV_URI_TLV 8
@@ -27,17 +26,21 @@
 #define EAP_TLV_INTERMEDIATE_RESULT_TLV 10
 #define EAP_TLV_PAC_TLV 11 /* draft-cam-winget-eap-fast-provisioning-04.txt,
 			    * Section 4.2 */
-#define EAP_TLV_CRYPTO_BINDING_TLV_ 12 /* RFC 4851, Section 4.2.8 */
-/* draft-cam-winget-eap-fast-provisiong-04.txt, Section 4.3.1 */
+#define EAP_TLV_CRYPTO_BINDING_TLV 12
+#define EAP_TLV_CALLING_STATION_ID_TLV 13
+#define EAP_TLV_CALLED_STATION_ID_TLV 14
+#define EAP_TLV_NAS_PORT_TYPE_TLV 15
+#define EAP_TLV_SERVER_IDENTIFIER_TLV 16
+#define EAP_TLV_IDENTITY_TYPE_TLV 17
 #define EAP_TLV_SERVER_TRUSTED_ROOT_TLV 18
-#define EAP_TLV_REQUEST_ACTION_TLV 19 /* RFC 4851, Section 4.2.9 */
-/* draft-cam-winget-eap-fast-provisiong-04.txt, Section 4.3.2 */
+#define EAP_TLV_REQUEST_ACTION_TLV 19
 #define EAP_TLV_PKCS7_TLV 20
 
 #define EAP_TLV_RESULT_SUCCESS 1
 #define EAP_TLV_RESULT_FAILURE 2
 
 #define EAP_TLV_TYPE_MANDATORY 0x8000
+#define EAP_TLV_TYPE_MASK 0x3fff
 
 #ifdef _MSC_VER
 #pragma pack(push, 1)
@@ -70,7 +73,7 @@ struct eap_tlv_intermediate_result_tlv {
 } STRUCT_PACKED;
 
 /* RFC 4851, Section 4.2.8 - Crypto-Binding TLV */
-struct eap_tlv_crypto_binding__tlv {
+struct eap_tlv_crypto_binding_tlv {
 	be16 tlv_type;
 	be16 length;
 	u8 reserved;

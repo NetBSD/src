@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.4 2004/04/09 21:21:07 karl Exp
+# Id: Makefile.am,v 1.5 2004/04/11 17:56:47 karl Exp
 # Makefile.am for texinfo/tests/makeinfo.
 #
 # This file is free software; as a special exception the author gives

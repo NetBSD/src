@@ -1,6 +1,6 @@
 /*
  * EAP peer method: EAP-GPSK (draft-ietf-emu-eap-gpsk-08.txt)
- * Copyright (c) 2006-2007, Jouni Malinen <j@w1.fi>
+ * Copyright (c) 2006-2008, Jouni Malinen <j@w1.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -16,7 +16,6 @@
 
 #include "common.h"
 #include "eap_peer/eap_i.h"
-#include "config_ssid.h"
 #include "eap_common/eap_gpsk_common.h"
 
 struct eap_gpsk_data {
@@ -83,16 +82,13 @@ static void eap_gpsk_deinit(struct eap_sm *sm, void *priv);
 
 static void * eap_gpsk_init(struct eap_sm *sm)
 {
-	struct wpa_ssid *config = eap_get_config(sm);
 	struct eap_gpsk_data *data;
+	const u8 *identity, *password;
+	size_t identity_len, password_len;
 
-	if (config == NULL) {
-		wpa_printf(MSG_INFO, "EAP-GPSK: No configuration found");
-		return NULL;
-	}
-
-	if (config->eappsk == NULL) {
-		wpa_printf(MSG_INFO, "EAP-GPSK: No key (eappsk) configured");
+	password = eap_get_config_password(sm, &password_len);
+	if (password == NULL) {
+		wpa_printf(MSG_INFO, "EAP-GPSK: No key (password) configured");
 		return NULL;
 	}
 
@@ -101,23 +97,24 @@ static void * eap_gpsk_init(struct eap_sm *sm)
 		return NULL;
 	data->state = GPSK_1;
 
-	if (config->nai) {
-		data->id_peer = os_malloc(config->nai_len);
+	identity = eap_get_config_identity(sm, &identity_len);
+	if (identity) {
+		data->id_peer = os_malloc(identity_len);
 		if (data->id_peer == NULL) {
 			eap_gpsk_deinit(sm, data);
 			return NULL;
 		}
-		os_memcpy(data->id_peer, config->nai, config->nai_len);
-		data->id_peer_len = config->nai_len;
+		os_memcpy(data->id_peer, identity, identity_len);
+		data->id_peer_len = identity_len;
 	}
 
-	data->psk = os_malloc(config->eappsk_len);
+	data->psk = os_malloc(password_len);
 	if (data->psk == NULL) {
 		eap_gpsk_deinit(sm, data);
 		return NULL;
 	}
-	os_memcpy(data->psk, config->eappsk, config->eappsk_len);
-	data->psk_len = config->eappsk_len;
+	os_memcpy(data->psk, password, password_len);
+	data->psk_len = password_len;
 
 	return data;
 }

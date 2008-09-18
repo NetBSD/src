@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_peer.c,v 1.5 2007/06/24 16:55:14 kardel Exp $	*/
+/*	$NetBSD: ntp_peer.c,v 1.5.12.1 2008/09/18 04:44:44 wrstuden Exp $	*/
 
 /*
  * ntp_peer.c - management of data maintained for peer associations
@@ -17,6 +17,10 @@
 #include "openssl/rand.h"
 #endif /* OPENSSL */
 
+#ifdef SYS_WINNT
+extern int accept_wildcard_if_for_winnt;
+#endif
+
 /*
  *                  Table of valid association combinations
  *                  ---------------------------------------
@@ -29,7 +33,7 @@
  * PASSIVE         |   e       1       e       0       0       0
  * CLIENT          |   e       0       0       0       1       1
  * SERVER          |   e       0       0       0       0       0
- * BCAST	   |   e       0       0       0       0       0
+ * BCAST           |   e       0       0       0       0       0
  * BCLIENT         |   e       0       0       0       e       1
  *
  * One point to note here: a packet in BCAST mode can potentially match
@@ -708,7 +712,11 @@ select_peerinterface(struct peer *peer, struct sockaddr_storage *srcadr, struct 
 	 * crypto will not work without knowing the own transmit address
 	 */
 	if (interface != NULL && interface->flags & INT_WILDCARD)
-		interface = NULL;
+#ifdef SYS_WINNT
+		if ( !accept_wildcard_if_for_winnt )  
+#endif
+			interface = NULL;
+
 
 	return interface;
 }
@@ -761,45 +769,25 @@ newpeer(
 		    cast_flags, stoa(srcadr)));
 
 	ISC_LINK_INIT(peer, ilink);  /* set up interface link chain */
-
-	dstadr = select_peerinterface(peer, srcadr, dstadr, cast_flags);
-	
-	/*
-	 * If we can't find an interface to use we return a NULL
-	 * unless the DYNAMIC flag is set - then we expect the dynamic
-	 * interface detection code to bind us some day to an interface
-	 */
-	if (dstadr == NULL && !(flags & FLAG_DYNAMIC))
-	{
-		msyslog(LOG_ERR, "Cannot find existing interface for address %s", stoa(srcadr));
-
-		peer->next = peer_free;
-		peer_free = peer;
-		peer_associations--;
-		peer_free_count++;
-		
-		return (NULL);
-	}
-	
 	peer->srcadr = *srcadr;
+	set_peerdstadr(peer, select_peerinterface(peer, srcadr, dstadr,
+	    cast_flags));
 	peer->hmode = (u_char)hmode;
 	peer->version = (u_char)version;
 	peer->minpoll = (u_char)max(NTP_MINPOLL, minpoll);
 	peer->maxpoll = (u_char)min(NTP_MAXPOLL, maxpoll);
 	peer->flags = flags;
-
-	set_peerdstadr(peer, dstadr);
-
 #ifdef DEBUG
 	if (debug > 2) {
 		if (peer->dstadr)
 			printf("newpeer: using fd %d and our addr %s\n",
-			       peer->dstadr->fd, stoa(&peer->dstadr->sin));
+				    peer->dstadr->fd,
+				    stoa(&peer->dstadr->sin));
 		else
 			printf("newpeer: local interface currently not bound\n");
 	}
 #endif
-	
+
 	/*
 	 * Broadcast needs the socket enabled for broadcast
 	 */

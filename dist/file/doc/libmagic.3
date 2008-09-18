@@ -1,4 +1,4 @@
-.\"	$NetBSD: libmagic.3,v 1.8 2007/06/07 11:32:45 pooka Exp $
+.\" $File: libmagic.man,v 1.18 2008/02/28 22:24:46 rrt Exp $
 .\"
 .\" Copyright (c) Christos Zoulas 2003.
 .\" All Rights Reserved.
@@ -68,7 +68,7 @@ These functions
 operate on the magic database file
 which is described
 in
-.Xr magic 5 .
+.Xr magic 4 .
 .Pp
 The function
 .Fn magic_open
@@ -88,8 +88,10 @@ If the file is compressed, unpack it and look at the contents.
 .It Dv MAGIC_DEVICES
 If the file is a block or character special device, then open the device
 and try to look in its contents.
-.It Dv MAGIC_MIME
-Return a mime string, instead of a textual description.
+.It Dv MAGIC_MIME_TYPE
+Return a MIME type string, instead of a textual description.
+.It Dv MAGIC_MIME_ENCODING
+Return a MIME encoding, instead of a textual description.
 .It Dv MAGIC_CONTINUE
 Return all matches, not just the first.
 .It Dv MAGIC_CHECK
@@ -130,7 +132,7 @@ Don't look for troff sequences inside ascii files.
 The
 .Fn magic_close
 function closes the
-.Xr magic 5
+.Xr magic 4
 database and deallocates any resources used.
 .Pp
 The
@@ -163,9 +165,10 @@ bytes size.
 .Pp
 The
 .Fn magic_setflags
-function, sets the 
+function sets the 
 .Ar flags
-described above.
+described above. Note that using both MIME flags together can also
+return extra information on the charset.
 .Pp
 The
 .Fn magic_check
@@ -183,7 +186,9 @@ separated list of database files passed in as
 or NULL for the default database. It returns 0 on success and -1 on
 failure. The compiled files created are named from the
 .Xr basename 1
-of each file argument with ".mgc" appended to it.
+of each file argument with
+.Dq .mgc
+appended to it.
 .Pp
 The
 .Fn magic_load
@@ -194,10 +199,14 @@ or NULL for the default database file
 before any magic queries can performed.
 .Pp
 The default database file is named by the MAGIC environment variable.  If
-that variable is not set, the default database file name is /usr/share/misc/magic.
+that variable is not set, the default database file name is /usr/tools/share/file/magic.
 .Pp
 .Fn magic_load
-adds ".mime" and/or ".mgc" to the database filename as appropriate.
+adds
+.Dq .mime
+and/or
+.Dq .mgc
+to the database filename as appropriate.
 .Sh RETURN VALUES
 The function
 .Fn magic_open
@@ -228,19 +237,19 @@ when
 .Dv MAGIC_PRESERVE_ATIME
 is set.
 .Sh FILES
-.Bl -tag -width /usr/share/misc/magic.mime.mgc -compact
-.It Pa /usr/share/misc/magic.mime
+.Bl -tag -width /usr/tools/share/file/magic.mime.mgc -compact
+.It Pa /usr/tools/share/file/magic.mime
 The non-compiled default magic mime database.
-.It Pa /usr/share/misc/magic.mime.mgc
+.It Pa /usr/tools/share/file/magic.mime.mgc
 The compiled default magic mime database.
-.It Pa /usr/share/misc/magic
+.It Pa /usr/tools/share/file/magic
 The non-compiled default magic database.
-.It Pa /usr/share/misc/magic.mgc
+.It Pa /usr/tools/share/file/magic.mgc
 The compiled default magic database.
 .El
 .Sh SEE ALSO
 .Xr file 1 ,
-.Xr magic 5 
+.Xr magic 4 
 .Sh AUTHORS
 Måns Rullgård Initial libmagic implementation,
 and configuration.

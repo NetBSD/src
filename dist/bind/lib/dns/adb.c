@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.3.12.1 2008/06/23 04:28:04 wrstuden Exp $	*/
+/*	$NetBSD: adb.c,v 1.3.12.2 2008/09/18 04:44:37 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2004-2008  Internet Systems Consortium, Inc. ("ISC")
@@ -3098,7 +3098,7 @@ fetch_callback(isc_task_t *task, isc_event_t *ev) {
 	dns_fetchevent_t *dev;
 	dns_adbname_t *name;
 	dns_adb_t *adb;
-	dns_adbfetch_t *fetch = NULL;
+	dns_adbfetch_t *fetch;
 	int bucket;
 	isc_eventtype_t ev_status;
 	isc_stdtime_t now;

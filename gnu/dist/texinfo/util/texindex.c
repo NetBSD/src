@@ -1,7 +1,7 @@
-/*	$NetBSD: texindex.c,v 1.10 2006/12/01 18:21:04 drochner Exp $	*/
+/*	$NetBSD: texindex.c,v 1.10.18.1 2008/09/18 04:48:31 wrstuden Exp $	*/
 
 /* texindex -- sort TeX index dribble output into an actual index.
-   Id: texindex.c,v 1.3 2004/03/18 22:26:53 karl Exp
+   Id: texindex.c,v 1.11 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 1987, 1991, 1992, 1996, 1997, 1998, 1999, 2000, 2001,
    2002, 2003, 2004 Free Software Foundation, Inc.

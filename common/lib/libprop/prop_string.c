@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.10 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.10.2.1 2008/09/18 04:54:19 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -51,13 +51,15 @@ _PROP_POOL_INIT(_prop_string_pool, sizeof(struct _prop_string), "propstng")
 _PROP_MALLOC_DEFINE(M_PROP_STRING, "prop string",
 		    "property string container object")
 
-static int		_prop_string_free(prop_stack_t, prop_object_t *);
+static _prop_object_free_rv_t
+		_prop_string_free(prop_stack_t, prop_object_t *);
 static bool	_prop_string_externalize(
 				struct _prop_object_externalize_context *,
 				void *);
-static bool	_prop_string_equals(prop_object_t, prop_object_t,
-				void **, void **,
-				prop_object_t *, prop_object_t *);
+static _prop_object_equals_rv_t
+		_prop_string_equals(prop_object_t, prop_object_t,
+				    void **, void **,
+				    prop_object_t *, prop_object_t *);
 
 static const struct _prop_object_type _prop_object_type_string = {
 	.pot_type	=	PROP_TYPE_STRING,
@@ -71,7 +73,7 @@ static const struct _prop_object_type _prop_object_type_string = {
 #define	prop_string_contents(x)  ((x)->ps_immutable ? (x)->ps_immutable : "")
 
 /* ARGSUSED */
-static int
+static _prop_object_free_rv_t
 _prop_string_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_string_t ps = *obj;
@@ -102,7 +104,7 @@ _prop_string_externalize(struct _prop_object_externalize_context *ctx,
 }
 
 /* ARGSUSED */
-static bool
+static _prop_object_equals_rv_t
 _prop_string_equals(prop_object_t v1, prop_object_t v2,
     void **stored_pointer1, void **stored_pointer2,
     prop_object_t *next_obj1, prop_object_t *next_obj2)

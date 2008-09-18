@@ -1,7 +1,7 @@
-/*	$NetBSD: xref.h,v 1.1.1.1 2004/07/12 23:26:47 wiz Exp $	*/
+/*	$NetBSD: xref.h,v 1.1.1.1.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* xref.h -- declarations for the cross references.
-   Id: xref.h,v 1.2 2004/02/13 22:01:39 dirt Exp
+   Id: xref.h,v 1.1 2004/04/11 17:56:47 karl Exp
 
    Copyright (C) 2004 Free Software Foundation, Inc.
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cipher.c,v 1.19.18.1 2008/06/23 04:27:02 wrstuden Exp $	*/
+/*	$NetBSD: cipher.c,v 1.19.18.2 2008/09/18 04:54:20 wrstuden Exp $	*/
 /* $OpenBSD: cipher.c,v 1.81 2006/08/03 03:34:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.19.18.1 2008/06/23 04:27:02 wrstuden Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.19.18.2 2008/09/18 04:54:20 wrstuden Exp $");
 #include <sys/types.h>
 
 #include <openssl/md5.h>
@@ -80,9 +80,15 @@ struct Cipher {
 	{ "aes256-cbc",		SSH_CIPHER_SSH2, 16, 32, 0, EVP_aes_256_cbc },
 	{ "rijndael-cbc@lysator.liu.se",
 				SSH_CIPHER_SSH2, 16, 32, 0, EVP_aes_256_cbc },
+#ifdef AES_CTR_MT
 	{ "aes128-ctr",		SSH_CIPHER_SSH2, 16, 16, 0, evp_aes_ctr_mt },
 	{ "aes192-ctr",		SSH_CIPHER_SSH2, 16, 24, 0, evp_aes_ctr_mt },
 	{ "aes256-ctr",		SSH_CIPHER_SSH2, 16, 32, 0, evp_aes_ctr_mt },
+#else
+	{ "aes128-ctr",		SSH_CIPHER_SSH2, 16, 16, 0, evp_aes_128_ctr },
+	{ "aes192-ctr",		SSH_CIPHER_SSH2, 16, 24, 0, evp_aes_128_ctr },
+	{ "aes256-ctr",		SSH_CIPHER_SSH2, 16, 32, 0, evp_aes_128_ctr },
+#endif
 #ifdef ACSS
 	{ "acss@openssh.org",	SSH_CIPHER_SSH2, 16, 5, 0, EVP_acss },
 #endif

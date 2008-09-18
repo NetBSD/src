@@ -57,7 +57,7 @@ static int ralink_set_oid(struct wpa_driver_ralink_data *drv,
 	if (buf == NULL)
 		return -1;
 	os_memset(&iwr, 0, sizeof(iwr));
-	os_strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+	os_strlcpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
 	iwr.u.data.flags = oid;
 	iwr.u.data.flags |= OID_GET_SET_TOGGLE;
 
@@ -84,7 +84,7 @@ ralink_get_new_driver_flag(struct wpa_driver_ralink_data *drv)
 	UCHAR enabled = 0;
 
 	os_memset(&iwr, 0, sizeof(iwr));
-	os_strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+	os_strlcpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
 	iwr.u.data.pointer = (UCHAR*) &enabled;
 	iwr.u.data.flags = RT_OID_NEW_DRIVER;
 
@@ -108,7 +108,7 @@ static int wpa_driver_ralink_get_bssid(void *priv, u8 *bssid)
 	wpa_printf(MSG_DEBUG, "%s", __FUNCTION__);
 
 	os_memset(&iwr, 0, sizeof(iwr));
-	os_strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+	os_strlcpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
 
 	if (ioctl(drv->ioctl_sock, SIOCGIWAP, &iwr) < 0) {
 		perror("ioctl[SIOCGIWAP]");
@@ -145,7 +145,7 @@ static int wpa_driver_ralink_get_ssid(void *priv, u8 *ssid)
 	wpa_printf(MSG_DEBUG, "%s", __FUNCTION__);
 
 	os_memset(&iwr, 0, sizeof(iwr));
-	os_strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+	os_strlcpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
 	iwr.u.essid.pointer = (caddr_t) ssid;
 	iwr.u.essid.length = 32;
 
@@ -236,7 +236,7 @@ static int wpa_driver_ralink_set_ssid(struct wpa_driver_ralink_data *drv,
 	buf->SsidLength = ssid_len;
 	os_memcpy(buf->Ssid, ssid, ssid_len);
 	os_memset(&iwr, 0, sizeof(iwr));
-	os_strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+	os_strlcpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
 
 	iwr.u.data.flags = OID_802_11_SSID;
 	iwr.u.data.flags |= OID_GET_SET_TOGGLE;
@@ -611,8 +611,10 @@ wpa_driver_ralink_event_wireless(struct wpa_driver_ralink_data *drv,
 					   "receive ReqIEs !!!");
 				drv->assoc_req_ies =
 					os_malloc(iwe->u.data.length);
-				if (drv->assoc_req_ies == NULL)
+				if (drv->assoc_req_ies == NULL) {
+					os_free(buf);
 					return;
+				}
 
 				drv->assoc_req_ies_len = iwe->u.data.length;
 				os_memcpy(drv->assoc_req_ies, custom,
@@ -625,6 +627,7 @@ wpa_driver_ralink_event_wireless(struct wpa_driver_ralink_data *drv,
 				if (drv->assoc_resp_ies == NULL) {
 					os_free(drv->assoc_req_ies);
 					drv->assoc_req_ies = NULL;
+					os_free(buf);
 					return;
 				}
 
@@ -637,7 +640,7 @@ wpa_driver_ralink_event_wireless(struct wpa_driver_ralink_data *drv,
 					   "receive ASSOCINFO_EVENT !!!");
 
 				assoc_info_buf =
-					os_malloc(drv->assoc_req_ies_len +
+					os_zalloc(drv->assoc_req_ies_len +
 						  drv->assoc_resp_ies_len + 1);
 
 				if (assoc_info_buf == NULL) {
@@ -649,18 +652,26 @@ wpa_driver_ralink_event_wireless(struct wpa_driver_ralink_data *drv,
 					return;
 				}
 
-				os_memcpy(assoc_info_buf, drv->assoc_req_ies,
-					  drv->assoc_req_ies_len);
+				if (drv->assoc_req_ies) {
+					os_memcpy(assoc_info_buf,
+						  drv->assoc_req_ies,
+						  drv->assoc_req_ies_len);
+				}
 				info_pos = assoc_info_buf +
 					drv->assoc_req_ies_len;
-				os_memcpy(info_pos, drv->assoc_resp_ies,
-					  drv->assoc_resp_ies_len);
+				if (drv->assoc_resp_ies) {
+					os_memcpy(info_pos,
+						  drv->assoc_resp_ies,
+						  drv->assoc_resp_ies_len);
+				}
 				assoc_info_buf[drv->assoc_req_ies_len +
 					       drv->assoc_resp_ies_len] = '\0';
 				wpa_driver_ralink_event_wireless_custom(
 					drv, ctx, assoc_info_buf);
 				os_free(drv->assoc_req_ies);
+				drv->assoc_req_ies = NULL;
 				os_free(drv->assoc_resp_ies);
+				drv->assoc_resp_ies = NULL;
 				os_free(assoc_info_buf);
 			} else if (iwe->u.data.flags == RT_DISASSOC_EVENT_FLAG)
 			{
@@ -836,7 +847,7 @@ ralink_get_we_version_compiled(struct wpa_driver_ralink_data *drv)
 	UINT we_version_compiled = 0;
 
 	os_memset(&iwr, 0, sizeof(iwr));
-	os_strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+	os_strlcpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
 	iwr.u.data.pointer = (caddr_t) &we_version_compiled;
 	iwr.u.data.flags = RT_OID_WE_VERSION_COMPILED;
 
@@ -898,7 +909,7 @@ static void * wpa_driver_ralink_init(void *ctx, const char *ifname)
 		return NULL;
 	}
 	/* do it */
-	os_strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	os_strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
 
 	if (ioctl(s, SIOCGIFINDEX, &ifr) < 0) {
 		perror(ifr.ifr_name);
@@ -912,7 +923,7 @@ static void * wpa_driver_ralink_init(void *ctx, const char *ifname)
 	drv->scanning_done = 1;
 	drv->ap_scan = 1; /* for now - let's assume ap_scan=1 is used */
 	drv->ctx = ctx;
-	os_strncpy(drv->ifname, ifname, sizeof(drv->ifname));
+	os_strlcpy(drv->ifname, ifname, sizeof(drv->ifname));
 	drv->ioctl_sock = s;
 	drv->g_driver_down = 0;
 
@@ -1034,7 +1045,7 @@ static int wpa_driver_ralink_scan(void *priv, const u8 *ssid, size_t ssid_len)
 	/* wpa_driver_ralink_set_ssid(drv, ssid, ssid_len); */
 
 	os_memset(&iwr, 0, sizeof(iwr));
-	os_strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+	os_strlcpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
 
 	if (ioctl(drv->ioctl_sock, SIOCSIWSCAN, &iwr) < 0) {
 		perror("ioctl[SIOCSIWSCAN]");
@@ -1083,7 +1094,7 @@ wpa_driver_ralink_get_scan_results(void *priv,
 	wsr = (NDIS_802_11_BSSID_LIST_EX *) buf;
 
 	wsr->NumberOfItems = 0;
-	os_strncpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
+	os_strlcpy(iwr.ifr_name, drv->ifname, IFNAMSIZ);
 	iwr.u.data.pointer = (void *) buf;
 	iwr.u.data.flags = OID_802_11_BSSID_LIST;
 

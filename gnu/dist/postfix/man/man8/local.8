@@ -1,4 +1,4 @@
-.\"	$NetBSD: local.8,v 1.9.12.1 2008/06/23 04:29:08 wrstuden Exp $
+.\"	$NetBSD: local.8,v 1.9.12.2 2008/09/18 04:48:25 wrstuden Exp $
 .\"
 .TH LOCAL 8 
 .ad
@@ -417,6 +417,10 @@ Update the \fBlocal\fR(8) delivery agent's idea of the Delivered-To:
 address (see prepend_delivered_header) only once, at the start of
 a delivery attempt; do not update the Delivered-To: address while
 expanding aliases or .forward files.
+.PP
+Available in Postfix version 2.5.3 and later:
+.IP "\fBstrict_mailbox_ownership (yes)\fR"
+Defer delivery when a mailbox file is not owned by its recipient.
 .SH "DELIVERY METHOD CONTROLS"
 .na
 .nf
@@ -515,7 +519,7 @@ Restrict \fBlocal\fR(8) mail delivery to external commands.
 Restrict \fBlocal\fR(8) mail delivery to external files.
 .IP "\fBcommand_expansion_filter (see 'postconf -d' output)\fR"
 Restrict the characters that the \fBlocal\fR(8) delivery agent allows in
-$name expansions of $mailbox_command.
+$name expansions of $mailbox_command and $command_execution_directory.
 .IP "\fBdefault_privs (nobody)\fR"
 The default rights used by the \fBlocal\fR(8) delivery agent for delivery
 to external file or command.
@@ -527,6 +531,10 @@ Available in Postfix version 2.2 and later:
 .IP "\fBexecution_directory_expansion_filter (see 'postconf -d' output)\fR"
 Restrict the characters that the \fBlocal\fR(8) delivery agent allows
 in $name expansions of $command_execution_directory.
+.PP
+Available in Postfix version 2.5.3 and later:
+.IP "\fBstrict_mailbox_ownership (yes)\fR"
+Defer delivery when a mailbox file is not owned by its recipient.
 .SH "MISCELLANEOUS CONTROLS"
 .na
 .nf

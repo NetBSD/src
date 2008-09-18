@@ -350,7 +350,7 @@ shnbsd_get_next_pc (CORE_ADDR pc)
    which would be executed.
  */
 void
-shnbsd_software_single_step (enum target_signal ignore,
+shnbsd_software_single_step (enum target_signal sig,
 			     int insert_breakpoints_p)
 {
   static CORE_ADDR next_pc;
@@ -359,15 +359,17 @@ shnbsd_software_single_step (enum target_signal ignore,
   if (insert_breakpoints_p)
     {
       pc = read_pc ();
-      next_pc = shnbsd_get_next_pc (pc);
+
+      /* If inferior was signalled before it had a chance to execute
+	 the single step breakpoint, keep the breakpoint where it
+	 was */
+      if (sig == 0 || pc != next_pc)
+	next_pc = shnbsd_get_next_pc (pc);
 
       insert_single_step_breakpoint (next_pc);
     }
   else
-    {
       remove_single_step_breakpoints ();
-      write_pc (next_pc);
-    }
 }
 
 /* SH register sets.  */

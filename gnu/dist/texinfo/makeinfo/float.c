@@ -1,7 +1,7 @@
-/*	$NetBSD: float.c,v 1.1.1.1 2004/07/12 23:26:51 wiz Exp $	*/
+/*	$NetBSD: float.c,v 1.1.1.1.26.1 2008/09/18 04:48:29 wrstuden Exp $	*/
 
 /* float.c -- float environment functions.
-   Id: float.c,v 1.27 2004/03/25 00:20:16 karl Exp
+   Id: float.c,v 1.8 2004/07/05 22:23:22 karl Exp
 
    Copyright (C) 2003, 2004 Free Software Foundation, Inc.
 
@@ -234,7 +234,7 @@ cm_listoffloats (void)
                   add_word ("\">");
 
                   if (strlen (float_type) > 0)
-                    execute_string (float_type);
+                    execute_string ("%s", float_type);
 
                   if (strlen (temp->id) > 0)
                     {
@@ -250,7 +250,7 @@ cm_listoffloats (void)
                           || strlen (temp->id) > 0)
                         insert_string (": ");
 
-                      execute_string (temp->title);
+                      execute_string ("%s", temp->title);
                     }
 
                   add_word ("</a>");

@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.3 2006/06/11 19:34:10 kardel Exp $	*/
+/*	$NetBSD: machines.c,v 1.3.20.1 2008/09/18 04:44:44 wrstuden Exp $	*/
 
 /* machines.c - provide special support for peculiar architectures
  *
@@ -502,10 +502,10 @@ getpass(const char * prompt)
 {
 	int c, i;
 	static char password[32];
-#ifdef DEBUG
+
 	fprintf(stderr, "%s", prompt);
 	fflush(stderr);
-#endif
+
 	for (i=0; i<sizeof(password)-1 && ((c=_getch())!='\n' && c!='\r'); i++) {
 		password[i] = (char) c;
 	}

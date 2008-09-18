@@ -1,7 +1,7 @@
-/*	$NetBSD: signals.h,v 1.1.1.3 2004/07/12 23:26:53 wiz Exp $	*/
+/*	$NetBSD: signals.h,v 1.1.1.3.26.1 2008/09/18 04:48:28 wrstuden Exp $	*/
 
 /* signals.h -- header to include system dependent signal definitions.
-   Id: signals.h,v 1.2 2004/03/20 01:44:23 karl Exp
+   Id: signals.h,v 1.2 2004/04/11 17:56:46 karl Exp
 
    Copyright (C) 1993, 1994, 1995, 1997, 2002, 2004 Free Software Foundation, Inc.
 
