@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.3 2008/09/18 02:49:00 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.4 2008/09/18 02:57:07 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.3 2008/09/18 02:49:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.4 2008/09/18 02:57:07 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1712,7 +1712,6 @@ uvideo_set_format(void *addr, struct video_format *format)
 	 * undefined.  TODO: this should be moved or changed so that
 	 * it isn't done on every set_format, only the first one.*/
 
-#if 0
 	/* Xbox camera does not like zeros during SET_CUR, at least
 	 * for FormatIndex, FrameIndex, and FrameInterval.  For now,
 	 * initialize with the default values. */
@@ -1737,7 +1736,6 @@ uvideo_set_format(void *addr, struct video_format *format)
 		      UGETW(probe.wDelay),
 		      UGETDW(probe.dwMaxVideoFrameSize),
 		      UGETDW(probe.dwMaxPayloadTransferSize)));
-#endif
 
 	err = uvideo_stream_probe(vs, UR_SET_CUR, &probe);
 	if (err != USBD_NORMAL_COMPLETION) {
