@@ -35,7 +35,7 @@
 
 #include "krb5_locl.h"
 __RCSID("$Heimdal: crypto.c,v 1.73.2.4 2004/03/06 16:38:00 lha Exp $"
-        "$NetBSD: crypto.c,v 1.13 2004/04/02 14:59:48 lha Exp $");
+        "$NetBSD: crypto.c,v 1.13.2.1 2008/09/18 19:09:19 bouyer Exp $");
 
 #undef CRYPTO_DEBUG
 #ifdef CRYPTO_DEBUG
@@ -3241,9 +3241,11 @@ seed_something(void)
     if (RAND_file_name(seedfile, sizeof(seedfile))) {
 	fd = open(seedfile, O_RDONLY);
 	if (fd >= 0) {
-	    read(fd, buf, sizeof(buf));
-	    /* Use the full buffer anyway */
-	    RAND_add(buf, sizeof(buf), 0.0);
+	    ssize_t ret;
+	    ret = read(fd, buf, sizeof(buf));
+	    if (ret > 0)
+		RAND_add(buf, sizeof(buf), 0.0);
+	    close(fd);
 	} else
 	    seedfile[0] = '\0';
     } else
