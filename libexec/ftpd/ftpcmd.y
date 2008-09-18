@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpcmd.y,v 1.84 2006/02/01 14:20:12 christos Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.84.4.1 2008/09/18 18:24:59 bouyer Exp $	*/
 
 /*-
- * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -79,7 +79,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.84 2006/02/01 14:20:12 christos Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.84.4.1 2008/09/18 18:24:59 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -1363,8 +1363,12 @@ lookup(struct tab *p, const char *cmd)
 
 /*
  * getline - a hacked up version of fgets to ignore TELNET escape codes.
+ *	`s' is the buffer to read into.
+ *	`n' is the 1 less than the size of the buffer, to allow trailing NUL
+ *	`iop' is the FILE to read from.
+ *	Returns 0 on success, -1 on EOF, -2 if the command was too long.
  */
-char *
+int
 getline(char *s, int n, FILE *iop)
 {
 	int c;
@@ -1379,7 +1383,7 @@ getline(char *s, int n, FILE *iop)
 			if (ftpd_debug)
 				syslog(LOG_DEBUG, "command: %s", s);
 			tmpline[0] = '\0';
-			return(s);
+			return(0);
 		}
 		if (c == 0)
 			tmpline[0] = '\0';
@@ -1418,11 +1422,25 @@ getline(char *s, int n, FILE *iop)
 		    }
 		}
 		*cs++ = c;
-		if (--n <= 0 || c == '\n')
+		if (--n <= 0) {
+			/*
+			 * If command doesn't fit into buffer, discard the
+			 * rest of the command and indicate truncation.
+			 * This prevents the command to be split up into
+			 * multiple commands.
+			 */
+			if (ftpd_debug)
+				syslog(LOG_DEBUG,
+				    "command too long, last char: %d", c);
+			while (c != '\n' && (c = getc(iop)) != EOF)
+				continue;
+			return (-2);
+		}
+		if (c == '\n')
 			break;
 	}
 	if (c == EOF && cs == s)
-		return (NULL);
+		return (-1);
 	*cs++ = '\0';
 	if (ftpd_debug) {
 		if ((curclass.type != CLASS_GUEST &&
@@ -1444,7 +1462,7 @@ getline(char *s, int n, FILE *iop)
 			syslog(LOG_DEBUG, "command: %.*s", len, s);
 		}
 	}
-	return (s);
+	return (0);
 }
 
 void
@@ -1458,15 +1476,20 @@ ftp_handle_line(char *cp)
 void
 ftp_loop(void)
 {
+	int ret;
 
 	while (1) {
 		(void) alarm(curclass.timeout);
-		if (getline(cbuf, sizeof(cbuf)-1, stdin) == NULL) {
+		ret = getline(cbuf, sizeof(cbuf)-1, stdin);
+		(void) alarm(0);
+		if (ret == -1) {
 			reply(221, "You could at least say goodbye.");
 			dologout(0);
+		} else if (ret == -2) {
+			reply(500, "Command too long.");
+		} else {
+			ftp_handle_line(cbuf);
 		}
-		(void) alarm(0);
-		ftp_handle_line(cbuf);
 	}
 	/*NOTREACHED*/
 }
