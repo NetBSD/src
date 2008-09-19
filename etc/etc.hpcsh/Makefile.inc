@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2007/07/24 10:49:25 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2008/09/19 17:38:43 tsutsui Exp $
 #
 #	etc.hpcsh/Makefile.inc -- hpcsh-specific etc Makefile targets
 #
@@ -11,3 +11,7 @@ KERNEL_SETS=		GENERIC HPW650PA
 BUILD_KERNELS=		RAMDISK
 
 INSTALLATION_DIRS+=	installation/miniroot
+
+snap_md_post:
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation \
+	    '*.gz' '*.exe'
