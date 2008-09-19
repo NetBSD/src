@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.25 2006/01/20 22:02:40 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.26 2008/09/19 03:02:35 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -203,7 +203,7 @@
 #define	ASMSTR		.asciz
 
 #ifdef __ELF__
-#define RCSID(x)	.section .ident; .asciz x; .previous
+#define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
 #else
 #define	RCSID(x)	.text; .asciz x
 #endif
