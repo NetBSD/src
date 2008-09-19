@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.40 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.41 2008/09/19 11:14:49 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -141,23 +141,23 @@ static int (*ph1exchange[][2][PHASE1ST_MAX])
  /* Identity Protection exchange */
  {
   { nostate1, ident_i1send, nostate1, ident_i2recv, ident_i2send,
-    ident_i3recv, ident_i3send, ident_i4recv, ident_i4send, nostate1, },
+    ident_i3recv, ident_i3send, ident_i4recv, ident_i4send, nostate1, nostate1,},
   { nostate1, ident_r1recv, ident_r1send, ident_r2recv, ident_r2send,
-    ident_r3recv, ident_r3send, nostate1, nostate1, nostate1, },
+    ident_r3recv, ident_r3send, nostate1, nostate1, nostate1, nostate1, },
  },
  /* Aggressive exchange */
  {
   { nostate1, agg_i1send, nostate1, agg_i2recv, agg_i2send,
-    nostate1, nostate1, nostate1, nostate1, nostate1, },
+    nostate1, nostate1, nostate1, nostate1, nostate1, nostate1, },
   { nostate1, agg_r1recv, agg_r1send, agg_r2recv, agg_r2send,
-    nostate1, nostate1, nostate1, nostate1, nostate1, },
+    nostate1, nostate1, nostate1, nostate1, nostate1, nostate1, },
  },
  /* Base exchange */
  {
   { nostate1, base_i1send, nostate1, base_i2recv, base_i2send,
-    base_i3recv, base_i3send, nostate1, nostate1, nostate1, },
+    base_i3recv, base_i3send, nostate1, nostate1, nostate1, nostate1, },
   { nostate1, base_r1recv, base_r1send, base_r2recv, base_r2send,
-    nostate1, nostate1, nostate1, nostate1, nostate1, },
+    nostate1, nostate1, nostate1, nostate1, nostate1, nostate1, },
  },
 };
 
@@ -683,7 +683,8 @@ isakmp_main(msg, remote, local)
 #endif
 
 		/* check status of phase 1 whether negotiated or not. */
-		if (iph1->status != PHASE1ST_ESTABLISHED) {
+		if (iph1->status != PHASE1ST_ESTABLISHED &&
+		    iph1->status != PHASE1ST_DYING) {
 			plog(LLV_ERROR, LOCATION, remote,
 				"can't start the quick mode, "
 				"there is no valid ISAKMP-SA, %s\n",
@@ -715,7 +716,6 @@ isakmp_main(msg, remote, local)
 		if (quick_main(iph2, msg) < 0) {
 			plog(LLV_ERROR, LOCATION, iph1->remote,
 				"phase2 negotiation failed.\n");
-			unbindph12(iph2);
 			remph2(iph2);
 			delph2(iph2);
 			return -1;
@@ -783,7 +783,7 @@ ph1_main(iph1, msg)
 #endif
 
 	/* ignore a packet */
-	if (iph1->status == PHASE1ST_ESTABLISHED)
+	if (iph1->status >= PHASE1ST_ESTABLISHED)
 		return 0;
 
 #ifdef ENABLE_STATS
@@ -863,9 +863,22 @@ ph1_main(iph1, msg)
 		/* save created date. */
 		(void)time(&iph1->created);
 
+		/* migrate ph2s from dying ph1s */
+		migrate_dying_ph12(iph1);
+
 		/* add to the schedule to expire, and seve back pointer. */
-		sched_schedule(&iph1->sce, iph1->approval->lifetime,
-			       isakmp_ph1expire_stub);
+		if ((iph1->rmconf->rekey == REKEY_FORCE) ||
+		    (iph1->rmconf->rekey == REKEY_ON && iph1->dpd_support &&
+		     iph1->rmconf->dpd_interval)) {
+			sched_schedule(&iph1->sce,
+				       iph1->approval->lifetime *
+				       PFKEY_SOFT_LIFETIME_RATE / 100,
+				       isakmp_ph1dying_stub);
+		} else {
+			sched_schedule(&iph1->sce, iph1->approval->lifetime,
+				       isakmp_ph1expire_stub);
+		}
+
 #ifdef ENABLE_HYBRID
 		if (iph1->mode_cfg->flags & ISAKMP_CFG_VENDORID_XAUTH) {
 			switch(AUTHMETHOD(iph1)) {
@@ -1286,7 +1299,6 @@ isakmp_ph2begin_i(iph1, iph2)
 	if ((ph2exchange[etypesw2(ISAKMP_ETYPE_QUICK)]
 			 [iph2->side]
 			 [iph2->status])(iph2, NULL) < 0) {
-		unbindph12(iph2);
 		/* release ipsecsa handler due to internal error. */
 		remph2(iph2);
 		return -1;
@@ -1321,7 +1333,6 @@ isakmp_ph2begin_r(iph1, msg)
 		return -1;
 	}
 
-	iph2->ph1 = iph1;
 	iph2->side = RESPONDER;
 	iph2->status = PHASE2ST_START;
 	iph2->flags = isakmp->flags;
@@ -1385,7 +1396,6 @@ isakmp_ph2begin_r(iph1, msg)
 		 * release handler because it's wrong that ph2handle is kept
 		 * after failed to check message for responder's.
 		 */
-		unbindph12(iph2);
 		remph2(iph2);
 		delph2(iph2);
 		return -1;
@@ -1930,7 +1940,6 @@ isakmp_ph2resend_stub(p)
 	struct ph2handle *iph2 = container_of(p, struct ph2handle, scr);
 
 	if (isakmp_ph2resend(iph2) < 0) {
-		unbindph12(iph2);
 		remph2(iph2);
 		delph2(iph2);
 	}
@@ -1942,7 +1951,7 @@ isakmp_ph2resend(iph2)
 {
 	/* Note: NEVER do the unbind/rem/del here, it will be done by the caller or by the _stub function
 	 */
-	if (iph2->ph1->status == PHASE1ST_EXPIRED){
+	if (iph2->ph1->status >= PHASE1ST_EXPIRED) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"phase2 negotiation failed due to phase1 expired. %s\n",
 				isakmp_pindex(&iph2->ph1->index, iph2->msgid));
@@ -1980,6 +1989,63 @@ isakmp_ph2resend(iph2)
 
 /* called from scheduler */
 void
+isakmp_ph1dying_stub(p)
+	struct sched *p;
+{
+
+	isakmp_ph1dying(container_of(p, struct ph1handle, sce));
+}
+
+void
+isakmp_ph1dying(iph1)
+	struct ph1handle *iph1;
+{
+	struct ph1handle *new_iph1;
+	struct ph2handle *p;
+	struct remoteconf *rmconf;
+
+	if (iph1->status >= PHASE1ST_DYING)
+		return;
+
+	/* Going away in after a while... */
+	iph1->status = PHASE1ST_DYING;
+
+	/* Any fresh phase1s? */
+	new_iph1 = getph1byaddr(iph1->local, iph1->remote, 1);
+	if (new_iph1 == NULL) {
+		LIST_FOREACH(p, &iph1->ph2tree, ph1bind) {
+			if (p->status != PHASE2ST_ESTABLISHED)
+				continue;
+
+			rmconf = getrmconf(iph1->remote);
+			if (rmconf == NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+				     "no configuration found "
+				     "for %s\n", saddrwop2str(iph1->remote));
+			} else {
+				plog(LLV_INFO, LOCATION, NULL,
+				     "renegotiating phase1 to %s due to "
+				      "active phase2\n",
+					saddrwop2str(iph1->remote));
+
+				if (iph1->side == INITIATOR)
+					isakmp_ph1begin_i(rmconf, iph1->remote,
+							  iph1->local);
+			}
+			break;
+		}
+	} else {
+		migrate_ph12(iph1, new_iph1);
+	}
+
+	/* Schedule for expiration */
+	sched_schedule(&iph1->sce, iph1->approval->lifetime *
+		       (100 - PFKEY_SOFT_LIFETIME_RATE) / 100,
+		       isakmp_ph1expire_stub);
+}
+
+/* called from scheduler */
+void
 isakmp_ph1expire_stub(p)
 	struct sched *p;
 {
@@ -1992,7 +2058,7 @@ isakmp_ph1expire(iph1)
 {
 	char *src, *dst;
 
-	if (iph1->status != PHASE1ST_EXPIRED) {
+	if (iph1->status < PHASE1ST_EXPIRED) {
 		src = racoon_strdup(saddr2str(iph1->local));
 		dst = racoon_strdup(saddr2str(iph1->remote));
 		STRDUP_FATAL(src);
@@ -2005,14 +2071,6 @@ isakmp_ph1expire(iph1)
 		racoon_free(src);
 		racoon_free(dst);
 		iph1->status = PHASE1ST_EXPIRED;
-	}
-
-	/*
-	 * the phase1 deletion is postponed until there is no phase2.
-	 */
-	if (LIST_FIRST(&iph1->ph2tree) != NULL) {
-		sched_schedule(&iph1->sce, 1, isakmp_ph1expire_stub);
-		return;
 	}
 
 	sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
@@ -2031,7 +2089,21 @@ void
 isakmp_ph1delete(iph1)
 	struct ph1handle *iph1;
 {
+	struct ph2handle *p, *next;
+	struct ph1handle *new_iph1;
 	char *src, *dst;
+
+	/* Migrate established phase2s. Any fresh phase1s? */
+	new_iph1 = getph1byaddr(iph1->local, iph1->remote, 1);
+	if (new_iph1 != NULL)
+		migrate_ph12(iph1, new_iph1);
+
+	/* Discard any left phase2s */
+	for (p = LIST_FIRST(&iph1->ph2tree); p; p = next) {
+		next = LIST_NEXT(p, ph1bind);
+		if (p->status >= PHASE2ST_ESTABLISHED)
+			unbindph12(p);
+	}
 
 	if (LIST_FIRST(&iph1->ph2tree) != NULL) {
 		sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
@@ -2054,8 +2126,6 @@ isakmp_ph1delete(iph1)
 
 	remph1(iph1);
 	delph1(iph1);
-
-	return;
 }
 
 /* called from scheduler.
@@ -2117,7 +2187,6 @@ isakmp_ph2delete(iph2)
 	racoon_free(src);
 	racoon_free(dst);
 
-	unbindph12(iph2);
 	remph2(iph2);
 	delph2(iph2);
 
@@ -2196,7 +2265,7 @@ isakmp_post_acquire(iph2)
 	}
 
 	/* found ISAKMP-SA, but on negotiation. */
-	if (iph1->status != PHASE1ST_ESTABLISHED) {
+	if (iph1->status < PHASE1ST_ESTABLISHED) {
 		iph2->retry_checkph1 = lcconf->retry_checkph1;
 		sched_schedule(&iph2->sce, 1, isakmp_chkph1there_stub);
 		plog(LLV_INFO, LOCATION, iph2->dst,
@@ -2296,7 +2365,7 @@ isakmp_post_getspi(iph2)
 #endif
 
 	/* don't process it because there is no suitable phase1-sa. */
-	if (iph2->ph1->status == PHASE1ST_EXPIRED) {
+	if (iph2->ph1->status >= PHASE1ST_EXPIRED) {
 		plog(LLV_ERROR, LOCATION, iph2->ph1->remote,
 			"the negotiation is stopped, "
 			"because there is no suitable ISAKMP-SA.\n");
@@ -2348,7 +2417,6 @@ isakmp_chkph1there(iph2)
 		/* send acquire to kernel as error */
 		pk_sendeacquire(iph2);
 
-		unbindph12(iph2);
 		remph2(iph2);
 		delph2(iph2);
 
@@ -3357,7 +3425,6 @@ purge_remote(iph1)
 		/* delete a relative phase 2 handle. */
 		if (iph2 != NULL) {
 			delete_spd(iph2, 0);
-			unbindph12(iph2);
 			remph2(iph2);
 			delph2(iph2);
 		}

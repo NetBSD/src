@@ -4,6 +4,11 @@
 	  isakmp_inf.c|isakmp_xauth.c|isakmp_xauth.h|nattraversal.c}:
 	  Change struct sched to be allocated be the caller and optimize
 	  scheduler to be faster.
+	* src/racoon/{isakmp.c|isakmp_quick.c|handler.c|handler.h|proposal.c|
+	  admin.c|isakmp_cfg.c|isakmp_inf.c|isakmp_var.h|pfkey.c|
+	  isakmp_xauth.c|cfparse.y|cfparse.l|racoon.conf.5|remoteconf.c|
+	  remoteconf.h}: Implement ISAKMP SA rekeying configurable with
+	  rekey {on|off|force} option in remote conf.
 
 2008-09-17  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/isakmp_inf.c: Fixed port match in purge_ipsec_spi()
