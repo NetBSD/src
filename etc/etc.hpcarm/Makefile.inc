@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2008/09/19 16:58:26 tsutsui Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2008/09/19 17:38:43 tsutsui Exp $
 #
 #	etc.hpcarm/Makefile.inc -- hpcarm-specific etc Makefile targets
 #
@@ -11,3 +11,7 @@ KERNEL_SETS=		IPAQ JORNADA720
 BUILD_KERNELS=		INSTALL_IPAQ
 
 INSTALLATION_DIRS+=	installation/miniroot
+
+snap_md_post:
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation \
+	    '*.gz' '*.exe'
