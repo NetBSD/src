@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.10 2008/09/18 23:20:52 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.11 2008/09/19 00:05:02 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.10 2008/09/18 23:20:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.11 2008/09/19 00:05:02 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -162,6 +162,12 @@ SLIST_HEAD(altlist, uvideo_alternate);
 		((fmt)->format.priv |= (((index) & 0xff) << 8));	\
 	} while (0)
 
+struct uvideo_pixel_format {
+	enum video_pixel_format	pixel_format;
+	SIMPLEQ_ENTRY(uvideo_pixel_format) entries;
+};
+SIMPLEQ_HEAD(uvideo_pixel_format_list, uvideo_pixel_format);
+
 struct uvideo_format {
 	struct video_format	format;
 	SIMPLEQ_ENTRY(uvideo_format) entries;
@@ -208,6 +214,7 @@ struct uvideo_stream {
 					      * depending on version
 					      * of spec. */
 	struct uvideo_format_list vs_formats;
+	struct uvideo_pixel_format_list vs_pixel_formats;
 	struct video_format	*vs_default_format;
 	struct video_format	vs_current_format;
 
@@ -1018,6 +1025,7 @@ uvideo_stream_init(struct uvideo_stream *vs,
 	vs->vs_ifaceno = ifdesc->bInterfaceNumber;
 	vs->vs_subtype = 0;
 	SIMPLEQ_INIT(&vs->vs_formats);
+	SIMPLEQ_INIT(&vs->vs_pixel_formats);
 	vs->vs_default_format = NULL;
 	vs->vs_current_format.priv = -1;
 	vs->vs_xfer_type = 0;
@@ -1190,6 +1198,7 @@ static void
 uvideo_stream_free(struct uvideo_stream *vs)
 {
 	struct uvideo_alternate *alt;
+	struct uvideo_pixel_format *pixel_format;
 	struct uvideo_format *format;
 
 	/* free linked list of alternate interfaces */
@@ -1202,10 +1211,14 @@ uvideo_stream_free(struct uvideo_stream *vs)
 		}
 	}
 
-	/* free linked-list of formats */
+	/* free linked-list of formats and pixel formats */
 	while ((format = SIMPLEQ_FIRST(&vs->vs_formats)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&vs->vs_formats, entries);
 		kmem_free(format, sizeof(struct uvideo_format));
+	}
+	while ((pixel_format = SIMPLEQ_FIRST(&vs->vs_pixel_formats)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&vs->vs_pixel_formats, entries);
+		kmem_free(pixel_format, sizeof(struct uvideo_pixel_format));
 	}
 
 	kmem_free(vs, sizeof(*vs));
@@ -1217,11 +1230,15 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 				      const uvideo_descriptor_t *format_desc,
 				      usbd_desc_iter_t *iter)
 {
+	struct uvideo_pixel_format *pformat, *pfiter;
+	enum video_pixel_format pixel_format;
 	struct uvideo_format *format;
 	const uvideo_descriptor_t *uvdesc;
 	uint8_t subtype, default_index, index;
 	uint32_t frame_interval;
 	const usb_guid_t *guid;
+
+	pixel_format = VIDEO_FORMAT_UNDEFINED;
 
 	switch (format_desc->bDescriptorSubtype) {
 	case UDESC_VS_FORMAT_UNCOMPRESSED:
@@ -1229,6 +1246,13 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 		default_index = GET(uvideo_vs_format_uncompressed_descriptor_t,
 				    format_desc,
 				    bDefaultFrameIndex);
+		guid = GETP(uvideo_vs_format_uncompressed_descriptor_t,
+			    format_desc,
+			    guidFormat);
+		if (usb_guid_cmp(guid, &uvideo_guid_format_yuy2) == 0)
+			pixel_format = VIDEO_FORMAT_YUY2;
+		else if (usb_guid_cmp(guid, &uvideo_guid_format_nv12) == 0)
+			pixel_format = VIDEO_FORMAT_NV12;
 		break;
 	case UDESC_VS_FORMAT_FRAME_BASED:
 		subtype = UDESC_VS_FRAME_FRAME_BASED;
@@ -1236,18 +1260,33 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 				    format_desc,
 				    bDefaultFrameIndex);
 		break;
-
-		break;
 	case UDESC_VS_FORMAT_MJPEG:
 		subtype = UDESC_VS_FRAME_MJPEG;
 		default_index = GET(uvideo_vs_format_mjpeg_descriptor_t,
 				    format_desc,
 				    bDefaultFrameIndex);
+		pixel_format = VIDEO_FORMAT_MJPEG;
 		break;
 	default:
 		DPRINTF(("uvideo: unknown frame based format %d\n",
 			 format_desc->bDescriptorSubtype));
 		return USBD_INVAL;
+	}
+
+	pformat = NULL;
+	SIMPLEQ_FOREACH(pfiter, &vs->vs_pixel_formats, entries) {
+		if (pfiter->pixel_format == pixel_format) {
+			pformat = pfiter;
+			break;
+		}
+	}
+	if (pixel_format != VIDEO_FORMAT_UNDEFINED && pformat == NULL) {
+		pformat = kmem_zalloc(sizeof(*pformat), KM_SLEEP);
+		pformat->pixel_format = pixel_format;
+		DPRINTF(("uvideo: Adding pixel format %d\n",
+		    pixel_format));
+		SIMPLEQ_INSERT_TAIL(&vs->vs_pixel_formats,
+		    pformat, entries);
 	}
 
 	/* Iterate through frame descriptors directly following the
@@ -1264,31 +1303,23 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			return USBD_NOMEM;
 		}
 		
+		format->format.pixel_format = pixel_format;
+
 		switch (format_desc->bDescriptorSubtype) {
 		case UDESC_VS_FORMAT_UNCOMPRESSED:
-			guid = GETP(uvideo_vs_format_uncompressed_descriptor_t,
+#ifdef UVIDEO_DEBUG
+			if (pixel_format == VIDEO_FORMAT_UNDEFINED &&
+			    uvideodebug) {
+				guid = GETP(
+				    uvideo_vs_format_uncompressed_descriptor_t,
 				    format_desc,
 				    guidFormat);
 
-			if (usb_guid_cmp(guid,
-					 &uvideo_guid_format_yuy2) == 0) {
-				format->format.pixel_format =
-				    VIDEO_FORMAT_YUY2;
-			} else if (usb_guid_cmp(guid,
-						&uvideo_guid_format_nv12) == 0) {
-				format->format.pixel_format =
-				    VIDEO_FORMAT_NV12;
-			} else {
-				format->format.pixel_format =
-				    VIDEO_FORMAT_UNDEFINED;
-#ifdef UVIDEO_DEBUG
-				if (uvideodebug) {
-					DPRINTF(("uvideo: format undefined "));
-					usb_guid_print(guid);
-					DPRINTF(("\n"));
-				}
-#endif
+				DPRINTF(("uvideo: format undefined "));
+				usb_guid_print(guid);
+				DPRINTF(("\n"));
 			}
+#endif
 
 			UVIDEO_FORMAT_INIT_FRAME_BASED(
 				uvideo_vs_format_uncompressed_descriptor_t,
@@ -1312,7 +1343,6 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 				dwDefaultFrameInterval));
 			break;
 		case UDESC_VS_FORMAT_MJPEG:
-			format->format.pixel_format = VIDEO_FORMAT_MJPEG;
 			UVIDEO_FORMAT_INIT_FRAME_BASED(
 				uvideo_vs_format_mjpeg_descriptor_t,
 				format_desc,
@@ -1730,17 +1760,21 @@ uvideo_enum_format(void *addr, uint32_t index, struct video_format *format)
 {
 	struct uvideo_softc *sc = addr;
 	struct uvideo_stream *vs = sc->sc_stream_in;
+	struct uvideo_pixel_format *pixel_format;
+	int off;
 
 	if (sc->sc_dying)
 		return EIO;
 
-	if (index != 0)
-		return EINVAL;
+	off = 0;
+	SIMPLEQ_FOREACH(pixel_format, &vs->vs_pixel_formats, entries) {
+		if (off++ != index)
+			continue;
+		format->pixel_format = pixel_format->pixel_format;
+		return 0;
+	}
 
-	/* TODO: actually enumerate formats */
-	*format = *vs->vs_default_format;
-
-	return 0;
+	return EINVAL;
 }
 
 /*
