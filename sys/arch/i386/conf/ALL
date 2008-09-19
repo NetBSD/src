@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.179 2008/09/11 20:50:04 pgoyette Exp $
+# $NetBSD: ALL,v 1.180 2008/09/19 22:50:05 jmcneill Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.179 $"
+#ident 		"ALL-$Revision: 1.180 $"
 
 maxusers	32		# estimated number of users
 
@@ -1347,6 +1347,13 @@ radio*	at rtii?
 radio*	at sf2r?
 
 
+# Video capture devices
+
+pseye* at uhub?			# Sony PLAYSTATION(R) Eye webcam
+uvideo* at uhub?		# USB Video Class capture devices
+video* at videobus?
+
+
 # TV cards
 
 # Brooktree 848/849/878/879 based TV cards
@@ -2109,6 +2116,7 @@ options USEFULL_DEBUG
 options USSCANNER_DEBUG
 options USTIR_DEBUG
 options UTOPPY_DEBUG
+options UVIDEO_DEBUG
 options UVISOR_DEBUG
 options UVSCOM_DEBUG
 options VALD_ACPI_DEBUG
