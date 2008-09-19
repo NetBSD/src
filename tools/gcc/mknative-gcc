@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.23 2008/02/08 18:06:48 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.24 2008/09/19 13:18:28 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -78,6 +78,23 @@ get_libgcc () {
 			EXTRA_HEADERS xm_defines \
 			tm_defines ${_extravars}
 	} | write_mk gnu/lib/lib$_subdir/arch${_archsubdir}/$MACHINE_ARCH.mk
+}
+
+##### gnu/lib/libgcov #####
+
+get_libgcov () {
+	_subdir="$1"
+
+	mkdir -p $_TOP/gnu/lib/lib$_subdir/libgcov/arch/$MACHINE_ARCH
+
+	{
+		getvars gcc/Makefile \
+			LIBGCOV
+	} | write_mk gnu/lib/lib$_subdir/libgcov/arch/$MACHINE_ARCH/defs.mk
+
+	write_c gnu/lib/lib$_subdir/libgcov/arch/$MACHINE_ARCH/gcov-iov.h \
+	   <$_TMPDIR/gcc/gcov-iov.h
+
 }
 
 ##### gnu/usr.bin/gcc[34]/libiberty #####
@@ -300,6 +317,7 @@ libgcc4)
 gcc4)
 	get_gcc gcc4
 	get_libgcc gcc4
+	get_libgcov gcc4
 	get_crtstuff crtstuff4
 	get_gcc_libiberty gcc4
 	get_libobjc libobjc4
