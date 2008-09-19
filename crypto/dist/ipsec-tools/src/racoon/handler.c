@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.20 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.21 2008/09/19 11:14:49 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -107,7 +107,7 @@ getph1byindex(index)
 	struct ph1handle *p;
 
 	LIST_FOREACH(p, &ph1tree, chain) {
-		if (p->status == PHASE1ST_EXPIRED)
+		if (p->status >= PHASE1ST_EXPIRED)
 			continue;
 		if (memcmp(&p->index, index, sizeof(*index)) == 0)
 			return p;
@@ -127,7 +127,7 @@ getph1byindex0(index)
 	struct ph1handle *p;
 
 	LIST_FOREACH(p, &ph1tree, chain) {
-		if (p->status == PHASE1ST_EXPIRED)
+		if (p->status >= PHASE1ST_EXPIRED)
 			continue;
 		if (memcmp(&p->index, index, sizeof(cookie_t)) == 0)
 			return p;
@@ -153,12 +153,12 @@ getph1byaddr(local, remote, established)
 	plog(LLV_DEBUG2, LOCATION, NULL, "remote: %s\n", saddr2str(remote));
 
 	LIST_FOREACH(p, &ph1tree, chain) {
-		if (p->status == PHASE1ST_EXPIRED)
+		if (p->status >= PHASE1ST_DYING)
 			continue;
 		plog(LLV_DEBUG2, LOCATION, NULL, "p->local: %s\n", saddr2str(p->local));
 		plog(LLV_DEBUG2, LOCATION, NULL, "p->remote: %s\n", saddr2str(p->remote));
 
-		if(established && p->status != PHASE1ST_ESTABLISHED){
+		if (established && p->status != PHASE1ST_ESTABLISHED) {
 			plog(LLV_DEBUG2, LOCATION, NULL, "status %d, skipping\n", p->status);
 			continue;
 		}
@@ -181,7 +181,7 @@ getph1byaddrwop(local, remote)
 	struct ph1handle *p;
 
 	LIST_FOREACH(p, &ph1tree, chain) {
-		if (p->status == PHASE1ST_EXPIRED)
+		if (p->status >= PHASE1ST_DYING)
 			continue;
 		if (cmpsaddrwop(local, p->local) == 0
 		 && cmpsaddrwop(remote, p->remote) == 0)
@@ -203,7 +203,7 @@ getph1bydstaddrwop(remote)
 	struct ph1handle *p;
 
 	LIST_FOREACH(p, &ph1tree, chain) {
-		if (p->status == PHASE1ST_EXPIRED)
+		if (p->status >= PHASE1ST_DYING)
 			continue;
 		if (cmpsaddrwop(remote, p->remote) == 0)
 			return p;
@@ -211,6 +211,48 @@ getph1bydstaddrwop(remote)
 
 	return NULL;
 }
+
+/*
+ * move phase2s from old_iph1 to new_iph1
+ */
+void
+migrate_ph12(old_iph1, new_iph1)
+	struct ph1handle *old_iph1, *new_iph1;
+{
+	struct ph2handle *p, *next;
+
+	/* Relocate phase2s to better phase1s or request a new phase1. */
+	for (p = LIST_FIRST(&old_iph1->ph2tree); p; p = next) {
+		next = LIST_NEXT(p, ph1bind);
+
+		if (p->status != PHASE2ST_ESTABLISHED)
+			continue;
+
+		unbindph12(p);
+		bindph12(new_iph1, p);
+	}
+}
+
+/*
+ * the iph1 is new, migrate all phase2s that belong to a dying or dead ph1
+ */
+void migrate_dying_ph12(iph1)
+	struct ph1handle *iph1;
+{
+	struct ph1handle *p;
+
+	LIST_FOREACH(p, &ph1tree, chain) {
+		if (p == iph1)
+			continue;
+		if (p->status < PHASE1ST_DYING)
+			continue;
+
+		if (CMPSADDR(iph1->local, p->local) == 0
+		 && CMPSADDR(iph1->remote, p->remote) == 0)
+			migrate_ph12(p, iph1);
+	}
+}
+
 
 /*
  * dump isakmp-sa
@@ -410,7 +452,7 @@ flushph1()
 		next = LIST_NEXT(p, chain);
 
 		/* send delete information */
-		if (p->status == PHASE1ST_ESTABLISHED) 
+		if (p->status >= PHASE1ST_ESTABLISHED)
 			isakmp_info_send_d1(p);
 
 		remph1(p);
@@ -592,6 +634,7 @@ initph2(iph2)
 	struct ph2handle *iph2;
 {
 	evt_list_cleanup(&iph2->evt_listeners);
+	unbindph12(iph2);
 
 	sched_cancel(&iph2->sce);
 	sched_cancel(&iph2->scr);
@@ -701,6 +744,7 @@ void
 remph2(iph2)
 	struct ph2handle *iph2;
 {
+	unbindph12(iph2);
 	LIST_REMOVE(iph2, chain);
 }
 
@@ -732,7 +776,6 @@ flushph2()
 		}
 
 		delete_spd(p, 0);
-		unbindph12(p);
 		remph2(p);
 		delph2(p);
 	}
@@ -770,7 +813,6 @@ deleteallph2(src, dst, proto_id)
 		}
 		continue;
  zap_it:
-		unbindph12(iph2);
 		remph2(iph2);
 		delph2(iph2);
 	}
@@ -782,7 +824,10 @@ bindph12(iph1, iph2)
 	struct ph1handle *iph1;
 	struct ph2handle *iph2;
 {
+	unbindph12(iph2);
+
 	iph2->ph1 = iph1;
+	iph1->ph2cnt++;
 	LIST_INSERT_HEAD(&iph1->ph2tree, iph2, ph1bind);
 }
 
@@ -791,8 +836,9 @@ unbindph12(iph2)
 	struct ph2handle *iph2;
 {
 	if (iph2->ph1 != NULL) {
-		iph2->ph1 = NULL;
 		LIST_REMOVE(iph2, ph1bind);
+		iph2->ph1->ph2cnt--;
+		iph2->ph1 = NULL;
 	}
 }
 
@@ -1296,7 +1342,6 @@ remove_ph2(struct ph2handle *iph2)
 		purge_ipsec_spi(iph2->dst, iph2->approval->head->proto_id,
 						spis, 2);
 	}else{
-		unbindph12(iph2);
 		remph2(iph2);
 		delph2(iph2);
 	}
@@ -1311,7 +1356,8 @@ static void remove_ph1(struct ph1handle *iph1){
 	plog(LLV_DEBUG, LOCATION, NULL,
 		 "Removing PH1...\n");
 
-	if (iph1->status == PHASE1ST_ESTABLISHED){
+	if (iph1->status == PHASE1ST_ESTABLISHED ||
+	    iph1->status == PHASE1ST_DYING) {
 		for (iph2 = LIST_FIRST(&iph1->ph2tree); iph2; iph2 = iph2_next) {
 			iph2_next = LIST_NEXT(iph2, chain);
 			remove_ph2(iph2);
@@ -1330,10 +1376,10 @@ static int revalidate_ph1tree_rmconf(void){
 	for (p = LIST_FIRST(&ph1tree); p; p = next) {
 		next = LIST_NEXT(p, chain);
 
-		if (p->status == PHASE1ST_EXPIRED)
+		if (p->status >= PHASE1ST_EXPIRED)
 			continue;
 
-		newrmconf=getrmconf(p->remote);
+		newrmconf = getrmconf(p->remote);
 		if(newrmconf == NULL){
 			p->rmconf = NULL;
 			remove_ph1(p);
@@ -1497,10 +1543,10 @@ static int revalidate_ph1tree(void){
 	for (p = LIST_FIRST(&ph1tree); p; p = next) {
 		next = LIST_NEXT(p, chain);
 
-		if (p->status == PHASE1ST_EXPIRED)
+		if (p->status >= PHASE1ST_EXPIRED)
 			continue;
 
-		if(!revalidate_ph1(p))
+		if (!revalidate_ph1(p))
 			remove_ph1(p);
 	}
 
@@ -1566,7 +1612,10 @@ purgeph1bylogin(login)
 		if (p->mode_cfg == NULL)
 			continue;
 		if (strncmp(p->mode_cfg->login, login, LOGINLEN) == 0) {
-			if (p->status == PHASE1ST_ESTABLISHED)
+			if (p->status >= PHASE1ST_EXPIRED)
+				continue;
+
+			if (p->status >= PHASE1ST_ESTABLISHED)
 				isakmp_info_send_d1(p);
 			purge_remote(p);
 			found++;
