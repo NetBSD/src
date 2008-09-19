@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.32 2008/09/09 11:50:42 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.33 2008/09/19 11:01:08 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.32 2008/09/09 11:50:42 vanhu Exp $ */
+/* $Id: pfkey.c,v 1.33 2008/09/19 11:01:08 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -815,35 +815,6 @@ pfkey_convertfromipsecdoi(proto_id, t_id, hashtype,
 	return -1;
 }
 
-/* called from scheduler */
-void
-pfkey_timeover_stub(p)
-	void *p;
-{
-
-	pfkey_timeover((struct ph2handle *)p);
-}
-
-void
-pfkey_timeover(iph2)
-	struct ph2handle *iph2;
-{
-	plog(LLV_ERROR, LOCATION, NULL,
-		"%s give up to get IPsec-SA due to time up to wait.\n",
-		saddrwop2str(iph2->dst));
-	SCHED_KILL(iph2->sce);
-
-	/* If initiator side, send error to kernel by SADB_ACQUIRE. */
-	if (iph2->side == INITIATOR)
-		pk_sendeacquire(iph2);
-
-	unbindph12(iph2);
-	remph2(iph2);
-	delph2(iph2);
-
-	return;
-}
-
 /*%%%*/
 /* send getspi message per ipsec protocol per remote address */
 /*
@@ -1313,7 +1284,7 @@ pk_recvupdate(mhp)
 		return 0;
 
 	/* turn off the timer for calling pfkey_timeover() */
-	SCHED_KILL(iph2->sce);
+	sched_cancel(&iph2->sce);
 
 	/* update status */
 	iph2->status = PHASE2ST_ESTABLISHED;
@@ -1329,7 +1300,7 @@ pk_recvupdate(mhp)
 	iph2->ph1->ph2cnt++;
 
 	/* turn off schedule */
-	SCHED_KILL(iph2->scr);
+	sched_cancel(&iph2->scr);
 
 	/* Force the update of ph2's ports, as there is at least one
 	 * situation where they'll mismatch with ph1's values
@@ -1346,8 +1317,8 @@ pk_recvupdate(mhp)
 	 */
 	unbindph12(iph2);
 
-	iph2->sce = sched_new(iph2->approval->lifetime,
-	    isakmp_ph2expire_stub, iph2);
+	sched_schedule(&iph2->sce, iph2->approval->lifetime,
+		       isakmp_ph2expire_stub);
 
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
 	return 0;
@@ -1659,7 +1630,7 @@ pk_recvexpire(mhp)
 	}
 
 	/* turn off the timer for calling isakmp_ph2expire() */ 
-	SCHED_KILL(iph2->sce);
+	sched_cancel(&iph2->sce);
 
 	iph2->status = PHASE2ST_EXPIRED;
 

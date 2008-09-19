@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.32 2008/09/17 12:39:07 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.33 2008/09/19 11:01:08 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -107,7 +107,7 @@ static int isakmp_info_recv_r_u __P((struct ph1handle *,
 	struct isakmp_pl_ru *, u_int32_t));
 static int isakmp_info_recv_r_u_ack __P((struct ph1handle *,
 	struct isakmp_pl_ru *, u_int32_t));
-static void isakmp_info_send_r_u __P((void *));
+static void isakmp_info_send_r_u __P((struct sched *));
 #endif
 
 static void purge_isakmp_spi __P((int, isakmp_index *, size_t));
@@ -518,7 +518,7 @@ isakmp_info_recv_d(iph1, delete, msgid, encrypted)
 		if(del_ph1 != NULL){
 
 			evt_phase1(iph1, EVT_PHASE1_PEER_DELETED, NULL);
-			SCHED_KILL(del_ph1->scr);
+			sched_cancel(&del_ph1->scr);
 
 			/*
 			 * Do not delete IPsec SAs when receiving an IKE delete notification.
@@ -1117,9 +1117,8 @@ purge_isakmp_spi(proto, spi, n)
 			s_ipsecdoi_proto(proto),
 			isakmp_pindex(&spi[i], 0));
 
-		SCHED_KILL(iph1->sce);
 		iph1->status = PHASE1ST_EXPIRED;
-		iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
+		sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
 	}
 }
 
@@ -1564,8 +1563,7 @@ isakmp_info_recv_r_u_ack (iph1, ru, msgid)
 	/* Useless ??? */
 	iph1->dpd_lastack = time(NULL);
 
-	SCHED_KILL(iph1->dpd_r_u);
-
+	sched_cancel(&iph1->dpd_r_u);
 	isakmp_sched_r_u(iph1, 0);
 
 	plog(LLV_DEBUG, LOCATION, NULL, "received an R-U-THERE-ACK\n");
@@ -1580,10 +1578,10 @@ isakmp_info_recv_r_u_ack (iph1, ru, msgid)
  * send DPD R-U-THERE payload in Informational exchange.
  */
 static void
-isakmp_info_send_r_u(arg)
-	void *arg;
+isakmp_info_send_r_u(sc)
+	struct sched *sc;
 {
-	struct ph1handle *iph1 = arg;
+	struct ph1handle *iph1 = container_of(sc, struct ph1handle, dpd_r_u);
 
 	/* create R-U-THERE payload */
 	struct isakmp_pl_ru *ru;
@@ -1592,8 +1590,6 @@ isakmp_info_send_r_u(arg)
 	int error = 0;
 
 	plog(LLV_DEBUG, LOCATION, iph1->remote, "DPD monitoring....\n");
-
-	iph1->dpd_r_u=NULL;
 
 	if (iph1->dpd_fails >= iph1->rmconf->dpd_maxfails) {
 
@@ -1674,11 +1670,11 @@ isakmp_sched_r_u(iph1, retry)
 		return 0;
 
 	if(retry)
-		iph1->dpd_r_u = sched_new(iph1->rmconf->dpd_retry,
-								  isakmp_info_send_r_u, iph1);
+		sched_schedule(&iph1->dpd_r_u, iph1->rmconf->dpd_retry,
+			       isakmp_info_send_r_u);
 	else
-		iph1->dpd_r_u = sched_new(iph1->rmconf->dpd_interval,
-								  isakmp_info_send_r_u, iph1);
+		sched_schedule(&iph1->dpd_r_u, iph1->rmconf->dpd_interval,
+			       isakmp_info_send_r_u);
 
 	return 0;
 }

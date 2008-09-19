@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.h,v 1.5 2008/03/05 22:09:44 mgrooms Exp $	*/
+/*	$NetBSD: pfkey.h,v 1.6 2008/09/19 11:01:08 tteras Exp $	*/
 
 /* Id: pfkey.h,v 1.3 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -60,9 +60,6 @@ extern int pk_sendeacquire __P((struct ph2handle *));
 extern int pk_sendspdupdate2 __P((struct ph2handle *));
 extern int pk_sendspdadd2 __P((struct ph2handle *));
 extern int pk_sendspddelete __P((struct ph2handle *));
-
-extern void pfkey_timeover_stub __P((void *));
-extern void pfkey_timeover __P((struct ph2handle *));
 
 extern u_int pfkey2ipsecdoi_proto __P((u_int));
 extern u_int ipsecdoi2pfkey_proto __P((u_int));

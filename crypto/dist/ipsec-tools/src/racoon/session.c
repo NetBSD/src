@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.15 2008/08/06 19:14:28 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.16 2008/09/19 11:01:08 tteras Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -104,7 +104,7 @@ static void initfds __P((void));
 static void init_signal __P((void));
 static int set_signal __P((int sig, RETSIGTYPE (*func) __P((int))));
 static void check_sigreq __P((void));
-static void check_flushsa_stub __P((void *));
+static void check_flushsa_stub __P((struct sched *));
 static void check_flushsa __P((void));
 static int close_sockets __P((void));
 
@@ -113,6 +113,7 @@ static fd_set maskdying;
 static int nfds = 0;
 static volatile sig_atomic_t sigreq[NSIG + 1];
 static int dying = 0;
+static struct sched scflushsa = SCHED_INITIALIZER();
 
 int
 session(void)
@@ -482,7 +483,7 @@ check_sigreq()
 #ifdef ENABLE_FASTQUIT
 			close_session();
 #else
-			sched_new(1, check_flushsa_stub, NULL);
+			sched_schedule(&scflushsa, 1, check_flushsa_stub);
 #endif
 			dying = 1;
 			break;
@@ -501,7 +502,7 @@ check_sigreq()
  */
 static void
 check_flushsa_stub(p)
-	void *p;
+	struct sched *p;
 {
 
 	check_flushsa();
@@ -563,7 +564,7 @@ check_flushsa()
 		vfree(buf);
 
 	if (n) {
-		sched_new(1, check_flushsa_stub, NULL);
+		sched_schedule(&scflushsa, 1, check_flushsa_stub);
 		return;
 	}
 
