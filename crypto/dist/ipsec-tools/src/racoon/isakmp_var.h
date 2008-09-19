@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.9 2008/03/06 00:46:04 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.10 2008/09/19 11:01:08 tteras Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
@@ -75,23 +75,23 @@ extern int isakmp_open __P((void));
 extern void isakmp_close __P((void));
 extern int isakmp_send __P((struct ph1handle *, vchar_t *));
 
-extern void isakmp_ph1resend_stub __P((void *));
+extern void isakmp_ph1resend_stub __P((struct sched *));
 extern int isakmp_ph1resend __P((struct ph1handle *));
-extern void isakmp_ph2resend_stub __P((void *));
+extern void isakmp_ph2resend_stub __P((struct sched *));
 extern int isakmp_ph2resend __P((struct ph2handle *));
-extern void isakmp_ph1expire_stub __P((void *));
+extern void isakmp_ph1expire_stub __P((struct sched *));
 extern void isakmp_ph1expire __P((struct ph1handle *));
-extern void isakmp_ph1delete_stub __P((void *));
+extern void isakmp_ph1delete_stub __P((struct sched *));
 extern void isakmp_ph1delete __P((struct ph1handle *));
-extern void isakmp_ph2expire_stub __P((void *));
+extern void isakmp_ph2expire_stub __P((struct sched *));
 extern void isakmp_ph2expire __P((struct ph2handle *));
-extern void isakmp_ph2delete_stub __P((void *));
+extern void isakmp_ph2delete_stub __P((struct sched *));
 extern void isakmp_ph2delete __P((struct ph2handle *));
 
 extern int isakmp_get_sainfo __P((struct ph2handle *, struct secpolicy *, struct secpolicy *));
 extern int isakmp_post_acquire __P((struct ph2handle *));
 extern int isakmp_post_getspi __P((struct ph2handle *));
-extern void isakmp_chkph1there_stub __P((void *));
+extern void isakmp_chkph1there_stub __P((struct sched *));
 extern void isakmp_chkph1there __P((struct ph2handle *));
 
 extern caddr_t isakmp_set_attr_v __P((caddr_t, int, caddr_t, int));

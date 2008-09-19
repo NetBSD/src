@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.14 2008/07/14 05:45:15 tteras Exp $	*/
+/*	$NetBSD: handler.h,v 1.15 2008/09/19 11:01:08 tteras Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -41,6 +41,7 @@
 
 #include "isakmp_var.h"
 #include "oakley.h"
+#include "schedule.h"
 #include "evt.h"
 
 /* Phase 1 handler */
@@ -141,9 +142,9 @@ struct ph1handle {
 	struct isakmp_frag_item *frag_chain;	/* Received fragments */
 #endif
 
-	struct sched *sce;		/* schedule for expire */
+	struct sched sce;		/* schedule for expire */
 
-	struct sched *scr;		/* schedule for resend */
+	struct sched scr;		/* schedule for resend */
 	int retry_counter;		/* for resend. */
 	vchar_t *sendbuf;		/* buffer for re-sending */
 
@@ -202,7 +203,7 @@ struct ph1handle {
 	time_t		dpd_lastack;	/* Last ack received */
 	u_int16_t	dpd_seq;		/* DPD seq number to receive */
 	u_int8_t	dpd_fails;		/* number of failures */
-	struct sched	*dpd_r_u;
+	struct sched	dpd_r_u;
 #endif
 
 	u_int32_t msgid2;		/* msgid counter for Phase 2 */
@@ -265,8 +266,8 @@ struct ph2handle {
 	int status;			/* ipsec sa status */
 	u_int8_t side;			/* INITIATOR or RESPONDER */
 
-	struct sched *sce;		/* schedule for expire */
-	struct sched *scr;		/* schedule for resend */
+	struct sched sce;		/* schedule for expire */
+	struct sched scr;		/* schedule for resend */
 	int retry_counter;		/* for resend. */
 	vchar_t *sendbuf;		/* buffer for re-sending */
 	vchar_t *msg1;			/* buffer for re-sending */
@@ -350,8 +351,6 @@ struct recvdpkt {
 	int retry_counter;		/* how many times to send */
 	time_t time_send;		/* timestamp to send a packet */
 	time_t created;			/* timestamp to create a queue */
-
-	struct sched *scr;		/* schedule for resend, may not used */
 
 	LIST_ENTRY(recvdpkt) chain;
 };

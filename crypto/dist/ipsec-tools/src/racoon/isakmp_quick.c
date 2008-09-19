@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.19 2008/07/14 05:45:15 tteras Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.20 2008/09/19 11:01:08 tteras Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -99,6 +99,33 @@ static vchar_t *quick_ir1mx __P((struct ph2handle *, vchar_t *, vchar_t *));
 static int get_sainfo_r __P((struct ph2handle *));
 static int get_proposal_r __P((struct ph2handle *));
 static int ph2_recv_n __P((struct ph2handle *, struct isakmp_gen *));
+static void quick_timeover_stub __P((struct sched *));
+static void quick_timeover __P((struct ph2handle *));
+
+/* called from scheduler */
+static void
+quick_timeover_stub(p)
+	struct sched *p;
+{
+	quick_timeover(container_of(p, struct ph2handle, sce));
+}
+
+static void
+quick_timeover(iph2)
+	struct ph2handle *iph2;
+{
+	plog(LLV_ERROR, LOCATION, NULL,
+		"%s give up to get IPsec-SA due to time up to wait.\n",
+		saddrwop2str(iph2->dst));
+
+	/* If initiator side, send error to kernel by SADB_ACQUIRE. */
+	if (iph2->side == INITIATOR)
+		pk_sendeacquire(iph2);
+
+	unbindph12(iph2);
+	remph2(iph2);
+	delph2(iph2);
+}
 
 /* %%%
  * Quick Mode
@@ -139,8 +166,8 @@ quick_i1prep(iph2, msg)
 
 	plog(LLV_DEBUG, LOCATION, NULL, "pfkey getspi sent.\n");
 
-	iph2->sce = sched_new(lcconf->wait_ph2complete,
-		pfkey_timeover_stub, iph2);
+	sched_schedule(&iph2->sce, lcconf->wait_ph2complete,
+		       quick_timeover_stub);
 
 	error = 0;
 
@@ -1390,8 +1417,8 @@ quick_r1prep(iph2, msg)
 
 	plog(LLV_DEBUG, LOCATION, NULL, "pfkey getspi sent.\n");
 
-	iph2->sce = sched_new(lcconf->wait_ph2complete,
-		pfkey_timeover_stub, iph2);
+	sched_schedule(&iph2->sce, lcconf->wait_ph2complete,
+		       quick_timeover_stub);
 
 	error = 0;
 

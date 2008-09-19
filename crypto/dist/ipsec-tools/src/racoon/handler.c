@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.19 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: handler.c,v 1.20 2008/09/19 11:01:08 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -85,10 +85,10 @@ static LIST_HEAD(_ph1tree_, ph1handle) ph1tree;
 static LIST_HEAD(_ph2tree_, ph2handle) ph2tree;
 static LIST_HEAD(_ctdtree_, contacted) ctdtree;
 static LIST_HEAD(_rcptree_, recvdpkt) rcptree;
+static struct sched sc_sweep = SCHED_INITIALIZER();
 
 static void del_recvdpkt __P((struct recvdpkt *));
 static void rem_recvdpkt __P((struct recvdpkt *));
-static void sweep_recvdpkt __P((void *));
 
 /*
  * functions about management of the isakmp status table
@@ -271,7 +271,6 @@ newph1()
 	iph1->dpd_lastack = 0;
 	iph1->dpd_seq = 0;
 	iph1->dpd_fails = 0;
-	iph1->dpd_r_u = NULL;
 #endif
 	evt_list_init(&iph1->evt_listeners);
 
@@ -308,8 +307,10 @@ delph1(iph1)
 #endif
 
 #ifdef ENABLE_DPD
-	SCHED_KILL(iph1->dpd_r_u);
+	sched_cancel(&iph1->dpd_r_u);
 #endif
+	sched_cancel(&iph1->sce);
+	sched_cancel(&iph1->scr);
 
 	if (iph1->remote) {
 		racoon_free(iph1->remote);
@@ -325,13 +326,7 @@ delph1(iph1)
 	}
 
 	VPTRINIT(iph1->authstr);
-
-	sched_scrub_param(iph1);
-	iph1->sce = NULL;
-	iph1->scr = NULL;
-
 	VPTRINIT(iph1->sendbuf);
-
 	VPTRINIT(iph1->dhpriv);
 	VPTRINIT(iph1->dhpub);
 	VPTRINIT(iph1->dhpub_p);
@@ -504,7 +499,7 @@ getph2byid(src, dst, spid)
 			 */
 			if(p->status < PHASE2ST_ESTABLISHED &&
 			   p->retry_counter == 0
-			   && p->sce == NULL && p->scr == NULL){
+			   && p->sce.func == NULL && p->scr.func == NULL) {
 				plog(LLV_DEBUG, LOCATION, NULL,
 					 "Zombie ph2 found, expiring it\n");
 				isakmp_ph2expire(p);
@@ -598,9 +593,8 @@ initph2(iph2)
 {
 	evt_list_cleanup(&iph2->evt_listeners);
 
-	sched_scrub_param(iph2);
-	iph2->sce = NULL;
-	iph2->scr = NULL;
+	sched_cancel(&iph2->sce);
+	sched_cancel(&iph2->scr);
 
 	VPTRINIT(iph2->sendbuf);
 	VPTRINIT(iph2->msg1);
@@ -1020,9 +1014,9 @@ rem_recvdpkt(r)
 	LIST_REMOVE(r, chain);
 }
 
-void
+static void
 sweep_recvdpkt(dummy)
-	void *dummy;
+	struct sched *dummy;
 {
 	struct recvdpkt *r, *next;
 	time_t t, lt;
@@ -1042,7 +1036,7 @@ sweep_recvdpkt(dummy)
 		}
 	}
 
-	sched_new(lt, sweep_recvdpkt, NULL);
+	sched_schedule(&sc_sweep, lt, sweep_recvdpkt);
 }
 
 void
@@ -1052,7 +1046,7 @@ init_recvdpkt()
 
 	LIST_INIT(&rcptree);
 
-	sched_new(lt, sweep_recvdpkt, NULL);
+	sched_schedule(&sc_sweep, lt, sweep_recvdpkt);
 }
 
 #ifdef ENABLE_HYBRID
@@ -1325,7 +1319,7 @@ static void remove_ph1(struct ph1handle *iph1){
 		isakmp_info_send_d1(iph1);
 	}
 	iph1->status = PHASE1ST_EXPIRED;
-	iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
+	sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
 }
 
 

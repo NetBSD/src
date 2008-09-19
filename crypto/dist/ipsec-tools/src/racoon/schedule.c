@@ -1,9 +1,10 @@
-/*	$NetBSD: schedule.c,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	$NetBSD: schedule.c,v 1.5 2008/09/19 11:01:08 tteras Exp $	*/
 
 /*	$KAME: schedule.c,v 1.19 2001/11/05 10:53:19 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * Copyright (C) 2008 Timo Teras.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -68,7 +69,6 @@ static time_t deltaY2038;
 
 static TAILQ_HEAD(_schedtree, sched) sctree;
 
-static void sched_add __P((struct sched *));
 static time_t current_time __P((void));
 
 /*
@@ -81,30 +81,16 @@ struct timeval *
 schedular()
 {
 	time_t now, delta;
-	struct sched *p, *next = NULL;
+	struct sched *p;
 
 	now = current_time();
+	while (!TAILQ_EMPTY(&sctree) && TAILQ_FIRST(&sctree)->xtime <= now) {
+		void (*func)(struct sched *);
 
-        for (p = TAILQ_FIRST(&sctree); p; p = next) {
-		/* if the entry has been daed, remove it */
-		if (p->dead)
-			goto next_schedule;
-
-		/* if the time hasn't come, proceed to the next entry */
-		if (now < p->xtime) {
-			next = TAILQ_NEXT(p, chain);
-			continue;
-		}
-
-		/* mark it with dead. and call the function. */
-		p->dead = 1;
-		if (p->func != NULL)
-			(p->func)(p->param);
-
-	   next_schedule:
-		next = TAILQ_NEXT(p, chain);
-		TAILQ_REMOVE(&sctree, p, chain);
-		racoon_free(p);
+		p = TAILQ_FIRST(&sctree);
+		func = p->func;
+		sched_cancel(p);
+		func(p);
 	}
 
 	p = TAILQ_FIRST(&sctree);
@@ -112,7 +98,6 @@ schedular()
 		return NULL;
 
 	now = current_time();
-
 	delta = p->xtime - now;
 	timeout.tv_sec = delta < 0 ? 0 : delta;
 	timeout.tv_usec = 0;
@@ -123,54 +108,46 @@ schedular()
 /*
  * add new schedule to schedule table.
  */
-struct sched *
-sched_new(tick, func, param)
+void
+sched_schedule(sc, tick, func)
+	struct sched *sc;
 	time_t tick;
-	void (*func) __P((void *));
-	void *param;
+	void (*func) __P((struct sched *));
 {
 	static long id = 1;
-	struct sched *new;
-
-	new = (struct sched *)racoon_malloc(sizeof(*new));
-	if (new == NULL)
-		return NULL;
-
-	memset(new, 0, sizeof(*new));
-	new->func = func;
-	new->param = param;
-
-	new->id = id++;
-	time(&new->created);
-	new->tick = tick;
-
-	new->xtime = current_time() + tick;
-	new->dead = 0;
-
-	/* add to schedule table */
-	sched_add(new);
-
-	return(new);
-}
-
-/* add new schedule to schedule table */
-static void
-sched_add(sc)
-	struct sched *sc;
-{
 	struct sched *p;
 
+	sched_cancel(sc);
+	sc->func = func;
+	sc->id = id++;
+	time(&sc->created);
+	sc->tick = tick;
+	sc->xtime = current_time() + tick;
+
+	/* add to schedule table */
 	TAILQ_FOREACH(p, &sctree, chain) {
-		if (sc->xtime < p->xtime) {
-			TAILQ_INSERT_BEFORE(p, sc, chain);
-			return;
-		}
+		if (sc->xtime < p->xtime)
+			break;
 	}
 	if (p == NULL)
 		TAILQ_INSERT_TAIL(&sctree, sc, chain);
-
-	return;
+	else
+		TAILQ_INSERT_BEFORE(p, sc, chain);
 }
+
+/*
+ * cancel scheduled callback
+ */
+void
+sched_cancel(sc)
+	struct sched *sc;
+{
+	if (sc->func != NULL) {
+		TAILQ_REMOVE(&sctree, sc, chain);
+		sc->func = NULL;
+	}
+}
+
 
 /* get current time.
  * if defined FIXY2038PROBLEM, base time is the time when called sched_init().
@@ -192,33 +169,6 @@ current_time()
 #else
 	return time(&n);
 #endif
-}
-
-void
-sched_kill(sc)
-	struct sched *sc;
-{
-	sc->dead = 1;
-
-	return;
-}
-
-/* XXX this function is probably unnecessary. */
-void
-sched_scrub_param(param)
-	void *param;
-{
-	struct sched *sc;
-
-	TAILQ_FOREACH(sc, &sctree, chain) {
-		if (sc->param == param) {
-			if (!sc->dead) {
-				plog(LLV_DEBUG, LOCATION, NULL,
-				    "an undead schedule has been deleted.\n");
-			}
-			sched_kill(sc);
-		}
-	}
 }
 
 /*
@@ -281,8 +231,6 @@ sched_init()
 #endif
 
 	TAILQ_INIT(&sctree);
-
-	return;
 }
 
 #ifdef STEST
