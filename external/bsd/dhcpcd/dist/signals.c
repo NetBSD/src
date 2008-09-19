@@ -29,7 +29,6 @@
 #include <sys/socket.h>
 
 #include <errno.h>
-#include <poll.h>
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>
