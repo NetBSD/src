@@ -1,4 +1,4 @@
-/*	$NetBSD: conf_tok.l,v 1.1.1.1 2008/09/19 20:07:16 christos Exp $	*/
+/*	$NetBSD: conf_tok.l,v 1.2 2008/09/19 21:38:41 christos Exp $	*/
 
 %{
 /*
@@ -88,9 +88,9 @@ int yylex(void);
  * which automatically generates yywrap macros and symbols.  So I must
  * distinguish between them and when yywrap is actually needed.
  */
-#ifndef yywrap
+#if !defined(yywrap) || defined(yylex)
 int yywrap(void);
-#endif /* not yywrap */
+#endif /* not yywrap or yylex */
 
 #define TOK_DEBUG 0
 
@@ -186,9 +186,9 @@ NONQUOTE	[^\"]
  * which automatically generates yywrap macros and symbols.  So I must
  * distinguish between them and when yywrap is actually needed.
  */
-#ifndef yywrap
+#if !defined(yywrap) || defined(yylex)
 int yywrap(void)
 {
   return 1;
 }
-#endif /* not yywrap */
+#endif /* not yywrap or yylex */
