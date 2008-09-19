@@ -38,31 +38,6 @@
 static int loglevel = LOG_INFO;
 static char logprefix[12] = {0};
 
-struct logname {
-	int level;
-	const char *name;
-};
-static const struct logname const lognames[] = {
-	{ LOG_DEBUG,	"debug" },
-	{ LOG_INFO,	"info" },
-	{ LOG_WARNING,	"warning" },
-	{ LOG_ERR,	"error" },
-	{ -1,		NULL }
-};
-
-int
-logtolevel(const char *priority)
-{
-	const struct logname *lt;
-
-	if (isdigit((unsigned char)*priority))
-		return atoi(priority);
-	for (lt = lognames; lt->name; lt++)
-		if (!strcasecmp(priority, lt->name))
-			return lt->level;
-	return -1;
-}
-
 void
 setloglevel(int level)
 {
@@ -90,10 +65,6 @@ logger(int level, const char *fmt, ...)
 		fprintf(f, "%s", logprefix);
 		vfprintf(f, fmt, p);
 		fputc('\n', f);
-
-		/* stdout, stderr may be re-directed to some kind of buffer.
-		 * So we always flush to ensure it's written. */
-		fflush(f);
 	}
 
 	if (level < LOG_DEBUG || level <= loglevel) {

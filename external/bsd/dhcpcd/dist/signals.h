@@ -28,8 +28,6 @@
 #ifndef SIGNAL_H
 #define SIGNAL_H
 
-#include <poll.h>
-
 int signal_init(void);
 int signal_setup(void);
 int signal_reset(void);
