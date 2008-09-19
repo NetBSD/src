@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.88 2008/09/18 16:40:37 jmcneill Exp $
+#	$NetBSD: files.usb,v 1.89 2008/09/19 11:29:35 jmcneill Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -140,11 +140,6 @@ file	dev/usb/ubt.c			ubt
 device	pseye: videobus
 attach	pseye at usbifif
 file	dev/usb/pseye.c			pseye
-
-# Logitech QuickCam Messenger
-device	qcm: videobus
-attach	qcm at usbifif
-file	dev/usb/qcm.c			qcm
 
 # USB Video Class capture devices
 device	uvideo: videobus
