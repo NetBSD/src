@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.45 2008/09/19 11:14:49 tteras Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.46 2008/09/19 17:33:24 wiz Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -825,14 +825,17 @@ The default value is
 .\"
 .It Ic rekey (on | off | force) ;
 Enable automatic renegotiation of expired phase1 when there are non-dying
-phase2 SAs. Possible values are:
+phase2 SAs.
+Possible values are:
 .Bl -tag -width Ds -compact
 .It Ic force
 Rekeying is done unconditionally.
 .It Ic on
-Rekeying is done only if DPD monitoring is active. This is the default.
+Rekeying is done only if DPD monitoring is active.
+This is the default.
 .It Ic off
-No automatic rekeying. Do note that turning off automatic rekeying will
+No automatic rekeying.
+Do note that turning off automatic rekeying will
 result in inaccurate DPD monitoring.
 .El
 .\"
@@ -1349,9 +1352,10 @@ The default value is
 Defines the parameters that will be used to communicate with radius
 servers for
 .Ic xauth
-authentication. If radius is selected as the xauth authentication or
-accounting source and no servers are defined in this section, settings
-from the system
+authentication.
+If radius is selected as the xauth authentication or accounting
+source and no servers are defined in this section, settings from
+the system
 .Xr radius.conf 5
 configuration file will be used instead.
 .Pp
@@ -1359,11 +1363,13 @@ The following are valid statements:
 .Bl -tag -width Ds -compact
 .It Ic auth Ar (hostname | address) [port] sharedsecret;
 The host name or ip address, optional port value and shared secret value
-of a radius authentication server. Up to 5 radius authentication servers
+of a radius authentication server.
+Up to 5 radius authentication servers
 may be specified using multiple lines.
 .It Ic acct Ar (hostname | address) [port] sharedsecret;
 The host name or ip address, optional port value and shared secret value
-of a radius accounting server. Up to 5 radius accounting servers may be
+of a radius accounting server.
+Up to 5 radius accounting servers may be
 specified using multiple lines.
 .It Ic timeout Ar seconds ;
 The timeout for receiving replies from radius servers.
