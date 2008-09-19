@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.16 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.17 2008/09/19 19:15:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.16 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.17 2008/09/19 19:15:58 christos Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -120,7 +120,8 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 		tf->tf_fs = context.sc_fs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
-		tf->tf_eflags = context.sc_eflags;
+		tf->tf_eflags &= ~PSL_USER;
+		tf->tf_eflags |= context.sc_eflags & PSL_USER;
 	}
 	tf->tf_edi = context.sc_edi;
 	tf->tf_esi = context.sc_esi;
