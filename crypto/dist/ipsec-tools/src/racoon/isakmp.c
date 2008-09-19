@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.39 2008/08/29 00:31:37 gmcgarry Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.40 2008/09/19 11:01:08 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -833,7 +833,7 @@ ph1_main(iph1, msg)
 	VPTRINIT(iph1->sendbuf);
 
 	/* turn off schedule */
-	SCHED_KILL(iph1->scr);
+	sched_cancel(&iph1->scr);
 
 	/* send */
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
@@ -864,8 +864,8 @@ ph1_main(iph1, msg)
 		(void)time(&iph1->created);
 
 		/* add to the schedule to expire, and seve back pointer. */
-		iph1->sce = sched_new(iph1->approval->lifetime,
-		    isakmp_ph1expire_stub, iph1);
+		sched_schedule(&iph1->sce, iph1->approval->lifetime,
+			       isakmp_ph1expire_stub);
 #ifdef ENABLE_HYBRID
 		if (iph1->mode_cfg->flags & ISAKMP_CFG_VENDORID_XAUTH) {
 			switch(AUTHMETHOD(iph1)) {
@@ -996,7 +996,7 @@ quick_main(iph2, msg)
 	VPTRINIT(iph2->sendbuf);
 
 	/* turn off schedule */
-	SCHED_KILL(iph2->scr);
+	sched_cancel(&iph2->scr);
 
 	/* send */
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
@@ -1877,19 +1877,11 @@ isakmp_send(iph1, sbuf)
 /* called from scheduler */
 void
 isakmp_ph1resend_stub(p)
-	void *p;
+	struct sched *p;
 {
-	struct ph1handle *iph1;
+	struct ph1handle *iph1 = container_of(p, struct ph1handle, scr);
 
-	iph1=(struct ph1handle *)p;
-	if(isakmp_ph1resend(iph1) < 0){
-		if(iph1->scr != NULL){
-			/* Should not happen...
-			 */
-			sched_kill(iph1->scr);
-			iph1->scr=NULL;
-		}
-
+	if (isakmp_ph1resend(iph1) < 0) {
 		remph1(iph1);
 		delph1(iph1);
 	}
@@ -1924,8 +1916,8 @@ isakmp_ph1resend(iph1)
 
 	iph1->retry_counter--;
 
-	iph1->scr = sched_new(iph1->rmconf->retry_interval,
-		isakmp_ph1resend_stub, iph1);
+	sched_schedule(&iph1->scr, iph1->rmconf->retry_interval,
+		       isakmp_ph1resend_stub);
 
 	return 0;
 }
@@ -1933,13 +1925,11 @@ isakmp_ph1resend(iph1)
 /* called from scheduler */
 void
 isakmp_ph2resend_stub(p)
-	void *p;
+	struct sched *p;
 {
-	struct ph2handle *iph2;
+	struct ph2handle *iph2 = container_of(p, struct ph2handle, scr);
 
-	iph2=(struct ph2handle *)p;
-
-	if(isakmp_ph2resend(iph2) < 0){
+	if (isakmp_ph2resend(iph2) < 0) {
 		unbindph12(iph2);
 		remph2(iph2);
 		delph2(iph2);
@@ -1982,8 +1972,8 @@ isakmp_ph2resend(iph2)
 
 	iph2->retry_counter--;
 
-	iph2->scr = sched_new(iph2->ph1->rmconf->retry_interval,
-		isakmp_ph2resend_stub, iph2);
+	sched_schedule(&iph2->scr, iph2->ph1->rmconf->retry_interval,
+		       isakmp_ph2resend_stub);
 
 	return 0;
 }
@@ -1991,10 +1981,9 @@ isakmp_ph2resend(iph2)
 /* called from scheduler */
 void
 isakmp_ph1expire_stub(p)
-	void *p;
+	struct sched *p;
 {
-
-	isakmp_ph1expire((struct ph1handle *)p);
+	isakmp_ph1expire(container_of(p, struct ph1handle, sce));
 }
 
 void
@@ -2003,9 +1992,7 @@ isakmp_ph1expire(iph1)
 {
 	char *src, *dst;
 
-	SCHED_KILL(iph1->sce);
-
-	if(iph1->status != PHASE1ST_EXPIRED){
+	if (iph1->status != PHASE1ST_EXPIRED) {
 		src = racoon_strdup(saddr2str(iph1->local));
 		dst = racoon_strdup(saddr2str(iph1->remote));
 		STRDUP_FATAL(src);
@@ -2024,20 +2011,20 @@ isakmp_ph1expire(iph1)
 	 * the phase1 deletion is postponed until there is no phase2.
 	 */
 	if (LIST_FIRST(&iph1->ph2tree) != NULL) {
-		iph1->sce = sched_new(1, isakmp_ph1expire_stub, iph1);
+		sched_schedule(&iph1->sce, 1, isakmp_ph1expire_stub);
 		return;
 	}
 
-	iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
+	sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
 }
 
 /* called from scheduler */
 void
 isakmp_ph1delete_stub(p)
-	void *p;
+	struct sched *p;
 {
 
-	isakmp_ph1delete((struct ph1handle *)p);
+	isakmp_ph1delete(container_of(p, struct ph1handle, sce));
 }
 
 void
@@ -2046,10 +2033,8 @@ isakmp_ph1delete(iph1)
 {
 	char *src, *dst;
 
-	SCHED_KILL(iph1->sce);
-
 	if (LIST_FIRST(&iph1->ph2tree) != NULL) {
-		iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
+		sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
 		return;
 	}
 
@@ -2081,10 +2066,10 @@ isakmp_ph1delete(iph1)
  */
 void
 isakmp_ph2expire_stub(p)
-	void *p;
+	struct sched *p;
 {
 
-	isakmp_ph2expire((struct ph2handle *)p);
+	isakmp_ph2expire(container_of(p, struct ph2handle, sce));
 }
 
 void
@@ -2092,8 +2077,6 @@ isakmp_ph2expire(iph2)
 	struct ph2handle *iph2;
 {
 	char *src, *dst;
-
-	SCHED_KILL(iph2->sce);
 
 	src = racoon_strdup(saddrwop2str(iph2->src));
 	dst = racoon_strdup(saddrwop2str(iph2->dst));
@@ -2106,19 +2089,16 @@ isakmp_ph2expire(iph2)
 	racoon_free(dst);
 
 	iph2->status = PHASE2ST_EXPIRED;
-
-	iph2->sce = sched_new(1, isakmp_ph2delete_stub, iph2);
-
-	return;
+	sched_schedule(&iph2->sce, 1, isakmp_ph2delete_stub);
 }
 
 /* called from scheduler */
 void
 isakmp_ph2delete_stub(p)
-	void *p;
+	struct sched *p;
 {
 
-	isakmp_ph2delete((struct ph2handle *)p);
+	isakmp_ph2delete(container_of(p, struct ph2handle, sce));
 }
 
 void
@@ -2126,8 +2106,6 @@ isakmp_ph2delete(iph2)
 	struct ph2handle *iph2;
 {
 	char *src, *dst;
-
-	SCHED_KILL(iph2->sce);
 
 	src = racoon_strdup(saddrwop2str(iph2->src));
 	dst = racoon_strdup(saddrwop2str(iph2->dst));
@@ -2200,10 +2178,8 @@ isakmp_post_acquire(iph2)
 
 	/* no ISAKMP-SA found. */
 	if (iph1 == NULL) {
-		struct sched *sc;
-
 		iph2->retry_checkph1 = lcconf->retry_checkph1;
-		sc = sched_new(1, isakmp_chkph1there_stub, iph2);
+		sched_schedule(&iph2->sce, 1, isakmp_chkph1there_stub);
 		plog(LLV_INFO, LOCATION, NULL,
 			"IPsec-SA request for %s queued "
 			"due to no phase1 found.\n",
@@ -2211,7 +2187,7 @@ isakmp_post_acquire(iph2)
 
 		/* start phase 1 negotiation as a initiator. */
 		if (isakmp_ph1begin_i(rmconf, iph2->dst, iph2->src) == NULL) {
-			SCHED_KILL(sc);
+			sched_cancel(&iph2->sce);
 			return -1;
 		}
 
@@ -2222,7 +2198,7 @@ isakmp_post_acquire(iph2)
 	/* found ISAKMP-SA, but on negotiation. */
 	if (iph1->status != PHASE1ST_ESTABLISHED) {
 		iph2->retry_checkph1 = lcconf->retry_checkph1;
-		sched_new(1, isakmp_chkph1there_stub, iph2);
+		sched_schedule(&iph2->sce, 1, isakmp_chkph1there_stub);
 		plog(LLV_INFO, LOCATION, iph2->dst,
 			"request for establishing IPsec-SA was queued "
 			"due to no phase1 found.\n");
@@ -2348,9 +2324,9 @@ isakmp_post_getspi(iph2)
 /* called by scheduler */
 void
 isakmp_chkph1there_stub(p)
-	void *p;
+	struct sched *p;
 {
-	isakmp_chkph1there((struct ph2handle *)p);
+	isakmp_chkph1there(container_of(p, struct ph2handle, sce));
 }
 
 void
@@ -2426,7 +2402,7 @@ isakmp_chkph1there(iph2)
 	plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: no established ph1 handler found\n");
 
 	/* no isakmp-sa found */
-	sched_new(1, isakmp_chkph1there_stub, iph2);
+	sched_schedule(&iph2->sce, 1, isakmp_chkph1there_stub);
 
 	return;
 }
@@ -3401,9 +3377,7 @@ purge_remote(iph1)
 		 "purged ISAKMP-SA spi=%s.\n",
 		 isakmp_pindex(&(iph1->index), iph1->msgid));
 
-	SCHED_KILL(iph1->sce);
-
-	iph1->sce = sched_new(1, isakmp_ph1delete_stub, iph1);
+	sched_schedule(&iph1->sce, 1, isakmp_ph1delete_stub);
 }
 
 void 

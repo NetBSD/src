@@ -1,3 +1,10 @@
+2008-09-19  Timo Teras  <timo.teras@iki.fi>
+	* src/racoon/{schedule.c|schedule.h|session.c|isakmp.c|
+	  isakmp_var.h|handler.c|handler.h|isakmp_quick.c|pfkey.c|pfkey.h|
+	  isakmp_inf.c|isakmp_xauth.c|isakmp_xauth.h|nattraversal.c}:
+	  Change struct sched to be allocated be the caller and optimize
+	  scheduler to be faster.
+
 2008-09-17  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/isakmp_inf.c: Fixed port match in purge_ipsec_spi()
 	  when NAT-T enabled and trying to purge non NAT-T SAs.
