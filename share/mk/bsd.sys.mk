@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.166 2008/08/24 06:27:00 gmcgarry Exp $
+#	$NetBSD: bsd.sys.mk,v 1.167 2008/09/19 22:54:55 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -241,14 +241,15 @@ TOOL_ZIC?=		zic
 	${COMPILE.S} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 # Lex
-LPREFIX?=	yy
-LFLAGS+=	-P${LPREFIX}
+LFLAGS+=	${LPREFIX.${.IMPSRC:T}:D-P${LPREFIX.${.IMPSRC:T}}}
+LFLAGS+=	${LPREFIX:D-P${LPREFIX}}
 
 .l.c:
 	${_MKTARGET_LEX}
 	${LEX.l} -o${.TARGET} ${.IMPSRC}
 
 # Yacc
+YFLAGS+=	${YPREFIX.${.IMPSRC:T}:D-p${YPREFIX.${.IMPSRC:T}}} ${YHEADER.${.IMPSRC:T}:D-d}
 YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 
 .y.c:
