@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1121 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1122 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -873,3 +873,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[tron 20080916]
 	patch(1): Merge improved version from DragonFly.
 		patch -b behaves as specified by POSIX. [joerg 20080919]
+	am-utils: Upgrade to 6.2a3 to add new fs flags (log,symperm,...)
+		and efs and tmpfs.
