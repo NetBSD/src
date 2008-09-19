@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1120 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1121 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -871,3 +871,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	ataraid(4): Add support for multiple volumes attached to
 		Intel MatrixRAID controllers contributed by Juan RP.
 		[tron 20080916]
+	patch(1): Merge improved version from DragonFly.
+		patch -b behaves as specified by POSIX. [joerg 20080919]
