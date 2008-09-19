@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.15 2008/07/22 01:30:02 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.16 2008/09/19 11:01:08 tteras Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -330,7 +330,7 @@ skip_auth:
 		if (throttle_delay != 0) {
 			struct xauth_reply_arg *xra;
 
-			if ((xra = racoon_malloc(sizeof(*xra))) == NULL) {
+			if ((xra = racoon_calloc(1, sizeof(*xra))) == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL, 
 				    "malloc failed, bypass throttling\n");
 				return xauth_reply(iph1, port, id, res);
@@ -345,7 +345,8 @@ skip_auth:
 			xra->port = port;
 			xra->id = id;
 			xra->res = res;
-			sched_new(throttle_delay, xauth_reply_stub, xra);
+			sched_schedule(&xra->sc, throttle_delay,
+				       xauth_reply_stub);
 		} else {
 			return xauth_reply(iph1, port, id, res);
 		}
@@ -355,10 +356,10 @@ skip_auth:
 }
 
 void 
-xauth_reply_stub(args)
-	void *args;
+xauth_reply_stub(sc)
+	struct sched *sc;
 {
-	struct xauth_reply_arg *xra = (struct xauth_reply_arg *)args;
+	struct xauth_reply_arg *xra = container_of(sc, struct xauth_reply_arg, sc);
 	struct ph1handle *iph1;
 
 	if ((iph1 = getph1byindex(&xra->index)) != NULL)
@@ -368,7 +369,6 @@ xauth_reply_stub(args)
 		    "Delayed Xauth reply: phase 1 no longer exists.\n"); 
 
 	racoon_free(xra);
-	return;
 }
 
 int
