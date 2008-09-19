@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/24 05:47:05 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.5 2008/09/19 21:41:51 christos Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+= dhcpcd
+SUBDIR+= am-utils dhcpcd
 .if (${MKLDAP} != "no")
 SUBDIR+= openldap
 .endif
