@@ -15,8 +15,10 @@ If you're cross compiling you may need to set the below knobs to avoid
 automatic tests.
 OS=BSD | Linux
 
-If you're building for a NOMMU system where fork() does not work, you should
-add -DTHERE_IS_NO_FORK to your CPPFLAGS.
+If you're building for an MMU-less system where fork() does not work, you
+should add -DTHERE_IS_NO_FORK to your CPPFLAGS.
+This also puts the --no-background flag on and stops the --background flag
+from working.
 
 You can change the default dir with these knobs.
 For example, to satisfy FHS compliance you would do this:-
@@ -62,4 +64,4 @@ ChangeLog
 ---------
 We no longer supply a ChangeLog.
 However, you're more than welcome to read the git commit comments at
-http://git.marples.name/?p=dhcpcd/.git;a=summary
+http://git.marples.name/?p=dhcpcd.git;a=summary
