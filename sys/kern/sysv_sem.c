@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.83 2008/05/06 20:25:09 njoly Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.84 2008/09/19 11:21:33 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.83 2008/05/06 20:25:09 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.84 2008/09/19 11:21:33 rmind Exp $");
 
 #define SYSVSEM
 
@@ -105,12 +105,12 @@ seminit(void)
 	if (v == 0)
 		panic("sysv_sem: cannot allocate memory");
 	sema = (void *)v;
-	sem = (void *)(ALIGN(sema) +
-	    seminfo.semmni * sizeof(struct semid_ds));
-	semcv = (void *)(ALIGN(sem) +
-	    seminfo.semmns * sizeof(struct __sem));
-	semu = (void *)(ALIGN(semcv) +
-	    seminfo.semmni * sizeof(kcondvar_t));
+	sem = (void *)((uintptr_t)sema +
+	    ALIGN(seminfo.semmni * sizeof(struct semid_ds)));
+	semcv = (void *)((uintptr_t)sem +
+	    ALIGN(seminfo.semmns * sizeof(struct __sem)));
+	semu = (void *)((uintptr_t)semcv +
+	    ALIGN(seminfo.semmni * sizeof(kcondvar_t)));
 
 	for (i = 0; i < seminfo.semmni; i++) {
 		sema[i]._sem_base = 0;
@@ -191,12 +191,12 @@ semrealloc(int newsemmni, int newsemmns, int newsemmnu)
 	}
 
 	new_sema = (void *)v;
-	new_sem = (void *)(ALIGN(new_sema) +
-	    newsemmni * sizeof(struct semid_ds));
-	new_semcv = (void *)(ALIGN(new_sem) +
-	    newsemmns * sizeof(struct __sem));
-	new_semu = (void *)(ALIGN(new_semcv) +
-	    newsemmni * sizeof(kcondvar_t));
+	new_sem = (void *)((uintptr_t)new_sema +
+	    ALIGN(newsemmni * sizeof(struct semid_ds)));
+	new_semcv = (void *)((uintptr_t)new_sem +
+	    ALIGN(newsemmns * sizeof(struct __sem)));
+	new_semu = (void *)((uintptr_t)new_semcv +
+	    ALIGN(newsemmni * sizeof(kcondvar_t)));
 
 	/* Initialize all semaphore identifiers and condvars */
 	for (i = 0; i < newsemmni; i++) {
