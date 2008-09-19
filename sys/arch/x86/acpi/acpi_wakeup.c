@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.8 2008/09/10 03:56:12 jmcneill Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.9 2008/09/19 11:15:50 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.8 2008/09/10 03:56:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.9 2008/09/19 11:15:50 jmcneill Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -315,7 +315,7 @@ acpi_cpu_sleep(struct cpu_info *ci)
 int
 acpi_md_sleep(int state)
 {
-	int ret = 0;
+	int s, ret = 0;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -331,6 +331,7 @@ acpi_md_sleep(int state)
 
 	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr);
 
+	s = splhigh();
 #ifdef __i386__
 	npxsave_cpu(true);
 #else
@@ -387,6 +388,7 @@ out:
 #endif
 
 	x86_enable_intr();
+	splx(s);
 
 #ifdef MTRR
 	if (mtrr_funcs != NULL)
