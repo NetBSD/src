@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.11 2008/09/19 00:05:02 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.12 2008/09/19 12:14:53 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.11 2008/09/19 00:05:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.12 2008/09/19 12:14:53 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1816,15 +1816,6 @@ uvideo_set_format(void *addr, struct video_format *format)
 	vs = sc->sc_stream_in;
 	ifaceno = vs->vs_ifaceno;
 
-	/* probe/GET_CUR to see what the hardware is offering */
-	uvideo_init_probe_data(&probe);
-
-	err = uvideo_stream_probe(vs, UR_GET_CUR, &probe);
-	if (err != USBD_NORMAL_COMPLETION) {
-		DPRINTF(("uvideo: error probe/GET_CUR: %s (%d)\n",
-			 usbd_errstr(err), err));
-	}
-
 	uvfmt =	uvideo_stream_guess_format(vs, format->pixel_format,
 					   format->width, format->height);
 	if (uvfmt == NULL) {
@@ -1834,15 +1825,45 @@ uvideo_set_format(void *addr, struct video_format *format)
 		return EINVAL;
 	}
 
+	uvideo_init_probe_data(&probe);
 	probe.bFormatIndex = UVIDEO_FORMAT_GET_FORMAT_INDEX(uvfmt);
 	probe.bFrameIndex = UVIDEO_FORMAT_GET_FRAME_INDEX(uvfmt);
+	USETDW(probe.dwFrameInterval, vs->vs_frame_interval);	/* XXX */
+
+	err = uvideo_stream_probe(vs, UR_SET_CUR, &probe);
+	if (err) {
+		DPRINTF(("uvideo: error commit/SET_CUR: %s (%d)\n",
+			 usbd_errstr(err), err));
+		return EIO;
+	}
+
+	uvideo_init_probe_data(&probe);
+	err = uvideo_stream_probe(vs, UR_GET_CUR, &probe);
+	if (err) {
+		DPRINTF(("uvideo: error commit/SET_CUR: %s (%d)\n",
+			 usbd_errstr(err), err));
+		return EIO;
+	}
+
+	if (probe.bFormatIndex != UVIDEO_FORMAT_GET_FORMAT_INDEX(uvfmt)) {
+		DPRINTF(("uvideo: probe/GET_CUR returned format index %d "
+			 "(expected %d)\n", probe.bFormatIndex,
+			 UVIDEO_FORMAT_GET_FORMAT_INDEX(uvfmt)));
+		probe.bFormatIndex = UVIDEO_FORMAT_GET_FORMAT_INDEX(uvfmt);
+	}
+	if (probe.bFrameIndex != UVIDEO_FORMAT_GET_FRAME_INDEX(uvfmt)) {
+		DPRINTF(("uvideo: probe/GET_CUR returned frame index %d "
+			 "(expected %d)\n", probe.bFrameIndex,
+			 UVIDEO_FORMAT_GET_FRAME_INDEX(uvfmt)));
+		probe.bFrameIndex = UVIDEO_FORMAT_GET_FRAME_INDEX(uvfmt);
+	}
 	USETDW(probe.dwFrameInterval, vs->vs_frame_interval);	/* XXX */
 
 	/* commit/SET_CUR. Fourth step is to set the alternate
 	 * interface.  Currently the fourth step is in
 	 * uvideo_start_transfer.  Maybe move it here? */
 	err = uvideo_stream_commit(vs, UR_SET_CUR, &probe);
-	if (err != USBD_NORMAL_COMPLETION) {
+	if (err) {
 		DPRINTF(("uvideo: error commit/SET_CUR: %s (%d)\n",
 			 usbd_errstr(err), err));
 		return EIO;
@@ -1879,29 +1900,9 @@ uvideo_set_format(void *addr, struct video_format *format)
 	vs->vs_frame_interval = UGETDW(probe.dwFrameInterval);
 	vs->vs_max_payload_size = UGETDW(probe.dwMaxPayloadTransferSize);
 
-#if 0
-	uvfmt =	uvideo_stream_find_format(vs, probe.bFormatIndex,
-					  probe.bFrameIndex);
-	if (uvfmt != NULL) {
-		*format = uvfmt->format;
-	} else {
-		DPRINTF(("uvideo_set_format: matching format not found\n"));
-		*format = *vs->vs_default_format;
-	}
-#else
 	*format = uvfmt->format;
-#endif
-
-	DPRINTF(("uvideo_set_format: pixeltype is %d\n", format->pixel_format));
-
-	/* format->sample_size = UGETDW(probe.dwMaxVideoFrameSize); */
-	/* format->stride = format->sample_size / format->height; */
-	/* format->color.primaries = */
-	/* format->color.gamma_function = */
-	/* format->color.matrix_coeff = */
-	/* format->interlace_flags = */
-
 	vs->vs_current_format = *format;
+	DPRINTF(("uvideo_set_format: pixeltype is %d\n", format->pixel_format));
 	
 	return 0;
 }
