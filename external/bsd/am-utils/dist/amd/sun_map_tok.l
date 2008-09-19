@@ -1,4 +1,4 @@
-/*	$NetBSD: sun_map_tok.l,v 1.1.1.1 2008/09/19 20:07:17 christos Exp $	*/
+/*	$NetBSD: sun_map_tok.l,v 1.2 2008/09/19 21:38:41 christos Exp $	*/
 
 %{
 /*
@@ -77,6 +77,9 @@
 # endif /* not ECHO */
 #endif /* FLEX_SCANNER */
 
+int yylex(void);
+int yyerror(const char *);
+
 /*
  * We need to configure lex to parse from a string
  * instead of a file. Each version of lex has it's
@@ -126,9 +129,9 @@ int sun_map_input(char *buff, int maxsize);
  * which automatically generates yywrap macros and symbols.  So I must
  * distinguish between them and when yywrap is actually needed.
  */
-#ifndef yywrap
+#if !defined(yywrap) || defined(yylex)
 int yywrap(void);
-#endif /* not yywrap */
+#endif /* not yywrap or yylex */
 
 /* no need to use yywrap() */
 #define YY_SKIP_YYWRAP
@@ -228,9 +231,9 @@ sun_map_tok_setbuff(const char* buff)
  * which automatically generates yywrap macros and symbols.  So I must
  * distinguish between them and when yywrap is actually needed.
  */
-#ifndef yywrap
+#if !defined(yywrap) || defined(yylex)
 int yywrap(void)
 {
   return 1;
 }
-#endif /* not yywrap */
+#endif /* not yywrap or yylex */
