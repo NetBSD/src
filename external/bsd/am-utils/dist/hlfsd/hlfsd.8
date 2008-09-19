@@ -1,4 +1,4 @@
-.\"	$NetBSD: hlfsd.8,v 1.1.1.1 2008/09/19 20:07:21 christos Exp $
+.\"	$NetBSD: hlfsd.8,v 1.2 2008/09/19 21:49:09 christos Exp $
 .\"
 .\"
 .\" Copyright (c) 1997-2007 Erez Zadok
@@ -264,7 +264,7 @@ home-directory fields of the file
 are read and checked.  All other fields are ignored.  The file
 .I password-file
 must otherwise be compliant with Unix System 7 colon-delimited format
-.IR passwd (4).
+.IR passwd (5).
 .SH FILES
 .TP 5
 .B /hlfs
@@ -291,11 +291,11 @@ user's home directory is accessible.
 .BR mail(1),
 .BR getgrent (3),
 .BR getpwent (3),
-.BR mnttab (4),
-.BR passwd (4),
-.BR mtab (5),
+.BR passwd (5),
+.\" .BR mnttab (4),
+.\" .BR mtab (5),
 .BR amd (8),
-.BR automount (8),
+.\" .BR automount (8),
 .BR cron(8),
 .BR mount (8),
 .BR sendmail (8),
