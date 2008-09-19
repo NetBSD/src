@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.15 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: handler.h,v 1.16 2008/09/19 11:14:49 tteras Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -95,8 +95,9 @@
 #define PHASE1ST_MSG3SENT		7
 #define PHASE1ST_MSG4RECEIVED		8
 #define PHASE1ST_ESTABLISHED		9
-#define PHASE1ST_EXPIRED		10
-#define PHASE1ST_MAX			11
+#define PHASE1ST_DYING			10
+#define PHASE1ST_EXPIRED		11
+#define PHASE1ST_MAX			12
 
 /* About address semantics in each case.
  *			initiator(addr=I)	responder(addr=R)
@@ -434,14 +435,16 @@ struct policyindex;
 extern struct ph1handle *getph1byindex __P((isakmp_index *));
 extern struct ph1handle *getph1byindex0 __P((isakmp_index *));
 extern struct ph1handle *getph1byaddr __P((struct sockaddr *,
-										   struct sockaddr *, int));
+					   struct sockaddr *, int));
 extern struct ph1handle *getph1byaddrwop __P((struct sockaddr *,
-	struct sockaddr *));
+					      struct sockaddr *));
 extern struct ph1handle *getph1bydstaddrwop __P((struct sockaddr *));
 #ifdef ENABLE_HYBRID
 struct ph1handle *getph1bylogin __P((char *));
 int purgeph1bylogin __P((char *));
 #endif
+extern void migrate_ph12 __P((struct ph1handle *old_iph1, struct ph1handle *new_iph1));
+extern void migrate_dying_ph12 __P((struct ph1handle *iph1));
 extern vchar_t *dumpph1 __P((void));
 extern struct ph1handle *newph1 __P((void));
 extern void delph1 __P((struct ph1handle *));

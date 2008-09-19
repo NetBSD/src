@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.25 2008/08/29 00:30:15 gmcgarry Exp $	*/
+/*	$NetBSD: admin.c,v 1.26 2008/09/19 11:14:49 tteras Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -306,7 +306,7 @@ admin_process(so2, combuf)
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "phase 1 for %s -> %s not found\n", loc, rem);
 		} else {
-			if (iph1->status == PHASE1ST_ESTABLISHED)
+			if (iph1->status >= PHASE1ST_ESTABLISHED)
 				isakmp_info_send_d1(iph1);
 			purge_remote(iph1);
 		}
@@ -356,7 +356,7 @@ admin_process(so2, combuf)
 			loc = racoon_strdup(saddrwop2str(iph1->local));
 			STRDUP_FATAL(loc);
 
-			if (iph1->status == PHASE1ST_ESTABLISHED)
+			if (iph1->status >= PHASE1ST_ESTABLISHED)
 				isakmp_info_send_d1(iph1);
 			purge_remote(iph1);
 
@@ -581,7 +581,6 @@ out1:
 
 			insph2(iph2);
 			if (isakmp_post_acquire(iph2) < 0) {
-				unbindph12(iph2);
 				remph2(iph2);
 				delph2(iph2);
 				break;
