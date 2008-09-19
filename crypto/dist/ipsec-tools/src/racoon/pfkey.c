@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.33 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.34 2008/09/19 11:14:49 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.33 2008/09/19 11:01:08 tteras Exp $ */
+/* $Id: pfkey.c,v 1.34 2008/09/19 11:14:49 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1008,7 +1008,6 @@ pk_recvgetspi(mhp)
 		if (isakmp_post_getspi(iph2) < 0) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to start post getspi.\n");
-			unbindph12(iph2);
 			remph2(iph2);
 			delph2(iph2);
 			iph2 = NULL;
@@ -1296,9 +1295,6 @@ pk_recvupdate(mhp)
 		"phase2", "quick", timedelta(&iph2->start, &iph2->end));
 #endif
 
-	/* count up */
-	iph2->ph1->ph2cnt++;
-
 	/* turn off schedule */
 	sched_cancel(&iph2->scr);
 
@@ -1315,8 +1311,6 @@ pk_recvupdate(mhp)
 	 * since we are going to reuse the phase2 handler, we need to
 	 * remain it and refresh all the references between ph1 and ph2 to use.
 	 */
-	unbindph12(iph2);
-
 	sched_schedule(&iph2->sce, iph2->approval->lifetime,
 		       isakmp_ph2expire_stub);
 
@@ -1648,7 +1642,6 @@ pk_recvexpire(mhp)
 			plog(LLV_ERROR, LOCATION, iph2->dst,
 				"failed to begin ipsec sa "
 				"re-negotication.\n");
-			unbindph12(iph2);
 			remph2(iph2);
 			delph2(iph2);
 			return -1;
@@ -1661,7 +1654,6 @@ pk_recvexpire(mhp)
 	/* If not received SADB_EXPIRE, INITIATOR delete ph2handle. */
 	/* RESPONDER always delete ph2handle, keep silent.  RESPONDER doesn't
 	 * manage IPsec SA, so delete the list */
-	unbindph12(iph2);
 	remph2(iph2);
 	delph2(iph2);
 
@@ -1893,7 +1885,6 @@ pk_recvacquire(mhp)
 
 err:
 	while (n >= 0) {
-		unbindph12(iph2[n]);
 		remph2(iph2[n]);
 		delph2(iph2[n]);
 		iph2[n] = NULL;
@@ -1965,7 +1956,6 @@ pk_recvdelete(mhp)
 	if (iph2->status == PHASE2ST_ESTABLISHED)
 		isakmp_info_send_d2(iph2);
 
-	unbindph12(iph2);
 	remph2(iph2);
 	delph2(iph2);
 

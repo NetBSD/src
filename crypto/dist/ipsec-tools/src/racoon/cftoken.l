@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.15 2008/07/22 01:30:02 mgrooms Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.16 2008/09/19 11:14:49 tteras Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -371,6 +371,7 @@ hexstring	0x{hexdigit}+
 <S_RMTS>phase1_down	{ YYD; return(PHASE1_DOWN); }
 <S_RMTS>mode_cfg	{ YYD; return(MODE_CFG); }
 <S_RMTS>weak_phase1_check { YYD; return(WEAK_PHASE1_CHECK); }
+<S_RMTS>rekey		{ YYD; return(REKEY); }
 	/* remote proposal */
 <S_RMTS>proposal	{ BEGIN S_RMTP; YYDB; return(PROPOSAL); }
 <S_RMTP>{bcl}		{ return(BOC); }

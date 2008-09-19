@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.10 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.11 2008/09/19 11:14:49 tteras Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
@@ -79,6 +79,8 @@ extern void isakmp_ph1resend_stub __P((struct sched *));
 extern int isakmp_ph1resend __P((struct ph1handle *));
 extern void isakmp_ph2resend_stub __P((struct sched *));
 extern int isakmp_ph2resend __P((struct ph2handle *));
+extern void isakmp_ph1dying_stub __P((struct sched *));
+extern void isakmp_ph1dying __P((struct ph1handle *));
 extern void isakmp_ph1expire_stub __P((struct sched *));
 extern void isakmp_ph1expire __P((struct ph1handle *));
 extern void isakmp_ph1delete_stub __P((struct sched *));

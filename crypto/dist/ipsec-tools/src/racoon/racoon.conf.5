@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.44 2008/07/22 01:30:02 mgrooms Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.45 2008/09/19 11:14:49 tteras Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -822,6 +822,19 @@ is set, this sets the maximum number of liveliness proofs to request
 (without reply) before considering the peer is dead.
 The default value is
 .Ic 5 .
+.\"
+.It Ic rekey (on | off | force) ;
+Enable automatic renegotiation of expired phase1 when there are non-dying
+phase2 SAs. Possible values are:
+.Bl -tag -width Ds -compact
+.It Ic force
+Rekeying is done unconditionally.
+.It Ic on
+Rekeying is done only if DPD monitoring is active. This is the default.
+.It Ic off
+No automatic rekeying. Do note that turning off automatic rekeying will
+result in inaccurate DPD monitoring.
+.El
 .\"
 .It Ic nonce_size Ar number ;
 define the byte size of nonce value.

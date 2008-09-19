@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.33 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.34 2008/09/19 11:14:49 tteras Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -180,14 +180,15 @@ isakmp_info_recv(iph1, msg0)
 	if (encrypted) {
 		if (isakmp->np != ISAKMP_NPTYPE_HASH) {
 			plog(LLV_ERROR, LOCATION, NULL,
-			    "ignore information because the"
+			    "ignore information because the "
 			    "message has no hash payload.\n");
 			goto end;
 		}
 
-		if (iph1->status != PHASE1ST_ESTABLISHED) {
+		if (iph1->status != PHASE1ST_ESTABLISHED &&
+		    iph1->status != PHASE1ST_DYING) {
 			plog(LLV_ERROR, LOCATION, NULL,
-			    "ignore information because ISAKMP-SA"
+			    "ignore information because ISAKMP-SA "
 			    "has not been established yet.\n");
 			goto end;
 		}
@@ -923,7 +924,6 @@ isakmp_info_send_common(iph1, payload, np, flags)
 		goto end;
 	}
 #endif
-	iph2->ph1 = iph1;
 	iph2->side = INITIATOR;
 	iph2->status = PHASE2ST_START;
 	iph2->msgid = isakmp_newmsgid2(iph1);
@@ -937,7 +937,7 @@ isakmp_info_send_common(iph1, payload, np, flags)
 		}
 
 		/* generate HASH(1) */
-		hash = oakley_compute_hash1(iph2->ph1, iph2->msgid, payload);
+		hash = oakley_compute_hash1(iph1, iph2->msgid, payload);
 		if (hash == NULL) {
 			delph2(iph2);
 			goto end;
@@ -1038,7 +1038,6 @@ end:
 	return error;
 
 err:
-	unbindph12(iph2);
 	remph2(iph2);
 	delph2(iph2);
 	goto end;
@@ -1256,7 +1255,6 @@ purge_ipsec_spi(dst0, proto, spi, n)
 			iph2 = getph2bysaidx(src, dst, proto, spi[i]);
 			if(iph2 != NULL){
 				delete_spd(iph2, created);
-				unbindph12(iph2);
 				remph2(iph2);
 				delph2(iph2);
 			}
@@ -1471,7 +1469,6 @@ isakmp_info_recv_initialcontact(iph1, protectedph2)
 		iph2 = getph2bysaidx(src, dst, proto_id, sa->sadb_sa_spi);
 		if (iph2 && iph2 != protectedph2) {
 			delete_spd(iph2, 0);
-			unbindph12(iph2);
 			remph2(iph2);
 			delph2(iph2);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.18 2008/07/22 01:30:02 mgrooms Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.19 2008/09/19 11:14:49 tteras Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -730,7 +730,8 @@ isakmp_cfg_set(iph1, attrpl)
 	    ISAKMP_NPTYPE_ATTR, ISAKMP_FLAG_E, 0);
 
 	if (iph1->mode_cfg->flags & ISAKMP_CFG_DELETE_PH1) {
-		if (iph1->status == PHASE1ST_ESTABLISHED)
+		if (iph1->status == PHASE1ST_ESTABLISHED ||
+		    iph1->status == PHASE1ST_DYING)
 			isakmp_info_send_d1(iph1);
 		remph1(iph1);
 		delph1(iph1);
@@ -1126,7 +1127,7 @@ isakmp_cfg_send(iph1, payload, np, flags, new_exchange)
 	struct isakmp_cfg_state *ics = iph1->mode_cfg;
 
 	/* Check if phase 1 is established */
-	if ((iph1->status != PHASE1ST_ESTABLISHED) || 
+	if ((iph1->status < PHASE1ST_ESTABLISHED) ||
 	    (iph1->local == NULL) ||
 	    (iph1->remote == NULL)) {
 		plog(LLV_ERROR, LOCATION, NULL, 
@@ -1159,7 +1160,6 @@ isakmp_cfg_send(iph1, payload, np, flags, new_exchange)
 		goto end;
 	}
 #endif
-	iph2->ph1 = iph1;
 	iph2->side = INITIATOR;
 	iph2->status = PHASE2ST_START;
 
@@ -1178,7 +1178,7 @@ isakmp_cfg_send(iph1, payload, np, flags, new_exchange)
 		}
 
 		/* generate HASH(1) */
-		hash = oakley_compute_hash1(iph2->ph1, iph2->msgid, payload);
+		hash = oakley_compute_hash1(iph1, iph2->msgid, payload);
 		if (hash == NULL) {
 			delph2(iph2);
 			goto end;
@@ -1277,7 +1277,6 @@ err:
 	if (iph2->sendbuf != NULL)
 		vfree(iph2->sendbuf);
 
-	unbindph12(iph2);
 	remph2(iph2);
 	delph2(iph2);
 end:

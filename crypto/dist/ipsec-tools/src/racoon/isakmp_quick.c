@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.20 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.21 2008/09/19 11:14:49 tteras Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -2107,7 +2107,6 @@ get_sainfo_r(iph2)
 {
 	vchar_t *idsrc = NULL, *iddst = NULL, *client = NULL;
 	int error = ISAKMP_INTERNAL_ERROR;
-	int remoteid = 0;
 
 	if (iph2->id == NULL) {
 		idsrc = ipsecdoi_sockaddr2id(iph2->src, IPSECDOI_PREFIX_HOST,
@@ -2131,18 +2130,6 @@ get_sainfo_r(iph2)
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to set ID for destination.\n");
 		goto end;
-	}
-
-	{
-		struct remoteconf *conf;
-		conf = getrmconf(iph2->dst);
-		if (conf != NULL)
-			remoteid=conf->ph1id;
-		else{
-			plog(LLV_DEBUG, LOCATION, NULL, "Warning: no valid rmconf !\n");
-			remoteid=0;
-		}
-		
 	}
 
 #ifdef ENABLE_HYBRID
@@ -2172,7 +2159,7 @@ get_sainfo_r(iph2)
 #endif
 
 	/* obtain a matching sainfo section */
-	iph2->sainfo = getsainfo(idsrc, iddst, iph2->ph1->id_p, client, remoteid);
+	iph2->sainfo = getsainfo(idsrc, iddst, iph2->ph1->id_p, client, iph2->ph1->rmconf->ph1id);
 	if (iph2->sainfo == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get sainfo.\n");
