@@ -36,7 +36,6 @@
 
 #include <syslog.h>
 
-int logtolevel(const char *);
 void setloglevel(int);
 void setlogprefix(const char *);
 void logger(int, const char *, ...) _PRINTF_LIKE (2, 3);

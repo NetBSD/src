@@ -2,6 +2,7 @@
 
 lookup_hostname()
 {
+	[ -z "${new_ip_address}" ] && return 1
 	local h=
 	# Silly ISC programs love to send error text to stdout
 	if type dig >/dev/null 2>&1; then
@@ -23,7 +24,7 @@ lookup_hostname()
 
 set_hostname()
 {
-	if [ -z "${new_host_name}" ]; then
+	if [ -z "${new_host_name}" -a -z "${new_fqdn_name}" ]; then
 		export new_host_name="$(lookup_hostname)"
 	fi
 }

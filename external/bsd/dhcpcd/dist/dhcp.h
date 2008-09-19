@@ -62,58 +62,50 @@
 #define DHCP_INFORM         8
 
 /* DHCP options */
-enum DHCP_OPTIONS
+enum DHO
 {
-	DHCP_PAD                    = 0,
-	DHCP_SUBNETMASK             = 1,
-	DHCP_ROUTER                 = 3,
-	DHCP_DNSSERVER              = 6,
-	DHCP_HOSTNAME               = 12,
-	DHCP_DNSDOMAIN              = 15,
-	DHCP_MTU                    = 26,
-	DHCP_BROADCAST              = 28,
-	DHCP_STATICROUTE            = 33,
-	DHCP_NISDOMAIN              = 40,
-	DHCP_NISSERVER              = 41,
-	DHCP_NTPSERVER              = 42,
-	DHCP_VENDOR                 = 43,
-	DHCP_IPADDRESS              = 50,
-	DHCP_LEASETIME              = 51,
-	DHCP_OPTIONSOVERLOADED      = 52,
-	DHCP_MESSAGETYPE            = 53,
-	DHCP_SERVERID               = 54,
-	DHCP_PARAMETERREQUESTLIST   = 55,
-	DHCP_MESSAGE                = 56,
-	DHCP_MAXMESSAGESIZE         = 57,
-	DHCP_RENEWALTIME            = 58,
-	DHCP_REBINDTIME             = 59,
-	DHCP_CLASSID                = 60,
-	DHCP_CLIENTID               = 61,
-	DHCP_USERCLASS              = 77,  /* RFC 3004 */
-	DHCP_FQDN                   = 81,
-	DHCP_DNSSEARCH              = 119, /* RFC 3397 */
-	DHCP_CSR                    = 121, /* RFC 3442 */
-	DHCP_MSCSR                  = 249, /* MS code for RFC 3442 */
-	DHCP_END                    = 255
+	DHO_PAD                    = 0,
+	DHO_SUBNETMASK             = 1,
+	DHO_ROUTER                 = 3,
+	DHO_DNSSERVER              = 6,
+	DHO_HOSTNAME               = 12,
+	DHO_DNSDOMAIN              = 15,
+	DHO_MTU                    = 26,
+	DHO_BROADCAST              = 28,
+	DHO_STATICROUTE            = 33,
+	DHO_NISDOMAIN              = 40,
+	DHO_NISSERVER              = 41,
+	DHO_NTPSERVER              = 42,
+	DHO_VENDOR                 = 43,
+	DHO_IPADDRESS              = 50,
+	DHO_LEASETIME              = 51,
+	DHO_OPTIONSOVERLOADED      = 52,
+	DHO_MESSAGETYPE            = 53,
+	DHO_SERVERID               = 54,
+	DHO_PARAMETERREQUESTLIST   = 55,
+	DHO_MESSAGE                = 56,
+	DHO_MAXMESSAGESIZE         = 57,
+	DHO_RENEWALTIME            = 58,
+	DHO_REBINDTIME             = 59,
+	DHO_VENDORCLASSID          = 60,
+	DHO_CLIENTID               = 61,
+	DHO_USERCLASS              = 77,  /* RFC 3004 */
+	DHO_FQDN                   = 81,
+	DHO_DNSSEARCH              = 119, /* RFC 3397 */
+	DHO_CSR                    = 121, /* RFC 3442 */
+	DHO_MSCSR                  = 249, /* MS code for RFC 3442 */
+	DHO_END                    = 255
 };
 
-/* SetFQDNHostName values - lsnybble used in flags
- * byte (see buildmsg.c), hsnybble to create order
+/* FQDN values - lsnybble used in flags
+ * hsnybble to create order
  * and to allow 0x00 to mean disable
  */
-enum FQQN {
+enum FQDN {
 	FQDN_DISABLE    = 0x00,
 	FQDN_NONE       = 0x18,
 	FQDN_PTR        = 0x20,
 	FQDN_BOTH       = 0x31
-};
-
-struct fqdn
-{
-	uint8_t flags;
-	uint8_t r1;
-	uint8_t r2;
-	char *name;
 };
 
 /* Sizes for DHCP options */
@@ -157,14 +149,15 @@ struct dhcp_lease {
 	uint32_t renewaltime;
 	uint32_t rebindtime;
 	struct in_addr server;
-	uint32_t leasedfrom;
+	time_t leasedfrom;
+	struct timeval boundtime;
 	uint8_t frominfo;
 };
 
-#define add_reqmask(var, val) (var[val >> 3] |= 1 << (val & 7))
-#define del_reqmask(var, val) (var[val >> 3] &= ~(1 << (val & 7)))
-#define has_reqmask(var, val) (var[val >> 3] & (1 << (val & 7)))
-int make_reqmask(uint8_t *, char **, int);
+#define add_option_mask(var, val) (var[val >> 3] |= 1 << (val & 7))
+#define del_option_mask(var, val) (var[val >> 3] &= ~(1 << (val & 7)))
+#define has_option_mask(var, val) (var[val >> 3] & (1 << (val & 7)))
+int make_option_mask(uint8_t *, char **, int);
 void print_options(void);
 char *get_option_string(const struct dhcp_message *, uint8_t);
 int get_option_addr(uint32_t *, const struct dhcp_message *, uint8_t);

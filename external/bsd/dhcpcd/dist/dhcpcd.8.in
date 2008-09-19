@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd Jul 18, 2008
+.Dd August 20, 2008
 .Dt DHCPCD 8 SMM
 .Sh NAME
 .Nm dhcpcd
@@ -33,7 +33,7 @@
 .Op Fl c , -script Ar script
 .Op Fl f , -config Ar file
 .Op Fl h , -hostname Ar hostname
-.Op Fl i , -classid Ar classid
+.Op Fl i , -vendorclassid Ar vendorclassid
 .Op Fl l , -leasetime Ar seconds
 .Op Fl m , -metric Ar metric
 .Op Fl o , -option Ar option
@@ -46,6 +46,8 @@
 .Op Fl F , -fqdn Ar FQDN
 .Op Fl I , -clientid Ar clientid
 .Op Fl O , -nooption Ar option
+.Op Fl Q , -require Ar option
+.Op Fl X , -blacklist Ar address
 .Ar interface
 .Nm
 .Fl k , -release
@@ -56,9 +58,7 @@
 .Sh DESCRIPTION
 .Nm
 is an implementation of the DHCP client specified in
-.Rs
-.%T "RFC 2131"
-.Re
+.Li RFC 2131 .
 .Nm
 gets the host information
 .Po 
@@ -69,40 +69,42 @@ from a DHCP server and configures the network
 of the
 machine on which it is running. 
 .Nm
-will then write DNS information to
+then runs the configuration script which writes DNS information to
 .Xr resolvconf 8 ,
 if available, otherwise directly to
 .Pa /etc/resolv.conf .
 If the hostname is currenly blank, (null) or localhost then
 .Nm
-will set the hostname to the one supplied by the DHCP server.
+sets the hostname to the one supplied by the DHCP server.
 .Nm
 then daemonises and waits for the lease renewal time to lapse.
 Then it attempts to renew its lease and reconfigure if the new lease changes.
 .Ss Local Link configuration
 If
 .Nm
-failed to obtain a lease, it will probe for a valid IPv4LL address
+failed to obtain a lease, it probes for a valid IPv4LL address
 .Po
-aka Zeroconf, aka APIPA
+aka ZeroConf, aka APIPA
 .Pc .
-Once obtained it will restart the process of looking for a DHCP server to get a
+Once obtained it restarts the process of looking for a DHCP server to get a
 proper address.
 .Pp
 When using IPv4LL,
 .Nm
-will always succeed and return a 0 exit code. To disable this behaviour, you
-can use the
+nearly always succeeds and returns an exit code of 0.
+In the rare case it fails, it normally means that there is a reverse ARP proxy
+installed which always defeats IPv4LL probing.
+To disable this behaviour, you can use the
 .Fl L , -noipv4ll
 option.
 .Ss Hooking into DHCP events
 .Nm
-will run
+runs
 .Pa @SCRIPT@ ,
 or the script specified by the
 .Fl c , -script
 option.
-This script will run each script found in
+This script runs each script found in
 .Pa @HOOKDIR@
 in a lexical order.
 The default installation supplies the scripts
@@ -146,16 +148,16 @@ always processes the config file before any command line options.
 .It Fl h , -hostname Ar hostname
 By default,
 .Nm
-will send the current hostname to the DHCP server so it can register in DNS.
+sends the current hostname to the DHCP server so it can register in DNS.
 You can use this option to specify the
 .Ar hostname
 sent, or an empty string to
 stop any
 .Ar hostname
 from being sent.
-.It Fl i , -classid Ar classid
+.It Fl i , -vendorclassid Ar vendorclassid
 Override the
-.Ar classid
+.Ar vendorclassid
 field sent. The default is
 dhcpcd <version>.
 If not set then none is sent.
@@ -167,6 +169,8 @@ process running on the
 to release its lease, deconfigure the
 .Ar interface
 and then exit.
+.Nm
+then waits until this process has exited.
 .It Fl l , -leasetime Ar seconds
 Request a specific lease time in
 .Ar seconds .
@@ -188,14 +192,27 @@ Request the DHCP
 .Ar option
 variable for use in
 .Pa @SCRIPT@ .
-.It Fl n , -renew
+.It Fl n , -rebind
 Notifies an existing
 .Nm
 process running on the
 .Ar interface
-to renew it's lease. If
+to rebind it's lease.
+.Nm
+will not re-configure itself or use any other command line arguments.
+.Nm
+will timeout the rebind after 30 seconds at which point the lease will be
+expired and
+.Nm
+will enter the discovery state to obtain a new lease.
+Use the
+.Fl t , -timeout
+option to change this.
+If
 .Nm
 is not running, then it starts up as normal.
+This option used to be renew, but rebind is more accurate as we need to
+broadcast the request instead of unicasting.
 .It Fl p , -persistent
 .Nm
 normally deconfigures the
@@ -205,28 +222,31 @@ Sometimes, this isn't desirable if for example you have root mounted over NFS.
 You can use this option to stop this from happening.
 .It Fl r , -request Op Ar address
 .Nm
-normally sends a DHCP Broadcast to find servers to offer an address.
+normally sends a DHCP DISCOVER to find servers to offer an address.
 .Nm
-will then request the address used.
-You can use this option to skip the broadcast step and just request an
+then requests the address used.
+You can use this option to skip the BROADCAST step and just request the
 .Ar address .
 The downside is if you request an
 .Ar address
 the DHCP server does not know about or the DHCP server is not
 authorative, it will remain silent.
-In this situation, we go back to the init state and broadcast again.
+In this situation, we go back to the init state and DISCOVER again.
 If no
 .Ar address
 is given then the first address currently assigned to the
 .Ar interface
 is used.
 .It Fl s , -inform Op Ar address Ns Op Ar /cidr
-Behaves exactly like
+Behaves like
 .Fl r , -request
 as above, but sends a DHCP INFORM instead of a REQUEST.
 This does not get a lease as such, just notifies the DHCP server of the
 .Ar address
 in use.
+You should also include the optional
+.Ar cidr
+network number in-case the address is not already configured on the interface.
 .Nm
 remains running and pretends it has an infinite lease.
 .Nm
@@ -256,30 +276,31 @@ should be between 1 and 254 inclusive.
 Examples.
 .Pp
 Set the vendor option 01 with an IP address.
-.D1 dhcpcd -v 01,192.168.0.2 eth0
+.D1 dhcpcd \-v 01,192.168.0.2 eth0
 Set the vendor option 02 with a hex code.
-.D1 dhcpcd -v 02,01:02:03:04:05 eth0
+.D1 dhcpcd \-v 02,01:02:03:04:05 eth0
 Do the above and set a third option with a string and not an IP address.
-.D1 dhcpcd -v 01,192.168.0.2 -v 02,01:02:03:04:05 -v 03,\e"192.168.0.2\e" eth0
+.D1 dhcpcd \-v 01,192.168.0.2 \-v 02,01:02:03:04:05 \-v 03,\e"192.168.0.2\e" eth0
 .It Fl x , -exit
-This causes an existing
+This will signal an existing
 .Nm
 process running on the
 .Ar interface
 to deconfigure the
 .Ar interface
 and exit.
+.Nm
+then waits until this process has exited.
 .It Fl D , -duid 
 Generate an
-.Rs
-.%T "RFC 4361"
-.Re
+.Li RFC 4361
 compliant clientid.
 This requires persistent storage and not all DHCP servers work with it so it's
 not enabled by default.
-The DUID generated will be held in
+.Nm
+generates the DUID and stores in it
 .Pa @SYSCONFDIR@/dhcpcd.duid
-and should not be copied to other hosts.
+This file should not be copied to other hosts.
 .It Fl E , -lastlease
 If
 .Nm
@@ -293,12 +314,15 @@ Requests that the DHCP server updates DNS using FQDN instead of just a
 hostname.
 Valid values for
 .Ar fqdn
-are none, ptr and both.
+are disable, none, ptr and both.
 The current hostname or the hostname specified using the
 .Fl h , -hostname
 option must be a FQDN.
 .Nm
 itself never does any DNS updates.
+.Nm
+encodes the FQDN hostname as specified in
+.Li RFC1035 .
 .It Fl I , -clientid Ar clientid
 Change the default clientid sent from the interface hardware address.
 If the string is of the format 01:02:03 then it is encoded as hex.
@@ -343,6 +367,10 @@ Don't use IPv4LL (aka APIPA, aka Bonjour, aka ZeroConf).
 Don't request the specified option.
 If no option given, then don't request any options other than those to
 configure the interface and routing.
+.It Fl Q , -require Ar option
+Requires the
+.Ar option
+to be present in all DHCP messages, otherwise the message is ignored.
 .It Fl T, -test
 On receipt of OFFER messages just call
 .Pa @SCRIPT@
@@ -353,6 +381,13 @@ files.
 .It Fl V, -variables
 Display a list of option codes and the associated variable for use in
 .Xr dhcpcd-run-hooks 8 .
+.It Fl X, -blacklist Ar address
+Ignores all DHCP messages which have this
+.Ar address
+as the server ID.
+This may be expanded in future releases to ignore all packets
+matching either the IP or hardware
+.Ar address .
 .El
 .Sh NOTES
 .Nm

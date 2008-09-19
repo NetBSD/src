@@ -53,7 +53,6 @@
 
 #include <ctype.h>
 #include <errno.h>
-#include <poll.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -82,7 +81,7 @@ inet_ntocidr(struct in_addr address)
 }
 
 int
-inet_cidrtoaddr (int cidr, struct in_addr *addr)
+inet_cidrtoaddr(int cidr, struct in_addr *addr)
 {
 	int ocets;
 
@@ -184,7 +183,7 @@ do_interface(const char *ifname,
 {
 	int s;
 	struct ifconf ifc;
-	int retval = 0;
+	int retval = 0, found = 0;
 	int len = 10 * sizeof(struct ifreq);
 	int lastlen = 0;
 	char *p;
@@ -195,9 +194,8 @@ do_interface(const char *ifname,
 	struct sockaddr_in address;
 	struct ifreq *ifr;
 	struct sockaddr_in netmask;
-
 #ifdef AF_LINK
-	struct sockaddr_dl sdl;
+	struct sockaddr_dl *sdl;
 #endif
 
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
@@ -242,12 +240,15 @@ do_interface(const char *ifname,
 		if (strcmp(ifname, ifr->ifr_name) != 0)
 			continue;
 
+		found = 1;
+
 #ifdef AF_LINK
 		if (hwaddr && hwlen && ifr->ifr_addr.sa_family == AF_LINK) {
-			memcpy(&sdl, &ifr->ifr_addr, sizeof(sdl));
-			*hwlen = sdl.sdl_alen;
-			memcpy(hwaddr, sdl.sdl_data + sdl.sdl_nlen,
-			       (size_t)sdl.sdl_alen);
+			sdl = xmalloc(ifr->ifr_addr.sa_len);
+			memcpy(sdl, &ifr->ifr_addr, ifr->ifr_addr.sa_len);
+			*hwlen = sdl->sdl_alen;
+			memcpy(hwaddr, LLADDR(sdl), *hwlen);
+			free(sdl);
 			retval = 1;
 			break;
 		}
@@ -276,6 +277,8 @@ do_interface(const char *ifname,
 
 	}
 
+	if (!found)
+		errno = ENXIO;
 	close(s);
 	free(ifc.ifc_buf);
 	return retval;
@@ -483,15 +486,26 @@ open_udp_socket(struct interface *iface)
 		struct sockaddr sa;
 		struct sockaddr_in sin;
 	} su;
-	int n = 1;
+	int n;
+#ifdef SO_BINDTODEVICE
+	struct ifreq ifr;
+#endif
 
 	if ((s = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
 		return -1;
 
+	n = 1;
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1)
 		goto eexit;
-	/* As we don't actually use this socket for anything, set
-	 * the receiver buffer to 1 */
+#ifdef SO_BINDTODEVICE
+	memset(&ifr, 0, sizeof(ifr));
+	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
+	if (setsockopt(s, SOL_SOCKET, SO_BINDTODEVICE, &ifr, sizeof(ifr)) == -1)
+		goto eexit;
+#endif
+	/* As we don't use this socket for receiving, set the
+	 * receive buffer to 1 */
+	n = 1;
 	if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, &n, sizeof(n)) == -1)
 		goto eexit;
 	memset(&su, 0, sizeof(su));
