@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.13 2008/09/20 14:01:27 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.14 2008/09/20 15:55:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.13 2008/09/20 14:01:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.14 2008/09/20 15:55:38 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1808,7 +1808,7 @@ uvideo_set_format(void *addr, struct video_format *format)
 	struct uvideo_softc *sc;
 	struct uvideo_stream *vs;
 	struct uvideo_format *uvfmt;
-	uvideo_probe_and_commit_data_t probe;
+	uvideo_probe_and_commit_data_t probe, maxprobe;
 	uint8_t ifaceno;
 	usbd_status err;
 
@@ -1834,6 +1834,15 @@ uvideo_set_format(void *addr, struct video_format *format)
 	probe.bFormatIndex = UVIDEO_FORMAT_GET_FORMAT_INDEX(uvfmt);
 	probe.bFrameIndex = UVIDEO_FORMAT_GET_FRAME_INDEX(uvfmt);
 	USETDW(probe.dwFrameInterval, vs->vs_frame_interval);	/* XXX */
+
+	maxprobe = probe;
+	err = uvideo_stream_probe(vs, UR_GET_MAX, &maxprobe);
+	if (err) {
+		DPRINTF(("uvideo: error probe/GET_MAX: %s (%d)\n",
+			 usbd_errstr(err), err));
+	} else {
+		USETW(probe.wCompQuality, UGETW(maxprobe.wCompQuality));
+	}
 
 	err = uvideo_stream_probe(vs, UR_SET_CUR, &probe);
 	if (err) {
