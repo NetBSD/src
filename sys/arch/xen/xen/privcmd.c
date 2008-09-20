@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.29 2008/08/24 20:35:43 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.30 2008/09/20 20:36:09 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.29 2008/08/24 20:35:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.30 2008/09/20 20:36:09 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -400,6 +400,7 @@ privcmd_ioctl(void *v)
 		vaddr_t va0, va;
 		u_long mfn, ma;
 		struct vm_map *vmm;
+		struct vm_map_entry *entry;
 		pmap_t pmap;
 		vaddr_t trymap;
 
@@ -411,6 +412,13 @@ privcmd_ioctl(void *v)
 			return EINVAL;
 		if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < pmb->num)
 			return EINVAL;
+
+		vm_map_lock_read(vmm);
+		if (!uvm_map_lookup_entry(vmm, va0, &entry)) {
+			vm_map_unlock_read(vmm);
+			return EINVAL;
+		}
+		vm_map_unlock_read(vmm);
 		
 		maddr = kmem_alloc(sizeof(paddr_t) * pmb->num, KM_SLEEP);
 		if (maddr == NULL)
@@ -434,7 +442,7 @@ privcmd_ioctl(void *v)
 			}
 			ma = mfn << PGSHIFT;
 			if (pmap_enter_ma(pmap_kernel(), trymap, ma, 0,
-			    VM_PROT_READ | VM_PROT_WRITE, PMAP_CANFAIL,
+			    entry->protection, PMAP_CANFAIL,
 			    pmb->dom)) {
 				mfn |= 0xF0000000;
 				copyout(&mfn, &pmb->arr[i], sizeof(mfn));
@@ -557,7 +565,7 @@ privcmd_map_obj(struct vm_map *map, vaddr_t start, paddr_t *maddr,
 	vm_prot_t prot;
 	off_t size = ((off_t)npages << PGSHIFT);
 
-	vm_map_lock(map);
+	vm_map_lock_read(map);
 	/* get protections. This also check for validity of mapping */
 	if (uvm_map_checkprot(map, start, start + size - 1, VM_PROT_WRITE))
 		prot = VM_PROT_READ | VM_PROT_WRITE;
@@ -567,11 +575,11 @@ privcmd_map_obj(struct vm_map *map, vaddr_t start, paddr_t *maddr,
 		printf("uvm_map_checkprot 0x%lx -> 0x%lx "
 		    "failed\n",
 		    start, (unsigned long)(start + size - 1));
-		vm_map_unlock(map);
+		vm_map_unlock_read(map);
 		kmem_free(maddr, sizeof(paddr_t) * npages);
 		return EINVAL;
 	}
-	vm_map_unlock(map);
+	vm_map_unlock_read(map);
 	/* remove current entries */
 	uvm_unmap1(map, start, start + size, 0);
 
