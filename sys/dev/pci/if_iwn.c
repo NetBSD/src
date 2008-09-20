@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.18 2008/09/14 10:09:39 freza Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.19 2008/09/20 18:28:28 freza Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.18 2008/09/14 10:09:39 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.19 2008/09/20 18:28:28 freza Exp $");
 
 
 /*
@@ -944,12 +944,9 @@ iwn_node_alloc(struct ieee80211_node_table *nt __unused)
 {
 	struct iwn_node *wn;
 
-	wn = malloc(sizeof (struct iwn_node), M_DEVBUF, M_NOWAIT);
+	wn = malloc(sizeof (struct iwn_node), M_80211_NODE, M_NOWAIT | M_ZERO);
 
-	if (wn != NULL)
-		memset(wn, 0, sizeof (struct iwn_node));
 	return (struct ieee80211_node *)wn;
-
 }
 
 static void
