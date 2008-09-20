@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.16 2008/09/18 15:29:15 cube Exp $
+# $NetBSD: shl.mi,v 1.17 2008/09/20 15:29:25 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -60,6 +60,7 @@
 ./usr/X11R7/lib/libGLU.so.1.0.3			-unknown-		xorg
 ./usr/X11R7/lib/libGLw.so.1.0			-unknown-		xorg
 ./usr/X11R7/lib/libICE.so.6.3			-unknown-		xorg
+./usr/X11R7/lib/libOSMesa.so.6.5.3		-unknown-		xorg
 ./usr/X11R7/lib/libSM.so.6.0			-unknown-		xorg
 ./usr/X11R7/lib/libX11.so.6.2			-unknown-		xorg
 ./usr/X11R7/lib/libXTrap.so.6.4			-unknown-		xorg

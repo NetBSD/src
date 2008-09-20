@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.48 2008/09/13 04:33:05 cube Exp $
+# $NetBSD: mi,v 1.49 2008/09/20 15:29:25 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5938,6 +5938,8 @@
 ./usr/X11R7/lib/libICE.a				-unknown-	xorg
 ./usr/X11R7/lib/libICE_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libICE_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libOSMesa.a				-unknown-	xorg
+./usr/X11R7/lib/libOSMesa_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libSM.a					-unknown-	xorg
 ./usr/X11R7/lib/libSM_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libSM_p.a				-unknown-	profile,xorg
@@ -7072,6 +7074,7 @@
 ./usr/libdata/lint/llib-lGL.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-lGLw.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-lICE.ln				-unknown-	lint,x11
+./usr/libdata/lint/llib-lOSMesa.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lSM.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-lX11.ln				-unknown-	lint,x11
 ./usr/libdata/lint/llib-lXRes.ln			-unknown-	lint,x11
