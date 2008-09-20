@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.32 2008/03/10 01:18:44 lukem Exp $	*/
+/*	$NetBSD: fts.c,v 1.33 2008/09/20 00:14:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.32 2008/03/10 01:18:44 lukem Exp $");
+__RCSID("$NetBSD: fts.c,v 1.33 2008/09/20 00:14:12 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: fts.c,v 1.32 2008/03/10 01:18:44 lukem Exp $");
 
 static FTSENT	*fts_alloc(FTS *, const char *, size_t);
 static FTSENT	*fts_build(FTS *, int);
+static void	 fts_free(FTSENT *);
 static void	 fts_lfree(FTSENT *);
 static void	 fts_load(FTS *, FTSENT *);
 static size_t	 fts_maxarglen(char * const *);
@@ -71,6 +72,12 @@ static FTSENT	*fts_sort(FTS *, FTSENT *, size_t);
 static unsigned short fts_stat(FTS *, FTSENT *, int);
 static int	 fts_safe_changedir(const FTS *, const FTSENT *, int,
     const char *);
+
+#if defined(ALIGNBYTES) && defined(ALIGN)
+#define	FTS_ALLOC_ALIGNED	1
+#else
+#undef	FTS_ALLOC_ALIGNED
+#endif
 
 #define	ISDOT(a)	(a[0] == '.' && (!a[1] || (a[1] == '.' && !a[2])))
 
@@ -197,12 +204,12 @@ fts_open(char * const *argv, int options,
 	}
 
 	if (nitems == 0)
-		free(parent);
+		fts_free(parent);
 
 	return (sp);
 
 mem3:	fts_lfree(root);
-	free(parent);
+	fts_free(parent);
 mem2:	free(sp->fts_path);
 mem1:	free(sp);
 	return (NULL);
@@ -254,9 +261,9 @@ fts_close(FTS *sp)
 		for (p = sp->fts_cur; p->fts_level >= FTS_ROOTLEVEL;) {
 			freep = p;
 			p = p->fts_link ? p->fts_link : p->fts_parent;
-			free(freep);
+			fts_free(freep);
 		}
-		free(p);
+		fts_free(p);
 	}
 
 	/* Free up child linked list, sort array, path buffer. */
@@ -413,7 +420,7 @@ fts_read(FTS *sp)
 	/* Move to the next node on this level. */
 next:	tmp = p;
 	if ((p = p->fts_link) != NULL) {
-		free(tmp);
+		fts_free(tmp);
 
 		/*
 		 * If reached the top, return to the original directory, and
@@ -460,14 +467,14 @@ name:		t = sp->fts_path + NAPPEND(p->fts_parent);
 
 	/* Move up to the parent node. */
 	p = tmp->fts_parent;
-	free(tmp);
+	fts_free(tmp);
 
 	if (p->fts_level == FTS_ROOTPARENTLEVEL) {
 		/*
 		 * Done; free everything up and set errno to 0 so the user
 		 * can distinguish between error and EOF.
 		 */
-		free(p);
+		fts_free(p);
 		errno = 0;
 		return (sp->fts_cur = NULL);
 	}
@@ -745,7 +752,7 @@ fts_build(FTS *sp, int type)
 				 */
 mem1:				saved_errno = errno;
 				if (p)
-					free(p);
+					fts_free(p);
 				fts_lfree(head);
 				(void)closedir(dirp);
 				errno = saved_errno;
@@ -771,7 +778,7 @@ mem1:				saved_errno = errno;
 			 * structures already allocated, then error out
 			 * with ENAMETOOLONG.
 			 */
-			free(p);
+			fts_free(p);
 			fts_lfree(head);
 			(void)closedir(dirp);
 			cur->fts_info = FTS_ERR;
@@ -1006,7 +1013,7 @@ fts_alloc(FTS *sp, const char *name, size_t namelen)
 	_DIAGASSERT(sp != NULL);
 	_DIAGASSERT(name != NULL);
 
-#if defined(ALIGNBYTES) && defined(ALIGN)
+#if defined(FTS_ALLOC_ALIGNED)
 	/*
 	 * The file name is a variable length array and no stat structure is
 	 * necessary if the user has set the nostat bit.  Allocate the FTSENT
@@ -1049,6 +1056,16 @@ fts_alloc(FTS *sp, const char *name, size_t namelen)
 }
 
 static void
+fts_free(FTSENT *p)
+{
+#if !defined(FTS_ALLOC_ALIGNED)
+	if (p->fts_statp)
+		free(p->fts_statp);
+#endif
+	free(p);
+}
+
+static void
 fts_lfree(FTSENT *head)
 {
 	FTSENT *p;
@@ -1058,12 +1075,7 @@ fts_lfree(FTSENT *head)
 	/* Free a linked list of structures. */
 	while ((p = head) != NULL) {
 		head = head->fts_link;
-
-#if !defined(ALIGNBYTES) || !defined(ALIGN)
-		if (p->fts_statp)
-			free(p->fts_statp);
-#endif
-		free(p);
+		fts_free(p);
 	}
 }
 
