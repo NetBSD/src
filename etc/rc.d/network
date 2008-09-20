@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.54 2008/09/20 12:12:38 apb Exp $
+# $NetBSD: network,v 1.55 2008/09/20 14:22:57 apb Exp $
 #
 
 # PROVIDE: network
@@ -275,7 +275,7 @@ network_start()
 					# "ssid 'foo;*>bar'".
 					(
 						set -o noglob
-						eval set -- "$args"
+						set -- $args
 						#echo >&2 "[$#] [$1] [$2] [$3]"
 						/sbin/ifconfig $int "$@"
 					)
