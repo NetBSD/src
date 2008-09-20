@@ -1,4 +1,4 @@
-#	$NetBSD: shl.mi,v 1.7 2008/09/02 02:23:11 lukem Exp $
+#	$NetBSD: shl.mi,v 1.8 2008/09/20 15:29:25 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -52,6 +52,7 @@
 ./usr/X11R7/lib/libGL_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libGLw_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libICE_pic.a				-unknown-	xorg
+./usr/X11R7/lib/libOSMesa_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libSM_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libX11_pic.a				-unknown-	xorg
 ./usr/X11R7/lib/libXTrap_pic.a				-unknown-	xorg
