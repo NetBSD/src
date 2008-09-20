@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.15 2008/09/18 15:29:15 cube Exp $
+# $NetBSD: shl.elf,v 1.16 2008/09/20 15:29:25 cube Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2	-unknown-		x11
@@ -119,6 +119,8 @@
 ./usr/X11R7/lib/libGLw.so.1			-unknown-		xorg
 ./usr/X11R7/lib/libICE.so			-unknown-		xorg
 ./usr/X11R7/lib/libICE.so.6			-unknown-		xorg
+./usr/X11R7/lib/libOSMesa.so			-unknown-		xorg
+./usr/X11R7/lib/libOSMesa.so.6			-unknown-		xorg
 ./usr/X11R7/lib/libSM.so			-unknown-		xorg
 ./usr/X11R7/lib/libSM.so.6			-unknown-		xorg
 ./usr/X11R7/lib/libX11.so			-unknown-		xorg
