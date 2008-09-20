@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.13 2008/08/06 07:16:39 mrg Exp $
+$NetBSD: TODO,v 1.14 2008/09/20 02:55:34 cube Exp $
 
 plan:
 	- build modular-xorg stuff with reach over
@@ -12,15 +12,11 @@ plan:
 things to handle:
 	- figure out a saner way to handle .man.pre files.
 
-	- many package.pc files need to be generated / installed for pkgsrc to be useful.
-
 
 big items:
 
 libs		- done
 			-- many libs may not install manuals yet.
-			-- many libs should have pkg-config files generated/installed?
-			   this will apparently help with pkgsrc.
 			-- libGL has has glapi_x86.S commented out from the
 			   build because it spews when eating -traditional-cpp
 			   cheap whitespace hacks have been discussed or
