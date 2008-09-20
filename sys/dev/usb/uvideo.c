@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.12 2008/09/19 12:14:53 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.13 2008/09/20 14:01:27 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.12 2008/09/19 12:14:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.13 2008/09/20 14:01:27 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -769,18 +769,14 @@ uvideo_init_control(struct uvideo_softc *sc,
 
 		if (uvdesc->bDescriptorType != UDESC_CS_INTERFACE)
 			continue;
-
-		switch (uvdesc->bDescriptorSubtype) {
-		case UDESC_INPUT_TERMINAL:
-		case UDESC_OUTPUT_TERMINAL:
-		case UDESC_SELECTOR_UNIT:
-		case UDESC_PROCESSING_UNIT:
-		case UDESC_EXTENSION_UNIT:
+		if (uvdesc->bDescriptorSubtype < UDESC_INPUT_TERMINAL ||
+		    uvdesc->bDescriptorSubtype > UDESC_EXTENSION_UNIT)
 			++nunits;
-			break;
-		default:
-			break;
-		}
+	}
+
+	if (nunits == 0) {
+		DPRINTF(("uvideo_init_control: no units\n"));
+		return USBD_NORMAL_COMPLETION;
 	}
 
 	/* allocate space for units */
@@ -796,6 +792,12 @@ uvideo_init_control(struct uvideo_softc *sc,
 	i = 0;
 	while ((desc = usb_desc_iter_next_non_interface(iter)) != NULL) {
 		uvdesc = (const uvideo_descriptor_t *)desc;
+
+		if (uvdesc->bDescriptorType != UDESC_CS_INTERFACE)
+			continue;
+		if (uvdesc->bDescriptorSubtype < UDESC_INPUT_TERMINAL ||
+		    uvdesc->bDescriptorSubtype > UDESC_EXTENSION_UNIT)
+			continue;
 
 		sc->sc_unit[i] = uvideo_unit_alloc(uvdesc);
 		/* TODO: free other units before returning? */
@@ -1329,8 +1331,8 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 				format);
 			format->format.sample_size =
 			    UGETDW(
-			     ((const uvideo_vs_frame_uncompressed_descriptor_t *)
-			      uvdesc)->dwMaxVideoFrameBufferSize);
+			      GET(uvideo_vs_frame_uncompressed_descriptor_t,
+			      uvdesc, dwMaxVideoFrameBufferSize));
 			format->format.stride =
 			    format->format.sample_size / format->format.height;
 			index = GET(uvideo_vs_frame_uncompressed_descriptor_t,
@@ -1350,8 +1352,9 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 				uvdesc,
 				format);
 			format->format.sample_size =
-			    UGETDW(((const uvideo_vs_frame_mjpeg_descriptor_t *)
-			     uvdesc)->dwMaxVideoFrameBufferSize);
+			    UGETDW(
+				GET(uvideo_vs_frame_mjpeg_descriptor_t,
+			        uvdesc, dwMaxVideoFrameBufferSize));
 			format->format.stride =
 			    format->format.sample_size / format->format.height;
 			index = GET(uvideo_vs_frame_mjpeg_descriptor_t,
@@ -1375,15 +1378,15 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 				    uvdesc,
 				    bFrameIndex);
 			format->format.stride =
-			    UGETDW(((const uvideo_frame_frame_based_descriptor_t *)
-			     uvdesc)->dwBytesPerLine);
+			    UGETDW(
+				GET(uvideo_frame_frame_based_descriptor_t,
+			        uvdesc, dwBytesPerLine));
 			format->format.sample_size =
 			    format->format.stride * format->format.height;
 			frame_interval =
 			    UGETDW(
 				GET(uvideo_frame_frame_based_descriptor_t,
-				uvdesc,
-				dwDefaultFrameInterval));
+				uvdesc, dwDefaultFrameInterval));
 			break;
 		default:
 			/* shouldn't ever get here */
@@ -1393,9 +1396,11 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			return USBD_INVAL;
 		}
 
-		DPRINTF(("UVC: Found format (index %d) %d: %dx%d\n",
+		DPRINTF(("uvideo: found format (index %d) type %d "
+		    "size %ux%u size %u stride %u interval %u\n",
 		    index, format->format.pixel_format, format->format.width,
-		    format->format.height));
+		    format->format.height, format->format.sample_size,
+		    format->format.stride, frame_interval));
 
 		SIMPLEQ_INSERT_TAIL(&vs->vs_formats, format, entries);
 
@@ -1434,15 +1439,6 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 		return 0;
 	case UE_ISOCHRONOUS:
 		ix = &vs->vs_xfer.isoc;
-
-		vframe_len = vs->vs_current_format.sample_size;
-		uframe_len = UVIDEO_FRAME_INTERVAL_UNITS_PER_USB_FRAME *
-		    vframe_len / vs->vs_frame_interval;
-		nframes = (vframe_len / uframe_len);
-		if (nframes == 0)
-			nframes++;
-
-		DPRINTF(("uvideo_stream_start_xfer: nframes=%d\n", nframes));
 
 		/* Choose an alternate interface most suitable for
 		 * this format.  Choose the smallest size that can
@@ -1490,9 +1486,10 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 		}
 
 		/* TODO: "packet" not same as frame */
+		vframe_len = vs->vs_current_format.sample_size;
 		uframe_len = alt->max_packet_size;
 		nframes = (vframe_len + uframe_len - 1) / uframe_len;
-		DPRINTF(("uvideo_stream_start_xfer: nframes2=%d\n", nframes));
+		DPRINTF(("uvideo_stream_start_xfer: nframes=%d\n", nframes));
 		
 		ix->ix_nframes = nframes;
 		ix->ix_uframe_len = uframe_len;
@@ -1679,8 +1676,7 @@ uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
 
 		if (count == 0) {
 			/* DPRINTF(("uvideo: zero length transfer\n")); */
-			/* return; */	/* TODO: what to do here?  restarting
-				 * can lead to infinite loop */
+			goto next;
 		}
 		
 		hdr = (const uvideo_payload_header_t *)isoc->i_buf;
@@ -1689,12 +1685,20 @@ uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
 		     i < ix->ix_nframes;
 		     ++i, buf += ix->ix_uframe_len)
 		{
-			if (isoc->i_frlengths[i] == 0)
+			if (isoc->i_frlengths[i] <
+			    sizeof(uvideo_payload_header_t))
 				continue;
 				
 			hdr = (uvideo_payload_header_t *)buf;
-			if (hdr->bHeaderLength == 0)
+			if (hdr->bHeaderLength != UVIDEO_PAYLOAD_HEADER_SIZE)
 				continue;
+			if (hdr->bHeaderLength == isoc->i_frlengths[i] &&
+			    !(hdr->bmHeaderInfo & UV_END_OF_FRAME))
+				continue;
+			if (hdr->bmHeaderInfo & UV_ERROR) {
+				DPRINTF(("uvideo: stream error\n"));
+				break;
+			}
 
 			payload.data = buf + hdr->bHeaderLength;
 			payload.size = isoc->i_frlengths[i] -
@@ -1708,6 +1712,7 @@ uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
 		}
 	}
 
+next:
 	uvideo_stream_recv_isoc_start1(isoc);
 }
 
@@ -1871,9 +1876,9 @@ uvideo_set_format(void *addr, struct video_format *format)
 
 	DPRINTFN(15, ("uvideo_set_format: committing to format: "
 		      "bmHint=0x%04x bFormatIndex=%d bFrameIndex=%d "
-		      "dwFrameInterval=%d wKeyFrameRate=%d wPFrameRate=%d "
+		      "dwFrameInterval=%u wKeyFrameRate=%d wPFrameRate=%d "
 		      "wCompQuality=%d wCompWindowSize=%d wDelay=%d "
-		      "dwMaxVideoFrameSize=%d dwMaxPayloadTransferSize=%d",
+		      "dwMaxVideoFrameSize=%u dwMaxPayloadTransferSize=%u",
 		      UGETW(probe.bmHint),
 		      probe.bFormatIndex,
 		      probe.bFrameIndex,
@@ -1886,7 +1891,7 @@ uvideo_set_format(void *addr, struct video_format *format)
 		      UGETDW(probe.dwMaxVideoFrameSize),
 		      UGETDW(probe.dwMaxPayloadTransferSize)));
 	if (vs->vs_probelen == 34) {
-		DPRINTFN(15, (" dwClockFrequency=%d bmFramingInfo=0x%02x "
+		DPRINTFN(15, (" dwClockFrequency=%u bmFramingInfo=0x%02x "
 			      "bPreferedVersion=%d bMinVersion=%d "
 			      "bMaxVersion=%d",
 			      UGETDW(probe.dwClockFrequency),
@@ -2472,7 +2477,7 @@ print_vc_header_descriptor(
 	printf("Interface Header: "
 	    "Len=%d Type=0x%02x Subtype=0x%02x "
 	    "bcdUVC=%d wTotalLength=%d "
-	    "dwClockFrequency=%d bInCollection=%d",
+	    "dwClockFrequency=%u bInCollection=%d",
 	    desc->bLength,
 	    desc->bDescriptorType,
 	    desc->bDescriptorSubtype,
@@ -2713,8 +2718,8 @@ print_vs_frame_uncompressed_descriptor(
 	printf("Frame Uncompressed: "
 	    "Len=%d Type=0x%02x Subtype=0x%02x "
 	    "bFrameIndex=%d bmCapabilities=0x%02x "
-	    "wWidth=%d wHeight=%d dwMinBitRate=%d dwMaxBitRate=%d "
-	    "dwMaxVideoFrameBufferSize=%d dwDefaultFrameInterval=%d "
+	    "wWidth=%d wHeight=%d dwMinBitRate=%u dwMaxBitRate=%u "
+	    "dwMaxVideoFrameBufferSize=%u dwDefaultFrameInterval=%u "
 	    "bFrameIntervalType=%d",
 	    desc->bLength,
 	    desc->bDescriptorType,
@@ -2759,8 +2764,8 @@ print_vs_frame_mjpeg_descriptor(
 	printf("MJPEG frame: "
 	    "Len=%d Type=0x%02x Subtype=0x%02x "
 	    "bFrameIndex=%d bmCapabilities=0x%02x "
-	    "wWidth=%d wHeight=%d dwMinBitRate=%d dwMaxBitRate=%d "
-	    "dwMaxVideoFrameBufferSize=%d dwDefaultFrameInterval=%d "
+	    "wWidth=%d wHeight=%d dwMinBitRate=%u dwMaxBitRate=%u "
+	    "dwMaxVideoFrameBufferSize=%u dwDefaultFrameInterval=%u "
 	    "bFrameIntervalType=%d",
 	    desc->bLength,
 	    desc->bDescriptorType,
@@ -2782,7 +2787,7 @@ print_vs_format_dv_descriptor(
 {
 	printf("MJPEG format: "
 	    "Len=%d Type=0x%02x Subtype=0x%02x "
-	    "bFormatIndex=%d dwMaxVideoFrameBufferSize=%d "
+	    "bFormatIndex=%d dwMaxVideoFrameBufferSize=%u "
 	    "bFormatType/Rate=%d bFormatType/Format=%d",
 	    desc->bLength,
 	    desc->bDescriptorType,
