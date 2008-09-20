@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.14 2008/09/20 15:55:38 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.15 2008/09/20 18:17:56 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.14 2008/09/20 15:55:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.15 2008/09/20 18:17:56 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1255,6 +1255,8 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			pixel_format = VIDEO_FORMAT_YUY2;
 		else if (usb_guid_cmp(guid, &uvideo_guid_format_nv12) == 0)
 			pixel_format = VIDEO_FORMAT_NV12;
+		else if (usb_guid_cmp(guid, &uvideo_guid_format_uyvy) == 0)
+			pixel_format = VIDEO_FORMAT_UYVY;
 		break;
 	case UDESC_VS_FORMAT_FRAME_BASED:
 		subtype = UDESC_VS_FRAME_FRAME_BASED;
