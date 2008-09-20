@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.1 2008/09/19 21:38:40 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2008/09/20 10:45:48 mrg Exp $
 
 WARNS?=	1
 
 .include <bsd.own.mk>
 
-BINDIR= /usr/sbin
+BINDIR?= /usr/sbin
 
 USE_FORT?=yes
 
