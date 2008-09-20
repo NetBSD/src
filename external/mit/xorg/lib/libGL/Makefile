@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/09/13 04:32:29 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2008/09/20 15:26:28 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -43,7 +43,7 @@ SRCS.mesa=	dispatch.c
 .PATH:		${X11SRCDIR.MesaLib}/src/glw
 .PATH:		${X11SRCDIR.MesaLib}/include/GL
 INCS=	GLwDrawA.h GLwDrawAP.h GLwMDrawA.h GLwMDrawAP.h gl.h gl_mangle.h \
-	glext.h glx.h glx_mangle.h glxext.h osmesa.h xmesa.h xmesa_x.h \
+	glext.h glx.h glx_mangle.h glxext.h xmesa.h xmesa_x.h \
 	xmesa_xf86.h
 INCSDIR=${X11INCDIR}/GL
 
