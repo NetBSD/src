@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2008/09/19 21:38:40 christos Exp $
-
-.include "${.CURDIR}/../Makefile.inc"
+#	$NetBSD: Makefile,v 1.2 2008/09/20 10:45:48 mrg Exp $
 
 BINDIR=	/usr/bin
+
+.include "${.CURDIR}/../Makefile.inc"
 
 PROG=	pawd
 
