@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2008/09/19 21:38:40 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/20 20:32:47 christos Exp $
 
-SUBDIR=	amd amq fixmount fsinfo hlfsd mk-amd-map pawd wire-test
+SUBDIR=	amd amq fixmount fsinfo hlfsd mk-amd-map pawd scripts wire-test
 
 .include <bsd.subdir.mk>
