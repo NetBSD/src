@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.67 2008/09/13 15:43:07 tsutsui Exp $
+.\"	$NetBSD: postinstall,v 1.68 2008/09/20 08:34:28 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -383,15 +383,15 @@ A list of available packages suitable for browsing is at
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/README.html
 .It
 Precompiled binaries can be found at
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/
+.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/
 usually in the
-.Pa \*V/\*M/All
+.Pa \*M/\*V/All
 subdir.
 You can install them with the following commands under
 .Xr sh 1 :
 .Pp
 .Bd -unfilled
-.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
 .Ic # export PKG_PATH
 .Ic # pkg_add -v tcsh
 .Ic # pkg_add -v bash
@@ -407,9 +407,17 @@ If you are using
 then replace the first two lines with the following:
 .Pp
 .Bd -unfilled
-.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
 \&...
 .Ed
+.(Note
+Some mirror sites don't mirror
+.Pa /pub/pkgsrc
+directory.
+If you would like to use such mirrors, you could also try the
+.Pa /pub/NetBSD/packages/current-packages/NetBSD/\*M/\*V/All
+directory which may have the same contents.
+.Note)
 .Pp
 The above commands will install the Tenex-csh and Bourne Again shell,
 the Perl programming language, Apache web server, KDE desktop
