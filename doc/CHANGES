@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1122 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1123 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -875,3 +875,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		patch -b behaves as specified by POSIX. [joerg 20080919]
 	am-utils: Upgrade to 6.2a3 to add new fs flags (log,symperm,...)
 		and efs and tmpfs.
+	rc.conf(5): ifconfig_xxN variables may now have multi-line
+		values, just like /etc/ifconfig.xxN files, and
+		semicolons may be used instead of line breaks.
+		[apb 20080920]

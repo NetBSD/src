@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.53 2008/07/24 19:48:19 reed Exp $
+# $NetBSD: network,v 1.54 2008/09/20 12:12:38 apb Exp $
 #
 
 # PROVIDE: network
@@ -12,6 +12,9 @@ $_rc_subr_loaded . /etc/rc.subr
 name="network"
 start_cmd="network_start"
 stop_cmd="network_stop"
+
+nl='
+' # a newline
 
 network_start()
 {
@@ -155,12 +158,18 @@ network_start()
 	# Configure all of the network interfaces listed in $net_interfaces;
 	# if $auto_ifconfig is YES, grab all interfaces from ifconfig.
 	# In the following, "xxN" stands in for interface names, like "le0".
-	# For any interfaces that has an $ifconfig_xxN variable associated,
-	# we do "ifconfig xxN $ifconfig_xxN".
-	# If there is no such variable, we take the contents of the file
-	# /etc/ifconfig.xxN, and run "ifconfig xxN" repeatedly, using each
-	# line of the file as the arguments for a separate "ifconfig"
-	# invocation.
+	#
+	# For any interfaces that has an $ifconfig_xxN variable
+	# associated, we break it into lines using ';' as a separator,
+	# then process it just like the contents of an /etc/ifconfig.xxN
+	# file.
+	#
+	# For each line from the $ifconfig_xxN variable or the
+	# /etc/ifconfig.xxN file, we ignore comments and blank lines,
+	# treat lines beginning with "!" as commands to execute, treat
+	# "dhcp" as a special case to invoke dhcpcd, and for any other
+	# line we run "ifconfig xxN", using each line of the file as the
+	# arguments for a separate "ifconfig" invocation.
 	#
 	# In order to configure an interface reasonably, you at the very least
 	# need to specify "[addr_family] [hostname]" (e.g "inet my.domain.org"),
@@ -192,40 +201,14 @@ network_start()
 		fi
 		echo -n 'Configuring network interfaces:'
 		for int in $tmp; do
-			eval args=\$ifconfig_$int
-			if [ -n "$args" ] || [ -f /etc/ifconfig.$int ]; then
-				if /sbin/ifconfig $int create 2>/dev/null && \
-				   checkyesno ipfilter; then
-					# resync ipf(4)
-					/sbin/ipf -y >/dev/null
-				fi
-			fi
-			if [ "$args" = "dhcp" ]; then
-				echo -n " $int"
-				/sbin/dhcpcd -n ${dhcpcd_flags} $int
-			elif [ -n "$args" ]; then
-				echo -n " $int"
-				/sbin/ifconfig $int $args
-			elif [ -f /etc/ifconfig.$int ]; then
-				echo -n " $int"
-				while read args; do
-					[ -z "$args" ] && continue
-					case "$args" in
-					"#"*|create)
-						;;
-					"!"*)
-						eval ${args#*!}
-						;;
-					dhcp)
-						/sbin/dhcpcd -n ${dhcpcd_flags} \
-						    $int
-						;;
-					*)
-						eval /sbin/ifconfig $int $args
-						;;
-					esac
-				done < /etc/ifconfig.$int
-			else
+			eval argslist=\$ifconfig_$int
+
+			# Skip interfaces that do not have explicit
+			# configuration information.  If auto_ifconfig is
+			# false then also warn about such interfaces.
+			#
+			if [ -z "$argslist" ] && ! [ -f /etc/ifconfig.$int ]
+			then
 				if ! checkyesno auto_ifconfig; then
 					echo
 					warn \
@@ -234,6 +217,71 @@ network_start()
 				fi
 				continue
 			fi
+
+			echo -n " $int"
+
+			# Create the interface if necessary.
+			# If the interface did not exist before,
+			# then also resync ipf(4).
+			#
+			if /sbin/ifconfig $int create 2>/dev/null && \
+			   checkyesno ipfilter; then
+				/sbin/ipf -y >/dev/null
+			fi
+
+			# If $ifconfig_xxN is empty, then use
+			# /etc/ifconfig.xxN, which we know exists due to
+			# an earlier test.
+			#
+			# If $ifconfig_xxN is non-empty and contains a
+			# newline, then just use it as is.  (This allows
+			# semicolons through unmolested.)
+			#
+			# If $ifconfig_xxN is non-empty and does not
+			# contain a newline, then convert all semicolons
+			# to newlines.
+			#
+			case "$argslist" in
+			'')
+				cat /etc/ifconfig.$int
+				;;
+			*"${nl}"*)
+				echo "$argslist"
+				;;
+			*)
+				(
+					set -o noglob
+					IFS=';'; set -- $argslist
+					#echo >&2 "[$#] [$1] [$2] [$3] [$4]"
+					IFS="$nl"; echo "$*"
+				)
+				;;
+			esac |
+			while read -r args; do
+				case "$args" in
+				''|"#"*|create)
+					;;
+				"!"*)
+					# Run arbitrary command in a subshell.
+					( eval "${args#*!}" )
+					;;
+				dhcp)
+					/sbin/dhcpcd -n ${dhcpcd_flags} $int
+					;;
+				*)
+					# Pass args to ifconfig.  Note
+					# that args may contain embedded
+					# shell metacharacters, such as
+					# "ssid 'foo;*>bar'".
+					(
+						set -o noglob
+						eval set -- "$args"
+						#echo >&2 "[$#] [$1] [$2] [$3]"
+						/sbin/ifconfig $int "$@"
+					)
+					;;
+				esac
+			done
 			configured_interfaces="$configured_interfaces $int"
 		done
 		echo "."
@@ -274,9 +322,9 @@ network_start()
 	# The variable contains a list of "address netmask" pairs, with
 	# "netmask" set to "-" if the interface default netmask is to be used.
 	#
-	# Note that $ifaliases_xxN works only with certain configurations and
-	# considered not recommended.  Use /etc/ifconfig.xxN if possible.
-	# 
+	# Note that $ifaliases_xxN works only in certain cases and its
+	# use is not recommended.  Use /etc/ifconfig.xxN or multiple
+	# commands in $ifconfig_xxN instead.
 	#
 	for int in lo0 $configured_interfaces; do
 		eval args=\$ifaliases_$int
@@ -301,9 +349,9 @@ network_start()
 	# that contain
 	#	address interface netmask
 	#
-	# Note that /etc/ifaliases works only with certain cases only and its
-	# use is not recommended.  Use /etc/ifconfig.xxN instead.
-	#
+	# Note that /etc/ifaliases works only in certain cases and its
+	# use is not recommended.  Use /etc/ifconfig.xxN or multiple
+	# commands in $ifconfig_xxN instead.
 	#
 	if [ -f /etc/ifaliases ]; then
 		while read addr int net; do
