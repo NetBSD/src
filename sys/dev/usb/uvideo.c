@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.15 2008/09/20 18:17:56 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.16 2008/09/20 21:05:58 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.15 2008/09/20 18:17:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.16 2008/09/20 21:05:58 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -771,7 +771,8 @@ uvideo_init_control(struct uvideo_softc *sc,
 			continue;
 		if (uvdesc->bDescriptorSubtype < UDESC_INPUT_TERMINAL ||
 		    uvdesc->bDescriptorSubtype > UDESC_EXTENSION_UNIT)
-			++nunits;
+			continue;
+		++nunits;
 	}
 
 	if (nunits == 0) {
