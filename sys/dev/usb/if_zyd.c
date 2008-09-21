@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.13 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.14 2008/09/21 09:38:27 freza Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.13 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.14 2008/09/21 09:38:27 freza Exp $");
 
 #include "bpfilter.h"
 
@@ -672,9 +672,8 @@ zyd_node_alloc(struct ieee80211_node_table *nt __unused)
 {
 	struct zyd_node *zn;
 
-	zn = malloc(sizeof (struct zyd_node), M_DEVBUF, M_NOWAIT);
-	if (zn != NULL)
-		bzero(zn, sizeof (struct zyd_node));
+	zn = malloc(sizeof (struct zyd_node), M_80211_NODE, M_NOWAIT | M_ZERO);
+
 	return (struct ieee80211_node *)zn;
 }
 
