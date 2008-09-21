@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/09/20 15:26:28 cube Exp $
+#	$NetBSD: Makefile,v 1.5 2008/09/21 01:34:03 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -30,7 +30,7 @@ SRCS.glx+=	glapi.c glthread.c
 # dri
 SRCS.dri=	XF86dri.c dri_glx.c
 .for fn in ${SRCS.dri}
-CPPFLAGS.${fn}=-DDEFAULT_DRIVER_DIR=\"${X11USRLIBDIR}/modules\"
+CPPFLAGS.${fn}=-DDEFAULT_DRIVER_DIR=\"${X11USRLIBDIR}/modules/dri\"
 .endfor
 .endif
 
