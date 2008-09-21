@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2008/09/21 00:46:59 cube Exp $
+# $NetBSD: Makefile,v 1.2 2008/09/21 14:08:45 lukem Exp $
 
-LIB=	i965
+MODULE=	i965
 
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/i965 \
 		-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/intel

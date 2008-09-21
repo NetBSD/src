@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2008/09/21 00:47:00 cube Exp $
+# $NetBSD: Makefile,v 1.2 2008/09/21 14:08:46 lukem Exp $
 
-LIB=	tdfx
+MODULE=	tdfx
 
 SRCS=	tdfx_context.c tdfx_dd.c tdfx_lock.c tdfx_pixels.c tdfx_render.c \
 	tdfx_screen.c tdfx_span.c tdfx_state.c tdfx_tex.c tdfx_texman.c \
