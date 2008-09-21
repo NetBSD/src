@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.72 2008/08/04 17:08:49 matt Exp $	*/
+/*	$NetBSD: stdio.h,v 1.73 2008/09/21 16:59:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -221,13 +221,15 @@ int	 fgetc(FILE *);
 int	 fgetpos(FILE * __restrict, fpos_t * __restrict);
 char	*fgets(char * __restrict, int, FILE * __restrict);
 FILE	*fopen(const char * __restrict , const char * __restrict);
-int	 fprintf(FILE * __restrict , const char * __restrict, ...);
+int	 fprintf(FILE * __restrict , const char * __restrict, ...)
+    __attribute__((__format__(__printf__, 2, 3)));
 int	 fputc(int, FILE *);
 int	 fputs(const char * __restrict, FILE * __restrict);
 size_t	 fread(void * __restrict, size_t, size_t, FILE * __restrict);
 FILE	*freopen(const char * __restrict, const char * __restrict,
 	    FILE * __restrict);
-int	 fscanf(FILE * __restrict, const char * __restrict, ...);
+int	 fscanf(FILE * __restrict, const char * __restrict, ...)
+    __attribute__((__format__(__scanf__, 2, 3)));
 int	 fseek(FILE *, long, int);
 int	 fsetpos(FILE *, const fpos_t *);
 long	 ftell(FILE *);
@@ -235,27 +237,34 @@ size_t	 fwrite(const void * __restrict, size_t, size_t, FILE * __restrict);
 int	 getc(FILE *);
 int	 getchar(void);
 void	 perror(const char *);
-int	 printf(const char * __restrict, ...);
+int	 printf(const char * __restrict, ...)
+    __attribute__((__format__(__printf__, 1, 2)));
 int	 putc(int, FILE *);
 int	 putchar(int);
 int	 puts(const char *);
 int	 remove(const char *);
 void	 rewind(FILE *);
-int	 scanf(const char * __restrict, ...);
+int	 scanf(const char * __restrict, ...)
+    __attribute__((__format__(__scanf__, 1, 2)));
 void	 setbuf(FILE * __restrict, char * __restrict);
 int	 setvbuf(FILE * __restrict, char * __restrict, int, size_t);
-int	 sscanf(const char * __restrict, const char * __restrict, ...);
+int	 sscanf(const char * __restrict, const char * __restrict, ...)
+    __attribute__((__format__(__scanf__, 2, 3)));
 FILE	*tmpfile(void);
 int	 ungetc(int, FILE *);
-int	 vfprintf(FILE * __restrict, const char * __restrict, _BSD_VA_LIST_);
-int	 vprintf(const char * __restrict, _BSD_VA_LIST_);
+int	 vfprintf(FILE * __restrict, const char * __restrict, _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__, 2, 0)));
+int	 vprintf(const char * __restrict, _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__, 1, 0)));
 
 #ifndef __AUDIT__
 char	*gets(char *);
-int	 sprintf(char * __restrict, const char * __restrict, ...);
+int	 sprintf(char * __restrict, const char * __restrict, ...)
+    __attribute__((__format__(__printf__, 2, 3)));
 char	*tmpnam(char *);
 int	 vsprintf(char * __restrict, const char * __restrict,
-	    _BSD_VA_LIST_);
+    _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__, 2, 0)));
 #endif
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
@@ -322,10 +331,10 @@ __END_DECLS
     defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 int	 snprintf(char * __restrict, size_t, const char * __restrict, ...)
-	    __attribute__((__format__(__printf__, 3, 4)));
+    __attribute__((__format__(__printf__, 3, 4)));
 int	 vsnprintf(char * __restrict, size_t, const char * __restrict,
 	    _BSD_VA_LIST_)
-	    __attribute__((__format__(__printf__, 3, 0)));
+    __attribute__((__format__(__printf__, 3, 0)));
 __END_DECLS
 #endif
 
@@ -366,12 +375,12 @@ __END_DECLS
 #if defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 int	 vscanf(const char * __restrict, _BSD_VA_LIST_)
-	    __attribute__((__format__(__scanf__, 1, 0)));
+    __attribute__((__format__(__scanf__, 1, 0)));
 int	 vfscanf(FILE * __restrict, const char * __restrict, _BSD_VA_LIST_)
-	    __attribute__((__format__(__scanf__, 2, 0)));
+    __attribute__((__format__(__scanf__, 2, 0)));
 int	 vsscanf(const char * __restrict, const char * __restrict,
-	    _BSD_VA_LIST_)
-	    __attribute__((__format__(__scanf__, 2, 0)));
+    _BSD_VA_LIST_)
+    __attribute__((__format__(__scanf__, 2, 0)));
 __END_DECLS
 #endif /* _ISOC99_SOURCE || _NETBSD_SOURCE */
 
@@ -388,17 +397,17 @@ __END_DECLS
 
 __BEGIN_DECLS
 int	 asprintf(char ** __restrict, const char * __restrict, ...)
-	    __attribute__((__format__(__printf__, 2, 3)));
+    __attribute__((__format__(__printf__, 2, 3)));
 char	*fgetln(FILE * __restrict, size_t * __restrict);
 char	*fparseln(FILE *, size_t *, size_t *, const char[3], int);
 int	 fpurge(FILE *);
 void	 setbuffer(FILE *, char *, int);
 int	 setlinebuf(FILE *);
 int	 vasprintf(char ** __restrict, const char * __restrict,
-	    _BSD_VA_LIST_)
-	    __attribute__((__format__(__printf__, 2, 0)));
+    _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__, 2, 0)));
 const char *fmtcheck(const char *, const char *)
-	    __attribute__((__format_arg__(2)));
+    __attribute__((__format_arg__(2)));
 __END_DECLS
 
 /*

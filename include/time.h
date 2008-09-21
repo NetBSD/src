@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.36 2008/04/01 19:23:28 drochner Exp $	*/
+/*	$NetBSD: time.h,v 1.37 2008/09/21 16:59:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -95,7 +95,8 @@ struct tm *gmtime(const time_t *);
 struct tm *localtime(const time_t *);
 time_t mktime(struct tm *);
 size_t strftime(char * __restrict, size_t, const char * __restrict,
-    const struct tm * __restrict);
+    const struct tm * __restrict)
+    __attribute__((__format__(__strftime__, 3, 0)));
 time_t time(time_t *);
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
