@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1096 2008/09/09 01:17:23 jmcneill Exp $
+# $NetBSD: mi,v 1.1097 2008/09/21 10:25:07 hannken Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -895,7 +895,7 @@
 ./usr/share/man/cat4/fmv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fpa.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fss.0			man-sys-catman		.cat
-./usr/share/man/cat4/fssbs.0			man-sys-catman		.cat
+./usr/share/man/cat4/fssbs.0			man-obsolete		obsolete
 ./usr/share/man/cat4/fta.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fwip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fwiso.0			man-obsolete		obsolete
@@ -3404,7 +3404,7 @@
 ./usr/share/man/html4/fmv.html			man-sys-htmlman		html
 ./usr/share/man/html4/fpa.html			man-sys-htmlman		html
 ./usr/share/man/html4/fss.html			man-sys-htmlman		html
-./usr/share/man/html4/fssbs.html		man-sys-htmlman		html
+./usr/share/man/html4/fssbs.html		man-obsolete		obsolete
 ./usr/share/man/html4/fta.html			man-sys-htmlman		html
 ./usr/share/man/html4/fwip.html			man-sys-htmlman		html
 ./usr/share/man/html4/fwohci.html		man-sys-htmlman		html
@@ -5691,7 +5691,7 @@
 ./usr/share/man/man4/fmv.4			man-sys-man		.man
 ./usr/share/man/man4/fpa.4			man-sys-man		.man
 ./usr/share/man/man4/fss.4			man-sys-man		.man
-./usr/share/man/man4/fssbs.4			man-sys-man		.man
+./usr/share/man/man4/fssbs.4			man-obsolete		obsolete
 ./usr/share/man/man4/fta.4			man-sys-man		.man
 ./usr/share/man/man4/fwip.4			man-sys-man		.man
 ./usr/share/man/man4/fwiso.4			man-obsolete		obsolete
