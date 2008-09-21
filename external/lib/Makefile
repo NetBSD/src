@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/05/22 14:12:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/21 19:45:59 joerg Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -11,5 +11,7 @@
 .if (${MKLDAP} != "no")
 SUBDIR+= ../bsd/openldap/lib
 .endif
+
+SUBDIR+= ../bsd/libarchive/lib
 
 .include <bsd.subdir.mk>
