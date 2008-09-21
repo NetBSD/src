@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.16 2008/09/20 21:05:58 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.17 2008/09/21 14:13:24 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.16 2008/09/20 21:05:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.17 2008/09/21 14:13:24 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.16 2008/09/20 21:05:58 jmcneill Exp $")
 #include <sys/vnode.h>
 #include <sys/poll.h>
 #include <sys/queue.h>	/* SLIST */
+#include <sys/kthread.h>
 
 #include <sys/videoio.h>
 #include <dev/video_if.h>
@@ -80,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.16 2008/09/20 21:05:58 jmcneill Exp $")
 #endif
 
 #define UVIDEO_NXFERS	3
+#define PRI_UVIDEO	PRI_BIO
 
 /* #define UVIDEO_DISABLE_MJPEG */
 
@@ -201,7 +203,9 @@ struct uvideo_bulk_xfer {
 	usbd_xfer_handle	bx_xfer;
 	uint8_t			*bx_buffer;
 	int			bx_buflen;
-	int			bx_datalen;
+	bool			bx_running;
+	kcondvar_t		bx_cv;
+	kmutex_t		bx_lock;
 };
 
 struct uvideo_stream {
@@ -333,11 +337,14 @@ static void			uvideo_stream_free(struct uvideo_stream *);
 
 static int		uvideo_stream_start_xfer(struct uvideo_stream *);
 static int		uvideo_stream_stop_xfer(struct uvideo_stream *);
+static usbd_status	uvideo_stream_recv_process(struct uvideo_stream *,
+						   uint8_t *, uint32_t);
 static usbd_status	uvideo_stream_recv_isoc_start(struct uvideo_stream *);
 static usbd_status	uvideo_stream_recv_isoc_start1(struct uvideo_isoc *);
 static void		uvideo_stream_recv_isoc_complete(usbd_xfer_handle,
 							 usbd_private_handle,
 							 usbd_status);
+static void		uvideo_stream_recv_bulk_transfer(void *);
 
 /* format probe and commit */
 #define uvideo_stream_probe(vs, act, data)				\
@@ -1089,7 +1096,8 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 	struct uvideo_bulk_xfer *bx;
 	struct uvideo_isoc_xfer *ix;
 	struct uvideo_alternate *alt;
-	uint8_t xfer_type;
+	uint8_t xfer_type, xfer_dir;
+	uint8_t bmAttributes, bEndpointAddress;
 	int i;
 
 	/* Iterate until the next interface descriptor.  All
@@ -1100,17 +1108,28 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 	
 		switch (uvdesc->bDescriptorType) {
 		case UDESC_ENDPOINT:
-			xfer_type = UE_GET_XFERTYPE(GET(usb_endpoint_descriptor_t,
-							desc, bmAttributes));
-			if (xfer_type == UE_BULK) {
+			bmAttributes = GET(usb_endpoint_descriptor_t,
+					   desc, bmAttributes);
+			bEndpointAddress = GET(usb_endpoint_descriptor_t,
+					       desc, bEndpointAddress);
+			xfer_type = UE_GET_XFERTYPE(bmAttributes);
+			xfer_dir = UE_GET_DIR(bEndpointAddress);
+			if (xfer_type == UE_BULK && xfer_dir == UE_DIR_IN) {
 				bx = &vs->vs_xfer.bulk;
 				if (vs->vs_xfer_type == 0) {
 					DPRINTFN(15, ("uvideo_attach: "
 						      "BULK stream *\n"));
 					vs->vs_xfer_type = UE_BULK;
-					bx->bx_endpt =
-					    GET(usb_endpoint_descriptor_t,
-						desc, bEndpointAddress);
+					bx->bx_endpt = bEndpointAddress;
+					DPRINTF(("uvideo_attach: BULK "
+						 "endpoint %x\n",
+						 bx->bx_endpt));
+					bx->bx_running = false;
+					cv_init(&bx->bx_cv,
+					    device_xname(vs->vs_parent->sc_dev)
+					    );
+					mutex_init(&bx->bx_lock,
+					  MUTEX_DEFAULT, IPL_NONE);
 				}
 			} else if (xfer_type == UE_ISOCHRONOUS) {
 				ix = &vs->vs_xfer.isoc;
@@ -1431,14 +1450,61 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 	uint32_t vframe_len;	/* rough bytes per video frame */
 	uint32_t uframe_len;	/* bytes per usb frame (TODO: or microframe?) */
 	uint32_t nframes;	/* number of usb frames (TODO: or microframs?) */
-	int i;
+	int i, ret;
 
 	struct uvideo_alternate *alt, *alt_maybe;
 	usbd_status err;
 
 	switch (vs->vs_xfer_type) {
 	case UE_BULK:
+		ret = 0;
 		bx = &vs->vs_xfer.bulk;
+
+		bx->bx_xfer = usbd_alloc_xfer(sc->sc_udev);
+		if (bx->bx_xfer == NULL) {
+			DPRINTF(("uvideo: couldn't allocate xfer\n"));
+			return ENOMEM;
+		}
+		DPRINTF(("uvideo: xfer %p\n", bx->bx_xfer));
+
+		bx->bx_buflen = vs->vs_max_payload_size;
+
+		DPRINTF(("uvideo: allocating %u byte buffer\n", bx->bx_buflen));
+		bx->bx_buffer = usbd_alloc_buffer(bx->bx_xfer, bx->bx_buflen);
+		if (bx->bx_buffer == NULL) {
+			DPRINTF(("uvideo: couldn't allocate buffer\n"));
+			return ENOMEM;
+		}
+
+		err = usbd_open_pipe(vs->vs_iface, bx->bx_endpt, 0,
+		    &bx->bx_pipe);
+		if (err != USBD_NORMAL_COMPLETION) {
+			DPRINTF(("uvideo: error opening pipe: %s (%d)\n",
+				 usbd_errstr(err), err));
+			return EIO;
+		}
+		DPRINTF(("uvideo: pipe %p\n", bx->bx_pipe));
+
+		mutex_enter(&bx->bx_lock);
+		if (bx->bx_running == false) {
+			bx->bx_running = true;
+			ret = kthread_create(PRI_UVIDEO, 0, NULL,
+			    uvideo_stream_recv_bulk_transfer, vs,
+			    NULL, device_xname(sc->sc_dev));
+			if (ret) {
+				DPRINTF(("uvideo: couldn't create kthread:"
+					 " %d\n", err));
+				bx->bx_running = false;
+				mutex_exit(&bx->bx_lock);
+				return err;
+			}
+		} else
+			aprint_error_dev(sc->sc_dev,
+			    "transfer already in progress\n");
+		mutex_exit(&bx->bx_lock);
+
+		DPRINTF(("uvideo: thread created\n"));
+
 		return 0;
 	case UE_ISOCHRONOUS:
 		ix = &vs->vs_xfer.isoc;
@@ -1559,6 +1625,31 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 	switch (vs->vs_xfer_type) {
 	case UE_BULK:
 		bx = &vs->vs_xfer.bulk;
+
+		DPRINTF(("uvideo_stream_stop_xfer: UE_BULK: "
+			 "waiting for thread to complete\n"));
+		mutex_enter(&bx->bx_lock);
+		if (bx->bx_running == true) {
+			bx->bx_running = false;
+			cv_wait_sig(&bx->bx_cv, &bx->bx_lock);
+		}
+		mutex_exit(&bx->bx_lock);
+
+		DPRINTF(("uvideo_stream_stop_xfer: UE_BULK: cleaning up\n"));
+
+		if (bx->bx_pipe) {
+			usbd_abort_pipe(bx->bx_pipe);
+			usbd_close_pipe(bx->bx_pipe);
+			bx->bx_pipe = NULL;
+		}
+
+		if (bx->bx_xfer) {
+			usbd_free_xfer(bx->bx_xfer);
+			bx->bx_xfer = NULL;
+		}
+
+		DPRINTF(("uvideo_stream_stop_xfer: UE_BULK: done\n"));
+
 		return 0;
 	case UE_ISOCHRONOUS:
 		ix = &vs->vs_xfer.isoc;
@@ -1647,6 +1738,39 @@ uvideo_stream_recv_isoc_start1(struct uvideo_isoc *isoc)
 	return err;
 }
 
+static usbd_status
+uvideo_stream_recv_process(struct uvideo_stream *vs, uint8_t *buf, uint32_t len)
+{
+	uvideo_payload_header_t *hdr;
+	struct video_payload payload;
+
+	if (len < sizeof(uvideo_payload_header_t)) {
+		DPRINTF(("uvideo_stream_recv_process: len %d < payload hdr\n",
+			 len));
+		return USBD_SHORT_XFER;
+	}
+
+	hdr = (uvideo_payload_header_t *)buf;
+
+#if 0
+	if (hdr->bHeaderLength != UVIDEO_PAYLOAD_HEADER_SIZE)
+		return USBD_INVAL;
+#endif
+	if (hdr->bHeaderLength == len && !(hdr->bmHeaderInfo & UV_END_OF_FRAME))
+		return USBD_INVAL;
+	if (hdr->bmHeaderInfo & UV_ERROR)
+		return USBD_IOERROR;
+
+	payload.data = buf + hdr->bHeaderLength;
+	payload.size = len - hdr->bHeaderLength;
+	payload.frameno = hdr->bmHeaderInfo & UV_FRAME_ID;
+	payload.end_of_frame = hdr->bmHeaderInfo & UV_END_OF_FRAME;
+
+	video_submit_payload(vs->vs_parent->sc_videodev, &payload);
+
+	return USBD_NORMAL_COMPLETION;
+}
+
 /* Callback on completion of usb isoc transfer */
 static void
 uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
@@ -1660,7 +1784,6 @@ uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
 	uint32_t count;
 	const uvideo_payload_header_t *hdr;
 	uint8_t *buf;
-	struct video_payload payload;
 
 	isoc = priv;
 	vs = isoc->i_vs;
@@ -1688,30 +1811,10 @@ uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
 		     i < ix->ix_nframes;
 		     ++i, buf += ix->ix_uframe_len)
 		{
-			if (isoc->i_frlengths[i] <
-			    sizeof(uvideo_payload_header_t))
-				continue;
-				
-			hdr = (uvideo_payload_header_t *)buf;
-			if (hdr->bHeaderLength != UVIDEO_PAYLOAD_HEADER_SIZE)
-				continue;
-			if (hdr->bHeaderLength == isoc->i_frlengths[i] &&
-			    !(hdr->bmHeaderInfo & UV_END_OF_FRAME))
-				continue;
-			if (hdr->bmHeaderInfo & UV_ERROR) {
-				DPRINTF(("uvideo: stream error\n"));
+			status = uvideo_stream_recv_process(vs, buf,
+			    isoc->i_frlengths[i]);
+			if (status == USBD_IOERROR)
 				break;
-			}
-
-			payload.data = buf + hdr->bHeaderLength;
-			payload.size = isoc->i_frlengths[i] -
-			    hdr->bHeaderLength;
-			payload.frameno = hdr->bmHeaderInfo & UV_FRAME_ID;
-			payload.end_of_frame =
-			    hdr->bmHeaderInfo & UV_END_OF_FRAME;
-			
-			video_submit_payload(vs->vs_parent->sc_videodev,
-					     &payload);
 		}
 	}
 
@@ -1719,6 +1822,45 @@ next:
 	uvideo_stream_recv_isoc_start1(isoc);
 }
 
+static void
+uvideo_stream_recv_bulk_transfer(void *addr)
+{
+	struct uvideo_stream *vs = addr;
+	struct uvideo_softc *sc = vs->vs_parent;
+	struct uvideo_bulk_xfer *bx = &vs->vs_xfer.bulk;
+	usbd_status err;
+	uint32_t len;
+
+	DPRINTF(("uvideo_stream_recv_bulk_transfer: "
+		 "vs %p sc %p bx %p buffer %p\n", vs, sc, bx, bx->bx_buffer));
+
+	while (bx->bx_running) {
+		len = bx->bx_buflen;
+		err = usbd_bulk_transfer(bx->bx_xfer, bx->bx_pipe,
+		    USBD_SHORT_XFER_OK /* | USBD_NO_COPY */, 500,
+		    bx->bx_buffer, &len, "uvideorb");
+
+		if (len == 0)
+			DPRINTF(("uvideo_stream_recv_bulk_transfer: 0 len\n"));
+
+		if (err == USBD_NORMAL_COMPLETION) {
+			uvideo_stream_recv_process(vs, bx->bx_buffer, len);
+		} else {
+			DPRINTF(("uvideo_stream_recv_bulk_transfer: %s\n",
+				 usbd_errstr(err)));
+		}
+	}
+
+	DPRINTF(("uvideo_stream_recv_bulk_transfer: notify complete\n"));
+
+	mutex_enter(&bx->bx_lock);
+	cv_broadcast(&bx->bx_cv);
+	mutex_exit(&bx->bx_lock);
+
+	DPRINTF(("uvideo_stream_recv_bulk_transfer: return\n"));
+
+	kthread_exit(0);
+}
 
 /*
  * uvideo_open - probe and commit video format and start receiving
