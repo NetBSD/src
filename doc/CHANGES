@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1125 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1126 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -26,7 +26,7 @@
 
 Changes from NetBSD 4.0 to NetBSD 5.0:
 	evbppc: Add support for Xilinx Virtex II-Pro/4-FX. [freza 20061202]
-	mac68k: Add support for four more Nubus video cards, including the
+	mac68k: Add support for four more NuBus video cards, including the
 		VillageTronic MacPicasso 340. [hauke 20061206]
 	puc(4): Add support for Perle Systems 4 and 8 ports modem boards.
 		[manu 20071209]
@@ -415,8 +415,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[garbled 20071017]
 	powerpc: Add shared PReP memory maps. [garbled 20071017]
 	sandpoint: DHCP/NFS bootloader. [nisimura 20071017]
-	macppc: Convert to generic powerpc bus_dma. [matt 20071017]
-	macppc: Convert to generic powerpc bus_space. [garbled 20071017]
+	macppc: Convert to generic powerpc bus_dma(9). [matt 20071017]
+	macppc: Convert to generic powerpc bus_space(9). [garbled 20071017]
 	powerpc: Generic powerpc OpenFirmware code. [garbled 20071017]
 	ofppc: Completely rewrite ofppc port from scratch. [garbled 20071017]
 	bebox: Convert to generic powerpc PCI/ISA framework. [ober 20071017]
@@ -472,7 +472,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		the NetBSD operating system.  Work until 0.1 sponsored by
 		Google Summer of Code 2007 and mentored by martin.
 		[jmmv 20071112]
-	sysinst: Add support to install the new tests.tgz set.
+	sysinst(8): Add support to install the new tests.tgz set.
 		[jmmv 20071112]
 	tests: Converted the regress/bin tree to use ATF and migrated it
 		to tests/util. [jmmv 20071112]
@@ -481,10 +481,10 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	tests: Converted the regress/games tree to use ATF and migrated it
 		to tests/games. [jmmv 20071112]
 	ahcisata(4): Add support for ATAPI devices. [bouyer 20071112]
-	nfsmb(4): Support more recent nVidia chips. [xtraeme 20071114]
-	viaide(4): Add support for nVidia MCP73/77 IDE controllers.
+	nfsmb(4): Support more recent NVIDIA chips. [xtraeme 20071114]
+	viaide(4): Add support for NVIDIA MCP73/77 IDE controllers.
 		[xtraeme 20071114]
-	nfe(4): Add support for nVidia MCP67/73 Ethernet controllers.
+	nfe(4): Add support for NVIDIA MCP67/73 Ethernet controllers.
 		[xtraeme 20071114]
 	i386: Remove I486_CPU, I586_CPU, I686_CPU options. [ad 20071114]
 	i386: Remove pccons(4). [ad 20071114]
@@ -502,7 +502,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		block and character devices in userspace. [pooka 20071120]
 	xen: Added support for amd64 architecture, both as dom0 and domU.
 		[bouyer 20071122]
-	i386: Create a boot.cfg on the install CD to allow the end-user to
+	i386: Create a boot.cfg(5) on the install CD to allow the end-user to
 		select either the standard or non-ACPI kernel easily.
 		[sborrill 20071123]
 	agp(4): Add AGP support for Intel Q35/G33/Q33. [markd 20071124]
@@ -685,7 +685,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		From Risto Sainio. [tsutsui 20080126]
 	hostapd(8), wpa_supplicant(8): Upgrade to 0.6.2 [christos 20080126]
 	openpam(3): upgrade to 20071221 [christos 20080126]
-	sysinst: Fix MD set tweaking so that the appropriate (or specified)
+	sysinst(8): Fix MD set tweaking so that the appropriate (or specified)
 		kernel is installed properly.  This should fix IP3x
 		installation issues on sgimips. [rumble 20080128]
 	ukbd(4): Add support for function keys F16 to F19 as present on
@@ -697,8 +697,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[jmcneill 20080130]
 	kernel: Add Mersenne Twister PRNG implementation. [matt 20080131]
 	sgimips: Enable fireware devices in GENERIC. [sekiya 20080202]
-	arc: Add sysinst support. [tsutsui 20080202]
-	cobalt: Add sysinst support. [tsutsui 20080202]
+	arc: Add sysinst(8) support. [tsutsui 20080202]
+	cobalt: Add sysinst(8) support. [tsutsui 20080202]
 	compat_linux32: Fix the linux32 emulations of fcntl() locking.
 		[dsl 20080202]
 	compat_linux32: Implement pread(2) and pwrite(2). [dsl 20080202]
@@ -776,7 +776,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		in the EeePC. [jmcneill 20080331]
 	asus(4): Added a driver for ASUS ACPI hotkeys as found in the EeePC.
 		[jmcneill 20080331]
-	zaurus: Add sysinst support. [chris 20080401]
+	zaurus: Add sysinst(8) support. [chris 20080401]
 	isv(4): Add support for the IDEC Supervision/16 image capture board
 		for ISA. [dyoung 20080402]
 	puc(4): Support for Digi International 4 and 8 port boards,
@@ -804,7 +804,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		The stats are collated when the user requests them via sysctl.
 		[thorpej 20080412]
 	acpi(4): Updated ACPI-CA to 20080321. [jmcneill 20080412]
-	landisk: Add sysinst support. [skrll 20080414]
+	landisk: Add sysinst(8) support. [skrll 20080414]
 	libcurses: Add getwin() and putwin(). [jdc 20080414]
 	kernel: Make IP6, ICMP6, UDP6, RAW6, PIM6, CARP, ARP, and IGMP
 		statistics per-CPU.  [thorpej 20080415]
@@ -857,7 +857,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		or both ipv4 and ip v6 respectively. [skd 20080510]
 	libarchive: Import libarchive-2.5.3b. [joerg 20080511]
 	getent(1): Added support for "netgroup" database. [tron 20080514]
-	fs/udf: Added write support for the UDF file system. [reinoud 20080514]
+	udf: Added write support for the UDF file system. [reinoud 20080514]
 	event(3): Updated libevent to 1.4.4-stable. [peter 20080516]
 	ypserv(8): disabled libwrap address to hostname lookups to avoid
 		the chance of ypserv blocking for an extended period of
@@ -874,7 +874,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[lukem 20080522]
 	amd(8): Enable LDAP support for amd maps. [lukem 20080522]
 	mac68k: Added support for Creative Systems Inc Hurdler CPI 
-		Nubus parallel printer card. [hauke 20080522]
+		NuBus parallel printer card. [hauke 20080522]
 	siisata(4): A driver for Silicon Image SteelVine SATA-II controllers
 		(SiI3124, SiI3132, and SiI3531) [jnemeth 20080523]
 	dhcpcd(8): Import dhcpcd 4.0.0-beta5. [joerg 20080524]
@@ -953,7 +953,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	btpand(8): a Bluetooth Personal Area Networking profile
 		daemon [plunky 20080817]
 	agp(4): Add AGP support for Intel 946GZ. [matthias 20080819]
-	ataraid(4): Add support for nVidia MediaShield from FreeBSD.
+	ataraid(4): Add support for NVIDIA MediaShield from FreeBSD.
 		[tacha 20080820]
 	fss(4): Add snapshot support for logging ffs file systems.
 		[hannken 20080822]
@@ -979,7 +979,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	file(1): Update to 4.26.  [christos 20080830]
 	nvi(1): 1.81 with internationalization is now the default, replacing
 		1.79 [christos 20080831]
-	texinfo(1): Update to 4.8 (last gplv2 version) [christos 20080902]
+	texinfo(1): Update to 4.8 (last GPLv2 version) [christos 20080902]
 	db(1): Add support for encoding or decoding VIS_HTTPSTYLE, and
 		for tuning the page size of the database.  [lukem 20080905]
 	ataraid(4): Add JMicron RAID support contributed by Juan RP.
