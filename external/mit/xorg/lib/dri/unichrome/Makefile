@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2008/09/21 00:47:00 cube Exp $
+# $NetBSD: Makefile,v 1.2 2008/09/21 14:08:46 lukem Exp $
 
-LIB=	unichrome
+MODULE=	unichrome
 
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/unichrome
 

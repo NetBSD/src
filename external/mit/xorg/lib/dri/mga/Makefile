@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2008/09/21 00:46:59 cube Exp $
+# $NetBSD: Makefile,v 1.2 2008/09/21 14:08:45 lukem Exp $
 
-LIB=	mga
+MODULE=	mga
 
 SRCS=	mgadd.c mgaioctl.c mgarender.c mgastate.c mgatris.c mgapixel.c \
 	mgaspan.c mgatex.c mgatexmem.c mga_texstate.c mga_texcombine.c \

@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2008/09/21 00:46:59 cube Exp $
+# $NetBSD: Makefile,v 1.2 2008/09/21 14:08:45 lukem Exp $
 
-LIB=	mach64
+MODULE=	mach64
 
 SRCS=	mach64_context.c mach64_ioctl.c mach64_screen.c mach64_span.c \
 	mach64_state.c mach64_tex.c mach64_texmem.c mach64_texstate.c \
