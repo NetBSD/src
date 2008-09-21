@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2008/09/21 00:47:00 cube Exp $
+# $NetBSD: Makefile,v 1.2 2008/09/21 14:08:46 lukem Exp $
 
-LIB=	r200
+MODULE=	r200
 
 CPPFLAGS+=	-DRADEON_COMMON=1 -DRADEON_COMMON_FOR_R200
 

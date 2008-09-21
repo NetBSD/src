@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2008/09/21 00:47:00 cube Exp $
+# $NetBSD: Makefile,v 1.2 2008/09/21 14:08:46 lukem Exp $
 
-LIB=	sis
+MODULE=	sis
 
 SRCS=	sis6326_state.c sis6326_clear.c sis_alloc.c sis_clear.c sis_context.c \
 	sis_dd.c sis_fog.c sis_lock.c sis_screen.c sis_span.c sis_state.c \

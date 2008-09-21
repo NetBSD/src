@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2008/09/21 00:46:59 cube Exp $
+# $NetBSD: Makefile,v 1.2 2008/09/21 14:08:45 lukem Exp $
 
-LIB=	i915
+MODULE=	i915
 
 SRCS=	i915_context.c i915_debug.c i915_fragprog.c i915_metaops.c \
 	i915_program.c i915_state.c i915_tex.c i915_texprog.c i915_texstate.c \
