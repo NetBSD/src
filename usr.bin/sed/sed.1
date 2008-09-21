@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.26 2008/09/16 13:32:04 perry Exp $
+.\"	$NetBSD: sed.1,v 1.27 2008/09/21 16:46:01 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd September 16, 2008
+.Dd September 21, 2008
 .Dt SED 1
 .Os
 .Sh NAME
@@ -82,10 +82,6 @@ function is applied to a line of input.
 .It Fl E
 Enables the use of extended regular expressions instead of the
 usual basic regular expression syntax.
-.It Fl r
-Identical to
-.Fl E ,
-present for compatibility with Gnu sed.
 .It Fl e Ar command
 Append the editing commands specified by the
 .Ar command
@@ -102,6 +98,10 @@ all of the commands have been applied to it.
 The
 .Fl n
 option suppresses this behavior.
+.It Fl r
+Identical to
+.Fl E ,
+present for compatibility with GNU sed.
 .El
 .Pp
 The form of a
