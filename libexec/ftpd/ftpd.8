@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.81 2008/09/16 12:30:38 lukem Exp $
+.\"	$NetBSD: ftpd.8,v 1.82 2008/09/21 06:20:46 lukem Exp $
 .\"
 .\" Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd September 16, 2008
+.Dd September 21, 2008
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -424,7 +424,7 @@ authenticates users according to five rules.
 .Bl -enum -offset indent
 .It
 The login name must be in the password data base,
-.Pa /etc/pwd.db ,
+.Xr passwd 5 ,
 and not have a null password.
 In this case a password must be provided by the client before any
 file operations may be performed.
