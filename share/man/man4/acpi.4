@@ -1,4 +1,4 @@
-.\" $NetBSD: acpi.4,v 1.28 2008/04/30 13:10:53 martin Exp $
+.\" $NetBSD: acpi.4,v 1.29 2008/09/21 11:12:36 wiz Exp $
 .\"
 .\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 8, 2007
+.Dd September 21, 2008
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -102,6 +102,36 @@ If
 is not specified, default to
 .Dq dsdt.hex
 in the build directory.
+.El
+.Ss sysctl support
+Two
+.Xr sysctl 8
+settings are especially relevant for
+.Nm :
+.Li hw.acpi_supported_states
+and
+.Li machdep.acpi_vbios_reset .
+.Li hw.acpi_supported_states
+is a list of the supported states (see
+.Xr sysctl 7 ) .
+.Li machdep.acpi_vbios_reset
+defines the handling of the graphics card.
+The supported values for this are:
+.Bl -tag -width 2
+.It 0
+No attempt to reset the VGA controller is done.
+.It 1
+Call the VGA BIOS when still in real mode.
+This can result in direct reboots.
+In that case, use
+.Sq 2
+or
+.Ic vbetool post
+from the
+.Pa pkgsrc/sysutils/vbetool
+package.
+.It 2
+Call the VGA BIOS using the in-kernel x86 emulator.
 .El
 .Sh SUPPORTED DEVICES
 .Nx
