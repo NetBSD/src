@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.19 2008/09/21 18:20:03 freza Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.20 2008/09/21 19:22:21 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.19 2008/09/21 18:20:03 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.20 2008/09/21 19:22:21 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1752,7 +1752,8 @@ uvideo_stream_recv_process(struct uvideo_stream *vs, uint8_t *buf, uint32_t len)
 
 	hdr = (uvideo_payload_header_t *)buf;
 
-	if (hdr->bHeaderLength > UVIDEO_PAYLOAD_HEADER_SIZE)
+	if (hdr->bHeaderLength > UVIDEO_PAYLOAD_HEADER_SIZE ||
+	    hdr->bHeaderLength < sizeof(uvideo_payload_header_t))
 		return USBD_INVAL;
 	if (hdr->bHeaderLength == len && !(hdr->bmHeaderInfo & UV_END_OF_FRAME))
 		return USBD_INVAL;
