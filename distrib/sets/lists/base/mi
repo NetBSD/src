@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.773 2008/09/15 22:00:16 kleink Exp $
+# $NetBSD: mi,v 1.774 2008/09/21 12:10:33 rtr Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -595,6 +595,7 @@
 ./usr/X11R7/lib/X11/xkb/torture			base-x11-root
 ./usr/X11R7/lib/X11/xkb/types			base-x11-root
 ./usr/X11R7/lib/modules				base-x11-root
+./usr/X11R7/lib/modules/dri			base-x11-root
 ./usr/X11R7/lib/modules/drivers			base-x11-root
 ./usr/X11R7/lib/modules/extensions		base-x11-root
 ./usr/X11R7/lib/modules/fonts			base-x11-root
