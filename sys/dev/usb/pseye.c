@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.7 2008/09/17 03:57:19 jmcneill Exp $ */
+/* $NetBSD: pseye.c,v 1.8 2008/09/21 19:28:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.7 2008/09/17 03:57:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.8 2008/09/21 19:28:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ USB_ATTACH(pseye)
 	sc->sc_bulkin_bufferlen = PSEYE_BULKIN_BUFLEN;
 
 	sc->sc_dying = sc->sc_running = 0;
-	cv_init(&sc->sc_cv, device_xname(sc->sc_dev));
+	cv_init(&sc->sc_cv, device_xname(self));
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	id = usbd_get_interface_descriptor(sc->sc_iface);
@@ -205,7 +205,7 @@ USB_ATTACH(pseye)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(sc->sc_iface, i);
 		if (ed == NULL) {
-			aprint_error_dev(sc->sc_dev, "couldn't get ep %d\n", i);
+			aprint_error_dev(self, "couldn't get ep %d\n", i);
 			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -218,7 +218,7 @@ USB_ATTACH(pseye)
 	}
 
 	if (ed_bulkin == NULL) {
-		aprint_error_dev(sc->sc_dev, "no bulk-in endpoint found\n");
+		aprint_error_dev(self, "no bulk-in endpoint found\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -241,15 +241,18 @@ USB_ATTACH(pseye)
 
 	pseye_init(sc);
 
-	sc->sc_videodev = video_attach_mi(&pseye_hw_if, sc->sc_dev);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	sc->sc_videodev = video_attach_mi(&pseye_hw_if, self);
 	if (sc->sc_videodev == NULL) {
-		aprint_error_dev(sc->sc_dev, "couldn't attach video layer\n");
+		aprint_error_dev(self, "couldn't attach video layer\n");
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
-	    USBDEV(sc->sc_dev));
+	    USBDEV(self));
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -259,6 +262,8 @@ USB_DETACH(pseye)
 	USB_DETACH_START(pseye, sc);
 
 	sc->sc_dying = 1;
+
+	pmf_device_deregister(self);
 
 	if (sc->sc_videodev != NULL) {
 		config_detach(sc->sc_videodev, flags);
