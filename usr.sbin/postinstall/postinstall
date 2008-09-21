@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.69 2008/09/14 17:25:59 apb Exp $
+# $NetBSD: postinstall,v 1.70 2008/09/21 06:20:07 junyoung Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1317,7 +1317,7 @@ main()
 		case "${ch}" in
 		s)
 			qarg="$(shell_quote "${OPTARG}")"
-			N_SRC_ARGS=$(( N_SRC_ARGS + 1 ))
+			N_SRC_ARGS=$(( $N_SRC_ARGS + 1 ))
 			SRC_ARGLIST="${SRC_ARGLIST}${SRC_ARGLIST:+ }-s ${qarg}"
 			if [ -f "${OPTARG}" ]; then
 				# arg refers to a *.tgz file.
