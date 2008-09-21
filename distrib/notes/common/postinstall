@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.68 2008/09/20 08:34:28 tsutsui Exp $
+.\"	$NetBSD: postinstall,v 1.69 2008/09/21 14:24:00 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -423,6 +423,21 @@ The above commands will install the Tenex-csh and Bourne Again shell,
 the Perl programming language, Apache web server, KDE desktop
 environment and the Firefox web browser 
 as well as all the packages they depend on.
+.(Note
+In some case the
+.Xr pkg_add 1
+command will complain about a version mismatch of packages with a message
+like the following:
+.Dl Warning: package `foo' was built for a different version of the OS:
+.Dl NetBSD/i386 M.N (pkg) vs. NetBSD/i386 \*V (this host) ,
+This warning would be harmless if the formal major release numbers are same
+between the pkg and your host.
+Please refer
+.Dq the NetBSD release glossary and graphs :
+.Lk http://www.NetBSD.org/releases/release-map.html
+for details of the release numbering scheme of
+.Nx .
+.Note)
 .It
 Package sources for compiling packages on your own can be obtained by
 retrieving the file
