@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.379 2008/08/29 04:51:57 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.380 2008/09/21 00:48:44 cube Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -386,6 +386,7 @@
 ./usr/X11R7/lib/X11/xkb/torture
 ./usr/X11R7/lib/X11/xkb/types
 ./usr/X11R7/lib/modules
+./usr/X11R7/lib/modules/dri
 ./usr/X11R7/lib/modules/extensions
 ./usr/X11R7/lib/modules/fonts
 ./usr/X11R7/lib/modules/drivers
