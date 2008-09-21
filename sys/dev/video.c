@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.16 2008/09/20 18:13:40 jmcneill Exp $ */
+/* $NetBSD: video.c,v 1.17 2008/09/21 19:29:50 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.16 2008/09/20 18:13:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.17 2008/09/21 19:29:50 jmcneill Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -311,6 +311,9 @@ video_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s\n", sc->hw_if->get_devname(sc->hw_softc));
 
 	DPRINTF(("video_attach: sc=%p hwif=%p\n", sc, sc->hw_if));
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 
@@ -343,6 +346,8 @@ video_detach(device_t self, int flags)
 	DPRINTF(("video_detach: sc=%p flags=%d\n", sc, flags));
 
 	sc->sc_dying = true;
+
+	pmf_device_deregister(self);
 	
 	maj = cdevsw_lookup_major(&video_cdevsw);
 	mn = device_unit(self);
