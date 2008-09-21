@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.18 2008/09/21 17:58:05 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.19 2008/09/21 18:20:03 freza Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.18 2008/09/21 17:58:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.19 2008/09/21 18:20:03 freza Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1824,13 +1824,13 @@ static void
 uvideo_stream_recv_bulk_transfer(void *addr)
 {
 	struct uvideo_stream *vs = addr;
-	struct uvideo_softc *sc = vs->vs_parent;
 	struct uvideo_bulk_xfer *bx = &vs->vs_xfer.bulk;
 	usbd_status err;
 	uint32_t len;
 
 	DPRINTF(("uvideo_stream_recv_bulk_transfer: "
-		 "vs %p sc %p bx %p buffer %p\n", vs, sc, bx, bx->bx_buffer));
+		 "vs %p sc %p bx %p buffer %p\n", vs, vs->vs_parent, bx,
+		 bx->bx_buffer));
 
 	while (bx->bx_running) {
 		len = bx->bx_buflen;
