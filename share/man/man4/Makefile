@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.473 2008/09/09 01:16:03 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.474 2008/09/21 10:25:07 hannken Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 acpidalb.4 \
@@ -148,7 +148,6 @@ MLINKS+=cardbus.4 cbb.4
 MLINKS+=crypto.4 swcrypto.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4 fpa.4 fta.4
-MLINKS+=fss.4 fssbs.4
 MLINKS+=icp.4 icpsp.4
 MLINKS+=irframe.4 irda.4
 MLINKS+=le.4 bicc.4 le.4 nele.4 le.4 depca.4
