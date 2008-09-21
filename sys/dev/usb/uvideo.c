@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.17 2008/09/21 14:13:24 jmcneill Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.18 2008/09/21 17:58:05 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.17 2008/09/21 14:13:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.18 2008/09/21 17:58:05 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1752,10 +1752,8 @@ uvideo_stream_recv_process(struct uvideo_stream *vs, uint8_t *buf, uint32_t len)
 
 	hdr = (uvideo_payload_header_t *)buf;
 
-#if 0
-	if (hdr->bHeaderLength != UVIDEO_PAYLOAD_HEADER_SIZE)
+	if (hdr->bHeaderLength > UVIDEO_PAYLOAD_HEADER_SIZE)
 		return USBD_INVAL;
-#endif
 	if (hdr->bHeaderLength == len && !(hdr->bmHeaderInfo & UV_END_OF_FRAME))
 		return USBD_INVAL;
 	if (hdr->bmHeaderInfo & UV_ERROR)
@@ -1837,11 +1835,9 @@ uvideo_stream_recv_bulk_transfer(void *addr)
 	while (bx->bx_running) {
 		len = bx->bx_buflen;
 		err = usbd_bulk_transfer(bx->bx_xfer, bx->bx_pipe,
-		    USBD_SHORT_XFER_OK /* | USBD_NO_COPY */, 500,
+		    USBD_SHORT_XFER_OK | USBD_NO_COPY,
+		    USBD_NO_TIMEOUT,
 		    bx->bx_buffer, &len, "uvideorb");
-
-		if (len == 0)
-			DPRINTF(("uvideo_stream_recv_bulk_transfer: 0 len\n"));
 
 		if (err == USBD_NORMAL_COMPLETION) {
 			uvideo_stream_recv_process(vs, bx->bx_buffer, len);
