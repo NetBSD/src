@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.21 2008/09/01 10:15:08 rtr Exp $
+#	$NetBSD: Makefile,v 1.22 2008/09/22 16:11:48 cube Exp $
 
 SUBDIR=		common init ddc dixmods doc dri dummy i2c int10 loader \
-		xf86modes \
+		xf86modes exa \
 		xorgos rac ramdac scanpci pcidata shadowfb vbe vgahw \
 		x86emu xaa xf1bpp xf4bpp xf8_16bpp xf8_32bpp xf86config
 
