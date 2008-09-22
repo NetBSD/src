@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.1.2.15 2008/09/11 13:40:47 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.1.2.16 2008/09/22 09:11:38 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -60,6 +60,9 @@ dm_target_linear_init(struct dm_dev *dmv, void **target_config, char *params)
 	struct dm_pdev *dmp;
 
 	char **ap, *argv[3];
+
+	if(params == NULL)
+		return EINVAL;
 	
 	/*
 	 * Parse a string, containing tokens delimited by white space,
