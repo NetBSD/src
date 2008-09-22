@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.16 2008/09/11 13:40:48 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.17 2008/09/22 09:11:38 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -608,8 +608,9 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
-	
-	cmd_array = prop_dictionary_get(dm_dict,DM_IOCTL_CMD_DATA);
+
+	/* create array for dev_t's */
+	cmd_array = prop_array_create();
 
 	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL){
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
@@ -629,6 +630,8 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 		table_en->target->deps(table_en, cmd_array);
 
 	rw_exit(&dmv->dev_rwlock);
+
+	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, cmd_array);
 	
 	return 0;
 }
@@ -731,12 +734,12 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		/*
 		 * There is a parameter string after dm_target_spec
 		 * structure which  points to /dev/wd0a 284 part of
-		 * table. String str points to this text.
+		 * table. String str points to this text. This can be
+		 * null and therefore it should be checked before we try to
+		 * use it.
 		 */
-
 		prop_dictionary_get_cstring(target_dict,
 		    DM_TABLE_PARAMS, (char**)&str);
-		
 		
 		if (SLIST_EMPTY(tbl))
 			/* insert this table to head */
@@ -749,17 +752,18 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		 * therfore I have to pass it to target init
 		 * routine and parse parameters there.
 		 */
-		if (strlen(str) != 0) {
-			if ((ret = target->init(dmv, &table_en->target_config, str)) != 0) {	
-				dm_table_destroy(tbl);
+		if ((ret = target->init(dmv, &table_en->target_config,
+			    str)) != 0) {
 
-				return ret;
-			}
-		}
-				
+			dm_table_destroy(tbl);
+			
+			return ret;
+		} 
+					
 		last_table = table_en;
-				
-		prop_object_release(str);
+
+		if (str != NULL)
+			prop_object_release(str);
 	}
 	
 	prop_object_release(cmd_array);
