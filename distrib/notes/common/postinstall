@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.62.2.3 2007/12/15 19:34:02 bouyer Exp $
+.\"	$NetBSD: postinstall,v 1.62.2.4 2008/09/22 17:53:51 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -389,15 +389,15 @@ A list of available packages suitable for browsing is at
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/README.html
 .It
 Precompiled binaries can be found at
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/
+.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/
 usually in the
-.Pa \*V/\*M/All
+.Pa \*M/\*V/All
 subdir.
 You can install them with the following commands under
 .Xr sh 1 :
 .Pp
 .Bd -unfilled
-.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
 .Ic # export PKG_PATH
 .Ic # pkg_add -v tcsh
 .Ic # pkg_add -v bash
@@ -413,14 +413,37 @@ If you are using
 then replace the first two lines with the following:
 .Pp
 .Bd -unfilled
-.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
 \&...
 .Ed
+.(Note
+Some mirror sites don't mirror
+.Pa /pub/pkgsrc
+directory.
+If you would like to use such mirrors, you could also try the
+.Pa /pub/NetBSD/packages/current-packages/NetBSD/\*M/\*V/All
+directory which may have the same contents.
+.Note)
 .Pp
 The above commands will install the Tenex-csh and Bourne Again shell,
 the Perl programming language, Apache web server, KDE desktop
 environment and the Firefox web browser 
 as well as all the packages they depend on.
+.(Note
+In some case the
+.Xr pkg_add 1
+command will complain about a version mismatch of packages with a message
+like the following:
+.Dl Warning: package `foo' was built for a different version of the OS:
+.Dl NetBSD/i386 M.N (pkg) vs. NetBSD/i386 \*V (this host) ,
+This warning would be harmless if the formal major release numbers are same
+between the pkg and your host.
+Please refer
+.Dq the NetBSD release glossary and graphs :
+.Lk http://www.NetBSD.org/releases/release-map.html
+for details of the release numbering scheme of
+.Nx .
+.Note)
 .It
 Package sources for compiling packages on your own can be obtained by
 retrieving the file
