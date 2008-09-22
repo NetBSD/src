@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2003/01/03 15:34:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.63.16.1 2008/09/22 18:14:43 bouyer Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -37,7 +37,7 @@ ${CRUNCHBIN}:	libhack.o
 .endif
 .include "${DISTRIBDIR}/common/Makefile.image"
 
-release:: check_RELEASEDIR .WAIT
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/${IMAGE_RELEASEDIR} ${IMAGE}.gz
+release:: check_RELEASEDIR .WAIT ${IMAGE}.gz
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/${IMAGE_RELEASEDIR} ${IMAGE}.gz
 
 .include <bsd.prog.mk>
