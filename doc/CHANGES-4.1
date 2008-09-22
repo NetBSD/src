@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.85 2008/09/18 18:27:02 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.86 2008/09/22 18:16:20 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2104,4 +2104,32 @@ libexec/ftpd/version.h				patch
 	Fix mostly derived from OpenBSD, written by
 	Moritz Jodeit <moritz@OpenBSD.org>
 	[lukem, ticket #1202]
+
+distrib/notes/common/main			1.417 - 1.420
+distrib/notes/common/postinstall		1.68, 1.69
+
+	Various update and fixes to developers lists.
+	Update URLs for packages PKG_PATH 
+	Add a note about a version mismatch warning of pkg_add(1) command.
+	[tsutsui, ticket #1203]
+
+distrib/hpcarm/Makefile				1.4 - 1.6
+distrib/hpcarm/instkernel/Makefile		1.1
+distrib/hpcarm/stand/Makefile			1.1 - 1.2
+distrib/hpcmips/Makefile			1.29 - 1.33
+distrib/hpcmips/instkernel/Makefile		1.1
+distrib/hpcmips/stand/Makefile			1.1 - 1.2
+distrib/hpcsh/Makefile				1.7 - 1.9
+distrib/hpcsh/instkernel/Makefile		1.1
+distrib/hpcsh/stand/Makefile			1.1 - 1.2
+distrib/miniroot/Makefile			1.65 - 1.66
+etc/etc.hpcarm/Makefile.inc			1.6 - 1.8
+etc/etc.hpcmips/Makefile.inc			1.9 - 1.10
+etc/etc.hpcsh/Makefile.inc			1.4 - 1.5
+
+	Fix the following problems:
+	- builds for hpcarm and hpcsh fail on build.sh -jN (even if N=1)
+	- hpcarm miniroot.fs.gz isn't installed into proper dir
+	- no cksum files in (some) miniroot dirs
+	[tsutsui, ticket #1204]
 
