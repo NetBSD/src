@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.9 2008/09/11 13:40:47 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.10 2008/09/22 09:11:38 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -86,6 +86,8 @@ dm_target_snapshot_init(struct dm_dev *dmv, void **target_config, char *params)
 
 	dmp_cow = NULL;
 
+	if (params == NULL)
+		return EINVAL;
 	/*
 	 * Parse a string, containing tokens delimited by white space,
 	 * into an argument vector
@@ -293,6 +295,9 @@ dm_target_snapshot_orig_init(struct dm_dev *dmv, void **target_config,
 {
 	struct target_snapshot_origin_config *tsoc;
 	struct dm_pdev *dmp_real;
+
+	if (params == NULL)
+		return EINVAL;
 	
 	printf("Snapshot origin target init function called!!\n");
 	printf("Parent device: %s\n", params);
