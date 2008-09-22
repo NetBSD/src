@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.36 2008/09/12 06:54:07 mrg Exp $
+# $NetBSD: md.macppc,v 1.37 2008/09/22 16:19:57 cube Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xmacppc					-unknown-	x11
@@ -449,6 +449,10 @@
 ./usr/X11R7/lib/modules/fonts/libtype1.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/fonts/libtype1_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/fonts/libtype1_pic.a		-unknown-	xorg
+./usr/X11R7/lib/modules/libexa.a			-unknown-	xorg
+./usr/X11R7/lib/modules/libexa.so			-unknown-	xorg
+./usr/X11R7/lib/modules/libexa.so.0			-unknown-	xorg
+./usr/X11R7/lib/modules/libexa_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.a				-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.so.0			-unknown-	xorg

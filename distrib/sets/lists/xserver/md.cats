@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.22 2008/09/02 21:51:09 lukem Exp $
+# $NetBSD: md.cats,v 1.23 2008/09/22 16:19:57 cube Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -471,6 +471,10 @@
 ./usr/X11R7/lib/modules/fonts/libtype1.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/fonts/libtype1_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/fonts/libtype1_pic.a		-unknown-	xorg
+./usr/X11R7/lib/modules/libexa.a			-unknown-	xorg
+./usr/X11R7/lib/modules/libexa.so			-unknown-	xorg
+./usr/X11R7/lib/modules/libexa.so.0			-unknown-	xorg
+./usr/X11R7/lib/modules/libexa_pic.a			-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.a				-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.so			-unknown-	xorg
 ./usr/X11R7/lib/modules/libfb.so.0			-unknown-	xorg
