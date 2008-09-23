@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.21 2008/06/24 10:14:41 gmcgarry Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.22 2008/09/23 22:22:41 christos Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.21 2008/06/24 10:14:41 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.22 2008/09/23 22:22:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1198,8 +1198,7 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 		if (error != 0)
 			goto out;
 
-		if (raidinfo->volumes)
-			nvols++;
+		nvols += raidinfo->volumes;
 	}
 
 	strlcpy(bi->bi_dev, device_xname(sc->sc_dev), sizeof(bi->bi_dev));
@@ -1378,12 +1377,17 @@ arc_bio_disk_filldata(struct arc_softc *sc, struct bioc_disk *bd,
 	char			serial[41];
 	char			rev[17];
 
+	/* Ignore bit zero for now, we don't know what it means */
+	diskinfo->device_state &= ~0x1;
+
 	switch (diskinfo->device_state) {
+	case ARC_FW_DISK_FAILED:
+		bd->bd_status = BIOC_SDFAILED;
+		break;
 	case ARC_FW_DISK_PASSTHRU:
 		bd->bd_status = BIOC_SDPASSTHRU;
 		break;
-	case ARC_FW_DISK_INITIALIZED:
-	case ARC_FW_DISK_RAIDMEMBER:
+	case ARC_FW_DISK_NORMAL:
 		bd->bd_status = BIOC_SDONLINE;
 		break;
 	case ARC_FW_DISK_HOTSPARE:
