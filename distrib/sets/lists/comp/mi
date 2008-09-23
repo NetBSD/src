@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1192 2008/09/16 17:52:53 pgoyette Exp $
+#	$NetBSD: mi,v 1.1193 2008/09/23 06:59:42 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2307,6 +2307,7 @@
 ./usr/lib/libgcc_p.a				comp-c-proflib		profile
 ./usr/lib/libgcc_s.a				comp-obsolete		obsolete
 ./usr/lib/libgcc_s_g.a		-unknown-	debuglib
+./usr/lib/libgcov.a				comp-c-lib
 ./usr/lib/libgnumalloc.a			comp-c-lib
 ./usr/lib/libgnumalloc_g.a		-unknown-	debuglib
 ./usr/lib/libgnumalloc_p.a			comp-c-proflib		profile
