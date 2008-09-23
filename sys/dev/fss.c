@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.58 2008/09/18 10:52:14 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.59 2008/09/23 07:56:59 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.58 2008/09/18 10:52:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.59 2008/09/23 07:56:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1219,3 +1219,58 @@ fss_bs_thread(void *arg)
 		biodone(bp);
 	}
 }
+
+#ifdef _MODULE
+
+#include <sys/module.h>
+
+MODULE(MODULE_CLASS_DRIVER, fss, NULL);
+CFDRIVER_DECL(fss, DV_DISK, NULL);
+
+static int
+fss_modcmd(modcmd_t cmd, void *arg)
+{
+	int bmajor = -1, cmajor = -1,  error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
+		error = config_cfdriver_attach(&fss_cd);
+		if (error) {
+			mutex_destroy(&fss_device_lock);
+			break;
+		}
+		error = config_cfattach_attach(fss_cd.cd_name, &fss_ca);
+		if (error) {
+			config_cfdriver_detach(&fss_cd);
+			mutex_destroy(&fss_device_lock);
+			break;
+		}
+		error = devsw_attach(fss_cd.cd_name,
+		    &fss_bdevsw, &bmajor, &fss_cdevsw, &cmajor);
+		if (error) {
+			config_cfattach_detach(fss_cd.cd_name, &fss_ca);
+			config_cfdriver_detach(&fss_cd);
+			mutex_destroy(&fss_device_lock);
+			break;
+		}
+		break;
+
+	case MODULE_CMD_FINI:
+		error = config_cfattach_detach(fss_cd.cd_name, &fss_ca);
+		if (error)
+			break;
+		config_cfdriver_detach(&fss_cd);
+		devsw_detach(&fss_bdevsw, &fss_cdevsw);
+		mutex_destroy(&fss_device_lock);
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return error;
+}
+
+#endif /* _MODULE */
