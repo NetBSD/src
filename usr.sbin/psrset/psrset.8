@@ -1,4 +1,4 @@
-.\"	$NetBSD: psrset.8,v 1.4 2008/06/23 06:52:43 wiz Exp $
+.\"	$NetBSD: psrset.8,v 1.5 2008/09/23 10:09:56 rmind Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,12 +24,12 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 22, 2008
+.Dd September 23, 2008
 .Dt PSRSET 8
 .Os
 .Sh NAME
 .Nm psrset
-.Nd control CPU sets
+.Nd control processor sets
 .Sh SYNOPSIS
 .Nm
 .Op Ar setid ...
@@ -54,16 +54,17 @@
 .Sh DESCRIPTION
 The
 .Nm
-command can used to control and inspect CPU sets.
+command can be used to control and inspect processor sets.
 .Pp
-The system always contains at least one CPU set: the default
+The system always contains at least one processor set: the default
 set.
-The default set must contain at least one online CPU at all times.
+The default set must contain at least one online processor (CPU) at
+all times.
 .Pp
 Available options:
 .Bl -tag -width indent
 .It Fl a
-Assign one or more CPUs to the set
+Assign one or more processors (CPUs) to the set
 .Ar setid .
 In the current implementation, a CPU may only be present in one set.
 CPU IDs are as reported and used by the
@@ -77,20 +78,20 @@ Bindings are inherited when new LWPs or processes are forked.
 However, setting a new binding on a parent process does not affect the
 bindings of its existing child processes.
 .It Fl c
-Create a new CPU set.
+Create a new processor set.
 If successful, the ID of the new set will be printed.
 If a list of CPU IDs is provided, those CPUs will be assigned to the set
 upon creation.
 Otherwise, the set will be created empty.
 .It Fl d
-Delete the CPU set specified by
+Delete the processor set specified by
 .Ar setid .
-Any LWPs bound to the set will be re-bound to the default CPU set.
+Any LWPs bound to the set will be re-bound to the default processor set.
 .It Fl e
-Execute a command within the CPU set specified by
+Execute a command within the processor set specified by
 .Ar setid .
 .It Fl i
-List all CPU sets.
+List all processor sets.
 For each set, print the member CPUs.
 If
 .Nm
@@ -99,14 +100,15 @@ is run without any options, it behaves as if
 were given.
 .It Fl p
 List all CPUs.
-For each CPU, print the associated CPU set.
+For each CPU, print the associated processor set.
 .It Fl r
-Remove a CPU from its current set, and return it back to the default CPU
-set.
+Remove a CPU from its current set, and return it back to the default
+processor set.
 .It Fl u
-Bind the specified processes to the system default CPU set.
+Bind the specified processes to the system default processor set.
 .El
 .Sh SEE ALSO
+.Xr pset 3 ,
 .Xr cpuctl 8 ,
 .Xr schedctl 8
 .Sh HISTORY
