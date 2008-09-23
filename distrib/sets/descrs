@@ -199,7 +199,7 @@ base-util_locale-sv	Swedish language support for standard utilities
 base-vfs-lkm loadable kernel modules for filesystems
 comp-c-bin	
 comp-c-bin	This package includes compilers and tools for the C programming language:
-comp-c-bin	c89, cc, gcc - C compilers
+comp-c-bin	c89, c99, cc, gcc - C compilers
 comp-c-bin	flex, lex - lexical analyzer generator
 comp-c-bin	lint - C program validator
 comp-c-bin	rpcgen - RPC stub generator
@@ -209,7 +209,7 @@ comp-c-catman
 comp-c-catman	
 comp-c-catman	
 comp-c-catman	
-comp-c-catman		c89, cc, gcc - C compilers
+comp-c-catman		c89, c99, cc, gcc - C compilers
 comp-c-catman		flex, lex - lexical analyzer generator
 comp-c-catman		lint - C program validator
 comp-c-catman		rpcgen - RPC stub generator
@@ -229,7 +229,7 @@ comp-c-man
 comp-c-man	
 comp-c-man	
 comp-c-man	
-comp-c-man		c89, cc, gcc - C compilers
+comp-c-man		c89, c99, cc, gcc - C compilers
 comp-c-man		flex, lex - lexical analyzer generator
 comp-c-man		lint - C program validator
 comp-c-man		rpcgen - RPC stub generator
