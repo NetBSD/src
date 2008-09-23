@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.123 2008/05/31 20:27:24 dyoung Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.124 2008/09/23 22:20:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.123 2008/05/31 20:27:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.124 2008/09/23 22:20:24 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -135,9 +135,6 @@ int	dumponpanic = DUMP_ON_PANIC;
 
 void (*v_putc)(int) = cnputc;	/* start with cnputc (normal cons) */
 void (*v_flush)(void) = cnflush;	/* start with cnflush (normal cons) */
-
-const char hexdigits[] = "0123456789abcdef";
-const char HEXDIGITS[] = "0123456789ABCDEF";
 
 
 /*
