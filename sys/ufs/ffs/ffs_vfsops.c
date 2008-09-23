@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.236 2008/09/21 23:22:00 freza Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.237 2008/09/23 15:27:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.236 2008/09/21 23:22:00 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.237 2008/09/23 15:27:59 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -299,8 +299,6 @@ ffs_mountroot(void)
 	return (0);
 }
 
-static int dolog;
-
 /*
  * VFS Operations.
  *
@@ -317,9 +315,6 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct fs *fs;
 	int error = 0, flags, update;
 	mode_t accessmode;
-
-	if (dolog)
-		mp->mnt_flag |= MNT_LOG;
 
 	if (*data_len < sizeof *args)
 		return EINVAL;
