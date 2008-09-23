@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2008/09/01 05:35:47 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2008/09/23 11:33:16 rtr Exp $
 
 SUBDIR=		xf86-input-keyboard xf86-input-void
 SUBDIR+=	xf86-input-mouse
@@ -12,7 +12,7 @@ SUBDIR+=	xf86-video-cirrus_alpine xf86-video-cirrus_laguna
 SUBDIR+=	xf86-video-cyrix xf86-video-glint xf86-video-i128
 SUBDIR+=	xf86-video-i740 xf86-video-imstt xf86-video-intel
 SUBDIR+=	xf86-video-mga xf86-video-neomagic xf86-video-nsc
-SUBDIR+=	xf86-video-nv
+SUBDIR+=	xf86-video-nv xf86-video-mach64
 #SUBDIR+=	xf86-video-radeonhd xf86-video-rendition
 SUBDIR+=	xf86-video-radeon
 SUBDIR+=	xf86-video-s3 xf86-video-s3virge xf86-video-savage
