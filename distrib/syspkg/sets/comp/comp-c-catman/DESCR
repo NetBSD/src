@@ -1,7 +1,7 @@
 This package includes formatted manual pages for compilers and tools for
 the C programming language:
 
-	c89, cc, gcc - C compilers
+	c89, c99, cc, gcc - C compilers
 
 	flex, lex - lexical analyzer generator
 
