@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1193 2008/09/23 06:59:42 skrll Exp $
+#	$NetBSD: mi,v 1.1194 2008/09/23 23:59:03 hubertf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11,6 +11,7 @@
 ./usr/bin/c++					comp-cxx-bin		gcccmds
 ./usr/bin/c++filt				comp-cxx-bin		bfd
 ./usr/bin/c89					comp-c-bin
+./usr/bin/c99					comp-c-bin
 ./usr/bin/cc					comp-c-bin		gcccmds
 ./usr/bin/config				comp-util-bin
 ./usr/bin/crunchgen				comp-c-bin
@@ -3694,6 +3695,7 @@
 ./usr/share/man/cat1/c++.0			comp-cxx-catman		gcccmds,.cat
 ./usr/share/man/cat1/c++filt.0			comp-cxx-catman		bfd,.cat
 ./usr/share/man/cat1/c89.0			comp-c-catman		.cat
+./usr/share/man/cat1/c99.0			comp-c-catman		.cat
 ./usr/share/man/cat1/cc.0			comp-c-catman		gcccmds,.cat
 ./usr/share/man/cat1/cccp.0			comp-util-catman	gcccmds,.cat
 ./usr/share/man/cat1/config.0			comp-util-catman	.cat
@@ -9090,6 +9092,7 @@
 ./usr/share/man/html1/c++.html			comp-cxx-htmlman	gcccmds,html
 ./usr/share/man/html1/c++filt.html		comp-cxx-htmlman	bfd,html
 ./usr/share/man/html1/c89.html			comp-c-htmlman		html
+./usr/share/man/html1/c99.html			comp-c-htmlman		html
 ./usr/share/man/html1/cc.html			comp-c-htmlman		gcccmds,html
 ./usr/share/man/html1/cccp.html			comp-util-htmlman	gcccmds,html
 ./usr/share/man/html1/config.html		comp-util-htmlman	html
@@ -14217,6 +14220,7 @@
 ./usr/share/man/man1/c++.1			comp-cxx-man		gcccmds,.man
 ./usr/share/man/man1/c++filt.1			comp-cxx-man		bfd,.man
 ./usr/share/man/man1/c89.1			comp-c-man		.man
+./usr/share/man/man1/c99.1			comp-c-man		.man
 ./usr/share/man/man1/cc.1			comp-c-man		gcccmds,.man
 ./usr/share/man/man1/cccp.1			comp-util-man		gcccmds,.man
 ./usr/share/man/man1/config.1			comp-util-man		.man

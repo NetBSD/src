@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1127 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1128 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1034,3 +1034,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[apb 20080920]
 	uvideo(4): Add bulk endpoint support found in some cameras (like
 		the one in the ASUS Eee PC). [jmcneill,mjf 20080921]
+	c99(1): Implement as wrapper for cc to run in C99 compatible mode.
+		[hubertf 20080924]
