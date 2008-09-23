@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.47 2008/05/25 16:00:52 chs Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.48 2008/09/23 13:58:59 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.47 2008/05/25 16:00:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.48 2008/09/23 13:58:59 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -305,6 +305,7 @@ cpu_probe_cache(void)
 	case IBM750FX:
 	case MPC601:
 	case MPC750:
+	case MPC7400:
 	case MPC7447A:
 	case MPC7448:
 	case MPC7450:
