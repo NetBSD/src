@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.220 2008/08/27 22:05:13 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.221 2008/09/23 21:30:11 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.220 2008/08/27 22:05:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.221 2008/09/23 21:30:11 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -149,6 +149,8 @@ static int ctx_alloc(struct pmap *);
 #ifdef MULTIPROCESSOR
 static void ctx_free(struct pmap *, struct cpu_info *);
 #define pmap_ctx(PM)	((PM)->pm_ctx[cpu_number()])
+
+static bool pmap_is_referenced_locked(struct vm_page *);
 
 /*
  * Check if any MMU has a non-zero context
@@ -2586,7 +2588,7 @@ pmap_clear_reference(pg)
 	mutex_enter(&pmap_lock);
 #ifdef DEBUG
 	DPRINTF(PDB_CHANGEPROT|PDB_REF, ("pmap_clear_reference(%p)\n", pg));
-	referenced = pmap_is_referenced(pg);
+	referenced = pmap_is_referenced_locked(pg);
 #endif
 	/* Clear all references */
 	pv = &pg->mdpage.mdpg_pvh;
@@ -2638,7 +2640,7 @@ pmap_clear_reference(pg)
 	dcache_flush_page(pa);
 	pv_check();
 #ifdef DEBUG
-	if (pmap_is_referenced(pg)) {
+	if (pmap_is_referenced_locked(pg)) {
 		pv = &pg->mdpage.mdpg_pvh;
 		printf("pmap_clear_reference(): %p still referenced "
 			"(pmap = %p, ctx = %d)\n", pg, pv->pv_pmap,
@@ -2666,12 +2668,14 @@ pmap_is_modified(pg)
 	struct vm_page *pg;
 {
 	pv_entry_t pv, npv;
-	int i = 0;
+	bool res = false;
+
+	KASSERT(!mutex_owned(&pmap_lock));
 
 	/* Check if any mapping has been modified */
 	pv = &pg->mdpage.mdpg_pvh;
 	if (pv->pv_va & PV_MOD)
-		i = 1;
+		res = true;
 #ifdef HWREF
 #ifdef DEBUG
 	if (pv->pv_next && !pv->pv_pmap) {
@@ -2679,46 +2683,55 @@ pmap_is_modified(pg)
 		Debugger();
 	}
 #endif
-	if (!i && pv->pv_pmap != NULL)
-		for (npv = pv; i == 0 && npv && npv->pv_pmap;
+	if (!res && pv->pv_pmap != NULL) {
+		mutex_enter(&pmap_lock);
+		for (npv = pv; !res && npv && npv->pv_pmap;
 		     npv = npv->pv_next) {
 			int64_t data;
 
 			data = pseg_get(npv->pv_pmap, npv->pv_va & PV_VAMASK);
 			KASSERT(data & TLB_V);
 			if (data & TLB_MODIFY)
-				i = 1;
+				res = true;
 
 			/* Migrate modify info to head pv */
 			if (npv->pv_va & PV_MOD)
-				i = 1;
+				res = true;
 			npv->pv_va &= ~PV_MOD;
 		}
-	/* Save modify info */
-	if (i)
-		pv->pv_va |= PV_MOD;
+		/* Save modify info */
+		if (res)
+			pv->pv_va |= PV_MOD;
 #ifdef DEBUG
-	if (i)
-		pv->pv_va |= PV_WE;
+		if (res)
+			pv->pv_va |= PV_WE;
 #endif
 #endif
+		mutex_exit(&pmap_lock);
+	}
 
-	DPRINTF(PDB_CHANGEPROT|PDB_REF, ("pmap_is_modified(%p) = %d\n", pg, i));
+	DPRINTF(PDB_CHANGEPROT|PDB_REF, ("pmap_is_modified(%p) = %d\n", pg,
+	    res));
 	pv_check();
-	return (i);
+	return res;
 }
 
-bool
-pmap_is_referenced(pg)
-	struct vm_page *pg;
+/*
+ * Variant of pmap_is_reference() where caller already holds pmap_lock
+ */
+static bool
+pmap_is_referenced_locked(struct vm_page *pg)
 {
 	pv_entry_t pv, npv;
-	int i = 0;
+	bool res = false;
+
+	KASSERT(mutex_owned(&pmap_lock));
 
 	/* Check if any mapping has been referenced */
 	pv = &pg->mdpage.mdpg_pvh;
 	if (pv->pv_va & PV_REF)
-		i = 1;
+		return true;
+
 #ifdef HWREF
 #ifdef DEBUG
 	if (pv->pv_next && !pv->pv_pmap) {
@@ -2726,29 +2739,64 @@ pmap_is_referenced(pg)
 		Debugger();
 	}
 #endif
-	if (!i && (pv->pv_pmap != NULL))
-		for (npv = pv; npv; npv = npv->pv_next) {
-			int64_t data;
+	if (pv->pv_pmap == NULL)
+		return false;
 
-			data = pseg_get(npv->pv_pmap, npv->pv_va & PV_VAMASK);
-			KASSERT(data & TLB_V);
-			if (data & TLB_ACCESS)
-				i = 1;
+	for (npv = pv; npv; npv = npv->pv_next) {
+		int64_t data;
 
-			/* Migrate ref info to head pv */
-			if (npv->pv_va & PV_REF)
-				i = 1;
-			npv->pv_va &= ~PV_REF;
-		}
+		data = pseg_get(npv->pv_pmap, npv->pv_va & PV_VAMASK);
+		KASSERT(data & TLB_V);
+		if (data & TLB_ACCESS)
+			res = true;
+
+		/* Migrate ref info to head pv */
+		if (npv->pv_va & PV_REF)
+			res = true;
+		npv->pv_va &= ~PV_REF;
+	}
 	/* Save ref info */
-	if (i)
+	if (res)
 		pv->pv_va |= PV_REF;
 #endif
 
 	DPRINTF(PDB_CHANGEPROT|PDB_REF,
-		("pmap_is_referenced(%p) = %d\n", pg, i));
+		("pmap_is_referenced(%p) = %d\n", pg, res));
 	pv_check();
-	return i;
+	return res;
+}
+
+bool
+pmap_is_referenced(struct vm_page *pg)
+{
+	pv_entry_t pv;
+	bool res = false;
+
+	KASSERT(!mutex_owned(&pmap_lock));
+
+	/* Check if any mapping has been referenced */
+	pv = &pg->mdpage.mdpg_pvh;
+	if (pv->pv_va & PV_REF)
+		return true;
+
+#ifdef HWREF
+#ifdef DEBUG
+	if (pv->pv_next && !pv->pv_pmap) {
+		printf("pmap_is_referenced: npv but no pmap for pv %p\n", pv);
+		Debugger();
+	}
+#endif
+	if (pv->pv_pmap != NULL) {
+		mutex_enter(&pmap_lock);
+		res = pmap_is_referenced_locked(pg);
+		mutex_exit(&pmap_lock);
+	}
+#endif
+
+	DPRINTF(PDB_CHANGEPROT|PDB_REF,
+		("pmap_is_referenced(%p) = %d\n", pg, res));
+	pv_check();
+	return res;
 }
 
 
