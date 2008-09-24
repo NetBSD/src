@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.66 2008/09/10 11:16:41 joerg Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.67 2008/09/24 07:36:52 apb Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1483,19 +1483,17 @@ In normal use, exactly one of the
 or
 .Fl O
 options should be specified.
-If the source directory is
-.Pa /usr/src
-and neither
+If neither
 .Fl M
 nor
 .Fl O
 is specified, then a default object directory will be chosen
 according to rules in
-.Aq bsd.obj.mk ;
-this default is usually either
-.Pa /usr/obj
-or
-.Pa /usr/obj. Ns Sy MACHINE .
+.Aq bsd.obj.mk .
+Relying on this default is not recommended because
+it is determined by complex rules that are influenced
+by the values of several variables and
+by the location of the source directory.
 .It Fl o
 Set the value of
 .Sy MKOBJDIRS
@@ -1643,13 +1641,13 @@ or called with an absolute path.
 .Bl -enum
 .
 .It
-.Li "% ./build.sh tools kernel=GENERIC"
+.Li "% ./build.sh [options] tools kernel=GENERIC"
 .Pp
 Build a new toolchain, and use the new toolchain to
 configure and build a new GENERIC kernel.
 .
 .It
-.Li "% ./build.sh -U distribution"
+.Li "% ./build.sh [options] -U distribution"
 .Pp
 Using unprivileged mode,
 build a complete distribution to a
@@ -1659,7 +1657,7 @@ directory that
 selects (and will display).
 .
 .It
-.Li "# ./build.sh -U install=/"
+.Li "# ./build.sh [options] -U install=/"
 .Pp
 As root, install to
 .Pa /
@@ -1673,7 +1671,7 @@ are correctly applied to the files as they're copied to
 .Pa / .
 .
 .It
-.Li "% ./build.sh -U -u release"
+.Li "% ./build.sh [options] -U -u release"
 .Pp
 Using unprivileged mode,
 build a complete release to
