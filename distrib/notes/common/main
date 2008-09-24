@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.320.2.10.2.3 2008/09/22 17:54:42 bouyer Exp $
+.\"	$NetBSD: main,v 1.320.2.10.2.4 2008/09/24 17:31:12 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd December 15, 2007
+.Dd September 24, 2008
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -461,11 +461,206 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
+.Ss Changes Between The NetBSD 4.0 release and 4.0.1 update
+.Pp
+The 
+.Nx
+4.0.1
+update is the first security/critical update of the
+.Nx
+4.0
+release branch.
+This represents a selected subset of fixes deemed 
+critical in nature for stability or security reasons.
+.Pp
+These fixes will also appear in future releases (NetBSD 4.1),
+together with other less-critical fixes and feature enhancements.
+.Pp
+.
+The complete list of changes can be found in the
+CHANGES-4.0.1:
+.Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-4.0.1/CHANGES-4.0.1
+file in the top level directory of the
+.Nx
+4.0.1 release tree.
+.Pp
+.
+.Ss2 Security Advisories Fixes
+.(bullet
+NetBSD-SA2008-004,
+.Xr bzip2 1
+Multiple issues (CVE-2008-1372 and CVE-2005-0953),
+has been fixed by upgrading bzip2 to 1.0.5.
+.It
+NetBSD-SA2008-005,
+OpenSSH Multiple issues (CVE-2008-1483 and CVE-2008-1657),
+has been fixed by applying patches from upstream.
+.It
+NetBSD-SA2008-006,
+Integer overflow in
+.Xr strfmon 3
+function (CVE-2008-1391),
+has been fixed.
+.It
+NetBSD-SA2008-008,
+OpenSSL Montgomery multiplication (CVE-2007-3108),
+has been fixed.
+.It
+NetBSD-SA2008-009,
+BIND cache poisoning (CVE-2008-1447 and CERT VU#800113),
+has been fixed by updating BIND to 9.4.2-P2.
+Note there are two related changes to this advisory:
+.(bullet
+The default behavior of ipfilter's Port Address Translation has been
+changed to using random port allocation rather than sequential mappings,
+to avoid decreasing the randomness of source ports used for DNS queries
+which affects the BIND cache poisoning problem.
+.It
+A
+.Sq Li query-source
+statement, which could allow the BIND cache poisoning attack,
+has been commented out in the default
+.Xr named.conf 5
+file.
+.bullet)
+.It
+NetBSD-SA2008-010,
+Malicious PPPoE discovery packet can overrun a kernel buffer (CVE-2008-3584),
+has been fixed.
+.It
+NetBSD-SA2008-011,
+ICMPv6 MLD query (CVE-2008-2464), has been fixed.
+.It
+NetBSD-SA2008-012,
+Denial of Service issues in
+.Xr racoon 8
+(CVE-2008-3652), has been fixed by upgrading ipsec-tools to release 0.7.1.
+Note this also fixes CVE-2008-3651.
+.bullet)
+.(Note
+NetBSD-SA2008-007 and advisories prior to NetBSD-SA2008-004 don't affect
+.Nx 
+4.0.
+.Note)
+.
+.Ss2 Other Security Fixes
+.(bullet
+Fix a buffer overrun which could crash a FAST_IPSEC kernel.
+.It
+.Xr tcpdump 8 :
+Fix CVE-2007-1218, CVE-2007-3798 and CAN-2005-1278 in base-tcpdump.
+.It
+Fix a buffer overflow of PCF font parser in X11 libXfont library
+(CVE-2008-0006).
+.It
+Fix a buffer overflow of Tektronix Hex Format support in binutils
+(CVE-2006-2362).
+.It
+.Xr machfb 4 ,
+.Xr voodoofb 4 :
+Introduce two missing KAUTH_GENERIC_ISSUSER check in the
+.Xr mmap 2
+code.
+.bullet)
+.
+.Ss2 Networking
+.(bullet
+Update root.cache to 2008020400 version.
+.It
+Fix IP packet forwording code to make sure to send a reasonable fragment size
+when IPSEC is configured.
+.It
+Fix a bug in TCP SACK code which causes data corruption.
+.It
+Fix an
+.Xr rc.d 8
+script for
+.Xr amd 8
+not to shutdown gracefully since it seems to cause problems for more people
+than the old (also broken) behavior.
+.bullet)
+.
+.Ss2 Libraries
+.(bullet
+Pthread support of BIND has been disabled for future binary compatibility
+after removal of the scheduler activations.
+.It
+Fix coredump of gdtoa
+.Pq conversion between binary floating-point and ASCII string
+functions on out of memory conditions.
+.bullet)
+.
+.Ss2 Drivers
+.(bullet
+.Xr fxp 4 :
+Fix random pool corruption and hangup problems.
+.It
+.Xr wd 4 :
+Handle more LBA48 bug quirks on some Hitachi's SATA/IDE drives.
+.bullet)
+.
+.Ss2 Miscellaneous
+.(bullet
+Disable a NULL pointer check in zlib for standalone programs.
+This fixes errors on loading a gzipped kernel (including installation kernels)
+on several ports (news68k etc.) whose kernels are loaded at address zero.
+.It
+.Xr awk 1 :
+Bring back an accidentally removed fix to allow escape of a newline
+in string literals.
+.It
+.Xr gcc 1 :
+.(bullet
+Fix compilation of native sh3 gcc on 64-bit build machines.
+.It
+Fix an internal compiler error on compiling m68k softfloat or
+m68010 targets on 64-bit build machines.
+.bullet)
+.It
+.Xr zgrep 1 :
+Make
+.Sq Fl h
+option
+.Pq suppress filenames on output when multiple files are searched
+actually work.
+.It
+Fix parallel build failure on building hpcarm, hpcarm and hpcsh releases.
+.bullet)
+.
+.Ss2 Platforms specific
+.(bullet
+acorn32: Fix a bootloader problem on some RiscPCs.
+.It
+cobalt:
+.(bullet
+Add a workaround to avoid panic on probing a multi function PCI device
+on Qube's PCI slot.
+.It
+Fix a bug in the interrupt handler which causes network freeze
+if more than one interfaces are used.
+.bullet)
+.It
+hp700: Fix potential kernel / userland memory corruption in
+.Xr copyinstr 9
+and
+.Xr copyoutstr 9 .
+.It
+sparc64: Fix a bug in
+.Pa locore.s
+which causes unexpected behavior.
+.It
+sun3: Fix a bug which might cause an occasional panic during boot.
+.It
+vax: Make syscall handler use proper
+.Xr copyin 9
+function on parsing syscall args.
+.bullet)
+.
 .Ss Changes Between The NetBSD 3.0 and 4.0 Releases
 .Pp
 The
 .Nx
-\*V release
+4.0 release
 provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
 new and updated kernel subsystems, and many user-land enhancements.
@@ -475,7 +670,7 @@ production use that rivals most commercially available systems.
 It is impossible to completely summarize more than a year of development that
 went into the
 .Nx
-\*V release.
+4.0 release.
 .\" {BEGIN from htdocs/releases/formal-4/NetBSD-4.0.xml#major-changes
 The complete list of changes can be found in the
 CHANGES:
@@ -1126,6 +1321,10 @@ Changes between
 Changes since
 .Nx
 4.0 was branched.
+.It Li CHANGES-4.0.1
+Changes between
+.Nx
+4.0 and 4.0.1.
 .It Li CHANGES.prev
 Changes in earlier
 .Nx
@@ -1467,7 +1666,7 @@ needs to be updated.
 .It
 A number of things have been removed from the
 .Nx
-\*V release
+4.0 release
 including: the evbsh5 port, the Fortran 77 compiler (g77), NETCCITT,
 NETNS, Sendmail, Sushi, UUCP, and Vinum.  If you were using any of these,
 then please see the "Components removed from NetBSD" section near the
