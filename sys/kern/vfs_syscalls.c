@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.372 2008/09/24 09:44:09 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.373 2008/09/24 10:07:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.372 2008/09/24 09:44:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.373 2008/09/24 10:07:19 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -171,9 +171,11 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	/*
 	 * We only allow the filesystem to be reloaded if it
-	 * is currently mounted read-only.
+	 * is currently mounted read-only.  Additionally, we
+	 * prevent read-write to read-only downgrades.
 	 */
-	if (flags & MNT_RELOAD && !(mp->mnt_flag & MNT_RDONLY)) {
+	if ((flags & (MNT_RELOAD | MNT_RDONLY)) != 0 &&
+	    (mp->mnt_flag & MNT_RDONLY) == 0) {
 		error = EOPNOTSUPP;	/* Needs translation */
 		goto out;
 	}
