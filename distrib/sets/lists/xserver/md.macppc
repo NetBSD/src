@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.37 2008/09/22 16:19:57 cube Exp $
+# $NetBSD: md.macppc,v 1.38 2008/09/24 10:11:29 rtr Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xmacppc					-unknown-	x11
@@ -308,12 +308,14 @@
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xnest					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
-#./usr/X11R7/bin/Xmacppc	-unknown-	xorg
 ./usr/X11R7/bin/dga					-unknown-	xorg
 ./usr/X11R7/bin/gtf					-unknown-	xorg
 ./usr/X11R7/bin/pcitweak				-unknown-	xorg
 ./usr/X11R7/bin/scanpci					-unknown-	xorg
 ./usr/X11R7/bin/xorgconfig				-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	xorg
+./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ark_drv.so		-unknown-	xorg
@@ -518,25 +520,6 @@
 ./usr/X11R7/lib/modules/libxf8_32bpp.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/libxf8_32bpp_g.a		-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/libxf8_32bpp_pic.a		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libdbe.a		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libextmod.a		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/librecord.a		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libxtrap.a		-unknown-	xorg
-./usr/X11R7/lib/modules/fonts/libfreetype.a		-unknown-	xorg
-./usr/X11R7/lib/modules/fonts/libtype1.a		-unknown-	xorg
-./usr/X11R7/lib/modules/libfb.a				-unknown-	xorg
-./usr/X11R7/lib/modules/libi2c.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libint10.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libpcidata.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libscanpci.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libshadowfb.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libvbe.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libvgahw.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libxaa.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libxf1bpp.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libxf4bpp.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libxf8_16bpp.a			-unknown-	xorg
-./usr/X11R7/lib/modules/libxf8_32bpp.a			-unknown-	xorg
 ./usr/X11R7/man/cat1/Xorg.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/dga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				-unknown-	.cat,xorg
@@ -548,6 +531,7 @@
 ./usr/X11R7/man/cat4/chips.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/cirrus.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/cyrix.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/exa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/i128.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/i740.0				-unknown-	.cat,xorg
@@ -583,6 +567,7 @@
 ./usr/X11R7/man/html4/chips.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/cirrus.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/cyrix.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/i128.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/i740.html				-unknown-	html,xorg
@@ -618,6 +603,7 @@
 ./usr/X11R7/man/man4/chips.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/cirrus.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/cyrix.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/i128.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/i740.4				-unknown-	.man,xorg
@@ -642,6 +628,3 @@
 ./usr/X11R7/man/man4/via.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/vmware.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
-./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
-./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	xorg
-./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
