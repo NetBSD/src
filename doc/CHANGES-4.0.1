@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.49 2008/09/24 17:31:29 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.50 2008/09/24 18:16:39 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -213,18 +213,18 @@ sys/netinet/tcp_subr.c				1.225 via patch
 	stream, making it appear as corrupted.
 	[cube, ticket #1109]
 
-src/crypto/dist/ssh/channels.c			1.38 via patch
-src/crypto/dist/ssh/session.c			1.45 via patch
-src/crypto/dist/ssh/sshd_config.5		1.14 via patch
+crypto/dist/ssh/channels.c			1.38 via patch
+crypto/dist/ssh/session.c			1.45 via patch
+crypto/dist/ssh/sshd_config.5			1.14 via patch
 	Fix two vulnerabilities in OpenSSH:
 	- X11 forwarding information disclosure (CVE-2008-1483)
 	- ForceCommand bypass vulnerability
 	[adrianp, ticket #1113]
 
-src/crypto/dist/ssh/auth-options.c		1.8 via patch
-src/crypto/dist/ssh/auth-options.h		1.4 via patch
-src/crypto/dist/ssh/session.c			1.46 via patch
-src/crypto/dist/ssh/sshd.8			1.39 via patch
+crypto/dist/ssh/auth-options.c			1.8 via patch
+crypto/dist/ssh/auth-options.h			1.4 via patch
+crypto/dist/ssh/session.c			1.46 via patch
+crypto/dist/ssh/sshd.8				1.39 via patch
 	Add no-user-rc option which disables execution of ~/.ssh/rc
 	(backport from OpenSSH 4.9)
 	[adrianp, ticket #1114]
@@ -236,47 +236,47 @@ lib/libc/stdlib/strfmon.c			1.6
 	an integer overflow.
 	[mjf, ticket #1115]
 
-src/lib/libc/gdtoa/dmisc.c		1.4
-src/lib/libc/gdtoa/gdtoa.c		1.4
-src/lib/libc/gdtoa/gethex.c		1.4
-src/lib/libc/gdtoa/misc.c		1.4
-src/lib/libc/gdtoa/strtof_vaxf.c	1.4-1.5
-src/lib/libc/gdtoa/strtopQ.c		1.4
-src/lib/libc/gdtoa/strtopx.c		1.4
-src/lib/libc/gdtoa/strtopxL.c		1.4
-src/lib/libc/gdtoa/strtord.c		1.4
-src/lib/libc/gdtoa/dtoa.c		1.5
-src/lib/libc/gdtoa/strtod.c		1.5
-src/lib/libc/gdtoa/g_Qfmt.c		1.3
-src/lib/libc/gdtoa/g_xLfmt.c		1.3
-src/lib/libc/gdtoa/g_xfmt.c		1.3
-src/lib/libc/gdtoa/smisc.c		1.3
-src/lib/libc/gdtoa/strtof.c		1.3
-src/lib/libc/gdtoa/strtorQ.c		1.3
-src/lib/libc/gdtoa/strtorx.c		1.3
-src/lib/libc/gdtoa/strtorxL.c		1.3
-src/lib/libc/gdtoa/g_ddfmt.c		1.2
-src/lib/libc/gdtoa/g_dfmt.c		1.2
-src/lib/libc/gdtoa/g_ffmt.c		1.2
-src/lib/libc/gdtoa/strtoIQ.c		1.2
-src/lib/libc/gdtoa/strtoId.c		1.2
-src/lib/libc/gdtoa/strtoIdd.c		1.2
-src/lib/libc/gdtoa/strtoIf.c		1.2
-src/lib/libc/gdtoa/strtoIg.c		1.2
-src/lib/libc/gdtoa/strtoIx.c		1.2
-src/lib/libc/gdtoa/strtoIxL.c		1.2
-src/lib/libc/gdtoa/strtodI.c		1.2
-src/lib/libc/gdtoa/strtodnrp.c	1.2
-src/lib/libc/gdtoa/strtopd.c		1.2
-src/lib/libc/gdtoa/strtopdd.c		1.2
-src/lib/libc/gdtoa/strtopf.c		1.2
-src/lib/libc/gdtoa/strtordd.c		1.2
-src/lib/libc/gdtoa/strtorf.c		1.2
-src/lib/libc/gdtoa/sum.c		1.2
-src/lib/libc/gdtoa/gdtoa.h		1.8
-src/lib/libc/gdtoa/hdtoa.c		1.6
-src/lib/libc/gdtoa/strtodg.c		1.6
-src/lib/libc/stdio/vfwprintf.c	1.12
+lib/libc/gdtoa/dmisc.c			1.4
+lib/libc/gdtoa/gdtoa.c			1.4
+lib/libc/gdtoa/gethex.c			1.4
+lib/libc/gdtoa/misc.c			1.4
+lib/libc/gdtoa/strtof_vaxf.c		1.4-1.5
+lib/libc/gdtoa/strtopQ.c		1.4
+lib/libc/gdtoa/strtopx.c		1.4
+lib/libc/gdtoa/strtopxL.c		1.4
+lib/libc/gdtoa/strtord.c		1.4
+lib/libc/gdtoa/dtoa.c			1.5
+lib/libc/gdtoa/strtod.c			1.5
+lib/libc/gdtoa/g_Qfmt.c			1.3
+lib/libc/gdtoa/g_xLfmt.c		1.3
+lib/libc/gdtoa/g_xfmt.c			1.3
+lib/libc/gdtoa/smisc.c			1.3
+lib/libc/gdtoa/strtof.c			1.3
+lib/libc/gdtoa/strtorQ.c		1.3
+lib/libc/gdtoa/strtorx.c		1.3
+lib/libc/gdtoa/strtorxL.c		1.3
+lib/libc/gdtoa/g_ddfmt.c		1.2
+lib/libc/gdtoa/g_dfmt.c			1.2
+lib/libc/gdtoa/g_ffmt.c			1.2
+lib/libc/gdtoa/strtoIQ.c		1.2
+lib/libc/gdtoa/strtoId.c		1.2
+lib/libc/gdtoa/strtoIdd.c		1.2
+lib/libc/gdtoa/strtoIf.c		1.2
+lib/libc/gdtoa/strtoIg.c		1.2
+lib/libc/gdtoa/strtoIx.c		1.2
+lib/libc/gdtoa/strtoIxL.c		1.2
+lib/libc/gdtoa/strtodI.c		1.2
+lib/libc/gdtoa/strtodnrp.c		1.2
+lib/libc/gdtoa/strtopd.c		1.2
+lib/libc/gdtoa/strtopdd.c		1.2
+lib/libc/gdtoa/strtopf.c		1.2
+lib/libc/gdtoa/strtordd.c		1.2
+lib/libc/gdtoa/strtorf.c		1.2
+lib/libc/gdtoa/sum.c			1.2
+lib/libc/gdtoa/gdtoa.h			1.8
+lib/libc/gdtoa/hdtoa.c			1.6
+lib/libc/gdtoa/strtodg.c		1.6
+lib/libc/stdio/vfwprintf.c		1.12
 
 	Don't coredump on out of memory conditions. This solution leaks,
 	but gdtoa is too complicated to fix.
@@ -292,9 +292,9 @@ crypto/dist/openssl/crypto/bn/bn_mont.c		1.2
 	a side-channel attack and retrieve RSA private keys.
 	[adrianp, ticket #1123]
 
-src/dist/tcpdump/print-802_11.c			patch
-src/dist/tcpdump/print-bgp.c			patch
-src/dist/tcpdump/print-isoclns.c		patch
+dist/tcpdump/print-802_11.c			patch
+dist/tcpdump/print-bgp.c			patch
+dist/tcpdump/print-isoclns.c			patch
 
 	Fix CVE-2007-1218, CVE-2007-3798 and CAN-2005-1278 in base-tcpdump.
 	[tonnerre, ticket #1124]
@@ -328,7 +328,7 @@ gnu/dist/gcc4/gcc/hwint.h			1.2
 	PR#34549.
 	[uwe, ticket #1139]
 
-src/gnu/dist/binutils/bfd/tekhex.c		1.2
+gnu/dist/binutils/bfd/tekhex.c			1.2
 
 	Fix for PR #33551 (a.k.a CVE-2006-2362)
 	Back port from the binutils CVS tree.
@@ -881,4 +881,19 @@ distrib/notes/common/postinstall        	patch
 	Add a "Changes Between The NetBSD 4.0 release and 4.0.1 update" section
 	Various others minor adjustements for 4.0.1
 	[tsutsui, ticket #1206]
+
+common/lib/libprop/prop_array.3			1.5
+common/lib/libprop/prop_bool.3			1.3
+common/lib/libprop/prop_data.3			1.4
+common/lib/libprop/prop_dictionary.3		1.8
+common/lib/libprop/prop_dictionary_util.3	1.2
+common/lib/libprop/prop_ingest.3		1.3
+common/lib/libprop/prop_number.3		1.7
+common/lib/libprop/prop_object.3		1.6
+common/lib/libprop/prop_string.3		1.4 
+	boolean_t -> bool
+	TRUE -> true
+	FALSE -> false
+	Completes processing of ticket 904, fixes PR lib/38013.
+	[joerg, ticket #904]
 
