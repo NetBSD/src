@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.86 2008/09/22 18:16:20 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.87 2008/09/24 17:25:49 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2132,4 +2132,13 @@ etc/etc.hpcsh/Makefile.inc			1.4 - 1.5
 	- hpcarm miniroot.fs.gz isn't installed into proper dir
 	- no cksum files in (some) miniroot dirs
 	[tsutsui, ticket #1204]
+
+sys/dev/pci/arcmsr.c				1.22
+sys/dev/pci/arcmsrvar.h				1.13
+
+	PR/39583: Brad du Plessis: acrmsr(4) driver doesn't report number of
+	volumes correctly to bioctl(8)
+	PR/39584: Juan RP: arcmsr(4) driver disk state values are incorrect
+	(for ARC-1220)
+	[christos, ticket #1205]
 
