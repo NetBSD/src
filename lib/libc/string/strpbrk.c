@@ -1,4 +1,4 @@
-/*	$NetBSD: strpbrk.c,v 1.18 2008/09/24 16:24:30 christos Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.19 2008/09/24 16:58:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpbrk.c,v 1.18 2008/09/24 16:24:30 christos Exp $");
+__RCSID("$NetBSD: strpbrk.c,v 1.19 2008/09/24 16:58:53 christos Exp $");
 
 #include <assert.h>
 #include <inttypes.h>
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: strpbrk.c,v 1.18 2008/09/24 16:24:30 christos Exp $");
 #ifdef FAST_STRPBRK
 #define ADD_NEW_TO_SET(i) (set[inv[i] = idx++] = (i))
 #define IS_IN_SET(i) (inv[i] < idx && set[inv[i]] == (i))
-#define ADD_TO_SET(i) (void)(IS_IN_SET(i) || ADD_NEW_TO_SET(i))
+#define ADD_TO_SET(i) (void)(IS_IN_SET(i) || /*LINTED no effect*/ADD_NEW_TO_SET(i))
 #else
 #define IS_IN_SET(i) (set[(i) >> 3] & idx[(i) & 7])
 #define ADD_TO_SET(i) (void)(set[(i) >> 3] |= idx[(i) & 7])
