@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.371 2008/09/17 14:49:25 hannken Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.372 2008/09/24 09:44:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.371 2008/09/17 14:49:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.372 2008/09/24 09:44:09 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -395,10 +395,8 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	vfs_unbusy(mp, true, NULL);
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	error = VFS_START(mp, 0);
-	if (error) {
+	if (error)
 		vrele(vp);
-		vfs_destroy(mp);
-	}
 	/* Drop reference held for VFS_START(). */
 	vfs_destroy(mp);
 	*vpp = NULL;
