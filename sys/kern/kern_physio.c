@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.87 2008/02/15 13:46:04 ad Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.88 2008/09/24 08:19:19 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.87 2008/02/15 13:46:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.88 2008/09/24 08:19:19 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,12 +91,6 @@ struct workqueue *physio_workqueue;
  *	Leffler, et al.: The Design and Implementation of the 4.3BSD
  *	    UNIX Operating System (Addison Welley, 1989)
  * on pages 231-233.
- *
- * The routines "getphysbuf" and "putphysbuf" steal and return a swap
- * buffer.  Leffler, et al., says that swap buffers are used to do the
- * I/O, so raw I/O requests don't have to be single-threaded.  Of course,
- * NetBSD doesn't use "swap buffers" -- we have our own memory pool for
- * buffer descriptors.
  */
 
 /* #define	PHYSIO_DEBUG */
@@ -111,42 +105,10 @@ struct physio_stat {
 	int ps_error;
 	int ps_failed;
 	off_t ps_endoffset;
+	buf_t *ps_orig_bp;
 	kmutex_t ps_lock;
 	kcondvar_t ps_cv;
 };
-
-/* abuse these flags of struct buf */
-#define	BC_DONTFREE	BC_AGE
-
-/*
- * allocate a buffer structure for use in physical I/O.
- */
-static struct buf *
-getphysbuf(void)
-{
-	struct buf *bp;
-
-	bp = getiobuf(NULL, true);
-	bp->b_error = 0;
-	bp->b_cflags = BC_BUSY;
-	return(bp);
-}
-
-/*
- * get rid of a swap buffer structure which has been used in physical I/O.
- */
-static void
-putphysbuf(struct buf *bp)
-{
-
-	if ((bp->b_cflags & BC_DONTFREE) != 0) {
-		return;
-	}
-
-	if (__predict_false(bp->b_cflags & BC_WANTED))
-		panic("putphysbuf: private buf BC_WANTED");
-	putiobuf(bp);
-}
 
 static void
 physio_done(struct work *wk, void *dummy)
@@ -201,7 +163,8 @@ physio_done(struct work *wk, void *dummy)
 	cv_signal(&ps->ps_cv);
 	mutex_exit(&ps->ps_lock);
 
-	putphysbuf(bp);
+	if (bp != ps->ps_orig_bp)
+		putiobuf(bp);
 }
 
 static void
@@ -277,6 +240,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	/* ps->ps_running = 0; */
 	/* ps->ps_error = 0; */
 	/* ps->ps_failed = 0; */
+	ps->ps_orig_bp = obp;
 	ps->ps_endoffset = -1;
 	mutex_init(&ps->ps_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&ps->ps_cv, "physio");
@@ -285,10 +249,9 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	if (obp != NULL) {
 		/* [raise the processor priority level to splbio;] */
 		mutex_enter(&bufcache_lock);
+		/* Mark it busy, so nobody else will use it. */
 		while (bbusy(obp, false, 0, NULL) == EPASSTHROUGH)
 			;
-		/* Mark it busy, so nobody else will use it. */
-		obp->b_cflags |= BC_DONTFREE;
 		mutex_exit(&bufcache_lock);
 		concurrency = 0; /* see "XXXkludge" comment below */
 	}
@@ -316,7 +279,8 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 				 */
 				bp = obp;
 			} else {
-				bp = getphysbuf();
+				bp = getiobuf(NULL, true);
+				bp->b_cflags = BC_BUSY;
 			}
 			bp->b_dev = dev;
 			bp->b_proc = p;
@@ -330,7 +294,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			 * to the "busy" and read/write flag.)
 			 */
 			bp->b_oflags = 0;
-			bp->b_cflags = (bp->b_cflags & BC_DONTFREE) | BC_BUSY;
+			bp->b_cflags = BC_BUSY;
 			bp->b_flags = flags | B_PHYS | B_RAW;
 			bp->b_iodone = physio_biodone;
 
@@ -413,8 +377,8 @@ done_locked:
 	} else {
 		KASSERT(ps->ps_endoffset == -1);
 	}
-	if (bp != NULL) {
-		putphysbuf(bp);
+	if (bp != NULL && bp != obp) {
+		putiobuf(bp);
 	}
 	if (error == 0) {
 		error = ps->ps_error;
@@ -430,14 +394,13 @@ done_locked:
 	 */
 	if (obp != NULL) {
 		KASSERT((obp->b_cflags & BC_BUSY) != 0);
-		KASSERT((obp->b_cflags & BC_DONTFREE) != 0);
 
 		/*
 		 * [if another process is waiting for the raw I/O buffer,
 		 *    wake up processes waiting to do physical I/O;
 		 */
 		mutex_enter(&bufcache_lock);
-		obp->b_cflags &= ~(BC_DONTFREE | BC_BUSY | BC_WANTED);
+		obp->b_cflags &= ~(BC_BUSY | BC_WANTED);
 		obp->b_flags &= ~(B_PHYS | B_RAW);
 		obp->b_iodone = NULL;
 		cv_broadcast(&obp->b_busy);
