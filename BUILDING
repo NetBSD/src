@@ -274,6 +274,13 @@ CONFIGURATION
 
                  Default: ``yes''
 
+     MKSTRIPIDENT
+                 Can be set to ``yes'' or ``no''.  Indicates whether program
+                 binaries and shared libraries should be built to include RCS
+                 IDs for use with ident(1).
+
+                 Default: ``no''
+
      MKTTINTERP  Can be set to ``yes'' or ``no''.  For X builds, decides if
                  the TrueType bytecode interpreter is turned on.  See
                  http://www.freetype.org/patents.html for details.
@@ -774,10 +781,12 @@ BUILDING
                lute path before being used.  Unsets MAKEOBJDIRPREFIX.
 
                In normal use, exactly one of the -M or -O options should be
-               specified.  If the source directory is /usr/src and neither -M
-               nor -O is specified, then a default object directory will be
-               chosen according to rules in <bsd.obj.mk>; this default is usu-
-               ally either /usr/obj or /usr/obj.MACHINE.
+               specified.  If neither -M nor -O is specified, then a default
+               object directory will be chosen according to rules in
+               <bsd.obj.mk>.  Relying on this default is not recommended
+               because it is determined by complex rules that are influenced
+               by the values of several variables and by the location of the
+               source directory.
 
      -o        Set the value of MKOBJDIRS to ``no''.  Otherwise, it will be
                automatically set to ``yes''.  This default is opposite to the
@@ -840,24 +849,24 @@ BUILDING
      with an absolute path.
 
 EXAMPLES
-     1.   % ./build.sh tools kernel=GENERIC
+     1.   % ./build.sh [options] tools kernel=GENERIC
 
           Build a new toolchain, and use the new toolchain to configure and
           build a new GENERIC kernel.
 
-     2.   % ./build.sh -U distribution
+     2.   % ./build.sh [options] -U distribution
 
           Using unprivileged mode, build a complete distribution to a DESTDIR
           directory that build.sh selects (and will display).
 
-     3.   # ./build.sh -U install=/
+     3.   # ./build.sh [options] -U install=/
 
           As root, install to / the distribution that was built by example 2.
           Even though this is run as root, -U is required so that the permis-
           sions stored in DESTDIR/METALOG are correctly applied to the files
           as they're copied to /.
 
-     4.   % ./build.sh -U -u release
+     4.   % ./build.sh [options] -U -u release
 
           Using unprivileged mode, build a complete release to DESTDIR and
           RELEASEDIR directories that build.sh selects (and will display).
@@ -880,4 +889,4 @@ HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as
      USE_NEW_TOOLCHAIN, and re-worked to TOOLCHAIN_MISSING after that.
 
-NetBSD                          August 18, 2008                         NetBSD
+NetBSD                        September 10, 2008                        NetBSD
