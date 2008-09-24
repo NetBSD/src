@@ -1,6 +1,6 @@
-.\"	$NetBSD: c99.1,v 1.1 2008/09/23 23:59:04 hubertf Exp $
+.\"	$NetBSD: c99.1,v 1.2 2008/09/24 00:19:46 hubertf Exp $
 .\"
-.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 5, 1999
+.Dd September 24, 2008
 .Dt C99 1
 .Os
 .Sh NAME
@@ -40,13 +40,14 @@
 Calls the C compiler (cc) with the given
 .Ar options ,
 using a C language environment compatible with the
-.St -ansiC
+.St -isoC-99
 specification.
 .Pp
-This includes proper handling of trigraphs,
+This includes
+inline functions, variable-length arrays, support for one-line
+comments beginning with //, 
 disabling non-ANSI compiler features (such as
 .Ar asm ,
-.Ar inline ,
 .Ar typeof ,
 and the $ character in identifiers),
 and definition of the preprocessor symbol
@@ -70,8 +71,8 @@ conforms to
 .St -p1003.2-92 .
 .Sh HISTORY
 .Nm
-appeared in
-.Nx 1.4 .
+first appeared in
+.Nx 5.0 .
 .Sh BUGS
 Since
 .Nm
