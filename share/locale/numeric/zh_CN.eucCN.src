@@ -1,0 +1,16 @@
+# $NetBSD: zh_CN.eucCN.src,v 1.1.6.2 2008/09/24 04:45:54 wrstuden Exp $
+#
+# Chinese Language Numeric Locale for China
+#
+# WARNING: Empty lines and/or blank spaces may be essential.
+#
+# From: $FreeBSD: src/share/numericdef/zh_CN.eucCN.src,v 1.1 2001/02/17 18:45:08 keith Exp $
+#
+# Decimal Delimiter/Radix Character (decimal_point)
+.
+# Separator for groups of digits left of above (thousands_sep)
+,
+# Grouping Sequence (grouping)
+#    A sequence of integers separated by semi-colons ';'.
+3;3
+# EOF
