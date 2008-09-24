@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.62.2.3.2.1 2008/09/22 17:54:42 bouyer Exp $
+.\"	$NetBSD: postinstall,v 1.62.2.3.2.2 2008/09/24 17:31:12 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -391,13 +391,13 @@ A list of available packages suitable for browsing is at
 Precompiled binaries can be found at
 .Lk ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/
 usually in the
-.Pa \*M/\*V/All
+.Pa \*M/4.0/All
 subdir.
 You can install them with the following commands under
 .Xr sh 1 :
 .Pp
 .Bd -unfilled
-.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
+.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/4.0/All
 .Ic # export PKG_PATH
 .Ic # pkg_add -v tcsh
 .Ic # pkg_add -v bash
@@ -413,7 +413,7 @@ If you are using
 then replace the first two lines with the following:
 .Pp
 .Bd -unfilled
-.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
+.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/4.0/All
 \&...
 .Ed
 .(Note
@@ -421,7 +421,7 @@ Some mirror sites don't mirror
 .Pa /pub/pkgsrc
 directory.
 If you would like to use such mirrors, you could also try the
-.Pa /pub/NetBSD/packages/current-packages/NetBSD/\*M/\*V/All
+.Pa /pub/NetBSD/packages/current-packages/NetBSD/\*M/4.0/All
 directory which may have the same contents.
 .Note)
 .Pp
@@ -435,7 +435,7 @@ In some case the
 command will complain about a version mismatch of packages with a message
 like the following:
 .Dl Warning: package `foo' was built for a different version of the OS:
-.Dl NetBSD/i386 M.N (pkg) vs. NetBSD/i386 \*V (this host) ,
+.Dl NetBSD/i386 4.0 (pkg) vs. NetBSD/i386 \*V (this host) ,
 This warning would be harmless if the formal major release numbers are same
 between the pkg and your host.
 Please refer
