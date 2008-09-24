@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.40 2008/09/07 18:30:18 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.41 2008/09/24 17:04:27 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.40 2008/09/07 18:30:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.41 2008/09/24 17:04:27 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1149,7 +1149,7 @@ exit_lock:
 	return error;
 #else
 	/* Just return an error */
-	return (sys_nosys(l, v, retval));
+	return (sys_nosys(l, (const void *)uap, retval));
 #endif
 }
 
