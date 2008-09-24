@@ -1,2 +1,2 @@
 #!/bin/sh
-exec /usr/bin/cc -std=c89 ${1+"$@"}
+exec /usr/bin/cc -std=c89 "$@"
