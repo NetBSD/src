@@ -1,4 +1,4 @@
-/*	$NetBSD: strpbrk.c,v 1.16 2008/02/23 15:18:04 christos Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.17 2008/09/24 14:36:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,30 +26,45 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpbrk.c,v 1.16 2008/02/23 15:18:04 christos Exp $");
+__RCSID("$NetBSD: strpbrk.c,v 1.17 2008/09/24 14:36:02 christos Exp $");
 
 #include <assert.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <string.h>
 
+#define FAST_STRPBRK 1
+#define UC(a) ((unsigned int)(unsigned char)(a))
+
+#ifdef FAST_STRPBRK
+#define ADD_NEW_TO_SET(i) (set[inv[i] = idx++] = (i))
+#define IS_IN_SET(i) (inv[i] < idx && set[inv[i]] == (i))
+#define ADD_TO_SET(i) (IS_IN_SET(i) || ADD_NEW_TO_SET(i))
+#else
+#define IS_IN_SET(i) (set[(i) >> 3] & idx[(i) & 7])
+#define ADD_TO_SET(i) (set[(i) >> 3] |= idx[(i) & 7])
+#endif
+
 char *
 strpbrk(const char *s, const char *charset)
 {
+#ifdef FAST_STRPBRK
+	uint8_t set[256], inv[256], idx = 0;
+#else
 	static const size_t idx[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
 	uint8_t set[32];
-#define UC(a) ((unsigned int)(unsigned char)(a))
+
+	(void)memset(set, 0, sizeof(set));
+#endif
 
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(charset != NULL);
 
-	(void)memset(set, 0, sizeof(set));
-
 	for (; *charset != '\0'; ++charset)
-		set[UC(*charset) >> 3] |= idx[UC(*charset) & 7];
+		ADD_TO_SET(UC(*charset));
 
 	for (; *s != '\0'; ++s)
-		if (set[UC(*s) >> 3] & idx[UC(*s) & 7])
+		if (IS_IN_SET(UC(*s)))
 			return __UNCONST(s);
 	return NULL;
 }
