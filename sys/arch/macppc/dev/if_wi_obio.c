@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.17 2007/12/11 21:00:22 macallan Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.17.12.1 2008/09/24 16:38:50 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.17 2007/12/11 21:00:22 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.17.12.1 2008/09/24 16:38:50 wrstuden Exp $");
 
 #include "opt_inet.h"
 
@@ -95,7 +95,7 @@ wi_obio_attach(struct device *parent, struct device *self, void *aux)
 	intr_establish(ca->ca_intr[0], IST_LEVEL, IPL_NET, wi_intr, sc);
 
 	sc->sc_tag = wisc->sc_iot = ca->ca_tag;
-	bus_space_map(sc->sc_tag, 0x8000000, 0x20000, 0, &sc->sc_bsh);
+	bus_space_map(sc->sc_tag, ca->ca_baseaddr, 0x70, 0, &sc->sc_bsh);
 	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x40, 4, &sc->sc_fcr2h);
 	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x6a, 16, &sc->sc_gpioh);
 	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x58, 16, &sc->sc_extint_gpioh);

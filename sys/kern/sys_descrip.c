@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.3.2.1 2008/09/18 04:31:43 wrstuden Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.3.2.2 2008/09/24 16:38:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.3.2.1 2008/09/18 04:31:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.3.2.2 2008/09/24 16:38:57 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,7 +428,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		break;
 
 	case F_SETOWN:
-		tmp = (int)(intptr_t) SCARG(uap, arg);
+		tmp = (int)(uintptr_t) SCARG(uap, arg);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOSETOWN, &tmp);
 		break;
 

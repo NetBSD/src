@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.430.2.2 2008/09/18 04:41:12 wrstuden Exp $
+# $NetBSD: shl.mi,v 1.430.2.3 2008/09/24 16:32:52 wrstuden Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -21,7 +21,7 @@
 ./lib/libipsec.so.2.2				base-net-shlib		dynamicroot
 ./lib/libkvm.so.5.3				base-sys-shlib		dynamicroot
 ./lib/libm.so.0.6				base-sys-shlib		dynamicroot
-./lib/libprop.so.0.6				base-sys-shlib		dynamicroot
+./lib/libprop.so.0.7				base-sys-shlib		dynamicroot
 ./lib/libradius.so.2.0				base-sys-shlib		dynamicroot
 ./lib/libtermcap.so.0.6				base-sys-shlib		dynamicroot
 ./lib/libtermlib.so.0.6				base-sys-shlib		dynamicroot
@@ -101,7 +101,7 @@
 ./usr/lib/libpcap.so.2.0			base-net-shlib
 ./usr/lib/libpci.so.1.0				base-sys-shlib
 ./usr/lib/libposix.so.0.1			base-sys-shlib
-./usr/lib/libprop.so.0.6			base-sys-shlib
+./usr/lib/libprop.so.0.7			base-sys-shlib
 ./usr/lib/libpthread.so.0.10			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.1.0			base-sys-shlib
 ./usr/lib/libpuffs.so.0.0			base-sys-shlib

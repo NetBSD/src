@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.359.2.4 2008/09/18 04:31:45 wrstuden Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.359.2.5 2008/09/24 16:38:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,12 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.359.2.4 2008/09/18 04:31:45 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.359.2.5 2008/09/24 16:38:57 wrstuden Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_fileassoc.h"
-#include "fss.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -109,10 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.359.2.4 2008/09/18 04:31:45 wrstu
 #ifdef COMPAT_30
 #include <nfs/nfs.h>
 #include <nfs/nfs_var.h>
-#endif
-
-#if NFSS > 0
-#include <dev/fssvar.h>
 #endif
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
@@ -764,11 +759,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		vfs_deallocate_syncvnode(mp);
 	error = 0;
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
-#if NFSS > 0
-		error = fss_umount_hook(mp, (flags & MNT_FORCE));
-#endif
-		if (error == 0)
-			error = VFS_SYNC(mp, MNT_WAIT, l->l_cred);
+		error = VFS_SYNC(mp, MNT_WAIT, l->l_cred);
 	}
 	vfs_scrubvnlist(mp);
 	if (error == 0 || (flags & MNT_FORCE))

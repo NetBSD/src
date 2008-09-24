@@ -1,4 +1,4 @@
-/*	$Id: pftn.c,v 1.3.2.2 2008/09/18 05:15:39 wrstuden Exp $	*/
+/*	$Id: pftn.c,v 1.3.2.3 2008/09/24 16:35:00 wrstuden Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -715,7 +715,7 @@ enumdcl(struct symtab *sp)
 }
 
 /*
- * Handle reference to an enum
+ * Handle reference to an enum
  */
 NODE *
 enumref(char *name)

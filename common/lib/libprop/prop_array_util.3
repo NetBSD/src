@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_array_util.3,v 1.2.4.2 2008/06/23 05:01:56 wrstuden Exp $
+.\"	$NetBSD: prop_array_util.3,v 1.2.4.3 2008/09/24 16:30:24 wrstuden Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,6 +50,14 @@
 .Nm prop_array_get_uint64 ,
 .Nm prop_array_set_int64 ,
 .Nm prop_array_set_uint64 ,
+.Nm prop_array_add_int8 ,
+.Nm prop_array_add_uint8 ,
+.Nm prop_array_add_int16 ,
+.Nm prop_array_add_uint16 ,
+.Nm prop_array_add_int32 ,
+.Nm prop_array_add_uint32 ,
+.Nm prop_array_add_int64 ,
+.Nm prop_array_add_uint64 ,
 .Nm prop_array_get_cstring ,
 .Nm prop_array_set_cstring ,
 .Nm prop_array_get_cstring_nocopy ,
@@ -117,6 +125,30 @@
 .Ft bool
 .Fn prop_array_set_uint64 "prop_array_t dict" "unsigned int indx" \
     "uint64_t val"
+.\"
+.Ft bool
+.Fn prop_array_set_int32 "prop_array_t dict" "unsigned int indx" \                                                          
+    "int32_t val"
+.Ft bool
+.Fn prop_array_set_uint32 "prop_array_t dict" "unsigned int indx" \                                                         
+    "uint32_t val"
+.\"               
+.Ft bool
+.Fn prop_array_add_int8 "prop_array_t dict" "int8_t val"
+.Ft bool
+.Fn prop_array_add_uint8 "prop_array_t dict" "uint8_t val"
+.Ft bool
+.Fn prop_array_add_int16 "prop_array_t dict"  "int16_t val"
+.Ft bool
+.Fn prop_array_add_uint16 "prop_array_t dict" "uint16_t val"
+.Ft bool
+.Fn prop_array_add_int32 "prop_array_t dict" "int32_t val"
+.Ft bool
+.Fn prop_array_add_uint32 "prop_array_t dict" "uint32_t val"
+.Ft bool
+.Fn prop_array_add_int64 "prop_array_t dict"  "int64_t val"
+.Ft bool
+.Fn prop_array_add_uint64 "prop_array_t dict" "uint64_t val"
 .\"
 .Ft bool
 .Fn prop_array_get_cstring "prop_array_t dict" "unsigned int indx" \

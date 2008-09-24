@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.55.2.1 2008/06/23 04:31:05 wrstuden Exp $	*/
+/*	$NetBSD: mlx.c,v 1.55.2.2 2008/09/24 16:38:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.55.2.1 2008/06/23 04:31:05 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.55.2.2 2008/09/24 16:38:52 wrstuden Exp $");
 
 #include "ld.h"
 
@@ -669,7 +669,7 @@ mlx_adjqparam(struct mlx_softc *mlx, int mpu, int slop)
 	for (i = 0; i < ld_cd.cd_ndevs; i++) {
 		if ((ld = device_lookup_private(&ld_cd, i)) == NULL)
 			continue;
-		if (device_parent(&ld->sc_dv) != &mlx->mlx_dv)
+		if (device_parent(ld->sc_dv) != &mlx->mlx_dv)
 			continue;
 		ldadjqparam(ld, mpu + (slop-- > 0));
 	}

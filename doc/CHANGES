@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1052.2.2 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1052.2.3 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -471,7 +471,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	msdosfs: Add large read / readahead support by Paul Ripke
 		(introduce run-length detection to msdosfs_bmap(),
 		from FreeBSD).  [christos 20080105]
-	gem(4): Add support for Sun SX fibre cards.  [jdc 20080105]
+	gem(4): Add support for Sun PCI SX fibre cards.  [jdc 20080105]
 	amiga: Add timecounter(9) support and coutner-based delay(9) from i386.
 		[mhitch 20080106]
 	mvme68k: Add timecounter(9) support. [tsutsui 20080107]
@@ -849,3 +849,25 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[jmcneill 20080906]
 	pseye(4): Add support for the Sony PLAYSTATION(R) Eye USB webcam.
 		[jmcneill 20080906]
+	uvideo(4): Add support for USB Video Class capture devices, part of
+		Patrick Mahoney's Google Summer of Code 2008 project.
+		[jmcneill 20080908]
+	altq(4): Add support for source address hashing in the WFQ scheduler.
+		[joerg 20080911]
+	ataraid(4): Add Intel MatrixRAID controller support contributed
+		by Juan RP. [tron 20080911]
+	cgd(4): Change default iv to encblkno1; encblkno (the old iv) used
+		to encrypt things 8 times leading to a 20% performance loss
+		for no real security benefit [christos 20080912]
+	etcupdate(8): Remove the "-b binarydir" and "-s srcdir/etc"
+		options which were deprecated in NetBSD-4.0.  Deprecate
+		the "-s tgz1:tgz2" option; please use "-s tgz1 -s tgz2"
+		instead.  [apb 20080914]
+	postinstall(8): Deprecate the "-s tgz1:tgz2" option; please use
+		"-s tgz1 -s tgz2" instead.  [apb 20080914]
+	ataraid(4): Add support for status reports via bio(4) contributed
+		by Juan RP. [tron 20080915]
+	gem(4): Add support for Sun SBus SX fibre cards.  [jdc 20080915]
+	ataraid(4): Add support for multiple volumes attached to
+		Intel MatrixRAID controllers contributed by Juan RP.
+		[tron 20080916]

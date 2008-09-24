@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.13 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.13.6.1 2008/09/24 16:38:53 wrstuden Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.13 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.13.6.1 2008/09/24 16:38:53 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -131,7 +131,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_SMB_HOSTC);
-	DPRINTF(("%s: conf 0x%08x", device_xname(&sc->sc_dev), conf));
+	DPRINTF(("%s: conf 0x%08x\n", device_xname(sc->sc_dev), conf));
 
 	if ((conf & LPCIB_SMB_HOSTC_HSTEN) == 0) {
 		aprint_error_dev(self, "SMBus disabled\n");
@@ -148,7 +148,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_poll = 1;
 	if (conf & LPCIB_SMB_HOSTC_SMIEN) {
 		/* No PCI IRQ */
-		aprint_normal_dev(self, "SMI\n");
+		aprint_normal_dev(self, "interrupting at SMI\n");
 	} else {
 		/* Install interrupt handler */
 		if (pci_intr_map(pa, &ih) == 0) {
@@ -214,8 +214,8 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	int retries;
 	char fbuf[64];
 
-	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %d, "
-	    "flags 0x%02x\n", device_xname(&sc->sc_dev), op, addr, cmdlen,
+	DPRINTF(("%s: exec: op %d, addr 0x%02x, cmdlen %zu, len %zu, "
+	    "flags 0x%02x\n", device_xname(sc->sc_dev), op, addr, cmdlen,
 	    len, flags));
 
 	/* Wait for bus to be idle */
@@ -227,7 +227,7 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	}
 #ifdef ICHIIC_DEBUG
 	bitmask_snprintf(st, LPCIB_SMB_HS_BITS, fbuf, sizeof(fbuf));
-	printf("%s: exec: st 0x%s\n", device_private(sc->sc_dev), fbuf);
+	printf("%s: exec: st 0x%s\n", device_xname(sc->sc_dev), fbuf);
 #endif
 	if (st & LPCIB_SMB_HS_BUSY)
 		return (1);

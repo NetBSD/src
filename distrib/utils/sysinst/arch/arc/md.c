@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.29 2008/02/02 04:20:02 tsutsui Exp $	*/
+/*	$NetBSD: md.c,v 1.29.10.1 2008/09/24 16:32:54 wrstuden Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -98,7 +98,7 @@ md_post_newfs(void)
 
 	if (!nobootfs) {
 		msg_display(msg_string(MSG_copybootloader), diskdev);
-		cp_to_target("/usr/mdec/boot", "/boot");
+		cp_to_target("/usr/mdec/boot", PART_BOOT_FAT12_PI_MOUNT);
 	}
 
 	return 0;

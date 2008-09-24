@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.19 2006/03/06 21:11:56 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.19.20.1 2008/09/24 16:35:09 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.19 2006/03/06 21:11:56 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.19.20.1 2008/09/24 16:35:09 wrstuden Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -910,7 +910,7 @@ ed_command(EditLine *el, int c __attribute__((__unused__)))
 	int tmplen;
 
 	tmplen = c_gets(el, tmpbuf, "\n: ");
-	term__putc('\n');
+	term__putc(el, '\n');
 
 	if (tmplen < 0 || (tmpbuf[tmplen] = 0, parse_line(el, tmpbuf)) == -1)
 		term_beep(el);

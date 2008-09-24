@@ -1,4 +1,4 @@
-/* $NetBSD: siisatareg.h,v 1.1.8.2 2008/06/23 05:02:13 wrstuden Exp $ */
+/* $NetBSD: siisatareg.h,v 1.1.8.3 2008/09/24 16:38:52 wrstuden Exp $ */
 /* Id: siisatareg.h,v 1.10 2008/05/21 15:51:36 jakllsch Exp  */
 
 /*-
@@ -52,13 +52,13 @@ struct siisata_sge {
 #define SGE_FLAG_LNK __BIT(30)
 #define SGE_FLAG_DRD __BIT(29)
 #define SGE_FLAG_XCF __BIT(28)
-} __attribute__((__packed__));
+} __packed;
 
 /* Scatter/Gather Table */
 /* must be aligned to 64-bit boundary */
 struct siisata_sgt {
 	struct siisata_sge sgt_sge[4];
-} __attribute__((__packed__));
+} __packed;
 
 /* Port Request Block */
 struct siisata_prb {
@@ -84,7 +84,7 @@ struct siisata_prb {
 /* First SGE in PRB is always reserved for ATAPI in this implementation. */
 	uint8_t prb_atapi[16]; /* zero for non-ATAPI */
 	struct siisata_sge prb_sge[1]; /* extended to NSGE */
-} __attribute__((__packed__));
+} __packed;
 
 
 #define SIISATA_NSGE ((MAXPHYS/PAGE_SIZE) + 1)

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.10.10.1 2008/09/18 04:41:14 wrstuden Exp $
+# $NetBSD: shl.mi,v 1.10.10.2 2008/09/24 16:32:53 wrstuden Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -83,6 +83,8 @@
 ./usr/X11R7/lib/libXmuu.so.1.0			-unknown-		xorg
 ./usr/X11R7/lib/libXp.so.6.2			-unknown-		xorg
 ./usr/X11R7/lib/libXpm.so.4.11			-unknown-		xorg
+./usr/X11R7/lib/libXprintAppUtil.so.1.0.0	-unknown-		xorg
+./usr/X11R7/lib/libXprintUtil.so.1.0.0		-unknown-		xorg
 ./usr/X11R7/lib/libXrandr.so.2.1		-unknown-		xorg
 ./usr/X11R7/lib/libXrender.so.1.3		-unknown-		xorg
 ./usr/X11R7/lib/libXres.so.1.0			-unknown-		xorg

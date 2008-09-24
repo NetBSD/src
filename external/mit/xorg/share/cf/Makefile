@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.2 2008/09/18 05:18:48 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.5.2.3 2008/09/24 16:35:06 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -21,18 +21,28 @@ FILES=	Amoeba.cf DGUX.cf FreeBSD.cf Imake.cf Imake.rules Imake.tmpl \
 	nto.cf nto.rules oldlib.rules os2.cf os2.rules os2Lib.rules \
 	os2Lib.tmpl osf1.cf osfLib.rules osfLib.tmpl pegasus.cf \
 	sco.cf sco5.cf scoLib.rules sequent.cf sgi.cf sgiLib.rules \
-	sgiLib.tmpl site.def sony.cf sun.cf sunLib.rules sunLib.tmpl \
+	sgiLib.tmpl sony.cf sun.cf sunLib.rules sunLib.tmpl \
 	sv3Lib.rules sv3Lib.tmpl sv4Lib.rules sv4Lib.tmpl svr3.cf \
 	svr4.cf ultrix.cf usl.cf version.def x386.cf xf86.rules \
-	xf86.tmpl xf86site.def xfree86.cf xorg.cf xorgsite.def \
-	xorgversion.def
+	xf86.tmpl xf86site.def xfree86.cf xorg.cf xorgversion.def
 
 # Note: acts as '#define InstallEmptyHostDef'
 #
-FILES+=	host.def
+FILES+=	host.def xorgsite.def
 
 BUILDSYMLINKS=\
 	${X11SRCDIR.xorg-server}//hw/xfree86/common/xf86Version.h version.def \
         ${X11SRCDIR.xorg-server}//hw/xfree86/common/xf86Date.h	date.def
+
+# Handle site.def specificly because it is provided in dist
+#
+FILES+=				netbsd.site.def
+FILESNAME_netbsd.site.def=	site.def
+CLEANFILES+=			netbsd.site.def
+
+netbsd.site.def:	site.def.in
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e 's,@prefix@,${X11ROOTDIR},' <${.ALLSRC} >${.TARGET}
+realall:	netbsd.site.def
 
 .include <bsd.prog.mk>

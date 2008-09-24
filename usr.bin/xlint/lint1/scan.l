@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.38 2008/04/25 22:18:34 christos Exp $ */
+/* $NetBSD: scan.l,v 1.38.2.1 2008/09/24 16:38:59 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.38 2008/04/25 22:18:34 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.38.2.1 2008/09/24 16:38:59 wrstuden Exp $");
 #endif
 
 #include <stdlib.h>
@@ -564,11 +564,23 @@ icon(int base)
 			}
 		}
 		break;
+	case ULONG:
+		if (uq > TARG_ULONG_MAX) {
+			/* integer constant out of range */
+			warning(252);
+		}
+		break;
 	case QUAD:
 		if (uq > TARG_QUAD_MAX && !tflag) {
 			typ = UQUAD;
 			if (!sflag)
 				ansiu = 1;
+		}
+		break;
+	case UQUAD:
+		if (uq > TARG_UQUAD_MAX) {
+			/* integer constant out of range */
+			warning(252);
 		}
 		break;
 		/* LINTED (enumeration values not handled in switch) */
@@ -584,8 +596,6 @@ icon(int base)
 	case NOTSPEC:
 	case DOUBLE:
 	case FLOAT:
-	case UQUAD:
-	case ULONG:
 	case USHORT:
 	case SHORT:
 	case UCHAR:

@@ -1,10 +1,12 @@
-#	$NetBSD: files.usb,v 1.82.12.2 2008/09/18 04:35:11 wrstuden Exp $
+#	$NetBSD: files.usb,v 1.82.12.3 2008/09/24 16:38:55 wrstuden Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
 # their own "major" declarations for the appropriate devices.
 
 defflag	USBVERBOSE
+
+defflag	opt_uvideo.h	UVIDEO_DEBUG
 
 define	usbroothubif { }
 define	usbdevif { [port = -1], [configuration = -1], [interface = -1],
@@ -138,6 +140,16 @@ file	dev/usb/ubt.c			ubt
 device	pseye: videobus
 attach	pseye at usbifif
 file	dev/usb/pseye.c			pseye
+
+# Logitech QuickCam Messenger
+device	qcm: videobus
+attach	qcm at usbifif
+file	dev/usb/qcm.c			qcm
+
+# USB Video Class capture devices
+device	uvideo: videobus
+attach	uvideo at usbifif
+file	dev/usb/uvideo.c		uvideo
 
 #
 # Misc

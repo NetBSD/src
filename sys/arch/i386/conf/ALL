@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.170.2.2 2008/09/18 04:33:27 wrstuden Exp $
+# $NetBSD: ALL,v 1.170.2.3 2008/09/24 16:38:49 wrstuden Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.170.2.2 $"
+#ident 		"ALL-$Revision: 1.170.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -245,6 +245,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options 	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 options 	MCAVERBOSE	# verbose MCA device autoconfig messages
+options		I2C_SCAN	# Scan i2c bus for responses
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -917,6 +918,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
+iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3

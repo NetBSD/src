@@ -1,4 +1,4 @@
-.\"	$NetBSD: sed.1,v 1.25 2006/05/14 14:34:49 wiz Exp $
+.\"	$NetBSD: sed.1,v 1.25.22.1 2008/09/24 16:38:59 wrstuden Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)sed.1	8.2 (Berkeley) 12/30/93
 .\"
-.Dd May 14, 2006
+.Dd September 16, 2008
 .Dt SED 1
 .Os
 .Sh NAME
@@ -40,11 +40,11 @@
 .Nd stream editor
 .Sh SYNOPSIS
 .Nm
-.Op Fl aEn
+.Op Fl aEnr
 .Ar command
 .Op Ar file ...
 .Nm
-.Op Fl aEn
+.Op Fl aEnr
 .Op Fl e Ar command
 .Op Fl f Ar command_file
 .Op Ar file ...
@@ -82,6 +82,10 @@ function is applied to a line of input.
 .It Fl E
 Enables the use of extended regular expressions instead of the
 usual basic regular expression syntax.
+.It Fl r
+Identical to
+.Fl E ,
+present for compatibility with Gnu sed.
 .It Fl e Ar command
 Append the editing commands specified by the
 .Ar command

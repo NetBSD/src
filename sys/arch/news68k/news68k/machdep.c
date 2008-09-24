@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70.12.1 2008/09/18 04:33:30 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.12.2 2008/09/24 16:38:50 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.12.1 2008/09/18 04:33:30 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.12.2 2008/09/24 16:38:50 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -367,10 +367,6 @@ int	waittime = -1;
 void
 cpu_reboot(int howto, char *bootstr)
 {
-
-#if __GNUC__    /* XXX work around lame compiler problem (gcc 2.7.2) */
-	(void)&howto;
-#endif
 
 	/* take a snap shot before clobbering any registers */
 	if (curlwp->l_addr)

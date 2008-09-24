@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.66 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: postinstall,v 1.66.2.1 2008/09/24 16:32:52 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -176,6 +176,7 @@ For example:
 .Pp
 .
 .ds IFname de0
+.if \n[arc]   .ds IFname sn0
 .if \n[hp300]:\n[mvme68k]:\n[pmax]:\n[sparc] .ds IFname le0
 .if \n[hp700]   .ds IFname ie0
 .if \n[next68k] .ds IFname xe0
