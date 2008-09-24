@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.68 2008/09/24 17:18:02 tsutsui Exp $
+# $NetBSD: GENERIC.in,v 1.69 2008/09/24 17:26:37 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68 $"
+#ident 		"GENERIC-$Revision: 1.69 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -592,10 +592,10 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-m4_ifdef(`GENERIC_CONFIGURATION', `m4_dnl
-pseudo-device	fss		4	# file system snapshot device
-', `m4_dnl
+m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 #pseudo-device	fss		4	# file system snapshot device
+', `m4_dnl
+pseudo-device	fss		4	# file system snapshot device
 ')m4_dnl
 
 pseudo-device	view		4	# views (needed for grfcc)
