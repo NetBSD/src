@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.17 2008/05/24 17:35:37 cube Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.18 2008/09/24 07:19:18 ws Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,8 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.17 2008/05/24 17:35:37 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.18 2008/09/24 07:19:18 ws Exp $");
 #include "bpfilter.h"
+#ifdef	__NetBSD__
+#include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
