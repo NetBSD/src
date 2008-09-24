@@ -1,4 +1,4 @@
-/*	$NetBSD: rot13fs.c,v 1.16 2007/11/30 19:02:38 pooka Exp $	*/
+/*	$NetBSD: rot13fs.c,v 1.16.10.1 2008/09/24 16:41:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -50,7 +50,7 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-s] [-o mntopts] rot13path mountpath",
+	errx(1, "usage: %s [-s] [-o mntopts] rot13path mountpath",
 	    getprogname());
 }
 

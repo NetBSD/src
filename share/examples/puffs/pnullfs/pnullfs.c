@@ -1,4 +1,4 @@
-/*	$NetBSD: pnullfs.c,v 1.16 2007/11/16 18:39:02 pooka Exp $	*/
+/*	$NetBSD: pnullfs.c,v 1.16.10.1 2008/09/24 16:41:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-s] [-o mntopts] nullpath mountpath",
+	errx(1, "usage: %s [-s] [-o mntopts] nullpath mountpath",
 	    getprogname());
 }
 
