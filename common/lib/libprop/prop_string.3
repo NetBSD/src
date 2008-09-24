@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_string.3,v 1.3 2006/09/27 19:24:28 xtraeme Exp $
+.\"	$NetBSD: prop_string.3,v 1.3.4.1 2008/09/24 18:05:48 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,14 +75,14 @@
 .Ft const char *
 .Fn prop_string_cstring_nocopy "prop_string_t string"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_string_append "prop_string_t str1" "prop_string_t str2"
-.Ft boolean_t
+.Ft bool
 .Fn prop_string_append_cstring "prop_string_t string" "const char *cstring"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_string_equals "prop_string_t str1" "prop_string_t str2"
-.Ft boolean_t
+.Ft bool
 .Fn prop_string_equals_cstring "prop_string_t string" "const char *cstring"
 .Sh DESCRIPTION
 The
@@ -107,7 +107,7 @@ Copy a string, always creating a mutable copy.
 Returns the size of the string, not including the terminating NUL.
 .It Fn prop_string_mutable "prop_string_t string"
 Returns
-.Dv TRUE
+.Dv true
 if the string is mutable.
 .It Fn prop_string_cstring "prop_string_t string"
 Returns a copy of the string's contents as a C string.
@@ -129,9 +129,9 @@ to
 .Fa str1 ,
 which must be mutable.
 Returns
-.Dv TRUE
+.Dv true
 upon success and
-.Dv FALSE
+.Dv false
 otherwise.
 .It Fn prop_string_append_cstring "prop_string_t string" "const char *cstring"
 Append the C string
@@ -140,17 +140,17 @@ to
 .Fa string ,
 which must be mutable.
 Returns
-.Dv TRUE
+.Dv true
 upon success and
-.Dv FALSE
+.Dv false
 otherwise.
 .It Fn prop_string_equals "prop_string_t str1" "prop_string_t str2"
 Returns
-.Dv TRUE
+.Dv true
 if the two string objects are equivalent.
 .It Fn prop_string_equals_cstring "prop_string_t string" "const char *cstring"
 Returns
-.Dv TRUE
+.Dv true
 if the string's value is equivalent to
 .Fa cstring .
 .El

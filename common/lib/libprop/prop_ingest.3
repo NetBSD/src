@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_ingest.3,v 1.2 2006/08/23 20:50:37 wiz Exp $
+.\"	$NetBSD: prop_ingest.3,v 1.2.6.1 2008/09/24 18:05:48 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,12 +60,12 @@
 .Fn prop_ingest_context_key "prop_ingest_context_t ctx"
 .Ft void *
 .Fn prop_ingest_context_private "prop_ingest_context_t ctx"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_ingest "prop_dictionary_t dict" \
     "const prop_ingest_table_entry rules[]" \
     "prop_ingest_context_t ctx"
 .Pp
-.Ft typedef boolean_t
+.Ft typedef bool
 .Fn (*prop_ingest_handler_t) "prop_ingest_context_t" "prop_object_t"
 .Sh DESCRIPTION
 The
@@ -129,9 +129,9 @@ context and the object
 .Dv NULL
 if the key does not exist in the dictionary).
 The handler should return
-.Dv FALSE
+.Dv false
 if the value of the object is invalid to indicate failure and
-.Dv TRUE
+.Dv true
 otherwise.
 .Pp
 The ingest context contains several pieces of information that are
@@ -160,7 +160,7 @@ A non-optional key was not found in the dictionary.
 An object in the dictionary was not the same type specifed in the rules.
 .It Dv PROP_INGEST_ERROR_HANDLER_FAILED
 An object's handler returned
-.Dv FALSE .
+.Dv false .
 .El
 .Pp
 .It Fn prop_ingest_context_type "prop_ingest_context_t ctx"
