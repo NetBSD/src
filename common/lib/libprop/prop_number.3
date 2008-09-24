@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_number.3,v 1.5 2006/10/14 07:30:16 wiz Exp $
+.\"	$NetBSD: prop_number.3,v 1.5.8.1 2008/09/24 18:06:46 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,18 +64,18 @@
 .\"
 .Ft int
 .Fn prop_number_size "prop_number_t number"
-.Ft boolean_t
+.Ft bool
 .Fn prop_number_unsigned "prop_number_t number"
 .Ft int64_t
 .Fn prop_number_integer_value "prop_number_t number"
 .Ft uint64_t
 .Fn prop_number_unsigned_integer_value "prop_number_t number"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_number_equals "prop_number_t num1" "prop_number_t num2"
-.Ft boolean_t
+.Ft bool
 .Fn prop_number_equals_integer "prop_number_t number" "int64_t val"
-.Ft boolean_t
+.Ft bool
 .Fn prop_number_equals_unsigned_integer "prop_number_t number" "uint64_t val"
 .Sh DESCRIPTION
 The
@@ -141,7 +141,7 @@ Returns 8, 16, 32, or 64, representing the number of bits required to
 hold the value of the object.
 .It Fn prop_number_unsigned "prop_number_t number"
 Returns
-.Dv TRUE
+.Dv true
 if the numeric value object has an unsigned value.
 .It Fn prop_number_integer_value "prop_number_t number"
 Returns the signed integer value of the numeric value object.
@@ -149,17 +149,17 @@ Returns the signed integer value of the numeric value object.
 Returns the unsigned integer value of the numeric value object.
 .It Fn prop_number_equals "prop_number_t num1" "prop_number_t num2"
 Returns
-.Dv TRUE
+.Dv true
 if the two numeric value objects are equivalent.
 .It Fn prop_number_equals_integer "prop_number_t number" "int64_t val"
 Returns
-.Dv TRUE
+.Dv true
 if the object's value is equivalent to the signed value
 .Fa val .
 .It Fn prop_number_equals_unsigned_integer "prop_number_t number" \
     "uint64_t val"
 Returns
-.Dv TRUE
+.Dv true
 if the object's value is equivalent to the unsigned value
 .Fa val .
 .El

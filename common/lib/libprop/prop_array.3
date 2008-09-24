@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_array.3,v 1.4 2006/08/21 04:13:28 thorpej Exp $
+.\"	$NetBSD: prop_array.3,v 1.4.16.1 2008/09/24 18:06:46 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,7 +78,7 @@
 .Fn prop_array_capacity "prop_array_t array"
 .Ft unsigned int
 .Fn prop_array_count "prop_array_t array"
-.Ft boolean_t
+.Ft bool
 .Fn prop_array_ensure_capacity "prop_array_t array" "unsigned int capacity"
 .\"
 .Ft prop_object_iterator_t
@@ -86,14 +86,14 @@
 .\"
 .Ft void
 .Fn prop_array_make_immutable "prop_array_t array"
-.Ft boolean_t
+.Ft bool
 .Fn prop_array_mutable "prop_array_t array"
 .\"
 .Ft prop_object_t
 .Fn prop_array_get "prop_array_t array" "unsigned int index"
-.Ft boolean_t
+.Ft bool
 .Fn prop_array_set "prop_array_t array" "unsigned int index" "prop_object_t obj"
-.Ft boolean_t
+.Ft bool
 .Fn prop_array_add "prop_array_t array" "prop_object_t obj"
 .Ft void
 .Fn prop_array_remove "prop_array_t array" "unsigned int index"
@@ -103,12 +103,12 @@
 .Ft prop_array_t
 .Fn prop_array_internalize "const char *xml"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_array_externalize_to_file "prop_array_t array" "const char *path"
 .Ft prop_array_t
 .Fn prop_array_internalize_from_file "const char *path"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
 .Sh DESCRIPTION
 The
@@ -146,12 +146,12 @@ Ensure that the array has a total capacity of
 .Fa capacity ,
 including objects already stored in the array.
 Returns
-.Dv TRUE
+.Dv true
 if the capacity of the array is greater or equal to
 .Fa capacity
 or if expansion of the array's capacity was successful
 and
-.Dv FALSE
+.Dv false
 otherwise.
 .It Fn prop_array_iterator "prop_array_t array"
 Create an iterator for the array.
@@ -165,7 +165,7 @@ Make
 immutable.
 .It Fn prop_array_mutable "prop_array_t array"
 Returns
-.Dv TRUE
+.Dv true
 if the array is mutable.
 .It Fn prop_array_get "prop_array_t array" "unsigned int index"
 Return the object stored at the array index
@@ -183,9 +183,9 @@ The object will be retained by the array.
 If an existing object reference is being replaced, that object will be
 released.
 Returns
-.Dv TRUE
+.Dv true
 if storing the object was successful and
-.Dv FALSE
+.Dv false
 otherwise.
 .It Fn prop_array_add "prop_array_t array" "prop_object_t obj"
 Add a reference to the object
@@ -194,9 +194,9 @@ to the array, appending to the end and growing the array's capacity of
 necessary.
 The object will be retained by the array.
 Returns
-.Dv TRUE
+.Dv true
 if storing the object was successful and
-.Dv FALSE
+.Dv false
 otherwise.
 .It Fn prop_array_remove "prop_array_t array" "unsigned int index"
 Remove the reference to the object stored at array index
@@ -205,7 +205,7 @@ The object will be released and the array compacted following
 the removal.
 .It Fn prop_array_equals "prop_array_t array1" "prop_array_t array2"
 Returns
-.Dv TRUE
+.Dv true
 if the two arrays are equivalent.
 Note: Objects contained in the array are compared by value, not by reference.
 .It Fn prop_array_externalize "prop_array_t array"
@@ -239,7 +239,7 @@ as modified by the process's file creation mask
 .Pq see Xr umask 3
 and is written atomically.
 Returns
-.Dv FALSE
+.Dv false
 if externalizing or writing the array fails for any reason.
 .It Fn prop_array_internalize_from_file "const char *path"
 Reads the XML property list contained in the file specified by

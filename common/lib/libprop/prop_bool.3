@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_bool.3,v 1.2 2006/07/09 19:04:02 wiz Exp $
+.\"	$NetBSD: prop_bool.3,v 1.2.18.1 2008/09/24 18:06:46 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,18 +49,18 @@
 .In prop/proplib.h
 .\"
 .Ft prop_bool_t
-.Fn prop_bool_create "boolean_t val"
+.Fn prop_bool_create "bool val"
 .Ft prop_bool_t
 .Fn prop_booly_copy "prop_bool_t bool"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_bool_true "prop_bool_t bool"
 .Sh DESCRIPTION
 The
 .Nm prop_bool
 family of functions operate on a boolean value property object type.
 .Bl -tag -width "xxxxx"
-.It Fn prop_bool_create "boolean_t val"
+.It Fn prop_bool_create "bool val"
 Create a boolean value object with the value
 .Fa val .
 .It Fn prop_bool_copy "prop_bool_t bool"
