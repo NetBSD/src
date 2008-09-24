@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14.2.2 2008/09/18 04:33:37 wrstuden Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14.2.3 2008/09/24 16:38:50 wrstuden Exp $	*/
 
 /*
  *
@@ -402,7 +402,9 @@ void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
 	    vm_prot_t, int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
+
 paddr_t	vtomach(vaddr_t);
+#define vtomfn(va) (vtomach(va) >> PAGE_SHIFT)
 
 #endif	/* XEN */
 

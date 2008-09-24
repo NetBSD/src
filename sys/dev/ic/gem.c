@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.77 2008/05/04 17:16:27 xtraeme Exp $ */
+/*	$NetBSD: gem.c,v 1.77.2.1 2008/09/24 16:38:52 wrstuden Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.77 2008/05/04 17:16:27 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.77.2.1 2008/09/24 16:38:52 wrstuden Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1234,7 +1234,8 @@ gem_init_regs(struct gem_softc *sc)
 	 */
 	bus_space_write_4(t, h, GEM_CONFIG,
 	    GEM_CONFIG_TXDMA_LIMIT | GEM_CONFIG_RXDMA_LIMIT |
-	    GEM_CONFIG_BURST_INF | (GEM_IS_APPLE(sc) ?
+	    ((sc->sc_flags & GEM_PCI) ?
+	    GEM_CONFIG_BURST_INF : GEM_CONFIG_BURST_64) | (GEM_IS_APPLE(sc) ?
 	    GEM_CONFIG_RONPAULBIT | GEM_CONFIG_BUG2FIX : 0));
 
 	/*
@@ -1978,7 +1979,7 @@ int
 gem_eint(struct gem_softc *sc, u_int status)
 {
 	char bits[128];
-	u_int32_t v;
+	u_int32_t r, v;
 
 	if ((status & GEM_INTR_MIF) != 0) {
 		printf("%s: XXXlink status changed\n", device_xname(&sc->sc_dev));
@@ -1991,9 +1992,12 @@ gem_eint(struct gem_softc *sc, u_int status)
 	}
 
 	if (status & GEM_INTR_BERR) {
-		bus_space_read_4(sc->sc_bustag, sc->sc_h2, GEM_ERROR_STATUS);
-		v = bus_space_read_4(sc->sc_bustag, sc->sc_h2,
-		    GEM_ERROR_STATUS);
+		if (sc->sc_flags & GEM_PCI)
+			r = GEM_ERROR_STATUS;
+		else
+			r = GEM_SBUS_ERROR_STATUS;
+		bus_space_read_4(sc->sc_bustag, sc->sc_h2, r);
+		v = bus_space_read_4(sc->sc_bustag, sc->sc_h2, r);
 		aprint_error_dev(&sc->sc_dev, "bus error interrupt: 0x%02x\n",
 		    v);
 		return (1);

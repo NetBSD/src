@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.197.2.2 2008/09/18 04:31:44 wrstuden Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.197.2.3 2008/09/24 16:38:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.197.2.2 2008/09/18 04:31:44 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.197.2.3 2008/09/24 16:38:57 wrstuden Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -2020,6 +2020,7 @@ nestiobuf_setup(buf_t *mbp, buf_t *bp, int offset, size_t size)
 
 	KASSERT(mbp->b_bcount >= offset + size);
 	bp->b_vp = vp;
+	bp->b_dev = mbp->b_dev;
 	bp->b_objlock = mbp->b_objlock;
 	bp->b_cflags = BC_BUSY;
 	bp->b_flags = B_ASYNC | b_read;

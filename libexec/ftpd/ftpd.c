@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.184.2.2 2008/09/18 04:39:17 wrstuden Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.184.2.3 2008/09/24 16:35:51 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.184.2.2 2008/09/18 04:39:17 wrstuden Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.184.2.3 2008/09/24 16:35:51 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -340,6 +340,24 @@ main(int argc, char *argv[])
 			break;
 
 		case 'C':
+			if ((p = strchr(optarg, '@')) != NULL) {
+				*p++ = '\0';
+				strlcpy(remotehost, p, MAXHOSTNAMELEN + 1);
+				if (inet_pton(AF_INET, p,
+				    &his_addr.su_addr) == 1) {
+					his_addr.su_family = AF_INET;
+					his_addr.su_len =
+					    sizeof(his_addr.si_su.su_sin);
+#ifdef INET6
+				} else if (inet_pton(AF_INET6, p,
+				    &his_addr.su_6addr) == 1) {
+					his_addr.su_family = AF_INET6;
+					his_addr.su_len =
+					    sizeof(his_addr.si_su.su_sin6);
+#endif
+				} else
+					his_addr.su_family = AF_UNSPEC;
+			}
 			pw = sgetpwnam(optarg);
 			exit(checkaccess(optarg) ? 0 : 1);
 			/* NOTREACHED */
@@ -1075,18 +1093,38 @@ checkuser(const char *fname, const char *name, int def, int nofile,
 
 					/* have a host specifier */
 		if ((p = strchr(word, '@')) != NULL) {
-			unsigned long	net, mask, addr;
-			int		bits;
+			unsigned char	net[16], mask[16], *addr;
+			int		addrlen, bits, bytes, a;
 
 			*p++ = '\0';
 					/* check against network or CIDR */
-			if (isdigit((unsigned char)*p) &&
-			    (bits = inet_net_pton(AF_INET, p,
-			    &net, sizeof(net))) != -1) {
-				net = ntohl(net);
-				mask = 0xffffffffU << (32 - bits);
-				addr = ntohl(his_addr.su_addr.s_addr);
-				if ((addr & mask) != net)
+			memset(net, 0x00, sizeof(net));
+			if ((bits = inet_net_pton(his_addr.su_family, p, net,
+			    sizeof(net))) != -1) {
+#ifdef INET6
+				if (his_addr.su_family == AF_INET) {
+#endif
+					addrlen = 4;
+					addr = (unsigned char *)&his_addr.su_addr;
+#ifdef INET6
+				} else {
+					addrlen = 16;
+					addr = (unsigned char *)&his_addr.su_6addr;
+				}
+#endif
+				bytes = bits / 8;
+				bits = bits % 8;
+				if (bytes > 0)
+					memset(mask, 0xFF, bytes);
+				if (bytes < addrlen)
+					mask[bytes] = 0xFF << (8 - bits);
+				if (bytes + 1 < addrlen)
+					memset(mask + bytes + 1, 0x00,
+					    addrlen - bytes - 1);
+				for (a = 0; a < addrlen; a++)
+					if ((addr[a] & mask[a]) != net[a])
+						break;
+				if (a < addrlen)
 					continue;
 
 					/* check against hostname glob */
@@ -2888,6 +2926,7 @@ static int
 handleoobcmd()
 {
 	char *cp;
+	int ret;
 
 	if (!urgflag)
 		return (0);
@@ -2896,9 +2935,14 @@ handleoobcmd()
 	if (!transflag)
 		return (0);
 	cp = tmpline;
-	if (getline(cp, sizeof(tmpline), stdin) == NULL) {
+	ret = getline(cp, sizeof(tmpline)-1, stdin);
+	if (ret == -1) {
 		reply(221, "You could at least say goodbye.");
 		dologout(0);
+	} else if (ret == -2) {
+		/* Ignore truncated command */
+		/* XXX: abort xfer with "500 command too long", & return 1 ? */
+		return 0;
 	}
 		/*
 		 * Manually parse OOB commands, because we can't
@@ -3686,7 +3730,7 @@ static int
 auth_conv(int num_msg, const struct pam_message **msg,
     struct pam_response **resp, void *appdata)
 {
-	int i;
+	int i, ret;
 	size_t n;
 	ftpd_cred_t *cred = (ftpd_cred_t *) appdata;
 	struct pam_response *myreply;
@@ -3739,18 +3783,23 @@ auth_conv(int num_msg, const struct pam_message **msg,
 			reply(331, "User %s accepted, provide %s.",
 			    cred->uname, pbuf);
 			(void) alarm(curclass.timeout);
-			if (getline(pbuf, sizeof(pbuf)-1, stdin) == NULL) {
+			ret = getline(pbuf, sizeof(pbuf)-1, stdin);
+			(void) alarm(0);
+			if (ret == -1) {
 				reply(221, "You could at least say goodbye.");
 				dologout(0);
+			} else if (ret == -2) {
+			    /* XXX: should we do this reply(-530, ..) ? */
+				reply(-530, "Command too long.");
+				goto fail;
 			}
-			(void) alarm(0);
 				/* Ensure it is PASS */
 			if (strncasecmp(pbuf, "PASS ", 5) != 0) {
-			    syslog(LOG_ERR,
-				"auth_conv: unexpected reply '%.4s'", pbuf);
-			    /* XXX: should we do this reply(-530, ..) ? */
-			    reply(-530, "Unexpected reply '%.4s'.", pbuf);
-			    goto fail;
+				syslog(LOG_ERR,
+				    "auth_conv: unexpected reply '%.4s'", pbuf);
+				/* XXX: should we do this reply(-530, ..) ? */
+				reply(-530, "Unexpected reply '%.4s'.", pbuf);
+				goto fail;
 			}
 				/* Strip CRLF from "PASS" reply */
 			n = strlen(pbuf);

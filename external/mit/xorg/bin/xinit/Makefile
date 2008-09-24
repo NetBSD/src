@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2008/09/18 05:18:30 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2008/09/24 16:35:00 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,8 @@ CPPFLAGS+=	-DHAS_VFORK ${X11FLAGS.CONNECTION} -DBINDIR=\"${X11BINDIR}\" \
 CPPSCRIPTS=	startx xinitrc
 CPPSCRIPTFLAGS_xinitrc=	-DXINITDIR=${XINITDIR} -DBINDIR=${X11BINDIR}
 CPPSCRIPTFLAGS_startx=	-DXINITDIR=${XINITDIR} -DBINDIR=${X11BINDIR} \
+		-DSHELL_CMD=/bin/sh -DXAUTH=xauth -DXINIT=xinit \
+		-DXSERVER=${X11BINDIR}/X -DXTERM=${X11BINDIR}/xterm \
 		-DHAS_COOKIE_MAKER \
 		-DMK_COOKIE='dd if=/dev/urandom bs=16 count=1 2>/dev/null | hexdump -e \\"%08x\\"'
 

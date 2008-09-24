@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_isa.c,v 1.8.80.1 2008/09/18 04:33:18 wrstuden Exp $ */
+/* $NetBSD: pccons_isa.c,v 1.8.80.2 2008/09/24 16:38:49 wrstuden Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons_isa.c,v 1.8.80.1 2008/09/18 04:33:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons_isa.c,v 1.8.80.2 2008/09/24 16:38:49 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,7 @@ pccons_isa_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq, IST_EDGE, IPL_TTY,
-	    pcintr, self);
+	    pcintr, sc);
 	pccons_common_attach(sc, ia->ia_iot, ia->ia_memt, ia->ia_iot,
 	    pccons_isa_conf);
 }

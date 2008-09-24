@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.7.2.2 2008/09/18 04:35:11 wrstuden Exp $ */
+/* $NetBSD: pseye.c,v 1.7.2.3 2008/09/24 16:38:55 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,8 +36,18 @@
  * URL: http://forums.ps2dev.org/viewtopic.php?t=9238
  */
 
+/*
+ * Sony PLAYSTATION(R) Eye Driver
+ *
+ * The only documentation we have for this part is based on a series
+ * of forum postings by Jim Paris on ps2dev.org. Many thanks for
+ * figuring this one out.
+ *
+ * URL: http://forums.ps2dev.org/viewtopic.php?t=9238
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.7.2.2 2008/09/18 04:35:11 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.7.2.3 2008/09/24 16:38:55 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.7.2.2 2008/09/18 04:35:11 wrstuden Exp $
 #include <dev/usb/usbdevs.h>
 
 #include <dev/video_if.h>
+
+#define PRI_PSEYE	PRI_BIO
 
 #define PRI_PSEYE	PRI_BIO
 
@@ -738,6 +750,12 @@ pseye_set_format(void *opaque, struct video_format *format)
 		return EINVAL;
 #endif
 	/* XXX */
+	return pseye_get_format(opaque, format);
+}
+
+static int
+pseye_try_format(void *opaque, struct video_format *format)
+{
 	return pseye_get_format(opaque, format);
 }
 

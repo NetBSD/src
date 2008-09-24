@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.34.2.1 2008/09/18 04:41:10 wrstuden Exp $
+.\"	$NetBSD: macros,v 1.34.2.2 2008/09/24 16:32:52 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -389,7 +389,7 @@
 .
 .\" Supported MACHINE_ARCHs:
 .ds MACHINE_ARCH_LIST alpha arm hppa i386 m68000 m68k mipseb mipsel
-.as MACHINE_ARCH_LIST " powerpc sh3eb sh3el sparc sparc64 vax x86_64 xen-i386
+.as MACHINE_ARCH_LIST " powerpc sh3eb sh3el sparc sparc64 vax x86_64
 .
 .\" Define registers for MACHINE_ARCHs with multiple or different MACHINEs
 .
@@ -403,10 +403,6 @@
 .if \n[amigappc]:\n[bebox]:\n[evbppc]:\n[macppc]:\n[mvmeppc]:\n[ofppc]:\n[prep]:\n[sandpoint] .ds A powerpc
 .if \n[evbsh3]:\n[mmeye] .ds A sh3eb
 .if \n[dreamcast]:\n[hpcsh] .ds A sh3el
-.if \n[xen-i386] \{.ds A i386
-.ds P i386
-.nr xen 1
-.\}
 .if !r\*A .nr \*A 1
 .define_all \*[MACHINE_ARCH_LIST]
 .

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.49.2.1 2008/06/23 04:31:58 wrstuden Exp $	*/
+/*	$NetBSD: if_media.h,v 1.49.2.2 2008/09/24 16:38:58 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -178,6 +178,7 @@ void		ifmedia_removeall(struct ifmedia *);
 #define	IFM_10G_LR	18		/* 10GbaseLR - single-mode fiber */
 #define	IFM_10G_SR	19		/* 10GBase-SR 850nm Multi-mode */
 #define	IFM_10G_CX4	20		/* 10GBase CX4 copper */
+#define	IFM_2500_SX	21		/* 2500baseSX - multi-mode fiber */
 
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
@@ -423,6 +424,8 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_10G_CX4,	"10GbaseCX4" },			\
 	{ IFM_ETHER | IFM_10G_CX4,	"10GCX4" },			\
 	{ IFM_ETHER | IFM_10G_CX4,	"10GBASE-CX4" },		\
+	{ IFM_ETHER | IFM_2500_SX,	"2500baseSX" },			\
+	{ IFM_ETHER | IFM_2500_SX,	"2500SX" },			\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"DB9/4Mbit" },			\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"4STP" },			\
@@ -553,6 +556,7 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_10G_LR,	IF_Gbps(10ULL) },		\
 	{ IFM_ETHER | IFM_10G_SR,	IF_Gbps(10ULL) },		\
 	{ IFM_ETHER | IFM_10G_CX4,	IF_Gbps(10ULL) },		\
+	{ IFM_ETHER | IFM_2500_SX,	IF_Mbps(2500ULL) },		\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	IF_Mbps(4) },			\
 	{ IFM_TOKEN | IFM_TOK_STP16,	IF_Mbps(16) },			\

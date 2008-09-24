@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_buf.c,v 1.12.12.1 2008/09/18 04:39:20 wrstuden Exp $	*/
+/*	$NetBSD: hash_buf.c,v 1.12.12.2 2008/09/24 16:35:08 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,13 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)hash_buf.c	8.5 (Berkeley) 7/15/94";
-#else
-__RCSID("$NetBSD: hash_buf.c,v 1.12.12.1 2008/09/18 04:39:20 wrstuden Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: hash_buf.c,v 1.12.12.2 2008/09/24 16:35:08 wrstuden Exp $");
 
 /*
  * PACKAGE: hash

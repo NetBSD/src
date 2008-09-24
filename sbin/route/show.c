@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.35 2006/10/16 02:55:10 christos Exp $	*/
+/*	$NetBSD: show.c,v 1.35.22.1 2008/09/24 16:35:51 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: show.c,v 1.35 2006/10/16 02:55:10 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.35.22.1 2008/09/24 16:35:51 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: show.c,v 1.35 2006/10/16 02:55:10 christos Exp $");
 #include <sys/sysctl.h>
 
 #include <netdb.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,8 +100,8 @@ static void p_sockaddr(struct sockaddr *, struct sockaddr *, int, int );
 static void p_flags(int);
 
 void
-parse_show_opts(int argc, char **argv, int *afp, int *flagsp,
-    const char **afnamep, int nolink)
+parse_show_opts(int argc, char * const *argv, int *afp, int *flagsp,
+    const char **afnamep, bool nolink)
 {
 	const char *afname = "unspec";
 	int af, flags;
@@ -166,7 +167,7 @@ parse_show_opts(int argc, char **argv, int *afp, int *flagsp,
  * Print routing tables.
  */
 void
-show(int argc, char **argv)
+show(int argc, char *const *argv)
 {
 	size_t needed;
 	int af, flags, mib[6];
@@ -174,7 +175,7 @@ show(int argc, char **argv)
 	struct rt_msghdr *rtm;
 	struct sockaddr *sa;
 
-	parse_show_opts(argc, argv, &af, &flags, NULL, 1);
+	parse_show_opts(argc, argv, &af, &flags, NULL, true);
 	mib[0] = CTL_NET;
 	mib[1] = PF_ROUTE;
 	mib[2] = 0;
@@ -182,13 +183,13 @@ show(int argc, char **argv)
 	mib[4] = NET_RT_DUMP;
 	mib[5] = 0;
 	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		err(1, "route-sysctl-estimate");
+		err(EXIT_FAILURE, "route-sysctl-estimate");
 	buf = lim = NULL;
 	if (needed) {
 		if ((buf = malloc(needed)) == 0)
-			err(1, "malloc");
+			err(EXIT_FAILURE, "malloc");
 		if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-			err(1, "sysctl of routing table");
+			err(EXIT_FAILURE, "sysctl of routing table");
 		lim  = buf + needed;
 	}
 

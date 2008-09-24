@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92.2.5 2008/09/18 04:33:17 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92.2.6 2008/09/24 16:38:48 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.5 2008/09/18 04:33:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.6 2008/09/24 16:38:48 wrstuden Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -533,7 +533,7 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 
 	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rflags &= ~PSL_CLEARSIG;
 	tf->tf_rsp = (uint64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }

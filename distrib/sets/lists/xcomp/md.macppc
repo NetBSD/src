@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.5.40.1 2008/09/18 04:41:14 wrstuden Exp $
+# $NetBSD: md.macppc,v 1.5.40.2 2008/09/24 16:32:54 wrstuden Exp $
 ./usr/X11R6/include/X11/extensions/xf86dga.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/xf86dga1.h		-unknown-	x11
 ./usr/X11R6/include/X11/extensions/xf86dga1str.h	-unknown-	x11
@@ -102,6 +102,28 @@
 ./usr/X11R7/man/cat3/XF86VidModeSwitchMode.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeSwitchToMode.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeValidateModeLine.0	-unknown-	.cat,xorg
+./usr/X11R7/man/html3/XF86VM.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeDeleteModeLine.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeGetAllModeLines.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeGetDotClocks.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeGetGamma.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeGetGammaRamp.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeGetGammaRampSize.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeGetModeLine.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeGetMonitor.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeGetPermissions.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeGetViewPort.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeLockModeSwitch.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeModModeLine.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeQueryExtension.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeQueryVersion.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeSetClientVersion.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeSetGamma.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeSetGammaRamp.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeSetViewPort.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeSwitchMode.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeSwitchToMode.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86VidModeValidateModeLine.html	-unknown-	html,xorg
 ./usr/X11R7/man/man3/XF86VM.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeDeleteModeLine.3	-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeGetAllModeLines.3	-unknown-	.man,xorg
@@ -139,7 +161,6 @@
 ./usr/libdata/debug/usr/X11R7/bin/Xmacppc.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/Xvfb.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/kbd_mode.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/mmapr.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/mmapw.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	debug,xorg

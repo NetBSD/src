@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_func.c,v 1.11.12.1 2008/09/18 04:39:21 wrstuden Exp $	*/
+/*	$NetBSD: hash_func.c,v 1.11.12.2 2008/09/24 16:35:08 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,13 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)hash_func.c	8.2 (Berkeley) 2/21/94";
-#else
-__RCSID("$NetBSD: hash_func.c,v 1.11.12.1 2008/09/18 04:39:21 wrstuden Exp $");
-#endif
-#endif /* LIBC_SCCS and not lint */
+__RCSID("$NetBSD: hash_func.c,v 1.11.12.2 2008/09/24 16:35:08 wrstuden Exp $");
 
 #include <sys/types.h>
 

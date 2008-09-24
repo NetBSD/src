@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.29.4.4 2008/09/18 04:36:45 wrstuden Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.29.4.5 2008/09/24 16:38:50 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.4.4 2008/09/18 04:36:45 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.29.4.5 2008/09/24 16:38:50 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -629,7 +629,7 @@ linux_buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_rip = (u_int64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rflags &= ~PSL_CLEARSIG;
 	tf->tf_rsp = (u_int64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }

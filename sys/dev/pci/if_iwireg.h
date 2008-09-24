@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwireg.h,v 1.18 2007/12/25 18:33:40 perry Exp $ */
+/*	$NetBSD: if_iwireg.h,v 1.18.12.1 2008/09/24 16:38:53 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -434,12 +434,12 @@ struct iwi_scan_v2 {
 		u_int8_t lsn:4;
 		u_int8_t msn:4;
 #endif
-	} __attribute__ ((__packed__)) type[IWI_SCAN_CHANNELS / 2];
+	} __packed type[IWI_SCAN_CHANNELS / 2];
 
 	u_int8_t	reserved1;
 	u_int16_t	dwelltime[IWI_SCAN_TYPES];
 
-} __attribute__ ((__packed__));
+} __packed;
 
 /* structure for command IWI_CMD_SET_CONFIGURATION */
 struct iwi_configuration {

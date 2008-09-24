@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2008/09/18 05:18:37 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2008/09/24 16:35:03 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,8 @@ CPPFLAGS+=-DHASXDMAUTH
 
 CPPFLAGS.Fill.c=	${X11FLAGS.CONNECTION}
 CPPFLAGS.Flush.c=	${X11FLAGS.CONNECTION}
+
+PKGDIST=	${LIB}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

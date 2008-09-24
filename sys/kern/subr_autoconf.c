@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.147.2.2 2008/09/18 04:31:43 wrstuden Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.147.2.3 2008/09/24 16:38:56 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.147.2.2 2008/09/18 04:31:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.147.2.3 2008/09/24 16:38:56 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -1243,7 +1243,6 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		dev = kmem_zalloc(sizeof(*dev), kmflags);
 	} else {
 		dev = dev_private;
-		printf("%s is not split\n", cd->cd_name);
 	}
 	if (dev == NULL)
 		panic("config_devalloc: memory allocation for device_t failed");

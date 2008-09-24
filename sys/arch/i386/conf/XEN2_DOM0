@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.43.6.2 2008/09/18 04:33:27 wrstuden Exp $
+# $NetBSD: XEN2_DOM0,v 1.43.6.3 2008/09/24 16:38:49 wrstuden Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -251,6 +251,8 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 # Hardware monitors
 
+amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
+
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #iic*	at amdpm?			# sensors below are on this bus
@@ -284,6 +286,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
+iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3

@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.4.16.1 2008/09/18 04:41:14 wrstuden Exp $
+# $NetBSD: md.amd64,v 1.4.16.2 2008/09/24 16:32:54 wrstuden Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -136,15 +136,6 @@
 ./usr/X11R7/man/man3/XF86VidModeSwitchMode.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeSwitchToMode.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeValidateModeLine.3	-unknown-	.man,xorg
-./usr/libdata/debug/usr/X11R7/bin/XFree86.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/Xvfb.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/ioport.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/kbd_mode.debug	-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xf86cfg.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/xf86config.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R6/bin/XFree86.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/Xvfb.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/gtf.debug		-unknown-	debug,x11
@@ -156,3 +147,9 @@
 ./usr/libdata/debug/usr/X11R6/bin/scanpci.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/xf86cfg.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/xf86config.debug	-unknown-	debug,x11
+./usr/libdata/debug/usr/X11R7/bin/Xvfb.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/gtf.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/ioport.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/pcitweak.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/scanpci.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/xorgconfig.debug	-unknown-	debug,xorg
