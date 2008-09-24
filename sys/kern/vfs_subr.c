@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.356 2008/09/07 13:09:36 tron Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.357 2008/09/24 09:33:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.356 2008/09/07 13:09:36 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.357 2008/09/24 09:33:40 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -282,7 +282,7 @@ void
 vfs_destroy(struct mount *mp)
 {
 
-	if (__predict_true(atomic_dec_uint_nv(&mp->mnt_refcnt) > 0)) {
+	if (__predict_true((int)atomic_dec_uint_nv(&mp->mnt_refcnt) > 0)) {
 		return;
 	}
 
@@ -290,6 +290,7 @@ vfs_destroy(struct mount *mp)
 	 * Nothing else has visibility of the mount: we can now
 	 * free the data structures.
 	 */
+	KASSERT(mp->mnt_refcnt == 0);
 	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
 	rw_destroy(&mp->mnt_unmounting);
 	mutex_destroy(&mp->mnt_updating);
