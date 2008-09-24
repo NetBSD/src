@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.19.2.2 2008/09/18 04:31:45 wrstuden Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.19.2.3 2008/09/24 16:38:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.19.2.2 2008/09/18 04:31:45 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.19.2.3 2008/09/24 16:38:57 wrstuden Exp $");
 
 /*
  * File system transaction operations.
@@ -143,6 +143,7 @@ void
 fstrans_unmount(struct mount *mp)
 {
 	struct fstrans_mount_info *fmi;
+	struct fscow_handler *hp;
 
 	if ((fmi = mp->mnt_transinfo) == NULL)
 		return;
@@ -150,7 +151,12 @@ fstrans_unmount(struct mount *mp)
 	KASSERT(fmi->fmi_state == FSTRANS_NORMAL);
 	rw_destroy(&fmi->fmi_lazy_lock);
 	rw_destroy(&fmi->fmi_shared_lock);
-	KASSERT(SLIST_EMPTY(&fmi->fmi_cow_handler));
+	rw_enter(&fmi->fmi_cow_lock, RW_WRITER);
+	while ((hp = SLIST_FIRST(&fmi->fmi_cow_handler)) != NULL) {
+		SLIST_REMOVE(&fmi->fmi_cow_handler, hp, fscow_handler, ch_list);
+		kmem_free(hp, sizeof(*hp));
+	}
+	rw_exit(&fmi->fmi_cow_lock);
 	rw_destroy(&fmi->fmi_cow_lock);
 	kmem_free(fmi, sizeof(*fmi));
 	mp->mnt_iflag &= ~IMNT_HAS_TRANS;

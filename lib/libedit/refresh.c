@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.27 2005/11/09 22:11:10 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.27.20.1 2008/09/24 16:35:09 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.27 2005/11/09 22:11:10 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.27.20.1 2008/09/24 16:35:09 wrstuden Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -323,9 +323,9 @@ re_goto_bottom(EditLine *el)
 {
 
 	term_move_to_line(el, el->el_refresh.r_oldcv);
-	term__putc('\n');
+	term__putc(el, '\n');
 	re_clear_display(el);
-	term__flush();
+	term__flush(el);
 }
 
 
@@ -1011,7 +1011,7 @@ re_refresh_cursor(EditLine *el)
 	/* now go there */
 	term_move_to_line(el, v);
 	term_move_to_char(el, h);
-	term__flush();
+	term__flush(el);
 }
 
 
@@ -1022,7 +1022,7 @@ private void
 re_fastputc(EditLine *el, int c)
 {
 
-	term__putc(c);
+	term__putc(el, c);
 	el->el_display[el->el_cursor.v][el->el_cursor.h++] = c;
 	if (el->el_cursor.h >= el->el_term.t_size.h) {
 		/* if we must overflow */
@@ -1049,12 +1049,12 @@ re_fastputc(EditLine *el, int c)
 		}
 		if (EL_HAS_AUTO_MARGINS) {
 			if (EL_HAS_MAGIC_MARGINS) {
-				term__putc(' ');
-				term__putc('\b');
+				term__putc(el, ' ');
+				term__putc(el, '\b');
 			}
 		} else {
-			term__putc('\r');
-			term__putc('\n');
+			term__putc(el, '\r');
+			term__putc(el, '\n');
 		}
 	}
 }
@@ -1094,7 +1094,7 @@ re_fastaddc(EditLine *el)
 		re_fastputc(el, (int)(((((unsigned int)c) >> 3) & 7) + '0'));
 		re_fastputc(el, (c & 7) + '0');
 	}
-	term__flush();
+	term__flush(el);
 }
 
 
@@ -1133,7 +1133,7 @@ re_clear_lines(EditLine *el)
 	} else {
 		term_move_to_line(el, el->el_refresh.r_oldcv);
 					/* go to last line */
-		term__putc('\r');	/* go to BOL */
-		term__putc('\n');	/* go to new line */
+		term__putc(el, '\r');	/* go to BOL */
+		term__putc(el, '\n');	/* go to new line */
 	}
 }

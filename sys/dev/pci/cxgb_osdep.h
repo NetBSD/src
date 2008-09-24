@@ -252,7 +252,7 @@ struct t3_mbuf_hdr {
 #define M_SANITY(m, n)
 #endif
 
-#define __read_mostly __attribute__((__section__(".data.read_mostly")))
+#define __read_mostly __section(".data.read_mostly")
 
 /*
  * Workaround for weird Chelsio issue

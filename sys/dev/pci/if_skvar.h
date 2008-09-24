@@ -1,4 +1,4 @@
-/* $NetBSD: if_skvar.h,v 1.13.2.1 2008/06/23 04:31:11 wrstuden Exp $ */
+/* $NetBSD: if_skvar.h,v 1.13.2.2 2008/09/24 16:38:53 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ struct sk_if_softc;
 
 /* Softc for the GEnesis controller. */
 struct sk_softc {
-	struct device		sk_dev;		/* generic device */
+	device_t		sk_dev;		/* generic device */
 	bus_space_handle_t	sk_bhandle;	/* bus space handle */
 	bus_space_tag_t		sk_btag;	/* bus space tag */
 	void			*sk_intrhand;	/* irq handler handle */
@@ -211,7 +211,7 @@ struct sk_softc {
 
 /* Softc for each logical interface */
 struct sk_if_softc {
-	struct device		sk_dev;		/* generic device */
+	device_t		sk_dev;		/* generic device */
 	struct ethercom		sk_ethercom;	/* interface info */
 	struct mii_data		sk_mii;
 	u_int8_t                sk_enaddr[ETHER_ADDR_LEN]; /* station addr */

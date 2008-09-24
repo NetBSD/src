@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_workqueue.c,v 1.24.6.1 2008/09/18 04:31:43 wrstuden Exp $	*/
+/*	$NetBSD: subr_workqueue.c,v 1.24.6.2 2008/09/24 16:38:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c)2002, 2005, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.24.6.1 2008/09/18 04:31:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_workqueue.c,v 1.24.6.2 2008/09/24 16:38:57 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -86,7 +86,7 @@ workqueue_queue_lookup(struct workqueue *wq, struct cpu_info *ci)
 		idx = ci ? cpu_index(ci) : cpu_index(curcpu());
 	}
 
-	return (void *)((intptr_t)(wq) + WQ_SIZE + (idx * WQ_QUEUE_SIZE));
+	return (void *)((uintptr_t)(wq) + WQ_SIZE + (idx * WQ_QUEUE_SIZE));
 }
 
 static void
@@ -235,7 +235,7 @@ workqueue_create(struct workqueue **wqp, const char *name,
 	CTASSERT(sizeof(work_impl_t) <= sizeof(struct work));
 
 	ptr = kmem_zalloc(workqueue_size(flags), KM_SLEEP);
-	wq = (void *)roundup2((intptr_t)ptr, coherency_unit);
+	wq = (void *)roundup2((uintptr_t)ptr, coherency_unit);
 	wq->wq_ptr = ptr;
 	wq->wq_flags = flags;
 

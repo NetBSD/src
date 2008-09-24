@@ -1,4 +1,4 @@
-/* $NetBSD: siisatavar.h,v 1.1.8.2 2008/06/23 05:02:13 wrstuden Exp $ */
+/* $NetBSD: siisatavar.h,v 1.1.8.3 2008/09/24 16:38:53 wrstuden Exp $ */
 /* Id: siisatavar.h,v 1.15 2008/05/22 13:48:54 jakllsch Exp  */
 
 /* from ahcisatavar.h */
@@ -64,8 +64,6 @@
 
 #include <dev/ic/siisatareg.h>
 #include <dev/ata/atavar.h>
-
-#define SIISATA_DEBUG
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02

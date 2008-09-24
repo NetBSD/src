@@ -1,4 +1,4 @@
-/* $NetBSD: vreset.c,v 1.7 2008/04/28 20:23:33 martin Exp $ */
+/* $NetBSD: vreset.c,v 1.7.2.1 2008/09/24 16:38:50 wrstuden Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -76,7 +76,8 @@ static vga_reg_t CR_regs[CRREGS] = {
 	{ 0x0,	0x61 }, /* 00: horizontal total */
 	{ 0x1,	0x4f }, /* 01: horizontal display-enable end */
 	{ 0x2,	0x50 }, /* 02: start horizontal blanking */
-	{ 0x3,	0x82 }, /* 03: display skew control / end horizontal blanking */	{ 0x4,	0x55 }, /* 04: start horizontal retrace pulse */
+	{ 0x3,	0x82 }, /* 03: display skew control / end horizontal blanking */
+	{ 0x4,	0x55 }, /* 04: start horizontal retrace pulse */
 	{ 0x5,	0x81 }, /* 05: horizontal retrace delay / end horiz. retrace */
 	{ 0x6,	0xf0 }, /* 06: vertical total */
 	{ 0x7,	0x1f }, /* 07: overflow register */

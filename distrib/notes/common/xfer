@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.62 2008/04/30 13:10:48 martin Exp $
+.\"	$NetBSD: xfer,v 1.62.2.1 2008/09/24 16:32:52 wrstuden Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,6 +37,13 @@ and the kernel you wish to boot on a RISC OS file system somewhere.
 can boot gzipped kernels, so there's no need to gunzip it.
 .Pp
 .\} \" \n[acorn26]
+.
+.if \n[arc] \{\
+You will need to create a CD with an install kernel on it or have
+a FAT partition and working other OS (Windows NT) which can write
+install files into it.
+.Pp
+.\} \" \n[arc]
 .
 .if \n[cats] \{\
 You will need to create a CD with an install kernel on it or have another

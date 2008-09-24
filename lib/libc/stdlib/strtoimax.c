@@ -31,8 +31,12 @@
 #include "nbtool_config.h"
 #endif
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoimax.c,v 1.5.12.1 2008/09/18 04:39:22 wrstuden Exp $");
+__RCSID("$NetBSD: strtoimax.c,v 1.5.12.2 2008/09/24 16:35:09 wrstuden Exp $");
 
 #include <assert.h>
 #include <ctype.h>

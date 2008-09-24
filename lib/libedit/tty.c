@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.25.20.1 2008/09/18 04:39:23 wrstuden Exp $	*/
+/*	$NetBSD: tty.c,v 1.25.20.2 2008/09/24 16:35:09 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tty.c,v 1.25.20.1 2008/09/18 04:39:23 wrstuden Exp $");
+__RCSID("$NetBSD: tty.c,v 1.25.20.2 2008/09/24 16:35:09 wrstuden Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1305,6 +1305,17 @@ tty_stty(EditLine *el, int argc __attribute__((__unused__)), const char **argv)
 			break;
 		}
 	}
+
+	if (el->el_tty.t_mode == z) {
+		if (tty_setty(el, TCSADRAIN, tios) == -1) {
+#ifdef DEBUG_TTY
+			(void) fprintf(el->el_errfile,
+			    "tty_stty: tty_setty: %s\n", strerror(errno));
+#endif /* DEBUG_TTY */
+			return (-1);
+		}
+	}
+
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7.2.2 2008/09/18 05:18:46 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.7.2.3 2008/09/24 16:35:06 wrstuden Exp $
 
 SUBDIR=	cvt gtf xorgconfig
 
@@ -6,7 +6,7 @@ SUBDIR=	cvt gtf xorgconfig
 SUBDIR+=ioport pcitweak scanpci
 .endif
 
-.if ${MACHINE} == "cats"
+.if ${MACHINE} == "cats" || ${MACHINE} == "macppc"
 SUBDIR+=pcitweak scanpci
 .endif
 

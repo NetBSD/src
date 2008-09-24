@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.8.4.1 2008/09/18 04:33:39 wrstuden Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.8.4.2 2008/09/24 16:38:50 wrstuden Exp $	*/
 
 /*
  *
@@ -59,16 +59,36 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.8.4.1 2008/09/18 04:33:39 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.8.4.2 2008/09/24 16:38:50 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kmem.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <machine/vmparam.h>
+#include <machine/pmap.h>
 
 #include <xen/xen.h>
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
+#include <xen/xenpmap.h>
 
 #include "opt_xen.h"
+
+#ifdef XEN3
+/*
+ * arch-dependent p2m frame lists list (L3 and L2)
+ * used by Xen for save/restore mappings
+ */
+static unsigned long * l3_p2m_page;
+static unsigned long * l2_p2m_page;
+static int l2_p2m_page_size; /* size of L2 page, in pages */
+
+static void build_p2m_frame_list_list(void);
+static void update_p2m_frame_list_list(void);
+#endif /* XEN3 */
 
 // #define PORT_DEBUG 4
 // #define EARLY_DEBUG_EVENT
@@ -358,3 +378,98 @@ hypervisor_set_ipending(uint32_t iplmask, int l1, int l2)
 	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1UL << l1;
 	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
 }
+
+void
+hypervisor_machdep_attach(void) {
+
+#ifdef XEN3
+ 	/* dom0 does not require the arch-dependent P2M translation table */
+	if ( !(xen_start_info.flags & SIF_INITDOMAIN) ) {
+		build_p2m_frame_list_list();
+	}
+#endif
+
+}
+
+#ifdef XEN3
+/*
+ * Generate the p2m_frame_list_list table,
+ * needed for guest save/restore
+ */
+static void
+build_p2m_frame_list_list(void) {
+
+        int fpp; /* number of page (frame) pointer per page */
+        unsigned long max_pfn;
+        /*
+         * The p2m list is composed of three levels of indirection,
+         * each layer containing MFNs pointing to lower level pages
+         * The indirection is used to convert a given PFN to its MFN
+         * Each N level page can point to @fpp (N-1) level pages
+         * For example, for x86 32bit, we have:
+         * - PAGE_SIZE: 4096 bytes
+         * - fpp: 1024 (one L3 page can address 1024 L2 pages)
+         * A L1 page contains the list of MFN we are looking for
+         */
+        max_pfn = xen_start_info.nr_pages;
+        fpp = PAGE_SIZE / sizeof(paddr_t);
+
+        /* we only need one L3 page */
+        l3_p2m_page = kmem_alloc(PAGE_SIZE, KM_NOSLEEP);
+        if (l3_p2m_page == NULL)
+                panic("could not allocate memory for l3_p2m_page");
+
+        /*
+         * Determine how many L2 pages we need for the mapping
+         * Each L2 can map a total of @fpp L1 pages
+         */
+        l2_p2m_page_size = howmany(max_pfn, fpp);
+
+        l2_p2m_page = kmem_alloc(l2_p2m_page_size * PAGE_SIZE, KM_NOSLEEP);
+        if (l2_p2m_page == NULL)
+                panic("could not allocate memory for l2_p2m_page");
+
+        /* We now have L3 and L2 pages ready, update L1 mapping */
+        update_p2m_frame_list_list();
+
+}
+
+/*
+ * Update the L1 p2m_frame_list_list mapping (during guest boot or resume)
+ */
+static void
+update_p2m_frame_list_list(void) {
+
+        int i;
+        int fpp; /* number of page (frame) pointer per page */
+        unsigned long max_pfn;
+
+        max_pfn = xen_start_info.nr_pages;
+        fpp = PAGE_SIZE / sizeof(paddr_t);
+
+        for (i = 0; i < l2_p2m_page_size; i++) {
+                /*
+                 * Each time we start a new L2 page,
+                 * store its MFN in the L3 page
+                 */
+                if ((i % fpp) == 0) {
+                        l3_p2m_page[i/fpp] = vtomfn(
+                                (vaddr_t)&l2_p2m_page[i]);
+                }
+                /*
+                 * we use a shortcut
+                 * since @xpmap_phys_to_machine_mapping array
+                 * already contains PFN to MFN mapping, we just
+                 * set the l2_p2m_page MFN pointer to the MFN of the
+                 * according frame of @xpmap_phys_to_machine_mapping
+                 */
+                l2_p2m_page[i] = vtomfn((vaddr_t)
+                        &xpmap_phys_to_machine_mapping[i*fpp]);
+        }
+
+        HYPERVISOR_shared_info->arch.pfn_to_mfn_frame_list_list =
+                                        vtomfn((vaddr_t)l3_p2m_page);
+        HYPERVISOR_shared_info->arch.max_pfn = max_pfn;
+
+}
+#endif /* XEN3 */

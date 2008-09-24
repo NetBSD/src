@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.19.12.1 2008/09/18 04:37:04 wrstuden Exp $	*/
+/*	$NetBSD: specfs.c,v 1.19.12.2 2008/09/24 16:38:58 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -53,6 +53,8 @@ static int rump_specbmap(void *);
 static int rump_specputpages(void *);
 static int rump_specstrategy(void *);
 static int rump_specsimpleul(void *);
+
+kmutex_t specfs_lock;
 
 int (**spec_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
@@ -234,7 +236,7 @@ rump_specstrategy(void *v)
 	off = bp->b_blkno << DEV_BSHIFT;
 	DPRINTF(("specstrategy: 0x%x bytes %s off 0x%" PRIx64
 	    " (0x%" PRIx64 " - 0x%" PRIx64")\n",
-	    bp->b_bcount, bp->b_flags & B_READ ? "READ" : "WRITE",
+	    bp->b_bcount, BUF_ISREAD(bp) "READ" : "WRITE",
 	    off, off, (off + bp->b_bcount)));
 
 	/*
@@ -260,7 +262,7 @@ rump_specstrategy(void *v)
 		rua->rua_dlen = bp->b_bcount;
 		rua->rua_off = off;
 		rua->rua_bp = bp;
-		rua->rua_op = bp->b_flags & B_READ;
+		rua->rua_op = BUF_ISREAD(bp);
 
 		rumpuser_mutex_enter(&rua_mtx);
 
@@ -286,15 +288,20 @@ rump_specstrategy(void *v)
 		rumpuser_mutex_exit(&rua_mtx);
 	} else {
  syncfallback:
-		if (bp->b_flags & B_READ) {
+		if (BUF_ISREAD(bp)) {
 			rumpuser_read_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		} else {
 			rumpuser_write_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		}
-		if (!async)
+		if (!async) {
+			int error;
+
+			if (BUF_ISWRITE(bp))
+				rumpuser_fsync(sp->rsp_fd, &error);
 			biowait(bp);
+		}
 	}
 
 	return 0;

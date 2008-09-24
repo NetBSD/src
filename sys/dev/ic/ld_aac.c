@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.20 2008/04/30 14:07:13 ad Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.20.2.1 2008/09/24 16:38:52 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.20 2008/04/30 14:07:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.20.2.1 2008/09/24 16:38:52 wrstuden Exp $");
 
 #include "rnd.h"
 
@@ -61,46 +61,42 @@ struct ld_aac_softc {
 	int	sc_hwunit;
 };
 
-static void	ld_aac_attach(struct device *, struct device *, void *);
+static void	ld_aac_attach(device_t, device_t, void *);
 static void	ld_aac_intr(struct aac_ccb *);
 static int	ld_aac_dobio(struct ld_aac_softc *, void *, int, int, int,
 			     struct buf *);
 static int	ld_aac_dump(struct ld_softc *, void *, int, int);
-static int	ld_aac_match(struct device *, struct cfdata *, void *);
+static int	ld_aac_match(device_t, cfdata_t, void *);
 static int	ld_aac_start(struct ld_softc *, struct buf *);
 
-CFATTACH_DECL(ld_aac, sizeof(struct ld_aac_softc),
+CFATTACH_DECL_NEW(ld_aac, sizeof(struct ld_aac_softc),
     ld_aac_match, ld_aac_attach, NULL, NULL);
 
 static int
-ld_aac_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ld_aac_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return (1);
 }
 
 static void
-ld_aac_attach(struct device *parent, struct device *self, void *aux)
+ld_aac_attach(device_t parent, device_t self, void *aux)
 {
-	struct aac_attach_args *aaca;
-	struct aac_drive *hdr;
-	struct ld_aac_softc *sc;
-	struct ld_softc *ld;
-	struct aac_softc *aac;
+	struct aac_attach_args *aaca = aux;
+	struct ld_aac_softc *sc = device_private(self);
+	struct ld_softc *ld = &sc->sc_ld;
+	struct aac_softc *aac = device_private(parent);
+	struct aac_drive *hdr = &aac->sc_hdr[aaca->aaca_unit];
 
-	aaca = aux;
-	aac = (struct aac_softc *)parent;
-	sc = (struct ld_aac_softc *)self;
-	ld = &sc->sc_ld;
-	hdr = &aac->sc_hdr[aaca->aaca_unit];
+	ld->sc_dv = self;
 
 	sc->sc_hwunit = aaca->aaca_unit;
 	ld->sc_flags = LDF_ENABLED;
 	ld->sc_maxxfer = AAC_MAX_XFER(aac);
 	ld->sc_secperunit = hdr->hd_size;
 	ld->sc_secsize = AAC_SECTOR_SIZE;
-	ld->sc_maxqueuecnt = (aac->sc_max_fibs - AAC_NCCBS_RESERVE) / aac->sc_nunits;
+	ld->sc_maxqueuecnt =
+	    (aac->sc_max_fibs - AAC_NCCBS_RESERVE) / aac->sc_nunits;
 	ld->sc_start = ld_aac_start;
 	ld->sc_dump = ld_aac_dump;
 
@@ -123,7 +119,7 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 	u_int16_t size;
 	int s, rv, i;
 
-	aac = (struct aac_softc *)device_parent(&sc->sc_ld.sc_dv);
+	aac = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	/*
 	 * Allocate a command control block and map the data transfer.
@@ -271,7 +267,8 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 			}
 
 			if (status != ST_OK) {
-				aprint_error_dev(&sc->sc_ld.sc_dv, "I/O error: %s\n",
+				aprint_error_dev(sc->sc_ld.sc_dv,
+				    "I/O error: %s\n",
 				    aac_describe_code(aac_command_status_table,
 				    status));
 				rv = EIO;
@@ -308,7 +305,7 @@ ld_aac_intr(struct aac_ccb *ac)
 
 	bp = ac->ac_context;
 	sc = (struct ld_aac_softc *)ac->ac_device;
-	aac = (struct aac_softc *)device_parent(&sc->sc_ld.sc_dv);
+	aac = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	if ((bp->b_flags & B_READ) != 0) {
 		brr = (struct aac_blockread_response *)&ac->ac_fib->data[0];
@@ -325,7 +322,7 @@ ld_aac_intr(struct aac_ccb *ac)
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 
-		aprint_error_dev(&sc->sc_ld.sc_dv, "I/O error: %s\n",
+		aprint_error_dev(sc->sc_ld.sc_dv, "I/O error: %s\n",
 		    aac_describe_code(aac_command_status_table, status));
 	} else
 		bp->b_resid = 0;

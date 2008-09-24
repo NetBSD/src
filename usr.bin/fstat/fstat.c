@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.82.4.1 2008/09/18 04:29:12 wrstuden Exp $	*/
+/*	$NetBSD: fstat.c,v 1.82.4.2 2008/09/24 16:38:58 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.82.4.1 2008/09/18 04:29:12 wrstuden Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.82.4.2 2008/09/24 16:38:58 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -977,7 +977,7 @@ static void
 misctrans(struct file *file)
 {
 
-	PREFIX(file->f_type);
+	PREFIX((int)file->f_type);
 	pmisc(file, dtypes[file->f_type]);
 }
 

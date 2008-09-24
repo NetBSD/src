@@ -5,7 +5,7 @@
  *   Target: AT76c503a with RFMD radio
  *   Version: 1.101.0-84
  *
- * Copyright 2004 Atmel Corporation. All Rights Reserved. Redistribution and use
+ * Copyright 2004 Atmel Corporation. All Rights Reserved. Redistribution and use
  * of the microcode software ("Firmware") is permitted provided that the following
  * conditions are met:
  *     1. Firmware is redistributed in object code only.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_put.c,v 1.14.12.1 2008/09/18 04:39:21 wrstuden Exp $	*/
+/*	$NetBSD: rec_put.c,v 1.14.12.2 2008/09/24 16:35:08 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -29,14 +29,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)rec_put.c	8.7 (Berkeley) 8/18/94";
-#else
-__RCSID("$NetBSD: rec_put.c,v 1.14.12.1 2008/09/18 04:39:21 wrstuden Exp $");
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
-#endif /* LIBC_SCCS and not lint */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: rec_put.c,v 1.14.12.2 2008/09/24 16:35:08 wrstuden Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>

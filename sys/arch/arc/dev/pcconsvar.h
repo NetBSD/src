@@ -1,4 +1,4 @@
-/*	$NetBSD: pcconsvar.h,v 1.4 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: pcconsvar.h,v 1.4.80.1 2008/09/24 16:38:48 wrstuden Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -109,7 +109,7 @@ struct pccons_context {
 struct tty;
 
 struct pc_softc {
-	struct	device sc_dev;
+	device_t sc_dev;
 	struct	tty *sc_tty;
 
 #if 0

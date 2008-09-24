@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.16.6.2 2008/09/18 04:33:39 wrstuden Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.16.6.3 2008/09/24 16:38:50 wrstuden Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.16.6.2 2008/09/18 04:33:39 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.16.6.3 2008/09/24 16:38:50 wrstuden Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -485,7 +485,7 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 				proto = XEN_IO_PROTO_ABI_X86_32;
 			} else if(strcmp(xsproto, XEN_IO_PROTO_ABI_X86_64) == 0) {
 				xbdi->xbdi_proto = XBDIP_64;
-				proto = XEN_IO_PROTO_ABI_X86_32;
+				proto = XEN_IO_PROTO_ABI_X86_64;
 			} else {
 				printf("xbd domain %d: unknown proto %s\n",
 				    xbdi->xbdi_domid, xsproto);
@@ -549,7 +549,7 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 			printf("blkback %s: can't get event channel: %d\n",
 			    xbusd->xbusd_otherend, err);
 			xenbus_dev_fatal(xbusd, err,
-			    "can't bind event chanel", xbusd->xbusd_otherend);
+			    "can't bind event channel", xbusd->xbusd_otherend);
 			goto err2;
 		}
 		xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
@@ -643,7 +643,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	major = major(xbdi->xbdi_dev);
 	devname = devsw_blk2name(major);
 	if (devname == NULL) {
-		printf("xbdback %s: unknwon device 0x%x\n", xbusd->xbusd_path,
+		printf("xbdback %s: unknown device 0x%x\n", xbusd->xbusd_path,
 		    xbdi->xbdi_dev);
 		return;
 	}

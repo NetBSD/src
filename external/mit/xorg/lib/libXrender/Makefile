@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2008/09/18 05:18:38 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2008/09/24 16:35:04 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -14,29 +14,6 @@ SRCS=		Xrender.c AddTrap.c Color.c Composite.c Cursor.c \
 INCS=	Xrender.h
 INCSDIR=${X11INCDIR}/X11/extensions
 
-.if 0
-FILES=		xrender.pc
-FILESDIR_xrender.pc=	${X11USRLIBDIR}/pkgconfig
-
-CLEANFILES+=	${FILES}
-realall:	${FILES}
-
-XCURSORDIR=	${X11SRCDIR.xc}/lib/Xcursor
-CONFIG_SUBST= 	${HOST_SH} ${XCURSORDIR}/config-subst \
-		prefix="${X11ROOTDIR}" \
-		exec_prefix="${X11BINDIR}" \
-		libdir="${X11USRLIBDIR}" \
-		includedir="${X11INCDIR}" \
-		VERSION="0.9.4" \
-		X_REQUIRES="" \
-		RENDER_CFLAGS="" \
-		X_NON_PKG_CFLAGS="" \
-		X_NON_PKG_LIBS="-lX11 -lXext"
-
-xrender.pc:
-	${CONFIG_SUBST} < ${XRENDERDIR}/xrender.pc.in > ${.TARGET}
-.endif
-
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/extensions
 CPPFLAGS+=	-I${XRENDERDIR}/../include
@@ -45,6 +22,8 @@ CPPFLAGS+=	-I${XRENDERDIR}/../include
 LIBDPLIBS=\
 	Xext	${.CURDIR}/../libXext \
 	X11	${.CURDIR}/../libX11/dynamic
+
+PKGDIST=	${LIB}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/* $NetBSD: strtoull.c,v 1.1.26.1 2008/09/18 04:54:18 wrstuden Exp $ */
+/* $NetBSD: strtoull.c,v 1.1.26.2 2008/09/24 16:30:24 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2005 The DragonFly Project.  All rights reserved.
@@ -31,8 +31,12 @@
 #include "nbtool_config.h"
 #endif
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strtoull.c,v 1.1.26.1 2008/09/18 04:54:18 wrstuden Exp $");
+__RCSID("$NetBSD: strtoull.c,v 1.1.26.2 2008/09/24 16:30:24 wrstuden Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"

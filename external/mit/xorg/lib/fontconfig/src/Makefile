@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2008/09/18 05:18:35 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2008/09/24 16:35:02 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,8 @@ SRCS=	fcatomic.c fcblanks.c fccache.c fccfg.c fccharset.c fcdbg.c \
 	fcstr.c fcxml.c ftglue.h ftglue.c
 
 LIBDPLIBS=\
-	expat	${.CURDIR}/../../expat
+	expat		${.CURDIR}/../../expat \
+	freetype	${.CURDIR}/../../freetype
 
 # XXX FONTCONFIG_PATH was arbitrarily chosen
 CPPFLAGS+=	-DFONTCONFIG_PATH='"/etc/X11/fonts"' \

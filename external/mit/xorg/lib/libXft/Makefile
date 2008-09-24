@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2008/09/18 05:18:37 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2008/09/24 16:35:04 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -53,6 +53,8 @@ xft.pc:
 xft-config:
 	${CONFIG_SUBST} < ${XFTDIR}/xft-config.in > ${.TARGET}
 .endif
+
+PKGDIST=	${LIB}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

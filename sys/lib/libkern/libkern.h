@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.79.6.1 2008/09/18 04:36:56 wrstuden Exp $	*/
+/*	$NetBSD: libkern.h,v 1.79.6.2 2008/09/24 16:38:57 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,15 +43,15 @@
 #define LIBKERN_BODY
 #endif
 
-LIBKERN_INLINE int imax __P((int, int)) __attribute__ ((unused));
-LIBKERN_INLINE int imin __P((int, int)) __attribute__ ((unused));
-LIBKERN_INLINE u_int max __P((u_int, u_int)) __attribute__ ((unused));
-LIBKERN_INLINE u_int min __P((u_int, u_int)) __attribute__ ((unused));
-LIBKERN_INLINE long lmax __P((long, long)) __attribute__ ((unused));
-LIBKERN_INLINE long lmin __P((long, long)) __attribute__ ((unused));
-LIBKERN_INLINE u_long ulmax __P((u_long, u_long)) __attribute__ ((unused));
-LIBKERN_INLINE u_long ulmin __P((u_long, u_long)) __attribute__ ((unused));
-LIBKERN_INLINE int abs __P((int)) __attribute__ ((unused));
+LIBKERN_INLINE int imax __P((int, int)) __unused;
+LIBKERN_INLINE int imin __P((int, int)) __unused;
+LIBKERN_INLINE u_int max __P((u_int, u_int)) __unused;
+LIBKERN_INLINE u_int min __P((u_int, u_int)) __unused;
+LIBKERN_INLINE long lmax __P((long, long)) __unused;
+LIBKERN_INLINE long lmin __P((long, long)) __unused;
+LIBKERN_INLINE u_long ulmax __P((u_long, u_long)) __unused;
+LIBKERN_INLINE u_long ulmin __P((u_long, u_long)) __unused;
+LIBKERN_INLINE int abs __P((int)) __unused;
 
 LIBKERN_INLINE int isspace __P((int)) __unused;
 LIBKERN_INLINE int isascii __P((int)) __unused;

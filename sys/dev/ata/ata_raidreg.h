@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidreg.h,v 1.5.12.1 2008/09/18 04:35:02 wrstuden Exp $	*/
+/*	$NetBSD: ata_raidreg.h,v 1.5.12.2 2008/09/24 16:38:51 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -292,5 +292,68 @@ struct jmicron_raid_conf {
 	uint8_t 	filler_4[32];
 	uint8_t 	filler_5[384];
 };
+
+/* Intel MatrixRAID metadata */
+#define INTEL_LBA(wd)		((wd)->sc_capacity - 3)
+
+struct intel_raid_conf {
+	uint8_t		intel_id[24];
+#define INTEL_MAGIC		"Intel Raid ISM Cfg Sig. "
+
+	uint8_t		version[6];
+#define INTEL_VERSION_1100	"1.1.00"
+#define INTEL_VERSION_1201	"1.2.01"
+#define INTEL_VERSION_1202	"1.2.02"
+
+	uint8_t		dummy_0[2];
+	uint32_t	checksum;
+	uint32_t	config_size;
+	uint32_t	config_id;
+	uint32_t	generation;
+	uint32_t	dummy_1[2];
+	uint8_t		total_disks;
+	uint8_t		total_volumes;
+	uint8_t 	dummy_2[2];
+	uint32_t	filler_0[39];
+	struct {
+		uint8_t		serial[16];
+		uint32_t	sectors;
+		uint32_t	id;
+		uint32_t	flags;
+#define INTEL_F_SPARE			0x01
+#define INTEL_F_ASSIGNED		0x02
+#define INTEL_F_DOWN			0x04
+#define INTEL_F_ONLINE			0x08
+		uint32_t	filler[5];
+	} __packed disk[1];
+	uint32_t	filler_1[62];
+} __packed;
+
+struct intel_raid_mapping {
+	uint8_t		name[16];
+	uint64_t	total_sectors __packed;
+	uint32_t	state;
+	uint32_t	reserved;
+	uint32_t	filler_0[20];
+	uint32_t	offset;
+	uint32_t	disk_sectors;
+	uint32_t	stripe_count;
+	uint16_t	stripe_sectors;
+	uint8_t		status;
+#define INTEL_S_READY		0x00
+#define INTEL_S_DISABLED	0x01
+#define INTEL_S_DEGRADED	0x02
+#define INTEL_S_FAILURE		0x03
+
+	uint8_t		type;
+#define INTEL_T_RAID0		0x00
+#define INTEL_T_RAID1		0x01
+#define INTEL_T_RAID5		0x05
+
+	uint8_t		total_disks;
+	uint8_t		magic[3];
+	uint32_t	filler_1[7];
+	uint32_t	disk_idx[1];
+} __packed;
 
 #endif /* _DEV_PCI_PCIIDE_PROMISE_RAID_H_ */

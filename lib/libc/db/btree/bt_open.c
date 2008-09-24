@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.21.12.1 2008/09/18 04:39:20 wrstuden Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.21.12.2 2008/09/24 16:35:08 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -32,14 +32,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-#if 0
-static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
-#else
-__RCSID("$NetBSD: bt_open.c,v 1.21.12.1 2008/09/18 04:39:20 wrstuden Exp $");
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
 #endif
-#endif /* LIBC_SCCS and not lint */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: bt_open.c,v 1.21.12.2 2008/09/24 16:35:08 wrstuden Exp $");
 
 /*
  * Implementation of btree access method for 4.4BSD.

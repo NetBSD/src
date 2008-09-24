@@ -1,4 +1,4 @@
-/* $NetBSD: opms_isa.c,v 1.8.80.1 2008/09/18 04:33:18 wrstuden Exp $ */
+/* $NetBSD: opms_isa.c,v 1.8.80.2 2008/09/24 16:38:48 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.8.80.1 2008/09/18 04:33:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms_isa.c,v 1.8.80.2 2008/09/24 16:38:48 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,6 @@ opms_isa_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 
 	isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq, IST_EDGE, IPL_TTY,
-	    pcintr, self);
+	    pcintr, sc);
 	opms_common_attach(sc, ia->ia_iot, pccons_isa_conf);
 }

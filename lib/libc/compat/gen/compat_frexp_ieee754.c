@@ -1,4 +1,4 @@
-/* $NetBSD: compat_frexp_ieee754.c,v 1.2 2006/07/03 13:33:39 drochner Exp $ */
+/* $NetBSD: compat_frexp_ieee754.c,v 1.2.20.1 2008/09/24 16:35:08 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_frexp_ieee754.c,v 1.2 2006/07/03 13:33:39 drochner Exp $");
+__RCSID("$NetBSD: compat_frexp_ieee754.c,v 1.2.20.1 2008/09/24 16:35:08 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -77,6 +77,6 @@ frexp(double value, int *eptr)
 		return (u.dblu_d);
 	} else {
 		*eptr = 0;
-		return (0.0);
+		return (value);
 	}
 }

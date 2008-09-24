@@ -1,4 +1,4 @@
-/*	$NetBSD: rtwreg.h,v 1.24.20.1 2008/06/23 04:31:05 wrstuden Exp $	*/
+/*	$NetBSD: rtwreg.h,v 1.24.20.2 2008/09/24 16:38:52 wrstuden Exp $	*/
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -841,7 +841,7 @@ struct rtw_txdesc {
 	volatile uint32_t	td_len;
 	volatile uint32_t	td_next;
 	volatile uint32_t	td_rsvd[3];
-} __attribute__((__packed__, __aligned__(4)));
+} __packed __aligned(4);
 
 #define td_stat td_ctl0
 
@@ -902,7 +902,7 @@ struct rtw_rxdesc {
 	volatile uint32_t	rd_rsvd0;
 	volatile uint32_t	rd_buf;
 	volatile uint32_t	rd_rsvd1;
-} __attribute__((__packed__, __aligned__(4)));
+} __packed __aligned(4);
 
 #define rd_stat rd_ctl
 #define rd_rssi rd_rsvd0

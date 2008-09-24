@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2008/09/18 05:18:39 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2008/09/24 16:35:06 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,8 @@ INCS=	XKBui.h
 INCSDIR=${X11INCDIR}/X11/extensions
 
 CPPFLAGS+=-I${DESTDIR}${X11INCDIR}/X11/extensions
+
+PKGCONFIG=	xkbui
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/* $NetBSD: video_if.h,v 1.3.2.2 2008/09/18 04:35:01 wrstuden Exp $ */
+/* $NetBSD: video_if.h,v 1.3.2.3 2008/09/24 16:38:51 wrstuden Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -186,6 +186,7 @@ enum video_pixel_format {
 	VIDEO_FORMAT_NV12,	/* planar 4:2:0 */
 	VIDEO_FORMAT_RGB24,
 	VIDEO_FORMAT_YUV420,
+	VIDEO_FORMAT_SBGGR8,
 
 	/* compressed frame-based formats */
 	VIDEO_FORMAT_MJPEG,	/* frames of JPEG images */

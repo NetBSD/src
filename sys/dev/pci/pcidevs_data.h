@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.938.2.2 2008/09/18 04:35:08 wrstuden Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.938.2.3 2008/09/24 16:38:54 wrstuden Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.953 2008/09/06 22:42:59 rmind Exp
+ *	NetBSD: pcidevs,v 1.958 2008/09/18 12:03:45 cegger Exp
  */
 
 /*
@@ -10764,6 +10764,14 @@ static const struct pci_product pci_products[] = {
 	    "Quadro DCC",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6150,
+	    "GeForce 6150",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6150LE,
+	    "GeForce 6150 LE",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_TI4600,
 	    "GeForce4 Ti 4600",
 	},
@@ -10854,6 +10862,70 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_780_XGL,
 	    "Quadro4 780 XGL",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F0,
+	    "C51 Host Bridge (0x02f0)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F1,
+	    "C51 Host Bridge (0x02f1)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F2,
+	    "C51 Host Bridge (0x02f2)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F3,
+	    "C51 Host Bridge (0x02f3)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F4,
+	    "C51 Host Bridge (0x02f4)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F5,
+	    "C51 Host Bridge (0x02f5)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F6,
+	    "C51 Host Bridge (0x02f6)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F7,
+	    "C51 Host Bridge (0x02f7)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC5,
+	    "C51 Memory Controller 5",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC4,
+	    "C51 Memory Controller 4",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC0,
+	    "C51 Memory Controller 0",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FB,
+	    "C51 PCI Express Bridge (0x02fb)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FC,
+	    "C51 PCI Express Bridge (0x02fc)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FD,
+	    "C51 PCI Express Bridge (0x02fd)",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC1,
+	    "C51 Memory Controller 1",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02FF,
+	    "C51 Host Bridge (0x02ff)",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_FX5800U,
@@ -12232,6 +12304,10 @@ static const struct pci_product pci_products[] = {
 	    "CSB6 USB Host Controller",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_USB,
+	    "HT1000 USB",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5_LPC,
 	    "CSB5 ISA/LPC bridge",
 	},
@@ -12240,12 +12316,16 @@ static const struct pci_product pci_products[] = {
 	    "CSB6 ISA/LPC bridge",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_USB,
-	    "HT1000 USB",
-	},
-	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_LPC,
 	    "HT1000 LPC",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_XIOAPIC,
+	    "HT1000 XIOAPIC",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_WDTIMER,
+	    "HT1000 Watchdog Timer",
 	},
 	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_K2_SATA,
@@ -14360,4 +14440,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2989;
+const int pci_nproducts = 3009;

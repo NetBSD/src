@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17.20.1 2008/09/18 04:29:20 wrstuden Exp $	*/
+/*	$NetBSD: main.c,v 1.17.20.2 2008/09/24 16:38:59 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.17.20.1 2008/09/18 04:29:20 wrstuden Exp $");
+__RCSID("$NetBSD: main.c,v 1.17.20.2 2008/09/24 16:38:59 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
 
 	setprogname(*argv);
 	fflag = 0;
-	while ((c = getopt(argc, argv, "ae:f:nE")) != -1)
+	while ((c = getopt(argc, argv, "ae:f:nrE")) != -1)
 		switch (c) {
 		case 'a':
 			aflag = 1;
@@ -166,13 +166,14 @@ main(int argc, char *argv[])
 		case 'n':
 			nflag = 1;
 			break;
+		case 'r':
 		case 'E':
 			ere = REG_EXTENDED;
 			break;
 		default:
 		case '?':
 			(void)fprintf(stderr,
-"usage:\t%s [-aEn] script [file ...]\n\t%s [-aEn] [-e script] ... [-f script_file] ... [file ...]\n",
+"usage:\t%s [-aEnr] script [file ...]\n\t%s [-aEnr] [-e script] ... [-f script_file] ... [file ...]\n",
 			    getprogname(), getprogname());
 			exit(1);
 		}

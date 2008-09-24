@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.905.2.4 2008/09/18 04:36:46 wrstuden Exp $
+#	$NetBSD: files,v 1.905.2.5 2008/09/24 16:38:51 wrstuden Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1194,7 +1194,7 @@ defflag opt_vnd.h	VND_COMPRESSION
 defpseudo ccd:		disk
 defpseudo cgd:		disk, des, blowfish, cast128, rijndael
 defpseudodev md:	disk
-defpseudo fss:		disk
+defpseudodev fss:	disk
 
 defpseudo pty:		tty
 defpseudo rnd

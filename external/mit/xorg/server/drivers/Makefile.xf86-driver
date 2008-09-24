@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xf86-driver,v 1.10.2.2 2008/09/18 05:18:41 wrstuden Exp $
+#	$NetBSD: Makefile.xf86-driver,v 1.10.2.3 2008/09/24 16:35:06 wrstuden Exp $
 
 LIBISMODULE=	yes
 SHLIB_MAJOR=	${PACKAGE_MAJOR}
@@ -25,6 +25,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/../include \
 		${X11FLAGS.DIX} ${X11INCS.DIX} \
+		${X11FLAGS.SERVER} \
 		-DXFree86LOADER
 
 CPPFLAGS+=	-DPACKAGE_VERSION_MAJOR=${PACKAGE_MAJOR}

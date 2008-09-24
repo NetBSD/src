@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.2.2 2008/09/18 05:18:38 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.2.2.3 2008/09/24 16:35:04 wrstuden Exp $
 
 .include <bsd.own.mk>
 
@@ -22,6 +22,8 @@ LIBDPLIBS=\
 	Xrender	${.CURDIR}/../libXrender \
 	Xext	${.CURDIR}/../libXext \
 	X11	${.CURDIR}/../libX11/dynamic
+
+PKGDIST=	${LIB}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
