@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.264.2.1 2008/09/18 04:38:09 wrstuden Exp $
+#       $NetBSD: Makefile,v 1.264.2.2 2008/09/24 16:41:22 wrstuden Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -180,6 +180,13 @@ MLINKS+=cardbus.9 cardbus_attach_card.9 \
 	cardbus.9 Cardbus_free_tag.9 \
 	cardbus.9 Cardbus_conf_read.9 \
 	cardbus.9 Cardbus_conf_write.9
+MLINKS+=cnmagic.9 cn_trap.9 \
+	cnmagic.9 cn_isconsole.9 \
+	cnmagic.9 cn_check_magic.9 \
+	cnmagic.9 cn_init_magic.9 \
+	cnmagic.9 cn_set_magic.9 \
+	cnmagic.9 cn_get_magic.9 \
+	cnmagic.9 cn_destroy_magic.9
 MLINKS+=condvar.9 cv.9 condvar.9 cv_init.9 condvar.9 cv_destroy.9 \
 	condvar.9 cv_wait.9 condvar.9 cv_wait_sig.9 \
 	condvar.9 cv_timedwait.9 condvar.9 cv_timedwait_sig.9 \

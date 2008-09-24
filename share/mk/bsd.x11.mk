@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.57.6.1 2008/09/18 04:38:10 wrstuden Exp $
+#	$NetBSD: bsd.x11.mk,v 1.57.6.2 2008/09/24 16:41:22 wrstuden Exp $
 
 .include <bsd.init.mk>
 
@@ -143,6 +143,12 @@ XLOCALE.DEFINES=	-DXLOCALEDIR=\"${X11LIBDIR}/locale\" \
 XORG_VERSION_CURRENT="(((1) * 10000000) + ((4) * 100000) + ((2) * 1000) + 0)"
 .endif
 
+PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
+				match($$1, "([0-9]+\\.)+[0-9]+");	\
+				version = substr($$1, RSTART, RLENGTH);	\
+			} END { print version }'
+
+
 # Extract X11VERSION
 PRINTX11VERSION=awk '/^\#define XF86_VERSION_MAJOR/ {major = $$3} \
 		     /^\#define XF86_VERSION_MINOR/ {minor = $$3} \
@@ -197,6 +203,108 @@ cleancppscripts: .PHONY
 	rm -f ${CPPSCRIPTS}
 .endif								# }
 
+#
+# X.Org pkgconfig files handling
+#
+# PKGCONFIG is expected to contain a list of pkgconfig module names.
+# They will produce the files <module1>.pc, <module2>.pc, etc, to be
+# put in X11USRLIBDIR/pkgconfig.
+#
+# PKGDIST contains the name of a X11SRCDIR subscript where to find the
+# source file for the pkgconfig files.
+#
+# If PKGDIST is not suitable, a consumer can set PKGDIST.<module> with
+# the full path to the source file.
+#
+# Also, the consumer can use PKGDIST alone, and a PKGCONFIG will be
+# derived from it.  Many times, PKGDIST is capitalized and PKGCONFIG is
+# the lower case version.
+#
+
+.if defined(PKGDIST) && !defined(PKGCONFIG)
+PKGCONFIG=	${PKGDIST:tl}
+.endif
+.if defined(PKGCONFIG)
+
+.include <bsd.files.mk>
+
+_PKGCONFIG_FILES=	${PKGCONFIG:C/$/.pc/}
+
+.PHONY:	pkgconfig-install
+pkgconfig-install:
+
+realall:	${_PKGCONFIG_FILES:O:u}
+realinstall:	pkgconfig-install
+
+.for _pkg in ${PKGCONFIG:O:u}
+PKGDIST.${_pkg}?=	${X11SRCDIR.${PKGDIST:U${_pkg}}}
+_PKGDEST.${_pkg}=	${DESTDIR}/${X11USRLIBDIR}/pkgconfig/${_pkg}.pc
+
+.PATH:	${PKGDIST.${_pkg}}
+
+FILESOWN_${_pkg}.pc=	${BINOWN}
+FILESGRP_${_pkg}.pc=	${BINGRP}
+FILESMODE_${_pkg}.pc=	${NONBINMODE}
+
+${_PKGDEST.${_pkg}}: ${_pkg}.pc __fileinstall
+pkgconfig-install: ${_PKGDEST.${_pkg}}
+.endfor
+
+# XXX
+# The sed script is very, very ugly.  What we actually need is a
+# mknative-xorg script that will generate all the .pc files from
+# running the autoconfigure script.
+# And yes, it has to be splitted in two otherwise it's too long
+# for sed to handle.
+
+.SUFFIXES:	.pc.in .pc
+.pc.in.pc:
+	${_MKTARGET_CREATE}
+	rm -f ${.TARGET}
+	if [ -n '${PKGCONFIG_VERSION.${.PREFIX}}' ]; then \
+		_pkg_version='${PKGCONFIG_VERSION.${.PREFIX}}'; \
+	else \
+		_pkg_version=$$(${PRINT_PACKAGE_VERSION} \
+		    ${PKGDIST.${.PREFIX}}/configure); \
+	fi; \
+	${TOOL_SED} \
+		-e "s,@prefix@,${X11ROOTDIR},; \
+		s,@INSTALL_DIR@,${X11ROOTDIR},; \
+		s,@exec_prefix@,\\$$\{prefix\},; \
+		s,@libdir@,\\$$\{prefix\}/lib,; \
+		s,@includedir@,\\$$\{prefix\}/include,; \
+		s,@datarootdir@,\\$$\{prefix\}/share,; \
+		s,@appdefaultdir@,\\$$\{libdir}/X11/app-default,; \
+		s,@MAPDIR@,\\$$\{libdir\}/X11/fonts/util,; \
+		s,@ICONDIR@,\\$$\{datarootdir\}/icons,; \
+		s,@PACKAGE_VERSION@,$${_pkg_version},; \
+		s,@VERSION@,$${_pkg_version},; \
+		s,@COMPOSITEEXT_VERSION@,$${_pkg_version%.*},; \
+		s,@DAMAGEEXT_VERSION@,$${_pkg_version%.*},; \
+		s,@FIXESEXT_VERSION@,$${_pkg_version%.*},; \
+		s,@RANDR_VERSION@,$${_pkg_version%.*},; \
+		s,@RENDER_VERSION@,$${_pkg_version%.*}," \
+		-e "s,@moduledir@,\\$$\{libdir\}/modules,; \
+		s,@sdkdir@,\\$$\{includedir\}/xorg,; \
+		s,@PIXMAN_CFLAGS@,,; \
+		s,@LIB_DIR@,/lib,; \
+		s,@XKBPROTO_REQUIRES@,kbproto,; \
+		s,@FREETYPE_REQUIRES@,freetype2,; \
+		s,@EXPAT_LIBS@,-lexpat,; \
+		s,@FREETYPE_LIBS@,-lfreetype,; \
+		s,@DEP_CFLAGS@,,; \
+		s,@DEP_LIBS@,,; \
+		s,@X11_EXTRA_DEPS@,,; \
+		s,@XTHREAD_CFLAGS@,-D_REENTRANT,; \
+		s,@XTHREADLIB@,-lpthread,; \
+		s,@fchown_define@,-DHAS_FCHOWN,; \
+		s,@sticky_bit_define@,-DHAS_STICKY_DIR_BIT," \
+		-e '/^Libs:/ s%-L\([^ 	]*\)%-Wl,-R\1 &%g' \
+		< ${.IMPSRC} > ${.TARGET}.tmp && \
+	mv -f ${.TARGET}.tmp ${.TARGET}
+
+CLEANFILES+=	${_PKGCONFIG_FILES} ${_PKGCONFIG_FILES:C/$/.tmp/}
+.endif
 
 #
 # APPDEFS (app defaults) handling

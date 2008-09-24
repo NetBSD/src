@@ -1,4 +1,4 @@
-.\" $NetBSD: fileassoc.9,v 1.20.14.1 2008/06/23 04:30:03 wrstuden Exp $
+.\" $NetBSD: fileassoc.9,v 1.20.14.2 2008/09/24 16:41:22 wrstuden Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -236,7 +236,7 @@ void
 myhook_cleanup(void *data)
 {
 
-	printf("Myhook: Removing entry for file.\n");
+	printf("Myhook: Removing entry for file.\en");
 	...handle file entry removal...
 	free(data, M_TEMP);
 }
@@ -252,11 +252,11 @@ myhook_acl_add(struct vnode *vp, struct myhook_acl *acl)
 
 	error = fileassoc_add(vp, myhook_id, acl);
 	if (error) {
-		printf("Myhook: Could not add ACL.\n");
+		printf("Myhook: Could not add ACL.\en");
 		...handle error...
 	}
 
-	printf("Myhook: Added ACL.\n");
+	printf("Myhook: Added ACL.\en");
 
 	return (0);
 }
@@ -279,7 +279,7 @@ myhook_acl_access(struct vnode *vp, int access_flags)
 
 	error = myhook_acl_eval(acl, access_flags);
 	if (error) {
-		printf("Myhook: Denying access based on ACL decision.\n");
+		printf("Myhook: Denying access based on ACL decision.\en");
 		return (error);
 	}
 
@@ -294,7 +294,7 @@ int error;
 
 error = fileassoc_clear(vp, myhook_id);
 if (error) {
-	printf("Myhook: Error occurred during fileassoc removal.\n");
+	printf("Myhook: Error occurred during fileassoc removal.\en");
 	...handle error...
 }
 .Ed

@@ -1,4 +1,4 @@
-.\"	$NetBSD: spdmem.4,v 1.1 2007/08/18 11:26:36 tnn Exp $
+.\"	$NetBSD: spdmem.4,v 1.1.12.1 2008/09/24 16:41:22 wrstuden Exp $
 .\"
 .\"Copyright (c) 2007 Nicolas Joly
 .\"Copyright (c) 2007 Paul Goyette
@@ -45,6 +45,11 @@ driver provides support for generic memory module Serial Presence Detect.
 During kernel boot it displays module type, and where possible, the size and
 rated speed of the memory module. Additional information such as bank
 configuration and width is printed if the kernel is booted in verbose mode.
+.Pp
+The Serial Presence Detect data for each memory module is also made accessible
+to user mode via sysctl(8).  An entry for each 
+.Nm
+device is created under the 'hw' top-level MIB.
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr intro 4 ,
