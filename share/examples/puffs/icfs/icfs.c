@@ -1,4 +1,4 @@
-/*	$NetBSD: icfs.c,v 1.9.10.1 2008/09/18 04:38:08 wrstuden Exp $	*/
+/*	$NetBSD: icfs.c,v 1.9.10.2 2008/09/24 16:41:21 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@ static void
 usage()
 {
 
-	errx(1, "usage: %s [-sp] [-o mntopts] icfs mountpath",
+	errx(1, "usage: %s [-sp] [-o mntopts] icfs mountpath",
 	    getprogname());
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.207.2.2 2008/09/18 04:38:09 wrstuden Exp $
+#	$NetBSD: bsd.README,v 1.207.2.3 2008/09/24 16:41:22 wrstuden Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -176,6 +176,9 @@ MKHTML		If "no", don't build or install the HTML man pages.
 MKIEEEFP	If "no", don't add code for IEEE754/IEC60559 conformance.
 		Has no effect on most platforms.
 		Default: yes
+
+MKSTRIPIDENT	Strip the RCS IDs from program binaries and shared libraries.
+		Default: no
 
 MKINET6		If "no", disables building of INET6 (IPv6) infrastructure
 		(libraries and support programs).
