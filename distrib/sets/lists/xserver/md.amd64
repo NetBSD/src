@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.35 2008/09/22 16:19:57 cube Exp $
+# $NetBSD: md.amd64,v 1.36 2008/09/24 10:11:29 rtr Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xvfb					-unknown-	x11
@@ -552,6 +552,7 @@
 ./usr/X11R7/man/cat4/chips.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/cirrus.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/cyrix.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/exa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/i128.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/i740.0				-unknown-	.cat,xorg
@@ -587,6 +588,7 @@
 ./usr/X11R7/man/html4/chips.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/cirrus.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/cyrix.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/i128.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/i740.html				-unknown-	html,xorg
@@ -622,6 +624,7 @@
 ./usr/X11R7/man/man4/chips.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/cirrus.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/cyrix.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/i128.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/i740.4				-unknown-	.man,xorg
