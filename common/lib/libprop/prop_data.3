@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_data.3,v 1.2 2006/07/09 19:04:02 wiz Exp $
+.\"	$NetBSD: prop_data.3,v 1.2.6.1 2008/09/24 18:05:48 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,9 +66,9 @@
 .Ft const void *
 .Fn prop_data_data_nocopy "prop_data_t data"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_data_equals "prop_data_t dat1" "prop_data_t dat2"
-.Ft boolean_t
+.Ft bool
 .Fn prop_data_equals_data "prop_data_t data" "const void *blob" "size_t len"
 .Sh DESCRIPTION
 The
@@ -105,11 +105,11 @@ using the malloc type
 Returns an immutable reference to the contents of the data object.
 .It Fn prop_data_equals "prop_data_t dat1" "prop_data_t dat2"
 Returns
-.Dv TRUE
+.Dv true
 if the two data objects are equivalent.
 .It Fn prop_data_equals_data "prop_data_t data" "const void *blob" "size_t len"
 Returns
-.Dv TRUE
+.Dv true
 if the data object's value is equivalent to
 .Fa blob
 with size

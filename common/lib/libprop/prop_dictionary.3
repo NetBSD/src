@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary.3,v 1.5 2006/10/26 05:02:12 thorpej Exp $
+.\"	$NetBSD: prop_dictionary.3,v 1.5.4.1 2008/09/24 18:05:48 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,7 +83,7 @@
 .Fn prop_dictionary_capacity "prop_dictionary_t dict"
 .Ft unsigned int
 .Fn prop_dictionary_count "prop_dictionary_t dict"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_ensure_capacity "prop_dictionary_t dict" \
     "unsigned int capacity"
 .\"
@@ -94,12 +94,12 @@
 .\"
 .Ft void
 .Fn prop_dictionary_make_immutable "prop_dictionary_t dict"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_mutable "prop_dictionary_t dict"
 .\"
 .Ft prop_object_t
 .Fn prop_dictionary_get "prop_dictionary_t dict" "const char *key"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set "prop_dictionary_t dict" "const char *key" \
     "prop_object_t obj"
 .Ft void
@@ -108,20 +108,20 @@
 .Ft prop_object_t
 .Fn prop_dictionary_get_keysym "prop_dictionary_t dict" \
     "prop_dictionary_keysym_t keysym"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set_keysym "prop_dictionary_t dict" \
     "prop_dictionary_keysym_t keysym" "prop_object_t obj"
 .Ft void
 .Fn prop_dictionary_remove_keysym "prop_dictionary_t dict" \
     "prop_dictionary_keysym_t keysym"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_equals "prop_dictionary_t dict1" "prop_dictionary_t dict2"
 .\"
 .Ft const char *
 .Fn prop_dictionary_keysym_cstring_nocopy "prop_dictionary_keysym_t sym"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_keysym_equals "prop_dictionary_keysym_t keysym1" \
     "prop_dictionary_keysym_t keysym2"
 .\"
@@ -130,7 +130,7 @@
 .Ft prop_dictionary_t
 .Fn prop_dictionary_internalize "const char *xml"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_externalize_to_file "prop_dictionary_t dict" \
     "const char *path"
 .Ft prop_dictionary_t
@@ -172,12 +172,12 @@ Ensure that the dictionary has a total capacity of
 .Fa capacity ,
 including objects already stored in the dictionary.
 Returns
-.Dv TRUE
+.Dv true
 if the capacity of the dictionary is greater or equal to
 .Fa capacity
 or if the expansion of the dictionary's capacity was successful
 and
-.Dv FALSE
+.Dv false
 otherwise.
 .It Fn prop_dictionary_iterator "prop_dictionary_t dict"
 Create an iterator for the dictionary.
@@ -201,7 +201,7 @@ Make
 immutable.
 .It Fn prop_dictionary_mutable "prop_dictionary_t dict"
 Returns
-.Dv TRUE
+.Dv true
 if the dictionary is mutable.
 .It Fn prop_dictionary_get "prop_dictionary_t dict" "const char *key"
 Return the object stored in the dictionary with the key
@@ -219,9 +219,9 @@ The object will be retained by the array.
 If the key already exists in the dictionary, the object associated with
 that key will be released and replaced with the new object.
 Returns
-.Dv TRUE
+.Dv true
 if storing the object was successful and
-.Dv FALSE
+.Dv false
 otherwise.
 .It Fn prop_dictionary_remove "prop_dictionary_t dict" "const char *key"
 Remove the reference to the object stored in the dictionary with the key
@@ -257,7 +257,7 @@ is not associated with
 .It Fn prop_dictionary_equals "prop_dictionary_t dict1" \
     "prop_dictionary_t dict2"
 Returns
-.Dv TRUE
+.Dv true
 if the two dictionaries are equivalent.
 Note: Objects contained in the dictionary are compared by value, not by
 reference.
@@ -266,7 +266,7 @@ Returns an immutable reference to the dictionary key symbol's string value.
 .It Fn prop_dictionary_keysym_equals "prop_dictionary_keysym_t keysym1" \
     "prop_dictionary_keysym_t keysym2"
 Returns
-.Dv TRUE
+.Dv true
 if the two dictionary key symbols are equivalent.
 .It Fn prop_dictionary_externalize "prop_dictionary_t dict"
 Externalizes a dictionary, returning a NUL-terminated buffer containing
@@ -300,7 +300,7 @@ as modified by the process's file creation mask
 .Pq see Xr umask 3
 and is written atomically.
 Returns
-.Dv FALSE
+.Dv false
 if externalizing or writing the dictionary fails for any reason.
 .It Fn prop_dictionary_internalize_from_file "const char *path"
 Reads the XML property list contained in the file specified by

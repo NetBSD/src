@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_dictionary_util.3,v 1.1 2006/10/26 05:02:12 thorpej Exp $
+.\"	$NetBSD: prop_dictionary_util.3,v 1.1.4.1 2008/09/24 18:05:48 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,76 +66,76 @@
 .Sh SYNOPSIS
 .In prop/proplib.h
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_get_bool "prop_dictionary_t dict" "cosnt char *key" \
-    "boolean_t *valp"
-.Ft boolean_t
+    "bool *valp"
+.Ft bool
 .Fn prop_dictionary_set_bool "prop_dictionary_t dict" "const char *key" \
-    "boolean_t val"
+    "bool val"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_get_int8 "prop_dictionary_t dict" "const char *key" \
     "int8_t *valp"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_get_uint8 "prop_dictionary_t dict" "const char *key" \
     "uint8_t *valp"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set_int8 "prop_dictionary_t dict" "const char *key" \
     "int8_t val"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set_uint8 "prop_dictionary_t dict" "const char *key" \
     "uint8_t val"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_get_int16 "prop_dictionary_t dict" "const char *key" \
     "int16_t *valp"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_get_uint16 "prop_dictionary_t dict" "const char *key" \
     "uint16_t *valp"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set_int16 "prop_dictionary_t dict" "const char *key" \
     "int16_t val"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set_uint16 "prop_dictionary_t dict" "const char *key" \
     "uint16_t val"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_get_int32 "prop_dictionary_t dict" "const char *key" \
     "int32_t *valp"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_get_uint32 "prop_dictionary_t dict" "const char *key" \
     "uint32_t *valp"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set_int32 "prop_dictionary_t dict" "const char *key" \
     "int32_t val"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set_uint32 "prop_dictionary_t dict" "const char *key" \
     "uint32_t val"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_get_int64 "prop_dictionary_t dict" "const char *key" \
     "int64_t *valp"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_get_uint64 "prop_dictionary_t dict" "const char *key" \
     "uint64_t *valp"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set_int64 "prop_dictionary_t dict" "const char *key" \
     "int64_t val"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set_uint64 "prop_dictionary_t dict" "const char *key" \
     "uint64_t val"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_get_cstring "prop_dictionary_t dict" "const char *key" \
     "char **strp"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set_cstring "prop_dictionary_t dict" "const char *key" \
     "const char *str"
 .\"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_get_cstring_nocopy "prop_dictionary_t dict" \
     "const char *key" "const char **strp"
-.Ft boolean_t
+.Ft bool
 .Fn prop_dictionary_set_cstring_nocopy "prop_dictionary_t dict" \
     "const char *key" "const char *strp"
 .Sh DESCRIPTION
@@ -169,17 +169,17 @@ for more information.
 The
 .Nm prop_dictionary_util
 getter functions return
-.Dv TRUE
+.Dv true
 if the object exists in the dictionary and the value is in-range, or
-.Dv FALSE
+.Dv false
 otherwise.
 .Pp
 The
 .Nm prop_dictionary_util
 setter functions return
-.Dv TRUE
+.Dv true
 if creating the object and storing it in the dictionary is successful, or
-.Dv FALSE
+.Dv false
 otherwise.
 .Sh SEE ALSO
 .Xr prop_bool 3 ,

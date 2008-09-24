@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_object.3,v 1.5 2006/08/23 20:46:22 wiz Exp $
+.\"	$NetBSD: prop_object.3,v 1.5.4.1 2008/09/24 18:05:48 bouyer Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@
 .\"
 .Ft prop_type_t
 .Fn prop_object_type "prop_object_t obj"
-.Ft boolean_t
+.Ft bool
 .Fn prop_object_equals "prop_object_t obj1" "prop_object_t obj2"
 .\"
 .Ft prop_object_t
@@ -114,7 +114,7 @@ then
 is returned.
 .It Fn prop_object_equals "prop_object_t obj1" "prop_object_t obj2"
 Returns
-.Dv TRUE
+.Dv true
 if the two objects are of the same type and are equivalent.
 .It Fn prop_object_iterator_next "prop_object_iterator_t iter"
 Return the next object in the collection
