@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.127 2007/06/21 12:51:06 skrll Exp $
+#	$NetBSD: Makefile,v 1.128 2008/09/24 02:19:45 dogcow Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -7,7 +7,7 @@ SUBDIR+=	bc
 .if ${MKBINUTILS} != "no"
 SUBDIR+=	binutils
 .endif
-SUBDIR+=	c89
+SUBDIR+=	c89 c99
 .if ${MKCVS} != "no"
 SUBDIR+=	xcvs
 .endif
