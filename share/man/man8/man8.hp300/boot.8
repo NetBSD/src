@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.8 2003/08/07 10:31:23 agc Exp $
+.\"	$NetBSD: boot.8,v 1.9 2008/09/24 20:07:05 reed Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,12 +41,12 @@
 .Nd
 system bootstrapping procedures
 .Sh DESCRIPTION
-.Sy Power fail and crash recovery
+.Ss Power fail and crash recovery
 Normally, the system will reboot itself at power-up or after crashes.
 An automatic consistency check of the file systems will be performed,
 and unless this fails, the system will resume multi-user operations.
 .Pp
-.Sy Cold starts
+.Ss Cold starts
 On an HP300, the boot procedure uses the boot ROM to load a boot program
 from an
 .Tn LIF
