@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.87 2008/09/24 17:25:49 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.88 2008/09/24 18:14:36 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -735,18 +735,18 @@ sys/netinet/tcp_subr.c				1.225 via patch
 	stream, making it appear as corrupted.
 	[cube, ticket #1109]
 
-src/crypto/dist/ssh/channels.c			1.38 via patch
-src/crypto/dist/ssh/session.c			1.45 via patch
-src/crypto/dist/ssh/sshd_config.5		1.14 via patch
+crypto/dist/ssh/channels.c			1.38 via patch
+crypto/dist/ssh/session.c			1.45 via patch
+crypto/dist/ssh/sshd_config.5		1.14 via patch
 	Fix two vulnerabilities in OpenSSH:
 	- X11 forwarding information disclosure (CVE-2008-1483)
 	- ForceCommand bypass vulnerability
 	[adrianp, ticket #1113]
 
-src/crypto/dist/ssh/auth-options.c		1.8 via patch
-src/crypto/dist/ssh/auth-options.h		1.4 via patch
-src/crypto/dist/ssh/session.c			1.46 via patch
-src/crypto/dist/ssh/sshd.8			1.39 via patch
+crypto/dist/ssh/auth-options.c			1.8 via patch
+crypto/dist/ssh/auth-options.h			1.4 via patch
+crypto/dist/ssh/session.c			1.46 via patch
+crypto/dist/ssh/sshd.8				1.39 via patch
 	Add no-user-rc option which disables execution of ~/.ssh/rc
 	(backport from OpenSSH 4.9)
 	[adrianp, ticket #1114]
@@ -763,83 +763,83 @@ sys/dev/vnd.c					1.174
 	such as gpt(8).
 	[riz, ticket #1116]
 
-src/sbin/gpt/add.c				1.5
-src/sbin/gpt/create.c				1.3
-src/sbin/gpt/destroy.c				1.3
-src/sbin/gpt/gpt.c				1.4-1.6
-src/sbin/gpt/label.c				1.5-1.6
-src/sbin/gpt/migrate.c				1.4
-src/sbin/gpt/recover.c				1.3
-src/sbin/gpt/remove.c				1.4
-src/sbin/gpt/show.c				1.3
+sbin/gpt/add.c					1.5
+sbin/gpt/create.c				1.3
+sbin/gpt/destroy.c				1.3
+sbin/gpt/gpt.c					1.4-1.6
+sbin/gpt/label.c				1.5-1.6
+sbin/gpt/migrate.c				1.4
+sbin/gpt/recover.c				1.3
+sbin/gpt/remove.c				1.4
+sbin/gpt/show.c					1.3
 	Improve gpt(8) error and usage messages.
 	[riz, ticket #1117]
 
-src/etc/MAKEDEV.tmpl				1.100 via patch
+etc/MAKEDEV.tmpl				1.100 via patch
 	Create drvctl as part of 'all'.
 	[riz, ticket #1118]
 
-src/sbin/gpt/add.c				1.6
-src/sbin/gpt/gpt.c				1.7
-src/sbin/gpt/show.c				1.4
-src/sys/dev/dkwedge/dkwedge_gpt.c		1.7
-src/sys/sys/disk.h				1.47
-src/sys/sys/disklabel_gpt.h			1.4
+sbin/gpt/add.c					1.6
+sbin/gpt/gpt.c					1.7
+sbin/gpt/show.c					1.4
+sys/dev/dkwedge/dkwedge_gpt.c			1.7
+sys/sys/disk.h					1.47
+sys/sys/disklabel_gpt.h				1.4
 	Add NetBSD GPT partition types for swap, ffs, lfs, raidframe,
 	and cgd.  gpt(8) now defaults to NetBSD ffs if no type is
 	given, but previous FreeBSD types are still recognized in
 	the DKWEDGE_AUTODISCOVER code.
 	[riz, ticket #1119]
 
-src/lib/libc/gdtoa/dmisc.c		1.4
-src/lib/libc/gdtoa/gdtoa.c		1.4
-src/lib/libc/gdtoa/gethex.c		1.4
-src/lib/libc/gdtoa/misc.c		1.4
-src/lib/libc/gdtoa/strtof_vaxf.c	1.4-1.5
-src/lib/libc/gdtoa/strtopQ.c		1.4
-src/lib/libc/gdtoa/strtopx.c		1.4
-src/lib/libc/gdtoa/strtopxL.c		1.4
-src/lib/libc/gdtoa/strtord.c		1.4
-src/lib/libc/gdtoa/dtoa.c		1.5
-src/lib/libc/gdtoa/strtod.c		1.5
-src/lib/libc/gdtoa/g_Qfmt.c		1.3
-src/lib/libc/gdtoa/g_xLfmt.c		1.3
-src/lib/libc/gdtoa/g_xfmt.c		1.3
-src/lib/libc/gdtoa/smisc.c		1.3
-src/lib/libc/gdtoa/strtof.c		1.3
-src/lib/libc/gdtoa/strtorQ.c		1.3
-src/lib/libc/gdtoa/strtorx.c		1.3
-src/lib/libc/gdtoa/strtorxL.c		1.3
-src/lib/libc/gdtoa/g_ddfmt.c		1.2
-src/lib/libc/gdtoa/g_dfmt.c		1.2
-src/lib/libc/gdtoa/g_ffmt.c		1.2
-src/lib/libc/gdtoa/strtoIQ.c		1.2
-src/lib/libc/gdtoa/strtoId.c		1.2
-src/lib/libc/gdtoa/strtoIdd.c		1.2
-src/lib/libc/gdtoa/strtoIf.c		1.2
-src/lib/libc/gdtoa/strtoIg.c		1.2
-src/lib/libc/gdtoa/strtoIx.c		1.2
-src/lib/libc/gdtoa/strtoIxL.c		1.2
-src/lib/libc/gdtoa/strtodI.c		1.2
-src/lib/libc/gdtoa/strtodnrp.c		1.2
-src/lib/libc/gdtoa/strtopd.c		1.2
-src/lib/libc/gdtoa/strtopdd.c		1.2
-src/lib/libc/gdtoa/strtopf.c		1.2
-src/lib/libc/gdtoa/strtordd.c		1.2
-src/lib/libc/gdtoa/strtorf.c		1.2
-src/lib/libc/gdtoa/sum.c		1.2
-src/lib/libc/gdtoa/gdtoa.h		1.8
-src/lib/libc/gdtoa/hdtoa.c		1.6
-src/lib/libc/gdtoa/strtodg.c		1.6
-src/lib/libc/stdio/vfwprintf.c		1.12
+lib/libc/gdtoa/dmisc.c				1.4
+lib/libc/gdtoa/gdtoa.c				1.4
+lib/libc/gdtoa/gethex.c				1.4
+lib/libc/gdtoa/misc.c				1.4
+lib/libc/gdtoa/strtof_vaxf.c			1.4-1.5
+lib/libc/gdtoa/strtopQ.c			1.4
+lib/libc/gdtoa/strtopx.c			1.4
+lib/libc/gdtoa/strtopxL.c			1.4
+lib/libc/gdtoa/strtord.c			1.4
+lib/libc/gdtoa/dtoa.c				1.5
+lib/libc/gdtoa/strtod.c				1.5
+lib/libc/gdtoa/g_Qfmt.c				1.3
+lib/libc/gdtoa/g_xLfmt.c			1.3
+lib/libc/gdtoa/g_xfmt.c				1.3
+lib/libc/gdtoa/smisc.c				1.3
+lib/libc/gdtoa/strtof.c				1.3
+lib/libc/gdtoa/strtorQ.c			1.3
+lib/libc/gdtoa/strtorx.c			1.3
+lib/libc/gdtoa/strtorxL.c			1.3
+lib/libc/gdtoa/g_ddfmt.c			1.2
+lib/libc/gdtoa/g_dfmt.c				1.2
+lib/libc/gdtoa/g_ffmt.c				1.2
+lib/libc/gdtoa/strtoIQ.c			1.2
+lib/libc/gdtoa/strtoId.c			1.2
+lib/libc/gdtoa/strtoIdd.c			1.2
+lib/libc/gdtoa/strtoIf.c			1.2
+lib/libc/gdtoa/strtoIg.c			1.2
+lib/libc/gdtoa/strtoIx.c			1.2
+lib/libc/gdtoa/strtoIxL.c			1.2
+lib/libc/gdtoa/strtodI.c			1.2
+lib/libc/gdtoa/strtodnrp.c			1.2
+lib/libc/gdtoa/strtopd.c			1.2
+lib/libc/gdtoa/strtopdd.c			1.2
+lib/libc/gdtoa/strtopf.c			1.2
+lib/libc/gdtoa/strtordd.c			1.2
+lib/libc/gdtoa/strtorf.c			1.2
+lib/libc/gdtoa/sum.c				1.2
+lib/libc/gdtoa/gdtoa.h				1.8
+lib/libc/gdtoa/hdtoa.c				1.6
+lib/libc/gdtoa/strtodg.c			1.6
+lib/libc/stdio/vfwprintf.c			1.12
 	Don't coredump on out of memory conditions. This solution leaks,
 	but gdtoa is too complicated to fix.
 	Try printf %99999999999.9999999999f 2
 	[mjf, ticket #1120]
 
-src/sys/kern/kern_ktrace.c			1.112.4.1
-src/sys/kern/kern_sa.c				1.87.4.9
-src/sys/sys/ktrace.h				1.45.4.1
+sys/kern/kern_ktrace.c				1.112.4.1
+sys/kern/kern_sa.c				1.87.4.9
+sys/sys/ktrace.h				1.45.4.1
 	Pass an array of pointers in kernel VM space to ktrsaupcall for it
 	to create the ktrace record instead of trying to access a pointer
 	in userland.
@@ -855,9 +855,9 @@ crypto/dist/openssl/crypto/bn/bn_mont.c		1.2
 	a side-channel attack and retrieve RSA private keys.
 	[adrianp, ticket #1123]
 
-src/dist/tcpdump/print-802_11.c			patch
-src/dist/tcpdump/print-bgp.c			patch
-src/dist/tcpdump/print-isoclns.c		patch
+dist/tcpdump/print-802_11.c			patch
+dist/tcpdump/print-bgp.c			patch
+dist/tcpdump/print-isoclns.c			patch
 
 	Fix CVE-2007-1218, CVE-2007-3798 and CAN-2005-1278 in base-tcpdump.
 	[tonnerre, ticket #1124]
@@ -1051,16 +1051,16 @@ libexec/mail.local/mail.local.c			1.24
 	related problems).
 	[manu, ticket #1148]
 
-src/share/man/man4/gem.4		1.5,1.6 via patch
-src/sys/arch/sparc64/conf/GENERIC	1.97 via patch
-src/sys/dev/ic/gem.c			1.59,1.61-1.68,1.70-1.73 via patch
-src/sys/dev/ic/gemreg.h			1.11 via patch
-src/sys/dev/ic/gemvar.h			1.16,1.18 via patch
-src/sys/dev/mii/bmtphy.c		1.24 via patch
-src/sys/dev/pci/if_gem_pci.c		1.25,1.27 via patch
-src/sys/dev/pci/pcidevs	1.12		via patch
-src/sys/dev/pci/pcidevs.h		regenerate
-src/sys/dev/pci/pcidevs_data.h		regenerate
+share/man/man4/gem.4			1.5,1.6 via patch
+sys/arch/sparc64/conf/GENERIC		1.97 via patch
+sys/dev/ic/gem.c			1.59,1.61-1.68,1.70-1.73 via patch
+sys/dev/ic/gemreg.h			1.11 via patch
+sys/dev/ic/gemvar.h			1.16,1.18 via patch
+sys/dev/mii/bmtphy.c			1.24 via patch
+sys/dev/pci/if_gem_pci.c		1.25,1.27 via patch
+sys/dev/pci/pcidevs	1.12		via patch
+sys/dev/pci/pcidevs.h			regenerate
+sys/dev/pci/pcidevs_data.h		regenerate
 
 	Add support for Sun PCI X1141A (SX fibre) cards.
 	Add improvements to the driver.
@@ -1139,7 +1139,7 @@ sys/arch/m68k/m68k/pmap_motorola.c		1.22
 	http://mail-index.netbsd.org/tech-kern/2006/12/12/0000.html
 	[hauke, ticket #1158]
 
-src/gnu/dist/binutils/bfd/tekhex.c		1.2
+gnu/dist/binutils/bfd/tekhex.c			1.2
 
 	Fix for PR #33551 (a.k.a CVE-2006-2362)
 	Back port from the binutils CVS tree.
@@ -1672,18 +1672,18 @@ sbin/bioctl/strtonum.h			patch
 gnu/dist/gcc4/gcc/config.gcc			1.18
 gnu/dist/gcc4/gcc/configure.ac			1.9 via patch
 gnu/dist/gcc4/gcc/configure			regen (via patch)
-src/gnu/usr.bin/gcc4/arch/m68000/auto-host.h    regen (via patch)
-src/gnu/usr.bin/gcc4/arch/m68000/configargs.h   regen (via patch)
-src/gnu/usr.bin/gcc4/arch/m68000/defs.mk        regen (via patch)
-src/gnu/usr.bin/gcc4/arch/m68000/tm.h           regen (via patch)
-src/gnu/usr.bin/gcc4/arch/m68k/auto-host.h      regen (via patch)
-src/gnu/usr.bin/gcc4/arch/m68k/configargs.h     regen (via patch)
-src/gnu/usr.bin/gcc4/arch/m68k/defs.mk          regen (via patch)
-src/gnu/usr.bin/gcc4/arch/m68k/tm.h             regen (via patch)
-src/gnu/lib/crtstuff4/arch/m68000.mk            regen (via patch)
-src/gnu/lib/crtstuff4/arch/m68k.mk              regen (via patch)
-src/gnu/lib/libgcc4/arch/m68000.mk              regen (via patch)
-src/gnu/lib/libgcc4/arch/m68k.mk                regen (via patch)
+gnu/usr.bin/gcc4/arch/m68000/auto-host.h	regen (via patch)
+gnu/usr.bin/gcc4/arch/m68000/configargs.h	regen (via patch)
+gnu/usr.bin/gcc4/arch/m68000/defs.mk		regen (via patch)
+gnu/usr.bin/gcc4/arch/m68000/tm.h		regen (via patch)
+gnu/usr.bin/gcc4/arch/m68k/auto-host.h		regen (via patch)
+gnu/usr.bin/gcc4/arch/m68k/configargs.h		regen (via patch)
+gnu/usr.bin/gcc4/arch/m68k/defs.mk		regen (via patch)
+gnu/usr.bin/gcc4/arch/m68k/tm.h			regen (via patch)
+gnu/lib/crtstuff4/arch/m68000.mk		regen (via patch)
+gnu/lib/crtstuff4/arch/m68k.mk			regen (via patch)
+gnu/lib/libgcc4/arch/m68000.mk			regen (via patch)
+gnu/lib/libgcc4/arch/m68k.mk			regen (via patch)
 
 	config.gcc: Do not completely overwrite tm_defines in m68k specific
 	    target selection, it may have been set globaly before for
@@ -2141,4 +2141,20 @@ sys/dev/pci/arcmsrvar.h				1.13
 	PR/39584: Juan RP: arcmsr(4) driver disk state values are incorrect
 	(for ARC-1220)
 	[christos, ticket #1205]
+
+common/lib/libprop/prop_array.3			1.5
+common/lib/libprop/prop_bool.3			1.3
+common/lib/libprop/prop_data.3			1.4
+common/lib/libprop/prop_dictionary.3		1.8
+common/lib/libprop/prop_dictionary_util.3	1.2
+common/lib/libprop/prop_ingest.3		1.3
+common/lib/libprop/prop_number.3		1.7
+common/lib/libprop/prop_object.3		1.6
+common/lib/libprop/prop_string.3		1.4 
+
+	boolean_t -> bool
+	TRUE -> true
+	FALSE -> false
+	Completes processing of ticket 904, fixes PR lib/38013.
+	[joerg, ticket #904]
 
