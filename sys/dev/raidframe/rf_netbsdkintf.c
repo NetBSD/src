@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.224.2.3 2008/09/25 19:45:22 bouyer Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.224.2.4 2008/09/25 19:49:57 bouyer Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.224.2.3 2008/09/25 19:45:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.224.2.4 2008/09/25 19:49:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -238,6 +238,8 @@ const struct cdevsw raid_cdevsw = {
 	raidopen, raidclose, raidread, raidwrite, raidioctl,
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
+
+static struct dkdriver rf_dkdriver = { raidstrategy, minphys };
 
 /* XXX Not sure if the following should be replacing the raidPtrs above,
    or if it should be used in conjunction with that...
@@ -1825,10 +1827,11 @@ raidinit(RF_Raid_t *raidPtr)
 		       raidPtr->raidid);
 	}
 
+
 	/* disk_attach actually creates space for the CPU disklabel, among
 	 * other things, so it's critical to call this *BEFORE* we try putzing
 	 * with disklabels. */
-
+	rs->sc_dkdev.dk_driver = &rf_dkdriver;
 	disk_attach(&rs->sc_dkdev);
 
 	/* XXX There may be a weird interaction here between this, and
