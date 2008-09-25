@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.38 2008/09/24 10:11:29 rtr Exp $
+# $NetBSD: md.macppc,v 1.39 2008/09/25 14:15:55 rtr Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xmacppc					-unknown-	x11
@@ -421,6 +421,10 @@
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod_g.a	-unknown-	debuglib,xorg
 ./usr/X11R7/lib/modules/extensions/libextmod_pic.a	-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.a		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libmfb.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libmfb.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libmfb.so.0		-unknown-	xorg
