@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.224.2.2 2008/09/25 19:41:44 bouyer Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.224.2.3 2008/09/25 19:45:22 bouyer Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.224.2.2 2008/09/25 19:41:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.224.2.3 2008/09/25 19:45:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -169,6 +169,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.224.2.2 2008/09/25 19:41:44 bou
 #include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/kauth.h>
+
+#include <prop/proplib.h>
 
 #include <dev/raidframe/raidframevar.h>
 #include <dev/raidframe/raidframeio.h>
@@ -300,6 +302,7 @@ static int raidlock(struct raid_softc *);
 static void raidunlock(struct raid_softc *);
 
 static void rf_markalldirty(RF_Raid_t *);
+static void rf_set_properties(struct raid_softc *, RF_Raid_t *);
 
 void rf_ReconThread(struct rf_recon_req *);
 void rf_RewriteParityThread(RF_Raid_t *raidPtr);
@@ -413,7 +416,6 @@ rf_autoconfig(struct device *self)
 {
 	RF_AutoConfig_t *ac_list;
 	RF_ConfigSet_t *config_sets;
-	int i;
 
 	if (raidautoconfig == 0)
 		return (0);
@@ -435,10 +437,6 @@ rf_autoconfig(struct device *self)
 	 * This gets done in rf_buildroothack().
 	 */
 	rf_buildroothack(config_sets);
-
-	for (i = 0; i < numraid; i++)
-		if (raidPtrs[i] != NULL && raidPtrs[i]->valid)
-			dkwedge_discover(&raid_softc[i].sc_dkdev);
 
 	return 1;
 }
@@ -1837,6 +1835,11 @@ raidinit(RF_Raid_t *raidPtr)
 	 * protectedSectors, as used in RAIDframe.  */
 
 	rs->sc_size = raidPtr->totalSectors;
+
+	dkwedge_discover(&rs->sc_dkdev);
+
+	rf_set_properties(rs, raidPtr);
+
 }
 #if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 /* wake up the daemon & tell it to get us a spare table
@@ -3577,4 +3580,32 @@ raid_detach(struct device *self, int flags)
 	return 0;
 }
 
-
+static void
+rf_set_properties(struct raid_softc *rs, RF_Raid_t *raidPtr)
+{
+	prop_dictionary_t disk_info, odisk_info, geom;
+	disk_info = prop_dictionary_create();
+	geom = prop_dictionary_create();
+	prop_dictionary_set_uint64(geom, "sectors-per-unit",
+				   raidPtr->totalSectors);
+	prop_dictionary_set_uint32(geom, "sector-size",
+				   raidPtr->bytesPerSector);
+	
+	prop_dictionary_set_uint16(geom, "sectors-per-track",
+				   raidPtr->Layout.dataSectorsPerStripe);
+	prop_dictionary_set_uint16(geom, "tracks-per-cylinder",
+				   4 * raidPtr->numCol);
+	
+	prop_dictionary_set_uint64(geom, "cylinders-per-unit",
+	   raidPtr->totalSectors / (raidPtr->Layout.dataSectorsPerStripe *
+	   (4 * raidPtr->numCol)));
+				   
+	prop_dictionary_set(disk_info, "geometry", geom);
+	prop_object_release(geom);
+	prop_dictionary_set(device_properties(rs->sc_dev),
+			    "disk-info", disk_info);
+	odisk_info = rs->sc_dkdev.dk_info;
+	rs->sc_dkdev.dk_info = disk_info;
+	if (odisk_info)
+		prop_object_release(odisk_info);
+}
