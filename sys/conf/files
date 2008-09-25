@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.916 2008/09/14 16:10:19 hannken Exp $
+#	$NetBSD: files,v 1.917 2008/09/25 16:23:45 pooka Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1385,6 +1385,7 @@ file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
+file	kern/kern_malloc_stdtype.c
 file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_module.c
 file	kern/kern_mutex.c

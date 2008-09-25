@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.47 2008/08/12 10:04:57 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.48 2008/09/25 16:23:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -68,11 +68,6 @@ int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
 int hardclock_ticks;
-
-MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
-MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
-MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
-MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
