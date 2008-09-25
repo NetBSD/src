@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.41 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.42 2008/09/25 09:34:13 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -215,7 +215,7 @@ isakmp_handler(so_isakmp)
 	unsigned int local_len = sizeof(local);
 	int len = 0, extralen = 0;
 	vchar_t *buf = NULL, *tmpbuf = NULL;
-	int error = -1;
+	int error = -1, res;
 
 	/* read message by MSG_PEEK */
 	while ((len = recvfromto(so_isakmp, x.buf, sizeof(x),
@@ -366,11 +366,11 @@ isakmp_handler(so_isakmp)
 	/* XXX: I don't know how to check isakmp half connection attack. */
 
 	/* simply reply if the packet was processed. */
-	if (check_recvdpkt((struct sockaddr *)&remote,
-			(struct sockaddr *)&local, buf)) {
+	res=check_recvdpkt((struct sockaddr *)&remote,(struct sockaddr *)&local, buf);
+	if (res) {
 		plog(LLV_NOTIFY, LOCATION, NULL,
-			"the packet is retransmitted by %s.\n",
-			saddr2str((struct sockaddr *)&remote));
+			"the packet is retransmitted by %s (%d).\n",
+			 saddr2str((struct sockaddr *)&remote), res);
 		error = 0;
 		goto end;
 	}
@@ -1812,10 +1812,16 @@ isakmp_send(iph1, sbuf)
 {
 	int len = 0;
 	int s;
-	vchar_t *vbuf = NULL;
+	vchar_t *vbuf = NULL, swap;
 
 #ifdef ENABLE_NATT
 	size_t extralen = NON_ESP_MARKER_USE(iph1) ? NON_ESP_MARKER_LEN : 0;
+
+	/* Check if NON_ESP_MARKER_LEN is already there (happens when resending packets)
+	 */
+	if(extralen == NON_ESP_MARKER_LEN &&
+	   *(u_int32_t *)sbuf->v == 0)
+		extralen = 0;
 
 #ifdef ENABLE_FRAG
 	/* 
@@ -1840,15 +1846,19 @@ isakmp_send(iph1, sbuf)
 		}
 		*(u_int32_t *)vbuf->v = 0;
 		memcpy (vbuf->v + extralen, sbuf->v, sbuf->l);
-		sbuf = vbuf;
+		/* ensures that the modified buffer will be sent back to the caller, so
+		 * add_recvdpkt() will add the correct buffer
+		 */
+		swap = *sbuf;
+		*sbuf = *vbuf;
+		*vbuf = swap;
+		vfree(vbuf);
 	}
 #endif
 
 	/* select the socket to be sent */
 	s = getsockmyaddr(iph1->local);
 	if (s == -1){
-		if ( vbuf != NULL )
-			vfree(vbuf);
 		return -1;
 	}
 
@@ -1860,8 +1870,6 @@ isakmp_send(iph1, sbuf)
 		if (isakmp_sendfrags(iph1, sbuf) == -1) {
 			plog(LLV_ERROR, LOCATION, NULL, 
 			    "isakmp_sendfrags failed\n");
-			if ( vbuf != NULL )
-				vfree(vbuf);
 			return -1;
 		}
 	} else 
@@ -1872,14 +1880,9 @@ isakmp_send(iph1, sbuf)
 
 		if (len == -1) {
 			plog(LLV_ERROR, LOCATION, NULL, "sendfromto failed\n");
-			if ( vbuf != NULL )
-				vfree(vbuf);
 			return -1;
 		}
 	}
-	
-	if ( vbuf != NULL )
-		vfree(vbuf);
 	
 	return 0;
 }
