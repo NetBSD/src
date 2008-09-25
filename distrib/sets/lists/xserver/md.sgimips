@@ -1,4 +1,4 @@
-# $NetBSD: md.sgimips,v 1.21 2008/09/02 21:51:10 lukem Exp $	x11
+# $NetBSD: md.sgimips,v 1.22 2008/09/25 14:15:55 rtr Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xprt					-unknown-	x11
@@ -400,3 +400,7 @@
 ./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.a		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx_pic.a		-unknown-	xorg

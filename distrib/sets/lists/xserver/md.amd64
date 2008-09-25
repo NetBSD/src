@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.36 2008/09/24 10:11:29 rtr Exp $
+# $NetBSD: md.amd64,v 1.37 2008/09/25 14:15:55 rtr Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xvfb					-unknown-	x11
@@ -462,6 +462,10 @@
 ./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod_pic.a	-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.a		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libglx_pic.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libmfb.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libmfb.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libmfb.so.0		-unknown-	xorg
