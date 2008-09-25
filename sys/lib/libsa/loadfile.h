@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.h,v 1.9 2008/05/20 16:04:08 ad Exp $	 */
+/*	$NetBSD: loadfile.h,v 1.10 2008/09/25 20:59:38 christos Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,8 @@
 #define	LOAD_BSS	0x0008
 #define	LOAD_SYM	0x0010
 #define	LOAD_HDR	0x0020
-#define LOAD_ALL	0x003f
+#define LOAD_NOTE	0x0040
+#define LOAD_ALL	0x007f
 
 #define	COUNT_TEXT	0x0100
 #define	COUNT_TEXTA	0x0200
