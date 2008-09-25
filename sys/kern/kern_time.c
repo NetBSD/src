@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.146.2.9 2008/09/18 04:31:43 wrstuden Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.146.2.10 2008/09/25 06:12:28 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.9 2008/09/18 04:31:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.146.2.10 2008/09/25 06:12:28 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1288,19 +1288,18 @@ itimerfree(struct ptimers *pts, int index)
 
 /*
  * Decrement an interval timer by a specified number
- * of microseconds, which must be less than a second,
- * i.e. < 1000000.  If the timer expires, then reload
- * it.  In this case, carry over (usec - old value) to
+ * of nanoseconds, which must be less than a second,
+ * i.e. < 1000000000.  If the timer expires, then reload
+ * it.  In this case, carry over (nsec - old value) to
  * reduce the value reloaded into the timer so that
  * the timer does not drift.  This routine assumes
  * that it is called in a context where the timers
  * on which it is operating cannot change in value.
  */
 static int
-itimerdecr(struct ptimer *pt, int usec)
+itimerdecr(struct ptimer *pt, int nsec)
 {
 	struct itimerspec *itp;
-	int nsec = usec * 1000;
 
 	KASSERT(mutex_owned(&timer_lock));
 
@@ -1314,8 +1313,8 @@ itimerdecr(struct ptimer *pt, int usec)
 		itp->it_value.tv_nsec += 1000000000;
 		itp->it_value.tv_sec--;
 	}
-	itp->it_value.tv_nsec -= usec;
-	usec = 0;
+	itp->it_value.tv_nsec -= nsec;
+	nsec = 0;
 	if (timespecisset(&itp->it_value))
 		return (1);
 	/* expired, exactly at end of interval */
@@ -1369,10 +1368,10 @@ timer_tick(lwp_t *l, bool user)
 		 * Run current process's virtual and profile time, as needed.
 		 */
 		if (user && (pt = LIST_FIRST(&pts->pts_virtual)) != NULL)
-			if (itimerdecr(pt, tick) == 0)
+			if (itimerdecr(pt, tick * 1000) == 0)
 				itimerfire(pt);
 		if ((pt = LIST_FIRST(&pts->pts_prof)) != NULL)
-			if (itimerdecr(pt, tick) == 0)
+			if (itimerdecr(pt, tick * 1000) == 0)
 				itimerfire(pt);
 	}
 	mutex_spin_exit(&timer_lock);
