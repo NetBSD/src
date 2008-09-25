@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2008/09/18 10:57:03 rtr Exp $
+#	$NetBSD: Makefile,v 1.8 2008/09/25 13:58:41 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -46,7 +46,9 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
-.if ${MACHINE} == "cats" || ${MACHINE} == "shark"
+.if ${MACHINE} == "cats" || \
+    ${MACHINE} == "shark" || \
+    ${MACHINE} == "netwinder"
 SRCS.bsd+=      arm_video.c bsdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
@@ -64,7 +66,8 @@ SRCS.bus+=	ix86Pci.c
 .endif
 
 .if ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
-    ${MACHINE} == "sgimips" || ${MACHINE} == "shark"
+    ${MACHINE} == "sgimips" || ${MACHINE} == "shark" || \
+    ${MACHINE} == "netwinder"
 SRCS.bus+=	netbsdPci.c
 .endif
 
