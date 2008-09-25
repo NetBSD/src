@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:31 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2008/09/25 17:12:11 cube Exp $
 
 .include <bsd.own.mk>
 
-LIB=	Xres
+LIB=	XRes
 
 XRESDIR=	${X11SRCDIR.${LIB}}
 .PATH:		${XRESDIR}/src
