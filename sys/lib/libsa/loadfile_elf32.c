@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.23 2008/05/20 14:41:06 ad Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.24 2008/09/25 20:59:38 christos Exp $ */
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -449,11 +449,14 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 				first = 0;
 				break;
 			case SHT_NOTE:
+				if ((flags & LOAD_NOTE) == 0)
+					break;
 				if (shp[i].sh_size < sizeof(note)) {
 					shp[i].sh_offset = 0;
 					break;
 				}
-				if (lseek(fd, shp[i].sh_offset, SEEK_SET) == -1)  {
+				if (lseek(fd, shp[i].sh_offset, SEEK_SET)
+				    == -1) {
 					WARN(("lseek note"));
 					goto freeshp;
 				}
@@ -462,11 +465,14 @@ ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 					WARN(("read note"));
 					goto freeshp;
 				}
-				if (note.nh.n_namesz == ELF_NOTE_NETBSD_NAMESZ &&
-				    note.nh.n_descsz == ELF_NOTE_NETBSD_DESCSZ &&
-				    note.nh.n_type == ELF_NOTE_TYPE_NETBSD_TAG &&
+				if (note.nh.n_namesz ==
+				    ELF_NOTE_NETBSD_NAMESZ &&
+				    note.nh.n_descsz ==
+				    ELF_NOTE_NETBSD_DESCSZ &&
+				    note.nh.n_type ==
+				    ELF_NOTE_TYPE_NETBSD_TAG &&
 				    memcmp(note.name, ELF_NOTE_NETBSD_NAME,
-				        sizeof(note.name)) == 0) {
+				    sizeof(note.name)) == 0) {
 				    	memcpy(&netbsd_version, &note.desc,
 				    	    sizeof(netbsd_version));
 				}
@@ -526,5 +532,33 @@ freeshp:
 	DEALLOC(shp, sz);
 	return 1;
 }
+
+#ifdef TEST
+#include <stdlib.h>
+#include <fcntl.h>
+#include <err.h>
+#include <stdio.h>
+u_int32_t netbsd_version;
+int
+main(int argc, char *argv[])
+{
+	int fd;
+	u_long marks[MARK_MAX];
+	Elf_Ehdr elf;
+	if (argc != 2) {
+		(void)fprintf(stderr, "Usage: %s <file>\n", getprogname());
+		return 1;
+	}
+	if ((fd = open(argv[1], O_RDONLY)) == -1)
+		err(1, "Can't open `%s'", argv[1]);
+	if (read(fd, &elf, sizeof(elf)) != sizeof(elf))
+		err(1, "Can't read `%s'", argv[1]);
+	memset(marks, 0, sizeof(marks));
+	marks[MARK_START] = (u_long)malloc(2LL * 1024 * 2024 * 1024);
+	ELFNAMEEND(loadfile)(fd, &elf, marks, LOAD_ALL);
+	printf("%d\n", netbsd_version);
+	return 0;
+}
+#endif
 
 #endif /* (ELFSIZE == 32 && BOOT_ELF32) || (ELFSIZE == 64 && BOOT_ELF64) */
