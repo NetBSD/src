@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.29.4.4 2008/06/27 01:34:26 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.29.4.5 2008/09/25 19:26:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.29.4.4 2008/06/27 01:34:26 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.29.4.5 2008/09/25 19:26:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,13 +314,15 @@ getucontext32(struct lwp *l, ucontext32_t *ucp)
 /*
  * getucontext32_sa:
  *	Get a ucontext32_t for use in SA upcall generation.
- * Teweaked version of getucontext32. We 1) do not take p_lock, 2)
+ * Tweaked version of getucontext32. We 1) do not take p_lock, 2)
  * fudge things with uc_link (which is usually NULL for libpthread
  * code), and 3) we report an empty signal mask.
  */
 void
 getucontext32_sa(struct lwp *l, ucontext32_t *ucp)
 {
+	struct proc *p = l->l_proc;
+
 	ucp->uc_flags = 0;
 	ucp->uc_link = (uint32_t)(intptr_t)l->l_ctxlink;
 
