@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.373 2008/09/24 10:07:19 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.374 2008/09/25 14:17:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.373 2008/09/24 10:07:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.374 2008/09/25 14:17:29 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -695,6 +695,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 
 	vrele(vp);
 	error = dounmount(mp, SCARG(uap, flags), l);
+	vfs_destroy(mp);
 	return error;
 }
 
@@ -702,8 +703,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
  * Do the actual file system unmount.  File system is assumed to have
  * been locked by the caller.
  *
- * => Caller gain reference to the mount, explicility for unmount.
- * => Reference will be dropped in all cases.
+ * => Caller hold reference to the mount, explicility for dounmount().
  */
 int
 dounmount(struct mount *mp, int flags, struct lwp *l)
@@ -728,7 +728,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
 		rw_exit(&mp->mnt_unmounting);
 		mutex_exit(&syncer_mutex);
-		vfs_destroy(mp);
 		return ENOENT;
 	}
 
@@ -787,8 +786,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mutex_exit(&syncer_mutex);
 	vfs_hooks_unmount(mp);
 	rw_exit(&mp->mnt_unmounting);
-	vfs_destroy(mp);	/* caller provided reference */
-	vfs_destroy(mp);	/* from mount(), final nail in coffin */
+	vfs_destroy(mp);	/* reference from mount() */
 	if (coveredvp != NULLVP)
 		vrele(coveredvp);
 	return (0);
