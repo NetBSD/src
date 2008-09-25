@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.6 2008/08/04 15:02:16 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.7 2008/09/25 16:23:45 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -22,12 +22,13 @@ SRCS=	rump.c atomic.c auth.c emul.c intr.c genfs_io.c locks.c		\
 SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
 
 # sys/kern
-SRCS+=	clock_subr.c kern_descrip.c kern_module.c kern_stub.c		\
-	kern_sysctl.c param.c subr_bufq.c subr_callback.c subr_hash.c	\
-	subr_kobj.c subr_prf2.c subr_specificdata.c subr_time.c		\
-	subr_workqueue.c sys_descrip.c sys_generic.c vfs_bio.c		\
-	vfs_cache.c vfs_getcwd.c vfs_hooks.c vfs_init.c vfs_lookup.c	\
-	vfs_subr.c vfs_syscalls.c vfs_vnops.c vfs_wapbl.c vnode_if.c
+SRCS+=	clock_subr.c kern_descrip.c kern_malloc_stdtype.c		\
+	kern_module.c kern_stub.c kern_sysctl.c param.c subr_bufq.c	\
+	subr_callback.c subr_hash.c subr_kobj.c subr_prf2.c		\
+	subr_specificdata.c subr_time.c subr_workqueue.c sys_descrip.c	\
+	sys_generic.c vfs_bio.c vfs_cache.c vfs_getcwd.c vfs_hooks.c	\
+	vfs_init.c vfs_lookup.c vfs_subr.c vfs_syscalls.c vfs_vnops.c	\
+	vfs_wapbl.c vnode_if.c
 
 # sys/miscfs
 SRCS+=	genfs_vfsops.c genfs_vnops.c sync_subr.c
