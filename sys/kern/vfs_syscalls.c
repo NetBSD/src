@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.374 2008/09/25 14:17:29 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.375 2008/09/25 14:37:30 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.374 2008/09/25 14:17:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.375 2008/09/25 14:37:30 wiz Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -703,7 +703,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
  * Do the actual file system unmount.  File system is assumed to have
  * been locked by the caller.
  *
- * => Caller hold reference to the mount, explicility for dounmount().
+ * => Caller hold reference to the mount, explicitly for dounmount().
  */
 int
 dounmount(struct mount *mp, int flags, struct lwp *l)
