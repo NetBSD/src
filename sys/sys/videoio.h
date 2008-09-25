@@ -1,4 +1,4 @@
-/* $NetBSD: videoio.h,v 1.3 2008/09/08 18:40:08 jmcneill Exp $ */
+/* $NetBSD: videoio.h,v 1.4 2008/09/25 19:34:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -507,6 +507,7 @@ struct v4l2_requestbuffers {
 #define V4L2_TUNER_MODE_LANG2		2
 #define V4L2_TUNER_MODE_SAP		2
 #define V4L2_TUNER_MODE_LANG1		3
+#define V4L2_TUNER_MODE_LANG1_LANG2	4
 
 /* Control flags */
 #define V4L2_CTRL_FLAG_DISABLED		0x0001
