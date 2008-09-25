@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.71 2008/05/06 18:43:44 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.72 2008/09/25 14:17:29 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.71 2008/05/06 18:43:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.72 2008/09/25 14:17:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1018,19 +1018,13 @@ puffs_msgif_close(void *this)
 	}
 
 	/* Won't access pmp from here anymore */
+	atomic_inc_uint((unsigned int*)&mp->mnt_refcnt);
 	puffs_mp_release(pmp);
 	mutex_exit(&pmp->pmp_lock);
 
-	/*
-	 * Detach from VFS.  First do necessary XXX-dance (from
-	 * sys_unmount() & other callers of dounmount()
-	 *
-	 * XXX2: take a reference to the mountpoint before starting to
-	 * wait for syncer_mutex.  Otherwise the mointpoint can be
-	 * wiped out while we wait. XXX Should be done earlier
-	 */
-	atomic_inc_uint((unsigned int*)&mp->mnt_refcnt);
+	/* Detach from VFS. */
 	(void)dounmount(mp, MNT_FORCE, curlwp);
+	vfs_destroy(mp);
 
 	return 0;
 }
