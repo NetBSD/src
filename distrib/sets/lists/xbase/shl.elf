@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.16 2008/09/20 15:29:25 cube Exp $
+# $NetBSD: shl.elf,v 1.17 2008/09/25 17:12:12 cube Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2	-unknown-		x11
@@ -125,6 +125,8 @@
 ./usr/X11R7/lib/libSM.so.6			-unknown-		xorg
 ./usr/X11R7/lib/libX11.so			-unknown-		xorg
 ./usr/X11R7/lib/libX11.so.6			-unknown-		xorg
+./usr/X11R7/lib/libXRes.so			-unknown-		xorg
+./usr/X11R7/lib/libXRes.so.1			-unknown-		xorg
 ./usr/X11R7/lib/libXTrap.so			-unknown-		xorg
 ./usr/X11R7/lib/libXTrap.so.6			-unknown-		xorg
 ./usr/X11R7/lib/libXau.so			-unknown-		xorg
@@ -178,8 +180,6 @@
 ./usr/X11R7/lib/libXrandr.so.2			-unknown-		xorg
 ./usr/X11R7/lib/libXrender.so			-unknown-		xorg
 ./usr/X11R7/lib/libXrender.so.1			-unknown-		xorg
-./usr/X11R7/lib/libXres.so			-unknown-		xorg
-./usr/X11R7/lib/libXres.so.1			-unknown-		xorg
 ./usr/X11R7/lib/libXss.so			-unknown-		xorg
 ./usr/X11R7/lib/libXss.so.1			-unknown-		xorg
 ./usr/X11R7/lib/libXt.so			-unknown-		xorg
