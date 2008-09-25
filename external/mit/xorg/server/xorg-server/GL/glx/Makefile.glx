@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.glx,v 1.3 2008/09/25 14:15:06 rtr Exp $
+#	$NetBSD: Makefile.glx,v 1.4 2008/09/25 15:02:58 rtr Exp $
 
 .PATH:	${X11SRCDIR.xorg-server}/GL/glx
+.PATH:	${X11SRCDIR.MesaLib}/src/mesa/glapi
+.PATH:	${X11SRCDIR.MesaLib}/src/glx/x11
 
 SRCS.glx= \
 	glxcmds.c \
@@ -30,6 +32,11 @@ SRCS.glx= \
 	singlesize.c \
 	swap_interval.c \
 	xfont.c
+
+SRCS.glx+= \
+	glapi.c \
+	glcontextmodes.c \
+	glthread.c
 
 COPTS.glxcmds.c=		-Wno-error
 COPTS.indirect_dispatch.c=	-Wno-error
