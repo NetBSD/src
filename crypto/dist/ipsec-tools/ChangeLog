@@ -1,3 +1,7 @@
+2008-09-25  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp.c: Fixed resending mechanism to have non-ESP
+	  marker for retransmitted packets.
+
 2008-09-17  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/isakmp_inf.c: Fixed port match in purge_ipsec_spi()
 	  when NAT-T enabled and trying to purge non NAT-T SAs.
