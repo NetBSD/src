@@ -1,3 +1,7 @@
+2008-09-25  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp.c: Fixed resending mechanism to have non-ESP
+	  marker for retransmitted packets.
+
 2008-09-19  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/{schedule.c|schedule.h|session.c|isakmp.c|
 	  isakmp_var.h|handler.c|handler.h|isakmp_quick.c|pfkey.c|pfkey.h|
