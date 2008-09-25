@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.6 2008/09/01 10:15:08 rtr Exp $
+#	$NetBSD: Makefile.Xserver,v 1.7 2008/09/25 12:30:04 rtr Exp $
 
 # XXX old list
 .if 0
@@ -41,7 +41,6 @@
 	os \
 	dix \
 	config \
-	GL/glx \
 	hw/xnest \
 	hw/xfree86/common \
 	hw/xfree86/ddc \
