@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.89 2008/09/25 19:59:39 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.90 2008/09/25 20:30:50 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2179,4 +2179,13 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.235 via patch
 	We need to initialize dk_driver as well.  Thanks to Ronald Roskens
 	for reporting the problem and testing the fix.
 	[oster, ticket #984]
+
+sys/arch/macppc/dev/snapper.c		1.14-1.21
+	- proper support for 24bit audio on TAS3004 / snapper codecs
+	- fix sample rate setup bugs ( otherwise the chip would always stay in
+	  44.1kHz )
+	- add support for the codecs found in G4 Mac Minis ( AOAKeylargo and
+	  AOAK2 ), which don't have hardware volume control
+	- add support for 'tumbler' codecs found in some iBook G3 models
+	[macallan, ticket #616]
 
