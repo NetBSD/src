@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1143.2.3 2008/09/24 16:32:52 wrstuden Exp $
+#	$NetBSD: mi,v 1.1143.2.4 2008/09/25 18:15:38 wrstuden Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2002,7 +2002,8 @@
 ./usr/include/sys/rmd160.h			comp-c-include
 ./usr/include/sys/rnd.h				comp-c-include
 ./usr/include/sys/rwlock.h			comp-c-include
-./usr/include/sys/sa.h				comp-obsolete		obsolete
+./usr/include/sys/sa.h				comp-c-include
+./usr/include/sys/satypes.h			comp-c-include
 ./usr/include/sys/scanio.h			comp-c-include
 ./usr/include/sys/sched.h			comp-c-include
 ./usr/include/sys/scsiio.h			comp-c-include
