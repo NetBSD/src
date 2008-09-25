@@ -1,35 +1,55 @@
-#	$NetBSD: Makefile.glx,v 1.2 2008/08/15 15:55:05 rtr Exp $
-
-LIB=		glx
+#	$NetBSD: Makefile.glx,v 1.3 2008/09/25 14:15:06 rtr Exp $
 
 .PATH:	${X11SRCDIR.xorg-server}/GL/glx
-.PATH:	${X11SRCDIR.xorg-server}/GL/glx
-SRCS+=	glxcmds.c glxcmdsswap.c glxext.c glxglcore.c glxscreens.c \
-	glxutil.c glxvisuals.c indirect_dispatch.c \
-	indirect_dispatch_swap.c indirect_program.c indirect_reqsize.c \
-	indirect_size_get.c indirect_table.c \
-	indirect_texture_compression.c indirect_util.c render2.c \
-	render2swap.c renderpix.c renderpixswap.c rensize.c single2.c \
-	single2swap.c singlepix.c singlepixswap.c singlesize.c \
-	swap_interval.c xfont.c
 
-CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/GL/glx \
-		-I${X11SRCDIR.xorg-server}/GL/include \
-		-I${X11SRCDIR.xorg-server}/include \
-		-I${X11SRCDIR.MesaLib}/include \
-		-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
-		-I${X11SRCDIR.MesaLib}/src/mesa/main \
-		-I${X11SRCDIR.MesaLib}/src/glx/x11 \
-		-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${X11SRCDIR.xorg-server}/mi \
-		-I${DESTDIR}${X11INCDIR}/X11/extensions \
-		-I${DESTDIR}${X11INCDIR}/pixman-1 \
-		-I${DESTDIR}${X11INCDIR}/xorg \
-		-I${DESTDIR}${X11INCDIR}/X11/drm \
-		${X11FLAGS.DIX}
+SRCS.glx= \
+	glxcmds.c \
+	glxcmdsswap.c \
+	glxext.c \
+	glxglcore.c \
+	glxscreens.c \
+	glxutil.c \
+	glxvisuals.c \
+	indirect_dispatch.c \
+	indirect_dispatch_swap.c \
+	indirect_program.c \
+	indirect_reqsize.c \
+	indirect_size_get.c \
+	indirect_table.c \
+	indirect_texture_compression.c \
+	indirect_util.c \
+	render2.c \
+	render2swap.c \
+	renderpix.c \
+	renderpixswap.c \
+	rensize.c \
+	single2.c \
+	single2swap.c \
+	singlepix.c \
+	singlepixswap.c \
+	singlesize.c \
+	swap_interval.c \
+	xfont.c
 
-CPPFLAGS+=	-DGLXEXT -DGLX_USE_MESA \
-		-DXORG_VERSION_CURRENT=${XORG_VERSION_CURRENT}
+COPTS.glxcmds.c=		-Wno-error
+COPTS.indirect_dispatch.c=	-Wno-error
+COPTS.indirect_dispatch_swap.c=	-Wno-error
+
+CPPFLAGS+= \
+	-I${X11SRCDIR.xorg-server}/include \
+	-I${X11SRCDIR.xorg-server}/GL/glx \
+	-I${X11SRCDIR.MesaLib}/include \
+	-I${X11SRCDIR.MesaLib}/src/glx/x11 \
+	-I${X11SRCDIR.MesaLib}/src/mesa/main \
+	-I${X11SRCDIR.MesaLib}/src/mesa/glapi \
+	-I${DESTDIR}${X11INCDIR}/X11/drm \
+	-I${DESTDIR}${X11INCDIR}/xorg \
+	-I${DESTDIR}${X11INCDIR}/pixman-1
+
+CPPFLAGS+= \
+	-DGLXEXT \
+	-DGLX_USE_MESA \
+	${X11FLAGS.DIX}
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}
