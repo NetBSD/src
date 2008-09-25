@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.88 2008/09/24 18:14:36 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.89 2008/09/25 19:59:39 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2157,4 +2157,26 @@ common/lib/libprop/prop_string.3		1.4
 	FALSE -> false
 	Completes processing of ticket 904, fixes PR lib/38013.
 	[joerg, ticket #904]
+
+sys/arch/sparc64/sparc64/locore.s		1.261
+
+	Cosmetic: remove an unused .globl declaration
+	[martin, ticket #945]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.228
+
+	don't leak a vnode in the wedge case.
+	[oster, ticket #979]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.234
+
+	Implement support for drvctl in RAIDframe.  Thanks to jnemeth@ for
+	initial patch.
+	[oster, ticket #981]
+
+sys/dev/raidframe/rf_netbsdkintf.c		1.235 via patch
+
+	We need to initialize dk_driver as well.  Thanks to Ronald Roskens
+	for reporting the problem and testing the fix.
+	[oster, ticket #984]
 
