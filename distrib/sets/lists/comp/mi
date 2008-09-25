@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1194 2008/09/23 23:59:03 hubertf Exp $
+#	$NetBSD: mi,v 1.1195 2008/09/25 17:12:11 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3428,6 +3428,7 @@
 ./usr/libdata/lint/llib-lICE.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lSM.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lX11.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXRes.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXTrap.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXau.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXaw7.ln		-unknown-	lint,xorg
@@ -3452,7 +3453,6 @@
 ./usr/libdata/lint/llib-lXprintUtil.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXrandr.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXrender.ln		-unknown-	lint,xorg
-./usr/libdata/lint/llib-lXres.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXss.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXt.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXtst.ln		-unknown-	lint,xorg

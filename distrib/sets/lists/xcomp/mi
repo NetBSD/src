@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.50 2008/09/25 14:08:12 rtr Exp $
+# $NetBSD: mi,v 1.51 2008/09/25 17:12:12 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5946,6 +5946,9 @@
 ./usr/X11R7/lib/libX11.a				-unknown-	xorg
 ./usr/X11R7/lib/libX11_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libX11_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libXRes.a				-unknown-	xorg
+./usr/X11R7/lib/libXRes_g.a				-unknown-	debuglib,xorg
+./usr/X11R7/lib/libXRes_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXTrap.a				-unknown-	xorg
 ./usr/X11R7/lib/libXTrap_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXTrap_p.a				-unknown-	profile,xorg
@@ -6021,9 +6024,6 @@
 ./usr/X11R7/lib/libXrender.a				-unknown-	xorg
 ./usr/X11R7/lib/libXrender_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXrender_p.a				-unknown-	profile,xorg
-./usr/X11R7/lib/libXres.a				-unknown-	xorg
-./usr/X11R7/lib/libXres_g.a				-unknown-	debuglib,xorg
-./usr/X11R7/lib/libXres_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/libXss.a				-unknown-	xorg
 ./usr/X11R7/lib/libXss_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libXss_p.a				-unknown-	profile,xorg
