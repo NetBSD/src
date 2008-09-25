@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/09/25 21:55:35 cube Exp $
+#	$NetBSD: Makefile,v 1.5 2008/09/25 22:00:27 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -12,8 +12,7 @@ SRCS=		XRes.c
 INCS=	XRes.h
 INCSDIR=${X11INCDIR}/X11/extensions
 
-PKGCONFIG=	xres
-PKGDIST.xres=	${XRESDIR}
+PKGDIST=	Xres
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
