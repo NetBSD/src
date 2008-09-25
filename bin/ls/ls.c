@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.64 2008/07/20 00:52:40 lukem Exp $	*/
+/*	$NetBSD: ls.c,v 1.65 2008/09/25 23:44:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.64 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: ls.c,v 1.65 2008/09/25 23:44:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -232,6 +232,8 @@ ls_main(int argc, char *argv[])
 			break;
 		case 'n':
 			f_numericonly = 1;
+			f_longform = 1;
+			f_column = f_columnacross = f_singlecol = f_stream = 0;
 			break;
 		case 'o':
 			f_flags = 1;
