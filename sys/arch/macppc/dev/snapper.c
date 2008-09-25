@@ -1,8 +1,8 @@
-/*	$NetBSD: snapper.c,v 1.13 2006/09/24 03:47:09 jmcneill Exp $	*/
+/*	$NetBSD: snapper.c,v 1.13.2.1 2008/09/25 20:29:56 bouyer Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
-
+/*     Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp         */
 /*-
- * Copyright (c) 2002 Tsubai Masanari.  All rights reserved.
+ * Copyright (c) 2002, 2003 Tsubai Masanari.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,6 +36,7 @@
 #include <sys/audioio.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 
 #include <dev/auconv.h>
 #include <dev/audio_if.h>
@@ -60,7 +61,10 @@
 struct snapper_softc {
 	struct device sc_dev;
 	int sc_flags;
+#define SNAPPER_IS_TAS3001	0x01
 	int sc_node;
+
+	struct audio_encoding_set *sc_encodings;
 
 	void (*sc_ointr)(void *);	/* dma completion intr handler */
 	void *sc_oarg;			/* arg for sc_ointr() */
@@ -76,6 +80,10 @@ struct snapper_softc {
 	u_char *sc_reg;
 	i2c_addr_t sc_deqaddr;
 	i2c_tag_t sc_i2c;
+
+	int sc_rate;                    /* current sampling rate */
+	int sc_bitspersample;
+	int sc_swvol;
 
 	u_int sc_vol_l;
 	u_int sc_vol_r;
@@ -94,7 +102,6 @@ int snapper_match(struct device *, struct cfdata *, void *);
 void snapper_attach(struct device *, struct device *, void *);
 void snapper_defer(struct device *);
 int snapper_intr(void *);
-void snapper_close(void *);
 int snapper_query_encoding(void *, struct audio_encoding *);
 int snapper_set_params(void *, int, int, audio_params_t *,
     audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
@@ -113,7 +120,7 @@ int snapper_trigger_output(void *, void *, void *, int, void (*)(void *),
 int snapper_trigger_input(void *, void *, void *, int, void (*)(void *),
     void *, const audio_params_t *);
 void snapper_set_volume(struct snapper_softc *, int, int);
-int snapper_set_rate(struct snapper_softc *, u_int);
+int snapper_set_rate(struct snapper_softc *);
 void snapper_set_treble(struct snapper_softc *, int);
 void snapper_set_bass(struct snapper_softc *, int);
 void snapper_write_mixers(struct snapper_softc *);
@@ -127,14 +134,85 @@ int snapper_cint(void *);
 int tas3004_init(struct snapper_softc *);
 void snapper_init(struct snapper_softc *, int);
 
+struct snapper_codecvar {
+	stream_filter_t	base;
+};
+
+static stream_filter_t *snapper_factory
+	(int (*)(stream_fetcher_t *, audio_stream_t *, int));
+static void snapper_dtor(stream_filter_t *);
+
+
+/* XXX We can't access the hw device softc from our audio
+ *     filter -- lame...
+ */
+static u_int snapper_vol_l = 128, snapper_vol_r = 128;
+
+/* XXX why doesn't auconv define this? */
+#define DEFINE_FILTER(name)	\
+static int \
+name##_fetch_to(stream_fetcher_t *, audio_stream_t *, int); \
+stream_filter_t * name(struct audio_softc *, \
+    const audio_params_t *, const audio_params_t *); \
+stream_filter_t * \
+name(struct audio_softc *sc, const audio_params_t *from, \
+     const audio_params_t *to) \
+{ \
+	return snapper_factory(name##_fetch_to); \
+} \
+static int \
+name##_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
+
+DEFINE_FILTER(snapper_volume)
+{
+	stream_filter_t *this;
+	int16_t j;
+	int16_t *wp;
+	int m, err;
+
+	this = (stream_filter_t *)self;
+	max_used = (max_used + 1) & ~1;
+	if ((err = this->prev->fetch_to(this->prev, this->src, max_used)))
+		return err;
+	m = (dst->end - dst->start) & ~1;
+	m = min(m, max_used);
+	FILTER_LOOP_PROLOGUE(this->src, 2, dst, 2, m) {
+		j = (s[0] << 8 | s[1]);
+		wp = (int16_t *)d;
+		*wp = ((j * snapper_vol_l) / 255);
+	} FILTER_LOOP_EPILOGUE(this->src, dst);
+
+	return 0;
+}
+
+static stream_filter_t *
+snapper_factory(int (*fetch_to)(stream_fetcher_t *, audio_stream_t *, int))
+{
+	struct snapper_codecvar *this;
+
+	this = malloc(sizeof(*this), M_DEVBUF, M_WAITOK | M_ZERO);
+	this->base.base.fetch_to = fetch_to;
+	this->base.dtor = snapper_dtor;
+	this->base.set_fetcher = stream_filter_set_fetcher;
+	this->base.set_inputbuffer = stream_filter_set_inputbuffer;
+	return &this->base;
+}
+
+static void
+snapper_dtor(stream_filter_t *this)
+{
+	if (this != NULL)
+		free(this, M_DEVBUF);
+}
+
 struct cfattach snapper_ca = {
 	"snapper", {}, sizeof(struct snapper_softc),
 	snapper_match, snapper_attach
 };
 
 const struct audio_hw_if snapper_hw_if = {
-	NULL,			/* open */
-	snapper_close,
+	NULL,
+	NULL,
 	NULL,
 	snapper_query_encoding,
 	snapper_set_params,
@@ -389,10 +467,18 @@ const uint8_t snapper_mixer_gain[178][3] = {
 	{ 0x00, 0x00, 0x00 }  /* Mute */
 };
 
-#define SNAPPER_NFORMATS	1
+#define SNAPPER_NFORMATS	2
 static const struct audio_format snapper_formats[SNAPPER_NFORMATS] = {
 	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	 2, AUFMT_STEREO, 3, {8000, 44100, 48000}},
+	 2, AUFMT_STEREO, 3, {32000, 44100, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 24, 24,
+	 2, AUFMT_STEREO, 3, {32000, 44100, 48000}},
+};
+
+#define TUMBLER_NFORMATS	1
+static const struct audio_format tumbler_formats[TUMBLER_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
+	 2, AUFMT_STEREO, 3, {32000, 44100, 48000}},
 };
 
 static u_char *amp_mute;
@@ -409,14 +495,25 @@ static int headphone_detect_active;
 #define I2S_FRAMEMATCH	0x50
 #define I2S_WORDSIZE	0x60
 
+/* I2S_INT register definitions */
+#define I2S_INT_CLKSTOPPEND 0x01000000  /* clock-stop interrupt pending */
+
+/* FCR(0x3c) bits */
+#define I2S0CLKEN      0x1000
+#define I2S0EN         0x2000
+#define I2S1CLKEN      0x080000
+#define I2S1EN         0x100000
+#define FCR3C_BITMASK "\020\25I2S1EN\24I2S1CLKEN\16I2S0EN\15I2S0CLKEN"
+
 /* TAS3004 registers */
 #define DEQ_MCR1	0x01	/* Main control register 1 (1byte) */
-#define DEQ_DRC		0x02	/* Dynamic range compression (6bytes?) */
+#define DEQ_DRC		0x02	/* Dynamic range compression (6bytes?)
+					2 bytes on the TAS 3001 */
 #define DEQ_VOLUME	0x04	/* Volume (6bytes) */
 #define DEQ_TREBLE	0x05	/* Treble control (1byte) */
 #define DEQ_BASS	0x06	/* Bass control (1byte) */
-#define DEQ_MIXER_L	0x07	/* Mixer left gain (9bytes) */
-#define DEQ_MIXER_R	0x08	/* Mixer right gain (9bytes) */
+#define DEQ_MIXER_L	0x07	/* Mixer left gain (9bytes; 3 on TAS3001) */
+#define DEQ_MIXER_R	0x08	/* Mixer right gain (9bytes; 3 on TAS3001) */
 #define DEQ_LB0		0x0a	/* Left biquad 0 (15bytes) */
 #define DEQ_LB1		0x0b	/* Left biquad 1 (15bytes) */
 #define DEQ_LB2		0x0c	/* Left biquad 2 (15bytes) */
@@ -446,10 +543,15 @@ static int headphone_detect_active;
 #define  DEQ_MCR1_SM_L	0x00	/*  Left justified */
 #define  DEQ_MCR1_SM_R	0x10	/*  Right justified */
 #define  DEQ_MCR1_SM_I2S 0x20	/*  I2S */
+#define DEQ_MCR1_ISM	0x0c	/* Input serial port mode */
+#define  DEQ_MCR1_ISM_L	0x00	/*  Left justified */
+#define  DEQ_MCR1_ISM_R	0x04	/*  Right justified */
+#define  DEQ_MCR1_ISM_I2S 0x08	/*  I2S */
 #define DEQ_MCR1_W	0x03	/* Serial port word length */
 #define  DEQ_MCR1_W_16	0x00	/*  16 bit */
 #define  DEQ_MCR1_W_18	0x01	/*  18 bit */
 #define  DEQ_MCR1_W_20	0x02	/*  20 bit */
+#define  DEQ_MCR1_W_24	0x03	/*  20 bit */
 
 #define DEQ_MCR2_DL	0x80	/* Download */
 #define DEQ_MCR2_AP	0x02	/* All pass mode */
@@ -533,6 +635,15 @@ snapper_match(struct device *parent, struct cfdata *match, void *aux)
 
 	if (strcmp(compat, "snapper") == 0)
 		return 1;
+
+	if (strcmp(compat, "tumbler") == 0)
+		return 1;
+
+	if (strcmp(compat, "AOAKeylargo") == 0)
+		return 1;
+
+	if (strcmp(compat, "AOAK2") == 0)
+		return 1;
 		
 	if (OF_getprop(soundchip,"platform-tas-codec-ref",
 	    &soundcodec, sizeof soundcodec) == sizeof soundcodec)
@@ -549,9 +660,32 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 	unsigned long v;
 	int cirq, oirq, iirq, cirq_type, oirq_type, iirq_type;
 	int soundbus, intr[6];
+	char compat[32];
 
 	sc = (struct snapper_softc *)self;
 	ca = aux;
+
+	soundbus = OF_child(ca->ca_node);
+	bzero(compat, sizeof compat);
+	OF_getprop(OF_child(soundbus), "compatible", compat, sizeof compat);
+
+	sc->sc_flags = 0;
+	if (strcmp(compat, "tumbler") == 0)
+		sc->sc_flags |= SNAPPER_IS_TAS3001;
+
+	if (sc->sc_flags & SNAPPER_IS_TAS3001) {
+		if (auconv_create_encodings(tumbler_formats, TUMBLER_NFORMATS,
+				&sc->sc_encodings) != 0) {
+			aprint_normal("can't create encodings\n");
+			return;
+		}
+	} else {
+		if (auconv_create_encodings(snapper_formats, SNAPPER_NFORMATS,
+				&sc->sc_encodings) != 0) {
+			aprint_normal("can't create encodings\n");
+			return;
+		}
+	}
 
 	v = (((unsigned long) &sc->dbdma_cmdspace[0]) + 0xf) & ~0xf;
 	sc->sc_odmacmd = (struct dbdma_command *) v;
@@ -573,7 +707,6 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_odma = (void *)ca->ca_reg[2];
 	sc->sc_idma = (void *)ca->ca_reg[4];
 
-	soundbus = OF_child(ca->ca_node);
 	OF_getprop(soundbus, "interrupts", intr, sizeof intr);
 	cirq = intr[0];
 	oirq = intr[2];
@@ -586,9 +719,9 @@ snapper_attach(struct device *parent, struct device *self, void *aux)
 	intr_establish(oirq, oirq_type, IPL_AUDIO, snapper_intr, sc);
 	intr_establish(iirq, iirq_type, IPL_AUDIO, snapper_intr, sc);
 
-	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
+	aprint_normal(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
-	config_interrupts(self, snapper_defer);
+	config_defer(self, snapper_defer);
 }
 
 void
@@ -599,12 +732,6 @@ snapper_defer(struct device *dev)
 	struct deq_softc *deq;
 	
 	sc = (struct snapper_softc *)dev;
-	/*
-	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
-		if (strncmp(dv->dv_xname, "ki2c", 4) == 0 &&
-		    strncmp(device_parent(dv)->dv_xname, "obio", 4) == 0)
-			sc->sc_i2c = dv;
-	*/
 	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
 		if (strncmp(dv->dv_xname, "deq", 3) == 0 &&
 		    strncmp(device_parent(dv)->dv_xname, "ki2c", 4) == 0) {
@@ -613,12 +740,15 @@ snapper_defer(struct device *dev)
 			sc->sc_deqaddr=deq->sc_address;
 		}
 
+	/* If we don't find a codec, it's not the end of the world;
+	 * we can control the volume in software in this case.
+	 */
 	if (sc->sc_i2c == NULL) {
-		printf("%s: unable to find i2c\n", sc->sc_dev.dv_xname);
-		return;
-	}
-
-	/* XXX If i2c was failed to attach, what should we do? */
+		aprint_verbose("%s: software codec\n",
+		    sc->sc_dev.dv_xname);
+		sc->sc_swvol = 1;
+	} else
+		sc->sc_swvol = 0;
 
 	audio_attach_mi(&snapper_hw_if, sc, &sc->sc_dev);
 
@@ -666,69 +796,14 @@ snapper_intr(void *v)
 	return 1;
 }
 
-/*
- * Close function is called at splaudio().
- */
-void
-snapper_close(void *h)
-{
-	struct snapper_softc *sc;
-
-	sc = h;
-	snapper_halt_output(sc);
-	snapper_halt_input(sc);
-
-	sc->sc_ointr = 0;
-	sc->sc_iintr = 0;
-}
 
 int
 snapper_query_encoding(void *h, struct audio_encoding *ae)
 {
 
-	ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
-	switch (ae->index) {
-	case 0:
-		strcpy(ae->name, AudioEslinear);
-		ae->encoding = AUDIO_ENCODING_SLINEAR;
-		ae->precision = 16;
-		ae->flags = 0;
-		return 0;
-	case 1:
-		strcpy(ae->name, AudioEslinear_be);
-		ae->encoding = AUDIO_ENCODING_SLINEAR_BE;
-		ae->precision = 16;
-		ae->flags = 0;
-		return 0;
-	case 2:
-		strcpy(ae->name, AudioEslinear_le);
-		ae->encoding = AUDIO_ENCODING_SLINEAR_LE;
-		ae->precision = 16;
-		return 0;
-	case 3:
-		strcpy(ae->name, AudioEulinear_be);
-		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
-		ae->precision = 16;
-		return 0;
-	case 4:
-		strcpy(ae->name, AudioEulinear_le);
-		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
-		ae->precision = 16;
-		return 0;
-	case 5:
-		strcpy(ae->name, AudioEmulaw);
-		ae->encoding = AUDIO_ENCODING_ULAW;
-		ae->precision = 8;
-		return 0;
-	case 6:
-		strcpy(ae->name, AudioEalaw);
-		ae->encoding = AUDIO_ENCODING_ALAW;
-		ae->precision = 8;
-		return 0;
-	default:
-		DPRINTF("snapper_query_encoding: invalid encoding %d\n", ae->index);
-		return EINVAL;
-	}
+	struct snapper_softc *sc = h;
+
+	return auconv_query_encoding(sc->sc_encodings, ae);
 }
 
 int
@@ -738,7 +813,7 @@ snapper_set_params(void *h, int setmode, int usemode,
 {
 	struct snapper_softc *sc;
 	audio_params_t *p;
-	stream_filter_list_t *fil;
+	stream_filter_list_t *fil = NULL; /* XXX gcc */
 	int mode;
 
 	sc = h;
@@ -772,19 +847,33 @@ snapper_set_params(void *h, int setmode, int usemode,
 		}
 
 		fil = mode == AUMODE_PLAY ? pfil : rfil;
-		if (auconv_set_converter(snapper_formats, SNAPPER_NFORMATS,
-					 mode, p, TRUE, fil) < 0) {
-			DPRINTF("snapper_set_params: auconv_set_converter failed\n");
-			return EINVAL;
+		if (sc->sc_flags & SNAPPER_IS_TAS3001) {
+			if (auconv_set_converter(tumbler_formats,
+				    TUMBLER_NFORMATS, mode, p, true, fil) < 0) {
+				DPRINTF("snapper_set_params: "
+					"auconv_set_converter failed\n");
+				return EINVAL;
+			}
+		} else {	/* TAS 3004 */
+			if (auconv_set_converter(snapper_formats,
+				    SNAPPER_NFORMATS, mode, p, true, fil) < 0) {
+				DPRINTF("snapper_set_params: "
+					"auconv_set_converter failed\n");
+				return EINVAL;
+			}
 		}
+
+		if (sc->sc_swvol)
+			fil->append(fil, snapper_volume, p);
 		if (fil->req_size > 0)
 			p = &fil->filters[0].param;
 	}
 
 	/* Set the speed. p points HW encoding. */
-	if (snapper_set_rate(sc, p->sample_rate))
-		return EINVAL;
-
+	if (p) {
+		sc->sc_rate = p->sample_rate;
+		sc->sc_bitspersample = p->precision;
+	}
 	return 0;
 }
 
@@ -806,6 +895,7 @@ snapper_halt_output(void *h)
 	sc = h;
 	dbdma_stop(sc->sc_odma);
 	dbdma_reset(sc->sc_odma);
+	sc->sc_ointr = NULL;
 	return 0;
 }
 
@@ -817,6 +907,7 @@ snapper_halt_input(void *h)
 	sc = h;
 	dbdma_stop(sc->sc_idma);
 	dbdma_reset(sc->sc_idma);
+	sc->sc_iintr = NULL;
 	return 0;
 }
 
@@ -836,11 +927,12 @@ enum {
 	SNAPPER_VOL_OUTPUT,
 	SNAPPER_DIGI1,
 	SNAPPER_DIGI2,
-	SNAPPER_ANALOG,
-	SNAPPER_INPUT_SELECT,
 	SNAPPER_VOL_INPUT,
 	SNAPPER_TREBLE,
 	SNAPPER_BASS,
+	/* From this point, unsupported by the TAS 3001 */
+	SNAPPER_ANALOG,
+	SNAPPER_INPUT_SELECT,
 	SNAPPER_ENUM_LAST
 };
 
@@ -877,6 +969,9 @@ snapper_set_port(void *h, mixer_ctrl_t *mc)
 		return 0;
 
 	case SNAPPER_INPUT_SELECT:
+		if (sc->sc_flags & SNAPPER_IS_TAS3001)
+			return ENXIO;
+
 		/* no change necessary? */
 		if (mc->un.mask == sc->sc_record_source)
 			return 0;
@@ -913,11 +1008,18 @@ snapper_set_port(void *h, mixer_ctrl_t *mc)
 		snapper_write_mixers(sc);
 		return 0;
 	case SNAPPER_DIGI2:
-		sc->mixer[1]=l;
-		sc->mixer[4]=r;
+		if (sc->sc_flags & SNAPPER_IS_TAS3001)
+			sc->mixer[3] = l;
+		else {
+			sc->mixer[1]=l;
+			sc->mixer[4]=r;
+		}
 		snapper_write_mixers(sc);
 		return 0;
 	case SNAPPER_ANALOG:
+		if (sc->sc_flags & SNAPPER_IS_TAS3001)
+			return ENXIO;
+
 		sc->mixer[2]=l;
 		sc->mixer[5]=r;
 		snapper_write_mixers(sc);
@@ -939,11 +1041,19 @@ snapper_get_port(void *h, mixer_ctrl_t *mc)
 		return 0;
 
 	case SNAPPER_VOL_OUTPUT:
-		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->sc_vol_l;
-		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->sc_vol_r;
+		if (sc->sc_swvol) {
+			mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = snapper_vol_l;
+			mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = snapper_vol_r;
+		} else {
+			mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->sc_vol_l;
+			mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->sc_vol_r;
+		}
 		return 0;
 
 	case SNAPPER_INPUT_SELECT:
+		if (sc->sc_flags & SNAPPER_IS_TAS3001)
+			return ENXIO;
+
 		mc->un.mask = sc->sc_record_source;
 		return 0;
 
@@ -967,6 +1077,9 @@ snapper_get_port(void *h, mixer_ctrl_t *mc)
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->mixer[4];
 		return 0;
 	case SNAPPER_ANALOG:
+		if (sc->sc_flags & SNAPPER_IS_TAS3001)
+			return ENXIO;
+
 		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->mixer[2];
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->mixer[5];
 		return 0;
@@ -980,6 +1093,8 @@ snapper_get_port(void *h, mixer_ctrl_t *mc)
 int
 snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 {
+	struct snapper_softc *sc = h;
+
 	switch (dip->index) {
 
 	case SNAPPER_OUTPUT_SELECT:
@@ -1004,6 +1119,9 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 		return 0;
 
 	case SNAPPER_INPUT_SELECT:
+		if (sc->sc_flags & SNAPPER_IS_TAS3001)
+			return ENXIO;
+
 		dip->mixer_class = SNAPPER_RECORD_CLASS;
 		strcpy(dip->label.name, AudioNsource);
 		dip->type = AUDIO_MIXER_SET;
@@ -1066,16 +1184,21 @@ snapper_query_devinfo(void *h, mixer_devinfo_t *dip)
 		strcpy(dip->label.name, AudioNdac);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		dip->un.v.num_channels = 2;
+		dip->un.v.num_channels =
+			sc->sc_flags & SNAPPER_IS_TAS3001? 1 : 2;
 		return 0;
 	case SNAPPER_DIGI2:
 		dip->mixer_class = SNAPPER_MONITOR_CLASS;
 		strcpy(dip->label.name, AudioNline);
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		dip->un.v.num_channels = 2;
+		dip->un.v.num_channels =
+			sc->sc_flags & SNAPPER_IS_TAS3001? 1 : 2;
 		return 0;
 	case SNAPPER_ANALOG:
+		if (sc->sc_flags & SNAPPER_IS_TAS3001)
+			return ENXIO;
+
 		dip->mixer_class = SNAPPER_MONITOR_CLASS;
 		strcpy(dip->label.name, AudioNmicrophone);
 		dip->type = AUDIO_MIXER_VALUE;
@@ -1120,9 +1243,14 @@ snapper_trigger_output(void *h, void *start, void *end, int bsize,
 	struct dbdma_command *cmd;
 	vaddr_t va;
 	int i, len, intmode;
+	int res;
 
 	DPRINTF("trigger_output %p %p 0x%x\n", start, end, bsize);
 	sc = h;
+
+	if ((res = snapper_set_rate(sc)) != 0)
+		return res;
+
 	cmd = sc->sc_odmacmd;
 	sc->sc_ointr = intr;
 	sc->sc_oarg = arg;
@@ -1170,9 +1298,14 @@ snapper_trigger_input(void *h, void *start, void *end, int bsize,
 	struct dbdma_command *cmd;
 	vaddr_t va;
 	int i, len, intmode;
+	int res;
 
 	DPRINTF("trigger_input %p %p 0x%x\n", start, end, bsize);
 	sc = h;
+
+	if ((res = snapper_set_rate(sc)) != 0)
+		return res;
+
 	cmd = sc->sc_idmacmd;
 	sc->sc_iintr = intr;
 	sc->sc_iarg = arg;
@@ -1216,7 +1349,13 @@ snapper_set_volume(struct snapper_softc *sc, int left, int right)
 {
 	u_char regs[6];
 	int l, r;
-	
+
+	if (sc->sc_swvol) {
+		snapper_vol_l = left;
+		snapper_vol_r = right;
+		return;
+	}
+
 	/*
 	 * for some insane reason the gain table for master volume and the
 	 * mixer channels is almost identical - just shifted by 4 bits
@@ -1343,27 +1482,25 @@ void snapper_write_mixers(struct snapper_softc *sc)
  */
 
 int
-snapper_set_rate(struct snapper_softc *sc, u_int rate)
+snapper_set_rate(struct snapper_softc *sc)
 {
-	u_int reg;
+	u_int reg = 0, x;
+	u_int rate = sc->sc_rate;
+	uint32_t wordsize, ows;
 	int MCLK;
 	int clksrc, mdiv, sdiv;
 	int mclk_fs;
+	int timo;
+	uint8_t mcr1;
 
-	reg = 0;
 	switch (rate) {
-	case 8000:
-		clksrc = 18432000;		/* 18MHz */
-		reg = CLKSRC_18MHz;
-		mclk_fs = 256;
-		break;
-
 	case 44100:
 		clksrc = 45158400;		/* 45MHz */
 		reg = CLKSRC_45MHz;
 		mclk_fs = 256;
 		break;
 
+	case 32000:
 	case 48000:
 		clksrc = 49152000;		/* 49MHz */
 		reg = CLKSRC_49MHz;
@@ -1411,21 +1548,67 @@ snapper_set_rate(struct snapper_softc *sc, u_int rate)
 	reg |= SERIAL_64x;
 
 	/* stereo input and output */
+	
+	DPRINTF("precision: %d\n", sc->sc_bitspersample);
+	switch(sc->sc_bitspersample) {
+		case 16:
+			wordsize = 0x02000200;
+			mcr1 = DEQ_MCR1_SC_64 | DEQ_MCR1_SM_I2S | DEQ_MCR1_W_16;
+			break;
+		case 24:
+			wordsize = 0x03000300;
+			mcr1 = DEQ_MCR1_SC_64 | DEQ_MCR1_SM_I2S | DEQ_MCR1_W_24;
+			break;
+		default:
+			printf("%s: unsupported sample size %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_bitspersample);
+			return EINVAL;
+	}
+
+	if (sc->sc_flags & SNAPPER_IS_TAS3001)
+		mcr1 |= DEQ_MCR1_ISM_I2S;
+
+	ows = in32rb(sc->sc_reg + I2S_WORDSIZE);
 	DPRINTF("I2SSetDataWordSizeReg 0x%08x -> 0x%08x\n",
-	    in32rb(sc->sc_reg + I2S_WORDSIZE), 0x02000200);
-	out32rb(sc->sc_reg + I2S_WORDSIZE, 0x02000200);
+	    ows, wordsize);
+	if (ows != wordsize) {
+		out32rb(sc->sc_reg + I2S_WORDSIZE, wordsize);
+		tas3004_write(sc, DEQ_MCR1, &mcr1);
+	}
+
+	x = in32rb(sc->sc_reg + I2S_FORMAT);
+	if (x == reg)
+		return 0;        /* No change; do nothing. */
 
 	DPRINTF("I2SSetSerialFormatReg 0x%x -> 0x%x\n",
 	    in32rb(sc->sc_reg + I2S_FORMAT), reg);
+
+	/* Clear CLKSTOPPEND. */
+	out32rb(sc->sc_reg + I2S_INT, I2S_INT_CLKSTOPPEND);
+
+	x = in32rb(0x8000003c);                /* FCR */
+	x &= ~I2S0CLKEN;                /* XXX I2S0 */
+	out32rb(0x8000003c, x);
+
+	/* Wait until clock is stopped. */
+	for (timo = 1000; timo > 0; timo--) {
+		if (in32rb(sc->sc_reg + I2S_INT) & I2S_INT_CLKSTOPPEND)
+			goto done;
+		delay(1);
+	}
+	DPRINTF("snapper_set_rate: timeout\n");
+done:
 	out32rb(sc->sc_reg + I2S_FORMAT, reg);
+
+	x = in32rb(0x8000003c);
+	x |= I2S0CLKEN;
+	out32rb(0x8000003c, x);
 
 	return 0;
 }
 
-/*#define DEQaddr 0x6a*/
-
 const struct tas3004_reg tas3004_initdata = {
-	{ DEQ_MCR1_SC_64 | DEQ_MCR1_SM_I2S | DEQ_MCR1_W_20 },	/* MCR1 */
+	{ DEQ_MCR1_SC_64 | DEQ_MCR1_SM_I2S | DEQ_MCR1_W_16 },	/* MCR1 */
 	{ 1, 0, 0, 0, 0, 0 },					/* DRC */
 	{ 0, 0, 0, 0, 0, 0 },					/* VOLUME */
 	{ 0x72 },						/* TREBLE */
@@ -1500,23 +1683,27 @@ tas3004_write(struct snapper_softc *sc, u_int reg, const void *data)
 {
 	int size;
 	static char regblock[sizeof(struct tas3004_reg)+1];
+
+	if (sc->sc_i2c == NULL)
+		return 0;
 		
 	KASSERT(reg < sizeof tas3004_regsize);
 	size = tas3004_regsize[reg];
 	KASSERT(size > 0);
 
-#ifdef SNAPPER_DEBUG
-	printf("reg: %x, %d %d\n", reg, size, ((const char*)data)[0]);
-#endif
-#if 0
-	ki2c_setmode(sc->sc_i2c, 8); /* std+sub mode */
-	
-	if (ki2c_write(sc->sc_i2c, DEQaddr, reg, data, size))
-		return -1;
-#endif
-	/* ugly, but for now... */
+	DPRINTF("reg: %x, %d %d\n", reg, size, ((const char*)data)[0]);
+
 	regblock[0] = reg;
 	memcpy(&regblock[1], data, size);
+	if (sc->sc_flags & SNAPPER_IS_TAS3001) {
+		if (reg == DEQ_MIXER_L || reg == DEQ_MIXER_R)
+			size = 3;
+		else if (reg == DEQ_DRC) {
+			size = 2;
+			regblock[1] = 0;
+			regblock[2] = 0;
+		}
+	}
 	iic_acquire_bus(sc->sc_i2c, 0);
 	iic_exec(sc->sc_i2c, I2C_OP_WRITE, sc->sc_deqaddr, regblock, size + 1,
 	    NULL, 0, 0);
@@ -1666,14 +1853,6 @@ err:
 	return -1;
 }
 
-/* FCR(0x3c) bits */
-#define I2S0CLKEN	0x1000
-#define I2S0EN		0x2000
-#define I2S1CLKEN	0x080000
-#define I2S1EN		0x100000
-
-#define FCR3C_BITMASK "\020\25I2S1EN\24I2S1CLKEN\16I2S0EN\15I2S0CLKEN"
-
 void
 snapper_init(struct snapper_softc *sc, int node)
 {
@@ -1734,8 +1913,8 @@ snapper_init(struct snapper_softc *sc, int node)
 		intr_establish(headphone_detect_intr, IST_EDGE, IPL_AUDIO,
 		    snapper_cint, sc);
 
-	/* "sample-rates" (44100, 48000) */
-	snapper_set_rate(sc, 44100);
+	sc->sc_rate = 44100;	/* default rate */
+	sc->sc_bitspersample = 16;
 
 	/* Enable headphone interrupt? */
 	*headphone_detect |= 0x80;
@@ -1743,22 +1922,13 @@ snapper_init(struct snapper_softc *sc, int node)
 
 	/* i2c_set_port(port); */
 
-#if 0
-	/* Enable I2C interrupts. */
-#define IER 4
-#define I2C_INT_DATA 0x01
-#define I2C_INT_ADDR 0x02
-#define I2C_INT_STOP 0x04
-	ki2c_writereg(sc->sc_i2c, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
-#endif
-
 	if (tas3004_init(sc))
 		return;
 
 	/* Update headphone status. */
 	snapper_cint(sc);
 
-	snapper_set_volume(sc, 80, 80);
+	snapper_set_volume(sc, 128, 128);
 	
 	sc->sc_bass = 128;
 	sc->sc_treble = 128;
