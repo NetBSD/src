@@ -1,4 +1,4 @@
-.\"	$NetBSD: apmd.8,v 1.19 2008/04/30 13:11:01 martin Exp $
+.\"	$NetBSD: apmd.8,v 1.20 2008/09/25 22:44:51 reed Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,6 +57,10 @@ monitors the advanced power management (APM) pseudo-device, acting on
 signaled events and upon user requests as sent by the
 .Xr apm 8
 utility.
+The
+.Nm
+daemon is only installed on supported platforms.
+.Pp
 For suspend and standby request events delivered by the BIOS, or via
 .Xr apm 8 ,
 .Nm

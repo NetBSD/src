@@ -1,4 +1,4 @@
-.\"	$NetBSD: apm.8,v 1.18 2008/04/30 13:11:01 martin Exp $
+.\"	$NetBSD: apm.8,v 1.19 2008/09/25 22:44:51 reed Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,6 +51,10 @@ communicates with the Advanced Power Management daemon,
 .Xr apmd 8 ,
 making requests of it for current power status or to place the system
 into a suspend or stand-by state.
+The
+.Nm
+tool is only installed on supported platforms.
+.Pp
 With no flags,
 .Nm
 displays the current power management state in verbose form.
