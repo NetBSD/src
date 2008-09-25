@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/09/23 06:59:42 skrll Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/25 17:40:05 tron Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -17,6 +17,7 @@ LIBGCOVSRCS=	${G_LIBGCOV:=.c}
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
 
+
 DPSRCS+=	${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
 SRCS+=		${LIBGCOVSRCS}
 
@@ -28,6 +29,7 @@ ${LIBGCOVSRCS}: ${.CURDIR}/Makefile
 
 .include <bsd.lib.mk>
 
+COPTS+=		-Wno-stack-protector
 .else
 .include <bsd.prog.mk> # do nothing
 .endif
