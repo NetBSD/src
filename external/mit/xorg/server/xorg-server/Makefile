@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2008/09/13 04:32:31 cube Exp $
+#	$NetBSD: Makefile,v 1.17 2008/09/25 14:15:06 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -41,6 +41,7 @@ SUBDIR.iplan=
 .endif
 
 SUBDIR=		doc include .WAIT
+SUBDIR+=	GL
 SUBDIR+=	dix ${SUBDIR.fb} mi Xext ${SUBDIR.miext} os randr render 
 SUBDIR+=	Xi xkb dbe mfb ${SUBDIR.afb} ${SUBDIR.cfb} record xfixes
 SUBDIR+=	damageext XTrap composite config .WAIT

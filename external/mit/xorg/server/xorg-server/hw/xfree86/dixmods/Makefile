@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/15 15:55:05 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/09/25 14:15:06 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -17,9 +17,22 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 
 CPPFLAGS+=	-DXFree86LOADER
 
-SUBDIR=	extmod \
-	afb cfb cfb32 dbe fb freetype mfb record \
-	shadow type1 wfb xorgxkb xtrap
+SUBDIR = \
+	afb \
+	cfb \
+	cfb32 \
+	dbe \
+	extmod \
+	fb \
+	freetype \
+	glx \
+	mfb \
+	record \
+	shadow \
+	type1 \
+	wfb \
+	xorgxkb \
+	xtrap
 
 .include <bsd.x11.mk>
 LIBDIR=	${XMODULEDIR}

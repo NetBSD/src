@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 22:11:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/25 14:15:06 rtr Exp $
+
+LIBISPRIVATE=yes
 
 .include "../../Makefile.serverlib"
 
-.if ${MKX11LOADABLE} != "no"
-XMODULEDIR=	${X11USRLIBDIR}/modules/extensions
-.PATH:          ${X11SRCDIR.xorg-server}/GL
-SRCS=		glxmodule.c
-.endif
+LIB=	glx
+SRCS=	${SRCS.glx}
 
-.include "../../Makefile.servermod"
 .include "Makefile.glx"
