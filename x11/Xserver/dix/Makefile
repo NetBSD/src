@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2004/03/06 03:31:06 rtr Exp $
+#	$NetBSD: Makefile,v 1.10 2008/09/25 13:29:53 jmcneill Exp $
 
 .include "../Makefile.serverlib"
 
@@ -21,7 +21,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${X11SRCDIR.xc}/programs/Xserver/lbx
 
 
-CPPFLAGS.globals.c=	-DCOMPILEDDEFAULTFONTPATH=\"${X11FONTDIR}/misc/,${X11FONTDIR}/Speedo/,${X11FONTDIR}/Type1/,${X11FONTDIR}/CID/,${X11FONTDIR}/75dpi/,${X11FONTDIR}/100dpi/\" \
+CPPFLAGS.globals.c=	-DCOMPILEDDEFAULTFONTPATH=\"${X11FONTDIR}/misc/,${X11FONTDIR}/TTF/,${X11FONTDIR}/Speedo/,${X11FONTDIR}/Type1/,${X11FONTDIR}/CID/,${X11FONTDIR}/75dpi/,${X11FONTDIR}/100dpi/\" \
 			-DRGB_DB=\"${X11LIBDIR}/rgb\"
 
 CPPFLAGS.main.c=	-DVENDOR_STRING="\"The XFree86 Project, Inc\"" \
