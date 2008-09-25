@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.49 2008/09/20 15:29:25 cube Exp $
+# $NetBSD: mi,v 1.50 2008/09/25 14:08:12 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6974,7 +6974,6 @@
 ./usr/libdata/debug/usr/X11R7/bin/iceauth.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/ico.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/imake.debug		-unknown-	debug,xorg
-./usr/libdata/debug/usr/X11R7/bin/ioport.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/lbxproxy.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/listres.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/luit.debug		-unknown-	debug,xorg
