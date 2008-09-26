@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.26 2008/07/20 01:03:21 lukem Exp $	*/
+/*	$NetBSD: strfile.c,v 1.27 2008/09/26 13:46:48 apb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.26 2008/07/20 01:03:21 lukem Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.27 2008/09/26 13:46:48 apb Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -59,20 +59,28 @@ __RCSID("$NetBSD: strfile.c,v 1.26 2008/07/20 01:03:21 lukem Exp $");
 # include	<time.h>
 # include	<unistd.h>
 
-# ifndef u_int32_t
-# define u_int32_t	unsigned int
-# endif
 # include	"strfile.h"
 
 # ifndef MAXPATHLEN
 # define	MAXPATHLEN	1024
 # endif	/* MAXPATHLEN */
 
-u_int32_t
-h2nl(u_int32_t h)
+static uint32_t h2nl(uint32_t h);
+static void getargs(int argc, char **argv);
+static void usage(void);
+static void die(const char *str);
+static void dieperror(const char *fmt, char *file);
+static void add_offset(FILE *fp, off_t off);
+static void do_order(void);
+static int cmp_str(const void *vp1, const void *vp2);
+static void randomize(void);
+static void fwrite_be_offt(off_t off, FILE *f);
+
+static uint32_t
+h2nl(uint32_t h)
 {
         unsigned char c[4];
-        u_int32_t rv;
+        uint32_t rv;
 
         c[0] = (h >> 24) & 0xff;
         c[1] = (h >> 16) & 0xff;
@@ -177,9 +185,7 @@ void	usage(void) NORETURN;
  *	and then seek back to the beginning to write in the table.
  */
 int
-main(ac, av)
-	int	ac;
-	char	*av[];
+main(int ac, char **av)
 {
 	char		*sp, dc;
 	FILE		*inf, *outf;
@@ -190,8 +196,8 @@ main(ac, av)
 	static char	string[257];
 
 	/* sanity test */
-	if (sizeof(u_int32_t) != 4)
-		die("sizeof(unsigned int) != 4");
+	if (sizeof(uint32_t) != 4)
+		die("sizeof(uint32_t) != 4");
 
 	getargs(ac, av);		/* evalute arguments */
 	dc = Delimch;
@@ -290,10 +296,8 @@ main(ac, av)
 /*
  *	This routine evaluates arguments from the command line
  */
-void
-getargs(argc, argv)
-	int	argc;
-	char	**argv;
+static void
+getargs(int argc, char **argv)
 {
 	int	ch;
 	extern	int optind;
@@ -344,26 +348,23 @@ getargs(argc, argv)
 	}
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	(void) fprintf(stderr,
 	    "strfile [-iorsx] [-c char] sourcefile [datafile]\n");
 	exit(1);
 }
 
-void
-die(str)
-	const char *str;
+static void
+die(const char *str)
 {
 	fprintf(stderr, "strfile: %s\n", str);
 	exit(1);
 }
 
-void
-dieperror(fmt, file)
-	const char *fmt;
-	char *file;
+static void
+dieperror(const char *fmt, char *file)
 {
 	fprintf(stderr, "strfile: ");
 	fprintf(stderr, fmt, file);
@@ -376,10 +377,8 @@ dieperror(fmt, file)
  * add_offset:
  *	Add an offset to the list, or write it out, as appropriate.
  */
-void
-add_offset(fp, off)
-	FILE	*fp;
-	off_t	off;
+static void
+add_offset(FILE *fp, off_t off)
 {
 
 	if (!STORING_PTRS) {
@@ -395,8 +394,8 @@ add_offset(fp, off)
  * do_order:
  *	Order the strings alphabetically (possibly ignoring case).
  */
-void
-do_order()
+static void
+do_order(void)
 {
 	int	i;
 	off_t	*lp;
@@ -415,9 +414,8 @@ do_order()
 	Tbl.str_flags |= STR_ORDERED;
 }
 
-int
-cmp_str(vp1, vp2)
-	const void *vp1, *vp2;
+static int
+cmp_str(const void *vp1, const void *vp2)
 {
 	const STR	*p1, *p2;
 	int	c1, c2;
@@ -471,8 +469,8 @@ cmp_str(vp1, vp2)
  *	not to randomize across delimiter boundaries.  All
  *	randomization is done within each block.
  */
-void
-randomize()
+static void
+randomize(void)
 {
 	int	cnt, i;
 	off_t	tmp;
@@ -500,10 +498,8 @@ randomize()
  *	Write out the off paramater as a 64 bit big endian number
  */
 
-void
-fwrite_be_offt(off, f)
-	off_t	 off;
-	FILE	*f;
+static void
+fwrite_be_offt(off_t off, FILE *f)
 {
 	int		i;
 	unsigned char	c[8];
