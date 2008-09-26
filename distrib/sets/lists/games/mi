@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.44 2008/09/26 18:23:09 apb Exp $
+# $NetBSD: mi,v 1.45 2008/09/26 18:56:43 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -84,6 +84,7 @@
 ./usr/games/teachgammon				games-games-bin
 ./usr/games/tetris				games-games-bin
 ./usr/games/trek				games-games-bin
+./usr/games/unstr				games-utils-bin
 ./usr/games/wargames				games-games-bin
 ./usr/games/worm				games-games-bin
 ./usr/games/worms				games-games-bin
@@ -240,6 +241,7 @@
 ./usr/share/man/cat6/wump.0			games-games-catman	.cat
 ./usr/share/man/cat8/dm.0			games-games-catman	.cat
 ./usr/share/man/cat8/strfile.0			games-utils-catman	.cat
+./usr/share/man/cat8/unstr.0			games-utils-catman	.cat
 ./usr/share/man/html5/dm.conf.html		games-games-htmlman	html
 ./usr/share/man/html6/adventure.html		games-games-htmlman	html
 ./usr/share/man/html6/arithmetic.html		games-games-htmlman	html
@@ -291,6 +293,7 @@
 ./usr/share/man/html6/wump.html			games-games-htmlman	html
 ./usr/share/man/html8/dm.html			games-games-htmlman	html
 ./usr/share/man/html8/strfile.html		games-utils-htmlman	html
+./usr/share/man/html8/unstr.html		games-utils-htmlman	html
 ./usr/share/man/man5/dm.conf.5			games-games-man		.man
 ./usr/share/man/man6/adventure.6		games-games-man		.man
 ./usr/share/man/man6/arithmetic.6		games-games-man		.man
@@ -343,6 +346,7 @@
 ./usr/share/man/man6/wump.6			games-games-man		.man
 ./usr/share/man/man8/dm.8			games-games-man		.man
 ./usr/share/man/man8/strfile.8			games-utils-man		.man
+./usr/share/man/man8/unstr.8			games-utils-man		.man
 ./var/games/atc_scores				games-obsolete		obsolete
 ./var/games/hackdir/data			games-games-root
 ./var/games/hackdir/help			games-games-root
