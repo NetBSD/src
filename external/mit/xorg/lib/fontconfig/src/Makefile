@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 19:57:23 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2008/09/26 02:24:35 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -15,8 +15,8 @@ LIBDPLIBS=\
 	freetype	${.CURDIR}/../../freetype
 
 # XXX FONTCONFIG_PATH was arbitrarily chosen
-CPPFLAGS+=	-DFONTCONFIG_PATH='"/etc/X11/fonts"' \
-		-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' \
+CPPFLAGS+=	-DFONTCONFIG_PATH='"/etc/fonts"' \
+		-DFC_DEFAULT_FONTS='"${X11FONTDIR}"' \
 		-DFC_CACHEDIR='"/var/cache/fontconfig"' \
 		-DHAVE_FT_BITMAP_SIZE_Y_PPEM \
 		-DHAVE_FT_GET_BDF_PROPERTY \
