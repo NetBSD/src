@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.11 2008/04/25 22:18:34 christos Exp $	*/
+/*	$NetBSD: lint.h,v 1.12 2008/09/26 22:52:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -74,9 +74,10 @@ typedef enum {
 	PTR,		/* pointer */
 	ARRAY,		/* array */
 	FUNC,		/* function */
+	COMPLEX,	/* _Complex */
 	FCOMPLEX,	/* float _Complex */
 	DCOMPLEX,	/* double _Complex */
-	COMPLEX,	/* _Complex */
+	LCOMPLEX,	/* long double _Complex */
 	NTSPEC
 } tspec_t;
 
