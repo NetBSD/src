@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2008/08/26 21:18:38 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2008/09/26 11:41:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -53,7 +53,7 @@ EPG	*__bt_search(BTREE *, const DBT *, int *);
 int	 __bt_seq(const DB *, DBT *, DBT *, unsigned int);
 void	 __bt_setcur(BTREE *, pgno_t, unsigned int);
 int	 __bt_split(BTREE *, PAGE *,
-	    const DBT *, const DBT *, int, size_t, unsigned int32_t);
+	    const DBT *, const DBT *, int, size_t, uint32_t);
 int	 __bt_sync(const DB *, unsigned int);
 
 int	 __ovfl_delete(BTREE *, void *);
