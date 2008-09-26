@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.1.2.12 2008/09/10 18:43:27 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.1.2.13 2008/09/26 22:57:13 haad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -69,9 +69,6 @@ static int dm_cmd_to_fun(prop_dictionary_t);
 static int disk_ioctl_switch(dev_t, u_long, void *);
 static int dm_ioctl_switch(u_long);
 static void dmminphys(struct buf *);
-static void dmgetdisklabel(struct disklabel **, dev_t);
-/* Called to initialize disklabel values for readdisklabel. */
-static void dmgetdefaultdisklabel(struct disklabel *, dev_t); 
 
 /* ***Variable-definitions*** */
 const struct bdevsw dm_bdevsw = {
@@ -161,7 +158,7 @@ dm_modcmd(modcmd_t cmd, void *arg)
 int
 dmattach(void)
 {
-		dm_sc = (struct dm_softc *)kmem_zalloc(sizeof(struct dm_softc), KM_NOSLEEP);
+	dm_sc = (struct dm_softc *)kmem_zalloc(sizeof(struct dm_softc), KM_NOSLEEP);
 
 	if (dm_sc == NULL){
 		aprint_error("Not enough memory for dm device.\n");
@@ -188,8 +185,10 @@ dmdestroy(void)
 {
 	(void)kmem_free(dm_sc, sizeof(struct dm_softc));
 
+	aprint_debug("dm_destroy\n");
 	dm_dev_destroy();
 
+	aprint_debug("dm_pdev_destroy\n");
 	dm_pdev_destroy();
 	
 	dm_target_destroy();
@@ -202,17 +201,15 @@ dmdestroy(void)
 static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-
 	struct dm_dev *dmv;
 
-	aprint_verbose("open routine called %d\n", minor(dev));
+	aprint_debug("open routine called %d\n", minor(dev));
 
 	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) != NULL)
 		dmv->ref_cnt++;
        
 	return 0;
 }
-
 
 static int
 dmclose(dev_t dev, int flags, int mode, struct lwp *l)
@@ -222,7 +219,7 @@ dmclose(dev_t dev, int flags, int mode, struct lwp *l)
 	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) != NULL)
 		dmv->ref_cnt--;
 
-	aprint_verbose("CLOSE routine called\n");
+	aprint_debug("CLOSE routine called\n");
 
 	return 0;
 }
@@ -241,6 +238,8 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 	prop_dictionary_t dm_dict_in;
 
 	r = 0;
+
+	aprint_debug("dmioctl called\n");
 	
 	if (data == NULL)
 		return(EINVAL);
@@ -300,7 +299,7 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict){
 			continue;
 
 		if ((strncmp(command, cmd_fn[i].cmd, slen)) == 0) {
-			printf("ioctl command: %s\n", command);
+			aprint_normal("ioctl command: %s\n", command);
 			r = cmd_fn[i].fn(dm_dict);
 			break;
 		}
@@ -330,7 +329,7 @@ dm_ioctl_switch(u_long cmd)
 	}
 
 	 return r;
- }
+}
 
  /*
   * Check for disk specific ioctls.
@@ -339,60 +338,56 @@ dm_ioctl_switch(u_long cmd)
 static int
 disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 {
-	 switch(cmd) {
-
-	 /*case DIOCGWEDGEINFO:
-	 {
-		 struct dkwedge_info *dkw = (void *) data;
-
-		 aprint_debug("DIOCGWEDGEINFO ioctl called\n");
-
-		 strlcpy(dkw->dkw_devname, dmv->name, 16);
-		 strlcpy(dkw->dkw_wname, dmv->name, DM_NAME_LEN);
-		 strlcpy(dkw->dkw_parent, dmv->name, 16);
-
-		 dkw->dkw_offset = 0;
-		 dkw->dkw_size = dmsize(dev);
-		 strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
-
-		 break;
-	 }*/
-
-	 case DIOCGDINFO:
-	 {
-		 struct disklabel *dk_label;
-		 dk_label = NULL;
-		 aprint_debug("DIOCGDINFO called\n");
-		 dmgetdisklabel(&dk_label, dev);
+	struct dm_dev *dmv;
 	
-		 *(struct disklabel *)data = *(dk_label);
-		 break;
-	 }
+	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
+		return ENOENT;
+	
+	switch(cmd) {
+	case DIOCGWEDGEINFO:
+	{
+		struct dkwedge_info *dkw = (void *) data;
+		
+		aprint_normal("DIOCGWEDGEINFO ioctl called\n");
+		
+		strlcpy(dkw->dkw_devname, dmv->name, 16);
+		strlcpy(dkw->dkw_wname, dmv->name, DM_NAME_LEN);
+		strlcpy(dkw->dkw_parent, dmv->name, 16);
+		
+		dkw->dkw_offset = 0;
+		dkw->dkw_size = dmsize(dev);
+		strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
+		
+		break;
+	}
+	
+	case DIOCGDINFO:
+	{
+		aprint_debug("DIOCGDINFO %d\n", dmv->dk_label->d_secsize);
+		 
+		*(struct disklabel *)data = *(dmv->dk_label);
+		break;
+	}
 	 
-	 case DIOCGPART:
-	 {
-		 struct disklabel *dk_label;
-		 dk_label = NULL;
-		 aprint_debug("DIOCGDINFO called\n");
-		 dmgetdisklabel(&dk_label, dev);
-
-		 ((struct partinfo *)data)->disklab = dk_label;
-		 ((struct partinfo *)data)->part = &dk_label->d_partitions[DISKPART(dev)];
-		 break;
-	 }
-	 case DIOCWDINFO:
-	 case DIOCSDINFO:
-	 case DIOCKLABEL:
-	 case DIOCWLABEL:
-	 case DIOCGDEFLABEL:
-
-	 default:
-		 aprint_verbose("unknown disk_ioctl called\n");
-		 return 1;
-		 break; /* NOT REACHED */
-	 }
-
-	 return 0;
+	case DIOCGPART:
+	{
+		((struct partinfo *)data)->disklab = dmv->dk_label;
+		((struct partinfo *)data)->part = &dmv->dk_label->d_partitions[0];
+		break;
+	}
+	case DIOCWDINFO:
+	case DIOCSDINFO:
+	case DIOCKLABEL:
+	case DIOCWLABEL:
+	case DIOCGDEFLABEL:
+		
+	default:
+		aprint_verbose("unknown disk_ioctl called\n");
+		return 1;
+		break; /* NOT REACHED */
+	}
+	
+	return 0;
 }
 
 /*
@@ -489,7 +484,8 @@ dmstrategy(struct buf *bp)
 		    PRIu64"\n", buf_start, buf_len);
 		aprint_debug("start-buf_start %010"PRIu64", end %010"
 		    PRIu64"\n", start - buf_start, end);
-		aprint_debug("end-start %010" PRIu64 "\n", end - start);
+		aprint_debug("start %010" PRIu64" , end %010"
+                    PRIu64"\n", start, end);
 		aprint_debug("\n----------------------------------------\n");
 
 		if (start < end) {
@@ -497,9 +493,9 @@ dmstrategy(struct buf *bp)
 			nestbuf = getiobuf(NULL, true);
 
 			nestiobuf_setup(bp, nestbuf, start - buf_start,
-			    (end-start));
+			    (end - start));
 
-			issued_len += end-start;
+			issued_len += end - start;
 			
 			/* I need number of blocks. */
 			nestbuf->b_blkno = (start - table_start) / DEV_BSIZE;
@@ -512,7 +508,7 @@ dmstrategy(struct buf *bp)
 		nestiobuf_done(bp, buf_len - issued_len, EINVAL);
 
 	rw_exit(&dmv->dev_rwlock);
-	
+
 	return;
 }
 
@@ -581,23 +577,8 @@ dmminphys(struct buf *bp)
   *
   * Copied from vnd code.
   */
-static void
-dmgetdisklabel(struct disklabel **dk_label, dev_t dev)
-{
-	if ((*dk_label = kmem_zalloc(sizeof(struct disklabel), KM_NOSLEEP))
-	    == NULL)
-		return;
-
-	dmgetdefaultdisklabel(*dk_label, dev);
-	
-	return;
-}
-
-/*
- * Initialize disklabel values, so we can use it for readdisklabel.
- */
-static void
-dmgetdefaultdisklabel(struct disklabel *lp, dev_t dev)
+void
+dmgetdisklabel(struct disklabel *lp, dev_t dev)
 {
 	struct partition *pp;
 	int dmp_size;
@@ -623,7 +604,7 @@ dmgetdefaultdisklabel(struct disklabel *lp, dev_t dev)
 	lp->d_interleave = 1;
 	lp->d_flags = 0;
 
-	pp = &lp->d_partitions[1];
+	pp = &lp->d_partitions[0];
 	/*
 	 * This is logical offset and therefore it can be 0
 	 * I will consider table offsets later in dmstrategy.
@@ -631,9 +612,11 @@ dmgetdefaultdisklabel(struct disklabel *lp, dev_t dev)
 	pp->p_offset = 0; 
 	pp->p_size = dmp_size * DEV_BSIZE;
 	pp->p_fstype = FS_BSDFFS;  /* default value */
-	lp->d_npartitions = RAW_PART + 1;
+	lp->d_npartitions = 1;
 
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
+	
+	return;
 }

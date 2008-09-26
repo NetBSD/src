@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.17 2008/09/22 09:11:38 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.18 2008/09/26 22:57:13 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 
 #include <sys/atomic.h>
+#include <sys/disklabel.h>
 #include <sys/kmem.h>
 #include <sys/vnode.h>
 
@@ -178,7 +179,6 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	dmv->ref_cnt = 0;
 	dmv->event_nr = 0;
 	dmv->cur_active_table = 0;
-
 	dmv->dev_type = 0;
 	
 	/* Initialize tables. */
@@ -207,8 +207,11 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 
 	rw_init(&dmv->dev_rwlock);
 
-	/* Test readonly flag change anything only if it is not set*/
-	r = dm_dev_insert(dmv);
+	 
+	if ((r = dm_dev_insert(dmv)) != 0){
+		rw_destroy(&dmv->dev_rwlock);
+		dm_dev_free(dmv);
+	}
 	
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);
 	DM_REMOVE_FLAG(flags, DM_INACTIVE_PRESENT_FLAG);
@@ -305,7 +308,7 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_set_cstring(dm_dict, DM_IOCTL_UUID, dmv->uuid);
 	
 	/* change device name */
-    strlcpy(dmv->name, n_name, DM_NAME_LEN);
+	strlcpy(dmv->name, n_name, DM_NAME_LEN);
 	
 	return 0;
 }
@@ -488,7 +491,9 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 	const char *name, *uuid;
 	
 	uint32_t flags, minor;
-		
+	dev_t dev;
+	
+	
 	name = NULL;
 	uuid = NULL;
 	flags = 0;
@@ -515,8 +520,13 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 	DM_ADD_FLAG(flags, DM_EXISTS_FLAG);	
 	
 	dmv->cur_active_table = 1 - dmv->cur_active_table;
-	
+
 	rw_exit(&dmv->dev_rwlock);
+
+	/* XXX locking this should be guarded too. */
+	dev = makedev(0, dmv->minor);
+	
+	dmgetdisklabel(dmv->dk_label, dev);
 	
 	/* Destroy inactive table after resume. */
 	dm_table_destroy(&dmv->tables[1 - dmv->cur_active_table]);
@@ -670,7 +680,9 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	uuid = NULL;
 	dmv = NULL;
 	last_table = NULL;
+	str = NULL;
 
+	
 /*	char *xml;
 	xml = prop_dictionary_externalize(dm_dict);
 	printf("%s\n",xml);*/
@@ -692,7 +704,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		return ENOENT;
 	}
 
-	printf("dmv->name = %s\n",dmv->name);
+	printf("dmv->name = %s\n", dmv->name);
 	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 	
@@ -812,7 +824,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	
 	const char *name, *uuid;
 	char *params;
-	int flags,i;
+	int flags;
 	
 	dmv = NULL;
 	uuid = NULL;
@@ -820,15 +832,15 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	params = NULL;
 	flags = 0;
 	rec_size = 0;
-	i = 0;
 
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 
-	cmd_array = prop_dictionary_get(dm_dict, DM_IOCTL_CMD_DATA);
-	
+	if ((cmd_array = prop_dictionary_get(dm_dict, DM_IOCTL_CMD_DATA)) == NULL)
+		cmd_array = prop_array_create();
+		
 	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL){
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
 		return ENOENT;
@@ -890,13 +902,12 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 				kmem_free(params, strlen(params) + 1);
 			}
 		}
-		prop_array_set(cmd_array, i, target_dict);
-
+		prop_array_add(cmd_array, target_dict);
 		prop_object_release(target_dict);
-
-		i++;
 	}
-
+	
+	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, cmd_array);
+	
 	return 0;
 }
 

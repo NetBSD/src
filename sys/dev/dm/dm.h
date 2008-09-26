@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.1.2.16 2008/09/11 13:40:47 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.1.2.17 2008/09/26 22:57:13 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -138,6 +138,8 @@ struct dm_dev {
 
 	struct dm_dev_head upcalls;
 	
+	struct disklabel *dk_label;    /* Disklabel for this table. */
+	
 	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
 
 	TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
@@ -223,6 +225,9 @@ struct cmd_function {
 	const char *cmd;
 	int  (*fn)(prop_dictionary_t);
 };
+
+/* device-mapper */
+void dmgetdisklabel(struct disklabel *, dev_t);
 
 /* dm_ioctl.c */
 int dm_dev_create_ioctl(prop_dictionary_t);

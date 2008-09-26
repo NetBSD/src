@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.1.2.9 2008/09/10 18:43:27 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.1.2.10 2008/09/26 22:57:13 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@ kmutex_t dm_dev_mutex;
  * Generic function used to lookup struct dm_dev. Calling with dm_dev_name 
  * and dm_dev_uuid NULL is allowed.
  */
-
 struct dm_dev*
 dm_dev_lookup(const char *dm_dev_name, const char *dm_dev_uuid,
  	int dm_dev_minor) 
@@ -236,8 +235,10 @@ dm_dev_destroy(void)
 		dm_dev = TAILQ_FIRST(&dm_dev_list);
 		
 		TAILQ_REMOVE(&dm_dev_list, TAILQ_FIRST(&dm_dev_list),
-		next_devlist);
+		    next_devlist);
 
+		rw_enter(&dm_dev->dev_rwlock, RW_WRITER);
+		
 		/* Destroy active table first.  */
 		if (!SLIST_EMPTY(&dm_dev->tables[dm_dev->cur_active_table]))
 			dm_table_destroy(&dm_dev->tables[dm_dev->cur_active_table]);
@@ -245,11 +246,17 @@ dm_dev_destroy(void)
 		/* Destroy unactive table if exits, too. */
 		if (!SLIST_EMPTY(&dm_dev->tables[1 - dm_dev->cur_active_table]))
 			dm_table_destroy(&dm_dev->tables[1 - dm_dev->cur_active_table]);
+
+		rw_exit(&dm_dev->dev_rwlock);
+
+		rw_destroy(&dm_dev->dev_rwlock);
 		
 		(void)kmem_free(dm_dev, sizeof(struct dm_dev));
 	}
 	
 	mutex_exit(&dm_dev_mutex);
+	
+	mutex_destroy(&dm_dev_mutex);
 	
 	return 0;
 }
@@ -259,8 +266,13 @@ dm_dev_destroy(void)
  */
 struct dm_dev*
 dm_dev_alloc()
-{	
-	return kmem_zalloc(sizeof(struct dm_dev), KM_NOSLEEP);
+{
+	struct dm_dev *dmv;
+	
+	dmv = kmem_zalloc(sizeof(struct dm_dev), KM_NOSLEEP);
+	dmv->dk_label = kmem_zalloc(sizeof(struct disklabel), KM_NOSLEEP);
+
+	return dmv;
 }
 
 /*
@@ -269,6 +281,9 @@ dm_dev_alloc()
 int
 dm_dev_free(struct dm_dev *dmv)
 {
+	if (dmv->dk_label != NULL)
+		(void)kmem_free(dmv, sizeof(struct disklabel));
+	
 	if (dmv != NULL)
 		(void)kmem_free(dmv, sizeof(struct dm_dev));
 	
