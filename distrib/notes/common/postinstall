@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.69 2008/09/21 14:24:00 tsutsui Exp $
+.\"	$NetBSD: postinstall,v 1.70 2008/09/26 12:42:48 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -175,18 +175,30 @@ For example:
 .\}
 .Pp
 .
-.ds IFname de0
-.if \n[arc]   .ds IFname sn0
-.if \n[hp300]:\n[mvme68k]:\n[pmax]:\n[sparc] .ds IFname le0
-.if \n[hp700]   .ds IFname ie0
-.if \n[next68k] .ds IFname xe0
-.if \n[mac68k]  .ds IFname sn0
-.if \n[macppc]  .ds IFname mc0
-.if \n[sgimips] .ds IFname sq0
-.if \n[sparc64] .ds IFname hme0
-.if \n[xen]     .ds IFname xennet0
+.ds IFname le0
+.if \n[acorn26]   .ds IFname ei0
+.if \n[acorn32]   .ds IFname ei0
+.if \n[amd64]     .ds IFname wm0
+.if \n[arc]       .ds IFname sn0
+.if \n[cats]      .ds IFname tlp0
+.if \n[evbarm]    .ds IFname fxp0
+.if \n[hp700]     .ds IFname ie0
+.if \n[hpcmips]   .ds IFname ne0
+.if \n[hpcsh]     .ds IFname ne0
+.if \n[i386]      .ds IFname wm0
+.if \n[landisk]   .ds IFname re0
+.if \n[mac68k]    .ds IFname sn0
+.if \n[macppc]    .ds IFname mc0
+.if \n[next68k]   .ds IFname xe0
+.if \n[prep]      .ds IFname pcn0
+.if \n[sandpoint] .ds IFname tlp0
+.if \n[sgimips]   .ds IFname sq0
+.if \n[shark]     .ds IFname cs0
+.if \n[sparc64]   .ds IFname hme0
+.if \n[x68k]      .ds IFname ne0
+.if \n[xen]       .ds IFname xennet0
 .
-.Dl ifconfig_\*[IFname]="inet 123.45.67.89 netmask 255.255.255.0"
+.Dl ifconfig_\*[IFname]="inet 192.168.123.45 netmask 255.255.255.0"
 .Pp
 or, if you have
 .Ar myname.my.dom
