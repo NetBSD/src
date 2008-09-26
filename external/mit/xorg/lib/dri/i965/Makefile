@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2008/09/21 14:08:45 lukem Exp $
+# $NetBSD: Makefile,v 1.3 2008/09/26 07:15:53 rtr Exp $
 
 MODULE=	i965
 
@@ -23,5 +23,7 @@ SRCS=	brw_aub.c brw_aub_playback.c brw_cc.c brw_clip.c brw_clip_line.c \
 	intel_regions.c intel_screen.c intel_span.c intel_pixel_copy.c \
 	intel_pixel_bitmap.c intel_state.c intel_tex.c intel_tex_layout.c \
 	intel_tex_validate.c
+
+COPTS.brw_draw_upload.c=	-Wno-error
 
 .include "${.CURDIR}/../dri.mk"
