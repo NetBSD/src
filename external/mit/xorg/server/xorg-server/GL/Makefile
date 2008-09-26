@@ -1,11 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/03 22:11:10 mrg Exp $
-
-SUBDIR=	glx
+#	$NetBSD: Makefile,v 1.2 2008/09/26 06:57:03 rtr Exp $
 
 .include <bsd.own.mk>
 
-#.if ${X11DRI} != "no"
-#SUBDIR+=	dri
-#.endif
+SUBDIR=	GLcore glx
 
 .include <bsd.subdir.mk>
