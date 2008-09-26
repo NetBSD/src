@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.167 2008/09/19 22:54:55 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.168 2008/09/26 18:23:09 apb Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -185,6 +185,7 @@ TOOL_SED?=		sed
 TOOL_SOELIM?=		soelim
 TOOL_STAT?=		stat
 TOOL_SPARKCRC?=		sparkcrc
+TOOL_strfile?=		strfile
 TOOL_SUNLABEL?=		sunlabel
 TOOL_TBL?=		tbl
 TOOL_UUDECODE?=		uudecode

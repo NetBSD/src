@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.529 2008/09/21 02:12:25 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.530 2008/09/26 18:23:09 apb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -270,6 +270,7 @@ TOOL_SED=		${TOOLDIR}/bin/${_TOOL_PREFIX}sed
 TOOL_SOELIM=		${TOOLDIR}/bin/${_TOOL_PREFIX}soelim
 TOOL_STAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}stat
 TOOL_SPARKCRC=		${TOOLDIR}/bin/${_TOOL_PREFIX}sparkcrc
+TOOL_STRFILE=		${TOOLDIR}/bin/${_TOOL_PREFIX}strfile
 TOOL_SUNLABEL=		${TOOLDIR}/bin/${_TOOL_PREFIX}sunlabel
 TOOL_TBL=		${TOOLDIR}/bin/${_TOOL_PREFIX}tbl
 TOOL_UUDECODE=		${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode

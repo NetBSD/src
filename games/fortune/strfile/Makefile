@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.8 2000/04/14 04:12:19 simonb Exp $
+#	$NetBSD: Makefile,v 1.9 2008/09/26 18:23:09 apb Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
-HOSTPROG=	strfile
-MAN=		strfile.8
+PROG=	strfile
+MAN=	strfile.8
 
-.include <bsd.hostprog.mk>
+.include "../../Makefile.inc"
+.include <bsd.prog.mk>
