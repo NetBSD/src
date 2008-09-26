@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.37 2008/09/25 14:15:55 rtr Exp $
+# $NetBSD: md.amd64,v 1.38 2008/09/26 06:57:04 rtr Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xvfb					-unknown-	x11
@@ -442,6 +442,10 @@
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so.10	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so.1		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libGLcore.a		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libGLcore.so		-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libGLcore.so.0	-unknown-	xorg
+./usr/X11R7/lib/modules/extensions/libGLcore_pic.a	-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libcfb.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libcfb.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libcfb.so.0		-unknown-	xorg
