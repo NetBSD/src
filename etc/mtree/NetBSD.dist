@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.380 2008/09/21 00:48:44 cube Exp $
+#	$NetBSD: NetBSD.dist,v 1.381 2008/09/26 07:02:57 rtr Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -32,6 +32,7 @@
 ./etc/bluetooth
 ./etc/defaults
 ./etc/fonts
+./etc/fonts/conf.d
 ./etc/iscsi
 ./etc/kerberosV
 ./etc/mail

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.9 2008/09/02 02:24:12 lukem Exp $
+# $NetBSD: mi,v 1.10 2008/09/26 07:02:57 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -53,6 +53,32 @@
 ./etc/X11/xserver/SecurityPolicy			-unknown-	x11
 ./etc/X11/xsm/system.xsm				-unknown-	x11
 ./etc/X11/xsm/system.xsm				-unknown-	xorg
+./etc/fonts/conf.d/10-autohint.conf			-unknown-	xorg
+./etc/fonts/conf.d/10-no-sub-pixel.conf			-unknown-	xorg
+./etc/fonts/conf.d/10-sub-pixel-bgr.conf		-unknown-	xorg
+./etc/fonts/conf.d/10-sub-pixel-rgb.conf		-unknown-	xorg
+./etc/fonts/conf.d/10-sub-pixel-vbgr.conf		-unknown-	xorg
+./etc/fonts/conf.d/10-sub-pixel-vrgb.conf		-unknown-	xorg
+./etc/fonts/conf.d/10-unhinted.conf			-unknown-	xorg
+./etc/fonts/conf.d/20-fix-globaladvance.conf		-unknown-	xorg
+./etc/fonts/conf.d/20-unhint-small-vera.conf		-unknown-	xorg
+./etc/fonts/conf.d/25-unhint-nonlatin.conf		-unknown-	xorg
+./etc/fonts/conf.d/30-metric-aliases.conf		-unknown-	xorg
+./etc/fonts/conf.d/30-urw-aliases.conf			-unknown-	xorg
+./etc/fonts/conf.d/40-nonlatin.conf			-unknown-	xorg
+./etc/fonts/conf.d/45-latin.conf			-unknown-	xorg
+./etc/fonts/conf.d/49-sansserif.conf			-unknown-	xorg
+./etc/fonts/conf.d/50-user.conf				-unknown-	xorg
+./etc/fonts/conf.d/51-local.conf			-unknown-	xorg
+./etc/fonts/conf.d/60-latin.conf			-unknown-	xorg
+./etc/fonts/conf.d/65-fonts-persian.conf		-unknown-	xorg
+./etc/fonts/conf.d/65-khmer.conf			-unknown-	xorg
+./etc/fonts/conf.d/65-nonlatin.conf			-unknown-	xorg
+./etc/fonts/conf.d/69-unifont.conf			-unknown-	xorg
+./etc/fonts/conf.d/70-no-bitmaps.conf			-unknown-	xorg
+./etc/fonts/conf.d/70-yes-bitmaps.conf			-unknown-	xorg
+./etc/fonts/conf.d/80-delicious.conf			-unknown-	xorg
+./etc/fonts/conf.d/90-synthetic.conf			-unknown-	xorg
 ./etc/fonts/fonts.conf					-unknown-	x11
 ./etc/fonts/fonts.conf					-unknown-	xorg
 ./etc/fonts/fonts.dtd					-unknown-	x11
