@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/09/20 15:26:05 cube Exp $
+#	$NetBSD: Makefile,v 1.2 2008/09/26 07:15:53 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -46,6 +46,8 @@ SRCS.vbo= \
 	vbo_exec_draw.c vbo_exec_eval.c vbo_rebase.c vbo_split.c \
 	vbo_split_copy.c vbo_split_inplace.c vbo_save.c vbo_save_api.c \
 	vbo_save_draw.c vbo_save_loopback.c 
+
+COPTS.vbo_save_draw.c=	-Wno-error
 
 # TNL sources
 PATHS.tnl=	tnl
