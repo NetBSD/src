@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.18 2008/09/10 00:33:12 macallan Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.19 2008/09/26 04:06:59 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.18 2008/09/10 00:33:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.19 2008/09/26 04:06:59 macallan Exp $");
 
 #include "opt_inet.h"
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wi_obio.c,v 1.18 2008/09/10 00:33:12 macallan Exp
 #include <dev/ic/wi_ieee.h>
 #include <dev/ic/wireg.h>
 #include <dev/ic/wivar.h>
+#include <macppc/dev/obiovar.h>
 
 static int wi_obio_match(struct device *, struct cfdata *, void *);
 static void wi_obio_attach(struct device *, struct device *, void *);
@@ -61,10 +62,6 @@ static void wi_obio_disable(struct wi_softc *);
 struct wi_obio_softc {
 	struct wi_softc sc_wi;
 	bus_space_tag_t sc_tag;
-	bus_space_handle_t sc_bsh;
-	bus_space_handle_t sc_fcr2h;
-	bus_space_handle_t sc_gpioh;
-	bus_space_handle_t sc_extint_gpioh;
 };
 
 CFATTACH_DECL(wi_obio, sizeof(struct wi_obio_softc),
@@ -84,6 +81,10 @@ wi_obio_match(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
+#define OBIO_WI_FCR2	0x40
+#define OBIO_WI_GPIO	0x6a
+#define OBIO_WI_EXTINT	0x58
+
 void
 wi_obio_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -95,10 +96,6 @@ wi_obio_attach(struct device *parent, struct device *self, void *aux)
 	intr_establish(ca->ca_intr[0], IST_LEVEL, IPL_NET, wi_intr, sc);
 
 	sc->sc_tag = wisc->sc_iot = ca->ca_tag;
-	bus_space_map(sc->sc_tag, ca->ca_baseaddr, 0x70, 0, &sc->sc_bsh);
-	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x40, 4, &sc->sc_fcr2h);
-	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x6a, 16, &sc->sc_gpioh);
-	bus_space_subregion(sc->sc_tag, sc->sc_bsh, 0x58, 16, &sc->sc_extint_gpioh);
 
 	if (bus_space_map(wisc->sc_iot, ca->ca_baseaddr + ca->ca_reg[0],
 	    ca->ca_reg[1], 0, &wisc->sc_ioh)) {
@@ -128,36 +125,35 @@ wi_obio_attach(struct device *parent, struct device *self, void *aux)
 int
 wi_obio_enable(struct wi_softc *wisc)
 {
-	struct wi_obio_softc * const sc = (void *)wisc;
 	uint32_t x;
 
-	x = bus_space_read_4(sc->sc_tag, sc->sc_fcr2h, 0);
+	x = obio_read_4(OBIO_WI_FCR2);
 	x |= 0x4;
-	bus_space_write_4(sc->sc_tag, sc->sc_fcr2h, 0, x);
+	obio_write_4(OBIO_WI_FCR2, x);
 
 	/* Enable card slot. */
-	bus_space_write_1(sc->sc_tag, sc->sc_gpioh, 0x0f, 5);
+	obio_write_1(OBIO_WI_GPIO + 0x0f, 5);
 	delay(1000);
-	bus_space_write_1(sc->sc_tag, sc->sc_gpioh, 0x0f, 4);
+	obio_write_1(OBIO_WI_GPIO + 0x0f, 4);
 	delay(1000);
-	x = bus_space_read_4(sc->sc_tag, sc->sc_fcr2h, 0);
+	x = obio_read_4(OBIO_WI_FCR2);
 	x &= ~0x8000000;
 
-	bus_space_write_4(sc->sc_tag, sc->sc_fcr2h, 0, x);
+	obio_write_4(OBIO_WI_FCR2, x);
 	/* out8(gpio + 0x10, 4); */
 
-	bus_space_write_1(sc->sc_tag, sc->sc_extint_gpioh, 0x0b, 0);
-	bus_space_write_1(sc->sc_tag, sc->sc_extint_gpioh, 0x0a, 0x28);
-	bus_space_write_1(sc->sc_tag, sc->sc_extint_gpioh, 0x0d, 0x28);
-	bus_space_write_1(sc->sc_tag, sc->sc_gpioh, 0x0d, 0x28);
-	bus_space_write_1(sc->sc_tag, sc->sc_gpioh, 0x0e, 0x28);
-	bus_space_write_4(sc->sc_tag, sc->sc_bsh, 0x1c000, 0);
+	obio_write_1(OBIO_WI_EXTINT + 0x0b, 0);
+	obio_write_1(OBIO_WI_EXTINT + 0x0a, 0x28);
+	obio_write_1(OBIO_WI_EXTINT + 0x0d, 0x28);
+	obio_write_1(OBIO_WI_GPIO + 0x0d, 0x28);
+	obio_write_1(OBIO_WI_GPIO + 0x0e, 0x28);
+	obio_write_4(0x1c000, 0);
 
 	/* Initialize the card. */
-	bus_space_write_4(sc->sc_tag, sc->sc_bsh, 0x1a3e0, 0x41);
-	x = bus_space_read_4(sc->sc_tag, sc->sc_fcr2h, 0);
+	obio_write_4(0x1a3e0, 0x41);
+	x = obio_read_4(OBIO_WI_FCR2);
 	x |= 0x8000000;
-	bus_space_write_4(sc->sc_tag, sc->sc_fcr2h, 0, x);
+	obio_write_4(OBIO_WI_FCR2, x);
 
 	return 0;
 }
@@ -165,11 +161,10 @@ wi_obio_enable(struct wi_softc *wisc)
 void
 wi_obio_disable(struct wi_softc *wisc)
 {
-	struct wi_obio_softc * const sc = (void *)wisc;
 	uint32_t x;
 
-	x = bus_space_read_4(sc->sc_tag, sc->sc_fcr2h, 0);
+	x = obio_read_4(OBIO_WI_FCR2);
 	x &= ~0x4;
-	bus_space_write_4(sc->sc_tag, sc->sc_fcr2h, 0, x);
+	obio_write_4(OBIO_WI_FCR2, x);
 	/* out8(gpio + 0x10, 0); */
 }
