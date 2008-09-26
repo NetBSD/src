@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.28 2008/05/25 11:54:33 chris Exp $	 */
+/*	$NetBSD: exec.c,v 1.29 2008/09/26 14:12:50 christos Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ static char module_base[64] = "/";
 static void	module_init(void);
 
 int
-exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
+exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 {
 	u_long          boot_argv[BOOT_NARGS];
 	int		fd;
@@ -190,7 +190,8 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 	}
 #endif
 	marks[MARK_START] = loadaddr;
-	if ((fd = loadfile(file, marks, LOAD_KERNEL)) == -1)
+	if ((fd = loadfile(file, marks,
+	    LOAD_KERNEL & ~(floppy ? LOAD_NOTE : 0))) == -1)
 		goto out;
 
 	boot_argv[0] = boothowto;

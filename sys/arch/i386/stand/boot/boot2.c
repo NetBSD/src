@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.35 2008/08/20 11:34:32 sborrill Exp $	*/
+/*	$NetBSD: boot2.c,v 1.36 2008/09/26 14:12:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ bootit(const char *filename, int howto, int tell)
 		printf("\n");
 	}
 
-	if (exec_netbsd(filename, 0, howto) < 0)
+	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else
