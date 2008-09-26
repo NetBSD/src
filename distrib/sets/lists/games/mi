@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.43 2008/08/29 06:08:40 lukem Exp $
+# $NetBSD: mi,v 1.44 2008/09/26 18:23:09 apb Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -80,6 +80,7 @@
 ./usr/games/sail				games-games-bin
 ./usr/games/snake				games-games-bin
 ./usr/games/snscore				games-games-bin
+./usr/games/strfile				games-utils-bin
 ./usr/games/teachgammon				games-games-bin
 ./usr/games/tetris				games-games-bin
 ./usr/games/trek				games-games-bin
