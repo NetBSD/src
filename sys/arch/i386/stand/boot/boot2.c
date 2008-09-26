@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.36 2008/09/26 14:12:49 christos Exp $	*/
+/*	$NetBSD: boot2.c,v 1.37 2008/09/26 18:42:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -79,9 +79,6 @@
 #include "devopen.h"
 #include "bootmod.h"
 
-#ifdef SUPPORT_USTARFS
-#include "ustarfs.h"
-#endif
 #ifdef SUPPORT_PS2
 #include <biosmca.h>
 #endif
@@ -341,9 +338,6 @@ parsebootconf(const char *conf)
 	int fd, err, off;
 	struct stat st;
 	char *key, *value, *v2;
-#ifdef SUPPORT_USTARFS
-	void *op_open;
-#endif
 
 	/* Clear bootconf structure */
 	bzero((void *)&bootconf, sizeof(bootconf));
@@ -353,23 +347,6 @@ parsebootconf(const char *conf)
 
 	/* automatically switch between letter and numbers on menu */
 	bootconf.menuformat = MENUFORMAT_AUTO;
-
-	/* don't try to open BOOTCONF if the target fs is ustarfs */
-#ifdef SUPPORT_USTARFS
-#if !defined(LIBSA_SINGLE_FILESYSTEM)
-	fd = open("boot", 0);	/* assume we are loaded as "boot" from here */
-	if (fd < 0)
-		op_open = NULL;	/* XXX */
-	else {
-		op_open = files[fd].f_ops->open;
-		close(fd);
-	}
-#else
-	op_open = file_system[0].open;
-#endif	/* !LIBSA_SINGLE_FILESYSTEM */
-	if (op_open == ustarfs_open)
-		return;
-#endif	/* SUPPORT_USTARFS */
 
 	fd = open(BOOTCONF, 0);
 	if (fd < 0)
