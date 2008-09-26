@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.9 2008/09/26 22:52:24 matt Exp $	*/
+/*	$NetBSD: tyname.c,v 1.10 2008/09/26 23:51:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.9 2008/09/26 22:52:24 matt Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.10 2008/09/26 23:51:04 matt Exp $");
 #endif
 
 #include <limits.h>
@@ -128,6 +128,7 @@ tyname(char *buf, size_t bufsiz, type_t *tp)
 	case COMPLEX:
 	case FCOMPLEX:
 	case DCOMPLEX:
+	case LCOMPLEX:
 		(void)snprintf(buf, bufsiz, "%s%s", cv, s);
 		break;
 	case PTR:
