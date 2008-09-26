@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1129 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1130 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1037,3 +1037,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	c99(1): Implement as wrapper for cc to run in C99 compatible mode.
 		[hubertf 20080924]
 	ls(1): -n now implies -l.  [lukem 20080925]
+	ps(1): Add the -A option, to display information about all processes.
+		[apb 20080926]
