@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.18 2008/04/26 23:34:55 christos Exp $ */
+/* $NetBSD: emit1.c,v 1.19 2008/09/26 22:52:24 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.18 2008/04/26 23:34:55 christos Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.19 2008/09/26 22:52:24 matt Exp $");
 #endif
 
 #include <ctype.h>
@@ -56,6 +56,7 @@ static	void	outfstrg(strg_t *);
  *	_Bool			B
  *	_Complex float		s X
  *	_Complex double		X 
+ *	_Complex long double	l X 
  *	char			C
  *	signed char		s C
  *	unsigned char		u C
@@ -125,6 +126,7 @@ outtype(type_t *tp)
 		case UNION:	t = 'T';	s = 'u';	break;
 		case FCOMPLEX:	t = 'X';	s = 's';	break;
 		case DCOMPLEX:	t = 'X';	s = '\0';	break;
+		case LCOMPLEX:	t = 'X';	s = 'l';	break;
 		default:
 			LERROR("outtyp()");
 		}

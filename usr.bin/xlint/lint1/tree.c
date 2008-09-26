@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.51 2008/07/31 15:21:34 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.52 2008/09/26 22:52:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.51 2008/07/31 15:21:34 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.52 2008/09/26 22:52:24 matt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1982,6 +1982,7 @@ cvtcon(op_t op, int arg, type_t *tp, val_t *nv, val_t *v)
 		case PTR:
 			/* Got already an error because of float --> ptr */
 		case LDOUBLE:
+		case LCOMPLEX:
 			max = LDBL_MAX;		min = -LDBL_MAX;	break;
 		default:
 			LERROR("cvtcon()");
@@ -2391,6 +2392,9 @@ bldri(op_t op, tnode_t *ln)
 		LERROR("bldincdec()");
 
 	switch (ln->tn_type->t_tspec) {
+	case LCOMPLEX:
+		cn = getinode(LDOUBLE, (int64_t)1);
+		break;
 	case DCOMPLEX:
 		cn = getinode(DOUBLE, (int64_t)1);
 		break;
