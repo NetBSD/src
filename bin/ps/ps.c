@@ -1,7 +1,7 @@
-/*	$NetBSD: ps.c,v 1.69 2008/07/20 00:52:40 lukem Exp $	*/
+/*	$NetBSD: ps.c,v 1.70 2008/09/26 08:09:31 apb Exp $	*/
 
 /*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.69 2008/07/20 00:52:40 lukem Exp $");
+__RCSID("$NetBSD: ps.c,v 1.70 2008/09/26 08:09:31 apb Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ __RCSID("$NetBSD: ps.c,v 1.69 2008/07/20 00:52:40 lukem Exp $");
  * ARGOPTS must contain all option characters that take arguments
  * (except for 't'!) - it is used in kludge_oldps_options()
  */
-#define	GETOPTSTR	"acCeghjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
+#define	GETOPTSTR	"aAcCeghjk:LlM:mN:O:o:p:rSsTt:U:uvW:wx"
 #define	ARGOPTS		"kMNOopUW"
 
 struct kinfo_proc2 *kinfo;
@@ -180,6 +180,10 @@ main(int argc, char *argv[])
 	mode = PRINTMODE;
 	while ((ch = getopt(argc, argv, GETOPTSTR)) != -1)
 		switch((char)ch) {
+		case 'A':
+			/* "-A" shows all processes, like "-ax" */
+			xflg = 1;
+			/*FALLTHROUGH*/
 		case 'a':
 			what = KERN_PROC_ALL;
 			flag = 0;
