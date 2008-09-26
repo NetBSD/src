@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.9 2008/04/25 22:18:34 christos Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.10 2008/09/26 22:52:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.9 2008/04/25 22:18:34 christos Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.10 2008/09/26 22:52:24 matt Exp $");
 #endif
 
 #include <limits.h>
@@ -119,6 +119,9 @@ inittyp(void)
 		{ DCOMPLEX,   { DOUBLE_SIZE * 2, 8 * CHAR_BIT * 2,
 				      DCOMPLEX, DCOMPLEX,
 				      0, 0, 1, 1, 1, 1, "double _Complex" } },
+		{ LCOMPLEX,   { LDOUBLE_SIZE * 2, 8 * CHAR_BIT * 2,
+				      LCOMPLEX, LCOMPLEX,
+				      0, 0, 1, 1, 1, 1, "long double _Complex" } },
 		{ VOID,     { -1, -1,
 				      VOID, VOID,
 				      0, 0, 0, 0, 0, 0, "void" } },

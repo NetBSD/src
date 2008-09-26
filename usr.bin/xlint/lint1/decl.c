@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.41 2008/04/27 00:13:58 christos Exp $ */
+/* $NetBSD: decl.c,v 1.42 2008/09/26 22:52:24 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.41 2008/04/27 00:13:58 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.42 2008/09/26 22:52:24 matt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -119,6 +119,7 @@ initdecl(void)
 	typetab[LDOUBLE].t_tspec = LDOUBLE;
 	typetab[FCOMPLEX].t_tspec = FCOMPLEX;
 	typetab[DCOMPLEX].t_tspec = DCOMPLEX;
+	typetab[LCOMPLEX].t_tspec = LCOMPLEX;
 	typetab[COMPLEX].t_tspec = COMPLEX;
 	typetab[VOID].t_tspec = VOID;
 	/*
@@ -300,9 +301,9 @@ addtype(type_t *tp)
 	if (t == COMPLEX) {
 		if (dcs->d_cmod == FLOAT)
 			t = FCOMPLEX;
-		else if (dcs->d_cmod == DOUBLE)
+		else if (dcs->d_cmod == DOUBLE) {
 			t = DCOMPLEX;
-		else
+		} else
 			error(308, basictyname(dcs->d_cmod));
 		dcs->d_cmod = NOTSPEC;
 	}
@@ -342,8 +343,9 @@ addtype(type_t *tp)
 			dcs->d_terr = 1;
 		dcs->d_lmod = t;
 	} else if (t == FLOAT || t == DOUBLE) {
-		if (dcs->d_lmod == NOTSPEC) {
-			if (dcs->d_cmod != NOTSPEC)
+		if (dcs->d_lmod == NOTSPEC || dcs->d_lmod == LONG) {
+			if (dcs->d_cmod != NOTSPEC
+			    || (t == FLOAT && dcs->d_lmod == LONG))
 				dcs->d_terr = 1;
 			dcs->d_cmod = t;
 		} else {
@@ -398,7 +400,7 @@ tdeferr(type_t *td, tspec_t t)
 		break;
 	case LONG:
 		if (t2 == INT || t2 == UINT || t2 == LONG || t2 == ULONG ||
-		    t2 == FLOAT || t2 == DOUBLE) {
+		    t2 == FLOAT || t2 == DOUBLE || t2 == DCOMPLEX) {
 			/* modifying typedef with ... */
 			warning(5, "long");
 			if (t2 == INT) {
@@ -413,6 +415,8 @@ tdeferr(type_t *td, tspec_t t)
 				td = gettyp(DOUBLE);
 			} else if (t2 == DOUBLE) {
 				td = gettyp(LDOUBLE);
+			} else if (t2 == DCOMPLEX) {
+				td = gettyp(LCOMPLEX);
 			}
 			td = duptyp(td);
 			td->t_typedef = 1;
@@ -443,6 +447,7 @@ tdeferr(type_t *td, tspec_t t)
 	case INT:
 	case FCOMPLEX:
 	case DCOMPLEX:
+	case LCOMPLEX:
 	case COMPLEX:
 		break;
 
@@ -709,9 +714,18 @@ deftyp(void)
 					warning(266);
 			}
 			break;
+		case DCOMPLEX:
+			if (l == LONG) {
+				l = NOTSPEC;
+				t = LCOMPLEX;
+				if (tflag)
+					/* 'long double' is illegal in ... */
+					warning(266);
+			}
+			break;
 		case VOID:
 		case FCOMPLEX:
-		case DCOMPLEX:
+		case LCOMPLEX:
 			break;
 		default:
 			LERROR("deftyp()");

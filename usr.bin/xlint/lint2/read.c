@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.22 2008/04/26 20:11:09 christos Exp $ */
+/* $NetBSD: read.c,v 1.23 2008/09/26 22:52:24 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.22 2008/04/26 20:11:09 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.23 2008/09/26 22:52:24 matt Exp $");
 #endif
 
 #include <ctype.h>
@@ -633,7 +633,8 @@ inptype(const char *cp, const char **epp)
 		tp->t_tspec = s == 'e' ? ENUM : (s == 's' ? STRUCT : UNION);
 		break;
 	case 'X':
-		tp->t_tspec = s == 's' ? FCOMPLEX : DCOMPLEX;
+		tp->t_tspec = s == 's' ? FCOMPLEX
+				       : (s == 'l' ? LCOMPLEX : DCOMPLEX);
 		break;
 	}
 
@@ -721,6 +722,7 @@ inptype(const char *cp, const char **epp)
 	case NOTSPEC:
 	case FCOMPLEX:
 	case DCOMPLEX:
+	case LCOMPLEX:
 	case COMPLEX:
 		break;
 	case NTSPEC:
@@ -856,6 +858,8 @@ gettlen(const char *cp, const char **epp)
 	case 'X':
 		if (s == 's') {
 			t = FCOMPLEX;
+		} else if (s == 'l') {
+			t = LCOMPLEX;
 		} else if (s == '\0') {
 			t = DCOMPLEX;
 		}
@@ -948,6 +952,7 @@ gettlen(const char *cp, const char **epp)
 	case LONG:
 	case FCOMPLEX:
 	case DCOMPLEX:
+	case LCOMPLEX:
 	case COMPLEX:
 		break;
 #ifndef __COVERITY__

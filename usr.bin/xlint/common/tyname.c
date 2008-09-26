@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.8 2008/05/01 21:52:19 christos Exp $	*/
+/*	$NetBSD: tyname.c,v 1.9 2008/09/26 22:52:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.8 2008/05/01 21:52:19 christos Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.9 2008/09/26 22:52:24 matt Exp $");
 #endif
 
 #include <limits.h>
@@ -80,6 +80,7 @@ basictyname(tspec_t t)
 	case ARRAY:	return "array";
 	case FCOMPLEX:	return "float _Complex";
 	case DCOMPLEX:	return "double _Complex";
+	case LCOMPLEX:	return "long double _Complex";
 	case COMPLEX:	return "_Complex";
 	default:
 		LERROR("basictyname(%d)", t);

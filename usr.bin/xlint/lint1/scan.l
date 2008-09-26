@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.39 2008/09/10 14:05:00 joerg Exp $ */
+/* $NetBSD: scan.l,v 1.40 2008/09/26 22:52:24 matt Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.39 2008/09/10 14:05:00 joerg Exp $");
+__RCSID("$NetBSD: scan.l,v 1.40 2008/09/26 22:52:24 matt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -605,6 +605,7 @@ icon(int base)
 	case UNSIGN:
 	case FCOMPLEX:
 	case DCOMPLEX:
+	case LCOMPLEX:
 	case COMPLEX:
 		break;
 
