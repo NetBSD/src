@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.28 2008/05/16 03:49:54 macallan Exp $	*/
+/*	$NetBSD: snapper.c,v 1.29 2008/09/26 03:20:30 macallan Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.28 2008/05/16 03:49:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.29 2008/09/26 03:20:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -1461,8 +1461,8 @@ snapper_set_volume(struct snapper_softc *sc, u_int left, u_int right)
 	u_char regs[6];
 	int l, r;
 
-	left &= 0xFF;
-	right &= 0xFF;
+	left = min(255, left);
+	right = min(255, right);
 
 	if (sc->sc_mode == SNAPPER_SWVOL) {
 		snapper_vol_l = left;
