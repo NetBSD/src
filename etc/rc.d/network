@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.55 2008/09/20 14:22:57 apb Exp $
+# $NetBSD: network,v 1.56 2008/09/26 10:31:46 apb Exp $
 #
 
 # PROVIDE: network
@@ -287,34 +287,6 @@ network_start()
 		echo "."
 	fi
 
-	# Check $defaultroute, then /etc/mygate, for the name or address
-	# of my IPv4 gateway host. If using a name, that name must be in
-	# /etc/hosts.
-	#
-	if [ -z "$defaultroute" ] && [ -f /etc/mygate ]; then
-		defaultroute=$(cat /etc/mygate)
-	fi
-	if [ -n "$defaultroute" ]; then
-		/sbin/route add default $defaultroute
-	fi
-
-	# Check $defaultroute6, then /etc/mygate6, for the name or address
-	# of my IPv6 gateway host. If using a name, that name must be in
-	# /etc/hosts.  Note that the gateway host address must be a link-local
-	# address if it is not using an stf* interface.
-	#
-	if [ -z "$defaultroute6" ] && [ -f /etc/mygate6 ]; then
-		defaultroute6=$(cat /etc/mygate6)
-	fi
-	if [ -n "$defaultroute6" ]; then
-		if [ "$ip6mode" = "autohost" ]; then
-			echo
-			warn \
-	    "ip6mode is set to 'autohost' and a v6 default route is also set."
-		fi
-		/sbin/route add -inet6 default $defaultroute6
-	fi
-
 	echo -n "Adding interface aliases:"
 
 	# Check if each configured interface xxN has an $ifaliases_xxN variable
@@ -364,7 +336,35 @@ network_start()
 		done < /etc/ifaliases
 	fi
 
-	echo
+	echo "." # for "Adding interface aliases:"
+
+	# Check $defaultroute, then /etc/mygate, for the name or address
+	# of my IPv4 gateway host. If using a name, that name must be in
+	# /etc/hosts.
+	#
+	if [ -z "$defaultroute" ] && [ -f /etc/mygate ]; then
+		defaultroute=$(cat /etc/mygate)
+	fi
+	if [ -n "$defaultroute" ]; then
+		/sbin/route add default $defaultroute
+	fi
+
+	# Check $defaultroute6, then /etc/mygate6, for the name or address
+	# of my IPv6 gateway host. If using a name, that name must be in
+	# /etc/hosts.  Note that the gateway host address must be a link-local
+	# address if it is not using an stf* interface.
+	#
+	if [ -z "$defaultroute6" ] && [ -f /etc/mygate6 ]; then
+		defaultroute6=$(cat /etc/mygate6)
+	fi
+	if [ -n "$defaultroute6" ]; then
+		if [ "$ip6mode" = "autohost" ]; then
+			echo
+			warn \
+	    "ip6mode is set to 'autohost' and a v6 default route is also set."
+		fi
+		/sbin/route add -inet6 default $defaultroute6
+	fi
 
 	# IPv6 interface autoconfiguration.
 	#
