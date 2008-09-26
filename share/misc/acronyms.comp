@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.89 2008/09/03 06:45:50 dholland Exp $
+$NetBSD: acronyms.comp,v 1.90 2008/09/26 04:54:23 dholland Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -348,6 +348,7 @@ TLA	top level aggregator
 TLB	transition lookaside buffer
 TLD	top level domain
 TLS	transport layer security
+TLS	thread-local storage
 TMDS	transition minimized differential signaling
 TR	token ring
 TRNG	true random number generator
