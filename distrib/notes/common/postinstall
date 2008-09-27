@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.70 2008/09/26 12:42:48 tsutsui Exp $
+.\"	$NetBSD: postinstall,v 1.71 2008/09/27 01:26:28 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -198,7 +198,7 @@ For example:
 .if \n[x68k]      .ds IFname ne0
 .if \n[xen]       .ds IFname xennet0
 .
-.Dl ifconfig_\*[IFname]="inet 192.168.123.45 netmask 255.255.255.0"
+.Dl ifconfig_\*[IFname]="inet 192.0.2.123 netmask 255.255.255.0"
 .Pp
 or, if you have
 .Ar myname.my.dom
