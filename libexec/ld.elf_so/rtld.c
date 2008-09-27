@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.120 2008/07/24 04:39:25 matt Exp $	 */
+/*	$NetBSD: rtld.c,v 1.121 2008/09/27 03:52:05 macallan Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.120 2008/07/24 04:39:25 matt Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.121 2008/09/27 03:52:05 macallan Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -813,6 +813,14 @@ _rtld_objmain_sym(const char *name)
 	return(NULL);
 }
 
+#ifdef __powerpc__
+static void *
+hackish_return_address(void)
+{
+	return __builtin_return_address(1);
+}
+#endif
+
 __strong_alias(__dlsym,dlsym)
 void *
 dlsym(void *handle, const char *name)
@@ -832,7 +840,11 @@ dlsym(void *handle, const char *name)
 	case (intptr_t)RTLD_NEXT:
 	case (intptr_t)RTLD_DEFAULT:
 	case (intptr_t)RTLD_SELF:
-		retaddr = __builtin_return_address(0); /* __GNUC__ only */
+#ifdef __powerpc__
+		retaddr = hackish_return_address();
+#else
+		retaddr = __builtin_return_address(0);
+#endif
 		if ((obj = _rtld_obj_from_addr(retaddr)) == NULL) {
 			_rtld_error("Cannot determine caller's shared object");
 			return NULL;
