@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1097 2008/09/21 10:25:07 hannken Exp $
+# $NetBSD: mi,v 1.1098 2008/09/27 04:33:04 reed Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2097,6 +2097,7 @@
 ./usr/share/man/cat8/i386/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/mbr.0			man-sys-catman		.cat
 ./usr/share/man/cat8/i386/multiboot.0		man-sys-catman		.cat
+./usr/share/man/cat8/i386/ndiscvt.0		man-netutil-catman	.cat
 ./usr/share/man/cat8/i386/pxeboot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/i386/reboot.0		man-obsolete		obsolete
 ./usr/share/man/cat8/i386/reboot_i386.0		man-obsolete		obsolete
@@ -2259,7 +2260,6 @@
 ./usr/share/man/cat8/ncdcs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ndbootd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/ndc.0			man-obsolete		obsolete
-./usr/share/man/cat8/ndiscvt.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/ndp.0			man-netutil-catman	inet6,.cat
 ./usr/share/man/cat8/netbsd32.0			man-sys-catman		.cat
 ./usr/share/man/cat8/netgroup_mkdb.0		man-nis-catman		.cat
@@ -4427,6 +4427,7 @@
 ./usr/share/man/html8/i386/dosboot.html		man-sys-htmlman		html
 ./usr/share/man/html8/i386/mbr.html		man-sys-htmlman		html
 ./usr/share/man/html8/i386/multiboot.html	man-sys-htmlman		html
+./usr/share/man/html8/i386/ndiscvt.html		man-netutil-htmlman	html
 ./usr/share/man/html8/i386/pxeboot.html		man-sys-htmlman		html
 ./usr/share/man/html8/i386/w95boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/identd.html		man-netutil-htmlman	html
@@ -4556,7 +4557,6 @@
 ./usr/share/man/html8/named.html		man-bind-htmlman	html
 ./usr/share/man/html8/ncdcs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/ndbootd.html		man-bootserver-htmlman	html
-./usr/share/man/html8/ndiscvt.html		man-netutil-htmlman	html
 ./usr/share/man/html8/ndp.html			man-netutil-htmlman	inet6,html
 ./usr/share/man/html8/netbsd32.html		man-sys-htmlman		html
 ./usr/share/man/html8/netgroup_mkdb.html	man-nis-htmlman		html
@@ -6892,6 +6892,7 @@
 ./usr/share/man/man8/i386/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/mbr.8			man-sys-man		.man
 ./usr/share/man/man8/i386/multiboot.8		man-sys-man		.man
+./usr/share/man/man8/i386/ndiscvt.8		man-netutil-man		.man
 ./usr/share/man/man8/i386/pxeboot.8		man-sys-man		.man
 ./usr/share/man/man8/i386/reboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/i386/reboot_i386.8		man-obsolete		obsolete
@@ -7055,7 +7056,6 @@
 ./usr/share/man/man8/ncdcs.8			man-sysutil-man		.man
 ./usr/share/man/man8/ndbootd.8			man-bootserver-man	.man
 ./usr/share/man/man8/ndc.8			man-obsolete		obsolete
-./usr/share/man/man8/ndiscvt.8			man-netutil-man		.man
 ./usr/share/man/man8/ndp.8			man-netutil-man		inet6,.man
 ./usr/share/man/man8/netbsd32.8			man-sys-man		.man
 ./usr/share/man/man8/netgroup_mkdb.8		man-nis-man		.man
