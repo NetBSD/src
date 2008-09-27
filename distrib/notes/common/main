@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.420 2008/09/13 15:54:57 tsutsui Exp $
+.\"	$NetBSD: main,v 1.421 2008/09/27 23:15:21 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1250,7 +1250,7 @@ directory, in the format produced by the command:
 .br
 .Ic cksum -a SHA512 Ar file .
 .It Li SYSVSUM
-Historic AT\*&T System V
+Historic AT\*[Am]T System V
 .Ux
 checksums for the various files in that directory, in the format produced by
 the command:

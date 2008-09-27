@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.123 2008/09/06 21:25:33 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.124 2008/09/27 23:15:21 tsutsui Exp $
 .
 .Nx
 \*V
@@ -221,7 +221,7 @@ X/Lan Add-On Adapter
 #13H9237 PCI Ethernet Adapter
 .bullet)
 .It
-AT\*&T StarLAN 10, EN100, and StarLAN Fiber
+AT\*[Am]T StarLAN 10, EN100, and StarLAN Fiber
 .It
 3COM 3c501
 .It
@@ -399,7 +399,7 @@ Auto 16/4 Token-Ring ISA Adapter [+]
 .(bullet -compact
 3Com AirConnect Wireless LAN
 .It
-AT\*&T/Lucent/Agere WaveLAN/ORiNOCO IEEE (802.11) PCMCIA cards
+AT\*[Am]T/Lucent/Agere WaveLAN/ORiNOCO IEEE (802.11) PCMCIA cards
 .It
 Aironet 4500/4800 and Cisco 340 series PCMCIA cards
 .It

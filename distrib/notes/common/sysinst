@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.94 2008/09/14 23:39:02 tsutsui Exp $
+.\"	$NetBSD: sysinst,v 1.95 2008/09/27 23:15:21 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -352,7 +352,7 @@ pull-down menu, select
 .Ic Monitors ,
 then select
 .Ic Change Monitor Depth
-and make sure B\*&W is highlighted.
+and make sure B\*[Am]W is highlighted.
 Close the window using the
 .Ic Close
 button.
@@ -568,7 +568,7 @@ Enable 32-bit addressing in the Memory Control Panel [1].
 Disable all forms of virtual memory (the Memory Control Panel, RAM Doubler,
 or other software-based memory enhancement products).
 .It
-Place the system in B\*&W Mode (1-bit color or grayscale) as shown in the
+Place the system in B\*[Am]W Mode (1-bit color or grayscale) as shown in the
 Monitors Control Panel or in the Monitors options dialog of the Booter.
 You may choose to have the Booter do this for you automatically by selecting
 the appropriate check box and radio button in the
@@ -615,11 +615,11 @@ Select the Kernel Location to be from Mac OS with the filename
 corresponding to the name of the Installation Kernel you are using.
 Typically this will be netbsd-INSTALL.gz.
 .Pp
-If you haven't already put your Macintosh into B\*&W mode, select the
+If you haven't already put your Macintosh into B\*[Am]W mode, select the
 .Ic Monitor Options
 from the
 .Ic Options
-menu and check the box for B\*&W mode.
+menu and check the box for B\*[Am]W mode.
 .Pp
 Try booting
 .Nx
