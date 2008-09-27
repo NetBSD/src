@@ -9,6 +9,7 @@ PROG=	ndiscvt
 .endif
 
 MAN=	ndiscvt.8
+MANSUBDIR=	/i386
 SRCS=	ndiscvt.c
 SRCS+=	subr_pe.c
 SRCS+=	inf.c inf-token.l inf-parse.y
