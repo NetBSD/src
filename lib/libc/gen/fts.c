@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.33 2008/09/20 00:14:12 lukem Exp $	*/
+/*	$NetBSD: fts.c,v 1.34 2008/09/27 15:12:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.33 2008/09/20 00:14:12 lukem Exp $");
+__RCSID("$NetBSD: fts.c,v 1.34 2008/09/27 15:12:00 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1008,7 +1008,9 @@ static FTSENT *
 fts_alloc(FTS *sp, const char *name, size_t namelen)
 {
 	FTSENT *p;
+#if defined(FTS_ALLOC_ALIGNED)
 	size_t len;
+#endif
 
 	_DIAGASSERT(sp != NULL);
 	_DIAGASSERT(name != NULL);
