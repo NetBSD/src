@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.18 2008/08/29 00:02:25 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.19 2008/09/27 04:47:01 reed Exp $
 
 .include <bsd.own.mk>
 
 PROG=	rpc.pcnfsd
-MAN=	pcnfsd.8
-MLINKS= pcnfsd.8 rpc.pcnfsd.8
+MAN=	rpc.pcnfsd.8
+BUILDSYMLINKS+=	pcnfsd.8 rpc.pcnfsd.8
+MLINKS= rpc.pcnfsd.8 pcnfsd.8
 CPPFLAGS += -DUSER_CACHE -DWTMP -I. -DSUPPORT_UTMP -DSUPPORT_UTMPX
 
 .if (${USE_YP} != "no")
