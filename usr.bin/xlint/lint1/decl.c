@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.42 2008/09/26 22:52:24 matt Exp $ */
+/* $NetBSD: decl.c,v 1.43 2008/09/27 20:04:24 dholland Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.42 2008/09/26 22:52:24 matt Exp $");
+__RCSID("$NetBSD: decl.c,v 1.43 2008/09/27 20:04:24 dholland Exp $");
 #endif
 
 #include <sys/param.h>
@@ -325,7 +325,7 @@ addtype(type_t *tp)
 
 	/* now it can be only a combination of arithmetic types and void */
 	if (t == SIGNED || t == UNSIGN) {
-		/* remeber specifiers "signed" and "unsigned" in dcs->d_smod */
+		/* remember specifiers "signed" & "unsigned" in dcs->d_smod */
 		if (dcs->d_smod != NOTSPEC)
 			/*
 			 * more than one "signed" and/or "unsigned"; print
@@ -671,7 +671,8 @@ deftyp(void)
 	if (t == NOTSPEC && s == NOTSPEC && l == NOTSPEC && c == NOTSPEC &&
 	    tp == NULL)
 		dcs->d_notyp = 1;
-	if (t == NOTSPEC && s == NOTSPEC && l == NOTSPEC && tp == NULL)
+	if (t == NOTSPEC && s == NOTSPEC && (l == NOTSPEC || l == LONG) &&
+	    tp == NULL)
 		t = c;
 
 	if (tp != NULL && (t != NOTSPEC || s != NOTSPEC || l != NOTSPEC)) {
