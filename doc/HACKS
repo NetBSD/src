@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.109 2008/08/03 07:16:58 veego Exp $
+# $NetBSD: HACKS,v 1.110 2008/09/27 03:57:37 macallan Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -578,3 +578,15 @@ port	i386
 		gcc-4 does subsequent operations on "float" values within
 		the i387 FPU without rounding the intermediate results
 	kcah
+
+port	powerpc
+
+	hack	avoid using __builtin_return_address(0) because it fails in
+		Xorg's module loader
+	cdate	Sat Sep 27 03:52:05 UTC 2008
+	who	macallan
+	file	src/libexec/ld.elf_so/rtld.c : 1.121
+	descr
+		workaround for PR port-macppc/37812
+	kcah
+
