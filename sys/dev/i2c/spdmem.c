@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.9 2008/09/27 06:58:08 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.10 2008/09/27 16:37:40 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.9 2008/09/27 06:58:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.10 2008/09/27 16:37:40 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -109,10 +109,14 @@ static const char* spdmem_parity_types[] = {
 	"cmd/addr/data parity, data ECC"
 };
 
-/* Cycle time fractional values for DDR2 SDRAM */
-static const uint8_t spdmem_cycle_frac[] = {
-	0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 25, 33, 67, 75, 99, 99
+/* Cycle time fractional values (units of .001 ns) for DDR2 SDRAM */
+static const uint16_t spdmem_cycle_frac[] = {
+	0, 100, 200, 300, 400, 500, 600, 700, 800, 900,
+	250, 333, 667, 750, 999, 999
 };
+
+/* Format string for timing info */
+static const char* latency="tAA-tRCD-tRP-tRAS: %d-%d-%d-%d\n";
 
 /* sysctl stuff */
 static int hw_node = CTL_EOL;
@@ -222,6 +226,7 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 	int dimm_size, cycle_time, d_clk, p_clk, bits;
 	int i;
 	unsigned int spd_len, spd_size;
+	unsigned int tAA, tRCD, tRP, tRAS;
 	const struct sysctlnode *node = NULL;
 
 	sc->sc_tag = ia->ia_tag;
@@ -412,23 +417,64 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* cycle_time is expressed in units of 0.01 ns */
-	cycle_time = 0;
-	if (s->sm_type == SPDMEM_MEMTYPE_SDRAM)
-		cycle_time = s->sm_sdr.sdr_cycle_whole * 100 +
-			     s->sm_sdr.sdr_cycle_tenths * 10;
+	cycle_time = 0;			/* cycle_time in units of 0.001 ns */
+	tAA = tRCD = tRP = tRAS = 0;	/* Initialize latency values */
+
+	if (s->sm_type == SPDMEM_MEMTYPE_SDRAM) {
+		cycle_time = s->sm_sdr.sdr_cycle_whole * 1000 +
+			     s->sm_sdr.sdr_cycle_tenths * 100;
+		tRCD = s->sm_sdr.sdr_tRCD;
+		tRP  = s->sm_sdr.sdr_tRP;
+		tRAS = s->sm_sdr.sdr_tRAS;
+		tAA  = 0;
+		for (i = 0; i < 8; i++)
+			if (s->sm_sdr.sdr_tCAS & (1 << i))
+				tAA = i;
+		tAA++;
+	}
 	else if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM ||
-		 s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM)
-		cycle_time = s->sm_ddr2.ddr2_cycle_whole * 100 +
+		 s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
+		cycle_time = s->sm_ddr2.ddr2_cycle_whole * 1000 +
 			     spdmem_cycle_frac[s->sm_ddr2.ddr2_cycle_frac];
+		tRCD = ( 250 * s->sm_ddr2.ddr2_tRCD + cycle_time - 1) /
+			cycle_time;
+		tRP  = ( 250 * s->sm_ddr2.ddr2_tRP + cycle_time - 1) /
+			cycle_time;
+		tRAS = (1000 * s->sm_ddr2.ddr2_tRAS + cycle_time - 1) /
+			cycle_time;
+		tAA  = 0;
+		for (i = 2; i < 8; i++)
+			if (s->sm_ddr2.ddr2_tCAS & (1 << i))
+				tAA = i;
+		/* DDR_SDRAM measures tAA in half-cycles */
+		if (s->sm_type == SPDMEM_MEMTYPE_DDRSDRAM)
+			tAA /= 2;
+	}
+	else if (s->sm_type == SPDMEM_MEMTYPE_FBDIMM ||
+		 s->sm_type == SPDMEM_MEMTYPE_FBDIMM_PROBE) {
+		cycle_time = (1000 * s->sm_fbd.fbdimm_mtb_dividend +
+				    (s->sm_fbd.fbdimm_mtb_divisor / 2)) /
+			     s->sm_fbd.fbdimm_mtb_divisor;
+		tAA  = s->sm_fbd.fbdimm_tAAmin  / s->sm_fbd.fbdimm_tCKmin;
+		tRCD = s->sm_fbd.fbdimm_tRCDmin / s->sm_fbd.fbdimm_tCKmin;
+		tRP  = s->sm_fbd.fbdimm_tRPmin  / s->sm_fbd.fbdimm_tCKmin;
+		tRAS = (s->sm_fbd.fbdimm_tRAS_msb * 256 +
+			s->sm_fbd.fbdimm_tRAS_lsb) / s->sm_fbd.fbdimm_tCKmin;
+	}
 	if (cycle_time != 0) {
 		/*
-		 * cycle time is scaled by a factor of 100 to avoid using
+		 * cycle time is scaled by a factor of 1000 to avoid using
 		 * floating point.  Calculate memory speed as the number
 		 * of cycles per microsecond.
 		 */
-		d_clk = 100 * 1000;
-		if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
+		d_clk = 1000 * 1000;
+		if (s->sm_type == SPDMEM_MEMTYPE_FBDIMM ||
+		    s->sm_type == SPDMEM_MEMTYPE_FBDIMM_PROBE) {
+			/* DDR2 FB-DIMM uses a dual-pumped clock */
+			d_clk *= 2;
+			bits = 1 << (s->sm_fbd.fbdimm_dev_width + 2);
+			ddr_type_string = "PC2";
+		} else if (s->sm_type == SPDMEM_MEMTYPE_DDR2SDRAM) {
 			/* DDR2 uses a dual-pumped clock */
 			d_clk *= 2;
 			bits = s->sm_ddr2.ddr2_datawidth;
@@ -485,16 +531,18 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 		    "%d rows, %d cols, %d banks, %d banks/chip, "
 		    "%d.%dns cycle time\n",
 		    s->sm_sdr.sdr_rows, s->sm_sdr.sdr_cols, s->sm_sdr.sdr_banks,
-		    s->sm_sdr.sdr_banks_per_chip, s->sm_sdr.sdr_cycle_whole,
-		    s->sm_sdr.sdr_cycle_tenths);
+		    s->sm_sdr.sdr_banks_per_chip, cycle_time/1000,
+		    (cycle_time % 1000) / 100);
+		aprint_verbose_dev(self, latency, tAA, tRCD, tRP, tRAS);
 		break;
 	case SPDMEM_MEMTYPE_DDRSDRAM:
 		aprint_verbose(
 		    "%d rows, %d cols, %d ranks, %d banks/chip, "
 		    "%d.%dns cycle time\n",
 		    s->sm_ddr.ddr_rows, s->sm_ddr.ddr_cols, s->sm_ddr.ddr_ranks,
-		    s->sm_ddr.ddr_banks_per_chip, s->sm_ddr.ddr_cycle_whole,
-		    s->sm_ddr.ddr_cycle_tenths);
+		    s->sm_ddr.ddr_banks_per_chip, cycle_time/1000,
+		    (cycle_time % 1000 + 50) / 100);
+		aprint_verbose_dev(self, latency, tAA, tRCD, tRP, tRAS);
 		break;
 	case SPDMEM_MEMTYPE_DDR2SDRAM:
 		aprint_verbose(
@@ -502,8 +550,8 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 		    "%d.%02dns cycle time\n",
 		    s->sm_ddr2.ddr2_rows, s->sm_ddr2.ddr2_cols,
 		    s->sm_ddr2.ddr2_ranks + 1, s->sm_ddr2.ddr2_banks_per_chip,
-		    s->sm_ddr2.ddr2_cycle_whole,
-		    spdmem_cycle_frac[s->sm_ddr2.ddr2_cycle_frac]);
+		    cycle_time / 1000, (cycle_time % 1000 + 5) /10 );
+		aprint_verbose_dev(self, latency, tAA, tRCD, tRP, tRAS);
 		break;
 	default:
 		break;
