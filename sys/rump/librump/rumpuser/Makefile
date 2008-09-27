@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2008/07/29 14:01:25 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2008/09/27 20:49:55 pooka Exp $
 #
 
 LIB=		rumpuser
 INCS=		rumpuser.h
 INCSDIR=	/usr/include/rump
+WARNS=		4
 
 SRCS=		rumpuser.c rumpuser_pth.c
 
