@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1098 2008/09/27 04:33:04 reed Exp $
+# $NetBSD: mi,v 1.1099 2008/09/27 13:16:53 reed Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2260,6 +2260,7 @@
 ./usr/share/man/cat8/ncdcs.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ndbootd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/ndc.0			man-obsolete		obsolete
+./usr/share/man/cat8/ndiscvt.0			man-obsolete		obsolete
 ./usr/share/man/cat8/ndp.0			man-netutil-catman	inet6,.cat
 ./usr/share/man/cat8/netbsd32.0			man-sys-catman		.cat
 ./usr/share/man/cat8/netgroup_mkdb.0		man-nis-catman		.cat
@@ -4557,6 +4558,7 @@
 ./usr/share/man/html8/named.html		man-bind-htmlman	html
 ./usr/share/man/html8/ncdcs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/ndbootd.html		man-bootserver-htmlman	html
+./usr/share/man/html8/ndiscvt.html		man-obsolete		obsolete
 ./usr/share/man/html8/ndp.html			man-netutil-htmlman	inet6,html
 ./usr/share/man/html8/netbsd32.html		man-sys-htmlman		html
 ./usr/share/man/html8/netgroup_mkdb.html	man-nis-htmlman		html
@@ -7056,6 +7058,7 @@
 ./usr/share/man/man8/ncdcs.8			man-sysutil-man		.man
 ./usr/share/man/man8/ndbootd.8			man-bootserver-man	.man
 ./usr/share/man/man8/ndc.8			man-obsolete		obsolete
+./usr/share/man/man8/ndiscvt.8			man-obsolete		obsolete
 ./usr/share/man/man8/ndp.8			man-netutil-man		inet6,.man
 ./usr/share/man/man8/netbsd32.8			man-sys-man		.man
 ./usr/share/man/man8/netgroup_mkdb.8		man-nis-man		.man
