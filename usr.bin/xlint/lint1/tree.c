@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.52 2008/09/26 22:52:24 matt Exp $	*/
+/*	$NetBSD: tree.c,v 1.53 2008/09/27 02:30:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.52 2008/09/26 22:52:24 matt Exp $");
+__RCSID("$NetBSD: tree.c,v 1.53 2008/09/27 02:30:46 matt Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1629,6 +1629,14 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	if (!tflag) {
 		if (lt == rt) {
 			t = lt;
+		} else if (lt == LCOMPLEX || rt == LCOMPLEX) {
+			t = LCOMPLEX;
+		} else if (lt == DCOMPLEX || rt == DCOMPLEX) {
+			t = DCOMPLEX;
+		} else if (lt == COMPLEX || rt == COMPLEX) {
+			t = COMPLEX;
+		} else if (lt == FCOMPLEX || rt == FCOMPLEX) {
+			t = FCOMPLEX;
 		} else if (lt == LDOUBLE || rt == LDOUBLE) {
 			t = LDOUBLE;
 		} else if (lt == DOUBLE || rt == DOUBLE) {
