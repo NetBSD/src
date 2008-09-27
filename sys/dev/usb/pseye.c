@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.8 2008/09/21 19:28:36 jmcneill Exp $ */
+/* $NetBSD: pseye.c,v 1.9 2008/09/27 02:47:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.8 2008/09/21 19:28:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.9 2008/09/27 02:47:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,9 +153,10 @@ static const struct video_hw_if pseye_hw_if = {
 	.set_control_group = NULL,
 };
 
-USB_MATCH(pseye)
+static int
+pseye_match(device_t parent, cfdata_t match, void *opaque)
 {
-	USB_IFMATCH_START(pseye, uaa);
+	struct usbif_attach_arg *uaa = opaque;
 
 	if (uaa->class != UICLASS_VENDOR)
 		return UMATCH_NONE;
@@ -172,18 +173,20 @@ USB_MATCH(pseye)
 	return UMATCH_NONE;
 }
 
-USB_ATTACH(pseye)
+static void
+pseye_attach(device_t parent, device_t self, void *opaque)
 {
-	USB_IFATTACH_START(pseye, sc, uaa);
+	struct pseye_softc *sc = device_private(self);
+	struct usbif_attach_arg *uaa = opaque;
 	usbd_device_handle dev = uaa->device;
 	usb_interface_descriptor_t *id = NULL;
 	usb_endpoint_descriptor_t *ed = NULL, *ed_bulkin = NULL;
 	char *devinfo;
 	int i;
 
-	USB_ATTACH_SETUP;
 	devinfo = usbd_devinfo_alloc(dev, 0);
-	aprint_normal_dev(self, "%s\n", devinfo);
+	aprint_naive("\n");
+	aprint_normal(": %s\n", devinfo);
 	usbd_devinfo_free(devinfo);
 
 	sc->sc_dev = self;
@@ -199,7 +202,7 @@ USB_ATTACH(pseye)
 	if (id == NULL) {
 		aprint_error_dev(self, "failed to get interface descriptor\n");
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	for (i = 0; i < id->bNumEndpoints; i++) {
@@ -207,7 +210,7 @@ USB_ATTACH(pseye)
 		if (ed == NULL) {
 			aprint_error_dev(self, "couldn't get ep %d\n", i);
 			sc->sc_dying = 1;
-			USB_ATTACH_ERROR_RETURN;
+			return;
 		}
 
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
@@ -220,7 +223,7 @@ USB_ATTACH(pseye)
 	if (ed_bulkin == NULL) {
 		aprint_error_dev(self, "no bulk-in endpoint found\n");
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	sc->sc_bulkin = ed_bulkin->bEndpointAddress;
@@ -228,7 +231,7 @@ USB_ATTACH(pseye)
 	sc->sc_bulkin_xfer = usbd_alloc_xfer(sc->sc_udev);
 	if (sc->sc_bulkin_xfer == NULL) {
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 	sc->sc_bulkin_buffer = usbd_alloc_buffer(sc->sc_bulkin_xfer,
 	    sc->sc_bulkin_bufferlen);
@@ -236,7 +239,7 @@ USB_ATTACH(pseye)
 		usbd_free_xfer(sc->sc_bulkin_xfer);
 		sc->sc_bulkin_xfer = NULL;
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	pseye_init(sc);
@@ -248,18 +251,17 @@ USB_ATTACH(pseye)
 	if (sc->sc_videodev == NULL) {
 		aprint_error_dev(self, "couldn't attach video layer\n");
 		sc->sc_dying = 1;
-		USB_ATTACH_ERROR_RETURN;
+		return;
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    USBDEV(self));
-
-	USB_ATTACH_SUCCESS_RETURN;
 }
 
-USB_DETACH(pseye)
+static int
+pseye_detach(device_t self, int flags)
 {
-	USB_DETACH_START(pseye, sc);
+	struct pseye_softc *sc = device_private(self);
 
 	sc->sc_dying = 1;
 
