@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92.2.6 2008/09/24 16:38:48 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92.2.7 2008/09/28 21:23:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.6 2008/09/24 16:38:48 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92.2.7 2008/09/28 21:23:31 skrll Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -622,7 +622,7 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
-		l->l_sigstk->ss_flags |= SS_ONSTACK;
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 void 
@@ -866,42 +866,6 @@ cpu_dumpconf(void)
  */
 #define BYTES_PER_DUMP  PAGE_SIZE /* must be a multiple of pagesize XXX small */
 static vaddr_t dumpspace;
-
-void
-netbsd32_cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
-    void *sas, void *ap, void *sp, sa_upcall_t upcall)
-{
-	struct trapframe *tf;
-	struct netbsd32_saframe *sf, frame;
-
-	tf = l->l_md.md_regs;
-
-	frame.sa_type = type;
-	frame.sa_sas = (uintptr_t)sas;
-	frame.sa_events = nevents;
-	frame.sa_interrupted = ninterrupted;
-	frame.sa_arg = (uintptr_t)ap;
-	frame.sa_ra = 0;
-
-	sf = (struct netbsd32_saframe *)sp - 1;
-	if (copyout(&frame, sf, sizeof(frame)) != 0) {
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	}
-
-	tf->tf_rip = (uintptr_t)upcall;
-	tf->tf_rsp = (uintptr_t)sf;
-	tf->tf_rbp = 0;
-	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
-	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
-
-	l->l_md.md_flags |= MDP_IRET;
-}
 
 vaddr_t
 reserve_dumppages(vaddr_t p)
