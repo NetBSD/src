@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.4 2008/09/27 06:58:09 pgoyette Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.5 2008/09/28 12:59:54 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -387,8 +387,85 @@ struct spdmem_rambus {				/* Direct Rambus DRAM */
 	);
 } __packed;
 
+/*
+ * No JEDEC standard for DDR3 memory has yet been made publicly available.
+ * This information is compiled from information posted at www.simmtester.com
+ * and www.digit-life.com
+ */
+struct spdmem_ddr3 {				/* Dual Data Rate 3 SDRAM */
+	uint8_t	ddr3_mod_type;
+	SPD_BITFIELD(				\
+		/* chipsize is offset by 28: 0 = 256M, 1 = 512M, ... */ \
+		uint8_t ddr3_chipsize:5,	\
+		/* logbanks is offset by 1 */	\
+		uint8_t ddr3_logbanks:3, ,	\
+	);
+	/* cols is offset by 9, rows offset by 12 */
+	SPD_BITFIELD(				\
+		uint8_t ddr3_cols:3,		\
+		uint8_t ddr3_rows:5, ,		\
+	);
+	uint8_t	ddr3_unused2;
+	/* chipwidth in bits offset by 2: 0 = X4, 1 = X8, 2 = X16 */
+	/* physbanks is offset by 1 */
+	SPD_BITFIELD(				\
+		uint8_t ddr3_chipwidth:3,	\
+		uint8_t ddr3_physbanks:5, ,	\
+	);
+	/* datawidth in bits offset by 3: 1 = 16b, 2 = 32b, 3 = 64b */
+	SPD_BITFIELD(				\
+		uint8_t ddr3_datawidth:7,	\
+		uint8_t ddr3_hasECC:1, ,	\
+	);
+	uint8_t	ddr3_ftb;		/* 0x52 = 2.5ps, 0x55 = 5.0ps */
+	uint8_t ddr3_mtb_dividend;	/* 0x0108 = 0.1250ns */
+	uint8_t	ddr3_mtb_divisor;	/* 0x010f = 0.0625ns */
+	uint8_t	ddr3_tCKmin;		/* in terms of mtb */
+	uint8_t	ddr3_unused3;
+	uint16_t ddr3_CAS_sup;
+	uint8_t	ddr3_tAAmin;		/* in terms of mtb */
+	uint8_t	ddr3_tWRmin;
+	uint8_t	ddr3_tRCDmin;
+	uint8_t	ddr3_tRRDmin;
+	uint8_t	ddr3_tRPmin;
+	SPD_BITFIELD(				\
+		uint8_t	ddr3_tRAS_msb:4,	\
+		uint8_t	ddr3_tRC_msb:4, ,	\
+	);
+	uint8_t	ddr3_tRAS_lsb;
+	uint8_t	ddr3_tRC_lsb;
+	uint8_t	ddr3_tRFCmin_lsb;
+	uint8_t	ddr3_tRFCmin_msb;
+	uint8_t	ddr3_tWTRmin;
+	uint8_t	ddr3_tRTPmin;
+	SPD_BITFIELD(				\
+		uint8_t	ddr3_tFAW_msb:4, , ,	\
+	);
+	uint8_t	ddr3_tFAW_lsb;
+	uint8_t	ddr3_output_drvrs;
+	SPD_BITFIELD(				\
+		uint8_t	ddr3_ext_temp_range:1,	\
+		uint8_t	ddr3_unused6:1,		\
+		uint8_t	ddr3_asr_refresh:1,	\
+		uint8_t	ddr3_unused7:5		\
+	);
+	uint8_t	ddr3_unused4[28];
+	uint8_t	ddr3_mod_height;
+	uint8_t	ddr3_mod_thickness;
+	uint8_t	ddr3_ref_card;
+	uint8_t	ddr3_mapping;
+	uint8_t	ddr3_unused5[53];
+	uint8_t	ddr3_mfgID_lsb;
+	uint8_t	ddr3_mfgID_msb;
+	uint8_t	ddr3_mfgloc;
+	uint8_t	ddr3_mfg_year;
+	uint8_t	ddr3_mfg_week;
+	uint8_t	ddr3_serial[4];
+	uint16_t ddr3_crc;
+} __packed;
+
 struct spdmem {
-	uint8_t sm_len;
+	uint8_t	sm_len;
 	uint8_t sm_size;
 	uint8_t sm_type;
 	union {
@@ -399,6 +476,7 @@ struct spdmem {
 		struct spdmem_sdram	u1_sdr;
 		struct spdmem_rambus	u1_rdr;
 		struct spdmem_rom	u1_rom;
+		struct spdmem_ddr3	u1_ddr3;
 	} sm_u1;
 	uint8_t	sm_extension[128];
 } __packed;
@@ -408,6 +486,7 @@ struct spdmem {
 #define	sm_ddr2		sm_u1.u1_ddr2
 #define	sm_rdr		sm_u1.u1_rdr
 #define	sm_rom		sm_u1.u1_rom
+#define	sm_ddr3		sm_u1.u1_ddr3
 #define	sm_sdr		sm_u1.u1_sdr
 
 /* some fields are in the same place for all memory types */
