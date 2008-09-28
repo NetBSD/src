@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.958 2008/09/18 12:04:25 cegger Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.959 2008/09/28 11:36:06 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.958 2008/09/18 12:03:45 cegger Exp
+ *	NetBSD: pcidevs,v 1.959 2008/09/28 11:35:06 bouyer Exp
  */
 
 /*
@@ -2645,12 +2645,14 @@
 #define	PCI_PRODUCT_ITT_ITT3204	0x0002		/* ITT3204 MPEG Decoder */
 
 /* JMicron products */
-#define	PCI_PRODUCT_JMICRON_JMB360	0x02360		/* JMB360 SATA controller */
-#define	PCI_PRODUCT_JMICRON_JMB361	0x02361		/* JMB361 SATA/PATA controller */
-#define	PCI_PRODUCT_JMICRON_JMB363	0x02363		/* JMB363 SATA/PATA controller */
-#define	PCI_PRODUCT_JMICRON_JMB365	0x02365		/* JMB365 SATA/PATA controller */
-#define	PCI_PRODUCT_JMICRON_JMB366	0x02366		/* JMB366 SATA/PATA controller */
-#define	PCI_PRODUCT_JMICRON_JMB368	0x02368		/* JMB368 PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB360	0x2360		/* JMB360 SATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB361	0x2361		/* JMB361 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB363	0x2363		/* JMB363 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB365	0x2365		/* JMB365 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB366	0x2366		/* JMB366 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB368	0x2368		/* JMB368 PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMC250	0x0250		/* JMC250 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_JMICRON_JMC260	0x0260		/* JMC260 Fast Ethernet Controller */
 
 /* JNI products */
 #define	PCI_PRODUCT_JNI_JNIC1460	0x1460		/* JNIC-1460 Fibre-Channel adapter */

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.957 2008/09/18 12:04:26 cegger Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.958 2008/09/28 11:36:06 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.958 2008/09/18 12:03:45 cegger Exp
+ *	NetBSD: pcidevs,v 1.959 2008/09/28 11:35:06 bouyer Exp
  */
 
 /*
@@ -9376,6 +9376,14 @@ static const struct pci_product pci_products[] = {
 	    "JMB368 PATA controller",
 	},
 	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMC250,
+	    "JMC250 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMC260,
+	    "JMC260 Fast Ethernet Controller",
+	},
+	{
 	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1460,
 	    "JNIC-1460 Fibre-Channel adapter",
 	},
@@ -14440,4 +14448,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3009;
+const int pci_nproducts = 3011;
