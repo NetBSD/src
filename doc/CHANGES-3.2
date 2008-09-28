@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.144 2008/09/18 19:30:43 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.145 2008/09/28 16:43:44 jdc Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -4983,4 +4983,28 @@ libexec/ftpd/version.h				patch
 	Fix mostly derived from OpenBSD, written by
 	Moritz Jodeit <moritz@OpenBSD.org>
 	[lukem, ticket #1964]
+
+sys/arch/amd64/include/cpufunc.h		patch
+sys/arch/i386/include/cpufunc.h			patch
+sys/arch/x86/x86/bus_dma.c			1.45 via patch
+
+	Add appropriate x86_lfence or x86_mfence calls to bus_dmamap_sync(),
+	depending on the BUS_DMASYNC flag. This makes sure that the kernel
+	reads data from main memory in the intended order.  PR#38935.
+	[bouyer, ticket #1945]
+
+sys/dev/usb/ehci.c				1.138 via patch
+sys/dev/usb/ehcivar.h				1.31 via patch
+sys/dev/usb/ohci.c				1.195 via patch
+sys/dev/usb/ohcivar.h				1.45 via patch
+sys/dev/usb/uhci.c				1.223 via patch
+sys/dev/usb/uhcivar.h				1.45 via patch
+sys/dev/usb/usb_mem.c				1.37 via patch
+sys/dev/usb/usb_mem.h				1.27 via patch
+
+	Add appropriate bus_dmamap_sync() calls to uhci(4), ohci(4) and
+	ehci(4).  This adds explicit barrier between DMA descriptors
+	read/writes, fixing race condition on DMA descriptors access with
+	the controller.
+	[bouyer, ticket #1946]
 
