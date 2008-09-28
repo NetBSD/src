@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.249 2008/09/27 21:58:04 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.250 2008/09/28 16:17:17 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.249 2008/09/27 21:58:04 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.250 2008/09/28 16:17:17 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1662,7 +1662,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * -- I should either compute the spare table in the kernel,
 		 * or have a different -- XXX XXX -- interface (a different
 		 * character device) for delivering the table     -- XXX */
-#if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
+#if 0
 	case RAIDFRAME_SPARET_WAIT:
 		RF_LOCK_MUTEX(rf_sparet_wait_mutex);
 		while (!rf_sparet_wait_queue)
