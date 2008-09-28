@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.98.6.3 2008/06/29 09:33:19 mjf Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.98.6.4 2008/09/28 10:40:56 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.98.6.3 2008/06/29 09:33:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.98.6.4 2008/09/28 10:40:56 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -365,11 +365,10 @@ route_output(struct mbuf *m, ...)
 				R_Malloc(new_rtm, struct rt_msghdr *, len);
 				if (new_rtm == NULL)
 					senderr(ENOBUFS);
-				memmove(new_rtm, rtm, rtm->rtm_msglen);
+				(void)memcpy(new_rtm, rtm, rtm->rtm_msglen);
 				Free(rtm); rtm = new_rtm;
 			}
-			(void)rt_msg2(rtm->rtm_type, &info, (void *)rtm,
-			    NULL, 0);
+			(void)rt_msg2(rtm->rtm_type, &info, rtm, NULL, 0);
 			rtm->rtm_flags = rt->rt_flags;
 			rtm->rtm_rmx = rt->rt_rmx;
 			rtm->rtm_addrs = info.rti_addrs;
@@ -656,7 +655,7 @@ again:
 		rtinfo->rti_addrs |= (1 << i);
 		dlen = ROUNDUP(sa->sa_len);
 		if (cp) {
-			bcopy(sa, cp, (unsigned)dlen);
+			(void)memcpy(cp, sa, (size_t)dlen);
 			cp += dlen;
 		}
 		len += dlen;
@@ -669,10 +668,11 @@ again:
 			if (rw->w_tmemsize < len) {
 				if (rw->w_tmem)
 					free(rw->w_tmem, M_RTABLE);
-				rw->w_tmem = (void *) malloc(len, M_RTABLE,
-				    M_NOWAIT);
+				rw->w_tmem = malloc(len, M_RTABLE, M_NOWAIT);
 				if (rw->w_tmem)
 					rw->w_tmemsize = len;
+				else
+					rw->w_tmemsize = 0;
 			}
 			if (rw->w_tmem) {
 				cp = rw->w_tmem;
@@ -714,7 +714,7 @@ rt_missmsg(int type, struct rt_addrinfo *rtinfo, int flags, int error)
 	memset(&rtm, 0, sizeof(rtm));
 	rtm.rtm_flags = RTF_DONE | flags;
 	rtm.rtm_errno = error;
-	m = rt_msg1(type, rtinfo, (void *)&rtm, sizeof(rtm));
+	m = rt_msg1(type, rtinfo, &rtm, sizeof(rtm));
 	if (m == NULL)
 		return;
 	mtod(m, struct rt_msghdr *)->rtm_addrs = rtinfo->rti_addrs;
@@ -743,7 +743,7 @@ rt_ifmsg(struct ifnet *ifp)
 	ifm.ifm_flags = ifp->if_flags;
 	ifm.ifm_data = ifp->if_data;
 	ifm.ifm_addrs = 0;
-	m = rt_msg1(RTM_IFINFO, &info, (void *)&ifm, sizeof(ifm));
+	m = rt_msg1(RTM_IFINFO, &info, &ifm, sizeof(ifm));
 	if (m == NULL)
 		return;
 	route_enqueue(m, 0);
@@ -771,7 +771,7 @@ rt_ifmsg(struct ifnet *ifp)
 	oifm.ifm_data.ifi_noproto = ifp->if_data.ifi_noproto;
 	oifm.ifm_data.ifi_lastchange = ifp->if_data.ifi_lastchange;
 	oifm.ifm_addrs = 0;
-	m = rt_msg1(RTM_OIFINFO, &info, (void *)&oifm, sizeof(oifm));
+	m = rt_msg1(RTM_OIFINFO, &info, &oifm, sizeof(oifm));
 	if (m == NULL)
 		return;
 	route_enqueue(m, 0);
@@ -812,7 +812,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			ifam.ifam_index = ifp->if_index;
 			ifam.ifam_metric = ifa->ifa_metric;
 			ifam.ifam_flags = ifa->ifa_flags;
-			m = rt_msg1(ncmd, &info, (void *)&ifam, sizeof(ifam));
+			m = rt_msg1(ncmd, &info, &ifam, sizeof(ifam));
 			if (m == NULL)
 				continue;
 			mtod(m, struct ifa_msghdr *)->ifam_addrs =
@@ -831,7 +831,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			rtm.rtm_index = ifp->if_index;
 			rtm.rtm_flags |= rt->rt_flags;
 			rtm.rtm_errno = error;
-			m = rt_msg1(cmd, &info, (void *)&rtm, sizeof(rtm));
+			m = rt_msg1(cmd, &info, &rtm, sizeof(rtm));
 			if (m == NULL)
 				continue;
 			mtod(m, struct rt_msghdr *)->rtm_addrs = info.rti_addrs;
@@ -855,7 +855,7 @@ rt_makeifannouncemsg(struct ifnet *ifp, int type, int what,
 	ifan.ifan_index = ifp->if_index;
 	strlcpy(ifan.ifan_name, ifp->if_xname, sizeof(ifan.ifan_name));
 	ifan.ifan_what = what;
-	return rt_msg1(type, info, (void *)&ifan, sizeof(ifan));
+	return rt_msg1(type, info, &ifan, sizeof(ifan));
 }
 
 /*
@@ -983,13 +983,11 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 		ifpaddr = ifp->if_dl->ifa_addr;
 		switch (type) {
 		case NET_RT_IFLIST:
-			error =
-			    rt_msg2(RTM_IFINFO, &info, NULL, w, &len);
+			error = rt_msg2(RTM_IFINFO, &info, NULL, w, &len);
 			break;
 #ifdef COMPAT_14
 		case NET_RT_OIFLIST:
-			error =
-			    rt_msg2(RTM_OIFINFO, &info, NULL, w, &len);
+			error = rt_msg2(RTM_OIFINFO, &info, NULL, w, &len);
 			break;
 #endif
 		default:
@@ -1119,7 +1117,7 @@ sysctl_rtable(SYSCTLFN_ARGS)
 again:
 	/* we may return here if a later [re]alloc of the t_mem buffer fails */
 	if (w.w_tmemneeded) {
-		w.w_tmem = (void *) malloc(w.w_tmemneeded, M_RTABLE, M_WAITOK);
+		w.w_tmem = malloc(w.w_tmemneeded, M_RTABLE, M_WAITOK);
 		w.w_tmemsize = w.w_tmemneeded;
 		w.w_tmemneeded = 0;
 	}

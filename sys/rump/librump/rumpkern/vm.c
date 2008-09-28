@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.29.6.2 2008/06/05 19:14:37 mjf Exp $	*/
+/*	$NetBSD: vm.c,v 1.29.6.3 2008/09/28 10:41:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -49,14 +49,15 @@
 #include <sys/buf.h>
 #include <sys/kmem.h>
 
+#include <machine/pmap.h>
+
+#include <rump/rumpuser.h>
+
 #include <uvm/uvm.h>
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_readahead.h>
 
-#include <machine/pmap.h>
-
 #include "rump_private.h"
-#include "rumpuser.h"
 
 /* dumdidumdum */
 #define len2npages(off, len)						\
@@ -87,6 +88,9 @@ struct uvm uvm;
 struct vmspace rump_vmspace;
 struct vm_map rump_vmmap;
 const struct rb_tree_ops uvm_page_tree_ops;
+
+static struct vm_map_kernel kernel_map_store;
+struct vm_map *kernel_map = &kernel_map_store.vmk_map;
 
 /*
  * vm pages 
@@ -425,6 +429,8 @@ rumpvm_init()
 	mutex_init(&rvamtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uwinmtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
+
+	callback_head_init(&kernel_map_store.vmk_reclaim_callback, IPL_VM);
 }
 
 void
@@ -501,7 +507,10 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 		KASSERT(pg->flags & PG_BUSY);
 		if (pg->flags & PG_WANTED)
 			wakeup(pg);
-		pg->flags &= ~(PG_WANTED|PG_BUSY);
+		if (pg->flags & PG_RELEASED)
+			uvm_pagefree(pg);
+		else
+			pg->flags &= ~(PG_WANTED|PG_BUSY);
 	}
 }
 
@@ -568,7 +577,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 		memset(pgs, 0, npages * sizeof(struct vm_page *));
 		mutex_enter(&uobj->vmobjlock);
 		rv = uobj->pgops->pgo_get(uobj, off, pgs, &npages, 0, 0, 0, 0);
-		assert(npages > 0);
+		KASSERT(npages > 0);
 
 		for (i = 0; i < npages; i++) {
 			uint8_t *start;
@@ -579,7 +588,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 			start = (uint8_t *)pgs[i]->uanon + chunkoff;
 
 			memset(start, 0, chunklen);
-			pgs[i]->flags &= PG_CLEAN;
+			pgs[i]->flags &= ~PG_CLEAN;
 
 			off += chunklen;
 			len -= chunklen;
@@ -613,6 +622,7 @@ uvn_clean_p(struct uvm_object *uobj)
 	return (vp->v_iflag & VI_ONWORKLST) == 0;
 }
 
+#ifndef RUMP_USE_REAL_KMEM
 /*
  * Kmem
  */
@@ -642,6 +652,7 @@ kmem_free(void *p, size_t size)
 
 	rumpuser_free(p);
 }
+#endif /* RUMP_USE_REAL_KMEM */
 
 /*
  * UVM km
@@ -696,4 +707,14 @@ uvm_pageout_done(int npages)
 	} else {
 		wakeup(&uvmexp.free);
 	}
+}
+
+/*
+ * Misc
+ */
+struct vm_map_kernel *
+vm_map_to_kernel(struct vm_map *map)
+{
+
+	return (struct vm_map_kernel *)map;
 }

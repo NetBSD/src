@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.66.6.2 2008/06/02 13:22:44 mjf Exp $ */
+/*	$NetBSD: cpu.c,v 1.66.6.3 2008/09/28 10:40:09 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66.6.2 2008/06/02 13:22:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66.6.3 2008/09/28 10:40:09 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -81,6 +81,7 @@ struct cpu_info *cpus = NULL;
 
 volatile sparc64_cpuset_t cpus_active;/* set of active cpus */
 struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
+struct pool_cache *fpstate_cache;
 
 static struct cpu_info *alloc_cpuinfo(u_int);
 
@@ -183,7 +184,7 @@ cpu_reset_fpustate(void)
 	struct fpstate64 *fpstate;
 	struct fpstate64 fps[2];
 
-	/* This needs to be 64-bit aligned */
+	/* This needs to be 64-byte aligned */
 	fpstate = ALIGNFPSTATE(&fps[1]);
 
 	/*
@@ -233,6 +234,9 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 */
 	if (!passed) {
 		passed = true;
+		fpstate_cache = pool_cache_init(sizeof(struct fpstate64),
+					BLOCK_SIZE, 0, 0, "fpstate", NULL,
+					IPL_NONE, NULL, NULL, NULL);
 		cpu_reset_fpustate();
 	}
 #ifdef MULTIPROCESSOR

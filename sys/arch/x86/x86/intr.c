@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.40.6.1 2008/06/02 13:22:51 mjf Exp $	*/
+/*	$NetBSD: intr.c,v 1.40.6.2 2008/09/28 10:40:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40.6.1 2008/06/02 13:22:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40.6.2 2008/09/28 10:40:12 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -175,9 +175,7 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.40.6.1 2008/06/02 13:22:51 mjf Exp $");
 #endif
 
 struct pic softintr_pic = {
-	.pic_dev = {
-		.dv_xname = "softintr_fakepic",
-	},
+	.pic_name = "softintr_fakepic",
 	.pic_type = PIC_SOFT,
 	.pic_vecbase = 0,
 	.pic_apicid = 0,
@@ -507,7 +505,7 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 		snprintf(isp->is_evname, sizeof (isp->is_evname),
 		    "pin %d", pin);
 		evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-		    device_xname(&pic->pic_dev), isp->is_evname);
+		    pic->pic_name, isp->is_evname);
 		ci->ci_isources[slot] = isp;
 	}
 	mutex_exit(&x86_intr_lock);
@@ -628,11 +626,11 @@ struct pic *
 intr_findpic(int num)
 {
 #if NIOAPIC > 0
-	struct pic *pic;
+	struct ioapic_softc *pic;
 
-	pic = (struct pic *)ioapic_find_bybase(num);
+	pic = ioapic_find_bybase(num);
 	if (pic != NULL)
-		return pic;
+		return &pic->sc_pic;
 #endif
 	if (num < NUM_LEGACY_IRQS)
 		return &i8259_pic;
@@ -665,7 +663,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	    &idt_vec);
 	if (error != 0) {
 		printf("failed to allocate interrupt slot for PIC %s pin %d\n",
-		    device_xname(&pic->pic_dev), pin);
+		    pic->pic_name, pin);
 		return NULL;
 	}
 
@@ -713,7 +711,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	default:
 		mutex_exit(&x86_intr_lock);
 		panic("intr_establish: bad intr type %d for pic %s pin %d\n",
-		    source->is_type, device_xname(&pic->pic_dev), pin);
+		    source->is_type, pic->pic_name, pin);
 	}
 
 	pic->pic_hwmask(pic, pin);
@@ -813,7 +811,7 @@ intr_disestablish(struct intrhand *ih)
 
 #ifdef INTRDEBUG
 	printf("%s: remove slot %d (pic %s pin %d vec %d)\n",
-	    device_xname(ci->ci_dev), ih->ih_slot, device_xname(&pic->pic_dev),
+	    device_xname(ci->ci_dev), ih->ih_slot, pic->pic_name,
 	    ih->ih_pin, idtvec);
 #endif
 
@@ -835,7 +833,7 @@ intr_string(int ih)
 {
 	static char irqstr[64];
 #if NIOAPIC > 0
-	struct pic *pic;
+	struct ioapic_softc *pic;
 #endif
 
 	if (ih == 0)
@@ -844,10 +842,10 @@ intr_string(int ih)
 
 #if NIOAPIC > 0
 	if (ih & APIC_INT_VIA_APIC) {
-		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
+		pic = ioapic_find(APIC_IRQ_APIC(ih));
 		if (pic != NULL) {
 			sprintf(irqstr, "%s pin %d",
-			    pic->pic_name, APIC_IRQ_PIN(ih));
+			    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih));
 		} else {
 			sprintf(irqstr, "apic %d int %d (irq %d)",
 			    APIC_IRQ_APIC(ih),

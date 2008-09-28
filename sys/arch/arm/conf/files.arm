@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.89.6.2 2008/06/02 13:21:53 mjf Exp $
+#	$NetBSD: files.arm,v 1.89.6.3 2008/09/28 10:39:49 mjf Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -13,6 +13,7 @@ defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_XSCALE_IXP425
 defflag	opt_cputypes.h		CPU_ARM1136: CPU_ARM11
 defflag	opt_cputypes.h		CPU_ARM1176: CPU_ARM11
+defflag	opt_cputypes.h		CPU_CORTEXA8: CPU_ARM11
 defflag opt_cputypes.h		FPU_VFP
 
 defparam opt_cpuoptions.h	XSCALE_CCLKCFG

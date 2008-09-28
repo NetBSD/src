@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.29.6.3 2008/06/29 09:33:20 mjf Exp $	*/
+/*	$NetBSD: emul.c,v 1.29.6.4 2008/09/28 10:41:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -50,10 +50,11 @@
 
 #include <machine/stdarg.h>
 
+#include <rump/rumpuser.h>
+
 #include <uvm/uvm_map.h>
 
 #include "rump_private.h"
-#include "rumpuser.h"
 
 time_t time_second = 1;
 
@@ -62,17 +63,11 @@ struct lwp lwp0;
 struct vnode *rootvp;
 struct device *root_device;
 dev_t rootdev;
-struct vm_map *kernel_map;
 int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
 int hardclock_ticks;
-
-MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
-MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
-MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
-MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
@@ -113,6 +108,13 @@ log(int level, const char *fmt, ...)
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
+}
+
+void
+vlog(int level, const char *fmt, va_list ap)
+{
+
+	vprintf(fmt, ap);
 }
 
 void
@@ -175,6 +177,14 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	strlcpy(kaddr, uaddr, len);
 	if (done)
 		*done = strlen(kaddr)+1; /* includes termination */
+	return 0;
+}
+
+int
+kcopy(const void *src, void *dst, size_t len)
+{
+
+	memcpy(dst, src, len);
 	return 0;
 }
 
@@ -362,19 +372,19 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct lwp *l;
 	int rv;
 
-#ifdef RUMP_WITHOUT_THREADS
-	/* fake them */
-	if (strcmp(fmt, "vrele") == 0) {
-		printf("rump warning: threads not enabled, not starting "
-		   "vrele thread\n");
-		return 0;
-	} else if (strcmp(fmt, "cachegc") == 0) {
-		printf("rump warning: threads not enabled, not starting "
-		   "namecache g/c thread\n");
-		return 0;
-	} else
-		panic("threads not available, undef RUMP_WITHOUT_THREADS");
-#endif
+	if (!rump_threads) {
+		/* fake them */
+		if (strcmp(fmt, "vrele") == 0) {
+			printf("rump warning: threads not enabled, not starting"
+			   " vrele thread\n");
+			return 0;
+		} else if (strcmp(fmt, "cachegc") == 0) {
+			printf("rump warning: threads not enabled, not starting"
+			   " namecache g/c thread\n");
+			return 0;
+		} else
+			panic("threads not available, setenv RUMP_THREADS 1");
+	}
 
 	KASSERT(fmt != NULL);
 	if (ci != NULL)
@@ -416,6 +426,20 @@ callout_reset(callout_t *c, int ticks, void (*func)(void *), void *arg)
 
 bool
 callout_stop(callout_t *c)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+callout_schedule(callout_t *c, int ticks)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+callout_setfunc(callout_t *c, void (*func)(void *), void *arg)
 {
 
 	panic("%s: not implemented", __func__);
@@ -574,4 +598,19 @@ assert_sleepable(void)
 {
 
 	/* always sleepable, although we should improve this */
+}
+
+int
+devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
+	const struct cdevsw *cdev, int *cmajor)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+devsw_detach(const struct bdevsw *bdev, const struct cdevsw *cdev)
+{
+
+	panic("%s: not implemented", __func__);
 }

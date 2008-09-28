@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.24.14.1 2008/06/02 13:22:52 mjf Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.24.14.2 2008/09/28 10:40:12 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -128,7 +128,7 @@ extern union start_info_union start_info_union;
 #define xen_start_info (start_info_union.start_info)
 
 /* For use in guest OSes. */
-volatile extern shared_info_t *HYPERVISOR_shared_info;
+extern volatile shared_info_t *HYPERVISOR_shared_info;
 
 /* hypervisor.c */
 struct intrframe;
@@ -141,7 +141,7 @@ void hypervisor_mask_event(unsigned int);
 void hypervisor_clear_event(unsigned int);
 void hypervisor_enable_ipl(unsigned int);
 void hypervisor_set_ipending(uint32_t, int, int);
-
+void hypervisor_machdep_attach(void);
 
 /* 
  * Force a proper event-channel callback from Xen after clearing the

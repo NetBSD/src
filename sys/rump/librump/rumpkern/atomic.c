@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.c,v 1.2.14.1 2008/06/02 13:24:31 mjf Exp $	*/
+/*	$NetBSD: atomic.c,v 1.2.14.2 2008/09/28 10:41:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
 
 #include <sys/param.h>
 #include <sys/atomic.h>
+#include <sys/mutex.h>
 
-#include "rump.h"
-#include "rumpuser.h"
+#include <rump/rump.h>
+#include <rump/rumpuser.h>
 
 kmutex_t rump_atomic_lock;
 

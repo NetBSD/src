@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.81.6.1 2008/06/02 13:22:21 mjf Exp $
+# $NetBSD: GENERIC,v 1.81.6.2 2008/09/28 10:40:02 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.81.6.1 $"
+#ident 		"GENERIC-$Revision: 1.81.6.2 $"
 
 maxusers	8
 
@@ -97,6 +97,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independent support
 options 	SOFTDEP		# ffs soft updates support
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
@@ -172,6 +173,11 @@ st* at scsibus? target ? lun ?		# SCSI tapes
 #ch* at scsibus? target ? lun ?		# SCSI changer devices
 #ss* at scsibus? target ? lun ?		# SCSI scanners
 #uk* at scsibus? target ? lun ?		# unknown SCSI devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	bpfilter		# Berkeley Packet Filter
 #pseudo-device	carp			# Common Address Redundancy Protocol

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.162.6.2 2008/06/02 13:24:22 mjf Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.162.6.3 2008/09/28 10:40:55 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.162.6.2 2008/06/02 13:24:22 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.162.6.3 2008/09/28 10:40:55 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1491,6 +1491,7 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCSIFFLAGS:
 		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
 			 * then stop and disable it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.109.6.1 2008/06/29 09:33:18 mjf Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.109.6.2 2008/09/28 10:40:56 mjf Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.109.6.1 2008/06/29 09:33:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.109.6.2 2008/09/28 10:40:56 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -939,7 +939,6 @@ void
 sppp_detach(struct ifnet *ifp)
 {
 	struct sppp **q, *p, *sp = (struct sppp *) ifp;
-	int i;
 
 	/* Remove the entry from the keepalive list. */
 	for (q = &spppq; (p = *q); q = &p->pp_next)
@@ -953,9 +952,13 @@ sppp_detach(struct ifnet *ifp)
 		callout_stop(&keepalive_ch);
 	}
 
-	for (i = 0; i < IDX_COUNT; i++) {
-		callout_stop(&sp->ch[i]);
-	}
+	callout_stop(&sp->ch[IDX_LCP]);
+	callout_stop(&sp->ch[IDX_IPCP]);
+	callout_stop(&sp->ch[IDX_PAP]);
+	callout_stop(&sp->ch[IDX_CHAP]);
+#ifdef INET6
+	callout_stop(&sp->ch[IDX_IPV6CP]);
+#endif
 	callout_stop(&sp->pap_my_to_ch);
 
 	/* free authentication info */

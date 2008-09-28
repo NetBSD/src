@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.6.6.1 2008/04/03 12:43:11 mjf Exp $	*/
+/*	$NetBSD: pool.c,v 1.6.6.2 2008/09/28 10:41:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 #include <sys/mount.h>
 #include <sys/pool.h>
 
-#include "rumpuser.h"
+#include <rump/rumpuser.h>
 
 struct pool_cache pnbuf_cache;
 struct pool pnbuf_pool;
@@ -60,14 +60,25 @@ pool_cache_init(size_t size, u_int align, u_int align_offset, u_int flags,
 {
 	pool_cache_t pc;
 
-	pc = kmem_zalloc(sizeof(*pc), KM_SLEEP);
+	pc = rumpuser_malloc(sizeof(*pc), 0);
+	pool_cache_bootstrap(pc, size, align, align_offset, flags, wchan,
+	    palloc, ipl, ctor, dtor, arg);
+	return pc;
+}
+
+void
+pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
+	u_int align_offset, u_int flags, const char *wchan,
+	struct pool_allocator *palloc, int ipl,
+	int (*ctor)(void *, void *, int), void (*dtor)(void *, void *),
+	void *arg)
+{
+
 	pool_init(&pc->pc_pool, size, align, align_offset, flags,
 	    wchan, palloc, ipl);
 	pc->pc_ctor = ctor;
 	pc->pc_dtor = dtor;
 	pc->pc_arg = arg;
-
-	return pc;
 }
 
 void
@@ -75,7 +86,7 @@ pool_cache_destroy(pool_cache_t pc)
 {
 
 	pool_destroy(&pc->pc_pool);
-	kmem_free(pc, sizeof(*pc));
+	rumpuser_free(pc);
 }
 
 void *
@@ -101,15 +112,24 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 	pool_put(&pc->pc_pool, object);
 }
 
+bool
+pool_cache_reclaim(pool_cache_t pc)
+{
+
+	return true;
+}
+
 void *
 pool_get(struct pool *pp, int flags)
 {
 	void *rv;
 
+#ifdef DIAGNOSTIC
 	if (pp->pr_size == 0)
 		panic("%s: pool unit size 0.  not initialized?", __func__);
+#endif
 
-	rv = kmem_alloc(pp->pr_size, KM_NOSLEEP);
+	rv = rumpuser_malloc(pp->pr_size, 1);
 	if (rv == NULL && (flags & PR_WAITOK && (flags & PR_LIMITFAIL) == 0))
 		panic("%s: out of memory and PR_WAITOK", __func__);
 
@@ -120,7 +140,7 @@ void
 pool_put(struct pool *pp, void *item)
 {
 
-	kmem_free(item, pp->pr_size);
+	rumpuser_free(item);
 }
 
 void

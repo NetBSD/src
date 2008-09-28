@@ -1,4 +1,4 @@
-/* $NetBSD: hypercalls.h,v 1.2 2007/11/22 16:16:58 bouyer Exp $ */
+/* $NetBSD: hypercalls.h,v 1.2.22.1 2008/09/28 10:40:12 mjf Exp $ */
 /******************************************************************************
  * hypercall.h
  * 
@@ -388,6 +388,13 @@ HYPERVISOR_dom0_op(
 {
 	dom0_op->interface_version = DOM0_INTERFACE_VERSION;
 	return _hypercall1(int, dom0_op, dom0_op);
+}
+
+static inline int
+HYPERVISOR_machine_check(struct xen_mc *mc)
+{
+	mc->interface_version = XEN_MCA_INTERFACE_VERSION;
+	return _hypercall1(int, mca, mc);
 }
 
 #endif /* __HYPERCALL_H__ */

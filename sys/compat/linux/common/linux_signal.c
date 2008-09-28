@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.58.6.1 2008/06/02 13:23:03 mjf Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.58.6.2 2008/09/28 10:40:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.58.6.1 2008/06/02 13:23:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.58.6.2 2008/09/28 10:40:15 mjf Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -82,9 +82,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.58.6.1 2008/06/02 13:23:03 mjf Ex
 /* Locally used defines (in bsd<->linux conversion functions): */
 #define	linux_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
 #define	linux_sigismember(s, n)	((s)->sig[((n) - 1) / LINUX__NSIG_BPW]	\
-					& (1 << ((n) - 1) % LINUX__NSIG_BPW))
+					& (1L << ((n) - 1) % LINUX__NSIG_BPW))
 #define	linux_sigaddset(s, n)	((s)->sig[((n) - 1) / LINUX__NSIG_BPW]	\
-					|= (1 << ((n) - 1) % LINUX__NSIG_BPW))
+					|= (1L << ((n) - 1) % LINUX__NSIG_BPW))
 
 #ifdef DEBUG_LINUX
 #define DPRINTF(a)	uprintf a

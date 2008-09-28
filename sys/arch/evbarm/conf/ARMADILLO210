@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.6.6.1 2008/06/02 13:22:00 mjf Exp $
+#	$NetBSD: ARMADILLO210,v 1.6.6.2 2008/09/28 10:39:53 mjf Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -42,6 +42,7 @@ file-system	NFS		# Network file system
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support
+options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach64_irq.c,v 1.3 2007/12/11 11:48:42 lukem Exp $	*/
+/*	$NetBSD: mach64_irq.c,v 1.3.8.1 2008/09/28 10:40:29 mjf Exp $	*/
 
 /* mach64_irq.c -- IRQ handling for ATI Mach64 -*- linux-c -*-
  * Created: Tue Feb 25, 2003 by Leif Delgass, based on radeon_irq.c/r128_irq.c
@@ -38,15 +38,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach64_irq.c,v 1.3 2007/12/11 11:48:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach64_irq.c,v 1.3.8.1 2008/09/28 10:40:29 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mach64_irq.c,v 1.2 2005/11/28 23:13:53 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/mach64_drm.h>
-#include <dev/pci/drm/mach64_drv.h>
+#include "drmP.h"
+#include "drm.h"
+#include "mach64_drm.h"
+#include "mach64_drv.h"
 
 irqreturn_t mach64_driver_irq_handler(DRM_IRQ_ARGS)
 {

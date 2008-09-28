@@ -1,4 +1,4 @@
-/* $NetBSD: features.h,v 1.3 2007/10/17 19:58:30 garbled Exp $ */
+/* $NetBSD: features.h,v 1.3.16.1 2008/09/28 10:40:13 mjf Exp $ */
 /******************************************************************************
  * features.h
  * 
@@ -56,6 +56,9 @@
  * below 4GB. This flag is usually implied by auto_translated_physmap.
  */
 #define XENFEAT_pae_pgdir_above_4gb        4
+
+/* x86: Does this Xen host support the MMU_PT_UPDATE_PRESERVE_AD hypercall? */
+#define XENFEAT_mmu_pt_update_preserve_ad  5
 
 #define XENFEAT_NR_SUBMAPS 1
 

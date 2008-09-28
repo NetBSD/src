@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.14 2005/12/24 22:45:35 perry Exp $	*/
+/*	$NetBSD: uboot.c,v 1.14.74.1 2008/09/28 10:39:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,8 +75,8 @@ main(void)
 	int currname = 0;
 
 	printf("\n");
-	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);  
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+	printf(">> %s, Revision %s (from NetBSD %s)\n",
+	    bootprog_name, bootprog_rev, bootprog_kernrev);
 	printf(">> HP 9000/%s SPU\n", getmachineid());
 	printf(">> Enter \"reset\" to reset system.\n");
 

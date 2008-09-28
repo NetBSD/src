@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.18.14.3 2008/06/29 09:33:05 mjf Exp $	*/
+/*	$NetBSD: btsco.c,v 1.18.14.4 2008/09/28 10:40:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.18.14.3 2008/06/29 09:33:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.18.14.4 2008/09/28 10:40:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.18.14.3 2008/06/29 09:33:05 mjf Exp $");
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/socketvar.h>
 #include <sys/systm.h>
 #include <sys/intr.h>
 
@@ -560,6 +561,7 @@ btsco_open(void *hdl, int flags)
 {
 	struct sockaddr_bt sa;
 	struct btsco_softc *sc = hdl;
+	struct sockopt sopt;
 	int err, timo;
 
 	DPRINTF("%s flags 0x%x\n", sc->sc_name, flags);
@@ -633,7 +635,10 @@ btsco_open(void *hdl, int flags)
 		break;
 
 	case BTSCO_OPEN:		/* hurrah */
-		sco_getopt(sc->sc_sco, SO_SCO_MTU, &sc->sc_mtu);
+		sockopt_init(&sopt, BTPROTO_SCO, SO_SCO_MTU, 0);
+		(void)sco_getopt(sc->sc_sco, &sopt);
+		(void)sockopt_get(&sopt, &sc->sc_mtu, sizeof(sc->sc_mtu));
+		sockopt_destroy(&sopt);
 		break;
 
 	default:

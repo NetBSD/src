@@ -1,4 +1,4 @@
-/*	$NetBSD: necpbvar.h,v 1.6 2005/12/11 12:16:41 christos Exp $	*/
+/*	$NetBSD: necpbvar.h,v 1.6.74.1 2008/09/28 10:39:47 mjf Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -35,7 +35,7 @@ struct necpb_context {
 };
 
 struct necpb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct necpb_context *sc_ncp;
 };
 

@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.10 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.7 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.7.48.1 2008/09/28 10:40:56 mjf Exp $");
 #endif
 
 /*
@@ -829,10 +829,20 @@ michael_mic(struct tkip_ctx *ctx, const u8 *key,
 		while (space >= sizeof(uint32_t)) {
 			l ^= get_le32(data);
 			michael_block(l, r);
-			data += sizeof(uint32_t), space -= sizeof(uint32_t);
+			data += sizeof(uint32_t);
+			space -= sizeof(uint32_t);
 			data_len -= sizeof(uint32_t);
 		}
-		if (data_len < sizeof(uint32_t))
+		/*
+		 * NB: when space is zero we make one more trip around
+		 * the loop to advance to the next mbuf where there is
+		 * data.  This handles the case where there are 4*n
+		 * bytes in an mbuf followed by <4 bytes in a later mbuf.
+		 * By making an extra trip we'll drop out of the loop
+		 * with m pointing at the mbuf with 3 bytes and space
+		 * set as required by the remainder handling below.
+		 */
+		if (!data_len || (data_len < sizeof(uint32_t) && space != 0))
 			break;
 		m = m->m_next;
 		if (m == NULL) {
@@ -879,6 +889,13 @@ michael_mic(struct tkip_ctx *ctx, const u8 *key,
 			space = m->m_len;
 		}
 	}
+	/*
+	 * Catch degenerate cases like mbuf[4*n+1 bytes] followed by
+	 * mbuf[2 bytes].  I don't believe these should happen; if they
+	 * do then we'll need more involved logic.
+	 */
+	KASSERT(data_len <= space);
+
 	/* Last block and padding (0x5a, 4..7 x 0) */
 	switch (data_len) {
 	case 0:

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.11.6.2 2008/06/02 13:24:31 mjf Exp $	*/
+/*	$NetBSD: locks.c,v 1.11.6.3 2008/09/28 10:41:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,9 +59,9 @@
 #include <sys/rwlock.h>
 #include <sys/atomic.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
-#include "rumpuser.h"
+#include "rump_private.h"
 
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
@@ -254,6 +254,13 @@ cv_broadcast(kcondvar_t *cv)
 {
 
 	rumpuser_cv_broadcast(RUMPCV(cv));
+}
+
+bool
+cv_has_waiters(kcondvar_t *cv)
+{
+
+	return rumpuser_cv_has_waiters(RUMPCV(cv));
 }
 
 /* kernel biglock, only for vnode_if */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.15.6.3 2008/06/29 09:33:14 mjf Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.15.6.4 2008/09/28 10:40:53 mjf Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.15.6.3 2008/06/29 09:33:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.15.6.4 2008/09/28 10:40:53 mjf Exp $");
 
 #include <sys/param.h>
 
@@ -387,6 +387,11 @@ sys__sched_setaffinity(struct lwp *l,
 		if (lid && lid != t->l_lid)
 			continue;
 		lwp_lock(t);
+		/* It is not allowed to set the affinity for zombie LWPs */
+		if (t->l_stat == LSZOMB) {
+			lwp_unlock(t);
+			continue;
+		}
 		if (cpuset) {
 			/* Set the affinity flag and new CPU set */
 			t->l_flag |= LW_AFFINITY;

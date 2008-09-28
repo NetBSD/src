@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.11 2007/12/31 15:32:09 ad Exp $
+#	$NetBSD: GENERIC,v 1.11.6.1 2008/09/28 10:40:15 mjf Exp $
 #
 # GENERIC machine description file
 #
@@ -69,6 +69,7 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 #options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
@@ -298,6 +299,11 @@ options 	VND_COMPRESSION		# compressed vnd(4)
 
 # network pseudo-devices
 pseudo-device	loop			# network loopback
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

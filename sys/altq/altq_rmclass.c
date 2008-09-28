@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_rmclass.c,v 1.20 2007/03/04 05:59:02 christos Exp $	*/
+/*	$NetBSD: altq_rmclass.c,v 1.20.36.1 2008/09/28 10:39:44 mjf Exp $	*/
 /*	$KAME: altq_rmclass.c,v 1.19 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.20 2007/03/04 05:59:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_rmclass.c,v 1.20.36.1 2008/09/28 10:39:44 mjf Exp $");
 
 /* #ident "@(#)rm_class.c  1.48     97/12/05 SMI" */
 
@@ -1448,11 +1448,10 @@ rmc_dropall(struct rm_class *cl)
 }
 
 #if (__FreeBSD_version > 300000)
-/* hzto() is removed from FreeBSD-3.0 */
-static int hzto(struct timeval *);
+static int tvhzto(struct timeval *);
 
 static int
-hzto(struct timeval *tv)
+tvhzto(struct timeval *tv)
 {
 	struct timeval t2;
 
@@ -1524,10 +1523,10 @@ rmc_delay_action(struct rm_class *cl, struct rm_class *borrow)
 		if (ndelay > tick * 2) {
 #ifdef __FreeBSD__
 			/* FreeBSD rounds up the tick */
-			t = hzto(&cl->undertime_);
+			t = tvhzto(&cl->undertime_);
 #else
 			/* other BSDs round down the tick */
-			t = hzto(&cl->undertime_) + 1;
+			t = tvhzto(&cl->undertime_) + 1;
 #endif
 		} else
 			t = 2;

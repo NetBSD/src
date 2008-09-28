@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.6.6.3 2008/07/02 19:08:20 mjf Exp $	*/
+/*	$NetBSD: auth.c,v 1.6.6.4 2008/09/28 10:41:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -34,8 +34,7 @@
 #include <sys/kmem.h>
 #include <sys/proc.h>
 
-#include "rump.h"
-#include "rumpuser.h"
+#include <rump/rump.h>
 
 struct kauth_cred {
 	uid_t cr_uid;

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.4.66.2 2008/06/29 09:33:13 mjf Exp $ */
+/* $NetBSD: udf_subr.h,v 1.4.66.3 2008/09/28 10:40:51 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -87,24 +87,27 @@ int udf_read_rootdirs(struct udf_mount *ump);
 int udf_open_logvol(struct udf_mount *ump);
 int udf_close_logvol(struct udf_mount *ump, int mntflags);
 int udf_writeout_vat(struct udf_mount *ump);
-int udf_write_partition_spacetables(struct udf_mount *ump, int waitfor);
+int udf_write_physical_partition_spacetables(struct udf_mount *ump, int waitfor);
+int udf_write_metadata_partition_spacetable(struct udf_mount *ump, int waitfor);
 void udf_do_sync(struct udf_mount *ump, kauth_cred_t cred, int waitfor);
 
 /* translation services */
 int udf_translate_vtop(struct udf_mount *ump, struct long_ad *icb_loc,
 		uint32_t *lb_numres, uint32_t *extres);
+void udf_translate_vtop_list(struct udf_mount *ump, uint32_t sectors,
+		uint16_t vpart_num, uint64_t *lmapping, uint64_t *pmapping);
 int udf_translate_file_extent(struct udf_node *node,
 		uint32_t from, uint32_t num_lb, uint64_t *map);
 void udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb, int *eof);
-int udf_append_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb);
+int udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb);
 
 int udf_vat_read(struct udf_node *vat_node, uint8_t *blob, int size, uint32_t offset);
 int udf_vat_write(struct udf_node *vat_node, uint8_t *blob, int size, uint32_t offset);
 
 /* disc allocation */
-void udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf, uint64_t *lmapping, uint64_t *pmapping, struct long_ad *node_ad_cpy);
+void udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf, uint64_t *lmapping, struct long_ad *node_ad_cpy, uint16_t *vpart_num);
 void udf_free_allocated_space(struct udf_mount *ump, uint32_t lb_num, uint16_t vpart_num, uint32_t num_lb);
-int udf_pre_allocate_space(struct udf_mount *ump, int udf_c_type, int num_lb, uint16_t *alloc_partp, uint64_t *lmapping, uint64_t *pmapping);
+int udf_pre_allocate_space(struct udf_mount *ump, int udf_c_type, uint32_t num_lb, uint16_t vpartnr, uint64_t *lmapping);
 int udf_grow_node(struct udf_node *node, uint64_t new_size);
 int udf_shrink_node(struct udf_node *node, uint64_t new_size);
 
@@ -140,6 +143,7 @@ void udf_discstrat_queuebuf(struct udf_mount *ump, struct buf *nestbuf);
 int udf_write_terminator(struct udf_mount *ump, uint32_t sector);
 
 /* structure creators */
+void udf_inittag(struct udf_mount *ump, struct desc_tag *tag, int tagid, uint32_t sector);
 void udf_set_regid(struct regid *regid, char const *name);
 void udf_add_domain_regid(struct udf_mount *ump, struct regid *regid);
 void udf_add_udf_regid(struct udf_mount *ump, struct regid *regid);
@@ -149,7 +153,7 @@ void udf_add_app_regid(struct udf_mount *ump, struct regid *regid);
 /* directory operations and helpers */
 void udf_osta_charset(struct charspec *charspec);
 int udf_read_fid_stream(struct vnode *vp, uint64_t *offset, struct fileid_desc *fid, struct dirent *dirent);
-int udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen, struct long_ad *icb_loc);
+int udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen, struct long_ad *icb_loc, int *found);
 int udf_create_node(struct vnode *dvp, struct vnode **vpp, struct vattr *vap, struct componentname *cnp);
 void udf_delete_node(struct udf_node *udf_node);
 

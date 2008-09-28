@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.28.6.1 2008/06/02 13:22:59 mjf Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.28.6.2 2008/09/28 10:40:15 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.6.1 2008/06/02 13:22:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.28.6.2 2008/09/28 10:40:15 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -473,11 +473,11 @@ linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
 	 * And the stack
 	 */
 	uctx.uc_stack.ss_flags = 0;
-	if (luctx->luc_stack.ss_flags & LINUX_SS_ONSTACK);
-		uctx.uc_stack.ss_flags = SS_ONSTACK;
+	if (luctx->luc_stack.ss_flags & LINUX_SS_ONSTACK)
+		uctx.uc_stack.ss_flags |= SS_ONSTACK;
 
-	if (luctx->luc_stack.ss_flags & LINUX_SS_DISABLE);
-		uctx.uc_stack.ss_flags = SS_DISABLE;
+	if (luctx->luc_stack.ss_flags & LINUX_SS_DISABLE)
+		uctx.uc_stack.ss_flags |= SS_DISABLE;
 
 	uctx.uc_stack.ss_sp = luctx->luc_stack.ss_sp;
 	uctx.uc_stack.ss_size = luctx->luc_stack.ss_size;
@@ -629,7 +629,7 @@ linux_buildcontext(struct lwp *l, void *catcher, void *f)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_rip = (u_int64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rflags &= ~PSL_CLEARSIG;
 	tf->tf_rsp = (u_int64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }

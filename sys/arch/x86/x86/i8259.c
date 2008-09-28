@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.c,v 1.12.16.1 2008/06/02 13:22:51 mjf Exp $	*/
+/*	$NetBSD: i8259.c,v 1.12.16.2 2008/09/28 10:40:12 mjf Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.12.16.1 2008/06/02 13:22:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i8259.c,v 1.12.16.2 2008/09/28 10:40:12 mjf Exp $");
 
 #include <sys/param.h> 
 #include <sys/systm.h>
@@ -108,9 +108,7 @@ unsigned i8259_imen;
  * Perhaps this should be made into a real device.
  */
 struct pic i8259_pic = {
-	.pic_dev = {
-		.dv_xname = "pic0",
-	},
+	.pic_name = "pic0",
 	.pic_type = PIC_I8259,
 	.pic_vecbase = 0,
 	.pic_apicid = 0,

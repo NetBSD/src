@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.82.6.2 2008/06/02 13:22:52 mjf Exp $
+#	$NetBSD: files.xen,v 1.82.6.3 2008/09/28 10:40:12 mjf Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -227,8 +227,10 @@ include	"dev/pckbport/files.pckbport"
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
 include "dev/pci/files.agp"
-file 	arch/x86/pci/agp_machdep.c	agp
 file	arch/xen/xen/pciide_machdep.c	pciide_common
+
+# x86 specific PCI hardware
+include "arch/x86/pci/files.pci"
 
 #
 # Machine-independent ISA devices
@@ -267,24 +269,6 @@ file	arch/x86/x86/ioapic.c		ioapic needs-flag
 device ipmi : sysmon_envsys, sysmon_wdog
 attach ipmi at ipmibus
 file	arch/x86/x86/ipmi.c		ipmi needs-flag
-
-# PCI-Host bridge chipsets
-device	pchb: pcibus, agpbus, agp_ali, agp_amd, agp_i810, agp_intel, agp_sis,
-		agp_via
-attach	pchb at pci
-file	arch/x86/pci/pchb.c		pchb			needs-flag
-file	arch/x86/pci/pchb_rnd.c		pchb & rnd
-
-# PCI-ISA bridges
-device	pcib: isabus
-attach	pcib at pci
-file	arch/xen/xen/pcib.c		pcib | ichlpcib
-
-# PCI-LPC bridges
-device	ichlpcib: isabus, sysmon_wdog
-attach	ichlpcib at pci
-file	arch/x86/pci/ichlpcib.c 	ichlpcib
-
 
 # CPUS
 

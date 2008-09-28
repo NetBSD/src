@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.42 2007/10/17 19:55:13 garbled Exp $
+#	$NetBSD: INSTALL,v 1.42.16.1 2008/09/28 10:40:02 mjf Exp $
 #
 # INSTALL
 
@@ -61,6 +61,7 @@ file-system 	KERNFS		# /kern
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

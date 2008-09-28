@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.12.16.1 2008/06/02 13:23:33 mjf Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.12.16.2 2008/09/28 10:40:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.12.16.1 2008/06/02 13:23:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.12.16.2 2008/09/28 10:40:24 mjf Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"
@@ -94,7 +94,7 @@ int idmadebug = 0;
 #ifdef DIAGNOSTIC
 
 unsigned char idmalock[CACHELINESIZE]
-	__attribute__ ((aligned(CACHELINESIZE))) = { 0 };
+	__aligned(CACHELINESIZE) = { 0 };
 
 #endif
 

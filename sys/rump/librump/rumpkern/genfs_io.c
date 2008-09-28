@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.8.6.2 2008/06/05 19:14:37 mjf Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.8.6.3 2008/09/28 10:41:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,6 @@
 #include <miscfs/genfs/genfs.h>
 
 #include "rump_private.h"
-#include "rumpuser.h"
 
 void
 genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
@@ -310,7 +309,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		 */
 		KASSERT((pg->flags & PG_BUSY) == 0);
 
-		if (pg->flags & PG_CLEAN) {
+		/* If we can just dump the page, do so */
+		if (pg->flags & PG_CLEAN || flags & PGO_FREE) {
 			uvm_pagefree(pg);
 			continue;
 		}
@@ -346,7 +346,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 		pg->flags |= PG_CLEAN;
 	}
-	assert(curoff > smallest);
+	KASSERT(curoff > smallest);
 
 	mutex_exit(&uobj->vmobjlock);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.72.14.2 2008/06/05 19:14:36 mjf Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.72.14.3 2008/09/28 10:40:54 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.72.14.2 2008/06/05 19:14:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.72.14.3 2008/09/28 10:40:54 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -409,6 +409,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 	if (error) {
 		/* Unlocked, but only for stats. */
 		COUNT(cpup->cpu_stats, ncs_badhits);
+		vrele(vp);
 		*vpp = NULL;
 		return -1;
 	}

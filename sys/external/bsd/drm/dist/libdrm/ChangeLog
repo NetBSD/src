@@ -1,0 +1,20 @@
+2006-03-14  Adam Jackson  <ajax@freedesktop.org>
+
+	* xf86drmHash.c:
+	Avoid walking off the end of the hash table.  (Coverity report #465)
+
+2006-02-20  Adam Jackson  <ajax@freedesktop.org>
+
+	* ChangeLog:
+	* Makefile.am:
+	Created.
+
+	* TODO:
+	* xf86drm.c:
+	* xf86drm.h:
+	* xf86drmHash.c:
+	* xf86drmRandom.c:
+	* xf86drmSL.c:
+	Formatting cleanup, dead code removal.  Remove N() namespacing macro,
+	useless.  Remove SIGIO handling functions as they're server-only and
+	properly belong in libdri.

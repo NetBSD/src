@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113.6.1 2008/04/03 12:42:22 mjf Exp $
+# $NetBSD: GENERIC,v 1.113.6.2 2008/09/28 10:40:05 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113.6.1 $"
+#ident 		"GENERIC-$Revision: 1.113.6.2 $"
 
 maxusers	32
 
@@ -105,6 +105,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -378,6 +379,11 @@ auvia*  at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 # Audio support
 audio*	at audiobus?
 
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)

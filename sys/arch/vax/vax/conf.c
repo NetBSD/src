@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.65 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.65.74.1 2008/09/28 10:40:10 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.65 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.65.74.1 2008/09/28 10:40:10 mjf Exp $");
 
 #include "opt_cputype.h"
 
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.65 2005/12/11 12:19:36 christos Exp $");
 #include <dev/cons.h>
 
 #include "smg.h"
-#include "lcspx.h"
+#include "spx.h"
 #include "lcg.h"
 #include "wskbd.h"
 #if NSMG > 0
@@ -63,19 +63,19 @@ smgcngetc(dev_t dev)
 #define smgcnputc wsdisplay_cnputc
 #define	smgcnpollc nullcnpollc
 #endif
-#if NLCSPX > 0
+#if NSPX > 0
 #if NWSKBD > 0
-#define lcspxcngetc wskbd_cngetc
+#define spxcngetc wskbd_cngetc
 #else
 static int
-lcspxcngetc(dev_t dev)
+spxcngetc(dev_t dev)
 {
 	return 0;
 }
 #endif
 
-#define lcspxcnputc wsdisplay_cnputc
-#define lcspxcnpollc nullcnpollc
+#define spxcnputc wsdisplay_cnputc
+#define spxcnpollc nullcnpollc
 #endif
 #if NLCG > 0
 #if NWSKBD > 0
@@ -96,7 +96,7 @@ cons_decl(gen);
 cons_decl(dz);
 cons_decl(qd);
 cons_decl(smg);
-cons_decl(lcspx);
+cons_decl(spx);
 cons_decl(lcg);
 #include "qv.h"
 #include "qd.h"
@@ -120,8 +120,8 @@ struct	consdev constab[]={
 #if NSMG
 	cons_init(smg),
 #endif
-#if NLCSPX
-	cons_init(lcspx),
+#if NSPX
+	cons_init(spx),
 #endif
 #if NLCG
 	cons_init(lcg),

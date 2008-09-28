@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.32.8.1 2008/06/02 13:23:40 mjf Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.32.8.2 2008/09/28 10:40:26 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.32.8.1 2008/06/02 13:23:40 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.32.8.2 2008/09/28 10:40:26 mjf Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -106,7 +106,7 @@ static const struct rtk_type re_devs[] = {
 	    "RealTek 8139C+ 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E,
 	    RTK_8101E,
-	    "RealTek 8100E/8101E PCIe 10/100BaseTX" },
+	    "RealTek 8100E/8101E/8102E/8102EL PCIe 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
 	    RTK_8168,
 	    "RealTek 8168B/8111B PCIe Gigabit Ethernet" },

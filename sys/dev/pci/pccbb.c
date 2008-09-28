@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.165.6.3 2008/06/29 09:33:09 mjf Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.165.6.4 2008/09/28 10:40:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.165.6.3 2008/06/29 09:33:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.165.6.4 2008/09/28 10:40:27 mjf Exp $");
 
 /*
 #define CBB_DEBUG
@@ -362,6 +362,8 @@ const struct yenta_chipinfo {
 	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6933),
 	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972),
+	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7223),
 	  CB_O2MICRO, PCCBB_PCMCIA_MEM_32},
 
 	/* sentinel, or Generic chip */
@@ -1893,8 +1895,21 @@ static cardbusreg_t
 pccbb_conf_read(cardbus_chipset_tag_t cc, cardbustag_t tag, int offset)
 {
 	struct pccbb_softc *sc = (struct pccbb_softc *)cc;
+	pcitag_t brtag = sc->sc_tag;
+	cardbusreg_t reg;
 
-	return pci_conf_read(sc->sc_pc, tag, offset);
+	/*
+	 * clear cardbus master abort status; it is OK to write without
+	 * reading before because all bits are r/o or w1tc
+	 */
+	pci_conf_write(sc->sc_pc, brtag, PCI_CBB_SECSTATUS,
+		       CBB_SECSTATUS_CBMABORT);
+	reg = pci_conf_read(sc->sc_pc, tag, offset);
+	/* check cardbus master abort status */
+	if (pci_conf_read(sc->sc_pc, brtag, PCI_CBB_SECSTATUS)
+			  & CBB_SECSTATUS_CBMABORT)
+		return (0xffffffff);
+	return reg;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.5.6.2 2008/06/05 19:14:36 mjf Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.5.6.3 2008/09/28 10:40:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.5.6.2 2008/06/05 19:14:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.5.6.3 2008/09/28 10:40:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ genfs_getpages(void *v)
 	daddr_t lbn, blkno;
 	int i, error, npages, orignpages, npgs, run, ridx, pidx, pcount;
 	int fs_bshift, fs_bsize, dev_bshift;
-	int flags = ap->a_flags;
+	const int flags = ap->a_flags;
 	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
 	vaddr_t kva;
 	struct buf *bp, *mbp;
@@ -122,12 +122,12 @@ genfs_getpages(void *v)
 	struct vm_page *pg, **pgs, *pgs_onstack[MAX_READ_PAGES];
 	int pgs_size;
 	kauth_cred_t cred = curlwp->l_cred;		/* XXXUBC curlwp */
-	bool async = (flags & PGO_SYNCIO) == 0;
-	bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
+	const bool async = (flags & PGO_SYNCIO) == 0;
+	const bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	bool sawhole = false;
 	bool has_trans = false;
-	bool overwrite = (flags & PGO_OVERWRITE) != 0;
-	bool blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
+	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
+	const bool blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
 	voff_t origvsize;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
@@ -589,8 +589,22 @@ loopdone:
 	 */
 
 	if (!error && sawhole && blockalloc) {
-		error = GOP_ALLOC(vp, startoffset, npages << PAGE_SHIFT, 0,
-		    cred);
+		/*
+		 * XXX: This assumes that we come here only via
+		 * the mmio path
+		 */
+		if (vp->v_mount->mnt_wapbl) {
+			error = WAPBL_BEGIN(vp->v_mount);
+		}
+
+		if (!error) {
+			error = GOP_ALLOC(vp, startoffset,
+			    npages << PAGE_SHIFT, 0, cred);
+			if (vp->v_mount->mnt_wapbl) {
+				WAPBL_END(vp->v_mount);
+			}
+		}
+
 		UVMHIST_LOG(ubchist, "gop_alloc off 0x%x/0x%x -> %d",
 		    startoffset, npages << PAGE_SHIFT, error,0);
 		if (!error) {

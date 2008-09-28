@@ -1,4 +1,4 @@
-/*	$NetBSD: twereg.h,v 1.13.56.1 2008/06/02 13:23:44 mjf Exp $	*/
+/*	$NetBSD: twereg.h,v 1.13.56.2 2008/09/28 10:40:28 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@
 struct twe_sgb {
 	u_int32_t	tsg_address;
 	u_int32_t	tsg_length;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Command block.  This is 512 (really 508) bytes in size, and must be
@@ -167,16 +167,16 @@ struct twe_cmd {
 		struct {
 			u_int32_t	lba;
 			struct	twe_sgb sgl[TWE_SG_SIZE];
-		} io __attribute__ ((__packed__));
+		} io __packed;
 		struct {
 			struct	twe_sgb sgl[TWE_SG_SIZE];
 		} param;
 		struct {
 			u_int32_t	response_queue_pointer;
-		} init_connection  __attribute__ ((__packed__));
+		} init_connection  __packed;
 	} tc_args;
 	int32_t		tc_pad;
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Get/set parameter block. */
 struct twe_param {
@@ -184,7 +184,7 @@ struct twe_param {
 	u_int8_t	tp_param_id;
 	u_int8_t	tp_param_size;
 	u_int8_t	tp_data[1];
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * From 3ware's documentation:
@@ -306,14 +306,14 @@ struct twe_unit_descriptor {
 	u_int8_t	log_drv_num;	/* must be zero for configuration == 0x0f */
 	u_int32_t	start_lba;
 	u_int32_t	block_count;	/* actual drive size if configuration == 0x0f, otherwise less DCB size */
-} __attribute__ ((packed));
+} __packed;
 
 struct twe_mirror_descriptor {
 	u_int8_t	flag;			/* must be 0xff */
 	u_int8_t	res1;
 	u_int8_t	mirunit_status[4];	/* bitmap of functional subunits in each mirror */
 	u_int8_t	res2[6];
-} __attribute__ ((packed));
+} __packed;
 
 struct twe_array_descriptor {
 	u_int8_t	num_subunits;	/* number of subunits, or number of mirror units in RAID10 */
@@ -337,6 +337,6 @@ struct twe_array_descriptor {
 	u_int32_t		start_lba;
 	u_int32_t		block_count;	/* actual drive size if configuration == 0x0f, otherwise less DCB size */
 	struct twe_unit_descriptor	subunit[1];
-} __attribute__ ((packed));
+} __packed;
 
 #endif	/* !_PCI_TWEREG_H_ */

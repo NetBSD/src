@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12.6.1 2008/06/02 13:22:19 mjf Exp $	*/
+/*	$NetBSD: main.c,v 1.12.6.2 2008/09/28 10:40:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -53,8 +53,7 @@ extern struct x86_boot_params boot_params;
 int errno;
 int debug;
 
-extern char	bootprog_name[], bootprog_rev[], bootprog_date[],
-		bootprog_maker[];
+extern char	bootprog_name[], bootprog_rev[], bootprog_kernrev[];
 
 int	main(void);
 
@@ -79,7 +78,7 @@ const struct bootblk_command commands[] = {
 static int 
 bootit(const char *filename, int howto)
 {
-	if (exec_netbsd(filename, 0, howto) < 0)
+	if (exec_netbsd(filename, 0, howto, 0) < 0)
 		printf("boot: %s\n", strerror(errno));
 	else
 		printf("boot returned\n");
@@ -93,11 +92,9 @@ print_banner(void)
 	int ext = getextmem();
 
 	printf("\n"
-	       ">> %s, Revision %s\n"
-	       ">> (%s, %s)\n"
+	       ">> %s, Revision %s (from NetBSD %s)\n"
 	       ">> Memory: %d/%d k\n",
-	       bootprog_name, bootprog_rev,
-	       bootprog_maker, bootprog_date,
+	       bootprog_name, bootprog_rev, bootprog_kernrev,
 	       base, ext);
 }
 

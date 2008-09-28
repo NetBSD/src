@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.c,v 1.5.8.2 2008/06/05 19:14:35 mjf Exp $	*/
+/*	$NetBSD: radeon_drv.c,v 1.5.8.3 2008/09/28 10:40:29 mjf Exp $	*/
 
 /* radeon_drv.c -- ATI Radeon driver -*- linux-c -*-
  * Created: Wed Feb 14 17:10:04 2001 by gareth@valinux.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.5.8.2 2008/06/05 19:14:35 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.5.8.3 2008/09/28 10:40:29 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_drv.c,v 1.14 2005/12/20 22:44:36 jhb Exp $");
 */
@@ -41,11 +41,11 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_drv.c,v 1.14 2005/12/20 22:44:36 jhb 
 #include <sys/module.h>
 #endif
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/radeon_drm.h>
-#include <dev/pci/drm/radeon_drv.h>
-#include <dev/pci/drm/drm_pciids.h>
+#include "drmP.h"
+#include "drm.h"
+#include "radeon_drm.h"
+#include "radeon_drv.h"
+#include "drm_pciids.h"
 
 int radeon_no_wb;
 
@@ -143,13 +143,13 @@ static void
 radeondrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	drm_device_t *dev = device_private(self);
 
 	radeon_configure(dev);
 	return drm_attach(self, pa, radeon_pciidlist);
 }
 
-CFATTACH_DECL(radeondrm, sizeof(drm_device_t), radeondrm_probe, radeondrm_attach,
+CFATTACH_DECL_NEW(radeondrm, sizeof(drm_device_t), radeondrm_probe, radeondrm_attach,
 	drm_detach, drm_activate);
 
 #ifdef _MODULE

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.6.6.1 2008/06/02 13:23:04 mjf Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.6.6.2 2008/09/28 10:40:16 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -107,6 +107,14 @@ struct linux32_sysinfo {
 struct linux32_timespec {
 	linux32_time_t	tv_sec;
 	netbsd32_long	tv_nsec;
+};
+
+#define LINUX32_MAXNAMLEN	255
+struct linux32_dirent {
+	linux32_ino_t	d_ino;
+	linux32_off_t	d_off;
+	u_short		d_reclen;
+	char		d_name[LINUX32_MAXNAMLEN + 1];
 };
 
 #endif /* !_LINUX32_TYPES_H */

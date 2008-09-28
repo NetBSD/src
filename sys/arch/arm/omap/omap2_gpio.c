@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.1.6.1 2008/06/02 13:21:55 mjf Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.1.6.2 2008/09/28 10:39:50 mjf Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.1.6.1 2008/06/02 13:21:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.1.6.2 2008/09/28 10:39:50 mjf Exp $");
 
 #define _INTR_PRIVATE
 
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.1.6.1 2008/06/02 13:21:55 mjf Exp $
 #include <machine/atomic.h>
 #include <machine/bus.h>
 
-#include <arm/omap/omap2430reg.h>
-#include <arm/omap/omap2430obiovar.h>
+#include <arm/omap/omap2_reg.h>
+#include <arm/omap/omap2_obiovar.h>
 #include <arm/pic/picvar.h>
 
 #if NGPIO > 0
@@ -106,7 +106,6 @@ gpio_pic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(irq_base == 0);
 
-	aprint_debug_dev(&gpio->gpio_dev, "unblock: mask=%x\n", irq_mask);
 	gpio->gpio_enable_mask |= irq_mask;
 	/*
 	 * If this a level source, ack it now.  If it's still asserted
@@ -124,7 +123,6 @@ gpio_pic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
 	KASSERT(irq_base == 0);
 
-	aprint_debug_dev(&gpio->gpio_dev, "block: mask=%x\n", irq_mask);
 	gpio->gpio_enable_mask &= ~irq_mask;
 	GPIO_WRITE(gpio, GPIO_CLEARIRQENABLE1, irq_mask);
 	/*
@@ -148,7 +146,6 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 	if (pending == 0)
 		return 0;
 
-	aprint_debug_dev(&gpio->gpio_dev, "pending=%x\n", pending);
 	/*
 	 * Now find all the pending bits and mark them as pending.
 	 */
@@ -326,23 +323,33 @@ gpio_match(device_t parent, cfdata_t cfdata, void *aux)
 	struct obio_attach_args *oa = aux;
 
 #ifdef OMAP_2420
-	if (oa->obio_addr != GPIO1_BASE_2420
-	    && oa->obio_addr != GPIO2_BASE_2420
-	    && oa->obio_addr != GPIO3_BASE_2420
-	    && oa->obio_addr != GPIO4_BASE_2420)
-		return 0;
+	if (oa->obio_addr == GPIO1_BASE_2420
+	    || oa->obio_addr == GPIO2_BASE_2420
+	    || oa->obio_addr == GPIO3_BASE_2420
+	    || oa->obio_addr == GPIO4_BASE_2420)
+		return 1;
 #endif
 
 #ifdef OMAP_2430
-	if (oa->obio_addr != GPIO1_BASE_2430
-	    && oa->obio_addr != GPIO2_BASE_2430
-	    && oa->obio_addr != GPIO3_BASE_2430
-	    && oa->obio_addr != GPIO4_BASE_2430
-	    && oa->obio_addr != GPIO5_BASE_2430)
-		return 0;
+	if (oa->obio_addr == GPIO1_BASE_2430
+	    || oa->obio_addr == GPIO2_BASE_2430
+	    || oa->obio_addr == GPIO3_BASE_2430
+	    || oa->obio_addr == GPIO4_BASE_2430
+	    || oa->obio_addr == GPIO5_BASE_2430)
+		return 1;
 #endif
 
-	return 1;
+#ifdef OMAP_3530
+	if (oa->obio_addr == GPIO1_BASE_3530
+	    || oa->obio_addr == GPIO2_BASE_3530
+	    || oa->obio_addr == GPIO3_BASE_3530
+	    || oa->obio_addr == GPIO4_BASE_3530
+	    || oa->obio_addr == GPIO5_BASE_3530
+	    || oa->obio_addr == GPIO6_BASE_3530)
+		return 1;
+#endif
+
+	return 0;
 }
 
 void

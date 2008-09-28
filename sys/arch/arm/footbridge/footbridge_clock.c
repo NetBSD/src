@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.24 2007/12/03 15:33:17 ad Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.24.14.1 2008/09/28 10:39:49 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.24 2007/12/03 15:33:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.24.14.1 2008/09/28 10:39:49 mjf Exp $");
 
 /* Include header files */
 
@@ -375,7 +375,13 @@ delay(unsigned n)
 	 */
 	if (!delay_count_per_usec)
 	{
-		int delaycount = 25000;
+		/*
+		 * the loop below has a core of 6 instructions
+		 * StrongArms top out at 233Mhz, so one instruction takes
+		 * 0.004 us, and 6 take 0.025 us, so we need to loop 40
+		 * times to make one usec
+		 */
+		int delaycount = 40;
 		volatile int i;
 
 		while (n-- > 0) {

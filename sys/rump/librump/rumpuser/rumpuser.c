@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.13.6.3 2008/07/02 19:08:21 mjf Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.13.6.4 2008/09/28 10:41:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -60,15 +60,13 @@
 #include "rumpuser.h"
 
 #define DOCALL(rvtype, call)						\
-do {									\
 	rvtype rv;							\
 	rv = call;							\
 	if (rv == -1)							\
 		*error = errno;						\
 	else								\
 		*error = 0;						\
-	return rv;							\
-} while (/*CONSTCOND*/0)
+	return rv;
 
 int
 rumpuser_stat(const char *path, struct stat *sb, int *error)
@@ -195,6 +193,7 @@ rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
 	if (rv < 0)
 		rv = 0;
 		
+	/* LINTED: see above */
 	rump_biodone(biodonecookie, rv, error);
 }
 
@@ -234,6 +233,7 @@ rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 	if (rv < 0)
 		rv = 0;
 
+	/* LINTED: see above */
 	rump_biodone(biodonecookie, rv, error);
 }
 

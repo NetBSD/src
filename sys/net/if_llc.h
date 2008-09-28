@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llc.h,v 1.19 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_llc.h,v 1.19.6.1 2008/09/28 10:40:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -51,15 +51,15 @@ struct llc {
 		uint8_t format_id;
 		uint8_t class;
 		uint8_t window_x2;
-	    } type_u /* XXX __attribute__((__packed__)) ??? */;
+	    } type_u /* XXX __packed ??? */;
 	    struct {
 		uint8_t num_snd_x2;
 		uint8_t num_rcv_x2;
-	    } type_i /* XXX __attribute__((__packed__)) ??? */;
+	    } type_i /* XXX __packed ??? */;
 	    struct {
 		uint8_t control;
 		uint8_t num_rcv_x2;
-	    } type_s /* XXX __attribute__((__packed__)) ??? */;
+	    } type_s /* XXX __packed ??? */;
 	    struct {
 	        uint8_t control;
 		/*
@@ -71,7 +71,7 @@ struct llc {
 		uint8_t frmr_control;
 		uint8_t frmr_control_ext;
 		uint8_t frmr_cause;
-	    } type_frmr /* XXX __attribute__((__packed__)) ??? */;
+	    } type_frmr /* XXX __packed ??? */;
 	    struct {
 		uint8_t  control;
 		uint8_t  org_code[3];
@@ -80,8 +80,8 @@ struct llc {
 	    struct {
 		uint8_t control;
 		uint8_t control_ext;
-	    } type_raw /* XXX __attribute__((__packed__)) ??? */;
-	} llc_un /* XXX __attribute__((__packed__)) ??? */;
+	    } type_raw /* XXX __packed ??? */;
+	} llc_un /* XXX __packed ??? */;
 } __packed;
 
 struct frmrinfo {

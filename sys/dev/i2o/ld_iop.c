@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.26.16.1 2008/06/02 13:23:17 mjf Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.26.16.2 2008/09/28 10:40:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.26.16.1 2008/06/02 13:23:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.26.16.2 2008/09/28 10:40:21 mjf Exp $");
 
 #include "rnd.h"
 
@@ -74,18 +74,18 @@ struct ld_iop_softc {
 	int	sc_flags;
 };
 
-static void	ld_iop_adjqparam(struct device *, int);
-static void	ld_iop_attach(struct device *, struct device *, void *);
-static int	ld_iop_detach(struct device *, int);
+static void	ld_iop_adjqparam(device_t, int);
+static void	ld_iop_attach(device_t, device_t, void *);
+static int	ld_iop_detach(device_t, int);
 static int	ld_iop_dump(struct ld_softc *, void *, int, int);
-static int	ld_iop_flush(struct ld_softc *);
-static void	ld_iop_intr(struct device *, struct iop_msg *, void *);
-static void	ld_iop_intr_event(struct device *, struct iop_msg *, void *);
-static int	ld_iop_match(struct device *, struct cfdata *, void *);
+static int	ld_iop_flush(struct ld_softc *, int);
+static void	ld_iop_intr(device_t, struct iop_msg *, void *);
+static void	ld_iop_intr_event(device_t, struct iop_msg *, void *);
+static int	ld_iop_match(device_t, cfdata_t, void *);
 static int	ld_iop_start(struct ld_softc *, struct buf *);
 static void	ld_iop_unconfig(struct ld_iop_softc *, int);
 
-CFATTACH_DECL(ld_iop, sizeof(struct ld_iop_softc),
+CFATTACH_DECL_NEW(ld_iop, sizeof(struct ld_iop_softc),
     ld_iop_match, ld_iop_attach, ld_iop_detach, NULL);
 
 static const char * const ld_iop_errors[] = {
@@ -107,8 +107,7 @@ static const char * const ld_iop_errors[] = {
 };
 
 static int
-ld_iop_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ld_iop_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct iop_attach_args *ia;
 
@@ -118,12 +117,12 @@ ld_iop_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-ld_iop_attach(struct device *parent, struct device *self, void *aux)
+ld_iop_attach(device_t parent, device_t self, void *aux)
 {
-	struct iop_attach_args *ia;
-	struct ld_softc *ld;
-	struct ld_iop_softc *sc;
-	struct iop_softc *iop;
+	struct iop_attach_args *ia = aux;
+	struct ld_iop_softc *sc = device_private(self);
+	struct iop_softc *iop = device_private(parent);
+	struct ld_softc *ld = &sc->sc_ld;
 	int rv, evreg, enable;
 	const char *typestr, *fixedstr;
 	u_int cachesz;
@@ -135,12 +134,9 @@ ld_iop_attach(struct device *parent, struct device *self, void *aux)
 			struct	i2o_param_rbs_cache_control cc;
 			struct	i2o_param_rbs_device_info bdi;
 		} p;
-	} __attribute__ ((__packed__)) param;
+	} __packed param;
 
-	sc = device_private(self);
-	ld = &sc->sc_ld;
-	iop = device_private(parent);
-	ia = (struct iop_attach_args *)aux;
+	ld->sc_dv = self;
 	evreg = 0;
 
 	/* Register us as an initiator. */
@@ -287,7 +283,7 @@ ld_iop_unconfig(struct ld_iop_softc *sc, int evreg)
 {
 	struct iop_softc *iop;
 
-	iop = (struct iop_softc *)device_parent(&sc->sc_ld.sc_dv);
+	iop = device_private(device_parent(sc->sc_ld.sc_dv));
 
 	if ((sc->sc_flags & LD_IOP_CLAIMED) != 0)
 		iop_util_claim(iop, &sc->sc_ii, 1,
@@ -318,7 +314,7 @@ ld_iop_unconfig(struct ld_iop_softc *sc, int evreg)
 }
 
 static int
-ld_iop_detach(struct device *self, int flags)
+ld_iop_detach(device_t self, int flags)
 {
 	struct ld_iop_softc *sc;
 	struct iop_softc *iop;
@@ -359,7 +355,7 @@ ld_iop_start(struct ld_softc *ld, struct buf *bp)
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	sc = (struct ld_iop_softc *)ld;
-	iop = (struct iop_softc *)device_parent(&ld->sc_dv);
+	iop = device_private(device_parent(ld->sc_dv));
 
 	im = iop_msg_alloc(iop, 0);
 	im->im_dvcontext = bp;
@@ -419,7 +415,7 @@ ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	u_int32_t mb[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 
 	sc = (struct ld_iop_softc *)ld;
-	iop = (struct iop_softc *)device_parent(&ld->sc_dv);
+	iop = device_private(device_parent(ld->sc_dv));
 	bcount = blkcnt * ld->sc_secsize;
 	ba = (u_int64_t)blkno * ld->sc_secsize;
 	im = iop_msg_alloc(iop, IM_POLL);
@@ -446,7 +442,7 @@ ld_iop_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 }
 
 static int
-ld_iop_flush(struct ld_softc *ld)
+ld_iop_flush(struct ld_softc *ld, int flags)
 {
 	struct iop_msg *im;
 	struct iop_softc *iop;
@@ -455,7 +451,7 @@ ld_iop_flush(struct ld_softc *ld)
 	int rv;
 
 	sc = (struct ld_iop_softc *)ld;
-	iop = (struct iop_softc *)device_parent(&ld->sc_dv);
+	iop = device_private(device_parent(ld->sc_dv));
 	im = iop_msg_alloc(iop, IM_WAIT);
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_rbs_cache_flush);
@@ -471,7 +467,7 @@ ld_iop_flush(struct ld_softc *ld)
 }
 
 void
-ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
+ld_iop_intr(device_t dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_rbs_reply *rb;
 	struct buf *bp;
@@ -483,7 +479,7 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 	rb = reply;
 	bp = im->im_dvcontext;
 	sc = (struct ld_iop_softc *)dv;
-	iop = (struct iop_softc *)device_parent(dv);
+	iop = device_private(device_parent(dv));
 
 	err = ((rb->msgflags & I2O_MSGFLAGS_FAIL) != 0);
 
@@ -509,7 +505,7 @@ ld_iop_intr(struct device *dv, struct iop_msg *im, void *reply)
 }
 
 static void
-ld_iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
+ld_iop_intr_event(device_t dv, struct iop_msg *im, void *reply)
 {
 	struct i2o_util_event_register_reply *rb;
 	struct ld_iop_softc *sc;
@@ -537,17 +533,18 @@ ld_iop_intr_event(struct device *dv, struct iop_msg *im, void *reply)
 }
 
 static void
-ld_iop_adjqparam(struct device *dv, int mpi)
+ld_iop_adjqparam(device_t dv, int mpi)
 {
-	struct iop_softc *iop;
+	struct ld_iop_softc *sc = device_private(dv);
+	struct iop_softc *iop = device_private(device_parent(dv));
+	struct ld_softc *ld = &sc->sc_ld;
 
 	/*
 	 * AMI controllers seem to loose the plot if you hand off lots of
 	 * queued commands.
 	 */
-	iop = (struct iop_softc *)device_parent(dv);
 	if (le16toh(I2O_ORG_AMI) == iop->sc_status.orgid && mpi > 64)
 		mpi = 64;
 
-	ldadjqparam((struct ld_softc *)dv, mpi);
+	ldadjqparam(ld, mpi);
 }

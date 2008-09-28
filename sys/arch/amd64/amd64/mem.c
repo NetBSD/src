@@ -1,4 +1,33 @@
-/*	$NetBSD: mem.c,v 1.13.6.1 2008/03/29 18:47:00 mjf Exp $	*/
+/*	$NetBSD: mem.c,v 1.13.6.2 2008/09/28 10:39:45 mjf Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software written for The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.13.6.1 2008/03/29 18:47:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.13.6.2 2008/09/28 10:39:45 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -85,7 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.13.6.1 2008/03/29 18:47:00 mjf Exp $");
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
@@ -97,18 +126,20 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.13.6.1 2008/03/29 18:47:00 mjf Exp $");
 
 extern char *vmmap;            /* poor name! */
 void *zeropage;
+static kmutex_t mm_lock;
 extern int start, end, __data_start;
 extern vaddr_t kern_end;
 extern vaddr_t lkm_start, lkm_end;
 extern struct vm_map *lkm_map;
 
+dev_type_open(mmopen);
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
 dev_type_mmap(mmmmap);
 
 const struct cdevsw mem_cdevsw = {
-	nullopen, nullclose, mmrw, mmrw, mmioctl,
-	nostop, notty, nopoll, mmmmap, nokqfilter
+	mmopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap, nokqfilter, D_OTHER | D_MPSAFE
 };
 
 int check_pa_acc(paddr_t, vm_prot_t);
@@ -128,6 +159,22 @@ mem_init(void)
 	    true, DEV_OTHER, "zero");
 }
 
+/* ARGSUSED */
+int
+mmopen(dev_t dev, int flag, int mode, struct lwp *l)
+{
+	static bool again;
+
+	if (!again) {
+		/* XXX UNSAFE.  Need an mmattach(). */
+		again = true;
+		mutex_init(&mm_lock, MUTEX_DEFAULT, IPL_NONE);
+		zeropage = kmem_zalloc(PAGE_SIZE, KM_SLEEP);
+	}
+
+	return (0);
+}			
+
 /*ARGSUSED*/
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
@@ -136,20 +183,8 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 	register int c;
 	register struct iovec *iov;
 	int error = 0;
-	static int physlock;
 	vm_prot_t prot;
 
-	if (minor(dev) == DEV_MEM) {
-		/* lock against other uses of shared vmmap */
-		while (physlock > 0) {
-			physlock++;
-			error = tsleep((void *)&physlock, PZERO | PCATCH,
-			    "mmrw", 0);
-			if (error)
-				return (error);
-		}
-		physlock = 1;
-	}
 	while (uio->uio_resid > 0 && !error) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -162,12 +197,15 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		switch (minor(dev)) {
 
 		case DEV_MEM:
+			mutex_enter(&mm_lock);
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
 			error = check_pa_acc(uio->uio_offset, prot);
-			if (error)
+			if (error) {
+				mutex_exit(&mm_lock);
 				break;
+			}
 			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
 			    trunc_page(v), prot, PMAP_WIRED|prot);
 			o = uio->uio_offset & PGOFSET;
@@ -175,6 +213,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			error = uiomove((char *)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + PAGE_SIZE);
+			mutex_exit(&mm_lock);
 			break;
 
 		case DEV_KMEM:
@@ -208,11 +247,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				uio->uio_resid = 0;
 				return (0);
 			}
-			if (zeropage == NULL) {
-				zeropage = (void *)
-				    malloc(PAGE_SIZE, M_TEMP, M_WAITOK);
-				memset(zeropage, 0, PAGE_SIZE);
-			}
 			c = min(iov->iov_len, PAGE_SIZE);
 			error = uiomove(zeropage, c, uio);
 			break;
@@ -220,11 +254,6 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 		default:
 			return (ENXIO);
 		}
-	}
-	if (minor(dev) == 0) {
-		if (physlock > 1)
-			wakeup((void *)&physlock);
-		physlock = 0;
 	}
 	return (error);
 }

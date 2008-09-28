@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.61.6.2 2008/06/02 13:24:14 mjf Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.61.6.3 2008/09/28 10:40:54 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.61.6.2 2008/06/02 13:24:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.61.6.3 2008/09/28 10:40:54 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,10 +167,10 @@ lf_printlist(const char *tag, struct lockf *lock)
 			"unknown", lf->lf_start, lf->lf_end);
 		TAILQ_FOREACH(blk, &lf->lf_blkhd, lf_block) {
 			if (blk->lf_flags & F_POSIX)
-				printf("proc %d",
+				printf("; proc %d",
 				    ((struct proc *)blk->lf_id)->p_pid);
 			else
-				printf("file %p", (struct file *)blk->lf_id);
+				printf("; file %p", (struct file *)blk->lf_id);
 			printf(", %s, start %qx, end %qx",
 				blk->lf_type == F_RDLCK ? "shared" :
 				blk->lf_type == F_WRLCK ? "exclusive" :
@@ -383,6 +383,8 @@ lf_split(struct lockf *lock1, struct lockf *lock2, struct lockf **sparelock)
 	splitlock = *sparelock;
 	*sparelock = NULL;
 	memcpy(splitlock, lock1, sizeof(*splitlock));
+	cv_init(&splitlock->lf_cv, lockstr);
+
 	splitlock->lf_start = lock2->lf_end + 1;
 	TAILQ_INIT(&splitlock->lf_blkhd);
 	lock1->lf_end = lock2->lf_start - 1;
@@ -574,13 +576,6 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 				waitblock = wlwp->l_wchan;
 				lwp_unlock(wlwp);
 				mutex_exit(p->p_lock);
-				if (waitblock == NULL) {
-					/*
-					 * this lwp just got up but
-					 * not returned from ltsleep yet.
-					 */
-					break;
-				}
 				/* Get the owner of the blocking lock */
 				waitblock = waitblock->lf_next;
 				if ((waitblock->lf_flags & F_POSIX) == 0)

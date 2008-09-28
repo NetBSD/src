@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.52.2 2008/06/29 09:32:57 mjf Exp $
+#	$NetBSD: Makefile,v 1.8.52.3 2008/09/28 10:39:57 mjf Exp $
 
 PROG=	xxboot
 NOMAN=	# defined
@@ -18,7 +18,7 @@ COPTS+=		-funsigned-char	-mdisable-fpregs
 
 .include <bsd.own.mk>
 
-.if ${HAVE_GCC} != 4
+.if defined(HAVE_GCC) && ${HAVE_GCC} != 4
 COPTS+=	-fwritable-strings
 .endif
 

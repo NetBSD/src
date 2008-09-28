@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.34.6.2 2008/06/29 09:32:57 mjf Exp $	*/
+/*	$NetBSD: vector.S,v 1.34.6.3 2008/09/28 10:39:59 mjf Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.34.6.2 2008/06/29 09:32:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.34.6.3 2008/09/28 10:39:59 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -110,17 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.34.6.2 2008/06/29 09:32:57 mjf Exp $");
  */
 
 #define MY_COUNT _C_LABEL(uvmexp)
-
-/* XXX See comment in locore.s */
-#ifdef __ELF__
-#define	XINTR(name,num)		Xintr_/**/name/**/num
-#define	XSTRAY(name,num)	Xstray_/**/name/**/num
-#define XINTR_TSS(irq_num)	Xintr_tss_ ## irq_num
-#else
-#define	XINTR(name,num)		_Xintr_/**/name/**/num
-#define	XSTRAY(name,num)	_Xstray_/**/name/**/num
-#define XINTR_TSS(irq_num)	Xintr_tss_/**/irq_num
-#endif
 
 /*
  * Store address of TSS in %eax, given a selector in %eax.
@@ -1233,17 +1222,17 @@ NENTRY(resume_iret)
 	ZTRAP(T_PROTFLT)
 /* LINTSTUB: Var: char resume_pop_ds[1]; */
 NENTRY(resume_pop_ds)
-	movl	%es,TF_ES(%esp)
+	movw	%es,TF_ES(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%es
 /* LINTSTUB: Var: char resume_pop_es[1]; */
 NENTRY(resume_pop_es)
-	movl	%fs,TF_FS(%esp)
+	movw	%fs,TF_FS(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%fs
 /* LINTSTUB: Var: char resume_pop_fs[1]; */
 NENTRY(resume_pop_fs)
-	movl	%gs,TF_GS(%esp)
+	movw	%gs,TF_GS(%esp)
 	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax
 	movw	%ax,%gs
 /* LINTSTUB: Var: char resume_pop_gs[1]; */

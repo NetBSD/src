@@ -1,4 +1,4 @@
-/*	$NetBSD: xboxfb.c,v 1.11 2007/12/11 12:00:55 lukem Exp $	*/
+/*	$NetBSD: xboxfb.c,v 1.11.8.1 2008/09/28 10:40:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxfb.c,v 1.11 2007/12/11 12:00:55 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxfb.c,v 1.11.8.1 2008/09/28 10:40:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,6 @@ MALLOC_DEFINE(M_XBOXFB, "xboxfb", "xboxfb shadow framebuffer");
 */
 
 struct xboxfb_softc {
-	struct device sc_dev;
 	struct vcons_data vd;
 
 	bus_space_tag_t sc_memt;
@@ -118,13 +117,13 @@ static uint8_t *xboxfb_console_bits;
 static int xboxfb_console_width;
 static int xboxfb_console_height;
 
-static int	xboxfb_match(struct device *, struct cfdata *, void *);
-static void	xboxfb_attach(struct device *, struct device *, void *);
+static int	xboxfb_match(device_t, cfdata_t, void *);
+static void	xboxfb_attach(device_t, device_t, void *);
 
 static uint8_t	xboxfb_get_avpack(void);
 static void	xboxfb_clear_fb(struct xboxfb_softc *);
 
-CFATTACH_DECL(xboxfb, sizeof(struct xboxfb_softc), xboxfb_match,
+CFATTACH_DECL_NEW(xboxfb, sizeof(struct xboxfb_softc), xboxfb_match,
 	xboxfb_attach, NULL, NULL);
 
 /* static void	xboxfb_init(struct xboxfb_softc *); */
@@ -171,7 +170,7 @@ struct wsdisplay_accessops xboxfb_accessops = {
 };
 
 static int
-xboxfb_match(struct device *parent, struct cfdata *match, void *aux)
+xboxfb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -190,9 +189,9 @@ xboxfb_match(struct device *parent, struct cfdata *match, void *aux)
 };
 
 static void
-xboxfb_attach(struct device *parent, struct device *self, void *aux)
+xboxfb_attach(device_t parent, device_t self, void *aux)
 {
-	struct xboxfb_softc *sc = (void *)self;
+	struct xboxfb_softc *sc = device_private(self);
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri;
 	int console;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.101.6.1 2008/06/02 13:23:49 mjf Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.101.6.2 2008/09/28 10:40:31 mjf Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.101.6.1 2008/06/02 13:23:49 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.101.6.2 2008/09/28 10:40:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -190,9 +190,6 @@ FreeReconDesc(RF_RaidReconDesc_t *reconDesc)
 	printf("raid%d: %lu max exec ticks\n",
 	       reconDesc->raidPtr->raidid,
 	       (long) reconDesc->maxReconExecTicks);
-#if (RF_RECON_STATS > 0) || defined(KERNEL)
-	printf("\n");
-#endif				/* (RF_RECON_STATS > 0) || KERNEL */
 	RF_Free(reconDesc, sizeof(RF_RaidReconDesc_t));
 }
 

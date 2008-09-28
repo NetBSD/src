@@ -1,4 +1,4 @@
-/* $NetBSD: xen-x86_64.h,v 1.2.26.1 2008/06/02 13:22:53 mjf Exp $ */
+/* $NetBSD: xen-x86_64.h,v 1.2.26.2 2008/09/28 10:40:13 mjf Exp $ */
 /******************************************************************************
  * xen-x86_64.h
  * 
@@ -98,8 +98,6 @@
 #define machine_to_phys_mapping ((unsigned long *)HYPERVISOR_VIRT_START)
 #endif
 
-#ifndef __ASSEMBLY__
-
 /*
  * int HYPERVISOR_set_segment_base(unsigned int which, unsigned long base)
  *  @which == SEGBASE_*  ;  @base == 64-bit base address
@@ -134,6 +132,9 @@
 #define _VGCF_in_syscall 8
 #define VGCF_in_syscall  (1<<_VGCF_in_syscall)
 #define VGCF_IN_SYSCALL  VGCF_in_syscall
+
+#ifndef __ASSEMBLY__
+
 struct iret_context {
     /* Top of stack (%rsp at point of hypercall). */
     uint64_t rax, r11, rcx, flags, rip, cs, rflags, rsp, ss;

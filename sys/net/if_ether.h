@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.49.6.2 2008/06/02 13:24:21 mjf Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.49.6.3 2008/09/28 10:40:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -56,6 +56,7 @@
  * Some Ethernet extensions.
  */
 #define	ETHER_VLAN_ENCAP_LEN 4	/* length of 802.1Q VLAN encapsulation */
+#define	ETHER_PPPOE_ENCAP_LEN 8	/* length of PPPoE encapsulation */
 
 /*
  * Ethernet address - 6 octets
@@ -90,7 +91,8 @@ struct ether_header {
 #define	ETHER_MAX_FRAME(ifp, etype, hasfcs)				\
 	((ifp)->if_mtu + ETHER_HDR_LEN +				\
 	 ((hasfcs) ? ETHER_CRC_LEN : 0) +				\
-	 (((etype) == ETHERTYPE_VLAN) ? ETHER_VLAN_ENCAP_LEN : 0))
+	 (((etype) == ETHERTYPE_VLAN) ? ETHER_VLAN_ENCAP_LEN : 0) +	\
+	 (((etype) == ETHERTYPE_PPPOE) ? ETHER_PPPOE_ENCAP_LEN : 0))
 
 /*
  * Ethernet CRC32 polynomials (big- and little-endian verions).
@@ -254,24 +256,31 @@ struct ether_multistep {
  */
 
 /* add VLAN tag to input/received packet */
-#define	VLAN_INPUT_TAG(ifp, m, vlanid, _errcase)	\
-	do {								\
-                struct m_tag *mtag =					\
-                    m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);\
-                if (mtag == NULL) {					\
-			ifp->if_ierrors++;				\
-                        printf("%s: unable to allocate VLAN tag\n",	\
-                            ifp->if_xname);				\
-                        m_freem(m);					\
-                        _errcase;					\
-                }							\
-                *(u_int *)(mtag + 1) = vlanid;				\
-                m_tag_prepend(m, mtag);					\
-	} while(0)
+static inline int vlan_input_tag(struct ifnet *, struct mbuf *, u_int);
+static inline int
+vlan_input_tag(struct ifnet *ifp, struct mbuf *m, u_int vlanid)
+{
+	struct m_tag *mtag;
+	mtag = m_tag_get(PACKET_TAG_VLAN, sizeof(u_int), M_NOWAIT);
+	if (mtag == NULL) {
+		ifp->if_ierrors++;
+		printf("%s: unable to allocate VLAN tag\n", ifp->if_xname);
+		m_freem(m);
+		return 1;
+	}
+	*(u_int *)(mtag + 1) = vlanid;
+	m_tag_prepend(m, mtag);
+	return 0;
+}
+
+#define VLAN_INPUT_TAG(ifp, m, vlanid, _errcase)		\
+    if (vlan_input_tag(ifp, m, vlanid) != 0) {	 		\
+	_errcase;						\
+    }
 
 /* extract VLAN tag from output/trasmit packet */
 #define VLAN_OUTPUT_TAG(ec, m0)			\
-	VLAN_ATTACHED(ec) ? m_tag_find((m0), PACKET_TAG_VLAN, NULL) : NULL
+	(VLAN_ATTACHED(ec) ? m_tag_find((m0), PACKET_TAG_VLAN, NULL) : NULL)
 
 /* extract VLAN ID value from a VLAN tag */
 #define VLAN_TAG_VALUE(mtag)	\

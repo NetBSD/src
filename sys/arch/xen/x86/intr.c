@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.6.1 2008/06/02 13:22:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.6.2 2008/09/28 10:40:14 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -131,11 +131,11 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.6.1 2008/06/02 13:22:54 mjf Exp $");
 #include "ioapic.h"
 #include "opt_mpbios.h"
 /* for x86/i8259.c */
-struct intrstub i8259_stubs[NUM_LEGACY_IRQS] = {{0}};
+struct intrstub i8259_stubs[NUM_LEGACY_IRQS] = {{0,0}};
 #if NIOAPIC > 0
 /* for x86/ioapic.c */
-struct intrstub ioapic_edge_stubs[MAX_INTR_SOURCES] = {{0}};
-struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0}};
+struct intrstub ioapic_edge_stubs[MAX_INTR_SOURCES] = {{0,0}};
+struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0,0}};
 
 #include <machine/i82093var.h>
 int irq2vect[256] = {0};
@@ -260,7 +260,7 @@ xen_intr_map(int *pirq, int type)
 	 */
 	static int xen_next_irq = 200;
 	struct ioapic_softc *ioapic = ioapic_find(APIC_IRQ_APIC(*pirq));
-	struct pic *pic = (struct pic *)ioapic;
+	struct pic *pic = &ioapic->sc_pic;
 	int pin = APIC_IRQ_PIN(*pirq);
 	physdev_op_t op;
 
@@ -298,11 +298,11 @@ struct pic *
 intr_findpic(int num)
 {
 #if NIOAPIC > 0
-	struct pic *pic;
+	struct ioapic_softc *pic;
 
-	pic = (struct pic *)ioapic_find_bybase(num);
+	pic = ioapic_find_bybase(num);
 	if (pic != NULL)
-		return pic;
+		return &pic->sc_pic;
 #endif
 	if (num < NUM_LEGACY_IRQS)
 		return &i8259_pic;

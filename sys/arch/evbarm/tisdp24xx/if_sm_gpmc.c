@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.1.18.1 2008/06/02 13:22:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.1.18.2 2008/09/28 10:39:54 mjf Exp $");
 
 #include "locators.h"
 
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_sm_gpmc.c,v 1.1.18.1 2008/06/02 13:22:03 mjf Exp 
 #include <dev/ic/smc91cxxreg.h>
 #include <dev/ic/smc91cxxvar.h>
 
-#include <arch/arm/omap/omap2430gpmcvar.h>
+#include <arch/arm/omap/omap2_gpmcvar.h>
 #include <arch/arm/omap/omap_gpio.h>
 
 static int	sm_gpmc_match(struct device *, struct cfdata *, void *);

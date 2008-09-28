@@ -1,4 +1,4 @@
-/*	$NetBSD: njs_cardbus.c,v 1.6.16.2 2008/06/29 09:33:06 mjf Exp $	*/
+/*	$NetBSD: njs_cardbus.c,v 1.6.16.3 2008/09/28 10:40:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.6.16.2 2008/06/29 09:33:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: njs_cardbus.c,v 1.6.16.3 2008/09/28 10:40:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,11 +65,11 @@ struct njsc32_cardbus_softc {
 	bus_size_t		sc_regmap_size;
 };
 
-static int	njs_cardbus_match(struct device *, struct cfdata *, void *);
-static void	njs_cardbus_attach(struct device *, struct device *, void *);
-static int	njs_cardbus_detach(struct device *, int);
+static int	njs_cardbus_match(device_t, cfdata_t, void *);
+static void	njs_cardbus_attach(device_t, device_t, void *);
+static int	njs_cardbus_detach(device_t, int);
 
-CFATTACH_DECL(njs_cardbus, sizeof(struct njsc32_cardbus_softc),
+CFATTACH_DECL_NEW(njs_cardbus, sizeof(struct njsc32_cardbus_softc),
     njs_cardbus_match, njs_cardbus_attach, njs_cardbus_detach, NULL);
 
 static const struct njsc32_cardbus_product {
@@ -107,8 +107,7 @@ njs_cardbus_lookup(const struct cardbus_attach_args *ca)
 }
 
 static int
-njs_cardbus_match(struct device *parent, struct cfdata *match,
-    void *aux)
+njs_cardbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
 
@@ -119,11 +118,10 @@ njs_cardbus_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-njs_cardbus_attach(struct device *parent, struct device *self,
-    void *aux)
+njs_cardbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct cardbus_attach_args *ca = aux;
-	struct njsc32_cardbus_softc *csc = (void *) self;
+	struct njsc32_cardbus_softc *csc = device_private(self);
 	struct njsc32_softc *sc = &csc->sc_njsc32;
 	const struct njsc32_cardbus_product *prod;
 	cardbus_devfunc_t ct = ca->ca_ct;
@@ -137,6 +135,7 @@ njs_cardbus_attach(struct device *parent, struct device *self,
 		panic("njs_cardbus_attach");
 
 	printf(": Workbit NinjaSCSI-32 SCSI adapter\n");
+	sc->sc_dev = self;
 	sc->sc_model = prod->p_model;
 	sc->sc_clk = prod->p_clk;
 
@@ -165,7 +164,7 @@ njs_cardbus_attach(struct device *parent, struct device *self,
 			goto try_io;
 		}
 #ifdef NJSC32_DEBUG
-		printf("%s: memory space mapped\n", device_xname(&sc->sc_dev));
+		printf("%s: memory space mapped\n", device_xname(self));
 #endif
 		csr |= PCI_COMMAND_MEM_ENABLE;
 		sc->sc_flags = NJSC32_MEM_MAPPED;
@@ -176,13 +175,13 @@ njs_cardbus_attach(struct device *parent, struct device *self,
 		    PCI_MAPREG_TYPE_IO, 0, &sc->sc_regt, &sc->sc_regh,
 		    NULL, &csc->sc_regmap_size) == 0) {
 #ifdef NJSC32_DEBUG
-			printf("%s: io space mapped\n", device_xname(&sc->sc_dev));
+			printf("%s: io space mapped\n", device_xname(self));
 #endif
 			csr |= PCI_COMMAND_IO_ENABLE;
 			sc->sc_flags = NJSC32_IO_MAPPED;
 			(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 		} else {
-			aprint_error_dev(&sc->sc_dev, "unable to map device registers\n");
+			aprint_error_dev(self, "unable to map device registers\n");
 			return;
 		}
 	}
@@ -215,7 +214,7 @@ njs_cardbus_attach(struct device *parent, struct device *self,
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline, IPL_BIO,
 	    njsc32_intr, sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(self,
 				 "unable to establish interrupt\n");
 		return;
 	}
@@ -230,7 +229,7 @@ njs_cardbus_attach(struct device *parent, struct device *self,
 static int
 njs_cardbus_detach(struct device *self, int flags)
 {
-	struct njsc32_cardbus_softc *csc = (void *) self;
+	struct njsc32_cardbus_softc *csc = device_private(self);
 	struct njsc32_softc *sc = &csc->sc_njsc32;
 	int rv;
 

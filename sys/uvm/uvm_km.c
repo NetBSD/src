@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.97.6.1 2008/04/03 12:43:14 mjf Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.97.6.2 2008/09/28 10:41:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -103,7 +103,7 @@
  * object is equal to the size of kernel virtual address space (i.e. the
  * value "VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS").
  *
- * note that just because a kernel object spans the entire kernel virutal
+ * note that just because a kernel object spans the entire kernel virtual
  * address space doesn't mean that it has to be mapped into the entire space.
  * large chunks of a kernel object's space go unused either because
  * that area of kernel VM is unmapped, or there is some other type of
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.97.6.1 2008/04/03 12:43:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.97.6.2 2008/09/28 10:41:07 mjf Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -623,7 +623,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		 * map it in
 		 */
 
-		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg), prot);
+		pmap_kenter_pa(loopva, VM_PAGE_TO_PHYS(pg), prot|PMAP_KMPAGE);
 		loopva += PAGE_SIZE;
 		offset += PAGE_SIZE;
 		loopsize -= PAGE_SIZE;
@@ -707,7 +707,8 @@ again:
 			return 0;
 		}
 	}
-	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pg),
+	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE);
 	pmap_update(pmap_kernel());
 
 	return va;

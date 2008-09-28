@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.43.6.4 2008/06/29 09:33:04 mjf Exp $	*/
+/*	$NetBSD: fss.c,v 1.43.6.5 2008/09/28 10:40:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,17 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.43.6.4 2008/06/29 09:33:04 mjf Exp $");
-
-#include "fss.h"
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.43.6.5 2008/09/28 10:40:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
-#include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/buf.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
 #include <sys/device.h>
@@ -65,49 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.43.6.4 2008/06/29 09:33:04 mjf Exp $");
 
 #include <dev/fssvar.h>
 
-#include <machine/stdarg.h>
-
-#ifdef DEBUG
-#define FSS_STATISTICS
-#endif
-
-#ifdef FSS_STATISTICS
-struct fss_stat {
-	u_int64_t	cow_calls;
-	u_int64_t	cow_copied;
-	u_int64_t	cow_cache_full;
-	u_int64_t	indir_read;
-	u_int64_t	indir_write;
-};
-
-static struct fss_stat fss_stat[NFSS];
-
-#define FSS_STAT_INC(sc, field)	\
-			do { \
-				fss_stat[sc->sc_unit].field++; \
-			} while (0)
-#define FSS_STAT_SET(sc, field, value) \
-			do { \
-				fss_stat[sc->sc_unit].field = value; \
-			} while (0)
-#define FSS_STAT_ADD(sc, field, value) \
-			do { \
-				fss_stat[sc->sc_unit].field += value; \
-			} while (0)
-#define FSS_STAT_VAL(sc, field) fss_stat[sc->sc_unit].field
-#define FSS_STAT_CLEAR(sc) \
-			do { \
-				memset(&fss_stat[sc->sc_unit], 0, \
-				    sizeof(struct fss_stat)); \
-			} while (0)
-#else /* FSS_STATISTICS */
-#define FSS_STAT_INC(sc, field)
-#define FSS_STAT_SET(sc, field, value)
-#define FSS_STAT_ADD(sc, field, value)
-#define FSS_STAT_CLEAR(sc)
-#endif /* FSS_STATISTICS */
-
-static struct fss_softc fss_softc[NFSS];
+#include <uvm/uvm.h>
 
 void fssattach(int);
 
@@ -120,8 +76,9 @@ dev_type_strategy(fss_strategy);
 dev_type_dump(fss_dump);
 dev_type_size(fss_size);
 
+static void fss_unmount_hook(struct mount *);
 static int fss_copy_on_write(void *, struct buf *, bool);
-static inline void fss_error(struct fss_softc *, const char *, ...);
+static inline void fss_error(struct fss_softc *, const char *);
 static int fss_create_files(struct fss_softc *, struct fss_set *,
     off_t *, struct lwp *);
 static int fss_create_snapshot(struct fss_softc *, struct fss_set *,
@@ -129,12 +86,17 @@ static int fss_create_snapshot(struct fss_softc *, struct fss_set *,
 static int fss_delete_snapshot(struct fss_softc *, struct lwp *);
 static int fss_softc_alloc(struct fss_softc *);
 static void fss_softc_free(struct fss_softc *);
-static void fss_cluster_iodone(struct buf *);
-static void fss_read_cluster(struct fss_softc *, u_int32_t);
+static int fss_read_cluster(struct fss_softc *, u_int32_t);
 static void fss_bs_thread(void *);
 static int fss_bs_io(struct fss_softc *, fss_io_type,
     u_int32_t, off_t, int, void *);
 static u_int32_t *fss_bs_indir(struct fss_softc *, u_int32_t);
+
+static kmutex_t fss_device_lock;	/* Protect fss_num_attached. */
+static int fss_num_attached = 0;	/* Number of attached devices. */
+static struct vfs_hooks fss_vfs_hooks = {
+	.vh_unmount = fss_unmount_hook
+};
 
 const struct bdevsw fss_bdevsw = {
 	fss_open, fss_close, fss_strategy, fss_ioctl,
@@ -145,6 +107,14 @@ const struct cdevsw fss_cdevsw = {
 	fss_open, fss_close, fss_read, fss_write, fss_ioctl,
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
+
+static int fss_match(device_t, cfdata_t, void *);
+static void fss_attach(device_t, device_t, void *);
+static int fss_detach(device_t, int);
+
+CFATTACH_DECL_NEW(fss, sizeof(struct fss_softc),
+    fss_match, fss_attach, fss_detach, NULL);
+extern struct cfdriver fss_cd;
 
 void
 fssattach(int num)
@@ -168,24 +138,92 @@ fssattach(int num)
 		device_register_name(makedev(bmaj, i), NULL, false,
 		    DEV_OTHER, "fss%d", i);
 	}
+	mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
+	if (config_cfattach_attach(fss_cd.cd_name, &fss_ca))
+		aprint_error("%s: unable to register\n", fss_cd.cd_name);
+}
+
+static int
+fss_match(device_t self, cfdata_t cfdata, void *aux)
+{
+	return 1;
+}
+
+static void
+fss_attach(device_t parent, device_t self, void *aux)
+{
+	struct fss_softc *sc = device_private(self);
+
+	sc->sc_dev = self;
+	sc->sc_bdev = NODEV;
+	mutex_init(&sc->sc_slock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&sc->sc_work_cv, "fssbs");
+	cv_init(&sc->sc_cache_cv, "cowwait");
+	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
+	sc->sc_dkdev = malloc(sizeof(*sc->sc_dkdev), M_DEVBUF, M_WAITOK);
+	sc->sc_dkdev->dk_info = NULL;
+	disk_init(sc->sc_dkdev, device_xname(self), NULL);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	mutex_enter(&fss_device_lock);
+	if (fss_num_attached++ == 0)
+		vfs_hooks_attach(&fss_vfs_hooks);
+	mutex_exit(&fss_device_lock);
+}
+
+static int
+fss_detach(device_t self, int flags)
+{
+	struct fss_softc *sc = device_private(self);
+
+	if (sc->sc_flags & FSS_ACTIVE)
+		return EBUSY;
+
+	mutex_enter(&fss_device_lock);
+	if (--fss_num_attached == 0)
+		vfs_hooks_detach(&fss_vfs_hooks);
+	mutex_exit(&fss_device_lock);
+
+	pmf_device_deregister(self);
+	mutex_destroy(&sc->sc_slock);
+	mutex_destroy(&sc->sc_lock);
+	cv_destroy(&sc->sc_work_cv);
+	cv_destroy(&sc->sc_cache_cv);
+	bufq_free(sc->sc_bufq);
+	disk_destroy(sc->sc_dkdev);
+	free(sc->sc_dkdev, M_DEVBUF);
+
+	return 0;
 }
 
 int
 fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	int s, mflag;
+	int mflag;
+	cfdata_t cf;
 	struct fss_softc *sc;
 
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 
-	if ((sc = FSS_DEV_TO_SOFTC(dev)) == NULL)
-		return ENODEV;
+	sc = device_lookup_private(&fss_cd, minor(dev));
+	if (sc == NULL) {
+		cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
+		cf->cf_name = fss_cd.cd_name;
+		cf->cf_atname = fss_cd.cd_name;
+		cf->cf_unit = minor(dev);
+		cf->cf_fstate = FSTATE_STAR;
+		sc = device_private(config_attach_pseudo(cf));
+		if (sc == NULL)
+			return ENOMEM;
+	}
 
-	FSS_LOCK(sc, s);
+	mutex_enter(&sc->sc_slock);
 
 	sc->sc_flags |= mflag;
 
-	FSS_UNLOCK(sc, s);
+	mutex_exit(&sc->sc_slock);
 
 	return 0;
 }
@@ -193,31 +231,37 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 int
 fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	int s, mflag, error;
-	struct fss_softc *sc;
+	int mflag, error;
+	cfdata_t cf;
+	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
 
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 
-	if ((sc = FSS_DEV_TO_SOFTC(dev)) == NULL)
-		return ENODEV;
-
-	FSS_LOCK(sc, s); 
+	mutex_enter(&sc->sc_slock);
 
 	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) == mflag) {
 		if ((sc->sc_uflags & FSS_UNCONFIG_ON_CLOSE) != 0 &&
 		    (sc->sc_flags & FSS_ACTIVE) != 0) {
-			FSS_UNLOCK(sc, s);
+			mutex_exit(&sc->sc_slock);
 			error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, l);
 			if (error)
 				return error;
-			FSS_LOCK(sc, s);
+			mutex_enter(&sc->sc_slock);
 		}
 		sc->sc_uflags &= ~FSS_UNCONFIG_ON_CLOSE;
 	}
 
 	sc->sc_flags &= ~mflag;
 
-	FSS_UNLOCK(sc, s);
+	mutex_exit(&sc->sc_slock);
+
+	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN|FSS_ACTIVE)) == 0) {
+		cf = device_cfdata(sc->sc_dev);
+		error = config_detach(sc->sc_dev, DETACH_QUIET);
+		if (error)
+			return error;
+		free(cf, M_DEVBUF);
+	}
 
 	return 0;
 }
@@ -225,17 +269,14 @@ fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 void
 fss_strategy(struct buf *bp)
 {
-	int s;
-	struct fss_softc *sc;
+	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(bp->b_dev));
 
-	sc = FSS_DEV_TO_SOFTC(bp->b_dev);
-
-	FSS_LOCK(sc, s);
+	mutex_enter(&sc->sc_slock);
 
 	if ((bp->b_flags & B_READ) != B_READ ||
 	    sc == NULL || !FSS_ISVALID(sc)) {
 
-		FSS_UNLOCK(sc, s);
+		mutex_exit(&sc->sc_slock);
 
 		bp->b_error = (sc == NULL ? ENODEV : EROFS);
 		bp->b_resid = bp->b_bcount;
@@ -245,9 +286,9 @@ fss_strategy(struct buf *bp)
 
 	bp->b_rawblkno = bp->b_blkno;
 	BUFQ_PUT(sc->sc_bufq, bp);
-	wakeup(&sc->sc_bs_lwp);
+	cv_signal(&sc->sc_work_cv);
 
-	FSS_UNLOCK(sc, s);
+	mutex_exit(&sc->sc_slock);
 }
 
 int
@@ -266,12 +307,9 @@ int
 fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
-	struct fss_softc *sc;
+	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
 	struct fss_set *fss = (struct fss_set *)data;
 	struct fss_get *fsg = (struct fss_get *)data;
-
-	if ((sc = FSS_DEV_TO_SOFTC(dev)) == NULL)
-		return ENODEV;
 
 	switch (cmd) {
 	case FSSIOCSET:
@@ -356,20 +394,14 @@ fss_dump(dev_t dev, daddr_t blkno, void *va,
 /*
  * An error occurred reading or writing the snapshot or backing store.
  * If it is the first error log to console.
- * The caller holds the simplelock.
+ * The caller holds the mutex.
  */
 static inline void
-fss_error(struct fss_softc *sc, const char *fmt, ...)
+fss_error(struct fss_softc *sc, const char *msg)
 {
-	va_list ap;
 
-	if ((sc->sc_flags & (FSS_ACTIVE|FSS_ERROR)) == FSS_ACTIVE) {
-		va_start(ap, fmt);
-		printf("fss%d: snapshot invalid: ", sc->sc_unit);
-		vprintf(fmt, ap);
-		printf("\n");
-		va_end(ap);
-	}
+	if ((sc->sc_flags & (FSS_ACTIVE|FSS_ERROR)) == FSS_ACTIVE)
+		aprint_error_dev(sc->sc_dev, "snapshot invalid: %s\n", msg);
 	if ((sc->sc_flags & FSS_ACTIVE) == FSS_ACTIVE)
 		sc->sc_flags |= FSS_ERROR;
 }
@@ -384,44 +416,51 @@ fss_error(struct fss_softc *sc, const char *fmt, ...)
 static int
 fss_softc_alloc(struct fss_softc *sc)
 {
-	int i, len, error;
+	int i, error;
 
-	len = (sc->sc_clcount+NBBY-1)/NBBY;
-	sc->sc_copied = malloc(len, M_TEMP, M_ZERO|M_WAITOK|M_CANFAIL);
-	if (sc->sc_copied == NULL)
-		return(ENOMEM);
-
-	len = sc->sc_cache_size*sizeof(struct fss_cache);
-	sc->sc_cache = malloc(len, M_TEMP, M_ZERO|M_WAITOK|M_CANFAIL);
-	if (sc->sc_cache == NULL)
-		return(ENOMEM);
-
-	len = FSS_CLSIZE(sc);
-	for (i = 0; i < sc->sc_cache_size; i++) {
-		sc->sc_cache[i].fc_type = FSS_CACHE_FREE;
-		sc->sc_cache[i].fc_softc = sc;
-		sc->sc_cache[i].fc_xfercount = 0;
-		sc->sc_cache[i].fc_data = malloc(len, M_TEMP,
-		    M_WAITOK|M_CANFAIL);
-		if (sc->sc_cache[i].fc_data == NULL)
+	if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
+		sc->sc_copied =
+		    kmem_zalloc(howmany(sc->sc_clcount, NBBY), KM_SLEEP);
+		if (sc->sc_copied == NULL)
 			return(ENOMEM);
+
+		sc->sc_cache = kmem_alloc(sc->sc_cache_size *
+		    sizeof(struct fss_cache), KM_SLEEP);
+		if (sc->sc_cache == NULL)
+			return(ENOMEM);
+
+		for (i = 0; i < sc->sc_cache_size; i++) {
+			sc->sc_cache[i].fc_type = FSS_CACHE_FREE;
+			sc->sc_cache[i].fc_data =
+			    kmem_alloc(FSS_CLSIZE(sc), KM_SLEEP);
+			if (sc->sc_cache[i].fc_data == NULL)
+				return(ENOMEM);
+			cv_init(&sc->sc_cache[i].fc_state_cv, "cowwait1");
+		}
+
+		sc->sc_indir_valid =
+		    kmem_zalloc(howmany(sc->sc_indir_size, NBBY), KM_SLEEP);
+		if (sc->sc_indir_valid == NULL)
+			return(ENOMEM);
+
+		sc->sc_indir_data = kmem_zalloc(FSS_CLSIZE(sc), KM_SLEEP);
+		if (sc->sc_indir_data == NULL)
+			return(ENOMEM);
+	} else {
+		sc->sc_copied = NULL;
+		sc->sc_cache = NULL;
+		sc->sc_indir_valid = NULL;
+		sc->sc_indir_data = NULL;
 	}
 
-	len = (sc->sc_indir_size+NBBY-1)/NBBY;
-	sc->sc_indir_valid = malloc(len, M_TEMP, M_ZERO|M_WAITOK|M_CANFAIL);
-	if (sc->sc_indir_valid == NULL)
-		return(ENOMEM);
-
-	len = FSS_CLSIZE(sc);
-	sc->sc_indir_data = malloc(len, M_TEMP, M_ZERO|M_WAITOK|M_CANFAIL);
-	if (sc->sc_indir_data == NULL)
-		return(ENOMEM);
-
 	if ((error = kthread_create(PRI_BIO, 0, NULL, fss_bs_thread, sc,
-	    &sc->sc_bs_lwp, "fssbs%d", sc->sc_unit)) != 0)
+	    &sc->sc_bs_lwp, device_xname(sc->sc_dev))) != 0)
 		return error;
 
 	sc->sc_flags |= FSS_BS_THREAD;
+
+	disk_attach(sc->sc_dkdev);
+
 	return 0;
 }
 
@@ -431,62 +470,62 @@ fss_softc_alloc(struct fss_softc *sc)
 static void
 fss_softc_free(struct fss_softc *sc)
 {
-	int s, i;
+	int i;
 
 	if ((sc->sc_flags & FSS_BS_THREAD) != 0) {
-		FSS_LOCK(sc, s);
+		mutex_enter(&sc->sc_slock);
 		sc->sc_flags &= ~FSS_BS_THREAD;
-		wakeup(&sc->sc_bs_lwp);
+		cv_signal(&sc->sc_work_cv);
 		while (sc->sc_bs_lwp != NULL)
-			ltsleep(&sc->sc_bs_lwp, PRIBIO, "fssthread", 0,
-			    &sc->sc_slock);
-		FSS_UNLOCK(sc, s);
+			kpause("fssdetach", false, 1, &sc->sc_slock);
+		mutex_exit(&sc->sc_slock);
 	}
 
+	disk_detach(sc->sc_dkdev);
+
 	if (sc->sc_copied != NULL)
-		free(sc->sc_copied, M_TEMP);
+		kmem_free(sc->sc_copied, howmany(sc->sc_clcount, NBBY));
 	sc->sc_copied = NULL;
 
 	if (sc->sc_cache != NULL) {
 		for (i = 0; i < sc->sc_cache_size; i++)
-			if (sc->sc_cache[i].fc_data != NULL)
-				free(sc->sc_cache[i].fc_data, M_TEMP);
-		free(sc->sc_cache, M_TEMP);
+			if (sc->sc_cache[i].fc_data != NULL) {
+				cv_destroy(&sc->sc_cache[i].fc_state_cv);
+				kmem_free(sc->sc_cache[i].fc_data,
+				    FSS_CLSIZE(sc));
+			}
+		kmem_free(sc->sc_cache,
+		    sc->sc_cache_size*sizeof(struct fss_cache));
 	}
 	sc->sc_cache = NULL;
 
 	if (sc->sc_indir_valid != NULL)
-		free(sc->sc_indir_valid, M_TEMP);
+		kmem_free(sc->sc_indir_valid, howmany(sc->sc_indir_size, NBBY));
 	sc->sc_indir_valid = NULL;
 
 	if (sc->sc_indir_data != NULL)
-		free(sc->sc_indir_data, M_TEMP);
+		kmem_free(sc->sc_indir_data, FSS_CLSIZE(sc));
 	sc->sc_indir_data = NULL;
 }
 
 /*
- * Check if an unmount is ok. If forced, set this snapshot into ERROR state.
+ * Set all active snapshots on this file system into ERROR state.
  */
-int
-fss_umount_hook(struct mount *mp, int forced)
+static void
+fss_unmount_hook(struct mount *mp)
 {
-	int i, s;
+	int i;
+	struct fss_softc *sc;
 
-	for (i = 0; i < NFSS; i++) {
-		FSS_LOCK(&fss_softc[i], s);
-		if ((fss_softc[i].sc_flags & FSS_ACTIVE) != 0 &&
-		    fss_softc[i].sc_mount == mp) {
-			if (forced)
-				fss_error(&fss_softc[i], "forced unmount");
-			else {
-				FSS_UNLOCK(&fss_softc[i], s);
-				return EBUSY;
-			}
-		}
-		FSS_UNLOCK(&fss_softc[i], s);
+	for (i = 0; i < fss_cd.cd_ndevs; i++) {
+		if ((sc = device_lookup_private(&fss_cd, i)) == NULL)
+			continue;
+		mutex_enter(&sc->sc_slock);
+		if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
+		    sc->sc_mount == mp)
+			fss_error(sc, "forced unmount");
+		mutex_exit(&sc->sc_slock);
 	}
-
-	return 0;
 }
 
 /*
@@ -496,27 +535,36 @@ fss_umount_hook(struct mount *mp, int forced)
 static int
 fss_copy_on_write(void *v, struct buf *bp, bool data_valid)
 {
-	int s;
+	int error;
 	u_int32_t cl, ch, c;
 	struct fss_softc *sc = v;
 
-	FSS_LOCK(sc, s);
+	mutex_enter(&sc->sc_slock);
 	if (!FSS_ISVALID(sc)) {
-		FSS_UNLOCK(sc, s);
+		mutex_exit(&sc->sc_slock);
 		return 0;
 	}
 
-	FSS_UNLOCK(sc, s);
-
-	FSS_STAT_INC(sc, cow_calls);
-
 	cl = FSS_BTOCL(sc, dbtob(bp->b_blkno));
 	ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
+	error = 0;
+	if (curlwp == uvm.pagedaemon_lwp) {
+		for (c = cl; c <= ch; c++)
+			if (isclr(sc->sc_copied, c)) {
+				error = ENOMEM;
+				break;
+			}
+	}
+	mutex_exit(&sc->sc_slock);
 
-	for (c = cl; c <= ch; c++)
-		fss_read_cluster(sc, c);
+	if (error == 0)
+		for (c = cl; c <= ch; c++) {
+			error = fss_read_cluster(sc, c);
+			if (error)
+				break;
+		}
 
-	return 0;
+	return error;
 }
 
 /*
@@ -560,17 +608,12 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Check for file system internal snapshot.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, fss->fss_bstore);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
 	if (nd.ni_vp->v_type == VREG && nd.ni_vp->v_mount == sc->sc_mount) {
-		vrele(nd.ni_vp);
 		sc->sc_flags |= FSS_PERSISTENT;
-
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
-		if ((error = vn_open(&nd, FREAD, 0)) != 0)
-			return error;
 		sc->sc_bs_vp = nd.ni_vp;
 
 		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
@@ -594,7 +637,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 
 		return error;
 	}
-	vrele(nd.ni_vp);
+	vput(nd.ni_vp);
 
 	/*
 	 * Get the block device it is mounted on.
@@ -610,15 +653,18 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		return EINVAL;
 	}
 
-	error = VOP_IOCTL(nd.ni_vp, DIOCGPART, &dpart, FREAD, l->l_cred);
-	if (error) {
-		vrele(nd.ni_vp);
-		return error;
-	}
-
 	sc->sc_bdev = nd.ni_vp->v_rdev;
-	*bsize = (off_t)dpart.disklab->d_secsize*dpart.part->p_size;
 	vrele(nd.ni_vp);
+
+	/*
+	 * Get the block device size.
+	 */
+
+	error = bdev_ioctl(sc->sc_bdev, DIOCGPART, &dpart, FREAD, l);
+	if (error)
+		return error;
+
+	*bsize = (off_t)dpart.disklab->d_secsize*dpart.part->p_size;
 
 	/*
 	 * Get the backing store
@@ -757,12 +803,11 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 	if (error != 0)
 		goto bad;
 
-#ifdef DEBUG
-	printf("fss%d: %s snapshot active\n", sc->sc_unit, sc->sc_mntname);
-	printf("fss%d: %u clusters of %u, %u cache slots, %u indir clusters\n",
-	    sc->sc_unit, sc->sc_clcount, FSS_CLSIZE(sc),
+	aprint_debug_dev(sc->sc_dev, "%s snapshot active\n", sc->sc_mntname);
+	aprint_debug_dev(sc->sc_dev,
+	    "%u clusters of %u, %u cache slots, %u indir clusters\n",
+	    sc->sc_clcount, FSS_CLSIZE(sc),
 	    sc->sc_cache_size, sc->sc_indir_size);
-#endif
 
 	return 0;
 
@@ -785,16 +830,15 @@ bad:
 static int
 fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 {
-	int s;
 
 	if ((sc->sc_flags & FSS_PERSISTENT) == 0)
 		fscow_disestablish(sc->sc_mount, fss_copy_on_write, sc);
 
-	FSS_LOCK(sc, s);
+	mutex_enter(&sc->sc_slock);
 	sc->sc_flags &= ~(FSS_ACTIVE|FSS_ERROR);
 	sc->sc_mount = NULL;
 	sc->sc_bdev = NODEV;
-	FSS_UNLOCK(sc, s);
+	mutex_exit(&sc->sc_slock);
 
 	fss_softc_free(sc);
 	if (sc->sc_flags & FSS_PERSISTENT)
@@ -804,45 +848,18 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 	sc->sc_bs_vp = NULL;
 	sc->sc_flags &= ~FSS_PERSISTENT;
 
-	FSS_STAT_CLEAR(sc);
-
 	return 0;
-}
-
-/*
- * A read from the snapshotted block device has completed.
- */
-static void
-fss_cluster_iodone(struct buf *bp)
-{
-	int s;
-	struct fss_cache *scp = bp->b_private;
-
-	KASSERT(bp->b_vp == NULL);
-
-	FSS_LOCK(scp->fc_softc, s);
-
-	if (bp->b_error != 0)
-		fss_error(scp->fc_softc, "fs read error %d", bp->b_error);
-
-	if (--scp->fc_xfercount == 0)
-		wakeup(&scp->fc_data);
-
-	FSS_UNLOCK(scp->fc_softc, s);
-
-	putiobuf(bp);
 }
 
 /*
  * Read a cluster from the snapshotted block device to the cache.
  */
-static void
+static int
 fss_read_cluster(struct fss_softc *sc, u_int32_t cl)
 {
-	int s, todo, len;
-	char *addr;
+	int error, todo, offset, len;
 	daddr_t dblk;
-	struct buf *bp;
+	struct buf *bp, *mbp;
 	struct fss_cache *scp, *scl;
 
 	/*
@@ -850,20 +867,23 @@ fss_read_cluster(struct fss_softc *sc, u_int32_t cl)
 	 */
 	scl = sc->sc_cache+sc->sc_cache_size;
 
-	FSS_LOCK(sc, s);
+	mutex_enter(&sc->sc_slock);
 
 restart:
 	if (isset(sc->sc_copied, cl) || !FSS_ISVALID(sc)) {
-		FSS_UNLOCK(sc, s);
-		return;
+		mutex_exit(&sc->sc_slock);
+		return 0;
 	}
 
 	for (scp = sc->sc_cache; scp < scl; scp++)
-		if (scp->fc_type != FSS_CACHE_FREE &&
-		    scp->fc_cluster == cl) {
-			ltsleep(&scp->fc_type, PRIBIO, "cowwait2", 0,
-			    &sc->sc_slock);
-			goto restart;
+		if (scp->fc_cluster == cl) {
+			if (scp->fc_type == FSS_CACHE_VALID) {
+				mutex_exit(&sc->sc_slock);
+				return 0;
+			} else if (scp->fc_type == FSS_CACHE_BUSY) {
+				cv_wait(&scp->fc_state_cv, &sc->sc_slock);
+				goto restart;
+			}
 		}
 
 	for (scp = sc->sc_cache; scp < scl; scp++)
@@ -873,66 +893,59 @@ restart:
 			break;
 		}
 	if (scp >= scl) {
-		FSS_STAT_INC(sc, cow_cache_full);
-		ltsleep(&sc->sc_cache, PRIBIO, "cowwait3", 0, &sc->sc_slock);
+		cv_wait(&sc->sc_cache_cv, &sc->sc_slock);
 		goto restart;
 	}
 
-	FSS_UNLOCK(sc, s);
+	mutex_exit(&sc->sc_slock);
 
 	/*
 	 * Start the read.
 	 */
-	FSS_STAT_INC(sc, cow_copied);
-
 	dblk = btodb(FSS_CLTOB(sc, cl));
-	addr = scp->fc_data;
 	if (cl == sc->sc_clcount-1) {
 		todo = sc->sc_clresid;
-		memset((char *)addr + todo, 0, FSS_CLSIZE(sc) - todo);
+		memset((char *)scp->fc_data + todo, 0, FSS_CLSIZE(sc) - todo);
 	} else
 		todo = FSS_CLSIZE(sc);
+	offset = 0;
+	mbp = getiobuf(NULL, true);
+	mbp->b_bufsize = todo;
+	mbp->b_data = scp->fc_data;
+	mbp->b_resid = mbp->b_bcount = todo;
+	mbp->b_flags = B_READ;
+	mbp->b_cflags = BC_BUSY;
+	mbp->b_dev = sc->sc_bdev;
 	while (todo > 0) {
 		len = todo;
 		if (len > MAXPHYS)
 			len = MAXPHYS;
-
-		bp = getiobuf(NULL, true);
-		bp->b_flags = B_READ;
-		bp->b_bcount = len;
-		bp->b_bufsize = bp->b_bcount;
-		bp->b_error = 0;
-		bp->b_data = addr;
+		if (btodb(FSS_CLTOB(sc, cl)) == dblk && len == todo)
+			bp = mbp;
+		else {
+			bp = getiobuf(NULL, true);
+			nestiobuf_setup(mbp, bp, offset, len);
+		}
+		bp->b_lblkno = 0;
 		bp->b_blkno = dblk;
-		bp->b_proc = NULL;
-		bp->b_dev = sc->sc_bdev;
-		bp->b_private = scp;
-		bp->b_iodone = fss_cluster_iodone;
-		SET(bp->b_cflags, BC_BUSY);	/* mark buffer busy */
-
 		bdev_strategy(bp);
-
-		FSS_LOCK(sc, s);
-		scp->fc_xfercount++;
-		FSS_UNLOCK(sc, s);
-
 		dblk += btodb(len);
-		addr += len;
+		offset += len;
 		todo -= len;
 	}
+	error = biowait(mbp);
+	putiobuf(mbp);
 
-	/*
-	 * Wait for all read requests to complete.
-	 */
-	FSS_LOCK(sc, s);
-	while (scp->fc_xfercount > 0)
-		ltsleep(&scp->fc_data, PRIBIO, "cowwait", 0, &sc->sc_slock);
+	mutex_enter(&sc->sc_slock);
+	scp->fc_type = (error ? FSS_CACHE_FREE : FSS_CACHE_VALID);
+	cv_broadcast(&scp->fc_state_cv);
+	if (error == 0) {
+		setbit(sc->sc_copied, scp->fc_cluster);
+		cv_signal(&sc->sc_work_cv);
+	}
+	mutex_exit(&sc->sc_slock);
 
-	scp->fc_type = FSS_CACHE_VALID;
-	setbit(sc->sc_copied, scp->fc_cluster);
-	FSS_UNLOCK(sc, s);
-
-	wakeup(&sc->sc_bs_lwp);
+	return error;
 }
 
 /*
@@ -980,7 +993,6 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 		return &sc->sc_indir_data[ioff];
 
 	if (sc->sc_indir_dirty) {
-		FSS_STAT_INC(sc, indir_write);
 		if (fss_bs_io(sc, FSS_WRITE, sc->sc_indir_cur, 0,
 		    FSS_CLSIZE(sc), (void *)sc->sc_indir_data) != 0)
 			return NULL;
@@ -991,7 +1003,6 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 	sc->sc_indir_cur = icl;
 
 	if (isset(sc->sc_indir_valid, sc->sc_indir_cur)) {
-		FSS_STAT_INC(sc, indir_read);
 		if (fss_bs_io(sc, FSS_READ, sc->sc_indir_cur, 0,
 		    FSS_CLSIZE(sc), (void *)sc->sc_indir_data) != 0)
 			return NULL;
@@ -1009,7 +1020,8 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 static void
 fss_bs_thread(void *arg)
 {
-	int error, len, nfreed, nio, s;
+	bool thread_idle;
+	int error, i, len, crotor;
 	long off;
 	char *addr;
 	u_int32_t c, cl, ch, *indirp;
@@ -1018,43 +1030,19 @@ fss_bs_thread(void *arg)
 	struct fss_cache *scp, *scl;
 
 	sc = arg;
-
 	scl = sc->sc_cache+sc->sc_cache_size;
+	crotor = 0;
+	thread_idle = false;
 
-	nbp = getiobuf(NULL, true);
-
-	nfreed = nio = 1;		/* Dont sleep the first time */
-
-	FSS_LOCK(sc, s);
+	mutex_enter(&sc->sc_slock);
 
 	for (;;) {
-		if (nfreed == 0 && nio == 0)
-			ltsleep(&sc->sc_bs_lwp, PVM-1, "fssbs", 0,
-			    &sc->sc_slock);
-
+		if (thread_idle)
+			cv_wait(&sc->sc_work_cv, &sc->sc_slock);
+		thread_idle = true;
 		if ((sc->sc_flags & FSS_BS_THREAD) == 0) {
 			sc->sc_bs_lwp = NULL;
-			wakeup(&sc->sc_bs_lwp);
-
-			FSS_UNLOCK(sc, s);
-
-			putiobuf(nbp);
-#ifdef FSS_STATISTICS
-			if ((sc->sc_flags & FSS_PERSISTENT) == 0) {
-				printf("fss%d: cow called %" PRId64 " times,"
-				    " copied %" PRId64 " clusters,"
-				    " cache full %" PRId64 " times\n",
-				    sc->sc_unit,
-				    FSS_STAT_VAL(sc, cow_calls),
-				    FSS_STAT_VAL(sc, cow_copied),
-				    FSS_STAT_VAL(sc, cow_cache_full));
-				printf("fss%d: %" PRId64 " indir reads,"
-				    " %" PRId64 " indir writes\n",
-				    sc->sc_unit,
-				    FSS_STAT_VAL(sc, indir_read),
-				    FSS_STAT_VAL(sc, indir_write));
-			}
-#endif /* FSS_STATISTICS */
+			mutex_exit(&sc->sc_slock);
 			kthread_exit(0);
 		}
 
@@ -1063,21 +1051,21 @@ fss_bs_thread(void *arg)
 		 */
 
 		if (sc->sc_flags & FSS_PERSISTENT) {
-			nfreed = nio = 0;
-
 			if ((bp = BUFQ_GET(sc->sc_bufq)) == NULL)
 				continue;
 
-			nio++;
+			thread_idle = false;
+
+			disk_busy(sc->sc_dkdev);
 
 			if (FSS_ISVALID(sc)) {
-				FSS_UNLOCK(sc, s);
+				mutex_exit(&sc->sc_slock);
 
 				error = fss_bs_io(sc, FSS_READ, 0,
 				    dbtob(bp->b_blkno), bp->b_bcount,
 				    bp->b_data);
 
-				FSS_LOCK(sc, s);
+				mutex_enter(&sc->sc_slock);
 			} else
 				error = ENXIO;
 
@@ -1087,6 +1075,9 @@ fss_bs_thread(void *arg)
 			} else
 				bp->b_resid = 0;
 
+			disk_unbusy(sc->sc_dkdev, bp->b_bcount - bp->b_resid,
+			    (bp->b_flags & B_READ));
+
 			biodone(bp);
 
 			continue;
@@ -1095,12 +1086,15 @@ fss_bs_thread(void *arg)
 		/*
 		 * Clean the cache
 		 */
-		nfreed = 0;
-		for (scp = sc->sc_cache; scp < scl; scp++) {
+		for (i = 0; i < sc->sc_cache_size; i++) {
+			crotor = (crotor + 1) % sc->sc_cache_size;
+			scp = sc->sc_cache + crotor;
 			if (scp->fc_type != FSS_CACHE_VALID)
 				continue;
 
-			FSS_UNLOCK(sc, s);
+			thread_idle = false;
+
+			mutex_exit(&sc->sc_slock);
 
 			indirp = fss_bs_indir(sc, scp->fc_cluster);
 			if (indirp != NULL) {
@@ -1109,80 +1103,86 @@ fss_bs_thread(void *arg)
 			} else
 				error = EIO;
 
-			FSS_LOCK(sc, s);
+			mutex_enter(&sc->sc_slock);
 
 			if (error == 0) {
 				*indirp = sc->sc_clnext++;
 				sc->sc_indir_dirty = 1;
 			} else
-				fss_error(sc, "write bs error %d", error);
+				fss_error(sc, "write error on backing store");
 
 			scp->fc_type = FSS_CACHE_FREE;
-			nfreed++;
-			wakeup(&scp->fc_type);
+			cv_signal(&sc->sc_cache_cv);
+			break;
 		}
-
-		if (nfreed)
-			wakeup(&sc->sc_cache);
 
 		/*
 		 * Process I/O requests
 		 */
-		nio = 0;
-
 		if ((bp = BUFQ_GET(sc->sc_bufq)) == NULL)
 			continue;
 
-		nio++;
+		thread_idle = false;
+
+		disk_busy(sc->sc_dkdev);
 
 		if (!FSS_ISVALID(sc)) {
 			bp->b_error = ENXIO;
 			bp->b_resid = bp->b_bcount;
+			disk_unbusy(sc->sc_dkdev, 0, (bp->b_flags & B_READ));
 			biodone(bp);
 			continue;
 		}
 
 		/*
-		 * First read from the snapshotted block device.
-		 * XXX Split to only read those parts that have not
-		 * been saved to backing store?
+		 * First read from the snapshotted block device unless
+		 * this request is completely covered by backing store.
 		 */
 
-		FSS_UNLOCK(sc, s);
-
-		buf_init(nbp);
-		nbp->b_flags = B_READ;
-		nbp->b_bcount = bp->b_bcount;
-		nbp->b_bufsize = bp->b_bcount;
-		nbp->b_error = 0;
-		nbp->b_data = bp->b_data;
-		nbp->b_blkno = bp->b_blkno;
-		nbp->b_proc = bp->b_proc;
-		nbp->b_dev = sc->sc_bdev;
-		SET(nbp->b_cflags, BC_BUSY);	/* mark buffer busy */
-
-		bdev_strategy(nbp);
-
-		if (biowait(nbp) != 0) {
-			bp->b_resid = bp->b_bcount;
-			bp->b_error = nbp->b_error;
-			biodone(bp);
-			FSS_LOCK(sc, s);
-			continue;
-		}
+		mutex_exit(&sc->sc_slock);
 
 		cl = FSS_BTOCL(sc, dbtob(bp->b_blkno));
 		off = FSS_CLOFF(sc, dbtob(bp->b_blkno));
 		ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
-		bp->b_resid = bp->b_bcount;
-		addr = bp->b_data;
 
-		FSS_LOCK(sc, s);
+		error = 0;
+		for (c = cl; c <= ch; c++) {
+			if (isset(sc->sc_copied, c))
+				continue;
+			/* Not on backing store, read from device. */
+			nbp = getiobuf(NULL, true);
+			nbp->b_flags = B_READ;
+			nbp->b_resid = nbp->b_bcount = bp->b_bcount;
+			nbp->b_bufsize = bp->b_bcount;
+			nbp->b_data = bp->b_data;
+			nbp->b_blkno = bp->b_blkno;
+			nbp->b_lblkno = 0;
+			nbp->b_dev = sc->sc_bdev;
+			SET(nbp->b_cflags, BC_BUSY);	/* mark buffer busy */
+
+			bdev_strategy(nbp);
+
+			error = biowait(nbp);
+			if (error != 0) {
+				bp->b_resid = bp->b_bcount;
+				bp->b_error = nbp->b_error;
+				disk_unbusy(sc->sc_dkdev, 0,
+				    (bp->b_flags & B_READ));
+				biodone(bp);
+			}
+			putiobuf(nbp);
+			break;
+		}
+		mutex_enter(&sc->sc_slock);
+		if (error)
+			continue;
 
 		/*
 		 * Replace those parts that have been saved to backing store.
 		 */
 
+		addr = bp->b_data;
+		bp->b_resid = bp->b_bcount;
 		for (c = cl; c <= ch;
 		    c++, off = 0, bp->b_resid -= len, addr += len) {
 			len = FSS_CLSIZE(sc)-off;
@@ -1192,11 +1192,11 @@ fss_bs_thread(void *arg)
 			if (isclr(sc->sc_copied, c))
 				continue;
 
-			FSS_UNLOCK(sc, s);
+			mutex_exit(&sc->sc_slock);
 
 			indirp = fss_bs_indir(sc, c);
 
-			FSS_LOCK(sc, s);
+			mutex_enter(&sc->sc_slock);
 
 			if (indirp == NULL || *indirp == 0) {
 				/*
@@ -1217,20 +1217,78 @@ fss_bs_thread(void *arg)
 			 * Read from backing store.
 			 */
 
-			FSS_UNLOCK(sc, s);
+			mutex_exit(&sc->sc_slock);
 
 			if ((error = fss_bs_io(sc, FSS_READ, *indirp,
 			    off, len, addr)) != 0) {
 				bp->b_resid = bp->b_bcount;
 				bp->b_error = error;
-				FSS_LOCK(sc, s);
+				mutex_enter(&sc->sc_slock);
 				break;
 			}
 
-			FSS_LOCK(sc, s);
+			mutex_enter(&sc->sc_slock);
 
 		}
+
+		disk_unbusy(sc->sc_dkdev, bp->b_bcount - bp->b_resid,
+		    (bp->b_flags & B_READ));
 
 		biodone(bp);
 	}
 }
+
+#ifdef _MODULE
+
+#include <sys/module.h>
+
+MODULE(MODULE_CLASS_DRIVER, fss, NULL);
+CFDRIVER_DECL(fss, DV_DISK, NULL);
+
+static int
+fss_modcmd(modcmd_t cmd, void *arg)
+{
+	int bmajor = -1, cmajor = -1,  error = 0;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
+		error = config_cfdriver_attach(&fss_cd);
+		if (error) {
+			mutex_destroy(&fss_device_lock);
+			break;
+		}
+		error = config_cfattach_attach(fss_cd.cd_name, &fss_ca);
+		if (error) {
+			config_cfdriver_detach(&fss_cd);
+			mutex_destroy(&fss_device_lock);
+			break;
+		}
+		error = devsw_attach(fss_cd.cd_name,
+		    &fss_bdevsw, &bmajor, &fss_cdevsw, &cmajor);
+		if (error) {
+			config_cfattach_detach(fss_cd.cd_name, &fss_ca);
+			config_cfdriver_detach(&fss_cd);
+			mutex_destroy(&fss_device_lock);
+			break;
+		}
+		break;
+
+	case MODULE_CMD_FINI:
+		error = config_cfattach_detach(fss_cd.cd_name, &fss_ca);
+		if (error)
+			break;
+		config_cfdriver_detach(&fss_cd);
+		devsw_detach(&fss_bdevsw, &fss_cdevsw);
+		mutex_destroy(&fss_device_lock);
+		break;
+
+	default:
+		error = ENOTTY;
+		break;
+	}
+
+	return error;
+}
+
+#endif /* _MODULE */

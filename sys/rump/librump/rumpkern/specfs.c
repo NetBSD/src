@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.19.6.1 2008/07/02 19:08:20 mjf Exp $	*/
+/*	$NetBSD: specfs.c,v 1.19.6.2 2008/09/28 10:41:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,8 +40,9 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <rump/rumpuser.h>
+
 #include "rump_private.h"
-#include "rumpuser.h"
 
 /* We have special special ops */
 static int rump_specopen(void *);
@@ -52,6 +53,8 @@ static int rump_specbmap(void *);
 static int rump_specputpages(void *);
 static int rump_specstrategy(void *);
 static int rump_specsimpleul(void *);
+
+kmutex_t specfs_lock;
 
 int (**spec_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
@@ -172,9 +175,16 @@ rump_specfsync(void *v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mount *mp;
+	int error;
 
-	assert(vp->v_type == VBLK);
-	vflushbuf(vp, 1);
+	KASSERT(vp->v_type == VBLK);
+	if ((mp = vp->v_specmountpoint) != NULL) {
+		error = VFS_FSYNC(mp, vp, ap->a_flags | FSYNC_VFS);
+		if (error != EOPNOTSUPP)
+			return error;
+	}
+	vflushbuf(vp, (ap->a_flags & FSYNC_WAIT) != 0);
 
 	return 0;
 }
@@ -217,15 +227,16 @@ rump_specstrategy(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
 	struct rump_specpriv *sp;
+	int async;
 	off_t off;
 
-	assert(vp->v_type == VBLK);
+	KASSERT(vp->v_type == VBLK);
 	sp = vp->v_data;
 
 	off = bp->b_blkno << DEV_BSHIFT;
 	DPRINTF(("specstrategy: 0x%x bytes %s off 0x%" PRIx64
 	    " (0x%" PRIx64 " - 0x%" PRIx64")\n",
-	    bp->b_bcount, bp->b_flags & B_READ ? "READ" : "WRITE",
+	    bp->b_bcount, BUF_ISREAD(bp) "READ" : "WRITE",
 	    off, off, (off + bp->b_bcount)));
 
 	/*
@@ -241,10 +252,8 @@ rump_specstrategy(void *v)
 	 * Synchronous I/O is done directly in the context mainly to
 	 * avoid unnecessary scheduling with the I/O thread.
 	 */
-	if (bp->b_flags & B_ASYNC) {
-#ifdef RUMP_WITHOUT_THREADS
-		goto syncfallback;
-#else
+	async = bp->b_flags & B_ASYNC;
+	if (async && rump_threads) {
 		struct rumpuser_aio *rua;
 
 		rua = kmem_alloc(sizeof(struct rumpuser_aio), KM_SLEEP);
@@ -253,7 +262,7 @@ rump_specstrategy(void *v)
 		rua->rua_dlen = bp->b_bcount;
 		rua->rua_off = off;
 		rua->rua_bp = bp;
-		rua->rua_op = bp->b_flags & B_READ;
+		rua->rua_op = BUF_ISREAD(bp);
 
 		rumpuser_mutex_enter(&rua_mtx);
 
@@ -277,17 +286,22 @@ rump_specstrategy(void *v)
 		rua_head = (rua_head+1) % (N_AIOS-1);
 		rumpuser_cv_signal(&rua_cv);
 		rumpuser_mutex_exit(&rua_mtx);
-#endif /* !RUMP_WITHOUT_THREADS */
 	} else {
  syncfallback:
-		if (bp->b_flags & B_READ) {
+		if (BUF_ISREAD(bp)) {
 			rumpuser_read_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		} else {
 			rumpuser_write_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		}
-		biowait(bp);
+		if (!async) {
+			int error;
+
+			if (BUF_ISWRITE(bp))
+				rumpuser_fsync(sp->rsp_fd, &error);
+			biowait(bp);
+		}
 	}
 
 	return 0;

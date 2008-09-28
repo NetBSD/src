@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.16 2007/02/22 05:14:04 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.16.44.1 2008/09/28 10:39:47 mjf Exp $	*/
 
 /* 
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16 2007/02/22 05:14:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.16.44.1 2008/09/28 10:39:47 mjf Exp $");
 
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -124,7 +124,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 					(*pr)("not found\n");
 					return;
 				}
-				l = proc_representative_lwp(p, NULL, 0);
+				l = LIST_FIRST(&p->p_lwps);
+				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
 			if (!(l->l_flag & LW_INMEM)) {

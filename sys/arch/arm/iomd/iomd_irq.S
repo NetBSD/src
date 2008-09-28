@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.10.6.1 2008/06/02 13:21:54 mjf Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.10.6.2 2008/09/28 10:39:50 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -233,8 +233,8 @@ Lfind_highest_ipl:
 	 * if X = 0, branch to exit code
 	 */
 	beq	exitirq
-	adr	r5, Lirq_ffs_table
 irqloop:
+	adr	r5, Lirq_ffs_table
 	/*
 	 * at this point:
 	 *	r5 = address of ffs table

@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.53.16.1 2008/06/02 13:23:52 mjf Exp $ */
+/* $NetBSD: tfb.c,v 1.53.16.2 2008/09/28 10:40:32 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.53.16.1 2008/06/02 13:23:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.53.16.2 2008/09/28 10:40:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,6 @@ struct hwcursor64 {
 };
 
 struct tfb_softc {
-	struct device sc_dev;
 	vaddr_t sc_vaddr;
 	size_t sc_size;
 	struct rasops_info *sc_ri;
@@ -175,10 +174,10 @@ struct tfb_softc {
 #define	TX_CTL_SEG_ENA	0x10
 #define	TX_CTL_SEG	0x0f
 
-static int  tfbmatch(struct device *, struct cfdata *, void *);
-static void tfbattach(struct device *, struct device *, void *);
+static int  tfbmatch(device_t, cfdata_t, void *);
+static void tfbattach(device_t, device_t, void *);
 
-CFATTACH_DECL(tfb, sizeof(struct tfb_softc),
+CFATTACH_DECL_NEW(tfb, sizeof(struct tfb_softc),
     tfbmatch, tfbattach, NULL, NULL);
 
 static void tfb_common_init(struct rasops_info *);
@@ -266,7 +265,7 @@ static const u_int8_t flip[256] = {
 };
 
 static int
-tfbmatch(struct device *parent, struct cfdata *match, void *aux)
+tfbmatch(device_t parent, cfdata_t match, void *aux)
 {
 	struct tc_attach_args *ta = aux;
 
@@ -279,7 +278,7 @@ tfbmatch(struct device *parent, struct cfdata *match, void *aux)
 
 
 static void
-tfbattach(struct device *parent, struct device *self, void *aux)
+tfbattach(device_t parent, device_t self, void *aux)
 {
 	struct tfb_softc *sc = device_private(self);
 	struct tc_attach_args *ta = aux;

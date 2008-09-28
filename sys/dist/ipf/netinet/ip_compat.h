@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.18.28.3 2008/06/29 09:33:11 mjf Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.18.28.4 2008/09/28 10:40:35 mjf Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -208,6 +208,8 @@ typedef unsigned int	u_32_t;
 # define	U_32_T	1
 
 # ifdef _KERNEL
+#  define	NEED_LOCAL_RAND	1
+#  define	ipf_random		arc4random
 #  define	KRWLOCK_T		krwlock_t
 #  define	KMUTEX_T		kmutex_t
 
@@ -338,6 +340,7 @@ typedef mblk_t mb_t;
 typedef	struct uio	uio_t;
 # endif
 typedef	int		ioctlcmd_t;
+typedef	uint8_t		u_int8_t;
 
 # define OS_RECOGNISED 1
 
@@ -568,6 +571,8 @@ typedef struct {
 # endif
 
 # ifdef _KERNEL
+#  define	NEED_LOCAL_RAND	1
+#  define	ipf_random		arc4random
 #  define	ATOMIC_INC(x)		{ MUTEX_ENTER(&ipf_rw); \
 					  (x)++; MUTEX_EXIT(&ipf_rw); }
 #  define	ATOMIC_DEC(x)		{ MUTEX_ENTER(&ipf_rw); \
@@ -664,6 +669,8 @@ typedef struct mbuf mb_t;
 # include <sys/sysmacros.h>
 
 # ifdef _KERNEL
+#  define	NEED_LOCAL_RAND		1
+#  define	ipf_random		arc4random
 #  define	KMUTEX_T		simple_lock_data_t
 #  define	KRWLOCK_T		lock_data_t
 #  include <net/net_globals.h>
@@ -785,6 +792,8 @@ typedef unsigned int    u_32_t;
 #  endif
 # endif
 
+# define	ipf_random	arc4random
+
 # ifdef _KERNEL
 # if (__NetBSD_Version__ >= 499000000)
 typedef	char *	caddr_t;
@@ -832,6 +841,11 @@ typedef	u_int32_t	u_32_t;
 /*                                F R E E B S D                            */
 /* ----------------------------------------------------------------------- */
 #ifdef __FreeBSD__
+# if  (__FreeBSD_version < 400000)
+#  define	NEED_LOCAL_RAND	1
+# else
+#  define	ipf_random	arc4random
+# endif
 # if defined(_KERNEL)
 #  if (__FreeBSD_version >= 500000)
 #   include "opt_bpf.h"

@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.40.6.2 2008/06/29 09:32:55 mjf Exp $
+#	$NetBSD: ADI_BRH,v 1.40.6.3 2008/09/28 10:39:53 mjf Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -50,6 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

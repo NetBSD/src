@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.190.6.5 2008/06/29 09:33:20 mjf Exp $	*/
+/*	$NetBSD: vnode.h,v 1.190.6.6 2008/09/28 10:41:05 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -298,6 +298,7 @@ struct vattr {
 #define	IO_NORMAL	0x00800		/* operate on regular data */
 #define	IO_EXT		0x01000		/* operate on extended attributes */
 #define	IO_DIRECT	0x02000		/* direct I/O hint */
+#define	IO_JOURNALLOCKED 0x04000	/* journal is already locked */
 #define	IO_ADV_MASK	0x00003		/* access pattern hint */
 
 #define	IO_ADV_SHIFT	0
@@ -344,6 +345,7 @@ extern const int	vttoif_tab[];
 #define	FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
 #define	FSYNC_RECLAIM	0x0004		/* fsync: hint: vnode is being reclaimed */
 #define	FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
+#define	FSYNC_NOLOG	0x0010		/* fsync: do not flush the log */
 #define	FSYNC_CACHE	0x0100		/* fsync: flush disk caches too */
 #define	FSYNC_VFS	0x0200		/* fsync: via FSYNC_VFS() */
 

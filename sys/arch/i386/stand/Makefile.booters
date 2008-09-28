@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.73 2007/10/17 19:54:58 garbled Exp $
+#	$NetBSD: Makefile.booters,v 1.73.16.1 2008/09/28 10:40:00 mjf Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ LIBC=		# nothing
 
 # Make sure we override any optimization options specified by the
 # user.
+.if defined(HAVE_GCC)
 .if ${MACHINE_ARCH} == "x86_64"
 CPUFLAGS= -m32
 .if ${HAVE_GCC} != 3
@@ -22,6 +23,7 @@ CPUFLAGS+= -Wno-attributes
 CPUFLAGS=  -mcpu=i386
 .else
 CPUFLAGS=  -march=i386 -mtune=i386 -Wno-attributes
+.endif
 .endif
 .endif
 COPTS=	-Os -ffreestanding
@@ -102,8 +104,8 @@ LDFLAGS+=-Wl,-N -Wl,-M -Wl,-e,_start
 
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
-vers.c: ${VERSIONFILE} ${SOURCES}
-	${HOST_SH} ${S}conf/newvers_stand.sh ${.ALLSRC} x86 ${NEWVERSWHAT}
+vers.c: ${VERSIONFILE} ${SOURCES} ${S}conf/newvers_stand.sh
+	${HOST_SH} ${S}conf/newvers_stand.sh -DM ${.ALLSRC} x86 ${NEWVERSWHAT}
 
 CLEANFILES+= ${BASE}.sym
 ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}

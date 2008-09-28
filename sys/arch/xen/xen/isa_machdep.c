@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.9.14.1 2008/06/02 13:22:55 mjf Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.9.14.2 2008/09/28 10:40:14 mjf Exp $	*/
 /*	NetBSD isa_machdep.c,v 1.11 2004/06/20 18:04:08 thorpej Exp 	*/
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9.14.1 2008/06/02 13:22:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.9.14.2 2008/09/28 10:40:14 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	char evname[8];
 	struct xen_intr_handle ih;
 #if NIOAPIC > 0
-	struct pic *pic = NULL;
+	struct ioapic_softc *pic = NULL;
 #endif
 
 	ih.pirq = irq;
@@ -166,8 +166,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 		if (intr_find_mpmapping(mp_isa_bus, irq, &ih) == 0 ||
 		    intr_find_mpmapping(mp_eisa_bus, irq, &ih) == 0) {
 			if (!APIC_IRQ_ISLEGACY(ih.pirq)) {
-				pic = (struct pic *)
-				    ioapic_find(APIC_IRQ_APIC(ih.pirq));
+				pic = ioapic_find(APIC_IRQ_APIC(ih.pirq));
 				if (pic == NULL) {
 					printf("isa_intr_establish: "
 					    "unknown apic %d\n",
@@ -186,7 +185,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 #if NIOAPIC > 0
 	if (pic)
 		snprintf(evname, sizeof(evname), "%s pin %d",
-		    pic->pic_name, APIC_IRQ_PIN(ih.pirq));
+		    device_xname(pic->sc_dev), APIC_IRQ_PIN(ih.pirq));
 	else
 #endif
 		snprintf(evname, sizeof(evname), "irq%d", irq);

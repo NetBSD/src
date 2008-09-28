@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.33.6.1 2008/06/02 13:22:01 mjf Exp $
+#	$NetBSD: SMDK2800,v 1.33.6.2 2008/09/28 10:39:53 mjf Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -57,6 +57,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

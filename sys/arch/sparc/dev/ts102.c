@@ -1,5 +1,5 @@
 /*	$OpenBSD: ts102.c,v 1.14 2005/01/27 17:03:23 millert Exp $	*/
-/*	$NetBSD: ts102.c,v 1.10.14.1 2008/06/02 13:22:40 mjf Exp $ */
+/*	$NetBSD: ts102.c,v 1.10.14.2 2008/09/28 10:40:08 mjf Exp $ */
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  * Copyright (c) 2005, Michael Lorenz.
@@ -184,7 +184,7 @@ static void tslot_slot_settype(pcmcia_chipset_handle_t, int);
 static void tslot_update_lcd(struct tslot_softc *, int, int);
 static void tslot_intr_dispatch(void *arg);
 
-CFATTACH_DECL(tslot, sizeof(struct tslot_softc),
+CFATTACH_DECL_NEW(tslot, sizeof(struct tslot_softc),
     tslot_match, tslot_attach, NULL, NULL);
 
 extern struct cfdriver tslot_cd;
@@ -357,9 +357,9 @@ tslot_attach(device_t parent, device_t self, void *args)
 
 	TSPRINTF("starting event thread...\n");
 	if (kthread_create(PRI_NONE, 0, NULL, tslot_event_thread, sc,
-	    &sc->sc_thread, "%s", self->dv_xname) != 0) {
+	    &sc->sc_thread, "%s", device_xname(self)) != 0) {
 		panic("%s: unable to create event kthread",
-		    self->dv_xname);
+		    device_xname(self));
 	}
 
 	sc->sc_pct = (pcmcia_chipset_tag_t)&tslot_functions;

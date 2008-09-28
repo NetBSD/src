@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.8.6.1 2008/06/02 13:24:04 mjf Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.8.6.2 2008/09/28 10:40:50 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.8.6.1 2008/06/02 13:24:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.8.6.2 2008/09/28 10:40:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ hfs_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 			break;
 	}
 
-	if (hp->h_rec.cnid == HFS_CNID_ROOT_FOLDER)
+	if (hp->h_rec.u.cnid == HFS_CNID_ROOT_FOLDER)
 		vp->v_vflag |= VV_ROOT;
 
 	*vpp = vp;

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.38.6.1 2008/06/02 13:21:53 mjf Exp $
+#	$NetBSD: genassym.cf,v 1.38.6.2 2008/09/28 10:39:47 mjf Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -14,11 +14,7 @@
 # 2. Redistributions in binary form must reproduce the above copyright
 #    notice, this list of conditions and the following disclaimer in the
 #    documentation and/or other materials provided with the distribution.
-# 3. All advertising materials mentioning features or use of this software
-#    must display the following acknowledgement:
-#	This product includes software developed by the University of
-#	California, Berkeley and its contributors.
-# 4. Neither the name of the University nor the names of its contributors
+# 3. Neither the name of the University nor the names of its contributors
 #    may be used to endorse or promote products derived from this software
 #    without specific prior written permission.
 #
@@ -67,6 +63,10 @@ endif
 
 ifdef __HAVE_FAST_SOFTINTS
 define	__HAVE_FAST_SOFTINTS	1
+endif
+
+ifdef __HAVE_UNNESTED_INTRS
+define	__HAVE_UNNESTED_INTRS	1
 endif
 
 define	KERNEL_BASE		KERNEL_BASE
@@ -153,6 +153,9 @@ define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
 if defined(EXEC_AOUT)
 define	CI_CTRL			offsetof(struct cpu_info, ci_ctrl)
+endif
+ifdef __HAVE_FAST_SOFTINTS
+define	CI_SOFTINTS		offsetof(struct cpu_info, ci_softints)
 endif
 
 # Constants required for in_cksum() and friends.

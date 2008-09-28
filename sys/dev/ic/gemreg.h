@@ -1,4 +1,4 @@
-/*	$NetBSD: gemreg.h,v 1.11.6.1 2008/06/02 13:23:21 mjf Exp $ */
+/*	$NetBSD: gemreg.h,v 1.11.6.2 2008/09/28 10:40:23 mjf Exp $ */
 
 /*
  *
@@ -36,7 +36,9 @@
  * Register definitions for Sun GEM Gigabit Ethernet
  * See `GEM Gigabit Ethernet ASIC Specification'
  *   http://www.sun.com/processors/manuals/ge.pdf
- * Section 3.1.3 GEM Register Space (from Rev 1.2)
+ * and `Sbus GEM Specification'
+ *  http://mediacast.sun.com/users/Barton808/media/gem_sbus-1.pdf
+ * section 3.1.3 GEM Register Space
  */
 
 /*
@@ -44,7 +46,7 @@
  * Section 3.1.4.1
  *
  * First bank: this registers live at the start of the PCI
- * mapping, and at the start of the second bank of the SBUS
+ * mapping, and at the start of the second bank of the SBus
  * version.
  */
 #define	GEM_SEB_STATE		0x0000	/* SEB State (R/O) */
@@ -58,7 +60,7 @@
 
 /*
  * Second bank: this registers live at offset 0x1000 of the PCI
- * mapping, and at the start of the first bank of the SBUS
+ * mapping, and at the start of the first bank of the SBus
  * version.
  */
 #define GEM_PCI_BANK2_OFFSET	0x1000
@@ -69,11 +71,11 @@
 #define	GEM_BIF_DIAG		0x000c	/* PCI BIF Diagnostic */
 #define	GEM_RESET		0x0010	/* PCI Software Reset */
 
-#define GEM_SBUS_RESET		0x0000	/* Sbus Reset */
-#define GEM_SBUS_CONFIG		0x0004	/* Sbus Burst-Size Configuration */
-#define GEM_SBUS_ERROR_STATUS	0x0008	/* Sbus Fatal Error */
-#define GEM_SBUS_REVISION	0x000c	/* Sbus Revision */
-#define GEM_SBUS_SOFT_RESET	0x0010	/* Sbus Software Reset */
+#define GEM_SBUS_RESET		0x0000	/* SBus Reset */
+#define GEM_SBUS_CONFIG		0x0004	/* SBus Burst-Size Configuration */
+#define GEM_SBUS_ERROR_STATUS	0x0008	/* SBus Fatal Error */
+#define GEM_SBUS_REVISION	0x000c	/* SBus Revision */
+/*  SBus Software Reset at same offset (0x0010) as PCI Software Reset above */
 
 /*
  * Bits in GEM_SEB_STATE register

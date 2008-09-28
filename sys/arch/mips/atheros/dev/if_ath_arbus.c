@@ -1,4 +1,4 @@
-/* $NetBSD: if_ath_arbus.c,v 1.10.6.1 2008/04/03 12:42:21 mjf Exp $ */
+/* $NetBSD: if_ath_arbus.c,v 1.10.6.2 2008/09/28 10:40:03 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.10.6.1 2008/04/03 12:42:21 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_arbus.c,v 1.10.6.2 2008/09/28 10:40:03 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,15 +75,15 @@ struct ath_arbus_softc {
 	struct ar531x_config	sc_config;
 };
 
-static int	ath_arbus_match(device_t, struct cfdata *, void *);
+static int	ath_arbus_match(device_t, cfdata_t, void *);
 static void	ath_arbus_attach(device_t, device_t, void *);
 static int	ath_arbus_detach(device_t, int);
 
-CFATTACH_DECL(ath_arbus, sizeof(struct ath_arbus_softc),
+CFATTACH_DECL_NEW(ath_arbus, sizeof(struct ath_arbus_softc),
     ath_arbus_match, ath_arbus_attach, ath_arbus_detach, NULL);
 
 static int
-ath_arbus_match(device_t parent, struct cfdata *cf, void *opaque)
+ath_arbus_match(device_t parent, cfdata_t cf, void *opaque)
 {
 	struct arbus_attach_args *aa;
 
@@ -117,9 +117,10 @@ ath_arbus_attach(device_t parent, device_t self, void *opaque)
 
 	asc = device_private(self);
 	sc = &asc->sc_ath;
+	sc->sc_dev = self;
 	aa = (struct arbus_attach_args *)opaque;
 
-	prop = prop_dictionary_get(device_properties(&sc->sc_dev),
+	prop = prop_dictionary_get(device_properties(sc->sc_dev),
 	    "wmac-rev");
 	if (prop == NULL) {
 		printf(": unable to get wmac-rev property\n");
@@ -136,8 +137,7 @@ ath_arbus_attach(device_t parent, device_t self, void *opaque)
 	rv = bus_space_map(asc->sc_iot, aa->aa_addr, aa->aa_size, 0,
 	    &asc->sc_ioh);
 	if (rv) {
-		aprint_error("%s: unable to map registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to map registers\n");
 		return;
 	}
 	/*
@@ -145,11 +145,10 @@ ath_arbus_attach(device_t parent, device_t self, void *opaque)
 	 */
 	rv = ar531x_board_config(&asc->sc_config);
 	if (rv) {
-		aprint_error("%s: unable to locate board configuration\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to locate board configuration\n");
 		return;
 	}
-	asc->sc_config.unit = sc->sc_dev.dv_unit;	/* XXX? */
+	asc->sc_config.unit = device_unit(sc->sc_dev);
 	asc->sc_config.tag = asc->sc_iot;
 
 	/* NB: the HAL expects the config state passed as the tag */
@@ -160,8 +159,7 @@ ath_arbus_attach(device_t parent, device_t self, void *opaque)
 	asc->sc_ih = arbus_intr_establish(aa->aa_cirq, aa->aa_mirq, ath_intr,
 	    sc);
 	if (asc->sc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "couldn't establish interrupt\n");
 		return;
 	}
 
@@ -173,7 +171,7 @@ ath_arbus_attach(device_t parent, device_t self, void *opaque)
 		pmf_class_network_register(self, &sc->sc_if);
 
 	if (ath_attach(devid, sc) != 0) {
-		aprint_error("%s: ath_attach failed\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "ath_attach failed\n");
 		goto err;
 	}
 

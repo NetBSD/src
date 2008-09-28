@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.135.6.2 2008/06/02 13:24:12 mjf Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.135.6.3 2008/09/28 10:40:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.135.6.2 2008/06/02 13:24:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.135.6.3 2008/09/28 10:40:53 mjf Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -364,7 +364,8 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 	 * this; memory access will be fine, but register access will
 	 * be weird.
 	 */
-	lt = proc_representative_lwp(t, NULL, 1);
+	lt = LIST_FIRST(&t->p_lwps);
+	KASSERT(lt != NULL);
 	lwp_addref(lt);
 
 	/*
@@ -959,6 +960,6 @@ process_stoptrace(void)
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	(void)issignal(l);
 	mutex_exit(p->p_lock);
-	KERNEL_LOCK(l->l_biglocks - 1, l);
+	KERNEL_LOCK(l->l_biglocks, l);
 }
 #endif	/* KTRACE || PTRACE */

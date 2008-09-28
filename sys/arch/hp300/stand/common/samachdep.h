@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.15 2007/03/04 05:59:50 christos Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.15.40.1 2008/09/28 10:39:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -132,5 +132,4 @@ extern	struct fs_ops file_system_rawfs[];
 extern	struct fs_ops file_system_ufs[];
 extern	struct fs_ops file_system_nfs[];
 
-extern	char bootprog_name[], bootprog_rev[], bootprog_date[],
-	    bootprog_maker[];
+extern	char bootprog_name[], bootprog_rev[], bootprog_kernrev[];

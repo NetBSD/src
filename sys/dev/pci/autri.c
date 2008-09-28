@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.37.6.2 2008/06/02 13:23:37 mjf Exp $	*/
+/*	$NetBSD: autri.c,v 1.37.6.3 2008/09/28 10:40:25 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.37.6.2 2008/06/02 13:23:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.37.6.3 2008/09/28 10:40:25 mjf Exp $");
 
 #include "midi.h"
 
@@ -517,28 +517,20 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	struct autri_softc *sc;
 	struct pci_attach_args *pa;
 	pci_chipset_tag_t pc;
-	pcitag_t tag;
 	struct autri_codec_softc *codec;
 	pci_intr_handle_t ih;
 	char const *intrstr;
 	char devinfo[256];
-	pcireg_t csr;
 	int r;
 	uint32_t reg;
 
 	sc = (struct autri_softc *)self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
-	tag = pa->pa_tag;
 	aprint_naive(": Audio controller\n");
 
 	sc->sc_devid = pa->pa_id;
 	sc->sc_class = pa->pa_class;
-
-	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	csr |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-	    PCI_COMMAND_MASTER_ENABLE);
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	sc->sc_revision = PCI_REVISION(pa->pa_class);

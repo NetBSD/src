@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticreg.h,v 1.7.114.1 2008/06/02 13:23:52 mjf Exp $	*/
+/* 	$NetBSD: sticreg.h,v 1.7.114.2 2008/09/28 10:40:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ struct stic_regs {
 	u_int32_t	sr_pad3;
 	u_int32_t	sr_buscsr;
 	u_int32_t	sr_modcl;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Bit definitions for stic_regs::sticsr.

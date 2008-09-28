@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.c,v 1.13.6.1 2008/06/02 13:23:18 mjf Exp $ */
+/*	$NetBSD: ath_netbsd.c,v 1.13.6.2 2008/09/28 10:40:22 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.13.6.1 2008/06/02 13:23:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.13.6.2 2008/09/28 10:40:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -451,7 +451,7 @@ ath_sysctlattach(struct ath_softc *sc)
 	sc->sc_debug = ath_debug;
 	sc->sc_txintrperiod = ATH_TXINTR_PERIOD;
 
-	if ((rnode = ath_sysctl_instance(device_xname(&sc->sc_dev), log)) == NULL)
+	if ((rnode = ath_sysctl_instance(device_xname(sc->sc_dev), log)) == NULL)
 		return;
 
 	if ((rc = SYSCTL_INT(0, countrycode, "EEPROM country code")) != 0)

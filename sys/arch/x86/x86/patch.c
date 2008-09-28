@@ -1,4 +1,4 @@
-/*	$NetBSD: patch.c,v 1.11.6.1 2008/06/02 13:22:52 mjf Exp $	*/
+/*	$NetBSD: patch.c,v 1.11.6.2 2008/09/28 10:40:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.11.6.1 2008/06/02 13:22:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.11.6.2 2008/09/28 10:40:12 mjf Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -83,7 +83,7 @@ extern void	*atomic_lockpatch[];
 #define	X86_DS		0x3e
 #define	X86_GROUP_0F	0x0f
 
-static void __attribute__ ((__unused__))
+static void __unused
 patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 	  void *pcrel)
 {
@@ -108,7 +108,7 @@ patchfunc(void *from_s, void *from_e, void *to_s, void *to_e,
 	}
 }
 
-static inline void  __attribute__ ((__unused__))
+static inline void __unused
 patchbytes(void *addr, const int byte1, const int byte2)
 {
 

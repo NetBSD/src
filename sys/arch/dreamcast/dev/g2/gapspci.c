@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.15 2006/08/07 17:36:53 tsutsui Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.15.58.1 2008/09/28 10:39:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.15 2006/08/07 17:36:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci.c,v 1.15.58.1 2008/09/28 10:39:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ int
 gaps_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct g2bus_attach_args *ga = aux;
-	char idbuf[16];
+	uint8_t idbuf[16];
 	bus_space_handle_t tmp_memh;
 
 	if (bus_space_map(ga->ga_memt, 0x01001400, 0x100, 0, &tmp_memh) != 0)
@@ -74,7 +74,7 @@ gaps_match(struct device *parent, struct cfdata *match, void *aux)
 
 	bus_space_unmap(ga->ga_memt, tmp_memh, 0x100);
 
-	if (strncmp(idbuf, "GAPSPCI_BRIDGE_2", 16))
+	if (strncmp((const char *)idbuf, "GAPSPCI_BRIDGE_2", 16))
 		return 0;
 
 	return 1;

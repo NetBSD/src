@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.1.6.5 2008/07/02 19:08:20 mjf Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.1.6.6 2008/09/28 10:40:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.1.6.5 2008/07/02 19:08:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.1.6.6 2008/09/28 10:40:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ sys_dup2(struct lwp *l, const struct sys_dup2_args *uap, register_t *retval)
 	fd_putfile(old);
 	*retval = new;
 
-	return 0;
+	return error;
 }
 
 /*
@@ -428,7 +428,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		break;
 
 	case F_SETOWN:
-		tmp = (int)(intptr_t) SCARG(uap, arg);
+		tmp = (int)(uintptr_t) SCARG(uap, arg);
 		error = (*fp->f_ops->fo_ioctl)(fp, FIOSETOWN, &tmp);
 		break;
 

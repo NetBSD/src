@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.158.6.2 2008/06/29 09:33:04 mjf Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.158.6.3 2008/09/28 10:40:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.158.6.2 2008/06/29 09:33:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.158.6.3 2008/09/28 10:40:17 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -536,8 +536,8 @@ sunos_sys_mctl(struct lwp *l, const struct sunos_sys_mctl_args *uap, register_t 
 int
 sunos_sys_setsockopt(struct lwp *l, const struct sunos_sys_setsockopt_args *uap, register_t *retval)
 {
+	struct sockopt sopt;
 	struct socket *so;
-	struct mbuf *m = NULL;
 	int name = SCARG(uap, name);
 	int error;
 
@@ -546,10 +546,11 @@ sunos_sys_setsockopt(struct lwp *l, const struct sunos_sys_setsockopt_args *uap,
 		return (error);
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (name == SO_DONTLINGER) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		mtod(m, struct linger *)->l_onoff = 0;
-		m->m_len = sizeof(struct linger);
-		error = sosetopt(so, SCARG(uap, level), SO_LINGER, m);
+		struct linger lg;
+
+		lg.l_onoff = 0;
+		error = so_setsockopt(l, so, SCARG(uap, level), SO_LINGER,
+		    &lg, sizeof(lg));
 		goto out;
 	}
 	if (SCARG(uap, level) == IPPROTO_IP) {
@@ -574,17 +575,14 @@ sunos_sys_setsockopt(struct lwp *l, const struct sunos_sys_setsockopt_args *uap,
 		error = EINVAL;
 		goto out;
 	}
+	sockopt_init(&sopt, SCARG(uap, level), name, SCARG(uap, valsize));
 	if (SCARG(uap, val)) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		error = copyin(SCARG(uap, val), mtod(m, void *),
+		error = copyin(SCARG(uap, val), sopt.sopt_data,
 		    (u_int)SCARG(uap, valsize));
-		if (error) {
-			(void) m_free(m);
-			goto out;
-		}
-		m->m_len = SCARG(uap, valsize);
 	}
-	error = sosetopt(so, SCARG(uap, level), name, m);
+	if (error == 0)
+		error = sosetopt(so, &sopt);
+	sockopt_destroy(&sopt);
  out:
  	fd_putfile(SCARG(uap, s));
 	return (error);

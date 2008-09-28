@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.20.28.1 2008/06/02 13:23:17 mjf Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.20.28.2 2008/09/28 10:40:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@ struct iop_initiator {
 struct iop_pgop {
 	struct	i2o_param_op_list_header olh;
 	struct	i2o_param_op_all_template oat;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Per-IOP context.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_adaptec.c,v 1.7.6.1 2008/04/03 12:42:38 mjf Exp $	*/
+/*	$NetBSD: ata_raid_adaptec.c,v 1.7.6.2 2008/09/28 10:40:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.7.6.1 2008/04/03 12:42:38 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.7.6.2 2008/09/28 10:40:19 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -160,6 +160,9 @@ ata_raid_read_config_adaptec(struct wd_softc *sc)
 		aai->aai_cylinders = aai->aai_capacity / (63 * 255);
 		aai->aai_offset = 0;
 		aai->aai_reserved = 17;
+		if (info->configs[0].name)
+			strlcpy(aai->aai_name, info->configs[0].name,
+			    sizeof(aai->aai_name));
 
 		/* XXX - bogus.  RAID1 shouldn't really have an interleave */
 		if (aai->aai_interleave == 0)

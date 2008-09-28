@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.82.6.1 2008/06/02 13:22:00 mjf Exp $
+# $NetBSD: GENERIC,v 1.82.6.2 2008/09/28 10:39:52 mjf Exp $
 #
 # GENERIC machine description file
 # 
@@ -93,6 +93,7 @@ file-system 	PROCFS		# /proc
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent supoprt
 #options 	SOFTDEP		# FFS soft updates support
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -217,6 +218,11 @@ pseudo-device	loop			# network loopback
 #pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 #pseudo-device	agr			# IEEE 802.3ad link aggregation
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-/* $NetBSD: vesafbvar.h,v 1.4 2007/03/24 00:07:18 reinoud Exp $ */
+/* $NetBSD: vesafbvar.h,v 1.4.34.1 2008/09/28 10:39:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -68,7 +68,7 @@ extern const char _splash_header_data_cmap[64+32][3];
 #define	VESAFB_SHADOW_FB
 
 struct vesafb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	int sc_mode;
 	int sc_isconsole;
 	struct vcons_data sc_vd;

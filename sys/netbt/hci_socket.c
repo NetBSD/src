@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.14.6.1 2008/06/02 13:24:23 mjf Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.14.6.2 2008/09/28 10:40:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.14.6.1 2008/06/02 13:24:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.14.6.2 2008/09/28 10:40:57 mjf Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -751,67 +751,66 @@ release:
  * get/set socket options
  */
 int
-hci_ctloutput(int req, struct socket *so, int level,
-		int optname, struct mbuf **opt)
+hci_ctloutput(int req, struct socket *so, struct sockopt *sopt)
 {
 	struct hci_pcb *pcb = (struct hci_pcb *)so->so_pcb;
-	struct mbuf *m;
-	int err = 0;
+	int optval, err = 0;
 
 	DPRINTFN(2, "req %s\n", prcorequests[req]);
 
 	if (pcb == NULL)
 		return EINVAL;
 
-	if (level != BTPROTO_HCI)
+	if (sopt->sopt_level != BTPROTO_HCI)
 		return ENOPROTOOPT;
 
 	switch(req) {
 	case PRCO_GETOPT:
-		m = m_get(M_WAIT, MT_SOOPTS);
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case SO_HCI_EVT_FILTER:
-			m->m_len = sizeof(struct hci_filter);
-			memcpy(mtod(m, void *), &pcb->hp_efilter, m->m_len);
+			err = sockopt_set(sopt, &pcb->hp_efilter,
+			    sizeof(struct hci_filter));
+
 			break;
 
 		case SO_HCI_PKT_FILTER:
-			m->m_len = sizeof(struct hci_filter);
-			memcpy(mtod(m, void *), &pcb->hp_pfilter, m->m_len);
+			err = sockopt_set(sopt, &pcb->hp_pfilter,
+			    sizeof(struct hci_filter));
+
 			break;
 
 		case SO_HCI_DIRECTION:
-			m->m_len = sizeof(int);
-			if (pcb->hp_flags & HCI_DIRECTION)
-				*mtod(m, int *) = 1;
-			else
-				*mtod(m, int *) = 0;
+			err = sockopt_setint(sopt,
+			    (pcb->hp_flags & HCI_DIRECTION ? 1 : 0));
+
 			break;
 
 		default:
 			err = ENOPROTOOPT;
-			m_freem(m);
-			m = NULL;
 			break;
 		}
-		*opt = m;
 		break;
 
 	case PRCO_SETOPT:
-		m = *opt;
-		if (m) switch (optname) {
+		switch (sopt->sopt_name) {
 		case SO_HCI_EVT_FILTER:	/* set event filter */
-			m->m_len = min(m->m_len, sizeof(struct hci_filter));
-			memcpy(&pcb->hp_efilter, mtod(m, void *), m->m_len);
+			err = sockopt_get(sopt, &pcb->hp_efilter,
+			    sizeof(pcb->hp_efilter));
+
 			break;
 
 		case SO_HCI_PKT_FILTER:	/* set packet filter */
-			m->m_len = min(m->m_len, sizeof(struct hci_filter));
-			memcpy(&pcb->hp_pfilter, mtod(m, void *), m->m_len);
+			err = sockopt_get(sopt, &pcb->hp_pfilter,
+			    sizeof(pcb->hp_pfilter));
+
 			break;
 
 		case SO_HCI_DIRECTION:	/* request direction ctl messages */
-			if (*mtod(m, int *))
+			err = sockopt_getint(sopt, &optval);
+			if (err)
+				break;
+
+			if (optval)
 				pcb->hp_flags |= HCI_DIRECTION;
 			else
 				pcb->hp_flags &= ~HCI_DIRECTION;
@@ -821,7 +820,6 @@ hci_ctloutput(int req, struct socket *so, int level,
 			err = ENOPROTOOPT;
 			break;
 		}
-		m_freem(m);
 		break;
 
 	default:

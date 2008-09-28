@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.17 2008/01/06 10:33:24 he Exp $	*/
+/*	$NetBSD: aica.c,v 1.17.6.1 2008/09/28 10:39:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.17 2008/01/06 10:33:24 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.17.6.1 2008/09/28 10:39:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,7 @@ aica_attach(struct device *parent, struct device *self, void *aux)
 	aica_enable(sc);
 
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
-	    sysasic_intr_string(IPL_BIO));
+	    sysasic_intr_string(SYSASIC_IRL9));
 	sysasic_intr_establish(SYSASIC_EVENT_AICA, IPL_BIO, SYSASIC_IRL9,
 	    aica_intr, sc);
 

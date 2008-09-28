@@ -1,4 +1,4 @@
-/* $NetBSD: memory.h,v 1.5 2007/10/17 19:58:30 garbled Exp $ */
+/* $NetBSD: memory.h,v 1.5.16.1 2008/09/28 10:40:13 mjf Exp $ */
 /******************************************************************************
  * memory.h
  * 
@@ -36,6 +36,21 @@
 #define XENMEM_increase_reservation 0
 #define XENMEM_decrease_reservation 1
 #define XENMEM_populate_physmap     6
+
+#if __XEN_INTERFACE_VERSION__ >= 0x00030209
+/*
+ * Maximum # bits addressable by the user of the allocated region (e.g., I/O 
+ * devices often have a 32-bit limitation even in 64-bit systems). If zero 
+ * then the user has no addressing restriction. This field is not used by 
+ * XENMEM_decrease_reservation.
+ */
+#define XENMEMF_address_bits(x)     (x)
+#define XENMEMF_get_address_bits(x) ((x) & 0xffu)
+/* NUMA node to allocate from. */
+#define XENMEMF_node(x)     (((x) + 1) << 8)
+#define XENMEMF_get_node(x) ((((x) >> 8) - 1) & 0xffu)
+#endif
+
 struct xen_memory_reservation {
 
     /*
@@ -54,13 +69,12 @@ struct xen_memory_reservation {
     xen_ulong_t    nr_extents;
     unsigned int   extent_order;
 
-    /*
-     * Maximum # bits addressable by the user of the allocated region (e.g., 
-     * I/O devices often have a 32-bit limitation even in 64-bit systems). If 
-     * zero then the user has no addressing restriction.
-     * This field is not used by XENMEM_decrease_reservation.
-     */
+#if __XEN_INTERFACE_VERSION__ >= 0x00030209
+    /* XENMEMF flags. */
+    unsigned int   mem_flags;
+#else
     unsigned int   address_bits;
+#endif
 
     /*
      * Domain whose reservation is being changed.

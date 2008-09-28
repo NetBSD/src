@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.37.6.1 2008/06/02 13:24:30 mjf Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.37.6.2 2008/09/28 10:41:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.37.6.1 2008/06/02 13:24:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.37.6.2 2008/09/28 10:41:00 mjf Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_tftproot.h"
@@ -403,7 +403,7 @@ bootpcheck(m, context)
 		goto warn;
 	}
 	p = &bootp->bp_vend[4];
-	limit = ((char*)bootp) + bpc->replylen;
+	limit = ((u_char*)bootp) + bpc->replylen;
 	while (p < limit) {
 		tag = *p++;
 		if (tag == TAG_END)
@@ -498,13 +498,11 @@ bootpc_call(nd, lwp)
 	 * interface (why?) and then fails because broadcast
 	 * is not supported on that interface...
 	 */
-	{	int32_t *opt;
-		m = m_get(M_WAIT, MT_SOOPTS);
-		opt = mtod(m, int32_t *);
-		m->m_len = sizeof(*opt);
-		*opt = 1;
-		error = sosetopt(so, SOL_SOCKET, SO_DONTROUTE, m);
-		m = NULL;	/* was consumed */
+	{	int32_t opt;
+
+		opt = 1;
+		error = so_setsockopt(NULL, so, SOL_SOCKET, SO_DONTROUTE, &opt,
+		    sizeof(opt));
 	}
 	if (error) {
 		DPRINTF(("bootpc_call: SO_DONTROUTE failed %d\n", error));
@@ -524,13 +522,11 @@ bootpc_call(nd, lwp)
 	 * The "helper-address" feature of some popular router vendor seems
 	 * to do simple IP forwarding and drops packets with (ip_ttl == 1).
 	 */
-	{	u_char *opt;
-		m = m_get(M_WAIT, MT_SOOPTS);
-		opt = mtod(m, u_char *);
-		m->m_len = sizeof(*opt);
-		*opt = 7;
-		error = sosetopt(so, IPPROTO_IP, IP_MULTICAST_TTL, m);
-		m = NULL;	/* was consumed */
+	{	u_char opt;
+
+		opt = 7;
+		error = so_setsockopt(NULL, so, IPPROTO_IP, IP_MULTICAST_TTL,
+		    &opt, sizeof(opt));
 	}
 	if (error) {
 		DPRINTF(("bootpc_call: IP_MULTICAST_TTL failed %d\n", error));
@@ -704,7 +700,7 @@ bootp_extract(bootp, replylen, nd)
 	overloaded = 0;
 
 	p = &bootp->bp_vend[4];
-	limit = ((char*)bootp) + replylen;
+	limit = ((u_char*)bootp) + replylen;
 	while (p < limit) {
 		tag = *p++;
 		if (tag == TAG_END)

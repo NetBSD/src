@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.18.6.2 2008/06/05 19:14:35 mjf Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.18.6.3 2008/09/28 10:40:14 mjf Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.18.6.2 2008/06/05 19:14:35 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.18.6.3 2008/09/28 10:40:14 mjf Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -525,7 +525,7 @@ xenbus_probe_init(void *unused)
 #if defined(DOM0OPS)
 		vaddr_t page;
 		paddr_t ma;
-		evtchn_op_t op = { 0 };
+		evtchn_op_t op = { .cmd = 0 };
 		int ret;
 
 		/* Allocate page. */

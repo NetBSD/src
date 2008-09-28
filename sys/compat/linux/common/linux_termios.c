@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.33.6.2 2008/06/02 13:23:04 mjf Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.33.6.3 2008/09/28 10:40:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.33.6.2 2008/06/02 13:23:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.33.6.3 2008/09/28 10:40:15 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.33.6.2 2008/06/02 13:23:04 mjf E
 #include <sys/ioctl.h>
 #include <sys/mount.h>
 #include <sys/termios.h>
+#include <sys/kernel.h>
 
 #include <sys/syscallargs.h>
 
@@ -296,7 +297,20 @@ linux_ioctl_termios(struct lwp *l, const struct linux_sys_ioctl_args *uap, regis
 		SCARG(&ia, com) = TIOCNOTTY;
 		break;
 	case LINUX_TCSBRK:
-		SCARG(&ia, com) = SCARG(uap, data) ? TIOCDRAIN : TIOCSBRK;
+		idat = (u_long)SCARG(uap, data);
+		if (idat != 0)
+			SCARG(&ia, com) = TIOCDRAIN;
+		else {
+			if ((error = (*bsdioctl)(fp, TIOCSBRK, NULL)) != 0)
+				goto out;
+			error = tsleep(&idat, PZERO | PCATCH, "linux_tcsbrk", hz / 4);
+			if (error == EINTR || error == ERESTART) {
+				(void)(*bsdioctl)(fp, TIOCCBRK, NULL);
+				error = EINTR;
+			} else
+				error = (*bsdioctl)(fp, TIOCCBRK, NULL);
+			goto out;
+		}
 		break;
 	case LINUX_TIOCMGET:
 		SCARG(&ia, com) = TIOCMGET;

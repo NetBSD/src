@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.68.12.3 2008/06/29 09:33:06 mjf Exp $	*/
+/*	$NetBSD: iop.c,v 1.68.12.4 2008/09/28 10:40:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.68.12.3 2008/06/29 09:33:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.68.12.4 2008/09/28 10:40:21 mjf Exp $");
 
 #include "iop.h"
 
@@ -916,7 +916,7 @@ iop_status_get(struct iop_softc *sc, int nosleep)
 	paddr_t pa;
 	int rv, i;
 
-	pa = sc->sc_scr_seg->ds_addr;
+	pa = sc->sc_scr_dmamap->dm_segs[0].ds_addr;
 	st = (struct i2o_status *)sc->sc_scr;
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_exec_status_get);
@@ -991,7 +991,7 @@ iop_ofifo_init(struct iop_softc *sc)
 	mb[sizeof(*mf) / sizeof(u_int32_t) + 0] = sizeof(*sw) |
 	    I2O_SGL_SIMPLE | I2O_SGL_END_BUFFER | I2O_SGL_END;
 	mb[sizeof(*mf) / sizeof(u_int32_t) + 1] =
-	    (u_int32_t)sc->sc_scr_seg->ds_addr;
+	    (u_int32_t)sc->sc_scr_dmamap->dm_segs[0].ds_addr;
 	mb[0] += 2 << 16;
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_scr_dmamap, 0, sizeof(*sw),
@@ -1540,7 +1540,7 @@ iop_reset(struct iop_softc *sc)
 	paddr_t pa;
 
 	sw = (u_int32_t *)sc->sc_scr;
-	pa = sc->sc_scr_seg->ds_addr;
+	pa = sc->sc_scr_dmamap->dm_segs[0].ds_addr;
 
 	mf.msgflags = I2O_MSGFLAGS(i2o_exec_iop_reset);
 	mf.msgfunc = I2O_MSGFUNC(I2O_TID_IOP, I2O_EXEC_IOP_RESET);
@@ -2375,7 +2375,7 @@ iop_print_ident(struct iop_softc *sc, int tid)
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
 		struct	i2o_param_device_identity di;
-	} __attribute__ ((__packed__)) p;
+	} __packed p;
 	char buf[32];
 	int rv;
 

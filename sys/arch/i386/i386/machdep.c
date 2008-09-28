@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.626.6.4 2008/07/02 19:08:16 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.626.6.5 2008/09/28 10:39:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.626.6.4 2008/07/02 19:08:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.626.6.5 2008/09/28 10:39:59 mjf Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -298,7 +298,6 @@ void	add_mem_cluster(uint64_t, uint64_t, uint32_t);
 
 extern int time_adjusted;
 
-struct bootinfo	bootinfo;
 int *esym;
 int *eblob;
 extern int boothowto;
@@ -765,7 +764,7 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)catcher;
 	tf->tf_cs = GSEL(sel, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC|PSL_D);
+	tf->tf_eflags &= ~PSL_CLEARSIG;
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
@@ -857,7 +856,6 @@ int	waittime = -1;
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	int s;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -876,18 +874,15 @@ cpu_reboot(int howto, char *bootstr)
 			resettodr();
 	}
 
+	/* Disable interrupts. */
+	splhigh();
+
 	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
-		s = splhigh();
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-		splx(s);
-	}
 
 haltsys:
 	doshutdownhooks();
-
-	/* Disable interrupts. */
-	(void)splhigh();
 
 #ifdef MULTIPROCESSOR
 	x86_broadcast_ipi(X86_IPI_HALT);
@@ -916,7 +911,8 @@ haltsys:
 		 * and users have reported disk corruption.
 		 */
 		delay(500000);
-		apm_set_powstate(NULL, APM_DEV_DISK(APM_DEV_ALLUNITS), APM_SYS_OFF);
+		apm_set_powstate(NULL, APM_DEV_DISK(APM_DEV_ALLUNITS),
+		    APM_SYS_OFF);
 		delay(500000);
 		apm_set_powstate(NULL, APM_DEV_ALLDEVS, APM_SYS_OFF);
 		printf("WARNING: APM powerdown failed!\n");
@@ -1858,8 +1854,21 @@ init386(paddr_t first_avail)
 	for (x = 0; x < 32; x++) {
 		KASSERT(xen_idt_idx < MAX_XEN_IDT);
 		xen_idt[xen_idt_idx].vector = x;
-		xen_idt[xen_idt_idx].flags =
-			(x == 3 || x == 4) ? SEL_UPL : SEL_XEN;
+
+		switch (x) {
+		case 2:  /* NMI */
+		case 18: /* MCA */
+			TI_SET_IF(&(xen_idt[xen_idt_idx]), 2);
+			break;
+		case 3:
+		case 4:
+			xen_idt[xen_idt_idx].flags = SEL_UPL;
+			break;
+		default:
+			xen_idt[xen_idt_idx].flags = SEL_XEN;
+			break;
+		}
+
 		xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 		xen_idt[xen_idt_idx].address =
 			(uint32_t)IDTVEC(exceptions)[x];

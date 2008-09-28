@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.c,v 1.67.6.1 2008/06/02 13:23:05 mjf Exp $	 */
+/*	$NetBSD: mach_exec.c,v 1.67.6.2 2008/09/28 10:40:16 mjf Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.67.6.1 2008/06/02 13:23:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exec.c,v 1.67.6.2 2008/09/28 10:40:16 mjf Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -189,8 +189,11 @@ mach_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	mach_e_proc_init(p, p->p_vmspace);
 
-	if (p->p_emul != epp->ep_esch->es_emul)
-		mach_e_lwp_fork(NULL, proc_representative_lwp(p, NULL, 1));
+	if (p->p_emul != epp->ep_esch->es_emul) {
+		struct lwp *l = LIST_FIRST(&p->p_lwps);
+		KASSERT(l != NULL);
+		mach_e_lwp_fork(NULL, l);
+	}
 
 	return;
 }
@@ -346,10 +349,13 @@ mach_e_proc_exit(struct proc *p)
 {
 	struct mach_emuldata *med;
 	struct mach_right *mr;
+	struct lwp *l;
 	int i;
 
 	/* There is only one lwp remaining... */
-	mach_e_lwp_exit(proc_representative_lwp(p, NULL, 1));
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
+	mach_e_lwp_exit(l);
 
 	med = (struct mach_emuldata *)p->p_emuldata;
 

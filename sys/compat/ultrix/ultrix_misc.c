@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.110.6.3 2008/06/29 09:33:04 mjf Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.110.6.4 2008/09/28 10:40:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.110.6.3 2008/06/29 09:33:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.110.6.4 2008/09/28 10:40:17 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -346,8 +346,8 @@ ultrix_sys_mmap(struct lwp *l, const struct ultrix_sys_mmap_args *uap, register_
 int
 ultrix_sys_setsockopt(struct lwp *l, const struct ultrix_sys_setsockopt_args *uap, register_t *retval)
 {
+	struct sockopt sopt;
 	struct socket *so;
-	struct mbuf *m = NULL;
 	int error;
 	struct sys_setsockopt_args ap;
 
@@ -362,10 +362,12 @@ ultrix_sys_setsockopt(struct lwp *l, const struct ultrix_sys_setsockopt_args *ua
 		return error;
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (SCARG(&ap, name) == SO_DONTLINGER) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		mtod(m, struct linger *)->l_onoff = 0;
-		m->m_len = sizeof(struct linger);
-		error = sosetopt(so, SCARG(&ap, level), SO_LINGER, m);
+		struct linger lg;
+
+		lg.l_onoff = 0;
+		error = so_setsockopt(l, so, SCARG(&ap, level), SO_LINGER,
+		    &lg, sizeof(lg));
+		goto out;
 	}
 	if (SCARG(&ap, level) == IPPROTO_IP) {
 #define		EMUL_IP_MULTICAST_IF		2
@@ -390,17 +392,15 @@ ultrix_sys_setsockopt(struct lwp *l, const struct ultrix_sys_setsockopt_args *ua
 		error = EINVAL;
 		goto out;
 	}
+	sockopt_init(&sopt, SCARG(&ap, level), SCARG(&ap, name),
+	    SCARG(&ap, valsize));
 	if (SCARG(&ap, val)) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		error = copyin(SCARG(&ap, val), mtod(m, void *),
+		error = copyin(SCARG(&ap, val), sopt.sopt_data,
 		    (u_int)SCARG(&ap, valsize));
-		if (error) {
-			(void) m_free(m);
-			goto out;
-		}
-		m->m_len = SCARG(&ap, valsize);
 	}
-	error = sosetopt(so, SCARG(&ap, level), SCARG(&ap, name), m);
+	if (error == 0)
+		error = sosetopt(so, &sopt);
+	sockopt_destroy(&sopt);
  out:
  	fd_putfile(SCARG(uap, s));
 	return error;

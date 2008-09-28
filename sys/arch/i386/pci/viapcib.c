@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.7.6.2 2008/06/02 13:22:18 mjf Exp $ */
+/* $NetBSD: viapcib.c,v 1.7.6.3 2008/09/28 10:40:00 mjf Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.7.6.2 2008/06/02 13:22:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.7.6.3 2008/09/28 10:40:00 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.7.6.2 2008/06/02 13:22:18 mjf Exp $");
 #include <dev/i2c/i2cvar.h>
 
 #include <i386/pci/viapcibreg.h>
+#include <x86/pci/pcibvar.h>
 
 /*#define VIAPCIB_DEBUG*/
 
@@ -82,6 +83,9 @@ __KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.7.6.2 2008/06/02 13:22:18 mjf Exp $");
 #endif
 
 struct viapcib_softc {
+	/* we call pcibattach(), which assumes softc starts like this: */
+	struct pcib_softc sc_pcib;
+
 	bus_space_tag_t	sc_iot;
 	bus_space_handle_t sc_ioh;
 	struct i2c_controller sc_i2c;
@@ -129,9 +133,6 @@ static int      viapcib_smbus_block_read(void *, i2c_addr_t, uint8_t,
 					 int, void *);
 /* XXX Should be moved to smbus layer */
 #define	SMB_MAXBLOCKSIZE	32
-
-/* from arch/i386/pci/pcib.c */
-extern void	pcibattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(viapcib, sizeof(struct viapcib_softc),
     viapcib_match, viapcib_attach, NULL, NULL);

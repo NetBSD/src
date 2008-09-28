@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.35.10.1 2008/06/02 13:23:40 mjf Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.35.10.2 2008/09/28 10:40:26 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.35.10.1 2008/06/02 13:23:40 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.35.10.2 2008/09/28 10:40:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,12 @@ static const struct rtk_type rtk_pci_devs[] = {
 		RTK_8129, "Realtek 8129 10/100BaseTX" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
 		RTK_8139, "Realtek 8139 10/100BaseTX" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138,
+		RTK_8139, "Realtek 8138 10/100BaseTX" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139D,
+		RTK_8139, "Realtek 8139D 10/100BaseTX" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8100,
+		RTK_8139, "Realtek 8100 10/100BaseTX" },
 	{ PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_MPX5030,
 		RTK_8139, "Accton MPX 5030/5038 10/100BaseTX" },
 	{ PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,

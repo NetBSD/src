@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.31.10.1 2008/04/03 12:42:37 mjf Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.31.10.2 2008/09/28 10:40:19 mjf Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -263,6 +263,7 @@ int		acpi_probe(void);
 ACPI_PHYSICAL_ADDRESS	acpi_OsGetRootPointer(void);
 int		acpi_match_hid(ACPI_DEVICE_INFO *, const char * const *);
 void		acpi_set_wake_gpe(ACPI_HANDLE);
+void		acpi_clear_wake_gpe(ACPI_HANDLE);
 
 ACPI_STATUS	acpi_eval_integer(ACPI_HANDLE, const char *, ACPI_INTEGER *);
 ACPI_STATUS	acpi_eval_string(ACPI_HANDLE, const char *, char **);

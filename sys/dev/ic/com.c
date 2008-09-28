@@ -673,15 +673,6 @@ com_activate(device_t self, enum devact act)
 		break;
 	}
 
-	if (sc->sc_type == COM_TYPE_OMAP) {
-		/* enable but mode is based on speed */
-		if (sc->sc_tty->t_termios.c_ospeed > 230400) {
-			CSR_WRITE_1(&sc->sc_regs, COM_REG_MDR1, MDR1_MODE_UART_13X);
-		} else {
-			CSR_WRITE_1(&sc->sc_regs, COM_REG_MDR1, MDR1_MODE_UART_16X);
-		}
-	}
-	mutex_spin_exit(&sc->sc_lock);
 	return (rv);
 }
 

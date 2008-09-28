@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.214.6.2 2008/06/02 13:24:34 mjf Exp $	*/
+/*	$NetBSD: systm.h,v 1.214.6.3 2008/09/28 10:41:05 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -98,8 +98,8 @@ extern int ncpuonline;		/* number of CPUs online */
 extern bool mp_online;		/* secondary processors are started */
 #endif /* defined(_KERNEL) */
 
-extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
-extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
+extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf2.c */
+extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf2.c */
 
 /*
  * These represent the swap pseudo-device (`sw').  This device
@@ -218,7 +218,7 @@ void	twiddle(void);
 #endif /* _KERNEL */
 
 void	panic(const char *, ...)
-    __attribute__((__noreturn__,__format__(__printf__,1,2)));
+    __dead __attribute__((__format__(__printf__,1,2)));
 void	uprintf(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	uprintf_locked(const char *, ...)

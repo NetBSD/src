@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.36 2008/01/19 22:10:15 dyoung Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.36.6.1 2008/09/28 10:40:03 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.36 2008/01/19 22:10:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.36.6.1 2008/09/28 10:40:03 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.36 2008/01/19 22:10:15 dyoung Exp $");
 
 #include <macppc/dev/dbdma.h>
 #include <macppc/dev/if_bmreg.h>
+#include <macppc/dev/obiovar.h>
 
 #define BMAC_TXBUFS 2
 #define BMAC_RXBUFS 16
@@ -97,8 +98,6 @@ struct bmac_softc {
 
 #define BMAC_BMACPLUS	0x01
 #define BMAC_DEBUGFLAG	0x02
-
-extern volatile uint32_t *heathrow_FCR;
 
 int bmac_match(struct device *, struct cfdata *, void *);
 void bmac_attach(struct device *, struct device *, void *);
@@ -276,21 +275,21 @@ bmac_reset_chip(sc)
 	dbdma_reset(sc->sc_txdma);
 	dbdma_reset(sc->sc_rxdma);
 
-	v = in32rb(heathrow_FCR);
+	v = obio_read_4(HEATHROW_FCR);
 
 	v |= EnetEnable;
-	out32rb(heathrow_FCR, v);
+	obio_write_4(HEATHROW_FCR, v);
 	delay(50000);
 
 	v |= ResetEnetCell;
-	out32rb(heathrow_FCR, v);
+	obio_write_4(HEATHROW_FCR, v);
 	delay(50000);
 
 	v &= ~ResetEnetCell;
-	out32rb(heathrow_FCR, v);
+	obio_write_4(HEATHROW_FCR, v);
 	delay(50000);
 
-	out32rb(heathrow_FCR, v);
+	obio_write_4(HEATHROW_FCR, v);
 }
 
 void

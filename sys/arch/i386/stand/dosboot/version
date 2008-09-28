@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.10 2003/02/01 14:48:17 dsl Exp $
+$NetBSD: version,v 1.10.104.1 2008/09/28 10:40:01 mjf Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -16,3 +16,4 @@ is taken as the current.
 1.8:	loadfile() update to avoid backwards seeks for ELF Program Headers.
 1.9:	move stack 64k up memory to allow for larger code and data
 	use .code16 and .code32 directives
+5.1:	Change boot messages to replace build date with kernel version.
