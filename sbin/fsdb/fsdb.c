@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.36.18.1 2008/06/02 13:21:21 mjf Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.36.18.2 2008/09/28 11:17:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.36.18.1 2008/06/02 13:21:21 mjf Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.36.18.2 2008/09/28 11:17:11 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -130,7 +130,7 @@ main(int argc, char *argv[])
 	if (fsys == NULL)
 		usage();
 	endian = 0;
-	if (setup(fsys) <= 0)
+	if (setup(fsys, fsys) <= 0)
 		errx(1, "cannot set up file system `%s'", fsys);
 	printf("Editing file system `%s'\nLast Mounted on %s\n", fsys,
 	    sblock->fs_fsmnt);

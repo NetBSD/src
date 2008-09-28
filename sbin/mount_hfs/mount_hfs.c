@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_hfs.c,v 1.6 2007/12/15 20:36:11 perry Exp $	*/
+/*	$NetBSD: mount_hfs.c,v 1.6.4.1 2008/09/28 11:17:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -60,16 +60,17 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 2005 Yevgeny Binder\n\
-	All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 2005 Yevgeny Binder.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mount_hfs.c,v 1.6 2007/12/15 20:36:11 perry Exp $");
+__RCSID("$NetBSD: mount_hfs.c,v 1.6.4.1 2008/09/28 11:17:13 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
+
+#include <fs/hfs/hfs.h>
 
 #include <err.h>
 #include <unistd.h>
@@ -79,42 +80,42 @@ __RCSID("$NetBSD: mount_hfs.c,v 1.6 2007/12/15 20:36:11 perry Exp $");
 
 #include <mntopts.h>
 
-#include <fs/hfs/hfs.h>
+#include "mountprog.h"
+#include "mount_hfs.h"
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
-	MOPT_GETARGS,
 	MOPT_NULL,
 };
 
 int	main(int, char *[]);
-int	mount_hfs(int argc, char **argv);
 static void	usage(void);
 
 #ifndef MOUNT_NOMAIN
 int
 main(int argc, char **argv)
 {
+
+	setprogname(argv[0]);
 	return mount_hfs(argc, argv);
 }
 #endif
 
-int
-mount_hfs(int argc, char *argv[])
+void
+mount_hfs_parseargs(int argc, char *argv[],
+	struct hfs_args *args, int *mntflags,
+	char *canon_dev, char *canon_dir)
 {
-	struct hfs_args args;
 	mntoptparse_t optparse;
-	int ch, mntflags;
-	char *fs_name;
+	int ch;
 
-	args.fspec = NULL;
-	
-	mntflags = 0;
+	memset(args, 0, sizeof(*args));
+	*mntflags = 0;
 	optind = optreset = 1;		/* Reset for parse of new argv. */
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
-			optparse = getmntopts(optarg, mopts, &mntflags, 0);
+			optparse = getmntopts(optarg, mopts, mntflags, 0);
 			if (optparse == NULL)
 				err(1, "getmntopts");
 			freemntopts(optparse);
@@ -128,13 +129,23 @@ mount_hfs(int argc, char *argv[])
 
 	if (argc != 2)
 		usage();
-		
-	args.fspec = argv[0];	/* The name of the device file. */
-	fs_name = argv[1];		/* The mount point. */
 
+	pathadj(argv[0], canon_dev);
+	pathadj(argv[1], canon_dir);
+	args->fspec = canon_dev;	/* The name of the device file. */
+}
 
-	if (mount(MOUNT_HFS, fs_name, mntflags, &args, sizeof args) == -1)
-		err(1, "%s on %s", args.fspec, fs_name);
+int
+mount_hfs(int argc, char *argv[])
+{
+	struct hfs_args args;
+	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	int mntflags;
+
+	mount_hfs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
+
+	if (mount(MOUNT_HFS, canon_dir, mntflags, &args, sizeof args) == -1)
+		err(1, "%s on %s", args.fspec, canon_dir);
 
 	exit(0);
 }
@@ -142,6 +153,6 @@ mount_hfs(int argc, char *argv[])
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: mount_hfs [-o options] special node\n");
+	fprintf(stderr, "usage: %s [-o options] special node\n", getprogname());
 	exit(1);
 }

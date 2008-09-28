@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.c,v 1.19.20.1 2008/06/29 08:41:57 mjf Exp $	*/
+/*	$NetBSD: fat.c,v 1.19.20.2 2008/09/28 11:17:11 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fat.c,v 1.19.20.1 2008/06/29 08:41:57 mjf Exp $");
+__RCSID("$NetBSD: fat.c,v 1.19.20.2 2008/09/28 11:17:11 mjf Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -128,7 +128,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 
 	if (!_readfat(fs, boot, no, &buffer))
 		return FSFATAL;
-		
+
 	fat = malloc(len = boot->NumClusters * sizeof(struct fatEntry));
 	if (fat == NULL) {
 		perr("No space for FAT clusters (%zu)", len);
@@ -161,7 +161,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 			ret |= FSDIRTY;
 		else {
 			/* just some odd byte sequence in FAT */
-				
+
 			switch (boot->ClustMask) {
 			case CLUST32_MASK:
 				pwarn("%s (%02x%02x%02x%02x%02x%02x%02x%02x)\n",
@@ -181,7 +181,7 @@ readfat(int fs, struct bootblock *boot, int no, struct fatEntry **fp)
 				break;
 			}
 
-	
+
 			if (ask(1, "Correct"))
 				ret |= FSFIXFAT;
 		}
@@ -322,7 +322,7 @@ clustdiffer(cl_t cl, cl_t *cp1, cl_t *cp2, int fatnum)
  * into the first one.
  */
 int
-comparefat(struct bootblock *boot, struct fatEntry *first, 
+comparefat(struct bootblock *boot, struct fatEntry *first,
 	   struct fatEntry *second, int fatnum)
 {
 	cl_t cl;
@@ -519,7 +519,7 @@ writefat(int fs, struct bootblock *boot, struct fatEntry *fat, int correct_fat)
 		free(old_fat);
 		p += count;
 	}
-			
+
 	for (cl = CLUST_FIRST; cl < boot->NumClusters; cl++) {
 		switch (boot->ClustMask) {
 		case CLUST32_MASK:
@@ -572,7 +572,7 @@ checklost(int dosfs, struct bootblock *boot, struct fatEntry *fat)
 	cl_t head;
 	int mod = FSOK;
 	int ret;
-	
+
 	for (head = CLUST_FIRST; head < boot->NumClusters; head++) {
 		/* find next untravelled chain */
 		if (fat[head].head != head
@@ -604,9 +604,10 @@ checklost(int dosfs, struct bootblock *boot, struct fatEntry *fat)
 				ret = 1;
 			}
 		}
-		if (boot->NumFree && fat[boot->FSNext].next != CLUST_FREE) {
-			pwarn("Next free cluster in FSInfo block (%u) not free\n",
-			      boot->FSNext);
+		if (boot->FSNext >= boot->NumClusters || (boot->NumFree && fat[boot->FSNext].next != CLUST_FREE)) {
+			pwarn("Next free cluster in FSInfo block (%u) %s\n",
+			      boot->FSNext,
+			      (boot->FSNext >= boot->NumClusters) ? "invalid" : "not free");
 			if (ask(1, "fix"))
 				for (head = CLUST_FIRST; head < boot->NumClusters; head++)
 					if (fat[head].next == CLUST_FREE) {

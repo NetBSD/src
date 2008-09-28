@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.58.12.1 2008/04/03 13:54:10 mjf Exp $	*/
+/*	$NetBSD: inode.c,v 1.58.12.2 2008/09/28 11:17:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.58.12.1 2008/04/03 13:54:10 mjf Exp $");
+__RCSID("$NetBSD: inode.c,v 1.58.12.2 2008/09/28 11:17:11 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 				IBLK_SET(bp, i, 0);
 				dirty(bp);
 			} else
-				markclean=  0;
+				markclean = 0;
 		}
 		flush(fswritefd, bp);
 	}
@@ -241,7 +241,7 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 		} else {
 			if (idesc->id_type == DATA && isize > 0) {
 				/* An empty block in a directory XXX */
-				markclean=  0;
+				markclean = 0;
 				getpathname(pathbuf, sizeof(pathbuf),
 				    idesc->id_number, idesc->id_number);
 				pfatal("DIRECTORY %s: CONTAINS EMPTY BLOCKS",
@@ -581,7 +581,7 @@ clri(struct inodesc *idesc, const char *type, int flag)
 		inoinfo(idesc->id_number)->ino_state = USTATE;
 		inodirty();
 	} else
-		markclean=  0;
+		markclean = 0;
 }
 
 int

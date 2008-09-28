@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.21.8.1 2008/06/02 13:21:21 mjf Exp $ */
+/* $NetBSD: params.c,v 1.21.8.2 2008/09/28 11:17:10 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.21.8.1 2008/06/02 13:21:21 mjf Exp $");
+__RCSID("$NetBSD: params.c,v 1.21.8.2 2008/09/28 11:17:10 mjf Exp $");
 #endif
 
 #include <sys/types.h>
@@ -152,7 +152,7 @@ params_filldefaults(struct params *p)
 	if (p->verify_method == VERIFY_UNKNOWN)
 		p->verify_method = VERIFY_NONE;
 	if (!p->ivmeth)
-		p->ivmeth = string_fromcharstar("encblkno");
+		p->ivmeth = string_fromcharstar("encblkno1");
 	if (p->keylen == (size_t)-1) {
 		i = crypt_defaults_lookup(string_tocharstar(p->algorithm));
 		if (i != (size_t)-1) {
@@ -178,6 +178,11 @@ params_filldefaults(struct params *p)
 int
 params_verify(const struct params *p)
 {
+	static const char *encblkno[] = {
+	    "encblkno", "encblkno1", "encblkno8"
+	};
+	static size_t i;
+	const char *meth;
 
 	if (!p->algorithm) {
 		warnx("unspecified algorithm");
@@ -196,9 +201,15 @@ params_verify(const struct params *p)
 		warnx("unspecified IV method");
 		return 0;
 	}
-	if (strcmp("encblkno", string_tocharstar(p->ivmeth)))
-		warnx("unknown IV method \"%s\" (warning)",
-		    string_tocharstar(p->ivmeth));
+
+	meth = string_tocharstar(p->ivmeth);
+	for (i = 0; i < __arraycount(encblkno); i++)
+		if (strcmp(encblkno[i], meth) == 0)
+			break;
+
+	if (i == __arraycount(encblkno))
+		warnx("unknown IV method \"%s\" (warning)", meth);
+
 	if (p->keylen == (size_t)-1) {
 		warnx("unspecified key length");
 		return 0;

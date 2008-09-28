@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.5.4.2 2008/06/02 13:21:22 mjf Exp $	*/
+/*	$NetBSD: env.c,v 1.5.4.3 2008/09/28 11:17:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -24,6 +24,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: env.c,v 1.5.4.3 2008/09/28 11:17:11 mjf Exp $");
+#endif /* not lint */
 
 #include <errno.h>
 #include <string.h>

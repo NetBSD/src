@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.1.4.3 2008/06/29 08:41:57 mjf Exp $ */
+/* $NetBSD: udf_create.c,v 1.1.4.4 2008/09/28 11:17:14 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_create.c,v 1.1.4.3 2008/06/29 08:41:57 mjf Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.1.4.4 2008/09/28 11:17:14 mjf Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -85,17 +85,33 @@ udf_init_create_context(void)
 }
 
 
+static uint32_t
+udf_space_bitmap_len(uint32_t part_size)
+{
+	return  sizeof(struct space_bitmap_desc)-1 +
+		part_size/8;
+}
+
+
+static uint32_t
+udf_bytes_to_sectors(uint64_t bytes)
+{
+	uint32_t sector_size = layout.sector_size;
+	return (bytes + sector_size -1) / sector_size;
+}
+
+
 int
 udf_calculate_disc_layout(int format_flags, int min_udf,
 	uint32_t wrtrack_skew,
 	uint32_t first_lba, uint32_t last_lba,
 	uint32_t sector_size, uint32_t blockingnr,
-	uint32_t sparable_blocks)
+	uint32_t sparable_blocks, float meta_fract)
 {
-	uint64_t kbsize;
+	uint64_t kbsize, bytes;
 	uint32_t sparable_blockingnr;
 	uint32_t align_blockingnr;
-	uint32_t pos;
+	uint32_t pos, mpos;
 
 	/* clear */
 	bzero(&layout, sizeof(struct udf_disclayout));
@@ -152,24 +168,19 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 		layout.lvis_size = 64 * blockingnr;
 
 	/* TODO skip bad blocks in LVID sequence; for now use f.e. */
-	/* first_lba+=128; */
+//first_lba+=128;
 	layout.lvis = first_lba;
 	first_lba += layout.lvis_size;
 
 	/* initial guess of UDF partition size */
 	layout.part_start_lba = first_lba;
-	layout.part_size_lbas = last_lba - layout.part_start_lba;
+	layout.part_size_lba = last_lba - layout.part_start_lba;
 
 	/* all non sequential media needs an unallocated space bitmap */
-	layout.bitmap_dscr_size = 0;
+	layout.alloc_bitmap_dscr_size = 0;
 	if ((format_flags & FORMAT_SEQUENTIAL) == 0) {
-		/* reserve space for unallocated space bitmap */
-		layout.bitmap_dscr_size = sizeof(struct space_bitmap_desc)-1 +
-			layout.part_size_lbas/8;
-
-		/* in sectors */
-		layout.bitmap_dscr_size += sector_size -1;
-		layout.bitmap_dscr_size /= sector_size;
+		bytes = udf_space_bitmap_len(layout.part_size_lba);
+		layout.alloc_bitmap_dscr_size = udf_bytes_to_sectors(bytes);
 
 		/* XXX freed space map when applicable */
 	}
@@ -185,9 +196,9 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 		sparable_blockingnr = 32;
 
 	align_blockingnr = blockingnr;
-	if (format_flags & FORMAT_SPARABLE)
+	if (format_flags & (FORMAT_SPARABLE | FORMAT_META))
 		align_blockingnr = sparable_blockingnr;
-	
+
 	layout.align_blockingnr    = align_blockingnr;
 	layout.sparable_blockingnr = sparable_blockingnr;
 
@@ -235,7 +246,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 
 	/* update guess of UDF partition size */
 	layout.part_start_lba = first_lba;
-	layout.part_size_lbas = last_lba - layout.part_start_lba;
+	layout.part_size_lba = last_lba - layout.part_start_lba;
 
 	/* determine partition selection for data and metadata */
 	context.data_part     = 0;
@@ -250,32 +261,85 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 	 * allocated later.
 	 */
 	pos = 0;
-	layout.unalloc_space = pos;	pos += layout.bitmap_dscr_size;
-	layout.fsd           = pos;	pos += 1;
-	layout.rootdir       = pos;	pos += 1;
-	layout.vat           = pos;	pos += 1;	/* if present */
+	layout.unalloc_space = pos;
+	pos += layout.alloc_bitmap_dscr_size;
+
+	/* claim metadata descriptors and partition space [UDF 2.2.10] */
+	if (format_flags & FORMAT_META) {
+		/* note: all in backing partition space */
+		layout.meta_file   = pos++;
+		layout.meta_bitmap = pos++;;
+		layout.meta_mirror = layout.part_size_lba-1;
+		layout.meta_alignment  = MAX(blockingnr, sparable_blockingnr);
+		layout.meta_blockingnr = MAX(layout.meta_alignment, 32);
+
+		/* calculate our partition length and store in sectors */
+		layout.meta_part_size_lba = layout.part_size_lba * meta_fract;
+		layout.meta_part_size_lba = MAX(layout.meta_part_size_lba, 32);
+		layout.meta_part_size_lba =
+			UDF_ROUNDDOWN(layout.meta_part_size_lba, layout.meta_blockingnr);
+
+		/* calculate positions */
+		bytes = udf_space_bitmap_len(layout.meta_part_size_lba);
+		layout.meta_bitmap_dscr_size = udf_bytes_to_sectors(bytes);
+
+		layout.meta_bitmap_space = pos;
+		pos += layout.meta_bitmap_dscr_size;
+
+		layout.meta_part_start_lba  = UDF_ROUNDUP(pos, layout.meta_alignment);
+	}
+
+	mpos = (context.metadata_part == context.data_part) ? pos : 0;
+	layout.fsd           = mpos;	mpos += 1;
+	layout.rootdir       = mpos;	mpos += 1;
+	layout.vat           = mpos;	mpos += 1;	/* if present */
 
 #if 0
 	printf("Summary so far\n");
-	printf("\tiso9660_vrs\t%d\n", layout.iso9660_vrs);
-	printf("\tanchor0\t\t%d\n", layout.anchors[0]);
-	printf("\tanchor1\t\t%d\n", layout.anchors[1]);
-	printf("\tanchor2\t\t%d\n", layout.anchors[2]);
-	printf("\tvds_size\t%d\n", layout.vds_size);
-	printf("\tvds1\t\t%d\n", layout.vds1);
-	printf("\tvds2\t\t%d\n", layout.vds2);
-	printf("\tlvis_size\t%d\n", layout.lvis_size);
-	printf("\tlvis\t\t%d\n", layout.lvis);
-	printf("\tunalloc_size\t%d\n", layout.bitmap_dscr_size);
-	printf("\tunalloc\t\t%d\n", layout.unalloc_space);
-	printf("\tsparable size\t%d\n", layout.sparable_area_size);
-	printf("\tsparable\t%d\n", layout.sparable_area);
-	printf("\tpart_start_lba\t%d\n", layout.part_start_lba);
+	printf("\tiso9660_vrs\t\t%d\n", layout.iso9660_vrs);
+	printf("\tanchor0\t\t\t%d\n", layout.anchors[0]);
+	printf("\tanchor1\t\t\t%d\n", layout.anchors[1]);
+	printf("\tanchor2\t\t\t%d\n", layout.anchors[2]);
+	printf("\tvds_size\t\t%d\n", layout.vds_size);
+	printf("\tvds1\t\t\t%d\n", layout.vds1);
+	printf("\tvds2\t\t\t%d\n", layout.vds2);
+	printf("\tlvis_size\t\t%d\n", layout.lvis_size);
+	printf("\tlvis\t\t\t%d\n", layout.lvis);
+	if (format_flags & FORMAT_SPARABLE) {
+		printf("\tsparable size\t\t%d\n", layout.sparable_area_size);
+		printf("\tsparable\t\t%d\n", layout.sparable_area);
+	}
+	printf("\tpartion start lba\t%d\n", layout.part_start_lba);
+	printf("\tpartition size\t\t%d Kb, %d Mb\n",
+		(layout.part_size_lba * sector_size) / 1024,
+		(layout.part_size_lba * sector_size) / (1024*1024));
+	if ((format_flags & FORMAT_SEQUENTIAL) == 0) {
+		printf("\tpart bitmap start\t%d\n",   layout.unalloc_space);
+		printf("\t\tfor %d lba\n", layout.alloc_bitmap_dscr_size);
+	}
+	if (format_flags & FORMAT_META) {
+		printf("\tmeta blockingnr\t\t%d\n", layout.meta_blockingnr);
+		printf("\tmeta alignment\t\t%d\n",  layout.meta_alignment);
+		printf("\tmeta size\t\t%d Kb, %d Mb\n",
+			(layout.meta_part_size_lba * sector_size) / 1024,
+			(layout.meta_part_size_lba * sector_size) / (1024*1024));
+		printf("\tmeta file\t\t%d\n", layout.meta_file);
+		printf("\tmeta mirror\t\t%d\n", layout.meta_mirror);
+		printf("\tmeta bitmap\t\t%d\n", layout.meta_bitmap);
+		printf("\tmeta bitmap start\t%d\n", layout.meta_bitmap_space);
+		printf("\t\tfor %d lba\n", layout.meta_bitmap_dscr_size);
+		printf("\tmeta space start\t%d\n",  layout.meta_part_start_lba);
+		printf("\t\tfor %d lba\n", layout.meta_part_size_lba);
+	}
 	printf("\n");
 #endif
 
-	kbsize = (uint64_t) layout.part_size_lbas * sector_size;
-	printf("Free space on this volume %"PRIu64" Kb, %"PRIu64" Mb\n\n",
+	kbsize = (uint64_t) last_lba * sector_size;
+	printf("Total space on this medium aprox. %"PRIu64" Kb, %"PRIu64" Mb\n",
+			kbsize/1024, kbsize/(1024*1024));
+	kbsize = (uint64_t) (layout.part_size_lba - layout.alloc_bitmap_dscr_size
+		- layout.meta_bitmap_dscr_size) * sector_size;
+	printf("Free space on this volume aprox.  %"PRIu64" Kb, %"PRIu64" Mb\n\n",
 			kbsize/1024, kbsize/(1024*1024));
 
 	return 0;
@@ -568,7 +632,7 @@ udf_create_partitiond(int part_num, int part_accesstype)
 	int crclen;
 
 	sector_size = context.sector_size;
-	bitmap_bytes = layout.bitmap_dscr_size * sector_size;
+	bitmap_bytes = layout.alloc_bitmap_dscr_size * sector_size;
 
 	if (context.partitions[part_num]) {
 		printf("Internal error: partition %d allready defined\n",
@@ -604,7 +668,7 @@ udf_create_partitiond(int part_num, int part_accesstype)
 
 	pd->access_type = udf_rw32(part_accesstype);
 	pd->start_loc   = udf_rw32(layout.part_start_lba);
-	pd->part_len    = udf_rw32(layout.part_size_lbas);
+	pd->part_len    = udf_rw32(layout.part_size_lba);
 
 	udf_set_regid(&pd->imp_id, context.impl_name);
 	udf_add_impl_regid(&pd->imp_id);
@@ -686,7 +750,8 @@ udf_create_base_logical_dscr(void)
 	lvd->tag.desc_crc_len = udf_rw16(crclen);
 
 	context.logical_vol = lvd;
-	context.vtop_tp[UDF_VTOP_RAWPART] = UDF_VTOP_TYPE_RAW;
+	context.vtop_tp[UDF_VTOP_RAWPART]      = UDF_VTOP_TYPE_RAW;
+	context.vtop_offset[UDF_VTOP_RAWPART] = 0;
 
 	return 0;
 }
@@ -711,10 +776,11 @@ udf_add_logvol_part_physical(uint16_t phys_part)
 	pmap->pm1.vol_seq_num = udf_rw16(1);		/* no multi-volume */
 	pmap->pm1.part_num    = udf_rw16(phys_part);
 
-	context.vtop      [log_part] = phys_part;
-	context.vtop_tp   [log_part] = UDF_VTOP_TYPE_PHYS;
-	context.part_size[log_part] = layout.part_size_lbas;
-	context.part_free[log_part] = layout.part_size_lbas;
+	context.vtop       [log_part] = phys_part;
+	context.vtop_tp    [log_part] = UDF_VTOP_TYPE_PHYS;
+	context.vtop_offset[log_part] = layout.part_start_lba;
+	context.part_size[log_part] = layout.part_size_lba;
+	context.part_free[log_part] = layout.part_size_lba;
 
 	/* increment number of partions and length */
 	logvol->n_pm = udf_rw32(log_part + 1);
@@ -740,7 +806,7 @@ udf_add_logvol_part_virtual(uint16_t phys_part)
 
 	pmap = (union udf_pmap *) pmap_pos;
 	pmap->pmv.type        = 2;
-	pmap->pmv.len         = sizeof(struct part_map_virt);
+	pmap->pmv.len         = pmapv_size;
 
 	udf_set_regid(&pmap->pmv.id, "*UDF Virtual Partition");
 	udf_add_udf_regid(&pmap->pmv.id);
@@ -748,8 +814,9 @@ udf_add_logvol_part_virtual(uint16_t phys_part)
 	pmap->pmv.vol_seq_num = udf_rw16(1);		/* no multi-volume */
 	pmap->pmv.part_num    = udf_rw16(phys_part);
 
-	context.vtop      [log_part] = phys_part;
-	context.vtop_tp   [log_part] = UDF_VTOP_TYPE_VIRT;
+	context.vtop       [log_part] = phys_part;
+	context.vtop_tp    [log_part] = UDF_VTOP_TYPE_VIRT;
+	context.vtop_offset[log_part] = context.vtop_offset[phys_part];
 	context.part_size[log_part] = 0xffffffff;
 	context.part_free[log_part] = 0xffffffff;
 
@@ -780,7 +847,7 @@ udf_add_logvol_part_sparable(uint16_t phys_part)
 
 	pmap = (union udf_pmap *) pmap_pos;
 	pmap->pms.type        = 2;
-	pmap->pms.len         = sizeof(struct part_map_virt);
+	pmap->pms.len         = pmaps_size;
 
 	udf_set_regid(&pmap->pmv.id, "*UDF Sparable Partition");
 	udf_add_udf_regid(&pmap->pmv.id);
@@ -801,10 +868,12 @@ udf_add_logvol_part_sparable(uint16_t phys_part)
 	if (layout.spt_1 == 0) num--;
 	pmap->pms.n_st = num;		/* 8 bit */
 
-	context.vtop      [log_part] = phys_part;
-	context.vtop_tp   [log_part] = UDF_VTOP_TYPE_SPARABLE;
-	context.part_size[log_part] = layout.part_size_lbas;
-	context.part_free[log_part] = layout.part_size_lbas;
+	/* the vtop_offset needs to explicitly set since there is no phys. */
+	context.vtop       [log_part] = phys_part;
+	context.vtop_tp    [log_part] = UDF_VTOP_TYPE_SPARABLE;
+	context.vtop_offset[log_part] = layout.part_start_lba;
+	context.part_size[log_part] = layout.part_size_lba;
+	context.part_free[log_part] = layout.part_size_lba;
 
 	/* increment number of partions and length */
 	logvol->n_pm = udf_rw32(log_part + 1);
@@ -854,6 +923,53 @@ udf_create_sparing_tabled(void)
 }
 
 
+static void
+udf_add_logvol_part_meta(uint16_t phys_part)
+{
+	union  udf_pmap *pmap;
+	struct logvol_desc *logvol = context.logical_vol;
+	uint8_t *pmap_pos;
+	int crclen, pmapv_size;
+	int log_part;
+
+	log_part = udf_rw32(logvol->n_pm);
+	pmap_pos = logvol->maps + udf_rw32(logvol->mt_l);
+	pmapv_size = sizeof(struct part_map_2);
+
+	pmap = (union udf_pmap *) pmap_pos;
+	pmap->pmm.type        = 2;
+	pmap->pmm.len         = pmapv_size;
+
+	udf_set_regid(&pmap->pmm.id, "*UDF Metadata Partition");
+	udf_add_udf_regid(&pmap->pmm.id);
+
+	pmap->pmm.vol_seq_num = udf_rw16(1);		/* no multi-volume */
+	pmap->pmm.part_num    = udf_rw16(phys_part);
+
+	/* fill in meta data file(s) and alloc/alignment unit sizes */
+	pmap->pmm.meta_file_lbn        = udf_rw32(layout.meta_file);
+	pmap->pmm.meta_mirror_file_lbn = udf_rw32(layout.meta_mirror);
+	pmap->pmm.meta_bitmap_file_lbn = udf_rw32(layout.meta_bitmap);
+	pmap->pmm.alloc_unit_size      = udf_rw32(layout.meta_blockingnr);
+	pmap->pmm.alignment_unit_size  = udf_rw16(layout.meta_alignment);
+	pmap->pmm.flags                = 0; /* METADATA_DUPLICATED */
+
+	context.vtop       [log_part] = phys_part;
+	context.vtop_tp    [log_part] = UDF_VTOP_TYPE_META;
+	context.vtop_offset[log_part] =
+		context.vtop_offset[phys_part] + layout.meta_part_start_lba;
+	context.part_size[log_part] = layout.meta_part_size_lba;
+	context.part_free[log_part] = layout.meta_part_size_lba;
+
+	/* increment number of partions and length */
+	logvol->n_pm = udf_rw32(log_part + 1);
+	logvol->mt_l = udf_rw32(udf_rw32(logvol->mt_l) + pmapv_size);
+
+	crclen = udf_rw16(logvol->tag.desc_crc_len) + pmapv_size;
+	logvol->tag.desc_crc_len = udf_rw16(crclen);
+}
+
+
 int
 udf_create_logical_dscr(int format_flags)
 {
@@ -875,7 +991,8 @@ udf_create_logical_dscr(int format_flags)
 		udf_add_logvol_part_virtual(context.data_part);
 	}
 	if (format_flags & FORMAT_META) {
-		/* TODO add META data mapping */
+		/* add META data mapping; reflects on datapart */
+		udf_add_logvol_part_meta(context.data_part);
 	}
 
 	return 0;
@@ -1049,20 +1166,21 @@ udf_create_fsd(void)
 
 
 int
-udf_create_space_bitmap(struct space_bitmap_desc **sbdp)
+udf_create_space_bitmap(uint32_t dscr_size, uint32_t part_size_lba,
+	struct space_bitmap_desc **sbdp)
 {
 	struct space_bitmap_desc *sbd;
 	int crclen, cnt;
 
 	*sbdp = NULL;
-	sbd = calloc(context.sector_size, layout.bitmap_dscr_size);
+	sbd = calloc(context.sector_size, dscr_size);
 	if (sbd == NULL)
 		return ENOMEM;
 
 	udf_inittag(&sbd->tag, TAGID_SPACE_BITMAP, /* loc */ 0);
 
-	sbd->num_bits  = udf_rw32(layout.part_size_lbas);
-	sbd->num_bytes = udf_rw32((layout.part_size_lbas + 7)/8);
+	sbd->num_bits  = udf_rw32(part_size_lba);
+	sbd->num_bytes = udf_rw32((part_size_lba + 7)/8);
 
 	/* fill space with 0xff to indicate free */
 	for (cnt = 0; cnt < udf_rw32(sbd->num_bytes); cnt++)
@@ -1119,13 +1237,13 @@ udf_mark_allocated(uint32_t start_lb, int partnr, uint32_t blocks)
 {
 	union dscrptr *dscr;
 	uint8_t *bpos;
-	int mapped_on = context.vtop[partnr];
 	uint32_t cnt, bit;
 
 	/* make not on space used on underlying partition */
-	context.part_free[mapped_on] -= blocks;
+	context.part_free[partnr] -= blocks;
 #ifdef DEBUG
-	printf("decrementing part_free %d with %d blocks\n", context.vtop[partnr], blocks);
+	printf("mark allocated : partnr %d, start_lb %d for %d blocks\n",
+		partnr, start_lb, blocks);
 #endif
 
 	switch (context.vtop_tp[partnr]) {
@@ -1134,18 +1252,16 @@ udf_mark_allocated(uint32_t start_lb, int partnr, uint32_t blocks)
 		break;
 	case UDF_VTOP_TYPE_PHYS:
 	case UDF_VTOP_TYPE_SPARABLE:
+	case UDF_VTOP_TYPE_META:
 #ifdef DEBUG
 		printf("Marking %d+%d as used\n", start_lb, blocks);
 #endif
-		dscr = (union dscrptr *) (context.part_unalloc_bits[mapped_on]);
+		dscr = (union dscrptr *) (context.part_unalloc_bits[partnr]);
 		for (cnt = start_lb; cnt < start_lb + blocks; cnt++) {
 			 bpos  = &dscr->sbd.data[cnt / 8];
 			 bit   = cnt % 8;
 			*bpos &= ~(1<< bit);
 		}
-		break;
-	case UDF_VTOP_TYPE_META:
-		/* TODO metadata file bitmap update */
 		break;
 	default:
 		printf("internal error: reality check in mapping type %d\n",
@@ -1441,6 +1557,140 @@ udf_create_new_efe(struct extfile_entry **efep, int file_type,
 	efe->tag.desc_crc_len = udf_rw16(crclen);
 
 	*efep = efe;
+	return 0;
+}
+
+/* --------------------------------------------------------------------- */
+
+static void
+udf_append_mapping_part_to_efe(struct extfile_entry *efe, struct short_ad *mapping)
+{
+	struct icb_tag *icb;
+	uint64_t inf_len, obj_size, logblks_rec;
+	uint32_t l_ad, l_ea;
+	uint16_t crclen;
+	uint8_t *bpos;
+
+	inf_len     = udf_rw64(efe->inf_len);
+	obj_size    = udf_rw64(efe->obj_size);
+	logblks_rec = udf_rw64(efe->logblks_rec);
+	l_ad   = udf_rw32(efe->l_ad);
+	l_ea   = udf_rw32(efe->l_ea);
+	crclen = udf_rw16(efe->tag.desc_crc_len);
+	icb    = &efe->icbtag;
+
+	/* set our allocation to shorts if not already done */
+	icb->flags = udf_rw16(UDF_ICB_SHORT_ALLOC);
+
+	/* append short_ad */
+	bpos = (uint8_t *) efe->data + l_ea + l_ad;
+	memcpy(bpos, mapping, sizeof(struct short_ad));
+
+	l_ad   += sizeof(struct short_ad);
+	crclen += sizeof(struct short_ad);
+	inf_len  += UDF_EXT_LEN(udf_rw32(mapping->len));
+	obj_size += UDF_EXT_LEN(udf_rw32(mapping->len));
+	logblks_rec = UDF_ROUNDUP(inf_len, context.sector_size) /
+				context.sector_size;
+
+	efe->l_ad = udf_rw32(l_ad);
+	efe->inf_len     = udf_rw64(inf_len);
+	efe->obj_size    = udf_rw64(obj_size);
+	efe->logblks_rec = udf_rw64(logblks_rec);
+	efe->tag.desc_crc_len = udf_rw16(crclen);
+}
+
+
+static void
+udf_append_meta_mapping_to_efe(struct extfile_entry *efe, uint16_t partnr, uint32_t lb_num,
+	uint64_t len)
+{
+	struct short_ad mapping;
+	uint64_t max_len, part_len;
+
+	/* calculate max length meta allocation sizes */
+	max_len = UDF_EXT_MAXLEN / context.sector_size; /* in sectors */
+	max_len = (max_len / layout.meta_blockingnr) * layout.meta_blockingnr;
+	max_len = max_len * context.sector_size;
+
+	memset(&mapping, 0, sizeof(struct short_ad));
+	while (len) {
+		part_len = MIN(len, max_len);
+		mapping.lb_num   = udf_rw32(lb_num);
+		mapping.len      = udf_rw32(part_len);
+
+		udf_append_mapping_part_to_efe(efe, &mapping);
+
+		lb_num += part_len / context.sector_size;
+		len    -= part_len;
+	}
+}
+
+
+int
+udf_create_meta_files(void)
+{
+	struct extfile_entry *efe;
+	struct long_ad meta_icb;
+	uint64_t bytes;
+	uint32_t sector_size;
+	int filetype, error;
+
+	sector_size = context.sector_size;
+
+	bzero(&meta_icb, sizeof(struct long_ad));
+	meta_icb.len          = udf_rw32(sector_size);
+	meta_icb.loc.part_num = udf_rw16(context.data_part);
+
+	/* create metadata file */
+	meta_icb.loc.lb_num   = udf_rw32(layout.meta_file);
+	filetype = UDF_ICB_FILETYPE_META_MAIN;
+	error = udf_create_new_efe(&efe, filetype, &meta_icb);
+	if (error)
+		return error;
+	context.meta_file = efe;
+
+	/* create metadata mirror file */
+	meta_icb.loc.lb_num   = udf_rw32(layout.meta_mirror);
+	filetype = UDF_ICB_FILETYPE_META_MIRROR;
+	error = udf_create_new_efe(&efe, filetype, &meta_icb);
+	if (error)
+		return error;
+	context.meta_mirror = efe;
+
+	/* create metadata bitmap file */
+	meta_icb.loc.lb_num   = udf_rw32(layout.meta_bitmap);
+	filetype = UDF_ICB_FILETYPE_META_BITMAP;
+	error = udf_create_new_efe(&efe, filetype, &meta_icb);
+	if (error)
+		return error;
+	context.meta_bitmap = efe;
+
+	/* patch up files */
+	context.meta_file->unique_id   = udf_rw64(0);
+	context.meta_mirror->unique_id = udf_rw64(0);
+	context.meta_bitmap->unique_id = udf_rw64(0);
+
+	/* restart unique id */
+	context.unique_id = 0x10;
+
+	/* XXX no support for metadata mirroring yet */
+	/* insert extents */
+	efe = context.meta_file;
+	udf_append_meta_mapping_to_efe(efe, context.data_part,
+		layout.meta_part_start_lba,
+		(uint64_t) layout.meta_part_size_lba * sector_size);
+
+	efe = context.meta_mirror;
+	udf_append_meta_mapping_to_efe(efe, context.data_part,
+		layout.meta_part_start_lba,
+		(uint64_t) layout.meta_part_size_lba * sector_size);
+
+	efe = context.meta_bitmap;
+	bytes = udf_space_bitmap_len(layout.meta_part_size_lba);
+	udf_append_meta_mapping_to_efe(efe, context.data_part,
+		layout.meta_bitmap_space, bytes);
+
 	return 0;
 }
 

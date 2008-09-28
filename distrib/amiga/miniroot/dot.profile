@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.9 2003/07/26 17:06:31 salo Exp $
+# $NetBSD: dot.profile,v 1.9.32.1 2008/09/28 11:09:16 mjf Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -65,7 +65,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 		# Delete all non-nummeric characters from the users answer
 		if [ ! -z "$_ans" ]; then
-			_ans=`echo $_ans | sed 's/[^0-9]//g`
+			_ans=`echo $_ans | sed 's/[^0-9]//g'`
 		fi
 
 		# Check if the answer is valid (in range). Note that an answer

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_kernfs.c,v 1.22 2007/07/16 17:09:42 pooka Exp $	*/
+/*	$NetBSD: mount_kernfs.c,v 1.22.12.1 2008/09/28 11:17:13 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -69,15 +69,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_kernfs.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_kernfs.c,v 1.22 2007/07/16 17:09:42 pooka Exp $");
+__RCSID("$NetBSD: mount_kernfs.c,v 1.22.12.1 2008/09/28 11:17:13 mjf Exp $");
 #endif
 #endif /* not lint */
 

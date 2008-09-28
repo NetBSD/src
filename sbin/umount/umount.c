@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.41 2007/12/15 19:44:48 perry Exp $	*/
+/*	$NetBSD: umount.c,v 1.41.4.1 2008/09/28 11:17:15 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.41 2007/12/15 19:44:48 perry Exp $");
+__RCSID("$NetBSD: umount.c,v 1.41.4.1 2008/09/28 11:17:15 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: umount.c,v 1.41 2007/12/15 19:44:48 perry Exp $");
 typedef enum { MNTANY, MNTON, MNTFROM } mntwhat;
 
 #ifndef SMALL
-#include "vfslist.h"
+#include "mountprog.h"
 
 static int	 fake, verbose;
 static char	*nfshost;
