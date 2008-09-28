@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1195 2008/09/25 17:12:11 cube Exp $
+#	$NetBSD: mi,v 1.1196 2008/09/28 06:34:48 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3453,6 +3453,7 @@
 ./usr/libdata/lint/llib-lXprintUtil.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXrandr.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXrender.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lXres.ln		comp-obsolete	obsolete
 ./usr/libdata/lint/llib-lXss.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXt.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lXtst.ln		-unknown-	lint,xorg
