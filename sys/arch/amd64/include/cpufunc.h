@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.4 2004/01/14 11:31:55 yamt Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.4.14.1 2008/09/28 15:57:50 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,6 +64,18 @@ x86_lfence(void)
 	 * memory clobber to avoid compiler reordering.
 	 */
 	__asm __volatile("lfence" : : : "memory");
+}
+
+static __inline void
+x86_mfence(void)
+{
+
+	/*
+	 * XXX if mfence isn't available...
+	 *
+	 * memory clobber to avoid compiler reordering.
+	 */
+	__asm __volatile("mfence" : : : "memory");
 }
 
 #ifdef _KERNEL
