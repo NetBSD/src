@@ -1,4 +1,4 @@
-/* $NetBSD: compat_frexp_ieee754.c,v 1.3 2008/09/14 13:38:38 drochner Exp $ */
+/* $NetBSD: compat_frexp_ieee754.c,v 1.4 2008/09/28 15:19:09 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,12 +35,15 @@
  * from: Header: frexp.c,v 1.1 91/07/07 04:45:01 torek Exp
  */
 
+#ifdef USE_LIBM
+#include "s_frexp.c"
+#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_frexp_ieee754.c,v 1.3 2008/09/14 13:38:38 drochner Exp $");
+__RCSID("$NetBSD: compat_frexp_ieee754.c,v 1.4 2008/09/28 15:19:09 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -80,3 +83,4 @@ frexp(double value, int *eptr)
 		return (value);
 	}
 }
+#endif
