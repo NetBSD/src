@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_modf.c,v 1.12 2008/04/25 22:21:53 christos Exp $");
+__RCSID("$NetBSD: s_modf.c,v 1.13 2008/09/28 18:54:55 christos Exp $");
 #endif
 
 /*
@@ -36,7 +36,7 @@ modf(double x, double *iptr)
 	int32_t i0,i1,jj0;
 	u_int32_t i;
 	EXTRACT_WORDS(i0,i1,x);
-	jj0 = ((i0>>20)&0x7ff)-0x3ff;	/* exponent of x */
+	jj0 = (((uint32_t)i0>>20)&0x7ff)-0x3ff;	/* exponent of x */
 	if(jj0<20) {			/* integer part in high x */
 	    if(jj0<0) {			/* |x|<1 */
 	        INSERT_WORDS(*iptr,i0&0x80000000,0);	/* *iptr = +-0 */

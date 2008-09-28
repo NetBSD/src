@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_scalbn.c,v 1.12 2002/05/26 22:01:58 wiz Exp $");
+__RCSID("$NetBSD: s_scalbn.c,v 1.13 2008/09/28 18:54:55 christos Exp $");
 #endif
 
 /*
@@ -36,12 +36,12 @@ scalbn(double x, int n)
 {
 	int32_t k,hx,lx;
 	EXTRACT_WORDS(hx,lx,x);
-        k = (hx&0x7ff00000)>>20;		/* extract exponent */
+        k = ((uint32_t)hx&0x7ff00000)>>20;		/* extract exponent */
         if (k==0) {				/* 0 or subnormal x */
             if ((lx|(hx&0x7fffffff))==0) return x; /* +-0 */
 	    x *= two54;
 	    GET_HIGH_WORD(hx,x);
-	    k = ((hx&0x7ff00000)>>20) - 54;
+	    k = (((uint32_t)hx&0x7ff00000)>>20) - 54;
             if (n< -50000) return tiny*x; 	/*underflow*/
 	    }
         if (k==0x7ff) return x+x;		/* NaN or Inf */

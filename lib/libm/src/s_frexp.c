@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: s_frexp.c,v 1.12 2002/05/26 22:01:56 wiz Exp $");
+__RCSID("$NetBSD: s_frexp.c,v 1.13 2008/09/28 18:54:55 christos Exp $");
 #endif
 
 /*
@@ -45,7 +45,7 @@ frexp(double x, int *eptr)
 	    ix = hx&0x7fffffff;
 	    *eptr = -54;
 	}
-	*eptr += (ix>>20)-1022;
+	*eptr += ((uint32_t)ix>>20)-1022;
 	hx = (hx&0x800fffff)|0x3fe00000;
 	SET_HIGH_WORD(x,hx);
 	return x;
