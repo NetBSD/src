@@ -1,14 +1,10 @@
-#	$NetBSD: Makefile,v 1.28.12.2 2008/06/29 08:25:12 mjf Exp $
+#	$NetBSD: Makefile,v 1.28.12.3 2008/09/28 11:09:16 mjf Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 SUBDIR=		instkernel stand cdroms
-
-release: check_RELEASEDIR
-	${MAKEDIRTARGET} instkernel release
-	${MAKEDIRTARGET} stand release
-	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation '*.gz' '*.exe'
+TARGETS+=	release
 
 iso_image:
 	${MAKEDIRTARGET} cdroms iso_image

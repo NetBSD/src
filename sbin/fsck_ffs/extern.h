@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.22 2005/06/27 01:25:35 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.22.20.1 2008/09/28 11:17:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -27,7 +27,7 @@
 void		adjust(struct inodesc *, int);
 daddr_t		allocblk(long);
 ino_t		allocdir(ino_t, ino_t, int);
-ino_t		allocino(ino_t request, int type);
+ino_t		allocino(ino_t, int);
 void		blkerror(ino_t, const char *, daddr_t);
 int		bread(int, char *, daddr_t, long);
 void		bufinit(void);
@@ -79,10 +79,15 @@ void		pinode(ino_t);
 void		propagate(ino_t);
 int		reply(const char *);
 void		setinodebuf(ino_t);
-int		setup(const char *);
+int		setup(const char *, const char *);
 void		voidquit(int);
 
-void	swap_cg(struct cg *, struct cg *);
-void copyback_cg(struct bufarea *);
-void sb_oldfscompat_write(struct fs *, struct fs *);
-void sb_oldfscompat_read(struct fs *, struct fs **);
+void		replay_wapbl(void);
+void		cleanup_wapbl(void);
+int		read_wapbl(char *, long, daddr_t);
+int		is_journal_inode(ino_t);
+
+void		swap_cg(struct cg *, struct cg *);
+void		copyback_cg(struct bufarea *);
+void		sb_oldfscompat_write(struct fs *, struct fs *);
+void		sb_oldfscompat_read(struct fs *, struct fs **);

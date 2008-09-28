@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdbutil.c,v 1.17.12.1 2008/06/02 13:21:21 mjf Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.17.12.2 2008/09/28 11:17:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdbutil.c,v 1.17.12.1 2008/06/02 13:21:21 mjf Exp $");
+__RCSID("$NetBSD: fsdbutil.c,v 1.17.12.2 2008/09/28 11:17:11 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -167,7 +167,7 @@ printstat(const char *cp, ino_t inum, union dinode *dp)
 	else
 		printf("GID=%u ", gid);
 
-	printf("LINKCNT=%hd FLAGS=0x%#x BLKCNT=0x%llx GEN=0x%x\n",
+	printf("LINKCNT=%hd FLAGS=0x%x BLKCNT=0x%llx GEN=0x%x\n",
 		iswap16(DIP(dp, nlink)),
 	    iswap32(DIP(dp, flags)), (unsigned long long)blocks,
 		iswap32(DIP(dp, gen)));

@@ -1,4 +1,4 @@
-/*	$NetBSD: vlan.c,v 1.3.20.1 2008/06/02 13:21:22 mjf Exp $	*/
+/*	$NetBSD: vlan.c,v 1.3.20.2 2008/09/28 11:17:12 mjf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: vlan.c,v 1.3.20.1 2008/06/02 13:21:22 mjf Exp $");
+__RCSID("$NetBSD: vlan.c,v 1.3.20.2 2008/09/28 11:17:12 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -52,7 +52,16 @@ __RCSID("$NetBSD: vlan.c,v 1.3.20.1 2008/06/02 13:21:22 mjf Exp $");
 #include "env.h"
 #include "extern.h"
 #include "util.h"
-#include "vlan.h"
+
+static status_func_t status;
+static usage_func_t usage;
+static cmdloop_branch_t branch;
+
+static void vlan_constructor(void) __attribute__((constructor));
+static void vlan_status(prop_dictionary_t, prop_dictionary_t);
+
+static int setvlan(prop_dictionary_t, prop_dictionary_t);
+static int setvlanif(prop_dictionary_t, prop_dictionary_t);
 
 struct pinteger vlantag = PINTEGER_INITIALIZER1(&vlantag, "VLAN tag",
     0, USHRT_MAX, 10, setvlan, "vlantag", &command_root.pb_parser);
@@ -101,7 +110,7 @@ getvlan(prop_dictionary_t env, struct vlanreq *vlr, bool quiet)
 }
 
 int
-setvlan(prop_dictionary_t env, prop_dictionary_t xenv)
+setvlan(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct vlanreq vlr;
 	int64_t tag;
@@ -122,7 +131,7 @@ setvlan(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 int
-setvlanif(prop_dictionary_t env, prop_dictionary_t xenv)
+setvlanif(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct vlanreq vlr;
 	const char *parent;
@@ -149,7 +158,7 @@ setvlanif(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-void
+static void
 vlan_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct vlanreq vlr;
@@ -161,4 +170,21 @@ vlan_status(prop_dictionary_t env, prop_dictionary_t oenv)
 		printf("\tvlan: %d parent: %s\n",
 		    vlr.vlr_tag, vlr.vlr_parent[0] == '\0' ?
 		    "<none>" : vlr.vlr_parent);
+}
+
+static void
+vlan_usage(prop_dictionary_t env)
+{
+	fprintf(stderr, "\t[ vlan n vlanif i ]\n");
+}
+
+static void
+vlan_constructor(void)
+{
+	cmdloop_branch_init(&branch, &vlan.pk_parser);
+	register_cmdloop_branch(&branch);
+	status_func_init(&status, vlan_status);
+	usage_func_init(&usage, vlan_usage);
+	register_status(&status);
+	register_usage(&usage);
 }

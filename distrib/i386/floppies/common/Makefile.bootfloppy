@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.19.20.1 2008/06/02 13:21:14 mjf Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.19.20.2 2008/09/28 11:09:16 mjf Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
 #
@@ -18,6 +18,8 @@
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
+I386COMMON=	${.CURDIR}/../common
+
 FLOPPYMAX?=		1
 FLOPPYSIZE?=		2880
 .if defined(FLOPPYSIZE) && (${FLOPPYSIZE} != 2880)
@@ -32,11 +34,18 @@ FLOPPYINSTBOOT=		"${TOOL_INSTALLBOOT} ${FLOPPYBOOTOPTIONS} -m${MACHINE} @IMAGE@ 
 FLOPPYKERNOBJ!=		cd ${.CURDIR}/../../${FLOPPYKERNDIR} && ${PRINTOBJDIR}
 
 FLOPPY_BOOT?=		${MDEC}/boot
+FLOPPY_BOOT_CFG?=	${I386COMMON}/boot.cfg
 FLOPPY_NETBSD=		${FLOPPYKERNOBJ}/${FLOPPYKERNEL}
-FLOPPYFILES=		boot ${DISTRIBDIR}/i386/floppies/common/boot.cfg ${FLOPPYMETAFILE} netbsd
+FLOPPYFILES=		boot boot.cfg ${FLOPPYMETAFILE} netbsd
 FLOPPYPAD=		1
 
 FLOPPY_RELEASEDIR=	installation/floppy
+
+CLEANFILES+=	boot.cfg
+boot.cfg:	${FLOPPY_BOOT_CFG}
+	${_MKTARGET_CREATE} "(from: ${.ALLSRC})"
+	@rm -f ${.TARGET}
+	@cp ${FLOPPY_BOOT_CFG} ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.tarfloppy"
 

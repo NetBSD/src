@@ -1,4 +1,4 @@
-/*	$NetBSD: agr.c,v 1.3.20.1 2008/06/02 13:21:22 mjf Exp $	*/
+/*	$NetBSD: agr.c,v 1.3.20.2 2008/09/28 11:17:11 mjf Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: agr.c,v 1.3.20.1 2008/06/02 13:21:22 mjf Exp $");
+__RCSID("$NetBSD: agr.c,v 1.3.20.2 2008/09/28 11:17:11 mjf Exp $");
 #endif /* !defined(lint) */
 
 #include <sys/param.h>
@@ -45,12 +45,13 @@ __RCSID("$NetBSD: agr.c,v 1.3.20.1 2008/06/02 13:21:22 mjf Exp $");
 #include <stdlib.h>
 #include <util.h>
 
-#include "agr.h"
 #include "env.h"
 #include "extern.h"
 #include "parse.h"
 #include "util.h"
 
+static int agrsetport(prop_dictionary_t, prop_dictionary_t);
+static void agr_constructor(void) __attribute__((constructor));
 static int checkifname(prop_dictionary_t);
 static void assertifname(prop_dictionary_t);
 
@@ -87,7 +88,7 @@ assertifname(prop_dictionary_t env)
 }
 
 int
-agrsetport(prop_dictionary_t env, prop_dictionary_t xenv)
+agrsetport(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	char buf[IFNAMSIZ];
 	struct agrreq ar;
@@ -119,7 +120,7 @@ agrsetport(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-void
+static void
 agr_status(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct agrreq ar;
@@ -170,4 +171,25 @@ again:
 		printf("\tagrport: %s, flags=%s\n", api->api_ifname, tmp);
 		api++;
 	}
+}
+
+static status_func_t status;
+static usage_func_t usage;
+static cmdloop_branch_t branch;
+
+static void
+agr_usage(prop_dictionary_t env)
+{
+	fprintf(stderr, "\t[ agrport i ] [ -agrport i ]\n");
+}
+
+static void
+agr_constructor(void)
+{
+	status_func_init(&status, agr_status);
+	usage_func_init(&usage, agr_usage);
+	register_status(&status);
+	register_usage(&usage);
+	cmdloop_branch_init(&branch, &agr.pk_parser);
+	register_cmdloop_branch(&branch);
 }

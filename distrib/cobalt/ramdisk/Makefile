@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2008/02/02 14:06:48 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.1.6.1 2008/09/28 11:09:16 mjf Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	2560k
+IMAGESIZE=	3072k
 MAKEFS_FLAGS=	-f 15
 
 WARNS=		1
@@ -21,7 +21,8 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
 		${NETBSDSRCDIR}/distrib/common/services \
-		${NETBSDSRCDIR}/distrib/common/termcap.mini
+		${NETBSDSRCDIR}/distrib/common/termcap.mini \
+		${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script
 SMALLPROG_INET6=1
 
 # Use stubs to eliminate some large stuff from libc

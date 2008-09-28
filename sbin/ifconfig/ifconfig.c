@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.181.4.2 2008/06/29 08:41:57 mjf Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.181.4.3 2008/09/28 11:17:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -61,19 +61,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
-#endif /* not lint */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
-#else
-__RCSID("$NetBSD: ifconfig.c,v 1.181.4.2 2008/06/29 08:41:57 mjf Exp $");
-#endif
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\
+ The Regents of the University of California.  All rights reserved.");
+__RCSID("$NetBSD: ifconfig.c,v 1.181.4.3 2008/09/28 11:17:11 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 
@@ -103,104 +97,38 @@ __RCSID("$NetBSD: ifconfig.c,v 1.181.4.2 2008/06/29 08:41:57 mjf Exp $");
 
 #include "extern.h"
 
-#ifndef INET_ONLY
-#include "af_atalk.h"
-#include "af_iso.h"
-#endif /* ! INET_ONLY */
-#include "af_inet.h"
-#ifdef INET6
-#include "af_inet6.h"
-#endif /* INET6 */
-#include "af_link.h"
-
-#include "agr.h"
-#include "carp.h"
-#include "ieee80211.h"
-#include "tunnel.h"
-#include "vlan.h"
+#include "media.h"
 #include "parse.h"
 #include "env.h"
 
-int	setaddr, doalias;
-int	clearaddr;
-int	newaddr = -1;
-int	check_up_state = -1;
-int	bflag, dflag, hflag, lflag, mflag, sflag, uflag, vflag, zflag;
-#ifdef INET6
-int	Lflag;
-#endif
+static bool bflag, dflag, hflag, sflag, uflag;
+bool lflag, vflag, zflag;
 
-/*
- * Media stuff.  Whenever a media command is first performed, the
- * currently select media is grabbed for this interface.  If `media'
- * is given, the current media word is modifed.  `mediaopt' commands
- * only modify the set and clear words.  They then operate on the
- * current media word later.
- */
-int	media_current;
-int	mediaopt_set;
-int	mediaopt_clear;
+static char gflags[10 + 26 * 2 + 1] = "AabCdhlsuvz";
+bool gflagset[10 + 26 * 2];
 
-void	check_ifflags_up(prop_dictionary_t);
-
-int 	notealias(prop_dictionary_t, prop_dictionary_t);
-int 	notrailers(prop_dictionary_t, prop_dictionary_t);
-int 	setifaddr(prop_dictionary_t, prop_dictionary_t);
-int 	setifdstormask(prop_dictionary_t, prop_dictionary_t);
-int 	setifflags(prop_dictionary_t, prop_dictionary_t);
-static int	setifcaps(prop_dictionary_t, prop_dictionary_t);
-int 	setifbroadaddr(prop_dictionary_t, prop_dictionary_t);
-static int 	setifmetric(prop_dictionary_t, prop_dictionary_t);
-static int 	setifmtu(prop_dictionary_t, prop_dictionary_t);
-int 	setifnetmask(prop_dictionary_t, prop_dictionary_t);
-int	setifprefixlen(prop_dictionary_t, prop_dictionary_t);
-int	setmedia(prop_dictionary_t, prop_dictionary_t);
-int	setmediamode(prop_dictionary_t, prop_dictionary_t);
-int	setmediaopt(prop_dictionary_t, prop_dictionary_t);
-int	unsetmediaopt(prop_dictionary_t, prop_dictionary_t);
-int	setmediainst(prop_dictionary_t, prop_dictionary_t);
-static int	clone_command(prop_dictionary_t, prop_dictionary_t);
-static void	do_setifpreference(prop_dictionary_t);
-
-static int no_cmds_exec(prop_dictionary_t, prop_dictionary_t);
+static int carrier(prop_dictionary_t);
+static int clone_command(prop_dictionary_t, prop_dictionary_t);
+static void do_setifpreference(prop_dictionary_t);
+static int flag_index(int);
+static void init_afs(void);
+static int list_cloners(prop_dictionary_t, prop_dictionary_t);
 static int media_status_exec(prop_dictionary_t, prop_dictionary_t);
-
-int	carrier(prop_dictionary_t);
-void	printall(const char *, prop_dictionary_t);
-int	list_cloners(prop_dictionary_t, prop_dictionary_t);
-void 	status(const struct sockaddr_dl *, prop_dictionary_t,
+static int no_cmds_exec(prop_dictionary_t, prop_dictionary_t);
+static int notrailers(prop_dictionary_t, prop_dictionary_t);
+static void printall(const char *, prop_dictionary_t);
+static int setifaddr(prop_dictionary_t, prop_dictionary_t);
+static int setifbroadaddr(prop_dictionary_t, prop_dictionary_t);
+static int setifcaps(prop_dictionary_t, prop_dictionary_t);
+static int setifdstormask(prop_dictionary_t, prop_dictionary_t);
+static int setifflags(prop_dictionary_t, prop_dictionary_t);
+static int setifmetric(prop_dictionary_t, prop_dictionary_t);
+static int setifmtu(prop_dictionary_t, prop_dictionary_t);
+static int setifnetmask(prop_dictionary_t, prop_dictionary_t);
+static int setifprefixlen(prop_dictionary_t, prop_dictionary_t);
+static void status(const struct sockaddr_dl *, prop_dictionary_t,
     prop_dictionary_t);
-void 	usage(void);
-
-void	print_media_word(int, const char *);
-void	process_media_commands(prop_dictionary_t);
-void	init_current_media(prop_dictionary_t, prop_dictionary_t);
-
-/* Known address families */
-static const struct afswtch afs[] = {
-	  {.af_name = "inet", .af_af = AF_INET, .af_status = in_status,
-	   .af_addr_commit = in_commit_address}
-
-	, {.af_name = "link", .af_af = AF_LINK, .af_status = link_status,
-	   .af_addr_commit = link_commit_address}
-#ifdef INET6
-	, {.af_name = "inet6", .af_af = AF_INET6, .af_status = in6_status,
-	   .af_addr_commit = in6_commit_address}
-#endif
-
-#ifndef INET_ONLY	/* small version, for boot media */
-	, {.af_name = "atalk", .af_af = AF_APPLETALK, .af_status = at_status,
-	   .af_getaddr = at_getaddr, .af_difaddr = SIOCDIFADDR,
-	   .af_aifaddr = SIOCAIFADDR, .af_gifaddr = SIOCGIFADDR,
-	   .af_ridreq = &at_addreq, .af_addreq = &at_addreq}
-	, {.af_name = "iso", .af_af = AF_ISO, .af_status = iso_status,
-	   .af_getaddr = iso_getaddr, .af_difaddr = SIOCDIFADDR_ISO,
-	   .af_aifaddr = SIOCAIFADDR_ISO, .af_gifaddr = SIOCGIFADDR_ISO,
-	   .af_ridreq = &iso_ridreq, .af_addreq = &iso_addreq}
-#endif	/* INET_ONLY */
-
-	, {.af_name = NULL}	/* sentinel */
-};
+static void usage(void);
 
 static const struct kwinst ifflagskw[] = {
 	  IFKW("arp", IFF_NOARP)
@@ -257,50 +185,15 @@ struct paddr parse_broadcast = PADDR_INITIALIZER(&parse_broadcast,
     "broadcast address",
     setifbroadaddr, "broadcast", NULL, NULL, NULL, &command_root.pb_parser);
 
-struct pstr mediamode = PSTR_INITIALIZER(&mediamode, "mediamode",
-    setmediamode, "mediamode", &command_root.pb_parser);
-
-struct pinteger mediainst = PINTEGER_INITIALIZER1(&mediainst, "mediainst",
-    0, IFM_INST_MAX, 10, setmediainst, "mediainst", &command_root.pb_parser);
-
-struct pstr unmediaopt = PSTR_INITIALIZER(&unmediaopt, "-mediaopt",
-    unsetmediaopt, "unmediaopt", &command_root.pb_parser);
-
-struct pstr mediaopt = PSTR_INITIALIZER(&mediaopt, "mediaopt",
-    setmediaopt, "mediaopt", &command_root.pb_parser);
-
-struct pstr media = PSTR_INITIALIZER(&media, "media",
-    setmedia, "media", &command_root.pb_parser);
-
 static const struct kwinst misckw[] = {
-	  {.k_word = "active", .k_key = "active", .k_type = KW_T_BOOL,
-	   .k_bool = true, .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "alias", .k_key = "alias", .k_deact = "alias",
+	  {.k_word = "alias", .k_key = "alias", .k_deact = "alias",
 	   .k_type = KW_T_BOOL, .k_neg = true,
 	   .k_bool = true, .k_negbool = false,
-	   .k_exec = notealias, .k_nextparser = &command_root.pb_parser}
+	   .k_nextparser = &command_root.pb_parser}
 	, {.k_word = "broadcast", .k_nextparser = &parse_broadcast.pa_parser}
 	, {.k_word = "delete", .k_key = "alias", .k_deact = "alias",
-	   .k_type = KW_T_BOOL, .k_bool = false, .k_exec = notealias,
+	   .k_type = KW_T_BOOL, .k_bool = false,
 	   .k_nextparser = &command_root.pb_parser}
-	, {.k_word = "instance", .k_key = "anymedia", .k_type = KW_T_BOOL,
-	   .k_bool = true, .k_act = "media", .k_deact = "mediainst",
-	   .k_nextparser = &mediainst.pi_parser}
-	, {.k_word = "inst", .k_key = "anymedia", .k_type = KW_T_BOOL,
-	   .k_bool = true, .k_act = "media", .k_deact = "mediainst",
-	   .k_nextparser = &mediainst.pi_parser}
-	, {.k_word = "media", .k_key = "anymedia", .k_type = KW_T_BOOL,
-	   .k_bool = true, .k_deact = "media", .k_altdeact = "anymedia",
-	   .k_nextparser = &media.ps_parser}
-	, {.k_word = "mediaopt", .k_key = "anymedia", .k_type = KW_T_BOOL,
-	   .k_bool = true, .k_deact = "mediaopt", .k_altdeact = "instance",
-	   .k_nextparser = &mediaopt.ps_parser}
-	, {.k_word = "-mediaopt", .k_key = "anymedia", .k_type = KW_T_BOOL,
-	   .k_bool = true, .k_deact = "unmediaopt", .k_altdeact = "media",
-	   .k_nextparser = &unmediaopt.ps_parser}
-	, {.k_word = "mode", .k_key = "anymedia", .k_type = KW_T_BOOL,
-	   .k_bool = true, .k_deact = "mode",
-	   .k_nextparser = &mediamode.ps_parser}
 	, {.k_word = "metric", .k_nextparser = &parse_metric.pi_parser}
 	, {.k_word = "mtu", .k_nextparser = &parse_mtu.pi_parser}
 	, {.k_word = "netmask", .k_nextparser = &parse_netmask.pa_parser}
@@ -318,22 +211,7 @@ static const struct kwinst clonekw[] = {
 	{.k_word = "destroy", .k_type = KW_T_INT, .k_int = SIOCIFDESTROY}
 };
 
-static const struct kwinst familykw[] = {
-	  {.k_word = "inet", .k_type = KW_T_INT, .k_int = AF_INET,
-	   .k_nextparser = NULL}
-	, {.k_word = "link", .k_type = KW_T_INT, .k_int = AF_LINK,
-	   .k_nextparser = NULL}
-#ifdef INET6
-	, {.k_word = "inet6", .k_type = KW_T_INT, .k_int = AF_INET6,
-	   .k_nextparser = NULL}
-#endif
-#ifndef INET_ONLY	/* small version, for boot media */
-	, {.k_word = "atalk", .k_type = KW_T_INT, .k_int = AF_APPLETALK,
-	   .k_nextparser = NULL}
-	, {.k_word = "iso", .k_type = KW_T_INT, .k_int = AF_ISO,
-	   .k_nextparser = NULL}
-#endif	/* INET_ONLY */
-};
+static struct kwinst familykw[24];
 
 struct pterm cloneterm = PTERM_INITIALIZER(&cloneterm, "list cloners",
     list_cloners, "none");
@@ -359,6 +237,17 @@ struct paddr broadcast = PADDR_INITIALIZER(&broadcast,
     setifbroadaddr, "broadcast", NULL, "dstormask", "broadcast",
     &command_root.pb_parser);
 
+static SIMPLEQ_HEAD(, afswtch) aflist = SIMPLEQ_HEAD_INITIALIZER(aflist);
+
+static SIMPLEQ_HEAD(, usage_func) usage_funcs =
+    SIMPLEQ_HEAD_INITIALIZER(usage_funcs);
+static SIMPLEQ_HEAD(, status_func) status_funcs =
+    SIMPLEQ_HEAD_INITIALIZER(status_funcs);
+static SIMPLEQ_HEAD(, statistics_func) statistics_funcs =
+    SIMPLEQ_HEAD_INITIALIZER(statistics_funcs);
+static SIMPLEQ_HEAD(, cmdloop_branch) cmdloop_branches =
+    SIMPLEQ_HEAD_INITIALIZER(cmdloop_branches);
+
 struct branch opt_clone_brs[] = {
 	  {.b_nextparser = &cloning.pk_parser}
 	, {.b_nextparser = &opt_family.pb_parser}
@@ -369,23 +258,10 @@ struct branch opt_clone_brs[] = {
 	  {.b_nextparser = &family.pk_parser}
 	, {.b_nextparser = &opt_command.pb_parser}
 }, command_root_brs[] = {
-	  {.b_nextparser = &ieee80211bool.pk_parser}
-	, {.b_nextparser = &ifflags.pk_parser}
+	  {.b_nextparser = &ifflags.pk_parser}
 	, {.b_nextparser = &ifcaps.pk_parser}
-#ifdef INET6
-	, {.b_nextparser = &ia6flags.pk_parser}
-	, {.b_nextparser = &inet6.pk_parser}
-#endif /*INET6*/
+	, {.b_nextparser = &kwmedia.pk_parser}
 	, {.b_nextparser = &misc.pk_parser}
-	, {.b_nextparser = &tunnel.pk_parser}
-	, {.b_nextparser = &vlan.pk_parser}
-	, {.b_nextparser = &agr.pk_parser}
-#ifndef INET_ONLY
-	, {.b_nextparser = &carp.pk_parser}
-	, {.b_nextparser = &atalk.pk_parser}
-	, {.b_nextparser = &iso.pk_parser}
-#endif
-	, {.b_nextparser = &kw80211.pk_parser}
 	, {.b_nextparser = &address.pa_parser}
 	, {.b_nextparser = &dstormask.pa_parser}
 	, {.b_nextparser = &broadcast.pa_parser}
@@ -419,6 +295,8 @@ struct pkw family = PKW_INITIALIZER(&family, "family", NULL, "af",
 struct pkw silent_family = PKW_INITIALIZER(&silent_family, "silent family",
     NULL, "af", familykw, __arraycount(familykw), &command_root.pb_parser);
 
+struct pkw *family_users[] = {&family_only, &family, &silent_family};
+
 struct pkw ifcaps = PKW_INITIALIZER(&ifcaps, "ifcaps", setifcaps,
     "ifcap", ifcapskw, __arraycount(ifcapskw), &command_root.pb_parser);
 
@@ -447,21 +325,162 @@ struct piface iface_start = PIFACE_INITIALIZER(&iface_start,
 struct piface iface_only = PIFACE_INITIALIZER(&iface_only, "iface",
     media_status_exec, "if", NULL);
 
+static bool
+flag_is_registered(const char *flags, int flag)
+{
+	return flags != NULL && strchr(flags, flag) != NULL;
+}
+
+static int
+check_flag(const char *flags, int flag)
+{
+	if (flag_is_registered(flags, flag)) {
+		errno = EEXIST;
+		return -1;
+	}
+
+	if (flag >= '0' && flag <= '9')
+		return 0;
+	if (flag >= 'a' && flag <= 'z')
+		return 0;
+	if (flag >= 'A' && flag <= 'Z')
+		return 0;
+
+	errno = EINVAL;
+	return -1;
+}
+
+void
+cmdloop_branch_init(cmdloop_branch_t *b, struct parser *p)
+{
+	b->b_parser = p;
+}
+
+void
+statistics_func_init(statistics_func_t *f, statistics_cb_t func)
+{
+	f->f_func = func;
+}
+
+void
+status_func_init(status_func_t *f, status_cb_t func)
+{
+	f->f_func = func;
+}
+
+void
+usage_func_init(usage_func_t *f, usage_cb_t func)
+{
+	f->f_func = func;
+}
+
+int
+register_cmdloop_branch(cmdloop_branch_t *b)
+{
+	SIMPLEQ_INSERT_TAIL(&cmdloop_branches, b, b_next);
+	return 0;
+}
+
+int
+register_statistics(statistics_func_t *f)
+{
+	SIMPLEQ_INSERT_TAIL(&statistics_funcs, f, f_next);
+	return 0;
+}
+
+int
+register_status(status_func_t *f)
+{
+	SIMPLEQ_INSERT_TAIL(&status_funcs, f, f_next);
+	return 0;
+}
+
+int
+register_usage(usage_func_t *f)
+{
+	SIMPLEQ_INSERT_TAIL(&usage_funcs, f, f_next);
+	return 0;
+}
+
+int
+register_family(struct afswtch *af)
+{
+	SIMPLEQ_INSERT_TAIL(&aflist, af, af_next);
+	return 0;
+}
+ 
+int
+register_flag(int flag)
+{
+	if (check_flag(gflags, flag) == -1)
+		return -1;
+
+	if (strlen(gflags) + 1 >= sizeof(gflags)) {
+		errno = ENOMEM;
+		return -1;
+	}
+
+	gflags[strlen(gflags)] = flag;
+
+	return 0;
+}
+ 
+static int
+flag_index(int flag)
+{
+	if (flag >= '0' && flag <= '9')
+		return flag - '0';
+	if (flag >= 'a' && flag <= 'z')
+		return 10 + flag - 'a';
+	if (flag >= 'A' && flag <= 'Z')
+		return 10 + 26 + flag - 'a';
+
+	errno = EINVAL;
+	return -1;
+}
+
+static bool
+set_flag(int flag)
+{
+	int idx;
+
+	if ((idx = flag_index(flag)) == -1)
+		return false;
+
+	return gflagset[idx] = true;
+}
+
+bool
+get_flag(int flag)
+{
+	int idx;
+
+	if ((idx = flag_index(flag)) == -1)
+		return false;
+		
+	return gflagset[idx];
+}
+
 static struct parser *
 init_parser(void)
 {
+	cmdloop_branch_t *b;
+
 	if (parser_init(&iface_opt_family_only.pif_parser) == -1)
 		err(EXIT_FAILURE, "parser_init(iface_opt_family_only)");
 	if (parser_init(&iface_only.pif_parser) == -1)
 		err(EXIT_FAILURE, "parser_init(iface_only)");
 	if (parser_init(&iface_start.pif_parser) == -1)
 		err(EXIT_FAILURE, "parser_init(iface_start)");
+ 
+	SIMPLEQ_FOREACH(b, &cmdloop_branches, b_next)
+		pbranch_addbranch(&command_root, b->b_parser);
 
 	return &iface_start.pif_parser;
 }
 
 static int
-no_cmds_exec(prop_dictionary_t env, prop_dictionary_t xenv)
+no_cmds_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const char *ifname;
 	unsigned short ignore;
@@ -469,7 +488,7 @@ no_cmds_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 	/* ifname == NULL is ok.  It indicates 'ifconfig -a'. */
 	if ((ifname = getifname(env)) == NULL)
 		;
-	else if (getifflags(env, xenv, &ignore) == -1)
+	else if (getifflags(env, oenv, &ignore) == -1)
 		err(EXIT_FAILURE, "SIOCGIFFLAGS %s", ifname);
 
 	printall(ifname, env);
@@ -477,7 +496,7 @@ no_cmds_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 static int
-media_status_exec(prop_dictionary_t env, prop_dictionary_t xenv)
+media_status_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const char *ifname;
 	unsigned short ignore;
@@ -485,7 +504,7 @@ media_status_exec(prop_dictionary_t env, prop_dictionary_t xenv)
 	/* ifname == NULL is ok.  It indicates 'ifconfig -a'. */
 	if ((ifname = getifname(env)) == NULL)
 		;
-	else if (getifflags(env, xenv, &ignore) == -1)
+	else if (getifflags(env, oenv, &ignore) == -1)
 		err(EXIT_FAILURE, "SIOCGIFFLAGS %s", ifname);
 
 	exit(carrier(env));
@@ -512,91 +531,78 @@ int
 main(int argc, char **argv)
 {
 	const struct afswtch *afp;
-	int af, aflag = 0, Cflag = 0, s;
+	int af, s;
+	bool aflag = false, Cflag = false;
 	struct match match[32];
 	size_t nmatch;
 	struct parser *start;
 	int ch, narg = 0, rc;
-	prop_dictionary_t env, xenv;
+	prop_dictionary_t env, oenv;
 	const char *ifname;
 
 	memset(match, 0, sizeof(match));
 
+	init_afs();
+
 	start = init_parser();
 
 	/* Parse command-line options */
-	aflag = mflag = vflag = zflag = 0;
-	while ((ch = getopt(argc, argv, "AabCdhlmsuvz"
-#ifdef INET6
-					"L"
-#endif
-			)) != -1) {
+	aflag = vflag = zflag = false;
+	while ((ch = getopt(argc, argv, gflags)) != -1) {
 		switch (ch) {
 		case 'A':
 			warnx("-A is deprecated");
 			break;
 
 		case 'a':
-			aflag = 1;
+			aflag = true;
 			break;
 
 		case 'b':
-			bflag = 1;
+			bflag = true;
 			break;
 			
 		case 'C':
-			Cflag = 1;
+			Cflag = true;
 			break;
 
 		case 'd':
-			dflag = 1;
+			dflag = true;
 			break;
 		case 'h':
-			hflag = 1;
+			hflag = true;
 			break;
-#ifdef INET6
-		case 'L':
-			Lflag = 1;
-			break;
-#endif
-
 		case 'l':
-			lflag = 1;
-			break;
-
-		case 'm':
-			mflag = 1;
+			lflag = true;
 			break;
 
 		case 's':
-			sflag = 1;
+			sflag = true;
 			break;
 
 		case 'u':
-			uflag = 1;
+			uflag = true;
 			break;
 
 		case 'v':
-			vflag = 1;
+			vflag = true;
 			break;
 
 		case 'z':
-			zflag = 1;
+			zflag = true;
 			break;
 
-			
 		default:
-			usage();
-			/* NOTREACHED */
+			if (!set_flag(ch))
+				usage();
+			break;
 		}
 		switch (ch) {
 		case 'a':
 			start = &opt_family_only.pb_parser;
 			break;
 
-#ifdef INET6
 		case 'L':
-#endif
 		case 'm':
 		case 'v':
 		case 'z':
@@ -630,12 +636,10 @@ main(int argc, char **argv)
 	 *
 	 * -a means "print status of all interfaces".
 	 */
-	if ((lflag || Cflag) && (aflag || mflag || vflag || zflag))
+	if ((lflag || Cflag) && (aflag || get_flag('m') || vflag || zflag))
 		usage();
-#ifdef INET6
-	if ((lflag || Cflag) && Lflag)
+	if ((lflag || Cflag) && get_flag('L'))
 		usage();
-#endif
 	if (lflag && Cflag)
 		usage();
 
@@ -645,10 +649,10 @@ main(int argc, char **argv)
 	if (rc != 0)
 		usage();
 
-	if ((xenv = prop_dictionary_create()) == NULL)
+	if ((oenv = prop_dictionary_create()) == NULL)
 		err(EXIT_FAILURE, "%s: prop_dictionary_create", __func__);
 
-	if (matches_exec(match, xenv, nmatch) == -1)
+	if (matches_exec(match, oenv, nmatch) == -1)
 		err(EXIT_FAILURE, "exec_matches");
 
 	argc -= narg;
@@ -656,26 +660,15 @@ main(int argc, char **argv)
 
 	env = (nmatch > 0) ? match[(int)nmatch - 1].m_env : NULL;
 	if (env == NULL)
-		env = xenv;
+		env = oenv;
 	else
-		env = prop_dictionary_augment(env, xenv);
+		env = prop_dictionary_augment(env, oenv);
 
 	/* Process any media commands that may have been issued. */
 	process_media_commands(env);
 
-	af = getaf(env);
-	switch (af) {
-#ifndef INET_ONLY
-	case AF_APPLETALK:
-		checkatrange(&at_addreq.ifra_addr);
-		break;
-#endif	/* INET_ONLY */
-	default:
-		break;
-	case -1:
+	if ((af = getaf(env)) == -1)
 		af = AF_INET;
-		break;
-	}
 
 	if ((s = getsock(af)) == -1)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
@@ -686,41 +679,44 @@ main(int argc, char **argv)
 	if ((afp = lookup_af_bynum(af)) == NULL)
 		errx(EXIT_FAILURE, "%s: lookup_af_bynum", __func__);
 
-	if (afp->af_addr_commit != NULL) {
-		(*afp->af_addr_commit)(env, xenv);
-	} else {
-		if (clearaddr) {
-			estrlcpy(afp->af_ridreq, ifname, IFNAMSIZ);
-			if (ioctl(s, afp->af_difaddr, afp->af_ridreq) == -1)
-				err(EXIT_FAILURE, "SIOCDIFADDR");
-		}
-		if (newaddr > 0) {
-			estrlcpy(afp->af_addreq, ifname, IFNAMSIZ);
-			if (ioctl(s, afp->af_aifaddr, afp->af_addreq) == -1)
-				warn("SIOCAIFADDR");
-			else if (check_up_state < 0)
-				check_up_state = 1;
-		}
-	}
+	assert(afp->af_addr_commit != NULL);
+	(*afp->af_addr_commit)(env, oenv);
 
 	do_setifpreference(env);
 	do_setifcaps(env);
 
-	if (check_up_state == 1)
-		check_ifflags_up(env);
-
 	exit(EXIT_SUCCESS);
+}
+
+static void
+init_afs(void)
+{
+	int i;
+	const struct afswtch *afp;
+	struct kwinst kw = {.k_type = KW_T_INT};
+
+	SIMPLEQ_FOREACH(afp, &aflist, af_next) {
+		kw.k_word = afp->af_name;
+		kw.k_int = afp->af_af;
+		for (i = 0; i < __arraycount(familykw); i++) {
+			if (familykw[i].k_word == NULL) {
+				familykw[i] = kw;
+				break;
+			}
+		}
+	}
 }
 
 const struct afswtch *
 lookup_af_bynum(int afnum)
 {
-	const struct afswtch *a;
+	const struct afswtch *afp;
 
-	for (a = afs; a->af_name != NULL; a++)
-		if (a->af_af == afnum)
-			return (a);
-	return (NULL);
+	SIMPLEQ_FOREACH(afp, &aflist, af_next) {
+		if (afp->af_af == afnum)
+			break;
+	}
+	return afp;
 }
 
 void
@@ -795,7 +791,7 @@ printall(const char *ifname, prop_dictionary_t env0)
 	freeifaddrs(ifap);
 }
 
-int
+static int
 list_cloners(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct if_clonereq ifcr;
@@ -837,7 +833,7 @@ list_cloners(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 static int
-clone_command(prop_dictionary_t env, prop_dictionary_t xenv)
+clone_command(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int64_t cmd;
 
@@ -854,22 +850,16 @@ clone_command(prop_dictionary_t env, prop_dictionary_t xenv)
 }
 
 /*ARGSUSED*/
-int
-setifaddr(prop_dictionary_t env, prop_dictionary_t xenv)
+static int
+setifaddr(prop_dictionary_t env, prop_dictionary_t oenv)
 {
-	struct ifreq *ifr;		/* XXX */
 	const struct paddr_prefix *pfx0;
 	struct paddr_prefix *pfx;
 	prop_data_t d;
-	const char *ifname;
-	int af, s;
-	const struct afswtch *afp;
+	int af;
 
 	if ((af = getaf(env)) == -1)
 		af = AF_INET;
-
-	if ((afp = lookup_af_bynum(af)) == NULL)
-		return -1;
 
 	d = (prop_data_t)prop_dictionary_get(env, "address");
 	assert(d != NULL);
@@ -879,96 +869,36 @@ setifaddr(prop_dictionary_t env, prop_dictionary_t xenv)
 		pfx = prefixlen_to_mask(af, pfx0->pfx_len);
 		if (pfx == NULL)
 			err(EXIT_FAILURE, "prefixlen_to_mask");
-
-		if (afp->af_getaddr != NULL)
-			(*afp->af_getaddr)(pfx, MASK);
 		free(pfx);
 	}
 
-	if (afp->af_addr_commit != NULL)
-		return 0;
-
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
-
-	/*
-	 * Delay the ioctl to set the interface addr until flags are all set.
-	 * The address interpretation may depend on the flags,
-	 * and the flags may change when the address is set.
-	 */
-	setaddr++;
-	if (newaddr == -1)
-		newaddr = 1;
-	if (doalias == 0 && afp->af_gifaddr != 0) {
-		ifr = (struct ifreq *)afp->af_ridreq;
-		estrlcpy(ifr->ifr_name, ifname, sizeof(ifr->ifr_name));
-		ifr->ifr_addr.sa_family = af;
-
-		if ((s = getsock(af)) == -1)
-			err(EXIT_FAILURE, "getsock");
-
-		if (ioctl(s, afp->af_gifaddr, afp->af_ridreq) == 0)
-			clearaddr = 1;
-		else if (errno == EADDRNOTAVAIL)
-			/* No address was assigned yet. */
-			;
-		else
-			err(EXIT_FAILURE, "SIOCGIFADDR");
-	}
-
-#if 0
-	int i;
-	for (i = 0; i < pfx0->pfx_addr.sa_len; i++)
-		printf(" %02x", ((const uint8_t *)&pfx->pfx_addr)[i]);
-	printf("\n");
-#endif
-	if (afp->af_getaddr != NULL)
-		(*afp->af_getaddr)(pfx0, (doalias >= 0 ? ADDR : RIDADDR));
 	return 0;
 }
 
-int
-setifnetmask(prop_dictionary_t env, prop_dictionary_t xenv)
+static int
+setifnetmask(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const struct paddr_prefix *pfx;
 	prop_data_t d;
-	int af;
-	const struct afswtch *afp;
-
-	if ((af = getaf(env)) == -1)
-		af = AF_INET;
-
-	if ((afp = lookup_af_bynum(af)) == NULL)
-		return -1;
 
 	d = (prop_data_t)prop_dictionary_get(env, "dstormask");
 	assert(d != NULL);
 	pfx = prop_data_data_nocopy(d);
 
-	if (!prop_dictionary_set(xenv, "netmask", (prop_object_t)d))
+	if (!prop_dictionary_set(oenv, "netmask", (prop_object_t)d))
 		return -1;
 
-	if (afp->af_getaddr != NULL)
-		(*afp->af_getaddr)(pfx, MASK);
 	return 0;
 }
 
-int
-setifbroadaddr(prop_dictionary_t env, prop_dictionary_t xenv)
+static int
+setifbroadaddr(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const struct paddr_prefix *pfx;
 	prop_data_t d;
-	int af;
-	const struct afswtch *afp;
 	unsigned short flags;
 
-	if ((af = getaf(env)) == -1)
-		af = AF_INET;
-
-	if ((afp = lookup_af_bynum(af)) == NULL)
-		return -1;
-
-	if (getifflags(env, xenv, &flags) == -1)
+	if (getifflags(env, oenv, &flags) == -1)
 		err(EXIT_FAILURE, "%s: getifflags", __func__);
 
 	if ((flags & IFF_BROADCAST) == 0)
@@ -978,77 +908,30 @@ setifbroadaddr(prop_dictionary_t env, prop_dictionary_t xenv)
 	assert(d != NULL);
 	pfx = prop_data_data_nocopy(d);
 
-	if (!prop_dictionary_set(xenv, "broadcast", (prop_object_t)d))
+	if (!prop_dictionary_set(oenv, "broadcast", (prop_object_t)d))
 		return -1;
 
-	if (afp->af_getaddr != NULL)
-		(*afp->af_getaddr)(pfx, DSTADDR);
-
-	return 0;
-}
-
-#define rqtosa(__afp, __x) (&(((struct ifreq *)(__afp->__x))->ifr_addr))
-
-int
-notealias(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	bool alias, delete;
-	int af;
-	const struct afswtch *afp;
-
-	if ((af = getaf(env)) == -1)
-		af = AF_INET;
-
-	if ((afp = lookup_af_bynum(af)) == NULL)
-		return -1;
-
-	if (afp->af_addr_commit != NULL)
-		return 0;
-
-	if (!prop_dictionary_get_bool(env, "alias", &alias)) {
-		errno = ENOENT;
-		return -1;
-	}
-	delete = !alias;
-	if (setaddr && doalias == 0 && delete)
-		memcpy(rqtosa(afp, af_ridreq), rqtosa(afp, af_addreq),
-		    rqtosa(afp, af_addreq)->sa_len);
-	doalias = delete ? -1 : 1;
-	if (delete) {
-		clearaddr = 1;
-		newaddr = 0;
-	} else {
-		clearaddr = 0;
-	}
 	return 0;
 }
 
 /*ARGSUSED*/
-int
-notrailers(prop_dictionary_t env, prop_dictionary_t xenv)
+static int
+notrailers(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	puts("Note: trailers are no longer sent, but always received");
 	return 0;
 }
 
 /*ARGSUSED*/
-int
-setifdstormask(prop_dictionary_t env, prop_dictionary_t xenv)
+static int
+setifdstormask(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	const char *key;
 	const struct paddr_prefix *pfx;
 	prop_data_t d;
-	int af, which;
-	const struct afswtch *afp;
 	unsigned short flags;
 
-	if ((af = getaf(env)) == -1)
-		af = AF_INET;
-
-	if ((afp = lookup_af_bynum(af)) == NULL)
-		return -1;
-
-	if (getifflags(env, xenv, &flags) == -1)
+	if (getifflags(env, oenv, &flags) == -1)
 		err(EXIT_FAILURE, "%s: getifflags", __func__);
 
 	d = (prop_data_t)prop_dictionary_get(env, "dstormask");
@@ -1057,36 +940,18 @@ setifdstormask(prop_dictionary_t env, prop_dictionary_t xenv)
 
 	if ((flags & IFF_BROADCAST) == 0) {
 		key = "dst";
-		which = DSTADDR;
 	} else {
 		key = "netmask";
-		which = MASK;
 	}
 
-	if (!prop_dictionary_set(xenv, key, (prop_object_t)d))
+	if (!prop_dictionary_set(oenv, key, (prop_object_t)d))
 		return -1;
 
-	if (afp->af_getaddr != NULL)
-		(*afp->af_getaddr)(pfx, which);
 	return 0;
 }
 
-void
-check_ifflags_up(prop_dictionary_t env)
-{
-	struct ifreq ifr;
-
- 	if (direct_ioctl(env, SIOCGIFFLAGS, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCGIFFLAGS");
-	if (ifr.ifr_flags & IFF_UP)
-		return;
-	ifr.ifr_flags |= IFF_UP;
-	if (direct_ioctl(env, SIOCSIFFLAGS, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCSIFFLAGS");
-}
-
-int
-setifflags(prop_dictionary_t env, prop_dictionary_t xenv)
+static int
+setifflags(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ifreq ifr;
 	int64_t ifflag;
@@ -1100,8 +965,6 @@ setifflags(prop_dictionary_t env, prop_dictionary_t xenv)
 
 	if (ifflag < 0) {
 		ifflag = -ifflag;
-		if (ifflag == IFF_UP)
-			check_up_state = 0;
 		ifr.ifr_flags &= ~ifflag;
 	} else
 		ifr.ifr_flags |= ifflag;
@@ -1147,16 +1010,12 @@ setifcaps(prop_dictionary_t env, prop_dictionary_t oenv)
 	int s;
 	bool rc;
 	prop_data_t capdata;
-	const char *ifname;
 	struct ifcapreq ifcr;
 
 	s = getsock(AF_INET);
 
 	rc = prop_dictionary_get_int64(env, "ifcap", &ifcap);
 	assert(rc);
-
-	if ((ifname = getifname(env)) == NULL)
-		return -1;
 
 	if (getifcaps(env, oenv, &ifcr) == -1)
 		return -1;
@@ -1177,7 +1036,7 @@ setifcaps(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 static int
-setifmetric(prop_dictionary_t env, prop_dictionary_t xenv)
+setifmetric(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	struct ifreq ifr;
 	bool rc;
@@ -1196,16 +1055,8 @@ static void
 do_setifpreference(prop_dictionary_t env)
 {
 	struct if_addrprefreq ifap;
-	int af;
-	const struct afswtch *afp;
 	prop_data_t d;
 	const struct paddr_prefix *pfx;
-
-	if ((af = getaf(env)) == -1)
-		af = AF_INET;
-
-	if ((afp = lookup_af_bynum(af)) == NULL)
-		errx(EXIT_FAILURE, "%s: lookup_af_bynum", __func__);
 
 	memset(&ifap, 0, sizeof(ifap));
 
@@ -1225,7 +1076,7 @@ do_setifpreference(prop_dictionary_t env)
 }
 
 static int
-setifmtu(prop_dictionary_t env, prop_dictionary_t xenv)
+setifmtu(prop_dictionary_t env, prop_dictionary_t oenv)
 {
 	int64_t mtu;
 	bool rc;
@@ -1241,259 +1092,7 @@ setifmtu(prop_dictionary_t env, prop_dictionary_t xenv)
 	return 0;
 }
 
-static void
-media_error(int type, const char *val, const char *opt)
-{
-	errx(EXIT_FAILURE, "unknown %s media %s: %s",
-		get_media_type_string(type), opt, val);
-}
-
-void
-init_current_media(prop_dictionary_t env, prop_dictionary_t oenv)
-{
-	const char *ifname;
-	struct ifmediareq ifmr;
-
-	if ((ifname = getifname(env)) == NULL)
-		err(EXIT_FAILURE, "getifname");
-
-	/*
-	 * If we have not yet done so, grab the currently-selected
-	 * media.
-	 */
-
-	if (prop_dictionary_get(env, "initmedia") == NULL) {
-		memset(&ifmr, 0, sizeof(ifmr));
-
-		if (direct_ioctl(env, SIOCGIFMEDIA, &ifmr) == -1) {
-			/*
-			 * If we get E2BIG, the kernel is telling us
-			 * that there are more, so we can ignore it.
-			 */
-			if (errno != E2BIG)
-				err(EXIT_FAILURE, "SIOCGIFMEDIA");
-		}
-
-		if (!prop_dictionary_set_bool(oenv, "initmedia", true)) {
-			err(EXIT_FAILURE, "%s: prop_dictionary_set_bool",
-			    __func__);
-		}
-		media_current = ifmr.ifm_current;
-	}
-
-	/* Sanity. */
-	if (IFM_TYPE(media_current) == 0)
-		errx(EXIT_FAILURE, "%s: no link type?", ifname);
-}
-
-void
-process_media_commands(prop_dictionary_t env)
-{
-	struct ifreq ifr;
-
-	if (prop_dictionary_get(env, "media") == NULL &&
-	    prop_dictionary_get(env, "mediaopt") == NULL &&
-	    prop_dictionary_get(env, "unmediaopt") == NULL &&
-	    prop_dictionary_get(env, "mediamode") == NULL) {
-		/* Nothing to do. */
-		return;
-	}
-
-	/*
-	 * Media already set up, and commands sanity-checked.  Set/clear
-	 * any options, and we're ready to go.
-	 */
-	media_current |= mediaopt_set;
-	media_current &= ~mediaopt_clear;
-
-	memset(&ifr, 0, sizeof(ifr));
-	ifr.ifr_media = media_current;
-
-	if (direct_ioctl(env, SIOCSIFMEDIA, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCSIFMEDIA");
-}
-
-int
-setmedia(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	int type, subtype, inst;
-	prop_data_t data;
-	char *val;
-
-	init_current_media(env, xenv);
-
-	data = (prop_data_t)prop_dictionary_get(env, "media");
-	assert(data != NULL);
-
-	/* Only one media command may be given. */
-	/* Must not come after mode commands */
-	/* Must not come after mediaopt commands */
-
-	/*
-	 * No need to check if `instance' has been issued; setmediainst()
-	 * craps out if `media' has not been specified.
-	 */
-
-	type = IFM_TYPE(media_current);
-	inst = IFM_INST(media_current);
-
-	val = strndup(prop_data_data_nocopy(data), prop_data_size(data));
-	if (val == NULL)
-		return -1;
-
-	/* Look up the subtype. */
-	subtype = get_media_subtype(type, val);
-	if (subtype == -1)
-		media_error(type, val, "subtype");
-
-	/* Build the new current media word. */
-	media_current = IFM_MAKEWORD(type, subtype, 0, inst);
-
-	/* Media will be set after other processing is complete. */
-	return 0;
-}
-
-int
-setmediaopt(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	char *invalid;
-	prop_data_t data;
-	char *val;
-
-	init_current_media(env, xenv);
-
-	data = (prop_data_t)prop_dictionary_get(env, "mediaopt");
-	assert(data != NULL);
-
-	/* Can only issue `mediaopt' once. */
-	/* Can't issue `mediaopt' if `instance' has already been issued. */
-
-	val = strndup(prop_data_data_nocopy(data), prop_data_size(data));
-	if (val == NULL)
-		return -1;
-
-	mediaopt_set = get_media_options(media_current, val, &invalid);
-	free(val);
-	if (mediaopt_set == -1)
-		media_error(media_current, invalid, "option");
-
-	/* Media will be set after other processing is complete. */
-	return 0;
-}
-
-int
-unsetmediaopt(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	char *invalid, *val;
-	prop_data_t data;
-
-	init_current_media(env, xenv);
-
-	data = (prop_data_t)prop_dictionary_get(env, "unmediaopt");
-	if (data == NULL) {
-		errno = ENOENT;
-		return -1;
-	}
-
-	val = strndup(prop_data_data_nocopy(data), prop_data_size(data));
-	if (val == NULL)
-		return -1;
-
-	/*
-	 * No need to check for A_MEDIAINST, since the test for A_MEDIA
-	 * implicitly checks for A_MEDIAINST.
-	 */
-
-	mediaopt_clear = get_media_options(media_current, val, &invalid);
-	free(val);
-	if (mediaopt_clear == -1)
-		media_error(media_current, invalid, "option");
-
-	/* Media will be set after other processing is complete. */
-	return 0;
-}
-
-int
-setmediainst(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	int type, subtype, options;
-	int64_t inst;
-	bool rc;
-
-	init_current_media(env, xenv);
-
-	rc = prop_dictionary_get_int64(env, "mediainst", &inst);
-	assert(rc);
-
-	/* Can only issue `instance' once. */
-	/* Must have already specified `media' */
-
-	type = IFM_TYPE(media_current);
-	subtype = IFM_SUBTYPE(media_current);
-	options = IFM_OPTIONS(media_current);
-
-	media_current = IFM_MAKEWORD(type, subtype, options, inst);
-
-	/* Media will be set after other processing is complete. */
-	return 0;
-}
-
-int
-setmediamode(prop_dictionary_t env, prop_dictionary_t xenv)
-{
-	int type, subtype, options, inst, mode;
-	prop_data_t data;
-	char *val;
-
-	init_current_media(env, xenv);
-
-	data = (prop_data_t)prop_dictionary_get(env, "mediamode");
-	assert(data != NULL);
-
-	type = IFM_TYPE(media_current);
-	subtype = IFM_SUBTYPE(media_current);
-	options = IFM_OPTIONS(media_current);
-	inst = IFM_INST(media_current);
-
-	val = strndup(prop_data_data_nocopy(data), prop_data_size(data));
-	if (val == NULL)
-		return -1;
-
-	mode = get_media_mode(type, val);
-	if (mode == -1)
-		media_error(type, val, "mode");
-
-	free(val);
-
-	media_current = IFM_MAKEWORD(type, subtype, options, inst) | mode;
-
-	/* Media will be set after other processing is complete. */
-	return 0;
-}
-
-void
-print_media_word(int ifmw, const char *opt_sep)
-{
-	const char *str;
-
-	printf("%s", get_media_subtype_string(ifmw));
-
-	/* Find mode. */
-	if (IFM_MODE(ifmw) != 0) {
-		str = get_media_mode_string(ifmw);
-		if (str != NULL)
-			printf(" mode %s", str);
-	}
-
-	/* Find options. */
-	for (; (str = get_media_option_string(&ifmw)) != NULL; opt_sep = ",")
-		printf("%s%s", opt_sep, str);
-
-	if (IFM_INST(ifmw) != 0)
-		printf(" instance %d", IFM_INST(ifmw));
-}
-
-int
+static int
 carrier(prop_dictionary_t env)
 {
 	struct ifmediareq ifmr;
@@ -1521,10 +1120,24 @@ carrier(prop_dictionary_t env)
 		return EXIT_FAILURE;
 }
 
-const int ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
+static void
+print_plural(const char *prefix, uint64_t n, const char *unit)
+{
+	printf("%s%" PRIu64 " %s%s", prefix, n, unit, (n == 1) ? "" : "s");
+}
 
-const struct ifmedia_status_description ifm_status_descriptions[] =
-    IFM_STATUS_DESCRIPTIONS;
+static void
+print_human_bytes(bool humanize, uint64_t n)
+{
+	char buf[5];
+
+	if (humanize) {
+		(void)humanize_number(buf, sizeof(buf),
+		    (int64_t)n, "", HN_AUTOSCALE, HN_NOSPACE | HN_DECIMAL);
+		printf(", %s byte%s", buf, (atof(buf) == 1.0) ? "" : "s");
+	} else
+		print_plural(", ", n, "byte");
+}
 
 /*
  * Print the status of the interface.  If an address family was
@@ -1534,10 +1147,11 @@ void
 status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
     prop_dictionary_t oenv)
 {
-	struct ifmediareq ifmr;
+	const struct if_data *ifi;
+	status_func_t *status_f;
+	statistics_func_t *statistics_f;
 	struct ifdatareq ifdr;
 	struct ifreq ifr;
-	int *media_list, i;
 	char hbuf[NI_MAXHOST];
 	char fbuf[BUFSIZ];
 	int af, s;
@@ -1585,13 +1199,8 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
 		printf("\tenabled=%s\n", &fbuf[2]);
 	}
 
-	ieee80211_status(env, oenv);
-	vlan_status(env, oenv);
-#ifndef INET_ONLY
-	carp_status(env, oenv);
-#endif
-	tunnel_status(env, oenv);
-	agr_status(env, oenv);
+	SIMPLEQ_FOREACH(status_f, &status_funcs, f_next)
+		(*status_f->f_func)(env, oenv);
 
 	if (sdl != NULL &&
 	    getnameinfo((const struct sockaddr *)sdl, sdl->sdl_len,
@@ -1599,192 +1208,60 @@ status(const struct sockaddr_dl *sdl, prop_dictionary_t env,
 	    hbuf[0] != '\0')
 		printf("\taddress: %s\n", hbuf);
 
-	(void) memset(&ifmr, 0, sizeof(ifmr));
-	estrlcpy(ifmr.ifm_name, ifname, sizeof(ifmr.ifm_name));
+	media_status(env, oenv);
 
-	if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1) {
-		/*
-		 * Interface doesn't support SIOC{G,S}IFMEDIA.
-		 */
-		goto iface_stats;
-	}
-
-	if (ifmr.ifm_count == 0) {
-		warnx("%s: no media types?", ifname);
-		goto iface_stats;
-	}
-
-	media_list = (int *)malloc(ifmr.ifm_count * sizeof(int));
-	if (media_list == NULL)
-		err(EXIT_FAILURE, "malloc");
-	ifmr.ifm_ulist = media_list;
-
-	if (ioctl(s, SIOCGIFMEDIA, &ifmr) == -1)
-		err(EXIT_FAILURE, "SIOCGIFMEDIA");
-
-	printf("\tmedia: %s ", get_media_type_string(ifmr.ifm_current));
-	print_media_word(ifmr.ifm_current, " ");
-	if (ifmr.ifm_active != ifmr.ifm_current) {
-		printf(" (");
-		print_media_word(ifmr.ifm_active, " ");
-		printf(")");
-	}
-	printf("\n");
-
-	if (ifmr.ifm_status & IFM_STATUS_VALID) {
-		const struct ifmedia_status_description *ifms;
-		int bitno, found = 0;
-
-		printf("\tstatus: ");
-		for (bitno = 0; ifm_status_valid_list[bitno] != 0; bitno++) {
-			for (ifms = ifm_status_descriptions;
-			     ifms->ifms_valid != 0; ifms++) {
-				if (ifms->ifms_type !=
-				      IFM_TYPE(ifmr.ifm_current) ||
-				    ifms->ifms_valid !=
-				      ifm_status_valid_list[bitno])
-					continue;
-				printf("%s%s", found ? ", " : "",
-				    IFM_STATUS_DESC(ifms, ifmr.ifm_status));
-				found = 1;
-
-				/*
-				 * For each valid indicator bit, there's
-				 * only one entry for each media type, so
-				 * terminate the inner loop now.
-				 */
-				break;
-			}
-		}
-
-		if (found == 0)
-			printf("unknown");
-		printf("\n");
-	}
-
-	if (mflag) {
-		int type, printed_type;
-
-		for (type = IFM_NMIN; type <= IFM_NMAX; type += IFM_NMIN) {
-			for (i = 0, printed_type = 0; i < ifmr.ifm_count; i++) {
-				if (IFM_TYPE(media_list[i]) != type)
-					continue;
-				if (printed_type == 0) {
-					printf("\tsupported %s media:\n",
-					    get_media_type_string(type));
-					printed_type = 1;
-				}
-				printf("\t\tmedia ");
-				print_media_word(media_list[i], " mediaopt ");
-				printf("\n");
-			}
-		}
-	}
-
-	free(media_list);
-
- iface_stats:
 	if (!vflag && !zflag)
 		goto proto_status;
 
 	estrlcpy(ifdr.ifdr_name, ifname, sizeof(ifdr.ifdr_name));
 
-	if (ioctl(s, zflag ? SIOCZIFDATA:SIOCGIFDATA, &ifdr) == -1) {
+	if (ioctl(s, zflag ? SIOCZIFDATA:SIOCGIFDATA, &ifdr) == -1)
 		err(EXIT_FAILURE, zflag ? "SIOCZIFDATA" : "SIOCGIFDATA");
-	} else {
-		struct if_data * const ifi = &ifdr.ifdr_data;
-		char buf[5];
 
-#define	PLURAL(n)	((n) == 1 ? "" : "s")
-#define PLURALSTR(s)	((atof(s)) == 1.0 ? "" : "s")
-		printf("\tinput: %llu packet%s, ", 
-		    (unsigned long long) ifi->ifi_ipackets,
-		    PLURAL(ifi->ifi_ipackets));
-		if (hflag) {
-			(void) humanize_number(buf, sizeof(buf),
-			    (int64_t) ifi->ifi_ibytes, "", HN_AUTOSCALE, 
-			    HN_NOSPACE | HN_DECIMAL);
-			printf("%s byte%s", buf,
-			    PLURALSTR(buf));
-		} else
-			printf("%llu byte%s",
-			    (unsigned long long) ifi->ifi_ibytes,
-		            PLURAL(ifi->ifi_ibytes));
-		if (ifi->ifi_imcasts)
-			printf(", %llu multicast%s",
-			    (unsigned long long) ifi->ifi_imcasts,
-			    PLURAL(ifi->ifi_imcasts));
-		if (ifi->ifi_ierrors)
-			printf(", %llu error%s",
-			    (unsigned long long) ifi->ifi_ierrors,
-			    PLURAL(ifi->ifi_ierrors));
-		if (ifi->ifi_iqdrops)
-			printf(", %llu queue drop%s",
-			    (unsigned long long) ifi->ifi_iqdrops,
-			    PLURAL(ifi->ifi_iqdrops));
-		if (ifi->ifi_noproto)
-			printf(", %llu unknown protocol",
-			    (unsigned long long) ifi->ifi_noproto);
-		printf("\n\toutput: %llu packet%s, ",
-		    (unsigned long long) ifi->ifi_opackets,
-		    PLURAL(ifi->ifi_opackets));
-		if (hflag) {
-			(void) humanize_number(buf, sizeof(buf),
-			    (int64_t) ifi->ifi_obytes, "", HN_AUTOSCALE,
-			    HN_NOSPACE | HN_DECIMAL);
-			printf("%s byte%s", buf,
-			    PLURALSTR(buf));
-		} else
-			printf("%llu byte%s",
-			    (unsigned long long) ifi->ifi_obytes,
-			    PLURAL(ifi->ifi_obytes));
-		if (ifi->ifi_omcasts)
-			printf(", %llu multicast%s",
-			    (unsigned long long) ifi->ifi_omcasts,
-			    PLURAL(ifi->ifi_omcasts));
-		if (ifi->ifi_oerrors)
-			printf(", %llu error%s",
-			    (unsigned long long) ifi->ifi_oerrors,
-			    PLURAL(ifi->ifi_oerrors));
-		if (ifi->ifi_collisions)
-			printf(", %llu collision%s",
-			    (unsigned long long) ifi->ifi_collisions,
-			    PLURAL(ifi->ifi_collisions));
-		printf("\n");
-#undef PLURAL
-#undef PLURALSTR
-	}
+	ifi = &ifdr.ifdr_data;
 
-	ieee80211_statistics(env);
+	print_plural("\tinput: ", ifi->ifi_ipackets, "packet");
+	print_human_bytes(hflag, ifi->ifi_ibytes);
+	if (ifi->ifi_imcasts)
+		print_plural(", ", ifi->ifi_imcasts, "multicast");
+	if (ifi->ifi_ierrors)
+		print_plural(", ", ifi->ifi_ierrors, "error");
+	if (ifi->ifi_iqdrops)
+		print_plural(", ", ifi->ifi_iqdrops, "queue drop");
+	if (ifi->ifi_noproto)
+		printf(", %" PRIu64 " unknown protocol", ifi->ifi_noproto);
+	print_plural("\n\toutput: ", ifi->ifi_opackets, "packet");
+	print_human_bytes(hflag, ifi->ifi_obytes);
+	if (ifi->ifi_omcasts)
+		print_plural(", ", ifi->ifi_omcasts, "multicast");
+	if (ifi->ifi_oerrors)
+		print_plural(", ", ifi->ifi_oerrors, "error");
+	if (ifi->ifi_collisions)
+		print_plural(", ", ifi->ifi_collisions, "collision");
+	printf("\n");
+
+	SIMPLEQ_FOREACH(statistics_f, &statistics_funcs, f_next)
+		(*statistics_f->f_func)(env);
 
  proto_status:
 
 	if (afp != NULL)
 		(*afp->af_status)(env, oenv, true);
-	else for (afp = afs; afp->af_name != NULL; afp++)
+	else SIMPLEQ_FOREACH(afp, &aflist, af_next)
 		(*afp->af_status)(env, oenv, false);
 }
 
-int
-setifprefixlen(prop_dictionary_t env, prop_dictionary_t xenv)
+static int
+setifprefixlen(prop_dictionary_t env, prop_dictionary_t oenv)
 {
-	const char *ifname;
 	bool rc;
 	int64_t plen;
 	int af;
-	const struct afswtch *afp;
-	unsigned short flags;
 	struct paddr_prefix *pfx;
 	prop_data_t d;
 
 	if ((af = getaf(env)) == -1)
 		af = AF_INET;
-
-	if ((afp = lookup_af_bynum(af)) == NULL)
-		return -1;
-
-	if ((ifname = getifinfo(env, xenv, &flags)) == NULL)
-		err(EXIT_FAILURE, "getifinfo");
 
 	rc = prop_dictionary_get_int64(env, "prefixlen", &plen);
 	assert(rc);
@@ -1793,54 +1270,49 @@ setifprefixlen(prop_dictionary_t env, prop_dictionary_t xenv)
 	if (pfx == NULL)
 		err(EXIT_FAILURE, "prefixlen_to_mask");
 
-	d = prop_data_create_data(pfx,
-	    offsetof(struct paddr_prefix, pfx_addr) + pfx->pfx_addr.sa_len);
+	d = prop_data_create_data(pfx, paddr_prefix_size(pfx));
 	if (d == NULL)
 		err(EXIT_FAILURE, "%s: prop_data_create_data", __func__);
 
-	if (!prop_dictionary_set(xenv, "netmask", (prop_object_t)d))
+	if (!prop_dictionary_set(oenv, "netmask", (prop_object_t)d))
 		err(EXIT_FAILURE, "%s: prop_dictionary_set", __func__);
-
-	if (afp->af_getaddr != NULL)
-		(*afp->af_getaddr)(pfx, MASK);
 
 	free(pfx);
 	return 0;
 }
 
-void
+static void
 usage(void)
 {
 	const char *progname = getprogname();
+	usage_func_t *usage_f;
+	prop_dictionary_t env;
 
-	fprintf(stderr,
-	    "usage: %s [-h] [-m] [-v] [-z] "
-#ifdef INET6
-		"[-L] "
-#endif
-		"interface\n"
+	if ((env = prop_dictionary_create()) == NULL)
+		err(EXIT_FAILURE, "%s: prop_dictionary_create", __func__);
+
+	fprintf(stderr, "usage: %s [-h] %s[-v] [-z] %sinterface\n"
 		"\t[ af [ address [ dest_addr ] ] [ netmask mask ] [ prefixlen n ]\n"
 		"\t\t[ alias | -alias ] ]\n"
-		"\t[ up ] [ down ] [ metric n ] [ mtu n ]\n"
-		"\t[ nwid network_id ] [ nwkey network_key | -nwkey ]\n"
-		"\t[ list scan ]\n"
-		"\t[ powersave | -powersave ] [ powersavesleep duration ]\n"
-		"\t[ hidessid | -hidessid ] [ apbridge | -apbridge ]\n"
-		"\t[ [ af ] tunnel src_addr dest_addr ] [ deletetunnel ]\n"
+		"\t[ up ] [ down ] [ metric n ] [ mtu n ]\n", progname,
+		flag_is_registered(gflags, 'm') ? "[-m] " : "",
+		flag_is_registered(gflags, 'L') ? "[-L] " : "");
+
+	SIMPLEQ_FOREACH(usage_f, &usage_funcs, f_next)
+		(*usage_f->f_func)(env);
+
+	fprintf(stderr,
 		"\t[ arp | -arp ]\n"
-		"\t[ media type ] [ mediaopt opts ] [ -mediaopt opts ] "
-		"[ instance minst ]\n"
 		"\t[ preference n ]\n"
-		"\t[ vlan n vlanif i ]\n"
-		"\t[ agrport i ] [ -agrport i ]\n"
-		"\t[ anycast | -anycast ] [ deprecated | -deprecated ]\n"
-		"\t[ tentative | -tentative ] [ pltime n ] [ vltime n ] [ eui64 ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
-		"       %s -a [-b] [-h] [-m] [-d] [-u] [-v] [-z] [ af ]\n"
-		"       %s -l [-b] [-d] [-u] [-s]\n"
+		"       %s -a [-b] [-d] [-h] %s[-u] [-v] [-z] [ af ]\n"
+		"       %s -l [-b] [-d] [-s] [-u]\n"
 		"       %s -C\n"
 		"       %s interface create\n"
 		"       %s interface destroy\n",
-		progname, progname, progname, progname, progname, progname);
+		progname, flag_is_registered(gflags, 'm') ? "[-m] " : "",
+		progname, progname, progname, progname);
+
+	prop_object_release((prop_object_t)env);
 	exit(EXIT_FAILURE);
 }

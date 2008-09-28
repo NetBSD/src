@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.26 2007/02/08 21:36:58 drochner Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.26.12.1 2008/09/28 11:17:14 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,20 +33,16 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.26 2007/02/08 21:36:58 drochner Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.26.12.1 2008/09/28 11:17:14 mjf Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/param.h>
-#ifdef __FreeBSD__
-#include <sys/diskslice.h>
-#endif
-#include <sys/disklabel.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/ioctl.h>
+#include <sys/disk.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -59,10 +55,11 @@ __RCSID("$NetBSD: newfs_msdos.c,v 1.26 2007/02/08 21:36:58 drochner Exp $");
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
-#ifdef __NetBSD__
-#include <disktab.h>
+
 #include <util.h>
-#endif
+#include <disktab.h>
+
+#include "partutil.h"
 
 #define MAXU16	  0xffff	/* maximum unsigned 16-bit quantity */
 #define BPN	  4		/* bits per nibble */
@@ -232,8 +229,7 @@ static int	got_siginfo = 0; /* received a SIGINFO */
 
 static void check_mounted(const char *, mode_t);
 static void getstdfmt(const char *, struct bpb *);
-static void getdiskinfo(int, const char *, const char *, int,
-			struct bpb *);
+static void getbpbinfo(int, const char *, const char *, int, struct bpb *);
 static void print_bpb(struct bpb *);
 static u_int ckgeom(const char *, u_int, const char *);
 static u_int argtou(const char *, u_int, u_int, const char *);
@@ -391,7 +387,7 @@ main(int argc, char *argv[])
     if (oflag)
 	bpb.hid = opt_o;
     if (!(opt_f || (opt_h && opt_u && opt_S && opt_s && oflag)))
-	getdiskinfo(fd, fname, dtype, oflag, &bpb);
+	getbpbinfo(fd, fname, dtype, oflag, &bpb);
     if (!powerof2(bpb.bps))
 	errx(1, "bytes/sector (%u) is not a power of 2", bpb.bps);
     if (bpb.bps < MINBPS)
@@ -758,22 +754,14 @@ getstdfmt(const char *fmt, struct bpb *bpb)
  * Get disk slice, partition, and geometry information.
  */
 static void
-getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
+getbpbinfo(int fd, const char *fname, const char *dtype, int oflag,
 	    struct bpb *bpb)
 {
-#ifdef __FreeBSD__
-    struct diskslices ds;
-    int slice = -1;
-#define NO_SLICE (slice == -1)
-#else
-#define NO_SLICE 0
-#endif
-    struct disklabel dl, *lp;
+    struct disk_geom geo;
+    struct dkwedge_info dkw;
     const char *s1, *s2;
-    char *s;
-    int part, fd1, i, e;
+    int part;
     int maxpartitions;
-    u_int nsectors, ntracks;
 
     part = -1;
     s1 = fname;
@@ -785,104 +773,37 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
     else
 	while (isdigit((unsigned char)*++s2));
     s1 = s2;
-#ifdef __FreeBSD__
-    if (s2 && *s2 == 's') {
-	slice = strtol(s2 + 1, &s, 10);
-	if (slice < 1 || slice > MAX_SLICES - BASE_SLICE)
-	    s2 = NULL;
-	else {
-	    slice = BASE_SLICE + slice - 1;
-	    s2 = s;
-	}
-    }
-#endif
 
-#ifdef __NetBSD__
     maxpartitions = getmaxpartitions();
-#else
-    maxpartitions = MAXPARTITIONS;
-#endif
 
     if (s2 && *s2 >= 'a' && *s2 <= 'a' + maxpartitions - 1) {
-#ifdef __FreeBSD__
-	if (slice == -1)
-	    slice = COMPATIBILITY_SLICE;
-#endif
 	part = *s2++ - 'a';
     }
-#ifdef __FreeBSD__
-    if (!s2 || (*s2 && *s2 != '.'))
-	errx(1, "%s: can't figure out partition info", fname);
-    if (slice != -1 && (!oflag || (!bpb->bsec && part == -1))) {
-	if (ioctl(fd, DIOCGSLICEINFO, &ds) == -1) {
-	    warn("ioctl (GSLICEINFO)");
-	    errx(1, "%s: can't get slice info", fname);
-	}
-	if (slice >= ds.dss_nslices || !ds.dss_slices[slice].ds_size)
-	    errx(1, "%s: slice is unavailable", fname);
-	if (!oflag)
-	    bpb->hid = ds.dss_slices[slice].ds_offset;
-	if (!bpb->bsec && part == -1)
-	    bpb->bsec = ds.dss_slices[slice].ds_size;
-    }
-#endif
-    if (((NO_SLICE || part != -1) &&
-	 ((!oflag && part != -1) || !bpb->bsec)) ||
+    if (((part != -1) && ((!oflag && part != -1) || !bpb->bsec)) ||
 	!bpb->bps || !bpb->spt || !bpb->hds) {
-	lp = &dl;
-	i = ioctl(fd, DIOCGDINFO, lp);
-	if (i == -1 && !NO_SLICE && part == -1 && s1) {
-	    e = errno;
-	    if (!(s = strdup(fname)))
-		err(1, NULL);
-	    s[s1 - fname] = 0;
-	    if ((fd1 = open(s, O_RDONLY)) != -1) {
-		i = ioctl(fd1, DIOCGDINFO, lp);
-		close(fd1);
-	    }
-	    free(s);
-	    errno = e;
-	}
-	if (i == -1) {
-	    if (!dtype) {
-		warn("ioctl (DIOCGDINFO)");
-		errx(1, "%s: can't read disk label; "
-		     "disk type must be specified", fname);
-	    } else if (!(lp = getdiskbyname(dtype)))
-		errx(1, "%s: unknown disk type", dtype);
-	}
-	if (NO_SLICE || part != -1) {
-#ifdef __FreeBSD__
-	    if (part == -1)
-		part = RAW_PART;
-#endif
-	    if (part >= lp->d_npartitions ||
-		!lp->d_partitions[part].p_size)
-		errx(1, "%s: partition is unavailable", fname);
-	    if (!oflag && part != -1)
-		bpb->hid += lp->d_partitions[part].p_offset;
-	    if (!bpb->bsec)
-		bpb->bsec = lp->d_partitions[part].p_size;
-	}
+	if (getdiskinfo(fname, fd, NULL, &geo, &dkw) == -1)
+		errx(1, "Can't read disk label for `%s'", fname);
 	if (!bpb->bps)
-	    bpb->bps = ckgeom(fname, lp->d_secsize, "bytes/sector");
+	    bpb->bps = ckgeom(fname, geo.dg_secsize, "bytes/sector");
 
-	nsectors = lp->d_nsectors;
-	ntracks = lp->d_ntracks;
-	if (nsectors > 63 || ntracks > 255) {
+	if (geo.dg_nsectors > 63 || geo.dg_ntracks > 255) {
 		/*
 		 * The kernel doesn't accept BPB with spt > 63 or hds > 255.
 		 * (see sys/fs/msdosfs/msdosfs_vfsops.c:msdosfs_mountfs())
 		 * If values taken from disklabel don't match these
 		 * restrictions, use popular BIOS default values instead.
 		 */
-		nsectors = 63;
-		ntracks = 255;
+		geo.dg_nsectors = 63;
+		geo.dg_ntracks = 255;
 	}
 	if (!bpb->spt)
-	    bpb->spt = ckgeom(fname, nsectors, "sectors/track");
+	    bpb->spt = ckgeom(fname, geo.dg_nsectors, "sectors/track");
 	if (!bpb->hds)
-	    bpb->hds = ckgeom(fname, ntracks, "drive heads");
+	    bpb->hds = ckgeom(fname, geo.dg_ntracks, "drive heads");
+	if (!bpb->sec)
+	    bpb->sec = geo.dg_secperunit;
+	if (!bpb->bsec)
+	    bpb->bsec = bpb->sec;
     }
 }
 

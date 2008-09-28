@@ -1,4 +1,4 @@
-# $NetBSD: md.acorn32,v 1.23 2008/01/19 13:15:46 chris Exp $
+# $NetBSD: md.acorn32,v 1.23.6.1 2008/09/28 11:09:19 mjf Exp $
 #./usr/include/acorn32/devmap.h		comp-c-include
 ./usr/include/acorn32				comp-c-include
 ./usr/include/acorn32/ansi.h			comp-c-include
@@ -55,3 +55,4 @@
 ./usr/include/acorn32/vmparam.h			comp-c-include
 ./usr/include/acorn32/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
+./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug

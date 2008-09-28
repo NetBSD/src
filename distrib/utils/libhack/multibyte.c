@@ -1,8 +1,9 @@
-/*      $NetBSD: multibyte.c,v 1.2 2007/05/29 17:46:44 he Exp $      */
+/*      $NetBSD: multibyte.c,v 1.2.12.1 2008/09/28 11:09:22 mjf Exp $      */
 
 /*
  * Ignore all multibyte sequences, removes all the citrus code.
  * Probably only used by vfprintf() when parsing the format string.
+ * And possibly from libcurses if compiled with HAVE_WCHAR.
  */
 
 #include <wchar.h>
@@ -10,13 +11,13 @@
 size_t
 mbrtowc(wchar_t *wc, const char *str, size_t max_sz, mbstate_t *ps)
 {
-	return (*wc = *str) == 0 ? 0 : 1;
+	return str == NULL || (*wc = (unsigned char)*str) == 0 ? 0 : 1;
 }
 
 size_t
 wcrtomb(char *str, wchar_t wc, mbstate_t *ps)
 {
-    *str = wc;
+    *str = wc & 0xFF;
     return 1;
 }
 

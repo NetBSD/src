@@ -1,7 +1,7 @@
-#	$NetBSD: md.sparc64,v 1.2 2004/03/08 07:14:47 rtr Exp $
-./usr/X11R6/include/X11/extensions/dpms.h
-./usr/X11R6/include/X11/extensions/dpmsstr.h
-./usr/X11R6/include/X11/extensions/xf86misc.h
-./usr/X11R6/include/X11/extensions/xf86mscstr.h
-./usr/X11R6/include/X11/extensions/xf86vmode.h
-./usr/X11R6/include/X11/extensions/xf86vmstr.h
+#	$NetBSD: md.sparc64,v 1.2.36.1 2008/09/28 11:09:20 mjf Exp $
+./usr/X11R6/include/X11/extensions/dpms.h		-unknown-	x11
+./usr/X11R6/include/X11/extensions/dpmsstr.h		-unknown-	x11
+./usr/X11R6/include/X11/extensions/xf86misc.h		-unknown-	x11
+./usr/X11R6/include/X11/extensions/xf86mscstr.h		-unknown-	x11
+./usr/X11R6/include/X11/extensions/xf86vmode.h		-unknown-	x11
+./usr/X11R6/include/X11/extensions/xf86vmstr.h		-unknown-	x11
