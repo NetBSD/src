@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.77 2008/08/25 08:15:05 cegger Exp $
+$NetBSD: miidevs,v 1.78 2008/09/28 18:30:11 bouyer Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui ICPLUS			0x0090c3	IC Plus Corp.
 oui ICS				0x00a0be	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
+oui JMICRON			0x00d831	JMicron
 oui LEVEL1			0x00207b	Level 1
 oui MARVELL			0x005043	Marvell Semiconductor
 oui MYSON			0x00c0b4	Myson Technology
@@ -173,6 +174,10 @@ model yyINTEL I82566		0x0039 i82566 10/100/1000 media interface
 model xxMARVELL I82563		0x000a i82563 10/100/1000 media interface
 
 model yyINTEL IGP01E1000	0x0038 Intel IGP01E1000 Gigabit PHY
+
+/* JMicron PHYs */
+model JMICRON JMC250		0x0021 JMC250 10/100/1000 media interface
+model JMICRON JMC260		0x0022 JMC260 10/100 media interface
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
