@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.21 2007/02/09 22:49:47 ad Exp $
+# $NetBSD: md.hpcsh,v 1.21.12.1 2008/09/28 11:09:19 mjf Exp $
 ./usr/include/hpcsh				comp-c-include
 ./usr/include/hpcsh/_G_config.h			comp-obsolete		obsolete
 ./usr/include/hpcsh/ansi.h			comp-c-include
@@ -58,3 +58,6 @@
 ./usr/include/hpcsh/wchar_limits.h		comp-c-include
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sh3/db_disasm.h			comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/apm.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/apmd.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/tpctl.debug	comp-sysutil-debug	debug

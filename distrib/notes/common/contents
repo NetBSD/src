@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.136.6.2 2008/06/02 13:21:15 mjf Exp $
+.\"	$NetBSD: contents,v 1.136.6.3 2008/09/28 11:09:17 mjf Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -381,16 +381,6 @@ Two programs needed to boot \*M kernels over the network.
 Tape boot programs, and a RAMDISK kernel.
 .\}
 .
-.if \n[xen-i386] \{\
-.		It Pa xen12load/
-.		(tag xen12load.gz -compact
-.			It Pa xen12load.gz
-The kernel loader needed to boot
-.Nx*M
-as domain-0.
-.		tag)
-.\}
-.
 .	tag)
 .
 .tag)
@@ -487,7 +477,7 @@ distribution tree.
 If you want to install 32-bit only binaries, you will 
 still need to boot using the sparc64 installation tools.  When it 
 asks you for the distribution set to install, provide the
-.Nx /sparc
+.Nx Ns /sparc
 .Pa binary/sets .
 Be sure to use the 32 bit sparc
 .Pa kern-GENERIC_SUN4U.tgz 
@@ -817,10 +807,11 @@ This set contains a
 .Li GENERIC32_IP3x
 kernel (for O2), named
 .Pa /netbsd .
+.Pp
 You
 .Em must
 install one of these distribution sets for your machine.
-.showsize 4 8				\" XXX old
+.showsize 4 8
 .\}
 .el \{\
 .ie \n[sparc] \{\

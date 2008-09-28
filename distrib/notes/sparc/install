@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.53.6.1 2008/06/02 13:21:16 mjf Exp $
+.\"	$NetBSD: install,v 1.53.6.2 2008/09/28 11:09:18 mjf Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,7 +110,7 @@ command at the PROM prompt (this example is for the swap partition):
 .(tag OpenBoot\ PROM\ 2 -offset indent -compact
 .It sunmon
 .(disp
-.No \*> Ic "b sd(,,1)netbsd -s"
+.No \*[Gt] Ic "b sd(,,1)netbsd -s"
 .disp)
 .It OpenBoot PROM 1
 .(disp
@@ -161,7 +161,7 @@ Boot the installer by typing the appropriate command at the PROM prompt:
 .(tag OpenBoot\ PROM\ 2 -offset indent -compact
 .It sunmon
 .(disp
-.No \*> Ic b "sd(,30,)"
+.No \*[Gt] Ic b "sd(,30,)"
 .disp)
 .It OpenBoot PROM 1
 .(disp
@@ -297,7 +297,7 @@ of the following forms:
 .(tag OpenBoot\ PROM\ 2 -offset indent -compact
 .It sunmon
 .(disp
-.No \*> Ic "b le()netbsd"
+.No \*[Gt] Ic "b le()netbsd"
 .disp)
 .It OpenBoot PROM 1
 .(disp
@@ -341,7 +341,7 @@ distribution sets from
 .Pq Pa binary/sets
 to the tape by using a series of additional
 .(disp
-.No # Ic "dd if=\*<aset\*>.tgz of=/dev/nrst0 bs=4k conv=osync"
+.No # Ic "dd if=\*[Lt]aset\*[Gt].tgz of=/dev/nrst0 bs=4k conv=osync"
 .disp)
 commands.
 See also the section
@@ -355,7 +355,7 @@ Boot the installer by typing the appropriate command at the PROM prompt:
 .(tag OpenBoot\ PROM\ 2\ (alternate) -offset indent -compact
 .It sunmon
 .(disp
-.No \*> Ic "b st()"
+.No \*[Gt] Ic "b st()"
 .disp)
 .It OpenBoot PROM 1
 .(disp

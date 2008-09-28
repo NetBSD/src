@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.17 2006/12/18 20:07:32 christos Exp $ */
+/*	$NetBSD: ffs_inode.c,v 1.17.12.1 2008/09/28 11:17:11 mjf Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -31,12 +31,12 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ffs_inode.c,v 1.17 2006/12/18 20:07:32 christos Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.17.12.1 2008/09/28 11:17:11 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>

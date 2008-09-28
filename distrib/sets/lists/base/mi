@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.740.6.5 2008/06/29 08:25:13 mjf Exp $
+# $NetBSD: mi,v 1.740.6.6 2008/09/28 11:09:18 mjf Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -88,6 +88,7 @@
 ./etc/defaults					base-sys-root
 ./etc/disklabels				base-obsolete		obsolete
 ./etc/fonts					base-x11-root
+./etc/fonts/conf.d				base-x11-root
 ./etc/iscsi					base-sysutil-root
 ./etc/kerberosIV				base-obsolete		obsolete
 ./etc/kerberosV					base-krb5-root
@@ -134,9 +135,13 @@
 ./libexec					base-sys-root
 ./libexec/dhcpcd-hooks				base-dhcpcd-root
 ./libexec/dhcpcd-hooks/01-test			base-dhcpcd-root
-./libexec/dhcpcd-hooks/10-resolv.conf		base-dhcpcd-root
-./libexec/dhcpcd-hooks/14-lookup-hostname	base-dhcpcd-root
-./libexec/dhcpcd-hooks/15-hostname		base-dhcpcd-root
+./libexec/dhcpcd-hooks/10-mtu			base-dhcpcd-root
+./libexec/dhcpcd-hooks/10-resolv.conf		base-obsolete obsolete
+./libexec/dhcpcd-hooks/14-lookup-hostname	base-obsolete obsolete
+./libexec/dhcpcd-hooks/15-hostname		base-obsolete obsolete
+./libexec/dhcpcd-hooks/20-resolv.conf		base-dhcpcd-root
+./libexec/dhcpcd-hooks/29-lookup-hostname	base-dhcpcd-root
+./libexec/dhcpcd-hooks/30-hostname		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/50-ntp.conf		base-dhcpcd-root
 ./libexec/dhcpcd-run-hooks			base-dhcpcd-root
 ./libexec/lfs_cleanerd				base-sysutil-bin
@@ -277,7 +282,10 @@
 ./usr/X11R6/include				base-x11-root
 ./usr/X11R6/include/DPS				base-x11-root
 ./usr/X11R6/include/GL				base-x11-root
+./usr/X11R6/include/GL/internal			base-x11-root
 ./usr/X11R6/include/X11				base-x11-root
+./usr/X11R6/include/X11/dri			base-x11-root
+./usr/X11R6/include/X11/drm			base-x11-root
 ./usr/X11R6/include/X11/ICE			base-x11-root
 ./usr/X11R6/include/X11/PM			base-x11-root
 ./usr/X11R6/include/X11/SM			base-x11-root
@@ -285,6 +293,9 @@
 ./usr/X11R6/include/X11/Xcursor			base-x11-root
 ./usr/X11R6/include/X11/Xft			base-x11-root
 ./usr/X11R6/include/X11/Xmu			base-x11-root
+./usr/X11R6/include/X11/XprintAppUtil		base-x11-root
+./usr/X11R6/include/X11/XprintUtil		base-x11-root
+./usr/X11R6/include/X11/Xtrans			base-x11-root
 ./usr/X11R6/include/X11/bitmaps			base-x11-root
 ./usr/X11R6/include/X11/extensions		base-x11-root
 ./usr/X11R6/include/X11/fonts			base-x11-root
@@ -297,6 +308,8 @@
 ./usr/X11R6/include/freetype2/freetype/config	base-x11-root
 ./usr/X11R6/include/freetype2/freetype/internal	base-x11-root
 ./usr/X11R6/include/freetype2/freetype/internal/services	base-x11-root
+./usr/X11R6/include/pixman-1			base-x11-root
+./usr/X11R6/include/xorg			base-x11-root
 ./usr/X11R6/lib					base-x11-root
 ./usr/X11R6/lib/X11				base-x11-root
 ./usr/X11R6/lib/X11/app-defaults		base-x11-root
@@ -318,6 +331,7 @@
 ./usr/X11R6/lib/X11/fonts/util			base-x11-root
 ./usr/X11R6/lib/X11/locale			base-x11-root
 ./usr/X11R6/lib/X11/locale/C			base-x11-root
+./usr/X11R6/lib/X11/locale/am_ET.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/armscii-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/el_GR.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/en_US.UTF-8		base-x11-root
@@ -343,7 +357,9 @@
 ./usr/X11R6/lib/X11/locale/iso8859-9e		base-x11-root
 ./usr/X11R6/lib/X11/locale/ja			base-x11-root
 ./usr/X11R6/lib/X11/locale/ja.JIS		base-x11-root
+./usr/X11R6/lib/X11/locale/ja.S90		base-x11-root
 ./usr/X11R6/lib/X11/locale/ja.SJIS		base-x11-root
+./usr/X11R6/lib/X11/locale/ja.U90		base-x11-root
 ./usr/X11R6/lib/X11/locale/ja_JP.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/ko			base-x11-root
 ./usr/X11R6/lib/X11/locale/ko_KR.UTF-8		base-x11-root
@@ -357,6 +373,7 @@
 ./usr/X11R6/lib/X11/locale/microsoft-cp1256	base-x11-root
 ./usr/X11R6/lib/X11/locale/mulelao-1		base-x11-root
 ./usr/X11R6/lib/X11/locale/nokhchi-1		base-x11-root
+./usr/X11R6/lib/X11/locale/pt_BR.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/tatar-cyr		base-x11-root
 ./usr/X11R6/lib/X11/locale/th_TH		base-x11-root
 ./usr/X11R6/lib/X11/locale/th_TH.UTF-8		base-x11-root
@@ -365,7 +382,9 @@
 ./usr/X11R6/lib/X11/locale/vi_VN.viscii		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_CN		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_CN.UTF-8		base-x11-root
+./usr/X11R6/lib/X11/locale/zh_CN.gb18030	base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_CN.gbk		base-x11-root
+./usr/X11R6/lib/X11/locale/zh_HK.UTF-8		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_HK.big5		base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_HK.big5hkscs	base-x11-root
 ./usr/X11R6/lib/X11/locale/zh_TW		base-x11-root
@@ -403,6 +422,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/sony		base-x11-root
 ./usr/X11R6/lib/X11/xkb/symbols/sun		base-x11-root
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68		base-x11-root
+./usr/X11R6/lib/X11/xkb/torture			base-x11-root
 ./usr/X11R6/lib/X11/xkb/types			base-x11-root
 ./usr/X11R6/lib/modules				base-x11-root
 ./usr/X11R6/lib/modules/codeconv		base-obsolete		obsolete
@@ -418,6 +438,11 @@
 ./usr/X11R6/man/cat4				base-x11-root
 ./usr/X11R6/man/cat5				base-x11-root
 ./usr/X11R6/man/cat7				base-x11-root
+./usr/X11R6/man/html1				base-x11-root
+./usr/X11R6/man/html3				base-x11-root
+./usr/X11R6/man/html4				base-x11-root
+./usr/X11R6/man/html5				base-x11-root
+./usr/X11R6/man/html7				base-x11-root
 ./usr/X11R6/man/man1				base-x11-root
 ./usr/X11R6/man/man3				base-x11-root
 ./usr/X11R6/man/man4				base-x11-root
@@ -426,6 +451,179 @@
 ./usr/X11R6/share				base-x11-root
 ./usr/X11R6/share/examples			base-x11-root
 ./usr/X11R6/share/examples/ssh-askpass		base-x11-root
+./usr/X11R7					base-x11-root
+./usr/X11R7/bin					base-x11-root
+./usr/X11R7/include				base-x11-root
+./usr/X11R7/include/DPS				base-x11-root
+./usr/X11R7/include/GL				base-x11-root
+./usr/X11R7/include/GL/internal			base-x11-root
+./usr/X11R7/include/X11				base-x11-root
+./usr/X11R7/include/X11/dri			base-x11-root
+./usr/X11R7/include/X11/drm			base-x11-root
+./usr/X11R7/include/X11/ICE			base-x11-root
+./usr/X11R7/include/X11/PM			base-x11-root
+./usr/X11R7/include/X11/SM			base-x11-root
+./usr/X11R7/include/X11/Xaw			base-x11-root
+./usr/X11R7/include/X11/Xcursor			base-x11-root
+./usr/X11R7/include/X11/Xft			base-x11-root
+./usr/X11R7/include/X11/Xmu			base-x11-root
+./usr/X11R7/include/X11/XprintAppUtil		base-x11-root
+./usr/X11R7/include/X11/XprintUtil		base-x11-root
+./usr/X11R7/include/X11/Xtrans			base-x11-root
+./usr/X11R7/include/X11/bitmaps			base-x11-root
+./usr/X11R7/include/X11/extensions		base-x11-root
+./usr/X11R7/include/X11/fonts			base-x11-root
+./usr/X11R7/include/X11/pixmaps			base-x11-root
+./usr/X11R7/include/fontconfig			base-x11-root
+./usr/X11R7/include/freetype2			base-x11-root
+./usr/X11R7/include/freetype2/freetype		base-x11-root
+./usr/X11R7/include/freetype2/freetype/cache	base-x11-root
+./usr/X11R7/include/freetype2/freetype/config	base-x11-root
+./usr/X11R7/include/freetype2/freetype/internal	base-x11-root
+./usr/X11R7/include/freetype2/freetype/internal/services	base-x11-root
+./usr/X11R7/include/pixman-1			base-x11-root
+./usr/X11R7/include/xorg			base-x11-root
+./usr/X11R7/lib					base-x11-root
+./usr/X11R7/lib/X11				base-x11-root
+./usr/X11R7/lib/X11/app-defaults		base-x11-root
+./usr/X11R7/lib/X11/config			base-x11-root
+./usr/X11R7/lib/X11/doc				base-x11-root
+./usr/X11R7/lib/X11/etc				base-x11-root
+./usr/X11R7/lib/X11/fonts			base-x11-root
+./usr/X11R7/lib/X11/fonts/100dpi		base-x11-root
+./usr/X11R7/lib/X11/fonts/75dpi			base-x11-root
+./usr/X11R7/lib/X11/fonts/CID			base-x11-root
+./usr/X11R7/lib/X11/fonts/Speedo		base-x11-root
+./usr/X11R7/lib/X11/fonts/TTF			base-x11-root
+./usr/X11R7/lib/X11/fonts/Type1			base-x11-root
+./usr/X11R7/lib/X11/fonts/cyrillic		base-x11-root
+./usr/X11R7/lib/X11/fonts/encodings		base-x11-root
+./usr/X11R7/lib/X11/fonts/encodings/large	base-x11-root
+./usr/X11R7/lib/X11/fonts/local			base-x11-root
+./usr/X11R7/lib/X11/fonts/misc			base-x11-root
+./usr/X11R7/lib/X11/fonts/util			base-x11-root
+./usr/X11R7/lib/X11/locale			base-x11-root
+./usr/X11R7/lib/X11/locale/C			base-x11-root
+./usr/X11R7/lib/X11/locale/am_ET.UTF-8		base-x11-root
+./usr/X11R7/lib/X11/locale/armscii-8		base-x11-root
+./usr/X11R7/lib/X11/locale/el_GR.UTF-8		base-x11-root
+./usr/X11R7/lib/X11/locale/en_US.UTF-8		base-x11-root
+./usr/X11R7/lib/X11/locale/georgian-academy	base-x11-root
+./usr/X11R7/lib/X11/locale/georgian-ps		base-x11-root
+./usr/X11R7/lib/X11/locale/ibm-cp1133		base-x11-root
+./usr/X11R7/lib/X11/locale/iscii-dev		base-x11-root
+./usr/X11R7/lib/X11/locale/isiri-3342		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-1		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-10		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-11		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-13		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-14		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-15		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-2		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-3		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-4		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-5		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-6		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-7		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-8		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-9		base-x11-root
+./usr/X11R7/lib/X11/locale/iso8859-9e		base-x11-root
+./usr/X11R7/lib/X11/locale/ja			base-x11-root
+./usr/X11R7/lib/X11/locale/ja.JIS		base-x11-root
+./usr/X11R7/lib/X11/locale/ja.S90		base-x11-root
+./usr/X11R7/lib/X11/locale/ja.SJIS		base-x11-root
+./usr/X11R7/lib/X11/locale/ja.U90		base-x11-root
+./usr/X11R7/lib/X11/locale/ja_JP.UTF-8		base-x11-root
+./usr/X11R7/lib/X11/locale/ko			base-x11-root
+./usr/X11R7/lib/X11/locale/ko_KR.UTF-8		base-x11-root
+./usr/X11R7/lib/X11/locale/koi8-c		base-x11-root
+./usr/X11R7/lib/X11/locale/koi8-r		base-x11-root
+./usr/X11R7/lib/X11/locale/koi8-u		base-x11-root
+./usr/X11R7/lib/X11/locale/lib			base-x11-root
+./usr/X11R7/lib/X11/locale/lib/common		base-x11-root
+./usr/X11R7/lib/X11/locale/microsoft-cp1251	base-x11-root
+./usr/X11R7/lib/X11/locale/microsoft-cp1255	base-x11-root
+./usr/X11R7/lib/X11/locale/microsoft-cp1256	base-x11-root
+./usr/X11R7/lib/X11/locale/mulelao-1		base-x11-root
+./usr/X11R7/lib/X11/locale/nokhchi-1		base-x11-root
+./usr/X11R7/lib/X11/locale/pt_BR.UTF-8		base-x11-root
+./usr/X11R7/lib/X11/locale/tatar-cyr		base-x11-root
+./usr/X11R7/lib/X11/locale/th_TH		base-x11-root
+./usr/X11R7/lib/X11/locale/th_TH.UTF-8		base-x11-root
+./usr/X11R7/lib/X11/locale/tscii-0		base-x11-root
+./usr/X11R7/lib/X11/locale/vi_VN.tcvn		base-x11-root
+./usr/X11R7/lib/X11/locale/vi_VN.viscii		base-x11-root
+./usr/X11R7/lib/X11/locale/zh_CN		base-x11-root
+./usr/X11R7/lib/X11/locale/zh_CN.UTF-8		base-x11-root
+./usr/X11R7/lib/X11/locale/zh_CN.gb18030	base-x11-root
+./usr/X11R7/lib/X11/locale/zh_CN.gbk		base-x11-root
+./usr/X11R7/lib/X11/locale/zh_HK.UTF-8		base-x11-root
+./usr/X11R7/lib/X11/locale/zh_HK.big5		base-x11-root
+./usr/X11R7/lib/X11/locale/zh_HK.big5hkscs	base-x11-root
+./usr/X11R7/lib/X11/locale/zh_TW		base-x11-root
+./usr/X11R7/lib/X11/locale/zh_TW.UTF-8		base-x11-root
+./usr/X11R7/lib/X11/locale/zh_TW.big5		base-x11-root
+./usr/X11R7/lib/X11/x11perfcomp			base-x11-root
+./usr/X11R7/lib/X11/xedit			base-x11-root
+./usr/X11R7/lib/X11/xedit/lisp			base-x11-root
+./usr/X11R7/lib/X11/xedit/lisp/progmodes	base-x11-root
+./usr/X11R7/lib/X11/xkb				base-x11-root
+./usr/X11R7/lib/X11/xkb/compat			base-x11-root
+./usr/X11R7/lib/X11/xkb/compiled		base-x11-root
+./usr/X11R7/lib/X11/xkb/geometry		base-x11-root
+./usr/X11R7/lib/X11/xkb/geometry/digital	base-x11-root
+./usr/X11R7/lib/X11/xkb/geometry/ibm		base-x11-root
+./usr/X11R7/lib/X11/xkb/geometry/sgi		base-x11-root
+./usr/X11R7/lib/X11/xkb/keycodes		base-x11-root
+./usr/X11R7/lib/X11/xkb/keycodes/digital	base-x11-root
+./usr/X11R7/lib/X11/xkb/keycodes/sgi		base-x11-root
+./usr/X11R7/lib/X11/xkb/keymap			base-x11-root
+./usr/X11R7/lib/X11/xkb/keymap/digital		base-x11-root
+./usr/X11R7/lib/X11/xkb/keymap/sgi		base-x11-root
+./usr/X11R7/lib/X11/xkb/keymap/sun		base-x11-root
+./usr/X11R7/lib/X11/xkb/rules			base-x11-root
+./usr/X11R7/lib/X11/xkb/semantics		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols			base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/digital		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/fujitsu		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/hp		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/macintosh	base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/nec		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/pc		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/sgi		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/sharp		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/sony		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/sun		base-x11-root
+./usr/X11R7/lib/X11/xkb/symbols/xfree68		base-x11-root
+./usr/X11R7/lib/X11/xkb/torture			base-x11-root
+./usr/X11R7/lib/X11/xkb/types			base-x11-root
+./usr/X11R7/lib/modules				base-x11-root
+./usr/X11R7/lib/modules/dri			base-x11-root
+./usr/X11R7/lib/modules/drivers			base-x11-root
+./usr/X11R7/lib/modules/extensions		base-x11-root
+./usr/X11R7/lib/modules/fonts			base-x11-root
+./usr/X11R7/lib/modules/input			base-x11-root
+./usr/X11R7/lib/pkgconfig			base-x11-root
+./usr/X11R7/libexec				base-x11-root
+./usr/X11R7/man					base-x11-root
+./usr/X11R7/man/cat1				base-x11-root
+./usr/X11R7/man/cat3				base-x11-root
+./usr/X11R7/man/cat4				base-x11-root
+./usr/X11R7/man/cat5				base-x11-root
+./usr/X11R7/man/cat7				base-x11-root
+./usr/X11R7/man/html1				base-x11-root
+./usr/X11R7/man/html3				base-x11-root
+./usr/X11R7/man/html4				base-x11-root
+./usr/X11R7/man/html5				base-x11-root
+./usr/X11R7/man/html7				base-x11-root
+./usr/X11R7/man/man1				base-x11-root
+./usr/X11R7/man/man3				base-x11-root
+./usr/X11R7/man/man4				base-x11-root
+./usr/X11R7/man/man5				base-x11-root
+./usr/X11R7/man/man7				base-x11-root
+./usr/X11R7/share				base-x11-root
+./usr/X11R7/share/examples			base-x11-root
+./usr/X11R7/share/examples/ssh-askpass		base-x11-root
 ./usr/bin					base-sys-usr
 ./usr/bin/Mail					base-mail-bin
 ./usr/bin/apply					base-util-bin
@@ -615,15 +813,15 @@
 ./usr/bin/newaliases				base-mailwrapper-bin
 ./usr/bin/newgrp				base-util-bin
 ./usr/bin/newsyslog				base-util-bin
-./usr/bin/nex					base-util-bin
+./usr/bin/nex					base-obsolete		obsolete
 ./usr/bin/nfsstat				base-nfsclient-bin
 ./usr/bin/nice					base-util-bin
 ./usr/bin/nl					base-util-bin
 ./usr/bin/nohup					base-util-bin
 ./usr/bin/nslookup				base-netutil-bin
 ./usr/bin/nsupdate				base-netutil-bin
-./usr/bin/nvi					base-util-bin
-./usr/bin/nview					base-util-bin
+./usr/bin/nvi					base-obsolete		obsolete
+./usr/bin/nview					base-obsolete		obsolete
 ./usr/bin/od					base-util-bin
 ./usr/bin/openssl				base-crypto-bin		crypto
 ./usr/bin/page					base-util-bin
@@ -835,6 +1033,7 @@
 ./usr/include/fs/puffs				base-c-usr
 ./usr/include/fs/smbfs				base-c-usr
 ./usr/include/fs/sysvbfs			base-c-usr
+./usr/include/fs/tmpfs				base-c-usr
 ./usr/include/fs/udf				base-c-usr
 ./usr/include/g++				base-cxx-usr
 ./usr/include/g++/backward			base-cxx-usr
@@ -892,6 +1091,7 @@
 ./usr/include/readline				base-c-usr
 ./usr/include/rpc				base-c-usr
 ./usr/include/rpcsvc				base-c-usr
+./usr/include/rump				base-c-usr
 ./usr/include/security				base-c-usr
 ./usr/include/ss				base-obsolete		obsolete
 ./usr/include/ssp				base-c-usr
@@ -951,6 +1151,9 @@
 ./usr/libdata/debug/usr/X11R6			base-sys-usr
 ./usr/libdata/debug/usr/X11R6/bin		base-sys-usr
 ./usr/libdata/debug/usr/X11R6/libexec		base-sys-usr
+./usr/libdata/debug/usr/X11R7			base-sys-usr
+./usr/libdata/debug/usr/X11R7/bin		base-sys-usr
+./usr/libdata/debug/usr/X11R7/libexec		base-sys-usr
 ./usr/libdata/debug/usr/bin			base-sys-usr
 ./usr/libdata/debug/usr/games			base-sys-usr
 ./usr/libdata/debug/usr/libexec			base-sys-usr
@@ -1080,6 +1283,7 @@
 ./usr/sbin/btcontrol				base-obsolete		obsolete
 ./usr/sbin/btdevctl				base-sysutil-bin
 ./usr/sbin/bthcid				base-sysutil-bin
+./usr/sbin/btpand				base-sysutil-bin
 ./usr/sbin/btuartd				base-obsolete		obsolete
 ./usr/sbin/catman				base-man-bin
 ./usr/sbin/chat					base-ppp-bin
@@ -1303,6 +1507,18 @@
 ./usr/sbin/rtadvd				base-router-bin		use_inet6
 ./usr/sbin/rtquery				base-netutil-bin
 ./usr/sbin/rtsold				base-netutil-bin	inet6
+./usr/sbin/rump_cd9660				base-miscfs-bin		puffs
+./usr/sbin/rump_efs				base-miscfs-bin		puffs
+./usr/sbin/rump_ext2fs				base-miscfs-bin		puffs
+./usr/sbin/rump_ffs				base-miscfs-bin		puffs
+./usr/sbin/rump_hfs				base-miscfs-bin		puffs
+./usr/sbin/rump_lfs				base-miscfs-bin		puffs
+./usr/sbin/rump_msdos				base-miscfs-bin		puffs
+./usr/sbin/rump_ntfs				base-miscfs-bin		puffs
+./usr/sbin/rump_syspuffs			base-miscfs-bin		puffs
+./usr/sbin/rump_sysvbfs				base-miscfs-bin		puffs
+./usr/sbin/rump_tmpfs				base-miscfs-bin		puffs
+./usr/sbin/rump_udf				base-miscfs-bin		puffs
 ./usr/sbin/rwhod				base-netutil-bin
 ./usr/sbin/sa					base-sysutil-bin
 ./usr/sbin/screenblank				base-sysutil-bin
@@ -3021,8 +3237,8 @@
 ./usr/share/misc/getopt				base-obsolete		obsolete
 ./usr/share/misc/magic				base-magic-share	share
 ./usr/share/misc/magic.mgc			base-magic-share	share
-./usr/share/misc/magic.mime			base-magic-share	share
-./usr/share/misc/magic.mime.mgc			base-magic-share	share
+./usr/share/misc/magic.mime			base-obsolete		obsolete
+./usr/share/misc/magic.mime.mgc			base-obsolete		obsolete
 ./usr/share/misc/mail.help			base-reference-share	share
 ./usr/share/misc/mail.tildehelp			base-reference-share	share
 ./usr/share/misc/map3270			base-reference-share	share
@@ -3411,16 +3627,16 @@
 ./usr/share/tmac				base-groff-share
 ./usr/share/tmac/mdoc				base-groff-share
 ./usr/share/tmac/mm				base-groff-share
-./usr/share/vi					base-util-share
-./usr/share/vi/catalog				base-util-share
-./usr/share/vi/catalog/dutch			base-util-share		share
-./usr/share/vi/catalog/english			base-util-share		share
-./usr/share/vi/catalog/french			base-util-share		share
-./usr/share/vi/catalog/german			base-util-share		share
-./usr/share/vi/catalog/ru_RU.KOI8-R		base-util-share		share
+./usr/share/vi					base-obsolete		obsolete
+./usr/share/vi/catalog				base-obsolete		obsolete
+./usr/share/vi/catalog/dutch			base-obsolete		obsolete
+./usr/share/vi/catalog/english			base-obsolete		obsolete
+./usr/share/vi/catalog/french			base-obsolete		obsolete
+./usr/share/vi/catalog/german			base-obsolete		obsolete
+./usr/share/vi/catalog/ru_RU.KOI8-R		base-obsolete		obsolete
 ./usr/share/vi/catalog/ru_SU.KOI8-R		base-obsolete		obsolete
-./usr/share/vi/catalog/spanish			base-util-share		share
-./usr/share/vi/catalog/swedish			base-util-share		share
+./usr/share/vi/catalog/spanish			base-obsolete		obsolete
+./usr/share/vi/catalog/swedish			base-obsolete		obsolete
 ./usr/share/wscons				base-util-share
 ./usr/share/wscons/fonts			base-util-share
 ./usr/share/wscons/fonts/donna.816		base-util-share		share
@@ -3521,6 +3737,7 @@
 ./usr/share/zoneinfo/America/Argentina/Mendoza	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Rio_Gallegos	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/San_Juan	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/San_Luis	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Tucuman	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Ushuaia	base-sys-share		share
 ./usr/share/zoneinfo/America/Aruba		base-sys-share		share
@@ -3600,6 +3817,7 @@
 ./usr/share/zoneinfo/America/Maceio		base-sys-share		share
 ./usr/share/zoneinfo/America/Managua		base-sys-share		share
 ./usr/share/zoneinfo/America/Manaus		base-sys-share		share
+./usr/share/zoneinfo/America/Marigot		base-sys-share		share
 ./usr/share/zoneinfo/America/Martinique		base-sys-share		share
 ./usr/share/zoneinfo/America/Mazatlan		base-sys-share		share
 ./usr/share/zoneinfo/America/Mendoza		base-sys-share		share
@@ -3636,11 +3854,13 @@
 ./usr/share/zoneinfo/America/Resolute		base-sys-share		share
 ./usr/share/zoneinfo/America/Rio_Branco		base-sys-share		share
 ./usr/share/zoneinfo/America/Rosario		base-sys-share		share
+./usr/share/zoneinfo/America/Santarem		base-sys-share		share
 ./usr/share/zoneinfo/America/Santiago		base-sys-share		share
 ./usr/share/zoneinfo/America/Santo_Domingo	base-sys-share		share
 ./usr/share/zoneinfo/America/Sao_Paulo		base-sys-share		share
 ./usr/share/zoneinfo/America/Scoresbysund	base-sys-share		share
 ./usr/share/zoneinfo/America/Shiprock		base-sys-share		share
+./usr/share/zoneinfo/America/St_Barthelemy		base-sys-share		share
 ./usr/share/zoneinfo/America/St_Johns		base-sys-share		share
 ./usr/share/zoneinfo/America/St_Kitts		base-sys-share		share
 ./usr/share/zoneinfo/America/St_Lucia		base-sys-share		share
@@ -3703,6 +3923,7 @@
 ./usr/share/zoneinfo/Asia/Dushanbe		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Gaza			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Harbin		base-sys-share		share
+./usr/share/zoneinfo/Asia/Ho_Chi_Minh		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Hong_Kong		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Hovd			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Irkutsk		base-sys-share		share
@@ -3716,6 +3937,7 @@
 ./usr/share/zoneinfo/Asia/Karachi		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kashgar		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Katmandu		base-sys-share		share
+./usr/share/zoneinfo/Asia/Kolkata		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Krasnoyarsk		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kuala_Lumpur		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kuching		base-sys-share		share

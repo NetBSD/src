@@ -1,4 +1,4 @@
-.\" $NetBSD: newfs_udf.8,v 1.1.4.3 2008/06/29 08:41:57 mjf Exp $
+.\" $NetBSD: newfs_udf.8,v 1.1.4.4 2008/09/28 11:17:14 mjf Exp $
 .\"
 .\" Copyright (c) 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd June 19, 2008
+.Dd July 26, 2008
 .Dt NEWFS_UDF 8
 .Os
 .Sh NAME
@@ -39,6 +39,7 @@
 .Op Fl P Ar discid
 .Op Fl S Ar setlabel
 .Op Fl s Ar size
+.Op Fl p Ar percentage
 .Op Fl t Ar gmtoff
 .Op Fl V Ar max_udf
 .Op Fl v Ar min_udf
@@ -60,8 +61,6 @@ Force file system construction on non-empty recordable media.
 .It Fl L Ar loglabel
 Set the disc logical label to the specified
 .Ar loglabel .
-.It Fl M
-Disable metadata partition flavour selection.
 .It Fl P Ar discid
 Set the phyisical disc label to the specified
 .Ar discid .
@@ -70,8 +69,15 @@ For strict conformance and interchange, don't set this manually.
 Set the disc set label to the specified
 .Ar setlabel .
 For strict conformance and interchange, don't set this manually.
+.It Fl M
+Disable metadata partion creation when selected UDF version or media dictates
+this. For strict conformance and interchange, don't disable this unless its
+causing problems.
 .It Fl s Ar size
 Ignored for now.
+.It Fl p Ar percentage
+Percentage of partition to be initially reserved for metadata on the Metadata
+partition. It defaults to 20 %.
 .It Fl t Ar gmtoff
 Use the specified
 .Ar gmtoff

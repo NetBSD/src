@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.16 2006/11/25 22:53:35 mishka Exp $
+.\"	$NetBSD: xfer,v 1.16.18.1 2008/09/28 11:09:18 mjf Exp $
 .
 Installation is supported from several media types, including:
 .(bullet
@@ -53,7 +53,7 @@ The installation set tape is created as follows:
 .Dl # Ic "set T = /dev/nrst0"
 .Dl # Ic "mt -f $T rewind"
 .Dl # Ic "for f in base etc comp games man misc text; do"
-.Dl   Ic "\ \ \ \ gzip -d \*< $f.tgz | dd of=$T bs=8k conv=osync"
+.Dl   Ic "\ \ \ \ gzip -d \*[Lt] $f.tgz | dd of=$T bs=8k conv=osync"
 .Dl # Ic "done"
 .Dl # Ic "mt -f $T rewind"
 .Pp
@@ -189,7 +189,7 @@ server, you may want to keep the following information handy:
 .(disp
 No IP Address: ftp.NetBSD.org
 Login: anonymous
-Password: \*<your e-mail address\*>
+Password: \*[Lt]your e-mail address\*[Gt]
 Server path: /pub/NetBSD/NetBSD-\*V/\*M/binary
 .disp)
 .(Note

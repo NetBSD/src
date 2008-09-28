@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.51 2006/10/23 19:44:57 he Exp $	*/
+/*	$NetBSD: label.c,v 1.51.18.1 2008/09/28 11:09:22 mjf Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.51 2006/10/23 19:44:57 he Exp $");
+__RCSID("$NetBSD: label.c,v 1.51.18.1 2008/09/28 11:09:22 mjf Exp $");
 #endif
 
 #include <sys/types.h>
@@ -528,6 +528,8 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 			wprintw(m->mw, "nosuid ");
 		if (p->pi_flags & PIF_SOFTDEP)
 			wprintw(m->mw, "softdep ");
+		if (p->pi_flags & PIF_LOG)
+			wprintw(m->mw, "log ");
 		break;
 	case PTN_MENU_MOUNTPT:
 		wprintw(m->mw, msg_string(MSG_mountpt_fmt), p->pi_mount);

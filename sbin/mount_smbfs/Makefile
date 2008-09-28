@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2006/05/11 23:16:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.20.1 2008/09/28 11:17:13 mjf Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ FILES=		dot.nsmbrc
 
 .include <bsd.prog.mk>
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 .for f in ctx mbuf nb_name nbns_rq
 COPTS.${f}.c+=       -Wno-pointer-sign
 .endfor

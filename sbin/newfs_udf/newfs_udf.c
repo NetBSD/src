@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.1.4.3 2008/06/29 08:41:57 mjf Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.1.4.4 2008/09/28 11:17:14 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -47,7 +47,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <util.h>
-#include <fattr.h>
 #include <time.h>
 #include <assert.h>
 #include <err.h>
@@ -63,10 +62,14 @@
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
+
+#include "mountprog.h"
 #include "udf_create.h"
 
 /* general settings */
 #define UDF_512_TRACK	0	/* NOT recommended */
+#define UDF_META_PERC  20	/* picked */
+
 
 /* prototypes */
 int newfs_udf(int argc, char **argv);
@@ -79,7 +82,7 @@ int udf_do_newfs(void);
 /* Identifying myself */
 #define APP_NAME		"*NetBSD newfs"
 #define APP_VERSION_MAIN	0
-#define APP_VERSION_SUB		2
+#define APP_VERSION_SUB		3
 #define IMPL_NAME		"*NetBSD userland UDF"
 
 
@@ -94,6 +97,8 @@ int	 media_accesstype;		/* derived from current mmc cap  */
 int	 check_surface;			/* for rewritables               */
 
 int	 wrtrack_skew;
+int	 meta_perc = UDF_META_PERC;
+float	 meta_fract = (float) UDF_META_PERC / 100.0;
 
 
 /* shared structure between udf_create.c users */
@@ -484,8 +489,7 @@ udf_write_dscr_virt(union dscrptr *dscr, uint32_t location, uint32_t vpart,
 		bpos += context.sector_size * cnt;
 
 		/* NOTE linear mapping assumed in the ranges used */
-		/* XXX 1:1 translation */
-		phys = layout.part_start_lba + location + cnt;
+		phys = context.vtop_offset[vpart] + location + cnt;
 
 		error = udf_write_sector(bpos, phys);
 		if (error)
@@ -903,7 +907,7 @@ udf_write_iso9660_vrs(void)
 			pos = layout.iso9660_vrs + cnt;
 			if ((error = udf_write_sector(iso9660_vrs_desc, pos)))
 				return error;
-		};
+		}
 
 		/* common VRS fields in all written out ISO descriptors */
 		iso9660_vrs_desc->struct_type = 0;
@@ -1024,7 +1028,8 @@ udf_do_newfs(void)
 	error = udf_calculate_disc_layout(format_flags, context.min_udf,
 		wrtrack_skew,
 		ti.track_start, mmc_discinfo.last_possible_lba,
-		sector_size, blockingnr, sparable_blocks);
+		sector_size, blockingnr, sparable_blocks,
+		meta_fract);
 
 	/* cache partition for we need it often */
 	data_part     = context.data_part;
@@ -1188,11 +1193,44 @@ udf_do_newfs(void)
 	 */
 	if ((format_flags & FORMAT_SEQUENTIAL) == 0) {
 		error = udf_create_space_bitmap(
+				layout.alloc_bitmap_dscr_size,
+				layout.part_size_lba,
 				&context.part_unalloc_bits[data_part]);
+		if (error)
+			return error;
 		/* TODO: freed space bitmap if applicable */
-		/* mark allocated space bitmap itself */
+
+		/* mark space allocated for the unallocated space bitmap */
 		udf_mark_allocated(layout.unalloc_space, data_part,
-			layout.bitmap_dscr_size);
+			layout.alloc_bitmap_dscr_size);
+	}
+
+	/*
+	 * Create metadata partition file entries and allocate and init their
+	 * space and free space maps.
+	 */
+	if (format_flags & FORMAT_META) {
+		error = udf_create_space_bitmap(
+				layout.meta_bitmap_dscr_size,
+				layout.meta_part_size_lba,
+				&context.part_unalloc_bits[metadata_part]);
+		if (error)
+			return error;
+	
+		error = udf_create_meta_files();
+		if (error)
+			return error;
+
+		/* mark space allocated for meta partition and its bitmap */
+		udf_mark_allocated(layout.meta_file,   data_part, 1);
+		udf_mark_allocated(layout.meta_mirror, data_part, 1);
+		udf_mark_allocated(layout.meta_bitmap, data_part, 1);
+		udf_mark_allocated(layout.meta_part_start_lba, data_part,
+			layout.meta_part_size_lba);
+
+		/* mark space allocated for the unallocated space bitmap */
+		udf_mark_allocated(layout.meta_bitmap_space, data_part,
+			layout.meta_bitmap_dscr_size);
 	}
 
 	/* create logical volume integrity descriptor */
@@ -1201,8 +1239,6 @@ udf_do_newfs(void)
 	integrity_type = UDF_INTEGRITY_OPEN;
 	if ((error = udf_create_lvintd(integrity_type)))
 		return error;
-
-	/* create secondary descriptors for the fileset and rootdir */
 
 	/* create FSD */
 	if ((error = udf_create_fsd()))
@@ -1261,11 +1297,39 @@ udf_do_newfs(void)
 
 	/* write out unallocated space bitmap on non sequential media */
 	if ((format_flags & FORMAT_SEQUENTIAL) == 0) {
-		/* writeout */
+		/* writeout unallocated space bitmap */
 		loc  = layout.unalloc_space;
 		dscr = (union dscrptr *) (context.part_unalloc_bits[data_part]);
-		len  = layout.bitmap_dscr_size;
-		error = udf_write_dscr_virt(dscr, loc, metadata_part, len);
+		len  = layout.alloc_bitmap_dscr_size;
+		error = udf_write_dscr_virt(dscr, loc, data_part, len);
+		if (error)
+			return error;
+	}
+
+	if (format_flags & FORMAT_META) {
+		loc = layout.meta_file;
+		dscr = (union dscrptr *) context.meta_file;
+		error = udf_write_dscr_virt(dscr, loc, data_part, 1);
+		if (error)
+			return error;
+	
+		loc = layout.meta_mirror;
+		dscr = (union dscrptr *) context.meta_mirror;
+		error = udf_write_dscr_virt(dscr, loc, data_part, 1);
+		if (error)
+			return error;
+
+		loc = layout.meta_bitmap;
+		dscr = (union dscrptr *) context.meta_bitmap;
+		error = udf_write_dscr_virt(dscr, loc, data_part, 1);
+		if (error)
+			return error;
+
+		/* writeout unallocated space bitmap */
+		loc  = layout.meta_bitmap_space;
+		dscr = (union dscrptr *) (context.part_unalloc_bits[metadata_part]);
+		len  = layout.meta_bitmap_dscr_size;
+		error = udf_write_dscr_virt(dscr, loc, data_part, len);
 		if (error)
 			return error;
 	}
@@ -1355,9 +1419,9 @@ a_udf_version(const char *s, const char *id_type)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-c] [-F] [-L loglabel] "
-	    "[-M] [-v min_udf] [-V max_udf] [-P discid] [-s size] "
-	    "[-S setlabel] [-t gmtoff] special\n", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-cFM] [-L loglabel] "
+	    "[-P discid] [-S setlabel] [-s size] [-p perc] "
+	    "[-t gmtoff] [-v min_udf] [-V max_udf] special\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -1398,7 +1462,7 @@ main(int argc, char **argv)
 	context.gmtoff = tm->tm_gmtoff;
 
 	/* process options */
-	while ((ch = getopt(argc, argv, "cFL:MP:s:S:t:v:V:")) != -1) {
+	while ((ch = getopt(argc, argv, "cFL:Mp:P:s:S:t:v:V:")) != -1) {
 		switch (ch) {
 		case 'c' :
 			check_surface = 1;
@@ -1412,6 +1476,13 @@ main(int argc, char **argv)
 			break;
 		case 'M' :
 			req_disable |= FORMAT_META;
+			break;
+		case 'p' :
+			meta_perc = a_num(optarg, "meta_perc");
+			/* limit to `sensible` values */
+			meta_perc = MIN(meta_perc, 99);
+			meta_perc = MAX(meta_perc, 1);
+			meta_fract = (float) meta_perc/100.0;
 			break;
 		case 'v' :
 			context.min_udf = a_udf_version(optarg, "min_udf");
@@ -1501,10 +1572,12 @@ main(int argc, char **argv)
 		context.min_udf, context.max_udf);
 	(void)snprintb(scrap, sizeof(scrap), FORMAT_FLAGBITS,
 	    (uint64_t) format_flags);
-	printf("UDF properties  %s\n", scrap);
-	printf("Volume set      `%s'\n", context.volset_name);
-	printf("Primary volume  `%s`\n", context.primary_name);
-	printf("Logical volume  `%s`\n", context.logvol_name);
+	printf("UDF properties       %s\n", scrap);
+	printf("Volume set          `%s'\n", context.volset_name);
+	printf("Primary volume      `%s`\n", context.primary_name);
+	printf("Logical volume      `%s`\n", context.logvol_name);
+	if (format_flags & FORMAT_META)
+		printf("Metadata percentage  %d %%\n", meta_perc);
 	printf("\n");
 
 	/* prepare disc if nessisary (recordables mainly) */

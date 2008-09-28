@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7.4.2 2008/06/02 13:21:22 mjf Exp $	*/
+/*	$NetBSD: util.c,v 1.7.4.3 2008/09/28 11:17:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 David Young.  All rights reserved.
@@ -24,6 +24,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: util.c,v 1.7.4.3 2008/09/28 11:17:12 mjf Exp $");
+#endif /* not lint */
 
 #include <ctype.h>
 #include <err.h>
@@ -224,3 +229,16 @@ indirect_ioctl(prop_dictionary_t env, unsigned long cmd, void *data)
 
 	return direct_ioctl(env, cmd, &ifr);
 }
+
+#ifdef INET6
+/* KAME idiosyncrasy */
+void
+in6_fillscopeid(struct sockaddr_in6 *sin6)
+{
+	if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr)) {
+		sin6->sin6_scope_id =
+			ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
+		sin6->sin6_addr.s6_addr[2] = sin6->sin6_addr.s6_addr[3] = 0;
+	}
+}
+#endif /* INET6	*/

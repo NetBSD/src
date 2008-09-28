@@ -1,4 +1,4 @@
-/*	$NetBSD: getnfsargs.c,v 1.10 2007/08/05 22:09:12 yamt Exp $	*/
+/*	$NetBSD: getnfsargs.c,v 1.10.10.1 2008/09/28 11:17:13 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -34,15 +34,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: getnfsargs.c,v 1.10 2007/08/05 22:09:12 yamt Exp $");
+__RCSID("$NetBSD: getnfsargs.c,v 1.10.10.1 2008/09/28 11:17:13 mjf Exp $");
 #endif
 #endif /* not lint */
 

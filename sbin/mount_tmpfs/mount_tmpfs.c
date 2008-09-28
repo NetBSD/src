@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.21.4.1 2008/06/02 13:21:23 mjf Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.21.4.2 2008/09/28 11:17:13 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -32,14 +32,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.21.4.1 2008/06/02 13:21:23 mjf Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.21.4.2 2008/09/28 11:17:13 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
 
-#include <fs/tmpfs/tmpfs.h>
+#include <fs/tmpfs/tmpfs_args.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -51,7 +51,9 @@ __RCSID("$NetBSD: mount_tmpfs.c,v 1.21.4.1 2008/06/02 13:21:23 mjf Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "fattr.h"
+
+#include "mountprog.h"
+#include "mount_tmpfs.h"
 
 /* --------------------------------------------------------------------- */
 
@@ -63,32 +65,30 @@ static const struct mntopt mopts[] = {
 
 /* --------------------------------------------------------------------- */
 
-static int	mount_tmpfs(int argc, char **argv);
 static void	usage(void) __dead;
 
 /* --------------------------------------------------------------------- */
 
-int
-mount_tmpfs(int argc, char *argv[])
+void
+mount_tmpfs_parseargs(int argc, char *argv[],
+	struct tmpfs_args *args, int *mntflags,
+	char *canon_dev, char *canon_dir)
 {
-	char canon_dir[MAXPATHLEN];
 	int gidset, modeset, uidset; /* Ought to be 'bool'. */
-	int ch, mntflags;
+	int ch;
 	gid_t gid;
 	uid_t uid;
 	mode_t mode;
 	int64_t tmpnumber;
 	mntoptparse_t mp;
-	struct tmpfs_args args;
 	struct stat sb;
 
-	setprogname(argv[0]);
-
 	/* Set default values for mount point arguments. */
-	args.ta_version = TMPFS_ARGS_VERSION;
-	args.ta_size_max = 0;
-	args.ta_nodes_max = 0;
-	mntflags = 0;
+	memset(args, 0, sizeof(*args));
+	args->ta_version = TMPFS_ARGS_VERSION;
+	args->ta_size_max = 0;
+	args->ta_nodes_max = 0;
+	*mntflags = 0;
 
 	gidset = 0; gid = 0;
 	uidset = 0; uid = 0;
@@ -111,11 +111,11 @@ mount_tmpfs(int argc, char *argv[])
 			if (dehumanize_number(optarg, &tmpnumber) == -1)
 				err(EXIT_FAILURE, "failed to parse nodes `%s'",
 				    optarg);
-			args.ta_nodes_max = tmpnumber;
+			args->ta_nodes_max = tmpnumber;
 			break;
 
 		case 'o':
-			mp = getmntopts(optarg, mopts, &mntflags, 0);
+			mp = getmntopts(optarg, mopts, mntflags, 0);
 			if (mp == NULL)
 				err(EXIT_FAILURE, "getmntopts");
 			freemntopts(mp);
@@ -125,7 +125,7 @@ mount_tmpfs(int argc, char *argv[])
 			if (dehumanize_number(optarg, &tmpnumber) == -1)
 				err(EXIT_FAILURE, "failed to parse size `%s'",
 				    optarg);
-			args.ta_size_max = tmpnumber;
+			args->ta_size_max = tmpnumber;
 			break;
 
 		case 'u':
@@ -144,20 +144,39 @@ mount_tmpfs(int argc, char *argv[])
 	if (argc != 2)
 		usage();
 
-	if (realpath(argv[1], canon_dir) == NULL)
-		err(EXIT_FAILURE, "realpath %s", argv[1]);
-
-	if (strncmp(argv[1], canon_dir, MAXPATHLEN) != 0) {
-		warnx("\"%s\" is a relative path", argv[1]);
-		warnx("using \"%s\" instead", canon_dir);
-	}
+	strlcpy(canon_dev, argv[0], MAXPATHLEN);
+	pathadj(argv[1], canon_dir);
 
 	if (stat(canon_dir, &sb) == -1)
 		err(EXIT_FAILURE, "cannot stat `%s'", canon_dir);
 
-	args.ta_root_uid = uidset ? uid : sb.st_uid;
-	args.ta_root_gid = gidset ? gid : sb.st_gid;
-	args.ta_root_mode = modeset ? mode : sb.st_mode;
+	args->ta_root_uid = uidset ? uid : sb.st_uid;
+	args->ta_root_gid = gidset ? gid : sb.st_gid;
+	args->ta_root_mode = modeset ? mode : sb.st_mode;
+}
+
+/* --------------------------------------------------------------------- */
+
+static void
+usage(void)
+{
+	(void)fprintf(stderr,
+	    "Usage: %s [-g group] [-m mode] [-n nodes] [-o options] [-s size]\n"
+	    "           [-u user] tmpfs mountpoint\n", getprogname());
+	exit(1);
+}
+
+/* --------------------------------------------------------------------- */
+
+int
+mount_tmpfs(int argc, char *argv[])
+{
+	struct tmpfs_args args;
+	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
+	int mntflags;
+
+	mount_tmpfs_parseargs(argc, argv, &args, &mntflags,
+	    canon_dev, canon_dir);
 
 	if (mount(MOUNT_TMPFS, canon_dir, mntflags, &args, sizeof args) == -1)
 		err(EXIT_FAILURE, "tmpfs on %s", canon_dir);
@@ -192,24 +211,12 @@ mount_tmpfs(int argc, char *argv[])
 	return EXIT_SUCCESS;
 }
 
-/* --------------------------------------------------------------------- */
-
-static void
-usage(void)
-{
-	(void)fprintf(stderr,
-	    "Usage: %s [-g group] [-m mode] [-n nodes] [-o options] [-s size]\n"
-	    "           [-u user] tmpfs mountpoint\n", getprogname());
-	exit(1);
-}
-
-/* --------------------------------------------------------------------- */
-
 #ifndef MOUNT_NOMAIN
 int
 main(int argc, char *argv[])
 {
 
+	setprogname(argv[0]);
 	return mount_tmpfs(argc, argv);
 }
 #endif

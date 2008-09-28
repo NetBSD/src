@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.15 2006/11/25 22:53:35 mishka Exp $
+.\"	$NetBSD: xfer,v 1.15.18.1 2008/09/28 11:09:16 mjf Exp $
 .
 Installation is supported from several media types, including:
 .Pp
@@ -90,7 +90,7 @@ If you make the tape on a
 system, you can create it as follows:
 .Pp
 .Dl # Ic "cd .../NetBSD-\*V/\*M/binary/sets"
-.Dl # Ic "T=\*<tape_device\*>"
+.Dl # Ic "T=\*[Lt]tape_device\*[Gt]"
 .Dl # Ic "mt -f $T rewind"
 .Dl # Ic "for f in base etc comp games man misc text"
 .Dl   Ic "\ \ \ \ dd if=$f.tgz of=$T conv=osync bs=5k"
@@ -98,7 +98,7 @@ system, you can create it as follows:
 .Dl # Ic "mt -f $T rewind"
 .Pp
 where
-.Dq \*<tape_device\*>
+.Dq \*[Lt]tape_device\*[Gt]
 is the name of the (non-rewinding!) tape
 device that you're using (probably something like
 .Pa /dev/nrst0 ,

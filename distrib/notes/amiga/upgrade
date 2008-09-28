@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.25.32.1 2008/06/02 13:21:15 mjf Exp $
+.\"	$NetBSD: upgrade,v 1.25.32.2 2008/09/28 11:09:16 mjf Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -121,7 +121,7 @@ machines, use this instead:
 .Pp
 .Dl Ic "netbsd -bn2"
 .Pp
-
+.
 .Ss2 Once your kernel boots
 .
 You should see the screen clear and some information about

@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.65.6.1 2008/06/02 13:21:16 mjf Exp $
+.\"	$NetBSD: postinstall,v 1.65.6.2 2008/09/28 11:09:17 mjf Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -175,17 +175,30 @@ For example:
 .\}
 .Pp
 .
-.ds IFname de0
-.if \n[hp300]:\n[mvme68k]:\n[pmax]:\n[sparc] .ds IFname le0
-.if \n[hp700]   .ds IFname ie0
-.if \n[next68k] .ds IFname xe0
-.if \n[mac68k]  .ds IFname sn0
-.if \n[macppc]  .ds IFname mc0
-.if \n[sgimips] .ds IFname sq0
-.if \n[sparc64] .ds IFname hme0
-.if \n[xen]     .ds IFname xennet0
+.ds IFname le0
+.if \n[acorn26]   .ds IFname ei0
+.if \n[acorn32]   .ds IFname ei0
+.if \n[amd64]     .ds IFname wm0
+.if \n[arc]       .ds IFname sn0
+.if \n[cats]      .ds IFname tlp0
+.if \n[evbarm]    .ds IFname fxp0
+.if \n[hp700]     .ds IFname ie0
+.if \n[hpcmips]   .ds IFname ne0
+.if \n[hpcsh]     .ds IFname ne0
+.if \n[i386]      .ds IFname wm0
+.if \n[landisk]   .ds IFname re0
+.if \n[mac68k]    .ds IFname sn0
+.if \n[macppc]    .ds IFname mc0
+.if \n[next68k]   .ds IFname xe0
+.if \n[prep]      .ds IFname pcn0
+.if \n[sandpoint] .ds IFname tlp0
+.if \n[sgimips]   .ds IFname sq0
+.if \n[shark]     .ds IFname cs0
+.if \n[sparc64]   .ds IFname hme0
+.if \n[x68k]      .ds IFname ne0
+.if \n[xen]       .ds IFname xennet0
 .
-.Dl ifconfig_\*[IFname]="inet 123.45.67.89 netmask 255.255.255.0"
+.Dl ifconfig_\*[IFname]="inet 192.0.2.123 netmask 255.255.255.0"
 .Pp
 or, if you have
 .Ar myname.my.dom
@@ -382,15 +395,15 @@ A list of available packages suitable for browsing is at
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/pkgsrc/README.html
 .It
 Precompiled binaries can be found at
-.Lk ftp://ftp.NetBSD.org/pub/NetBSD/packages/
+.Lk ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/
 usually in the
-.Pa \*V/\*M/All
+.Pa \*M/\*V/All
 subdir.
 You can install them with the following commands under
 .Xr sh 1 :
 .Pp
 .Bd -unfilled
-.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # PKG_PATH=ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
 .Ic # export PKG_PATH
 .Ic # pkg_add -v tcsh
 .Ic # pkg_add -v bash
@@ -406,14 +419,37 @@ If you are using
 then replace the first two lines with the following:
 .Pp
 .Bd -unfilled
-.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/NetBSD/packages/\*V/\*M/All
+.Ic # setenv PKG_PATH ftp://ftp.NetBSD.org/pub/pkgsrc/packages/NetBSD/\*M/\*V/All
 \&...
 .Ed
+.(Note
+Some mirror sites don't mirror
+.Pa /pub/pkgsrc
+directory.
+If you would like to use such mirrors, you could also try the
+.Pa /pub/NetBSD/packages/current-packages/NetBSD/\*M/\*V/All
+directory which may have the same contents.
+.Note)
 .Pp
 The above commands will install the Tenex-csh and Bourne Again shell,
 the Perl programming language, Apache web server, KDE desktop
 environment and the Firefox web browser 
 as well as all the packages they depend on.
+.(Note
+In some case the
+.Xr pkg_add 1
+command will complain about a version mismatch of packages with a message
+like the following:
+.Dl Warning: package `foo' was built for a different version of the OS:
+.Dl NetBSD/i386 M.N (pkg) vs. NetBSD/i386 \*V (this host) ,
+This warning would be harmless if the formal major release numbers are same
+between the pkg and your host.
+Please refer
+.Dq the NetBSD release glossary and graphs :
+.Lk http://www.NetBSD.org/releases/release-map.html
+for details of the release numbering scheme of
+.Nx .
+.Note)
 .It
 Package sources for compiling packages on your own can be obtained by
 retrieving the file

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66.12.1 2008/04/03 13:54:10 mjf Exp $	*/
+/*	$NetBSD: main.c,v 1.66.12.2 2008/09/28 11:17:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -31,15 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+__COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
+ The Regents of the University of California.  All rights reserved.");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.66.12.1 2008/04/03 13:54:10 mjf Exp $");
+__RCSID("$NetBSD: main.c,v 1.66.12.2 2008/09/28 11:17:11 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: main.c,v 1.66.12.1 2008/04/03 13:54:10 mjf Exp $");
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <fstab.h>
 #include <string.h>
 #include <time.h>
@@ -67,13 +68,15 @@ __RCSID("$NetBSD: main.c,v 1.66.12.1 2008/04/03 13:54:10 mjf Exp $");
 #include "extern.h"
 #include "fsutil.h"
 #include "exitvalues.h"
+#include "snapshot.h"
 
 int	progress = 0;
 int	returntosingle = 0;
 
 static int	argtoi(int, const char *, const char *, int);
-static int	checkfilesys(const char *, char *, long, int);
+static int	checkfilesys(const char *, const char *, int);
 static void	usage(void);
+static char 	*get_snap_device(char *);
 
 int
 main(int argc, char *argv[])
@@ -81,6 +84,8 @@ main(int argc, char *argv[])
 	struct rlimit r;
 	int ch;
 	int ret = FSCK_EXIT_OK;
+	char *snap_backup = NULL;
+	int snap_internal = 0;
 
 	if (getrlimit(RLIMIT_DATA, &r) == 0) {
 		r.rlim_cur = r.rlim_max;
@@ -92,7 +97,7 @@ main(int argc, char *argv[])
 	forceimage = 0;
 	endian = 0;
 	isappleufs = 0;
-	while ((ch = getopt(argc, argv, "aB:b:c:dFfm:npPqy")) != -1) {
+	while ((ch = getopt(argc, argv, "aB:b:c:dFfm:npPqyx:X")) != -1) {
 		switch (ch) {
 		case 'a':
 			isappleufs = 1;
@@ -163,11 +168,26 @@ main(int argc, char *argv[])
 			yflag++;
 			nflag = 0;
 			break;
+		case 'x':
+			snap_backup = optarg;
+			break;
+		case 'X':
+			snap_internal = 1;
+			break;
 
 		default:
 			usage();
 		}
 	}
+
+	if (snap_backup || snap_internal) {
+		if (!nflag || yflag) {
+			warnx("Cannot use -x or -X without -n\n");
+			snap_backup = NULL;
+			snap_internal = 0;
+		}
+	}
+			
 
 	argc -= optind;
 	argv += optind;
@@ -191,15 +211,38 @@ main(int argc, char *argv[])
 	signal(SIGINFO, infohandler);
 
 	while (argc-- > 0) {
-		const char *path = blockcheck(*argv);
+		int nret;
+		char *path = strdup(blockcheck(*argv));
 
 		if (path == NULL)
 			pfatal("Can't check %s\n", *argv);
-		else {
-			int nret = checkfilesys(blockcheck(*argv), 0, 0L, 0);
+		
+		if (snap_backup || snap_internal) {
+			char *mpt;
+			char *snap_dev;
+			int snapfd;
+
+			mpt = get_snap_device(*argv);
+			if (mpt == NULL)
+				goto next;
+			snapfd = snap_open(mpt, snap_backup, NULL, &snap_dev);
+			if (snapfd < 0) {
+				warn("can't take snapshot of %s", mpt);
+				free(mpt);
+				goto next;
+			}
+			nret = checkfilesys(blockcheck(snap_dev), path, 0);
 			if (ret < nret)
 				ret = nret;
-		}			
+			free(mpt);
+			close(snapfd);
+		} else {
+			nret = checkfilesys(path, path, 0);
+			if (ret < nret)
+				ret = nret;
+		}
+next:
+		free(path);
 		argv++;
 	}
 
@@ -224,7 +267,7 @@ argtoi(int flag, const char *req, const char *str, int base)
  */
 /* ARGSUSED */
 static int
-checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
+checkfilesys(const char *filesys, const char *origfs, int child)
 {
 	daddr_t n_ffree, n_bfree;
 	struct dups *dp;
@@ -255,7 +298,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	setcdevname(filesys, preen);
 	if (debug && preen)
 		pwarn("starting\n");
-	switch (setup(filesys)) {
+	switch (setup(filesys, origfs)) {
 	case 0:
 		if (preen)
 			pfatal("CAN'T CHECK FILE SYSTEM.");
@@ -458,9 +501,62 @@ usage(void)
 {
 
 	(void) fprintf(stderr,
-	    "usage: %s [-adFfnPpqy] [-B be|le] [-b block] [-c level] [-m mode]"
-	    " filesystem ...\n",
+	    "usage: %s [-adFfnPpqyX] [-B be|le] [-b block] [-c level] [-m mode]"
+	    " [-x snap-backup] filesystem ...\n",
 	    getprogname());
 	exit(FSCK_EXIT_USAGE);
 }
 
+static 
+char *get_snap_device(char *file)
+{
+	char *mountpoint = NULL;
+	struct statvfs *mntbuf, *fs, fsbuf;
+	struct stat sb;
+
+	/* find the mount point */
+	if (lstat(file, &sb) == -1) {
+		warn("can't stat %s", file);
+		return NULL;
+	}
+	if (S_ISCHR(sb.st_mode) || S_ISBLK(sb.st_mode)) {
+		int mntbufc, i;
+		if ((mntbufc = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
+			pfatal("can't get mount list: %s\n", strerror(errno));
+		for (fs = mntbuf, i = 0;
+		     i < mntbufc; i++, fs++) {
+			if (strcmp(fs->f_fstypename, "ufs") != 0 &&
+			    strcmp(fs->f_fstypename, "ffs") != 0)
+				continue;
+			if (fs->f_flag & ST_RDONLY) {
+				warnx("Cannot use -x or -X "
+				     "on read-only filesystem");
+				free(mntbuf);
+				return NULL;
+			}
+			if (strcmp(fs->f_mntfromname, unrawname(file)) == 0) {
+				mountpoint = strdup(fs->f_mntonname);
+				free(mntbuf);
+				return mountpoint;
+			}
+		}
+		warnx("Cannot use -x or -X on unmounted device");
+		free(mntbuf);
+		return NULL;
+	}
+	if (S_ISDIR(sb.st_mode)) {
+		if (statvfs(file, &fsbuf) == -1)
+			pfatal("can't statvfs %s: %s\n", file, strerror(errno));
+		if (strcmp(fsbuf.f_mntonname, file))
+			pfatal("%s is not a mount point\n", file);
+		if (fsbuf.f_flag & ST_RDONLY) {
+			warnx("Cannot use -x or -X "
+			     "on read-only filesystem");
+			return NULL;
+		}
+		mountpoint = strdup(file);
+		return mountpoint;
+	}
+	pfatal("%s is not a mount point\n", file);
+	return NULL;
+}

@@ -1,9 +1,9 @@
 %{
-/*	$NetBSD: veriexecctl_conf.l,v 1.11 2007/05/15 19:47:47 elad Exp $	*/
+/*	$NetBSD: veriexecctl_conf.l,v 1.11.12.1 2008/09/28 11:17:15 mjf Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
- * Copyright 2005 Brett Lymn <blymn@netbsd.org> 
+ * Copyright 2005 Brett Lymn <blymn@netbsd.org>
  *
  * All rights reserved.
  *

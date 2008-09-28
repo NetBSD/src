@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2006/11/23 13:22:18 martin Exp $
+#	$NetBSD: Makefile,v 1.15.18.1 2008/09/28 11:09:22 mjf Exp $
 
 NOMAN=
 .include <bsd.own.mk>
@@ -12,7 +12,7 @@ SRCS=		dhclient.c clparse.c
 CPPFLAGS+=	-DCLIENT_PATH='"PATH=/usr/bin:/usr/sbin:/bin:/sbin"' \
 		-DSMALL -I${RSRCDIR} -I${RSRCDIR}/includes
 
-.if ${HAVE_GCC} == 4
+.if defined(HAVE_GCC) && ${HAVE_GCC} == 4
 CPPFLAGS+=	-fno-strict-aliasing
 .endif
 

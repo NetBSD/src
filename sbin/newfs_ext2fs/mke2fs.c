@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.7.6.1 2008/06/02 13:21:23 mjf Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.7.6.2 2008/09/28 11:17:14 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -106,7 +106,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.7.6.1 2008/06/02 13:21:23 mjf Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.7.6.2 2008/09/28 11:17:14 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -238,7 +238,7 @@ mke2fs(const char *fsys, int fi, int fo)
 		 * and Linux seems to set the same values to them.
 		 */
 		errx(EXIT_FAILURE,
-		    "block size (%u) can't be diffrent from "
+		    "block size (%u) can't be different from "
 		    "fragment size (%u)\n",
 		    bsize, fsize);
 	}
@@ -255,7 +255,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	sblock.e2fs_ipb = sblock.e2fs_bsize / EXT2_DINODE_SIZE;
 
 	/*
-	 * Ext2fs preseves BBSIZE (1024 bytes) space at the top for
+	 * Ext2fs preserves BBSIZE (1024 bytes) space at the top for
 	 * bootloader (though it is not enough at all for our bootloader).
 	 * If bsize == BBSIZE we have to preserve one block.
 	 * If bsize > BBSIZE, the first block already contains BBSIZE space
@@ -283,7 +283,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	/*
 	 * While many people claim that ext2fs is a (bad) clone of ufs/ffs,
 	 * it isn't actual ffs so maybe we should call it "block group"
-	 * as their native name rather than ffs delived "cylinder group."
+	 * as their native name rather than ffs derived "cylinder group."
 	 * But we'll use the latter here since other kernel sources use it.
 	 * (I also agree "cylinder" based allocation is obsolete though)
 	 */
@@ -368,7 +368,7 @@ mke2fs(const char *fsys, int fi, int fo)
 	/*
 	 * Maybe we can use E2FS_OS_FREEBSD here and it would be more proper,
 	 * but the purpose of this newfs_ext2fs(8) command is to provide
-	 * a filesystem which can be recognized by firmwares on some
+	 * a filesystem which can be recognized by firmware on some
 	 * Linux based appliances that can load bootstrap files only from
 	 * (their native) ext2fs, and anyway we will (and should) try to
 	 * act like them as much as possible.
@@ -565,7 +565,7 @@ mke2fs(const char *fsys, int fi, int fo)
 
 		/*
 		 * Ensure there is nothing that looks like a filesystem
-		 * superbock anywhere other than where ours will be.
+		 * superblock anywhere other than where ours will be.
 		 * If fsck_ext2fs finds the wrong one all hell breaks loose!
 		 *
 		 * XXX: needs to check how fsck_ext2fs programs even
@@ -732,7 +732,7 @@ initcg(uint cylno)
 	 * Initialize inode bitmap.
 	 *
 	 *  Assume e2fs_ipg is a multiple of NBBY since
-	 *  it's a multible of e2fs_ipb (as we did above).
+	 *  it's a multiple of e2fs_ipb (as we did above).
 	 *  Note even (possibly smaller) the last group has the same e2fs_ipg.
 	 */
 	i = sblock.e2fs.e2fs_ipg / NBBY;
@@ -818,7 +818,7 @@ zap_old_sblock(daddr_t sec)
 	 * The sector might contain boot code, so we must validate it
 	 *
 	 * XXX: ext2fs won't preserve data after SBOFF,
-	 *      but first_dblock could have a differnt value.
+	 *      but first_dblock could have a different value.
 	 */
 	rdfs(sec, sizeof(oldfs), &oldfs);
 	for (fsm = fs_magics;; fsm++) {
@@ -939,7 +939,7 @@ fsinit(const struct timeval *tv)
 	node.e2di_mtime = tv->tv_sec;
 	node.e2di_gid = getegid();
 	node.e2di_nlink = PREDEFDIR;
-	/* e2di_nblock is a number of disk block, not ext2fs block */
+	/* e2di_nblock is a number of disk blocks, not ext2fs blocks */
 	node.e2di_nblock = fsbtodb(&sblock, nblks_lostfound);
 	node.e2di_blocks[0] = alloc(sblock.e2fs_bsize, node.e2di_mode);
 	if (node.e2di_blocks[0] == 0) {
@@ -1037,7 +1037,7 @@ copy_dir(struct ext2fs_direct *dir, struct ext2fs_direct *dbuf)
 /*
  * void init_resizeino(const struct timeval *tv);
  *
- *	Initialize the EXT2_RESEIZE_INO inode to prereserve
+ *	Initialize the EXT2_RESEIZE_INO inode to preserve
  *	reserved group descriptor blocks for future growth of this ext2fs.
  */
 void
@@ -1099,7 +1099,7 @@ init_resizeino(const struct timeval *tv)
 	 * have block numbers of actual reserved group descriptors
 	 * allocated at block group zero. This means e2fs_reserved_ngdb
 	 * blocks are reserved as the second level dindirect reference
-	 * blocks, and they acutually contain block numbers of indirect
+	 * blocks, and they actually contain block numbers of indirect
 	 * references. It may be safe since they don't have to keep any
 	 * data yet.
 	 *

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.88.6.1 2008/06/02 13:21:16 mjf Exp $
+.\"	$NetBSD: sysinst,v 1.88.6.2 2008/09/28 11:09:17 mjf Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,6 +58,11 @@
 .\}
 .if \n[macppc]:\n[news68k]:\n[newsmips]:\n[sparc]:\n[sparc64] \{\
 .  ds part_usr g
+.\}
+.if \n[arc] \{\
+.  ds part_raw d
+.  ds part_usr f
+.  ds part_free g
 .\}
 .
 .
@@ -189,7 +194,7 @@ volume on a netboot server as described above.
 .el \{\
 .ie \n[mac68k] The Mac OS Booter application and an Installation Kernel
 .el \{\
-.ie \n[acorn26]:\n[cats]:\n[evbppc]:\n[macppc]:\n[sparc] \{\
+.ie \n[acorn26]:\n[arc]:\n[cats]:\n[evbppc]:\n[macppc]:\n[sparc] \{\
 Some form of bootable media, described above.
 .\}
 .el \{\
@@ -218,6 +223,7 @@ A CD-ROM drive
 a hard disk and a minimum of
 .if \n[acorn26] 8 MB
 .if \n[alpha] 32 MB
+.if \n[arc] 16 MB
 .if \n[atari] 4 MB (TT030/Falcon) or 16 MB (Hades/Milan)
 .if \n[cats] 8 MB
 .if \n[ews4800mips] 16 MB
@@ -237,6 +243,7 @@ of memory installed.
 The hard disk should have at least
 .if \n[acorn26] 200
 .if \n[alpha] 200
+.if \n[arc] 200
 .if \n[atari] 120
 .if \n[cats] 200
 .if \n[ews4800mips] 200
@@ -345,7 +352,7 @@ pull-down menu, select
 .Ic Monitors ,
 then select
 .Ic Change Monitor Depth
-and make sure B\*&W is highlighted.
+and make sure B\*[Am]W is highlighted.
 Close the window using the
 .Ic Close
 button.
@@ -395,7 +402,7 @@ the computer.
 .if \n[alpha] \{\
 Type
 .Pp
-.Dl \&\*>\*>\*> Ic "B DVA0"
+.Dl \&\*[Gt]\*[Gt]\*[Gt] Ic "B DVA0"
 .Pp
 .\}
 .if \n[ews4800mips] \{\
@@ -406,17 +413,17 @@ pressing ESC key right after hardware checks, and boot the computer again.
 .if \n[news68k] \{\
 Type
 .Pp
-.Dl \&NEWS\*> Ic "bo fh"
+.Dl \&NEWS\*[Gt] Ic "bo fh"
 .Pp
 .\}
 .if \n[newsmips] \{\
 Type
 .Pp
-.Dl \&\*> Ic "bo fd" (in case of NWS-5000)
+.Dl \&\*[Gt] Ic "bo fd" (in case of NWS-5000)
 .Pp
 or
 .Pp
-.Dl \&\*> Ic "bo fh" (in case of NWS-3xxx)
+.Dl \&\*[Gt] Ic "bo fh" (in case of NWS-3xxx)
 .Pp
 .\}
 After language selection, the main menu will be displayed.
@@ -561,7 +568,7 @@ Enable 32-bit addressing in the Memory Control Panel [1].
 Disable all forms of virtual memory (the Memory Control Panel, RAM Doubler,
 or other software-based memory enhancement products).
 .It
-Place the system in B\*&W Mode (1-bit color or grayscale) as shown in the
+Place the system in B\*[Am]W Mode (1-bit color or grayscale) as shown in the
 Monitors Control Panel or in the Monitors options dialog of the Booter.
 You may choose to have the Booter do this for you automatically by selecting
 the appropriate check box and radio button in the
@@ -608,11 +615,11 @@ Select the Kernel Location to be from Mac OS with the filename
 corresponding to the name of the Installation Kernel you are using.
 Typically this will be netbsd-INSTALL.gz.
 .Pp
-If you haven't already put your Macintosh into B\*&W mode, select the
+If you haven't already put your Macintosh into B\*[Am]W mode, select the
 .Ic Monitor Options
 from the
 .Ic Options
-menu and check the box for B\*&W mode.
+menu and check the box for B\*[Am]W mode.
 .Pp
 Try booting
 .Nx
@@ -905,7 +912,7 @@ and
 .Pa swap ) ,
 for example:
 .Dl # Ic "mkdir /mnt/etc"
-.Dl # Ic "cat \*> /mnt/etc/fstab"
+.Dl # Ic "cat \*[Gt] /mnt/etc/fstab"
 .Dl "/dev/wd0a / ffs rw 1 1"
 .Dl "/dev/wd0b none swap sw 0 0"
 .Dl "/dev/wd0g /usr ffs rw 1 2"
@@ -1082,7 +1089,7 @@ the rest of the partitions in AHDI order
 .if \n[macppc] \{\
 .Pp
 You can skip a few steps, down to
-.Em Sq "Getting the distribution sets" ,
+.Sq Em "Getting the distribution sets" ,
 if you are installing onto a drive with an Apple Partition Map (Open 
 Firmware 3), i.e. you selected
 .Me "Re-install sets or install additional sets"
@@ -1654,10 +1661,7 @@ you have selected.
 In the latter case, you will be shown the currently selected sets,
 and given the opportunity to select the sets you want.
 Some sets always need to be installed
-.Po Sy kern, base,
-and
-.Sy etc
-.Pc
+.Pq Sy kern , Sy base , No and Sy etc
 they will not be shown in this selection menu.
 .Pp
 Before extraction begins, you can elect to watch the files being
@@ -1781,7 +1785,7 @@ As the a.out format kernel is not named in such a way that the
 Cyclone firmware will automatically find it the following command
 should be issued as the firmware prompt.
 .Pp
-.Dl boot> Ic "set boot wd0:/netbsd.aout"
+.Dl boot\*[Gt] Ic "set boot wd0:/netbsd.aout"
 .Pp
 .\}
 .if !\n[macppc] \{\

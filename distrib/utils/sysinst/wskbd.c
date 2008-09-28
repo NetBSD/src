@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbd.c,v 1.5.28.1 2008/06/02 13:21:18 mjf Exp $	*/
+/*	$NetBSD: wskbd.c,v 1.5.28.2 2008/09/28 11:09:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wskbd.c,v 1.5.28.1 2008/06/02 13:21:18 mjf Exp $");
+__RCSID("$NetBSD: wskbd.c,v 1.5.28.2 2008/09/28 11:09:22 mjf Exp $");
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -62,6 +62,8 @@ static const struct kb_types kb_types[] = {
 #define KB_sysinst(tag, tagf, value, cc, ccf, country) \
 	{tag | tagf, cc ccf, country},
 KB_ENC_FUN(KB_sysinst)
+{KB_US | KB_COLEMAK, "us" ".colemak", "US-Colemak"},
+{KB_US | KB_DVORAK, "us" ".dvorak", "US-Dvorak"}
 };
 
 static int

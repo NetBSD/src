@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.28.6.1 2008/06/02 13:21:16 mjf Exp $
+.\"	$NetBSD: install,v 1.28.6.2 2008/09/28 11:09:18 mjf Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@ each partition on which you wish to build a file system and click on the
 .Ic Change
 button. If you are placing the entire installation on a single
 partition, select the
-.Ic NetBSD Root\*&Usr
+.Ic NetBSD Root\*[Am]Usr
 radio button. If you are using
 multiple partitions, select
 .Ic NetBSD Root
@@ -266,7 +266,7 @@ All forms of virtual memory are disabled (the Memory control
 panel, RAM Doubler, or other software-based memory enhancement
 products); and
 .It
-Your system is in B\*&W mode (1-bit color or grayscale) as shown
+Your system is in B\*[Am]W mode (1-bit color or grayscale) as shown
 by the Monitors control panel. You may choose to have the
 Booter do this for you automatically by selecting the appropriate
 check box and radio button in the

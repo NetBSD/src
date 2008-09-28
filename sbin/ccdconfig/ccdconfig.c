@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.46.18.1 2008/06/02 13:21:20 mjf Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.46.18.2 2008/09/28 11:17:10 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -31,10 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT(
-"@(#) Copyright (c) 1996, 1997\
-	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.46.18.1 2008/06/02 13:21:20 mjf Exp $");
+__COPYRIGHT("@(#) Copyright (c) 1996, 1997\
+ The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: ccdconfig.c,v 1.46.18.2 2008/09/28 11:17:10 mjf Exp $");
 #endif
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.417.6.4 2008/07/05 11:53:51 mjf Exp $
+# $NetBSD: shl.mi,v 1.417.6.5 2008/09/28 11:09:18 mjf Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -13,20 +13,20 @@
 #
 # Note:	libtermcap and libtermlib are hardlinked and share the same version.
 #
-./lib/libc.so.12.162				base-sys-shlib
-./lib/libcrypt.so.0.2				base-sys-shlib
-./lib/libcrypto.so.4.1				base-crypto-shlib	crypto
-./lib/libedit.so.2.11				base-sys-shlib
-./lib/libevent.so.2.0				base-sys-shlib
-./lib/libipsec.so.2.2				base-net-shlib
-./lib/libkvm.so.5.3				base-sys-shlib
-./lib/libm.so.0.6				base-sys-shlib
-./lib/libprop.so.0.6				base-sys-shlib
-./lib/libradius.so.2.0				base-sys-shlib
-./lib/libtermcap.so.0.6				base-sys-shlib
-./lib/libtermlib.so.0.6				base-sys-shlib
-./lib/libutil.so.7.15				base-sys-shlib
-./lib/libz.so.1.0				base-sys-shlib
+./lib/libc.so.12.163				base-sys-shlib		dynamicroot
+./lib/libcrypt.so.0.2				base-sys-shlib		dynamicroot
+./lib/libcrypto.so.4.1				base-crypto-shlib	crypto,dynamicroot
+./lib/libedit.so.2.11				base-sys-shlib		dynamicroot
+./lib/libevent.so.2.0				base-sys-shlib		dynamicroot
+./lib/libipsec.so.2.2				base-net-shlib		dynamicroot
+./lib/libkvm.so.5.3				base-sys-shlib		dynamicroot
+./lib/libm.so.0.6				base-sys-shlib		dynamicroot
+./lib/libprop.so.0.7				base-sys-shlib		dynamicroot
+./lib/libradius.so.2.0				base-sys-shlib		dynamicroot
+./lib/libtermcap.so.0.6				base-sys-shlib		dynamicroot
+./lib/libtermlib.so.0.6				base-sys-shlib		dynamicroot
+./lib/libutil.so.7.15				base-sys-shlib		dynamicroot
+./lib/libz.so.1.0				base-sys-shlib		dynamicroot
 ./usr/lib/i18n/libBIG5.so.4.4			base-i18n-shlib
 ./usr/lib/i18n/libDECHanyu.so.4.4		base-i18n-shlib
 ./usr/lib/i18n/libEUC.so.4.4			base-i18n-shlib
@@ -58,7 +58,7 @@
 ./usr/lib/libbluetooth.so.3.0			base-sys-shlib
 ./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
-./usr/lib/libc.so.12.162			base-sys-shlib
+./usr/lib/libc.so.12.163			base-sys-shlib
 ./usr/lib/libcom_err.so.5.0			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.0.2			base-sys-shlib
 ./usr/lib/libcrypto.so.4.1			base-crypto-shlib	crypto
@@ -96,11 +96,12 @@
 ./usr/lib/libobjc.so.2.0			base-sys-shlib		gcc=3
 ./usr/lib/libobjc.so.2.1			base-sys-shlib		gcc=4
 ./usr/lib/libossaudio.so.0.0			base-sys-shlib
+./usr/lib/libp2k.so.0.0				base-sys-shlib		puffs
 ./usr/lib/libpam.so.1.0				base-sys-shlib		pam
 ./usr/lib/libpcap.so.2.0			base-net-shlib
 ./usr/lib/libpci.so.1.0				base-sys-shlib
 ./usr/lib/libposix.so.0.1			base-sys-shlib
-./usr/lib/libprop.so.0.6			base-sys-shlib
+./usr/lib/libprop.so.0.7			base-sys-shlib
 ./usr/lib/libpthread.so.0.10			base-sys-shlib
 ./usr/lib/libpthread_dbg.so.1.0			base-sys-shlib
 ./usr/lib/libpuffs.so.0.0			base-sys-shlib
@@ -110,6 +111,21 @@
 ./usr/lib/libroken.so.13.0			base-krb5-shlib		kerberos
 ./usr/lib/librpcsvc.so.0.0			base-net-shlib
 ./usr/lib/librt.so.0.0				base-sys-shlib
+./usr/lib/librump.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_cd9660.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_efs.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_ext2fs.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_ffs.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_hfs.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_lfs.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_msdos.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_ntfs.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_syspuffs.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_sysvbfs.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_tmpfs.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_udf.so.0.0			base-sys-shlib
+./usr/lib/librumpfs_ufs.so.0.0			base-sys-shlib
+./usr/lib/librumpuser.so.0.0			base-sys-shlib
 ./usr/lib/libsdp.so.2.0				base-sys-shlib
 ./usr/lib/libskey.so.1.0			base-sys-shlib		skey
 ./usr/lib/libsl.so.3.0				base-krb5-shlib		kerberos
@@ -120,6 +136,7 @@
 ./usr/lib/libstdc++.so.6.0			base-sys-shlib		gcc=4
 ./usr/lib/libtermcap.so.0.6			base-sys-shlib
 ./usr/lib/libtermlib.so.0.6			base-sys-shlib
+./usr/lib/libukfs.so.0.0			base-sys-shlib
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib
 ./usr/lib/libutil.so.7.15			base-sys-shlib
 ./usr/lib/libwrap.so.0.2			base-net-shlib

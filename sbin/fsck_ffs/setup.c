@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.81.10.1 2008/04/03 13:54:10 mjf Exp $	*/
+/*	$NetBSD: setup.c,v 1.81.10.2 2008/09/28 11:17:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.81.10.1 2008/04/03 13:54:10 mjf Exp $");
+__RCSID("$NetBSD: setup.c,v 1.81.10.2 2008/09/28 11:17:11 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ int16_t sblkpostbl[256];
  * is already clean (preen mode only).
  */
 int
-setup(const char *dev)
+setup(const char *dev, const char *origdev)
 {
 	long cg, size, asked, i, j;
 	long bmapsize;
@@ -91,6 +91,7 @@ setup(const char *dev)
 	int doskipclean;
 	u_int64_t maxfilesize;
 	struct csum *ccsp;
+	int fd;
 
 	havesb = 0;
 	fswritefd = -1;
@@ -128,7 +129,20 @@ setup(const char *dev)
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL ||
 		sblock == NULL || altsblock == NULL)
 		errexit("Cannot allocate space for superblock");
-	if (!forceimage && getdiskinfo(dev, fsreadfd, NULL, &geo, &dkw) != -1)
+	if (strcmp(dev, origdev) && !forceimage) {
+		/*
+		 * dev isn't the original fs (for example it's a snapshot)
+		 * do getdiskinfo on the original device
+		 */
+		 fd = open(origdev, O_RDONLY);
+		 if (fd < 0) {
+			warn("Can't open %s", origdev);
+			return (0);
+		}
+	} else {
+		fd = fsreadfd;
+	}
+	if (!forceimage && getdiskinfo(origdev, fd, NULL, &geo, &dkw) != -1)
 		dev_bsize = secsize = geo.dg_secsize;
 	else
 		dev_bsize = secsize = DEV_BSIZE;
@@ -158,6 +172,25 @@ setup(const char *dev)
 		}
 		doskipclean = 0;
 		pwarn("USING ALTERNATE SUPERBLOCK AT %d\n", bflag);
+	}
+	if (sblock->fs_flags & FS_DOWAPBL) {
+		if (preen) {
+			if (!quiet)
+				pwarn("file system is journaled; not checking\n");
+			return (-1);
+		}
+		if (!quiet)
+			pwarn("** File system is journaled; replaying journal\n");
+		replay_wapbl();
+		doskipclean = 0;
+		sblock->fs_flags &= ~FS_DOWAPBL;
+		sbdirty();
+		/* Although we may have updated the superblock from the
+		 * journal, we are still going to do a full check, so we
+		 * don't bother to re-read the superblock from the journal.
+		 * XXX, instead we could re-read the superblock and then not
+		 * force doskipclean = 0 
+		 */
 	}
 	if (debug)
 		printf("clean = %d\n", sblock->fs_clean);
@@ -218,6 +251,13 @@ setup(const char *dev)
 	/*
 	 * Check and potentially fix certain fields in the super block.
 	 */
+	if (sblock->fs_flags & ~(FS_KNOWN_FLAGS)) {
+		pfatal("UNKNOWN FLAGS=0x%08x IN SUPERBLOCK", sblock->fs_flags);
+		if (reply("CLEAR") == 1) {
+			sblock->fs_flags &= FS_KNOWN_FLAGS;
+			sbdirty();
+		}
+	}
 	if (sblock->fs_optim != FS_OPTTIME && sblock->fs_optim != FS_OPTSPACE) {
 		pfatal("UNDEFINED OPTIMIZATION IN SUPERBLOCK");
 		if (reply("SET TO DEFAULT") == 1) {

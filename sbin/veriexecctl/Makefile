@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2006/11/28 22:22:03 elad Exp $
+#	$NetBSD: Makefile,v 1.12.18.1 2008/09/28 11:17:15 mjf Exp $
 
 PROG=	veriexecctl
 MAN=	veriexecctl.8
@@ -10,7 +10,3 @@ DPADD+=		${LIBL} ${LIBPROP}
 LDADD+=		-ll -lprop
 
 .include <bsd.prog.mk>
-
-.if ${HAVE_GCC} == 4
-COPTS+=	-Wno-pointer-sign
-.endif
