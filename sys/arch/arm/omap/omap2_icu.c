@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_icu.c,v 1.1.6.1 2008/06/02 13:21:55 mjf Exp $	*/
+/*	$NetBSD: omap2_icu.c,v 1.1.6.2 2008/09/28 10:39:50 mjf Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -30,7 +30,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.1.6.1 2008/06/02 13:21:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.1.6.2 2008/09/28 10:39:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -45,8 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.1.6.1 2008/06/02 13:21:55 mjf Exp $"
 #include <arm/cpufunc.h>
 #include <arm/atomic.h>
 
-#include <arm/omap/omap2430reg.h>
-#include <arm/omap/omap2430obiovar.h>
+#include <arm/omap/omap2_reg.h>
+#include <arm/omap/omap2_obiovar.h>
 
 
 #define	INTC_READ(sc, g, o)		\
@@ -99,9 +99,6 @@ omap2icu_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t irq_mask)
 	sc->sc_enabled_irqs[group] |= irq_mask;
 	INTC_WRITE(sc, group, INTC_MIR_CLEAR, irq_mask);
 
-	aprint_normal_dev(sc->sc_dev, "unblock: group %zd: mask=%#x\n",
-	    group >> 5, irq_mask);
-
 	/* Force INTC to recompute IRQ availability */
 	INTC_WRITE(sc, 0, INTC_CONTROL, INTC_CONTROL_NEWIRQAGR);
 }
@@ -111,9 +108,6 @@ omap2icu_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t irq_mask)
 {
 	struct omap2icu_softc * const sc = PICTOSOFTC(pic);
 	const size_t group = irqbase / 32;
-
-	aprint_normal_dev(sc->sc_dev, "block: group %zd: mask=%#x\n",
-	    group >> 5, irq_mask);
 
 	INTC_WRITE(sc, group, INTC_MIR_SET, irq_mask);
 	sc->sc_enabled_irqs[group] &= ~irq_mask;
@@ -132,8 +126,6 @@ find_pending_irqs(struct omap2icu_softc *sc, size_t group)
 	if (pending == 0)
 		return 0;
 
-	aprint_normal_dev(sc->sc_dev, "group %zd: pending=%#x\n",
-	    group, pending);
 	return pic_mark_pending_sources(&sc->sc_pic, group * 32, pending);
 }
 
@@ -177,7 +169,13 @@ omap2icu_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct obio_attach_args * const oa = aux;
 
-	return (oa->obio_addr == INTC_BASE);
+#if defined(OMAP_2430) || defined(OMAP_2420)
+	return oa->obio_addr == INTC_BASE;
+#elif defined(OMAP3530)
+	return oa->obio_addr == INTC_BASE_3530;
+#else
+#error unsupported OMAP variant
+#endif
 }
 
 void

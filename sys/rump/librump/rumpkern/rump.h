@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.23.6.3 2008/07/02 19:08:20 mjf Exp $	*/
+/*	$NetBSD: rump.h,v 1.23.6.4 2008/09/28 10:41:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,8 +27,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_RUMP_H_
-#define _SYS_RUMP_H_
+#ifndef _RUMP_RUMP_H_
+#define _RUMP_RUMP_H_
+
+/*
+ * NOTE: do not #include anything from <sys> here.  Otherwise this
+ * has no chance of working on non-NetBSD platforms.
+ */
 
 struct mount;
 struct vnode;
@@ -44,9 +49,10 @@ typedef struct kauth_cred *kauth_cred_t;
 #endif
 
 struct lwp;
+struct modinfo;
 
-#include "rumpvnode_if.h"
-#include "rumpdefs.h"
+#include <rump/rumpvnode_if.h>
+#include <rump/rumpdefs.h>
 
 #ifndef curlwp
 #define curlwp rump_get_curlwp()
@@ -113,6 +119,7 @@ int	rump_vfs_sync(struct mount *, int, kauth_cred_t);
 int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
 void	rump_vfs_syncwait(struct mount *);
+int	rump_vfs_load(struct modinfo **);
 
 void	rump_bioops_sync(void);
 
@@ -126,4 +133,7 @@ struct vnode 	*rump_cdir_get(void);
 int	rump_splfoo(void);
 void	rump_splx(int);
 
-#endif /* _SYS_RUMP_H_ */
+/* I picked the wrong header to stop sniffin' glue */
+int syspuffs_glueinit(int, int *);
+
+#endif /* _RUMP_RUMP_H_ */

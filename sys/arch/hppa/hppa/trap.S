@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.23.6.1 2008/06/02 13:22:12 mjf Exp $	*/
+/*	$NetBSD: trap.S,v 1.23.6.2 2008/09/28 10:39:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -119,7 +119,6 @@ emergency_stack_end:
 /*
  * Kernel Gateway Page (must be at known address)
  *	System Call Gate
- *	Signal Return Gate
  *
  * GATEway instructions have to be at a fixed known locations
  * because their addresses are hard coded in routines such as
@@ -644,7 +643,7 @@ os_hpmc:
 	STRAP(itlb,T_ITLBMISSNA,ITLBPRE)/* 16. ITLB non-access miss fault */
 	STRAP(dtlb,T_DTLBMISSNA,DTLBPRE)/* 17. DTLB non-access miss fault */
 	ATRAP(dprot,T_DPROT)		/* 18. data protection trap
-					      unalligned data reference trap */
+					       unaligned data reference trap */
 	ATRAP(dbrk,T_DBREAK)		/* 19. data break trap */
 	STRAP(tlbd,T_TLB_DIRTY,DTLBPRE)	/* 20. TLB dirty bit trap */
 	ATRAP(pgref,T_PAGEREF)		/* 21. page reference trap */

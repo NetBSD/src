@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.9.6.1 2008/06/02 13:23:55 mjf Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.9.6.2 2008/09/28 10:40:33 mjf Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.9.6.1 2008/06/02 13:23:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.9.6.2 2008/09/28 10:40:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +121,8 @@ static const struct uipaq_type uipaq_devs[] = {
 	{{ USB_VENDOR_HP, USB_PRODUCT_HP_568J }, 0},
 	{{ USB_VENDOR_COMPAQ, USB_PRODUCT_COMPAQ_IPAQPOCKETPC} , 0},
 	{{ USB_VENDOR_CASIO, USB_PRODUCT_CASIO_BE300} , 0},
-	{{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_WS007SH} , 0}
+	{{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_WS007SH} , 0},
+	{{ USB_VENDOR_SHARP, USB_PRODUCT_SHARP_WS011SH} , 0}
 };
 
 #define uipaq_lookup(v, p) ((const struct uipaq_type *)usb_lookup(uipaq_devs, v, p))

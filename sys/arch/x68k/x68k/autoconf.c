@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55.6.1 2008/06/29 09:33:02 mjf Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55.6.2 2008/09/28 10:40:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.6.1 2008/06/29 09:33:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.55.6.2 2008/09/28 10:40:11 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -259,7 +259,7 @@ scsi_find(dev_t bdev)
 	}
 	if (!scsibus)
 		return NULL;
-	sbsc = (struct scsibus_softc *) scsibus;
+	sbsc = device_private(scsibus);
 	periph = scsipi_lookup_periph(sbsc->sc_channel,
 	    B_X68K_SCSI_ID(bdev), B_X68K_SCSI_LUN(bdev));
 

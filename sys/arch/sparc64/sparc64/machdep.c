@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.215.6.4 2008/07/02 19:08:18 mjf Exp $ */
+/*	$NetBSD: machdep.c,v 1.215.6.5 2008/09/28 10:40:09 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215.6.4 2008/07/02 19:08:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215.6.5 2008/09/28 10:40:09 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -276,7 +276,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
 		fpusave_lwp(l, false);
-		free((void *)fs, M_SUBPROC);
+		pool_cache_put(fpstate_cache, fs);
 		l->l_md.md_fpstate = NULL;
 	}
 	memset(tf, 0, sizeof *tf);
@@ -1916,7 +1916,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		 * by lazy FPU context switching); allocate it if necessary.
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
-			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
+			fsp = pool_cache_get(fpstate_cache, PR_WAITOK);
 			l->l_md.md_fpstate = fsp;
 		} else {
 			/* Drop the live context on the floor. */

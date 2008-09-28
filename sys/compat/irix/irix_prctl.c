@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.45.6.1 2008/06/02 13:22:58 mjf Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.45.6.2 2008/09/28 10:40:15 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.45.6.1 2008/06/02 13:22:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.45.6.2 2008/09/28 10:40:15 mjf Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -584,9 +584,12 @@ irix_sys_procblk(struct lwp *l, const struct irix_sys_procblk_args *uap, registe
 
 		rw_enter(&isg->isg_lock, RW_READER);
 		LIST_FOREACH(iedp, &isg->isg_head, ied_sglist) {
+			struct proc *p;
 			/* Recall procblk for this process */
-			SCARG(&cup, pid) = iedp->ied_p->p_pid;
-			ied_lwp = proc_representative_lwp(iedp->ied_p, NULL, 0);
+			p = iedp->ied_p;
+			SCARG(&cup, pid) = p->p_pid;
+			ied_lwp = LIST_FIRST(&p->p_lwps);
+			KASSERT(ied_lwp != NULL);
 			error = irix_sys_procblk(ied_lwp, &cup, retval);
 			if (error != 0)
 				last_error = error;
@@ -629,7 +632,10 @@ irix_prda_init(struct proc *p)
 	evc.ev_len = sizeof(struct irix_prda);
 	evc.ev_prot = UVM_PROT_RW;
 	evc.ev_proc = *vmcmd_map_zero;
-	l = proc_representative_lwp(p, NULL, 0);
+
+	/* XXXSMP */
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
 
 	if ((error = (*evc.ev_proc)(l, &evc)) != 0)
 		return error;

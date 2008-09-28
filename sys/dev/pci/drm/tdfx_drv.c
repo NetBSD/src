@@ -1,4 +1,4 @@
-/*	$NetBSD: tdfx_drv.c,v 1.3 2007/12/11 11:48:47 lukem Exp $	*/
+/*	$NetBSD: tdfx_drv.c,v 1.3.8.1 2008/09/28 10:40:30 mjf Exp $	*/
 
 /* tdfx_drv.c -- tdfx driver -*- linux-c -*-
  * Created: Thu Oct  7 10:38:32 1999 by faith@precisioninsight.com
@@ -35,14 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tdfx_drv.c,v 1.3 2007/12/11 11:48:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tdfx_drv.c,v 1.3.8.1 2008/09/28 10:40:30 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/tdfx_drv.c,v 1.10 2005/12/20 22:44:36 jhb Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/pci/drm/drm_pciids.h>
-#include <dev/pci/drm/tdfx_drv.h>
+#include "drmP.h"
+#include "drm_pciids.h"
+#include "tdfx_drv.h"
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t tdfx_pciidlist[] = {
@@ -118,13 +118,13 @@ static void
 tdfxdrm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	drm_device_t *dev = device_private(self);
 
 	tdfx_configure(dev);
 	return drm_attach(self, pa, tdfx_pciidlist);
 }
 
-CFATTACH_DECL(tdfxdrm, sizeof(drm_device_t), tdfxdrm_probe, tdfxdrm_attach,
+CFATTACH_DECL_NEW(tdfxdrm, sizeof(drm_device_t), tdfxdrm_probe, tdfxdrm_attach,
 	drm_detach, drm_activate);
 
 #endif

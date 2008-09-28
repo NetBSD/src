@@ -1,4 +1,4 @@
-/*	$NetBSD: fstrans_stub.c,v 1.5 2008/01/02 18:15:14 pooka Exp $	*/
+/*	$NetBSD: fstrans_stub.c,v 1.5.6.1 2008/09/28 10:41:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
 
 #include <sys/mount.h>
 #include <sys/fstrans.h>
+#include <sys/buf.h>
 
 int
 fstrans_setstate(struct mount *mp, enum fstrans_state new_state)
@@ -85,6 +86,7 @@ int
 fscow_run(struct buf *bp, bool data_valid)
 {
 
+	bp->b_flags |= B_COWDONE;
 	return 0;
 }
 

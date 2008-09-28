@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_drv.c,v 1.3 2007/12/11 11:48:43 lukem Exp $	*/
+/*	$NetBSD: r128_drv.c,v 1.3.8.1 2008/09/28 10:40:29 mjf Exp $	*/
 
 /* r128_drv.c -- ATI Rage 128 driver -*- linux-c -*-
  * Created: Mon Dec 13 09:47:27 1999 by faith@precisioninsight.com
@@ -34,16 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128_drv.c,v 1.3 2007/12/11 11:48:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128_drv.c,v 1.3.8.1 2008/09/28 10:40:29 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r128_drv.c,v 1.11 2005/12/20 22:44:36 jhb Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/r128_drm.h>
-#include <dev/pci/drm/r128_drv.h>
-#include <dev/pci/drm/drm_pciids.h>
+#include "drmP.h"
+#include "drm.h"
+#include "r128_drm.h"
+#include "r128_drv.h"
+#include "drm_pciids.h"
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t r128_pciidlist[] = {
@@ -134,13 +134,13 @@ static void
 r128drm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	drm_device_t *dev = (drm_device_t *)self;
+	drm_device_t *dev = device_private(self);
 
 	r128_configure(dev);
 	return drm_attach(self, pa, r128_pciidlist);
 }
 
-CFATTACH_DECL(r128drm, sizeof(drm_device_t), r128drm_probe, r128drm_attach,
+CFATTACH_DECL_NEW(r128drm, sizeof(drm_device_t), r128drm_probe, r128drm_attach,
 	drm_detach, drm_activate);
 
 #endif

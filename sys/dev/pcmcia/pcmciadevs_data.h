@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.226.20.2 2008/06/29 09:33:10 mjf Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.226.20.3 2008/09/28 10:40:30 mjf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.226 2008/06/19 18:20:33 imp Exp
+ *	NetBSD: pcmciadevs,v 1.227 2008/09/06 22:07:11 rmind Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1049,6 +1049,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Sharp Corporation",
 	    "PALDIO 611S PC CARD",	}
+	,
+	{
+	    PCMCIA_VENDOR_SIERRA, PCMCIA_PRODUCT_SIERRA_AC850,
+	    PCMCIA_CIS_SIERRA_AC850,
+	    0,
+	    "Sierra Wireless",
+	    "AC850",	}
 	,
 	{
 	    PCMCIA_VENDOR_SIMPLETECH, PCMCIA_PRODUCT_SIMPLETECH_COMMUNICATOR288,
@@ -2101,6 +2108,14 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_CIS_INVALID,
 	    0,
 	    "Kingston",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_SIERRA,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    0,
+	    "Sierra Wireless",
 	    NULL,
 	},
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: umidivar.h,v 1.10.28.1 2008/06/02 13:23:55 mjf Exp $	*/
+/*	$NetBSD: umidivar.h,v 1.10.28.2 2008/09/28 10:40:34 mjf Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -100,7 +100,7 @@ struct umidi_softc {
 	USBBASEDEVICE		sc_dev;
 	usbd_device_handle	sc_udev;
 	usbd_interface_handle	sc_iface;
-	struct umidi_quirk	*sc_quirk;
+	const struct umidi_quirk	*sc_quirk;
 
 	int			sc_dying;
 

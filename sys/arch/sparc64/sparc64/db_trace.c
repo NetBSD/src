@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.39 2007/03/04 06:00:50 christos Exp $ */
+/*	$NetBSD: db_trace.c,v 1.39.40.1 2008/09/28 10:40:09 mjf Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39 2007/03/04 06:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.39.40.1 2008/09/28 10:40:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -97,7 +97,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 					(*pr)("not found\n");
 					return;
 				}
-				l = proc_representative_lwp(p, NULL, 0);
+				l = LIST_FIRST(&p->p_lwps);
+				KASSERT(l != NULL);
 			}
 			(*pr)("lid %d ", l->l_lid);
                         if ((l->l_flag & LW_INMEM) == 0) {

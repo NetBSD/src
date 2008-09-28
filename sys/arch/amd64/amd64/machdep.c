@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85.6.3 2008/07/02 19:08:15 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85.6.4 2008/09/28 10:39:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85.6.3 2008/07/02 19:08:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85.6.4 2008/09/28 10:39:45 mjf Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -531,7 +531,7 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 
 	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rflags &= ~PSL_CLEARSIG;
 	tf->tf_rsp = (uint64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
@@ -629,7 +629,6 @@ struct pcb dumppcb;
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	int s;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -647,20 +646,15 @@ cpu_reboot(int howto, char *bootstr)
 		resettodr();
 	}
 
+	/* Disable interrupts. */
+	splhigh();
 
 	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
-		/* Disable interrupts. */
-		s = splhigh();
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-		splx(s);
-	}
 
 haltsys:
 	doshutdownhooks();
-
-	/* Disable interrupts. */
-	(void)splhigh();
 
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
@@ -1722,8 +1716,21 @@ init_x86_64(paddr_t first_avail)
 		    GSEL(GCODE_SEL, SEL_KPL));
 #else /* XEN */
 		xen_idt[xen_idt_idx].vector = x;
-		xen_idt[xen_idt_idx].flags =
-		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL;
+
+		switch (x) {
+		case 2:  /* NMI */
+		case 18: /* MCA */
+			TI_SET_IF(&(xen_idt[xen_idt_idx]), 2);
+			break;
+		case 3:
+		case 4:
+			xen_idt[xen_idt_idx].flags = SEL_UPL;
+			break;
+		default:
+			xen_idt[xen_idt_idx].flags = SEL_KPL;
+			break;
+		}
+
 		xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 		xen_idt[xen_idt_idx].address =
 		    (unsigned long)IDTVEC(exceptions)[x];

@@ -1,4 +1,4 @@
-/* $NetBSD: via_drv.c,v 1.2 2007/12/11 11:48:47 lukem Exp $ */
+/* $NetBSD: via_drv.c,v 1.2.8.1 2008/09/28 10:40:30 mjf Exp $ */
 
 /* via_drv.c -- VIA unichrome driver -*- linux-c -*-
  * Created: Fri Aug 12 2005 by anholt@FreeBSD.org
@@ -33,13 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.2 2007/12/11 11:48:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.2.8.1 2008/09/28 10:40:30 mjf Exp $");
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/via_drm.h>
-#include <dev/pci/drm/via_drv.h>
-#include <dev/pci/drm/drm_pciids.h>
+#include "drmP.h"
+#include "drm.h"
+#include "via_drm.h"
+#include "via_drv.h"
+#include "drm_pciids.h"
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t via_pciidlist[] = {
@@ -87,11 +87,11 @@ static void
 viadrm_attach(struct device *parent, struct device *self, void *opaque)
 {
 	struct pci_attach_args *pa = opaque;
-	drm_device_t *dev = (drm_device_t *)self;
+	drm_device_t *dev = device_private(self);
 
 	viadrm_configure(dev);
 	drm_attach(self, pa, via_pciidlist);
 }
 
-CFATTACH_DECL(viadrm, sizeof(drm_device_t), viadrm_probe, viadrm_attach,
+CFATTACH_DECL_NEW(viadrm, sizeof(drm_device_t), viadrm_probe, viadrm_attach,
     drm_detach, drm_activate);

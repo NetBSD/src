@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.54.70.1 2008/06/02 13:23:50 mjf Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.54.70.2 2008/09/28 10:40:31 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 int	scsiprint(void *, const char *);
 
 struct scsibus_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct scsipi_channel *sc_channel;	/* our scsipi_channel */
 	int	sc_flags;
 };

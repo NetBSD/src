@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.272.6.5 2008/06/29 09:33:10 mjf Exp $	*/
+/*	$NetBSD: cd.c,v 1.272.6.6 2008/09/28 10:40:31 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.272.6.5 2008/06/29 09:33:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.272.6.6 2008/09/28 10:40:31 mjf Exp $");
 
 #include "rnd.h"
 
@@ -524,8 +524,6 @@ out:	/* Insure only one open at a time. */
 	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
 	mutex_exit(&cd->sc_lock);
 	return (0);
-
-	periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 
 bad:
 	if (cd->sc_dk.dk_openmask == 0) {

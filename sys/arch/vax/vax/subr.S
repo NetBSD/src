@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.22.6.2 2008/04/03 12:42:29 mjf Exp $	   */
+/*	$NetBSD: subr.S,v 1.22.6.3 2008/09/28 10:40:10 mjf Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -592,8 +592,3 @@ JSBENTRY(Sunlock)
 	.globl _C_LABEL(memtest)
 _C_LABEL(memtest):		# memory test in progress
 	.long 0
-
-#ifdef __ELF__
-	.section	.rodata
-#endif
-noque:	.asciz	"swtch"

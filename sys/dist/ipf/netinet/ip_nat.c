@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.35.6.1 2008/06/02 13:24:03 mjf Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.35.6.2 2008/09/28 10:40:35 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -118,10 +118,10 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.35.6.1 2008/06/02 13:24:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.35.6.2 2008/09/28 10:40:35 mjf Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.35.6.1 2008/06/02 13:24:03 mjf Exp $";
+static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.35.6.2 2008/09/28 10:40:35 mjf Exp $";
 #endif
 #endif
 
@@ -1698,6 +1698,9 @@ int logtype;
 
 	if (logtype != 0 && nat_logging != 0)
 		nat_log(nat, logtype);
+#if defined(NEED_LOCAL_RAND) && defined(_KERNEL)
+	ipf_rand_push(nat, sizeof(*nat));
+#endif
 
 	/*
 	 * Take it as a general indication that all the pointers are set if
@@ -2048,7 +2051,15 @@ natinfo_t *ni;
 			/*
 			 * Standard port translation.  Select next port.
 			 */
-			port = htons(np->in_pnext++);
+			if (np->in_flags & IPN_SEQUENTIAL) {
+				port = np->in_pnext;
+			} else {
+				port = ipf_random() % (ntohs(np->in_pmax) -
+						       ntohs(np->in_pmin));
+				port += ntohs(np->in_pmin);
+			}
+			port = htons(port);
+			np->in_pnext++;
 
 			if (np->in_pnext > ntohs(np->in_pmax)) {
 				np->in_pnext = ntohs(np->in_pmin);
@@ -3815,7 +3826,7 @@ u_32_t *passp;
 
 	READ_ENTER(&ipf_nat);
 
-	if ((fin->fin_p == IPPROTO_ICMP) && !(nflags & IPN_ICMPQUERY) &&
+	if (((fin->fin_flx & FI_ICMPERR) != 0) &&
 	    (nat = nat_icmperror(fin, &nflags, NAT_OUTBOUND)))
 		/*EMPTY*/;
 	else if ((fin->fin_flx & FI_FRAG) && (nat = fr_nat_knownfrag(fin)))
@@ -4128,7 +4139,7 @@ u_32_t *passp;
 
 	READ_ENTER(&ipf_nat);
 
-	if ((fin->fin_p == IPPROTO_ICMP) && !(nflags & IPN_ICMPQUERY) &&
+	if (((fin->fin_flx & FI_ICMPERR) != 0) &&
 	    (nat = nat_icmperror(fin, &nflags, NAT_INBOUND)))
 		/*EMPTY*/;
 	else if ((fin->fin_flx & FI_FRAG) && (nat = fr_nat_knownfrag(fin)))

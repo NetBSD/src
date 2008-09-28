@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.31.6.2 2008/06/29 09:33:03 mjf Exp $
+	$NetBSD: syscalls.master,v 1.31.6.3 2008/09/28 10:40:16 mjf Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -112,7 +112,7 @@
 35	OBSOL	ftime
 36	NOARGS	{ int sys_sync(void); }
 37	STD	{ int linux32_sys_kill(int pid, int signum); }
-38	STD	{ int linux32_sys_rename(const netbsd32_charp from, \
+38	NOARGS	{ int netbsd32___posix_rename(const netbsd32_charp from, \
 		    const netbsd32_charp to); }
 39	NOARGS	{ int netbsd32_mkdir(const netbsd32_charp path, int mode); }
 40	NOARGS	{ int netbsd32_rmdir(const netbsd32_charp path); }
@@ -186,7 +186,7 @@
 		    unsigned int count); }
 90	STD	{ int linux32_sys_old_mmap(linux32_oldmmapp lmp); }
 91	NOARGS	{ int netbsd32_munmap(netbsd32_caddr_t addr, int len); }
-92	STD	{ int linux32_sys_truncate(const netbsd32_charp path, \
+92	NOARGS	{ int compat_43_netbsd32_otruncate(const netbsd32_charp path, \
 		    netbsd32_long length); }
 93	NOARGS	{ int compat_43_netbsd32_oftruncate(int fd, \
 		    netbsd32_long length); }
@@ -194,7 +194,7 @@
 95	STD	{ int linux32_sys_fchown16(int fd, linux32_uid16_t uid, \
 		    linux32_gid16_t gid); }
 96	STD	{ int linux32_sys_getpriority(int which, int who); }
-97	STD	{ int linux32_sys_setpriority(int which, int who, int prio); }
+97	NOARGS	{ int netbsd32_setpriority(int which, int who, int prio); }
 98	UNIMPL	profil
 99	STD	{ int linux32_sys_statfs(const netbsd32_charp path, \
 		    linux32_statfsp sp); }
@@ -307,7 +307,8 @@
 		     const linux32_sigsetp_t set, \
 		     linux32_sigsetp_t oset, \
 		     netbsd32_size_t sigsetsize); }
-176	UNIMPL	rt_sigpending
+176	STD	{ int linux32_sys_rt_sigpending(linux32_sigsetp_t set, \
+		    netbsd32_size_t sigsetsize); }
 177	UNIMPL	rt_sigtimedwait
 178	UNIMPL	rt_queueinfo
 179	STD	{ int linux32_sys_rt_sigsuspend(linux32_sigsetp_t unewset, \

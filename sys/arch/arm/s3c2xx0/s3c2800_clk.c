@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.13 2008/01/22 14:11:02 joerg Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.13.6.1 2008/09/28 10:39:51 mjf Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.13 2008/01/22 14:11:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.13.6.1 2008/09/28 10:39:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,6 +286,6 @@ cpu_initclocks()
 
 	}
 
-	s3c2800_timecounter.tc_frequency = pclk;
+	s3c2800_timecounter.tc_frequency = TIMER_FREQUENCY(pclk) / timer0_prescaler;
 	tc_init(&s3c2800_timecounter);
 }

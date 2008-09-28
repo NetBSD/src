@@ -1,24 +1,18 @@
-#	$NetBSD: Makefile.rump,v 1.6.6.1 2008/06/02 13:24:31 mjf Exp $
+#	$NetBSD: Makefile.rump,v 1.6.6.2 2008/09/28 10:41:00 mjf Exp $
 #
 
-.include <bsd.own.mk>
-
-LIBISPRIVATE=	yes
-NOMAN=		wizd
-
 WARNS?=		4
-DBG=		-g -O0
+NOLINT=		# kernel code
 
-CPPFLAGS+=	-I${.CURDIR} -I. 
-
-.if "${RUMPKERNEL}" != "no"
 CFLAGS+=	-ffreestanding
-CPPFLAGS:=	-I${NETBSDSRCDIR}/sys/rump/include ${CPPFLAGS}
-CPPFLAGS+=	-D_KERNEL -I${NETBSDSRCDIR}/common/include
-CPPFLAGS+=	-D_RUMPKERNEL -DDEBUG
-CPPFLAGS+=	-nostdinc -I${NETBSDSRCDIR}/sys
-.endif
+CPPFLAGS+=	-D_KERNEL -D_RUMPKERNEL -DDIAGNOSTIC
+CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
+CPPFLAGS+=	-I${.CURDIR} -I. 
+CPPFLAGS+=	-I${RUMPTOP}/../../common/include
+CPPFLAGS+=	-nostdinc -I${RUMPTOP}/..
+#CPPFLAGS+=	-DDEBUG
 
-LDFLAGS+=	-Wl,--wrap=malloc
+RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
 
-LIBRUMPDIR != cd ${NETBSDSRCDIR}/sys/rump/librump/rumpkern && ${PRINTOBJDIR}
+# If an options are changed, trigger a rebuild
+${SRCS:S/.c/.o/g}: ${RUMPTOP}/Makefile.rump

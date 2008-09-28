@@ -1,17 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.4.18.2 2008/06/29 09:33:20 mjf Exp $
+#	$NetBSD: Makefile.inc,v 1.4.18.3 2008/09/28 10:41:01 mjf Exp $
 #
 
-LIBISPRIVATE=	yes
-NOMAN=		wizd
+RUMPTOP=	${.CURDIR}/../../..
 
-WARNS?=		4
-DBG=		-O0 -g
-
-CPPFLAGS+=	-I${.CURDIR} -I.
-.if "${RUMPKERNEL}" != "no"
-CFLAGS+=	-ffreestanding
-CPPFLAGS:=	-I${NETBSDSRCDIR}/sys/rump/include ${CPPFLAGS}
-CPPFLAGS+=	-D_KERNEL -I${NETBSDSRCDIR}/common/include
-CPPFLAGS+=	-D_RUMPKERNEL
-CPPFLAGS+=	-nostdinc -I${NETBSDSRCDIR}/sys
-.endif
+.include "${RUMPTOP}/Makefile.rump"

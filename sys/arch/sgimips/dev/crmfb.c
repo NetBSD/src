@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.20.6.2 2008/06/02 13:22:37 mjf Exp $ */
+/* $NetBSD: crmfb.c,v 1.20.6.3 2008/09/28 10:40:07 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.20.6.2 2008/06/02 13:22:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.20.6.3 2008/09/28 10:40:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,6 +304,8 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	for (i = 0; i < (sc->sc_tiles_x * sc->sc_tiles_y); i++) {
 		p[i] = ((uint32_t)v >> 16) + i;
 	}
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmai.map, 0, sc->sc_dmai.size,
+	    BUS_DMASYNC_PREWRITE);
 	sc->sc_scratch = (char *)KERNADDR(sc->sc_dma) + (0xf0000 * sc->sc_tiles_x);
 	sc->sc_linear = (paddr_t)DMAADDR(sc->sc_dma) + 0x100000 * sc->sc_tiles_x;
 

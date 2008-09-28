@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.122.6.3 2008/06/29 09:33:13 mjf Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.122.6.4 2008/09/28 10:40:51 mjf Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.122.6.3 2008/06/29 09:33:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.122.6.4 2008/09/28 10:40:51 mjf Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2879,7 +2879,6 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 	sigset_t ss1, ss2;
 	struct rusage ru;
 	struct vmspace *vm;
-	int tmp;
 
 	KASSERT(mutex_owned(proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
@@ -2954,10 +2953,11 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_vm_dsize = vm->vm_dsize;
 		ki->p_vm_ssize = vm->vm_ssize;
 
-		/* Pick a "representative" LWP */
-		l = proc_representative_lwp(p, &tmp, 1);
+		/* Pick the primary (first) LWP */
+		l = LIST_FIRST(&p->p_lwps);
+		KASSERT(l != NULL);
 		lwp_lock(l);
-		ki->p_nrlwps = tmp;
+		ki->p_nrlwps = p->p_nrlwps;
 		ki->p_forw = 0;
 		ki->p_back = 0;
 		ki->p_addr = PTRTOUINT64(l->l_addr);
@@ -3068,6 +3068,7 @@ fill_lwp(struct lwp *l, struct kinfo_lwp *kl)
 	kl->l_stat = l->l_stat;
 	kl->l_lid = l->l_lid;
 	kl->l_flag = sysctl_map_flags(sysctl_lwpprflagmap, l->l_prflag);
+	kl->l_flag |= sysctl_map_flags(sysctl_lwpflagmap, l->l_flag);
 
 	kl->l_swtime = l->l_swtime;
 	kl->l_slptime = l->l_slptime;
@@ -3122,8 +3123,9 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		ep->e_vm.vm_dsize = vm->vm_dsize;
 		ep->e_vm.vm_ssize = vm->vm_ssize;
 
-		/* Pick a "representative" LWP */
-		l = proc_representative_lwp(p, NULL, 1);
+		/* Pick the primary (first) LWP */
+		l = LIST_FIRST(&p->p_lwps);
+		KASSERT(l != NULL);
 		lwp_lock(l);
 		if (l->l_wchan)
 			strncpy(ep->e_wmesg, l->l_wmesg, WMESGLEN);

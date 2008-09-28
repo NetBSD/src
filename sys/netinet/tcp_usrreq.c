@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.140.6.1 2008/06/02 13:24:25 mjf Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.140.6.2 2008/09/28 10:40:58 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.140.6.1 2008/06/02 13:24:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.140.6.2 2008/09/28 10:40:58 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -639,8 +639,7 @@ change_keepalive(struct socket *so, struct tcpcb *tp)
 
 
 int
-tcp_ctloutput(int op, struct socket *so, int level, int optname,
-    struct mbuf **mp)
+tcp_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int error = 0, s;
 	struct inpcb *inp;
@@ -648,10 +647,12 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 	struct in6pcb *in6p;
 #endif
 	struct tcpcb *tp;
-	struct mbuf *m;
-	int i;
 	u_int ui;
 	int family;	/* family of the socket */
+	int level, optname, optval;
+
+	level = sopt->sopt_level;
+	optname = sopt->sopt_name;
 
 	family = so->so_proto->pr_domain->dom_family;
 
@@ -682,20 +683,18 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 #endif
 	{
 		splx(s);
-		if (op == PRCO_SETOPT && *mp)
-			(void) m_free(*mp);
 		return (ECONNRESET);
 	}
 	if (level != IPPROTO_TCP) {
 		switch (family) {
 #ifdef INET
 		case PF_INET:
-			error = ip_ctloutput(op, so, level, optname, mp);
+			error = ip_ctloutput(op, so, sopt);
 			break;
 #endif
 #ifdef INET6
 		case PF_INET6:
-			error = ip6_ctloutput(op, so, level, optname, mp);
+			error = ip6_ctloutput(op, so, sopt);
 			break;
 #endif
 		}
@@ -712,18 +711,14 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 		tp = NULL;
 
 	switch (op) {
-
 	case PRCO_SETOPT:
-		m = *mp;
 		switch (optname) {
-
 #ifdef TCP_SIGNATURE
 		case TCP_MD5SIG:
-			if (m == NULL || m->m_len != sizeof(int))
-				error = EINVAL;
+			error = sockopt_getint(sopt, &optval);
 			if (error)
 				break;
-			if (*mtod(m, int *) > 0)
+			if (optval > 0)
 				tp->t_flags |= TF_SIGNATURE;
 			else
 				tp->t_flags &= ~TF_SIGNATURE;
@@ -731,33 +726,36 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 #endif /* TCP_SIGNATURE */
 
 		case TCP_NODELAY:
-			if (m == NULL || m->m_len != sizeof(int))
-				error = EINVAL;
-			else if (*mtod(m, int *))
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+			if (optval)
 				tp->t_flags |= TF_NODELAY;
 			else
 				tp->t_flags &= ~TF_NODELAY;
 			break;
 
 		case TCP_MAXSEG:
-			if (m && m->m_len == sizeof(int) &&
-			    (i = *mtod(m, int *)) > 0 &&
-			    i <= tp->t_peermss)
-				tp->t_peermss = i;  /* limit on send size */
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+			if (optval > 0 && optval <= tp->t_peermss)
+				tp->t_peermss = optval; /* limit on send size */
 			else
 				error = EINVAL;
 			break;
 #ifdef notyet
 		case TCP_CONGCTL:
-			if (m == NULL)
-				error = EINVAL;
-			error = tcp_congctl_select(tp, mtod(m, char *));
-#endif
+			/* XXX string overflow XXX */
+			error = tcp_congctl_select(tp, sopt->sopt_data);
 			break;
+#endif
 
 		case TCP_KEEPIDLE:
-			if (m && m->m_len == sizeof(u_int) &&
-			    (ui = *mtod(m, u_int *)) > 0) {
+			error = sockopt_get(sopt, &ui, sizeof(ui));
+			if (error)
+				break;
+			if (ui > 0) {
 				tp->t_keepidle = ui;
 				change_keepalive(so, tp);
 			} else
@@ -765,8 +763,10 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 
 		case TCP_KEEPINTVL:
-			if (m && m->m_len == sizeof(u_int) &&
-			    (ui = *mtod(m, u_int *)) > 0) {
+			error = sockopt_get(sopt, &ui, sizeof(ui));
+			if (error)
+				break;
+			if (ui > 0) {
 				tp->t_keepintvl = ui;
 				change_keepalive(so, tp);
 			} else
@@ -774,8 +774,10 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 
 		case TCP_KEEPCNT:
-			if (m && m->m_len == sizeof(u_int) &&
-			    (ui = *mtod(m, u_int *)) > 0) {
+			error = sockopt_get(sopt, &ui, sizeof(ui));
+			if (error)
+				break;
+			if (ui > 0) {
 				tp->t_keepcnt = ui;
 				change_keepalive(so, tp);
 			} else
@@ -783,8 +785,10 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			break;
 
 		case TCP_KEEPINIT:
-			if (m && m->m_len == sizeof(u_int) &&
-			    (ui = *mtod(m, u_int *)) > 0) {
+			error = sockopt_get(sopt, &ui, sizeof(ui));
+			if (error)
+				break;
+			if (ui > 0) {
 				tp->t_keepinit = ui;
 				change_keepalive(so, tp);
 			} else
@@ -795,24 +799,23 @@ tcp_ctloutput(int op, struct socket *so, int level, int optname,
 			error = ENOPROTOOPT;
 			break;
 		}
-		if (m)
-			(void) m_free(m);
 		break;
 
 	case PRCO_GETOPT:
-		*mp = m = m_intopt(so, 0);
-
 		switch (optname) {
 #ifdef TCP_SIGNATURE
 		case TCP_MD5SIG:
-			*mtod(m, int *) = (tp->t_flags & TF_SIGNATURE) ? 1 : 0;
+			optval = (tp->t_flags & TF_SIGNATURE) ? 1 : 0;
+			error = sockopt_set(sopt, &optval, sizeof(optval));
 			break;
 #endif
 		case TCP_NODELAY:
-			*mtod(m, int *) = tp->t_flags & TF_NODELAY;
+			optval = tp->t_flags & TF_NODELAY;
+			error = sockopt_set(sopt, &optval, sizeof(optval));
 			break;
 		case TCP_MAXSEG:
-			*mtod(m, int *) = tp->t_peermss;
+			optval = tp->t_peermss;
+			error = sockopt_set(sopt, &optval, sizeof(optval));
 			break;
 #ifdef notyet
 		case TCP_CONGCTL:
@@ -1269,7 +1272,7 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 	struct sockaddr_in6 *si6[2];
 #endif /* INET6 */
 	struct sockaddr_storage sa[2];
-	int error, pf, dodrop, s;
+	int error, pf, dodrop;
 
 	dodrop = name[-1] == TCPCTL_DROP;
 	if (dodrop) {
@@ -1299,10 +1302,10 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		laddr.s_addr = (uint32_t)name[2];
 		lport = (u_int)name[3];
 		
-		s = splsoftnet();
+		mutex_enter(softnet_lock);
 		error = inet4_ident_core(raddr, rport, laddr, lport,
 		    oldp, oldlenp, l, dodrop);
-		splx(s);
+		mutex_exit(softnet_lock);
 		return error;
 #else /* INET */
 		return EINVAL;
@@ -1339,11 +1342,11 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 			if (error)
 				return error;
 
-			s = splsoftnet();
+			mutex_enter(softnet_lock);
 			error = inet6_ident_core(&si6[0]->sin6_addr,
 			    si6[0]->sin6_port, &si6[1]->sin6_addr,
 			    si6[1]->sin6_port, oldp, oldlenp, l, dodrop);
-			splx(s);
+			mutex_exit(softnet_lock);
 			return error;
 		}
 
@@ -1363,11 +1366,11 @@ sysctl_net_inet_tcp_ident(SYSCTLFN_ARGS)
 		    si4[0]->sin_len != sizeof(*si4[1]))
 			return EINVAL;
 	
-		s = splsoftnet();
+		mutex_enter(softnet_lock);
 		error = inet4_ident_core(si4[0]->sin_addr, si4[0]->sin_port,
 		    si4[1]->sin_addr, si4[1]->sin_port,
 		    oldp, oldlenp, l, dodrop);
-		splx(s);
+		mutex_exit(softnet_lock);
 		return error;
 #endif /* INET */
 	default:
@@ -1435,6 +1438,8 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	pf = oname[1];
 	proto = oname[2];
 	pf2 = (oldp != NULL) ? pf : 0;
+
+	mutex_enter(softnet_lock);
 
 	CIRCLEQ_FOREACH(inph, &pcbtbl->inpt_queue, inph_queue) {
 #ifdef INET
@@ -1563,6 +1568,8 @@ sysctl_inpcblist(SYSCTLFN_ARGS)
 	if (oldp == NULL)
 		*oldlenp += PCB_SLOP * sizeof(struct kinfo_pcb);
 
+	mutex_exit(softnet_lock);
+
 	return (error);
 }
 
@@ -1570,7 +1577,7 @@ static int
 sysctl_tcp_congctl(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
-	int error, r;
+	int error;
 	char newname[TCPCC_MAXLEN];
 
 	strlcpy(newname, tcp_congctl_global_name, sizeof(newname) - 1);
@@ -1586,9 +1593,10 @@ sysctl_tcp_congctl(SYSCTLFN_ARGS)
 	    strncmp(newname, tcp_congctl_global_name, sizeof(newname)) == 0)
 		return error;
 
-	if ((r = tcp_congctl_select(NULL, newname)))
-		return r;
-	
+	mutex_enter(softnet_lock);
+	error = tcp_congctl_select(NULL, newname);
+	mutex_exit(softnet_lock);
+
 	return error;
 }
 
@@ -1607,8 +1615,12 @@ sysctl_tcp_keep(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
+	mutex_enter(softnet_lock);
+
 	*(u_int *)rnode->sysctl_data = tmp;
 	tcp_tcpcb_template();	/* update the template */
+
+	mutex_exit(softnet_lock);
 	return 0;
 }
 

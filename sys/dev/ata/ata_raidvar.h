@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidvar.h,v 1.5 2007/03/27 00:10:20 garbled Exp $	*/
+/*	$NetBSD: ata_raidvar.h,v 1.5.30.1 2008/09/28 10:40:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -51,7 +51,10 @@
 #define	ATA_RAID_TYPE_PROMISE	0
 #define	ATA_RAID_TYPE_ADAPTEC	1
 #define	ATA_RAID_TYPE_VIA	2
-#define	ATA_RAID_TYPE_MAX	2
+#define	ATA_RAID_TYPE_NVIDIA	3
+#define ATA_RAID_TYPE_JMICRON	4
+#define	ATA_RAID_TYPE_INTEL	5
+#define	ATA_RAID_TYPE_MAX	5
 
 /*
  * Max # of disks supported by a single array.  This is limited by
@@ -81,7 +84,7 @@ struct ataraid_array_info {
 	u_int	aai_type;		/* array type */
 	u_int	aai_arrayno;		/* array number */
 	int	aai_level;		/* RAID level */
-	int	aai_generation;		/* config generaion # */
+	int	aai_generation;		/* config generation # */
 	int	aai_status;		/* array status */
 
 	/* Geometry info. */
@@ -94,6 +97,8 @@ struct ataraid_array_info {
 	u_int	aai_capacity;		/* in sectors */
 	u_int	aai_offset;		/* component start offset */
 	u_int	aai_reserved;		/* component reserved sectors */
+
+	char	aai_name[32];		/* array volume name */
 
 	struct ataraid_disk_info aai_disks[ATA_RAID_MAX_DISKS];
 };
@@ -121,6 +126,8 @@ struct ataraid_array_info *ata_raid_get_array_info(u_int, u_int);
 int	ata_raid_config_block_rw(struct vnode *, daddr_t, void *,
 	    size_t, int);
 
+struct vnode *ata_raid_disk_vnode_find(struct ataraid_disk_info *);
+
 /* Promise RAID support */
 int	ata_raid_read_config_promise(struct wd_softc *);
 
@@ -129,5 +136,14 @@ int	ata_raid_read_config_adaptec(struct wd_softc *);
 
 /* VIA V-RAID support */
 int	ata_raid_read_config_via(struct wd_softc *);
+
+/* nVidia MediaShield support */
+int	ata_raid_read_config_nvidia(struct wd_softc *);
+
+/* JMicron RAID support */
+int	ata_raid_read_config_jmicron(struct wd_softc *);
+
+/* Intel MatrixRAID support */
+int	ata_raid_read_config_intel(struct wd_softc *);
 
 #endif /* _DEV_ATA_ATA_RAIDVAR_H_ */

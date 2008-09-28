@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.106.6.2 2008/06/29 09:33:20 mjf Exp $ */
+/*     $NetBSD: buf.h,v 1.106.6.3 2008/09/28 10:41:04 mjf Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -162,6 +162,7 @@ struct buf {
 	LIST_ENTRY(buf)		b_hash;		/* c: hash chain */
 	LIST_ENTRY(buf)		b_vnbufs;	/* c: associated vnode */
 	TAILQ_ENTRY(buf)	b_freelist;	/* c: position if not active */
+	LIST_ENTRY(buf)		b_wapbllist;	/* c: transaction buffer list */
 	daddr_t			b_lblkno;	/* c: logical block number */
 	int			b_freelistindex;/* c: free list index (BQ_) */
 	u_int			b_cflags;	/* c: BC_* flags */
@@ -244,6 +245,7 @@ do {									\
 #define B_CLRBUF	0x01	/* Request allocated buffer be cleared. */
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
 #define B_METAONLY	0x04	/* Return indirect block buffer. */
+#define B_CONTIG	0x08	/* Allocate file contiguously. */
 
 /* Flags to bread(), breadn() and breada(). */
 #define B_MODIFY	0x01	/* Hint: caller might modify buffer */

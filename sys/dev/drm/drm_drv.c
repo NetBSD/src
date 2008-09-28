@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.8.8.4 2008/07/02 19:08:19 mjf Exp $ */
+/* $NetBSD: drm_drv.c,v 1.8.8.5 2008/09/28 10:40:20 mjf Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.8.8.4 2008/07/02 19:08:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.8.8.5 2008/09/28 10:40:20 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -182,7 +182,8 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 	/* This should not happen, since drm_probe made sure there was room */
 	if(unit == DRM_MAXUNITS) return;
 
-	dev = drm_units[unit] = (drm_device_t*)kdev;
+	dev = drm_units[unit] = device_private(kdev);
+	dev->device = kdev;
 	dev->unit = unit;
 
 	id_entry = drm_find_description(PCI_VENDOR(pa->pa_id),
@@ -257,7 +258,7 @@ void drm_attach(struct device *kdev, struct pci_attach_args *pa,
 
 int drm_detach(struct device *self, int flags)
 {
-	drm_device_t *dev = (drm_device_t*)self;
+	drm_device_t *dev = device_private(self);
 	drm_unload(dev);
 	drm_units[dev->unit] = NULL;
 	return 0;
@@ -487,7 +488,7 @@ static int drm_load(drm_device_t *dev)
 		goto error;
 	}
 	
-	aprint_normal_dev(&dev->device, "Initialized %s %d.%d.%d %s\n",
+	aprint_normal_dev(dev->device, "Initialized %s %d.%d.%d %s\n",
 	  	dev->driver.name,
 	  	dev->driver.major,
 	  	dev->driver.minor,
@@ -622,7 +623,7 @@ int drm_close_pid(drm_device_t *dev, drm_file_t *priv, pid_t pid)
 	 */
 
 	DRM_DEBUG( "pid = %d, device = 0x%lx, open_count = %d\n",
-		   DRM_CURRENTPID, (long)&dev->device, dev->open_count);
+		   DRM_CURRENTPID, (long)dev->device, dev->open_count);
 
 	if (dev->lock.hw_lock && _DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock)
 	    && dev->lock.filp == filp) {
@@ -747,7 +748,7 @@ int drm_ioctl(DRM_CDEV kdev, u_long cmd, void *data, int flags,
 	++priv->ioctl_count;
 
 	DRM_DEBUG( "pid=%d, cmd=0x%02lx, nr=0x%02x, dev 0x%lx, auth=%d\n",
-		 DRM_CURRENTPID, cmd, nr, (long)&dev->device, priv->authenticated );
+		 DRM_CURRENTPID, cmd, nr, (long)dev->device, priv->authenticated );
 
 	switch (cmd) {
 	case FIONBIO:

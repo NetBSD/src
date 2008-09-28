@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.38.6.5 2008/06/29 09:33:18 mjf Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.38.6.6 2008/09/28 10:40:56 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.5 2008/06/29 09:33:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38.6.6 2008/09/28 10:40:56 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -350,6 +350,8 @@ tap_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_rdlock, MUTEX_DEFAULT, IPL_NONE);
 	simple_lock_init(&sc->sc_kqlock);
 
+	selinit(&sc->sc_rsel);
+
 	maj = cdevsw_lookup_major(&tap_cdevsw);
 	device_register_name(makedev(maj, device_unit(self)), self, true,
 	    DEV_OTHER, device_xname(self));
@@ -388,6 +390,7 @@ tap_detach(device_t self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
+	seldestroy(&sc->sc_rsel);
 	mutex_destroy(&sc->sc_rdlock);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.35.16.3 2008/06/29 09:32:55 mjf Exp $	*/
+/*	$NetBSD: maple.c,v 1.35.16.4 2008/09/28 10:39:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.35.16.3 2008/06/29 09:32:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.35.16.4 2008/09/28 10:39:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.35.16.3 2008/06/29 09:32:55 mjf Exp $");
 /* interrupt priority level */
 #define	IPL_MAPLE	IPL_BIO
 #define splmaple()	splbio()
+#define IRL_MAPLE       SYSASIC_IRL9
 
 /*
  * Function declarations.
@@ -189,7 +190,7 @@ mapleattach(struct device *parent, struct device *self, void *aux)
 
 	sc = (struct maple_softc *)self;
 
-	printf(": %s\n", sysasic_intr_string(IPL_MAPLE));
+	printf(": %s\n", sysasic_intr_string(IRL_MAPLE));
 
 	if (maple_alloc_dma(MAPLE_DMABUF_SIZE, &dmabuffer, &dmabuffer_phys)) {
 		printf("%s: unable to allocate DMA buffers.\n",
@@ -240,7 +241,7 @@ mapleattach(struct device *parent, struct device *self, void *aux)
 	callout_init(&sc->maple_callout_ch, 0);
 
 	sc->sc_intrhand = sysasic_intr_establish(SYSASIC_EVENT_MAPLE_DMADONE,
-	    IPL_MAPLE, SYSASIC_IRL9, maple_intr, sc);
+	    IPL_MAPLE, IRL_MAPLE, maple_intr, sc);
 
 	config_pending_incr();	/* create thread before mounting root */
 

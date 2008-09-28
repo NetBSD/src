@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467var.h,v 1.4.14.1 2008/06/02 13:23:17 mjf Exp $	*/
+/*	$NetBSD: adt7467var.h,v 1.4.14.2 2008/09/28 10:40:21 mjf Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -29,11 +29,11 @@
  * and probably other Apple machines 
  */
 
-#ifndef ADT7456VAR_H
-#define ADT7456VAR_H
+#ifndef ADT7467VAR_H
+#define ADT7467VAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.4.14.1 2008/06/02 13:23:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.4.14.2 2008/09/28 10:40:21 mjf Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -41,6 +41,13 @@ __KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.4.14.1 2008/06/02 13:23:17 mjf Exp 
 #include "sysmon_envsys.h"
 
 #define ADT7467_MAXSENSORS	5
+#define ADT7467_ADDRMASK	0x7f
+#define	ADT7467_ADDR		0x2e
+
+#define	ADT7467_DEVICEID_REG	0x3d
+#define	ADT7467_COMPANYID_REG	0x3e
+#define	ADT7467_DEVICEID	0x68
+#define	ADT7467_COMPANYID	0x41
 
 struct adt7467c_softc {
 	struct device *parent;
@@ -48,7 +55,7 @@ struct adt7467c_softc {
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[ADT7467_MAXSENSORS];
 	struct i2c_controller *sc_i2c;
-	uint8_t regs[32];
+	uint8_t regs[ADT7467_MAXSENSORS];
 };
 
 void adt7467c_setup(device_t);

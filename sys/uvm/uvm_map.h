@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.60.6.1 2008/06/02 13:24:37 mjf Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.60.6.2 2008/09/28 10:41:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -110,7 +110,7 @@
 
 #endif /* _KERNEL */
 
-#include <sys/tree.h>
+#include <sys/rb.h>
 #include <sys/pool.h>
 #include <sys/rwlock.h>
 #include <sys/mutex.h>
@@ -125,9 +125,9 @@
  * Also included is control information for virtual copy operations.
  */
 struct vm_map_entry {
-	RB_ENTRY(vm_map_entry)	rb_entry;	/* tree information */
-	vaddr_t			ownspace;	/* free space after */
-	vaddr_t			space;		/* space in subtree */
+	struct rb_node		rb_node;	/* tree information */
+	vsize_t			gap;		/* free space after */
+	vsize_t			maxgap;		/* space in subtree */
 	struct vm_map_entry	*prev;		/* previous entry */
 	struct vm_map_entry	*next;		/* next entry */
 	vaddr_t			start;		/* start address */
@@ -216,7 +216,7 @@ struct vm_map {
 	kmutex_t		misc_lock;	/* Lock for ref_count, cv */
 	kcondvar_t		cv;		/* For signalling */
 	int			flags;		/* flags */
-	RB_HEAD(uvm_tree, vm_map_entry) rbhead;	/* Tree for entries */
+	struct rb_tree		rb_tree;	/* Tree for entries */
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
 	vsize_t			size;		/* virtual size */

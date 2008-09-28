@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.320.16.1 2008/07/02 19:08:16 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.320.16.2 2008/09/28 10:40:02 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.320.16.1 2008/07/02 19:08:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.320.16.2 2008/09/28 10:40:02 mjf Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -516,9 +516,6 @@ cpu_reboot(int howto, char *bootstr)
 {
 	extern u_long maxaddr;
 
-#if __GNUC__	/* XXX work around lame compiler problem (gcc 2.7.2) */
-	(void)&howto;
-#endif
 	/* take a snap shot before clobbering any registers */
 	if (curlwp->l_addr)
 		savectx(&curlwp->l_addr->u_pcb);

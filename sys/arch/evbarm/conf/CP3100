@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100,v 1.6.6.2 2008/06/29 09:32:55 mjf Exp $
+#	$NetBSD: CP3100,v 1.6.6.3 2008/09/28 10:39:53 mjf Exp $
 #
 #	CP3100 -- Certance CP3100 Kernel
 #
@@ -51,6 +51,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

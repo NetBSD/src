@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.62.6.2 2008/06/02 13:23:55 mjf Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.62.6.3 2008/09/28 10:40:34 mjf Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.62.6.2 2008/06/02 13:23:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.62.6.3 2008/09/28 10:40:34 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ int	uplcomdebug = 0;
 #define RSAQ_STATUS_DCD		0x01
 
 enum  pl2303_type {
-	UPLCOM_TYPE_0,
+	UPLCOM_TYPE_0,	/* we use this for all non-HX variants */
 	UPLCOM_TYPE_HX,
 };
 
@@ -146,82 +146,49 @@ struct	ucom_methods uplcom_methods = {
 	NULL,
 };
 
-static const struct uplcom_type {
-      struct usb_devno uplcom_dev;
-      int32_t	  release;
-      enum pl2303_type chiptype;
-} uplcom_devs[] = {
+static const struct usb_devno uplcom_devs[] = {
 	/* I/O DATA USB-RSAQ2 */
-	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ2 },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ2 },
 	/* I/O DATA USB-RSAQ3 */
-	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ3 },
-		-1, UPLCOM_TYPE_HX },
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_RSAQ3 },
 	/* I/O DATA USB-RSAQ */
-	{ { USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ },
 	/* I/O DATA USB-RSAQ5 */
-	{ { USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ5 },
-		-1, UPLCOM_TYPE_HX },
+	{ USB_VENDOR_IODATA, USB_PRODUCT_IODATA_USBRSAQ5 },
 	/* PLANEX USB-RS232 URS-03 */
-	{ { USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
-		-1, UPLCOM_TYPE_0 },
-	/* TrendNet TU-S9 */
-	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
-		0x400, UPLCOM_TYPE_HX },
-	/* ST Lab USB-SERIAL-4 */
-	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
-		0x300, UPLCOM_TYPE_HX },
-	/* IOGEAR/ATEN UC-232A */
-	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
+	/* various */
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
 	/* SMART Technologies USB to serial */
-	{ { USB_VENDOR_PROLIFIC2, USB_PRODUCT_PROLIFIC2_PL2303 },
-		-1, UPLCOM_TYPE_HX },
+	{ USB_VENDOR_PROLIFIC2, USB_PRODUCT_PROLIFIC2_PL2303 },
 	/* IOGEAR/ATENTRIPPLITE */
-	{ { USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
-		0x300, UPLCOM_TYPE_HX },
-	{ { USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
 	/* ELECOM UC-SGT */
-	{ { USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
 	/* ELECOM UC-SGT0 */
-	{ { USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT0 },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT0 },
 	/* Panasonic 50" Touch Panel */
-	{ { USB_VENDOR_PANASONIC, USB_PRODUCT_PANASONIC_TYTP50P6S },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_PANASONIC, USB_PRODUCT_PANASONIC_TYTP50P6S },
 	/* RATOC REX-USB60 */
-	{ { USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60 },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60 },
 	/* TDK USB-PHS Adapter UHA6400 */
-	{ { USB_VENDOR_TDK, USB_PRODUCT_TDK_UHA6400 },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UHA6400 },
 	/* TDK USB-PDC Adapter UPA9664 */
-	{ { USB_VENDOR_TDK, USB_PRODUCT_TDK_UPA9664 },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UPA9664 },
 	/* Sony Ericsson USB Cable */
-	{ { USB_VENDOR_SUSTEEN, USB_PRODUCT_SUSTEEN_DCU10 },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_SUSTEEN, USB_PRODUCT_SUSTEEN_DCU10 },
 	/* SOURCENEXT KeikaiDenwa 8 */
-	{ { USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8 },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8 },
 	/* SOURCENEXT KeikaiDenwa 8 with charger */
-	{ { USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8_CHG },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8_CHG },
 	/* HAL Corporation Crossam2+USB */
-	{ { USB_VENDOR_HAL, USB_PRODUCT_HAL_IMR001 },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_HAL, USB_PRODUCT_HAL_IMR001 },
 	/* Sitecom USB to serial cable */
-	{ { USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_CN104 },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_CN104 },
 	/* Pharos USB GPS - Microsoft version */
-	{ { USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X },
-		-1, UPLCOM_TYPE_0 },
+	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X },
 	/* Willcom WS002IN (DD) */
-	{ { USB_VENDOR_NETINDEX, USB_PRODUCT_NETINDEX_WS002IN },
-		-1, UPLCOM_TYPE_HX },
+	{ USB_VENDOR_NETINDEX, USB_PRODUCT_NETINDEX_WS002IN },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
@@ -246,6 +213,7 @@ USB_ATTACH(uplcom)
 {
 	USB_ATTACH_START(uplcom, sc, uaa);
 	usbd_device_handle dev = uaa->device;
+	usb_device_descriptor_t *ddesc;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
@@ -281,17 +249,12 @@ USB_ATTACH(uplcom)
 	}
 
 	/* determine chip type */
-	for (i = 0; uplcom_devs[i].uplcom_dev.ud_vendor != 0; i++) {
-		if (uplcom_devs[i].uplcom_dev.ud_vendor == uaa->vendor &&
-		    uplcom_devs[i].uplcom_dev.ud_product == uaa->product &&
-		    (uplcom_devs[i].release == uaa->release ||
-		    uplcom_devs[i].release == -1)) {
-			sc->sc_type = uplcom_devs[i].chiptype;
-			break;
-		}
-	}
+	ddesc = usbd_get_device_descriptor(dev);
+	if (ddesc->bDeviceClass != UDCLASS_COMM &&
+	    ddesc->bMaxPacketSize == 0x40)
+		sc->sc_type = UPLCOM_TYPE_HX;
 
-#ifdef USB_DEBUG
+#ifdef UPLCOM_DEBUG
 	/* print the chip type */
 	if (sc->sc_type == UPLCOM_TYPE_HX) {
 		DPRINTF(("uplcom_attach: chiptype HX\n"));
@@ -504,7 +467,7 @@ uplcom_activate(device_t self, enum devact act)
 usbd_status
 uplcom_reset(struct uplcom_softc *sc)
 {
-        usb_device_request_t req;
+	usb_device_request_t req;
 	usbd_status err;
 
         req.bmRequestType = UT_WRITE_VENDOR_DEVICE;

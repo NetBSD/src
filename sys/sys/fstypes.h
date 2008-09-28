@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.21 2007/10/10 20:42:32 ad Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.21.18.1 2008/09/28 10:41:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #ifndef _SYS_FSTYPES_H_
-#define _SYS_FSTYPES_H_
+#define	_SYS_FSTYPES_H_
 
 typedef struct { int32_t __fsid_val[2]; } fsid_t; /* file system id type */
 
@@ -44,7 +44,7 @@ typedef struct { int32_t __fsid_val[2]; } fsid_t; /* file system id type */
 struct fid {
 	unsigned short	fid_len;		/* length of data in bytes */
 	unsigned short	fid_reserved;		/* compat: historic align */
-	char		fid_data[];		/* data (variable length) */
+	char		fid_data[0];		/* data (variable length) */
 };
 
 /*
@@ -87,7 +87,6 @@ typedef struct fhandle	fhandle_t;
 #define	__MNT_UNUSED2	0x00200000
 #define	__MNT_UNUSED3	0x00800000
 #define	__MNT_UNUSED4	0x01000000
-#define	__MNT_UNUSED5	0x02000000
 
 #define	MNT_RDONLY	0x00000001	/* read only filesystem */
 #define	MNT_SYNCHRONOUS	0x00000002	/* file system written synchronously */
@@ -97,13 +96,14 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_UNION	0x00000020	/* union with underlying filesystem */
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
-#define MNT_IGNORE	0x00100000	/* don't show entry in df */
-#define MNT_NOATIME	0x04000000	/* Never update access times in fs */
-#define MNT_SYMPERM	0x20000000	/* recognize symlink permission */
-#define MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
-#define MNT_SOFTDEP	0x80000000	/* Use soft dependencies */
+#define	MNT_IGNORE	0x00100000	/* don't show entry in df */
+#define	MNT_LOG		0x02000000	/* Use logging */
+#define	MNT_NOATIME	0x04000000	/* Never update access times in fs */
+#define	MNT_SYMPERM	0x20000000	/* recognize symlink permission */
+#define	MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
+#define	MNT_SOFTDEP	0x80000000	/* Use soft dependencies */
 
-#define __MNT_BASIC_FLAGS \
+#define	__MNT_BASIC_FLAGS \
 	{ MNT_RDONLY,		0,	"read-only" }, \
 	{ MNT_SYNCHRONOUS,	0,	"synchronous" }, \
 	{ MNT_NOEXEC,		0,	"noexec" }, \
@@ -116,7 +116,8 @@ typedef struct fhandle	fhandle_t;
 	{ MNT_NOATIME,		0,	"noatime" }, \
 	{ MNT_SYMPERM,		0,	"symperm" }, \
 	{ MNT_NODEVMTIME,	0,	"nodevmtime" }, \
-	{ MNT_SOFTDEP,		0,	"soft dependencies" },
+	{ MNT_SOFTDEP,		0,	"soft dependencies" }, \
+	{ MNT_LOG,		0,	"log" },
 
 /*
  * exported mount flags.
@@ -126,10 +127,10 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_DEFEXPORTED	0x00000200	/* exported to the world */
 #define	MNT_EXPORTANON	0x00000400	/* use anon uid mapping for everyone */
 #define	MNT_EXKERB	0x00000800	/* exported with Kerberos uid mapping */
-#define MNT_EXNORESPORT	0x08000000	/* don't enforce reserved ports (NFS) */
-#define MNT_EXPUBLIC	0x10000000	/* public export (WebNFS) */
+#define	MNT_EXNORESPORT	0x08000000	/* don't enforce reserved ports (NFS) */
+#define	MNT_EXPUBLIC	0x10000000	/* public export (WebNFS) */
 
-#define __MNT_EXPORTED_FLAGS \
+#define	__MNT_EXPORTED_FLAGS \
 	{ MNT_EXRDONLY,		1,	"exported read-only" }, \
 	{ MNT_EXPORTED,		0,	"NFS exported" }, \
 	{ MNT_DEFEXPORTED,	1,	"exported to the world" }, \
@@ -145,7 +146,7 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_QUOTA	0x00002000	/* quotas are enabled on filesystem */
 #define	MNT_ROOTFS	0x00004000	/* identifies the root filesystem */
 
-#define __MNT_INTERNAL_FLAGS \
+#define	__MNT_INTERNAL_FLAGS \
 	{ MNT_LOCAL,		0,	"local" }, \
 	{ MNT_QUOTA,		0,	"with quotas" }, \
 	{ MNT_ROOTFS,		1,	"root file system" },
@@ -176,7 +177,8 @@ typedef struct fhandle	fhandle_t;
      MNT_EXPUBLIC | \
      MNT_LOCAL | \
      MNT_QUOTA | \
-     MNT_ROOTFS)
+     MNT_ROOTFS | \
+     MNT_LOG)
 
 /*
  * External filesystem control flags.
@@ -188,7 +190,7 @@ typedef struct fhandle	fhandle_t;
 
 #define	MNT_OP_FLAGS	(MNT_UPDATE|MNT_RELOAD|MNT_FORCE|MNT_GETARGS)
 
-#define __MNT_EXTERNAL_FLAGS \
+#define	__MNT_EXTERNAL_FLAGS \
 	{ MNT_UPDATE,		1,	"being updated" }, \
 	{ MNT_RELOAD,		1,	"reload filesystem data" }, \
 	{ MNT_FORCE,		1,	"force unmount or readonly change" }, \
@@ -209,13 +211,13 @@ typedef struct fhandle	fhandle_t;
 #define	IMNT_HAS_TRANS	0x00000080	/* supports transactions */
 #define	IMNT_MPSAFE	0x00000100	/* file system code MP safe */
 
-#define __MNT_FLAGS \
+#define	__MNT_FLAGS \
 	__MNT_BASIC_FLAGS \
 	__MNT_EXPORTED_FLAGS \
 	__MNT_INTERNAL_FLAGS \
 	__MNT_EXTERNAL_FLAGS
 
-#define __MNT_FLAG_BITS \
+#define	__MNT_FLAG_BITS \
 	"\20" \
 	"\40MNT_SOFTDEP" \
 	"\37MNT_NODEVMTIME" \
@@ -223,7 +225,7 @@ typedef struct fhandle	fhandle_t;
 	"\35MNT_EXPUBLIC" \
 	"\34MNT_EXNORESPORT" \
 	"\33MNT_NOATIME" \
-	"\32MNT_UNUSED" \
+	"\32MNT_LOG" \
 	"\31MNT_UNUSED" \
 	"\30MNT_UNUSED" \
 	"\27MNT_GETARGS" \
@@ -250,7 +252,7 @@ typedef struct fhandle	fhandle_t;
 	"\02MNT_SYNCHRONOUS" \
 	"\01MNT_RDONLY"
 
-#define __IMNT_FLAG_BITS \
+#define	__IMNT_FLAG_BITS \
 	"\20" \
         "\20IMNT_MPSAFE" \
 	"\10IMNT_HAS_TRANS" \
@@ -264,7 +266,7 @@ typedef struct fhandle	fhandle_t;
  *
  * waitfor flags to vfs_sync() and getvfsstat()
  */
-#define MNT_WAIT	1	/* synchronously wait for I/O to complete */
-#define MNT_NOWAIT	2	/* start all I/O, but do not wait for it */
-#define MNT_LAZY 	3	/* push data not written by filesystem syncer */
+#define	MNT_WAIT	1	/* synchronously wait for I/O to complete */
+#define	MNT_NOWAIT	2	/* start all I/O, but do not wait for it */
+#define	MNT_LAZY 	3	/* push data not written by filesystem syncer */
 #endif /* _SYS_FSTYPES_H_ */

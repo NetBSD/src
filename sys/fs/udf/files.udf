@@ -1,4 +1,4 @@
-#	$NetBSD: files.udf,v 1.1.72.1 2008/06/02 13:24:06 mjf Exp $
+#	$NetBSD: files.udf,v 1.1.72.2 2008/09/28 10:40:51 mjf Exp $
 
 deffs	fs_udf.h			UDF
 
@@ -12,6 +12,4 @@ file	fs/udf/udf_strat_sequential.c	udf
 file	fs/udf/udf_strat_direct.c	udf
 file	fs/udf/udf_strat_rmw.c		udf
 file	fs/udf/udf_allocation.c		udf
-
-defflag opt_udf.h			UDF_READWRITE
 

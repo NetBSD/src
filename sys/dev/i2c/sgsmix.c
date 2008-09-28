@@ -1,4 +1,4 @@
-/*	$NetBSD: sgsmix.c,v 1.2.20.1 2008/06/02 13:23:17 mjf Exp $	*/
+/*	$NetBSD: sgsmix.c,v 1.2.20.2 2008/09/28 10:40:21 mjf Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.2.20.1 2008/06/02 13:23:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.2.20.2 2008/09/28 10:40:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: sgsmix.c,v 1.2.20.1 2008/06/02 13:23:17 mjf Exp $");
 struct sgsmix_softc {
 	device_t sc_dev;
 	device_t sc_parent;
-	struct i2c_controller *sc_i2c;
+	i2c_tag_t sc_i2c;
 	int sc_node, sc_address;
 	uint8_t sc_regs[7];
 };
@@ -104,7 +104,7 @@ sgsmix_attach(device_t parent, device_t self, void *aux)
 	sc->sc_parent = parent;
 	sc->sc_address = args->ia_addr;
 	aprint_normal(": SGS TDA7433 Basic Audio Processor\n");
-	sc->sc_i2c = (struct i2c_controller *)args->ia_tag;
+	sc->sc_i2c = args->ia_tag;
 	sgsmix_setup(sc);
 }
 
@@ -154,7 +154,7 @@ sgsmix_writereg(struct sgsmix_softc *sc, int reg, uint8_t val)
 void
 sgsmix_set_speaker_vol(void *cookie, int left, int right)
 {
-	struct sgsmix_softc *sc = cookie;
+	struct sgsmix_softc *sc = device_private((device_t)cookie);
 
 	DPRINTF("%s: speaker %d %d\n", device_xname(sc->sc_dev), left, right);
 	if (left == 0) {
@@ -175,7 +175,7 @@ sgsmix_set_speaker_vol(void *cookie, int left, int right)
 void
 sgsmix_set_headphone_vol(void *cookie, int left, int right)
 {
-	struct sgsmix_softc *sc = cookie;
+	struct sgsmix_softc *sc = device_private((device_t)cookie);
 
 	DPRINTF("%s: headphones %d %d\n", device_xname(sc->sc_dev), left, right);
 	if (left == 0) {
@@ -196,7 +196,7 @@ sgsmix_set_headphone_vol(void *cookie, int left, int right)
 void
 sgsmix_set_bass_treble(void *cookie, int bass, int treble)
 {
-	struct sgsmix_softc *sc = cookie;
+	struct sgsmix_softc *sc = device_private((device_t)cookie);
 	uint8_t b, t;
 
 	t = (treble >> 4) & 0xf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.7.6.1 2008/06/02 13:22:50 mjf Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.7.6.2 2008/09/28 10:40:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.6.1 2008/06/02 13:22:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.7.6.2 2008/09/28 10:40:12 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -244,6 +244,9 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 {
 	int pin, irq;
 	struct pic *pic;
+#if NIOAPIC > 0
+	struct ioapic_softc *ioapic;
+#endif
 	bool mpsafe;
 
 	pic = &i8259_pic;
@@ -252,12 +255,13 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 
 #if NIOAPIC > 0
 	if (ih & APIC_INT_VIA_APIC) {
-		pic = (struct pic *)ioapic_find(APIC_IRQ_APIC(ih));
-		if (pic == NULL) {
+		ioapic = ioapic_find(APIC_IRQ_APIC(ih));
+		if (ioapic == NULL) {
 			printf("pci_intr_establish: bad ioapic %d\n",
 			    APIC_IRQ_APIC(ih));
 			return NULL;
 		}
+		pic = &ioapic->sc_pic;
 		pin = APIC_IRQ_PIN(ih);
 		irq = APIC_IRQ_LEGACY_IRQ(ih);
 		if (irq < 0 || irq >= NUM_LEGACY_IRQS)

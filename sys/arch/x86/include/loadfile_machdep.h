@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1.28.1 2008/06/02 13:22:50 mjf Exp $	 */
+/*	$NetBSD: loadfile_machdep.h,v 1.1.28.2 2008/09/28 10:40:11 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -55,14 +55,21 @@ void pbzero(void *, size_t);
 ssize_t pread(int, void *, size_t);
 
 #else
-
+#ifdef TEST
+#define LOADADDR(a)		offset
+#define READ(f, b, c)		c
+#define BCOPY(s, d, c)	
+#define BZERO(d, c)	
+#define PROGRESS(a)		(void) printf a
+#else
 #define LOADADDR(a)		(((u_long)(a)) + offset)
-#define ALIGNENTRY(a)		((u_long)(a))
 #define READ(f, b, c)		read((f), (void *)LOADADDR(b), (c))
 #define BCOPY(s, d, c)		memcpy((void *)LOADADDR(d), (void *)(s), (c))
 #define BZERO(d, c)		memset((void *)LOADADDR(d), 0, (c))
-#define WARN(a)			warn a
 #define PROGRESS(a)		/* nothing */
+#endif
+#define WARN(a)			warn a
+#define ALIGNENTRY(a)		((u_long)(a))
 #define ALLOC(a)		malloc(a)
 #define DEALLOC(a, b)		free(a)
 #define OKMAGIC(a)		((a) == OMAGIC)

@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.42.16.1 2008/06/02 13:22:28 mjf Exp $
+# 	$NetBSD: NEWS1200,v 1.42.16.2 2008/09/28 10:40:04 mjf Exp $
 
 #	news1200 config file
 #
@@ -75,6 +75,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independent support
 #options 	SOFTDEP		# ffs soft updates support
+options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

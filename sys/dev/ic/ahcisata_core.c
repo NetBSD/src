@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.12.6.3 2008/06/29 09:33:06 mjf Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.12.6.4 2008/09/28 10:40:21 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.12.6.3 2008/06/29 09:33:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.12.6.4 2008/09/28 10:40:21 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -606,8 +606,8 @@ ahci_probe_drive(struct ata_channel *chp)
 		    AHCI_P_IX_DHRS);
 		/* and start operations */
 		ahci_channel_start(sc, chp);
-		/* wait 100ms before actually starting operations */
-		tsleep(&sc, PRIBIO, "ahciprb", mstohz(100));
+		/* wait 500ms before actually starting operations */
+		tsleep(&sc, PRIBIO, "ahciprb", mstohz(500));
 		break;
 
 	default:

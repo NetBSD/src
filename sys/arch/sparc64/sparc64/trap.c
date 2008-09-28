@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.145.16.4 2008/07/02 19:08:18 mjf Exp $ */
+/*	$NetBSD: trap.c,v 1.145.16.5 2008/09/28 10:40:09 mjf Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145.16.4 2008/07/02 19:08:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145.16.5 2008/09/28 10:40:09 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145.16.4 2008/07/02 19:08:18 mjf Exp $");
 #include <sys/user.h>
 #include <sys/ras.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
@@ -174,8 +173,7 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
  * set, no matter how it is interpreted.  Appendix N of the Sparc V8 document
  * seems to imply that we should do this, and it does make sense.
  */
-__asm(".align 64");
-const struct fpstate64 initfpstate = {
+const struct fpstate64 initfpstate __aligned(BLOCK_SIZE) = {
 	.fs_regs =
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
@@ -669,8 +667,8 @@ badtrap:
 		struct fpstate64 *fs = l->l_md.md_fpstate;
 
 		if (fs == NULL) {
-			/* NOTE: fpstate must be 64-bit aligned */
-			fs = malloc((sizeof *fs), M_SUBPROC, M_WAITOK);
+			/* NOTE: fpstate must be 64-byte aligned */
+			fs = pool_cache_get(fpstate_cache, PR_WAITOK);
 			*fs = initfpstate;
 			l->l_md.md_fpstate = fs;
 		}

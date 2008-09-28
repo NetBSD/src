@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.12.14.2 2008/06/02 13:23:44 mjf Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.12.14.3 2008/09/28 10:40:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.12.14.2 2008/06/02 13:23:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.12.14.3 2008/09/28 10:40:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.12.14.2 2008/06/02 13:23:44 mjf Exp $
 #include "opt_wsemul.h"
 
 struct voodoofb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
 	struct pci_attach_args sc_pa;
@@ -121,14 +121,14 @@ static struct vcons_screen voodoofb_console_screen;
 
 extern const u_char rasops_cmap[768];
 
-static int	voodoofb_match(struct device *, struct cfdata *, void *);
-static void	voodoofb_attach(struct device *, struct device *, void *);
+static int	voodoofb_match(device_t, cfdata_t, void *);
+static void	voodoofb_attach(device_t, device_t, void *);
 
 static int	voodoofb_drm_print(void *, const char *);
 static int	voodoofb_drm_unmap(struct voodoofb_softc *);
 static int	voodoofb_drm_map(struct voodoofb_softc *);
 
-CFATTACH_DECL(voodoofb, sizeof(struct voodoofb_softc), voodoofb_match, 
+CFATTACH_DECL_NEW(voodoofb, sizeof(struct voodoofb_softc), voodoofb_match, 
     voodoofb_attach, NULL, NULL);
 
 static int	voodoofb_is_console(struct pci_attach_args *);
@@ -291,7 +291,7 @@ voodoofb_wait_idle(struct voodoofb_softc *sc)
 }
 
 static int
-voodoofb_match(struct device *parent, struct cfdata *match, void *aux)
+voodoofb_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -305,9 +305,9 @@ voodoofb_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-voodoofb_attach(struct device *parent, struct device *self, void *aux)
+voodoofb_attach(device_t parent, device_t self, void *aux)
 {
-	struct voodoofb_softc *sc = (void *)self;	
+	struct voodoofb_softc *sc = device_private(self);	
 	struct pci_attach_args *pa = aux;
 	char devinfo[256];
 	struct wsemuldisplaydev_attach_args aa;
@@ -322,7 +322,9 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	int linebytes, depth, node;
 #endif
 	uint32_t bg, fg, ul;
-		
+
+	sc->sc_dev = self;
+
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
 #ifdef HAVE_OPENFIRMWARE
 	node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
@@ -342,20 +344,20 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE | 
 	    BUS_SPACE_MAP_LINEAR, 
 	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		aprint_error_dev(&sc->sc_dev, "failed to map the frame buffer.\n");
+		aprint_error_dev(self, "failed to map the frame buffer.\n");
 	}
 
 	/* memory-mapped registers */
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_regt, &sc->sc_regh, &sc->sc_regs, &sc->sc_regsize)) {
-		aprint_error_dev(&sc->sc_dev, "failed to map memory-mapped registers.\n");
+		aprint_error_dev(self, "failed to map memory-mapped registers.\n");
 	}
 
 	/* IO-mapped registers */
 	if (pci_mapreg_map(pa, 0x18, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_ioregt, &sc->sc_ioregh, &sc->sc_ioreg,
 	    &sc->sc_ioregsize)) {
-		aprint_error_dev(&sc->sc_dev, "failed to map IO-mapped registers.\n");
+		aprint_error_dev(self, "failed to map IO-mapped registers.\n");
 	}
 	voodoofb_init(sc);
 	
@@ -379,7 +381,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	sc->height = height;
 	sc->bits_per_pixel = depth;
 	sc->linebytes = linebytes;
-	printf("%s: initial resolution %dx%d, %d bit\n", device_xname(&sc->sc_dev),
+	printf("%s: initial resolution %dx%d, %d bit\n", device_xname(self),
 	    sc->width, sc->height, sc->bits_per_pixel);
 #endif
 
@@ -411,7 +413,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("%s: %d MB aperture at 0x%08x, %d MB registers at 0x%08x\n",
-	    device_xname(&sc->sc_dev), (u_int)(sc->sc_fbsize >> 20),
+	    device_xname(self), (u_int)(sc->sc_fbsize >> 20),
 	    (u_int)sc->sc_fb, (u_int)(sc->sc_regsize >> 20), 
 	    (u_int)sc->sc_regs);
 #ifdef VOODOOFB_DEBUG
@@ -428,7 +430,7 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 #ifdef VOODOOFB_ENABLE_INTR
 	/* Interrupt. We don't use it for anything yet */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "failed to map interrupt\n");
+		aprint_error_dev(self, "failed to map interrupt\n");
 		return;
 	}
 
@@ -436,13 +438,13 @@ voodoofb_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, voodoofb_intr, 
 	    sc);
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "failed to establish interrupt");
+		aprint_error_dev(self, "failed to establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", device_xname(&sc->sc_dev), intrstr);
+	printf("%s: interrupting at %s\n", device_xname(self), intrstr);
 #endif
 
 	rasops_unpack_attr(defattr, &fg, &bg, &ul);
@@ -470,7 +472,7 @@ voodoofb_drm_print(void *opaque, const char *pnp)
 static int
 voodoofb_drm_unmap(struct voodoofb_softc *sc)
 {
-	printf("%s: releasing bus resources\n", device_xname(&sc->sc_dev));
+	printf("%s: releasing bus resources\n", device_xname(sc->sc_dev));
 
 	bus_space_unmap(sc->sc_ioregt, sc->sc_ioregh, sc->sc_ioregsize);
 	bus_space_unmap(sc->sc_regt, sc->sc_regh, sc->sc_regsize);
@@ -486,20 +488,20 @@ voodoofb_drm_map(struct voodoofb_softc *sc)
 	    BUS_SPACE_MAP_CACHEABLE | BUS_SPACE_MAP_PREFETCHABLE | 
 	    BUS_SPACE_MAP_LINEAR, 
 	    &sc->sc_fbt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		aprint_error_dev(&sc->sc_dev, "failed to map the frame buffer.\n");
+		aprint_error_dev(sc->sc_dev, "failed to map the frame buffer.\n");
 	}
 
 	/* memory-mapped registers */
 	if (pci_mapreg_map(&sc->sc_pa, 0x10, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_regt, &sc->sc_regh, &sc->sc_regs, &sc->sc_regsize)) {
-		aprint_error_dev(&sc->sc_dev, "failed to map memory-mapped registers.\n");
+		aprint_error_dev(sc->sc_dev, "failed to map memory-mapped registers.\n");
 	}
 
 	/* IO-mapped registers */
 	if (pci_mapreg_map(&sc->sc_pa, 0x18, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_ioregt, &sc->sc_ioregh, &sc->sc_ioreg,
 	    &sc->sc_ioregsize)) {
-		aprint_error_dev(&sc->sc_dev, "failed to map IO-mapped registers.\n");
+		aprint_error_dev(sc->sc_dev, "failed to map IO-mapped registers.\n");
 	}
 
 	voodoofb_init(sc);
@@ -1003,7 +1005,7 @@ voodoofb_mmap(void *v, void *vs, off_t offset, int prot)
 	if (curlwp != NULL) {
 		if (kauth_authorize_generic(kauth_cred_get(),
 		    KAUTH_GENERIC_ISSUSER, NULL) != 0) {
-			aprint_error_dev(&sc->sc_dev, "mmap() rejected.\n");
+			aprint_error_dev(sc->sc_dev, "mmap() rejected.\n");
 			return -1;
 		}
 	}
@@ -1379,7 +1381,7 @@ voodoofb_set_videomode(struct voodoofb_softc *sc,
   	voodoo3_write32(sc, CLIP1MAX,        0x0fff0fff);
 	voodoo3_write32(sc, SRCXY, 0);
 	voodoofb_wait_idle(sc);
-	printf("%s: switched to %dx%d, %d bit\n", device_xname(&sc->sc_dev),
+	printf("%s: switched to %dx%d, %d bit\n", device_xname(sc->sc_dev),
 	    sc->width, sc->height, sc->bits_per_pixel);
 }
 

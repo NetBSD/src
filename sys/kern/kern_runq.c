@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.16.2.3 2008/06/29 09:33:14 mjf Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.16.2.4 2008/09/28 10:40:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.16.2.3 2008/06/29 09:33:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.16.2.4 2008/09/28 10:40:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -344,6 +344,7 @@ static inline bool
 sched_migratable(const struct lwp *l, struct cpu_info *ci)
 {
 	const struct schedstate_percpu *spc = &ci->ci_schedstate;
+	KASSERT(lwp_locked(__UNCONST(l), NULL));
 
 	/* CPU is offline */
 	if (__predict_false(spc->spc_flags & SPCF_OFFLINE))
@@ -380,7 +381,7 @@ sched_takecpu(struct lwp *l)
 	 * If CPU of this thread is idling - run there.
 	 */
 	if ((l->l_pflag & LP_BOUND) != 0 || ci_rq->r_count == 0) {
-	    	ci_rq->r_ev_stay.ev_count++;
+		ci_rq->r_ev_stay.ev_count++;
 		return ci;
 	}
 
@@ -388,7 +389,7 @@ sched_takecpu(struct lwp *l)
 	eprio = lwp_eprio(l);
 	if (__predict_true(l->l_stat != LSIDL) &&
 	    lwp_cache_hot(l) && eprio >= spc->spc_curpriority) {
-	    	ci_rq->r_ev_stay.ev_count++;
+		ci_rq->r_ev_stay.ev_count++;
 		return ci;
 	}
 
@@ -845,7 +846,7 @@ sched_print_runqueue(void (*pr)(const char *, ...)
 
 		(*pr)("Run-queue (CPU = %u):\n", ci->ci_index);
 		(*pr)(" pid.lid = %d.%d, r_count = %u, r_avgcount = %u, "
-		    "maxpri = %d, mchain = %p\n",
+		    "maxpri = %d, mlwp = %p\n",
 #ifdef MULTIPROCESSOR
 		    ci->ci_curlwp->l_proc->p_pid, ci->ci_curlwp->l_lid,
 #else

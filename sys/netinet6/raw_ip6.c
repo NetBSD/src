@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.91.14.1 2008/06/02 13:24:28 mjf Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.91.14.2 2008/09/28 10:40:59 mjf Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.91.14.1 2008/06/02 13:24:28 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.91.14.2 2008/09/28 10:40:59 mjf Exp $");
 
 #include "opt_ipsec.h"
 
@@ -562,25 +562,30 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
  * Raw IPv6 socket option processing.
  */
 int
-rip6_ctloutput(int op, struct socket *so, int level, int optname,
-    struct mbuf **mp)
+rip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	int error = 0;
 
-	if (level == SOL_SOCKET && optname == SO_NOHEADER) {
+	if (sopt->sopt_level == SOL_SOCKET && sopt->sopt_name == SO_NOHEADER) {
+		int optval;
+
 		/* need to fiddle w/ opt(IPPROTO_IPV6, IPV6_CHECKSUM)? */
 		if (op == PRCO_GETOPT) {
-			*mp = m_intopt(so, 1);
-			return 0;
-		} else if (*mp == NULL || (*mp)->m_len != sizeof(int))
-			error = EINVAL;
-		else if (*mtod(*mp, int *) == 0)
-			error = EINVAL;
-		goto free_m;
-	} else if (level != IPPROTO_IPV6)
-		return ip6_ctloutput(op, so, level, optname, mp);
+			optval = 1;
+			error = sockopt_set(sopt, &optval, sizeof(optval));
+		} else if (op == PRCO_SETOPT) {
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				goto out;
+			if (optval == 0)
+				error = EINVAL;
+		}
 
-	switch (optname) {
+		goto out;
+	} else if (sopt->sopt_level != IPPROTO_IPV6)
+		return ip6_ctloutput(op, so, sopt);
+
+	switch (sopt->sopt_name) {
 	case MRT6_INIT:
 	case MRT6_DONE:
 	case MRT6_ADD_MIF:
@@ -589,20 +594,18 @@ rip6_ctloutput(int op, struct socket *so, int level, int optname,
 	case MRT6_DEL_MFC:
 	case MRT6_PIM:
 		if (op == PRCO_SETOPT)
-			error = ip6_mrouter_set(optname, so, *mp);
+			error = ip6_mrouter_set(so, sopt);
 		else if (op == PRCO_GETOPT)
-			error = ip6_mrouter_get(optname, so, mp);
+			error = ip6_mrouter_get(so, sopt);
 		else
 			error = EINVAL;
 		break;
 	case IPV6_CHECKSUM:
-		return ip6_raw_ctloutput(op, so, level, optname, mp);
+		return ip6_raw_ctloutput(op, so, sopt);
 	default:
-		return ip6_ctloutput(op, so, level, optname, mp);
+		return ip6_ctloutput(op, so, sopt);
 	}
-free_m:
-	if (op == PRCO_SETOPT && *mp != NULL)
-		m_free(*mp);
+ out:
 	return error;
 }
 

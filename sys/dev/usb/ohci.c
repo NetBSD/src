@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.186.6.4 2008/06/29 09:33:11 mjf Exp $	*/
+/*	$NetBSD: ohci.c,v 1.186.6.5 2008/09/28 10:40:33 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.186.6.4 2008/06/29 09:33:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.186.6.5 2008/09/28 10:40:33 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,6 +385,7 @@ int
 ohci_detach(struct ohci_softc *sc, int flags)
 {
 	int rv = 0;
+	usbd_xfer_handle xfer;
 
 	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
@@ -396,7 +397,11 @@ ohci_detach(struct ohci_softc *sc, int flags)
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
-	/* free data structures XXX */
+	usb_freemem(&sc->sc_bus, &sc->sc_hccadma);
+	while((xfer = SIMPLEQ_FIRST(&sc->sc_free_xfers)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_free_xfers, next);
+		free(xfer, M_USB);
+	}
 
 	return (rv);
 }

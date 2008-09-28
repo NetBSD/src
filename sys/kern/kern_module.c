@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.8.10.2 2008/06/02 13:24:08 mjf Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.8.10.3 2008/09/28 10:40:52 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.8.10.2 2008/06/02 13:24:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.8.10.3 2008/09/28 10:40:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -170,7 +170,7 @@ module_init_class(modclass_t class)
  *	major and minor versions are significant for official
  *	releases of the system.
  */
-static bool
+bool
 module_compatible(int v1, int v2)
 {
 

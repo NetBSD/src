@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.78.6.1 2008/06/02 13:23:35 mjf Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.78.6.2 2008/09/28 10:40:25 mjf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.75 2008/02/20 11:17:41 markd Exp
+ *	NetBSD: miidevs,v 1.77 2008/08/25 08:15:05 cegger Exp
  */
 
 /*-
@@ -84,6 +84,7 @@
 /* bad bitorder (bits "g" and "h" (= MSBs byte 1) lost) */
 #define	MII_OUI_yyAMD	0x000058	/* Advanced Micro Devices */
 #define	MII_OUI_xxBROADCOM	0x000818	/* Broadcom Corporation */
+#define	MII_OUI_xxBROADCOM_ALT1	0x0050ef	/* Broadcom Corporation */
 #define	MII_OUI_xxDAVICOM	0x000676	/* Davicom Semiconductor */
 #define	MII_OUI_yyINTEL	0x005500	/* Intel */
 #define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
@@ -176,6 +177,8 @@
 #define	MII_STR_BROADCOM2_BCM5755	"BCM5755 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM2_BCM5754	0x000e
 #define	MII_STR_BROADCOM2_BCM5754	"BCM5754/5787 1000BASE-T media interface"
+#define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
+#define	MII_STR_xxBROADCOM_ALT1_BCM5906	"BCM5906 10/100baseTX media interface"
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 #define	MII_MODEL_CICADA_CS8201	0x0001

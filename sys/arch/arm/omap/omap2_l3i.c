@@ -1,7 +1,7 @@
-/*	$Id: omap2_l3i.c,v 1.1.18.1 2008/06/02 13:21:55 mjf Exp $	*/
+/*	$Id: omap2_l3i.c,v 1.1.18.2 2008/09/28 10:39:51 mjf Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_l3i.c,v 1.1.18.1 2008/06/02 13:21:55 mjf Exp $ */
+/*	$NetBSD: omap2_l3i.c,v 1.1.18.2 2008/09/28 10:39:51 mjf Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.18.1 2008/06/02 13:21:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.18.2 2008/09/28 10:39:51 mjf Exp $");
 
 #include "locators.h"
 
@@ -120,10 +120,10 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_l3i.c,v 1.1.18.1 2008/06/02 13:21:55 mjf Exp $
 #include <arm/mainbus/mainbus.h>
 #include <arm/omap/omap_var.h>
 
-#if defined(OMAP2)
-#include <arm/omap/omap2430reg.h>
+#if defined(OMAP2) || defined(OMAP3)
+#include <arm/omap/omap2_reg.h>
 #ifdef NOTYET
-#include <arm/omap/omap2430var.h>
+#include <arm/omap/omap2_var.h>
 #endif
 #else
 /*
@@ -160,7 +160,7 @@ static int	L3i_print(void *, const char *);
 #endif
 
 #define TARGET_AGENT_REGS_ENTRY(reg) \
-	{ .offset = OMAP2430_TA_ ## reg, \
+	{ .offset = OMAP2_TA_ ## reg, \
 	  .decode = L3i_decode_ta_ ## reg, \
 	  .name = #reg }
 struct {
@@ -211,8 +211,8 @@ L3i_attach(struct device *parent, struct device *self, void *aux)
 	L3i_attached = 1;
 
 #ifdef L3I_DEBUG
-	L3i_target_agent_check(sc, (bus_addr_t)OMAP2430_TA_L4_CORE, "L4 core");
-	L3i_target_agent_check(sc, (bus_addr_t)OMAP2430_TA_GPMC, "GPMC");
+	L3i_target_agent_check(sc, (bus_addr_t)OMAP2_TA_L4_CORE, "L4 core");
+	L3i_target_agent_check(sc, (bus_addr_t)OMAP2_TA_GPMC, "GPMC");
 #endif
 
 #ifdef NOTYET
@@ -369,15 +369,15 @@ L3i_search(struct device *parent, struct cfdata *cf,
 	aa.L3i_intr = cf->cf_loc[L3iCF_INTR];
 
 #if defined(OMAP2)
-	if ((aa.L3i_addr >= OMAP2430_L3i_BASE)
-	&&  (aa.L3i_addr < (OMAP2430_L4_CORE_BASE + OMAP2430_L3i_SIZE))) {
+	if ((aa.L3i_addr >= OMAP2_L3i_BASE)
+	&&  (aa.L3i_addr < (OMAP2_L4_CORE_BASE + OMAP2_L3i_SIZE))) {
 		/* XXX
 		 * if size was specified, then check it too
 		 * otherwise just assume it is OK
 		 */
 		if ((aa.L3i_size != L3iCF_SIZE_DEFAULT)
 		&&  ((aa.L3i_addr + aa.L3i_size)
-			>= (OMAP2430_L4_CORE_BASE + OMAP2430_L3i_SIZE)))
+			>= (OMAP2_L4_CORE_BASE + OMAP2_L3i_SIZE)))
 				return 1;		/* NG */
 		if (config_match(parent, cf, &aa)) {
 			config_attach(parent, cf, &aa, L3i_print);

@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.13.14.1 2008/06/02 13:24:34 mjf Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.13.14.2 2008/09/28 10:41:05 mjf Exp $	 */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -118,6 +118,7 @@ struct statvfs {
 #define	ST_SYMPERM	MNT_SYMPERM
 #define	ST_NODEVMTIME	MNT_NODEVMTIME
 #define	ST_SOFTDEP	MNT_SOFTDEP
+#define	ST_LOG		MNT_LOG
 
 #define	ST_EXRDONLY	MNT_EXRDONLY
 #define	ST_EXPORTED	MNT_EXPORTED
