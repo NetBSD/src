@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.43 2008/09/25 19:22:39 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.44 2008/09/28 20:37:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.43 2008/09/25 19:22:39 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.44 2008/09/28 20:37:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2435,7 +2435,7 @@ sa_unblock_userret(struct lwp *l)
 	 */
 	sleepq_enter(&vp->savp_woken, l, &vp->savp_mutex);
 	sleepq_enqueue(&vp->savp_woken, &vp->savp_woken, sa_lwpwoken_wmesg,
-			&sa_sobj);
+	    &sa_sobj);
 	l->l_flag |= LW_SINTR;
 	uvm_lwp_hold(l);
 	vp->savp_woken_count++;
