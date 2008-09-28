@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.202.18.3 2008/06/29 09:33:10 mjf Exp $ */
+/*	$NetBSD: st.c,v 1.202.18.4 2008/09/28 10:40:31 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.202.18.3 2008/06/29 09:33:10 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.202.18.4 2008/09/28 10:40:31 mjf Exp $");
 
 #include "opt_scsi.h"
 
@@ -1097,15 +1097,15 @@ ststrategy(struct buf *bp)
 	SC_DEBUG(st->sc_periph, SCSIPI_DB1,
 	    ("ststrategy %d bytes @ blk %" PRId64 "\n", bp->b_bcount, bp->b_blkno));
 	/*
-	 * If it's a null transfer, return immediatly
+	 * If it's a null transfer, return immediately
 	 */
 	if (bp->b_bcount == 0)
-		goto done;
+		goto abort;
 
 	/* If offset is negative, error */
 	if (bp->b_blkno < 0) {
 		bp->b_error = EINVAL;
-		goto done;
+		goto abort;
 	}
 
 	/*
@@ -1116,7 +1116,7 @@ ststrategy(struct buf *bp)
 			aprint_error_dev(&st->sc_dev, "bad request, must be multiple of %d\n",
 			    st->blksize);
 			bp->b_error = EIO;
-			goto done;
+			goto abort;
 		}
 	}
 	/*
@@ -1127,7 +1127,7 @@ ststrategy(struct buf *bp)
 		aprint_error_dev(&st->sc_dev, "bad request, must be between %d and %d\n",
 		    st->blkmin, st->blkmax);
 		bp->b_error = EIO;
-		goto done;
+		goto abort;
 	}
 	s = splbio();
 
@@ -1147,9 +1147,10 @@ ststrategy(struct buf *bp)
 
 	splx(s);
 	return;
-done:
+abort:
 	/*
-	 * Correctly set the buf to indicate a completed xfer
+	 * Reset the residue because we didn't do anything,
+	 * and send the buffer back as done.
 	 */
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);

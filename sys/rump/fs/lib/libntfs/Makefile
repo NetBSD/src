@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2007/08/19 14:47:24 pooka Exp $
+#	$NetBSD: Makefile,v 1.3.28.1 2008/09/28 10:41:02 mjf Exp $
 #
 
-.include <bsd.own.mk>
+.PATH:  ${.CURDIR}/../../../../fs/ntfs
 
-LIB=	ntfs
-
-.PATH:  ${NETBSDSRCDIR}/sys/fs/ntfs
+LIB=	rumpfs_ntfs
 
 SRCS=	ntfs_compr.c ntfs_conv.c ntfs_ihash.c ntfs_subr.c		\
 	ntfs_vfsops.c ntfs_vnops.c

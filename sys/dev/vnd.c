@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.175.6.5 2008/06/29 09:33:05 mjf Exp $	*/
+/*	$NetBSD: vnd.c,v 1.175.6.6 2008/09/28 10:40:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.175.6.5 2008/06/29 09:33:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.175.6.6 2008/09/28 10:40:18 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -928,6 +928,7 @@ vndiodone(struct buf *bp)
 	}
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
+	buf_destroy(bp);
 	VND_PUTXFER(vnd, vnx);
 	biodone(obp);
 }
@@ -1887,7 +1888,8 @@ compstrategy(struct buf *bp, off_t bn)
 			vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 			error = vn_rdwr(UIO_READ, vnd->sc_vp, vnd->sc_comp_buff,
 			    length, vnd->sc_comp_offsets[comp_block],
-			    UIO_SYSSPACE, IO_UNIT, vnd->sc_cred, NULL, NULL);
+			    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, vnd->sc_cred,
+			    NULL, NULL);
 			if (error) {
 				bp->b_error = error;
 				VOP_UNLOCK(vnd->sc_vp, 0);

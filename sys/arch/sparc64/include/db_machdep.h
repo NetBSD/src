@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.23.42.1 2008/04/03 12:42:26 mjf Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.23.42.2 2008/09/28 10:40:09 mjf Exp $ */
 
 /*
  * Mach Operating System
@@ -56,7 +56,7 @@ typedef struct {
 	struct frame64		db_fr;
 	struct trapstate	db_ts[5];
 	int			db_tl;
-	struct fpstate64	db_fpstate;
+	struct fpstate64	db_fpstate __aligned(BLOCK_SIZE);
 } db_regs_t;
 
 /* Current CPU register state */

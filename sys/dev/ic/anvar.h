@@ -1,4 +1,4 @@
-/*	$NetBSD: anvar.h,v 1.16 2007/12/25 18:33:38 perry Exp $	*/
+/*	$NetBSD: anvar.h,v 1.16.6.1 2008/09/28 10:40:21 mjf Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -103,7 +103,7 @@ struct an_tx_radiotap_header {
 #define	AN_GAPLEN_MAX	8
 
 struct an_softc	{
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct ethercom		sc_ec;
 	struct ieee80211com	sc_ic;
 	bus_space_tag_t		sc_iot;

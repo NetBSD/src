@@ -1,4 +1,4 @@
-/* $NetBSD: kbdif.h,v 1.2.28.1 2008/06/02 13:22:54 mjf Exp $ */
+/* $NetBSD: kbdif.h,v 1.2.28.2 2008/09/28 10:40:14 mjf Exp $ */
 /*
  * kbdif.h -- Xen virtual keyboard/mouse
  *
@@ -66,7 +66,7 @@ struct xenkbd_position
     uint8_t type;        /* XENKBD_TYPE_POS */
     int32_t abs_x;       /* absolute X position (in FB pixels) */
     int32_t abs_y;       /* absolute Y position (in FB pixels) */
-    int32_t abs_z;       /* absolute Z position (wheel) */
+    int32_t rel_z;       /* relative Z motion (wheel) */
 };
 
 #define XENKBD_IN_EVENT_SIZE 40

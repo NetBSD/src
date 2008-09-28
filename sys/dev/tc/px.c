@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.31.16.1 2008/06/02 13:23:52 mjf Exp $	*/
+/* 	$NetBSD: px.c,v 1.31.16.2 2008/09/28 10:40:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.31.16.1 2008/06/02 13:23:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.31.16.2 2008/09/28 10:40:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,16 +103,16 @@ static int	px_pbuf_post(struct stic_info *, u_int32_t *);
 void	px_cnattach(tc_addr_t);
 
 struct px_softc {
-	struct	device px_dv;
+	device_t px_dev;
 	struct	stic_info *px_si;
 	volatile u_int32_t	*px_qpoll[PX_BUF_COUNT];
 };
 
-CFATTACH_DECL(px, sizeof(struct px_softc),
+CFATTACH_DECL_NEW(px, sizeof(struct px_softc),
     px_match, px_attach, NULL, NULL);
 
 static int
-px_match(struct device *parent, struct cfdata *match, void *aux)
+px_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct tc_attach_args *ta;
 
@@ -122,7 +122,7 @@ px_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-px_attach(struct device *parent, struct device *self, void *aux)
+px_attach(device_t parent, device_t self, void *aux)
 {
 	struct stic_info *si;
 	struct tc_attach_args *ta;
@@ -132,6 +132,8 @@ px_attach(struct device *parent, struct device *self, void *aux)
 
 	px = device_private(self);
 	ta = (struct tc_attach_args *)aux;
+
+	px->px_dev = self;
 
 	if (ta->ta_addr == stic_consinfo.si_slotbase) {
 		si = &stic_consinfo;
@@ -261,7 +263,7 @@ px_intr(void *cookie)
 	 * Simply clear the flag and report the error.
 	 */
 	if ((state & STIC_INT_E) != 0) {
-		aprint_error_dev(&px->px_dv, "error intr, %x %x %x %x %x",
+		aprint_error_dev(px->px_dev, "error intr, %x %x %x %x %x",
 		    sr->sr_ipdvint, sr->sr_sticsr, sr->sr_buscsr,
 		    sr->sr_busadr, sr->sr_busdat);
 		sr->sr_ipdvint = STIC_INT_E_WE | STIC_INT_E_EN;

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_trantcp.c,v 1.31.28.3 2008/06/29 09:33:19 mjf Exp $	*/
+/*	$NetBSD: smb_trantcp.c,v 1.31.28.4 2008/09/28 10:41:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.31.28.3 2008/06/29 09:33:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_trantcp.c,v 1.31.28.4 2008/09/28 10:41:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,8 @@ static int  smb_nbst_disconnect(struct smb_vc *vcp, struct lwp *l);
 static int
 nb_setsockopt_int(struct socket *so, int level, int name, int val)
 {
-	return sosetopt(so, level, name, NULL); /* XXX */
+
+	return so_setsockopt(NULL, so, level, name, &val, sizeof(val));	/* XXX */
 }
 
 static int

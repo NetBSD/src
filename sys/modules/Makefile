@@ -1,6 +1,7 @@
-# $NetBSD: Makefile,v 1.5.2.3 2008/06/29 09:33:16 mjf Exp $
+# $NetBSD: Makefile,v 1.5.2.4 2008/09/28 10:40:55 mjf Exp $
 
 SUBDIR=		miniroot
+SUBDIR+=	fss
 SUBDIR+=	putter
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64"

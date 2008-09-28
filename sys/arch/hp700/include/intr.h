@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11.14.1 2008/06/02 13:22:07 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.11.14.2 2008/09/28 10:39:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2002 The NetBSD Foundation, Inc.
@@ -110,15 +110,6 @@ splraiseipl(ipl_cookie_t icookie)
 
 #define	setsoftast()	(astpending = 1)
 #define	setsoftnet()	hp700_intr_schedule(softnetmask)
-
-/*
- * Generic software interrupt support.
- */
-
-#define	HP700_SOFTINTR_SOFTCLOCK	0
-#define	HP700_SOFTINTR_SOFTNET		1
-#define	HP700_SOFTINTR_SOFTSERIAL	2
-#define	HP700_NSOFTINTR			3
 
 void	hp700_intr_schedule(int);
 

@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.38.6.1 2008/06/02 13:22:04 mjf Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.38.6.2 2008/09/28 10:39:54 mjf Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs405"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.38.6.1 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.38.6.2 $"
 
 maxusers	32
 
@@ -22,12 +22,7 @@ maxusers	32
 
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
-#options	SEMMNI=10		# number of semaphore identifiers
-#options	SEMMNS=60		# number of semaphores in system
-#options	SEMUME=10		# max number of undo entries per process
-#options	SEMMNU=30		# number of undo structures in system
 options 	SYSVSHM			# System V shared memory
-#options 	SHMMAXPGS=1024		# 1024 pages is the default
 options		P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 #options 	LKM			# loadable kernel modules
@@ -95,6 +90,7 @@ file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
 #file-system	NTFS		# Windows NT file system (experimental)
 
 
@@ -105,6 +101,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA			# UFS quotas
 options 	FFS_EI			# FFS Endian Independant support
 options 	SOFTDEP			# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER		# Network File System server
 #options 	FFS_NO_SNAPSHOT		# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
@@ -207,18 +204,19 @@ pseudo-device	bpfilter		# packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
-#pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
-#pseudo-device	irframetty		# IrDA frame line discipline
-#pseudo-device	tun			# network tunneling over tty
-#pseudo-device	tap			# virtual ethernet
-#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	sl			# Serial Line IP
+pseudo-device	strip			# Starmode Radio IP (Metricom)
+pseudo-device	irframetty		# IrDA frame line discipline
+pseudo-device	tap			# virtual ethernet
+pseudo-device	tun			# network tunneling over tty
+pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IPv[46] pfil hooks too
+pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 

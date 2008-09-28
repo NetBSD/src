@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9 2007/12/02 15:55:09 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.9.14.1 2008/09/28 10:39:58 mjf Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -39,6 +39,8 @@
 #endif
 
 #define _C_LABEL(x)	x
+
+#define _ASM_LS_CHAR	!
 
 #define	LEAF_ENTRY_NOPROFILE(x)				!\
 	 ! .text ! .align 4				!\

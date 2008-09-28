@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.20.6.1 2008/06/02 13:22:51 mjf Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.20.6.2 2008/09/28 10:40:12 mjf Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.20.6.1 2008/06/02 13:22:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.20.6.2 2008/09/28 10:40:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,9 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 {
 	void *ih;
 	struct pic *pic;
+#if NIOAPIC > 0
+	struct ioapic_softc *sc;
+#endif
 	int irq, pin, trigger;
 
 #if NIOAPIC > 0
@@ -138,9 +141,9 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	 */
 
 #if NIOAPIC > 0
-	pic = (struct pic *)ioapic_find_bybase(InterruptNumber);
-	if (pic != NULL) {
-		struct ioapic_softc *sc = (struct ioapic_softc *)pic;
+	sc = ioapic_find_bybase(InterruptNumber);
+	if (sc != NULL) {
+		pic = &sc->sc_pic;
 		struct mp_intr_map *mip;
 
 		if (pic->pic_type == PIC_IOAPIC) {

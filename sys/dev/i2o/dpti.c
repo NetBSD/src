@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.35.16.3 2008/06/29 09:33:06 mjf Exp $	*/
+/*	$NetBSD: dpti.c,v 1.35.16.4 2008/09/28 10:40:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.35.16.3 2008/06/29 09:33:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.35.16.4 2008/09/28 10:40:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ dpti_attach(struct device *parent, struct device *self, void *aux)
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
 		struct	i2o_dpt_param_exec_iop_buffers dib;
-	} __attribute__ ((__packed__)) param;
+	} __packed param;
 	int rv, maj;
 
 	sc = device_private(self);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.6.6.2 2008/06/02 13:22:50 mjf Exp $ */
+/*	$NetBSD: pchb.c,v 1.6.6.3 2008/09/28 10:40:11 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6.6.2 2008/06/02 13:22:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6.6.3 2008/09/28 10:40:11 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -374,6 +374,8 @@ pchbattach(device_t parent, device_t self, void *aux)
 		case PCI_PRODUCT_INTEL_82915GM_HB:
 		case PCI_PRODUCT_INTEL_82945P_MCH:
 		case PCI_PRODUCT_INTEL_82945GM_HB:
+		case PCI_PRODUCT_INTEL_82945GME_HB:
+		case PCI_PRODUCT_INTEL_82946GZ_HB:
 		case PCI_PRODUCT_INTEL_82965Q_HB:
 		case PCI_PRODUCT_INTEL_82965G_HB:
 		case PCI_PRODUCT_INTEL_82965PM_HB:

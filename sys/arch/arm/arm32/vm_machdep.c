@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42.6.1 2008/04/03 12:42:12 mjf Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42.6.2 2008/09/28 10:39:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42.6.1 2008/04/03 12:42:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42.6.2 2008/09/28 10:39:48 mjf Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -104,18 +104,12 @@ cpu_proc_fork(p1, p2)
 }
 
 /*
- * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the pcb and trap frame, making the child ready to run.
+ * Finish a fork operation, with LWP l2 nearly set up.
+ *
+ * Copy and update the pcb and trapframe, making the child ready to run.
  * 
  * Rig the child's kernel stack so that it will start out in
- * proc_trampoline() and call child_return() with p2 as an
- * argument. This causes the newly-created child process to go
- * directly to user level with an apparent return value of 0 from
- * fork(), while the parent process returns normally.
- *
- * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path and argument are specified with
- * `func' and `arg'.
+ * lwp_trampoline() which will call the specified func with the argument arg.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
@@ -125,7 +119,7 @@ void
 cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
     void (*func)(void *), void *arg)
 {
-	struct pcb *pcb = (struct pcb *)&l2->l_addr->u_pcb;
+	struct pcb *pcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
 

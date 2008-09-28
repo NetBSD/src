@@ -1,4 +1,4 @@
-#	$NetBSD: std.tisdp24xx,v 1.1.18.1 2008/06/02 13:22:01 mjf Exp $
+#	$NetBSD: std.tisdp24xx,v 1.1.18.2 2008/09/28 10:39:54 mjf Exp $
 #
 # standard NetBSD/evbarm for SDP2430 options
 
@@ -14,6 +14,8 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 options 	ARM11_PMC
+options 	ARM11_PMC_CCNT_HZ=266000000
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 #options 	PROCESS_ID_IS_CURLWP
 options 	KERNEL_BASE_EXT=0x80000000
 

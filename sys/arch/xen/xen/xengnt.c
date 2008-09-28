@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.6.6.1 2008/06/02 13:22:55 mjf Exp $      */
+/*      $NetBSD: xengnt.c,v 1.6.6.2 2008/09/28 10:40:14 mjf Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.6.6.1 2008/06/02 13:22:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.6.6.2 2008/09/28 10:40:14 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -171,7 +171,7 @@ xengnt_get_entry()
 	grant_ref_t entry;
 	int s = splvm();
 	static struct timeval xengnt_nonmemtime;
-	const static struct timeval xengnt_nonmemintvl = {5,0};
+	static const struct timeval xengnt_nonmemintvl = {5,0};
 
 	if (last_gnt_entry == 0) {
 		if (xengnt_more_entries()) {

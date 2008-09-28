@@ -1,4 +1,4 @@
-/* $NetBSD: ipmivar.h,v 1.6.14.1 2008/06/02 13:22:50 mjf Exp $ */
+/* $NetBSD: ipmivar.h,v 1.6.14.2 2008/09/28 10:40:11 mjf Exp $ */
 
 /*
  * Copyright (c) 2005 Jordan Hargrave
@@ -82,6 +82,7 @@ struct ipmi_softc {
 	struct ipmi_if		*sc_if;		/* Interface layer */
 	int			sc_if_iospacing; /* Spacing of I/O ports */
 	int			sc_if_rev;	/* IPMI Revision */
+	struct ipmi_attach_args	sc_ia;
 
 	void			*sc_ih;		/* Interrupt/IO handles */
 	bus_space_tag_t		sc_iot;

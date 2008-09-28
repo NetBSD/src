@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.280.6.2 2008/06/02 13:24:25 mjf Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.280.6.3 2008/09/28 10:40:58 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.280.6.2 2008/06/02 13:24:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.280.6.3 2008/09/28 10:40:58 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1306,6 +1306,9 @@ findpcb:
 	}
 	if (tp->t_state == TCPS_CLOSED)
 		goto drop;
+
+	KASSERT(so->so_lock == softnet_lock);
+	KASSERT(solocked(so));
 
 	/*
 	 * Checksum extended TCP header and data.
@@ -2636,13 +2639,14 @@ dodata:							/* XXX */
 				m_adj(m, hdroptlen);
 				sbappendstream(&(so)->so_rcv, m);
 			}
+			TCP_REASS_UNLOCK(tp);
 			sorwakeup(so);
 		} else {
 			m_adj(m, hdroptlen);
 			tiflags = tcp_reass(tp, th, m, &tlen);
 			tp->t_flags |= TF_ACKNOW;
+			TCP_REASS_UNLOCK(tp);
 		}
-		TCP_REASS_UNLOCK(tp);
 
 		/*
 		 * Note the amount of data that peer has sent into
@@ -3888,8 +3892,11 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 resetandabort:
 	(void)tcp_respond(NULL, m, m, th, (tcp_seq)0, th->th_ack, TH_RST);
 abort:
-	if (so != NULL)
+	if (so != NULL) {
+		(void) soqremque(so, 1);
 		(void) soabort(so);
+		mutex_enter(softnet_lock);
+	}
 	s = splsoftnet();
 	syn_cache_put(sc);
 	splx(s);

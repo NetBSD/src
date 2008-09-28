@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.28.6.1 2008/06/02 13:22:07 mjf Exp $	*/
+/*	$NetBSD: locore.S,v 1.28.6.2 2008/09/28 10:39:56 mjf Exp $	*/
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
 /*
@@ -738,7 +738,7 @@ switch_diag:
 
 	/*
 	 * cpu_lwp_fork sets the initial stack to a page above l_addr.
-	 * Check that this is the case for curl.
+	 * Check that the stack is above this value for curl.
 	 */
 	ldw	L_ADDR(%arg1), %arg2
 	ldw	U_PCB+PCB_KSP(%arg2), %t1	/* t1 for switch_error */

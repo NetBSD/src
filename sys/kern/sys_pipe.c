@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.95.6.2 2008/06/02 13:24:12 mjf Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.95.6.3 2008/09/28 10:40:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.95.6.2 2008/06/02 13:24:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.95.6.3 2008/09/28 10:40:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.95.6.2 2008/06/02 13:24:12 mjf Exp $"
 #include <sys/kernel.h>
 #include <sys/ttycom.h>
 #include <sys/stat.h>
-#include <sys/malloc.h>
 #include <sys/poll.h>
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
@@ -170,8 +169,6 @@ static u_int nbigpipe = 0;
  * Amount of KVA consumed by pipe buffers.
  */
 static u_int amountpipekva = 0;
-
-MALLOC_DEFINE(M_PIPE, "pipe", "Pipe structures");
 
 static void pipeclose(struct file *fp, struct pipe *pipe);
 static void pipe_free_kmem(struct pipe *pipe);
@@ -620,8 +617,8 @@ pipe_loan_alloc(struct pipe *wpipe, int npages)
 	}
 
 	wpipe->pipe_map.npages = npages;
-	wpipe->pipe_map.pgs = malloc(npages * sizeof(struct vm_page *), M_PIPE,
-	    M_WAITOK);
+	wpipe->pipe_map.pgs = kmem_alloc(npages * sizeof(struct vm_page *),
+	    KM_SLEEP);
 	return (0);
 }
 
@@ -637,7 +634,8 @@ pipe_loan_free(struct pipe *wpipe)
 	uvm_km_free(kernel_map, wpipe->pipe_map.kva, len, UVM_KMF_VAONLY);
 	wpipe->pipe_map.kva = 0;
 	atomic_add_int(&amountpipekva, -len);
-	free(wpipe->pipe_map.pgs, M_PIPE);
+	kmem_free(wpipe->pipe_map.pgs,
+	    wpipe->pipe_map.npages * sizeof(struct vm_page *));
 	wpipe->pipe_map.pgs = NULL;
 }
 

@@ -1,9 +1,10 @@
-#	$NetBSD: files.i2c,v 1.16 2007/09/02 01:40:46 macallan Exp $
+#	$NetBSD: files.i2c,v 1.16.20.1 2008/09/28 10:40:21 mjf Exp $
 
+defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
 define	i2cexec
 
-device	iic { addr, [size = -1] }
+device	iic { [addr = -1], [size = -1] }
 attach	iic at i2cbus
 file	dev/i2c/i2c.c				iic | i2cbus
 file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec

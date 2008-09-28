@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.12 2006/12/27 15:56:26 rumble Exp $	 */
+/*	$NetBSD: pic.c,v 1.12.44.1 2008/09/28 10:40:07 mjf Exp $	 */
 
 /*
  * Copyright (c) 2002 Steve Rumble
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.12 2006/12/27 15:56:26 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.12.44.1 2008/09/28 10:40:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -59,13 +59,13 @@ static int      pic_match(struct device *, struct cfdata *, void *);
 static void     pic_attach(struct device *, struct device *, void *);
 static int      pic_print(void *, const char *);
 static void	pic_bus_reset(void);
-static void	pic_bus_error(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+static void	pic_bus_error(uint32_t, uint32_t, uint32_t, uint32_t);
 static void	pic_watchdog_enable(void);
 static void	pic_watchdog_disable(void);
 static void	pic_watchdog_tickle(void);
 
 CFATTACH_DECL(pic, sizeof(struct pic_softc),
-	      pic_match, pic_attach, NULL, NULL);
+    pic_match, pic_attach, NULL, NULL);
 
 struct pic_attach_args {
 	const char	       *iaa_name;
@@ -86,15 +86,15 @@ pic_match(struct device * parent, struct cfdata * match, void *aux)
 	 * ancestor of the mc, for mips1 processors.
 	 */
 	if (mach_type == MACH_SGI_IP12)
-		return (1);
+		return 1;
 	else
-		return (0);
+		return 0;
 }
 
 static void
 pic_attach(struct device * parent, struct device * self, void *aux)
 {
-	u_int32_t reg;
+	uint32_t reg;
 	struct pic_attach_args iaa;
 	struct mainbus_attach_args *ma = aux;
 
@@ -127,21 +127,21 @@ pic_attach(struct device * parent, struct device * self, void *aux)
 	printf("pic0: ");
 
 	switch (mach_subtype) {
-		case MACH_SGI_IP12_4D_3X:
-			printf("Personal Iris 4D/3x");
-			break;
-		case MACH_SGI_IP12_VIP12:
-			printf("VME IP12");
-			break;
-		case MACH_SGI_IP12_HP1:
-			printf("Indigo R3000");
-			break;
-		case MACH_SGI_IP12_HPLC:
-			printf("Hollywood Light");
-			break;
-		default:
-			printf("unknown machine");
-			break;
+	case MACH_SGI_IP12_4D_3X:
+		printf("Personal Iris 4D/3x");
+		break;
+	case MACH_SGI_IP12_VIP12:
+		printf("VME IP12");
+		break;
+	case MACH_SGI_IP12_HP1:
+		printf("Indigo R3000");
+		break;
+	case MACH_SGI_IP12_HPLC:
+		printf("Hollywood Light");
+		break;
+	default:
+		printf("unknown machine");
+		break;
 	}
 	printf(", board revision %x\n", mach_boardrev);
 
@@ -187,7 +187,7 @@ pic_attach(struct device * parent, struct device * self, void *aux)
 	 * machines use VME for their expansion bus.
 	 */
 	iaa.iaa_name = "gio";
-	(void) config_found(self, (void *) &iaa, pic_print);
+	(void)config_found(self, (void *)&iaa, pic_print);
 
 	pic_watchdog_enable();
 }
@@ -201,18 +201,18 @@ pic_print(void *aux, const char *name)
 	if (name)
 		aprint_normal("%s at %s", iaa->iaa_name, name);
 
-	return (UNCONF);
+	return UNCONF;
 }
 
 static void
 pic_bus_reset(void)
 {
+
 	bus_space_write_4(psc.iot, psc.ioh, PIC_PARITY_ERROR, 0);
 }
 
 static void
-pic_bus_error(u_int32_t status, u_int32_t cause, u_int32_t pc,
-    u_int32_t ipending)
+pic_bus_error(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 
 	printf("pic0: bus error\n");
@@ -256,11 +256,11 @@ pic_gio32_arb_config(int slot, uint32_t flags)
 	/* only Indigo machines have GIO expansion slots (XXX HPLC?) */
 	if (mach_subtype != MACH_SGI_IP12_HP1 &&
 	    mach_subtype != MACH_SGI_IP12_HPLC)
-		return (EINVAL);
+		return EINVAL;
 
 	/* graphics slot is not valid on IP12 */
 	if (slot != GIO_SLOT_EXP0 && slot != GIO_SLOT_EXP1)
-		return (EINVAL);
+		return EINVAL;
 
 	reg = bus_space_read_4(psc.iot, psc.ioh, (slot == GIO_SLOT_EXP0) ?
 	    PIC_GIO32ARB_SLOT0 : PIC_GIO32ARB_SLOT1);
@@ -280,5 +280,5 @@ pic_gio32_arb_config(int slot, uint32_t flags)
 	bus_space_write_4(psc.iot, psc.ioh, (slot == GIO_SLOT_EXP0) ?
 	    PIC_GIO32ARB_SLOT0 : PIC_GIO32ARB_SLOT1, reg);
 
-	return (0);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.1.6.2 2008/06/02 13:24:06 mjf Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.1.6.3 2008/09/28 10:40:51 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.1.6.2 2008/06/02 13:24:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.1.6.3 2008/09/28 10:40:51 mjf Exp $");
 #endif /* not lint */
 
 
@@ -61,10 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.1.6.2 2008/06/02 13:24:06 mjf
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
-
-#if defined(_KERNEL_OPT)
-#include "opt_udf.h"
-#endif
 
 #include "udf.h"
 #include "udf_subr.h"
@@ -108,11 +104,6 @@ udf_wr_nodedscr_callback(struct buf *buf)
 		return;
 	}
 
-	/* XXX noone is waiting on this outstanding_nodedscr */
-	udf_node->outstanding_nodedscr--;
-	if (udf_node->outstanding_nodedscr == 0)
-		wakeup(&udf_node->outstanding_nodedscr);
-
 	/* XXX right flags to mark dirty again on error? */
 	if (buf->b_error) {
 		/* write error on `defect free' media??? how to solve? */
@@ -120,10 +111,16 @@ udf_wr_nodedscr_callback(struct buf *buf)
 		udf_node->i_flags |= IN_MODIFIED | IN_ACCESSED;
 	}
 
-	/* first unlock the node */
-	KASSERT(udf_node->i_flags & IN_CALLBACK_ULK);
-	UDF_UNLOCK_NODE(udf_node, IN_CALLBACK_ULK);
+	/* decrement outstanding_nodedscr */
+	KASSERT(udf_node->outstanding_nodedscr >= 1);
+	udf_node->outstanding_nodedscr--;
+	if (udf_node->outstanding_nodedscr == 0) {
+		/* unlock the node */
+		KASSERT(udf_node->i_flags & IN_CALLBACK_ULK);
+		UDF_UNLOCK_NODE(udf_node, IN_CALLBACK_ULK);
 
+		wakeup(&udf_node->outstanding_nodedscr);
+	}
 	/* unreference the vnode so it can be recycled */
 	holdrele(udf_node->vnode);
 
@@ -212,28 +209,33 @@ udf_write_nodedscr_direct(struct udf_strat_args *args)
 	sector = 0;
 	error  = udf_translate_vtop(ump, icb, &sector, &dummy);
 	if (error)
-		return error;
+		goto out;
 
-	UDF_LOCK_NODE(udf_node, IN_CALLBACK_ULK);
+	/* add reference to the vnode to prevent recycling */
+	vhold(udf_node->vnode);
 
 	if (waitfor) {
 		DPRINTF(WRITE, ("udf_write_nodedscr: sync write\n"));
 
 		error = udf_write_phys_dscr_sync(ump, udf_node, UDF_C_NODE,
 			dscr, sector, logsector);
-		UDF_UNLOCK_NODE(udf_node, IN_CALLBACK_ULK);
 	} else {
 		DPRINTF(WRITE, ("udf_write_nodedscr: no wait, async write\n"));
-
-		/* add reference to the vnode to prevent recycling */
-		vhold(udf_node->vnode);
-
-		udf_node->outstanding_nodedscr++;
 
 		error = udf_write_phys_dscr_async(ump, udf_node, UDF_C_NODE,
 			dscr, sector, logsector, udf_wr_nodedscr_callback);
 		/* will be UNLOCKED in call back */
+		return error;
 	}
+
+	holdrele(udf_node->vnode);
+out:
+	udf_node->outstanding_nodedscr--;
+	if (udf_node->outstanding_nodedscr == 0) {
+		UDF_UNLOCK_NODE(udf_node, 0);
+		wakeup(&udf_node->outstanding_nodedscr);
+	}
+
 	return error;
 }
 
@@ -245,10 +247,12 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 	struct udf_mount *ump = args->ump;
 	struct buf *buf = args->nestbuf;
 	struct buf *nestbuf;
+	struct desc_tag *tag;
 	struct long_ad *node_ad_cpy;
 	uint64_t *lmapping, *pmapping, *lmappos, blknr, run_start;
 	uint32_t our_sectornr, sectornr;
 	uint32_t lb_size, buf_offset, rbuflen, bpos;
+	uint16_t vpart_num;
 	uint8_t *fidblk;
 	off_t rblk;
 	int sector_size = ump->discinfo.sector_size;
@@ -328,14 +332,12 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 	 * this queue. Note that a buffer can get multiple extents allocated.
 	 *
 	 * lmapping contains lb_num relative to base partition.
-	 * pmapping contains lb_num as used for disc adressing.
 	 */
 	lmapping    = ump->la_lmapping;
-	pmapping    = ump->la_pmapping;
 	node_ad_cpy = ump->la_node_ad_cpy;
 
-	/* write physical blocknr in buf and get its mappings */
-	udf_late_allocate_buf(ump, buf, lmapping, pmapping, node_ad_cpy);
+	/* logically allocate buf and map it in the file */
+	udf_late_allocate_buf(ump, buf, lmapping, node_ad_cpy, &vpart_num);
 
 	/* if we have FIDs, fixup using the new allocation table */
 	if (buf->b_udf_c_type == UDF_C_FIDS) {
@@ -352,10 +354,26 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 			buf_len -= len;
 		}
 	}
+	if (buf->b_udf_c_type == UDF_C_METADATA_SBM) {
+		if (buf->b_lblkno == 0) {
+			/* update the tag location inside */
+			tag = (struct desc_tag *) buf->b_data;
+			tag->tag_loc = udf_rw32(*lmapping);
+			udf_validate_tag_and_crc_sums(buf->b_data);
+		}
+	}
 	udf_fixup_node_internals(ump, buf->b_data, buf->b_udf_c_type);
 
-	/* speed up : try to conglomerate as many writes in one go */
-	sectors = (buf->b_bcount + sector_size -1) / sector_size;
+	/*
+	 * Translate new mappings in lmapping to pmappings and try to
+	 * conglomerate extents to reduce the number of writes.
+	 *
+	 * pmapping to contain lb_nums as used for disc adressing.
+	 */
+	pmapping = ump->la_pmapping;
+	sectors  = (buf->b_bcount + sector_size -1) / sector_size;
+	udf_translate_vtop_list(ump, sectors, vpart_num, lmapping, pmapping);
+
 	for (sector = 0; sector < sectors; sector++) {
 		buf_offset = sector * sector_size;
 		DPRINTF(WRITE, ("\tprocessing rel sector %d\n", sector));

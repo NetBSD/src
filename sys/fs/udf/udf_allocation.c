@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.2.2.4 2008/07/02 19:08:20 mjf Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.2.2.5 2008/09/28 10:40:51 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.2.2.4 2008/07/02 19:08:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.2.2.5 2008/09/28 10:40:51 mjf Exp $");
 #endif /* not lint */
 
 
@@ -63,10 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.2.2.4 2008/07/02 19:08:20 mjf E
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
 
-#if defined(_KERNEL_OPT)
-#include "opt_udf.h"
-#endif
-
 #include "udf.h"
 #include "udf_subr.h"
 #include "udf_bswap.h"
@@ -86,24 +82,23 @@ static void udf_record_allocation_in_node(struct udf_mount *ump,
  */
 
 /* --------------------------------------------------------------------- */
-//#ifdef DEBUG
-#if 1
+
+#if 0
 #if 1
 static void
 udf_node_dump(struct udf_node *udf_node) {
 	struct file_entry    *fe;
 	struct extfile_entry *efe;
 	struct icb_tag *icbtag;
-	struct short_ad *short_ad;
-	struct long_ad  *long_ad;
+	struct long_ad s_ad;
 	uint64_t inflen;
-	uint32_t icbflags, addr_type, max_l_ad;
+	uint32_t icbflags, addr_type;
 	uint32_t len, lb_num;
-	uint8_t  *data_pos;
+	uint32_t flags;
 	int part_num;
-	int adlen, ad_off, dscr_size, l_ea, l_ad, lb_size, flags;
+	int lb_size, eof, slot;
 
-	if ((udf_verbose & UDF_DEBUG_ADWLK) == 0)
+	if ((udf_verbose & UDF_DEBUG_NODEDUMP) == 0)
 		return;
 
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
@@ -113,68 +108,50 @@ udf_node_dump(struct udf_node *udf_node) {
 	if (fe) {
 		icbtag = &fe->icbtag;
 		inflen = udf_rw64(fe->inf_len);
-		dscr_size  = sizeof(struct file_entry) -1;
-		l_ea       = udf_rw32(fe->l_ea);
-		l_ad       = udf_rw32(fe->l_ad);
-		data_pos = (uint8_t *) fe + dscr_size + l_ea;
 	} else {
 		icbtag = &efe->icbtag;
 		inflen = udf_rw64(efe->inf_len);
-		dscr_size  = sizeof(struct extfile_entry) -1;
-		l_ea       = udf_rw32(efe->l_ea);
-		l_ad       = udf_rw32(efe->l_ad);
-		data_pos = (uint8_t *) efe + dscr_size + l_ea;
 	}
-	max_l_ad = lb_size - dscr_size - l_ea;
 
 	icbflags   = udf_rw16(icbtag->flags);
 	addr_type  = icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK;
 
-	printf("udf_node_dump:\n");
-	printf("\tudf_node %p\n", udf_node);
+	printf("udf_node_dump %p :\n", udf_node);
 
 	if (addr_type == UDF_ICB_INTERN_ALLOC) {
-		printf("\t\tIntern alloc, len = %"PRIu64"\n", inflen);
+		printf("\tIntern alloc, len = %"PRIu64"\n", inflen);
 		return;
 	}
 
-	printf("\t\tInflen  = %"PRIu64"\n", inflen);
-	printf("\t\tl_ad    = %d\n", l_ad);
-
-	if (addr_type == UDF_ICB_SHORT_ALLOC) {
-		adlen = sizeof(struct short_ad);
-	} else {
-		adlen = sizeof(struct long_ad);
-	}
-
+	printf("\tInflen  = %"PRIu64"\n", inflen);
 	printf("\t\t");
-	for (ad_off = 0; ad_off < max_l_ad-adlen; ad_off += adlen) {
-		if (addr_type == UDF_ICB_SHORT_ALLOC) {
-			short_ad = (struct short_ad *) (data_pos + ad_off);
-			len      = udf_rw32(short_ad->len);
-			lb_num   = udf_rw32(short_ad->lb_num); 
-			part_num = -1;
-			flags = UDF_EXT_FLAGS(len);
-			len   = UDF_EXT_LEN(len);
-		} else {
-			long_ad  = (struct long_ad *) (data_pos + ad_off);
-			len      = udf_rw32(long_ad->len);
-			lb_num   = udf_rw32(long_ad->loc.lb_num);
-			part_num = udf_rw16(long_ad->loc.part_num);
-			flags = UDF_EXT_FLAGS(len);
-			len   = UDF_EXT_LEN(len);
-		}
+
+	slot = 0;
+	for (;;) {
+		udf_get_adslot(udf_node, slot, &s_ad, &eof);
+		if (eof)
+			break;
+		part_num = udf_rw16(s_ad.loc.part_num);
+		lb_num = udf_rw32(s_ad.loc.lb_num);
+		len   = udf_rw32(s_ad.len);
+		flags = UDF_EXT_FLAGS(len);
+		len   = UDF_EXT_LEN(len);
+
 		printf("[");
 		if (part_num >= 0)
 			printf("part %d, ", part_num);
 		printf("lb_num %d, len %d", lb_num, len);
 		if (flags)
-			printf(", flags %d", flags);
+			printf(", flags %d", flags>>30);
 		printf("] ");
-		if (ad_off + adlen == l_ad)
-			printf("\n\t\tl_ad END\n\t\t");
+
+		if (flags == UDF_EXT_REDIRECT) {
+			printf("\n\textent END\n\tallocation extent\n\t\t");
+		}
+
+		slot++;
 	}
-	printf("\n");
+	printf("\n\tl_ad END\n\n");
 }
 #else
 #define udf_node_dump(a)
@@ -194,7 +171,7 @@ udf_assert_allocated(struct udf_mount *ump, uint16_t vpart_num,
 	int phys_part;
 	int ok;
 
-	DPRINTF(ALLOC, ("udf_assert_allocated: check virt lbnum %d "
+	DPRINTF(PARANOIA, ("udf_assert_allocated: check virt lbnum %d "
 			  "part %d + %d sect\n", lb_num, vpart_num, num_lb));
 
 	/* get partition backing up this vpart_num */
@@ -254,45 +231,59 @@ udf_assert_allocated(struct udf_mount *ump, uint16_t vpart_num,
 
 static void
 udf_node_sanity_check(struct udf_node *udf_node,
-		uint64_t *cnt_inflen, uint64_t *cnt_logblksrec) {
+		uint64_t *cnt_inflen, uint64_t *cnt_logblksrec)
+{
+	union dscrptr *dscr;
 	struct file_entry    *fe;
 	struct extfile_entry *efe;
 	struct icb_tag *icbtag;
-	struct short_ad *short_ad;
-	struct long_ad  *long_ad;
+	struct long_ad  s_ad;
 	uint64_t inflen, logblksrec;
-	uint32_t icbflags, addr_type, max_l_ad;
-	uint32_t len, lb_num;
-	uint8_t  *data_pos;
+	uint32_t icbflags, addr_type;
+	uint32_t len, lb_num, l_ea, l_ad, max_l_ad;
 	uint16_t part_num;
-	int adlen, ad_off, dscr_size, l_ea, l_ad, lb_size, flags, whole_lb;
+	uint8_t *data_pos;
+	int dscr_size, lb_size, flags, whole_lb;
+	int i, slot, eof;
 
 //	KASSERT(mutex_owned(&udf_node->ump->allocate_mutex));
+
+	if (1)
+		udf_node_dump(udf_node);
 
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
 
 	fe  = udf_node->fe;
 	efe = udf_node->efe;
 	if (fe) {
-		icbtag = &fe->icbtag;
-		inflen = udf_rw64(fe->inf_len);
-		logblksrec = udf_rw64(fe->logblks_rec);
+		dscr       = (union dscrptr *) fe;
+		icbtag     = &fe->icbtag;
+		inflen     = udf_rw64(fe->inf_len);
 		dscr_size  = sizeof(struct file_entry) -1;
-		l_ea       = udf_rw32(fe->l_ea);
+		logblksrec = udf_rw64(fe->logblks_rec);
 		l_ad       = udf_rw32(fe->l_ad);
-		data_pos = (uint8_t *) fe + dscr_size + l_ea;
+		l_ea       = udf_rw32(fe->l_ea);
 	} else {
-		icbtag = &efe->icbtag;
-		inflen = udf_rw64(efe->inf_len);
-		logblksrec = udf_rw64(efe->logblks_rec);
+		dscr       = (union dscrptr *) efe;
+		icbtag     = &efe->icbtag;
+		inflen     = udf_rw64(efe->inf_len);
 		dscr_size  = sizeof(struct extfile_entry) -1;
-		l_ea       = udf_rw32(efe->l_ea);
+		logblksrec = udf_rw64(efe->logblks_rec);
 		l_ad       = udf_rw32(efe->l_ad);
-		data_pos = (uint8_t *) efe + dscr_size + l_ea;
+		l_ea       = udf_rw32(efe->l_ea);
 	}
-	max_l_ad = lb_size - dscr_size - l_ea;
+	data_pos  = (uint8_t *) dscr + dscr_size + l_ea;
+	max_l_ad   = lb_size - dscr_size - l_ea;
 	icbflags   = udf_rw16(icbtag->flags);
 	addr_type  = icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK;
+
+	/* check if tail is zero */
+	DPRINTF(PARANOIA, ("Sanity check blank tail\n"));
+	for (i = l_ad; i < max_l_ad; i++) {
+		if (data_pos[i] != 0)
+			printf( "sanity_check: violation: node byte %d "
+				"has value %d\n", i, data_pos[i]);
+	}
 
 	/* reset counters */
 	*cnt_inflen     = 0;
@@ -305,31 +296,21 @@ udf_node_sanity_check(struct udf_node *udf_node,
 		return;
 	}
 
-	if (addr_type == UDF_ICB_SHORT_ALLOC) {
-		adlen = sizeof(struct short_ad);
-	} else {
-		adlen = sizeof(struct long_ad);
-	}
-
 	/* start counting */
 	whole_lb = 1;
-	for (ad_off = 0; ad_off < l_ad; ad_off += adlen) {
+	slot = 0;
+	for (;;) {
+		udf_get_adslot(udf_node, slot, &s_ad, &eof);
+		if (eof)
+			break;
 		KASSERT(whole_lb == 1);
-		if (addr_type == UDF_ICB_SHORT_ALLOC) {
-			short_ad = (struct short_ad *) (data_pos + ad_off);
-			len      = udf_rw32(short_ad->len);
-			lb_num   = udf_rw32(short_ad->lb_num); 
-			part_num = udf_rw16(udf_node->loc.loc.part_num);
-			flags = UDF_EXT_FLAGS(len);
-			len   = UDF_EXT_LEN(len);
-		} else {
-			long_ad  = (struct long_ad *) (data_pos + ad_off);
-			len      = udf_rw32(long_ad->len);
-			lb_num   = udf_rw32(long_ad->loc.lb_num);
-			part_num = udf_rw16(long_ad->loc.part_num);
-			flags = UDF_EXT_FLAGS(len);
-			len   = UDF_EXT_LEN(len);
-		}
+
+		part_num = udf_rw16(s_ad.loc.part_num);
+		lb_num = udf_rw32(s_ad.loc.lb_num);
+		len   = udf_rw32(s_ad.len);
+		flags = UDF_EXT_FLAGS(len);
+		len   = UDF_EXT_LEN(len);
+
 		if (flags != UDF_EXT_REDIRECT) {
 			*cnt_inflen += len;
 			if (flags == UDF_EXT_ALLOCATED) {
@@ -345,6 +326,8 @@ udf_node_sanity_check(struct udf_node *udf_node,
 
 		/* check whole lb */
 		whole_lb = ((len % lb_size) == 0);
+
+		slot++;
 	}
 	/* rest should be zero (ad_off > l_ad < max_l_ad - adlen) */
 
@@ -352,11 +335,35 @@ udf_node_sanity_check(struct udf_node *udf_node,
 	KASSERT(*cnt_logblksrec == logblksrec);
 
 //	KASSERT(mutex_owned(&udf_node->ump->allocate_mutex));
-	if (0)
-		udf_node_dump(udf_node);
 }
 #else
-#define udf_node_sanity_check(a, b, c)
+static void
+udf_node_sanity_check(struct udf_node *udf_node,
+		uint64_t *cnt_inflen, uint64_t *cnt_logblksrec) {
+	struct file_entry    *fe;
+	struct extfile_entry *efe;
+	struct icb_tag *icbtag;
+	uint64_t inflen, logblksrec;
+	int dscr_size, lb_size;
+
+	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
+
+	fe  = udf_node->fe;
+	efe = udf_node->efe;
+	if (fe) {
+		icbtag = &fe->icbtag;
+		inflen = udf_rw64(fe->inf_len);
+		dscr_size  = sizeof(struct file_entry) -1;
+		logblksrec = udf_rw64(fe->logblks_rec);
+	} else {
+		icbtag = &efe->icbtag;
+		inflen = udf_rw64(efe->inf_len);
+		dscr_size  = sizeof(struct extfile_entry) -1;
+		logblksrec = udf_rw64(efe->logblks_rec);
+	}
+	*cnt_logblksrec = logblksrec;
+	*cnt_inflen     = inflen;
+}
 #endif
 
 /* --------------------------------------------------------------------- */
@@ -524,6 +531,28 @@ translate_again:
 
 	return EINVAL;
 }
+
+
+/* XXX  provisional primitive braindead version */
+/* TODO use ext_res */
+void
+udf_translate_vtop_list(struct udf_mount *ump, uint32_t sectors,
+	uint16_t vpart_num, uint64_t *lmapping, uint64_t *pmapping)
+{
+	struct long_ad loc;
+	uint32_t lb_numres, ext_res;
+	int sector;
+
+	for (sector = 0; sector < sectors; sector++) {
+		memset(&loc, 0, sizeof(struct long_ad));
+		loc.loc.part_num = udf_rw16(vpart_num);
+		loc.loc.lb_num   = udf_rw32(*lmapping);
+		udf_translate_vtop(ump, &loc, &lb_numres, &ext_res);
+		*pmapping = lb_numres;
+		lmapping++; pmapping++;
+	}
+}
+
 
 /* --------------------------------------------------------------------- */
 
@@ -768,7 +797,7 @@ udf_search_free_vatloc(struct udf_mount *ump, uint32_t *lbnumres)
 
 static void
 udf_bitmap_allocate(struct udf_bitmap *bitmap, int ismetadata,
-	uint32_t ptov, uint32_t *num_lb, uint64_t *pmappos, uint64_t *lmappos)
+	uint32_t *num_lb, uint64_t *lmappos)
 {
 	uint32_t offset, lb_num, bit;
 	int32_t  diff;
@@ -803,7 +832,6 @@ udf_bitmap_allocate(struct udf_bitmap *bitmap, int ismetadata,
 			*bpos &= ~(1 << (bit-1));
 			lb_num = offset + bit-1;
 			*lmappos++ = lb_num;
-			*pmappos++ = lb_num + ptov;
 			*num_lb = *num_lb - 1;
 			// offset = (offset & ~7);
 		}
@@ -869,78 +897,78 @@ udf_bitmap_free(struct udf_bitmap *bitmap, uint32_t lb_num, uint32_t num_lb)
 
 /* allocate a contiguous sequence of sectornumbers */
 static int
-udf_allocate_space(struct udf_mount *ump, int ismetadata, int alloc_type,
-	int num_lb, uint16_t *alloc_partp,
-	uint64_t *lmapping, uint64_t *pmapping)
+udf_allocate_space(struct udf_mount *ump, int udf_c_type,
+	uint16_t vpart_num, uint32_t num_lb, uint64_t *lmapping)
 {
 	struct mmc_trackinfo *alloc_track, *other_track;
 	struct udf_bitmap *bitmap;
 	struct part_desc *pdesc;
 	struct logvol_int_desc *lvid;
-	uint64_t *lmappos, *pmappos;
+	uint64_t *lmappos;
 	uint32_t ptov, lb_num, *freepos, free_lbs;
 	int lb_size, alloc_num_lb;
-	int alloc_part;
-	int error;
+	int alloc_type, error;
+	int is_node;
 
+	DPRINTF(CALL, ("udf_allocate_space(ctype %d, vpart %d, num_lb %d\n",
+		udf_c_type, vpart_num, num_lb));
 	mutex_enter(&ump->allocate_mutex);
-	
+
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
 	KASSERT(lb_size == ump->discinfo.sector_size);
 
-	if (ismetadata) {
-		alloc_part  = ump->metadata_part;
-		alloc_track = &ump->metadata_track;
-		other_track = &ump->data_track;
-	} else {
-		alloc_part  = ump->data_part;
-		alloc_track = &ump->data_track;
-		other_track = &ump->metadata_track;
-	}
+	/* XXX TODO check disc space */
 
-	*alloc_partp = alloc_part;
+	alloc_type =  ump->vtop_alloc[vpart_num];
+	is_node    = (udf_c_type == UDF_C_NODE);
 
-	error = 0;
-	/* XXX check disc space */
-
-	pdesc = ump->partitions[ump->vtop[alloc_part]];
 	lmappos = lmapping;
-	pmappos = pmapping;
-
+	error = 0;
 	switch (alloc_type) {
 	case UDF_ALLOC_VAT :
 		/* search empty slot in VAT file */
 		KASSERT(num_lb == 1);
 		error = udf_search_free_vatloc(ump, &lb_num);
-		if (!error) {
+		if (!error)
 			*lmappos = lb_num;
-			*pmappos = 0;		/* will get late-allocated */
-		}
 		break;
 	case UDF_ALLOC_SEQUENTIAL :
 		/* sequential allocation on recordable media */
+		/* get partition backing up this vpart_num_num */
+		pdesc = ump->partitions[ump->vtop[vpart_num]];
+
 		/* calculate offset from physical base partition */
 		ptov  = udf_rw32(pdesc->start_loc);
 
+		/* get our track descriptors */
+		if (vpart_num == ump->node_part) {
+			alloc_track = &ump->metadata_track;
+			other_track = &ump->data_track;
+		} else {
+			alloc_track = &ump->data_track;
+			other_track = &ump->metadata_track;
+		}
+
+		/* allocate */
 		for (lb_num = 0; lb_num < num_lb; lb_num++) {
-			*pmappos++ = alloc_track->next_writable;
 			*lmappos++ = alloc_track->next_writable - ptov;
 			alloc_track->next_writable++;
 			alloc_track->free_blocks--;
 		}
+
+		/* keep other track up-to-date */
 		if (alloc_track->tracknr == other_track->tracknr)
 			memcpy(other_track, alloc_track,
 				sizeof(struct mmc_trackinfo));
 		break;
 	case UDF_ALLOC_SPACEMAP :
-		ptov  = udf_rw32(pdesc->start_loc);
-
-		/* allocate on unallocated bits page */
+		/* try to allocate on unallocated bits */
 		alloc_num_lb = num_lb;
-		bitmap = &ump->part_unalloc_bits[alloc_part];
-		udf_bitmap_allocate(bitmap, ismetadata, ptov, &alloc_num_lb,
-			pmappos, lmappos);
+		bitmap = &ump->part_unalloc_bits[vpart_num];
+		udf_bitmap_allocate(bitmap, is_node, &alloc_num_lb, lmappos);
 		ump->lvclose |= UDF_WRITE_PART_BITMAPS;
+
+		/* have we allocated all? */
 		if (alloc_num_lb) {
 			/* TODO convert freed to unalloc and try again */
 			/* free allocated piece for now */
@@ -953,14 +981,38 @@ udf_allocate_space(struct udf_mount *ump, int ismetadata, int alloc_type,
 		if (!error) {
 			/* adjust freecount */
 			lvid = ump->logvol_integrity;
-			freepos = &lvid->tables[0] + alloc_part;
+			freepos = &lvid->tables[0] + vpart_num;
 			free_lbs = udf_rw32(*freepos);
 			*freepos = udf_rw32(free_lbs - num_lb);
 		}
 		break;
-	case UDF_ALLOC_METABITMAP :
-	case UDF_ALLOC_METASEQUENTIAL :
-	case UDF_ALLOC_RELAXEDSEQUENTIAL :
+	case UDF_ALLOC_METABITMAP :		/* UDF 2.50, 2.60 BluRay-RE */
+		/* allocate on metadata unallocated bits */
+		alloc_num_lb = num_lb;
+		bitmap = &ump->metadata_unalloc_bits;
+		udf_bitmap_allocate(bitmap, is_node, &alloc_num_lb, lmappos);
+		ump->lvclose |= UDF_WRITE_PART_BITMAPS;
+
+		/* have we allocated all? */
+		if (alloc_num_lb) {
+			/* YIKES! TODO we need to extend the metadata partition */
+			/* free allocated piece for now */
+			lmappos = lmapping;
+			for (lb_num=0; lb_num < num_lb-alloc_num_lb; lb_num++) {
+				udf_bitmap_free(bitmap, *lmappos++, 1);
+			}
+			error = ENOSPC;
+		}
+		if (!error) {
+			/* adjust freecount */
+			lvid = ump->logvol_integrity;
+			freepos = &lvid->tables[0] + vpart_num;
+			free_lbs = udf_rw32(*freepos);
+			*freepos = udf_rw32(free_lbs - num_lb);
+		}
+		break;
+	case UDF_ALLOC_METASEQUENTIAL :		/* UDF 2.60       BluRay-R  */
+	case UDF_ALLOC_RELAXEDSEQUENTIAL :	/* UDF 2.50/~meta BluRay-R  */
 		printf("ALERT: udf_allocate_space : allocation %d "
 				"not implemented yet!\n", alloc_type);
 		/* TODO implement, doesn't have to be contiguous */
@@ -971,12 +1023,12 @@ udf_allocate_space(struct udf_mount *ump, int ismetadata, int alloc_type,
 #ifdef DEBUG
 	if (udf_verbose & UDF_DEBUG_ALLOC) {
 		lmappos = lmapping;
-		pmappos = pmapping;
-		printf("udf_allocate_space, mapping l->p:\n");
+		printf("udf_allocate_space, allocated logical lba :\n");
 		for (lb_num = 0; lb_num < num_lb; lb_num++) {
-			printf("\t%"PRIu64" -> %"PRIu64"\n",
-				*lmappos++, *pmappos++);
+			printf("%s %"PRIu64",", (lb_num > 0)?",":"", 
+				*lmappos++);
 		}
+		printf("\n");
 	}
 #endif
 	mutex_exit(&ump->allocate_mutex);
@@ -1001,6 +1053,10 @@ udf_free_allocated_space(struct udf_mount *ump, uint32_t lb_num,
 	DPRINTF(ALLOC, ("udf_free_allocated_space: freeing virt lbnum %d "
 			  "part %d + %d sect\n", lb_num, vpart_num, num_lb));
 
+	/* no use freeing zero length */
+	if (num_lb == 0)
+		return;
+
 	mutex_enter(&ump->allocate_mutex);
 
 	/* get partition backing up this vpart_num */
@@ -1020,7 +1076,7 @@ udf_free_allocated_space(struct udf_mount *ump, uint32_t lb_num,
 		if (bitmap->bits == NULL)
 			bitmap = &ump->part_unalloc_bits[phys_part];
 
-		/* if no bitmaps are defined, bail out */
+		/* if no bitmaps are defined, bail out; XXX OK? */
 		if (bitmap->bits == NULL)
 			break;
 
@@ -1049,6 +1105,18 @@ udf_free_allocated_space(struct udf_mount *ump, uint32_t lb_num,
 		break;
 	case UDF_VTOP_TYPE_META :
 		/* free space in the metadata bitmap */
+		bitmap = &ump->metadata_unalloc_bits;
+		KASSERT(bitmap->bits);
+
+		ump->lvclose |= UDF_WRITE_PART_BITMAPS;
+		udf_bitmap_free(bitmap, lb_num, num_lb);
+
+		/* adjust freecount */
+		lvid = ump->logvol_integrity;
+		freepos = &lvid->tables[0] + vpart_num;
+		free_lbs = udf_rw32(*freepos);
+		*freepos = udf_rw32(free_lbs + num_lb);
+		break;
 	default:
 		printf("ALERT: udf_free_allocated_space : allocation %d "
 			"not implemented yet!\n", ump->vtop_tp[vpart_num]);
@@ -1061,29 +1129,19 @@ udf_free_allocated_space(struct udf_mount *ump, uint32_t lb_num,
 /* --------------------------------------------------------------------- */
 
 int
-udf_pre_allocate_space(struct udf_mount *ump, int udf_c_type, int num_lb,
-	uint16_t *alloc_partp, uint64_t *lmapping, uint64_t *pmapping)
+udf_pre_allocate_space(struct udf_mount *ump, int udf_c_type,
+	uint32_t num_lb, uint16_t vpartnr, uint64_t *lmapping)
 {
-	int ismetadata, alloc_type;
-
-	ismetadata = (udf_c_type == UDF_C_NODE);
-	alloc_type = ismetadata? ump->meta_alloc : ump->data_alloc;
-
-#ifdef DIAGNOSTIC
-	if ((alloc_type == UDF_ALLOC_VAT) && (udf_c_type != UDF_C_NODE)) {
-		panic("udf_pre_allocate_space: bad c_type on VAT!\n");
-	}
-#endif
+	/* TODO properly maintain uncomitted_lb per partition */
 
 	/* reserve size for VAT allocated data */
-	if (alloc_type == UDF_ALLOC_VAT) {
+	if (ump->vtop_alloc[vpartnr] == UDF_ALLOC_VAT) {
 		mutex_enter(&ump->allocate_mutex);
 			ump->uncomitted_lb += num_lb;
 		mutex_exit(&ump->allocate_mutex);
 	}
 
-	return udf_allocate_space(ump, ismetadata, alloc_type,
-		num_lb, alloc_partp, lmapping, pmapping);
+	return udf_allocate_space(ump, udf_c_type, vpartnr, num_lb, lmapping);
 }
 
 /* --------------------------------------------------------------------- */
@@ -1095,13 +1153,11 @@ udf_pre_allocate_space(struct udf_mount *ump, int udf_c_type, int num_lb,
 
 void
 udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf,
-	uint64_t *lmapping, uint64_t *pmapping, struct long_ad *node_ad_cpy)
+	uint64_t *lmapping, struct long_ad *node_ad_cpy, uint16_t *vpart_nump)
 {
 	struct udf_node  *udf_node = VTOI(buf->b_vp);
-	uint16_t vpart_num;
 	int lb_size, blks, udf_c_type;
-	int ismetadata, alloc_type;
-	int num_lb;
+	int vpart_num, num_lb;
 	int error, s;
 
 	/*
@@ -1118,26 +1174,26 @@ udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf,
 
 	KASSERT(lb_size == ump->discinfo.sector_size);
 
-	ismetadata = (udf_c_type == UDF_C_NODE);
-	alloc_type = ismetadata? ump->meta_alloc : ump->data_alloc;
-
-#ifdef DIAGNOSTIC
-	if ((alloc_type == UDF_ALLOC_VAT) && (udf_c_type != UDF_C_NODE)) {
-		panic("udf_late_allocate_buf: bad c_type on VAT!\n");
-	}
-#endif
+	/* select partition to record the buffer on */
+	vpart_num = ump->data_part;
+	if (udf_c_type == UDF_C_NODE)
+		vpart_num = ump->node_part;
+	if (udf_c_type == UDF_C_FIDS)
+		vpart_num = ump->fids_part;
+	*vpart_nump = vpart_num;
 
 	if (udf_c_type == UDF_C_NODE) {
 		/* if not VAT, its allready allocated */
-		if (alloc_type != UDF_ALLOC_VAT)
+		if (ump->vtop_alloc[ump->node_part] != UDF_ALLOC_VAT)
 			return;
 
-		/* allocate sequential */
-		alloc_type = UDF_ALLOC_SEQUENTIAL;
+		/* allocate on its backing sequential partition */
+		vpart_num = ump->data_part;
 	}
 
-	error = udf_allocate_space(ump, ismetadata, alloc_type,
-			num_lb, &vpart_num, lmapping, pmapping);
+	/* do allocation on the selected partition */
+	error = udf_allocate_space(ump, udf_c_type,
+			vpart_num, num_lb, lmapping);
 	if (error) {
 		/* ARGH! we've not done our accounting right! */
 		panic("UDF disc allocation accounting gone wrong");
@@ -1152,10 +1208,11 @@ udf_late_allocate_buf(struct udf_mount *ump, struct buf *buf,
 		}
 	mutex_exit(&ump->allocate_mutex);
 
-	buf->b_blkno = (*pmapping) * blks;
-
 	/* If its userdata or FIDs, record its allocation in its node. */
-	if ((udf_c_type == UDF_C_USERDATA) || (udf_c_type == UDF_C_FIDS)) {
+	if ((udf_c_type == UDF_C_USERDATA) ||
+	    (udf_c_type == UDF_C_FIDS) ||
+	    (udf_c_type == UDF_C_METADATA_SBM))
+	{
 		udf_record_allocation_in_node(ump, buf, vpart_num, lmapping,
 			node_ad_cpy);
 		/* decrement our outstanding bufs counter */
@@ -1275,6 +1332,7 @@ udf_wipe_adslots(struct udf_node *udf_node)
 	for (extnr = 0; extnr < udf_node->num_extensions; extnr++) {
 		ext = udf_node->ext[extnr];
 		dscr_size  = sizeof(struct alloc_ext_entry) -1;
+		data_pos = (uint8_t *) ext->data;
 		max_l_ad = lb_size - dscr_size;
 		memset(data_pos, 0, max_l_ad);
 		ext->l_ad = udf_rw32(0);
@@ -1282,6 +1340,7 @@ udf_wipe_adslots(struct udf_node *udf_node)
 		crclen = dscr_size - UDF_DESC_TAG_LENGTH;
 		ext->tag.desc_crc_len = udf_rw32(crclen);
 	}
+	udf_node->i_flags |= IN_NODE_REBUILD;
 }
 
 /* --------------------------------------------------------------------- */
@@ -1294,9 +1353,9 @@ udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb,
 	struct alloc_ext_entry *ext;
 	struct icb_tag *icbtag;
 	struct short_ad *short_ad;
-	struct long_ad *long_ad;
+	struct long_ad *long_ad, l_icb;
 	uint32_t offset;
-	uint32_t lb_size, dscr_size, l_ea, l_ad, max_l_ad;
+	uint32_t lb_size, dscr_size, l_ea, l_ad, flags;
 	uint8_t *data_pos;
 	int icbflags, addr_type, adlen, extnr;
 
@@ -1318,7 +1377,6 @@ udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb,
 		l_ad       = udf_rw32(efe->l_ad);
 		data_pos = (uint8_t *) efe + dscr_size + l_ea;
 	}
-	max_l_ad = lb_size - dscr_size - l_ea;
 
 	icbflags  = udf_rw16(icbtag->flags);
 	addr_type = icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK;
@@ -1340,22 +1398,42 @@ udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb,
 	/* if offset too big, we go to the allocation extensions */
 	offset = slot * adlen;
 	extnr  = -1;
-	while (offset >= max_l_ad) {
-		extnr++;
-		offset -= max_l_ad;
-		ext  = udf_node->ext[extnr];
-		dscr_size  = sizeof(struct alloc_ext_entry) -1;
-		l_ad = udf_rw32(ext->l_ad);
-		max_l_ad = lb_size - dscr_size;
-		data_pos = (uint8_t *) ext + dscr_size;
-		if (extnr > udf_node->num_extensions) {
+	while (offset >= l_ad) {
+		/* check if our last entry is a redirect */
+		if (addr_type == UDF_ICB_SHORT_ALLOC) {
+			short_ad = (struct short_ad *) (data_pos + l_ad-adlen);
+			l_icb.len          = short_ad->len;
+			l_icb.loc.part_num = udf_node->loc.loc.part_num;
+			l_icb.loc.lb_num   = short_ad->lb_num;
+		} else {
+			KASSERT(addr_type == UDF_ICB_LONG_ALLOC);
+			long_ad = (struct long_ad *) (data_pos + l_ad-adlen);
+			l_icb = *long_ad;
+		}
+		flags = UDF_EXT_FLAGS(udf_rw32(l_icb.len));
+		if (flags != UDF_EXT_REDIRECT) {
 			l_ad = 0;	/* force EOF */
 			break;
 		}
+
+		/* advance to next extent */
+		extnr++;
+		if (extnr >= udf_node->num_extensions) {
+			l_ad = 0;	/* force EOF */
+			break;
+		}
+		offset = offset - l_ad;
+		ext  = udf_node->ext[extnr];
+		dscr_size  = sizeof(struct alloc_ext_entry) -1;
+		l_ad = udf_rw32(ext->l_ad);
+		data_pos = (uint8_t *) ext + dscr_size;
 	}
 
+	/* XXX l_ad == 0 should be enough to check */
 	*eof = (offset >= l_ad) || (l_ad == 0);
 	if (*eof) {
+		DPRINTF(PARANOIDADWLK, ("returning EOF, extnr %d, offset %d, "
+			"l_ad %d\n", extnr, offset, l_ad));
 		memset(icb, 0, sizeof(struct long_ad));
 		return;
 	}
@@ -1370,28 +1448,37 @@ udf_get_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb,
 		long_ad = (struct long_ad *) (data_pos + offset);
 		*icb = *long_ad;
 	}
+	DPRINTF(PARANOIDADWLK, ("returning element : v %d, lb %d, len %d, "
+		"flags %d\n", icb->loc.part_num, icb->loc.lb_num,
+		UDF_EXT_LEN(icb->len), UDF_EXT_FLAGS(icb->len)));
 }
 
 /* --------------------------------------------------------------------- */
 
 int
-udf_append_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb) {
-	union dscrptr          *dscr;
+udf_append_adslot(struct udf_node *udf_node, int *slot, struct long_ad *icb) {
+	struct udf_mount *ump = udf_node->ump;
+	union dscrptr          *dscr, *extdscr;
 	struct file_entry      *fe;
 	struct extfile_entry   *efe;
 	struct alloc_ext_entry *ext;
 	struct icb_tag *icbtag;
 	struct short_ad *short_ad;
-	struct long_ad *long_ad, o_icb;
+	struct long_ad *long_ad, o_icb, l_icb;
 	uint64_t logblks_rec, *logblks_rec_p;
-	uint32_t offset, rest, len;
+	uint64_t lmapping;
+	uint32_t offset, rest, len, lb_num;
 	uint32_t lb_size, dscr_size, l_ea, l_ad, *l_ad_p, max_l_ad, crclen;
+	uint32_t flags;
+	uint16_t vpart_num;
 	uint8_t *data_pos;
 	int icbflags, addr_type, adlen, extnr;
+	int error;
+
+	lb_size = udf_rw32(ump->logical_vol->lb_size);
+	vpart_num = udf_rw16(udf_node->loc.loc.part_num);
 
 	/* determine what descriptor we are in */
-	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
-
 	fe  = udf_node->fe;
 	efe = udf_node->efe;
 	if (fe) {
@@ -1429,40 +1516,56 @@ udf_append_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb) {
 		adlen = sizeof(struct long_ad);
 	}
 
-	/* clean up given long_ad */
-#ifdef DIAGNOSTIC
-	if (UDF_EXT_FLAGS(udf_rw32(icb->len)) == UDF_EXT_FREE) {
-		if ((udf_rw16(icb->loc.part_num) != 0) ||
-		    (udf_rw32(icb->loc.lb_num) != 0))
-			printf("UDF: warning, cleaning long_ad marked free\n");
+	/* clean up given long_ad since it can be a synthesized one */
+	flags = UDF_EXT_FLAGS(udf_rw32(icb->len));
+	if (flags == UDF_EXT_FREE) {
 		icb->loc.part_num = udf_rw16(0);
 		icb->loc.lb_num   = udf_rw32(0);
 	}
-#endif
 
 	/* if offset too big, we go to the allocation extensions */
-	offset = slot * adlen;
-	extnr  = 0;
-	while (offset > max_l_ad) {
-		offset -= max_l_ad;
+	l_ad   = udf_rw32(*l_ad_p);
+	offset = (*slot) * adlen;
+	extnr  = -1;
+	while (offset >= l_ad) {
+		/* check if our last entry is a redirect */
+		if (addr_type == UDF_ICB_SHORT_ALLOC) {
+			short_ad = (struct short_ad *) (data_pos + l_ad-adlen);
+			l_icb.len          = short_ad->len;
+			l_icb.loc.part_num = udf_node->loc.loc.part_num;
+			l_icb.loc.lb_num   = short_ad->lb_num;
+		} else {
+			KASSERT(addr_type == UDF_ICB_LONG_ALLOC);
+			long_ad = (struct long_ad *) (data_pos + l_ad-adlen);
+			l_icb = *long_ad;
+		}
+		flags = UDF_EXT_FLAGS(udf_rw32(l_icb.len));
+		if (flags != UDF_EXT_REDIRECT) {
+			/* only one past the last one is adressable */
+			break;
+		}
+
+		/* advance to next extent */
+		extnr++;
+		KASSERT(extnr < udf_node->num_extensions);
+		offset = offset - l_ad;
+
 		ext  = udf_node->ext[extnr];
 		dscr = (union dscrptr *) ext;
 		dscr_size  = sizeof(struct alloc_ext_entry) -1;
-
-		KASSERT(ext != NULL);
-		l_ad_p = &ext->l_ad;
 		max_l_ad = lb_size - dscr_size;
-		data_pos = (uint8_t *) dscr + dscr_size;
-
-		extnr++;
+		l_ad_p = &ext->l_ad;
+		l_ad   = udf_rw32(*l_ad_p);
+		data_pos = (uint8_t *) ext + dscr_size;
 	}
+	DPRINTF(PARANOIDADWLK, ("append, ext %d, offset %d, l_ad %d\n",
+		extnr, offset, udf_rw32(*l_ad_p)));
+	KASSERT(l_ad == udf_rw32(*l_ad_p));
+
 	/* offset is offset within the current (E)FE/AED */
 	l_ad   = udf_rw32(*l_ad_p);
 	crclen = udf_rw32(dscr->tag.desc_crc_len);
 	logblks_rec = udf_rw64(*logblks_rec_p);
-
-	if (extnr > udf_node->num_extensions)
-		return EFBIG;	/* too fragmented */
 
 	/* overwriting old piece? */
 	if (offset < l_ad) {
@@ -1487,15 +1590,84 @@ udf_append_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb) {
 		}
 	}
 
-	/* calculate rest space in this descriptor */
-	rest = max_l_ad - offset;
+	/* check if we're not appending a redirection */
+	flags = UDF_EXT_FLAGS(udf_rw32(icb->len));
+	KASSERT(flags != UDF_EXT_REDIRECT);
+
+	/* round down available space */
+	rest = adlen * ((max_l_ad - offset) / adlen);
 	if (rest <= adlen) {
-		/* create redirect and link new allocation extension */
-		printf("udf_append_to_adslot: can't create allocation extention yet\n");
-		return EFBIG;
+		/* have to append aed, see if we already have a spare one */
+		extnr++;
+		ext = udf_node->ext[extnr];
+		l_icb = udf_node->ext_loc[extnr];
+		if (ext == NULL) {
+			DPRINTF(ALLOC,("adding allocation extent %d\n", extnr));
+
+			error = udf_pre_allocate_space(ump, UDF_C_NODE, 1,
+					vpart_num, &lmapping);
+			lb_num = lmapping;
+			if (error)
+				return error;
+
+			/* initialise pointer to location */
+			memset(&l_icb, 0, sizeof(struct long_ad));
+			l_icb.len = udf_rw32(lb_size | UDF_EXT_REDIRECT);
+			l_icb.loc.lb_num   = udf_rw32(lb_num);
+			l_icb.loc.part_num = udf_rw16(vpart_num);
+
+			/* create new aed descriptor */
+			udf_create_logvol_dscr(ump, udf_node, &l_icb, &extdscr);
+			ext = &extdscr->aee;
+
+			udf_inittag(ump, &ext->tag, TAGID_ALLOCEXTENT, lb_num);
+			dscr_size  = sizeof(struct alloc_ext_entry) -1;
+			max_l_ad = lb_size - dscr_size;
+			memset(ext->data, 0, max_l_ad);
+			ext->l_ad = udf_rw32(0);
+			ext->tag.desc_crc_len =
+				udf_rw32(dscr_size - UDF_DESC_TAG_LENGTH);
+
+			/* declare aed */
+			udf_node->num_extensions++;
+			udf_node->ext_loc[extnr] = l_icb;
+			udf_node->ext[extnr] = ext;
+		}
+		/* add redirect and adjust l_ad and crclen for old descr */
+		if (addr_type == UDF_ICB_SHORT_ALLOC) {
+			short_ad = (struct short_ad *) (data_pos + offset);
+			short_ad->len    = l_icb.len;
+			short_ad->lb_num = l_icb.loc.lb_num;
+		} else if (addr_type == UDF_ICB_LONG_ALLOC) {
+			long_ad = (struct long_ad *) (data_pos + offset);
+			*long_ad = l_icb;
+		}
+		l_ad   += adlen;
+		crclen += adlen;
+		dscr->tag.desc_crc_len = udf_rw32(crclen);
+		*l_ad_p = udf_rw32(l_ad);
+
+		/* advance to the new extension */
+		KASSERT(ext != NULL);
+		dscr = (union dscrptr *) ext;
+		dscr_size  = sizeof(struct alloc_ext_entry) -1;
+		max_l_ad = lb_size - dscr_size;
+		data_pos = (uint8_t *) dscr + dscr_size;
+
+		l_ad_p = &ext->l_ad;
+		l_ad   = udf_rw32(*l_ad_p);
+		crclen = udf_rw32(dscr->tag.desc_crc_len);
+		offset = 0;
+
+		/* adjust callees slot count for link insert */
+		*slot += 1;
 	}
 
 	/* write out the element */
+	DPRINTF(PARANOIDADWLK, ("adding element : %p : v %d, lb %d, "
+			"len %d, flags %d\n", data_pos + offset,
+			icb->loc.part_num, icb->loc.lb_num,
+			UDF_EXT_LEN(icb->len), UDF_EXT_FLAGS(icb->len)));
 	if (addr_type == UDF_ICB_SHORT_ALLOC) {
 		short_ad = (struct short_ad *) (data_pos + offset);
 		short_ad->len    = icb->len;
@@ -1506,7 +1678,8 @@ udf_append_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb) {
 	}
 
 	/* adjust logblks recorded count */
-	if (UDF_EXT_FLAGS(icb->len) == UDF_EXT_ALLOCATED)
+	flags = UDF_EXT_FLAGS(udf_rw32(icb->len));
+	if (flags == UDF_EXT_ALLOCATED)
 		logblks_rec += (UDF_EXT_LEN(icb->len) + lb_size -1) / lb_size;
 	*logblks_rec_p = udf_rw64(logblks_rec);
 
@@ -1520,6 +1693,65 @@ udf_append_adslot(struct udf_node *udf_node, int slot, struct long_ad *icb) {
 
 	return 0;
 }
+
+/* --------------------------------------------------------------------- */
+
+static void
+udf_count_alloc_exts(struct udf_node *udf_node)
+{
+	struct long_ad s_ad;
+	uint32_t lb_num, len, flags;
+	uint16_t vpart_num;
+	int slot, eof;
+	int num_extents, extnr;
+	int lb_size;
+
+	if (udf_node->num_extensions == 0)
+		return;
+
+	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
+	/* count number of allocation extents in use */
+	num_extents = 0;
+	slot = 0;
+	for (;;) {
+		udf_get_adslot(udf_node, slot, &s_ad, &eof);
+		if (eof)
+			break;
+		len   = udf_rw32(s_ad.len);
+		flags = UDF_EXT_FLAGS(len);
+
+		if (flags == UDF_EXT_REDIRECT)
+			num_extents++;
+
+		slot++;
+	}
+
+	DPRINTF(ALLOC, ("udf_count_alloc_ext counted %d live extents\n",
+		num_extents));
+
+	/* XXX choice: we could delay freeing them on node writeout */
+	/* free excess entries */
+	extnr = num_extents;
+	for (;extnr < udf_node->num_extensions; extnr++) {
+		DPRINTF(ALLOC, ("freeing alloc ext %d\n", extnr));
+		/* free dscriptor */
+		s_ad = udf_node->ext_loc[extnr];
+		udf_free_logvol_dscr(udf_node->ump, &s_ad,
+			udf_node->ext[extnr]);
+		udf_node->ext[extnr] = NULL;
+
+		/* free disc space */
+		lb_num    = udf_rw32(s_ad.loc.lb_num);
+		vpart_num = udf_rw16(s_ad.loc.part_num);
+		udf_free_allocated_space(udf_node->ump, lb_num, vpart_num, 1);
+
+		memset(&udf_node->ext_loc[extnr], 0, sizeof(struct long_ad));
+	}
+
+	/* set our new number of allocation extents */
+	udf_node->num_extensions = num_extents;
+}
+
 
 /* --------------------------------------------------------------------- */
 
@@ -1548,16 +1780,19 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 	uint32_t run_start;
 	uint32_t slot_offset, replace_len, replace;
 	int addr_type, icbflags;
-	int udf_c_type = buf->b_udf_c_type;
+//	int udf_c_type = buf->b_udf_c_type;
 	int lb_size, run_length, eof;
 	int slot, cpy_slot, cpy_slots, restart_slot;
 	int error;
 
 	DPRINTF(ALLOC, ("udf_record_allocation_in_node\n"));
 
+#if 0
+	/* XXX disable sanity check for now */
 	/* sanity check ... should be panic ? */
 	if ((udf_c_type != UDF_C_USERDATA) && (udf_c_type != UDF_C_FIDS))
 		return;
+#endif
 
 	lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
 
@@ -1749,6 +1984,8 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 
 		/* advance for this slot */
 		if (replace) {
+			/* note: dont round DOWN on num_lb since we then
+			 * forget the last partial one */
 			num_lb = (replace + lb_size - 1) / lb_size;
 			if (flags != UDF_EXT_FREE) {
 				udf_free_allocated_space(ump, lb_num,
@@ -1848,7 +2085,7 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 			UDF_EXT_LEN(udf_rw32(c_ad.len)),
 			UDF_EXT_FLAGS(udf_rw32(c_ad.len)) >> 30));
 
-			error = udf_append_adslot(udf_node, slot, &c_ad);
+			error = udf_append_adslot(udf_node, &slot, &c_ad);
 			if (error) {
 				buf->b_error = error;
 				goto out;
@@ -1867,7 +2104,7 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 		UDF_EXT_LEN(udf_rw32(c_ad.len)),
 		UDF_EXT_FLAGS(udf_rw32(c_ad.len)) >> 30));
 
-		error = udf_append_adslot(udf_node, slot, &c_ad);
+		error = udf_append_adslot(udf_node, &slot, &c_ad);
 		if (error) {
 			buf->b_error = error;
 			goto out;
@@ -1875,6 +2112,8 @@ udf_record_allocation_in_node(struct udf_mount *ump, struct buf *buf,
 	}
 
 out:
+	udf_count_alloc_exts(udf_node);
+
 	/* the node's descriptors should now be sane */
 	udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
 	UDF_UNLOCK_NODE(udf_node, 0);
@@ -1901,12 +2140,13 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 	uint64_t foffset, end_foffset;
 	uint64_t orig_inflen, orig_lbrec, new_inflen, new_lbrec;
 	uint32_t lb_size, dscr_size, crclen, lastblock_grow;
-	uint32_t len, flags, max_len;
+	uint32_t icbflags, len, flags, max_len;
 	uint32_t max_l_ad, l_ad, l_ea;
+	uint16_t my_part, dst_part;
 	uint8_t *data_pos, *evacuated_data;
-	int icbflags, addr_type;
+	int addr_type;
 	int slot, cpy_slot;
-	int eof, error;
+	int isdir, eof, error;
 
 	DPRINTF(ALLOC, ("udf_grow_node\n"));
 
@@ -2006,10 +2246,16 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 			UDF_LOCK_NODE(udf_node, 0);
 		}
 
-		/* convert to a normal alloc */
-		/* XXX HOWTO selecting allocation method ? */
+		/* convert to a normal alloc and select type */
+		isdir    = (vp->v_type == VDIR);
+		my_part  = udf_rw16(udf_node->loc.loc.part_num);
+		dst_part = isdir? ump->fids_part : ump->data_part;
+		addr_type = UDF_ICB_SHORT_ALLOC;
+		if (dst_part != my_part)
+			addr_type = UDF_ICB_LONG_ALLOC;
+
 		icbflags &= ~UDF_ICB_TAG_FLAGS_ALLOC_MASK;
-		icbflags |=  UDF_ICB_LONG_ALLOC;	/* XXX or SHORT_ALLOC */
+		icbflags |= addr_type;
 		icbtag->flags = udf_rw16(icbflags);
 
 		/* wipe old descriptor space */
@@ -2087,7 +2333,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 
 		if (udf_ads_merge(lb_size, &c_ad, &s_ad)) {
 			/* not mergable (anymore) */
-			error = udf_append_adslot(udf_node, slot, &c_ad);
+			error = udf_append_adslot(udf_node, &slot, &c_ad);
 			if (error)
 				goto errorout;
 			slot++;
@@ -2099,7 +2345,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 
 	/* if there is a rest piece in the accumulator, append it */
 	if (UDF_EXT_LEN(udf_rw32(c_ad.len)) > 0) {
-		error = udf_append_adslot(udf_node, slot, &c_ad);
+		error = udf_append_adslot(udf_node, &slot, &c_ad);
 		if (error)
 			goto errorout;
 		slot++;
@@ -2107,7 +2353,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 
 	/* if there is a rest piece that didn't fit, append it */
 	if (UDF_EXT_LEN(udf_rw32(s_ad.len)) > 0) {
-		error = udf_append_adslot(udf_node, slot, &s_ad);
+		error = udf_append_adslot(udf_node, &slot, &s_ad);
 		if (error)
 			goto errorout;
 		slot++;
@@ -2138,6 +2384,8 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 errorout:
 	if (evacuated_data)
 		free(evacuated_data, M_UDFTEMP);
+
+	udf_count_alloc_exts(udf_node);
 
 	udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
 	UDF_UNLOCK_NODE(udf_node, 0);
@@ -2309,8 +2557,9 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 		vpart_num = udf_rw16(s_ad.loc.part_num);
 
 		if (flags == UDF_EXT_ALLOCATED) {
+			/* note: round DOWN on num_lb */
 			lb_num += (slot_offset + lb_size -1) / lb_size;
-			num_lb  = (len - slot_offset + lb_size - 1) / lb_size;
+			num_lb  = (len - slot_offset) / lb_size;
 
 			udf_free_allocated_space(ump, lb_num, vpart_num, num_lb);
 		}
@@ -2436,7 +2685,7 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 			UDF_EXT_LEN(udf_rw32(c_ad.len)),
 			UDF_EXT_FLAGS(udf_rw32(c_ad.len)) >> 30));
 
-			error = udf_append_adslot(udf_node, slot, &c_ad);
+			error = udf_append_adslot(udf_node, &slot, &c_ad);
 			if (error)
 				goto errorout; /* panic? */
 			c_ad = s_ad;
@@ -2453,7 +2702,7 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 		UDF_EXT_LEN(udf_rw32(c_ad.len)),
 		UDF_EXT_FLAGS(udf_rw32(c_ad.len)) >> 30));
 
-		error = udf_append_adslot(udf_node, slot, &c_ad);
+		error = udf_append_adslot(udf_node, &slot, &c_ad);
 		if (error)
 			goto errorout; /* panic? */
 		;
@@ -2474,6 +2723,8 @@ udf_shrink_node(struct udf_node *udf_node, uint64_t new_size)
 
 errorout:
 	free(node_ad_cpy, M_UDFMNT);
+
+	udf_count_alloc_exts(udf_node);
 
 	udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
 	UDF_UNLOCK_NODE(udf_node, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167var.h,v 1.4.70.1 2008/06/02 13:23:25 mjf Exp $	*/
+/*	$NetBSD: mm58167var.h,v 1.4.70.2 2008/09/28 10:40:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 struct mm58167_softc {
-	struct device	mm58167_dev;
+	device_t	mm58167_dev;
 
 	/* Pointers to bus_space */
 	bus_space_tag_t 	mm58167_regt;

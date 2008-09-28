@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.123.6.1 2008/04/03 12:43:14 mjf Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.123.6.2 2008/09/28 10:41:07 mjf Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.123.6.1 2008/04/03 12:43:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.123.6.2 2008/09/28 10:41:07 mjf Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -146,9 +146,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.123.6.1 2008/04/03 12:43:14 mjf Exp 
  *    by multiple map entries, and figuring out what should wait could be
  *    complex as well...).
  *
- * given that we are not currently multiprocessor or multithreaded we might
- * as well choose alternative 2 now.   maybe alternative 3 would be useful
- * in the future.    XXX keep in mind for future consideration//rechecking.
+ * we use alternative 2.  given that we are multi-threaded now we may want
+ * to reconsider the choice.
  */
 
 /*

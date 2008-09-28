@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lii.c,v 1.2.2.3 2008/06/02 13:23:39 mjf Exp $	*/
+/*	$NetBSD: if_lii.c,v 1.2.2.4 2008/09/28 10:40:26 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2008 The NetBSD Foundation.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.2.2.3 2008/06/02 13:23:39 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lii.c,v 1.2.2.4 2008/09/28 10:40:26 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -1191,9 +1191,9 @@ lii_setmulti(struct lii_softc *sc)
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 
 		if (crc & (1 << 31))
-			mht1 |= (1 << (crc & 0x0000001f));
+			mht1 |= (1 << ((crc >> 26) & 0x0000001f));
 		else
-			mht0 |= (1 << (crc & 0x0000001f));
+			mht0 |= (1 << ((crc >> 26) & 0x0000001f));
 
 	     ETHER_NEXT_MULTI(step, enm);
 	}

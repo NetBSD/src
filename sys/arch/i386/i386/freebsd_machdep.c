@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.49.6.1 2008/06/02 13:22:15 mjf Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.49.6.2 2008/09/28 10:39:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.49.6.1 2008/06/02 13:22:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.49.6.2 2008/09/28 10:39:59 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -228,7 +228,8 @@ freebsd_sys_sigreturn(struct lwp *l, const struct freebsd_sys_sigreturn_args *ua
 		tf->tf_fs = context.sc_fs;
 		tf->tf_es = context.sc_es;
 		tf->tf_ds = context.sc_ds;
-		tf->tf_eflags = context.sc_efl;
+		tf->tf_eflags &= ~PSL_USER;
+		tf->tf_eflags |= context.sc_efl & PSL_USER;
 	}
 	tf->tf_edi = context.sc_edi;
 	tf->tf_esi = context.sc_esi;

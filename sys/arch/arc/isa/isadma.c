@@ -1,9 +1,9 @@
-/*	$NetBSD: isadma.c,v 1.10 2007/03/04 05:59:35 christos Exp $	*/
+/*	$NetBSD: isadma.c,v 1.10.40.1 2008/09/28 10:39:47 mjf Exp $	*/
 /*	$OpenBSD: isadma.c,v 1.2 1996/11/23 21:45:34 kstailey Exp $	*/
 /*	NetBSD: isadma.c,v 1.19 1996/04/29 20:03:26 christos Exp 	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.10 2007/03/04 05:59:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma.c,v 1.10.40.1 2008/09/28 10:39:47 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,25 +48,25 @@ static uint8_t dmamode[4] = {
 	DMA37MD_WRITE | DMA37MD_LOOP
 };
 
-int isadmamatch(struct device *, struct cfdata *, void *);
-void isadmaattach(struct device *, struct device *, void *);
-int isadmaprint(void *, const char *);
+static int isadmamatch(device_t, cfdata_t, void *);
+static void isadmaattach(device_t, device_t, void *);
 
 struct isadma_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh1;
 	bus_space_handle_t sc_ioh2;
 }
 
-CFATTACH_DECL(isadma, sizeof(struct isadma_softc),
+CFATTACH_DECL_NEW(isadma, sizeof(struct isadma_softc),
     isadmamatch, isadmaattach, NULL, NULL);
 
 struct cfdriver isadma_cd = {
 	NULL, "isadma", DV_DULL, 1
 };
 
-isadmamatch(struct device *parent, struct cfdata *match, void *aux)
+static int
+isadmamatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -75,22 +75,24 @@ isadmamatch(struct device *parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
-void
-isadmaattach(struct device *parent, struct device *self, void *aux)
+static void
+isadmaattach(device_t parent, device_t self, void *aux)
 {
-	struct isadma_softc *sc = (void *)self;
+	struct isadma_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-	printf("\n");
+	sc->sc_dev = self;
+
+	aprint_normal("\n");
 
 	iot = sc->sc_iot = ia->ia_iot;
 	if (bus_space_map(iot, IO_DMA1, DMA_NREGS, 0, &ioh))
-		panic("isadmaattach: couldn't map I/O ports");
+		panic("%s: couldn't map I/O ports", __func__);
 	sc->sc_ioh1 = ioh;
 	if (bus_space_map(iot, IO_DMA2, DMA_NREGS*2, 0, &ioh))
-		panic("isadmaattach: couldn't map I/O ports");
+		panic("%s: couldn't map I/O ports", __func__);
 	sc->sc_ioh2 = ioh;
 	isadma_sc = sc;
 }
@@ -107,7 +109,7 @@ isadma_cascade(int chan)
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
-		panic("isadma_cascade: impossible request"); 
+		panic("%s: impossible request", __func__); 
 #endif
 
 	/* set dma channel mode, and set dma channel mode */
@@ -144,12 +146,12 @@ isadma_start(void *addr, bus_size_t nbytes, int chan, int flags)
 	    ((flags & DMAMODE_LOOP) != 0) != 1) ||
 	    ((chan & 4) ? (nbytes >= (1<<17) || nbytes & 1 || (u_int)addr & 1) :
 	    (nbytes >= (1<<16))))
-		panic("isadma_start: impossible request"); 
+		panic("%s: impossible request", __func__); 
 #endif
 
 	di = dma_info+chan;
 	if (di->active) {
-		log(LOG_ERR,"isadma_start: old request active on %d\n",chan);
+		log(LOG_ERR,"%s: old request active on %d\n", __func__, chan);
 		isadma_abort(chan);
 	}
 
@@ -162,7 +164,7 @@ isadma_start(void *addr, bus_size_t nbytes, int chan, int flags)
 	mflags |= (chan & 4) ? ISADMA_MAP_16BIT : ISADMA_MAP_8BIT;
 
 	if (isadma_map(addr, nbytes, di->phys, mflags) != 1)
-		panic("isadma_start: cannot map");
+		panic("%s: cannot map", __func__);
 
 	/* XXX Will this do what we want with DMAMODE_LOOP?  */
 	if ((flags & DMAMODE_READ) == 0)
@@ -205,9 +207,9 @@ isadma_start(void *addr, bus_size_t nbytes, int chan, int flags)
 
 		/* send start address */
 		waport = DMA2_CHN(chan & 3);
-		outb(dmapageport[1][chan], di->phys[0].addr>>16);
-		outb(waport, di->phys[0].addr>>1);
-		outb(waport, di->phys[0].addr>>9);
+		outb(dmapageport[1][chan], di->phys[0].addr >> 16);
+		outb(waport, di->phys[0].addr >> 1);
+		outb(waport, di->phys[0].addr >> 9);
 
 		/* send count */
 		nbytes >>= 1;
@@ -229,12 +231,12 @@ isadma_abort(int chan)
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
-		panic("isadma_abort: impossible request");
+		panic("%s: impossible request", __func__);
 #endif
 
 	di = dma_info+chan;
 	if (! di->active) {
-		log(LOG_ERR,"isadma_abort: no request active on %d\n",chan);
+		log(LOG_ERR,"%s: no request active on %d\n", __func__, chan);
 		return;
 	}
 
@@ -258,7 +260,7 @@ isadma_finished(int chan)
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
-		panic("isadma_finished: impossible request");
+		panic("%s: impossible request", __func__);
 #endif
 
 	/* check that the terminal count was reached */
@@ -282,12 +284,12 @@ isadma_done(int chan)
 
 #ifdef DIAGNOSTIC
 	if (chan < 0 || chan > 7)
-		panic("isadma_done: impossible request");
+		panic("%s: impossible request", __func__);
 #endif
 
 	di = dma_info+chan;
 	if (! di->active) {
-		log(LOG_ERR,"isadma_done: no request active on %d\n",chan);
+		log(LOG_ERR,"%s: no request active on %d\n", __func__, chan);
 		return;
 	}
 

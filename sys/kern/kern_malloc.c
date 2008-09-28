@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.117.6.1 2008/04/03 12:43:01 mjf Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.117.6.2 2008/09/28 10:40:52 mjf Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.117.6.1 2008/04/03 12:43:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.117.6.2 2008/09/28 10:40:52 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -279,28 +279,6 @@ struct freelist {
 	void *	next;
 };
 #endif /* DIAGNOSTIC */
-
-/*
- * The following are standard, built-in malloc types and are not
- * specific to any subsystem.
- */
-MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
-MALLOC_DEFINE(M_DMAMAP, "DMA map", "bus_dma(9) structures");
-MALLOC_DEFINE(M_FREE, "free", "should be on free list");
-MALLOC_DEFINE(M_PCB, "pcb", "protocol control block");
-MALLOC_DEFINE(M_SOFTINTR, "softintr", "Softinterrupt structures");
-MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
-
-/* XXX These should all be elsewhere. */
-MALLOC_DEFINE(M_RTABLE, "routetbl", "routing tables");
-MALLOC_DEFINE(M_FTABLE, "fragtbl", "fragment reassembly header");
-MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
-MALLOC_DEFINE(M_NETADDR, "Export Host", "Export host address structure");
-MALLOC_DEFINE(M_IPMOPTS, "ip_moptions", "internet multicast options");
-MALLOC_DEFINE(M_IPMADDR, "in_multi", "internet multicast address");
-MALLOC_DEFINE(M_MRTABLE, "mrt", "multicast routing tables");
-MALLOC_DEFINE(M_BWMETER, "bwmeter", "multicast upcall bw meters");
-MALLOC_DEFINE(M_1394DATA, "1394data", "IEEE 1394 data buffers");
 
 kmutex_t malloc_lock;
 

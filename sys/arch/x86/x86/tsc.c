@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.11.14.2 2008/06/02 13:22:52 mjf Exp $	*/
+/*	$NetBSD: tsc.c,v 1.11.14.3 2008/09/28 10:40:12 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.11.14.2 2008/06/02 13:22:52 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.11.14.3 2008/09/28 10:40:12 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,8 +140,10 @@ tsc_tc_init(void)
 		safe = false;
 	}
 
-	tsc_timecounter.tc_frequency = tsc_freq;
-	tc_init(&tsc_timecounter);
+	if (tsc_freq != 0) {
+		tsc_timecounter.tc_frequency = tsc_freq;
+		tc_init(&tsc_timecounter);
+	}
 }
 
 /*

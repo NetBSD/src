@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsysvar.h,v 1.26.14.1 2008/04/03 12:42:57 mjf Exp $ */
+/* $NetBSD: sysmon_envsysvar.h,v 1.26.14.2 2008/09/28 10:40:32 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -82,12 +82,14 @@ typedef struct sme_event {
 	struct sysmon_envsys	*see_sme;	/* device associated */
 	struct penvsys_state	see_pes;	/* our power envsys */
 	envsys_data_t		*see_edata;	/* our sensor data */
-	int32_t			see_critval;	/* critical value set */
+	int32_t			see_critmin;	/* critical-min value set */
+	int32_t			see_warnmin;	/* warning-min value set */
+	int32_t			see_warnmax;	/* warning-max value set */
+	int32_t			see_critmax;	/* critical-max value set */
 	int			see_type;	/* type of the event */
 	int			see_evsent;	/* event already sent */
 	int 			see_flags;	/* see above */
-#define SME_EVENT_WORKING	0x0001 		/* This event is busy */
-#define SME_EVENT_REFRESHED	0x0002		/* sensor already refreshed */
+#define SEE_EVENT_WORKING	0x0001 		/* This event is busy */
 } sme_event_t;
 
 /* 

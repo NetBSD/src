@@ -1,4 +1,4 @@
-/* $NetBSD: radio.c,v 1.20.36.3 2008/06/29 09:33:05 mjf Exp $ */
+/* $NetBSD: radio.c,v 1.20.36.4 2008/09/28 10:40:18 mjf Exp $ */
 /* $OpenBSD: radio.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radio.c,v 1.7 2001/12/04 06:03:05 tm Exp $ */
 
@@ -30,7 +30,7 @@
 /* This is the /dev/radio driver from OpenBSD */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.20.36.3 2008/06/29 09:33:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.20.36.4 2008/09/28 10:40:18 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,20 +43,26 @@ __KERNEL_RCSID(0, "$NetBSD: radio.c,v 1.20.36.3 2008/06/29 09:33:05 mjf Exp $");
 #include <sys/conf.h>
 
 #include <dev/radio_if.h>
-#include <dev/radiovar.h>
 
-int	radioprobe(struct device *, struct cfdata *, void *);
-void	radioattach(struct device *, struct device *, void *);
-int	radioprint(void *, const char *);
-int	radiodetach(struct device *, int);
-int	radioactivate(struct device *, enum devact);
+struct radio_softc {
+	void		*hw_hdl;	/* hardware driver handle */
+	device_t 	sc_dev;		/* hardware device struct */
+	const struct radio_hw_if *hw_if; /* hardware interface */
+	char		sc_dying;	/* device detached */
+};
 
-CFATTACH_DECL(radio, sizeof(struct radio_softc),
+static int	radioprobe(device_t, cfdata_t, void *);
+static void	radioattach(device_t, device_t, void *);
+static int	radioprint(void *, const char *);
+static int	radiodetach(device_t, int);
+static int	radioactivate(device_t, enum devact);
+
+CFATTACH_DECL_NEW(radio, sizeof(struct radio_softc),
     radioprobe, radioattach, radiodetach, radioactivate);
 
-dev_type_open(radioopen);
-dev_type_close(radioclose);
-dev_type_ioctl(radioioctl);
+static dev_type_open(radioopen);
+static dev_type_close(radioclose);
+static dev_type_ioctl(radioioctl);
 
 const struct cdevsw radio_cdevsw = {
 	radioopen, radioclose, noread, nowrite, radioioctl,
@@ -65,15 +71,14 @@ const struct cdevsw radio_cdevsw = {
 
 extern struct cfdriver radio_cd;
 
-int
-radioprobe(struct device *parent, struct cfdata *match,
-    void *aux)
+static int
+radioprobe(device_t parent, cfdata_t match, void *aux)
 {
 	return (1);
 }
 
-void
-radioattach(struct device *parent, struct device *self, void *aux)
+static void
+radioattach(device_t parent, device_t self, void *aux)
 {
 	struct radio_softc *sc = (void *)self;
 	struct radio_attach_args *sa = aux;
@@ -81,7 +86,8 @@ radioattach(struct device *parent, struct device *self, void *aux)
 	void  *hdlp = sa->hdl;
 	int maj;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
 	sc->sc_dev = parent;
@@ -92,7 +98,7 @@ radioattach(struct device *parent, struct device *self, void *aux)
 	    DEV_AUDIO, device_xname(self));
 }
 
-int
+static int
 radioopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	int	unit;
@@ -109,7 +115,7 @@ radioopen(dev_t dev, int flags, int fmt, struct lwp *l)
 		return (0);
 }
 
-int
+static int
 radioclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct radio_softc *sc;
@@ -122,7 +128,7 @@ radioclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		return (0);
 }
 
-int
+static int
 radioioctl(dev_t dev, u_long cmd, void *data, int flags,
     struct lwp *l)
 {
@@ -162,8 +168,8 @@ radioioctl(dev_t dev, u_long cmd, void *data, int flags,
  * Called from hardware driver. This is where the MI radio driver gets
  * probed/attached to the hardware driver
  */
-struct device *
-radio_attach_mi(const struct radio_hw_if *rhwp, void *hdlp, struct device *dev)
+device_t
+radio_attach_mi(const struct radio_hw_if *rhwp, void *hdlp, device_t dev)
 {
 	struct radio_attach_args arg;
 
@@ -172,7 +178,7 @@ radio_attach_mi(const struct radio_hw_if *rhwp, void *hdlp, struct device *dev)
 	return (config_found(dev, &arg, radioprint));
 }
 
-int
+static int
 radioprint(void *aux, const char *pnp)
 {
 	if (pnp != NULL)
@@ -180,8 +186,8 @@ radioprint(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
-int
-radiodetach(struct device *self, int flags)
+static int
+radiodetach(device_t self, int flags)
 {
 	/*struct radio_softc *sc = (struct radio_softc *)self;*/
 	int maj, mn;
@@ -198,10 +204,10 @@ radiodetach(struct device *self, int flags)
 	return (0);
 }
 
-int
-radioactivate(struct device *self, enum devact act)
+static int
+radioactivate(device_t self, enum devact act)
 {
-	struct radio_softc *sc = (struct radio_softc *)self;
+	struct radio_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:

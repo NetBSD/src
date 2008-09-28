@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.11.40.1 2008/06/02 13:23:27 mjf Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.11.40.2 2008/09/28 10:40:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct epic_descsoft {
  * Software state per device.
  */
 struct epic_softc {
-	struct device sc_dev;		/* generic device information */
+	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */

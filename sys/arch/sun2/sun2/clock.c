@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13.6.1 2008/06/02 13:22:45 mjf Exp $	*/
+/*	$NetBSD: clock.c,v 1.13.6.2 2008/09/28 10:40:09 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13.6.1 2008/06/02 13:22:45 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13.6.2 2008/09/28 10:40:09 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.13.6.1 2008/06/02 13:22:45 mjf Exp $");
  * e.g. F1 ticks CLK_BASIC/4 times a second.
  */
 #define	SUN2_CLK_BASIC		(19660800)
-#define SUN2_CLK_TICKS(func, hz) (((SUN2_CLK_BASIC / 4) / AM9513_CM_SOURCE_Fn_DIV(func)) / (hz))
+#define SUN2_CLK_TICKS(func, hz)	\
+	(((SUN2_CLK_BASIC / 4) / AM9513_CM_SOURCE_Fn_DIV(func)) / (hz))
 
 /* These define which counters are used for what. */
 #define	SUN2_CLK_NMI		AM9513_TIMER1	/* Non Maskable Interrupts */
@@ -130,57 +131,60 @@ void clock_intr(struct clockframe);
 
 static bus_space_tag_t am9513_bt;
 static bus_space_handle_t am9513_bh;
-#define am9513_write_clk_cmd(val) bus_space_write_2(am9513_bt, am9513_bh, AM9513_CLK_CMD, val)
-#define am9513_write_clk_data(val) bus_space_write_2(am9513_bt, am9513_bh, AM9513_CLK_DATA, val)
+#define am9513_write_clk_cmd(val)	\
+	bus_space_write_2(am9513_bt, am9513_bh, AM9513_CLK_CMD, val)
+#define am9513_write_clk_data(val)	\
+	bus_space_write_2(am9513_bt, am9513_bh, AM9513_CLK_DATA, val)
 
-static int  clock_match(struct device *, struct cfdata *, void *args);
-static void clock_attach(struct device *, struct device *, void *);
+static int  clock_match(device_t, cfdata_t, void *args);
+static void clock_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(clock, sizeof(struct device),
+CFATTACH_DECL_NEW(clock, 0,
     clock_match, clock_attach, NULL, NULL);
 
 static int clock_attached;
 
 static int 
-clock_match(struct device *parent, struct cfdata *cf, void *args)
+clock_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct obio_attach_args *oba = args;
 	bus_space_handle_t bh;
-	int matched;
+	bool matched;
 
 	/* This driver only supports one unit. */
 	if (clock_attached)
-		return (0);
+		return 0;
 
 	/* Make sure there is something there... */
-	if (bus_space_map(oba->oba_bustag, oba->oba_paddr, sizeof(struct am9513), 
-			  0, &bh))
-		return (0);
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
+	    sizeof(struct am9513), 0, &bh))
+		return 0;
 	matched = (bus_space_peek_2(oba->oba_bustag, bh, 0, NULL) == 0);
 	bus_space_unmap(oba->oba_bustag, bh, sizeof(struct am9513));
 	if (!matched)
-		return (0);
+		return 0;
 
 	/* Default interrupt priority. */
 	if (oba->oba_pri == -1)
 		oba->oba_pri = CLOCK_PRI;
 
-	return (1);
+	return 1;
 }
 
 static void 
-clock_attach(struct device *parent, struct device *self, void *args)
+clock_attach(device_t parent, device_t self, void *args)
 {
 	struct obio_attach_args *oba = args;
 	bus_space_handle_t bh;
 
 	clock_attached = 1;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Get a mapping for it. */
-	if (bus_space_map(oba->oba_bustag, oba->oba_paddr, sizeof(struct am9513), 0, &bh))
-		panic("clock_attach");
+	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
+	    sizeof(struct am9513), 0, &bh))
+		panic("%s: can't map clock", __func__);
 	am9513_bt = oba->oba_bustag;
 	am9513_bh = bh;
 
@@ -196,9 +200,8 @@ clock_attach(struct device *parent, struct device *self, void *args)
 
 	/* Set the clock to 100 Hz, but do not enable it yet. */
 	am9513_write_clk_cmd(AM9513_CMD_LOAD_MODE(SUN2_CLK_TIMER));
-	am9513_write_clk_data((AM9513_CM_MODE_D
-			       | AM9513_CM_SOURCE_F2
-			       | AM9513_CM_OUTPUT_TC_TOGGLED));
+	am9513_write_clk_data((AM9513_CM_MODE_D | AM9513_CM_SOURCE_F2 |
+	    AM9513_CM_OUTPUT_TC_TOGGLED));
 	am9513_write_clk_cmd(AM9513_CMD_LOAD_LOAD(SUN2_CLK_TIMER));
 	am9513_write_clk_data(SUN2_CLK_TICKS(AM9513_CM_SOURCE_F2, 100));
 
@@ -224,7 +227,7 @@ set_clk_mode(int prom_clock, int on)
 #ifdef	DIAGNOSTIC
 	/* Assertion: were are at splhigh! */
 	if ((getsr() & PSL_IPL) < PSL_IPL7)
-		panic("set_clk_mode: bad ipl");
+		panic("%s: bad ipl", __func__);
 #endif
 
 	/* Get the timer we're talking about. */
@@ -280,6 +283,7 @@ cpu_initclocks(void)
 void 
 setstatclockrate(int newhz)
 {
+
 	/* nothing */
 }
 

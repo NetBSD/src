@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.57.6.2 2008/06/02 13:24:07 mjf Exp $ */
+/* $NetBSD: kern_auth.c,v 1.57.6.3 2008/09/28 10:40:52 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.57.6.2 2008/06/02 13:24:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.57.6.3 2008/09/28 10:40:52 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -434,7 +434,7 @@ kauth_cred_setgroups(kauth_cred_t cred, const gid_t *grbuf, size_t len,
 	KASSERT(cred != NULL);
 	KASSERT(cred->cr_refcnt == 1);
 
-	if (len > sizeof(cred->cr_groups) / sizeof(cred->cr_groups[0]))
+	if (len > __arraycount(cred->cr_groups))
 		return EINVAL;
 
 	if (len) {
@@ -663,8 +663,7 @@ kauth_cred_toucred(kauth_cred_t cred, struct ki_ucred *uc)
 	uc->cr_ref = cred->cr_refcnt;
 	uc->cr_uid = cred->cr_euid;
 	uc->cr_gid = cred->cr_egid;
-	uc->cr_ngroups = min(cred->cr_ngroups,
-			     sizeof(uc->cr_groups) / sizeof(uc->cr_groups[0]));
+	uc->cr_ngroups = min(cred->cr_ngroups, __arraycount(uc->cr_groups));
 	memcpy(uc->cr_groups, cred->cr_groups,
 	       uc->cr_ngroups * sizeof(uc->cr_groups[0]));
 }

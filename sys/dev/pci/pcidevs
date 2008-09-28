@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.929.6.2 2008/06/02 13:23:42 mjf Exp $
+$NetBSD: pcidevs,v 1.929.6.3 2008/09/28 10:40:27 mjf Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -601,6 +601,7 @@ vendor ARECA		0x17d3	Areca
 vendor S2IO		0x17d5	S2io Technologies
 vendor LINKSYS2		0x17fe	Linksys
 vendor RALINK		0x1814	Ralink Technologies
+vendor BBELEC		0x1896	B & B Electronics
 vendor ATTANSIC		0x1969	Attansic Technologies
 vendor EVE		0x1adb	EVE
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
@@ -1372,6 +1373,16 @@ product AVM FRITZ_PCI_V2_ISDN	0x0e00	Fritz!PCI v2.0 ISDN Interface
 product AVM B1			0x0700	Basic Rate B1 ISDN Interface
 product AVM T1			0x1200	Primary Rate T1 ISDN Interface
 
+/* B & B Electronics Products */
+product BBELEC NON_ISOLATED_1_PORT	0x4201	single-channel RS-485 PCI UART
+product BBELEC NON_ISOLATED_2_PORT	0x4202	dual-channel RS-485 PCI UART
+product BBELEC NON_ISOLATED_4_PORT	0x4204	quad-channel RS-485 PCI UART
+product BBELEC NON_ISOLATED_8_PORT	0x4208	octal-channel RS-485 PCI UART
+product BBELEC ISOLATED_1_PORT		0x4211	single-channel Isolated RS-485 PCI UART
+product BBELEC ISOLATED_2_PORT		0x4212	dual-channel Isolated RS-485 PCI UART
+product BBELEC ISOLATED_4_PORT		0x4214	quad-channel Isolated RS-485 PCI UART
+product BBELEC ISOLATED_8_PORT		0x4218	octal-channel Isolated RS-485 PCI UART
+
 /* Belkin products */
 product BELKIN F5D6001		0x6001	F5D6001
 product BELKIN F5D6020V3	0x6020	F5D6020v3 802.11b
@@ -1852,6 +1863,7 @@ product O2MICRO OZ6933		0x6933	OZ6933 PCI-CardBus Bridge
 product O2MICRO OZ6972		0x6972	OZ6912/OZ6972 PCI-CardBus Bridge
 product O2MICRO 7120		0x7120	Integrated MMC/SD Controller
 product O2MICRO 7130		0x7130	Integrated MS/xD/SM Controller
+product O2MICRO 7223		0x7223	OZ711E0 PCI-CardBus Bridge
 
 /* Evans & Sutherland products */
 product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
@@ -2415,6 +2427,8 @@ product INTEL 82915GM_IGDC	0x2792	82915GM/GMS IGD Companion
 product INTEL 82945GM_HB	0x27a0	82945GM/PM/GMS Host Bridge
 product INTEL 82945GM_IGD	0x27a2	82945GM/PM/GMS Integrated Graphics Device
 product INTEL 82945GM_IGD_1	0x27a6	82945GM/PM/GMS Integrated Graphics Device
+product INTEL 82945GME_HB	0x27ac	82945GME Host Bridge
+product INTEL 82945GME_IGD	0x27ae	82945GME Integrated Graphics Device
 product INTEL 82801G_LPC	0x27b8	82801GB/GR LPC Interface Bridge
 product INTEL 82801GBM_LPC	0x27b9	82801GBM LPC Interface Bridge
 product INTEL 82801GHM_LPC	0x27bd	82801GHM LPC Interface Bridge
@@ -2498,6 +2512,8 @@ product INTEL 82801I_EXP_4	0x2946	82801I PCI Express Port #4
 product INTEL 82801I_EXP_5	0x2948	82801I PCI Express Port #5
 product INTEL 82801I_EXP_6	0x294a	82801I PCI Express Port #6
 product INTEL 82801I_IGP_C	0x294c	82801I (C) LAN Controller
+product INTEL 82946GZ_HB	0x2970	82946GZ Host Bridge
+product INTEL 82946GZ_IGD	0x2972	82946GZ	Integrated Graphics Device
 product INTEL 82965Q_HB		0x2990  82965Q Host Bridge
 product INTEL 82965Q_EXP	0x2991  82965Q PCI Express Bridge
 product INTEL 82965Q_IGD	0x2992  82965Q Integrated Graphics Device
@@ -2520,6 +2536,7 @@ product INTEL 82Q33_EXP		0x29d1  82Q35 PCI Express Bridge
 product INTEL 82Q33_IGD		0x29d2  82Q35 Integrated Graphics Device
 product INTEL 82Q33_IGD_1	0x29d3  82Q35 Integrated Graphics Device
 product INTEL 82965PM_HB	0x2a00  82965PM Host Bridge
+product INTEL 80862A01		0x2a01  80862A01 Mobile PCI Express Root Port
 product INTEL 82965PM_IGD	0x2a02	82965PM Integrated Graphics Device
 product INTEL 82965PM_IGD_1	0x2a03	82965PM Integrated Graphics Device
 product INTEL 82965PM_MEI	0x2a04	82965PM MEI Controller
@@ -2955,7 +2972,7 @@ product NVIDIA	MCP04_LAN2	0x0038	MCP04 Ethernet
 product NVIDIA	MCP04_SATA2	0x003e	MCP04 SATA
 product NVIDIA	GEFORCE_6800U	0x0040	GeForce 6800 Ultra
 product NVIDIA	GEFORCE_6800	0x0041	GeForce 6800
-product NVIDIA	GEFORCE_6800LE	0x0042	GeForce 6800LE
+product NVIDIA	GEFORCE_6800LE	0x0042	GeForce 6800 LE
 product NVIDIA	GEFORCE_6800GT	0x0045	GeForce 6800 GT
 product NVIDIA	NFORCE4_PCIB1	0x0050	nForce4 PCI-ISA bridge
 product NVIDIA	NFORCE4_PCIB2	0x0051	nForce4 PCI-ISA bridge
@@ -3049,6 +3066,7 @@ product NVIDIA	NFORCE_MCP_AC	0x01b1	nForce MCP AC-97
 product NVIDIA	NFORCE_ATA100	0x01bc	nForce ATA100 IDE
 product NVIDIA	NFORCE_USB	0x01c2	nForce USB
 product NVIDIA	NFORCE_LAN	0x01c3	nForce Ethernet
+product NVIDIA	GEFORCE_7300LE	0x01d1	GeForce 7300 LE
 product NVIDIA	NFORCE2_PCHB	0x01e0	nForce2 Host-PCI Bridge
 product NVIDIA	NFORCE2_PPB2	0x01e8	nForce2 PCI-PCI Bridge
 product NVIDIA	NFORCE2_MEM1	0x01eb	nForce2 Memory Controller
@@ -3061,6 +3079,8 @@ product NVIDIA	GEFORCE3	0x0200	GeForce3
 product NVIDIA	GEFORCE3_TI200	0x0201	GeForce3 Ti 200
 product NVIDIA	GEFORCE3_TI500	0x0202	GeForce3 Ti 500
 product NVIDIA	QUADRO_DCC	0x0203	Quadro DCC
+product NVIDIA	GEFORCE_6150	0x0240	GeForce 6150
+product NVIDIA	GEFORCE_6150LE	0x0241	GeForce 6150 LE
 product NVIDIA	GEFORCE4_TI4600	0x0250	GeForce4 Ti 4600
 product NVIDIA	GEFORCE4_TI4400	0x0251	GeForce4 Ti 4400
 product NVIDIA	GEFORCE4_TI4200	0x0253	GeForce4 Ti 4200
@@ -3084,6 +3104,22 @@ product NVIDIA	GF4_TI_4800_SE	0x0282	GeForce4 Ti 4800 SE
 product NVIDIA	GF4_TI_4200_GO	0x0286	GeForce4 Ti 4200 Go AGP 8x
 product NVIDIA	QUADRO4_980_XGL	0x0288	Quadro4 980 XGL
 product NVIDIA	QUADRO4_780_XGL	0x0289	Quadro4 780 XGL
+product NVIDIA	C51_HB_02F0	0x02f0	C51 Host Bridge (0x02f0)
+product NVIDIA	C51_HB_02F1	0x02f1	C51 Host Bridge (0x02f1)
+product NVIDIA	C51_HB_02F2	0x02f2	C51 Host Bridge (0x02f2)
+product NVIDIA	C51_HB_02F3	0x02f3	C51 Host Bridge (0x02f3)
+product NVIDIA	C51_HB_02F4	0x02f4	C51 Host Bridge (0x02f4)
+product NVIDIA	C51_HB_02F5	0x02f5	C51 Host Bridge (0x02f5)
+product NVIDIA	C51_HB_02F6	0x02f6	C51 Host Bridge (0x02f6)
+product NVIDIA	C51_HB_02F7	0x02f7	C51 Host Bridge (0x02f7)
+product NVIDIA	C51_MC5		0x02f8	C51 Memory Controller 5
+product NVIDIA	C51_MC4		0x02f9	C51 Memory Controller 4
+product NVIDIA	C51_MC0		0x02fa	C51 Memory Controller 0
+product NVIDIA	C51_PPB_02FB	0x02fb	C51 PCI Express Bridge (0x02fb)
+product NVIDIA	C51_PPB_02FC	0x02fc	C51 PCI Express Bridge (0x02fc)
+product NVIDIA	C51_PPB_02FD	0x02fd	C51 PCI Express Bridge (0x02fd)
+product NVIDIA	C51_MC1		0x02fe	C51 Memory Controller 1
+product NVIDIA	C51_HB_02FF	0x02ff	C51 Host Bridge (0x02ff)
 product NVIDIA	GEFORCE_FX5800U	0x0301	GeForce FX 5800 Ultra
 product NVIDIA	XBOXFB		0x02a0	Xbox Frame Buffer
 product NVIDIA	GEFORCE_FX5800	0x0302	GeForce FX 5800
@@ -3131,6 +3167,7 @@ product NVIDIA	MCP61_SATA3	0x03f7	nForce MCP61 Serial ATA Controller
 product NVIDIA	MCP61_LAN3	0x03ee	nForce MCP61 Gigabit Ethernet Controller
 product NVIDIA	MCP61_LAN4	0x03ef	nForce MCP61 Gigabit Ethernet Controller
 product NVIDIA	GF_8400M_GS	0x0427	GeForce 8400M GS
+product NVIDIA	QUADRO_NVS140M	0x0429	Quadro NVS 140M
 product NVIDIA	MCP65_ISA	0x0440	nForce MCP65 PCI-ISA Bridge
 product NVIDIA	MCP65_LPC1	0x0441	nForce MCP65 PCI-LPC Bridge
 product NVIDIA	MCP65_LPC2	0x0442	nForce MCP65 PCI-LPC Bridge
@@ -3361,11 +3398,11 @@ product RATOC	REXPCI31	0x0853	REX PCI-31/33 SCSI
 
 /* Realtek products */
 product REALTEK RT8029		0x8029	8029 Ethernet
+product REALTEK RT8139D		0x8039	8139D 10/100 Ethernet
 product REALTEK RT8100		0x8100	8100 10/100 Ethernet
 product REALTEK RT8129		0x8129	8129 10/100 Ethernet
 product REALTEK RT8101E		0x8136	8101E 10/100 Ethernet
 product REALTEK RT8138		0x8138	8138 10/100 Ethernet
-product REALTEK RT8139B		0x8138	8139B 10/100 Ethernet
 product REALTEK RT8139		0x8139	8139 10/100 Ethernet
 product REALTEK RT8169SC	0x8167	8169SC/8110SC 10/100/1000 Ethernet
 product REALTEK RT8168		0x8168	8168B/8111B 10/100/1000 Ethernet
@@ -3468,8 +3505,15 @@ product SERVERWORKS CNB30_HE		0x0012	CNB30-HE PCI bridge
 product SERVERWORKS CNB20_HE_PCI2	0x0013	CNB20-HE PCI/AGP bridge
 product SERVERWORKS CMIC_LE		0x0014	CMIC-LE PCI/AGP bridge
 product SERVERWORKS CMIC_SL		0x0017	CMIC-SL PCI/AGP bridge
+product SERVERWORKS HT1000_PPB0		0x0036	HT1000 PCI/PCI-X bridge
 product SERVERWORKS CIOB_X2		0x0101	CIOB-X2 PCI-X bridge
+product SERVERWORKS BCM5714		0x0103	bcm5714/bcm5715 integral PCI-E to PCI-X bridge
+product SERVERWORKS HT1000_PPB1		0x0104	HT1000 PCI/PCI-X bridge
 product SERVERWORKS CIOB_E		0x0110	CIOB-E PCI-X bridge
+product SERVERWORKS HT2100_PPB0		0x0140	HT2100 PCI-Express Bridge
+product SERVERWORKS HT2100_PPB1		0x0141	HT2100 PCI-Express Bridge
+product SERVERWORKS HT2100_PPB2		0x0142	HT2100 PCI-Express Bridge
+product SERVERWORKS HT2100_PPB3		0x0144	HT2100 PCI-Express Bridge
 product SERVERWORKS OSB4		0x0200	OSB4 southbridge
 product SERVERWORKS CSB5		0x0201	CSB5 southbridge
 product SERVERWORKS CSB6		0x0203	CSB6 southbridge
@@ -3481,14 +3525,17 @@ product SERVERWORKS CSB6_RAID		0x0213	CSB6 IDE/RAID
 product SERVERWORKS CSB6_IDE		0x0217	CSB6 IDE/RAID
 product SERVERWORKS OSB4_USB		0x0220	OSB4/CSB5 USB Host Controller
 product SERVERWORKS CSB6_USB		0x0221	CSB6 USB Host Controller
+product SERVERWORKS HT1000_USB		0x0223	HT1000 USB
 product SERVERWORKS CSB5_LPC		0x0225	CSB5 ISA/LPC bridge
 product SERVERWORKS CSB6_LPC		0x0227	CSB6 ISA/LPC bridge
+product SERVERWORKS HT1000_LPC		0x0234	HT1000 LPC
+product SERVERWORKS HT1000_XIOAPIC	0x0235	HT1000 XIOAPIC
+product SERVERWORKS HT1000_WDTIMER	0x0238	HT1000 Watchdog Timer
 product SERVERWORKS K2_SATA		0x0240	K2 SATA
 product SERVERWORKS FRODO4_SATA		0x0241	Frodo4 SATA
 product SERVERWORKS FRODO8_SATA		0x0242	Frodo8 SATA
 product SERVERWORKS HT1000_SATA_1	0x024a	HT-1000 SATA
 product SERVERWORKS HT1000_SATA_2 	0x024b	HT-1000 SATA
-product SERVERWORKS BCM5714		0x0103	bcm5714/bcm5715 integral PCI-E to PCI-X bridge
 
 /* SGI products */
 product SGI IOC3	0x0003	IOC3
@@ -3758,6 +3805,7 @@ product TI	PCI1510		0xac56	PCI1510 PCI-CardBus Bridge
 product TI	PCI1530		0xac57	PCI1530 PCI-CardBus Bridge
 product TI	PCI1515		0xac58	PCI1515 PCI-CardBus Bridge
 product TI	PCI2040		0xac60	PCI2040 PCI-DSP Bridge
+product TI	PCI7420YENTA	0xac8e	PCI7420 PCI-Cardbus Bridge w/ IEEE 1394 Host controller
 
 /* Titan Electronics products */
 product TITAN PCI800L		0x8080	PCI-800L
@@ -3937,6 +3985,7 @@ product VIATECH VT8237A_PPB	0x337a	VT8237A PCI-PCI Bridge
 product VIATECH VT8237A_HB	0x337b	VT8237A Host Bridge
 product VIATECH KT880_4		0x4269	KT880 CPU to PCI Bridge
 product VIATECH VT3351_HB_4351	0x4351	VT3351 Host Bridge
+product VIATECH CX700M2_IDE	0x5324	CX700M2/VX700 IDE Controller
 product VIATECH VT3351_IOAPIC	0x5351	VT3351 I/O APIC Interrupt Controller
 product VIATECH VT86C100A	0x6100	VT86C100A (Rhine-II) 10/100 Ethernet
 product VIATECH VT8378_IG	0x7205	VT8378 KM400 UniChrome Integrated Graphics

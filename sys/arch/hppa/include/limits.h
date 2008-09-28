@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.8 2007/10/17 19:54:40 garbled Exp $	*/
+/*	$NetBSD: limits.h,v 1.8.16.1 2008/09/28 10:39:58 mjf Exp $	*/
 
 /*	$OpenBSD: limits.h,v 1.2 2000/07/31 20:06:02 millert Exp $	*/
 
@@ -56,6 +56,9 @@
  *	@(#)limits.h	8.3 (Berkeley) 1/4/94
  */
 
+#ifndef	_MACHINE_LIMITS_H_
+#define	_MACHINE_LIMITS_H_
+
 #include <sys/featuretest.h>
 
 #define	CHAR_BIT	8		/* number of bits in a char */
@@ -72,8 +75,8 @@
  * These numbers work for pcc as well.  The UINT_MAX and ULONG_MAX values
  * are written as hex so that GCC will be quiet about large integer constants.
  */
-#define	SCHAR_MAX	0x7f		/* min value for a signed char */
-#define	SCHAR_MIN	(-0x7f-1)	/* max value for a signed char */
+#define	SCHAR_MAX	0x7f		/* max value for a signed char */
+#define	SCHAR_MIN	(-0x7f-1)	/* min value for a signed char */
 
 #define	UCHAR_MAX	0xff		/* max value for an unsigned char */
 #define	CHAR_MAX	0x7f		/* max value for a char */
@@ -95,20 +98,21 @@
     defined(_NETBSD_SOURCE)
 #define	SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
 
-#if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-#define	SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
+#if defined(_ISOC99_SOURCE) || (__STDC_VERSION__ - 0) >= 199901L || \
+    defined(_NETBSD_SOURCE)
+#define ULLONG_MAX      0xffffffffffffffffULL   /* max unsigned long long */
+#define LLONG_MAX       0x7fffffffffffffffLL    /* max signed long long */
+#define LLONG_MIN       (-0x7fffffffffffffffLL-1) /* min signed long long */
+#endif
 
-/* GCC requires that quad constants be written as expressions. */
-#define	UQUAD_MAX	((u_quad_t)0-1)	/* max value for a uquad_t */
-					/* max value for a quad_t */
-#define	QUAD_MAX	((quad_t)(UQUAD_MAX >> 1))
-#define	QUAD_MIN	(-QUAD_MAX-1)	/* min value for a quad_t */
-#define ULLONG_MAX	(UQUAD_MAX)	/* max value for unsigned long long */
-#define LLONG_MAX	(QUAD_MAX)	/* max value for a signed long long */
-#define LLONG_MIN	(QUAD_MIN)	/* min value for a signed long long */
+#if defined(_NETBSD_SOURCE)
+#define SIZE_T_MAX      UINT_MAX        /* max value for a size_t */
 
-#endif /* _XOPEN_SOURCE || _NETBSD_SOURCE */
+#define UQUAD_MAX       0xffffffffffffffffULL           /* max unsigned quad */
+#define QUAD_MAX        0x7fffffffffffffffLL            /* max signed quad */
+#define QUAD_MIN        (-0x7fffffffffffffffLL-1)       /* min signed quad */
 
+#endif /* _NETBSD_SOURCE */
 #endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE || _NETBSD_SOURCE */
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
@@ -123,3 +127,5 @@
 #define FLT_MAX		3.40282347E+38F 
 #define FLT_MIN		1.17549435E-38F 
 #endif
+
+#endif /* _MACHINE_LIMITS_H_ */

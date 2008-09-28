@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_dma.c,v 1.4 2007/12/15 00:39:31 perry Exp $	*/
+/*	$NetBSD: mga_dma.c,v 1.4.6.1 2008/09/28 10:40:29 mjf Exp $	*/
 
 /* mga_dma.c -- DMA support for mga g200/g400 -*- linux-c -*-
  * Created: Mon Dec 13 01:50:01 1999 by jhartmann@precisioninsight.com
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_dma.c,v 1.4 2007/12/15 00:39:31 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_dma.c,v 1.4.6.1 2008/09/28 10:40:29 mjf Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_dma.c,v 1.13 2005/11/28 23:13:53 anholt Exp $");
 */
@@ -43,11 +43,11 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/mga_dma.c,v 1.13 2005/11/28 23:13:53 anholt 
  * \author Gareth Hughes <gareth@valinux.com>
  */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/drm/drm_sarea.h>
-#include <dev/pci/drm/mga_drm.h>
-#include <dev/pci/drm/mga_drv.h>
+#include "drmP.h"
+#include "drm.h"
+#include "drm_sarea.h"
+#include "mga_drm.h"
+#include "mga_drv.h"
 
 #define MGA_DEFAULT_USEC_TIMEOUT	10000
 #define MGA_FREELIST_DEBUG		0
@@ -1074,7 +1074,7 @@ int mga_dma_flush(DRM_IOCTL_ARGS)
 #if MGA_DMA_DEBUG
 		int ret = mga_do_wait_for_idle(dev_priv);
 		if (ret < 0)
-			DRM_INFO("%s: -EBUSY\n", __func__);
+			DRM_INFO("%s: -EBUSY\n", __FUNCTION__);
 		return ret;
 #else
 		return mga_do_wait_for_idle(dev_priv);

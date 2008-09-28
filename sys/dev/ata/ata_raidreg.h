@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidreg.h,v 1.5 2007/12/25 18:33:36 perry Exp $	*/
+/*	$NetBSD: ata_raidreg.h,v 1.5.6.1 2008/09/28 10:40:19 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -200,6 +200,160 @@ struct via_raid_conf {
 	uint32_t		disks[8];
 	uint8_t			checksum;
 	uint8_t			pad_0[461];
+} __packed;
+
+/* nVidia MediaShield Metadata */
+/* taken from FreeBSD ata-raid.h 1.47 */
+#define NVIDIA_LBA(wd) ((wd)->sc_capacity - 2)
+
+struct nvidia_raid_conf {
+    u_int8_t            nvidia_id[8];
+#define NV_MAGIC                "NVIDIA  "
+
+    u_int32_t           config_size;
+    u_int32_t           checksum;
+    u_int16_t           version;
+    u_int8_t            disk_number;
+    u_int8_t            dummy_0;
+    u_int32_t           total_sectors;
+    u_int32_t           sector_size;
+    u_int8_t            serial[16];
+    u_int8_t            revision[4];
+    u_int32_t           dummy_1;
+
+    u_int32_t           magic_0;
+#define NV_MAGIC0               0x00640044
+
+    u_int64_t           magic_1;
+    u_int64_t           magic_2;
+    u_int8_t            flags;
+    u_int8_t            array_width;
+    u_int8_t            total_disks;
+    u_int8_t            dummy_2;
+    u_int16_t           type;
+#define NV_T_RAID0              0x00000080
+#define NV_T_RAID1              0x00000081
+#define NV_T_RAID3              0x00000083
+#define NV_T_RAID5              0x00000085
+#define NV_T_RAID01             0x00008180
+#define NV_T_SPAN               0x000000ff
+
+    u_int16_t           dummy_3;
+    u_int32_t           stripe_sectors;
+    u_int32_t           stripe_bytes;
+    u_int32_t           stripe_shift;
+    u_int32_t           stripe_mask;
+    u_int32_t           stripe_sizesectors;
+    u_int32_t           stripe_sizebytes;
+    u_int32_t           rebuild_lba;
+    u_int32_t           dummy_4;
+    u_int32_t           dummy_5;
+    u_int32_t           status;
+#define NV_S_BOOTABLE           0x00000001
+#define NV_S_DEGRADED           0x00000002
+
+    u_int32_t           filler[98];
+} __packed;
+
+/* JMicron Technology Corp Metadata */
+#define JMICRON_LBA(wd) 	((wd)->sc_capacity - 1)
+#define JM_MAX_DISKS            8
+
+struct jmicron_raid_conf {
+	uint8_t 	signature[2];
+#define JMICRON_MAGIC 		"JM"
+	uint16_t 	version;
+#define JMICRON_VERSION 	0x0001
+	uint16_t 	checksum;
+	uint8_t 	filler_1[10];
+	uint32_t 	disk_id;
+	uint32_t 	offset;
+	uint32_t 	disk_sectors_high;
+	uint16_t 	disk_sectors_low;
+	uint8_t 	filler_2[2];
+	uint8_t 	name[16];
+	uint8_t 	type;
+#define JM_T_RAID0 		0
+#define JM_T_RAID1 		1
+#define JM_T_RAID01 		2
+#define JM_T_JBOD 		3
+#define JM_T_RAID5 		5
+	uint8_t 	stripe_shift;
+	uint16_t 	flags;
+#define JM_F_READY 		0x0001
+#define JM_F_BOOTABLE 		0x0002
+#define JM_F_BAD 		0x0004
+#define JM_F_ACTIVE 		0x0010
+#define JM_F_UNSYNC 		0x0020
+#define JM_F_NEWEST 		0x0040
+	uint8_t 	filler_3[4];
+	uint32_t 	spare[2];
+	uint32_t 	disks[JM_MAX_DISKS];
+	uint8_t 	filler_4[32];
+	uint8_t 	filler_5[384];
+};
+
+/* Intel MatrixRAID metadata */
+#define INTEL_LBA(wd)		((wd)->sc_capacity - 3)
+
+struct intel_raid_conf {
+	uint8_t		intel_id[24];
+#define INTEL_MAGIC		"Intel Raid ISM Cfg Sig. "
+
+	uint8_t		version[6];
+#define INTEL_VERSION_1100	"1.1.00"
+#define INTEL_VERSION_1201	"1.2.01"
+#define INTEL_VERSION_1202	"1.2.02"
+
+	uint8_t		dummy_0[2];
+	uint32_t	checksum;
+	uint32_t	config_size;
+	uint32_t	config_id;
+	uint32_t	generation;
+	uint32_t	dummy_1[2];
+	uint8_t		total_disks;
+	uint8_t		total_volumes;
+	uint8_t 	dummy_2[2];
+	uint32_t	filler_0[39];
+	struct {
+		uint8_t		serial[16];
+		uint32_t	sectors;
+		uint32_t	id;
+		uint32_t	flags;
+#define INTEL_F_SPARE			0x01
+#define INTEL_F_ASSIGNED		0x02
+#define INTEL_F_DOWN			0x04
+#define INTEL_F_ONLINE			0x08
+		uint32_t	filler[5];
+	} __packed disk[1];
+	uint32_t	filler_1[62];
+} __packed;
+
+struct intel_raid_mapping {
+	uint8_t		name[16];
+	uint64_t	total_sectors __packed;
+	uint32_t	state;
+	uint32_t	reserved;
+	uint32_t	filler_0[20];
+	uint32_t	offset;
+	uint32_t	disk_sectors;
+	uint32_t	stripe_count;
+	uint16_t	stripe_sectors;
+	uint8_t		status;
+#define INTEL_S_READY		0x00
+#define INTEL_S_DISABLED	0x01
+#define INTEL_S_DEGRADED	0x02
+#define INTEL_S_FAILURE		0x03
+
+	uint8_t		type;
+#define INTEL_T_RAID0		0x00
+#define INTEL_T_RAID1		0x01
+#define INTEL_T_RAID5		0x05
+
+	uint8_t		total_disks;
+	uint8_t		magic[3];
+	uint32_t	filler_1[7];
+	uint32_t	disk_idx[1];
 } __packed;
 
 #endif /* _DEV_PCI_PCIIDE_PROMISE_RAID_H_ */

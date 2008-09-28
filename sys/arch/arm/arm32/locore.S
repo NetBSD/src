@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.22.6.1 2008/06/02 13:21:53 mjf Exp $	*/
+/*	$NetBSD: locore.S,v 1.22.6.2 2008/09/28 10:39:47 mjf Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -42,7 +42,7 @@
 /* What size should this really be ? It is only used by init_arm() */
 #define INIT_ARM_STACK_SIZE	2048
 
-	RCSID("$NetBSD: locore.S,v 1.22.6.1 2008/06/02 13:21:53 mjf Exp $")
+	RCSID("$NetBSD: locore.S,v 1.22.6.2 2008/09/28 10:39:47 mjf Exp $")
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -108,7 +108,7 @@ ENTRY_NP(cpu_reset)
 	mrs     r2, cpsr
 	bic	r2, r2, #(PSR_MODE)
 	orr     r2, r2, #(PSR_SVC32_MODE)
-	orr	r2, r2, #(I32_bit | F32_bit)
+	orr	r2, r2, #(IF32_bits)
 	msr     cpsr_c, r2
 
 	ldr	r4, .Lcpu_reset_address

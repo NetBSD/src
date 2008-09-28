@@ -1,4 +1,4 @@
-/*	$NetBSD: athvar.h,v 1.23.6.1 2008/04/03 12:42:39 mjf Exp $	*/
+/*	$NetBSD: athvar.h,v 1.23.6.2 2008/09/28 10:40:22 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -166,7 +166,7 @@ struct taskqueue;
 struct ath_tx99;
 
 struct ath_softc {
-	struct device		sc_dev;
+	device_t 		sc_dev;
 	struct ethercom		sc_ec;		/* interface common */
 	struct ath_stats	sc_stats;	/* interface statistics */
 	struct ieee80211com	sc_ic;		/* IEEE 802.11 common */

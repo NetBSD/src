@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clockintr.c,v 1.7 2008/01/08 14:46:28 joerg Exp $	*/
+/*	$NetBSD: mips3_clockintr.c,v 1.7.6.1 2008/09/28 10:40:04 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.7 2008/01/08 14:46:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.7.6.1 2008/09/28 10:40:04 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,5 @@ mips3_setstatclockrate(int newhz)
 	/* nothing we can do */
 }
 
-__weak_alias(delay, mips3_delay);
 __weak_alias(setstatclockrate, mips3_setstatclockrate);
 __weak_alias(cpu_initclocks, mips3_initclocks);

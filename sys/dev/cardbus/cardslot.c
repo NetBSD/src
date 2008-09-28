@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.39.6.3 2008/07/02 19:08:19 mjf Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.39.6.4 2008/09/28 10:40:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.39.6.3 2008/07/02 19:08:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.39.6.4 2008/09/28 10:40:19 mjf Exp $");
 
 #include "opt_cardslot.h"
 
@@ -130,12 +130,13 @@ cardslotattach(struct device *parent, struct device *self,
 	}
 
 	if (pa != NULL) {
-		psc = (void *)config_found_sm_loc(self, "pcmciabus", NULL, pa,
-			cardslot_16_print, cardslot_16_submatch);
-		if (psc) {
+		sc->sc_16_softc = config_found_sm_loc(self, "pcmciabus", NULL,
+						      pa, cardslot_16_print,
+						      cardslot_16_submatch);
+		if (sc->sc_16_softc) {
 			/* pcmcia 16-bit bus found */
 			DPRINTF(("%s: found 16-bit pcmcia bus\n", __func__));
-			sc->sc_16_softc = psc;
+			psc = device_private(sc->sc_16_softc);
 		}
 	}
 
@@ -419,11 +420,13 @@ cardslot_event_thread(arg)
 			}
 			if ((sc->sc_16_softc != NULL)
 			    && (CARDSLOT_WORK(sc->sc_status) == CARDSLOT_STATUS_WORKING)) {
-				struct pcmcia_softc *psc = sc->sc_16_softc;
+				struct pcmcia_softc *psc =
+					device_private(sc->sc_16_softc);
 
-				pcmcia_card_deactivate((struct device *)psc);
+				pcmcia_card_deactivate(sc->sc_16_softc);
 				pcmcia_chip_socket_disable(psc->pct, psc->pch);
-				pcmcia_card_detach((struct device *)psc, DETACH_FORCE);
+				pcmcia_card_detach(sc->sc_16_softc,
+						   DETACH_FORCE);
 			}
 			CARDSLOT_SET_CARDTYPE(sc->sc_status, CARDSLOT_STATUS_CARD_NONE);
 			CARDSLOT_SET_WORK(sc->sc_status, CARDSLOT_STATUS_NOTWORK);

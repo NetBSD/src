@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.64.6.1 2008/06/02 13:23:51 mjf Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.64.6.2 2008/09/28 10:40:31 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.64.6.1 2008/06/02 13:23:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.64.6.2 2008/09/28 10:40:31 mjf Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -277,6 +277,8 @@ scsistrategy(struct buf *bp)
 	    screq->timeout, bp, flags | XS_CTL_USERCMD);
 
 done:
+	if (error)
+		bp->b_resid = bp->b_bcount;
 	bp->b_error = error;
 	biodone(bp);
 	return;

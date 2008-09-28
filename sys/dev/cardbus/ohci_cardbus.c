@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.24.16.3 2008/06/29 09:33:06 mjf Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.24.16.4 2008/09/28 10:40:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.24.16.3 2008/06/29 09:33:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.24.16.4 2008/09/28 10:40:20 mjf Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -131,10 +131,6 @@ ohci_cardbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Disable interrupts, so we don't can any spurious ones. */
-	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
-			  OHCI_ALL_INTRS);
-
 	sc->sc_cc = cc;
 	sc->sc_cf = cf;
 	sc->sc_ct = ct;
@@ -153,6 +149,10 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 	cardbus_conf_write(cc, cf, ca->ca_tag, CARDBUS_COMMAND_STATUS_REG,
 		       csr | CARDBUS_COMMAND_MASTER_ENABLE
 			   | CARDBUS_COMMAND_MEM_ENABLE);
+
+	/* Disable interrupts, so we don't can any spurious ones. */
+	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
+			  OHCI_ALL_INTRS);
 
 	sc->sc_ih = cardbus_intr_establish(cc, cf, ca->ca_intrline,
 					   IPL_USB, ohci_intr, sc);

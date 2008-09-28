@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.111.6.1 2008/06/02 13:24:24 mjf Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.111.6.2 2008/09/28 10:40:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.111.6.1 2008/06/02 13:24:24 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.111.6.2 2008/09/28 10:40:58 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -212,23 +212,19 @@ static const struct protosw vif_protosw =
 
 static int get_sg_cnt(struct sioc_sg_req *);
 static int get_vif_cnt(struct sioc_vif_req *);
-static int ip_mrouter_init(struct socket *, struct mbuf *);
-static int get_version(struct mbuf *);
-static int set_assert(struct mbuf *);
-static int get_assert(struct mbuf *);
-static int add_vif(struct mbuf *);
-static int del_vif(struct mbuf *);
+static int ip_mrouter_init(struct socket *, int);
+static int set_assert(int);
+static int add_vif(struct vifctl *);
+static int del_vif(vifi_t *);
 static void update_mfc_params(struct mfc *, struct mfcctl2 *);
 static void init_mfc_params(struct mfc *, struct mfcctl2 *);
 static void expire_mfc(struct mfc *);
-static int add_mfc(struct mbuf *);
+static int add_mfc(struct sockopt *);
 #ifdef UPCALL_TIMING
 static void collate(struct timeval *);
 #endif
-static int del_mfc(struct mbuf *);
-static int set_api_config(struct mbuf *); /* chose API capabilities */
-static int get_api_support(struct mbuf *);
-static int get_api_config(struct mbuf *);
+static int del_mfc(struct sockopt *);
+static int set_api_config(struct sockopt *); /* chose API capabilities */
 static int socket_send(struct socket *, struct mbuf *, struct sockaddr_in *);
 static void expire_upcalls(void *);
 #ifdef RSVP_ISI
@@ -251,8 +247,8 @@ static int priority(struct vif *, struct ip *);
  * Bandwidth monitoring
  */
 static void free_bw_list(struct bw_meter *);
-static int add_bw_upcall(struct mbuf *);
-static int del_bw_upcall(struct mbuf *);
+static int add_bw_upcall(struct bw_upcall *);
+static int del_bw_upcall(struct bw_upcall *);
 static void bw_meter_receive_packet(struct bw_meter *, int , struct timeval *);
 static void bw_meter_prepare_upcall(struct bw_meter *, struct timeval *);
 static void bw_upcalls_send(void);
@@ -438,51 +434,72 @@ u_int32_t upcall_data[51];
  * Handle MRT setsockopt commands to modify the multicast routing tables.
  */
 int
-ip_mrouter_set(struct socket *so, int optname, struct mbuf **m)
+ip_mrouter_set(struct socket *so, struct sockopt *sopt)
 {
 	int error;
+	int optval;
+	struct vifctl vifc;
+	vifi_t vifi;
+	struct bw_upcall bwuc;
 
-	if (optname != MRT_INIT && so != ip_mrouter)
+	if (sopt->sopt_name != MRT_INIT && so != ip_mrouter)
 		error = ENOPROTOOPT;
-	else
-		switch (optname) {
+	else {
+		switch (sopt->sopt_name) {
 		case MRT_INIT:
-			error = ip_mrouter_init(so, *m);
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+
+			error = ip_mrouter_init(so, optval);
 			break;
 		case MRT_DONE:
 			error = ip_mrouter_done();
 			break;
 		case MRT_ADD_VIF:
-			error = add_vif(*m);
+			error = sockopt_get(sopt, &vifc, sizeof(vifc));
+			if (error)
+				break;
+			error = add_vif(&vifc);
 			break;
 		case MRT_DEL_VIF:
-			error = del_vif(*m);
+			error = sockopt_get(sopt, &vifi, sizeof(vifi));
+			if (error)
+				break;
+			error = del_vif(&vifi);
 			break;
 		case MRT_ADD_MFC:
-			error = add_mfc(*m);
+			error = add_mfc(sopt);
 			break;
 		case MRT_DEL_MFC:
-			error = del_mfc(*m);
+			error = del_mfc(sopt);
 			break;
 		case MRT_ASSERT:
-			error = set_assert(*m);
+			error = sockopt_getint(sopt, &optval);
+			if (error)
+				break;
+			error = set_assert(optval);
 			break;
 		case MRT_API_CONFIG:
-			error = set_api_config(*m);
+			error = set_api_config(sopt);
 			break;
 		case MRT_ADD_BW_UPCALL:
-			error = add_bw_upcall(*m);
+			error = sockopt_get(sopt, &bwuc, sizeof(bwuc));
+			if (error)
+				break;
+			error = add_bw_upcall(&bwuc);
 			break;
 		case MRT_DEL_BW_UPCALL:
-			error = del_bw_upcall(*m);
+			error = sockopt_get(sopt, &bwuc, sizeof(bwuc));
+			if (error)
+				break;
+			error = del_bw_upcall(&bwuc);
 			break;
 		default:
 			error = ENOPROTOOPT;
 			break;
 		}
-
-	if (*m)
-		m_free(*m);
+	}
 	return (error);
 }
 
@@ -490,38 +507,33 @@ ip_mrouter_set(struct socket *so, int optname, struct mbuf **m)
  * Handle MRT getsockopt commands
  */
 int
-ip_mrouter_get(struct socket *so, int optname, struct mbuf **m)
+ip_mrouter_get(struct socket *so, struct sockopt *sopt)
 {
 	int error;
 
 	if (so != ip_mrouter)
 		error = ENOPROTOOPT;
 	else {
-		*m = m_get(M_WAIT, MT_SOOPTS);
-		MCLAIM(*m, so->so_mowner);
-
-		switch (optname) {
+		switch (sopt->sopt_name) {
 		case MRT_VERSION:
-			error = get_version(*m);
+			error = sockopt_setint(sopt, 0x0305); /* XXX !!!! */
 			break;
 		case MRT_ASSERT:
-			error = get_assert(*m);
+			error = sockopt_setint(sopt, pim_assert);
 			break;
 		case MRT_API_SUPPORT:
-			error = get_api_support(*m);
+			error = sockopt_set(sopt, &mrt_api_support,
+			    sizeof(mrt_api_support));
 			break;
 		case MRT_API_CONFIG:
-			error = get_api_config(*m);
+			error = sockopt_set(sopt, &mrt_api_config,
+			    sizeof(mrt_api_config));
 			break;
 		default:
 			error = ENOPROTOOPT;
 			break;
 		}
-
-		if (error)
-			m_free(*m);
 	}
-
 	return (error);
 }
 
@@ -598,10 +610,8 @@ get_vif_cnt(struct sioc_vif_req *req)
  * Enable multicast routing
  */
 static int
-ip_mrouter_init(struct socket *so, struct mbuf *m)
+ip_mrouter_init(struct socket *so, int v)
 {
-	int *v;
-
 	if (mrtdebug)
 		log(LOG_DEBUG,
 		    "ip_mrouter_init: so_type = %d, pr_protocol = %d\n",
@@ -611,11 +621,7 @@ ip_mrouter_init(struct socket *so, struct mbuf *m)
 	    so->so_proto->pr_protocol != IPPROTO_IGMP)
 		return (EOPNOTSUPP);
 
-	if (m == NULL || m->m_len != sizeof(int))
-		return (EINVAL);
-
-	v = mtod(m, int *);
-	if (*v != 1)
+	if (v != 1)
 		return (EINVAL);
 
 	if (ip_mrouter != NULL)
@@ -732,42 +738,13 @@ ip_mrouter_detach(struct ifnet *ifp)
 	}
 }
 
-static int
-get_version(struct mbuf *m)
-{
-	int *v = mtod(m, int *);
-
-	*v = 0x0305;	/* XXX !!!! */
-	m->m_len = sizeof(int);
-	return (0);
-}
-
 /*
  * Set PIM assert processing global
  */
 static int
-set_assert(struct mbuf *m)
+set_assert(int i)
 {
-	int *i;
-
-	if (m == NULL || m->m_len != sizeof(int))
-		return (EINVAL);
-
-	i = mtod(m, int *);
-	pim_assert = !!*i;
-	return (0);
-}
-
-/*
- * Get PIM assert processing global
- */
-static int
-get_assert(struct mbuf *m)
-{
-	int *i = mtod(m, int *);
-
-	*i = pim_assert;
-	m->m_len = sizeof(int);
+	pim_assert = !!i;
 	return (0);
 }
 
@@ -775,15 +752,10 @@ get_assert(struct mbuf *m)
  * Configure API capabilities
  */
 static int
-set_api_config(struct mbuf *m)
+set_api_config(struct sockopt *sopt)
 {
-	int i;
-	u_int32_t *apival;
-
-	if (m == NULL || m->m_len < sizeof(u_int32_t))
-		return (EINVAL);
-
-	apival = mtod(m, u_int32_t *);
+	u_int32_t apival;
+	int i, error;
 
 	/*
 	 * We can set the API capabilities only if it is the first operation
@@ -792,60 +764,19 @@ set_api_config(struct mbuf *m)
 	 *  - pim_assert is not enabled
 	 *  - the MFC table is empty
 	 */
-	if (numvifs > 0) {
-		*apival = 0;
+	error = sockopt_get(sopt, &apival, sizeof(apival));
+	if (error)
+		return (error);
+	if (numvifs > 0)
 		return (EPERM);
-	}
-	if (pim_assert) {
-		*apival = 0;
+	if (pim_assert)
 		return (EPERM);
-	}
 	for (i = 0; i < MFCTBLSIZ; i++) {
-		if (LIST_FIRST(&mfchashtbl[i]) != NULL) {
-			*apival = 0;
+		if (LIST_FIRST(&mfchashtbl[i]) != NULL)
 			return (EPERM);
-		}
 	}
 
-	mrt_api_config = *apival & mrt_api_support;
-	*apival = mrt_api_config;
-
-	return (0);
-}
-
-/*
- * Get API capabilities
- */
-static int
-get_api_support(struct mbuf *m)
-{
-	u_int32_t *apival;
-
-	if (m == NULL || m->m_len < sizeof(u_int32_t))
-		return (EINVAL);
-
-	apival = mtod(m, u_int32_t *);
-
-	*apival = mrt_api_support;
-
-	return (0);
-}
-
-/*
- * Get API configured capabilities
- */
-static int
-get_api_config(struct mbuf *m)
-{
-	u_int32_t *apival;
-
-	if (m == NULL || m->m_len < sizeof(u_int32_t))
-		return (EINVAL);
-
-	apival = mtod(m, u_int32_t *);
-
-	*apival = mrt_api_config;
-
+	mrt_api_config = apival & mrt_api_support;
 	return (0);
 }
 
@@ -853,9 +784,8 @@ get_api_config(struct mbuf *m)
  * Add a vif to the vif table
  */
 static int
-add_vif(struct mbuf *m)
+add_vif(struct vifctl *vifcp)
 {
-	struct vifctl *vifcp;
 	struct vif *vifp;
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
@@ -863,10 +793,6 @@ add_vif(struct mbuf *m)
 	int error, s;
 	struct sockaddr_in sin;
 
-	if (m == NULL || m->m_len < sizeof(struct vifctl))
-		return (EINVAL);
-
-	vifcp = mtod(m, struct vifctl *);
 	if (vifcp->vifc_vifi >= MAXVIFS)
 		return (EINVAL);
 	if (in_nullhost(vifcp->vifc_lcl_addr))
@@ -1039,17 +965,12 @@ reset_vif(struct vif *vifp)
  * Delete a vif from the vif table
  */
 static int
-del_vif(struct mbuf *m)
+del_vif(vifi_t *vifip)
 {
-	vifi_t *vifip;
 	struct vif *vifp;
 	vifi_t vifi;
 	int s;
 
-	if (m == NULL || m->m_len < sizeof(vifi_t))
-		return (EINVAL);
-
-	vifip = mtod(m, vifi_t *);
 	if (*vifip >= numvifs)
 		return (EINVAL);
 
@@ -1135,7 +1056,7 @@ expire_mfc(struct mfc *rt)
  * Add an mfc entry
  */
 static int
-add_mfc(struct mbuf *m)
+add_mfc(struct sockopt *sopt)
 {
 	struct mfcctl2 mfcctl2;
 	struct mfcctl2 *mfccp;
@@ -1145,26 +1066,24 @@ add_mfc(struct mbuf *m)
 	u_short nstl;
 	int s;
 	int mfcctl_size = sizeof(struct mfcctl);
+	int error;
 
 	if (mrt_api_config & MRT_API_FLAGS_ALL)
 		mfcctl_size = sizeof(struct mfcctl2);
 
-	if (m == NULL || m->m_len < mfcctl_size)
-		return (EINVAL);
-
 	/*
 	 * select data size depending on API version.
 	 */
-	if (mrt_api_config & MRT_API_FLAGS_ALL) {
-		struct mfcctl2 *mp2 = mtod(m, struct mfcctl2 *);
-		bcopy(mp2, (void *)&mfcctl2, sizeof(*mp2));
-	} else {
-		struct mfcctl *mp = mtod(m, struct mfcctl *);
-		memcpy(&mfcctl2, mp, sizeof(*mp));
-		memset((char *)&mfcctl2 + sizeof(struct mfcctl), 0,
-		    sizeof(mfcctl2) - sizeof(struct mfcctl));
-	}
 	mfccp = &mfcctl2;
+	memset(&mfcctl2, 0, sizeof(mfcctl2));
+
+	if (mrt_api_config & MRT_API_FLAGS_ALL)
+		error = sockopt_get(sopt, mfccp, sizeof(struct mfcctl2));
+	else
+		error = sockopt_get(sopt, mfccp, sizeof(struct mfcctl));
+
+	if (error)
+		return (error);
 
 	s = splsoftnet();
 	rt = mfc_find(&mfccp->mfcc_origin, &mfccp->mfcc_mcastgrp);
@@ -1305,28 +1224,29 @@ collate(struct timeval *t)
  * Delete an mfc entry
  */
 static int
-del_mfc(struct mbuf *m)
+del_mfc(struct sockopt *sopt)
 {
 	struct mfcctl2 mfcctl2;
 	struct mfcctl2 *mfccp;
 	struct mfc *rt;
 	int s;
-	int mfcctl_size = sizeof(struct mfcctl);
-	struct mfcctl *mp = mtod(m, struct mfcctl *);
+	int error;
 
 	/*
 	 * XXX: for deleting MFC entries the information in entries
 	 * of size "struct mfcctl" is sufficient.
 	 */
 
-	if (m == NULL || m->m_len < mfcctl_size)
-		return (EINVAL);
-
-	memcpy(&mfcctl2, mp, sizeof(*mp));
-	memset((char *)&mfcctl2 + sizeof(struct mfcctl), 0,
-	    sizeof(mfcctl2) - sizeof(struct mfcctl));
-
 	mfccp = &mfcctl2;
+	memset(&mfcctl2, 0, sizeof(mfcctl2));
+
+	error = sockopt_get(sopt, mfccp, sizeof(struct mfcctl));
+	if (error) {
+		/* Try with the size of mfcctl2. */
+		error = sockopt_get(sopt, mfccp, sizeof(struct mfcctl2));
+		if (error)
+			return (error);
+	}
 
 	if (mrtdebug & DEBUG_MFC)
 		log(LOG_DEBUG, "del_mfc origin %x mcastgrp %x\n",
@@ -2557,7 +2477,7 @@ compute_bw_meter_flags(struct bw_upcall *req)
  * Add a bw_meter entry
  */
 static int
-add_bw_upcall(struct mbuf *m)
+add_bw_upcall(struct bw_upcall *req)
 {
     int s;
     struct mfc *mfc;
@@ -2566,12 +2486,6 @@ add_bw_upcall(struct mbuf *m)
     struct timeval now;
     struct bw_meter *x;
     uint32_t flags;
-    struct bw_upcall *req;
-
-    if (m == NULL || m->m_len < sizeof(struct bw_upcall))
-	return EINVAL;
-
-    req = mtod(m, struct bw_upcall *);
 
     if (!(mrt_api_config & MRT_MFC_BW_UPCALL))
 	return EOPNOTSUPP;
@@ -2656,17 +2570,11 @@ free_bw_list(struct bw_meter *list)
  * Delete one or multiple bw_meter entries
  */
 static int
-del_bw_upcall(struct mbuf *m)
+del_bw_upcall(struct bw_upcall *req)
 {
     int s;
     struct mfc *mfc;
     struct bw_meter *x;
-    struct bw_upcall *req;
-
-    if (m == NULL || m->m_len < sizeof(struct bw_upcall))
-	return EINVAL;
-
-    req = mtod(m, struct bw_upcall *);
 
     if (!(mrt_api_config & MRT_MFC_BW_UPCALL))
 	return EOPNOTSUPP;

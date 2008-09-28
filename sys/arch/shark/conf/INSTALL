@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.36.6.1 2008/06/02 13:22:39 mjf Exp $
+#	$NetBSD: INSTALL,v 1.36.6.2 2008/09/28 10:40:08 mjf Exp $
 #
 #	Shark installation kernel
 #
@@ -62,6 +62,7 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
 
 # Networking options
 

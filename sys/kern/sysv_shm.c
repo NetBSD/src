@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.105.6.1 2008/06/02 13:24:13 mjf Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.105.6.2 2008/09/28 10:40:54 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.105.6.1 2008/06/02 13:24:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.105.6.2 2008/09/28 10:40:54 mjf Exp $");
 
 #define SYSVSHM
 
@@ -905,8 +905,8 @@ shmrealloc(int newshmni)
 	shm_realloc_state = true;
 
 	newshmsegs = (void *)v;
-	newshm_cv = (void *)(ALIGN(newshmsegs) +
-	    newshmni * sizeof(struct shmid_ds));
+	newshm_cv = (void *)((uintptr_t)newshmsegs +
+	    ALIGN(newshmni * sizeof(struct shmid_ds)));
 
 	/* Copy all memory to the new area */
 	for (i = 0; i < shm_nused; i++)
@@ -932,8 +932,8 @@ shmrealloc(int newshmni)
 	mutex_exit(&shm_lock);
 
 	/* Release now unused resources. */
-	oldshm_cv = (void *)(ALIGN(oldshmsegs) +
-	    oldshmni * sizeof(struct shmid_ds));
+	oldshm_cv = (void *)((uintptr_t)oldshmsegs +
+	    ALIGN(oldshmni * sizeof(struct shmid_ds)));
 	for (i = 0; i < oldshmni; i++)
 		cv_destroy(&oldshm_cv[i]);
 
@@ -964,8 +964,8 @@ shminit(void)
 	if (v == 0)
 		panic("sysv_shm: cannot allocate memory");
 	shmsegs = (void *)v;
-	shm_cv = (void *)(ALIGN(shmsegs) +
-	    shminfo.shmmni * sizeof(struct shmid_ds));
+	shm_cv = (void *)((uintptr_t)shmsegs +
+	    ALIGN(shminfo.shmmni * sizeof(struct shmid_ds)));
 
 	shminfo.shmmax *= PAGE_SIZE;
 

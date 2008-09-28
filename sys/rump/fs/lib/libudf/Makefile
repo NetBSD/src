@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.30.1 2008/06/02 13:24:31 mjf Exp $
+#	$NetBSD: Makefile,v 1.1.30.2 2008/09/28 10:41:03 mjf Exp $
 #
 
-.include <bsd.own.mk>
+.PATH:  ${.CURDIR}/../../../../fs/udf
 
-LIB=	udf
-
-.PATH:  ${NETBSDSRCDIR}/sys/fs/udf
+LIB=	rumpfs_udf
 
 SRCS=	udf_osta.c udf_vfsops.c udf_vnops.c udf_subr.c \
 	udf_allocation.c udf_readwrite.c udf_strat_bootstrap.c \

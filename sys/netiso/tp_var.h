@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_var.h,v 1.15.36.1 2008/06/02 13:24:29 mjf Exp $	*/
+/*	$NetBSD: tp_var.h,v 1.15.36.2 2008/09/28 10:41:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ void Tpmeas (u_int, u_int, struct timeval *, u_int, u_int, u_int);
 
 /* tp_output.c */
 int tp_consistency (struct tp_pcb *, u_int, struct tp_conn_param *);
-int tp_ctloutput (int, struct socket *, int, int, struct mbuf **);
+int tp_ctloutput (int, struct socket *, struct sockopt *);
 
 /* tp_pcb.c */
 void tp_init    (void);

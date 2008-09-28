@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.30.14.1 2008/06/02 13:23:17 mjf Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.30.14.2 2008/09/28 10:40:21 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.30.14.1 2008/06/02 13:23:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.30.14.2 2008/09/28 10:40:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ iopsp_match(struct device *parent, struct cfdata *match, void *aux)
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
 		struct	i2o_param_hba_ctlr_info ci;
-	} __attribute__ ((__packed__)) param;
+	} __packed param;
 
 	ia = aux;
 
@@ -119,7 +119,7 @@ iopsp_attach(struct device *parent, struct device *self, void *aux)
 			struct	i2o_param_hba_scsi_ctlr_info sci;
 			struct	i2o_param_hba_scsi_port_info spi;
 		} p;
-	} __attribute__ ((__packed__)) param;
+	} __packed param;
 	int fc, rv;
 	int size;
 
@@ -219,7 +219,7 @@ iopsp_reconfig(struct device *dv)
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
 		struct	i2o_param_scsi_device_info sdi;
-	} __attribute__ ((__packed__)) param;
+	} __packed param;
 	u_int tid, nent, i, targ, lun, size, rv, bptid;
 	u_short *tidmap;
 	void *tofree;

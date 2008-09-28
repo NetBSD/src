@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.53.6.2 2008/06/29 09:32:55 mjf Exp $
+#	$NetBSD: IQ80321,v 1.53.6.3 2008/09/28 10:39:53 mjf Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -50,6 +50,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

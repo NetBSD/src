@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.167.6.2 2008/06/02 13:24:30 mjf Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.167.6.3 2008/09/28 10:41:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.167.6.2 2008/06/02 13:24:30 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.167.6.3 2008/09/28 10:41:00 mjf Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -199,6 +199,7 @@ nfs_connect(nmp, rep, l)
 	struct sockaddr_in6 *sin6;
 #endif
 	struct mbuf *m;
+	int val;
 
 	nmp->nm_so = (struct socket *)0;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
@@ -218,11 +219,10 @@ nfs_connect(nmp, rep, l)
 	 * Some servers require that the client port be a reserved port number.
 	 */
 	if (saddr->sa_family == AF_INET && (nmp->nm_flag & NFSMNT_RESVPORT)) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		MCLAIM(m, so->so_mowner);
-		*mtod(m, int32_t *) = IP_PORTRANGE_LOW;
-		m->m_len = sizeof(int32_t);
-		if ((error = sosetopt(so, IPPROTO_IP, IP_PORTRANGE, m)))
+		val = IP_PORTRANGE_LOW;
+
+		if ((error = so_setsockopt(NULL, so, IPPROTO_IP, IP_PORTRANGE,
+		    &val, sizeof(val))))
 			goto bad;
 		m = m_get(M_WAIT, MT_SONAME);
 		MCLAIM(m, so->so_mowner);
@@ -238,11 +238,10 @@ nfs_connect(nmp, rep, l)
 	}
 #ifdef INET6
 	if (saddr->sa_family == AF_INET6 && (nmp->nm_flag & NFSMNT_RESVPORT)) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		MCLAIM(m, so->so_mowner);
-		*mtod(m, int32_t *) = IPV6_PORTRANGE_LOW;
-		m->m_len = sizeof(int32_t);
-		if ((error = sosetopt(so, IPPROTO_IPV6, IPV6_PORTRANGE, m)))
+		val = IPV6_PORTRANGE_LOW;
+
+		if ((error = so_setsockopt(NULL, so, IPPROTO_IPV6,
+		    IPV6_PORTRANGE, &val, sizeof(val))))
 			goto bad;
 		m = m_get(M_WAIT, MT_SONAME);
 		MCLAIM(m, so->so_mowner);
@@ -322,18 +321,14 @@ nfs_connect(nmp, rep, l)
 		if (nmp->nm_sotype != SOCK_STREAM)
 			panic("nfscon sotype");
 		if (so->so_proto->pr_flags & PR_CONNREQUIRED) {
-			m = m_get(M_WAIT, MT_SOOPTS);
-			MCLAIM(m, so->so_mowner);
-			*mtod(m, int32_t *) = 1;
-			m->m_len = sizeof(int32_t);
-			sosetopt(so, SOL_SOCKET, SO_KEEPALIVE, m);
+			val = 1;
+			so_setsockopt(NULL, so, SOL_SOCKET, SO_KEEPALIVE, &val,
+			    sizeof(val));
 		}
 		if (so->so_proto->pr_protocol == IPPROTO_TCP) {
-			m = m_get(M_WAIT, MT_SOOPTS);
-			MCLAIM(m, so->so_mowner);
-			*mtod(m, int32_t *) = 1;
-			m->m_len = sizeof(int32_t);
-			sosetopt(so, IPPROTO_TCP, TCP_NODELAY, m);
+			val = 1;
+			so_setsockopt(NULL, so, IPPROTO_TCP, TCP_NODELAY, &val,
+			    sizeof(val));
 		}
 		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR +
 		    sizeof (u_int32_t)) * 2;

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_client.c,v 1.8 2007/12/15 00:39:24 perry Exp $ */
+/* $NetBSD: xenbus_client.c,v 1.8.6.1 2008/09/28 10:40:14 mjf Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.8 2007/12/15 00:39:24 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.8.6.1 2008/09/28 10:40:14 mjf Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -241,8 +241,12 @@ xenbus_alloc_evtchn(struct xenbus_device *dev, int *port)
 {
 	evtchn_op_t op = {
 		.cmd = EVTCHNOP_alloc_unbound,
-		.u.alloc_unbound.dom = DOMID_SELF,
-		.u.alloc_unbound.remote_dom = dev->xbusd_otherend_id };
+		.u.alloc_unbound = {
+			.dom = DOMID_SELF,
+			.remote_dom = dev->xbusd_otherend_id,
+			.port = 0
+		}
+	};
 
 	int err = HYPERVISOR_event_channel_op(&op);
 	if (err)

@@ -1,4 +1,4 @@
-/* $NetBSD: gcscehci.c,v 1.1.36.2 2008/06/02 13:22:18 mjf Exp $ */
+/* $NetBSD: gcscehci.c,v 1.1.36.3 2008/09/28 10:40:00 mjf Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.1.36.2 2008/06/02 13:22:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscehci.c,v 1.1.36.3 2008/09/28 10:40:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ gcscehci_attach(struct device *parent, struct device *self, void *aux)
 	struct usb_pci *up;
 
 	sc->sc.sc_dev = self;
-	sc->sc.sc_bus.hci_private = self;
+	sc->sc.sc_bus.hci_private = sc;
 
 	aprint_naive(": USB controller\n");
 

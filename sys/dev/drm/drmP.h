@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.14.6.4 2008/07/02 19:08:19 mjf Exp $ */
+/* $NetBSD: drmP.h,v 1.14.6.5 2008/09/28 10:40:20 mjf Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -482,7 +482,7 @@ do {									\
 	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock) ||		\
 	     dev->lock.filp != filp) {					\
 		DRM_ERROR("%s called without lock held\n",		\
-			   __func__);				\
+			   __FUNCTION__);				\
 		return EINVAL;						\
 	}								\
 } while (0)
@@ -841,7 +841,7 @@ typedef struct {
  */
 struct drm_device {
 #if defined(__NetBSD__) || defined(__OpenBSD__)
-	struct device		device;
+	struct device		*device;
 #endif
 
 	struct drm_driver_info driver;

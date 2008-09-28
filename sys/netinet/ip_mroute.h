@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.29 2007/12/25 18:33:46 perry Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.29.6.1 2008/09/28 10:40:58 mjf Exp $	*/
 
 #ifndef _NETINET_IP_MROUTE_H_
 #define _NETINET_IP_MROUTE_H_
@@ -20,6 +20,10 @@
 
 #include <sys/queue.h>
 #include <sys/callout.h>
+
+#ifdef _KERNEL
+struct sockopt; /* from <sys/socketvar.h> */
+#endif
 
 /*
  * Multicast Routing set/getsockopt commands.
@@ -332,8 +336,8 @@ struct bw_meter {
 	struct timeval	bm_start_time;		/* abs. time		     */
 };
 
-int	ip_mrouter_set(struct socket *, int, struct mbuf **);
-int	ip_mrouter_get(struct socket *, int, struct mbuf **);
+int	ip_mrouter_set(struct socket *, struct sockopt *);
+int	ip_mrouter_get(struct socket *, struct sockopt *);
 int	mrt_ioctl(struct socket *, u_long, void *);
 int	ip_mrouter_done(void);
 void	ip_mrouter_detach(struct ifnet *);
