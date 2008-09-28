@@ -1,4 +1,4 @@
-/* $NetBSD: compat_ldexp_ieee754.c,v 1.2 2008/04/28 20:22:59 martin Exp $ */
+/* $NetBSD: compat_ldexp_ieee754.c,v 1.3 2008/09/28 15:19:09 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -29,9 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef USE_LIBM
+#include "s_ldexp.c"
+#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.2 2008/04/28 20:22:59 martin Exp $");
+__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.3 2008/09/28 15:19:09 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -140,3 +143,4 @@ ldexp(double val, int expon)
 		return (u.dblu_d);
 	}
 }
+#endif
