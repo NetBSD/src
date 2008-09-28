@@ -1,4 +1,4 @@
-/* $NetBSD: compat_ldexp_ieee754.c,v 1.3 2008/09/28 15:19:09 christos Exp $ */
+/* $NetBSD: compat_ldexp_ieee754.c,v 1.4 2008/09/28 18:54:30 christos Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,11 +30,13 @@
  */
 
 #ifdef USE_LIBM
+#include "s_finite.c"
+#include "s_scalbn.c"
 #include "s_ldexp.c"
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.3 2008/09/28 15:19:09 christos Exp $");
+__RCSID("$NetBSD: compat_ldexp_ieee754.c,v 1.4 2008/09/28 18:54:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
