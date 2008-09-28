@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.138 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.139 2008/09/28 00:10:18 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.138 2008/08/06 15:01:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.139 2008/09/28 00:10:18 pooka Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -685,8 +685,6 @@ nfssvc_nfsd(nsd, argp, l)
 					if (nd != NULL) {
 						if (nd->nd_nam2)
 							m_free(nd->nd_nam2);
-						if (nd->nd_mrep)
-							m_freem(nd->nd_mrep);
 					}
 					break;
 				}
