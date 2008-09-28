@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.958 2008/09/18 12:03:45 cegger Exp $
+$NetBSD: pcidevs,v 1.959 2008/09/28 11:35:06 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2638,12 +2638,14 @@ product ITT AGX016	0x0001	AGX016
 product ITT ITT3204	0x0002	ITT3204 MPEG Decoder
 
 /* JMicron products */
-product JMICRON	JMB360	0x02360 JMB360 SATA controller
-product JMICRON	JMB361	0x02361 JMB361 SATA/PATA controller
-product JMICRON	JMB363	0x02363 JMB363 SATA/PATA controller
-product JMICRON	JMB365	0x02365 JMB365 SATA/PATA controller
-product JMICRON	JMB366	0x02366 JMB366 SATA/PATA controller
-product JMICRON	JMB368	0x02368 JMB368 PATA controller
+product JMICRON	JMB360	0x2360 JMB360 SATA controller
+product JMICRON	JMB361	0x2361 JMB361 SATA/PATA controller
+product JMICRON	JMB363	0x2363 JMB363 SATA/PATA controller
+product JMICRON	JMB365	0x2365 JMB365 SATA/PATA controller
+product JMICRON	JMB366	0x2366 JMB366 SATA/PATA controller
+product JMICRON	JMB368	0x2368 JMB368 PATA controller
+product JMICRON	JMC250	0x0250 JMC250 Gigabit Ethernet Controller
+product JMICRON	JMC260	0x0260 JMC260 Fast Ethernet Controller
 
 /* JNI products */
 product JNI JNIC1460	0x1460	JNIC-1460 Fibre-Channel adapter
