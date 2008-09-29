@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1196 2008/09/28 06:34:48 lukem Exp $
+#	$NetBSD: mi,v 1.1197 2008/09/29 11:39:37 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3077,9 +3077,11 @@
 ./usr/libdata/debug/usr/games/sail.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/snake.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/snscore.debug	comp-games-debug	debug
+./usr/libdata/debug/usr/games/strfile.debug	comp-utils-debug	debug
 ./usr/libdata/debug/usr/games/teachgammon.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/tetris.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/trek.debug	comp-games-debug	debug
+./usr/libdata/debug/usr/games/unstr.debug	comp-utils-debug	debug
 ./usr/libdata/debug/usr/games/worm.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/worms.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/wump.debug	comp-games-debug	debug
