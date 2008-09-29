@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/05/16 10:25:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.6.12.1 2008/09/29 20:21:24 jdc Exp $
 
 .include <bsd.own.mk>
 
@@ -45,6 +45,10 @@ LDADD+=	-llbxutil -lICE -lXext -lX11 -lz
 DPADD+=	${LIBLBXUTIL} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBZ}
 
 .PATH:	${X11SRCDIR.xc}/programs/${PROG}
+
+.if ${MACHINE_ARCH} == "vax"
+COPTS.connection.c+= -O0
+.endif
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
