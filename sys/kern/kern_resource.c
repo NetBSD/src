@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.143 2008/06/23 20:04:36 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.144 2008/09/29 21:30:12 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.143 2008/06/23 20:04:36 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.144 2008/09/29 21:30:12 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,8 +220,8 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 		break;
 
 	default:
-		error = EINVAL;
-		break;
+		mutex_exit(proc_lock);
+		return EINVAL;
 	}
 	mutex_exit(proc_lock);
 	if (found == 0)
