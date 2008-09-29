@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.118 2008/08/08 17:09:28 skrll Exp $	*/
+/*	$NetBSD: db_command.c,v 1.119 2008/09/29 10:27:53 rmind Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.118 2008/08/08 17:09:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.119 2008/09/29 10:27:53 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -246,6 +246,8 @@ static const struct db_command db_show_cmds[] = {
 	    "Print the vm_map at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("mount",	db_mount_print_cmd,	0,
 	    "Print the mount structure at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("mqueue", db_show_mqueue_cmd,	0,
+	    "Print the message queues", NULL, NULL) },
 	{ DDB_ADD_CMD("mbuf",	db_mbuf_print_cmd,	0,NULL,NULL,
 	    "-c prints all mbuf chains") },
 	{ DDB_ADD_CMD("ncache",	db_namecache_print_cmd,	0,
