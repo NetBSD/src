@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.92 2007/12/16 13:49:22 degroote Exp $
+.\"	$NetBSD: ifconfig.8,v 1.93 2008/09/29 17:28:07 dyoung Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,7 +120,7 @@ supported are
 .Dq atalk ,
 .Dq iso ,
 and
-.Dq ns .
+.Dq link .
 .It Ar interface
 The
 .Ar interface
@@ -133,6 +133,18 @@ for example,
 The following parameters may be set with
 .Nm :
 .Bl -tag -width dest_addressxx
+.It Cm active
+This keyword applies when
+.Nm
+adds or modifies any link-layer address.  It indicates that
+.Nm
+should
+.Dq activate
+the address.
+Activation makes an address the default source for transmissions
+on the interface.
+You may not delete the active address from an interface.
+You must activate some other address, first.
 .It Cm advbase Ar n
 If the driver is a
 .Xr carp 4
@@ -786,6 +798,14 @@ flag except that it zeros the interface input and output statistics
 after printing them.
 .Pp
 Only the super-user may modify the configuration of a network interface.
+.Sh EXAMPLES
+Add a link-layer address to an ethernet:
+.Pp
+.Ic ifconfig sip0 link 00:11:22:33:44:55
+.Pp
+Add and activate a link-layer address:
+.Pp
+.Ic ifconfig sip0 link 00:11:22:33:44:55 active
 .Sh DIAGNOSTICS
 Messages indicating the specified interface does not exist, the
 requested address is unknown, or the user is not privileged and
