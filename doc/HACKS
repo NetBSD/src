@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.91.2.2 2007/07/19 14:38:17 liamjfoy Exp $
+# $NetBSD: HACKS,v 1.91.2.3 2008/09/29 20:23:31 jdc Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -318,6 +318,15 @@ descr
 kcah
 
 port	vax
+
+	hack	gcc4/vax compiler crash
+	cdate	Thu Sep 25 22:20:08 CEST 2008
+	who	bouyer
+	file	x11/Xserver/os/Makefile	: 1.14.4.1
+	file	x11/bin/lbxproxy/Makefile	: 1.6.12.1
+	descr
+		GCC4 on vax crashes.  -O0 stops it happening so far...
+	kcah
 
 	hack	gcc4/vax compiler crash
 	cdate	Fri Jun 30 22:39:12 PDT 2006
