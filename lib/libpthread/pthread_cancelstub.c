@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.20 2008/06/28 16:50:43 ad Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.21 2008/09/29 08:48:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.20 2008/06/28 16:50:43 ad Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.21 2008/09/29 08:48:15 ad Exp $");
 
 #ifndef lint
 
@@ -131,21 +131,6 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 }
 
 int
-aio_suspend(const struct aiocb * const list[], int nent,
-    const struct timespec *timeout)
-{
-	int retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys_aio_suspend(list, nent, timeout);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-int
 close(int d)
 {
 	int retval;
@@ -227,64 +212,6 @@ fsync_range(int d, int f, off_t s, off_t e)
 	self = pthread__self();
 	TESTCANCEL(self);
 	retval = _sys_fsync_range(d, f, s, e);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-int
-mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio)
-{
-	int retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys_mq_send(mqdes, msg_ptr, msg_len, msg_prio);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-ssize_t
-mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio)
-{
-	ssize_t retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys_mq_receive(mqdes, msg_ptr, msg_len, msg_prio);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-int
-mq_timedsend(mqd_t mqdes, const char *msg_ptr, size_t msg_len,
-    unsigned msg_prio, const struct timespec *abst)
-{
-	int retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys_mq_timedsend(mqdes, msg_ptr, msg_len, msg_prio, abst);
-	TESTCANCEL(self);
-
-	return retval;
-}
-
-ssize_t
-mq_timedreceive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio,
-    const struct timespec *abst)
-{
-	ssize_t retval;
-	pthread_t self;
-
-	self = pthread__self();
-	TESTCANCEL(self);
-	retval = _sys_mq_timedreceive(mqdes, msg_ptr, msg_len, msg_prio, abst);
 	TESTCANCEL(self);
 
 	return retval;
@@ -540,16 +467,11 @@ sigtimedwait(const sigset_t * __restrict set, siginfo_t * __restrict info,
 	return retval;
 }
 
-__strong_alias(_aio_suspend, aio_suspend)
 __strong_alias(_close, close)
 __strong_alias(_fcntl, fcntl)
 __strong_alias(_fdatasync, fdatasync)
 __strong_alias(_fsync, fsync)
 __weak_alias(fsync_range, _fsync_range)
-__strong_alias(_mq_send, mq_send)
-__strong_alias(_mq_receive, mq_receive)
-__strong_alias(_mq_timedsend, mq_timedsend)
-__strong_alias(_mq_timedreceive, mq_timedreceive)
 __strong_alias(_msgrcv, msgrcv)
 __strong_alias(_msgsnd, msgsnd)
 __strong_alias(___msync13, __msync13)
@@ -565,5 +487,86 @@ __strong_alias(_select, select)
 __strong_alias(_wait4, wait4)
 __strong_alias(_write, write)
 __strong_alias(_writev, writev)
+
+#ifndef PTHREAD__COMPAT
+int
+aio_suspend(const struct aiocb * const list[], int nent,
+    const struct timespec *timeout)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_aio_suspend(list, nent, timeout);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
+mq_send(mqd_t mqdes, const char *msg_ptr, size_t msg_len, unsigned msg_prio)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_mq_send(mqdes, msg_ptr, msg_len, msg_prio);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+ssize_t
+mq_receive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio)
+{
+	ssize_t retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_mq_receive(mqdes, msg_ptr, msg_len, msg_prio);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
+mq_timedsend(mqd_t mqdes, const char *msg_ptr, size_t msg_len,
+    unsigned msg_prio, const struct timespec *abst)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_mq_timedsend(mqdes, msg_ptr, msg_len, msg_prio, abst);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+ssize_t
+mq_timedreceive(mqd_t mqdes, char *msg_ptr, size_t msg_len, unsigned *msg_prio,
+    const struct timespec *abst)
+{
+	ssize_t retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_mq_timedreceive(mqdes, msg_ptr, msg_len, msg_prio, abst);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+__strong_alias(_aio_suspend, aio_suspend)
+__strong_alias(_mq_send, mq_send)
+__strong_alias(_mq_receive, mq_receive)
+__strong_alias(_mq_timedsend, mq_timedsend)
+__strong_alias(_mq_timedreceive, mq_timedreceive)
+#endif	/* !PTHREAD__COMPAT */
 
 #endif	/* !lint */

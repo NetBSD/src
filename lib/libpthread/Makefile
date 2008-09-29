@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.52 2008/06/16 14:25:49 rmind Exp $
+#	$NetBSD: Makefile,v 1.53 2008/09/29 08:48:15 ad Exp $
 #
 
 WARNS=	4
@@ -64,6 +64,16 @@ SRCS+=	sem.c
 SRCS+=	_context_u.S
 .if exists(${ARCHDIR}/pthread_md.c)
 SRCS+= pthread_md.c
+.endif
+
+.if defined(PTHREAD__COMPAT)
+SRCS+=		pthread_compat.c
+CPPFLAGS+=	-DPTHREAD__COMPAT
+.PATH.c:	${.CURDIR}/../../common/lib/libc/arch/${ARCHSUBDIR}/atomic
+.PATH.S:	${.CURDIR}/../../common/lib/libc/arch/${ARCHSUBDIR}/atomic
+.PATH.c:	${.CURDIR}/../../common/lib/libc/atomic
+.PATH.c:	${.CURDIR}/../libc/misc
+.include "../../common/lib/libc/arch/${ARCHSUBDIR}/atomic/Makefile.inc"
 .endif
 
 # The TSD routines are used in the implementation of profiling, and so
