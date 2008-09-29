@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.853.2.23 2008/05/17 16:37:09 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.853.2.24 2008/09/29 20:12:10 jdc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.855.2.23 2008/05/17 16:36:08 bouyer Exp
+ *	NetBSD: pcidevs,v 1.855.2.24 2008/09/29 20:10:15 jdc Exp
  */
 
 /*
@@ -9136,11 +9136,23 @@ static const struct pci_product pci_products[] = {
 	    "SAS1068",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068_2,
+	    "SAS1068",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064E,
 	    "SAS1064E",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064E_2,
+	    "SAS1064E",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068E,
+	    "SAS1068E",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068E_2,
 	    "SAS1068E",
 	},
 	{
@@ -13160,4 +13172,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2693;
+const int pci_nproducts = 2696;
