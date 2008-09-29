@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.91 2008/09/29 20:00:58 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.92 2008/09/29 20:26:47 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2181,7 +2181,7 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.235 via patch
 	for reporting the problem and testing the fix.
 	[oster, ticket #984]
 
-sys/arch/macppc/dev/snapper.c		1.14-1.21
+sys/arch/macppc/dev/snapper.c			1.14-1.21
 	- proper support for 24bit audio on TAS3004 / snapper codecs
 	- fix sample rate setup bugs ( otherwise the chip would always stay in
 	  44.1kHz )
@@ -2189,4 +2189,18 @@ sys/arch/macppc/dev/snapper.c		1.14-1.21
 	  AOAK2 ), which don't have hardware volume control
 	- add support for 'tumbler' codecs found in some iBook G3 models
 	[macallan, ticket #616]
+
+src/sys/dev/pci/pcidevs				1.902
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data			regen
+sys/dev/pci/mpt_pci.c				1.12
+	Add SYMBIOS SAS1068_2, SAS1064E_2 and SAS1068E_2
+	[bouyer, ticket #1192]
+
+doc/HACKS					patch
+x11/Xserver/os/Makefile				patch
+x11/bin/lbxproxy/Makefile			patch
+	Workaround vax gcc segfault on XFree's connection.c by building
+	this file -O0 for vax.
+	[bouyer, ticket #1207]
 
