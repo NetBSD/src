@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.226 2008/09/09 03:26:42 ober Exp $
+# $NetBSD: GENERIC,v 1.227 2008/09/30 16:46:56 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.226 $"
+#ident 		"GENERIC-$Revision: 1.227 $"
 
 maxusers	64		# estimated number of users
 
@@ -915,13 +915,9 @@ neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
 
-# PCMCIA audio devices
-#esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
-
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at cmpci? flags 1
-#opl*	at esl?
 opl*	at eso?
 opl*	at fms?
 opl*	at sv?
