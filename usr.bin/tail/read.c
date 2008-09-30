@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.13 2008/02/04 16:23:11 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.14 2008/09/30 04:03:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: read.c,v 1.13 2008/02/04 16:23:11 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.14 2008/09/30 04:03:37 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: read.c,v 1.13 2008/02/04 16:23:11 christos Exp $");
  * Non-zero return means than a (non-fatal) error occurred.
  */
 int
-bytes(FILE *fp, __off_t off)
+bytes(FILE *fp, off_t off)
 {
 	int ch, len, tlen;
 	char *ep, *p, *t;
@@ -131,7 +131,7 @@ bytes(FILE *fp, __off_t off)
  * Non-zero return means than a (non-fatal) error occurred.
  */
 int
-lines(FILE *fp, __off_t off)
+lines(FILE *fp, off_t off)
 {
 	struct {
 		u_int blen;
