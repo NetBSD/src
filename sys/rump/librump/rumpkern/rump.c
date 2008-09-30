@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.57 2008/09/30 15:26:54 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.58 2008/09/30 16:51:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -238,7 +238,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	cnp = kmem_zalloc(sizeof(struct componentname), KM_SLEEP);
 
 	cnp->cn_nameiop = nameiop;
-	cnp->cn_flags = flags;
+	cnp->cn_flags = flags | HASBUF;
 
 	cnp->cn_pnbuf = PNBUF_GET();
 	strcpy(cnp->cn_pnbuf, name);
