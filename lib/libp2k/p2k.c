@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.3 2008/08/12 19:52:32 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.4 2008/09/30 17:18:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,6 +42,7 @@
  * really nuke the last reference.
  */
 
+#include <sys/cdefs.h>
 #include <sys/mount.h>
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -118,7 +119,17 @@ static void
 clearlwp(struct puffs_usermount *pu)
 {
 
-	rump_clear_curlwp();
+	/*
+	 * XXX: because of the vnode reference counting lossage, we
+	 * can't clear the curlwp if we unmounted succesfully.
+	 * Therefore, don't do it to avoid a diagnostic panic.
+	 * So this currently leaks a process structure in that case,
+	 * but since p2k is rarely used multiple times in a single
+	 * process, it's more like a feature than a bug (yea, I'm
+	 * good at lying to myself).
+	 */
+	if (__predict_false(puffs_getstate(pu) != PUFFS_STATE_UNMOUNTED))
+		rump_clear_curlwp();
 }
 
 int
