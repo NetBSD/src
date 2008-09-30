@@ -1,7 +1,7 @@
-/*	$NetBSD: progressbar.h,v 1.6 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: progressbar.h,v 1.7 2008/09/30 03:41:53 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
