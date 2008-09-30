@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.59 2008/09/30 19:25:56 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.60 2008/09/30 21:00:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -486,7 +486,7 @@ rump_vp_recycle_nokidding(struct vnode *vp)
 	 * it out.  This is very wrong, but fixing it properly would
 	 * take too much effort for now
 	 */
-	if (vp->v_tag == VT_NFS) {
+	if (vp->v_tag == VT_NFS && vp->v_vflag & VV_ROOT) {
 		mutex_exit(&vp->v_interlock);
 		return;
 	}
