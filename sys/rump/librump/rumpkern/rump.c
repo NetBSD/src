@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.56 2008/09/07 20:17:03 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.57 2008/09/30 15:26:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -478,6 +478,15 @@ rump_vp_recycle_nokidding(struct vnode *vp)
 
 	mutex_enter(&vp->v_interlock);
 	vp->v_usecount = 1;
+	/*
+	 * XXX: NFS holds a reference to the root vnode, so don't clean
+	 * it out.  This is very wrong, but fixing it properly would
+	 * take too much effort for now
+	 */
+	if (vp->v_tag == VT_NFS) {
+		mutex_exit(&vp->v_interlock);
+		return;
+	}
 	vclean(vp, DOCLOSE);
 	vrelel(vp, 0);
 }
