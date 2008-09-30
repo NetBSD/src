@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmeat.c,v 1.31 2006/12/20 16:33:34 christos Exp $	*/
+/*	$NetBSD: supcmeat.c,v 1.32 2008/09/30 20:49:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1038,7 +1038,7 @@ linkone(TREE * t, void *fv)
 	int new, x;
 	char *type;
 
-	if (stat(fname, &fbuf) < 0) {	/* source file */
+	if (lstat(fname, &fbuf) < 0) {	/* source file */
 		if (thisC->Cflags & CFLIST) {
 			vnotify("SUP Would link %s to %s\n", name, fname);
 			return (SCMOK);
@@ -1047,7 +1047,7 @@ linkone(TREE * t, void *fv)
 		thisC->Cnogood = TRUE;
 		return (SCMOK);
 	}
-	if (prepare(name, S_IFREG, &new, &sbuf)) {
+	if (prepare(name, S_IFLNK, &new, &sbuf)) {
 		notify("SUP: Can't prepare path for link %s\n", name);
 		thisC->Cnogood = TRUE;
 		return (SCMOK);
@@ -1061,7 +1061,7 @@ linkone(TREE * t, void *fv)
 	}
 	(void) unlink(name);
 	type = "";
-	if ((x = link(fname, name)) < 0) {
+	if (S_ISDIR(fbuf.st_mode) || (x = link(fname, name)) < 0) {
 		type = "symbolic ";
 		x = symlink(fname, name);
 	}
