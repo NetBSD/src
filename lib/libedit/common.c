@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.20 2008/09/10 15:45:37 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.21 2008/09/30 08:37:42 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.20 2008/09/10 15:45:37 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.21 2008/09/30 08:37:42 aymeric Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -213,13 +213,13 @@ ed_move_to_end(EditLine *el, int c __attribute__((__unused__)))
 
 	el->el_line.cursor = el->el_line.lastchar;
 	if (el->el_map.type == MAP_VI) {
-#ifdef VI_MOVE
-		el->el_line.cursor--;
-#endif
 		if (el->el_chared.c_vcmd.action != NOP) {
 			cv_delfini(el);
 			return (CC_REFRESH);
 		}
+#ifdef VI_MOVE
+		el->el_line.cursor--;
+#endif
 	}
 	return (CC_CURSOR);
 }
