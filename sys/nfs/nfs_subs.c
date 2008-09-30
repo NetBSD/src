@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.205 2008/07/15 16:06:58 christos Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.206 2008/09/30 14:29:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.205 2008/07/15 16:06:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.206 2008/09/30 14:29:39 pooka Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1566,6 +1566,7 @@ nfs_init0(void)
 	/* Initialize the iod structures */
 	nfs_iodinit();
 #endif
+
 	return 0;
 }
 
@@ -1584,23 +1585,26 @@ nfs_init(void)
 void
 nfs_vfs_init()
 {
+
 	/* Initialize NFS server / client shared data. */
 	nfs_init();
 
-	nfs_nhinit();			/* Init the nfsnode table */
+	nfs_node_init();
 	nfs_commitsize = uvmexp.npages << (PAGE_SHIFT - 4);
 }
 
 void
 nfs_vfs_reinit()
 {
-	nfs_nhreinit();
+
+	nfs_node_reinit();
 }
 
 void
 nfs_vfs_done()
 {
-	nfs_nhdone();
+
+	nfs_node_done();
 }
 
 /*
