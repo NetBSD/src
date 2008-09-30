@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.93 2008/09/29 17:28:07 dyoung Exp $
+.\"	$NetBSD: ifconfig.8,v 1.94 2008/09/30 09:41:41 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd January 9, 2007
+.Dd September 29, 2008
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -136,7 +136,8 @@ The following parameters may be set with
 .It Cm active
 This keyword applies when
 .Nm
-adds or modifies any link-layer address.  It indicates that
+adds or modifies any link-layer address.
+It indicates that
 .Nm
 should
 .Dq activate
@@ -485,7 +486,7 @@ The
 flag may be used to display long SSIDs.
 .Fl v
 also causes received information elements to be displayed symbolicaly.
-Only the super-user can use this command. 
+Only the super-user can use this command.
 .It Cm tunnel Ar src_addr Ns Op Ar ,src_port
 .Ar dest_addr Ns Op Ar ,dest_port
 .Ek
@@ -547,7 +548,7 @@ These three options are interface specific in actual effect, however,
 they are in general used to select special modes of operation.
 An example
 of this is to enable SLIP compression, or to select the connector type
-for some ethernet cards.
+for some Ethernet cards.
 Refer to the man page for the specific driver
 for more information.
 .It Fl link[0-2]
@@ -799,7 +800,7 @@ after printing them.
 .Pp
 Only the super-user may modify the configuration of a network interface.
 .Sh EXAMPLES
-Add a link-layer address to an ethernet:
+Add a link-layer address to an Ethernet:
 .Pp
 .Ic ifconfig sip0 link 00:11:22:33:44:55
 .Pp
