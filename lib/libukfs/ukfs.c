@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.8 2008/09/29 15:59:54 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.9 2008/09/30 19:26:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -194,8 +194,12 @@ ukfs_release(struct ukfs *fs, int flags)
 	int rv;
 
 	if ((flags & UKFS_RELFLAG_NOUNMOUNT) == 0) {
+		kauth_cred_t cred;
+
 		rump_vp_rele(fs->ukfs_cdir);
-		rv = rump_vfs_sync(fs->ukfs_mp, 1, RUMPCRED_SUSER);
+		cred = rump_cred_suserget();
+		rv = rump_vfs_sync(fs->ukfs_mp, 1, cred);
+		rump_cred_suserput(cred);
 		rump_vp_recycle_nokidding(ukfs_getrvp(fs));
 		rv |= rump_vfs_unmount(fs->ukfs_mp, 0);
 		assert(rv == 0);
@@ -233,6 +237,7 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
 	struct uio *uio;
 	struct vnode *vp;
 	size_t resid;
+	kauth_cred_t cred;
 	int rv, eofflag;
 
 	precall(ukfs);
@@ -243,7 +248,9 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
 		goto out;
 		
 	uio = rump_uio_setup(buf, bufsize, *off, RUMPUIO_READ);
-	rv = RUMP_VOP_READDIR(vp, uio, RUMPCRED_SUSER, &eofflag, NULL, NULL);
+	cred = rump_cred_suserget();
+	rv = RUMP_VOP_READDIR(vp, uio, cred, &eofflag, NULL, NULL);
+	rump_cred_suserput(cred);
 	VUL(vp);
 	*off = rump_uio_getoff(uio);
 	resid = rump_uio_free(uio);
