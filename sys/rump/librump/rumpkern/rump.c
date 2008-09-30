@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.58 2008/09/30 16:51:26 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.59 2008/09/30 19:25:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -53,11 +53,11 @@ struct proc proc0;
 struct cwdinfo rump_cwdi;
 struct pstats rump_stats;
 struct plimit rump_limits;
-kauth_cred_t rump_cred = RUMPCRED_SUSER;
 struct cpu_info rump_cpu;
 struct filedesc rump_filedesc0;
 struct proclist allproc;
 char machine[] = "rump";
+static kauth_cred_t rump_susercred;
 
 kmutex_t rump_giantlock;
 
@@ -113,14 +113,20 @@ rump_init()
 		rump_threads = *buf != '0';
 	}
 
+	mutex_init(&rump_atomic_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	rumpvm_init();
 	rump_sleepers_init();
 #ifdef RUMP_USE_REAL_KMEM
 	kmem_init();
 #endif
 
+	kauth_init();
+	rump_susercred = rump_cred_create(0, 0, 0, NULL);
+
 	cache_cpu_init(&rump_cpu);
 	rw_init(&rump_cwdi.cwdi_lock);
+
 	l = &lwp0;
 	p = &proc0;
 	p->p_stats = &rump_stats;
@@ -130,13 +136,10 @@ rump_init()
 	p->p_fd = &rump_filedesc0;
 	p->p_vmspace = &rump_vmspace;
 	p->p_emul = &emul_rump;
-	l->l_cred = rump_cred;
+	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = 1;
-
 	LIST_INSERT_HEAD(&allproc, p, p_list);
-
-	mutex_init(&rump_atomic_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
@@ -691,7 +694,7 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 		p = &proc0;
 	}
 
-	l->l_cred = rump_cred;
+	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
@@ -711,6 +714,7 @@ rump_clear_curlwp()
 	if (l->l_proc->p_pid != 0) {
 		fd_free();
 		cwdfree(l->l_proc->p_cwdi);
+		rump_cred_destroy(l->l_cred);
 		kmem_free(l->l_proc, sizeof(*l->l_proc));
 	}
 	kmem_free(l, sizeof(*l));
@@ -779,6 +783,42 @@ rump_biodone(void *arg, size_t count, int error)
 	rump_intr_enter();
 	biodone(bp);
 	rump_intr_exit();
+}
+
+kauth_cred_t
+rump_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
+{
+	kauth_cred_t cred;
+	int rv;
+
+	cred = kauth_cred_alloc();
+	kauth_cred_setuid(cred, uid);
+	kauth_cred_seteuid(cred, uid);
+	kauth_cred_setsvuid(cred, uid);
+	kauth_cred_setgid(cred, gid);
+	kauth_cred_setgid(cred, gid);
+	kauth_cred_setegid(cred, gid);
+	kauth_cred_setsvgid(cred, gid);
+	rv = kauth_cred_setgroups(cred, groups, ngroups, 0, UIO_SYSSPACE);
+	/* oh this is silly.  and by "this" I mean kauth_cred_setgroups() */
+	assert(rv == 0);
+
+	return cred;
+}
+
+void
+rump_cred_destroy(kauth_cred_t cred)
+{
+
+	kauth_cred_free(cred);
+}
+
+kauth_cred_t
+rump_cred_suserget()
+{
+
+	kauth_cred_hold(rump_susercred);
+	return rump_susercred;
 }
 
 int _syspuffs_stub(int, int *);

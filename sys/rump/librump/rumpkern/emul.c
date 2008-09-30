@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.48 2008/09/25 16:23:46 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.49 2008/09/30 19:25:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -610,6 +610,20 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 
 int
 devsw_detach(const struct bdevsw *bdev, const struct cdevsw *cdev)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+proc_crmod_enter()
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+proc_crmod_leave(kauth_cred_t c1, kauth_cred_t c2, bool sugid)
 {
 
 	panic("%s: not implemented", __func__);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.8 2008/09/27 16:03:30 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.9 2008/09/30 19:25:56 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -15,14 +15,14 @@ INCS+=	rump.h rumpdefs.h rump_syscalls.h rumpvnode_if.h
 	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs
 
 # implement something
-SRCS=	rump.c atomic.c auth.c emul.c intr.c genfs_io.c locks.c		\
+SRCS=	rump.c atomic.c emul.c intr.c genfs_io.c locks.c		\
 	ltsleep.c pool.c specfs.c vfs.c vm.c
 
 # just stubs
 SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
 
 # sys/kern
-SRCS+=	clock_subr.c kern_descrip.c kern_malloc_stdtype.c		\
+SRCS+=	clock_subr.c kern_auth.c kern_descrip.c kern_malloc_stdtype.c	\
 	kern_module.c kern_stub.c kern_sysctl.c param.c subr_bufq.c	\
 	subr_callback.c subr_hash.c subr_kobj.c subr_prf2.c		\
 	subr_specificdata.c subr_time.c subr_workqueue.c sys_descrip.c	\
