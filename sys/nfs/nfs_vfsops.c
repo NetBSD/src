@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.200 2008/05/10 02:26:10 rumble Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.201 2008/09/30 21:12:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.200 2008/05/10 02:26:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.201 2008/09/30 21:12:48 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -705,6 +705,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 {
 	struct nfsmount *nmp;
 	struct nfsnode *np;
+	struct vnode *vp;
 	int error;
 	struct vattr *attrs;
 	kauth_cred_t cr;
@@ -795,10 +796,10 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	error = nfs_nget(mp, (nfsfh_t *)argp->fh, argp->fhsize, &np);
 	if (error)
 		goto bad;
-	*vpp = NFSTOV(np);
+	vp = NFSTOV(np);
 	MALLOC(attrs, struct vattr *, sizeof(struct vattr), M_TEMP, M_WAITOK);
-	VOP_GETATTR(*vpp, attrs, l->l_cred);
-	if ((nmp->nm_flag & NFSMNT_NFSV3) && ((*vpp)->v_type == VDIR)) {
+	VOP_GETATTR(vp, attrs, l->l_cred);
+	if ((nmp->nm_flag & NFSMNT_NFSV3) && (vp->v_type == VDIR)) {
 		cr = kauth_cred_alloc();
 		kauth_cred_setuid(cr, attrs->va_uid);
 		kauth_cred_seteuid(cr, attrs->va_uid);
@@ -806,7 +807,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		kauth_cred_setgid(cr, attrs->va_gid);
 		kauth_cred_setegid(cr, attrs->va_gid);
 		kauth_cred_setsvgid(cr, attrs->va_gid);
-		nfs_cookieheuristic(*vpp, &nmp->nm_iflag, l, cr);
+		nfs_cookieheuristic(vp, &nmp->nm_iflag, l, cr);
 		kauth_cred_free(cr);
 	}
 	FREE(attrs, M_TEMP);
@@ -820,8 +821,12 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	 * number == ROOTINO (2). So, just unlock, but no rele.
 	 */
 
-	nmp->nm_vnode = *vpp;
-	VOP_UNLOCK(*vpp, 0);
+	nmp->nm_vnode = vp;
+	if (vp->v_type == VNON)
+		vp->v_type = VDIR;
+	vp->v_vflag |= VV_ROOT;
+	VOP_UNLOCK(vp, 0);
+	*vpp = vp;
 
 	snprintf(iosname, sizeof(iosname), "nfs%u", nfs_mount_count++);
 	nmp->nm_stats = iostat_alloc(IOSTAT_NFS, nmp, iosname);
@@ -933,9 +938,6 @@ nfs_root(mp, vpp)
 	error = vget(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
 		return error;
-	if (vp->v_type == VNON)
-		vp->v_type = VDIR;
-	vp->v_vflag = VV_ROOT;
 	*vpp = vp;
 	return (0);
 }
