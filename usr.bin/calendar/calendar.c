@@ -1,4 +1,4 @@
-/*	$NetBSD: calendar.c,v 1.46 2008/07/21 14:19:21 lukem Exp $	*/
+/*	$NetBSD: calendar.c,v 1.47 2008/09/30 05:51:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)calendar.c	8.4 (Berkeley) 1/7/95";
 #endif
-__RCSID("$NetBSD: calendar.c,v 1.46 2008/07/21 14:19:21 lukem Exp $");
+__RCSID("$NetBSD: calendar.c,v 1.47 2008/09/30 05:51:41 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -283,6 +283,12 @@ isnow(char *endp)
 			day = v2 ? v2 : 1;
 		}
 	}
+	/* if month is out of range, treat it as '*' */
+	if (month < 1 || month > 12) {
+		flags |= F_ISMONTH | F_WILDMONTH;
+		month = tp->tm_mon + 1;
+	}
+
 	if (flags & F_WILDMONTH && flags & F_WILDDAY)
 		return true;
 
