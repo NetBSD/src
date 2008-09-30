@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2008/09/30 05:20:42 dholland Exp $
+#	$NetBSD: Makefile,v 1.21 2008/09/30 06:25:22 dholland Exp $
 
 .include <bsd.own.mk>
 
@@ -7,9 +7,6 @@ MAN=	rpc.pcnfsd.8
 BUILDSYMLINKS+=	pcnfsd.8 rpc.pcnfsd.8
 MLINKS= rpc.pcnfsd.8 pcnfsd.8
 CPPFLAGS += -DUSER_CACHE -DWTMP -I. -DSUPPORT_UTMP -DSUPPORT_UTMPX
-
-# hack to allow config file to be read (see PR 12758)
-CPPFLAGS+=-Dmain=mymain
 
 .if (${USE_YP} != "no")
 CPPFLAGS+=-DUSE_YP
