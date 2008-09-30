@@ -1,7 +1,7 @@
-/*	$NetBSD: complete.c,v 1.43 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: complete.c,v 1.44 2008/09/30 03:41:53 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2000,2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.43 2008/04/28 20:24:13 martin Exp $");
+__RCSID("$NetBSD: complete.c,v 1.44 2008/09/30 03:41:53 lukem Exp $");
 #endif /* not lint */
 
 /*
