@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.44 2008/09/28 20:37:20 skrll Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.45 2008/10/01 16:46:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.44 2008/09/28 20:37:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.45 2008/10/01 16:46:36 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1652,7 +1652,7 @@ sa_switchcall(void *arg)
 
 	lwp_lock(l2);
 	KASSERT(vp->savp_lwp == l2);
-	if (l2->l_flag & LW_WEXIT) {
+	if ((l2->l_flag & LW_WEXIT) || (p->p_sflag & (PS_WCORE | PS_WEXIT))) {
 		lwp_unlock(l2);
 		sadata_upcall_free(sau);
 		lwp_exit(l2);
@@ -1743,7 +1743,7 @@ sa_newcachelwp(struct lwp *l, struct sadata_vp *targ_vp)
 	int error;
 
 	p = l->l_proc;
-	if (p->p_sflag & PS_WEXIT)
+	if (p->p_sflag & (PS_WCORE | PS_WEXIT))
 		return (0);
 
 	inmem = uvm_uarea_alloc(&uaddr);
@@ -1982,7 +1982,8 @@ sa_upcall_userret(struct lwp *l)
 		DPRINTFN(9,("sa_upcall_userret(%d.%d) using stack %p\n",
 		    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
 
-		if (l->l_flag & LW_WEXIT) {
+		if ((l->l_flag & LW_WEXIT)
+		    || (p->p_sflag & (PS_WCORE | PS_WEXIT))) {
 			lwp_exit(l);
 			/* NOTREACHED */
 		}
@@ -1991,7 +1992,8 @@ sa_upcall_userret(struct lwp *l)
 		    p->p_pid, l->l_lid, l2->l_lid));
 
 		sau = sadata_upcall_alloc(1);
-		if (l->l_flag & LW_WEXIT) {
+		if ((l->l_flag & LW_WEXIT)
+		    || (p->p_sflag & (PS_WCORE | PS_WEXIT))) {
 			sadata_upcall_free(sau);
 			lwp_exit(l);
 			/* NOTREACHED */
@@ -2306,7 +2308,7 @@ sa_unblock_userret(struct lwp *l)
 	sa = p->p_sa;
 	vp = l->l_savp;
 
-	if (l->l_flag & LW_WEXIT)
+	if ((l->l_flag & LW_WEXIT) || (p->p_sflag & (PS_WCORE | PS_WEXIT)))
 		return;
 
 	if ((l->l_flag & LW_SA_BLOCKING) == 0)
