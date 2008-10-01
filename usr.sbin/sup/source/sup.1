@@ -1,4 +1,4 @@
-.\"	$NetBSD: sup.1,v 1.14 2003/01/02 00:22:31 jschauma Exp $
+.\"	$NetBSD: sup.1,v 1.15 2008/10/01 12:43:46 christos Exp $
 .\"
 .\" Copyright (c) 1992 Carnegie Mellon University
 .\" All Rights Reserved.
@@ -45,7 +45,7 @@
 .\" 04-Apr-85  Steven Shafer (sas) at Carnegie-Mellon University
 .\" 	Created.
 .\"
-.TH SUP 1 02/08/92
+.TH SUP 1 10/01/08
 .CM 4
 .SH "NAME"
 sup \- software upgrade protocol
@@ -855,3 +855,15 @@ CMU Computer Science Department, 1985.
 .SH "BUGS"
 The encryption mechanism should be strengthened, although it's
 not trivial.
+.Pp
+.I sup 
+can delete files it should not with the delete option.
+This is because in the delete pass, it tries to delete all files
+in the old list that don't exist in the new list.
+This is a problem when a directory becomes a symlink to a hierarchy
+that contains the same names.
+Then sup will cross the symlink and start deleting files and directories
+from the destination.
+This is not easily fixed.
+Don't use sup with symlink/rsymlink and the delete
+option at the same time or *be careful*!
