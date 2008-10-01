@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.959 2008/09/28 11:35:06 bouyer Exp $
+$NetBSD: pcidevs,v 1.960 2008/10/01 15:38:14 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2207,6 +2207,7 @@ product INTEL 82801I_IFE_G	0x10c2	82801I (G) LAN Controller
 product INTEL 82801I_IFE_GT	0x10c3	82801I (GT) LAN Controller
 product INTEL 82801H_IFE_GT 	0x10c4	i82801H IFE (GT) LAN Controller
 product INTEL 82801H_IFE_G 	0x10c5	i82801H IFE (G) LAN Controller
+product INTEL 82567V		0x10ce	i82567V LAN controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
@@ -2564,6 +2565,17 @@ product INTEL E7525_MCHER	0x3591	E7525 Error Reporting Device
 product INTEL E7525_PCIE_A	0x3595	E7525 PCI Express Port A
 product INTEL E7525_PCIE_A1	0x3596	E7525 PCI Express Port A1
 product INTEL E7525_PCIE_B	0x3597	E7525 PCI Express Port B
+product INTEL ICH10_SATA2_4x1	0x3a00	ICH10 SATA2(4port1)
+product INTEL ICH10_SATA2_2x1	0x3a06	ICH10 SATA2(2port1)
+product INTEL ICH10DO_TIMER	0x3a14	ICH10DO Watchdog timer
+product INTEL ICH10R_TIMER	0x3a16	ICH10R Watchdog timer
+product INTEL ICH10_TIMER	0x3a18	ICH10 Watchdog timer
+product INTEL ICH10D_TIMER	0x3a1a	ICH10D Watchdog timer
+product INTEL ICH10_SATA2_4x2	0x3a20	ICH10 SATA2(4port2)
+product INTEL ICH10R_AHCI	0x3a22	ICH10R AHCI Controller
+product INTEL ICH10_SATA2_2x2	0x3a26	ICH10 SATA2(2port2)
+product INTEL ICH10_SMB1	0x3a30	ICH10 SMBus Serial Bus 1
+product INTEL ICH10_SMB2	0x3a60	ICH10 SMBus Serial Bus 2
 product INTEL PRO_WL_2200BG	0x4220	PRO/Wireless LAN 2200BG Mini-PCI Adapter
 product INTEL PRO_WL_2225BG	0x4221	PRO/Wireless LAN 2225BG Mini-PCI Adapter
 product INTEL PRO_WL_3945ABG_1	0x4222	PRO/Wireless LAN 3945ABG Mini-PCI Adapter

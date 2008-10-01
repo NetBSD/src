@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.958 2008/09/28 11:36:06 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.959 2008/10/01 15:38:15 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -7684,6 +7684,10 @@ static const struct pci_product pci_products[] = {
 	    "i82801H IFE (G) LAN Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82567V,
+	    "i82567V LAN controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
 	    "82815 Hub",
 	},
@@ -9110,6 +9114,50 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_PCIE_B,
 	    "E7525 PCI Express Port B",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_4x1,
+	    "ICH10 SATA2(4port1)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_2x1,
+	    "ICH10 SATA2(2port1)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10DO_TIMER,
+	    "ICH10DO Watchdog timer",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10R_TIMER,
+	    "ICH10R Watchdog timer",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_TIMER,
+	    "ICH10 Watchdog timer",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10D_TIMER,
+	    "ICH10D Watchdog timer",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_4x2,
+	    "ICH10 SATA2(4port2)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10R_AHCI,
+	    "ICH10R AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_2x2,
+	    "ICH10 SATA2(2port2)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SMB1,
+	    "ICH10 SMBus Serial Bus 1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SMB2,
+	    "ICH10 SMBus Serial Bus 2",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2200BG,
@@ -14448,4 +14496,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3011;
+const int pci_nproducts = 3023;
