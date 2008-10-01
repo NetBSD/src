@@ -1,4 +1,4 @@
-/*	$NetBSD: options_f.c,v 1.1.1.2 2008/05/18 14:29:50 aymeric Exp $ */
+/*	$NetBSD: options_f.c,v 1.2 2008/10/01 21:20:09 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -62,7 +62,7 @@ f_columns(SCR *sp, OPTION *op, char *str, u_long *valp)
 	 * number of lines/columns for the screen, but at least we don't drop
 	 * core.
 	 */
-#define	MAXIMUM_SCREEN_COLS	500
+#define	MAXIMUM_SCREEN_COLS	4000
 	if (*valp > MAXIMUM_SCREEN_COLS) {
 		msgq(sp, M_ERR, "041|Screen columns too large, greater than %d",
 		    MAXIMUM_SCREEN_COLS);
@@ -92,7 +92,7 @@ f_lines(SCR *sp, OPTION *op, char *str, u_long *valp)
 	 * number of lines/columns for the screen, but at least we don't drop
 	 * core.
 	 */
-#define	MAXIMUM_SCREEN_ROWS	500
+#define	MAXIMUM_SCREEN_ROWS	4000
 	if (*valp > MAXIMUM_SCREEN_ROWS) {
 		msgq(sp, M_ERR, "043|Screen lines too large, greater than %d",
 		    MAXIMUM_SCREEN_ROWS);
@@ -141,20 +141,6 @@ int
 f_msgcat(SCR *sp, OPTION *op, char *str, u_long *valp)
 {
 	(void)msg_open(sp, str);
-	return (0);
-}
-
-/*
- * PUBLIC: int f_paragraph __P((SCR *, OPTION *, char *, u_long *));
- */
-int
-f_paragraph(SCR *sp, OPTION *op, char *str, u_long *valp)
-{
-	if (strlen(str) & 1) {
-		msgq(sp, M_ERR,
-		    "048|The paragraph option must be in two character groups");
-		return (1);
-	}
 	return (0);
 }
 
@@ -224,20 +210,6 @@ int
 f_reformat(SCR *sp, OPTION *op, char *str, u_long *valp)
 {
 	F_SET(sp, SC_SCR_REFORMAT);
-	return (0);
-}
-
-/*
- * PUBLIC: int f_section __P((SCR *, OPTION *, char *, u_long *));
- */
-int
-f_section(SCR *sp, OPTION *op, char *str, u_long *valp)
-{
-	if (strlen(str) & 1) {
-		msgq(sp, M_ERR,
-		    "049|The section option must be in two character groups");
-		return (1);
-	}
 	return (0);
 }
 
