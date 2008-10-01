@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.1.1.2 2008/05/18 14:29:49 aymeric Exp $ */
+/*	$NetBSD: options.c,v 1.2 2008/10/01 21:20:09 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -50,6 +50,8 @@ static int	 	 opts_print __P((SCR *, OPTLIST const *));
  *
  * HPUX noted options and abbreviations are from "The Ultimate Guide to the
  * VI and EX Text Editors", 1990.
+ *
+ * This list must be sorted...
  */
 OPTLIST const optlist[] = {
 /* O_ALTWERASE	  4.4BSD */
@@ -78,10 +80,10 @@ OPTLIST const optlist[] = {
 	{L("directory"),	NULL,		OPT_STR,	0},
 /* O_EDCOMPATIBLE   4BSD */
 	{L("edcompatible"),NULL,		OPT_0BOOL,	0},
-/* O_ESCAPETIME	  4.4BSD */
-	{L("escapetime"),	NULL,		OPT_NUM,	0},
 /* O_ERRORBELLS	    4BSD */
 	{L("errorbells"),	NULL,		OPT_0BOOL,	0},
+/* O_ESCAPETIME	  4.4BSD */
+	{L("escapetime"),	NULL,		OPT_NUM,	0},
 /* O_EXRC	System V (undocumented) */
 	{L("exrc"),	NULL,		OPT_0BOOL,	0},
 /* O_EXTENDED	  4.4BSD */
@@ -122,6 +124,8 @@ OPTLIST const optlist[] = {
 	{L("lock"),	NULL,		OPT_1BOOL,	0},
 /* O_MAGIC	    4BSD */
 	{L("magic"),	NULL,		OPT_1BOOL,	0},
+/* O_MATCHCHARS	  netbsd 2.0 */
+	{L("matchchars"),	NULL,		OPT_STR,	OPT_PAIRS},
 /* O_MATCHTIME	  4.4BSD */
 	{L("matchtime"),	NULL,		OPT_NUM,	0},
 /* O_MESG	    4BSD */
@@ -148,7 +152,7 @@ OPTLIST const optlist[] = {
 /* O_OPTIMIZE	    4BSD */
 	{L("optimize"),	NULL,		OPT_1BOOL,	0},
 /* O_PARAGRAPHS	    4BSD */
-	{L("paragraphs"),	f_paragraph,	OPT_STR,	0},
+	{L("paragraphs"), NULL,		OPT_STR,	OPT_PAIRS},
 /* O_PATH	  4.4BSD */
 	{L("path"),	NULL,		OPT_STR,	0},
 /* O_PRINT	  4.4BSD */
@@ -172,7 +176,7 @@ OPTLIST const optlist[] = {
 /* O_SEARCHINCR	  4.4BSD */
 	{L("searchincr"),	NULL,		OPT_0BOOL,	0},
 /* O_SECTIONS	    4BSD */
-	{L("sections"),	f_section,	OPT_STR,	0},
+	{L("sections"),	NULL,		OPT_STR,	OPT_PAIRS},
 /* O_SECURE	  4.4BSD */
 	{L("secure"),	NULL,		OPT_0BOOL,	OPT_NOUNSET},
 /* O_SHELL	    4BSD */
@@ -309,6 +313,13 @@ opts_init(SCR *sp, int *oargs)
 	CHAR_T *wp;
 	size_t wlen;
 
+	if (sizeof optlist / sizeof optlist[0] - 1 != O_OPTIONCOUNT) {
+		fprintf(stderr, "vi: option table size error (%d != %d)\n",
+		    (int)(sizeof optlist / sizeof optlist[0] - 1),
+		    O_OPTIONCOUNT);
+		exit(1);
+	}
+
 	a.bp = b2;
 	b.bp = NULL;
 	a.len = b.len = 0;
@@ -360,6 +371,7 @@ opts_init(SCR *sp, int *oargs)
 	OI(O_TMP_DIRECTORY, b2);
 	OI(O_ESCAPETIME, L("escapetime=1"));
 	OI(O_KEYTIME, L("keytime=6"));
+	OI(O_MATCHCHARS, L("matchchars=()[]{}<>"));
 	OI(O_MATCHTIME, L("matchtime=7"));
 	(void)SPRINTF(b2, SIZE(b2), L("msgcat=%s"), _PATH_MSGCAT);
 	OI(O_MSGCAT, b2);
@@ -707,6 +719,14 @@ badnum:				INT2CHAR(sp, name, STRLEN(name) + 1,
 				if (!disp)
 					disp = SELECT_DISPLAY;
 				F_SET(spo, OPT_SELECTED);
+				break;
+			}
+
+			/* Check for strings that must have even length */
+			if (F_ISSET(op, OPT_PAIRS) && STRLEN(sep) & 1) {
+				msgq_wstr(sp, M_ERR, name,
+				    "047|set: the %s option must be in two character groups");
+				rval = 1;
 				break;
 			}
 
