@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1100 2008/09/30 16:50:38 jmcneill Exp $
+# $NetBSD: mi,v 1.1101 2008/10/02 00:52:17 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -610,6 +610,15 @@
 ./usr/share/man/cat4/adbkbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adbms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adc.0			man-sys-catman		.cat
+./usr/share/man/cat4/adm1027.0			man-sys-catman		.cat
+./usr/share/man/cat4/adm1030.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7463.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7466.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7467.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7468.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7473.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7475.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7476.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adt7467c.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adw.0			man-sys-catman		.cat
@@ -822,6 +831,8 @@
 ./usr/share/man/cat4/cypide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cz.0			man-sys-catman		.cat
 ./usr/share/man/cat4/daic.0			man-sys-catman		.cat
+./usr/share/man/cat4/dbcool.0			man-sys-catman		.cat
+./usr/share/man/cat4/dbCool.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ddb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ddc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/de.0			man-sys-catman		.cat
@@ -3159,6 +3170,15 @@
 ./usr/share/man/html4/adbkbd.html		man-sys-htmlman		html
 ./usr/share/man/html4/adbms.html		man-sys-htmlman		html
 ./usr/share/man/html4/adc.html			man-sys-htmlman		html
+./usr/share/man/html4/adm1027.html		man-sys-htmlman		html
+./usr/share/man/html4/adm1030.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7463.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7466.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7467.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7468.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7473.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7475.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7476.html		man-sys-htmlman		html
 ./usr/share/man/html4/adt7467c.html		man-sys-htmlman		html
 ./usr/share/man/html4/adv.html			man-sys-htmlman		html
 ./usr/share/man/html4/adw.html			man-sys-htmlman		html
@@ -3332,6 +3352,8 @@
 ./usr/share/man/html4/cypide.html		man-sys-htmlman		html
 ./usr/share/man/html4/cz.html			man-sys-htmlman		html
 ./usr/share/man/html4/daic.html			man-sys-htmlman		html
+./usr/share/man/html4/dbcool.html		man-sys-htmlman		html
+./usr/share/man/html4/dbCool.html		man-sys-htmlman		html
 ./usr/share/man/html4/ddb.html			man-sys-htmlman		html
 ./usr/share/man/html4/ddc.html			man-sys-htmlman		html
 ./usr/share/man/html4/de.html			man-sys-htmlman		html
@@ -5408,6 +5430,15 @@
 ./usr/share/man/man4/adbkbd.4			man-sys-man		.man
 ./usr/share/man/man4/adbms.4			man-sys-man		.man
 ./usr/share/man/man4/adc.4			man-sys-man		.man
+./usr/share/man/man4/adm1027.4			man-sys-man		.man
+./usr/share/man/man4/adm1030.4			man-sys-man		.man
+./usr/share/man/man4/adt7463.4			man-sys-man		.man
+./usr/share/man/man4/adt7466.4			man-sys-man		.man
+./usr/share/man/man4/adt7467.4			man-sys-man		.man
+./usr/share/man/man4/adt7468.4			man-sys-man		.man
+./usr/share/man/man4/adt7473.4			man-sys-man		.man
+./usr/share/man/man4/adt7475.4			man-sys-man		.man
+./usr/share/man/man4/adt7476.4			man-sys-man		.man
 ./usr/share/man/man4/adt7467c.4			man-sys-man		.man
 ./usr/share/man/man4/adv.4			man-sys-man		.man
 ./usr/share/man/man4/adw.4			man-sys-man		.man
@@ -5620,6 +5651,8 @@
 ./usr/share/man/man4/cypide.4			man-sys-man		.man
 ./usr/share/man/man4/cz.4			man-sys-man		.man
 ./usr/share/man/man4/daic.4			man-sys-man		.man
+./usr/share/man/man4/dbcool.4			man-sys-man		.man
+./usr/share/man/man4/dbCool.4			man-sys-man		.man
 ./usr/share/man/man4/ddb.4			man-sys-man		.man
 ./usr/share/man/man4/ddc.4			man-sys-man		.man
 ./usr/share/man/man4/de.4			man-sys-man		.man
