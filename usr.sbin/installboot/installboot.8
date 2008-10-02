@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.69 2008/09/24 19:28:48 reed Exp $
+.\"	$NetBSD: installboot.8,v 1.70 2008/10/02 08:51:22 sborrill Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -649,6 +649,10 @@ It may also be necessary to use
 .Nm fdisk
 to make the device itself bootable.
 .
+.Pp
+Switch the existing installed bootstrap to use a serial console without 
+reinstalling or altering other options such as timeout.
+.Dl Ic installboot -e -o console=com0 /dev/rwd0a
 .Ss Nx Ns Tn /macppc
 Note the
 .Nm
