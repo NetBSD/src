@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.475 2008/09/30 16:48:39 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.476 2008/10/02 00:47:51 pgoyette Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 acpidalb.4 \
@@ -110,7 +110,7 @@ MAN+=	sc.4 si.4
 MAN+=	fwohci.4 fwip.4 sbp.4
 
 # machine-independent I2C devices
-MAN+=	lmtemp.4 spdmem.4
+MAN+=	dbcool.4 lmtemp.4 sdtemp.4 spdmem.4
 
 # machine-independent SPI devices
 MAN +=	m25p.4 tm121temp.4
@@ -146,6 +146,16 @@ MLINKS+=bktr.4 vbi.4
 MLINKS+=cardbus.4 cardslot.4
 MLINKS+=cardbus.4 cbb.4
 MLINKS+=crypto.4 swcrypto.4
+MLINKS+=dbcool.4 dbCool.4
+MLINKS+=dbcool.4 adm1027.4
+MLINKS+=dbcool.4 adm1030.4
+MLINKS+=dbcool.4 adt7463.4
+MLINKS+=dbcool.4 adt7466.4
+MLINKS+=dbcool.4 adt7467.4
+MLINKS+=dbcool.4 adt7468.4
+MLINKS+=dbcool.4 adt7473.4
+MLINKS+=dbcool.4 adt7475.4
+MLINKS+=dbcool.4 adt7476.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=fpa.4 fea.4 fpa.4 fta.4
 MLINKS+=icp.4 icpsp.4
