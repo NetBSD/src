@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1197 2008/09/29 11:39:37 njoly Exp $
+#	$NetBSD: mi,v 1.1198 2008/10/02 17:54:51 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -610,6 +610,7 @@
 ./usr/include/evrpc.h				comp-c-include
 ./usr/include/evutil.h				comp-c-include
 ./usr/include/fcntl.h				comp-c-include
+./usr/include/fetch.h				comp-c-include
 ./usr/include/filecorefs/filecore_mount.h	comp-c-include
 ./usr/include/float.h				comp-c-include
 ./usr/include/fmtmsg.h				comp-c-include
@@ -2288,6 +2289,9 @@
 ./usr/lib/libevent.a				comp-c-lib
 ./usr/lib/libevent_g.a		-unknown-	debuglib
 ./usr/lib/libevent_p.a				comp-c-proflib		profile
+./usr/lib/libfetch.a				comp-c-lib
+./usr/lib/libfetch_g.a		-unknown-	debuglib
+./usr/lib/libfetch_p.a			comp-c-proflib		profile
 ./usr/lib/libfl.a				comp-c-lib
 ./usr/lib/libfl_p.a				comp-c-proflib		profile
 ./usr/lib/libform.a				comp-c-lib
@@ -3482,6 +3486,7 @@
 ./usr/libdata/lint/llib-ldrm.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-ledit.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lexpat.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-lfetch.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lfontconfig.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lfontenc.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lform.ln		comp-c-lintlib		lint
@@ -5307,6 +5312,7 @@
 ./usr/share/man/cat3/fdopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/feof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ferror.0			comp-c-catman		.cat
+./usr/share/man/cat3/fetch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fflush.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ffs.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fgetc.0			comp-c-catman		.cat
@@ -10612,6 +10618,7 @@
 ./usr/share/man/html3/fclose.html		comp-c-htmlman		html
 ./usr/share/man/html3/fdopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/feof.html			comp-c-htmlman		html
+./usr/share/man/html3/fetch.html		comp-c-htmlman		html
 ./usr/share/man/html3/ferror.html		comp-c-htmlman		html
 ./usr/share/man/html3/fflush.html		comp-c-htmlman		html
 ./usr/share/man/html3/ffs.html			comp-c-htmlman		html
@@ -15828,6 +15835,7 @@
 ./usr/share/man/man3/fdopen.3			comp-c-man		.man
 ./usr/share/man/man3/feof.3			comp-c-man		.man
 ./usr/share/man/man3/ferror.3			comp-c-man		.man
+./usr/share/man/man3/fetch.3			comp-c-man		.man
 ./usr/share/man/man3/fflush.3			comp-c-man		.man
 ./usr/share/man/man3/ffs.3			comp-c-man		.man
 ./usr/share/man/man3/fgetc.3			comp-c-man		.man
