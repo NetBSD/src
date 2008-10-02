@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.226 2008/09/26 18:23:09 apb Exp $
+#	$NetBSD: bsd.README,v 1.227 2008/10/02 17:54:53 joerg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1103,6 +1103,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
+		LIBFETCH?=	${DESTDIR}/usr/lib/libfetch.a
 		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
 		LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
 		LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
