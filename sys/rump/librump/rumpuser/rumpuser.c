@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.18 2008/07/29 13:17:47 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.19 2008/10/02 19:37:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -291,12 +291,6 @@ rumpuser_realpath(const char *path, char resolvedname[MAXPATHLEN], int *error)
 		*error = 0;
 
 	return rv;
-}
-
-void
-rumpuser_yield(void)
-{
-
 }
 
 #ifdef __linux__

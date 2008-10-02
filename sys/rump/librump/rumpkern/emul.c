@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.49 2008/09/30 19:25:56 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.50 2008/10/02 19:37:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -531,14 +531,6 @@ suspendsched()
 
 	panic("%s: not implemented", __func__);
 }
-
-void
-yield(void)
-{
-
-	rumpuser_yield();
-}
-
 
 u_int
 lwp_unsleep(lwp_t *l, bool cleanup)
