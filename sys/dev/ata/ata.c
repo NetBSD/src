@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.100 2008/10/01 18:23:55 bouyer Exp $	*/
+/*	$NetBSD: ata.c,v 1.101 2008/10/02 21:05:17 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.100 2008/10/01 18:23:55 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.101 2008/10/02 21:05:17 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.100 2008/10/01 18:23:55 bouyer Exp $");
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/pool.h>
 #include <sys/kthread.h>
 #include <sys/errno.h>
@@ -179,12 +180,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	struct ata_channel *chp = atabus_sc->sc_chan;
 	struct atac_softc *atac = chp->ch_atac;
 	struct atabus_initq *atabus_initq = NULL;
-	int i, s, error;
-
-	/* we are in the atabus's thread context */
-	s = splbio();
-	chp->ch_flags |= ATACH_TH_RUN;
-	splx(s);
+	int i, error;
 
 	/* Probe for the drives. */
 	/* XXX for SATA devices we will power up all drives at once */
@@ -193,11 +189,6 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	ATADEBUG_PRINT(("atabusattach: ch_drive_flags 0x%x 0x%x\n",
 	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),
 	    DEBUG_PROBE);
-
-	/* next operations will occurs in a separate thread */
-	s = splbio();
-	chp->ch_flags &= ~ATACH_TH_RUN;
-	splx(s);
 
 	/* Make sure the devices probe in atabus order to avoid jitter. */
 	simple_lock(&atabus_interlock);
@@ -357,8 +348,6 @@ atabus_thread(void *arg)
 	int i, s;
 
 	s = splbio();
-	chp->ch_flags |= ATACH_TH_RUN;
-
 	/*
 	 * Probe the drives.  Reset all flags to 0 to indicate to controllers
 	 * that can re-probe that all drives must be probed..
@@ -377,9 +366,7 @@ atabus_thread(void *arg)
 		if ((chp->ch_flags & (ATACH_TH_RESET | ATACH_SHUTDOWN)) == 0 &&
 		    (chp->ch_queue->active_xfer == NULL ||
 		     chp->ch_queue->queue_freeze == 0)) {
-			chp->ch_flags &= ~ATACH_TH_RUN;
 			(void) tsleep(&chp->ch_thread, PRIBIO, "atath", 0);
-			chp->ch_flags |= ATACH_TH_RUN;
 		}
 		if (chp->ch_flags & ATACH_SHUTDOWN) {
 			break;
