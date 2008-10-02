@@ -1,4 +1,4 @@
-/*	$NetBSD: audit.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $	*/
+/*	$NetBSD: audit.c,v 1.1.1.2 2008/10/02 20:49:40 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -8,7 +8,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: audit.c,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $");
+__RCSID("$NetBSD: audit.c,v 1.1.1.2 2008/10/02 20:49:40 joerg Exp $");
 #endif
 
 /*-
@@ -254,11 +254,11 @@ check_and_read_pkg_vulnerabilities(void)
 		if (now < 0)
 			warnx("pkg-vulnerabilities is from the future");
 		else if (now > 86400 * 7)
-			warnx("pkg-vulnerabilities is out of day (%d days old)",
-			    now / 86400);
+			warnx("pkg-vulnerabilities is out of day (%ld days old)",
+			    (long)(now / 86400));
 		else if (verbose >= 2)
-			warnx("pkg-vulnerabilities is %d day%s old",
-			    now / 86400, now / 86400 == 1 ? "" : "s");
+			warnx("pkg-vulnerabilities is %ld day%s old",
+			    (long)(now / 86400), now / 86400 == 1 ? "" : "s");
 	}
 
 	pv = read_pkg_vulnerabilities(pkg_vulnerabilities_file, 0, check_signature);
