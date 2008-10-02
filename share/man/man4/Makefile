@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.476 2008/10/02 00:47:51 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.477 2008/10/02 11:05:23 pgoyette Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 acpidalb.4 \
@@ -110,7 +110,7 @@ MAN+=	sc.4 si.4
 MAN+=	fwohci.4 fwip.4 sbp.4
 
 # machine-independent I2C devices
-MAN+=	dbcool.4 lmtemp.4 sdtemp.4 spdmem.4
+MAN+=	dbcool.4 lmtemp.4 spdmem.4
 
 # machine-independent SPI devices
 MAN +=	m25p.4 tm121temp.4
