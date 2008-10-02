@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.70 2008/10/02 08:51:22 sborrill Exp $
+.\"	$NetBSD: installboot.8,v 1.71 2008/10/02 09:11:28 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 5, 2007
+.Dd October 2, 2008
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -650,7 +650,7 @@ It may also be necessary to use
 to make the device itself bootable.
 .
 .Pp
-Switch the existing installed bootstrap to use a serial console without 
+Switch the existing installed bootstrap to use a serial console without
 reinstalling or altering other options such as timeout.
 .Dl Ic installboot -e -o console=com0 /dev/rwd0a
 .Ss Nx Ns Tn /macppc
