@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/21 19:45:59 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/02 17:54:53 joerg Exp $
 
 #
 # This Makefile exists to provide a single point to build
@@ -12,6 +12,7 @@
 SUBDIR+= ../bsd/openldap/lib
 .endif
 
+SUBDIR+= ../bsd/fetch/lib
 SUBDIR+= ../bsd/libarchive/lib
 
 .include <bsd.subdir.mk>
