@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.92 2008/09/29 20:26:47 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.93 2008/10/03 09:12:42 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2203,4 +2203,18 @@ x11/bin/lbxproxy/Makefile			patch
 	Workaround vax gcc segfault on XFree's connection.c by building
 	this file -O0 for vax.
 	[bouyer, ticket #1207]
+
+sys/dev/ic/aac.c				1.41 via patch
+sys/dev/ic/aacreg.h				1.13 via patch
+sys/dev/ic/aacvar.h				1.13 via patch
+sys/dev/ic/ld_aac.c				1.22 via patch
+	Add support for >2TB arrays and implement raw I/O mode which is a
+	requirement for this.
+	[sborrill, ticket #1208]
+
+sys/netinet6/icmp6.c				1.150
+	Fix for CVE-2008-3530 from matt@
+	Implement improved checking for MTU values on ICMP 'Packet Too Big
+	Messages'
+	[adrianp, ticket #1209]
 
