@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.93 2008/10/03 09:12:42 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.94 2008/10/03 10:33:01 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2217,4 +2217,11 @@ sys/netinet6/icmp6.c				1.150
 	Implement improved checking for MTU values on ICMP 'Packet Too Big
 	Messages'
 	[adrianp, ticket #1209]
+
+src/sys/netinet6/in6.c				1.141 via patch
+src/sys/netinet6/in6_var.h			1.59 via patch
+src/sys/netinet6/nd6_nbr.c			1.89-1.90 via patch
+	If a neighbor solictation isn't from the unspecified address,
+	make sure that the source address matches one of the interfaces
+	address prefixes.  Fixes CVE-2008-2476/VU#472363.
 
