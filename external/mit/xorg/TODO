@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.14 2008/09/20 02:55:34 cube Exp $
+$NetBSD: TODO,v 1.15 2008/10/03 04:04:00 cube Exp $
 
 plan:
 	- build modular-xorg stuff with reach over
@@ -27,8 +27,6 @@ tools		- done
 share		- done
 bin		- done
 			-- many apps don't install manuals yet
-			-- many apps need app-config generated/installed?
-			   this will apparently help with pkgsrc.
 Xserver 
 	drivers:
 		- all mostly done.
