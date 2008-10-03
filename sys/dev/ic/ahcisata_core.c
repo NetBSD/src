@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.17 2008/08/01 17:41:54 dillo Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.18 2008/10/03 13:02:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.17 2008/08/01 17:41:54 dillo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.18 2008/10/03 13:02:08 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -498,6 +498,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
+	int i, tfd;
 
 	ahci_channel_stop(sc, chp, flags);
 	if (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
@@ -505,26 +506,24 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 		printf("%s: port reset failed\n", AHCINAME(sc));
 		/* XXX and then ? */
 	}
-	AHCI_WRITE(sc, AHCI_P_SERR(chp->ch_channel),
-	    AHCI_READ(sc, AHCI_P_SERR(chp->ch_channel)));
 	if (chp->ch_queue->active_xfer) {
 		chp->ch_queue->active_xfer->c_kill_xfer(chp,
 		    chp->ch_queue->active_xfer, KILL_RESET);
 	}
 	ahci_channel_start(sc, chp);
-#if 0
-	/* Wait 15s for device to host FIS to arrive. */
-	for (i = 0; i <1500; i++) {
-		if (AHCI_READ(sc, AHCI_P_IS(chp->ch_channel)) & AHCI_P_IX_DHRS)
+	/* wait 31s for BSY to clear */
+	for (i = 0; i <3100; i++) {
+		tfd = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
+		if ((((tfd & AHCI_P_TFD_ST) >> AHCI_P_TFD_ST_SHIFT)
+		    & WDCS_BSY) == 0)
 			break;
-		if (flags & AT_WAIT)
-			tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
-		else
-			delay (10000);
+		tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
 	}
 	if (i == 1500)
-		aprint_error("%s port %d: D2H FIS never arrived\n", AHCINAME(sc));
-#endif
+		aprint_error("%s: BSY never cleared, TD 0x%x\n",
+		    AHCINAME(sc), tfd);
+	AHCIDEBUG_PRINT(("%s: BSY took %d ms\n", AHCINAME(sc), i * 10),
+	    DEBUG_PROBE);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 
@@ -563,28 +562,29 @@ ahci_probe_drive(struct ata_channel *chp)
 		chp->ch_drive[i].drive = i;
 	}
 
-	/* bring interface up, power up and spin up device */
+	/* bring interface up, accept FISs, power up and spin up device */
 	AHCI_WRITE(sc, AHCI_P_CMD(chp->ch_channel),
-	    AHCI_P_CMD_ICC_AC | AHCI_P_CMD_POD | AHCI_P_CMD_SUD);
+	    AHCI_P_CMD_ICC_AC | AHCI_P_CMD_FRE |
+	    AHCI_P_CMD_POD | AHCI_P_CMD_SUD);
 	/* reset the PHY and bring online */
 	switch (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
 	    achp->ahcic_sstatus)) {
 	case SStatus_DET_DEV:
-		AHCI_WRITE(sc, AHCI_P_SERR(chp->ch_channel),
-		    AHCI_READ(sc, AHCI_P_SERR(chp->ch_channel)));
-#if 0
-		/* wait 15s for d2h FIS */
-		for (i = 0; i <1500; i++) {
-			if (AHCI_READ(sc, AHCI_P_IS(chp->ch_channel))
-			    & AHCI_P_IX_DHRS)
+		/* clear SErrors and start operations */
+		ahci_channel_start(sc, chp);
+		/* wait 31s for BSY to clear */
+		for (i = 0; i <3100; i++) {
+			sig = AHCI_READ(sc, AHCI_P_TFD(chp->ch_channel));
+			if ((((sig & AHCI_P_TFD_ST) >> AHCI_P_TFD_ST_SHIFT)
+			    & WDCS_BSY) == 0)
 				break;
 			tsleep(&sc, PRIBIO, "ahcid2h", mstohz(10));
 		}
 		if (i == 1500)
-			aprint_error("%s: D2H FIS never arrived\n",
-			    AHCINAME(sc));
-#endif
-
+			aprint_error("%s: BSY never cleared, TD 0x%x\n",
+			    AHCINAME(sc), sig);
+		AHCIDEBUG_PRINT(("%s: BSY took %d ms\n", AHCINAME(sc), i * 10),
+		    DEBUG_PROBE);
 		sig = AHCI_READ(sc, AHCI_P_SIG(chp->ch_channel));
 		AHCIDEBUG_PRINT(("%s: port %d: sig=0x%x CMD=0x%x\n",
 		    AHCINAME(sc), chp->ch_channel, sig,
@@ -604,8 +604,6 @@ ahci_probe_drive(struct ata_channel *chp)
 		    AHCI_P_IX_TFES | AHCI_P_IX_HBFS | AHCI_P_IX_IFS |
 		    AHCI_P_IX_OFS | AHCI_P_IX_DPS | AHCI_P_IX_UFS |
 		    AHCI_P_IX_DHRS);
-		/* and start operations */
-		ahci_channel_start(sc, chp);
 		/* wait 500ms before actually starting operations */
 		tsleep(&sc, PRIBIO, "ahciprb", mstohz(500));
 		break;
@@ -1132,7 +1130,8 @@ void
 ahci_channel_start(struct ahci_softc *sc, struct ata_channel *chp)
 {
 	/* clear error */
-	AHCI_WRITE(sc, AHCI_P_SERR(chp->ch_channel), 0);
+	AHCI_WRITE(sc, AHCI_P_SERR(chp->ch_channel),
+	    AHCI_READ(sc, AHCI_P_SERR(chp->ch_channel)));
 
 	/* and start controller */
 	AHCI_WRITE(sc, AHCI_P_CMD(chp->ch_channel),
