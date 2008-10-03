@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_aac.c,v 1.13.2.1 2007/11/25 09:20:34 xtraeme Exp $	*/
+/*	$NetBSD: ld_aac.c,v 1.13.2.2 2008/10/03 09:12:16 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.13.2.1 2007/11/25 09:20:34 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_aac.c,v 1.13.2.2 2008/10/03 09:12:16 jdc Exp $");
 
 #include "rnd.h"
 
@@ -70,7 +70,7 @@ struct ld_aac_softc {
 
 static void	ld_aac_attach(struct device *, struct device *, void *);
 static void	ld_aac_intr(struct aac_ccb *);
-static int	ld_aac_dobio(struct ld_aac_softc *, void *, int, int, int,
+static int	ld_aac_dobio(struct ld_aac_softc *, void *, int, daddr_t, int,
 			     struct buf *);
 static int	ld_aac_dump(struct ld_softc *, void *, int, int);
 static int	ld_aac_match(struct device *, struct cfdata *, void *);
@@ -117,7 +117,7 @@ ld_aac_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
+ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, daddr_t blkno,
 	     int dowrite, struct buf *bp)
 {
 	struct aac_blockread_response *brr;
@@ -156,7 +156,37 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 	    AAC_FIBSTATE_REXPECTED | AAC_FIBSTATE_NORM |
 	    AAC_FIBSTATE_ASYNC | AAC_FIBSTATE_FAST_RESPONSE );
 
-	if ((aac->sc_quirks & AAC_QUIRK_SG_64BIT) == 0) {
+	if (aac->sc_quirks & AAC_QUIRK_RAW_IO) {
+		struct aac_raw_io *raw;
+		struct aac_sg_entryraw *sge;
+		struct aac_sg_tableraw *sgt;
+
+		raw = (struct aac_raw_io *)&fib->data[0];
+		fib->Header.Command = htole16(RawIo);
+		raw->BlockNumber = htole64(blkno);
+		raw->ByteCount = htole32(datasize);
+		raw->ContainerId = htole16(sc->sc_hwunit);
+		raw->BpTotal = 0;
+		raw->BpComplete = 0;
+		size = sizeof(struct aac_raw_io);
+		sgt = &raw->SgMapRaw;
+		raw->Flags = (dowrite ? 0 : 1);
+
+		xfer = ac->ac_dmamap_xfer;
+		sgt->SgCount = xfer->dm_nsegs;
+		sge = sgt->SgEntryRaw;
+
+		for (i = 0; i < xfer->dm_nsegs; i++, sge++) {
+			sge->SgAddress = htole64(xfer->dm_segs[i].ds_addr);
+			sge->SgByteCount = htole32(xfer->dm_segs[i].ds_len);
+			sge->Next = 0;
+			sge->Prev = 0;
+			sge->Flags = 0;
+		}
+		size += xfer->dm_nsegs * sizeof(struct aac_sg_entryraw);
+		size = sizeof(fib->Header) + size;
+		fib->Header.Size = htole16(size);
+	} else if ((aac->sc_quirks & AAC_QUIRK_SG_64BIT) == 0) {
 		struct aac_blockread *br;
 		struct aac_blockwrite *bw;
 		struct aac_sg_entry *sge;
@@ -199,7 +229,7 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 		}
 
 		size += xfer->dm_nsegs * sizeof(struct aac_sg_entry);
-		size = htole16(sizeof(fib->Header) + size);
+		size = sizeof(fib->Header) + size;
 		fib->Header.Size = htole16(size);
 	} else {
 		struct aac_blockread64 *br;
@@ -251,7 +281,7 @@ ld_aac_dobio(struct ld_aac_softc *sc, void *data, int datasize, int blkno,
 			    (u_long)xfer->dm_segs[i].ds_len));
 		}
 		size += xfer->dm_nsegs * sizeof(struct aac_sg_entry64);
-		size = htole16(sizeof(fib->Header) + size);
+		size = sizeof(fib->Header) + size;
 		fib->Header.Size = htole16(size);
 	}
 
