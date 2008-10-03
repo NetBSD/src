@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.51 2008/09/29 20:01:21 jdc Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.52 2008/10/03 09:12:59 jdc Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -897,4 +897,10 @@ common/lib/libprop/prop_string.3		1.4
 	FALSE -> false
 	Completes processing of ticket 904, fixes PR lib/38013.
 	[joerg, ticket #904]
+
+sys/netinet6/icmp6.c				1.150
+	Fix for CVE-2008-3530 from matt@
+	Implement improved checking for MTU values on ICMP 'Packet Too Big
+	Messages'
+	[adrianp, ticket #1209]
 
