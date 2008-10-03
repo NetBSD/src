@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.257 2008/08/28 07:21:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.258 2008/10/03 18:09:48 jnemeth Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -94,7 +94,7 @@
 #   do-ld.so:        builds and installs prerequisites from libexec/ld.*_so.
 #   do-build:        builds and installs the entire system.
 #   do-x11:          builds and installs X11; either
-#                    X11R7 from src/external/mit/xorg if ${MKORG} != "no"
+#                    X11R7 from src/external/mit/xorg if ${MKXORG} != "no"
 #                    or X11R6 from src/x11 if ${MKX11} != "no"
 #   do-obsolete:     installs the obsolete sets (for the postinstall-* targets).
 #
