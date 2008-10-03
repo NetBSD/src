@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.123.2.2 2007/05/24 19:13:14 pavel Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.123.2.2.4.1 2008/10/03 09:05:06 jdc Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.123.2.2 2007/05/24 19:13:14 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.123.2.2.4.1 2008/10/03 09:05:06 jdc Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -552,6 +552,9 @@ icmp6_input(struct mbuf **mp, int *offp, int proto)
 	case ICMP6_PACKET_TOO_BIG:
 		icmp6_ifstat_inc(m->m_pkthdr.rcvif, ifs6_in_pkttoobig);
 
+		/*
+		 * MTU is checked in icmp6_mtudisc.
+		 */
 		code = PRC_MSGSIZE;
 
 		/*
@@ -1082,6 +1085,20 @@ icmp6_mtudisc_update(ip6cp, validated)
 	u_int mtu = ntohl(icmp6->icmp6_mtu);
 	struct rtentry *rt = NULL;
 	struct sockaddr_in6 sin6;
+
+	/*
+	 * The MTU should not be less than the minimal IPv6 MTU except for the
+	 * hack in ip6_output/ip6_setpmtu where we always include a frag header.
+	 * In that one case, the MTU might be less than 1280.  
+	 */
+	if (__predict_false(mtu < IPV6_MMTU - sizeof(struct ip6_frag))) {
+		/* is the mtu even sane? */
+		if (mtu < sizeof(struct ip6_hdr) + sizeof(struct ip6_frag) + 8)
+			return;
+		if (!validated)
+			return;
+		mtu = IPV6_MMTU - sizeof(struct ip6_frag);
+	}
 
 	/*
 	 * allow non-validated cases if memory is plenty, to make traffic
