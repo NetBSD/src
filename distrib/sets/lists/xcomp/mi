@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.52 2008/09/28 06:34:49 lukem Exp $
+# $NetBSD: mi,v 1.53 2008/10/03 03:53:22 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5121,6 +5121,7 @@
 ./usr/X11R6/man/man3/gluTessProperty.3			-unknown-	.man,x11
 ./usr/X11R6/man/man3/gluTessVertex.3			-unknown-	.man,x11
 ./usr/X11R6/man/man3/gluUnProject.3			-unknown-	.man,x11
+./usr/X11R7/bin/freetype-config				-unknown-	xorg
 ./usr/X11R7/include/GL/GLwDrawA.h			-unknown-	xorg
 ./usr/X11R7/include/GL/GLwDrawAP.h			-unknown-	xorg
 ./usr/X11R7/include/GL/GLwMDrawA.h			-unknown-	xorg
@@ -6169,6 +6170,7 @@
 ./usr/X11R7/lib/pkgconfig/xxf86misc.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/xxf86vm.pc			-unknown-	xorg
 ./usr/X11R7/man/cat1/mergelib.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xft-config.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/AllPlanes.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/BlackPixelOfScreen.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/DisplayOfCCC.0			-unknown-	.cat,xorg
@@ -6385,6 +6387,7 @@
 ./usr/X11R7/man/cat3/XrmPutResource.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XrmUniqueQuark.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/mergelib.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/xft-config.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/AllPlanes.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/BlackPixelOfScreen.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/DisplayOfCCC.html			-unknown-	html,xorg
@@ -6600,6 +6603,7 @@
 ./usr/X11R7/man/html3/XrmMergeDatabases.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XrmPutResource.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XrmUniqueQuark.html		-unknown-	html,xorg
+./usr/X11R7/man/man1/xft-config.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/AllPlanes.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/BlackPixelOfScreen.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/DisplayOfCCC.3			-unknown-	.man,xorg

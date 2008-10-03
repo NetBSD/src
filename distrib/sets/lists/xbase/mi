@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.65 2008/09/06 06:37:58 rtr Exp $
+# $NetBSD: mi,v 1.66 2008/10/03 03:53:22 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1190,7 +1190,6 @@
 ./usr/X11R7/bin/fc-list					-unknown-	xorg
 ./usr/X11R7/bin/fillblnk				-unknown-	xorg
 ./usr/X11R7/bin/fonttosfnt				-unknown-	xorg
-./usr/X11R7/bin/freetype-config				-unknown-	xorg
 ./usr/X11R7/bin/fslsfonts				-unknown-	xorg
 ./usr/X11R7/bin/fstobdf					-unknown-	xorg
 ./usr/X11R7/bin/glxgears				-unknown-	xorg
