@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/03 03:52:15 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -19,40 +19,6 @@ MAN=	Xft.3
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-DFREETYPE2 -I${DESTDIR}${X11INCDIR}/freetype2 -DXFREE86_FT2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/Xft
-
-.if 0
-# XXX it would be really swell if SCRIPTS was available from bsd.lib.mk
-FILES=			xft.pc xft-config
-FILESDIR_xft.pc=	${X11USRLIBDIR}/pkgconfig
-FILESDIR_xft-config=	${X11BINDIR}
-FILESOWN_xft-config=	${BINOWN}
-FILESGRP_xft-config=	${BINGRP}
-FILESMODE_xft-config=	${BINMODE}
-
-CLEANFILES+=${FILES}
-realall: ${FILES}
-
-XFTDIR=		${X11SRCDIR.xc}/lib/Xft
-CONFIG_SUBST=	${HOST_SH} ${XFTDIR}/config/config-subst \
-		prefix="${X11ROOTDIR}" \
-		exec_prefix="${X11BINDIR}" \
-		libdir="${X11USRLIBDIR}" \
-		includedir="${X11INCDIR}" \
-		hardcode_libdir_flag_spec="-Wl,-rpath,${X11USRLIBDIR}" \
-		PACKAGE_VERSION="2.1.0" \
-		FREETYPE_LIBS="-L${X11USRLIBDIR} -lfreetype" \
-		FREETYPE_CFLAGS="-I${X11INCDIR}/freetype2" \
-		XRENDER_LIBS="-L${X11USRLIBDIR} -lXrender" \
-		XRENDER_CFLAGS="-I${X11INCDIR}" \
-		FONTCONFIG_LIBS="-L${X11USRLIBDIR} -lfontconfig" \
-		FONTCONFIG_CFLAGS="-I${X11INCDIR}" 
-
-xft.pc:
-	${CONFIG_SUBST} < ${XFTDIR}/xft.pc.in > ${.TARGET}
-
-xft-config:
-	${CONFIG_SUBST} < ${XFTDIR}/xft-config.in > ${.TARGET}
-.endif
 
 PKGDIST=	${LIB}
 
