@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2008/04/23 05:13:43 macallan Exp $
+#	$NetBSD: Makefile,v 1.20 2008/10/03 05:14:01 macallan Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -49,8 +49,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 SRCS.bsd+=	sparc64_video.c bsdResource.c pm_noop.c lnx_agp.c \
 		ioperm_noop.c netbsdSbus.c
 .for _FN in ${SRCS.bsd}
-CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC \
-			-DPCI_VIA_TTYE0
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
@@ -89,9 +88,10 @@ SRCS.bus+=	ix86Pci.c
 SRCS.bus+=	netbsdPci.c
 .endif
 
-.if ${MACHINE} == "macppc" || ${MACHINE} == "ofppc"
+.if ${MACHINE} == "macppc" || ${MACHINE} == "ofppc" || \
+    ${MACHINE} == "sparc64" || ${MACHINE} == "sparc"
 .for _FN in ${SRCS.bus}
-CPPFLAGS.${_FN}=	-DPCI_VIA_TTYE0
+CPPFLAGS.${_FN}+=	-DPCI_VIA_TTYE0
 .endfor
 .endif
 
