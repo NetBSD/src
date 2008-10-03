@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.113 2008/08/22 12:13:18 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.114 2008/10/03 18:33:06 pooka Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.113 2008/08/22 12:13:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.114 2008/10/03 18:33:06 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -3450,7 +3450,7 @@ sppp_ipv6cp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 				continue;
 			}
 
-			memset(&suggestaddr, 0, sizeof(&suggestaddr));
+			memset(&suggestaddr, 0, sizeof(suggestaddr));
 			if (collision && nohisaddr) {
 				/* collision, hisaddr unknown - Conf-Rej */
 				type = CONF_REJ;
