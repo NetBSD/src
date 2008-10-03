@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0.4,v 1.1.2.32 2008/09/18 19:31:50 bouyer Exp $
+#	$NetBSD: CHANGES-3.0.4,v 1.1.2.33 2008/10/03 09:22:15 jdc Exp $
 
 A complete list of changes from the NetBSD 3.0.3 release to the NetBSD 3.0.4
 release:
@@ -1175,3 +1175,8 @@ libexec/ftpd/version.h				patch
 	Moritz Jodeit <moritz@OpenBSD.org>
 	[lukem, ticket #1964]
 
+sys/netinet6/icmp6.c				1.150
+	Fix for CVE-2008-3530 from matt@
+	Implement improved checking for MTU values on ICMP 'Packet Too Big
+	Messages'
+	[adrianp, ticket #1966]
