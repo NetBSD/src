@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.119 2008/09/29 10:27:53 rmind Exp $	*/
+/*	$NetBSD: db_command.c,v 1.120 2008/10/03 14:52:11 rmind Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.119 2008/09/29 10:27:53 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.120 2008/10/03 14:52:11 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1074,9 +1074,9 @@ db_map_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		full = true;
 
 	if (have_addr == false)
-		addr = (db_expr_t)(intptr_t) kernel_map;
+		addr = (db_expr_t)(uintptr_t) kernel_map;
 
-	uvm_map_printit((struct vm_map *)(intptr_t) addr, full, db_printf);
+	uvm_map_printit((struct vm_map *)(uintptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1105,7 +1105,7 @@ db_object_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
-	uvm_object_printit((struct uvm_object *)(intptr_t) addr, full,
+	uvm_object_printit((struct uvm_object *)(uintptr_t) addr, full,
 	    db_printf);
 }
 
@@ -1119,7 +1119,7 @@ db_page_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
-	uvm_page_printit((struct vm_page *)(intptr_t) addr, full, db_printf);
+	uvm_page_printit((struct vm_page *)(uintptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1141,7 +1141,7 @@ db_buf_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
-	vfs_buf_print((struct buf *)(intptr_t) addr, full, db_printf);
+	vfs_buf_print((struct buf *)(uintptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1167,7 +1167,7 @@ db_vnode_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
-	vfs_vnode_print((struct vnode *)(intptr_t) addr, full, db_printf);
+	vfs_vnode_print((struct vnode *)(uintptr_t) addr, full, db_printf);
 }
 
 static void
@@ -1179,7 +1179,7 @@ db_mount_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
-	vfs_mount_print((struct mount *)(intptr_t) addr, full, db_printf);
+	vfs_mount_print((struct mount *)(uintptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1188,7 +1188,7 @@ db_mbuf_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-	m_print((const struct mbuf *)(intptr_t) addr, modif, db_printf);
+	m_print((const struct mbuf *)(uintptr_t) addr, modif, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1197,7 +1197,7 @@ db_pool_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-	pool_printit((struct pool *)(intptr_t) addr, modif, db_printf);
+	pool_printit((struct pool *)(uintptr_t) addr, modif, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1206,7 +1206,7 @@ db_namecache_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-	namecache_print((struct vnode *)(intptr_t) addr, db_printf);
+	namecache_print((struct vnode *)(uintptr_t) addr, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1260,7 +1260,7 @@ db_fncall(db_expr_t addr, bool have_addr,
 		db_flush_lex();
 		return;
 	}
-	func = (db_expr_t (*)(db_expr_t, ...))(intptr_t) fn_addr;
+	func = (db_expr_t (*)(db_expr_t, ...))(uintptr_t) fn_addr;
 
 	t = db_read_token();
 	if (t == tLPAREN) {
