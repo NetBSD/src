@@ -1,4 +1,4 @@
-/*	$NetBSD: aac.c,v 1.29.2.1 2007/11/25 09:20:33 xtraeme Exp $	*/
+/*	$NetBSD: aac.c,v 1.29.2.2 2008/10/03 09:12:16 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.29.2.1 2007/11/25 09:20:33 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aac.c,v 1.29.2.2 2008/10/03 09:12:16 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -471,10 +471,8 @@ aac_check_firmware(struct aac_softc *sc)
 		    (sc->sc_if.aif_send_command != NULL)) {
 			sc->sc_quirks |= AAC_QUIRK_NEW_COMM;
 		}
-#ifdef notyet
 		if (opts & AAC_SUPPORTED_64BIT_ARRAYSIZE)
 			sc->sc_quirks |= AAC_QUIRK_ARRAY_64BIT;
-#endif
 	}
 
 	sc->sc_max_fibs = (sc->sc_quirks & AAC_QUIRK_256FIBS) ? 256 : 512;
@@ -551,6 +549,17 @@ aac_check_firmware(struct aac_softc *sc)
 	}
 
 	sc->sc_max_fibs_alloc = PAGE_SIZE / sc->sc_max_fib_size;
+
+	if (sc->sc_max_fib_size > sizeof(struct aac_fib)) {
+		sc->sc_quirks |= AAC_QUIRK_RAW_IO;
+		aprint_debug("%s: Enable raw I/O\n", sc->sc_dv.dv_xname);
+	}
+	if ((sc->sc_quirks & AAC_QUIRK_RAW_IO) &&
+	    (sc->sc_quirks & AAC_QUIRK_ARRAY_64BIT)) {
+		sc->sc_quirks |= AAC_QUIRK_LBA_64BIT;
+		aprint_normal("%s: Enable 64-bit array support\n",
+		    sc->sc_dv.dv_xname);
+	}
 
 	return (0);
 }
@@ -654,10 +663,8 @@ aac_init(struct aac_softc *sc)
 	 */
 	ip = &sc->sc_common->ac_init;
 	ip->InitStructRevision = htole32(AAC_INIT_STRUCT_REVISION);
-	if (sc->sc_max_fib_size > sizeof(struct aac_fib)) {
+	if (sc->sc_quirks & AAC_QUIRK_RAW_IO)
 		ip->InitStructRevision = htole32(AAC_INIT_STRUCT_REVISION_4);
-		sc->sc_quirks |= AAC_QUIRK_RAW_IO;
-	}
 	ip->MiniPortRevision = htole32(AAC_INIT_STRUCT_MINIPORT_REVISION);
 
 	ip->AdapterFibsPhysicalAddress = htole32(sc->sc_common_seg.ds_addr +
@@ -836,6 +843,7 @@ aac_startup(struct aac_softc *sc)
 	struct aac_mntinforesponse mir;
 	struct aac_drive *hd;
 	u_int16_t rsize;
+	size_t ersize;
 	int i;
 
 	/*
@@ -848,7 +856,14 @@ aac_startup(struct aac_softc *sc)
 		 * Request information on this container.
 		 */
 		memset(&mi, 0, sizeof(mi));
-		mi.Command = htole32(VM_NameServe);
+		/* use 64-bit LBA if enabled */
+		if (sc->sc_quirks & AAC_QUIRK_LBA_64BIT) {
+			mi.Command = htole32(VM_NameServe64);
+			ersize = sizeof(mir);
+		} else {
+			mi.Command = htole32(VM_NameServe);
+			ersize = sizeof(mir) - sizeof(mir.MntTable[0].CapacityHigh);
+		}
 		mi.MntType = htole32(FT_FILESYS);
 		mi.MntCount = htole32(i);
 		if (aac_sync_fib(sc, ContainerCommand, 0, &mi, sizeof(mi), &mir,
@@ -857,10 +872,10 @@ aac_startup(struct aac_softc *sc)
 			    sc->sc_dv.dv_xname, i);
 			continue;
 		}
-		if (rsize != sizeof(mir)) {
+		if (rsize != ersize) {
 			aprint_error("%s: container info response wrong size "
 			    "(%d should be %zu)\n",
-			    sc->sc_dv.dv_xname, rsize, sizeof(mir));
+			    sc->sc_dv.dv_xname, rsize, ersize);
 			continue;
 		}
 
@@ -874,6 +889,9 @@ aac_startup(struct aac_softc *sc)
 
 		hd->hd_present = 1;
 		hd->hd_size = le32toh(mir.MntTable[0].Capacity);
+		if (sc->sc_quirks & AAC_QUIRK_LBA_64BIT)
+			hd->hd_size += (u_int64_t)
+			    le32toh(mir.MntTable[0].CapacityHigh) << 32;
 		hd->hd_devtype = le32toh(mir.MntTable[0].VolType);
 		hd->hd_size &= ~0x1f;
 		sc->sc_nunits++;
