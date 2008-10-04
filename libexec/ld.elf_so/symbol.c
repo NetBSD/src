@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.46 2008/07/24 04:39:25 matt Exp $	 */
+/*	$NetBSD: symbol.c,v 1.47 2008/10/04 09:37:12 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.46 2008/07/24 04:39:25 matt Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.47 2008/10/04 09:37:12 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -132,6 +132,56 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
 	}
 	if (def != NULL)
 		*defobj_out = defobj;
+	return def;
+}
+
+/*
+ * Search the symbol table of a shared object and all objects needed by it for
+ * a symbol of the given name. Search order is breadth-first. Returns a pointer
+ * to the symbol, or NULL if no definition was found.
+ */
+const Elf_Sym *
+_rtld_symlook_needed(const char *name, unsigned long hash,
+    const Needed_Entry *needed, const Obj_Entry **defobj_out, bool inplt)
+{
+	const Elf_Sym *def, *def_w;
+	const Needed_Entry *n;
+	const Obj_Entry *obj, *defobj, *defobj1;
+
+	def = def_w = NULL;
+	defobj = NULL;
+	for (n = needed; n != NULL; n = n->next) {
+		if ((obj = n->obj) == NULL ||
+		     (def = _rtld_symlook_obj(name, hash, obj, inplt)) == NULL)
+			continue;
+		defobj = obj;
+		if (ELF_ST_BIND(def->st_info) != STB_WEAK) {
+			*defobj_out = defobj;
+
+			return (def);
+		}
+	}
+	/*
+	 * Either the symbol definition has not been found in directly needed
+	 * objects, or the found symbol is weak.
+	 */
+	for (n = needed; n != NULL; n = n->next) {
+		if ((obj = n->obj) == NULL)
+			continue;
+		def_w = _rtld_symlook_needed(name, hash, obj->needed, &defobj1,
+		    inplt);
+		if (def_w == NULL)
+			continue;
+		if (def == NULL || ELF_ST_BIND(def_w->st_info) != STB_WEAK) {
+			def = def_w;
+			defobj = defobj1;
+			if (ELF_ST_BIND(def_w->st_info) != STB_WEAK)
+				break;
+		}
+	}
+	if (def != NULL)
+		*defobj_out = defobj;
+
 	return def;
 }
 
