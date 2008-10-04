@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.54 2008/10/04 02:32:26 cube Exp $
+# $NetBSD: mi,v 1.55 2008/10/04 18:32:25 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6257,6 +6257,15 @@
 ./usr/X11R7/man/cat3/XExposeEvent.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XExtentsOfFontSet.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XF86DGA.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XF86Misc.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XF86MiscGetKbdSettings.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XF86MiscGetMouseSettings.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XF86MiscGetSaver.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XF86MiscQueryExtension.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XF86MiscQueryVersion.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XF86MiscSetKbdSettings.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XF86MiscSetMouseSettings.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XF86MiscSetSaver.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XFillRectangle.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XFilterEvent.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XFlush.0				-unknown-	.cat,xorg
@@ -6474,6 +6483,15 @@
 ./usr/X11R7/man/html3/XExposeEvent.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XExtentsOfFontSet.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XF86DGA.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86Misc.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86MiscGetKbdSettings.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86MiscGetMouseSettings.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86MiscGetSaver.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86MiscQueryExtension.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86MiscQueryVersion.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86MiscSetKbdSettings.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86MiscSetMouseSettings.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XF86MiscSetSaver.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XFillRectangle.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XFilterEvent.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XFlush.html			-unknown-	html,xorg
@@ -6690,6 +6708,15 @@
 ./usr/X11R7/man/man3/XExposeEvent.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XExtentsOfFontSet.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XF86DGA.3				-unknown-	.man,xorg
+./usr/X11R7/man/man3/XF86Misc.3				-unknown-	.man,xorg
+./usr/X11R7/man/man3/XF86MiscGetKbdSettings.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XF86MiscGetMouseSettings.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XF86MiscGetSaver.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XF86MiscQueryExtension.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XF86MiscQueryVersion.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XF86MiscSetKbdSettings.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XF86MiscSetMouseSettings.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XF86MiscSetSaver.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XFillRectangle.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XFilterEvent.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XFlush.3				-unknown-	.man,xorg
