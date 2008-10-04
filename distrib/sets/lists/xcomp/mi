@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.60 2008/10/04 22:29:00 cube Exp $
+# $NetBSD: mi,v 1.61 2008/10/04 22:41:42 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6403,6 +6403,11 @@
 ./usr/X11R7/man/cat3/Xcursor.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xfontcache.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xft.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/Xinerama.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XineramaIsActive.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XineramaQueryExtension.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XineramaQueryScreens.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XineramaQueryVersion.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XmbDrawImageString.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XmbDrawString.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XmbDrawText.0			-unknown-	.cat,xorg
@@ -6967,6 +6972,11 @@
 ./usr/X11R7/man/html3/Xcursor.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xfontcache.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xft.html				-unknown-	html,xorg
+./usr/X11R7/man/html3/Xinerama.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XineramaIsActive.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XineramaQueryExtension.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XineramaQueryScreens.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XineramaQueryVersion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XmbDrawImageString.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XmbDrawString.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XmbDrawText.html			-unknown-	html,xorg
@@ -7530,6 +7540,11 @@
 ./usr/X11R7/man/man3/Xcursor.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xfontcache.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xft.3				-unknown-	.man,xorg
+./usr/X11R7/man/man3/Xinerama.3				-unknown-	.man,xorg
+./usr/X11R7/man/man3/XineramaIsActive.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XineramaQueryExtension.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XineramaQueryScreens.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XineramaQueryVersion.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XmbDrawImageString.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XmbDrawString.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XmbDrawText.3			-unknown-	.man,xorg
