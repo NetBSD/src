@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.55 2008/10/04 18:32:25 cube Exp $
+# $NetBSD: mi,v 1.56 2008/10/04 18:46:20 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6401,6 +6401,26 @@
 ./usr/X11R7/man/cat3/XrmMergeDatabases.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XrmPutResource.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XrmUniqueQuark.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/Xv.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvFreeAdaptorInfo.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvFreeEncodingInfo.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvGetPortAttribute.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvGetStill.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvGetVideo.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvGrabPort.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvPortNotify.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvPutStill.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvPutVideo.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvQueryAdaptors.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvQueryBestSize.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvQueryEncodings.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvQueryExtension.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvSelectPortNotify.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvSelectVideoNotify.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvSetPortAttribute.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvStopVideo.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvUngrabPort.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XvVideoNotify.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/mergelib.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xft-config.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/AllPlanes.html			-unknown-	html,xorg
@@ -6627,6 +6647,26 @@
 ./usr/X11R7/man/html3/XrmMergeDatabases.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XrmPutResource.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XrmUniqueQuark.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/Xv.html				-unknown-	html,xorg
+./usr/X11R7/man/html3/XvFreeAdaptorInfo.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XvFreeEncodingInfo.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XvGetPortAttribute.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XvGetStill.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XvGetVideo.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XvGrabPort.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XvPortNotify.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XvPutStill.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XvPutVideo.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XvQueryAdaptors.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XvQueryBestSize.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XvQueryEncodings.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XvQueryExtension.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XvSelectPortNotify.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XvSelectVideoNotify.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XvSetPortAttribute.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XvStopVideo.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XvUngrabPort.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XvVideoNotify.html		-unknown-	html,xorg
 ./usr/X11R7/man/man1/xft-config.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/AllPlanes.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/BlackPixelOfScreen.3		-unknown-	.man,xorg
@@ -6852,6 +6892,26 @@
 ./usr/X11R7/man/man3/XrmMergeDatabases.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XrmPutResource.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XrmUniqueQuark.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/Xv.3				-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvFreeAdaptorInfo.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvFreeEncodingInfo.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvGetPortAttribute.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvGetStill.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvGetVideo.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvGrabPort.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvPortNotify.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvPutStill.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvPutVideo.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvQueryAdaptors.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvQueryBestSize.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvQueryEncodings.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvQueryExtension.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvSelectPortNotify.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvSelectVideoNotify.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvSetPortAttribute.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvStopVideo.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvUngrabPort.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XvVideoNotify.3			-unknown-	.man,xorg
 ./usr/libdata/debug/usr/X11R6/bin/Xdmx.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/Xnest.debug		-unknown-	debug,x11
 ./usr/libdata/debug/usr/X11R6/bin/Xprt.debug		-unknown-	debug,x11
