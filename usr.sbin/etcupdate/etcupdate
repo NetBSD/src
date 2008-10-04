@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.46 2008/09/14 14:22:45 apb Exp $
+# $NetBSD: etcupdate,v 1.47 2008/10/04 08:07:38 apb Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -571,6 +571,10 @@ if ! ${CONTINUE}; then
 			eval "${MAKE_ENV} make distribution"
 		fi
 		[ $? -ne 0 ] && exit 1
+	fi
+	if ! [ -f "${TEMPROOT}/etc/mtree/set.etc" ]; then
+		echo "*** ERROR: Files from the etc.tgz set are missing"
+		exit 1
 	fi
 	if [ ! -f "${TEMPROOT}/dev/MAKEDEV" ]; then
 		echo ""

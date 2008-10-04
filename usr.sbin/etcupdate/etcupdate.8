@@ -1,4 +1,4 @@
-.\"	$NetBSD: etcupdate.8,v 1.17 2008/09/14 14:22:45 apb Exp $
+.\"	$NetBSD: etcupdate.8,v 1.18 2008/10/04 08:07:38 apb Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 5, 2008
+.Dd October 4, 2008
 .Dt ETCUPDATE 8
 .Os
 .Sh NAME
@@ -189,12 +189,14 @@ to refer to the
 subdirectory within the source tree.
 .It Fl s Ar tgzdir
 A directory in which reference files have been
-extracted from one or more of the
-.Dq Pa etc.tgz
-or
-.Dq Pa xetc.tgz
-files from a binary distribution of
+extracted from a binary distribution of
 .Nx .
+The files that are distributed in the
+.Dq Pa etc.tgz
+set file must be present.
+The files that are distributed in the
+.Dq Pa xetc.tgz
+set file are optional.
 The reference files from the specified directory will be copied to the
 .Pa temproot
 directory.
@@ -203,9 +205,9 @@ The location of a set file
 (or
 .Dq "tgz file" )
 such as
-.Pa etc.tgz
+.Dq Pa etc.tgz
 or
-.Pa xetc.tgz
+.Dq Pa xetc.tgz
 from a binary distribution of
 .Nx .
 Each set file is a compressed archive containing reference files,
@@ -215,6 +217,12 @@ directory.
 Multiple
 .Fl s
 options may be used to specify multiple set files.
+The
+.Dq Pa etc.tgz
+set file must be specified.
+The
+.Dq Pa xetc.tgz
+set file is optional.
 .El
 .It Fl t Ar temproot
 Specifies the location of the

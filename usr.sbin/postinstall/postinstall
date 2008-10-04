@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.70 2008/09/21 06:20:07 junyoung Exp $
+# $NetBSD: postinstall,v 1.71 2008/10/04 08:07:38 apb Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1312,6 +1312,7 @@ main()
 	N_SRC_ARGS=0		# number of "-s" args
 	TGZMODE=false		# true if "-s" specifies a tgz file
 	DIRMODE=false		# true if "-s" specified a directory
+	SOURCEMODE=false	# true if "-s" specified a source directory
 
 	while getopts s:d:m:a: ch; do
 		case "${ch}" in
@@ -1331,8 +1332,15 @@ main()
 				# human-readable messages.
 				SRC_ARG="${TGZLIST}"
 			elif [ -d "${OPTARG}" ]; then
+				# arg refers to a directory.
+				# It might be a source directory, or a
+				# directory where the sets have already
+				# been extracted.
 				DIRMODE=true
 				SRC_ARG="${OPTARG}"
+				if [ -f "${OPTARG}/etc/Makefile" ]; then
+					SOURCEMODE=true
+				fi
 			elif [ -f "${OPTARG%%:*}" -a -f "${OPTARG##*:}" \
 			       -a ! -f "${OPTARG}" ]
 			then
@@ -1405,6 +1413,9 @@ EOF
 	[ -d "${DEST_DIR}" ]	|| err 2 "${DEST_DIR} is not a directory"
 	[ -n "${MACHINE}" ]	|| err 2 "\${MACHINE} is not defined"
 	[ -n "${MACHINE_ARCH}" ] || err 2 "\${MACHINE_ARCH} is not defined"
+	if ! $SOURCEMODE && ! [ -f "${SRC_DIR}/etc/mtree/set.etc" ]; then
+		err 2 "Files from the etc.tgz set are missing"
+	fi
 
 		# If directories are /, clear them, so various messages
 		# don't have leading "//".   However, this requires
