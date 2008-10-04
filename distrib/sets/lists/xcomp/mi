@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.58 2008/10/04 20:53:12 cube Exp $
+# $NetBSD: mi,v 1.59 2008/10/04 21:59:49 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6321,6 +6321,12 @@
 ./usr/X11R7/man/cat3/XRecolorCursor.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XReparentEvent.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XReparentWindow.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XRes.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XResQueryClientPixmapBytes.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XResQueryClientResources.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XResQueryClients.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XResQueryExtension.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XResQueryVersion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XResizeRequestEvent.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XResourceManagerString.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XSaveContext.0			-unknown-	.cat,xorg
@@ -6845,6 +6851,12 @@
 ./usr/X11R7/man/html3/XRecolorCursor.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XReparentEvent.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XReparentWindow.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XRes.html				-unknown-	html,xorg
+./usr/X11R7/man/html3/XResQueryClientPixmapBytes.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XResQueryClientResources.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XResQueryClients.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XResQueryExtension.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XResQueryVersion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XResizeRequestEvent.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XResourceManagerString.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XSaveContext.html			-unknown-	html,xorg
@@ -7368,6 +7380,12 @@
 ./usr/X11R7/man/man3/XRecolorCursor.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XReparentEvent.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XReparentWindow.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XRes.3				-unknown-	.man,xorg
+./usr/X11R7/man/man3/XResQueryClientPixmapBytes.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XResQueryClientResources.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XResQueryClients.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XResQueryExtension.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XResQueryVersion.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XResizeRequestEvent.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XResourceManagerString.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XSaveContext.3			-unknown-	.man,xorg
