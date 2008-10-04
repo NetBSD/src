@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.320.2.10.2.4 2008/09/24 17:31:12 bouyer Exp $
+.\"	$NetBSD: main,v 1.320.2.10.2.5 2008/10/04 14:30:25 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -536,6 +536,18 @@ Denial of Service issues in
 .Xr racoon 8
 (CVE-2008-3652), has been fixed by upgrading ipsec-tools to release 0.7.1.
 Note this also fixes CVE-2008-3651.
+.It
+upcoming NetBSD-SA2008-013,
+IPv6 Neighbor Discovery Protocol routing vulnerability (CVE-2008-2476),
+has been fixed.
+.It
+upcoming NetBSD-SA2008-014,
+Remote cross-site request forgery attack issue in 
+.Xr ftpd 8
+(CVE-2008-4247), has been fixed.
+.It
+upcoming NetBSD-SA2008-015,
+Remote kernel panics on IPv6 connections (CVE-2008-3530), has been fixed.
 .bullet)
 .(Note
 NetBSD-SA2008-007 and advisories prior to NetBSD-SA2008-004 don't affect
@@ -578,6 +590,9 @@ script for
 .Xr amd 8
 not to shutdown gracefully since it seems to cause problems for more people
 than the old (also broken) behavior.
+.It
+.Xr ftpd 8 :
+Fix and reorganize PAM support.
 .bullet)
 .
 .Ss2 Libraries
@@ -624,7 +639,7 @@ option
 .Pq suppress filenames on output when multiple files are searched
 actually work.
 .It
-Fix parallel build failure on building hpcarm, hpcarm and hpcsh releases.
+Fix parallel build failure on building hpcarm, hpcmips and hpcsh releases.
 .bullet)
 .
 .Ss2 Platforms specific
