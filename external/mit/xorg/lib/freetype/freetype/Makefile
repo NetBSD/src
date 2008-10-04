@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/09/13 20:51:34 cube Exp $
+#	$NetBSD: Makefile,v 1.5 2008/10/04 02:29:15 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -8,30 +8,32 @@ SUBDIR=	config internal
 
 INCSDIR=${X11INCDIR}/freetype2/freetype
 
-INCS=	freetype.h ftbbox.h ftbdf.h ftcache.h ftchapters.h fterrdef.h \
-	fterrors.h ftglyph.h ftgzip.h ftimage.h ftincrem.h ftlist.h \
-	ftmac.h ftmm.h ftmoderr.h ftoutln.h ftpfr.h \
-	ftrender.h ftsizes.h ftsnames.h ftsynth.h \
-	ftsystem.h fttrigon.h fttypes.h ftwinfnt.h ftxf86.h \
-	t1tables.h ttnameid.h tttables.h tttags.h ftmodapi.h ftstroke.h \
-	ftlzw.h ttunpat.h
+INCS=	freetype.h ftbbox.h ftbdf.h ftbitmap.h ftcache.h ftchapters.h ftcid.h \
+	fterrdef.h fterrors.h ftgasp.h ftglyph.h ftgxval.h ftgzip.h ftimage.h \
+	ftincrem.h ftlcdfil.h ftlist.h ftlzw.h ftmac.h ftmm.h ftmodapi.h \
+	ftmoderr.h ftotval.h ftoutln.h ftpfr.h ftrender.h ftsizes.h \
+	ftsnames.h ftstroke.h ftsynth.h ftsystem.h fttrigon.h fttypes.h \
+	ftwinfnt.h ftxf86.h \
+	t1tables.h ttnameid.h tttables.h tttags.h ttunpat.h
 
 SCRIPTS=	freetype-config
 
 CLEANFILES+=	${SCRIPTS}
 
 # XXX hijack config-subst from Xft
-CONFIG_SUBST=	sed -e 's%@prefix@%${X11ROOTDIR}%' \
+CONFIG_SUBST=	${TOOL_SED} -e 's%@prefix@%${X11ROOTDIR}%' \
 		-e 's%@exec_prefix@%${X11BINDIR}%' \
 		-e 's%@libdir@%${X11USRLIBDIR}%g' \
 		-e 's%@includedir@%${X11INCDIR}%' \
 		-e 's%@ft_version@%9.17.3%' \
 		-e 's%@FT2_EXTRA_LIBS@%%' \
 		-e 's%@hardcode_libdir_flag_spec@%-Wl,-rpath,${X11USRLIBDIR}%' \
-		-e 's%@LIBZ@%-lz%' \
+		-e 's%@LIBZ@%-lz%'
 
-freetype-config:
-	${CONFIG_SUBST} < ${X11SRCDIR.freetype}/builds/unix/freetype-config.in > ${.TARGET}
+.PATH: ${X11SRCDIR.freetype}/builds/unix
+freetype-config: freetype-config.in
+	${_MKTARGET_CREATE}
+	${CONFIG_SUBST} < ${.ALLSRC} > ${.TARGET}
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
