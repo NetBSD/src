@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.53 2008/10/03 03:53:22 cube Exp $
+# $NetBSD: mi,v 1.54 2008/10/04 02:32:26 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5589,20 +5589,26 @@
 ./usr/X11R7/include/freetype2/freetype/freetype.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbbox.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbdf.h		-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftbitmap.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcache.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftcid.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftchapters.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrdef.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrors.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftgasp.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftglyph.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftgxval.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftgzip.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftimage.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftincrem.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftlcdfil.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftlist.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftlzw.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftmac.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftmm.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftmodapi.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftmoderr.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftotval.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftoutln.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftpfr.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftrender.h	-unknown-	xorg
