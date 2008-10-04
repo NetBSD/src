@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.56 2008/10/04 18:46:20 cube Exp $
+# $NetBSD: mi,v 1.57 2008/10/04 19:00:19 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6359,6 +6359,17 @@
 ./usr/X11R7/man/cat3/XStringToKeysym.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XSupportsLocale.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XSynchronize.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XTestCompareCurrentCursorWithWindow.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XTestCompareCursorWithWindow.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XTestDiscard.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XTestFakeButtonEvent.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XTestFakeKeyEvent.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XTestFakeMotionEvent.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XTestFakeRelativeMotionEvent.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XTestGrabControl.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XTestQueryExtension.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XTestSetGContextOfGC.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XTestSetVisualIDOfVisual.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XTextExtents.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XTextWidth.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XTranslateCoordinates.0		-unknown-	.cat,xorg
@@ -6605,6 +6616,17 @@
 ./usr/X11R7/man/html3/XStringToKeysym.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XSupportsLocale.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XSynchronize.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XTestCompareCurrentCursorWithWindow.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XTestCompareCursorWithWindow.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XTestDiscard.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XTestFakeButtonEvent.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XTestFakeKeyEvent.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XTestFakeMotionEvent.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XTestFakeRelativeMotionEvent.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XTestGrabControl.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XTestQueryExtension.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XTestSetGContextOfGC.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XTestSetVisualIDOfVisual.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XTextExtents.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XTextWidth.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XTranslateCoordinates.html	-unknown-	html,xorg
@@ -6850,6 +6872,17 @@
 ./usr/X11R7/man/man3/XStringToKeysym.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XSupportsLocale.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XSynchronize.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XTestCompareCurrentCursorWithWindow.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XTestCompareCursorWithWindow.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XTestDiscard.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XTestFakeButtonEvent.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XTestFakeKeyEvent.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XTestFakeMotionEvent.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XTestFakeRelativeMotionEvent.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XTestGrabControl.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XTestQueryExtension.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XTestSetGContextOfGC.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XTestSetVisualIDOfVisual.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XTextExtents.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XTextWidth.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XTranslateCoordinates.3		-unknown-	.man,xorg
