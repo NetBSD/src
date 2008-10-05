@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.63 2008/10/05 00:45:12 cube Exp $
+# $NetBSD: mi,v 1.64 2008/10/05 00:53:12 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6439,6 +6439,7 @@
 ./usr/X11R7/man/cat3/XcmsStoreColor.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XcmsTekHVCQueryMaxC.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xcursor.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/Xfixes.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xfontcache.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xft.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xinerama.0				-unknown-	.cat,xorg
@@ -7045,6 +7046,7 @@
 ./usr/X11R7/man/html3/XcmsStoreColor.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XcmsTekHVCQueryMaxC.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xcursor.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/Xfixes.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xfontcache.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xft.html				-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xinerama.html			-unknown-	html,xorg
@@ -7650,6 +7652,7 @@
 ./usr/X11R7/man/man3/XcmsStoreColor.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XcmsTekHVCQueryMaxC.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xcursor.3				-unknown-	.man,xorg
+./usr/X11R7/man/man3/Xfixes.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xfontcache.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xft.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xinerama.3				-unknown-	.man,xorg
