@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.92.6.1 2008/09/28 10:40:03 mjf Exp $
+#	$NetBSD: files.macppc,v 1.92.6.2 2008/10/05 20:11:26 mjf Exp $
 #
 # macppc-specific configuration info
 
@@ -290,6 +290,9 @@ file arch/macppc/dev/adt7467_ki2c.c		adt7467c
 
 attach adm1030c at ki2c with adm1030_ki2c
 file arch/macppc/dev/adm1030_ki2c.c		adm1030c
+
+attach dbcool at ki2c with dbcool_ki2c
+file arch/macppc/dev/dbcool_ki2c.c		dbcool
 
 define deq {}
 device deq

@@ -1,4 +1,4 @@
-# $NetBSD: CARDBUS,v 1.78 2006/10/01 09:53:08 itohy Exp $
+# $NetBSD: CARDBUS,v 1.78.52.1 2008/10/05 20:11:26 mjf Exp $
 #
 #	CARDBUS: GENERIC + CardBus support
 
@@ -54,9 +54,3 @@ tlp*	at cardbus? function ?	# DECchip 21143
 # CardBus USB controllers
 ehci*	at cardbus? function ?	# Enhanced Host Controller
 ohci*	at cardbus? function ?	# Open Host Controller
-
-# PCMCIA audio devices
-esl*	at pcmcia? function ?		# ESS 1688 AudioDrive
- 
-# OPL[23] FM synthesizers
-opl*	at esl?

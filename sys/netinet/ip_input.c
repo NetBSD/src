@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.262.6.3 2008/09/28 10:40:58 mjf Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.262.6.4 2008/10/05 20:11:33 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.262.6.3 2008/09/28 10:40:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.262.6.4 2008/10/05 20:11:33 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -330,10 +330,8 @@ do {									\
 
 #define	IPQ_UNLOCK()		ipq_unlock()
 
-POOL_INIT(inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl", NULL,
-    IPL_SOFTNET);
-POOL_INIT(ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl", NULL,
-    IPL_VM);
+struct pool inmulti_pool;
+struct pool ipqent_pool;
 
 #ifdef INET_CSUM_COUNTERS
 #include <sys/device.h>
@@ -398,6 +396,11 @@ ip_init(void)
 {
 	const struct protosw *pr;
 	int i;
+
+	pool_init(&inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl",
+	    NULL, IPL_SOFTNET);
+	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl",
+	    NULL, IPL_VM);
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.114.10.2 2008/06/29 08:51:20 mjf Exp $
+.\"	$NetBSD: rc.conf.5,v 1.114.10.3 2008/10/05 20:11:22 mjf Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 13, 2008
+.Dd September 20, 2008
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -515,7 +515,9 @@ variable - for example, "-lf /tmp/dhclient.leases".
 Additional arguments to pass to
 .Xr dhcpcd 8
 when requesting configuration via
-.Sy ifconfig_xxN .
+.Sy ifconfig_xxN
+or
+.Pa /etc/ifconfig.xxN .
 .It Sy flushroutes
 .Sq YES
 or
@@ -548,8 +550,10 @@ then use the default netmask for the interface.
 .Sy ifaliases_*
 covers limited cases only and considered unrecommended.
 We recommend using
+.Sy ifconfig_nnX
+variables or
 .Pa /etc/ifconfig.xxN
-with multiple lines instead.
+files with multiple lines instead.
 .It Sy ifwatchd
 .Sq YES
 or
@@ -678,24 +682,37 @@ at network boot time, before any interfaces are configured.
 A string.
 The list of network interfaces to be configured at boot time.
 For each interface "xxN", the system first looks for ifconfig
-parameters in
-.Pa /etc/ifconfig.xxN
-and then in the variable
-.Sy ifconfig_xxN .
-If this variable is equal to
-.Dq dhcp ,
-.Xr dhcpcd 8
-is started for the interface.
-Otherwise the contents of the file or the variable are handed to ifconfig
-after the interface name.
+parameters in the variable
+.Sy ifconfig_xxN ,
+and then in the file
+.Pa /etc/ifconfig.xxN .
 If
 .Sy auto_ifconfig
 is set to "NO" and neither the file nor the variable is found,
 a warning is printed.
+Information in either the variable or the file is parsed identically,
+except that, if an
+.Sy ifconfig_xxN
+variable contains a single line with embedded semicolons,
+then the value is split into multiple lines prior to further parsing,
+treating the semicolon as a line separator.
+One common case it to set
+.Sy ifconfig_xxN Ns Li \&= Ns Qq dhcp ,
+which will cause
+.Xr dhcpcd 8
+to be started for the interface.
+Another common case it to set the
+.Sy ifconfig_xxN
+variable to a set of arguments to be passed to an
+.Xr ifconfig 8
+command after the interface name.
 Refer to
 .Xr ifconfig.if 5
 for more details on
-.Pa /etc/ifconfig.xxN .
+.Pa /etc/ifconfig.xxN
+files, and note that the information there also applies to
+.Sy ifconfig_xxN
+variables (after the variables are split into lines).
 .It Sy ntpdate
 .Sq YES
 or

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.44.6.3 2008/09/28 10:40:51 mjf Exp $ */
+/* $NetBSD: udf_subr.c,v 1.44.6.4 2008/10/05 20:11:31 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.6.3 2008/09/28 10:40:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.6.4 2008/10/05 20:11:31 mjf Exp $");
 #endif /* not lint */
 
 
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.44.6.3 2008/09/28 10:40:51 mjf Exp $"
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
+#include <sys/dirhash.h>
 
 #include "udf.h"
 #include "udf_subr.h"
@@ -4008,369 +4009,12 @@ udf_setownership(struct udf_node *udf_node, uid_t uid, gid_t gid)
 
 /* --------------------------------------------------------------------- */
 
-/*
- * UDF dirhash implementation
- */
-
-static uint32_t
-udf_dirhash_hash(const char *str, int namelen)
-{
-	uint32_t hash = 5381;
-        int i, c;
-
-	for (i = 0; i < namelen; i++) {
-		c = *str++;
-		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-	}
-        return hash;
-}
-
-
-static void
-udf_dirhash_purge(struct udf_dirhash *dirh)
-{
-	struct udf_dirhash_entry *dirh_e;
-	uint32_t hashline;
-
-	if (dirh == NULL)
-		return;
-
-	if (dirh->size == 0)
-		return;
-
-	for (hashline = 0; hashline < UDF_DIRHASH_HASHSIZE; hashline++) {
-		dirh_e = LIST_FIRST(&dirh->entries[hashline]);
-		while (dirh_e) {
-			LIST_REMOVE(dirh_e, next);
-			pool_put(&udf_dirhash_entry_pool, dirh_e);
-			dirh_e = LIST_FIRST(&dirh->entries[hashline]);
-		}
-	}
-	dirh_e = LIST_FIRST(&dirh->free_entries);
-
-	while (dirh_e) {
-		LIST_REMOVE(dirh_e, next);
-		pool_put(&udf_dirhash_entry_pool, dirh_e);
-		dirh_e = LIST_FIRST(&dirh->entries[hashline]);
-	}
-
-	dirh->flags &= ~UDF_DIRH_COMPLETE;
-	dirh->flags |=  UDF_DIRH_PURGED;
-
-	udf_dirhashsize -= dirh->size;
-	dirh->size = 0;
-}
-
-
-static void
-udf_dirhash_destroy(struct udf_dirhash **dirhp)
-{
-	struct udf_dirhash *dirh = *dirhp;
-
-	if (dirh == NULL)
-		return;
-
-	mutex_enter(&udf_dirhashmutex);
-
-	udf_dirhash_purge(dirh);
-	TAILQ_REMOVE(&udf_dirhash_queue, dirh, next);
-	pool_put(&udf_dirhash_pool, dirh);
-
-	*dirhp = NULL;
-
-	mutex_exit(&udf_dirhashmutex);
-}
-
-
-static void
-udf_dirhash_get(struct udf_dirhash **dirhp)
-{
-	struct udf_dirhash *dirh;
-	uint32_t hashline;
-
-	mutex_enter(&udf_dirhashmutex);
-
-	dirh = *dirhp;
-	if (*dirhp == NULL) {
-		dirh = pool_get(&udf_dirhash_pool, PR_WAITOK);
-		*dirhp = dirh;
-		memset(dirh, 0, sizeof(struct udf_dirhash));
-		for (hashline = 0; hashline < UDF_DIRHASH_HASHSIZE; hashline++)
-			LIST_INIT(&dirh->entries[hashline]);
-		dirh->size   = 0;
-		dirh->refcnt = 0;
-		dirh->flags  = 0;
-	} else {
-		TAILQ_REMOVE(&udf_dirhash_queue, dirh, next);
-	}
-
-	dirh->refcnt++;
-	TAILQ_INSERT_HEAD(&udf_dirhash_queue, dirh, next);
-
-	mutex_exit(&udf_dirhashmutex);
-}
-
-
-static void
-udf_dirhash_put(struct udf_dirhash *dirh)
-{
-	mutex_enter(&udf_dirhashmutex);
-	dirh->refcnt--;
-	mutex_exit(&udf_dirhashmutex);
-}
-
-
-static void
-udf_dirhash_enter(struct udf_node *dir_node, struct fileid_desc *fid,
-	struct dirent *dirent, uint64_t offset, uint32_t fid_size, int new)
-{
-	struct udf_dirhash *dirh, *del_dirh, *prev_dirh;
-	struct udf_dirhash_entry *dirh_e;
-	uint32_t hashvalue, hashline;
-	int entrysize;
-
-	/* make sure we have a dirhash to work on */
-	dirh = dir_node->dir_hash;
-	KASSERT(dirh);
-	KASSERT(dirh->refcnt > 0);
-
-	/* are we trying to re-enter an entry? */
-	if (!new && (dirh->flags & UDF_DIRH_COMPLETE))
-		return;
-
-	/* calculate our hash */
-	hashvalue = udf_dirhash_hash(dirent->d_name, dirent->d_namlen);
-	hashline  = hashvalue & UDF_DIRHASH_HASHMASK;
-
-	/* lookup and insert entry if not there yet */
-	LIST_FOREACH(dirh_e, &dirh->entries[hashline], next) {
-		/* check for hash collision */
-		if (dirh_e->hashvalue != hashvalue)
-			continue;
-		if (dirh_e->offset != offset)
-			continue;
-		/* got it already */
-		KASSERT(dirh_e->d_namlen == dirent->d_namlen);
-		KASSERT(dirh_e->fid_size == fid_size);
-		return;
-	}
-
-	DPRINTF(DIRHASH, ("dirhash enter %"PRIu64", %d, %d for `%*.*s`\n",
-		offset, fid_size, dirent->d_namlen,
-		dirent->d_namlen, dirent->d_namlen, dirent->d_name));
-
-	/* check if entry is in free space list */
-	LIST_FOREACH(dirh_e, &dirh->free_entries, next) {
-		if (dirh_e->offset == offset) {
-			DPRINTF(DIRHASH, ("\tremoving free entry\n"));
-			LIST_REMOVE(dirh_e, next);
-			break;
-		}
-	}
-
-	/* ensure we are not passing the dirhash limit */
-	entrysize = sizeof(struct udf_dirhash_entry);
-	if (udf_dirhashsize + entrysize > udf_maxdirhashsize) {
-		del_dirh = TAILQ_LAST(&udf_dirhash_queue, _udf_dirhash);
-		KASSERT(del_dirh);
-		while (udf_dirhashsize + entrysize > udf_maxdirhashsize) {
-			/* no use trying to delete myself */
-			if (del_dirh == dirh)
-				break;
-			prev_dirh = TAILQ_PREV(del_dirh, _udf_dirhash, next);
-			if (del_dirh->refcnt == 0)
-				udf_dirhash_purge(del_dirh);
-			del_dirh = prev_dirh;
-		}
-	}
-
-	/* add to the hashline */
-	dirh_e = pool_get(&udf_dirhash_entry_pool, PR_WAITOK);
-	memset(dirh_e, 0, sizeof(struct udf_dirhash_entry));
-
-	dirh_e->hashvalue = hashvalue;
-	dirh_e->offset    = offset;
-	dirh_e->d_namlen  = dirent->d_namlen;
-	dirh_e->fid_size  = fid_size;
-
-	dirh->size      += sizeof(struct udf_dirhash_entry);
-	udf_dirhashsize += sizeof(struct udf_dirhash_entry);
-	LIST_INSERT_HEAD(&dirh->entries[hashline], dirh_e, next);
-}
-
-
-static void
-udf_dirhash_enter_freed(struct udf_node *dir_node, uint64_t offset,
-	uint32_t fid_size)
-{
-	struct udf_dirhash *dirh;
-	struct udf_dirhash_entry *dirh_e;
-
-	/* make sure we have a dirhash to work on */
-	dirh = dir_node->dir_hash;
-	KASSERT(dirh);
-	KASSERT(dirh->refcnt > 0);
-
-#ifdef DEBUG
-	/* check for double entry of free space */
-	LIST_FOREACH(dirh_e, &dirh->free_entries, next)
-		KASSERT(dirh_e->offset != offset);
-#endif
-
-	DPRINTF(DIRHASH, ("dirhash enter FREED %"PRIu64", %d\n",
-		offset, fid_size));
-	dirh_e = pool_get(&udf_dirhash_entry_pool, PR_WAITOK);
-	memset(dirh_e, 0, sizeof(struct udf_dirhash_entry));
-
-	dirh_e->hashvalue = 0;		/* not relevant */
-	dirh_e->offset    = offset;
-	dirh_e->d_namlen  = 0;		/* not relevant */
-	dirh_e->fid_size  = fid_size;
-
-	/* XXX it might be preferable to append them at the tail */
-	LIST_INSERT_HEAD(&dirh->free_entries, dirh_e, next);
-	dirh->size      += sizeof(struct udf_dirhash_entry);
-	udf_dirhashsize += sizeof(struct udf_dirhash_entry);
-}
-
-
-static void
-udf_dirhash_remove(struct udf_node *dir_node, struct dirent *dirent,
-	uint64_t offset, uint32_t fid_size)
-{
-	struct udf_dirhash *dirh;
-	struct udf_dirhash_entry *dirh_e;
-	uint32_t hashvalue, hashline;
-
-	DPRINTF(DIRHASH, ("dirhash remove %"PRIu64", %d for `%*.*s`\n",
-		offset, fid_size, 
-		dirent->d_namlen, dirent->d_namlen, dirent->d_name));
-
-	/* make sure we have a dirhash to work on */
-	dirh = dir_node->dir_hash;
-	KASSERT(dirh);
-	KASSERT(dirh->refcnt > 0);
-
-	/* calculate our hash */
-	hashvalue = udf_dirhash_hash(dirent->d_name, dirent->d_namlen);
-	hashline  = hashvalue & UDF_DIRHASH_HASHMASK;
-
-	/* lookup entry */
-	LIST_FOREACH(dirh_e, &dirh->entries[hashline], next) {
-		/* check for hash collision */
-		if (dirh_e->hashvalue != hashvalue)
-			continue;
-		if (dirh_e->offset != offset)
-			continue;
-
-		/* got it! */
-		KASSERT(dirh_e->d_namlen == dirent->d_namlen);
-		KASSERT(dirh_e->fid_size == fid_size);
-		LIST_REMOVE(dirh_e, next);
-		dirh->size      -= sizeof(struct udf_dirhash_entry);
-		udf_dirhashsize -= sizeof(struct udf_dirhash_entry);
-
-		udf_dirhash_enter_freed(dir_node, offset, fid_size);
-		return;
-	}
-
-	/* not found! */
-	panic("dirhash_remove couldn't find entry in hash table\n");
-}
-
-
-/* BUGALERT: don't use result longer than needed, never past the node lock */
-/* call with NULL *result initially and it will return nonzero if again */
-static int
-udf_dirhash_lookup(struct udf_node *dir_node, const char *d_name, int d_namlen,
-	struct udf_dirhash_entry **result)
-{
-	struct udf_dirhash *dirh;
-	struct udf_dirhash_entry *dirh_e;
-	uint32_t hashvalue, hashline;
-
-	KASSERT(VOP_ISLOCKED(dir_node->vnode));
-
-	/* make sure we have a dirhash to work on */
-	dirh = dir_node->dir_hash;
-	KASSERT(dirh);
-	KASSERT(dirh->refcnt > 0);
-
-	/* start where we were */
-	if (*result) {
-		KASSERT(dir_node->dir_hash);
-		dirh_e = *result;
-
-		/* retrieve information to avoid recalculation and advance */
-		hashvalue = dirh_e->hashvalue;
-		dirh_e = LIST_NEXT(*result, next);
-	} else {
-		/* calculate our hash and lookup all entries in hashline */
-		hashvalue = udf_dirhash_hash(d_name, d_namlen);
-		hashline  = hashvalue & UDF_DIRHASH_HASHMASK;
-		dirh_e = LIST_FIRST(&dirh->entries[hashline]);
-	}
-
-	for (; dirh_e; dirh_e = LIST_NEXT(dirh_e, next)) {
-		/* check for hash collision */
-		if (dirh_e->hashvalue != hashvalue)
-			continue;
-		if (dirh_e->d_namlen != d_namlen)
-			continue;
-		/* might have an entry in the cache */
-		*result = dirh_e;
-		return 1;
-	}
-
-	*result = NULL;
-	return 0;
-}
-
-
-/* BUGALERT: don't use result longer than needed, never past the node lock */
-/* call with NULL *result initially and it will return nonzero if again */
-static int
-udf_dirhash_lookup_freed(struct udf_node *dir_node, uint32_t min_fidsize,
-	struct udf_dirhash_entry **result)
-{
-	struct udf_dirhash *dirh;
-	struct udf_dirhash_entry *dirh_e;
-
-	KASSERT(VOP_ISLOCKED(dir_node->vnode));
-
-	/* make sure we have a dirhash to work on */
-	dirh = dir_node->dir_hash;
-	KASSERT(dirh);
-	KASSERT(dirh->refcnt > 0);
-
-	/* start where we were */
-	if (*result) {
-		KASSERT(dir_node->dir_hash);
-		dirh_e = LIST_NEXT(*result, next);
-	} else {
-		/* lookup all entries that match */
-		dirh_e = LIST_FIRST(&dirh->free_entries);
-	}
-
-	for (; dirh_e; dirh_e = LIST_NEXT(dirh_e, next)) {
-		/* check for minimum size */
-		if (dirh_e->fid_size < min_fidsize)
-			continue;
-		/* might be a candidate */
-		*result = dirh_e;
-		return 1;
-	}
-
-	*result = NULL;
-	return 0;
-}
-
 
 static int
-udf_dirhash_fill(struct udf_node *dir_node)
+dirhash_fill(struct udf_node *dir_node)
 {
 	struct vnode *dvp = dir_node->vnode;
-	struct udf_dirhash *dirh;
+	struct dirhash *dirh;
 	struct file_entry    *fe  = dir_node->fe;
 	struct extfile_entry *efe = dir_node->efe;
 	struct fileid_desc *fid;
@@ -4384,13 +4028,13 @@ udf_dirhash_fill(struct udf_node *dir_node)
 	KASSERT(dirh);
 	KASSERT(dirh->refcnt > 0);
 
-	if (dirh->flags & UDF_DIRH_BROKEN)
+	if (dirh->flags & DIRH_BROKEN)
 		return EIO;
-	if (dirh->flags & UDF_DIRH_COMPLETE)
+	if (dirh->flags & DIRH_COMPLETE)
 		return 0;
 
 	/* make sure we have a clean dirhash to add to */
-	udf_dirhash_purge(dirh);
+	dirhash_purge_entries(dirh);
 
 	/* get directory filesize */
 	if (fe) {
@@ -4415,22 +4059,22 @@ udf_dirhash_fill(struct udf_node *dir_node)
 		error = udf_read_fid_stream(dvp, &diroffset, fid, dirent);
 		if (error) {
 			/* TODO what to do? continue but not add? */
-			dirh->flags |= UDF_DIRH_BROKEN;
-			udf_dirhash_purge(dirh);
+			dirh->flags |= DIRH_BROKEN;
+			dirhash_purge_entries(dirh);
 			break;
 		}
 
 		if ((fid->file_char & UDF_FILE_CHAR_DEL)) {
 			/* register deleted extent for reuse */
-			udf_dirhash_enter_freed(dir_node, pre_diroffset,
+			dirhash_enter_freed(dirh, pre_diroffset,
 				udf_fidsize(fid));
 		} else {
 			/* append to the dirhash */
-			udf_dirhash_enter(dir_node, fid, dirent, pre_diroffset,
+			dirhash_enter(dirh, dirent, pre_diroffset,
 				udf_fidsize(fid), 0);
 		}
 	}
-	dirh->flags |= UDF_DIRH_COMPLETE;
+	dirh->flags |= DIRH_COMPLETE;
 
 	free(fid, M_UDFTEMP);
 	free(dirent, M_UDFTEMP);
@@ -4454,7 +4098,8 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
        struct long_ad *icb_loc, int *found)
 {
 	struct udf_node  *dir_node = VTOI(vp);
-	struct udf_dirhash_entry *dirh_ep;
+	struct dirhash       *dirh;
+	struct dirhash_entry *dirh_ep;
 	struct fileid_desc *fid;
 	struct dirent *dirent;
 	uint64_t diroffset;
@@ -4465,12 +4110,13 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 	*found = 0;
 
 	/* get our dirhash and make sure its read in */
-	udf_dirhash_get(&dir_node->dir_hash);
-	error = udf_dirhash_fill(dir_node);
+	dirhash_get(&dir_node->dir_hash);
+	error = dirhash_fill(dir_node);
 	if (error) {
-		udf_dirhash_put(dir_node->dir_hash);
+		dirhash_put(dir_node->dir_hash);
 		return error;
 	}
+	dirh = dir_node->dir_hash;
 
 	/* allocate temporary space for fid */
 	lb_size = udf_rw32(dir_node->ump->logical_vol->lb_size);
@@ -4484,7 +4130,7 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 	memset(icb_loc, 0, sizeof(*icb_loc));
 	dirh_ep = NULL;
 	for (;;) {
-		hit = udf_dirhash_lookup(dir_node, name, namelen, &dirh_ep);
+		hit = dirhash_lookup(dirh, name, namelen, &dirh_ep);
 		/* if no hit, abort the search */
 		if (!hit)
 			break;
@@ -4511,7 +4157,7 @@ udf_lookup_name_in_dir(struct vnode *vp, const char *name, int namelen,
 	free(fid, M_UDFTEMP);
 	free(dirent, M_UDFTEMP);
 
-	udf_dirhash_put(dir_node->dir_hash);
+	dirhash_put(dir_node->dir_hash);
 
 	return error;
 }
@@ -4675,7 +4321,8 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 	struct udf_node *udf_node, struct componentname *cnp)
 {
 	struct vnode *dvp = dir_node->vnode;
-	struct udf_dirhash_entry *dirh_ep;
+	struct dirhash       *dirh;
+	struct dirhash_entry *dirh_ep;
 	struct file_entry    *fe  = dir_node->fe;
 	struct extfile_entry *efe = dir_node->efe;
 	struct fileid_desc *fid;
@@ -4688,12 +4335,13 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 	int hit, refcnt;
 
 	/* get our dirhash and make sure its read in */
-	udf_dirhash_get(&dir_node->dir_hash);
-	error = udf_dirhash_fill(dir_node);
+	dirhash_get(&dir_node->dir_hash);
+	error = dirhash_fill(dir_node);
 	if (error) {
-		udf_dirhash_put(dir_node->dir_hash);
+		dirhash_put(dir_node->dir_hash);
 		return error;
 	}
+	dirh = dir_node->dir_hash;
 
 	/* get directory filesize */
 	if (fe) {
@@ -4712,7 +4360,7 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 	found = 0;
 	dirh_ep = NULL;
 	for (;;) {
-		hit = udf_dirhash_lookup(dir_node, name, namelen, &dirh_ep);
+		hit = dirhash_lookup(dirh, name, namelen, &dirh_ep);
 		/* if no hit, abort the search */
 		if (!hit)
 			break;
@@ -4802,14 +4450,14 @@ udf_dir_detach(struct udf_mount *ump, struct udf_node *dir_node,
 		udf_adjust_filecount(udf_node, -1);
 
 	/* remove from the dirhash */
-	udf_dirhash_remove(dir_node, dirent, diroffset,
+	dirhash_remove(dirh, dirent, diroffset,
 		udf_fidsize(fid));
 
 error_out:
 	free(fid, M_UDFTEMP);
 	free(dirent, M_UDFTEMP);
 
-	udf_dirhash_put(dir_node->dir_hash);
+	dirhash_put(dir_node->dir_hash);
 
 	return error;
 }
@@ -4829,7 +4477,8 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 	struct udf_node *udf_node, struct vattr *vap, struct componentname *cnp)
 {
 	struct vnode *dvp = dir_node->vnode;
-	struct udf_dirhash_entry *dirh_ep;
+	struct dirhash       *dirh;
+	struct dirhash_entry *dirh_ep;
 	struct fileid_desc   *fid;
 	struct icb_tag       *icbtag;
 	struct charspec osta_charspec;
@@ -4841,12 +4490,13 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 	int file_char, refcnt, icbflags, addr_type, hit, error;
 
 	/* get our dirhash and make sure its read in */
-	udf_dirhash_get(&dir_node->dir_hash);
-	error = udf_dirhash_fill(dir_node);
+	dirhash_get(&dir_node->dir_hash);
+	error = dirhash_fill(dir_node);
 	if (error) {
-		udf_dirhash_put(dir_node->dir_hash);
+		dirhash_put(dir_node->dir_hash);
 		return error;
 	}
+	dirh = dir_node->dir_hash;
 
 	/* get info */
 	lb_size = udf_rw32(ump->logical_vol->lb_size);
@@ -4903,13 +4553,13 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 	error = 0;
 	dirh_ep = NULL;
 	for (;;) {
-		hit = udf_dirhash_lookup_freed(dir_node, fidsize, &dirh_ep);
+		hit = dirhash_lookup_freed(dirh, fidsize, &dirh_ep);
 		/* if no hit, abort the search */
 		if (!hit)
 			break;
 
 		/* check this hit for size */
-		this_fidsize = dirh_ep->fid_size;
+		this_fidsize = dirh_ep->entry_size;
 
 		/* check this hit */
 		fid_pos     = dirh_ep->offset;
@@ -5043,7 +4693,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 	/* append to the dirhash */
 	dirent.d_namlen = cnp->cn_namelen;
 	memcpy(dirent.d_name, cnp->cn_nameptr, cnp->cn_namelen);
-	udf_dirhash_enter(dir_node, fid, &dirent, chosen_fid_pos,
+	dirhash_enter(dirh, &dirent, chosen_fid_pos,
 		udf_fidsize(fid), 1);
 
 	/* note updates */
@@ -5054,7 +4704,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 error_out:
 	free(fid, M_TEMP);
 
-	udf_dirhash_put(dir_node->dir_hash);
+	dirhash_put(dir_node->dir_hash);
 
 	return error;
 }
@@ -5513,7 +5163,7 @@ udf_dispose_node(struct udf_node *udf_node)
 	/* TODO extended attributes and streamdir */
 
 	/* remove dirhash if present */
-	udf_dirhash_destroy(&udf_node->dir_hash);
+	dirhash_purge(&udf_node->dir_hash);
 
 	/* remove from our hash lookup table */
 	udf_deregister_node(udf_node);

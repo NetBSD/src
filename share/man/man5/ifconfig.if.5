@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.if.5,v 1.8.20.1 2008/06/02 13:21:40 mjf Exp $
+.\"	$NetBSD: ifconfig.if.5,v 1.8.20.2 2008/10/05 20:11:22 mjf Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -24,30 +24,53 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 27, 2008
+.Dd September 20, 2008
 .Dt IFCONFIG.IF 5
 .Os
 .Sh NAME
 .Nm ifconfig.if
-.Nd interface-specific configuration files
+.Nd interface-specific configuration files or variables
 .Sh DESCRIPTION
 The
 .Nm
-files contain information regarding the configuration of each network interface.
+files or variables contain information regarding the configuration
+of each network interface.
 .Nm
 is processed by
 .Pa /etc/rc.d/network
 at system boot time.
 .Pp
-One file should exist for each interface that is to be configured, such as
-.Pa /etc/ifconfig.fxp0 .
-The file will get evaluated only if the interface exists on the system.
-Multiple lines can be placed in a file, and will be evaluated sequentially.
+For each interface
+.Pq Ar nnX
+that is to be configured, there should be either an
+.Sy ifconfig_nnX
+variable in
+.Xr rc.conf 5 ,
+or an
+.Pa /etc/ifconfig.nnX
+file
+(such as the
+.Sy ifconfig_fxp0
+variable or the
+.Pa /etc/ifconfig.fxp0
+file for the
+.Sy fxp0
+interface).
+The variable or file will get evaluated only if the interface exists on
+the system.
+Multiple lines can be placed in a variable or file, and will be
+evaluated sequentially.
+In the case of a variable, semicolons may be used instead of
+newlines, as described in
+.Xr rc.conf 5 .
 .Pp
 Normally, a line will be evaluated as command line arguments to
 .Xr ifconfig 8 .
-.Dq Li ifconfig if
+.Dq Li ifconfig Ar nnX
 will be prepended on evaluation.
+Arguments with embedded shell metacharacters should be quoted in
+.Xr sh 1
+style.
 .Pp
 If the line is equal to
 .Dq dhcp ,
@@ -63,7 +86,7 @@ If a line starts with
 the rest of line will get evaluated as shell script fragment.
 Shell variables declared in
 .Pa /etc/rc.d/network
-are accessible.
+are accessible but may not be modified.
 The most useful variable is
 .Li $int ,
 as it will be bound to the interface being configured with the file.
@@ -98,6 +121,15 @@ up
 # configure IPv6 default route toward the interface
 !route add -inet6 default ::1
 !route change -inet6 default -ifp $int
+.Ed
+.Pp
+The following example sets a network name for a wireless interface
+(using quotes to protect special characters in the name),
+and starts
+.Xr dhcpcd 8 ) :
+.Bd -literal -offset indent
+ssid 'my network'
+dhcp
 .Ed
 .Pp
 Earlier versions of

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.37.6.1 2008/06/02 13:24:14 mjf Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.37.6.2 2008/10/05 20:11:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.37.6.1 2008/06/02 13:24:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.37.6.2 2008/10/05 20:11:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.37.6.1 2008/06/02 13:24:14 mjf Exp $"
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/module.h>
+#include <sys/dirhash.h>
 
 /*
  * Sigh, such primitive tools are these...
@@ -329,6 +330,11 @@ vfsinit(void)
 	 * Initialize the special vnode operations.
 	 */
 	vfs_opv_init(vfs_special_vnodeopv_descs);
+
+	/*
+	 * Initialise generic dirhash.
+	 */
+	dirhash_init();
 
 	/*
 	 * Initialise VFS hooks.

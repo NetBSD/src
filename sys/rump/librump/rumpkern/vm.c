@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.29.6.3 2008/09/28 10:41:04 mjf Exp $	*/
+/*	$NetBSD: vm.c,v 1.29.6.4 2008/10/05 20:11:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -425,6 +425,7 @@ rumpvm_init()
 
 	uvmexp.free = 1024*1024; /* XXX */
 	uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
+	rump_vmspace.vm_map.pmap = pmap_kernel();
 
 	mutex_init(&rvamtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uwinmtx, MUTEX_DEFAULT, 0);

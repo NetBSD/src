@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.252.6.2 2008/06/02 13:23:28 mjf Exp $ */
+/*	$NetBSD: wdc.c,v 1.252.6.3 2008/10/05 20:11:29 mjf Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.252.6.2 2008/06/02 13:23:28 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.252.6.3 2008/10/05 20:11:29 mjf Exp $");
 
 #include "opt_ata.h"
 
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.252.6.2 2008/06/02 13:23:28 mjf Exp $");
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 
 #include <sys/intr.h>
 #include <sys/bus.h>
@@ -1257,8 +1258,7 @@ wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int flags)
 	else {
 		error = __wdcwait(chp, mask, bits, WDCDELAY_POLL);
 		if (error != 0) {
-			if ((chp->ch_flags & ATACH_TH_RUN) ||
-			    (flags & AT_WAIT)) {
+			if (!cpu_intr_p()) {
 				/*
 				 * we're running in the channel thread
 				 * or some userland thread context
@@ -1273,7 +1273,7 @@ wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int flags)
 				}
 			} else {
 				/*
-				 * we're probably in interrupt context,
+				 * we're in interrupt context,
 				 * ask the thread to come back here
 				 */
 #ifdef DIAGNOSTIC

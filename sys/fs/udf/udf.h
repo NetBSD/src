@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.10.18.3 2008/09/28 10:40:51 mjf Exp $ */
+/* $NetBSD: udf.h,v 1.10.18.4 2008/10/05 20:11:31 mjf Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -207,8 +207,6 @@ MALLOC_DECLARE(M_UDFVOLD);
 MALLOC_DECLARE(M_UDFTEMP);
 
 struct pool udf_node_pool;
-struct pool udf_dirhash_pool;
-struct pool udf_dirhash_entry_pool;
 struct udf_node;
 struct udf_strategy;
 
@@ -354,37 +352,6 @@ struct udf_mount {
 };
 
 
-/* dirent's d_namlen is to avoid useless costly fid->dirent translations */
-struct udf_dirhash_entry {
-	uint32_t		 hashvalue;
-	uint64_t		 offset;
-	uint32_t		 d_namlen;
-	uint32_t		 fid_size;
-	LIST_ENTRY(udf_dirhash_entry) next;
-};
-
-
-struct udf_dirhash {
-	uint32_t		 flags;
-	uint32_t		 size;			/* in bytes */
-	uint32_t		 refcnt;
-	LIST_HEAD(, udf_dirhash_entry) entries[UDF_DIRHASH_HASHSIZE];
-	LIST_HEAD(, udf_dirhash_entry) free_entries;
-	TAILQ_ENTRY(udf_dirhash) next;
-};
-
-#define UDF_DIRH_PURGED		0x0001	/* dirhash has been purged */
-#define	UDF_DIRH_COMPLETE	0x0002	/* dirhash is complete */
-#define	UDF_DIRH_BROKEN		0x0004	/* dirhash is broken on readin */
-#define UDF_DIRH_FLAGBITS \
-	"\10\1DIRH_PURGED\2DIRH_COMPLETE\3DIRH_BROKEN"
-
-extern kmutex_t udf_dirhashmutex;
-extern uint32_t udf_maxdirhashsize;
-extern uint32_t udf_dirhashsize;
-extern TAILQ_HEAD(_udf_dirhash, udf_dirhash) udf_dirhash_queue;
-
-
 /*
  * UDF node describing a file/directory.
  *
@@ -412,7 +379,7 @@ struct udf_node {
 	int			 needs_indirect;	/* has missing indr. */
 	struct long_ad		 ext_loc[UDF_MAX_ALLOC_EXTENTS];
 
-	struct udf_dirhash	*dir_hash;
+	struct dirhash		*dir_hash;
 
 	/* misc */
 	uint32_t		 i_flags;		/* associated flags  */
