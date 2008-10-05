@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.15 2008/10/03 04:04:00 cube Exp $
+$NetBSD: TODO,v 1.16 2008/10/05 18:39:28 cube Exp $
 
 plan:
 	- build modular-xorg stuff with reach over
@@ -16,7 +16,6 @@ things to handle:
 big items:
 
 libs		- done
-			-- many libs may not install manuals yet.
 			-- libGL has has glapi_x86.S commented out from the
 			   build because it spews when eating -traditional-cpp
 			   cheap whitespace hacks have been discussed or
@@ -26,7 +25,6 @@ libs		- done
 tools		- done
 share		- done
 bin		- done
-			-- many apps don't install manuals yet
 Xserver 
 	drivers:
 		- all mostly done.
