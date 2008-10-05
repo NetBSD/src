@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.13 2007/10/17 19:55:18 garbled Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.14 2008/10/05 05:01:08 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.13 2007/10/17 19:55:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.14 2008/10/05 05:01:08 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -117,6 +117,7 @@ mc_attach(parent, self, aux)
 	u_int *reg;
 
 	sc->sc_node = ca->ca_node;
+	sc->sc_regt = ca->ca_tag;
 
 	reg  = ca->ca_reg;
 	reg[0] += ca->ca_baseaddr;
@@ -126,7 +127,7 @@ mc_attach(parent, self, aux)
 	sc->sc_txdma = mapiodev(reg[2], reg[3]);
 	sc->sc_rxdma = mapiodev(reg[4], reg[5]);
 	bus_space_map(sc->sc_regt, reg[0], reg[1], 0, &sc->sc_regh);
-					/* XXX sc_regt is uninitialized */
+
 	sc->sc_tail = 0;
 	sc->sc_txdmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 2);
 	sc->sc_rxdmacmd = (void *)dbdma_alloc(sizeof(dbdma_command_t) * 8);
