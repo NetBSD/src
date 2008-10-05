@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.68 2008/10/05 02:42:53 cube Exp $
+# $NetBSD: mi,v 1.69 2008/10/05 03:15:20 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6379,6 +6379,17 @@
 ./usr/X11R7/man/cat3/XResizeRequestEvent.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XResourceManagerString.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XSaveContext.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XScreenSaverAllocInfo.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XScreenSaverGetRegistered.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XScreenSaverQueryExtension.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XScreenSaverQueryInfo.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XScreenSaverQueryVersion.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XScreenSaverRegister.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XScreenSaverSelectInput.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XScreenSaverSetAttributes.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XScreenSaverSuspend.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XScreenSaverUnregister.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XScreenSaverUnsetAttributes.0	-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XSelectExtensionEvent.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XSelectInput.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XSelectionClearEvent.0		-unknown-	.cat,xorg
@@ -6584,6 +6595,7 @@
 ./usr/X11R7/man/cat3/XrmMergeDatabases.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XrmPutResource.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XrmUniqueQuark.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/Xss.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XtAddActions.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XtAddCallback.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XtAddCallbacks.0			-unknown-	.cat,xorg
@@ -7073,6 +7085,17 @@
 ./usr/X11R7/man/html3/XResizeRequestEvent.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XResourceManagerString.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XSaveContext.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XScreenSaverAllocInfo.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XScreenSaverGetRegistered.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XScreenSaverQueryExtension.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XScreenSaverQueryInfo.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XScreenSaverQueryVersion.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XScreenSaverRegister.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XScreenSaverSelectInput.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XScreenSaverSetAttributes.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XScreenSaverSuspend.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XScreenSaverUnregister.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XScreenSaverUnsetAttributes.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XSelectExtensionEvent.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XSelectInput.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XSelectionClearEvent.html		-unknown-	html,xorg
@@ -7278,6 +7301,7 @@
 ./usr/X11R7/man/html3/XrmMergeDatabases.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XrmPutResource.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XrmUniqueQuark.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/Xss.html				-unknown-	html,xorg
 ./usr/X11R7/man/html3/XtAddActions.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XtAddCallback.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XtAddCallbacks.html		-unknown-	html,xorg
@@ -7766,6 +7790,17 @@
 ./usr/X11R7/man/man3/XResizeRequestEvent.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XResourceManagerString.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XSaveContext.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XScreenSaverAllocInfo.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XScreenSaverGetRegistered.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XScreenSaverQueryExtension.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XScreenSaverQueryInfo.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XScreenSaverQueryVersion.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XScreenSaverRegister.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XScreenSaverSelectInput.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XScreenSaverSetAttributes.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XScreenSaverSuspend.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XScreenSaverUnregister.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XScreenSaverUnsetAttributes.3	-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XSelectExtensionEvent.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XSelectInput.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XSelectionClearEvent.3		-unknown-	.man,xorg
@@ -7971,6 +8006,7 @@
 ./usr/X11R7/man/man3/XrmMergeDatabases.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XrmPutResource.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XrmUniqueQuark.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/Xss.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XtAddActions.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XtAddCallback.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XtAddCallbacks.3			-unknown-	.man,xorg
