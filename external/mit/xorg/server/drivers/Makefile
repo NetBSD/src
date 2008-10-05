@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.12 2008/09/26 11:02:12 rtr Exp $
+#	$NetBSD: Makefile,v 1.13 2008/10/05 03:35:13 cube Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
 	xf86-input-mouse \
 	xf86-input-void
 
-.if ${MACHINE_ARCH} == "i368" || \
+.if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+= \
 	xf86-input-vmmouse
