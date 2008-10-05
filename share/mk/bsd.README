@@ -1,9 +1,9 @@
-#	$NetBSD: bsd.README,v 1.204.2.2 2008/06/02 13:21:42 mjf Exp $
+#	$NetBSD: bsd.README,v 1.204.2.3 2008/10/05 20:11:24 mjf Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
-This is the README file for the new (as of 1993) make "include" files
-for the BSD source tree.  The files are installed in /usr/share/mk, and
-are, by convention, named with the suffix ".mk".
+This is the README file for the make "include" files for the NetBSD
+source tree.  The files are installed in /usr/share/mk, and are,
+by convention, named with the suffix ".mk".
 
 Note, this file is not intended to replace reading through the .mk
 files for anything tricky.
@@ -71,8 +71,8 @@ MKxxx		Can be set to "no" to disable functionality, or
 		Usually defaults to "yes", although some variables
 		default to "no".
 		Due to make(1) implementation issues, if a temporary
-		command-line override of a mk.conf or <bsd.own.mk>
-		setting is required whilst still honouring a particular
+		command-line override of a mk.conf(5) or <bsd.own.mk>
+		setting is required whilst still honoring a particular
 		Makefile's setting of MKxxx, use
 			env MKxxx=value make
 		instead of
@@ -87,8 +87,8 @@ NOxxx		If defined, disables a feature.
 
 The following variables that control how things are made/installed that
 are not set by default. These should not be set by Makefiles; they're for
-the user to define in MAKECONF (see <bsd.own.mk>, below) or on the make(1)
-command line:
+the user to define in MAKECONF (see <bsd.own.mk>, below, or mk.conf(5))
+or on the make(1) command line:
 
 BUILD 		If defined, 'make install' checks that the targets in the
 		source directories are up-to-date and remakes them if they
@@ -103,11 +103,18 @@ MAKEVERBOSE	Control how "verbose" the standard make(1) rules are.
 		    2	Describe what is occurring and echo the actual command
 
 
+MKATF		If "no", don't build libatf-c, libatf-c++ libraries associated
+		with the Automated Testing Framework (ATF).
+		Default: yes
+
 MKBFD		If "no", don't build libbfd, libiberty, or any of the things
 		that depend on them (binutils/gas/ld, gdb, dbsym, mdsetimage).
 		Default: yes
 
 MKCATPAGES	If "no", don't build or install the catman pages.
+		Default: yes
+
+MKCOMPLEX	If "no", don't build libm support for <complex.h>
 		Default: yes
 
 MKCRYPTO	If "no", no cryptography support will be built into the system,
@@ -130,7 +137,8 @@ MKDEBUG		If "no", don't build and install separate debugging symbols
 		into /usr/libdata/debug.
 		Default: no
 
-MKDEBUGLIB	Build debugging libraries.
+MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
+		with -DDEBUG.
 		Default: no
 
 MKDOC		If "no", don't build or install the documentation.
@@ -162,12 +170,15 @@ MKHOSTOBJ	If not "no", for programs intended to be run on the compile
 		directory created by "make obj".
 		Default: no
 
-MKHTML		If "no", don't build or install the html man pages.
-		Default: no
+MKHTML		If "no", don't build or install the HTML man pages.
+		Default: yes
 
 MKIEEEFP	If "no", don't add code for IEEE754/IEC60559 conformance.
 		Has no effect on most platforms.
 		Default: yes
+
+MKSTRIPIDENT	Strip the RCS IDs from program binaries and shared libraries.
+		Default: no
 
 MKINET6		If "no", disables building of INET6 (IPv6) infrastructure
 		(libraries and support programs).
@@ -238,6 +249,14 @@ MKPAM		If "no", disables building of PAM authentication
 		infrastructure (libraries and support programs).
 		Default: yes
 
+MKPCC		If "no", don't build pcc(1) or any of the PCC-related
+		libraries (libpcc, libpccsoftfloat).
+		Default: no
+
+MKPCCCMDS	If "no", don't build pcc(1), but do build the PCC-related
+		libraries (libpcc, libpccsoftfloat).
+		Default: no
+
 MKPF		If "no", don't build or install the pf programs and LKM.
 		Default: yes
 
@@ -302,8 +321,15 @@ MKUPDATE 	If not "no", 'make install' only installs targets that are
 		Default: no
 
 MKX11		If not "no", 'make build' also descends into src/x11
-		to cross build X11R6 and automatically enables creation
+		to cross-build X11R6 and automatically enables creation
 		of X sets.
+		Mutually exclusive to MKXORG!=no
+		Default: no
+
+MKXORG		If not "no", 'make build' also descends into
+		src/external/mit/xorg to cross-build X11R7 (modular Xorg)
+		and automatically enables creation of X sets.
+		Mutually exclusive to MKX11!=no
 		Default: no
 
 MKYP		If "no", disables building of YP (NIS)
@@ -424,8 +450,9 @@ MANOWN		Manual owner.  [root]
 
 MANMODE		Manual mode.  [${NONBINMODE}]
 
-MANINSTALL	Manual installation type: maninstall, catinstall, or both
-		[maninstall catinstall]
+MANINSTALL	Manual installation type.  Space separated list:
+			catinstall, htmlinstall, maninstall
+		[catinstall maninstall htmlinstall]
 
 LDSTATIC	Control program linking; if set blank, link everything
 		dynamically.  If set to "-static", link everything statically.
@@ -464,11 +491,17 @@ NLSMODE		Native Language Support files mode.  [${NONBINMODE}]
 
 X11SRCDIR	The path to the xsrc tree.  [/usr/xsrc]
 
-X11SRCDIR.xc	The path to the X11R6 xc src tree.  [${X11SRCDIR}/xfree/xc]
+X11SRCDIR.xc	The path to the (old) X11 xc src tree.  [${X11SRCDIR}/xfree/xc]
 
-X11SRCDIR.local	The path to the local X11R6 src tree.  [${X11SRCDIR}/local]
+X11SRCDIR.local	The path to the local X11 src tree.  [${X11SRCDIR}/local]
 
-X11ROOTDIR	Root directory of the X11 installation.  [/usr/X11R6]
+X11SRCDIR.lib<package>
+X11SRCDIR.<package>
+		The path to the xorg src tree for the specificed package>.
+		[${X11SRCDIR}/external/mit/xorg/<package>/dist]
+
+X11ROOTDIR	Root directory of the X11 installation.  [/usr/X11R6 or
+		[/usr/X11R7]
 
 X11BINDIR	X11 bin directory.  [${X11ROOTDIR}/bin]
 
@@ -509,7 +542,7 @@ RELEASEMACHINE	Subdirectory or path component used for the following
 		Used when building a release.  [${MACHINE}]
 
 Additionally, the following variables may be set by <bsd.own.mk> or in a
-make configuration file to modify the behaviour of the system build
+make configuration file to modify the behavior of the system build
 process (default values are in brackets along with comments, if set by
 <bsd.own.mk>):
 
@@ -763,8 +796,13 @@ USE_SHLIBDIR	If not "no", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
 		USE_SHLIBDIR must be defined before <bsd.own.mk> is included.
 		Default: no
 
-LIBISPRIVATE	If not "no", act as "MKDEBUGLIB=no MKLINT=no MKPIC=no MKPROFILE=no",
-		and don't install the (.a) library.
+LIBISMODULE	If not "no", install as ${LIB}.so (without the "lib" prefix),
+		and act as "MKDEBUGLIB=no MKLINT=no MKPICINSTALL=no
+		MKPROFILE=no MKSTATICLIB=no".
+		Default: no
+
+LIBISPRIVATE	If not "no", act as "MKDEBUGLIB=no MKLINT=no MKPIC=no
+		MKPROFILE=no", and don't install the (.a) library.
 		This is useful for "build only" helper libraries.
 		Default: no
 
@@ -849,12 +887,14 @@ CONFIGSYMLINKS	Similar semantics to SYMLINKS, except that the symbolic links
 The include file <bsd.man.mk> handles installing manual pages and their
 links.
 
-It has a two targets:
+It has a three targets:
 
-	maninstall:
-		Install the manual page sources and their links.
 	catinstall:
 		Install the preformatted manual pages and their links.
+	htmlinstall:
+		Install the HTML manual pages and their links.
+	maninstall:
+		Install the manual page sources and their links.
 
 It sets/uses the following variables:
 
@@ -1013,8 +1053,8 @@ SYMLINKS	See <bsd.links.mk>
 MAN		Manual pages (should end in .1 - .9).  If no MAN variable is
 		defined, "MAN=${PROG}.1" is assumed.
 
-PAXCTL_FLAGS	If defined then paxctl(1) is ran on binary after link
-		time, with the value of the variable as args to it.
+PAXCTL_FLAGS	If defined, run paxctl(1) on the program binary after link
+		time, with the value of this variable as args to paxctl(1).
 
 PAXCTL_FLAGS.${PROG} Custom override for PAXCTL_FLAGS.
 
@@ -1063,6 +1103,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBDES?=	${DESTDIR}/usr/lib/libdes.a
 		LIBEDIT?=	${DESTDIR}/usr/lib/libedit.a
 		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
+		LIBFETCH?=	${DESTDIR}/usr/lib/libfetch.a
 		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
 		LIBGCC?=	${DESTDIR}/usr/lib/libgcc.a
 		LIBGNUMALLOC?=	${DESTDIR}/usr/lib/libgnumalloc.a
@@ -1239,7 +1280,15 @@ ARFLAGS		Options to ${AR}.  [rl]
 
 AS		Assembler.  [as]
 
-AFLAGS		Options to ${AS}.  []
+AFLAGS		Options to ${CC} when compiling or linking .s or .S
+		assembly source files.  []
+
+BUILDSEED	GCC uses random numbers when compiling C++ code.
+		If this option is present, seed the random number
+		generator based on the value, source file names and
+		the output file name to make builds more deterministic.
+		Additional information is available in the GCC
+		documentation of -frandom-seed.
 
 CC		C compiler.  [cc]
 
@@ -1413,6 +1462,9 @@ TOOL_SOELIM		Eliminate .so's from groff input.  [soelim]
 
 TOOL_STAT		Display file status.  [stat]
 
+TOOL_STRFILE		Create a random access file for storing strings.
+			[strfile]
+
 TOOL_SUNLABEL		Read or modify a SunOS disk label.  [sunlabel]
 
 TOOL_TBL		Format tables for groff.  [tbl]
@@ -1426,7 +1478,12 @@ TOOL_ZIC		Time zone compiler.  [zic]
 
 Other variables of note (incomplete list):
 
-WARNS		Crank up gcc warning options; the distinct levels are:
+NOGCCERROR	If defined, prevents passing certain ${CFLAGS} to GCC
+		that cause warnings to be fatal, such as:
+			-Werror -Wa,--fatal-warnings
+		(The latter being for as(1).)
+
+WARNS		Crank up GCC warning options; the distinct levels are:
 			WARNS=1
 			WARNS=2
 			WARNS=3
@@ -1435,14 +1492,14 @@ WARNS		Crank up gcc warning options; the distinct levels are:
 =-=-=-=-=   bsd.x11.mk   =-=-=-=-=
 
 The include file <bsd.x11.mk> contains parameters and targets for
-cross-building X11R6 from ${X11SRCDIR.xc}.
+cross-building X11 from ${X11SRCDIR.xc} / ${X11MITSRCDIR.*}.
 It should be included after the general Makefile contents but before
 the include files such as <bsd.prog.mk> and <bsd.lib.mk>.
 
 It provides the following targets:
 	.man.1 .man.3 .man.4 .man.5 .man.7:
 		If ${MAN} or ${PROG} is set and ${MKMAN} != "no",
-		these rules convert from X11R6's manual page source
+		these rules convert from X11's manual page source
 		into an mdoc.old source file.
 	cleanx11man:
 		Clean up the mdoc.old files generated by the above.
@@ -1464,21 +1521,23 @@ CPPFLAGS		Appended with definitions to include from
 LDFLAGS			Appended with definitions to link from
 			${DESTDIR}${X11USRLIBDIR}
 
-X11FLAGS.CONNECTION	Equivalent to X11R6's CONNECTION_FLAGS.
+X11FLAGS.CONNECTION	Equivalent to X11's CONNECTION_FLAGS.
 
-X11FLAGS.EXTENSION	Equivalent to X11R6's EXT_DEFINES.
+X11FLAGS.EXTENSION	Equivalent to X11's EXT_DEFINES.
 
-X11FLAGS.LOADABLE	Equivalent to X11R6's LOADABLE.
+X11FLAGS.LOADABLE	Equivalent to X11's LOADABLE.
 
-X11FLAGS.OS_DEFINES	Equivalent to X11R6's OS_DEFINES.
+X11FLAGS.OS_DEFINES	Equivalent to X11's OS_DEFINES.
 
-X11FLAGS.SERVER		Equivalent to X11R6's ServerDefines.
+X11FLAGS.SERVER		Equivalent to X11's ServerDefines.
 
-X11FLAGS.THREADLIB	Equivalent to X11R6's THREADS_DEFINES for libraries.
+X11FLAGS.THREADLIB	Equivalent to X11's THREADS_DEFINES for libraries.
 
-X11FLAGS.THREADS	Equivalent to X11R6's THREADS_DEFINES.
+X11FLAGS.THREADS	Equivalent to X11's THREADS_DEFINES.
 
 X11FLAGS.VERSION	cpp(1) definitions of OSMAJORVERSION and OSMINORVERSION.
+
+X11FLAGS.DIX		Equivalent to X11's DIX_DEFINES.
 
 X11TOOL_UNXCOMM		Commandline to convert `XCOMM' comments to `#'
 

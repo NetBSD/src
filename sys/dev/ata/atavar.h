@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.75.10.1 2008/04/03 12:42:38 mjf Exp $	*/
+/*	$NetBSD: atavar.h,v 1.75.10.2 2008/10/05 20:11:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -340,7 +340,6 @@ struct ata_channel {
 #define ATACH_DMA_WAIT 0x20	/* controller is waiting for DMA */
 #define ATACH_PIOBM_WAIT 0x40	/* controller is waiting for busmastering PIO */
 #define	ATACH_DISABLED 0x80	/* channel is disabled */
-#define ATACH_TH_RUN   0x100	/* the kernel thread is working */
 #define ATACH_TH_RESET 0x200	/* someone ask the thread to reset */
 	u_int8_t ch_status;	/* copy of status register */
 	u_int8_t ch_error;	/* copy of error register */

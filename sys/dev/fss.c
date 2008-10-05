@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.43.6.5 2008/09/28 10:40:18 mjf Exp $	*/
+/*	$NetBSD: fss.c,v 1.43.6.6 2008/10/05 20:11:28 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.43.6.5 2008/09/28 10:40:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.43.6.6 2008/10/05 20:11:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,7 +92,7 @@ static int fss_bs_io(struct fss_softc *, fss_io_type,
     u_int32_t, off_t, int, void *);
 static u_int32_t *fss_bs_indir(struct fss_softc *, u_int32_t);
 
-static kmutex_t fss_device_lock;	/* Protect fss_num_attached. */
+static kmutex_t fss_device_lock;	/* Protect all units. */
 static int fss_num_attached = 0;	/* Number of attached devices. */
 static struct vfs_hooks fss_vfs_hooks = {
 	.vh_unmount = fss_unmount_hook
@@ -100,12 +100,12 @@ static struct vfs_hooks fss_vfs_hooks = {
 
 const struct bdevsw fss_bdevsw = {
 	fss_open, fss_close, fss_strategy, fss_ioctl,
-	fss_dump, fss_size, D_DISK
+	fss_dump, fss_size, D_DISK | D_MPSAFE
 };
 
 const struct cdevsw fss_cdevsw = {
 	fss_open, fss_close, fss_read, fss_write, fss_ioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK | D_MPSAFE
 };
 
 static int fss_match(device_t, cfdata_t, void *);
@@ -167,10 +167,8 @@ fss_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	mutex_enter(&fss_device_lock);
 	if (fss_num_attached++ == 0)
 		vfs_hooks_attach(&fss_vfs_hooks);
-	mutex_exit(&fss_device_lock);
 }
 
 static int
@@ -181,16 +179,15 @@ fss_detach(device_t self, int flags)
 	if (sc->sc_flags & FSS_ACTIVE)
 		return EBUSY;
 
-	mutex_enter(&fss_device_lock);
 	if (--fss_num_attached == 0)
 		vfs_hooks_detach(&fss_vfs_hooks);
-	mutex_exit(&fss_device_lock);
 
 	pmf_device_deregister(self);
 	mutex_destroy(&sc->sc_slock);
 	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_work_cv);
 	cv_destroy(&sc->sc_cache_cv);
+	bufq_drain(sc->sc_bufq);
 	bufq_free(sc->sc_bufq);
 	disk_destroy(sc->sc_dkdev);
 	free(sc->sc_dkdev, M_DEVBUF);
@@ -206,6 +203,8 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 	struct fss_softc *sc;
 
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
+
+	mutex_enter(&fss_device_lock);
 
 	sc = device_lookup_private(&fss_cd, minor(dev));
 	if (sc == NULL) {
@@ -224,6 +223,7 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 	sc->sc_flags |= mflag;
 
 	mutex_exit(&sc->sc_slock);
+	mutex_exit(&fss_device_lock);
 
 	return 0;
 }
@@ -236,49 +236,56 @@ fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
 
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
+	error = 0;
 
+restart:
 	mutex_enter(&sc->sc_slock);
-
-	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) == mflag) {
-		if ((sc->sc_uflags & FSS_UNCONFIG_ON_CLOSE) != 0 &&
-		    (sc->sc_flags & FSS_ACTIVE) != 0) {
-			mutex_exit(&sc->sc_slock);
-			error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, l);
-			if (error)
-				return error;
-			mutex_enter(&sc->sc_slock);
-		}
+	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) != mflag) {
+		sc->sc_flags &= ~mflag;
+		mutex_exit(&sc->sc_slock);
+		return 0;
+	}
+	if ((sc->sc_flags & FSS_ACTIVE) != 0 &&
+	    (sc->sc_uflags & FSS_UNCONFIG_ON_CLOSE) != 0) {
 		sc->sc_uflags &= ~FSS_UNCONFIG_ON_CLOSE;
+		mutex_exit(&sc->sc_slock);
+		error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, l);
+		goto restart;
+	}
+	if ((sc->sc_flags & FSS_ACTIVE) != 0) {
+		mutex_exit(&sc->sc_slock);
+		return error;
+	}
+	if (! mutex_tryenter(&fss_device_lock)) {
+		mutex_exit(&sc->sc_slock);
+		goto restart;
 	}
 
-	sc->sc_flags &= ~mflag;
-
+	KASSERT((sc->sc_flags & FSS_ACTIVE) == 0);
+	KASSERT((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) == mflag);
 	mutex_exit(&sc->sc_slock);
-
-	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN|FSS_ACTIVE)) == 0) {
-		cf = device_cfdata(sc->sc_dev);
-		error = config_detach(sc->sc_dev, DETACH_QUIET);
-		if (error)
-			return error;
+	cf = device_cfdata(sc->sc_dev);
+	error = config_detach(sc->sc_dev, DETACH_QUIET);
+	if (! error)
 		free(cf, M_DEVBUF);
-	}
+	mutex_exit(&fss_device_lock);
 
-	return 0;
+	return error;
 }
 
 void
 fss_strategy(struct buf *bp)
 {
+	const bool write = ((bp->b_flags & B_READ) != B_READ);
 	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(bp->b_dev));
 
 	mutex_enter(&sc->sc_slock);
 
-	if ((bp->b_flags & B_READ) != B_READ ||
-	    sc == NULL || !FSS_ISVALID(sc)) {
+	if (write || !FSS_ISVALID(sc)) {
 
 		mutex_exit(&sc->sc_slock);
 
-		bp->b_error = (sc == NULL ? ENODEV : EROFS);
+		bp->b_error = (write ? EROFS : ENXIO);
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		return;
@@ -361,12 +368,16 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 
 	case FSSIOFSET:
+		mutex_enter(&sc->sc_slock);
 		sc->sc_uflags = *(int *)data;
+		mutex_exit(&sc->sc_slock);
 		error = 0;
 		break;
 
 	case FSSIOFGET:
+		mutex_enter(&sc->sc_slock);
 		*(int *)data = sc->sc_uflags;
+		mutex_exit(&sc->sc_slock);
 		error = 0;
 		break;
 
@@ -517,6 +528,7 @@ fss_unmount_hook(struct mount *mp)
 	int i;
 	struct fss_softc *sc;
 
+	mutex_enter(&fss_device_lock);
 	for (i = 0; i < fss_cd.cd_ndevs; i++) {
 		if ((sc = device_lookup_private(&fss_cd, i)) == NULL)
 			continue;
@@ -526,6 +538,7 @@ fss_unmount_hook(struct mount *mp)
 			fss_error(sc, "forced unmount");
 		mutex_exit(&sc->sc_slock);
 	}
+	mutex_exit(&fss_device_lock);
 }
 
 /*
@@ -1020,8 +1033,8 @@ fss_bs_indir(struct fss_softc *sc, u_int32_t cl)
 static void
 fss_bs_thread(void *arg)
 {
-	bool thread_idle;
-	int error, i, len, crotor;
+	bool thread_idle, is_valid;
+	int error, i, todo, len, crotor, is_read;
 	long off;
 	char *addr;
 	u_int32_t c, cl, ch, *indirp;
@@ -1053,33 +1066,26 @@ fss_bs_thread(void *arg)
 		if (sc->sc_flags & FSS_PERSISTENT) {
 			if ((bp = BUFQ_GET(sc->sc_bufq)) == NULL)
 				continue;
-
+			is_valid = FSS_ISVALID(sc);
+			is_read = (bp->b_flags & B_READ);
 			thread_idle = false;
+			mutex_exit(&sc->sc_slock);
 
-			disk_busy(sc->sc_dkdev);
-
-			if (FSS_ISVALID(sc)) {
-				mutex_exit(&sc->sc_slock);
-
+			if (is_valid) {
+				disk_busy(sc->sc_dkdev);
 				error = fss_bs_io(sc, FSS_READ, 0,
 				    dbtob(bp->b_blkno), bp->b_bcount,
 				    bp->b_data);
-
-				mutex_enter(&sc->sc_slock);
+				disk_unbusy(sc->sc_dkdev,
+				    (error ? 0 : bp->b_bcount), is_read);
 			} else
 				error = ENXIO;
 
-			if (error) {
-				bp->b_error = error;
-				bp->b_resid = bp->b_bcount;
-			} else
-				bp->b_resid = 0;
-
-			disk_unbusy(sc->sc_dkdev, bp->b_bcount - bp->b_resid,
-			    (bp->b_flags & B_READ));
-
+			bp->b_error = error;
+			bp->b_resid = (error ? bp->b_bcount : 0);
 			biodone(bp);
 
+			mutex_enter(&sc->sc_slock);
 			continue;
 		}
 
@@ -1091,11 +1097,9 @@ fss_bs_thread(void *arg)
 			scp = sc->sc_cache + crotor;
 			if (scp->fc_type != FSS_CACHE_VALID)
 				continue;
-
-			thread_idle = false;
-
 			mutex_exit(&sc->sc_slock);
 
+			thread_idle = false;
 			indirp = fss_bs_indir(sc, scp->fc_cluster);
 			if (indirp != NULL) {
 				error = fss_bs_io(sc, FSS_WRITE, sc->sc_clnext,
@@ -1104,7 +1108,6 @@ fss_bs_thread(void *arg)
 				error = EIO;
 
 			mutex_enter(&sc->sc_slock);
-
 			if (error == 0) {
 				*indirp = sc->sc_clnext++;
 				sc->sc_indir_dirty = 1;
@@ -1121,34 +1124,37 @@ fss_bs_thread(void *arg)
 		 */
 		if ((bp = BUFQ_GET(sc->sc_bufq)) == NULL)
 			continue;
-
+		is_valid = FSS_ISVALID(sc);
+		is_read = (bp->b_flags & B_READ);
 		thread_idle = false;
 
-		disk_busy(sc->sc_dkdev);
+		if (!is_valid) {
+			mutex_exit(&sc->sc_slock);
 
-		if (!FSS_ISVALID(sc)) {
 			bp->b_error = ENXIO;
 			bp->b_resid = bp->b_bcount;
-			disk_unbusy(sc->sc_dkdev, 0, (bp->b_flags & B_READ));
 			biodone(bp);
+
+			mutex_enter(&sc->sc_slock);
 			continue;
 		}
+
+		disk_busy(sc->sc_dkdev);
 
 		/*
 		 * First read from the snapshotted block device unless
 		 * this request is completely covered by backing store.
 		 */
 
-		mutex_exit(&sc->sc_slock);
-
 		cl = FSS_BTOCL(sc, dbtob(bp->b_blkno));
 		off = FSS_CLOFF(sc, dbtob(bp->b_blkno));
 		ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
-
 		error = 0;
 		for (c = cl; c <= ch; c++) {
 			if (isset(sc->sc_copied, c))
 				continue;
+			mutex_exit(&sc->sc_slock);
+
 			/* Not on backing store, read from device. */
 			nbp = getiobuf(NULL, true);
 			nbp->b_flags = B_READ;
@@ -1166,14 +1172,14 @@ fss_bs_thread(void *arg)
 			if (error != 0) {
 				bp->b_resid = bp->b_bcount;
 				bp->b_error = nbp->b_error;
-				disk_unbusy(sc->sc_dkdev, 0,
-				    (bp->b_flags & B_READ));
+				disk_unbusy(sc->sc_dkdev, 0, is_read);
 				biodone(bp);
 			}
 			putiobuf(nbp);
+
+			mutex_enter(&sc->sc_slock);
 			break;
 		}
-		mutex_enter(&sc->sc_slock);
 		if (error)
 			continue;
 
@@ -1182,59 +1188,54 @@ fss_bs_thread(void *arg)
 		 */
 
 		addr = bp->b_data;
-		bp->b_resid = bp->b_bcount;
-		for (c = cl; c <= ch;
-		    c++, off = 0, bp->b_resid -= len, addr += len) {
+		todo = bp->b_bcount;
+		for (c = cl; c <= ch; c++, off = 0, todo -= len, addr += len) {
 			len = FSS_CLSIZE(sc)-off;
-			if (len > bp->b_resid)
-				len = bp->b_resid;
-
+			if (len > todo)
+				len = todo;
 			if (isclr(sc->sc_copied, c))
 				continue;
-
 			mutex_exit(&sc->sc_slock);
 
 			indirp = fss_bs_indir(sc, c);
-
-			mutex_enter(&sc->sc_slock);
-
 			if (indirp == NULL || *indirp == 0) {
 				/*
 				 * Not on backing store. Either in cache
 				 * or hole in the snapshotted block device.
 				 */
+
+				mutex_enter(&sc->sc_slock);
 				for (scp = sc->sc_cache; scp < scl; scp++)
 					if (scp->fc_type == FSS_CACHE_VALID &&
 					    scp->fc_cluster == c)
 						break;
 				if (scp < scl)
-					memcpy(addr, (char *)scp->fc_data+off, len);
+					memcpy(addr, (char *)scp->fc_data+off,
+					    len);
 				else
 					memset(addr, 0, len);
 				continue;
 			}
+
 			/*
 			 * Read from backing store.
 			 */
-
-			mutex_exit(&sc->sc_slock);
-
-			if ((error = fss_bs_io(sc, FSS_READ, *indirp,
-			    off, len, addr)) != 0) {
-				bp->b_resid = bp->b_bcount;
-				bp->b_error = error;
-				mutex_enter(&sc->sc_slock);
-				break;
-			}
+			error =
+			    fss_bs_io(sc, FSS_READ, *indirp, off, len, addr);
 
 			mutex_enter(&sc->sc_slock);
-
+			if (error) {
+				bp->b_resid = bp->b_bcount;
+				bp->b_error = error;
+				break;
+			}
 		}
+		mutex_exit(&sc->sc_slock);
 
-		disk_unbusy(sc->sc_dkdev, bp->b_bcount - bp->b_resid,
-		    (bp->b_flags & B_READ));
-
+		disk_unbusy(sc->sc_dkdev, (error ? 0 : bp->b_bcount), is_read);
 		biodone(bp);
+
+		mutex_enter(&sc->sc_slock);
 	}
 }
 

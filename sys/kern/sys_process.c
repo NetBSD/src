@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.135.6.3 2008/09/28 10:40:53 mjf Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.135.6.4 2008/10/05 20:11:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.135.6.3 2008/09/28 10:40:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.135.6.4 2008/10/05 20:11:32 mjf Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -648,7 +648,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		if (tmp == 0)
 			lt = LIST_FIRST(&t->p_lwps);
 		else {
-			lt = lwp_find(p, tmp);
+			lt = lwp_find(t, tmp);
 			if (lt == NULL) {
 				mutex_exit(t->p_lock);
 				error = ESRCH;

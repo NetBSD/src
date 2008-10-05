@@ -1,5 +1,0 @@
-#	$NetBSD: md.evbsh3,v 1.1.32.1 2008/09/28 11:09:21 mjf Exp $
-./usr/X11R6/bin/Xvfb					-unknown-	x11
-./usr/X11R6/man/cat1/Xvfb.0				-unknown-	x11,.cat
-./usr/X11R6/man/html1/Xvfb.html				-unknown-	html,x11
-./usr/X11R6/man/man1/Xvfb.1				-unknown-	x11,.man

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sgivol.8,v 1.5 2007/12/01 18:35:06 wiz Exp $
+.\"	$NetBSD: sgivol.8,v 1.5.6.1 2008/10/05 20:11:23 mjf Exp $
 .\"
 .\" Copyright (c) 2006 Stephen M. Rumble
 .\" All rights reserved.
@@ -22,8 +22,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 10, 2007
-.Dt SGIVOL 8
+.Dd August 3, 2008
+.Dt SGIVOL 8 sgimips
 .Os
 .Sh NAME
 .Nm /usr/mdec/sgivol
@@ -52,6 +52,12 @@
 .Nm
 .Op Fl fq
 .Fl d
+.Ar vhfilename
+.Ar device
+.Nm
+.Op Fl fq
+.Fl m
+.Ar vhfilename
 .Ar vhfilename
 .Ar device
 .Nm
@@ -132,6 +138,14 @@ To delete the existing file
 from the volume header on disk
 .Dq sd0 :
 .Dl Ic sgivol -d boot sd0
+.Pp
+To move (rename) an existing file
+.Pa file1
+to
+.Pa file2
+in the volume header on disk
+.Dq sd0 :
+.Dl Ic sgivol -m file1 file2 sd0
 .Pp
 To change partition 0 to type 4 (BSD4.2) beginning at block offset 3200
 and continue for 28000 blocks on disk

@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.105.6.2 2008/06/02 13:24:23 mjf Exp $	*/
+/*	$NetBSD: route.c,v 1.105.6.3 2008/10/05 20:11:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.105.6.2 2008/06/02 13:24:23 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.105.6.3 2008/10/05 20:11:32 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -128,10 +128,8 @@ struct	radix_node_head *rt_tables[AF_MAX+1];
 
 int	rttrash;		/* routes not in table but not freed */
 
-POOL_INIT(rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl", NULL,
-    IPL_SOFTNET);
-POOL_INIT(rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl", NULL,
-    IPL_SOFTNET);
+struct pool rtentry_pool;
+struct pool rttimer_pool;
 
 struct callout rt_timer_ch; /* callout for rt_timer_timer() */
 
@@ -221,6 +219,11 @@ rtable_init(void **table)
 void
 route_init(void)
 {
+
+	pool_init(&rtentry_pool, sizeof(struct rtentry), 0, 0, 0, "rtentpl",
+	    NULL, IPL_SOFTNET);
+	pool_init(&rttimer_pool, sizeof(struct rttimer), 0, 0, 0, "rttmrpl",
+	    NULL, IPL_SOFTNET);
 
 	rt_init();
 	rn_init();	/* initialize all zeroes, all ones, mask table */

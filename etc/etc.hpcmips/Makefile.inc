@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2007/07/24 10:49:25 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.9.12.1 2008/10/05 20:11:19 mjf Exp $
 #
 #	etc.hpcmips/Makefile.inc -- hpcmips-specific etc Makefile targets
 #
@@ -11,3 +11,7 @@ KERNEL_SETS=		GENERIC TX3912
 BUILD_KERNELS=		RAMDISK INSTALL_TX3912
 
 INSTALLATION_DIRS+=	installation/miniroot
+
+snap_md_post:
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation \
+	    '*.gz' '*.exe'

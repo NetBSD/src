@@ -1,0 +1,126 @@
+$NetBSD: storage,v 1.1.8.2 2008/10/05 20:11:18 mjf Exp $
+
+NetBSD Storage Roadmap
+======================
+
+This is a small roadmap document, and deals with the storage and file
+systems side of the operating system.
+
+NetBSD 5.0 will ship with the following storage elements in place:
+
+1. puffs/putter
+2. ReFUSE
+3. rump
+4. RAIDframe
+5. iSCSI target
+6. iSCSI initiator
+7. cgd
+8. fss
+
+The following elements and projects are pencilled in for 5.0, but
+please do not rely on them being there.
+
+9. pud
+10. devfs
+11. journalling functionality for ffs
+12. logical volume management
+13. a native port of Sun's ZFS
+14. ReFUSE-lowlevel
+15. web-based management tools for storage subsystems
+16. support for flash devices - NAND and MMC/SD
+17. read/write support for UDF file systems
+
+We are working on the following elements, and expect them to be in 6.0:
+
+18. OSD (object storage device)
+19. basic FCIP support
+
+We expect to branch for the 5.0 release in April or May 2008, which would
+put a NetBSD 5.0 Release date in Q4 2008. An annual release cycle would
+thus mean that 6.0 would be branched in April or May 2009.
+
+Pictorially, this looks like:
+
+ 2008                                        2009
+ Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec Jan Feb Mar Apr May Jun Jul Aug
+|===|===|===|===|===|===|===|===|===|===|===|===|===|===|===|===|===|===|===|
+
+                | ------- 5.0 --------- |                       | ------- 6.0
+              branch                  release                 branch
+
+ 1-8  11,16  9,10,12,13,14,17  15            18      19
+
+We'll continue to update this roadmap as features and dates get firmed up.
+
+
+Some explanations
+=================
+
+10. devfs
+---------
+
+Devfs will allow device special files (the files used to access
+devices) to be created dynamically as and when they are attached to
+the system.  This will greatly reduce the number of files in a /dev
+directory and removes the need to run the MAKEDEV script when support
+for new devices is added to the NetBSD kernel.  NetBSD's devfs
+implementation will also allow multiple instances of the file system
+to be mounted simultaneously, which is very useful for chroot jails.
+
+Responsible: mjf
+
+11. Journalling Functionality for FFS
+-------------------------------------
+
+Contributed by Wasabi Systems, Inc, technical review on tech-kern
+in March 2008, merged to HEAD in July 2008, will be in NetBSD 5.0.
+
+12. Logical Volume Management
+-----------------------------
+
+Based on the Linux lvm2 and devmapper software, with a new kernel component
+for NetBSD written.
+
+Responsible: haad, martin
+
+13. Native port of Sun's ZFS
+----------------------------
+
+Mostly completed by ad@, this is the FreeBSD port of Sun's ZFS, with
+modifications to make it compile on NetBSD 5.0 by ad@, and based on
+the original Sun code for the block layer, rather than the GEOM-based
+layer.
+
+Responsible: oster, agc
+
+14. ReFUSE-lowlevel
+-------------------
+
+FUSE has two interfaces, the normal high-level one, and a lower-level
+interface which is closer to the way standard file systems operate. This
+adds the low-level functionality in the same way that ReFUSE adds the
+high-level functionality
+
+Responsible: pooka, agc
+
+15. Web-based Management tools for Storage Subsystems
+-----------------------------------------------------
+
+Standard tools for managing the storage subsystems that NetBSD provides,
+using a standard web-server as the basic user interface on the storage
+device, allowing remote management by a standard web browser.
+
+Responsible: agc
+
+16. OSD
+-------
+
+Based on the T10 specification, and the Intel reference code. An Object
+Storage Device, where some of the functionality of a file system is placed
+in the storage device.
+
+Responsible: agc
+
+
+Alistair Crooks
+Sun Mar  2 23:31:03 GMT 2008

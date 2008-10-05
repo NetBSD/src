@@ -1,4 +1,16 @@
-#	$NetBSD: ROADMAP,v 1.22 2007/12/07 14:37:31 rmind Exp $
+#	$NetBSD: ROADMAP,v 1.22.8.1 2008/10/05 20:11:18 mjf Exp $
+
+*** THIS FILE IS OBSOLETE ***
+
+Although many of the projects in this file are still current and
+valid, roadmap information is now stored in the src/doc/roadmaps
+directory.
+
+This file is temporarily retained to allow the information in it to be
+transitioned.
+
+------------------------------------------------------------
+
 
 A high-level roadmap for NetBSD
 
@@ -108,8 +120,8 @@ ad. Volume management
 ae. High-performance, maybe log-based, journalled fs w/ snapshot support
     Addition of logs, journals, and snapshots to FFS is a lot, another
     filesystem could be cleaner and faster.
-	Responsible: TBD
-	ETA: ?
+	Responsible: simonb
+	ETA: 5.0 (journaling + snapshots don't work together yet though)
 
 af. Expansion of ieee1394 support
     Where possible, fully support DV, disk, and network devices.

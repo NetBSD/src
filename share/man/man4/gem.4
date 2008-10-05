@@ -1,4 +1,4 @@
-.\" $NetBSD: gem.4,v 1.6.4.1 2008/06/02 13:21:35 mjf Exp $
+.\" $NetBSD: gem.4,v 1.6.4.2 2008/10/05 20:11:21 mjf Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 1, 2007
+.Dd September 15, 2008
 .Dt GEM 4
 .Os
 .Sh NAME
@@ -47,7 +47,7 @@ well as many Sun UltraSPARCs.
 Cards supported by this driver include:
 .Bl -bullet -compact -offset indent
 .It
-Sun GEM gigabit ethernet (including SX fibre variants)
+Sun GEM gigabit ethernet (SX fibre variants)
 .It
 Sun ERI 10/100
 .It
@@ -73,11 +73,20 @@ for information on how to enable this feature.
 .%A Sun Microsystems
 .%O http://www.sun.com/processors/manuals/ge.pdf
 .Re
+.Rs
+.%T "Sbus GEM Specification"
+.%A Sun Microsystems
+.%O http://mediacast.sun.com/users/Barton808/media/gem_sbus-1.pdf
+.Re
 .Sh HISTORY
 The
 .Nm
 device driver appeared in
 .Nx 1.6 .
+Support for PCI SX fibre cards was added in
+.Nx 4.1 .
+Support for SBus SX fibre cards was added in
+.Nx 5.0 .
 .Sh AUTHORS
 .An -nosplit
 The
@@ -85,13 +94,16 @@ The
 driver was written by
 .An Eduardo Horvath
 .Aq eeh@NetBSD.org .
+SX fibre support was added by
+.An Julian Coleman
+.Aq jdc@NetBSD.org .
 The man page was written by
 .An Thomas Klausner
 .Aq wiz@NetBSD.org .
 .Sh BUGS
 The hardware checksumming support does not support IPv4 UDP, although this was
 allowed prior to
-.Nx 5 .
+.Nx 5.0 .
 Also, the hardware IPv4 TCP receive checksumming support has bugs, so this is
 disabled.
 .Pp

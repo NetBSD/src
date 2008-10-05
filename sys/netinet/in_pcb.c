@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.122.6.2 2008/09/28 10:40:58 mjf Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.122.6.3 2008/10/05 20:11:32 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.122.6.2 2008/09/28 10:40:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.122.6.3 2008/10/05 20:11:32 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.122.6.2 2008/09/28 10:40:58 mjf Exp $")
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/time.h>
+#include <sys/once.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
@@ -151,12 +152,21 @@ int	anonportmax = IPPORT_ANONMAX;
 int	lowportmin  = IPPORT_RESERVEDMIN;
 int	lowportmax  = IPPORT_RESERVEDMAX;
 
-POOL_INIT(inpcb_pool, sizeof(struct inpcb), 0, 0, 0, "inpcbpl", NULL,
-    IPL_NET);
+static struct pool inpcb_pool;
+
+static int
+inpcb_poolinit(void)
+{
+
+	pool_init(&inpcb_pool, sizeof(struct inpcb), 0, 0, 0, "inpcbpl", NULL,
+	    IPL_NET);
+	return 0;
+}
 
 void
 in_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 {
+	static ONCE_DECL(control);
 
 	CIRCLEQ_INIT(&table->inpt_queue);
 	table->inpt_porthashtbl = hashinit(bindhashsize, HASH_LIST, true,
@@ -167,6 +177,8 @@ in_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 	    &table->inpt_connecthash);
 	table->inpt_lastlow = IPPORT_RESERVEDMAX;
 	table->inpt_lastport = (u_int16_t)anonportmax;
+
+	RUN_ONCE(&control, inpcb_poolinit);
 }
 
 int
