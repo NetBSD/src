@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.66 2008/10/05 02:05:39 cube Exp $
+# $NetBSD: mi,v 1.67 2008/10/05 02:28:01 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6229,6 +6229,17 @@
 ./usr/X11R7/man/cat3/XClientMessageEvent.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XCloseDevice.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XColormapEvent.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XCompositeCreateRegionFromBorderClip.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XCompositeGetOverlayWindow.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XCompositeNameWindowPixmap.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XCompositeQueryExtension.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XCompositeQueryVersion.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XCompositeRedirectSubwindows.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XCompositeRedirectWindow.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XCompositeReleaseOverlayWindow.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XCompositeUnredirectSubwindows.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XCompositeUnredirectWindow.0	-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XCompositeVersion.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XConfigureEvent.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XConfigureRequestEvent.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XConfigureWindow.0			-unknown-	.cat,xorg
@@ -6470,6 +6481,7 @@
 ./usr/X11R7/man/cat3/XcmsSetWhitePoint.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XcmsStoreColor.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XcmsTekHVCQueryMaxC.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/Xcomposite.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XcupGetReservedColormapEntries.0	-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XcupQueryVersion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XcupStoreColors.0			-unknown-	.cat,xorg
@@ -6902,6 +6914,17 @@
 ./usr/X11R7/man/html3/XClientMessageEvent.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XCloseDevice.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XColormapEvent.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XCompositeCreateRegionFromBorderClip.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XCompositeGetOverlayWindow.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XCompositeNameWindowPixmap.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XCompositeQueryExtension.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XCompositeQueryVersion.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XCompositeRedirectSubwindows.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XCompositeRedirectWindow.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XCompositeReleaseOverlayWindow.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XCompositeUnredirectSubwindows.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XCompositeUnredirectWindow.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XCompositeVersion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XConfigureEvent.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XConfigureRequestEvent.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XConfigureWindow.html		-unknown-	html,xorg
@@ -7143,6 +7166,7 @@
 ./usr/X11R7/man/html3/XcmsSetWhitePoint.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XcmsStoreColor.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XcmsTekHVCQueryMaxC.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/Xcomposite.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XcupGetReservedColormapEntries.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XcupQueryVersion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XcupStoreColors.html		-unknown-	html,xorg
@@ -7574,6 +7598,17 @@
 ./usr/X11R7/man/man3/XClientMessageEvent.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XCloseDevice.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XColormapEvent.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XCompositeCreateRegionFromBorderClip.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XCompositeGetOverlayWindow.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XCompositeNameWindowPixmap.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XCompositeQueryExtension.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XCompositeQueryVersion.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XCompositeRedirectSubwindows.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XCompositeRedirectWindow.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XCompositeReleaseOverlayWindow.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XCompositeUnredirectSubwindows.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XCompositeUnredirectWindow.3	-unknown-	.man,xorg
+./usr/X11R7/man/man3/XCompositeVersion.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XConfigureEvent.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XConfigureRequestEvent.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XConfigureWindow.3			-unknown-	.man,xorg
@@ -7815,6 +7850,7 @@
 ./usr/X11R7/man/man3/XcmsSetWhitePoint.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XcmsStoreColor.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XcmsTekHVCQueryMaxC.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/Xcomposite.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XcupGetReservedColormapEntries.3	-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XcupQueryVersion.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XcupStoreColors.3			-unknown-	.man,xorg
