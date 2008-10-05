@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.227 2008/10/02 17:54:53 joerg Exp $
+#	$NetBSD: bsd.README,v 1.228 2008/10/05 20:17:16 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1461,6 +1461,8 @@ TOOL_RPCGEN		Remote Procedure Call (RPC) protocol compiler.  [rpcgen]
 TOOL_SOELIM		Eliminate .so's from groff input.  [soelim]
 
 TOOL_STAT		Display file status.  [stat]
+
+TOOL_SED		Stream editor.  [sed]
 
 TOOL_STRFILE		Create a random access file for storing strings.
 			[strfile]
