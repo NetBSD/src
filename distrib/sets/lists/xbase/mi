@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.68 2008/10/05 17:55:01 cube Exp $
+# $NetBSD: mi,v 1.69 2008/10/05 18:32:40 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2025,6 +2025,7 @@
 ./usr/X11R7/man/cat1/xwd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xwininfo.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xwud.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat5/fonts-conf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/appres.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/atobm.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/bdftopcf.html			-unknown-	html,xorg
@@ -2146,6 +2147,7 @@
 ./usr/X11R7/man/html1/xwd.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/xwininfo.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xwud.html				-unknown-	html,xorg
+./usr/X11R7/man/html5/fonts-conf.html			-unknown-	html,xorg
 ./usr/X11R7/man/man1/appres.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/atobm.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/bdftopcf.1				-unknown-	.man,xorg
@@ -2268,6 +2270,7 @@
 ./usr/X11R7/man/man1/xwd.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xwininfo.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xwud.1				-unknown-	.man,xorg
+./usr/X11R7/man/man5/fonts-conf.5			-unknown-	.man,xorg
 ./usr/X11R7/man/whatis.db				-unknown-	man,xorg
 ./usr/X11R7/share/examples/ssh-askpass/SshAskpass-1337.ad	-unknown-	xorg
 ./usr/X11R7/share/examples/ssh-askpass/SshAskpass-NeXTish.ad	-unknown-	xorg
