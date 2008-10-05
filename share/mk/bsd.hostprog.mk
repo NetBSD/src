@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.50.16.1 2008/06/02 13:21:42 mjf Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.50.16.2 2008/10/05 20:11:24 mjf Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -20,6 +20,7 @@ LIBDBM?=	/usr/lib/libdbm.a
 LIBDES?=	/usr/lib/libdes.a
 LIBEDIT?=	/usr/lib/libedit.a
 LIBEVENT?=	/usr/lib/libevent.a
+LIBFETCH?=	/usr/lib/libfetch.a
 LIBFORM?=	/usr/lib/libform.a
 LIBGCC?=	/usr/lib/libgcc.a
 LIBGNUMALLOC?=	/usr/lib/libgnumalloc.a
@@ -33,6 +34,7 @@ LIBMENU?=	/usr/lib/libmenu.a
 LIBMP?=		/usr/lib/libmp.a
 LIBNTP?=	/usr/lib/libntp.a
 LIBOBJC?=	/usr/lib/libobjc.a
+LIBP2K?=	/usr/lib/libp2k.a
 LIBPC?=		/usr/lib/libpc.a
 LIBPCAP?=	/usr/lib/libpcap.a
 LIBPCI?=	/usr/lib/libpci.a
@@ -41,6 +43,8 @@ LIBPOSIX?=	/usr/lib/libposix.a
 LIBPUFFS?=	/usr/lib/libpuffs.a
 LIBRESOLV?=	/usr/lib/libresolv.a
 LIBRPCSVC?=	/usr/lib/librpcsvc.a
+LIBRUMP?=	/usr/lib/librump.a
+LIBRUMPUSER?=	/usr/lib/librumpuser.a
 LIBSDP?=	/usr/lib/libsdp.a
 LIBSKEY?=	/usr/lib/libskey.a
 LIBSSP?=	/usr/lib/libssp.a
@@ -49,8 +53,23 @@ LIBSUPCXX?=	/usr/lib/libsupc++.a
 LIBTERMCAP?=	/usr/lib/libtermcap.a
 LIBUTIL?=	/usr/lib/libutil.a
 LIBWRAP?=	/usr/lib/libwrap.a
+LIBUKFS?=	/usr/lib/libukfs.a
 LIBY?=		/usr/lib/liby.a
 LIBZ?=		/usr/lib/libz.a
+
+##### rump file system modules
+LIBRUMPFS_CD9660FS?=	/usr/lib/librumpfs_cd9660fs.a
+LIBRUMPFS_EFS?=		/usr/lib/librumpfs_efs.a
+LIBRUMPFS_EXT2FS?=	/usr/lib/librumpfs_ext2fs.a
+LIBRUMPFS_FFS?=		/usr/lib/librumpfs_ffs.a
+LIBRUMPFS_HFS?=		/usr/lib/librumpfs_hfs.a
+LIBRUMPFS_LFS?=		/usr/lib/librumpfs_lfs.a
+LIBRUMPFS_MSDOSFS?=	/usr/lib/librumpfs_msdosfs.a
+LIBRUMPFS_NTFS?=	/usr/lib/librumpfs_ntfs.a
+LIBRUMPFS_SYSPUFFS?=	/usr/lib/librumpfs_syspuffs.a
+LIBRUMPFS_TMPFS?=	/usr/lib/librumpfs_tmpfs.a
+LIBRUMPFS_UDF?=		/usr/lib/librumpfs_udf.a
+LIBRUMPFS_UFS?=		/usr/lib/librumpfs_ufs.a
 
 HOST_MKDEP?=	CC=${HOST_CC:Q} mkdep
 MKDEP_SUFFIXES?=	.lo .ln

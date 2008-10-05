@@ -1,10 +1,11 @@
-#	$NetBSD: bsd.man.mk,v 1.96 2006/09/11 22:24:09 dbj Exp $
+#	$NetBSD: bsd.man.mk,v 1.96.16.1 2008/10/05 20:11:24 mjf Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
 
 ##### Basic targets
 .PHONY:		catinstall maninstall catpages manpages catlinks manlinks
+.PHONY:		htmlinstall htmlpages htmllinks
 realinstall:	${MANINSTALL}
 
 ##### Default values
@@ -14,7 +15,7 @@ TMACDEPDIR?=	${TOOLDIR}/share/groff/tmac
 TMACDEPDIR?=	/usr/share/tmac
 .endif
 
-HTMLDIR?=	${DESTDIR}/usr/share/man
+HTMLDIR?=	${DESTDIR}${MANDIR}
 CATDEPS?=	${TMACDEPDIR}/andoc.tmac \
 		${TMACDEPDIR}/doc.tmac \
 		${TMACDEPDIR}/mdoc/doc-common \
@@ -69,6 +70,7 @@ realall:	${MANPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.$N${MANSUFFIX}@}
 
 ${_MNUMBERS:@N@.$N.$N${MANSUFFIX}@}:			# build rule
+	${_MKTARGET_FORMAT}
 	cat ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .endif # !empty(MANSUFFIX)
 
@@ -121,7 +123,6 @@ realall:	${CATPAGES}
 .NOPATH:	${CATPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.cat$N${MANSUFFIX}@}
 .MADE:	${CATDEPS}
-.MADE:	${HTMLDEPS}
 
 ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 	${_MKTARGET_FORMAT}
@@ -173,14 +174,15 @@ catlinks::	${_t}
 
 ##### Build and install rules (HTML pages)
 
-.if ${MKHTML} != "no"					# {
-installhtml:	.PHONY htmlpages
+.if (${MKHTML} != "no") && (${MKMAN} != "no")		# {
+htmlinstall:	htmlpages htmllinks
 htmlpages::	# ensure target exists
 HTMLPAGES=	${MAN:C/\.([1-9])$/.html\1/}
 
-html:		.PHONY ${HTMLPAGES}
+realall:	${HTMLPAGES}
 .NOPATH:	${HTMLPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.html$N@}
+.MADE:	${HTMLDEPS}
 
 ${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
 	${_MKTARGET_FORMAT}
@@ -207,8 +209,24 @@ htmlpages::	${_F}
 .PRECIOUS:	${_F}					# keep if install fails
 .endfor
 
-cleanhtml: .PHONY
-	rm -f ${HTMLPAGES}
+htmllinks::						# link install
+
+.for _src _dst in ${MLINKS}
+_l:=${HTMLDIR}/html${_src:T:E}${MANSUBDIR}/${_src:R:S-/index$-/x&-}.html
+_t:=${HTMLDIR}/html${_dst:T:E}${MANSUBDIR}/${_dst:R:S-/index$-/x&-}.html
+
+# Handle case conflicts carefully, when _dst occurs
+# more than once after case flattening
+.if ${MKUPDATE} == "no" || ${MLINKS:tl:M${_dst:tl:Q}:[\#]} > 1
+${_t}!		${_l} __linkinstallpage
+.else
+${_t}:		${_l} __linkinstallpage
+.endif
+
+htmllinks::	${_t}
+.PRECIOUS:	${_t}
+.endfor
+
 .endif							# }
 
 ##### Clean rules
@@ -227,6 +245,9 @@ cleanman: .PHONY
 .if !empty(MANSUFFIX)
 	rm -f ${MANPAGES} ${CATPAGES:S/${MANSUFFIX}$//}
 .endif
+.if ${MKHTML} != "no"
+	rm -f ${HTMLPAGES}
+.endif
 .endif
 # (XXX ${CATPAGES:S...} cleans up old .catN files where .catN.gz now used)
 
@@ -235,4 +256,4 @@ cleanman: .PHONY
 .include <bsd.files.mk>
 .include <bsd.sys.mk>
 
-${TARGETS} catinstall maninstall: # ensure existence
+${TARGETS} catinstall maninstall htmlinstall: # ensure existence

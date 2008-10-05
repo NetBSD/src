@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.273.4.1 2008/06/02 13:21:43 mjf Exp $
+#	$NetBSD: bsd.lib.mk,v 1.273.4.2 2008/10/05 20:11:24 mjf Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -7,7 +7,19 @@
 # Pull in <bsd.sys.mk> here so we can override its .c.o rule
 .include <bsd.sys.mk>
 
+LIBISMODULE?=	no
 LIBISPRIVATE?=	no
+
+_LIB_PREFIX=	lib
+
+.if ${LIBISMODULE} != "no"
+_LIB_PREFIX=	# empty
+MKDEBUGLIB:=	no
+MKLINT:=	no
+MKPICINSTALL:=	no
+MKPROFILE:=	no
+MKSTATICLIB:=	no
+.endif
 
 .if ${LIBISPRIVATE} != "no"
 MKDEBUGLIB:=	no
@@ -43,7 +55,7 @@ DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so
 .endif									# }
 
 ##### Build and install rules
-MKDEP_SUFFIXES?=	.o .po .so .ln
+MKDEP_SUFFIXES?=	.o .po .so .go .ln
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
 CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
 
@@ -174,7 +186,7 @@ MKSHLIBOBJS= no
 # Platform-independent linker flags for ELF shared libraries
 .if ${OBJECT_FMT} == "ELF"
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
-SHLIB_SHFLAGS=		-Wl,-soname,lib${LIB}.so.${SHLIB_SOVERSION}
+SHLIB_SHFLAGS=		-Wl,-soname,${_LIB_PREFIX}${LIB}.so.${SHLIB_SOVERSION}
 SHLIB_SHFLAGS+=		-Wl,--warn-shared-textrel
 SHLIB_LDSTARTFILE?=	${DESTDIR}/usr/lib/crti.o ${_GCC_CRTBEGINS}
 SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${DESTDIR}/usr/lib/crtn.o
@@ -489,10 +501,16 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
 #  We don't use INSTALL_SYMLINK here because this is just
 #  happening inside the build directory/objdir. XXX Why does
 #  this spend so much effort on libraries that aren't live??? XXX
+.if defined(SHLIB_FULLVERSION) && defined(SHLIB_MAJOR) && \
+    "${SHLIB_FULLVERSION}" != "${SHLIB_MAJOR}"
 	${HOST_LN} -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.${SHLIB_MAJOR}.tmp
 	mv -f lib${LIB}.so.${SHLIB_MAJOR}.tmp lib${LIB}.so.${SHLIB_MAJOR}
+.endif
 	${HOST_LN} -sf lib${LIB}.so.${SHLIB_FULLVERSION} lib${LIB}.so.tmp
 	mv -f lib${LIB}.so.tmp lib${LIB}.so
+.endif
+.if ${MKSTRIPIDENT} != "no"
+	${OBJCOPY} -R .ident ${.TARGET}
 .endif
 
 .if !empty(LOBJS)							# {
@@ -603,48 +621,54 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}_pic.a __archiveinstall
 .endif
 
 .if ${MKPIC} != "no" && defined(SHLIB_FULLVERSION)
-libinstall:: ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
-.PRECIOUS: ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
+_LIB_SO_TGT=		${DESTDIR}${_LIBSODIR}/${_LIB_PREFIX}${LIB}.so
+_LIB_SO_TGTLIBDIR=	   ${DESTDIR}${LIBDIR}/${_LIB_PREFIX}${LIB}.so
+
+libinstall:: ${_LIB_SO_TGT}.${SHLIB_FULLVERSION}
+.PRECIOUS: ${_LIB_SO_TGT}.${SHLIB_FULLVERSION}
 
 .if ${MKUPDATE} == "no"
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}.so.${SHLIB_FULLVERSION})
-${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}! .MADE
+${_LIB_SO_TGT}.${SHLIB_FULLVERSION}! .MADE
 .endif
-${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}! lib${LIB}.so.${SHLIB_FULLVERSION}
+${_LIB_SO_TGT}.${SHLIB_FULLVERSION}! lib${LIB}.so.${SHLIB_FULLVERSION}
 .else
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}.so.${SHLIB_FULLVERSION})
-${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: .MADE
+${_LIB_SO_TGT}.${SHLIB_FULLVERSION}: .MADE
 .endif
-${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
+${_LIB_SO_TGT}.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
 .endif
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 		${.ALLSRC} ${.TARGET}
 .if ${_LIBSODIR} != ${LIBDIR}
-	${INSTALL_SYMLINK} \
-		-l r ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
-		${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
+	${INSTALL_SYMLINK} -l r \
+		${_LIB_SO_TGT}.${SHLIB_FULLVERSION} \
+		${_LIB_SO_TGTLIBDIR}.${SHLIB_FULLVERSION}
 .endif
 .if ${OBJECT_FMT} == "a.out" && !defined(DESTDIR)
 	/sbin/ldconfig -m ${_LIBSODIR} ${LIBDIR}
 .endif
 .if ${OBJECT_FMT} == "ELF"
+.if defined(SHLIB_FULLVERSION) && defined(SHLIB_MAJOR) && \
+    "${SHLIB_FULLVERSION}" != "${SHLIB_MAJOR}"
 	${INSTALL_SYMLINK} \
-		lib${LIB}.so.${SHLIB_FULLVERSION} \
-		${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_MAJOR}
+		${_LIB_PREFIX}${LIB}.so.${SHLIB_FULLVERSION} \
+		${_LIB_SO_TGT}.${SHLIB_MAJOR}
 .if ${_LIBSODIR} != ${LIBDIR}
-	${INSTALL_SYMLINK} \
-		-l r ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
-		${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}
+	${INSTALL_SYMLINK} -l r \
+		${_LIB_SO_TGT}.${SHLIB_FULLVERSION} \
+		${_LIB_SO_TGTLIBDIR}.${SHLIB_MAJOR}
+.endif
 .endif
 .if ${MKLINKLIB} != "no"
 	${INSTALL_SYMLINK} \
-		lib${LIB}.so.${SHLIB_FULLVERSION} \
-		${DESTDIR}${_LIBSODIR}/lib${LIB}.so
+		${_LIB_PREFIX}${LIB}.so.${SHLIB_FULLVERSION} \
+		${_LIB_SO_TGT}
 .if ${_LIBSODIR} != ${LIBDIR}
-	${INSTALL_SYMLINK} \
-		-l r ${DESTDIR}${_LIBSODIR}/lib${LIB}.so.${SHLIB_FULLVERSION} \
-		${DESTDIR}${LIBDIR}/lib${LIB}.so
+	${INSTALL_SYMLINK} -l r \
+		${_LIB_SO_TGT}.${SHLIB_FULLVERSION} \
+		${_LIB_SO_TGTLIBDIR}
 .endif
 .endif
 .endif

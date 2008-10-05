@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.159.2.2 2008/06/02 13:21:43 mjf Exp $
+#	$NetBSD: bsd.sys.mk,v 1.159.2.3 2008/10/05 20:11:24 mjf Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -16,6 +16,10 @@ CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
 # differently in traditional and ansi environments' which is the warning
 # we wanted, and now we don't get anymore.
 CFLAGS+=	-Wno-sign-compare -Wno-traditional
+.if !defined(NOGCCERROR)
+# Set assembler warnings to be fatal
+CFLAGS+=	-Wa,--fatal-warnings
+.endif
 # Set linker warnings to be fatal
 # XXX no proper way to avoid "FOO is a patented algorithm" warnings
 # XXX on linking static libs
@@ -36,7 +40,7 @@ CXXFLAGS+=	-Wctor-dtor-privacy -Wnon-virtual-dtor -Wreorder \
 		-Wno-deprecated -Wno-non-template-friend \
 		-Woverloaded-virtual -Wno-pmf-conversions -Wsign-promo -Wsynth
 .endif
-.if ${WARNS} > 3 && ${HAVE_GCC} >= 3
+.if ${WARNS} > 3 && defined(HAVE_GCC) && ${HAVE_GCC} >= 3
 CFLAGS+=	-std=gnu99
 .endif
 .endif
@@ -78,8 +82,10 @@ FFLAGS+=	-mieee
 .endif
 
 .if defined(MKPIE) && (${MKPIE} != "no")
+.if !defined(KERNEL_BUILD)
 CFLAGS+=	-fPIC
 LDFLAGS+=	-Wl,-pie -shared-libgcc
+.endif
 .endif
 
 .if ${MACHINE} == "sparc64" && ${MACHINE_ARCH} == "sparc"
@@ -179,6 +185,7 @@ TOOL_SED?=		sed
 TOOL_SOELIM?=		soelim
 TOOL_STAT?=		stat
 TOOL_SPARKCRC?=		sparkcrc
+TOOL_strfile?=		strfile
 TOOL_SUNLABEL?=		sunlabel
 TOOL_TBL?=		tbl
 TOOL_UUDECODE?=		uudecode
@@ -235,14 +242,15 @@ TOOL_ZIC?=		zic
 	${COMPILE.S} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC}
 
 # Lex
-LPREFIX?=	yy
-LFLAGS+=	-P${LPREFIX}
+LFLAGS+=	${LPREFIX.${.IMPSRC:T}:D-P${LPREFIX.${.IMPSRC:T}}}
+LFLAGS+=	${LPREFIX:D-P${LPREFIX}}
 
 .l.c:
 	${_MKTARGET_LEX}
 	${LEX.l} -o${.TARGET} ${.IMPSRC}
 
 # Yacc
+YFLAGS+=	${YPREFIX.${.IMPSRC:T}:D-p${YPREFIX.${.IMPSRC:T}}} ${YHEADER.${.IMPSRC:T}:D-d}
 YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
 
 .y.c:

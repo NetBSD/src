@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.48.14.1 2008/09/28 10:40:18 mjf Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.48.14.2 2008/10/05 20:11:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.48.14.1 2008/09/28 10:40:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.48.14.2 2008/10/05 20:11:28 mjf Exp $");
 
 #include "opt_kgdb.h"
 
@@ -134,7 +134,7 @@ db_show_files_cmd(db_expr_t addr, bool haddr,
 	if (modif[0] == 'f')
 		full = true;
 
-	p = (struct proc *) (intptr_t) addr;
+	p = (struct proc *) (uintptr_t) addr;
 
 	fdp = p->p_fd;
 	for (i = 0; i < fdp->fd_nfiles; i++) {

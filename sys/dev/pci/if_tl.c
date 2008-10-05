@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.85.6.1 2008/06/02 13:23:40 mjf Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.85.6.2 2008/10/05 20:11:30 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.85.6.1 2008/06/02 13:23:40 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.85.6.2 2008/10/05 20:11:30 mjf Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -765,6 +765,7 @@ tl_init(struct ifnet *ifp)
 	    HOST_CMD_GO | HOST_CMD_RT | HOST_CMD_Nes | HOST_CMD_IntOn);
 	sc->tl_if.if_flags |= IFF_RUNNING;
 	sc->tl_if.if_flags &= ~IFF_OACTIVE;
+	splx(s);
 	return 0;
 bad:
 	printf("%s: %s\n", device_xname(sc->sc_dev), errstring);

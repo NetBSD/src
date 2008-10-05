@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.38 2007/12/11 14:06:04 lukem Exp $
+#	$NetBSD: bsd.files.mk,v 1.38.6.1 2008/10/05 20:11:24 mjf Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -94,7 +94,7 @@ configfilesinstall::	${_F}
 BUILDSYMLINKS.s+=	${_SL}
 BUILDSYMLINKS.t+=	${_TL}
 ${_TL}: ${_SL}
-	${_MKTARGET_CREATE}
+	${_MKMSG} "symlink " ${.CURDIR:T}/${.TARGET}
 	rm -f ${.TARGET}
 	ln -s ${.ALLSRC} ${.TARGET}
 .endfor

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.22 2006/12/23 06:58:20 wiz Exp $
+.\"	$NetBSD: ip.4,v 1.22.10.1 2008/10/05 20:11:21 mjf Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ip.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd December 5, 2006
+.Dd September 23, 2008
 .Dt IP 4
 .Os
 .Sh NAME
@@ -94,7 +94,7 @@ and
 sockets.
 For example,
 .Bd -literal
-int tos = IPTOS_LOWDELAY;       /* see \*[Lt]netinet/in.h\*[Gt] */
+int tos = IPTOS_LOWDELAY;       /* see \*[Lt]netinet/ip.h\*[Gt] */
 setsockopt(s, IPPROTO_IP, IP_TOS, \*[Am]tos, sizeof(tos));
 
 int ttl = 60;                   /* max = 255 */

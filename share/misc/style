@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.42 2008/02/16 14:22:16 apb Exp $ */
+/* $NetBSD: style,v 1.42.4.1 2008/10/05 20:11:24 mjf Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -25,11 +25,12 @@
  * source file per program contains a __COPYRIGHT() section.
  * Historic Berkeley code may also have an __SCCSID() section.
  * Only one instance of each of these macros can occur in each file.
+ * Don't use newlines in the identifiers.
  */
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2000\n\
-	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.42 2008/02/16 14:22:16 apb Exp $");
+__COPYRIGHT("@(#) Copyright (c) 2008\
+ The NetBSD Foundation, inc. All rights reserved.");
+__RCSID("$NetBSD: style,v 1.42.4.1 2008/10/05 20:11:24 mjf Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -417,7 +418,7 @@ dirinfo(const char *p, struct stat *sb, struct dirent *de, struct statfs *sf,
 /*
  * Functions that support variable numbers of arguments should look like this.
  * (With the #include <stdarg.h> appearing at the top of the file with the
- * other include files).
+ * other include files.)
  */
 #include <stdarg.h>
 

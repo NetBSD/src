@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.15.6.4 2008/09/28 10:41:04 mjf Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.15.6.5 2008/10/05 20:11:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,8 @@
 #define _RUMP_RUMPUSER_H_
 
 struct stat;
+struct msghdr;
+struct pollfd;
 
 int rumpuser_stat(const char *, struct stat *, int *);
 int rumpuser_lstat(const char *, struct stat *, int *);
@@ -66,7 +68,7 @@ int rumpuser_gethostname(char *, size_t, int *);
 
 char *rumpuser_realpath(const char *, char *, int *);
 
-void rumpuser_yield(void);
+int rumpuser_poll(struct pollfd *, int, int, int *);
 
 /* rumpuser_pth */
 
@@ -139,5 +141,11 @@ extern struct rumpuser_rw rumpspl;
 void rumpuser_set_ipl(int);
 int  rumpuser_whatis_ipl(void);
 void rumpuser_clear_ipl(int);
+
+/* rumpuser_net */
+
+int  rumpuser_net_socket(int, int, int, int *);
+int  rumpuser_net_sendmsg(int, const struct msghdr *, int, int *);
+int  rumpuser_net_recvmsg(int, struct msghdr *, int, int *);
 
 #endif /* _RUMP_RUMPUSER_H_ */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.4.6.1 2008/06/02 13:21:39 mjf Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.4.6.2 2008/10/05 20:11:22 mjf Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -25,14 +25,15 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 2, 2008
+.Dd August 13, 2008
 .Dt BOOT.CFG 5
 .Os
 .Sh NAME
 .Nm boot.cfg
 .Nd configuration file for /boot
 .Sh DESCRIPTION
-The file /boot.cfg
+The file
+.Pa /boot.cfg
 is used to alter the behaviour of the standard boot loader described in
 .Xr boot 8 .
 Configuration changes include setting the timeout, choosing a console device,
@@ -91,7 +92,7 @@ Each command is executed just as though the user had typed it in
 and so can be any valid command that would be accepted at the
 normal boot prompt.
 In addition,
-.So prompt Sc
+.Dq Ic prompt
 can be used to drop to the normal boot prompt.
 .It Sy timeout
 If the value is greater than zero, this specifies the time in seconds
@@ -120,6 +121,19 @@ Used to load kernel modules, which will be passed on to the kernel for
 initialization during early boot.
 The argument is the complete path and file name of the module to be loaded.
 May be used as many times as needed.
+.It Sy format
+Changes how the menu options are displayed.
+Should be set to one of
+.Sq a
+for automatic,
+.Sq l
+for letters and
+.Sq n
+for numbers.
+If set to automatic (the default), menu options will be displayed numerically
+unless there are more than 9 options and the timeout is greater than zero.
+If there are more than 9 options with a timeout greater than zero and
+the format is set to number, only the first 9 options will be available.
 .El
 .Sh EXAMPLES
 Here is an example
@@ -159,21 +173,11 @@ Please choose an option from the following menu:
 Option [1]:
 .Ed
 .Pp
-It will then wait for the user to type 1, 2, 3, 4, 5 or 6 followed by Return.
+It will then wait for the user to type 1, 2, 3, 4, 5, or 6 followed by Return.
 Pressing Return by itself will run option 1.
 There will be no timeout.
 .Sh SEE ALSO
 .Xr boot 8
-.Sh BUGS
-Support for
-.Nm
-is currently for 
-.Nx Ns /i386 and
-.Nx Ns /amd64 only.
-It is hoped that its use will be extended to other appropriate ports that
-use the
-.Xr boot 8
-interface.
 .Sh HISTORY
 The
 .Nm
@@ -187,3 +191,15 @@ extensions to
 were written by
 .An Stephen Borrill
 .Aq sborrill@NetBSD.org .
+.Sh BUGS
+Support for
+.Nm
+is currently for
+.Nx Ns /i386
+and
+.Nx Ns /amd64
+only.
+It is hoped that its use will be extended to other appropriate ports that
+use the
+.Xr boot 8
+interface.

@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.78.6.2 2008/09/28 10:40:25 mjf Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.78.6.3 2008/10/05 20:11:29 mjf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.77 2008/08/25 08:15:05 cegger Exp
+ *	NetBSD: miidevs,v 1.78 2008/09/28 18:30:11 bouyer Exp
  */
 
 /*-
@@ -62,6 +62,7 @@
 #define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
+#define	MII_OUI_JMICRON	0x00d831	/* JMicron */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
@@ -233,6 +234,12 @@
 
 #define	MII_MODEL_yyINTEL_IGP01E1000	0x0038
 #define	MII_STR_yyINTEL_IGP01E1000	"Intel IGP01E1000 Gigabit PHY"
+
+/* JMicron PHYs */
+#define	MII_MODEL_JMICRON_JMC250	0x0021
+#define	MII_STR_JMICRON_JMC250	"JMC250 10/100/1000 media interface"
+#define	MII_MODEL_JMICRON_JMC260	0x0022
+#define	MII_STR_JMICRON_JMC260	"JMC260 10/100 media interface"
 
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000

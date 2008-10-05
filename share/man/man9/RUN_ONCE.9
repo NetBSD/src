@@ -1,4 +1,4 @@
-.\"	$NetBSD: RUN_ONCE.9,v 1.6 2007/07/14 10:52:47 ad Exp $
+.\"	$NetBSD: RUN_ONCE.9,v 1.6.10.1 2008/10/05 20:11:23 mjf Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd January 17, 2006
+.Dd October 3, 2008
 .Dt RUN_ONCE 9
 .Os
 .\" ------------------------------------------------------------
@@ -92,7 +92,7 @@ init_func(void)
 int
 some_func(void)
 {
-	static DECL_ONCE(control);
+	static ONCE_DECL(control);
 
 	RUN_ONCE(\*[Am]control, init_func);
 

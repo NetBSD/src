@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.30.6.1 2008/04/03 12:42:13 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.30.6.2 2008/10/05 20:11:26 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -103,6 +103,6 @@ void cpu_intr_disestablish(void *);
 void icu_intr_disestablish(void *);
 
 #endif /* !_LOCORE */
-#endif /* _LOCORE */
+#endif /* _KERNEL */
 
 #endif	/* !_COBALT_INTR_H_ */

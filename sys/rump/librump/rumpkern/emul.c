@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.29.6.4 2008/09/28 10:41:03 mjf Exp $	*/
+/*	$NetBSD: emul.c,v 1.29.6.5 2008/10/05 20:11:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -532,14 +532,6 @@ suspendsched()
 	panic("%s: not implemented", __func__);
 }
 
-void
-yield(void)
-{
-
-	rumpuser_yield();
-}
-
-
 u_int
 lwp_unsleep(lwp_t *l, bool cleanup)
 {
@@ -610,6 +602,20 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 
 int
 devsw_detach(const struct bdevsw *bdev, const struct cdevsw *cdev)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+proc_crmod_enter()
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+proc_crmod_leave(kauth_cred_t c1, kauth_cred_t c2, bool sugid)
 {
 
 	panic("%s: not implemented", __func__);

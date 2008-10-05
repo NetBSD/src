@@ -1,4 +1,4 @@
-/*	$NetBSD: aacvar.h,v 1.11.6.1 2008/06/02 13:23:17 mjf Exp $	*/
+/*	$NetBSD: aacvar.h,v 1.11.6.2 2008/10/05 20:11:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -160,6 +160,7 @@ struct aac_softc;
 #define AAC_QUIRK_NEW_COMM	(1 << 11)	/* New comm. i/f supported */
 #define AAC_QUIRK_RAW_IO	(1 << 12)	/* Raw I/O interface */
 #define AAC_QUIRK_ARRAY_64BIT	(1 << 13)	/* 64-bit array size */
+#define AAC_QUIRK_LBA_64BIT	(1 << 14)	/* 64-bit LBA support */
 
 
 /*
@@ -284,7 +285,7 @@ struct aac_ccb {
 struct aac_drive {
 	u_int	hd_present;
 	u_int	hd_devtype;
-	u_int	hd_size;
+	u_int64_t	hd_size;
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.111.6.2 2008/09/28 10:40:58 mjf Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.111.6.3 2008/10/05 20:11:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.111.6.2 2008/09/28 10:40:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.111.6.3 2008/10/05 20:11:33 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -694,7 +694,7 @@ ip_mrouter_done(void)
 	}
 
 	bzero((void *)nexpire, sizeof(nexpire));
-	free(mfchashtbl, M_MRTABLE);
+	hashdone(mfchashtbl, HASH_LIST, mfchash);
 	mfchashtbl = NULL;
 
 	bw_upcalls_n = 0;

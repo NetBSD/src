@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.13.6.4 2008/09/28 10:41:04 mjf Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.13.6.5 2008/10/05 20:11:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,7 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,16 +58,9 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "rumpuser.h"
+#include <rump/rumpuser.h>
 
-#define DOCALL(rvtype, call)						\
-	rvtype rv;							\
-	rv = call;							\
-	if (rv == -1)							\
-		*error = errno;						\
-	else								\
-		*error = 0;						\
-	return rv;
+#include "rumpuser_int.h"
 
 int
 rumpuser_stat(const char *path, struct stat *sb, int *error)
@@ -293,10 +287,11 @@ rumpuser_realpath(const char *path, char resolvedname[MAXPATHLEN], int *error)
 	return rv;
 }
 
-void
-rumpuser_yield(void)
+int
+rumpuser_poll(struct pollfd *fds, int nfds, int timeout, int *error)
 {
 
+	DOCALL(int, (poll(fds, nfds, timeout)));
 }
 
 #ifdef __linux__

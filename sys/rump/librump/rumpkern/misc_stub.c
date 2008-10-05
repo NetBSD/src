@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.6.6.4 2008/09/28 10:41:03 mjf Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.6.6.5 2008/10/05 20:11:34 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -44,9 +44,21 @@ int nbpg = 4096;
 #endif
 
 void
+yield(void)
+{
+
+	/*
+	 * Do nothing - doesn't really make sense as we're being
+	 * scheduled anyway.
+	 */
+	return;
+}
+
+void
 preempt()
 {
 
+	/* see yield */
 	return;
 }
 

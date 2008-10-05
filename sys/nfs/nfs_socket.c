@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.167.6.3 2008/09/28 10:41:00 mjf Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.167.6.4 2008/10/05 20:11:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.167.6.3 2008/09/28 10:41:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.167.6.4 2008/10/05 20:11:33 mjf Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -172,8 +172,10 @@ static struct evcnt nfs_timer_ev;
 static struct evcnt nfs_timer_start_ev;
 static struct evcnt nfs_timer_stop_ev;
 
+#ifdef NFS
 static int nfs_sndlock(struct nfsmount *, struct nfsreq *);
 static void nfs_sndunlock(struct nfsmount *);
+#endif
 static int nfs_rcvlock(struct nfsmount *, struct nfsreq *);
 static void nfs_rcvunlock(struct nfsmount *);
 
@@ -1778,6 +1780,7 @@ nfs_sigintr(nmp, rep, l)
 	return (0);
 }
 
+#ifdef NFS
 /*
  * Lock a socket against others.
  * Necessary for STREAM sockets to ensure you get an entire rpc request/reply
@@ -1834,6 +1837,7 @@ nfs_sndunlock(struct nfsmount *nmp)
 	cv_signal(&nmp->nm_sndcv);
 	mutex_exit(&nmp->nm_lock);
 }
+#endif /* NFS */
 
 static int
 nfs_rcvlock(struct nfsmount *nmp, struct nfsreq *rep)

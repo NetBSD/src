@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.494.6.4 2008/09/28 10:40:34 mjf Exp $
+$NetBSD: usbdevs,v 1.494.6.5 2008/10/05 20:11:31 mjf Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -342,6 +342,7 @@ vendor ACERW		0x0967	Acer
 vendor ADIRONDACK	0x0976	Adirondack Wire & Cable
 vendor BECKHOFF		0x0978	Beckhoff
 vendor MINDSATWORK	0x097a	Minds At Work
+vendor ZIPPY		0x099a	Zippy Technology Corporation
 vendor POINTCHIPS	0x09a6	PointChips
 vendor INTERSIL		0x09aa	Intersil
 vendor TRIPPLITE2	0x09ae	Tripp Lite

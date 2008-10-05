@@ -1,4 +1,4 @@
-/*	$NetBSD: aacreg.h,v 1.10.6.2 2008/09/28 10:40:21 mjf Exp $	*/
+/*	$NetBSD: aacreg.h,v 1.10.6.3 2008/10/05 20:11:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -535,6 +535,7 @@ struct aac_mntobj {
 		u_int32_t pad[8];
 	} ObjExtension;
 	u_int32_t AlterEgoId;
+	u_int32_t CapacityHigh; /* Only if VM_NameServe64 */
 } __packed;
 
 struct aac_mntinfo {

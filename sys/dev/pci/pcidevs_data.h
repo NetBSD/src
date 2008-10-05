@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.929.6.3 2008/09/28 10:40:28 mjf Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.929.6.4 2008/10/05 20:11:30 mjf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.958 2008/09/18 12:03:45 cegger Exp
+ *	NetBSD: pcidevs,v 1.960 2008/10/01 15:38:14 christos Exp
  */
 
 /*
@@ -7684,6 +7684,10 @@ static const struct pci_product pci_products[] = {
 	    "i82801H IFE (G) LAN Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82567V,
+	    "i82567V LAN controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
 	    "82815 Hub",
 	},
@@ -9112,6 +9116,50 @@ static const struct pci_product pci_products[] = {
 	    "E7525 PCI Express Port B",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_4x1,
+	    "ICH10 SATA2(4port1)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_2x1,
+	    "ICH10 SATA2(2port1)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10DO_TIMER,
+	    "ICH10DO Watchdog timer",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10R_TIMER,
+	    "ICH10R Watchdog timer",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_TIMER,
+	    "ICH10 Watchdog timer",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10D_TIMER,
+	    "ICH10D Watchdog timer",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_4x2,
+	    "ICH10 SATA2(4port2)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10R_AHCI,
+	    "ICH10R AHCI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_2x2,
+	    "ICH10 SATA2(2port2)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SMB1,
+	    "ICH10 SMBus Serial Bus 1",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SMB2,
+	    "ICH10 SMBus Serial Bus 2",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2200BG,
 	    "PRO/Wireless LAN 2200BG Mini-PCI Adapter",
 	},
@@ -9374,6 +9422,14 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB368,
 	    "JMB368 PATA controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMC250,
+	    "JMC250 Gigabit Ethernet Controller",
+	},
+	{
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMC260,
+	    "JMC260 Fast Ethernet Controller",
 	},
 	{
 	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1460,
@@ -14440,4 +14496,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3009;
+const int pci_nproducts = 3023;
