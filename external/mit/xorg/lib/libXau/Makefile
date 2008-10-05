@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/05 02:42:53 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,16 @@ INCS=	Xauth.h
 INCSDIR=${X11INCDIR}/X11
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
+
+MAN=	Xau.3
+MLINKS=	Xau.3 XauDisposeAuth.3 \
+	Xau.3 XauFileName.3 \
+	Xau.3 XauGetAuthByAddr.3 \
+	Xau.3 XauGetBestAuthByAddr.3 \
+	Xau.3 XauLockAuth.3 \
+	Xau.3 XauReadAuth.3 \
+	Xau.3 XauUnlockAuth.3 \
+	Xau.3 XauWriteAuth.3
 
 PKGDIST=	${LIB}
 

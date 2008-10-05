@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.67 2008/10/05 02:28:01 cube Exp $
+# $NetBSD: mi,v 1.68 2008/10/05 02:42:53 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6467,6 +6467,15 @@
 ./usr/X11R7/man/cat3/XVaCreateNestedList.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XVisibilityEvent.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XWarpPointer.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/Xau.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XauDisposeAuth.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XauFileName.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XauGetAuthByAddr.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XauGetBestAuthByAddr.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XauLockAuth.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XauReadAuth.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XauUnlockAuth.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XauWriteAuth.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xaw.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XcmsAllocColor.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XcmsCCCOfColormap.0		-unknown-	.cat,xorg
@@ -7152,6 +7161,15 @@
 ./usr/X11R7/man/html3/XVaCreateNestedList.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XVisibilityEvent.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XWarpPointer.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/Xau.html				-unknown-	html,xorg
+./usr/X11R7/man/html3/XauDisposeAuth.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XauFileName.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XauGetAuthByAddr.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XauGetBestAuthByAddr.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XauLockAuth.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XauReadAuth.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XauUnlockAuth.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XauWriteAuth.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xaw.html				-unknown-	html,xorg
 ./usr/X11R7/man/html3/XcmsAllocColor.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XcmsCCCOfColormap.html		-unknown-	html,xorg
@@ -7836,6 +7854,15 @@
 ./usr/X11R7/man/man3/XVaCreateNestedList.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XVisibilityEvent.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XWarpPointer.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/Xau.3				-unknown-	.man,xorg
+./usr/X11R7/man/man3/XauDisposeAuth.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XauFileName.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XauGetAuthByAddr.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XauGetBestAuthByAddr.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XauLockAuth.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XauReadAuth.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XauUnlockAuth.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XauWriteAuth.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xaw.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XcmsAllocColor.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XcmsCCCOfColormap.3		-unknown-	.man,xorg
