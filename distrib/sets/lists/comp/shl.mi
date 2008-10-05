@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.61.6.3 2008/09/28 11:09:19 mjf Exp $
+# $NetBSD: shl.mi,v 1.61.6.4 2008/10/05 16:47:46 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -23,6 +23,7 @@
 ./usr/lib/libdns_pic.a				comp-bind-piclib
 ./usr/lib/libedit_pic.a				comp-c-piclib
 ./usr/lib/libevent_pic.a			comp-c-piclib
+./usr/lib/libfetch_pic.a			comp-c-piclib
 ./usr/lib/libform_pic.a				comp-c-piclib
 ./usr/lib/libg2c_pic.a				comp-fortran-lib	gcc=3
 ./usr/lib/libg2c_pic.a				comp-obsolete		obsolete,gcc=4

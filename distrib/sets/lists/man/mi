@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1057.6.7 2008/09/28 11:09:19 mjf Exp $
+# $NetBSD: mi,v 1.1057.6.8 2008/10/05 16:47:47 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -610,6 +610,15 @@
 ./usr/share/man/cat4/adbkbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adbms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adc.0			man-sys-catman		.cat
+./usr/share/man/cat4/adm1027.0			man-sys-catman		.cat
+./usr/share/man/cat4/adm1030.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7463.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7466.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7467.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7468.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7473.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7475.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7476.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adt7467c.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adw.0			man-sys-catman		.cat
@@ -822,6 +831,8 @@
 ./usr/share/man/cat4/cypide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/cz.0			man-sys-catman		.cat
 ./usr/share/man/cat4/daic.0			man-sys-catman		.cat
+./usr/share/man/cat4/dbcool.0			man-sys-catman		.cat
+./usr/share/man/cat4/dbCool.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ddb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ddc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/de.0			man-sys-catman		.cat
@@ -870,7 +881,7 @@
 ./usr/share/man/cat4/esh.0			man-sys-catman		.cat
 ./usr/share/man/cat4/esiop.0			man-sys-catman		.cat
 ./usr/share/man/cat4/esis.0			man-sys-catman		.cat
-./usr/share/man/cat4/esl.0			man-sys-catman		.cat
+./usr/share/man/cat4/esl.0			man-obsolete		obsolete
 ./usr/share/man/cat4/esm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/eso.0			man-sys-catman		.cat
 ./usr/share/man/cat4/esp.0			man-sys-catman		.cat
@@ -3162,6 +3173,15 @@
 ./usr/share/man/html4/adbkbd.html		man-sys-htmlman		html
 ./usr/share/man/html4/adbms.html		man-sys-htmlman		html
 ./usr/share/man/html4/adc.html			man-sys-htmlman		html
+./usr/share/man/html4/adm1027.html		man-sys-htmlman		html
+./usr/share/man/html4/adm1030.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7463.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7466.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7467.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7468.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7473.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7475.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7476.html		man-sys-htmlman		html
 ./usr/share/man/html4/adt7467c.html		man-sys-htmlman		html
 ./usr/share/man/html4/adv.html			man-sys-htmlman		html
 ./usr/share/man/html4/adw.html			man-sys-htmlman		html
@@ -3335,6 +3355,8 @@
 ./usr/share/man/html4/cypide.html		man-sys-htmlman		html
 ./usr/share/man/html4/cz.html			man-sys-htmlman		html
 ./usr/share/man/html4/daic.html			man-sys-htmlman		html
+./usr/share/man/html4/dbcool.html		man-sys-htmlman		html
+./usr/share/man/html4/dbCool.html		man-sys-htmlman		html
 ./usr/share/man/html4/ddb.html			man-sys-htmlman		html
 ./usr/share/man/html4/ddc.html			man-sys-htmlman		html
 ./usr/share/man/html4/de.html			man-sys-htmlman		html
@@ -3382,7 +3404,7 @@
 ./usr/share/man/html4/esh.html			man-sys-htmlman		html
 ./usr/share/man/html4/esiop.html		man-sys-htmlman		html
 ./usr/share/man/html4/esis.html			man-sys-htmlman		html
-./usr/share/man/html4/esl.html			man-sys-htmlman		html
+./usr/share/man/html4/esl.html			man-obsolete		obsolete
 ./usr/share/man/html4/esm.html			man-sys-htmlman		html
 ./usr/share/man/html4/eso.html			man-sys-htmlman		html
 ./usr/share/man/html4/esp.html			man-sys-htmlman		html
@@ -5411,6 +5433,15 @@
 ./usr/share/man/man4/adbkbd.4			man-sys-man		.man
 ./usr/share/man/man4/adbms.4			man-sys-man		.man
 ./usr/share/man/man4/adc.4			man-sys-man		.man
+./usr/share/man/man4/adm1027.4			man-sys-man		.man
+./usr/share/man/man4/adm1030.4			man-sys-man		.man
+./usr/share/man/man4/adt7463.4			man-sys-man		.man
+./usr/share/man/man4/adt7466.4			man-sys-man		.man
+./usr/share/man/man4/adt7467.4			man-sys-man		.man
+./usr/share/man/man4/adt7468.4			man-sys-man		.man
+./usr/share/man/man4/adt7473.4			man-sys-man		.man
+./usr/share/man/man4/adt7475.4			man-sys-man		.man
+./usr/share/man/man4/adt7476.4			man-sys-man		.man
 ./usr/share/man/man4/adt7467c.4			man-sys-man		.man
 ./usr/share/man/man4/adv.4			man-sys-man		.man
 ./usr/share/man/man4/adw.4			man-sys-man		.man
@@ -5623,6 +5654,8 @@
 ./usr/share/man/man4/cypide.4			man-sys-man		.man
 ./usr/share/man/man4/cz.4			man-sys-man		.man
 ./usr/share/man/man4/daic.4			man-sys-man		.man
+./usr/share/man/man4/dbcool.4			man-sys-man		.man
+./usr/share/man/man4/dbCool.4			man-sys-man		.man
 ./usr/share/man/man4/ddb.4			man-sys-man		.man
 ./usr/share/man/man4/ddc.4			man-sys-man		.man
 ./usr/share/man/man4/de.4			man-sys-man		.man
@@ -5671,7 +5704,7 @@
 ./usr/share/man/man4/esh.4			man-sys-man		.man
 ./usr/share/man/man4/esiop.4			man-sys-man		.man
 ./usr/share/man/man4/esis.4			man-sys-man		.man
-./usr/share/man/man4/esl.4			man-sys-man		.man
+./usr/share/man/man4/esl.4			man-obsolete		obsolete
 ./usr/share/man/man4/esm.4			man-sys-man		.man
 ./usr/share/man/man4/eso.4			man-sys-man		.man
 ./usr/share/man/man4/esp.4			man-sys-man		.man
