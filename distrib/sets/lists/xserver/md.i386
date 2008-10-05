@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.52 2008/09/26 06:57:04 rtr Exp $
+# $NetBSD: md.i386,v 1.53 2008/10/05 03:35:44 cube Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xvfb					-unknown-	x11
@@ -470,6 +470,8 @@
 ./usr/X11R7/lib/modules/drivers/vga_drv.so.4		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/via_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/via_drv.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmmouse_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/vmmouse_drv.so.12	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/vmware_drv.so.10	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/void_drv.so		-unknown-	xorg
@@ -637,6 +639,7 @@
 ./usr/X11R7/man/cat4/vesa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/vga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/via.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/vmmouse.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/vmware.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/void.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/pcitweak.html			-unknown-	html,xorg
@@ -670,6 +673,7 @@
 ./usr/X11R7/man/html4/vesa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/vga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/via.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/vmmouse.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/vmware.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/void.html				-unknown-	html,xorg
 ./usr/X11R7/man/man1/pcitweak.1				-unknown-	.man,xorg
@@ -703,5 +707,6 @@
 ./usr/X11R7/man/man4/vesa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/vga.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/via.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/vmmouse.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/vmware.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/void.4				-unknown-	.man,xorg
