@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.65 2008/10/05 01:47:55 cube Exp $
+# $NetBSD: mi,v 1.66 2008/10/05 02:05:39 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6487,6 +6487,12 @@
 ./usr/X11R7/man/cat3/XeviGetVisualInfo.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XeviQueryExtension.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XeviQueryVersion.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/Xevie.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XevieQueryVersion.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XevieStart.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XevieSelectInput.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XevieSendEvent.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XevieEnd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xfixes.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xfontcache.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xft.0				-unknown-	.cat,xorg
@@ -7154,6 +7160,12 @@
 ./usr/X11R7/man/html3/XeviGetVisualInfo.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XeviQueryExtension.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XeviQueryVersion.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/Xevie.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XevieQueryVersion.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XevieStart.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XevieSelectInput.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XevieSendEvent.html		-unknown-	html,xorg
+./usr/X11R7/man/html3/XevieEnd.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xfixes.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xfontcache.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xft.html				-unknown-	html,xorg
@@ -7820,6 +7832,12 @@
 ./usr/X11R7/man/man3/XeviGetVisualInfo.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XeviQueryExtension.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XeviQueryVersion.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/Xevie.3				-unknown-	.man,xorg
+./usr/X11R7/man/man3/XevieQueryVersion.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XevieStart.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XevieSelectInput.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XevieSendEvent.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XevieEnd.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xfixes.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xfontcache.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xft.3				-unknown-	.man,xorg
