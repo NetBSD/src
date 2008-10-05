@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.70 2008/10/05 18:32:40 cube Exp $
+# $NetBSD: mi,v 1.71 2008/10/05 20:24:33 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7980,7 +7980,7 @@
 ./usr/X11R7/man/man3/FcCharSetNew.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetNextPage.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetSubtract.3		-unknown-	.man,xorg
-./usr/X11R7/man/man3/FcCharSetSubtractCount.		-unknown-	.man,xorg
+./usr/X11R7/man/man3/FcCharSetSubtractCount.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcCharSetUnion.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcConfigAppFontAddDir.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/FcConfigAppFontAddFile.3		-unknown-	.man,xorg
