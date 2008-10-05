@@ -136,8 +136,10 @@ cd ./tmpmultilib.$$ || exit 1
 # Since not all versions of sh support functions, we achieve recursion
 # by creating a temporary shell script which invokes itself.
 rm -f tmpmultilib
-cat >tmpmultilib <<\EOF
+cat >tmpmultilib <<EOF
 #!${CONFIG_SHELL:-/bin/sh}
+EOF
+cat >>tmpmultilib <<\EOF
 # This recursive script basically outputs all combinations of its
 # input arguments, handling mutually exclusive sets of options by
 # repetition.  When the script is called, ${initial} is the list of
@@ -172,8 +174,10 @@ combinations=`initial=/ ./tmpmultilib ${options}`
 
 # If there exceptions, weed them out now
 if [ -n "${exceptions}" ]; then
-  cat >tmpmultilib2 <<\EOF
+  cat >tmpmultilib2 <<EOF
 #!${CONFIG_SHELL:-/bin/sh}
+EOF
+  cat >>tmpmultilib2 <<\EOF
 # This recursive script weeds out any combination of multilib
 # switches that should not be generated.  The output looks like
 # a list of subdirectory names with leading and trailing slashes.
@@ -271,8 +275,10 @@ fi
 #   opt1/opt2 nopt1 nopt2
 # In other words, we must output all combinations of matches.
 rm -f tmpmultilib2
-cat >tmpmultilib2 <<\EOF
+cat >tmpmultilib2 <<EOF
 #!${CONFIG_SHELL:-/bin/sh}
+EOF
+cat >>tmpmultilib2 <<\EOF
 # The positional parameters are a list of matches to consider.
 # ${dirout} is the directory name and ${optout} is the current list of
 # options.
