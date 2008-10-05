@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.62 2008/10/05 00:33:35 cube Exp $
+# $NetBSD: mi,v 1.63 2008/10/05 00:45:12 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5122,6 +5122,7 @@
 ./usr/X11R6/man/man3/gluTessVertex.3			-unknown-	.man,x11
 ./usr/X11R6/man/man3/gluUnProject.3			-unknown-	.man,x11
 ./usr/X11R7/bin/freetype-config				-unknown-	xorg
+./usr/X11R7/bin/xft-config				-unknown-	xorg
 ./usr/X11R7/include/GL/GLwDrawA.h			-unknown-	xorg
 ./usr/X11R7/include/GL/GLwDrawAP.h			-unknown-	xorg
 ./usr/X11R7/include/GL/GLwMDrawA.h			-unknown-	xorg
