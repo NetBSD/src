@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.66 2008/10/03 03:53:22 cube Exp $
+# $NetBSD: mi,v 1.67 2008/10/05 17:37:53 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1272,6 +1272,7 @@
 ./usr/X11R7/bin/xmessage				-unknown-	xorg
 ./usr/X11R7/bin/xmh					-unknown-	xorg
 ./usr/X11R7/bin/xmkmf					-unknown-	xorg
+./usr/X11R7/bin/xmlwf					-unknown-	xorg
 ./usr/X11R7/bin/xmodmap					-unknown-	xorg
 ./usr/X11R7/bin/xmore					-unknown-	xorg
 ./usr/X11R7/bin/xphelloworld				-unknown-	xorg
@@ -1988,6 +1989,7 @@
 ./usr/X11R7/man/cat1/xmessage.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xmh.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xmkmf.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/xmlwf.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xmodmap.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xmore.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xphelloworld.0			-unknown-	.cat,xorg
@@ -2106,6 +2108,7 @@
 ./usr/X11R7/man/html1/xmessage.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xmh.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/xmkmf.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/xmlwf.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xmodmap.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xmore.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xphelloworld.html			-unknown-	html,xorg
@@ -2225,6 +2228,7 @@
 ./usr/X11R7/man/man1/xmessage.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmh.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmkmf.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/xmlwf.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmodmap.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xmore.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xphelloworld.1			-unknown-	.man,xorg
