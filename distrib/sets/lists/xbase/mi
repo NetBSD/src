@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.67 2008/10/05 17:37:53 cube Exp $
+# $NetBSD: mi,v 1.68 2008/10/05 17:55:01 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1187,7 +1187,9 @@
 ./usr/X11R7/bin/dga					-unknown-	xorg
 ./usr/X11R7/bin/editres					-unknown-	xorg
 ./usr/X11R7/bin/fc-cache				-unknown-	xorg
+./usr/X11R7/bin/fc-cat					-unknown-	xorg
 ./usr/X11R7/bin/fc-list					-unknown-	xorg
+./usr/X11R7/bin/fc-match				-unknown-	xorg
 ./usr/X11R7/bin/fillblnk				-unknown-	xorg
 ./usr/X11R7/bin/fonttosfnt				-unknown-	xorg
 ./usr/X11R7/bin/fslsfonts				-unknown-	xorg
@@ -1916,7 +1918,9 @@
 ./usr/X11R7/man/cat1/dga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/editres.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-cache.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/fc-cat.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fc-list.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/fc-match.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fonttosfnt.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fslsfonts.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/fstobdf.0				-unknown-	.cat,xorg
@@ -2035,7 +2039,9 @@
 ./usr/X11R7/man/html1/dga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html1/editres.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-cache.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/fc-cat.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fc-list.html			-unknown-	html,xorg
+./usr/X11R7/man/html1/fc-match.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fonttosfnt.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fslsfonts.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/fstobdf.html			-unknown-	html,xorg
@@ -2154,7 +2160,9 @@
 ./usr/X11R7/man/man1/dga.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/editres.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-cache.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/fc-cat.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fc-list.1				-unknown-	.man,xorg
+./usr/X11R7/man/man1/fc-match.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fonttosfnt.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fslsfonts.1			-unknown-	.man,xorg
 ./usr/X11R7/man/man1/fstobdf.1				-unknown-	.man,xorg
