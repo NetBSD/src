@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.83 2008/07/10 15:04:41 nakayama Exp $ */
+/*	$NetBSD: cpu.h,v 1.84 2008/10/05 01:53:05 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,9 +153,9 @@ struct cpu_info {
  *
  */
 	int			ci_pmap_next_ctx;
+	int			ci_numctx;
 	paddr_t 		*ci_ctxbusy;
 	LIST_HEAD(, pmap) 	ci_pmap_ctxlist;
-	int			ci_numctx;
 
 	/*
 	 * The TSBs are per cpu too (since MMU context differs between
