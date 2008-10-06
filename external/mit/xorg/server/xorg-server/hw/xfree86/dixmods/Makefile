@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/09/26 06:57:03 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2008/10/06 10:33:44 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -16,7 +16,10 @@ CPPFLAGS+= \
 	-I${X11SRCDIR.xorg-server}/hw/xfree86/${LIB} \
 	-I${X11SRCDIR.xorg-server}/hw/xfree86/loader
 
-CPPFLAGS+=	-DXFree86LOADER
+CPPFLAGS+= \
+	${X11FLAGS.EXTENSION} \
+	-DHAVE_DIX_CONFIG_H \
+	-DXFree86LOADER
 
 SUBDIR = \
 	GLcore \
