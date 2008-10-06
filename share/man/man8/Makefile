@@ -1,4 +1,14 @@
-#	$NetBSD: Makefile,v 1.93 2008/02/18 10:37:19 elad Exp $
+#	$NetBSD: Makefile,v 1.94 2008/10/06 20:25:42 pgoyette Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
+
+MAN=	boot.8 #dosboot.8 boot_console.8 multiboot.8 w95boot.8 pxeboot.8 mbr.8
+#MLINKS=	mbr.8 bootselect.8
+MANSUBDIR=/amd64
+
+.include <bsd.man.mk>
+
+.PATH: ${.CURDIR}/../man8.i386
+#	$NetBSD: Makefile,v 1.94 2008/10/06 20:25:42 pgoyette Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	MAKEDEV.8 MAKEDEV.local.8 afterboot.8 boot.8 compat_30.8 \
@@ -21,7 +31,7 @@ MLINKS+=nis.8 yp.8
 MLINKS+=rc.8 rc.d.8
 MLINKS+=rc.8 rc.shutdown.8
 
-SUBDIR= man8.acorn26 man8.acorn32 man8.alpha man8.amiga man8.atari \
+SUBDIR= man8.acorn26 man8.acorn32 man8.alpha man8.amd64 man8.amiga man8.atari \
 	man8.cobalt man8.dreamcast man8.hp300 man8.hp700 man8.hpcarm \
 	man8.hpcmips man8.hpcsh man8.i386 man8.mac68k man8.macppc \
 	man8.mvme68k man8.next68k man8.pmax man8.prep \
