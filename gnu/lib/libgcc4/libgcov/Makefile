@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/25 17:40:05 tron Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/06 14:20:12 tron Exp $
 
 REQUIRETOOLS=	yes
 NOPIC=		# defined
@@ -16,7 +16,7 @@ LIB=		gcov
 LIBGCOVSRCS=	${G_LIBGCOV:=.c}
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH}
-
+CPPFLAGS+=	-Wno-stack-protector
 
 DPSRCS+=	${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk
 SRCS+=		${LIBGCOVSRCS}
@@ -28,8 +28,6 @@ ${LIBGCOVSRCS}: ${.CURDIR}/Makefile
 	printf '#define L${.PREFIX}\n#include <libgcov.c>\n' >${.TARGET}
 
 .include <bsd.lib.mk>
-
-COPTS+=		-Wno-stack-protector
 .else
 .include <bsd.prog.mk> # do nothing
 .endif
