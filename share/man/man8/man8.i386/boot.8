@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.42 2008/10/06 20:25:42 pgoyette Exp $
+.\"	$NetBSD: boot.8,v 1.43 2008/10/06 21:04:51 pgoyette Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -159,7 +159,7 @@ input of these commands:
 .It Xo Ic boot
 .Op Va device : Ns
 .Op Va filename
-.Op Fl acdqsvxz12
+.Op Fl 12acdqsvxz
 .Xc
 The default
 .Va device
@@ -240,10 +240,6 @@ Boot the system in verbose mode.
 Boot the system with debug messages enabled.
 .It Fl z
 Boot the system in silent mode.
-.It Fl 1
-Boot the system with multiprocessor support disabled.
-.It Fl 2
-Boot the system with ACPI disabled.
 .El
 .It Ic consdev Va dev
 Immediately switch the console to the specified device
