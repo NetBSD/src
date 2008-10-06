@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.146 2008/06/03 13:02:28 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.147 2008/10/06 22:09:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.146 2008/06/03 13:02:28 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.147 2008/10/06 22:09:21 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.146 2008/06/03 13:02:28 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.147 2008/10/06 22:09:21 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -667,7 +667,7 @@ ParseDoSrc(int tOp, const char *src)
 	 * invoked if the user didn't specify a target on the command
 	 * line. This is to allow #ifmake's to succeed, or something...
 	 */
-	(void)Lst_AtEnd(create, estrdup(src));
+	(void)Lst_AtEnd(create, bmake_strdup(src));
 	/*
 	 * Add the name to the .TARGETS variable as well, so the user can
 	 * employ that, if desired.
@@ -1755,7 +1755,7 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
      * find the durn thing. A return of NULL indicates the file don't
      * exist.
      */
-    fullname = file[0] == '/' ? estrdup(file) : NULL;
+    fullname = file[0] == '/' ? bmake_strdup(file) : NULL;
 
     if (fullname == NULL && !isSystem) {
 	/*
@@ -1766,7 +1766,7 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
 	 * we can locate the beast.
 	 */
 
-	incdir = estrdup(curFile->fname);
+	incdir = bmake_strdup(curFile->fname);
 	prefEnd = strrchr(incdir, '/');
 	if (prefEnd != NULL) {
 	    *prefEnd = '\0';
@@ -1917,7 +1917,7 @@ ParseSetParseFile(const char *filename)
 	Var_Set(".PARSEFILE", filename, VAR_GLOBAL, 0);
     } else {
 	len = slash - filename;
-	dirname = emalloc(len + 1);
+	dirname = bmake_malloc(len + 1);
 	memcpy(dirname, filename, len);
 	dirname[len] = 0;
 	Var_Set(".PARSEDIR", dirname, VAR_GLOBAL, 0);
@@ -1992,7 +1992,7 @@ Parse_SetInput(const char *name, int line, int fd, char *buf)
 	Lst_AtFront(includes, curFile);
 
     /* Allocate and fill in new structure */
-    curFile = emalloc(sizeof *curFile);
+    curFile = bmake_malloc(sizeof *curFile);
 
     /*
      * Once the previous state has been saved, we can get down to reading
@@ -2012,7 +2012,7 @@ Parse_SetInput(const char *name, int line, int fd, char *buf)
 	 * Allocate a 32k data buffer (as stdio seems to).
 	 * Set pointers so that first ParseReadc has to do a file read.
 	 */
-	buf = emalloc(IFILE_BUFLEN);
+	buf = bmake_malloc(IFILE_BUFLEN);
 	buf[0] = 0;
 	curFile->P_str = buf;
 	curFile->P_ptr = buf;
@@ -2192,7 +2192,7 @@ ParseGetLine(int flags, int *length)
 		len = cf->P_str + cf->P_buflen - tp - 32;
 		if (len <= 0) {
 		    /* We need a bigger buffer to hold this line */
-		    tp = erealloc(cf->P_str, cf->P_buflen + IFILE_BUFLEN);
+		    tp = bmake_realloc(cf->P_str, cf->P_buflen + IFILE_BUFLEN);
 		    cf->P_ptr = cf->P_ptr - cf->P_str + tp;
 		    cf->P_end = cf->P_end - cf->P_str + tp;
 		    ptr = ptr - cf->P_str + tp;
@@ -2512,7 +2512,7 @@ Parse_File(const char *name, int fd)
 		     * commands of all targets in the dependency spec
 		     */
 		    if (targets) {
-			cp = estrdup(cp);
+			cp = bmake_strdup(cp);
 			Lst_ForEach(targets, ParseAddCmd, cp);
 #ifdef CLEANUP
 			Lst_AtEnd(targCmds, cp);

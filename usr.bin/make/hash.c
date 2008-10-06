@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.16 2005/08/04 00:20:12 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.17 2008/10/06 22:09:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.16 2005/08/04 00:20:12 christos Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.17 2008/10/06 22:09:21 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.16 2005/08/04 00:20:12 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.17 2008/10/06 22:09:21 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -148,7 +148,7 @@ Hash_InitTable(Hash_Table *t, int numBuckets)
 	t->numEntries = 0;
 	t->size = i;
 	t->mask = i - 1;
-	t->bucketPtr = hp = emalloc(sizeof(*hp) * i);
+	t->bucketPtr = hp = bmake_malloc(sizeof(*hp) * i);
 	while (--i >= 0)
 		*hp++ = NULL;
 }
@@ -287,7 +287,7 @@ Hash_CreateEntry(Hash_Table *t, const char *key, Boolean *newPtr)
 	 */
 	if (t->numEntries >= rebuildLimit * t->size)
 		RebuildTable(t);
-	e = emalloc(sizeof(*e) + keylen);
+	e = bmake_malloc(sizeof(*e) + keylen);
 	hp = &t->bucketPtr[h & t->mask];
 	e->next = *hp;
 	*hp = e;
@@ -448,7 +448,7 @@ RebuildTable(Hash_Table *t)
 	i <<= 1;
 	t->size = i;
 	t->mask = mask = i - 1;
-	t->bucketPtr = hp = emalloc(sizeof(*hp) * i);
+	t->bucketPtr = hp = bmake_malloc(sizeof(*hp) * i);
 	while (--i >= 0)
 		*hp++ = NULL;
 	for (hp = oldhp, i = oldsize; --i >= 0;) {
