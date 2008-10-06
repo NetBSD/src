@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.44 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.45 2008/10/06 22:09:21 joerg Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.44 2008/02/15 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.45 2008/10/06 22:09:21 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.44 2008/02/15 21:29:50 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.45 2008/10/06 22:09:21 joerg Exp $");
 #endif
 #endif
 
@@ -38,63 +38,13 @@ strerror(int e)
 }
 #endif
 
-#if !defined(MAKE_NATIVE) && !defined(HAVE_STRDUP)
-#include <string.h>
-
-/* strdup
- *
- * Make a duplicate of a string.
- * For systems which lack this function.
- */
-char *
-strdup(const char *str)
-{
-    size_t len;
-    char *p;
-
-    if (str == NULL)
-	return NULL;
-    len = strlen(str) + 1;
-    p = emalloc(len);
-
-    return memcpy(p, str, len);
-}
-#endif
-
-#if !defined(HAVE_EMALLOC) && !defined(HAVE_STRNDUP)
-#include <string.h>
-
-/* strndup
- *
- * Make a duplicate of a string, up to a maximum length.
- * For systems which lack this function.
- */
-char *
-strndup(const char *str, size_t maxlen)
-{
-    size_t len;
-    char *p;
-
-    if (str == NULL)
-	return NULL;
-    len = strlen(str);
-    if (len > maxlen)
-	len = maxlen;
-    p = emalloc(len + 1);
-
-    memcpy(p, str, len);
-    p[len] = '\0';
-    return p;
-}
-#endif
-
 #if !defined(MAKE_NATIVE) && !defined(HAVE_SETENV)
 int
 setenv(const char *name, const char *value, int dum)
 {
     char *p;
     int len = strlen(name) + strlen(value) + 2; /* = \0 */
-    char *ptr = emalloc(len);
+    char *ptr = bmake_malloc(len);
 
     (void) dum;
 

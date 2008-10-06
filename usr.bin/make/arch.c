@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.55 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: arch.c,v 1.56 2008/10/06 22:09:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.55 2008/02/15 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.56 2008/10/06 22:09:21 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.55 2008/02/15 21:29:50 christos Exp $");
+__RCSID("$NetBSD: arch.c,v 1.56 2008/10/06 22:09:21 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -363,7 +363,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	     * are just placed at the end of the nodeLst we're returning.
 	     */
 	    sz = strlen(memName)+strlen(libName)+3;
-	    buf = sacrifice = emalloc(sz);
+	    buf = sacrifice = bmake_malloc(sz);
 
 	    snprintf(buf, sz, "%s(%s)", libName, memName);
 
@@ -398,14 +398,14 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	    Lst	  members = Lst_Init(FALSE);
 	    char  *member;
 	    size_t sz = MAXPATHLEN, nsz;
-	    nameBuf = emalloc(sz);
+	    nameBuf = bmake_malloc(sz);
 
 	    Dir_Expand(memName, dirSearchPath, members);
 	    while (!Lst_IsEmpty(members)) {
 		member = (char *)Lst_DeQueue(members);
 		nsz = strlen(libName) + strlen(member) + 3;
 		if (sz > nsz)
-		    nameBuf = erealloc(nameBuf, sz = nsz * 2);
+		    nameBuf = bmake_realloc(nameBuf, sz = nsz * 2);
 
 		snprintf(nameBuf, sz, "%s(%s)", libName, member);
 		free(member);
@@ -429,7 +429,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	    free(nameBuf);
 	} else {
 	    size_t	sz = strlen(libName) + strlen(memName) + 3;
-	    nameBuf = emalloc(sz);
+	    nameBuf = bmake_malloc(sz);
 	    snprintf(nameBuf, sz, "%s(%s)", libName, memName);
 	    gn = Targ_FindNode(nameBuf, TARG_CREATE);
 	    free(nameBuf);
@@ -610,8 +610,8 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 	    return (NULL);
     }
 
-    ar = emalloc(sizeof(Arch));
-    ar->name = estrdup(archive);
+    ar = bmake_malloc(sizeof(Arch));
+    ar->name = bmake_strdup(archive);
     ar->fnametab = NULL;
     ar->fnamesize = 0;
     Hash_InitTable(&ar->members, -1);
@@ -686,7 +686,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 #endif
 
 	    he = Hash_CreateEntry(&ar->members, memName, NULL);
-	    Hash_SetValue(he, emalloc(sizeof(struct ar_hdr)));
+	    Hash_SetValue(he, bmake_malloc(sizeof(struct ar_hdr)));
 	    memcpy(Hash_GetValue(he), &arh, sizeof(struct ar_hdr));
 	}
 	fseek(arch, (size + 1) & ~1, SEEK_CUR);
@@ -760,7 +760,7 @@ ArchSVR4Entry(Arch *ar, char *name, size_t size, FILE *arch)
 	 * This is a table of archive names, so we build one for
 	 * ourselves
 	 */
-	ar->fnametab = emalloc(size);
+	ar->fnametab = bmake_malloc(size);
 	ar->fnamesize = size;
 
 	if (fread(ar->fnametab, size, 1, arch) != 1) {
@@ -1183,7 +1183,7 @@ Arch_FindLib(GNode *gn, Lst path)
     char	    *libName;   /* file name for archive */
     size_t	     sz = strlen(gn->name) + 6 - 2;
 
-    libName = emalloc(sz);
+    libName = bmake_malloc(sz);
     snprintf(libName, sz, "lib%s.a", &gn->name[2]);
 
     gn->path = Dir_FindFile(libName, path);
