@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.21 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.22 2008/10/06 22:09:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.21 2008/02/15 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.22 2008/10/06 22:09:21 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.21 2008/02/15 21:29:50 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.22 2008/10/06 22:09:21 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -105,7 +105,7 @@ __RCSID("$NetBSD: buf.c,v 1.21 2008/02/15 21:29:50 christos Exp $");
 #define BufExpand(bp,nb) \
  	while (bp->left < (nb)+1) {\
 	    int newSize = (bp)->size * 2; \
-	    Byte  *newBuf = (Byte *)erealloc((bp)->buffer, newSize); \
+	    Byte  *newBuf = (Byte *)bmake_realloc((bp)->buffer, newSize); \
 	    \
 	    (bp)->inPtr = newBuf + ((bp)->inPtr - (bp)->buffer); \
 	    (bp)->outPtr = newBuf + ((bp)->outPtr - (bp)->buffer);\
@@ -267,13 +267,13 @@ Buf_Init(int size)
 {
     Buffer bp;	  	/* New Buffer */
 
-    bp = emalloc(sizeof(*bp));
+    bp = bmake_malloc(sizeof(*bp));
 
     if (size <= 0) {
 	size = BUF_DEF_SIZE;
     }
     bp->left = bp->size = size;
-    bp->buffer = emalloc(size);
+    bp->buffer = bmake_malloc(size);
     bp->inPtr = bp->outPtr = bp->buffer;
     *bp->inPtr = 0;
 
