@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.149 2008/10/05 21:31:39 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.150 2008/10/06 02:21:50 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.149 2008/10/05 21:31:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.150 2008/10/06 02:21:50 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2828,7 +2828,7 @@ ehci_free_itd(ehci_softc_t *sc, ehci_soft_itd_t *itd)
 	int s;
 
 	s = splusb();
-	LIST_INSERT_AFTER(LIST_FIRST(&sc->sc_freeitds), itd, u.free_list);
+	LIST_INSERT_HEAD(&sc->sc_freeitds, itd, u.free_list);
 	splx(s);
 }
 
