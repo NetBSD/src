@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_reg.h,v 1.1 2008/10/02 00:47:51 pgoyette Exp $ */
+/*	$NetBSD: dbcool_reg.h,v 1.2 2008/10/06 01:35:35 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define DBCOOLREG_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.1 2008/10/02 00:47:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.2 2008/10/06 01:35:35 pgoyette Exp $");
 
 #define DBCOOL_ADDRMASK		0x7f
 #define	DBCOOL_ADDR		0x2e	/* Some chips have multiple addrs */
@@ -55,16 +55,16 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.1 2008/10/02 00:47:51 pgoyette Exp 
 #define	DBCOOL_INT_TRIP_FIXED	0x17
 #define	DBCOOL_EXT_TRIP_FIXED	0x18
 #define	DBCOOL_ANALOG_OUT	0x19
-#define	DBCOOL_PECI1		0x1A
-#define	DBCOOL_PECI2		0x1B
-#define	DBCOOL_PECI3		0x1C
+#define	DBCOOL_PECI1_TEMP	0x1A
+#define	DBCOOL_PECI2_TEMP	0x1B
+#define	DBCOOL_PECI3_TEMP	0x1C
 #define	DBCOOL_IMON		0x1D
 #define	DBCOOL_VTT		0x1E
-#define	DBCOOL_EXTRES		0x1F
+#define	DBCOOL_EXTRES_VTT_IMON	0x1F
 #define	DBCOOL_OFFSET		0x1F
 #define	DBCOOL_25VIN		0x20
-#define	DBCOOL_CPU_VOLTAGE	0x21
-#define	DBCOOL_SUPPLY_VOLTAGE	0x22
+#define	DBCOOL_VCCP		0x21
+#define	DBCOOL_VCC		0x22
 #define	DBCOOL_5VIN		0x23
 #define	DBCOOL_12VIN		0x24
 #define	DBCOOL_CPU_VOLTAGE2	0x25
@@ -98,10 +98,11 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.1 2008/10/02 00:47:51 pgoyette Exp 
 #define	DBCOOL_PWM2_MAXDUTY	0x39
 #define	DBCOOL_PWM3_MAXDUTY	0x3A
 /*
- * Note: ADT7490 reused the Device_ID register for PECI Tcontrol limit
+ * Note: ADT7490 reused the Device_ID register for PECI Tcontrol value
+ * (equivalent to Ttherm for the regular temp sensors)
  */
 #define	DBCOOL_DEVICEID_REG	0x3D
-#define	DBCOOL_PECI_TCRTL_LIM	0x3D
+#define	DBCOOL_PECI_TCONTROL	0x3D
 #define	DBCOOL_COMPANYID_REG	0x3E
 #define	DBCOOL_REVISION_REG	0x3F
 #define	DBCOOL_CONFIG1_REG	0x40
@@ -140,9 +141,9 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.1 2008/10/02 00:47:51 pgoyette Exp 
 #define	DBCOOL_PWM1_CTL		0x5C
 #define	DBCOOL_PWM2_CTL		0x5D
 #define	DBCOOL_PWM3_CTL		0x5E
-#define	DBCOOL_PWM1_TRANGE	0x5F
-#define	DBCOOL_PWM2_TRANGE	0x60
-#define	DBCOOL_PWM3_TRANGE	0x61
+#define	DBCOOL_REMOTE1_TRANGE	0x5F	/* Bits [7:4] */
+#define	DBCOOL_LOCAL_TRANGE	0x60	/* Bits [7:4] */
+#define	DBCOOL_REMOTE2_TRANGE	0x61	/* Bits [7:4] */
 #define	DBCOOL_ENH_ACOUST_1	0x62
 #define	DBCOOL_ENH_ACOUST_2	0x63
 #define	DBCOOL_PWM1_MINDUTY	0x64
@@ -375,18 +376,20 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool_reg.h,v 1.1 2008/10/02 00:47:51 pgoyette Exp 
 #define	ADM1030_DEVICEID	0x30
 #define	ADT7463_DEVICEID	0x27
 #define	ADT7466_DEVICEID	0x66
-#define	ADT7467_DEVICEID	0x67
-#define	ADT7468_DEVICEID	0x68
+#define	ADT7467_DEVICEID	0x68	/* The ADT7467/7468 cannot be */
+#define	ADT7468_DEVICEID	0x68	/* distinguished by DEVICEID  */
 #define	ADT7473_DEVICEID	0x73
 #define	ADT7475_DEVICEID	0x75
 #define	ADT7476_DEVICEID	0x76
+#define	ADT7490_DEVICEID	0xFF	/* Device ID not used on 7490 */
 
 #define	ADM1027_REV_ID		0x60
 #define	ADT7463_REV_ID1		0x62
 #define	ADT7463_REV_ID2		0x6A
 #define	ADT7467_REV_ID1		0x71
 #define	ADT7467_REV_ID2		0x72
-#define	ADT7473_REV_ID		0x68
-#define	ADT7473_1_REV_ID	0x69
+#define	ADT7473_REV_ID1		0x68
+#define	ADT7473_REV_ID2		0x69
+#define	ADT7490_REV_ID		0x6E
 
 #endif /* def DBCOOLREG_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.1 2008/10/02 00:47:51 pgoyette Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.2 2008/10/06 01:35:35 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.1 2008/10/02 00:47:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.2 2008/10/06 01:35:35 pgoyette Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.1 2008/10/02 00:47:51 pgoyette Exp 
 
 enum dbc_pwm_params {
 	DBC_PWM_BEHAVIOR = 0,
-	DBC_PWM_RANGE,
 	DBC_PWM_MIN_DUTY,
 	DBC_PWM_MAX_DUTY,
 	DBC_PWM_CUR_DUTY,
@@ -74,6 +73,7 @@ enum dbc_sensor_type {
 #define	DBCFLAG_4BIT_VER	0x0010
 #define	DBCFLAG_HAS_VID		0x0020
 #define	DBCFLAG_HAS_VID_SEL	0x0040
+#define	DBCFLAG_HAS_PECI	0x0080
 #define	DBCFLAG_ADM1027		0x1000
 #define	DBCFLAG_ADM1030		0x2000
 #define	DBCFLAG_ADT7466		0x4000
@@ -92,6 +92,7 @@ struct dbcool_sensor {
 	struct reg_list	reg;
 	int name_index;
 	int sysctl_index;
+	int nom_volt_index;
 };
 
 /*
@@ -99,18 +100,14 @@ struct dbcool_sensor {
  * as the enum dbc_pwm_params above
  */
 struct dbcool_power_control {
-	uint8_t behavior;
-	uint8_t range;
-	uint8_t min;
-	uint8_t max;
-	uint8_t cur;
+	uint8_t	power_regs[DBC_PWM_LAST_PARAM];
 	const char *desc;
 };
 
 struct chip_id;
 
 struct dbcool_softc {
-	struct device *parent;
+	struct device *sc_dev;
 	i2c_tag_t sc_tag;
 	i2c_addr_t sc_addr;
 	struct chip_id *sc_chip;
@@ -118,8 +115,10 @@ struct dbcool_softc {
 	envsys_data_t sc_sensor[DBCOOL_MAXSENSORS];
 	int sc_sysctl_num[DBCOOL_MAXSENSORS];
 	struct reg_list *sc_regs[DBCOOL_MAXSENSORS];
-	uint8_t sc_suspend;
-	uint8_t sc_temp_offset;
+	int sc_nom_volt[DBCOOL_MAXSENSORS];
+	int sc_temp_offset;
+	int64_t sc_supply_voltage;
+	bool sc_suspend;
 #ifdef DBCOOL_DEBUG
 	uint8_t sc_user_reg;
 #endif
