@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.150 2008/07/21 14:19:24 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.151 2008/10/06 22:09:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.150 2008/07/21 14:19:24 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.151 2008/10/06 22:09:21 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.150 2008/07/21 14:19:24 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.151 2008/10/06 22:09:21 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -423,7 +423,7 @@ rearg:
 			break;
 		case 'T':
 			if (argvalue == NULL) goto noarg;
-			tracefile = estrdup(argvalue);
+			tracefile = bmake_strdup(argvalue);
 			Var_Append(MAKEFLAGS, "-T", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
 			break;
@@ -543,7 +543,7 @@ rearg:
 				Punt("illegal (null) argument.");
 			if (*argv[1] == '-' && !dashDash)
 				goto rearg;
-			(void)Lst_AtEnd(create, estrdup(argv[1]));
+			(void)Lst_AtEnd(create, bmake_strdup(argv[1]));
 		}
 
 	return;
@@ -588,7 +588,7 @@ Main_ParseArgLine(char *line)
 	if (!*line)
 		return;
 
-	buf = emalloc(len = strlen(line) + strlen(argv0) + 2);
+	buf = bmake_malloc(len = strlen(line) + strlen(argv0) + 2);
 	(void)snprintf(buf, len, "%s %s", argv0, line);
 	if (p1)
 		free(p1);
@@ -943,7 +943,7 @@ main(int argc, char **argv)
 	if (syspath == NULL || *syspath == '\0')
 		syspath = defsyspath;
 	else
-		syspath = estrdup(syspath);
+		syspath = bmake_strdup(syspath);
 
 	for (start = syspath; *start != '\0'; start = cp) {
 		for (cp = start; *cp != '\0' && *cp != ':'; cp++)
@@ -1159,7 +1159,7 @@ ReadMakefile(ClientData p, ClientData q __unused)
 	char *fname = p;		/* makefile to read */
 	int fd;
 	size_t len = MAXPATHLEN;
-	char *name, *path = emalloc(len);
+	char *name, *path = bmake_malloc(len);
 	int setMAKEFILE;
 
 	if (!strcmp(fname, "-")) {
@@ -1172,7 +1172,7 @@ ReadMakefile(ClientData p, ClientData q __unused)
 		if (strcmp(curdir, objdir) && *fname != '/') {
 			size_t plen = strlen(curdir) + strlen(fname) + 2;
 			if (len < plen)
-				path = erealloc(path, len = 2 * plen);
+				path = bmake_realloc(path, len = 2 * plen);
 			
 			(void)snprintf(path, len, "%s/%s", curdir, fname);
 			fd = open(path, O_RDONLY);
@@ -1184,7 +1184,7 @@ ReadMakefile(ClientData p, ClientData q __unused)
 			/* If curdir failed, try objdir (ala .depend) */
 			plen = strlen(objdir) + strlen(fname) + 2;
 			if (len < plen)
-				path = erealloc(path, len = 2 * plen);
+				path = bmake_realloc(path, len = 2 * plen);
 			(void)snprintf(path, len, "%s/%s", objdir, fname);
 			fd = open(path, O_RDONLY);
 			if (fd != -1) {
@@ -1535,7 +1535,7 @@ Cmd_Exec(const char *cmd, const char **errnum)
     }
     return res;
 bad:
-    res = emalloc(1);
+    res = bmake_malloc(1);
     *res = '\0';
     return res;
 }
@@ -1666,13 +1666,24 @@ Finish(int errors)
 	Fatal("%d error%s", errors, errors == 1 ? "" : "s");
 }
 
-#ifndef HAVE_EMALLOC
+#ifndef USE_EMALLOC
 /*
- * emalloc --
+ * enomem --
+ *	die when out of memory.
+ */
+static void
+enomem(void)
+{
+	(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
+	exit(2);
+}
+
+/*
+ * bmake_malloc --
  *	malloc, but die on error.
  */
 void *
-emalloc(size_t len)
+bmake_malloc(size_t len)
 {
 	void *p;
 
@@ -1682,54 +1693,54 @@ emalloc(size_t len)
 }
 
 /*
- * estrdup --
+ * bmake_strdup --
  *	strdup, but die on error.
  */
 char *
-estrdup(const char *str)
+bmake_strdup(const char *str)
 {
+	size_t len;
 	char *p;
 
-	if ((p = strdup(str)) == NULL)
+	len = strlen(str) + 1;
+	if ((p = malloc(len)) == NULL)
 		enomem();
-	return(p);
+	return memcpy(p, str, len);
 }
 
 /*
- * estrndup --
+ * bmake_strndup --
  *	strndup, but die on error.
  */
 char *
-estrndup(const char *str, size_t len)
+bmake_strndup(const char *str, size_t max_len)
 {
+	size_t len;
 	char *p;
 
-	if ((p = strndup(str, len)) == NULL)
-		enomem();
+	if (str == NULL)
+		return NULL;
+
+	len = strlen(str);
+	if (len > max_len)
+		len = max_len;
+	p = bmake_malloc(len + 1);
+	memcpy(p, str, len);
+	p[len] = '\0';
+
 	return(p);
 }
 
 /*
- * erealloc --
+ * bmake_realloc --
  *	realloc, but die on error.
  */
 void *
-erealloc(void *ptr, size_t size)
+bmake_realloc(void *ptr, size_t size)
 {
 	if ((ptr = realloc(ptr, size)) == NULL)
 		enomem();
 	return(ptr);
-}
-
-/*
- * enomem --
- *	die when out of memory.
- */
-void
-enomem(void)
-{
-	(void)fprintf(stderr, "%s: %s.\n", progname, strerror(errno));
-	exit(2);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.55 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.56 2008/10/06 22:09:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.55 2008/02/15 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.56 2008/10/06 22:09:21 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.55 2008/02/15 21:29:50 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.56 2008/10/06 22:09:21 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -276,10 +276,10 @@ Dir_Init(const char *cdname)
 
     Dir_InitCur(cdname);
 
-    dotLast = emalloc(sizeof(Path));
+    dotLast = bmake_malloc(sizeof(Path));
     dotLast->refCount = 1;
     dotLast->hits = 0;
-    dotLast->name = estrdup(".DOTLAST");
+    dotLast->name = bmake_strdup(".DOTLAST");
     Hash_InitTable(&dotLast->files, -1);
 }
 
@@ -552,7 +552,7 @@ DirMatchFiles(const char *pattern, Path *p, Lst expansions)
 	     (pattern[0] == '.')))
 	{
 	    (void)Lst_AtEnd(expansions,
-			    (isDot ? estrdup(entry->name) :
+			    (isDot ? bmake_strdup(entry->name) :
 			     str_concat(p->name, entry->name,
 					STR_ADDSLASH)));
 	}
@@ -635,7 +635,7 @@ DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
 	/*
 	 * Allocate room for the combination and install the three pieces.
 	 */
-	file = emalloc(otherLen + cp - start + 1);
+	file = bmake_malloc(otherLen + cp - start + 1);
 	if (brace != word) {
 	    strncpy(file, word, brace-word);
 	}
@@ -909,7 +909,7 @@ DirLookupSubdir(Path *p, const char *name)
 	/*
 	 * Checking in dot -- DON'T put a leading ./ on the thing.
 	 */
-	file = estrdup(name);
+	file = bmake_strdup(name);
     }
 
     if (DEBUG(DIR)) {
@@ -977,7 +977,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
 			fprintf(debug_file, "   must be here but isn't -- returning\n");
 		}
 		/* Return empty string: terminates search */
-		return estrdup("");
+		return bmake_strdup("");
 	}
 
 	p->hits += 1;
@@ -985,7 +985,7 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
 	if (DEBUG(DIR)) {
 		fprintf(debug_file, "   returning %s\n", name);
 	}
-	return (estrdup(name));
+	return (bmake_strdup(name));
 }
 
 /*-
@@ -1011,7 +1011,7 @@ DirFindDot(Boolean hasSlash __unused, const char *name, const char *cp)
 	    }
 	    hits += 1;
 	    dot->hits += 1;
-	    return (estrdup(name));
+	    return (bmake_strdup(name));
 	}
 	if (cur &&
 	    Hash_FindEntry(&cur->files, cp) != NULL) {
@@ -1283,7 +1283,7 @@ Dir_FindFile(const char *name, Lst path)
     }
 
     if (Hash_FindEntry(&p->files, cp) != NULL) {
-	return (estrdup(name));
+	return (bmake_strdup(name));
     } else {
 	return (NULL);
     }
@@ -1298,7 +1298,7 @@ Dir_FindFile(const char *name, Lst path)
 	if (DEBUG(DIR)) {
 	    fprintf(debug_file, "   got it (in mtime cache)\n");
 	}
-	return(estrdup(name));
+	return(bmake_strdup(name));
     } else if (stat(name, &stb) == 0) {
 	entry = Hash_CreateEntry(&mtimes, name, NULL);
 	if (DEBUG(DIR)) {
@@ -1306,7 +1306,7 @@ Dir_FindFile(const char *name, Lst path)
 		    name);
 	}
 	Hash_SetValue(entry, (long)stb.st_mtime);
-	return (estrdup(name));
+	return (bmake_strdup(name));
     } else {
 	if (DEBUG(DIR)) {
 	    fprintf(debug_file, "   failed. Returning NULL\n");
@@ -1439,7 +1439,7 @@ Dir_MTime(GNode *gn)
     }
 
     if (fullName == NULL) {
-	fullName = estrdup(gn->name);
+	fullName = bmake_strdup(gn->name);
     }
 
     entry = Hash_FindEntry(&mtimes, fullName);
@@ -1524,8 +1524,8 @@ Dir_AddDir(Lst path, const char *name)
 	}
 
 	if ((d = opendir(name)) != NULL) {
-	    p = emalloc(sizeof(Path));
-	    p->name = estrdup(name);
+	    p = bmake_malloc(sizeof(Path));
+	    p->name = bmake_strdup(name);
 	    p->hits = 0;
 	    p->refCount = 1;
 	    Hash_InitTable(&p->files, -1);
@@ -1606,7 +1606,7 @@ Dir_MakeFlags(const char *flag, Lst path)
     LstNode	  ln;	  /* the node of the current directory */
     Path	  *p;	  /* the structure describing the current directory */
 
-    str = estrdup("");
+    str = bmake_strdup("");
 
     if (Lst_Open(path) == SUCCESS) {
 	while ((ln = Lst_Next(path)) != NILLNODE) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.63 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.64 2008/10/06 22:09:21 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.63 2008/02/15 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.64 2008/10/06 22:09:21 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.63 2008/02/15 21:29:50 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.64 2008/10/06 22:09:21 joerg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -966,9 +966,9 @@ Suff_AddSuffix(char *str, GNode **gn)
 
     ln = Lst_Find(sufflist, str, SuffSuffHasNameP);
     if (ln == NILLNODE) {
-	s = emalloc(sizeof(Suff));
+	s = bmake_malloc(sizeof(Suff));
 
-	s->name =   	estrdup(str);
+	s->name =   	bmake_strdup(str);
 	s->nameLen = 	strlen(s->name);
 	s->searchPath = Lst_Init(FALSE);
 	s->children = 	Lst_Init(FALSE);
@@ -1189,8 +1189,8 @@ SuffAddSrc(ClientData sp, ClientData lsp)
 	 * structure for a file with no suffix attached. Two birds, and all
 	 * that...
 	 */
-	s2 = emalloc(sizeof(Src));
-	s2->file =  	estrdup(targ->pref);
+	s2 = bmake_malloc(sizeof(Src));
+	s2->file =  	bmake_strdup(targ->pref);
 	s2->pref =  	targ->pref;
 	s2->parent = 	targ;
 	s2->node =  	NILGNODE;
@@ -1207,7 +1207,7 @@ SuffAddSrc(ClientData sp, ClientData lsp)
 	fprintf(debug_file, "\n");
 #endif
     }
-    s2 = emalloc(sizeof(Src));
+    s2 = bmake_malloc(sizeof(Src));
     s2->file = 	    str_concat(targ->pref, s->name, 0);
     s2->pref =	    targ->pref;
     s2->parent =    targ;
@@ -1474,8 +1474,8 @@ SuffFindCmds(Src *targ, Lst slst)
      * source node's name so Suff_FindDeps can free it
      * again (ick)), and return the new structure.
      */
-    ret = emalloc(sizeof(Src));
-    ret->file = estrdup(s->name);
+    ret = bmake_malloc(sizeof(Src));
+    ret->file = bmake_strdup(s->name);
     ret->pref = targ->pref;
     ret->suff = suff;
     suff->refCount++;
@@ -2072,8 +2072,8 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	    /*
 	     * Allocate a Src structure to which things can be transformed
 	     */
-	    targ = emalloc(sizeof(Src));
-	    targ->file = estrdup(gn->name);
+	    targ = bmake_malloc(sizeof(Src));
+	    targ->file = bmake_strdup(gn->name);
 	    targ->suff = (Suff *)Lst_Datum(ln);
 	    targ->suff->refCount++;
 	    targ->node = gn;
@@ -2088,7 +2088,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	     * the length of the suffix from the end of the name.
 	     */
 	    prefLen = (eoname - targ->suff->nameLen) - sopref;
-	    targ->pref = emalloc(prefLen + 1);
+	    targ->pref = bmake_malloc(prefLen + 1);
 	    memcpy(targ->pref, sopref, prefLen);
 	    targ->pref[prefLen] = '\0';
 
@@ -2117,14 +2117,14 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	    fprintf(debug_file, "\tNo known suffix on %s. Using .NULL suffix\n", gn->name);
 	}
 
-	targ = emalloc(sizeof(Src));
-	targ->file = estrdup(gn->name);
+	targ = bmake_malloc(sizeof(Src));
+	targ->file = bmake_strdup(gn->name);
 	targ->suff = suffNull;
 	targ->suff->refCount++;
 	targ->node = gn;
 	targ->parent = NULL;
 	targ->children = 0;
-	targ->pref = estrdup(sopref);
+	targ->pref = bmake_strdup(sopref);
 #ifdef DEBUG_SRC
 	targ->cp = Lst_Init(FALSE);
 #endif
@@ -2529,9 +2529,9 @@ Suff_Init(void)
      * actually go on the suffix list or everyone will think that's its
      * suffix.
      */
-    emptySuff = suffNull = emalloc(sizeof(Suff));
+    emptySuff = suffNull = bmake_malloc(sizeof(Suff));
 
-    suffNull->name =   	    estrdup("");
+    suffNull->name =   	    bmake_strdup("");
     suffNull->nameLen =     0;
     suffNull->searchPath =  Lst_Init(FALSE);
     Dir_Concat(suffNull->searchPath, dirSearchPath);

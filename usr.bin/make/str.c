@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.28 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: str.c,v 1.29 2008/10/06 22:09:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.28 2008/02/15 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.29 2008/10/06 22:09:21 joerg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.28 2008/02/15 21:29:50 christos Exp $");
+__RCSID("$NetBSD: str.c,v 1.29 2008/10/06 22:09:21 joerg Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -102,7 +102,7 @@ str_concat(const char *s1, const char *s2, int flags)
 	len2 = strlen(s2);
 
 	/* allocate length plus separator plus EOS */
-	result = emalloc((u_int)(len1 + len2 + 2));
+	result = bmake_malloc((u_int)(len1 + len2 + 2));
 
 	/* copy first string into place */
 	memcpy(result, s1, len1);
@@ -145,7 +145,7 @@ brk_string(const char *str, int *store_argc, Boolean expand, char **buffer)
 	const char *p;
 	int len;
 	int argmax = 50, curlen = 0;
-    	char **argv = emalloc((argmax + 1) * sizeof(char *));
+    	char **argv = bmake_malloc((argmax + 1) * sizeof(char *));
 
 	/* skip leading space chars. */
 	for (; *str == ' ' || *str == '\t'; ++str)
@@ -153,7 +153,7 @@ brk_string(const char *str, int *store_argc, Boolean expand, char **buffer)
 
 	/* allocate room for a copy of the string */
 	if ((len = strlen(str) + 1) > curlen)
-		*buffer = emalloc(curlen = len);
+		*buffer = bmake_malloc(curlen = len);
 
 	/*
 	 * copy the string; at the same time, parse backslashes,
@@ -206,7 +206,7 @@ brk_string(const char *str, int *store_argc, Boolean expand, char **buffer)
 			*t++ = '\0';
 			if (argc == argmax) {
 				argmax *= 2;		/* ramp up fast */
-				argv = (char **)erealloc(argv,
+				argv = (char **)bmake_realloc(argv,
 				    (argmax + 1) * sizeof(char *));
 			}
 			argv[argc++] = start;
