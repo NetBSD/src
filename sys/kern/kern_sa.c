@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.45 2008/10/01 16:46:36 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.46 2008/10/06 18:05:01 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.45 2008/10/01 16:46:36 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.46 2008/10/06 18:05:01 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2120,12 +2120,15 @@ sa_makeupcalls(struct lwp *l, struct sadata_upcall *sau)
 		sas[2] = &sau->sau_interrupted.ss_captured.ss_sa;
 		nint = 1;
 	}
+#if 0
+	/* For now, limit ourselves to one unblock at once. */
 	if (sau->sau_type == SA_UPCALL_UNBLOCKED) {
 		mutex_enter(&vp->savp_mutex);
 		nevents += vp->savp_woken_count;
 		mutex_exit(&vp->savp_mutex);
 		/* XXX WRS Need to limit # unblocks we copy out at once! */
 	}
+#endif
 
 	/* Copy out the activation's ucontext */
 	up = (void *)STACK_ALLOC(stack, ucsize);
