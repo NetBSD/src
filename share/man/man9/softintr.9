@@ -1,4 +1,4 @@
-.\"	$NetBSD: softintr.9,v 1.17 2008/05/02 18:11:05 martin Exp $
+.\"	$NetBSD: softintr.9,v 1.18 2008/10/06 13:51:38 pooka Exp $
 .\"
 .\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -59,7 +59,7 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd December 6, 2007
+.Dd October 6, 2008
 .Dt SOFTINT 9
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@
 .Sh SYNOPSIS
 .In sys/intr.h
 .Ft void *
-.Fn softint_establish "int flags" "void (*func)(void *)" "void *arg"
+.Fn softint_establish "u_int flags" "void (*func)(void *)" "void *arg"
 .Ft void
 .Fn softint_disestablish "void *cookie"
 .Ft void
