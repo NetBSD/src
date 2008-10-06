@@ -1,15 +1,5 @@
-#	$NetBSD: Makefile,v 1.94 2008/10/06 20:25:42 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.95 2008/10/06 22:51:15 pgoyette Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
-
-MAN=	boot.8 #dosboot.8 boot_console.8 multiboot.8 w95boot.8 pxeboot.8 mbr.8
-#MLINKS=	mbr.8 bootselect.8
-MANSUBDIR=/amd64
-
-.include <bsd.man.mk>
-
-.PATH: ${.CURDIR}/../man8.i386
-#	$NetBSD: Makefile,v 1.94 2008/10/06 20:25:42 pgoyette Exp $
-#	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 MAN=	MAKEDEV.8 MAKEDEV.local.8 afterboot.8 boot.8 compat_30.8 \
 	compat_darwin.8 \
