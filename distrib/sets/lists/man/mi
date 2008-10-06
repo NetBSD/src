@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1101 2008/10/02 00:52:17 pgoyette Exp $
+# $NetBSD: mi,v 1.1102 2008/10/06 20:25:42 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1894,6 +1894,7 @@
 ./usr/share/man/cat8/amd.0			man-amd-catman		.cat
 ./usr/share/man/cat8/amd64/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/amd64/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/amd64/boot.0		man-sys-catman		.cat
 ./usr/share/man/cat8/amiga/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/amiga/binpatch.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/amiga/boot.0		man-sys-catman		.cat
@@ -4300,6 +4301,7 @@
 ./usr/share/man/html8/alpha/setnetbootinfo.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/altqd.html		man-router-htmlman	html
 ./usr/share/man/html8/amd.html			man-amd-htmlman		html
+./usr/share/man/html8/amd64/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/amiga/binpatch.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/amiga/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/amiga/grfconfig.html	man-sysutil-htmlman	html
@@ -6713,6 +6715,7 @@
 ./usr/share/man/man8/amd.8			man-amd-man		.man
 ./usr/share/man/man8/amd64/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/amd64/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/amd64/boot.8		man-sys-man		.man
 ./usr/share/man/man8/amiga/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/amiga/binpatch.8		man-sysutil-man		.man
 ./usr/share/man/man8/amiga/boot.8		man-sys-man		.man
