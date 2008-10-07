@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ttys,v 1.8 2008/03/27 15:26:39 tsutsui Exp $
+#	$NetBSD: ttys,v 1.9 2008/10/07 10:00:01 abs Exp $
 #
 # name	getty				type	status		comments
 
@@ -9,6 +9,7 @@
 
 # Console pseudo-device
 console	"/usr/libexec/getty std.115200"	vt100	off secure
+constty	"/usr/libexec/getty std.115200"	vt100	off secure
 
 # Serial console port
 tty00	"/usr/libexec/getty std.115200"	vt100	on secure
