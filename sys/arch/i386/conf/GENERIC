@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.911 2008/10/07 09:30:04 rmind Exp $
+# $NetBSD: GENERIC,v 1.912 2008/10/07 12:43:32 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.911 $"
+#ident 		"GENERIC-$Revision: 1.912 $"
 
 maxusers	64		# estimated number of users
 
@@ -632,9 +632,10 @@ iic*	at nfsmb?
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
-#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-#adt7463c* at iic? addr 0x2D		# Tyan S2881
-#adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+# dbCool Thermal monitor and fan controller
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # IBM Thinkpad Active Protection System
 #aps0 	at isa? port 0x1600
