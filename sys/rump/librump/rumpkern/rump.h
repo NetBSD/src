@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.33 2008/09/30 19:25:56 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.34 2008/10/07 23:21:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -58,7 +58,14 @@ struct modinfo;
 #define curlwp rump_get_curlwp()
 #endif
 
-void	rump_init(void);
+/*
+ * Something like rump capabilities would be nicer, but let's
+ * do this for a start.
+ */
+#define RUMP_VERSION	01
+#define rump_init()	_rump_init(RUMP_VERSION)
+
+int		_rump_init(int);
 struct mount	*rump_mnt_init(struct vfsops *, int);
 int		rump_mnt_mount(struct mount *, const char *, void *, size_t *);
 void		rump_mnt_destroy(struct mount *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.6 2008/08/01 19:52:11 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.7 2008/10/07 23:16:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -38,6 +38,7 @@
 /* don't include NetBSD <sys/header.h> for portability */
 struct vnode;
 struct stat;
+struct timeval;
 
 struct ukfs;
 
@@ -45,9 +46,12 @@ struct ukfs;
 
 #define UKFS_RELFLAG_NOUNMOUNT	0x01
 
+#define UKFS_VERSION	001 /* sector 001 */
+#define	ukfs_init()	_ukfs_init(UKFS_VERSION)
+
 __BEGIN_DECLS
 
-int		ukfs_init(void);
+int		_ukfs_init(int);
 struct ukfs	*ukfs_mount(const char *, const char *, const char *,
 			  int, void *, size_t);
 void		ukfs_release(struct ukfs *, int);
