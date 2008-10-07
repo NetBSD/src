@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.50 2008/09/30 16:45:33 jmcneill Exp $
+# $NetBSD: XEN2_DOM0,v 1.51 2008/10/07 12:43:32 pgoyette Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -255,10 +255,12 @@ amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
+
+# dbCool thermal monitor and fan controller
 #iic*	at amdpm?			# sensors below are on this bus
-#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-#adt7463c* at iic? addr 0x2D		# Tyan S2881
-#adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00

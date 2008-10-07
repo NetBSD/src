@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.228 2008/10/07 09:30:04 rmind Exp $
+# $NetBSD: GENERIC,v 1.229 2008/10/07 12:43:31 pgoyette Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.228 $"
+#ident 		"GENERIC-$Revision: 1.229 $"
 
 maxusers	64		# estimated number of users
 
@@ -429,9 +429,10 @@ options 	INTEL_CORETEMP
 ichsmb*	at pci? dev ? function ?
 iic*	at ichsmb?
 
-#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-#adt7463c* at iic? addr 0x2D		# Tyan S2881
-#adt7463c* at iic? addr 0x2E            # Tyan S2882-D
+# Thermal monitor and fan controller
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # Fintek Super I/O with hardware monitor
 #finsio0 	at isa? port 0x4e

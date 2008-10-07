@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.181 2008/09/30 16:45:33 jmcneill Exp $
+# $NetBSD: ALL,v 1.182 2008/10/07 12:43:32 pgoyette Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.181 $"
+#ident 		"ALL-$Revision: 1.182 $"
 
 maxusers	32		# estimated number of users
 
@@ -640,9 +640,10 @@ iic*	at nfsmb?
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
-adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-adt7463c* at iic? addr 0x2D		# Tyan S2881
-adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+# dbCool thermal monitor and fan controller
+dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+dbcool* at iic? addr 0x2D		# Tyan S2881
+dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 pic16lc*	at iic? addr 0x10	# XBOX PIC16LC
 xbseeprom*	at iic? addr 0x54	# XBOX serial EEPROM
