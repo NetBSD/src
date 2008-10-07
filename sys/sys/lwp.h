@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.107 2008/08/28 06:21:22 yamt Exp $	*/
+/*	$NetBSD: lwp.h,v 1.108 2008/10/07 09:48:27 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,10 @@ struct lockdebug;
 struct lwp {
 	/* Scheduling and overall state */
 	TAILQ_ENTRY(lwp) l_runq;	/* s: run queue */
-	void		*l_sched_info;	/* s: Scheduler-specific structure */
+	union {
+		void *	info;		/* s: scheduler-specific structure */
+		u_int	timeslice;	/* l: time-quantum for SCHED_M2 */
+	} l_sched;
 	struct cpu_info *volatile l_cpu;/* s: CPU we're on if LSONPROC */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
 	int		l_ctxswtch;	/* l: performing a context switch */
