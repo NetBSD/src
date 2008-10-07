@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.172 2008/09/30 14:25:15 pooka Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.173 2008/10/07 01:20:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.172 2008/09/30 14:25:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.173 2008/10/07 01:20:37 pooka Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1605,7 +1605,6 @@ nfs_timer_init(void)
  * Scan the nfsreq list and retranmit any requests that have timed out
  * To avoid retransmission attempts on STREAM sockets (in the future) make
  * sure to set the r_retry field to 0 (implies nm_retry == 0).
- * A non-NULL argument means 'initialize'.
  */
 void
 nfs_timer(void *arg)
