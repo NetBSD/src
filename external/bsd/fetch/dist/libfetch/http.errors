@@ -1,5 +1,5 @@
 # $FreeBSD: http.errors,v 1.5 2001/05/23 18:52:02 des Exp $
-# $NetBSD: http.errors,v 1.1.1.1 2008/09/30 18:46:07 joerg Exp $
+# $NetBSD: http.errors,v 1.1.1.2 2008/10/07 15:55:20 joerg Exp $
 #
 # This list is taken from RFC 2068.
 #
