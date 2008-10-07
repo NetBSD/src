@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.118 2008/01/28 02:47:14 rumble Exp $ */
+/*	$NetBSD: md.c,v 1.119 2008/10/07 09:58:15 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -485,9 +485,6 @@ md_cleanup_install(void)
 			    "sed -an -e '/^ttyE[1-9]/s/off/on/;"
 			    "H;$!d;g;w /etc/ttys' /etc/ttys");
 
-	run_program(0, "rm -f %s", target_expand("/sysinst"));
-	run_program(0, "rm -f %s", target_expand("/.termcap"));
-	run_program(0, "rm -f %s", target_expand("/.profile"));
 }
 
 int

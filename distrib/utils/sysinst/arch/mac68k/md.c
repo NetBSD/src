@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.52 2008/05/24 21:42:52 hauke Exp $ */
+/*	$NetBSD: md.c,v 1.53 2008/10/07 09:58:15 abs Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1133,10 +1133,6 @@ md_cleanup_install(void)
 {
 
 	enable_rc_conf();
-
-	run_program(0, "rm -f %s", target_expand("/sysinst"));
-	run_program(0, "rm -f %s", target_expand("/.termcap"));
-	run_program(0, "rm -f %s", target_expand("/.profile"));
 }
 
 int
