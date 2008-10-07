@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.9 2008/09/30 19:26:23 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.10 2008/10/07 23:16:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -131,10 +131,21 @@ postcall(struct ukfs *ukfs)
 }
 
 int
-ukfs_init()
+_ukfs_init(int version)
 {
+	int rv;
 
-	rump_init();
+	if (version != UKFS_VERSION) {
+		printf("incompatible ukfs version, %d vs. %d\n",
+		    version, UKFS_VERSION);
+		errno = EPROGMISMATCH;
+		return -1;
+	}
+
+	if ((rv = rump_init()) != 0) {
+		errno = rv;
+		return -1;
+	}
 
 	return 0;
 }
