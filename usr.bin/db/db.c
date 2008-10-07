@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.20 2008/09/05 07:55:33 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.21 2008/10/07 01:32:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
@@ -32,12 +32,12 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.20 2008/09/05 07:55:33 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.21 2008/10/07 01:32:51 lukem Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
-#include <db.h>
 #include <ctype.h>
+#include <db.h>
 #include <err.h>
 #include <fcntl.h>
 #include <limits.h>
@@ -441,12 +441,14 @@ int
 db_del(char *keystr)
 {
 	DBT	key;
-	int	r = 0;
+	int	r;
 
 	db_makekey(&key, keystr, 1, (flags & F_DECODE_KEY ? 1 : 0));
-	switch (db->del(db, &key, 0)) {
+	r = db->del(db, &key, 0);
+	switch (r) {
 	case -1:
-		warn("Error deleting key `%s'", keystr);
+		if (! (flags & F_QUIET))
+			warn("Error deleting key `%s'", keystr);
 		r = 1;
 		break;
 	case 0:
@@ -454,8 +456,11 @@ db_del(char *keystr)
 			printf("Deleted key `%s'\n", keystr);
 		break;
 	case 1:
-		warnx("Unknown key `%s'", keystr);
+		if (! (flags & F_QUIET))
+			warnx("Unknown key `%s'", keystr);
 		break;
+	default:
+		abort();
 	}
 	if (flags & F_DECODE_KEY)
 		free(key.data);
@@ -505,6 +510,8 @@ db_get(char *keystr)
 			warnx("Unknown key `%s'", keystr);
 		}
 		break;
+	default:
+		abort();
 	}
 	if (flags & F_DECODE_KEY)
 		free(key.data);
@@ -520,8 +527,8 @@ db_put(char *keystr, char *valstr)
 
 	db_makekey(&key, keystr, 1, (flags & F_DECODE_KEY ? 1 : 0));
 	db_makekey(&val, valstr, 0, (flags & F_DECODE_VAL ? 1 : 0));
-	switch (db->put(db, &key, &val,
-	    (flags & F_REPLACE) ? 0 : R_NOOVERWRITE)) {
+	r = db->put(db, &key, &val, (flags & F_REPLACE) ? 0 : R_NOOVERWRITE);
+	switch (r) {
 	case -1:
 		warn("Error writing key `%s'", keystr);
 		r = 1;
@@ -534,6 +541,8 @@ db_put(char *keystr, char *valstr)
 		if (! (flags & F_QUIET))
 			warnx("Key `%s' already exists", keystr);
 		break;
+	default:
+		abort();
 	}
 	if (flags & F_DECODE_KEY)
 		free(key.data);
