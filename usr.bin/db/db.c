@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.21 2008/10/07 01:32:51 lukem Exp $	*/
+/*	$NetBSD: db.c,v 1.22 2008/10/07 10:03:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
@@ -29,10 +29,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: db.c,v 1.21 2008/10/07 01:32:51 lukem Exp $");
+__RCSID("$NetBSD: db.c,v 1.22 2008/10/07 10:03:47 lukem Exp $");
 #endif /* __RCSID */
 #endif /* not lint */
 
