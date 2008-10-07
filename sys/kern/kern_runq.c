@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.21 2008/09/30 16:28:45 rmind Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.22 2008/10/07 09:48:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.21 2008/09/30 16:28:45 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.22 2008/10/07 09:48:27 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -123,8 +123,8 @@ runq_init(void)
 
 	/* Balancing */
 	worker_ci = curcpu();
-	cacheht_time = mstohz(3);		/* ~3 ms  */
-	balance_period = mstohz(300);		/* ~300ms */
+	cacheht_time = mstohz(3);		/*   ~3 ms */
+	balance_period = mstohz(300);		/* ~300 ms */
 
 	/* Minimal count of LWPs for catching */
 	min_catch = 1;
@@ -639,6 +639,9 @@ sched_lwp_stats(struct lwp *l)
 {
 	int batch;
 
+	KASSERT(lwp_locked(l, NULL));
+
+	/* Update sleep time */
 	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
 	    l->l_stat == LSSUSPENDED)
 		l->l_slptime++;
