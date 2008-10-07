@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_syspuffs.c,v 1.4 2008/09/02 19:38:25 pooka Exp $	*/
+/*	$NetBSD: rump_syspuffs.c,v 1.5 2008/10/07 23:23:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -102,7 +102,8 @@ mount_syspuffs_parseargs(int argc, char *argv[],
 	if (socketpair(PF_LOCAL, SOCK_STREAM, 0, sv) == -1)
 		err(1, "socketpair");
 
-	rump_init();
+	if ((rv = rump_init()) == -1)
+		err(1, "rump_init");
 
 	switch (fork()) {
 	case 0:
