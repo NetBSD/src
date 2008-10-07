@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.2 2008/10/06 01:35:35 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.3 2008/10/07 22:50:33 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.2 2008/10/06 01:35:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.3 2008/10/07 22:50:33 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,13 +164,13 @@ static const char *dbc_sensor_names[] = {
 static int64_t nominal_voltages[] = {
 	-1,		/* Vcc can be either 3.3 or 5.0V
 			   at 3/4 scale                  */
-	2250000,	/* Vccp         2.25V 3/4 scale  */
-	2497500,	/* 2.5VIN       2.5V  3/4 scale  */
-	5002500,	/* 5VIN         5V    3/4 scale  */
+	 2249939,	/* Vccp         2.25V 3/4 scale  */
+	 2497436,	/* 2.5VIN       2.5V  3/4 scale  */
+	 5002466,	/* 5VIN         5V    3/4 scale  */
 	12000000,	/* 12VIN       12V    3/4 scale  */
-	1680900,	/* Vtt, Imon    2.25V full scale */
-	1689000,	/* AIN1, AIN2   2.25V full scale */
-	0
+	 1690809,	/* Vtt, Imon    2.25V full scale */
+	 1689600,	/* AIN1, AIN2   2.25V full scale */
+	       0
 };
 
 /*
