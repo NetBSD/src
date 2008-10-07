@@ -1,4 +1,4 @@
-/* $NetBSD: md.c,v 1.3 2008/01/28 02:47:14 rumble Exp $ */
+/* $NetBSD: md.c,v 1.4 2008/10/07 09:58:14 abs Exp $ */
 
 /*
  * Copyright 1997,2002 Piermont Information Systems Inc.
@@ -60,30 +60,12 @@ md_cleanup_install(void)
 {
 
 	enable_rc_conf();
-
-	run_program(0, "rm -f %s", target_expand("/sysinst"));
-	run_program(0, "rm -f %s", target_expand("/.termcap"));
-	run_program(0, "rm -f %s", target_expand("/.profile"));
 }
 
 int
 md_copy_filesystem(void)
 {
 
-#if 0
-	if (target_already_root()) {
-		return 0;
-	}
-
-	/* Copy the instbin(s) to the disk */
-	run_program(RUN_DISPLAY | RUN_PROGRESS, 
-	    "pax -X -O -r -w -pe / %s", targetroot_mnt);
-
-	/* Copy next-stage install profile into target /.profile. */
-	if (cp_to_target ("/tmp/.hdprofile", "/.profile")!= 0)
-		return 1;
-	return cp_to_target ("/usr/share/misc/termcap", "/.termcap");
-#endif
 	return 0;
 }
 
