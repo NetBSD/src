@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.111 2008/09/19 11:21:33 rmind Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.112 2008/10/07 09:35:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.111 2008/09/19 11:21:33 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.112 2008/10/07 09:35:03 rmind Exp $");
 
 #define SYSVSHM
 
@@ -1003,7 +1003,8 @@ sysctl_ipc_shmmni(SYSCTLFN_ARGS)
 static int
 sysctl_ipc_shmmaxpgs(SYSCTLFN_ARGS)
 {
-	int newsize, error;
+	uint32_t newsize;
+	int error;
 	struct sysctlnode node;
 	node = *rnode;
 	node.sysctl_data = &newsize;
@@ -1017,7 +1018,30 @@ sysctl_ipc_shmmaxpgs(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	shminfo.shmall = newsize;
-	shminfo.shmmax = shminfo.shmall * PAGE_SIZE;
+	shminfo.shmmax = (uint64_t)shminfo.shmall * PAGE_SIZE;
+
+	return 0;
+}
+
+static int
+sysctl_ipc_shmmax(SYSCTLFN_ARGS)
+{
+	uint64_t newsize;
+	int error;
+	struct sysctlnode node;
+	node = *rnode;
+	node.sysctl_data = &newsize;
+
+	newsize = shminfo.shmmax;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (newsize < PAGE_SIZE)
+		return EINVAL;
+
+	shminfo.shmmax = round_page(newsize);
+	shminfo.shmall = shminfo.shmmax >> PAGE_SHIFT;
 
 	return 0;
 }
@@ -1037,10 +1061,10 @@ SYSCTL_SETUP(sysctl_ipc_shm_setup, "sysctl kern.ipc subtree setup")
 		NULL, 0, NULL, 0,
 		CTL_KERN, KERN_SYSVIPC, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT | CTLFLAG_READONLY,
-		CTLTYPE_INT, "shmmax",
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_QUAD, "shmmax",
 		SYSCTL_DESCR("Max shared memory segment size in bytes"),
-		NULL, 0, &shminfo.shmmax, 0,
+		sysctl_ipc_shmmax, 0, &shminfo.shmmax, 0,
 		CTL_KERN, KERN_SYSVIPC, KERN_SYSVIPC_SHMMAX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
