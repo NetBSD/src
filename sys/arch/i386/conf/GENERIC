@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.910 2008/09/30 16:45:33 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.911 2008/10/07 09:30:04 rmind Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.910 $"
+#ident 		"GENERIC-$Revision: 1.911 $"
 
 maxusers	64		# estimated number of users
 
@@ -89,6 +89,7 @@ options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
+# Note: SysV IPC parameters could be changed dynamically, see sysctl(8).
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
