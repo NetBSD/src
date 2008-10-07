@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.60 2008/09/30 21:00:39 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.61 2008/10/07 23:21:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -88,8 +88,8 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 static int rump_inited;
 static struct emul emul_rump;
 
-void
-rump_init()
+int
+_rump_init(int rump_version)
 {
 	extern char hostname[];
 	extern size_t hostnamelen;
@@ -101,8 +101,14 @@ rump_init()
 
 	/* XXX */
 	if (rump_inited)
-		return;
+		return 0;
 	rump_inited = 1;
+
+	if (rump_version != RUMP_VERSION) {
+		printf("rump version mismatch, %d vs. %d\n",
+		    rump_version, RUMP_VERSION);
+		return EPROGMISMATCH;
+	}
 
 	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
 		desiredvnodes = strtoul(buf, NULL, 10);
@@ -174,6 +180,8 @@ rump_init()
 
 	lwp0.l_fd = proc0.p_fd = fd_init(&rump_filedesc0);
 	rump_cwdi.cwdi_cdir = rootvnode;
+
+	return 0;
 }
 
 struct mount *
