@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.7 2008/09/05 10:42:09 pooka Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.8 2008/10/07 23:22:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.7 2008/09/05 10:42:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.8 2008/10/07 23:22:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -166,7 +166,9 @@ syspuffs_glueinit(int fd, int *newfd)
 	struct ptargs *pap;
 	int rv;
 
-	rump_init();
+	if ((rv = rump_init()) != 0)
+		return rv;
+
 	putterattach();
 	rv = puttercdopen(makedev(178, 0), 0, 0, curlwp);
 	if (rv && rv != EMOVEFD)
