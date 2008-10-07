@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2007/01/14 16:32:23 apb Exp $
+#	$NetBSD: Makefile,v 1.10 2008/10/07 15:10:35 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -12,9 +12,6 @@ CLEANFILES+=	lorder
 .PATH: ${.CURDIR}/../../usr.bin/lorder
 
 .include <bsd.hostprog.mk>
-
-BUILD_OSTYPE!=	uname -s
-BUILD_OSVERSION!= uname -r | sed -e 's,\([0-9]*\.[0-9]*\).*,\1,'
 
 install: ${TIMESTAMP}
 ${TIMESTAMP}: lorder
