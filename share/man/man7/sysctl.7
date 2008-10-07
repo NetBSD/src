@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.15 2008/09/21 11:13:14 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.16 2008/10/07 09:36:17 rmind Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -730,11 +730,16 @@ The third level names for the ipc variables are detailed below.
 .It kern.ipc.sysvsem	integer		no
 .It kern.ipc.sysvshm	integer		no
 .It kern.ipc.sysvipc_info	struct		no
-.It kern.ipc.shmmax	integer		no
+.It kern.ipc.shmmax	integer		yes
 .It kern.ipc.shmmni	integer		yes
 .It kern.ipc.shmseg	integer		yes
 .It kern.ipc.shmmaxpgs	integer		yes
 .It kern.ipc.shm_use_phys	integer		yes
+.It kern.ipc.msgmni	integer		yes
+.It kern.ipc.msgseg	integer		yes
+.It kern.ipc.semmni	integer		yes
+.It kern.ipc.semmns	integer		yes
+.It kern.ipc.semmnu	integer		yes
 .El
 .Bl -tag -width "123456"
 .It Li kern.ipc.sysvmsg ( KERN_SYSVIPC_MSG )
@@ -791,6 +796,16 @@ Max amount of shared memory in pages.
 Locking of shared memory in physical memory.
 If 0, memory can be swapped
 out, otherwise it will be locked in physical memory.
+.It Li kern.ipc.msgmni
+Max number of message queue identifiers.
+.It Li kern.ipc.msgseg
+Max number of number of message segments.
+.It Li kern.ipc.semmni
+Max number of number of semaphore identifiers.
+.It Li kern.ipc.semmns
+Max number of number of semaphores in system.
+.It Li kern.ipc.semmnu
+Max number of undo structures in system.
 .El
 .It Li kern.timex ( KERN_TIMEX )
 Not available.
