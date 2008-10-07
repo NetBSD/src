@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.38 2008/05/02 18:11:05 martin Exp $
+.\"	$NetBSD: queue.3,v 1.39 2008/10/07 13:03:50 apb Exp $
 .\"
 .\" Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\"
 .\"	@(#)queue.3	8.1 (Berkeley) 12/13/93
 .\"
-.Dd December 11, 2007
+.Dd October 7, 2008
 .Dt QUEUE 3
 .Os
 .Sh NAME
@@ -1171,6 +1171,12 @@ while (CIRCLEQ_FIRST(\*[Am]head) != (void *)\*[Am]head)
 if (CIRCLEQ_EMPTY(\*[Am]head))		/* Test for emptiness. */
 	printf("nothing to do\\n");
 .Ed
+.Sh NOTES
+Some of these macros or functions perform no error checking,
+and invalid usage leads to undefined behaviour.
+In the case of macros or functions that expect their arguments
+to be elements that are present in the list or queue, passing an element
+that is not present is invalid.
 .Sh HISTORY
 The
 .Nm queue
