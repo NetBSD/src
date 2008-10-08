@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.42 2008/07/21 14:19:21 lukem Exp $	*/
+/*	$NetBSD: cksum.c,v 1.43 2008/10/08 03:55:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.42 2008/07/21 14:19:21 lukem Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.43 2008/10/08 03:55:05 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -112,7 +112,7 @@ __RCSID("$NetBSD: cksum.c,v 1.42 2008/07/21 14:19:21 lukem Exp $");
 
 typedef char *(*_filefunc)(const char *, char *);
 
-struct hash {
+const struct hash {
 	const char *progname;
 	const char *hashname;
 	void (*stringfunc)(const char *);
@@ -148,7 +148,7 @@ struct hash {
 	{ .progname = NULL, },
 };
 
-int	hash_digest_file(char *, struct hash *, int);
+int	hash_digest_file(char *, const struct hash *, int);
 void	requirehash(const char *);
 void	usage(void);
 
@@ -162,7 +162,7 @@ main(int argc, char **argv)
 	const char *progname;
 	int (*cfncn) (int, u_int32_t *, off_t *);
 	void (*pfncn) (char *, u_int32_t, off_t);
-	struct hash *hash;
+	const struct hash *hash;
 	int normal, i, check_warn, do_check;
 
 	cfncn = NULL;
@@ -342,7 +342,7 @@ main(int argc, char **argv)
 					/*
 					 * Search proper hash
 					 */
-					struct hash *nhash;
+					const struct hash *nhash;
 					
 					for (nhash = hashes ;
 					     nhash->hashname != NULL;
@@ -504,7 +504,7 @@ main(int argc, char **argv)
 }
 
 int
-hash_digest_file(char *fn, struct hash *hash, int normal)
+hash_digest_file(char *fn, const struct hash *hash, int normal)
 {
 	char *cp;
 
