@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.31 2008/10/08 22:46:19 joerg Exp $	 */
+/*	$NetBSD: exec.c,v 1.32 2008/10/08 22:57:28 joerg Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -133,31 +133,18 @@ static char module_base[64] = "/";
 
 static void	module_init(void);
 
-int
-exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
+static int
+common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
+    physaddr_t loadaddr, int floppy, u_long marks[MARK_MAX])
 {
-	u_long          boot_argv[BOOT_NARGS];
-	int		fd;
-	u_long		marks[MARK_MAX];
-	struct btinfo_symtab btinfo_symtab;
-	u_long		extmem;
-	u_long		basemem;
+	int fd;
 #ifdef XMS
 	u_long		xmsmem;
 	physaddr_t	origaddr = loadaddr;
 #endif
 
-#ifdef	DEBUG
-	printf("exec: file=%s loadaddr=0x%lx\n",
-	       file ? file : "NULL", loadaddr);
-#endif
-
-	BI_ALLOC(32); /* ??? */
-
-	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
-
-	extmem = getextmem();
-	basemem = getbasemem();
+	*extmem = getextmem();
+	*basemem = getbasemem();
 
 #ifdef XMS
 	if ((getextmem1() == 0) && (xmsmem = checkxms())) {
@@ -170,14 +157,14 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 		 * xmsmem is a few kB less than the actual size, but
 		 *  better than nothing.
 		 */
-		if (xmsmem > extmem)
-			extmem = xmsmem;
+		if (xmsmem > *extmem)
+			*extmem = xmsmem;
 		/*
 		 * Get the size of the kernel
 		 */
 		marks[MARK_START] = loadaddr;
 		if ((fd = loadfile(file, marks, COUNT_KERNEL)) == -1)
-			goto out;
+			return EIO;
 		close(fd);
 
 		kernsize = marks[MARK_END];
@@ -191,7 +178,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 	marks[MARK_START] = loadaddr;
 	if ((fd = loadfile(file, marks,
 	    LOAD_KERNEL & ~(floppy ? LOAD_NOTE : 0))) == -1)
-		goto out;
+		return EIO;
 
 	close(fd);
 
@@ -225,6 +212,30 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 	    (-sizeof(int));
 	image_end = marks[MARK_END];
 	kernel_loaded = true;
+
+	return 0;
+}
+
+int
+exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
+{
+	u_long          boot_argv[BOOT_NARGS];
+	u_long		marks[MARK_MAX];
+	struct btinfo_symtab btinfo_symtab;
+	u_long		extmem;
+	u_long		basemem;
+
+#ifdef	DEBUG
+	printf("exec: file=%s loadaddr=0x%lx\n",
+	       file ? file : "NULL", loadaddr);
+#endif
+
+	BI_ALLOC(32); /* ??? */
+
+	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
+
+	if (common_load_kernel(file, &basemem, &extmem, loadaddr, floppy, marks))
+		goto out;
 
 	boot_argv[0] = boothowto;
 	boot_argv[1] = 0;
