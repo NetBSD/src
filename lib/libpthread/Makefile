@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2008/09/29 08:48:15 ad Exp $
+#	$NetBSD: Makefile,v 1.54 2008/10/08 08:27:07 ad Exp $
 #
 
 WARNS=	4
@@ -68,7 +68,6 @@ SRCS+= pthread_md.c
 
 .if defined(PTHREAD__COMPAT)
 SRCS+=		pthread_compat.c
-CPPFLAGS+=	-DPTHREAD__COMPAT
 .PATH.c:	${.CURDIR}/../../common/lib/libc/arch/${ARCHSUBDIR}/atomic
 .PATH.S:	${.CURDIR}/../../common/lib/libc/arch/${ARCHSUBDIR}/atomic
 .PATH.c:	${.CURDIR}/../../common/lib/libc/atomic
