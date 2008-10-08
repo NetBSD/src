@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2004/08/31 00:00:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.39.2.1 2008/10/08 19:14:22 bouyer Exp $
 
 .include <bsd.own.mk>
 
@@ -46,6 +46,7 @@ YDATA=		africa antarctica asia australasia \
 NDATA=		systemv
 SDATA=		solar87 solar88 solar89
 TDATA=		$(YDATA) $(NDATA) $(SDATA)
+TABDATA=	iso3166.tab zone.tab
 DATA=		$(YDATA) $(NDATA) $(SDATA) leapseconds # yearistype.sh
 USNO=		usno1988 usno1989
 
@@ -87,20 +88,38 @@ TOOL_PAX.unpriv=
 .endif
 
 .if ${MKSHARE} != "no"
-afterinstall: ${DATA} ${REDO}
+afterinstall: ${DATA} ${REDO} ${TABDATA}
 	${_MKMSG_CREATE} ${POSIXRULES}
 	mkdir -p ${TZBUILDDIR}
 	cd ${.CURDIR} && \
 	    ${TOOL_ZIC} -y ${YEARISTYPE} -d ${TZBUILDDIR} -p ${POSIXRULES}
-	cd ${TZBUILDDIR} && find . -type f -print | sort \
-	| while read tzfile; do \
+	cd ${TZBUILDDIR} && \
+	    find . -type f -print | xargs ${TOOL_STAT} -qf '%d,%i %N' | sort \
+	| while read devino tzfile; do \
 		destfile=${DESTDIR}${TZDIR}/$${tzfile#./}; \
-		cmp -s $$tzfile $$destfile > /dev/null 2>&1 && continue; \
-		${_MKSHMSG_INSTALL} $$destfile; \
-		${_MKSHECHO} ${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} \
-		    -m ${NONBINMODE} $$tzfile $$destfile ; \
-		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} \
-		    -m ${NONBINMODE} $$tzfile $$destfile ; \
+		if [ "$$devino" = "$$lastdevino" ]; then \
+			if  ldevino=`${TOOL_STAT} -qf '%d %i' $$lastfile` && \
+			    tdevino=`${TOOL_STAT} -qf '%d %i' $$destfile` && \
+			    [ "$$ldevino" = "$$tdevino" ]; then \
+				continue; \
+			fi; \
+			${_MKSHMSG_INSTALL} $$destfile; \
+			${_MKSHECHO} ${INSTALL_LINK} $$lastfile $$destfile; \
+			${INSTALL_LINK} $$lastfile $$destfile; \
+		else \
+			lastdevino=$$devino; \
+			lastfile=$$destfile; \
+			cmp -s $$tzfile $$destfile >/dev/null 2>&1 && continue;\
+			${_MKSHMSG_INSTALL} $$destfile; \
+			${_MKSHECHO} ${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} \
+			    -m ${NONBINMODE} $$tzfile $$destfile; \
+			${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} \
+			    -m ${NONBINMODE} $$tzfile $$destfile; \
+		fi; \
+	done
+	for f in ${TABDATA}; do \
+		${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+			${.CURDIR}/$$f ${DESTDIR}${TZDIR}; \
 	done
 .else	# ${MKSHARE} == "no"
 afterinstall:

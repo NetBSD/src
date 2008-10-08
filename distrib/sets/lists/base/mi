@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532.2.32 2007/10/15 05:09:55 riz Exp $
+# $NetBSD: mi,v 1.532.2.33 2008/10/08 19:14:22 bouyer Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2930,6 +2930,7 @@
 ./usr/share/zoneinfo/America/Argentina/Mendoza	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Rio_Gallegos	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/San_Juan	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/San_Luis	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Tucuman	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Ushuaia	base-sys-share		share
 ./usr/share/zoneinfo/America/Aruba		base-sys-share		share
@@ -2988,8 +2989,10 @@
 ./usr/share/zoneinfo/America/Indiana/Knox	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Marengo	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Petersburg	base-sys-share		share
+./usr/share/zoneinfo/America/Indiana/Tell_City	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Vevay	base-sys-share		share
 ./usr/share/zoneinfo/America/Indiana/Vincennes	base-sys-share		share
+./usr/share/zoneinfo/America/Indiana/Winamac	base-sys-share		share
 ./usr/share/zoneinfo/America/Indianapolis	base-sys-share		share
 ./usr/share/zoneinfo/America/Inuvik		base-sys-share		share
 ./usr/share/zoneinfo/America/Iqaluit		base-sys-share		share
@@ -3007,6 +3010,7 @@
 ./usr/share/zoneinfo/America/Maceio		base-sys-share		share
 ./usr/share/zoneinfo/America/Managua		base-sys-share		share
 ./usr/share/zoneinfo/America/Manaus		base-sys-share		share
+./usr/share/zoneinfo/America/Marigot		base-sys-share		share
 ./usr/share/zoneinfo/America/Martinique		base-sys-share		share
 ./usr/share/zoneinfo/America/Mazatlan		base-sys-share		share
 ./usr/share/zoneinfo/America/Mendoza		base-sys-share		share
@@ -3040,13 +3044,16 @@
 ./usr/share/zoneinfo/America/Rankin_Inlet	base-sys-share		share
 ./usr/share/zoneinfo/America/Recife		base-sys-share		share
 ./usr/share/zoneinfo/America/Regina		base-sys-share		share
+./usr/share/zoneinfo/America/Resolute		base-sys-share		share
 ./usr/share/zoneinfo/America/Rio_Branco		base-sys-share		share
 ./usr/share/zoneinfo/America/Rosario		base-sys-share		share
+./usr/share/zoneinfo/America/Santarem		base-sys-share		share
 ./usr/share/zoneinfo/America/Santiago		base-sys-share		share
 ./usr/share/zoneinfo/America/Santo_Domingo	base-sys-share		share
 ./usr/share/zoneinfo/America/Sao_Paulo		base-sys-share		share
 ./usr/share/zoneinfo/America/Scoresbysund	base-sys-share		share
 ./usr/share/zoneinfo/America/Shiprock		base-sys-share		share
+./usr/share/zoneinfo/America/St_Barthelemy		base-sys-share		share
 ./usr/share/zoneinfo/America/St_Johns		base-sys-share		share
 ./usr/share/zoneinfo/America/St_Kitts		base-sys-share		share
 ./usr/share/zoneinfo/America/St_Lucia		base-sys-share		share
@@ -3109,6 +3116,7 @@
 ./usr/share/zoneinfo/Asia/Dushanbe		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Gaza			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Harbin		base-sys-share		share
+./usr/share/zoneinfo/Asia/Ho_Chi_Minh		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Hong_Kong		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Hovd			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Irkutsk		base-sys-share		share
@@ -3122,6 +3130,7 @@
 ./usr/share/zoneinfo/Asia/Karachi		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kashgar		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Katmandu		base-sys-share		share
+./usr/share/zoneinfo/Asia/Kolkata		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Krasnoyarsk		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kuala_Lumpur		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kuching		base-sys-share		share
@@ -3495,7 +3504,9 @@
 ./usr/share/zoneinfo/W-SU			base-sys-share		share
 ./usr/share/zoneinfo/WET			base-sys-share		share
 ./usr/share/zoneinfo/Zulu			base-sys-share		share
+./usr/share/zoneinfo/iso3166.tab		base-sys-share		share
 ./usr/share/zoneinfo/posixrules			base-sys-share		share
+./usr/share/zoneinfo/zone.tab			base-sys-share		share
 ./var						base-sys-root
 ./var/account					base-sys-root
 ./var/at					base-cron-root
