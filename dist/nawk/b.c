@@ -896,7 +896,7 @@ int cgoto(fa *f, int s, int c)
 					if (q[j] >= maxsetvec) {
 						maxsetvec *= 4;
 						setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
-						tmpset = (int *) realloc(setvec, maxsetvec * sizeof(int));
+						tmpset = (int *) realloc(tmpset, maxsetvec * sizeof(int));
 						if (setvec == 0 || tmpset == 0)
 							overflo("cgoto overflow");
 					}
