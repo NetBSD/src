@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.105 2008/08/02 16:02:26 matt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.106 2008/10/08 10:03:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.105 2008/08/02 16:02:26 matt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.106 2008/10/08 10:03:28 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -90,7 +90,7 @@ enum {
 	DIAGASSERT_SYSLOG =	1<<2
 };
 
-static int pthread__diagassert = DIAGASSERT_ABORT | DIAGASSERT_STDERR;
+static int pthread__diagassert;
 
 int pthread__concurrency;
 int pthread__nspins;
