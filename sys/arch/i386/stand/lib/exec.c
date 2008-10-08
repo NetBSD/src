@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.29 2008/09/26 14:12:50 christos Exp $	 */
+/*	$NetBSD: exec.c,v 1.30 2008/10/08 22:42:38 joerg Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -146,7 +146,6 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 	u_long		xmsmem;
 	physaddr_t	origaddr = loadaddr;
 #endif
-	char		*machine;
 
 #ifdef	DEBUG
 	printf("exec: file=%s loadaddr=0x%lx\n",
@@ -237,31 +236,6 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 
 	/* pull in any modules if necessary */
 	if (boot_modules_enabled) {
-		switch (netbsd_elf_class) {
-		case ELFCLASS32:
-			machine = "i386";
-			break;
-		case ELFCLASS64:
-			machine = "amd64";
-			break;
-		default:
-			machine = "generic";
-			break;
-		}
-		if (netbsd_version / 1000000 % 100 == 99) {
-			/* -current */
-			snprintf(module_base, sizeof(module_base),
-			    "/stand/%s/%d.%d.%d/modules", machine,
-			    netbsd_version / 100000000,
-			    netbsd_version / 1000000 % 100,
-			    netbsd_version / 100 % 100);
-		} else if (netbsd_version != 0) {
-			/* release */
-			snprintf(module_base, sizeof(module_base),
-			    "/stand/%s/%d.%d/modules", machine,
-			    netbsd_version / 100000000,
-			    netbsd_version / 1000000 % 100);
-		}
 		module_init();
 		if (btinfo_modulelist) {
 			BI_ADD(btinfo_modulelist, BTINFO_MODULELIST,
@@ -327,11 +301,38 @@ module_init(void)
 {
 	struct bi_modulelist_entry *bi;
 	struct stat st;
+	const char *machine;
 	char *buf;
 	boot_module_t *bm;
 	size_t len;
 	off_t off;
 	int err, fd;
+
+	switch (netbsd_elf_class) {
+	case ELFCLASS32:
+		machine = "i386";
+		break;
+	case ELFCLASS64:
+		machine = "amd64";
+		break;
+	default:
+		machine = "generic";
+		break;
+	}
+	if (netbsd_version / 1000000 % 100 == 99) {
+		/* -current */
+		snprintf(module_base, sizeof(module_base),
+		    "/stand/%s/%d.%d.%d/modules", machine,
+		    netbsd_version / 100000000,
+		    netbsd_version / 1000000 % 100,
+		    netbsd_version / 100 % 100);
+	} else if (netbsd_version != 0) {
+		/* release */
+		snprintf(module_base, sizeof(module_base),
+		    "/stand/%s/%d.%d/modules", machine,
+		    netbsd_version / 100000000,
+		    netbsd_version / 1000000 % 100);
+	}
 
 	/* First, see which modules are valid and calculate btinfo size */
 	len = sizeof(struct btinfo_modulelist);
