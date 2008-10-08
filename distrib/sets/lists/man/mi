@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1102 2008/10/06 20:25:42 pgoyette Exp $
+# $NetBSD: mi,v 1.1103 2008/10/08 01:15:11 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -619,7 +619,7 @@
 ./usr/share/man/cat4/adt7473.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adt7475.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adt7476.0			man-sys-catman		.cat
-./usr/share/man/cat4/adt7467c.0			man-sys-catman		.cat
+./usr/share/man/cat4/adt7467c.0			man-obsolete		obsolete
 ./usr/share/man/cat4/adv.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adw.0			man-sys-catman		.cat
 ./usr/share/man/cat4/agp.0			man-sys-catman		.cat
@@ -3180,7 +3180,7 @@
 ./usr/share/man/html4/adt7473.html		man-sys-htmlman		html
 ./usr/share/man/html4/adt7475.html		man-sys-htmlman		html
 ./usr/share/man/html4/adt7476.html		man-sys-htmlman		html
-./usr/share/man/html4/adt7467c.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7467c.html		man-obsolete		obsolete
 ./usr/share/man/html4/adv.html			man-sys-htmlman		html
 ./usr/share/man/html4/adw.html			man-sys-htmlman		html
 ./usr/share/man/html4/agp.html			man-sys-htmlman		html
@@ -5441,7 +5441,7 @@
 ./usr/share/man/man4/adt7473.4			man-sys-man		.man
 ./usr/share/man/man4/adt7475.4			man-sys-man		.man
 ./usr/share/man/man4/adt7476.4			man-sys-man		.man
-./usr/share/man/man4/adt7467c.4			man-sys-man		.man
+./usr/share/man/man4/adt7467c.4			man-obsolete		obsolete
 ./usr/share/man/man4/adv.4			man-sys-man		.man
 ./usr/share/man/man4/adw.4			man-sys-man		.man
 ./usr/share/man/man4/agp.4			man-sys-man		.man
