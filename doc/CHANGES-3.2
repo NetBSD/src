@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.147 2008/10/03 10:47:40 jdc Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.148 2008/10/08 19:17:47 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5021,4 +5021,30 @@ src/sys/netinet6/nd6_nbr.c			1.89-1.90 via patch
 	make sure that the source address matches one of the interfaces
 	address prefixes.  Fixes CVE-2008-2476/VU#472363.
 	[adrianp, ticket #1967]
+
+distrib/sets/lists/base/mi		1.699, 1.721, 1.725, 1.773
+share/zoneinfo/Makefile			patch
+share/zoneinfo/africa			patch
+share/zoneinfo/antarctica		patch
+share/zoneinfo/asia			patch
+share/zoneinfo/australasia		patch
+share/zoneinfo/backward			patch
+share/zoneinfo/europe			patch
+share/zoneinfo/iso3166.tab		patch
+share/zoneinfo/leapseconds		patch
+share/zoneinfo/northamerica		patch
+share/zoneinfo/southamerica		patch
+share/zoneinfo/zone.tab			patch
+
+	Update to tzdata2008f.
+	[lukem, ticket #1968]
+
+libexec/ld.elf_so/rtld.c			1.122
+libexec/ld.elf_so/rtld.h			1.79
+libexec/ld.elf_so/symbol.c			1.47
+
+	Fix PR lib/39649: dlsym(3) does not follow dependencies
+	Pull across code from FreeBSD to do a search of the passed object
+	and it's NEEDED objects (dependencies).
+	[jmcneill, ticket #1973]
 
