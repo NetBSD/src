@@ -1,4 +1,4 @@
-.\"	$NetBSD: pthread.3,v 1.8 2008/05/09 08:31:13 wiz Exp $
+.\"	$NetBSD: pthread.3,v 1.9 2008/10/08 10:11:11 ad Exp $
 .\"
 .\" Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 19, 2007
+.Dd October 8, 2008
 .Dt PTHREAD 3
 .Os
 .Sh NAME
@@ -69,9 +69,10 @@ It is reserved for use by the
 library.
 .It Ev PTHREAD_DIAGASSERT
 Possible values are any combinations of:
+.Pp
 .Bl -tag -width ignoreXX -offset indent -compact
 .It Sy A
-Ignore errors.
+Report errors to application by error return, but do not abort.
 .It Sy a
 Abort on errors, creating a core dump for further debugging.
 .It Sy E
@@ -85,6 +86,12 @@ Do not log errors via
 Log errors via
 .Xr syslogd 8 .
 .El
+.Pp
+If not set in the environment, the
+.Nm
+library behaves as if 
+.Sy AEL
+has been specified.
 .It Ev PTHREAD_RRTIME
 The current version of the system does not inspect this variable.
 It is reserved for use by the
