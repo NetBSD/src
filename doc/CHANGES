@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1132 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1133 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1043,4 +1043,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		is a prerequisite for this [sborrill 20081002]
 	dbcool(4): Replace chip-specific drivers for ADT7463, ADT7467, and
 		ADM1030 with generic dBCool(tm) driver. [pgoyette 20081007]
-
+	libpthread: Diagnostic assertions are now disabled by default.
+		Application errors will be reported only by error return
+		from pthread APIs. The assertions can be re-enabled by
+		setting the PTHREAD_DIAGASSERT environment variable
+		correctly. [ad 20081008]
