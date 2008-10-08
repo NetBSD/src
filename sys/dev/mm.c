@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.11 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: mm.c,v 1.12 2008/10/08 14:42:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.11 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.12 2008/10/08 14:42:56 christos Exp $");
 
 /*
  * Memory special file
@@ -61,6 +61,7 @@ mmioctl(dev_t dev, u_long cmd, void *data, int flag,
 		case FIOGETOWN:
 		case TIOCGPGRP:
 		case TIOCSPGRP:
+		case TIOCGETA:
 			return ENOTTY;
 		case FIOASYNC:
 			if ((*(int *)data) == 0)
