@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.30 2008/10/08 22:42:38 joerg Exp $	 */
+/*	$NetBSD: exec.c,v 1.31 2008/10/08 22:46:19 joerg Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -193,13 +193,6 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 	    LOAD_KERNEL & ~(floppy ? LOAD_NOTE : 0))) == -1)
 		goto out;
 
-	boot_argv[0] = boothowto;
-	boot_argv[1] = 0;
-	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
-	/* argv[3] below */
-	boot_argv[4] = extmem;
-	boot_argv[5] = basemem;
-
 	close(fd);
 
 	/*
@@ -230,9 +223,15 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
 #endif
 	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
-	boot_argv[3] = marks[MARK_END];
 	image_end = marks[MARK_END];
 	kernel_loaded = true;
+
+	boot_argv[0] = boothowto;
+	boot_argv[1] = 0;
+	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
+	boot_argv[3] = marks[MARK_END];
+	boot_argv[4] = extmem;
+	boot_argv[5] = basemem;
 
 	/* pull in any modules if necessary */
 	if (boot_modules_enabled) {
