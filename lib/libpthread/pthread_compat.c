@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_compat.c,v 1.1 2008/09/29 08:48:15 ad Exp $	*/
+/*	$NetBSD: pthread_compat.c,v 1.2 2008/10/08 08:27:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,11 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * libc symbols that are not present before NetBSD 5.0.
+ */
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_compat.c,v 1.1 2008/09/29 08:48:15 ad Exp $");
+__RCSID("$NetBSD: pthread_compat.c,v 1.2 2008/10/08 08:27:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/syscall.h>
+#include <sys/aio.h>
 
 #include <lwp.h>
 #include <unistd.h>
@@ -46,14 +51,23 @@ static void     __pthread_init(void) __attribute__((__constructor__, __used__));
 
 void	__libc_thr_init(void);
 void	__libc_atomic_init(void);
+
 int	_sys_sched_yield(void);
+int	_sys_aio_suspend(const struct aiocb * const[], int,
+			 const struct timespec *);
+int	_sys_mq_send(mqd_t, const char *, size_t, unsigned);
+ssize_t	_sys_mq_receive(mqd_t, char *, size_t, unsigned *);
+int	_sys_mq_timedsend(mqd_t, const char *, size_t, unsigned,
+			  const struct timespec *);
+ssize_t	_sys_mq_timedreceive(mqd_t, char *, size_t, unsigned *,
+			     const struct timespec *);
 
 static void
 __pthread_init(void)
 {
 
-	__libc_thr_init();
 	__libc_atomic_init();
+	__libc_thr_init();
 }
 
 int
@@ -88,7 +102,7 @@ ssize_t
 _lwp_unpark_all(const lwpid_t *a, size_t b, const void *c)
 {
 
-	return syscall(SYS__lwp_unpark_all, a, b, c);
+	return (ssize_t)syscall(SYS__lwp_unpark_all, a, b, c);
 }
 
 int
@@ -152,4 +166,42 @@ _sched_getparam(pid_t a, lwpid_t b, int *c, struct sched_param *d)
 {
 
 	return syscall(SYS__sched_getparam, a, b, c, d);
+}
+
+int
+_sys_aio_suspend(const struct aiocb * const a[], int b,
+		 const struct timespec *c)
+{
+
+	return syscall(SYS_aio_suspend, a, b, c);
+}
+
+int
+_sys_mq_send(mqd_t a, const char *b, size_t c, unsigned d)
+{
+
+	return syscall(SYS_mq_send, a, b, c, d);
+}
+
+ssize_t
+_sys_mq_receive(mqd_t a, char *b, size_t c, unsigned *d)
+{
+
+	return (ssize_t)syscall(SYS_mq_receive, a, b, c, d);
+}
+
+int
+_sys_mq_timedsend(mqd_t a, const char *b, size_t c, unsigned d,
+		  const struct timespec *e)
+{
+
+	return syscall(SYS_mq_timedsend, a, b,c ,d, e);
+}
+
+ssize_t
+_sys_mq_timedreceive(mqd_t a, char *b, size_t c, unsigned *d,
+		     const struct timespec *e)
+{
+
+	return (ssize_t)syscall(SYS_mq_timedreceive, a, b, c, d, e);
 }
