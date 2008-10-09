@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.17 2008/04/28 20:23:08 martin Exp $	 */
+/* $NetBSD: fsck.h,v 1.18 2008/10/09 16:56:23 christos Exp $	 */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -195,6 +195,8 @@ struct inoinfo {
 #define	testbmap(blkno)		blockmap[blkno]
 #define	clrbmap(blkno)		blockmap[blkno] = 0
 #endif
+
+int	Uflag;			/* resolve user names */
 
 #define	STOP	0x01
 #define	SKIP	0x02
