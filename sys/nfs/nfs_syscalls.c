@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.139 2008/09/28 00:10:18 pooka Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.140 2008/10/09 14:38:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.139 2008/09/28 00:10:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.140 2008/10/09 14:38:21 christos Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -318,13 +318,19 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 					nuidp->nu_inetaddr =
 					     saddr->sin_addr.s_addr;
 					break;
+#ifdef INET6
+				    case AF_INET6:
+#endif
+#ifdef ISO
 				    case AF_ISO:
-				    default:
+#endif
 					nuidp->nu_flag |= NU_NAM;
 					nuidp->nu_nam = m_copym(
 					    nfsd->nfsd_nd->nd_nam2, 0,
 					     M_COPYALL, M_WAIT);
 					break;
+				    default:
+					return EAFNOSUPPORT;
 				    };
 				}
 				TAILQ_INSERT_TAIL(&slp->ns_uidlruhead, nuidp,
