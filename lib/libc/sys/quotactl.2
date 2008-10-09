@@ -1,4 +1,4 @@
-.\"	$NetBSD: quotactl.2,v 1.23 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: quotactl.2,v 1.24 2008/10/09 14:40:11 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)quotactl.2	8.2 (Berkeley) 3/10/95
 .\"
-.Dd March 10, 1995
+.Dd October 9, 2008
 .Dt QUOTACTL 2
 .Os
 .Sh NAME
@@ -119,7 +119,7 @@ The usage fields of the
 structure are ignored.
 This call is restricted to the super-user.
 .It Dv Q_SETUSE
-Set disk usage limits for the user or group
+Set disk usage for the user or group
 (as determined by the command type) with identifier
 .Fa id .
 .Fa addr
