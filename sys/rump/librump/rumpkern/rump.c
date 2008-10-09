@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.61 2008/10/07 23:21:02 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.62 2008/10/09 17:58:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -93,7 +93,6 @@ _rump_init(int rump_version)
 {
 	extern char hostname[];
 	extern size_t hostnamelen;
-	extern kmutex_t rump_atomic_lock;
 	char buf[256];
 	struct proc *p;
 	struct lwp *l;
@@ -118,8 +117,6 @@ _rump_init(int rump_version)
 	if (rumpuser_getenv("RUMP_THREADS", buf, sizeof(buf), &error) == 0) {
 		rump_threads = *buf != '0';
 	}
-
-	mutex_init(&rump_atomic_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	rumpvm_init();
 	rump_sleepers_init();
