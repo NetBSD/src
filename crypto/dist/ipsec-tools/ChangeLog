@@ -1,3 +1,8 @@
+2008-10-09  Timo Teras  <timo.teras@iki.fi>
+	From Arnoud Ebalard <arno@natisbad.org>:
+	* src/racoon/isakmp_quick.c: remove unbindph12() call that is
+	  now done also in remph2()
+
 2008-09-25  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/isakmp.c: Fixed resending mechanism to have non-ESP
 	  marker for retransmitted packets.
