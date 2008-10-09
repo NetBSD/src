@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.2 2008/10/06 01:35:35 pgoyette Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.3 2008/10/09 10:25:47 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,12 +41,11 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.2 2008/10/06 01:35:35 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.3 2008/10/09 10:25:47 pgoyette Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
-#include "sysmon_envsys.h"
 
 #include <dev/i2c/dbcool_reg.h>
 
