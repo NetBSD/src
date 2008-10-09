@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.20 2008/10/02 21:37:59 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.21 2008/10/09 01:19:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -46,6 +46,7 @@
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
+#include <sys/uio.h>
 
 #include <err.h>
 #include <errno.h>
@@ -81,7 +82,7 @@ rumpuser_nanosleep(const struct timespec *rqtp, struct timespec *rmtp,
 		   int *error)
 {
 
-	DOCALL(int, (nanosleep(rqtp, rmtp)));
+	DOCALL_KLOCK(int, (nanosleep(rqtp, rmtp)));
 }
 
 void *
@@ -134,7 +135,7 @@ int
 rumpuser_ioctl(int fd, u_long cmd, void *data, int *error)
 {
 
-	DOCALL(int, (ioctl(fd, cmd, data)));
+	DOCALL_KLOCK(int, (ioctl(fd, cmd, data)));
 }
 
 int
@@ -148,7 +149,7 @@ int
 rumpuser_fsync(int fd, int *error)
 {
 
-	DOCALL(int, fsync(fd));
+	DOCALL_KLOCK(int, fsync(fd));
 }
 
 ssize_t
@@ -156,7 +157,7 @@ rumpuser_read(int fd, void *data, size_t size, int *error)
 {
 	ssize_t rv;
 
-	rv = read(fd, data, size);
+	KLOCK_WRAP(rv = read(fd, data, size));
 	if (rv == -1)
 		*error = errno;
 
@@ -168,7 +169,19 @@ rumpuser_pread(int fd, void *data, size_t size, off_t offset, int *error)
 {
 	ssize_t rv;
 
-	rv = pread(fd, data, size, offset);
+	KLOCK_WRAP(rv = pread(fd, data, size, offset));
+	if (rv == -1)
+		*error = errno;
+
+	return rv;
+}
+
+ssize_t 
+rumpuser_readv(int fd, const struct iovec *iov, int iovcnt, int *error)
+{
+	ssize_t rv;
+
+	KLOCK_WRAP(rv = readv(fd, iov, iovcnt));
 	if (rv == -1)
 		*error = errno;
 
@@ -182,7 +195,7 @@ rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
 	ssize_t rv;
 	int error = 0;
 
-	rv = rumpuser_pread(fd, data, size, offset, &error);
+	KLOCK_WRAP(rv = rumpuser_pread(fd, data, size, offset, &error));
 	/* check against <0 instead of ==-1 to get typing below right */
 	if (rv < 0)
 		rv = 0;
@@ -196,7 +209,7 @@ rumpuser_write(int fd, const void *data, size_t size, int *error)
 {
 	ssize_t rv;
 
-	rv = write(fd, data, size);
+	KLOCK_WRAP(rv = write(fd, data, size));
 	if (rv == -1)
 		*error = errno;
 
@@ -208,7 +221,19 @@ rumpuser_pwrite(int fd, const void *data, size_t size, off_t offset, int *error)
 {
 	ssize_t rv;
 
-	rv = pwrite(fd, data, size, offset);
+	KLOCK_WRAP(rv = pwrite(fd, data, size, offset));
+	if (rv == -1)
+		*error = errno;
+
+	return rv;
+}
+
+ssize_t 
+rumpuser_writev(int fd, const struct iovec *iov, int iovcnt, int *error)
+{
+	ssize_t rv;
+
+	KLOCK_WRAP(rv = writev(fd, iov, iovcnt));
 	if (rv == -1)
 		*error = errno;
 
@@ -222,7 +247,7 @@ rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 	ssize_t rv;
 	int error = 0;
 
-	rv = rumpuser_pwrite(fd, data, size, offset, &error);
+	KLOCK_WRAP(rv = rumpuser_pwrite(fd, data, size, offset, &error));
 	/* check against <0 instead of ==-1 to get typing below right */
 	if (rv < 0)
 		rv = 0;
@@ -291,7 +316,7 @@ int
 rumpuser_poll(struct pollfd *fds, int nfds, int timeout, int *error)
 {
 
-	DOCALL(int, (poll(fds, nfds, timeout)));
+	DOCALL_KLOCK(int, (poll(fds, (nfds_t)nfds, timeout)));
 }
 
 #ifdef __linux__
