@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.44 2008/02/23 21:41:48 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.45 2008/10/09 15:50:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.44 2008/02/23 21:41:48 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.45 2008/10/09 15:50:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,8 @@ static ino_t lastino;
 void
 pass1(void)
 {
-	ino_t inumber, inosused;
+	ino_t inumber, inosused, ninosused;
+	size_t inospace;
 	int c;
 	daddr_t i, cgd;
 	struct inodesc idesc;
@@ -151,12 +152,19 @@ pass1(void)
 			inostathead[c].il_stat = 0;
 			continue;
 		}
-		info = calloc((unsigned)inosused, sizeof(struct inostat));
-		if (info == NULL) {
-			pfatal("cannot alloc %u bytes for inoinfo\n",
-			    (unsigned)(sizeof(struct inostat) * inosused));
+		inospace = inosused * sizeof(*info);
+		if (inospace / sizeof(*info) != inosused) {
+			pfatal("too many inodes %llu\n", (unsigned long long)
+			    inosused);
 			exit(FSCK_EXIT_CHECK_FAILED);
 		}
+		info = malloc(inospace);
+		if (info == NULL) {
+			pfatal("cannot alloc %zu bytes for inoinfo\n",
+			    inospace);
+			exit(FSCK_EXIT_CHECK_FAILED);
+		}
+		(void)memset(info, 0, inospace);
 		inostathead[c].il_stat = info;
 		/*
 		 * Scan the allocated inodes.
@@ -178,24 +186,33 @@ pass1(void)
 		 * really found.
 		 */
 		if (lastino < (c * sblock->fs_ipg))
-			inosused = 0;
+			ninosused = 0;
 		else
-			inosused = lastino - (c * sblock->fs_ipg);
-		inostathead[c].il_numalloced = inosused;
-		if (inosused == 0) {
+			ninosused = lastino - (c * sblock->fs_ipg);
+		inostathead[c].il_numalloced = ninosused;
+		if (ninosused == 0) {
 			free(inostathead[c].il_stat);
 			inostathead[c].il_stat = 0;
 			continue;
 		}
-		info = calloc((unsigned)inosused, sizeof(struct inostat));
-		if (info == NULL) {
-			pfatal("cannot alloc %u bytes for inoinfo\n",
-			    (unsigned)(sizeof(struct inostat) * inosused));
-			exit(FSCK_EXIT_CHECK_FAILED);
+		if (ninosused != inosused) {
+			struct inostat *ninfo;
+			size_t ninospace = ninosused * sizeof(*ninfo);
+			if (ninospace / sizeof(*info) != ninosused) {
+				pfatal("too many inodes %llu\n",
+				    (unsigned long long)ninosused);
+				exit(FSCK_EXIT_CHECK_FAILED);
+			}
+			ninfo = realloc(info, ninosused);
+			if (ninfo == NULL) {
+				pfatal("cannot realloc %zu bytes to %zu "
+				    "for inoinfo\n", inospace, ninospace);
+				exit(FSCK_EXIT_CHECK_FAILED);
+			}
+			if (ninosused > inosused)
+				(void)memset(&ninfo[inosused], 0, ninospace - inospace);
+			inostathead[c].il_stat = ninfo;
 		}
-		memmove(info, inostathead[c].il_stat, inosused * sizeof(*info));
-		free(inostathead[c].il_stat);
-		inostathead[c].il_stat = info;
 	}
 #ifdef PROGRESS
 	if (!preen)
