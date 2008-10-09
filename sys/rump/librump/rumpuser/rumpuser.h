@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.24 2008/10/02 21:37:59 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.25 2008/10/09 01:19:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,6 +33,9 @@
 struct stat;
 struct msghdr;
 struct pollfd;
+struct iovec;
+struct timespec;
+struct timeval;
 
 int rumpuser_stat(const char *, struct stat *, int *);
 int rumpuser_lstat(const char *, struct stat *, int *);
@@ -52,8 +55,10 @@ int rumpuser_fsync(int, int *);
 
 ssize_t rumpuser_read(int, void *, size_t, int *);
 ssize_t rumpuser_pread(int, void *, size_t, off_t, int *);
+ssize_t rumpuser_readv(int, const struct iovec *, int, int *);
 ssize_t rumpuser_write(int, const void *, size_t, int *);
 ssize_t rumpuser_pwrite(int, const void *, size_t, off_t, int *);
+ssize_t rumpuser_writev(int, const struct iovec *, int, int *);
 void rumpuser_read_bio(int, void *, size_t, off_t, void *);
 void rumpuser_write_bio(int, const void *, size_t, off_t, void *);
 

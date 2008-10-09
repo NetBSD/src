@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_net.c,v 1.1 2008/10/02 21:37:59 pooka Exp $	*/
+/*	$NetBSD: rumpuser_net.c,v 1.2 2008/10/09 01:19:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -38,19 +38,19 @@ int
 rumpuser_net_socket(int domain, int type, int proto, int *error)
 {
 
-	DOCALL(int, (socket(domain, type, proto)));
+	DOCALL_KLOCK(int, (socket(domain, type, proto)));
 }
 
 int
 rumpuser_net_sendmsg(int s, const struct msghdr *msg, int flags, int *error)
 {
 
-	DOCALL(ssize_t, (sendmsg(s, msg, flags)));
+	DOCALL_KLOCK(ssize_t, (sendmsg(s, msg, flags)));
 }
 
 int
 rumpuser_net_recvmsg(int s, struct msghdr *msg, int flags, int *error)
 {
 
-	DOCALL(ssize_t, (recvmsg(s, msg, flags)));
+	DOCALL_KLOCK(ssize_t, (recvmsg(s, msg, flags)));
 }
