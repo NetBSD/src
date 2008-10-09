@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.18 2008/07/29 13:17:47 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.19 2008/10/09 01:17:48 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -263,24 +263,45 @@ cv_has_waiters(kcondvar_t *cv)
 	return rumpuser_cv_has_waiters(RUMPCV(cv));
 }
 
-/* kernel biglock, only for vnode_if */
+/*
+ * giant lock
+ */
 
+static int lockcnt;
 void
 _kernel_lock(int nlocks)
 {
 
-	KASSERT(nlocks == 1);
-	mutex_enter(&rump_giantlock);
+	while (nlocks--) {
+		mutex_enter(&rump_giantlock);
+		lockcnt++;
+	}
 }
 
 void
 _kernel_unlock(int nlocks, int *countp)
 {
 
-	KASSERT(nlocks == 1);
-	mutex_exit(&rump_giantlock);
+	if (!mutex_owned(&rump_giantlock)) {
+		KASSERT(nlocks == 0);
+		if (countp)
+			*countp = 0;
+		return;
+	}
+
 	if (countp)
-		*countp = 1;
+		*countp = lockcnt;
+	if (nlocks == 0)
+		nlocks = lockcnt;
+	if (nlocks == -1) {
+		KASSERT(lockcnt == 1);
+		nlocks = 1;
+	}
+	KASSERT(nlocks <= lockcnt);
+	while (nlocks--) {
+		lockcnt--;
+		mutex_exit(&rump_giantlock);
+	}
 }
 
 struct kmutexobj {
