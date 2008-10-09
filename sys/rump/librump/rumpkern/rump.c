@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.62 2008/10/09 17:58:33 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.63 2008/10/09 19:40:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -118,6 +118,8 @@ _rump_init(int rump_version)
 		rump_threads = *buf != '0';
 	}
 
+	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
+
 	rumpvm_init();
 	rump_sleepers_init();
 #ifdef RUMP_USE_REAL_KMEM
@@ -158,10 +160,9 @@ _rump_init(int rump_version)
 	vfsinit();
 	bufinit();
 	wapbl_init();
+	softint_init(&rump_cpu);
 
 	rumpvfs_init();
-
-	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
 
 	/* aieeeedondest */
 	if (rump_threads) {
