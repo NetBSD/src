@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.39 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.40 2008/10/09 14:56:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.39 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.40 2008/10/09 14:56:35 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -564,8 +564,8 @@ update(fsname, quotafile, type)
 		    fup->fu_curblocks >= dqbuf.dqb_bsoftlimit)
 			dqbuf.dqb_btime = 0;
 		if (dqbuf.dqb_isoftlimit &&
-		    dqbuf.dqb_curblocks < dqbuf.dqb_isoftlimit &&
-		    fup->fu_curblocks >= dqbuf.dqb_isoftlimit)
+		    dqbuf.dqb_curinodes < dqbuf.dqb_isoftlimit &&
+		    fup->fu_curinodes >= dqbuf.dqb_isoftlimit)
 			dqbuf.dqb_itime = 0;
 		dqbuf.dqb_curinodes = fup->fu_curinodes;
 		dqbuf.dqb_curblocks = fup->fu_curblocks;
