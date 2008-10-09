@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_once.c,v 1.4 2008/10/09 10:48:21 pooka Exp $	*/
+/*	$NetBSD: subr_once.c,v 1.5 2008/10/09 12:14:06 pooka Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -28,11 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.4 2008/10/09 10:48:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_once.c,v 1.5 2008/10/09 12:14:06 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/atomic.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
 #include <sys/once.h>
@@ -52,24 +51,21 @@ int
 _run_once(once_t *o, int (*fn)(void))
 {
 
-	/* Fastpath handled also by RUN_ONCE(), but be pedantic */
-	if (o->o_status == ONCE_DONE)
-		goto out;
+	/* Fastpath handled by RUN_ONCE() */
 
 	mutex_enter(&oncemtx);
 	if (o->o_status == ONCE_VIRGIN) {
-		atomic_swap_uint(&o->o_status, ONCE_RUNNING);
+		o->o_status = ONCE_RUNNING;
 		mutex_exit(&oncemtx);
 		o->o_error = fn();
-		atomic_swap_uint(&o->o_status, ONCE_DONE);
 		mutex_enter(&oncemtx);
+		o->o_status = ONCE_DONE;
 		cv_broadcast(&oncecv);
 	}
-	while (o->o_status == ONCE_RUNNING)
+	while (o->o_status != ONCE_DONE)
 		cv_wait(&oncecv, &oncemtx);
 	mutex_exit(&oncemtx);
 
- out:
 	KASSERT(o->o_status == ONCE_DONE);
 	return o->o_error;
 }
