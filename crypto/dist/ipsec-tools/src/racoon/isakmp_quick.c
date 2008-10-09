@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.21 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.22 2008/10/09 15:53:12 tteras Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -122,7 +122,6 @@ quick_timeover(iph2)
 	if (iph2->side == INITIATOR)
 		pk_sendeacquire(iph2);
 
-	unbindph12(iph2);
 	remph2(iph2);
 	delph2(iph2);
 }
