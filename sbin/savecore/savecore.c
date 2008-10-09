@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.74 2008/07/20 01:20:23 lukem Exp $	*/
+/*	$NetBSD: savecore.c,v 1.75 2008/10/09 13:59:50 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.74 2008/07/20 01:20:23 lukem Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.75 2008/10/09 13:59:50 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -333,6 +333,13 @@ kmem_setup(void)
 		ddname = find_dev(dumpcdev, S_IFCHR);
 	} else
 		ddname = find_dev(dumpdev, S_IFBLK);
+	if (strncmp(ddname, "/dev/cons", 8) == 0 ||
+	    strncmp(ddname, "/dev/tty", 7) == 0 ||
+	    strncmp(ddname, "/dev/pty", 7) == 0 ||
+	    strncmp(ddname, "/dev/pts", 7) == 0) {
+		syslog(LOG_ERR, "dumpdev %s is tty; override kernel", ddname);
+		exit(1);
+	}
 	dumpfd = Open(ddname, O_RDWR);
 
 	kd_dump = kvm_openfiles(kernel, ddname, NULL, O_RDWR, errbuf);
