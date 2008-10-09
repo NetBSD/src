@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.37 2008/02/23 21:41:48 christos Exp $	 */
+/* $NetBSD: main.c,v 1.38 2008/10/09 16:56:23 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -74,7 +74,7 @@ main(int argc, char **argv)
 {
 	int ch;
 	int ret = FSCK_EXIT_OK;
-	const char *optstring = "b:dfi:m:npPqy";
+	const char *optstring = "b:dfi:m:npPqUy";
 
 	skipclean = 1;
 	exitonfail = 0;
@@ -122,7 +122,11 @@ main(int argc, char **argv)
 		case 'q':
 			quiet++;
 			break;
-
+#ifndef SMALL
+		case 'U':
+			Uflag++;
+			break;
+#endif
 		case 'y':
 			yflag++;
 			nflag = 0;

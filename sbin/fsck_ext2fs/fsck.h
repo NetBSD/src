@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.13 2005/06/26 23:01:39 christos Exp $	*/
+/*	$NetBSD: fsck.h,v 1.14 2008/10/09 16:56:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -197,6 +197,7 @@ long	secsize;		/* actual disk sector size */
 char	nflag;			/* assume a no response */
 char	yflag;			/* assume a yes response */
 int	bflag;			/* location of alternate super block */
+int	Uflag;			/* resolve user names */
 int	debug;			/* output debugging info */
 int	preen;			/* just fix normal inconsistencies */
 char	havesb;			/* superblock has been read */
