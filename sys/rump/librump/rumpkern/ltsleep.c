@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.7 2008/07/29 13:17:47 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.8 2008/10/09 13:39:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -55,6 +55,9 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	struct ltsleeper lts;
 	int iplrecurse;
 
+	if (__predict_false(slock))
+		panic("simplelock not supported by rump, convert code");
+
 	lts.id = ident;
 	cv_init(&lts.cv, NULL);
 
@@ -67,8 +70,6 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 		rumpuser_rw_exit(&rumpspl);
 
 	/* protected by sleepermtx */
-	if (slock)
-		simple_unlock(slock);
 	cv_wait(&lts.cv, &sleepermtx);
 
 	/* retake ipl */
@@ -80,9 +81,6 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	mutex_exit(&sleepermtx);
 
 	cv_destroy(&lts.cv);
-
-	if (slock && (prio & PNORELOCK) == 0)
-		simple_lock(slock);
 
 	return 0;
 }
