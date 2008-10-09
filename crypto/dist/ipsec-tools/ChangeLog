@@ -1,5 +1,5 @@
 2008-10-09  Timo Teras  <timo.teras@iki.fi>
-	From Arnoud Ebalard <arno@natisbad.org>:
+	From Arnaud Ebalard <arno@natisbad.org>:
 	* src/racoon/isakmp_quick.c: remove unbindph12() call that is
 	  now done also in remph2()
 
