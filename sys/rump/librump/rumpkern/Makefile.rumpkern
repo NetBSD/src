@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.9 2008/09/30 19:25:56 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.10 2008/10/09 17:58:33 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -15,7 +15,7 @@ INCS+=	rump.h rumpdefs.h rump_syscalls.h rumpvnode_if.h
 	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs
 
 # implement something
-SRCS=	rump.c atomic.c emul.c intr.c genfs_io.c locks.c		\
+SRCS=	rump.c emul.c intr.c genfs_io.c locks.c		\
 	ltsleep.c pool.c specfs.c vfs.c vm.c
 
 # just stubs
