@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.7 2008/10/10 20:13:58 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.8 2008/10/10 21:00:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -38,6 +38,8 @@
  * Interrupt simulator.  It executes hardclock() and softintrs.
  */
 
+time_t time_uptime = 1;
+
 struct softint {
 	void (*si_func)(void *);
 	void *si_arg;
@@ -57,13 +59,20 @@ intr_worker(void *arg)
 	void (*func)(void *) = NULL;
 	void *funarg = NULL; /* XXX gcc */
 	bool mpsafe = false; /* XXX gcc */
+	int ticks;
 
-	for (;;) {
+	for (ticks = 0;;ticks++) {
 		/*
 		 * XXX: not exactly executed once per tick, but without
 		 * a proper timer ticktocking we don't really care.
 		 */
 		callout_hardclock();
+
+		/* advance uptime with the same leisurely attitude */
+		if (ticks & 0x80) {
+			time_uptime++;
+			ticks = 0;
+		}
 
 		mutex_enter(&si_mtx);
 		if (LIST_EMPTY(&si_pending)) {
