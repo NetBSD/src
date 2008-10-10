@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.172 2008/10/10 11:20:15 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.173 2008/10/10 19:49:49 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.172 2008/10/10 11:20:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.173 2008/10/10 19:49:49 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_sock_counters.h"
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.172 2008/10/10 11:20:15 ad Exp $")
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
@@ -1863,7 +1863,7 @@ sockopt_alloc(struct sockopt *sopt, size_t len)
 	KASSERT(sopt->sopt_size == 0);
 
 	if (len > sizeof(sopt->sopt_buf))
-		sopt->sopt_data = malloc(len, M_SOOPTS, M_WAITOK | M_ZERO);
+		sopt->sopt_data = kmem_zalloc(len, KM_SLEEP);
 	else
 		sopt->sopt_data = sopt->sopt_buf;
 
@@ -1893,7 +1893,7 @@ sockopt_destroy(struct sockopt *sopt)
 {
 
 	if (sopt->sopt_data != sopt->sopt_buf)
-		free(sopt->sopt_data, M_SOOPTS);
+		kmem_free(sopt->sopt_data, sopt->sopt_size);
 
 	memset(sopt, 0, sizeof(*sopt));
 }
