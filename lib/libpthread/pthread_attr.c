@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_attr.c,v 1.10 2008/06/28 10:29:37 ad Exp $	*/
+/*	$NetBSD: pthread_attr.c,v 1.11 2008/10/10 09:13:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_attr.c,v 1.10 2008/06/28 10:29:37 ad Exp $");
+__RCSID("$NetBSD: pthread_attr.c,v 1.11 2008/10/10 09:13:20 ad Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -260,8 +260,9 @@ pthread_attr_getschedparam(const pthread_attr_t *attr,
 		return EINVAL;
 	p = attr->pta_private;
 	if (p == NULL)
-		return ENOMEM;
-	*param = p->ptap_sp;
+		memset(param, 0, sizeof(*param));
+	else 
+		*param = p->ptap_sp;
 	return 0;
 }
 
