@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.4.2.2 2008/09/18 04:37:06 wrstuden Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.4.2.3 2008/10/10 22:37:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -84,6 +84,10 @@
 
 #if defined(WAPBL_DEBUG)
 #define	WAPBL_DEBUG_INODES
+#endif
+
+#ifdef WAPBL_DEBUG_INODES
+#error Undefine WAPBL_DEBUG_INODES or update the code.  Have a nice day.
 #endif
 
 int	wapbl_ufs_rename(void *v);

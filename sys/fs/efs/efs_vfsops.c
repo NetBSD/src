@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vfsops.c,v 1.14.18.1 2008/06/23 04:31:47 wrstuden Exp $	*/
+/*	$NetBSD: efs_vfsops.c,v 1.14.18.2 2008/10/10 22:34:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.14.18.1 2008/06/23 04:31:47 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vfsops.c,v 1.14.18.2 2008/10/10 22:34:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,7 +378,6 @@ efs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	eip->ei_dev = emp->em_dev;
 	eip->ei_vp = vp;
 	vp->v_data = eip;
-	vp->v_mount = mp;
 
 	/*
 	 * Place the vnode on the hash chain. Doing so will lock the

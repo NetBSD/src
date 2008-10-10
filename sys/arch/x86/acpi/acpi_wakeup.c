@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.5.2.3 2008/09/24 16:38:50 wrstuden Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.5.2.4 2008/10/10 22:29:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.5.2.3 2008/09/24 16:38:50 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.5.2.4 2008/10/10 22:29:46 skrll Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -315,7 +315,7 @@ acpi_cpu_sleep(struct cpu_info *ci)
 int
 acpi_md_sleep(int state)
 {
-	int ret = 0;
+	int s, ret = 0;
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
@@ -331,6 +331,7 @@ acpi_md_sleep(int state)
 
 	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr);
 
+	s = splhigh();
 #ifdef __i386__
 	npxsave_cpu(true);
 #else
@@ -368,7 +369,12 @@ acpi_md_sleep(int state)
 	initrtclock(TIMER_FREQ);
 	inittodr(time_second);
 
+	AcpiClearEvent(ACPI_EVENT_PMTIMER);
+	AcpiClearEvent(ACPI_EVENT_GLOBAL);
 	AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
+	AcpiClearEvent(ACPI_EVENT_SLEEP_BUTTON);
+	AcpiClearEvent(ACPI_EVENT_RTC);
+	AcpiHwDisableAllGpes ();
 
 out:
 
@@ -387,6 +393,7 @@ out:
 #endif
 
 	x86_enable_intr();
+	splx(s);
 
 #ifdef MTRR
 	if (mtrr_funcs != NULL)

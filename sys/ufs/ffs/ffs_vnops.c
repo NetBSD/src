@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.99.2.1 2008/09/18 04:37:05 wrstuden Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.99.2.2 2008/10/10 22:37:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.99.2.1 2008/09/18 04:37:05 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.99.2.2 2008/10/10 22:37:10 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -690,24 +690,6 @@ ffs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 	} else {
 		*eobp = blkroundup(fs, size);
 	}
-}
-
-int
-ffs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
-{
-	int error;
-	const bool need_wapbl = (curlwp != uvm.pagedaemon_lwp &&
-	    vp->v_mount->mnt_wapbl && (flags & PGO_JOURNALLOCKED) == 0);
-
-	if (need_wapbl) {
-		error = UFS_WAPBL_BEGIN(vp->v_mount);
-		if (error)
-			return error;
-	}
-	error = genfs_gop_write(vp, pgs, npages, flags);
-	if (need_wapbl)
-		UFS_WAPBL_END(vp->v_mount);
-	return error;
 }
 
 int

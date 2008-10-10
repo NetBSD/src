@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.226.2.2 2008/09/18 04:37:05 wrstuden Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.226.2.3 2008/10/10 22:37:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.226.2.2 2008/09/18 04:37:05 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.226.2.3 2008/10/10 22:37:10 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -160,7 +160,7 @@ struct vfsops ffs_vfsops = {
 static const struct genfs_ops ffs_genfsops = {
 	.gop_size = ffs_gop_size,
 	.gop_alloc = ufs_gop_alloc,
-	.gop_write = ffs_gop_write,
+	.gop_write = genfs_gop_write,
 	.gop_markupdate = ufs_gop_markupdate,
 };
 
@@ -299,8 +299,6 @@ ffs_mountroot(void)
 	return (0);
 }
 
-static int dolog;
-
 /*
  * VFS Operations.
  *
@@ -317,9 +315,6 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	struct fs *fs;
 	int error = 0, flags, update;
 	mode_t accessmode;
-
-	if (dolog)
-		mp->mnt_flag |= MNT_LOG;
 
 	if (*data_len < sizeof *args)
 		return EINVAL;

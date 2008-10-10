@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.9.2.1 2008/06/23 04:30:26 wrstuden Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.9.2.2 2008/10/10 22:29:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.9.2.1 2008/06/23 04:30:26 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.9.2.2 2008/10/10 22:29:04 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -371,8 +371,11 @@ END(clts)
 
 ENTRY(stts)
 	movl	%cr0, %eax
+	testl	$CR0_TS, %eax
+	jnz	1f
 	orl	$CR0_TS, %eax
 	movl	%eax, %cr0
+1:
 	ret
 END(stts)
 

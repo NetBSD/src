@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.27 2007/10/17 19:55:19 garbled Exp $	*/
+/*	$NetBSD: obio.c,v 1.27.22.1 2008/10/10 22:29:05 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.27 2007/10/17 19:55:19 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.27.22.1 2008/10/10 22:29:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.27 2007/10/17 19:55:19 garbled Exp $");
 #include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
+
+#include <macppc/dev/obiovar.h>
 
 #include "opt_obio.h"
 
@@ -69,6 +71,8 @@ struct obio_softc {
 	int sc_busspeed;
 #endif
 };
+
+static struct obio_softc *obio0 = NULL;
 
 #ifdef OBIO_SPEED_CONTROL
 static void obio_setup_gpios(struct obio_softc *, int);
@@ -164,6 +168,17 @@ obio_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_getprop(node, "assigned-addresses", reg, sizeof(reg)) < 12)
 		return;
 #endif /* PMAC_G5 */
+
+	/*
+	 * XXX
+	 * This relies on the primary obio always attaching first which is
+	 * true on the PowerBook 3400c and similar machines but may or may
+	 * not work on others. We can't rely on the node name since Apple
+	 * didn't follow anything remotely resembling a consistent naming
+	 * scheme.
+	 */
+	if (obio0 == NULL)
+		obio0 = sc;
 
 	ca.ca_baseaddr = reg[2];
 	ca.ca_tag = pa->pa_memt;
@@ -279,6 +294,34 @@ obio_print(aux, obio)
 		aprint_normal(" offset 0x%x", ca->ca_reg[0]);
 
 	return UNCONF;
+}
+
+void obio_write_4(int offset, uint32_t value)
+{
+	if (obio0 == NULL)
+		return;
+	bus_space_write_4(obio0->sc_tag, obio0->sc_bh, offset, value);
+}
+
+void obio_write_1(int offset, uint8_t value)
+{
+	if (obio0 == NULL)
+		return;
+	bus_space_write_1(obio0->sc_tag, obio0->sc_bh, offset, value);
+}
+
+uint32_t obio_read_4(int offset)
+{
+	if (obio0 == NULL)
+		return 0xffffffff;
+	return bus_space_read_4(obio0->sc_tag, obio0->sc_bh, offset);
+}
+
+uint8_t obio_read_1(int offset)
+{
+	if (obio0 == NULL)
+		return 0xff;
+	return bus_space_read_1(obio0->sc_tag, obio0->sc_bh, offset);
 }
 
 #ifdef OBIO_SPEED_CONTROL

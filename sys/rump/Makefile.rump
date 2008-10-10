@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.rump,v 1.7.2.2 2008/09/18 04:37:03 wrstuden Exp $
+#	$NetBSD: Makefile.rump,v 1.7.2.3 2008/10/10 22:36:16 skrll Exp $
 #
 
 WARNS?=		4
 NOLINT=		# kernel code
 
 CFLAGS+=	-ffreestanding
-CPPFLAGS+=	-D_KERNEL -D_RUMPKERNEL -DDIAGNOSTIC
+CPPFLAGS+=	-D_KERNEL -D_RUMPKERNEL -DMULTIPROCESSOR -DDIAGNOSTIC
 CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
 CPPFLAGS+=	-I${.CURDIR} -I. 
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include

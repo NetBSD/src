@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.16.2.3 2008/09/24 16:38:48 wrstuden Exp $
+# $NetBSD: XEN3_DOM0,v 1.16.2.4 2008/10/10 22:29:03 skrll Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -273,9 +273,11 @@ amdtemp* at pci? dev ? function ?	# AMD CPU Temperature sensors
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface
 #iic*	at amdpm?			# sensors below are on this bus
-#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-#adt7463c* at iic? addr 0x2D		# Tyan S2881
-#adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+
+# Thermal monitor and fan controller
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310, 0xc00
@@ -654,7 +656,6 @@ yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at cmpci? flags 1
-#opl*	at esl?
 opl*	at eso?
 opl*	at fms?
 opl*	at sv?

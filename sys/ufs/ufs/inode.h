@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.51.12.1 2008/09/18 04:37:06 wrstuden Exp $	*/
+/*	$NetBSD: inode.h,v 1.51.12.2 2008/10/10 22:37:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -52,8 +52,8 @@
 struct ffs_inode_ext {
 	daddr_t *ffs_snapblklist;	/* Collect expunged snapshot blocks. */
 	/* follow two fields are used by contiguous allocation code only. */
-	daddr_t ffs_first_data_blk;	/* first indirect block on disk. */
-	daddr_t ffs_first_indir_blk;	/* first data block on disk. */
+	daddr_t ffs_first_data_blk;	/* first data block on disk. */
+	daddr_t ffs_first_indir_blk;	/* first indirect block on disk. */
 };
 
 struct ext2fs_inode_ext {

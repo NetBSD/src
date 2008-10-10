@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.8.12.2 2008/09/18 04:37:04 wrstuden Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.8.12.3 2008/10/10 22:36:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -71,6 +71,7 @@ genfs_getpages(void *v)
 	struct uvm_object *uobj = (struct uvm_object *)vp;
 	struct vm_page *pg;
 	voff_t curoff, endoff;
+	off_t diskeof;
 	size_t bufsize, remain, bufoff, xfersize;
 	uint8_t *tmpbuf;
 	int bshift = vp->v_mount->mnt_fs_bshift;
@@ -155,12 +156,14 @@ genfs_getpages(void *v)
 	 * starting from the missing offset and transfer into the
 	 * page buffers.
 	 */
+	GOP_SIZE(vp, vp->v_size, &diskeof, 0);
 
 	/* align to boundaries */
 	endoff = trunc_page(ap->a_offset) + (count << PAGE_SHIFT);
 	endoff = MIN(endoff, ((vp->v_writesize+bsize-1) & ~(bsize-1)));
 	curoff = ap->a_offset & ~(MAX(bsize,PAGE_SIZE)-1);
 	remain = endoff - curoff;
+	remain = MIN(remain, diskeof - curoff);
 
 	DPRINTF(("a_offset: %llx, startoff: 0x%llx, endoff 0x%llx\n",
 	    (unsigned long long)ap->a_offset, (unsigned long long)curoff,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.181.2.2 2008/09/18 04:35:01 wrstuden Exp $	*/
+/*	$NetBSD: vnd.c,v 1.181.2.3 2008/10/10 22:30:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.181.2.2 2008/09/18 04:35:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.181.2.3 2008/10/10 22:30:57 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -1796,7 +1796,8 @@ compstrategy(struct buf *bp, off_t bn)
 			vn_lock(vnd->sc_vp, LK_EXCLUSIVE | LK_RETRY);
 			error = vn_rdwr(UIO_READ, vnd->sc_vp, vnd->sc_comp_buff,
 			    length, vnd->sc_comp_offsets[comp_block],
-			    UIO_SYSSPACE, IO_UNIT, vnd->sc_cred, NULL, NULL);
+			    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, vnd->sc_cred,
+			    NULL, NULL);
 			if (error) {
 				bp->b_error = error;
 				VOP_UNLOCK(vnd->sc_vp, 0);

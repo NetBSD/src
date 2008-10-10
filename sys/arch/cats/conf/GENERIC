@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.120.12.2 2008/09/18 04:33:22 wrstuden Exp $
+# $NetBSD: GENERIC,v 1.120.12.3 2008/10/10 22:29:04 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -192,7 +192,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-#options		SYMTAB_SPACE=380000
+#options		SYMTAB_SPACE=500000
 
 config		netbsd	root on ? type ?
 
@@ -247,8 +247,8 @@ scsibus* at ahc?
 #scsibus* at bha?
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 scsibus* at iha?
-isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
-scsibus* at isp?
+#isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+#scsibus* at isp?
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI

@@ -59,7 +59,7 @@ i915_get_pipe(struct drm_device *dev, int plane)
  * @pipe: pipe to look for
  *
  * The Intel Mesa & 2D drivers call the vblank routines with a plane number
- * rather than a plane number, since they may not always be equal.  This routine
+ * rather than a pipe number, since they may not always be equal.  This routine
  * maps the given @pipe back to a plane number.
  */
 static int

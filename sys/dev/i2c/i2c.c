@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.20.2.1 2008/09/24 16:38:52 wrstuden Exp $	*/
+/*	$NetBSD: i2c.c,v 1.20.2.2 2008/10/10 22:30:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.20.2.1 2008/09/24 16:38:52 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.20.2.2 2008/10/10 22:30:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,9 @@ iic_attach(device_t parent, device_t self, void *aux)
 		uint8_t cmd = 0, val;
 
 		for (addr = 0x0; addr < 0x80; addr++) {
+			/* Skip i2c Alert Response Address */
+			if (addr == 0x0c)
+				continue;
 			iic_acquire_bus(ic, 0);
 			if (iic_exec(ic, I2C_OP_READ_WITH_STOP, addr,
 			    &cmd, 1, &val, 1, 0) == 0) {

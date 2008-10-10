@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.30.6.2 2008/09/18 04:37:04 wrstuden Exp $	*/
+/*	$NetBSD: vm.c,v 1.30.6.3 2008/10/10 22:36:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -44,6 +44,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
@@ -425,6 +426,7 @@ rumpvm_init()
 
 	uvmexp.free = 1024*1024; /* XXX */
 	uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
+	rump_vmspace.vm_map.pmap = pmap_kernel();
 
 	mutex_init(&rvamtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uwinmtx, MUTEX_DEFAULT, 0);
@@ -622,11 +624,57 @@ uvn_clean_p(struct uvm_object *uobj)
 	return (vp->v_iflag & VI_ONWORKLST) == 0;
 }
 
-#ifndef RUMP_USE_REAL_KMEM
+struct vm_map_kernel *
+vm_map_to_kernel(struct vm_map *map)
+{
+
+	return (struct vm_map_kernel *)map;
+}
+
+void
+uvm_pageout_start(int npages)
+{
+
+	uvmexp.paging += npages;
+}
+
+void
+uvm_pageout_done(int npages)
+{
+
+	uvmexp.paging -= npages;
+
+	/*
+	 * wake up either of pagedaemon or LWPs waiting for it.
+	 */
+
+	if (uvmexp.free <= uvmexp.reserve_kernel) {
+		wakeup(&uvm.pagedaemon);
+	} else {
+		wakeup(&uvmexp.free);
+	}
+}
+
+/* XXX: following two are unfinished because lwp's are not refcounted yet */
+void
+uvm_lwp_hold(struct lwp *l)
+{
+
+	atomic_inc_uint(&l->l_holdcnt);
+}
+
+void
+uvm_lwp_rele(struct lwp *l)
+{
+
+	atomic_dec_uint(&l->l_holdcnt);
+}
+
 /*
  * Kmem
  */
 
+#ifndef RUMP_USE_REAL_KMEM
 void *
 kmem_alloc(size_t size, km_flag_t kmflag)
 {
@@ -685,36 +733,16 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *minaddr, vaddr_t *maxaddr,
 	return (struct vm_map *)417416;
 }
 
-void
-uvm_pageout_start(int npages)
+vaddr_t
+uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 {
 
-	uvmexp.paging += npages;
+	return (vaddr_t)rumpuser_malloc(PAGE_SIZE, !waitok);
 }
 
 void
-uvm_pageout_done(int npages)
+uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 {
 
-	uvmexp.paging -= npages;
-
-	/*
-	 * wake up either of pagedaemon or LWPs waiting for it.
-	 */
-
-	if (uvmexp.free <= uvmexp.reserve_kernel) {
-		wakeup(&uvm.pagedaemon);
-	} else {
-		wakeup(&uvmexp.free);
-	}
-}
-
-/*
- * Misc
- */
-struct vm_map_kernel *
-vm_map_to_kernel(struct vm_map *map)
-{
-
-	return (struct vm_map_kernel *)map;
+	rumpuser_free((void *)addr);
 }

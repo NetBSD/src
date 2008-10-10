@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.11.2.1 2008/06/23 04:32:03 wrstuden Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.11.2.2 2008/10/10 22:37:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -32,8 +32,10 @@
 #ifndef	_SYS_SLEEPQ_H_
 #define	_SYS_SLEEPQ_H_
 
-#include <sys/queue.h>
+#include <sys/lwp.h>
 #include <sys/mutex.h>
+#include <sys/pool.h>
+#include <sys/queue.h>
 #include <sys/sched.h>
 #include <sys/syncobj.h>
 

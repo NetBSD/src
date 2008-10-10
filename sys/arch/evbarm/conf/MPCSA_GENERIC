@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.3.2.2 2008/09/18 04:33:23 wrstuden Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.3.2.3 2008/10/10 22:29:04 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.3.2.2 $"
+#ident 		"GENERIC-$Revision: 1.3.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -206,7 +206,6 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
-options 	I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -335,9 +334,9 @@ com*	at pcmcom? slave ?		# ...and the slave devices
 # Hardware monitors
 
 # AMD 768 and 8111 power/ACPI controllers
-#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-#adt7463c* at iic? addr 0x2D		# Tyan S2881
-#adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # 1-Wire support
 #gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bitbanging via gpio

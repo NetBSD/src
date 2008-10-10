@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.25.2.1 2008/06/23 04:30:27 wrstuden Exp $	 */
+/*	$NetBSD: exec.c,v 1.25.2.2 2008/10/10 22:29:05 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -133,32 +133,18 @@ static char module_base[64] = "/";
 
 static void	module_init(void);
 
-int
-exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
+static int
+common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
+    physaddr_t loadaddr, int floppy, u_long marks[MARK_MAX])
 {
-	u_long          boot_argv[BOOT_NARGS];
-	int		fd;
-	u_long		marks[MARK_MAX];
-	struct btinfo_symtab btinfo_symtab;
-	u_long		extmem;
-	u_long		basemem;
+	int fd;
 #ifdef XMS
 	u_long		xmsmem;
 	physaddr_t	origaddr = loadaddr;
 #endif
-	char		*machine;
 
-#ifdef	DEBUG
-	printf("exec: file=%s loadaddr=0x%lx\n",
-	       file ? file : "NULL", loadaddr);
-#endif
-
-	BI_ALLOC(32); /* ??? */
-
-	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
-
-	extmem = getextmem();
-	basemem = getbasemem();
+	*extmem = getextmem();
+	*basemem = getbasemem();
 
 #ifdef XMS
 	if ((getextmem1() == 0) && (xmsmem = checkxms())) {
@@ -171,14 +157,14 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 		 * xmsmem is a few kB less than the actual size, but
 		 *  better than nothing.
 		 */
-		if (xmsmem > extmem)
-			extmem = xmsmem;
+		if (xmsmem > *extmem)
+			*extmem = xmsmem;
 		/*
 		 * Get the size of the kernel
 		 */
 		marks[MARK_START] = loadaddr;
 		if ((fd = loadfile(file, marks, COUNT_KERNEL)) == -1)
-			goto out;
+			return EIO;
 		close(fd);
 
 		kernsize = marks[MARK_END];
@@ -190,15 +176,9 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 	}
 #endif
 	marks[MARK_START] = loadaddr;
-	if ((fd = loadfile(file, marks, LOAD_KERNEL)) == -1)
-		goto out;
-
-	boot_argv[0] = boothowto;
-	boot_argv[1] = 0;
-	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
-	/* argv[3] below */
-	boot_argv[4] = extmem;
-	boot_argv[5] = basemem;
+	if ((fd = loadfile(file, marks,
+	    LOAD_KERNEL & ~(floppy ? LOAD_NOTE : 0))) == -1)
+		return EIO;
 
 	close(fd);
 
@@ -230,37 +210,42 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto)
 #endif
 	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) &
 	    (-sizeof(int));
-	boot_argv[3] = marks[MARK_END];
 	image_end = marks[MARK_END];
 	kernel_loaded = true;
 
+	return 0;
+}
+
+int
+exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy)
+{
+	u_long          boot_argv[BOOT_NARGS];
+	u_long		marks[MARK_MAX];
+	struct btinfo_symtab btinfo_symtab;
+	u_long		extmem;
+	u_long		basemem;
+
+#ifdef	DEBUG
+	printf("exec: file=%s loadaddr=0x%lx\n",
+	       file ? file : "NULL", loadaddr);
+#endif
+
+	BI_ALLOC(32); /* ??? */
+
+	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
+
+	if (common_load_kernel(file, &basemem, &extmem, loadaddr, floppy, marks))
+		goto out;
+
+	boot_argv[0] = boothowto;
+	boot_argv[1] = 0;
+	boot_argv[2] = vtophys(bootinfo);	/* old cyl offset */
+	boot_argv[3] = marks[MARK_END];
+	boot_argv[4] = extmem;
+	boot_argv[5] = basemem;
+
 	/* pull in any modules if necessary */
 	if (boot_modules_enabled) {
-		switch (netbsd_elf_class) {
-		case ELFCLASS32:
-			machine = "i386";
-			break;
-		case ELFCLASS64:
-			machine = "amd64";
-			break;
-		default:
-			machine = "generic";
-			break;
-		}
-		if (netbsd_version / 1000000 % 100 == 99) {
-			/* -current */
-			snprintf(module_base, sizeof(module_base),
-			    "/stand/%s/%d.%d.%d/modules", machine,
-			    netbsd_version / 100000000,
-			    netbsd_version / 1000000 % 100,
-			    netbsd_version / 100 % 100);
-		} else if (netbsd_version != 0) {
-			/* release */
-			snprintf(module_base, sizeof(module_base),
-			    "/stand/%s/%d.%d/modules", machine,
-			    netbsd_version / 100000000,
-			    netbsd_version / 1000000 % 100);
-		}
 		module_init();
 		if (btinfo_modulelist) {
 			BI_ADD(btinfo_modulelist, BTINFO_MODULELIST,
@@ -326,11 +311,38 @@ module_init(void)
 {
 	struct bi_modulelist_entry *bi;
 	struct stat st;
+	const char *machine;
 	char *buf;
 	boot_module_t *bm;
 	size_t len;
 	off_t off;
 	int err, fd;
+
+	switch (netbsd_elf_class) {
+	case ELFCLASS32:
+		machine = "i386";
+		break;
+	case ELFCLASS64:
+		machine = "amd64";
+		break;
+	default:
+		machine = "generic";
+		break;
+	}
+	if (netbsd_version / 1000000 % 100 == 99) {
+		/* -current */
+		snprintf(module_base, sizeof(module_base),
+		    "/stand/%s/%d.%d.%d/modules", machine,
+		    netbsd_version / 100000000,
+		    netbsd_version / 1000000 % 100,
+		    netbsd_version / 100 % 100);
+	} else if (netbsd_version != 0) {
+		/* release */
+		snprintf(module_base, sizeof(module_base),
+		    "/stand/%s/%d.%d/modules", machine,
+		    netbsd_version / 100000000,
+		    netbsd_version / 1000000 % 100);
+	}
 
 	/* First, see which modules are valid and calculate btinfo size */
 	len = sizeof(struct btinfo_modulelist);

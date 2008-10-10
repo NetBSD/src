@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.65.12.1 2008/06/23 04:32:01 wrstuden Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.65.12.2 2008/10/10 22:35:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.65.12.1 2008/06/23 04:32:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.65.12.2 2008/10/10 22:35:43 skrll Exp $");
 
 #include "opt_eon.h"
 
@@ -149,7 +149,7 @@ eonattach(void)
 	ifp->if_ioctl = eonioctl;
 	ifp->if_output = eonoutput;
 	ifp->if_type = IFT_EON;
-	ifp->if_addrlen = 5;
+	ifp->if_addrlen = 0;
 	ifp->if_hdrlen = EONIPLEN;
 	ifp->if_flags = IFF_BROADCAST;
 	if_attach(ifp);

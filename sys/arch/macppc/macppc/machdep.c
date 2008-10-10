@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150.20.2 2008/05/14 01:34:59 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.20.3 2008/10/10 22:29:05 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.20.2 2008/05/14 01:34:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.20.3 2008/10/10 22:29:05 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.20.2 2008/05/14 01:34:59 wrstuden 
 #include <arch/powerpc/pic/ipivar.h>
 #endif
 
-volatile uint32_t *heathrow_FCR = NULL;
 struct genfb_colormap_callback gfb_cb;
 
 static void of_set_palette(void *, int, int, int, int);
