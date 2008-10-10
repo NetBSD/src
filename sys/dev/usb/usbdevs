@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.512 2008/09/28 15:41:29 wiz Exp $
+$NetBSD: usbdevs,v 1.513 2008/10/10 16:29:57 joerg Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1675,6 +1675,8 @@ product NOVATEL2 XU870		0x1430	XU870
 product NOVATEL2 ES620		0x2100	ES620 CDMA
 product NOVATEL2 U720		0x2110	U720
 product NOVATEL2 U727		0x4100	U727
+product NOVATEL2 MC950D		0x4400	Novatel Wireless HSUPA Modem
+product NOVATEL2 MC950D_DRIVER	0x5010	Novatel Wireless HSUPA Modem Windows Driver
 
 /* Olympus products */
 product OLYMPUS C1		0x0102	C-1 Digital Camera
@@ -1700,6 +1702,7 @@ product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card Reader
 product ONSPEC2 8IN2		0xb012	8In2
 
 /* Option N.V. products */
+product OPTIONNV VODAFONEMC3G	0x5000	Vodafone Mobile Connect 3G datacard
 product OPTIONNV MC3G		0x5000	Mobile Connect 3G datacard
 product OPTIONNV QUADUMTS2	0x6000	GlobeTrotter Fusion Quad Lite UMTS/GPRS
 product OPTIONNV QUADUMTS	0x6300	GlobeTrotter Fusion Quad Lite 3D
