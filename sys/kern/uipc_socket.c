@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.164.2.2 2008/09/18 04:31:44 wrstuden Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.164.2.3 2008/10/10 22:34:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.164.2.2 2008/09/18 04:31:44 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.164.2.3 2008/10/10 22:34:14 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_sock_counters.h"
@@ -77,7 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.164.2.2 2008/09/18 04:31:44 wrstud
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
@@ -639,22 +639,25 @@ soclose(struct socket *so)
 	error = 0;
 	solock(so);
 	if (so->so_options & SO_ACCEPTCONN) {
-		do {
-			while ((so2 = TAILQ_FIRST(&so->so_q0)) != 0) {
+		for (;;) {
+			if ((so2 = TAILQ_FIRST(&so->so_q0)) != 0) {
 				KASSERT(solocked2(so, so2));
 				(void) soqremque(so2, 0);
 				/* soabort drops the lock. */
 				(void) soabort(so2);
 				solock(so);
+				continue;
 			}
-			while ((so2 = TAILQ_FIRST(&so->so_q)) != 0) {
+			if ((so2 = TAILQ_FIRST(&so->so_q)) != 0) {
 				KASSERT(solocked2(so, so2));
 				(void) soqremque(so2, 1);
 				/* soabort drops the lock. */
 				(void) soabort(so2);
 				solock(so);
+				continue;
 			}
-		} while (!TAILQ_EMPTY(&so->so_q0));
+			break;
+		}
 	}
 	if (so->so_pcb == 0)
 		goto discard;
@@ -1860,7 +1863,7 @@ sockopt_alloc(struct sockopt *sopt, size_t len)
 	KASSERT(sopt->sopt_size == 0);
 
 	if (len > sizeof(sopt->sopt_buf))
-		sopt->sopt_data = malloc(len, M_SOOPTS, M_WAITOK | M_ZERO);
+		sopt->sopt_data = kmem_zalloc(len, KM_SLEEP);
 	else
 		sopt->sopt_data = sopt->sopt_buf;
 
@@ -1890,7 +1893,7 @@ sockopt_destroy(struct sockopt *sopt)
 {
 
 	if (sopt->sopt_data != sopt->sopt_buf)
-		free(sopt->sopt_data, M_SOOPTS);
+		kmem_free(sopt->sopt_data, sopt->sopt_size);
 
 	memset(sopt, 0, sizeof(*sopt));
 }

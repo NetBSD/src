@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile,v 1.6.6.2 2008/09/18 04:37:04 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.6.6.3 2008/10/10 22:36:16 skrll Exp $
 #
 
 LIB=		rumpuser
 INCS=		rumpuser.h
 INCSDIR=	/usr/include/rump
+WARNS=		4
 
-SRCS=		rumpuser.c rumpuser_pth.c
+SRCS=		rumpuser.c rumpuser_net.c rumpuser_pth.c
 
 LDFLAGS+=	-Wl,--wrap=malloc
 

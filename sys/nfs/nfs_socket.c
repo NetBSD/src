@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.170.4.1 2008/09/18 04:37:02 wrstuden Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.170.4.2 2008/10/10 22:35:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.170.4.1 2008/09/18 04:37:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.170.4.2 2008/10/10 22:35:43 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -172,8 +172,10 @@ static struct evcnt nfs_timer_ev;
 static struct evcnt nfs_timer_start_ev;
 static struct evcnt nfs_timer_stop_ev;
 
+#ifdef NFS
 static int nfs_sndlock(struct nfsmount *, struct nfsreq *);
 static void nfs_sndunlock(struct nfsmount *);
+#endif
 static int nfs_rcvlock(struct nfsmount *, struct nfsreq *);
 static void nfs_rcvunlock(struct nfsmount *);
 
@@ -1603,7 +1605,6 @@ nfs_timer_init(void)
  * Scan the nfsreq list and retranmit any requests that have timed out
  * To avoid retransmission attempts on STREAM sockets (in the future) make
  * sure to set the r_retry field to 0 (implies nm_retry == 0).
- * A non-NULL argument means 'initialize'.
  */
 void
 nfs_timer(void *arg)
@@ -1778,6 +1779,7 @@ nfs_sigintr(nmp, rep, l)
 	return (0);
 }
 
+#ifdef NFS
 /*
  * Lock a socket against others.
  * Necessary for STREAM sockets to ensure you get an entire rpc request/reply
@@ -1834,6 +1836,7 @@ nfs_sndunlock(struct nfsmount *nmp)
 	cv_signal(&nmp->nm_sndcv);
 	mutex_exit(&nmp->nm_lock);
 }
+#endif /* NFS */
 
 static int
 nfs_rcvlock(struct nfsmount *nmp, struct nfsreq *rep)

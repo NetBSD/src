@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.110.2.6 2008/09/18 04:31:42 wrstuden Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.110.2.7 2008/10/10 22:34:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.110.2.6 2008/09/18 04:31:42 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.110.2.7 2008/10/10 22:34:14 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -934,7 +934,6 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 */
 	if (l->l_lwpctl != NULL)
 		lwp_ctl_free(l);
-	sched_lwp_exit(l);
 
 	if (!recycle && l->l_ts != &turnstile0)
 		pool_cache_put(turnstile_cache, l->l_ts);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.26.6.2 2008/09/18 04:37:04 wrstuden Exp $	*/
+/*	$NetBSD: rump.h,v 1.26.6.3 2008/10/10 22:36:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -58,7 +58,14 @@ struct modinfo;
 #define curlwp rump_get_curlwp()
 #endif
 
-void	rump_init(void);
+/*
+ * Something like rump capabilities would be nicer, but let's
+ * do this for a start.
+ */
+#define RUMP_VERSION	01
+#define rump_init()	_rump_init(RUMP_VERSION)
+
+int		_rump_init(int);
 struct mount	*rump_mnt_init(struct vfsops *, int);
 int		rump_mnt_mount(struct mount *, const char *, void *, size_t *);
 void		rump_mnt_destroy(struct mount *);
@@ -107,10 +114,13 @@ int	rump_vp_islocked(struct vnode *);
 void	rump_vp_interlock(struct vnode *);
 
 kauth_cred_t	rump_cred_create(uid_t, gid_t, size_t, gid_t *);
+kauth_cred_t	rump_cred_suserget(void);
 void		rump_cred_destroy(kauth_cred_t);
 
-#define RUMPCRED_SUSER	((void *)-3)
-#define WizardMode	RUMPCRED_SUSER /* COMPAT_NETHACK */
+#define rump_cred_suserput(c)	rump_cred_destroy(c)
+/* COMPAT_NETHACK */
+#define WizardMode()		rump_cred_suserget()
+#define YASD(cred)		rump_cred_suserput(cred)
 
 int	rump_vfs_unmount(struct mount *, int);
 int	rump_vfs_root(struct mount *, struct vnode **, int);

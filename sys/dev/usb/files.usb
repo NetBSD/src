@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.82.12.3 2008/09/24 16:38:55 wrstuden Exp $
+#	$NetBSD: files.usb,v 1.82.12.4 2008/10/10 22:33:10 skrll Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -141,11 +141,6 @@ device	pseye: videobus
 attach	pseye at usbifif
 file	dev/usb/pseye.c			pseye
 
-# Logitech QuickCam Messenger
-device	qcm: videobus
-attach	qcm at usbifif
-file	dev/usb/qcm.c			qcm
-
 # USB Video Class capture devices
 device	uvideo: videobus
 attach	uvideo at usbifif
@@ -174,6 +169,11 @@ file	dev/usb/uvisor.c		uvisor
 device	ugensa: ucombus
 attach	ugensa at usbdevif
 file	dev/usb/ugensa.c		ugensa
+
+# Generic Serial Adapter
+device	u3g: ucombus
+attach	u3g at usbdevif
+file	dev/usb/u3g.c			u3g
 
 # YAP phone firmware loader
 device	uyap: ezload

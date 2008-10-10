@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.36.2.2 2008/09/18 04:36:56 wrstuden Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.36.2.3 2008/10/10 22:34:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.36.2.2 2008/09/18 04:36:56 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.36.2.3 2008/10/10 22:34:14 skrll Exp $");
 #endif /* not lint */
 
 
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.36.2.2 2008/09/18 04:36:56 wrstuden
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
+#include <sys/dirhash.h>
 
 #include "udf.h"
 #include "udf_subr.h"
@@ -72,12 +73,6 @@ MODULE(MODULE_CLASS_VFS, udf, NULL);
 
 /* verbose levels of the udf filingsystem */
 int udf_verbose = UDF_DEBUGGING;
-
-/* maximum dirhash size of all UDF filesystems combined(!) */
-kmutex_t udf_dirhashmutex;
-uint32_t udf_maxdirhashsize = UDF_DIRHASH_DEFAULTMEM;
-uint32_t udf_dirhashsize    = 0;
-struct _udf_dirhash udf_dirhash_queue;
 
 /* malloc regions */
 MALLOC_JUSTDEFINE(M_UDFMNT,   "UDF mount",	"UDF mount structures");
@@ -141,10 +136,6 @@ void
 udf_init(void)
 {
 	size_t size;
-	uint32_t max_entries;
-
-	/* initialise dirhash queue */
-	TAILQ_INIT(&udf_dirhash_queue);
 
 	/* setup memory types */
 	malloc_type_attach(M_UDFMNT);
@@ -155,20 +146,6 @@ udf_init(void)
 	size = sizeof(struct udf_node);
 	pool_init(&udf_node_pool, size, 0, 0, 0,
 		"udf_node_pool", NULL, IPL_NONE);
-
-	/* init dirhash pools */
-	size = sizeof(struct udf_dirhash);
-	pool_init(&udf_dirhash_pool, size, 0, 0, 0,
-		"udf_dirhash_pool", NULL, IPL_NONE);
-
-	size = sizeof(struct udf_dirhash_entry);
-	pool_init(&udf_dirhash_entry_pool, size, 0, 0, 0,
-		"udf_dirhash_entry_pool", NULL, IPL_NONE);
-
-	mutex_init(&udf_dirhashmutex, MUTEX_DEFAULT, IPL_NONE);
-	max_entries = udf_maxdirhashsize / size;
-	pool_sethiwat(&udf_dirhash_entry_pool, max_entries);
-	udf_dirhashsize = 0;
 }
 
 
@@ -184,8 +161,6 @@ udf_done(void)
 {
 	/* remove pools */
 	pool_destroy(&udf_node_pool);
-	pool_destroy(&udf_dirhash_pool);
-	pool_destroy(&udf_dirhash_entry_pool);
 
 	malloc_type_detach(M_UDFMNT);
 	malloc_type_detach(M_UDFVOLD);
@@ -197,8 +172,6 @@ udf_done(void)
  * running into a problem.
  */
 #define UDF_VERBOSE_SYSCTLOPT        1
-#define UDF_CURDIRHASHSIZE_SYSCTLOPT 2
-#define UDF_MAXDIRHASHSIZE_SYSCTLOPT 3
 
 static int
 udf_modcmd(modcmd_t cmd, void *arg)
@@ -227,18 +200,6 @@ udf_modcmd(modcmd_t cmd, void *arg)
 			       SYSCTL_DESCR("OSTA Universal File System"),
 			       NULL, 0, NULL, 0,
 			       CTL_VFS, 24, CTL_EOL);
-		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
-			       CTLFLAG_PERMANENT,
-			       CTLTYPE_INT, "curdirhashsize",
-			       SYSCTL_DESCR("Current memory to be used by dirhash"),
-			       NULL, 0, &udf_dirhashsize, 0,
-			       CTL_VFS, 24, UDF_CURDIRHASHSIZE_SYSCTLOPT, CTL_EOL);
-		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
-			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			       CTLTYPE_INT, "maxdirhashsize",
-			       SYSCTL_DESCR("Max memory to be used by dirhash"),
-			       NULL, 0, &udf_maxdirhashsize, 0,
-			       CTL_VFS, 24, UDF_MAXDIRHASHSIZE_SYSCTLOPT, CTL_EOL);
 #ifdef DEBUG
 		sysctl_createv(&udf_sysctl_log, 0, NULL, &node,
 			       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

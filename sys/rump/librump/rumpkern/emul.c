@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.38.4.2 2008/09/18 04:37:04 wrstuden Exp $	*/
+/*	$NetBSD: emul.c,v 1.38.4.3 2008/10/10 22:36:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -68,11 +68,6 @@ int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
 int hardclock_ticks;
-
-MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
-MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
-MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
-MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
@@ -351,8 +346,6 @@ struct kthdesc {
 	struct lwp *mylwp;
 };
 
-static lwpid_t curlid = 2;
-
 static void *
 threadbouncer(void *arg)
 {
@@ -398,7 +391,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k = kmem_alloc(sizeof(struct kthdesc), KM_SLEEP);
 	k->f = func;
 	k->arg = arg;
-	k->mylwp = l = rump_setup_curlwp(0, curlid++, 0);
+	k->mylwp = l = rump_setup_curlwp(0, rump_nextlid(), 0);
 	rv = rumpuser_thread_create(threadbouncer, k);
 	if (rv)
 		return rv;
@@ -413,41 +406,6 @@ kthread_exit(int ecode)
 {
 
 	rumpuser_thread_exit();
-}
-
-void
-callout_init(callout_t *c, u_int flags)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-callout_reset(callout_t *c, int ticks, void (*func)(void *), void *arg)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-bool
-callout_stop(callout_t *c)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-callout_schedule(callout_t *c, int ticks)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-callout_setfunc(callout_t *c, void (*func)(void *), void *arg)
-{
-
-	panic("%s: not implemented", __func__);
 }
 
 struct proc *
@@ -537,14 +495,6 @@ suspendsched()
 	panic("%s: not implemented", __func__);
 }
 
-void
-yield(void)
-{
-
-	rumpuser_yield();
-}
-
-
 u_int
 lwp_unsleep(lwp_t *l, bool cleanup)
 {
@@ -615,6 +565,20 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 
 int
 devsw_detach(const struct bdevsw *bdev, const struct cdevsw *cdev)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+proc_crmod_enter()
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+proc_crmod_leave(kauth_cred_t c1, kauth_cred_t c2, bool sugid)
 {
 
 	panic("%s: not implemented", __func__);

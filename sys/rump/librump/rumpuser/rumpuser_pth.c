@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.12.6.1 2008/09/18 04:37:04 wrstuden Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.12.6.2 2008/10/10 22:36:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "rumpuser.h"
+#include <rump/rumpuser.h>
+
+#include "rumpuser_int.h"
 
 static pthread_key_t curlwpkey;
 static pthread_key_t isintr;
@@ -171,7 +173,7 @@ void
 rumpuser_mutex_enter(struct rumpuser_mtx *mtx)
 {
 
-	NOFAIL_ERRNO(pthread_mutex_lock(&mtx->pthmtx));
+	KLOCK_WRAP(NOFAIL_ERRNO(pthread_mutex_lock(&mtx->pthmtx)));
 }
 
 int
@@ -216,9 +218,9 @@ rumpuser_rw_enter(struct rumpuser_rw *rw, int write)
 {
 
 	if (write)
-		NOFAIL_ERRNO(pthread_rwlock_wrlock(&rw->pthrw));
+		KLOCK_WRAP(NOFAIL_ERRNO(pthread_rwlock_wrlock(&rw->pthrw)));
 	else
-		NOFAIL_ERRNO(pthread_rwlock_rdlock(&rw->pthrw));
+		KLOCK_WRAP(NOFAIL_ERRNO(pthread_rwlock_rdlock(&rw->pthrw)));
 }
 
 int
@@ -287,7 +289,7 @@ void
 rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 {
 
-	NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx));
+	KLOCK_WRAP(NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx)));
 }
 
 int
@@ -303,7 +305,7 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	ts.tv_sec  += ts.tv_nsec / 1000000000;
 	ts.tv_nsec %= 1000000000;
 
-	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
+	KLOCK_WRAP(rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts));
 	if (rv != 0 && rv != ETIMEDOUT)
 		abort();
 

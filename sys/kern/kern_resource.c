@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.141.2.4 2008/09/18 04:31:42 wrstuden Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.141.2.5 2008/10/10 22:34:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.141.2.4 2008/09/18 04:31:42 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.141.2.5 2008/10/10 22:34:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,8 +183,8 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 			mutex_enter(p->p_lock);
 			error = donice(l, p, SCARG(uap, prio));
 			mutex_exit(p->p_lock);
+			found++;
 		}
-		found++;
 		break;
 
 	case PRIO_PGRP: {
@@ -220,8 +220,8 @@ sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
 		break;
 
 	default:
-		error = EINVAL;
-		break;
+		mutex_exit(proc_lock);
+		return EINVAL;
 	}
 	mutex_exit(proc_lock);
 	if (found == 0)

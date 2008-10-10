@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.117.2.1 2008/06/23 04:31:12 wrstuden Exp $	*/
+/*	$NetBSD: pci.c,v 1.117.2.2 2008/10/10 22:32:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.117.2.1 2008/06/23 04:31:12 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.117.2.2 2008/10/10 22:32:17 skrll Exp $");
 
 #include "opt_pci.h"
 
@@ -432,10 +432,15 @@ pci_get_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 
 	ofs = PCI_CAPLIST_PTR(pci_conf_read(pc, tag, ofs));
 	while (ofs != 0) {
-#ifdef DIAGNOSTIC
-		if ((ofs & 3) || (ofs < 0x40))
-			panic("pci_get_capability");
-#endif
+		if ((ofs & 3) || (ofs < 0x40)) {
+			int bus, device, function;
+
+			pci_decompose_tag(pc, tag, &bus, &device, &function);
+
+			printf("Skipping broken PCI header on %d:%d:%d\n",
+			    bus, device, function);
+			break;
+		}
 		reg = pci_conf_read(pc, tag, ofs);
 		if (PCI_CAPLIST_CAP(reg) == capid) {
 			if (offset)

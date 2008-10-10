@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.355.2.4 2008/09/18 04:31:41 wrstuden Exp $	*/
+/*	$NetBSD: init_main.c,v 1.355.2.5 2008/10/10 22:34:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.355.2.4 2008/09/18 04:31:41 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.355.2.5 2008/10/10 22:34:14 skrll Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -162,6 +162,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.355.2.4 2008/09/18 04:31:41 wrstuden
 #include <sys/module.h>
 #include <sys/event.h>
 #include <sys/lockf.h>
+#include <sys/once.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -335,6 +336,7 @@ main(void)
 	consinit();
 
 	kernel_lock_init();
+	once_init();
 
 	uvm_init();
 

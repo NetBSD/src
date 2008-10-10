@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.905.2.5 2008/09/24 16:38:51 wrstuden Exp $
+#	$NetBSD: files,v 1.905.2.6 2008/10/10 22:29:46 skrll Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1386,6 +1386,7 @@ file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
+file	kern/kern_malloc_stdtype.c
 file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_module.c
 file	kern/kern_mutex.c
@@ -1397,6 +1398,7 @@ file	kern/kern_pmf.c
 file	kern/kern_proc.c
 file	kern/kern_prot.c
 file	kern/kern_ras.c
+file	kern/kern_rate.c
 file	kern/kern_resource.c
 file	kern/kern_runq.c
 file	kern/kern_rwlock.c
@@ -1486,6 +1488,7 @@ file	kern/uipc_syscalls.c
 file	kern/uipc_usrreq.c
 file	kern/vfs_bio.c
 file	kern/vfs_cache.c
+file	kern/vfs_dirhash.c
 file	kern/vfs_getcwd.c
 file	kern/vfs_hooks.c
 file	kern/vfs_init.c

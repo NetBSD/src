@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.30.2.2 2008/09/18 04:33:28 wrstuden Exp $	*/
+/*	$NetBSD: boot2.c,v 1.30.2.3 2008/10/10 22:29:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -79,9 +79,6 @@
 #include "devopen.h"
 #include "bootmod.h"
 
-#ifdef SUPPORT_USTARFS
-#include "ustarfs.h"
-#endif
 #ifdef SUPPORT_PS2
 #include <biosmca.h>
 #endif
@@ -261,7 +258,7 @@ bootit(const char *filename, int howto, int tell)
 		printf("\n");
 	}
 
-	if (exec_netbsd(filename, 0, howto) < 0)
+	if (exec_netbsd(filename, 0, howto, boot_biosdev < 0x80) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else
@@ -341,9 +338,6 @@ parsebootconf(const char *conf)
 	int fd, err, off;
 	struct stat st;
 	char *key, *value, *v2;
-#ifdef SUPPORT_USTARFS
-	void *op_open;
-#endif
 
 	/* Clear bootconf structure */
 	bzero((void *)&bootconf, sizeof(bootconf));
@@ -353,23 +347,6 @@ parsebootconf(const char *conf)
 
 	/* automatically switch between letter and numbers on menu */
 	bootconf.menuformat = MENUFORMAT_AUTO;
-
-	/* don't try to open BOOTCONF if the target fs is ustarfs */
-#ifdef SUPPORT_USTARFS
-#if !defined(LIBSA_SINGLE_FILESYSTEM)
-	fd = open("boot", 0);	/* assume we are loaded as "boot" from here */
-	if (fd < 0)
-		op_open = NULL;	/* XXX */
-	else {
-		op_open = files[fd].f_ops->open;
-		close(fd);
-	}
-#else
-	op_open = file_system[0].open;
-#endif	/* !LIBSA_SINGLE_FILESYSTEM */
-	if (op_open == ustarfs_open)
-		return;
-#endif	/* SUPPORT_USTARFS */
 
 	fd = open(BOOTCONF, 0);
 	if (fd < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.3.2.2 2008/09/18 04:31:42 wrstuden Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.3.2.3 2008/10/10 22:34:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.3.2.2 2008/09/18 04:31:42 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.3.2.3 2008/10/10 22:34:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -123,8 +123,8 @@ runq_init(void)
 
 	/* Balancing */
 	worker_ci = curcpu();
-	cacheht_time = mstohz(3);		/* ~3 ms  */
-	balance_period = mstohz(300);		/* ~300ms */
+	cacheht_time = mstohz(3);		/*   ~3 ms */
+	balance_period = mstohz(300);		/* ~300 ms */
 
 	/* Minimal count of LWPs for catching */
 	min_catch = 1;
@@ -639,6 +639,9 @@ sched_lwp_stats(struct lwp *l)
 {
 	int batch;
 
+	KASSERT(lwp_locked(l, NULL));
+
+	/* Update sleep time */
 	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
 	    l->l_stat == LSSUSPENDED)
 		l->l_slptime++;
@@ -701,11 +704,13 @@ sched_nextlwp(void)
 
 #ifdef MULTIPROCESSOR
 	/* If runqueue is empty, try to catch some thread from other CPU */
-	if (__predict_false(spc->spc_flags & SPCF_OFFLINE)) {
-		if ((ci_rq->r_count - ci_rq->r_mcount) == 0)
-			return NULL;
-	} else if (ci_rq->r_count == 0) {
+	if (__predict_false(ci_rq->r_count == 0)) {
 		struct cpu_info *cci;
+
+		/* Offline CPUs should not perform this, however */
+		if (__predict_false(spc->spc_flags & SPCF_OFFLINE))
+			return NULL;
+
 		/* Reset the counter, and call the balancer */
 		ci_rq->r_avgcount = 0;
 		sched_balance(ci);
@@ -715,7 +720,7 @@ sched_nextlwp(void)
 		return sched_catchlwp(cci);
 	}
 #else
-	if (ci_rq->r_count == 0)
+	if (__predict_false(ci_rq->r_count == 0))
 		return NULL;
 #endif
 
@@ -751,10 +756,7 @@ sched_curcpu_runnable_p(void)
 	}
 #endif
 
-	if (__predict_false(spc->spc_flags & SPCF_OFFLINE))
-		rv = (ci_rq->r_count - ci_rq->r_mcount);
-	else
-		rv = ci_rq->r_count != 0;
+	rv = (ci_rq->r_count != 0) ? true : false;
 	kpreempt_enable();
 
 	return rv;

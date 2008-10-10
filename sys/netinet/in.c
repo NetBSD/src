@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.125.2.1 2008/06/23 04:31:58 wrstuden Exp $	*/
+/*	$NetBSD: in.c,v 1.125.2.2 2008/10/10 22:35:43 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.125.2.1 2008/06/23 04:31:58 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.125.2.2 2008/10/10 22:35:43 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -134,7 +134,6 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.125.2.1 2008/06/23 04:31:58 wrstuden Exp $"
 #include <net/pfil.h>
 #endif
 
-#ifdef INET
 static u_int in_mask2len(struct in_addr *);
 static void in_len2mask(struct in_addr *, u_int);
 static int in_lifaddr_ioctl(struct socket *, u_long, void *,
@@ -1208,4 +1207,3 @@ in_delmulti(struct in_multi *inm)
 	}
 	splx(s);
 }
-#endif /* INET */

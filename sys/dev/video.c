@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.15.2.2 2008/09/18 04:35:01 wrstuden Exp $ */
+/* $NetBSD: video.c,v 1.15.2.3 2008/10/10 22:30:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.15.2.2 2008/09/18 04:35:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.15.2.3 2008/10/10 22:30:57 skrll Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -311,6 +311,9 @@ video_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s\n", sc->hw_if->get_devname(sc->hw_softc));
 
 	DPRINTF(("video_attach: sc=%p hwif=%p\n", sc, sc->hw_if));
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 
@@ -343,6 +346,8 @@ video_detach(device_t self, int flags)
 	DPRINTF(("video_detach: sc=%p flags=%d\n", sc, flags));
 
 	sc->sc_dying = true;
+
+	pmf_device_deregister(self);
 	
 	maj = cdevsw_lookup_major(&video_cdevsw);
 	mn = device_unit(self);
@@ -402,10 +407,13 @@ static const char *
 video_pixel_format_str(enum video_pixel_format px)
 {
 	switch (px) {
+	case VIDEO_FORMAT_UYVY:		return "UYVY";
 	case VIDEO_FORMAT_YUV420:	return "YUV420";
 	case VIDEO_FORMAT_YUY2: 	return "YUYV";
 	case VIDEO_FORMAT_NV12:		return "NV12";
 	case VIDEO_FORMAT_RGB24:	return "RGB24";
+	case VIDEO_FORMAT_RGB555:	return "RGB555";
+	case VIDEO_FORMAT_RGB565:	return "RGB565";
 	case VIDEO_FORMAT_SBGGR8:	return "SBGGR8";
 	case VIDEO_FORMAT_MJPEG:	return "MJPEG";
 	case VIDEO_FORMAT_DV:		return "DV";
@@ -588,6 +596,9 @@ video_format_to_v4l2_format(const struct video_format *src,
 	dest->fmt.pix.priv = src->priv;
 	
 	switch (src->pixel_format) {
+	case VIDEO_FORMAT_UYVY:
+		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_UYVY;
+		break;
 	case VIDEO_FORMAT_YUV420:
 		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_YUV420;
 		break;
@@ -599,6 +610,12 @@ video_format_to_v4l2_format(const struct video_format *src,
 		break;
 	case VIDEO_FORMAT_RGB24:
 		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_RGB24;
+		break;
+	case VIDEO_FORMAT_RGB555:
+		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_RGB555;
+		break;
+	case VIDEO_FORMAT_RGB565:
+		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_RGB565;
 		break;
 	case VIDEO_FORMAT_SBGGR8:
 		dest->fmt.pix.pixelformat = V4L2_PIX_FMT_SBGGR8;
@@ -637,6 +654,9 @@ v4l2_format_to_video_format(const struct v4l2_format *src,
 		dest->sample_size = src->fmt.pix.sizeimage;
 
 		switch (src->fmt.pix.pixelformat) {
+		case V4L2_PIX_FMT_UYVY:
+			dest->pixel_format = VIDEO_FORMAT_UYVY;
+			break;
 		case V4L2_PIX_FMT_YUV420:
 			dest->pixel_format = VIDEO_FORMAT_YUV420;
 			break;
@@ -648,6 +668,12 @@ v4l2_format_to_video_format(const struct v4l2_format *src,
 			break;
 		case V4L2_PIX_FMT_RGB24:
 			dest->pixel_format = VIDEO_FORMAT_RGB24;
+			break;
+		case V4L2_PIX_FMT_RGB555:
+			dest->pixel_format = VIDEO_FORMAT_RGB555;
+			break;
+		case V4L2_PIX_FMT_RGB565:
+			dest->pixel_format = VIDEO_FORMAT_RGB565;
 			break;
 		case V4L2_PIX_FMT_SBGGR8:
 			dest->pixel_format = VIDEO_FORMAT_SBGGR8;

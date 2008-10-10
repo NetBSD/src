@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.359.2.5 2008/09/24 16:38:57 wrstuden Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.359.2.6 2008/10/10 22:34:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.359.2.5 2008/09/24 16:38:57 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.359.2.6 2008/10/10 22:34:14 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -171,9 +171,11 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	/*
 	 * We only allow the filesystem to be reloaded if it
-	 * is currently mounted read-only.
+	 * is currently mounted read-only.  Additionally, we
+	 * prevent read-write to read-only downgrades.
 	 */
-	if (flags & MNT_RELOAD && !(mp->mnt_flag & MNT_RDONLY)) {
+	if ((flags & (MNT_RELOAD | MNT_RDONLY)) != 0 &&
+	    (mp->mnt_flag & MNT_RDONLY) == 0) {
 		error = EOPNOTSUPP;	/* Needs translation */
 		goto out;
 	}
@@ -395,10 +397,8 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	vfs_unbusy(mp, true, NULL);
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	error = VFS_START(mp, 0);
-	if (error) {
+	if (error)
 		vrele(vp);
-		vfs_destroy(mp);
-	}
 	/* Drop reference held for VFS_START(). */
 	vfs_destroy(mp);
 	*vpp = NULL;
@@ -695,6 +695,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 
 	vrele(vp);
 	error = dounmount(mp, SCARG(uap, flags), l);
+	vfs_destroy(mp);
 	return error;
 }
 
@@ -702,8 +703,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
  * Do the actual file system unmount.  File system is assumed to have
  * been locked by the caller.
  *
- * => Caller gain reference to the mount, explicility for unmount.
- * => Reference will be dropped in all cases.
+ * => Caller hold reference to the mount, explicitly for dounmount().
  */
 int
 dounmount(struct mount *mp, int flags, struct lwp *l)
@@ -728,7 +728,6 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
 		rw_exit(&mp->mnt_unmounting);
 		mutex_exit(&syncer_mutex);
-		vfs_destroy(mp);
 		return ENOENT;
 	}
 
@@ -787,8 +786,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		mutex_exit(&syncer_mutex);
 	vfs_hooks_unmount(mp);
 	rw_exit(&mp->mnt_unmounting);
-	vfs_destroy(mp);	/* caller provided reference */
-	vfs_destroy(mp);	/* from mount(), final nail in coffin */
+	vfs_destroy(mp);	/* reference from mount() */
 	if (coveredvp != NULLVP)
 		vrele(coveredvp);
 	return (0);

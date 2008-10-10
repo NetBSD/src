@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.7 2008/01/11 05:11:18 mrg Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.7.12.1 2008/10/10 22:29:06 skrll Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.7 2008/01/11 05:11:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.7.12.1 2008/10/10 22:29:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -245,7 +245,8 @@ device_register(dev, aux)
 			pci_class = (pci_class >> 16) & 0xff;
 
 			if (strcmp(name, "display") == 0 ||
-					pci_class == PCI_CLASS_DISPLAY) {
+			    strcmp(name, "ATY,DDParent") == 0 ||
+			    pci_class == PCI_CLASS_DISPLAY) {
 				/* setup display properties for fb driver */
 				prop_dictionary_set_bool(dict, "is_console", 0);
 				copy_disp_props(dev, node, dict);

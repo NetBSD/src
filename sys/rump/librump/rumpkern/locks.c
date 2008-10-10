@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.15.2.2 2008/09/18 04:37:04 wrstuden Exp $	*/
+/*	$NetBSD: locks.c,v 1.15.2.3 2008/10/10 22:36:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,8 @@ void
 mutex_spin_enter(kmutex_t *mtx)
 {
 
-	mutex_enter(mtx);
+	if (__predict_true(mtx != RUMP_LMUTEX_MAGIC))
+		mutex_enter(mtx);
 }
 
 int
@@ -109,7 +110,8 @@ void
 mutex_spin_exit(kmutex_t *mtx)
 {
 
-	mutex_exit(mtx);
+	if (__predict_true(mtx != RUMP_LMUTEX_MAGIC))
+		mutex_exit(mtx);
 }
 
 int
@@ -263,24 +265,45 @@ cv_has_waiters(kcondvar_t *cv)
 	return rumpuser_cv_has_waiters(RUMPCV(cv));
 }
 
-/* kernel biglock, only for vnode_if */
+/*
+ * giant lock
+ */
 
+static int lockcnt;
 void
 _kernel_lock(int nlocks)
 {
 
-	KASSERT(nlocks == 1);
-	mutex_enter(&rump_giantlock);
+	while (nlocks--) {
+		mutex_enter(&rump_giantlock);
+		lockcnt++;
+	}
 }
 
 void
 _kernel_unlock(int nlocks, int *countp)
 {
 
-	KASSERT(nlocks == 1);
-	mutex_exit(&rump_giantlock);
+	if (!mutex_owned(&rump_giantlock)) {
+		KASSERT(nlocks == 0);
+		if (countp)
+			*countp = 0;
+		return;
+	}
+
 	if (countp)
-		*countp = 1;
+		*countp = lockcnt;
+	if (nlocks == 0)
+		nlocks = lockcnt;
+	if (nlocks == -1) {
+		KASSERT(lockcnt == 1);
+		nlocks = 1;
+	}
+	KASSERT(nlocks <= lockcnt);
+	while (nlocks--) {
+		lockcnt--;
+		mutex_exit(&rump_giantlock);
+	}
 }
 
 struct kmutexobj {

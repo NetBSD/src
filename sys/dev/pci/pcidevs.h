@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.939.2.3 2008/09/24 16:38:54 wrstuden Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.939.2.4 2008/10/10 22:32:17 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.958 2008/09/18 12:03:45 cegger Exp
+ *	NetBSD: pcidevs,v 1.960 2008/10/01 15:38:14 christos Exp
  */
 
 /*
@@ -2214,6 +2214,7 @@
 #define	PCI_PRODUCT_INTEL_82801I_IFE_GT	0x10c3		/* 82801I (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_GT	0x10c4		/* i82801H IFE (GT) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801H_IFE_G	0x10c5		/* i82801H IFE (G) LAN Controller */
+#define	PCI_PRODUCT_INTEL_82567V	0x10ce		/* i82567V LAN controller */
 #define	PCI_PRODUCT_INTEL_82815_DC100_HUB	0x1100		/* 82815 Hub */
 #define	PCI_PRODUCT_INTEL_82815_DC100_AGP	0x1101		/* 82815 AGP */
 #define	PCI_PRODUCT_INTEL_82815_DC100_GRAPH	0x1102		/* 82815 Graphics */
@@ -2571,6 +2572,17 @@
 #define	PCI_PRODUCT_INTEL_E7525_PCIE_A	0x3595		/* E7525 PCI Express Port A */
 #define	PCI_PRODUCT_INTEL_E7525_PCIE_A1	0x3596		/* E7525 PCI Express Port A1 */
 #define	PCI_PRODUCT_INTEL_E7525_PCIE_B	0x3597		/* E7525 PCI Express Port B */
+#define	PCI_PRODUCT_INTEL_ICH10_SATA2_4x1	0x3a00		/* ICH10 SATA2(4port1) */
+#define	PCI_PRODUCT_INTEL_ICH10_SATA2_2x1	0x3a06		/* ICH10 SATA2(2port1) */
+#define	PCI_PRODUCT_INTEL_ICH10DO_TIMER	0x3a14		/* ICH10DO Watchdog timer */
+#define	PCI_PRODUCT_INTEL_ICH10R_TIMER	0x3a16		/* ICH10R Watchdog timer */
+#define	PCI_PRODUCT_INTEL_ICH10_TIMER	0x3a18		/* ICH10 Watchdog timer */
+#define	PCI_PRODUCT_INTEL_ICH10D_TIMER	0x3a1a		/* ICH10D Watchdog timer */
+#define	PCI_PRODUCT_INTEL_ICH10_SATA2_4x2	0x3a20		/* ICH10 SATA2(4port2) */
+#define	PCI_PRODUCT_INTEL_ICH10R_AHCI	0x3a22		/* ICH10R AHCI Controller */
+#define	PCI_PRODUCT_INTEL_ICH10_SATA2_2x2	0x3a26		/* ICH10 SATA2(2port2) */
+#define	PCI_PRODUCT_INTEL_ICH10_SMB1	0x3a30		/* ICH10 SMBus Serial Bus 1 */
+#define	PCI_PRODUCT_INTEL_ICH10_SMB2	0x3a60		/* ICH10 SMBus Serial Bus 2 */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2200BG	0x4220		/* PRO/Wireless LAN 2200BG Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_2225BG	0x4221		/* PRO/Wireless LAN 2225BG Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_3945ABG_1	0x4222		/* PRO/Wireless LAN 3945ABG Mini-PCI Adapter */
@@ -2645,12 +2657,14 @@
 #define	PCI_PRODUCT_ITT_ITT3204	0x0002		/* ITT3204 MPEG Decoder */
 
 /* JMicron products */
-#define	PCI_PRODUCT_JMICRON_JMB360	0x02360		/* JMB360 SATA controller */
-#define	PCI_PRODUCT_JMICRON_JMB361	0x02361		/* JMB361 SATA/PATA controller */
-#define	PCI_PRODUCT_JMICRON_JMB363	0x02363		/* JMB363 SATA/PATA controller */
-#define	PCI_PRODUCT_JMICRON_JMB365	0x02365		/* JMB365 SATA/PATA controller */
-#define	PCI_PRODUCT_JMICRON_JMB366	0x02366		/* JMB366 SATA/PATA controller */
-#define	PCI_PRODUCT_JMICRON_JMB368	0x02368		/* JMB368 PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB360	0x2360		/* JMB360 SATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB361	0x2361		/* JMB361 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB363	0x2363		/* JMB363 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB365	0x2365		/* JMB365 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB366	0x2366		/* JMB366 SATA/PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMB368	0x2368		/* JMB368 PATA controller */
+#define	PCI_PRODUCT_JMICRON_JMC250	0x0250		/* JMC250 Gigabit Ethernet Controller */
+#define	PCI_PRODUCT_JMICRON_JMC260	0x0260		/* JMC260 Fast Ethernet Controller */
 
 /* JNI products */
 #define	PCI_PRODUCT_JNI_JNIC1460	0x1460		/* JNIC-1460 Fibre-Channel adapter */

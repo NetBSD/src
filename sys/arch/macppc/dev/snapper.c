@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.25.20.1 2008/06/23 04:30:31 wrstuden Exp $	*/
+/*	$NetBSD: snapper.c,v 1.25.20.2 2008/10/10 22:29:05 skrll Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.25.20.1 2008/06/23 04:30:31 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.25.20.2 2008/10/10 22:29:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.25.20.1 2008/06/23 04:30:31 wrstuden E
 #include <machine/pio.h>
 
 #include <macppc/dev/deqvar.h>
+#include <macppc/dev/obiovar.h>
 
 #ifdef SNAPPER_DEBUG
 # define DPRINTF printf
@@ -1461,8 +1462,8 @@ snapper_set_volume(struct snapper_softc *sc, u_int left, u_int right)
 	u_char regs[6];
 	int l, r;
 
-	left &= 0xFF;
-	right &= 0xFF;
+	left = min(255, left);
+	right = min(255, right);
 
 	if (sc->sc_mode == SNAPPER_SWVOL) {
 		snapper_vol_l = left;
@@ -1745,9 +1746,9 @@ snapper_set_rate(struct snapper_softc *sc)
 	/* Clear CLKSTOPPEND. */
 	bus_space_write_4(sc->sc_tag, sc->sc_bsh, I2S_INT, I2S_INT_CLKSTOPPEND);
 
-	x = in32rb(sc->sc_baseaddr + KEYLARGO_FCR1);                /* FCR */
+	x = obio_read_4(KEYLARGO_FCR1);                /* FCR */
 	x &= ~I2S0CLKEN;                /* XXX I2S0 */
-	out32rb(sc->sc_baseaddr + KEYLARGO_FCR1, x);
+	obio_write_4(KEYLARGO_FCR1, x);
 
 	/* Wait until clock is stopped. */
 	for (timo = 1000; timo > 0; timo--) {
@@ -1760,9 +1761,9 @@ snapper_set_rate(struct snapper_softc *sc)
 done:
 	bus_space_write_4(sc->sc_tag, sc->sc_bsh, I2S_FORMAT, reg);
 
-	x = in32rb(sc->sc_baseaddr + KEYLARGO_FCR1);
+	x = obio_read_4(KEYLARGO_FCR1);
 	x |= I2S0CLKEN;
-	out32rb(sc->sc_baseaddr + KEYLARGO_FCR1, x);
+	obio_write_4(KEYLARGO_FCR1, x);
 
 	return 0;
 }
@@ -2021,7 +2022,8 @@ snapper_init(struct snapper_softc *sc, int node)
 #ifdef SNAPPER_DEBUG
 	char fcr[32];
 
-	bitmask_snprintf(in32rb(sc->sc_baseaddr + KEYLARGO_FCR1), FCR3C_BITMASK, 	    fcr, sizeof fcr);
+	bitmask_snprintf(obio_read_4(KEYLARGO_FCR1), FCR3C_BITMASK,
+			fcr, sizeof fcr);
 	printf("FCR(0x3c) 0x%s\n", fcr);
 #endif
 	headphone_detect_intr = -1;

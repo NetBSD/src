@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.16.2.1 2008/06/23 04:31:51 wrstuden Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.16.2.2 2008/10/10 22:34:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.16.2.1 2008/06/23 04:31:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.16.2.2 2008/10/10 22:34:14 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -1024,8 +1024,11 @@ kobj_read(kobj_t ko, void **basep, size_t size, off_t off)
 		    UIO_SYSSPACE, IO_NODELOCKED, curlwp->l_cred, &resid,
 		    curlwp);
 		if (error == 0 && resid != 0) {
-			kmem_free(base, size);
 			error = EINVAL;
+		}
+		if (error != 0) {
+			kmem_free(base, size);
+			base = NULL;
 		}
 		break;
 	case KT_MEMORY:

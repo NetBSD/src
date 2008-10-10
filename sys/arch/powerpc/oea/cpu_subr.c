@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.46.6.1 2008/06/23 04:30:38 wrstuden Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.46.6.2 2008/10/10 22:29:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.46.6.1 2008/06/23 04:30:38 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.46.6.2 2008/10/10 22:29:06 skrll Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -305,6 +305,7 @@ cpu_probe_cache(void)
 	case IBM750FX:
 	case MPC601:
 	case MPC750:
+	case MPC7400:
 	case MPC7447A:
 	case MPC7448:
 	case MPC7450:
@@ -1183,13 +1184,12 @@ cpu_hatch(void)
 
 	/*
 	 * Set PIR (Processor Identification Register).  i.e. whoami
-	 * Note that PIR is read-only on some CPU's.  Try to work around
-	 * that as best as possible.  Assume that if it is 0, it is meant
-	 * to be setup by us.
+	 * Note that PIR is read-only on some CPU versions, so we write to it
+	 * only if it has a different value than we need.
 	 */
 
 	msr = mfspr(SPR_PIR);
-	if (msr == 0)
+	if (msr != h->pir)
 		mtspr(SPR_PIR, h->pir);
 	
 	__asm volatile ("mtsprg 0,%0" :: "r"(ci));

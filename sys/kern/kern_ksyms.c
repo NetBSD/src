@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.35.12.1 2008/09/18 04:31:42 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.35.12.2 2008/10/10 22:34:14 skrll Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -897,6 +897,8 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 	st->sd_symsize = sizeof(Elf_Sym)*info.maxsyms;
 	st->sd_strstart = info.symnames;
 	st->sd_strsize = info.maxnamep;
+	st->sd_minsym = NULL;
+	st->sd_maxsym = NULL;
 
 	/* Make them absolute references */
 	sym = st->sd_symstart;

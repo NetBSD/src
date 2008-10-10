@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22.80.1 2008/09/18 04:33:28 wrstuden Exp $	 */
+/*	$NetBSD: main.c,v 1.22.80.2 2008/10/10 22:29:05 skrll Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -181,6 +181,7 @@ bootit(filename, howto, tell)
 	const char     *filename;
 	int             howto, tell;
 {
+	int floppy = strncmp(default_devname, "fd", 2) == 0;
 	if (tell) {
 		printf("booting %s", sprint_bootsel(filename));
 		if (howto)
@@ -188,7 +189,7 @@ bootit(filename, howto, tell)
 		printf("\n");
 	}
 #ifdef SUPPORT_LYNX
-	if(exec_netbsd(filename, 0, howto) < 0)
+	if(exec_netbsd(filename, 0, howto, floppy) < 0)
 		printf("boot netbsd: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else {
@@ -201,7 +202,7 @@ bootit(filename, howto, tell)
 	else
 		printf("boot lynx returned\n");
 #else
-	if (exec_netbsd(filename, 0, howto) < 0)
+	if (exec_netbsd(filename, 0, howto, floppy) < 0)
 		printf("boot: %s: %s\n", sprint_bootsel(filename),
 		       strerror(errno));
 	else

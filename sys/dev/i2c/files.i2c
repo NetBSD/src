@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.16.26.2 2008/09/24 16:38:52 wrstuden Exp $
+#	$NetBSD: files.i2c,v 1.16.26.3 2008/10/10 22:30:58 skrll Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -59,23 +59,11 @@ device	xrtc
 attach	xrtc at iic
 file	dev/i2c/x1226.c				xrtc
 
-# Analog Devices ADT 7463 thermal monitor / fan controller
-define adt7463c {}
-device adt7463c: sysmon_envsys
-attach adt7463c at iic
-file dev/i2c/adt7463.c			adt7463c
-
-# Analog Devices ADT 7467 thermal monitor / fan controller
-define adt7467c {}
-device adt7467c: sysmon_envsys
-attach adt7467c at iic
-file dev/i2c/adt7467.c			adt7467c
-
-# Analog Devices ADM 1030 thermal monitor / fan controller
-define adm1030c {}
-device adm1030c: sysmon_envsys
-attach adm1030c at iic
-file dev/i2c/adm1030.c			adm1030c
+# Analog Devices dBCool family of thermal monitors / fan controllers
+define dbcool {}
+device dbcool: sysmon_envsys
+attach dbcool at iic
+file dev/i2c/dbcool.c			dbcool
 
 # RICOH RS5C372[AB] Real Time Clock
 device	rs5c372rtc

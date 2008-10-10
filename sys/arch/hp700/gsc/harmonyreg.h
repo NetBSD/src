@@ -1,4 +1,4 @@
-/*	$NetBSD: harmonyreg.h,v 1.2 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: harmonyreg.h,v 1.2.80.1 2008/10/10 22:29:04 skrll Exp $	*/
 
 /*	$OpenBSD: harmonyreg.h,v 1.5 2003/06/02 19:54:29 jason Exp $	*/
 
@@ -128,7 +128,7 @@
 #define	PCURADD_BUFMASK		(~(HARMONY_BUFSIZE - 1))
 
 /* HARMONY_RCURADD */
-#define	PCURADD_BUFMASK		(~(HARMONY_BUFSIZE - 1))
+#define	RCURADD_BUFMASK		(~(HARMONY_BUFSIZE - 1))
 
 /* HARMONY_DSTATUS */
 #define	DSTATUS_IE		0x80000000	/* interrupt enable */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.135.2.3 2008/09/24 16:38:55 wrstuden Exp $ */
+/*	$NetBSD: ehci.c,v 1.135.2.4 2008/10/10 22:33:10 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.135.2.3 2008/09/24 16:38:55 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.135.2.4 2008/10/10 22:33:10 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2828,7 +2828,7 @@ ehci_free_itd(ehci_softc_t *sc, ehci_soft_itd_t *itd)
 	int s;
 
 	s = splusb();
-	LIST_INSERT_AFTER(LIST_FIRST(&sc->sc_freeitds), itd, u.free_list);
+	LIST_INSERT_HEAD(&sc->sc_freeitds, itd, u.free_list);
 	splx(s);
 }
 
@@ -3974,7 +3974,7 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 
 		k = (UE_GET_DIR(epipe->pipe.endpoint->edesc->bEndpointAddress))
 		    ? 1 : 0;
-		j = UE_GET_SIZE(UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize));
+		j = UGETW(epipe->pipe.endpoint->edesc->wMaxPacketSize);
 		itd->itd.itd_bufr[1] |= htole32(EHCI_ITD_SET_DIR(k) |
 		    EHCI_ITD_SET_MAXPKT(UE_GET_SIZE(j)));
 
