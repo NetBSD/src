@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.81 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.82 2008/10/10 10:21:05 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.81 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.82 2008/10/10 10:21:05 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -208,7 +208,7 @@ tcp_delack(void *arg)
 	 */
 
 	mutex_enter(softnet_lock);
-	if ((tp->t_flags & TF_DEAD) != 0) {
+	if ((tp->t_flags & (TF_DEAD | TF_DELACK)) != TF_DELACK) {
 		mutex_exit(softnet_lock);
 		return;
 	}
