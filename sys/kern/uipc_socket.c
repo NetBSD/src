@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.171 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.172 2008/10/10 11:20:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.171 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.172 2008/10/10 11:20:15 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_sock_counters.h"
@@ -639,22 +639,25 @@ soclose(struct socket *so)
 	error = 0;
 	solock(so);
 	if (so->so_options & SO_ACCEPTCONN) {
-		do {
-			while ((so2 = TAILQ_FIRST(&so->so_q0)) != 0) {
+		for (;;) {
+			if ((so2 = TAILQ_FIRST(&so->so_q0)) != 0) {
 				KASSERT(solocked2(so, so2));
 				(void) soqremque(so2, 0);
 				/* soabort drops the lock. */
 				(void) soabort(so2);
 				solock(so);
+				continue;
 			}
-			while ((so2 = TAILQ_FIRST(&so->so_q)) != 0) {
+			if ((so2 = TAILQ_FIRST(&so->so_q)) != 0) {
 				KASSERT(solocked2(so, so2));
 				(void) soqremque(so2, 1);
 				/* soabort drops the lock. */
 				(void) soabort(so2);
 				solock(so);
+				continue;
 			}
-		} while (!TAILQ_EMPTY(&so->so_q0));
+			break;
+		}
 	}
 	if (so->so_pcb == 0)
 		goto discard;
