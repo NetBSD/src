@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.13 2008/10/10 13:14:41 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.14 2008/10/10 20:19:35 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -15,11 +15,12 @@ INCS+=	rump.h rumpdefs.h rump_syscalls.h rumpvnode_if.h
 	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs
 
 #
-# Source modules.  First the ones specifically implemented for librump.
+# Source modules, first the ones specifically implemented for librump.
 # 
-SRCS=	rump.c emul.c intr.c genfs_io.c locks.c ltsleep.c pool.c	\
-	specfs.c vfs.c vm.c
-SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c sleepq.c vfsops_stub.c
+SRCS=	rump.c emul.c intr.c genfs_io.c locks.c ltsleep.c percpu.c	\
+	pool.c sleepq.c specfs.c vfs.c vm.c
+# stubs
+SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
 
 #
 # Rest are from the std kernel sources.
@@ -56,7 +57,7 @@ SRCS+=	rumpvnode_if.c rump_syscalls.c
 
 # uncomment these lines if you want to use the real kmem code
 #CPPFLAGS+=	-DRUMP_USE_REAL_KMEM
-#SRCS+=		subr_kmem.c subr_once.c subr_vmem.c
+#SRCS+=		subr_kmem.c subr_vmem.c
 
 .if ${MACHINE_ARCH} == "vax"
 .PATH:	${RUMPTOP}/../lib/libkern/arch/vax
