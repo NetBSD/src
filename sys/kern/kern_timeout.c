@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.42 2008/09/06 23:08:54 rmind Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.43 2008/10/10 11:42:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.42 2008/09/06 23:08:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.43 2008/10/10 11:42:58 ad Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -330,7 +330,7 @@ callout_schedule_locked(callout_impl_t *c, kmutex_t *lock, int to_ticks)
 
 	/* Initialize the time here, it won't change. */
 	occ = c->c_cpu;
-	c->c_flags &= ~CALLOUT_FIRED;
+	c->c_flags &= ~(CALLOUT_FIRED | CALLOUT_INVOKING);
 
 	/*
 	 * If this timeout is already scheduled and now is moved
@@ -717,7 +717,8 @@ callout_softclock(void *v)
 		if (delta < 0)
 			cc->cc_ev_late.ev_count++;
 
-		c->c_flags ^= (CALLOUT_PENDING | CALLOUT_FIRED);
+		c->c_flags = (c->c_flags & ~CALLOUT_PENDING) |
+		    (CALLOUT_FIRED | CALLOUT_INVOKING);
 		mpsafe = (c->c_flags & CALLOUT_MPSAFE);
 		func = c->c_func;
 		arg = c->c_arg;
