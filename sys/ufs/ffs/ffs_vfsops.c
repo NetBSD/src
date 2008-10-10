@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.237 2008/09/23 15:27:59 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.238 2008/10/10 09:21:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.237 2008/09/23 15:27:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.238 2008/10/10 09:21:58 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -160,7 +160,7 @@ struct vfsops ffs_vfsops = {
 static const struct genfs_ops ffs_genfsops = {
 	.gop_size = ffs_gop_size,
 	.gop_alloc = ufs_gop_alloc,
-	.gop_write = ffs_gop_write,
+	.gop_write = genfs_gop_write,
 	.gop_markupdate = ufs_gop_markupdate,
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.11 2008/08/14 00:47:13 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.12 2008/10/10 09:21:58 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.11 2008/08/14 00:47:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.12 2008/10/10 09:21:58 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -779,6 +779,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	int flags;
 	int dirtygen;
 	bool modified;
+	bool need_wapbl;
 	bool has_trans;
 	bool cleanall;
 	bool onworklst;
@@ -793,6 +794,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
 
 	has_trans = false;
+	need_wapbl = (!pagedaemon && vp->v_mount && vp->v_mount->mnt_wapbl &&
+	    (origflags & PGO_JOURNALLOCKED) == 0);
 
 retry:
 	modified = false;
@@ -805,8 +808,11 @@ retry:
 			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 				vn_syncer_remove_from_worklist(vp);
 		}
-		if (has_trans)
+		if (has_trans) {
+			if (need_wapbl)
+				WAPBL_END(vp->v_mount);
 			fstrans_done(vp->v_mount);
+		}
 		mutex_exit(slock);
 		return (0);
 	}
@@ -823,6 +829,13 @@ retry:
 				return error;
 		} else
 			fstrans_start(vp->v_mount, FSTRANS_LAZY);
+		if (need_wapbl) {
+			error = WAPBL_BEGIN(vp->v_mount);
+			if (error) {
+				fstrans_done(vp->v_mount);
+				return error;
+			}
+		}
 		has_trans = true;
 		mutex_enter(slock);
 		goto retry;
@@ -1196,8 +1209,11 @@ skip_scan:
 		goto retry;
 	}
 
-	if (has_trans)
+	if (has_trans) {
+		if (need_wapbl)
+			WAPBL_END(vp->v_mount);
 		fstrans_done(vp->v_mount);
+	}
 
 	return (error);
 }
