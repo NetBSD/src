@@ -1,3 +1,5 @@
+/*	$NetBSD: kern_ksyms.c,v 1.38 2008/10/10 23:09:19 skrll Exp $	*/
+
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -45,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.37 2008/10/06 11:49:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.38 2008/10/10 23:09:19 skrll Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
