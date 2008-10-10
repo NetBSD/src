@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.24.2.11 2008/06/29 03:38:01 wrstuden Exp $	*/
+/*	$NetBSD: savar.h,v 1.24.2.12 2008/10/10 18:10:30 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -125,7 +125,10 @@ struct sadata_vp {
 	SIMPLEQ_HEAD(, sadata_upcall)	savp_upcalls; /* ?: pending upcalls */
 	int		savp_woken_count;    /* m: count of woken lwps */
 	int		savp_lwpcache_count; /* m: count of cached lwps */
+	int		savp_pflags;	/* !: blessed-private flags */
 };
+
+#define	SAVP_FLAG_NOUPCALLS	0x0001	/* Already did upcalls, don't redo */
 
 /*
  * Locking:

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.46 2008/10/06 18:05:01 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.47 2008/10/10 18:10:30 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.46 2008/10/06 18:05:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.47 2008/10/10 18:10:30 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,6 +283,7 @@ sa_newsavp(struct proc *p)
 	vp->savp_ofaultaddr = 0;
 	vp->savp_woken_count = 0;
 	vp->savp_lwpcache_count = 0;
+	vp->savp_pflags = 0;
 	vp->savp_sleeper_upcall = sau;
 	mutex_init(&vp->savp_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	sleepq_init(&vp->savp_lwpcache);
@@ -1009,8 +1010,14 @@ sys_sa_yield(struct lwp *l, const void *v, register_t *retval)
 /*
  * sa_yield
  *	This lwp has nothing to do, so hang around. Assuming we
- * are the lwp "on" our vp, tsleep in "sawait" until there's something
- * to do. If there are upcalls, we deliver them explicitly.
+ * are the lwp "on" our vp, sleep in "sawait" until there's something
+ * to do.
+ *
+ *	Unfortunately some subsystems can't directly tell us if there's an
+ * upcall going to happen when we get worken up. Work gets deferred to
+ * userret() and that work may trigger an upcall. So we have to try
+ * calling userret() (by calling upcallret()) and see if makeupcalls()
+ * delivered an upcall. It will clear LW_SA_YIELD if it did.
  */
 void
 sa_yield(struct lwp *l)
@@ -1050,19 +1057,16 @@ sa_yield(struct lwp *l)
 	KASSERT(vp->savp_lwp == l);
 
 	/*
-	 * If we were told to make an upcall or exit before
-	 * the splsched(), make sure we process it instead of
-	 * going to sleep. It might make more sense for this to
-	 * be handled inside of tsleep....
+	 * If we were told to make an upcall or exit already
+	 * make sure we process it (by returning and letting userret() do
+	 * the right thing). Otherwise set LW_SA_YIELD and go to sleep.
 	 */
 	ret = 0;
-	l->l_flag |= LW_SA_YIELD;
 	if (l->l_flag & LW_SA_UPCALL) {
-		/* KERNEL_UNLOCK(l); in upcallret() */
 		lwp_unlock(l);
-		upcallret(l);
 		return;
 	}
+	l->l_flag |= LW_SA_YIELD;
 
 	do {
 		lwp_unlock(l);
@@ -1079,8 +1083,30 @@ sa_yield(struct lwp *l)
 
 		KASSERT(vp->savp_lwp == l || p->p_sflag & PS_WEXIT);
 
-		/* KERNEL_UNLOCK(l); in upcallret() */
-		upcallret(l);
+		/*
+		 * We get woken in two different ways. Most code
+		 * calls setrunnable() which clears LW_SA_IDLE,
+		 * but leaves LW_SA_YIELD. Some call points
+		 * (in this file) however also clear LW_SA_YIELD, mainly
+		 * as the code knows there is an upcall to be delivered.
+		 *
+		 * As noted above, except in the cases where other code
+		 * in this file cleared LW_SA_YIELD already, we have to
+		 * try calling upcallret() & seeing if upcalls happen.
+		 * if so, tell userret() NOT to deliver more upcalls on
+		 * the way out!
+		 */
+		if (l->l_flag & LW_SA_YIELD) {
+			upcallret(l);
+			if (~l->l_flag & LW_SA_YIELD) {
+				/*
+				 * Ok, we made an upcall. We will exit. Tell
+				 * sa_upcall_userret() to NOT make any more
+				 * upcalls.
+				 */
+				vp->savp_pflags |= SAVP_FLAG_NOUPCALLS;
+			}
+		}
 
 		lwp_lock(l);
 	} while (l->l_flag & LW_SA_YIELD);
@@ -1940,6 +1966,17 @@ sa_upcall_userret(struct lwp *l)
 	p = l->l_proc;
 	sa = p->p_sa;
 	vp = l->l_savp;
+
+	if (vp->savp_pflags & SAVP_FLAG_NOUPCALLS) {
+		/*
+		 * We made upcalls in sa_yield() (otherwise we would
+		 * still be in the loop there!). Don't do it again.
+		 */
+		vp->savp_pflags &= ~SAVP_FLAG_NOUPCALLS;
+		DPRINTFN(7,("sa_upcall_userret(%d.%d %x) skipping processing\n",
+		    p->p_pid, l->l_lid, l->l_flag));
+		return;
+	}
 
 	SA_LWP_STATE_LOCK(l, f);
 
