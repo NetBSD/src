@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.21 2008/06/11 20:52:14 cegger Exp $	*/
+/*	$NetBSD: cir.c,v 1.22 2008/10/10 21:07:52 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.21 2008/06/11 20:52:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.22 2008/10/10 21:07:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,11 +52,10 @@ dev_type_read(cirread);
 dev_type_write(cirwrite);
 dev_type_ioctl(cirioctl);
 dev_type_poll(cirpoll);
-dev_type_kqfilter(cirkqfilter);
 
 const struct cdevsw cir_cdevsw = {
 	ciropen, circlose, cirread, cirwrite, cirioctl,
-	nostop, notty, cirpoll, nommap, cirkqfilter,
+	nostop, notty, cirpoll, nommap, nokqfilter,
 	D_OTHER
 };
 
