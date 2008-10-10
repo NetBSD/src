@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.19 2008/10/09 01:17:48 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.20 2008/10/10 13:14:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -88,7 +88,8 @@ void
 mutex_spin_enter(kmutex_t *mtx)
 {
 
-	mutex_enter(mtx);
+	if (__predict_true(mtx != RUMP_LMUTEX_MAGIC))
+		mutex_enter(mtx);
 }
 
 int
@@ -109,7 +110,8 @@ void
 mutex_spin_exit(kmutex_t *mtx)
 {
 
-	mutex_exit(mtx);
+	if (__predict_true(mtx != RUMP_LMUTEX_MAGIC))
+		mutex_exit(mtx);
 }
 
 int

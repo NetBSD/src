@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.63 2008/10/09 19:40:52 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.64 2008/10/10 13:14:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,6 +28,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
@@ -704,6 +705,7 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	l->l_proc = p;
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
+	l->l_mutex = RUMP_LMUTEX_MAGIC;
 
 	if (set)
 		rumpuser_set_curlwp(l);
@@ -825,6 +827,19 @@ rump_cred_suserget()
 
 	kauth_cred_hold(rump_susercred);
 	return rump_susercred;
+}
+
+/* XXX: if they overflow, we're screwed */
+lwpid_t
+rump_nextlid()
+{
+	static unsigned lwpid = 2;
+
+	do {
+		lwpid = atomic_inc_uint_nv(&lwpid);
+	} while (lwpid == 0);
+
+	return (lwpid_t)lwpid;
 }
 
 int _syspuffs_stub(int, int *);

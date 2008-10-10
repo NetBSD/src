@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.50 2008/10/02 19:37:23 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.51 2008/10/10 13:14:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -346,8 +346,6 @@ struct kthdesc {
 	struct lwp *mylwp;
 };
 
-static lwpid_t curlid = 2;
-
 static void *
 threadbouncer(void *arg)
 {
@@ -393,7 +391,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k = kmem_alloc(sizeof(struct kthdesc), KM_SLEEP);
 	k->f = func;
 	k->arg = arg;
-	k->mylwp = l = rump_setup_curlwp(0, curlid++, 0);
+	k->mylwp = l = rump_setup_curlwp(0, rump_nextlid(), 0);
 	rv = rumpuser_thread_create(threadbouncer, k);
 	if (rv)
 		return rv;
@@ -408,41 +406,6 @@ kthread_exit(int ecode)
 {
 
 	rumpuser_thread_exit();
-}
-
-void
-callout_init(callout_t *c, u_int flags)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-callout_reset(callout_t *c, int ticks, void (*func)(void *), void *arg)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-bool
-callout_stop(callout_t *c)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-callout_schedule(callout_t *c, int ticks)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-callout_setfunc(callout_t *c, void (*func)(void *), void *arg)
-{
-
-	panic("%s: not implemented", __func__);
 }
 
 struct proc *
