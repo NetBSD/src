@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.3 2008/10/07 22:50:33 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.4 2008/10/10 13:08:29 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.3 2008/10/07 22:50:33 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.4 2008/10/10 13:08:29 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,8 +154,8 @@ static struct dbc_sysctl_info dbc_sysctl_table[] = {
 
 static const char *dbc_sensor_names[] = {
 	"l_temp",  "r1_temp", "r2_temp", "Vccp",   "Vcc",    "fan1",
-	"fan2",    "fan3",    "fan4",    "AIN1",   "AIN2",   "2.5V",
-	"5V",      "12V",     "Vtt",     "Imon"
+	"fan2",    "fan3",    "fan4",    "AIN1",   "AIN2",   "V2dot5",
+	"V5",      "V12",     "Vtt",     "Imon"
 };
 
 /*
