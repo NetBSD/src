@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.64 2008/10/10 13:14:41 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.65 2008/10/10 20:24:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/percpu.h>
 #include <sys/queue.h>
 #include <sys/resourcevar.h>
 #include <sys/select.h>
@@ -155,6 +156,7 @@ _rump_init(int rump_version)
 
 	rumpuser_thrinit();
 
+	percpu_init();
 	fd_sys_init();
 	module_init();
 	sysctl_init();
