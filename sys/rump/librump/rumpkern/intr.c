@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.6 2008/10/10 13:14:41 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.7 2008/10/10 20:13:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -57,8 +57,6 @@ intr_worker(void *arg)
 	void (*func)(void *) = NULL;
 	void *funarg = NULL; /* XXX gcc */
 	bool mpsafe = false; /* XXX gcc */
-
-	rump_setup_curlwp(0, rump_nextlid(), 1);
 
 	for (;;) {
 		/*
