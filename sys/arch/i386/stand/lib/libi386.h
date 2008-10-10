@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.23.80.1 2008/06/23 04:30:27 wrstuden Exp $	*/
+/*	$NetBSD: libi386.h,v 1.23.80.2 2008/10/10 22:29:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -37,7 +37,7 @@ physaddr_t vtophys(void *);
 ssize_t pread(int, void *, size_t);
 void startprog(physaddr_t, int, unsigned long *, physaddr_t);
 
-int exec_netbsd(const char *, physaddr_t, int);
+int exec_netbsd(const char *, physaddr_t, int, int);
 
 void delay(int);
 int getbasemem(void);

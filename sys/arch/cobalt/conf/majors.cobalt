@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cobalt,v 1.21.6.1 2008/06/23 04:30:17 wrstuden Exp $
+#	$NetBSD: majors.cobalt,v 1.21.6.2 2008/10/10 22:29:04 skrll Exp $
 #
 # Device majors for cobalt
 #
@@ -49,6 +49,9 @@ device-major	ugen		char 43			ugen
 device-major	ucom		char 44			ucom
 device-major	urio		char 45			urio
 device-major	uscanner	char 46			uscanner
+device-major	audio		char 47			audio
+device-major	midi		char 48			midi
+
 device-major	altq		char 77			altq
 
 device-major	nsmb		char 98			nsmb

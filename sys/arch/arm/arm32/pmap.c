@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.175.2.2 2008/09/18 04:33:18 wrstuden Exp $	*/
+/*	$NetBSD: pmap.c,v 1.175.2.3 2008/10/10 22:29:03 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.2.2 2008/09/18 04:33:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.175.2.3 2008/10/10 22:29:03 skrll Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -2287,7 +2287,7 @@ pmap_clearbit(struct vm_page *pg, u_int maskbits)
 		PMAPCOUNT(exec_synced_clearbit);
 	}
 	/*
-	 * If we are changing this to read-only, we ned to call vac_me_harder
+	 * If we are changing this to read-only, we need to call vac_me_harder
 	 * so we can change all the read-only pages to cacheable.  We pretend
 	 * this as a page deletion.
 	 */

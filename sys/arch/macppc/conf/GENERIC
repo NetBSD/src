@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.263.12.2 2008/09/18 04:33:29 wrstuden Exp $
+# $NetBSD: GENERIC,v 1.263.12.3 2008/10/10 22:29:05 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.263.12.2 $"
+#ident 		"GENERIC-$Revision: 1.263.12.3 $"
 
 maxusers	32
 
@@ -398,10 +398,7 @@ wdc*	at mediabay? flags 0
 ki2c*	at obio?			# Keywest I2C
 ki2c*	at uni_n?			# Keywest I2C
 iic*	at ki2c?
-adt7467c*	at ki2c? 		# Analog Devices ADT7467 thermal 
-					# monitor, iBook G4
-adm1030c*	at ki2c? 		# Analog Devices ADM1030 thermal 
-					# monitor, iBook G3
+dbcool*	at ki2c?			# dbCool thermal monitor & fan control
 
 deq*	at ki2c?			# mixer/equalizer, needed by snapper
 wi*	at obio?			# AirMac

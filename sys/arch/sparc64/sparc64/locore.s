@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.278.6.2 2008/09/18 04:33:34 wrstuden Exp $	*/
+/*	$NetBSD: locore.s,v 1.278.6.3 2008/10/10 22:29:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3656,7 +3656,7 @@ setup_sparcintr:
 	sethi	%hi(CPUINFO_VA+CI_INTRPENDING), %g1
 	sll	%g6, PTRSHFT, %g3	! Find start of table for this IPL
 	or	%g1, %lo(CPUINFO_VA+CI_INTRPENDING), %g1
-	 add	%g1, %g3, %g1
+	add	%g1, %g3, %g1
 1:
 	LDPTR	[%g1], %g3		! Load list head
 	STPTR	%g3, [%g5+IH_PEND]	! Link our intrhand node in
@@ -3664,7 +3664,7 @@ setup_sparcintr:
 	CASPTR	[%g1] ASI_N, %g3, %g7
 	cmp	%g7, %g3		! Did it work?
 	bne,pn	CCCR, 1b		! No, try again
-	 nop
+	 EMPTY
 2:
 	mov	1, %g7
 	sll	%g7, %g6, %g6
@@ -4128,7 +4128,7 @@ sparc_intr_retry:
 	CASPTR	[%l4] ASI_N, %l2, %l7	! Grab the entire list
 	cmp	%l7, %l2
 	bne,pn	CCCR, 1b
-	 nop
+	 EMPTY
 2:
 	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
 	LDPTR	[%l2 + IH_PEND], %l7	! save ih->ih_pending
@@ -5664,15 +5664,16 @@ ENTRY(blast_dcache)
 #endif
 
 	rdpr	%pstate, %o3
-	set	(2 * NBPG) - 8, %o1
+	set	(2 * NBPG) - 32, %o1
 	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
 	wrpr	%o4, 0, %pstate
 1:
 	stxa	%g0, [%o1] ASI_DCACHE_TAG
 	brnz,pt	%o1, 1b
-	 dec	8, %o1
+	 dec	32, %o1
 	sethi	%hi(KERNBASE), %o2
 	flush	%o2
+	membar	#Sync
 #ifdef PROF
 	wrpr	%o3, %pstate
 	ret
@@ -5695,15 +5696,16 @@ ENTRY(blast_icache)
  * We turn off interrupts for the duration to prevent RED exceptions.
  */
 	rdpr	%pstate, %o3
-	set	(2 * NBPG) - 8, %o1
+	set	(2 * NBPG) - 32, %o1
 	andn	%o3, PSTATE_IE, %o4			! Turn off PSTATE_IE bit
 	wrpr	%o4, 0, %pstate
 1:
 	stxa	%g0, [%o1] ASI_ICACHE_TAG
 	brnz,pt	%o1, 1b
-	 dec	8, %o1
+	 dec	32, %o1
 	sethi	%hi(KERNBASE), %o2
 	flush	%o2
+	membar	#Sync
 	retl
 	 wrpr	%o3, %pstate
 
@@ -5744,7 +5746,6 @@ ENTRY(dcache_flush_page)
 	 membar	#StoreLoad
 2:
 
-	wr	%g0, ASI_PRIMARY_NOFAULT, %asi
 	sethi	%hi(KERNBASE), %o5
 	flush	%o5
 	retl
@@ -5777,7 +5778,7 @@ ENTRY(icache_flush_page)
 	
 1:
 	ldda	[%o4] ASI_ICACHE_TAG, %g0	! Tag goes in %g1
-	dec	16, %o5
+	dec	32, %o5
 	xor	%g1, %o2, %g1
 	andcc	%g1, %o1, %g0
 	bne,pt	%xcc, 2f
@@ -5786,7 +5787,7 @@ ENTRY(icache_flush_page)
 	membar	#StoreLoad
 2:
 	brnz,pt	%o5, 1b
-	 inc	16, %o4
+	 inc	32, %o4
 #endif
 	sethi	%hi(KERNBASE), %o5
 	flush	%o5
@@ -5856,9 +5857,9 @@ ENTRY(cache_flush_phys)
 3:
 #endif
 	membar	#StoreLoad
-	dec	16, %o5
+	dec	32, %o5
 	brgz,pt	%o5, 1b
-	 inc	16, %o4
+	 inc	32, %o4
 
 	sethi	%hi(KERNBASE), %o5
 	flush	%o5
@@ -9748,11 +9749,11 @@ ENTRY(send_softint)
 	CASPTR	[%o3] ASI_N, %o5, %o4
 	cmp	%o4, %o5		! Did it work?
 	bne,pn	CCCR, 2b		! No, try again
-	 nop
+	 EMPTY
 
-	mov	1, %o3			! Change from level to bitmask
-	sllx	%o3, %o1, %o3
-	wr	%o3, 0, SET_SOFTINT	! SET_SOFTINT
+	mov	1, %o4			! Change from level to bitmask
+	sllx	%o4, %o1, %o4
+	wr	%o4, 0, SET_SOFTINT	! SET_SOFTINT
 1:
 	retl
 	 wrpr	%g1, 0, %pstate		! restore PSTATE.IE

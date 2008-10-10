@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.17.4.3 2008/09/24 16:38:51 wrstuden Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.17.4.4 2008/10/10 22:29:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17.4.3 2008/09/24 16:38:51 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17.4.4 2008/10/10 22:29:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	(void)memset(lsi, 0, sizeof(frame.sf_si));
 	lsi->lsi_errno = native_to_linux32_errno[ksi->ksi_errno];
 	lsi->lsi_code = ksi->ksi_code;
-	lsi->lsi_signo = native_to_linux32_signo[frame.sf_sig];
+	lsi->lsi_signo = frame.sf_sig;
 	switch (lsi->lsi_signo) {
 	case LINUX32_SIGILL:
 	case LINUX32_SIGFPE:

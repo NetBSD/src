@@ -1,3 +1,5 @@
+/*	$NetBSD: uipc_accf.c,v 1.2.2.3 2008/10/10 22:34:14 skrll Exp $	*/
+
 /*-
  * Copyright (c) 2000 Paycounter, Inc.
  * Copyright (c) 2005 Robert N. M. Watson
@@ -27,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.2.2.2 2008/09/18 04:31:44 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.2.2.3 2008/10/10 22:34:14 skrll Exp $");
 
 #define ACCEPT_FILTER_MOD
 

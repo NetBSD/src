@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideoreg.h,v 1.2.2.2 2008/09/24 16:38:56 wrstuden Exp $	*/
+/*	$NetBSD: uvideoreg.h,v 1.2.2.3 2008/10/10 22:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -395,6 +395,13 @@ static const guid_t uvideo_guid_format_yuy2 = {
 
 static const guid_t uvideo_guid_format_nv12 = {
 	0x3231564E,
+	0x0000,
+	0x0010,
+	{0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71}
+};
+
+static const guid_t uvideo_guid_format_uyvy = {
+	0x59565955,
 	0x0000,
 	0x0010,
 	{0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71}

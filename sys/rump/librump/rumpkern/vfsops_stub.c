@@ -1,4 +1,4 @@
-/*	$NetBSD: vfsops_stub.c,v 1.6 2007/10/17 16:48:17 pooka Exp $	*/
+/*	$NetBSD: vfsops_stub.c,v 1.6.26.1 2008/10/10 22:36:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,12 +27,14 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 
+#include <miscfs/specfs/specdev.h>
+#include <miscfs/fifofs/fifo.h>
+
 #define VFSSTUB(name)							\
-    int name(void *);							\
     int name(void *arg) {panic("%s: unimplemented vfs stub", __func__);}
 
 /* specfs */
@@ -49,7 +51,13 @@ VFSSTUB(spec_pathconf)
 VFSSTUB(spec_advlock)
 VFSSTUB(spec_read)
 VFSSTUB(spec_write)
-VFSSTUB(spec_fsync)
+
+int
+spec_fsync(void *v)
+{
+
+	return 0;
+}
 
 /* fifo oops */
 int (**fifo_vnodeop_p)(void *);

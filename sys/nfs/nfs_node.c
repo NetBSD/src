@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.102.2.1 2008/06/23 04:32:01 wrstuden Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.102.2.2 2008/10/10 22:35:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.102.2.1 2008/06/23 04:32:01 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.102.2.2 2008/10/10 22:35:43 skrll Exp $");
 
 #include "opt_nfs.h"
 
@@ -62,12 +62,10 @@ struct nfsnodehashhead *nfsnodehashtbl;
 u_long nfsnodehash;
 static kmutex_t nfs_hashlock;
 
-POOL_INIT(nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
-    &pool_allocator_nointr, IPL_NONE);
-POOL_INIT(nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
-    &pool_allocator_nointr, IPL_NONE);
+struct pool nfs_node_pool;
+struct pool nfs_vattr_pool;
 
-MALLOC_DEFINE(M_NFSNODE, "NFS node", "NFS vnode private part");
+MALLOC_JUSTDEFINE(M_NFSNODE, "NFS node", "NFS vnode private part");
 
 extern int prtactive;
 
@@ -88,8 +86,14 @@ static const struct genfs_ops nfs_genfsops = {
  * and build nfsnode free list.
  */
 void
-nfs_nhinit()
+nfs_node_init()
 {
+
+	malloc_type_attach(M_NFSNODE);
+	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",
+	    &pool_allocator_nointr, IPL_NONE);
+	pool_init(&nfs_vattr_pool, sizeof(struct vattr), 0, 0, 0, "nfsvapl",
+	    &pool_allocator_nointr, IPL_NONE);
 
 	nfsnodehashtbl = hashinit(desiredvnodes, HASH_LIST, true,
 	    &nfsnodehash);
@@ -101,7 +105,7 @@ nfs_nhinit()
  */
 
 void
-nfs_nhreinit()
+nfs_node_reinit()
 {
 	struct nfsnode *np;
 	struct nfsnodehashhead *oldhash, *hash;
@@ -127,15 +131,17 @@ nfs_nhreinit()
 }
 
 /*
- * Free resources previoslu allocated in nfs_nhinit().
+ * Free resources previously allocated in nfs_node_init().
  */
 void
-nfs_nhdone()
+nfs_node_done()
 {
+
+	mutex_destroy(&nfs_hashlock);
 	hashdone(nfsnodehashtbl, HASH_LIST, nfsnodehash);
 	pool_destroy(&nfs_node_pool);
 	pool_destroy(&nfs_vattr_pool);
-	mutex_destroy(&nfs_hashlock);
+	malloc_type_detach(M_NFSNODE);
 }
 
 /*

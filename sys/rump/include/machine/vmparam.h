@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.4.2 2008/09/18 04:37:04 wrstuden Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.1.4.3 2008/10/10 22:36:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #ifndef _SYS_RUMP_VMPARAM_H_
 #define _SYS_RUMP_VMPARAM_H_
 
-#define PAGE_SHIFT		10
+#define PAGE_SHIFT		12
 #define PAGE_SIZE		(1 << PAGE_SHIFT)
 #define PAGE_MASK		(PAGE_SIZE - 1)
 

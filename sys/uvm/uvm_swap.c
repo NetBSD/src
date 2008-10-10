@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.137.6.3 2008/06/23 04:32:06 wrstuden Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.137.6.4 2008/10/10 22:37:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.137.6.3 2008/06/23 04:32:06 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.137.6.4 2008/10/10 22:37:10 skrll Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -275,7 +275,11 @@ uvm_swap_init(void)
 	 * done!
 	 */
 	uvm.swap_running = true;
+#ifdef __SWAP_BROKEN
+	uvm.swapout_enabled = 0;
+#else
 	uvm.swapout_enabled = 1;
+#endif
 	UVMHIST_LOG(pdhist, "<- done", 0, 0, 0, 0);
 
         sysctl_createv(NULL, 0, NULL, NULL,

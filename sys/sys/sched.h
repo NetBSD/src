@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.55.2.2 2008/09/18 04:37:05 wrstuden Exp $	*/
+/*	$NetBSD: sched.h,v 1.55.2.3 2008/10/10 22:37:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -100,7 +100,6 @@ typedef struct _kcpuset kcpuset_t;	/* XXX: lwp.h included from userland */
 
 #ifdef _KERNEL
 
-
 kcpuset_t *kcpuset_create(void);
 void	kcpuset_destroy(kcpuset_t *);
 void	kcpuset_copy(kcpuset_t *, const kcpuset_t *);
@@ -128,6 +127,7 @@ int	_cpuset_set(cpuid_t, cpuset_t *);
 int	_cpuset_clr(cpuid_t, cpuset_t *);
 int	_cpuset_isset(cpuid_t, const cpuset_t *);
 size_t	_cpuset_size(const cpuset_t *);
+
 #endif
 
 /*
@@ -250,7 +250,6 @@ void		sched_nice(struct proc *, int);
 void		sched_proc_fork(struct proc *, struct proc *);
 void		sched_proc_exit(struct proc *, struct proc *);
 void		sched_lwp_fork(struct lwp *, struct lwp *);
-void		sched_lwp_exit(struct lwp *);
 void		sched_lwp_collect(struct lwp *);
 
 void		sched_slept(struct lwp *);
