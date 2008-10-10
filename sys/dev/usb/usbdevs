@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.513 2008/10/10 16:29:57 joerg Exp $
+$NetBSD: usbdevs,v 1.514 2008/10/10 22:28:53 jmcneill Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -653,6 +653,9 @@ product APC UPS			0x0002	Uninterruptible Power Supply
 /* Ambit Microsystems products */
 product AMBIT NTL_250		0x6098	NTL 250 cable modem
 
+/* AMD product */
+product AMD TV_WONDER_600_USB	0xb002	TV Wonder 600 USB
+
 /* AMIT products */
 product AMIT CGWLUSB2GO		0x0002	CG-WLUSB2GO
 
@@ -990,6 +993,7 @@ product ELSA USB2ETHERNET	0x3000	Microlink USB2Ethernet
 
 /* eMPIA products */
 product EMPIA CAMERA		0x2761	Camera
+product EMPIA EM2883		0x2883	EM2883
 
 /* EMS products */
 product EMS DUAL_SHOOTER	0x0003	PSX gun controller converter
