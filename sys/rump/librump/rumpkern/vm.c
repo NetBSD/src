@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.39 2008/10/10 20:45:21 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.40 2008/10/10 20:51:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -44,6 +44,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
@@ -654,6 +655,21 @@ uvm_pageout_done(int npages)
 	}
 }
 
+/* XXX: following two are unfinished because lwp's are not refcounted yet */
+void
+uvm_lwp_hold(struct lwp *l)
+{
+
+	atomic_inc_uint(&l->l_holdcnt);
+}
+
+void
+uvm_lwp_rele(struct lwp *l)
+{
+
+	atomic_dec_uint(&l->l_holdcnt);
+}
+
 /*
  * Kmem
  */
@@ -715,4 +731,18 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *minaddr, vaddr_t *maxaddr,
 {
 
 	return (struct vm_map *)417416;
+}
+
+vaddr_t
+uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
+{
+
+	return (vaddr_t)rumpuser_malloc(PAGE_SIZE, !waitok);
+}
+
+void
+uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
+{
+
+	rumpuser_free((void *)addr);
 }
