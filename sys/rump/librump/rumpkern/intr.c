@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5 2008/10/09 19:40:52 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.6 2008/10/10 13:14:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -58,14 +58,14 @@ intr_worker(void *arg)
 	void *funarg = NULL; /* XXX gcc */
 	bool mpsafe = false; /* XXX gcc */
 
+	rump_setup_curlwp(0, rump_nextlid(), 1);
+
 	for (;;) {
 		/*
 		 * XXX: not exactly executed once per tick, but without
 		 * a proper timer ticktocking we don't really care.
 		 */
-#ifdef notquiteyet
 		callout_hardclock();
-#endif
 
 		mutex_enter(&si_mtx);
 		if (LIST_EMPTY(&si_pending)) {

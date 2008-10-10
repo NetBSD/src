@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.12 2008/10/09 21:30:06 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.13 2008/10/10 13:14:41 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -19,15 +19,15 @@ INCS+=	rump.h rumpdefs.h rump_syscalls.h rumpvnode_if.h
 # 
 SRCS=	rump.c emul.c intr.c genfs_io.c locks.c ltsleep.c pool.c	\
 	specfs.c vfs.c vm.c
-SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
+SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c sleepq.c vfsops_stub.c
 
 #
 # Rest are from the std kernel sources.
 #
 # sys/kern
 SRCS+=	kern_auth.c kern_descrip.c kern_malloc_stdtype.c kern_module.c	\
-	kern_rate.c kern_stub.c kern_sysctl.c param.c sys_descrip.c	\
-	sys_generic.c
+	kern_rate.c kern_stub.c kern_sysctl.c kern_timeout.c param.c	\
+	sys_descrip.c sys_generic.c
 
 # sys/kern subr (misc)
 SRCS+=	subr_bufq.c subr_callback.c subr_hash.c subr_iostat.c		\
