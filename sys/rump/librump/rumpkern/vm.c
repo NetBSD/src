@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.38 2008/09/30 19:50:16 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.39 2008/10/10 20:45:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -623,11 +623,42 @@ uvn_clean_p(struct uvm_object *uobj)
 	return (vp->v_iflag & VI_ONWORKLST) == 0;
 }
 
-#ifndef RUMP_USE_REAL_KMEM
+struct vm_map_kernel *
+vm_map_to_kernel(struct vm_map *map)
+{
+
+	return (struct vm_map_kernel *)map;
+}
+
+void
+uvm_pageout_start(int npages)
+{
+
+	uvmexp.paging += npages;
+}
+
+void
+uvm_pageout_done(int npages)
+{
+
+	uvmexp.paging -= npages;
+
+	/*
+	 * wake up either of pagedaemon or LWPs waiting for it.
+	 */
+
+	if (uvmexp.free <= uvmexp.reserve_kernel) {
+		wakeup(&uvm.pagedaemon);
+	} else {
+		wakeup(&uvmexp.free);
+	}
+}
+
 /*
  * Kmem
  */
 
+#ifndef RUMP_USE_REAL_KMEM
 void *
 kmem_alloc(size_t size, km_flag_t kmflag)
 {
@@ -684,38 +715,4 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *minaddr, vaddr_t *maxaddr,
 {
 
 	return (struct vm_map *)417416;
-}
-
-void
-uvm_pageout_start(int npages)
-{
-
-	uvmexp.paging += npages;
-}
-
-void
-uvm_pageout_done(int npages)
-{
-
-	uvmexp.paging -= npages;
-
-	/*
-	 * wake up either of pagedaemon or LWPs waiting for it.
-	 */
-
-	if (uvmexp.free <= uvmexp.reserve_kernel) {
-		wakeup(&uvm.pagedaemon);
-	} else {
-		wakeup(&uvmexp.free);
-	}
-}
-
-/*
- * Misc
- */
-struct vm_map_kernel *
-vm_map_to_kernel(struct vm_map *map)
-{
-
-	return (struct vm_map_kernel *)map;
 }
