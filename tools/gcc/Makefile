@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2007/09/20 12:26:51 drochner Exp $
+#	$NetBSD: Makefile,v 1.28 2008/10/11 05:03:44 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -10,9 +10,15 @@ BINENV=		/usr/bin/env -i
 
 VAX_CONFIGURE_ARGS=
 
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
+MULTILIB_ARGS= --enable-multilib
+.else
+MULTILIB_ARGS= --disable-multilib
+.endif
+
 CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
 		--enable-long-long \
-		--disable-multilib \
+		${MULTILIB_ARGS} \
 		--enable-threads \
 		${VAX_CONFIGURE_ARGS} \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
@@ -39,6 +45,7 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			ac_cv_prog_cc_cross=yes \
 			ac_cv_func_strcoll_works=yes \
 			gcc_cv_func_printf_ptr=yes \
+			gcc_cv_libc_provides_ssp=yes \
 			gdb_cv_printf_has_long_double=yes \
 			gdb_cv_printf_has_long_long=yes \
 			gdb_cv_scanf_has_long_double=yes
@@ -87,7 +94,7 @@ native-gcc: .native/.configure_done
 	# edit Makefile so that maybe-all-gcc does not depend on all-gcc any more.
 		(cd .native && mv Makefile Makefile.config && \
 			sed -e 's/\(maybe-all-gcc:\) all-gcc/\1/' < Makefile.config > Makefile) && \
-		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e tree-check.h config.h)
+		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e tree-check.h config.h multilib.h gcov-iov.h)
 .else
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} all-libiberty) && \

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.24 2008/09/19 13:18:28 skrll Exp $
+#	$NetBSD: mknative-gcc,v 1.25 2008/10/11 05:03:44 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -289,7 +289,7 @@ get_gcc () {
 		;;
 	gcc4)
 		write_c gnu/usr.bin/$_subdir/libcpp/arch/$MACHINE_ARCH/config.h <$_TMPDIR/libcpp/config.h
-		hfiles='auto-host configargs gencheck gthr-default tm bconfig config'
+		hfiles='auto-host configargs gencheck gthr-default tm bconfig config multilib'
 		;;
 	esac
 	for f in $hfiles; do
