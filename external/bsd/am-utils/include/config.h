@@ -463,17 +463,23 @@
 /* Define to 1 if you have the <isofs/cd9660/cd9660_mount.h> header file. */
 #define HAVE_ISOFS_CD9660_CD9660_MOUNT_H 1
 
+#ifdef notdef
 /* Define to 1 if you have the <lber.h> header file. */
 #define HAVE_LBER_H 1
+#endif
 
 /* Define to 1 if you have the `ldap_enable_cache' function. */
 /* #undef HAVE_LDAP_ENABLE_CACHE */
 
+#ifdef notdef
 /* Define to 1 if you have the <ldap.h> header file. */
 #define HAVE_LDAP_H 1
+#endif
 
+#ifdef notdef
 /* Define to 1 if you have the `ldap_open' function. */
 #define HAVE_LDAP_OPEN 1
+#endif
 
 /* Define to 1 if you have the <libgen.h> header file. */
 #define HAVE_LIBGEN_H 1
