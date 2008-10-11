@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.211 2008/06/16 09:51:14 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.212 2008/10/11 13:40:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.211 2008/06/16 09:51:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.212 2008/10/11 13:40:57 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.211 2008/06/16 09:51:14 ad Exp $");
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/resourcevar.h>
+#include <sys/uidinfo.h>
 #if defined(PERFCTRS)
 #include <sys/pmc.h>
 #endif

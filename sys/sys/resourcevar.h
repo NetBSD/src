@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.45 2008/10/11 13:04:39 pooka Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.46 2008/10/11 13:40:58 pooka Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -93,24 +93,6 @@ struct plimit {
 	} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
-/*
- * Structure associated with user caching.
- */
-struct uidinfo {
-	SLIST_ENTRY(uidinfo) ui_hash;
-	uid_t	ui_uid;
-	u_long	ui_proccnt;	/* Number of processes */
-	u_long	ui_lockcnt;	/* Number of locks */
-
-	rlim_t	ui_sbsize;	/* Socket buffer size */
-	kmutex_t ui_lock;	/* mutex for ui_sbsize */
-};
-
-int	chgproccnt(uid_t, int);
-int	chgsbsize(struct uidinfo *, u_long *, u_long, rlim_t);
-struct uidinfo *uid_find(uid_t);
-void	uid_init(void);
-
 extern char defcorename[];
 
 extern int security_setidcore_dump;

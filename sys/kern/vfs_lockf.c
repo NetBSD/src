@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.68 2008/08/11 02:44:28 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.69 2008/10/11 13:40:57 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.68 2008/08/11 02:44:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.69 2008/10/11 13:40:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.68 2008/08/11 02:44:28 yamt Exp $");
 #include <sys/lockf.h>
 #include <sys/atomic.h>
 #include <sys/kauth.h>
+#include <sys/uidinfo.h>
 
 /*
  * The lockf structure is a kernel structure which contains the information

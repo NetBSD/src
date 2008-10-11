@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.128 2008/10/03 16:22:33 pooka Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.129 2008/10/11 13:40:57 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.128 2008/10/03 16:22:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.129 2008/10/11 13:40:57 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.128 2008/10/03 16:22:33 pooka Exp $");
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
+#include <sys/uidinfo.h>
 
 #include <net/if.h>
 #include <net/route.h>

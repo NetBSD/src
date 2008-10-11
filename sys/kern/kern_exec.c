@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.277 2008/07/02 17:28:57 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.278 2008/10/11 13:40:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.277 2008/07/02 17:28:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.278 2008/10/11 13:40:57 pooka Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.277 2008/07/02 17:28:57 ad Exp $");
 #include <sys/acct.h>
 #include <sys/exec.h>
 #include <sys/ktrace.h>
-#include <sys/resourcevar.h>
+#include <sys/uidinfo.h>
 #include <sys/wait.h>
 #include <sys/mman.h>
 #include <sys/ras.h>

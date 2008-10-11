@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.146 2008/10/11 13:04:39 pooka Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.147 2008/10/11 13:40:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.146 2008/10/11 13:04:39 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.147 2008/10/11 13:40:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,29 +66,17 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.146 2008/10/11 13:04:39 pooka Ex
 rlim_t maxdmap = MAXDSIZ;
 rlim_t maxsmap = MAXSSIZ;
 
-static SLIST_HEAD(uihashhead, uidinfo) *uihashtbl;
-static u_long 		uihash;
-
-#define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
-
 static pool_cache_t	plimit_cache;
 static pool_cache_t	pstats_cache;
 
 void
 resource_init(void)
 {
-	/*
-	 * In case of MP system, SLIST_FOREACH would force a cache line
-	 * write-back for every modified 'uidinfo', thus we try to keep the
-	 * lists short.
-	 */
-	const u_int uihash_sz = (maxproc > 1 ? 1024 : 64);
 
 	plimit_cache = pool_cache_init(sizeof(struct plimit), 0, 0, 0,
 	    "plimitpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	pstats_cache = pool_cache_init(sizeof(struct pstats), 0, 0, 0,
 	    "pstatspl", NULL, IPL_NONE, NULL, NULL, NULL);
-	uihashtbl = hashinit(uihash_sz, HASH_SLIST, true, &uihash);
 }
 
 /*
@@ -1035,94 +1023,4 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       SYSCTL_DESCR("Stop process before completing exit"),
 		       sysctl_proc_stop, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXIT, CTL_EOL);
-}
-
-void
-uid_init(void)
-{
-
-	/*
-	 * Ensure that uid 0 is always in the user hash table, as
-	 * sbreserve() expects it available from interrupt context.
-	 */
-	(void)uid_find(0);
-}
-
-struct uidinfo *
-uid_find(uid_t uid)
-{
-	struct uidinfo *uip, *uip_first, *newuip;
-	struct uihashhead *uipp;
-
-	uipp = UIHASH(uid);
-	newuip = NULL;
-
-	/*
-	 * To make insertion atomic, abstraction of SLIST will be violated.
-	 */
-	uip_first = uipp->slh_first;
- again:
-	SLIST_FOREACH(uip, uipp, ui_hash) {
-		if (uip->ui_uid != uid)
-			continue;
-		if (newuip != NULL) {
-			mutex_destroy(&newuip->ui_lock);
-			kmem_free(newuip, sizeof(*newuip));
-		}
-		return uip;
-	}
-	if (newuip == NULL) {
-		newuip = kmem_zalloc(sizeof(*newuip), KM_SLEEP);
-		/* XXX this could be IPL_SOFTNET */
-		mutex_init(&newuip->ui_lock, MUTEX_DEFAULT, IPL_VM);
-	}
-	newuip->ui_uid = uid;
-
-	/*
-	 * If atomic insert is unsuccessful, another thread might be
-	 * allocated this 'uid', thus full re-check is needed.
-	 */
-	newuip->ui_hash.sle_next = uip_first;
-	membar_producer();
-	uip = atomic_cas_ptr(&uipp->slh_first, uip_first, newuip);
-	if (uip != uip_first) {
-		uip_first = uip;
-		goto again;
-	}
-
-	return newuip;
-}
-
-/*
- * Change the count associated with number of processes
- * a given user is using.
- */
-int
-chgproccnt(uid_t uid, int diff)
-{
-	struct uidinfo *uip;
-	long proccnt;
-
-	uip = uid_find(uid);
-	proccnt = atomic_add_long_nv(&uip->ui_proccnt, diff);
-	KASSERT(proccnt >= 0);
-	return proccnt;
-}
-
-int
-chgsbsize(struct uidinfo *uip, u_long *hiwat, u_long to, rlim_t xmax)
-{
-	rlim_t nsb;
-
-	mutex_enter(&uip->ui_lock);
-	nsb = uip->ui_sbsize + to - *hiwat;
-	if (to > *hiwat && nsb > xmax) {
-		mutex_exit(&uip->ui_lock);
-		return 0;
-	}
-	*hiwat = to;
-	uip->ui_sbsize = nsb;
-	KASSERT(uip->ui_sbsize >= 0);
-	mutex_exit(&uip->ui_lock);
-	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.97 2008/08/04 03:55:47 tls Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.98 2008/10/11 13:40:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.97 2008/08/04 03:55:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.98 2008/10/11 13:40:57 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.97 2008/08/04 03:55:47 tls Exp $"
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
 #include <sys/pool.h>
+#include <sys/uidinfo.h>
 
 /*
  * Primitive routines for operating on sockets and socket buffers.

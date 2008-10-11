@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.52 2008/06/18 09:06:27 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.53 2008/10/11 13:40:57 pooka Exp $	*/
 /*	$OpenBSD: pf.c,v 1.552.2.1 2007/11/27 16:37:57 henning Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.52 2008/06/18 09:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.53 2008/10/11 13:40:57 pooka Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.52 2008/06/18 09:06:27 yamt Exp $");
 #include <sys/rwlock.h>
 #ifdef __NetBSD__
 #include <sys/kthread.h>
+#include <sys/uidinfo.h>
 #endif /* __NetBSD__ */
 
 #include <net/if.h>
