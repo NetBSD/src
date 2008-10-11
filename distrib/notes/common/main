@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.421 2008/09/27 23:15:21 tsutsui Exp $
+.\"	$NetBSD: main,v 1.422 2008/10/11 21:54:11 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -619,6 +619,10 @@ added support for the following chips: BCM5753, BCM5753M, BCM5715, BCM5754, BCM5
 .It
 .Xr iwn 4 :
 new driver for Intel Wireless 4965AGN IEEE network cards, from OpenBSD.
+.It
+.Xr jme 4 :
+new driver for JMicron Technologies JME250 Gigabit Ethernet and JME260 Fast
+Ethernet controllers.
 .It
 .Xr kse 4 :
 new driver for Micrel KSZ8842/8841 PCI network cards.
