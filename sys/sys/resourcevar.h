@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.44 2008/03/27 19:06:52 ad Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.45 2008/10/11 13:04:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -101,7 +101,9 @@ struct uidinfo {
 	uid_t	ui_uid;
 	u_long	ui_proccnt;	/* Number of processes */
 	u_long	ui_lockcnt;	/* Number of locks */
+
 	rlim_t	ui_sbsize;	/* Socket buffer size */
+	kmutex_t ui_lock;	/* mutex for ui_sbsize */
 };
 
 int	chgproccnt(uid_t, int);
