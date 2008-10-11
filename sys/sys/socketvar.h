@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.113 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.114 2008/10/11 12:03:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #include <sys/lkm.h>
 #endif
 
-#if !defined(_KERNEL) || defined(LKM)
+#if !defined(_KERNEL)
 struct uio;
 struct lwp;
 struct uidinfo;
