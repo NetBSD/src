@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.51 2008/10/07 12:43:32 pgoyette Exp $
+# $NetBSD: XEN2_DOM0,v 1.52 2008/10/11 21:54:12 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -289,6 +289,7 @@ hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
+jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
