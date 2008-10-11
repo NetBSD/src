@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.38 2008/09/16 19:55:32 bouyer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.39 2008/10/11 21:11:11 bouyer Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.38 2008/09/16 19:55:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.39 2008/10/11 21:11:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,11 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_pba.pba_iot = X86_BUS_SPACE_IO;
 	hac.hac_pba.pba_memt = X86_BUS_SPACE_MEM;
 	hac.hac_pba.pba_dmat = &pci_bus_dma_tag;
-	hac.hac_pba.pba_dmat64 = 0;
+#ifdef _LP64
+	hac.hac_pba.pba_dmat64 = &pci_bus_dma64_tag;
+#else
+	hac.hac_pba.pba_dmat64 = NULL;
+#endif /* _LP64 */
 	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
 	hac.hac_pba.pba_bridgetag = NULL;
 	hac.hac_pba.pba_bus = 0;
