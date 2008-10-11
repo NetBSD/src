@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.920 2008/10/11 13:40:57 pooka Exp $
+#	$NetBSD: files,v 1.921 2008/10/11 16:39:07 tls Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1474,7 +1474,7 @@ file	kern/tty_pty.c			pty 			needs-flag
 file	kern/tty_ptm.c			pty
 file	kern/tty_subr.c
 file	kern/tty_tty.c
-file	kern/uipc_accf.c		inet
+file	kern/uipc_accf.c		accf_data | accf_http
 file	kern/uipc_domain.c
 file	kern/uipc_mbuf.c
 file	kern/uipc_mbuf2.c
@@ -1553,8 +1553,8 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
-file	netinet/accf_data.c		inet & accf_data
-file	netinet/accf_http.c		inet & accf_http
+file	netinet/accf_data.c		accf_data
+file	netinet/accf_http.c		accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm

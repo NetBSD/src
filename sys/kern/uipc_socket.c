@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.174 2008/10/11 13:40:57 pooka Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.175 2008/10/11 16:39:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.174 2008/10/11 13:40:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.175 2008/10/11 16:39:07 tls Exp $");
 
 #include "opt_inet.h"
 #include "opt_sock_counters.h"
@@ -615,11 +615,9 @@ sofree(struct socket *so)
 	KASSERT(!cv_has_waiters(&so->so_snd.sb_cv));
 	sorflush(so);
 	refs = so->so_aborting;	/* XXX */
-#ifdef INET
 	/* remove acccept filter if one is present. */
 	if (so->so_accf != NULL)
 		do_setopt_accept_filter(so, NULL);
-#endif
 	sounlock(so);
 	if (refs == 0)		/* XXX */
 		soput(so);
@@ -1580,13 +1578,11 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 
 	switch (sopt->sopt_name) {
 
-#ifdef INET
 	case SO_ACCEPTFILTER:
 		error = do_setopt_accept_filter(so, sopt);
 		if (error)
 			return error;
 		break;
-#endif
 
   	case SO_LINGER:
  		error = sockopt_get(sopt, &l, sizeof(l));
@@ -1760,11 +1756,9 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 
 	switch (sopt->sopt_name) {
 
-#ifdef INET
 	case SO_ACCEPTFILTER:
 		error = do_getopt_accept_filter(so, sopt);
 		break;
-#endif
 
 	case SO_LINGER:
 		l.l_onoff = (so->so_options & SO_LINGER) ? 1 : 0;
