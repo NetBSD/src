@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.118 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.119 2008/10/11 13:40:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.118 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.119 2008/10/11 13:40:57 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.118 2008/08/06 15:01:23 plunky Exp
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/atomic.h>
+#include <sys/uidinfo.h>
 
 /*
  * Unix communications domain.

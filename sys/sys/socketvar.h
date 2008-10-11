@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.114 2008/10/11 12:03:20 pooka Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.115 2008/10/11 13:40:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,6 +73,8 @@
 struct uio;
 struct lwp;
 struct uidinfo;
+#else
+#include <sys/uidinfo.h>
 #endif
 
 TAILQ_HEAD(soqhead, socket);

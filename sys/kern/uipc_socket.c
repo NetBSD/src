@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.173 2008/10/10 19:49:49 plunky Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.174 2008/10/11 13:40:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.173 2008/10/10 19:49:49 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.174 2008/10/11 13:40:57 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_sock_counters.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.173 2008/10/10 19:49:49 plunky Exp
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/uidinfo.h>
 #include <sys/event.h>
 #include <sys/poll.h>
 #include <sys/kauth.h>

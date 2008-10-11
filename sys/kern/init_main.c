@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.364 2008/10/09 10:48:21 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.365 2008/10/11 13:40:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.364 2008/10/09 10:48:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.365 2008/10/11 13:40:57 pooka Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -163,6 +163,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.364 2008/10/09 10:48:21 pooka Exp $"
 #include <sys/event.h>
 #include <sys/lockf.h>
 #include <sys/once.h>
+#include <sys/uidinfo.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
