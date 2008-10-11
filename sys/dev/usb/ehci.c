@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.151 2008/10/11 05:17:12 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.152 2008/10/11 13:56:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.151 2008/10/11 05:17:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.152 2008/10/11 13:56:51 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -811,8 +811,7 @@ ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex) {
 
 	for (i = 0; i < 8; i++) {
 		if (le32toh(itd->itd.itd_ctl[i]) & EHCI_ITD_ACTIVE)
-			continue;
-		break;
+			break;
 	}
 
 	if (i == 8) {
