@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1133 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1134 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1048,3 +1048,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		from pthread APIs. The assertions can be re-enabled by
 		setting the PTHREAD_DIAGASSERT environment variable
 		correctly. [ad 20081008]
+	i386, amd64: Add support for the multiboot protocol to boot(8).
+		This allows booting Xen without GRUB. [rjs,joerg 20081011]
