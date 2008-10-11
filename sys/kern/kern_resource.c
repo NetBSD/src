@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.145 2008/09/30 17:28:47 njoly Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.146 2008/10/11 13:04:39 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.145 2008/09/30 17:28:47 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.146 2008/10/11 13:04:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1065,12 +1065,17 @@ uid_find(uid_t uid)
 	SLIST_FOREACH(uip, uipp, ui_hash) {
 		if (uip->ui_uid != uid)
 			continue;
-		if (newuip != NULL)
+		if (newuip != NULL) {
+			mutex_destroy(&newuip->ui_lock);
 			kmem_free(newuip, sizeof(*newuip));
+		}
 		return uip;
 	}
-	if (newuip == NULL)
+	if (newuip == NULL) {
 		newuip = kmem_zalloc(sizeof(*newuip), KM_SLEEP);
+		/* XXX this could be IPL_SOFTNET */
+		mutex_init(&newuip->ui_lock, MUTEX_DEFAULT, IPL_VM);
+	}
 	newuip->ui_uid = uid;
 
 	/*
@@ -1108,14 +1113,16 @@ int
 chgsbsize(struct uidinfo *uip, u_long *hiwat, u_long to, rlim_t xmax)
 {
 	rlim_t nsb;
-	const long diff = to - *hiwat;
 
-	nsb = atomic_add_long_nv((long *)&uip->ui_sbsize, diff);
-	if (diff > 0 && nsb > xmax) {
-		atomic_add_long((long *)&uip->ui_sbsize, -diff);
+	mutex_enter(&uip->ui_lock);
+	nsb = uip->ui_sbsize + to - *hiwat;
+	if (to > *hiwat && nsb > xmax) {
+		mutex_exit(&uip->ui_lock);
 		return 0;
 	}
 	*hiwat = to;
-	KASSERT(nsb >= 0);
+	uip->ui_sbsize = nsb;
+	KASSERT(uip->ui_sbsize >= 0);
+	mutex_exit(&uip->ui_lock);
 	return 1;
 }
