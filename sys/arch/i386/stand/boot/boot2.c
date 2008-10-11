@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.37 2008/09/26 18:42:52 tsutsui Exp $	*/
+/*	$NetBSD: boot2.c,v 1.38 2008/10/11 11:06:19 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -133,6 +133,7 @@ void	command_dev(char *);
 void	command_consdev(char *);
 void	command_modules(char *);
 void	command_load(char *);
+void	command_multiboot(char *);
 
 const struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -144,6 +145,7 @@ const struct bootblk_command commands[] = {
 	{ "consdev",	command_consdev },
 	{ "modules",	command_modules },
 	{ "load",	command_load },
+	{ "multiboot",	command_multiboot },
 	{ NULL,		NULL },
 };
 
@@ -685,6 +687,7 @@ command_help(char *arg)
 	       "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
 	       "modules {enabled|disabled}\n"
 	       "load {path_to_module}\n"
+	       "multiboot [xdNx:][filename] [<args>]\n"
 	       "help|?\n"
 	       "quit\n");
 }
@@ -800,6 +803,9 @@ command_load(char *arg)
 	size_t len;
 	char *str;
 
+	while (*arg == ' ' || *arg == '\t')
+		++arg;
+
 	bm = alloc(sizeof(boot_module_t));
 	len = strlen(arg) + 1;
 	str = alloc(len);
@@ -819,3 +825,17 @@ command_load(char *arg)
 		bmp->bm_next = bm;
 	}
 }
+
+void
+command_multiboot(char *arg)
+{
+	char *filename;
+
+	filename = arg;
+	if (exec_multiboot(filename, gettrailer(arg)) < 0)
+		printf("multiboot: %s: %s\n", sprint_bootsel(filename),
+		       strerror(errno));
+	else
+		printf("boot returned\n");
+}
+
