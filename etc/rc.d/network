@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.56 2008/09/26 10:31:46 apb Exp $
+# $NetBSD: network,v 1.57 2008/10/11 17:28:03 christos Exp $
 #
 
 # PROVIDE: network
@@ -272,10 +272,12 @@ network_start()
 					# Pass args to ifconfig.  Note
 					# that args may contain embedded
 					# shell metacharacters, such as
-					# "ssid 'foo;*>bar'".
+					# "ssid 'foo;*>bar'". We eval
+					# one more time so that things
+					# like ssid "Columbia University" work.
 					(
 						set -o noglob
-						set -- $args
+						eval set -- $args
 						#echo >&2 "[$#] [$1] [$2] [$3]"
 						/sbin/ifconfig $int "$@"
 					)
