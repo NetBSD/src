@@ -1,4 +1,4 @@
-/*	$NetBSD: percpu.c,v 1.1 2008/10/10 20:19:35 pooka Exp $	*/
+/*	$NetBSD: percpu.c,v 1.2 2008/10/11 16:23:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,8 @@
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/percpu.h>
+
+#include <machine/cpu.h>
 
 /*
  * A poor-man's userspace percpu emulation.  Since we can't disable
