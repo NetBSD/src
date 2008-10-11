@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.16 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.17 2008/10/11 11:06:19 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.16 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.17 2008/10/11 11:06:19 joerg Exp $");
+
+#include "opt_multiboot.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

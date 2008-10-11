@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.32 2008/10/08 22:57:28 joerg Exp $	 */
+/*	$NetBSD: exec.c,v 1.33 2008/10/11 11:06:20 joerg Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -102,6 +102,8 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+
+#include <machine/multiboot.h>
 
 #include <lib/libsa/stand.h>
 #include <lib/libkern/libkern.h>
@@ -277,13 +279,25 @@ static const char *
 module_path(boot_module_t *bm)
 {
 	static char buf[256];
-	const char *name;
+	char name_buf[256];
+	const char *name, *name2;
 
 	name = bm->bm_path;
-	if (name[0] == '/')
-		return name;
-	snprintf(buf, sizeof(buf), "%s/%s/%s.kmod", module_base, bm->bm_path,
-	    bm->bm_path);
+	for (name2 = name; *name2; ++name2) {
+		if (*name2 == ' ' || *name2 == '\t') {
+			strlcpy(name_buf, name, sizeof(name_buf));
+			if (name2 - name < sizeof(name_buf))
+				name_buf[name2 - name] = '\0';
+			name = name_buf;
+			break;
+		}
+	}
+ 	if (name[0] == '/')
+		snprintf(buf, sizeof(buf), "%s", name);
+	else
+		snprintf(buf, sizeof(buf), "%s/%s/%s.kmod",
+		    module_base, name, name);
+
 	return buf;
 }
 
@@ -406,4 +420,80 @@ module_init(void)
 		close(fd);
 	}
 	btinfo_modulelist->endpa = image_end;
+}
+
+int
+exec_multiboot(const char *file, char *args)
+{
+	struct multiboot_info *mbi;
+	struct multiboot_module *mbm;
+	struct bi_modulelist_entry *bim;
+	int		i, len;
+	u_long		marks[MARK_MAX];
+	u_long		extmem;
+	u_long		basemem;
+	char		*cmdline;
+
+	mbi = alloc(sizeof(struct multiboot_info));
+	mbi->mi_flags = MULTIBOOT_INFO_HAS_MEMORY;
+
+	if (common_load_kernel(file, &basemem, &extmem, 0, 0, marks))
+		goto out;
+
+	mbi->mi_mem_upper = extmem;
+	mbi->mi_mem_lower = basemem;
+
+	if (args) {
+		mbi->mi_flags |= MULTIBOOT_INFO_HAS_CMDLINE;
+		len = strlen(file) + 1 + strlen(args) + 1;
+		cmdline = alloc(len);
+		snprintf(cmdline, len, "%s %s", file, args);
+		mbi->mi_cmdline = (char *) vtophys(cmdline);
+	}
+
+	/* pull in any modules if necessary */
+	if (boot_modules_enabled) {
+		module_init();
+		if (btinfo_modulelist) {
+			mbm = alloc(sizeof(struct multiboot_module) *
+					   btinfo_modulelist->num);
+
+			bim = (struct bi_modulelist_entry *)
+			  (((char *) btinfo_modulelist) +
+			   sizeof(struct btinfo_modulelist));
+			for (i = 0; i < btinfo_modulelist->num; i++) {
+				mbm[i].mmo_start = bim->base;
+				mbm[i].mmo_end = bim->base + bim->len;
+				mbm[i].mmo_string = (char *)vtophys(bim->path);
+				mbm[i].mmo_reserved = 0;
+				bim++;
+			}
+			mbi->mi_flags |= MULTIBOOT_INFO_HAS_MODS;
+			mbi->mi_mods_count = btinfo_modulelist->num;
+			mbi->mi_mods_addr = vtophys(mbm);
+		}
+	}
+
+#ifdef DEBUG
+	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n", marks[MARK_ENTRY],
+	    marks[MARK_NSYM], marks[MARK_SYM], marks[MARK_END]);
+#endif
+
+
+#if 0
+	if (btinfo_symtab.nsym) {
+		mbi->mi_flags |= MULTIBOOT_INFO_HAS_ELF_SYMS;
+		mbi->mi_elfshdr_addr = marks[MARK_SYM];
+	btinfo_symtab.nsym = marks[MARK_NSYM];
+	btinfo_symtab.ssym = marks[MARK_SYM];
+	btinfo_symtab.esym = marks[MARK_END];
+#endif
+
+	multiboot(marks[MARK_ENTRY], vtophys(mbi),
+		  x86_trunc_page(mbi->mi_mem_lower*1024));
+	panic("exec returned");
+
+out:
+        dealloc(mbi, 0);
+	return -1;
 }
