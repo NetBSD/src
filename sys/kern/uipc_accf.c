@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.3 2008/09/27 16:58:03 pooka Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.4 2008/10/11 16:39:07 tls Exp $	*/
 
 /*-
  * Copyright (c) 2000 Paycounter, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.3 2008/09/27 16:58:03 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.4 2008/10/11 16:39:07 tls Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.3 2008/09/27 16:58:03 pooka Exp $");
 #include <sys/domain.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/lkm.h>
 #include <sys/mutex.h>
@@ -53,13 +53,11 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.3 2008/09/27 16:58:03 pooka Exp $");
 static kmutex_t accept_filter_mtx;
 #define	ACCEPT_FILTER_LOCK()		mutex_spin_enter(&accept_filter_mtx)
 #define	ACCEPT_FILTER_UNLOCK()		mutex_spin_exit(&accept_filter_mtx);
-#define	SOCK_LOCK(so)
-#define	SOCK_UNLOCK(so)
+#define	SOCK_LOCK(so)			KASSERT(solocked(so));
+#define	SOCK_UNLOCK(so)			KASSERT(solocked(so));
 
 static SLIST_HEAD(, accept_filter) accept_filtlsthd =
 	SLIST_HEAD_INITIALIZER(&accept_filtlsthd);
-
-MALLOC_DEFINE(M_ACCF, "accf", "accept filter data");
 
 static int unloadable = 0;
 
@@ -99,7 +97,7 @@ SYSCTL_SETUP(sysctl_net_inet_accf_setup, "sysctl net.inet.accf subtree setup")
 }
 
 /*
- * Must be passed a malloc'd structure so we don't explode if the kld is
+ * Must be passed a kmem_malloc'd structure so we don't explode if the kld is
  * unloaded, we leak the struct on deallocation to deal with this, but if a
  * filter is loaded with the same name as a leaked one we re-use the entry.
  */
@@ -117,7 +115,7 @@ accept_filt_add(struct accept_filter *filt)
 			} else {
 				p->accf_callback = filt->accf_callback;
 				ACCEPT_FILTER_UNLOCK();
-				FREE(filt, M_ACCF);
+				kmem_free(filt, sizeof(struct accept_filter));
 				return (0);
 			}
 		}
@@ -191,8 +189,7 @@ accept_filt_generic_mod_event(struct lkm_table *lkmtp, int event, void *data)
 	switch (event) {
 	case LKM_E_LOAD:
 		accept_filter_init();
-		MALLOC(p, struct accept_filter *, sizeof(*p), M_ACCF,
-		    M_WAITOK);
+		p = kmem_alloc(sizeof(struct accept_filter), KM_SLEEP);
 		bcopy(accfp, p, sizeof(*p));
 		error = accept_filt_add(p);
 		break;
@@ -271,9 +268,11 @@ do_setopt_accept_filter(struct socket *so, const struct sockopt *sopt)
 				af->so_accept_filter->accf_destroy != NULL) {
 				af->so_accept_filter->accf_destroy(so);
 			}
-			if (af->so_accept_filter_str != NULL)
-				FREE(af->so_accept_filter_str, M_ACCF);
-			FREE(af, M_ACCF);
+			if (af->so_accept_filter_str != NULL) {
+				kmem_free(af->so_accept_filter_str,
+					  sizeof(afa.af_name));
+			}
+			kmem_free(af, sizeof(*af));
 			so->so_accf = NULL;
 		}
 		so->so_options &= ~SO_ACCEPTFILTER;
@@ -284,6 +283,9 @@ do_setopt_accept_filter(struct socket *so, const struct sockopt *sopt)
 	/*
 	 * Pre-allocate any memory we may need later to avoid blocking at
 	 * untimely moments.  This does not optimize for invalid arguments.
+	 *
+	 * XXX on NetBSD, we're called with the socket lock already held,
+	 * XXX so we should not allow this allocation to block either.
 	 */
 	error = sockopt_get(sopt, &afa, sizeof(afa));
 	if (error) {
@@ -301,12 +303,25 @@ do_setopt_accept_filter(struct socket *so, const struct sockopt *sopt)
 	 * attached properly, 'newaf' is NULLed to avoid a free()
 	 * while in use.
 	 */
-	MALLOC(newaf, struct so_accf *, sizeof(*newaf), M_ACCF, M_WAITOK |
-	    M_ZERO);
+	newaf = kmem_zalloc(sizeof(*newaf), KM_NOSLEEP);
+	if (!newaf) {
+		return ENOMEM;
+	}
 	if (afp->accf_create != NULL && afa.af_name[0] != '\0') {
-		int len = strlen(afa.af_name) + 1;
-		MALLOC(newaf->so_accept_filter_str, char *, len, M_ACCF,
-		    M_WAITOK);
+		/*
+		 * FreeBSD did a variable-size allocation here
+		 * with the actual string length from afa.af_name
+		 * but it is so short, why bother tracking it?
+		 * XXX as others have noted, this is an API mistake;
+		 * XXX accept_filter_arg should have a mandatory namelen.
+		 * XXX (but it's a bit too late to fix that now)
+		 */
+		newaf->so_accept_filter_str =
+		    kmem_alloc(sizeof(afa.af_name), KM_NOSLEEP);
+		if (!newaf->so_accept_filter_str) {
+			kmem_free(newaf, sizeof(*newaf));
+			return ENOMEM;
+		}
 		strcpy(newaf->so_accept_filter_str, afa.af_name);
 	}
 
@@ -342,8 +357,9 @@ out:
 	SOCK_UNLOCK(so);
 	if (newaf != NULL) {
 		if (newaf->so_accept_filter_str != NULL)
-			FREE(newaf->so_accept_filter_str, M_ACCF);
-		FREE(newaf, M_ACCF);
+			kmem_free(newaf->so_accept_filter_str,
+				  sizeof(afa.af_name));
+		kmem_free(newaf, sizeof(*newaf));
 	}
 	return (error);
 }
