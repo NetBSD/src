@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.229 2008/10/07 12:43:31 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.230 2008/10/11 21:54:11 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.229 $"
+#ident 		"GENERIC-$Revision: 1.230 $"
 
 maxusers	64		# estimated number of users
 
@@ -624,6 +624,7 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
+jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
