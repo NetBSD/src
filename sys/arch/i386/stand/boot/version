@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.7 2008/07/15 23:16:26 perry Exp $
+$NetBSD: version,v 1.8 2008/10/11 11:06:20 joerg Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -38,3 +38,4 @@ is taken as the current.
 3.3:	Add support for cd9660 file system.
 5.0:	Support for boot menu, modules.
 5.1:	Change boot messages to replace build date with kernel version.
+5.2:	Support for multiboot.
