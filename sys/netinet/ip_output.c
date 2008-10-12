@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.198 2008/08/16 21:51:43 plunky Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.199 2008/10/12 10:23:18 plunky Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.198 2008/08/16 21:51:43 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.199 2008/10/12 10:23:18 plunky Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1337,7 +1337,13 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			if (inp->inp_options) {
 				struct mbuf *m;
 
-				m = m_copym(inp->inp_options, 0, M_COPYALL, M_WAIT);
+				m = m_copym(inp->inp_options, 0, M_COPYALL,
+				    M_DONTWAIT);
+				if (m == NULL) {
+					error = ENOBUFS;
+					break;
+				}
+
 				error = sockopt_setmbuf(sopt, m);
 			}
 			break;
@@ -1611,11 +1617,10 @@ ip_setmoptions(struct ip_moptions **imop, const struct sockopt *sopt)
 		 * No multicast option buffer attached to the pcb;
 		 * allocate one and initialize to default values.
 		 */
-		imo = (struct ip_moptions *)malloc(sizeof(*imo), M_IPMOPTS,
-		    M_WAITOK);
-
+		imo = malloc(sizeof(*imo), M_IPMOPTS, M_NOWAIT);
 		if (imo == NULL)
 			return (ENOBUFS);
+
 		*imop = imo;
 		imo->imo_multicast_ifp = NULL;
 		imo->imo_multicast_addr.s_addr = INADDR_ANY;
