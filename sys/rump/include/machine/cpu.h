@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2007/10/31 15:57:20 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 2008/10/12 22:08:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,9 +33,25 @@
 #include <sys/cpu_data.h>
 
 struct cpu_info {
-        struct cpu_data ci_data;
+	struct cpu_data ci_data;
 	cpuid_t ci_cpuid;
+
+/*
+ * XXX: horrible workaround for vax lock.h.
+ * I eventually want to nuke rump include/machine, so don't waste
+ * energy fighting with this.
+ */
+#ifdef __vax__
+	int ci_ipimsgs;
+#define IPI_SEND_CNCHAR 0
+#define IPI_DDB 0
+#endif /* __vax__ */
 };
+
+/* more dirty rotten vax kludges */
+#ifdef __vax__
+static __inline void cpu_handle_ipi(void) {}
+#endif /* __vax__ */
 
 extern struct cpu_info rump_cpu;
 #define curcpu() (&rump_cpu)
