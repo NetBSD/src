@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_isa.c,v 1.21 2008/10/12 13:17:28 pgoyette Exp $ */
+/*	$NetBSD: lm_isa.c,v 1.22 2008/10/12 23:07:32 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.21 2008/10/12 13:17:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm_isa.c,v 1.22 2008/10/12 23:07:32 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,7 +126,7 @@ lm_isa_attach(device_t parent, device_t self, void *aux)
 	sc->lmsc.lm_writereg = lm_isa_writereg;
 	sc->lmsc.lm_readreg = lm_isa_readreg;
 
-	lm_attach(&sc->sc_lmsc);
+	lm_attach(&sc->lmsc);
 }
 
 int
@@ -134,7 +134,7 @@ lm_isa_detach(device_t self, int flags)
 {
 	struct lm_isa_softc *sc = device_private(self);
 
-	lm_detach(&sc->sc_lmsc);
+	lm_detach(&sc->lmsc);
 	bus_space_unmap(sc->lm_iot, sc->lm_ioh, 8);
 	return 0;
 }
