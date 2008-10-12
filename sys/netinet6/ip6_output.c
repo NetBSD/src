@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.130 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.131 2008/10/12 10:25:04 plunky Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.130 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.131 2008/10/12 10:25:04 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1783,8 +1783,13 @@ else 					\
 			}
 #endif
 
-			optbuflen = sopt->sopt_size; /* XXX-elad */
-			optbuf = malloc(optbuflen, M_IP6OPT, M_WAITOK);
+			optbuflen = sopt->sopt_size;
+			optbuf = malloc(optbuflen, M_IP6OPT, M_NOWAIT);
+			if (optbuf == NULL) {
+				error = ENOBUFS;
+				break;
+			}
+
 			sockopt_get(sopt, optbuf, optbuflen);
 			optp = &in6p->in6p_outputopts;
 			error = ip6_pcbopt(optname, optbuf, optbuflen,
@@ -1802,7 +1807,7 @@ else 					\
 
 			m = sockopt_getmbuf(sopt);
 			if (m == NULL) {
-				error = ENOMEM;
+				error = ENOBUFS;
 				break;
 			}
 			error = ip6_setmoptions(optname,
