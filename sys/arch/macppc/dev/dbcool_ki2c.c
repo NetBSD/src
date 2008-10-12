@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_ki2c.c,v 1.2 2008/10/09 03:11:29 pgoyette Exp $ */
+/*	$NetBSD: dbcool_ki2c.c,v 1.3 2008/10/12 12:49:04 pgoyette Exp $ */
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.2 2008/10/09 03:11:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.3 2008/10/12 12:49:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: dbcool_ki2c.c,v 1.2 2008/10/09 03:11:29 pgoyette Exp
 
 static void dbcool_ki2c_attach(device_t, device_t, void *);
 static int dbcool_ki2c_match(device_t, cfdata_t, void *);
+static uint8_t dbcool_ki2c_readreg(struct dbcool_softc *, uint8_t);
+static void dbcool_ki2c_writereg(struct dbcool_softc *, uint8_t, uint8_t);
 
 CFATTACH_DECL_NEW(dbcool_ki2c, sizeof(struct dbcool_softc),
     dbcool_ki2c_match, dbcool_ki2c_attach, NULL, NULL);
@@ -83,13 +85,16 @@ dbcool_ki2c_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_tag = ka->ka_tag;
 	sc->sc_addr = ka->ka_addr & 0xfe;
+	sc->sc_readreg = dbcool_ki2c_readreg;
+	sc->sc_writereg = dbcool_ki2c_writereg;
+
 	if (dbcool_chip_ident(sc) < 0) {
 		aprint_error_dev(self, "Unrecognized dbCool chip - "
 					"set-up aborted\n");
 		return;
 	}
 
-	ver = dbcool_readreg(sc, DBCOOL_REVISION_REG);
+	ver = sc->sc_readreg(sc, DBCOOL_REVISION_REG);
 
 	if (sc->sc_chip->flags & DBCFLAG_4BIT_VER)
 		aprint_normal_dev(self, "%s dBCool(tm) Controller "
@@ -103,4 +108,26 @@ dbcool_ki2c_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, dbcool_pmf_suspend, dbcool_pmf_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static uint8_t
+dbcool_ki2c_readreg(struct dbcool_softc *sc, uint8_t reg)
+{
+	uint8_t data = 0;
+	
+	iic_acquire_bus(sc->sc_tag, 0);
+	iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_addr, &reg, 1,
+	    &data, 1, 0);
+	iic_release_bus(sc->sc_tag, 0);
+	return data;
+}
+
+static void
+dbcool_ki2c_writereg(struct dbcool_softc *sc, uint8_t reg, uint8_t data)
+{
+	uint8_t mdata[2] = {reg, data};
+	
+	iic_acquire_bus(sc->sc_tag, 0);
+	iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_addr, &mdata, 2, NULL, 0, 0);
+	iic_release_bus(sc->sc_tag, 0);
 }
