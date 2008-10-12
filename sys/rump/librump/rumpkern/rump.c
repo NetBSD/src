@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.65 2008/10/10 20:24:10 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.66 2008/10/12 18:52:56 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/atomic.h>
+#include <sys/callout.h>
 #include <sys/cpu.h>
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
@@ -155,6 +156,8 @@ _rump_init(int rump_version)
 	dovfsusermount = 1;
 
 	rumpuser_thrinit();
+	callout_startup();
+	callout_init_cpu(&rump_cpu);
 
 	percpu_init();
 	fd_sys_init();
