@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.29 2006/03/17 14:47:10 rumble Exp $	*/
+/*	$NetBSD: output.c,v 1.30 2008/10/12 01:40:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.29 2006/03/17 14:47:10 rumble Exp $");
+__RCSID("$NetBSD: output.c,v 1.30 2008/10/12 01:40:37 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,6 @@ __RCSID("$NetBSD: output.c,v 1.29 2006/03/17 14:47:10 rumble Exp $");
 #define OUTBUFSIZ BUFSIZ
 #define BLOCK_OUT -2		/* output to a fixed block of memory */
 #define MEM_OUT -3		/* output to dynamically allocated memory */
-#define OUTPUT_ERR 01		/* error occurred on output */
 
 
 struct output output = {NULL, 0, NULL, OUTBUFSIZ, 1, 0};
