@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.2 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.3 2008/10/12 16:03:27 apb Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ext2fs.c,v 1.2 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: ext2fs.c,v 1.3 2008/10/12 16:03:27 apb Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -443,6 +443,8 @@ ext2fs_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 	if (strchr(params->stage2, '/') != NULL) {
 		warnx("The secondary bootstrap `%s' must be in /",
 		    params->stage2);
+		warnx("(Path must be relative to the file system in `%s')",
+		    params->filesystem);
 		return 0;
 	}
 
@@ -452,6 +454,8 @@ ext2fs_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 	if (rv != 2) {
 		warnx("Could not find secondary bootstrap `%s' in `%s'",
 		    params->stage2, params->filesystem);
+		warnx("(Path must be relative to the file system in `%s')",
+		    params->filesystem);
 		return 0;
 	}
 
