@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.131 2008/10/12 10:25:04 plunky Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.132 2008/10/12 11:34:48 plunky Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.131 2008/10/12 10:25:04 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.132 2008/10/12 11:34:48 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -132,8 +132,8 @@ static int ip6_pcbopt(int, u_char *, int, struct ip6_pktopts **,
 static int ip6_getpcbopt(struct ip6_pktopts *, int, struct sockopt *);
 static int ip6_setpktopt(int, u_char *, int, struct ip6_pktopts *, int,
 	int, int, int);
-static int ip6_setmoptions(int, struct ip6_moptions **, struct mbuf *);
-static int ip6_getmoptions(int, struct ip6_moptions *, struct mbuf **);
+static int ip6_setmoptions(const struct sockopt *, struct ip6_moptions **);
+static int ip6_getmoptions(struct sockopt *, struct ip6_moptions *);
 static int ip6_copyexthdr(struct mbuf **, void *, int);
 static int ip6_insertfraghdr(struct mbuf *, struct mbuf *, int,
 	struct ip6_frag **);
@@ -1802,18 +1802,9 @@ else 					\
 		case IPV6_MULTICAST_HOPS:
 		case IPV6_MULTICAST_LOOP:
 		case IPV6_JOIN_GROUP:
-		case IPV6_LEAVE_GROUP: {
-			struct mbuf *m;
-
-			m = sockopt_getmbuf(sopt);
-			if (m == NULL) {
-				error = ENOBUFS;
-				break;
-			}
-			error = ip6_setmoptions(optname,
-			    &in6p->in6p_moptions, m);
+		case IPV6_LEAVE_GROUP:
+			error = ip6_setmoptions(sopt, &in6p->in6p_moptions);
 			break;
-			}
 
 		case IPV6_PORTRANGE:
 			error = sockopt_getint(sopt, &optval);
@@ -2023,15 +2014,9 @@ else 					\
 		case IPV6_MULTICAST_HOPS:
 		case IPV6_MULTICAST_LOOP:
 		case IPV6_JOIN_GROUP:
-		case IPV6_LEAVE_GROUP: {
-			struct mbuf *m;
-
-			error = ip6_getmoptions(optname,
-			    in6p->in6p_moptions, &m);
-			if (!error)
-				error = sockopt_setmbuf(sopt, m);
+		case IPV6_LEAVE_GROUP:
+			error = ip6_getmoptions(sopt, in6p->in6p_moptions);
 			break;
-			}
 
 #if defined(IPSEC) || defined(FAST_IPSEC)
 		case IPV6_IPSEC_POLICY:
@@ -2427,11 +2412,11 @@ ip6_freepcbopts(struct ip6_pktopts *pktopt)
  * Set the IP6 multicast options in response to user setsockopt().
  */
 static int
-ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
+ip6_setmoptions(const struct sockopt *sopt, struct ip6_moptions **im6op)
 {
 	int error = 0;
 	u_int loop, ifindex;
-	struct ipv6_mreq *mreq;
+	struct ipv6_mreq mreq;
 	struct ifnet *ifp;
 	struct ip6_moptions *im6o = *im6op;
 	struct route ro;
@@ -2443,11 +2428,10 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		 * No multicast option buffer attached to the pcb;
 		 * allocate one and initialize to default values.
 		 */
-		im6o = (struct ip6_moptions *)
-			malloc(sizeof(*im6o), M_IPMOPTS, M_WAITOK);
-
+		im6o = malloc(sizeof(*im6o), M_IPMOPTS, M_NOWAIT);
 		if (im6o == NULL)
 			return (ENOBUFS);
+
 		*im6op = im6o;
 		im6o->im6o_multicast_ifp = NULL;
 		im6o->im6o_multicast_hlim = ip6_defmcasthlim;
@@ -2455,17 +2439,16 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		LIST_INIT(&im6o->im6o_memberships);
 	}
 
-	switch (optname) {
+	switch (sopt->sopt_name) {
 
 	case IPV6_MULTICAST_IF:
 		/*
 		 * Select the interface for outgoing multicast packets.
 		 */
-		if (m == NULL || m->m_len != sizeof(u_int)) {
-			error = EINVAL;
+		error = sockopt_get(sopt, &ifindex, sizeof(ifindex));
+		if (error != 0)
 			break;
-		}
-		bcopy(mtod(m, u_int *), &ifindex, sizeof(ifindex));
+
 		if (ifindex != 0) {
 			if (if_indexlim <= ifindex || !ifindex2ifnet[ifindex]) {
 				error = ENXIO;	/* XXX EINVAL? */
@@ -2487,11 +2470,11 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		 * Set the IP6 hoplimit for outgoing multicast packets.
 		 */
 		int optval;
-		if (m == NULL || m->m_len != sizeof(int)) {
-			error = EINVAL;
+
+		error = sockopt_getint(sopt, &optval);
+		if (error != 0)
 			break;
-		}
-		bcopy(mtod(m, u_int *), &optval, sizeof(optval));
+
 		if (optval < -1 || optval >= 256)
 			error = EINVAL;
 		else if (optval == -1)
@@ -2506,11 +2489,9 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		 * Set the loopback flag for outgoing multicast packets.
 		 * Must be zero or one.
 		 */
-		if (m == NULL || m->m_len != sizeof(u_int)) {
-			error = EINVAL;
+		error = sockopt_get(sopt, &loop, sizeof(loop));
+		if (error != 0)
 			break;
-		}
-		bcopy(mtod(m, u_int *), &loop, sizeof(loop));
 		if (loop > 1) {
 			error = EINVAL;
 			break;
@@ -2523,12 +2504,11 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		 * Add a multicast group membership.
 		 * Group must be a valid IP6 multicast address.
 		 */
-		if (m == NULL || m->m_len != sizeof(struct ipv6_mreq)) {
-			error = EINVAL;
+		error = sockopt_get(sopt, &mreq, sizeof(mreq));
+		if (error != 0)
 			break;
-		}
-		mreq = mtod(m, struct ipv6_mreq *);
-		if (IN6_IS_ADDR_UNSPECIFIED(&mreq->ipv6mr_multiaddr)) {
+
+		if (IN6_IS_ADDR_UNSPECIFIED(&mreq.ipv6mr_multiaddr)) {
 			/*
 			 * We use the unspecified address to specify to accept
 			 * all multicast addresses. Only super user is allowed
@@ -2540,7 +2520,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 				error = EACCES;
 				break;
 			}
-		} else if (!IN6_IS_ADDR_MULTICAST(&mreq->ipv6mr_multiaddr)) {
+		} else if (!IN6_IS_ADDR_MULTICAST(&mreq.ipv6mr_multiaddr)) {
 			error = EINVAL;
 			break;
 		}
@@ -2549,7 +2529,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		 * If no interface was explicitly specified, choose an
 		 * appropriate one according to the given multicast address.
 		 */
-		if (mreq->ipv6mr_interface == 0) {
+		if (mreq.ipv6mr_interface == 0) {
 			struct rtentry *rt;
 			union {
 				struct sockaddr		dst;
@@ -2562,7 +2542,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			 *   XXX: is it a good approach?
 			 */
 			memset(&ro, 0, sizeof(ro));
-			sockaddr_in6_init(&u.dst6, &mreq->ipv6mr_multiaddr, 0,
+			sockaddr_in6_init(&u.dst6, &mreq.ipv6mr_multiaddr, 0,
 			    0, 0);
 			rtcache_setdst(&ro, &u.dst);
 			ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp
@@ -2572,12 +2552,12 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			/*
 			 * If the interface is specified, validate it.
 			 */
-			if (if_indexlim <= mreq->ipv6mr_interface ||
-			    !ifindex2ifnet[mreq->ipv6mr_interface]) {
+			if (if_indexlim <= mreq.ipv6mr_interface ||
+			    !ifindex2ifnet[mreq.ipv6mr_interface]) {
 				error = ENXIO;	/* XXX EINVAL? */
 				break;
 			}
-			ifp = ifindex2ifnet[mreq->ipv6mr_interface];
+			ifp = ifindex2ifnet[mreq.ipv6mr_interface];
 		}
 
 		/*
@@ -2589,7 +2569,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			break;
 		}
 
-		if (in6_setscope(&mreq->ipv6mr_multiaddr, ifp, NULL)) {
+		if (in6_setscope(&mreq.ipv6mr_multiaddr, ifp, NULL)) {
 			error = EADDRNOTAVAIL; /* XXX: should not happen */
 			break;
 		}
@@ -2601,7 +2581,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		     imm != NULL; imm = imm->i6mm_chain.le_next)
 			if (imm->i6mm_maddr->in6m_ifp == ifp &&
 			    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
-			    &mreq->ipv6mr_multiaddr))
+			    &mreq.ipv6mr_multiaddr))
 				break;
 		if (imm != NULL) {
 			error = EADDRINUSE;
@@ -2611,7 +2591,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		 * Everything looks good; add a new record to the multicast
 		 * address list for the given interface.
 		 */
-		imm = in6_joingroup(ifp, &mreq->ipv6mr_multiaddr, &error, 0);
+		imm = in6_joingroup(ifp, &mreq.ipv6mr_multiaddr, &error, 0);
 		if (imm == NULL)
 			break;
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm, i6mm_chain);
@@ -2622,34 +2602,32 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		 * Drop a multicast group membership.
 		 * Group must be a valid IP6 multicast address.
 		 */
-		if (m == NULL || m->m_len != sizeof(struct ipv6_mreq)) {
-			error = EINVAL;
+		error = sockopt_get(sopt, &mreq, sizeof(mreq));
+		if (error != 0)
 			break;
-		}
-		mreq = mtod(m, struct ipv6_mreq *);
 
 		/*
 		 * If an interface address was specified, get a pointer
 		 * to its ifnet structure.
 		 */
-		if (mreq->ipv6mr_interface != 0) {
-			if (if_indexlim <= mreq->ipv6mr_interface ||
-			    !ifindex2ifnet[mreq->ipv6mr_interface]) {
+		if (mreq.ipv6mr_interface != 0) {
+			if (if_indexlim <= mreq.ipv6mr_interface ||
+			    !ifindex2ifnet[mreq.ipv6mr_interface]) {
 				error = ENXIO;	/* XXX EINVAL? */
 				break;
 			}
-			ifp = ifindex2ifnet[mreq->ipv6mr_interface];
+			ifp = ifindex2ifnet[mreq.ipv6mr_interface];
 		} else
 			ifp = NULL;
 
 		/* Fill in the scope zone ID */
 		if (ifp) {
-			if (in6_setscope(&mreq->ipv6mr_multiaddr, ifp, NULL)) {
+			if (in6_setscope(&mreq.ipv6mr_multiaddr, ifp, NULL)) {
 				/* XXX: should not happen */
 				error = EADDRNOTAVAIL;
 				break;
 			}
-		} else if (mreq->ipv6mr_interface != 0) {
+		} else if (mreq.ipv6mr_interface != 0) {
 			/*
 			 * XXX: This case would happens when the (positive)
 			 * index is in the valid range, but the corresponding
@@ -2672,12 +2650,12 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			 * check if there's ambiguity with the default scope
 			 * zone as the last resort.
 			 */
-			sockaddr_in6_init(&sa6_mc, &mreq->ipv6mr_multiaddr,
+			sockaddr_in6_init(&sa6_mc, &mreq.ipv6mr_multiaddr,
 			    0, 0, 0);
 			error = sa6_embedscope(&sa6_mc, ip6_use_defzone);
 			if (error != 0)
 				break;
-			mreq->ipv6mr_multiaddr = sa6_mc.sin6_addr;
+			mreq.ipv6mr_multiaddr = sa6_mc.sin6_addr;
 		}
 
 		/*
@@ -2687,7 +2665,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 		     imm != NULL; imm = imm->i6mm_chain.le_next) {
 			if ((ifp == NULL || imm->i6mm_maddr->in6m_ifp == ifp) &&
 			    IN6_ARE_ADDR_EQUAL(&imm->i6mm_maddr->in6m_addr,
-			    &mreq->ipv6mr_multiaddr))
+			    &mreq.ipv6mr_multiaddr))
 				break;
 		}
 		if (imm == NULL) {
@@ -2726,44 +2704,44 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
  * Return the IP6 multicast options in response to user getsockopt().
  */
 static int
-ip6_getmoptions(int optname, struct ip6_moptions *im6o, struct mbuf **mp)
+ip6_getmoptions(struct sockopt *sopt, struct ip6_moptions *im6o)
 {
-	u_int *hlim, *loop, *ifindex;
+	u_int optval;
+	int error;
 
-	*mp = m_get(M_WAIT, MT_SOOPTS);
-
-	switch (optname) {
-
+	switch (sopt->sopt_name) {
 	case IPV6_MULTICAST_IF:
-		ifindex = mtod(*mp, u_int *);
-		(*mp)->m_len = sizeof(u_int);
 		if (im6o == NULL || im6o->im6o_multicast_ifp == NULL)
-			*ifindex = 0;
+			optval = 0;
 		else
-			*ifindex = im6o->im6o_multicast_ifp->if_index;
-		return (0);
+			optval = im6o->im6o_multicast_ifp->if_index;
+
+		error = sockopt_set(sopt, &optval, sizeof(optval));
+		break;
 
 	case IPV6_MULTICAST_HOPS:
-		hlim = mtod(*mp, u_int *);
-		(*mp)->m_len = sizeof(u_int);
 		if (im6o == NULL)
-			*hlim = ip6_defmcasthlim;
+			optval = ip6_defmcasthlim;
 		else
-			*hlim = im6o->im6o_multicast_hlim;
-		return (0);
+			optval = im6o->im6o_multicast_hlim;
+
+		error = sockopt_set(sopt, &optval, sizeof(optval));
+		break;
 
 	case IPV6_MULTICAST_LOOP:
-		loop = mtod(*mp, u_int *);
-		(*mp)->m_len = sizeof(u_int);
 		if (im6o == NULL)
-			*loop = ip6_defmcasthlim;
+			optval = ip6_defmcasthlim;
 		else
-			*loop = im6o->im6o_multicast_loop;
-		return (0);
+			optval = im6o->im6o_multicast_loop;
+
+		error = sockopt_set(sopt, &optval, sizeof(optval));
+		break;
 
 	default:
-		return (EOPNOTSUPP);
+		error = EOPNOTSUPP;
 	}
+
+	return (error);
 }
 
 /*
