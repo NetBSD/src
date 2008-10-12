@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.175 2008/10/11 16:39:07 tls Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.176 2008/10/12 09:26:50 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.175 2008/10/11 16:39:07 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.176 2008/10/12 09:26:50 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_sock_counters.h"
@@ -1851,22 +1851,26 @@ sogetopt(struct socket *so, struct sockopt *sopt)
  * alloc sockopt data buffer buffer
  *	- will be released at destroy
  */
-static void
-sockopt_alloc(struct sockopt *sopt, size_t len)
+static int
+sockopt_alloc(struct sockopt *sopt, size_t len, km_flag_t kmflag)
 {
 
 	KASSERT(sopt->sopt_size == 0);
 
-	if (len > sizeof(sopt->sopt_buf))
-		sopt->sopt_data = kmem_zalloc(len, KM_SLEEP);
-	else
+	if (len > sizeof(sopt->sopt_buf)) {
+		sopt->sopt_data = kmem_zalloc(len, kmflag);
+		if (sopt->sopt_data == NULL)
+			return ENOMEM;
+	} else
 		sopt->sopt_data = sopt->sopt_buf;
 
 	sopt->sopt_size = len;
+	return 0;
 }
 
 /*
  * initialise sockopt storage
+ *	- MAY sleep during allocation
  */
 void
 sockopt_init(struct sockopt *sopt, int level, int name, size_t size)
@@ -1876,7 +1880,7 @@ sockopt_init(struct sockopt *sopt, int level, int name, size_t size)
 
 	sopt->sopt_level = level;
 	sopt->sopt_name = name;
-	sockopt_alloc(sopt, size);
+	(void)sockopt_alloc(sopt, size, KM_SLEEP);
 }
 
 /*
@@ -1896,14 +1900,18 @@ sockopt_destroy(struct sockopt *sopt)
 /*
  * set sockopt value
  *	- value is copied into sockopt
- * 	- memory is allocated when necessary
+ * 	- memory is allocated when necessary, will not sleep
  */
 int
 sockopt_set(struct sockopt *sopt, const void *buf, size_t len)
 {
+	int error;
 
-	if (sopt->sopt_size == 0)
-		sockopt_alloc(sopt, len);
+	if (sopt->sopt_size == 0) {
+		error = sockopt_alloc(sopt, len, KM_NOSLEEP);
+		if (error)
+			return error;
+	}
 
 	KASSERT(sopt->sopt_size == len);
 	memcpy(sopt->sopt_data, buf, len);
@@ -1949,16 +1957,21 @@ sockopt_getint(const struct sockopt *sopt, int *valp)
  * set sockopt value from mbuf
  *	- ONLY for legacy code
  *	- mbuf is released by sockopt
+ *	- will not sleep
  */
 int
 sockopt_setmbuf(struct sockopt *sopt, struct mbuf *m)
 {
 	size_t len;
+	int error;
 
 	len = m_length(m);
 
-	if (sopt->sopt_size == 0)
-		sockopt_alloc(sopt, len);
+	if (sopt->sopt_size == 0) {
+		error = sockopt_alloc(sopt, len, KM_NOSLEEP);
+		if (error)
+			return error;
+	}
 
 	KASSERT(sopt->sopt_size == len);
 	m_copydata(m, 0, len, sopt->sopt_data);
@@ -1971,23 +1984,30 @@ sockopt_setmbuf(struct sockopt *sopt, struct mbuf *m)
  * get sockopt value into mbuf
  *	- ONLY for legacy code
  *	- mbuf to be released by the caller
+ *	- will not sleep
  */
 struct mbuf *
 sockopt_getmbuf(const struct sockopt *sopt)
 {
 	struct mbuf *m;
 
-	m = m_get(M_WAIT, MT_SOOPTS);
+	if (sopt->sopt_size > MCLBYTES)
+		return NULL;
+
+	m = m_get(M_DONTWAIT, MT_SOOPTS);
 	if (m == NULL)
 		return NULL;
 
-	m->m_len = MLEN;
-	m_copyback(m, 0, sopt->sopt_size, sopt->sopt_data);
-	if (m_length(m) != max(sopt->sopt_size, MLEN)) {
-		m_freem(m);
-		return NULL;
+	if (sopt->sopt_size > MLEN) {
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return NULL;
+		}
 	}
-	m->m_len = min(sopt->sopt_size, MLEN);
+
+	memcpy(mtod(m, void *), sopt->sopt_data, sopt->sopt_size);
+	m->m_len = sopt->sopt_size;
 
 	return m;
 }
