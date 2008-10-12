@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/05/20 12:17:49 ad Exp $
+#	$NetBSD: Makefile,v 1.1 2008/10/12 23:00:53 mrg Exp $
 
 NOOBJ=	# defined
 
@@ -6,7 +6,7 @@ NOOBJ=	# defined
 
 .if ${MKSHARE} != "no"
 FILES=	kmodule
-FILESDIR=/usr/share/ldscripts
+FILESDIR=/usr/libdata/ldscripts
 .endif
 
 .include <bsd.prog.mk>
