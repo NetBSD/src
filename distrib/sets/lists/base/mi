@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.775 2008/09/26 07:02:57 rtr Exp $
+# $NetBSD: mi,v 1.776 2008/10/12 23:00:53 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1160,6 +1160,7 @@
 ./usr/libdata/debug/usr/libexec/uucp		base-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin			base-sys-usr
 ./usr/libdata/firmware				base-sys-usr
+./usr/libdata/ldscripts				base-c-usr
 ./usr/libdata/lint				base-c-usr
 ./usr/libexec					base-sys-usr
 ./usr/libexec/atf-cleanup			base-atf-bin
@@ -2494,7 +2495,7 @@
 ./usr/share/keymaps/amiga			base-sys-share
 ./usr/share/keymaps/atari			base-sys-share
 ./usr/share/keymaps/x68k			base-sys-share
-./usr/share/ldscripts				base-util-share
+./usr/share/ldscripts				base-obsolete		obsolete
 ./usr/share/legal				base-sys-share
 ./usr/share/legal/COPYRIGHT			base-sys-share
 ./usr/share/lkm					base-obsolete		obsolete
