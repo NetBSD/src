@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/05/03 14:48:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2008/10/12 10:08:13 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -9,14 +9,14 @@ LIB=		frontend
 
 SRCS=		gcc.c version.c intl.c prefix.c
 
-CPPFLAGS+=	-I${.CURDIR} -I${GCCARCH} -I${BACKENDOBJ} -I. \
+CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
 		-DPREFIX=\"/usr\" \
 		-DDEFAULT_TARGET_VERSION=\"${G_version}\" \
 		-DDEFAULT_TARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
 HOST_CPPFLAGS+=	-I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 
-DPSRCS+=	multilib.h specs.h
+DPSRCS+=	specs.h
 
 MKPIC:=		no
 MKPICLIB:=	no
