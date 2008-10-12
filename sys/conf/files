@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.922 2008/10/12 13:17:28 pgoyette Exp $
+#	$NetBSD: files,v 1.923 2008/10/12 13:39:42 tls Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1476,7 +1476,7 @@ file	kern/tty_pty.c			pty 			needs-flag
 file	kern/tty_ptm.c			pty
 file	kern/tty_subr.c
 file	kern/tty_tty.c
-file	kern/uipc_accf.c		accf_data | accf_http
+file	kern/uipc_accf.c
 file	kern/uipc_domain.c
 file	kern/uipc_mbuf.c
 file	kern/uipc_mbuf2.c
