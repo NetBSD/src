@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.45 2008/10/09 15:50:46 christos Exp $	*/
+/*	$NetBSD: pass1.c,v 1.46 2008/10/12 23:26:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.45 2008/10/09 15:50:46 christos Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.46 2008/10/12 23:26:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,7 +203,7 @@ pass1(void)
 				    (unsigned long long)ninosused);
 				exit(FSCK_EXIT_CHECK_FAILED);
 			}
-			ninfo = realloc(info, ninosused);
+			ninfo = realloc(info, ninospace);
 			if (ninfo == NULL) {
 				pfatal("cannot realloc %zu bytes to %zu "
 				    "for inoinfo\n", inospace, ninospace);
