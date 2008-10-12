@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cobalt,v 1.23 2008/10/10 16:44:23 tsutsui Exp $
+#	$NetBSD: majors.cobalt,v 1.24 2008/10/12 04:36:36 tsutsui Exp $
 #
 # Device majors for cobalt
 #
@@ -51,6 +51,8 @@ device-major	urio		char 45			urio
 device-major	uscanner	char 46			uscanner
 device-major	audio		char 47			audio
 device-major	midi		char 48			midi
+device-major	sequencer	char 49			sequencer
+device-major	vcoda		char 50			vcoda
 
 device-major	altq		char 77			altq
 
