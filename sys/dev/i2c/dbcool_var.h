@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.3 2008/10/09 10:25:47 pgoyette Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.4 2008/10/12 12:49:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.3 2008/10/09 10:25:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.4 2008/10/12 12:49:04 pgoyette Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -118,6 +118,8 @@ struct dbcool_softc {
 	int sc_temp_offset;
 	int64_t sc_supply_voltage;
 	bool sc_suspend;
+	void (*sc_writereg)(struct dbcool_softc *, uint8_t, uint8_t);
+	uint8_t (*sc_readreg)(struct dbcool_softc *, uint8_t);
 #ifdef DBCOOL_DEBUG
 	uint8_t sc_user_reg;
 #endif
