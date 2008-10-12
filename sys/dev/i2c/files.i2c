@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.20 2008/10/07 19:32:30 pgoyette Exp $
+#	$NetBSD: files.i2c,v 1.21 2008/10/12 13:17:28 pgoyette Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -48,6 +48,10 @@ file	dev/i2c/at24cxx.c			seeprom | at24cxx_eeprom
 device	lmtemp: sysmon_envsys
 attach	lmtemp at iic
 file	dev/i2c/lm75.c				lmtemp
+
+# National Semiconductor LM78 temp sensor/fan controller
+attach	lm at iic with lm_iic
+file	dev/i2c/lm_i2c.c			lm_iic
 
 # Dallas DS1307 Real Time Clock
 device	dsrtc
