@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/12 20:20:49 hubertf Exp $
 
 .include <bsd.own.mk>
 
@@ -6,16 +6,16 @@ LIB=	Xaw8
 LIBOLD=	Xaw
 
 .if ${MKSTATICLIB} != "no"
-LINKS=          ${X11USRLIBDIR}/lib${LIB}.a ${X11USRLIBDIR}/lib${LIBOLD}.a
+SYMLINKS=	lib${LIB}.a ${X11USRLIBDIR}/lib${LIBOLD}.a
 .endif
 
 .if ${MKPROFILE} != "no"
-LINKS+=         ${X11USRLIBDIR}/lib${LIB}_p.a ${X11USRLIBDIR}/lib${LIBOLD}_p.a
+SYMLINKS+=	lib${LIB}_p.a ${X11USRLIBDIR}/lib${LIBOLD}_p.a
 .endif
 
 .if ${MKPIC} != "no"
-LINKS+=         ${X11USRLIBDIR}/lib${LIB}.so ${X11USRLIBDIR}/lib${LIBOLD}.so
-LINKS+=         ${X11USRLIBDIR}/lib${LIB}.so.8 ${X11USRLIBDIR}/lib${LIBOLD}.so.8
+SYMLINKS+=	lib${LIB}.so ${X11USRLIBDIR}/lib${LIBOLD}.so
+SYMLINKS+=	lib${LIB}.so.8 ${X11USRLIBDIR}/lib${LIBOLD}.so.8
 .endif
 
 .PATH:	${X11SRCDIR.Xaw}/src
