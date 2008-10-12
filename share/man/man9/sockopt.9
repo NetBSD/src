@@ -1,4 +1,4 @@
-.\"	$NetBSD: sockopt.9,v 1.1 2008/08/06 15:08:08 plunky Exp $
+.\"	$NetBSD: sockopt.9,v 1.2 2008/10/12 09:27:57 plunky Exp $
 .\"
 .\" Copyright (c) 2008 Iain Hibbert
 .\" All rights reserved.
@@ -87,6 +87,9 @@ is given,
 will arrange for sopt_data to point to a buffer of
 .Ar size
 bytes for the sockopt value.
+Where memory needs to be allocated to satisfy this,
+.Fn sockopt_init
+may sleep.
 .It Fn sockopt_destroy "sopt"
 Destroy sockopt storage, releasing any allocated memory.
 .It Fn sockopt_get "sopt" "value" "size"
@@ -105,7 +108,10 @@ The sockopt structure must contain a data field of
 .Ar size
 bytes or be previously unset, in which case a data buffer may be
 allocated using
-.Dv M_WAITOK .
+.Xr kmem_alloc 9
+with the
+.Dv KM_NOSLEEP
+flag.
 .It Fn sockopt_setint "sopt" "value"
 Common case of set sockopt integer value.
 The sockpt structure must contain an int sized data field or be previously
@@ -124,7 +130,7 @@ header file, and the socket options implementation is in
 .Pa sys/kern/uipc_socket.c .
 .Sh SEE ALSO
 .Xr errno 2 ,
-.Xr malloc 9
+.Xr kmem_alloc 9
 .Sh HISTORY
 The socket options KPI was inspired by a similar KPI in FreeBSD and
 first appeared in
