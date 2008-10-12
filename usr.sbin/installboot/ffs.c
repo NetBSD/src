@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.25 2008/04/28 20:24:16 martin Exp $	*/
+/*	$NetBSD: ffs.c,v 1.26 2008/10/12 16:03:27 apb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.25 2008/04/28 20:24:16 martin Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.26 2008/10/12 16:03:27 apb Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -553,6 +553,8 @@ ffs_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 	if (strchr(params->stage2, '/') != NULL) {
 		warnx("The secondary bootstrap `%s' must be in /",
 		    params->stage2);
+		warnx("(Path must be relative to the file system in `%s')",
+		    params->filesystem);
 		return (0);
 	}
 
@@ -566,6 +568,8 @@ ffs_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 	if (rv != 2) {
 		warnx("Could not find secondary bootstrap `%s' in `%s'",
 		    params->stage2, params->filesystem);
+		warnx("(Path must be relative to the file system in `%s')",
+		    params->filesystem);
 		return (0);
 	}
 
