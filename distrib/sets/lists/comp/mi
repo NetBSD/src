@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1198 2008/10/02 17:54:51 joerg Exp $
+#	$NetBSD: mi,v 1.1199 2008/10/12 23:00:53 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3429,6 +3429,7 @@
 ./usr/libdata/debug/usr/sbin/ypxfr.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/zdump.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/zic.debug		comp-sysutil-debug	debug
+./usr/libdata/ldscripts/kmodule			comp-util-share
 ./usr/libdata/lint/llib-lFS.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lGLw.ln		-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lICE.ln		-unknown-	lint,xorg
@@ -3613,7 +3614,7 @@
 ./usr/share/ldscripts/elf64alpha.xr		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf64alpha.xs		comp-obsolete		obsolete
 ./usr/share/ldscripts/elf64alpha.xu		comp-obsolete		obsolete
-./usr/share/ldscripts/kmodule			comp-util-share
+./usr/share/ldscripts/kmodule			comp-obsolete		obsolete
 ./usr/share/ldscripts/m68kelf.x			comp-obsolete		obsolete
 ./usr/share/ldscripts/m68kelf.xbn		comp-obsolete		obsolete
 ./usr/share/ldscripts/m68kelf.xn		comp-obsolete		obsolete
