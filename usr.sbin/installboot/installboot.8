@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.71 2008/10/02 09:11:28 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.72 2008/10/12 16:02:45 apb Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 2, 2008
+.Dd October 12, 2008
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -349,13 +349,17 @@ to be a currently mounted file system.
 The path name of the
 .Dq primary
 boot block to install.
+The path name must refer to a file in a file system that is currently
+mounted.
 .
 .It Ar secondary
 The path name of the
 .Dq secondary
-boot block,
-relative to the top of
-.Ar filesystem .
+boot block, relative to the root of
+the file system in the device or image specified by the
+.Ar filesystem
+argument.
+Note that this may refer to a file in a file system that is not mounted.
 Most systems require
 .Ar secondary
 to be in the
