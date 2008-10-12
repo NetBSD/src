@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.25 2008/07/09 14:39:44 joerg Exp $ */
+/* $NetBSD: piixpm.c,v 1.26 2008/10/12 19:01:01 martin Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.25 2008/07/09 14:39:44 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.26 2008/10/12 19:01:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,9 +219,9 @@ nopowermanagement:
 				sc->sc_poll = 0;
 			}
 		}
-		if (sc->sc_poll)
-			aprint_normal_dev(self, "polling");
 	}
+	if (sc->sc_poll)
+		aprint_normal_dev(self, "polling");
 
 	aprint_normal("\n");
 
