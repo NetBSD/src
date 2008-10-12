@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.132 2008/10/12 11:34:48 plunky Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.133 2008/10/12 15:12:17 plunky Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.132 2008/10/12 11:34:48 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.133 2008/10/12 15:12:17 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2186,7 +2186,10 @@ ip6_pcbopt(int optname, u_char *buf, int len, struct ip6_pktopts **pktopt,
 
 	if (*pktopt == NULL) {
 		*pktopt = malloc(sizeof(struct ip6_pktopts), M_IP6OPT,
-		    M_WAITOK);
+		    M_NOWAIT);
+		if (*pktopt == NULL)
+			return (ENOBUFS);
+
 		ip6_initpktopts(*pktopt);
 	}
 	opt = *pktopt;
