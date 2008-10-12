@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.1 2008/10/11 21:54:12 bouyer Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.2 2008/10/12 11:27:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.1 2008/10/11 21:54:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.2 2008/10/12 11:27:12 bouyer Exp $");
 
 
 #include <sys/param.h>
@@ -189,8 +189,8 @@ struct jme_softc {
 #define JME_FLAG_GIGA	0x0002 /* giga Ethernet capable */
 
 
-#define jme_if	    jme_ec.ec_if
-#define jme_bpf   jme_if.if_bpf
+#define jme_if	jme_ec.ec_if
+#define jme_bpf	jme_if.if_bpf
 
 typedef struct jme_softc jme_softc_t;
 typedef u_long ioctl_cmd_t;
@@ -1854,7 +1854,6 @@ jme_eeprom_read_byte(struct jme_softc *sc, uint8_t addr, uint8_t *val)
 
 	 reg = bus_space_read_4(sc->jme_bt_phy, sc->jme_bh_phy, JME_SMBINTF);
 	 *val = (reg & SMBINTF_RD_DATA_MASK) >> SMBINTF_RD_DATA_SHIFT;
-
 	 return (0);
 }
 
@@ -1862,48 +1861,48 @@ jme_eeprom_read_byte(struct jme_softc *sc, uint8_t addr, uint8_t *val)
 static int
 jme_eeprom_macaddr(struct jme_softc *sc)
 {
-	 uint8_t eaddr[ETHER_ADDR_LEN];
-	 uint8_t fup, reg, val;
-	 uint32_t offset;
-	 int match;
+	uint8_t eaddr[ETHER_ADDR_LEN];
+	uint8_t fup, reg, val;
+	uint32_t offset;
+	int match;
 
-	 offset = 0;
-	 if (jme_eeprom_read_byte(sc, offset++, &fup) != 0 ||
-	     fup != JME_EEPROM_SIG0)
-		  return (ENOENT);
-	 if (jme_eeprom_read_byte(sc, offset++, &fup) != 0 ||
-	     fup != JME_EEPROM_SIG1)
-		  return (ENOENT);
-	 match = 0;
-	 do {
-		  if (jme_eeprom_read_byte(sc, offset, &fup) != 0)
-			   break;
-		  /* Check for the end of EEPROM descriptor. */
-		  if ((fup & JME_EEPROM_DESC_END) == JME_EEPROM_DESC_END)
-			   break;
-		  if ((uint8_t)JME_EEPROM_MKDESC(JME_EEPROM_FUNC0,
-		      JME_EEPROM_PAGE_BAR1) == fup) {
-			   if (jme_eeprom_read_byte(sc, offset + 1, &reg) != 0)
-				    break;
-			   if (reg >= JME_PAR0 &&
-				reg < JME_PAR0 + ETHER_ADDR_LEN) {
-				    if (jme_eeprom_read_byte(sc, offset + 2,
-					 &val) != 0)
-					     break;
-				    eaddr[reg - JME_PAR0] = val;
-				    match++;
-			   }
-		  }
-		  /* Try next eeprom descriptor. */
-		  offset += JME_EEPROM_DESC_BYTES;
-	 } while (match != ETHER_ADDR_LEN && offset < JME_EEPROM_END);
+	offset = 0;
+	if (jme_eeprom_read_byte(sc, offset++, &fup) != 0 ||
+	    fup != JME_EEPROM_SIG0)
+		return (ENOENT);
+	if (jme_eeprom_read_byte(sc, offset++, &fup) != 0 ||
+	    fup != JME_EEPROM_SIG1)
+		return (ENOENT);
+	match = 0;
+	do {
+		if (jme_eeprom_read_byte(sc, offset, &fup) != 0)
+			break;
+		if (JME_EEPROM_MKDESC(JME_EEPROM_FUNC0, JME_EEPROM_PAGE_BAR1)
+		    == (fup & (JME_EEPROM_FUNC_MASK|JME_EEPROM_PAGE_MASK))) {
+			if (jme_eeprom_read_byte(sc, offset + 1, &reg) != 0)
+				break;
+			if (reg >= JME_PAR0 &&
+			    reg < JME_PAR0 + ETHER_ADDR_LEN) {
+				if (jme_eeprom_read_byte(sc, offset + 2,
+				    &val) != 0)
+					break;
+				eaddr[reg - JME_PAR0] = val;
+				match++;
+			}
+		}
+		if (fup & JME_EEPROM_DESC_END)
+			break;
+			
+		/* Try next eeprom descriptor. */
+		offset += JME_EEPROM_DESC_BYTES;
+	} while (match != ETHER_ADDR_LEN && offset < JME_EEPROM_END);
 
-	 if (match == ETHER_ADDR_LEN) {
-		  bcopy(eaddr, sc->jme_enaddr, ETHER_ADDR_LEN);
-		  return (0);
-	 }
+	if (match == ETHER_ADDR_LEN) {
+		bcopy(eaddr, sc->jme_enaddr, ETHER_ADDR_LEN);
+		return (0);
+	}
 
-	 return (ENOENT);
+	return (ENOENT);
 }
 
 /*
