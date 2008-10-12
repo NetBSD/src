@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/12 20:20:49 hubertf Exp $
 
 NOCHECKVER=	yes	# we want to install an older version ...
 MKLINKLIB=	no
@@ -9,7 +9,7 @@ LIB=	Xaw6
 LIBOLD=	Xaw
 
 .if ${MKPIC} != "no"
-LINKS+=         ${X11USRLIBDIR}/lib${LIB}.so.6 ${X11USRLIBDIR}/lib${LIBOLD}.so.6
+SYMLINKS+=	lib${LIB}.so.6 ${X11USRLIBDIR}/lib${LIBOLD}.so.6
 .endif
 
 .PATH:	${X11SRCDIR.Xaw}/src
