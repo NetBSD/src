@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.199 2008/10/12 10:23:18 plunky Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.200 2008/10/12 11:15:54 plunky Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.199 2008/10/12 10:23:18 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.200 2008/10/12 11:15:54 plunky Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1216,18 +1216,8 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 #ifdef notyet
 		case IP_RETOPTS:
 #endif
-		    {
-			struct mbuf *m;
-
-			m = sockopt_getmbuf(sopt);
-			if (m == NULL) {
-				error = ENOBUFS;
-				break;
-			}
-
-			error = ip_pcbopts(&inp->inp_options, m);
+			error = ip_pcbopts(&inp->inp_options, sopt);
 			break;
-		    }
 
 		case IP_TOS:
 		case IP_TTL:
@@ -1436,62 +1426,63 @@ ip_ctloutput(int op, struct socket *so, struct sockopt *sopt)
  * with destination address if source routed.
  */
 int
-ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
+ip_pcbopts(struct mbuf **pcbopt, const struct sockopt *sopt)
 {
-	int cnt, optlen;
-	u_char *cp;
-	u_char opt;
+	struct mbuf *m;
+	const u_char *cp;
+	u_char *dp;
+	int cnt;
+	uint8_t optval, olen, offset;
 
 	/* turn off any old options */
 	if (*pcbopt)
 		(void)m_free(*pcbopt);
-	*pcbopt = 0;
-	if (m == (struct mbuf *)0 || m->m_len == 0) {
-		/*
-		 * Only turning off any previous options.
-		 */
-		if (m)
-			(void)m_free(m);
-		return (0);
-	}
+	*pcbopt = NULL;
+
+	cp = sopt->sopt_data;
+	cnt = sopt->sopt_size;
+
+	if (cnt == 0)
+		return (0);	/* Only turning off any previous options */
 
 #ifndef	__vax__
-	if (m->m_len % sizeof(int32_t))
-		goto bad;
+	if (cnt % sizeof(int32_t))
+		return (EINVAL);
 #endif
-	/*
-	 * IP first-hop destination address will be stored before
-	 * actual options; move other options back
-	 * and clear it when none present.
-	 */
-	if (m->m_data + m->m_len + sizeof(struct in_addr) >= &m->m_dat[MLEN])
-		goto bad;
-	cnt = m->m_len;
-	m->m_len += sizeof(struct in_addr);
-	cp = mtod(m, u_char *) + sizeof(struct in_addr);
-	memmove(cp, mtod(m, void *), (unsigned)cnt);
-	bzero(mtod(m, void *), sizeof(struct in_addr));
 
-	for (; cnt > 0; cnt -= optlen, cp += optlen) {
-		opt = cp[IPOPT_OPTVAL];
-		if (opt == IPOPT_EOL)
-			break;
-		if (opt == IPOPT_NOP)
-			optlen = 1;
-		else {
-			if (cnt < IPOPT_OLEN + sizeof(*cp))
+	m = m_get(M_DONTWAIT, MT_SOOPTS);
+	if (m == NULL)
+		return (ENOBUFS);
+
+	dp = mtod(m, u_char *);
+	memset(dp, 0, sizeof(struct in_addr));
+	dp += sizeof(struct in_addr);
+	m->m_len = sizeof(struct in_addr);
+
+	/*
+	 * IP option list according to RFC791. Each option is of the form
+	 *
+	 *	[optval] [olen] [(olen - 2) data bytes]
+	 *
+	 * we validate the list and copy options to an mbuf for prepending
+	 * to data packets. The IP first-hop destination address will be
+	 * stored before actual options and is zero if unset.
+	 */
+	while (cnt > 0) {
+		optval = cp[IPOPT_OPTVAL];
+
+		if (optval == IPOPT_EOL || optval == IPOPT_NOP) {
+			olen = 1;
+		} else {
+			if (cnt < IPOPT_OLEN + 1)
 				goto bad;
-			optlen = cp[IPOPT_OLEN];
-			if (optlen < IPOPT_OLEN  + sizeof(*cp) || optlen > cnt)
+
+			olen = cp[IPOPT_OLEN];
+			if (olen < IPOPT_OLEN + 1 || olen > cnt)
 				goto bad;
 		}
-		switch (opt) {
 
-		default:
-			break;
-
-		case IPOPT_LSRR:
-		case IPOPT_SSRR:
+		if (optval == IPOPT_LSRR || optval == IPOPT_SSRR) {
 			/*
 			 * user process specifies route as:
 			 *	->A->B->C->D
@@ -1500,29 +1491,43 @@ ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 			 * A is first hop destination, which doesn't appear in
 			 * actual IP option, but is stored before the options.
 			 */
-			if (optlen < IPOPT_MINOFF - 1 + sizeof(struct in_addr))
+			if (olen < IPOPT_OFFSET + 1 + sizeof(struct in_addr))
 				goto bad;
-			m->m_len -= sizeof(struct in_addr);
-			cnt -= sizeof(struct in_addr);
-			optlen -= sizeof(struct in_addr);
-			cp[IPOPT_OLEN] = optlen;
-			/*
-			 * Move first hop before start of options.
-			 */
-			bcopy((void *)&cp[IPOPT_OFFSET+1], mtod(m, void *),
+
+			offset = cp[IPOPT_OFFSET];
+			memcpy(mtod(m, u_char *), cp + IPOPT_OFFSET + 1,
 			    sizeof(struct in_addr));
-			/*
-			 * Then copy rest of options back
-			 * to close up the deleted entry.
-			 */
-			(void)memmove(&cp[IPOPT_OFFSET+1],
-			    &cp[IPOPT_OFFSET+1] + sizeof(struct in_addr),
-			    (unsigned)cnt - (IPOPT_MINOFF - 1));
+
+			cp += sizeof(struct in_addr);
+			cnt -= sizeof(struct in_addr);
+			olen -= sizeof(struct in_addr);
+
+			if (m->m_len + olen > MAX_IPOPTLEN + sizeof(struct in_addr))
+				goto bad;
+
+			memcpy(dp, cp, olen);
+			dp[IPOPT_OPTVAL] = optval;
+			dp[IPOPT_OLEN] = olen;
+			dp[IPOPT_OFFSET] = offset;
+			break;
+		} else {
+			if (m->m_len + olen > MAX_IPOPTLEN + sizeof(struct in_addr))
+				goto bad;
+
+			memcpy(dp, cp, olen);
 			break;
 		}
+
+		dp += olen;
+		m->m_len += olen;
+
+		if (optval == IPOPT_EOL)
+			break;
+
+		cp += olen;
+		cnt -= olen;
 	}
-	if (m->m_len > MAX_IPOPTLEN + sizeof(struct in_addr))
-		goto bad;
+
 	*pcbopt = m;
 	return (0);
 
