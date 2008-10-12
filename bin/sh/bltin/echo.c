@@ -1,4 +1,4 @@
-/*	$NetBSD: echo.c,v 1.13 2007/12/12 22:55:43 lukem Exp $	*/
+/*	$NetBSD: echo.c,v 1.14 2008/10/12 01:40:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: echo.c,v 1.13 2007/12/12 22:55:43 lukem Exp $");
+__RCSID("$NetBSD: echo.c,v 1.14 2008/10/12 01:40:37 dholland Exp $");
 
 #define main echocmd
 
@@ -115,5 +115,8 @@ main(int argc, char **argv)
 	}
 	if (! nflag)
 		putchar('\n');
+	fflush(stdout);
+	if (ferror(stdout))
+		return 1;
 	return 0;
 }

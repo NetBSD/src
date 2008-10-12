@@ -1,4 +1,4 @@
-/*	$NetBSD: bltin.h,v 1.12 2008/03/29 09:55:40 apb Exp $	*/
+/*	$NetBSD: bltin.h,v 1.13 2008/10/12 01:40:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -56,6 +56,7 @@
 #undef putc
 #undef putchar
 #undef fileno
+#undef ferror
 #define FILE struct output
 #define stdout out1
 #define stderr out2
@@ -67,6 +68,7 @@
 #define fputs(...)	_RETURN_INT(outstr(__VA_ARGS__))
 #define fflush(f)	_RETURN_INT(flushout(f))
 #define fileno(f) ((f)->fd)
+#define ferror(f) ((f)->flags & OUTPUT_ERR)
 #define INITARGS(argv)
 #define	err sh_err
 #define	verr sh_verr
