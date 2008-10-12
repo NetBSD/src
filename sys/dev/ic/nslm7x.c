@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.47 2008/04/28 20:23:50 martin Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.48 2008/10/12 13:17:28 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.47 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.48 2008/10/12 13:17:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1625,25 +1625,28 @@ lm_generic_banksel(struct lm_softc *lmsc, int bank)
 
 /*
  * bus independent probe
+ *
+ * prerequisites:  lmsc contains valid lm_{read,write}reg() routines
+ * and associated bus access data is present in attachment's softc
  */
 int
-lm_probe(bus_space_tag_t iot, bus_space_handle_t ioh)
+lm_probe(struct lm_softc *lmsc)
 {
 	uint8_t cr;
 	int rv;
 
 	/* Check for some power-on defaults */
-	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_CONFIG);
+	(*lmsc->lm_writereg)(lmsc, LMC_ADDR, LMD_CONFIG);
 
 	/* Perform LM78 reset */
-	/* bus_space_write_1(iot, ioh, LMC_DATA, 0x80); */
+	/*(*lmsc->lm_writereg)(lmsc, LMC_DATA, 0x80); */
 
 	/* XXX - Why do I have to reselect the register? */
-	bus_space_write_1(iot, ioh, LMC_ADDR, LMD_CONFIG);
-	cr = bus_space_read_1(iot, ioh, LMC_DATA);
+	(*lmsc->lm_writereg)(lmsc, LMC_ADDR, LMD_CONFIG);
+	cr = (*lmsc->lm_readreg)(lmsc, LMC_DATA);
 
 	/* XXX - spec says *only* 0x08! */
-	if ((cr == 0x08) || (cr == 0x01) || (cr == 0x03))
+	if ((cr == 0x08) || (cr == 0x01) || (cr == 0x03) || (cr == 0x06))
 		rv = 1;
 	else
 		rv = 0;
@@ -1653,10 +1656,6 @@ lm_probe(bus_space_tag_t iot, bus_space_handle_t ioh)
 	return rv;
 }
 
-
-/*
- * pre:  lmsc contains valid busspace tag and handle
- */
 void
 lm_attach(struct lm_softc *lmsc)
 {

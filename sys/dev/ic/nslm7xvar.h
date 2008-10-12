@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.25 2008/04/28 20:23:51 martin Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.26 2008/10/12 13:17:28 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -152,8 +152,6 @@
 
 struct lm_softc {
 	device_t sc_dev;
-	bus_space_tag_t	lm_iot;
-	bus_space_handle_t lm_ioh;
 
 	callout_t sc_callout;
 
@@ -182,6 +180,6 @@ struct lm_sensor {
 
 void 	lm_attach(struct lm_softc *);
 void	lm_detach(struct lm_softc *);
-int 	lm_probe(bus_space_tag_t, bus_space_handle_t);
+int 	lm_probe(struct lm_softc *);
 
 #endif /* _DEV_ISA_NSLM7XVAR_H_ */
