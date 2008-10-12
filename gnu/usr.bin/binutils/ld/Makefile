@@ -1,18 +1,22 @@
-#	$NetBSD: Makefile,v 1.25 2007/12/02 18:10:21 bouyer Exp $
+#	$NetBSD: Makefile,v 1.26 2008/10/12 23:00:53 mrg Exp $
 
 .include <bsd.own.mk>
+
+SUBDIR=		ldscripts
 
 TOP=		${NETBSDSRCDIR}/gnu
 
 .include "${.CURDIR}/../common/Makefile.inc"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
+SCRIPTSDIR=	/usr/libdata
+
 PROG=		ld
 SRCS=		${G_OFILES:.o=.c}
 CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} \
 		-I${DIST}/ld \
 		-DDEFAULT_EMULATION=\"${G_EMUL}\" \
-		-DSCRIPTDIR=\"/usr/share\" \
+		-DSCRIPTDIR=\"${SCRIPTSDIR}\" \
 		-DTARGET=\"${G_target_alias}\" \
 		-DBINDIR=\"/usr/bin\" \
 		-DTOOLBINDIR=\"/usr/bin\"
@@ -36,9 +40,7 @@ DPADD+=		${IBERTYOBJ}/libiberty.a
 
 TEXINFO=	${G_TEXINFOS}
 INFOFLAGS=	-I${DIST}/ld -I${DIST}/bfd/doc
-.if ${MACHINE_ARCH} == "x86_64"
-FILESDIR=	/usr/share/ldscripts
-.endif
+FILESDIR=	${SCRIPTSDIR}/ldscripts
 
 .PATH: ${DIST}/ld ${DIST}/ld/emulparams \
 	${DIST}/ld/emultempl ${DIST}/ld/scripttempl ldscripts
@@ -80,7 +82,7 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
 		${G_EMUL} ${LIBDIR} no ${f} "${G_target_alias}"
 
-.if ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
 FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
 
 # XXX hack to find out if .xs exists - slow!
@@ -88,11 +90,13 @@ HAS_XS!=	grep '^GENERATE_SHLIB_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
 .if !empty(HAS_XS)
 FILES+= ${f}.xc ${f}.xd ${f}.xdc ${f}.xdw ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
 .endif
-.endif
+.endif	# x64_64 || sparc64
+
 .endfor
 
 .include <bsd.prog.mk>
 .include <bsd.info.mk>
+.include <bsd.subdir.mk>
 
 # Make sure we use the pre-generated C files
 .l.c .y.c .y.h:

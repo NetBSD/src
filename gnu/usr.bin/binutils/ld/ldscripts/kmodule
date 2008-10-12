@@ -1,4 +1,4 @@
-/*	$NetBSD: kmodule,v 1.1 2008/05/20 12:17:49 ad Exp $	*/
+/*	$NetBSD: kmodule,v 1.1 2008/10/12 23:00:53 mrg Exp $	*/
 
 SECTIONS
 {
