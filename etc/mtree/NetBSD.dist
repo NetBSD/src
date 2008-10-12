@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.381 2008/09/26 07:02:57 rtr Exp $
+#	$NetBSD: NetBSD.dist,v 1.382 2008/10/12 23:35:38 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -547,6 +547,7 @@
 ./usr/libdata/debug/usr/tests/util/df
 ./usr/libdata/debug/usr/tests/util/id
 ./usr/libdata/firmware
+./usr/libdata/ldscripts
 ./usr/libdata/lint
 ./usr/libexec
 ./usr/libexec/ching
@@ -747,7 +748,6 @@
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/atari
 ./usr/share/keymaps/x68k
-./usr/share/ldscripts
 ./usr/share/legal
 ./usr/share/locale
 ./usr/share/locale/af_ZA.ISO8859-1
