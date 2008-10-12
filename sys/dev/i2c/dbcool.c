@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.4 2008/10/10 13:08:29 pgoyette Exp $ */
+/*	$NetBSD: dbcool.c,v 1.5 2008/10/12 12:49:04 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.4 2008/10/10 13:08:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.5 2008/10/12 12:49:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -591,6 +591,8 @@ dbcool_match(device_t parent, cfdata_t cf, void *aux)
 	struct dbcool_softc sc;
 	sc.sc_tag = ia->ia_tag;
 	sc.sc_addr = ia->ia_addr;
+	sc.sc_readreg = dbcool_readreg;
+	sc.sc_writereg = dbcool_writereg;
 
 	/* no probing if we attach to iic, but verify chip id */
 	if (dbcool_chip_ident(&sc) >= 0)
@@ -609,12 +611,14 @@ dbcool_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = args->ia_addr;
 	sc->sc_tag = args->ia_tag;
 	sc->sc_dev = self;
+	sc->sc_readreg = dbcool_readreg;
+	sc->sc_writereg = dbcool_writereg;
 	(void)dbcool_chip_ident(sc);
 
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	ver = dbcool_readreg(sc, DBCOOL_REVISION_REG);
+	ver = sc->sc_readreg(sc, DBCOOL_REVISION_REG);
 	if (sc->sc_chip->flags & DBCFLAG_4BIT_VER)
 		aprint_normal_dev(self, "%s dBCool(tm) Controller "
 			"(rev 0x%02x, stepping 0x%02x)\n", sc->sc_chip->name,
@@ -656,10 +660,10 @@ bool dbcool_pmf_suspend(device_t dev PMF_FN_ARGS)
 		reg = DBCOOL_CONFIG2_REG;
 		bit = DBCOOL_CFG2_SHDN;
 	}
-	cfg = dbcool_readreg(sc, reg);
+	cfg = sc->sc_readreg(sc, reg);
 	sc->sc_suspend = cfg & bit;
 	cfg |= bit;
-	dbcool_writereg(sc, reg, cfg);
+	sc->sc_writereg(sc, reg, cfg);
 
 	return true;
 }
@@ -680,9 +684,9 @@ bool dbcool_pmf_resume(device_t dev PMF_FN_ARGS)
 		reg = DBCOOL_CONFIG2_REG;
 		bit = DBCOOL_CFG2_SHDN;
 	}
-	cfg = dbcool_readreg(sc, reg);
+	cfg = sc->sc_readreg(sc, reg);
 	cfg &= ~sc->sc_suspend;
-	dbcool_writereg(sc, reg, cfg);
+	sc->sc_writereg(sc, reg, cfg);
 
 	return true;
 
@@ -733,7 +737,7 @@ dbcool_islocked(struct dbcool_softc *sc)
 	else
 		cfg_reg = DBCOOL_CONFIG1_REG;
 
-	if (dbcool_readreg(sc, cfg_reg) & DBCOOL_CFG1_LOCK)
+	if (sc->sc_readreg(sc, cfg_reg) & DBCOOL_CFG1_LOCK)
 		return 1;
 	else
 		return 0;
@@ -749,31 +753,31 @@ dbcool_read_temp(struct dbcool_softc *sc, uint8_t reg, bool extres)
 		/*
 		 * ADT7466 temps are in strange location
 		 */
-		ext = dbcool_readreg(sc, DBCOOL_ADT7466_CONFIG1);
-		val = dbcool_readreg(sc, reg);
+		ext = sc->sc_readreg(sc, DBCOOL_ADT7466_CONFIG1);
+		val = sc->sc_readreg(sc, reg);
 		if (extres)
-			ext = dbcool_readreg(sc, reg + 1);
+			ext = sc->sc_readreg(sc, reg + 1);
 	} else if (sc->sc_chip->flags & DBCFLAG_ADM1030) {
 		/*
 		 * ADM1030 temps are in their own special place, too
 		 */
 		if (extres) {
-			ext = dbcool_readreg(sc, DBCOOL_ADM1030_TEMP_EXTRES);
+			ext = sc->sc_readreg(sc, DBCOOL_ADM1030_TEMP_EXTRES);
 			if (reg == DBCOOL_ADM1030_L_TEMP)
 				ext >>= 6;
 			else
 				ext >>= 1;
 			ext &= 0x03;
 		}
-		val = dbcool_readreg(sc, reg);
+		val = sc->sc_readreg(sc, reg);
 	} else if (extres) {
-		ext = dbcool_readreg(sc, DBCOOL_EXTRES2_REG);
+		ext = sc->sc_readreg(sc, DBCOOL_EXTRES2_REG);
 
 		/* Read all msb regs to unlatch them */
-		t1 = dbcool_readreg(sc, DBCOOL_12VIN);
-		t1 = dbcool_readreg(sc, DBCOOL_REMOTE1_TEMP);
-		t2 = dbcool_readreg(sc, DBCOOL_REMOTE2_TEMP);
-		t3 = dbcool_readreg(sc, DBCOOL_LOCAL_TEMP);
+		t1 = sc->sc_readreg(sc, DBCOOL_12VIN);
+		t1 = sc->sc_readreg(sc, DBCOOL_REMOTE1_TEMP);
+		t2 = sc->sc_readreg(sc, DBCOOL_REMOTE2_TEMP);
+		t3 = sc->sc_readreg(sc, DBCOOL_LOCAL_TEMP);
 		switch (reg) {
 		case DBCOOL_REMOTE1_TEMP:
 			val = t1;
@@ -794,7 +798,7 @@ dbcool_read_temp(struct dbcool_softc *sc, uint8_t reg, bool extres)
 		ext &= 0x03;
 	}
 	else
-		val = dbcool_readreg(sc, reg);
+		val = sc->sc_readreg(sc, reg);
 
 	/* Check for invalid temp values */
 	if ((sc->sc_temp_offset == 0 && val == 0x80) ||
@@ -822,11 +826,11 @@ dbcool_read_rpm(struct dbcool_softc *sc, uint8_t reg)
 	int rpm;
 	uint8_t rpm_lo, rpm_hi;
 
-	rpm_lo = dbcool_readreg(sc, reg);
+	rpm_lo = sc->sc_readreg(sc, reg);
 	if (sc->sc_chip->flags & DBCFLAG_ADM1030)
 		rpm_hi = (rpm_lo == 0xff)?0xff:0x0;
 	else
-		rpm_hi = dbcool_readreg(sc, reg + 1);
+		rpm_hi = sc->sc_readreg(sc, reg + 1);
 
 	rpm = (rpm_hi << 8) | rpm_lo;
 	if (rpm == 0xffff)
@@ -840,12 +844,12 @@ static int
 dbcool_supply_voltage(struct dbcool_softc *sc)
 {
 	if (sc->sc_chip->flags & DBCFLAG_MULTI_VCC) {
-		if (dbcool_readreg(sc, DBCOOL_CONFIG1_REG) & DBCOOL_CFG1_Vcc)
+		if (sc->sc_readreg(sc, DBCOOL_CONFIG1_REG) & DBCOOL_CFG1_Vcc)
 			return 5002500;
 		else
 			return 3300000;
 	} else if (sc->sc_chip->flags & DBCFLAG_ADT7466) {
-		if (dbcool_readreg(sc, DBCOOL_ADT7466_CONFIG1) &
+		if (sc->sc_readreg(sc, DBCOOL_ADT7466_CONFIG1) &
 			    DBCOOL_ADT7466_CFG1_Vcc)
 			return 5000000;
 		else
@@ -870,7 +874,7 @@ dbcool_read_volt(struct dbcool_softc *sc, uint8_t reg, int nom_idx, bool extres)
 
 	/* ADT7466 voltages are in strange locations with only 8-bits */
 	if (sc->sc_chip->flags & DBCFLAG_ADT7466)
-		val = dbcool_readreg(sc, reg);
+		val = sc->sc_readreg(sc, reg);
 	else
 	/*
 	 * It's a "normal" dbCool chip - check for regs that
@@ -878,15 +882,15 @@ dbcool_read_volt(struct dbcool_softc *sc, uint8_t reg, int nom_idx, bool extres)
 	 * read all the MSB registers to unlatch them.
 	 */
 	if (!extres)
-		val = dbcool_readreg(sc, reg);
+		val = sc->sc_readreg(sc, reg);
 	else if (reg == DBCOOL_12VIN) {
-		ext = dbcool_readreg(sc, DBCOOL_EXTRES2_REG) && 0x03;
-		val = dbcool_readreg(sc, reg);
+		ext = sc->sc_readreg(sc, DBCOOL_EXTRES2_REG) && 0x03;
+		val = sc->sc_readreg(sc, reg);
 		(void)dbcool_read_temp(sc, DBCOOL_LOCAL_TEMP, true);
 	} else if (reg == DBCOOL_VTT || reg == DBCOOL_IMON) {
-		ext = dbcool_readreg(sc, DBCOOL_EXTRES_VTT_IMON);
-		v1 = dbcool_readreg(sc, DBCOOL_IMON);
-		v2 = dbcool_readreg(sc, DBCOOL_VTT);
+		ext = sc->sc_readreg(sc, DBCOOL_EXTRES_VTT_IMON);
+		v1 = sc->sc_readreg(sc, DBCOOL_IMON);
+		v2 = sc->sc_readreg(sc, DBCOOL_VTT);
 		if (reg == DBCOOL_IMON) {
 			val = v1;
 			ext >>= 6;
@@ -895,11 +899,11 @@ dbcool_read_volt(struct dbcool_softc *sc, uint8_t reg, int nom_idx, bool extres)
 			ext >>= 4;
 		ext &= 0x0f;
 	} else {
-		ext = dbcool_readreg(sc, DBCOOL_EXTRES1_REG);
-		v1 = dbcool_readreg(sc, DBCOOL_25VIN);
-		v2 = dbcool_readreg(sc, DBCOOL_VCCP);
-		v3 = dbcool_readreg(sc, DBCOOL_VCC);
-		v4 = dbcool_readreg(sc, DBCOOL_5VIN);
+		ext = sc->sc_readreg(sc, DBCOOL_EXTRES1_REG);
+		v1 = sc->sc_readreg(sc, DBCOOL_25VIN);
+		v2 = sc->sc_readreg(sc, DBCOOL_VCCP);
+		v3 = sc->sc_readreg(sc, DBCOOL_VCC);
+		v4 = sc->sc_readreg(sc, DBCOOL_5VIN);
 
 		switch (reg) {
 		case DBCOOL_25VIN:
@@ -959,10 +963,10 @@ sysctl_dbcool_temp(SYSCTLFN_ARGS)
 	chipreg = node.sysctl_num & 0xff;
 
 	if (sc->sc_temp_offset) {
-		reg = dbcool_readreg(sc, chipreg);
+		reg = sc->sc_readreg(sc, chipreg);
 		reg -= sc->sc_temp_offset;
 	} else
-		reg = (int8_t)dbcool_readreg(sc, chipreg);
+		reg = (int8_t)sc->sc_readreg(sc, chipreg);
 
 	node.sysctl_data = &reg;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -977,7 +981,7 @@ sysctl_dbcool_temp(SYSCTLFN_ARGS)
 
 	newreg = *(int *)node.sysctl_data;
 	newreg += sc->sc_temp_offset;
-	dbcool_writereg(sc, chipreg, newreg);
+	sc->sc_writereg(sc, chipreg, newreg);
 	return 0;
 }
 
@@ -993,7 +997,7 @@ sysctl_adm1030_temp(SYSCTLFN_ARGS)
 	sc = (struct dbcool_softc *)node.sysctl_data;
 	chipreg = node.sysctl_num & 0xff;
 
-	oldreg = (int8_t)dbcool_readreg(sc, chipreg);
+	oldreg = (int8_t)sc->sc_readreg(sc, chipreg);
 	reg = (oldreg >> 1) & ~0x03;
 
 	node.sysctl_data = &reg;
@@ -1010,7 +1014,7 @@ sysctl_adm1030_temp(SYSCTLFN_ARGS)
 	newreg &= ~0x03;
 	newreg <<= 1;
 	newreg |= (oldreg & 0x07);
-	dbcool_writereg(sc, chipreg, newreg);
+	sc->sc_writereg(sc, chipreg, newreg);
 	return 0;
 }
 
@@ -1026,7 +1030,7 @@ sysctl_adm1030_trange(SYSCTLFN_ARGS)
 	sc = (struct dbcool_softc *)node.sysctl_data;
 	chipreg = node.sysctl_num & 0xff;
 
-	oldreg = (int8_t)dbcool_readreg(sc, chipreg);
+	oldreg = (int8_t)sc->sc_readreg(sc, chipreg);
 	reg = oldreg & 0x07;
 
 	node.sysctl_data = &reg;
@@ -1052,7 +1056,7 @@ sysctl_adm1030_trange(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	newreg |= (oldreg & ~0x07);
-	dbcool_writereg(sc, chipreg, newreg);
+	sc->sc_writereg(sc, chipreg, newreg);
 	return 0;
 }
 
@@ -1068,7 +1072,7 @@ sysctl_dbcool_duty(SYSCTLFN_ARGS)
 	sc = (struct dbcool_softc *)node.sysctl_data;
 	chipreg = node.sysctl_num & 0xff;
 
-	oldreg = dbcool_readreg(sc, chipreg);
+	oldreg = sc->sc_readreg(sc, chipreg);
 	reg = (uint32_t)oldreg;
 	if (sc->sc_chip->flags & DBCFLAG_ADM1030)
 		reg = ((reg & 0x0f) * 100) / 15;
@@ -1089,7 +1093,7 @@ sysctl_dbcool_duty(SYSCTLFN_ARGS)
 		newreg |= oldreg & 0xf0;
 	} else
 		newreg = *(uint8_t *)(node.sysctl_data) * 255 / 100;
-	dbcool_writereg(sc, chipreg, newreg);
+	sc->sc_writereg(sc, chipreg, newreg);
 	return 0;
 }
 
@@ -1105,10 +1109,10 @@ sysctl_dbcool_behavior(SYSCTLFN_ARGS)
 	sc = (struct dbcool_softc *)node.sysctl_data;
 	chipreg = node.sysctl_num & 0xff;
 	
-	oldreg = dbcool_readreg(sc, chipreg);
+	oldreg = sc->sc_readreg(sc, chipreg);
 
 	if (sc->sc_chip->flags & DBCFLAG_ADM1030) {
-		if ((dbcool_readreg(sc, DBCOOL_ADM1030_CFG2) & 1) == 0)
+		if ((sc->sc_readreg(sc, DBCOOL_ADM1030_CFG2) & 1) == 0)
 			reg = 4;
 		else if ((oldreg & 0x80) == 0)
 			reg = 7;
@@ -1141,9 +1145,9 @@ sysctl_dbcool_behavior(SYSCTLFN_ARGS)
 		 * nor do we support Manual-RPM-feedback.
 		 */
 		if (newreg == 4) {
-			oldreg = dbcool_readreg(sc, DBCOOL_ADM1030_CFG2);
+			oldreg = sc->sc_readreg(sc, DBCOOL_ADM1030_CFG2);
 			oldreg &= ~0x01;
-			dbcool_writereg(sc, DBCOOL_ADM1030_CFG2, oldreg);
+			sc->sc_writereg(sc, DBCOOL_ADM1030_CFG2, oldreg);
 		} else {
 			if (newreg == 0)
 				newreg = 4;
@@ -1155,13 +1159,13 @@ sysctl_dbcool_behavior(SYSCTLFN_ARGS)
 				return EINVAL;
 			newreg <<= 5;
 			newreg |= (oldreg & 0x1f);
-			dbcool_writereg(sc, chipreg, newreg);
-			oldreg = dbcool_readreg(sc, DBCOOL_ADM1030_CFG2) | 1;
-			dbcool_writereg(sc, DBCOOL_ADM1030_CFG2, oldreg);
+			sc->sc_writereg(sc, chipreg, newreg);
+			oldreg = sc->sc_readreg(sc, DBCOOL_ADM1030_CFG2) | 1;
+			sc->sc_writereg(sc, DBCOOL_ADM1030_CFG2, oldreg);
 		}
 	} else {
-		newreg = (dbcool_readreg(sc, chipreg) & 0x1f) | (i << 5);
-		dbcool_writereg(sc, chipreg, newreg);
+		newreg = (sc->sc_readreg(sc, chipreg) & 0x1f) | (i << 5);
+		sc->sc_writereg(sc, chipreg, newreg);
 	}
 	return 0;
 }
@@ -1179,7 +1183,7 @@ sysctl_dbcool_slope(SYSCTLFN_ARGS)
 	sc = (struct dbcool_softc *)node.sysctl_data;
 	chipreg = node.sysctl_num & 0xff;
 	
-	reg = (dbcool_readreg(sc, chipreg) >> 4) & 0x0f;
+	reg = (sc->sc_readreg(sc, chipreg) >> 4) & 0x0f;
 	node.sysctl_data = &reg;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
@@ -1190,9 +1194,9 @@ sysctl_dbcool_slope(SYSCTLFN_ARGS)
 	if (*(int *)node.sysctl_data < 0 || *(int *)node.sysctl_data > 0x0f)
 		return EINVAL;
 
-	newreg = (dbcool_readreg(sc, chipreg) & 0x0f) |
+	newreg = (sc->sc_readreg(sc, chipreg) & 0x0f) |
 		  (*(int *)node.sysctl_data << 4);
-	dbcool_writereg(sc, chipreg, newreg);
+	sc->sc_writereg(sc, chipreg, newreg);
 	return 0;
 }
 
@@ -1221,7 +1225,7 @@ sysctl_dbcool_volt_limit(SYSCTLFN_ARGS)
 	/*
 	 * Use int64_t for calculation to avoid overflow
 	 */
-	val =  dbcool_readreg(sc, chipreg);
+	val =  sc->sc_readreg(sc, chipreg);
 	val *= nom;
 	val /= 0xc0;	/* values are scaled so 0xc0 == nominal voltage */
 	reg = val;
@@ -1244,7 +1248,7 @@ sysctl_dbcool_volt_limit(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	newreg = newval;
-	dbcool_writereg(sc, chipreg, newreg);
+	sc->sc_writereg(sc, chipreg, newreg);
 	return 0;
 }
 
@@ -1262,10 +1266,10 @@ sysctl_dbcool_temp_limit(SYSCTLFN_ARGS)
 
 	/* If using offset mode, adjust, else treat as signed */
 	if (sc->sc_temp_offset) {
-		reg = dbcool_readreg(sc, chipreg);
+		reg = sc->sc_readreg(sc, chipreg);
 		reg -= sc->sc_temp_offset;
 	 } else
-		reg = (int8_t)dbcool_readreg(sc, chipreg);
+		reg = (int8_t)sc->sc_readreg(sc, chipreg);
 
 	node.sysctl_data = &reg;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -1278,7 +1282,7 @@ sysctl_dbcool_temp_limit(SYSCTLFN_ARGS)
 	if (newtemp < 0 || newtemp > 0xff)
 		return EINVAL;
 
-	dbcool_writereg(sc, chipreg, newtemp);
+	sc->sc_writereg(sc, chipreg, newtemp);
 	return 0;
 }
 
@@ -1325,9 +1329,9 @@ sysctl_dbcool_fan_limit(SYSCTLFN_ARGS)
 
 	/* Update the on-chip registers with new value */
 	newreg = newrpm & 0xff;
-	dbcool_writereg(sc, chipreg, newreg);
+	sc->sc_writereg(sc, chipreg, newreg);
 	newreg = (newrpm >> 8) & 0xff;
-	dbcool_writereg(sc, chipreg + 1, newreg);
+	sc->sc_writereg(sc, chipreg + 1, newreg);
 	return 0;
 }
 
@@ -1344,7 +1348,7 @@ sysctl_dbcool_vid(SYSCTLFN_ARGS)
 	chipreg = node.sysctl_num;
 
 	/* retrieve 5- or 6-bit value */
-	newreg = dbcool_readreg(sc, chipreg);
+	newreg = sc->sc_readreg(sc, chipreg);
 	if ((sc->sc_chip->flags & DBCFLAG_HAS_VID_SEL) &&
 	    (reg & 0x80))
 		reg = newreg & 0x3f;
@@ -1374,7 +1378,7 @@ sysctl_dbcool_thyst(SYSCTLFN_ARGS)
 	chipreg = node.sysctl_num & 0x7f;
 
 	/* retrieve 4-bit value */
-	newreg = dbcool_readreg(sc, chipreg);
+	newreg = sc->sc_readreg(sc, chipreg);
 	if ((node.sysctl_num & 0x80) == 0)
 		reg = newreg >> 4;
 	else
@@ -1400,7 +1404,7 @@ sysctl_dbcool_thyst(SYSCTLFN_ARGS)
 		newreg &= 0xf0;
 		newreg |= newhyst;
 	}
-	dbcool_writereg(sc, chipreg, newreg);
+	sc->sc_writereg(sc, chipreg, newreg);
 	return 0;
 }
 
@@ -1450,7 +1454,7 @@ sysctl_dbcool_reg_access(SYSCTLFN_ARGS)
 	sc = (struct dbcool_softc *)node.sysctl_data;
 	chipreg = sc->sc_user_reg;
 	
-	reg = dbcool_readreg(sc, chipreg);
+	reg = sc->sc_readreg(sc, chipreg);
 	node.sysctl_data = &reg;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
 
@@ -1458,7 +1462,7 @@ sysctl_dbcool_reg_access(SYSCTLFN_ARGS)
 		return error;
 
 	newreg = *(int *)node.sysctl_data;
-	dbcool_writereg(sc, chipreg, newreg);
+	sc->sc_writereg(sc, chipreg, newreg);
 	return 0;
 }
 #endif /* DBCOOL_DEBUG */
@@ -1484,12 +1488,12 @@ dbcool_setup(device_t self)
 	 * to 1 for compatability with other chips that report 2s complement.
 	 */
 	if (sc->sc_chip->flags & DBCFLAG_ADT7466) {
-		if (dbcool_readreg(sc, DBCOOL_ADT7466_CONFIG1) & 0x80)
+		if (sc->sc_readreg(sc, DBCOOL_ADT7466_CONFIG1) & 0x80)
 			sc->sc_temp_offset = 64;
 		else
 			sc->sc_temp_offset = 0;
 	} else if (sc->sc_chip->flags & DBCFLAG_TEMPOFFSET) {
-		if (dbcool_readreg(sc, DBCOOL_CONFIG5_REG) &
+		if (sc->sc_readreg(sc, DBCOOL_CONFIG5_REG) &
 			    DBCOOL_CFG5_TWOSCOMP)
 			sc->sc_temp_offset = 0;
 		else
@@ -1558,10 +1562,10 @@ dbcool_setup(device_t self)
 		cfg_reg = DBCOOL_ADT7466_CONFIG1;
 	else
 		cfg_reg = DBCOOL_CONFIG1_REG;
-	cfg_val = dbcool_readreg(sc, DBCOOL_CONFIG1_REG);
+	cfg_val = sc->sc_readreg(sc, DBCOOL_CONFIG1_REG);
 	if ((cfg_val & DBCOOL_CFG1_START) == 0) {
 		cfg_val |= DBCOOL_CFG1_START;
-		dbcool_writereg(sc, cfg_reg, cfg_val);
+		sc->sc_writereg(sc, cfg_reg, cfg_val);
 	}
 	if (dbcool_islocked(sc))
 		aprint_normal_dev(self, "configuration locked\n");
@@ -1844,9 +1848,9 @@ dbcool_chip_ident(struct dbcool_softc *sc)
 	uint8_t c_id, d_id, r_id;
 	int i;
 
-	c_id = dbcool_readreg(sc, DBCOOL_COMPANYID_REG);
-	d_id = dbcool_readreg(sc, DBCOOL_DEVICEID_REG);
-	r_id = dbcool_readreg(sc, DBCOOL_REVISION_REG);
+	c_id = sc->sc_readreg(sc, DBCOOL_COMPANYID_REG);
+	d_id = sc->sc_readreg(sc, DBCOOL_DEVICEID_REG);
+	r_id = sc->sc_readreg(sc, DBCOOL_REVISION_REG);
     
 	for (i = 0; chip_table[i].company != 0; i++)
 		if ((c_id == chip_table[i].company) &&
