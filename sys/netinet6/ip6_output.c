@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.133 2008/10/12 15:12:17 plunky Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.134 2008/10/12 15:24:10 plunky Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.133 2008/10/12 15:12:17 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.134 2008/10/12 15:24:10 plunky Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2132,8 +2132,11 @@ ip6_pcbopts(struct ip6_pktopts **pktopt, struct socket *so,
 		    printf("ip6_pcbopts: all specified options are cleared.\n");
 #endif
 		ip6_clearpktopts(opt, -1);
-	} else
-		opt = malloc(sizeof(*opt), M_IP6OPT, M_WAITOK);
+	} else {
+		opt = malloc(sizeof(*opt), M_IP6OPT, M_NOWAIT);
+		if (opt == NULL)
+			return (ENOBUFS);
+	}
 	*pktopt = NULL;
 
 	if (sopt == NULL || sopt->sopt_size == 0) {
