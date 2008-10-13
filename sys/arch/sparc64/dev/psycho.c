@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.88 2008/06/13 13:10:49 cegger Exp $	*/
+/*	$NetBSD: psycho.c,v 1.89 2008/10/13 12:25:22 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.88 2008/06/13 13:10:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.89 2008/10/13 12:25:22 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -98,7 +98,6 @@ int psycho_debug = 0x0;
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/psychoreg.h>
 #include <sparc64/dev/psychovar.h>
-#include <sparc64/sparc64/cache.h>
 
 #include "ioconf.h"
 
