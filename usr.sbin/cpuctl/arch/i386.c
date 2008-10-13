@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.11 2008/10/13 19:14:53 cegger Exp $	*/
+/*	$NetBSD: i386.c,v 1.12 2008/10/13 21:11:46 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.11 2008/10/13 19:14:53 cegger Exp $");
+__RCSID("$NetBSD: i386.c,v 1.12 2008/10/13 21:11:46 cegger Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -95,7 +95,8 @@ struct cpu_info {
 	uint32_t	ci_signature;	 /* X86 cpuid type */
 	uint32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
 	uint32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
-	uint32_t	ci_feature3_flags;/* X86 extended feature bits */
+	uint32_t	ci_feature3_flags;/* X86 extended %edx feature bits */
+	uint32_t	ci_feature4_flags;/* X86 extended %ecx feature bits */
 	uint32_t	ci_padlock_flags;/* VIA PadLock feature bits */
 	uint32_t	ci_cpu_class;	 /* CPU class */
 	uint32_t	ci_brand_id;	 /* Intel brand id */
@@ -1081,7 +1082,8 @@ amd_family6_probe(struct cpu_info *ci)
 	 */
 	if (descs[0] >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature3_flags |= descs[3];
+		ci->ci_feature3_flags |= descs[3]; /* %edx */
+		ci->ci_feature4_flags = descs[2]; /* %ecx */
 	}
 
 	if (*cpu_brand_string == '\0')
@@ -1184,7 +1186,7 @@ identifycpu(const char *cpuname)
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
 	char *buf;
-	const char *feature_str[4];
+	const char *feature_str[5];
 	struct cpu_info *ci, cistore;
 	extern int cpu;
 	extern int cpu_info_level;
@@ -1325,11 +1327,19 @@ identifycpu(const char *cpuname)
 	feature_str[0] = CPUID_FLAGS1;
 	feature_str[1] = CPUID_FLAGS2;
 	feature_str[2] = CPUID_FLAGS3;
-	if (cpu_vendor == CPUVENDOR_INTEL) {
-		feature_str[3] = CPUID_INTEL_FLAGS4;
-	} else {
+
+	switch (cpu_vendor) {
+	case CPUVENDOR_AMD:
 		feature_str[3] = CPUID_EXT_FLAGS;
-	}	
+		feature_str[4] = CPUID_AMD_FLAGS4;
+		break;
+	case CPUVENDOR_INTEL:
+		feature_str[3] = CPUID_INTEL_FLAGS4;
+		break;
+	default:
+		feature_str[3] = CPUID_EXT_FLAGS;
+		break;
+	}
 	
 	if (ci->ci_feature_flags) {
 		if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
@@ -1359,6 +1369,12 @@ identifycpu(const char *cpuname)
 		bitmask_snprintf(ci->ci_feature3_flags,
 			feature_str[3], buf, MAXPATHLEN);
 		aprint_verbose("%s: features3 %s\n", cpuname, buf);
+	}
+
+	if (ci->ci_feature4_flags) {
+		bitmask_snprintf(ci->ci_feature4_flags,
+			feature_str[4], buf, MAXPATHLEN);
+		aprint_verbose("%s: features4 %s\n", cpuname, buf);
 	}
 
 	if (ci->ci_padlock_flags) {
