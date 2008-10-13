@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.69 2008/10/13 18:17:07 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.70 2008/10/13 19:41:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -152,6 +152,7 @@ _rump_init(int rump_version)
 
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
+	rump_limits.pl_rlimit[RLIMIT_SBSIZE].rlim_cur = RLIM_INFINITY;
 
 	syncdelay = 0;
 	dovfsusermount = 1;
