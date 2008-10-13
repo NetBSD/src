@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.27 2008/08/26 13:43:47 pgoyette Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.28 2008/10/13 19:14:53 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -87,6 +87,7 @@
  * CPUID "features" bits in %edx
  */
 
+/* Fn80000001 %edx feature */
 #define	CPUID_FPU	0x00000001	/* processor has an FPU? */
 #define	CPUID_VME	0x00000002	/* has virtual mode (%cr4's VME/PVI) */
 #define	CPUID_DE	0x00000004	/* has debugging extension */
@@ -136,8 +137,8 @@
 #define CPUID_XD	0x00100000	/* Execute Disable */
 #define CPUID_EM64T	0x20000000	/* Intel EM64T */
 
-#define CPUID_MASK4	0x20100800
-#define CPUID_FLAGS4	"\20\14SYSCALL/SYSRET\25XD\36EM64T"
+#define CPUID_INTEL_MASK4	0x20100800
+#define CPUID_INTEL_FLAGS4	"\20\14SYSCALL/SYSRET\25XD\36EM64T"
 
 /*
  * AMD/VIA processor specific flags.
@@ -155,6 +156,28 @@
 #define CPUID_EXT_FLAGS	"\20\14SCALL/RET\24MPC\25NOX\27MXX\32FFXSR\33P1GB" \
 			    "\34RDTSCP\36LONG\0373DNOW2\0403DNOW"
 
+
+/* AMD Fn80000001 %ecx features */
+#define CPUID_LAHF	0x00000001	/* LAHF/SAHF instruction */
+#define CPUID_CMPLEGACY	0x00000002	/* Compare Legacy */
+#define CPUID_SVM	0x00000004	/* Secure Virtual Machine */
+#define CPUID_EAPIC	0x00000008	/* Extended APIC space */
+#define CPUID_ALTMOVCR0	0x00000010	/* Lock Mov Cr0 */
+#define CPUID_LZCNT	0x00000020	/* LZCNT instruction */
+#define CPUID_SSE4A	0x00000040	/* SSE4A instruction set */
+#define CPUID_MISALIGNSSE 0x00000080	/* Misaligned SSE */
+#define CPUID_3DNOWPF	0x00000100	/* 3DNow Prefetch */
+#define CPUID_OSVW	0x00000200	/* OS visible workarounds */
+#define CPUID_IBS	0x00000400	/* Instruction Based Sampling */
+#define CPUID_SSE5	0x00000800	/* SSE5 instruction set */
+#define CPUID_SKINIT	0x00001000	/* SKINIT */
+#define CPUID_WDT	0x00002000	/* watchdog timer support */
+
+#define CPUID_AMD_MASK4	0x00003fff
+#define CPUID_AMD_FLAGS4	"\20\1LAHF\2CMPLEGACY\3SVM\4EAPIC\5ALTMOVCR0" \
+				    "\6LZCNT\7SSE4A\10MISALIGNSSE" \
+				    "\113DNOWPREFETCH\12OSVW\13IBS" \
+				    "\14SSE5\15SKINIT\16WDT"
 /*
  * Centaur Extended Feature flags
  */
@@ -172,7 +195,7 @@
 #define CPUID_FLAGS_PADLOCK	"\20\3RNG\7AES\11AES/CTR\13SHA1/SHA256\15RSA"
 
 /*
- * CPUID "features" bits in %ecx
+ * CPUID "features" bits in Fn00000001 %ecx
  */
 
 #define	CPUID2_SSE3	0x00000001	/* Streaming SIMD Extensions 3 */
@@ -349,6 +372,14 @@
 #define MSR_FSBASE	0xc0000100		/* 64bit offset for fs: */
 #define MSR_GSBASE	0xc0000101		/* 64bit offset for gs: */
 #define MSR_KERNELGSBASE 0xc0000102		/* storage for swapgs ins */
+
+#define MSR_VMCR	0xc0010114	/* Virtual Machine Control Register */
+#define 	VMCR_DPD	0x00000001	/* Debug port disable */
+#define		VMCR_RINIT	0x00000002	/* intercept init */
+#define		VMCR_DISA20	0x00000004	/* Disable A20 masking */
+#define		VMCR_LOCK	0x00000008	/* SVM Lock */
+#define		VMCR_SVMED	0x00000010	/* SVME Disable */
+#define MSR_SVMLOCK	0xc0010118	/* SVM Lock key */
 
 /*
  * These require a 'passcode' for access.  See cpufunc.h.
