@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.48 2008/10/12 13:17:28 pgoyette Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.49 2008/10/13 12:44:46 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.48 2008/10/12 13:17:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.49 2008/10/13 12:44:46 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1635,15 +1635,10 @@ lm_probe(struct lm_softc *lmsc)
 	uint8_t cr;
 	int rv;
 
-	/* Check for some power-on defaults */
-	(*lmsc->lm_writereg)(lmsc, LMC_ADDR, LMD_CONFIG);
-
 	/* Perform LM78 reset */
-	/*(*lmsc->lm_writereg)(lmsc, LMC_DATA, 0x80); */
+	/*(*lmsc->lm_writereg)(lmsc, LMD_CONFIG, 0x80); */
 
-	/* XXX - Why do I have to reselect the register? */
-	(*lmsc->lm_writereg)(lmsc, LMC_ADDR, LMD_CONFIG);
-	cr = (*lmsc->lm_readreg)(lmsc, LMC_DATA);
+	cr = (*lmsc->lm_readreg)(lmsc, LMD_CONFIG);
 
 	/* XXX - spec says *only* 0x08! */
 	if ((cr == 0x08) || (cr == 0x01) || (cr == 0x03) || (cr == 0x06))
