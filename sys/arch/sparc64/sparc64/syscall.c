@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.32 2008/06/26 15:17:06 nakayama Exp $ */
+/*	$NetBSD: syscall.c,v 1.33 2008/10/13 12:25:22 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2008/06/26 15:17:06 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33 2008/10/13 12:25:22 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,9 +98,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2008/06/26 15:17:06 nakayama Exp $"
 #include <machine/pmap.h>
 #include <machine/frame.h>
 #include <machine/userret.h>
-
-#include <sparc/fpu/fpu_extern.h>
-#include <sparc64/sparc64/cache.h>
 
 #ifndef offsetof
 #define	offsetof(s, f) ((size_t)&((s *)0)->f)

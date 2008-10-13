@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.153 2008/07/10 15:23:58 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.154 2008/10/13 12:25:22 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.153 2008/07/10 15:23:58 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154 2008/10/13 12:25:22 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.153 2008/07/10 15:23:58 nakayama Exp $");
 #endif
 
 #include <sparc/fpu/fpu_extern.h>
-#include <sparc64/sparc64/cache.h>
 
 #ifndef offsetof
 #define	offsetof(s, f) ((size_t)&((s *)0)->f)
