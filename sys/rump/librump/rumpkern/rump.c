@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.66 2008/10/12 18:52:56 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.67 2008/10/13 16:20:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -854,5 +854,11 @@ _syspuffs_stub(int fd, int *newfd)
 
 	return ENODEV;
 }
-
 __weak_alias(syspuffs_glueinit,_syspuffs_stub);
+
+int
+rump_enosys()
+{
+
+	return ENOSYS;
+}
