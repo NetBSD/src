@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.51 2008/10/10 13:14:41 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.52 2008/10/13 11:14:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -420,6 +420,18 @@ pg_find(pid_t pid, uint flags)
 {
 
 	panic("%s: not implemented", __func__);
+}
+
+void
+psignal(struct proc *p, int signo)
+{
+
+	switch (signo) {
+	case SIGSYS:
+		break;
+	default:
+		panic("unhandled signal %d", signo);
+	}
 }
 
 void
