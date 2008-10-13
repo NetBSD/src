@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.71 2008/09/07 19:27:58 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.72 2008/10/13 16:25:12 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -213,12 +213,13 @@ NR == 1 {
 	printf "#include <sys/param.h>\n" > rumpcalls
 	printf "#include <sys/proc.h>\n" > rumpcalls
 	printf "#include <sys/syscallargs.h>\n" > rumpcalls
-	printf "#include \"rump_syscalls.h\"\n\n" > rumpcalls
+	printf "#include \"rump_syscalls.h\"\n" > rumpcalls
+	printf "#include \"rump_private.h\"\n\n" > rumpcalls
 	printf "#if\tBYTE_ORDER == BIG_ENDIAN\n" > rumpcalls
 	printf "#define SPARG(p,k)\t((p)->k.be.datum)\n" > rumpcalls
 	printf "#else /* LITTLE_ENDIAN, I hope dearly */\n" > rumpcalls
 	printf "#define SPARG(p,k)\t((p)->k.le.datum)\n" > rumpcalls
-	printf "#endif\n\n" > rumpcalls
+	printf "#endif\n" > rumpcalls
 
 	# System call names are included by userland (kdump(1)), so
 	# hide the include files from it.
@@ -539,7 +540,7 @@ function putent(type, compatwrap) {
 	if (!rumpable)
 		return
 
-	printf("%s\nrump_%s(", returntype, funcname) > rumpcalls
+	printf("\n%s\nrump_%s(", returntype, funcname) > rumpcalls
 	for (i = 1; i <= argc; i++) {
 		printf("%s %s, ", argtype[i], argname[i]) > rumpcalls
 	}
@@ -563,7 +564,8 @@ function putent(type, compatwrap) {
 	printf("\tif (*error)\n\t\tretval = -1;\n") > rumpcalls
 	if (returntype != "void")
 		printf("\treturn retval;\n") > rumpcalls
-	printf("}\n\n") > rumpcalls
+	printf("}\n") > rumpcalls
+	printf("__weak_alias(%s,rump_enosys);\n", funcname) > rumpcalls
 }
 $2 == "STD" || $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
 	parseline()
