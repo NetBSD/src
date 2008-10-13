@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.15 2008/10/13 16:25:52 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.16 2008/10/13 18:17:43 pooka Exp $ */
 
 /*
  * System call marshalling for rump.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.15 2008/10/13 16:25:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.16 2008/10/13 18:17:43 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -22,6 +22,14 @@ __KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.15 2008/10/13 16:25:52 pooka Exp
 #else /* LITTLE_ENDIAN, I hope dearly */
 #define SPARG(p,k)	((p)->k.le.datum)
 #endif
+
+int rump_enosys(void);
+int
+rump_enosys()
+{
+
+	return ENOSYS;
+}
 
 ssize_t
 rump_sys_read(int fd, void * buf, size_t nbyte, int *error)
