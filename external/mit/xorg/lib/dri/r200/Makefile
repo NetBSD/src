@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2008/09/21 14:08:46 lukem Exp $
+# $NetBSD: Makefile,v 1.3 2008/10/13 03:19:08 mrg Exp $
 
 MODULE=	r200
 
@@ -13,5 +13,10 @@ SRCS=	r200_context.c r200_ioctl.c r200_lock.c r200_state.c \
 	r200_state_init.c r200_cmdbuf.c r200_pixel.c r200_tex.c r200_texmem.c \
 	r200_texstate.c r200_tcl.c r200_swtcl.c r200_span.c r200_maos.c \
 	r200_sanity.c r200_fragshader.c r200_vertprog.c radeon_screen.c
+
+# XXX
+.if ${MACHINE_ARCH} == "sparc64"
+COPTS.r200_tcl.c=	-Wno-error
+.endif
 
 .include "${.CURDIR}/../dri.mk"
