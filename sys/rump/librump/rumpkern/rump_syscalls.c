@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.14 2008/09/07 19:28:29 pooka Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.15 2008/10/13 16:25:52 pooka Exp $ */
 
 /*
  * System call marshalling for rump.
@@ -8,13 +8,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.14 2008/09/07 19:28:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.15 2008/10/13 16:25:52 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
 #include "rump_syscalls.h"
+#include "rump_private.h"
 
 #if	BYTE_ORDER == BIG_ENDIAN
 #define SPARG(p,k)	((p)->k.be.datum)
@@ -37,6 +38,7 @@ rump_sys_read(int fd, void * buf, size_t nbyte, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_read,rump_enosys);
 
 ssize_t
 rump_sys_write(int fd, const void * buf, size_t nbyte, int *error)
@@ -53,6 +55,7 @@ rump_sys_write(int fd, const void * buf, size_t nbyte, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_write,rump_enosys);
 
 int
 rump_sys_open(const char * path, int flags, mode_t mode, int *error)
@@ -69,6 +72,7 @@ rump_sys_open(const char * path, int flags, mode_t mode, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_open,rump_enosys);
 
 int
 rump_sys_close(int fd, int *error)
@@ -83,6 +87,7 @@ rump_sys_close(int fd, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_close,rump_enosys);
 
 int
 rump_sys_link(const char * path, const char * link, int *error)
@@ -98,6 +103,7 @@ rump_sys_link(const char * path, const char * link, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_link,rump_enosys);
 
 int
 rump_sys_unlink(const char * path, int *error)
@@ -112,6 +118,7 @@ rump_sys_unlink(const char * path, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_unlink,rump_enosys);
 
 int
 rump_sys_chdir(const char * path, int *error)
@@ -126,6 +133,7 @@ rump_sys_chdir(const char * path, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_chdir,rump_enosys);
 
 int
 rump_sys_fchdir(int fd, int *error)
@@ -140,6 +148,7 @@ rump_sys_fchdir(int fd, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_fchdir,rump_enosys);
 
 int
 rump_sys_mknod(const char * path, mode_t mode, dev_t dev, int *error)
@@ -156,6 +165,7 @@ rump_sys_mknod(const char * path, mode_t mode, dev_t dev, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_mknod,rump_enosys);
 
 int
 rump_sys_chmod(const char * path, mode_t mode, int *error)
@@ -171,6 +181,7 @@ rump_sys_chmod(const char * path, mode_t mode, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_chmod,rump_enosys);
 
 int
 rump_sys_chown(const char * path, uid_t uid, gid_t gid, int *error)
@@ -187,6 +198,7 @@ rump_sys_chown(const char * path, uid_t uid, gid_t gid, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_chown,rump_enosys);
 
 int
 rump_sys_unmount(const char * path, int flags, int *error)
@@ -202,6 +214,7 @@ rump_sys_unmount(const char * path, int flags, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_unmount,rump_enosys);
 
 int
 rump_sys_chflags(const char * path, u_long flags, int *error)
@@ -217,6 +230,7 @@ rump_sys_chflags(const char * path, u_long flags, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_chflags,rump_enosys);
 
 void
 rump_sys_sync(int *error)
@@ -227,6 +241,7 @@ rump_sys_sync(int *error)
 	if (*error)
 		retval = -1;
 }
+__weak_alias(sys_sync,rump_enosys);
 
 int
 rump_sys_symlink(const char * path, const char * link, int *error)
@@ -242,6 +257,7 @@ rump_sys_symlink(const char * path, const char * link, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_symlink,rump_enosys);
 
 ssize_t
 rump_sys_readlink(const char * path, char * buf, size_t count, int *error)
@@ -258,6 +274,7 @@ rump_sys_readlink(const char * path, char * buf, size_t count, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_readlink,rump_enosys);
 
 int
 rump_sys_fsync(int fd, int *error)
@@ -272,6 +289,7 @@ rump_sys_fsync(int fd, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_fsync,rump_enosys);
 
 int
 rump_sys_rename(const char * from, const char * to, int *error)
@@ -287,6 +305,7 @@ rump_sys_rename(const char * from, const char * to, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_rename,rump_enosys);
 
 int
 rump_sys_mkfifo(const char * path, mode_t mode, int *error)
@@ -302,6 +321,7 @@ rump_sys_mkfifo(const char * path, mode_t mode, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_mkfifo,rump_enosys);
 
 int
 rump_sys_mkdir(const char * path, mode_t mode, int *error)
@@ -317,6 +337,7 @@ rump_sys_mkdir(const char * path, mode_t mode, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_mkdir,rump_enosys);
 
 int
 rump_sys_rmdir(const char * path, int *error)
@@ -331,6 +352,7 @@ rump_sys_rmdir(const char * path, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_rmdir,rump_enosys);
 
 int
 rump_sys_utimes(const char * path, const struct timeval * tptr, int *error)
@@ -346,6 +368,7 @@ rump_sys_utimes(const char * path, const struct timeval * tptr, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_utimes,rump_enosys);
 
 ssize_t
 rump_sys_pread(int fd, void * buf, size_t nbyte, int pad, off_t offset, int *error)
@@ -364,6 +387,7 @@ rump_sys_pread(int fd, void * buf, size_t nbyte, int pad, off_t offset, int *err
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_pread,rump_enosys);
 
 ssize_t
 rump_sys_pwrite(int fd, const void * buf, size_t nbyte, int pad, off_t offset, int *error)
@@ -382,6 +406,7 @@ rump_sys_pwrite(int fd, const void * buf, size_t nbyte, int pad, off_t offset, i
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_pwrite,rump_enosys);
 
 int
 rump_sys_truncate(const char * path, int pad, off_t length, int *error)
@@ -398,6 +423,7 @@ rump_sys_truncate(const char * path, int pad, off_t length, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_truncate,rump_enosys);
 
 int
 rump_sys___sysctl(const int * name, u_int namelen, void * old, size_t * oldlenp, const void * new, size_t newlen, int *error)
@@ -417,6 +443,7 @@ rump_sys___sysctl(const int * name, u_int namelen, void * old, size_t * oldlenp,
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys___sysctl,rump_enosys);
 
 int
 rump_sys_lchmod(const char * path, mode_t mode, int *error)
@@ -432,6 +459,7 @@ rump_sys_lchmod(const char * path, mode_t mode, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_lchmod,rump_enosys);
 
 int
 rump_sys_lchown(const char * path, uid_t uid, gid_t gid, int *error)
@@ -448,6 +476,7 @@ rump_sys_lchown(const char * path, uid_t uid, gid_t gid, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_lchown,rump_enosys);
 
 int
 rump_sys_lutimes(const char * path, const struct timeval * tptr, int *error)
@@ -463,6 +492,7 @@ rump_sys_lutimes(const char * path, const struct timeval * tptr, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_lutimes,rump_enosys);
 
 int
 rump_sys_lchflags(const char * path, u_long flags, int *error)
@@ -478,6 +508,7 @@ rump_sys_lchflags(const char * path, u_long flags, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys_lchflags,rump_enosys);
 
 int
 rump_sys___stat30(const char * path, struct stat * ub, int *error)
@@ -493,6 +524,7 @@ rump_sys___stat30(const char * path, struct stat * ub, int *error)
 		retval = -1;
 	return retval;
 }
+__weak_alias(sys___stat30,rump_enosys);
 
 int
 rump_sys___lstat30(const char * path, struct stat * ub, int *error)
@@ -508,4 +540,4 @@ rump_sys___lstat30(const char * path, struct stat * ub, int *error)
 		retval = -1;
 	return retval;
 }
-
+__weak_alias(sys___lstat30,rump_enosys);
