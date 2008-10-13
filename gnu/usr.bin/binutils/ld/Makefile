@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.26 2008/10/12 23:00:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2008/10/13 22:36:55 mrg Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=		ldscripts
+SUBDIR=		xldscripts
 
 TOP=		${NETBSDSRCDIR}/gnu
 
