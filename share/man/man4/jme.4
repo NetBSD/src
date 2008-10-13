@@ -1,4 +1,4 @@
-.\"	$NetBSD: jme.4,v 1.2 2008/10/13 08:39:27 wiz Exp $
+.\"	$NetBSD: jme.4,v 1.3 2008/10/13 18:02:43 bouyer Exp $
 .\"
 .\" Copyright (c) 2008 Manuel Bouyer
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 11, 2008
+.Dd October 13, 2008
 .Dt JME 4
 .Os
 .Sh NAME
@@ -54,7 +54,11 @@ VLAN tag insertion/removal
 Interrupt coalescing
 10/100/1000Mbps operation in full-duplex mode
 10/100Mbps operation in half-duplex mode
+Jumbo frames (up to 9022 bytes)
 .Ed
+.Pp
+Due to hardware limitation checksums and TCP segmentation offload can't
+be enabled if the configured MTU is larger than 4000 bytes.
 .Pp
 Interrupt coalescing can be controlled on a per-adapter basis through
 the following sysctls:
@@ -62,11 +66,11 @@ the following sysctls:
 .It Cm hw.jme.jme\*[Lt]x\*[Gt].int_rxtos
 jme receive interrupt moderation timer, in microseconds (defaults to 100)
 .It Cm hw.jme.jme\*[Lt]x\*[Gt].int_rxct
-jme receive interrupt moderation packet counter (defaults to 2)
+jme receive interrupt moderation packet counter (defaults to 128)
 .It Cm hw.jme.jme\*[Lt]x\*[Gt].int_txto
 jme transmit interrupt moderation timer, in microseconds (defaults to 100)
 .It Cm hw.jme.jme\*[Lt]x\*[Gt].int_txct
-jme transmit interrupt moderation packet counter (defaults to 2)
+jme transmit interrupt moderation packet counter (defaults to 128)
 .El
 .Sh SEE ALSO
 .Xr ifmedia 4 ,
@@ -80,8 +84,6 @@ The
 device driver first appeared in
 .Nx 5.0 .
 .Sh BUGS
-Jumbo frames are not yet supported.
-.Pp
 Hardware bugs prevent support of IPv6 receive TCP/UDP checksum offload
 in the JME250 rev A2, and is disabled in the driver.
 This should be revisited when a newer hardware revision is available.
