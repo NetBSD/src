@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.10 2008/08/24 20:27:34 pgoyette Exp $	*/
+/*	$NetBSD: i386.c,v 1.11 2008/10/13 19:14:53 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.10 2008/08/24 20:27:34 pgoyette Exp $");
+__RCSID("$NetBSD: i386.c,v 1.11 2008/10/13 19:14:53 cegger Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1326,7 +1326,7 @@ identifycpu(const char *cpuname)
 	feature_str[1] = CPUID_FLAGS2;
 	feature_str[2] = CPUID_FLAGS3;
 	if (cpu_vendor == CPUVENDOR_INTEL) {
-		feature_str[3] = CPUID_FLAGS4;
+		feature_str[3] = CPUID_INTEL_FLAGS4;
 	} else {
 		feature_str[3] = CPUID_EXT_FLAGS;
 	}	
