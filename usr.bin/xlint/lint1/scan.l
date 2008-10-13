@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.40 2008/09/26 22:52:24 matt Exp $ */
+/* $NetBSD: scan.l,v 1.41 2008/10/13 14:00:37 dholland Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.40 2008/09/26 22:52:24 matt Exp $");
+__RCSID("$NetBSD: scan.l,v 1.41 2008/10/13 14:00:37 dholland Exp $");
 #endif
 
 #include <stdlib.h>
@@ -324,7 +324,7 @@ allocsb(void)
 	} else {
 		sb = xmalloc(sizeof (sbuf_t));
 	}
-	(void)memset(sb, 0, sizeof (sb));
+	(void)memset(sb, 0, sizeof (*sb));
 	return (sb);
 }
 
