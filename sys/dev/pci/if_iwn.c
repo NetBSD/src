@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.19 2008/09/20 18:28:28 freza Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.20 2008/10/13 12:41:45 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.19 2008/09/20 18:28:28 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.20 2008/10/13 12:41:45 blymn Exp $");
 
 
 /*
@@ -169,7 +169,7 @@ static void		iwn_compute_differential_gain(struct iwn_softc *,
 static void		iwn_tune_sensitivity(struct iwn_softc *,
     const struct iwn_rx_stats *);
 static int		iwn_send_sensitivity(struct iwn_softc *);
-/*static int		  iwn_setup_beacon(struct iwn_softc *, struct ieee80211_node *);*/
+static int		iwn_setup_beacon(struct iwn_softc *, struct ieee80211_node *);
 static int		iwn_auth(struct iwn_softc *);
 static int		iwn_run(struct iwn_softc *);
 static int		iwn_scan(struct iwn_softc *, uint16_t);
@@ -183,7 +183,7 @@ static void		iwn_stop(struct ifnet *, int);
 static void		iwn_fix_channel(struct ieee80211com *, struct mbuf *);
 static bool		iwn_resume(device_t PMF_FN_PROTO);
 static int		iwn_add_node(struct iwn_softc *sc,
-	struct ieee80211_node *ni, bool broadcast, bool async);
+				     struct ieee80211_node *ni, bool broadcast, bool async, uint32_t htflags);
 
 
 
@@ -271,7 +271,17 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 		return;
 	}
 
+#if 0
 	sc->sc_dmat = pa->pa_dmat;
+#endif
+	/* XXX may not be needed */
+	if (bus_dmatag_subregion(pa->pa_dmat, 0, 3 << 30,
+	    &(sc->sc_dmat), BUS_DMA_NOWAIT) != 0) {
+		aprint_error_dev(self,
+		    "WARNING: failed to restrict dma range, "
+		    "falling back to parent bus dma range\n");
+		sc->sc_dmat = pa->pa_dmat;
+	}
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		aprint_error_dev(self, "could not map interrupt\n");
@@ -505,13 +515,14 @@ iwn_setup_beacon(struct iwn_softc *sc, struct ieee80211_node *ni)
 	bcn = (struct iwn_cmd_beacon *)cmd->data;
 	memset(bcn, 0, sizeof (struct iwn_cmd_beacon));
 	bcn->id = IWN_ID_BROADCAST;
-	bcn->ofdm_mask = 0xff;
-	bcn->cck_mask = 0x0f;
 	bcn->lifetime = htole32(IWN_LIFETIME_INFINITE);
 	bcn->len = htole16(m0->m_pkthdr.len);
 	bcn->rate = (ic->ic_curmode == IEEE80211_MODE_11A) ?
 	    iwn_plcp_signal(12) : iwn_plcp_signal(2);
-	bcn->flags = htole32(IWN_TX_AUTO_SEQ | IWN_TX_INSERT_TSTAMP);
+	bcn->flags2 = 0x2; /* RATE_MCS_CCK_MSK */
+
+	bcn->flags = htole32(IWN_TX_AUTO_SEQ | IWN_TX_INSERT_TSTAMP
+			     | IWN_TX_USE_NODE_RATE);
 
 	/* save and trim IEEE802.11 header */
 	m_copydata(m0, 0, sizeof (struct ieee80211_frame), (void *)&bcn->wh);
@@ -536,6 +547,8 @@ iwn_setup_beacon(struct iwn_softc *sc, struct ieee80211_node *ni)
 	IWN_SET_DESC_SEG(desc, 1,  data->map->dm_segs[0].ds_addr,
 	    data->map->dm_segs[1].ds_len);
 
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+	    data->map->dm_mapsize /* calc? */, BUS_DMASYNC_PREWRITE);
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
@@ -1018,20 +1031,20 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			break;
 		/* FALLTHROUGH */
 	case IEEE80211_S_AUTH:
-		/* reset state to handle reassociations correctly */
-		sc->config.associd = 0;
-		sc->config.filter &= ~htole32(IWN_FILTER_BSS);
-		/*sc->calib.state = IWN_CALIB_STATE_INIT;*/
+		/* cancel any active scan - it apparently breaks auth */
+		(void)iwn_cmd(sc, IWN_CMD_SCAN_ABORT, NULL, 0, 0);
 
 		if ((error = iwn_auth(sc)) != 0) {
-			aprint_error_dev(sc->sc_dev, "could not move to auth state\n");
+			aprint_error_dev(sc->sc_dev,
+					 "could not move to auth state\n");
 			return error;
 		}
 		break;
 
 	case IEEE80211_S_RUN:
 		if ((error = iwn_run(sc)) != 0) {
-			aprint_error_dev(sc->sc_dev, "could not move to run state\n");
+			aprint_error_dev(sc->sc_dev,
+					 "could not move to run state\n");
 			return error;
 		}
 		break;
@@ -1488,8 +1501,9 @@ iwn_rx_intr(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	rssi = iwn_get_rssi(stat);
 
-	if (ic->ic_state == IEEE80211_S_SCAN)
+	if ((ic->ic_state == IEEE80211_S_SCAN) && (false))
 		iwn_fix_channel(ic, m);
+	ic->ic_curchan = &ic->ic_channels[11];
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -1992,7 +2006,11 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	}else if (m0->m_pkthdr.len + IEEE80211_CRC_LEN > ic->ic_rtsthreshold)
 		flags |= (IWN_TX_NEED_RTS | IWN_TX_FULL_TXOP);
 
-	tx->id = IEEE80211_IS_MULTICAST(wh->i_addr1) ? IWN_ID_BROADCAST : IWN_ID_BSS;
+	if (IEEE80211_IS_MULTICAST(wh->i_addr1)
+	    || (type != IEEE80211_FC0_TYPE_DATA))
+		tx->id = IWN_ID_BROADCAST;
+	else
+		tx->id = IWN_ID_BSS;
 
 	DPRINTFN(5, ("addr1: %x:%x:%x:%x:%x:%x, id = 0x%x\n",
 		     wh->i_addr1[0], wh->i_addr1[1], wh->i_addr1[2],
@@ -2007,7 +2025,9 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 			flags |= IWN_TX_INSERT_TSTAMP;
 
 		if (subtype == IEEE80211_FC0_SUBTYPE_ASSOC_REQ ||
-		    subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ) {
+		    subtype == IEEE80211_FC0_SUBTYPE_REASSOC_REQ ||
+		    subtype == IEEE80211_FC0_SUBTYPE_AUTH ||
+		    subtype == IEEE80211_FC0_SUBTYPE_DEAUTH) {
 			flags &= ~IWN_TX_NEED_RTS;
 			flags |= IWN_TX_NEED_CTS;
 			tx->timeout = htole16(3);
@@ -2053,7 +2073,7 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	}
 
 	/* copy and trim IEEE802.11 header */
-	memcpy((uint8_t *)(tx + 1), wh, hdrlen);
+	memcpy(((uint8_t *)tx) + sizeof(*tx), wh, hdrlen);
 	m_adj(m0, hdrlen);
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
@@ -2121,6 +2141,9 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 	}
 
 	ring->queued++;
+
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+	    data->map->dm_mapsize /* calc? */, BUS_DMASYNC_PREWRITE);
 
 	/* kick ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
@@ -2476,6 +2499,9 @@ iwn_cmd(struct iwn_softc *sc, int code, const void *buf, int size, int async)
 		sc->shared->len[ring->qid][ring->cur + IWN_TX_RING_COUNT] =
 		    htole16(8);
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, ring->cmd_dma.map, 0,
+	    4 + size, BUS_DMASYNC_PREWRITE);
 
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
@@ -3116,7 +3142,7 @@ iwn_send_sensitivity(struct iwn_softc *sc)
 
 static int
 iwn_add_node(struct iwn_softc *sc, struct ieee80211_node *ni, bool broadcast,
-    bool async)
+	     bool async, uint32_t htflags)
 {
 	struct iwn_node_info node;
 	int error;
@@ -3131,8 +3157,7 @@ iwn_add_node(struct iwn_softc *sc, struct ieee80211_node *ni, bool broadcast,
 	} else {
 		IEEE80211_ADDR_COPY(node.macaddr, ni->ni_macaddr);
 		node.id = IWN_ID_BSS;
-		node.htflags = htole32(3 << IWN_AMDPU_SIZE_FACTOR_SHIFT |
-				       5 << IWN_AMDPU_DENSITY_SHIFT);
+		node.htflags = htole32(htflags);
 		DPRINTF(("adding BSS node\n"));
 	}
 
@@ -3160,7 +3185,10 @@ iwn_auth(struct iwn_softc *sc)
 	struct ieee80211_node *ni = ic->ic_bss;
 	int error;
 
+	sc->calib.state = IWN_CALIB_STATE_INIT;
+
 	/* update adapter's configuration */
+	sc->config.associd = 0;
 	IEEE80211_ADDR_COPY(sc->config.bssid, ni->ni_bssid);
 	sc->config.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
 	sc->config.flags = htole32(IWN_CONFIG_TSF);
@@ -3181,6 +3209,14 @@ iwn_auth(struct iwn_softc *sc)
 		sc->config.cck_mask  = 0xf;
 		sc->config.ofdm_mask = 0x15;
 	}
+
+/*	iwn_enable_tsf(sc, ni);*/
+	if (ic->ic_flags & IEEE80211_F_SHSLOT)
+		sc->config.flags |= htole32(IWN_CONFIG_SHSLOT);
+	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
+		sc->config.flags |= htole32(IWN_CONFIG_SHPREAMBLE);
+	sc->config.filter &= ~htole32(IWN_FILTER_BSS);
+
 	DPRINTF(("config chan %d flags %x cck %x ofdm %x\n", sc->config.chan,
 		sc->config.flags, sc->config.cck_mask, sc->config.ofdm_mask));
 	error = iwn_cmd(sc, IWN_CMD_CONFIGURE, &sc->config,
@@ -3200,11 +3236,11 @@ iwn_auth(struct iwn_softc *sc)
 	 * Reconfiguring clears the adapter's nodes table so we must
 	 * add the broadcast node again.
 	 */
-	if ((error = iwn_add_node(sc, ni, true, true)) != 0)
+	if ((error = iwn_add_node(sc, ni, true, true, 0)) != 0)
 		return error;
 
 	/* add BSS node */
-	if ((error = iwn_add_node(sc, ni, false, true)) != 0)
+	if ((error = iwn_add_node(sc, ni, false, true, 0)) != 0)
 		return error;
 
 	if (ic->ic_opmode == IEEE80211_M_STA) {
@@ -3267,7 +3303,9 @@ iwn_run(struct iwn_softc *sc)
 	}
 
 	/* add BSS node */
-	iwn_add_node(sc, ni, false, true);
+	iwn_add_node(sc, ni, false, true,
+		     (3 << IWN_AMDPU_SIZE_FACTOR_SHIFT |
+		      5 << IWN_AMDPU_DENSITY_SHIFT));
 
 	if (ic->ic_opmode == IEEE80211_M_STA) {
 		/* fake a join to init the tx rate */
@@ -3306,7 +3344,8 @@ iwn_run(struct iwn_softc *sc)
 
 /*
  * Send a scan request to the firmware. Since this command is huge, we map it
- * into a mbuf instead of using the pre-allocated set of commands.
+ * into a mbuf instead of using the pre-allocated set of commands. this function
+ * implemented as iwl4965_bg_request_scan in the linux driver.
  */
 static int
 iwn_scan(struct iwn_softc *sc, uint16_t flags)
@@ -3330,11 +3369,21 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	desc = &ring->desc[ring->cur];
 	data = &ring->data[ring->cur];
 
+	/*
+	 * allocate an mbuf and initialize it so that it contains a packet
+	 * header. M_DONTWAIT can fail and MT_DATA means it is dynamically
+	 * allocated.
+	 */
 	MGETHDR(data->m, M_DONTWAIT, MT_DATA);
 	if (data->m == NULL) {
 		aprint_error_dev(sc->sc_dev, "could not allocate mbuf for scan command\n");
 		return ENOMEM;
 	}
+
+	/*
+	 * allocates and adds an mbuf cluster to a normal mbuf m. the how
+	 * is M_DONTWAIT and the flag M_EXT is set upon success.
+	 */
 	MCLGET(data->m, M_DONTWAIT);
 	if (!(data->m->m_flags & M_EXT)) {
 		m_freem(data->m);
@@ -3343,6 +3392,11 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 		return ENOMEM;
 	}
 
+	/*
+	 * returns a pointer to the data contained in the specified mbuf.
+	 * in this case it is our iwn_tx_cmd. we initialize the basic
+	 * members of the command here with exception to data[136].
+	 */
 	cmd = mtod(data->m, struct iwn_tx_cmd *);
 	cmd->code = IWN_CMD_SCAN;
 	cmd->flags = 0;
@@ -3364,6 +3418,14 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 
 	tx = (struct iwn_cmd_data *)(hdr + 1);
 	memset(tx, 0, sizeof (struct iwn_cmd_data));
+	/*
+	 * linux
+	 * flags = IWN_TX_AUTO_SEQ
+	 * 	   0x200 is rate selection?
+	 * id = ???
+	 * lifetime = IWN_LIFETIME_INFINITE
+	 *
+	 */
 	tx->flags = htole32(IWN_TX_AUTO_SEQ | 0x200); // XXX
 	tx->id = IWN_ID_BROADCAST;
 	tx->lifetime = htole32(IWN_LIFETIME_INFINITE);
@@ -3482,6 +3544,9 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 		    htole16(8);
 	}
 
+	bus_dmamap_sync(sc->sc_dmat, data->map, 0,
+	    data->map->dm_segs[0].ds_len, BUS_DMASYNC_PREWRITE);
+
 	/* kick cmd ring */
 	ring->cur = (ring->cur + 1) % IWN_TX_RING_COUNT;
 	IWN_WRITE(sc, IWN_TX_WIDX, ring->qid << 8 | ring->cur);
@@ -3572,7 +3637,7 @@ iwn_config(struct iwn_softc *sc)
 	}
 
 	/* add broadcast node */
-	if ((error = iwn_add_node(sc, NULL, true, false)) != 0)
+	if ((error = iwn_add_node(sc, NULL, true, false, 0)) != 0)
 		return error;
 
 	if ((error = iwn_set_critical_temp(sc)) != 0) {
