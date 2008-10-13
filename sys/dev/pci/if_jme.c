@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.2 2008/10/12 11:27:12 bouyer Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.3 2008/10/13 17:57:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.2 2008/10/12 11:27:12 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.3 2008/10/13 17:57:32 bouyer Exp $");
 
 
 #include <sys/param.h>
@@ -163,6 +163,7 @@ struct jme_softc {
 	bus_dmamap_t jme_rxmbufm[JME_NBUFS]; /* receive mbufs DMA map */
 	struct mbuf *jme_rxmbuf[JME_NBUFS]; /* mbufs being received */
 	int jme_rx_cons;		/* receive ring consumer */
+	int jme_rx_prod;		/* receive ring producer */
 	void* jme_ih;			/* our interrupt */
 	struct ethercom jme_ec;
 	struct callout jme_tick_ch;	/* tick callout */
@@ -197,6 +198,7 @@ typedef u_long ioctl_cmd_t;
 
 static int jme_pci_match(device_t, cfdata_t, void *);
 static void jme_pci_attach(device_t, device_t, void *);
+static void jme_intr_rx(jme_softc_t *);
 static int jme_intr(void *);
 
 static int jme_ifioctl(struct ifnet *, ioctl_cmd_t, void *);
@@ -491,6 +493,10 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	sc->jme_ec.ec_capabilities |=
 	    ETHERCAP_VLAN_MTU | ETHERCAP_VLAN_HWTAGGING;
 
+	if (sc->jme_flags & JME_FLAG_GIGA)
+		sc->jme_ec.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+
+
 	strlcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_ioctl = jme_ifioctl;
@@ -644,6 +650,7 @@ jme_stop(struct ifnet *ifp, int disable)
 			bus_dmamap_unload(sc->jme_dmatag, sc->jme_rxmbufm[i]);
 			m_freem(sc->jme_rxmbuf[i]);
 		}
+		sc->jme_rxmbuf[i] = NULL;
 	}
 	/* process completed transmits */
 	jme_txeof(sc);
@@ -669,10 +676,21 @@ jme_restart(void *v)
 #endif
 
 static int
-jme_add_rxbuf(jme_softc_t *sc, struct mbuf *m, int i)
+jme_add_rxbuf(jme_softc_t *sc, struct mbuf *m)
 {
 	int error;
 	bus_dmamap_t map;
+	int i = sc->jme_rx_prod;
+
+	if (sc->jme_rxmbuf[i] != NULL) {
+		aprint_error_dev(sc->jme_dev,
+		    "mbuf already here: rxprod %d rxcons %d\n",
+		    sc->jme_rx_prod, sc->jme_rx_cons);
+		if (m)
+			m_freem(m);
+		return EINVAL;
+	}
+	
 	if (m == NULL) {
 		sc->jme_rxmbuf[i] = NULL;
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -711,6 +729,7 @@ jme_add_rxbuf(jme_softc_t *sc, struct mbuf *m, int i)
 	bus_dmamap_sync(sc->jme_dmatag, sc->jme_rxmap,
 	    i * sizeof(struct jme_desc), sizeof(struct jme_desc),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	JME_DESC_INC(sc->jme_rx_prod, JME_NBUFS);
 	return (0);
 }
 
@@ -737,8 +756,9 @@ jme_init(struct ifnet *ifp, int do_ifinit)
 		return 0;
 	}
 	/* allocate receive ring */
+	sc->jme_rx_prod = 0;
 	for (i = 0; i < JME_NBUFS; i++) {
-		if (jme_add_rxbuf(sc, NULL, i) < 0) {
+		if (jme_add_rxbuf(sc, NULL) < 0) {
 			aprint_error_dev(sc->jme_dev,
 			    "can't allocate rx mbuf\n");
 			for (i--; i >= 0; i--) {
@@ -917,7 +937,7 @@ jme_init(struct ifnet *ifp, int do_ifinit)
 
 	/* Initialize the interrupt mask. */
 	bus_space_write_4(sc->jme_bt_misc, sc->jme_bh_misc,
-	     JME_INTR_MASK_SET, JME_INTRS);
+	     JME_INTR_MASK_SET, JME_INTRS_ENABLE);
 	bus_space_write_4(sc->jme_bt_misc, sc->jme_bh_misc,
 	     JME_INTR_STATUS, 0xFFFFFFFF);
 
@@ -1025,28 +1045,170 @@ jme_statchg(device_t self)
 		jme_init(ifp, 0);
 }
 
+static void
+jme_intr_rx(jme_softc_t *sc) {
+	struct mbuf *m, *mhead;
+	struct ifnet *ifp = &sc->jme_if;
+	uint32_t flags,  buflen;
+	int i, ipackets, nsegs, seg, error;
+	struct jme_desc *desc;
+
+	bus_dmamap_sync(sc->jme_dmatag, sc->jme_rxmap, 0,
+	    sizeof(struct jme_desc) * JME_NBUFS,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+#ifdef JMEDEBUG_RX
+	printf("rxintr sc->jme_rx_cons %d flags 0x%x\n",
+	    sc->jme_rx_cons, le32toh(sc->jme_rxring[sc->jme_rx_cons].flags));
+#endif
+	ipackets = 0;
+	while((le32toh(sc->jme_rxring[ sc->jme_rx_cons].flags) & JME_RD_OWN)
+	    == 0) {
+		i = sc->jme_rx_cons;
+		desc = &sc->jme_rxring[i];
+#ifdef JMEDEBUG_RX
+		printf("rxintr i %d flags 0x%x buflen 0x%x\n",
+		    i,  le32toh(desc->flags), le32toh(desc->buflen));
+#endif
+		if ((le32toh(desc->buflen) & JME_RD_VALID) == 0)
+			break;
+		bus_dmamap_sync(sc->jme_dmatag, sc->jme_rxmbufm[i], 0,
+		    sc->jme_rxmbufm[i]->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_unload(sc->jme_dmatag, sc->jme_rxmbufm[i]);
+
+		buflen = le32toh(desc->buflen);
+		nsegs = JME_RX_NSEGS(buflen);
+		flags = le32toh(desc->flags);
+		if ((buflen & JME_RX_ERR_STAT) != 0 ||
+		    JME_RX_BYTES(buflen) < sizeof(struct ether_header) ||
+		    JME_RX_BYTES(buflen) >
+		    (ifp->if_mtu + ETHER_HDR_LEN + JME_RX_PAD_BYTES)) {
+#ifdef JMEDEBUG_RX
+			printf("rx error flags 0x%x buflen 0x%x\n",
+			    flags, buflen);
+#endif
+			ifp->if_ierrors++;
+			/* reuse the mbufs */
+			for (seg = 0; seg < nsegs; seg++) {
+				m = sc->jme_rxmbuf[i];
+				sc->jme_rxmbuf[i] = NULL;
+				if ((error = jme_add_rxbuf(sc, m)) != 0)
+					aprint_error_dev(sc->jme_dev,
+					    "can't reuse mbuf: %d\n", error);
+				JME_DESC_INC(sc->jme_rx_cons, JME_NBUFS);
+				i = sc->jme_rx_cons;
+			}
+			continue;
+		}
+		/* receive this packet */
+		mhead = m = sc->jme_rxmbuf[i];
+		sc->jme_rxmbuf[i] = NULL;
+		/* add a new buffer to chain */
+		if (jme_add_rxbuf(sc, NULL) == ENOBUFS) {
+			for (seg = 0; seg < nsegs; seg++) {
+				m = sc->jme_rxmbuf[i];
+				sc->jme_rxmbuf[i] = NULL;
+				if ((error = jme_add_rxbuf(sc, m)) != 0)
+					aprint_error_dev(sc->jme_dev,
+					    "can't reuse mbuf: %d\n", error);
+				JME_DESC_INC(sc->jme_rx_cons, JME_NBUFS);
+				i = sc->jme_rx_cons;
+			}
+			ifp->if_ierrors++;
+			continue;
+		}
+
+		/* build mbuf chain: head, then remaining segments */
+		m->m_pkthdr.rcvif = ifp;
+		m->m_pkthdr.len = JME_RX_BYTES(buflen) - JME_RX_PAD_BYTES;
+		m->m_len = (nsegs > 1) ? (MCLBYTES - JME_RX_PAD_BYTES) :
+		    m->m_pkthdr.len;
+		m->m_data = m->m_ext.ext_buf + JME_RX_PAD_BYTES;
+		JME_DESC_INC(sc->jme_rx_cons, JME_NBUFS);
+		for (seg = 1; seg < nsegs; seg++) {
+			i = sc->jme_rx_cons;
+			m = sc->jme_rxmbuf[i];
+			sc->jme_rxmbuf[i] = NULL;
+			(void)jme_add_rxbuf(sc, NULL);
+			m->m_flags &= ~M_PKTHDR;
+			m_cat(mhead, m);
+			JME_DESC_INC(sc->jme_rx_cons, JME_NBUFS);
+		}
+		/* and adjust last mbuf's size */
+		if (nsegs > 1) {
+			m->m_len =
+			    JME_RX_BYTES(buflen) - (MCLBYTES * (nsegs - 1));
+		}
+		ifp->if_ipackets++;
+		ipackets++;
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, mhead);
+#endif /* NBPFILTER > 0 */
+
+		if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) &&
+		    (flags & JME_RD_IPV4)) {
+			mhead->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			if (!(flags & JME_RD_IPCSUM))
+				mhead->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
+		}
+		if ((ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx) &&
+		    (flags & JME_RD_TCPV4) == JME_RD_TCPV4) {
+			mhead->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
+			if (!(flags & JME_RD_TCPCSUM))
+				mhead->m_pkthdr.csum_flags |=
+				    M_CSUM_TCP_UDP_BAD;
+		}
+		if ((ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx) &&
+		    (flags & JME_RD_UDPV4) == JME_RD_UDPV4) {
+			mhead->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
+			if (!(flags & JME_RD_UDPCSUM))
+				mhead->m_pkthdr.csum_flags |=
+				    M_CSUM_TCP_UDP_BAD;
+		}
+		if ((ifp->if_capenable & IFCAP_CSUM_TCPv6_Rx) &&
+		    (flags & JME_RD_TCPV6) == JME_RD_TCPV6) {
+			mhead->m_pkthdr.csum_flags |= M_CSUM_TCPv6;
+			if (!(flags & JME_RD_TCPCSUM))
+				mhead->m_pkthdr.csum_flags |=
+				    M_CSUM_TCP_UDP_BAD;
+		}
+		if ((ifp->if_capenable & IFCAP_CSUM_UDPv6_Rx) &&
+		    (flags & JME_RD_UDPV6) == JME_RD_UDPV6) {
+			m->m_pkthdr.csum_flags |= M_CSUM_UDPv6;
+			if (!(flags & JME_RD_UDPCSUM))
+				mhead->m_pkthdr.csum_flags |=
+				    M_CSUM_TCP_UDP_BAD;
+		}
+		if (flags & JME_RD_VLAN_TAG) {
+			/* pass to vlan_input() */
+			VLAN_INPUT_TAG(ifp, mhead,
+			    (flags & JME_RD_VLAN_MASK), continue);
+		}
+		(*ifp->if_input)(ifp, mhead);
+	}
+#if NRND > 0
+	if (ipackets && RND_ENABLED(&sc->rnd_source))
+		rnd_add_uint32(&sc->rnd_source, ipackets);
+#endif /* NRND > 0 */
+
+}
+
 static int
 jme_intr(void *v)
 {
 	jme_softc_t *sc = v;
-	struct ifnet *ifp = &sc->jme_if;
-	struct mbuf *m;
 	uint32_t istatus;
-	uint32_t flags,  buflen;
-	int i, ipackets;
-	struct jme_desc *desc;
 
 again:
 	istatus = bus_space_read_4(sc->jme_bt_misc, sc->jme_bh_misc,
 	     JME_INTR_STATUS);
 
-	if ((istatus & JME_INTRS) == 0 || istatus == 0xFFFFFFFF)
+	if ((istatus & JME_INTRS_CHECK) == 0 || istatus == 0xFFFFFFFF)
 		goto done;
 	/* Reset PCC counter/timer and Ack interrupts. */
-	istatus &= ~(INTR_TXQ_COMP | INTR_RXQ_COMP);
-	if ((istatus & (INTR_TXQ_COAL | INTR_TXQ_COAL_TO)) != 0)
+	if ((istatus & (INTR_TXQ_COMP | INTR_TXQ_COAL | INTR_TXQ_COAL_TO)) != 0)
 		istatus |= INTR_TXQ_COAL | INTR_TXQ_COAL_TO | INTR_TXQ_COMP;
-	if ((istatus & (INTR_RXQ_COAL | INTR_RXQ_COAL_TO)) != 0)
+	if ((istatus & (INTR_RXQ_COMP | INTR_RXQ_COAL | INTR_RXQ_COAL_TO)) != 0)
 		istatus |= INTR_RXQ_COAL | INTR_RXQ_COAL_TO | INTR_RXQ_COMP;
 	bus_space_write_4(sc->jme_bt_misc, sc->jme_bh_misc,
 	     JME_INTR_STATUS, istatus);
@@ -1068,120 +1230,8 @@ again:
 	    bus_space_read_4(sc->jme_bt_mac, sc->jme_bh_mac, JME_MAR1),
 	    bus_space_read_4(sc->jme_bt_mac, sc->jme_bh_mac, JME_GHC));
 #endif
-	if ((istatus & (INTR_RXQ_COAL | INTR_RXQ_COAL_TO)) != 0) {
-		bus_dmamap_sync(sc->jme_dmatag, sc->jme_rxmap, 0,
-		    sizeof(struct jme_desc) * JME_NBUFS,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
-#ifdef JMEDEBUG_RX
-		printf("rxintr sc->jme_rx_cons %d flags 0x%x\n",
-		    sc->jme_rx_cons, le32toh(sc->jme_rxring[sc->jme_rx_cons].flags));
-#endif
-		ipackets = 0;
-		while((le32toh(sc->jme_rxring[ sc->jme_rx_cons].flags) &
-		    JME_RD_OWN) == 0) {
-			i = sc->jme_rx_cons;
-			desc = &sc->jme_rxring[i];
-#ifdef JMEDEBUG_RX
-			printf("rxintr i %d flags 0x%x buflen 0x%x\n",
-			    i,  le32toh(desc->flags), le32toh(desc->buflen));
-#endif
-			if ((le32toh(desc->buflen) & JME_RD_VALID) == 0)
-				break;
-			bus_dmamap_sync(sc->jme_dmatag, sc->jme_rxmbufm[i], 0,
-			    sc->jme_rxmbufm[i]->dm_mapsize,
-			    BUS_DMASYNC_POSTREAD);
-			bus_dmamap_unload(sc->jme_dmatag, sc->jme_rxmbufm[i]);
-			m = sc->jme_rxmbuf[i];
-			buflen = le32toh(desc->buflen);
-			flags = le32toh(desc->flags);
-			if ((buflen & JME_RX_ERR_STAT) != 0) {
-				ifp->if_ierrors++;
-				/* reuse this buf */
-				if (jme_add_rxbuf(sc, m, i) != 0)
-					aprint_error_dev(sc->jme_dev,
-					    "can't reuse mbuf\n");
-				sc->jme_rx_cons++;
-				sc->jme_rx_cons %= JME_NBUFS;
-				continue;
-			}
-			/* add a new buffer to chain */
-			if (jme_add_rxbuf(sc, NULL, i) == ENOBUFS) {
-				/* reuse this mbuf (data is lost) */
-				if (jme_add_rxbuf(sc, m, i) != 0)
-					aprint_error_dev(sc->jme_dev,
-					    "can't reuse mbuf\n");
-				ifp->if_ierrors++;
-				sc->jme_rx_cons++;
-				sc->jme_rx_cons %= JME_NBUFS;
-				continue;
-			}
-
-			if (JME_RX_BYTES(buflen) < sizeof(struct ether_header)){
-				sc->jme_rx_cons++;
-				sc->jme_rx_cons %= JME_NBUFS;
-				m_freem(m);
-				continue;
-			}
-			m->m_pkthdr.rcvif = ifp;
-			m->m_pkthdr.len = m->m_len =
-			    JME_RX_BYTES(buflen) - JME_RX_PAD_BYTES;
-			m->m_data = m->m_ext.ext_buf + JME_RX_PAD_BYTES;
-			ifp->if_ipackets++;
-			ipackets++;
-			JME_DESC_INC(sc->jme_rx_cons, JME_NBUFS);
-#if NBPFILTER > 0
-			if (ifp->if_bpf)
-				bpf_mtap(ifp->if_bpf, m);
-#endif /* NBPFILTER > 0 */
-
-			if ((ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) &&
-			    (flags & JME_RD_IPV4)) {
-				m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-				if (!(flags & JME_RD_IPCSUM))
-					m->m_pkthdr.csum_flags |=
-					    M_CSUM_IPv4_BAD;
-			}
-			if ((ifp->if_capenable & IFCAP_CSUM_TCPv4_Rx) &&
-			    (flags & JME_RD_TCPV4) == JME_RD_TCPV4) {
-				m->m_pkthdr.csum_flags |= M_CSUM_TCPv4;
-				if (!(flags & JME_RD_TCPCSUM))
-					m->m_pkthdr.csum_flags |=
-					    M_CSUM_TCP_UDP_BAD;
-			}
-			if ((ifp->if_capenable & IFCAP_CSUM_UDPv4_Rx) &&
-			    (flags & JME_RD_UDPV4) == JME_RD_UDPV4) {
-				m->m_pkthdr.csum_flags |= M_CSUM_UDPv4;
-				if (!(flags & JME_RD_UDPCSUM))
-					m->m_pkthdr.csum_flags |=
-					    M_CSUM_TCP_UDP_BAD;
-			}
-			if ((ifp->if_capenable & IFCAP_CSUM_TCPv6_Rx) &&
-			    (flags & JME_RD_TCPV6) == JME_RD_TCPV6) {
-				m->m_pkthdr.csum_flags |= M_CSUM_TCPv6;
-				if (!(flags & JME_RD_TCPCSUM))
-					m->m_pkthdr.csum_flags |=
-					    M_CSUM_TCP_UDP_BAD;
-			}
-			if ((ifp->if_capenable & IFCAP_CSUM_UDPv6_Rx) &&
-			    (flags & JME_RD_UDPV6) == JME_RD_UDPV6) {
-				m->m_pkthdr.csum_flags |= M_CSUM_UDPv6;
-				if (!(flags & JME_RD_UDPCSUM))
-					m->m_pkthdr.csum_flags |=
-					    M_CSUM_TCP_UDP_BAD;
-			}
-			if (flags & JME_RD_VLAN_TAG) {
-				/* pass to vlan_input() */
-				VLAN_INPUT_TAG(ifp, m,
-				    (flags & JME_RD_VLAN_MASK), continue);
-			}
-			(*ifp->if_input)(ifp, m);
-		}
-#if NRND > 0
-		if (ipackets && RND_ENABLED(&sc->rnd_source))
-			rnd_add_uint32(&sc->rnd_source, ipackets);
-#endif /* NRND > 0 */
-
-	}
+	if ((istatus & (INTR_RXQ_COMP | INTR_RXQ_COAL | INTR_RXQ_COAL_TO)) != 0)
+		jme_intr_rx(sc);
 	if ((istatus & INTR_RXQ_DESC_EMPTY) != 0) {
 		/*
 		 * Notify hardware availability of new Rx
@@ -1197,9 +1247,8 @@ again:
 		    JME_RXCSR,
 		    sc->jme_rxcsr | RXCSR_RX_ENB | RXCSR_RXQ_START);
 	}
-	if ((istatus & (INTR_TXQ_COAL | INTR_TXQ_COAL_TO)) != 0) {
+	if ((istatus & (INTR_TXQ_COMP | INTR_TXQ_COAL | INTR_TXQ_COAL_TO)) != 0)
 		jme_ifstart(&sc->jme_if);
-	}
 
 	goto again;
 
@@ -1213,8 +1262,39 @@ jme_ifioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct jme_softc *sc = ifp->if_softc;
 	int s, error;
+	struct ifreq *ifr;
+	struct ifcapreq *ifcr;
 
 	s = splnet();
+	/*
+	 * we can't support at the same time jumbo frames and
+	 * TX checksums offload/TSO
+	 */
+	switch(cmd) {
+	case SIOCSIFMTU:
+		ifr = data;
+		if (ifr->ifr_mtu > JME_TX_FIFO_SIZE &&
+		    (ifp->if_capenable & (
+		    IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_UDPv4_Tx|
+		    IFCAP_CSUM_TCPv6_Tx|IFCAP_CSUM_UDPv6_Tx|
+		    IFCAP_TSOv4|IFCAP_TSOv6)) != 0) {
+			splx(s);
+			return EINVAL;
+		}
+		break;
+	case SIOCSIFCAP:
+		ifcr = data;
+		if (ifp->if_mtu > JME_TX_FIFO_SIZE &&
+		    (ifcr->ifcr_capenable & (
+		    IFCAP_CSUM_IPv4_Tx|IFCAP_CSUM_TCPv4_Tx|IFCAP_CSUM_UDPv4_Tx|
+		    IFCAP_CSUM_TCPv6_Tx|IFCAP_CSUM_UDPv6_Tx|
+		    IFCAP_TSOv4|IFCAP_TSOv6)) != 0) {
+			splx(s);
+			return EINVAL;
+		}
+		break;
+	}
+
 	error = ether_ioctl(ifp, cmd, data);
 	if (error == ENETRESET && (ifp->if_flags & IFF_RUNNING)) {
 		if (cmd == SIOCADDMULTI || cmd == SIOCDELMULTI) {
@@ -1533,7 +1613,12 @@ jme_ifstart(struct ifnet *ifp)
 	struct mbuf *mb_head;
 	int enq;
 
-	/* check if we can free some desc */
+	/*
+	 * check if we can free some desc.
+	 * Clear TX interrupt status to reset TX coalescing counters.
+	 */
+	bus_space_write_4(sc->jme_bt_misc, sc->jme_bh_misc,
+	     JME_INTR_STATUS, INTR_TXQ_COMP);
 	jme_txeof(sc);
 
 	if ((sc->jme_if.if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
