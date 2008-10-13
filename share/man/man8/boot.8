@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.6 2007/12/14 12:03:53 apb Exp $
+.\"	$NetBSD: boot.8,v 1.7 2008/10/13 20:40:52 apb Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd December 14, 2007
+.Dd October 13, 2008
 .Os
 .Dt BOOT 8
 .Sh NAME
@@ -47,6 +47,18 @@ Additional information may be found in
 architecture-specific
 .Xr boot 8
 manual pages.
+.Pp
+In the native
+.Nx
+boot protocol, options are passed from the boot loader
+to the kernel via flag bits in the
+.Va boothowto
+variable, which is interpreted by the kernel in much the same way
+as the
+.Va howto
+argument passed to the
+.Xr reboot 2
+system call.
 .Ss Interactive mode
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
@@ -57,7 +69,7 @@ input of these commands:
 .It Xo Ic boot
 .Op Va device : Ns
 .Op Va filename
-.Op Fl acdqsvxz
+.Op Fl 1234abcdmqsvxz
 .Xc
 The default
 .Va device
@@ -105,27 +117,92 @@ Alternate system images can be loaded by just specifying the name of the image.
 .Pp
 Options are:
 .Bl -tag -width xxx
+.It Fl 1
+Sets the machine-dependent flag
+.Sy RB_MD1
+in
+.Va boothowto .
+.It Fl 2
+Sets the machine-dependent flag
+.Sy RB_MD2
+in
+.Va boothowto .
+.It Fl 3
+Sets the machine-dependent flag
+.Sy RB_MD3
+in
+.Va boothowto .
+.It Fl 4
+Sets the machine-dependent flag
+.Sy RB_MD4
+in
+.Va boothowto .
 .It Fl a
-Prompt for the root file system device, the system crash dump
-device, and the path to
+Sets the
+.Sy RB_ASKNAME
+flag in
+.Va boothowto .
+This causes the kernel to prompt for the root file system device,
+the system crash dump device, and the path to
 .Xr init 8 .
+.It Fl b
+Sets the
+.Sy RB_HALT
+flag in
+.Va boothowto .
+This causes subsequent reboot attempts to halt instead of rebooting.
 .It Fl c
-Bring the system up into the device configuration manager.
-From here the device locators can be tuned to the hardware; see
+Sets the
+.Sy RB_USERCONF
+flag in
+.Va boothowto .
+This causes the kernel to enter the device configuration manager
+as soon as possible, which allows devices to be enabled or disabled,
+and allows device locators can be tuned to the hardware; see
 .Xr userconf 4 .
 .It Fl d
-Bring the system up in debug mode.
-Here it waits for a kernel debugger connect; see
+Sets the
+.Sy RB_KDB
+flag in
+.Va boothowto .
+Requests the kernel to enter debug mode, in which it
+waits for a connection from a kernel debugger; see
 .Xr ddb 4 .
+.It Fl m
+Sets the
+.Sy RB_MINIROOT
+flag in
+.Va boothowto .
+Informs the kernel that a mini-root file system is present in memory.
 .It Fl q
+Sets the
+.Sy AB_QUIET
+flag in
+.Va boothowto .
 Boot the system in quiet mode.
 .It Fl s
-Bring the system up in single-user mode.
+Sets the
+.Sy RB_SINGLE
+flag in
+.Va boothowto .
+Boot the system in single-user mode.
 .It Fl v
+Sets the
+.Sy AB_VERBOSE
+flag in
+.Va boothowto .
 Boot the system in verbose mode.
 .It Fl x
+Sets the
+.Sy AB_DEBUG
+flag in
+.Va boothowto .
 Boot the system with debug messages enabled.
 .It Fl z
+Sets the
+.Sy AB_SILENT
+flag in
+.Va boothowto .
 Boot the system in silent mode.
 .El
 .It Ic consdev Va dev
@@ -153,12 +230,16 @@ is of the form specified in
 .Cm boot .
 .It Ic help
 Print an overview about commands and arguments.
+.\" .It Ic load Va module Op Va arguments
+.\" [i386 only]
 .It Ic ls Op Pa path
 Print a directory listing of
 .Pa path ,
 containing inode number, filename, and file type.
 .Pa path
 can contain a device specification.
+.\" .It Ic multiboot Va kernel Op Va arguments
+.\" [i386 only]
 .It Ic quit
 Reboot the system.
 .El
@@ -194,12 +275,12 @@ manual pages,
 .Xr ddb 4 ,
 .Xr userconf 4 ,
 .\" .Xr boot.cfg 5 ,
-.Xr boot_console 8 ,
 .Xr halt 8 ,
 .Xr installboot 8 ,
 .Xr reboot 8 ,
 .Xr shutdown 8
 .Sh BUGS
+The kernel file name must be specified before, not after, the boot options.
 Any
 .Ar filename
 specified after the boot options, e.g.:
