@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.72 2008/10/13 16:25:12 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.73 2008/10/13 18:16:33 pooka Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -219,7 +219,9 @@ NR == 1 {
 	printf "#define SPARG(p,k)\t((p)->k.be.datum)\n" > rumpcalls
 	printf "#else /* LITTLE_ENDIAN, I hope dearly */\n" > rumpcalls
 	printf "#define SPARG(p,k)\t((p)->k.le.datum)\n" > rumpcalls
-	printf "#endif\n" > rumpcalls
+	printf "#endif\n\n" > rumpcalls
+	printf "int rump_enosys(void);\n" > rumpcalls
+	printf "int\nrump_enosys()\n{\n\n\treturn ENOSYS;\n}\n" > rumpcalls
 
 	# System call names are included by userland (kdump(1)), so
 	# hide the include files from it.
