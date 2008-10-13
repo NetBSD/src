@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.81 2008/06/11 18:52:32 cegger Exp $ */
+/*	$NetBSD: sbus.c,v 1.82 2008/10/13 12:25:22 nakayama Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.81 2008/06/11 18:52:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.82 2008/10/13 12:25:22 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.81 2008/06/11 18:52:32 cegger Exp $");
 #include <machine/bus.h>
 #include <machine/openfirm.h>
 
-#include <sparc64/sparc64/cache.h>
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/sbusreg.h>

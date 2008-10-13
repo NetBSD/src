@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.81 2008/07/10 15:04:42 nakayama Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.82 2008/10/13 12:25:22 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.81 2008/07/10 15:04:42 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82 2008/10/13 12:25:22 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -70,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.81 2008/07/10 15:04:42 nakayama Exp
 #include <machine/frame.h>
 #include <machine/trap.h>
 #include <machine/bus.h>
-
-#include <sparc64/sparc64/cache.h>
 
 /*
  * Map a user I/O request into kernel virtual address space.
