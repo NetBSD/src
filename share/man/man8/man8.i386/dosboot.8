@@ -1,4 +1,4 @@
-.\"	$NetBSD: dosboot.8,v 1.16 2007/12/14 12:03:53 apb Exp $
+.\"	$NetBSD: dosboot.8,v 1.17 2008/10/13 20:41:21 apb Exp $
 .\"
 .\" Copyright (c) 1997
 .\" 	Matthias Drochner.  All rights reserved.
@@ -24,7 +24,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 14, 2007
+.\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
+.\"
+.Dd October 13, 2008
 .Os
 .Dt DOSBOOT 8 i386
 .Sh NAME
@@ -107,7 +109,7 @@ flag or in interactive mode are:
 .It Xo Ic boot
 .Op Va device : Ns
 .Op Va filename
-.Op Fl acdqsvxz
+.Op Fl 1234abcdmqsvxz
 .Xc
 Boot
 .Nx .
