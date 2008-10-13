@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/05 04:50:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/13 16:38:52 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -11,13 +11,10 @@ FILESDIR=	${X11USRLIBDIR}/X11/doc
 
 MAN=	Xorg.1 xorg.conf.5
 
-# XXX
-Xorg.1: Xorg.man.pre
-	cp ${.ALLSRC} ${.TARGET}
+BUILDSYMLINKS+=	${X11SRCDIR.xorg-server}/hw/xfree86/doc/man/Xorg.man.pre \
+		Xorg.man \
+		${X11SRCDIR.xorg-server}/hw/xfree86/doc/man/xorg.conf.man.pre \
+		xorg.conf.man
 
-# XXX
-xorg.conf.5: xorg.conf.man.pre
-	cp ${.ALLSRC} ${.TARGET}
-     
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
