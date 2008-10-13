@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.229 2008/10/13 15:29:22 apb Exp $
+#	$NetBSD: bsd.README,v 1.230 2008/10/13 18:24:21 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1371,9 +1371,15 @@ The following variables are defined to commands to perform the
 appropriate operation, with the default in [brackets].
 (Note that these are overridden in <bsd.own.mk> if USETOOLS == "yes"):
 
+TOOL_AMIGAAOUT2BB	aout to Amiga bootblock converter.  [amiga-aout2bb]
+
+TOOL_AMIGAELF2BB	ELF to Amiga bootblock converter.  [amiga-elf2bb]
+
+TOOL_AMIGATXLT		Amige assembly language format translator.  [amiga-txlt]
+
 TOOL_ASN1_COMPILE	ASN1 compiler.  [asn1_compile]
 
-TOOL_ATF_COMPILE	Generates POSIX shell test programs.  [atf-compile]
+TOOL_ATF_COMPILE	Generate POSIX shell test programs.  [atf-compile]
 
 TOOL_CAP_MKDB		Create capability database.  [cap_mkdb]
 
@@ -1391,7 +1397,11 @@ TOOL_CTAGS		Create a tags file.  [ctags]
 
 TOOL_DB			Manipulate db(3) databases.  [db]
 
+TOOL_DISKLABEL		Read and write disk pack label.  [disklabel]
+
 TOOL_EQN		Format equations for groff.  [eqn]
+
+TOOL_FDISK		MS-DOS partition maintenance program.  [fdisk]
 
 TOOL_FGEN		IEEE 1275 Open Firmware FCode Tokenizer.  [fgen]
 
@@ -1399,9 +1409,15 @@ TOOL_GENASSYM		Generate constants for assembly files.  [genassym]
 
 TOOL_GENCAT		Generate NLS message catalogs.  [gencat]
 
+TOOL_GMAKE		GNU make utility.  [gmake]
+
 TOOL_GROFF		Front end for groff document formatting system.  [groff]
 
 TOOL_HEXDUMP		Ascii, decimal, hexadecimal, octal dump.  [hexdump]
+
+TOOL_HP300MKBOOT	Make bootable image for hp300.  [hp300-mkboot]
+
+TOOL_HP700MKBOOT	Make bootable image for hp700.  [hp700-mkboot]
 
 TOOL_INDXBIB		Make bibliographic database's inverted index.  [indxbib]
 
@@ -1413,6 +1429,8 @@ TOOL_JOIN		Relational database operator.  [join]
 
 TOOL_M4			M4 macro language processor.  [m4]
 
+TOOL_MACPPCFIXCOFF	Fix up xcoff headers for macppc.  [macppc-fixcoff]
+
 TOOL_MAKEFS		Create file system image from directory tree.  [makefs]
 
 TOOL_MAKEINFO		Translate Texinfo documents.  [makeinfo]
@@ -1422,6 +1440,9 @@ TOOL_MAKEWHATIS		Create a whatis.db database.  [makewhatis]
 TOOL_MDSETIMAGE		Set kernel RAM disk image.  [mdsetimage]
 
 TOOL_MENUC		Menu compiler.  [menuc]
+
+TOOL_MIPSELF2ECOFF	Convert ELF-format executable to ECOFF for mips.
+			[mips-elf2ecoff]
 
 TOOL_MKCSMAPPER		Make charset mapping table.  [mkcsmapper]
 
@@ -1441,7 +1462,7 @@ TOOL_PAX		Manipulate file archives and copy directories.  [pax]
 
 TOOL_PIC		Compile pictures for groff.  [pic]
 
-TOOL_POWERPCMKBOOTIMAGE	powerpc-mkbootimage (XXXBUILDSH).  [powerpc-mkbootimage]
+TOOL_POWERPCMKBOOTIMAGE	Make bootable image for powerpc.  [powerpc-mkbootimage]
 
 TOOL_PWD_MKDB		Generate the password databases.  [pwd_mkdb]
 
