@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.232 2008/10/10 10:23:34 ad Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.233 2008/10/13 19:44:21 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.232 2008/10/10 10:23:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.233 2008/10/13 19:44:21 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -232,8 +232,7 @@ void	tcp6_mtudisc_callback(struct in6_addr *);
 void	tcp6_mtudisc(struct in6pcb *, int);
 #endif
 
-POOL_INIT(tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl", NULL,
-    IPL_SOFTNET);
+static struct pool tcpcb_pool;
 
 #ifdef TCP_CSUM_COUNTERS
 #include <sys/device.h>
@@ -376,6 +375,8 @@ tcp_init(void)
 	int hlen;
 
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
+	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
+	    NULL, IPL_SOFTNET);
 
 	hlen = sizeof(struct ip) + sizeof(struct tcphdr);
 #ifdef INET6
