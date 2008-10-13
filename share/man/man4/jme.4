@@ -1,4 +1,4 @@
-.\"	$NetBSD: jme.4,v 1.1 2008/10/11 21:54:11 bouyer Exp $
+.\"	$NetBSD: jme.4,v 1.2 2008/10/13 08:39:27 wiz Exp $
 .\"
 .\" Copyright (c) 2008 Manuel Bouyer
 .\" All rights reserved.
@@ -33,19 +33,18 @@
 .Os
 .Sh NAME
 .Nm jme
-.Nd Ethernet driver for JMicron Technologies JME250 Gigabit Ethernet and
-JME260 Fast Ethernet controllers
+.Nd JMicron Technologies JME250 Gigabit Ethernet and JME260 Fast Ethernet controller driver
 .Sh SYNOPSIS
 .Cd "jme* at pci? dev ? function ?"
 .Pp
-Configuration of PHYs are necessary.
+Configuration of PHYs is necessary.
 See
 .Xr mii 4 .
 .Sh DESCRIPTION
 The
 .Nm jme
-device driver supports network adapters based on
-the JMicron Technologies JME250 and JME260 chips.
+device driver supports network adapters based on the JMicron
+Technologies JME250 Gigabit Ethernet and JME260 Fast Ethernet chips.
 The following features are supported:
 .Bd -literal -offset indent
 IPv4 transmit/receive IP/TCP/UDP checksum offload
@@ -59,14 +58,14 @@ Interrupt coalescing
 .Pp
 Interrupt coalescing can be controlled on a per-adapter basis through
 the following sysctls:
-.Bl -tag -width ".Cm hw.jme.jme<x>.int_rxtos"
-.It Cm hw.jme.jme<x>.int_rxtos
+.Bl -tag -width ".Cm hw.jme.jmeXxX.int_rxtos"
+.It Cm hw.jme.jme\*[Lt]x\*[Gt].int_rxtos
 jme receive interrupt moderation timer, in microseconds (defaults to 100)
-.It Cm hw.jme.jme<x>.int_rxct
+.It Cm hw.jme.jme\*[Lt]x\*[Gt].int_rxct
 jme receive interrupt moderation packet counter (defaults to 2)
-.It Cm hw.jme.jme<x>.int_txto
+.It Cm hw.jme.jme\*[Lt]x\*[Gt].int_txto
 jme transmit interrupt moderation timer, in microseconds (defaults to 100)
-.It Cm hw.jme.jme<x>.int_txct
+.It Cm hw.jme.jme\*[Lt]x\*[Gt].int_txct
 jme transmit interrupt moderation packet counter (defaults to 2)
 .El
 .Sh SEE ALSO
@@ -75,15 +74,14 @@ jme transmit interrupt moderation packet counter (defaults to 2)
 .Xr netintro 4 ,
 .Xr pci 4 ,
 .Xr ifconfig 8
-.Sh BUGS
-.Pp
-Jumbo frames are not yet supported
-.Pp
-Hardware bugs prevent support of IPv6 receive TCP/UDP checksum offload
-in the JME250 rev A2, and is disabled in the driver.
-This should be revisited when newer hardware revision is available.
 .Sh HISTORY
 The
 .Nm
 device driver first appeared in
 .Nx 5.0 .
+.Sh BUGS
+Jumbo frames are not yet supported.
+.Pp
+Hardware bugs prevent support of IPv6 receive TCP/UDP checksum offload
+in the JME250 rev A2, and is disabled in the driver.
+This should be revisited when a newer hardware revision is available.
