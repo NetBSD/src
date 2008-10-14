@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/14 23:37:19 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
 
 CPP_PROGRAM=	cpp
 CPPFLAGS+=	-DCPP_PROGRAM=\"$(CPP_PROGRAM)\"
-X11EXTRAMANDEFS=-D__cpp__=$(CPP_PROGRAM)
+X11EXTRAMANDEFS=-e 's,__cpp__,$(CPP_PROGRAM),g'
 
 .PATH:	${X11SRCDIR.${PROG}}
 

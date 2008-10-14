@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/09/01 05:34:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2008/10/14 23:37:19 cube Exp $
 
 DRIVER=		xf86-video-sis
 DRIVER_NAME=	sis_drv
@@ -17,5 +17,9 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/drm
 
 # XXX
 COPTS.sis_driver.c=	-Wno-error
+
+X11MANCPP=		yes
+X11EXTRAMANDEFS+=	-D__myservername__=Xorg \
+			-D__myxconfigfile__=xorg.conf
 
 .include "../Makefile.xf86-driver"

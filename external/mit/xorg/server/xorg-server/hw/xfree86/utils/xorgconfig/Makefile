@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/30 06:36:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/14 23:37:19 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -25,10 +25,6 @@ CPPFLAGS+=	-DCARD_DATABASE_FILE='"${X11USRLIBDIR}/X11/Cards"' \
 .if ${MACHINE} == "i386"
 CPPFLAGS+=	-DPCVT_SUPPORT
 .endif
-
-# XXX
-xorgconfig.1: xorgconfig.man.pre
-	cp ${.ALLSRC} ${.TARGET}
 
 .include <bsd.x11.mk>
 XVERSION!=	${PRINTX11VERSION}

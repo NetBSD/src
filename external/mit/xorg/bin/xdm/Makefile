@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/07 14:30:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/14 23:37:19 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -43,6 +43,7 @@ BUILDSYMLINKS+=	xdm.man.cpp xdm.man
 
 CPPFLAGS.resource.c+=	-DDEF_CHOOSER=\"${XDMCHOOSERPATH}\"
 
+X11MANCPP=	yes
 X11EXTRAMANDEFS+=	-DARC4_RANDOM \
 			-DCHOOSERPATH=${XDMCHOOSERPATH} \
 			-DGREETERLIBPATH=${XDMGREETERLIB} \
