@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.12 2008/10/12 23:00:54 mrg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.13 2008/10/14 18:31:42 mrg Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -24,8 +24,8 @@ _YKMSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
 DPSRCS+=	${_YKMSRCS}
 CLEANFILES+=	${_YKMSRCS}
 
-.if exists($S/../gnu/usr.bin/binutils/ld/ldscripts/kmodule)
-KMODSCRIPT=	$S/../gnu/usr.bin/binutils/ld/ldscripts/kmodule
+.if exists($S/../gnu/usr.bin/binutils/ld/xldscripts/kmodule)
+KMODSCRIPT=	$S/../gnu/usr.bin/binutils/ld/xldscripts/kmodule
 .else
 KMODSCRIPT=	${DESTDIR}/usr/libdata/ldscripts/kmodule
 .endif
