@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.22 2008/05/31 21:26:01 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.23 2008/10/14 17:15:20 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.22 2008/05/31 21:26:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.23 2008/10/14 17:15:20 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -225,7 +225,7 @@ u_int		softint_bytes = 8192;
 u_int		softint_timing;
 static u_int	softint_max;
 static kmutex_t	softint_lock;
-static void	*softint_netisrs[32];
+static void	*softint_netisrs[NETISR_MAX];
 
 /*
  * softint_init_isr:
