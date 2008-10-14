@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.12 2008/10/13 21:11:46 cegger Exp $	*/
+/*	$NetBSD: i386.c,v 1.13 2008/10/14 15:49:04 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.12 2008/10/13 21:11:46 cegger Exp $");
+__RCSID("$NetBSD: i386.c,v 1.13 2008/10/14 15:49:04 cegger Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1787,10 +1787,7 @@ powernow_probe(struct cpu_info *ci)
 		return;
 	x86_cpuid(0x80000007, regs);
 
-
-				  
-	bitmask_snprintf(regs[3], "\20\11TscInv\10HwPState\7Clk100MHz"
-	    "\6STC\5TM\4TTP\3VID\2FID\1TS", line, sizeof(line));
+	bitmask_snprintf(regs[3], CPUID_APM_FLAGS, line, sizeof(line));
 	aprint_normal_dev(ci->ci_dev, "AMD Power Management features: %s\n",
 	    line);
 }
