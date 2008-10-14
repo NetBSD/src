@@ -1,3 +1,5 @@
+/*	$NetBSD: accf_data.c,v 1.2 2008/10/14 13:05:44 ad Exp $	*/
+
 /*-
  * Copyright (c) 2000 Alfred Perlstein <alfred@FreeBSD.org>
  * All rights reserved.
@@ -25,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_data.c,v 1.1 2008/08/04 03:55:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_data.c,v 1.2 2008/10/14 13:05:44 ad Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -35,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: accf_data.c,v 1.1 2008/08/04 03:55:47 tls Exp $");
 #include <sys/sysctl.h>
 #include <sys/signalvar.h>
 #include <sys/socketvar.h>
+
 #include <netinet/accept_filter.h>
 
 /* accept filter that holds a socket until data arrives */
@@ -42,11 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: accf_data.c,v 1.1 2008/08/04 03:55:47 tls Exp $");
 static void	sohasdata(struct socket *so, void *arg, int waitflag);
 
 static struct accept_filter accf_data_filter = {
-	"dataready",
-	sohasdata,
-	NULL,
-	NULL,
-	{NULL,}
+	.accf_name = "dataready",
+	.accf_callback = sohasdata,
 };
 
 void accf_dataattach(int);
