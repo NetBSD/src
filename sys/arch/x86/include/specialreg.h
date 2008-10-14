@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.29 2008/10/14 12:22:29 cegger Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.30 2008/10/14 14:33:51 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -178,6 +178,25 @@
 				    "\6LZCNT\7SSE4A\10MISALIGNSSE" \
 				    "\0113DNOWPREFETCH\12OSVW\13IBS" \
 				    "\14SSE5\15SKINIT\16WDT"
+
+/*
+ * AMD Advanced Power Management
+ * CPUID Fn8000_0007 %edx
+ */
+
+#define CPUID_APM_TS	0x00000001	/* Temperature Sensor */
+#define CPUID_APM_FID	0x00000002	/* Frequency ID control */
+#define CPUID_APM_VID	0x00000004	/* Voltage ID control */
+#define CPUID_APM_TTP	0x00000008	/* THERMTRIP (PCI F3xE4 register) */
+#define CPUID_APM_HTC	0x00000010	/* Hardware thermal control (HTC) */
+#define CPUID_APM_STC	0x00000020	/* Software thermal control (STC) */
+#define CPUID_APM_100	0x00000040	/* 100MHz multiplier control */
+#define CPUID_APM_HWP	0x00000080	/* HW P-State control */
+#define CPUID_APM_TSC	0x00000100	/* TSC invariant */
+
+#define CPUID_APM_FLAGS			"\20\1TS\2FID\3VID\4TTP\5HTC\6STC\007100\8HWP\9TSC"
+
+
 /*
  * Centaur Extended Feature flags
  */
