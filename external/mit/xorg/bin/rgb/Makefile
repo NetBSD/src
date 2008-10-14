@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/14 23:37:19 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,9 @@ PROG=	showrgb
 
 CPPFLAGS+=-DNDBM -DRGB_DB=\"${X11LIBDIR}/rgb\" -DUSE_RGB_TXT
 CPPFLAGS+=-I${X11SRCDIR.rgb}/include
+
+X11EXTRAMANDEFS+=	-e 's,__RGB_DB__,${X11LIBDIR}/rgb,g; \
+			    s,__RGB_DB_TYPE__,text,g'
 
 FILES=	rgb.txt
 FILESDIR=${X11LIBDIR}

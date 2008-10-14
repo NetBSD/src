@@ -1,26 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2008/08/02 04:32:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/14 23:37:19 cube Exp $
 
 .include <bsd.own.mk>
 
-SecurityPolicy.5: SecurityPolicy.man.pre
-	${_MKTARGET_CREATE}
-	rm -f ${.TARGET}
-	${CPP} -undef -traditional \
-		-D__default_font_path__="`echo ${COMPILEDDEFAULTFONTPATH} | sed -e 's/,/, /g'`" \
-		< ${.ALLSRC} \
-		> ${.TARGET}
+.include "../dix/Makefile.common"
 
-Xserver.1: Xserver.man.pre
-	${_MKTARGET_CREATE}
-	rm -f ${.TARGET}
-	${CPP} -undef -traditional \
-		-D__default_font_path__="`echo ${COMPILEDDEFAULTFONTPATH} | sed -e 's/,/, /g'`" \
-		< ${.ALLSRC} \
-		> ${.TARGET}
-
+.PATH: ${X11SRCDIR.xorg-server}/doc
 MAN=	SecurityPolicy.5 Xserver.1
-
-.PATH:	${X11SRCDIR.xorg-server}/doc
+X11EXTRAMANDEFS+=	-e 's%__default_font_path__%${X11DEFAULTFONTPATH:ts,:S/,/, /g}%g'
 
 .include <bsd.x11.mk>
 .include <bsd.man.mk>

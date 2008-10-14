@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/14 23:37:19 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,10 @@ PROG=	sessreg
 .include "../xdm/Makefile.xdm"
 
 CPPFLAGS=	-I${X11SRCDIR.${PROG}}/../include
+
+X11EXTRAMANDEFS+=	-e 's,__ttys_file__,/etc/ttys,g; \
+			s,__utmp_file__,/var/run/utmp,g; \
+			s,__wtmp_file__,/var/log/wtmp,g'
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

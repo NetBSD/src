@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/08/09 03:26:39 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/14 23:37:19 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -27,10 +27,6 @@ DPADD+=	${LIBX86_64}
 .endif
 
 .PATH: ${X11SRCDIR.xorg-server}/hw/xfree86/utils/${PROG}
-
-# XXX
-pcitweak.1: pcitweak.man.pre
-	cp ${.ALLSRC} ${.TARGET}
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

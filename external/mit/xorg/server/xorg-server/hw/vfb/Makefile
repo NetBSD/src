@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/15 15:55:05 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2008/10/14 23:37:19 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -99,10 +99,6 @@ DPADD+=	${LIBI386}
 LDADD+=	-lx86_64
 DPADD+=	${LIBX86_64}
 .endif
-
-# XXX
-Xvfb.1: Xvfb.man.pre
-	cp ${.ALLSRC} ${.TARGET}
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

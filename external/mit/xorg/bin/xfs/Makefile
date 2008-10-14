@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/14 23:37:19 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -42,7 +42,8 @@ CPPFLAGS.config.c=	${CONN_DEFINES} -DFONTCACHE
 # XXX
 CPPFLAGS.xfstrans.c+=	-Wno-error
 
-X11EXTRAMANDEFS+=	-DDEFAULT_CONFIG_FILE=${XFSCONFIGDIR}/config
+X11EXTRAMANDEFS+=	-e 's%__configfilepath__%${XFSCONFIGDIR}/config%g; \
+			s%__configfiledesc__%the default file,%g'
 
 
 BUILDSYMLINKS=	config.cpp fsconfig.cpp

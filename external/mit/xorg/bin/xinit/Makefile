@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/09/25 20:14:09 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2008/10/14 23:37:19 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -28,6 +28,7 @@ LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
 DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 
 X11EXTRAMANDEFS=-D__xinitdir__=${XINITDIR}
+X11MANCPP=	yes
 
 .PATH:	${X11SRCDIR.${PROG}}
 
