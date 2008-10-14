@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.9 2008/08/04 15:02:16 pooka Exp $	*/
+/*	$NetBSD: pool.c,v 1.10 2008/10/14 10:32:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -155,6 +155,30 @@ pool_setlowat(struct pool *pp, int n)
 {
 
 	return;
+}
+
+void
+pool_cache_sethardlimit(pool_cache_t pc, int n, const char *warnmess,
+	int ratecap)
+{
+
+	return;
+}
+
+void
+pool_cache_setlowat(pool_cache_t pc, int n)
+{
+
+	return;
+}
+
+void
+pool_cache_set_drain_hook(pool_cache_t pc, void (*fn)(void *, int), void *arg)
+{
+
+	/* XXX: notused */
+	pc->pc_pool.pr_drain_hook = fn;
+	pc->pc_pool.pr_drain_hook_arg = arg;
 }
 
 /* XXX: for tmpfs, shouldn't be here */
