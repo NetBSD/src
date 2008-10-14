@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.2 2008/10/13 22:05:15 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.3 2008/10/14 00:50:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -103,7 +103,7 @@ virtif_create(struct ifaliasreq *ia, struct ifnet **ifpp)
 	struct virtif_sc *sc;
 	struct ifreq ifr;
 	struct ifnet *ifp;
-	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb0, 0x0a, 0x00, 0x0b, 0x0e, 0x01 };
+	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0x0a, 0x00, 0x0b, 0x0e, 0x01 };
 	int fd, rv, error;
 	int mynum;
 
