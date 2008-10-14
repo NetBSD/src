@@ -1,3 +1,5 @@
+/*	$NetBSD: accf_http.c,v 1.2 2008/10/14 13:05:44 ad Exp $	*/
+
 /*-
  * Copyright (c) 2000 Paycounter, Inc.
  * Author: Alfred Perlstein <alfred@paycounter.com>, <alfred@FreeBSD.org>
@@ -26,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.1 2008/08/04 03:55:47 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.2 2008/10/14 13:05:44 ad Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -38,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.1 2008/08/04 03:55:47 tls Exp $");
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+
 #include <netinet/accept_filter.h>
 
 /* check for GET/HEAD */
@@ -55,11 +58,8 @@ static int mbufstrncmp(struct mbuf *m, struct mbuf *npkt, int offset,
 static int sbfull(struct sockbuf *sb);
 
 static struct accept_filter accf_http_filter = {
-	"httpready",
-	sohashttpget,
-	NULL,
-	NULL,
-	{NULL,}
+	.accf_name = "httpready",
+	.accf_callback = sohashttpget,
 };
 
 /*
