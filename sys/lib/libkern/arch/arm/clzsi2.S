@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 
 	.text
-ENTRY(_clzdi2)
+ENTRY(__clzdi2)
 	movs	r3, r0
 	movne	r0, #31
 	bne	.L_clz
@@ -38,10 +38,9 @@ ENTRY(_clzdi2)
 	bne	.L_clz
 	mov	r0, #64
 	bx	lr
-END(_clzdi2)
-	
+END(__clzdi2)
 
-ENTRY(_clzsi2)
+ENTRY(__clzsi2)
 	movs	r3, r0
 	moveq	r0, #32
 	bxeq	lr
@@ -84,6 +83,6 @@ ENTRY(_clzsi2)
 	teq	r3, #0
 	addeq	r0, r0, #1
 #endif
-#endif
+#endif	/* __OPTIMIZE_SIZE__ */
 	bx	lr
-END(_clzsi2)
+END(__clzsi2)
