@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.32 2008/08/02 22:23:18 jmcneill Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.33 2008/10/14 18:12:38 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ typedef struct ehci_soft_itd {
 struct ehci_xfer {
 	struct usbd_xfer xfer;
 	struct usb_task	abort_task;
-	LIST_ENTRY(ehci_xfer) inext; /* list of active xfers */
+	TAILQ_ENTRY(ehci_xfer) inext; /* list of active xfers */
 	ehci_soft_qtd_t *sqtdstart;
 	ehci_soft_qtd_t *sqtdend;
 	ehci_soft_itd_t *itdstart;
@@ -138,7 +138,8 @@ typedef struct ehci_softc {
 	 */
 	struct ehci_soft_itd **sc_softitds;
 
-	LIST_HEAD(, ehci_xfer) sc_intrhead;
+	TAILQ_HEAD(, ehci_xfer) sc_intrhead;
+	kmutex_t sc_intrhead_lock;
 
 	ehci_soft_qh_t *sc_freeqhs;
 	ehci_soft_qtd_t *sc_freeqtds;
