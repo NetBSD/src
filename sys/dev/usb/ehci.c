@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.153 2008/10/14 18:12:38 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.154 2008/10/14 18:32:53 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.153 2008/10/14 18:12:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154 2008/10/14 18:32:53 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1483,6 +1483,7 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 	    sizeof(sqh->qh), BUS_DMASYNC_PREREAD);
 }
 
+#if notyet
 void
 ehci_dump_itd(struct ehci_soft_itd *itd)
 {
@@ -1518,6 +1519,7 @@ ehci_dump_sitd(struct ehci_soft_itd *itd)
 			itd, itd->u.frame_list.next, itd->u.frame_list.prev,
 			itd->xfer_next, itd->physaddr, itd->slot);
 }
+#endif
 
 #ifdef DIAGNOSTIC
 void
