@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.47 2008/10/10 18:10:30 wrstuden Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.91.2.48 2008/10/14 20:25:42 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.47 2008/10/10 18:10:30 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.48 2008/10/14 20:25:42 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,6 +344,11 @@ sa_freevp(struct proc *p, struct sadata *sa, struct sadata_vp *vp)
 }
 
 /*
+ *
+ */
+int sa_system_disabled = 0;
+
+/*
  * sys_sa_register
  *	Handle copyin and copyout of info for registering the
  * upcall handler address.
@@ -391,6 +396,9 @@ dosa_register(struct lwp *l, sa_upcall_t new, sa_upcall_t *prev, int flags,
 {
 	struct proc *p = l->l_proc;
 	struct sadata *sa;
+
+	if (sa_system_disabled)
+		return EINVAL;
 
 	if (p->p_sa == NULL) {
 		/* Allocate scheduler activations data structure */
@@ -1506,6 +1514,16 @@ sa_switch(struct lwp *l)
 	}
 
 	if (vp->savp_lwp == l) {
+		if (vp->savp_pflags & SAVP_FLAG_DELIVERING) {
+			/*
+			 * We've exited sa_switchcall() but NOT
+			 * made it into a new systemcall. Don't make
+			 * a BLOCKED upcall.
+			 */
+			mutex_exit(&vp->savp_mutex);
+			mi_switch(l);
+			return;
+		}
 		/*
 		 * Case 1: we're blocking for the first time; generate
 		 * a SA_BLOCKED upcall and allocate resources for the
@@ -1687,8 +1705,9 @@ sa_switchcall(void *arg)
 	KASSERT(vp->savp_lwp == l2);
 	DPRINTFN(6,("sa_switchcall(%d.%d)\n", p->p_pid, l2->l_lid));
 
-	l2->l_flag &= ~LW_SA;
+	l2->l_flag |= LW_SA;
 	lwp_unlock(l2);
+	l2->l_pflag |= LP_SA_NOBLOCK;
 
 	if (vp->savp_lwpcache_count == 0) {
 		/* Allocate the next cache LWP */
@@ -1706,9 +1725,10 @@ sa_switchcall(void *arg)
 		if (sast) {
 			sau->sau_stack = sast->sast_stack;
 			SIMPLEQ_INSERT_TAIL(&vp->savp_upcalls, sau, sau_next);
+			mutex_exit(&vp->savp_mutex);
 			lwp_lock(l2);
 			l2->l_flag |= LW_SA_UPCALL;
-			mutex_exit(&vp->savp_mutex);
+			lwp_unlock(l2);
 		} else {
 			/*
 			 * Oops! We're in trouble. The app hasn't
@@ -1741,12 +1761,17 @@ sa_switchcall(void *arg)
 			/* mostly NOTREACHED */
 			lwp_exit(l2);
 		}
-	} else
-		lwp_lock(l2);
+	}
 
-	l2->l_flag |= LW_SA;
-	lwp_unlock(l2);
 	upcallret(l2);
+
+	/*
+	 * Ok, clear LP_SA_NOBLOCK. However it'd be VERY BAD to generate
+	 * a blocked upcall before this upcall makes it to libpthread.
+	 * So disable BLOCKED upcalls until this vp enters a syscall.
+	 */
+	l2->l_pflag &= ~LP_SA_NOBLOCK;
+	vp->savp_pflags |= SAVP_FLAG_DELIVERING;
 }
 
 /*
