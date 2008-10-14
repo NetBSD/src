@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10.12.1 2008/05/10 23:48:46 wrstuden Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.12.2 2008/10/14 20:25:42 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -78,6 +78,8 @@
  * T.Horiuchi 1998.06.8
  */
 
+#include "opt_sa.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -127,6 +129,12 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	params = (void *)tf->tf_r15;
 
@@ -260,6 +268,12 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	params = (void *)tf->tf_r15;
 

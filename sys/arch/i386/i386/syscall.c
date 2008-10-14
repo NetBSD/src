@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.55.2.1 2008/05/23 04:30:03 wrstuden Exp $	*/
+/*	$NetBSD: syscall.c,v 1.55.2.2 2008/10/14 20:25:42 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.55.2.1 2008/05/23 04:30:03 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.55.2.2 2008/10/14 20:25:42 wrstuden Exp $");
 
 #include "opt_vm86.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +87,12 @@ syscall(struct trapframe *frame)
 
 	SYSCALL_COUNT(syscall_counts, code);
 	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	if (callp->sy_argsize) {
 		error = x86_copyargs((char *)frame->tf_esp + sizeof(int), args,
@@ -156,6 +163,14 @@ syscall_vm86(frame)
 
 	l = curlwp;
 	p = l->l_proc;
+
+#ifdef KERN_SA
+	/* While this is probably not needed, it's probably better to include than not */
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
 	(*p->p_emul->e_trapsignal)(l, &ksi);
 	userret(l);
 }

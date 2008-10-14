@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55.2.3 2008/06/30 04:55:55 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.55.2.4 2008/10/14 20:25:42 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55.2.3 2008/06/30 04:55:55 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55.2.4 2008/10/14 20:25:42 wrstuden Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55.2.3 2008/06/30 04:55:55 wrstuden Exp $
 
 #include "opt_kgdb.h"
 #include "opt_ptrace.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1106,6 +1107,12 @@ syscall(struct trapframe *frame, int *args)
 	callp = p->p_emul->e_sysent;
 	code = frame->tf_t1;
 	LWP_CACHE_CREDS(l, p);
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	/*
 	 * Restarting a system call is touchy on the HPPA, 

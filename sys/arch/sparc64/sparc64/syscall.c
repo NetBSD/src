@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.30.2.4 2008/09/18 04:33:35 wrstuden Exp $ */
+/*	$NetBSD: syscall.c,v 1.30.2.5 2008/10/14 20:25:42 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30.2.4 2008/09/18 04:33:35 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.30.2.5 2008/10/14 20:25:42 wrstuden Exp $");
+
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,6 +308,12 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	if ((error = getargs(p, tf, &code, &callp, &args, &s64)) != 0)
 		goto bad;
 
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
@@ -394,6 +402,12 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 #else
 	ap = &args;
 #endif
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
 	if ((error = trace_enter(code, ap->r, callp->sy_narg)) != 0) {
 		goto out;
 	}

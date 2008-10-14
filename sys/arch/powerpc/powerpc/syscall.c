@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.41.4.1 2008/05/10 23:48:46 wrstuden Exp $	*/
+/*	$NetBSD: syscall.c,v 1.41.4.2 2008/10/14 20:25:42 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -34,6 +34,7 @@
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
+#include "opt_sa.h"
 /* DO NOT INCLUDE opt_compat_XXX.h */
 /* If needed, they will be included by file that includes this one */
 
@@ -62,7 +63,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.41.4.1 2008/05/10 23:48:46 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.41.4.2 2008/10/14 20:25:42 wrstuden Exp $");
 
 void
 child_return(void *arg)
@@ -102,6 +103,12 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	code = frame->fixreg[0];
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 #ifdef COMPAT_MACH
 	if ((callp = mach_syscall_dispatch(&code)) == NULL)
@@ -206,6 +213,12 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	code = frame->fixreg[0];
 	params = frame->fixreg + FIRSTARG;
 	n = NARGREG;
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	realcode = code;
 #ifdef COMPAT_MACH

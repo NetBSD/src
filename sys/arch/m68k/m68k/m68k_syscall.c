@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.34.12.1 2008/06/22 18:12:02 wrstuden Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.34.12.2 2008/10/14 20:25:42 wrstuden Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,11 +110,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34.12.1 2008/06/22 18:12:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34.12.2 2008/10/14 20:25:42 wrstuden Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_aout_m68k.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,6 +168,12 @@ syscall(register_t code, struct frame frame)
 	sticks = p->p_sticks;
 	l->l_md.md_regs = frame.f_regs;
 	LWP_CACHE_CREDS(l, p);
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	(p->p_md.md_syscall)(code, l, &frame);
 
