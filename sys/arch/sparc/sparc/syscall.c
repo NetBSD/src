@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18.4.2 2008/06/23 04:30:43 wrstuden Exp $ */
+/*	$NetBSD: syscall.c,v 1.18.4.3 2008/10/14 20:25:42 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,10 +49,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18.4.2 2008/06/23 04:30:43 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18.4.3 2008/10/14 20:25:42 wrstuden Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,6 +234,12 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 	rval.o[0] = 0;
 	rval.o[1] = tf->tf_out[1];
 
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
 	error = (*callp->sy_call)(l, &args, rval.o);
 
 	switch (error) {
@@ -310,6 +317,12 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 
 	rval.o[0] = 0;
 	rval.o[1] = tf->tf_out[1];
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	error = (*callp->sy_call)(l, &args, rval.o);
 

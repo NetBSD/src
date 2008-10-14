@@ -1,4 +1,4 @@
-/*	$NetBSD: sa.h,v 1.11.2.3 2008/05/14 01:35:18 wrstuden Exp $	*/
+/*	$NetBSD: sa.h,v 1.11.2.4 2008/10/14 20:25:43 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,5 +68,7 @@ struct sa_stackinfo_t {
 #define SA_FLAG_PREEMPT	0x0001	/* Generate upcalls on a vanilla preempt() */
 
 #define	SA_FLAG_STACKINFO 0x010000 /* Use stackinfo for upcall stack return */
+
+int sa_system_disabled;
 
 #endif /* !_SYS_SA_H_ */

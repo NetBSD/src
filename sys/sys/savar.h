@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.24.2.12 2008/10/10 18:10:30 wrstuden Exp $	*/
+/*	$NetBSD: savar.h,v 1.24.2.13 2008/10/14 20:25:43 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -129,6 +129,7 @@ struct sadata_vp {
 };
 
 #define	SAVP_FLAG_NOUPCALLS	0x0001	/* Already did upcalls, don't redo */
+#define	SAVP_FLAG_DELIVERING	0x0002	/* Delivering an upcall, no block */
 
 /*
  * Locking:
