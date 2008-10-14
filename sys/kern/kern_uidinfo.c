@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uidinfo.c,v 1.2 2008/10/14 09:16:32 ad Exp $	*/
+/*	$NetBSD: kern_uidinfo.c,v 1.3 2008/10/14 09:17:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.2 2008/10/14 09:16:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uidinfo.c,v 1.3 2008/10/14 09:17:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,8 @@ chgsbsize(struct uidinfo *uip, u_long *hiwat, u_long to, rlim_t xmax)
 	rlim_t nsb;
 	const long diff = to - *hiwat;
 
-	nsb = atomic_add_long_nv((long *)&uip->ui_sbsize, diff);
-	if (diff > 0 && (rlim_t)nsb > xmax) {
+	nsb = (rlim_t)atomic_add_long_nv((long *)&uip->ui_sbsize, diff);
+	if (diff > 0 && nsb > xmax) {
 		atomic_add_long((long *)&uip->ui_sbsize, -diff);
 		return 0;
 	}
