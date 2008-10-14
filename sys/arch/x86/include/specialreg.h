@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.28 2008/10/13 19:14:53 cegger Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.29 2008/10/14 12:22:29 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -176,7 +176,7 @@
 #define CPUID_AMD_MASK4	0x00003fff
 #define CPUID_AMD_FLAGS4	"\20\1LAHF\2CMPLEGACY\3SVM\4EAPIC\5ALTMOVCR0" \
 				    "\6LZCNT\7SSE4A\10MISALIGNSSE" \
-				    "\113DNOWPREFETCH\12OSVW\13IBS" \
+				    "\0113DNOWPREFETCH\12OSVW\13IBS" \
 				    "\14SSE5\15SKINIT\16WDT"
 /*
  * Centaur Extended Feature flags
