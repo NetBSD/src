@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.52 2008/10/13 11:14:14 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.53 2008/10/14 10:42:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -47,6 +47,8 @@
 #include <sys/cpu.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
+#include <sys/tprintf.h>
+#include <sys/timetc.h>
 
 #include <machine/stdarg.h>
 
@@ -68,6 +70,8 @@ int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
 int hardclock_ticks;
+bool mp_online = false;
+struct vm_map *mb_map;
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
@@ -127,6 +131,30 @@ uprintf(const char *fmt, ...)
 	va_end(ap);
 }
 
+/* relegate this to regular printf */
+tpr_t
+tprintf_open(struct proc *p)
+{
+
+	return (tpr_t)0x111;
+}
+
+void
+tprintf(tpr_t tpr, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void
+tprintf_close(tpr_t tpr)
+{
+
+}
+
 void
 printf_nolog(const char *fmt, ...)
 {
@@ -178,6 +206,20 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	if (done)
 		*done = strlen(kaddr)+1; /* includes termination */
 	return 0;
+}
+
+int
+copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
+{
+
+	return copyin(uaddr, kaddr, len);
+}
+
+int
+copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
+{
+
+	return copyout(kaddr, uaddr, len);
 }
 
 int
@@ -463,6 +505,13 @@ sigispending(struct lwp *l, int signo)
 }
 
 void
+sigpending1(struct lwp *l, sigset_t *ss)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
 knote_fdclose(int fd)
 {
 
@@ -577,6 +626,13 @@ devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
 
 int
 devsw_detach(const struct bdevsw *bdev, const struct cdevsw *cdev)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+tc_setclock(struct timespec *ts)
 {
 
 	panic("%s: not implemented", __func__);
