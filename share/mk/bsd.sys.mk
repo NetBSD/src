@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.171 2008/10/13 18:24:21 apb Exp $
+#	$NetBSD: bsd.sys.mk,v 1.172 2008/10/14 07:24:34 apb Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -135,9 +135,9 @@ STRIP?=		strip
 
 AWK?=		awk
 
-TOOL_AMIGAAOUT2BB=	amiga-aout2bb
-TOOL_AMIGAELF2BB=	amiga-elf2bb
-TOOL_AMIGATXLT=		amiga-txlt
+TOOL_AMIGAAOUT2BB?=	amiga-aout2bb
+TOOL_AMIGAELF2BB?=	amiga-elf2bb
+TOOL_AMIGATXLT?=	amiga-txlt
 TOOL_ASN1_COMPILE?=	asn1_compile
 TOOL_ATF_COMPILE?=	atf-compile
 TOOL_CAP_MKDB?=		cap_mkdb
@@ -148,29 +148,29 @@ TOOL_CONFIG?=		config
 TOOL_CRUNCHGEN?=	crunchgen
 TOOL_CTAGS?=		ctags
 TOOL_DB?=		db
-TOOL_DISKLABEL=		disklabel
+TOOL_DISKLABEL?=	disklabel
 TOOL_EQN?=		eqn
-TOOL_FDISK=		fdisk
+TOOL_FDISK?=		fdisk
 TOOL_FGEN?=		fgen
 TOOL_GENASSYM?=		genassym
 TOOL_GENCAT?=		gencat
-TOOL_GMAKE=		gmake
+TOOL_GMAKE?=		gmake
 TOOL_GROFF?=		groff
 TOOL_HEXDUMP?=		hexdump
-TOOL_HP300MKBOOT=	hp300-mkboot
-TOOL_HP700MKBOOT=	hp700-mkboot
+TOOL_HP300MKBOOT?=	hp300-mkboot
+TOOL_HP700MKBOOT?=	hp700-mkboot
 TOOL_INDXBIB?=		indxbib
 TOOL_INSTALLBOOT?=	installboot
 TOOL_INSTALL_INFO?=	install-info
 TOOL_JOIN?=		join
 TOOL_M4?=		m4
-TOOL_MACPPCFIXCOFF=	macppc-fixcoff
+TOOL_MACPPCFIXCOFF?=	macppc-fixcoff
 TOOL_MAKEFS?=		makefs
 TOOL_MAKEINFO?=		makeinfo
 TOOL_MAKEWHATIS?=	/usr/libexec/makewhatis
 TOOL_MDSETIMAGE?=	mdsetimage
 TOOL_MENUC?=		menuc
-TOOL_MIPSELF2ECOFF=	mips-elf2ecoff
+TOOL_MIPSELF2ECOFF?=	mips-elf2ecoff
 TOOL_MKCSMAPPER?=	mkcsmapper
 TOOL_MKESDB?=		mkesdb
 TOOL_MKLOCALE?=		mklocale
