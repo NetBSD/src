@@ -1,4 +1,4 @@
-/*	$NetBSD: gatea20.c,v 1.10 2007/10/17 19:54:59 garbled Exp $	*/
+/*	$NetBSD: gatea20.c,v 1.11 2008/10/14 14:18:11 ad Exp $	*/
 
 /* extracted from freebsd:sys/i386/boot/biosboot/io.c */
 
@@ -33,15 +33,23 @@ static unsigned char	x_20 = KB_A20;
 void
 gateA20(void)
 {
+	int biosA20(void);
 	u_long psl;
 
+	/*
+	 * First, try asking the BIOS to enable A20.
+	 *
+	 * If that fails, try system configuration port 0x92 but only
+	 * if known to be necessary.  Not all systems enable A20 via the
+	 * keyboard controller, some don't have keyboard controllers,
+	 * and playing with port 0x92 may cause some systems to break.
+	 *
+	 * Otherwise, use the traditional method (keyboard controller).
+	 */
+	if (!biosA20())
+		return;
 	psl = x86_read_psl();
 	x86_disable_intr();
-	/*
-	 * Not all systems enable A20 via the keyboard controller.
-	 *	* IBM PS/2 L40
-	 *	* AMD Elan SC520-based systems
-	 */
 	if (
 #ifdef SUPPORT_PS2
 	    biosmca_ps2model == 0xf82 ||
