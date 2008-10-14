@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.191 2008/09/15 18:12:56 rmind Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.192 2008/10/14 14:17:49 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.191 2008/09/15 18:12:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.192 2008/10/14 14:17:49 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -128,8 +128,6 @@ struct hook_desc {
 	void	*hk_arg;
 };
 typedef LIST_HEAD(, hook_desc) hook_list_t;
-
-MALLOC_DEFINE(M_IOV, "iov", "large iov's");
 
 #ifdef TFTPROOT
 int tftproot_dhcpboot(struct device *);
