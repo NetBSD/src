@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.176 2008/10/12 09:26:50 plunky Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.177 2008/10/14 13:45:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,9 +63,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.176 2008/10/12 09:26:50 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.177 2008/10/14 13:45:26 ad Exp $");
 
-#include "opt_inet.h"
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
 #include "opt_mbuftrace.h"
@@ -615,9 +614,9 @@ sofree(struct socket *so)
 	KASSERT(!cv_has_waiters(&so->so_snd.sb_cv));
 	sorflush(so);
 	refs = so->so_aborting;	/* XXX */
-	/* remove acccept filter if one is present. */
+	/* Remove acccept filter if one is present. */
 	if (so->so_accf != NULL)
-		do_setopt_accept_filter(so, NULL);
+		(void)accept_filt_clear(so);
 	sounlock(so);
 	if (refs == 0)		/* XXX */
 		soput(so);
@@ -1579,26 +1578,26 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 	switch (sopt->sopt_name) {
 
 	case SO_ACCEPTFILTER:
-		error = do_setopt_accept_filter(so, sopt);
-		if (error)
-			return error;
+		error = accept_filt_setopt(so, sopt);
+		KASSERT(solocked(so));
 		break;
 
   	case SO_LINGER:
  		error = sockopt_get(sopt, &l, sizeof(l));
+		solock(so);
  		if (error)
- 			return (error);
- 
+ 			break;
  		if (l.l_linger < 0 || l.l_linger > USHRT_MAX ||
- 		    l.l_linger > (INT_MAX / hz))
-			return EDOM;
+ 		    l.l_linger > (INT_MAX / hz)) {
+			error = EDOM;
+			break;
+		}
  		so->so_linger = l.l_linger;
  		if (l.l_onoff)
  			so->so_options |= SO_LINGER;
  		else
  			so->so_options &= ~SO_LINGER;
- 
-  		break;
+   		break;
 
 	case SO_DEBUG:
 	case SO_KEEPALIVE:
@@ -1610,9 +1609,9 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 	case SO_OOBINLINE:
 	case SO_TIMESTAMP:
 		error = sockopt_getint(sopt, &optval);
+		solock(so);
 		if (error)
-			return (error);
-
+			break;
 		if (optval)
 			so->so_options |= sopt->sopt_name;
 		else
@@ -1624,28 +1623,33 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 	case SO_SNDLOWAT:
 	case SO_RCVLOWAT:
 		error = sockopt_getint(sopt, &optval);
+		solock(so);
 		if (error)
-			return (error);
+			break;
 
 		/*
 		 * Values < 1 make no sense for any of these
 		 * options, so disallow them.
 		 */
-		if (optval < 1)
-			return EINVAL;
+		if (optval < 1) {
+			error = EINVAL;
+			break;
+		}
 
 		switch (sopt->sopt_name) {
 		case SO_SNDBUF:
-			if (sbreserve(&so->so_snd, (u_long)optval, so) == 0)
-				return ENOBUFS;
-
+			if (sbreserve(&so->so_snd, (u_long)optval, so) == 0) {
+				error = ENOBUFS;
+				break;
+			}
 			so->so_snd.sb_flags &= ~SB_AUTOSIZE;
 			break;
 
 		case SO_RCVBUF:
-			if (sbreserve(&so->so_rcv, (u_long)optval, so) == 0)
-				return ENOBUFS;
-
+			if (sbreserve(&so->so_rcv, (u_long)optval, so) == 0) {
+				error = ENOBUFS;
+				break;
+			}
 			so->so_rcv.sb_flags &= ~SB_AUTOSIZE;
 			break;
 
@@ -1672,11 +1676,14 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 	case SO_SNDTIMEO:
 	case SO_RCVTIMEO:
 		error = sockopt_get(sopt, &tv, sizeof(tv));
+		solock(so);
 		if (error)
-			return (error);
+			break;
 
-		if (tv.tv_sec > (INT_MAX - tv.tv_usec / tick) / hz)
-			return EDOM;
+		if (tv.tv_sec > (INT_MAX - tv.tv_usec / tick) / hz) {
+			error = EDOM;
+			break;
+		}
 
 		optval = tv.tv_sec * hz + tv.tv_usec / tick;
 		if (optval == 0 && tv.tv_usec != 0)
@@ -1693,9 +1700,12 @@ sosetopt1(struct socket *so, const struct sockopt *sopt)
 		break;
 
 	default:
-		return ENOPROTOOPT;
+		solock(so);
+		error = ENOPROTOOPT;
+		break;
 	}
-	return 0;
+	KASSERT(solocked(so));
+	return error;
 }
 
 int
@@ -1703,11 +1713,13 @@ sosetopt(struct socket *so, struct sockopt *sopt)
 {
 	int error, prerr;
 
-	solock(so);
-	if (sopt->sopt_level == SOL_SOCKET)
+	if (sopt->sopt_level == SOL_SOCKET) {
 		error = sosetopt1(so, sopt);
-	else
+		KASSERT(solocked(so));
+	} else {
 		error = ENOPROTOOPT;
+		solock(so);
+	}
 
 	if ((error == 0 || error == ENOPROTOOPT) &&
 	    so->so_proto != NULL && so->so_proto->pr_ctloutput != NULL) {
@@ -1757,7 +1769,7 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 	switch (sopt->sopt_name) {
 
 	case SO_ACCEPTFILTER:
-		error = do_getopt_accept_filter(so, sopt);
+		error = accept_filt_getopt(so, sopt);
 		break;
 
 	case SO_LINGER:
