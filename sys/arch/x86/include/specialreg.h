@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.30 2008/10/14 14:33:51 cegger Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.31 2008/10/14 15:49:04 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -194,7 +194,7 @@
 #define CPUID_APM_HWP	0x00000080	/* HW P-State control */
 #define CPUID_APM_TSC	0x00000100	/* TSC invariant */
 
-#define CPUID_APM_FLAGS			"\20\1TS\2FID\3VID\4TTP\5HTC\6STC\007100\8HWP\9TSC"
+#define CPUID_APM_FLAGS			"\20\1TS\2FID\3VID\4TTP\5HTC\6STC\007100\10HWP\11TSC"
 
 
 /*
