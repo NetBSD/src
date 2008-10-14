@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.67 2008/09/15 18:21:48 cube Exp $
+#	$NetBSD: bsd.x11.mk,v 1.68 2008/10/14 23:33:55 cube Exp $
 
 .include <bsd.init.mk>
 
@@ -335,22 +335,58 @@ cleanx11man: .PHONY
 	rm -f ${MAN:U${PROG:D${PROG.1}}}
 .endif								# }
 
-.SUFFIXES:	.man .1 .3 .4 .5 .7
+.SUFFIXES:	.man .man.pre .1 .3 .4 .5 .7
 
-.man.1 .man.3 .man.4 .man.5 .man.7:
+_X11MANTRANSFORM= \
+	__adminmansuffix__	8 \
+	__apploaddir__		${X11ROOTDIR}/lib/X11/app-defaults \
+	__appmansuffix__ 	1 \
+	__bindir__		${X11BINDIR} \
+	__drivermansuffix__	4 \
+	__filemansuffix__	5 \
+	__LIB_MAN_SUFFIX__	3 \
+	__libmansuffix__	3 \
+	__logdir__		/var/log \
+	__mandir__		${X11MANDIR} \
+	__miscmansuffix__	7 \
+	__oslibmansuffix__	3 \
+	__projectroot__		${X11ROOTDIR} \
+	${X11EXTRAMANTRANSFORMS}
+
+# Note the escaping trick for _X11MANTRANSFORM using % to replace spaces
+.if ${MKXORG} == "no"
+X11VERSION=	"XFree86 4.5.0"
+X11MANCPP?=	yes
+_X11MANTRANSFORM+= \
+	__vendorversion__	${X11VERSION:C/ /%/gW}
+.else
+XORGVERSION=	'"X.Org 7.3nb20081014" "X Version 11"'
+X11MANCPP?=	no
+_X11MANTRANSFORM+= \
+	__vendorversion__	${XORGVERSION:C/ /%/gW} \
+	__XCONFIGFILE__		xorg.conf \
+	__xconfigfile__		xorg.conf \
+	__xorgversion__		${XORGVERSION:C/ /%/gW} \
+	__XSERVERNAME__		Xorg \
+	__xservername__		Xorg
+.endif
+
+_X11MANTRANSFORMCMD=	${TOOL_SED} -e 's/\\$$/\\ /' ${.IMPSRC}
+
+.if ${X11MANCPP} != "no"
+_X11MANTRANSFORMCMD+=	| ${CPP} -undef -traditional
+. for __def__ __value__ in ${_X11MANTRANSFORM}
+_X11MANTRANSFORMCMD+=	-D${__def__}=${__value__:C/%/ /gW}
+. endfor
+.else
+_X11MANTRANSFORMCMD+=	| ${TOOL_SED}
+. for __def__ __value__ in ${_X11MANTRANSFORM}
+_X11MANTRANSFORMCMD+=	-e s,${__def__},${__value__:C/%/ /gW},g
+. endfor
+.endif
+_X11MANTRANSFORMCMD+=	${X11EXTRAMANDEFS}
+
+.man.1 .man.3 .man.4 .man.5 .man.7 .man.pre.1 .man.pre.4 .man.pre.5:
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	sed -e 's/\\$$/\\ /' ${.IMPSRC} \
-	| ${CPP} -undef -traditional \
-	    -D__apploaddir__=${X11ROOTDIR}/lib/X11/app-defaults \
-	    -D__appmansuffix__=1 \
-	    -D__libmansuffix__=3 \
-	    -D__filemansuffix__=5 \
-	    -D__miscmansuffix__=7 \
-	    -D__drivermansuffix__=4 \
-	    -D__adminmansuffix__=8 \
-	    -D__projectroot__=${X11ROOTDIR} \
-	    -D__xorgversion__='"Release 6.6" "X Version 11"' \
-	    -D__vendorversion__="XFree86 4.5.0" \
-	    ${X11EXTRAMANDEFS} \
-	| ${X11TOOL_UNXCOMM} > ${.TARGET}
+	${_X11MANTRANSFORMCMD} | ${X11TOOL_UNXCOMM} > ${.TARGET}
