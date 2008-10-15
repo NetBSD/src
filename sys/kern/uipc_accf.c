@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.5 2008/10/14 13:45:26 ad Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.6 2008/10/15 08:25:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.5 2008/10/14 13:45:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.6 2008/10/15 08:25:28 ad Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -247,7 +247,7 @@ accept_filt_clear(struct socket *so)
 {
 	struct accept_filter_arg afa;
 	struct accept_filter *afp;
-	struct socket *so2;
+	struct socket *so2, *next;
 	struct so_accf *af;
 
 	KASSERT(solocked(so));
@@ -257,17 +257,16 @@ accept_filt_clear(struct socket *so)
 	}
 	if (so->so_accf != NULL) {
 		/* Break in-flight processing. */
-		TAILQ_FOREACH(so2, &so->so_q0, so_qe) {
+		for (so2 = TAILQ_FIRST(&so->so_q0); so2 != NULL; so2 = next) {
+			next = TAILQ_NEXT(so2, so_qe);
 			if (so2->so_upcall == NULL) {
 				continue;
 			}
 			so2->so_upcall = NULL;
 			so2->so_upcallarg = NULL;
+			so2->so_options &= ~SO_ACCEPTFILTER;
 			so2->so_rcv.sb_flags &= ~SB_UPCALL;
-			soqremque(so2, 0);
-			soqinsque(so, so2, 1);
-			sorwakeup(so);
-			cv_broadcast(&so->so_cv);
+			soisconnected(so2);
 		}
 		af = so->so_accf;
 		afp = af->so_accept_filter;
