@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.25 2008/10/15 06:52:38 wrstuden Exp $	*/
+/*	$NetBSD: savar.h,v 1.26 2008/10/15 08:58:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include <sys/tree.h>
 #include <sys/queue.h>
 #include <sys/sleepq.h>
+#include <sys/sa.h>	/* needed for struct sa_t */
 
 union sau_state {
 	struct {
