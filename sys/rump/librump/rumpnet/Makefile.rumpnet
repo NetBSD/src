@@ -1,0 +1,28 @@
+#	$NetBSD: Makefile.rumpnet,v 1.1 2008/10/15 13:00:39 pooka Exp $
+#
+
+.include "${RUMPTOP}/Makefile.rump"
+
+LIB=		rumpnet
+
+.PATH:	${RUMPTOP}/librump/rumpnet				\
+	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern
+
+SRCS=	net_stub.c netisr.c rump_net.c
+
+# sys/kern networking (sockets, mbufs, etc.)
+SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
+	uipc_socket.c uipc_socket2.c uipc_syscalls.c
+
+# src/lib/libkern
+SRCS+=	intoa.c
+
+# automatically in sync src/lib
+SHLIB_MAJOR=    0
+SHLIB_MINOR=    0
+
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpnet/opt
+CPPFLAGS+=	-DMAXUSERS=32
+
+.include <bsd.lib.mk>
+.include <bsd.klinks.mk>
