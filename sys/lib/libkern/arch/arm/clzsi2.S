@@ -37,13 +37,13 @@ ENTRY(__clzdi2)
 	movne	r0, #63
 	bne	.L_clz
 	mov	r0, #64
-	bx	lr
+	RET
 END(__clzdi2)
 
 ENTRY(__clzsi2)
 	movs	r3, r0
 	moveq	r0, #32
-	bxeq	lr
+	RETc(eq)
 	mov	r0, #31
 .L_clz:
 	mvn	r1, #0
@@ -84,5 +84,5 @@ ENTRY(__clzsi2)
 	addeq	r0, r0, #1
 #endif
 #endif	/* __OPTIMIZE_SIZE__ */
-	bx	lr
+	RET
 END(__clzsi2)
