@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.2 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.3 2008/10/15 10:05:07 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.2 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.3 2008/10/15 10:05:07 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.2 2008/10/15 06:51:20 wrstuden Exp $
 #include <sys/ktrace.h>
 #include <sys/sched.h>
 #include <sys/sleepq.h>
+#include <sys/atomic.h> /* for membar_producer() */
 
 #include <uvm/uvm_extern.h>
 
