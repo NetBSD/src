@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.34.12.2 2008/10/14 20:25:42 wrstuden Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.34.12.3 2008/10/15 04:46:18 wrstuden Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34.12.2 2008/10/14 20:25:42 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34.12.3 2008/10/15 04:46:18 wrstuden Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -123,6 +123,8 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34.12.2 2008/10/14 20:25:42 wrstu
 #include <sys/pool.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
