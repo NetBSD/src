@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.8 2008/06/16 01:41:21 rmind Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.9 2008/10/15 08:08:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.8 2008/06/16 01:41:21 rmind Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.9 2008/10/15 08:08:30 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -183,9 +183,6 @@ getcpuid(char **argv)
 	cs.cs_id = (int)strtoul(argv[0], &argp, 0);
 	if (*argp != '\0')
 		usage();
-	if (ioctl(fd, IOC_CPU_MAPID, &cs.cs_id) < 0)
-		err(EXIT_FAILURE, "IOC_CPU_MAPID");
-
 	return cs.cs_id;
 }
 
