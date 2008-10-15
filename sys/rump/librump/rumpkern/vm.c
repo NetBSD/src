@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.40 2008/10/10 20:51:44 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.41 2008/10/15 13:04:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -631,6 +631,13 @@ vm_map_to_kernel(struct vm_map *map)
 	return (struct vm_map_kernel *)map;
 }
 
+bool
+vm_map_starved_p(struct vm_map *map)
+{
+
+	return false;
+}
+
 void
 uvm_pageout_start(int npages)
 {
@@ -668,6 +675,20 @@ uvm_lwp_rele(struct lwp *l)
 {
 
 	atomic_dec_uint(&l->l_holdcnt);
+}
+
+int
+uvm_loan(struct vm_map *map, vaddr_t start, vsize_t len, void *v, int flags)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+void
+uvm_unloan(void *v, int npages, int flags)
+{
+
+	panic("%s: unimplemented", __func__);
 }
 
 /*
