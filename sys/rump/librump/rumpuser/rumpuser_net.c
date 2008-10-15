@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_net.c,v 1.2 2008/10/09 01:19:06 pooka Exp $	*/
+/*	$NetBSD: rumpuser_net.c,v 1.3 2008/10/15 13:02:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -53,4 +53,11 @@ rumpuser_net_recvmsg(int s, struct msghdr *msg, int flags, int *error)
 {
 
 	DOCALL_KLOCK(ssize_t, (recvmsg(s, msg, flags)));
+}
+
+int
+rumpuser_net_connect(int s, const struct sockaddr *name, int len, int *error)
+{
+
+	DOCALL_KLOCK(int, (connect(s, name, (socklen_t)len)));
 }

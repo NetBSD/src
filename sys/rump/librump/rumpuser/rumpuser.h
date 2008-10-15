@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.25 2008/10/09 01:19:06 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.26 2008/10/15 13:02:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -152,5 +152,6 @@ void rumpuser_clear_ipl(int);
 int  rumpuser_net_socket(int, int, int, int *);
 int  rumpuser_net_sendmsg(int, const struct msghdr *, int, int *);
 int  rumpuser_net_recvmsg(int, struct msghdr *, int, int *);
+int  rumpuser_net_connect(int, const struct sockaddr *, int, int *);
 
 #endif /* _RUMP_RUMPUSER_H_ */
