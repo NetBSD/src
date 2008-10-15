@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.962 2008/10/15 17:34:51 bouyer Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.963 2008/10/15 18:31:16 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.961 2008/10/15 17:32:04 bouyer Exp
+ *	NetBSD: pcidevs,v 1.962 2008/10/15 18:30:29 bouyer Exp
  */
 
 /*
@@ -2209,7 +2209,7 @@
 #define	PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT	0x10bb		/* i80003 Gigabit Ethernet (SERDES) */
 #define	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER	0x10bc		/* i82571GB quad 1000baseT Ethernet */
 #define	PCI_PRODUCT_INTEL_82801I_IGP_AMT	0x10bd		/* 82801I (AMT) LAN Controller */
-#define	PCI_PRODUCT_INTEL_82801I_IGP_M	0x10bf		/* 82801I mobile LAN controllerWWWW */
+#define	PCI_PRODUCT_INTEL_82801I_IGP_M	0x10bf		/* 82801I mobile LAN controller */
 #define	PCI_PRODUCT_INTEL_82801I_IFE	0x10c0		/* 82801I LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801I_IFE_G	0x10c2		/* 82801I (G) LAN Controller */
 #define	PCI_PRODUCT_INTEL_82801I_IFE_GT	0x10c3		/* 82801I (GT) LAN Controller */
