@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.12 2008/10/02 19:37:23 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.13 2008/10/15 08:13:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -70,7 +70,7 @@ knote(struct klist *list, long hint)
 }
 
 struct cpu_info *
-cpu_lookup_byindex(u_int index)
+cpu_lookup(u_int index)
 {
 	extern struct cpu_info rump_cpu;
 
