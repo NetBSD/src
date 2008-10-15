@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.17 2008/10/15 06:51:21 wrstuden Exp $	*/
+/*	$NetBSD: userret.h,v 1.18 2008/10/15 08:58:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -71,6 +71,8 @@
 #if defined(_KERNEL_OPT)
 #include "opt_sa.h"
 #endif
+
+#include <sys/savar.h>
 
 /*
  * Define the MI code needed before returning to user mode, for
