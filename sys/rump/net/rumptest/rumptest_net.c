@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <sys/time.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -17,6 +18,7 @@ main()
 {
 	char buf[65536];
 	struct sockaddr_in sin;
+	struct timeval tv;
 	ssize_t n;
 	size_t off;
 	int s, error;
@@ -27,6 +29,12 @@ main()
 	s = rump_sys___socket30(PF_INET, SOCK_STREAM, 0, &error);
 	if (s == -1)
 		errx(1, "can't open socket: %d (%s)", error, strerror(error));
+
+	tv.tv_sec = 5;
+	tv.tv_usec = 0;
+	if (rump_sys_setsockopt(s, SOL_SOCKET, SO_RCVTIMEO,
+	    &tv, sizeof(tv), &error) == -1)
+		errx(1, "setsockopt %d (%s)", error, strerror(error));
 
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
