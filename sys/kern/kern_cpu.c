@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.35 2008/08/28 06:18:26 yamt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.36 2008/10/15 08:13:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.35 2008/08/28 06:18:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.36 2008/10/15 08:13:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,8 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		    NULL);
 		if (error != 0)
 			break;
-		if ((ci = cpu_lookup(cs->cs_id)) == NULL) {
+		if (cs->cs_id >= __arraycount(cpu_infos) ||
+		    (ci = cpu_lookup(cs->cs_id)) == NULL) {
 			error = ESRCH;
 			break;
 		}
@@ -181,7 +182,8 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		id = cs->cs_id;
 		memset(cs, 0, sizeof(*cs));
 		cs->cs_id = id;
-		if ((ci = cpu_lookup(id)) == NULL) {
+		if (cs->cs_id >= __arraycount(cpu_infos) ||
+		    (ci = cpu_lookup(id)) == NULL) {
 			error = ESRCH;
 			break;
 		}
@@ -219,25 +221,11 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 }
 
 struct cpu_info *
-cpu_lookup(cpuid_t id)
-{
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (ci->ci_cpuid == id)
-			return ci;
-	}
-
-	return NULL;
-}
-
-struct cpu_info *
-cpu_lookup_byindex(u_int idx)
+cpu_lookup(u_int idx)
 {
 	struct cpu_info *ci = cpu_infos[idx];
 
-	KASSERT(idx < MAXCPUS);
+	KASSERT(idx < __arraycount(cpu_infos));
 	KASSERT(ci == NULL || cpu_index(ci) == idx);
 
 	return ci;
