@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.14 2008/05/25 22:03:23 cegger Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.15 2008/10/15 02:21:48 pgoyette Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.14 2008/05/25 22:03:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.15 2008/10/15 02:21:48 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -302,7 +302,7 @@ nfsmb_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmd,
 		rv = nfsmb_read_2(sc, *(const uint8_t*)cmd, addr, op, flags);
 		if (rv == -1)
 			return -1;
-		*p = (uint8_t)rv;
+		*(uint16_t *)p = (uint16_t)rv;
 		return 0;
 	}
 
