@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_fa526.S,v 1.2 2008/10/15 16:38:10 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_fa526.S,v 1.3 2008/10/15 16:56:49 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -64,12 +64,14 @@ ENTRY(fa526_tlb_flushI_SE)
 	mcr	p15, 0, r0, c8, c5, 1	/* flush Itlb single entry */
 	mov	pc, lr
 
-/*
- * TLB functions
- */
 ENTRY(fa526_cpu_sleep)
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c5, 5	/* Enter sleep mode */
+	mov	pc, lr
+
+ENTRY(fa526_flush_prefetchbuf)
+	mov	r0, #0
+	mcr	p15, 0, r0, c7, c5, 4	/* Pre-fetch flush */
 	mov	pc, lr
 
 /*

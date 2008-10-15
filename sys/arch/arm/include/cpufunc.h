@@ -284,6 +284,7 @@ void	fa526_context_switch	(u_int);
 void	fa526_cpu_sleep		(int);
 void	fa526_tlb_flushI_SE	(u_int);
 void	fa526_tlb_flushID_SE	(u_int);
+void	fa526_flush_prefetchbuf	(void);
 void	fa526_flush_brnchtgt_E	(u_int);
 
 void	fa526_icache_sync_all	(void);
