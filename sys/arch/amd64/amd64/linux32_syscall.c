@@ -1,14 +1,12 @@
-/*	$NetBSD: linux32_syscall.c,v 1.24.4.2 2008/05/23 04:30:02 wrstuden Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.24.4.3 2008/10/15 04:56:55 wrstuden Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.24.4.2 2008/05/23 04:30:02 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.24.4.3 2008/10/15 04:56:55 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/sa.h>
-#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
 
