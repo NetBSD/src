@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.109 2008/10/15 06:51:21 wrstuden Exp $	*/
+/*	$NetBSD: lwp.h,v 1.110 2008/10/15 20:32:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
  * of cache hits) and by size (to reduce dead space in the structure).
  */
 struct lockdebug;
+struct sadata_vp;
 
 struct lwp {
 	/* Scheduling and overall state */
