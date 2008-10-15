@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.172 2008/10/14 07:24:34 apb Exp $
+#	$NetBSD: bsd.sys.mk,v 1.173 2008/10/15 17:31:50 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -78,13 +78,6 @@ FOPTS+=		-msoft-float
 .if ${MACHINE_ARCH} == "alpha"
 CFLAGS+=	-mieee
 FFLAGS+=	-mieee
-.endif
-.endif
-
-.if defined(MKPIE) && (${MKPIE} != "no")
-.if !defined(KERNEL_BUILD)
-CFLAGS+=	-fPIC
-LDFLAGS+=	-Wl,-pie -shared-libgcc
 .endif
 .endif
 
