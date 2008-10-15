@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_fa526.S,v 1.1 2008/10/14 16:01:22 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_fa526.S,v 1.2 2008/10/15 16:38:10 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,15 +34,16 @@
 #define	CACHELINE_SIZE	16
 
 ENTRY(fa526_setttb)
-	mcr	p15, 0, r0, c7, c14, 0	/* clean and invalidate D$ */
-	mcr	p15, 0, r0, c7, c5, 0	/* invalidate I$ */
-	mcr	p15, 0, r0, c7, c5, 6	/* invalidate BTB */
-	mcr	p15, 0, r0, c7, c10, 4	/* drain write and fill buffer */
+	mov	r1, #0
+	mcr	p15, 0, r1, c7, c14, 0	/* clean and invalidate D$ */
+	mcr	p15, 0, r1, c7, c5, 0	/* invalidate I$ */
+	mcr	p15, 0, r1, c7, c5, 6	/* invalidate BTB */
+	mcr	p15, 0, r1, c7, c10, 4	/* drain write and fill buffer */
 
 	mcr	p15, 0, r0, c2, c0, 0	/* Write the TTB */ 
 
 	/* If we have updated the TTB we must flush the TLB */
-	mcr	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLB */
+	mcr	p15, 0, r1, c8, c7, 0	/* invalidate I+D TLB */
 
 	/* Make sure that pipeline is emptied */
 	mov	r0, r0
@@ -193,6 +194,7 @@ ENTRY(fa526_context_switch)
 	mcr	p15, 0, r0, c2, c0, 0	/* Write the TTB */
 
 	/* If we have updated the TTB we must flush the TLB */
+	mov	r0, #0
 	mcr	p15, 0, r0, c8, c7, 0	/* flush the I+D tlb */
 
 	/* Make sure that pipeline is emptied */
