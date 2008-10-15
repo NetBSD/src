@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.11 2008/10/11 13:20:29 joerg Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.12 2008/10/15 14:32:26 sborrill Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -149,14 +149,20 @@ menu=Boot single-user:boot -s
 menu=Boot from second disk:boot hd1a:
 menu=Boot with module foo:load /foo.kmod;boot
 menu=Boot with modules foo and bar:load /foo.kmod;load /bar.kmod;boot
-menu=Boot Xen with 256MB for dom0:load /netbsd-XEN_DOM0;multiboot /usr/pkg/xen3-kernel/xen.gz dom0_mem=256M
-menu=Boot Xen with dom0 in single-user mode:load /netbsd-XEN_DOM0 -s;multiboot /usr/pkg/xen3-kernel/xen.gz dom0_mem=256M
+menu=Boot Xen with 256MB for dom0:load /netbsd-XEN3_DOM0 console=pc;multiboot /usr/pkg/xen3-kernel/xen.gz dom0_mem=256M
+menu=Boot Xen with 256MB for dom0 (serial):load /netbsd-XEN3_DOM0 console=com0;multiboot /usr/pkg/xen3-kernel/xen.gz dom0_mem=256M console=com1 com1=115200,8n1
+menu=Boot Xen with dom0 in single-user mode:load /netbsd-XEN3_DOM0 -s;multiboot /usr/pkg/xen3-kernel/xen.gz dom0_mem=256M
 menu=Go to command line (advanced users only):prompt
 timeout=-1
 default=1
 # Always load ramdisk module
 load=/ramdisk.kmod
 .Ed
+.Pp
+N.B. Xen counts serial ports from com1 upwards, but
+.Nx
+counts from com0, so the appropriate device name must be used.
+Please see the Xen with serial console example above.
 .Pp
 This will display:
 .Bd -literal -offset indent
@@ -171,13 +177,15 @@ Please choose an option from the following menu:
       4. Boot with module foo
       5. Boot with modules foo and bar
       6. Boot Xen with 256 MB for dom0
-      7. Boot Xen with dom0 in single-user mode
-      8. Go to command line (advanced users only)
+      7. Boot Xen with 256 MB for dom0 (serial)
+      8. Boot Xen with dom0 in single-user mode
+      9. Go to command line (advanced users only)
 
 Option [1]:
 .Ed
 .Pp
-It will then wait for the user to type 1, 2, 3, 4, 5, or 6 followed by Return.
+It will then wait for the user to type 1, 2, 3, 4, 5, 6, 7, 8 or 9 followed by
+Return.
 Pressing Return by itself will run option 1.
 There will be no timeout.
 .Sh SEE ALSO
