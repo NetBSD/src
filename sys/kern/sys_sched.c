@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.27 2008/07/14 01:19:37 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.28 2008/10/15 06:51:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.27 2008/07/14 01:19:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.28 2008/10/15 06:51:20 wrstuden Exp $");
 
 #include <sys/param.h>
 
@@ -46,12 +46,16 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.27 2008/07/14 01:19:37 rmind Exp $")
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/pset.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/unistd.h>
+
+#include "opt_sa.h"
 
 /*
  * Convert user priority or the in-kernel priority or convert the current
@@ -380,6 +384,23 @@ sys__sched_setaffinity(struct lwp *l,
 		goto out;
 	}
 
+#ifdef KERN_SA
+	/*
+	 * Don't permit changing the affinity of an SA process. The only
+	 * thing that would make sense wold be to set the affinity of
+	 * a VP and all threads running on it. But we don't support that
+	 * now, so just don't permit it.
+	 *
+	 * Test is here so that caller gets auth errors before SA
+	 * errors.
+	 */
+	if ((p->p_sflag & (PS_SA | PS_WEXIT)) != 0 || p->p_sa != NULL) {
+		mutex_exit(p->p_lock);
+		error = EINVAL;
+		goto out;
+	}
+#endif
+
 	/* Find the LWP(s) */
 	lcnt = 0;
 	lid = SCARG(uap, lid);
@@ -477,6 +498,11 @@ sys_sched_yield(struct lwp *l, const void *v, register_t *retval)
 {
 
 	yield();
+#ifdef KERN_SA
+	if (l->l_flag & LW_SA) {
+		sa_preempt(l);
+	}
+#endif
 	return 0;
 }
 

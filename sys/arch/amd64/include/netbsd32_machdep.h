@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.15 2007/12/25 18:33:32 perry Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.16 2008/10/15 06:51:17 wrstuden Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -131,6 +131,15 @@ struct x86_64_get_mtrr_args32 {
 struct x86_64_set_mtrr_args32 {
 	uint32_t mtrrp;
 	uint32_t n;
+};
+
+struct netbsd32_saframe {
+	int			sa_ra;
+	int			sa_type;
+	netbsd32_pointer_t	sa_sas;
+	int			sa_events;
+	int			sa_interrupted;
+	netbsd32_pointer_t	sa_arg;
 };
 
 struct env87 {

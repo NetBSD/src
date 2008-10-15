@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.202 2008/08/03 00:09:20 tsutsui Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.203 2008/10/15 06:51:18 wrstuden Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.202 2008/08/03 00:09:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.203 2008/10/15 06:51:18 wrstuden Exp $");
 
 #include "opt_cputype.h"
 
@@ -132,6 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.202 2008/08/03 00:09:20 tsutsui E
 #include <sys/kcore.h>
 #include <sys/pool.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/cpu.h>
 #include <sys/ucontext.h>
 
@@ -1680,6 +1682,53 @@ startlwp(arg)
 
 	userret(l);
 }
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+	userret(l);
+}
+
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+    void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct saframe *sf, frame;
+	struct frame *f;
+
+	f = (struct frame *)l->l_md.md_regs;
+
+#if 0 /* First 4 args in regs (see below). */
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+#endif
+	frame.sa_arg = ap;
+	frame.sa_upcall = upcall;
+
+	sf = (struct saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		mutex_enter(&l->l_proc->p_smutex);
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	f->f_regs[_R_PC] = (uintptr_t)upcall;
+	f->f_regs[_R_SP] = (uintptr_t)sf;
+	f->f_regs[_R_A0] = type;
+	f->f_regs[_R_A1] = (uintptr_t)sas;
+	f->f_regs[_R_A2] = nevents;
+	f->f_regs[_R_A3] = ninterrupted;
+	f->f_regs[_R_S8] = 0;
+	f->f_regs[_R_RA] = 0;
+	f->f_regs[_R_T9] = (uintptr_t)upcall;  /* t9=Upcall function*/
+}
+
 
 void
 cpu_getmcontext(l, mcp, flags)

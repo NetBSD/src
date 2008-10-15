@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.16 2008/04/28 21:17:16 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.17 2008/10/15 06:51:21 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
@@ -68,6 +68,10 @@
 #include <sys/lockdebug.h>
 #include <sys/intr.h>
 
+#if defined(_KERNEL_OPT)
+#include "opt_sa.h"
+#endif
+
 /*
  * Define the MI code needed before returning to user mode, for
  * trap and syscall.
@@ -77,6 +81,22 @@
 static __inline void
 mi_userret(struct lwp *l)
 {
+	struct proc *p = l->l_proc;
+#ifndef __HAVE_PREEMPTION
+	struct cpu_info *ci;
+#endif
+
+/*
+ * Skip either if SA_NO_USERRET defined or we're in the kernel and KERN_SA
+ * isn't defined.
+ */
+#if !defined(SA_NO_USERRET) && !(defined(_KERNEL_OPT) && !defined(KERN_SA))
+	/* Generate UNBLOCKED upcall if needed */
+	if (l->l_flag & LW_SA_BLOCKING) {
+		sa_unblock_userret(l);
+		/* NOTREACHED */
+	}
+#endif
 
 	/*
 	 * Handle "exceptional" events: pending signals, stop/exit actions,
@@ -84,19 +104,28 @@ mi_userret(struct lwp *l)
 	 * posted as we are reading unlocked.
 	 */
 #ifdef __HAVE_PREEMPTION
-	if (__predict_false((l->l_flag & LW_USERRET) != 0))
+	if (__predict_false(((l->l_flag & LW_USERRET) | p->p_timerpend) != 0))
 		lwp_userret(l);
 	l->l_kpriority = false;
 	cpu_set_curpri(l->l_priority);	/* XXX this needs to die */
 #else
-	struct cpu_info *ci;
 	ci = l->l_cpu;
-	if (((l->l_flag & LW_USERRET) | ci->ci_data.cpu_softints) != 0) {
+	if (((l->l_flag & LW_USERRET) | p->p_timerpend |
+	    ci->ci_data.cpu_softints) != 0) {
 		lwp_userret(l);
 		ci = l->l_cpu;
 	}
 	l->l_kpriority = false;
 	ci->ci_schedstate.spc_curpriority = l->l_priority;
+#endif
+
+/* See comment above for logic */
+#if !defined(SA_NO_USERRET) && !(defined(_KERNEL_OPT) && !defined(KERN_SA))
+	if (l->l_flag & LW_SA_UPCALL)
+		sa_upcall_userret(l);
+	else if (__predict_false((l->l_savp)
+	    && (l->l_savp->savp_pflags & SAVP_FLAG_NOUPCALLS)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_NOUPCALLS;
 #endif
 
 	LOCKDEBUG_BARRIER(NULL, 0);

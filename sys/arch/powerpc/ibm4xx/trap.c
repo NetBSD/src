@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 2008/01/02 11:48:27 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.49 2008/10/15 06:51:18 wrstuden Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2008/01/02 11:48:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2008/10/15 06:51:18 wrstuden Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -80,6 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.48 2008/01/02 11:48:27 ad Exp $");
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/pool.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/userret.h>
 #include <sys/kauth.h>
 
@@ -186,6 +188,11 @@ trap(struct trapframe *frame)
 				map = kernel_map;
 			} else {
 				map = &p->p_vmspace->vm_map;
+				if ((l->l_flag & LW_SA)
+				    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+					l->l_savp->savp_faultaddr = va;
+					l->l_pflag |= LP_SA_PAGEFAULT;
+				}
 			}
 
 			if (frame->tf_xtra[TF_ESR] & (ESR_DST|ESR_DIZ))
@@ -197,6 +204,9 @@ trap(struct trapframe *frame)
 			    (ftype & VM_PROT_WRITE) ? "write" : "read",
 			    (void *)va, frame->tf_xtra[TF_ESR]));
 			rv = uvm_fault(map, trunc_page(va), ftype);
+			if (map != kernel_map) {
+				l->l_pflag &= ~LP_SA_PAGEFAULT;
+			}
 			if (rv == 0)
 				goto done;
 			if ((fb = l->l_addr->u_pcb.pcb_onfault) != NULL) {
@@ -225,9 +235,14 @@ trap(struct trapframe *frame)
 		    frame->srr0, (ftype & VM_PROT_WRITE) ? "write" : "read",
 		    frame->dar, frame->tf_xtra[TF_ESR]));
 		KASSERT(l == curlwp && (l->l_stat == LSONPROC));
+		if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->dar;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
 		    ftype);
 		if (rv == 0) {
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -243,10 +258,15 @@ trap(struct trapframe *frame)
 			ksi.ksi_signo = SIGKILL;
 		}
 		trapsignal(l, &ksi);
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 
 	case EXC_ITMISS|EXC_USER:
 	case EXC_ISI|EXC_USER:
+		if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)frame->srr0;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
 		ftype = VM_PROT_EXECUTE;
 		DBPRINTF(TDB_ALL,
 		    ("trap(EXC_ISI|EXC_USER) at %lx execute fault tf %p\n",
@@ -254,6 +274,7 @@ trap(struct trapframe *frame)
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->srr0),
 		    ftype);
 		if (rv == 0) {
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			break;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -262,6 +283,7 @@ trap(struct trapframe *frame)
 		ksi.ksi_addr = (void *)frame->srr0;
 		ksi.ksi_code = (rv == EACCES ? SEGV_ACCERR : SEGV_MAPERR);
 		trapsignal(l, &ksi);
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 
 	case EXC_AST|EXC_USER:
@@ -698,6 +720,17 @@ startlwp(arg)
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
+
+	upcallret(l);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(l)
+	struct lwp *l;
+{
 
 	/* Invoke MI userret code */
 	mi_userret(l);

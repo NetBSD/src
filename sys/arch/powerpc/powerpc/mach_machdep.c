@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.25 2008/04/28 20:23:32 martin Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.26 2008/10/15 06:51:18 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.25 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.26 2008/10/15 06:51:18 wrstuden Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -115,7 +115,7 @@ mach_create_thread_child(void *arg)
 	 * Call upcallret before setting the register context as it
 	 * affects R3, R4 and CR.
 	 */
-	/* XXX upcallret(l); */
+	upcallret(l);
 
 	/* Set requested register context */
 	tf->srr0 = regs->srr0;

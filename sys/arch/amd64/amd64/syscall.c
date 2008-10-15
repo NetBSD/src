@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.42 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: syscall.c,v 1.43 2008/10/15 06:51:17 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,13 +30,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.43 2008/10/15 06:51:17 wrstuden Exp $");
+
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/signal.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/ktrace.h>
 #include <sys/syscall.h>
 #include <sys/syscall_stats.h>
@@ -100,6 +104,11 @@ syscall(struct trapframe *frame)
 	SYSCALL_COUNT(syscall_counts, code);
 	SYSCALL_TIME_SYS_ENTRY(l, syscall_times, code);
 
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 	/*
 	 * The first 6 syscall args are passed in rdi, rsi, rdx, r10, r8 and r9
 	 * (rcx gets copied to r10 in the libc stub because the syscall

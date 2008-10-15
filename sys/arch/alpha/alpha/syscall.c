@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.32 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: syscall.c,v 1.33 2008/10/15 06:51:17 wrstuden Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,11 +89,15 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2008/04/28 20:23:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33 2008/10/15 06:51:17 wrstuden Exp $");
+
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -148,6 +152,12 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	l->l_md.md_tf = framep;
 
 	callp = p->p_emul->e_sysent;
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	switch (code) {
 	case SYS_syscall:
@@ -236,6 +246,12 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	l->l_md.md_tf = framep;
 
 	callp = p->p_emul->e_sysent;
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	switch (code) {
 	case SYS_syscall:

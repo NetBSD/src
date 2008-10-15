@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.144 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.145 2008/10/15 06:51:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.144 2008/05/29 14:51:26 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.145 2008/10/15 06:51:19 wrstuden Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.144 2008/05/29 14:51:26 mrg Ex
 #include "opt_nfsserver.h"
 #include "opt_syscall_debug.h"
 #include "opt_ptrace.h"
+#include "opt_sa.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
@@ -77,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.144 2008/05/29 14:51:26 mrg Ex
 
 #include <uvm/uvm_extern.h>
 
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 #include <sys/acct.h>
@@ -89,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.144 2008/05/29 14:51:26 mrg Ex
 #include <compat/netbsd32/netbsd32_syscall.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+#include <compat/netbsd32/netbsd32_sa.h>
 
 #include <machine/frame.h>
 
@@ -114,6 +118,21 @@ struct uvm_object *emul_netbsd32_object;
 #endif
 
 extern struct sysctlnode netbsd32_sysctl_root;
+
+const struct sa_emul saemul_netbsd32 = {
+	sizeof(ucontext32_t),
+	sizeof(struct netbsd32_sa_t),
+	sizeof(netbsd32_sa_tp),
+	netbsd32_sacopyout,  
+	netbsd32_upcallconv,
+	netbsd32_cpu_upcall,
+	(void (*)(struct lwp *, void *))getucontext32_sa,
+#ifdef KERN_SA
+	netbsd32_sa_ucsp
+#else
+	NULL
+#endif
+}; 
 
 const struct emul emul_netbsd32 = {
 	"netbsd32",
@@ -158,6 +177,7 @@ const struct emul emul_netbsd32 = {
 
 	netbsd32_vm_default_addr,
 	NULL,
+	&saemul_netbsd32,
 	sizeof(ucontext32_t),
 	startlwp32,
 };
