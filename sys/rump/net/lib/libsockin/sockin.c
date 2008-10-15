@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.1 2008/10/02 21:59:20 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.2 2008/10/15 11:43:38 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -58,22 +58,29 @@ static int	sockin_usrreq(struct socket *, int, struct mbuf *,
 			      struct mbuf *, struct mbuf *, struct lwp *);
 
 const struct protosw sockinsw[] = {
-{	.pr_type = SOCK_DGRAM,
+{
+	.pr_type = SOCK_DGRAM,
 	.pr_domain = &sockindomain,
 	.pr_protocol = IPPROTO_UDP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_usrreq = sockin_usrreq,
-	.pr_init = sockin_init,
+},
+{
+	.pr_type = SOCK_STREAM,
+	.pr_domain = &sockindomain,
+	.pr_protocol = IPPROTO_TCP,
+	.pr_flags = PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
+	.pr_usrreq = sockin_usrreq,
 }};
 
 struct domain sockindomain = {
 	.dom_family = PF_INET,
 	.dom_name = "socket_inet",
-	.dom_init = NULL,
+	.dom_init = sockin_init,
 	.dom_externalize = NULL,
 	.dom_dispose = NULL,
 	.dom_protosw = sockinsw,
-	.dom_protoswNPROTOSW = &sockinsw[__arraycount(&sockinsw)], 
+	.dom_protoswNPROTOSW = &sockinsw[__arraycount(sockinsw)], 
 	.dom_rtattach = NULL,
 	.dom_rtoffset = 0,
 	.dom_maxrtkey = 0,
@@ -92,6 +99,7 @@ struct domain sockindomain = {
 #endif
 
 #define SO2S(so) ((int)(so->so_internal))
+#define SOCKIN_SBSIZE 65536
 
 static void
 sockin_process(struct socket *so)
@@ -123,9 +131,14 @@ sockin_process(struct socket *so)
 	}
 	m->m_len = m->m_pkthdr.len = n;
 
-	if (!sbappendaddr(&so->so_rcv, rmsg.msg_name, m, NULL)) {
-		m_freem(m);
+	if (so->so_proto->pr_type == SOCK_DGRAM) {
+		if (!sbappendaddr(&so->so_rcv, rmsg.msg_name, m, NULL)) {
+			m_freem(m);
+		}
+	} else {
+		sbappendstream(&so->so_rcv, m);
 	}
+
 	sorwakeup(so);
 }
 
@@ -231,7 +244,7 @@ static int
 sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	struct mbuf *control, struct lwp *l)
 {
-	int error = 0;
+	int error = 0, rv;
 
 	switch (req) {
 	case PRU_ATTACH:
@@ -240,6 +253,11 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		int news;
 
 		sosetlock(so);
+		if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
+			error = soreserve(so, SOCKIN_SBSIZE, SOCKIN_SBSIZE);
+			if (error)
+				break;
+		}
 
 		su = kmem_alloc(sizeof(*su), KM_NOSLEEP);
 		if (!su) {
@@ -247,7 +265,8 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			break;
 		}
 
-		news = rumpuser_net_socket(PF_INET, SOCK_DGRAM, 0, &error);
+		news = rumpuser_net_socket(PF_INET, so->so_proto->pr_type,
+		    0, &error);
 		if (news == -1) {
 			kmem_free(su, sizeof(*su));
 			break;
@@ -264,7 +283,15 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	case PRU_CONNECT:
-		/* sorry dear, not today */
+		/* don't bother to connect udp sockets, always sendmsg */
+		if (so->so_proto->pr_type == SOCK_DGRAM)
+			break;
+
+		rv = rumpuser_net_connect((int)so->so_internal,
+		    mtod(nam, struct sockaddr *), sizeof(struct sockaddr_in),
+		    &error);
+		if (rv == 0)
+		soisconnected(so);
 		break;
 
 	case PRU_SEND:
@@ -287,14 +314,18 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			tot += m2->m_len;
 
 		}
-		saddr = mtod(nam, struct sockaddr *);
-		mhdr.msg_name = saddr;
-		mhdr.msg_namelen = saddr->sa_len;
 		mhdr.msg_iov = iov;
 		mhdr.msg_iovlen = i;
-
 		s = (int)so->so_internal;
+
+		if (so->so_proto->pr_type == SOCK_DGRAM) {
+			saddr = mtod(nam, struct sockaddr *);
+			mhdr.msg_name = saddr;
+			mhdr.msg_namelen = saddr->sa_len;
+		}
+
 		rumpuser_net_sendmsg(s, &mhdr, 0, &error);
+
 		m_freem(m);
 		m_freem(control);
 #ifdef SOCKIN_NOTHREAD
