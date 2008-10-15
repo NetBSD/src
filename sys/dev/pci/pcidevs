@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.961 2008/10/15 17:32:04 bouyer Exp $
+$NetBSD: pcidevs,v 1.962 2008/10/15 18:30:29 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2202,7 +2202,7 @@ product INTEL 80K3LAN_CPR_SPT 0x10ba	i80003 1000baseT Ethernet
 product INTEL 80K3LAN_SDS_SPT 0x10bb	i80003 Gigabit Ethernet (SERDES)
 product	INTEL 82571GB_QUAD_COPPER 0x10bc i82571GB quad 1000baseT Ethernet
 product INTEL 82801I_IGP_AMT	0x10bd	82801I (AMT) LAN Controller
-product INTEL 82801I_IGP_M	0x10bf  82801I mobile LAN controllerWWWW
+product INTEL 82801I_IGP_M	0x10bf  82801I mobile LAN controller
 product INTEL 82801I_IFE	0x10c0	82801I LAN Controller
 product INTEL 82801I_IFE_G	0x10c2	82801I (G) LAN Controller
 product INTEL 82801I_IFE_GT	0x10c3	82801I (GT) LAN Controller
