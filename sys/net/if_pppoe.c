@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.92 2008/08/19 22:03:05 martin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.93 2008/10/15 20:08:33 scw Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.92 2008/08/19 22:03:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.93 2008/10/15 20:08:33 scw Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -305,12 +305,9 @@ pppoe_find_softc_by_session(u_int session, struct ifnet *rcvif)
 
 	LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
 		if (sc->sc_state == PPPOE_STATE_SESSION
-		    && sc->sc_session == session) {
-			if (sc->sc_eth_if == rcvif)
-				return sc;
-			else
-				return NULL;
-		}
+		    && sc->sc_session == session
+		    && sc->sc_eth_if == rcvif)
+			return sc;
 	}
 	return NULL;
 }
