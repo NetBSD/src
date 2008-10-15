@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.154 2008/10/13 12:25:22 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.155 2008/10/15 06:51:19 wrstuden Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154 2008/10/13 12:25:22 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.155 2008/10/15 06:51:19 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -63,6 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.154 2008/10/13 12:25:22 nakayama Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/kernel.h>
 #include <sys/resource.h>
 #include <sys/signal.h>
@@ -1131,8 +1133,19 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 				return;
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		/*
+		 * WRS: Can drop LP_SA_NOBLOCK test iff can only get
+		 * here from a usermode-initiated access. LP_SA_NOBLOCK
+		 * should never be set there - it's kernel-only.
+		 */
+		if ((l->l_flag & LW_SA)
+		    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+			l->l_savp->savp_faultaddr = addr;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
+	}
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
@@ -1230,6 +1243,7 @@ kfault:
 		trapsignal(l, &ksi);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}

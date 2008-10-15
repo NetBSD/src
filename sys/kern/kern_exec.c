@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.278 2008/10/11 13:40:57 pooka Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.279 2008/10/15 06:51:20 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,13 +59,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.278 2008/10/11 13:40:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.279 2008/10/15 06:51:20 wrstuden Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
 #include "opt_compat_netbsd.h"
 #include "veriexec.h"
 #include "opt_pax.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.278 2008/10/11 13:40:57 pooka Exp $"
 #include <sys/pax.h>
 #include <sys/cpu.h>
 
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
@@ -167,6 +170,21 @@ struct uvm_object *emul_netbsd_object;
 void	syscall(void);
 #endif
 
+static const struct sa_emul saemul_netbsd = {
+	sizeof(ucontext_t),
+	sizeof(struct sa_t),
+	sizeof(struct sa_t *),
+	NULL,
+	NULL,
+	cpu_upcall,
+	(void (*)(struct lwp *, void *))getucontext_sa,
+#ifdef KERN_SA
+	sa_ucsp
+#else
+	NULL
+#endif
+};
+
 /* NetBSD emul struct */
 const struct emul emul_netbsd = {
 	"netbsd",
@@ -211,6 +229,7 @@ const struct emul emul_netbsd = {
 
 	uvm_default_mapaddr,
 	NULL,
+	&saemul_netbsd,
 	sizeof(ucontext_t),
 	startlwp,
 };
@@ -472,6 +491,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	struct exec_fakearg	*tmpfap;
 	int			szsigcode;
 	struct exec_vmcmd	*base_vcp;
+	int			oldlwpflags;
 	ksiginfo_t		ksi;
 	ksiginfoq_t		kq;
 	char			*pathbuf;
@@ -499,6 +519,13 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	    chgproccnt(kauth_cred_getuid(l->l_cred), 0) >
 	    p->p_rlimit[RLIMIT_NPROC].rlim_cur)
 		return EAGAIN;
+
+	oldlwpflags = l->l_flag & (LW_SA | LW_SA_UPCALL);
+	if (l->l_flag & LW_SA) {
+		lwp_lock(l);
+		l->l_flag &= ~(LW_SA | LW_SA_UPCALL);
+		lwp_unlock(l);
+	}
 
 	/*
 	 * Drain existing references and forbid new ones.  The process
@@ -679,7 +706,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	}
 
 	/* Get rid of other LWPs. */
-	if (p->p_nlwps > 1) {
+	if (p->p_sa || p->p_nlwps > 1) {
 		mutex_enter(p->p_lock);
 		exit_lwps(l);
 		mutex_exit(p->p_lock);
@@ -693,6 +720,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* This is now LWP 1 */
 	l->l_lid = 1;
 	p->p_nlwpid = 1;
+
+#ifdef KERN_SA
+	/* Release any SA state. */
+	if (p->p_sa)
+		sa_release(p);
+#endif /* KERN_SA */
 
 	/* Remove POSIX timers */
 	timers_free(p, TIMERS_POSIX);
@@ -1119,6 +1152,9 @@ execve1(struct lwp *l, const char *path, char * const *args,
 #endif
 
  clrflg:
+	lwp_lock(l);
+	l->l_flag |= oldlwpflags;
+	lwp_unlock(l);
 	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
 
