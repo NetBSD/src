@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.169 2008/08/11 02:48:42 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.170 2008/10/15 08:13:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.169 2008/08/11 02:48:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.170 2008/10/15 08:13:17 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2982,7 +2982,7 @@ found:
 				if (pool_in_cg(pp, cc->cc_current, addr) ||
 				    pool_in_cg(pp, cc->cc_previous, addr)) {
 					struct cpu_info *ci =
-					    cpu_lookup_byindex(i);
+					    cpu_lookup(i);
 
 					incpucache = true;
 					snprintf(cpucachestr,

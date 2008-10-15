@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 2008/05/19 17:06:02 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 2008/10/15 08:13:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -71,8 +71,7 @@ void	cpu_offline_md(void);
 #endif
 
 lwp_t	*cpu_switchto(lwp_t *, lwp_t *, bool);
-struct	cpu_info *cpu_lookup(cpuid_t);
-struct	cpu_info *cpu_lookup_byindex(u_int);
+struct	cpu_info *cpu_lookup(u_int);
 int	cpu_setonline(struct cpu_info *, bool);
 bool	cpu_intr_p(void);
 bool	cpu_kpreempt_enter(uintptr_t, int);
