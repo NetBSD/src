@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.71 2008/10/15 13:04:26 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.72 2008/10/15 20:15:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <sys/callout.h>
 #include <sys/cpu.h>
 #include <sys/filedesc.h>
+#include <sys/iostat.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
@@ -172,6 +173,7 @@ _rump_init(int rump_version)
 	callout_init_cpu(&rump_cpu);
 
 	once_init();
+	iostat_init();
 	uid_init();
 	percpu_init();
 	fd_sys_init();
