@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.19 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.20 2008/10/15 09:55:01 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.19 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.20 2008/10/15 09:55:01 cegger Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.19 2008/10/15 06:51:17 wrstuden Ex
 #include <sys/ucontext.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
+#include <sys/savar.h>
 
 #include <arm/cpufunc.h>
 
