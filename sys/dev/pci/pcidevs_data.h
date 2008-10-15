@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.960 2008/10/01 17:16:15 christos Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.961 2008/10/15 17:34:52 bouyer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.960 2008/10/01 15:38:14 christos Exp
+ *	NetBSD: pcidevs,v 1.961 2008/10/15 17:32:04 bouyer Exp
  */
 
 /*
@@ -7664,6 +7664,10 @@ static const struct pci_product pci_products[] = {
 	    "82801I (AMT) LAN Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_M,
+	    "82801I mobile LAN controllerWWWW",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE,
 	    "82801I LAN Controller",
 	},
@@ -7684,8 +7688,16 @@ static const struct pci_product pci_products[] = {
 	    "i82801H IFE (G) LAN Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IGP_M_V,
+	    "i82801H IGP (MV) LAN Controller",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82567V,
 	    "i82567V LAN controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_M_AMT,
+	    "82801I mobile (AMT) LAN controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
@@ -14496,4 +14508,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3023;
+const int pci_nproducts = 3026;
