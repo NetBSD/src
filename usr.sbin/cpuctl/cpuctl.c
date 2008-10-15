@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.9 2008/10/15 08:08:30 ad Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.10 2008/10/15 08:22:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.9 2008/10/15 08:08:30 ad Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.10 2008/10/15 08:22:06 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -178,12 +178,12 @@ u_int
 getcpuid(char **argv)
 {
 	char *argp;
-	cpustate_t cs;
+	u_int id;
 
-	cs.cs_id = (int)strtoul(argv[0], &argp, 0);
+	id = (int)strtoul(argv[0], &argp, 0);
 	if (*argp != '\0')
 		usage();
-	return cs.cs_id;
+	return id;
 }
 
 void
