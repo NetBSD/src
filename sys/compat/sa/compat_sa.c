@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.91.2.48 2008/10/14 20:25:42 wrstuden Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.1.2.1 2008/10/15 06:43:22 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.91.2.48 2008/10/14 20:25:42 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.1.2.1 2008/10/15 06:43:22 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
