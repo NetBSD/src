@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.88 2008/10/14 16:01:22 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.89 2008/10/15 16:56:49 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.88 2008/10/14 16:01:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.89 2008/10/15 16:56:49 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -946,7 +946,7 @@ struct cpu_functions fa526_cpufuncs = {
 
 	/* Other functions */
 
-	.cf_flush_prefetchbuf	= cpufunc_nullop,
+	.cf_flush_prefetchbuf	= fa526_flush_prefetchbuf,
 	.cf_drain_writebuf	= armv4_drain_writebuf,
 	.cf_flush_brnchtgt_C	= cpufunc_nullop,
 	.cf_flush_brnchtgt_E	= fa526_flush_brnchtgt_E,
