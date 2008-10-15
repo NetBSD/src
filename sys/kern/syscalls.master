@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.209 2008/10/15 06:51:20 wrstuden Exp $
+	$NetBSD: syscalls.master,v 1.210 2008/10/15 13:01:15 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -218,7 +218,7 @@
 95	STD	RUMP 	{ int sys_fsync(int fd); }
 96	STD 		{ int sys_setpriority(int which, id_t who, int prio); }
 97	COMPAT_30	{ int sys_socket(int domain, int type, int protocol); }
-98	STD		{ int sys_connect(int s, const struct sockaddr *name, \
+98	STD	RUMP	{ int sys_connect(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
 99	COMPAT_43	{ int sys_accept(int s, void *name, \
 			    int *anamelen); } oaccept
@@ -231,7 +231,7 @@
 			    sigreturn13
 104	STD		{ int sys_bind(int s, const struct sockaddr *name, \
 			    unsigned int namelen); }
-105	STD		{ int sys_setsockopt(int s, int level, int name, \
+105	STD	RUMP	{ int sys_setsockopt(int s, int level, int name, \
 			    const void *val, unsigned int valsize); }
 106	STD		{ int sys_listen(int s, int backlog); }
 107	OBSOL		vtimes
@@ -250,7 +250,7 @@
 116	STD 		{ int sys_gettimeofday(struct timeval *tp, \
 			    void *tzp); }
 117	STD 		{ int sys_getrusage(int who, struct rusage *rusage); }
-118	STD		{ int sys_getsockopt(int s, int level, int name, \
+118	STD	RUMP	{ int sys_getsockopt(int s, int level, int name, \
 			    void *val, unsigned int *avalsize); }
 119	OBSOL		resuba
 120	STD 		{ ssize_t sys_readv(int fd, \
@@ -800,7 +800,7 @@
 392	COMPAT_30 	{ int sys___fhstat30(const struct compat_30_fhandle \
 			    *fhp, struct stat *sb); }
 393	STD 		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
-394	STD		{ int sys___socket30(int domain, int type, int protocol); }
+394	STD	 RUMP	{ int sys___socket30(int domain, int type, int protocol); }
 395	STD 		{ int sys___getfh30(const char *fname, void *fhp, \
 			    size_t *fh_size); }
 396	STD 		{ int sys___fhopen40(const void *fhp, size_t fh_size,\
