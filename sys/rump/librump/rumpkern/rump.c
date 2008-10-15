@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.70 2008/10/13 19:41:13 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.71 2008/10/15 13:04:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -37,6 +37,7 @@
 #include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/once.h>
 #include <sys/percpu.h>
 #include <sys/queue.h>
 #include <sys/resourcevar.h>
@@ -52,6 +53,7 @@
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+#include "rump_net_private.h"
 
 struct proc proc0;
 struct cwdinfo rump_cwdi;
@@ -91,6 +93,14 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 
 static int rump_inited;
 static struct emul emul_rump;
+
+void __rump_net_unavailable(void);
+void __rump_net_unavailable() {}
+__weak_alias(rump_net_init,__rump_net_unavailable);
+
+void __rump_vfs_unavailable(void);
+void __rump_vfs_unavailable() {}
+__weak_alias(rump_vfs_init,__rump_vfs_unavailable);
 
 int
 _rump_init(int rump_version)
@@ -161,6 +171,7 @@ _rump_init(int rump_version)
 	callout_startup();
 	callout_init_cpu(&rump_cpu);
 
+	once_init();
 	uid_init();
 	percpu_init();
 	fd_sys_init();
@@ -170,8 +181,10 @@ _rump_init(int rump_version)
 	bufinit();
 	wapbl_init();
 	softint_init(&rump_cpu);
-
 	rumpvfs_init();
+
+	if (rump_net_init != __rump_net_unavailable)
+		rump_net_init();
 
 	/* aieeeedondest */
 	if (rump_threads) {
@@ -714,6 +727,7 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	l->l_lid = lid;
 	l->l_fd = p->p_fd;
 	l->l_mutex = RUMP_LMUTEX_MAGIC;
+	l->l_cpu = &rump_cpu;
 
 	if (set)
 		rumpuser_set_curlwp(l);
