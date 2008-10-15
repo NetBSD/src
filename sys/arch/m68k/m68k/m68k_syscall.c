@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.34 2008/02/06 22:12:40 dsl Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.35 2008/10/15 06:51:18 wrstuden Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,11 +110,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34 2008/02/06 22:12:40 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.35 2008/10/15 06:51:18 wrstuden Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_aout_m68k.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +123,8 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.34 2008/02/06 22:12:40 dsl Exp $"
 #include <sys/pool.h>
 #include <sys/acct.h>
 #include <sys/kernel.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
@@ -167,6 +170,12 @@ syscall(register_t code, struct frame frame)
 	sticks = p->p_sticks;
 	l->l_md.md_regs = frame.f_regs;
 	LWP_CACHE_CREDS(l, p);
+
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
 
 	(p->p_md.md_syscall)(code, l, &frame);
 
@@ -476,6 +485,17 @@ startlwp(void *arg)
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
+
+	machine_userret(l, f, 0);
+}
+
+/*
+ * XXX This is a terrible name.
+ */
+void
+upcallret(struct lwp *l)
+{
+	struct frame *f = (struct frame *)l->l_md.md_regs;
 
 	machine_userret(l, f, 0);
 }

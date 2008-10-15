@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.35 2008/04/24 18:39:22 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.36 2008/10/15 06:51:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35 2008/04/24 18:39:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.36 2008/10/15 06:51:19 wrstuden Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.35 2008/04/24 18:39:22 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscall.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
@@ -518,6 +520,9 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 			/* supervisor mode fault */
 			if ((l->l_addr->u_pcb.pcb_onfault == NULL) || KDFAULT(code))
 				map = kernel_map;
+		} else if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)v;
+			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
 
 		if (WRFAULT(code))
@@ -557,6 +562,9 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 		if (rv == 0) {
 			if (map != kernel_map && (void *)va >= vm->vm_maxsaddr)
 				uvm_grow(p, va);
+
+			if ((type & T_USER) != 0)
+				l->l_pflag &= ~LP_SA_PAGEFAULT;
 			goto finish;
 		}
 		if (rv == EACCES) {
@@ -579,6 +587,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 			       map, va, ftype, rv);
 			goto dopanic;
 		}
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		ksi.ksi_addr = (void *)v;
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d (%s), uid %d killed: out of swap\n",
