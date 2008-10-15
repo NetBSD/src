@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.905.2.6 2008/10/10 22:29:46 skrll Exp $
+#	$NetBSD: files,v 1.905.2.7 2008/10/15 06:43:23 wrstuden Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1315,6 +1315,7 @@ include "secmodel/files.secmodel"
 #
 # kernel sources
 #
+file	compat/sa/compat_sa.c
 file	conf/debugsyms.c
 file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
@@ -1402,7 +1403,6 @@ file	kern/kern_rate.c
 file	kern/kern_resource.c
 file	kern/kern_runq.c
 file	kern/kern_rwlock.c
-file	kern/kern_sa.c
 file	kern/kern_sig.c
 file	kern/kern_sleepq.c
 file	kern/kern_softint.c
