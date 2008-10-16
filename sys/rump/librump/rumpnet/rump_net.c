@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.2 2008/10/16 16:41:07 pooka Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.3 2008/10/16 19:27:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -25,6 +25,7 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #include <sys/param.h>
 
 #include <sys/domain.h>
@@ -32,6 +33,16 @@
 #include <sys/socketvar.h>
 
 #include "rump_net_private.h"
+
+/* XXX: tempkludge */
+void __rumpnet_unimpl(void);
+void
+__rumpnet_unimpl()
+{
+
+	panic("XXX");
+}
+__weak_alias(ifunit,__rumpnet_unimpl);
 
 void
 rump_net_init()
