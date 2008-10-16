@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2008/10/09 12:34:36 pooka Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2008/10/16 22:05:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #ifndef _SYS_RUMP_VMPARAM_H_
 #define _SYS_RUMP_VMPARAM_H_
 
-#define PAGE_SHIFT		12
+#define PAGE_SHIFT		13
 #define PAGE_SIZE		(1 << PAGE_SHIFT)
 #define PAGE_MASK		(PAGE_SIZE - 1)
 
