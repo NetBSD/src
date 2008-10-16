@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.175 2008/04/24 15:35:31 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.176 2008/10/16 19:33:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.175 2008/04/24 15:35:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.176 2008/10/16 19:33:48 christos Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -921,7 +921,7 @@ nfs_doio_write(struct buf *bp, struct uio *uiop)
 	int iomode;
 	bool stalewriteverf = false;
 	int i, npages = (bp->b_bcount + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	struct vm_page *pgs[npages];
+	struct vm_page **pgs;
 #ifndef NFS_V2_ONLY
 	bool needcommit = true; /* need only COMMIT RPC */
 #else
@@ -937,6 +937,8 @@ nfs_doio_write(struct buf *bp, struct uio *uiop)
 	} else {
 		iomode = NFSV3WRITE_FILESYNC;
 	}
+
+	pgs = malloc(sizeof(*pgs) * npages, M_TEMP, M_WAITOK);
 
 #ifndef NFS_V2_ONLY
 again:
@@ -1046,7 +1048,7 @@ again:
 			bp->b_error = np->n_error = error;
 			np->n_flag |= NWRITEERR;
 		}
-		return error;
+		goto out;
 	}
 #endif
 	off = uiop->uio_offset;
@@ -1115,6 +1117,8 @@ again:
 	if (stalewriteverf) {
 		nfs_clearcommit(vp->v_mount);
 	}
+out:
+	free(pgs, M_TEMP);
 	return error;
 }
 
