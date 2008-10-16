@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.69 2008/10/02 17:54:51 joerg Exp $
+# $NetBSD: shl.mi,v 1.70 2008/10/16 09:39:43 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -85,12 +85,18 @@
 ./usr/lib/librumpfs_hfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_lfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_msdos_pic.a			comp-c-piclib
+./usr/lib/librumpfs_nfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_ntfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_syspuffs_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_sysvbfs_pic.a		comp-c-piclib
 ./usr/lib/librumpfs_tmpfs_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_udf_pic.a			comp-c-piclib
 ./usr/lib/librumpfs_ufs_pic.a			comp-c-piclib
+./usr/lib/librumpnet_pic.a			comp-c-piclib
+./usr/lib/librumpnet_net_pic.a			comp-c-piclib
+./usr/lib/librumpnet_netinet_pic.a		comp-c-piclib
+./usr/lib/librumpnet_sockin_pic.a		comp-c-piclib
+./usr/lib/librumpnet_virtif_pic.a		comp-c-piclib
 ./usr/lib/librumpuser_pic.a			comp-c-piclib
 ./usr/lib/libsdp_pic.a				comp-c-piclib
 ./usr/lib/libskey_pic.a				comp-c-piclib		skey
