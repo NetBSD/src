@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.210 2008/10/15 13:01:15 pooka Exp $
+	$NetBSD: syscalls.master,v 1.211 2008/10/16 19:30:49 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -156,7 +156,7 @@
 53	COMPAT_13 	{ int sys_sigaltstack( \
 			    const struct sigaltstack13 *nss, \
 			    struct sigaltstack13 *oss); } sigaltstack13
-54	STD 		{ int sys_ioctl(int fd, \
+54	STD	RUMP	{ int sys_ioctl(int fd, \
 			    u_long com, ... void *data); }
 55	COMPAT_12 	{ int sys_reboot(int opt); } oreboot
 56	STD 		{ int sys_revoke(const char *path); }
