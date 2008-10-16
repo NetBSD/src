@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.41 2008/02/15 17:26:06 matt Exp $	*/
+/*	$NetBSD: exec.c,v 1.42 2008/10/16 15:31:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.41 2008/02/15 17:26:06 matt Exp $");
+__RCSID("$NetBSD: exec.c,v 1.42 2008/10/16 15:31:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,11 +101,14 @@ int exerrno = 0;			/* Last exec error */
 
 
 STATIC void tryexec(char *, char **, char **, int);
-STATIC void execinterp(char **, char **);
 STATIC void printentry(struct tblentry *, int);
 STATIC void clearcmdentry(int);
 STATIC struct tblentry *cmdlookup(const char *, int);
 STATIC void delete_cmd_entry(void);
+
+#ifndef BSD
+STATIC void execinterp(char **, char **);
+#endif
 
 
 extern const char *const parsekwd[];
