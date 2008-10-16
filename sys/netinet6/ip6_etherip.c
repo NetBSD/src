@@ -1,4 +1,4 @@
-/*      $NetBSD: ip6_etherip.c,v 1.9 2008/04/15 03:57:04 thorpej Exp $        */
+/*      $NetBSD: ip6_etherip.c,v 1.10 2008/10/16 18:56:56 hans Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,9 +58,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.9 2008/04/15 03:57:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.10 2008/10/16 18:56:56 hans Exp $");
 
 #include "opt_inet.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +94,9 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_etherip.c,v 1.9 2008/04/15 03:57:04 thorpej Exp 
 #include <net/if_ether.h>
 #include <net/if_media.h>
 #include <net/if_etherip.h>
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
 
 #include <machine/stdarg.h>
 
