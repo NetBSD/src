@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1200 2008/10/16 03:51:54 wrstuden Exp $
+#	$NetBSD: mi,v 1.1201 2008/10/16 09:39:43 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2477,6 +2477,9 @@
 ./usr/lib/librumpfs_msdos.a			comp-c-lib
 ./usr/lib/librumpfs_msdos_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_msdos_p.a			comp-c-proflib		profile
+./usr/lib/librumpfs_nfs.a			comp-c-lib
+./usr/lib/librumpfs_nfs_g.a		-unknown-	debuglib
+./usr/lib/librumpfs_nfs_p.a			comp-c-proflib		profile
 ./usr/lib/librumpfs_ntfs.a			comp-c-lib
 ./usr/lib/librumpfs_ntfs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_ntfs_p.a			comp-c-proflib		profile
@@ -2495,6 +2498,21 @@
 ./usr/lib/librumpfs_ufs.a			comp-c-lib
 ./usr/lib/librumpfs_ufs_g.a		-unknown-	debuglib
 ./usr/lib/librumpfs_ufs_p.a			comp-c-proflib		profile
+./usr/lib/librumpnet.a				comp-c-lib
+./usr/lib/librumpnet_g.a		-unknown-	debuglib
+./usr/lib/librumpnet_p.a			comp-c-proflib		profile
+./usr/lib/librumpnet_net.a			comp-c-lib
+./usr/lib/librumpnet_net_g.a		-unknown-	debuglib
+./usr/lib/librumpnet_net_p.a			comp-c-proflib		profile
+./usr/lib/librumpnet_netinet.a			comp-c-lib
+./usr/lib/librumpnet_netinet_g.a	-unknown-	debuglib
+./usr/lib/librumpnet_netinet_p.a		comp-c-proflib		profile
+./usr/lib/librumpnet_sockin.a			comp-c-lib
+./usr/lib/librumpnet_sockin_g.a		-unknown-	debuglib
+./usr/lib/librumpnet_sockin_p.a			comp-c-proflib		profile
+./usr/lib/librumpnet_virtif.a			comp-c-lib
+./usr/lib/librumpnet_virtif_g.a		-unknown-	debuglib
+./usr/lib/librumpnet_virtif_p.a			comp-c-proflib		profile
 ./usr/lib/librumpuser.a				comp-c-lib
 ./usr/lib/librumpuser_g.a		-unknown-	debuglib
 ./usr/lib/librumpuser_p.a			comp-c-proflib		profile
@@ -3367,6 +3385,7 @@
 ./usr/libdata/debug/usr/sbin/rump_hfs.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_lfs.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_msdos.debug	comp-sysutil-debug	debug,puffs
+./usr/libdata/debug/usr/sbin/rump_nfs.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_ntfs.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_syspuffs.debug	comp-sysutil-debug	debug,puffs
 ./usr/libdata/debug/usr/sbin/rump_sysvbfs.debug	comp-sysutil-debug	debug,puffs
