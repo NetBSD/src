@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.29 2008/08/30 02:57:42 cube Exp $	*/
+/*	$NetBSD: main.c,v 1.30 2008/10/16 05:35:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -65,6 +65,7 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,6 +78,11 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 
 #ifndef LINE_MAX
 #define LINE_MAX 1024
+#endif
+
+/* just in case */
+#ifndef _PATH_TMP
+#define _PATH_TMP "/tmp"
 #endif
 
 int	vflag;				/* verbose output */
@@ -139,7 +145,7 @@ const char *progname;
 int
 main(int argc, char **argv)
 {
-	char *p, cname[20];
+	char *p, cname[PATH_MAX];
 	const char *last_component;
 	int pflag, xflag, ch, removeit;
 
@@ -328,16 +334,18 @@ main(int argc, char **argv)
 		/* Open temporary configuration file */
 		tmpdir = getenv("TMPDIR");
 		if (tmpdir == NULL)
-			tmpdir = "/tmp";
+			tmpdir = _PATH_TMP;
 		snprintf(cname, sizeof(cname), "%s/config.tmp.XXXXXX", tmpdir);
 		cfd = mkstemp(cname);
 		if (cfd == -1)
 			err(EXIT_FAILURE, "Cannot create `%s'", cname);
 
 		printf("Using configuration data embedded in kernel...\n");
-		if (!extract_config(conffile, cname, cfd))
+		if (!extract_config(conffile, cname, cfd)) {
+			unlink(cname);
 			errx(EXIT_FAILURE, "%s does not contain embedded "
 			    "configuration data", conffile);
+		}
 
 		removeit = 1;
 		close(cfd);
