@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.2 2008/10/15 11:43:38 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.3 2008/10/16 13:36:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -98,7 +98,7 @@ struct domain sockindomain = {
 #define SOCKIN_NOTHREAD
 #endif
 
-#define SO2S(so) ((int)(so->so_internal))
+#define SO2S(so) ((intptr_t)(so->so_internal))
 #define SOCKIN_SBSIZE 65536
 
 static void
@@ -271,7 +271,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			kmem_free(su, sizeof(*su));
 			break;
 		}
-		so->so_internal = (void *)news;
+		so->so_internal = (void *)(intptr_t)news;
 		su->su_so = so;
 
 		mutex_enter(&su_mtx);
@@ -287,7 +287,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		if (so->so_proto->pr_type == SOCK_DGRAM)
 			break;
 
-		rv = rumpuser_net_connect((int)so->so_internal,
+		rv = rumpuser_net_connect(SO2S(so),
 		    mtod(nam, struct sockaddr *), sizeof(struct sockaddr_in),
 		    &error);
 		if (rv == 0)
@@ -316,7 +316,7 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 		}
 		mhdr.msg_iov = iov;
 		mhdr.msg_iovlen = i;
-		s = (int)so->so_internal;
+		s = SO2S(so);
 
 		if (so->so_proto->pr_type == SOCK_DGRAM) {
 			saddr = mtod(nam, struct sockaddr *);
