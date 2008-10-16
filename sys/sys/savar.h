@@ -1,4 +1,4 @@
-/*	$NetBSD: savar.h,v 1.26 2008/10/15 08:58:40 cegger Exp $	*/
+/*	$NetBSD: savar.h,v 1.27 2008/10/16 18:21:46 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -138,6 +138,15 @@ struct sadata_vp {
  * m:	sadata::sa_mutex
  * p:	proc::p_lock
  * (:	unlocked, stable
+ *
+ *	Locking sadata::sa_vps is special. The list of vps is examined
+ * in two locations, signal handling and timer processing, in which
+ * proc::p_lock either is the best lock to use (signal handling) or an
+ * unacceptable lock to use (timer processing, as we hold spinlocks when
+ * locking the list, and p_lock can sleep; spinlocks while sleeping == BAD).
+ * Actually changing the list of vps is exceptionally rare; it only happens
+ * with concurrency > 1 and at app startup. So use both locks to write &
+ * have the code to add vps grab both of them to actually change the list.
  */
 struct sadata {
 	kmutex_t	sa_mutex;		/* (: lock on these fields */
@@ -151,7 +160,7 @@ struct sadata {
 	ssize_t 	sa_stackinfo_offset;	/* m: offset from ss_sp to stackinfo data */
 	int		sa_nstacks;		/* m: number of upcall stacks */
 	sigset_t	sa_sigmask;		/* p: process-wide masked sigs*/
-	SLIST_HEAD(, sadata_vp)	sa_vps;		/* m: virtual processors */
+	SLIST_HEAD(, sadata_vp)	sa_vps;		/* m,p: virtual processors */
 	kcondvar_t	sa_cv;			/* m: condvar for sa_yield */
 };
 
