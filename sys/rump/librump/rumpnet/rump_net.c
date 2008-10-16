@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.1 2008/10/15 13:00:40 pooka Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.2 2008/10/16 16:41:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -41,4 +41,5 @@ rump_net_init()
 	domaininit();
 	soinit();
 	soinit2();
+	rump_netisr_init();
 }
