@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.42 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.43 2008/10/16 08:47:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.42 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.43 2008/10/16 08:47:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,7 +379,7 @@ sys__lwp_kill(struct lwp *l, const struct sys__lwp_kill_args *uap, register_t *r
 
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
-	ksi.ksi_code = SI_USER;
+	ksi.ksi_code = SI_LWP;
 	ksi.ksi_pid = p->p_pid;
 	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
 	ksi.ksi_lid = SCARG(uap, target);
