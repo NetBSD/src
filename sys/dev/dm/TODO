@@ -2,9 +2,6 @@ Important unimplemented features in current device-mapper implementation
 
 * implement dm_dev_event_ioctl and dm_target_msg_ioctl functions
 
-* review locking there is no device locking now, Device table can 
-  be changed when IO is done on device.
-
 * write more targets mirror, stripe.
 
 			Pain in the sky tasks

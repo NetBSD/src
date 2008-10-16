@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.1.2.8 2008/09/11 13:40:47 haad Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.1.2.9 2008/10/16 23:26:42 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ int
 dm_target_zero_strategy(struct dm_table_entry *table_en, struct buf *bp)
 {
 
-	printf("Zero target read function called %d!!\n", bp->b_bcount);
+	/* printf("Zero target read function called %d!!\n", bp->b_bcount); */
 
 	memset(bp->b_data, 0, bp->b_bcount); 
 	bp->b_resid = 0; /* nestiobuf_done wants b_resid = 0 to be sure

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.1.2.10 2008/09/11 13:40:47 haad Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.1.2.11 2008/10/16 23:26:42 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -42,9 +42,13 @@
 
 #include "dm.h"
 
+SLIST_HEAD(dm_pdevs, dm_pdev) dm_pdev_list;
+
+kmutex_t dm_pdev_mutex;
+
 static struct dm_pdev *dm_pdev_alloc(const char *);
 static int dm_pdev_rem(struct dm_pdev *);
-/*static int dm_pdev_dump_list(void);*/
+static struct dm_pdev* dm_pdev_lookup_name(const char *);
 
 /*
  * Find used pdev with name == dm_pdev_name.
@@ -54,6 +58,8 @@ dm_pdev_lookup_name(const char *dm_pdev_name)
 {
 	struct dm_pdev *dm_pdev;
 	int dlen; int slen;
+
+	KASSERT(dm_pdev_name != NULL);
 
 	slen = strlen(dm_pdev_name);
 
@@ -81,31 +87,35 @@ dm_pdev_insert(const char *dev_name)
 	struct dm_pdev *dmp;
 	int error;
 	
-	dmp = dm_pdev_lookup_name(dev_name);
+	KASSERT(dev_name != NULL);
 	
+	mutex_enter(&dm_pdev_mutex);
+	dmp = dm_pdev_lookup_name(dev_name);
+
 	if (dmp != NULL) {
 		dmp->ref_cnt++;
 		aprint_verbose("dmp_pdev_insert pdev %s already in tree\n",dev_name);
+		mutex_exit(&dm_pdev_mutex);
 		return dmp;
 	}
-
+	mutex_exit(&dm_pdev_mutex);
+	
 	if ((dmp = dm_pdev_alloc(dev_name)) == NULL)
 		return NULL;
 
 	error = dk_lookup(dev_name, curlwp, &dmp->pdev_vnode, UIO_SYSSPACE);
-
 	if (error) {
 		aprint_verbose("dk_lookup on device: %s failed with error %d!\n",
 		    dev_name, error);
-
 		kmem_free(dmp, sizeof(struct dm_pdev));
-		
 		return NULL;
 	}
-	
-	dmp->ref_cnt = 1;
 
+	dmp->ref_cnt = 1;
+	
+	mutex_enter(&dm_pdev_mutex);
 	SLIST_INSERT_HEAD(&dm_pdev_list, dmp, next_pdev);
+	mutex_exit(&dm_pdev_mutex);
 
 	return dmp;
 }
@@ -116,9 +126,9 @@ dm_pdev_insert(const char *dev_name)
 int
 dm_pdev_init(void)
 {
-	
 	SLIST_INIT(&dm_pdev_list); /* initialize global pdev list */
-
+	mutex_init(&dm_pdev_mutex, MUTEX_DEFAULT, IPL_NONE);
+	
 	return 0;
 }
 
@@ -150,8 +160,7 @@ dm_pdev_rem(struct dm_pdev *dmp)
 {
 	int err;
 
-	if (dmp == NULL)
-		return ENOENT;
+	KASSERT(dmp != NULL);
 		
 	if (dmp->pdev_vnode != NULL) {
 		err = vn_close(dmp->pdev_vnode, FREAD | FWRITE, FSCRED);
@@ -173,6 +182,7 @@ dm_pdev_destroy(void)
 {
 	struct dm_pdev *dm_pdev;
 
+	mutex_enter(&dm_pdev_mutex);
 	while (!SLIST_EMPTY(&dm_pdev_list)) {           /* List Deletion. */
 		
 		dm_pdev = SLIST_FIRST(&dm_pdev_list);
@@ -181,7 +191,9 @@ dm_pdev_destroy(void)
 
 		dm_pdev_rem(dm_pdev);
 	}
+	mutex_exit(&dm_pdev_mutex);
 
+	mutex_destroy(&dm_pdev_mutex);
 	return 0;
 }
 
@@ -199,20 +211,21 @@ dm_pdev_destroy(void)
 int
 dm_pdev_decr(struct dm_pdev *dmp)
 {
-	if (dmp == NULL)
-		return ENOENT;
-	
-	dmp->ref_cnt--;
-
+	KASSERT(dmp != NULL);
 	/*
 	 * If this was last reference remove dmp from
 	 * global list also.
 	 */
-	if (dmp->ref_cnt == 0) {
+	mutex_enter(&dm_pdev_mutex);
+	
+	if (--dmp->ref_cnt == 0) {
 		SLIST_REMOVE(&dm_pdev_list, dmp, dm_pdev, next_pdev); 
+		mutex_exit(&dm_pdev_mutex);
 		dm_pdev_rem(dmp);
+		return 0;
 	}
-
+	
+	mutex_exit(&dm_pdev_mutex);
 	return 0;
 }
 
