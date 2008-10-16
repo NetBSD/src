@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.176 2008/10/16 19:33:48 christos Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.177 2008/10/16 22:04:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.176 2008/10/16 19:33:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.177 2008/10/16 22:04:22 christos Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1214,7 +1214,7 @@ nfs_getpages(void *v)
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct nfsnode *np = VTONFS(vp);
 	const int npages = *ap->a_count;
-	struct vm_page *pg, **pgs, *opgs[npages];
+	struct vm_page *pg, **pgs, **opgs;
 	off_t origoffset, len;
 	int i, error;
 	bool v3 = NFS_ISV3(vp);
@@ -1225,6 +1225,7 @@ nfs_getpages(void *v)
 	 * call the genfs code to get the pages.  `pgs' may be NULL
 	 * when doing read-ahead.
 	 */
+	opgs = malloc(npages * sizeof(*opgs), M_TEMP, M_WAITOK);
 
 	pgs = ap->a_m;
 	if (write && locked && v3) {
@@ -1242,9 +1243,8 @@ nfs_getpages(void *v)
 		memcpy(opgs, pgs, npages * sizeof(struct vm_pages *));
 	}
 	error = genfs_getpages(v);
-	if (error) {
-		return (error);
-	}
+	if (error)
+		goto out;
 
 	/*
 	 * for read faults where the nfs node is not yet marked NMODIFIED,
@@ -1268,9 +1268,8 @@ nfs_getpages(void *v)
 			mutex_exit(&uobj->vmobjlock);
 		}
 	}
-	if (!write) {
-		return (0);
-	}
+	if (!write)
+		goto out;
 
 	/*
 	 * this is a write fault, update the commit info.
@@ -1298,7 +1297,8 @@ nfs_getpages(void *v)
 				*ap->a_count = 0;
 				memcpy(pgs, opgs,
 				    npages * sizeof(struct vm_pages *));
-				return EBUSY;
+				error = EBUSY;
+				goto out;
 			}
 		}
 		nfs_del_committed_range(vp, origoffset, len);
@@ -1321,5 +1321,7 @@ nfs_getpages(void *v)
 	if (v3) {
 		mutex_exit(&np->n_commitlock);
 	}
-	return (0);
+out:
+	free(opgs, M_TEMP);
+	return error;
 }
