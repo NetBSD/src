@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/10/15 22:25:26 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2008/10/16 19:06:40 pooka Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../nfs
@@ -15,3 +15,5 @@ CPPFLAGS+=	-I${.CURDIR}/../../../net/lib/libnetinet/opt
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
+
+CFLAGS+=	-Wno-stack-protector
