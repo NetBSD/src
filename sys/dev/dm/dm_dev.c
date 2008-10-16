@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.1.2.11 2008/10/16 23:26:42 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.1.2.12 2008/10/16 23:43:03 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -49,14 +49,16 @@ TAILQ_HEAD_INITIALIZER(dm_dev_list);
 
 kmutex_t dm_dev_mutex;
 
-#define DISABLE_DEV(dmv)  do {                                 \
-		TAILQ_REMOVE(&dm_dev_list, dmv, next_devlist); \
-                mutex_enter(&dmv->dev_mtx);		       \
-                mutex_exit(&dm_dev_mutex);		       \
-                while(dmv->ref_cnt != 0)                       \
-	              cv_wait(&dmv->dev_cv, &dmv->dev_mtx);    \
-                mutex_exit(&dmv->dev_mtx);                     \
-} while (/*CONSTCOND*/0)
+__inline static void
+disable_dev(struct dm_dev *dmv)
+{
+	TAILQ_REMOVE(&dm_dev_list, dmv, next_devlist);
+	mutex_enter(&dmv->dev_mtx);
+	mutex_exit(&dm_dev_mutex);
+	while(dmv->ref_cnt != 0) 
+		cv_wait(&dmv->dev_cv, &dmv->dev_mtx);
+	mutex_exit(&dmv->dev_mtx);
+} 
 
 /*
  * Generic function used to lookup struct dm_dev. Calling with dm_dev_name 
@@ -103,11 +105,11 @@ dm_dev_lookup(const char *dm_dev_name, const char *dm_dev_uuid,
 static struct dm_dev*
 dm_dev_lookup_minor(int dm_dev_minor)
 {
-	struct dm_dev *dm_dev;
+	struct dm_dev *dmv;
 	
-	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
-		if (dm_dev_minor == dm_dev->minor)
-			return dm_dev;
+	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist){
+		if (dm_dev_minor == dmv->minor)
+			return dmv;
 	}
 	
 	return NULL;
@@ -119,7 +121,7 @@ dm_dev_lookup_minor(int dm_dev_minor)
 static struct dm_dev*
 dm_dev_lookup_name(const char *dm_dev_name)
 {
-	struct dm_dev *dm_dev;
+	struct dm_dev *dmv;
 	int dlen; int slen;
 
 	slen = strlen(dm_dev_name);
@@ -127,15 +129,15 @@ dm_dev_lookup_name(const char *dm_dev_name)
 	if (slen == 0)
 		return NULL;
 	
-	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
+	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist){
 
-		dlen = strlen(dm_dev->name);
+		dlen = strlen(dmv->name);
 		
 		if(slen != dlen)
 			continue;
 
-		if (strncmp(dm_dev_name, dm_dev->name, slen) == 0)
-			return dm_dev;
+		if (strncmp(dm_dev_name, dmv->name, slen) == 0)
+			return dmv;
 	}
 
 	return NULL;
@@ -147,7 +149,7 @@ dm_dev_lookup_name(const char *dm_dev_name)
 static struct dm_dev*
 dm_dev_lookup_uuid(const char *dm_dev_uuid)
 {
-	struct dm_dev *dm_dev;
+	struct dm_dev *dmv;
 	size_t len;
 	
 	len = 0;
@@ -156,13 +158,13 @@ dm_dev_lookup_uuid(const char *dm_dev_uuid)
 	if (len == 0)
 		return NULL;
 
-	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
+	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist){
 
-		if (strlen(dm_dev->uuid) != len)
+		if (strlen(dmv->uuid) != len)
 			continue;
 	
-		if (strncmp(dm_dev_uuid, dm_dev->uuid, strlen(dm_dev->uuid)) == 0)
-			return dm_dev;
+		if (strncmp(dm_dev_uuid, dmv->uuid, strlen(dmv->uuid)) == 0)
+			return dmv;
 	}
 
 	return NULL;
@@ -174,17 +176,17 @@ dm_dev_lookup_uuid(const char *dm_dev_uuid)
 int
 dm_dev_insert(struct dm_dev *dev)
 {
-	struct dm_dev *dmt;
+	struct dm_dev *dmv;
 	int r;
 
-	dmt = NULL;
+	dmv = NULL;
 	r = 0;
 	
 	KASSERT(dev != NULL);
 	mutex_enter(&dm_dev_mutex);
-	if (((dmt = dm_dev_lookup_uuid(dev->uuid)) == NULL) &&
-	    ((dmt = dm_dev_lookup_name(dev->name)) == NULL) &&
-	    ((dmt = dm_dev_lookup_minor(dev->minor)) == NULL)){
+	if (((dmv = dm_dev_lookup_uuid(dev->uuid)) == NULL) &&
+	    ((dmv = dm_dev_lookup_name(dev->name)) == NULL) &&
+	    ((dmv = dm_dev_lookup_minor(dev->minor)) == NULL)){
 
 		TAILQ_INSERT_TAIL(&dm_dev_list, dev, next_devlist);
 	
@@ -204,11 +206,11 @@ dm_dev_insert(struct dm_dev *dev)
 int
 dm_dev_test_minor(int dm_dev_minor)
 {
-	struct dm_dev *dm_dev;
+	struct dm_dev *dmv;
 	
 	mutex_enter(&dm_dev_mutex);
-	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
-		if (dm_dev_minor == dm_dev->minor){
+	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist){
+		if (dm_dev_minor == dmv->minor){
 			mutex_exit(&dm_dev_mutex);
 			return 1;
 		}
@@ -232,19 +234,19 @@ dm_dev_rem(const char *dm_dev_name, const char *dm_dev_uuid,
 	
 	if (dm_dev_minor > 0)
 		if ((dmv = dm_dev_lookup_minor(dm_dev_minor)) != NULL){
-			DISABLE_DEV(dmv);
+			disable_dev(dmv);
 			return dmv;
 		}
 	
 	if (dm_dev_name != NULL)	
 		if ((dmv = dm_dev_lookup_name(dm_dev_name)) != NULL){
-			DISABLE_DEV(dmv);
+			disable_dev(dmv);
 			return dmv;
 		}
 	
 	if (dm_dev_uuid != NULL)
 		if ((dmv = dm_dev_lookup_name(dm_dev_uuid)) != NULL){
-			DISABLE_DEV(dmv);
+			disable_dev(dmv);
 			return dmv;
 		}
 	mutex_exit(&dm_dev_mutex);
@@ -259,34 +261,34 @@ dm_dev_rem(const char *dm_dev_name, const char *dm_dev_uuid,
 int
 dm_dev_destroy(void)
 {
-	struct dm_dev *dm_dev;
+	struct dm_dev *dmv;
 	mutex_enter(&dm_dev_mutex);
 
 	while (TAILQ_FIRST(&dm_dev_list) != NULL){
 
-		dm_dev = TAILQ_FIRST(&dm_dev_list);
+		dmv = TAILQ_FIRST(&dm_dev_list);
 		
 		TAILQ_REMOVE(&dm_dev_list, TAILQ_FIRST(&dm_dev_list),
 		    next_devlist);
 
-		mutex_enter(&dm_dev->dev_mtx);
+		mutex_enter(&dmv->dev_mtx);
 
-		while (dm_dev->ref_cnt != 0)
-			cv_wait(&dm_dev->dev_cv, &dm_dev->dev_mtx);
+		while (dmv->ref_cnt != 0)
+			cv_wait(&dmv->dev_cv, &dmv->dev_mtx);
 		
 		/* Destroy active table first.  */
-		dm_table_destroy(&dm_dev->table_head, DM_TABLE_ACTIVE);
+		dm_table_destroy(&dmv->table_head, DM_TABLE_ACTIVE);
 
 		/* Destroy inactive table if exits, too. */
-		dm_table_destroy(&dm_dev->table_head, DM_TABLE_INACTIVE);
+		dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
 
-		dm_table_head_destroy(&dm_dev->table_head);
+		dm_table_head_destroy(&dmv->table_head);
 
-		mutex_exit(&dm_dev->dev_mtx);
-		mutex_destroy(&dm_dev->dev_mtx);
-		cv_destroy(&dm_dev->dev_cv);
+		mutex_exit(&dmv->dev_mtx);
+		mutex_destroy(&dmv->dev_mtx);
+		cv_destroy(&dmv->dev_cv);
 		
-		(void)kmem_free(dm_dev, sizeof(struct dm_dev));
+		(void)kmem_free(dmv, sizeof(struct dm_dev));
 	}
 	mutex_exit(&dm_dev_mutex);
 
@@ -349,7 +351,7 @@ dm_dev_unbusy(struct dm_dev *dmv)
 prop_array_t
 dm_dev_prop_list(void)
 {
-	struct dm_dev *dmd;
+	struct dm_dev *dmv;
 	
 	int j;
 	
@@ -362,12 +364,12 @@ dm_dev_prop_list(void)
 	
 	mutex_enter(&dm_dev_mutex);
 	
-	TAILQ_FOREACH(dmd, &dm_dev_list,next_devlist) {
+	TAILQ_FOREACH(dmv, &dm_dev_list,next_devlist) {
 		dev_dict  = prop_dictionary_create();
 		
-		prop_dictionary_set_cstring(dev_dict, DM_DEV_NAME, dmd->name);
+		prop_dictionary_set_cstring(dev_dict, DM_DEV_NAME, dmv->name);
 		
-		prop_dictionary_set_uint32(dev_dict, DM_DEV_DEV, dmd->minor);
+		prop_dictionary_set_uint32(dev_dict, DM_DEV_DEV, dmv->minor);
 
 		prop_array_set(dev_array, j, dev_dict);
 		
