@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.1.2.16 2008/09/22 09:11:38 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.1.2.17 2008/10/16 23:26:42 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,6 @@ dm_target_linear_status(void *target_config)
 	uint32_t i;
 	uint32_t count;
 	size_t prm_len;
-
 	
 	tlc = target_config;    
 	prm_len = 0;
@@ -121,7 +120,7 @@ dm_target_linear_status(void *target_config)
 	for(i = tlc->offset; i != 0; i /= 10)
 		count++;
 	
-	printf("Linear target status function called\n");
+	/*printf("Linear target status function called\n");*/
 
 	/* length of name + count of chars + one space and null char */
 	prm_len = strlen(tlc->pdev->name) + count + 2;
@@ -131,7 +130,6 @@ dm_target_linear_status(void *target_config)
 
 	printf("%s %"PRIu64, tlc->pdev->name, tlc->offset);
 	snprintf(params, prm_len,"%s %"PRIu64, tlc->pdev->name, tlc->offset);
-	
 	
 	return params;
 }
@@ -146,8 +144,8 @@ dm_target_linear_strategy(struct dm_table_entry *table_en, struct buf *bp)
 
 	tlc = table_en->target_config;
 	
-	printf("Linear target read function called %" PRIu64 "!!\n",
-	    tlc->offset);
+/*	printf("Linear target read function called %" PRIu64 "!!\n",
+	tlc->offset);*/
 
 	bp->b_blkno += tlc->offset;
 	
@@ -215,7 +213,6 @@ dm_target_linear_deps(struct dm_table_entry *table_en, prop_array_t prop_array)
 int
 dm_target_linear_upcall(struct dm_table_entry *table_en, struct buf *bp)
 {
-
 	return 0;
 }
 
@@ -226,11 +223,9 @@ uint64_t
 atoi(const char *s)
 {
 	uint64_t n;
-
 	n = 0;
 
 	while (*s != '\0') {
-
 		if (!isdigit(*s))
 			break;
 

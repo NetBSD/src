@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.1.2.13 2008/09/11 13:40:47 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.1.2.14 2008/10/16 23:26:42 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include <sys/errno.h>
 #include <sys/kmem.h>
 
 #include "netbsd-dm.h"
@@ -81,12 +80,8 @@ dm_target_insert(struct dm_target *dm_target)
 
 	dmt = dm_target_lookup_name(dm_target->name);
 
-	if (dmt != NULL) {
-		if (dmt->version[0] >= dm_target->version[0] &&
-		    dmt->version[1] >= dm_target->version[1] &&
-		    dmt->version[2] >= dm_target->version[2])
-				return EEXIST;
-	}
+	if (dmt != NULL)
+		return EEXIST;
 	
 	TAILQ_INSERT_TAIL(&dm_target_list, dm_target, dm_target_next);
 	
@@ -102,8 +97,7 @@ dm_target_rem(char *dm_target_name)
 {
 	struct dm_target *dm_target;
 	
-	if (dm_target_name == NULL)
-		return ENOENT;
+	KASSERT(dm_target_name != NULL);
 		    
 	dm_target = dm_target_lookup_name(dm_target_name);
 	if (dm_target == NULL)
@@ -163,26 +157,22 @@ dm_target_prop_list(void)
 	size_t i,j;
 
 	j = 0;
-	
+
 	target_array = prop_array_create();
 	
 	TAILQ_FOREACH (dm_target, &dm_target_list, dm_target_next){
 
 		target_dict  = prop_dictionary_create();
 		ver = prop_array_create();
-		
 		prop_dictionary_set_cstring(target_dict, DM_TARGETS_NAME,
 		    dm_target->name);
 
-		for (i=0;i<3;i++)
-			prop_array_set_uint32(ver, i, dm_target->version[i]);
+		for (i = 0; i < 3; i++)
+			prop_array_add_uint32(ver, dm_target->version[i]);
 
 		prop_dictionary_set(target_dict, DM_TARGETS_VERSION, ver);
-
 		prop_array_set(target_array, j, target_dict);
-		
 		prop_object_release(target_dict);
-
 		j++;
 	}
 

@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.1.2.13 2008/09/26 22:57:13 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.1.2.14 2008/10/16 23:26:41 haad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-#include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/dkio.h>
@@ -46,8 +45,6 @@
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
-#include <sys/mutex.h>
-
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -72,19 +69,15 @@ static void dmminphys(struct buf *);
 
 /* ***Variable-definitions*** */
 const struct bdevsw dm_bdevsw = {
-	dmopen, dmclose, dmstrategy, dmioctl, dmdump, dmsize,
-		D_DISK
+	dmopen, dmclose, dmstrategy, dmioctl, dmdump, dmsize, D_DISK | D_MPSAFE
 };
 
 const struct cdevsw dm_cdevsw = {
 	dmopen, dmclose, dmread, dmwrite, dmioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK | D_MPSAFE
 };
 
-/* Info about all devices */
-struct dm_softc *dm_sc;
-
-kmutex_t dm_ioctl_mtx;
+int unload;
 
 /*
  * This array is used to translate cmd to function pointer.
@@ -158,23 +151,9 @@ dm_modcmd(modcmd_t cmd, void *arg)
 int
 dmattach(void)
 {
-	dm_sc = (struct dm_softc *)kmem_zalloc(sizeof(struct dm_softc), KM_NOSLEEP);
-
-	if (dm_sc == NULL){
-		aprint_error("Not enough memory for dm device.\n");
-		return ENOMEM;
-	}
-
-	dm_sc->sc_minor_num = 0;
-	dm_sc->sc_ref_count = 0;
-	
 	dm_target_init();
-
 	dm_dev_init();
-	
 	dm_pdev_init();
-		
-	mutex_init(&dm_ioctl_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	return 0;
 }
@@ -183,54 +162,32 @@ dmattach(void)
 int
 dmdestroy(void)
 {
-	(void)kmem_free(dm_sc, sizeof(struct dm_softc));
+	atomic_inc_32(&unload);
 
-	aprint_debug("dm_destroy\n");
 	dm_dev_destroy();
-
-	aprint_debug("dm_pdev_destroy\n");
 	dm_pdev_destroy();
-	
 	dm_target_destroy();
-	
-	mutex_destroy(&dm_ioctl_mtx);
-	
+
 	return 0;
 }
 
 static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct dm_dev *dmv;
-
 	aprint_debug("open routine called %d\n", minor(dev));
 
-	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) != NULL)
-		dmv->ref_cnt++;
-       
 	return 0;
 }
 
 static int
 dmclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct dm_dev *dmv;
-
-	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) != NULL)
-		dmv->ref_cnt--;
-
 	aprint_debug("CLOSE routine called\n");
 
 	return 0;
 }
 
-/*
- * Called after ioctl call on mapper/control or dm device.
- * Locking: Use dm_ioctl_mtx to synchronise access to dm driver. 
- * Only one ioctl can be in dm driver in time. Ioctl's are not 
- * run many times and they performance is not critical, therefore
- * I can do it this way.
- */
+
 static int
 dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 {
@@ -241,38 +198,31 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 
 	aprint_debug("dmioctl called\n");
 	
-	if (data == NULL)
-		return(EINVAL);
-	
-	mutex_enter(&dm_ioctl_mtx);
+	KASSERT(data != NULL);
 	
 	if (disk_ioctl_switch(dev, cmd, data) != 0) {
 		struct plistref *pref = (struct plistref *) data;
 
-		r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in);
-		if (r)
-			goto out;
+		if((r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in)) != 0)
+			return r;
 		
 		dm_check_version(dm_dict_in);
-		
+
 		/* call cmd selected function */
-		r = dm_ioctl_switch(cmd);
-		if (r)
-			goto out;
+		if ((r = dm_ioctl_switch(cmd)) != 0)
+			return r;
 
-	/*	char *xml;
+		char *xml;
 		xml = prop_dictionary_externalize(dm_dict_in);
-		aprint_verbose("%s\n",xml);*/
-				
-		r = dm_cmd_to_fun(dm_dict_in);
-		if (r)
-			goto out;
+		aprint_verbose("%s\n",xml);
 
+		/* run ioctl routine */
+		if ((r = dm_cmd_to_fun(dm_dict_in)) != 0)
+			return r;
+		
 		r = prop_dictionary_copyout_ioctl(pref, cmd, dm_dict_in);
 	}
 
-out:
-	mutex_exit(&dm_ioctl_mtx);
 	return r;
 }
 
@@ -340,14 +290,14 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 {
 	struct dm_dev *dmv;
 	
-	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
-		return ENOENT;
-	
 	switch(cmd) {
 	case DIOCGWEDGEINFO:
 	{
 		struct dkwedge_info *dkw = (void *) data;
-		
+
+		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
+			return ENOENT;
+			
 		aprint_normal("DIOCGWEDGEINFO ioctl called\n");
 		
 		strlcpy(dkw->dkw_devname, dmv->name, 16);
@@ -355,24 +305,36 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		strlcpy(dkw->dkw_parent, dmv->name, 16);
 		
 		dkw->dkw_offset = 0;
-		dkw->dkw_size = dmsize(dev);
+		dkw->dkw_size = dm_table_size(&dmv->table_head);
 		strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
-		
+
+		dm_dev_unbusy(dmv);
 		break;
 	}
 	
 	case DIOCGDINFO:
 	{
+		
+		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
+			return ENOENT;
+
 		aprint_debug("DIOCGDINFO %d\n", dmv->dk_label->d_secsize);
 		 
 		*(struct disklabel *)data = *(dmv->dk_label);
+
+		dm_dev_unbusy(dmv);
 		break;
 	}
 	 
 	case DIOCGPART:
 	{
+		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
+			return ENOENT;
+
 		((struct partinfo *)data)->disklab = dmv->dk_label;
 		((struct partinfo *)data)->part = &dmv->dk_label->d_partitions[0];
+
+		dm_dev_unbusy(dmv);
 		break;
 	}
 	case DIOCWDINFO:
@@ -382,7 +344,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	case DIOCGDEFLABEL:
 		
 	default:
-		aprint_verbose("unknown disk_ioctl called\n");
+		aprint_debug("unknown disk_ioctl called\n");
 		return 1;
 		break; /* NOT REACHED */
 	}
@@ -396,26 +358,16 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 static void
 dmstrategy(struct buf *bp)
 {
-
 	struct dm_dev *dmv;
 	struct dm_table  *tbl;
-	
 	struct dm_table_entry *table_en;
-
 	struct buf *nestbuf;
 
 	uint32_t dev_type;
-	
-	uint64_t table_start;
-	uint64_t table_end;
-	
-	uint64_t buf_start;
-	uint64_t buf_len;
 
-	uint64_t start;
-	uint64_t end;
-
-	uint64_t issued_len;
+	uint64_t buf_start, buf_len, issued_len;
+	uint64_t table_start, table_end;
+	uint64_t start, end;
 	
 	buf_start = bp->b_blkno * DEV_BSIZE;
 	buf_len = bp->b_bcount;
@@ -425,35 +377,23 @@ dmstrategy(struct buf *bp)
 	table_end = 0;
 	dev_type = 0;
 	issued_len = 0;
-	
-	/* dm_dev are guarded by their own mutex */
+
+	if (unload == 1){
+		bp->b_error = EIO;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+		return;
+	}
+		
 	if ((dmv = dm_dev_lookup(NULL, NULL, minor(bp->b_dev))) == NULL) {
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		return;
 	} 
-        /*
-	 * Test if deleting flag is not set if it is set fail io
-	 * operation. There is small window between rw_enter and
-	 * dev_rem in dm_dev_remove_ioctl when new IO can be started
-	 * on device (it will wait on dev_rwlock) which will be
-	 * destroyed.
-	 */
-	dev_type = atomic_and_32_nv(&dmv->dev_type, DM_DELETING_DEV);
-	
-	if (dev_type & DM_DELETING_DEV) {
-		bp->b_error = EIO;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return;
-	}
-
-        /* Read lock per device rwlock so device can't be changed. */
-	rw_enter(&dmv->dev_rwlock, RW_READER);
 	
 	/* Select active table */
-	tbl = &dmv->tables[dmv->cur_active_table];
+	tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
 
 	 /* Nested buffers count down to zero therefore I have
 	    to set bp->b_resid to maximal value. */
@@ -464,7 +404,6 @@ dmstrategy(struct buf *bp)
 	 */
 	SLIST_FOREACH(table_en, tbl, next)
 	{
-		
 		/* I need need number of bytes not blocks. */
 		table_start = table_en->start * DEV_BSIZE;
 		/*
@@ -507,7 +446,8 @@ dmstrategy(struct buf *bp)
 	if (issued_len < buf_len)
 		nestiobuf_done(bp, buf_len - issued_len, EINVAL);
 
-	rw_exit(&dmv->dev_rwlock);
+	dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
+	dm_dev_unbusy(dmv);
 
 	return;
 }
@@ -535,31 +475,17 @@ static int
 dmsize(dev_t dev)
 {
 	struct dm_dev *dmv;
-	struct dm_table  *tbl;
-	struct dm_table_entry *table_en;
-
-	uint64_t length;
+	uint64_t size;
 	
-	length = 0;
+	size = 0;
 	
-	if ( (dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
-		return ENODEV;
+	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
+			return -ENOENT;
 	
-	/* Select active table */
-	tbl = &dmv->tables[dmv->cur_active_table];
+	size = dm_table_size(&dmv->table_head);
+	dm_dev_unbusy(dmv);
 	
-	rw_enter(&dmv->dev_rwlock, RW_READER);
-	
-	/*
-	 * Find out what tables I want to select.
-	 * if length => rawblkno then we should used that table.
-	 */
-	SLIST_FOREACH(table_en, tbl, next)
-	    length += table_en->length;
-	
-	rw_exit(&dmv->dev_rwlock);
-	
-	return length / DEV_BSIZE;
+  	return size;
 }
 
 static void
@@ -570,7 +496,7 @@ dmminphys(struct buf *bp)
 
  /*
   * Load the label information on the named device
-  * Actually fabricate a disklabel
+  * Actually fabricate a disklabel.
   *
   * EVENTUALLY take information about different
   * data tracks from the TOC and put it in the disklabel
@@ -578,12 +504,12 @@ dmminphys(struct buf *bp)
   * Copied from vnd code.
   */
 void
-dmgetdisklabel(struct disklabel *lp, dev_t dev)
+dmgetdisklabel(struct disklabel *lp, struct dm_table_head *head)
 {
 	struct partition *pp;
 	int dmp_size;
 
-	dmp_size = dmsize(dev);
+	dmp_size = dm_table_size(head);
 
 	/*
 	 * Size must be at least 2048 DEV_BSIZE blocks

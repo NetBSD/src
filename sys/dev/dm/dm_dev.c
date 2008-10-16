@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.1.2.10 2008/09/26 22:57:13 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.1.2.11 2008/10/16 23:26:42 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -29,17 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include <sys/types.h>
 #include <sys/param.h>
 
 #include <sys/disklabel.h>
-#include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
 #include <sys/kmem.h>
-#include <sys/lkm.h>
-#include <sys/queue.h>
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -53,11 +49,14 @@ TAILQ_HEAD_INITIALIZER(dm_dev_list);
 
 kmutex_t dm_dev_mutex;
 
-/*
- * Locking architecture, for now I use mutexes later we can convert them to
- * rw_locks. I use IPL_NONE for specifing IPL type for mutex.
- * I will enter into mutex everytime I'm working with dm_dev_list.
- */
+#define DISABLE_DEV(dmv)  do {                                 \
+		TAILQ_REMOVE(&dm_dev_list, dmv, next_devlist); \
+                mutex_enter(&dmv->dev_mtx);		       \
+                mutex_exit(&dm_dev_mutex);		       \
+                while(dmv->ref_cnt != 0)                       \
+	              cv_wait(&dmv->dev_cv, &dmv->dev_mtx);    \
+                mutex_exit(&dmv->dev_mtx);                     \
+} while (/*CONSTCOND*/0)
 
 /*
  * Generic function used to lookup struct dm_dev. Calling with dm_dev_name 
@@ -70,23 +69,34 @@ dm_dev_lookup(const char *dm_dev_name, const char *dm_dev_uuid,
 	struct dm_dev *dmv;
 	
 	dmv = NULL;
+	mutex_enter(&dm_dev_mutex);
 	
+	/* KASSERT(dm_dev_name != NULL && dm_dev_uuid != NULL && dm_dev_minor > 0); */
 	if (dm_dev_minor > 0)
-		if ((dmv = dm_dev_lookup_minor(dm_dev_minor)) != NULL)
+		if ((dmv = dm_dev_lookup_minor(dm_dev_minor)) != NULL){
+			dm_dev_busy(dmv);
+			mutex_exit(&dm_dev_mutex);
 			return dmv;
+		}
 	
 	if (dm_dev_name != NULL)	
-		if ((dmv = dm_dev_lookup_name(dm_dev_name)) != NULL)
+		if ((dmv = dm_dev_lookup_name(dm_dev_name)) != NULL){
+			dm_dev_busy(dmv);
+			mutex_exit(&dm_dev_mutex);
 			return dmv;	
+		}
 	
 	if (dm_dev_uuid != NULL)
-		if ((dmv = dm_dev_lookup_name(dm_dev_uuid)) != NULL)
+		if ((dmv = dm_dev_lookup_name(dm_dev_uuid)) != NULL){
+			dm_dev_busy(dmv);
+			mutex_exit(&dm_dev_mutex);
 			return dmv;
-		
+		}
+	mutex_exit(&dm_dev_mutex);	
 	return NULL;	
 }
 
-
+ 
 /*
  * Lookup device with its minor number.
  */
@@ -94,17 +104,11 @@ static struct dm_dev*
 dm_dev_lookup_minor(int dm_dev_minor)
 {
 	struct dm_dev *dm_dev;
-
-	mutex_enter(&dm_dev_mutex);
 	
 	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
-		if (dm_dev_minor == dm_dev->minor){
-			mutex_exit(&dm_dev_mutex);
+		if (dm_dev_minor == dm_dev->minor)
 			return dm_dev;
-		}
 	}
-
-	mutex_exit(&dm_dev_mutex);
 	
 	return NULL;
 }
@@ -122,24 +126,18 @@ dm_dev_lookup_name(const char *dm_dev_name)
 
 	if (slen == 0)
 		return NULL;
-
-	mutex_enter(&dm_dev_mutex);
 	
 	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
-		
+
 		dlen = strlen(dm_dev->name);
 		
 		if(slen != dlen)
 			continue;
 
-		if (strncmp(dm_dev_name, dm_dev->name, slen) == 0) {
-			mutex_exit(&dm_dev_mutex);
+		if (strncmp(dm_dev_name, dm_dev->name, slen) == 0)
 			return dm_dev;
-		}	
 	}
 
-	mutex_exit(&dm_dev_mutex);
-	
 	return NULL;
 }
 
@@ -153,26 +151,20 @@ dm_dev_lookup_uuid(const char *dm_dev_uuid)
 	size_t len;
 	
 	len = 0;
-
 	len = strlen(dm_dev_uuid);
 	
 	if (len == 0)
 		return NULL;
 
-	mutex_enter(&dm_dev_mutex);
-	
 	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
-			
+
 		if (strlen(dm_dev->uuid) != len)
 			continue;
 	
-		if (strncmp(dm_dev_uuid, dm_dev->uuid, strlen(dm_dev->uuid)) == 0){
-			mutex_exit(&dm_dev_mutex);
+		if (strncmp(dm_dev_uuid, dm_dev->uuid, strlen(dm_dev->uuid)) == 0)
 			return dm_dev;
-		}
 	}
-		mutex_exit(&dm_dev_mutex);
-	
+
 	return NULL;
 }
 
@@ -187,47 +179,87 @@ dm_dev_insert(struct dm_dev *dev)
 
 	dmt = NULL;
 	r = 0;
-
+	
+	KASSERT(dev != NULL);
+	mutex_enter(&dm_dev_mutex);
 	if (((dmt = dm_dev_lookup_uuid(dev->uuid)) == NULL) &&
 	    ((dmt = dm_dev_lookup_name(dev->name)) == NULL) &&
 	    ((dmt = dm_dev_lookup_minor(dev->minor)) == NULL)){
 
-		mutex_enter(&dm_dev_mutex);
 		TAILQ_INSERT_TAIL(&dm_dev_list, dev, next_devlist);
-		mutex_exit(&dm_dev_mutex);
+	
 	} else
 		r = EEXIST;
-	
+		
+	mutex_exit(&dm_dev_mutex);		
 	return r;
 }
 
 
+
+ 
+/*
+ * Lookup device with its minor number.
+ */
+int
+dm_dev_test_minor(int dm_dev_minor)
+{
+	struct dm_dev *dm_dev;
+	
+	mutex_enter(&dm_dev_mutex);
+	TAILQ_FOREACH(dm_dev, &dm_dev_list, next_devlist){
+		if (dm_dev_minor == dm_dev->minor){
+			mutex_exit(&dm_dev_mutex);
+			return 1;
+		}
+	}
+	mutex_exit(&dm_dev_mutex);
+	
+	return 0;
+}
+
 /* 
  * Remove device selected with dm_dev from global list of devices. 
  */
-int
-dm_dev_rem(struct dm_dev *dm_dev)
+struct dm_dev*
+dm_dev_rem(const char *dm_dev_name, const char *dm_dev_uuid,
+ 	int dm_dev_minor)
 {	
+	struct dm_dev *dmv;
+	dmv = NULL;
+	
 	mutex_enter(&dm_dev_mutex);
 	
-	TAILQ_REMOVE(&dm_dev_list, dm_dev, next_devlist);
+	if (dm_dev_minor > 0)
+		if ((dmv = dm_dev_lookup_minor(dm_dev_minor)) != NULL){
+			DISABLE_DEV(dmv);
+			return dmv;
+		}
 	
+	if (dm_dev_name != NULL)	
+		if ((dmv = dm_dev_lookup_name(dm_dev_name)) != NULL){
+			DISABLE_DEV(dmv);
+			return dmv;
+		}
+	
+	if (dm_dev_uuid != NULL)
+		if ((dmv = dm_dev_lookup_name(dm_dev_uuid)) != NULL){
+			DISABLE_DEV(dmv);
+			return dmv;
+		}
 	mutex_exit(&dm_dev_mutex);
 
-	return 0;
+	return NULL;
 }
 
 /*
  * Destroy all devices created in device-mapper. Remove all tables
  * free all allocated memmory. 
  */
-
 int
 dm_dev_destroy(void)
 {
 	struct dm_dev *dm_dev;
-
-	/* XXX should I get rw_lock here ? */
 	mutex_enter(&dm_dev_mutex);
 
 	while (TAILQ_FIRST(&dm_dev_list) != NULL){
@@ -237,28 +269,29 @@ dm_dev_destroy(void)
 		TAILQ_REMOVE(&dm_dev_list, TAILQ_FIRST(&dm_dev_list),
 		    next_devlist);
 
-		rw_enter(&dm_dev->dev_rwlock, RW_WRITER);
+		mutex_enter(&dm_dev->dev_mtx);
+
+		while (dm_dev->ref_cnt != 0)
+			cv_wait(&dm_dev->dev_cv, &dm_dev->dev_mtx);
 		
 		/* Destroy active table first.  */
-		if (!SLIST_EMPTY(&dm_dev->tables[dm_dev->cur_active_table]))
-			dm_table_destroy(&dm_dev->tables[dm_dev->cur_active_table]);
+		dm_table_destroy(&dm_dev->table_head, DM_TABLE_ACTIVE);
 
-		/* Destroy unactive table if exits, too. */
-		if (!SLIST_EMPTY(&dm_dev->tables[1 - dm_dev->cur_active_table]))
-			dm_table_destroy(&dm_dev->tables[1 - dm_dev->cur_active_table]);
+		/* Destroy inactive table if exits, too. */
+		dm_table_destroy(&dm_dev->table_head, DM_TABLE_INACTIVE);
 
-		rw_exit(&dm_dev->dev_rwlock);
+		dm_table_head_destroy(&dm_dev->table_head);
 
-		rw_destroy(&dm_dev->dev_rwlock);
+		mutex_exit(&dm_dev->dev_mtx);
+		mutex_destroy(&dm_dev->dev_mtx);
+		cv_destroy(&dm_dev->dev_cv);
 		
 		(void)kmem_free(dm_dev, sizeof(struct dm_dev));
 	}
-	
 	mutex_exit(&dm_dev_mutex);
-	
+
 	mutex_destroy(&dm_dev_mutex);
-	
-	return 0;
+       	return 0;
 }
 
 /*
@@ -281,15 +314,34 @@ dm_dev_alloc()
 int
 dm_dev_free(struct dm_dev *dmv)
 {
-	if (dmv->dk_label != NULL)
-		(void)kmem_free(dmv, sizeof(struct disklabel));
+	KASSERT(dmv != NULL);
 	
-	if (dmv != NULL)
-		(void)kmem_free(dmv, sizeof(struct dm_dev));
+	if (dmv->dk_label != NULL)
+		(void)kmem_free(dmv->dk_label, sizeof(struct disklabel));
+	
+	(void)kmem_free(dmv, sizeof(struct dm_dev));
 	
 	return 0;
 }
 
+void
+dm_dev_busy(struct dm_dev *dmv)
+{
+	mutex_enter(&dmv->dev_mtx);
+	dmv->ref_cnt++;
+	mutex_exit(&dmv->dev_mtx);
+}	
+
+void
+dm_dev_unbusy(struct dm_dev *dmv)
+{
+	KASSERT(dmv->ref_cnt != 0);
+	
+	mutex_enter(&dmv->dev_mtx);
+	if (--dmv->ref_cnt == 0)
+		cv_broadcast(&dmv->dev_cv);
+	mutex_exit(&dmv->dev_mtx);
+}
 
 /*
  * Return prop_array of dm_targer_list dictionaries.
@@ -324,8 +376,7 @@ dm_dev_prop_list(void)
 		j++;
 	}
 
-	mutex_exit(&dm_dev_mutex);
-	
+	mutex_exit(&dm_dev_mutex);	
 	return dev_array;
 }
 
@@ -336,8 +387,6 @@ int
 dm_dev_init()
 {
 	TAILQ_INIT(&dm_dev_list); /* initialize global dev list */
-	
 	mutex_init(&dm_dev_mutex, MUTEX_DEFAULT, IPL_NONE);
-
 	return 0;
 }

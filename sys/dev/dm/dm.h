@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.1.2.17 2008/09/26 22:57:13 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.1.2.18 2008/10/16 23:26:42 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
 
 #include <sys/errno.h>
 
+#include <sys/atomic.h>
+#include <sys/condvar.h>
+#include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
 
@@ -47,16 +50,6 @@
 #define DM_VERSION_MAJOR	4
 #define DM_VERSION_MINOR	13
 #define DM_VERSION_PATCHLEVEL	0
-
-
-/*
- * XXX - Do we need this? Can there be more than one devmapper in the system?
- */
-struct dm_softc {
-	uint8_t       sc_ref_count;
-	uint32_t      sc_minor_num;
-};
-
 
 /*** Internal device-mapper structures ***/
 
@@ -81,6 +74,17 @@ struct dm_table_entry {
 };
 SLIST_HEAD(dm_table, dm_table_entry);
 
+struct dm_table_head {
+	/* Current active table is selected with this. */
+	int cur_active_table; 
+	struct dm_table tables[2];
+
+	kmutex_t   table_mtx;
+	kcondvar_t table_cv; /*IO waiting cv */
+
+	uint32_t io_cnt;
+};
+
 #define MAX_DEV_NAME 32
 
 /*
@@ -93,13 +97,10 @@ struct dm_pdev {
 	char name[MAX_DEV_NAME];
 
 	struct vnode *pdev_vnode;
-	
-	int ref_cnt;
+	int ref_cnt; /* reference counter for users ofthis pdev */
 
 	SLIST_ENTRY(dm_pdev) next_pdev;
 };
-SLIST_HEAD(dm_pdevs, dm_pdev) dm_pdev_list;
-
 
 /*
  * This structure is called for every device-mapper device.
@@ -112,15 +113,28 @@ struct dm_dev {
 	char uuid[DM_UUID_LEN];
 
 	int minor;
-	uint32_t flags;
+	uint32_t flags; /* store communication protocol flags */
 
-	krwlock_t dev_rwlock; /* dmstrategy -> ioctl routines lock */
+	kmutex_t dev_mtx; /* mutex for generall device lock */
+	kcondvar_t dev_cv; /* cv for between ioctl synchronisation */
 	
 	uint32_t event_nr;
 	uint32_t ref_cnt;
 
 	uint32_t dev_type;
 
+	struct dm_table_head table_head;
+
+	struct dm_dev_head upcalls;
+	
+	struct disklabel *dk_label;    /* Disklabel for this table. */
+	
+	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
+
+	TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
+};
+
+/* Device types used for upcalls */
 #define DM_ZERO_DEV            (1 << 0)
 #define DM_ERROR_DEV           (1 << 1)	
 #define DM_LINEAR_DEV          (1 << 2)
@@ -131,19 +145,6 @@ struct dm_dev {
 #define DM_SPARE_DEV           (1 << 7)
 /* Set this device type only during dev remove ioctl. */
 #define DM_DELETING_DEV        (1 << 8) 
-
-	/* Current active table is selected with this. */
-	int cur_active_table; 
-	struct dm_table tables[2];
-
-	struct dm_dev_head upcalls;
-	
-	struct disklabel *dk_label;    /* Disklabel for this table. */
-	
-	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
-
-	TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
-};
 
 
 /* for zero, error : dm_target->target_config == NULL */
@@ -209,7 +210,7 @@ struct dm_target {
 	int (*upcall)(struct dm_table_entry *, struct buf *);
 	
 	uint32_t version[3];
-
+	
 	TAILQ_ENTRY(dm_target) dm_target_next;
 };
 
@@ -227,7 +228,7 @@ struct cmd_function {
 };
 
 /* device-mapper */
-void dmgetdisklabel(struct disklabel *, dev_t);
+void dmgetdisklabel(struct disklabel *, struct dm_table_head *);
 
 /* dm_ioctl.c */
 int dm_dev_create_ioctl(prop_dictionary_t);
@@ -239,7 +240,6 @@ int dm_dev_status_ioctl(prop_dictionary_t);
 int dm_dev_suspend_ioctl(prop_dictionary_t);
 
 int dm_check_version(prop_dictionary_t);
-
 int dm_get_version_ioctl(prop_dictionary_t);
 int dm_list_versions_ioctl(prop_dictionary_t);
 
@@ -247,7 +247,6 @@ int dm_table_clear_ioctl(prop_dictionary_t);
 int dm_table_deps_ioctl(prop_dictionary_t);
 int dm_table_load_ioctl(prop_dictionary_t);
 int dm_table_status_ioctl(prop_dictionary_t);
-
 
 /* dm_target.c */
 int dm_target_destroy(void);
@@ -303,24 +302,36 @@ int dm_target_snapshot_orig_destroy(struct dm_table_entry *);
 int dm_target_snapshot_orig_upcall(struct dm_table_entry *, struct buf *);
 
 /* dm_table.c  */
-int dm_table_destroy(struct dm_table *);
+#define DM_TABLE_ACTIVE 0
+#define DM_TABLE_INACTIVE 1
+
+int dm_table_destroy(struct dm_table_head *, uint8_t);
+uint64_t dm_table_size(struct dm_table_head *);
+struct dm_table * dm_table_get_entry(struct dm_table_head *, uint8_t);
+int dm_table_get_target_count(struct dm_table_head *, uint8_t);
+void dm_table_release(struct dm_table_head *, uint8_t s);
+void dm_table_switch_tables(struct dm_table_head *);
+void dm_table_head_init(struct dm_table_head *);
+void dm_table_head_destroy(struct dm_table_head *);
 
 /* dm_dev.c */
 struct dm_dev* dm_dev_alloc(void);
+void dm_dev_busy(struct dm_dev *);
 int dm_dev_destroy(void);
 int dm_dev_free(struct dm_dev *);
 int dm_dev_init(void);
 int dm_dev_insert(struct dm_dev *);
 struct dm_dev* dm_dev_lookup(const char *, const char *, int);
 prop_array_t dm_dev_prop_list(void);
-int dm_dev_rem(struct dm_dev *);
+struct dm_dev* dm_dev_rem(const char *, const char *, int);
+int dm_dev_test_minor(int);
+void dm_dev_unbusy(struct dm_dev *);
 
 /* dm_pdev.c */
 int dm_pdev_decr(struct dm_pdev *);
 int dm_pdev_destroy(void);
 int dm_pdev_init(void);
 struct dm_pdev* dm_pdev_insert(const char *);
-struct dm_pdev* dm_pdev_lookup_name(const char *);
 
 #endif /*_KERNEL*/
 
