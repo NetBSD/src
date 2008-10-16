@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.110 2008/10/15 20:32:46 wrstuden Exp $	*/
+/*	$NetBSD: lwp.h,v 1.111 2008/10/16 08:52:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -225,7 +225,6 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
 #define	LP_KTRCSW	0x00000002 /* ktrace context switch marker */
 #define	LP_KTRCSWUSER	0x00000004 /* ktrace context switch marker */
-#define	LP_UFSCOW	0x00000008 /* UFS: doing copy on write */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
