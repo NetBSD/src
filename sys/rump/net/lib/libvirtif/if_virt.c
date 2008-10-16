@@ -1,4 +1,4 @@
-/*	$NetBSD: if_virt.c,v 1.3 2008/10/14 00:50:44 pooka Exp $	*/
+/*	$NetBSD: if_virt.c,v 1.4 2008/10/16 09:25:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -69,6 +69,8 @@ struct virtif_sc {
 static int virtif_create(struct ifaliasreq *, struct ifnet **);
 static void virtif_worker(void *);
 
+/* XXXXX: this prototype needs to go elsewhere */
+int rump_virtif_create(struct ifaliasreq *, struct ifnet **);
 int
 rump_virtif_create(struct ifaliasreq *ia, struct ifnet **ifpp)
 {
