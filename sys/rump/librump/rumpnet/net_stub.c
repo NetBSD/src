@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.1 2008/10/15 13:00:39 pooka Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.2 2008/10/16 14:38:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #include <net/route.h>
 
 #include <compat/sys/socket.h>
+#include <compat/sys/sockio.h>
 
 int __rtioctl_unimpl(u_long, void *, struct lwp *);
 int
@@ -57,4 +58,19 @@ compat_cvtcmd(u_long cmd)
 {
 
 	return ENOTTY;
+}
+
+int
+compat_ifconf(u_long cmd, void *data)
+{
+
+	return EOPNOTSUPP;
+}
+
+int
+compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
+	struct lwp *l)
+{
+
+	return EOPNOTSUPP;
 }
