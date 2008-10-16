@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.40 2007/02/15 12:02:59 rillig Exp $	*/
+/*	$NetBSD: input.c,v 1.41 2008/10/16 14:36:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.40 2007/02/15 12:02:59 rillig Exp $");
+__RCSID("$NetBSD: input.c,v 1.41 2008/10/16 14:36:40 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,8 +103,6 @@ MKINIT char basebuf[BUFSIZ];	/* buffer for top level input file */
 struct parsefile *parsefile = &basepf;	/* current input file */
 int init_editline = 0;		/* editline library initialized? */
 int whichprompt;		/* 1 == PS1, 2 == PS2 */
-
-EditLine *el;			/* cookie for editline package */
 
 STATIC void pushfile(void);
 static int preadfd(void);

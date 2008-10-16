@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.23 2004/10/02 12:16:53 dsl Exp $	*/
+/*	$NetBSD: var.h,v 1.24 2008/10/16 14:36:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ struct localvar {
 };
 
 
-struct localvar *localvars;
+extern struct localvar *localvars;
 
 #if ATTY
 extern struct var vatty;
