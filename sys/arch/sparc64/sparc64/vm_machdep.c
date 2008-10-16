@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.82 2008/10/13 12:25:22 nakayama Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.83 2008/10/16 17:08:33 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82 2008/10/13 12:25:22 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83 2008/10/16 17:08:33 martin Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -363,6 +363,21 @@ cpu_lwp_free2(struct lwp *l)
 
 	if ((fs = l->l_md.md_fpstate) != NULL)
 		pool_cache_put(fpstate_cache, fs);
+}
+
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *npcb = &l->l_addr->u_pcb;
+	struct rwindow *rp;
+
+	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (long)func;		/* Function to call */
+	rp->rw_local[1] = (long)arg;		/* and its argument */
+	rp->rw_local[2] = (long)l;		/* new lwp */
+
+	npcb->pcb_pc = (long)lwp_trampoline - 8;
+	npcb->pcb_sp = (long)rp - STACK_OFFSET;
 }
 
 #ifdef COREDUMP
