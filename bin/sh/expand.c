@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.78 2007/03/25 06:29:26 apb Exp $	*/
+/*	$NetBSD: expand.c,v 1.79 2008/10/16 17:58:29 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.78 2007/03/25 06:29:26 apb Exp $");
+__RCSID("$NetBSD: expand.c,v 1.79 2008/10/16 17:58:29 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -475,8 +475,8 @@ expbackq(union node *cmd, int quoted, int flag)
 	if (quoted == 0)
 		recordregion(startloc, dest - stackblock(), 0);
 	TRACE(("evalbackq: size=%d: \"%.*s\"\n",
-		(dest - stackblock()) - startloc,
-		(dest - stackblock()) - startloc,
+		(int)((dest - stackblock()) - startloc),
+		(int)((dest - stackblock()) - startloc),
 		stackblock() + startloc));
 	expdest = dest;
 	INTON;
@@ -517,7 +517,8 @@ subevalvar(char *p, char *str, int strloc, int subtype, int startloc, int varfla
 			outfmt(&errout, "%s\n", startp);
 			error((char *)NULL);
 		}
-		error("%.*s: parameter %snot set", p - str - 1,
+		error("%.*s: parameter %snot set",
+		      (int)(p - str - 1),
 		      str, (varflags & VSNUL) ? "null or "
 					      : nullstr);
 		/* NOTREACHED */
@@ -650,7 +651,8 @@ again: /* jump here after setting a variable with ${var=text} */
 		case VSTRIMRIGHT:
 		case VSTRIMRIGHTMAX:
 		case VSLENGTH:
-			error("%.*s: parameter not set", p - var - 1, var);
+			error("%.*s: parameter not set",
+			    (int)(p - var - 1), var);
 			/* NOTREACHED */
 		}
 	}
