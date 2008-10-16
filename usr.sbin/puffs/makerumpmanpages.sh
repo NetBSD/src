@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: makerumpmanpages.sh,v 1.3 2008/09/05 09:07:40 wiz Exp $
+#	$NetBSD: makerumpmanpages.sh,v 1.4 2008/10/16 10:30:17 pooka Exp $
 #
 
 IFS=' '
@@ -60,8 +60,9 @@ As opposed to
 does not use file system code within the kernel and therefore does
 not require kernel support except
 .Xr puffs 4 .
-Apart from a minor speed penalty (~10%), there is no difference to
-using the in-kernel code.
+Apart from a minor speed penalty (starting from 10% and depending
+on the workload and file system in question), there is no difference
+to using in-kernel code.
 .Pp
 It is recommended that untrusted file system images be mounted with
 .Nm
