@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.h,v 1.1 2005/05/15 21:18:34 dsl Exp $	*/
+/*	$NetBSD: mount_nfs.h,v 1.2 2008/10/16 09:12:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -32,13 +32,25 @@
  * SUCH DAMAGE.
  */
 
-int force2;
-int force3;
-int retrycnt;
-#define	DEF_RETRY	10000
+#ifndef _SBIN_MOUNT_NFS_MOUNT_NFS_H_
+#define _SBIN_MOUNT_NFS_MOUNT_NFS_H_
+
+#include <nfs/nfsmount.h>
+
+extern int force2;
+extern int force3;
+extern int retrycnt;
+
 #define	BGRND	1
 #define	ISBGRND	2
-int opflags;
-int mnttcp_ok;
-int port;
+
+extern int opflags;
+extern int mnttcp_ok;
+extern int port;
+
 int	getnfsargs(char *, struct nfs_args *);
+void	mount_nfs_dogetargs(struct nfs_args *, int, const char *);
+void	mount_nfs_parseargs(int, char **, struct nfs_args *, int *,
+			    char *, char *);
+
+#endif /* _SBIN_MOUNT_NFS_MOUNT_NFS_H_ */
