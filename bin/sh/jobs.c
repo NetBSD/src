@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.65 2006/04/24 19:00:29 snj Exp $	*/
+/*	$NetBSD: jobs.c,v 1.66 2008/10/16 15:36:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.65 2006/04/24 19:00:29 snj Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.66 2008/10/16 15:36:23 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,11 +95,14 @@ STATIC void restartjob(struct job *);
 STATIC void freejob(struct job *);
 STATIC struct job *getjob(const char *, int);
 STATIC int dowait(int, struct job *);
-STATIC int onsigchild(void);
 STATIC int waitproc(int, struct job *, int *);
 STATIC void cmdtxt(union node *);
 STATIC void cmdlist(union node *, int);
 STATIC void cmdputs(const char *);
+
+#ifdef SYSV
+STATIC int onsigchild(void);
+#endif
 
 #ifdef OLD_TTY_DRIVER
 static pid_t tcgetpgrp(int fd);
