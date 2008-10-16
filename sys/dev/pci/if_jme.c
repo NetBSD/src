@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.3 2008/10/13 17:57:32 bouyer Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.4 2008/10/16 21:22:32 abs Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.3 2008/10/13 17:57:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.4 2008/10/16 21:22:32 abs Exp $");
 
 
 #include <sys/param.h>
@@ -1360,6 +1360,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 				    th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
 					 ip.ip_dst.s_addr, htons(IPPROTO_TCP));
 			   } else {
+#if INET6
 				    struct ip6_hdr ip6;
 
 				    m_copydata((*m_head), ETHER_HDR_LEN,
@@ -1370,6 +1371,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 					 sizeof(ip6.ip6_plen), &ip6.ip6_plen);
 				    th.th_sum = in6_cksum_phdr(&ip6.ip6_src,
 					 &ip6.ip6_dst, 0, htonl(IPPROTO_TCP));
+#endif /* INET6 */
 			   }
 			   m_copyback((*m_head),
 			    hlen + offsetof(struct tcphdr, th_sum),
@@ -1393,6 +1395,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 				    th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
 					 ip->ip_dst.s_addr, htons(IPPROTO_TCP));
 			   } else {
+#if INET6
 				    struct ip6_hdr *ip6 =
 				    (void *)(mtod((*m_head), char *) +
 				    ETHER_HDR_LEN);
@@ -1401,6 +1404,7 @@ jme_encap(struct jme_softc *sc, struct mbuf **m_head)
 				    ip6->ip6_plen = 0;
 				    th->th_sum = in6_cksum_phdr(&ip6->ip6_src,
 					 &ip6->ip6_dst, 0, htonl(IPPROTO_TCP));
+#endif /* INET6 */
 			   }
 			hlen += th->th_off << 2;
 		}
