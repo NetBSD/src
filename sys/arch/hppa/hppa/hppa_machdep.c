@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.14 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.15 2008/10/16 17:49:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.14 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.15 2008/10/16 17:49:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	sf = (void *)(va - 32 - sizeof(frame));
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
@@ -114,13 +114,15 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 		upva &= ~3;
 		if (copyin((void *)(upva + 4), &tf->tf_t4, 4)) {
 			printf("copyin t4 failed\n");
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			sigexit(l, SIGILL);
+			/* NOTREACHED */
 		}
 		if (copyin((void *)upva, &upcall, 4)) {
 			printf("copyin upcall failed\n");
-			mutex_enter(&p->p_smutex);
+			mutex_enter(p->p_lock);
 			sigexit(l, SIGILL);
+			/* NOTREACHED */
 		}
 	}
 
