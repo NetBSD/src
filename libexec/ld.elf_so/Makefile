@@ -1,5 +1,8 @@
-#	$NetBSD: Makefile,v 1.85 2007/12/26 21:11:52 christos Exp $
+#	$NetBSD: Makefile,v 1.86 2008/10/16 14:36:20 christos Exp $
 
+# We are not building this with PIE
+PIE_CFLAGS=
+PIE_LDFLAGS=
 .include <bsd.init.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
 
