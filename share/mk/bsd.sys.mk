@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.173 2008/10/15 17:31:50 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.174 2008/10/16 14:36:42 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -87,6 +87,10 @@ CFLAGS+=	-Wa,-Av8plus
 
 CFLAGS+=	${CPUFLAGS}
 AFLAGS+=	${CPUFLAGS}
+
+# Position Independent Executable flags
+PIE_CFLAGS?=        -fPIC
+PIE_LDFLAGS?=       -Wl,-pie -shared-libgcc
 
 # Helpers for cross-compiling
 HOST_CC?=	cc
