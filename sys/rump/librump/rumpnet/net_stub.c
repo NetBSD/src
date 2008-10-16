@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.3 2008/10/16 15:02:10 pooka Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.4 2008/10/16 16:40:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -59,7 +59,7 @@ u_long
 compat_cvtcmd(u_long cmd)
 {
 
-	return ENOTTY;
+	return cmd;
 }
 
 int
@@ -80,5 +80,5 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 		return ENXIO;
 
 	return (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
-	    (struct mbuf *)ocmd, (struct mbuf *)data, (struct mbuf *)ifp, l);
+	    (struct mbuf *)cmd, (struct mbuf *)data, (struct mbuf *)ifp, l);
 }
