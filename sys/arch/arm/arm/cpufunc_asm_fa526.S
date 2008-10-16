@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_fa526.S,v 1.3 2008/10/15 16:56:49 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_fa526.S,v 1.4 2008/10/16 17:54:23 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -91,7 +91,7 @@ ENTRY(fa526_icache_sync_all)
 
 ENTRY(fa526_dcache_wbinv_all)
 	mov	r0, #0
-	mcr	p15, 0, r0, c7, c6, 0	/* clean and invalidate D$ */
+	mcr	p15, 0, r0, c7, c14, 0	/* clean and invalidate D$ */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain write buffer */
 	mov	pc, lr
 
