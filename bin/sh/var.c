@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.38 2006/12/18 00:37:33 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.39 2008/10/16 14:36:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.38 2006/12/18 00:37:33 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.39 2008/10/16 14:36:40 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ struct varinit {
 	void (*func)(const char *);
 };
 
+struct localvar *localvars;
 
 #if ATTY
 struct var vatty;
