@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.10 2008/09/22 09:11:38 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.11 2008/10/16 23:26:42 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -153,7 +153,6 @@ dm_target_snapshot_status(void *target_config)
 	prm_len = 0;
 	cow_len = 0;
 	count = 0;
-
 	cow_name = NULL;
 
 	printf("Snapshot target status function called\n");
