@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.2 2008/10/16 14:38:39 pooka Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.3 2008/10/16 15:02:10 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/protosw.h>
+#include <sys/socketvar.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -71,6 +73,12 @@ int
 compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 	struct lwp *l)
 {
+	struct ifreq *ifr = data;
+	struct ifnet *ifp = ifunit(ifr->ifr_name);
 
-	return EOPNOTSUPP;
+	if (!ifp)
+		return ENXIO;
+
+	return (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
+	    (struct mbuf *)ocmd, (struct mbuf *)data, (struct mbuf *)ifp, l);
 }
