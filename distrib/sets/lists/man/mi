@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1105 2008/10/11 21:54:11 bouyer Exp $
+# $NetBSD: mi,v 1.1106 2008/10/16 09:39:43 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2454,6 +2454,7 @@
 ./usr/share/man/cat8/rump_hfs.0			man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/rump_lfs.0			man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/rump_msdos.0		man-sysutil-catman	puffs,.cat
+./usr/share/man/cat8/rump_nfs.0			man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/rump_ntfs.0		man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/rump_syspuffs.0		man-sysutil-catman	puffs,.cat
 ./usr/share/man/cat8/rump_sysvbfs.0		man-sysutil-catman	puffs,.cat
@@ -4728,6 +4729,7 @@
 ./usr/share/man/html8/rump_hfs.html		man-sysutil-htmlman	puffs,html
 ./usr/share/man/html8/rump_lfs.html		man-sysutil-htmlman	puffs,html
 ./usr/share/man/html8/rump_msdos.html		man-sysutil-htmlman	puffs,html
+./usr/share/man/html8/rump_nfs.html		man-sysutil-htmlman	puffs,html
 ./usr/share/man/html8/rump_ntfs.html		man-sysutil-htmlman	puffs,html
 ./usr/share/man/html8/rump_syspuffs.html	man-sysutil-htmlman	puffs,html
 ./usr/share/man/html8/rump_sysvbfs.html		man-sysutil-htmlman	puffs,html
@@ -7280,6 +7282,7 @@
 ./usr/share/man/man8/rump_hfs.8			man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_lfs.8			man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_msdos.8		man-sysutil-man		puffs,.man
+./usr/share/man/man8/rump_nfs.8			man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_ntfs.8		man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_syspuffs.8		man-sysutil-man		puffs,.man
 ./usr/share/man/man8/rump_sysvbfs.8		man-sysutil-man		puffs,.man

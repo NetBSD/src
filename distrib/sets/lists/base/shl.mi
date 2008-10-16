@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.448 2008/10/02 17:54:51 joerg Exp $
+# $NetBSD: shl.mi,v 1.449 2008/10/16 09:39:43 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -120,12 +120,18 @@
 ./usr/lib/librumpfs_hfs.so.0.0			base-sys-shlib
 ./usr/lib/librumpfs_lfs.so.0.0			base-sys-shlib
 ./usr/lib/librumpfs_msdos.so.0.0		base-sys-shlib
+./usr/lib/librumpfs_nfs.so.0.0			base-sys-shlib
 ./usr/lib/librumpfs_ntfs.so.0.0			base-sys-shlib
 ./usr/lib/librumpfs_syspuffs.so.0.0		base-sys-shlib
 ./usr/lib/librumpfs_sysvbfs.so.0.0		base-sys-shlib
 ./usr/lib/librumpfs_tmpfs.so.0.0		base-sys-shlib
 ./usr/lib/librumpfs_udf.so.0.0			base-sys-shlib
 ./usr/lib/librumpfs_ufs.so.0.0			base-sys-shlib
+./usr/lib/librumpnet.so.0.0			base-sys-shlib
+./usr/lib/librumpnet_net.so.0.0			base-sys-shlib
+./usr/lib/librumpnet_netinet.so.0.0		base-sys-shlib
+./usr/lib/librumpnet_sockin.so.0.0		base-sys-shlib
+./usr/lib/librumpnet_virtif.so.0.0		base-sys-shlib
 ./usr/lib/librumpuser.so.0.0			base-sys-shlib
 ./usr/lib/libsdp.so.2.0				base-sys-shlib
 ./usr/lib/libskey.so.1.0			base-sys-shlib		skey

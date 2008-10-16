@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.776 2008/10/12 23:00:53 mrg Exp $
+# $NetBSD: mi,v 1.777 2008/10/16 09:39:43 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1512,6 +1512,7 @@
 ./usr/sbin/rump_hfs				base-miscfs-bin		puffs
 ./usr/sbin/rump_lfs				base-miscfs-bin		puffs
 ./usr/sbin/rump_msdos				base-miscfs-bin		puffs
+./usr/sbin/rump_nfs				base-miscfs-bin		puffs
 ./usr/sbin/rump_ntfs				base-miscfs-bin		puffs
 ./usr/sbin/rump_syspuffs			base-miscfs-bin		puffs
 ./usr/sbin/rump_sysvbfs				base-miscfs-bin		puffs
