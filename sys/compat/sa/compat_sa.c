@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.3 2008/10/15 10:05:07 cegger Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.4 2008/10/16 18:21:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.3 2008/10/15 10:05:07 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.4 2008/10/16 18:21:45 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,7 +291,9 @@ sa_newsavp(struct proc *p)
 	sleepq_init(&vp->savp_woken);
 	SIMPLEQ_INIT(&vp->savp_upcalls);
 
+	/* We're writing sa_savps, so lock both locks */
 	mutex_enter(p->p_lock);
+	mutex_enter(&sa->sa_mutex);
 	/* find first free savp_id and add vp to sorted slist */
 	if (SLIST_EMPTY(&sa->sa_vps) ||
 	    SLIST_FIRST(&sa->sa_vps)->savp_id != 0) {
@@ -307,6 +309,7 @@ sa_newsavp(struct proc *p)
 		vp->savp_id = qvp->savp_id + 1;
 		SLIST_INSERT_AFTER(qvp, vp, savp_next);
 	}
+	mutex_exit(&sa->sa_mutex);
 	mutex_exit(p->p_lock);
 
 	DPRINTFN(1, ("sa_newsavp(%d) allocated vp %p\n", p->p_pid, vp));
@@ -2433,7 +2436,7 @@ sa_unblock_userret(struct lwp *l)
 		if (vp_lwp->l_flag & LW_SA_YIELD)
 			break;
 		spc_lock(vp_lwp->l_cpu);
-		cpu_need_resched(vp_lwp->l_cpu, 0);
+		cpu_need_resched(vp_lwp->l_cpu, RESCHED_IMMED);
 		spc_unlock(vp_lwp->l_cpu);
 		break;
 	case LSSLEEP:

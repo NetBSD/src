@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.154 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.155 2008/10/16 18:21:45 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.154 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.155 2008/10/16 18:21:45 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -1385,14 +1385,13 @@ timer_tick(lwp_t *l, bool user)
  * with the timer lock held. We know that the process had SA enabled
  * when this timer was enqueued. As timer_intr() is a soft interrupt
  * handler, SA should still be enabled by the time we get here.
- *
- * XXX Is it legit to lock p_lock and the lwp at this time?
  */
 static void
 timer_sa_intr(struct ptimer *pt, proc_t *p)
 {
-	unsigned int i;
-	struct sadata_vp *vp;
+	unsigned int		i;
+	struct sadata		*sa;
+	struct sadata_vp	*vp;
 
 	/* Cause the process to generate an upcall when it returns. */
 	if (!p->p_timerpend) {
@@ -1408,18 +1407,20 @@ timer_sa_intr(struct ptimer *pt, proc_t *p)
 		p->p_timers->pts_fired = i;
 		p->p_timerpend = 1;
 
-		mutex_enter(p->p_lock);
-		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-			lwp_lock(vp->savp_lwp);
-			lwp_need_userret(vp->savp_lwp);
-			if (vp->savp_lwp->l_flag & LW_SA_IDLE) {
-				vp->savp_lwp->l_flag &= ~LW_SA_IDLE;
-				lwp_unsleep(vp->savp_lwp, true);
+		sa = p->p_sa;
+		mutex_enter(&sa->sa_mutex);
+		SLIST_FOREACH(vp, &sa->sa_vps, savp_next) {
+			struct lwp *vp_lwp = vp->savp_lwp;
+			lwp_lock(vp_lwp);
+			lwp_need_userret(vp_lwp);
+			if (vp_lwp->l_flag & LW_SA_IDLE) {
+				vp_lwp->l_flag &= ~LW_SA_IDLE;
+				lwp_unsleep(vp_lwp, true);
 				break;
 			}
-			lwp_unlock(vp->savp_lwp);
+			lwp_unlock(vp_lwp);
 		}
-		mutex_exit(p->p_lock);
+		mutex_exit(&sa->sa_mutex);
 	} else {
 		i = 1 << pt->pt_entry;
 		if ((p->p_timers->pts_fired & i) == 0) {
