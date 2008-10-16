@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_nfs.8,v 1.1 2008/10/16 09:30:57 pooka Exp $
+.\"	$NetBSD: rump_nfs.8,v 1.2 2008/10/16 10:32:29 pooka Exp $
 .\"
 .\"	WARNING: GENERATED FILE, DO NOT EDIT
 .\"	INSTEAD, EDIT makerumpmanpages.sh AND REGEN
@@ -54,8 +54,9 @@ As opposed to
 does not use file system code within the kernel and therefore does
 not require kernel support except
 .Xr puffs 4 .
-Apart from a minor speed penalty (~10%), there is no difference to
-using the in-kernel code.
+Apart from a minor speed penalty (starting from 10% and depending
+on the workload and file system in question), there is no difference
+to using in-kernel code.
 .Pp
 It is recommended that untrusted file system images be mounted with
 .Nm
