@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2008/10/16 05:35:01 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2008/10/16 05:41:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,11 +78,6 @@ COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 
 #ifndef LINE_MAX
 #define LINE_MAX 1024
-#endif
-
-/* just in case */
-#ifndef _PATH_TMP
-#define _PATH_TMP "/tmp"
 #endif
 
 int	vflag;				/* verbose output */
@@ -1262,7 +1257,7 @@ logconfig_start(void)
 
 	tmpdir = getenv("TMPDIR");
 	if (tmpdir == NULL)
-		tmpdir = "/tmp";
+		tmpdir = _PATH_TMP;
 	(void)snprintf(line, sizeof(line), "%s/config.tmp.XXXXXX", tmpdir);
 	if ((fd = mkstemp(line)) == -1 ||
 	    (cfg = fdopen(fd, "r+")) == NULL) {
