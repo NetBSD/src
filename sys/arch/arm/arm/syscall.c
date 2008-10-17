@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.43 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: syscall.c,v 1.44 2008/10/17 08:51:43 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.43 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2008/10/17 08:51:43 cegger Exp $");
 
 #include "opt_sa.h"
 
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.43 2008/10/15 06:51:17 wrstuden Exp $"
 
 #include <uvm/uvm_extern.h>
 
+#include <sys/savar.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
