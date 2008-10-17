@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.286 2008/09/09 11:54:19 joerg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.287 2008/10/17 17:29:39 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -34,6 +34,12 @@ realinstall:	checkver libinstall
 clean:		cleanlib
 
 ##### LIB specific flags.
+# XXX: This is needed for programs that link with .a libraries
+# Perhaps a more correct solution is to always generate _pic.a
+# files or always have a shared library.
+.if defined(MKPIE) && (${MKPIE} != "no")
+CFLAGS+=        ${PIE_CFLAGS}
+.endif
 COPTS+=     ${COPTS.lib${LIB}}
 CPPFLAGS+=  ${CPPFLAGS.lib${LIB}}
 CXXFLAGS+=  ${CXXFLAGS.lib${LIB}}
