@@ -595,6 +595,7 @@ static inline register_t cpsid(register_t psw) __attribute__((__unused__));
 static inline void
 cpsie(register_t psw)
 {
+#if _ARM_ARCH_6
 	if (!__builtin_constant_p(psw)) {
 		enable_interrupts(psw);
 		return;
@@ -604,11 +605,15 @@ cpsie(register_t psw)
 	case F32_bit:		__asm("cpsie\tf"); break;
 	case I32_bit|F32_bit:	__asm("cpsie\tif"); break;
 	}
+#else
+	enable_interrupts(psw);
+#endif
 }
 
 static inline register_t
 cpsid(register_t psw)
 {
+#if _ARM_ARCH_6
 	register_t oldpsw;
 	if (!__builtin_constant_p(psw))
 		return disable_interrupts(psw);
@@ -620,6 +625,9 @@ cpsid(register_t psw)
 	case I32_bit|F32_bit:	__asm("cpsid\tif"); break;
 	}
 	return oldpsw;
+#else 
+	return disable_interrupts(psw);
+#endif
 }
 
 #else /* ! __PROG32 */
