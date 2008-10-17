@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32 2008/10/16 17:42:26 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33 2008/10/17 12:35:12 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.32 2008/10/16 17:42:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.33 2008/10/17 12:35:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	 */
 	sp += HPPA_FRAME_SIZE + 16*4;
 	pcbp->pcb_ksp = sp;
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)l2->l_addr, sp - (vaddr_t)l2->l_addr);
+	fdcache(HPPA_SID_KERNEL, (vaddr_t)l->l_addr, sp - (vaddr_t)l->l_addr);
 }
 
 void
