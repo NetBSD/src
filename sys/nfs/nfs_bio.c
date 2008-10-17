@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.177 2008/10/16 22:04:22 christos Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.178 2008/10/17 06:40:21 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.177 2008/10/16 22:04:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.178 2008/10/17 06:40:21 dogcow Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1114,10 +1114,13 @@ again:
 
 	rw_exit(&nmp->nm_writeverflock);
 
+
 	if (stalewriteverf) {
 		nfs_clearcommit(vp->v_mount);
 	}
+#ifndef NFS_V2_ONLY
 out:
+#endif
 	free(pgs, M_TEMP);
 	return error;
 }
