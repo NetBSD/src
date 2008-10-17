@@ -1,4 +1,4 @@
-/*	$NetBSD: whereis.c,v 1.20 2008/07/21 14:19:28 lukem Exp $	*/
+/*	$NetBSD: whereis.c,v 1.21 2008/10/17 10:53:26 apb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)whereis.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: whereis.c,v 1.20 2008/07/21 14:19:28 lukem Exp $");
+__RCSID("$NetBSD: whereis.c,v 1.21 2008/10/17 10:53:26 apb Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -111,19 +111,19 @@ main(int argc, char *argv[])
 	}
 
 	/* For each path, for each program... */
-	for (; *argv; ++argv)
+	for (; *argv; ++argv) {
 		if (**argv == '/') {
 			if (stat(*argv, &sb) == -1)
-				continue;
+				continue; /* next argv */
 			if (!S_ISREG(sb.st_mode))
-				continue;
+				continue; /* next argv */
 			if (access(*argv, X_OK) == -1)
-				continue;
+				continue; /* next argv */
 			(void)printf("%s\n", *argv);
 			found++;
 			if (which)
-				break;
-		} else for (p = std; p; p && (*p++ = ':')) {
+				continue; /* next argv */
+		} else for (p = std; p; ) {
 			t = p;
 			if ((p = strchr(p, ':')) != NULL) {
 				*p = '\0';
@@ -134,19 +134,22 @@ main(int argc, char *argv[])
 					t = ".";
 			(void)snprintf(path, sizeof(path), "%s/%s", t, *argv);
 			len = snprintf(path, sizeof(path), "%s/%s", t, *argv);
+			if (p)
+				*p++ = ':';
 			if (len >= sizeof(path))
-				continue;
+				continue; /* next p */
 			if (stat(path, &sb) == -1)
-				continue;
+				continue; /* next p */
 			if (!S_ISREG(sb.st_mode))
-				continue;
+				continue; /* next p */
 			if (access(path, X_OK) == -1)
-				continue;
+				continue; /* next p */
 			(void)printf("%s\n", path);
 			found++;
 			if (which)
-				break;
+				break; /* next argv */
 		}
+	}
 	
 	return ((found == 0) ? 3 : ((found >= argc) ? 0 : 2));
 }
