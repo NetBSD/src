@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.70 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: fault.c,v 1.71 2008/10/17 08:20:48 cegger Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.70 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.71 2008/10/17 08:20:48 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.70 2008/10/15 06:51:17 wrstuden Exp $");
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
+
+#include <sys/savar.h>
 #include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
