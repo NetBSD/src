@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.74 2008/10/17 21:20:30 christos Exp $
+# $NetBSD: postinstall,v 1.75 2008/10/17 21:31:55 cube Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1381,6 +1381,7 @@ EOF
 	if [ "$N_SRC_ARGS" -eq 0 ]; then
 		# The default SRC_ARG was set elsewhere
 		DIRMODE=true
+		SOURCEMODE=true
 		SRC_ARGLIST="-s $(shell_quote "${SRC_ARG}")"
 	fi
 
