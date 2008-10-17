@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.30 2008/09/20 20:36:09 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.31 2008/10/17 22:16:37 jym Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.30 2008/09/20 20:36:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.31 2008/10/17 22:16:37 jym Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -369,6 +369,8 @@ privcmd_ioctl(void *v)
 			error = copyin(&mcmd->entry[i], &mentry, sizeof(mentry));
 			if (error)
 				return error;
+			if (mentry.npages == 0)
+				return EINVAL;
 			if (mentry.va > VM_MAXUSER_ADDRESS)
 				return EINVAL;
 #if 0
@@ -408,6 +410,8 @@ privcmd_ioctl(void *v)
 		pmap = vm_map_pmap(vmm);
 		va0 = pmb->addr & ~PAGE_MASK;
 
+		if (pmb->num == 0)
+			return EINVAL;
 		if (va0 > VM_MAXUSER_ADDRESS)
 			return EINVAL;
 		if (((VM_MAXUSER_ADDRESS - va0) >> PGSHIFT) < pmb->num)
