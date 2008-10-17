@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.230 2008/10/13 18:24:21 apb Exp $
+#	$NetBSD: bsd.README,v 1.231 2008/10/17 15:04:18 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -66,6 +66,10 @@ and are tested with  ${VAR} == "no"  and  ${VAR} != "no" .
 
 The basic rule for the variable naming scheme is as follows:
 
+HOST_xxx	A command that runs on the host machine regardless of
+		whether or not the system is being cross compiled, or
+		flags for such a command.
+
 MKxxx		Can be set to "no" to disable functionality, or
 		"yes" to enable it.
 		Usually defaults to "yes", although some variables
@@ -84,6 +88,11 @@ NOxxx		If defined, disables a feature.
 		that they don't support (such as missing man pages).
 		NOxxx variables must be defined before <bsd.own.mk>
 		is included.
+
+TOOL_xxx	A tool that is provided as part of the USETOOLS
+		framework.  When not using the USETOOLS framework,
+		TOOL_xxx variables should refer to tools that are
+		already installed on the host system.
 
 The following variables that control how things are made/installed that
 are not set by default. These should not be set by Makefiles; they're for
