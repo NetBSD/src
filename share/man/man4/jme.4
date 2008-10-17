@@ -1,4 +1,4 @@
-.\"	$NetBSD: jme.4,v 1.3 2008/10/13 18:02:43 bouyer Exp $
+.\"	$NetBSD: jme.4,v 1.4 2008/10/17 19:31:00 bouyer Exp $
 .\"
 .\" Copyright (c) 2008 Manuel Bouyer
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Os
 .Sh NAME
 .Nm jme
-.Nd JMicron Technologies JME250 Gigabit Ethernet and JME260 Fast Ethernet controller driver
+.Nd JMicron Technologies JMC250 Gigabit Ethernet and JMC260 Fast Ethernet controller driver
 .Sh SYNOPSIS
 .Cd "jme* at pci? dev ? function ?"
 .Pp
@@ -44,7 +44,7 @@ See
 The
 .Nm jme
 device driver supports network adapters based on the JMicron
-Technologies JME250 Gigabit Ethernet and JME260 Fast Ethernet chips.
+Technologies JMC250 Gigabit Ethernet and JMC260 Fast Ethernet chips.
 The following features are supported:
 .Bd -literal -offset indent
 IPv4 transmit/receive IP/TCP/UDP checksum offload
@@ -85,5 +85,5 @@ device driver first appeared in
 .Nx 5.0 .
 .Sh BUGS
 Hardware bugs prevent support of IPv6 receive TCP/UDP checksum offload
-in the JME250 rev A2, and is disabled in the driver.
+in the JMC250 rev A2, and is disabled in the driver.
 This should be revisited when a newer hardware revision is available.
