@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.61 2008/08/22 18:05:44 tnn Exp $	*/
+/*	$NetBSD: agp.c,v 1.62 2008/10/17 17:15:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.61 2008/08/22 18:05:44 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.62 2008/10/17 17:15:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,8 +385,10 @@ agp_alloc_gatt(struct agp_softc *sc)
 
 	if (agp_alloc_dmamem(sc->as_dmat, entries * sizeof(u_int32_t),
 	    0, &gatt->ag_dmamap, &virtual, &gatt->ag_physical,
-	    &gatt->ag_dmaseg, 1, &dummyseg) != 0)
+	    &gatt->ag_dmaseg, 1, &dummyseg) != 0) {
+		free(gatt, M_AGP);
 		return NULL;
+	}
 	gatt->ag_virtual = (uint32_t *)virtual;
 
 	gatt->ag_size = entries * sizeof(u_int32_t);
