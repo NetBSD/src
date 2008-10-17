@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.166 2008/10/15 06:51:19 wrstuden Exp $	 */
+/* $NetBSD: machdep.c,v 1.167 2008/10/17 08:12:23 cegger Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2008/10/15 06:51:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2008/10/17 08:12:23 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.166 2008/10/15 06:51:19 wrstuden Exp $
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+#include <sys/savar.h>	/* for cpu_upcall */
 
 #include <machine/sid.h>
 #include <machine/pte.h>
