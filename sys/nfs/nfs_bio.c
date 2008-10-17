@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.178 2008/10/17 06:40:21 dogcow Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.179 2008/10/17 14:24:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.178 2008/10/17 06:40:21 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.179 2008/10/17 14:24:43 christos Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -921,7 +921,7 @@ nfs_doio_write(struct buf *bp, struct uio *uiop)
 	int iomode;
 	bool stalewriteverf = false;
 	int i, npages = (bp->b_bcount + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	struct vm_page **pgs;
+	struct vm_page **pgs, *spgs[64];
 #ifndef NFS_V2_ONLY
 	bool needcommit = true; /* need only COMMIT RPC */
 #else
@@ -932,13 +932,19 @@ nfs_doio_write(struct buf *bp, struct uio *uiop)
 	int error;
 	off_t off, cnt;
 
+	if (npages < __arraycount(spgs))
+		pgs = spgs;
+	else {
+		if ((pgs = kmem_alloc(sizeof(*pgs) * npages, KM_NOSLEEP)) ==
+		    NULL)
+			return ENOMEM;
+	}
+
 	if ((bp->b_flags & B_ASYNC) != 0 && NFS_ISV3(vp)) {
 		iomode = NFSV3WRITE_UNSTABLE;
 	} else {
 		iomode = NFSV3WRITE_FILESYNC;
 	}
-
-	pgs = malloc(sizeof(*pgs) * npages, M_TEMP, M_WAITOK);
 
 #ifndef NFS_V2_ONLY
 again:
@@ -1121,7 +1127,8 @@ again:
 #ifndef NFS_V2_ONLY
 out:
 #endif
-	free(pgs, M_TEMP);
+	if (pgs != spgs)
+		kmem_free(pgs, sizeof(*pgs) * npages);
 	return error;
 }
 
@@ -1217,7 +1224,7 @@ nfs_getpages(void *v)
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct nfsnode *np = VTONFS(vp);
 	const int npages = *ap->a_count;
-	struct vm_page *pg, **pgs, **opgs;
+	struct vm_page *pg, **pgs, **opgs, *spgs[64];
 	off_t origoffset, len;
 	int i, error;
 	bool v3 = NFS_ISV3(vp);
@@ -1225,11 +1232,21 @@ nfs_getpages(void *v)
 	bool locked = (ap->a_flags & PGO_LOCKED) != 0;
 
 	/*
+	 * If we are not locked we are not really using opgs,
+	 * so just initialize it
+	 */
+	if (!locked || npages < __arraycount(spgs))
+		opgs = spgs;
+	else {
+		if ((opgs = kmem_alloc(npages * sizeof(*opgs), KM_NOSLEEP)) ==
+		    NULL)
+			return ENOMEM;
+	}
+
+	/*
 	 * call the genfs code to get the pages.  `pgs' may be NULL
 	 * when doing read-ahead.
 	 */
-	opgs = malloc(npages * sizeof(*opgs), M_TEMP, M_WAITOK);
-
 	pgs = ap->a_m;
 	if (write && locked && v3) {
 		KASSERT(pgs != NULL);
@@ -1325,6 +1342,7 @@ nfs_getpages(void *v)
 		mutex_exit(&np->n_commitlock);
 	}
 out:
-	free(opgs, M_TEMP);
+	if (opgs != spgs)
+		kmem_free(opgs, sizeof(*opgs) * npages);
 	return error;
 }
