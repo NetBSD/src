@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.203 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.204 2008/10/17 00:29:21 uebayasi Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.203 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.204 2008/10/17 00:29:21 uebayasi Exp $");
 
 #include "opt_cputype.h"
 
@@ -1713,7 +1713,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 	sf = (struct saframe *)sp - 1;
 	if (copyout(&frame, sf, sizeof(frame)) != 0) {
 		/* Copying onto the stack didn't work. Die. */
-		mutex_enter(&l->l_proc->p_smutex);
+		mutex_enter(&l->l_proc->p_lock);
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
