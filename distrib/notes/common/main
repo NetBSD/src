@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.422 2008/10/11 21:54:11 bouyer Exp $
+.\"	$NetBSD: main,v 1.423 2008/10/18 20:20:01 jym Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2058,6 +2058,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Julio M. Merino Vidal Ta Mt jmmv@NetBSD.org
 .It Ta Perry Metzger Ta Mt perry@NetBSD.org
 .It Ta Luke Mewburn Ta Mt lukem@NetBSD.org
+.It Ta Jean-Yves Migeon Ta Mt jym@NetBSD.org
 .It Ta Brook Milligan Ta Mt brook@NetBSD.org
 .It Ta Minoura Makoto Ta Mt minoura@NetBSD.org
 .It Ta Simas Mockevicius Ta Mt symka@NetBSD.org
