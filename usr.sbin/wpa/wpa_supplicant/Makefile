@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.9 2008/10/18 12:32:50 scw Exp $
+# $NetBSD: Makefile,v 1.10 2008/10/18 14:40:48 scw Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
 PROG=	wpa_supplicant
-SRCS=	aes_wrap base64.c blacklist.c common.c config.c config_file.c \
+SRCS=	aes.c aes_wrap.c base64.c blacklist.c common.c config.c config_file.c \
 	ctrl_iface.c ctrl_iface_unix.c driver_netbsd.c drivers.c eap_common.c \
 	eap_methods.c eapol_supp_sm.c eloop.c events.c l2_packet_freebsd.c \
 	main.c md5.c os_unix.c pmksa_cache.c preauth.c rc4.c scan.c \
@@ -50,7 +50,7 @@ DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBDES}
 LDADD+= -lssl -lcrypto -ldes
 .else
 CPPFLAGS+= -DINTERNAL_AES -DINTERNAL_MD5 -DINTERNAL_SHA1
-SRCS+=	tls_none.c aes.c
+SRCS+=	tls_none.c
 .endif
 
 .endif
