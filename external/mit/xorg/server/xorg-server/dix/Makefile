@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.5 2008/10/18 22:44:26 cube Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -24,13 +24,12 @@ CPPFLAGS.globals.c=	-DCOMPILEDDEFAULTFONTPATH=\"${X11DEFAULTFONTPATH:ts,}\" \
 
 # XXX make user variables
 CPPFLAGS.main.c=	-DVENDOR_STRING="\"The Xorg Group\"" \
-			-DVENDOR_RELEASE="${XVERSION}" \
+			-DVENDOR_RELEASE="${XORG_VERSION_CURRENT}" \
 			-DVENDOR_NAME="\"The Xorg Foundation\""
 
 COPTS.dixutils.c=	-Wno-error
 
 .include <bsd.x11.mk>
-XVERSION!=	${PRINTX11VERSION}
 .include <bsd.lib.mk>
 
 SUBDIR=	xpstubs
