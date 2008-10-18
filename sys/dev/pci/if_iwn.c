@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.20 2008/10/13 12:41:45 blymn Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.21 2008/10/18 15:55:27 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.20 2008/10/13 12:41:45 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.21 2008/10/18 15:55:27 blymn Exp $");
 
 
 /*
@@ -1032,7 +1032,7 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		/* FALLTHROUGH */
 	case IEEE80211_S_AUTH:
 		/* cancel any active scan - it apparently breaks auth */
-		(void)iwn_cmd(sc, IWN_CMD_SCAN_ABORT, NULL, 0, 0);
+		(void)iwn_cmd(sc, IWN_CMD_SCAN_ABORT, NULL, 0, 1);
 
 		if ((error = iwn_auth(sc)) != 0) {
 			aprint_error_dev(sc->sc_dev,
