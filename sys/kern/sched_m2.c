@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.26 2008/10/07 09:48:27 rmind Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.27 2008/10/18 03:44:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.26 2008/10/07 09:48:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.27 2008/10/18 03:44:04 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -175,7 +175,25 @@ sched_schedclock(struct lwp *l)
 void
 sched_nice(struct proc *p, int prio)
 {
+	struct lwp *l;
+	int n;
 
+	KASSERT(mutex_owned(p->p_lock));
+
+	p->p_nice = prio;
+	n = (prio - NZERO) >> 2;
+	if (n == 0)
+		return;
+
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		lwp_lock(l);
+		if (l->l_class == SCHED_OTHER) {
+			pri_t pri = l->l_priority - n;
+			pri = (n < 0) ? min(pri, PRI_HIGHEST_TS) : imax(pri, 0);
+			lwp_changepri(l, pri);
+		}
+		lwp_unlock(l);
+	}
 }
 
 /* Recalculate the time-slice */
@@ -195,8 +213,15 @@ sched_slept(struct lwp *l)
 	 * increase the the priority, and run with the lower time-quantum.
 	 */
 	if (l->l_priority < PRI_HIGHEST_TS && (l->l_flag & LW_BATCH) == 0) {
+		struct proc *p = l->l_proc;
+
 		KASSERT(l->l_class == SCHED_OTHER);
-		l->l_priority++;
+		if (__predict_false(p->p_nice < NZERO)) {
+			const int n = max((NZERO - p->p_nice) >> 2, 1);
+			l->l_priority = min(l->l_priority + n, PRI_HIGHEST_TS);
+		} else {
+			l->l_priority++;
+		}
 	}
 }
 
@@ -265,6 +290,7 @@ sched_tick(struct cpu_info *ci)
 {
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	struct lwp *l = curlwp;
+	struct proc *p;
 
 	if (__predict_false(CURCPU_IDLE_P()))
 		return;
@@ -284,7 +310,14 @@ sched_tick(struct cpu_info *ci)
 		 * and run with a higher time-quantum.
 		 */
 		KASSERT(l->l_priority <= PRI_HIGHEST_TS);
-		if (l->l_priority != 0)
+		if (l->l_priority == 0)
+			break;
+
+		p = l->l_proc;
+		if (__predict_false(p->p_nice > NZERO)) {
+			const int n = max((p->p_nice - NZERO) >> 2, 1);
+			l->l_priority = imax(l->l_priority - n, 0);
+		} else
 			l->l_priority--;
 		break;
 	}
