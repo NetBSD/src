@@ -1,6 +1,6 @@
 /* nbtool_config.h.in.  Generated automatically from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.20 2008/10/14 15:23:26 tsutsui Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.21 2008/10/18 16:27:19 tsutsui Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -18,6 +18,9 @@
 
 /* Define if you have <alloca.h> and it should be used (not on Ultrix). */
 #undef HAVE_ALLOCA_H
+
+/* Define if you have the <arpa/nameser.h> header file. */
+#undef HAVE_ARPA_NAMESER_H
 
 /* Define if you have the `asnprintf' function. */
 #undef HAVE_ASNPRINTF
@@ -377,6 +380,9 @@
 
 /* Define if you have the `random' function. */
 #undef HAVE_RANDOM
+
+/* Define if you have the <resolv.h> header file. */
+#undef HAVE_RESOLV_H
 
 /* Define if you have the <rpc/types.h> header file. */
 #undef HAVE_RPC_TYPES_H
