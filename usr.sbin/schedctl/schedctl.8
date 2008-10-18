@@ -1,4 +1,4 @@
-.\"	$NetBSD: schedctl.8,v 1.8 2008/06/22 14:51:45 wiz Exp $
+.\"	$NetBSD: schedctl.8,v 1.9 2008/10/18 03:40:18 rmind Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 22, 2008
+.Dd October 18, 2008
 .Dt SCHEDCTL 8
 .Os
 .Sh NAME
@@ -71,13 +71,15 @@ First in, first out (FIFO) scheduling policy.
 Round-robin scheduling policy.
 .El
 .It Fl P Ar pri
-Priority which will be set for the process or thread.
-For all scheduling classes, priority might be set to any value in
-the range from
+Priority for the process or thread.
+Value should be in the range from
 .Dv SCHED_PRI_MIN
 (0) to
 .Dv SCHED_PRI_MAX
 (63).
+Setting of priority for the process or thread running at
+.Dv SCHED_OTHER
+policy is not allowed.
 .It Fl p Ar pid
 The target process which will be affected.
 If the process has more than one thread, all of them will be affected.
@@ -107,7 +109,7 @@ for thread whose ID is
 in process whose ID is
 .Dq 123 :
 .Bd -literal -offset indent
-# schedctl -p 123 -t 1 -A 0,1 -C 2 -P 63
+# schedctl -p 123 -t 1 -A 0,1 -C SCHED_RR -P 63
 .Ed
 .Pp
 Run the
