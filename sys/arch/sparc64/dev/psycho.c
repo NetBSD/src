@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.89 2008/10/13 12:25:22 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.90 2008/10/18 03:10:53 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.89 2008/10/13 12:25:22 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.90 2008/10/18 03:10:53 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -141,6 +141,8 @@ static void psycho_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
 static int psycho_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
 	bus_dma_segment_t *, int, bus_size_t, int);
 static void psycho_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	bus_size_t, int);
+static void psycho_sabre_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	bus_size_t, int);
 int psycho_dmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
 	bus_dma_segment_t *, int, int *, int);
@@ -1067,7 +1069,10 @@ psycho_alloc_dma_tag(struct psycho_pbm *pp)
 	PCOPY(_dmamap_load_uio);
 	dt->_dmamap_load_raw = psycho_dmamap_load_raw;
 	dt->_dmamap_unload = psycho_dmamap_unload;
-	dt->_dmamap_sync = psycho_dmamap_sync;
+	if (sc->sc_mode == PSYCHO_MODE_SABRE)
+		dt->_dmamap_sync = psycho_sabre_dmamap_sync;
+	else
+		dt->_dmamap_sync = psycho_dmamap_sync;
 	dt->_dmamem_alloc = psycho_dmamem_alloc;
 	dt->_dmamem_free = psycho_dmamem_free;
 	dt->_dmamem_map = psycho_dmamem_map;
@@ -1433,4 +1438,22 @@ psycho_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
 
 	iommu_dvmamem_unmap(t, &pp->pp_sb, kva, size);
+}
+
+/*
+ * UltraSPARC IIi and IIe have no streaming buffers, but have PCI DMA
+ * Write Synchronization Register (see UltraSPARC-IIi User's Manual
+ * section 19.3.0.5).  So use it to synchronize with the DMA writes.
+ */
+static void
+psycho_sabre_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
+	bus_size_t len, int ops)
+{
+	struct psycho_pbm *pp = (struct psycho_pbm *)t->_cookie;
+	struct psycho_softc *sc = pp->pp_sc;
+
+	if (ops & BUS_DMASYNC_POSTREAD)
+		bus_space_read_8(sc->sc_bustag, sc->sc_bh,
+			offsetof(struct psychoreg, pci_dma_write_sync));
+	bus_dmamap_sync(t->_parent, map, offset, len, ops);
 }
