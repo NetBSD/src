@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.28 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.29 2008/10/18 03:40:18 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.28 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.29 2008/10/18 03:40:18 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -64,39 +64,33 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.28 2008/10/15 06:51:20 wrstuden Exp 
 static pri_t
 convert_pri(lwp_t *l, int policy, pri_t pri)
 {
-	int delta = 0;
 
-	switch (policy) {
-	case SCHED_OTHER:
-		delta = PRI_USER;
-		break;
-	case SCHED_FIFO:
-	case SCHED_RR:
-		delta = PRI_USER_RT;
-		break;
-	default:
-		panic("upri_to_kpri");
-	}
-
+	/* Convert user priority to the in-kernel */
 	if (pri != PRI_NONE) {
-		/* Convert user priority to the in-kernel */
+		/* Only for real-time threads */
 		KASSERT(pri >= SCHED_PRI_MIN && pri <= SCHED_PRI_MAX);
-		return pri + delta;
+		KASSERT(policy != SCHED_OTHER);
+		return PRI_USER_RT + pri;
 	}
+
+	/* Neither policy, nor priority change */
 	if (l->l_class == policy)
 		return l->l_priority;
 
-	/* Change the current priority to the appropriate range */
+	/* Time-sharing -> real-time */
 	if (l->l_class == SCHED_OTHER) {
 		KASSERT(policy == SCHED_FIFO || policy == SCHED_RR);
-		return delta;
+		return PRI_USER_RT;
 	}
+
+	/* Real-time -> time-sharing */
 	if (policy == SCHED_OTHER) {
 		KASSERT(l->l_class == SCHED_FIFO || l->l_class == SCHED_RR);
-		return l->l_priority - delta;
+		return l->l_priority - PRI_USER_RT;
 	}
-	KASSERT(l->l_class != SCHED_OTHER && policy != SCHED_OTHER);
-	return l->l_class;
+
+	/* Real-time -> real-time */
+	return l->l_priority;
 }
 
 int
@@ -154,19 +148,19 @@ do_sched_setparam(pid_t pid, lwpid_t lid, int policy,
 
 		if (lid && lid != t->l_lid)
 			continue;
+
 		lcnt++;
-		KASSERT(pri != PRI_NONE || policy != SCHED_NONE);
 		lwp_lock(t);
+		lpolicy = (policy == SCHED_NONE) ? t->l_class : policy;
 
-		if (policy == SCHED_NONE)
-			lpolicy = t->l_class;
-		else
-			lpolicy = policy;
+		/* Disallow setting of priority for SCHED_OTHER threads */
+		if (lpolicy == SCHED_FIFO && pri != PRI_NONE) {
+			lwp_unlock(t);
+			error = EINVAL;
+			break;
+		}
 
-		/*
-		 * Note that, priority may need to be changed to get into
-		 * the correct priority range of the new scheduling class.
-		 */
+		/* Convert priority, if needed */
 		kpri = convert_pri(t, lpolicy, pri);
 
 		/* Check the permission */
@@ -178,14 +172,9 @@ do_sched_setparam(pid_t pid, lwpid_t lid, int policy,
 			break;
 		}
 
-		/* Set the scheduling class */
-		if (policy != SCHED_NONE)
-			t->l_class = policy;
-
-		/* Change the priority */
-		if (t->l_priority != kpri)
-			lwp_changepri(t, kpri);
-
+		/* Set the scheduling class, change the priority */
+		t->l_class = lpolicy;
+		lwp_changepri(t, kpri);
 		lwp_unlock(t);
 	}
 	mutex_exit(p->p_lock);
@@ -344,7 +333,6 @@ sys__sched_setaffinity(struct lwp *l,
 			break;
 		}
 	}
-
 	if (ci == NULL) {
 		/* Empty set */
 		kcpuset_unuse(cpuset, NULL);
