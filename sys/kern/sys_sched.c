@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.29 2008/10/18 03:40:18 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.30 2008/10/18 19:24:04 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.29 2008/10/18 03:40:18 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.30 2008/10/18 19:24:04 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -154,7 +154,7 @@ do_sched_setparam(pid_t pid, lwpid_t lid, int policy,
 		lpolicy = (policy == SCHED_NONE) ? t->l_class : policy;
 
 		/* Disallow setting of priority for SCHED_OTHER threads */
-		if (lpolicy == SCHED_FIFO && pri != PRI_NONE) {
+		if (lpolicy == SCHED_OTHER && pri != PRI_NONE) {
 			lwp_unlock(t);
 			error = EINVAL;
 			break;
