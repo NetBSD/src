@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.38 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.39 2008/10/18 13:38:42 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.38 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.39 2008/10/18 13:38:42 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.38 2008/10/15 06:51:18 wrstuden Ex
 #include <machine/frame.h>
 
 #include <m68k/m68k.h>
+#include <m68k/saframe.h>
 
 extern short exframesize[];
 struct fpframe m68k_cached_fpu_idle_frame;
