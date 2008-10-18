@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.365 2008/10/11 13:40:57 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.366 2008/10/18 03:46:22 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.365 2008/10/11 13:40:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.366 2008/10/18 03:46:22 rmind Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -125,7 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.365 2008/10/11 13:40:57 pooka Exp $"
 #include <sys/callout.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
-#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
@@ -340,8 +339,6 @@ main(void)
 	once_init();
 
 	uvm_init();
-
-	kmem_init();
 
 	percpu_init();
 
