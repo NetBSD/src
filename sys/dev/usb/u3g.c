@@ -59,6 +59,7 @@ struct u3g_softc {
 	u_char                      *sc_intr_buf;    /* interrupt buffer */
 #endif
 	int                         sc_isize;
+	bool                        sc_pseudodev;
 };
 
 struct ucom_methods u3g_methods = {
@@ -99,6 +100,95 @@ u3g_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 #endif
 
 static int
+u3g_novatel_reinit(struct usb_attach_arg *uaa)
+{
+	unsigned char cmd[31];
+	usbd_interface_handle iface;
+	usb_interface_descriptor_t *id;
+	usb_endpoint_descriptor_t *ed;
+	usbd_pipe_handle pipe;
+	usbd_xfer_handle xfer;
+	int err, i;
+
+	memset(cmd, 0, sizeof(cmd));
+	/* Byte 0..3: Command Block Wrapper (CBW) signature */
+	cmd[0] = 0x55; 
+	cmd[1] = 0x53;
+	cmd[2] = 0x42;
+	cmd[3] = 0x43;
+	/* 4..7: CBW Tag, has to unique, but only a single transfer used. */
+	cmd[4] = 0x01;
+	/* 8..11: CBW Transfer Length, no data here */
+	/* 12: CBW Flag: output, so 0 */
+	/* 13: CBW Lun: 0 */
+	/* 14: CBW Length */
+	cmd[14] = 0x06;
+	/* Rest is the SCSI payload */
+	/* 0: SCSI START/STOP opcode */
+	cmd[15] = 0x1b;
+	/* 1..3 unused */
+	/* 4 Load/Eject command */
+	cmd[19] = 0x02;
+	/* 5: unused */
+
+
+	/* Move the device into the configured state. */
+	err = usbd_set_config_index(uaa->device, 0, 0);
+	if (err) {
+		aprint_error("u3g: failed to set configuration index\n");
+		return UMATCH_NONE;
+	}
+
+	err = usbd_device2interface_handle(uaa->device, 0, &iface);
+	if (err != 0) {
+		aprint_error("u3g: failed to get interface\n");
+		return UMATCH_NONE;
+	}
+
+	id = usbd_get_interface_descriptor(iface);
+	ed = NULL;
+	for (i = 0 ; i < id->bNumEndpoints ; i++) {
+		ed = usbd_interface2endpoint_descriptor(iface, i);
+		if (ed == NULL)
+			continue;
+		if (UE_GET_DIR(ed->bEndpointAddress) != UE_DIR_OUT)
+			continue;
+		if ((ed->bmAttributes & UE_XFERTYPE) == UE_BULK)
+			break;
+	}
+
+	if (i == id->bNumEndpoints)
+		return UMATCH_NONE;
+
+	err = usbd_open_pipe(iface, ed->bEndpointAddress, USBD_EXCLUSIVE_USE,
+	    &pipe);
+	if (err != 0) {
+		aprint_error("u3g: failed to open bulk transfer pipe %d\n",
+		    ed->bEndpointAddress);
+		return UMATCH_NONE;
+	}
+
+	xfer = usbd_alloc_xfer(uaa->device);
+	if (xfer != NULL) {
+		usbd_setup_xfer(xfer, pipe, NULL, cmd, sizeof(cmd),
+		    USBD_SYNCHRONOUS, USBD_DEFAULT_TIMEOUT, NULL);
+
+		err = usbd_transfer(xfer);
+		if (err)
+			aprint_error("u3g: transfer failed\n");
+		usbd_free_xfer(xfer);
+	} else {
+		aprint_error("u3g: failed to allocate xfer\n");
+		err = USBD_NOMEM;
+	}
+
+	usbd_abort_pipe(pipe);
+	usbd_close_pipe(pipe);
+
+	return (err == USBD_NORMAL_COMPLETION ? UMATCH_HIGHEST : UMATCH_NONE);
+}
+
+static int
 u3g_huawei_reinit(usbd_device_handle dev)
 {
 	/* The Huawei device presents itself as a umass device with Windows
@@ -125,7 +215,8 @@ u3g_huawei_reinit(usbd_device_handle dev)
 
 	(void) usbd_do_request(dev, &req, 0);
 
-	return UMATCH_NONE;	/* mismatch; it will be gone and reappear */
+
+	return (UMATCH_HIGHEST); /* Match to prevent umass from attaching */
 }
 
 static int
@@ -135,6 +226,10 @@ u3g_match(device_t parent, cfdata_t match, void *aux)
 
 	if (uaa->vendor == USB_VENDOR_HUAWEI)
 		return u3g_huawei_reinit(uaa->device);
+
+	if (uaa->vendor == USB_VENDOR_NOVATEL2 &&
+	    uaa->product == USB_PRODUCT_NOVATEL2_MC950D_DRIVER)
+		return u3g_novatel_reinit(uaa);
 
 	if (usb_lookup(u3g_devs, uaa->vendor, uaa->product))
 		return UMATCH_VENDOR_PRODUCT;
@@ -158,6 +253,13 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	if (uaa->vendor == USB_VENDOR_NOVATEL2 &&
+	    uaa->product == USB_PRODUCT_NOVATEL2_MC950D_DRIVER) {
+		/* About to disappear... */
+		sc->sc_pseudodev = true;
+		return;
+	}
+
 	sc->sc_dev = self;
 #ifdef U3G_DEBUG
 	sc->sc_intr_number = -1;
@@ -176,6 +278,12 @@ u3g_attach(device_t parent, device_t self, void *aux)
 
 	if (cdesc == NULL) {
 		aprint_error_dev(self, "failed to get configuration descriptor\n");
+		return;
+	}
+
+	if (uaa->vendor == USB_VENDOR_HUAWEI && cdesc->bNumInterface > 1) {
+		/* About to disappear... */
+		sc->sc_pseudodev = true;
 		return;
 	}
 
@@ -260,6 +368,9 @@ u3g_detach(device_t self, int flags)
 	struct u3g_softc *sc = device_private(self);
 	int rv = 0;
 	int i;
+
+	if (sc->sc_pseudodev)
+		return 0;
 
 	pmf_device_deregister(self);
 
