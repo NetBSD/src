@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.224 2008/10/13 12:34:56 nakayama Exp $	*/
+/*	$NetBSD: pmap.c,v 1.225 2008/10/18 04:20:37 nakayama Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.224 2008/10/13 12:34:56 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.225 2008/10/18 04:20:37 nakayama Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2197,11 +2197,17 @@ pmap_extract(pm, va, pap)
 		pa = pmap_kextract(va);
 		DPRINTF(PDB_EXTRACT, ("pmap_extract: va=%lx pa=%llx\n",
 				      (u_long)va, (unsigned long long)pa));
+		if (pap != NULL)
+			*pap = pa;
+		return TRUE;
 	} else if (pm == pmap_kernel() && va >= ktext && va < ektext) {
 		/* Need to deal w/locked TLB entry specially. */
 		pa = pmap_kextract(va);
 		DPRINTF(PDB_EXTRACT, ("pmap_extract: va=%lx pa=%llx\n",
 		    (u_long)va, (unsigned long long)pa));
+		if (pap != NULL)
+			*pap = pa;
+		return TRUE;
 	} else if (pm == pmap_kernel() && va >= INTSTACK && va < (INTSTACK + 64*KB)) {
 		pa = (paddr_t)(curcpu()->ci_paddr - INTSTACK + va);
 		DPRINTF(PDB_EXTRACT, ("pmap_extract (intstack): va=%lx pa=%llx\n",
@@ -2514,9 +2520,10 @@ pmap_clear_modify(pg)
 	if (pv->pv_va & PV_MOD)
 		pv->pv_va |= PV_WE;	/* Remember this was modified */
 #endif
-	if (pv->pv_va & PV_MOD)
+	if (pv->pv_va & PV_MOD) {
 		changed |= 1;
-	pv->pv_va &= ~(PV_MOD);
+		pv->pv_va &= ~PV_MOD;
+	}
 #ifdef DEBUG
 	if (pv->pv_next && !pv->pv_pmap) {
 		printf("pmap_clear_modify: npv but no pmap for pv %p\n", pv);
@@ -2550,9 +2557,10 @@ pmap_clear_modify(pg)
 				tlb_flush_pte(va, pmap);
 			}
 			/* Then clear the mod bit in the pv */
-			if (pv->pv_va & PV_MOD)
+			if (pv->pv_va & PV_MOD) {
 				changed |= 1;
-			pv->pv_va &= ~(PV_MOD);
+				pv->pv_va &= ~PV_MOD;
+			}
 		}
 	}
 	pv_check();
@@ -2577,7 +2585,6 @@ bool
 pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	pv_entry_t pv;
 	int rv;
 	int changed = 0;
@@ -2592,9 +2599,10 @@ pmap_clear_reference(pg)
 #endif
 	/* Clear all references */
 	pv = &pg->mdpage.mdpg_pvh;
-	if (pv->pv_va & PV_REF)
+	if (pv->pv_va & PV_REF) {
 		changed |= 1;
-	pv->pv_va &= ~(PV_REF);
+		pv->pv_va &= ~PV_REF;
+	}
 #ifdef DEBUG
 	if (pv->pv_next && !pv->pv_pmap) {
 		printf("pmap_clear_reference: npv but no pmap for pv %p\n", pv);
@@ -2615,9 +2623,10 @@ pmap_clear_reference(pg)
 			     (u_long)pmap_ctx(pmap),
 			     (long long)data));
 #ifdef HWREF
-			if (data & TLB_ACCESS)
+			if (data & TLB_ACCESS) {
 				changed |= 1;
-			data &= ~TLB_ACCESS;
+				data &= ~TLB_ACCESS;
+			}
 #else
 			if (data < 0)
 				changed |= 1;
@@ -2632,12 +2641,13 @@ pmap_clear_reference(pg)
 				tsb_invalidate(va, pmap);
 				tlb_flush_pte(va, pmap);
 			}
-			if (pv->pv_va & PV_REF)
+			if (pv->pv_va & PV_REF) {
 				changed |= 1;
-			pv->pv_va &= ~(PV_REF);
+				pv->pv_va &= ~PV_REF;
+			}
 		}
 	}
-	dcache_flush_page(pa);
+	dcache_flush_page(VM_PAGE_TO_PHYS(pg));
 	pv_check();
 #ifdef DEBUG
 	if (pmap_is_referenced_locked(pg)) {
@@ -2695,9 +2705,10 @@ pmap_is_modified(pg)
 				res = true;
 
 			/* Migrate modify info to head pv */
-			if (npv->pv_va & PV_MOD)
+			if (npv->pv_va & PV_MOD) {
 				res = true;
-			npv->pv_va &= ~PV_MOD;
+				npv->pv_va &= ~PV_MOD;
+			}
 		}
 		/* Save modify info */
 		if (res)
@@ -2751,9 +2762,10 @@ pmap_is_referenced_locked(struct vm_page *pg)
 			res = true;
 
 		/* Migrate ref info to head pv */
-		if (npv->pv_va & PV_REF)
+		if (npv->pv_va & PV_REF) {
 			res = true;
-		npv->pv_va &= ~PV_REF;
+			npv->pv_va &= ~PV_REF;
+		}
 	}
 	/* Save ref info */
 	if (res)
@@ -2854,8 +2866,7 @@ pmap_page_protect(pg, prot)
 	int64_t clear, set;
 	int64_t data = 0;
 	int rv;
-	paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	pv_entry_t pv, npv, firstpv, freepv = NULL;
+	pv_entry_t pv, npv, freepv = NULL;
 	struct pmap *pmap;
 	vaddr_t va;
 	bool needflush = FALSE;
@@ -2920,8 +2931,6 @@ pmap_page_protect(pg, prot)
 		DPRINTF(PDB_REMOVE,
 			("pmap_page_protect: demapping pg %p\n", pg));
 
-		firstpv = pv;
-
 		/* First remove the entire list of continuation pv's */
 		for (npv = pv->pv_next; npv; npv = pv->pv_next) {
 			pmap = npv->pv_pmap;
@@ -2939,9 +2948,9 @@ pmap_page_protect(pg, prot)
 
 			/* Save ref/mod info */
 			if (data & TLB_ACCESS)
-				firstpv->pv_va |= PV_REF;
+				pv->pv_va |= PV_REF;
 			if (data & TLB_MODIFY)
-				firstpv->pv_va |= PV_MOD;
+				pv->pv_va |= PV_MOD;
 			/* Clear mapping */
 			rv = pseg_set(pmap, va, 0, 0);
 			if (rv & 1)
@@ -2961,8 +2970,6 @@ pmap_page_protect(pg, prot)
 			npv->pv_next = freepv;
 			freepv = npv;
 		}
-
-		pv = firstpv;
 
 		/* Then remove the primary pv */
 #ifdef DEBUG
@@ -3004,7 +3011,7 @@ pmap_page_protect(pg, prot)
 			if (npv) {
 				/* First save mod/ref bits */
 				pv->pv_pmap = npv->pv_pmap;
-				pv->pv_va |= npv->pv_va & PV_MASK;
+				pv->pv_va = (pv->pv_va & PV_MASK) | npv->pv_va;
 				pv->pv_next = npv->pv_next;
 				npv->pv_next = freepv;
 				freepv = npv;
@@ -3014,7 +3021,7 @@ pmap_page_protect(pg, prot)
 			}
 		}
 		if (needflush) {
-			dcache_flush_page(pa);
+			dcache_flush_page(VM_PAGE_TO_PHYS(pg));
 		}
 	}
 	/* We should really only flush the pages we demapped. */
