@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.31 2008/10/17 22:16:37 jym Exp $ */
+/* $NetBSD: privcmd.c,v 1.32 2008/10/18 16:59:52 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.31 2008/10/17 22:16:37 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.32 2008/10/18 16:59:52 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -403,6 +403,7 @@ privcmd_ioctl(void *v)
 		u_long mfn, ma;
 		struct vm_map *vmm;
 		struct vm_map_entry *entry;
+		vm_prot_t prot;
 		pmap_t pmap;
 		vaddr_t trymap;
 
@@ -422,6 +423,7 @@ privcmd_ioctl(void *v)
 			vm_map_unlock_read(vmm);
 			return EINVAL;
 		}
+		prot = entry->protection;
 		vm_map_unlock_read(vmm);
 		
 		maddr = kmem_alloc(sizeof(paddr_t) * pmb->num, KM_SLEEP);
@@ -446,8 +448,7 @@ privcmd_ioctl(void *v)
 			}
 			ma = mfn << PGSHIFT;
 			if (pmap_enter_ma(pmap_kernel(), trymap, ma, 0,
-			    entry->protection, PMAP_CANFAIL,
-			    pmb->dom)) {
+			    prot, PMAP_CANFAIL, pmb->dom)) {
 				mfn |= 0xF0000000;
 				copyout(&mfn, &pmb->arr[i], sizeof(mfn));
 				maddr[i] = INVALID_PAGE;
