@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51 2007/09/28 09:12:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.52 2008/10/18 16:25:04 tsutsui Exp $
 
 HOSTLIB=	nbcompat
 
@@ -75,7 +75,7 @@ regen:
 	cd ${.CURDIR} && ${TOOLDIR}/bin/${_TOOL_PREFIX}autoheader
 
 include/.stamp:
-	mkdir -p include/sys include/machine include/rpc
+	mkdir -p include/sys include/machine include/rpc include/arpa
 	@touch ${.TARGET}
 
 cleandir:
