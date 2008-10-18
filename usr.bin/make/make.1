@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.137 2008/08/10 23:25:50 wiz Exp $
+.\"	$NetBSD: make.1,v 1.138 2008/10/18 14:36:40 apb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd August 10, 2008
+.Dd October 18, 2008
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -117,6 +117,10 @@ Unless the flags are preceded by
 they are added to the
 .Va MAKEFLAGS
 environment variable and will be processed by any child make processes.
+By default, debugging information is printed to standard output,
+but this can be changed using the
+Ar F
+debugging flag.
 .Ar Flags
 is one or more of the following:
 .Bl -tag -width Ds
@@ -131,11 +135,27 @@ Print debugging information about conditional evaluation.
 Print debugging information about directory searching and caching.
 .It Ar e
 Print debugging information about failed commands and targets.
-.It Ar F
-Use the rest of
-.Ql flags
-as the name of the file to which the debug output is written.
-If the filename ends
+.It Ar F Ns Oo Sy \&+ Oc Ns Ar filename
+Specify where debugging output is written.
+This must be the last flag, because it consumes the remainder of
+the argument.
+If the character immediately after the
+.Ql F
+flag is
+.Ql \&+ ,
+then the file will be opened in append mode;
+otherwise the file will be overwritten.
+If the file name is
+.Ql stdout
+or
+.Ql stderr
+then debugging output will be written to the
+standard output or standard error output file descriptors respectively
+(and the
+.Ql \&+
+option has no effect).
+Otherwise, the output will be written to the named file.
+If the file name ends
 .Ql .%d
 then the
 .Ql %d
