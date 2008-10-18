@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.103 2008/06/25 13:21:04 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.104 2008/10/18 03:46:22 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,15 +43,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.103 2008/06/25 13:21:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.104 2008/10/18 03:46:22 rmind Exp $");
 
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/pool.h>
 
 #include <uvm/uvm.h>
@@ -118,7 +118,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.103 2008/06/25 13:21:04 ad Exp $");
 	(MIN((AOBJ)->u_pages >> UAO_SWHASH_CLUSTER_SHIFT, \
 	     UAO_SWHASH_MAXBUCKETS))
 
-
 /*
  * uao_swhash_elt: when a hash table is being used, this structure defines
  * the format of an entry in the bucket list.
@@ -141,7 +140,7 @@ LIST_HEAD(uao_swhash, uao_swhash_elt);
  * uao_swhash_elt_pool: pool of uao_swhash_elt structures
  * NOTE: Pages for this pool must not come from a pageable kernel map!
  */
-POOL_INIT(uao_swhash_elt_pool, sizeof(struct uao_swhash_elt), 0, 0, 0,
+static POOL_INIT(uao_swhash_elt_pool, sizeof(struct uao_swhash_elt), 0, 0, 0,
     "uaoeltpl", NULL, IPL_VM);
 
 static struct pool_cache uvm_aobj_cache;
@@ -167,11 +166,6 @@ struct uvm_aobj {
 	u_long u_swhashmask;		/* mask for hashtable */
 	LIST_ENTRY(uvm_aobj) u_list;	/* global list of aobjs */
 };
-
-/*
- * uvm_aobj_pool: pool of uvm_aobj structures
- */
-MALLOC_DEFINE(M_UVMAOBJ, "UVM aobj", "UVM aobj and related structures");
 
 /*
  * local functions
@@ -220,27 +214,6 @@ static kmutex_t uao_list_lock;
  */
 
 #if defined(VMSWAP)
-
-/*
- * uao_hashinit: limited version of hashinit() that uses malloc(). XXX
- */
-static void *
-uao_hashinit(u_int elements, int mflags, u_long *hashmask)
-{
-	LIST_HEAD(, generic) *elm, *emx;
-	u_long hashsize;
-	void *p;
-
-	for (hashsize = 1; hashsize < elements; hashsize <<= 1)
-		continue;
-	if ((p = malloc(hashsize * sizeof(*elm), M_UVMAOBJ, mflags)) == NULL)
-		return (NULL);
-	for (elm = p, emx = elm + hashsize; elm < emx; elm++)
-		LIST_INIT(elm);
-	*hashmask = hashsize - 1;
-
-	return (p);
-}
 
 /*
  * uao_find_swhash_elt: find (or create) a hash table entry for a page
@@ -432,14 +405,14 @@ uao_free(struct uvm_aobj *aobj)
 		 * free the hash table itself.
 		 */
 
-		free(aobj->u_swhash, M_UVMAOBJ);
+		hashdone(aobj->u_swhash, HASH_LIST, aobj->u_swhashmask);
 	} else {
 
 		/*
 		 * free the array itsself.
 		 */
 
-		free(aobj->u_swslots, M_UVMAOBJ);
+		kmem_free(aobj->u_swslots, aobj->u_pages * sizeof(int));
 	}
 #endif /* defined(VMSWAP) */
 
@@ -517,21 +490,20 @@ uao_create(vsize_t size, int flags)
 
 	if (flags == 0 || (flags & UAO_FLAG_KERNSWAP) != 0) {
 #if defined(VMSWAP)
-		int mflags = (flags & UAO_FLAG_KERNSWAP) != 0 ?
-		    M_NOWAIT : M_WAITOK;
+		const int kernswap = (flags & UAO_FLAG_KERNSWAP) != 0;
 
 		/* allocate hash table or array depending on object size */
 		if (UAO_USES_SWHASH(aobj)) {
-			aobj->u_swhash = uao_hashinit(UAO_SWHASH_BUCKETS(aobj),
-			    mflags, &aobj->u_swhashmask);
+			aobj->u_swhash = hashinit(UAO_SWHASH_BUCKETS(aobj),
+			    HASH_LIST, kernswap ? false : true,
+			    &aobj->u_swhashmask);
 			if (aobj->u_swhash == NULL)
 				panic("uao_create: hashinit swhash failed");
 		} else {
-			aobj->u_swslots = malloc(pages * sizeof(int),
-			    M_UVMAOBJ, mflags);
+			aobj->u_swslots = kmem_zalloc(pages * sizeof(int),
+			    kernswap ? KM_NOSLEEP : KM_SLEEP);
 			if (aobj->u_swslots == NULL)
 				panic("uao_create: malloc swslots failed");
-			memset(aobj->u_swslots, 0, pages * sizeof(int));
 		}
 #endif /* defined(VMSWAP) */
 

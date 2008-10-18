@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.33 2008/06/04 15:06:04 ad Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.34 2008/10/18 03:46:22 rmind Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.33 2008/06/04 15:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.34 2008/10/18 03:46:22 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.33 2008/06/04 15:06:04 ad Exp $");
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/resourcevar.h>
+#include <sys/kmem.h>
 #include <sys/mman.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
@@ -153,7 +154,20 @@ uvm_init(void)
 	uvm_loan_init();
 
 	/*
-	 * the VM system is now up!  now that malloc is up we can resize the
+	 * Initialize pools.  This must be done before anyone manipulates
+	 * any vm_maps because we use a pool for some map entry structures.
+	 */
+
+	pool_subsystem_init();
+
+	/*
+	 * init slab memory allocator kmem(9).
+	 */
+
+	kmem_init();
+
+	/*
+	 * the VM system is now up!  now that kmem is up we can resize the
 	 * <obj,off> => <page> hash table for general use and enable paging
 	 * of kernel objects.
 	 */
@@ -162,13 +176,6 @@ uvm_init(void)
 	    UAO_FLAG_KERNSWAP);
 
 	uvmpdpol_reinit();
-
-	/*
-	 * Initialize pools.  This must be done before anyone manipulates
-	 * any vm_maps because we use a pool for some map entry structures.
-	 */
-
-	pool_subsystem_init();
 
 	/*
 	 * init anonymous memory systems
