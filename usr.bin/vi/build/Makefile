@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2008/08/29 00:02:24 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.28 2008/10/19 22:05:24 apb Exp $
 #
 #	@(#)Makefile.in	8.75 (Berkeley) 10/23/96
 
@@ -47,7 +47,7 @@ CLEANFILES+=options_def.h
 
 options_def.h: options.awk options.c
 	${_MKTARGET_CREATE}
-	${AWK} -f ${.ALLSRC} >${.TARGET}
+	${TOOL_AWK} -f ${.ALLSRC} >${.TARGET}
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>
