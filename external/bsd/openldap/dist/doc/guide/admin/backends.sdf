@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/admin/backends.sdf,v 1.8.2.5 2008/04/14 19:00:49 quanah Exp $
+# $OpenLDAP: pkg/openldap-guide/admin/backends.sdf,v 1.8.2.6 2008/07/12 05:51:38 quanah Exp $
 # Copyright 2007-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -54,9 +54,51 @@ in some modified form. For this purpose, the proxy binds to the remote server
 with some administrative identity, and, if required, authorizes the asserted 
 identity. 
 
+It is heavily used by a lot of other {{SECT: Backends}} and {{SECT: Overlays}}.
+
 H3: back-ldap Configuration
 
-LATER
+As previously mentioned, {{slapd-ldap(5)}} is used behind the scenes by many 
+other {{SECT: Backends}} and {{SECT: Overlays}}. Some of them merely provide a 
+few configuration directive themselves, but have available to the administrator
+the whole of the {{slapd-ldap(5)}} options. 
+
+For example, the {{SECT: Translucent Proxy}}, which retrieves entries from a 
+remote LDAP server that can be partially overridden by the defined database, has
+only four specific {{translucent-}} directives, but can be configured using any 
+of the normal {{slapd-ldap(5)}} options. See {[slapo-translucent(5)}} for details.
+
+Other {{SECT: Overlays}} allow you to tag directives in front of a normal 
+{{slapd-ldap(5)}} directive. For example, the {{slapo-chain(5)}} overlay does 
+this:
+
+{{"There are very few chain overlay specific directives; however, directives 
+related to the instances of the ldap backend that may be implicitly instantiated 
+by the overlay may assume a special meaning when used in conjunction with this 
+overlay.  They are described in slapd-ldap(5), and they also need to be prefixed 
+by chain-."}}
+
+You may have also seen the {{slapd-ldap(5)}} backend used and described in the
+{{SECT: Push Based}} {{SECT: Replication}} section of the guide.
+
+It should therefore be obvious that the {{slapd-ldap(5)}} backend is extremely
+flexible and heavily used throughout the OpenLDAP Suite.
+
+The following is a very simple example, but already the power of the {{slapd-ldap(5)}}
+backend is seen by use of a {{uri list}}:
+
+>	database        ldap
+>	suffix          "dc=suretecsystems,dc=com"
+>	rootdn          "cn=slapd-ldap"
+>	uri             ldap://localhost/ ldap://remotehost ldap://remotehost2
+
+The URI list is space or comma-separated. Whenever the server that responds 
+is not the first one in the list, the list is rearranged and the responsive 
+server is moved to the head, so that it will be first contacted the next time 
+a connection needs be created.
+
+This feature can be used to provide a form of load balancing when using 
+{{SECT: MirrorMode replication}}.
 
 H3: Further Information
 
@@ -78,7 +120,62 @@ for more information
 
 H3: back-ldif Configuration
 
-LATER
+Like many other backends, the LDIF backend can be instantiated with very few
+configuration lines:
+
+>	include ./schema/core.schema
+>	
+>	database  ldif
+>	directory "./ldif"
+>	suffix    "dc=suretecsystems,dc=com"
+>	rootdn    "cn=LDIF,dc=suretecsystems,dc=com"
+>	rootpw    LDIF
+
+You'll notice that when compared to examples below, there is no:
+
+>   moduleload  back_ldif.la
+
+directive. This is because {{back_ldif}} is always built in by default as it is
+used by {{slapd-config(5)}}, which again is built in by default.
+
+If we add the {{dcObject}} for {{dc=suretecsystems,dc=com}}, you can see how this
+is added behind the scenes on the file system:
+
+>   dn: dc=suretecsystems,dc=com
+>   objectClass: dcObject
+>   objectClass: organization
+>   dc: suretecsystems
+>   o: Suretec Systems Ltd
+
+Now we add it to the directory:
+
+>   ldapadd -x -H ldap://localhost:9011 -f suretec.ldif -D "cn=LDIF,dc=suretecsystems,dc=com" -w LDIF
+>   adding new entry "dc=suretecsystems,dc=com"
+
+And inside {{F: ./ldif}} we have:
+
+>   ls ./ldif
+>   dc=suretecsystems,dc=com.ldif
+
+which again contains:
+
+>   cat ldif/dc\=suretecsystems\,dc\=com.ldif 
+>   
+>   dn: dc=suretecsystems
+>   objectClass: dcObject
+>   objectClass: organization
+>   dc: suretecsystems
+>   o: Suretec Systems Ltd.
+>   structuralObjectClass: organization
+>   entryUUID: 2134b714-e3a1-102c-9a15-f96ee263886d
+>   creatorsName: cn=LDIF,dc=suretecsystems,dc=com
+>   createTimestamp: 20080711142643Z
+>   entryCSN: 20080711142643.661124Z#000000#000#000000
+>   modifiersName: cn=LDIF,dc=suretecsystems,dc=com
+>   modifyTimestamp: 20080711142643Z
+
+This is the complete format you would get when exporting your directory using
+{{F: slapcat}} etc.
 
 H3: Further Information
 
@@ -132,7 +229,60 @@ See the {{SECT:Monitoring}} section.
 
 H3: back-monitor Configuration
 
-LATER
+The monitor database can be instantiated only once, i.e. only one occurrence 
+of "database monitor" can occur in the {{slapd.conf(5)}} file.  Also the suffix 
+is automatically set to {{"cn=Monitor"}}.
+
+You can however set a {{rootdn}} and {{rootpw}}. The following is all that is
+needed to instantiate a monitor backend:
+
+>	include ./schema/core.schema
+>
+>	modulepath  /usr/local/libexec/openldap
+>	moduleload  back_monitor.la
+>	
+>	database monitor
+>	rootdn "cn=monitoring,cn=Monitor"
+>	rootpw monitoring
+
+You can also apply Access Control to this database like any other database, for 
+example:
+
+>	access to dn.subtree="cn=Monitor"
+>	     by dn.exact="uid=Admin,dc=my,dc=org" write
+>	     by users read
+>	     by * none
+
+Note: The {{F: core.schema}} must be loaded for the monitor database to work. 
+
+A small example of the data returned via {{ldapsearch}} would be:
+
+>	ldapsearch -x -H ldap://localhost:9011 -b 'cn=Monitor'
+>	# extended LDIF
+>	#
+>	# LDAPv3
+>	# base <cn=Monitor> with scope subtree
+>	# filter: (objectclass=*)
+>	# requesting: ALL
+>	#
+>	
+>	# Monitor
+>	dn: cn=Monitor
+>	objectClass: monitorServer
+>	cn: Monitor
+>	description: This subtree contains monitoring/managing objects.
+>	description: This object contains information about this server.
+>	description: Most of the information is held in operational attributes, which 
+>	 must be explicitly requested.
+>	
+>	# Backends, Monitor
+>	dn: cn=Backends,cn=Monitor
+>	objectClass: monitorContainer
+>	cn: Backends
+>	description: This subsystem contains information about available backends.
+
+Please see the {{SECT: Monitoring}} section for complete examples of information
+available via this backend.
 
 H3: Further Information
 
@@ -155,7 +305,40 @@ Inspired by the {{F:/dev/null}} device.
 
 H3: back-null Configuration
 
-LATER
+This has to be one of the shortest configurations you'll ever do. In order to 
+test this, your {{F: slapd.conf}} file would look like:
+
+>	modulepath  /usr/local/libexec/openldap
+>	moduleload  back_null.la
+
+>	database null
+>	suffix "cn=Nothing"
+>	bind on
+
+The first two directives are only applicable if you've enabled module support and
+haven't "built-in" {{slapd-null(5)}} support (why would you?).
+
+{{bind on}} means:
+
+{{"Allow binds as any DN in this backend's suffix, with any password. The default is "off"."}}
+
+To test this backend with {{ldapsearch}}:
+
+>	ldapsearch -x -H ldap://localhost:9011 -D "uid=none,cn=Nothing" -w testing -b 'cn=Nothing'
+>	# extended LDIF
+>	#
+>	# LDAPv3
+>	# base <cn=Nothing> with scope subtree
+>	# filter: (objectclass=*)
+>	# requesting: ALL
+>	#
+>	
+>	# search result
+>	search: 2
+>	result: 0 Success
+>	
+>	# numResponses: 1
+
 
 H3: Further Information
 
@@ -167,14 +350,49 @@ H2: Passwd
 H3: Overview
 
 The PASSWD backend to {{slapd}}(8) serves up the user account information 
-listed in the system {{passwd}}(5) file.
+listed in the system {{passwd}}(5) file (defaulting to {{F: /etc/passwd}}).
 
 This backend is provided for demonstration purposes only. The DN of each entry 
 is "uid=<username>,<suffix>".
 
 H3: back-passwd Configuration
 
-LATER
+The configuration using {{F: slapd.conf}} a slightly longer, but not much. For 
+example:
+
+>	include ./schema/core.schema
+>	
+>	modulepath  /usr/local/libexec/openldap
+>	moduleload  back_passwd.la
+>	
+>	database passwd
+>	suffix "cn=passwd"
+
+Again, testing this with {{ldapsearch}} would result in something like:
+
+>	ldapsearch -x -H ldap://localhost:9011 -b 'cn=passwd'
+>	# extended LDIF
+>	#
+>	# LDAPv3
+>	# base <cn=passwd> with scope subtree
+>	# filter: (objectclass=*)
+>	# requesting: ALL
+>	#
+>	
+>	# passwd
+>	dn: cn=passwd
+>	cn: passwd
+>	objectClass: organizationalUnit
+>	
+>	# root, passwd
+>	dn: uid=root,cn=passwd
+>	objectClass: person
+>	objectClass: uidObject
+>	uid: root
+>	cn: root
+>	sn: root
+>	description: root
+
 
 H3: Further Information
 
@@ -228,7 +446,7 @@ H3: Overview
 
 The primary purpose of this {{slapd}}(8) backend is to PRESENT information 
 stored in some RDBMS as an LDAP subtree without any programming (some SQL and 
-maybe stored procedures can’t be considered programming, anyway ;).
+maybe stored procedures can't be considered programming, anyway ;).
 
 That is, for example, when you (some ISP) have account information you use in 
 an RDBMS, and want to use modern solutions that expect such information in LDAP 
@@ -249,14 +467,88 @@ The SQL backend is designed to be tunable to virtually any relational schema wit
 having to change source (through that meta-information mentioned). Also, it uses 
 ODBC to connect to RDBMSes, and is highly configurable for SQL dialects RDBMSes 
 may use, so it may be used for integration and distribution of data on different 
-RDBMSes, OSes, hosts etc., in other words, in highly heterogeneous environment.
+RDBMSes, OSes, hosts etc., in other words, in highly heterogeneous environments.
 
 This backend is experimental.
 
 H3: back-sql Configuration
 
-LATER
+This backend has to be one of the most abused and complex backends there is. 
+Therefore, we will go through a simple, small example that comes with the 
+OpenLDAP source and can be found in {{F: servers/slapd/back-sql/rdbms_depend/README}}
+
+For this example we will be using PostgreSQL.
+
+First, we add to {{F: /etc/odbc.ini}} a block of the form:
+
+>	[example]                        <===
+>	Description         = Example for OpenLDAP's back-sql
+>	Driver              = PostgreSQL
+>	Trace               = No
+>	Database            = example    <===
+>	Servername          = localhost
+>	UserName            = manager    <===
+>	Password            = secret     <===
+>	Port                = 5432
+>	;Protocol            = 6.4
+>	ReadOnly            = No
+>	RowVersioning       = No
+>	ShowSystemTables    = No
+>	ShowOidColumn       = No
+>	FakeOidIndex        = No
+>	ConnSettings        =
+
+The relevant information for our test setup is highlighted with '<===' on the 
+right above.
+
+Next, we add to {{F: /etc/odbcinst.ini}} a block of the form:
+
+>	[PostgreSQL]
+>	Description     = ODBC for PostgreSQL
+>	Driver          = /usr/lib/libodbcpsql.so
+>	Setup           = /usr/lib/libodbcpsqlS.so
+>	FileUsage       = 1
+
+
+We will presume you know how to create a database and user in PostgreSQL and 
+how to set a password. Also, we'll presume you can populate the 'example'
+database you've just created with the following files, as found in {{F: servers/slapd/back-sql/rdbms_depend/pgsql }} 
+
+>	backsql_create.sql, testdb_create.sql, testdb_data.sql, testdb_metadata.sql
+
+Lastly, run the test:
+
+>	[root@localhost]# cd $SOURCES/tests
+>	[root@localhost]# SLAPD_USE_SQL=pgsql ./run sql-test000
+
+Briefly, you should see something like (cut short for space):
+
+>	Cleaning up test run directory leftover from previous run.
+>	Running ./scripts/sql-test000-read...
+>	running defines.sh
+>	Starting slapd on TCP/IP port 9011...
+>	Testing SQL backend read operations...
+>	Waiting 5 seconds for slapd to start...
+>	Testing correct bind... dn:cn=Mitya Kovalev,dc=example,dc=com
+>	Testing incorrect bind (should fail)... ldap_bind: Invalid credentials (49)
+>	
+>	......
+>	
+>	Filtering original ldif...
+>	Comparing filter output...
+>	>>>>> Test succeeded
+
+The test is basically readonly; this can be performed by all RDBMSes 
+(listed above). 
+
+There is another test, sql-test900-write, which is currently enabled
+only for PostgreSQL and IBM db2.
+
+Using {{F: sql-test000}}, files in {{F: servers/slapd/back-sql/rdbms_depend/pgsql/}}
+and the man page, you should be set.
+
+Note: This backend is experimental.
 
 H3: Further Information
 
-{{slapd-sql}}(5)
+{{slapd-sql}}(5) and {{F: servers/slapd/back-sql/rdbms_depend/README}}

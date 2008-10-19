@@ -1,0 +1,14 @@
+# $NetBSD: Makefile.xlibi18n,v 1.1.6.2 2008/10/19 22:41:08 haad Exp $
+
+.PATH:		${X11SRCDIR.X11}/modules/lc/gen
+SRCS.xlibi18n=	lcGenConv.c
+
+CPPFLAGS+= \
+	-I${DESTDIR}${X11INCDIR}/X11 \
+	-I${X11SRCDIR.X11}/src/xlibi18n
+
+CPPFLAGS+= \
+	${XLOCALE.DEFINES} \
+	-DHASXDMAUTH
+
+.include <bsd.lib.mk>

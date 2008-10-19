@@ -1,0 +1,11 @@
+#	$NetBSD: Makefile.dbe,v 1.4.6.2 2008/10/19 22:41:18 haad Exp $
+
+.PATH:		${X11SRCDIR.xorg-server}/dbe
+SRCS.dbe=	dbe.c midbe.c
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
+		-I${DESTDIR}${X11INCDIR}/pixman-1
+
+.include <bsd.x11.mk>
+LIBDIR=	${XMODULEDIR}
+.include <bsd.lib.mk>

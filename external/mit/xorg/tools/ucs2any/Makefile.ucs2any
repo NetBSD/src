@@ -1,0 +1,7 @@
+#	$NetBSD: Makefile.ucs2any,v 1.1.1.1.6.2 2008/10/19 22:41:28 haad Exp $
+
+UCS2ANYDIR!=	cd ${NETBSDSRCDIR}/external/mit/xorg/tools/ucs2any && ${PRINTOBJDIR}
+UCS2ANY=	${UCS2ANYDIR}/ucs2any
+
+${UCS2ANY}:
+	(cd ${NETBSDSRCDIR}/external/mit/xorg/tools/ucs2any && ${MAKE})

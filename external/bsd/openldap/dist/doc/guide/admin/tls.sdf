@@ -1,4 +1,4 @@
-# $OpenLDAP: pkg/openldap-guide/admin/tls.sdf,v 1.13.2.7 2008/02/11 23:26:39 kurt Exp $
+# $OpenLDAP: pkg/openldap-guide/admin/tls.sdf,v 1.13.2.8 2008/07/09 00:40:40 quanah Exp $
 # Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
@@ -113,6 +113,11 @@ specification for OpenSSL. You can use the command
 >	openssl ciphers -v ALL
 
 to obtain a verbose list of available cipher specifications.
+
+To obtain the list of ciphers in GNUtls use:
+
+>	gnutls-cli -l
+
 Besides the individual cipher names, the specifiers {{EX:HIGH}},
 {{EX:MEDIUM}}, {{EX:LOW}}, {{EX:EXPORT}}, and {{EX:EXPORT40}}
 may be helpful, along with {{EX:TLSv1}}, {{EX:SSLv3}},

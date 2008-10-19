@@ -1,0 +1,12 @@
+#	$NetBSD: TODO,v 1.1.6.2 2008/10/19 22:40:00 haad Exp $
+
+provide an openldap2netbsd conversion script
+(libraries/liblunicode needs $Id: TODO,v 1.1.6.2 2008/10/19 22:40:00 haad Exp $ fixing)
+
+install ldap.conf ?
+
+add patches from pkgsrc/databases/openldap/patches ?
+
+build server?
+
+build: slappasswd

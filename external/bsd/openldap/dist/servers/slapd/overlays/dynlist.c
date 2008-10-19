@@ -1,5 +1,5 @@
 /* dynlist.c - dynamic list overlay */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.14 2008/05/01 21:19:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/dynlist.c,v 1.20.2.17 2008/07/10 00:43:03 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.
@@ -178,10 +178,10 @@ dynlist_sc_update( Operation *op, SlapReply *rs )
 		goto done;
 	}
 
-	for ( dlm = dlc->dlc_dli->dli_dlm; dlm; dlm = dlm->dlm_next ) {
-		if (dlm->dlm_mapped_ad != NULL)
-			continue;
-
+	/* if there is only one member_ad, and it's not mapped,
+	 * consider it as old-style member listing */
+	dlm = dlc->dlc_dli->dli_dlm;
+	if ( dlm && dlm->dlm_mapped_ad == NULL && dlm->dlm_next == NULL ) {
 		/* if access allowed, try to add values, emulating permissive
 		 * control to silently ignore duplicates */
 		if ( access_allowed( op, rs->sr_entry, slap_schema.si_ad_entry,
@@ -780,7 +780,7 @@ done:;
 
 release:;
 	if ( e != NULL ) {
-		overlay_entry_release_ov( &o, e, 0, on );
+		overlay_entry_release_ov( op, e, 0, on );
 	}
 
 	return SLAP_CB_CONTINUE;
@@ -1557,22 +1557,26 @@ dynlist_db_open(
 		}
 	}
 
-	rc = slap_str2ad( "dgIdentity", &ad_dgIdentity, &text );
-	if ( rc != LDAP_SUCCESS ) {
-		snprintf( cr->msg, sizeof( cr->msg),
-			"unable to fetch attributeDescription \"dgIdentity\": %d (%s)",
-			rc, text );
-		Debug( LDAP_DEBUG_ANY, "dynlist_db_open: %s\n", cr->msg, 0, 0 );
-		/* Just a warning */
+	if ( ad_dgIdentity == NULL ) {
+		rc = slap_str2ad( "dgIdentity", &ad_dgIdentity, &text );
+		if ( rc != LDAP_SUCCESS ) {
+			snprintf( cr->msg, sizeof( cr->msg),
+				"unable to fetch attributeDescription \"dgIdentity\": %d (%s)",
+				rc, text );
+			Debug( LDAP_DEBUG_ANY, "dynlist_db_open: %s\n", cr->msg, 0, 0 );
+			/* Just a warning */
+		}
 	}
 
-	rc = slap_str2ad( "dgAuthz", &ad_dgAuthz, &text );
-	if ( rc != LDAP_SUCCESS ) {
-		snprintf( cr->msg, sizeof( cr->msg),
-			"unable to fetch attributeDescription \"dgAuthz\": %d (%s)",
-			rc, text );
-		Debug( LDAP_DEBUG_ANY, "dynlist_db_open: %s\n", cr->msg, 0, 0 );
-		/* Just a warning */
+	if ( ad_dgAuthz == NULL ) {
+		rc = slap_str2ad( "dgAuthz", &ad_dgAuthz, &text );
+		if ( rc != LDAP_SUCCESS ) {
+			snprintf( cr->msg, sizeof( cr->msg),
+				"unable to fetch attributeDescription \"dgAuthz\": %d (%s)",
+				rc, text );
+			Debug( LDAP_DEBUG_ANY, "dynlist_db_open: %s\n", cr->msg, 0, 0 );
+			/* Just a warning */
+		}
 	}
 
 	return 0;
