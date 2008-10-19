@@ -1,4 +1,4 @@
-.\"	$NetBSD: select.2,v 1.35 2008/10/18 03:30:19 rmind Exp $
+.\"	$NetBSD: select.2,v 1.36 2008/10/19 16:54:19 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -144,9 +144,9 @@ and
 .Fa exceptfds
 may be given as null pointers if no descriptors are of interest.
 .Sh NOTES
-It is recomended to use alternative
+It is recommended to use the
 .Xr poll 2
-interface, which tends to be more portable and efficient.
+interface instead, which tends to be more portable and efficient.
 .Sh RETURN VALUES
 .Fn select
 returns the number of ready descriptors that are contained in
@@ -161,7 +161,7 @@ returns with an error,
 including one due to an interrupted call,
 the descriptor sets will be unmodified.
 .Sh EXAMPLES
-.Bd -unfilled
+.Bd -literal
 #include \*[Lt]stdio.h\*[Gt]
 #include \*[Lt]stdlib.h\*[Gt]
 #include \*[Lt]unistd.h\*[Gt]
