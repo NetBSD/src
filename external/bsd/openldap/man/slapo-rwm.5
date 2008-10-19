@@ -1,8 +1,8 @@
-.TH SLAPO-RWM 5 "2008/05/07" "OpenLDAP 2.4.9"
+.TH SLAPO-RWM 5 "2008/07/16" "OpenLDAP 2.4.11"
 .\" Copyright 1998-2008 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2004, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-rwm.5,v 1.14.2.4 2008/02/11 23:26:40 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapo-rwm.5,v 1.14.2.5 2008/05/19 23:44:27 quanah Exp $
 .\"
 .\" Portions of this document should probably be moved to slapd-ldap(5)
 .\" and maybe manual pages for librewrite.
@@ -427,8 +427,8 @@ This limit is overridden by setting specific per-rule limits
 with the `M{n}' flag.
 
 .SH "MAPS"
-Currently, few maps are builtin and there are no provisions for developers
-to register new map types at runtime.
+Currently, few maps are builtin but additional map types may be
+registered at runtime.
 
 Supported maps are:
 .TP
@@ -469,6 +469,20 @@ The parameter
 .B version
 can be 2 or 3 to indicate the protocol version that must be used.
 The default is 3.
+
+.TP
+.B slapd <URI>
+The
+.B slapd
+map expands a value by performing an internal LDAP search.
+Its configuration is based on a mandatory URI, which must begin with
+.B "ldap:///"
+(i.e., it must be an LDAP URI and it must not specify a host).
+As with the
+LDAP map, the
+.B attrs
+portion must contain exactly one attribute, and if
+a multi-valued attribute is used, only the first value is considered.
 
 .SH "REWRITE CONFIGURATION EXAMPLES"
 .nf

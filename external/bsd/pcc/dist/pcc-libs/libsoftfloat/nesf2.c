@@ -1,0 +1,19 @@
+/* $NetBSD: nesf2.c,v 1.1.1.1.6.2 2008/10/19 22:40:31 haad Exp $ */
+
+/*
+ * Written by Ben Harris, 2000.  This file is in the Public Domain.
+ */
+
+#include "softfloat-for-gcc.h"
+#include "milieu.h"
+#include "softfloat.h"
+
+flag __nesf2(float32, float32);
+
+flag
+__nesf2(float32 a, float32 b)
+{
+
+	/* libgcc1.c says a != b */
+	return !float32_eq(a, b);
+}

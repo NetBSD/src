@@ -1,5 +1,5 @@
 #! /bin/sh
-# $OpenLDAP: pkg/ldap/tests/scripts/test048-syncrepl-multiproxy,v 1.1.2.6 2008/02/11 23:26:51 kurt Exp $
+# $OpenLDAP: pkg/ldap/tests/scripts/test048-syncrepl-multiproxy,v 1.1.2.7 2008/07/08 19:04:25 quanah Exp $
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 1998-2008 The OpenLDAP Foundation.
@@ -30,6 +30,11 @@ if test $MONITORDB = no; then
 	echo "Monitor backend not available, test skipped"
 	exit 0
 fi 
+
+if test $THREADS = threadsno ; then
+	echo "Need threads support, test skipped"
+	exit 0
+fi
 
 mkdir -p $TESTDIR $DBDIR1 $DBDIR2 $DBDIR3
 

@@ -1,4 +1,4 @@
-// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPEntry.h,v 1.6.8.5 2008/04/14 23:30:47 quanah Exp $
+// $OpenLDAP: pkg/ldap/contrib/ldapc++/src/LDAPEntry.h,v 1.6.8.6 2008/07/08 19:31:00 quanah Exp $
 /*
  * Copyright 2000, OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
@@ -78,6 +78,13 @@ class LDAPEntry{
          * @param attr The attribute to add to the list.
          */
         void addAttribute(const LDAPAttribute& attr);
+        
+        /**
+         * Deletes all values of an Attribute from the list of Attributes 
+         * (simple wrapper around LDAPAttributeList::delAttribute() ).
+         * @param type The attribute to delete.
+         */
+        void delAttribute(const std::string& type);
 
         /**
          * Replace an Attribute in the List of Attributes (simple wrapper

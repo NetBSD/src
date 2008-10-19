@@ -1,5 +1,5 @@
 /* refint.c - referential integrity module */
-/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/refint.c,v 1.19.2.8 2008/04/14 20:13:41 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/overlays/refint.c,v 1.19.2.9 2008/05/27 20:18:19 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2004-2008 The OpenLDAP Foundation.
@@ -81,6 +81,8 @@ typedef struct refint_data_s {
 	BerValue dn;				/* basedn in parent, */
 	BerValue nothing;			/* the nothing value, if needed */
 	BerValue nnothing;			/* normalized nothingness */
+	BerValue refint_dn;			/* modifier's name */
+	BerValue refint_ndn;			/* normalized modifier's name */
 	struct re_s *qtask;
 	refint_q *qhead;
 	refint_q *qtail;
@@ -93,7 +95,8 @@ static MatchingRule	*mr_dnSubtreeMatch;
 
 enum {
 	REFINT_ATTRS = 1,
-	REFINT_NOTHING
+	REFINT_NOTHING,
+	REFINT_MODIFIERSNAME
 };
 
 static ConfigDriver refint_cf_gen;
@@ -110,6 +113,11 @@ static ConfigTable refintcfg[] = {
 	  "( OLcfgOvAt:11.2 NAME 'olcRefintNothing' "
 	  "DESC 'Replacement DN to supply when needed' "
 	  "SYNTAX OMsDN SINGLE-VALUE )", NULL, NULL },
+	{ "refint_modifiersName", "DN", 2, 2, 0,
+	  ARG_DN|ARG_MAGIC|REFINT_MODIFIERSNAME, refint_cf_gen,
+	  "( OLcfgOvAt:11.3 NAME 'olcRefintModifiersName' "
+	  "DESC 'The DN to use as modifiersName' "
+	  "SYNTAX OMsDN SINGLE-VALUE )", NULL, NULL },
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
 };
 
@@ -118,7 +126,10 @@ static ConfigOCs refintocs[] = {
 	  "NAME 'olcRefintConfig' "
 	  "DESC 'Referential integrity configuration' "
 	  "SUP olcOverlayConfig "
-	  "MAY ( olcRefintAttribute $ olcRefintNothing ) )",
+	  "MAY ( olcRefintAttribute "
+		"$ olcRefintNothing "
+		"$ olcRefintModifiersName "
+	  ") )",
 	  Cft_Overlay, refintcfg },
 	{ NULL, 0, NULL }
 };
@@ -153,6 +164,17 @@ refint_cf_gen(ConfigArgs *c)
 				if ( rc ) return rc;
 				rc = value_add_one( &c->rvalue_nvals,
 						    &dd->nnothing );
+				return rc;
+			}
+			rc = 0;
+			break;
+		case REFINT_MODIFIERSNAME:
+			if ( !BER_BVISEMPTY( &dd->refint_dn )) {
+				rc = value_add_one( &c->rvalue_vals,
+						    &dd->refint_dn );
+				if ( rc ) return rc;
+				rc = value_add_one( &c->rvalue_nvals,
+						    &dd->refint_ndn );
 				return rc;
 			}
 			rc = 0;
@@ -196,6 +218,15 @@ refint_cf_gen(ConfigArgs *c)
 			dd->nnothing.bv_len = 0;
 			rc = 0;
 			break;
+		case REFINT_MODIFIERSNAME:
+			if ( dd->refint_dn.bv_val )
+				ber_memfree ( dd->refint_dn.bv_val );
+			if ( dd->refint_ndn.bv_val )
+				ber_memfree ( dd->refint_ndn.bv_val );
+			dd->refint_dn.bv_len = 0;
+			dd->refint_ndn.bv_len = 0;
+			rc = 0;
+			break;
 		default:
 			abort ();
 		}
@@ -231,6 +262,15 @@ refint_cf_gen(ConfigArgs *c)
 				ber_memfree ( dd->nnothing.bv_val );
 			dd->nothing = c->value_dn;
 			dd->nnothing = c->value_ndn;
+			rc = 0;
+			break;
+		case REFINT_MODIFIERSNAME:
+			if ( dd->refint_dn.bv_val )
+				ber_memfree ( dd->refint_dn.bv_val );
+			if ( dd->refint_ndn.bv_val )
+				ber_memfree ( dd->refint_ndn.bv_val );
+			dd->refint_dn = c->value_dn;
+			dd->refint_ndn = c->value_ndn;
 			rc = 0;
 			break;
 		default:
@@ -302,6 +342,10 @@ refint_open(
 			return -1;
 		ber_dupbv( &id->dn, &be->be_nsuffix[0] );
 	}
+	if ( BER_BVISNULL( &id->refint_dn ) ) {
+		ber_dupbv( &id->refint_dn, &refint_dn );
+		ber_dupbv( &id->refint_ndn, &refint_ndn );
+	}
 	return(0);
 }
 
@@ -339,6 +383,10 @@ refint_close(
 	BER_BVZERO( &id->nothing );
 	ch_free( id->nnothing.bv_val );
 	BER_BVZERO( &id->nnothing );
+	ch_free( id->refint_dn.bv_val );
+	BER_BVZERO( &id->refint_dn );
+	ch_free( id->refint_ndn.bv_val );
+	BER_BVZERO( &id->refint_ndn );
 
 	return(0);
 }
@@ -580,8 +628,8 @@ refint_repair(
 				m->sml_nvalues = m->sml_values+2;
 				BER_BVZERO( &m->sml_values[1] );
 				BER_BVZERO( &m->sml_nvalues[1] );
-				m->sml_values[0] = refint_dn;
-				m->sml_nvalues[0] = refint_ndn;
+				m->sml_values[0] = id->refint_dn;
+				m->sml_nvalues[0] = id->refint_ndn;
 			}
 			if ( !BER_BVISEMPTY( &rq->newdn ) || ( ra->next &&
 				ra->attr == ra->next->attr ) )

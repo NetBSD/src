@@ -1,5 +1,5 @@
 /* syncrepl.c -- Replication Engine which uses the LDAP Sync protocol */
-/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.32 2008/05/01 22:01:03 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/syncrepl.c,v 1.254.2.37 2008/07/10 00:52:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.
@@ -568,15 +568,22 @@ do_syncrep1(
 		op->o_tls_ssf = ldap_pvt_tls_get_strength( ssl );
 	}
 #endif /* HAVE_TLS */
-	ldap_get_option( si->si_ld, LDAP_OPT_X_SASL_SSF, &op->o_sasl_ssf );
+	{
+		ber_len_t ssf; /* ITS#5403, 3864 LDAP_OPT_X_SASL_SSF probably ought
+						  to use sasl_ssf_t but currently uses ber_len_t */
+		ldap_get_option( si->si_ld, LDAP_OPT_X_SASL_SSF, &ssf );
+		op->o_sasl_ssf = ssf;
+	}
 	op->o_ssf = ( op->o_sasl_ssf > op->o_tls_ssf )
 		?  op->o_sasl_ssf : op->o_tls_ssf;
 
 	ldap_set_option( si->si_ld, LDAP_OPT_TIMELIMIT, &si->si_tlimit );
 
 	si->si_syncCookie.rid = si->si_rid;
-	si->si_syncCookie.sid = SLAP_SINGLE_SHADOW( si->si_be ) ? -1 :
-		slap_serverID;
+
+	/* whenever there are multiple data sources possible, advertise sid */
+	si->si_syncCookie.sid = ( SLAP_MULTIMASTER( si->si_be ) || si->si_be != si->si_wbe ) ?
+		slap_serverID : -1;
 
 	/* We've just started up, or the remote server hasn't sent us
 	 * any meaningful state.
@@ -682,8 +689,8 @@ compare_csns( struct sync_cookie *sc1, struct sync_cookie *sc2, int *which )
 		return -1;
 	}
 
-	for (i=0; i<sc1->numcsns; i++) {
-		for (j=0; j<sc2->numcsns; j++) {
+	for (j=0; j<sc2->numcsns; j++) {
+		for (i=0; i<sc1->numcsns; i++) {
 			if ( sc1->sids[i] != sc2->sids[j] )
 				continue;
 			value_match( &match, slap_schema.si_ad_entryCSN,
@@ -695,6 +702,11 @@ compare_csns( struct sync_cookie *sc1, struct sync_cookie *sc2, int *which )
 				return match;
 			}
 			break;
+		}
+		if ( i == sc1->numcsns ) {
+			/* sc2 has a sid sc1 lacks */
+			*which = j;
+			return -1;
 		}
 	}
 	return match;
@@ -1235,7 +1247,8 @@ do_syncrepl(
 	 *
 	 * Typically there is a single syncprov mastering the entire
 	 * glued tree. In that case, our contextCSN updates should
-	 * go to the master DB.
+	 * go to the master DB. But if there is no syncprov on the
+	 * master DB, then nothing special is needed here.
 	 *
 	 * Alternatively, there may be individual syncprov overlays
 	 * on each glued branch. In that case, each syncprov only
@@ -1244,7 +1257,11 @@ do_syncrepl(
 	 */
 	if ( !si->si_wbe ) {
 		if ( SLAP_GLUE_SUBORDINATE( be ) && !overlay_is_inst( be, "syncprov" )) {
-			si->si_wbe = select_backend( &be->be_nsuffix[0], 1 );
+			BackendDB * top_be = select_backend( &be->be_nsuffix[0], 1 );
+			if ( overlay_is_inst( top_be, "syncprov" ))
+				si->si_wbe = select_backend( &be->be_nsuffix[0], 1 );
+			else
+				si->si_wbe = be;
 		} else {
 			si->si_wbe = be;
 		}
@@ -2721,6 +2738,7 @@ syncrepl_updateCookie(
 	mod.sml_op = LDAP_MOD_REPLACE;
 	mod.sml_desc = slap_schema.si_ad_contextCSN;
 	mod.sml_type = mod.sml_desc->ad_cname;
+	mod.sml_flags = SLAP_MOD_INTERNAL;
 	mod.sml_nvalues = NULL;
 	mod.sml_next = NULL;
 
@@ -2864,6 +2882,14 @@ attr_cmp( Operation *op, Attribute *old, Attribute *new,
 				}
 			}
 		}
+
+		/* Don't delete/add an objectClass, always use the replace op.
+		 * Modify would fail if provider has replaced entry with a new,
+		 * and the new explicitly includes a superior of a class that was
+		 * only included implicitly in the old entry.  Ref ITS#5517.
+		 */
+		if ( nn && no < o && old->a_desc == slap_schema.si_ad_objectClass )
+			no = o;
 
 		i = j;
 		/* all old values were deleted, just use the replace op */

@@ -1,5 +1,5 @@
 /* at.c - routines for dealing with attribute types */
-/* $OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.5 2008/04/14 22:08:32 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/at.c,v 1.84.2.6 2008/07/08 19:01:38 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -287,6 +287,10 @@ at_clean( AttributeType *a )
 	if ( a->sat_oidmacro ) {
 		ldap_memfree( a->sat_oidmacro );
 		a->sat_oidmacro = NULL;
+	}
+	if ( a->sat_soidmacro ) {
+		ldap_memfree( a->sat_soidmacro );
+		a->sat_soidmacro = NULL;
 	}
 	if ( a->sat_subtypes ) {
 		ldap_memfree( a->sat_subtypes );
@@ -590,6 +594,7 @@ at_add(
 	int		code = LDAP_SUCCESS;
 	char		*cname = NULL;
 	char		*oidm = NULL;
+	char		*soidm = NULL;
 
 	if ( !at->at_oid ) {
 		*err = "";
@@ -622,7 +627,7 @@ at_add(
 			goto error_return;
 		}
 		if ( oid != at->at_syntax_oid ) {
-			ldap_memfree( at->at_syntax_oid );
+			soidm = at->at_syntax_oid;
 			at->at_syntax_oid = oid;
 		}
 	}
@@ -673,6 +678,7 @@ at_add(
 	sat->sat_cname.bv_val = cname;
 	sat->sat_cname.bv_len = strlen( cname );
 	sat->sat_oidmacro = oidm;
+	sat->sat_soidmacro = soidm;
 	ldap_pvt_thread_mutex_init(&sat->sat_ad_mutex);
 
 	if ( at->at_sup_oid ) {
@@ -979,9 +985,12 @@ at_unparse( BerVarray *res, AttributeType *start, AttributeType *end, int sys )
 	for ( at=start; at; at=LDAP_STAILQ_NEXT(at, sat_next)) {
 		LDAPAttributeType lat, *latp;
 		if ( sys && !(at->sat_flags & SLAP_AT_HARDCODE)) break;
-		if ( at->sat_oidmacro ) {
+		if ( at->sat_oidmacro || at->sat_soidmacro ) {
 			lat = at->sat_atype;
-			lat.at_oid = at->sat_oidmacro;
+			if ( at->sat_oidmacro )
+				lat.at_oid = at->sat_oidmacro;
+			if ( at->sat_soidmacro )
+				lat.at_syntax_oid = at->sat_soidmacro;
 			latp = &lat;
 		} else {
 			latp = &at->sat_atype;
