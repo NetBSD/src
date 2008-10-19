@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.31 2008/06/15 13:42:03 nonaka Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.32 2008/10/19 17:20:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.31 2008/06/15 13:42:03 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.32 2008/10/19 17:20:38 jmcneill Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -349,8 +349,9 @@ vga_cnattach(bus_space_tag_t iot, bus_space_tag_t memt, int type, int check)
 	else if (scr->nrows > 30)
 		/* Unsupported screen type, try 80x30. */
 		typestr = "80x30";
-	scr = wsdisplay_screentype_pick(vga_console_vc.hdl.vh_mono ?
-	    &vga_screenlist_mono : &vga_screenlist, typestr);
+	if (typestr)
+		scr = wsdisplay_screentype_pick(vga_console_vc.hdl.vh_mono ?
+		    &vga_screenlist_mono : &vga_screenlist, typestr);
 	if (scr != vga_console_vc.currenttype)
 		vga_console_vc.currenttype = scr;
 #else
