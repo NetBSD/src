@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.12 2008/10/10 09:21:58 hannken Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.13 2008/10/19 18:17:13 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.12 2008/10/10 09:21:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.13 2008/10/19 18:17:13 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1585,6 +1585,12 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 		return;
 	}
 
+	if ((ioflag & IO_JOURNALLOCKED) == 0) {
+		error = WAPBL_BEGIN(vp->v_mount);
+		if (error)
+			return;
+	}
+
 	/*
 	 * Do as much of the uio as possible with direct I/O.
 	 */
@@ -1607,7 +1613,7 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 		 */
 
 		if (len == 0 || uio->uio_offset + len > vp->v_size) {
-			return;
+			break;
 		}
 
 		/*
@@ -1618,7 +1624,7 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 		 */
 
 		if (uio->uio_offset & mask || va & mask) {
-			return;
+			break;
 		}
 		error = genfs_do_directio(vs, va, len, vp, uio->uio_offset,
 					  uio->uio_rw);
@@ -1630,6 +1636,9 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 		uio->uio_offset += len;
 		uio->uio_resid -= len;
 	}
+
+	if ((ioflag & IO_JOURNALLOCKED) == 0)
+		WAPBL_END(vp->v_mount);
 }
 
 /*
@@ -1666,7 +1675,7 @@ genfs_do_directio(struct vmspace *vs, vaddr_t uva, size_t len, struct vnode *vp,
 	paddr_t pa;
 	vm_prot_t prot;
 	int error, rv, poff, koff;
-	const int pgoflags = PGO_CLEANIT | PGO_SYNCIO |
+	const int pgoflags = PGO_CLEANIT | PGO_SYNCIO | PGO_JOURNALLOCKED |
 		(rw == UIO_WRITE ? PGO_FREE : 0);
 
 	/*
