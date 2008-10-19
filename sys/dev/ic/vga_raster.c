@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.32 2008/10/19 17:20:38 jmcneill Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.33 2008/10/19 17:47:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.32 2008/10/19 17:20:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.33 2008/10/19 17:47:38 jmcneill Exp $");
 
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
@@ -450,7 +450,8 @@ vga_raster_init_screen(struct vga_config *vc, struct vgascreen *scr,
 	scr->hdl = &vc->hdl;
 	scr->type = type;
 	scr->mindispoffset = 0;
-	scr->maxdispoffset = 0x10000;
+	scr->maxdispoffset = scr->dispoffset +
+	    type->nrows * type->ncols * type->fontheight;
 	vh = &vc->hdl;
 
 	LIST_INIT(&scr->fontset);
