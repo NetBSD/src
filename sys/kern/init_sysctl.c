@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.146 2008/10/19 01:43:25 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.147 2008/10/19 03:10:09 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.146 2008/10/19 01:43:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.147 2008/10/19 03:10:09 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2881,8 +2881,12 @@ sysctl_consdev(SYSCTLFN_ARGS)
  * section 4: support for some helpers
  * ********************************************************************
  */
+/*
+ * Find the most ``active'' lwp of a process and return it for ps display
+ * purposes
+ */
 static struct lwp *
-proc_representative_lwp(struct proc *p)
+proc_active_lwp(struct proc *p)
 {
 	static const int ostat[] = {
 		0,	
@@ -2998,7 +3002,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_vm_ssize = vm->vm_ssize;
 
 		/* Pick the primary (first) LWP */
-		l = proc_representative_lwp(p);
+		l = proc_active_lwp(p);
 		KASSERT(l != NULL);
 		lwp_lock(l);
 		ki->p_nrlwps = p->p_nrlwps;
@@ -3168,7 +3172,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		ep->e_vm.vm_ssize = vm->vm_ssize;
 
 		/* Pick the primary (first) LWP */
-		l = proc_representative_lwp(p);
+		l = proc_active_lwp(p);
 		KASSERT(l != NULL);
 		lwp_lock(l);
 		if (l->l_wchan)
