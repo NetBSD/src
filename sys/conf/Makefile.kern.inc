@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.116 2008/09/05 13:37:25 tron Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.117 2008/10/19 22:05:22 apb Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -369,7 +369,7 @@ LOBJS?= ${_lsrc:T:S/.c$/.ln/g} ${LIBKERNLN} ${SYSLIBCOMPATLN}
 LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
 	${_MKTARGET_COMPILE}
 	${CC} -E -C ${AFLAGS} ${CPPFLAGS} ${_sfile} | \
-	      awk -f $S/kern/genlintstub.awk >${.TARGET}
+	      ${TOOL_AWK} -f $S/kern/genlintstub.awk >${.TARGET}
 .endfor
 
 .for _cfile in ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2008/10/11 05:03:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2008/10/19 22:05:23 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -38,8 +38,9 @@ MKNATIVE_ENV=	${BINENV} ${CONFIGURE_ENV:NC*:NLD*} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q}' '${CXXADDFLAGS:Q} \
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
 			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
-			AS=${AS:Q} LD=${LD:Q} NM=${NM:Q} OBJDUMP=${OBJDUMP:Q} \
+			AS=${AS:Q} AWK=${TOOL_AWK:Q} LD=${LD:Q} \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
+			NM=${NM:Q} OBJDUMP=${OBJDUMP:Q} \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
 			LIBS=-lintl \
 			ac_cv_prog_cc_cross=yes \

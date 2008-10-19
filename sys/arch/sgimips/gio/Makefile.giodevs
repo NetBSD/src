@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.giodevs,v 1.4 2005/12/11 12:18:53 christos Exp $
+#	$NetBSD: Makefile.giodevs,v 1.5 2008/10/19 22:05:21 apb Exp $
 
-AWK?=	awk
+.include <bsd.sys.mk>
 
 giodevs.h: giodevs devlist2h.awk
 	/bin/rm -f giodevs.h giodevs_data.h
-	${AWK} -f devlist2h.awk giodevs
+	${TOOL_AWK} -f devlist2h.awk giodevs

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2006/06/24 03:28:42 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.16 2008/10/19 22:05:21 apb Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 #	M68000 Hi-Performance Microprocessor Division
@@ -37,7 +37,6 @@
 #
 
 .include <bsd.prog.mk>
-#.include <bsd.sys.mk>		# for HOST_SH
 
 TARGET = fpsp
 
@@ -252,7 +251,7 @@ $(LIB_O_FILES): l_fpsp.defs
 # the entry routines for each function.
 #
 l_entry.sa: L_ENTRY.AWK L_LIST MONADIC.$(SYS) DYADIC.$(SYS) l_fpsp.h
-	awk -f L_ENTRY.AWK SYS=$(SYS) PREFIX=$(PREFIX) - \
+	${TOOL_AWK} -f L_ENTRY.AWK SYS=$(SYS) PREFIX=$(PREFIX) - \
 	    <L_LIST | ${HOST_SH} >l_entry.sa
 
 #

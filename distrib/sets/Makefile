@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2008/08/31 00:19:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.62 2008/10/19 22:05:20 apb Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -12,6 +12,7 @@ GREP?= grep
 SETSCMD=	cd ${.CURDIR} && \
 		DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
+		AWK=${TOOL_AWK:Q} \
 		CKSUM=${TOOL_CKSUM:Q} \
 		DB=${TOOL_DB:Q} \
 		HOST_SH=${HOST_SH:Q} \

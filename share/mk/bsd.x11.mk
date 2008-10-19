@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.68 2008/10/14 23:33:55 cube Exp $
+#	$NetBSD: bsd.x11.mk,v 1.69 2008/10/19 22:05:21 apb Exp $
 
 .include <bsd.init.mk>
 
@@ -150,7 +150,8 @@ PRINT_PACKAGE_VERSION=	awk '/^PACKAGE_VERSION=/ {			\
 
 
 # Extract X11VERSION
-PRINTX11VERSION=awk '/^\#define XF86_VERSION_MAJOR/ {major = $$3} \
+PRINTX11VERSION=${TOOL_AWK} ' \
+		     /^\#define XF86_VERSION_MAJOR/ {major = $$3} \
 		     /^\#define XF86_VERSION_MINOR/ {minor = $$3} \
 		     /^\#define XF86_VERSION_PATCH/ {patch = $$3} \
 		     /^\#define XF86_VERSION_SNAP/ {snap = $$3} \

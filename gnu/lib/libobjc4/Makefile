@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2008/02/09 01:03:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2008/10/19 22:05:20 apb Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -97,10 +97,12 @@ CLEANFILES+= cs-tconfig.h tconfig.h unwind.h
 # XXX just while all platforms defs.mk are updated..
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
 optionlist: ${G_ALL_OPT_FILES} ${LIBOBJCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
-	${AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} > ${.TARGET}
+	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} \
+		> ${.TARGET}
 
 options.h: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opth-gen.awk
-	${AWK} -f ${DIST}/gcc/opt-functions.awk -f ${DIST}/gcc/opth-gen.awk \
+	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk \
+		-f ${DIST}/gcc/opth-gen.awk \
 		< optionlist > ${.TARGET}
 
 CLEANFILES+=	options.h optionlist

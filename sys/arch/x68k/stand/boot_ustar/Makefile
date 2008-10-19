@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2006/06/29 03:46:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2008/10/19 22:05:22 apb Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,8 @@ NOMAN=		# defined
 
 BOOT=	boot_ustar
 VERSIONFILE=	${.CURDIR}/version
-VERSION!=	awk -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } END { print it }' ${VERSIONFILE}
+VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
+			END { print it }' ${VERSIONFILE}
 NEWVERSWHAT=	"${BOOT}"
 
 # text and bss addresses in hex

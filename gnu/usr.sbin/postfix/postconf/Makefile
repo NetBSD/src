@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2008/06/22 14:38:13 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2008/10/19 22:05:20 apb Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -32,17 +32,15 @@ CPPFLAGS+= -I.
 DPADD+= ${LIBPGLOBAL} ${LIBPXSASL} ${LIBPUTIL}
 LDADD+= ${LIBPGLOBAL} ${LIBPXSASL} ${LIBPUTIL}
 
-# XXX Note that there is no ${AWK} variable in our build system. This
-# is probably a deficiency.
 ${GENSRCS}: postconf-hdrs.stamp
 CLEANFILES+= postconf-hdrs.stamp
 postconf-hdrs.stamp: ${DIST}/../global/mail_params.h ${DIST}/../global/mail_params.c
 	${_MKMSG_CREATE} ${GENSRCS}
 	rm -f ${.TARGET}
-	awk -f ${DIST}/extract.awk ${DIST}/../*/*.c
+	${TOOL_AWK} -f ${DIST}/extract.awk ${DIST}/../*/*.c
 	touch ${.TARGET}
 
 auto_table.h auto_vars.h: ${DIST}/auto.awk
-	awk -f ${DIST}/auto.awk
+	${TOOL_AWK} -f ${DIST}/auto.awk
 
 .include <bsd.prog.mk>

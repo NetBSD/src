@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/09/18 12:20:19 skrll Exp $
+#	$NetBSD: Makefile,v 1.6 2008/10/19 22:05:20 apb Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -43,7 +43,7 @@ libgcc.map:	${LIBGCC_S_OBJS} ${G_SHLIB_MKMAP} ${G_SHLIB_MAPFILES}
 		cat ${G_SHLIB_MAPFILES} | \
 			sed -e "/^[ 	]*#/d" -e 's/^%\(if\|else\|elif\|endif\|define\)/#\1/' | \
 	  		${CC} ${G_LIBGCC2_CFLAGS} ${G_INCLUDES} -E -xassembler-with-cpp -; \
-	} | ${AWK} -f ${G_SHLIB_MKMAP} > ${.TARGET}.tmp
+	} | ${TOOL_AWK} -f ${G_SHLIB_MKMAP} > ${.TARGET}.tmp
 	mv ${.TARGET}.tmp ${.TARGET} 
 
 .else

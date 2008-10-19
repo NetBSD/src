@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2008/06/23 02:16:53 matt Exp $
+#	$NetBSD: Makefile,v 1.26 2008/10/19 22:05:19 apb Exp $
 #
 
 .include <bsd.own.mk>
@@ -100,7 +100,7 @@ setup_tmp:
 settypes: setup_tmp
 .for file in ${SETTYPE_FILES}
 . if ${SETTYPE_FILE_${file}} == ffb
-	${AWK} '{ printf "%5d %s\n", FNR * 10, $$0 }' \
+	${TOOL_AWK} '{ printf "%5d %s\n", FNR * 10, $$0 }' \
 	    < tmp/BtNetBSD/${file} > tmp/BtNetBSD/${file}.tmp
 	mv tmp/BtNetBSD/${file}.tmp tmp/BtNetBSD/${file}
 . endif

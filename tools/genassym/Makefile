@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2005/06/05 18:19:53 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 2008/10/19 22:05:23 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,8 @@ ${TIMESTAMP}: genassym
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${.ALLSRC} ${.TARGET}
 
 genassym: genassym.sh
-	sed -e "s,/bin/sh,${HOST_BSHELL},g" < ${.ALLSRC} > ${.TARGET}
+	sed -e "s,/bin/sh,${HOST_BSHELL},g" \
+	    -e "s,{AWK:=.*},{AWK:="${TOOL_AWK:Q}"}," \
+		< ${.ALLSRC} > ${.TARGET}
 
 realall: genassym

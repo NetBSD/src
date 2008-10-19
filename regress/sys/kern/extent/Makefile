@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2002/09/18 04:16:02 lukem Exp $
+# $NetBSD: Makefile,v 1.6 2008/10/19 22:05:20 apb Exp $
 
 NOMAN=		# defined
 
@@ -17,6 +17,6 @@ regress: ${PROG}
 	tail +4 ${.CURDIR}/extest.exp | diff - extest.out
 
 extest.c: extest.awk tests
-	awk -f ${.CURDIR}/extest.awk <${.CURDIR}/tests >extest.c
+	${TOOL_AWK} -f ${.CURDIR}/extest.awk <${.CURDIR}/tests >extest.c
 
 .include <bsd.prog.mk>

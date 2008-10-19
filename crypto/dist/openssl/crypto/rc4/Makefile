@@ -50,7 +50,8 @@ rc4-ia64.S: asm/rc4-ia64.pl
 	$(PERL) asm/rc4-ia64.pl $(CFLAGS) > $@
 
 rc4-ia64.s: rc4-ia64.S
-	@case `awk '/^#define RC4_INT/{print$$NF}' $(TOP)/include/openssl/opensslconf.h` in \
+	@case `${TOOL_AWK} '/^#define RC4_INT/{print$$NF}' \
+			$(TOP)/include/openssl/opensslconf.h` in \
 	int)	set -x; $(CC) $(CFLAGS) -DSZ=4 -E rc4-ia64.S > $@ ;; \
 	char)	set -x; $(CC) $(CFLAGS) -DSZ=1 -E rc4-ia64.S > $@ ;; \
 	*)	exit 1 ;; \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/05/31 16:05:20 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2008/10/19 22:05:20 apb Exp $
 
 LIBISPRIVATE=	yes
 
@@ -156,14 +156,14 @@ tm_p.h: Makefile
 
 CLEANFILES+=	options.h options.c optionlist
 optionlist: ${G_ALL_OPT_FILES} ${GCCARCH}/defs.mk Makefile ${DIST}/gcc/opt-gather.awk
-	${AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} > ${.TARGET}
+	${TOOL_AWK} -f ${DIST}/gcc/opt-gather.awk ${G_ALL_OPT_FILES} > ${.TARGET}
 
 options.c: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/optc-gen.awk
-	${AWK} -f ${DIST}/gcc/opt-functions.awk -f ${DIST}/gcc/optc-gen.awk \
+	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk -f ${DIST}/gcc/optc-gen.awk \
 		-v header_name="config.h system.h coretypes.h tm.h" < optionlist > ${.TARGET}
 
 options.h: optionlist ${DIST}/gcc/opt-functions.awk ${DIST}/gcc/opth-gen.awk
-	${AWK} -f ${DIST}/gcc/opt-functions.awk -f ${DIST}/gcc/opth-gen.awk \
+	${TOOL_AWK} -f ${DIST}/gcc/opt-functions.awk -f ${DIST}/gcc/opth-gen.awk \
 		< optionlist > ${.TARGET}
 
 options.o: options.c coretypes.h opts.h intl.h
@@ -176,6 +176,7 @@ auto-build.h: Makefile
 	rm -rf .ab && \
 	mkdir .ab && \
 	(cd .ab && \
+		AWK=${TOOL_AWK:Q} \
 		CC=${HOST_CC:Q} \
 		MAKE=${MAKE:Q} \
 		CONFIG_SHELL=${HOST_SH:Q} \
