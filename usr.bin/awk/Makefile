@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2008/08/29 00:02:24 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.11 2008/10/19 19:42:23 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -19,5 +19,14 @@ COPTS=	-Wno-pointer-sign
 .PATH:	${NETBSDSRCDIR}/gnu/dist/gawk
 TEXINFO=        awk.info
 
+# During the tools build (from src/tools/awk/Makefile),
+# src/tools/Makefile.host changes .CURDIR back and forth between
+# src/tools/awk and src/usr.bin/awk.  For some unknown reason, including
+# bsd.info.mk here leads to the obj dir being created at the wrong time,
+# while .CURDIR is src/usr.bin/awk.  Work around the problem by not
+# including bsd.info.mk when MKINFO=no.
+.if ${MKINFO} != "no"
 .include <bsd.info.mk>
+.endif
+
 .include <bsd.prog.mk>
