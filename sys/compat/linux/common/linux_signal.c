@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.63 2008/07/30 16:05:26 njoly Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.64 2008/10/19 09:44:31 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.63 2008/07/30 16:05:26 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.64 2008/10/19 09:44:31 njoly Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -656,3 +656,17 @@ linux_sys_tgkill(struct lwp *l, const struct linux_sys_tgkill_args *uap, registe
 	return linux_sys_kill(l, &cup, retval);
 }
 #endif /* LINUX_NPTL */
+
+int
+native_to_linux_si_code(int code)
+{
+	int si_codes[] = {
+	    LINUX_SI_USER, LINUX_SI_QUEUE, LINUX_SI_TIMER, LINUX_SI_ASYNCIO,
+	    LINUX_SI_MESGQ, LINUX_SI_TKILL /* SI_LWP */
+	};
+
+	if (code <= 0 && -code < __arraycount(si_codes))
+		return si_codes[-code];
+
+	return code;
+}

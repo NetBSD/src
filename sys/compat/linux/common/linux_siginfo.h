@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_siginfo.h,v 1.11 2008/04/28 20:23:44 martin Exp $	*/
+/* 	$NetBSD: linux_siginfo.h,v 1.12 2008/10/19 09:44:31 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,16 @@
 #elif defined(__amd64__)
 #include <compat/linux/arch/amd64/linux_siginfo.h>
 #endif
+
+/* si_code values */
+#define	LINUX_SI_USER		0
+#define	LINUX_SI_QUEUE		-1
+#define	LINUX_SI_TIMER		-2
+#define	LINUX_SI_MESGQ		-3
+#define	LINUX_SI_ASYNCIO	-4
+#define	LINUX_SI_SIGIO		-5
+#define	LINUX_SI_TKILL		-6
+#define	LINUX_SI_DETHREAD	-7
 
 /* From linux/include/asm-generic/siginfo.h */
 #define LINUX_CLD_EXITED	1
