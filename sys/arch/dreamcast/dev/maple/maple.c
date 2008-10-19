@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.39 2008/08/01 20:19:49 marcus Exp $	*/
+/*	$NetBSD: maple.c,v 1.40 2008/10/19 14:05:49 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.39 2008/08/01 20:19:49 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maple.c,v 1.40 2008/10/19 14:05:49 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -795,9 +795,9 @@ maple_detach_unit_nofix(struct maple_softc *sc, struct maple_unit *u)
 		sc->sc_port_unit_map[port] = 0;
 #if defined(MAPLE_DEBUG) && MAPLE_DEBUG > 2
 		{
-			char buf[16];
+			char buf2[16];
 			printf("%s: queued to probe 3\n",
-			    maple_unit_name(buf, port, u->subunit));
+			    maple_unit_name(buf2, port, u->subunit));
 		}
 #endif
 		TAILQ_INSERT_TAIL(&sc->sc_probeq, u, u_q);
@@ -1422,7 +1422,7 @@ maple_event_thread(void *arg)
 
 #ifdef MAPLE_DEBUG
 	printf("%s: forked event thread, pid %d\n",
-	    sc->sc_dev.dv_xname, sc->event_thread->p_pid);
+	    sc->sc_dev.dv_xname, sc->event_thread->l_proc->p_pid);
 #endif
 
 	/* begin first DMA cycle */
