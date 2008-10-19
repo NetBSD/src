@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.73 2006/10/18 21:20:44 freza Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.74 2008/10/19 22:10:05 apb Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.73 2006/10/18 21:20:44 freza Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.74 2008/10/19 22:10:05 apb Exp $");
 #endif
 
 #include <stdlib.h>
@@ -924,6 +924,7 @@ top_makefile_rules(FILE *outmk)
 #ifdef NEW_TOOLCHAIN
     fprintf(outmk, "OBJCOPY?=objcopy\n");
     fprintf(outmk, "NM?=nm\n");
+    fprintf(outmk, "AWK?=awk\n");
 #else
     fprintf(outmk, "CRUNCHIDE?=crunchide\n");
 #endif
@@ -1027,7 +1028,7 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	fprintf(outmk, "\t${LD} -r -o %s/%s.ro $(%s_OBJPATHS)\n", 
 		p->ident, p->name, p->ident);
     /* Use one awk command.... */
-    fprintf(outmk, "\t${NM} -ng %s/%s.ro | awk '/^ *U / { next };",
+    fprintf(outmk, "\t${NM} -ng %s/%s.ro | ${AWK} '/^ *U / { next };",
 	    p->ident, p->name);
     fprintf(outmk, " /^[0-9a-fA-F]+ C/ { next };");
     for (lst = p->keepsymbols; lst != NULL; lst = lst->next)
