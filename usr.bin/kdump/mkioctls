@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.36 2008/03/23 18:53:51 christos Exp $
+#	$NetBSD: mkioctls,v 1.37 2008/10/19 22:10:05 apb Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,10 @@
 #
 #	@(#)mkioctls	8.2 (Berkeley) 4/28/95
 #
+
+: ${CC:=cc}
+: ${AWK:=awk}
+
 echo "/* Automatically generated file, do not edit! */"
 #echo "#define const" 	# XXX: timepps lossage
 echo "#define COMPAT_43"
@@ -71,13 +75,14 @@ echo "#include <netiso/iso.h>"
 echo "#include <dev/ic/hd44780reg.h>"
 echo "#include <dev/pci/mlyreg.h>"
 echo "#include <prop/proplib.h>"
+
 for i
 do
 	echo "#include <$i>"
 done | sed -e "s,${DESTDIR}/usr/include/,,g"
 
-${CC:-cc} -E -nostdinc -idirafter ${DESTDIR}/usr/include -dM ${1+"$@"} | \
-${AWK:-awk} '
+${CC} -E -nostdinc -idirafter ${DESTDIR}/usr/include -dM ${1+"$@"} | \
+${AWK} '
 BEGIN {
 	keep["SLIOCGUNIT"] = 1;	# Same as PPPIOCGASYNCMAP
 	keep["TUNSLMODE"] = 1;	# Same as PPPIOCGASYNCMAP

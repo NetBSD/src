@@ -1,5 +1,7 @@
 #!/bin/sh
 
+: ${AWK:=awk}
+
 verbose=no
 
 if [ X"$1" = X-v ] ; then
@@ -32,7 +34,7 @@ fi
 #
 [ $verbose = yes ] && echo "$0: Generating $which man page (0=sh,1=ksh)..." 1>&2
 
-awk 'BEGIN { ksh = '$which'; pr = 1 }
+${AWK} 'BEGIN { ksh = '$which'; pr = 1 }
     /^\.sh\(/ { pr = ksh - 1; next }
     /^\.sh\)/ { pr = 1; next }
     /^\.ksh\(/ { pr = ksh; next }

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mksiginfos,v 1.4 2008/09/12 20:44:40 christos Exp $
+#	$NetBSD: mksiginfos,v 1.5 2008/10/19 22:10:05 apb Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,9 +29,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # allow AWK to be overriden
-awk=${AWK:-awk}
+: ${AWK:=awk}
 
-$awk '
+$AWK '
 BEGIN {
 	print "/* Automatically generated file; do not edit */";
 	print "#include <stdio.h>";

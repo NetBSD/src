@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: genassym.sh,v 1.3 2008/02/27 22:38:57 matt Exp $
+#	$NetBSD: genassym.sh,v 1.4 2008/10/19 22:10:05 apb Exp $
 #
 # Copyright (c) 1997 Matthias Pfaller.
 # All rights reserved.
@@ -31,7 +31,7 @@
 #
 
 progname=${0}
-awk=${AWK:-awk}
+: ${AWK:=awk}
 
 ccode=0		# generate temporary C file, compile it, execute result
 fcode=0		# generate Forth code
@@ -85,7 +85,7 @@ if ! mkdir $genassym_temp; then
 fi
 trap "rm -rf $genassym_temp" 0 1 2 3 15
 
-$awk '
+$AWK '
 BEGIN {
 	printf("#define	offsetof(type, member) ((size_t)(&((type *)0)->member))\n");
 	defining = 0;
