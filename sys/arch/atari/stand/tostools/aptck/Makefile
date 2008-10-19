@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/02/24 20:51:07 leo Exp $
+#	$NetBSD: Makefile,v 1.4 2008/10/19 22:05:21 apb Exp $
 
 PROG	= aptck.ttp
 
@@ -11,7 +11,7 @@ CLEAN	= aptck.c
 include ../Makefile.inc
 
 aptck.c: aptck.in diskio.c disklbl.c
-	${AWK} -f ./setrev.awk $^ > aptck.c
+	${TOOL_AWK} -f ./setrev.awk $^ > aptck.c
 
 ${PROG}: ${OBJS} ${LDADD}
 	${CC} ${LDFLAGS} -o $@ ${OBJS} ${LDADD} ${LIBS}

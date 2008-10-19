@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.45 2008/08/29 00:02:22 gmcgarry Exp $
+#	$NetBSD: Makefile.inc,v 1.46 2008/10/19 22:05:20 apb Exp $
 #
 # Makefile for sysinst
 
@@ -25,7 +25,7 @@ MSG_MD?=	msg.md.${SYSINSTLANG}
 MENUS_MD?=	menus.md.${SYSINSTLANG}
 
 .include <bsd.own.mk>		# for mk.conf
-.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.sys.mk>		# for HOST_SH, TOOL_*
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 _MKSHTARGET_CREATE?=	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}
@@ -108,24 +108,24 @@ msgtouch: ${DISTRIBVERDEP}
 msg.def: msg.mi.${SYSINSTLANG} ${MSG_MD} msgtouch
 	${_MKTARGET_CREATE}
 	sed "s/@@VERSION@@/${DISTRIBVER}/" ${.ALLSRC} | \
-	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
+	${TOOL_AWK} -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
 menus.def: menus.mi ${MENUS_MD} msgtouch
 	${_MKTARGET_CREATE}
 	sed "s/@@VERSION@@/${DISTRIBVER}/" ${.ALLSRC} | \
-	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
+	${TOOL_AWK} -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
 sysinstmsgs.fmtcnt: msg.mi.${SYSINSTLANG} ${MSG_MD} msgtouch msg_defs.h
 	${_MKTARGET_CREATE}
 	sed "s/@@VERSION@@/${DISTRIBVER}/" ${.ALLSRC:M*.${SYSINSTLANG}} | \
-	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
+	${TOOL_AWK} -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
 	${HOST_SH} ${MSG_XLAT_SH} -c > ${.TARGET}
 
 .for LANG in ${LANGUAGES:N${SYSINSTLANG}}
 sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgtouch msg_defs.h sysinstmsgs.fmtcnt
 	${_MKTARGET_CREATE}
 	sed "s/@@VERSION@@/${DISTRIBVER}/" ${.ALLSRC:M*.${LANG}} | \
-	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
+	${TOOL_AWK} -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
 	${HOST_SH} ${MSG_XLAT_SH} -f sysinstmsgs.fmtcnt > ${.TARGET}
 
 DPSRCS+=	sysinstmsgs.${LANG}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gmakehost,v 1.4 2008/07/07 10:57:03 apb Exp $
+#	$NetBSD: Makefile.gmakehost,v 1.5 2008/10/19 22:05:23 apb Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 # This version runs ${TOOL_GMAKE} instead of ${MAKE}
@@ -45,18 +45,20 @@ _GNU_CFGSRC!=	find ${GNUHOSTDIST} ${FIND_ARGS} \
 .MAKEOVERRIDES+= _GNU_CFGSRC
 .endif
 
-CONFIGURE_ENV+=	CC=${HOST_CC:Q} \
+CONFIGURE_ENV+= \
+		AR=${HOST_AR:Q} \
+		AWK=${TOOL_AWK:Q} \
+		CC=${HOST_CC:Q} \
 		CFLAGS=${HOST_CFLAGS:Q} \
 		CPPFLAGS=${HOST_CPPFLAGS:Q} \
 		CXX=${HOST_CXX:Q} \
 		CXXFLAGS=${HOST_CXXFLAGS:Q} \
 		INSTALL=${HOST_INSTALL_FILE:Q} \
 		LDFLAGS=${HOST_LDFLAGS:Q} \
-		AR=${HOST_AR:Q} \
-		RANLIB=${HOST_RANLIB:Q} \
 		LEX=${LEX:Q} \
 		MAKE=${TOOL_GMAKE:Q} \
 		PATH="${TOOLDIR}/bin:$$PATH" \
+		RANLIB=${HOST_RANLIB:Q} \
 		YACC=${YACC:Q}
 
 BUILD_ENV+=	${CONFIGURE_ENV}

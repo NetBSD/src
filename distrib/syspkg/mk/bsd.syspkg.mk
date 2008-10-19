@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.syspkg.mk,v 1.3 2004/03/02 23:25:05 xtraeme Exp $
+#	$NetBSD: bsd.syspkg.mk,v 1.4 2008/10/19 22:05:20 apb Exp $
 #
 #	This file is derived from:
 #
@@ -98,7 +98,7 @@ PKG_DEINSTALL_FILE=		${PKGDIR}/DEINSTALL
 MESSAGE_FILE=		${PKGDIR}/MESSAGE
 .endif
 
-AWK?=		/usr/bin/awk
+AWK?=		${TOOL_AWK:U/usr/bin/awk}
 CAT?=		/bin/cat
 CP?=		/bin/cp
 DC?=		/usr/bin/dc
