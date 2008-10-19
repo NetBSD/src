@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2008/10/05 03:35:13 cube Exp $
+#	$NetBSD: Makefile,v 1.14 2008/10/19 15:53:02 macallan Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -8,8 +8,24 @@ SUBDIR= \
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+= \
-	xf86-input-vmmouse
+	xf86-input-vmmouse \
+	xf86-video-vmware \
+	xf86-video-vesa
 .endif
+
+.if ${MACHINE} == "macppc"
+SUBDIR+= \
+	xf86-video-ati \
+	xf86-video-chips \
+	xf86-video-imstt \
+	xf86-video-mach64 \
+	xf86-video-mga \
+	xf86-video-nv \
+	xf86-video-radeon \
+	xf86-video-r128 \
+	xf86-video-tdfx \
+	xf86-video-wsfb
+.else
 
 SUBDIR+= \
 	xf86-video-apm \
@@ -31,6 +47,7 @@ SUBDIR+= \
 	xf86-video-neomagic \
 	xf86-video-nsc \
 	xf86-video-nv \
+	xf86-video-r128 \
 	xf86-video-radeon \
 	xf86-video-s3 \
 	xf86-video-s3virge \
@@ -41,10 +58,9 @@ SUBDIR+= \
 	xf86-video-tga \
 	xf86-video-trident \
 	xf86-video-tseng \
-	xf86-video-vesa \
 	xf86-video-vga \
-	xf86-video-via \
-	xf86-video-vmware
+	xf86-video-via
+.endif
 
 #xf86-video-wsfb
 #xf86-video-radeonhd
