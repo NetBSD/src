@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.host,v 1.23 2003/11/16 18:06:01 dsl Exp $
+#	$NetBSD: Makefile.host,v 1.24 2008/10/19 19:38:55 apb Exp $
 
+NOINFO=		# defined
 NOLINT=		# defined
 NOMAN=		# defined
 
