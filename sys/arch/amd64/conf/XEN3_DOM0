@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.31 2008/10/11 21:54:11 bouyer Exp $
+# $NetBSD: XEN3_DOM0,v 1.32 2008/10/19 11:34:31 joerg Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -226,7 +226,7 @@ ppb*		at pci? dev ? function ?	# PCI-PCI bridges
 pci*		at ppb? bus ?
 
 # PCI bridges
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and SpeedStep support
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -237,7 +237,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 agp* 	at pchb?
 
 # ISA bus support
-#isa0	at ichlpcib?
+isa0	at ichlpcib?
 isa0	at pcib?
 isa0	at hypervisor?
 
