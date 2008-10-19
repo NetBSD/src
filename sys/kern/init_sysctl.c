@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.145 2008/10/15 06:51:20 wrstuden Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.146 2008/10/19 01:43:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.145 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.146 2008/10/19 01:43:25 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2881,6 +2881,35 @@ sysctl_consdev(SYSCTLFN_ARGS)
  * section 4: support for some helpers
  * ********************************************************************
  */
+static struct lwp *
+proc_representative_lwp(struct proc *p)
+{
+	static const int ostat[] = {
+		0,	
+		2,	/* LSIDL */
+		6,	/* LSRUN */
+		5,	/* LSSLEEP */
+		4,	/* LSSTOP */
+		0,	/* LSZOMB */
+		1,	/* LSDEAD */
+		7,	/* LSONPROC */
+		3	/* LSSUSPENDED */
+	};
+
+	struct lwp *l, *lp = NULL;
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		KASSERT(l->l_stat >= 0 && l->l_stat < __arraycount(ostat));
+		if (lp == NULL ||
+		    ostat[l->l_stat] > ostat[lp->l_stat] ||
+		    (ostat[l->l_stat] == ostat[lp->l_stat] &&
+		    l->l_cpticks > lp->l_cpticks)) {
+			lp = l;
+			continue;
+		}
+	}
+	return lp;
+}
+
 
 /*
  * Fill in a kinfo_proc2 structure for the specified process.
@@ -2969,7 +2998,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 		ki->p_vm_ssize = vm->vm_ssize;
 
 		/* Pick the primary (first) LWP */
-		l = LIST_FIRST(&p->p_lwps);
+		l = proc_representative_lwp(p);
 		KASSERT(l != NULL);
 		lwp_lock(l);
 		ki->p_nrlwps = p->p_nrlwps;
@@ -3139,7 +3168,7 @@ fill_eproc(struct proc *p, struct eproc *ep, bool zombie)
 		ep->e_vm.vm_ssize = vm->vm_ssize;
 
 		/* Pick the primary (first) LWP */
-		l = LIST_FIRST(&p->p_lwps);
+		l = proc_representative_lwp(p);
 		KASSERT(l != NULL);
 		lwp_lock(l);
 		if (l->l_wchan)
