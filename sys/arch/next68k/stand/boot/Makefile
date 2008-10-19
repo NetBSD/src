@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2005/12/11 12:18:29 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2008/10/19 22:05:21 apb Exp $
 
 NOMAN=	# defined
 
@@ -66,7 +66,8 @@ ${PROG}: srt0.o ${OBJS} ${LIBS}
 	${LD} -N -Ttext ${RELOC} -e start srt0.o ${OBJS} ${LIBS} -o $@.elf
 	${SIZE} $@.elf
 	${OBJCOPY} -O binary $@.elf $@.raw
-	(${SIZE} $@.elf | tail +2 | awk ${AWKPROG} | xargs printf ; cat $@.raw) > $@
+	(${SIZE} $@.elf | tail +2 | ${TOOL_AWK} ${AWKPROG} | \
+		xargs printf ; cat $@.raw) > $@
 
 # startup
 
