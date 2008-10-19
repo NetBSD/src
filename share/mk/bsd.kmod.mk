@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.88 2008/08/24 06:27:00 gmcgarry Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.89 2008/10/19 22:05:21 apb Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -52,18 +52,20 @@ ${KMOD}_tmp.o: ${OBJS} ${DPADD}
 ${KMOD}_tramp.S: ${KMOD}_tmp.o $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk
 	${_MKTARGET_CREATE}
 	${OBJDUMP} --syms --reloc ${KMOD}_tmp.o | \
-		 awk -f $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk > tmp.S
+		 ${TOOL_AWK} -f $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk \
+		 > tmp.S
 	mv tmp.S ${.TARGET}
 
 ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${_MKTARGET_LINK}
 	${LD} -r \
 		`${OBJDUMP} --syms --reloc ${KMOD}_tmp.o | \
-			 awk -f $S/lkm/arch/${MACHINE_CPU}/lkmwrap.awk` \
+			${TOOL_AWK} -f $S/lkm/arch/${MACHINE_CPU}/lkmwrap.awk` \
 		 -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
 .if exists($S/lkm/arch/${MACHINE_CPU}/lkmhide.awk)
 	${OBJCOPY} \
-		`${NM} tmp.o | awk -f $S/lkm/arch/${MACHINE_CPU}/lkmhide.awk` \
+		`${NM} tmp.o | \
+			${TOOL_AWK} -f $S/lkm/arch/${MACHINE_CPU}/lkmhide.awk` \
 		tmp.o tmp1.o
 	mv tmp1.o tmp.o
 .endif

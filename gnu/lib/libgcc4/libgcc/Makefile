@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/09/18 12:20:19 skrll Exp $
+#	$NetBSD: Makefile,v 1.6 2008/10/19 22:05:20 apb Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -24,7 +24,8 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 .c.so:
 	${_MKTARGET_COMPILE}
 	${COMPILE.c} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}.tmp1
-	${NM} -pg ${.TARGET}.tmp1 | ${AWK} 'NF == 3 { print "\t.hidden", $$3 }' | \
+	${NM} -pg ${.TARGET}.tmp1 | \
+	    ${TOOL_AWK} 'NF == 3 { print "\t.hidden", $$3 }' | \
 	    ${CC} -Wl,-x -r -nostdinc -nostdlib ${CPUFLAGS} -o ${.TARGET}.tmp2 ${.TARGET}.tmp1 -xassembler -
 .if defined(COPTS) && !empty(COPTS:M*-g*)
 	mv ${.TARGET}.tmp2 ${.TARGET}
@@ -37,7 +38,8 @@ CLEANFILES+=	${SOBJS:=.tmp1} ${SOBJS:=.tmp2}
 .S.so .s.so:
 	${_MKTARGET_COMPILE}
 	${COMPILE.S} ${CAPICFLAGS} ${CFLAGS:M-[ID]*} ${.IMPSRC} -o ${.TARGET}.tmp1
-	${NM} -pg ${.TARGET}.tmp1 | ${AWK} 'NF == 3 { print "\t.hidden", $$3 }' | \
+	${NM} -pg ${.TARGET}.tmp1 | \
+	    ${TOOL_AWK} 'NF == 3 { print "\t.hidden", $$3 }' | \
 	    ${CC} -Wl,-x -r -nostdinc -nostdlib -o ${.TARGET}.tmp2 ${.TARGET}.tmp1 -xassembler -
 .if defined(COPTS) && !empty(COPTS:M*-g*)
 	mv ${.TARGET}.tmp2 ${.TARGET}

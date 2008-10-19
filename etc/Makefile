@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.358 2008/08/28 07:21:49 lukem Exp $
+#	$NetBSD: Makefile,v 1.359 2008/10/19 22:05:20 apb Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -36,7 +36,7 @@
 # For MK* vars
 .include <bsd.own.mk>
 
-.include <bsd.sys.mk>		# for HOST_SH
+.include <bsd.sys.mk>		# for HOST_SH, TOOL_AWK, ...
 .include <bsd.kernobj.mk>	# For KERNSRCDIR, KERNOBJDIR, ...
 .include <bsd.endian.mk>	# For TARGET_ENDIANNESS
 
@@ -172,7 +172,8 @@ MAKEDEV: .EXEC
 	${_MKTARGET_CREATE}
 	MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
 	    NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
-	    awk -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl > ${.TARGET}
+	    ${TOOL_AWK} -f ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
+	    > ${.TARGET}
 
 RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		DESTDIR EXTERNAL_TOOLCHAIN HAVE_GCC HAVE_GDB \
@@ -402,7 +403,7 @@ distrib-dirs: .PHONY check_DESTDIR
 .if ${MKUNPRIVED} != "no"						# {
 	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
 	    -p ${DESTDIR}/ -C -k all | \
-	    awk '/ optional/ {next} // {print}' | ${METALOG.add}
+	    ${TOOL_AWK} '/ optional/ {next} // {print}' | ${METALOG.add}
 .endif	# MKUNPRIVED							# }
 .endif	# DISTRIBUTION_DONE						# }
 
@@ -537,7 +538,7 @@ snap_post: .PHONY .MAKE build_kernelsets build_releasekernels
 #
 ALL_KERNELS?=	${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
 
-GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
+GETKERNELAWK=	${TOOL_AWK} '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
 
 build_kernels: .PHONY

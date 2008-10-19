@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.crunch,v 1.23 2005/11/10 21:29:37 dsl Exp $
+#	$NetBSD: Makefile.crunch,v 1.24 2008/10/19 22:05:19 apb Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
 #
@@ -26,6 +26,7 @@
 .if !defined(_MAKEFILE_CRUNCH_)
 _MAKEFILE_CRUNCH_=1
 
+CRUNCHENV+=		AWK=${TOOL_AWK:Q}
 
 SMALLPROG?=		1
 SMALLPROG_INET6?=	0

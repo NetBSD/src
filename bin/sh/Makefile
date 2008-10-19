@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 2007/03/25 06:30:37 apb Exp $
+#	$NetBSD: Makefile,v 1.82 2008/10/19 22:05:19 apb Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -22,6 +22,10 @@ DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 
 LFLAGS=	-8	# 8-bit lex scanner for arithmetic
 YFLAGS=	-d
+
+# Environment for scripts executed during build.
+SCRIPT_ENV= \
+	AWK=${TOOL_AWK:Q} \
 
 # The .depend file can get references to these temporary files
 .OPTIONAL: lex.yy.c y.tab.c
@@ -52,25 +56,25 @@ CLEANFILES+= trace
 
 token.h: mktokens
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${.ALLSRC}
+	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC}
 
 builtins.h: builtins.c
 	${_MKTARGET_CREATE}
 
 builtins.c: mkbuiltins shell.h builtins.def
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${.ALLSRC} ${.OBJDIR}
+	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} ${.OBJDIR}
 	[ -f builtins.h ]
 
 init.c: mkinit.sh ${SHSRCS}
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${.ALLSRC}
+	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC}
 
 nodes.h: nodes.c
 
 nodes.c: mknodes.sh nodetypes nodes.c.pat
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${.ALLSRC} ${.OBJDIR}
+	${SCRIPT_ENV} ${HOST_SH} ${.ALLSRC} ${.OBJDIR}
 	[ -f nodes.h ]
 
 .if ${USETOOLS} == "yes"
