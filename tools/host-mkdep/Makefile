@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.9 2003/10/26 07:25:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2008/10/19 22:05:23 apb Exp $
 
 TIMESTAMP=	${TOOLDIR}/bin/${_TOOL_PREFIX}host-mkdep
 
 CLEANFILES+=	config.cache config.log config.status host-mkdep
 
 .include <bsd.hostprog.mk>
+
+# When host-mkdep is built, TOOL_AWK is not yet available, so we do not
+# pass AWK=${TOOL_AWK:Q} to configure; we allow configure to find awk
+# for itself (or complain if it can't find awk).
 
 realall: host-mkdep
 host-mkdep: configure host-mkdep.in
