@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2006/10/08 17:52:29 peter Exp $
+#	$NetBSD: Makefile,v 1.22 2008/10/19 22:05:23 apb Exp $
 
 NOMAN=		# defined
 
@@ -19,7 +19,7 @@ dump.c misc.c: misc.h
 misc.h: ${DESTDIR}/usr/include/sys/errno.h makeerrnos.sh \
 	       ${DESTDIR}/usr/include/sys/signal.h
 	${_MKTARGET_CREATE}
-	CPP=${CPP:Q} CPPFLAGS=${CPPFLAGS:Q} \
+	AWK=${TOOL_AWK:Q} CPP=${CPP:Q} CPPFLAGS=${CPPFLAGS:Q} \
 	    ${HOST_SH} ${.CURDIR}/makeerrnos.sh \
 	    ${DESTDIR}/usr/include/sys/errno.h \
 	    ${DESTDIR}/usr/include/sys/signal.h misc
