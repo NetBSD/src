@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.287 2008/10/17 17:29:39 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.288 2008/10/19 15:22:50 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -39,6 +39,7 @@ clean:		cleanlib
 # files or always have a shared library.
 .if defined(MKPIE) && (${MKPIE} != "no")
 CFLAGS+=        ${PIE_CFLAGS}
+AFLAGS+=        ${PIE_AFLAGS}
 .endif
 COPTS+=     ${COPTS.lib${LIB}}
 CPPFLAGS+=  ${CPPFLAGS.lib${LIB}}

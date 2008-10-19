@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.238 2008/10/16 14:36:42 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.239 2008/10/19 15:22:50 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -53,6 +53,7 @@ CLEANFILES+=strings
 
 .if defined(MKPIE) && (${MKPIE} != "no")
 CFLAGS+=	${PIE_CFLAGS}
+AFLAGS+=	${PIE_AFLAGS}
 LDFLAGS+=	${PIE_LDFLAGS}
 .endif
 
