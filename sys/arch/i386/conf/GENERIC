@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.913 2008/10/11 21:54:11 bouyer Exp $
+# $NetBSD: GENERIC,v 1.914 2008/10/19 11:34:31 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.913 $"
+#ident 		"GENERIC-$Revision: 1.914 $"
 
 maxusers	64		# estimated number of users
 
@@ -1216,6 +1216,10 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
 options UGEN_BULK_RA_WB
+
+# USB 3G datacards
+u3g*	at uhub? port ?
+ucom*	at u3g?
 
 # USB generic serial port (e.g., data over cellular)
 ugensa*	at uhub? port ?

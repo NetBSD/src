@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.28 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: GUMSTIX,v 1.29 2008/10/19 11:34:31 joerg Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -401,6 +401,10 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
 #options UGEN_BULK_RA_WB
+
+# USB 3G datacards
+#u3g*	at uhub? port ?
+#ucom*	at u3g?
 
 # USB generic serial port (e.g., data over cellular)
 #ugensa*	at uhub? port ?

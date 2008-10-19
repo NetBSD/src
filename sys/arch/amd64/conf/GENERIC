@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.230 2008/10/11 21:54:11 bouyer Exp $
+# $NetBSD: GENERIC,v 1.231 2008/10/19 11:34:31 joerg Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.230 $"
+#ident 		"GENERIC-$Revision: 1.231 $"
 
 maxusers	64		# estimated number of users
 
@@ -325,7 +325,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet* 	at amdpcib?
 
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and Speedstep support.
 
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
@@ -336,7 +336,7 @@ agp* 	at pchb?
 isa0	at mainbus?
 isa0	at pcib?
 #isa0 	at amdpcib?
-#isa0 	at ichlpcib?
+isa0 	at ichlpcib?
 
 # CardBus bridge support
 cbb*		at pci? dev ? function ?
@@ -875,6 +875,10 @@ radio*	at udsbr?
 ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
 options	UGEN_BULK_RA_WB
+
+# USB 3G datacards
+u3g*	at uhub? port ?
+ucom*	at u3g?
 
 # USB generic serial port (e.g., data over cellular)
 ugensa*	at uhub? port ?
