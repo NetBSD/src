@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.175 2008/10/19 15:22:50 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.176 2008/10/19 19:44:47 apb Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -138,6 +138,7 @@ TOOL_AMIGAELF2BB?=	amiga-elf2bb
 TOOL_AMIGATXLT?=	amiga-txlt
 TOOL_ASN1_COMPILE?=	asn1_compile
 TOOL_ATF_COMPILE?=	atf-compile
+TOOL_AWK?=		awk
 TOOL_CAP_MKDB?=		cap_mkdb
 TOOL_CAT?=		cat
 TOOL_CKSUM?=		cksum
