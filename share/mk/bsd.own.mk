@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.533 2008/10/13 18:23:47 apb Exp $
+#	$NetBSD: bsd.own.mk,v 1.534 2008/10/19 19:29:43 apb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -537,7 +537,7 @@ dependall:	.NOTMAIN realdepend .MAKE
 # including bsd.own.mk.
 #
 .for var in \
-	NOCRYPTO NODOC NOHTML NOLINKLIB NOLINT NOMAN NONLS NOOBJ NOPIC \
+	NOCRYPTO NODOC NOHTML NOINFO NOLINKLIB NOLINT NOMAN NONLS NOOBJ NOPIC \
 	NOPICINSTALL NOPROFILE NOSHARE NOSTATICLIB
 .if defined(${var})
 MK${var:S/^NO//}:=	no
