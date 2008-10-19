@@ -28,6 +28,10 @@ THIS SOFTWARE.
  * it finds the indices in ytab.h, produced by yacc.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>

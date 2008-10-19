@@ -1,3 +1,7 @@
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <stdio.h>
 #include "awk.h"
 #include "awkgram.h"

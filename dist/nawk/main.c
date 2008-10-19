@@ -24,6 +24,10 @@ THIS SOFTWARE.
 
 const char	*version = "version 20070501";
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #define DEBUG
 #include <stdio.h>
 #include <ctype.h>
