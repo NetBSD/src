@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2008/04/06 09:54:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.49 2008/10/19 22:05:23 apb Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 .include <bsd.own.mk>
@@ -42,7 +42,7 @@ CLEANFILES+=	copyrightstr.c
 copyrightstr.c: ${NETBSDSRCDIR}/sys/conf/copyright
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	awk '\
+	${TOOL_AWK} '\
 		BEGIN { print "const char copyrightstr[] =" }\
 		{ print "\""$$0"\\n\""}\
 		END { print "\"\\n\";" }\

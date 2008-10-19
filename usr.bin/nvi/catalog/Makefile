@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/08/26 12:15:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2008/10/19 22:05:24 apb Exp $
 #
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
@@ -30,7 +30,7 @@ ${CATALOG}: ${CATALOG:S/$/.base/}
 		f=${DIST}/catalog/$@.base;				\
 	fi;								\
 	sort -u $$f |							\
-	${AWK} '{							\
+	${TOOL_AWK} '{							\
 		if ($$1 == 1) {						\
 			print "\nMESSAGE NUMBER 1 IS NOT LEGAL";	\
 			exit 1;						\
@@ -60,14 +60,14 @@ ${CHK}: ${CATALOG}
 	@echo "... $@";							\
 	f=${DIST}/catalog/`basename $@ .check`;				\
 	(echo "Unused message id's (this is okay):";			\
-	${AWK} '{							\
+	${TOOL_AWK} '{							\
 		while (++nline < $$1)					\
 			printf "%03d\n", nline;				\
 	}' < ${DIST}/catalog/$$f.base;					\
 	echo =========================;					\
 	echo "MISSING ERROR MESSAGES (Please add!):";			\
-	${AWK} '{print $$1}' < $$f.base | sort -u > __ck1;		\
-	${AWK} '{print $$1}' < english.base | sort -u > __ck2; \
+	${TOOL_AWK} '{print $$1}' < $$f.base | sort -u > __ck1;		\
+	${TOOL_AWK} '{print $$1}' < english.base | sort -u > __ck2;	\
 	comm -13 __ck1 __ck2;						\
 	echo =========================;					\
 	echo "Extra error messages (just delete them):";		\
@@ -76,17 +76,17 @@ ${CHK}: ${CATALOG}
 	echo "MESSAGES WITH THE SAME MESSAGE ID's (FIX!):";		\
 	for j in							\
 	    `sed '/^$$/d' < $$f.base | sort -u |			\
-	    ${AWK} '{print $$1}' | uniq -d`; do				\
+	    ${TOOL_AWK} '{print $$1}' | uniq -d`; do			\
 		egrep $$j $$f.base;					\
 	done;								\
 	echo =========================;					\
 	echo "Duplicate messages, both id and message (this is okay):";	\
 	sed '/^$$/d' < $$f.base | sort | uniq -c |			\
-	${AWK} '$$1 != 1 { print $$0 }' | sort -n;			\
+	${TOOL_AWK} '$$1 != 1 { print $$0 }' | sort -n;			\
 	echo =========================;					\
 	echo "Duplicate messages, just message (this is okay):";	\
 	sed '/^$$/d' < $$f | sort | uniq -c |				\
-	${AWK} '$$1 != 1 { print $$0 }' | sort -n;			\
+	${TOOL_AWK} '$$1 != 1 { print $$0 }' | sort -n;			\
 	echo =========================) > $@
 
 english.base: dump ${VI_FILES} #Makefile
