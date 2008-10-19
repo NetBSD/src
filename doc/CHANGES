@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1136 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1137 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1056,3 +1056,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	rump: Add networking support to rump.  Support is available in
 		libraries prefixed with librumpnet.  [pooka 20081016]
 	rump_nfs(8): Add support for a userspace NFS client.  [pooka 20081016]
+	u3g(4): Add a driver for many 3G datacards to supersede ugensa(4) for
+		multi-port devices from FreeBSD. [joerg 20081019]
