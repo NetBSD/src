@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.121 2008/10/13 18:11:15 dyoung Exp $
+#	$NetBSD: Makefile,v 1.122 2008/10/19 19:40:19 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -43,6 +43,7 @@ SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	sed .WAIT \
 	texinfo .WAIT \
 	yacc .WAIT \
+	awk .WAIT \
 	lex .WAIT \
 	${TOOLCHAIN_BITS} \
 		asn1_compile atf-compile cat cksum compile_et config db \
