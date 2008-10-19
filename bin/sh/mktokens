@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mktokens,v 1.10 2003/08/22 11:22:23 agc Exp $
+#	$NetBSD: mktokens,v 1.11 2008/10/19 22:10:04 apb Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -32,6 +32,8 @@
 # SUCH DAMAGE.
 #
 #	@(#)mktokens	8.1 (Berkeley) 5/31/93
+
+: ${AWK:=awk}
 
 # The following is a list of tokens.  The second column is nonzero if the
 # token marks the end of a list.  The third column is the name to print in
@@ -69,11 +71,11 @@ TNOT	0	"!"
 !
 nl=`wc -l /tmp/ka$$`
 exec > token.h
-awk '{print "#define " $1 " " NR-1}' /tmp/ka$$
+${AWK} '{print "#define " $1 " " NR-1}' /tmp/ka$$
 echo '
 /* Array indicating which tokens mark the end of a list */
 const char tokendlist[] = {'
-awk '{print "\t" $2 ","}' /tmp/ka$$
+${AWK} '{print "\t" $2 ","}' /tmp/ka$$
 echo '};
 
 const char *const tokname[] = {'
@@ -82,7 +84,7 @@ sed -e 's/"/\\"/g' \
     /tmp/ka$$
 echo '};
 '
-sed 's/"//g' /tmp/ka$$ | awk '
+sed 's/"//g' /tmp/ka$$ | ${AWK} '
 /TIF/{print "#define KWDOFFSET " NR-1; print ""; 
       print "const char *const parsekwd[] = {"}
 /TIF/,/neverfound/{print "	\"" $3 "\","}'
