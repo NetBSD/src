@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.231 2008/10/17 15:04:18 apb Exp $
+#	$NetBSD: bsd.README,v 1.232 2008/10/19 19:44:47 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1389,6 +1389,8 @@ TOOL_AMIGATXLT		Amige assembly language format translator.  [amiga-txlt]
 TOOL_ASN1_COMPILE	ASN1 compiler.  [asn1_compile]
 
 TOOL_ATF_COMPILE	Generate POSIX shell test programs.  [atf-compile]
+
+TOOL_AWK		Pattern-directed scanning/processing language.  [awk]
 
 TOOL_CAP_MKDB		Create capability database.  [cap_mkdb]
 
