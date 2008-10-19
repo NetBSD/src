@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2008/01/27 19:07:21 pooka Exp $	*/
+/*	$NetBSD: intr.h,v 1.9.16.1 2008/10/19 22:18:06 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -49,6 +49,8 @@ void rump_splx(int);
 
 #define IPL_NONE 0
 #define	IPL_SOFTBIO 0
+#define	IPL_SOFTCLOCK 0
+#define	IPL_SOFTNET 0
 #define IPL_SCHED 0
 #define IPL_VM 0
 

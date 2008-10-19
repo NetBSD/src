@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.80 2008/02/02 06:09:11 uwe Exp $
+# $NetBSD: GENERIC,v 1.80.16.1 2008/10/19 22:15:47 haad Exp $
 #
 # GENERIC machine description file
 #
@@ -132,6 +132,7 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	FFS_EI		# FFS Endian Independent support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options		WAPBL		# File system journaling support - Experimental
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 
@@ -350,6 +351,11 @@ pseudo-device	bpfilter		# Berkeley packet filter
 #pseudo-device	ipfilter		# IP filter, NAT
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

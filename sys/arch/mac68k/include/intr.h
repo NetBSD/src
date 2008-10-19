@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.30 2008/06/19 13:56:22 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.30.2.1 2008/10/19 22:15:51 haad Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -67,21 +67,21 @@ extern uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
 typedef struct {
-	uint16_t _psl;
+	uint16_t _ipl;
 } ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._psl = ipl2psl_table[ipl]};
+	return (ipl_cookie_t){._ipl = ipl};
 }
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return _splraise(icookie._psl);
+	return _splraise(ipl2psl_table[icookie._ipl]);
 }
 
 #include <sys/spl.h>

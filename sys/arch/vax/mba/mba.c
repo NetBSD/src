@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.36 2008/03/11 05:34:02 matt Exp $ */
+/*	$NetBSD: mba.c,v 1.36.10.1 2008/10/19 22:16:06 haad Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mba.c,v 1.36 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mba.c,v 1.36.10.1 2008/10/19 22:16:06 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,9 +154,8 @@ mbaattach(device_t parent, device_t self, void *aux)
 			continue;
 		/* We have a drive, ok. */
 		ma.ma_unit = i;
-		ma.ma_type = MBA_RCSR(MUREG(i, MU_DT)) & 0777;
-		j = 0;
-		while (mbaunit[j++].nr)
+		ma.ma_type = MBA_RCSR(MUREG(i, MU_DT)) & 0xf1ff;
+		for (j = 0; mbaunit[j].nr; j++)
 			if (mbaunit[j].nr == ma.ma_type)
 				break;
 		ma.ma_devtyp = mbaunit[j].devtyp;

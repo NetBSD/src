@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.24 2008/04/30 14:07:14 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.24.6.1 2008/10/19 22:17:18 haad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.24 2008/04/30 14:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.24.6.1 2008/10/19 22:17:18 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -163,7 +163,7 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	kauth_cred_t cred = l->l_cred;
 	struct sysvbfs_mount *bmp;
 	struct partinfo dpart;
-	int error;
+	int error, oflags;
 
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
@@ -172,7 +172,10 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		return error;
 
 	/* Open block device */
-	if ((error = VOP_OPEN(devvp, FREAD, NOCRED)) != 0)
+	oflags = FREAD;
+	if ((mp->mnt_flag & MNT_RDONLY) == 0)
+		oflags |= FWRITE;
+	if ((error = VOP_OPEN(devvp, oflags, NOCRED)) != 0)
 		return error;
 
 	/* Get partition information */

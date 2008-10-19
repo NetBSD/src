@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $	*/
+/*	$NetBSD: mga_drv.c,v 1.4.2.1 2008/10/19 22:16:58 haad Exp $	*/
 
 /* mga_drv.c -- Matrox G200/G400 driver -*- linux-c -*-
  * Created: Mon Dec 13 01:56:22 1999 by jhartmann@precisioninsight.com
@@ -34,16 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_drv.c,v 1.4.2.1 2008/10/19 22:16:58 haad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/mga_drv.c,v 1.12 2006/05/17 06:36:28 anholt Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/mga_drm.h>
-#include <dev/pci/drm/mga_drv.h>
-#include <dev/pci/drm/drm_pciids.h>
+#include "drmP.h"
+#include "drm.h"
+#include "mga_drm.h"
+#include "mga_drv.h"
+#include "drm_pciids.h"
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t mga_pciidlist[] = {

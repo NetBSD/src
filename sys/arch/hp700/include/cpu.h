@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2008/02/27 18:26:15 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27.10.1 2008/10/19 22:15:46 haad Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -74,7 +74,7 @@
 /*
  * A CPU description.
  */
-struct hppa_cpu_info { 
+struct hppa_cpu_info {
 
 	/* The official name of the chip. */
 	const char *hppa_cpu_info_chip_name;
@@ -222,6 +222,9 @@ extern struct cpu_info cpu_info_store;
 void	cpu_boot_secondary_processors(void);
 #endif
 
+/*
+ * DON'T CHANGE THIS - this is assumed in lots of places.
+ */
 #define	HPPA_SID_KERNEL 0
 
 #define DELAY(x) delay(x)

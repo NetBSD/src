@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.59 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.59.6.1 2008/10/19 22:17:10 haad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.59 2008/04/28 20:24:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.59.6.1 2008/10/19 22:17:10 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_TRIPPLITE2, USB_PRODUCT_TRIPPLITE2_UPS,	    
 	ANY,   { UQ_HID_IGNORE }},
 
+ { USB_VENDOR_METAGEEK, USB_PRODUCT_METAGEEK_WISPY_24X, ANY, { UQ_HID_IGNORE }},
+
  { USB_VENDOR_KYE, USB_PRODUCT_KYE_NICHE,	    0x100, { UQ_NO_SET_PROTO}},
  { USB_VENDOR_INSIDEOUT, USB_PRODUCT_INSIDEOUT_EDGEPORT4,
    						    0x094, { UQ_SWAP_UNICODE}},
@@ -75,6 +77,8 @@ Static const struct usbd_quirk_entry {
 	0x000, { UQ_BAD_AUDIO }},
  { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMPRO4K,
 	0x000, { UQ_BAD_AUDIO }},
+ { USB_VENDOR_LOGITECH, USB_PRODUCT_LOGITECH_QUICKCAMMESS,
+	0x100, { UQ_BAD_ADC }},
  { USB_VENDOR_QTRONIX, USB_PRODUCT_QTRONIX_980N,    0x110, { UQ_SPUR_BUT_UP }},
  { USB_VENDOR_ALCOR2, USB_PRODUCT_ALCOR2_KBD_HUB,   0x001, { UQ_SPUR_BUT_UP }},
  { USB_VENDOR_METRICOM, USB_PRODUCT_METRICOM_RICOCHET_GS,
@@ -110,6 +114,14 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_NEC, USB_PRODUCT_NEC_PICTY800,	    ANY,   { UQ_BROKEN_BIDIR }},
 
  { USB_VENDOR_HP, USB_PRODUCT_HP_1220C,		    ANY,   { UQ_BROKEN_BIDIR }},
+
+ /* HID and audio are both invalid on iPhone/iPod Touch */
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE,
+	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPOD_TOUCH,
+	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
+ { USB_VENDOR_APPLE, USB_PRODUCT_APPLE_IPHONE_3G,
+	ANY, { UQ_HID_IGNORE | UQ_BAD_AUDIO }},
 
  { USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_CDMA_MSM,
 	ANY, { UQ_ASSUME_CM_OVER_DATA }},

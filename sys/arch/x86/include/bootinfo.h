@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.13 2008/05/02 15:26:39 ad Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.13.6.1 2008/10/19 22:16:07 haad Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -200,6 +200,8 @@ struct bootinfo {
 	 * offset as specified by the previous entry. */
 	uint8_t		bi_data[BOOTINFO_MAXSIZE - sizeof(uint32_t)];
 };
+
+extern struct bootinfo bootinfo;
 
 void *lookup_bootinfo(int);
 #endif /* _LOCORE */

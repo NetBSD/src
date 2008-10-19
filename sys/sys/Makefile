@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.109 2008/06/04 14:31:15 ad Exp $
+#	$NetBSD: Makefile,v 1.109.4.1 2008/10/19 22:18:09 haad Exp $
 
 .include <bsd.sys.mk>
 
@@ -19,12 +19,13 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h atomic.h audioio.h \
 	joystick.h \
 	kcore.h kgdb.h kmem.h ksem.h ksyms.h ktrace.h \
 	lkm.h localedef.h lock.h lockf.h lwp.h lwpctl.h \
-	malloc.h mallocvar.h mbuf.h md4.h \
-	md5.h midiio.h mman.h module.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
+	malloc.h mallocvar.h mbuf.h md4.h md5.h midiio.h \
+	mman.h module.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \
 	param.h pipe.h pmc.h poll.h pool.h power.h proc.h \
 	protosw.h pset.h ptrace.h queue.h \
-	ras.h rb.h reboot.h radioio.h resource.h resourcevar.h rmd160.h rnd.h rwlock.h \
+	ras.h rb.h reboot.h radioio.h resource.h resourcevar.h rmd160.h \
+	rnd.h rwlock.h sa.h satypes.h \
 	scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h sha2.h \
 	shm.h siginfo.h signal.h signalvar.h sigtypes.h simplelock.h \
 	sleepq.h socket.h \
@@ -35,8 +36,8 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h atomic.h audioio.h \
 	timex.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h uuid.h \
-	vadvise.h verified_exec.h vmmeter.h vnode.h vnode_if.h \
-	wait.h wdog.h
+	vadvise.h verified_exec.h videoio.h vmmeter.h vnode.h vnode_if.h \
+	wait.h wapbl.h wdog.h
 
 INCSYMLINKS=\
 	sys/exec_elf.h /usr/include/elf.h \

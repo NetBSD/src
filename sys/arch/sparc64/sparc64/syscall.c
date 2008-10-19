@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.32 2008/06/26 15:17:06 nakayama Exp $ */
+/*	$NetBSD: syscall.c,v 1.32.2.1 2008/10/19 22:16:01 haad Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,12 +79,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2008/06/26 15:17:06 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32.2.1 2008/10/19 22:16:01 haad Exp $");
+
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/signal.h>
 #include <sys/ktrace.h>
 #include <sys/syscall.h>
@@ -98,9 +102,6 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2008/06/26 15:17:06 nakayama Exp $"
 #include <machine/pmap.h>
 #include <machine/frame.h>
 #include <machine/userret.h>
-
-#include <sparc/fpu/fpu_extern.h>
-#include <sparc64/sparc64/cache.h>
 
 #ifndef offsetof
 #define	offsetof(s, f) ((size_t)&((s *)0)->f)
@@ -304,6 +305,12 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	if ((error = getargs(p, tf, &code, &callp, &args, &s64)) != 0)
 		goto bad;
 
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
@@ -392,6 +399,12 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 #else
 	ap = &args;
 #endif
+#ifdef KERN_SA
+	if (__predict_false((l->l_savp)
+            && (l->l_savp->savp_pflags & SAVP_FLAG_DELIVERING)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
+#endif
+
 	if ((error = trace_enter(code, ap->r, callp->sy_narg)) != 0) {
 		goto out;
 	}
@@ -480,5 +493,13 @@ startlwp(void *arg)
 #endif
 	pool_put(&lwp_uc_pool, uc);
 
+	userret(l, 0, 0);
+}
+
+void
+upcallret(struct lwp *l)
+{
+
+	KERNEL_UNLOCK_LAST(l);
 	userret(l, 0, 0);
 }

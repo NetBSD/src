@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.137 2008/05/19 09:36:55 njoly Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.137.4.1 2008/10/19 22:16:13 haad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.137 2008/05/19 09:36:55 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.137.4.1 2008/10/19 22:16:13 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -283,7 +283,7 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	(void)memset(lsi = &frame.sf_si, 0, sizeof(frame.sf_si));
 	lsi->lsi_errno = native_to_linux_errno[ksi->ksi_errno];
-	lsi->lsi_code = ksi->ksi_code;
+	lsi->lsi_code = native_to_linux_si_code(ksi->ksi_code);
 	switch (lsi->lsi_signo = frame.sf_sig) {
 	case LINUX_SIGILL:
 	case LINUX_SIGFPE:
@@ -297,9 +297,6 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		lsi->lsi_pid = ksi->ksi_pid;
 		lsi->lsi_utime = ksi->ksi_utime;
 		lsi->lsi_stime = ksi->ksi_stime;
-
-		/* We use the same codes */
-		lsi->lsi_code = ksi->ksi_code;
 		/* XXX is that right? */
 		lsi->lsi_status = WEXITSTATUS(ksi->ksi_status);
 		break;
@@ -343,7 +340,7 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_eip = ((int)p->p_sigctx.ps_sigcode) +
 	    (linux_rt_sigcode - linux_sigcode);
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_eflags &= ~PSL_CLEARSIG;
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
@@ -410,7 +407,7 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)p->p_sigctx.ps_sigcode;
 	tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_eflags &= ~PSL_CLEARSIG;
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 

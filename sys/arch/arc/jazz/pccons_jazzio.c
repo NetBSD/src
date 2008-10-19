@@ -1,4 +1,4 @@
-/* $NetBSD: pccons_jazzio.c,v 1.8 2008/07/05 08:46:25 tsutsui Exp $ */
+/* $NetBSD: pccons_jazzio.c,v 1.8.2.1 2008/10/19 22:15:41 haad Exp $ */
 /* NetBSD: vga_isa.c,v 1.4 2000/08/14 20:14:51 thorpej Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons_jazzio.c,v 1.8 2008/07/05 08:46:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons_jazzio.c,v 1.8.2.1 2008/10/19 22:15:41 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ pccons_jazzio_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t crt_iot, crt_memt;
 
 	pccons_jazzio_init_tag(ja->ja_name, &crt_iot, &crt_memt);
-	jazzio_intr_establish(PCKBD_INTR, pcintr, self);
+	jazzio_intr_establish(PCKBD_INTR, pcintr, sc);
 	pccons_common_attach(sc, crt_iot, crt_memt, ja->ja_bust,
 	    &pccons_jazzio_conf);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: icpreg.h,v 1.6 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: icpreg.h,v 1.6.6.1 2008/10/19 22:16:26 haad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ struct icp_ioc_version {
 	u_int8_t	iv_lastchan;	/* last channel number */
 	u_int8_t	iv_chancount;	/* channel count */
 	u_int32_t	iv_listoffset;	/* offset of list[0] */
-} __attribute__ ((__packed__));
+} __packed;
 
 #define	ICP_IOC_NEWEST	0xffffffff
 
@@ -197,14 +197,14 @@ struct icp_ioc {
 	u_int8_t	io_type;	/* type (SCSI/FCAL) */
 	u_int8_t	io_localno;	/* local number */
 	u_int16_t	io_features;	/* channel features */
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Get raw I/O channel description */
 struct icp_rawioc {
 	u_int8_t	ri_procid;	/* processor ID */
 	u_int8_t	ri_defect;	/* defect? */
 	u_int16_t	ri_padding;
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Get SCSI channel count */
 struct icp_getch {
@@ -212,7 +212,7 @@ struct icp_getch {
 	u_int32_t	gc_drivecnt;	/* drive count */
 	u_int8_t	gc_scsiid;	/* SCSI initiator ID */
 	u_int8_t	gc_scsistate;	/* SCSI processor state */
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Cache info/config IOCTL structures */
 struct icp_cpar {
@@ -221,7 +221,7 @@ struct icp_cpar {
 	u_int16_t	cp_strategy;	/* cache strategy */
 	u_int16_t	cp_write_back;	/* write back (on/off) */
 	u_int16_t	cp_block_size;	/* cache block size */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct icp_cstat {
 	u_int32_t	cs_size;	/* cache size */
@@ -230,7 +230,7 @@ struct icp_cstat {
 	u_int32_t	cs_trhits;	/* track hits */
 	u_int32_t	cs_sechits;	/* sector hits */
 	u_int32_t	cs_secmiss;	/* sector misses */
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Board information. */
 struct icp_binfo {
@@ -259,7 +259,7 @@ struct icp_binfo {
 	u_int8_t	bi_subtype_valid;	/* board_subtype valid */
 	u_int8_t	bi_board_subtype;	/* subtype/hardware level */
 	u_int8_t	bi_rampar_pres;		/* RAM parity check hw? */
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Board features. */
 struct icp_bfeat {
@@ -267,7 +267,7 @@ struct icp_bfeat {
 	u_int8_t	bf_striping;	/* striping (RAID-0) supported */
 	u_int8_t	bf_mirroring;	/* mirroring (RAID-1) supported */
 	u_int8_t	bf_raid;	/* RAID-4/5/10 supported */
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Cache drive information. */
 struct icp_cdevinfo {
@@ -287,12 +287,12 @@ struct icp_cdevinfo {
 	u_int32_t	ld_last_error;
 	char		ld_name[8];
 	u_int8_t	ld_error;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct icp_sg {
 	u_int32_t	sg_addr;
 	u_int32_t	sg_len;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct icp_cachecmd {
 	u_int16_t	cc_deviceno;
@@ -301,19 +301,19 @@ struct icp_cachecmd {
 	u_int32_t	cc_addr;		/* ~0 == s/g */
 	u_int32_t	cc_nsgent;
 	struct icp_sg	cc_sg[ICP_MAXSG];
-} __attribute__ ((__packed__));
+} __packed;
 
 struct icp_ioctlcmd {
 	u_int16_t	ic_bufsize;
 	u_int32_t	ic_subfunc;
 	u_int32_t	ic_channel;
 	u_int32_t	ic_addr;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct icp_screencmd {
 	u_int32_t	sc_msghandle;
 	u_int32_t	sc_msgaddr;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct icp_rawcmd {
 	u_int16_t	rc_padding0;		/* unused */
@@ -333,13 +333,13 @@ struct icp_rawcmd {
 	u_int32_t	rc_padding1;		/* unused */
 	u_int32_t	rc_nsgent;		/* s/g element count */
 	struct icp_sg	rc_sg[ICP_MAXSG];	/* s/g list */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct icp_cmdhdr {
 	u_int32_t	cmd_boardnode;		/* always 0 */
 	u_int32_t	cmd_cmdindex;		/* command identifier */
 	u_int16_t	cmd_opcode;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct icp_cmd {
 	u_int32_t	cmd_boardnode;		/* always 0 */
@@ -352,6 +352,6 @@ struct icp_cmd {
 		struct icp_ioctlcmd	ic;
 		struct icp_cachecmd	cc;
 	} cmd_packet;
-} __attribute__ ((__packed__));
+} __packed;
 
 #endif	/* !_IC_ICPREG_H_ */

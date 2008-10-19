@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.34 2008/05/16 02:41:50 macallan Exp $	*/
+/*	$NetBSD: awacs.c,v 1.34.4.1 2008/10/19 22:15:51 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.34 2008/05/16 02:41:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awacs.c,v 1.34.4.1 2008/10/19 22:15:51 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -85,6 +85,7 @@ struct awacs_softc {
 	lwp_t *sc_thread;
 	int sc_event;
 	int sc_output_wanted;
+	int sc_need_parallel_output;
 #if NSGSMIX > 0
 	device_t sc_sgsmix;
 #endif
@@ -283,6 +284,12 @@ static const char *detect_reversed[] = {"AAPL,3400/2400",
 static const char *use_gpio4[] = {	"PowerMac3,3",
 					NULL};
 
+/*
+ * list of machines that do not require AWACS_PARALLEL_OUTPUT
+ */
+static const char *no_parallel_output[] = {	"PowerBook3,1",
+						NULL};
+
 static int
 awacs_match(device_t parent, struct cfdata *match, void *aux)
 {
@@ -414,7 +421,7 @@ awacs_attach(device_t parent, device_t self, void *aux)
 	awacs_write_codec(sc, sc->sc_codecctl0);
 
 	/* Set loopthrough for external mixer on beige G3 */
-	sc->sc_codecctl1 |= (AWACS_LOOP_THROUGH | AWACS_PARALLEL_OUTPUT);
+	sc->sc_codecctl1 |= AWACS_LOOP_THROUGH;
 
         printf("%s: ", device_xname(sc->sc_dev));
 
@@ -451,6 +458,14 @@ awacs_attach(device_t parent, device_t self, void *aux)
 		sc->sc_headphones_mask = 0x8;
 		sc->sc_headphones_in = 0x8;
 	}
+
+	if (of_compatible(root_node, no_parallel_output) != -1)
+		sc->sc_need_parallel_output = 0;
+	else {
+		sc->sc_need_parallel_output = 1;
+		sc->sc_codecctl1 |= AWACS_PARALLEL_OUTPUT;
+	}
+
 	if (awacs_check_headphones(sc)) {
 
                 /* default output to headphones */
@@ -483,7 +498,9 @@ awacs_attach(device_t parent, device_t self, void *aux)
 	/* Enable interrupts and looping mode. */
 	/* XXX ... */
 
-	sc->sc_codecctl1 |= (AWACS_LOOP_THROUGH | AWACS_PARALLEL_OUTPUT);
+	sc->sc_codecctl1 |= AWACS_LOOP_THROUGH;
+	if (sc->sc_need_parallel_output)
+		sc->sc_codecctl1 |= AWACS_PARALLEL_OUTPUT;
 	awacs_write_codec(sc, sc->sc_codecctl1);
 
 #if NSGSMIX > 0

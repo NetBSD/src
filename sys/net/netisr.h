@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.37 2007/12/03 15:34:33 ad Exp $ */
+/* $NetBSD: netisr.h,v 1.37.24.1 2008/10/19 22:17:41 haad Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -112,6 +112,7 @@
 #define	NETISR_ISDN	26		/* same as AF_E164 */
 #define	NETISR_NATM	27		/* same as AF_NATM */
 #define	NETISR_ARP	28		/* same as AF_ARP */
+#define	NETISR_MAX	AF_MAX
 
 #if !defined(_LOCORE) && defined(_KERNEL)
 /* XXX Legacy netisr support. */

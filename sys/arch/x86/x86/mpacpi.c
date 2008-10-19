@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.66 2008/07/03 14:02:25 drochner Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.66.2.1 2008/10/19 22:16:08 haad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.66 2008/07/03 14:02:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.66.2.1 2008/10/19 22:16:08 haad Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -750,6 +750,12 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 			break;
 		dev = ACPI_HIWORD(ptrp->Address);
 
+		if (ptrp->Source[0] == 0 &&
+		    (ptrp->SourceIndex == 14 || ptrp->SourceIndex == 15)) {
+			printf("Skipping PCI routing entry for PCI IDE compat IRQ");
+			continue;
+		}
+
 		mpi = &mp_intrs[mpacpi_intr_index];
 		mpi->bus_pin = (dev << 2) | (ptrp->Pin & 3);
 		mpi->bus = mpb;
@@ -1145,7 +1151,7 @@ mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 	mpb->mb_pci_chipset_tag = pba->pba_pc;
 
 	if (mp_verbose)
-		printf("%s: added to list as bus %d\n", device_xname(parent),
+		printf("\n%s: added to list as bus %d", device_xname(parent),
 		    pba->pba_bus);
 
 

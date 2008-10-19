@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.175 2008/04/24 15:35:31 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.175.8.1 2008/10/19 22:17:59 haad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.175 2008/04/24 15:35:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.175.8.1 2008/10/19 22:17:59 haad Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -921,7 +921,7 @@ nfs_doio_write(struct buf *bp, struct uio *uiop)
 	int iomode;
 	bool stalewriteverf = false;
 	int i, npages = (bp->b_bcount + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	struct vm_page *pgs[npages];
+	struct vm_page **pgs, *spgs[64];
 #ifndef NFS_V2_ONLY
 	bool needcommit = true; /* need only COMMIT RPC */
 #else
@@ -931,6 +931,14 @@ nfs_doio_write(struct buf *bp, struct uio *uiop)
 	struct uvm_object *uobj = &vp->v_uobj;
 	int error;
 	off_t off, cnt;
+
+	if (npages < __arraycount(spgs))
+		pgs = spgs;
+	else {
+		if ((pgs = kmem_alloc(sizeof(*pgs) * npages, KM_NOSLEEP)) ==
+		    NULL)
+			return ENOMEM;
+	}
 
 	if ((bp->b_flags & B_ASYNC) != 0 && NFS_ISV3(vp)) {
 		iomode = NFSV3WRITE_UNSTABLE;
@@ -1046,7 +1054,7 @@ again:
 			bp->b_error = np->n_error = error;
 			np->n_flag |= NWRITEERR;
 		}
-		return error;
+		goto out;
 	}
 #endif
 	off = uiop->uio_offset;
@@ -1112,9 +1120,15 @@ again:
 
 	rw_exit(&nmp->nm_writeverflock);
 
+
 	if (stalewriteverf) {
 		nfs_clearcommit(vp->v_mount);
 	}
+#ifndef NFS_V2_ONLY
+out:
+#endif
+	if (pgs != spgs)
+		kmem_free(pgs, sizeof(*pgs) * npages);
 	return error;
 }
 
@@ -1210,7 +1224,7 @@ nfs_getpages(void *v)
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct nfsnode *np = VTONFS(vp);
 	const int npages = *ap->a_count;
-	struct vm_page *pg, **pgs, *opgs[npages];
+	struct vm_page *pg, **pgs, **opgs, *spgs[64];
 	off_t origoffset, len;
 	int i, error;
 	bool v3 = NFS_ISV3(vp);
@@ -1218,10 +1232,21 @@ nfs_getpages(void *v)
 	bool locked = (ap->a_flags & PGO_LOCKED) != 0;
 
 	/*
+	 * If we are not locked we are not really using opgs,
+	 * so just initialize it
+	 */
+	if (!locked || npages < __arraycount(spgs))
+		opgs = spgs;
+	else {
+		if ((opgs = kmem_alloc(npages * sizeof(*opgs), KM_NOSLEEP)) ==
+		    NULL)
+			return ENOMEM;
+	}
+
+	/*
 	 * call the genfs code to get the pages.  `pgs' may be NULL
 	 * when doing read-ahead.
 	 */
-
 	pgs = ap->a_m;
 	if (write && locked && v3) {
 		KASSERT(pgs != NULL);
@@ -1238,9 +1263,8 @@ nfs_getpages(void *v)
 		memcpy(opgs, pgs, npages * sizeof(struct vm_pages *));
 	}
 	error = genfs_getpages(v);
-	if (error) {
-		return (error);
-	}
+	if (error)
+		goto out;
 
 	/*
 	 * for read faults where the nfs node is not yet marked NMODIFIED,
@@ -1264,9 +1288,8 @@ nfs_getpages(void *v)
 			mutex_exit(&uobj->vmobjlock);
 		}
 	}
-	if (!write) {
-		return (0);
-	}
+	if (!write)
+		goto out;
 
 	/*
 	 * this is a write fault, update the commit info.
@@ -1294,7 +1317,8 @@ nfs_getpages(void *v)
 				*ap->a_count = 0;
 				memcpy(pgs, opgs,
 				    npages * sizeof(struct vm_pages *));
-				return EBUSY;
+				error = EBUSY;
+				goto out;
 			}
 		}
 		nfs_del_committed_range(vp, origoffset, len);
@@ -1317,5 +1341,8 @@ nfs_getpages(void *v)
 	if (v3) {
 		mutex_exit(&np->n_commitlock);
 	}
-	return (0);
+out:
+	if (opgs != spgs)
+		kmem_free(opgs, sizeof(*opgs) * npages);
+	return error;
 }

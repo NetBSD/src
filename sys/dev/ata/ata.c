@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.99 2008/06/12 21:46:35 cegger Exp $	*/
+/*	$NetBSD: ata.c,v 1.99.2.1 2008/10/19 22:16:19 haad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.99 2008/06/12 21:46:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.99.2.1 2008/10/19 22:16:19 haad Exp $");
 
 #include "opt_ata.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.99 2008/06/12 21:46:35 cegger Exp $");
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/pool.h>
 #include <sys/kthread.h>
 #include <sys/errno.h>
@@ -89,6 +90,9 @@ struct atabus_initq_head atabus_initq_head =
     TAILQ_HEAD_INITIALIZER(atabus_initq_head);
 struct simplelock atabus_interlock = SIMPLELOCK_INITIALIZER;
 
+/* kernel thread probing devices on a atabus. Only one probing at once */
+struct lwp *atabus_configlwp;
+
 /*****************************************************************************
  * ATA bus layer.
  *
@@ -110,6 +114,7 @@ extern struct cfdriver atabus_cd;
 static void atabus_childdetached(device_t, device_t);
 static bool atabus_resume(device_t PMF_FN_PROTO);
 static bool atabus_suspend(device_t PMF_FN_PROTO);
+static void atabusconfig_thread(void *);
 
 /*
  * atabusprint:
@@ -174,8 +179,8 @@ atabusconfig(struct atabus_softc *atabus_sc)
 {
 	struct ata_channel *chp = atabus_sc->sc_chan;
 	struct atac_softc *atac = chp->ch_atac;
-	int i, s;
 	struct atabus_initq *atabus_initq = NULL;
+	int i, error;
 
 	/* Probe for the drives. */
 	/* XXX for SATA devices we will power up all drives at once */
@@ -184,17 +189,6 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	ATADEBUG_PRINT(("atabusattach: ch_drive_flags 0x%x 0x%x\n",
 	    chp->ch_drive[0].drive_flags, chp->ch_drive[1].drive_flags),
 	    DEBUG_PROBE);
-
-	/* If no drives, abort here */
-	for (i = 0; i < chp->ch_ndrive; i++)
-		if ((chp->ch_drive[i].drive_flags & DRIVE) != 0)
-			break;
-	if (i == chp->ch_ndrive)
-		goto out;
-
-	/* Shortcut in case we've been shutdown */
-	if (chp->ch_flags & ATACH_SHUTDOWN)
-		goto out;
 
 	/* Make sure the devices probe in atabus order to avoid jitter. */
 	simple_lock(&atabus_interlock);
@@ -207,6 +201,55 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	}
 	simple_unlock(&atabus_interlock);
 
+	/* If no drives, abort here */
+	for (i = 0; i < chp->ch_ndrive; i++)
+		if ((chp->ch_drive[i].drive_flags & DRIVE) != 0)
+			break;
+	if (i == chp->ch_ndrive)
+		goto out;
+
+	/* Shortcut in case we've been shutdown */
+	if (chp->ch_flags & ATACH_SHUTDOWN)
+		goto out;
+
+
+	if ((error = kthread_create(PRI_NONE, 0, NULL, atabusconfig_thread,
+	    atabus_sc, &atabus_configlwp,
+	    "%scnf", device_xname(atac->atac_dev))) != 0)
+		aprint_error_dev(atac->atac_dev,
+		    "unable to create config thread: error %d\n", error);
+	return;
+
+ out:
+	simple_lock(&atabus_interlock);
+	TAILQ_REMOVE(&atabus_initq_head, atabus_initq, atabus_initq);
+	simple_unlock(&atabus_interlock);
+
+	free(atabus_initq, M_DEVBUF);
+	wakeup(&atabus_initq_head);
+
+	ata_delref(chp);
+
+	config_pending_decr();
+}
+
+/*
+ * atabus_configthread: finish attach of atabus's childrens, in a separate
+ * kernel thread.
+ */
+static void
+atabusconfig_thread(void *arg)
+{
+	struct atabus_softc *atabus_sc = arg;
+	struct ata_channel *chp = atabus_sc->sc_chan;
+	struct atac_softc *atac = chp->ch_atac;
+	int i, s;
+	struct atabus_initq *atabus_initq = NULL;
+
+	simple_lock(&atabus_interlock);
+	atabus_initq = TAILQ_FIRST(&atabus_initq_head);
+	simple_unlock(&atabus_interlock);
+	KASSERT(atabus_initq->atabus_sc == atabus_sc);
 	/*
 	 * Attach an ATAPI bus, if needed.
 	 */
@@ -278,18 +321,6 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	}
 	splx(s);
 
- out:
-	if (atabus_initq == NULL) {
-		simple_lock(&atabus_interlock);
-		while(1) {
-			atabus_initq = TAILQ_FIRST(&atabus_initq_head);
-			if (atabus_initq->atabus_sc == atabus_sc)
-				break;
-			ltsleep(&atabus_initq_head, PRIBIO, "ata_initq", 0,
-			    &atabus_interlock);
-		}
-		simple_unlock(&atabus_interlock);
-	}
 	simple_lock(&atabus_interlock);
 	TAILQ_REMOVE(&atabus_initq_head, atabus_initq, atabus_initq);
 	simple_unlock(&atabus_interlock);
@@ -300,6 +331,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 	ata_delref(chp);
 
 	config_pending_decr();
+	kthread_exit(0);
 }
 
 /*
@@ -316,8 +348,6 @@ atabus_thread(void *arg)
 	int i, s;
 
 	s = splbio();
-	chp->ch_flags |= ATACH_TH_RUN;
-
 	/*
 	 * Probe the drives.  Reset all flags to 0 to indicate to controllers
 	 * that can re-probe that all drives must be probed..
@@ -336,9 +366,7 @@ atabus_thread(void *arg)
 		if ((chp->ch_flags & (ATACH_TH_RESET | ATACH_SHUTDOWN)) == 0 &&
 		    (chp->ch_queue->active_xfer == NULL ||
 		     chp->ch_queue->queue_freeze == 0)) {
-			chp->ch_flags &= ~ATACH_TH_RUN;
 			(void) tsleep(&chp->ch_thread, PRIBIO, "atath", 0);
-			chp->ch_flags |= ATACH_TH_RUN;
 		}
 		if (chp->ch_flags & ATACH_SHUTDOWN) {
 			break;
@@ -981,6 +1009,8 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	 * If we can poll or wait it's OK, otherwise wake up the
 	 * kernel thread to do it for us.
 	 */
+	ATADEBUG_PRINT(("ata_reset_channel flags 0x%x ch_flags 0x%x\n",
+	    flags, chp->ch_flags), DEBUG_FUNCS | DEBUG_XFERS);
 	if ((flags & (AT_POLL | AT_WAIT)) == 0) {
 		if (chp->ch_flags & ATACH_TH_RESET) {
 			/* No need to schedule a reset more than one time. */

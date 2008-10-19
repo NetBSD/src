@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.30 2008/04/28 20:23:58 martin Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.30.6.1 2008/10/19 22:17:04 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #endif
 
 struct sd_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct disk sc_dk;
 
 	int flags;

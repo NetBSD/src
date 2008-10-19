@@ -1,4 +1,4 @@
-/*      $NetBSD: psl.h,v 1.10 2005/12/11 12:19:34 christos Exp $      */
+/*      $NetBSD: psl.h,v 1.10.84.1 2008/10/19 22:16:06 haad Exp $      */
 
 /*
  * Rewritten for the VAX port. Based on Berkeley code. /IC
@@ -44,6 +44,9 @@
 #define	PSL_Z		0x00000004     	/* zero bit */
 #define	PSL_N		0x00000008     	/* negative bit */
 #define	PSL_T		0x00000010      /* trace enable bit */
+#define	PSL_IV		0x00000020	/* integer overflow */
+#define	PSL_FU		0x00000040	/* floating underflow */
+#define	PSL_DV		0x00000080	/* decimal overflow */
 #define	PSL_IPL00	0x00000000	/* interrupt priority level 0 */
 #define	PSL_IPL01	0x00010000	/* interrupt priority level 1 */
 #define	PSL_IPL02	0x00020000	/* interrupt priority level 2 */

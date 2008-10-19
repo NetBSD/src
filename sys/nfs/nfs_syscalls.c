@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.137 2008/06/24 11:18:14 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.137.2.1 2008/10/19 22:17:59 haad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.137 2008/06/24 11:18:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.137.2.1 2008/10/19 22:17:59 haad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -318,13 +318,19 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 					nuidp->nu_inetaddr =
 					     saddr->sin_addr.s_addr;
 					break;
+#ifdef INET6
+				    case AF_INET6:
+#endif
+#ifdef ISO
 				    case AF_ISO:
-				    default:
+#endif
 					nuidp->nu_flag |= NU_NAM;
 					nuidp->nu_nam = m_copym(
 					    nfsd->nfsd_nd->nd_nam2, 0,
 					     M_COPYALL, M_WAIT);
 					break;
+				    default:
+					return EAFNOSUPPORT;
 				    };
 				}
 				TAILQ_INSERT_TAIL(&slp->ns_uidlruhead, nuidp,
@@ -392,12 +398,12 @@ nfssvc_addsock(fp, mynam)
 	file_t *fp;
 	struct mbuf *mynam;
 {
-	struct mbuf *m;
 	int siz;
 	struct nfssvc_sock *slp;
 	struct socket *so;
 	struct nfssvc_sock *tslp;
 	int error;
+	int val;
 
 	so = (struct socket *)fp->f_data;
 	tslp = (struct nfssvc_sock *)0;
@@ -442,11 +448,9 @@ nfssvc_addsock(fp, mynam)
 	 * repeatedly for the same socket, but that isn't harmful.
 	 */
 	if (so->so_type == SOCK_STREAM) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		MCLAIM(m, &nfs_mowner);
-		*mtod(m, int32_t *) = 1;
-		m->m_len = sizeof(int32_t);
-		sosetopt(so, SOL_SOCKET, SO_KEEPALIVE, m);
+		val = 1;
+		so_setsockopt(NULL, so, SOL_SOCKET, SO_KEEPALIVE, &val,
+		    sizeof(val));
 	}
 	if ((so->so_proto->pr_domain->dom_family == AF_INET
 #ifdef INET6
@@ -454,11 +458,9 @@ nfssvc_addsock(fp, mynam)
 #endif
 	    ) &&
 	    so->so_proto->pr_protocol == IPPROTO_TCP) {
-		m = m_get(M_WAIT, MT_SOOPTS);
-		MCLAIM(m, &nfs_mowner);
-		*mtod(m, int32_t *) = 1;
-		m->m_len = sizeof(int32_t);
-		sosetopt(so, IPPROTO_TCP, TCP_NODELAY, m);
+		val = 1;
+		so_setsockopt(NULL, so, IPPROTO_TCP, TCP_NODELAY, &val,
+		    sizeof(val));
 	}
 	solock(so);
 	so->so_rcv.sb_flags &= ~SB_NOINTR;
@@ -689,8 +691,6 @@ nfssvc_nfsd(nsd, argp, l)
 					if (nd != NULL) {
 						if (nd->nd_nam2)
 							m_free(nd->nd_nam2);
-						if (nd->nd_mrep)
-							m_freem(nd->nd_mrep);
 					}
 					break;
 				}

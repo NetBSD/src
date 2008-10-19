@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.272 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.272.6.1 2008/10/19 22:17:46 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.272 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.272.6.1 2008/10/19 22:17:46 haad Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -330,10 +330,8 @@ do {									\
 
 #define	IPQ_UNLOCK()		ipq_unlock()
 
-POOL_INIT(inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl", NULL,
-    IPL_SOFTNET);
-POOL_INIT(ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl", NULL,
-    IPL_VM);
+struct pool inmulti_pool;
+struct pool ipqent_pool;
 
 #ifdef INET_CSUM_COUNTERS
 #include <sys/device.h>
@@ -398,6 +396,11 @@ ip_init(void)
 {
 	const struct protosw *pr;
 	int i;
+
+	pool_init(&inmulti_pool, sizeof(struct in_multi), 0, 0, 0, "inmltpl",
+	    NULL, IPL_SOFTNET);
+	pool_init(&ipqent_pool, sizeof(struct ipqent), 0, 0, 0, "ipqepl",
+	    NULL, IPL_VM);
 
 	pr = pffindproto(PF_INET, IPPROTO_RAW, SOCK_RAW);
 	if (pr == 0)
@@ -1967,9 +1970,11 @@ ip_forward(struct mbuf *m, int srcrt)
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
 
-		if ((rt = rtcache_validate(&ipforward_rt)) != NULL) {
+		if ((rt = rtcache_validate(&ipforward_rt)) != NULL)
+			destmtu = rt->rt_ifp->if_mtu;
 
 #if defined(IPSEC) || defined(FAST_IPSEC)
+		{
 			/*
 			 * If the packet is routed over IPsec tunnel, tell the
 			 * originator the tunnel MTU.
@@ -1985,10 +1990,7 @@ ip_forward(struct mbuf *m, int srcrt)
 			sp = ipsec4_getpolicybyaddr(mcopy,
 			    IPSEC_DIR_OUTBOUND, IP_FORWARDING,
 			    &ipsecerror);
-#endif
 
-			destmtu = rt->rt_ifp->if_mtu;
-#if defined(IPSEC) || defined(FAST_IPSEC)
 			if (sp != NULL) {
 				/* count IPsec header size */
 				ipsechdr = ipsec4_hdrsiz(mcopy,
@@ -2003,6 +2005,7 @@ ip_forward(struct mbuf *m, int srcrt)
 				 && sp->req->sav != NULL
 				 && sp->req->sav->sah != NULL) {
 					ro = &sp->req->sav->sah->sa_route;
+					rt = rtcache_validate(ro);
 					if (rt && rt->rt_ifp) {
 						destmtu =
 						    rt->rt_rmx.rmx_mtu ?
@@ -2018,8 +2021,8 @@ ip_forward(struct mbuf *m, int srcrt)
 				KEY_FREESP(&sp);
 #endif
 			}
-#endif /*defined(IPSEC) || defined(FAST_IPSEC)*/
 		}
+#endif /*defined(IPSEC) || defined(FAST_IPSEC)*/
 		IP_STATINC(IP_STAT_CANTFRAG);
 		break;
 
@@ -2143,8 +2146,12 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 	if (tmp < 0)
 		return (EINVAL);
 
+	mutex_enter(softnet_lock);
+
 	ip_mtudisc_timeout = tmp;
 	rt_timer_queue_change(ip_mtudisc_timeout_q, ip_mtudisc_timeout);
+
+	mutex_exit(softnet_lock);
 
 	return (0);
 }
@@ -2156,15 +2163,19 @@ sysctl_net_inet_ip_pmtudto(SYSCTLFN_ARGS)
 static int
 sysctl_net_inet_ip_maxflows(SYSCTLFN_ARGS)
 {
-	int s;
+	int error;
 
-	s = sysctl_lookup(SYSCTLFN_CALL(rnode));
-	if (s || newp == NULL)
-		return (s);
+	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
+	if (error || newp == NULL)
+		return (error);
 
-	s = splsoftnet();
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	ipflow_prune();
-	splx(s);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 
 	return (0);
 }
@@ -2186,16 +2197,22 @@ sysctl_net_inet_ip_hashsize(SYSCTLFN_ARGS)
 		/*
 		 * Can only fail due to malloc()
 		 */
-		if (ipflow_invalidate_all(tmp))
-			return ENOMEM;
+		mutex_enter(softnet_lock);
+		KERNEL_LOCK(1, NULL);
+
+		error = ipflow_invalidate_all(tmp);
+
+		KERNEL_UNLOCK_ONE(NULL);
+		mutex_exit(softnet_lock);
+
 	} else {
 		/*
 		 * EINVAL if not a power of 2
 	         */
-		return EINVAL;
+		error = EINVAL;
 	}	
 
-	return (0);
+	return error;
 }
 #endif /* GATEWAY */
 

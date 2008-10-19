@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.8 2008/05/31 20:14:38 ad Exp $	*/
+/*	$NetBSD: module.h,v 1.8.4.1 2008/10/19 22:18:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ void	module_init_md(void);
 void	module_init_class(modclass_t);
 int	module_prime(void *, size_t);
 
+bool	module_compatible(int, int);
 int	module_load(const char *, int, prop_dictionary_t, modclass_t, bool);
 int	module_unload(const char *);
 int	module_hold(const char *);

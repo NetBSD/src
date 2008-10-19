@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.h,v 1.5 2006/10/12 19:59:08 peter Exp $	*/
+/*	$NetBSD: altq_wfq.h,v 1.5.58.1 2008/10/19 22:15:38 haad Exp $	*/
 /*	$KAME: altq_wfq.h,v 1.8 2003/07/10 12:07:49 kjc Exp $	*/
 
 /*
@@ -80,6 +80,7 @@ struct wfq_conf {
 #define	WFQ_HASH_DSTADDR	0	/* hash by dst address */
 #define	WFQ_HASH_SRCPORT	1	/* hash by src port */
 #define	WFQ_HASH_FULL		2	/* hash by all fields */
+#define	WFQ_HASH_SRCADDR	3	/* hash by src address */
 
 #define	WFQ_IF_ATTACH		_IOW('Q', 1, struct wfq_interface)
 #define	WFQ_IF_DETACH		_IOW('Q', 2, struct wfq_interface)

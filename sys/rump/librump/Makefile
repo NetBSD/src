@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2007/08/05 22:28:07 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.40.1 2008/10/19 22:18:06 haad Exp $
 #
 
-SUBDIR= rumpuser .WAIT rumpkern
+SUBDIR= rumpuser .WAIT rumpkern rumpnet
 
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.11 2008/03/20 16:15:57 cube Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.11.10.1 2008/10/19 22:16:37 haad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.11 2008/03/20 16:15:57 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.11.10.1 2008/10/19 22:16:37 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -49,6 +49,15 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.11 2008/03/20 16:15:57 cube Exp $
 #include <dev/pci/pciidevar.h>
 #include <dev/ic/ahcisatavar.h>
 
+#define AHCI_PCI_QUIRK_FORCE	1	/* force attach */
+
+static const struct pci_quirkdata ahci_pci_quirks[] = {
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA,
+	    AHCI_PCI_QUIRK_FORCE },
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA,
+	    AHCI_PCI_QUIRK_FORCE },
+};
+
 struct ahci_pci_softc {
 	struct ahci_softc ah_sc;
 	pci_chipset_tag_t sc_pc;
@@ -58,6 +67,8 @@ struct ahci_pci_softc {
 
 static int  ahci_pci_match(device_t, cfdata_t, void *);
 static void ahci_pci_attach(device_t, device_t, void *);
+const struct pci_quirkdata *ahci_pci_lookup_quirkdata(pci_vendor_id_t,
+						      pci_product_id_t);
 static bool ahci_pci_resume(device_t PMF_FN_PROTO);
 
 
@@ -72,25 +83,31 @@ ahci_pci_match(device_t parent, cfdata_t match, void *aux)
 	bus_space_handle_t regh;
 	bus_size_t size;
 	int ret = 0;
+	const struct pci_quirkdata *quirks;
 
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
-	    ((PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
+	quirks = ahci_pci_lookup_quirkdata(PCI_VENDOR(pa->pa_id),
+					   PCI_PRODUCT(pa->pa_id));
+
+	/* if wrong class and not forced by quirks, don't match */
+	if ((PCI_CLASS(pa->pa_class) != PCI_CLASS_MASS_STORAGE ||
+	    ((PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_MASS_STORAGE_SATA ||
+	     PCI_INTERFACE(pa->pa_class) != PCI_INTERFACE_SATA_AHCI) &&
+	     PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_MASS_STORAGE_RAID)) &&
+	    (quirks == NULL || (quirks->quirks & AHCI_PCI_QUIRK_FORCE) == 0))
+		return 0;
+
+	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+	    &regt, &regh, NULL, &size) != 0)
+		return 0;
+
+	if ((PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
 	     PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_SATA_AHCI) ||
-	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)) {
-		/* check if the chip is in ahci mode */
-		if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
-		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
-		    &regt, &regh, NULL, &size) != 0)
-			return 0;
-		if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA
-		    && PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_SATA_AHCI)
-			ret = 3;
-		else if (bus_space_read_4(regt, regh, AHCI_GHC) & AHCI_GHC_AE)
-			ret = 3;
-		bus_space_unmap(regt, regh, size);
-		return ret;
-	}
+	    (quirks && quirks->quirks & AHCI_PCI_QUIRK_FORCE) ||
+	    (bus_space_read_4(regt, regh, AHCI_GHC) & AHCI_GHC_AE))
+		ret = 3;
 
+	bus_space_unmap(regt, regh, size);
 	return ret;
 }
 
@@ -163,4 +180,17 @@ ahci_pci_resume(device_t dv PMF_FN_ARGS)
 	splx(s);
 
 	return true;
+}
+
+const struct pci_quirkdata *
+ahci_pci_lookup_quirkdata(pci_vendor_id_t vendor, pci_product_id_t product)
+{
+	int i;
+
+	for (i = 0; i < (sizeof ahci_pci_quirks / sizeof ahci_pci_quirks[0]);
+	     i++)
+		if (vendor == ahci_pci_quirks[i].vendor &&
+		    product == ahci_pci_quirks[i].product)
+			return (&ahci_pci_quirks[i]);
+	return (NULL);
 }

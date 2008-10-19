@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.41 2008/05/26 12:08:39 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.41.4.1 2008/10/19 22:17:28 haad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.41 2008/05/26 12:08:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.41.4.1 2008/10/19 22:17:28 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.41 2008/05/26 12:08:39 ad Exp $");
 #include <sys/lwpctl.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "opt_sa.h"
 
 #define	LWP_UNPARK_MAX		1024
 
@@ -83,6 +85,15 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_
 	bool inmem;
 	ucontext_t *newuc;
 	int error, lid;
+
+#ifdef KERN_SA
+	mutex_enter(p->p_lock);
+	if ((p->p_sflag & (PS_SA | PS_WEXIT)) != 0 || p->p_sa != NULL) {
+		mutex_exit(p->p_lock);
+		return EINVAL;
+	}
+	mutex_exit(p->p_lock);
+#endif
 
 	newuc = pool_get(&lwp_uc_pool, PR_WAITOK);
 
@@ -189,6 +200,14 @@ sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap, registe
 	int error;
 
 	mutex_enter(p->p_lock);
+
+#ifdef KERN_SA
+	if ((p->p_sflag & PS_SA) != 0 || p->p_sa != NULL) {
+		mutex_exit(p->p_lock);
+		return EINVAL;
+	}
+#endif
+
 	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
 		mutex_exit(p->p_lock);
 		return ESRCH;
@@ -360,7 +379,7 @@ sys__lwp_kill(struct lwp *l, const struct sys__lwp_kill_args *uap, register_t *r
 
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
-	ksi.ksi_code = SI_USER;
+	ksi.ksi_code = SI_LWP;
 	ksi.ksi_pid = p->p_pid;
 	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
 	ksi.ksi_lid = SCARG(uap, target);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.6 2008/01/27 19:07:21 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.6.16.1 2008/10/19 22:18:06 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -33,8 +33,9 @@
 #include <sys/queue.h>
 #include <sys/simplelock.h>
 
+#include <rump/rumpuser.h>
+
 #include "rump_private.h"
-#include "rumpuser.h"
 
 struct ltsleeper {
 	wchan_t id;
@@ -54,6 +55,9 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	struct ltsleeper lts;
 	int iplrecurse;
 
+	if (__predict_false(slock))
+		panic("simplelock not supported by rump, convert code");
+
 	lts.id = ident;
 	cv_init(&lts.cv, NULL);
 
@@ -66,8 +70,6 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 		rumpuser_rw_exit(&rumpspl);
 
 	/* protected by sleepermtx */
-	if (slock)
-		simple_unlock(slock);
 	cv_wait(&lts.cv, &sleepermtx);
 
 	/* retake ipl */
@@ -79,9 +81,6 @@ ltsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo,
 	mutex_exit(&sleepermtx);
 
 	cv_destroy(&lts.cv);
-
-	if (slock && (prio & PNORELOCK) == 0)
-		simple_lock(slock);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.32 2008/04/05 18:21:34 tsutsui Exp $
+# $NetBSD: Makefile.boot,v 1.32.10.1 2008/10/19 22:15:49 haad Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -38,6 +38,7 @@ CPPFLAGS+= -I ${.OBJDIR}
 # Make sure we override any optimization options specified by the user
 COPTS=  -Os
 
+.if defined(HAVE_GCC)
 .if ${MACHINE} == "amd64"
 LDFLAGS+=  -Wl,-m,elf_i386
 AFLAGS+=   -m32
@@ -49,6 +50,7 @@ KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 CPUFLAGS=  -mcpu=i386
 .else
 CPUFLAGS=  -march=i386 -mtune=i386
+.endif
 .endif
 .endif
 
@@ -81,7 +83,7 @@ SAMISCCPPFLAGS+= -DHEAP_START=0x20000 -DHEAP_LIMIT=0x50000
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 SAMISCMAKEFLAGS+= SA_INCLUDE_NET=no	# Netboot via TFTP, NFS
 
-.if ${HAVE_GCC} == 4
+.if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 CPPFLAGS+=	-Wno-pointer-sign
 .endif
 
@@ -134,7 +136,7 @@ LIBLIST= ${LIBI386} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386} ${LIBSA}
 CLEANFILES+= ${PROG}.tmp ${PROG}.map vers.c
 
 vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
-	${HOST_SH} ${S}conf/newvers_stand.sh ${VERSIONFILE} x86 ${NEWVERSWHAT}
+	${HOST_SH} ${S}conf/newvers_stand.sh -DM ${VERSIONFILE} x86 ${NEWVERSWHAT}
 
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
 # We link the program, find the callers (all in libi386), then

@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.74 2008/05/11 05:20:33 mlelstv Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.74.4.1 2008/10/19 22:17:10 haad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.74 2008/05/11 05:20:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.74.4.1 2008/10/19 22:17:10 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,18 @@ Static const struct umass_quirk umass_quirks[] = {
 	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_CLIE_40_MS },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UFI,
 	  0,
+	  0,
+	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL, NULL
+	},
+
+	/*
+	 * The SONY Portable GPS strage device almost hangs up when request
+	 * UR_BBB_GET_MAX_LUN - disable the query logic.
+	 */
+	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_GPS_CS1 },
+	  UMASS_WPROTO_BBB, UMASS_CPROTO_UNSPEC,
+	  UMASS_QUIRK_NOGETMAXLUN,
 	  0,
 	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
 	  NULL, NULL

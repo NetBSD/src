@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.10 2008/06/24 15:30:33 reinoud Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.10.2.1 2008/10/19 22:17:18 haad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006, 2008 Reinoud Zandijk
@@ -303,6 +303,7 @@ struct icb_tag {
 #define UDF_ICB_FILETYPE_REALTIME	249
 #define UDF_ICB_FILETYPE_META_MAIN	250
 #define UDF_ICB_FILETYPE_META_MIRROR	251
+#define UDF_ICB_FILETYPE_META_BITMAP	252
 
 
 /* Anchor Volume Descriptor Pointer [3/10.2] */

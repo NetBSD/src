@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.34 2007/11/09 21:00:06 plunky Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.34.24.1 2008/10/19 22:17:53 haad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.34 2007/11/09 21:00:06 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.34.24.1 2008/10/19 22:17:53 haad Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -350,10 +350,11 @@ done:
 }
 
 /*
- * NAME: 	tp_ctloutput()
+ * NAME: 	tp_ctloutput1()
  *
  * CALLED FROM:
  * 	[sg]etsockopt(), via so[sg]etopt().
+ *	via tp_ctloutput() below
  *
  * FUNCTION and ARGUMENTS:
  * 	Implements the socket options at transport level.
@@ -385,8 +386,8 @@ done:
  *
  * NOTES:
  */
-int
-tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
+static int
+tp_ctloutput1(int cmd, struct socket  *so, int level, int optname,
 	struct mbuf **mp)
 {
 	struct lwp *l = curlwp;		/* XXX */
@@ -764,4 +765,41 @@ done:
 	}
 	splx(s);
 	return error;
+}
+
+/*
+ * temporary sockopt wrapper, the above needs to be worked through
+ */
+int
+tp_ctloutput(int cmd, struct socket  *so, struct sockopt *sopt)
+{
+	struct mbuf *m;
+	int err;
+
+	switch(cmd) {
+	case PRCO_SETOPT:
+		m = sockopt_getmbuf(sopt);
+		if (m == NULL) {
+			err = ENOMEM;
+			break;
+		}
+
+		err = tp_ctloutput1(cmd, so, sopt->sopt_level, sopt->sopt_name, &m);
+		break;
+
+	case PRCO_GETOPT:
+		m = NULL;
+		err = tp_ctloutput1(cmd, so, sopt->sopt_level, sopt->sopt_name, &m);
+		if (err)
+			break;
+
+		err = sockopt_setmbuf(sopt, m);
+		break;
+
+	default:
+		err = ENOPROTOOPT;
+		break;
+	}
+
+	return err;
 }

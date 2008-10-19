@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.1 2007/08/09 07:42:07 pooka Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.1.40.1 2008/10/19 22:18:06 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -52,4 +52,18 @@ pmap_clear_modify(struct vm_page *pg)
 {
 
 	return true;
+}
+
+void
+pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
+{
+
+	panic("%s: unavailable", __func__);
+}
+
+void
+pmap_kremove(vaddr_t va, vsize_t size)
+{
+
+	panic("%s: unavailable", __func__);
 }

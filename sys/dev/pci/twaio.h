@@ -1,4 +1,4 @@
-/*	$NetBSD: twaio.h,v 1.4 2006/09/23 22:16:35 manu Exp $ */
+/*	$NetBSD: twaio.h,v 1.4.58.1 2008/10/19 22:16:40 haad Exp $ */
 /*	$wasabi: twaio.h,v 1.8 2006/04/27 17:12:39 wrstuden Exp $ */
 
 /*-
@@ -51,7 +51,7 @@
 
 struct twa_scan_bus_packet {
 	uint32_t	unit;
-} __attribute__ ((packed));
+} __packed;
 
 struct tw_cl_event_packet {
 	uint32_t	sequence_id;
@@ -64,13 +64,13 @@ struct tw_cl_event_packet {
 	uint8_t		parameter_data[98];
 	uint32_t	event_src;
 	uint8_t		severity_str[20];
-} __attribute__ ((packed));
+} __packed;
 
 struct tw_cl_lock_packet {
 	uint32_t	timeout_msec;
 	uint32_t	time_remaining_msec;
 	uint32_t	force_flag;
-} __attribute__ ((packed));
+} __packed;
 
 
 struct tw_cl_compatibility_packet {
@@ -78,7 +78,7 @@ struct tw_cl_compatibility_packet {
 	uint16_t	working_srl;	/* driver & firmware negotiated srl */
 	uint16_t	working_branch;	/* branch # of the firmware that the driver is compatible with */
 	uint16_t	working_build;	/* build # of the firmware that the driver is compatible with */
-} __attribute__ ((packed));
+} __packed;
 
 
 struct twa_driver_packet {
@@ -88,7 +88,7 @@ struct twa_driver_packet {
 	uint32_t	sequence_id;
 	uint32_t	os_status;
 	uint32_t	buffer_length;
-} __attribute__ ((packed));
+} __packed;
 
 /* Account for differences between 32/64 bit system. Offsets into memory
  * are anticipated for driver/firmware command packets and having a 
@@ -103,7 +103,7 @@ struct twa_ioctl_9k {
 	int8_t				padding[488 - TW_SIZEOF_VOIDPTR];
 	struct twa_command_packet	twa_cmd_pkt;
 	int8_t				data_buf[1];
-} __attribute__ ((packed));
+} __packed;
 
 typedef struct twa_ioctl_with_payload {
 	struct twa_driver_packet	twa_drvr_pkt;
@@ -115,7 +115,7 @@ typedef struct twa_ioctl_with_payload {
 		struct tw_cl_compatibility_packet	compat_pkt;
 		int8_t					data_buf[1];
 	} payload;
-}  __attribute__ ((packed)) TWA_IOCTL_WITH_PAYLOAD;
+}  __packed TWA_IOCTL_WITH_PAYLOAD;
 
 /*
  * We need the structure below to ensure that the first byte of
@@ -130,7 +130,7 @@ typedef struct twa_ioctl_no_data_buf {
 	void				*pdata; /* points to data_buf */
 	int8_t				padding[488 - TW_SIZEOF_VOIDPTR];
 	struct twa_command_packet	twa_cmd_pkt;
-}  __attribute__ ((packed)) TWA_IOCTL_NO_DATA_BUF;
+}  __packed TWA_IOCTL_NO_DATA_BUF;
 
 
 /*

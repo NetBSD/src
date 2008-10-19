@@ -1,22 +1,17 @@
-#	$NetBSD: Makefile,v 1.2 2008/01/02 22:01:41 pooka Exp $
+#	$NetBSD: Makefile,v 1.2.22.1 2008/10/19 22:18:06 haad Exp $
 #
 
-.include <bsd.own.mk>
+.PATH:  ${.CURDIR}/../../../../fs/puffs
+.PATH:  ${.CURDIR}/../../../../dev/putter
 
-LIB=	syspuffs
-
-.PATH:  ${NETBSDSRCDIR}/sys/fs/puffs
-.PATH:  ${NETBSDSRCDIR}/sys/dev/putter
+LIB=	rumpfs_syspuffs
 
 SRCS=	puffs_msgif.c puffs_node.c puffs_subr.c puffs_vfsops.c puffs_vnops.c
 SRCS+=	putter.c
 
 SRCS+=	puffs_rumpglue.c
 
-CPPFLAGS+= -I${NETBSDSRCDIR}/sys/rump/librump/rumpkern -I${LIBRUMPDIR}
-CPPFLAGS+= -I${NETBSDSRCDIR}/sys/rump/librump/rumpuser
 CPPFLAGS+= -DPUFFSDEBUG -DPUTTERDEBUG
 
-.include "${NETBSDSRCDIR}/sys/rump/Makefile.rump"
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

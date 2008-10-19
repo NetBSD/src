@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_com.c,v 1.2 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: obio_com.c,v 1.2.6.1 2008/10/19 22:15:42 haad Exp $	*/
 
 /*
  * Based on arch/arm/omap/omap_com.c
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.2 2008/04/27 18:58:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.2.6.1 2008/10/19 22:15:42 haad Exp $");
 
 #include "opt_omap.h"
 #include "opt_com.h"
@@ -55,8 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: obio_com.c,v 1.2 2008/04/27 18:58:45 matt Exp $");
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
 
-#include <arm/omap/omap2430obiovar.h>
-#include <arm/omap/omap2430reg.h>
+#include <arm/omap/omap2_obiovar.h>
+#include <arm/omap/omap2_reg.h>
 #include <arm/omap/omap_com.h>
 
 #include "locators.h"

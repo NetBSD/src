@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_ppb.c,v 1.23 2008/05/18 02:06:14 jmcneill Exp $	*/
+/*	$NetBSD: rbus_ppb.c,v 1.23.4.1 2008/10/19 22:16:24 haad Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.23 2008/05/18 02:06:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.23.4.1 2008/10/19 22:16:24 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: rbus_ppb.c,v 1.23 2008/05/18 02:06:14 jmcneill Exp $
 #include <dev/pci/ppbreg.h>
 
 #include <dev/ic/i82365reg.h>
-#include <dev/ic/i82365var.h>
 
 #include <dev/pci/pccbbreg.h>
 #include <dev/pci/pccbbvar.h>
@@ -101,12 +100,12 @@ unsigned int rbus_round_up(unsigned int, unsigned int);
 
 
 struct ppb_cardbus_softc {
-  struct device sc_dev;
+  device_t sc_dev;
   pcitag_t sc_tag;
   int foo;
 };
 
-CFATTACH_DECL(rbus_ppb, sizeof(struct ppb_cardbus_softc),
+CFATTACH_DECL_NEW(rbus_ppb, sizeof(struct ppb_cardbus_softc),
     ppb_cardbus_match, ppb_cardbus_attach, ppb_cardbus_detach, ppb_activate);
 
 #ifdef  CBB_DEBUG
@@ -267,7 +266,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	bzero(rct.bussize_memreqs, size);
 
 	printf("%s: sizing buses %d-%d\n",
-	       device_xname(&rct.csc->sc_dev),
+	       device_xname(rct.csc->sc_dev),
 	       minbus, maxbus);
 
 	pci_device_foreach_min(pc, minbus, maxbus,
@@ -285,7 +284,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	    if(pci_bus_parent[busnum] < minbus ||
 	       pci_bus_parent[busnum] >= maxbus) {
 	      printf("%s: bus %d has illegal parent %d\n",
-		     device_xname(&rct.csc->sc_dev),
+		     device_xname(rct.csc->sc_dev),
 		     busnum, pci_bus_parent[busnum]);
 	      continue;
 	    }
@@ -310,7 +309,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	  rbus_round_up(rct.bussize_memreqs[minbus], 8);
 
 	printf("%s: total needs IO %08lx and MEM %08lx\n",
-	       device_xname(&rct.csc->sc_dev),
+	       device_xname(rct.csc->sc_dev),
 	       rct.bussize_ioreqs[minbus], rct.bussize_memreqs[minbus]);
 
 	if(!caa->ca_rbus_iot) {
@@ -345,7 +344,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 			      &start,
 			      &handle) != 0) {
 	    panic("%s: can not allocate %ld bytes in MEM bus %d",
-		  device_xname(&rct.csc->sc_dev),
+		  device_xname(rct.csc->sc_dev),
 		  rct.bussize_memreqs[minbus], minbus);
 	  }
 	  rct.membustags[minbus]=rbus_new(caa->ca_rbus_memt,
@@ -363,7 +362,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	  busparent = pci_bus_parent[busnum];
 
 	  printf("%s: bus %d (parent=%d) needs IO %08lx and MEM %08lx\n",
-		 device_xname(&rct.csc->sc_dev),
+		 device_xname(rct.csc->sc_dev),
 		 busnum,
 		 busparent,
 		 rct.bussize_ioreqs[busnum],
@@ -461,7 +460,7 @@ rbus_pci_addr_fixup(struct ppb_cardbus_softc *csc,
 	}
 
 	printf("%s: configuring buses %d-%d\n",
-		device_xname(&rct.csc->sc_dev),
+		device_xname(rct.csc->sc_dev),
 	       minbus, maxbus);
 	pci_device_foreach_min(pc, minbus, maxbus,
 			       rbus_pci_phys_allocate, &rct);
@@ -480,7 +479,7 @@ rbus_pci_phys_countspace(pc, tag, context)
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 
 	printf("%s: configuring device %02x:%02x:%02x\n",
-	       device_xname(&rct->csc->sc_dev),
+	       device_xname(rct->csc->sc_dev),
 	       bus, device, function);
 
 	pciaddr_resource_manage(pc, tag,
@@ -505,7 +504,7 @@ rbus_do_phys_countspace(pc, tag, mapreg, ctx, type, addr, size)
 
 	if(size > (1<<24)) {
 	  printf("%s: skipping huge space request of size=%08x\n",
-		 device_xname(&rct->csc->sc_dev), (unsigned int)size);
+		 device_xname(rct->csc->sc_dev), (unsigned int)size);
 	  return 0;
 	}
 
@@ -533,7 +532,7 @@ rbus_pci_phys_allocate(pc, tag, context)
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 
 	printf("%s: configuring device %02x:%02x:%02x\n",
-	       device_xname(&rct->csc->sc_dev),
+	       device_xname(rct->csc->sc_dev),
 	       bus, device, function);
 
 	pciaddr_resource_manage(pc, tag,
@@ -588,7 +587,7 @@ rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
 
 	if(size > (1<<24)) {
 	  printf("%s: skipping huge space request of size=%08x\n",
-		 device_xname(&rct->csc->sc_dev), (unsigned int)size);
+		 device_xname(rct->csc->sc_dev), (unsigned int)size);
 	  return 0;
 	}
 
@@ -606,7 +605,7 @@ rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
 				      mask, size, busflags|flags,
 				      addr, &handle)) {
 	  printf("%s: no available resources (size=%08x) for bar %2d. fixup failed\n",
-		 device_xname(&rct->csc->sc_dev), (unsigned int)size, mapreg);
+		 device_xname(rct->csc->sc_dev), (unsigned int)size, mapreg);
 
 	  *addr = 0;
 	  pci_conf_write(pc, tag, mapreg, *addr);
@@ -614,7 +613,7 @@ rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
 	}
 
 	printf("%s: alloc %s space of size %08x for %02d:%02d:%02d -> %08x\n",
-	       device_xname(&rct->csc->sc_dev),
+	       device_xname(rct->csc->sc_dev),
 	       bustype,
 	       (unsigned int)size,
 	       bus, device, function, (unsigned int)*addr);
@@ -625,7 +624,7 @@ rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
 	/* check */
 	{
 		DPRINTF(("%s: pci_addr_fixup: ",
-			 device_xname(&rct->csc->sc_dev)));
+			 device_xname(rct->csc->sc_dev)));
 #ifdef  CBB_DEBUG
 		if(rbus_ppb_debug) { pciaddr_print_devid(pc, tag); }
 #endif
@@ -635,7 +634,7 @@ rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
 	if (pciaddr_ioaddr(pci_conf_read(pc, tag, mapreg)) != *addr) {
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
 		printf("%s: fixup failed. (new address=%#x)\n",
-		       device_xname(&rct->csc->sc_dev),
+		       device_xname(rct->csc->sc_dev),
 		       (unsigned)*addr);
 		return (1);
 	}
@@ -647,13 +646,10 @@ rbus_do_phys_allocate(pc, tag, mapreg, ctx, type, addr, size)
 }
 
 static void
-ppb_cardbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ppb_cardbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct ppb_cardbus_softc *csc = device_private(self);
-	struct cardbus_softc *parent_sc =
-	    device_private(device_parent(&csc->sc_dev));
+	struct cardbus_softc *parent_sc = device_private(parent);
 	struct cardbus_attach_args *ca = aux;
 	cardbus_devfunc_t ct = ca->ca_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
@@ -666,12 +662,14 @@ ppb_cardbus_attach(parent, self, aux)
 	u_int16_t pciirq;
 	int minbus, maxbus;
 
+	csc->sc_dev = self;
+
 	mybus = ct->ct_bus;
 	pciirq = 0;
 	rv = 0;
 
 	/* shut up compiler */
-	csc->foo=parent_sc->sc_intrline;
+	csc->foo = parent_sc->sc_intrline;
 
 
 	pci_devinfo(ca->ca_id, ca->ca_class, 0, devinfo, sizeof(devinfo));
@@ -801,9 +799,8 @@ int
 ppb_cardbus_enable(struct ppb_softc * sc)
 {
 #if 0
-	struct ppb_cardbus_softc *csc = (struct fxp_cardbus_softc *) sc;
-	struct cardbus_softc *psc =
-	    (struct cardbus_softc *) device_parent(&sc->sc_dev);
+	struct ppb_cardbus_softc *csc = (struct ppb_cardbus_softc *) sc;
+	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
@@ -816,11 +813,11 @@ ppb_cardbus_enable(struct ppb_softc * sc)
 	sc->sc_ih = cardbus_intr_establish(cc, cf, psc->sc_intrline, IPL_NET,
 	    fxp_intr, sc);
 	if (NULL == sc->sc_ih) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt\n");
+		aprint_error_dev(sc->sc_dev, "couldn't establish interrupt\n");
 		return 1;
 	}
 
-	printf("%s: interrupting at %d\n", device_xname(&sc->sc_dev),
+	printf("%s: interrupting at %d\n", device_xname(sc->sc_dev),
 	    psc->sc_intrline);
 
 #endif
@@ -831,8 +828,7 @@ void
 ppb_cardbus_disable(struct ppb_softc * sc)
 {
 #if 0
-	struct cardbus_softc *psc =
-	    (struct cardbus_softc *) device_parent(&sc->sc_dev);
+	struct cardbus_softc *psc = device_private(device_parent(sc->sc_dev));
 	cardbus_chipset_tag_t cc = psc->sc_cc;
 	cardbus_function_tag_t cf = psc->sc_cf;
 
@@ -857,7 +853,7 @@ ppb_cardbus_detach(self, flags)
 
 #ifdef DIAGNOSTIC
 	if (ct == NULL)
-		panic("%s: data structure lacks", device_xname(&sc->sc_dev));
+		panic("%s: data structure lacks", device_xname(sc->sc_dev));
 #endif
 
 	rv = fxp_detach(sc);

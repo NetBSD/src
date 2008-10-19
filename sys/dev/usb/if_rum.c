@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.21 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.21.4.1 2008/10/19 22:17:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.21 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.21.4.1 2008/10/19 22:17:09 haad Exp $");
 
 #include "bpfilter.h"
 
@@ -125,6 +125,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_PLANEX2,		USB_PRODUCT_PLANEX2_GWUSMM },
 	{ USB_VENDOR_QCOM,		USB_PRODUCT_QCOM_RT2573 },
 	{ USB_VENDOR_QCOM,		USB_PRODUCT_QCOM_RT2573_2 },
+	{ USB_VENDOR_QCOM,		USB_PRODUCT_QCOM_RT2573_3 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2573 },
 	{ USB_VENDOR_RALINK_2,          USB_PRODUCT_RALINK_2_RT2573 },
 	{ USB_VENDOR_RALINK,		USB_PRODUCT_RALINK_RT2671 },

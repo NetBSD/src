@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.19 2008/06/22 00:06:36 christos Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.19.2.1 2008/10/19 22:17:27 haad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.19 2008/06/22 00:06:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.19.2.1 2008/10/19 22:17:27 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -123,8 +123,8 @@ runq_init(void)
 
 	/* Balancing */
 	worker_ci = curcpu();
-	cacheht_time = mstohz(3);		/* ~3 ms  */
-	balance_period = mstohz(300);		/* ~300ms */
+	cacheht_time = mstohz(3);		/*   ~3 ms */
+	balance_period = mstohz(300);		/* ~300 ms */
 
 	/* Minimal count of LWPs for catching */
 	min_catch = 1;
@@ -344,6 +344,7 @@ static inline bool
 sched_migratable(const struct lwp *l, struct cpu_info *ci)
 {
 	const struct schedstate_percpu *spc = &ci->ci_schedstate;
+	KASSERT(lwp_locked(__UNCONST(l), NULL));
 
 	/* CPU is offline */
 	if (__predict_false(spc->spc_flags & SPCF_OFFLINE))
@@ -380,7 +381,7 @@ sched_takecpu(struct lwp *l)
 	 * If CPU of this thread is idling - run there.
 	 */
 	if ((l->l_pflag & LP_BOUND) != 0 || ci_rq->r_count == 0) {
-	    	ci_rq->r_ev_stay.ev_count++;
+		ci_rq->r_ev_stay.ev_count++;
 		return ci;
 	}
 
@@ -388,7 +389,7 @@ sched_takecpu(struct lwp *l)
 	eprio = lwp_eprio(l);
 	if (__predict_true(l->l_stat != LSIDL) &&
 	    lwp_cache_hot(l) && eprio >= spc->spc_curpriority) {
-	    	ci_rq->r_ev_stay.ev_count++;
+		ci_rq->r_ev_stay.ev_count++;
 		return ci;
 	}
 
@@ -638,6 +639,9 @@ sched_lwp_stats(struct lwp *l)
 {
 	int batch;
 
+	KASSERT(lwp_locked(l, NULL));
+
+	/* Update sleep time */
 	if (l->l_stat == LSSLEEP || l->l_stat == LSSTOP ||
 	    l->l_stat == LSSUSPENDED)
 		l->l_slptime++;
@@ -700,11 +704,13 @@ sched_nextlwp(void)
 
 #ifdef MULTIPROCESSOR
 	/* If runqueue is empty, try to catch some thread from other CPU */
-	if (__predict_false(spc->spc_flags & SPCF_OFFLINE)) {
-		if ((ci_rq->r_count - ci_rq->r_mcount) == 0)
-			return NULL;
-	} else if (ci_rq->r_count == 0) {
+	if (__predict_false(ci_rq->r_count == 0)) {
 		struct cpu_info *cci;
+
+		/* Offline CPUs should not perform this, however */
+		if (__predict_false(spc->spc_flags & SPCF_OFFLINE))
+			return NULL;
+
 		/* Reset the counter, and call the balancer */
 		ci_rq->r_avgcount = 0;
 		sched_balance(ci);
@@ -714,7 +720,7 @@ sched_nextlwp(void)
 		return sched_catchlwp(cci);
 	}
 #else
-	if (ci_rq->r_count == 0)
+	if (__predict_false(ci_rq->r_count == 0))
 		return NULL;
 #endif
 
@@ -750,10 +756,7 @@ sched_curcpu_runnable_p(void)
 	}
 #endif
 
-	if (__predict_false(spc->spc_flags & SPCF_OFFLINE))
-		rv = (ci_rq->r_count - ci_rq->r_mcount);
-	else
-		rv = ci_rq->r_count != 0;
+	rv = (ci_rq->r_count != 0) ? true : false;
 	kpreempt_enable();
 
 	return rv;
@@ -845,7 +848,7 @@ sched_print_runqueue(void (*pr)(const char *, ...)
 
 		(*pr)("Run-queue (CPU = %u):\n", ci->ci_index);
 		(*pr)(" pid.lid = %d.%d, r_count = %u, r_avgcount = %u, "
-		    "maxpri = %d, mchain = %p\n",
+		    "maxpri = %d, mlwp = %p\n",
 #ifdef MULTIPROCESSOR
 		    ci->ci_curlwp->l_proc->p_pid, ci->ci_curlwp->l_lid,
 #else

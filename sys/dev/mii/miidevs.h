@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.79 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.79.6.1 2008/10/19 22:16:37 haad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.75 2008/02/20 11:17:41 markd Exp
+ *	NetBSD: miidevs,v 1.78 2008/09/28 18:30:11 bouyer Exp
  */
 
 /*-
@@ -62,6 +62,7 @@
 #define	MII_OUI_ICPLUS	0x0090c3	/* IC Plus Corp. */
 #define	MII_OUI_ICS	0x00a0be	/* Integrated Circuit Systems */
 #define	MII_OUI_INTEL	0x00aa00	/* Intel */
+#define	MII_OUI_JMICRON	0x00d831	/* JMicron */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
@@ -84,6 +85,7 @@
 /* bad bitorder (bits "g" and "h" (= MSBs byte 1) lost) */
 #define	MII_OUI_yyAMD	0x000058	/* Advanced Micro Devices */
 #define	MII_OUI_xxBROADCOM	0x000818	/* Broadcom Corporation */
+#define	MII_OUI_xxBROADCOM_ALT1	0x0050ef	/* Broadcom Corporation */
 #define	MII_OUI_xxDAVICOM	0x000676	/* Davicom Semiconductor */
 #define	MII_OUI_yyINTEL	0x005500	/* Intel */
 #define	MII_OUI_xxMARVELL	0x000ac2	/* Marvell Semiconductor */
@@ -176,6 +178,8 @@
 #define	MII_STR_BROADCOM2_BCM5755	"BCM5755 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM2_BCM5754	0x000e
 #define	MII_STR_BROADCOM2_BCM5754	"BCM5754/5787 1000BASE-T media interface"
+#define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
+#define	MII_STR_xxBROADCOM_ALT1_BCM5906	"BCM5906 10/100baseTX media interface"
  
 /* Cicada Semiconductor PHYs (now owned by Vitesse?) */
 #define	MII_MODEL_CICADA_CS8201	0x0001
@@ -230,6 +234,12 @@
 
 #define	MII_MODEL_yyINTEL_IGP01E1000	0x0038
 #define	MII_STR_yyINTEL_IGP01E1000	"Intel IGP01E1000 Gigabit PHY"
+
+/* JMicron PHYs */
+#define	MII_MODEL_JMICRON_JMC250	0x0021
+#define	MII_STR_JMICRON_JMC250	"JMC250 10/100/1000 media interface"
+#define	MII_MODEL_JMICRON_JMC260	0x0022
+#define	MII_STR_JMICRON_JMC260	"JMC260 10/100 media interface"
 
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000

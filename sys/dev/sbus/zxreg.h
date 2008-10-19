@@ -1,4 +1,4 @@
-/*	$NetBSD: zxreg.h,v 1.4 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: zxreg.h,v 1.4.6.1 2008/10/19 22:17:04 haad Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -200,12 +200,12 @@ struct zx_draw {
 	u_int32_t	zd_forcecol;	/* SS1 only */
 	u_int32_t	zd_door[8];	/* SS1 only */
 	u_int32_t	zd_pick[5];	/* SS1 only */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct zx_draw_ss1 {
 	u_int32_t	zd_pad0[957];
 	u_int32_t	zd_misc;
-} __attribute__ ((__packed__));
+} __packed;
 #define	ZX_SS1_MISC_ENABLE	0x00000001
 #define	ZX_SS1_MISC_STEREO	0x00000002
 
@@ -230,7 +230,7 @@ struct zx_command {
 	u_int32_t	zc_dst;
 	u_int32_t	zc_copy;
 	u_int32_t	zc_fill;
-} __attribute__ ((__packed__));
+} __packed;
 
 #define ZX_CROSS_TYPE_CLUT0	0x00001000
 #define ZX_CROSS_TYPE_CLUT1	0x00001001
@@ -249,7 +249,7 @@ struct zx_cross {
 	u_int32_t	zx_type;
 	u_int32_t	zx_csr;
 	u_int32_t	zx_value;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct zx_cursor {
 	u_int32_t	zcu_pad0[4];
@@ -257,6 +257,6 @@ struct zx_cursor {
 	u_int32_t	zcu_misc;
 	u_int32_t	zcu_sxy;
 	u_int32_t	zcu_data;
-} __attribute__ ((__packed__));
+} __packed;
 
 #endif	/* !_DEV_SBUS_ZXREG_H_ */

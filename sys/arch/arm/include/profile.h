@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.7 2005/12/24 23:23:59 perry Exp $	*/
+/*	$NetBSD: profile.h,v 1.7.86.1 2008/10/19 22:15:41 haad Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -38,13 +38,9 @@
  * prologue.
  */
 
-#ifdef __ELF__
 #define MCOUNT_ASM_NAME "__mcount"
 #ifdef PIC
 #define	PLTSYM		"(PLT)"
-#endif
-#else
-#define MCOUNT_ASM_NAME "mcount"
 #endif
 
 #ifndef PLTSYM

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.94 2008/01/05 22:51:34 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.94.16.1 2008/10/19 22:16:00 haad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94 2008/01/05 22:51:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.94.16.1 2008/10/19 22:16:00 haad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -319,6 +319,25 @@ cpu_lwp_free2(struct lwp *l)
 
 	if ((fs = l->l_md.md_fpstate) != NULL)
 		free((void *)fs, M_SUBPROC);
+}
+
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	/*struct trapframe *tf = l->l_md.md_tf;*/
+	struct rwindow *rp;
+
+	/* Construct kernel frame to return to in cpu_switch() */
+	rp = (struct rwindow *)((u_int)pcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (int)func;		/* Function to call */
+	rp->rw_local[1] = (int)arg;		/* and its argument */
+	rp->rw_local[2] = (int)l;		/* new lwp */
+
+	pcb->pcb_pc = (int)lwp_trampoline - 8;
+	pcb->pcb_sp = (int)rp;
+	pcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
+	pcb->pcb_wim = 1;		/* Fence at window #1 */
 }
 
 #ifdef COREDUMP

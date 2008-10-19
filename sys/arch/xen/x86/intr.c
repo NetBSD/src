@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2008/07/03 14:02:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20.2.1 2008/10/19 22:16:13 haad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -131,11 +131,11 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.20 2008/07/03 14:02:25 drochner Exp $");
 #include "ioapic.h"
 #include "opt_mpbios.h"
 /* for x86/i8259.c */
-struct intrstub i8259_stubs[NUM_LEGACY_IRQS] = {{0}};
+struct intrstub i8259_stubs[NUM_LEGACY_IRQS] = {{0,0}};
 #if NIOAPIC > 0
 /* for x86/ioapic.c */
-struct intrstub ioapic_edge_stubs[MAX_INTR_SOURCES] = {{0}};
-struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0}};
+struct intrstub ioapic_edge_stubs[MAX_INTR_SOURCES] = {{0,0}};
+struct intrstub ioapic_level_stubs[MAX_INTR_SOURCES] = {{0,0}};
 
 #include <machine/i82093var.h>
 int irq2vect[256] = {0};

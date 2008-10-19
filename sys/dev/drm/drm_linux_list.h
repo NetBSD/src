@@ -1,4 +1,4 @@
-/* $NetBSD: drm_linux_list.h,v 1.2 2007/11/21 19:22:13 bjs Exp $ */
+/* $NetBSD: drm_linux_list.h,v 1.2.24.1 2008/10/19 22:16:24 haad Exp $ */
 
 /* drm_linux_list.h -- linux list functions for the BSDs.
  * Created: Mon Apr 7 14:30:16 1999 by anholt@FreeBSD.org
@@ -73,6 +73,6 @@ list_del(struct list_head *entry) {
 
 #define list_for_each_safe(entry, temp, head)			\
     for (entry = (head)->next, temp = (entry)->next;		\
-	temp != head; 						\
-	entry = temp, temp = temp->next)
+	entry != head; 						\
+	entry = temp, temp = entry->next)
 

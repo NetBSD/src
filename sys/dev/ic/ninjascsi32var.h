@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32var.h,v 1.5 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: ninjascsi32var.h,v 1.5.6.1 2008/10/19 22:16:26 haad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2007 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ struct njsc32_cmd {
 #define NJSC32_MAX_XFER	((NJSC32_NUM_SG - 1) << PGSHIFT)
 
 struct njsc32_softc {
-	struct device	sc_dev;
+	device_t		sc_dev;
 
 	/* device spec */
 	njsc32_model_t		sc_model;

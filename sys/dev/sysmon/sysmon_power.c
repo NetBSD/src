@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.38 2008/05/10 14:01:32 jmcneill Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.38.4.1 2008/10/19 22:17:05 haad Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.38 2008/05/10 14:01:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.38.4.1 2008/10/19 22:17:05 haad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -135,7 +135,10 @@ static const struct power_event_description penvsys_event_desc[] = {
 	{ PENVSYS_EVENT_WARNUNDER,	"warning-under" },
 	{ PENVSYS_EVENT_USER_CRITMAX,	"critical-over" },
 	{ PENVSYS_EVENT_USER_CRITMIN,	"critical-under" },
+	{ PENVSYS_EVENT_USER_WARNMAX,	"warning-over" },
+	{ PENVSYS_EVENT_USER_WARNMIN,	"warning-under" },
 	{ PENVSYS_EVENT_BATT_USERCAP,	"user-capacity" },
+	{ PENVSYS_EVENT_BATT_USERWARN,	"user-cap-warning" },
 	{ PENVSYS_EVENT_STATE_CHANGED,	"state-changed" },
 	{ PENVSYS_EVENT_LOW_POWER,	"low-power" },
 	{ -1, NULL }
@@ -319,7 +322,10 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 	case PENVSYS_EVENT_WARNOVER:
 	case PENVSYS_EVENT_USER_CRITMAX:
 	case PENVSYS_EVENT_USER_CRITMIN:
+	case PENVSYS_EVENT_USER_WARNMAX:
+	case PENVSYS_EVENT_USER_WARNMIN:
 	case PENVSYS_EVENT_BATT_USERCAP:
+	case PENVSYS_EVENT_BATT_USERWARN:
 	case PENVSYS_EVENT_STATE_CHANGED:
 	case PENVSYS_EVENT_LOW_POWER:
 	    {
@@ -425,6 +431,7 @@ int
 sysmonread_power(dev_t dev, struct uio *uio, int flags)
 {
 	power_event_t pev;
+	int rv;
 
 	/* We only allow one event to be read at a time. */
 	if (uio->uio_resid != POWER_EVENT_MSG_SIZE)
@@ -433,19 +440,21 @@ sysmonread_power(dev_t dev, struct uio *uio, int flags)
 	mutex_enter(&sysmon_power_event_queue_mtx);
 	for (;;) {
 		if (sysmon_get_power_event(&pev)) {
-			mutex_exit(&sysmon_power_event_queue_mtx);
-			return uiomove(&pev, POWER_EVENT_MSG_SIZE, uio);
+			rv =  uiomove(&pev, POWER_EVENT_MSG_SIZE, uio);
+			break;
 		}
 
 		if (flags & IO_NDELAY) {
-			mutex_exit(&sysmon_power_event_queue_mtx);
-			return EWOULDBLOCK;
+			rv = EWOULDBLOCK;
+			break;
 		}
 
 		cv_wait(&sysmon_power_event_queue_cv,
 			&sysmon_power_event_queue_mtx);
 	}
 	mutex_exit(&sysmon_power_event_queue_mtx);
+
+	return rv;
 }
 
 /*
@@ -802,6 +811,10 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 			mystr = "critical capacity";
 			PENVSYS_SHOWSTATE(mystr);
 			break;
+		case PENVSYS_EVENT_BATT_USERWARN:
+			mystr = "warning capacity";
+			PENVSYS_SHOWSTATE(mystr);
+			break;
 		case PENVSYS_EVENT_NORMAL:
 			printf("%s: normal capacity on '%s'\n",
 			    pes->pes_dvname, pes->pes_sensname);
@@ -830,10 +843,12 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 			PENVSYS_SHOWSTATE(mystr);
 			break;
 		case PENVSYS_EVENT_WARNOVER:
+		case PENVSYS_EVENT_USER_WARNMAX:
 			mystr = "warning over";
 			PENVSYS_SHOWSTATE(mystr);
 			break;
 		case PENVSYS_EVENT_WARNUNDER:
+		case PENVSYS_EVENT_USER_WARNMIN:
 			mystr = "warning under";
 			PENVSYS_SHOWSTATE(mystr);
 			break;

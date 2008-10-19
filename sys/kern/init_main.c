@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.360 2008/06/18 09:06:27 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.360.2.1 2008/10/19 22:17:27 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.360 2008/06/18 09:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.360.2.1 2008/10/19 22:17:27 haad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -108,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.360 2008/06/18 09:06:27 yamt Exp $")
 #include "opt_fileassoc.h"
 #include "opt_ktrace.h"
 #include "opt_pax.h"
+#include "opt_wapbl.h"
 
 #include "rnd.h"
 #include "sysmon_envsys.h"
@@ -124,7 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.360 2008/06/18 09:06:27 yamt Exp $")
 #include <sys/callout.h>
 #include <sys/cpu.h>
 #include <sys/kernel.h>
-#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
@@ -161,6 +161,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.360 2008/06/18 09:06:27 yamt Exp $")
 #include <sys/module.h>
 #include <sys/event.h>
 #include <sys/lockf.h>
+#include <sys/once.h>
+#include <sys/uidinfo.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -192,6 +194,9 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.360 2008/06/18 09:06:27 yamt Exp $")
 #include <sys/ktrace.h>
 #endif
 #include <sys/kauth.h>
+#ifdef WAPBL
+#include <sys/wapbl.h>
+#endif
 #include <net80211/ieee80211_netbsd.h>
 
 #include <sys/syscall.h>
@@ -331,10 +336,9 @@ main(void)
 	consinit();
 
 	kernel_lock_init();
+	once_init();
 
 	uvm_init();
-
-	kmem_init();
 
 	percpu_init();
 
@@ -372,7 +376,7 @@ main(void)
 	 */
 	evcnt_init();		/* initialize event counters */
 #if NRND > 0
-	rnd_init();		/* initialize RNG */
+	rnd_init();		/* initialize random number generator */
 #endif
 
 	/* Initialize process and pgrp structures. */
@@ -569,6 +573,11 @@ main(void)
 
 	/* Initialize the UUID system calls. */
 	uuid_init();
+
+#ifdef WAPBL
+	/* Initialize write-ahead physical block logging. */
+	wapbl_init();
+#endif
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has

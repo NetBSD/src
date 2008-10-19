@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.156 2008/04/04 10:06:54 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.156.10.1 2008/10/19 22:15:54 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.156 $"
+#ident		"GENERIC-$Revision: 1.156.10.1 $"
 
 maxusers	64
 
@@ -100,6 +100,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
@@ -271,6 +272,11 @@ uk*	at scsibus? target ? lun ?	# unknown SCSI
 #########################################################################
 # Pseudo-devices							#
 #########################################################################
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	loop		 1	# network loopback
 pseudo-device	sl		 	# serial-line IP ports

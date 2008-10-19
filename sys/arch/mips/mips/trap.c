@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.216 2007/12/03 15:33:56 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.216.24.1 2008/10/19 22:15:52 haad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.216 2007/12/03 15:33:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.216.24.1 2008/10/19 22:15:52 haad Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.216 2007/12/03 15:33:56 ad Exp $");
 #include <sys/user.h>
 #include <sys/buf.h>
 #include <sys/ktrace.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/kauth.h>
 #include <sys/cpu.h>
 
@@ -365,6 +367,11 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 		map = &vm->vm_map;
 		va = trunc_page(vaddr);
 
+		if ((l->l_flag & LW_SA) && (~l->l_pflag & LP_SA_NOBLOCK)) {
+			l->l_savp->savp_faultaddr = (vaddr_t)vaddr;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
+
 		if (p->p_emul->e_fault)
 			rv = (*p->p_emul->e_fault)(p, va, ftype);
 		else
@@ -387,6 +394,7 @@ trap(unsigned int status, unsigned int cause, vaddr_t vaddr, vaddr_t opc,
 			else if (rv == EACCES)
 				rv = EFAULT;
 		}
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		if (rv == 0) {
 			if (type & T_USER) {
 				userret(l);

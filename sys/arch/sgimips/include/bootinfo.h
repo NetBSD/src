@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.5 2008/01/26 14:35:24 tsutsui Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.5.16.1 2008/10/19 22:15:55 haad Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -29,7 +29,7 @@
 #ifndef _SGIMIPS_BOOTINFO_H_
 #define _SGIMIPS_BOOTINFO_H_
 
-#define	BOOTINFO_MAGIC		0x20011121
+#define	BOOTINFO_MAGIC		0x20080808
 #define	BOOTINFO_SIZE		1024
 
 struct btinfo_common {
