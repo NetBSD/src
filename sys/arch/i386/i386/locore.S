@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.77 2008/06/27 00:41:39 gmcgarry Exp $	*/
+/*	$NetBSD: locore.S,v 1.78 2008/10/19 14:12:28 joerg Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,10 +134,11 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.77 2008/06/27 00:41:39 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.78 2008/10/19 14:12:28 joerg Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
+#include "opt_multiboot.h"
 #include "opt_realmem.h"
 #include "opt_vm86.h"
 #include "opt_xen.h"
