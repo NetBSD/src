@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.152 2008/10/18 14:35:32 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.153 2008/10/19 08:30:10 apb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.152 2008/10/18 14:35:32 apb Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.153 2008/10/19 08:30:10 apb Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.152 2008/10/18 14:35:32 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.153 2008/10/19 08:30:10 apb Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -262,16 +262,15 @@ parse_debug_options(const char *argvalue)
 				fclose(debug_file);
 			if (*++modules == '+')
 				mode = "a";
-			else {
+			else
 				mode = "w";
-			}
-			if (!strcmp(modules, "stdout")) {
+			if (strcmp(modules, "stdout") == 0) {
 				debug_file = stdout;
-				return;
+				goto debug_setbuf;
 			}
-			if (!strcmp(modules, "stderr")) {
+			if (strcmp(modules, "stderr") == 0) {
 				debug_file = stderr;
-				return;
+				goto debug_setbuf;
 			}
 			len = strlen(modules);
 			fname = malloc(len + 20);
@@ -286,15 +285,22 @@ parse_debug_options(const char *argvalue)
 				usage();
 			}
 			free(fname);
-			/* Have this non-buffered */
-			setbuf(debug_file, NULL);
-			return;
+			goto debug_setbuf;
 		default:
 			(void)fprintf(stderr,
 			    "%s: illegal argument to d option -- %c\n",
 			    progname, *modules);
 			usage();
 		}
+	}
+debug_setbuf:
+	/*
+	 * Make the debug_file unbuffered, and make
+	 * stdout line buffered (unless debugfile == stdout).
+	 */
+	setvbuf(debug_file, NULL, _IONBF, 0);
+	if (debug_file != stdout) {
+		setvbuf(stdout, NULL, _IOLBF, 0);
 	}
 }
 
