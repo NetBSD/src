@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.14 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: ast.c,v 1.14.6.1 2008/10/19 22:15:41 haad Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.14 2008/04/27 18:58:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.14.6.1 2008/10/19 22:15:41 haad Exp $");
 
 #include "opt_ddb.h"
 
@@ -74,23 +74,8 @@ void ast(struct trapframe *);
 void
 userret(struct lwp *l)
 {
-#ifdef CPU_ARM11
-	struct cpu_info * const ci = curcpu();
-#endif
-
 	/* Invoke MI userret code */
 	mi_userret(l);
-
-#ifdef CPU_ARM11
-	/*
-	 * This is a hack to work around an unknown cache bug on the ARM11
-	 * Before returning we clean the data cache.
-	 */
-	if (ci->ci_arm_cputype == CPU_ID_ARM1136JS
-	    || ci->ci_arm_cputype == CPU_ID_ARM1136JSR1) {
-                __asm("mcr\tp15, 0, %0, c7, c10, 0" :: "r"(0));
-	}
-#endif
 }
 
 
@@ -120,7 +105,7 @@ ast(struct trapframe *tf)
 #ifdef DEBUG
 	if (l == NULL)
 		panic("ast: no curlwp!");
-	if (&l->l_addr->u_pcb == 0)
+	if (&l->l_addr->u_pcb == NULL)
 		panic("ast: no pcb!");
 #endif	
 

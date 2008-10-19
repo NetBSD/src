@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.28 2007/02/19 20:14:30 rumble Exp $	*/
+/*	$NetBSD: imc.c,v 1.28.52.1 2008/10/19 22:15:55 haad Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.28 2007/02/19 20:14:30 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.28.52.1 2008/10/19 22:15:55 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -61,7 +61,7 @@ static int	imc_match(struct device *, struct cfdata *, void *);
 static void	imc_attach(struct device *, struct device *, void *);
 static int	imc_print(void *, const char *);
 static void	imc_bus_reset(void);
-static void	imc_bus_error(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
+static void	imc_bus_error(uint32_t, uint32_t, uint32_t, uint32_t);
 static void	imc_watchdog_reset(void);
 static void	imc_watchdog_disable(void);
 static void	imc_watchdog_enable(void);
@@ -91,19 +91,19 @@ static int
 imc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
-	if ( (mach_type == MACH_SGI_IP22) || (mach_type == MACH_SGI_IP20) )
-		return (1);
+	if ((mach_type == MACH_SGI_IP22) || (mach_type == MACH_SGI_IP20))
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
 imc_attach(struct device *parent, struct device *self, void *aux)
 {
-	u_int32_t reg;
+	uint32_t reg;
 	struct imc_attach_args iaa;
 	struct mainbus_attach_args *ma = aux;
-	u_int32_t sysid;
+	uint32_t sysid;
 
 	isc.iot = SGIMIPS_BUS_SPACE_HPC;
 	if (bus_space_map(isc.iot, ma->ma_addr, 0,
@@ -181,8 +181,7 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 	reg &= (IMC_GIO64ARB_GRX64 | IMC_GIO64ARB_GRXRT | IMC_GIO64ARB_GRXMST);
 
 	/* Rest of settings are machine/board dependant */
-	if (mach_type == MACH_SGI_IP20)
-	{
+	if (mach_type == MACH_SGI_IP20) {
 		reg |=   IMC_GIO64ARB_ONEGIO;
 	        reg |=  (IMC_GIO64ARB_EXP0RT	| IMC_GIO64ARB_EXP1RT);
 		reg |=  (IMC_GIO64ARB_EXP0MST	| IMC_GIO64ARB_EXP1MST);
@@ -190,9 +189,7 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 			 IMC_GIO64ARB_HPCEXP64	| IMC_GIO64ARB_EISA64 |
 			 IMC_GIO64ARB_EXP064	| IMC_GIO64ARB_EXP164 |
 			 IMC_GIO64ARB_EXP0PIPE	| IMC_GIO64ARB_EXP1PIPE);
-	}
-	else
-	{
+	} else {
 		/*
 		 * GIO64 invariant for all IP22 platforms: one GIO bus,
 		 * HPC1 @ 64
@@ -218,10 +215,12 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 
 			if (mach_boardrev < 2) {
 			/* EXP0 realtime, EXP1 can master */
-				reg |= (IMC_GIO64ARB_EXP0RT | IMC_GIO64ARB_EXP1MST);
+				reg |= (IMC_GIO64ARB_EXP0RT |
+				    IMC_GIO64ARB_EXP1MST);
 			} else {
 				/* EXP1 pipelined as well, EISA masters */
-				reg |= (IMC_GIO64ARB_EXP1PIPE | IMC_GIO64ARB_EISAMST);
+				reg |= (IMC_GIO64ARB_EXP1PIPE |
+				    IMC_GIO64ARB_EISAMST);
 			}
 			break;
 		}
@@ -248,6 +247,7 @@ imc_attach(struct device *parent, struct device *self, void *aux)
 static int
 imc_print(void *aux, const char *name)
 {
+
 	if (name)
 		aprint_normal("gio at %s", name);
 
@@ -257,13 +257,15 @@ imc_print(void *aux, const char *name)
 static void
 imc_bus_reset(void)
 {
+
 	bus_space_write_4(isc.iot, isc.ioh, IMC_CPU_ERRSTAT, 0);
 	bus_space_write_4(isc.iot, isc.ioh, IMC_GIO_ERRSTAT, 0);
 }
 
 static void
-imc_bus_error(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+imc_bus_error(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
+
 	printf("bus error: cpu_stat %08x addr %08x, gio_stat %08x addr %08x\n",
 			bus_space_read_4(isc.iot, isc.ioh, IMC_CPU_ERRSTAT),
 			bus_space_read_4(isc.iot, isc.ioh, IMC_CPU_ERRADDR),
@@ -275,13 +277,14 @@ imc_bus_error(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipendin
 static void
 imc_watchdog_reset(void)
 {
+
 	bus_space_write_4(isc.iot, isc.ioh, IMC_WDOG, 0);
 }
 
 static void
 imc_watchdog_disable(void)
 {
-	u_int32_t reg;
+	uint32_t reg;
 
 	bus_space_write_4(isc.iot, isc.ioh, IMC_WDOG, 0);
 	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL0);
@@ -292,7 +295,7 @@ imc_watchdog_disable(void)
 static void
 imc_watchdog_enable(void)
 {
-	u_int32_t reg;
+	uint32_t reg;
 
 	/* enable watchdog and clear it */
 	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL0);
@@ -309,20 +312,20 @@ imc_gio64_arb_config(int slot, uint32_t flags)
 
 	/* GIO_SLOT_EXP1 is unusable on Fullhouse */
 	if (slot == GIO_SLOT_EXP1 && mach_subtype == MACH_SGI_IP22_FULLHOUSE)
-		return (EINVAL);
+		return EINVAL;
 
 	/* GIO_SLOT_GFX is only usable on Fullhouse */
 	if (slot == GIO_SLOT_GFX && mach_subtype != MACH_SGI_IP22_FULLHOUSE)
-		return (EINVAL);
+		return EINVAL;
 
 	/* GIO_SLOT_GFX is always pipelined */
 	if (slot == GIO_SLOT_GFX && (flags & GIO_ARB_NOPIPE))
-		return (EINVAL);
+		return EINVAL;
 
 	/* IP20 does not support pipelining (XXX what about Indy?) */
 	if (((flags & GIO_ARB_PIPE) || (flags & GIO_ARB_NOPIPE)) &&
 	    mach_type == MACH_SGI_IP20)
-		return (EINVAL);
+		return EINVAL;
 
 	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_GIO64ARB);
 
@@ -398,7 +401,7 @@ imc_gio64_arb_config(int slot, uint32_t flags)
 
 	bus_space_write_4(isc.iot, isc.ioh, IMC_GIO64ARB, reg);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -408,7 +411,7 @@ imc_gio64_arb_config(int slot, uint32_t flags)
  * parity checking.
  */
 void
-imc_disable_sysad_parity()
+imc_disable_sysad_parity(void)
 {
 	uint32_t reg;
 
@@ -421,7 +424,7 @@ imc_disable_sysad_parity()
 }
 
 void
-imc_enable_sysad_parity()
+imc_enable_sysad_parity(void)
 {
 	uint32_t reg;
 
@@ -434,14 +437,14 @@ imc_enable_sysad_parity()
 }
 
 int
-imc_is_sysad_parity_enabled()
+imc_is_sysad_parity_enabled(void)
 {
 	uint32_t reg;
 
 	if (mach_type != MACH_SGI_IP20 && mach_type != MACH_SGI_IP22)
-		return (0);
+		return 0;
 
 	reg = bus_space_read_4(isc.iot, isc.ioh, IMC_CPUCTRL0);
 
-	return (reg & IMC_CPUCTRL0_NCHKMEMPAR);
+	return reg & IMC_CPUCTRL0_NCHKMEMPAR;
 }

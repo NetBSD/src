@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.22 2008/05/31 12:03:15 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.22.4.1 2008/10/19 22:17:28 haad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.22 2008/05/31 12:03:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.22.4.1 2008/10/19 22:17:28 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -239,6 +239,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 		 * turnstile instead.
 		 */
 		ots = l->l_ts;
+		KASSERT(ots->ts_free == NULL);
 		ots->ts_free = ts->ts_free;
 		ts->ts_free = ots;
 		l->l_ts = ts;

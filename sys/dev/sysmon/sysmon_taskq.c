@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.13 2008/04/06 09:42:04 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.13.10.1 2008/10/19 22:17:05 haad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.13 2008/04/06 09:42:04 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.13.10.1 2008/10/19 22:17:05 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -145,29 +145,27 @@ sysmon_task_queue_thread(void *arg)
 	 * condition; it's probably more important to actually run
 	 * all the tasks before we exit.
 	 */
+	mutex_enter(&sysmon_task_queue_mtx);
 	for (;;) {
-		mutex_enter(&sysmon_task_queue_mtx);
 		st = TAILQ_FIRST(&sysmon_task_queue);
-		if (st == NULL) {
-			/* Check for the exit condition. */
-			if (sysmon_task_queue_cleanup_sem != 0) {
-				/* Time to die. */
-				sysmon_task_queue_cleanup_sem = 0;
-				cv_broadcast(&sysmon_task_queue_cv);
-				mutex_exit(&sysmon_task_queue_mtx);
-				kthread_exit(0);
-			}
-			cv_wait(&sysmon_task_queue_cv, &sysmon_task_queue_mtx);
+		if (st != NULL) {
+			TAILQ_REMOVE(&sysmon_task_queue, st, st_list);
 			mutex_exit(&sysmon_task_queue_mtx);
-			continue;
+			(*st->st_func)(st->st_arg);
+			free(st, M_TEMP);
+			mutex_enter(&sysmon_task_queue_mtx);
+		} else {
+			/* Check for the exit condition. */
+			if (sysmon_task_queue_cleanup_sem != 0)
+				break;
+			cv_wait(&sysmon_task_queue_cv, &sysmon_task_queue_mtx);
 		}
-		TAILQ_REMOVE(&sysmon_task_queue, st, st_list);
-		mutex_exit(&sysmon_task_queue_mtx);
-
-		(*st->st_func)(st->st_arg);
-		free(st, M_TEMP);
 	}
-	panic("sysmon_task_queue_thread: impossible");
+	/* Time to die. */
+	sysmon_task_queue_cleanup_sem = 0;
+	cv_broadcast(&sysmon_task_queue_cv);
+	mutex_exit(&sysmon_task_queue_mtx);
+	kthread_exit(0);
 }
 
 /*

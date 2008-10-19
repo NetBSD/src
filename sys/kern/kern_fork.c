@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.170 2008/06/16 09:51:14 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.170.2.1 2008/10/19 22:17:27 haad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.170 2008/06/16 09:51:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.170.2.1 2008/10/19 22:17:27 haad Exp $");
 
 #include "opt_ktrace.h"
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.170 2008/06/16 09:51:14 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 #include <sys/syscallargs.h>
+#include <sys/uidinfo.h>
 
 #include <uvm/uvm_extern.h>
 

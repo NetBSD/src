@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.82 2008/06/14 07:51:51 nakayama Exp $ */
+/*	$NetBSD: cpu.h,v 1.82.2.1 2008/10/19 22:16:00 haad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,9 +153,9 @@ struct cpu_info {
  *
  */
 	int			ci_pmap_next_ctx;
+	int			ci_numctx;
 	paddr_t 		*ci_ctxbusy;
 	LIST_HEAD(, pmap) 	ci_pmap_ctxlist;
-	int			ci_numctx;
 
 	/*
 	 * The TSBs are per cpu too (since MMU context differs between
@@ -193,6 +193,7 @@ extern struct cpu_bootargs *cpu_args;
 
 extern int sparc_ncpus;
 extern struct cpu_info *cpus;
+extern struct pool_cache *fpstate_cache;
 
 #define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
 #define	cpu_number()	(curcpu()->ci_index)

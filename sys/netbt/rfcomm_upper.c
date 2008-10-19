@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_upper.c,v 1.10 2007/11/20 20:25:57 plunky Exp $	*/
+/*	$NetBSD: rfcomm_upper.c,v 1.10.24.1 2008/10/19 22:17:46 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,12 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.10 2007/11/20 20:25:57 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_upper.c,v 1.10.24.1 2008/10/19 22:17:46 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/socketvar.h>
 #include <sys/systm.h>
 
 #include <netbt/bluetooth.h>
@@ -434,19 +435,22 @@ rfcomm_rcvd(struct rfcomm_dlc *dlc, size_t space)
 }
 
 /*
- * rfcomm_setopt(dlc, option, addr)
+ * rfcomm_setopt(dlc, sopt)
  *
  * set DLC options
  */
 int
-rfcomm_setopt(struct rfcomm_dlc *dlc, int opt, void *addr)
+rfcomm_setopt(struct rfcomm_dlc *dlc, const struct sockopt *sopt)
 {
 	int mode, err = 0;
 	uint16_t mtu;
 
-	switch (opt) {
+	switch (sopt->sopt_name) {
 	case SO_RFCOMM_MTU:
-		mtu = *(uint16_t *)addr;
+		err = sockopt_get(sopt, &mtu, sizeof(mtu));
+		if (err)
+			break;
+
 		if (mtu < RFCOMM_MTU_MIN || mtu > RFCOMM_MTU_MAX)
 			err = EINVAL;
 		else if (dlc->rd_state == RFCOMM_DLC_CLOSED)
@@ -457,7 +461,10 @@ rfcomm_setopt(struct rfcomm_dlc *dlc, int opt, void *addr)
 		break;
 
 	case SO_RFCOMM_LM:
-		mode = *(int *)addr;
+		err = sockopt_getint(sopt, &mode);
+		if (err)
+			break;
+
 		mode &= (RFCOMM_LM_SECURE | RFCOMM_LM_ENCRYPT | RFCOMM_LM_AUTH);
 
 		if (mode & RFCOMM_LM_SECURE)
@@ -481,40 +488,37 @@ rfcomm_setopt(struct rfcomm_dlc *dlc, int opt, void *addr)
 }
 
 /*
- * rfcomm_getopt(dlc, option, addr)
+ * rfcomm_getopt(dlc, sopt)
  *
  * get DLC options
  */
 int
-rfcomm_getopt(struct rfcomm_dlc *dlc, int opt, void *addr)
+rfcomm_getopt(struct rfcomm_dlc *dlc, struct sockopt *sopt)
 {
-	struct rfcomm_fc_info *fc;
+	struct rfcomm_fc_info fc;
 
-	switch (opt) {
+	switch (sopt->sopt_name) {
 	case SO_RFCOMM_MTU:
-		*(uint16_t *)addr = dlc->rd_mtu;
-		return sizeof(uint16_t);
+		return sockopt_set(sopt, &dlc->rd_mtu, sizeof(uint16_t));
 
 	case SO_RFCOMM_FC_INFO:
-		fc = addr;
-		memset(fc, 0, sizeof(*fc));
-		fc->lmodem = dlc->rd_lmodem;
-		fc->rmodem = dlc->rd_rmodem;
-		fc->tx_cred = max(dlc->rd_txcred, 0xff);
-		fc->rx_cred = max(dlc->rd_rxcred, 0xff);
+		memset(&fc, 0, sizeof(fc));
+		fc.lmodem = dlc->rd_lmodem;
+		fc.rmodem = dlc->rd_rmodem;
+		fc.tx_cred = max(dlc->rd_txcred, 0xff);
+		fc.rx_cred = max(dlc->rd_rxcred, 0xff);
 		if (dlc->rd_session
 		    && (dlc->rd_session->rs_flags & RFCOMM_SESSION_CFC))
-			fc->cfc = 1;
+			fc.cfc = 1;
 
-		return sizeof(*fc);
+		return sockopt_set(sopt, &fc, sizeof(fc));
 
 	case SO_RFCOMM_LM:
-		*(int *)addr = dlc->rd_mode;
-		return sizeof(int);
+		return sockopt_setint(sopt, dlc->rd_mode);
 
 	default:
 		break;
 	}
 
-	return 0;
+	return ENOPROTOOPT;
 }

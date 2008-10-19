@@ -1,4 +1,4 @@
-/* $NetBSD: obio_mputmr.c,v 1.2 2008/04/27 18:58:45 matt Exp $ */
+/* $NetBSD: obio_mputmr.c,v 1.2.6.1 2008/10/19 22:15:42 haad Exp $ */
 
 /*
  * Based on omap_mputmr.c
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.2 2008/04/27 18:58:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.2.6.1 2008/10/19 22:15:42 haad Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -118,13 +118,13 @@ __KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.2 2008/04/27 18:58:45 matt Exp $")
 #include <machine/bus.h>
 #include <machine/intr.h>
 
-#include <arm/omap/omap2430obiovar.h>
+#include <arm/omap/omap2_obiovar.h>
 
 #include <arm/omap/omap2_mputmrvar.h>
 #include <arm/omap/omap2_mputmrreg.h>
 
 
-#include <arm/omap/omap2430reg.h>
+#include <arm/omap/omap2_reg.h>
 
 #ifndef OMAP_MPU_TIMER_CLOCK_FREQ
 #error Specify the timer frequency in Hz with the OMAP_MPU_TIMER_CLOCK_FREQ option.

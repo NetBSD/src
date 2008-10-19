@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.18 2008/02/07 01:21:55 dyoung Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.18.16.1 2008/10/19 22:16:38 haad Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,12 +35,12 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.18 2008/02/07 01:21:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.18.16.1 2008/10/19 22:16:38 haad Exp $");
 
 /*
  * The following controllers are supported by this driver:
  *   BCM5706C A2, A3
- *   BCM5708C B1
+ *   BCM5708C B1, B2
  *
  * The following controllers are not supported by this driver:
  * (These are not "Production" versions of the controller.)
@@ -412,6 +412,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	u_int32_t		command;
 	struct ifnet		*ifp;
 	u_int32_t		val;
+	int			mii_flags = MIIF_FORCEANEG;
 	pcireg_t		memtype;
 
 	bp = bnx_lookup(pa);
@@ -482,12 +483,6 @@ bnx_attach(device_t parent, device_t self, void *aux)
 		    "unsupported controller revision (%c%d)!\n",
 		    ((PCI_REVISION(pa->pa_class) & 0xf0) >> 4) + 'A',
 		    PCI_REVISION(pa->pa_class) & 0x0f);
-		goto bnx_attach_fail;
-	}
-
-	if (BNX_CHIP_BOND_ID(sc) & BNX_CHIP_BOND_ID_SERDES_BIT) {
-		aprint_error_dev(sc->bnx_dev,
-		    "SerDes controllers are not supported!\n");
 		goto bnx_attach_fail;
 	}
 
@@ -610,28 +605,22 @@ bnx_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * The copper based NetXtreme II controllers
-	 * use an integrated PHY at address 1 while
-	 * the SerDes controllers use a PHY at
-	 * address 2.
+	 * that support 2.5Gb operation (currently
+	 * 5708S) use a PHY at address 2, otherwise
+	 * the PHY is present at address 1.
 	 */
 	sc->bnx_phy_addr = 1;
 
 	if (BNX_CHIP_BOND_ID(sc) & BNX_CHIP_BOND_ID_SERDES_BIT) {
 		sc->bnx_phy_flags |= BNX_PHY_SERDES_FLAG;
 		sc->bnx_flags |= BNX_NO_WOL_FLAG;
-		if (BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5708) {
+		if (BNX_CHIP_NUM(sc) != BNX_CHIP_NUM_5706) {
 			sc->bnx_phy_addr = 2;
 			val = REG_RD_IND(sc, sc->bnx_shmem_base +
 					 BNX_SHARED_HW_CFG_CONFIG);
 			if (val & BNX_SHARED_HW_CFG_PHY_2_5G)
 				sc->bnx_phy_flags |= BNX_PHY_2_5G_CAPABLE_FLAG;
 		}
-	}
-
-	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG) {
-		aprint_error_dev(sc->bnx_dev,
-		    "SerDes is not supported by this driver!\n");
-		goto bnx_attach_fail;
 	}
 
 	/* Allocate DMA memory resources. */
@@ -652,10 +641,6 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	ifp->if_init = bnx_init;
 	ifp->if_timer = 0;
 	ifp->if_watchdog = bnx_watchdog;
-        if (sc->bnx_phy_flags & BNX_PHY_2_5G_CAPABLE_FLAG)
-                ifp->if_baudrate = IF_Gbps(2.5);
-        else
-                ifp->if_baudrate = IF_Gbps(1);
 	IFQ_SET_MAXLEN(&ifp->if_snd, USABLE_TX_BD - 1);
 	IFQ_SET_READY(&ifp->if_snd);
 	memcpy(ifp->if_xname, device_xname(self), IFNAMSIZ);
@@ -686,8 +671,10 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	sc->bnx_ec.ec_mii = &sc->bnx_mii;
 	ifmedia_init(&sc->bnx_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
+	if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
+		mii_flags |= MIIF_HAVEFIBER;
 	mii_attach(self, &sc->bnx_mii, 0xffffffff,
-	    MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
+	    MII_PHY_ANY, MII_OFFSET_ANY, mii_flags);
 
 	if (LIST_EMPTY(&sc->bnx_mii.mii_phys)) {
 		aprint_error_dev(self, "no PHY found!\n");
@@ -994,28 +981,53 @@ bnx_miibus_statchg(device_t dev)
 {
 	struct bnx_softc	*sc = device_private(dev);
 	struct mii_data		*mii = &sc->bnx_mii;
+	int			val;
 
-	BNX_CLRBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_PORT);
+	val = REG_RD(sc, BNX_EMAC_MODE);
+	val &= ~(BNX_EMAC_MODE_PORT | BNX_EMAC_MODE_HALF_DUPLEX |
+	    BNX_EMAC_MODE_MAC_LOOP | BNX_EMAC_MODE_FORCE_LINK |
+	    BNX_EMAC_MODE_25G);
 
-	/* Set MII or GMII inerface based on the speed negotiated by the PHY. */
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
-		DBPRINT(sc, BNX_INFO, "Setting GMII interface.\n");
-		BNX_SETBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_PORT_GMII);
-	} else {
-		DBPRINT(sc, BNX_INFO, "Setting MII interface.\n");
-		BNX_SETBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_PORT_MII);
+	/* Set MII or GMII interface based on the speed
+	 * negotiated by the PHY.
+	 */
+	switch (IFM_SUBTYPE(mii->mii_media_active)) {
+	case IFM_10_T:
+		if (BNX_CHIP_NUM(sc) != BNX_CHIP_NUM_5706) {
+			DBPRINT(sc, BNX_INFO, "Enabling 10Mb interface.\n");
+			val |= BNX_EMAC_MODE_PORT_MII_10;
+			break;
+		}
+		/* FALLTHROUGH */
+	case IFM_100_TX:
+		DBPRINT(sc, BNX_INFO, "Enabling MII interface.\n");
+		val |= BNX_EMAC_MODE_PORT_MII;
+		break;
+	case IFM_2500_SX:
+		DBPRINT(sc, BNX_INFO, "Enabling 2.5G MAC mode.\n");
+		val |= BNX_EMAC_MODE_25G;
+		/* FALLTHROUGH */
+	case IFM_1000_T:
+	case IFM_1000_SX:
+		DBPRINT(sc, BNX_INFO, "Enabling GMII interface.\n");
+		val |= BNX_EMAC_MODE_PORT_GMII;
+		break;
+	default:
+		val |= BNX_EMAC_MODE_PORT_GMII;
+		break;
 	}
 
 	/* Set half or full duplex based on the duplicity
 	 * negotiated by the PHY.
 	 */
-	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX) {
-		DBPRINT(sc, BNX_INFO, "Setting Full-Duplex interface.\n");
-		BNX_CLRBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_HALF_DUPLEX);
-	} else {
+	if ((mii->mii_media_active & IFM_GMASK) == IFM_HDX) {
 		DBPRINT(sc, BNX_INFO, "Setting Half-Duplex interface.\n");
-		BNX_SETBIT(sc, BNX_EMAC_MODE, BNX_EMAC_MODE_HALF_DUPLEX);
+		val |= BNX_EMAC_MODE_HALF_DUPLEX;
+	} else {
+		DBPRINT(sc, BNX_INFO, "Setting Full-Duplex interface.\n");
 	}
+
+	REG_WR(sc, BNX_EMAC_MODE, val);
 }
 
 /****************************************************************************/
@@ -2203,7 +2215,8 @@ bnx_release_resources(struct bnx_softc *sc)
 		bus_space_unmap(sc->bnx_btag, sc->bnx_bhandle, sc->bnx_size);
 
 	for (i = 0; i < TOTAL_RX_BD; i++)
-		bus_dmamap_destroy(sc->bnx_dmatag, sc->rx_mbuf_map[i]);
+		if (sc->rx_mbuf_map[i])
+			bus_dmamap_destroy(sc->bnx_dmatag, sc->rx_mbuf_map[i]);
 
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
 }
@@ -4305,7 +4318,7 @@ bnx_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct bnx_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
-	struct mii_data		*mii;
+	struct mii_data		*mii = &sc->bnx_mii;
 	int			s, error = 0;
 
 	s = splnet();
@@ -4331,14 +4344,7 @@ bnx_ioctl(struct ifnet *ifp, u_long command, void *data)
 		DBPRINT(sc, BNX_VERBOSE, "bnx_phy_flags = 0x%08X\n",
 		    sc->bnx_phy_flags);
 
-		if (sc->bnx_phy_flags & BNX_PHY_SERDES_FLAG)
-			error = ifmedia_ioctl(ifp, ifr,
-			    &sc->bnx_ifmedia, command);
-		else {
-			mii = &sc->bnx_mii;
-			error = ifmedia_ioctl(ifp, ifr,
-			    &mii->mii_media, command);
-		}
+		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
 		break;
 
 	default:
@@ -4824,8 +4830,6 @@ bnx_tick(void *xsc)
 
 	/* Schedule the next tick. */
 	callout_reset(&sc->bnx_timeout, hz, bnx_tick, sc);
-
-	/* DRC - ToDo: Add SerDes support and check SerDes link here. */
 
 	mii = &sc->bnx_mii;
 	mii_tick(mii);

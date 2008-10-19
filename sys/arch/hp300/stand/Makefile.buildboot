@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.26 2005/12/11 12:17:19 christos Exp $
+#	$NetBSD: Makefile.buildboot,v 1.26.84.1 2008/10/19 22:15:46 haad Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -34,7 +34,8 @@ LIBCRTEND=
 
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version hp300 ${NEWVERSWHAT}
+	${HOST_SH} ${S}/conf/newvers_stand.sh \
+		-DM ${.CURDIR}/version ${MACHINE} ${NEWVERSWHAT}
 
 ${PROG}: ${PROGAOUT}
 	${OBJCOPY} --output-target=binary ${PROGAOUT} ${PROGAOUT}.bin

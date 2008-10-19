@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.29 2008/06/12 21:46:21 cegger Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.29.2.1 2008/10/19 22:16:19 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.29 2008/06/12 21:46:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.29.2.1 2008/10/19 22:16:19 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ static const char * const pckbc_acpi_ids_ms[] = {
 	"PNP0F19",
 	"PNP0F1B",
 	"PNP0F1C",
+	"SYN0302",
 	NULL
 };
 

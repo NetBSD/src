@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.42 2007/03/04 05:59:39 christos Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.42.50.1 2008/10/19 22:15:43 haad Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.42 2007/03/04 05:59:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.42.50.1 2008/10/19 22:15:43 haad Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -138,14 +138,14 @@ struct scsi_dma {
 
 #define	set_scsi_dma(addr, val)	(void)(					\
 	{								\
-	u_char	*address = (u_char*)__UNVOLATILE(addr+1);		\
+	volatile u_char	*address = (volatile u_char *)addr+1;		\
 	u_long	nval	 = (u_long)val;					\
 	__asm("movepl	%0, %1@(0)": :"d" (nval), "a" (address));	\
 	})
 
 #define	get_scsi_dma(addr, res)	(					\
 	{								\
-	u_char	*address = (u_char*)__UNVOLATILE(addr+1);		\
+	volatile u_char	*address = (volatile u_char *)addr+1;		\
 	u_long	nval;							\
 	__asm("movepl	%1@(0), %0": "=d" (nval) : "a" (address));	\
 	res = (u_long)nval;						\
@@ -342,8 +342,8 @@ scsi_tt_dmasetup(SC_REQ *reqp, u_int phase, u_char	mode)
 		SCSI_DMA->s_dma_ctrl = SD_IN;
 		if (machineid & ATARI_HADES)
 		    SCSI_DMA->s_hdma_ctrl &= ~(SDH_BUSERR|SDH_EOP);
-		set_scsi_dma(&(SCSI_DMA->s_dma_ptr), reqp->dm_cur->dm_addr);
-		set_scsi_dma(&(SCSI_DMA->s_dma_cnt), reqp->dm_cur->dm_count);
+		set_scsi_dma(SCSI_DMA->s_dma_ptr, reqp->dm_cur->dm_addr);
+		set_scsi_dma(SCSI_DMA->s_dma_cnt, reqp->dm_cur->dm_count);
 		SET_TT_REG(NCR5380_ICOM, 0);
 		SET_TT_REG(NCR5380_MODE, mode);
 		SCSI_DMA->s_dma_ctrl = SD_ENABLE;
@@ -353,8 +353,8 @@ scsi_tt_dmasetup(SC_REQ *reqp, u_int phase, u_char	mode)
 		SCSI_DMA->s_dma_ctrl = SD_OUT;
 		if (machineid & ATARI_HADES)
 		    SCSI_DMA->s_hdma_ctrl &= ~(SDH_BUSERR|SDH_EOP);
-		set_scsi_dma(&(SCSI_DMA->s_dma_ptr), reqp->dm_cur->dm_addr);
-		set_scsi_dma(&(SCSI_DMA->s_dma_cnt), reqp->dm_cur->dm_count);
+		set_scsi_dma(SCSI_DMA->s_dma_ptr, reqp->dm_cur->dm_addr);
+		set_scsi_dma(SCSI_DMA->s_dma_cnt, reqp->dm_cur->dm_count);
 		SET_TT_REG(NCR5380_MODE, mode);
 		SET_TT_REG(NCR5380_ICOM, SC_ADTB);
 		SET_TT_REG(NCR5380_DMSTAT, 0);
@@ -472,10 +472,11 @@ tt_get_dma_result(SC_REQ *reqp, u_long *bytes_left)
 	 */
 	if ((machineid & ATARI_TT) && ((u_long)byte_p & 3)
 	    && PH_IN(reqp->phase)) {
-		u_char	*p, *q;
+		u_char	*p;
+		volatile u_char *q;
 
 		p = ptov(reqp, (u_long *)((u_long)byte_p & ~3));
-		q = (u_char*)&(SCSI_DMA->s_dma_res);
+		q = SCSI_DMA->s_dma_res;
 		switch ((u_long)byte_p & 3) {
 			case 3: *p++ = *q++;
 			case 2: *p++ = *q++;
@@ -495,7 +496,7 @@ extern	int			*nofault;
 	label_t			faultbuf;
 	int			write;
 	u_long	 		count, t;
-	u_char			*data_p = (u_char*)(stio_addr+0x741);
+	volatile u_char		*data_p = (volatile u_char *)(stio_addr+0x741);
 
 	/*
 	 * Block SCSI interrupts while emulating DMA. They come

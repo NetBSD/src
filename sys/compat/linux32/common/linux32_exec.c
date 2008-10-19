@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.13 2008/04/28 20:23:44 martin Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.13.6.1 2008/10/19 22:16:16 haad Exp $ */
 
 /*-
  * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.13 2008/04/28 20:23:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.13.6.1 2008/10/19 22:16:16 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,10 @@ const struct emul emul_linux32 = {
 	NULL,
 	NULL,
 	netbsd32_vm_default_addr,
+	NULL,
+	NULL,
+	0,
+	NULL
 };
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.2.1 2008/10/19 22:15:45 haad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.2.1 2008/10/19 22:15:45 haad Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2008/07/02 17:28:55 ad Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
-
-#include <net/netisr.h>
 
 #include <machine/explora.h>
 #include <machine/bus.h>

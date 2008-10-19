@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.146 2008/06/04 12:45:28 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.146.4.1 2008/10/19 22:18:10 haad Exp $	*/
 
 /*
  *
@@ -143,7 +143,7 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
 #define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce malloc() */
 #define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
 #define UVM_FLAG_NOWAIT  0x400000 /* not allowed to sleep */
-#define UVM_FLAG_QUANTUM 0x800000 /* entry never be splitted later */
+#define UVM_FLAG_QUANTUM 0x800000 /* entry can never be split later */
 #define UVM_FLAG_WAITVA  0x1000000 /* wait for va */
 #define UVM_FLAG_VAONLY  0x2000000 /* unmap: no pages are mapped */
 
@@ -525,7 +525,6 @@ struct uvm_coredump_state {
 /*
  * the various kernel maps, owned by MD code
  */
-extern struct vm_map *exec_map;
 extern struct vm_map *kernel_map;
 extern struct vm_map *kmem_map;
 extern struct vm_map *mb_map;

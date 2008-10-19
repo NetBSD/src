@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_bootstrap.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $ */
+/* $NetBSD: udf_strat_bootstrap.c,v 1.1.12.1 2008/10/19 22:17:18 haad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.1 2008/05/14 16:49:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.1.12.1 2008/10/19 22:17:18 haad Exp $");
 #endif /* not lint */
 
 
@@ -61,10 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.1 2008/05/14 16:49:48 rein
 
 #include <fs/udf/ecma167-udf.h>
 #include <fs/udf/udf_mount.h>
-
-#if defined(_KERNEL_OPT)
-#include "opt_udf.h"
-#endif
 
 #include "udf.h"
 #include "udf_subr.h"

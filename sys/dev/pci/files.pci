@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.304 2008/05/23 21:11:40 jnemeth Exp $
+#	$NetBSD: files.pci,v 1.304.4.1 2008/10/19 22:16:38 haad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -363,6 +363,11 @@ file	dev/pci/if_hme_pci.c		hme_pci
 attach	gem at pci with gem_pci
 file	dev/pci/if_gem_pci.c		gem_pci
 
+# JMicron JMC2[56]0 ethernet controllers
+device	jme: ether, ifnet, arp, mii
+attach	jme at pci
+file	dev/pci/if_jme.c		jme
+
 # NE2000-compatible PCI Ethernet cards
 defparam opt_ipkdb.h	IPKDB_NE_PCISLOT
 defflag	opt_ipkdb.h	IPKDB_NE_PCI		: IPKDB_NE
@@ -391,7 +396,7 @@ attach	esh at pci with esh_pci
 file	dev/pci/if_esh_pci.c		esh_pci
 
 # generic PCI VGA
-defflag	opt_vga.h	VGA_POST
+defflag	opt_vga.h	VGA_POST:	X86EMU
 attach	vga at pci with vga_pci
 file	dev/pci/vga_pci.c		vga_pci			needs-flag
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.33 2008/06/22 13:59:06 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.33.2.1 2008/10/19 22:17:27 haad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.33 2008/06/22 13:59:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.33.2.1 2008/10/19 22:17:27 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,8 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		    NULL);
 		if (error != 0)
 			break;
-		if ((ci = cpu_lookup(cs->cs_id)) == NULL) {
+		if (cs->cs_id >= __arraycount(cpu_infos) ||
+		    (ci = cpu_lookup(cs->cs_id)) == NULL) {
 			error = ESRCH;
 			break;
 		}
@@ -181,7 +182,8 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		id = cs->cs_id;
 		memset(cs, 0, sizeof(*cs));
 		cs->cs_id = id;
-		if ((ci = cpu_lookup(id)) == NULL) {
+		if (cs->cs_id >= __arraycount(cpu_infos) ||
+		    (ci = cpu_lookup(id)) == NULL) {
 			error = ESRCH;
 			break;
 		}
@@ -219,25 +221,11 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 }
 
 struct cpu_info *
-cpu_lookup(cpuid_t id)
-{
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (ci->ci_cpuid == id)
-			return ci;
-	}
-
-	return NULL;
-}
-
-struct cpu_info *
-cpu_lookup_byindex(u_int idx)
+cpu_lookup(u_int idx)
 {
 	struct cpu_info *ci = cpu_infos[idx];
 
-	KASSERT(idx < MAXCPUS);
+	KASSERT(idx < __arraycount(cpu_infos));
 	KASSERT(ci == NULL || cpu_index(ci) == idx);
 
 	return ci;
@@ -273,24 +261,14 @@ cpu_xc_offline(struct cpu_info *ci)
 	 * be handled by sched_takecpu().
 	 */
 	mutex_enter(proc_lock);
-	spc_dlock(ci, mci);
 	LIST_FOREACH(l, &alllwp, l_list) {
 		lwp_lock(l);
-		if (l->l_cpu != ci || (l->l_pflag & LP_BOUND) != 0) {
-			lwp_unlock(l);
-			continue;
-		}
-		if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM) != 0) {
-			sched_dequeue(l);
-			l->l_cpu = mci;
-			lwp_setlock(l, mspc->spc_mutex);
-			sched_enqueue(l, false);
-			lwp_unlock(l);
-		} else {
+		if ((l->l_pflag & LP_BOUND) == 0 && l->l_cpu == ci) {
 			lwp_migrate(l, mci);
+		} else {
+			lwp_unlock(l);
 		}
 	}
-	spc_dunlock(ci, mci);
 	mutex_exit(proc_lock);
 
 #ifdef __HAVE_MD_CPU_OFFLINE

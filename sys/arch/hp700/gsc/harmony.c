@@ -1,4 +1,4 @@
-/*	$NetBSD: harmony.c,v 1.12 2008/07/04 11:18:02 skrll Exp $	*/
+/*	$NetBSD: harmony.c,v 1.12.2.1 2008/10/19 22:15:46 haad Exp $	*/
 
 /*	$OpenBSD: harmony.c,v 1.23 2004/02/13 21:28:19 mickey Exp $	*/
 
@@ -127,10 +127,12 @@ void harmony_intr_disable(struct harmony_softc *);
 uint32_t harmony_speed_bits(struct harmony_softc *, u_int *);
 int harmony_set_gainctl(struct harmony_softc *);
 void harmony_reset_codec(struct harmony_softc *);
-void harmony_start_cp(struct harmony_softc *);
+void harmony_start_cp(struct harmony_softc *, int);
+void harmony_start_pp(struct harmony_softc *, int);
 void harmony_tick_pb(void *);
 void harmony_tick_cp(void *);
-void harmony_try_more(struct harmony_softc *);
+void harmony_try_more(struct harmony_softc *, int, int,
+	struct harmony_channel *);
 
 #if NRND > 0
 void harmony_acc_tmo(void *);
@@ -327,7 +329,6 @@ int
 harmony_intr(void *vsc)
 {
 	struct harmony_softc *sc;
-	struct harmony_channel *c;
 	uint32_t dstatus;
 	int r;
 
@@ -341,41 +342,14 @@ harmony_intr(void *vsc)
 
 	dstatus = READ_REG(sc, HARMONY_DSTATUS);
 
-	if (sc->sc_playing && (dstatus & DSTATUS_PN)) {
-		struct harmony_dma *d;
-		bus_addr_t nextaddr;
-		bus_size_t togo;
-
+	if (dstatus & DSTATUS_PN) {
 		r = 1;
-		c = &sc->sc_playback;
-		d = c->c_current;
-		togo = c->c_segsz - c->c_cnt;
-		if (togo == 0) {
-			nextaddr = d->d_map->dm_segs[0].ds_addr;
-			c->c_cnt = togo = c->c_blksz;
-		} else {
-			nextaddr = c->c_lastaddr;
-			if (togo > c->c_blksz)
-				togo = c->c_blksz;
-			c->c_cnt += togo;
-		}
-
-		bus_dmamap_sync(sc->sc_dmat, d->d_map,
-		    nextaddr - d->d_map->dm_segs[0].ds_addr,
-		    c->c_blksz, BUS_DMASYNC_PREWRITE);
-
-		WRITE_REG(sc, HARMONY_PNXTADD, nextaddr);
-		SYNC_REG(sc, HARMONY_PNXTADD, BUS_SPACE_BARRIER_WRITE);
-		c->c_lastaddr = nextaddr + togo;
-		harmony_try_more(sc);
+		harmony_start_pp(sc, 0);
 	}
 
 	if (dstatus & DSTATUS_RN) {
-		c = &sc->sc_capture;
 		r = 1;
-		harmony_start_cp(sc);
-		if (sc->sc_capturing && c->c_intr != NULL)
-			(*c->c_intr)(c->c_intrarg);
+		harmony_start_cp(sc, 0);
 	}
 
 	if (READ_REG(sc, HARMONY_OV) & OV_OV) {
@@ -1086,8 +1060,6 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 	struct harmony_softc *sc;
 	struct harmony_channel *c;
 	struct harmony_dma *d;
-	bus_addr_t nextaddr;
-	bus_size_t togo;
 
 	sc = vsc;
 	c = &sc->sc_playback;
@@ -1109,34 +1081,15 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 
 	sc->sc_playing = 1;
 
-	togo = c->c_segsz - c->c_cnt;
-	if (togo == 0) {
-		nextaddr = d->d_map->dm_segs[0].ds_addr;
-		c->c_cnt = togo = c->c_blksz;
-	} else {
-		nextaddr = c->c_lastaddr;
-		if (togo > c->c_blksz)
-			togo = c->c_blksz;
-		c->c_cnt += togo;
-	}
-
-	bus_dmamap_sync(sc->sc_dmat, d->d_map,
-	    nextaddr - d->d_map->dm_segs[0].ds_addr,
-	    c->c_blksz, BUS_DMASYNC_PREWRITE);
-
-	WRITE_REG(sc, HARMONY_PNXTADD, nextaddr);
-	c->c_theaddr = nextaddr;
-	SYNC_REG(sc, HARMONY_PNXTADD, BUS_SPACE_BARRIER_WRITE);
-	c->c_lastaddr = nextaddr + togo;
-
-	harmony_start_cp(sc);
+	harmony_start_pp(sc, 1);
+	harmony_start_cp(sc, 0);
 	harmony_intr_enable(sc);
 
 	return 0;
 }
 
 void
-harmony_start_cp(struct harmony_softc *sc)
+harmony_start_cp(struct harmony_softc *sc, int start)
 {
 	struct harmony_channel *c;
 	struct harmony_dma *d;
@@ -1167,13 +1120,60 @@ harmony_start_cp(struct harmony_softc *sc)
 		    c->c_blksz, BUS_DMASYNC_PREWRITE);
 
 		WRITE_REG(sc, HARMONY_RNXTADD, nextaddr);
+		if (start)
+			c->c_theaddr = nextaddr;
 		SYNC_REG(sc, HARMONY_RNXTADD, BUS_SPACE_BARRIER_WRITE);
 		c->c_lastaddr = nextaddr + togo;
+
+		harmony_try_more(sc, HARMONY_RCURADD,
+		    RCURADD_BUFMASK, &sc->sc_capture);
 	}
 
 #if NRND > 0
 	callout_schedule(&sc->sc_acc_tmo, 1);
 #endif
+}
+
+void
+harmony_start_pp(struct harmony_softc *sc, int start)
+{
+	struct harmony_channel *c;
+	struct harmony_dma *d;
+	bus_addr_t nextaddr;
+	bus_size_t togo;
+
+	c = &sc->sc_playback;
+	if (sc->sc_playing == 0) {
+		WRITE_REG(sc, HARMONY_PNXTADD,
+		    sc->sc_playback_paddrs[sc->sc_playback_empty]);
+		if (++sc->sc_playback_empty == PLAYBACK_EMPTYS)
+			sc->sc_playback_empty = 0;
+	} else {
+		d = c->c_current;
+		togo = c->c_segsz - c->c_cnt;
+		if (togo == 0) {
+			nextaddr = d->d_map->dm_segs[0].ds_addr;
+			c->c_cnt = togo = c->c_blksz;
+		} else {
+			nextaddr = c->c_lastaddr;
+			if (togo > c->c_blksz)
+				togo = c->c_blksz;
+			c->c_cnt += togo;
+		}
+
+		bus_dmamap_sync(sc->sc_dmat, d->d_map,
+		    nextaddr - d->d_map->dm_segs[0].ds_addr,
+		    c->c_blksz, BUS_DMASYNC_PREWRITE);
+
+		WRITE_REG(sc, HARMONY_PNXTADD, nextaddr);
+		if (start)
+			c->c_theaddr = nextaddr;
+		SYNC_REG(sc, HARMONY_PNXTADD, BUS_SPACE_BARRIER_WRITE);
+		c->c_lastaddr = nextaddr + togo;
+
+		harmony_try_more(sc, HARMONY_PCURADD,
+		    PCURADD_BUFMASK, &sc->sc_playback);
+	}
 }
 
 int
@@ -1203,8 +1203,11 @@ harmony_trigger_input(void *vsc, void *start, void *end, int blksize,
 	c->c_lastaddr = d->d_map->dm_segs[0].ds_addr;
 
 	sc->sc_capturing = 1;
-	harmony_start_cp(sc);
+
+	harmony_start_pp(sc, 0);
+	harmony_start_cp(sc, 1);
 	harmony_intr_enable(sc);
+
 	return 0;
 }
 
@@ -1315,17 +1318,16 @@ harmony_set_gainctl(struct harmony_softc *sc)
 }
 
 void
-harmony_try_more(struct harmony_softc *sc)
+harmony_try_more(struct harmony_softc *sc, int curadd, int bufmask,
+	struct harmony_channel *c)
 {
-	struct harmony_channel *c;
 	struct harmony_dma *d;
 	uint32_t cur;
 	int i, nsegs;
 
-	c = &sc->sc_playback;
 	d = c->c_current;
-	cur = bus_space_read_4(sc->sc_bt, sc->sc_bh, HARMONY_PCURADD);
-	cur &= PCURADD_BUFMASK;
+	cur = bus_space_read_4(sc->sc_bt, sc->sc_bh, curadd);
+	cur &= bufmask;
 	nsegs = 0;
 
 #ifdef DIAGNOSTIC

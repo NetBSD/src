@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.69 2008/05/25 16:21:54 chs Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.69.4.1 2008/10/19 22:16:27 haad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.69 2008/05/25 16:21:54 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.69.4.1 2008/10/19 22:16:27 haad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -133,7 +133,6 @@ __KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.69 2008/05/25 16:21:54 chs Exp $");
 
 /* XXX Hardware padding doesn't work yet(?) */
 #define	SMC91CXX_SW_PAD
-#define	SMC91CXX_NO_BYTE_WRITE
 
 const char *smc91cxx_idstrs[] = {
 	NULL,				/* 0 */
@@ -773,6 +772,7 @@ smc91cxx_start(ifp)
 	oddbyte = smc91cxx_copy_tx_frame(sc, m);
 
 #ifdef SMC91CXX_SW_PAD
+#ifdef SMC91CXX_NO_BYTE_WRITE
 #if BYTE_ORDER == LITTLE_ENDIAN
 	if (pad > 1 && (pad & 1)) {
 		bus_space_write_2(bst, bsh, DATA_REG_W, oddbyte << 0);
@@ -784,6 +784,7 @@ smc91cxx_start(ifp)
 		oddbyte = 0;
 	}
 #endif
+#endif
 
 	/*
 	 * Push out padding.
@@ -794,6 +795,7 @@ smc91cxx_start(ifp)
 	}
 #endif
 
+#ifdef SMC91CXX_NO_BYTE_WRITE
 	/*
 	 * Push out control byte and unused packet byte.  The control byte
 	 * is 0, meaning the packet is even lengthed and no special
@@ -805,6 +807,10 @@ smc91cxx_start(ifp)
 #else
 	bus_space_write_2(bst, bsh, DATA_REG_W,
 	    (oddbyte << 8) | (pad ? CTLB_ODD : 0));
+#endif
+#else
+	if (pad)
+		bus_space_write_1(bst, bsh, DATA_REG_B, 0);
 #endif
 
 	/*
@@ -913,6 +919,10 @@ smc91cxx_copy_tx_frame(sc, m0)
 			panic("smc91cxx_copy_tx_frame: p != lim");
 #endif
 	}
+#ifndef SMC91CXX_NO_BYTE_WRITE
+	if (leftover)
+		bus_space_write_1(bst, bsh, DATA_REG_B, dbuf);
+#endif
 	return dbuf;
 }
 
@@ -928,7 +938,10 @@ smc91cxx_intr(arg)
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	u_int8_t mask, interrupts, status;
-	u_int16_t packetno, tx_status, card_stats, v;
+	u_int16_t packetno, tx_status, card_stats;
+#ifdef SMC91CXX_NO_BYTE_WRITE
+	u_int16_t v;
+#endif
 
 	if ((sc->sc_flags & SMC_FLAGS_ENABLED) == 0 ||
 	    !device_is_active(&sc->sc_dev))
@@ -939,6 +952,7 @@ smc91cxx_intr(arg)
 	/*
 	 * Obtain the current interrupt status and mask.
 	 */
+#ifdef SMC91CXX_NO_BYTE_WRITE
 	v = bus_space_read_2(bst, bsh, INTR_STAT_REG_B);
 
 	/*
@@ -953,6 +967,15 @@ smc91cxx_intr(arg)
 	mask = v & 0xff;
 #endif
 	KDASSERT(mask == sc->sc_intmask);
+#else
+	mask = bus_space_read_1(bst, bsh, INTR_MASK_REG_B);
+
+	/*
+	 * Get the set of interrupt which occurred and eliminate any
+	 * which are not enabled.
+	 */
+	interrupts = bus_space_read_1(bst, bsh, INTR_STAT_REG_B);
+#endif
 	status = interrupts & mask;
 
 	/* Ours? */

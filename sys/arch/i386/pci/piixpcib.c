@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.15 2008/05/05 11:49:40 xtraeme Exp $ */
+/* $NetBSD: piixpcib.c,v 1.15.6.1 2008/10/19 22:15:49 haad Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.15 2008/05/05 11:49:40 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.15.6.1 2008/10/19 22:15:49 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,14 +53,16 @@ __KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.15 2008/05/05 11:49:40 xtraeme Exp $"
 #include <dev/pci/pcidevs.h>
 
 #include <i386/pci/piixreg.h>
+#include <x86/pci/pcibvar.h>
 
 #define		PIIX4_PIRQRC	0x60
 
 struct piixpcib_softc {
-	device_t	sc_dev;
+	/* we call pcibattach() which assumes our softc starts like this: */
 
-	pci_chipset_tag_t sc_pc;
-	pcitag_t	sc_pcitag;
+	struct pcib_softc sc_pcib;
+
+	device_t	sc_dev;
 
 	int		sc_smi_cmd;
 	int		sc_smi_data;
@@ -84,10 +86,7 @@ static void speedstep_configure(struct piixpcib_softc *,
 				struct pci_attach_args *);
 static int speedstep_sysctl_helper(SYSCTLFN_ARGS);
 
-struct piixpcib_softc *speedstep_cookie;	/* XXX */
-
-/* Defined in arch/i386/pci/pcib.c. */
-extern void pcibattach(device_t, device_t, void *);
+static struct piixpcib_softc *speedstep_cookie;	/* XXX */
 
 CFATTACH_DECL_NEW(piixpcib, sizeof(struct piixpcib_softc),
     piixpcibmatch, piixpcibattach, NULL, NULL);
@@ -126,8 +125,6 @@ piixpcibattach(device_t parent, device_t self, void *aux)
 	struct piixpcib_softc *sc = device_private(self);
 
 	sc->sc_dev = self;
-	sc->sc_pc = pa->pa_pc;
-	sc->sc_pcitag = pa->pa_tag;
 	sc->sc_iot = pa->pa_iot;
 
 	pcibattach(parent, self, aux);
@@ -152,7 +149,8 @@ piixpcib_suspend(device_t dv PMF_FN_ARGS)
 	struct piixpcib_softc *sc = device_private(dv);
 
 	/* capture PIRQX route control registers */
-	sc->sc_pirqrc = pci_conf_read(sc->sc_pc, sc->sc_pcitag, PIIX4_PIRQRC);
+	sc->sc_pirqrc = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
+	    PIIX4_PIRQRC);
 
 	/* capture edge/level control registers */
 	sc->sc_elcr[0] = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
@@ -167,7 +165,8 @@ piixpcib_resume(device_t dv PMF_FN_ARGS)
 	struct piixpcib_softc *sc = device_private(dv);
 
 	/* restore PIRQX route control registers */
-	pci_conf_write(sc->sc_pc, sc->sc_pcitag, PIIX4_PIRQRC, sc->sc_pirqrc);
+	pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag, PIIX4_PIRQRC,
+	    sc->sc_pirqrc);
 
 	/* restore edge/level control registers */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, sc->sc_elcr[0]);

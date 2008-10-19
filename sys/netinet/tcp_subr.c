@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.231 2008/05/02 13:40:33 ad Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.231.6.1 2008/10/19 22:17:46 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.231 2008/05/02 13:40:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.231.6.1 2008/10/19 22:17:46 haad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -232,8 +232,7 @@ void	tcp6_mtudisc_callback(struct in6_addr *);
 void	tcp6_mtudisc(struct in6pcb *, int);
 #endif
 
-POOL_INIT(tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl", NULL,
-    IPL_SOFTNET);
+static struct pool tcpcb_pool;
 
 #ifdef TCP_CSUM_COUNTERS
 #include <sys/device.h>
@@ -376,6 +375,8 @@ tcp_init(void)
 	int hlen;
 
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
+	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
+	    NULL, IPL_SOFTNET);
 
 	hlen = sizeof(struct ip) + sizeof(struct tcphdr);
 #ifdef INET6
@@ -1211,27 +1212,22 @@ tcp_close(struct tcpcb *tp)
 	TCP_REASS_UNLOCK(tp);
 
 	/* free the SACK holes list. */
-	tcp_free_sackholes(tp);
-	
+	tcp_free_sackholes(tp);	
 	tcp_congctl_release(tp);
-
-	tcp_canceltimers(tp);
-	TCP_CLEAR_DELACK(tp);
 	syn_cache_cleanup(tp);
 
 	if (tp->t_template) {
 		m_free(tp->t_template);
 		tp->t_template = NULL;
 	}
-	tp->t_flags |= TF_DEAD;
-	for (j = 0; j < TCPT_NTIMERS; j++) {
-		callout_halt(&tp->t_timer[j], softnet_lock);
-		callout_destroy(&tp->t_timer[j]);
-	}
-	callout_halt(&tp->t_delack_ch, softnet_lock);
-	callout_destroy(&tp->t_delack_ch);
-	pool_put(&tcpcb_pool, tp);
 
+	/*
+	 * Detaching the pcb will unlock the socket/tcpcb, and stopping
+	 * the timers can also drop the lock.  We need to prevent access
+	 * to the tcpcb as it's half torn down.  Flag the pcb as dead
+	 * (prevents access by timers) and only then detach it.
+	 */
+	tp->t_flags |= TF_DEAD;
 	if (inp) {
 		inp->inp_ppcb = 0;
 		soisdisconnected(so);
@@ -1244,7 +1240,19 @@ tcp_close(struct tcpcb *tp)
 		in6_pcbdetach(in6p);
 	}
 #endif
+	/*
+	 * pcb is no longer visble elsewhere, so we can safely release
+	 * the lock in callout_halt() if needed.
+	 */
 	TCP_STATINC(TCP_STAT_CLOSED);
+	for (j = 0; j < TCPT_NTIMERS; j++) {
+		callout_halt(&tp->t_timer[j], softnet_lock);
+		callout_destroy(&tp->t_timer[j]);
+	}
+	callout_halt(&tp->t_delack_ch, softnet_lock);
+	callout_destroy(&tp->t_delack_ch);
+	pool_put(&tcpcb_pool, tp);
+
 	return ((struct tcpcb *)0);
 }
 

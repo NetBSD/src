@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.6 2008/05/11 15:32:20 ad Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.6.4.1 2008/10/19 22:16:07 haad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.6 2008/05/11 15:32:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.6.4.1 2008/10/19 22:16:07 haad Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -109,7 +109,7 @@ static paddr_t acpi_wakeup_paddr = 3 * PAGE_SIZE;
 static vaddr_t acpi_wakeup_vaddr;
 
 static int acpi_md_node = CTL_EOL;
-static int acpi_md_vbios_reset = 1;
+int acpi_md_vbios_reset = 1; /* Referenced by dev/pci/vga_pci.c */
 static int acpi_md_beep_on_reset = 0;
 
 static int	sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS);
@@ -369,7 +369,12 @@ acpi_md_sleep(int state)
 	initrtclock(TIMER_FREQ);
 	inittodr(time_second);
 
+	AcpiClearEvent(ACPI_EVENT_PMTIMER);
+	AcpiClearEvent(ACPI_EVENT_GLOBAL);
 	AcpiClearEvent(ACPI_EVENT_POWER_BUTTON);
+	AcpiClearEvent(ACPI_EVENT_SLEEP_BUTTON);
+	AcpiClearEvent(ACPI_EVENT_RTC);
+	AcpiHwDisableAllGpes ();
 
 out:
 
@@ -446,7 +451,7 @@ sysctl_md_acpi_vbios_reset(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	if (t < 0 || t > 1)
+	if (t < 0 || t > 2)
 		return EINVAL;
 
 	acpi_md_vbios_reset = t;

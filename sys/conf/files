@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.909.2.1 2008/07/07 14:45:53 haad Exp $
+#	$NetBSD: files,v 1.909.2.2 2008/10/19 22:16:18 haad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -110,9 +110,14 @@ defflag	opt_fileassoc.h		FILEASSOC
 
 defflag	opt_gre.h		GRE_DEBUG
 
+# Write Ahead Physical Block Logging
+defflag opt_wapbl.h		WAPBL WAPBL_DEBUG
+defparam opt_wapbl.h		WAPBL_DEBUG_PRINT
+
 # compatibility options
 #
-defflag	opt_compat_netbsd.h	COMPAT_40
+defflag	opt_sa.h		KERN_SA
+defflag	opt_compat_netbsd.h	COMPAT_40: KERN_SA
 defflag	opt_compat_netbsd.h	COMPAT_30: COMPAT_40
 defflag	opt_compat_netbsd.h	COMPAT_20: COMPAT_30
 defflag	opt_compat_netbsd.h	COMPAT_16: COMPAT_20
@@ -261,6 +266,7 @@ include "conf/majors"
 define	audiobus	{ }
 define	midibus		{ }
 define	midisyn
+define	videobus	{ }
 define	ata	        {[channel = -1]}
 define	sata
 define	scsi_core
@@ -291,6 +297,18 @@ attach	midi at midibus
 # console bell via audio device
 #
 define	audiobell
+
+# video devices, attaches to video hardware driver
+#
+device	video
+attach	video at videobus
+
+# National Semiconductor LM7[89]
+#
+# (included here so files.i2c can define an attachment)
+
+device	lm: sysmon_envsys
+file	dev/ic/nslm7x.c			lm			needs-flag
 
 # I2C device support
 include "dev/i2c/files.i2c"
@@ -801,11 +819,6 @@ file	dev/ic/attimer.c		attimer			needs-flag
 device	clmpcc: tty
 file	dev/ic/clmpcc.c			clmpcc			needs-flag
 
-# National Semiconductor LM7[89]
-#
-device	lm: sysmon_envsys
-file	dev/ic/nslm7x.c			lm			needs-flag
-
 # Abit uGuru
 #
 device	ug: sysmon_envsys
@@ -1183,7 +1196,7 @@ defflag opt_vnd.h	VND_COMPRESSION
 defpseudo ccd:		disk
 defpseudo cgd:		disk, des, blowfish, cast128, rijndael
 defpseudodev md:	disk
-defpseudo fss:		disk
+defpseudodev fss:	disk
 
 defpseudo pty:		tty
 defpseudo rnd
@@ -1215,6 +1228,12 @@ defpseudo sequencer
 defpseudo clockctl
 defpseudo irix_kmem
 defpseudo irix_usema
+
+#
+# Accept filters.  XXX should use another registration/initialization method.
+#
+defpseudo accf_data
+defpseudo accf_http
 
 # ISDN userland pseudo devices
 #
@@ -1300,6 +1319,7 @@ include "secmodel/files.secmodel"
 #
 # kernel sources
 #
+file	compat/sa/compat_sa.c
 file	conf/debugsyms.c
 file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
@@ -1330,6 +1350,7 @@ file	dev/radio.c			radio			needs-flag
 file	dev/rnd.c			rnd			needs-flag
 file	dev/rndpool.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
+file	dev/video.c			video			needs-flag
 file	dev/vnd.c			vnd			needs-flag
 file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
@@ -1370,6 +1391,7 @@ file	kern/kern_lkm.c			lkm
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
+file	kern/kern_malloc_stdtype.c
 file	kern/kern_malloc_debug.c	malloc_debug
 file	kern/kern_module.c
 file	kern/kern_mutex.c
@@ -1381,6 +1403,7 @@ file	kern/kern_pmf.c
 file	kern/kern_proc.c
 file	kern/kern_prot.c
 file	kern/kern_ras.c
+file	kern/kern_rate.c
 file	kern/kern_resource.c
 file	kern/kern_runq.c
 file	kern/kern_rwlock.c
@@ -1396,6 +1419,7 @@ file	kern/kern_time.c
 file	kern/kern_timeout.c
 file	kern/kern_turnstile.c
 file	kern/kern_todr.c
+file	kern/kern_uidinfo.c
 file	kern/kern_uuid.c
 file	kern/kern_xxx.c
 file	kern/kgdb_stub.c		kgdb
@@ -1456,6 +1480,7 @@ file	kern/tty_pty.c			pty 			needs-flag
 file	kern/tty_ptm.c			pty
 file	kern/tty_subr.c
 file	kern/tty_tty.c
+file	kern/uipc_accf.c
 file	kern/uipc_domain.c
 file	kern/uipc_mbuf.c
 file	kern/uipc_mbuf2.c
@@ -1468,16 +1493,17 @@ file	kern/uipc_syscalls.c
 file	kern/uipc_usrreq.c
 file	kern/vfs_bio.c
 file	kern/vfs_cache.c
+file	kern/vfs_dirhash.c
 file	kern/vfs_getcwd.c
 file	kern/vfs_hooks.c
 file	kern/vfs_init.c
 file	kern/vfs_lockf.c
 file	kern/vfs_lookup.c
 file	kern/vfs_subr.c
-file	kern/vfs_subr2.c
 file	kern/vfs_syscalls.c
 file	kern/vfs_trans.c
 file	kern/vfs_vnops.c
+file	kern/vfs_wapbl.c		wapbl
 file	kern/vfs_xattr.c
 file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c
@@ -1533,6 +1559,8 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
+file	netinet/accf_data.c		accf_data
+file	netinet/accf_http.c		accf_http
 file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm

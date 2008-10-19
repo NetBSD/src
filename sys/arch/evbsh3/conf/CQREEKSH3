@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.28 2006/09/20 00:41:12 uwe Exp $
+#	$NetBSD: CQREEKSH3,v 1.28.62.1 2008/10/19 22:15:45 haad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -54,6 +54,7 @@ options 	EXEC_COFF	# 32-bit COFF executables (sh-compiler)
 # File systems
 file-system 	FFS		# UFS
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?

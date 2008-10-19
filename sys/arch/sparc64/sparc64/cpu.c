@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.75 2008/04/14 16:19:18 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.75.10.1 2008/10/19 22:16:01 haad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75 2008/04/14 16:19:18 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.75.10.1 2008/10/19 22:16:01 haad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -81,6 +81,7 @@ struct cpu_info *cpus = NULL;
 
 volatile sparc64_cpuset_t cpus_active;/* set of active cpus */
 struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
+struct pool_cache *fpstate_cache;
 
 static struct cpu_info *alloc_cpuinfo(u_int);
 
@@ -183,7 +184,7 @@ cpu_reset_fpustate(void)
 	struct fpstate64 *fpstate;
 	struct fpstate64 fps[2];
 
-	/* This needs to be 64-bit aligned */
+	/* This needs to be 64-byte aligned */
 	fpstate = ALIGNFPSTATE(&fps[1]);
 
 	/*
@@ -233,6 +234,9 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	 */
 	if (!passed) {
 		passed = true;
+		fpstate_cache = pool_cache_init(sizeof(struct fpstate64),
+					BLOCK_SIZE, 0, 0, "fpstate", NULL,
+					IPL_NONE, NULL, NULL, NULL);
 		cpu_reset_fpustate();
 	}
 #ifdef MULTIPROCESSOR
@@ -241,10 +245,10 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		ci->ci_cpcb = (struct pcb *)ci->ci_data.cpu_idlelwp->l_addr;
 	}
 	for (i = 0; i < IPI_EVCNT_NUM; ++i)
-		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_INTR,
+		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_MISC,
 				     NULL, device_xname(dev), ipi_evcnt_names[i]);
 #endif
-	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_INTR, NULL,
+	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_MISC, NULL,
 			     device_xname(dev), "timer");
 
 	clk = prom_getpropint(node, "clock-frequency", 0);

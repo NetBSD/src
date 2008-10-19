@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.47 2008/06/03 15:50:22 ad Exp $	*/
+/*	$NetBSD: rump.c,v 1.47.4.1 2008/10/19 22:18:06 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,37 +28,53 @@
  */
 
 #include <sys/param.h>
+#include <sys/atomic.h>
+#include <sys/callout.h>
 #include <sys/cpu.h>
 #include <sys/filedesc.h>
+#include <sys/iostat.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/once.h>
+#include <sys/percpu.h>
 #include <sys/queue.h>
 #include <sys/resourcevar.h>
 #include <sys/select.h>
+#include <sys/uidinfo.h>
 #include <sys/vnode.h>
 #include <sys/vfs_syscalls.h>
-#include <sys/module.h>
+#include <sys/wapbl.h>
+#include <sys/sysctl.h>
 
 #include <miscfs/specfs/specdev.h>
 
+#include <rump/rumpuser.h>
+
 #include "rump_private.h"
-#include "rumpuser.h"
+#include "rump_net_private.h"
 
 struct proc proc0;
 struct cwdinfo rump_cwdi;
 struct pstats rump_stats;
 struct plimit rump_limits;
-kauth_cred_t rump_cred = RUMPCRED_SUSER;
 struct cpu_info rump_cpu;
 struct filedesc rump_filedesc0;
 struct proclist allproc;
 char machine[] = "rump";
+static kauth_cred_t rump_susercred;
 
 kmutex_t rump_giantlock;
 
 sigset_t sigcantmask;
+
+#ifdef RUMP_WITHOUT_THREADS
+int rump_threads = 0;
+#else
+int rump_threads = 1;
+#endif
 
 struct fakeblk {
 	char path[MAXPATHLEN];
@@ -67,7 +83,6 @@ struct fakeblk {
 
 static LIST_HEAD(, fakeblk) fakeblks = LIST_HEAD_INITIALIZER(fakeblks);
 
-#ifndef RUMP_WITHOUT_THREADS
 static void
 rump_aiodone_worker(struct work *wk, void *dummy)
 {
@@ -76,16 +91,23 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 	KASSERT(&bp->b_work == wk);
 	bp->b_iodone(bp);
 }
-#endif /* RUMP_WITHOUT_THREADS */
 
-int rump_inited;
+static int rump_inited;
+static struct emul emul_rump;
 
-void
-rump_init()
+void __rump_net_unavailable(void);
+void __rump_net_unavailable() {}
+__weak_alias(rump_net_init,__rump_net_unavailable);
+
+void __rump_vfs_unavailable(void);
+void __rump_vfs_unavailable() {}
+__weak_alias(rump_vfs_init,__rump_vfs_unavailable);
+
+int
+_rump_init(int rump_version)
 {
 	extern char hostname[];
 	extern size_t hostnamelen;
-	extern kmutex_t rump_atomic_lock;
 	char buf[256];
 	struct proc *p;
 	struct lwp *l;
@@ -93,17 +115,38 @@ rump_init()
 
 	/* XXX */
 	if (rump_inited)
-		return;
+		return 0;
 	rump_inited = 1;
+
+	if (rump_version != RUMP_VERSION) {
+		printf("rump version mismatch, %d vs. %d\n",
+		    rump_version, RUMP_VERSION);
+		return EPROGMISMATCH;
+	}
 
 	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
 		desiredvnodes = strtoul(buf, NULL, 10);
 	} else {
 		desiredvnodes = 1<<16;
 	}
+	if (rumpuser_getenv("RUMP_THREADS", buf, sizeof(buf), &error) == 0) {
+		rump_threads = *buf != '0';
+	}
+
+	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
+
+	rumpvm_init();
+	rump_sleepers_init();
+#ifdef RUMP_USE_REAL_KMEM
+	kmem_init();
+#endif
+
+	kauth_init();
+	rump_susercred = rump_cred_create(0, 0, 0, NULL);
 
 	cache_cpu_init(&rump_cpu);
 	rw_init(&rump_cwdi.cwdi_lock);
+
 	l = &lwp0;
 	p = &proc0;
 	p->p_stats = &rump_stats;
@@ -112,47 +155,55 @@ rump_init()
 	p->p_pid = 0;
 	p->p_fd = &rump_filedesc0;
 	p->p_vmspace = &rump_vmspace;
-	l->l_cred = rump_cred;
+	p->p_emul = &emul_rump;
+	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
 	l->l_lid = 1;
-
 	LIST_INSERT_HEAD(&allproc, p, p_list);
-
-	mutex_init(&rump_atomic_lock, MUTEX_DEFAULT, IPL_NONE);
-	rumpvm_init();
 
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
+	rump_limits.pl_rlimit[RLIMIT_SBSIZE].rlim_cur = RLIM_INFINITY;
 
 	syncdelay = 0;
 	dovfsusermount = 1;
 
-	rump_sleepers_init();
 	rumpuser_thrinit();
+	callout_startup();
+	callout_init_cpu(&rump_cpu);
 
+	once_init();
+	iostat_init();
+	uid_init();
+	percpu_init();
 	fd_sys_init();
 	module_init();
+	sysctl_init();
 	vfsinit();
 	bufinit();
-
+	wapbl_init();
+	softint_init(&rump_cpu);
 	rumpvfs_init();
 
-	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
+	if (rump_net_init != __rump_net_unavailable)
+		rump_net_init();
 
-#ifndef RUMP_WITHOUT_THREADS
 	/* aieeeedondest */
-	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    rump_aiodone_worker, NULL, 0, 0, 0))
-		panic("aiodoned");
-#endif /* RUMP_WITHOUT_THREADS */
+	if (rump_threads) {
+		if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
+		    rump_aiodone_worker, NULL, 0, 0, 0))
+			panic("aiodoned");
+	}
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);
 
 	sigemptyset(&sigcantmask);
 
-	fd_init(&rump_filedesc0);
+	lwp0.l_fd = proc0.p_fd = fd_init(&rump_filedesc0);
 	rump_cwdi.cwdi_cdir = rootvnode;
+
+	return 0;
 }
 
 struct mount *
@@ -178,6 +229,7 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 int
 rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
 {
+	struct vnode *rvp;
 	int rv;
 
 	rv = VFS_MOUNT(mp, path, data, dlen);
@@ -188,6 +240,15 @@ rump_mnt_mount(struct mount *mp, const char *path, void *data, size_t *dlen)
 	rv = VFS_START(mp, 0);
 	if (rv)
 		VFS_UNMOUNT(mp, MNT_FORCE);
+
+	/*
+	 * XXX: set a root for lwp0.  This is strictly not correct,
+	 * but makes things works for single fs case without having
+	 * to manually call rump_rcvp_set().
+	 */
+	VFS_ROOT(mp, &rvp);
+	rump_rcvp_set(rvp, rvp);
+	vput(rvp);
 
 	return rv;
 }
@@ -210,7 +271,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	cnp = kmem_zalloc(sizeof(struct componentname), KM_SLEEP);
 
 	cnp->cn_nameiop = nameiop;
-	cnp->cn_flags = flags;
+	cnp->cn_flags = flags | HASBUF;
 
 	cnp->cn_pnbuf = PNBUF_GET();
 	strcpy(cnp->cn_pnbuf, name);
@@ -450,6 +511,15 @@ rump_vp_recycle_nokidding(struct vnode *vp)
 
 	mutex_enter(&vp->v_interlock);
 	vp->v_usecount = 1;
+	/*
+	 * XXX: NFS holds a reference to the root vnode, so don't clean
+	 * it out.  This is very wrong, but fixing it properly would
+	 * take too much effort for now
+	 */
+	if (vp->v_tag == VT_NFS && vp->v_vflag & VV_ROOT) {
+		mutex_exit(&vp->v_interlock);
+		return;
+	}
 	vclean(vp, DOCLOSE);
 	vrelel(vp, 0);
 }
@@ -616,6 +686,16 @@ rump_vfs_syncwait(struct mount *mp)
 		printf("syncwait: unsynced buffers: %d\n", n);
 }
 
+int
+rump_vfs_load(struct modinfo **mi)
+{
+
+	if (!module_compatible((*mi)->mi_version, __NetBSD_Version__))
+		return EPROGMISMATCH;
+
+	return (*mi)->mi_modcmd(MODULE_CMD_INIT, NULL);
+}
+
 void
 rump_bioops_sync()
 {
@@ -631,19 +711,25 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	struct proc *p;
 
 	l = kmem_zalloc(sizeof(struct lwp), KM_SLEEP);
-	p = kmem_zalloc(sizeof(struct proc), KM_SLEEP);
-	p->p_cwdi = cwdinit();
+	if (pid != 0) {
+		p = kmem_zalloc(sizeof(struct proc), KM_SLEEP);
+		p->p_cwdi = cwdinit();
 
-	p->p_stats = &rump_stats;
-	p->p_limit = &rump_limits;
-        p->p_pid = pid;
-	p->p_vmspace = &rump_vmspace;
-	l->l_cred = rump_cred;
+		p->p_stats = &rump_stats;
+		p->p_limit = &rump_limits;
+		p->p_pid = pid;
+		p->p_vmspace = &rump_vmspace;
+		p->p_fd = fd_init(NULL);
+	} else {
+		p = &proc0;
+	}
+
+	l->l_cred = rump_cred_suserget();
 	l->l_proc = p;
-        l->l_lid = lid;
-
-	p->p_fd = fd_init(NULL);
-        l->l_fd = p->p_fd;
+	l->l_lid = lid;
+	l->l_fd = p->p_fd;
+	l->l_mutex = RUMP_LMUTEX_MAGIC;
+	l->l_cpu = &rump_cpu;
 
 	if (set)
 		rumpuser_set_curlwp(l);
@@ -657,9 +743,12 @@ rump_clear_curlwp()
 	struct lwp *l;
 
 	l = rumpuser_get_curlwp();
-	fd_free();
-	cwdfree(l->l_proc->p_cwdi);
-	kmem_free(l->l_proc, sizeof(*l->l_proc));
+	if (l->l_proc->p_pid != 0) {
+		fd_free();
+		cwdfree(l->l_proc->p_cwdi);
+		rump_cred_destroy(l->l_cred);
+		kmem_free(l->l_proc, sizeof(*l->l_proc));
+	}
 	kmem_free(l, sizeof(*l));
 	rumpuser_set_curlwp(NULL);
 }
@@ -727,3 +816,61 @@ rump_biodone(void *arg, size_t count, int error)
 	biodone(bp);
 	rump_intr_exit();
 }
+
+kauth_cred_t
+rump_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
+{
+	kauth_cred_t cred;
+	int rv;
+
+	cred = kauth_cred_alloc();
+	kauth_cred_setuid(cred, uid);
+	kauth_cred_seteuid(cred, uid);
+	kauth_cred_setsvuid(cred, uid);
+	kauth_cred_setgid(cred, gid);
+	kauth_cred_setgid(cred, gid);
+	kauth_cred_setegid(cred, gid);
+	kauth_cred_setsvgid(cred, gid);
+	rv = kauth_cred_setgroups(cred, groups, ngroups, 0, UIO_SYSSPACE);
+	/* oh this is silly.  and by "this" I mean kauth_cred_setgroups() */
+	assert(rv == 0);
+
+	return cred;
+}
+
+void
+rump_cred_destroy(kauth_cred_t cred)
+{
+
+	kauth_cred_free(cred);
+}
+
+kauth_cred_t
+rump_cred_suserget()
+{
+
+	kauth_cred_hold(rump_susercred);
+	return rump_susercred;
+}
+
+/* XXX: if they overflow, we're screwed */
+lwpid_t
+rump_nextlid()
+{
+	static unsigned lwpid = 2;
+
+	do {
+		lwpid = atomic_inc_uint_nv(&lwpid);
+	} while (lwpid == 0);
+
+	return (lwpid_t)lwpid;
+}
+
+int _syspuffs_stub(int, int *);
+int
+_syspuffs_stub(int fd, int *newfd)
+{
+
+	return ENODEV;
+}
+__weak_alias(syspuffs_glueinit,_syspuffs_stub);

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_bitbang.c,v 1.11 2008/06/01 01:13:18 tsutsui Exp $	*/
+/*	$NetBSD: i2c_bitbang.c,v 1.11.4.1 2008/10/19 22:16:25 haad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_bitbang.c,v 1.11 2008/06/01 01:13:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_bitbang.c,v 1.11.4.1 2008/10/19 22:16:25 haad Exp $");
 
 #include <sys/param.h>
 
@@ -169,11 +169,12 @@ i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags, i2c_bitbang_ops_t ops)
 		val <<= 1;
 
 		/* data is set at SCL H->L edge */
-		SETBITS(  0 |   0);
+		/* SDA is set here because DIR() is INPUT */
+		SETBITS(SDA |   0);
 		delay(5);	/* clock low time (4.7 us) */
 
 		/* read data at SCL L->H edge */
-		SETBITS(  0 | SCL);
+		SETBITS(SDA | SCL);
 		if (i2c_wait_for_scl(v, ops) != 0)
 			return EIO;
 		if (READ & SDA)
@@ -181,7 +182,7 @@ i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags, i2c_bitbang_ops_t ops)
 		delay(4);	/* clock high time (4.0 us) */
 	}
 	/* set SCL H->L before set SDA direction OUTPUT */
-	SETBITS(  0 |   0);
+	SETBITS(SDA |   0);
 
 	/* set ack after SCL H->L edge */
 	bit = (flags & I2C_F_LAST) ? SDA : 0;
@@ -199,7 +200,6 @@ i2c_bitbang_read_byte(void *v, uint8_t *valp, int flags, i2c_bitbang_ops_t ops)
 	SETBITS(bit |   0);
 
 	/* leave SCL=L and SDL=L to avoid unexpected start/stop condition */
-	DIR(INPUT);
 	SETBITS(  0 |   0);
 
 
@@ -243,16 +243,18 @@ i2c_bitbang_write_byte(void *v, uint8_t val, int flags, i2c_bitbang_ops_t ops)
 	delay(5);	/* clock low time (4.7 us) */
 
 	/* read ack at L->H edge */
-	SETBITS(  0 | SCL);
+	/* SDA is set here because DIR() is INPUT */
+	SETBITS(SDA | SCL);
 	if (i2c_wait_for_scl(v, ops) != 0)
 		return EIO;
 	error = (READ & SDA) ? EIO : 0;
 	delay(4);	/* clock high time (4.0 us) */
 
-	/* leave SCL=L and SDL=L to avoid unexpected start/stop condition */
 	/* set SCL H->L before set SDA direction OUTPUT */
-	SETBITS(  0 |   0);
+	SETBITS(SDA |   0);
 	DIR(OUTPUT);
+	/* leave SCL=L and SDL=L to avoid unexpected start/stop condition */
+	SETBITS(  0 |   0);
 
 	if (flags & I2C_F_STOP)
 		(void) i2c_bitbang_send_stop(v, flags, ops);

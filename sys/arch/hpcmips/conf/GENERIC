@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.201 2008/05/30 20:10:02 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.201.4.1 2008/10/19 22:15:46 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.201 $"
+#ident 		"GENERIC-$Revision: 1.201.4.1 $"
 
 maxusers	16
 
@@ -93,6 +93,7 @@ file-system	PTYFS		# /dev/pts/N support
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	QUOTA		# UFS quotas
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -646,6 +647,11 @@ ugen*	at uhub? port ?
 audio*	at uaudio?
 
 # Pseudo-Devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	loop		1	# network loopback
 pseudo-device	ppp			# serial-line IP ports

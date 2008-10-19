@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.37 2008/05/27 17:01:07 explorer Exp $ */
+/* $NetBSD: hypervisor.c,v 1.37.4.1 2008/10/19 22:16:13 haad Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.37 2008/05/27 17:01:07 explorer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.37.4.1 2008/10/19 22:16:13 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,7 +306,11 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_pba.pba_iot = X86_BUS_SPACE_IO;
 	hac.hac_pba.pba_memt = X86_BUS_SPACE_MEM;
 	hac.hac_pba.pba_dmat = &pci_bus_dma_tag;
-	hac.hac_pba.pba_dmat64 = 0;
+#ifdef _LP64
+	hac.hac_pba.pba_dmat64 = &pci_bus_dma64_tag;
+#else
+	hac.hac_pba.pba_dmat64 = NULL;
+#endif /* _LP64 */
 	hac.hac_pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
 	hac.hac_pba.pba_bridgetag = NULL;
 	hac.hac_pba.pba_bus = 0;
@@ -393,6 +397,8 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		ctrl_if_register_receiver(CMSG_SHUTDOWN,
 		    hypervisor_shutdown_handler, CALLBACK_IN_BLOCKING_CONTEXT);
 #endif
+
+	hypervisor_machdep_attach();
 }
 
 static int

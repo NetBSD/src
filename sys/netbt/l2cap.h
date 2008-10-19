@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap.h,v 1.6 2007/11/03 17:20:17 plunky Exp $	*/
+/*	$NetBSD: l2cap.h,v 1.6.26.1 2008/10/19 22:17:45 haad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: l2cap.h,v 1.6 2007/11/03 17:20:17 plunky Exp $
+ * $Id: l2cap.h,v 1.6.26.1 2008/10/19 22:17:45 haad Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/l2cap.h,v 1.4 2005/08/31 18:13:23 emax Exp $
  */
 
@@ -181,7 +181,7 @@ typedef struct {
 	uint32_t peak_bandwidth;	/* bytes per second */
 	uint32_t latency;		/* microseconds */
 	uint32_t delay_variation;	/* microseconds */
-} __attribute__ ((__packed__)) l2cap_qos_t;
+} __packed l2cap_qos_t;
 
 /* L2CAP QoS type */
 #define L2CAP_QOS_NO_TRAFFIC	0x00
@@ -197,7 +197,7 @@ typedef struct {
 	uint16_t	retransmit_timo;   /* milliseconds */
 	uint16_t	monitor_timo;	   /* milliseconds */
 	uint16_t	max_pdu_size;	   /* bytes */
-} __attribute__ ((__packed__)) l2cap_rfc_t;
+} __packed l2cap_rfc_t;
 
 /* L2CAP RFC mode */
 #define L2CAP_RFC_BASIC		0x00	   /* (default) */
@@ -215,12 +215,12 @@ typedef struct {
 typedef struct {
 	uint16_t	length;	/* payload size */
 	uint16_t	dcid;	/* destination channel ID */
-} __attribute__ ((__packed__)) l2cap_hdr_t;
+} __packed l2cap_hdr_t;
 
 /* L2CAP ConnectionLess Traffic		(dcid == L2CAP_CLT_CID) */
 typedef struct {
 	uint16_t	psm; /* Protocol/Service Multiplexor */
-} __attribute__ ((__packed__)) l2cap_clt_hdr_t;
+} __packed l2cap_clt_hdr_t;
 
 #define L2CAP_CLT_MTU_MAXIMUM \
 	(L2CAP_MTU_MAXIMUM - sizeof(l2cap_clt_hdr_t))
@@ -230,21 +230,21 @@ typedef struct {
 	uint8_t	code;   /* command OpCode */
 	uint8_t	ident;  /* identifier to match request and response */
 	uint16_t	length; /* command parameters length */
-} __attribute__ ((__packed__)) l2cap_cmd_hdr_t;
+} __packed l2cap_cmd_hdr_t;
 
 /* L2CAP Command Reject */
 #define L2CAP_COMMAND_REJ			0x01
 typedef struct {
 	uint16_t	reason; /* reason to reject command */
 	uint16_t	data[2];/* optional data */
-} __attribute__ ((__packed__)) l2cap_cmd_rej_cp;
+} __packed l2cap_cmd_rej_cp;
 
 /* L2CAP Connection Request */
 #define L2CAP_CONNECT_REQ			0x02
 typedef struct {
 	uint16_t	psm;  /* Protocol/Service Multiplexor (PSM) */
 	uint16_t	scid; /* source channel ID */
-} __attribute__ ((__packed__)) l2cap_con_req_cp;
+} __packed l2cap_con_req_cp;
 
 /* L2CAP Connection Response */
 #define L2CAP_CONNECT_RSP			0x03
@@ -253,7 +253,7 @@ typedef struct {
 	uint16_t	scid;   /* source channel ID */
 	uint16_t	result; /* 0x00 - success */
 	uint16_t	status; /* more info if result != 0x00 */
-} __attribute__ ((__packed__)) l2cap_con_rsp_cp;
+} __packed l2cap_con_rsp_cp;
 
 /* L2CAP Configuration Request */
 #define L2CAP_CONFIG_REQ			0x04
@@ -261,7 +261,7 @@ typedef struct {
 	uint16_t	dcid;  /* destination channel ID */
 	uint16_t	flags; /* flags */
 /*	uint8_t	options[] --  options */
-} __attribute__ ((__packed__)) l2cap_cfg_req_cp;
+} __packed l2cap_cfg_req_cp;
 
 /* L2CAP Configuration Response */
 #define L2CAP_CONFIG_RSP			0x05
@@ -270,14 +270,14 @@ typedef struct {
 	uint16_t	flags;  /* flags */
 	uint16_t	result; /* 0x00 - success */
 /*	uint8_t	options[] -- options */
-} __attribute__ ((__packed__)) l2cap_cfg_rsp_cp;
+} __packed l2cap_cfg_rsp_cp;
 
 /* L2CAP configuration option */
 typedef struct {
 	uint8_t	type;
 	uint8_t	length;
 /*	uint8_t	value[] -- option value (depends on type) */
-} __attribute__ ((__packed__)) l2cap_cfg_opt_t;
+} __packed l2cap_cfg_opt_t;
 
 /* L2CAP configuration option value */
 typedef union {
@@ -292,7 +292,7 @@ typedef union {
 typedef struct {
 	uint16_t	dcid; /* destination channel ID */
 	uint16_t	scid; /* source channel ID */
-} __attribute__ ((__packed__)) l2cap_discon_req_cp;
+} __packed l2cap_discon_req_cp;
 
 /* L2CAP Disconnect Response */
 #define L2CAP_DISCONNECT_RSP			0x07
@@ -312,7 +312,7 @@ typedef l2cap_discon_req_cp	l2cap_discon_rsp_cp;
 #define L2CAP_INFO_REQ				0x0a
 typedef struct {
 	uint16_t	type; /* requested information type */
-} __attribute__ ((__packed__)) l2cap_info_req_cp;
+} __packed l2cap_info_req_cp;
 
 /* L2CAP Information Response */
 #define L2CAP_INFO_RSP				0x0b
@@ -323,13 +323,13 @@ typedef struct {
  *
  * L2CAP_CONNLESS_MTU - 2 bytes connectionless MTU
  */
-} __attribute__ ((__packed__)) l2cap_info_rsp_cp;
+} __packed l2cap_info_rsp_cp;
 
 typedef union {
 	/* L2CAP_CONNLESS_MTU */
 	struct {
 		uint16_t	mtu;
-	} __attribute__ ((__packed__)) mtu;
+	} __packed mtu;
 } l2cap_info_rsp_data_t;
 
 /**************************************************************************
@@ -439,6 +439,7 @@ struct l2cap_pdu {
  */
 
 struct socket;
+struct sockopt;
 struct mbuf;
 
 /* l2cap_lower.c */
@@ -464,7 +465,7 @@ int l2cap_send_connect_rsp(struct hci_link *, uint8_t, uint16_t, uint16_t, uint1
 
 /* l2cap_socket.c */
 int l2cap_usrreq(struct socket *, int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
-int l2cap_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int l2cap_ctloutput(int, struct socket *, struct sockopt *);
 
 /* l2cap_upper.c */
 int l2cap_attach(struct l2cap_channel **, const struct btproto *, void *);
@@ -476,8 +477,8 @@ int l2cap_disconnect(struct l2cap_channel *, int);
 int l2cap_detach(struct l2cap_channel **);
 int l2cap_listen(struct l2cap_channel *);
 int l2cap_send(struct l2cap_channel *, struct mbuf *);
-int l2cap_setopt(struct l2cap_channel *, int, void *);
-int l2cap_getopt(struct l2cap_channel *, int, void *);
+int l2cap_setopt(struct l2cap_channel *, const struct sockopt *);
+int l2cap_getopt(struct l2cap_channel *, struct sockopt *);
 
 #endif	/* _KERNEL */
 

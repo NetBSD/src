@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.264 2008/05/30 20:10:02 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.264.4.1 2008/10/19 22:15:51 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.264 $"
+#ident 		"GENERIC-$Revision: 1.264.4.1 $"
 
 maxusers	32
 
@@ -59,7 +59,7 @@ options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=0	# don't go into ddb on panic.
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	TRAP_PANICWAIT
-#options		DDB_COMMANDONENTER="bt"
+options		DDB_COMMANDONENTER="bt"
 
 #makeoptions 	DEBUG="-g"	# compile full symbol table
 
@@ -112,6 +112,7 @@ file-system	TMPFS		# Efficient memory file-system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -209,12 +210,8 @@ bandit*	at mainbus?
 grackle* at mainbus?
 uninorth* at mainbus?
 uni_n*	at mainbus?
-
-# interrupt controller support
-options PIC_OHARE
-options PIC_HEATHROW
-#options PIC_GRANDCENTRAL
-options PIC_OPENPIC
+memory*	at mainbus?
+spdmem*	at memory? addr ?
 
 pci*	at bandit? bus ?
 pci*	at grackle? bus ?
@@ -281,6 +278,10 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 # O'Hare based machine that uses external cache like the PowerBook 3400c
 #options 	OFB_ENABLE_CACHE	# Speed up console in ofb
 #options 	OFB_FAKE_VGA_FB		# Allow X to mmap VGA regs
+# 
+# ofb is considered obsolete and machine-independent genfb should be used
+# instead.
+
 chipsfb*	at pci?	function ?	# C&T 65550
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
 
@@ -366,9 +367,11 @@ nvram*	at obio?			# nvram
 #ams*	at adb?				# ADB mouse
 #abtn*	at adb?
 
-cuda*	at obio?			# Apple CUDA
-pmu*	at obio?			# Apple CUDA
-nadb*	at adb_bus?				# new ADB Bus abstraction
+# the new, improved, experimental ADB subsystem
+
+cuda*	at obio?			# CUDA, for Old World PowerMacs
+pmu*	at obio?			# PMU, *Books and newer PowerMacs
+nadb*	at adb_bus?			# ADB bus enumerator, at cuda or pmu
 adbkbd* at nadb?			# ADB keyboard
 adbms*	at nadb?			# ADB mice and touchpads
 adbbt*	at nadb?			# button device found on *Books
@@ -376,23 +379,12 @@ adbbt*	at nadb?			# button device found on *Books
 wskbd*		at wskbddev? console ?
 wsmouse*	at wsmousedev?
 
-# the new, improved, experimental ADB subsystem
+battery* at pmu?		# legacy battery, for ohare-based PowerBooks
+smartbat* at pmu?		# Smart battery, sound in newer *Books
 
-#cuda*	at obio?		# CUDA, for Old World PowerMacs
-#pmu*	at obio?		# PMU, *Books and newer PowerMacs
-#battery* at pmu?		# legacy battery, for ohare-based PowerBooks
-
-#iic0	at cuda0		# CUDA's IIC bus
-#sgsmix0 at iic0	addr 0x8a	# additional mixer found in beige G3
+iic0	at cuda0		# CUDA's IIC bus
+sgsmix0 at iic0 addr 0x8a	# additional mixer found in beige G3
 				# use with awacs
-
-#nadb*	at adb_bus?		# ADB bus enumerator, at cuda or pmu
-
-#adbkbd* at nadb?		# ADB keyboard
-#adbms*	at nadb?		# ADB mouse or trackpad
-
-wsmouse* at wsmousedev?
-wskbd*	at wskbddev?
 
 zsc*	at obio?
 zstty*	at zsc? channel ?
@@ -406,10 +398,7 @@ wdc*	at mediabay? flags 0
 ki2c*	at obio?			# Keywest I2C
 ki2c*	at uni_n?			# Keywest I2C
 iic*	at ki2c?
-adt7467c*	at ki2c? 		# Analog Devices ADT7467 thermal 
-					# monitor, iBook G4
-adm1030c*	at ki2c? 		# Analog Devices ADM1030 thermal 
-					# monitor, iBook G3
+dbcool*	at ki2c?			# dbCool thermal monitor & fan control
 
 deq*	at ki2c?			# mixer/equalizer, needed by snapper
 wi*	at obio?			# AirMac
@@ -557,6 +546,11 @@ audio*	at audiobus?
 # MIDI support
 midi*	at eap?			# 137[01] MIDI port
 #midi*	at mpu?			# MPU 401
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 #pseudo-device 	crypto			# /dev/crypto device
 					# (disabled, requires generic softints)

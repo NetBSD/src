@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.141 2008/07/02 19:49:58 rmind Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.141.2.1 2008/10/19 22:17:28 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.141 2008/07/02 19:49:58 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.141.2.1 2008/10/19 22:17:28 haad Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -648,7 +648,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 		if (tmp == 0)
 			lt = LIST_FIRST(&t->p_lwps);
 		else {
-			lt = lwp_find(p, tmp);
+			lt = lwp_find(t, tmp);
 			if (lt == NULL) {
 				mutex_exit(t->p_lock);
 				error = ESRCH;
@@ -960,6 +960,6 @@ process_stoptrace(void)
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	(void)issignal(l);
 	mutex_exit(p->p_lock);
-	KERNEL_LOCK(l->l_biglocks - 1, l);
+	KERNEL_LOCK(l->l_biglocks, l);
 }
 #endif	/* KTRACE || PTRACE */

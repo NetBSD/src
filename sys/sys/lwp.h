@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.105 2008/07/03 15:15:40 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.105.2.1 2008/10/19 22:18:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,11 +66,15 @@
  * of cache hits) and by size (to reduce dead space in the structure).
  */
 struct lockdebug;
+struct sadata_vp;
 
 struct lwp {
 	/* Scheduling and overall state */
 	TAILQ_ENTRY(lwp) l_runq;	/* s: run queue */
-	void		*l_sched_info;	/* s: Scheduler-specific structure */
+	union {
+		void *	info;		/* s: scheduler-specific structure */
+		u_int	timeslice;	/* l: time-quantum for SCHED_M2 */
+	} l_sched;
 	struct cpu_info *volatile l_cpu;/* s: CPU we're on if LSONPROC */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
 	int		l_ctxswtch;	/* l: performing a context switch */
@@ -104,6 +108,7 @@ struct lwp {
 	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
 	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
 	kcpuset_t	*l_affinity;	/* l: CPU set for affinity */
+	struct sadata_vp *l_savp;	/* p: SA "virtual processor" */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -198,17 +203,23 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
 #define	LW_INMEM	0x00000004 /* Loaded into memory. */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
+#define	LW_SA_SWITCHING	0x00000100 /* SA LWP in context switch */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
+#define	LW_SA		0x00000400 /* Scheduler activations LWP */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
 #define	LW_BATCH	0x00040000 /* LWP tends to hog CPU */
 #define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
 #define	LW_WEXIT	0x00100000 /* Exit before return to user */
 #define	LW_AFFINITY	0x00200000 /* Affinity is assigned to the thread */
+#define	LW_SA_UPCALL	0x00400000 /* SA upcall is pending */
+#define	LW_SA_BLOCKING	0x00800000 /* Blocking in tsleep() */
 #define	LW_PENDSIG	0x01000000 /* Pending signal for us */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
 #define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
+#define	LW_SA_YIELD	0x40000000 /* LWP on VP is yielding */
+#define	LW_SA_IDLE	0x80000000 /* VP is idle */
 
 /* The second set of flags is kept in l_pflag. */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
@@ -218,6 +229,8 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
 #define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
+#define	LP_SA_PAGEFAULT	0x00000200 /* SA LWP in pagefault handler */
+#define	LP_SA_NOBLOCK	0x00000400 /* SA don't upcall on block */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_RUNNING	0x20000000 /* Active on a CPU */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */
@@ -280,7 +293,7 @@ void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(lwp_t *);
 void	lwp_exit(lwp_t *) __dead;
-void	lwp_exit_switchaway(lwp_t *);
+void	lwp_exit_switchaway(lwp_t *) __dead;
 int	lwp_suspend(lwp_t *, lwp_t *);
 int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);
 void	lwp_update_creds(lwp_t *);
@@ -401,17 +414,6 @@ spc_dlock(struct cpu_info *ci1, struct cpu_info *ci2)
 		mutex_spin_enter(spc2->spc_mutex);
 		mutex_spin_enter(spc1->spc_mutex);
 	}
-}
-
-static inline void
-spc_dunlock(struct cpu_info *ci1, struct cpu_info *ci2)
-{
-	struct schedstate_percpu *spc1 = &ci1->ci_schedstate;
-	struct schedstate_percpu *spc2 = &ci2->ci_schedstate;
-
-	KASSERT(ci1 != ci2);
-	mutex_spin_exit(spc1->spc_mutex);
-	mutex_spin_exit(spc2->spc_mutex);
 }
 
 /*

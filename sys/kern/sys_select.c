@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.9 2008/06/04 13:02:41 rmind Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.9.4.1 2008/10/19 22:17:28 haad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.9 2008/06/04 13:02:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.9.4.1 2008/10/19 22:17:28 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -661,7 +661,7 @@ selnotify(struct selinfo *sip, int events, long knhint)
 		do {
 			index = ffs(mask) - 1;
 			mask &= ~(1 << index);
-			sc = cpu_lookup_byindex(index)->ci_data.cpu_selcpu;
+			sc = cpu_lookup(index)->ci_data.cpu_selcpu;
 			mutex_spin_enter(&sc->sc_lock);
 			sc->sc_ncoll++;
 			sleepq_wake(&sc->sc_sleepq, sc, (u_int)-1,

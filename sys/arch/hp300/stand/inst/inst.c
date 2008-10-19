@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.17 2008/04/28 20:23:19 martin Exp $	*/
+/*	$NetBSD: inst.c,v 1.17.6.1 2008/10/19 22:15:46 haad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -123,8 +123,8 @@ main(void)
 	netio_ask = 1;
 
 	printf("\n");
-	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
-	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+	printf(">> %s, Revision %s (from NetBSD %s)\n",
+	    bootprog_name, bootprog_rev, bootprog_kernrev);
 	printf(">> HP 9000/%s SPU\n", getmachineid());
 	gethelp();
 

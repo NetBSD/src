@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.h,v 1.6 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: multiboot.h,v 1.6.6.1 2008/10/19 22:15:49 haad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -28,12 +28,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
-#if defined(_KERNEL)
-
-#include "opt_multiboot.h"
-
-#if defined(MULTIBOOT)
 
 /* --------------------------------------------------------------------- */
 
@@ -70,9 +64,9 @@ struct multiboot_header {
 /*
  * Symbols defined in locore.S.
  */
-#if !defined(_LOCORE)
+#if !defined(_LOCORE) && defined(_KERNEL)
 extern struct multiboot_header *Multiboot_Header;
-#endif /* !defined(_LOCORE) */
+#endif /* !defined(_LOCORE) && defined(_KERNEL) */
 
 /* --------------------------------------------------------------------- */
 
@@ -111,8 +105,8 @@ struct multiboot_info {
 	char *		mi_cmdline;
 
 	/* Valid if mi_flags sets MULTIBOOT_INFO_HAS_MODS. */
-	uint32_t	unused_mi_mods_count;
-	vaddr_t		unused_mi_mods_addr;
+	uint32_t	mi_mods_count;
+	vaddr_t		mi_mods_addr;
 
 	/* Valid if mi_flags sets MULTIBOOT_INFO_HAS_{AOUT,ELF}_SYMS. */
 	uint32_t	mi_elfshdr_num;
@@ -180,6 +174,18 @@ struct multiboot_mmap {
 	uint32_t	mm_type;
 };
 
+/*
+ * Modules. This describes an entry in the modules table as pointed
+ * to by mi_mods_addr.
+ */
+
+struct multiboot_module {
+	uint32_t	mmo_start;
+	uint32_t	mmo_end;
+	char *		mmo_string;
+	uint32_t	mmo_reserved;
+};
+
 #endif /* !defined(_LOCORE) */
 
 /* --------------------------------------------------------------------- */
@@ -187,7 +193,7 @@ struct multiboot_mmap {
 /*
  * Prototypes for public functions defined in multiboot.c.
  */
-#if !defined(_LOCORE)
+#if !defined(_LOCORE) && defined(_KERNEL)
 void		multiboot_pre_reloc(struct multiboot_info *);
 void		multiboot_post_reloc(void);
 void		multiboot_print_info(void);
@@ -195,7 +201,3 @@ bool		multiboot_ksyms_init(void);
 #endif /* !defined(_LOCORE) */
 
 /* --------------------------------------------------------------------- */
-
-#endif /* defined(MULTIBOOT) */
-
-#endif /* defined(_KERNEL) */

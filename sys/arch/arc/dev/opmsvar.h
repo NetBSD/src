@@ -1,4 +1,4 @@
-/*	$NetBSD: opmsvar.h,v 1.4 2005/12/11 12:16:38 christos Exp $	*/
+/*	$NetBSD: opmsvar.h,v 1.4.84.1 2008/10/19 22:15:40 haad Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -77,7 +77,7 @@
  */
 
 struct opms_softc {		/* driver status information */
-	struct device sc_dev;
+	device_t sc_dev;
 
 	struct clist sc_q;
 	struct selinfo sc_rsel;

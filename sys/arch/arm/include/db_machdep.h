@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.14 2007/01/06 16:14:44 christos Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.14.56.1 2008/10/19 22:15:41 haad Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K Stevens
@@ -113,12 +113,8 @@ int kdb_trap __P((int, db_regs_t *));
 void db_machine_init __P((void));
 int db_validate_address(vm_offset_t addr);
 
-#ifdef __ELF__
 #define DB_ELF_SYMBOLS
 #define DB_ELFSIZE 32
-#else
-#define	DB_AOUT_SYMBOLS
-#endif
 
 /*
  * kgdb

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.139 2008/05/30 20:10:03 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.139.4.1 2008/10/19 22:16:07 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.139 $"
+#ident 		"GENERIC-$Revision: 1.139.4.1 $"
 
 maxusers	8
 
@@ -193,6 +193,7 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -422,6 +423,11 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 
 
 #### Pseudo devices
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.

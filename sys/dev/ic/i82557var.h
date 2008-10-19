@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.39 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.39.6.1 2008/10/19 22:16:26 haad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ struct fxp_txsoft {
  * Software state per device.
  */
 struct fxp_softc {
-	struct device sc_dev;		/* generic device structures */
+	device_t sc_dev;
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus dma tag */

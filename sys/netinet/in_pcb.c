@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.125 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.125.6.1 2008/10/19 22:17:46 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.125 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.125.6.1 2008/10/19 22:17:46 haad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -106,9 +106,11 @@ __KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.125 2008/05/05 17:11:17 ad Exp $");
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/time.h>
+#include <sys/once.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
+#include <sys/uidinfo.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -151,12 +153,21 @@ int	anonportmax = IPPORT_ANONMAX;
 int	lowportmin  = IPPORT_RESERVEDMIN;
 int	lowportmax  = IPPORT_RESERVEDMAX;
 
-POOL_INIT(inpcb_pool, sizeof(struct inpcb), 0, 0, 0, "inpcbpl", NULL,
-    IPL_NET);
+static struct pool inpcb_pool;
+
+static int
+inpcb_poolinit(void)
+{
+
+	pool_init(&inpcb_pool, sizeof(struct inpcb), 0, 0, 0, "inpcbpl", NULL,
+	    IPL_NET);
+	return 0;
+}
 
 void
 in_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 {
+	static ONCE_DECL(control);
 
 	CIRCLEQ_INIT(&table->inpt_queue);
 	table->inpt_porthashtbl = hashinit(bindhashsize, HASH_LIST, true,
@@ -167,6 +178,8 @@ in_pcbinit(struct inpcbtable *table, int bindhashsize, int connecthashsize)
 	    &table->inpt_connecthash);
 	table->inpt_lastlow = IPPORT_RESERVEDMAX;
 	table->inpt_lastport = (u_int16_t)anonportmax;
+
+	RUN_ONCE(&control, inpcb_poolinit);
 }
 
 int
@@ -487,9 +500,6 @@ in_pcbdetach(void *v)
 	ipsec4_delete_pcbpolicy(inp);
 #endif /*IPSEC*/
 	so->so_pcb = 0;
-	/* sofree drop's the socket's lock */
-	sofree(so);
-	mutex_enter(softnet_lock);
 	if (inp->inp_options)
 		(void)m_free(inp->inp_options);
 	rtcache_free(&inp->inp_route);
@@ -501,6 +511,8 @@ in_pcbdetach(void *v)
 	    inph_queue);
 	pool_put(&inpcb_pool, inp);
 	splx(s);
+	sofree(so);			/* drops the socket's lock */
+	mutex_enter(softnet_lock);	/* reacquire the softnet_lock */
 }
 
 void

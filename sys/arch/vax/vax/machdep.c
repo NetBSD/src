@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.165 2008/07/02 17:28:57 ad Exp $	 */
+/* $NetBSD: machdep.c,v 1.165.2.1 2008/10/19 22:16:06 haad Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2008/07/02 17:28:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.1 2008/10/19 22:16:06 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165 2008/07/02 17:28:57 ad Exp $");
 
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
+#include <sys/savar.h>	/* for cpu_upcall */
 
 #include <machine/sid.h>
 #include <machine/pte.h>
@@ -633,6 +634,52 @@ krnunlock(void)
 	KERNEL_UNLOCK_ONE(NULL);
 }
 #endif
+
+void
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+    void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf = l->l_addr->u_pcb.framep;
+	uint32_t saframe[11], *fp = saframe;
+
+	sp = (void *)((uintptr_t)sp - sizeof(saframe));
+
+	/*
+	 * We don't bother to save the callee's register mask
+	 * since the function is never expected to return.
+	 */
+
+	/*
+	 * Fake a CALLS stack frame.
+	 */
+	*fp++ = 0;			/* condition handler */
+	*fp++ = 0x20000000;		/* saved regmask & PSW */
+	*fp++ = 0;			/* saved AP */
+	*fp++ = 0;			/* saved FP, new call stack */
+	*fp++ = 0;			/* saved PC, new call stack */
+
+	/*
+	 * Now create the argument list.
+	 */
+	*fp++ = 5;			/* argc = 5 */
+	*fp++ = type;
+	*fp++ = (uintptr_t) sas;
+	*fp++ = nevents;
+	*fp++ = ninterrupted;
+	*fp++ = (uintptr_t) ap;
+
+	if (copyout(&saframe, sp, sizeof(saframe)) != 0) {
+		/* Copying onto the stack didn't work, die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->ap = (uintptr_t) sp + 20;
+	tf->sp = (long) sp;
+	tf->fp = (long) sp;
+	tf->pc = (long) upcall + 2;
+	tf->psl = (long) PSL_U | PSL_PREVU;
+}
 
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)

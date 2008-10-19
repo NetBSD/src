@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.140 2008/05/13 18:24:01 dyoung Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.140.4.1 2008/10/19 22:17:46 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.140 2008/05/13 18:24:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.140.4.1 2008/10/19 22:17:46 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1083,13 +1083,13 @@ in_arpinput(struct mbuf *m)
 		    sdl->sdl_alen != ah->ar_hln) {
 			ARP_STATINC(ARP_STAT_RCVLENCHG);
 			log(LOG_WARNING,
-			    "arp from %s: new addr len %d, was %d",
+			    "arp from %s: new addr len %d, was %d\n",
 			    in_fmtaddr(isaddr), ah->ar_hln, sdl->sdl_alen);
 		}
 		if (ifp->if_addrlen != ah->ar_hln) {
 			ARP_STATINC(ARP_STAT_RCVBADLEN);
 			log(LOG_WARNING,
-			    "arp from %s: addr len: new %d, i/f %d (ignored)",
+			    "arp from %s: addr len: new %d, i/f %d (ignored)\n",
 			    in_fmtaddr(isaddr), ah->ar_hln,
 			    ifp->if_addrlen);
 			goto reply;

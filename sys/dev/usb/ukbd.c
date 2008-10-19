@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.100 2008/05/24 16:40:58 cube Exp $        */
+/*      $NetBSD: ukbd.c,v 1.100.4.1 2008/10/19 22:17:10 haad Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.100 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.100.4.1 2008/10/19 22:17:10 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,6 +312,11 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
 
+	if (!pmf_device_register(self, NULL, NULL)) {
+		aprint_normal("\n");
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	}
+
 	parseerr = ukbd_parse_desc(sc);
 	if (parseerr != NULL) {
 		aprint_normal("\n");
@@ -324,7 +329,6 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	       sc->sc_nkeycode);
 #endif
 	aprint_normal("\n");
-
 
 	qflags = usbd_get_quirks(uha->parent->sc_udev)->uq_flags;
 	sc->sc_debounce = (qflags & UQ_SPUR_BUT_UP) != 0;
@@ -432,6 +436,8 @@ ukbd_detach(device_t self, int flags)
 	int rv = 0;
 
 	DPRINTF(("ukbd_detach: sc=%p flags=%d\n", sc, flags));
+
+	pmf_device_deregister(self);
 
 	if (sc->sc_console_keyboard) {
 #if 0

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.40 2007/10/17 19:57:44 garbled Exp $
+# $NetBSD: INSTALL3X,v 1.40.26.1 2008/10/19 22:16:01 haad Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -83,6 +83,7 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
 
 # Networking options
 options 	INET		# IP protocol stack support
