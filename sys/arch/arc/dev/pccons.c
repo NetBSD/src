@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.54 2008/06/13 08:27:38 cegger Exp $	*/
+/*	$NetBSD: pccons.c,v 1.54.2.1 2008/10/19 22:15:40 haad Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.54 2008/06/13 08:27:38 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.54.2.1 2008/10/19 22:15:40 haad Exp $");
 
 #include "opt_ddb.h"
 
@@ -268,7 +268,7 @@ pc_context_init(bus_space_tag_t crt_iot, bus_space_tag_t crt_memt,
 
 /*
  * bcopy variant that only moves word-aligned 16-bit entities,
- * for stupid VGA cards.  cnt is required to be an even vale.
+ * for stupid VGA cards.  cnt is required to be an even value.
  */
 static inline void
 wcopy(void *src, void *tgt, u_int cnt)
@@ -771,13 +771,13 @@ pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			    map[i].shift_altgr[KB_CODE_SIZE-1])
 				return EINVAL;
 
-		bcopy(data, scan_codes, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
+		memcpy(scan_codes, data, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
 		return 0;
 	}
 	case CONSOLE_GET_KEYMAP:
 		if (!data)
 			return EINVAL;
-		bcopy(scan_codes, data, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
+		memcpy(scan_codes, data, sizeof(pccons_keymap_t[KB_NUM_KEYS]));
 		return 0;
 
 	default:
@@ -792,6 +792,7 @@ pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 void
 pcstart(struct tty *tp)
 {
+	struct clist *cl;
 	int s, len;
 	u_char buf[PCBURST];
 
@@ -804,6 +805,7 @@ pcstart(struct tty *tp)
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
 	 */
+	cl = &tp->t_outq;
 	len = q_to_b(cl, buf, PCBURST);
 	sput(buf, len);
 	s = spltty();
@@ -1278,9 +1280,10 @@ sput(const u_char *cp, int n)
 						    crtAt, vs.ncol * (nrow -
 						    cx) * CHR);
 #else
-						bcopy(crtAt + vs.ncol * cx,
-						    crtAt, vs.ncol * (nrow -
-						    cx) * CHR);
+						memmove(crtAt,
+						    crtAt + vs.ncol * cx,
+						    vs.ncol * (nrow - cx) *
+						    CHR);
 #endif
 					fillw((vs.at << 8) | ' ',
 					    crtAt + vs.ncol * (nrow - cx),
@@ -1300,9 +1303,10 @@ sput(const u_char *cp, int n)
 						    Crtat, vs.ncol * (vs.nrow -
 						    cx) * CHR);
 #else
-						bcopy(Crtat + vs.ncol * cx,
-						    Crtat, vs.ncol * (vs.nrow -
-						    cx) * CHR);
+						memmove(Crtat,
+						    Crtat + vs.ncol * cx,
+						    vs.ncol * (vs.nrow - cx) *
+						    CHR);
 #endif
 					fillw((vs.at << 8) | ' ',
 					    Crtat + vs.ncol * (vs.nrow - cx),
@@ -1327,8 +1331,8 @@ sput(const u_char *cp, int n)
 						    vs.ncol * (nrow - cx) *
 						    CHR);
 #else
-						bcopy(crtAt,
-						    crtAt + vs.ncol * cx,
+						memmove(crtAt + vs.ncol * cx,
+						    crtAt,
 						    vs.ncol * (nrow - cx) *
 						    CHR);
 #endif
@@ -1350,8 +1354,8 @@ sput(const u_char *cp, int n)
 						    vs.ncol * (vs.nrow - cx) *
 						    CHR);
 #else
-						bcopy(Crtat,
-						    Crtat + vs.ncol * cx,
+						memmove(Crtat + vs.ncol * cx,
+						    Crtat,
 						    vs.ncol * (vs.nrow - cx) *
 						    CHR);
 #endif
@@ -1438,7 +1442,7 @@ sput(const u_char *cp, int n)
 				wcopy(Crtat + vs.ncol, Crtat,
 				    (vs.nchr - vs.ncol) * CHR);
 #else
-				bcopy(Crtat + vs.ncol, Crtat,
+				memmove(Crtat, Crtat + vs.ncol,
 				    (vs.nchr - vs.ncol) * CHR);
 #endif
 				fillw((vs.at << 8) | ' ',

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.9 2008/06/02 14:41:41 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.9.6.1 2008/10/19 22:16:07 haad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.9 2008/06/02 14:41:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.9.6.1 2008/10/19 22:16:07 haad Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -144,11 +144,11 @@ cpu_probe_p6(struct cpu_info *ci)
 	    CPUID2FAMILY(ci->ci_signature) < 6)
 		return;
 
-	/* Determine extended feature flags. */
+	/* Determine the extended feature flags. */
 	x86_cpuid(0x80000000, descs);
 	if (descs[0] >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature3_flags |= descs[3];
+		ci->ci_feature3_flags |= descs[3]; /* %edx */
 	}
 
 	/* Determine topology. 253668.pdf 7.10.2. */
@@ -363,7 +363,8 @@ cpu_probe_k678(struct cpu_info *ci)
 	x86_cpuid(0x80000000, descs);
 	if (descs[0] >= 0x80000001) {
 		x86_cpuid(0x80000001, descs);
-		ci->ci_feature_flags |= descs[3];
+		ci->ci_feature3_flags |= descs[3]; /* %edx */
+		ci->ci_feature4_flags = descs[2];  /* %ecx */
 	}
 
 	cpu_probe_amd_cache(ci);
@@ -729,6 +730,25 @@ cpu_identify(struct cpu_info *ci)
 	}
 	if (cpu == CPU_486DLC) {
 		aprint_error("WARNING: BUGGY CYRIX CACHE\n");
+	}
+
+	if ((cpu_vendor == CPUVENDOR_AMD) /* check enablement of an */
+	  && (device_unit(ci->ci_dev) == 0) /* AMD feature only once */
+	  && ((ci->ci_feature4_flags & CPUID_SVM) == CPUID_SVM)
+#if defined(XEN) && !defined(DOM0OPS)
+	  && (false)  /* on Xen rdmsr is for Dom0 only */
+#endif
+	  )
+	{
+		uint64_t val;
+
+		val = rdmsr(MSR_VMCR);
+		if (((val & VMCR_SVMED) == VMCR_SVMED)
+		  && ((val & VMCR_LOCK) == VMCR_LOCK))
+		{
+			aprint_normal_dev(ci->ci_dev,
+				"SVM disabled by the BIOS\n");
+		}
 	}
 
 #ifdef i386 /* XXX for now */

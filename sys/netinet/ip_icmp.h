@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.h,v 1.24 2007/12/25 18:33:46 perry Exp $	*/
+/*	$NetBSD: ip_icmp.h,v 1.24.16.1 2008/10/19 22:17:46 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -74,7 +74,7 @@ struct icmp {
 			u_int8_t irt_wpa;
 			u_int16_t irt_lifetime;
 		} ih_rtradv __packed;
-	} icmp_hun /* XXX __attribute__((__packed__)) ??? */;
+	} icmp_hun /* XXX __packed ??? */;
 #define	icmp_pptr	  icmp_hun.ih_pptr
 #define	icmp_gwaddr	  icmp_hun.ih_gwaddr
 #define	icmp_id		  icmp_hun.ih_idseq.icd_id
@@ -94,11 +94,11 @@ struct icmp {
 		struct id_ip  {
 			  struct ip idi_ip;
 			  /* options and then 64 bits of data */
-		} id_ip /* XXX: __attribute__((__packed__)) ??? */;
+		} id_ip /* XXX: __packed ??? */;
 		struct icmp_ra_addr id_radv;
 		u_int32_t id_mask;
 		int8_t	  id_data[1];
-	} icmp_dun /* XXX __attribute__((__packed__)) ??? */;
+	} icmp_dun /* XXX __packed ??? */;
 #define	icmp_otime	  icmp_dun.id_ts.its_otime
 #define	icmp_rtime	  icmp_dun.id_ts.its_rtime
 #define	icmp_ttime	  icmp_dun.id_ts.its_ttime

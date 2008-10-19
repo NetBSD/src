@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.80 2008/03/17 23:54:03 nakayama Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.80.10.1 2008/10/19 22:16:01 haad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80 2008/03/17 23:54:03 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.10.1 2008/10/19 22:16:01 haad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80 2008/03/17 23:54:03 nakayama Exp
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/core.h>
-#include <sys/malloc.h>
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
@@ -71,8 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80 2008/03/17 23:54:03 nakayama Exp
 #include <machine/frame.h>
 #include <machine/trap.h>
 #include <machine/bus.h>
-
-#include <sparc64/sparc64/cache.h>
 
 /*
  * Map a user I/O request into kernel virtual address space.
@@ -233,8 +230,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	memcpy(npcb, opcb, sizeof(struct pcb));
        	if (l1->l_md.md_fpstate) {
        		fpusave_lwp(l1, true);
-		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate64),
-		    M_SUBPROC, M_WAITOK);
+		l2->l_md.md_fpstate = pool_cache_get(fpstate_cache, PR_WAITOK);
 		memcpy(l2->l_md.md_fpstate, l1->l_md.md_fpstate,
 		    sizeof(struct fpstate64));
 	} else
@@ -366,7 +362,22 @@ cpu_lwp_free2(struct lwp *l)
 	struct fpstate64 *fs;
 
 	if ((fs = l->l_md.md_fpstate) != NULL)
-		free(fs, M_SUBPROC);
+		pool_cache_put(fpstate_cache, fs);
+}
+
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *npcb = &l->l_addr->u_pcb;
+	struct rwindow *rp;
+
+	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (long)func;		/* Function to call */
+	rp->rw_local[1] = (long)arg;		/* and its argument */
+	rp->rw_local[2] = (long)l;		/* new lwp */
+
+	npcb->pcb_pc = (long)lwp_trampoline - 8;
+	npcb->pcb_sp = (long)rp - STACK_OFFSET;
 }
 
 #ifdef COREDUMP

@@ -1,4 +1,4 @@
-/* $NetBSD: hvm_op.h,v 1.3 2008/05/04 19:56:29 cegger Exp $ */
+/* $NetBSD: hvm_op.h,v 1.3.6.1 2008/10/19 22:16:12 haad Exp $ */
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
@@ -73,5 +73,60 @@ DEFINE_XEN_GUEST_HANDLE(xen_hvm_set_pci_link_route_t);
 
 /* Flushes all VCPU TLBs: @arg must be NULL. */
 #define HVMOP_flush_tlbs          5
+
+/* Following tools-only interfaces may change in future. */
+#if defined(__XEN__) || defined(__XEN_TOOLS__)
+
+/* Track dirty VRAM. */
+#define HVMOP_track_dirty_vram    6
+struct xen_hvm_track_dirty_vram {
+    /* Domain to be tracked. */
+    domid_t  domid;
+    /* First pfn to track. */
+    uint64_aligned_t first_pfn;
+    /* Number of pages to track. */
+    uint64_aligned_t nr;
+    /* OUT variable. */
+    /* Dirty bitmap buffer. */
+    XEN_GUEST_HANDLE_64(uint8) dirty_bitmap;
+};
+typedef struct xen_hvm_track_dirty_vram xen_hvm_track_dirty_vram_t;
+DEFINE_XEN_GUEST_HANDLE(xen_hvm_track_dirty_vram_t);
+
+/* Notify that some pages got modified by the Device Model. */
+#define HVMOP_modified_memory    7
+struct xen_hvm_modified_memory {
+    /* Domain to be updated. */
+    domid_t  domid;
+    /* First pfn. */
+    uint64_aligned_t first_pfn;
+    /* Number of pages. */
+    uint64_aligned_t nr;
+};
+typedef struct xen_hvm_modified_memory xen_hvm_modified_memory_t;
+DEFINE_XEN_GUEST_HANDLE(xen_hvm_modified_memory_t);
+
+#define HVMOP_set_mem_type    8
+typedef enum {
+    HVMMEM_ram_rw,             /* Normal read/write guest RAM */
+    HVMMEM_ram_ro,             /* Read-only; writes are discarded */
+    HVMMEM_mmio_dm,            /* Reads and write go to the device model */
+} hvmmem_type_t;
+/* Notify that a region of memory is to be treated in a specific way. */
+struct xen_hvm_set_mem_type {
+    /* Domain to be updated. */
+    domid_t domid;
+    /* Memory type */
+    hvmmem_type_t hvmmem_type;
+    /* First pfn. */
+    uint64_aligned_t first_pfn;
+    /* Number of pages. */
+    uint64_aligned_t nr;
+};
+typedef struct xen_hvm_set_mem_type xen_hvm_set_mem_type_t;
+DEFINE_XEN_GUEST_HANDLE(xen_hvm_set_mem_type_t);
+
+
+#endif /* defined(__XEN__) || defined(__XEN_TOOLS__) */
 
 #endif /* __XEN_PUBLIC_HVM_HVM_OP_H__ */

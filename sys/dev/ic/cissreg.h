@@ -1,4 +1,4 @@
-/*	$NetBSD: cissreg.h,v 1.2 2008/05/25 20:08:34 mhitch Exp $	*/
+/*	$NetBSD: cissreg.h,v 1.2.4.1 2008/10/19 22:16:26 haad Exp $	*/
 /*	$OpenBSD: cissreg.h,v 1.4 2005/12/13 15:55:59 brad Exp $	*/
 
 /*
@@ -425,7 +425,7 @@ struct ciss_cmd {
 #define	CISS_CDB_IN	0x80
 #define	CISS_CDB_OUT	0x40
 	u_int16_t	tmo;	/* 16: timeout in seconds */
-#define	CISS_MAX_CDB	12
+#define	CISS_MAX_CDB	16
 	u_int8_t	cdb[16];/* 18 */
 
 	u_int64_t	err_pa;	/* 28: pa(struct ciss_error *) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.125 2008/07/02 19:38:37 rmind Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.125.2.1 2008/10/19 22:17:27 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.125 2008/07/02 19:38:37 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.125.2.1 2008/10/19 22:17:27 haad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_perfctrs.h"
@@ -224,9 +224,7 @@ hardclock(struct clockframe *frame)
 	}
 
 	/*
-	 * Update real-time timeout queue.  Callouts are processed at a
-	 * very low CPU priority, so we don't keep the relatively high
-	 * clock interrupt priority any longer than necessary.
+	 * Update real-time timeout queue.
 	 */
 	callout_hardclock();
 }

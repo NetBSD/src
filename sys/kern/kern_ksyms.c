@@ -1,3 +1,5 @@
+/*	$NetBSD: kern_ksyms.c,v 1.35.16.1 2008/10/19 22:17:27 haad Exp $	*/
+
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -45,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.35 2008/02/20 02:30:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.35.16.1 2008/10/19 22:17:27 haad Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -897,6 +899,8 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 	st->sd_symsize = sizeof(Elf_Sym)*info.maxsyms;
 	st->sd_strstart = info.symnames;
 	st->sd_strsize = info.maxnamep;
+	st->sd_minsym = NULL;
+	st->sd_maxsym = NULL;
 
 	/* Make them absolute references */
 	sym = st->sd_symstart;
@@ -1251,11 +1255,13 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 			if ((sym = findsym(str, st)) == NULL) /* from userland */
 				continue;
 
+#ifdef notdef
 			/* Skip if bad binding */
 			if (ELF_ST_BIND(sym->st_info) != STB_GLOBAL) {
 				sym = NULL;
 				continue;
 			}
+#endif
 			break;
 		}
 		/*

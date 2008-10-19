@@ -1,17 +1,15 @@
-#	$NetBSD: Makefile,v 1.2 2008/05/14 20:13:05 reinoud Exp $
+#	$NetBSD: Makefile,v 1.2.4.1 2008/10/19 22:18:06 haad Exp $
 #
 
-.include <bsd.own.mk>
+.PATH:  ${.CURDIR}/../../../../fs/udf
 
-LIB=	udf
-
-.PATH:  ${NETBSDSRCDIR}/sys/fs/udf
+LIB=	rumpfs_udf
 
 SRCS=	udf_osta.c udf_vfsops.c udf_vnops.c udf_subr.c \
 	udf_allocation.c udf_readwrite.c udf_strat_bootstrap.c \
 	udf_strat_direct.c udf_strat_sequential.c udf_strat_rmw.c
 
-CFLAGS+=	-Wno-pointer-sign -DUDF_READWRITE -DDEBUG -DDIAGNOSTIC
+CFLAGS+=	-Wno-pointer-sign -DDEBUG -DDIAGNOSTIC
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

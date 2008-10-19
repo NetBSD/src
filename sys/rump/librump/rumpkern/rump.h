@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.28 2008/07/01 12:33:32 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.28.2.1 2008/10/19 22:18:06 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,8 +27,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SYS_RUMP_H_
-#define _SYS_RUMP_H_
+#ifndef _RUMP_RUMP_H_
+#define _RUMP_RUMP_H_
+
+/*
+ * NOTE: do not #include anything from <sys> here.  Otherwise this
+ * has no chance of working on non-NetBSD platforms.
+ */
 
 struct mount;
 struct vnode;
@@ -44,15 +49,23 @@ typedef struct kauth_cred *kauth_cred_t;
 #endif
 
 struct lwp;
+struct modinfo;
 
-#include "rumpvnode_if.h"
-#include "rumpdefs.h"
+#include <rump/rumpvnode_if.h>
+#include <rump/rumpdefs.h>
 
 #ifndef curlwp
 #define curlwp rump_get_curlwp()
 #endif
 
-void	rump_init(void);
+/*
+ * Something like rump capabilities would be nicer, but let's
+ * do this for a start.
+ */
+#define RUMP_VERSION	01
+#define rump_init()	_rump_init(RUMP_VERSION)
+
+int		_rump_init(int);
 struct mount	*rump_mnt_init(struct vfsops *, int);
 int		rump_mnt_mount(struct mount *, const char *, void *, size_t *);
 void		rump_mnt_destroy(struct mount *);
@@ -101,10 +114,13 @@ int	rump_vp_islocked(struct vnode *);
 void	rump_vp_interlock(struct vnode *);
 
 kauth_cred_t	rump_cred_create(uid_t, gid_t, size_t, gid_t *);
+kauth_cred_t	rump_cred_suserget(void);
 void		rump_cred_destroy(kauth_cred_t);
 
-#define RUMPCRED_SUSER	((void *)-3)
-#define WizardMode	RUMPCRED_SUSER /* COMPAT_NETHACK */
+#define rump_cred_suserput(c)	rump_cred_destroy(c)
+/* COMPAT_NETHACK */
+#define WizardMode()		rump_cred_suserget()
+#define YASD(cred)		rump_cred_suserput(cred)
 
 int	rump_vfs_unmount(struct mount *, int);
 int	rump_vfs_root(struct mount *, struct vnode **, int);
@@ -113,6 +129,7 @@ int	rump_vfs_sync(struct mount *, int, kauth_cred_t);
 int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
 void	rump_vfs_syncwait(struct mount *);
+int	rump_vfs_load(struct modinfo **);
 
 void	rump_bioops_sync(void);
 
@@ -126,4 +143,7 @@ struct vnode 	*rump_cdir_get(void);
 int	rump_splfoo(void);
 void	rump_splx(int);
 
-#endif /* _SYS_RUMP_H_ */
+/* I picked the wrong header to stop sniffin' glue */
+int syspuffs_glueinit(int, int *);
+
+#endif /* _RUMP_RUMP_H_ */

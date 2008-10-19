@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.248 2008/06/16 16:58:26 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.248.2.1 2008/10/19 22:17:04 haad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.248 2008/06/16 16:58:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.248.2.1 2008/10/19 22:17:04 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -190,12 +190,14 @@ int     rf_kdebug_level = 0;
 
 static RF_Raid_t **raidPtrs;	/* global raid device descriptors */
 
+#if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 RF_DECLARE_STATIC_MUTEX(rf_sparet_wait_mutex)
 
 static RF_SparetWait_t *rf_sparet_wait_queue;	/* requests to install a
 						 * spare table */
 static RF_SparetWait_t *rf_sparet_resp_queue;	/* responses from
 						 * installation process */
+#endif
 
 MALLOC_DEFINE(M_RAIDFRAME, "RAIDframe", "RAIDframe structures");
 
@@ -351,9 +353,11 @@ raidattach(int num)
 		panic("raidPtrs is NULL!!");
 	}
 
+#if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
 	rf_mutex_init(&rf_sparet_wait_mutex);
 
 	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
+#endif
 
 	for (i = 0; i < num; i++)
 		raidPtrs[i] = NULL;

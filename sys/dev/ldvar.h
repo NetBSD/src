@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.13 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.13.6.1 2008/10/19 22:16:18 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/mutex.h>
 
 struct ld_softc {
-	struct	device sc_dv;
+	struct	device *sc_dv;
 	struct	disk sc_dk;
 	struct	bufq_state *sc_bufq;
 	kmutex_t sc_mutex;
@@ -57,10 +57,11 @@ struct ld_softc {
 	int	sc_maxqueuecnt;		/* maximum h/w queue depth */
 
 	int	(*sc_dump)(struct ld_softc *, void *, int, int);
-	int	(*sc_flush)(struct ld_softc *);
+	int	(*sc_flush)(struct ld_softc *, int);
 	int	(*sc_start)(struct ld_softc *, struct buf *);
 };
 
+/* sc_flags */
 #define	LDF_ENABLED	0x001		/* device enabled */
 #define	LDF_WLABEL	0x008		/* label is writable */
 #define	LDF_LABELLING	0x010		/* writing label */
@@ -68,6 +69,9 @@ struct ld_softc {
 #define	LDF_DETACH	0x040		/* detach pending */
 #define	LDF_KLABEL	0x080		/* keep label on close */
 #define	LDF_VLABEL	0x100		/* label is valid */
+
+/* sc_flush() flags */
+#define	LDFL_POLL	0x001		/* poll for completion */
 
 int	ldadjqparam(struct ld_softc *, int);
 void	ldattach(struct ld_softc *);

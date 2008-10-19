@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.17 2008/06/01 01:43:20 uwe Exp $	*/
+/*	$NetBSD: frame.h,v 1.17.4.1 2008/10/19 22:15:55 haad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -160,5 +160,18 @@ struct sigframe_sigcontext {
 	struct sigcontext sf_sc; /* actual saved context */
 };
 #endif
+
+/*
+ * Scheduler activations upcall frame
+ */
+struct saframe {
+#if 0 /* in registers on entry to upcallcode */
+	int		sa_type;	/* r4 */
+	struct sa_t **	sa_sas;		/* r5 */
+	int		sa_events;	/* r6 */
+	int		sa_interrupted;	/* r7 */
+#endif
+	void *		sa_arg;
+};
 
 #endif /* !_SH3_FRAME_H_ */

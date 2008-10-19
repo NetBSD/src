@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.41 2008/05/10 02:26:09 rumble Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.41.4.1 2008/10/19 22:17:18 haad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.41 2008/05/10 02:26:09 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.41.4.1 2008/10/19 22:17:18 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.41 2008/05/10 02:26:09 rumble Exp
 
 #include <miscfs/genfs/genfs.h>
 #include <fs/tmpfs/tmpfs.h>
+#include <fs/tmpfs/tmpfs_args.h>
 
 MODULE(MODULE_CLASS_VFS, tmpfs, NULL);
 

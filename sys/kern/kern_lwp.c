@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.121 2008/07/02 19:53:12 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.121.2.1 2008/10/19 22:17:27 haad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,10 +206,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.121 2008/07/02 19:53:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.121.2.1 2008/10/19 22:17:27 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
+#include "opt_sa.h"
 
 #define _LWP_API_PRIVATE
 
@@ -218,6 +219,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.121 2008/07/02 19:53:12 rmind Exp $")
 #include <sys/cpu.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/syscall_stats.h>
 #include <sys/kauth.h>
@@ -649,9 +652,16 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 		/* Inherit a processor-set */
 		l2->l_psid = l1->l_psid;
 		/* Inherit an affinity */
-		if (l1->l_affinity) {
-			kcpuset_use(l1->l_affinity);
-			l2->l_affinity = l1->l_affinity;
+		if (l1->l_flag & LW_AFFINITY) {
+			proc_t *p = l1->l_proc;
+
+			mutex_enter(p->p_lock);
+			if (l1->l_flag & LW_AFFINITY) {
+				kcpuset_use(l1->l_affinity);
+				l2->l_affinity = l1->l_affinity;
+				l2->l_flag |= LW_AFFINITY;
+			}
+			mutex_exit(p->p_lock);
 		}
 		/* Look for a CPU to start */
 		l2->l_cpu = sched_takecpu(l2);
@@ -747,11 +757,6 @@ lwp_exit(struct lwp *l)
 	kauth_cred_free(l->l_cred);
 	callout_destroy(&l->l_timeout_ch);
 
-	if (l->l_affinity) {
-		kcpuset_unuse(l->l_affinity, NULL);
-		l->l_affinity = NULL;
-	}
-
 	/*
 	 * While we can still block, mark the LWP as unswappable to
 	 * prevent conflicts with the with the swapper.
@@ -805,12 +810,20 @@ lwp_exit(struct lwp *l)
 	l->l_stat = LSZOMB;
 	if (l->l_name != NULL)
 		strcpy(l->l_name, "(zombie)");
+	if (l->l_flag & LW_AFFINITY)
+		l->l_flag &= ~LW_AFFINITY;
 	lwp_unlock(l);
 	p->p_nrlwps--;
 	cv_broadcast(&p->p_lwpcv);
 	if (l->l_lwpctl != NULL)
 		l->l_lwpctl->lc_curcpu = LWPCTL_CPU_EXITED;
 	mutex_exit(p->p_lock);
+
+	/* Safe without lock since LWP is in zombie state */
+	if (l->l_affinity) {
+		kcpuset_unuse(l->l_affinity, NULL);
+		l->l_affinity = NULL;
+	}
 
 	/*
 	 * We can no longer block.  At this point, lwp_free() may already
@@ -921,7 +934,6 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 */
 	if (l->l_lwpctl != NULL)
 		lwp_ctl_free(l);
-	sched_lwp_exit(l);
 
 	if (!recycle && l->l_ts != &turnstile0)
 		pool_cache_put(turnstile_cache, l->l_ts);
@@ -1285,6 +1297,17 @@ lwp_userret(struct lwp *l)
 			(*hook)();
 		}
 	}
+
+#ifdef KERN_SA
+	/*
+	 * Timer events are handled specially.  We only try once to deliver
+	 * pending timer upcalls; if if fails, we can try again on the next
+	 * loop around.  If we need to re-enter lwp_userret(), MD code will
+	 * bounce us back here through the trap path after we return.
+	 */
+	if (p->p_timerpend)
+		timerupcall(l);
+#endif /* KERN_SA */
 }
 
 /*

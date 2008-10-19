@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.325 2008/07/02 16:45:20 matt Exp $	*/
+/*	$NetBSD: param.h,v 1.325.2.1 2008/10/19 22:18:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499006900	/* NetBSD 4.99.69 */
+#define	__NetBSD_Version__	499007300	/* NetBSD 4.99.73 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -94,6 +94,7 @@
  * Redefined constants are from POSIX 1003.1 limits file.
  *
  * MAXCOMLEN should be >= sizeof(ac_comm) (see <acct.h>)
+ * MAXHOSTNAMELEN should be >= (_POSIX_HOST_NAME_MAX + 1) (see <limits.h>)
  * MAXLOGNAME should be >= UT_NAMESIZE (see <utmp.h>)
  */
 #include <sys/syslimits.h>
@@ -310,6 +311,8 @@
  * maximum number of symbolic links that may be expanded in a path name.
  * It should be set high enough to allow all legitimate uses, but halt
  * infinite loops reasonably quickly.
+ *
+ * MAXSYMLINKS should be >= _POSIX_SYMLOOP_MAX (see <limits.h>)
  */
 #define	MAXPATHLEN	PATH_MAX
 #define	MAXSYMLINKS	32

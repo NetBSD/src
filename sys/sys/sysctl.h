@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.176 2008/04/29 16:21:27 ad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.176.6.1 2008/10/19 22:18:09 haad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -852,7 +852,7 @@ struct kinfo_file {
 #define	USER_POSIX2_SW_DEV	17	/* int: POSIX2_SW_DEV */
 #define	USER_POSIX2_UPE		18	/* int: POSIX2_UPE */
 #define	USER_STREAM_MAX		19	/* int: POSIX2_STREAM_MAX */
-#define	USER_TZNAME_MAX		20	/* int: POSIX2_TZNAME_MAX */
+#define	USER_TZNAME_MAX		20	/* int: _POSIX_TZNAME_MAX */
 #define	USER_ATEXIT_MAX		21	/* int: {ATEXIT_MAX} */
 #define	USER_MAXID		22	/* number of valid user ids */
 

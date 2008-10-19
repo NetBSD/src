@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.59 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.59.2.1 2008/10/19 22:17:41 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.59 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.59.2.1 2008/10/19 22:17:41 haad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -462,6 +462,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifnet *pr;
+	struct ifcapreq *ifcr;
 	struct vlanreq vlr;
 	struct sockaddr *sa;
 	int s, error = 0;
@@ -561,6 +562,17 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		    (*ifv->ifv_msw->vmsw_delmulti)(ifv, ifr) : EINVAL;
 		break;
 
+	case SIOCSIFCAP:
+		ifcr = data;
+		/* make sure caps are enabled on parent */
+		if ((ifv->ifv_p->if_capenable & ifcr->ifcr_capenable) !=
+		    ifcr->ifcr_capenable) {
+			error = EINVAL;
+			break;
+		}
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
+		break;
 	default:
 		error = EINVAL;
 	}

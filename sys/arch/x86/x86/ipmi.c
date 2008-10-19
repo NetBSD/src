@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.18 2008/04/17 05:26:11 cegger Exp $ */
+/*	$NetBSD: ipmi.c,v 1.18.10.1 2008/10/19 22:16:07 haad Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.18 2008/04/17 05:26:11 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.18.10.1 2008/10/19 22:16:07 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -197,7 +197,7 @@ void	ipmi_sensor_name(char *, int, uint8_t, uint8_t *);
 uint8_t bmc_read(struct ipmi_softc *, int);
 void	bmc_write(struct ipmi_softc *, int, uint8_t);
 int	bmc_io_wait(struct ipmi_softc *, int, uint8_t, uint8_t, const char *);
-int	bmc_io_wait_cold(struct ipmi_softc *, int, uint8_t, uint8_t,
+int	bmc_io_wait_spin(struct ipmi_softc *, int, uint8_t, uint8_t,
     const char *);
 void	_bmc_io_wait(void *);
 
@@ -214,7 +214,8 @@ void	ipmi_unmap_regs(struct ipmi_softc *sc, struct ipmi_attach_args *ia);
 
 void	*scan_sig(long, long, int, int, const void *);
 
-int	ipmi_test_threshold(uint8_t, uint8_t, uint8_t, uint8_t);
+int	ipmi_test_threshold_lo(uint8_t, uint8_t, uint8_t);
+int	ipmi_test_threshold_hi(uint8_t, uint8_t, uint8_t);
 int	ipmi_sensor_status(struct ipmi_softc *, struct ipmi_sensor *,
 			   envsys_data_t *, uint8_t *);
 
@@ -312,10 +313,12 @@ bmc_io_wait(struct ipmi_softc *sc, int offset, uint8_t mask, uint8_t value,
     const char *lbl)
 {
 	volatile uint8_t	v;
+	int			u;
 	struct ipmi_bmc_args	args;
 
-	if (cold)
-		return (bmc_io_wait_cold(sc, offset, mask, value, lbl));
+	u = bmc_io_wait_spin(sc, offset, mask, value, lbl);
+	if (u != -1)
+		return u;
 
 	sc->sc_retries = 0;
 	sc->sc_wakeup = 1;
@@ -341,11 +344,11 @@ bmc_io_wait(struct ipmi_softc *sc, int offset, uint8_t mask, uint8_t value,
 }
 
 int
-bmc_io_wait_cold(struct ipmi_softc *sc, int offset, uint8_t mask,
+bmc_io_wait_spin(struct ipmi_softc *sc, int offset, uint8_t mask,
     uint8_t value, const char *lbl)
 {
 	volatile uint8_t	v;
-	int			count = 5000000; /* == 5s XXX can be shorter */
+	int			count = 500; /* ~us */
 
 	while (count--) {
 		v = bmc_read(sc, offset);
@@ -355,8 +358,6 @@ bmc_io_wait_cold(struct ipmi_softc *sc, int offset, uint8_t mask,
 		delay(1);
 	}
 
-	dbg_printf(1, "%s: bmc_io_wait_cold fails : *v=%.2x m=%.2x b=%.2x %s\n",
-	    DEVNAME(sc), v, mask, value, lbl);
 	return (-1);
 
 }
@@ -1056,7 +1057,7 @@ ipmi_sendcmd(struct ipmi_softc *sc, int rssa, int rslun, int netfn, int cmd,
 	rc = sc->sc_if->sendmsg(sc, txlen, buf);
 	free(buf, M_DEVBUF);
 
-	ipmi_delay(sc, 5); /* give bmc chance to digest command */
+	ipmi_delay(sc, 50); /* give bmc chance to digest command */
 
 done:
 	return (rc);
@@ -1097,13 +1098,12 @@ ipmi_recvcmd(struct ipmi_softc *sc, int maxlen, int *rxlen, void *data)
 }
 
 void
-ipmi_delay(struct ipmi_softc *sc, int period)
+ipmi_delay(struct ipmi_softc *sc, int ms)
 {
-	/* period is in 10 ms increments */
 	if (cold)
-		delay(period * 10000);
+		delay(ms * 1000);
 	else
-		while (tsleep(sc, PWAIT, "ipmicmd", period) != EWOULDBLOCK);
+		while (tsleep(sc, PWAIT, "ipmicmd", mstohz(ms)) != EWOULDBLOCK);
 }
 
 /* Read a partial SDR entry */
@@ -1307,11 +1307,17 @@ ipmi_convert(uint8_t v, struct sdrtype1 *s1, long adj)
 }
 
 int
-ipmi_test_threshold(uint8_t v, uint8_t valid, uint8_t hi, uint8_t lo)
+ipmi_test_threshold_hi(uint8_t v, uint8_t valid, uint8_t hi)
 {
-	dbg_printf(10, "thresh: %.2x %.2x %.2x %d\n", v, lo, hi,valid);
-	return ((valid & 1 && lo != 0x00 && v <= lo) ||
-	    (valid & 8 && hi != 0xFF && v >= hi));
+	dbg_printf(10, "thresh_hi: %.2x %.2x %d\n", v, hi, valid);
+	return (valid & 8 && hi != 0xFF && v >= hi);
+}
+
+int
+ipmi_test_threshold_lo(uint8_t v, uint8_t valid, uint8_t lo)
+{
+	dbg_printf(10, "thresh_lo: %.2x %.2x %d\n", v, lo, valid);
+	return (valid & 1 && lo != 0x00 && v <= lo);
 }
 
 int
@@ -1357,17 +1363,23 @@ ipmi_sensor_status(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		    data[0], data[1], data[2], data[3], data[4], data[5],
 		    data[6]);
 
-		if (ipmi_test_threshold(*reading, data[0] >> 2 ,
-		    data[6], data[3]))
+		if (ipmi_test_threshold_hi(*reading, data[0] >> 2 , data[6]))
 			return ENVSYS_SCRITOVER;
 
-		if (ipmi_test_threshold(*reading, data[0] >> 1,
-		    data[5], data[2]))
+		if (ipmi_test_threshold_hi(*reading, data[0] >> 1, data[5]))
 			return ENVSYS_SCRITOVER;
 
-		if (ipmi_test_threshold(*reading, data[0] ,
-		    data[4], data[1]))
+		if (ipmi_test_threshold_hi(*reading, data[0] , data[4]))
 			return ENVSYS_SWARNOVER;
+
+		if (ipmi_test_threshold_lo(*reading, data[0] >> 2 , data[3]))
+			return ENVSYS_SCRITUNDER;
+
+		if (ipmi_test_threshold_lo(*reading, data[0] >> 1, data[2]))
+			return ENVSYS_SCRITUNDER;
+
+		if (ipmi_test_threshold_lo(*reading, data[0] , data[1]))
+			return ENVSYS_SWARNUNDER;
 
 		break;
 
@@ -1724,18 +1736,27 @@ unmap:
 	return (rv);
 }
 
-void
-ipmi_attach(struct device *parent, struct device *self, void *aux)
+static void
+ipmi_attach2(device_t self)
 {
 	struct ipmi_softc	*sc = (void *) self;
-	struct ipmi_attach_args *ia = aux;
+	struct ipmi_attach_args *ia = &sc->sc_ia;
 	uint16_t		rec;
 	struct ipmi_sensor *ipmi_s;
 	int i;
 	int current_index_typ[ENVSYS_NSENSORS];
 
-
 	sc->sc_thread_running = 1;
+
+	/* lock around read_sensor so that no one messes with the bmc regs */
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	/* setup ticker */
+	sc->sc_retries = 0;
+	sc->sc_wakeup = 0;
+	sc->sc_max_retries = hz / 2; /* 0.5 seconds max */
+	callout_init(&sc->sc_callout, 0);
+	callout_setfunc(&sc->sc_callout, _bmc_io_wait, sc);
 
 	/* Map registers */
 	ipmi_map_regs(sc, ia);
@@ -1798,7 +1819,8 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	if (!SLIST_EMPTY(&ipmi_sensor_list))
 		sc->current_sensor = SLIST_FIRST(&ipmi_sensor_list);
 
-	aprint_normal(": version %d.%d interface %s %sbase 0x%x/%x spacing %d",
+	aprint_verbose_dev(self, "version %d.%d interface %s %sbase "
+	    "0x%x/%x spacing %d",
 	    ia->iaa_if_rev >> 4, ia->iaa_if_rev & 0xF, sc->sc_if->name,
 	    ia->iaa_if_iotype == 'i' ? "io" : "mem", ia->iaa_if_iobase,
 	    ia->iaa_if_iospacing * sc->sc_if->nregs, ia->iaa_if_iospacing);
@@ -1816,22 +1838,22 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_wdog.smw_tickle = ipmi_watchdog_tickle;
 	sysmon_wdog_register(&sc->sc_wdog);
 
-	/* lock around read_sensor so that no one messes with the bmc regs */
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-
-	/* setup ticker */
-	sc->sc_retries = 0;
-	sc->sc_wakeup = 0;
-	sc->sc_max_retries = 50; /* 50 * 1/100 = 0.5 seconds max */
-	callout_init(&sc->sc_callout, 0);
-	callout_setfunc(&sc->sc_callout, _bmc_io_wait, sc);
-
 	if (kthread_create(PRI_NONE, 0, NULL, ipmi_poll_thread, sc,
 	    &sc->sc_kthread, DEVNAME(sc)) != 0) {
 		printf("%s: unable to create polling thread, ipmi disabled\n",
 		    DEVNAME(sc));
 		return;
 	}
+}
+
+void
+ipmi_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct ipmi_softc	*sc = (void *) self;
+
+	sc->sc_ia = *(struct ipmi_attach_args *)aux;
+	aprint_normal("\n");
+	config_interrupts(self, ipmi_attach2);
 }
 
 int

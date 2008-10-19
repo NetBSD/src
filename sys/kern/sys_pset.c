@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.8 2008/06/22 12:59:18 ad Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.8.2.1 2008/10/19 22:17:28 haad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.8 2008/06/22 12:59:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.8.2.1 2008/10/19 22:17:28 haad Exp $");
 
 #include <sys/param.h>
 
@@ -283,10 +283,10 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 		syscallarg(psetid_t) *opsid;
 	} */
 	struct cpu_info *ci;
-	struct schedstate_percpu *spc;
+	struct schedstate_percpu *spc = NULL;
 	psetid_t psid = SCARG(uap, psid), opsid = 0;
 	CPU_INFO_ITERATOR cii;
-	int error = 0, nnone;
+	int error = 0, nnone = 0;
 
 	/* Available only for super-user, except the case of PS_QUERY */
 	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_PSET,
@@ -296,8 +296,6 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 
 	/* Find the target CPU */
 	mutex_enter(&cpu_lock);
-	spc = NULL;
-	nnone = 0;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (cpu_index(ci) == SCARG(uap, cpuid))
 			spc = &ci->ci_schedstate;
@@ -320,9 +318,12 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 		psid = curlwp->l_psid;
 		/* FALLTHROUGH */
 	default:
-		/* Ensure at least one CPU stays in the default set. */
-		if (nnone == 1 && spc->spc_psid == PS_NONE &&
-		    psid != PS_NONE) {
+		/*
+		 * Ensure at least one CPU stays in the default set,
+		 * and that specified CPU is not offline.
+		 */
+		if (psid != PS_NONE && ((spc->spc_flags & SPCF_OFFLINE) ||
+		    (nnone == 1 && spc->spc_psid == PS_NONE))) {
 			mutex_exit(&cpu_lock);
 			return EBUSY;
 		}

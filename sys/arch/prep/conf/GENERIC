@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.143 2008/05/30 20:10:03 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.143.4.1 2008/10/19 22:15:54 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.143 $"
+#ident		"GENERIC-$Revision: 1.143.4.1 $"
 
 maxusers	32
 
@@ -102,6 +102,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -559,6 +560,11 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

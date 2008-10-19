@@ -1,4 +1,4 @@
-/*	$NetBSD: amrreg.h,v 1.4 2008/04/28 20:23:54 martin Exp $	*/
+/*	$NetBSD: amrreg.h,v 1.4.6.1 2008/10/19 22:16:37 haad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ struct amr_adapter_info {
 	u_int8_t	aa_inserteddrive;
 	u_int8_t	aa_batterystatus;
 	u_int8_t   	aa_res1;
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Logical drive information. */
 struct amr_logdrive_info {
@@ -168,14 +168,14 @@ struct amr_logdrive_info {
 	u_int32_t	al_size[AMR_8LD_MAXDRIVES];
 	u_int8_t	al_properties[AMR_8LD_MAXDRIVES];
 	u_int8_t	al_state[AMR_8LD_MAXDRIVES];
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Physical drive information. */
 struct amr_physdrive_info {
 	/* Low nybble is current state, high nybble is previous state. */
 	u_int8_t	ap_state[AMR_8LD_MAXPHYSDRIVES];
 	u_int8_t	ap_predictivefailure;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Enquiry response structure for AMR_CMD_ENQUIRY (e), AMR_CMD_EXT_ENQUIRY (x)
@@ -200,7 +200,7 @@ struct amr_enquiry {
 #define	AMR_SIG_T7	0xfff80007
 #define	AMR_SIG_490	0xfff70008
 	u_int8_t	res2[844];				/*     2 */
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * 40LD firmware interface.
@@ -230,7 +230,7 @@ struct amr_prodinfo {
 	u_int16_t	ap_subsystem;		/* subsystem identifier */
 	u_int16_t	ap_subvendor;		/* subsystem vendor ID */
 	u_int8_t	ap_numnotifyctr;	/* number of notify counters */
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Notify structure. */
 struct amr_notify {
@@ -292,7 +292,7 @@ struct amr_notify {
 	u_int8_t	an_fcloopstate0;
 	u_int8_t	an_fcloopstate1;
 	u_int8_t	res4;
-} __attribute__ ((__packed__));
+} __packed;
 
 /* Enquiry3 structure. */
 struct amr_enquiry3 {
@@ -317,7 +317,7 @@ struct amr_enquiry3 {
 	u_int8_t	ae_targxfer[80];			/* physical drive transfer rates */
 
 	u_int8_t	res1[263];		/* pad to 1024 bytes */
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * Mailbox and command structures.
@@ -333,13 +333,13 @@ struct amr_mailbox_cmd {
 	u_int8_t	mb_nsgelem;
 	u_int8_t	res1;
 	u_int8_t	mb_busy;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct amr_mailbox_resp {
 	u_int8_t	mb_nstatus;
 	u_int8_t	mb_status;
 	u_int8_t	mb_completed[46];
-}  __attribute__ ((__packed__));
+}  __packed;
 
 struct amr_mailbox {
 	u_int32_t	mb_res1[3];
@@ -349,7 +349,7 @@ struct amr_mailbox {
 	u_int8_t	mb_poll;
 	u_int8_t	mb_ack;
 	u_int8_t	res2[62];		/* Pad to 128+16 bytes. */
-} __attribute__ ((__packed__));
+} __packed;
 
 struct amr_mailbox_ioctl {
 	u_int8_t	mb_command;
@@ -367,12 +367,12 @@ struct amr_mailbox_ioctl {
 	u_int8_t	mb_poll;
 	u_int8_t	mb_ack;
 	u_int8_t	res4[16];
-} __attribute__ ((__packed__));
+} __packed;
 
 struct amr_sgentry {
 	u_int32_t	sge_addr;
 	u_int32_t	sge_count;
-} __attribute__ ((__packed__));
+} __packed;
 
 struct amr_passthrough {
 	u_int8_t	ap_timeout:3;
@@ -392,7 +392,7 @@ struct amr_passthrough {
 	u_int8_t	ap_scsi_status;
 	u_int32_t	ap_data_transfer_address;
 	u_int32_t	ap_data_transfer_length;
-} __attribute__ ((__packed__));
+} __packed;
 
 /*
  * "Quartz" i960 PCI bridge interface.

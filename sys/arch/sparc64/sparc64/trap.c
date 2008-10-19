@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.151 2008/06/30 14:16:13 nakayama Exp $ */
+/*	$NetBSD: trap.c,v 1.151.2.1 2008/10/19 22:16:01 haad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2008/06/30 14:16:13 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151.2.1 2008/10/19 22:16:01 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -63,8 +63,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2008/06/30 14:16:13 nakayama Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/resource.h>
 #include <sys/signal.h>
 #include <sys/wait.h>
@@ -94,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2008/06/30 14:16:13 nakayama Exp $");
 #endif
 
 #include <sparc/fpu/fpu_extern.h>
-#include <sparc64/sparc64/cache.h>
 
 #ifndef offsetof
 #define	offsetof(s, f) ((size_t)&((s *)0)->f)
@@ -174,8 +174,7 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
  * set, no matter how it is interpreted.  Appendix N of the Sparc V8 document
  * seems to imply that we should do this, and it does make sense.
  */
-__asm(".align 64");
-const struct fpstate64 initfpstate = {
+const struct fpstate64 initfpstate __aligned(BLOCK_SIZE) = {
 	.fs_regs =
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
@@ -669,8 +668,8 @@ badtrap:
 		struct fpstate64 *fs = l->l_md.md_fpstate;
 
 		if (fs == NULL) {
-			/* NOTE: fpstate must be 64-bit aligned */
-			fs = malloc((sizeof *fs), M_SUBPROC, M_WAITOK);
+			/* NOTE: fpstate must be 64-byte aligned */
+			fs = pool_cache_get(fpstate_cache, PR_WAITOK);
 			*fs = initfpstate;
 			l->l_md.md_fpstate = fs;
 		}
@@ -1134,8 +1133,19 @@ data_access_fault(struct trapframe64 *tf, unsigned int type, vaddr_t pc,
 				return;
 			goto kfault;
 		}
-	} else
+	} else {
 		l->l_md.md_tf = tf;
+		/*
+		 * WRS: Can drop LP_SA_NOBLOCK test iff can only get
+		 * here from a usermode-initiated access. LP_SA_NOBLOCK
+		 * should never be set there - it's kernel-only.
+		 */
+		if ((l->l_flag & LW_SA)
+		    && (~l->l_pflag & LP_SA_NOBLOCK)) {
+			l->l_savp->savp_faultaddr = addr;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
+	}
 
 	vm = p->p_vmspace;
 	/* alas! must call the horrible vm code */
@@ -1233,6 +1243,7 @@ kfault:
 		trapsignal(l, &ksi);
 	}
 	if ((tstate & TSTATE_PRIV) == 0) {
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		userret(l, pc, sticks);
 		share_fpu(l, tf);
 	}

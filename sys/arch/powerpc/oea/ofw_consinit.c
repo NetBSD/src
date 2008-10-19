@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.7 2008/04/28 20:23:32 martin Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.7.6.1 2008/10/19 22:15:54 haad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.7 2008/04/28 20:23:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.7.6.1 2008/10/19 22:15:54 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -291,17 +291,30 @@ cninit_kd(void)
 	 * stdin is /pseudo-hid/keyboard.  There is no 
 	 * `adb-kbd-ihandle or `usb-kbd-ihandles methods
 	 * available. Try attaching as ADB.
+	 * But only if ADB support is actually present.
 	 *
 	 * XXX This must be called before pmap_bootstrap().
 	 */
 	if (strcmp(name, "pseudo-hid") == 0) {
-		printf("console keyboard type: unknown, assuming ADB\n");
+		int adb_node;
+
+		adb_node = OF_finddevice("/pci/mac-io/via-pmu/adb");
+		if (adb_node > 0) {
+			printf("ADB support found\n");
 #if NAKBD > 0
-		akbd_cnattach();
+			akbd_cnattach();
 #endif
 #if NADBKBD > 0
-		adbkbd_cnattach();
+			adbkbd_cnattach();
 #endif
+		} else {
+			/* must be USB */
+			printf("No ADB support present, assuming USB " 
+			       "keyboard\n");
+#if NUKBD > 0
+			ukbd_cnattach();
+#endif
+		}
 		goto kbd_found;
 	}
 
@@ -368,7 +381,7 @@ cninit_kd(void)
 	return;
 
 kbd_found:;
-#if NAKBD + NUKBD + NADBKBD > 0
+#if NAKBD + NUKBD + NADBKBD + NPCKBC > 0
 	/*
 	 * XXX This is a little gross, but we don't get to call
 	 * XXX wskbd_cnattach() twice.

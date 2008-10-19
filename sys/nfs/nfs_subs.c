@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.204 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.204.4.1 2008/10/19 22:17:59 haad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.204 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.204.4.1 2008/10/19 22:17:59 haad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.204 2008/06/04 12:41:40 ad Exp $");
 #include <sys/dirent.h>
 #include <sys/once.h>
 #include <sys/kauth.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -118,6 +119,8 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.204 2008/06/04 12:41:40 ad Exp $");
 #ifdef ISO
 #include <netiso/iso.h>
 #endif
+
+static u_int32_t nfs_xid;
 
 /*
  * Data items converted to xdr at startup, since they are constant
@@ -1539,6 +1542,7 @@ nfs_init0(void)
 	nfs_ticks = (hz * NFS_TICKINTVL + 500) / 1000;
 	if (nfs_ticks < 1)
 		nfs_ticks = 1;
+	nfs_xid = arc4random();
 #ifdef NFSSERVER
 	vfs_hooks_attach(&nfs_export_hooks);
 	nfsrv_init(0);			/* Init server data structures */
@@ -1566,6 +1570,7 @@ nfs_init0(void)
 	/* Initialize the iod structures */
 	nfs_iodinit();
 #endif
+
 	return 0;
 }
 
@@ -1584,23 +1589,26 @@ nfs_init(void)
 void
 nfs_vfs_init()
 {
+
 	/* Initialize NFS server / client shared data. */
 	nfs_init();
 
-	nfs_nhinit();			/* Init the nfsnode table */
+	nfs_node_init();
 	nfs_commitsize = uvmexp.npages << (PAGE_SHIFT - 4);
 }
 
 void
 nfs_vfs_reinit()
 {
-	nfs_nhreinit();
+
+	nfs_node_reinit();
 }
 
 void
 nfs_vfs_done()
 {
-	nfs_nhdone();
+
+	nfs_node_done();
 }
 
 /*
@@ -1724,6 +1732,8 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	vap->va_rdev = (dev_t)rdev;
 	vap->va_mtime = mtime;
 	vap->va_ctime = ctime;
+	vap->va_birthtime.tv_sec = VNOVAL;
+	vap->va_birthtime.tv_nsec = VNOVAL;
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 	switch (vtyp) {
 	case VDIR:
@@ -2903,31 +2913,12 @@ nfsrv_errmap(nd, err)
 u_int32_t
 nfs_getxid()
 {
-	static u_int32_t base;
-	static u_int32_t nfs_xid = 0;
-	static struct simplelock nfs_xidlock = SIMPLELOCK_INITIALIZER;
 	u_int32_t newxid;
 
-	simple_lock(&nfs_xidlock);
-	/*
-	 * derive initial xid from system time
-	 * XXX time is invalid if root not yet mounted
-	 */
-	if (__predict_false(!base && (rootvp))) {
-		struct timeval tv;
-
-		microtime(&tv);
-		base = tv.tv_sec << 12;
-		nfs_xid = base;
-	}
-
-	/*
-	 * Skip zero xid if it should ever happen.
-	 */
-	if (__predict_false(++nfs_xid == 0))
-		nfs_xid++;
-	newxid = nfs_xid;
-	simple_unlock(&nfs_xidlock);
+	/* get next xid.  skip 0 */
+	do {
+		newxid = atomic_inc_32_nv(&nfs_xid);
+	} while (__predict_false(newxid == 0));
 
 	return txdr_unsigned(newxid);
 }

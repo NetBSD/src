@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.8 2008/04/24 18:39:23 ad Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.8.8.1 2008/10/19 22:16:16 haad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.8 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.8.8.1 2008/10/19 22:16:16 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -370,4 +370,22 @@ linux32_sys_signal(struct lwp *l, const struct linux32_sys_signal_args *uap, reg
 
         *retval = (int)(long)obsa.sa_handler;
         return 0;
+}
+
+int
+linux32_sys_rt_sigpending(struct lwp *l, const struct linux32_sys_rt_sigpending_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_sigsetp_t) set;
+		syscallarg(netbsd32_size_t) sigsetsize;
+	} */
+	sigset_t bss;
+	linux32_sigset_t lss;
+
+	if (SCARG(uap, sigsetsize) != sizeof(linux32_sigset_t))
+		return EINVAL;
+
+	sigpending1(l, &bss);
+	native_to_linux32_sigset(&lss, &bss);
+	return copyout(&lss, SCARG_P32(uap, set), sizeof(lss));
 }

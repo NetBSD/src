@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.101 2007/06/29 23:30:32 rumble Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.101.38.1 2008/10/19 22:18:09 haad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -305,7 +305,8 @@ x(JFS2,		16,	"jfs")		/* IBM JFS2 */ \
 x(CGD,		17,	"cgd")		/* cryptographic pseudo-disk */ \
 x(VINUM,	18,	"vinum")	/* vinum volume */ \
 x(FLASH,	19,	"flash")	/* flash memory devices */ \
-
+x(DM,           20,     "dm")           /* device-mapper pseudo-disk devices */\
+    
 #ifndef _LOCORE
 #define DKTYPE_NUMS(tag, number, name) __CONCAT(DTYPE_,tag=number),
 enum { DKTYPE_DEFN(DKTYPE_NUMS) DKMAXTYPES };

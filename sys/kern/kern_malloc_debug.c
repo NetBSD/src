@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.19 2008/02/23 16:05:17 chris Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.19.10.1 2008/10/19 22:17:27 haad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.19 2008/02/23 16:05:17 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.19.10.1 2008/10/19 22:17:27 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -148,7 +148,8 @@ debug_malloc(unsigned long size, struct malloc_type *type, int flags,
 	debug_malloc_allocs++;
 	splx(s);
 
-	pmap_kenter_pa(md->md_va, md->md_pa, VM_PROT_READ|VM_PROT_WRITE);
+	pmap_kenter_pa(md->md_va, md->md_pa,
+	    VM_PROT_READ|VM_PROT_WRITE|PMAP_KMPAGE);
 	pmap_update(pmap_kernel());
 
 	md->md_size = size;

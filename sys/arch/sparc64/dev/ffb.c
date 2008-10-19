@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.34 2008/06/13 13:10:49 cegger Exp $	*/
+/*	$NetBSD: ffb.c,v 1.34.2.1 2008/10/19 22:16:00 haad Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.34 2008/06/13 13:10:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.34.2.1 2008/10/19 22:16:00 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -613,7 +613,7 @@ ffb_ras_setfg(struct ffb_softc *sc, int32_t fg)
 static void
 ffbfb_unblank(struct device *dev)
 {
-	struct ffb_softc *sc = (struct ffb_softc *)dev;
+	struct ffb_softc *sc = device_private(dev);
 	struct vcons_screen *ms = sc->vd.active;
 	u_int on = 1;
 	int redraw = 0;

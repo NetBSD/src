@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_via.c,v 1.5 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: ata_raid_via.c,v 1.5.10.1 2008/10/19 22:16:19 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_via.c,v 1.5 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_via.c,v 1.5.10.1 2008/10/19 22:16:19 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -120,7 +120,7 @@ ata_raid_read_config_via(struct wd_softc *sc)
 	int bmajor, error;
 	dev_t dev;
 	uint32_t drive;
-	uint8_t checksum, *ptr;
+	uint8_t checksum, checksum_alt, byte3, *ptr;
 	int count, disk;
 	struct ataraid_array_info *aai;
 	struct ataraid_disk_info *adi;
@@ -165,15 +165,18 @@ ata_raid_read_config_via(struct wd_softc *sc)
 	}
 
 	/* calculate checksum and compare for valid */
-	for (checksum = 0, ptr = (uint8_t *)info, count = 0; count < 50;
-	    count++)
+	for (byte3 = 0, checksum = 0, ptr = (uint8_t *)info, count = 0;
+	    count < 50; count++)
 		if (count == 3)
-			checksum += *ptr++ & ~ VIA_T_BOOTABLE;
+			byte3 = *ptr++;
 		else
 			checksum += *ptr++;
-	if (checksum != info->checksum) {
-		DPRINTF(("%s: VIA V-RAID checksum failed 0x%02x != 0x%02x\n",
-		    device_xname(sc->sc_dev), checksum, info->checksum));
+	checksum_alt = checksum + (byte3 & ~VIA_T_BOOTABLE);
+	checksum += byte3;
+	if (checksum != info->checksum && checksum_alt != info->checksum) {
+		DPRINTF(("%s: VIA V-RAID checksum failed 0x%02x != "
+		    "0x%02x or 0x%02x\n", device_xname(sc->sc_dev),
+		    info->checksum, checksum, checksum_alt));
 		error = ESRCH;
 		goto out;
 	}

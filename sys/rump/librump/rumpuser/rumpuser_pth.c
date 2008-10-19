@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.13 2008/07/01 12:33:33 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.13.2.1 2008/10/19 22:18:07 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,7 +42,9 @@
 #include <string.h>
 #include <stdint.h>
 
-#include "rumpuser.h"
+#include <rump/rumpuser.h>
+
+#include "rumpuser_int.h"
 
 static pthread_key_t curlwpkey;
 static pthread_key_t isintr;
@@ -77,7 +79,6 @@ struct rumpuser_aio *rua_aios[N_AIOS];
 
 struct rumpuser_rw rumpspl;
 
-#ifndef RUMP_WITHOUT_THREADS
 static void *
 iothread(void *arg)
 {
@@ -105,14 +106,12 @@ iothread(void *arg)
 		NOFAIL_ERRNO(pthread_mutex_lock(&rua_mtx.pthmtx));
 	}
 }
-#endif /* RUMP_WITHOUT_THREADS */
 
 int
 rumpuser_thrinit()
 {
-#ifndef RUMP_WITHOUT_THREADS
+	extern int rump_threads;
 	pthread_t iothr;
-#endif
 
 	pthread_mutex_init(&rua_mtx.pthmtx, NULL);
 	pthread_cond_init(&rua_cv.pthcv, NULL);
@@ -121,9 +120,8 @@ rumpuser_thrinit()
 	pthread_key_create(&curlwpkey, NULL);
 	pthread_key_create(&isintr, NULL);
 
-#ifndef RUMP_WITHOUT_THREADS
-	pthread_create(&iothr, NULL, iothread, NULL);
-#endif
+	if (rump_threads)
+		pthread_create(&iothr, NULL, iothread, NULL);
 
 	return 0;
 }
@@ -175,7 +173,7 @@ void
 rumpuser_mutex_enter(struct rumpuser_mtx *mtx)
 {
 
-	NOFAIL_ERRNO(pthread_mutex_lock(&mtx->pthmtx));
+	KLOCK_WRAP(NOFAIL_ERRNO(pthread_mutex_lock(&mtx->pthmtx)));
 }
 
 int
@@ -220,9 +218,9 @@ rumpuser_rw_enter(struct rumpuser_rw *rw, int write)
 {
 
 	if (write)
-		NOFAIL_ERRNO(pthread_rwlock_wrlock(&rw->pthrw));
+		KLOCK_WRAP(NOFAIL_ERRNO(pthread_rwlock_wrlock(&rw->pthrw)));
 	else
-		NOFAIL_ERRNO(pthread_rwlock_rdlock(&rw->pthrw));
+		KLOCK_WRAP(NOFAIL_ERRNO(pthread_rwlock_rdlock(&rw->pthrw)));
 }
 
 int
@@ -291,7 +289,7 @@ void
 rumpuser_cv_wait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx)
 {
 
-	NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx));
+	KLOCK_WRAP(NOFAIL_ERRNO(pthread_cond_wait(&cv->pthcv, &mtx->pthmtx)));
 }
 
 int
@@ -307,7 +305,7 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	ts.tv_sec  += ts.tv_nsec / 1000000000;
 	ts.tv_nsec %= 1000000000;
 
-	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
+	KLOCK_WRAP(rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts));
 	if (rv != 0 && rv != ETIMEDOUT)
 		abort();
 
@@ -328,6 +326,13 @@ rumpuser_cv_broadcast(struct rumpuser_cv *cv)
 {
 
 	NOFAIL_ERRNO(pthread_cond_broadcast(&cv->pthcv));
+}
+
+int
+rumpuser_cv_has_waiters(struct rumpuser_cv *cv)
+{
+
+	return pthread_cond_has_waiters_np(&cv->pthcv);
 }
 
 /*

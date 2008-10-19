@@ -1,4 +1,4 @@
-/* $NetBSD: rb.h,v 1.11 2008/07/03 18:30:39 simonb Exp $ */
+/* $NetBSD: rb.h,v 1.11.2.1 2008/10/19 22:18:09 haad Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -135,9 +135,7 @@ struct rb_tree_ops {
 struct rb_tree {
 	struct rb_node *rbt_root;
 	const struct rb_tree_ops *rbt_ops;
-#ifndef RBSMALL
 	struct rb_node *rbt_minmax[2];
-#endif
 #ifdef RBDEBUG
 	struct rb_node_qh rbt_nodes;
 #endif

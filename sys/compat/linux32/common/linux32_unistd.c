@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.22 2008/04/15 21:13:34 njoly Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.22.10.1 2008/10/19 22:16:16 haad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.22 2008/04/15 21:13:34 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.22.10.1 2008/10/19 22:16:16 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -304,21 +304,6 @@ linux32_sys_break(struct lwp *l, const struct linux32_sys_break_args *uap, regis
 }
 
 int
-linux32_sys_rename(struct lwp *l, const struct linux32_sys_rename_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const netbsd32_charp) from;
-		syscallarg(const netbsd32_charp) to;
-	} */
-	struct sys___posix_rename_args ua;
-
-	NETBSD32TOP_UAP(from, const char);
-	NETBSD32TOP_UAP(to, const char);
-
-	return sys___posix_rename(l, &ua, retval);
-}
-
-int
 linux32_sys_swapon(struct lwp *l, const struct linux32_sys_swapon_args *uap, register_t *retval)
 {
 	/* {
@@ -367,22 +352,6 @@ linux32_sys_reboot(struct lwp *l, const struct linux32_sys_reboot_args *uap, reg
 }
 
 int
-linux32_sys_truncate(struct lwp *l, const struct linux32_sys_truncate_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(netbsd32_charp) buf;
-		syscallarg(int) count;
-	} */
-	struct compat_43_sys_truncate_args ua;
-
-	NETBSD32TOP_UAP(path, const char);
-	NETBSD32TO64_UAP(length);
-
-	return compat_43_sys_truncate(l, &ua, retval);
-}
-
-int
 linux32_sys_setresuid(struct lwp *l, const struct linux32_sys_setresuid_args *uap, register_t *retval)
 {
 	/* {
@@ -422,11 +391,12 @@ linux32_sys_nice(struct lwp *l, const struct linux32_sys_nice_args *uap, registe
 	/* {
 		syscallarg(int) incr;
 	} */
+	struct proc *p = l->l_proc;
 	struct sys_setpriority_args bsa;
 
 	SCARG(&bsa, which) = PRIO_PROCESS;
 	SCARG(&bsa, who) = 0;
-	SCARG(&bsa, prio) = SCARG(uap, incr);
+	SCARG(&bsa, prio) = p->p_nice - NZERO + SCARG(uap, incr);
 
 	return sys_setpriority(l, &bsa, retval);
 }

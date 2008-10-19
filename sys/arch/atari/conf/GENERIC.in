@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.71 2007/12/31 15:31:50 ad Exp $
+#	$NetBSD: GENERIC.in,v 1.71.16.1 2008/10/19 22:15:42 haad Exp $
 #
 # Generic atari
 #
@@ -119,8 +119,9 @@ file-system 	LFS		# log-structured file system
 file-system	PTYFS		# /dev/pts/N support
 #endif
 
-#ifndef INSTALL_KERNEL
 # File system options
+options 	WAPBL		# File system journaling support - Experimental
+#ifndef INSTALL_KERNEL
 options 	QUOTA		# Disk quotas for local disks
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.

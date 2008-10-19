@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.12 2008/04/03 13:59:01 xtraeme Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.12.12.1 2008/10/19 22:16:37 haad Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -347,11 +347,11 @@ struct arc_fw_diskinfo {
 	uint32_t	capacity;
 	uint32_t	capacity2;
 	uint8_t		device_state;
-#define ARC_FW_DISK_INITIALIZED	0x88	/* disk has been initialized */
-#define ARC_FW_DISK_RAIDMEMBER	0x89	/* disk is member of a raid set */
-#define ARC_FW_DISK_PASSTHRU	0x8b	/* pass through disk */
-#define ARC_FW_DISK_HOTSPARE	0xa9	/* hotspare disk */
-#define ARC_FW_DISK_UNUSED	0xc9	/* free/unused disk */
+#define ARC_FW_DISK_NORMAL	0x88	/* disk attached/initialized */
+#define ARC_FW_DISK_PASSTHRU	0x8a	/* pass through disk in normal state */
+#define ARC_FW_DISK_HOTSPARE	0xa8	/* hotspare disk in normal state */
+#define ARC_FW_DISK_UNUSED	0xc8	/* free/unused disk in normal state */
+#define ARC_FW_DISK_FAILED	0x10	/* disk in failed state */
 	uint8_t		pio_mode;
 	uint8_t		current_udma_mode;
 	uint8_t		udma_mode;

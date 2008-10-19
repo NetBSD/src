@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.23 2008/01/30 16:27:10 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.23.16.1 2008/10/19 22:15:45 haad Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.23 $"
+#ident		"GENERIC-$Revision: 1.23.16.1 $"
 
 maxusers	16
 
@@ -118,6 +118,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Indpendent support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# no FFS snapshot support
@@ -265,6 +266,11 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

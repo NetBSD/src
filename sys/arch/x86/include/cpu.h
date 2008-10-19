@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 2008/05/30 11:03:29 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7.8.1 2008/10/19 22:16:07 haad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -142,7 +142,8 @@ struct cpu_info {
 	uint32_t	ci_signature;	 /* X86 cpuid type */
 	uint32_t	ci_feature_flags;/* X86 %edx CPUID feature bits */
 	uint32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
-	uint32_t	ci_feature3_flags;/* X86 extended feature bits */
+	uint32_t	ci_feature3_flags;/* X86 extended %edx feature bits */
+	uint32_t	ci_feature4_flags;/* X86 extended %ecx feature bits */
 	uint32_t	ci_padlock_flags;/* VIA PadLock feature bits */
 	uint32_t	ci_vendor[4];	 /* vendor string */
 	uint32_t	ci_cpu_serial[3]; /* PIII serial number */

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.123 2008/05/26 18:00:33 drochner Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.123.4.1 2008/10/19 22:17:10 haad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.123 2008/05/26 18:00:33 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.123.4.1 2008/10/19 22:17:10 haad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -805,17 +805,15 @@ usb_transfer_complete(usbd_xfer_handle xfer)
 		xfer->status = USBD_SHORT_XFER;
 	}
 
-	if (xfer->callback)
-		xfer->callback(xfer, xfer->priv, xfer->status);
-
-#ifdef DIAGNOSTIC
-	if (pipe->methods->done != NULL)
+	if (repeat) {
+		if (xfer->callback)
+			xfer->callback(xfer, xfer->priv, xfer->status);
 		pipe->methods->done(xfer);
-	else
-		printf("usb_transfer_complete: pipe->methods->done == NULL\n");
-#else
-	pipe->methods->done(xfer);
-#endif
+	} else {
+		pipe->methods->done(xfer);
+		if (xfer->callback)
+			xfer->callback(xfer, xfer->priv, xfer->status);
+	}
 
 	if (sync && !polling)
 		wakeup(xfer);

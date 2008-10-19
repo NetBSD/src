@@ -26,7 +26,7 @@
 #ifndef _via_ds_h_
 #define _via_ds_h_
 
-#include <dev/drm/drmP.h>
+#include "drmP.h"
 
 /* Set Data Structure */
 #define SET_SIZE 5000

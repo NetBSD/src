@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.20 2008/06/29 05:42:24 hamajima Exp $
+#	$NetBSD: ARMADILLO9,v 1.20.2.1 2008/10/19 22:15:44 haad Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -42,6 +42,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support
+options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

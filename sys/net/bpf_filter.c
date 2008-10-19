@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_filter.c,v 1.34 2008/01/02 15:58:01 christos Exp $	*/
+/*	$NetBSD: bpf_filter.c,v 1.34.16.1 2008/10/19 22:17:41 haad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.34 2008/01/02 15:58:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf_filter.c,v 1.34.16.1 2008/10/19 22:17:41 haad Exp $");
 
 #if 0
 #if !(defined(lint) || defined(KERNEL))
@@ -137,7 +137,7 @@ u_int
 bpf_filter(struct bpf_insn *pc, u_char *p, u_int wirelen, u_int buflen)
 {
 	uint32_t A, X, k;
-	int32_t mem[BPF_MEMWORDS];
+	uint32_t mem[BPF_MEMWORDS];
 
 	if (pc == 0)
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.14 2007/03/07 11:29:46 skrll Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.14.50.1 2008/10/19 22:15:46 haad Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.14 2007/03/07 11:29:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_gsc.c,v 1.14.50.1 2008/10/19 22:15:46 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,6 +292,9 @@ ie_gsc_memcopyin(struct ie_softc *sc, void *p, int offset, size_t size)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
 
+	if (size == 0)
+		return;
+
 	memcpy(p, (char *)sc->sc_maddr + offset, size);
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,
 			BUS_DMASYNC_PREREAD);
@@ -302,6 +305,9 @@ void
 ie_gsc_memcopyout(struct ie_softc *sc, const void *p, int offset, size_t size)
 {
 	struct ie_gsc_softc *gsc = (struct ie_gsc_softc *) sc;
+
+	if (size == 0)
+		return;
 
 	memcpy((char *)sc->sc_maddr + offset, p, size);
 	bus_dmamap_sync(gsc->iemt, sc->sc_dmamap, offset, size,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sco.h,v 1.2 2006/07/26 10:20:56 tron Exp $	*/
+/*	$NetBSD: sco.h,v 1.2.66.1 2008/10/19 22:17:46 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -59,13 +59,15 @@ extern struct sco_pcb_list sco_pcb;
 /* sp_flags */
 #define SP_LISTENING		(1<<0)		/* is listening pcb */
 
-/* sco_socket.c */
 struct socket;
+struct sockopt;
+
+/* sco_socket.c */
 extern int sco_sendspace;
 extern int sco_recvspace;
 int sco_usrreq(struct socket *, int, struct mbuf *,
 		struct mbuf *, struct mbuf *, struct lwp *);
-int sco_ctloutput(int, struct socket *, int, int, struct mbuf **);
+int sco_ctloutput(int, struct socket *, struct sockopt *);
 
 /* sco_upper.c */
 int sco_attach(struct sco_pcb **, const struct btproto *, void *);
@@ -77,8 +79,8 @@ int sco_disconnect(struct sco_pcb *, int);
 int sco_detach(struct sco_pcb **);
 int sco_listen(struct sco_pcb *);
 int sco_send(struct sco_pcb *, struct mbuf *);
-int sco_setopt(struct sco_pcb *, int, void *);
-int sco_getopt(struct sco_pcb *, int, void *);
+int sco_setopt(struct sco_pcb *, const struct sockopt *);
+int sco_getopt(struct sco_pcb *, struct sockopt *);
 
 #endif	/* _KERNEL */
 

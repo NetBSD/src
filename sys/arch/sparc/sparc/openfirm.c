@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.15 2007/02/22 16:48:59 thorpej Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.15.52.1 2008/10/19 22:16:00 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.15 2007/02/22 16:48:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.15.52.1 2008/10/19 22:16:00 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,12 +679,15 @@ OF_interpret(const char *cmd, int nargs, int nreturns, ...)
 	while (i < nargs) {
 		args.slot[i++] = va_arg(ap, cell_t);
 	}
-	if (openfirmware(&args) == -1)
+	if (openfirmware(&args) == -1) {
+		va_end(ap);
 		return (-1);
+	}
 	status = args.slot[i++];
 	while (i < nargs+nreturns) {
 		*va_arg(ap, cell_t *) = args.slot[i++];
 	}
+	va_end(ap);
 	return (status);
 }
 

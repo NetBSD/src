@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.101 2008/06/16 10:37:54 drochner Exp $	*/
+/*	$NetBSD: uhub.c,v 1.101.2.1 2008/10/19 22:17:10 haad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.101 2008/06/16 10:37:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.101.2.1 2008/10/19 22:17:10 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,14 +95,15 @@ Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
 
 int uhub_match(device_t, cfdata_t, void *);
 void uhub_attach(device_t, device_t, void *);
+int uhub_rescan(device_t, const char *, const int *);
 void uhub_childdet(device_t, device_t);
 int uhub_detach(device_t, int);
 int uhub_activate(device_t, enum devact);
 extern struct cfdriver uhub_cd;
 CFATTACH_DECL2_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
-    uhub_attach, uhub_detach, uhub_activate, NULL, uhub_childdet);
+    uhub_attach, uhub_detach, uhub_activate, uhub_rescan, uhub_childdet);
 CFATTACH_DECL2_NEW(uroothub, sizeof(struct uhub_softc), uhub_match,
-    uhub_attach, uhub_detach, uhub_activate, NULL, uhub_childdet);
+    uhub_attach, uhub_detach, uhub_activate, uhub_rescan, uhub_childdet);
 
 USB_MATCH(uhub)
 {
@@ -622,6 +623,24 @@ USB_DETACH(uhub)
 	return (0);
 }
 
+int
+uhub_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct uhub_softc *sc = device_private(self);
+	struct usbd_hub *hub = sc->sc_hub->hub;
+	usbd_device_handle dev;
+	int port, err;
+
+	for (port = 0; port < hub->hubdesc.bNbrPorts; port++) {
+		dev = hub->ports[port].device;
+		if (dev == NULL)
+			continue;
+		err = usbd_reattach_device(USBDEV(sc->sc_dev), dev,
+					   port, locators);
+	}
+	return 0;
+}
+
 /* Called when a device has been detached from it */
 void
 uhub_childdet(device_t self, device_t child)
@@ -645,11 +664,10 @@ uhub_childdet(device_t self, device_t child)
 		for (i = 0; i < dev->subdevlen; i++) {
 			if (dev->subdevs[i] == child) {
 				dev->subdevs[i] = NULL;
-				return;
+				dev->nifaces_claimed--;
 			}
 		}
 	}
-	KASSERT(false);
 }
 
 

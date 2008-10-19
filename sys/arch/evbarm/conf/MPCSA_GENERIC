@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.2 2008/07/03 01:15:38 matt Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.2.2.1 2008/10/19 22:15:44 haad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.2.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -156,6 +156,7 @@ file-system	TMPFS		# Efficient memory file-system
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -205,7 +206,6 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
-options 	I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -334,9 +334,9 @@ com*	at pcmcom? slave ?		# ...and the slave devices
 # Hardware monitors
 
 # AMD 768 and 8111 power/ACPI controllers
-#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-#adt7463c* at iic? addr 0x2D		# Tyan S2881
-#adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # 1-Wire support
 #gpioow* 	at gpio? offset 6 mask 0x1	# 1-wire bitbanging via gpio

@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.28 2008/05/30 20:10:01 tsutsui Exp $
+#	$NetBSD: NAPPI,v 1.28.4.1 2008/10/19 22:15:44 haad Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -49,6 +49,7 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP
+options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
 # Networking options

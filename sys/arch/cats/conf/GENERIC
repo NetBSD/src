@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.121 2008/05/30 20:10:01 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.121.4.1 2008/10/19 22:15:43 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -80,6 +80,7 @@ options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
 options 	SOFTDEP		# FFS soft updates support
+options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -191,7 +192,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-#options		SYMTAB_SPACE=380000
+#options		SYMTAB_SPACE=500000
 
 config		netbsd	root on ? type ?
 
@@ -246,8 +247,8 @@ scsibus* at ahc?
 #scsibus* at bha?
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 scsibus* at iha?
-isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
-scsibus* at isp?
+#isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+#scsibus* at isp?
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 scsibus* at pcscp?
 siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
@@ -572,6 +573,11 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

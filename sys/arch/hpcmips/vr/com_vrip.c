@@ -1,4 +1,4 @@
-/*	$NetBSD: com_vrip.c,v 1.20 2008/03/14 15:09:10 cube Exp $	*/
+/*	$NetBSD: com_vrip.c,v 1.20.10.1 2008/10/19 22:15:47 haad Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.20 2008/03/14 15:09:10 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_vrip.c,v 1.20.10.1 2008/10/19 22:15:47 haad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -197,7 +197,7 @@ com_vrip_attach(device_t parent, device_t self, void *aux)
 
 	DPRINTF(("Establish intr"));
 	if (!vrip_intr_establish(va->va_vc, va->va_unit, 0, IPL_TTY,
-	    comintr, self)) {
+	    comintr, sc)) {
 		aprint_error_dev(self, "can't map interrupt line.\n");
 	}
 

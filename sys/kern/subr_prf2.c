@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf2.c,v 1.2 2007/12/30 22:55:21 pooka Exp $	*/
+/*	$NetBSD: subr_prf2.c,v 1.2.16.1 2008/10/19 22:17:28 haad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf2.c,v 1.2 2007/12/30 22:55:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf2.c,v 1.2.16.1 2008/10/19 22:17:28 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/kprintf.h>
@@ -48,6 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf2.c,v 1.2 2007/12/30 22:55:21 pooka Exp $");
  * This function is in its own separate module to permit easier
  * standalone compilation without pulling in kprintf(), panic(), etcetc.
  */
+
+const char hexdigits[] = "0123456789abcdef";
+const char HEXDIGITS[] = "0123456789ABCDEF";
 
 /*
  * tablefull: warn that a system table is full

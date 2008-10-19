@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.49 2008/05/30 20:10:01 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.49.4.1 2008/10/19 22:15:43 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -126,6 +126,11 @@ zsc*		at mainbus0
 zstty*		at zsc? channel ?
 
 le*		at mainbus0		# LANCE ethernet interfaces
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 pseudo-device	pty		64	# pseudo ptys
 #pseudo-device	sl			# SLIP network interfaces

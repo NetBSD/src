@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_cd.h,v 1.19 2008/05/02 15:56:25 reinoud Exp $	*/
+/*	$NetBSD: scsipi_cd.h,v 1.19.6.1 2008/10/19 22:17:04 haad Exp $	*/
 
 /*
  * Written by Julian Elischer (julian@tfs.com)
@@ -250,7 +250,7 @@ struct scsipi_close_tracksession {
 	uint8_t  tracksessionnr[2];
 	uint8_t  unused2[3];
 	uint8_t  control;
-} __attribute__((packed));
+} __packed;
 
 
 #define RESERVE_TRACK 0x53
@@ -259,7 +259,7 @@ struct scsipi_reserve_track {
 	uint8_t  reserved[4];
 	uint8_t  reservation_size[4];
 	uint8_t  control;
-} __attribute__((packed));
+} __packed;
 
 
 #define REPAIR_TRACK 0x58
@@ -270,7 +270,7 @@ struct scsipi_repair_track {
 	uint8_t  tracknr[2];		/* logical track nr */
 	uint8_t  reserved3[3];
 	uint8_t  control;
-} __attribute__((packed));
+} __packed;
 
 
 #define READ_CD_CAPACITY	0x25	/* slightly different from disk */

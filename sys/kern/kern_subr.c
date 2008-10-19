@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.190 2008/06/11 10:40:21 drochner Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.190.2.1 2008/10/19 22:17:28 haad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.190 2008/06/11 10:40:21 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.190.2.1 2008/10/19 22:17:28 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -128,8 +128,6 @@ struct hook_desc {
 	void	*hk_arg;
 };
 typedef LIST_HEAD(, hook_desc) hook_list_t;
-
-MALLOC_DEFINE(M_IOV, "iov", "large iov's");
 
 #ifdef TFTPROOT
 int tftproot_dhcpboot(struct device *);
@@ -271,7 +269,7 @@ copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
 	iov.iov_len = len;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
-	uio.uio_offset = (off_t)(intptr_t)uaddr;
+	uio.uio_offset = (off_t)(uintptr_t)uaddr;
 	uio.uio_resid = len;
 	uio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&uio);
@@ -304,7 +302,7 @@ copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
 	iov.iov_len = len;
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1;
-	uio.uio_offset = (off_t)(intptr_t)uaddr;
+	uio.uio_offset = (off_t)(uintptr_t)uaddr;
 	uio.uio_resid = len;
 	uio.uio_rw = UIO_WRITE;
 	UIO_SETUP_SYSSPACE(&uio);

@@ -1,12 +1,12 @@
 #
-# $NetBSD: FALCON,v 1.83 2007/10/17 19:53:46 garbled Exp $
+# $NetBSD: FALCON,v 1.83.26.1 2008/10/19 22:15:42 haad Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.8 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.67 2007/07/16 06:26:54 he Exp $
+#		NetBSD: GENERIC.in,v 1.73 2008/07/31 07:47:43 simonb Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -18,7 +18,6 @@ options M68040 # support for 040
 options FPSP # 68040 Floatingpoint support
 options INET # IP + ICMP + TCP + UDP
 options INET6 # IPV6
-options ISO,TPIP # OSI
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
 options PPP_DEFLATE # Deflate compression support for PPP
 options PPP_FILTER # Active filter support for PPP (requires bpf)
@@ -41,6 +40,7 @@ file-system PORTAL # portal file system
 file-system EXT2FS # second extended file system (linux)
 file-system LFS # log-structured file system
 file-system PTYFS # /dev/pts/N support
+options WAPBL # File system journaling support - Experimental
 options QUOTA # Disk quotas for local disks
 options SOFTDEP # FFS soft updates support.
 options NFSSERVER # Network File System server side code

@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.22 2008/04/29 06:53:03 martin Exp $	*/
+/*	$NetBSD: timevar.h,v 1.22.6.1 2008/10/19 22:18:10 haad Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -77,7 +77,7 @@ struct 	ptimer {
 		} pt_nonreal;
 	} pt_data;
 	struct	sigevent pt_ev;
-	struct	itimerval pt_time;
+	struct	itimerspec pt_time;
 	struct	ksiginfo pt_info;
 	int	pt_overruns;	/* Overruns currently accumulating */
 	int	pt_poverruns;	/* Overruns associated w/ a delivery */
@@ -152,7 +152,8 @@ int	dosetitimer(struct proc *, int, struct itimerval *);
 int	dotimer_gettime(int, struct proc *, struct itimerspec *);
 int	dotimer_settime(int, struct itimerspec *, struct itimerspec *, int,
 	    struct proc *);
-int	hzto(struct timeval *);
+int	tshzto(const struct timespec *);
+int	tvhzto(const struct timeval *);
 void	inittimecounter(void);
 int	itimerfix(struct timeval *);
 int	itimespecfix(struct timespec *);
@@ -165,13 +166,13 @@ int	settimeofday1(const struct timeval *, bool,
 	    const void *, struct lwp *, bool);
 int	timer_create1(timer_t *, clockid_t, struct sigevent *, copyin_t,
 	    struct lwp *);
-void	timer_gettime(struct ptimer *, struct itimerval *);
+void	timer_gettime(struct ptimer *, struct itimerspec *);
 void	timer_settime(struct ptimer *);
 struct	ptimers *timers_alloc(struct proc *);
 void	timers_free(struct proc *, int);
 void	timer_tick(struct lwp *, bool);
-int	tstohz(struct timespec *);
-int	tvtohz(struct timeval *);
+int	tstohz(const struct timespec *);
+int	tvtohz(const struct timeval *);
 int	inittimeleft(struct timeval *, struct timeval *);
 int	gettimeleft(struct timeval *, struct timeval *);
 void	timerupcall(struct lwp *);

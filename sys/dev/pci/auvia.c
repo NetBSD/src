@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.66 2008/07/01 12:43:03 jmcneill Exp $	*/
+/*	$NetBSD: auvia.c,v 1.66.2.1 2008/10/19 22:16:37 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.66 2008/07/01 12:43:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.66.2.1 2008/10/19 22:16:37 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,6 +470,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 		sc->codec_if->vtbl->detach(sc->codec_if);
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
+		aprint_error_dev(&sc->sc_dev, "can't create encodings\n");
 		return;
 	}
 	if (0 != auconv_create_encodings(auvia_spdif_formats,
@@ -477,6 +478,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 		sc->codec_if->vtbl->detach(sc->codec_if);
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
+		aprint_error_dev(&sc->sc_dev, "can't create spdif encodings\n");
 		return;
 	}
 

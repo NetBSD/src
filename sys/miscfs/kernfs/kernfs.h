@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.33 2008/06/28 01:34:06 rumble Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.33.2.1 2008/10/19 22:17:41 haad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,7 @@
 
 #ifdef _KERNEL
 #include <sys/queue.h>
+#include <sys/tree.h>
 
 /*
  * The different types of node in a kernfs filesystem

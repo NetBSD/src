@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.10 2008/06/04 13:10:06 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.10.4.1 2008/10/19 22:18:06 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,6 @@
 #include <miscfs/genfs/genfs.h>
 
 #include "rump_private.h"
-#include "rumpuser.h"
 
 void
 genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
@@ -72,6 +71,7 @@ genfs_getpages(void *v)
 	struct uvm_object *uobj = (struct uvm_object *)vp;
 	struct vm_page *pg;
 	voff_t curoff, endoff;
+	off_t diskeof;
 	size_t bufsize, remain, bufoff, xfersize;
 	uint8_t *tmpbuf;
 	int bshift = vp->v_mount->mnt_fs_bshift;
@@ -156,12 +156,14 @@ genfs_getpages(void *v)
 	 * starting from the missing offset and transfer into the
 	 * page buffers.
 	 */
+	GOP_SIZE(vp, vp->v_size, &diskeof, 0);
 
 	/* align to boundaries */
 	endoff = trunc_page(ap->a_offset) + (count << PAGE_SHIFT);
 	endoff = MIN(endoff, ((vp->v_writesize+bsize-1) & ~(bsize-1)));
 	curoff = ap->a_offset & ~(MAX(bsize,PAGE_SIZE)-1);
 	remain = endoff - curoff;
+	remain = MIN(remain, diskeof - curoff);
 
 	DPRINTF(("a_offset: %llx, startoff: 0x%llx, endoff 0x%llx\n",
 	    (unsigned long long)ap->a_offset, (unsigned long long)curoff,
@@ -310,7 +312,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		 */
 		KASSERT((pg->flags & PG_BUSY) == 0);
 
-		if (pg->flags & PG_CLEAN) {
+		/* If we can just dump the page, do so */
+		if (pg->flags & PG_CLEAN || flags & PGO_FREE) {
 			uvm_pagefree(pg);
 			continue;
 		}
@@ -346,7 +349,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 		pg->flags |= PG_CLEAN;
 	}
-	assert(curoff > smallest);
+	KASSERT(curoff > smallest);
 
 	mutex_exit(&uobj->vmobjlock);
 

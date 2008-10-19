@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.225 2008/07/02 17:28:56 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.225.2.1 2008/10/19 22:16:01 haad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225.2.1 2008/10/19 22:16:01 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2008/07/02 17:28:56 ad Exp $");
 #include <sys/signalvar.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/ras.h>
@@ -276,7 +278,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
 		fpusave_lwp(l, false);
-		free((void *)fs, M_SUBPROC);
+		pool_cache_put(fpstate_cache, fs);
 		l->l_md.md_fpstate = NULL;
 	}
 	memset(tf, 0, sizeof *tf);
@@ -537,6 +539,45 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 #endif
 		sendsig_siginfo(ksi, mask);
+}
+
+/*
+ * Set the lwp to begin execution in the upcall handler.  The upcall
+ * handler will then simply call the upcall routine and then exit.
+ *
+ * Because we have a bunch of different signal trampolines, the first
+ * two instructions in the signal trampoline call the upcall handler.
+ * Signal dispatch should skip the first two instructions in the signal
+ * trampolines.
+ */
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+	void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+       	struct trapframe64 *tf;
+	vaddr_t addr;
+
+	tf = l->l_md.md_tf;
+	addr = (vaddr_t) upcall;
+
+	/* Arguments to the upcall... */
+	tf->tf_out[0] = type;
+	tf->tf_out[1] = (vaddr_t) sas;
+	tf->tf_out[2] = nevents;
+	tf->tf_out[3] = ninterrupted;
+	tf->tf_out[4] = (vaddr_t) ap;
+
+	/*
+	 * Ensure the stack is double-word aligned, and provide a
+	 * valid C call frame.
+	 */
+	sp = (void *)(((vaddr_t)sp & ~0xf) - CCFSZ);
+
+	/* Arrange to begin execution at the upcall handler. */
+	tf->tf_pc = addr;
+	tf->tf_npc = addr + 4;
+	tf->tf_out[6] = (vaddr_t)sp - STACK_OFFSET;
+	tf->tf_out[7] = -1;		/* "you lose" if upcall returns */
 }
 
 int	waittime = -1;
@@ -1769,7 +1810,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
 	write_user_windows();
-	if (rwindow_save(l)) {
+	if ((l->l_flag & LW_SA_SWITCHING) == 0 && rwindow_save(l)) {
 		mutex_enter(l->l_proc->p_lock);
 		sigexit(l, SIGILL);
 	}
@@ -1916,7 +1957,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		 * by lazy FPU context switching); allocate it if necessary.
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
-			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
+			fsp = pool_cache_get(fpstate_cache, PR_WAITOK);
 			l->l_md.md_fpstate = fsp;
 		} else {
 			/* Drop the live context on the floor. */

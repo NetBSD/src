@@ -1,4 +1,4 @@
-/* $NetBSD: pciif.h,v 1.3 2007/10/17 19:58:31 garbled Exp $ */
+/* $NetBSD: pciif.h,v 1.3.26.1 2008/10/19 22:16:12 haad Exp $ */
 /*
  * PCI Backend/Frontend Common Data Structures & Macros
  *
@@ -35,6 +35,10 @@
 /* xen_pci_op commands */
 #define XEN_PCI_OP_conf_read    (0)
 #define XEN_PCI_OP_conf_write   (1)
+#define XEN_PCI_OP_enable_msi   (2)
+#define XEN_PCI_OP_disable_msi  (3)
+#define XEN_PCI_OP_enable_msix  (4)
+#define XEN_PCI_OP_disable_msix (5)
 
 /* xen_pci_op error numbers */
 #define XEN_PCI_ERR_success          (0)
@@ -45,6 +49,16 @@
 /* XEN_PCI_ERR_op_failed - backend failed to complete the operation */
 #define XEN_PCI_ERR_op_failed       (-5)
 
+/*
+ * it should be PAGE_SIZE-sizeof(struct xen_pci_op))/sizeof(struct msix_entry))
+ * Should not exceed 128
+ */
+#define SH_INFO_MAX_VEC     128
+
+struct xen_msix_entry {
+    uint16_t vector;
+    uint16_t entry;
+};
 struct xen_pci_op {
     /* IN: what action to perform: XEN_PCI_OP_* */
     uint32_t cmd;
@@ -63,6 +77,10 @@ struct xen_pci_op {
 
     /* IN/OUT: Contains the result after a READ or the value to WRITE */
     uint32_t value;
+    /* IN: Contains extra infor for this operation */
+    uint32_t info;
+    /*IN:  param for msi-x */
+    struct xen_msix_entry msix_entries[SH_INFO_MAX_VEC];
 };
 
 struct xen_pci_sharedinfo {

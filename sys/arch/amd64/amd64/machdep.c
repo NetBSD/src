@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2008/07/02 17:28:54 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97.2.1 2008/10/19 22:15:39 haad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2008/07/02 17:28:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97.2.1 2008/10/19 22:15:39 haad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -152,6 +152,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2008/07/02 17:28:54 ad Exp $");
 #include <sys/ucontext.h>
 #include <machine/kcore.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
 
@@ -531,7 +533,7 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 
 	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rflags &= ~PSL_CLEARSIG;
 	tf->tf_rsp = (uint64_t)f;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
@@ -623,13 +625,45 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
 }
 
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+
+	tf = l->l_md.md_regs;
+
+#if 0
+	printf("proc %d: upcall to lwp %d, type %d ev %d int %d sas %p to %p\n",
+	    (int)l->l_proc->p_pid, (int)l->l_lid, type, nevents, ninterrupted,
+	    sas, (void *)upcall);
+#endif
+
+	tf->tf_rdi = type;
+	tf->tf_rsi = (u_int64_t)sas;
+	tf->tf_rdx = nevents;
+	tf->tf_rcx = ninterrupted;
+	tf->tf_r8 = (u_int64_t)ap;
+
+	tf->tf_rip = (u_int64_t)upcall;
+	tf->tf_rsp = ((unsigned long)sp & ~15) - 8;
+	tf->tf_rbp = 0; /* indicate call-frame-top to debuggers */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+
+	l->l_md.md_flags |= MDP_IRET;
+}
+
 int	waittime = -1;
 struct pcb dumppcb;
 
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	int s;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -647,20 +681,15 @@ cpu_reboot(int howto, char *bootstr)
 		resettodr();
 	}
 
+	/* Disable interrupts. */
+	splhigh();
 
 	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
-		/* Disable interrupts. */
-		s = splhigh();
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-		splx(s);
-	}
 
 haltsys:
 	doshutdownhooks();
-
-	/* Disable interrupts. */
-	(void)splhigh();
 
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
@@ -1722,8 +1751,21 @@ init_x86_64(paddr_t first_avail)
 		    GSEL(GCODE_SEL, SEL_KPL));
 #else /* XEN */
 		xen_idt[xen_idt_idx].vector = x;
-		xen_idt[xen_idt_idx].flags =
-		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL;
+
+		switch (x) {
+		case 2:  /* NMI */
+		case 18: /* MCA */
+			TI_SET_IF(&(xen_idt[xen_idt_idx]), 2);
+			break;
+		case 3:
+		case 4:
+			xen_idt[xen_idt_idx].flags = SEL_UPL;
+			break;
+		default:
+			xen_idt[xen_idt_idx].flags = SEL_KPL;
+			break;
+		}
+
 		xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 		xen_idt[xen_idt_idx].address =
 		    (unsigned long)IDTVEC(exceptions)[x];

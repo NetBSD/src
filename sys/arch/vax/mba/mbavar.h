@@ -1,4 +1,4 @@
-/*	$NetBSD: mbavar.h,v 1.12 2008/03/11 05:34:02 matt Exp $ */
+/*	$NetBSD: mbavar.h,v 1.12.10.1 2008/10/19 22:16:06 haad Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -52,6 +52,7 @@
  * Devices that have different device drivers.
  */
 enum	mb_devices {
+	MB_UK,	/* unknown */
 	MB_RP,	/* RM/RP disk */
 	MB_TU,	/* TM03 based tape, ex. TU45 or TU77 */
 	MB_MT	/* TU78 tape */

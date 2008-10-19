@@ -1,4 +1,4 @@
-/* $NetBSD: ring.h,v 1.9 2008/05/04 19:56:29 cegger Exp $ */
+/* $NetBSD: ring.h,v 1.9.6.1 2008/10/19 22:16:12 haad Exp $ */
 /******************************************************************************
  * ring.h
  * 
@@ -27,6 +27,22 @@
 
 #ifndef __XEN_PUBLIC_IO_RING_H__
 #define __XEN_PUBLIC_IO_RING_H__
+
+#include "../xen-compat.h"
+
+#if __XEN_INTERFACE_VERSION__ < 0x00030208
+#if defined(__Linux__)
+#define xen_mb()  mb()
+#define xen_rmb() rmb()
+#define xen_wmb() wmb()
+#endif
+#endif
+
+#if defined(__NetBSD__)
+#define xen_mb()  x86_mfence()
+#define xen_rmb() x86_lfence()
+#define xen_wmb() x86_sfence()
+#endif
 
 typedef unsigned int RING_IDX;
 
@@ -212,12 +228,12 @@ typedef struct __name##_back_ring __name##_back_ring_t
     (((_cons) - (_r)->rsp_prod_pvt) >= RING_SIZE(_r))
 
 #define RING_PUSH_REQUESTS(_r) do {                                     \
-    x86_sfence(); /* back sees requests /before/ updated producer index */ \
+    xen_wmb(); /* back sees requests /before/ updated producer index */ \
     (_r)->sring->req_prod = (_r)->req_prod_pvt;                         \
 } while (0)
 
 #define RING_PUSH_RESPONSES(_r) do {                                    \
-    x86_sfence(); /* front sees responses /before/ updated producer index */ \
+    xen_wmb(); /* front sees resps /before/ updated producer index */   \
     (_r)->sring->rsp_prod = (_r)->rsp_prod_pvt;                         \
 } while (0)
 
@@ -254,9 +270,9 @@ typedef struct __name##_back_ring __name##_back_ring_t
 #define RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(_r, _notify) do {           \
     RING_IDX __old = (_r)->sring->req_prod;                             \
     RING_IDX __new = (_r)->req_prod_pvt;                                \
-    x86_sfence(); /* back sees requests /before/ updated producer index */ \
+    xen_wmb(); /* back sees requests /before/ updated producer index */ \
     (_r)->sring->req_prod = __new;                                      \
-    x86_mfence(); /* back sees new requests /before/ we check req_event */ \
+    xen_mb(); /* back sees new requests /before/ we check req_event */  \
     (_notify) = ((RING_IDX)(__new - (_r)->sring->req_event) <           \
                  (RING_IDX)(__new - __old));                            \
 } while (0)
@@ -264,9 +280,9 @@ typedef struct __name##_back_ring __name##_back_ring_t
 #define RING_PUSH_RESPONSES_AND_CHECK_NOTIFY(_r, _notify) do {          \
     RING_IDX __old = (_r)->sring->rsp_prod;                             \
     RING_IDX __new = (_r)->rsp_prod_pvt;                                \
-    x86_sfence(); /* front sees responses /before/ updated producer index */ \
+    xen_wmb(); /* front sees resps /before/ updated producer index */   \
     (_r)->sring->rsp_prod = __new;                                      \
-    x86_mfence(); /* front sees new responses /before/ we check rsp_event */ \
+    xen_mb(); /* front sees new resps /before/ we check rsp_event */    \
     (_notify) = ((RING_IDX)(__new - (_r)->sring->rsp_event) <           \
                  (RING_IDX)(__new - __old));                            \
 } while (0)
@@ -275,7 +291,7 @@ typedef struct __name##_back_ring __name##_back_ring_t
     (_work_to_do) = RING_HAS_UNCONSUMED_REQUESTS(_r);                   \
     if (_work_to_do) break;                                             \
     (_r)->sring->req_event = (_r)->req_cons + 1;                        \
-    x86_mfence();                                                       \
+    xen_mb();                                                           \
     (_work_to_do) = RING_HAS_UNCONSUMED_REQUESTS(_r);                   \
 } while (0)
 
@@ -283,7 +299,7 @@ typedef struct __name##_back_ring __name##_back_ring_t
     (_work_to_do) = RING_HAS_UNCONSUMED_RESPONSES(_r);                  \
     if (_work_to_do) break;                                             \
     (_r)->sring->rsp_event = (_r)->rsp_cons + 1;                        \
-    x86_mfence();                                                       \
+    xen_mb();                                                           \
     (_work_to_do) = RING_HAS_UNCONSUMED_RESPONSES(_r);                  \
 } while (0)
 

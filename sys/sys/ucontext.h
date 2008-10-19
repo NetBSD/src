@@ -1,4 +1,4 @@
-/*	$NetBSD: ucontext.h,v 1.10 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: ucontext.h,v 1.10.6.1 2008/10/19 22:18:10 haad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2003 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ struct __ucontext {
 struct lwp;
 
 void	getucontext(struct lwp *, ucontext_t *);
+void	getucontext_sa(struct lwp *, ucontext_t *);
 int	setucontext(struct lwp *, const ucontext_t *);
 void	cpu_getmcontext(struct lwp *, mcontext_t *, unsigned int *);
 int	cpu_setmcontext(struct lwp *, const mcontext_t *, unsigned int);

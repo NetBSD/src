@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.9 2008/05/01 00:20:12 ad Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.9.6.1 2008/10/19 22:17:28 haad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,10 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.9 2008/05/01 00:20:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.9.6.1 2008/10/19 22:17:28 haad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -97,6 +98,7 @@ __weak_alias(ktr_mibio,nullop);
 __weak_alias(ktr_namei,nullop);
 __weak_alias(ktr_namei2,nullop);
 __weak_alias(ktr_psig,nullop);
+__weak_alias(ktr_saupcall,nullop);
 __weak_alias(ktr_syscall,nullop);
 __weak_alias(ktr_sysret,nullop);
 __weak_alias(ktr_kuser,nullop);
@@ -116,9 +118,10 @@ __weak_alias(ktr_point,nullop);
 #endif	/* KTRACE */
 
 /*
- * Scheduler activations system calls.  These need to remain until libc's
- * major version is bumped.
+ * Scheduler activations system calls.  These need to remain, even when
+ * KERN_SA isn't defined, until libc's major version is bumped.
  */
+#if !defined(KERN_SA)
 __strong_alias(sys_sa_register,sys_nosys);
 __strong_alias(sys_sa_stacks,sys_nosys);
 __strong_alias(sys_sa_enable,sys_nosys);
@@ -126,6 +129,7 @@ __strong_alias(sys_sa_setconcurrency,sys_nosys);
 __strong_alias(sys_sa_yield,sys_nosys);
 __strong_alias(sys_sa_preempt,sys_nosys);
 __strong_alias(sys_sa_unblockyield,sys_nosys);
+#endif
 
 /*
  * Stubs for architectures that do not support kernel preemption.

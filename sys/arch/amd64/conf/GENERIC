@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.216 2008/05/26 00:33:37 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.216.4.1 2008/10/19 22:15:40 haad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.216 $"
+#ident 		"GENERIC-$Revision: 1.216.4.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -60,6 +60,7 @@ options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
+# Note: SysV IPC parameters could be changed dynamically, see sysctl(8).
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
@@ -157,6 +158,7 @@ file-system 	TMPFS		# Efficient memory file-system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -251,7 +253,7 @@ config		netbsd	root on ? type ?
 #
 
 #IPMI support
-#ipmi0		at mainbus?
+ipmi0		at mainbus?
 
 # ACPI will be used if present. If not it will fall back to MPBIOS
 acpi0 		at mainbus0
@@ -263,6 +265,7 @@ options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+options 	VGA_POST		# in-kernel support for VGA POST
 
 # ACPI devices
 acpiacad* 	at acpi?		# ACPI AC Adapter
@@ -322,7 +325,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 #amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
 #hpet* 	at amdpcib?
 
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and Speedstep support.
 
 aapic* 	at pci? dev ? function ?	# AMD 8131 IO apic
@@ -333,7 +336,7 @@ agp* 	at pchb?
 isa0	at mainbus?
 isa0	at pcib?
 #isa0 	at amdpcib?
-#isa0 	at ichlpcib?
+isa0 	at ichlpcib?
 
 # CardBus bridge support
 cbb*		at pci? dev ? function ?
@@ -426,9 +429,10 @@ options 	INTEL_CORETEMP
 ichsmb*	at pci? dev ? function ?
 iic*	at ichsmb?
 
-#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-#adt7463c* at iic? addr 0x2D		# Tyan S2881
-#adt7463c* at iic? addr 0x2E            # Tyan S2882-D
+# Thermal monitor and fan controller
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # Fintek Super I/O with hardware monitor
 #finsio0 	at isa? port 0x4e
@@ -619,6 +623,8 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
+iwn*    at pci? dev ? function ?        # Intel PRO/Wireless 4965AGN
+jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
@@ -870,6 +876,10 @@ ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
 options	UGEN_BULK_RA_WB
 
+# USB 3G datacards
+u3g*	at uhub? port ?
+ucom*	at u3g?
+
 # USB generic serial port (e.g., data over cellular)
 ugensa*	at uhub? port ?
 ucom*	at ugensa?
@@ -893,6 +903,7 @@ sbp*	at ieee1394if? euihi ? euilo ?
 # Audio Devices
 
 # PCI audio devices
+auacer* at pci? dev ? function ?	# ALi M5455 integrated AC'97 Audio
 auich*	at pci? dev ? function ?	# Intel/AMD/nVidia AC'97 Audio
 auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
@@ -911,13 +922,9 @@ neo*	at pci? dev ? function ?	# NeoMagic 256 AC'97 Audio
 sv*	at pci? dev ? function ?	# S3 SonicVibes
 yds*	at pci? dev ? function ?	# Yamaha DS-1 PCI Audio
 
-# PCMCIA audio devices
-#esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
-
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at cmpci? flags 1
-#opl*	at esl?
 opl*	at eso?
 opl*	at fms?
 opl*	at sv?
@@ -945,6 +952,13 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 
 # Radio support
 #radio*	at gtp?
+
+
+# Video capture devices
+
+pseye* at uhub?		# Sony PLAYSTATION(R) Eye webcam
+uvideo* at uhub?	# USB Video Class capture devices
+video* at videobus?
 
 
 # TV cards
@@ -1042,6 +1056,11 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
 #options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.901 2008/06/11 20:37:38 perry Exp $
+# $NetBSD: GENERIC,v 1.901.2.1 2008/10/19 22:15:48 haad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.901 $"
+#ident 		"GENERIC-$Revision: 1.901.2.1 $"
 
 maxusers	64		# estimated number of users
 
@@ -86,11 +86,10 @@ options 	INSECURE	# disable kernel security levels - X needs this
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
-#options 	NO_TSC_TIME	# Don't use TSC microtime, even if available.
-				# Improves time behavior under VMware.
 
 options 	KTRACE		# system call tracing via ktrace(1)
 
+# Note: SysV IPC parameters could be changed dynamically, see sysctl(8).
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
@@ -195,6 +194,7 @@ file-system 	TMPFS		# Efficient memory file-system
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
@@ -326,7 +326,7 @@ config		netbsd	root on ? type ?
 # Basic Bus Support
 
 #IPMI support
-#ipmi0		at mainbus?
+ipmi0		at mainbus?
 
 # Advanced Configuration and Power Interface
 
@@ -339,6 +339,7 @@ acpi0 		at mainbus0
 
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 #options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+options 	VGA_POST		# in-kernel support for VGA POST
 
 # ACPI devices
 apm*		at acpi?		# ACPI apm emulation
@@ -631,9 +632,10 @@ iic*	at nfsmb?
 piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
 iic*	at piixpm?			# SMBus on PIIX4
 
-#adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
-#adt7463c* at iic? addr 0x2D		# Tyan S2881
-#adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+# dbCool Thermal monitor and fan controller
+#dbcool* at iic? addr 0x2C		# Unknown other motherboard(s)
+#dbcool* at iic? addr 0x2D		# Tyan S2881
+#dbcool* at iic? addr 0x2E		# Tyan S2882-D
 
 # IBM Thinkpad Active Protection System
 #aps0 	at isa? port 0x1600
@@ -905,6 +907,8 @@ gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 ipw*	at pci? dev ? function ?	# Intel PRO/Wireless 2100
 iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
+iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
+jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
@@ -1213,6 +1217,10 @@ ugen*	at uhub? port ?
 # On ugen bulk endpoints, perform read-ahead and write-behind.
 options UGEN_BULK_RA_WB
 
+# USB 3G datacards
+u3g*	at uhub? port ?
+ucom*	at u3g?
+
 # USB generic serial port (e.g., data over cellular)
 ugensa*	at uhub? port ?
 ucom*	at ugensa?
@@ -1272,16 +1280,11 @@ gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
 pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
-
-# PCMCIA audio devices
-#esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
-
 #cms0	at isa? port 0x220			# Creative Music System
 
 # OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 opl*	at cmpci? flags 1
-#opl*	at esl?
 opl*	at eso?
 opl*	at ess?
 opl*	at fms?
@@ -1333,6 +1336,13 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 #radio*	at rt?
 #radio*	at rtii?
 #radio*	at sf2r?
+
+
+# Video capture devices
+
+pseye* at uhub?			# Sony PLAYSTATION(R) Eye webcam
+uvideo* at uhub?		# USB Video Class capture devices
+video* at videobus?
 
 
 # TV cards
@@ -1476,6 +1486,11 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 #pseudo-device	pflog			# PF log if
 # srt is EXPERIMENTAL
 #pseudo-device	srt			# source-address-based routing
+
+#
+# accept filters
+pseudo-device	accf_data		# "dataready" accept filter
+pseudo-device	accf_http		# "httpready" accept filter
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals

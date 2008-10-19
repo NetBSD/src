@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.92 2008/02/20 21:43:34 drochner Exp $
+#	$NetBSD: files.macppc,v 1.92.16.1 2008/10/19 22:15:51 haad Exp $
 #
 # macppc-specific configuration info
 
@@ -82,6 +82,10 @@ device cpu: sysmon_envsys
 attach cpu at mainbus
 file arch/macppc/macppc/cpu.c
 
+device memory: iic
+attach memory at mainbus
+file arch/macppc/macppc/memory.c		memory
+
 # ISA stuff
 # we don't need it but some of the shared code needs isa.h
 include "dev/isa/files.isa"
@@ -115,7 +119,7 @@ file arch/macppc/dev/uni-n.c			uni_n
 include "dev/usb/files.usb"
 include "dev/bluetooth/files.bluetooth"
 
-device ibmcpc: pcibus
+device ibmcpc: pcibus, pic_openpic, ipi_openpic
 attach ibmcpc at mainbus
 file arch/macppc/pci/u3.c			ibmcpc
 
@@ -237,7 +241,7 @@ file arch/macppc/dev/if_wi_obio.c		wi_obio
 
 device awacs: audiobus, auconv, mulaw, aurateconv
 attach awacs at obio
-file arch/macppc/dev/awacs.c			awacs
+file arch/macppc/dev/awacs.c			awacs needs-flag
 defflag	opt_awacs.h	AWACS_DEBUG
 
 device macgpio {}
@@ -281,14 +285,12 @@ file arch/macppc/dev/snapper.c			snapper
 
 include "arch/powerpc/conf/majors.powerpc"
 
-attach adt7467c at ki2c with adt7467_ki2c
-file arch/macppc/dev/adt7467_ki2c.c		adt7467c
-
-attach adm1030c at ki2c with adm1030_ki2c
-file arch/macppc/dev/adm1030_ki2c.c		adm1030c
+attach dbcool at ki2c with dbcool_ki2c
+file arch/macppc/dev/dbcool_ki2c.c		dbcool
 
 define deq {}
 device deq
 attach deq at ki2c
 file arch/macppc/dev/deq.c				deq
+
 

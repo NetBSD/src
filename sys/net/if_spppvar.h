@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.12 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.12.16.1 2008/10/19 22:17:41 haad Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_

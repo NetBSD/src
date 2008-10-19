@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.51 2008/05/21 14:10:28 ad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.51.4.1 2008/10/19 22:15:39 haad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.51 2008/05/21 14:10:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.51.4.1 2008/10/19 22:15:39 haad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
 #include "opt_execfmt.h"
 #include "opt_user_ldt.h"
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -49,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.51 2008/05/21 14:10:28 ad Exp
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/user.h>
 #include <sys/core.h>
 #include <sys/mount.h>
@@ -265,7 +268,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rflags &= ~PSL_CLEARSIG;
 	tf->tf_rsp = (uint64_t)fp;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 
@@ -350,7 +353,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	tf->tf_rip = (uint64_t)catcher;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+	tf->tf_rflags &= ~PSL_CLEARSIG;
 	tf->tf_rsp = (uint64_t)fp;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
 
@@ -643,7 +646,7 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 		return error;
 
 	if (args32.mtrrp == 0) {
-		n = (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR);
+		n = (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR_MAX);
 		return copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
 	}
 
@@ -651,7 +654,7 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (error != 0)
 		return error;
 
-	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR))
+	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR_MAX))
 		return EINVAL;
 
 	m64p = malloc(n * sizeof (struct mtrr), M_TEMP, M_WAITOK);
@@ -713,7 +716,7 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (error != 0)
 		return error;
 
-	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR)) {
+	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR_MAX)) {
 		error = EINVAL;
 		goto fail;
 	}
@@ -969,6 +972,42 @@ check_mcontext32(const mcontext32_t *mcp, struct trapframe *tf)
 	if (gr[_REG32_EIP] >= VM_MAXUSER_ADDRESS32)
 		return EINVAL;
 	return 0;
+}
+
+void
+netbsd32_cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+    void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct trapframe *tf;
+	struct netbsd32_saframe *sf, frame;
+
+	tf = l->l_md.md_regs;
+
+	frame.sa_type = type;
+	NETBSD32PTR32(frame.sa_sas, sas);
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+	NETBSD32PTR32(frame.sa_arg, ap);
+	frame.sa_ra = 0;
+
+	sf = (struct netbsd32_saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->tf_rip = (uintptr_t)upcall;
+	tf->tf_rsp = (uintptr_t)sf;
+	tf->tf_rbp = 0;
+	tf->tf_gs = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL);
+	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC);
+
+	l->l_md.md_flags |= MDP_IRET;
 }
 
 vaddr_t

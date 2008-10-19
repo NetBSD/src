@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.90 2008/06/15 21:14:06 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.90.2.1 2008/10/19 22:18:09 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -121,6 +121,7 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define	SO_OOBINLINE	0x0100		/* leave received OOB data in line */
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 #define	SO_TIMESTAMP	0x0400		/* timestamp received dgram traffic */
+#define	SO_ACCEPTFILTER	0x1000		/* there is an accept filter */
 
 
 /*
@@ -146,6 +147,11 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 struct	linger {
 	int	l_onoff;		/* option on/off */
 	int	l_linger;		/* linger time in seconds */
+};
+
+struct	accept_filter_arg {
+	char	af_name[16];
+	char	af_arg[256-16];
 };
 
 /*

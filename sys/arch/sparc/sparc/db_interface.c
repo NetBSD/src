@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.78 2008/01/30 14:11:33 ad Exp $ */
+/*	$NetBSD: db_interface.c,v 1.78.16.1 2008/10/19 22:16:00 haad Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.78 2008/01/30 14:11:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.78.16.1 2008/10/19 22:16:00 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -485,27 +485,11 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 
 #endif /* MULTIPROCESSOR */
 
-#include <uvm/uvm.h>
-
-#ifdef UVMHIST
-extern void uvmhist_dump(struct uvm_history *);
-#endif
-extern struct uvm_history_head uvm_histories;
-
-void
-db_uvmhistdump(db_expr_t addr, bool have_addr, db_expr_t count,
-	       const char *modif)
-{
-
-	uvmhist_dump(uvm_histories.lh_first);
-}
-
 const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("prom",	db_prom_cmd,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("pcb",	db_dump_pcb,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("page",	db_page_cmd,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("uvmdump",	db_uvmhistdump,	0,	NULL,NULL,NULL) },
 #ifdef MULTIPROCESSOR
 	{ DDB_ADD_CMD("cpu",	db_cpu_cmd,	0,	NULL,NULL,NULL) },
 #endif

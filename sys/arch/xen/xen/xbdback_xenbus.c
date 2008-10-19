@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.17 2008/06/13 22:59:03 cegger Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.17.2.1 2008/10/19 22:16:13 haad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.17 2008/06/13 22:59:03 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.17.2.1 2008/10/19 22:16:13 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.17 2008/06/13 22:59:03 cegger E
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
+#include <sys/workqueue.h>
 
 #include <xen/xen.h>
 #include <xen/xen_shm.h>
@@ -177,6 +178,7 @@ struct xbdback_request {
  * can be coalesced.
  */
 struct xbdback_io {
+	struct work xio_work;
 	struct buf xio_buf; /* our I/O */
 	/* The instance pointer is duplicated for convenience. */
 	struct xbdback_instance *xio_xbdi; /* our xbd instance */
@@ -246,7 +248,7 @@ static void *xbdback_co_flush_done(struct xbdback_instance *, void *);
 
 static int  xbdback_shm_callback(void *);
 static void xbdback_io_error(struct xbdback_io *, int);
-static void xbdback_do_io(struct xbdback_io *);
+static void xbdback_do_io(struct work *, void *);
 static void xbdback_iodone(struct buf *);
 static void xbdback_send_reply(struct xbdback_instance *, uint64_t , int , int);
 
@@ -262,6 +264,8 @@ static struct xenbus_backend_driver xbd_backend_driver = {
 	.xbakd_create = xbdback_xenbus_create,
 	.xbakd_type = "vbd"
 };
+
+struct workqueue *xbdback_workqueue;
 
 void
 xbdbackattach(int n)
@@ -293,6 +297,9 @@ xbdbackattach(int n)
             BLKIF_MAX_SEGMENTS_PER_REQUEST * BLKIF_RING_SIZE) != 0)
 		printf("xbdback: failed to prime fragment pool\n");
 
+	if (workqueue_create(&xbdback_workqueue, "xbdbackd",
+	    xbdback_do_io, NULL, PRI_BIO, IPL_BIO, 0))
+		printf("xbdback: failed to init workqueue\n");
 	xenbus_backend_register(&xbd_backend_driver);
 }
 
@@ -478,7 +485,7 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 				proto = XEN_IO_PROTO_ABI_X86_32;
 			} else if(strcmp(xsproto, XEN_IO_PROTO_ABI_X86_64) == 0) {
 				xbdi->xbdi_proto = XBDIP_64;
-				proto = XEN_IO_PROTO_ABI_X86_32;
+				proto = XEN_IO_PROTO_ABI_X86_64;
 			} else {
 				printf("xbd domain %d: unknown proto %s\n",
 				    xbdi->xbdi_domid, xsproto);
@@ -542,7 +549,7 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 			printf("blkback %s: can't get event channel: %d\n",
 			    xbusd->xbusd_otherend, err);
 			xenbus_dev_fatal(xbusd, err,
-			    "can't bind event chanel", xbusd->xbusd_otherend);
+			    "can't bind event channel", xbusd->xbusd_otherend);
 			goto err2;
 		}
 		xbdi->xbdi_evtchn = evop.u.bind_interdomain.local_port;
@@ -636,7 +643,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 	major = major(xbdi->xbdi_dev);
 	devname = devsw_blk2name(major);
 	if (devname == NULL) {
-		printf("xbdback %s: unknwon device 0x%x\n", xbusd->xbusd_path,
+		printf("xbdback %s: unknown device 0x%x\n", xbusd->xbusd_path,
 		    xbdi->xbdi_dev);
 		return;
 	}
@@ -1178,7 +1185,7 @@ static void *
 xbdback_co_flush_done(struct xbdback_instance *xbdi, void *obj)
 {
 	(void)obj;
-	xbdback_do_io(xbdi->xbdi_io);
+	workqueue_enqueue(xbdback_workqueue, &xbdi->xbdi_io->xio_work, NULL);
 	xbdi->xbdi_io = NULL;
 	xbdi->xbdi_cont = xbdi->xbdi_cont_aux;
 	return xbdi;
@@ -1192,8 +1199,11 @@ xbdback_io_error(struct xbdback_io *xbd_io, int error)
 }
 
 static void
-xbdback_do_io(struct xbdback_io *xbd_io)
+xbdback_do_io(struct work *wk, void *dummy)
 {
+	struct xbdback_io *xbd_io = (void *)wk;
+	KASSERT(&xbd_io->xio_work == wk);
+
 	xbd_io->xio_buf.b_data =
 	    (void *)((vaddr_t)xbd_io->xio_buf.b_data + xbd_io->xio_vaddr);
 #ifdef DIAGNOSTIC
@@ -1215,8 +1225,11 @@ xbdback_do_io(struct xbdback_io *xbd_io)
 	}
 	}
 #endif
-	if ((xbd_io->xio_buf.b_flags & B_READ) == 0)
+	if ((xbd_io->xio_buf.b_flags & B_READ) == 0) {
+		mutex_enter(&xbd_io->xio_buf.b_vp->v_interlock);
 		xbd_io->xio_buf.b_vp->v_numoutput++;
+		mutex_exit(&xbd_io->xio_buf.b_vp->v_interlock);
+	}
 	bdev_strategy(&xbd_io->xio_buf);
 }
 

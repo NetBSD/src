@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.62 2008/04/28 20:23:44 martin Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.62.6.1 2008/10/19 22:16:14 haad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.62 2008/04/28 20:23:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.62.6.1 2008/10/19 22:16:14 haad Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -82,9 +82,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.62 2008/04/28 20:23:44 martin Exp
 /* Locally used defines (in bsd<->linux conversion functions): */
 #define	linux_sigemptyset(s)	memset((s), 0, sizeof(*(s)))
 #define	linux_sigismember(s, n)	((s)->sig[((n) - 1) / LINUX__NSIG_BPW]	\
-					& (1 << ((n) - 1) % LINUX__NSIG_BPW))
+					& (1L << ((n) - 1) % LINUX__NSIG_BPW))
 #define	linux_sigaddset(s, n)	((s)->sig[((n) - 1) / LINUX__NSIG_BPW]	\
-					|= (1 << ((n) - 1) % LINUX__NSIG_BPW))
+					|= (1L << ((n) - 1) % LINUX__NSIG_BPW))
 
 #ifdef DEBUG_LINUX
 #define DPRINTF(a)	uprintf a
@@ -656,3 +656,17 @@ linux_sys_tgkill(struct lwp *l, const struct linux_sys_tgkill_args *uap, registe
 	return linux_sys_kill(l, &cup, retval);
 }
 #endif /* LINUX_NPTL */
+
+int
+native_to_linux_si_code(int code)
+{
+	int si_codes[] = {
+	    LINUX_SI_USER, LINUX_SI_QUEUE, LINUX_SI_TIMER, LINUX_SI_ASYNCIO,
+	    LINUX_SI_MESGQ, LINUX_SI_TKILL /* SI_LWP */
+	};
+
+	if (code <= 0 && -code < __arraycount(si_codes))
+		return si_codes[-code];
+
+	return code;
+}

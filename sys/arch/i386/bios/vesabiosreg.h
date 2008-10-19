@@ -1,4 +1,4 @@
-/* $NetBSD: vesabiosreg.h,v 1.6 2007/03/24 00:07:17 reinoud Exp $ */
+/* $NetBSD: vesabiosreg.h,v 1.6.44.1 2008/10/19 22:15:48 haad Exp $ */
 
 /*
  * Written by M. Drochner
@@ -42,13 +42,13 @@ struct modeinfoblock {
 	uint8_t LinRsvdMaskSize, LinRsvdFieldPosition;
 	uint32_t MaxPixelClock;
 	uint8_t Reserved4[189];
-} __attribute__ ((packed));
+} __packed;
 
 struct paletteentry {
 	uint8_t Blue;
 	uint8_t Green;
 	uint8_t Red;
 	uint8_t Alignment;
-} __attribute__ ((packed));
+} __packed;
 
 #endif /* !_ARCH_I386_BIOS_VESABIOSREG_H */

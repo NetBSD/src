@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.51 2008/06/01 21:25:16 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.51.4.1 2008/10/19 22:15:40 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51 2008/06/01 21:25:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51.4.1 2008/10/19 22:15:40 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51 2008/06/01 21:25:16 ad Exp $");
 #include <sys/reboot.h>
 #include <sys/pool.h>
 #include <sys/cpu.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -444,6 +446,10 @@ copyfault:
 		if (p->p_emul->e_usertrap != NULL &&
 		    (*p->p_emul->e_usertrap)(l, cr2, frame) != 0)
 			return;
+		if (l->l_flag & LW_SA) {
+			l->l_savp->savp_faultaddr = (vaddr_t)cr2;
+			l->l_pflag |= LP_SA_PAGEFAULT;
+		}
 faultcommon:
 		vm = p->p_vmspace;
 		if (vm == NULL)
@@ -531,6 +537,7 @@ faultcommon:
 				 */
 				pfail = kpreempt(0);
 			}
+			l->l_pflag &= ~LP_SA_PAGEFAULT;
 			goto out;
 		}
 		KSI_INIT_TRAP(&ksi);
@@ -564,6 +571,7 @@ faultcommon:
 			ksi.ksi_signo = SIGSEGV;
 		}
 		(*p->p_emul->e_trapsignal)(l, &ksi);
+		l->l_pflag &= ~LP_SA_PAGEFAULT;
 		break;
 	}
 
@@ -642,6 +650,14 @@ startlwp(void *arg)
 
 	err = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	pool_put(&lwp_uc_pool, uc);
+	userret(l);
+}
+
+void
+upcallret(struct lwp *l)
+{
+	KERNEL_UNLOCK_LAST(l);
+
 	userret(l);
 }
 

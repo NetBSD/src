@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.16 2008/07/03 19:29:42 reinoud Exp $ */
+/* $NetBSD: udf.h,v 1.16.2.1 2008/10/19 22:17:18 haad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -64,12 +64,14 @@ extern int udf_verbose;
 #define UDF_DEBUG_EXTATTR	0x002000
 #define UDF_DEBUG_ALLOC		0x004000
 #define UDF_DEBUG_ADWLK		0x008000
-#define UDF_DEBUG_NOTIMPL	0x010000
-#define UDF_DEBUG_SHEDULE	0x020000
-#define UDF_DEBUG_ECCLINE	0x040000
-#define UDF_DEBUG_SYNC		0x080000
-#define UDF_DEBUG_PARANOIA	0x100000
-#define UDF_DEBUG_NODEDUMP	0x200000
+#define UDF_DEBUG_DIRHASH	0x010000
+#define UDF_DEBUG_NOTIMPL	0x020000
+#define UDF_DEBUG_SHEDULE	0x040000
+#define UDF_DEBUG_ECCLINE	0x080000
+#define UDF_DEBUG_SYNC		0x100000
+#define UDF_DEBUG_PARANOIA	0x200000
+#define UDF_DEBUG_PARANOIDADWLK	0x400000
+#define UDF_DEBUG_NODEDUMP	0x800000
 
 /* initial value of udf_verbose */
 #define UDF_DEBUGGING		0
@@ -114,6 +116,11 @@ extern int udf_verbose;
 #define UDF_ECCBUF_HASHSIZE	(1<<UDF_ECCBUF_HASHBITS)
 #define UDF_ECCBUF_HASHMASK	(UDF_ECCBUF_HASHSIZE -1)
 
+#define UDF_DIRHASH_DEFAULTMEM	(1024*1024)
+#define UDF_DIRHASH_HASHBITS	5
+#define UDF_DIRHASH_HASHSIZE	(1<<UDF_DIRHASH_HASHBITS)
+#define UDF_DIRHASH_HASHMASK	(UDF_DIRHASH_HASHSIZE -1)
+
 #define UDF_ECCLINE_MAXFREE	10			/* picked */
 #define UDF_ECCLINE_MAXBUSY	100			/* picked */
 
@@ -140,14 +147,14 @@ extern int udf_verbose;
 
 
 /* RW content hint for allocation and other purposes */
-#define UDF_C_PROCESSED	 0	/* not relevant */
-#define UDF_C_USERDATA	 1	/* all but userdata is metadata */
-//#define UDF_C_METADATA	 2	/* unspecified metadata */
-#define UDF_C_DSCR	 3	/* update sectornr and CRC */
-#define UDF_C_NODE	 4	/* file/dir node, update sectornr and CRC */
-#define UDF_C_EXTATTRS	 5	/* dunno what to do yet */
-#define UDF_C_FIDS	 6	/* update all contained fids */
-
+#define UDF_C_INVALID		 0	/* not relevant */
+#define UDF_C_PROCESSED		 0	/* not relevant */
+#define UDF_C_USERDATA		 1	/* all but userdata is metadata */
+#define UDF_C_DSCR		 2	/* update sectornr and CRC */
+#define UDF_C_NODE		 3	/* file/dir node, update sectornr and CRC */
+#define UDF_C_FIDS		 4	/* update all contained fids */
+#define UDF_C_METADATA_SBM	 5	/* space bitmap, update sectornr and CRC */
+#define UDF_C_EXTATTRS		 6	/* dunno what to do yet */
 
 /* use unused b_freelistindex for our UDF_C_TYPE */
 #define b_udf_c_type	b_freelistindex
@@ -165,6 +172,7 @@ extern int udf_verbose;
 
 
 /* allocation strategies */
+#define UDF_ALLOC_INVALID            0
 #define UDF_ALLOC_SEQUENTIAL         1  /* linear on NWA                 */
 #define UDF_ALLOC_VAT                2  /* VAT handling                  */
 #define UDF_ALLOC_SPACEMAP           3  /* spacemaps                     */
@@ -274,17 +282,17 @@ struct udf_mount {
 	int			 lvopen;		/* logvol actions    */
 	int			 lvclose;		/* logvol actions    */
 
-	/* disc allocation / writing method */
-	int			 lvreadwrite;		/* bits */
-	int			 data_alloc;		/* all userdata */
-	int			 meta_alloc;		/* all metadata */
-	int			 data_part;
-	int			 metadata_part;
-	kmutex_t		 allocate_mutex;
-
 	/* logical to physical translations */
 	int 			 vtop[UDF_PMAPS+1];	/* vpartnr trans     */
 	int			 vtop_tp[UDF_PMAPS+1];	/* type of trans     */
+
+	/* disc allocation / writing method */
+	kmutex_t		 allocate_mutex;
+	int			 lvreadwrite;		/* error handling    */
+	int			 vtop_alloc[UDF_PMAPS+1]; /* alloc scheme    */
+	int			 data_part;
+	int			 node_part;
+	int			 fids_part;
 
 	/* sequential track info */
 	struct mmc_trackinfo	 data_track;
@@ -302,7 +310,7 @@ struct udf_mount {
 	uint8_t			*vat_pages;		/* TODO */
 	struct udf_node		*vat_node;		/* system node       */
 
-	/* space bitmaps */
+	/* space bitmaps for physical partitions */
 	struct space_bitmap_desc*part_unalloc_dscr[UDF_PARTITIONS];
 	struct space_bitmap_desc*part_freed_dscr  [UDF_PARTITIONS];
 	struct udf_bitmap	 part_unalloc_bits[UDF_PARTITIONS];
@@ -317,7 +325,8 @@ struct udf_mount {
 	struct udf_node 	*metadata_node;		/* system node       */
 	struct udf_node 	*metadatamirror_node;	/* system node       */
 	struct udf_node 	*metadatabitmap_node;	/* system node       */
-	struct udf_bitmap	 metadata_bitmap;	/* TODO : readin */
+	struct space_bitmap_desc*metadata_unalloc_dscr;
+	struct udf_bitmap	 metadata_unalloc_bits;
 
 	/* hash table to lookup icb -> udf_node and sorted list for sync */
 	kmutex_t	ihash_lock;
@@ -341,6 +350,7 @@ struct udf_mount {
 	struct udf_strategy	*strategy;
 	void			*strategy_private;
 };
+
 
 /*
  * UDF node describing a file/directory.
@@ -369,7 +379,7 @@ struct udf_node {
 	int			 needs_indirect;	/* has missing indr. */
 	struct long_ad		 ext_loc[UDF_MAX_ALLOC_EXTENTS];
 
-	uint64_t		 last_diroffset;	/* speeding up lookup*/
+	struct dirhash		*dir_hash;
 
 	/* misc */
 	uint32_t		 i_flags;		/* associated flags  */
@@ -388,18 +398,18 @@ struct udf_node {
 
 
 /* misc. flags stored in i_flags (XXX needs cleaning up) */
-#define	IN_ACCESS	0x0001		/* Inode access time update request  */
-#define	IN_CHANGE	0x0002		/* Inode change time update request  */
-#define	IN_UPDATE	0x0004		/* Inode was written to; update mtime*/
-#define	IN_MODIFY	0x0008		/* Modification time update request  */
-#define	IN_MODIFIED	0x0010		/* node has been modified */
-#define	IN_ACCESSED	0x0020		/* node has been accessed */
-#define	IN_RENAME	0x0040		/* node is being renamed. XXX ?? */
-#define	IN_DELETED	0x0080		/* node is unlinked, no FID reference*/
-#define	IN_LOCKED	0x0100		/* node is locked by condvar */
-#define	IN_SYNCED	0x0200		/* node is being used by sync */
-#define	IN_CALLBACK_ULK	0x0400		/* node will be unlocked by callback */
-#define	IN_NODE_REBUILD	0x0800		/* node is rebuild */
+#define	IN_ACCESS		0x0001	/* Inode access time update request  */
+#define	IN_CHANGE		0x0002	/* Inode change time update request  */
+#define	IN_UPDATE		0x0004	/* Inode was written to; update mtime*/
+#define	IN_MODIFY		0x0008	/* Modification time update request  */
+#define	IN_MODIFIED		0x0010	/* node has been modified */
+#define	IN_ACCESSED		0x0020	/* node has been accessed */
+#define	IN_RENAME		0x0040	/* node is being renamed. XXX ?? */
+#define	IN_DELETED		0x0080	/* node is unlinked, no FID reference*/
+#define	IN_LOCKED		0x0100	/* node is locked by condvar */
+#define	IN_SYNCED		0x0200	/* node is being used by sync */
+#define	IN_CALLBACK_ULK		0x0400	/* node will be unlocked by callback */
+#define	IN_NODE_REBUILD		0x0800	/* node is rebuild */
 
 
 #define IN_FLAGBITS \

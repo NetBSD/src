@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemreg.h,v 1.1 2007/08/18 11:26:37 tnn Exp $ */
+/* $NetBSD: spdmemreg.h,v 1.1.40.1 2008/10/19 22:16:25 haad Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -28,6 +28,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/* Constants for matching i2c bus address */
+#define SPDMEM_ADDRMASK	0x78
+#define SPDMEM_ADDR	0x50
+
 /* possible values for the memory type */
 #define	SPDMEM_MEMTYPE_FPM		0x01
 #define	SPDMEM_MEMTYPE_EDO		0x02
@@ -37,6 +41,24 @@
 #define	SPDMEM_MEMTYPE_DDRSGRAM		0x06
 #define	SPDMEM_MEMTYPE_DDRSDRAM		0x07
 #define	SPDMEM_MEMTYPE_DDR2SDRAM	0x08
+#define	SPDMEM_MEMTYPE_FBDIMM		0x09
+#define	SPDMEM_MEMTYPE_FBDIMM_PROBE	0x0A
+#define	SPDMEM_MEMTYPE_DDR3SDRAM	0x0B
+
+#define	SPDMEM_MEMTYPE_RAMBUS		0x11
+#define	SPDMEM_MEMTYPE_DIRECTRAMBUS	0x01
+
+/* Encodings of the size used/total byte for certain memory types    */
+#define	SPDMEM_SPDSIZE_MASK		0x0F	/* SPD EEPROM Size   */
+
+#define	SPDMEM_SPDLEN_128		0x00	/* SPD EEPROM Sizes  */
+#define	SPDMEM_SPDLEN_176		0x10
+#define	SPDMEM_SPDLEN_256		0x20
+#define	SPDMEM_SPDLEN_MASK		0x70	/* Bits 4 - 6        */
+
+#define	SPDMEM_SPDCRC_116		0x80	/* CRC Bytes covered */
+#define	SPDMEM_SPDCRC_125		0x00
+#define	SPDMEM_SPDCRC_MASK		0x80	/* Bit 7             */
 
 /* possible values for the supply voltage */
 #define	SPDMEM_VOLTAGE_TTL_5V		0x00

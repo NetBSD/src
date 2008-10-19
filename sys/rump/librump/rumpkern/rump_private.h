@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.8 2008/01/24 22:41:08 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.8.16.1 2008/10/19 22:18:06 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
 #include <uvm/uvm_object.h>
 #include <uvm/uvm_page.h>
 
-#include "rump.h"
+#include <rump/rump.h>
 
 #if 0
 #define DPRINTF(x) printf x
@@ -67,6 +67,9 @@ struct rump_specpriv {
 };
 
 #define RUMP_UBC_MAGIC_WINDOW (void *)0x37
+#define RUMP_LMUTEX_MAGIC ((kmutex_t *)0x101)
+
+extern int rump_threads;
 
 void abort(void) __dead;
 
@@ -84,5 +87,7 @@ struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
 
 void		rumpvm_enterva(vaddr_t addr, struct vm_page *);
 void		rumpvm_flushva(void);
+
+lwpid_t		rump_nextlid(void);
 
 #endif /* _SYS_RUMP_PRIVATE_H_ */

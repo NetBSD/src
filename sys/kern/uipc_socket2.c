@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.96 2008/06/18 09:06:27 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.96.2.1 2008/10/19 22:17:29 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.96 2008/06/18 09:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.96.2.1 2008/10/19 22:17:29 haad Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.96 2008/06/18 09:06:27 yamt Exp $
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
 #include <sys/pool.h>
+#include <sys/uidinfo.h>
 
 /*
  * Primitive routines for operating on sockets and socket buffers.
@@ -177,10 +178,19 @@ soisconnected(struct socket *so)
 
 	so->so_state &= ~(SS_ISCONNECTING|SS_ISDISCONNECTING|SS_ISCONFIRMING);
 	so->so_state |= SS_ISCONNECTED;
-	if (head && soqremque(so, 0)) {
-		soqinsque(head, so, 1);
-		sorwakeup(head);
-		cv_broadcast(&head->so_cv);
+	if (head && so->so_onq == &head->so_q0) {
+		if ((so->so_options & SO_ACCEPTFILTER) == 0) {
+			soqremque(so, 0);
+			soqinsque(head, so, 1);
+			sorwakeup(head);
+			cv_broadcast(&head->so_cv);
+		} else {
+			so->so_upcall =
+			    head->so_accf->so_accept_filter->accf_callback;
+			so->so_upcallarg = head->so_accf->so_accept_filter_arg;
+			so->so_rcv.sb_flags |= SB_UPCALL;
+			so->so_options &= ~SO_ACCEPTFILTER;
+			(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);		}
 	} else {
 		cv_broadcast(&so->so_cv);
 		sorwakeup(so);
@@ -238,6 +248,8 @@ sonewconn(struct socket *head, int connstatus)
 
 	KASSERT(solocked(head));
 
+	if ((head->so_options & SO_ACCEPTFILTER) != 0)
+		connstatus = 0;
 	soqueue = connstatus ? 1 : 0;
 	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2)
 		return ((struct socket *)0);
@@ -277,6 +289,12 @@ sonewconn(struct socket *head, int connstatus)
 	KASSERT(solocked(so));
 	if (error != 0) {
 		(void) soqremque(so, soqueue);
+		/*
+		 * Remove acccept filter if one is present.
+		 * XXX Is this really needed?
+		 */
+		if (so->so_accf != NULL)
+			(void)accept_filt_clear(so);
 		soput(so);
 		return (NULL);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.111 2008/03/27 15:21:35 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.111.10.1 2008/10/19 22:16:01 haad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.111 2008/03/27 15:21:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.111.10.1 2008/10/19 22:16:01 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1185,22 +1185,6 @@ db_sir_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	__asm("sir; nop");
 }
 
-#include <uvm/uvm.h>
-
-void db_uvmhistdump(db_expr_t, bool, db_expr_t, const char *);
-/*extern void uvmhist_dump(struct uvm_history *);*/
-#ifdef UVMHIST
-extern void uvmhist_dump(struct uvm_history *);
-#endif
-extern struct uvm_history_head uvm_histories;
-
-void
-db_uvmhistdump(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
-{
-
-	uvmhist_dump(LIST_FIRST(&uvm_histories));
-}
-
 const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("ctx",	db_ctx_cmd,	0,	
 	  "Print process MMU context information", NULL,NULL) },
@@ -1278,8 +1262,6 @@ const struct db_command db_machine_command_table[] = {
 	  "   addr:\tstart address of trace\n"
 	  "   /f:\tdisplay full information\n"
 	  "   /r:\treverse the trace order") },
-	{ DDB_ADD_CMD("uvmdump",	db_uvmhistdump,	0,
-	  "Dumps the UVM histories.",NULL,NULL) },
 	{ DDB_ADD_CMD("watch",	db_watch,	0,
 	  "Set or clear a physical or virtual hardware watchpoint.",
 	  "[/prbhlL] [addr]",

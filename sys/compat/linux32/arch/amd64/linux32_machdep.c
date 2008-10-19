@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.17 2008/04/24 18:39:23 ad Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.17.8.1 2008/10/19 22:16:14 haad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17 2008/04/24 18:39:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.17.8.1 2008/10/19 22:16:14 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,7 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_ds = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 	tf->tf_rip = ((long)p->p_sigctx.ps_sigcode) & 0xffffffff;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL) & 0xffffffff;
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC) & 0xffffffff;
+	tf->tf_rflags &= ~PSL_CLEARSIG & 0xffffffff;
 	tf->tf_rsp = (long)fp & 0xffffffff;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 
@@ -210,8 +210,8 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	lsi = &frame.sf_si;
 	(void)memset(lsi, 0, sizeof(frame.sf_si));
 	lsi->lsi_errno = native_to_linux32_errno[ksi->ksi_errno];
-	lsi->lsi_code = ksi->ksi_code;
-	lsi->lsi_signo = native_to_linux32_signo[frame.sf_sig];
+	lsi->lsi_code = native_to_linux_si_code(ksi->ksi_code);
+	lsi->lsi_signo = frame.sf_sig;
 	switch (lsi->lsi_signo) {
 	case LINUX32_SIGILL:
 	case LINUX32_SIGFPE:
@@ -271,7 +271,7 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	tf->tf_rip = (((long)p->p_sigctx.ps_sigcode) +
 	    (linux32_rt_sigcode - linux32_sigcode)) & 0xffffffff;
 	tf->tf_cs = GSEL(GUCODE32_SEL, SEL_UPL) & 0xffffffff;
-	tf->tf_rflags &= ~(PSL_T|PSL_VM|PSL_AC) & 0xffffffff;
+	tf->tf_rflags &= ~PSL_CLEARSIG & 0xffffffff;
 	tf->tf_rsp = (long)fp & 0xffffffff;
 	tf->tf_ss = GSEL(GUDATA32_SEL, SEL_UPL) & 0xffffffff;
 

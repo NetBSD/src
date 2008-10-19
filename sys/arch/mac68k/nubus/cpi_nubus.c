@@ -1,4 +1,4 @@
-/*	$NetBSD: cpi_nubus.c,v 1.3 2008/06/11 23:54:45 cegger Exp $	*/
+/*	$NetBSD: cpi_nubus.c,v 1.3.4.1 2008/10/19 22:15:51 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 Hauke Fath
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.3 2008/06/11 23:54:45 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.3.4.1 2008/10/19 22:15:51 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpi_nubus.c,v 1.3 2008/06/11 23:54:45 cegger Exp $")
 #define TRACE_ALL	(cpi_debug_mask & M_TRACE_ALL)
 #define TRACE_NONE	(cpi_debug_mask & M_TRACE_NONE)
 
-uint32_t cpi_debug_mask = M_TRACE_NONE /* | M_TRACE_WRITE */ ;
+uint32_t cpi_debug_mask = M_TRACE_NONE /* | M_TRACE_WRITE */ ;
 
 #else
 #define TRACE_CONFIG	0
@@ -675,7 +675,7 @@ cpi_initclock(struct cpi_softc *sc)
 	/* Disable counters A and B */
 	reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_MCCR);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_MCCR,
-	    reg & ~(MCCR_CT1E | MCCR_CT2E));
+	    reg & ~(MCCR_CT1E | MCCR_CT2E));
 
 	/* Make sure interrupt enable bits are cleared */
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR1,
@@ -695,7 +695,7 @@ cpi_initclock(struct cpi_softc *sc)
 	/* Re-enable counters A and B */
 	reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_MCCR);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_MCCR,
-	    reg | MCCR_CT1E | MCCR_CT2E | MCCR_CT1CT2);
+	    reg | MCCR_CT1E | MCCR_CT2E | MCCR_CT1CT2);
 
 	/* Start counters A and B */
 	reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR1);
@@ -703,7 +703,7 @@ cpi_initclock(struct cpi_softc *sc)
 	    reg | CTCS_TCB);
 	reg = z8536_reg_get(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR2);
 	z8536_reg_set(sc->sc_bst, sc->sc_bsh, Z8536_CTCSR2,
-	    reg | CTCS_TCB);
+	    reg | CTCS_TCB);
 	
 	tc_init(&cpi_timecounter);
 }

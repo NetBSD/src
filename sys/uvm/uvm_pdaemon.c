@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.92 2008/02/29 20:35:23 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.92.10.1 2008/10/19 22:18:11 haad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.92 2008/02/29 20:35:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.92.10.1 2008/10/19 22:18:11 haad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -193,12 +193,14 @@ uvmpd_tune(void)
 {
 	UVMHIST_FUNC("uvmpd_tune"); UVMHIST_CALLED(pdhist);
 
-	uvmexp.freemin = uvmexp.npages / 20;
-
-	/* between 16k and 256k */
-	/* XXX:  what are these values good for? */
-	uvmexp.freemin = MAX(uvmexp.freemin, (16*1024) >> PAGE_SHIFT);
-	uvmexp.freemin = MIN(uvmexp.freemin, (256*1024) >> PAGE_SHIFT);
+	/*
+	 * try to keep 0.5% of available RAM free, but limit to between
+	 * 128k and 1024k per-CPU.  XXX: what are these values good for?
+	 */
+	uvmexp.freemin = uvmexp.npages / 200;
+	uvmexp.freemin = MAX(uvmexp.freemin, (128*1024) >> PAGE_SHIFT);
+	uvmexp.freemin = MIN(uvmexp.freemin, (1024*1024) >> PAGE_SHIFT);
+	uvmexp.freemin *= ncpu;
 
 	/* Make sure there's always a user page free. */
 	if (uvmexp.freemin < uvmexp.reserve_kernel + 1)
@@ -246,7 +248,7 @@ uvm_pageout(void *arg)
 	 */
 
 	for (;;) {
-		bool needsscan;
+		bool needsscan, needsfree;
 
 		mutex_spin_enter(&uvm_fpageqlock);
 		if (uvm_pagedaemon_waiters == 0 || uvmexp.paging > 0) {
@@ -286,8 +288,8 @@ uvm_pageout(void *arg)
 		UVMHIST_LOG(pdhist,"  free/ftarg=%d/%d",
 		    uvmexp.free, uvmexp.freetarg, 0,0);
 
-		needsscan = uvmexp.free + uvmexp.paging < uvmexp.freetarg ||
-		    uvmpdpol_needsscan_p();
+		needsfree = uvmexp.free + uvmexp.paging < uvmexp.freetarg;
+		needsscan = needsfree || uvmpdpol_needsscan_p();
 		mutex_spin_exit(&uvm_fpageqlock);
 
 		/*
@@ -313,6 +315,13 @@ uvm_pageout(void *arg)
 		 * scan done.  unlock page queues (the only lock we are holding)
 		 */
 		mutex_exit(&uvm_pageqlock);
+
+		/*
+		 * if we don't need free memory, we're done.
+		 */
+
+		if (!needsfree) 
+			continue;
 
 		/*
 		 * start draining pool resources now that we're not
@@ -930,30 +939,11 @@ uvmpd_scan(void)
 
 	uvmexp.pdrevs++;
 
-#ifndef __SWAP_BROKEN
-
 	/*
-	 * swap out some processes if we are below our free target.
-	 * we need to unlock the page queues for this.
-	 */
-
-	if (uvmexp.free < uvmexp.freetarg && uvmexp.nswapdev != 0 &&
-	    uvm.swapout_enabled) {
-		uvmexp.pdswout++;
-		UVMHIST_LOG(pdhist,"  free %d < target %d: swapout",
-		    uvmexp.free, uvmexp.freetarg, 0, 0);
-		mutex_exit(&uvm_pageqlock);
-		uvm_swapout_threads();
-		mutex_enter(&uvm_pageqlock);
-
-	}
-#endif
-
-	/*
-	 * now we want to work on meeting our targets.   first we work on our
-	 * free target by converting inactive pages into free pages.  then
-	 * we work on meeting our inactive target by converting active pages
-	 * to inactive ones.
+	 * work on meeting our targets.   first we work on our free target
+	 * by converting inactive pages into free pages.  then we work on
+	 * meeting our inactive target by converting active pages to
+	 * inactive ones.
 	 */
 
 	UVMHIST_LOG(pdhist, "  starting 'free' loop",0,0,0,0);
@@ -976,6 +966,22 @@ uvmpd_scan(void)
 	}
 
 	uvmpdpol_balancequeue(swap_shortage);
+
+	/*
+	 * swap out some processes if we are still below the minimum
+	 * free target.  we need to unlock the page queues for this.
+	 */
+
+	if (uvmexp.free < uvmexp.freemin && uvmexp.nswapdev != 0 &&
+	    uvm.swapout_enabled) {
+		uvmexp.pdswout++;
+		UVMHIST_LOG(pdhist,"  free %d < min %d: swapout",
+		    uvmexp.free, uvmexp.freemin, 0, 0);
+		mutex_exit(&uvm_pageqlock);
+		uvm_swapout_threads();
+		mutex_enter(&uvm_pageqlock);
+
+	}
 }
 
 /*

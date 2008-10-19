@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.91 2008/04/28 20:23:24 martin Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.91.6.1 2008/10/19 22:15:49 haad Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.91 2008/04/28 20:23:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.91.6.1 2008/10/19 22:15:49 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -230,7 +230,8 @@ svr4_setmcontext(struct lwp *l, svr4_mcontext_t *mc, u_long flags)
 		if (tf->tf_eflags & PSL_VM)
 			(*p->p_emul->e_syscall_intern)(p);
 #endif
-		tf->tf_eflags = r[SVR4_X86_EFL];
+		tf->tf_eflags &= ~PSL_USER;
+		tf->tf_eflags |= r[SVR4_X86_EFL] & PSL_USER;
 	}
 	tf->tf_edi = r[SVR4_X86_EDI];
 	tf->tf_esi = r[SVR4_X86_ESI];

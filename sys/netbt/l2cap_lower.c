@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_lower.c,v 1.7 2007/11/10 23:12:23 plunky Exp $	*/
+/*	$NetBSD: l2cap_lower.c,v 1.7.24.1 2008/10/19 22:17:45 haad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.7 2007/11/10 23:12:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_lower.c,v 1.7.24.1 2008/10/19 22:17:45 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -136,13 +136,14 @@ l2cap_recv_frame(struct mbuf *m, struct hci_link *link)
 
 	chan = l2cap_cid_lookup(hdr.dcid);
 	if (chan != NULL && chan->lc_link == link
+	    && chan->lc_imtu >= hdr.length
 	    && chan->lc_state == L2CAP_OPEN) {
 		(*chan->lc_proto->input)(chan->lc_upper, m);
 		return;
 	}
 
-	DPRINTF("(%s) dropping %d L2CAP data bytes for unknown CID #%d\n",
-		device_xname(link->hl_unit->hci_dev), hdr.length, hdr.dcid);
+	DPRINTF("(%s) invalid L2CAP packet dropped, CID #%d, length %d\n",
+		device_xname(link->hl_unit->hci_dev), hdr.dcid, hdr.length);
 
 failed:
 	m_freem(m);

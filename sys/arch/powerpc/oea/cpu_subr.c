@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.47 2008/05/25 16:00:52 chs Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.47.4.1 2008/10/19 22:15:54 haad Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.47 2008/05/25 16:00:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.47.4.1 2008/10/19 22:15:54 haad Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -77,6 +77,12 @@ struct fmttab {
 	register_t fmt_value;
 	const char *fmt_string;
 };
+
+/*
+ * This should be one per CPU but since we only support it on 750 variants it
+ * doesn't realy matter since none of them supports SMP
+ */
+envsys_data_t sensor;
 
 static const struct fmttab cpu_7450_l2cr_formats[] = {
 	{ L2CR_L2E, 0, " disabled" },
@@ -305,6 +311,7 @@ cpu_probe_cache(void)
 	case IBM750FX:
 	case MPC601:
 	case MPC750:
+	case MPC7400:
 	case MPC7447A:
 	case MPC7448:
 	case MPC7450:
@@ -987,12 +994,22 @@ void
 cpu_tau_setup(struct cpu_info *ci)
 {
 	struct sysmon_envsys *sme;
-	envsys_data_t sensor;
-	int error;
+	int error, therm_delay;
+
+	mtspr(SPR_THRM1, SPR_THRM_VALID);
+	mtspr(SPR_THRM2, 0);
+
+	/*
+	 * we need to figure out how much 20+us in units of CPU clock cycles
+	 * are
+	 */
+
+	therm_delay = ci->ci_khz / 40;		/* 25us just to be safe */
+	
+        mtspr(SPR_THRM3, SPR_THRM_TIMER(therm_delay) | SPR_THRM_ENABLE); 
 
 	sme = sysmon_envsys_create();
 
-	sensor.state = ENVSYS_SVALID;
 	sensor.units = ENVSYS_STEMP;
 	(void)strlcpy(sensor.desc, "CPU Temp", sizeof(sensor.desc));
 	if (sysmon_envsys_sensor_attach(sme, &sensor)) {
@@ -1019,26 +1036,16 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	int i, threshold, count;
 
 	threshold = 64; /* Half of the 7-bit sensor range */
-	mtspr(SPR_THRM1, 0);
-	mtspr(SPR_THRM2, 0);
-	/* XXX This counter is supposed to be "at least 20 microseonds, in
-	 * XXX units of clock cycles". Since we don't have convenient
-	 * XXX access to the CPU speed, set it to a conservative value,
-	 * XXX that is, assuming a fast (1GHz) G3 CPU (As of February 2002,
-	 * XXX the fastest G3 processor is 700MHz) . The cost is that
-	 * XXX measuring the temperature takes a bit longer.
-	 */
-        mtspr(SPR_THRM3, SPR_THRM_TIMER(20000) | SPR_THRM_ENABLE); 
 
 	/* Successive-approximation code adapted from Motorola
 	 * application note AN1800/D, "Programming the Thermal Assist
 	 * Unit in the MPC750 Microprocessor".
 	 */
-	for (i = 4; i >= 0 ; i--) {
+	for (i = 5; i >= 0 ; i--) {
 		mtspr(SPR_THRM1, 
 		    SPR_THRM_THRESHOLD(threshold) | SPR_THRM_VALID);
 		count = 0;
-		while ((count < 100) && 
+		while ((count < 100000) && 
 		    ((mfspr(SPR_THRM1) & SPR_THRM_TIV) == 0)) {
 			count++;
 			delay(1);
@@ -1047,16 +1054,18 @@ cpu_tau_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			/* The interrupt bit was set, meaning the 
 			 * temperature was above the threshold 
 			 */
-			threshold += 2 << i;
+			threshold += 1 << i;
 		} else {
 			/* Temperature was below the threshold */
-			threshold -= 2 << i;
+			threshold -= 1 << i;
 		}
+		
 	}
 	threshold += 2;
 
 	/* Convert the temperature in degrees C to microkelvin */
 	edata->value_cur = (threshold * 1000000) + 273150000;
+	edata->state = ENVSYS_SVALID;
 }
 #endif /* NSYSMON_ENVSYS > 0 */
 
@@ -1183,13 +1192,12 @@ cpu_hatch(void)
 
 	/*
 	 * Set PIR (Processor Identification Register).  i.e. whoami
-	 * Note that PIR is read-only on some CPU's.  Try to work around
-	 * that as best as possible.  Assume that if it is 0, it is meant
-	 * to be setup by us.
+	 * Note that PIR is read-only on some CPU versions, so we write to it
+	 * only if it has a different value than we need.
 	 */
 
 	msr = mfspr(SPR_PIR);
-	if (msr == 0)
+	if (msr != h->pir)
 		mtspr(SPR_PIR, h->pir);
 	
 	__asm volatile ("mtsprg 0,%0" :: "r"(ci));

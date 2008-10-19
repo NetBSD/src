@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.95 2008/05/30 20:10:01 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.95.4.1 2008/10/19 22:15:39 haad Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -50,6 +50,7 @@ file-system	KERNFS		# Kernel variable file system (/kern)
 # File system options
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

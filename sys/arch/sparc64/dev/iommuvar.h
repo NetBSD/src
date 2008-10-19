@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.16 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.16.4.1 2008/10/19 22:16:00 haad Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -70,20 +70,18 @@ void    iommu_enter(struct strbuf_ctl *, vaddr_t, int64_t, int);
 void    iommu_remove(struct iommu_state *, vaddr_t, size_t);
 paddr_t iommu_extract(struct iommu_state *, vaddr_t);
 
-int	iommu_dvmamap_load(bus_dma_tag_t, struct strbuf_ctl *, bus_dmamap_t,
-		void *, bus_size_t, struct proc *, int);
-void	iommu_dvmamap_unload(bus_dma_tag_t, struct strbuf_ctl *, bus_dmamap_t);
-int	iommu_dvmamap_load_raw(bus_dma_tag_t, struct strbuf_ctl *, bus_dmamap_t,
-		bus_dma_segment_t *, int, int, bus_size_t);
-void	iommu_dvmamap_sync(bus_dma_tag_t, struct strbuf_ctl *, bus_dmamap_t,
-		bus_addr_t, bus_size_t, int);
-int	iommu_dvmamem_alloc(bus_dma_tag_t, struct strbuf_ctl *, bus_size_t,
-		bus_size_t, bus_size_t, bus_dma_segment_t *, int, int *, int);
-void	iommu_dvmamem_free(bus_dma_tag_t, struct strbuf_ctl *,
-		bus_dma_segment_t *, int);
-int	iommu_dvmamem_map(bus_dma_tag_t, struct strbuf_ctl *,
-		bus_dma_segment_t *, int, size_t, void **, int);
-void	iommu_dvmamem_unmap(bus_dma_tag_t, struct strbuf_ctl *, void *,
-		size_t);
+int	iommu_dvmamap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+		struct proc *, int);
+void	iommu_dvmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+int	iommu_dvmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
+		bus_dma_segment_t *, int, bus_size_t, int);
+void	iommu_dvmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t, bus_size_t,
+		int);
+int	iommu_dvmamem_alloc(bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
+		bus_dma_segment_t *, int, int *, int);
+void	iommu_dvmamem_free(bus_dma_tag_t, bus_dma_segment_t *, int);
+int	iommu_dvmamem_map(bus_dma_tag_t, bus_dma_segment_t *, int, size_t,
+		void **, int);
+void	iommu_dvmamem_unmap(bus_dma_tag_t, void *, size_t);
 
 #endif /* _SPARC64_DEV_IOMMUVAR_H_ */

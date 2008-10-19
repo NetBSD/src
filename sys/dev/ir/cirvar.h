@@ -1,4 +1,4 @@
-/*	$NetBSD: cirvar.h,v 1.7 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: cirvar.h,v 1.7.6.1 2008/10/19 22:16:36 haad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@ struct cir_softc {
 	const struct cir_methods *sc_methods;
 	void			*sc_handle;
 	char			sc_open;
+	int			sc_rdframes;
 	struct	selinfo		sc_rdsel;
 	struct	cir_params	sc_params;
 };

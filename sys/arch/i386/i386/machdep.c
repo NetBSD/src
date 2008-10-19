@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.637 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.637.2.1 2008/10/19 22:15:48 haad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.637 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.637.2.1 2008/10/19 22:15:48 haad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -108,6 +108,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.637 2008/07/02 17:28:55 ad Exp $");
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
 #include <sys/ras.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/ksyms.h>
 
 #ifdef IPKDB
@@ -298,7 +300,6 @@ void	add_mem_cluster(uint64_t, uint64_t, uint32_t);
 
 extern int time_adjusted;
 
-struct bootinfo	bootinfo;
 int *esym;
 int *eblob;
 extern int boothowto;
@@ -765,7 +766,7 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
 	tf->tf_eip = (int)catcher;
 	tf->tf_cs = GSEL(sel, SEL_UPL);
-	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC|PSL_D);
+	tf->tf_eflags &= ~PSL_CLEARSIG;
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 }
@@ -852,12 +853,49 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 		sendsig_siginfo(ksi, mask);
 }
 
+void
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
+    void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
+	struct saframe *sf, frame;
+	struct trapframe *tf;
+
+	tf = l->l_md.md_regs;
+
+	/* Finally, copy out the rest of the frame. */
+	frame.sa_type = type;
+	frame.sa_sas = sas;
+	frame.sa_events = nevents;
+	frame.sa_interrupted = ninterrupted;
+	frame.sa_arg = ap;
+	frame.sa_ra = 0;
+
+	sf = (struct saframe *)sp - 1;
+	if (copyout(&frame, sf, sizeof(frame)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+
+	tf->tf_eip = (int) upcall;
+	tf->tf_esp = (int) sf;
+	tf->tf_ebp = 0; /* indicate call-frame-top to debuggers */
+	tf->tf_gs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_fs = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_es = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_ds = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_cs = pmap->pm_hiexec > I386_MAX_EXE_ADDR ?
+	    GSEL(GUCODEBIG_SEL, SEL_UPL) : GSEL(GUCODE_SEL, SEL_UPL);
+	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+	tf->tf_eflags &= ~(PSL_T|PSL_VM|PSL_AC);
+}
+
 int	waittime = -1;
 
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	int s;
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -876,18 +914,15 @@ cpu_reboot(int howto, char *bootstr)
 			resettodr();
 	}
 
+	/* Disable interrupts. */
+	splhigh();
+
 	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
-		s = splhigh();
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		dumpsys();
-		splx(s);
-	}
 
 haltsys:
 	doshutdownhooks();
-
-	/* Disable interrupts. */
-	(void)splhigh();
 
 #ifdef MULTIPROCESSOR
 	x86_broadcast_ipi(X86_IPI_HALT);
@@ -916,7 +951,8 @@ haltsys:
 		 * and users have reported disk corruption.
 		 */
 		delay(500000);
-		apm_set_powstate(NULL, APM_DEV_DISK(APM_DEV_ALLUNITS), APM_SYS_OFF);
+		apm_set_powstate(NULL, APM_DEV_DISK(APM_DEV_ALLUNITS),
+		    APM_SYS_OFF);
 		delay(500000);
 		apm_set_powstate(NULL, APM_DEV_ALLDEVS, APM_SYS_OFF);
 		printf("WARNING: APM powerdown failed!\n");
@@ -1858,8 +1894,21 @@ init386(paddr_t first_avail)
 	for (x = 0; x < 32; x++) {
 		KASSERT(xen_idt_idx < MAX_XEN_IDT);
 		xen_idt[xen_idt_idx].vector = x;
-		xen_idt[xen_idt_idx].flags =
-			(x == 3 || x == 4) ? SEL_UPL : SEL_XEN;
+
+		switch (x) {
+		case 2:  /* NMI */
+		case 18: /* MCA */
+			TI_SET_IF(&(xen_idt[xen_idt_idx]), 2);
+			break;
+		case 3:
+		case 4:
+			xen_idt[xen_idt_idx].flags = SEL_UPL;
+			break;
+		default:
+			xen_idt[xen_idt_idx].flags = SEL_XEN;
+			break;
+		}
+
 		xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 		xen_idt[xen_idt_idx].address =
 			(uint32_t)IDTVEC(exceptions)[x];

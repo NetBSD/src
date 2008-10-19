@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.107 2008/03/24 14:44:26 cube Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.107.10.1 2008/10/19 22:17:04 haad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.107 2008/03/24 14:44:26 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.107.10.1 2008/10/19 22:17:04 haad Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.107 2008/03/24 14:44:26 cube Exp $")
 #include <sys/device.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
+#include <sys/cpu.h>
 #include <sys/dvdio.h>
 
 #include <sys/intr.h>
@@ -470,8 +471,7 @@ wdc_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	/* Do control operations specially. */
 	if (__predict_false(drvp->state < READY)) {
 		/* If it's not a polled command, we need the kernel thread */
-		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0 &&
-		    (chp->ch_flags & ATACH_TH_RUN) == 0) {
+		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0 && cpu_intr_p()) {
 			chp->ch_queue->queue_freeze++;
 			wakeup(&chp->ch_thread);
 			return;

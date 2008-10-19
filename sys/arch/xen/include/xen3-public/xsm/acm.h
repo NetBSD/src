@@ -91,7 +91,7 @@
  * whenever the interpretation of the related
  * policy's data structure changes
  */
-#define ACM_POLICY_VERSION 3
+#define ACM_POLICY_VERSION 4
 #define ACM_CHWALL_VERSION 1
 #define ACM_STE_VERSION  1
 
@@ -102,6 +102,7 @@ typedef uint32_t ssidref_t;
 #define ACMHOOK_none          0
 #define ACMHOOK_sharing       1
 #define ACMHOOK_authorization 2
+#define ACMHOOK_conflictset   3
 
 /* -------security policy relevant type definitions-------- */
 
@@ -129,6 +130,10 @@ typedef uint16_t domaintype_t;
  */
 /* high-16 = version, low-16 = check magic */
 #define ACM_MAGIC  0x0001debc
+
+/* size of the SHA1 hash identifying the XML policy from which the
+   binary policy was created */
+#define ACM_SHA1_HASH_SIZE    20
 
 /* each offset in bytes from start of the struct they
  * are part of */
@@ -159,6 +164,7 @@ struct acm_policy_buffer {
     uint32_t secondary_policy_code;
     uint32_t secondary_buffer_offset;
     struct acm_policy_version xml_pol_version; /* add in V3 */
+    uint8_t xml_policy_hash[ACM_SHA1_HASH_SIZE]; /* added in V4 */
 };
 
 

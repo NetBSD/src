@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.18 2006/03/02 03:38:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.18.74.1 2008/10/19 22:17:45 haad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -300,7 +300,7 @@ enum {
 	IEEE80211_MACCMD_FLUSH		= 3,	/* flush ACL database */
 	IEEE80211_MACCMD_DETACH		= 4,	/* detach ACL policy */
 	IEEE80211_MACCMD_POLICY		= 5,	/* get ACL policy */
-	IEEE80211_MACCMD_LIST		= 6,	/* get ACL database */
+	IEEE80211_MACCMD_LIST		= 6	/* get ACL database */
 };
 
 struct ieee80211req_maclist {

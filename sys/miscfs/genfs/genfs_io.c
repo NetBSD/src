@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.8 2008/06/04 12:41:40 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.8.4.1 2008/10/19 22:17:41 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.8 2008/06/04 12:41:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.8.4.1 2008/10/19 22:17:41 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ genfs_getpages(void *v)
 	daddr_t lbn, blkno;
 	int i, error, npages, orignpages, npgs, run, ridx, pidx, pcount;
 	int fs_bshift, fs_bsize, dev_bshift;
-	int flags = ap->a_flags;
+	const int flags = ap->a_flags;
 	size_t bytes, iobytes, tailstart, tailbytes, totalbytes, skipbytes;
 	vaddr_t kva;
 	struct buf *bp, *mbp;
@@ -122,12 +122,12 @@ genfs_getpages(void *v)
 	struct vm_page *pg, **pgs, *pgs_onstack[MAX_READ_PAGES];
 	int pgs_size;
 	kauth_cred_t cred = curlwp->l_cred;		/* XXXUBC curlwp */
-	bool async = (flags & PGO_SYNCIO) == 0;
-	bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
+	const bool async = (flags & PGO_SYNCIO) == 0;
+	const bool write = (ap->a_access_type & VM_PROT_WRITE) != 0;
 	bool sawhole = false;
 	bool has_trans = false;
-	bool overwrite = (flags & PGO_OVERWRITE) != 0;
-	bool blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
+	const bool overwrite = (flags & PGO_OVERWRITE) != 0;
+	const bool blockalloc = write && (flags & PGO_NOBLOCKALLOC) == 0;
 	voff_t origvsize;
 	UVMHIST_FUNC("genfs_getpages"); UVMHIST_CALLED(ubchist);
 
@@ -589,8 +589,22 @@ loopdone:
 	 */
 
 	if (!error && sawhole && blockalloc) {
-		error = GOP_ALLOC(vp, startoffset, npages << PAGE_SHIFT, 0,
-		    cred);
+		/*
+		 * XXX: This assumes that we come here only via
+		 * the mmio path
+		 */
+		if (vp->v_mount->mnt_wapbl) {
+			error = WAPBL_BEGIN(vp->v_mount);
+		}
+
+		if (!error) {
+			error = GOP_ALLOC(vp, startoffset,
+			    npages << PAGE_SHIFT, 0, cred);
+			if (vp->v_mount->mnt_wapbl) {
+				WAPBL_END(vp->v_mount);
+			}
+		}
+
 		UVMHIST_LOG(ubchist, "gop_alloc off 0x%x/0x%x -> %d",
 		    startoffset, npages << PAGE_SHIFT, error,0);
 		if (!error) {
@@ -765,6 +779,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	int flags;
 	int dirtygen;
 	bool modified;
+	bool need_wapbl;
 	bool has_trans;
 	bool cleanall;
 	bool onworklst;
@@ -779,6 +794,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
 
 	has_trans = false;
+	need_wapbl = (!pagedaemon && vp->v_mount && vp->v_mount->mnt_wapbl &&
+	    (origflags & PGO_JOURNALLOCKED) == 0);
 
 retry:
 	modified = false;
@@ -791,8 +808,11 @@ retry:
 			if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 				vn_syncer_remove_from_worklist(vp);
 		}
-		if (has_trans)
+		if (has_trans) {
+			if (need_wapbl)
+				WAPBL_END(vp->v_mount);
 			fstrans_done(vp->v_mount);
+		}
 		mutex_exit(slock);
 		return (0);
 	}
@@ -809,6 +829,13 @@ retry:
 				return error;
 		} else
 			fstrans_start(vp->v_mount, FSTRANS_LAZY);
+		if (need_wapbl) {
+			error = WAPBL_BEGIN(vp->v_mount);
+			if (error) {
+				fstrans_done(vp->v_mount);
+				return error;
+			}
+		}
 		has_trans = true;
 		mutex_enter(slock);
 		goto retry;
@@ -1182,8 +1209,11 @@ skip_scan:
 		goto retry;
 	}
 
-	if (has_trans)
+	if (has_trans) {
+		if (need_wapbl)
+			WAPBL_END(vp->v_mount);
 		fstrans_done(vp->v_mount);
+	}
 
 	return (error);
 }

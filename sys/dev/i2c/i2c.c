@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.20 2008/05/04 15:26:29 xtraeme Exp $	*/
+/*	$NetBSD: i2c.c,v 1.20.6.1 2008/10/19 22:16:25 haad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.20 2008/05/04 15:26:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.20.6.1 2008/10/19 22:16:25 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.20 2008/05/04 15:26:29 xtraeme Exp $");
 #include <dev/i2c/i2cvar.h>
 
 #include "locators.h"
+#include <opt_i2cbus.h>
 
 struct iic_softc {
 	i2c_tag_t sc_tag;
@@ -128,13 +129,16 @@ iic_attach(device_t parent, device_t self, void *aux)
 	if (rv)
 		aprint_error_dev(self, "unable to create intr thread\n");
 
-#if notyet
+#if I2C_SCAN
 	if (sc->sc_type == I2C_TYPE_SMBUS) {
 		int found = 0;
 		i2c_addr_t addr;
 		uint8_t cmd = 0, val;
 
 		for (addr = 0x0; addr < 0x80; addr++) {
+			/* Skip i2c Alert Response Address */
+			if (addr == 0x0c)
+				continue;
 			iic_acquire_bus(ic, 0);
 			if (iic_exec(ic, I2C_OP_READ_WITH_STOP, addr,
 			    &cmd, 1, &val, 1, 0) == 0) {

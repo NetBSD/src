@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.43 2008/04/24 11:38:39 ad Exp $	*/
+/*	$NetBSD: protosw.h,v 1.43.8.1 2008/10/19 22:18:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -60,6 +60,7 @@
 struct mbuf;
 struct sockaddr;
 struct socket;
+struct sockopt;
 struct domain;
 struct proc;
 struct lwp;
@@ -78,7 +79,7 @@ struct protosw {
 	void	*(*pr_ctlinput)		/* control input (from below) */
 			(int, const struct sockaddr *, void *);
 	int	(*pr_ctloutput)		/* control output (from above) */
-			(int, struct socket *, int, int, struct mbuf **);
+			(int, struct socket *, struct sockopt *);
 
 /* user-protocol hook */
 	int	(*pr_usrreq)		/* user request: see list below */
@@ -214,14 +215,9 @@ static const char * const prcrequests[] = {
 
 /*
  * The arguments to ctloutput are:
- *	(*protosw[].pr_ctloutput)(req, so, level, optname, optval);
+ *	(*protosw[].pr_ctloutput)(req, so, sopt);
  * req is one of the actions listed below, so is a (struct socket *),
- * level is an indication of which protocol layer the option is intended.
- * optname is a protocol dependent socket option request,
- * optval is a pointer to a mbuf-chain pointer, for value-return results.
- * The protocol is responsible for disposal of the mbuf chain *optval
- * if supplied,
- * the caller is responsible for any space held by *optval, when returned.
+ * sopt is a (struct sockopt *)
  * A non-zero return from usrreq gives an
  * UNIX error number which should be passed to higher level software.
  */
@@ -281,12 +277,12 @@ name##_wrapper(struct socket *a, int b, struct mbuf *c,	\
 
 #define	PR_WRAP_CTLOUTPUT(name)				\
 static int						\
-name##_wrapper(int a, struct socket *b, int c, int d,	\
-     struct mbuf **e)					\
+name##_wrapper(int a, struct socket *b,			\
+    struct sockopt *c)					\
 {							\
 	int rv;						\
 	KERNEL_LOCK(1, NULL);				\
-	rv = name(a, b, c, d, e);			\
+	rv = name(a, b, c);				\
 	KERNEL_UNLOCK_ONE(NULL);			\
 	return rv;					\
 }

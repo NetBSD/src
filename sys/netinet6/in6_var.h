@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.58 2008/04/15 03:57:04 thorpej Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.58.10.1 2008/10/19 22:17:52 haad Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -480,8 +480,8 @@ do {								\
 } while (/*CONSTCOND*/ 0)
 
 extern struct ifqueue ip6intrq;		/* IP6 packet input queue */
-extern struct in6_addr zeroin6_addr;
-extern u_char inet6ctlerrmap[];
+extern const struct in6_addr zeroin6_addr;
+extern const u_char inet6ctlerrmap[];
 extern unsigned long in6_maxmtu;
 
 /*
@@ -683,6 +683,8 @@ void	in6_ifaddloop(struct ifaddr *);
 void	in6_createmkludge(struct ifnet *);
 void	in6_purgemkludge(struct ifnet *);
 struct in6_ifaddr *in6ifa_ifpforlinklocal(const struct ifnet *, int);
+struct in6_ifaddr *in6ifa_ifplocaladdr(const struct ifnet *,
+    const struct in6_addr *);
 struct in6_ifaddr *in6ifa_ifpwithaddr(const struct ifnet *,
     const struct in6_addr *);
 char	*ip6_sprintf(const struct in6_addr *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $	*/
+/*	$NetBSD: savage_drv.c,v 1.4.2.1 2008/10/19 22:16:58 haad Exp $	*/
 
 /* savage_drv.c -- Savage DRI driver
  */
@@ -29,16 +29,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.4 2008/07/03 17:36:44 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: savage_drv.c,v 1.4.2.1 2008/10/19 22:16:58 haad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/savage_drv.c,v 1.3 2005/12/20 22:44:36 jhb Exp $");
 */
 
-#include <dev/drm/drmP.h>
-#include <dev/drm/drm.h>
-#include <dev/pci/drm/savage_drm.h>
-#include <dev/pci/drm/savage_drv.h>
-#include <dev/pci/drm/drm_pciids.h>
+#include "drmP.h"
+#include "drm.h"
+#include "savage_drm.h"
+#include "savage_drv.h"
+#include "drm_pciids.h"
 
 /* drv_PCI_IDs comes from drm_pciids.h, generated from drm_pciids.txt. */
 static drm_pci_id_list_t savage_pciidlist[] = {

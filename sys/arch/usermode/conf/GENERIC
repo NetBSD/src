@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.2 2008/05/25 19:05:17 agc Exp $
+# $NetBSD: GENERIC,v 1.2.4.1 2008/10/19 22:16:06 haad Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.2.4.1 $"
 maxusers 	32
 makeoptions	DEBUG="-g3"
 makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
@@ -44,6 +44,11 @@ ttycons0	at mainbus?
 
 pseudo-device	loop
 pseudo-device	md	1
+
+#
+# accept filters
+pseudo-device   accf_data		# "dataready" accept filter
+pseudo-device   accf_http		# "httpready" accept filter
 
 options		MEMORY_DISK_HOOKS
 options		MEMORY_DISK_IS_ROOT

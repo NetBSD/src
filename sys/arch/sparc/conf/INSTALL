@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.61 2008/06/25 03:33:06 matt Exp $
+#	$NetBSD: INSTALL,v 1.61.2.1 2008/10/19 22:15:56 haad Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -177,6 +177,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #options 	FFS_EI		# FFS Endian Independent support
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
+options 	WAPBL		# File system journaling support - Experimental
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2008/01/17 15:10:53 njoly Exp $
+#	$NetBSD: Makefile,v 1.34.16.1 2008/10/19 22:17:40 haad Exp $
 
 .include "../Makefile.inc"
 
@@ -17,7 +17,7 @@ KMOD=	compat_linux
 SRCS+=	lkminit_emul.c
 SRCS+=	linux_cdrom.c linux_errno.c linux_exec.c linux_file.c \
 	linux_ioctl.c linux_ipc.c linux_misc.c linux_pipe.c \
-	linux_sched.c linux_sigaction.c linux_signal.c linux_signo.c \
+	linux_sched.c linux_signal.c linux_signo.c \
 	linux_socket.c linux_termios.c linux_time.c linux_uselib.c
 SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c
 SRCS+=	linux_fdio.c linux_hdio.c linux_blkio.c linux_sysctl.c
@@ -32,7 +32,8 @@ SRCS+=	linux_sg.c linux_mtio.c
 .PATH:	$S/arch/x86/x86
 SRCS+=	linux_break.c linux_llseek.c linux_misc_notalpha.c linux_oldolduname.c \
 	linux_oldselect.c linux_sig_notalpha.c linux_socketcall.c \
-	linux_ipccall.c linux_oldmmap.c linux_olduname.c linux_file64.c
+	linux_ipccall.c linux_oldmmap.c linux_olduname.c linux_file64.c \
+	linux_sigaction.c
 SRCS+=	linux_syscall.c linux_trap.c
 SRCS+=	linux_sigcode.S
 .endif
@@ -48,21 +49,22 @@ SRCS+=	linux_sigcode.S
 
 .if ${MACHINE_ARCH} == "m68k"
 SRCS+=	linux_ipccall.c linux_llseek.c linux_misc_notalpha.c		\
-	linux_oldselect.c linux_sig_notalpha.c 	\
+	linux_oldselect.c linux_sig_notalpha.c linux_sigaction.c \
 	linux_socketcall.c linux_oldmmap.c linux_file64.c linux_uid16.c
 SRCS+=	linux_sig_machdep.S
 .endif
 
 .if ${MACHINE_ARCH} == "alpha"
 CPPFLAGS+=	-Dalpha
-SRCS+=	linux_olduname.c linux_syscall.c
+SRCS+=	linux_olduname.c linux_sigaction.c linux_syscall.c
 SRCS+=	linux_sigcode.s
 .endif
 
 .if ${MACHINE_ARCH} == "powerpc"
 CPPFLAGS+=	-Dpowerpc
 SRCS+=	linux_ipccall.c linux_misc_notalpha.c linux_sig_notalpha.c	\
-	linux_socketcall.c linux_llseek.c linux_olduname.c linux_file64.c
+	linux_socketcall.c linux_llseek.c linux_olduname.c linux_file64.c \
+	linux_sigaction.c
 SRCS+=	linux_exec_powerpc.c linux_sp_wrap_powerpc.S
 SRCS+=	linux_sigcode.S linux_trap.c
 .endif

@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.70 2008/05/30 20:10:02 tsutsui Exp $
+#	$NetBSD: TX3912,v 1.70.4.1 2008/10/19 22:15:47 haad Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -97,6 +97,7 @@ options 	INET6		# IPV6
 
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 #options 	QUOTA		# UFS quotas
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

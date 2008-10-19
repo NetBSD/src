@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.32 2008/06/05 12:43:52 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.32.4.1 2008/10/19 22:18:07 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -44,19 +44,21 @@
  */
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/kmem.h>
 
+#include <machine/pmap.h>
+
+#include <rump/rumpuser.h>
+
 #include <uvm/uvm.h>
 #include <uvm/uvm_prot.h>
 #include <uvm/uvm_readahead.h>
 
-#include <machine/pmap.h>
-
 #include "rump_private.h"
-#include "rumpuser.h"
 
 /* dumdidumdum */
 #define len2npages(off, len)						\
@@ -87,6 +89,9 @@ struct uvm uvm;
 struct vmspace rump_vmspace;
 struct vm_map rump_vmmap;
 const struct rb_tree_ops uvm_page_tree_ops;
+
+static struct vm_map_kernel kernel_map_store;
+struct vm_map *kernel_map = &kernel_map_store.vmk_map;
 
 /*
  * vm pages 
@@ -421,10 +426,13 @@ rumpvm_init()
 
 	uvmexp.free = 1024*1024; /* XXX */
 	uvm.pagedaemon_lwp = NULL; /* doesn't match curlwp */
+	rump_vmspace.vm_map.pmap = pmap_kernel();
 
 	mutex_init(&rvamtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uwinmtx, MUTEX_DEFAULT, 0);
 	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, 0);
+
+	callback_head_init(&kernel_map_store.vmk_reclaim_callback, IPL_VM);
 }
 
 void
@@ -501,7 +509,10 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 		KASSERT(pg->flags & PG_BUSY);
 		if (pg->flags & PG_WANTED)
 			wakeup(pg);
-		pg->flags &= ~(PG_WANTED|PG_BUSY);
+		if (pg->flags & PG_RELEASED)
+			uvm_pagefree(pg);
+		else
+			pg->flags &= ~(PG_WANTED|PG_BUSY);
 	}
 }
 
@@ -568,7 +579,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 		memset(pgs, 0, npages * sizeof(struct vm_page *));
 		mutex_enter(&uobj->vmobjlock);
 		rv = uobj->pgops->pgo_get(uobj, off, pgs, &npages, 0, 0, 0, 0);
-		assert(npages > 0);
+		KASSERT(npages > 0);
 
 		for (i = 0; i < npages; i++) {
 			uint8_t *start;
@@ -579,7 +590,7 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 			start = (uint8_t *)pgs[i]->uanon + chunkoff;
 
 			memset(start, 0, chunklen);
-			pgs[i]->flags &= PG_CLEAN;
+			pgs[i]->flags &= ~PG_CLEAN;
 
 			off += chunklen;
 			len -= chunklen;
@@ -613,10 +624,78 @@ uvn_clean_p(struct uvm_object *uobj)
 	return (vp->v_iflag & VI_ONWORKLST) == 0;
 }
 
+struct vm_map_kernel *
+vm_map_to_kernel(struct vm_map *map)
+{
+
+	return (struct vm_map_kernel *)map;
+}
+
+bool
+vm_map_starved_p(struct vm_map *map)
+{
+
+	return false;
+}
+
+void
+uvm_pageout_start(int npages)
+{
+
+	uvmexp.paging += npages;
+}
+
+void
+uvm_pageout_done(int npages)
+{
+
+	uvmexp.paging -= npages;
+
+	/*
+	 * wake up either of pagedaemon or LWPs waiting for it.
+	 */
+
+	if (uvmexp.free <= uvmexp.reserve_kernel) {
+		wakeup(&uvm.pagedaemon);
+	} else {
+		wakeup(&uvmexp.free);
+	}
+}
+
+/* XXX: following two are unfinished because lwp's are not refcounted yet */
+void
+uvm_lwp_hold(struct lwp *l)
+{
+
+	atomic_inc_uint(&l->l_holdcnt);
+}
+
+void
+uvm_lwp_rele(struct lwp *l)
+{
+
+	atomic_dec_uint(&l->l_holdcnt);
+}
+
+int
+uvm_loan(struct vm_map *map, vaddr_t start, vsize_t len, void *v, int flags)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+void
+uvm_unloan(void *v, int npages, int flags)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
 /*
  * Kmem
  */
 
+#ifndef RUMP_USE_REAL_KMEM
 void *
 kmem_alloc(size_t size, km_flag_t kmflag)
 {
@@ -642,6 +721,7 @@ kmem_free(void *p, size_t size)
 
 	rumpuser_free(p);
 }
+#endif /* RUMP_USE_REAL_KMEM */
 
 /*
  * UVM km
@@ -674,26 +754,16 @@ uvm_km_suballoc(struct vm_map *map, vaddr_t *minaddr, vaddr_t *maxaddr,
 	return (struct vm_map *)417416;
 }
 
-void
-uvm_pageout_start(int npages)
+vaddr_t
+uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 {
 
-	uvmexp.paging += npages;
+	return (vaddr_t)rumpuser_malloc(PAGE_SIZE, !waitok);
 }
 
 void
-uvm_pageout_done(int npages)
+uvm_km_free_poolpage(struct vm_map *map, vaddr_t addr)
 {
 
-	uvmexp.paging -= npages;
-
-	/*
-	 * wake up either of pagedaemon or LWPs waiting for it.
-	 */
-
-	if (uvmexp.free <= uvmexp.reserve_kernel) {
-		wakeup(&uvm.pagedaemon);
-	} else {
-		wakeup(&uvmexp.free);
-	}
+	rumpuser_free((void *)addr);
 }

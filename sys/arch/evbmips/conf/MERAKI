@@ -1,10 +1,10 @@
-#	$NetBSD: MERAKI,v 1.5 2008/05/30 20:10:02 tsutsui Exp $
+#	$NetBSD: MERAKI,v 1.5.4.1 2008/10/19 22:15:44 haad Exp $
 
 include 	"arch/evbmips/conf/std.meraki"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"AP30-$Revision: 1.5 $"
+#ident 		"AP30-$Revision: 1.5.4.1 $"
 
 maxusers	32
 
@@ -89,6 +89,7 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.

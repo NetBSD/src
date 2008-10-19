@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.33 2008/06/17 09:11:25 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.33.2.1 2008/10/19 22:17:28 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.33 2008/06/17 09:11:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.33.2.1 2008/10/19 22:17:28 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,12 +43,16 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.33 2008/06/17 09:11:25 ad Exp $");
 #include <sys/pool.h>
 #include <sys/proc.h> 
 #include <sys/resourcevar.h>
+#include <sys/sa.h>
+#include <sys/savar.h>
 #include <sys/sched.h>
 #include <sys/systm.h>
 #include <sys/sleepq.h>
 #include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "opt_sa.h"
 
 int	sleepq_sigtoerror(lwp_t *, int);
 
@@ -145,6 +149,10 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 */
 	spc_lock(ci);
 	lwp_setlock(l, spc->spc_mutex);
+#ifdef KERN_SA
+	if (l->l_proc->p_sa != NULL)
+		sa_awaken(l);
+#endif /* KERN_SA */
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
@@ -228,6 +236,7 @@ sleepq_block(int timo, bool catch)
 	struct proc *p;
 	lwp_t *l = curlwp;
 	bool early = false;
+	int biglocks = l->l_biglocks;
 
 	ktrcsw(1, 0);
 
@@ -251,7 +260,13 @@ sleepq_block(int timo, bool catch)
 	} else {
 		if (timo)
 			callout_schedule(&l->l_timeout_ch, timo);
-		mi_switch(l);
+
+#ifdef KERN_SA
+		if (((l->l_flag & LW_SA) != 0) && (~l->l_pflag & LP_SA_NOBLOCK))
+			sa_switch(l);
+		else
+#endif
+			mi_switch(l);
 
 		/* The LWP and sleep queue are now unlocked. */
 		if (timo) {
@@ -284,8 +299,8 @@ sleepq_block(int timo, bool catch)
 	}
 
 	ktrcsw(0, 0);
-	if (__predict_false(l->l_biglocks != 0)) {
-		KERNEL_LOCK(l->l_biglocks, NULL);
+	if (__predict_false(biglocks != 0)) {
+		KERNEL_LOCK(biglocks, NULL);
 	}
 	return error;
 }

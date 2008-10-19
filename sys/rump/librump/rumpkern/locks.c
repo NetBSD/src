@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.16 2008/05/31 19:28:36 ad Exp $	*/
+/*	$NetBSD: locks.c,v 1.16.4.1 2008/10/19 22:18:06 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,9 +59,9 @@
 #include <sys/rwlock.h>
 #include <sys/atomic.h>
 
-#include "rump_private.h"
+#include <rump/rumpuser.h>
 
-#include "rumpuser.h"
+#include "rump_private.h"
 
 void
 mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl)
@@ -88,7 +88,8 @@ void
 mutex_spin_enter(kmutex_t *mtx)
 {
 
-	mutex_enter(mtx);
+	if (__predict_true(mtx != RUMP_LMUTEX_MAGIC))
+		mutex_enter(mtx);
 }
 
 int
@@ -109,7 +110,8 @@ void
 mutex_spin_exit(kmutex_t *mtx)
 {
 
-	mutex_exit(mtx);
+	if (__predict_true(mtx != RUMP_LMUTEX_MAGIC))
+		mutex_exit(mtx);
 }
 
 int
@@ -256,24 +258,52 @@ cv_broadcast(kcondvar_t *cv)
 	rumpuser_cv_broadcast(RUMPCV(cv));
 }
 
-/* kernel biglock, only for vnode_if */
+bool
+cv_has_waiters(kcondvar_t *cv)
+{
 
+	return rumpuser_cv_has_waiters(RUMPCV(cv));
+}
+
+/*
+ * giant lock
+ */
+
+static int lockcnt;
 void
 _kernel_lock(int nlocks)
 {
 
-	KASSERT(nlocks == 1);
-	mutex_enter(&rump_giantlock);
+	while (nlocks--) {
+		mutex_enter(&rump_giantlock);
+		lockcnt++;
+	}
 }
 
 void
 _kernel_unlock(int nlocks, int *countp)
 {
 
-	KASSERT(nlocks == 1);
-	mutex_exit(&rump_giantlock);
+	if (!mutex_owned(&rump_giantlock)) {
+		KASSERT(nlocks == 0);
+		if (countp)
+			*countp = 0;
+		return;
+	}
+
 	if (countp)
-		*countp = 1;
+		*countp = lockcnt;
+	if (nlocks == 0)
+		nlocks = lockcnt;
+	if (nlocks == -1) {
+		KASSERT(lockcnt == 1);
+		nlocks = 1;
+	}
+	KASSERT(nlocks <= lockcnt);
+	while (nlocks--) {
+		lockcnt--;
+		mutex_exit(&rump_giantlock);
+	}
 }
 
 struct kmutexobj {

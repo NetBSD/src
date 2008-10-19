@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnreg.h,v 1.3 2008/02/09 19:14:53 skrll Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.3.22.1 2008/10/19 22:16:38 haad Exp $	*/
 /*	OpenBSD: if_iwnreg.h,v 1.9 2007/11/27 20:59:40 damien Exp	*/
 
 /*-
@@ -35,7 +35,7 @@
 #define IWN_MAX_SCATTER	20
 
 /* Rx buffers must be large enough to hold a full 4K A-MPDU */
-#define IWN_RBUF_SIZE	(4 * 1024)
+#define IWN_RBUF_SIZE	(8 * 1024)
 
 /*
  * Control and status registers.
@@ -259,6 +259,7 @@ struct iwn_tx_cmd {
 #define IWN_CMD_SET_LED			 72
 #define IWN_CMD_SET_POWER_MODE		119
 #define IWN_CMD_SCAN			128
+#define IWN_CMD_SCAN_ABORT		129
 #define IWN_CMD_SET_BEACON		145
 #define IWN_CMD_TXPOWER			151
 #define IWN_CMD_BLUETOOTH		155
@@ -443,16 +444,23 @@ struct iwn_cmd_beacon {
 	uint16_t	len;
 	uint16_t	reserved1;
 	uint32_t	flags;	/* same as iwn_cmd_data */
+	uint8_t		try_cnt;
+	uint8_t		kill_cnt;
+	uint16_t	reserved2;
 	uint8_t		rate;
+	uint8_t		flags2;
+	uint16_t	ext_flags;
 	uint8_t		id;
-	uint8_t		reserved2[30];
+	uint8_t		reserved3[23];
 	uint32_t	lifetime;
-	uint8_t		ofdm_mask;
-	uint8_t		cck_mask;
-	uint16_t	reserved3[3];
+	uint32_t	reserved4;
+	uint8_t		reserved5;
+	uint8_t		reserved6;
+	uint8_t		reserved7;
+	uint16_t	reserved8[9];
 	uint16_t	tim;
 	uint8_t		timsz;
-	uint8_t		reserved4;
+	uint8_t		reserved9;
 	struct		ieee80211_frame wh;
 } __packed;
 
@@ -654,6 +662,14 @@ struct iwn_tx_stat {
 	uint16_t	reserved;
 	uint32_t	power[2];
 	uint32_t	status;
+	/* from FreeBSD driver... XXX */
+#define IWN_TX_SUCCESS                  0x00
+#define IWN_TX_FAIL                     0x80    /* all failures have 0x80 set */
+#define IWN_TX_FAIL_SHORT_LIMIT         0x82    /* too many RTS retries */
+#define IWN_TX_FAIL_LONG_LIMIT          0x83    /* too many retries */
+#define IWN_TX_FAIL_FIFO_UNDERRRUN      0x84    /* tx fifo not kept running */
+#define IWN_TX_FAIL_DEST_IN_PS          0x88    /* sta found in power save */
+#define IWN_TX_FAIL_TX_LOCKED           0x90    /* waiting to see traffic */
 } __packed;
 
 /* structure for IWN_BEACON_MISSED notification */

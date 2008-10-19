@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.14 2008/02/02 08:58:20 sekiya Exp $	*/
+/*	$NetBSD: mace.c,v 1.14.16.1 2008/10/19 22:15:55 haad Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.14 2008/02/02 08:58:20 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.14.16.1 2008/10/19 22:15:55 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,9 +121,9 @@ mace_match(struct device *parent, struct cfdata *match, void *aux)
 	 * The MACE is in the O2.
 	 */
 	if (mach_type == MACH_SGI_IP32)
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -131,7 +131,7 @@ mace_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mace_softc *sc = (struct mace_softc *)self;
 	struct mainbus_attach_args *ma = aux;
-	u_int32_t scratch;
+	uint32_t scratch;
 
 #ifdef BLINK
 	callout_init(&mace_blink_ch, 0);
@@ -267,7 +267,7 @@ mace_intr_disestablish(void *cookie)
 		if (&maceintrtab[i] == cookie) {
 			evcnt_detach(&maceintrtab[i].evcnt);
 			for (intr = 0;
-			    maceintrtab[i].irq == (1 << intr); intr ++);
+			    maceintrtab[i].irq == (1 << intr); intr++);
 			level = maceintrtab[i].intrmask;
 			irq = maceintrtab[i].irq;
 
@@ -275,8 +275,8 @@ mace_intr_disestablish(void *cookie)
 			maceintrtab[i].intrmask = 0;
 		        maceintrtab[i].func = NULL;
 		        maceintrtab[i].arg = NULL;
-			bzero(&maceintrtab[i].evcnt, sizeof (struct evcnt));
-			bzero(&maceintrtab[i].evname,
+			memset(&maceintrtab[i].evcnt, 0, sizeof (struct evcnt));
+			memset(&maceintrtab[i].evname, 0,
 			    sizeof (maceintrtab[i].evname));
 			break;
 		}
@@ -296,14 +296,14 @@ mace_intr_disestablish(void *cookie)
 void
 mace_intr(int irqs)
 {
-	u_int64_t isa_irq, isa_mask;
+	uint64_t isa_irq, isa_mask;
 	int i;
 
 	/* irq 4 is the ISA cascade interrupt.  Must handle with care. */
 	if (irqs & (1 << 4)) {
-		isa_mask = mips3_ld((u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
+		isa_mask = mips3_ld((uint64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
 		    + MACE_ISA_INT_MASK));
-		isa_irq = mips3_ld((u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
+		isa_irq = mips3_ld((uint64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
 		    + MACE_ISA_INT_STATUS));
 		for (i = 0; i < MACE_NINTR; i++) {
 			if ((maceintrtab[i].irq == (1 << 4)) &&

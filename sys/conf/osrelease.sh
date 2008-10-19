@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.112 2008/04/30 13:10:59 martin Exp $
+#	$NetBSD: osrelease.sh,v 1.112.6.1 2008/10/19 22:16:18 haad Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,13 +33,20 @@
 # We use the number specified in <sys/param.h>
 
 AWK=${AWK:-awk}
-GREP=${GREP:-grep}
+SED=${TOOL_SED:-sed}
 PARAMH="`dirname $0`"/../sys/param.h
 release=`$AWK '/^#define[ 	]*__NetBSD_Version__/ { print $6 }' $PARAMH`
 
+# default: return nn.nn.nn
+# -m: return the major number -- -current is the number of the next release
+# -s: return nnnnnn (no dots)
+
 case $1 in
+-m)
+	echo $release | $AWK -F. '{print int($1+$2/100+0.01)}'
+	;;
 -s)
-	echo $release | sed -e 's,\.,,g'
+	echo $release | $SED -e 's,\.,,g'
 	;;
 *)
 	echo $release

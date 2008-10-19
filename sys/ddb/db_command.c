@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.115 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: db_command.c,v 1.115.6.1 2008/10/19 22:16:18 haad Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,11 +58,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.115 2008/04/28 20:23:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.115.6.1 2008/10/19 22:16:18 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_inet.h"
+#include "opt_uvmhist.h"
 #include "opt_ddbparam.h"
 
 #include <sys/param.h>
@@ -131,7 +132,7 @@ db_addr_t	db_next;
   a) standard commands without subcommands -> reboot
   b) show commands which are subcommands of show command -> show aio_jobs
   c) if defined machine specific commands
-  
+
   ddb_add_cmd, ddb_rem_cmd use type (DDB_SHOW_CMD||DDB_BASE_CMD)argument to
   add them to representativ lists.
 */
@@ -207,6 +208,9 @@ static void	db_stack_trace_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_sync_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_whatis_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_uvmexp_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+#ifdef UVMHIST
+static void	db_uvmhist_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+#endif
 static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
@@ -233,12 +237,17 @@ static const struct db_command db_show_cmds[] = {
 	    "Print the struct buf at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("event",	db_event_print_cmd,	0,
 	    "Print all the non-zero evcnt(9) event counters.", "[/f]",NULL) },
+	{ DDB_ADD_CMD("files", db_show_files_cmd,	0,
+	    "Print the files open by process at address",
+	    "[/f] address", NULL) },
 	{ DDB_ADD_CMD("lock",	db_lock_print_cmd,	0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("malloc",	db_malloc_print_cmd,0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
 	    "Print the vm_map at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("mount",	db_mount_print_cmd,	0,
 	    "Print the mount structure at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("mqueue", db_show_mqueue_cmd,	0,
+	    "Print the message queues", NULL, NULL) },
 	{ DDB_ADD_CMD("mbuf",	db_mbuf_print_cmd,	0,NULL,NULL,
 	    "-c prints all mbuf chains") },
 	{ DDB_ADD_CMD("ncache",	db_namecache_print_cmd,	0,
@@ -257,6 +266,11 @@ static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("uvmexp",	db_uvmexp_print_cmd, 0,
 	    "Print a selection of UVM counters and statistics.",
 	    NULL,NULL) },
+#ifdef UVMHIST
+	{ DDB_ADD_CMD("uvmhist", db_uvmhist_print_cmd, 0,
+	    "Print the UVM history logs.",
+	    NULL,NULL) },
+#endif
 	{ DDB_ADD_CMD("vnode",	db_vnode_print_cmd,	0,
 	    "Print the vnode at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("watches",	db_listwatch_cmd, 	0,
@@ -519,13 +533,13 @@ db_unregister_tbl(uint8_t type,const struct db_command *cmd_tbl)
 		}
 	}
 	return ENOENT;
-}		
+}
 
 /*This function is called from machine trap code.*/
 void
 db_command_loop(void)
 {
-  
+
 	label_t	db_jmpbuf;
 	label_t	*savejmp;
 
@@ -580,7 +594,7 @@ static int
 db_cmd_search(const char *name,const struct db_command *table,
     const struct db_command **cmdp)
 {
-  
+
 	const struct db_command	*cmd;
 	int result;
 
@@ -652,7 +666,7 @@ db_cmd_list(const struct db_cmd_tbl_en_head *list)
 		for (numcmds = 0; table[numcmds].name != NULL; numcmds++)
 			;
 		lines = (numcmds + columns - 1) / columns;
-	
+
 		for (i = 0; i < lines; i++) {
 			for (j = 0; j < columns; j++) {
 				p = table[j * lines + i].name;
@@ -739,16 +753,16 @@ db_command(const struct db_command **last_cmdp)
 	const struct db_command *command;
 	struct db_cmd_tbl_en *list_ent;
 	struct db_cmd_tbl_en_head *list;
-  
+
 	int		t;
 	int		result;
-	
+
 	char		modif[TOK_STRING_SIZE];
 	db_expr_t	addr, count;
 	bool		have_addr = false;
 
 	static db_expr_t last_count = 0;
-  
+
 	command = NULL;	/* XXX gcc */
 
 	t = db_read_token();
@@ -801,7 +815,7 @@ db_command(const struct db_command **last_cmdp)
 			if (t != tIDENT) {
 				/* if only show command is executed, print
 				   all subcommands */
-				db_cmd_list(list); 
+				db_cmd_list(list);
 				db_flush_lex();
 				return;
 			}
@@ -818,11 +832,11 @@ db_command(const struct db_command **last_cmdp)
 				db_cmd_list(list);
 				db_flush_lex();
 				return;
-			}	
+			}
 			break;
 		default:
 			db_printf("No such command\n");
-			db_flush_lex();                 
+			db_flush_lex();
 			return;
 		}
 
@@ -838,7 +852,7 @@ db_command(const struct db_command **last_cmdp)
 
 		}
 
-                /* check compatibility flag */
+		/* check compatibility flag */
 		if (command && command->flag & CS_COMPAT){
 			t = db_read_token();
 			if (t != tIDENT) {
@@ -864,7 +878,7 @@ db_command(const struct db_command **last_cmdp)
 			 * command [/modifier] [addr] [,count]
 			 */
 			t = db_read_token(); /* get modifier */
-			if (t == tSLASH) { 
+			if (t == tSLASH) {
 				t = db_read_token();
 				if (t != tIDENT) {
 					db_printf("Bad modifier\n");
@@ -873,7 +887,7 @@ db_command(const struct db_command **last_cmdp)
 				}
 				/* save modifier */
 				strlcpy(modif, db_tok_string, sizeof(modif));
-		
+
 			} else {
 				db_unread_token(t);
 				modif[0] = '\0';
@@ -895,7 +909,7 @@ db_command(const struct db_command **last_cmdp)
 					db_flush_lex();
 					return;
 				}
-			} else { 
+			} else {
 				db_unread_token(t);
 				count = -1;
 			}
@@ -946,12 +960,12 @@ static void
 db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
     const char *modif)
 {
-  
+
 	const struct db_cmd_tbl_en_head *list;
 	const struct db_cmd_tbl_en *list_ent;
 	const struct db_command *help = NULL;
 	int t, result;
-  
+
 	t = db_read_token();
 	/* is there another command after the "help"? */
 	if (t == tIDENT){
@@ -964,20 +978,20 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		case DDB_SHOW_CMD:
 			list=&db_show_cmd_list;
 			/* read the show subcommand */
-			t = db_read_token(); 
+			t = db_read_token();
 
 			if (t != tIDENT) {
 				/* no subcommand, print the list */
 				db_cmd_list(list);
 				db_flush_lex();
 				return;
-			}	
-			
+			}
+
 			break;
 		case DDB_MACH_CMD:
 			list=&db_mach_cmd_list;
 			/* read machine subcommand */
-			t = db_read_token(); 
+			t = db_read_token();
 
 			if (t != tIDENT) {
 				/* no subcommand - just print the list */
@@ -992,7 +1006,7 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 			db_flush_lex();
 			return;
 		}
- COMPAT_RET:		
+ COMPAT_RET:
 		TAILQ_FOREACH(list_ent,list,db_cmd_next){
 			result = db_cmd_search(db_tok_string, list_ent->db_cmd,
 					&help);
@@ -1008,7 +1022,7 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		if (help->cmd_descr != NULL)
 			db_printf(" Description: %s\n",help->cmd_descr);
-		
+
 		if (help->cmd_arg != NULL)
 			db_printf(" Arguments: %s\n",help->cmd_arg);
 
@@ -1041,11 +1055,11 @@ db_help_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		} else {
 			db_skip_to_eol();
 		}
-		
+
 	} else /* t != tIDENT */
 		/* print base commands */
 		db_cmd_list(&db_base_cmd_list);
-		
+
 	return;
 }
 
@@ -1060,9 +1074,9 @@ db_map_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		full = true;
 
 	if (have_addr == false)
-		addr = (db_expr_t)(intptr_t) kernel_map;
+		addr = (db_expr_t)(uintptr_t) kernel_map;
 
-	uvm_map_printit((struct vm_map *)(intptr_t) addr, full, db_printf);
+	uvm_map_printit((struct vm_map *)(uintptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1091,7 +1105,7 @@ db_object_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
-	uvm_object_printit((struct uvm_object *)(intptr_t) addr, full,
+	uvm_object_printit((struct uvm_object *)(uintptr_t) addr, full,
 	    db_printf);
 }
 
@@ -1105,7 +1119,7 @@ db_page_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
-	uvm_page_printit((struct vm_page *)(intptr_t) addr, full, db_printf);
+	uvm_page_printit((struct vm_page *)(uintptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1127,7 +1141,7 @@ db_buf_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
-	vfs_buf_print((struct buf *)(intptr_t) addr, full, db_printf);
+	vfs_buf_print((struct buf *)(uintptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1153,7 +1167,7 @@ db_vnode_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
-	vfs_vnode_print((struct vnode *)(intptr_t) addr, full, db_printf);
+	vfs_vnode_print((struct vnode *)(uintptr_t) addr, full, db_printf);
 }
 
 static void
@@ -1165,7 +1179,7 @@ db_mount_print_cmd(db_expr_t addr, bool have_addr,
 	if (modif[0] == 'f')
 		full = true;
 
-	vfs_mount_print((struct mount *)(intptr_t) addr, full, db_printf);
+	vfs_mount_print((struct mount *)(uintptr_t) addr, full, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1174,7 +1188,7 @@ db_mbuf_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-	m_print((const struct mbuf *)(intptr_t) addr, modif, db_printf);
+	m_print((const struct mbuf *)(uintptr_t) addr, modif, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1183,7 +1197,7 @@ db_pool_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-	pool_printit((struct pool *)(intptr_t) addr, modif, db_printf);
+	pool_printit((struct pool *)(uintptr_t) addr, modif, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1192,7 +1206,7 @@ db_namecache_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-	namecache_print((struct vnode *)(intptr_t) addr, db_printf);
+	namecache_print((struct vnode *)(uintptr_t) addr, db_printf);
 }
 
 /*ARGSUSED*/
@@ -1203,6 +1217,17 @@ db_uvmexp_print_cmd(db_expr_t addr, bool have_addr,
 
 	uvmexp_print(db_printf);
 }
+
+#ifdef UVMHIST
+/*ARGSUSED*/
+static void
+db_uvmhist_print_cmd(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+
+	uvmhist_print(db_printf);
+}
+#endif
 
 /*ARGSUSED*/
 static void
@@ -1235,7 +1260,7 @@ db_fncall(db_expr_t addr, bool have_addr,
 		db_flush_lex();
 		return;
 	}
-	func = (db_expr_t (*)(db_expr_t, ...))(intptr_t) fn_addr;
+	func = (db_expr_t (*)(db_expr_t, ...))(uintptr_t) fn_addr;
 
 	t = db_read_token();
 	if (t == tLPAREN) {

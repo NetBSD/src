@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.42 2008/05/18 19:54:11 jmcneill Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.42.4.1 2008/10/19 22:16:40 haad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.42 2008/05/18 19:54:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.42.4.1 2008/10/19 22:16:40 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.42 2008/05/18 19:54:11 jmcneill Exp $"
 #include "opt_vga.h"
 
 #ifdef VGA_POST
+#  if defined(__i386__) || defined(__amd64__)
+#    include "acpi.h"
+#  endif
 #include <x86/vga_post.h>
 #endif
 
@@ -263,12 +266,15 @@ vga_pci_rescan(struct device *self, const char *ifattr, const int *locators)
 static bool
 vga_pci_resume(device_t dv PMF_FN_ARGS)
 {
+#if defined(VGA_POST) && NACPI > 0
+	extern int acpi_md_vbios_reset;
+#endif
 	struct vga_pci_softc *sc = device_private(dv);
 
 	vga_resume(&sc->sc_vga);
 
-#ifdef VGA_POST
-	if (sc->sc_posth != NULL)
+#if defined(VGA_POST) && NACPI > 0
+	if (sc->sc_posth != NULL && acpi_md_vbios_reset == 2)
 		vga_post_call(sc->sc_posth);
 #endif
 

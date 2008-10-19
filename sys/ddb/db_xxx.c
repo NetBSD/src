@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.48 2007/12/02 19:35:33 ad Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.48.24.1 2008/10/19 22:16:18 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.48 2007/12/02 19:35:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.48.24.1 2008/10/19 22:16:18 haad Exp $");
 
 #include "opt_kgdb.h"
 
@@ -48,11 +48,15 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.48 2007/12/02 19:35:33 ad Exp $");
 #include <sys/msgbuf.h>
 
 #include <sys/callout.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/lockdebug.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/pool.h>
 #include <sys/kauth.h>
 #include <sys/mqueue.h>
+#include <sys/vnode.h>
 
 #include <machine/db_machdep.h>
 
@@ -116,6 +120,47 @@ db_kgdb_cmd(db_expr_t addr, bool haddr,
 #endif
 
 void
+db_show_files_cmd(db_expr_t addr, bool haddr,
+	      db_expr_t count, const char *modif)
+{
+	struct proc *p;
+	int i;
+	filedesc_t *fdp;
+	fdfile_t *ff;
+	file_t *fp;
+	struct vnode *vn;
+	bool full = false;
+
+	if (modif[0] == 'f')
+		full = true;
+
+	p = (struct proc *) (uintptr_t) addr;
+
+	fdp = p->p_fd;
+	for (i = 0; i < fdp->fd_nfiles; i++) {
+		if ((ff = fdp->fd_ofiles[i]) == NULL)
+			continue;
+
+		fp = ff->ff_file;
+
+		/* Only look at vnodes... */
+		if ((fp != NULL) && (fp->f_type == DTYPE_VNODE)) {
+			if (fp->f_data != NULL) {
+				vn = (struct vnode *) fp->f_data;
+				vfs_vnode_print(vn, full, db_printf);
+
+#ifdef LOCKDEBUG
+				db_printf("\nv_uobj.vmobjlock lock details:\n");
+				lockdebug_lock_print(&(vn->v_uobj.vmobjlock),
+					     db_printf);
+				db_printf("\n");
+#endif
+			}
+		}
+	}
+}
+
+void
 db_show_aio_jobs(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
@@ -137,7 +182,7 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 	struct proc *p, *pp, *cp;
 	struct lwp *l, *cl;
 	const struct proclist_desc *pd;
-	char nbuf[MAXCOMLEN + 1];
+	char db_nbuf[MAXCOMLEN + 1];
 
 	if (modif[0] == 0)
 		mode = "n";			/* default == normal mode */
@@ -197,14 +242,17 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 			case 'l':
 				 while (l != NULL) {
 				 	if (l->l_name != NULL) {
-				 		snprintf(nbuf, sizeof(nbuf),
+				 		snprintf(db_nbuf,
+							 sizeof(db_nbuf),
 				 		    "%s", l->l_name);
 					} else
-				 		snprintf(nbuf, sizeof(nbuf),
+				 		snprintf(db_nbuf,
+						    sizeof(db_nbuf),
 				 		    "%s", p->p_comm);
 					db_printf("%c%4d %d %9x %18lx %18s %-8s\n",
 					    (cl == l ? '>' : ' '), l->l_lid,
-					    l->l_stat, l->l_flag, (long)l, nbuf,
+					    l->l_stat, l->l_flag, (long)l,
+						  db_nbuf,
 					    (l->l_wchan && l->l_wmesg) ?
 					    l->l_wmesg : "");
 

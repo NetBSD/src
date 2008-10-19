@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.46 2006/11/20 19:58:38 hauke Exp $	*/
+/*	$NetBSD: clock.c,v 1.46.62.1 2008/10/19 22:15:51 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46 2006/11/20 19:58:38 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46.62.1 2008/10/19 22:15:51 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -234,11 +234,7 @@ via1_t2_get_timecount(struct timecounter *tc)
 	uint8_t high, high2, low;
 	int s;
 
-	/*
-	 * Make the timer access atomic
-	 *
-	 * XXX How expensive is this? And is it really necessary?
-	 */
+	/* Guard HW timer access */
 	s = splhigh();
 	
 	high = via_reg(VIA1, vT2CH);

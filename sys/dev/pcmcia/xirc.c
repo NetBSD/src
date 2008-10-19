@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.24 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: xirc.c,v 1.24.6.1 2008/10/19 22:17:03 haad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.24 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.24.6.1 2008/10/19 22:17:03 haad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -473,13 +473,13 @@ xirc_intr(arg)
 #if NCOM_XIRC > 0
 	if (sc->sc_modem != NULL &&
 	    (sc->sc_flags & XIRC_MODEM_ENABLED) != 0)
-		rval |= comintr(sc->sc_modem);
+		rval |= comintr(device_private(sc->sc_modem));
 #endif
 
 #if NXI_XIRC > 0
 	if (sc->sc_ethernet != NULL &&
 	    (sc->sc_flags & XIRC_ETHERNET_ENABLED) != 0)
-		rval |= xi_intr(sc->sc_ethernet);
+		rval |= xi_intr(device_private(sc->sc_ethernet));
 #endif
 
 	return (rval);

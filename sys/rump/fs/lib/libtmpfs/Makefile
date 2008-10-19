@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 2007/08/07 10:16:58 pooka Exp $
+#	$NetBSD: Makefile,v 1.2.40.1 2008/10/19 22:18:06 haad Exp $
 #
 
-.include <bsd.own.mk>
+.PATH:	${.CURDIR}/../../../../fs/tmpfs
 
-LIB=	tmpfs
-
-.PATH:	${NETBSDSRCDIR}/sys/fs/tmpfs
+LIB=	rumpfs_tmpfs
 
 SRCS=	tmpfs_fifoops.c tmpfs_specops.c tmpfs_vfsops.c tmpfs_pool.c	\
 	tmpfs_subr.c tmpfs_vnops.c

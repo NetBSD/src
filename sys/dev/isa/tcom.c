@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.16 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: tcom.c,v 1.16.6.1 2008/10/19 22:16:36 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.16 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.16.6.1 2008/10/19 22:16:36 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,28 +91,27 @@ __KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.16 2008/04/28 20:23:52 martin Exp $");
 #define	STATUS_SIZE	8		/* 8 bytes reserved for irq status */
 
 struct tcom_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_ih;
 
 	bus_space_tag_t sc_iot;
 	int sc_iobase;
 
 	int sc_alive;			/* mask of slave units attached */
-	void *sc_slaves[NSLAVES];	/* com device unit numbers */
+	void *sc_slaves[NSLAVES];	/* com device softc pointers */
 	bus_space_handle_t sc_slaveioh[NSLAVES];
 	bus_space_handle_t sc_statusioh;
 };
 
-int tcomprobe(struct device *, struct cfdata *, void *);
-void tcomattach(struct device *, struct device *, void *);
+int tcomprobe(struct device *, cfdata_t, void *);
+void tcomattach(struct device *, device_t, void *);
 int tcomintr(void *);
 
-CFATTACH_DECL(tcom, sizeof(struct tcom_softc),
+CFATTACH_DECL_NEW(tcom, sizeof(struct tcom_softc),
     tcomprobe, tcomattach, NULL, NULL);
 
 int
-tcomprobe(struct device *parent, struct cfdata *self,
-    void *aux)
+tcomprobe(struct device *parent, cfdata_t self, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -181,16 +180,18 @@ out:
 }
 
 void
-tcomattach(struct device *parent, struct device *self, void *aux)
+tcomattach(struct device *parent, device_t self, void *aux)
 {
-	struct tcom_softc *sc = (void *)self;
+	struct tcom_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
 	bus_space_tag_t iot = ia->ia_iot;
 	int i, iobase;
+	device_t slave;
 
 	printf("\n");
 
+	sc->sc_dev = self;
 	sc->sc_iot = ia->ia_iot;
 	sc->sc_iobase = ia->ia_io[0].ir_addr;
 
@@ -199,14 +200,14 @@ tcomattach(struct device *parent, struct device *self, void *aux)
 		if (!com_is_console(iot, iobase, &sc->sc_slaveioh[i]) &&
 		    bus_space_map(iot, iobase, COM_NPORTS, 0,
 			&sc->sc_slaveioh[i])) {
-			aprint_error_dev(&sc->sc_dev, "can't map i/o space for slave %d\n", i);
+			aprint_error_dev(sc->sc_dev, "can't map i/o space for slave %d\n", i);
 			return;
 		}
 	}
 
 	if (bus_space_map(iot, sc->sc_iobase + STATUS_OFFSET, STATUS_SIZE, 0,
 	    &sc->sc_statusioh)) {
-		aprint_error_dev(&sc->sc_dev, "can't map status space\n");
+		aprint_error_dev(sc->sc_dev, "can't map status space\n");
 		return;
 	}
 
@@ -217,9 +218,11 @@ tcomattach(struct device *parent, struct device *self, void *aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 0;
 
-		sc->sc_slaves[i] = config_found(self, &ca, commultiprint);
-		if (sc->sc_slaves[i] != NULL)
+		slave = config_found(self, &ca, commultiprint);
+		if (slave != NULL) {
 			sc->sc_alive |= 1 << i;
+			sc->sc_slaves[i] = device_private(slave);
+		}
 	}
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,

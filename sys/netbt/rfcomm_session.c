@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.13 2008/04/24 11:38:37 ad Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.13.8.1 2008/10/19 22:17:46 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,12 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.13 2008/04/24 11:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.13.8.1 2008/10/19 22:17:46 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+#include <sys/socketvar.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 
@@ -162,6 +163,7 @@ rfcomm_session_alloc(struct rfcomm_session_list *list,
 			struct sockaddr_bt *laddr)
 {
 	struct rfcomm_session *rs;
+	struct sockopt sopt;
 	int err;
 
 	rs = malloc(sizeof(*rs), M_BLUETOOTH, M_NOWAIT | M_ZERO);
@@ -182,7 +184,10 @@ rfcomm_session_alloc(struct rfcomm_session_list *list,
 		return NULL;
 	}
 
-	(void)l2cap_getopt(rs->rs_l2cap, SO_L2CAP_OMTU, &rs->rs_mtu);
+	sockopt_init(&sopt, BTPROTO_L2CAP, SO_L2CAP_OMTU, 0);
+	(void)l2cap_getopt(rs->rs_l2cap, &sopt);
+	(void)sockopt_get(&sopt, &rs->rs_mtu, sizeof(rs->rs_mtu));
+	sockopt_destroy(&sopt);
 
 	if (laddr->bt_psm == L2CAP_PSM_ANY)
 		laddr->bt_psm = L2CAP_PSM_RFCOMM;
@@ -334,6 +339,7 @@ static void
 rfcomm_session_connected(void *arg)
 {
 	struct rfcomm_session *rs = arg;
+	struct sockopt sopt;
 
 	DPRINTF("Connected\n");
 
@@ -346,7 +352,10 @@ rfcomm_session_connected(void *arg)
 	 * We must take note of the L2CAP MTU because currently
 	 * the L2CAP implementation can only do Basic Mode.
 	 */
-	l2cap_getopt(rs->rs_l2cap, SO_L2CAP_OMTU, &rs->rs_mtu);
+	sockopt_init(&sopt, BTPROTO_L2CAP, SO_L2CAP_OMTU, 0);
+	(void)l2cap_getopt(rs->rs_l2cap, &sopt);
+	(void)sockopt_get(&sopt, &rs->rs_mtu, sizeof(rs->rs_mtu));
+	sockopt_destroy(&sopt);
 
 	rs->rs_mtu -= 6; /* (RFCOMM overhead could be this big) */
 	if (rs->rs_mtu < RFCOMM_MTU_MIN) {

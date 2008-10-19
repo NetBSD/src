@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.41 2008/06/25 13:16:58 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.41.2.1 2008/10/19 22:18:06 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -47,13 +47,16 @@
 #include <sys/cpu.h>
 #include <sys/kmem.h>
 #include <sys/poll.h>
+#include <sys/tprintf.h>
+#include <sys/timetc.h>
 
 #include <machine/stdarg.h>
+
+#include <rump/rumpuser.h>
 
 #include <uvm/uvm_map.h>
 
 #include "rump_private.h"
-#include "rumpuser.h"
 
 time_t time_second = 1;
 
@@ -62,17 +65,13 @@ struct lwp lwp0;
 struct vnode *rootvp;
 struct device *root_device;
 dev_t rootdev;
-struct vm_map *kernel_map;
 int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
 int hardclock_ticks;
-
-MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
-MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
-MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
-MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");
+bool mp_online = false;
+struct vm_map *mb_map;
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
@@ -116,6 +115,13 @@ log(int level, const char *fmt, ...)
 }
 
 void
+vlog(int level, const char *fmt, va_list ap)
+{
+
+	vprintf(fmt, ap);
+}
+
+void
 uprintf(const char *fmt, ...)
 {
 	va_list ap;
@@ -123,6 +129,30 @@ uprintf(const char *fmt, ...)
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
+}
+
+/* relegate this to regular printf */
+tpr_t
+tprintf_open(struct proc *p)
+{
+
+	return (tpr_t)0x111;
+}
+
+void
+tprintf(tpr_t tpr, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void
+tprintf_close(tpr_t tpr)
+{
+
 }
 
 void
@@ -175,6 +205,28 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	strlcpy(kaddr, uaddr, len);
 	if (done)
 		*done = strlen(kaddr)+1; /* includes termination */
+	return 0;
+}
+
+int
+copyin_vmspace(struct vmspace *vm, const void *uaddr, void *kaddr, size_t len)
+{
+
+	return copyin(uaddr, kaddr, len);
+}
+
+int
+copyout_vmspace(struct vmspace *vm, const void *kaddr, void *uaddr, size_t len)
+{
+
+	return copyout(kaddr, uaddr, len);
+}
+
+int
+kcopy(const void *src, void *dst, size_t len)
+{
+
+	memcpy(dst, src, len);
 	return 0;
 }
 
@@ -336,8 +388,6 @@ struct kthdesc {
 	struct lwp *mylwp;
 };
 
-static lwpid_t curlid = 2;
-
 static void *
 threadbouncer(void *arg)
 {
@@ -362,19 +412,19 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct lwp *l;
 	int rv;
 
-#ifdef RUMP_WITHOUT_THREADS
-	/* fake them */
-	if (strcmp(fmt, "vrele") == 0) {
-		printf("rump warning: threads not enabled, not starting "
-		   "vrele thread\n");
-		return 0;
-	} else if (strcmp(fmt, "cachegc") == 0) {
-		printf("rump warning: threads not enabled, not starting "
-		   "namecache g/c thread\n");
-		return 0;
-	} else
-		panic("threads not available, undef RUMP_WITHOUT_THREADS");
-#endif
+	if (!rump_threads) {
+		/* fake them */
+		if (strcmp(fmt, "vrele") == 0) {
+			printf("rump warning: threads not enabled, not starting"
+			   " vrele thread\n");
+			return 0;
+		} else if (strcmp(fmt, "cachegc") == 0) {
+			printf("rump warning: threads not enabled, not starting"
+			   " namecache g/c thread\n");
+			return 0;
+		} else
+			panic("threads not available, setenv RUMP_THREADS 1");
+	}
 
 	KASSERT(fmt != NULL);
 	if (ci != NULL)
@@ -383,7 +433,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k = kmem_alloc(sizeof(struct kthdesc), KM_SLEEP);
 	k->f = func;
 	k->arg = arg;
-	k->mylwp = l = rump_setup_curlwp(0, curlid++, 0);
+	k->mylwp = l = rump_setup_curlwp(0, rump_nextlid(), 0);
 	rv = rumpuser_thread_create(threadbouncer, k);
 	if (rv)
 		return rv;
@@ -400,27 +450,6 @@ kthread_exit(int ecode)
 	rumpuser_thread_exit();
 }
 
-void
-callout_init(callout_t *c, u_int flags)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-void
-callout_reset(callout_t *c, int ticks, void (*func)(void *), void *arg)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
-bool
-callout_stop(callout_t *c)
-{
-
-	panic("%s: not implemented", __func__);
-}
-
 struct proc *
 p_find(pid_t pid, uint flags)
 {
@@ -433,6 +462,18 @@ pg_find(pid_t pid, uint flags)
 {
 
 	panic("%s: not implemented", __func__);
+}
+
+void
+psignal(struct proc *p, int signo)
+{
+
+	switch (signo) {
+	case SIGSYS:
+		break;
+	default:
+		panic("unhandled signal %d", signo);
+	}
 }
 
 void
@@ -461,6 +502,13 @@ sigispending(struct lwp *l, int signo)
 {
 
 	return 0;
+}
+
+void
+sigpending1(struct lwp *l, sigset_t *ss)
+{
+
+	panic("%s: not implemented", __func__);
 }
 
 void
@@ -507,14 +555,6 @@ suspendsched()
 
 	panic("%s: not implemented", __func__);
 }
-
-void
-yield(void)
-{
-
-	rumpuser_yield();
-}
-
 
 u_int
 lwp_unsleep(lwp_t *l, bool cleanup)
@@ -574,4 +614,40 @@ assert_sleepable(void)
 {
 
 	/* always sleepable, although we should improve this */
+}
+
+int
+devsw_attach(const char *devname, const struct bdevsw *bdev, int *bmajor,
+	const struct cdevsw *cdev, int *cmajor)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+devsw_detach(const struct bdevsw *bdev, const struct cdevsw *cdev)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+tc_setclock(struct timespec *ts)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+proc_crmod_enter()
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+proc_crmod_leave(kauth_cred_t c1, kauth_cred_t c2, bool sugid)
+{
+
+	panic("%s: not implemented", __func__);
 }

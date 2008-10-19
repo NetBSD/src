@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.14 2005/12/11 12:19:30 christos Exp $ */
+/*	$NetBSD: devopen.c,v 1.14.84.1 2008/10/19 22:16:06 haad Exp $ */
 /*
  * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -184,9 +184,11 @@ devopen(f, fname, file)
 		csrbase = 0x20000000;
 		/* Always map in the lowest 4M on qbus-based machines */
 		mapregs = (void *)0x20088000;
-		if (bootrpb.adpphy == 0x20087800)
+		if (bootrpb.adpphy == 0x20087800) {
+			nexaddr = bootrpb.adpphy;
 			for (i = 0; i < 8192; i++)
 				mapregs[i] = PG_V | i;
+		}
 		break;
 	}
 

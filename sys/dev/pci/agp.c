@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.59 2008/06/09 06:49:54 freza Exp $	*/
+/*	$NetBSD: agp.c,v 1.59.4.1 2008/10/19 22:16:37 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.59 2008/06/09 06:49:54 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.59.4.1 2008/10/19 22:16:37 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,6 +166,8 @@ const struct agp_product {
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82945GM_HB,
 	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82945GME_HB,
+	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82965Q_HB,
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82965PM_HB,
@@ -177,6 +179,8 @@ const struct agp_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82G33_HB,
 	  NULL,			agp_i810_attach },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82Q33_HB,
+	  NULL,			agp_i810_attach },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82946GZ_HB,
 	  NULL,			agp_i810_attach },
 #endif
 
@@ -381,8 +385,10 @@ agp_alloc_gatt(struct agp_softc *sc)
 
 	if (agp_alloc_dmamem(sc->as_dmat, entries * sizeof(u_int32_t),
 	    0, &gatt->ag_dmamap, &virtual, &gatt->ag_physical,
-	    &gatt->ag_dmaseg, 1, &dummyseg) != 0)
+	    &gatt->ag_dmaseg, 1, &dummyseg) != 0) {
+		free(gatt, M_AGP);
 		return NULL;
+	}
 	gatt->ag_virtual = (uint32_t *)virtual;
 
 	gatt->ag_size = entries * sizeof(u_int32_t);

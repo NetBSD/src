@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.27 2008/05/28 12:48:21 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.27.4.1 2008/10/19 22:16:13 haad Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27 2008/05/28 12:48:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.27.4.1 2008/10/19 22:16:13 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -332,7 +332,7 @@ cpu_vm_init(struct cpu_info *ci)
 	 */
 	if (ncolors <= uvmexp.ncolors)
 		return;
-	printf("%s: %d page colors\n", device_xname(ci->ci_dev), ncolors);
+	aprint_debug_dev(ci->ci_dev, "%d page colors\n", ncolors);
 	uvm_page_recolor(ncolors);
 }
 

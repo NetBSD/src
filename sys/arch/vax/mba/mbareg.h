@@ -1,4 +1,4 @@
-/*	$NetBSD: mbareg.h,v 1.4 2000/06/04 18:04:39 ragge Exp $ */
+/*	$NetBSD: mbareg.h,v 1.4.138.1 2008/10/19 22:16:06 haad Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
  * All rights reserved.
@@ -110,13 +110,13 @@ struct mba_regs {
 #define	MBADS_DPR	0x100		/* Unit present */
 
 /* Definitions in mba_device md_dt */
-#define	MBADT_RP04	0x10
-#define MBADT_RP05	0x11
-#define MBADT_RP06	0x12
-#define MBADT_RP07	0x22
-#define MBADT_RM02	0x15
-#define MBADT_RM03	0x14
-#define MBADT_RM05	0x17
-#define MBADT_RM80	0x16
+#define	MBADT_RP04	0x2010
+#define MBADT_RP05	0x2011
+#define MBADT_RP06	0x2012
+#define MBADT_RP07	0x2022
+#define MBADT_RM02	0x2015
+#define MBADT_RM03	0x2014
+#define MBADT_RM05	0x2017
+#define MBADT_RM80	0x2016
 #define	MBADT_DRQ	0x800		/* Dual ported */
 #define	MBADT_MOH	0x2000		/* Moving head device */

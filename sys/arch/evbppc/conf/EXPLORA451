@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.34 2008/04/04 10:21:40 tsutsui Exp $
+#	$NetBSD: EXPLORA451,v 1.34.10.1 2008/10/19 22:15:44 haad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -99,6 +99,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support.
+options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

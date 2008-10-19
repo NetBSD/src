@@ -1,12 +1,13 @@
-	$NetBSD: TODO,v 1.1 2007/09/10 21:18:55 pooka Exp $
+	$NetBSD: TODO,v 1.1.38.1 2008/10/19 22:17:59 haad Exp $
 
 * fix the build structure to work better on non-NetBSD
-* finish fs/bin/fsconsole
-  + figure out how to handle mount parameters in fs-independent
-    fashion (requires kernel changes)
-* compile more components directly out of the kernel source tree
-  + whole of vfs_subr?
-  + kern_lock?
-* support ltsleep + locking primitives which might need to sleep
-  (only lfs needs this currently)
-* support nfs
+* figure out how to handle mount parameters in fs-independent
+  fashion (requires kernel changes)
+* integrate build framework with config(1) to stop the need to
+  maintain a separate build infrastructure
+* dlopen libraries instead of linking where it makes sense
+  + makes a difference for e.g. "fsconsole"
+* support nfs (requires using the network stack in userspace)
+* find a better solution for rumpdefs.h, the sed "solution"
+  doesn't really scale nicely
+* add support to vnode_if.sh to produce rumpvnode_if instead of sed'ing

@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.8 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.8.4.1 2008/10/19 22:17:10 haad Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.8 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.8.4.1 2008/10/19 22:17:10 haad Exp $");
 
 #include <sys/param.h>
 
@@ -166,7 +166,7 @@ stuirda_fwload(struct uirda_softc *sc) {
 	printf("%s: Attempting to load firmware %s\n",
 		USBDEVNAME(sc->sc_dev), fwname);
 	
-	rc = firmware_open("uirda", fwname, &fh);
+	rc = firmware_open("stuirda", fwname, &fh);
 
 	if (rc) {
 		printf("%s: Cannot load firmware\n",
