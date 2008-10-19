@@ -1,4 +1,4 @@
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.8 2008/04/14 22:46:48 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-meta/init.c,v 1.58.2.10 2008/07/09 23:48:40 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1999-2008 The OpenLDAP Foundation.
@@ -93,6 +93,15 @@ meta_back_db_init(
 {
 	metainfo_t	*mi;
 	int		i;
+	BackendInfo	*bi;
+
+	bi = backend_info( "ldap" );
+	if ( !bi || !bi->bi_extra ) {
+		Debug( LDAP_DEBUG_ANY,
+			"meta_back_db_init: needs back-ldap\n",
+			0, 0, 0 );
+		return 1;
+	}
 
 	mi = ch_calloc( 1, sizeof( metainfo_t ) );
 	if ( mi == NULL ) {
@@ -127,6 +136,8 @@ meta_back_db_init(
 	}
 	mi->mi_conn_priv_max = LDAP_BACK_CONN_PRIV_DEFAULT;
 	
+	mi->mi_ldap_extra = (ldap_extra_t *)bi->bi_extra;
+
 	be->be_private = mi;
 
 	return 0;
@@ -138,7 +149,6 @@ meta_back_db_open(
 	ConfigReply	*cr )
 {
 	metainfo_t	*mi = (metainfo_t *)be->be_private;
-	BackendInfo *bi;
 
 	int		i,
 			not_always = 0,
@@ -152,15 +162,6 @@ meta_back_db_open(
 			0, 0, 0 );
 		return 1;
 	}
-
-	bi = backend_info( "ldap" );
-	if ( !bi || !bi->bi_extra ) {
-		Debug( LDAP_DEBUG_ANY,
-			"meta_back_db_open: needs back-ldap\n",
-			0, 0, 0 );
-		return 1;
-	}
-	mi->mi_ldap_extra = (ldap_extra_t *)bi->bi_extra;
 
 	for ( i = 0; i < mi->mi_ntargets; i++ ) {
 		slap_bindconf	sb = { BER_BVNULL };
@@ -383,7 +384,7 @@ meta_back_db_destroy(
 				if ( META_BACK_TGT_QUARANTINE( mt ) ) {
 					if ( mt->mt_quarantine.ri_num != mi->mi_quarantine.ri_num )
 					{
-						slap_retry_info_destroy( &mt->mt_quarantine );
+						mi->mi_ldap_extra->retry_info_destroy( &mt->mt_quarantine );
 					}
 
 					ldap_pvt_thread_mutex_destroy( &mt->mt_quarantine_mutex );
@@ -411,7 +412,7 @@ meta_back_db_destroy(
 		}
 
 		if ( META_BACK_QUARANTINE( mi ) ) {
-			slap_retry_info_destroy( &mi->mi_quarantine );
+			mi->mi_ldap_extra->retry_info_destroy( &mi->mi_quarantine );
 		}
 	}
 

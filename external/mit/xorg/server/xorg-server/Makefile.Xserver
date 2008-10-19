@@ -1,0 +1,105 @@
+#	$NetBSD: Makefile.Xserver,v 1.7.4.2 2008/10/19 22:41:17 haad Exp $
+
+# XXX old list
+.if 0
+.for _SL in	dix os mi composite damage miext/damage \
+		Xext/ext Xext/exts GL/glx GL/GLcore xkb dbe \
+		record randr render xtrap mfb iplan2p4 iplan2p8 \
+		cfb cfb16 cfb24 cfb32 fb xfixes miext/cw \
+		hw/xnest hw/vfb fontbase afb \
+		\
+		dix/xpstubs hw/sun hw/xfree86/xf86 hw/xfree86/xf86_os \
+		hw/xfree86/xf86config hw/xfree86/loader \
+		\
+		hw/netbsd/macppc hw/netbsd/hpc hw/netbsd/x68k \
+		hw/netbsd/mac68k hw/netbsd/amiga hw/netbsd/dec \
+		hw/netbsd/arm32vidc hw/netbsd/alpha hw/netbsd/dreamcast \
+		hw/netbsd/newsmips
+.endfor
+.endif
+
+.for _SL in \
+	mi \
+	config \
+	fb \
+	xfixes \
+	Xext \
+	Xext/Xextbuiltin \
+	dbe \
+	XTrap \
+	record \
+	render \
+	randr \
+	damageext \
+	miext/damage \
+	miext/shadow \
+	miext/cw \
+	Xi \
+	xkb \
+	composite \
+	dix/xpstubs \
+	os \
+	dix \
+	config \
+	hw/xnest \
+	hw/xfree86/common \
+	hw/xfree86/ddc \
+	hw/xfree86/dixmods \
+	hw/xfree86/dixmods/afb \
+	hw/xfree86/dixmods/cfb \
+	hw/xfree86/dixmods/cfb32 \
+	hw/xfree86/dixmods/dbe \
+	hw/xfree86/dixmods/extmod \
+	hw/xfree86/dixmods/fb \
+	hw/xfree86/dixmods/freetype \
+	hw/xfree86/dixmods/mfb \
+	hw/xfree86/dixmods/record \
+	hw/xfree86/dixmods/shadow \
+	hw/xfree86/dixmods/type1 \
+	hw/xfree86/dixmods/wfb \
+	hw/xfree86/dixmods/xorgxkb \
+	hw/xfree86/dixmods/xtrap \
+	hw/xfree86/doc \
+	hw/xfree86/dri \
+	hw/xfree86/dummy \
+	hw/xfree86/i2c \
+	hw/xfree86/init \
+	hw/xfree86/int10 \
+	hw/xfree86/loader \
+	hw/xfree86/xorgos \
+	hw/xfree86/rac \
+	hw/xfree86/ramdac \
+	hw/xfree86/scanpci \
+	hw/xfree86/shadowfb \
+	hw/xfree86/utils \
+	hw/xfree86/vbe \
+	hw/xfree86/vgahw \
+	hw/xfree86/x86emu \
+	hw/xfree86/xaa \
+	hw/xfree86/xf1bpp \
+	hw/xfree86/xf4bpp \
+	hw/xfree86/xf8_16bpp \
+	hw/xfree86/xf8_32bpp \
+	hw/xfree86/xf86config \
+	hw/xfree86/xf86modes
+
+.if !defined(LIBDIR.${_SL})
+LIBDIR.${_SL}!=	cd ${NETBSDSRCDIR}/external/mit/xorg/server/xorg-server/${_SL} && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=LIBDIR.${_SL}
+.endif
+LDADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
+DPADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
+.endfor
+
+LDADD.XORG_CORE=	${LDADD.dix} ${LDADD.config}
+DPADD.XORG_CORE=	${DPADD.dix} ${DPADD.config}
+
+LIBCWRAPPER=	${LIBDIR.os}/libc_wrapper.o
+
+CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
+		-I${X11SRCDIR.xorg-server}/Xext \
+		-I${DESTDIR}${X11INCDIR}/pixman-1 \
+		-I${X11SRCDIR.xorg-server}/../include
+
+LDADD+=		-lm
+DPADD+=		${LIBM}

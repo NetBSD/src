@@ -1,5 +1,5 @@
 /* init.c - initialize ldap backend */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.7 2008/02/12 00:25:47 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/init.c,v 1.99.2.8 2008/07/09 23:36:23 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.
@@ -34,7 +34,12 @@
 
 static const ldap_extra_t ldap_extra = {
 	ldap_back_proxy_authz_ctrl,
-	ldap_back_controls_free
+	ldap_back_controls_free,
+	slap_idassert_authzfrom_parse_cf,
+	slap_idassert_parse_cf,
+	slap_retry_info_destroy,
+	slap_retry_info_parse,
+	slap_retry_info_unparse
 };
 
 int

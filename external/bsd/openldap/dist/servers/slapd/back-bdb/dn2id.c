@@ -1,5 +1,5 @@
 /* dn2id.c - routines to deal with the dn2id index */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.9 2008/04/14 19:37:25 quanah Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-bdb/dn2id.c,v 1.137.2.10 2008/05/20 00:14:04 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.
@@ -1156,7 +1156,11 @@ gotit:
 				}
 				cx->depth--;
 				cx->op->o_tmpfree( save, cx->op->o_tmpmemctx );
-				if ( nokids ) ei->bei_state |= CACHE_ENTRY_NO_GRANDKIDS;
+				if ( nokids ) {
+					bdb_cache_entryinfo_lock( ei );
+					ei->bei_state |= CACHE_ENTRY_NO_GRANDKIDS;
+					bdb_cache_entryinfo_unlock( ei );
+				}
 			}
 			/* Make sure caller knows it had kids! */
 			cx->tmp[0]=1;

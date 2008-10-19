@@ -1,0 +1,54 @@
+'\" -*- coding: us-ascii -*-
+.if \n(.g .ds T< \\FC
+.if \n(.g .ds T> \\F[\n[.fam]]
+.de URL
+\\$2 \(la\\$1\(ra\\$3
+..
+.if \n(.g .mso www.tmac
+.TH nslcd 8 "May 2008" "Version 0.6.2" "System Manager's Manual"
+.SH NAME
+nslcd \- local LDAP name service daemon.
+.SH SYNOPSIS
+'nh
+.fi
+.ad l
+\fBnslcd\fR \kx
+.if (\nx>(\n(.l/2)) .nr x (\n(.l/5)
+'in \n(.iu+\nxu
+[
+\fIoptions\fR
+]
+'in \n(.iu-\nxu
+.ad b
+'hy
+.SH DESCRIPTION
+\fBnslcd\fR is a daemon that will do LDAP queries
+for local processes based on a simple configuration
+file.
+.PP
+\fBnslcd\fR is configured through a configuration file
+(see \fBnss-ldapd.conf\fR(5)).
+.PP
+See the included README for information on configuring the LDAP server.
+.SH OPTIONS
+\fBnslcd\fR accepts the following options:
+.TP 
+\*(T<\fB\-d, \-\-debug\fR\*(T> 
+Enable debugging mode.
+\fBnslcd\fR will not put itself in the background and sends
+verbose debugging info to stderr.
+\fBnslcd\fR will handle connections as usual.
+This option is for debugging purposes only.
+.TP 
+\*(T<\fB\-\-help\fR\*(T> 
+Display short help and exit.
+.TP 
+\*(T<\fB\-V, \-\-version\fR\*(T> 
+Output version information and exit.
+.SH FILES
+\*(T<\fI/etc/nss\-ldapd.conf\fR\*(T> - the configuration file
+(see \fBnss-ldapd.conf\fR(5))
+.SH "SEE ALSO"
+\fBnss-ldapd.conf\fR(5)
+.SH AUTHOR
+This manual was written by Arthur de Jong <arthur@ch.tudelft.nl>.

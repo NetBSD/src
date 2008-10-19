@@ -1,0 +1,30 @@
+#	$NetBSD: Makefile,v 1.3.4.2 2008/10/19 22:41:09 haad Exp $
+
+.include <bsd.own.mk>
+
+LIB=	Xau
+.PATH:	${X11SRCDIR.${LIB}}
+.PATH:	${X11SRCDIR.${LIB}}/include/X11
+
+SRCS=	AuDispose.c AuFileName.c AuGetAddr.c AuGetBest.c AuLock.c \
+	AuRead.c AuUnlock.c AuWrite.c
+
+INCS=	Xauth.h
+INCSDIR=${X11INCDIR}/X11
+
+CPPFLAGS+=	${X11FLAGS.THREADLIB}
+
+MAN=	Xau.3
+MLINKS=	Xau.3 XauDisposeAuth.3 \
+	Xau.3 XauFileName.3 \
+	Xau.3 XauGetAuthByAddr.3 \
+	Xau.3 XauGetBestAuthByAddr.3 \
+	Xau.3 XauLockAuth.3 \
+	Xau.3 XauReadAuth.3 \
+	Xau.3 XauUnlockAuth.3 \
+	Xau.3 XauWriteAuth.3
+
+PKGDIST=	${LIB}
+
+.include <bsd.x11.mk>
+.include <bsd.lib.mk>

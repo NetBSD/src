@@ -1,5 +1,5 @@
 /* config.c - ldap backend configuration file routine */
-/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.115.2.8 2008/02/11 23:26:46 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/back-ldap/config.c,v 1.115.2.9 2008/07/10 00:28:39 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2003-2008 The OpenLDAP Foundation.
@@ -70,6 +70,8 @@ enum {
 	LDAP_BACK_CFG_CANCEL,
 	LDAP_BACK_CFG_QUARANTINE,
 	LDAP_BACK_CFG_ST_REQUEST,
+	LDAP_BACK_CFG_NOREFS,
+
 	LDAP_BACK_CFG_REWRITE,
 
 	LDAP_BACK_CFG_LAST
@@ -306,6 +308,14 @@ static ConfigTable ldapcfg[] = {
 			"SINGLE-VALUE )",
 		NULL, NULL },
 #endif /* SLAP_CONTROL_X_SESSION_TRACKING */
+	{ "norefs", "true|FALSE", 2, 2, 0,
+		ARG_MAGIC|ARG_ON_OFF|LDAP_BACK_CFG_NOREFS,
+		ldap_back_cf_gen, "( OLcfgDbAt:3.25 "
+			"NAME 'olcDbNorefs' "
+			"DESC 'Do not return search reference responses' "
+			"SYNTAX OMsBoolean "
+			"SINGLE-VALUE )",
+		NULL, NULL },
 	{ "suffixmassage", "[virtual]> <real", 2, 3, 0,
 		ARG_STRING|ARG_MAGIC|LDAP_BACK_CFG_REWRITE,
 		ldap_back_cf_gen, NULL, NULL, NULL },
@@ -345,6 +355,10 @@ static ConfigOCs ldapocs[] = {
 			"$ olcDbQuarantine "
 			"$ olcDbUseTemporaryConn "
 			"$ olcDbConnectionPoolMax "
+#ifdef SLAP_CONTROL_X_SESSION_TRACKING
+			"$ olcDbSessionTrackingRequest "
+#endif /* SLAP_CONTROL_X_SESSION_TRACKING */
+			"$ olcDbNorefs "
 		") )",
 		 	Cft_Database, ldapcfg},
 	{ NULL, 0, NULL }
@@ -1134,6 +1148,10 @@ ldap_back_cf_gen( ConfigArgs *c )
 			break;
 #endif /* SLAP_CONTROL_X_SESSION_TRACKING */
 
+		case LDAP_BACK_CFG_NOREFS:
+			c->value_int = LDAP_BACK_NOREFS( li );
+			break;
+
 		default:
 			/* FIXME: we need to handle all... */
 			assert( 0 );
@@ -1255,6 +1273,10 @@ ldap_back_cf_gen( ConfigArgs *c )
 			li->li_flags &= ~LDAP_BACK_F_ST_REQUEST;
 			break;
 #endif /* SLAP_CONTROL_X_SESSION_TRACKING */
+
+		case LDAP_BACK_CFG_NOREFS:
+			li->li_flags &= ~LDAP_BACK_F_NOREFS;
+			break;
 
 		default:
 			/* FIXME: we need to handle all... */
@@ -1899,6 +1921,15 @@ done_url:;
 		}
 		break;
 #endif /* SLAP_CONTROL_X_SESSION_TRACKING */
+
+	case LDAP_BACK_CFG_NOREFS:
+		if ( c->value_int ) {
+			li->li_flags |= LDAP_BACK_F_NOREFS;
+
+		} else {
+			li->li_flags &= ~LDAP_BACK_F_NOREFS;
+		}
+		break;
 
 	case LDAP_BACK_CFG_REWRITE:
 		snprintf( c->cr_msg, sizeof( c->cr_msg ),

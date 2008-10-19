@@ -1,7 +1,7 @@
 .TH SLAPD-LDAP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" Copyright 1998-2008 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
-.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.41.2.7 2008/02/11 23:26:40 kurt Exp $
+.\" $OpenLDAP: pkg/ldap/doc/man/man5/slapd-ldap.5,v 1.41.2.8 2008/07/10 00:28:39 quanah Exp $
 .SH NAME
 slapd-ldap \- LDAP backend to slapd
 .SH SYNOPSIS
@@ -383,6 +383,13 @@ following a
 returns in case of no activity.
 The value is in seconds, and it can be specified as for
 .BR idle-timeout .
+
+.TP
+.B norefs <NO|yes>
+If
+.BR yes ,
+do not return search reference responses.
+By default, they are returned unless request is LDAPv2.
 
 .TP
 .B protocol\-version {0,2,3}

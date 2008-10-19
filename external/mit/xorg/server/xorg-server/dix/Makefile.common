@@ -1,0 +1,6 @@
+#	$NetBSD: Makefile.common,v 1.1.2.2 2008/10/19 22:41:18 haad Exp $
+
+X11DEFAULTFONTPATH=	${X11FONTDIR}/misc/ ${X11FONTDIR}/TTF/ \
+			${X11FONTDIR}/Speedo/ ${X11FONTDIR}/Type1/ \
+			${X11FONTDIR}/CID/ ${X11FONTDIR}/75dpi/ \
+			${X11FONTDIR}/100dpi/

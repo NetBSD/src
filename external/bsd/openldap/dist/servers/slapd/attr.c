@@ -1,5 +1,5 @@
 /* attr.c - routines for dealing with attributes */
-/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.112.2.7 2008/02/11 23:26:43 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/servers/slapd/attr.c,v 1.112.2.8 2008/07/10 00:17:13 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 1998-2008 The OpenLDAP Foundation.
@@ -324,17 +324,16 @@ attr_valfind(
 		while ( 0 < n ) {
 			unsigned pivot = n >> 1;
 			i = base + pivot;
-			if ( i >= a->a_numvals ) {
-				i = a->a_numvals - 1;
-				break;
-			}
 			rc = value_match( &match, a->a_desc, mr, flags,
 				&a->a_nvals[i], cval, &text );
 			if ( rc == LDAP_SUCCESS && match == 0 )
 				break;
-			n = pivot;
-			if ( match < 0 )
+			if ( match < 0 ) {
 				base = i+1;
+				n -= pivot+1;
+			} else {
+				n = pivot;
+			}
 		}
 		if ( match < 0 )
 			i++;

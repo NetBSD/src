@@ -1,5 +1,5 @@
 /* getpeereid.c */
-/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpeereid.c,v 1.24.2.3 2008/02/11 23:26:42 kurt Exp $ */
+/* $OpenLDAP: pkg/ldap/libraries/liblutil/getpeereid.c,v 1.24.2.4 2008/07/15 18:29:53 quanah Exp $ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
  * Copyright 2000-2008 The OpenLDAP Foundation.
@@ -58,6 +58,7 @@ int lutil_getpeereid( int s, uid_t *euid, gid_t *egid
 		*euid = ucred_geteuid( uc );
 		*egid = ucred_getegid( uc );
 		ucred_free( uc );
+		return 0;
 	}
 
 #elif defined( SO_PEERCRED )
