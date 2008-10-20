@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.54 2008/10/15 06:51:21 wrstuden Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.55 2008/10/20 11:36:39 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -337,7 +337,7 @@ static inline void
 ktrgeniov(int a, enum uio_rw b, struct iovec *c, int d, int e)
 {
 	if (__predict_false(ktrace_on))
-		ktr_genio(a, b, c, d, e);
+		ktr_geniov(a, b, c, d, e);
 }
 
 static inline void
