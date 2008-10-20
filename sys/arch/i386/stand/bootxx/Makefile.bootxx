@@ -1,7 +1,10 @@
-# $NetBSD: Makefile.bootxx,v 1.32 2008/08/29 00:02:23 gmcgarry Exp $
+# $NetBSD: Makefile.bootxx,v 1.33 2008/10/20 03:02:07 christos Exp $
 
 S=	${.CURDIR}/../../../../../
 
+PIE_CFLAGS=
+PIE_LDFLAGS=
+PIE_AFLAGS=
 NOMAN=
 PROG?= bootxx_${FS}
 BINDIR= /usr/mdec
