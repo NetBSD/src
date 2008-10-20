@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2008/10/16 05:41:13 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2008/10/20 11:02:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -404,10 +404,6 @@ main(int argc, char **argv)
 			warnx("need \"maxusers\" line");
 			errors++;
 		}
-	}
-	if (fsoptions == NULL) {
-		warnx( "need at least one \"file-system\" line");
-		errors++;
 	}
 	if (crosscheck() || errors)
 		stop();
