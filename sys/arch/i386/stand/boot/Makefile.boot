@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.35 2008/10/19 21:27:46 snj Exp $
+# $NetBSD: Makefile.boot,v 1.36 2008/10/20 03:02:07 christos Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -14,6 +14,10 @@ SRCS= ${SOURCES}
 .if !make(depend)
 SRCS+= vers.c
 .endif
+
+PIE_CFLAGS=
+PIE_AFLAGS=
+PIE_LDFLAGS=
 
 .include <bsd.own.mk>
 

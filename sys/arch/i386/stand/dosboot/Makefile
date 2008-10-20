@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2003/04/01 21:25:35 mycroft Exp $
+#	$NetBSD: Makefile,v 1.24 2008/10/20 03:02:07 christos Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -31,6 +31,10 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_INCLUDE_NET=no
 I386MISCMAKEFLAGS= I386_INCLUDE_DOS=yes
 
 VERSIONFILE= ${.CURDIR}/version
+
+PIE_CFLAGS=
+PIE_LDFLAGS=
+PIE_AFLAGS=
 
 .include <bsd.own.mk>
 
