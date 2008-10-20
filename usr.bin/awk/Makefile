@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/10/19 19:42:23 apb Exp $
+#	$NetBSD: Makefile,v 1.12 2008/10/20 18:16:54 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,9 @@ PROG=	awk
 SRCS=	awkgram.y b.c lex.c lib.c main.c parse.c proctab.c run.c tran.c
 CPPFLAGS+=	-I${DIST}/nawk -I. -DHAS_ISBLANK
 LDADD+=	-lm
+.if !defined(HOSTPROG)
 DPADD+=	${LIBM}
+.endif
 YHEADER=	yes
 .if (defined(HAVE_GCC) && ${HAVE_GCC} == 4) || defined(HAVE_PCC)
 COPTS=	-Wno-pointer-sign
