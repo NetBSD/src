@@ -1,4 +1,4 @@
-/*	$NetBSD: sa.h,v 1.13 2008/10/20 16:01:28 wrstuden Exp $	*/
+/*	$NetBSD: sa.h,v 1.14 2008/10/20 16:16:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ struct sa_stackinfo_t {
 #define	SA_FLAG_STACKINFO 0x010000 /* Use stackinfo for upcall stack return */
 
 #ifdef _KERNEL
-int sa_system_disabled;
+extern int sa_system_disabled;
 #endif /* _KERNEL */
 
 #endif /* !_SYS_SA_H_ */
