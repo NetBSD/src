@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2005/06/26 19:09:00 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2008/10/20 07:11:55 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -17,10 +17,15 @@ DPSRCS+=ksh.1
 # needs tbl for the man page.
 USETBL= 
 
+# Environment for scripts executed during build.
+SCRIPT_ENV= \
+	AWK=${TOOL_AWK:Q} \
+
 CLEANFILES+=	siglist.out siglist.out.tmp
 # two steps to prevent the creation of a bogus siglist.out
 siglist.out: config.h sh.h siglist.in siglist.sh
 	${_MKTARGET_CREATE}
+	${SCRIPT_ENV} \
 	${HOST_SH} $(.CURDIR)/siglist.sh "$(CC) -E $(CPPFLAGS) $(DEFS) -I. -I$(.CURDIR)" < $(.CURDIR)/siglist.in > siglist.out.tmp \
 	    && mv siglist.out.tmp siglist.out
 
@@ -28,12 +33,14 @@ siglist.out: config.h sh.h siglist.in siglist.sh
 CLEANFILES+=	emacs.out emacs.out.tmp
 emacs.out: emacs.c
 	${_MKTARGET_CREATE}
+	${SCRIPT_ENV} \
 	${HOST_SH} $(.CURDIR)/emacs-gen.sh $(.CURDIR)/emacs.c > emacs.out.tmp \
 	    && mv emacs.out.tmp emacs.out
 
 CLEANFILES+=	ksh.1 ksh.1.tmp
 ksh.1: ksh.Man mkman
 	${_MKTARGET_CREATE}
+	${SCRIPT_ENV} \
 	${HOST_SH} $(.CURDIR)/mkman ksh $(.CURDIR)/ksh.Man >ksh.1.tmp \
 	    && mv ksh.1.tmp ksh.1
 
