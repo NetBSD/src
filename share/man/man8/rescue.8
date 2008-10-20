@@ -1,4 +1,4 @@
-.\"	$NetBSD: rescue.8,v 1.2 2008/10/20 06:26:47 lukem Exp $
+.\"	$NetBSD: rescue.8,v 1.3 2008/10/20 06:42:53 lukem Exp $
 .\"
 .\" Copyright (c) 2003 Tim Kientzle <kientzle@acm.org>
 .\" Copyright (c) 2003 Simon L. Nielsen <simon@FreeBSD.org>
@@ -56,6 +56,19 @@ are also less functional than the standard utilities.
 In particular, they do not have full use of the locale,
 .Xr pam 3 ,
 and nsswitch libraries.
+.Pp
+If your system fails to boot, and it shows an error message similar to:
+.Pp
+.Dl "init: not found"
+.Pp
+try booting the system with the boot flag
+.Dq Fl a
+and supplying
+.Pa /rescue/init ,
+which is the
+.Nm
+.Xr init 8 ,
+as the init path.
 .Pp
 If your system fails to boot, and it shows a prompt similar to:
 .Pp
