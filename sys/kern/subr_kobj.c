@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.22 2008/10/06 10:46:58 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.23 2008/10/20 10:24:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.22 2008/10/06 10:46:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.23 2008/10/20 10:24:18 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -143,6 +143,7 @@ struct kobj {
 };
 
 static int	kobj_relocate(kobj_t, bool);
+static int	kobj_checkdup(kobj_t);
 static void	kobj_error(const char *, ...);
 static int	kobj_read(kobj_t, void **, size_t, off_t);
 static int	kobj_read_bits(kobj_t, void *, size_t, off_t);
@@ -633,7 +634,10 @@ kobj_load(kobj_t ko)
 	 * Perform local relocations only.  Relocations relating to global
 	 * symbols will be done by kobj_affix().
 	 */
-	error = kobj_relocate(ko, true);
+	error = kobj_checkdup(ko);
+	if (error == 0) {
+		error = kobj_relocate(ko, true);
+	}
  out:
 	if (hdr != NULL) {
 		kobj_free(ko, hdr, sizeof(*hdr));
@@ -674,7 +678,7 @@ kobj_unload(kobj_t ko)
 		    UVM_KMF_WIRED);
 	}
 	if (ko->ko_ksyms == true) {
-		ksyms_delsymtab(ko->ko_name);
+		ksyms_modunload(ko->ko_name);
 	}
 	if (ko->ko_symtab != NULL) {
 		kobj_free(ko, ko->ko_symtab, ko->ko_symcnt * sizeof(Elf_Sym));
@@ -728,16 +732,16 @@ kobj_affix(kobj_t ko, const char *name)
 
 	strlcpy(ko->ko_name, name, sizeof(ko->ko_name));
 
-	/* Now that we know the name, register the symbol table. */
-	error = ksyms_addsymtab(ko->ko_name, ko->ko_symtab, ko->ko_symcnt *
+	/* Now do global relocations. */
+	error = kobj_relocate(ko, false);
+
+	/*
+	 * Now that we know the name, register the symbol table.
+	 * Do after global relocations because ksyms will pack it.
+	 */
+	ksyms_modload(ko->ko_name, ko->ko_symtab, ko->ko_symcnt *
 	    sizeof(Elf_Sym), ko->ko_strtab, ko->ko_strtabsz);
-	if (error != 0) {
-		kobj_error("unable to register module symbol table");
-	} else {
-		ko->ko_ksyms = true;
-		/* Now do global relocations. */
-		error = kobj_relocate(ko, false);
-	}
+	ko->ko_ksyms = true;
 
 	/* Jettison unneeded memory post-link. */
 	kobj_jettison(ko);
@@ -870,6 +874,10 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 			return 0;
 		}
 
+		/*
+		 * Don't need to lock, as it is known that the symbol
+		 * tables aren't going to change (we hold module_lock).
+		 */
 		error = ksyms_getval(NULL, symbol, &addr, KSYMS_ANY);
 		if (error != 0) {
 			kobj_error("symbol `%s' not found", symbol);
@@ -902,6 +910,55 @@ kobj_findbase(kobj_t ko, int sec)
 		}
 	}
 	return 0;
+}
+
+/*
+ * kobj_checkdup:
+ *
+ *	Scan symbol table for duplicates.
+ */
+static int
+kobj_checkdup(kobj_t ko)
+{
+	unsigned long rval;
+	Elf_Sym *sym, *ms;
+	const char *name;
+	bool dup;
+
+	dup = false;
+	for (ms = (sym = ko->ko_symtab) + ko->ko_symcnt; sym < ms; sym++) {
+		/* Check validity of the symbol. */
+		if (ELF_ST_BIND(sym->st_info) != STB_GLOBAL ||
+		    sym->st_name == 0)
+			continue;
+
+		/* Check if the symbol already exists */
+		name = ko->ko_strtab + sym->st_name;
+		if (ksyms_getval(NULL, name, &rval, KSYMS_EXTERN) != 0) {
+			continue;
+		}
+
+		/* Check (and complain) about differing values */
+		if (sym->st_value == rval || sym->st_shndx == SHN_UNDEF) {
+			continue;
+		}
+		if (strcmp(name, "_bss_start") == 0 ||
+		    strcmp(name, "__bss_start") == 0 ||
+		    strcmp(name, "_bss_end__") == 0 ||
+		    strcmp(name, "__bss_end__") == 0 ||
+		    strcmp(name, "_edata") == 0 ||
+		    strcmp(name, "_end") == 0 ||
+		    strcmp(name, "__end") == 0 ||
+		    strcmp(name, "__end__") == 0 ||
+		    strncmp(name, "__start_link_set_", 17) == 0 ||
+		    strncmp(name, "__stop_link_set_", 16)) {
+		    	continue;
+		}
+		kobj_error("symbol `%s' redeclared\n", name);
+		dup = true;
+	}
+
+	return dup ? EEXIST : 0;
 }
 
 /*

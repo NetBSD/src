@@ -1,4 +1,5 @@
-/*	$NetBSD: ksyms.h,v 1.14 2007/03/04 06:03:41 christos Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.15 2008/10/20 10:24:18 ad Exp $	*/
+
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -29,6 +30,45 @@
 #ifndef _SYS_KSYMS_H_
 #define _SYS_KSYMS_H_
 
+#ifdef _KSYMS_PRIVATE
+#define	ELFSIZE	ARCH_ELFSIZE
+#include <sys/exec_elf.h>
+#include <sys/queue.h>
+
+struct ksyms_symtab {
+	TAILQ_ENTRY(ksyms_symtab) sd_queue; /* All active tables */
+	const char *sd_name;	/* Name of this table */
+	Elf_Sym *sd_symstart;	/* Address of symbol table */
+	Elf_Sym *sd_minsym;	/* symbol with minimum value */
+	Elf_Sym *sd_maxsym;	/* symbol with maximum value */
+	char *sd_strstart;	/* Address of corresponding string table */
+	int sd_usroffset;	/* Real address for userspace */
+	int sd_symsize;		/* Size in bytes of symbol table */
+	int sd_strsize;		/* Size of string table */
+	bool sd_gone;		/* dead but around for open() */
+	bool sd_malloc;		/* XXX REMOVE WHEN LKMS GO */
+};
+
+/*
+ * Static allocated ELF header.
+ * Basic info is filled in at attach, sizes at open.
+ */
+#define	SYMTAB		1
+#define	STRTAB		2
+#define	SHSTRTAB	3
+#define NSECHDR		4
+
+#define	NPRGHDR		2
+#define	SHSTRSIZ	32
+
+struct ksyms_hdr {
+	Elf_Ehdr	kh_ehdr;
+	Elf_Phdr	kh_phdr[NPRGHDR];
+	Elf_Shdr	kh_shdr[NSECHDR];
+	char 		kh_strtab[SHSTRSIZ];
+};
+#endif	/* _KSYMS_PRIVATE */
+
 /*
  * Do a lookup of a symbol using the in-kernel lookup algorithm.
  */
@@ -45,6 +85,7 @@ struct ksyms_gsymbol {
 #define	KIOCGSYMBOL	_IOW('l', 1, struct ksyms_gsymbol)
 #define	KIOCGVALUE	_IOW('l', 2, struct ksyms_gsymbol)
 #define	KIOCGSIZE	_IOR('l', 3, int)
+
 
 #ifdef _KERNEL
 /*
@@ -63,11 +104,12 @@ int ksyms_getname(const char **, const char **, vaddr_t, int);
 int ksyms_getval(const char *, const char *, unsigned long *, int);
 int ksyms_addsymtab(const char *, void *, vsize_t, char *, vsize_t);
 int ksyms_delsymtab(const char *);
-int ksyms_rensymtab(const char *, const char*);
 void ksyms_init(int, void *, void *);
 void ksyms_init_explicit(void *, void *, size_t, void *, size_t);
-#ifdef DDB
 int ksyms_sift(char *, char *, int);
-#endif
+void ksyms_modload(const char *, void *, vsize_t, char *, vsize_t);
+void ksyms_modunload(const char *);
+
+extern kmutex_t ksyms_lock;
 #endif /* _KERNEL */
 #endif /* _SYS_KSYMS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.216 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.217 2008/10/20 10:24:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.216 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.217 2008/10/20 10:24:18 ad Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1027,8 +1027,10 @@ sysctl_create(SYSCTLFN_ARGS)
 					    sizeof(symname), &symlen);
 					if (error)
 						return (error);
+					mutex_enter(&ksyms_lock);
 					error = ksyms_getval(NULL, symname,
 					    &symaddr, KSYMS_EXTERN);
+					mutex_exit(&ksyms_lock);
 					if (error)
 						return (error); /* EINVAL? */
 					nnode.sysctl_data = (void*)symaddr;
