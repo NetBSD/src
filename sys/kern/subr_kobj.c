@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.23 2008/10/20 10:24:18 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.24 2008/10/20 20:07:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.23 2008/10/20 10:24:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.24 2008/10/20 20:07:35 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -954,7 +954,7 @@ kobj_checkdup(kobj_t ko)
 		    strncmp(name, "__stop_link_set_", 16)) {
 		    	continue;
 		}
-		kobj_error("symbol `%s' redeclared\n", name);
+		kobj_error("global symbol `%s' redefined\n", name);
 		dup = true;
 	}
 
