@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1107 2008/10/18 20:46:43 jmcneill Exp $
+# $NetBSD: mi,v 1.1108 2008/10/20 22:29:39 lukem Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2413,6 +2413,7 @@
 ./usr/share/man/cat8/reboot.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/renice.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/repquota.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/rescue.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/resize_lfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/restore.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/revnetgroup.0		man-nis-catman		yp,.cat
@@ -4690,6 +4691,7 @@
 ./usr/share/man/html8/reboot.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/renice.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/repquota.html		man-sysutil-htmlman	html
+./usr/share/man/html8/rescue.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/resize_lfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/restore.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/revnetgroup.html		man-nis-htmlman		yp,html
@@ -7243,6 +7245,7 @@
 ./usr/share/man/man8/reboot.8			man-sysutil-man		.man
 ./usr/share/man/man8/renice.8			man-sysutil-man		.man
 ./usr/share/man/man8/repquota.8			man-sysutil-man		.man
+./usr/share/man/man8/rescue.8			man-sysutil-man		.man
 ./usr/share/man/man8/resize_lfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/restore.8			man-sysutil-man		.man
 ./usr/share/man/man8/revnetgroup.8		man-nis-man		yp,.man
