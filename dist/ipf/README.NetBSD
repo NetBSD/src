@@ -1,5 +1,5 @@
 #
-# $NetBSD: README.NetBSD,v 1.1 2008/05/18 18:19:05 martti Exp $
+# $NetBSD: README.NetBSD,v 1.2 2008/10/20 12:09:15 martti Exp $
 #
 # Author: Martti Kuparinen <martti@NetBSD.org>
 #
@@ -34,9 +34,9 @@
 ###############################################################################
 
 export NETBSDUSERNAME="fixthis"
-export VERSION="4.1.29"
-export VEROLD="v4-1-23"
-export VERNEW="v4-1-29"
+export VERSION="4.1.31"
+export VEROLD="v4-1-29"
+export VERNEW="v4-1-31"
 export VERTAG="`echo ${VERSION} | sed 's+\.+_+g'`"
 export ORIG="${HOME}/netbsd/orig"
 export WORK="${HOME}/netbsd/work"
@@ -342,7 +342,7 @@ HEADSUP
 =======
 Hi!
 
-I have just upgraded IPFilter to the latest version (4.1.29) on
+I have just upgraded IPFilter to the latest version (4.1.31) on
 NetBSD -current. You must recompile kernel and the ipf tools to
 use the new version:
 
@@ -363,6 +363,6 @@ If you detect errors (or have improvements), please send a problem
 report with the send-pr tool.
 
 
-Changes since 4.1.23
+Changes since 4.1.29
 ====================
 <TBD>
