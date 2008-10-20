@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/18 22:44:26 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2008/10/20 16:25:06 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ DPADD=	${LIBXKBFILE} ${LIBXEXT} ${LIBX11}
 
 CPPFLAGS+=	-DCARD_DATABASE_FILE='"${X11USRLIBDIR}/X11/Cards"' \
 		-DXKB_RULES_DIR=\"${X11USRLIBDIR}/X11/xkb/rules\" \
-		-DXVERSION="${XORG_VERSION_CURRENT}" \
+		-DXVERSION=${XORG_VERSION_CURRENT} \
 		-DWSCONS_SUPPORT -D__XKBDEFRULES__='"xorg"' \
 		-D__XCONFIGFILE__='"xorg.conf"' \
 		-D__XSERVERNAME__='"Xorg"' \
