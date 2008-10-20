@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdtemp.c,v 1.9 2003/10/27 00:12:42 lukem Exp $	*/
+/*	$NetBSD: mkdtemp.c,v 1.10 2008/10/20 10:28:38 apb Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -40,12 +40,12 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mkdtemp.c,v 1.9 2003/10/27 00:12:42 lukem Exp $");
+__RCSID("$NetBSD: mkdtemp.c,v 1.10 2008/10/20 10:28:38 apb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
-#define	GETTEMP		gettemp
+#define	GETTEMP		__nbcompat_gettemp
 #else
 #include <assert.h>
 #include <errno.h>
