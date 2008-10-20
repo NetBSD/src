@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.65 2007/10/30 20:23:35 tls Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.66 2008/10/20 07:48:21 dogcow Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -13,6 +13,7 @@
 
 #if defined(__linux__) && HAVE_FEATURES_H
 #include <features.h>
+#define __USE_ISOC99 1
 #endif
 
 /* So _NETBSD_SOURCE doesn't end up defined. Define enough to pull in standard
