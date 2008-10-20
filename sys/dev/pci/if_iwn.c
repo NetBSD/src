@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.21 2008/10/18 15:55:27 blymn Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.22 2008/10/20 09:33:48 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.21 2008/10/18 15:55:27 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.22 2008/10/20 09:33:48 rtr Exp $");
 
 
 /*
@@ -1501,9 +1501,8 @@ iwn_rx_intr(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	rssi = iwn_get_rssi(stat);
 
-	if ((ic->ic_state == IEEE80211_S_SCAN) && (false))
+	if (ic->ic_state == IEEE80211_S_SCAN)
 		iwn_fix_channel(ic, m);
-	ic->ic_curchan = &ic->ic_channels[11];
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
