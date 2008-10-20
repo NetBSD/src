@@ -1,3 +1,5 @@
+.\"	$NetBSD: rescue.8,v 1.2 2008/10/20 06:26:47 lukem Exp $
+.\"
 .\" Copyright (c) 2003 Tim Kientzle <kientzle@acm.org>
 .\" Copyright (c) 2003 Simon L. Nielsen <simon@FreeBSD.org>
 .\" All rights reserved.
@@ -23,9 +25,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $FreeBSD: src/share/man/man8/rescue.8,v 1.3 2005/11/10 15:42:51 kientzle Exp $
+.\"  FreeBSD: src/share/man/man8/rescue.8,v 1.3 2005/11/10 15:42:51 kientzle Exp  
 .\"
-.Dd July 23, 2003
+.Dd October 20, 2008
 .Os
 .Dt RESCUE 8
 .Sh NAME
@@ -38,7 +40,7 @@ The
 directory contains a collection of common utilities intended for use
 in recovering a badly damaged system.
 With the transition to a dynamically-linked root beginning with
-.Fx 5.2 ,
+.Nx 2.0 ,
 there is a real possibility that the standard tools in
 .Pa /bin
 and
@@ -75,18 +77,15 @@ command:
 .Dl "/rescue/mount -uw /"
 .Pp
 The next step is to double-check the contents of
-.Pa /bin , /sbin ,
+.Pa /bin ,
+.Pa /lib ,
+.Pa /libexec ,
 and
-.Pa /usr/lib ,
+.Pa /sbin ,
 possibly mounting a
-.Fx
-rescue or
-.Dq "live file system"
-CD-ROM (e.g.,
-.Li disc2
-of the officially released
-.Fx
-ISO images) and copying files from there.
+.Nx
+installation CD-ROM
+and copying files from there.
 Once it is possible to successfully run
 .Pa /bin/sh , /bin/ls ,
 and other standard utilities, try rebooting back into the standard
@@ -98,33 +97,6 @@ tools are compiled using
 .Xr crunchgen 1 ,
 which makes them considerably more compact than the standard
 utilities.
-To build a
-.Fx
-system where space is critical,
-.Pa /rescue
-can be used as a replacement for the standard
-.Pa /bin
-and
-.Pa /sbin
-directories; simply change
-.Pa /bin
-and
-.Pa /sbin
-to be symbolic links pointing to
-.Pa /rescue .
-Since
-.Pa /rescue
-is statically linked, it should also be possible to dispense with much
-of
-.Pa /usr/lib
-in such an environment.
-.Pp
-In contrast to its predecessor
-.Pa /stand ,
-.Pa /rescue
-is updated during normal
-.Fx
-source and binary upgrades.
 .Sh FILES
 .Bl -tag -width ".Pa /rescue" -compact
 .It Pa /rescue
@@ -139,15 +111,13 @@ hierarchy.
 The
 .Nm
 utilities first appeared in
-.Fx 5.2 .
+.Nx 2.0 .
 .Sh AUTHORS
 .An -nosplit
 The
 .Nm
 system was written by
-.An Tim Kientzle Aq kientzle@FreeBSD.org ,
-based on ideas taken from
-.Nx .
+.An Luke Mewburn Aq lukem@NetBSD.org .
 This manual page was written by
 .An Simon L. Nielsen Aq simon@FreeBSD.org ,
 based on text by
@@ -168,7 +138,7 @@ files.
 Hopefully, a failsafe
 .Xr termcap 3
 entry will eventually be added into the
-.Xr ncurses 3
+.Xr curses 3
 library, so that
 .Pa /rescue/vi
 can be used even in a system where
