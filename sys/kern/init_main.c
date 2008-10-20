@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.366 2008/10/18 03:46:22 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.367 2008/10/20 10:24:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.366 2008/10/18 03:46:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.367 2008/10/20 10:24:18 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -162,6 +162,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.366 2008/10/18 03:46:22 rmind Exp $"
 #include <sys/event.h>
 #include <sys/lockf.h>
 #include <sys/once.h>
+#include <sys/ksyms.h>
 #include <sys/uidinfo.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
@@ -433,6 +434,7 @@ main(void)
 	loginit();
 
 	/* Start module system. */
+	mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
 	module_init();
 
 	/* Initialize the file systems. */
