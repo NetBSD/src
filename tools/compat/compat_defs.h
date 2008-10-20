@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.66 2008/10/20 07:48:21 dogcow Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.67 2008/10/20 10:28:38 apb Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -313,8 +313,9 @@ char *mkdtemp(char *);
 #endif
 
 #if !HAVE_MKSTEMP || !HAVE_MKDTEMP
-/* This is a prototype for the internal function. */
-int gettemp(char *, int *, int);
+/* This is a prototype for the internal function defined in
+ * src/lib/lib/stdio/gettemp.c */
+int __nbcompat_gettemp(char *, int *, int);
 #endif
 
 #if !HAVE_PREAD
