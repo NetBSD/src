@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.4 2008/08/27 11:03:10 matt Exp $	*/
+/*	$Id: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.4 2008/08/27 11:03:10 matt Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.4 2008/08/27 11:03:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -349,11 +349,11 @@ static const struct {
 	bus_addr_t addr;
 	bool required;
 } critical_devs[] = {
-#if 0
 	{ .name = "avic", .addr = INTC_BASE, .required = true },
 	{ .name = "gpio1", .addr = GPIO1_BASE, .required = false },
 	{ .name = "gpio2", .addr = GPIO2_BASE, .required = false },
 	{ .name = "gpio3", .addr = GPIO3_BASE, .required = false },
+#if 0
 	{ .name = "dmac", .addr = DMAC_BASE, .required = true },
 #endif
 };
