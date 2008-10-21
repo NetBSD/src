@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.32 2008/10/18 16:59:52 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.33 2008/10/21 15:46:32 cegger Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.32 2008/10/18 16:59:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.33 2008/10/21 15:46:32 cegger Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -627,7 +627,7 @@ xenprivcmd_init()
 	kernfs_entry_t *dkt;
 	kfstype kfst;
 
-	if ((xen_start_info.flags & SIF_PRIVILEGED) == 0)
+	if (!xendomain_is_privileged())
 		return;
 
 	kfst = KERNFS_ALLOCTYPE(privcmd_fileops);

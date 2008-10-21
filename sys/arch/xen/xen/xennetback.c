@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.33 2008/06/04 12:41:42 ad Exp $      */
+/*      $NetBSD: xennetback.c,v 1.34 2008/10/21 15:46:32 cegger Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.33 2008/06/04 12:41:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.34 2008/10/21 15:46:32 cegger Exp $");
 
 #include "opt_xen.h"
 
@@ -201,7 +201,7 @@ xennetback_init()
 	struct pglist mlist;
 	struct vm_page *pg;
 
-	if ( !(xen_start_info.flags & SIF_INITDOMAIN) &&
+	if ( !xendomain_is_dom0() &&
 	     !(xen_start_info.flags & SIF_NET_BE_DOMAIN))
 		return;
 
