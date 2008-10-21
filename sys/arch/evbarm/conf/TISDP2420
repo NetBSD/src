@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.5 2008/08/27 11:03:09 matt Exp $
+#	$NetBSD: TISDP2420,v 1.6 2008/10/21 23:45:06 matt Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -248,7 +248,6 @@ options		OMAP_CK_REF_SPEED=12000000
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
-pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	fss		4	# file system snapshot device
 
