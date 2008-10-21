@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.155 2008/05/06 21:07:57 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.156 2008/10/21 06:07:14 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.155 2008/05/06 21:07:57 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.156 2008/10/21 06:07:14 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -939,6 +939,9 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 	paddr_t fbpa, mem_base = 0;
 	uint32_t temp, fboffset;
 	uint32_t fbaddr = 0;
+	int options;
+	char output_device[256];
+	char *pos;
 
 	cntrlr = device_parent(busdev);
 	if (cntrlr != NULL) {
@@ -995,6 +998,22 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 	}
 	if (temp != 0)
 		prop_dictionary_set_uint32(dict, "refclk", temp / 10);
+	/*
+	 * finally, let's see if there's a video mode specified in
+	 * output-device and pass it on so drivers like radeonfb
+	 * can do their thing
+	 */
+	options = OF_finddevice("/options");
+	if ((options == 0) || (options == -1))
+		return;
+	if (OF_getprop(options, "output-device", output_device, 256) == 0)
+		return;
+	printf("output-device: %s\n", output_device);
+	/* find the mode string if there is one */
+	pos = strstr(output_device, ":r");
+	if (pos == NULL)
+		return;
+	prop_dictionary_set_cstring(dict, "videomode", pos + 2);
 }
 
 static void
