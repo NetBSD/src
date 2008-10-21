@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.367 2008/10/20 10:24:18 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.368 2008/10/21 20:51:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.367 2008/10/20 10:24:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.368 2008/10/21 20:51:11 matt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.367 2008/10/20 10:24:18 ad Exp $");
 #include "opt_pax.h"
 #include "opt_wapbl.h"
 
+#include "ksyms.h"
 #include "rnd.h"
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
@@ -434,7 +435,9 @@ main(void)
 	loginit();
 
 	/* Start module system. */
+#if NKSYMS > 0
 	mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
+#endif
 	module_init();
 
 	/* Initialize the file systems. */
