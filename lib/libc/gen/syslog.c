@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.40 2008/06/12 20:43:14 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.41 2008/10/21 21:00:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.40 2008/06/12 20:43:14 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.41 2008/10/21 21:00:31 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -170,6 +170,7 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 	char tbuf[TBUF_LEN], fmt_cpy[FMT_LEN];
 	size_t tbuf_left, fmt_left;
 	int signal_safe = pri & LOG_SIGNAL_SAFE;
+	int opened;
 
 	pri &= ~LOG_SIGNAL_SAFE;
 
@@ -302,7 +303,7 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 	/* Get connected, output the message to the local logger. */
 	if (data == &sdata)
 		mutex_lock(&syslog_mutex);
-	if (!data->opened)
+	if ((opened = !data->opened))
 		openlog_unlocked_r(data->log_tag, data->log_stat, 0, data);
 	connectlog_r(data);
 
@@ -344,8 +345,12 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 	if (data == &sdata)
 		mutex_unlock(&syslog_mutex);
 
-	if (data != &sdata)
+	if (data != &sdata && opened) {
+		/* preserve log tag */
+		const char *ident = data->log_tag;
 		closelog_r(data);
+		data->log_tag = ident;
+	}
 }
 
 static void
@@ -402,6 +407,8 @@ openlog_unlocked_r(const char *ident, int logstat, int logfac,
 
 	if (data->log_stat & LOG_NDELAY)	/* open immediately */
 		connectlog_r(data);
+
+	data->opened = 1;
 }
 
 void
