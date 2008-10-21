@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.32 2008/10/19 11:34:31 joerg Exp $
+# $NetBSD: XEN3_DOM0,v 1.33 2008/10/21 10:13:23 cegger Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -192,17 +192,20 @@ xenbus*		at hypervisor?		# Xen virtual bus
 xencons*	at hypervisor?		# Xen virtual console
 
 acpi0 		at hypervisor?
-options 	MPBIOS
-options 	MPDEBUG
-options 	MPVERBOSE
-options 	ACPIVERBOSE
+#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
+#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+options 	ACPIVERBOSE		# verbose ACPI configuration messages
+#options	MIIVERBOSE		# verbose PHY autoconfig messages
+options 	MPBIOS			# configure CPUs and APICs using MPBIOS
+options 	MPDEBUG			# MPBIOS configures PCI roots
+options 	MPVERBOSE		# verbose MPBIOS autoconfig messages
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 #options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
-#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
-#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+#options	PCIVERBOSE		# verbose PCI device autoconfig messages
+#options	USBVERBOSE		# verbose USB device autoconfig messages
 
 ioapic*		at mainbus? apid ?
 
