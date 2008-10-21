@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallvar.h,v 1.1 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: syscallvar.h,v 1.2 2008/10/21 12:22:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,9 +45,9 @@ sy_call(const struct sysent *sy, struct lwp *l, const void *uap,
 {
 	int error;
 
-	l->l_sycall = sy;
+	l->l_sysent = sy;
 	error = (*sy->sy_call)(l, uap, rval);
-	l->l_sycall = NULL;
+	l->l_sysent = NULL;
 
 	return error;
 }

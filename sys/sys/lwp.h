@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.113 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.114 2008/10/21 12:22:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@ struct lwp {
 	u_int		l_dopreempt;	/* s: kernel preemption pending */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
-	const volatile struct sysent *l_sycall;/* !: currently active syscall */
+	const struct sysent * volatile l_sysent;/* !: currently active syscall */
 	struct rusage	l_ru;		/* !: accounting information */
 	uint64_t	l_pfailtime;	/* !: for kernel preemption */
 	uintptr_t	l_pfailaddr;	/* !: for kernel preemption */
