@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.33 2008/10/15 06:51:17 wrstuden Exp $ */
+/* $NetBSD: syscall.c,v 1.34 2008/10/21 12:16:58 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.34 2008/10/21 12:16:58 ad Exp $");
 
 #include "opt_sa.h"
 
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.33 2008/10/15 06:51:17 wrstuden Exp $"
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
@@ -207,7 +208,7 @@ syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -303,7 +304,7 @@ syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	if ((error = trace_enter(code, args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
-		error = (*callp->sy_call)(l, args, rval);
+		error = sy_call(callp, l, args, rval);
 	}
 
 	switch (error) {

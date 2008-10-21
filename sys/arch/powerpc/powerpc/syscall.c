@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.42 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: syscall.c,v 1.43 2008/10/21 12:16:59 ad Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -46,6 +46,7 @@
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/ktrace.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -63,7 +64,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.43 2008/10/21 12:16:59 ad Exp $");
 
 void
 child_return(void *arg)
@@ -153,7 +154,7 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = (*callp->sy_call)(l, params, rval);
+	error = sy_call(callp, l, params, rval);
 
 	switch (error) {
 	case 0:
@@ -268,7 +269,7 @@ EMULNAME(syscall_fancy)(struct trapframe *frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = (*callp->sy_call)(l, params, rval);
+	error = sy_call(callp, l, params, rval);
 out:
 	switch (error) {
 	case 0:

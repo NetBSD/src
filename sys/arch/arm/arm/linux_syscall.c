@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.21 2008/04/28 20:23:13 martin Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.22 2008/10/21 12:16:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.21 2008/04/28 20:23:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.22 2008/10/21 12:16:59 ad Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.21 2008/04/28 20:23:13 martin Ex
 #include <sys/signalvar.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -127,7 +128,7 @@ linux_syscall_plain(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -175,7 +176,7 @@ linux_syscall_fancy(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:
