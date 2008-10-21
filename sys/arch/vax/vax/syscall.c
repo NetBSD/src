@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.14 2008/10/15 06:51:19 wrstuden Exp $     */
+/*	$NetBSD: syscall.c,v 1.15 2008/10/21 12:16:59 ad Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2008/10/15 06:51:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.15 2008/10/21 12:16:59 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.14 2008/10/15 06:51:19 wrstuden Exp $"
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/exec.h>
@@ -128,7 +129,7 @@ syscall(struct trapframe *frame)
 	if (__predict_true(!p->p_trace_enabled)
 	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
 	    || (error = trace_enter(frame->code, args, callp->sy_narg)) == 0) {
-		error = (*callp->sy_call)(curlwp, args, rval);
+		error = sy_call(callp, curlwp, args, rval);
 	}
 
 	KASSERT(exptr == l->l_addr->u_pcb.framep);

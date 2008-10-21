@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.34 2008/10/21 11:51:23 ad Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.35 2008/10/21 12:16:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.34 2008/10/21 11:51:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.35 2008/10/21 12:16:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.34 2008/10/21 11:51:23 ad Exp 
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -120,7 +121,7 @@ freebsd_syscall_plain(frame)
 	rval[0] = 0;
 	rval[1] = frame->tf_edx; /* need to keep edx for shared FreeBSD bins */
 
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -201,7 +202,7 @@ freebsd_syscall_fancy(frame)
 	if ((error = trace_enter(code, args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = frame->tf_edx; /* need to keep edx for shared FreeBSD bins */
-		error = (*callp->sy_call)(l, args, rval);
+		error = sy_call(callp, l, args, rval);
 	}
 
 	switch (error) {
