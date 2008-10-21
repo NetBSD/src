@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.25 2008/10/15 06:51:17 wrstuden Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.26 2008/10/21 11:51:23 ad Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.25 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.26 2008/10/21 11:51:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -14,7 +14,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.25 2008/10/15 06:51:17 wrstude
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
-#define SA_NO_USERRET
 #include <machine/userret.h>
 
 #include <compat/linux32/linux32_syscall.h>

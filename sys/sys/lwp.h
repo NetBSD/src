@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.111 2008/10/16 08:52:20 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.112 2008/10/21 11:51:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -244,7 +244,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
  * user.
  */
 #define	LW_USERRET (LW_WEXIT|LW_PENDSIG|LW_WREBOOT|LW_WSUSPEND|LW_WCORE|\
-		    LW_WUSERRET)
+		    LW_WUSERRET|LW_SA_BLOCKING|LW_SA_UPCALL)
 
 /*
  * Status values.

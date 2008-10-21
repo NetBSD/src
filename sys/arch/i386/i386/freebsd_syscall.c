@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.33 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.34 2008/10/21 11:51:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.33 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.34 2008/10/21 11:51:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.33 2008/10/15 06:51:17 wrstude
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
-#define SA_NO_USERRET
 #include <machine/userret.h>
 
 #include <compat/sys/signal.h>

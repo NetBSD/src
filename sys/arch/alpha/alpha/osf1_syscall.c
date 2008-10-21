@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.29 2008/10/15 06:51:17 wrstuden Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.30 2008/10/21 11:51:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.29 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.30 2008/10/21 11:51:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.29 2008/10/15 06:51:17 wrstuden E
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/alpha.h>
-#define SA_NO_USERRET
 #include <machine/userret.h>
 
 #include <compat/osf1/osf1.h>
