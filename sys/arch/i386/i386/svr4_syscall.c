@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.41 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.42 2008/10/21 11:51:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.41 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.42 2008/10/21 11:51:23 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.41 2008/10/15 06:51:17 wrstuden E
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
-#define SA_NO_USERRET
 #include <machine/userret.h>
 
 #include <compat/svr4/svr4_errno.h>

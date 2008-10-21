@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.124 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.125 2008/10/21 11:51:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.124 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.125 2008/10/21 11:51:23 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1240,6 +1240,14 @@ lwp_userret(struct lwp *l)
 		softint_overlay();
 #endif
 
+#ifdef KERN_SA
+	/* Generate UNBLOCKED upcall if needed */
+	if (l->l_flag & LW_SA_BLOCKING) {
+		sa_unblock_userret(l);
+		/* NOTREACHED */
+	}
+#endif
+
 	/*
 	 * It should be safe to do this read unlocked on a multiprocessor
 	 * system..
@@ -1307,6 +1315,11 @@ lwp_userret(struct lwp *l)
 	 */
 	if (p->p_timerpend)
 		timerupcall(l);
+	if (l->l_flag & LW_SA_UPCALL)
+		sa_upcall_userret(l);
+	else if (__predict_false((l->l_savp)
+	    && (l->l_savp->savp_pflags & SAVP_FLAG_NOUPCALLS)))
+		l->l_savp->savp_pflags &= ~SAVP_FLAG_NOUPCALLS;
 #endif /* KERN_SA */
 }
 
