@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.65 2008/10/21 13:36:28 njoly Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.66 2008/10/21 21:52:29 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.65 2008/10/21 13:36:28 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.66 2008/10/21 21:52:29 njoly Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -671,7 +671,6 @@ linux_sys_tgkill(struct lwp *l, const struct linux_sys_tgkill_args *uap, registe
 
 	return linux_do_tkill(l, SCARG(uap, tgid), SCARG(uap, tid), SCARG(uap, sig));
 }
-#endif /* LINUX_NPTL */
 
 int
 native_to_linux_si_code(int code)
@@ -686,3 +685,4 @@ native_to_linux_si_code(int code)
 
 	return code;
 }
+#endif /* LINUX_NPTL */
