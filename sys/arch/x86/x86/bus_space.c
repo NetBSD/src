@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.19 2008/05/01 12:03:18 ad Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.20 2008/10/21 15:46:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.19 2008/05/01 12:03:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.20 2008/10/21 15:46:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ x86_bus_space_init(void)
 
 #ifdef XEN
 	/* We are privileged guest os - should have IO privileges. */
-	if (xen_start_info.flags & SIF_PRIVILEGED) {
+	if (xendomain_is_privileged()) {
 #ifdef XEN3
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;

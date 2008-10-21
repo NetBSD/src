@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.9 2008/09/05 13:37:24 tron Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.10 2008/10/21 15:46:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.9 2008/09/05 13:37:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.10 2008/10/21 15:46:32 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -553,7 +553,7 @@ xen_pmap_bootstrap(void)
 	mapsize += NBPG;
 
 #ifdef DOM0OPS
-	if (xen_start_info.flags & SIF_INITDOMAIN) {
+	if (xendomain_is_dom0()) {
 		/* space for ISA I/O mem */
 		mapsize += IOM_SIZE;
 	}
@@ -668,7 +668,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	if (final)
 		atdevbase = map_end;
 #ifdef DOM0OPS
-	if (final && (xen_start_info.flags & SIF_INITDOMAIN)) {
+	if (final && xendomain_is_dom0()) {
 		/* ISA I/O mem */
 		map_end += IOM_SIZE;
 	}
