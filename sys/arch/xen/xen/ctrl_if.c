@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.18 2008/01/11 20:00:53 bouyer Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.19 2008/10/21 15:46:32 cegger Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.18 2008/01/11 20:00:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.19 2008/10/21 15:46:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,8 +478,8 @@ void ctrl_if_resume(void)
 {
     control_if_t *ctrl_if = get_ctrl_if();
 
-    if ( xen_start_info.flags & SIF_INITDOMAIN )
-    {
+    if (xendomain_is_dom0()) {
+
         /*
          * The initial domain must create its own domain-controller link.
          * The controller is probably not running at this point, but will

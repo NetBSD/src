@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.101 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102 2008/10/21 15:46:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2008/10/21 15:46:32 cegger Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -389,7 +389,7 @@ x86_64_switch_context(struct pcb *new)
 	struct cpu_info *ci;
 	ci = curcpu();
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), new->pcb_rsp0);
-	if (xen_start_info.flags & SIF_PRIVILEGED) {
+	if (xendomain_is_privileged()) {
 		struct physdev_op physop;
 		physop.cmd = PHYSDEVOP_SET_IOPL;
 		physop.u.set_iopl.iopl = new->pcb_iopl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.643 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.643 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -577,7 +577,7 @@ i386_switch_context(lwp_t *l)
 
 	HYPERVISOR_stack_switch(GSEL(GDATA_SEL, SEL_KPL), pcb->pcb_esp0);
 
-	if (xen_start_info.flags & SIF_PRIVILEGED) {
+	if (xendomain_is_privileged()) {
 		int iopl = pcb->pcb_iopl;
 #ifdef XEN3
 	        struct physdev_op physop;
