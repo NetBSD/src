@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.516 2008/10/19 11:36:11 joerg Exp $
+$NetBSD: usbdevs,v 1.517 2008/10/21 12:20:44 jun Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -872,6 +872,7 @@ product COREGA WLANUSB		0x0012	Wireless LAN USB Stick-11
 product COREGA FETHER_USB2_TX	0x0017	FEther USB2-TX
 product COREGA WLUSB_11_KEY	0x001a	ULUSB-11 Key
 product COREGA CGWLUSB2GL	0x002d	CG-WLUSB2GL
+product COREGA CGWLUSB2GPX	0x002e	CG-WLUSB2GPX
 product COREGA FETHER_USB_TXC	0x9601	FEther USB-TXC
 
 /* Creative products */
