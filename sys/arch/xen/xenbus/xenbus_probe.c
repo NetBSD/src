@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.23 2008/10/21 21:28:05 cegger Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.24 2008/10/21 21:55:44 cegger Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.23 2008/10/21 21:28:05 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.24 2008/10/21 21:55:44 cegger Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -71,7 +71,7 @@ static struct xenbus_device *xenbus_lookup_device_path(const char *);
 CFATTACH_DECL_NEW(xenbus, 0, xenbus_match, xenbus_attach,
     NULL, NULL);
 
-device_t xenbus_sc;
+device_t xenbus_dev;
 
 SLIST_HEAD(, xenbus_device) xenbus_device_list;
 SLIST_HEAD(, xenbus_backend_driver) xenbus_backend_driver_list =
@@ -93,13 +93,13 @@ xenbus_attach(device_t parent, device_t self, void *aux)
 	int err;
 
 	aprint_normal(": Xen Virtual Bus Interface\n");
-	xenbus_sc = self;
+	xenbus_dev = self;
 	config_pending_incr();
 
 	err = kthread_create(PRI_NONE, 0, NULL, xenbus_probe_init, NULL,
 	    NULL, "xenbus_probe");
 	if (err)
-		aprint_error_dev(xenbus_sc,
+		aprint_error_dev(xenbus_dev,
 				"kthread_create(xenbus_probe): %d\n", err);
 }
 
@@ -346,7 +346,7 @@ xenbus_probe_device_type(const char *path, const char *type,
 				    "for %s (%d)\n", xbusd->xbusd_path, err);
 				break;
 			}
-			xbusd->xbusd_u.f.f_dev = config_found_ia(xenbus_sc,
+			xbusd->xbusd_u.f.f_dev = config_found_ia(xenbus_dev,
 			    "xenbus", &xa, xenbus_print);
 			if (xbusd->xbusd_u.f.f_dev == NULL) {
 				free(xbusd, M_DEVBUF);
@@ -546,7 +546,7 @@ xenbus_probe_init(void *unused)
 
 		err = HYPERVISOR_event_channel_op(&op);
 		if (err) {
-			aprint_error_dev(xenbus_sc,
+			aprint_error_dev(xenbus_dev,
 				"can't register xenstore event\n");
 			goto err0;
 		}
@@ -563,12 +563,12 @@ xenbus_probe_init(void *unused)
 	}
 
 	/* register event handler */
-	xb_init_comms(xenbus_sc);
+	xb_init_comms(xenbus_dev);
 
 	/* Initialize the interface to xenstore. */
 	err = xs_init(); 
 	if (err) {
-		aprint_error_dev(xenbus_sc,
+		aprint_error_dev(xenbus_dev,
 				"Error initializing xenstore comms: %i\n", err);
 		goto err0;
 	}
