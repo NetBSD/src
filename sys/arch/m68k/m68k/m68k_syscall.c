@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.35 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.36 2008/10/21 12:16:59 ad Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.35 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.36 2008/10/21 12:16:59 ad Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.35 2008/10/15 06:51:18 wrstuden E
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syslog.h>
 #include <sys/user.h>
 #include <sys/ktrace.h>
@@ -273,7 +274,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -394,7 +395,7 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 
 	rval[0] = 0;
 	rval[1] = frame->f_regs[D1];
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:

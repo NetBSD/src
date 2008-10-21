@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.44 2008/10/17 08:51:43 cegger Exp $	*/
+/*	$NetBSD: syscall.c,v 1.45 2008/10/21 12:16:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2008/10/17 08:51:43 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.45 2008/10/21 12:16:59 ad Exp $");
 
 #include "opt_sa.h"
 
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2008/10/17 08:51:43 cegger Exp $");
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/ktrace.h>
@@ -318,7 +319,7 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -464,7 +465,7 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:
