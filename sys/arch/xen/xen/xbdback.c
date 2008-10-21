@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.33 2008/08/24 21:00:49 bouyer Exp $      */
+/*      $NetBSD: xbdback.c,v 1.34 2008/10/21 15:46:32 cegger Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.33 2008/08/24 21:00:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.34 2008/10/21 15:46:32 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -271,7 +271,7 @@ xbdback_init(void)
 	ctrl_msg_t cmsg;
 	blkif_be_driver_status_t st;
 
-	if ( !(xen_start_info.flags & SIF_INITDOMAIN) &&
+	if ( !xendomain_is_dom0() &&
 	     !(xen_start_info.flags & SIF_BLK_BE_DOMAIN) )
 		return;
 

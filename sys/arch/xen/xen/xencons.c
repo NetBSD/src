@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.28 2008/08/10 13:33:44 cegger Exp $	*/
+/*	$NetBSD: xencons.c,v 1.29 2008/10/21 15:46:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.28 2008/08/10 13:33:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.29 2008/10/21 15:46:32 cegger Exp $");
 
 #include "opt_xen.h"
 
@@ -211,7 +211,7 @@ xencons_attach(device_t parent, device_t self, void *aux)
 		db_max_line = 0x7fffffff;
 #endif
 
-		if (xen_start_info.flags & SIF_INITDOMAIN) {
+		if (xendomain_is_dom0()) {
 			int evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
 			aprint_verbose_dev(self, "using event channel %d\n",
 			    evtch);
@@ -368,7 +368,7 @@ xencons_start(struct tty *tp)
 	 * expensive and we don't want our serial ports to overflow.
 	 */
 	cl = &tp->t_outq;
-	if (xen_start_info.flags & SIF_INITDOMAIN) {
+	if (xendomain_is_dom0()) {
 		int len, r;
 		u_char buf[XENCONS_BURST+1];
 
@@ -603,7 +603,7 @@ xenconscn_getc(dev_t dev)
 		splx(s);
 		return 0;
 	}
-	if (xen_start_info.flags & SIF_INITDOMAIN) {
+	if (xendomain_is_dom0()) {
 		while (HYPERVISOR_console_io(CONSOLEIO_read, 1, &c) == 0)
 			;
 		cn_check_magic(dev, c, xencons_cnm_state);
@@ -661,11 +661,10 @@ xenconscn_putc(dev_t dev, int c)
 	int s = spltty();
 #ifdef XEN3
 	XENCONS_RING_IDX cons, prod;
-	if (xen_start_info.flags & SIF_INITDOMAIN) {
+	if (xendomain_is_dom0()) {
 #else
 	extern int ctrl_if_evtchn;
-	if (xen_start_info.flags & SIF_INITDOMAIN ||
-		ctrl_if_evtchn == -1) {
+	if (xendomain_is_dom0() || ctrl_if_evtchn == -1) {
 #endif
 		u_char buf[1];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.58 2008/04/16 20:50:27 cegger Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.59 2008/10/21 15:46:32 cegger Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.58 2008/04/16 20:50:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.59 2008/10/21 15:46:32 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -242,7 +242,7 @@ xennet_scan(device_t self, struct xennet_attach_args *xneta,
 	ctrl_msg_t cmsg;
 	netif_fe_driver_status_t st;
 
-	if ((xen_start_info.flags & SIF_INITDOMAIN) ||
+	if (xendomain_is_dom0() ||
 	    (xen_start_info.flags & SIF_NET_BE_DOMAIN))
 		return 0;
 

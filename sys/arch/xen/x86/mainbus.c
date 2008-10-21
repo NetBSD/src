@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.4 2008/04/16 18:41:48 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.5 2008/10/21 15:46:32 cegger Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2008/04/16 18:41:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2008/10/21 15:46:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	config_found_ia(self, "cpubus", &mba.mba_caa, mainbus_print);
 #else /* XEN3 */
 #ifdef DOM0OPS
-	if (xen_start_info.flags & SIF_INITDOMAIN) {
+	if (xendomain_is_dom0()) {
 #ifdef MPBIOS
 		mpbios_present = mpbios_probe(self);
 #endif

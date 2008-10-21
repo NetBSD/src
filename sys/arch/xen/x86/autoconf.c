@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2008/04/06 07:24:19 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2008/10/21 15:46:32 cegger Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2008/04/06 07:24:19 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2008/10/21 15:46:32 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -125,7 +125,7 @@ cpu_configure(void)
 
 #if NBIOS32 > 0 && defined(DOM0OPS)
 #ifdef XEN3
-	if (xen_start_info.flags & SIF_INITDOMAIN)
+	if (xendomain_is_dom0())
 #endif
 		bios32_init();
 #endif /* NBIOS32 > 0 && DOM0OPS */
@@ -270,7 +270,7 @@ device_register(struct device *dev, void *aux)
 		    sizeof(xcp.xcp_bootdev)) == 0) {
 #ifdef NFS_BOOT_BOOTSTATIC
 #ifdef DOM0OPS
-			if (xen_start_info.flags & SIF_PRIVILEGED) {
+			if (xendomain_is_privileged()) {
 				nfs_bootstatic_callback = dom0_bootstatic_callback;
 			} else
 #endif
