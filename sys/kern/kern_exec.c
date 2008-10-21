@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.279 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.280 2008/10/21 20:52:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.279 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280 2008/10/21 20:52:11 matt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -170,6 +170,7 @@ struct uvm_object *emul_netbsd_object;
 void	syscall(void);
 #endif
 
+#ifdef KERN_SA
 static const struct sa_emul saemul_netbsd = {
 	sizeof(ucontext_t),
 	sizeof(struct sa_t),
@@ -178,12 +179,9 @@ static const struct sa_emul saemul_netbsd = {
 	NULL,
 	cpu_upcall,
 	(void (*)(struct lwp *, void *))getucontext_sa,
-#ifdef KERN_SA
 	sa_ucsp
-#else
-	NULL
-#endif
 };
+#endif /* KERN_SA */
 
 /* NetBSD emul struct */
 const struct emul emul_netbsd = {
@@ -229,7 +227,11 @@ const struct emul emul_netbsd = {
 
 	uvm_default_mapaddr,
 	NULL,
+#ifdef KERN_SA
 	&saemul_netbsd,
+#else
+	NULL,
+#endif
 	sizeof(ucontext_t),
 	startlwp,
 };
