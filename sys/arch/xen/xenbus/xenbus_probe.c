@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.22 2008/09/05 13:37:24 tron Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.23 2008/10/21 21:28:05 cegger Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.22 2008/09/05 13:37:24 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.23 2008/10/21 21:28:05 cegger Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -99,7 +99,8 @@ xenbus_attach(device_t parent, device_t self, void *aux)
 	err = kthread_create(PRI_NONE, 0, NULL, xenbus_probe_init, NULL,
 	    NULL, "xenbus_probe");
 	if (err)
-		printf("kthread_create(xenbus_probe): %d\n", err);
+		aprint_error_dev(xenbus_sc,
+				"kthread_create(xenbus_probe): %d\n", err);
 }
 
 void
@@ -511,7 +512,9 @@ xenbus_probe(void *unused)
 static void
 xenbus_probe_init(void *unused)
 {
-	int err = 0, dom0;
+	int err = 0;
+	bool dom0;
+	vaddr_t page = 0;
 
 	DPRINTK("");
 
@@ -520,13 +523,11 @@ xenbus_probe_init(void *unused)
 	/*
 	** Domain0 doesn't have a store_evtchn or store_mfn yet.
 	*/
-	dom0 = (xen_start_info.store_evtchn == 0);
+	dom0 = xendomain_is_dom0();
 	if (dom0) {
 #if defined(DOM0OPS)
-		vaddr_t page;
 		paddr_t ma;
 		evtchn_op_t op = { .cmd = 0 };
-		int ret;
 
 		/* Allocate page. */
 		page = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
@@ -543,9 +544,13 @@ xenbus_probe_init(void *unused)
 		op.u.alloc_unbound.dom        = DOMID_SELF;
 		op.u.alloc_unbound.remote_dom = 0; 
 
-		ret = HYPERVISOR_event_channel_op(&op);
-		if (ret)
-			panic("can't register xenstore event");
+		err = HYPERVISOR_event_channel_op(&op);
+		if (err) {
+			aprint_error_dev(xenbus_sc,
+				"can't register xenstore event\n");
+			goto err0;
+		}
+		
 		xen_start_info.store_evtchn = op.u.alloc_unbound.port;
 
 		/* And finally publish the above info in /kern/xen */
@@ -553,7 +558,7 @@ xenbus_probe_init(void *unused)
 
 		DELAY(1000);
 #else /* DOM0OPS */
-		return ; /* can't get a working xenstore in this case */
+		kthread_exit(0); /* can't get a working xenstore in this case */
 #endif /* DOM0OPS */
 	}
 
@@ -563,8 +568,9 @@ xenbus_probe_init(void *unused)
 	/* Initialize the interface to xenstore. */
 	err = xs_init(); 
 	if (err) {
-		printf("XENBUS: Error initializing xenstore comms: %i\n", err);
-		kthread_exit(err);
+		aprint_error_dev(xenbus_sc,
+				"Error initializing xenstore comms: %i\n", err);
+		goto err0;
 	}
 
 	if (!dom0) {
@@ -586,6 +592,12 @@ xenbus_probe_init(void *unused)
 	}
 #endif
 	kthread_exit(0);
+
+err0:
+	if (page)
+		uvm_km_free(kernel_map, page, PAGE_SIZE,
+				UVM_KMF_ZERO | UVM_KMF_WIRED);
+	kthread_exit(err);
 }
 
 /*
