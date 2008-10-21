@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.141 2008/08/28 07:58:05 uebayasi Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.142 2008/10/21 11:22:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.141 2008/08/28 07:58:05 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.142 2008/10/21 11:22:21 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -340,7 +340,6 @@ arp_drain(void)
 	KERNEL_LOCK(1, NULL);
 
 	if (arp_lock_try(0) == 0) {
-		printf("arp_drain: locked; punting\n");
 		KERNEL_UNLOCK_ONE(NULL);
 		return;
 	}
