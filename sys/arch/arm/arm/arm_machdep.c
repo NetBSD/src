@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.20 2008/10/15 09:55:01 cegger Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.21 2008/10/21 19:01:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -75,10 +75,11 @@
 #include "opt_execfmt.h"
 #include "opt_cputypes.h"
 #include "opt_arm_debug.h"
+#include "opt_sa.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.20 2008/10/15 09:55:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.21 2008/10/21 19:01:00 matt Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -188,6 +189,7 @@ startlwp(void *arg)
 	userret(l);
 }
 
+#ifdef KERN_SA
 /*
  * XXX This is a terrible name.
  */
@@ -242,3 +244,5 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
 	tf->tf_usr_sp = (int) sf;
 	tf->tf_usr_lr = 0;		/* no return */
 }
+
+#endif /* KERN_SA */
