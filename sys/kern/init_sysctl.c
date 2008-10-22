@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.147 2008/10/19 03:10:09 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.148 2008/10/22 11:17:08 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.147 2008/10/19 03:10:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.148 2008/10/22 11:17:08 ad Exp $");
 
 #include "opt_sysv.h"
-#include "opt_posix.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_sa.h"
 #include "pty.h"
@@ -67,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.147 2008/10/19 03:10:09 christos E
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
+#include <sys/sem.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.147 2008/10/19 03:10:09 christos E
 
 #include <sys/cpu.h>
 
-/* XXX this should not be here */
+int posix_semaphores;
 int security_setidcore_dump;
 char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
 uid_t security_setidcore_owner = 0;
@@ -701,17 +701,13 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, _POSIX_THREADS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_THREADS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "posix_semaphores",
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 				    "Semaphores option to which the system "
 				    "attempts to conform"), NULL,
-#ifdef P1003_1B_SEMAPHORE
-		       200112,
-#else /* P1003_1B_SEMAPHORE */
-		       0,
-#endif /* P1003_1B_SEMAPHORE */
-		       NULL, 0, CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
+		       0, &posix_semaphores,
+		       0, CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_barriers",

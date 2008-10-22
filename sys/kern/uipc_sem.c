@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.25 2008/04/28 20:24:05 martin Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.26 2008/10/22 11:17:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.25 2008/04/28 20:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.26 2008/10/22 11:17:08 ad Exp $");
 
 #include "opt_posix.h"
 
@@ -834,6 +834,7 @@ ksem_init(void)
 	error = proc_specific_key_create(&ksem_specificdata_key,
 					 ksem_proc_dtor);
 	KASSERT(error == 0);
+	posix_semaphores = 200112;
 }
 
 /*
