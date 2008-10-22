@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.1 2008/10/22 10:50:56 matt Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.2 2008/10/22 17:29:33 matt Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.1 2008/10/22 10:50:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.2 2008/10/22 17:29:33 matt Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -367,8 +367,8 @@ static const struct pmap_devmap devmap[] = {
 	{
 		/*
 		 * Map the first 1MB of L4 Core area
-		 * this gets us the console UART, GP timers, interrupt
-		 * controller and GPIO5.
+		 * this gets us the ICU, I2C, USB, GPT[10-11], MMC, McSPI
+		 * UART[12], clock manager, sDMA, ...
 		 */
 		.pd_va = _A(OMAP3530_L4_CORE_VBASE),
 		.pd_pa = _A(OMAP3530_L4_CORE_BASE),
@@ -378,12 +378,24 @@ static const struct pmap_devmap devmap[] = {
 	},
 	{
 		/*
-		 * Map the first 1MB of L4 Wakeup area
-		 * this gets us GPIO[1-4] and Clock Management regs
+		 * Map the all 1MB of the L4 Core area
+		 * this gets us the console UART3, GPT[2-9], WDT1, 
+		 * and GPIO[2-6].
+		 */
+		.pd_va = _A(OMAP3530_L4_PERIPHERAL_VBASE),
+		.pd_pa = _A(OMAP3530_L4_PERIPHERAL_BASE),
+		.pd_size = _S(1 << 20),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+	{
+		/*
+		 * Map all 256KB of the L4 Wakeup area
+		 * this gets us GPIO1, WDT2, GPT1, 32K and power/reset regs
 		 */
 		.pd_va = _A(OMAP3530_L4_WAKEUP_VBASE),
 		.pd_pa = _A(OMAP3530_L4_WAKEUP_BASE),
-		.pd_size = _S(1 << 20),
+		.pd_size = _S(1 << 18),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
@@ -394,7 +406,7 @@ static const struct pmap_devmap devmap[] = {
 #undef	_S
 
 #ifdef DDB
-static void sdp_db_trap(int where)
+static void beagle_db_trap(int where)
 {
 #if  NOMAPWDT32K > 0
 	static int oldwatchdogstate;
@@ -408,9 +420,9 @@ static void sdp_db_trap(int where)
 }
 #endif
 
-void sdp_putchar(char c);
+void beagle_putchar(char c);
 void
-sdp_putchar(char c)
+beagle_putchar(char c)
 {
 	unsigned char *com0addr = (char *)CONSADDR_VA;
 	int timo = 150000;
@@ -443,7 +455,7 @@ u_int
 initarm(void *arg)
 {
 #if 1
-	sdp_putchar('d');
+	beagle_putchar('d');
 #endif
 	/*
 	 * When we enter here, we are using a temporary first level
@@ -462,7 +474,7 @@ initarm(void *arg)
 	pmap_devmap_register(devmap);
 	consinit();
 #if 1
-	sdp_putchar('h');
+	beagle_putchar('h');
 #endif
 #ifdef KGDB
 	kgdb_port_init();
@@ -470,7 +482,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
-	printf("\nNetBSD/evbarm (SDP24xx) booting ...\n");
+	printf("\nNetBSD/evbarm (beagle) booting ...\n");
 #endif
 
 #ifdef BOOT_ARGS
@@ -602,7 +614,7 @@ initarm(void *arg)
 #endif
 
 #ifdef DDB
-	db_trap_callback = sdp_db_trap;
+	db_trap_callback = beagle_db_trap;
 	db_machine_init();
 
 	/* Firmware doesn't load symbols. */
@@ -625,15 +637,15 @@ init_clocks(void)
 #ifdef NOTYET
 	static volatile uint32_t * const clksel_reg = (volatile uint32_t *) (OMAP3530_L4_WAKEUP_VBASE + OMAP2_CM_BASE + OMAP2_CM_CLKSEL_MPU - OMAP3530_L4_WAKEUP_BASE);
 	uint32_t v;
-	sdp_putchar('E');
+	beagle_putchar('E');
 	v = *clksel_reg;
-	sdp_putchar('F');
+	beagle_putchar('F');
 	if (v != OMAP3530_CM_CLKSEL_MPU_FULLSPEED) {
 		printf("Changed CPU speed from half (%d) ", v);
 		*clksel_reg = OMAP3530_CM_CLKSEL_MPU_FULLSPEED;
 		printf("to full speed.\n");
 	}
-	sdp_putchar('G');
+	beagle_putchar('G');
 #endif
 	arm11_pmc_ccnt_init();
 }
@@ -663,7 +675,7 @@ consinit(void)
 
 	consinit_called = 1;
 
-	sdp_putchar('e');
+	beagle_putchar('e');
 
 	if (bus_space_map(&omap_a4x_bs_tag, consaddr, OMAP_COM_SIZE, 0, &bh))
 		panic("Serial console can not be mapped.");
@@ -674,8 +686,8 @@ consinit(void)
 
 	bus_space_unmap(&omap_a4x_bs_tag, bh, OMAP_COM_SIZE);
 
-	sdp_putchar('f');
-	sdp_putchar('g');
+	beagle_putchar('f');
+	beagle_putchar('g');
 }
 
 #ifdef KGDB
