@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.47 2008/10/04 08:07:38 apb Exp $
+# $NetBSD: etcupdate,v 1.48 2008/10/22 15:20:05 apb Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -641,9 +641,9 @@ if ${SOURCEMODE}; then
 	set_makeenv
 	cd ${SRCDIR}/etc
 	if ! ${VERBOSE}; then
-		"eval ${MAKE_ENV} make clean > /dev/null"
+		eval "${MAKE_ENV} make clean > /dev/null"
 	else
-		"eval ${MAKE_ENV} make clean"
+		eval "${MAKE_ENV} make clean"
 	fi
 fi
 
