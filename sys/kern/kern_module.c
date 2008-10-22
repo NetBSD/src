@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.23 2008/10/22 11:16:29 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.24 2008/10/22 11:19:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.23 2008/10/22 11:16:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.24 2008/10/22 11:19:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,9 +511,13 @@ module_do_load(const char *filename, bool isdep, int flags,
 		goto fail;
 	}
 	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
-		error = EPROGMISMATCH;
 		module_error("module built for different version of system");
-		goto fail;
+		if ((flags & MODCTL_LOAD_FORCE) != 0) {
+			module_error("forced load, system may be unstable");
+		} else {
+			error = EPROGMISMATCH;
+			goto fail;
+		}
 	}
 
 	/*
