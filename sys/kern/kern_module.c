@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.22 2008/08/01 14:05:15 pooka Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.23 2008/10/22 11:16:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.22 2008/08/01 14:05:15 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.23 2008/10/22 11:16:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,7 @@ module_compatible(int v1, int v2)
  */
 int
 module_load(const char *filename, int flags, prop_dictionary_t props,
-	    modclass_t class, bool autoload)
+	    modclass_t class)
 {
 	int error;
 
@@ -201,10 +201,32 @@ module_load(const char *filename, int flags, prop_dictionary_t props,
 
 	mutex_enter(&module_lock);
 	error = module_do_load(filename, false, flags, props, NULL, class,
-	    autoload);
+	    false);
 	mutex_exit(&module_lock);
 
 	return error;
+}
+
+/*
+ * module_autoload:
+ *
+ *	Load a single module from the file system, system initiated.
+ */
+int
+module_autoload(const char *filename, modclass_t class)
+{
+	int error;
+
+	KASSERT(mutex_owned(&module_lock));
+
+	/* Authorize. */
+	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
+	    0, (void *)(uintptr_t)MODCTL_LOAD, (void *)(uintptr_t)1, NULL);
+	if (error != 0) {
+		return error;
+	}
+
+	return module_do_load(filename, false, 0, NULL, NULL, class, true);
 }
 
 /*
