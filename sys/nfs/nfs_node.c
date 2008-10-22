@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.105 2008/10/22 11:36:06 matt Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.106 2008/10/22 12:29:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.105 2008/10/22 11:36:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.106 2008/10/22 12:29:35 matt Exp $");
 
 #include "opt_nfs.h"
 
@@ -79,7 +79,7 @@ static const struct genfs_ops nfs_genfsops = {
  * Reinitialize inode hash table.
  */
 void
-nfs_node_reinit()
+nfs_node_init()
 {
 	malloc_type_attach(M_NFSNODE);
 	pool_init(&nfs_node_pool, sizeof(struct nfsnode), 0, 0, 0, "nfsnodepl",

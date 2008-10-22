@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmount.h,v 1.47 2008/10/22 11:36:06 matt Exp $	*/
+/*	$NetBSD: nfsmount.h,v 1.48 2008/10/22 12:29:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -197,7 +197,6 @@ int	nfs_fsinfo __P((struct nfsmount *, struct vnode *, kauth_cred_t,
 			struct lwp *));
 
 void	nfs_vfs_init __P((void));
-void	nfs_vfs_reinit __P((void));
 void	nfs_vfs_done __P((void));
 
 #endif /* _KERNEL */

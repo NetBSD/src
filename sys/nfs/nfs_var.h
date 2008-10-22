@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.81 2008/10/22 11:36:06 matt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.82 2008/10/22 12:29:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ void nfs_kqinit(void);
 
 /* nfs_node.c */
 void nfs_rbtinit(struct nfsmount *);
-void nfs_node_reinit(void);
+void nfs_node_init(void);
 void nfs_node_done(void);
 
 int nfs_nget1(struct mount *, nfsfh_t *, int, struct nfsnode **, int);

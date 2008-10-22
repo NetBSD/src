@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.208 2008/10/22 11:36:06 matt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.209 2008/10/22 12:29:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.208 2008/10/22 11:36:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.209 2008/10/22 12:29:35 matt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1590,14 +1590,9 @@ nfs_vfs_init()
 
 	/* Initialize NFS server / client shared data. */
 	nfs_init();
+	nfs_node_init();
 
 	nfs_commitsize = uvmexp.npages << (PAGE_SHIFT - 4);
-}
-
-void
-nfs_vfs_reinit()
-{
-	nfs_node_reinit();
 }
 
 void
