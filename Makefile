@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.259 2008/10/16 09:43:12 pooka Exp $
+#	$NetBSD: Makefile,v 1.260 2008/10/22 17:37:16 apb Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -74,8 +74,9 @@
 #
 # Targets invoked by `make build,' in order:
 #   cleandir:        cleans the tree.
-#   obj:             creates object directories.
+#   do-tools-obj:    creates object directories for the host toolchain.
 #   do-tools:        builds host toolchain.
+#   obj:             creates object directories.
 #   do-distrib-dirs: creates the distribution directories.
 #   includes:        installs include files.
 #   do-tools-compat: builds the "libnbcompat" library; needed for some
@@ -196,11 +197,14 @@ BUILDTARGETS+=	check-tools
 .if ${MKUPDATE} == "no" && !defined(NOCLEANDIR)
 BUILDTARGETS+=	cleandir
 .endif
+.if ${USETOOLS} == "yes"
+.if ${MKOBJDIRS} != "no"
+BUILDTARGETS+=	do-tools-obj
+.endif
+BUILDTARGETS+=	do-tools
+.endif
 .if ${MKOBJDIRS} != "no"
 BUILDTARGETS+=	obj
-.endif
-.if ${USETOOLS} == "yes"
-BUILDTARGETS+=	do-tools
 .endif
 .if !defined(NODISTRIBDIRS)
 BUILDTARGETS+=	do-distrib-dirs
@@ -382,6 +386,9 @@ do-${dir:S/\//-/g}: .PHONY .MAKE
 	${MAKEDIRTARGET} ${dir} ${targ}
 .endfor
 .endfor
+
+do-tools-obj: .PHONY .MAKE
+	${MAKEDIRTARGET} tools obj
 
 do-libgcc: .PHONY .MAKE
 .if defined(HAVE_GCC)
