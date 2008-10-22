@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.69 2007/12/04 17:42:30 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.70 2008/10/22 11:36:06 matt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -369,7 +369,6 @@ extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
 #endif
 #define	NMUIDHASH(nmp, uid) \
 	(&(nmp)->nm_uidhashtbl[(uid) % NFS_MUIDHASHSIZ])
-#define	NFSNOHASH(fhsum) ((fhsum) & nfsnodehash)
 
 #ifndef NFS_DIRHASHSIZ
 #define NFS_DIRHASHSIZ 64
