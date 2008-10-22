@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARD,v 1.1 2008/10/22 10:50:56 matt Exp $
+#	$NetBSD: BEAGLEBOARD,v 1.2 2008/10/22 17:38:59 matt Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -180,7 +180,7 @@ L3i0		at mainbus?
 obio0		at mainbus? base 0x48000000 size 0x1000000	# L4 CORE 
 obio1		at mainbus? base 0x48300000 size 0x0040000	# L4 WAKEUP 
 obio2		at mainbus? base 0x49000000 size 0x0100000	# L4 PERIPHERAL 
-obio3		at mainbus? base 0x54000000 size 0x0800000	# L4 EMUL 
+#obio3		at mainbus? base 0x54000000 size 0x0800000	# L4 EMUL 
 
 # General Purpose Memory Controller
 gpmc0		at mainbus? base 0x6e000000
@@ -224,11 +224,13 @@ omapwdt32k*	at obio2 addr 0x49030000 size 2048	# WDT3
 #omapwdt32k*	at obio1 addr 0x48314000 size 2048	# WDT2
 
 # On-board USB
-##ohci*		at obio0 addr 0x48064400 size 0x0400 intr 75
-##usb*		at ohci?
-##uhub*		at usb?
+#ehci*		at obio0 addr 0x48064800 size 0x0400 intr 77
+#ohci*		at obio0 addr 0x48064400 size 0x0400 intr 76
+#usb*		at ohci?
+#uhub*		at usb?
 ##umass*		at uhub? port ? configuration ? interface ?
 ##wd*		at umass?
+#axe*		at uhub? port ? configuration ? interface ?
 
 # Hardware clocking and power management
 
