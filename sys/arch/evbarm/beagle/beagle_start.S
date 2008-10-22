@@ -99,7 +99,7 @@
 #include <arm/omap/omap2_obioreg.h>
 #include <evbarm/beagle/beagle.h>  
 
-RCSID("$NetBSD: beagle_start.S,v 1.1 2008/10/22 10:50:56 matt Exp $")
+RCSID("$NetBSD: beagle_start.S,v 1.2 2008/10/22 17:29:33 matt Exp $")
 
 #define Invalidate_I_cache(reg) \
 	mcr	p15, 0, reg, c7, c5, 0	/* Invalidate Entire I cache */
@@ -190,17 +190,6 @@ _C_LABEL(beagle_start):
 	mrc	p15, 0, r1, c1, c0, 0	/*  "       "   "     */
 	and	r1, r1, r2		/*  "       "   "     */
 	mcr	p15, 0, r1, c1, c0, 0	/*  "       "   "     */
-
-#ifdef NOTYET
-	/*
-	 * XXX Restrict cache size is reported to be unsupported on SDP2340
-	 * XXX your CPU mileage may vary... as yet there is not generalized way to do this
-	 */
-        ldr     r2, Lauxctl_CZ_restrict	/* Restrict cache size */
-	mrc	p15, 0, r1, c1, c0, 1	/*  "        "     "   */
-	orr	r1, r1, r2		/*  "        "     "   */
-	mcr	p15, 0, r1, c1, c0, 1	/*  "        "     "   */
-#endif
 
 	mcr	p15, 0, r0, c7, c10, 4	/* Drain the write buffers. */
 	mcr	p15, 0, r0, c2, c0, 0	/* Set Translation Table Base */
@@ -303,7 +292,12 @@ mmu_init_table:
 		1,
 		L1_S_PROTO | L1_S_AP(AP_KRW))
 
-	/* Map first 1MB of L4 WAKEUP (so console will work) */
+	/* Map first(all) 1MB of L4 PERIPHERAL (so console will work) */
+	MMU_INIT(OMAP3530_L4_PERIPHERAL_VBASE, OMAP3530_L4_PERIPHERAL_BASE,
+		1,
+		L1_S_PROTO | L1_S_AP(AP_KRW))
+
+	/* Map all 256KB of L4 WAKEUP (so console will work) */
 	MMU_INIT(OMAP3530_L4_WAKEUP_VBASE, OMAP3530_L4_WAKEUP_BASE,
 		1,
 		L1_S_PROTO | L1_S_AP(AP_KRW))
