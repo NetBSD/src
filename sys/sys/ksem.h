@@ -1,4 +1,4 @@
-/*	$NetBSD: ksem.h,v 1.6 2006/03/05 00:49:19 cube Exp $	*/
+/*	$NetBSD: ksem.h,v 1.7 2008/10/22 11:25:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -51,6 +51,8 @@ int _ksem_trywait(semid_t);
 int _ksem_unlink(const char *);
 int _ksem_wait(semid_t);
 __END_DECLS
+
+extern int	posix_semaphores;
 #endif /* _LIBC */
 
 #endif /* _SYS_KSEM_H_ */
