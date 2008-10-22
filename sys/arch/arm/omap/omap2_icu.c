@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_icu.c,v 1.4 2008/08/27 11:03:10 matt Exp $	*/
+/*	$NetBSD: omap2_icu.c,v 1.5 2008/10/22 10:45:47 matt Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -30,7 +30,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.4 2008/08/27 11:03:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.5 2008/10/22 10:45:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -171,7 +171,7 @@ omap2icu_match(device_t parent, cfdata_t cf, void *aux)
 
 #if defined(OMAP_2430) || defined(OMAP_2420)
 	return oa->obio_addr == INTC_BASE;
-#elif defined(OMAP3530)
+#elif defined(OMAP_3530)
 	return oa->obio_addr == INTC_BASE_3530;
 #else
 #error unsupported OMAP variant
@@ -204,7 +204,7 @@ omap2icu_attach(device_t parent, device_t self, void *aux)
 	pic_add(&sc->sc_pic, 0);
 }
 
-CFATTACH_DECL(omap2icu,
-    sizeof(struct device),
+CFATTACH_DECL_NEW(omap2icu,
+    0,
     omap2icu_match, omap2icu_attach,
     NULL, NULL);
