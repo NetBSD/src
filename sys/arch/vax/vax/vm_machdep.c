@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.102 2008/03/11 05:34:03 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.103 2008/10/22 11:24:28 hans Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,11 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.103 2008/10/22 11:24:28 hans Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
+#include "opt_sa.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -171,6 +172,32 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf->r1 = 1;
 	tf->psl = PSL_U|PSL_PREVU;
 }
+
+#if KERN_SA > 0
+void
+cpu_setfunc(struct lwp *l, void (*func) __P((void *)), void *arg)
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = (struct trapframe *)((u_int)l->l_addr + USPACE) - 1;
+	struct callsframe *cf;
+	extern int sret;
+
+	panic("cpu_setfunc() called\n");
+
+	cf = (struct callsframe *)tf - 1;
+	cf->ca_cond = 0;
+	cf->ca_maskpsw = 0x20000000;
+	cf->ca_pc = (unsigned)&sret;
+	cf->ca_argno = 1;
+	cf->ca_arg1 = (long)arg;
+
+	pcb->framep = tf;
+	pcb->KSP = (long)cf;
+	pcb->FP = (long)cf;
+	pcb->AP = (long)&cf->ca_argno;
+	pcb->PC = (long)func + 2;
+}
+#endif
 
 int
 cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
