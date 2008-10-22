@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.10 2008/10/15 06:51:19 wrstuden Exp $	*/
+/*	$NetBSD: userret.h,v 1.11 2008/10/22 11:24:28 hans Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -41,23 +41,7 @@ userret(struct lwp *l, struct trapframe *frame, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
-	LOCKDEBUG_BARRIER(NULL, 0);
-
-	/* Generate UNBLOCKED upcall. */
-	if (l->l_flag & L_SA_BLOCKING)
-		sa_unblock_userret(l);
-
-	/* Take pending signals. */
-	for (;;) {
-		if ((l->l_flag & LW_USERRET) != 0)
-			lwp_userret(l);
-		if (!curcpu()->ci_want_resched)
-			break;
-		preempt();
-	}
-	/* Invoke any pending upcalls. */
-	if (l->l_flag & L_SA_UPCALL)
-		sa_upcall_userret(l);
+	mi_userret(l);
 
 	/*
 	 * If profiling, charge system time to the trapped pc.
