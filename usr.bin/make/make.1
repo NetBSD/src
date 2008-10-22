@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.140 2008/10/19 16:59:08 wiz Exp $
+.\"	$NetBSD: make.1,v 1.141 2008/10/22 15:04:49 apb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd October 19, 2008
+.Dd October 22, 2008
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -117,7 +117,7 @@ Unless the flags are preceded by
 they are added to the
 .Va MAKEFLAGS
 environment variable and will be processed by any child make processes.
-By default, debugging information is printed to standard output,
+By default, debugging information is printed to standard error,
 but this can be changed using the
 .Ar F
 debugging flag.
