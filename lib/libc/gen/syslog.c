@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.41 2008/10/21 21:00:31 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.42 2008/10/22 02:17:29 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.41 2008/10/21 21:00:31 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.42 2008/10/22 02:17:29 dogcow Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -303,7 +303,8 @@ vsyslog_r(int pri, struct syslog_data *data, const char *fmt, va_list ap)
 	/* Get connected, output the message to the local logger. */
 	if (data == &sdata)
 		mutex_lock(&syslog_mutex);
-	if ((opened = !data->opened))
+	opened = !data->opened;
+	if (opened)
 		openlog_unlocked_r(data->log_tag, data->log_stat, 0, data);
 	connectlog_r(data);
 
