@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.25 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: sem.h,v 1.26 2008/10/22 11:17:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -220,6 +220,8 @@ int	semctl1(struct lwp *, int, int, int, void *, register_t *);
     ((cmd) == IPC_SET || (cmd) == IPC_STAT ? (void *)sembuf \
     : (cmd) == GETALL || (cmd) == SETVAL || (cmd) == SETALL ? (void *)arg \
     : NULL)
+
+extern int	posix_semaphores;
 #endif /* !_KERNEL */
 
 #endif /* !_SYS_SEM_H_ */
