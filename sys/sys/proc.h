@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.281 2008/10/15 06:51:21 wrstuden Exp $	*/
+/*	$NetBSD: proc.h,v 1.282 2008/10/22 11:14:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ struct emul {
 	int		e_nosys;	/* Offset of the nosys() syscall */
 	int		e_nsysent;	/* Number of system call entries */
 #endif
-	const struct sysent *e_sysent;	/* System call array */
+	struct sysent	*e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
 	void		(*e_sendsig)(const struct ksiginfo *,
