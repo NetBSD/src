@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.517 2008/10/21 12:20:44 jun Exp $
+$NetBSD: usbdevs,v 1.518 2008/10/22 10:23:51 haad Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -474,6 +474,7 @@ vendor METAGEEK		0x1781	MetaGeek
 vendor AMIT		0x18c5	AMIT
 vendor QCOM		0x18e8	Qcom
 vendor LINKSYS3		0x1915	Linksys
+vendor WINCHIPHEAD2	0x1a86	QinHeng Electronics
 vendor QUALCOMMINC	0x19d2	Qualcomm, Incorporated
 vendor DLINK		0x2001	D-Link
 vendor PLANEX2		0x2019	Planex Communications
@@ -2343,6 +2344,7 @@ product WACOM GD0912U		0x0022	Intuos 9x12 Graphics Tablet
 
 /* WinChipHead products */
 product WINCHIPHEAD CH341SER	0x5523	CH341/CH340 USB-Serial Bridge
+product WINCHIPHEAD2 CH341	0x7523	CH341 serial/parallel
 
 /* Wistron NeWeb products */
 product WISTRONNEWEB UR055G	0x0711	UR055G
