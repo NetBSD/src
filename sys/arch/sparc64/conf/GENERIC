@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.102 2008/08/10 15:31:22 tls Exp $
+# $NetBSD: GENERIC,v 1.103 2008/10/22 07:23:42 jnemeth Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.102 $"
+#ident 		"GENERIC-$Revision: 1.103 $"
 
 maxusers	64
 
@@ -932,6 +932,9 @@ options VERIFIED_EXEC_FP_MD5
 
 # a pseudo device needed for SMBFS
 pseudo-device   nsmb		# experimental - SMB requester
+
+# drvctl - needed to show device dictionary via drvctl(8)
+pseudo-device	drvctl
 
 #options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
 					# (for static binaries only for now)
