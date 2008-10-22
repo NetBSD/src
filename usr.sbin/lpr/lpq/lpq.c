@@ -1,4 +1,4 @@
-/*	$NetBSD: lpq.c,v 1.18 2008/07/21 13:36:58 lukem Exp $	*/
+/*	$NetBSD: lpq.c,v 1.19 2008/10/22 07:59:43 mishka Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpq.c,v 1.18 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: lpq.c,v 1.19 2008/10/22 07:59:43 mishka Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,6 +153,6 @@ main(int argc, char *argv[])
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-a] [-l] [-Pprinter] [-w maxwait] [user ...] [job ...]", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-a] [-l] [-Pprinter] [-w maxwait] [user ...] [job ...]\n", getprogname());
 	exit(1);
 }
