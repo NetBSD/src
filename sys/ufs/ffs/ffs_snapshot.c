@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.80 2008/09/08 14:22:31 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.81 2008/10/23 14:25:21 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.80 2008/09/08 14:22:31 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.81 2008/10/23 14:25:21 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1942,15 +1942,16 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 	struct snap_info *si = VFSTOUFS(vp->v_mount)->um_snapinfo;
 	struct buf *bp;
 	daddr_t lbn, nextlbn;
-	off_t bytesinfile;
+	off_t fsbytes, bytesinfile;
 	long size, xfersize, blkoffset;
 	int error;
 
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	mutex_enter(&si->si_snaplock);
 
+	fsbytes = lblktosize(fs, howmany(fs->fs_size, fs->fs_frag));
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
-		bytesinfile = ip->i_size - uio->uio_offset;
+		bytesinfile = fsbytes - uio->uio_offset;
 		if (bytesinfile <= 0)
 			break;
 		lbn = lblkno(fs, uio->uio_offset);
