@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.39 2008/10/20 10:24:18 ad Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.40 2008/10/23 20:41:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.39 2008/10/20 10:24:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.40 2008/10/23 20:41:13 christos Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -108,11 +108,13 @@ static int ksyms_maxlen;
 static bool ksyms_isopen;
 static bool ksyms_initted;
 static struct ksyms_hdr ksyms_hdr;
-kmutex_t ksyms_lock;
+static kmutex_t ksyms_lock;
 
 void ksymsattach(int);
-static void ksyms_hdr_init(void *hdraddr);
+static void ksyms_hdr_init(void *);
 static void ksyms_sizes_calc(void);
+static int ksyms_getval_unlocked(const char *, const char *, unsigned long *,
+    int);
 
 #ifdef KSYMS_DEBUG
 #define	FOLLOW_CALLS		1
@@ -316,7 +318,6 @@ findsym(const char *name, struct ksyms_symtab *table)
 void
 ksymsattach(int arg)
 {
-
 	if (baseidx == 0)
 		ptree_gen(0, &kernel_symtab);
 }
@@ -412,6 +413,7 @@ ksyms_init(int symsize, void *start, void *end)
 	size_t strsize = 0;
 	Elf_Ehdr *ehdr;
 
+	mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
 #ifdef SYMTAB_SPACE
 	if (symsize <= 0 &&
 	    strncmp(db_symtab, SYMTAB_FILLER, sizeof(SYMTAB_FILLER))) {
@@ -505,8 +507,9 @@ ksyms_init_explicit(void *ehdr, void *symstart, size_t symsize,
  *
  * Call with ksyms_lock, unless known that the symbol table can't change.
  */
-int
-ksyms_getval(const char *mod, const char *sym, unsigned long *val, int type)
+static int
+ksyms_getval_unlocked(const char *mod, const char *sym, unsigned long *val,
+    int type)
 {
 	struct ksyms_symtab *st;
 	Elf_Sym *es;
@@ -516,7 +519,8 @@ ksyms_getval(const char *mod, const char *sym, unsigned long *val, int type)
 
 #ifdef KSYMS_DEBUG
 	if (ksyms_debug & FOLLOW_CALLS)
-		printf("ksyms_getval: mod %s sym %s valp %p\n", mod, sym, val);
+		printf("ksyms_getval_unlocked: mod %s sym %s valp %p\n",
+		    mod, sym, val);
 #endif
 
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
@@ -540,6 +544,18 @@ ksyms_getval(const char *mod, const char *sym, unsigned long *val, int type)
 	}
 	return ENOENT;
 }
+
+int
+ksyms_getval(const char *mod, const char *sym, unsigned long *val, int type)
+{
+	int rc;
+
+	mutex_enter(&ksyms_lock);
+	rc = ksyms_getval_unlocked(mod, sym, val, type);
+	mutex_exit(&ksyms_lock);
+	return rc;
+}
+
 
 /*
  * Get "mod" and "symbol" associated with an address.
@@ -730,7 +746,8 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 			continue;
 
 		/* Check if the symbol exists */
-		if (ksyms_getval(NULL, symname, &rval, KSYMS_EXTERN) == 0) {
+		if (ksyms_getval_unlocked(NULL, symname, &rval, KSYMS_EXTERN)
+		    == 0) {
 			/* Check (and complain) about differing values */
 			if (sym[i].st_value != rval &&
 			    sym[i].st_shndx != SHN_UNDEF) {
@@ -774,7 +791,8 @@ ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
 			continue;
 
 		/* Check if the symbol exists */
-		if (ksyms_getval(NULL, symname, &rval, KSYMS_EXTERN) == 0) {
+		if (ksyms_getval_unlocked(NULL, symname, &rval, KSYMS_EXTERN)
+		    == 0) {
 			if ((sym[i].st_value != rval) && specialsym(symname)) {
 				addsym(&info, &sym[i], symname, mod);
 			}
@@ -1183,9 +1201,7 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		 * Use the in-kernel symbol lookup code for fast
 		 * retreival of a value.
 		 */
-		mutex_enter(&ksyms_lock);
 		error = ksyms_getval(NULL, str, &val, KSYMS_EXTERN);
-		mutex_exit(&ksyms_lock);
 		if (error == 0)
 			error = copyout(&val, kg->kg_value, sizeof(long));
 		kmem_free(str, len);
