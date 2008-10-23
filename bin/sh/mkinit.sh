@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: mkinit.sh,v 1.4 2008/04/29 06:53:00 martin Exp $
+#	$NetBSD: mkinit.sh,v 1.5 2008/10/23 20:21:57 apb Exp $
 
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -138,7 +138,7 @@ echo
 echo "void"
 echo "init(void)"
 echo "{"
-echo "${event_init%$nl}"
+echo "${event_init}"
 echo "}"
 echo
 echo
@@ -151,7 +151,7 @@ echo
 echo "void"
 echo "reset(void)"
 echo "{"
-echo "${event_reset%$nl}"
+echo "${event_reset}"
 echo "}"
 echo
 echo
@@ -163,7 +163,7 @@ echo
 echo "void"
 echo "initshellproc(void)"
 echo "{"
-echo "${event_shellproc%$nl}"
+echo "${event_shellproc}"
 echo "}"
 
 exec >&-
