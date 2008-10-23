@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.15 2008/10/20 10:24:18 ad Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.16 2008/10/23 20:41:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -110,6 +110,5 @@ int ksyms_sift(char *, char *, int);
 void ksyms_modload(const char *, void *, vsize_t, char *, vsize_t);
 void ksyms_modunload(const char *);
 
-extern kmutex_t ksyms_lock;
 #endif /* _KERNEL */
 #endif /* _SYS_KSYMS_H_ */
