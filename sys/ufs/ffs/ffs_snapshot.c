@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.81 2008/10/23 14:25:21 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.82 2008/10/23 17:16:24 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.81 2008/10/23 14:25:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.82 2008/10/23 17:16:24 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1949,22 +1949,24 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	mutex_enter(&si->si_snaplock);
 
-	fsbytes = lblktosize(fs, howmany(fs->fs_size, fs->fs_frag));
+	fsbytes = lfragtosize(fs, fs->fs_size);
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		bytesinfile = fsbytes - uio->uio_offset;
 		if (bytesinfile <= 0)
 			break;
 		lbn = lblkno(fs, uio->uio_offset);
 		nextlbn = lbn + 1;
-		size = blksize(fs, ip, lbn);
+		size = fs->fs_bsize;
 		blkoffset = blkoff(fs, uio->uio_offset);
 		xfersize = MIN(MIN(fs->fs_bsize - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
-		if (lblktosize(fs, nextlbn) >= ip->i_size)
+		if (lblktosize(fs, nextlbn + 1) >= fsbytes) {
+			if (lblktosize(fs, lbn) + size > fsbytes)
+				size = fsbytes - lblktosize(fs, lbn);
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
-		else {
-			int nextsize = blksize(fs, ip, nextlbn);
+		} else {
+			int nextsize = fs->fs_bsize;
 			error = breadn(vp, lbn,
 			    size, &nextlbn, &nextsize, 1, NOCRED, 0, &bp);
 		}
@@ -1979,10 +1981,10 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 		 * or uninitialized data.
 		 */
 		size -= bp->b_resid;
-		if (size < xfersize) {
-			if (size == 0)
+		if (size < blkoffset + xfersize) {
+			xfersize = size - blkoffset;
+			if (xfersize <= 0)
 				break;
-			xfersize = size;
 		}
 		error = uiomove((char *)bp->b_data + blkoffset, xfersize, uio);
 		if (error)
