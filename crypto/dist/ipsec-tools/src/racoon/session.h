@@ -1,4 +1,4 @@
-/*	$NetBSD: session.h,v 1.5 2008/08/06 19:14:28 tteras Exp $	*/
+/*	$NetBSD: session.h,v 1.6 2008/10/23 10:56:10 tteras Exp $	*/
 
 /* Id: session.h,v 1.3 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -36,6 +36,5 @@
 
 extern int session __P((void));
 extern RETSIGTYPE signal_handler __P((int));
-extern int get_sigreq(int sig);
 
 #endif /* _SESSION_H */

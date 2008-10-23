@@ -1,4 +1,10 @@
-2008-10-09  Timo Teras  <timo.teras@iki.fi>
+2008-08-06  Timo Teras  <timo.teras@iki.fi>
+	From Krzysztof Piotr Oledzki <olel@ans.pl>:
+	* src/racoon/{privsep.c|session.c|session.h}: revert parts of
+	  2008-08-06 commit; the problem those changes address are already
+	  handled in a sensible way by Cyrus Rahman's patch from 2008-03-06
+
+[A2008-10-09  Timo Teras  <timo.teras@iki.fi>
 	From Arnaud Ebalard <arno@natisbad.org>:
 	* src/racoon/isakmp_quick.c: remove unbindph12() call that is
 	  now done also in remph2()
