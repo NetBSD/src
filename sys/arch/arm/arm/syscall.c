@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.46 2008/10/23 18:13:52 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.47 2008/10/23 21:38:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.46 2008/10/23 18:13:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.47 2008/10/23 21:38:39 matt Exp $");
 
 #include "opt_sa.h"
 
@@ -225,7 +225,7 @@ syscall(struct trapframe *frame, lwp_t *l, uint32_t insn)
 	const uint32_t os_mask = insn & SWI_OS_MASK;
 	uint32_t code = insn & 0x000fffff;
 
-	/* test new office and old unofficial NetBSD ranges */
+	/* test new official and old unofficial NetBSD ranges */
 	if (__predict_false(os_mask != SWI_OS_NETBSD)
 	    && __predict_false(os_mask != 0)) {
 		if (os_mask == SWI_OS_ARM
