@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.6 2008/09/02 02:23:11 lukem Exp $
+# $NetBSD: md.cats,v 1.7 2008/10/23 16:04:26 cube Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -70,7 +70,7 @@
 ./usr/X11R6/man/man3/XF86VidModeSwitchToMode.3		-unknown-	.man,x11
 ./usr/X11R6/man/man3/XF86VidModeValidateModeLine.3	-unknown-	.man,x11
 ./usr/X11R6/man/man4/fpit.4				-unknown-	.man,x11
-./usr/X11R7/man/cat3/XF86VM.0				-unknown-	xorg
+./usr/X11R7/man/cat3/XF86VM.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeDeleteModeLine.0	-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeGetAllModeLines.0	-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XF86VidModeGetDotClocks.0		-unknown-	.cat,xorg
@@ -114,7 +114,7 @@
 ./usr/X11R7/man/html3/XF86VidModeSwitchMode.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XF86VidModeSwitchToMode.html	-unknown-	html,xorg
 ./usr/X11R7/man/html3/XF86VidModeValidateModeLine.html	-unknown-	html,xorg
-./usr/X11R7/man/man3/XF86VM.3				-unknown-	xorg
+./usr/X11R7/man/man3/XF86VM.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeDeleteModeLine.3	-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeGetAllModeLines.3	-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XF86VidModeGetDotClocks.3		-unknown-	.man,xorg
