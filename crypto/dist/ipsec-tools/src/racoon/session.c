@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.16 2008/09/19 11:01:08 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.17 2008/10/23 10:56:10 tteras Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -415,14 +415,6 @@ static void reload_conf(){
 
 	save_sainfotree_flush();
 	save_rmconf_flush();
-}
-
-int get_sigreq(int sig)
-{
-	if (sig <= NSIG)
-		return sigreq[sig];
-
-	return 0;
 }
 
 static void
