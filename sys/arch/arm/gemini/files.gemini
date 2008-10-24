@@ -1,4 +1,4 @@
-#	$NetBSD: files.gemini,v 1.1 2008/10/24 04:23:18 matt Exp $
+#	$NetBSD: files.gemini,v 1.2 2008/10/24 16:48:29 matt Exp $
 #
 # Configuration info for GEMINI CPU support
 # Based on omap/files.omap2
@@ -65,6 +65,8 @@ file	arch/arm/gemini/gemini_com.c		gemini_com
 defparam opt_com.h				CONSADDR CONSPEED CONMODE
 
 # GEMINI USB controller
+attach ehci at obio with ehci_obio
+file	arch/arm/gemini/obio_ehci.c		ehci_obio
 
 
 # PCI
