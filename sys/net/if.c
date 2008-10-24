@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.229 2008/10/24 17:14:29 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.230 2008/10/24 21:46:09 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.229 2008/10/24 17:14:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.230 2008/10/24 21:46:09 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -486,20 +486,20 @@ if_attach(struct ifnet *ifp)
 		/* grow ifnet_addrs */
 		m = oldlim * sizeof(struct ifaddr *);
 		n = if_indexlim * sizeof(struct ifaddr *);
-		q = (void *)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
+		q = malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
 		if (ifnet_addrs != NULL) {
 			memcpy(q, ifnet_addrs, m);
-			free((void *)ifnet_addrs, M_IFADDR);
+			free(ifnet_addrs, M_IFADDR);
 		}
 		ifnet_addrs = (struct ifaddr **)q;
 
 		/* grow ifindex2ifnet */
 		m = oldlim * sizeof(struct ifnet *);
 		n = if_indexlim * sizeof(struct ifnet *);
-		q = (void *)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
+		q = malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
 		if (ifindex2ifnet != NULL) {
-			memcpy(q, (void *)ifindex2ifnet, m);
-			free((void *)ifindex2ifnet, M_IFADDR);
+			memcpy(q, ifindex2ifnet, m);
+			free(ifindex2ifnet, M_IFADDR);
 		}
 		ifindex2ifnet = (struct ifnet **)q;
 	}
@@ -1360,7 +1360,7 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 	}
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_flags = ifp->if_flags;
-	ret = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (void *) &ifr);
+	ret = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, &ifr);
 	/* Restore interface state if not successful. */
 	if (ret != 0) {
 		ifp->if_pcount = pcount;
