@@ -434,25 +434,26 @@ com_attach_subr(struct com_softc *sc)
 			 * setting DLAB enable gives access to the EFR on
 			 * these chips.
 			 */
-			lcr = CSR_READ_1(regsp, COM_REG_LCR);
-			CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
-			CSR_WRITE_1(regsp, COM_REG_EFR, 0);
-			if (CSR_READ_1(regsp, COM_REG_EFR) == 0) {
-				CSR_WRITE_1(regsp, COM_REG_LCR,
-				    lcr | LCR_DLAB);
+			if (type != COM_TYPE_16550_NOERS) {
+				lcr = CSR_READ_1(regsp, COM_REG_LCR);
+				CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
+				CSR_WRITE_1(regsp, COM_REG_EFR, 0);
+			
 				if (CSR_READ_1(regsp, COM_REG_EFR) == 0) {
+					CSR_WRITE_1(regsp, COM_REG_LCR,
+					    lcr | LCR_DLAB);
 					CLR(sc->sc_hwflags, COM_HW_FIFO);
 					sc->sc_fifolen = 0;
 				} else {
 					SET(sc->sc_hwflags, COM_HW_FLOW);
 					sc->sc_fifolen = 32;
 				}
+				CSR_WRITE_1(regsp, COM_REG_LCR, lcr);
 			} else
 #endif
 				sc->sc_fifolen = 16;
 
 #ifdef COM_16650
-			CSR_WRITE_1(regsp, COM_REG_LCR, lcr);
 			if (sc->sc_fifolen == 0)
 				fifo_msg = "st16650, broken fifo";
 			else if (sc->sc_fifolen == 32)
@@ -1454,7 +1455,9 @@ com_loadchannelregs(struct com_softc *sc)
 	}
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FLOW)) {
-		if (sc->sc_type != COM_TYPE_AU1x00) {	/* no EFR on alchemy */
+		if (sc->sc_type != COM_TYPE_AU1x00
+		    && sc->sc_type != COM_TYPE_16550_NOERS) {
+			/* no EFR on alchemy */
 			CSR_WRITE_1(regsp, COM_REG_EFR, sc->sc_efr);
 			CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
 		}
@@ -2146,9 +2149,11 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 
 	rate = comspeed(rate, frequency, type);
 	if (type != COM_TYPE_AU1x00) {
-		/* no EFR on alchemy */
-		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
-		CSR_WRITE_1(regsp, COM_REG_EFR, 0);
+		/* no EFR on alchemy */ 
+		if (type != COM_TYPE_16550_NOERS) {
+			CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
+			CSR_WRITE_1(regsp, COM_REG_EFR, 0);
+		}
 		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_DLAB);
 		CSR_WRITE_1(regsp, COM_REG_DLBL, rate & 0xff);
 		CSR_WRITE_1(regsp, COM_REG_DLBH, rate >> 8);

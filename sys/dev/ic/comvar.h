@@ -207,6 +207,7 @@ struct com_softc {
 #define	COM_TYPE_PXA2x0		2	/* Intel PXA2x0 processor built-in */
 #define	COM_TYPE_AU1x00		3	/* AMD/Alchemy Au1x000 proc. built-in */
 #define	COM_TYPE_OMAP		4	/* TI OMAP processor built-in */
+#define	COM_TYPE_16550_NOERS	5	/* like a 16550, no ERS */
 
 	/* power management hooks */
 	int (*enable)(struct com_softc *);
