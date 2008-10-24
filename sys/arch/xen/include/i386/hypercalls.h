@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.5 2008/10/21 22:35:25 cegger Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.6 2008/10/24 22:06:06 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -414,6 +414,19 @@ HYPERVISOR_shutdown(void)
 
     _hypercall(__HYPERVISOR_sched_op,
 	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_poweroff)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+
+    return ret;
+}
+
+static __inline long
+HYPERVISOR_crash(void)
+{
+    long ret;
+    unsigned long ign1, ign2;
+
+    _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_crash)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
 
     return ret;

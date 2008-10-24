@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.20 2008/10/24 18:02:58 jym Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.21 2008/10/24 22:06:06 jym Exp $	*/
 
 /*
  *
@@ -64,6 +64,9 @@ extern unsigned long *xpmap_phys_to_machine_mapping;
 #else
 #define	XPMAP_OFFSET	(KERNTEXTOFF - KERNBASE)
 #endif
+
+#define mfn_to_pfn(mfn) (machine_to_phys_mapping[(mfn)])
+#define pfn_to_mfn(pfn) (xpmap_phys_to_machine_mapping[(pfn)])
 
 static __inline paddr_t
 xpmap_mtop(paddr_t mpa)
