@@ -36,7 +36,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_icu.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_icu.c,v 1.2 2008/10/24 17:46:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -68,17 +68,13 @@ static void geminiicu_attach(device_t, device_t, void *);
 static void geminiicu_unblock_irqs(struct pic_softc *, size_t, uint32_t);
 static void geminiicu_block_irqs(struct pic_softc *, size_t, uint32_t);
 static void geminiicu_establish_irq(struct pic_softc *, struct intrsource *);
-#if 0
 static void geminiicu_source_name(struct pic_softc *, int, char *, size_t);
-#endif
 
 static const struct pic_ops geminiicu_picops = {
 	.pic_unblock_irqs = geminiicu_unblock_irqs,
 	.pic_block_irqs = geminiicu_block_irqs,
 	.pic_establish_irq = geminiicu_establish_irq,
-#if 0
 	.pic_source_name = geminiicu_source_name,
-#endif
 };
 
 #define	PICTOSOFTC(pic)	\
@@ -103,6 +99,24 @@ static struct geminiicu_softc {
 		.pic_name = "geminiicu",
 	},
 };
+
+static const char * const sources[32] = {
+	"ipi(0)",	"gmac0(1)",	"gmac1(2)",	"wdt(3)",
+	"ide0(4)",	"ide1(5)",	"raid(6)",	"crypto(7)",
+	"pci(8)",	"dma(9)",	"usb0(10)",	"usb1(11)",
+	"flash(12)",	"tve(13)",	"timer0(14)",	"timer1(15)",
+	"timer2(16)",	"rtc(17)",	"uart(18)",	"lcd(19)",
+	"lpc(20)",	"ssp(21)",	"gpio0(22)",	"gpio1(23)",
+	"gpio2(24)",	"cir(25)",	"power(26)",	"irq 27",
+	"irq 28",	"irq 29",	"usbc0(30)",	"usbc1(31)"
+};
+
+static void geminiicu_source_name(struct pic_softc *pic, int irq,
+	char *buf, size_t len)
+{
+	KASSERT((unsigned int)irq < 32);
+	strlcpy(buf, sources[irq], len);
+}
 
 static void
 geminiicu_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t irq_mask)
