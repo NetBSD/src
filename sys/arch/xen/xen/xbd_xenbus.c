@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.31 2008/10/24 18:02:58 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.32 2008/10/24 21:09:24 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.31 2008/10/24 18:02:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.32 2008/10/24 21:09:24 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.31 2008/10/24 18:02:58 jym Exp $");
 
 #include <xen/xen3-public/io/ring.h>
 #include <xen/xen3-public/io/blkif.h>
+#include <xen/xen3-public/io/protocols.h>
 
 #include <xen/granttables.h>
 #include <xen/xenbus.h>
@@ -286,6 +287,7 @@ xbd_xenbus_detach(device_t dev, int flags)
 		disk_destroy(&sc->sc_dksc.sc_dkdev);
 	}
 
+	hypervisor_mask_event(sc->sc_evtchn);
 	event_remove_handler(sc->sc_evtchn, &xbd_handler, sc);
 	while (xengnt_status(sc->sc_ring_gntref)) {
 		tsleep(xbd_xenbus_detach, PRIBIO, "xbd_ref", hz/2);
@@ -344,6 +346,12 @@ again:
 	    "event-channel", "%u", sc->sc_evtchn);
 	if (error) {
 		errmsg = "writing event channel";
+		goto abort_transaction;
+	}
+	error = xenbus_printf(xbt, sc->sc_xbusd->xbusd_path,
+	    "protocol", "%s", XEN_IO_PROTO_ABI_NATIVE);
+	if (error) {
+		errmsg = "writing protocol";
 		goto abort_transaction;
 	}
 	error = xenbus_switch_state(sc->sc_xbusd, xbt, XenbusStateInitialised);
