@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.67 2008/10/09 19:18:15 plunky Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.68 2008/10/24 17:07:33 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.67 2008/10/09 19:18:15 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.68 2008/10/24 17:07:33 dyoung Exp $");
 
 #include "opt_eon.h"
 
@@ -251,7 +251,7 @@ eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro, int class)
  * RETURNS:			nothing
  */
 void
-eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
+eonrtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 {
 	struct rtentry *nrt;
 	unsigned long   zerodst = 0;

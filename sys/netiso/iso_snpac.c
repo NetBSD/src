@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.49 2008/05/22 00:58:29 dyoung Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.50 2008/10/24 17:07:33 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.49 2008/05/22 00:58:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.50 2008/10/24 17:07:33 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -178,7 +178,7 @@ union sockunion {
  * NOTES:		This does a lot of obscure magic;
  */
 void
-llc_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
+llc_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 {
 	union sockunion *gate = (union sockunion *) rt->rt_gateway;
 	struct llinfo_llc *lc = (struct llinfo_llc *) rt->rt_llinfo;
