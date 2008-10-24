@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.129 2008/10/24 16:54:18 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.130 2008/10/24 17:07:33 dyoung Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.129 2008/10/24 16:54:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.130 2008/10/24 17:07:33 dyoung Exp $");
 
 #include "opt_ipsec.h"
 
@@ -1116,7 +1116,7 @@ nd6_nud_hint(struct rtentry *rt, struct in6_addr *dst6, int force)
 }
 
 void
-nd6_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
+nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
