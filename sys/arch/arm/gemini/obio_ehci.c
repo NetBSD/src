@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_ehci.c,v 1.1 2008/10/24 16:48:29 matt Exp $	*/
+/*	$NetBSD: obio_ehci.c,v 1.2 2008/10/24 17:31:24 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.1 2008/10/24 16:48:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ehci.c,v 1.2 2008/10/24 17:31:24 matt Exp $");
 
 #include "locators.h"
 
@@ -108,6 +108,7 @@ ehci_obio_attach(device_t parent, device_t self, void *aux)
 	sc->iot = obio->obio_iot;
 
 	aprint_naive(": EHCI USB controller\n");
+	aprint_normal(": EHCI USB controller\n");
 
 	/* Map I/O registers */
 	if (bus_space_map(sc->iot, obio->obio_addr, obio->obio_size, 0,
