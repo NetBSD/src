@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/03 03:52:15 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2008/10/24 19:49:54 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,11 @@ MAN=	Xft.3
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-DFREETYPE2 -I${DESTDIR}${X11INCDIR}/freetype2 -DXFREE86_FT2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/Xft
+
+LIBDPLIBS=	X11		${.CURDIR}/../libX11/dynamic \
+		fontconfig	${.CURDIR}/../fontconfig/src \
+		freetype	${.CURDIR}/../freetype \
+		Xrandr		${.CURDIR}/../libXrandr
 
 PKGDIST=	${LIB}
 
