@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5 2008/10/24 16:26:07 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6 2008/10/24 16:37:25 cegger Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2008/10/24 16:26:07 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.6 2008/10/24 16:37:25 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -189,21 +189,27 @@ findroot(void)
 	xen_parse_cmdline(XEN_PARSE_BOOTDEV, &xcp);
 
 	TAILQ_FOREACH(dv, &alldevs, dv_list) {
-		if (is_valid_disk(dv) == 0)
+		bool is_ifnet, is_disk;
+		const char *devname;
+
+		is_ifnet = (device_class(dv) == DV_IFNET);
+		is_disk = is_valid_disk(dv);
+		devname = device_xname(dv);
+
+		if (!is_ifnet && !is_disk)
 			continue;
 
-		if (xcp.xcp_bootdev[0] == 0) {
+		if (is_disk && xcp.xcp_bootdev[0] == 0) {
 			handle_wedges(dv, 0);
 			break;
 		}
 
-		if (strncmp(xcp.xcp_bootdev, device_xname(dv),
-		    strlen(device_xname(dv))))
+		if (strncmp(xcp.xcp_bootdev, devname, strlen(devname)))
 			continue;
 
-		if (strlen(xcp.xcp_bootdev) > strlen(device_xname(dv))) {
+		if (is_disk && strlen(xcp.xcp_bootdev) > strlen(devname)) {
 			booted_partition = toupper(
-				xcp.xcp_bootdev[strlen(device_xname(dv))]) - 'A';
+				xcp.xcp_bootdev[strlen(devname)]) - 'A';
 		}
 
 		booted_device = dv;
