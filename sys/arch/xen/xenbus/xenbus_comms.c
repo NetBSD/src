@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.8 2008/10/21 15:46:32 cegger Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.9 2008/10/24 18:02:58 jym Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.8 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.9 2008/10/24 18:02:58 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -214,7 +214,7 @@ xb_read(void *data, unsigned len)
 	return 0;
 }
 
-/* Set up interrupt handler off store event channel. */
+/* Set up interrupt handler of store event channel. */
 int
 xb_init_comms(device_t dev)
 {
@@ -226,11 +226,11 @@ xb_init_comms(device_t dev)
 	err = event_set_handler(xen_start_info.store_evtchn, wake_waiting,
 	    NULL, IPL_TTY, "xenbus");
 	if (err) {
-		printf("XENBUS request irq failed %i\n", err);
+		aprint_error_dev(dev, "request irq failed %i\n", err);
 		return err;
 	}
 	xenbus_irq = xen_start_info.store_evtchn;
-	printf("%s: using event channel %d\n", device_xname(dev), xenbus_irq);
+	aprint_verbose_dev(dev, "using event channel %d\n", xenbus_irq);
 	hypervisor_enable_event(xenbus_irq);
 	return 0;
 }

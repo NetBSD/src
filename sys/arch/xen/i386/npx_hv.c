@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_hv.c,v 1.6 2008/03/05 04:58:29 cube Exp $	*/
+/*	$NetBSD: npx_hv.c,v 1.7 2008/10/24 18:02:58 jym Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_hv.c,v 1.6 2008/03/05 04:58:29 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_hv.c,v 1.7 2008/10/24 18:02:58 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ npx_hv_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_type = NPX_EXCEPTION;
 
-	printf(": using exception 16\n");
+	aprint_normal(": using exception 16\n");
 
 	npxattach(sc);
 }
