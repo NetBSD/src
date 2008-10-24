@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.40 2008/10/23 20:41:13 christos Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.41 2008/10/24 13:55:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.40 2008/10/23 20:41:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.41 2008/10/24 13:55:42 christos Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -113,8 +113,6 @@ static kmutex_t ksyms_lock;
 void ksymsattach(int);
 static void ksyms_hdr_init(void *);
 static void ksyms_sizes_calc(void);
-static int ksyms_getval_unlocked(const char *, const char *, unsigned long *,
-    int);
 
 #ifdef KSYMS_DEBUG
 #define	FOLLOW_CALLS		1
@@ -507,7 +505,7 @@ ksyms_init_explicit(void *ehdr, void *symstart, size_t symsize,
  *
  * Call with ksyms_lock, unless known that the symbol table can't change.
  */
-static int
+int
 ksyms_getval_unlocked(const char *mod, const char *sym, unsigned long *val,
     int type)
 {
