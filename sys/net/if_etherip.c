@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.21 2008/07/10 05:15:32 cegger Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.22 2008/10/24 21:41:04 dyoung Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.21 2008/07/10 05:15:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.22 2008/10/24 21:41:04 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -144,9 +144,9 @@ SYSCTL_SETUP_PROTO(sysctl_etherip_setup);
 
 void etheripattach(int);
 
-static int  etherip_match(struct device *, struct cfdata *, void *);
-static void etherip_attach(struct device *, struct device *, void *);
-static int  etherip_detach(struct device *, int);
+static int  etherip_match(device_t, cfdata_t, void *);
+static void etherip_attach(device_t, device_t, void *);
+static int  etherip_detach(device_t, int);
 
 CFATTACH_DECL_NEW(etherip, sizeof(struct etherip_softc),
 	      etherip_match, etherip_attach, etherip_detach, NULL);
@@ -191,7 +191,7 @@ etheripattach(int count)
 
 /* Pretty much useless for a pseudo-device */
 static int
-etherip_match(struct device *self, struct cfdata *cfdata, void *arg)
+etherip_match(device_t self, cfdata_t cfdata, void *arg)
 {
 	return 1;
 }
@@ -209,6 +209,7 @@ etherip_attach(device_t parent, device_t self, void *aux)
 	uint32_t ui;
 	int error;
 
+	sc->sc_dev = self;
 	sc->sc_si  = NULL;
 	sc->sc_src = NULL;
 	sc->sc_dst = NULL;
@@ -340,7 +341,7 @@ etherip_mediachange(struct ifnet *ifp)
 static void
 etherip_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
 {
-	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
+	struct etherip_softc *sc = ifp->if_softc;
 
 	imr->ifm_active = sc->sc_im.ifm_cur->ifm_media;
 }
@@ -348,7 +349,7 @@ etherip_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
 static void
 etherip_start(struct ifnet *ifp)
 {
-	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
+	struct etherip_softc *sc = ifp->if_softc;
 
 	if(sc->sc_si)
 		softint_schedule(sc->sc_si);
@@ -401,7 +402,7 @@ etheripintr(void *arg)
 static int
 etherip_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
+	struct etherip_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = data;
 	struct sockaddr *src, *dst;
 	int s, error;
@@ -495,7 +496,7 @@ etherip_set_tunnel(struct ifnet *ifp,
 		   struct sockaddr *src, 
 		   struct sockaddr *dst)
 {
-	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
+	struct etherip_softc *sc = ifp->if_softc;
 	struct etherip_softc *sc2;
 	struct sockaddr *osrc, *odst;
 	int s, error = 0;
@@ -554,7 +555,7 @@ out:
 static void
 etherip_delete_tunnel(struct ifnet *ifp)
 {
-	struct etherip_softc *sc = (struct etherip_softc *)ifp->if_softc;
+	struct etherip_softc *sc = ifp->if_softc;
 	int s;
 
 	s = splsoftnet();
@@ -603,9 +604,9 @@ etherip_stop(struct ifnet *ifp, int disable)
 static int
 etherip_clone_create(struct if_clone *ifc, int unit)
 {
-	struct cfdata *cf;
+	cfdata_t cf;
 
-	MALLOC(cf, struct cfdata *, sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
+	MALLOC(cf, cfdata_t, sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
 	cf->cf_name   = etherip_cd.cd_name;
 	cf->cf_atname = etherip_ca.ca_name;
 	cf->cf_unit   = unit;
@@ -623,12 +624,12 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 static int
 etherip_clone_destroy(struct ifnet *ifp)
 {
-	struct device *dev = (struct device *)ifp->if_softc;
-	struct cfdata *cf = device_cfdata(dev);
+	struct etherip_softc *sc = ifp->if_softc;
+	cfdata_t cf = device_cfdata(sc->sc_dev);
 	int error;
 
-	if ((error = config_detach(dev, 0)) != 0)
-		aprint_error_dev(dev, "unable to detach instance\n");
+	if ((error = config_detach(sc->sc_dev, 0)) != 0)
+		aprint_error_dev(sc->sc_dev, "unable to detach instance\n");
 	FREE(cf, M_DEVBUF);
 
 	return error;
