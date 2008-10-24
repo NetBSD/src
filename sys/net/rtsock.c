@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.111 2008/08/28 19:33:24 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.112 2008/10/24 21:38:18 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.111 2008/08/28 19:33:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.112 2008/10/24 21:38:18 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -184,7 +184,7 @@ route_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	rp = sotorawcb(so);
 	if (req == PRU_ATTACH && rp) {
 		if (error) {
-			free((void *)rp, M_PCB);
+			free(rp, M_PCB);
 			splx(s);
 			return error;
 		}
@@ -248,7 +248,7 @@ route_output(struct mbuf *m, ...)
 		dst = NULL;
 		senderr(ENOBUFS);
 	}
-	m_copydata(m, 0, len, (void *)rtm);
+	m_copydata(m, 0, len, rtm);
 	if (rtm->rtm_version != RTM_VERSION) {
 		dst = NULL;
 		senderr(EPROTONOSUPPORT);
@@ -256,7 +256,8 @@ route_output(struct mbuf *m, ...)
 	rtm->rtm_pid = curproc->p_pid;
 	memset(&info, 0, sizeof(info));
 	info.rti_addrs = rtm->rtm_addrs;
-	if (rt_xaddrs(rtm->rtm_type, (void *)(rtm + 1), len + (char *)rtm, &info))
+	if (rt_xaddrs(rtm->rtm_type, (const char *)(rtm + 1), len + (char *)rtm,
+	    &info))
 		senderr(EINVAL);
 	info.rti_flags = rtm->rtm_flags;
 #ifdef RTSOCK_DEBUG
@@ -451,7 +452,7 @@ flush:
 		rp = sotorawcb(so);
 	}
 	if (rtm) {
-		m_copyback(m, 0, rtm->rtm_msglen, (void *)rtm);
+		m_copyback(m, 0, rtm->rtm_msglen, rtm);
 		if (m->m_pkthdr.len < rtm->rtm_msglen) {
 			m_freem(m);
 			m = NULL;
@@ -496,7 +497,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo 
 	const struct sockaddr *sa = NULL;	/* Quell compiler warning */
 	int i;
 
-	for (i = 0; (i < RTAX_MAX) && (cp < cplim); i++) {
+	for (i = 0; i < RTAX_MAX && cp < cplim; i++) {
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
 			continue;
 		rtinfo->rti_info[i] = sa = (const struct sockaddr *)cp;
@@ -513,7 +514,7 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo 
 	}
 	/* Check for bad data length.  */
 	if (cp != cplim) {
-		if (i == RTAX_NETMASK + 1 && sa &&
+		if (i == RTAX_NETMASK + 1 && sa != NULL &&
 		    cp - ROUNDUP(sa->sa_len) + sa->sa_len == cplim)
 			/*
 			 * The last sockaddr was netmask.
