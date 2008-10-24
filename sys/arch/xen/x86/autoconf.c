@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2008/10/24 16:26:07 cegger Exp $	*/
 /*	NetBSD: autoconf.c,v 1.75 2003/12/30 12:33:22 pk Exp 	*/
 
 /*-
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5 2008/10/24 16:26:07 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_compat_oldboot.h"
@@ -91,8 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2008/10/21 15:46:32 cegger Exp $");
 #include <machine/bootinfo.h>
 
 static void findroot(void);
-static int is_valid_disk(struct device *);
-static void handle_wedges(struct device *, int);
+static int is_valid_disk(device_t);
+static void handle_wedges(device_t, int);
 
 struct disklist *x86_alldisks;
 int x86_ndisks;
@@ -180,7 +180,7 @@ cpu_rootconf(void)
 void
 findroot(void)
 {
-	struct device *dv;
+	device_t dv;
 	union xen_cmdline_parseinfo xcp;
 
 	if (booted_device)
@@ -254,7 +254,7 @@ dom0_bootstatic_callback(struct nfs_diskless *nd)
 #endif
 
 void
-device_register(struct device *dev, void *aux)
+device_register(device_t dev, void *aux)
 {
 	/*
 	 * Handle network interfaces here, the attachment information is
@@ -337,7 +337,7 @@ found:
 }
 
 static void
-handle_wedges(struct device *dv, int par)
+handle_wedges(device_t dv, int par)
 {
 	if (config_handle_wedges(dv, par) == 0)
 		return;
@@ -346,7 +346,7 @@ handle_wedges(struct device *dv, int par)
 }
 
 static int
-is_valid_disk(struct device *dv)
+is_valid_disk(device_t dv)
 {
 
 	if (device_class(dv) != DV_DISK)
