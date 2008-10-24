@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.41 2008/10/24 18:02:58 jym Exp $ */
+/* $NetBSD: hypervisor.c,v 1.42 2008/10/24 21:09:24 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.41 2008/10/24 18:02:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.42 2008/10/24 21:09:24 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,7 +266,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 #endif
 
-	init_events();
+	events_init();
 
 #if NXENBUS > 0
 	hac.hac_xenbus.xa_device = "xenbus";

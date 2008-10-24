@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.38 2008/05/24 15:09:34 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.39 2008/10/24 21:09:24 jym Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.38 2008/05/24 15:09:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.39 2008/10/24 21:09:24 jym Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -174,7 +174,7 @@ events_default_setup(void)
 }
 
 void
-init_events(void)
+events_init(void)
 {
 #ifndef XEN3
 	int evtch;
@@ -346,7 +346,7 @@ bind_virq_to_evtch(int virq)
 	return evtchn;
 }
 
-void
+int
 unbind_virq_from_evtch(int virq)
 {
 	evtchn_op_t op;
@@ -370,6 +370,8 @@ unbind_virq_from_evtch(int virq)
 
 	simple_unlock(&irq_mapping_update_lock);
 	splx(s);
+
+	return evtchn;
 }
 
 #if NPCI > 0 || NISA > 0
@@ -409,7 +411,7 @@ bind_pirq_to_evtch(int pirq)
 	return evtchn;
 }
 
-void
+int
 unbind_pirq_from_evtch(int pirq)
 {
 	evtchn_op_t op;
@@ -433,6 +435,8 @@ unbind_pirq_from_evtch(int pirq)
 
 	simple_unlock(&irq_mapping_update_lock);
 	splx(s);
+
+	return evtchn;
 }
 
 struct pintrhand *

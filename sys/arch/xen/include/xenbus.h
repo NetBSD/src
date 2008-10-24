@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus.h,v 1.9 2008/04/16 18:41:48 cegger Exp $ */
+/* $NetBSD: xenbus.h,v 1.10 2008/10/24 21:09:24 jym Exp $ */
 /******************************************************************************
  * xenbus.h
  *
@@ -158,10 +158,6 @@ void xs_resume(void);
 
 /* Used by xenbus_dev to borrow kernel's store connection. */
 int xenbus_dev_request_and_reply(struct xsd_sockmsg *msg, void **);
-
-/* Called from xen core code. */
-void xenbus_suspend(void);
-void xenbus_resume(void);
 
 void xenbus_probe(void *);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.15 2008/10/24 18:02:58 jym Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.16 2008/10/24 21:09:24 jym Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.15 2008/10/24 18:02:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.16 2008/10/24 21:09:24 jym Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -845,7 +845,7 @@ xenbus_thread(void *unused)
 }
 
 int
-xs_init(void)
+xs_init(device_t dev)
 {
 	int err;
 
@@ -855,13 +855,17 @@ xs_init(void)
 
 	err = kthread_create(PRI_NONE, 0, NULL, xenwatch_thread,
 	    NULL, NULL, "xenwatch");
-	if (err)
-		printf("kthread_create(xenwatch): %d\n", err);
+	if (err) {
+		aprint_error_dev(dev, "kthread_create(xenwatch): %d\n", err);
+		return err;
+	}
 
 	err = kthread_create(PRI_NONE, 0, NULL, xenbus_thread,
 	    NULL, NULL, "xenbus");
-	if (err)
-		printf("kthread_create(xenbus): %d\n", err);
+	if (err) {
+		aprint_error_dev(dev, "kthread_create(xenbus): %d\n", err);
+		return err;
+	}
 
 	return 0;
 }
