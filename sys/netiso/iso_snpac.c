@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.50 2008/10/24 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.51 2008/10/24 21:50:08 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.50 2008/10/24 17:07:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_snpac.c,v 1.51 2008/10/24 21:50:08 dyoung Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -469,8 +469,7 @@ add:
 		if (nsellength && (rt->rt_flags & RTF_HOST)) {
 			if (rt->rt_refcnt == 0) {
 				rtrequest(RTM_DELETE, sisotosa(&dst),
-				(struct sockaddr *) 0, (struct sockaddr *) 0,
-					  0, (struct rtentry **) 0);
+				    NULL, NULL, 0, NULL);
 				rt = 0;
 				goto add;
 			} else {
@@ -606,7 +605,7 @@ snpac_logdefis(struct rtentry *sc)
 	rt = rtalloc1((struct sockaddr *) & zsi, 0);
 	if (rt == 0) {
 		rtrequest(RTM_ADD, sisotosa(&zsi), rt_getkey(sc),
-		    sisotosa(&zmk), RTF_DYNAMIC | RTF_GATEWAY, 0);
+		    sisotosa(&zmk), RTF_DYNAMIC | RTF_GATEWAY, NULL);
 	} else {
 		if ((rt->rt_flags & RTF_DYNAMIC) &&
 		    (rt->rt_flags & RTF_GATEWAY) && rt_mask(rt)->sa_len == 0)
