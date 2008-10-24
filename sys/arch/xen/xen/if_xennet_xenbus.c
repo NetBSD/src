@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.25 2008/04/16 18:41:48 cegger Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.26 2008/10/24 18:02:58 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.25 2008/04/16 18:41:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.26 2008/10/24 18:02:58 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -289,7 +289,7 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 			break;
 		if (!pmap_extract(pmap_kernel(), rxreq->rxreq_va,
 		    &rxreq->rxreq_pa))
-			panic("xennet: no pa for mapped va ?");
+			panic("%s: no pa for mapped va ?", device_xname(self));
 		rxreq->rxreq_gntref = GRANT_INVALID_REF;
 		SLIST_INSERT_HEAD(&sc->sc_rxreq_head, rxreq, rxreq_next);
 	}
@@ -336,7 +336,8 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, sc->sc_enaddr);
 	sc->sc_softintr = softint_establish(SOFTINT_NET, xennet_softstart, sc);
 	if (sc->sc_softintr == NULL)
-		panic(" xennet: can't establish soft interrupt");
+		panic("%s: can't establish soft interrupt",
+			device_xname(self));
 
 	/* initialise shared structures and tell backend that we are ready */
 	xennet_xenbus_resume(sc);
@@ -690,8 +691,8 @@ again:
 		KASSERT(req->txreq_id ==
 		    RING_GET_RESPONSE(&sc->sc_tx_ring, i)->id);
 		if (__predict_false(xengnt_status(req->txreq_gntref))) {
-			printf("%s: grant still used by backend\n",
-			    device_xname(sc->sc_dev));
+			aprint_verbose_dev(sc->sc_dev,
+					   "grant still used by backend\n");
 			sc->sc_tx_ring.rsp_cons = i;
 			goto end;
 		}
@@ -706,7 +707,7 @@ again:
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, req, txreq_next);
 	}
 	sc->sc_tx_ring.rsp_cons = resp_prod;
-	/* set new event and check fopr race with rsp_cons update */
+	/* set new event and check for race with rsp_cons update */
 	sc->sc_tx_ring.sring->rsp_event = 
 	    resp_prod + ((sc->sc_tx_ring.sring->req_prod - resp_prod) >> 1) + 1;
 	ifp->if_timer = 0;
@@ -1103,9 +1104,7 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 void
 xennet_watchdog(struct ifnet *ifp)
 {
-	struct xennet_xenbus_softc *sc = ifp->if_softc;
-
-	printf("%s: xennet_watchdog\n", device_xname(sc->sc_dev));
+	aprint_verbose_ifnet(ifp, "xennet_watchdog\n");
 }
 
 int

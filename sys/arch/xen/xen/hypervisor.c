@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.40 2008/10/21 15:46:32 cegger Exp $ */
+/* $NetBSD: hypervisor.c,v 1.41 2008/10/24 18:02:58 jym Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.40 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.41 2008/10/24 18:02:58 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 
 #ifdef XEN3
 	xen_version = HYPERVISOR_xen_version(XENVER_version, NULL);
-	printf(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
+	aprint_normal(": Xen version %d.%d\n", (xen_version & 0xffff0000) >> 16,
 	       xen_version & 0x0000ffff);
 
 	xengnt_init();
@@ -263,7 +263,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 	hac.hac_vcaa.vcaa_caa.cpu_func = 0;
 	config_found_ia(self, "xendevbus", &hac.hac_vcaa, hypervisor_print);
 #else
-	printf("\n");
+	aprint_normal("\n");
 #endif
 
 	init_events();
