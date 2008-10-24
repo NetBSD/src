@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.288 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.289 2008/10/24 18:07:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.288 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289 2008/10/24 18:07:36 wrstuden Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -1055,6 +1055,15 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
 	lwp_lock(l);
 
 	/*
+	 * When sending signals to SA processes, we first try to find an
+	 * idle VP to take it.
+	 */
+	if (idlecheck && (l->l_flag & (LW_SA_IDLE | LW_SA_YIELD)) == 0) {
+		lwp_unlock(l);
+		return 0;
+	}
+
+	/*
 	 * Have the LWP check for signals.  This ensures that even if no LWP
 	 * is found to take the signal immediately, it should be taken soon.
 	 */
@@ -1444,26 +1453,28 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * Try to find an LWP that can take the signal.
 	 */
 #if KERN_SA
-	if (p->p_sa != NULL) {
+	if ((p->p_sa != NULL) && !toall) {
 		/*
+		 * If we're in this delivery path, we are delivering a
+		 * signal that needs to go to one thread in the process.
+		 *
 		 * In the SA case, we try to find an idle LWP that can take
 		 * the signal.  If that fails, only then do we consider
-		 * interrupting active LWPs.
+		 * interrupting active LWPs. Since the signal's going to
+		 * just one thread, we need only look at "blessed" lwps,
+		 * so scan the vps for them.
 		 */
 		l = NULL;
-		if (!toall) {
-			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-				l = vp->savp_lwp;
-				if (sigpost(l, action, prop, kp->ksi_signo, 1))
-					break;
-			}
+		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+			l = vp->savp_lwp;
+			if (sigpost(l, action, prop, kp->ksi_signo, 1))
+				break;
 		}
 
 		if (l == NULL) {
 			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 				l = vp->savp_lwp;
-				if (sigpost(l, action, prop, kp->ksi_signo, 0)
-				    && !toall)
+				if (sigpost(l, action, prop, kp->ksi_signo, 0))
 					break;
 			}
 		}
