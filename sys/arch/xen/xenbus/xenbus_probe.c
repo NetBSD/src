@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_probe.c,v 1.24 2008/10/21 21:55:44 cegger Exp $ */
+/* $NetBSD: xenbus_probe.c,v 1.25 2008/10/24 21:09:24 jym Exp $ */
 /******************************************************************************
  * Talks to Xen Store to figure out what devices we have.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.24 2008/10/21 21:55:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_probe.c,v 1.25 2008/10/24 21:09:24 jym Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -566,7 +566,7 @@ xenbus_probe_init(void *unused)
 	xb_init_comms(xenbus_dev);
 
 	/* Initialize the interface to xenstore. */
-	err = xs_init(); 
+	err = xs_init(xenbus_dev); 
 	if (err) {
 		aprint_error_dev(xenbus_dev,
 				"Error initializing xenstore comms: %i\n", err);
