@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.83 2008/10/16 17:08:33 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.84 2008/10/24 07:54:41 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83 2008/10/16 17:08:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.84 2008/10/24 07:54:41 martin Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -162,6 +162,21 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 char cpu_forkname[] = "cpu_lwp_fork()";
 #endif
 
+inline void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *npcb = &l->l_addr->u_pcb;
+	struct rwindow *rp;
+
+	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (long)func;		/* Function to call */
+	rp->rw_local[1] = (long)arg;		/* and its argument */
+	rp->rw_local[2] = (long)l;		/* new lwp */
+
+	npcb->pcb_pc = (long)lwp_trampoline - 8;
+	npcb->pcb_sp = (long)rp - STACK_OFFSET;
+}
+
 /*
  * Finish a fork operation, with lwp l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
@@ -263,33 +278,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
 	*rp = *(struct rwindow *)((u_long)opcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (long)func;		/* Function to call */
-	rp->rw_local[1] = (long)arg;		/* and its argument */
-	rp->rw_local[2] = (long)l2;		/* newlwp */
 
-	npcb->pcb_pc = (long)lwp_trampoline - 8;
-	npcb->pcb_sp = (long)rp - STACK_OFFSET;
-
-#ifdef NOTDEF_DEBUG
-    {
-	char sbuf[sizeof(TSTATE_BITS) + 64];
-
-	bitmask_snprintf(tf2->tf_tstate, TSTATE_BITS, sbuf, sizeof(sbuf));
-
-	printf("cpu_lwp_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 
-	       (struct trapframe *)((u_long)opcb + USPACE - sizeof(*tf2)), tf2, rp, opcb, npcb);
-	printf("cpu_lwp_fork: tstate=%s pc=%x:%x npc=%x:%x rsp=%lx\n",
-	       sbuf,
-	       (uint)(tf2->tf_pc>>32), (uint)tf2->tf_pc,
-	       (uint)(tf2->tf_npc>>32), (uint)tf2->tf_npc, 
-	       (long)(tf2->tf_out[6]));
-	printf("cpu_lwp_fork: npcb_pc=%x:%x npcb_sp=%x:%x\n",
-	       (uint)(npcb->pcb_pc>>32), (uint)npcb->pcb_pc, 
-	       (uint)(npcb->pcb_sp>>32), (uint)npcb->pcb_sp);
-
-	Debugger();
-    }
-#endif
+	cpu_setfunc(l2, func, arg);
 }
 
 static inline void
@@ -363,21 +353,6 @@ cpu_lwp_free2(struct lwp *l)
 
 	if ((fs = l->l_md.md_fpstate) != NULL)
 		pool_cache_put(fpstate_cache, fs);
-}
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *npcb = &l->l_addr->u_pcb;
-	struct rwindow *rp;
-
-	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (long)func;		/* Function to call */
-	rp->rw_local[1] = (long)arg;		/* and its argument */
-	rp->rw_local[2] = (long)l;		/* new lwp */
-
-	npcb->pcb_pc = (long)lwp_trampoline - 8;
-	npcb->pcb_sp = (long)rp - STACK_OFFSET;
 }
 
 #ifdef COREDUMP
