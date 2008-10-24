@@ -1,4 +1,4 @@
-.\"	$NetBSD: sigpending.2,v 1.13 2003/08/07 16:44:08 agc Exp $
+.\"	$NetBSD: sigpending.2,v 1.14 2008/10/24 15:14:48 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)sigpending.2	8.3 (Berkeley) 1/12/94
 .\"
-.Dd January 12, 1994
+.Dd October 24, 2008
 .Dt SIGPENDING 2
 .Os
 .Sh NAME
@@ -60,8 +60,15 @@ A \-1 return value indicates an error occurred and
 is set to indicate the reason.
 .Sh ERRORS
 The
-.Nm sigpending
-function does not currently detect any errors.
+.Nm
+.Sh ERRORS
+.Fn sigpending
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+.Fa set
+specifies an invalid address.
+.El
 .Sh SEE ALSO
 .Xr sigaction 2 ,
 .Xr sigprocmask 2 ,
