@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.23 2008/10/24 20:37:35 macallan Exp $	x11
+# $NetBSD: md.sparc64,v 1.24 2008/10/24 20:43:13 macallan Exp $	x11
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -309,6 +309,8 @@
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mach64_drv.so           -unknown-       xorg
 ./usr/X11R7/lib/modules/drivers/mach64_drv.so.6         -unknown-       xorg
+./usr/X11R7/lib/modules/drivers/mga_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/mga_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so		-unknown-	xorg
