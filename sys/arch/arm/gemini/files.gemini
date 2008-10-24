@@ -1,0 +1,73 @@
+#	$NetBSD: files.gemini,v 1.1 2008/10/24 04:23:18 matt Exp $
+#
+# Configuration info for GEMINI CPU support
+# Based on omap/files.omap2
+#
+
+include "arch/arm/pic/files.pic"
+
+file	arch/arm/arm32/irq_dispatch.S
+
+# Memory size in megabytes
+defparam opt_gemini.h				MEMSIZE
+defflag opt_gemini.h				GEMINI
+defflag opt_gemini.h				SL3516: GEMINI
+
+# OBIO just an attach point
+define obio { [addr=-1], [size=0], [intr=-1], [mult=1], [intrbase=-1], [nobyteacc=0]
+	     } : bus_space_generic
+device obio: obio, pcibus
+attach obio at mainbus
+file	arch/arm/gemini/gemini_obio.c		obio needs-count
+
+# OBIO files
+file	arch/arm/gemini/gemini_space.c		obio
+##file	arch/arm/gemini/gemini_a2x_space.c		obio
+##file	arch/arm/gemini/gemini_a2x_io.S		obio
+file	arch/arm/gemini/gemini_a4x_space.c		obio
+file	arch/arm/xscale/pxa2x0_a4x_io.S		obio
+file	arch/arm/gemini/gemini_dma.c
+
+# these bus space methods are not bus-specific ...
+#
+##file	arch/arm/gemini/gemini_nobyteacc_space.c	obio
+##file	arch/arm/gemini/gemini_nobyteacc_io.S		obio
+
+# GEMINI interrupt controller
+device	geminiicu: pic
+attach	geminiicu at obio with geminiicu
+file	arch/arm/gemini/gemini_icu.c		geminiicu needs-flag
+
+
+
+# GEMINI GPIO controllers
+
+# GEMINI Timers
+device geminitmr
+file	arch/arm/gemini/gemini_timer.c		geminitmr
+defparam opt_gemini.h				GEMINI_TIMER_CLOCK_FREQ
+
+# OBIO/geminitmr
+attach 	geminitmr at obio with obiotimer
+file	arch/arm/gemini/obio_timer.c		obiotimer
+
+# Gemini Watchdog timer
+device geminiwdt: sysmon_wdog
+file arch/arm/gemini/gemini_wdt.c		geminiwdt needs-flag
+defparam opt_gemini.h				GEMINI_WDT_CLOCK_FREQ
+
+attach geminiwdt at obio with obiowdt
+file arch/arm/gemini/obio_wdt.c			obiowdt
+
+# NS16550 compatible serial ports
+attach com at obio with gemini_com
+file	arch/arm/gemini/gemini_com.c		gemini_com
+defparam opt_com.h				CONSADDR CONSPEED CONMODE
+
+# GEMINI USB controller
+
+
+# PCI
+device gemini_pci: pcibus
+attach gemini_pci at obio
+file arch/arm/gemini/gemini_pci.c		pci
