@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.66 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.67 2008/10/24 17:07:33 dyoung Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.66 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.67 2008/10/24 17:07:33 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -173,7 +173,7 @@ static int stf_checkaddr4(struct stf_softc *, const struct in_addr *,
 	struct ifnet *);
 static int stf_checkaddr6(struct stf_softc *, const struct in6_addr *,
 	struct ifnet *);
-static void stf_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+static void stf_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 static int stf_ioctl(struct ifnet *, u_long, void *);
 
 /* ARGSUSED */
@@ -662,7 +662,7 @@ in_stf_input(struct mbuf *m, ...)
 /* ARGSUSED */
 static void
 stf_rtrequest(int cmd, struct rtentry *rt,
-    struct rt_addrinfo *info)
+    const struct rt_addrinfo *info)
 {
 	if (rt != NULL) {
 		struct stf_softc *sc;

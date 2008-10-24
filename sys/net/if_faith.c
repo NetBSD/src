@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.43 2008/06/15 18:40:55 christos Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.44 2008/10/24 17:07:33 dyoung Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.43 2008/06/15 18:40:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.44 2008/10/24 17:07:33 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -86,7 +86,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.43 2008/06/15 18:40:55 christos Exp $
 static int	faithioctl(struct ifnet *, u_long, void *);
 static int	faithoutput(struct ifnet *, struct mbuf *,
 		            const struct sockaddr *, struct rtentry *);
-static void	faithrtrequest(int, struct rtentry *, struct rt_addrinfo *);
+static void	faithrtrequest(int, struct rtentry *,
+		               const struct rt_addrinfo *);
 
 void	faithattach(int);
 
@@ -213,7 +214,7 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 /* ARGSUSED */
 static void
 faithrtrequest(int cmd, struct rtentry *rt,
-    struct rt_addrinfo *info)
+    const struct rt_addrinfo *info)
 {
 	if (rt)
 		rt->rt_rmx.rmx_mtu = rt->rt_ifp->if_mtu; /* for ISO */

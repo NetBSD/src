@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.142 2008/10/21 11:22:21 ad Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.143 2008/10/24 17:07:33 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.142 2008/10/21 11:22:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.143 2008/10/24 17:07:33 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -449,7 +449,7 @@ arp_setgate(struct rtentry *rt, struct sockaddr *gate,
  * Parallel to llc_rtrequest.
  */
 void
-arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
+arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
@@ -513,7 +513,6 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 	ARP_LOCK(1);		/* we may already be locked here. */
 
 	switch (req) {
-
 	case RTM_SETGATE:
 		gate = arp_setgate(rt, gate, info->rti_info[RTAX_NETMASK]);
 		break;
