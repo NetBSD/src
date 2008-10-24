@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.2 2008/10/24 16:18:34 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.2 2008/10/24 16:18:34 cliff Exp $");
 
 #include <sys/cdefs.h>
 
@@ -207,7 +207,7 @@ gemini_pci_init(pci_chipset_tag_t pc, void *cookie)
 		sc->sc_dev.dv_xname);
 
 	/*
-	 * creating an BOGUS extent, don't use it!
+	 * XXX PCI IO addr should be inherited ?
 	 */
 	ioext  = extent_create("pciio",
 		GEMINI_PCIIO_BASE,
