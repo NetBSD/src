@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2008/09/25 13:58:41 rtr Exp $
+#	$NetBSD: Makefile,v 1.9 2008/10/24 19:49:30 macallan Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -39,8 +39,16 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
+.if ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c agp_noop.c
+SRCS.bus+=	netbsdSbus.c
+.for _FN in ${SRCS.bsd}
+CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
+.endfor
+.endif
+
 .if ${MACHINE} == "sgimips"
-SRCS.bsd+=	mips_video.c bsdResource.c pm_noop.c lnx_agp.c
+SRCS.bsd+=	mips_video.c bsdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -59,7 +67,7 @@ CPPFLAGS.arm_video.c=	-Wno-error
 # some platforms will probably need ioperm_noop.c
 
 .PATH:	${X11SRCDIR.xorg-server}/hw/xfree86/os-support/bus
-SRCS.bus=	Pci.c
+SRCS.bus+=	Pci.c
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
 SRCS.bus+=	ix86Pci.c
@@ -67,7 +75,8 @@ SRCS.bus+=	ix86Pci.c
 
 .if ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
     ${MACHINE} == "sgimips" || ${MACHINE} == "shark" || \
-    ${MACHINE} == "netwinder"
+    ${MACHINE} == "netwinder" || ${MACHINE} == "sparc" || \
+    ${MACHINE} == "sparc64"
 SRCS.bus+=	netbsdPci.c
 .endif
 
