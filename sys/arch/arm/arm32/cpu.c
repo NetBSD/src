@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.69 2008/10/21 19:03:24 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.70 2008/10/24 13:23:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69 2008/10/21 19:03:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70 2008/10/24 13:23:45 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -182,7 +182,8 @@ enum cpu_class {
 	CPU_CLASS_ARM10EJ,
 	CPU_CLASS_SA1,
 	CPU_CLASS_XSCALE,
-	CPU_CLASS_ARM11J
+	CPU_CLASS_ARM11J,
+	CPU_CLASS_ARMV4,
 };
 
 static const char * const generic_steppings[16] = {
@@ -409,6 +410,9 @@ const struct cpuidtab cpuids[] = {
 	  pN_steppings },
 	{ CPU_ID_CORTEXA8R2,	CPU_CLASS_ARM11J,	"Cortex-A8 r2",
 	  pN_steppings },
+
+	{ CPU_ID_FA526,		CPU_CLASS_ARMV4,	"FA526",
+	  generic_steppings },
 
 	{ 0, CPU_CLASS_NONE, NULL, NULL }
 };
