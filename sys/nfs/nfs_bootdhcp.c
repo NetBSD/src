@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.42 2008/08/06 15:01:24 plunky Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.43 2008/10/24 17:17:12 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.42 2008/08/06 15:01:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootdhcp.c,v 1.43 2008/10/24 17:17:12 cegger Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_tftproot.h"
@@ -217,8 +217,8 @@ static const u_int8_t vm_rfc1048[4] = { 99, 130, 83, 99 };
 /* Convenience macro */
 #define INTOHL(ina) ((u_int32_t)ntohl((ina).s_addr))
 
-static int bootpc_call __P((struct nfs_diskless *, struct lwp *));
-static void bootp_extract __P((struct bootp *, int, struct nfs_diskless *));
+static int bootpc_call (struct nfs_diskless *, struct lwp *);
+static void bootp_extract (struct bootp *, int, struct nfs_diskless *);
 
 #ifdef	DEBUG_NFS_BOOT_DHCP
 #define DPRINTF(s)  printf s
@@ -231,9 +231,7 @@ static void bootp_extract __P((struct bootp *, int, struct nfs_diskless *));
  * Get our boot parameters using BOOTP.
  */
 int
-nfs_bootdhcp(nd, lwp)
-	struct nfs_diskless *nd;
-	struct lwp *lwp;
+nfs_bootdhcp(struct nfs_diskless *nd, struct lwp *lwp)
 {
 	struct ifnet *ifp = nd->nd_ifp;
 	int error;
@@ -289,8 +287,8 @@ struct bootpcontext {
 #endif
 };
 
-static int bootpset __P((struct mbuf*, void*, int));
-static int bootpcheck __P((struct mbuf*, void*));
+static int bootpset (struct mbuf*, void*, int);
+static int bootpcheck (struct mbuf*, void*);
 
 static int
 bootpset(struct mbuf *m, void *context, int waited)
@@ -306,9 +304,7 @@ bootpset(struct mbuf *m, void *context, int waited)
 }
 
 static int
-bootpcheck(m, context)
-	struct mbuf *m;
-	void *context;
+bootpcheck(struct mbuf *m, void *context)
 {
 	struct bootp *bootp;
 	struct bootpcontext *bpc = context;
@@ -440,9 +436,7 @@ warn:
 }
 
 static int
-bootpc_call(nd, lwp)
-	struct nfs_diskless *nd;
-	struct lwp *lwp;
+bootpc_call(struct nfs_diskless *nd, struct lwp *lwp)
 {
 	struct socket *so;
 	struct ifnet *ifp = nd->nd_ifp;
@@ -669,10 +663,7 @@ out:
 }
 
 static void
-bootp_extract(bootp, replylen, nd)
-	struct bootp *bootp;
-	int replylen;
-	struct nfs_diskless *nd;
+bootp_extract(struct bootp *bootp, int replylen, struct nfs_diskless *nd)
 {
 	struct sockaddr_in *sin;
 	struct in_addr netmask;
