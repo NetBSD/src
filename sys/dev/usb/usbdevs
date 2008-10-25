@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.518 2008/10/22 10:23:51 haad Exp $
+$NetBSD: usbdevs,v 1.519 2008/10/25 17:35:44 christos Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2057,6 +2057,7 @@ product SIERRA MC8775_2		0x6815	MC8775
 product SIERRA AIRCARD875	0x6820	Aircard 875 HSDPA
 product SIERRA MC8780		0x6832	MC8780
 product SIERRA MC8781		0x6833	MC8781
+product SIERRA INSTALLER	0x0fff	Aircard Driver Installer
 
 /* Sigmatel products */
 product SIGMATEL SIR4116	0x4116	StIR4116 SIR
