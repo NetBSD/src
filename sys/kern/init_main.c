@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.369 2008/10/23 20:41:13 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.370 2008/10/25 15:40:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,8 +97,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.369 2008/10/23 20:41:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.370 2008/10/25 15:40:59 tsutsui Exp $");
 
+#include "opt_ddb.h"
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
@@ -810,13 +811,25 @@ start_init(void *arg)
 					path = initpaths[ipx++];
 				else
 					continue;
+			} else if (len == 4 && strcmp(ipath, "halt") == 0) {
+				cpu_reboot(RB_HALT, NULL);
+			} else if (len == 6 && strcmp(ipath, "reboot") == 0) {
+				cpu_reboot(0, NULL);
+#if defined(DDB)
+			} else if (len == 3 && strcmp(ipath, "ddb") == 0) {
+				console_debugger();
+				continue;
+#endif
 			} else {
 				ipath[len] = '\0';
 				path = ipath;
 			}
 		} else {
-			if ((path = initpaths[ipx++]) == NULL)
-				break;
+			if ((path = initpaths[ipx++]) == NULL) {
+				ipx = 0;
+				boothowto |= RB_ASKNAME;
+				continue;
+			}
 		}
 
 		ucp = (char *)USRSTACK;
