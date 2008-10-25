@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2003/01/06 17:40:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2008/10/25 22:27:37 apb Exp $
 
 # Makefile for hp300 tags file and boot blocks
 
@@ -18,7 +18,8 @@ DHP300=	dev hp300 include
 tags:
 	-ctags -wdtf ${THP300} ${SHP300} ${SM68K} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AHP300} ${AM68K} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${THP300}
 	sort -o ${THP300} ${THP300}
 

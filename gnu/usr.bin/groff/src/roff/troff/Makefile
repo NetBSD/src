@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2008/02/26 03:20:07 lukem Exp $
+# $NetBSD: Makefile,v 1.10 2008/10/25 22:27:35 apb Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/roff/troff/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
@@ -17,8 +17,10 @@ USETBL=
 majorminor.cpp: ${GROFF_DIST}/VERSION ${GROFF_DIST}/REVISION
 	${_MKTARGET_CREATE}
 	(\
-	    maj=`sed -e 's/^\([^.]*\)\..*$$/\1/' ${GROFF_DIST}/VERSION` ;\
-	    min=`sed -e 's/^[^.]*\.\([0-9]*\).*$$/\1/' ${GROFF_DIST}/VERSION` ;\
+	    maj=`${TOOL_SED} -e 's/^\([^.]*\)\..*$$/\1/' \
+		${GROFF_DIST}/VERSION` ;\
+	    min=`${TOOL_SED} -e 's/^[^.]*\.\([0-9]*\).*$$/\1/' \
+		${GROFF_DIST}/VERSION` ;\
 	    r=`cat ${GROFF_DIST}/REVISION` ;\
 	    echo 'const char *major_version = "'$$maj'";' ;\
 	    echo 'const char *minor_version = "'$$min'";' ;\

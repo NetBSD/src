@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2003/12/04 23:32:37 keihan Exp $
+#	$NetBSD: Makefile,v 1.30 2008/10/25 22:27:35 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -56,7 +56,7 @@ realall:	send-pr send-pr.1 send-pr.el install-sid
 
 send-pr:	send-pr.sh Makefile
 	${_MKTARGET_CREATE}
-	sed -e 's,xVERSIONx,$(VERSION),' \
+	${TOOL_SED} -e 's,xVERSIONx,$(VERSION),' \
             -e 's,xGNATS_ROOTx,$(GNATS_ROOT),' \
             -e 's,xGNATS_ADDRx,$(GNATS_ADDR),' \
             -e 's,xGNATS_SITEx,$(GNATS_SITE),' \
@@ -72,14 +72,14 @@ send-pr:	send-pr.sh Makefile
 
 install-sid:	install-sid.sh Makefile
 	${_MKTARGET_CREATE}
-	sed -e 's,xBINDIRx,$(bindir),g' \
+	${TOOL_SED} -e 's,xBINDIRx,$(bindir),g' \
 	    -e 's,xVERSIONx,$(VERSION),g' $(srcdir)/install-sid.sh > $@-t
 	mv -f $@-t $@
 	chmod 755 $@
 
 send-pr.el:	send-pr-el.in Makefile
 	${_MKTARGET_CREATE}
-	sed -e 's,xVERSIONx,$(VERSION),' \
+	${TOOL_SED} -e 's,xVERSIONx,$(VERSION),' \
             -e 's,xGNATS_ROOTx,$(GNATS_ROOT),' \
             -e 's,xGNATS_SITEx,$(GNATS_SITE),' \
             -e 's,xDATADIRx,$(datadir),' \
@@ -91,7 +91,7 @@ send-pr.el:	send-pr-el.in Makefile
 
 send-pr.1:	send-pr.man Makefile
 	${_MKTARGET_CREATE}
-	sed -e 's,xGNATS_ROOTx,$(GNATS_ROOT),g' \
+	${TOOL_SED} -e 's,xGNATS_ROOTx,$(GNATS_ROOT),g' \
 	    -e 's,xVERSIONx,$(VERSION),g' $(srcdir)/send-pr.man > $@-t
 	mv -f $@-t $@
 

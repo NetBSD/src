@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2006/03/13 19:45:36 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:27:35 apb Exp $
 
 .PATH: ${.CURDIR}/APPLE
 
@@ -13,7 +13,7 @@ SUBDIR_MAC:=	APPLE
 .if !exists(${.CURDIR}/MAC/MAC${i:S/:/@/}.src)
 MAC${i:S/:/@/}.src: MAC.src
 	${_MKTARGET_CREATE}
-	sed 's/changeme/$i/' $> > $@
+	${TOOL_SED} 's/changeme/$i/' $> > $@
 CLEANFILES+= MAC${i:S/:/@/}.src
 .endif
 .endfor

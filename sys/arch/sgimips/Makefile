@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2007/10/17 19:57:03 garbled Exp $
+#	$NetBSD: Makefile,v 1.6 2008/10/25 22:27:38 apb Exp $
 
 # Makefile for sgimips tags file
 
@@ -27,7 +27,8 @@ tags:
 	-echo ${SSGIMIPS} ${SMIPS} | xargs ctags -wadtf ${TSGIMIPS}
 	-${FINDCOMM} | xargs ctags -wadtf ${TSGIMIPS}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ASGIMIPS} ${AMIPS} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TSGIMIPS}
 	sort -o ${TSGIMIPS} ${TSGIMIPS}
 

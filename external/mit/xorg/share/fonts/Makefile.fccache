@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.fccache,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+#	$NetBSD: Makefile.fccache,v 1.2 2008/10/25 22:27:34 apb Exp $
 
 .ifndef _MAKEFILE_FCCACHE_
 _MAKEFILE_FCCACHE_=1
@@ -13,7 +13,8 @@ afterinstall:
 .if ${MKUNPRIVED} != "no"
 	cd ${DESTDIR} \
 	&& find ./${X11FONTDIR} -name fonts.cache-1 \
-	    | sed -e 's/$$/ type=file mode=0444 uname=${BINOWN} gname=${BINGRP}/' \
+	    | ${TOOL_SED} -e \
+		's/$$/ type=file mode=0444 uname=${BINOWN} gname=${BINGRP}/' \
 	    | ${METALOG.add}
 .endif
 

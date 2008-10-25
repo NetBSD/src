@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/03/21 00:55:04 rtr Exp $
+#	$NetBSD: Makefile,v 1.9 2008/10/25 22:27:39 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,7 @@ SCRIPTS=	freetype-config
 CLEANFILES+=	${SCRIPTS}
 
 # XXX hijack config-subst from Xft
-CONFIG_SUBST=	sed -e 's%@prefix@%${X11ROOTDIR}%' \
+CONFIG_SUBST=	${TOOL_SED} -e 's%@prefix@%${X11ROOTDIR}%' \
 		-e 's%@exec_prefix@%${X11BINDIR}%' \
 		-e 's%@libdir@%${X11USRLIBDIR}%g' \
 		-e 's%@includedir@%${X11INCDIR}%' \

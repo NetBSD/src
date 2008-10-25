@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2007/03/14 15:49:26 tnozaki Exp $
+# $NetBSD: Makefile,v 1.27 2008/10/25 22:27:36 apb Exp $
 
 NOMAN=	# defined
 
@@ -313,13 +313,13 @@ ${locale}.out: ${LOCALESRC_${locale}}.src \
 		${NETBSDSRCDIR}/lib/libc/locale/runetable.c
 	${_MKTARGET_CREATE}
 	${CPP} -I${.CURDIR} < ${.CURDIR}/${LOCALESRC_${locale}}.src | \
-	    sed -e '/^#/d' | ${TOOL_MKLOCALE} -o ${.TARGET}
+	    ${TOOL_SED} -e '/^#/d' | ${TOOL_MKLOCALE} -o ${.TARGET}
 .endfor
 
 .SUFFIXES: .src .out
 .src.out:
 	${_MKTARGET_CREATE}
-	${CPP} -I${.CURDIR} < ${.IMPSRC} | sed -e '/^#/d' | \
+	${CPP} -I${.CURDIR} < ${.IMPSRC} | ${TOOL_SED} -e '/^#/d' | \
             ${TOOL_MKLOCALE} -o ${.TARGET}
 
 # does not work

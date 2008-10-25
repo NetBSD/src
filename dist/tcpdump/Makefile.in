@@ -154,7 +154,7 @@ version.o: version.c
 
 version.c: $(srcdir)/VERSION
 	@rm -f $@
-	sed -e 's/.*/char version[] = "&";/' $(srcdir)/VERSION > $@
+	${TOOL_SED} -e 's/.*/char version[] = "&";/' $(srcdir)/VERSION > $@
 
 install:
 	[ -d $(DESTDIR)$(sbindir) ] || \

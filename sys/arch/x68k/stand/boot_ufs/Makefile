@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2008/10/19 22:05:22 apb Exp $
+#	$NetBSD: Makefile,v 1.23 2008/10/25 22:27:38 apb Exp $
 
 NOMAN=		# defined
 
@@ -70,7 +70,7 @@ $(PROG): $(OBJS)
 	$(LD) $(LINKFLAGS) -o $(PROG).x $(OBJS) $(LDADD) >$(PROG).map
 	@grep first_kbyte $(PROG).map
 	@if [ `(echo ibase=16;						\
-		sed -n	-e '/[ 	]first_kbyte/{'				\
+		${TOOL_SED} -n	-e '/[ 	]first_kbyte/{'			\
 			-e 's/.*0x\([0-9a-fA-F]*\).*/\1-$(TEXT)-400/p'	\
 			-e '}' $(PROG).map |				\
 		tr a-f A-F) | bc` -gt 0 ];				\

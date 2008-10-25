@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.16 2006/06/02 22:16:23 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.17 2008/10/25 22:27:35 apb Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/Makefile.inc,v 2.7 2003/05/01 13:22:18 ru Exp $
 
@@ -110,12 +110,13 @@ CLEANFILES+=	${GROFFYSRCS:.y=.cpp} ${GROFFYSRCS:.y=_tab.h}
 .SUFFIXES: .man .1 .2 .3 .4 .5 .6 .7 .8
 
 version=`cat $(GROFF_DIST)/VERSION`
-revision=`sed -e 's/^0$$//' -e 's/^[1-9].*$$/.&/' $(GROFF_DIST)/REVISION`
+revision=`${TOOL_SED} -e 's/^0$$//' -e 's/^[1-9].*$$/.&/' \
+		$(GROFF_DIST)/REVISION`
 
 .man.8 .man.7 .man.6 .man.5 .man.4 .man.3 .man.2 .man.1:
 	${_MKTARGET_CREATE}
 	rm -f $@
-	sed -e "s;@BINDIR@;${BINDIR};g" \
+	${TOOL_SED} -e "s;@BINDIR@;${BINDIR};g" \
 	-e "s;@FONTDIR@;$(fontdir);g" \
 	-e "s;@LOCALFONTDIR@;$(localfontdir);g" \
 	-e "s;@LEGACYFONTDIR@;$(legacyfontdir);g" \
@@ -150,7 +151,7 @@ revision=`sed -e 's/^0$$//' -e 's/^[1-9].*$$/.&/' $(GROFF_DIST)/REVISION`
 .sh .pl:
 	${_MKTARGET_CREATE}
 	rm -f $@
-	sed -e "s|@BINDIR@|${BINDIR}|g" \
+	${TOOL_SED} -e "s|@BINDIR@|${BINDIR}|g" \
 	     -e "s;@FONTDIR@;$(fontdir);g" \
 	     -e 's|@GROFF_BIN_PATH_SETUP@|GROFF_RUNTIME="$${GROFF_BIN_PATH=/usr/bin}:"|g' \
 	     -e "s|@SEP@|:|" \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/19 22:05:22 apb Exp $
+#	$NetBSD: Makefile,v 1.5 2008/10/25 22:27:38 apb Exp $
 
 # Makefile for xen tags file
 
@@ -23,7 +23,8 @@ tags:
 	rm -f ${TXEN}
 	-echo ${SXEN} ${COMM} | xargs ctags -wadtf ${TXEN}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AXEN} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TXEN}
 	sort -o ${TXEN} ${TXEN}
 

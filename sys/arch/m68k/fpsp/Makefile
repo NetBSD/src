@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2008/10/19 22:05:21 apb Exp $
+#	$NetBSD: Makefile,v 1.17 2008/10/25 22:27:37 apb Exp $
 
 #	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 #	M68000 Hi-Performance Microprocessor Division
@@ -55,7 +55,7 @@ AFLAGS		= -x assembler-with-cpp -m68040
 # For the Library Version:
 #
 AR?		= ar
-LIB_FILTER 	= sed 's/fpsp.defs/l_fpsp.defs/'
+LIB_FILTER 	= ${TOOL_SED} 's/fpsp.defs/l_fpsp.defs/'
 LIB_TARGET	= lib$(TARGET).a
 #
 # SYS selects the template set to use

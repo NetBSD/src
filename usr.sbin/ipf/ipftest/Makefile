@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2006/05/11 07:07:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.33 2008/10/25 22:27:39 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -34,11 +34,11 @@ CLEANFILES+=	ippool.tab.c ippool.tab.h
 ipnat_y.c: ipnat_y.y
 	${_MKTARGET_CREATE}
 	${YACC} -b ipnat -d ${.ALLSRC}
-	sed -e 's/yy/ipnat_yy/g' \
+	${TOOL_SED} -e 's/yy/ipnat_yy/g' \
 	    -e 's/y.tab.c/ipnat_y.c/' \
 	    -e s/\"ipnat_y.y\"/\"..\\/tools\\/ipnat_y.y\"/ \
 	    ipnat.tab.c > ${.TARGET}
-	sed -e 's/yy/ipnat_yy/g' \
+	${TOOL_SED} -e 's/yy/ipnat_yy/g' \
 	    -e 's/y.tab.h/ipnat_y.h/' \
 	    ipnat.tab.h > ${.TARGET:.c=.h}
 
@@ -46,60 +46,60 @@ ipnat_y.h: ipnat_y.c
 
 ipnat_l.c: lexer.c
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ipnat_yy/g' \
+	${TOOL_SED} -e 's/yy/ipnat_yy/g' \
 	    -e 's/y.tab.h/ipnat_y.h/' \
 	    -e 's/lexer.h/ipnat_l.h/' \
 	    ${.ALLSRC} > ${.TARGET}
 
 ipnat_l.h: lexer.h
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ipnat_yy/g' \
+	${TOOL_SED} -e 's/yy/ipnat_yy/g' \
 	    ${.ALLSRC} > ${.TARGET}
 
 ippool_y.c: ippool_y.y
 	${_MKTARGET_CREATE}
 	${YACC} -b ippool -d ${.ALLSRC}
-	sed -e 's/yy/ippool_yy/g' \
+	${TOOL_SED} -e 's/yy/ippool_yy/g' \
 	    -e 's/"ippool_y.y"/"..\/tools\/ippool_y.y"/' \
 	    ippool.tab.c > ${.TARGET}
-	sed -e 's/yy/ippool_yy/g' \
+	${TOOL_SED} -e 's/yy/ippool_yy/g' \
 	    ippool.tab.h > ${.TARGET:.c=.h}
 
 ippool_y.h: ippool_y.c
 
 ippool_l.c: lexer.c
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ippool_yy/g' \
+	${TOOL_SED} -e 's/yy/ippool_yy/g' \
 	    -e 's/y.tab.h/ippool_y.h/' \
 	    -e 's/lexer.h/ippool_l.h/' \
 	    ${.ALLSRC} > ${.TARGET}
 
 ippool_l.h: lexer.h
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ippool_yy/g' \
+	${TOOL_SED} -e 's/yy/ippool_yy/g' \
 	    ${.ALLSRC} > ${.TARGET}
 
 ipf_y.c: ipf_y.y
 	${_MKTARGET_CREATE}
 	${YACC} -b ipf -d ${.ALLSRC}
-	sed -e 's/yy/ipf_yy/g' \
+	${TOOL_SED} -e 's/yy/ipf_yy/g' \
 	    -e 's/"ipf_y.y"/"..\/tools\/ipf_y.y"/' \
 		ipf.tab.c > ${.TARGET}
-	sed -e 's/yy/ipf_yy/g' \
+	${TOOL_SED} -e 's/yy/ipf_yy/g' \
 		ipf.tab.h > ${.TARGET:.c=.h}
 
 ipf_y.h: ipf_y.c
 
 ipf_l.c: lexer.c
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ipf_yy/g' \
+	${TOOL_SED} -e 's/yy/ipf_yy/g' \
 	     -e 's/y.tab.h/ipf_y.h/' \
 	     -e 's/lexer.h/ipf_l.h/' \
 	    ${.ALLSRC} > ${.TARGET}
 
 ipf_l.h: lexer.h
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ipf_yy/g' \
+	${TOOL_SED} -e 's/yy/ipf_yy/g' \
 	    ${.ALLSRC} > ${.TARGET}
 
 .include <bsd.prog.mk>

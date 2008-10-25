@@ -122,7 +122,7 @@ states.texi s-usage.texi categ.texi send-pr.sh
 all: send-pr install-sid send-pr.elc send-pr.1
 
 send-pr: send-pr.sh Makefile
-	sed -e 's,xVERSIONx,$(VERSION),' \
+	${TOOL_SED} -e 's,xVERSIONx,$(VERSION),' \
 	    -e 's,xGNATS_ROOTx,$(GNATS_ROOT),' \
 	    -e 's,xGNATS_ADDRx,$(GNATS_ADDR),' \
 	    -e 's,xGNATS_SITEx,$(GNATS_SITE),' \
@@ -137,13 +137,13 @@ send-pr: send-pr.sh Makefile
 	chmod 755 $@
 
 install-sid: install-sid.sh Makefile
-	sed -e 's,xBINDIRx,$(bindir),g' \
+	${TOOL_SED} -e 's,xBINDIRx,$(bindir),g' \
 	    -e 's,xVERSIONx,$(VERSION),g' $(srcdir)/install-sid.sh > $@-t
 	mv $@-t $@
 	chmod 755 $@
 
 send-pr.el: send-pr-el.in Makefile
-	sed -e 's,xVERSIONx,$(VERSION),' \
+	${TOOL_SED} -e 's,xVERSIONx,$(VERSION),' \
 	    -e 's,xGNATS_ROOTx,$(GNATS_ROOT),' \
 	    -e 's,xGNATS_SITEx,$(GNATS_SITE),' \
 	    -e 's,xDATADIRx,$(datadir),' \
@@ -178,13 +178,14 @@ install-gnats-dist:
 	$(INSTALL_DATA) $(srcdir)/README $(datadir)/gnats/dist/README
 	$(INSTALL_DATA) $(srcdir)/INSTALL $(datadir)/gnats/dist/INSTALL
 	$(INSTALL_DATA) $(srcdir)/MANIFEST $(datadir)/gnats/dist/MANIFEST
-	sed -e 's/"DEFAULT_RELEASE") ".*"/"DEFAULT_RELEASE") "@''DEFAULT_RELEASE@"/' \
+	${TOOL_SED} \
+	    -e 's/"DEFAULT_RELEASE") ".*"/"DEFAULT_RELEASE") "@''DEFAULT_RELEASE@"/' \
 	    -e 's/"SUBMITTER") ".*"/"SUBMITTER") "@''SUBMITTER@"/' \
 	    -e 's/"DATADIR") ".*"/"DATADIR") "@''DATADIR@"/' \
 	    send-pr.el > $(datadir)/gnats/dist/send-pr-el.inT
 	mv $(datadir)/gnats/dist/send-pr-el.inT \
 		$(datadir)/gnats/dist/send-pr-el.in
-	sed -e 's/GNATS_ROOT=.*/GNATS_ROOT=/' \
+	${TOOL_SED} -e 's/GNATS_ROOT=.*/GNATS_ROOT=/' \
 	    -e 's/SUBMITTER=.*/SUBMITTER=@''SUBMITTER@/' \
 	    -e 's/DEFAULT_RELEASE=.*/DEFAULT_RELEASE="@''DEFAULT_RELEASE@"/' \
 	    -e 's/DEFAULT_ORGANIZATION=.*/DEFAULT_ORGANIZATION=/' \
@@ -192,7 +193,7 @@ install-gnats-dist:
 	    send-pr > $(datadir)/gnats/dist/send-pr.sh-t
 	mv $(datadir)/gnats/dist/send-pr.sh-t \
 		$(datadir)/gnats/dist/send-pr.sh
-	sed -e 's/^BINDIR=.*/BINDIR=@''BINDIR@/' \
+	${TOOL_SED} -e 's/^BINDIR=.*/BINDIR=@''BINDIR@/' \
 	    install-sid > $(datadir)/gnats/dist/install-sid.sT
 	mv $(datadir)/gnats/dist/install-sid.sT \
 		$(datadir)/gnats/dist/install-sid.sh
@@ -237,7 +238,7 @@ version.texi: Makefile
 	mv $@-t $@
 
 send-pr.1: Makefile
-	sed -e 's,xGNATS_ROOTx,$(GNATS_ROOT),g' \
+	${TOOL_SED} -e 's,xGNATS_ROOTx,$(GNATS_ROOT),g' \
 	    -e 's,xVERSIONx,$(VERSION),g' $(srcdir)/send-pr.man > $@-t
 	mv $@-t $@
 
@@ -252,7 +253,7 @@ send-pr.dvi: version.texi
 gnats-build: stamp-gnats
 
 stamp-gnats: Makefile
-	sed -e 's,^GNATS_ROOT =.*,GNATS_ROOT = $(GNATS_ROOT),' \
+	${TOOL_SED} -e 's,^GNATS_ROOT =.*,GNATS_ROOT = $(GNATS_ROOT),' \
 	    -e 's,^GNATS_ADDR =.*,GNATS_ADDR = $(GNATS_ADDR),' \
 	    -e 's,^GNATS_SITE =.*,GNATS_SITE = $(GNATS_SITE),' \
 	    -e 's,^DEFAULT_RELEASE =.*,DEFAULT_RELEASE = $(DEFAULT_RELEASE),' \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/04/04 15:59:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2008/10/25 22:27:39 apb Exp $
 
 PROG=		ippool
 SRCS=		ippool_y.c ippool_l.c kmem.c ippool.c
@@ -13,24 +13,24 @@ CLEANFILES+=	ippool_l.c ippool_l.h
 ippool_y.c: ippool_y.y
 	${_MKTARGET_CREATE}
 	${YACC} -d ${.ALLSRC}
-	sed -e 's/yy/ippool_yy/g' \
+	${TOOL_SED} -e 's/yy/ippool_yy/g' \
 	    -e 's/"ippool_y.y"/"..\/tools\/ippool_y.y"/' \
 	    y.tab.c > ${.TARGET}
-	sed -e 's/yy/ippool_yy/g' \
+	${TOOL_SED} -e 's/yy/ippool_yy/g' \
 	    y.tab.h > ${.TARGET:.c=.h}
 
 ippool_y.h: ippool_y.c
 
 ippool_l.c: lexer.c
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ippool_yy/g' \
+	${TOOL_SED} -e 's/yy/ippool_yy/g' \
 	    -e 's/y.tab.h/ippool_y.h/' \
 	    -e 's/lexer.h/ippool_l.h/' \
 	    ${.ALLSRC} > ${.TARGET}
 
 ippool_l.h: lexer.h
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ippool_yy/g' \
+	${TOOL_SED} -e 's/yy/ippool_yy/g' \
 	    ${.ALLSRC} > ${.TARGET}
 
 .include <bsd.prog.mk>

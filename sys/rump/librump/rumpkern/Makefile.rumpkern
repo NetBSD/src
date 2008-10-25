@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.16 2008/10/15 13:04:26 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.17 2008/10/25 22:27:38 apb Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -87,7 +87,7 @@ RVNH=\#include \<rump\/rump.h\>
 rumpvnode_if.h: ${RUMPTOP}/../sys/vnode_if.h \
 		${RUMPTOP}/librump/rumpkern/Makefile.rumpkern
 	echo Generating rumpvnode_if.h
-	sed ${VOPTORUMPVOP}";s/SYS_VNODE_IF_H/SYS_RUMPVNODE_IF_H/g"	\
+	${TOOL_SED} ${VOPTORUMPVOP}";s/SYS_VNODE_IF_H/SYS_RUMPVNODE_IF_H/g" \
 	    < ${RUMPTOP}/../sys/vnode_if.h > rumpvnode_if.h
 
 rumpvnode_if.c: ${RUMPTOP}/../kern/vnode_if.c \
@@ -95,7 +95,7 @@ rumpvnode_if.c: ${RUMPTOP}/../kern/vnode_if.c \
 	echo Generating rumpvnode_if.c
 	# XXX: some creative kludging to simulate 'a\' (I have no
 	# clue how to make it work in a Makefile
-	sed ${VOPTORUMPVOP}";/sys\/vnode.h/{x;s/.*/${RVNH}/;x;G;n;}"	\
+	${TOOL_SED} ${VOPTORUMPVOP}";/sys\/vnode.h/{x;s/.*/${RVNH}/;x;G;n;}" \
 	    < ${RUMPTOP}/../kern/vnode_if.c > rumpvnode_if.c
 
 rumpdefs.h: ${RUMPTOP}/../sys/namei.h \
@@ -104,17 +104,17 @@ rumpdefs.h: ${RUMPTOP}/../sys/namei.h \
 	    ${RUMPTOP}/../sys/errno.h \
 	    ${RUMPTOP}/librump/rumpkern/Makefile.rumpkern
 	echo Generating rumpdefs.h
-	sed -n '/#define NAMEI_/s/NAMEI_/RUMP_NAMEI_/gp'		\
+	${TOOL_SED} -n '/#define NAMEI_/s/NAMEI_/RUMP_NAMEI_/gp'	\
 	    < ${RUMPTOP}/../sys/namei.h > rumpdefs.h
-	sed -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp'	\
+	${TOOL_SED} -n '/#define	O_[A-Z]*	*0x/s/O_/RUMP_O_/gp' \
 	    < ${RUMPTOP}/../sys/fcntl.h >> rumpdefs.h
 	printf "#ifndef __VTYPE_DEFINED\n#define __VTYPE_DEFINED\n"	\
 	    >> rumpdefs.h
-	sed -n '/enum vtype.*{/p'					\
+	${TOOL_SED} -n '/enum vtype.*{/p'				\
 	    < ${RUMPTOP}/../sys/vnode.h >> rumpdefs.h
 	printf "#endif /* __VTYPE_DEFINED */\n" >> rumpdefs.h
 	printf "#ifndef EJUSTRETURN\n" >> rumpdefs.h
-	sed -n '/EJUSTRETURN/p'						\
+	${TOOL_SED} -n '/EJUSTRETURN/p'					\
 	    < ${RUMPTOP}/../sys/errno.h >> rumpdefs.h
 	printf "#endif /* EJUSTRETURN */\n" >> rumpdefs.h
 

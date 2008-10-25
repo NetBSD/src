@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2004/04/03 22:16:27 he Exp $
+#	$NetBSD: Makefile,v 1.24 2008/10/25 22:27:39 apb Exp $
 
 PROG=		ipnat
 SRCS=		ipnat.c ipnat_y.c ipnat_l.c
@@ -14,11 +14,11 @@ CLEANFILES+=	ipnat_l.c ipnat_l.h
 ipnat_y.c: ipnat_y.y
 	${_MKTARGET_CREATE}
 	${YACC} -d ${.ALLSRC}
-	sed -e 's/yy/ipnat_yy/g' \
+	${TOOL_SED} -e 's/yy/ipnat_yy/g' \
 	    -e 's/y.tab.c/ipnat_y.c/' \
 	    -e s/\"ipnat_y.y\"/\"..\\/tools\\/ipnat_y.y\"/ \
 	    y.tab.c > ${.TARGET}
-	sed -e 's/yy/ipnat_yy/g' \
+	${TOOL_SED} -e 's/yy/ipnat_yy/g' \
 	    -e 's/y.tab.h/ipnat_y.h/' \
 	    y.tab.h > ${.TARGET:.c=.h}
 
@@ -26,14 +26,14 @@ ipnat_y.h: ipnat_y.c
 
 ipnat_l.c: lexer.c
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ipnat_yy/g' \
+	${TOOL_SED} -e 's/yy/ipnat_yy/g' \
 	    -e 's/y.tab.h/ipnat_y.h/' \
 	    -e 's/lexer.h/ipnat_l.h/' \
 	    ${.ALLSRC} > ${.TARGET}
 
 ipnat_l.h: lexer.h
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ipnat_yy/g' \
+	${TOOL_SED} -e 's/yy/ipnat_yy/g' \
 	    ${.ALLSRC} > ${.TARGET}
 
 .include <bsd.prog.mk>

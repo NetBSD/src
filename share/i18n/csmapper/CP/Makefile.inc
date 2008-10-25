@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2006/11/04 03:46:19 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.5 2008/10/25 22:27:35 apb Exp $
 
 .PATH: ${.CURDIR}/CP
 
@@ -12,7 +12,7 @@ mapper.dir.CP: ${.CURDIR}/CP/CP.part ${.CURDIR}/CP/mapper.dir.CP.src
 	(\
 	    echo "# CP";\
 	    for i in ${PART_CP}; do \
-		f=`echo $$i | sed 's/:/@/'`; \
+		f=`echo $$i | ${TOOL_SED} 's/:/@/'`; \
 		printf '%-32s%-16s%s\n' CP$$i'/UCS' \
 		    mapper_std CP/CP$$f'%UCS.mps';\
 		printf '%-32s%-16s%s\n' UCS/CP$$i \

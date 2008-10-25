@@ -1,8 +1,10 @@
-# $NetBSD: Makefile,v 1.37 2007/12/08 12:30:18 tsutsui Exp $
+# $NetBSD: Makefile,v 1.38 2008/10/25 22:27:34 apb Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
 ##############################################################################
+
+.include <bsd.own.mk>
 
 all:
 
@@ -412,7 +414,12 @@ size-${image}: stage-${image} extfileprep fileprep-${image}
 .if !empty(BASE_PORTS.${image}:Mmacppc)
 	${MACPPC_MKBOOTHFSDIR}/macppc_mkboothfs ${MACPPC_MKBOOTHFSDIR}/boothfs
 .endif
-	@size=$$((`cd ${STAGEDIR}/${image} && ${MKISOFS} ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} -print-size . 2>&1 | tee /dev/stderr | sed '/=/!d;s/^[^=]*=//'` * 2048)) && \
+	@size=$$((`cd ${STAGEDIR}/${image} && \
+		   ${MKISOFS} ${MKISOFS_ARGS} ${MKISOFS_ARGS.${image}} \
+			-print-size . 2>&1
+		   | tee /dev/stderr \
+		   | ${TOOL_SED} '/=/!d;s/^[^=]*=//'`
+	       * 2048)) && \
 	if [ "${SUN_BOOT_ARGS.${image}}" != "" ]; then \
 		size=$$(($$(($$size + 327679)) / 327680 * 327680)) && \
 		bootfiles=`for f in ${SUN_BOOT_ARGS.${image}:N-:O}; do echo $$f; done | uniq` && \

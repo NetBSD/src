@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2007/04/01 18:52:31 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:27:36 apb Exp $
 
 .PATH: ${.CURDIR}/DEC
 
@@ -10,7 +10,7 @@ SEP_DEC:=
 .if !exists(${.CURDIR}/DEC/DEC${i:S/:/@/}.src)
 DEC${i:S/:/@/}.src: DEC.src
 	${_MKTARGET_CREATE}
-	sed 's/DECx/DEC$i/' $> > $@
+	${TOOL_SED} 's/DECx/DEC$i/' $> > $@
 CLEANFILES+=	DEC${i:S/:/@/}.src
 .endif
 .endfor

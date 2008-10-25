@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2004/03/31 00:34:32 lukem Exp $
+#	$NetBSD: Makefile,v 1.21 2008/10/25 22:27:39 apb Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -16,24 +16,24 @@ CLEANFILES+=	ipf_l.c ipf_l.h
 ipf_y.c: ipf_y.y
 	${_MKTARGET_CREATE}
 	${YACC} -d ${.ALLSRC}
-	sed -e 's/yy/ipf_yy/g' \
+	${TOOL_SED} -e 's/yy/ipf_yy/g' \
 	    -e 's/"ipf_y.y"/"..\/tools\/ipf_y.y"/' \
 	    y.tab.c > ${.TARGET}
-	sed -e 's/yy/ipf_yy/g' \
+	${TOOL_SED} -e 's/yy/ipf_yy/g' \
 	    y.tab.h > ${.TARGET:.c=.h}
 
 ipf_y.h: ipf_y.c
 
 ipf_l.c: lexer.c
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ipf_yy/g' \
+	${TOOL_SED} -e 's/yy/ipf_yy/g' \
 	    -e 's/y.tab.h/ipf_y.h/' \
 	    -e 's/lexer.h/ipf_l.h/' \
 	    ${.ALLSRC} > ${.TARGET}
 
 ipf_l.h: lexer.h
 	${_MKTARGET_CREATE}
-	sed -e 's/yy/ipf_yy/g' \
+	${TOOL_SED} -e 's/yy/ipf_yy/g' \
 	    ${.ALLSRC} > ${.TARGET}
 
 BINDIR=		/sbin

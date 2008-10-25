@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2008/10/19 22:05:20 apb Exp $
+#	$NetBSD: Makefile,v 1.33 2008/10/25 22:27:36 apb Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 NOOBJ=	# defined
@@ -21,7 +21,7 @@ update-domains:
 	  echo '# Last update:' `date` ; \
 	  echo '#' ; \
 	  ftp -o - ${DOMAIN_URL} \
-	  | sed -n -f ${.CURDIR}/domains.sed \
+	  | ${TOOL_SED} -n -f ${.CURDIR}/domains.sed \
 	 ) > domains ; \
 
 update-na.phone:

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2008/04/29 17:42:35 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.27 2008/10/25 22:27:34 apb Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -48,7 +48,7 @@ HACKSRC=	${DISTRIBDIR}/utils/libhack
 ${CRUNCHBIN}:	libhack.o
 
 install.sub: ${DISTRIBDIR}/miniroot/install.sub
-	sed -e "/^VERSION=/s/=.*/=${DISTRIBREV}/" < $? > $@
+	${TOOL_SED} -e "/^VERSION=/s/=.*/=${DISTRIBREV}/" < $? > $@
 
 CLEANFILES+= install.sub
 

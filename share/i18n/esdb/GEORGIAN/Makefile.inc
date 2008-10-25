@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2006/06/15 15:34:20 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:27:36 apb Exp $
 
 .PATH: ${.CURDIR}/GEORGIAN
 
@@ -9,7 +9,7 @@ SEP_GEORGIAN:=	-
 .for i in ${GEORGIAN_PART}
 GEORGIAN-${i}.src: GEORGIAN.src
 	${_MKTARGET_CREATE}
-	sed -e 's/GEORGIANx/GEORGIAN-${i}/' \
+	${TOOL_SED} -e 's/GEORGIANx/GEORGIAN-${i}/' \
 	    -e 's/GEORGIANy/GEORGIAN-${i:S/-/:/}/' $> > $@
 CLEANFILES+= GEORGIAN-${i}.src
 .endfor

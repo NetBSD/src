@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/10/19 22:05:24 apb Exp $
+#	$NetBSD: Makefile,v 1.6 2008/10/25 22:27:39 apb Exp $
 #
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
@@ -43,7 +43,7 @@ ${CATALOG}: ${CATALOG:S/$/.base/}
 			print "";					\
 		print $0;						\
 	}' |								\
-	sed -e '1s/^/VI_MESSAGE_CATALOG/'				\
+	${TOOL_SED} -e '1s/^/VI_MESSAGE_CATALOG/'			\
 	    -e '/"/s/^[^"]*"//'						\
 	    -e '1!s/"$$/X/' > $@;					\
 	if grep DUPLICATE $@ > /dev/null; then				\
@@ -75,24 +75,24 @@ ${CHK}: ${CATALOG}
 	echo =========================;					\
 	echo "MESSAGES WITH THE SAME MESSAGE ID's (FIX!):";		\
 	for j in							\
-	    `sed '/^$$/d' < $$f.base | sort -u |			\
+	    `${TOOL_SED} '/^$$/d' < $$f.base | sort -u |		\
 	    ${TOOL_AWK} '{print $$1}' | uniq -d`; do			\
 		egrep $$j $$f.base;					\
 	done;								\
 	echo =========================;					\
 	echo "Duplicate messages, both id and message (this is okay):";	\
-	sed '/^$$/d' < $$f.base | sort | uniq -c |			\
+	${TOOL_SED} '/^$$/d' < $$f.base | sort | uniq -c |		\
 	${TOOL_AWK} '$$1 != 1 { print $$0 }' | sort -n;			\
 	echo =========================;					\
 	echo "Duplicate messages, just message (this is okay):";	\
-	sed '/^$$/d' < $$f | sort | uniq -c |				\
+	${TOOL_SED} '/^$$/d' < $$f | sort | uniq -c |			\
 	${TOOL_AWK} '$$1 != 1 { print $$0 }' | sort -n;			\
 	echo =========================) > $@
 
 english.base: dump ${VI_FILES} #Makefile
 	${_MKTARGET_CREATE}
 	./dump ${VI_FILES} |\
-	sed -e '/|/!d' \
+	${TOOL_SED} -e '/|/!d' \
 	    -e 's/|/ "/' \
 	    -e 's/^"//' \
 	    -e 's/\\"/"/g' |\

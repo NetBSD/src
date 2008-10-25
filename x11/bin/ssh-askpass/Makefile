@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2007/09/17 04:51:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2008/10/25 22:27:39 apb Exp $
 
 NOMAN=		yes
 
@@ -22,7 +22,7 @@ CLEANFILES+=	SshAskpass_ad.h
 SshAskpass_ad.h: SshAskpass.ad
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	sed -n '/^[^!]/s/.*/"&",/p' <${.ALLSRC} > ${.TARGET}
+	${TOOL_SED} -n '/^[^!]/s/.*/"&",/p' <${.ALLSRC} > ${.TARGET}
 
 LDADD+=		-lXt -lSM -lICE -lXext -lX11
 DPADD+=		${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}

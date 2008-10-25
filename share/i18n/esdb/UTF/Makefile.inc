@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.4 2005/03/05 18:05:15 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.5 2008/10/25 22:27:36 apb Exp $
 
 .PATH: ${.CURDIR}/UTF
 
@@ -25,6 +25,10 @@ UTF-7-var=	utf7
 .for i in ${UTF_PART}
 UTF-$i.src: UTF.src
 	${_MKTARGET_CREATE}
-	sed 's/UTF-x/UTF-$i/;s/UTF-mod/${UTF-$i-mod}/;s/UTF-var/${UTF-$i-var}/' $> > $@
+	${TOOL_SED} \
+		-e 's/UTF-x/UTF-$i/' \
+		-e 's/UTF-mod/${UTF-$i-mod}/' \
+		-e 's/UTF-var/${UTF-$i-var}/' \
+		$> > $@
 CLEANFILES+= UTF-$i.src
 .endfor

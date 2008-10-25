@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2003/01/06 17:40:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2008/10/25 22:27:37 apb Exp $
 
 # Makefile for atari tags file and boot blocks
 
@@ -18,7 +18,7 @@ DATARI=	atari dev include
 tags:
 	-ctags -wdtf ${TATARI} ${SATARI} ${SM68K} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AATARI} ${AM68K} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TATARI}
 	sort -o ${TATARI} ${TATARI}
 

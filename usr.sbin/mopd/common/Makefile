@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2008/08/29 00:02:25 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.13 2008/10/25 22:27:39 apb Exp $
 
 LIBISPRIVATE=	yes
 
@@ -10,7 +10,7 @@ CLEANFILES= version.c
 version.c: VERSION
 	${_MKTARGET_CREATE}
 	rm -f version.c; \
-	sed 's/.*/char version[] = "&";/' ${.ALLSRC} > version.c
+	${TOOL_SED} 's/.*/char version[] = "&";/' ${.ALLSRC} > version.c
 
 .include <bsd.lib.mk>
 

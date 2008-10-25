@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.69 2008/10/19 22:05:21 apb Exp $
+#	$NetBSD: bsd.x11.mk,v 1.70 2008/10/25 22:27:36 apb Exp $
 
 .include <bsd.init.mk>
 
@@ -161,7 +161,7 @@ PRINTX11VERSION=${TOOL_AWK} ' \
 # Commandline to convert 'XCOMM' comments and 'XHASH' to '#', among other
 # things. Transformed from the "CppSedMagic" macro from "Imake.rules".
 #
-X11TOOL_UNXCOMM=    sed	-e '/^\#  *[0-9][0-9]*  *.*$$/d' \
+X11TOOL_UNXCOMM=    ${TOOL_SED}	-e '/^\#  *[0-9][0-9]*  *.*$$/d' \
 			-e '/^\#line  *[0-9][0-9]*  *.*$$/d' \
 			-e '/^[ 	]*XCOMM$$/s/XCOMM/\#/' \
 			-e '/^[ 	]*XCOMM[^a-zA-Z0-9_]/s/XCOMM/\#/' \

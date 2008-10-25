@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2008/10/19 22:05:20 apb Exp $
+#	$NetBSD: Makefile,v 1.13 2008/10/25 22:27:35 apb Exp $
 
 LIBISPRIVATE=	yes
 
@@ -196,21 +196,24 @@ build-rtl.c: rtl.c \
   ${G_RTL_H} real.h ${G_GCC_H} errors.h gtype-desc.h
 	${_MKTARGET_CREATE}
 	rm -f build-rtl.c
-	sed -e 's/<config[.]h/hconfig.h/' ${GNUHOSTDIST}/gcc/rtl.c >${.TARGET}
+	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
+		${GNUHOSTDIST}/gcc/rtl.c >${.TARGET}
 build-rtl.lo: ${HH}
 
 build-print-rtl.c: print-rtl.c \
   ${G_RTL_H} ${G_TREE_H} hard-reg-set.h ${G_BASIC_BLOCK_H}
 	${_MKTARGET_CREATE}
 	rm -f buid-print-rtl.c
-	sed -e 's/<config[.]h/hconfig.h/' ${GNUHOSTDIST}/gcc/print-rtl.c >${.TARGET}
+	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
+		${GNUHOSTDIST}/gcc/print-rtl.c >${.TARGET}
 build-print-rtl.lo: ${HH}
 
 build-bitmap.c: bitmap.c \
   ${G_RTL_H} flags.h ${G_BASIC_BLOCK_H} ${REGS_H} ${G_GCC_H} gtype-desc.h
 	${_MKTARGET_CREATE}
 	rm -f build-bitmap.c
-	sed -e 's/<config[.]h/hconfig.h/' ${GNUHOSTDIST}/gcc/bitmap.c >${.TARGET}
+	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
+		${GNUHOSTDIST}/gcc/bitmap.c >${.TARGET}
 build-bitmap.lo: ${HH}
 
 build-errors.c: errors.c errors.h
@@ -223,14 +226,16 @@ build-varray.c: varray.c \
   ${G_RTL_H} ${G_GCC_H} ${TREE_H} bitmap.h errors.h
 	${_MKTARGET_CREATE}
 	rm -f build-varray.c
-	sed -e 's/<config[.]h/hconfig.h/' ${GNUHOSTDIST}/gcc/varray.c >${.TARGET}
+	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
+		${GNUHOSTDIST}/gcc/varray.c >${.TARGET}
 build-varray.lo: ${HH} gtype-desc.h
 
 build-ggc-none.c: ggc-none.c \
   ${G_GCC_H} gtype-desc.h
 	${_MKTARGET_CREATE}
 	rm -f build-ggc-none.c
-	sed -e 's/<config[.]h/hconfig.h/' ${GNUHOSTDIST}/gcc/ggc-none.c >${.TARGET}
+	${TOOL_SED} -e 's/<config[.]h/hconfig.h/' \
+		${GNUHOSTDIST}/gcc/ggc-none.c >${.TARGET}
 build-ggc-none.lo: ${HH}
 
 #

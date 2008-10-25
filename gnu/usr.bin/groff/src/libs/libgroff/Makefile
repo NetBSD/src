@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2008/05/03 14:48:30 lukem Exp $
+# $NetBSD: Makefile,v 1.10 2008/10/25 22:27:35 apb Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/libs/libgroff/Makefile,v 1.5 2003/05/01 13:22:19 ru Exp $
 
@@ -32,5 +32,5 @@ version.cpp: ${GROFF_DIST}/VERSION ${GROFF_DIST}/REVISION
 	    echo 'const char *version_string = "'$$v'";' ;\
 	    echo 'const char *revision_string = "'$$r'";' ;\
 	    echo 'extern "C" const char *Version_string = "'$$v'.'$$r'";' |\
-		sed -e 's/\.0\"/\"/'; \
+		${TOOL_SED} -e 's/\.0\"/\"/'; \
 	) > ${.TARGET}
