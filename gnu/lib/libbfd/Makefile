@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2008/10/25 22:27:35 apb Exp $
+#	$NetBSD: Makefile,v 1.45 2008/10/25 23:56:02 mrg Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -17,8 +17,10 @@ libinstall:	# do nothing
 
 LIB=		bfd
 
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk)
-.include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
+BFD_MACHINE_ARCH?=	${MACHINE_ARCH}
+
+.if exists(${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk)
+.include "${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk"
 
 DIST=		${NETBSDSRCDIR}/gnu/dist/binutils
 
@@ -26,7 +28,7 @@ SHLIB_MAJOR=	9
 SHLIB_MINOR=	0
 
 GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}
-CPPFLAGS+=	-I${.CURDIR}/arch/${MACHINE_ARCH} -I${DIST}/include -I. \
+CPPFLAGS+=	-I${.CURDIR}/arch/${BFD_MACHINE_ARCH} -I${DIST}/include -I. \
 		-I${DIST}/bfd ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 
 GSRCS=		${G_libbfd_la_OBJECTS:libbfd.lo=lib_bfd.lo} \
