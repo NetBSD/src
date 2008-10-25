@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.260 2008/10/22 17:37:16 apb Exp $
+#	$NetBSD: Makefile,v 1.261 2008/10/25 15:03:44 apb Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -74,6 +74,7 @@
 #
 # Targets invoked by `make build,' in order:
 #   cleandir:        cleans the tree.
+#   do-top-obj:      creates the top level object directory.
 #   do-tools-obj:    creates object directories for the host toolchain.
 #   do-tools:        builds host toolchain.
 #   obj:             creates object directories.
@@ -130,15 +131,16 @@ _SRC_TOP_OBJ_=
 .endfor
 .endif
 
+#
+# _SUBDIR is used to set SUBDIR, after removing directories that have
+# BUILD_${dir}=no, or that have no ${dir}/Makefile.
+#
 _SUBDIR=	tools lib include gnu external bin games libexec sbin usr.bin
 _SUBDIR+=	usr.sbin share rescue sys etc tests .WAIT distrib regress
 
-#
-# Weed out directories that don't exist.
-#
-
 .for dir in ${_SUBDIR}
-.if ("${dir}" == ".WAIT") || exists(${dir}/Makefile) && (${BUILD_${dir}:Uyes} != "no")
+.if "${dir}" == ".WAIT" \
+	|| (${BUILD_${dir}:Uyes} != "no" && exists(${dir}/Makefile))
 SUBDIR+=	${dir}
 .endif
 .endfor
@@ -197,12 +199,15 @@ BUILDTARGETS+=	check-tools
 .if ${MKUPDATE} == "no" && !defined(NOCLEANDIR)
 BUILDTARGETS+=	cleandir
 .endif
-.if ${USETOOLS} == "yes"
+.if ${MKOBJDIRS} != "no"
+BUILDTARGETS+=	do-top-obj
+.endif
+.if ${USETOOLS} == "yes"	# {
 .if ${MKOBJDIRS} != "no"
 BUILDTARGETS+=	do-tools-obj
 .endif
 BUILDTARGETS+=	do-tools
-.endif
+.endif # USETOOLS		# }
 .if ${MKOBJDIRS} != "no"
 BUILDTARGETS+=	obj
 .endif
@@ -386,6 +391,9 @@ do-${dir:S/\//-/g}: .PHONY .MAKE
 	${MAKEDIRTARGET} ${dir} ${targ}
 .endfor
 .endfor
+
+do-top-obj: .PHONY .MAKE
+	${MAKEDIRTARGET} . obj NOSUBDIR=
 
 do-tools-obj: .PHONY .MAKE
 	${MAKEDIRTARGET} tools obj
