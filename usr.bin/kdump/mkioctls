@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.37 2008/10/19 22:10:05 apb Exp $
+#	$NetBSD: mkioctls,v 1.38 2008/10/25 22:18:15 apb Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -35,8 +35,9 @@
 #	@(#)mkioctls	8.2 (Berkeley) 4/28/95
 #
 
-: ${CC:=cc}
 : ${AWK:=awk}
+: ${CC:=cc}
+: ${SED:=sed}
 
 echo "/* Automatically generated file, do not edit! */"
 #echo "#define const" 	# XXX: timepps lossage
@@ -79,7 +80,7 @@ echo "#include <prop/proplib.h>"
 for i
 do
 	echo "#include <$i>"
-done | sed -e "s,${DESTDIR}/usr/include/,,g"
+done | ${SED} -e "s,${DESTDIR}/usr/include/,,g"
 
 ${CC} -E -nostdinc -idirafter ${DESTDIR}/usr/include -dM ${1+"$@"} | \
 ${AWK} '
