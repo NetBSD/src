@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2008/07/27 07:57:40 veego Exp $
+# $NetBSD: Makefile.inc,v 1.11 2008/10/25 22:27:38 apb Exp $
 
 .include "../Makefile.inc"
 
@@ -21,7 +21,7 @@ CLEANFILES+=	${TEMPL_FILE:S/.tmpl//} *~ ${KMOD}
 DPSRCS+=	${TEMPL_FILE:S/.tmpl//}
 
 ${TEMPL_FILE:S/.tmpl//}:
-	sed 	-e "s|@LKM_ISA_IO_PORT@|${LKM_ISA_IO_PORT}|g" \
+	${TOOL_SED} -e "s|@LKM_ISA_IO_PORT@|${LKM_ISA_IO_PORT}|g" \
 		-e "s|@LKM_ISA_SIZE@|${LKM_ISA_SIZE}|g" \
 		-e "s|@LKM_ISA_IOMEM@|${LKM_ISA_IOMEM}|g" \
 		-e "s|@LKM_ISA_IOSIZE@|${LKM_ISA_IOSIZE}|g" \

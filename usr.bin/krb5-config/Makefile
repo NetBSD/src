@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2008/07/20 17:53:30 veego Exp $
+# $NetBSD: Makefile,v 1.6 2008/10/25 22:27:38 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ MAN=		krb5-config.1
 CLEANFILES+=	krb5-config
 
 krb5-config: krb5-config.in
-	sed     -e "s!@PACKAGE\@!heimdal!g" \
+	${TOOL_SED} -e "s!@PACKAGE\@!heimdal!g" \
 	        -e "s!@VERSION\@!1.1!g" \
 	        -e "s!@prefix\@!/!g" \
 	        -e "s!@exec_prefix\@!/!g" \

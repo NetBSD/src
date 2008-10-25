@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.syspkg.mk,v 1.4 2008/10/19 22:05:20 apb Exp $
+#	$NetBSD: bsd.syspkg.mk,v 1.5 2008/10/25 22:27:34 apb Exp $
 #
 #	This file is derived from:
 #
@@ -113,7 +113,7 @@ MKDIR?=		/bin/mkdir -p
 MV?=		/bin/mv
 PKG_TOOLS_BIN?= /usr/sbin
 RM?=		/bin/rm
-SED?=		/usr/bin/sed
+SED?=		${TOOL_SED:U/usr/bin/sed}
 SETENV?=	/usr/bin/env
 SH?=		/bin/sh
 TEST?=		test				# Shell builtin

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2006/04/08 14:15:48 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:27:36 apb Exp $
 
 .PATH: ${.CURDIR}/KOI
 
@@ -10,7 +10,7 @@ SEP_KOI:=
 .if !exists(${.CURDIR}/KOI/KOI${i:S/:/@/}.src)
 KOI${i:S/:/@/}.src: KOI.src
 	${_MKTARGET_CREATE}
-	sed 's/KOIx/KOI$i/' $> > $@
+	${TOOL_SED} 's/KOIx/KOI$i/' $> > $@
 CLEANFILES+= KOI${i:S/:/@/}.src
 .endif
 .endfor

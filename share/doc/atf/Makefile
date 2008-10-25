@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2008/05/01 15:35:50 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2008/10/25 22:27:35 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -19,7 +19,7 @@ MAN+=	atf-c-api.3 atf-c++-api.3 atf-sh-api.3
 
 CLEANFILES+=	atf.7 atf.7.tmp
 atf.7: atf.7.in
-	sed -e 's,__DOCDIR__,/usr/share/doc/atf,g' \
+	${TOOL_SED} -e 's,__DOCDIR__,/usr/share/doc/atf,g' \
 	    <${SRCDIR}/doc/atf.7.in >atf.7.tmp
 	mv atf.7.tmp atf.7
 

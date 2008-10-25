@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 2008/04/20 07:11:22 mrg Exp $
+#	$NetBSD: Makefile,v 1.44 2008/10/25 22:27:35 apb Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -54,28 +54,28 @@ targets.o targets.so: targmatch.h Makefile
 
 targmatch.h: config.bfd targmatch.sed
 	${_MKTARGET_CREATE}
-	sed -f ${.ALLSRC:M*.sed} ${.ALLSRC:M*.bfd} >$@
+	${TOOL_SED} -f ${.ALLSRC:M*.sed} ${.ALLSRC:M*.bfd} >$@
 
 elf32-target.h: elfxx-target.h
 	${_MKTARGET_CREATE}
-	sed -e s/NN/32/g < $> > $@
+	${TOOL_SED} -e s/NN/32/g < $> > $@
 
 elf64-target.h: elfxx-target.h
 	${_MKTARGET_CREATE}
-	sed -e s/NN/64/g < $> > $@
+	${TOOL_SED} -e s/NN/64/g < $> > $@
 
 elf32-ia64.c: elfxx-ia64.c
 	${_MKTARGET_CREATE}
-	sed -e s/NN/32/g < $> > $@
+	${TOOL_SED} -e s/NN/32/g < $> > $@
 
 elf64-ia64.c: elfxx-ia64.c
 	${_MKTARGET_CREATE}
-	sed -e s/NN/64/g < $> > $@
+	${TOOL_SED} -e s/NN/64/g < $> > $@
 
 peigen.c: peXXigen.c
 	${_MKTARGET_CREATE}
-	sed -e s/XX/pe/g < $> > $@
+	${TOOL_SED} -e s/XX/pe/g < $> > $@
 
 pepigen.c: peXXigen.c
 	${_MKTARGET_CREATE}
-	sed -e s/XX/pep/g < $> > $@
+	${TOOL_SED} -e s/XX/pep/g < $> > $@

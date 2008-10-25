@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/05/03 14:48:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2008/10/25 22:27:35 apb Exp $
 
 LIBISPRIVATE=	yes
 NOGCCERROR=
@@ -149,7 +149,7 @@ run-hw: Makefile
 	done ; \
 	for hw in $$f; do \
 		echo $$hw; \
-	done | sed -e 's/^.*\(hw_.*\)\.c/\1/' \
+	done | ${TOOL_SED} -e 's/^.*\(hw_.*\)\.c/\1/' \
 		   -e 's/^/extern const device_descriptor /' \
 		   -e 's/$$/_device_descriptor\[\];/' \
 			> tmp-hw.h
@@ -162,7 +162,7 @@ run-hw: Makefile
 	done ; \
 	for hw in $$f; do \
 		echo $$hw; \
-	done | sed -e 's/^.*\(hw_.*\)\.c/\1/' \
+	done | ${TOOL_SED} -e 's/^.*\(hw_.*\)\.c/\1/' \
 		   -e 's/^/    /' \
 		   -e 's/$$/_device_descriptor,/' > tmp-hw.c
 	${MIC} tmp-hw.h hw.h
@@ -185,7 +185,7 @@ run-pk: $(PACKAGE_SRC)
 	done ; \
 	for pk in $$f; do \
 		echo $$pk; \
-	done | sed -e 's/^.*pk_\(.*\)\.c/\1/' \
+	done | ${TOOL_SED} -e 's/^.*pk_\(.*\)\.c/\1/' \
 		   -e 's/^/extern package_create_instance_callback pk_/' \
 		   -e 's/$$/_create_instance;/' > tmp-pk.h
 	${MIC} tmp-pk.h pk.h
@@ -196,7 +196,7 @@ DPSRCS+= ${PK_H}
 DEFINES_H=	defines.h
 ${DEFINES_H}: run-defines
 run-defines:
-	sed -n -e '/^#define HAVE_/s/ 1$$/",/' \
+	${TOOL_SED} -n -e '/^#define HAVE_/s/ 1$$/",/' \
 	       -e '/^#define HAVE_/s//"HAVE_/p' \
 	       < ${.CURDIR}/../arch/${MACHINE_ARCH}/config.h > tmp-defines.h
 	${MIC} tmp-defines.h defines.h

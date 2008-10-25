@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2006/04/01 04:13:22 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:27:35 apb Exp $
 
 .PATH: ${.CURDIR}/AST
 
@@ -12,7 +12,7 @@ SUBDIR_ARMSCII:=	AST
 .if !exists(${.CURDIR}/AST/ARMSCII-${i:S/:/@/}.src)
 ARMSCII-${i:S/:/@/}.src: ARMSCII.src
 	${_MKTARGET_CREATE}
-	sed 's/ARMSCII-x/ARMSCII-$i/' $> > $@
+	${TOOL_SED} 's/ARMSCII-x/ARMSCII-$i/' $> > $@
 CLEANFILES+= ARMSCII-${i:S/:/@/}.src
 .endif
 .endfor

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/08/29 00:02:23 gmcgarry Exp $
+#	$NetBSD: Makefile,v 1.12 2008/10/25 22:27:37 apb Exp $
 
 PROG=	xxboot
 NOMAN=	# defined
@@ -61,7 +61,7 @@ CLEANFILES+=	${SRCS:M*.c:S/.c$/.o.S/}
 # Place code to data section.
 .S.o:
 	${_MKTARGET_COMPILE}
-	sed -e 's/\.code/.data/' \
+	${TOOL_SED} -e 's/\.code/.data/' \
 	-e 's/\.bss/.section .bss,"aw",@nobits/' \
 	-e 's/\.allow$$/.level	1.0/' -e 's/\.allow/.level/' \
 	 ${.IMPSRC} | ${AS} -o ${.TARGET}
@@ -75,4 +75,4 @@ CLEANFILES+=	${SRCS:M*.c:S/.c$/.o.S/}
 		if [ $$? = 0 ]; then \
 			echo 'found non-relocatable code' >&2 && exit 1; \
 		fi
-	sed -e 's/\.text/.data/' $@.S | ${AS} -o ${.TARGET}
+	${TOOL_SED} -e 's/\.text/.data/' $@.S | ${AS} -o ${.TARGET}
