@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.40 2007/12/11 20:57:19 jnemeth Exp $
+#	$NetBSD: Makefile.inc,v 1.41 2008/10/25 22:27:34 apb Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -74,7 +74,7 @@ ${TARG}.more: ${SRCS} ${TOC.more} ${DISTRIBVERDEP}
 #
 
 TOCPROC=	   2>&1 >/dev/null |\
-           sed -n '/^\.Ti/{s/ \([A-Za-z]\)/ "\1/; s/ *$$/"/; p; }'
+           ${TOOL_SED} -n '/^\.Ti/{s/ \([A-Za-z]\)/ "\1/; s/ *$$/"/; p; }'
 
 ${TARG}.PostScript.toc: ${SRCS}
 	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/14 23:37:19 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/25 22:27:34 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,7 @@ deftwmrc.c: system.twmrc deftwmrc.sed
 	echo ' * twm bindings file system.twmrc by the twm Makefile.' >>$@
 	echo ' */' >>$@
 	echo 'char *defTwmrc[] = {' >>$@
-	sed -f ${TWMDIR}/src/deftwmrc.sed \
+	${TOOL_SED} -f ${TWMDIR}/src/deftwmrc.sed \
 	     < ${TWMDIR}/src/system.twmrc >>$@
 	echo '    (char *) 0 };' >>$@
 

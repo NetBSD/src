@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2007/10/17 19:53:14 garbled Exp $
+#	$NetBSD: Makefile,v 1.14 2008/10/25 22:27:36 apb Exp $
 
 #
 # Use this file to regenerate DRACO, GENERIC, INSTALL
@@ -22,5 +22,5 @@ __generate_config: .USE GENERIC.in Makefile
 	@echo '# Changes will be lost when make is run in this directory.' >> ${.TARGET}
 	@echo '#' >> ${.TARGET}
 	@echo -n '# Created from: ' >> ${.TARGET}
-	sed -e '1s/$$NetBSD/NetBSD/' GENERIC.in |\
+	${TOOL_SED} -e '1s/$$NetBSD/NetBSD/' GENERIC.in |\
 		m4 -P -DM4_Target=${.TARGET} >> ${.TARGET}

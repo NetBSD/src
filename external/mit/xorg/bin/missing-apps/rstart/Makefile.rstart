@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rstart,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
+#	$NetBSD: Makefile.rstart,v 1.2 2008/10/25 22:27:34 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -9,7 +9,7 @@ FILESDIR=	${X11ETCDIR}/rstart/${CFDIR}
 ${_F}.sed: ${_F}
 	${_MKTARGET_CREATE}
 	rm -f ${.TARGET}
-	sed ${CFSED} < ${.ALLSRC} > ${.TARGET}
+	${TOOL_SED} ${CFSED} < ${.ALLSRC} > ${.TARGET}
 
 CONFIGFILES+=		${_F}.sed
 CLEANFILES+=		${_F}.sed

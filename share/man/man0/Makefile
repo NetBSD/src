@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$NetBSD: Makefile,v 1.15 2006/08/29 14:32:45 hubertf Exp $
+#	$NetBSD: Makefile,v 1.16 2008/10/25 22:27:36 apb Exp $
 
 NOOBJ=		# defined
 
@@ -58,7 +58,7 @@ man.pdf:
 	for i in ${SECTIONS} ; 					\
 	do							\
 		echo Chewing on man$${i}pages.pdf ;		\
-		sed 						\
+		${TOOL_SED} 					\
 			${OPTIMIZE_PDF} 			\
 			<man$${i}pages.ps >man$${i}pages.ps.tmp ; \
 		ps2pdf man$${i}pages.ps.tmp man$${i}pages.pdf ;	\

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2008/10/19 22:05:22 apb Exp $
+#	$NetBSD: Makefile,v 1.15 2008/10/25 22:27:38 apb Exp $
 
 NOMAN=		# defined
 
@@ -53,14 +53,16 @@ ${PROG}: $(OBJS)
 	@grep first_kbyte $(PROG).map
 .if ${OBJECT_FMT} == "ELF"
 	@if [ `(echo ibase=16; 						   \
-	    sed -n 's/^.*0x\([0-9a-f]*\).* first_kbyte$$/\1-$(TEXT)-400/p' \
+	    ${TOOL_SED} -n						   \
+		's/^.*0x\([0-9a-f]*\).* first_kbyte$$/\1-$(TEXT)-400/p'    \
 		$(PROG).map | 						   \
 	    tr a-f A-F) | bc` -gt 0 ]; 					   \
 	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
 	    rm $(PROG) ; exit 1; 					   \
 	fi
 	@if [ `(echo ibase=16; 						   \
-	    sed -n 's/^.*0x\([0-9a-f]*\).* _edata *= *\.$$/\1-$(TEXT)-2000/p' \
+	    ${TOOL_SED} -n						   \
+		's/^.*0x\([0-9a-f]*\).* _edata *= *\.$$/\1-$(TEXT)-2000/p' \
 		$(PROG).map | 						   \
 	    tr a-f A-F) | bc` -gt 0 ]; 					   \
 	then echo '$(BOOT): text+data is too large';			   \
@@ -71,14 +73,16 @@ ${PROG}: $(OBJS)
 	$(OBJCOPY) -I a.out-m68k-netbsd -O binary $(PROG).x $(PROG)
 	@rm -f $(PROG).x
 	@if [ `(echo ibase=16; 						   \
-	    sed -n 's/  first_kbyte:.*0x\(.*\),.*$$/\1-$(TEXT)-400/p'	   \
+	    ${TOOL_SED} -n						   \
+		's/  first_kbyte:.*0x\(.*\),.*$$/\1-$(TEXT)-400/p'	   \
 		$(PROG).map | 						   \
 	    tr a-f A-F) | bc` -gt 0 ]; 					   \
 	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
 	    rm $(PROG) ; exit 1; 					   \
 	fi
 	@if [ `(echo ibase=16; 						   \
-	    sed -n 's/  _edata:.*0x\(.*\),.*$$/\1-$(TEXT)-2000/p'	   \
+	    ${TOOL_SED} -n						   \
+		's/  _edata:.*0x\(.*\),.*$$/\1-$(TEXT)-2000/p'		   \
 		$(PROG).map | 						   \
 	    tr a-f A-F) | bc` -gt 0 ]; 					   \
 	then echo '$(BOOT): text+data is too large';			   \

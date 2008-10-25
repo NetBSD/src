@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2008/10/19 22:05:24 apb Exp $
+#	$NetBSD: Makefile,v 1.10 2008/10/25 22:27:39 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -44,7 +44,7 @@ psops.h: ${PSOPSHEADERFILES} psname.txt header.txt psifdef.txt psendif.txt
 	( \
 		(cd ${DIST} && cat psname.txt header.txt psifdef.txt ); \
 		cat ${PSOPSHEADERFILES} \
-		    | sed -e '/^$$/D' -e '/#/D' -e '/^\//D' \
+		    | ${TOOL_SED} -e '/^$$/D' -e '/#/D' -e '/^\//D' \
 			-e '/^   gener/D' -e '/^.\//D' \
 		    | sort \
 		    | ${TOOL_AWK} '/;/ {print; printf("\n");}' ; \
@@ -59,7 +59,7 @@ dpsops.h: ${DPSOPSHEADERFILES} dpsname.txt header.txt dpsifdef.txt dpsendif.txt
 	( \
 		(cd ${DIST} && cat dpsname.txt header.txt dpsifdef.txt ); \
 		cat ${DPSOPSHEADERFILES} \
-		    | sed -e '/^$$/D' -e '/#/D' -e '/^\//D' \
+		    | ${TOOL_SED} -e '/^$$/D' -e '/#/D' -e '/^\//D' \
 			-e '/^   gener/D' -e '/^.\//D' \
 		    | sort \
 		    | ${TOOL_AWK} '/;/ {print; printf("\n");}' ; \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/10/19 22:05:24 apb Exp $
+#	$NetBSD: Makefile,v 1.6 2008/10/25 22:27:39 apb Exp $
 #
 #	@(#)Makefile	8.20 (Berkeley) 8/18/96
 
@@ -23,12 +23,12 @@ index.so: vi.ref
 	# Build index.so, side-effect of building the paper.
 	${TOOL_SOELIM} vi.ref | ${TOOL_TBL} | \
 	    ${TOOL_ROFF_PS} ${MACROS} > /dev/null
-	sed -e 's/MINUSSIGN/\\-/' \
+	${TOOL_SED} -e 's/MINUSSIGN/\\-/' \
 	    -e 's/DOUBLEQUOTE/""/' \
 	    -e "s/SQUOTE/'/" \
 	    -e 's/ /__SPACE/g' < index | \
 	sort -u '-t	' +0 -1 +1n | ${TOOL_AWK} -f merge.awk | \
-	sed -e 's/__SPACE/ /g' > $@
+	${TOOL_SED} -e 's/__SPACE/ /g' > $@
 	rm -f index
 	chmod 444 $@
 

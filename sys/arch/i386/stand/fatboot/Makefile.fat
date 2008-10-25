@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.fat,v 1.2 2008/10/20 03:02:07 christos Exp $
+#	$NetBSD: Makefile.fat,v 1.3 2008/10/25 22:27:37 apb Exp $
 
 S=		${.CURDIR}/../../../../../
 
@@ -45,7 +45,7 @@ ${PROG}: ${OBJS}
 	${_MKTARGET_LINK}
 	${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,0x7c00 ${OBJS}
 	@ set -- $$( ${NM} -t d ${PROG}.tmp | grep '\<pbr_space\>' \
-		    | sed 's/^0*//'  ); \
+		    | ${TOOL_SED} 's/^0*//'  ); \
 		echo "#### There are $$1 free bytes in ${PROG}"
 	${OBJCOPY} -O binary ${PROG}.tmp ${PROG}
 	rm -f ${PROG}.tmp

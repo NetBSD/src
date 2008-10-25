@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/02/17 16:23:12 bouyer Exp $
+#	$NetBSD: Makefile,v 1.4 2008/10/25 22:27:36 apb Exp $
 
 # Makefile for amd64 tags file and boot blocks
 
@@ -18,7 +18,8 @@ tags:
 	rm -f ${TAMD64}
 	-echo ${SAMD64} ${COMM} | xargs ctags -wadtf ${TAMD64}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AAMD64} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TAMD64}
 	sort -o ${TAMD64} ${TAMD64}
 

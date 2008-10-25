@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/10/21 10:01:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2008/10/25 22:27:35 apb Exp $
 
 PROG=		c++filt
 CPPFLAGS+=	-DMAIN
@@ -12,4 +12,4 @@ CLEANFILES+=	c++filt.1
 
 c++filt.1: ${DIST}/binutils/doc/cxxfilt.man
 	${_MKTARGET_CREATE}
-	sed -e "s/@PROGRAM@/${PROG}/" < $> > $@
+	${TOOL_SED} -e "s/@PROGRAM@/${PROG}/" < $> > $@
