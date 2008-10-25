@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.176 2008/10/19 19:44:47 apb Exp $
+#	$NetBSD: bsd.sys.mk,v 1.177 2008/10/25 18:29:03 apb Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -130,8 +130,6 @@ OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 PAXCTL?=	paxctl
 STRIP?=		strip
-
-AWK?=		awk
 
 TOOL_AMIGAAOUT2BB?=	amiga-aout2bb
 TOOL_AMIGAELF2BB?=	amiga-elf2bb
