@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.9 2008/10/24 18:02:58 jym Exp $      */
+/*      $NetBSD: xengnt.c,v 1.10 2008/10/25 17:12:29 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.9 2008/10/24 18:02:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.10 2008/10/25 17:12:29 jym Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,6 +117,10 @@ xengnt_resume()
 	}
 }
 
+/*
+ * Add another page to the grant table
+ * Returns 0 on success, ENOMEM on failure
+ */
 static int
 xengnt_more_entries()
 {
@@ -136,9 +140,14 @@ xengnt_more_entries()
 	setup.nr_frames = nframes_new;
 	setup.frame_list = pages;
 
+	/*
+	 * setup the grant table, made of nframes_new frames
+	 * and return the list of their virtual addresses
+	 * in 'pages'
+	 */
 	if (HYPERVISOR_grant_table_op(GNTTABOP_setup_table, &setup, 1) != 0)
 		panic("%s: setup table failed", __func__);
-	if (setup.status != 0) {
+	if (setup.status != GNTST_okay) {
 		aprint_error("%s: setup table returned %d\n",
 		    __func__, setup.status);
 		free(pages, M_DEVBUF);

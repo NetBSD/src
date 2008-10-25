@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.32 2008/10/24 21:09:24 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.33 2008/10/25 17:12:29 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.32 2008/10/24 21:09:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.33 2008/10/25 17:12:29 jym Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -514,7 +514,7 @@ again:
 		}
 		if (rep->operation != BLKIF_OP_READ &&
 		    rep->operation != BLKIF_OP_WRITE) {
-			aprint_error_dev(sc->sc_dev,
+				aprint_error_dev(sc->sc_dev,
 					 "bad operation %d from backend\n",
 					 rep->operation);
 				bp->b_error = EIO;
