@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.213 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.214 2008/10/25 14:10:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.213 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.214 2008/10/25 14:10:26 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -332,7 +332,7 @@ exit1(struct lwp *l, int rv)
 	}
 
 	/*
-	 * If parent is waiting for us to exit or exec, P_PPWAIT is set; we
+	 * If parent is waiting for us to exit or exec, PL_PPWAIT is set; we
 	 * wake up the parent early to avoid deadlock.  We can do this once
 	 * the VM resources are released.
 	 */
