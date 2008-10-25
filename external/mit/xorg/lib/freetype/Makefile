@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:29 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/25 13:14:49 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -10,8 +10,8 @@ SUBDIR=	freetype
 
 .PATH:	${FREETYPE}/src/base
 SRCS=	ftapi.c ftbase.c ftbbox.c ftbdf.c ftdebug.c ftglyph.c \
-	ftinit.c ftmm.c ftpfr.c ftstroke.c ftsynth.c ftsystem.c \
-	fttype1.c ftwinfnt.c ftxf86.c ftbitmap.c
+	ftinit.c ftlcdfil.c ftmm.c ftpfr.c ftstroke.c ftsynth.c \
+	ftsystem.c fttype1.c ftwinfnt.c ftxf86.c ftbitmap.c
 
 .PATH:	${FREETYPE}/src/autofit
 SRCS+=	autofit.c
