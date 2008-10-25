@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2008/10/13 21:11:47 cegger Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2008/10/25 19:13:40 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -58,6 +58,7 @@
 #include <x86/via_padlock.h>
 
 #include <sys/cpu_data.h>
+#include <sys/evcnt.h>
 
 #include <lib/libkern/libkern.h>	/* offsetof */
 
