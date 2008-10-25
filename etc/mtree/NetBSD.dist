@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.382 2008/10/12 23:35:38 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.383 2008/10/25 17:44:32 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -670,6 +670,7 @@
 ./usr/share/examples/mount_portal
 ./usr/share/examples/openssl
 ./usr/share/examples/pf
+./usr/share/examples/pppd
 ./usr/share/examples/postfix
 ./usr/share/examples/racoon
 ./usr/share/examples/racoon/roadwarrior
