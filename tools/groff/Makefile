@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2006/02/06 23:48:35 tron Exp $
+#	$NetBSD: Makefile,v 1.29 2008/10/25 22:15:28 apb Exp $
 
 MODULE=		groff
 
@@ -62,7 +62,8 @@ ${SITETMACDIR}/${F}: ${F}-s _installtmac
 .ORDER: realinstall ${SITETMACDIR}/${F}
 CLEANFILES+=${F}-s
 ${F}-s: ${F}
-	sed -f ${.CURDIR}/../../gnu/dist/groff/tmac/strip.sed ${.ALLSRC} > ${.TARGET}
+	${TOOL_SED} -f ${.CURDIR}/../../gnu/dist/groff/tmac/strip.sed \
+		${.ALLSRC} > ${.TARGET}
 .endfor
 
 # The silly walk below is because sometimes the files begin with "g",
