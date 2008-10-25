@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.31 2008/06/23 11:00:53 ad Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.32 2008/10/25 14:14:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.31 2008/06/23 11:00:53 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.32 2008/10/25 14:14:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -60,9 +60,9 @@ int	_pthread_rwlock_rdheld_np(pthread_rwlock_t *);
 int	_pthread_rwlock_wrheld_np(pthread_rwlock_t *);
 
 #ifndef lint
-__weak_alias(pthread_rwlock_held_np,_pthread_rwlock_held_np);
-__weak_alias(pthread_rwlock_rdheld_np,_pthread_rwlock_rdheld_np);
-__weak_alias(pthread_rwlock_wrheld_np,_pthread_rwlock_wrheld_np);
+__weak_alias(pthread_rwlock_held_np,_pthread_rwlock_held_np)
+__weak_alias(pthread_rwlock_rdheld_np,_pthread_rwlock_rdheld_np)
+__weak_alias(pthread_rwlock_wrheld_np,_pthread_rwlock_wrheld_np)
 #endif
 
 __strong_alias(__libc_rwlock_init,pthread_rwlock_init)
