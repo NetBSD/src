@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.26 2008/10/24 18:02:58 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.27 2008/10/25 17:12:29 jym Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.26 2008/10/24 18:02:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.27 2008/10/25 17:12:29 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -134,14 +134,14 @@ int xennet_debug = 0xff;
 
 struct xennet_txreq {
 	SLIST_ENTRY(xennet_txreq) txreq_next;
-	uint16_t txreq_id; /* ID passed to backed */
+	uint16_t txreq_id; /* ID passed to backend */
 	grant_ref_t txreq_gntref; /* grant ref of this request */
 	struct mbuf *txreq_m; /* mbuf being transmitted */
 };
 
 struct xennet_rxreq {
 	SLIST_ENTRY(xennet_rxreq) rxreq_next;
-	uint16_t rxreq_id; /* ID passed to backed */
+	uint16_t rxreq_id; /* ID passed to backend */
 	grant_ref_t rxreq_gntref; /* grant ref of this request */
 /* va/pa for this receive buf. ma will be provided by backend */
 	paddr_t rxreq_pa;
@@ -174,6 +174,7 @@ struct xennet_xenbus_softc {
 #define BEST_CLOSED		0
 #define BEST_DISCONNECTED	1
 #define BEST_CONNECTED		2
+#define BEST_SUSPENDED		3
 #if NRND > 0
 	rndsource_element_t     sc_rnd_source;
 #endif
