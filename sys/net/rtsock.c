@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.112 2008/10/24 21:38:18 dyoung Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.113 2008/10/25 17:34:00 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.112 2008/10/24 21:38:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.113 2008/10/25 17:34:00 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -497,10 +497,20 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo 
 	const struct sockaddr *sa = NULL;	/* Quell compiler warning */
 	int i;
 
+#ifdef DIAGNOSTIC
+	if (rtinfo->rti_addrs & (1 << RTAX_GENMASK)) {
+		struct proc *p = curproc;
+		if (p != NULL)
+			printf("rt_xaddrs: process %d (%s) tried to alter "
+			    "the route table with RTAX_GENMASK\n",
+			    p->p_pid, p->p_comm);
+	}
+#endif
 	for (i = 0; i < RTAX_MAX && cp < cplim; i++) {
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
 			continue;
-		rtinfo->rti_info[i] = sa = (const struct sockaddr *)cp;
+		if (i != RTAX_GENMASK)
+			rtinfo->rti_info[i] = sa = (const struct sockaddr *)cp;
 		ADVANCE(cp, sa);
 	}
 
