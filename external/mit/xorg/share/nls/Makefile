@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/25 22:27:35 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -34,7 +34,8 @@ ${_F}.lt: ${_F}.pre
 	( \
 	${CPP} -undef -traditional \
 	    < ${.ALLSRC} | ${X11TOOL_UNXCOMM} \
-	    | sed -e '/^[^#][^ 	]*:/s/://' -e '/^[^#].*[ 	].*:/d'; \
+	    | ${TOOL_SED} -e \
+		'/^[^#][^ 	]*:/s/://' -e '/^[^#].*[ 	].*:/d'; \
 	${CPP} -undef -traditional \
 	    < ${.ALLSRC} | ${X11TOOL_UNXCOMM} ; \
 	) > ${.TARGET}
@@ -58,6 +59,6 @@ realall: ${FILES}
 build_subdirs:
 .for _dir in ${SUBDIR}
 	mkdir ${.CURDIR}/${_dir}
-	printf '#	$$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:23 mrg Exp $$\n\nNLS_SUBDIR=	${_dir}\n\n.include "../Makefile.nls"\n' > ${.CURDIR}/${_dir}/Makefile
+	printf '#	$$NetBSD: Makefile,v 1.2 2008/10/25 22:27:35 apb Exp $$\n\nNLS_SUBDIR=	${_dir}\n\n.include "../Makefile.nls"\n' > ${.CURDIR}/${_dir}/Makefile
 
 .endfor

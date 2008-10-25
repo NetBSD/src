@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.1 2006/06/15 15:34:20 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:27:35 apb Exp $
 
 .PATH: ${.CURDIR}/GEORGIAN
 
@@ -12,7 +12,7 @@ mapper.dir.GEORGIAN: ${.CURDIR}/GEORGIAN/GEORGIAN.part
 	(\
 	    echo "# GEORGIAN";\
 	    for i in ${PART_GEORGIAN}; do \
-		f=`echo $$i | sed 's/:/@/'`; \
+		f=`echo $$i | ${TOOL_SED} 's/:/@/'`; \
 		printf '%-32s%-16s%s\n' GEORGIAN-$$i'/UCS' \
 		    mapper_std GEORGIAN/GEORGIAN-$$f'%UCS.mps';\
 		printf '%-32s%-16s%s\n' UCS/GEORGIAN-$$i \

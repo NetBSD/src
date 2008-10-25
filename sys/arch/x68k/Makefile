@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/01/06 17:40:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2008/10/25 22:27:38 apb Exp $
 
 # Makefile for x68k tags file and boot blocks
 
@@ -18,7 +18,8 @@ DX68K=	x68k dev include
 tags:
 	-ctags -wdtf ${TX68K} ${SX68K} ${SM68K} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AX68K} ${AM68K} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TX68K}
 	sort -o ${TX68K} ${TX68K}
 

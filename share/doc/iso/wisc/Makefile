@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/10/19 22:05:20 apb Exp $
+#	$NetBSD: Makefile,v 1.6 2008/10/25 22:27:35 apb Exp $
 #
 #	Makefile for the tp documents:
 #   design: TP design/source guide
@@ -61,16 +61,17 @@ appendix_c:
 appendix_a:
 	ctags -x $(SRCS) \
 		| ${TOOL_AWK} '{printf("%s\t%s\t%s\n",  $$1, $$3, $$2)}' \
-		| sed -e 's-../../sys/netargo/--' > index_by_func.nr
+		| ${TOOL_SED} -e 's-../../sys/netargo/--' > index_by_func.nr
 	format -P$(PRINTER) appendix_a.nr
 
 appendix_b:
 	ctags -x $(SRCS) \
 		| ${TOOL_AWK} '{printf("%s\t%s\t%s\n",  $$3, $$1, $$2)}' \
-		| sed -e 's-../../sys/netargo/--' \
+		| ${TOOL_SED} -e 's-../../sys/netargo/--' \
 		| sort \
 		| fmtxref -w 80 \
-		| sed	-e 's/					/		/' \
-				-e 's/			/	/' \
+		| ${TOOL_SED} \
+		    -e 's/					/		/' \
+		    -e 's/			/	/' \
 		> index_by_file.nr
 	format -P$(PRINTER) appendix_b.nr

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.79 2007/10/17 19:52:57 garbled Exp $
+#	$NetBSD: Makefile.alpha,v 1.80 2008/10/25 22:27:36 apb Exp $
 
 # Makefile for NetBSD
 #
@@ -35,7 +35,7 @@ CPPFLAGS+=	-Dalpha
 CFLAGS+=	-mno-fp-regs
 AFLAGS+=	-traditional
 
-NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's,^\#.*,,' | \
+NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | ${TOOL_SED} -e 's,^\#.*,,' | \
 		${AS} -o ${.TARGET}
 
 ##

@@ -1,5 +1,5 @@
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
-#	$NetBSD: Makefile,v 1.25 2004/03/20 20:41:33 dsl Exp $
+#	$NetBSD: Makefile,v 1.26 2008/10/25 22:27:36 apb Exp $
 
 MELIB=	${BINDIR}/me
 #TMLIB=	${BINDIR}/tmac
@@ -24,7 +24,7 @@ ${DESTDIR}${MELIB}/${M}: .MADE
 
 ${DESTDIR}${MELIB}/${M}: ${M}
 	@rm -f ${.TARGET} ${M}.tmp
-	sed -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${M}.tmp
+	${TOOL_SED} -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${M}.tmp
 	${INSTALL_FILE:N-c} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 		${M}.tmp ${.TARGET}
 	@rm -f ${M}.tmp
@@ -42,7 +42,7 @@ ${DESTDIR}${MELIB}/${M}: ${M}
 
 #${DESTDIR}${TMLIB}/${M}: ${M}
 #	@rm -f ${.TARGET} ${M}.tmp
-#	sed -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${M}.tmp
+#	${TOOL_SED} -f ${.CURDIR}/strip.sed < ${.ALLSRC} > ${M}.tmp
 #	${INSTALL_FILE:N-c} -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
 #		${M}.tmp ${.TARGET}
 #.endfor
