@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.43 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.44 2008/10/25 23:38:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ int linux_usertrap(struct lwp *, vaddr_t, void *);
 void linux_nptl_proc_fork(struct proc *, struct proc *, void (luserret)(void));
 void linux_nptl_proc_exit(struct proc *);      
 void linux_nptl_proc_init(struct proc *, struct proc *);
+int  linux_init_thread_area(struct lwp *, struct lwp *);
 #endif
 
 #ifdef EXEC_ELF32

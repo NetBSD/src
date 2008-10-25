@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_siginfo.h,v 1.5 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_siginfo.h,v 1.6 2008/10/25 23:38:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -110,7 +110,8 @@ typedef struct linux_siginfo {
 #define LINUX_SI_MESGQ		-3
 #define LINUX_SI_ASYNCIO	-4
 #define LINUX_SI_SIGIO		-5
-#define LINUX_SI_SIGNL		-6
+#define	LINUX_SI_TKILL		-6
+#define	LINUX_SI_DETHREAD       -7
 
 /* si_code values for SIGILL */
 #define	LINUX_ILL_ILLOPC	1

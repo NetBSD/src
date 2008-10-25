@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.91 2008/04/23 14:07:50 ad Exp $
+	$NetBSD: syscalls.master,v 1.92 2008/10/25 23:38:28 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -433,8 +433,15 @@
 241	UNIMPL		setaffinity
 242	UNIMPL		getaffinity
 #endif
+#ifdef LINUX_NPTL
+243	STD		{ int linux_sys_set_thread_area( \
+			    struct linux_user_desc *desc); }
+244	STD		{ int linux_sys_get_thread_area( \
+			    struct linux_user_desc *desc); }
+#else
 243	UNIMPL		set_thread_area
 244	UNIMPL		get_thread_area
+#endif
 245	UNIMPL		io_setup
 246	UNIMPL		io_destroy
 247	UNIMPL		io_getevents
