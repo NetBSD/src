@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.73 2007/10/17 19:56:48 garbled Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.74 2008/10/25 09:10:07 mrg Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73 2007/10/17 19:56:48 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.74 2008/10/25 09:10:07 mrg Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -60,6 +60,8 @@ vaddr_t vmaprange(struct proc *, vaddr_t, vsize_t, int);
 void vunmaprange(vaddr_t, vsize_t);
 #endif
 
+void cpu_lwp_bootstrap(void);
+
 /*
  * Finish a fork operation, with execution context l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
@@ -86,7 +88,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct callframe *cf;
 	struct switchframe *sf;
 	char *stktop1, *stktop2;
-	void cpu_lwp_bootstrap(void);
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 
 #ifdef DIAGNOSTIC
@@ -345,4 +346,34 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
+}
+
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	extern void fork_trampoline(void);
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf;
+	struct callframe *cf;
+	struct switchframe *sf;
+
+	tf = trapframe(l);
+	cf = (struct callframe *) ((uintptr_t)tf & ~(CALLFRAMELEN-1));
+	cf->lr = (register_t)cpu_lwp_bootstrap;
+	cf--;
+	cf->sp = (register_t) (cf+1);
+	cf->r31 = (register_t) func;
+	cf->r30 = (register_t) arg;
+	sf = (struct switchframe *) ((uintptr_t) cf - SFRAMELEN);
+	memset((void *)sf, 0, sizeof *sf);		/* just in case */
+	sf->sp = (register_t) cf;
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
+#endif
+	pcb->pcb_sp = (register_t)sf;
+	pcb->pcb_kmapsr = 0;
+	pcb->pcb_umapsr = 0;
+#ifdef PPC_HAVE_FPU
+	pcb->pcb_flags = PSL_FE_DFLT;
+#endif
 }
