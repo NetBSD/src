@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.52 2008/08/02 16:02:26 matt Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.53 2008/10/25 14:14:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.52 2008/08/02 16:02:26 matt Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.53 2008/10/25 14:14:11 yamt Exp $");
 
 #include <errno.h>
 #include <sys/time.h>
@@ -64,7 +64,7 @@ static int pthread_cond_wait_nothread(pthread_t, pthread_mutex_t *,
 
 int	_pthread_cond_has_waiters_np(pthread_cond_t *);
 
-__weak_alias(pthread_cond_has_waiters_np,_pthread_cond_has_waiters_np);
+__weak_alias(pthread_cond_has_waiters_np,_pthread_cond_has_waiters_np)
 
 __strong_alias(__libc_cond_init,pthread_cond_init)
 __strong_alias(__libc_cond_signal,pthread_cond_signal)
