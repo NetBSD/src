@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_i386.c,v 1.25 2008/01/15 13:57:42 ad Exp $	*/
+/*	$NetBSD: kvm_i386.c,v 1.26 2008/10/25 23:59:06 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_i386.c,v 1.25 2008/01/15 13:57:42 ad Exp $");
+__RCSID("$NetBSD: kvm_i386.c,v 1.26 2008/10/25 23:59:06 mrg Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: kvm_i386.c,v 1.25 2008/01/15 13:57:42 ad Exp $");
 #include <sys/user.h>
 #include <sys/stat.h>
 #include <sys/kcore.h>
-#include <machine/kcore.h>
+#include <i386/kcore.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <nlist.h>
@@ -63,9 +63,9 @@ __RCSID("$NetBSD: kvm_i386.c,v 1.25 2008/01/15 13:57:42 ad Exp $");
 
 #include "kvm_private.h"
 
-#include <machine/pmap.h>
-#include <machine/pte.h>
-#include <machine/vmparam.h>
+#include <i386/pmap.h>
+#include <i386/pte.h>
+#include <i386/vmparam.h>
 
 #ifndef btop
 #define	btop(x)		(((unsigned)(x)) >> PGSHIFT)	/* XXX */
