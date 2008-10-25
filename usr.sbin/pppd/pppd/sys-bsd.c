@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.57 2008/10/25 17:48:13 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.58 2008/10/25 22:12:20 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.57 2008/10/25 17:48:13 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.58 2008/10/25 22:12:20 christos Exp $");
 #endif
 #endif
 
@@ -1521,7 +1521,6 @@ dodefaultroute(u_int32_t g, int cmd)
 	struct sockaddr_in	dst;
 	struct sockaddr_in	gway;
 	struct sockaddr_in	netmask;
-	struct sockaddr_in	genmask;
 	struct sockaddr_dl	ifp;
     } rtmsg;
 
@@ -1551,10 +1550,6 @@ dodefaultroute(u_int32_t g, int cmd)
     rtmsg.netmask.sin_len = sizeof(rtmsg.netmask);
     rtmsg.netmask.sin_family = AF_INET;
     rtmsg.netmask.sin_addr.s_addr = 0;
-
-    rtmsg.genmask.sin_len = sizeof(rtmsg.genmask);
-    rtmsg.genmask.sin_family = AF_INET;
-    rtmsg.genmask.sin_addr.s_addr = 0;
 
     rtmsg.ifp.sdl_family = AF_LINK;
     rtmsg.ifp.sdl_len = sizeof(rtmsg.ifp);
