@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 2008/10/19 22:05:19 apb Exp $
+#	$NetBSD: Makefile,v 1.83 2008/10/25 22:23:55 apb Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -26,6 +26,7 @@ YFLAGS=	-d
 # Environment for scripts executed during build.
 SCRIPT_ENV= \
 	AWK=${TOOL_AWK:Q} \
+	SED=${TOOL_SED:Q}
 
 # The .depend file can get references to these temporary files
 .OPTIONAL: lex.yy.c y.tab.c
