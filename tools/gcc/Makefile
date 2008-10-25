@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2008/10/19 22:05:23 apb Exp $
+#	$NetBSD: Makefile,v 1.30 2008/10/25 22:15:28 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -94,7 +94,8 @@ native-gcc: .native/.configure_done
 		(cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE} configure-libiberty)
 	# edit Makefile so that maybe-all-gcc does not depend on all-gcc any more.
 		(cd .native && mv Makefile Makefile.config && \
-			sed -e 's/\(maybe-all-gcc:\) all-gcc/\1/' < Makefile.config > Makefile) && \
+			${TOOL_SED} -e 's/\(maybe-all-gcc:\) all-gcc/\1/' \
+				< Makefile.config > Makefile) && \
 		(cd .native/gcc && ${MKNATIVE_ENV} ${BUILD_MAKE} -e tree-check.h config.h multilib.h gcov-iov.h)
 .else
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
