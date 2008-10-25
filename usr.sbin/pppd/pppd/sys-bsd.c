@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.56 2007/05/27 18:11:38 tls Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.57 2008/10/25 17:48:13 christos Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -79,7 +79,7 @@
 #if 0
 #define RCSID	"Id: sys-bsd.c,v 1.47 2000/04/13 12:04:23 paulus Exp "
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.56 2007/05/27 18:11:38 tls Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.57 2008/10/25 17:48:13 christos Exp $");
 #endif
 #endif
 
@@ -1538,7 +1538,7 @@ dodefaultroute(u_int32_t g, int cmd)
     rtmsg.hdr.rtm_version = RTM_VERSION;
     rtmsg.hdr.rtm_seq = ++rtm_seq;
     rtmsg.hdr.rtm_addrs =
-	RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_GENMASK | RTA_IFP;
+	RTA_DST | RTA_GATEWAY | RTA_NETMASK | RTA_IFP;
 
     rtmsg.dst.sin_len = sizeof(rtmsg.dst);
     rtmsg.dst.sin_family = AF_INET;
