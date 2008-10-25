@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.33 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.34 2008/10/25 23:38:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -147,6 +147,88 @@ struct linux_sigframe {
 	sig_t	sf_handler;
 };
 
+struct linux_user_desc {
+	unsigned int		entry_number;
+	unsigned int		base_addr;
+	unsigned int		limit;
+	unsigned int		seg_32bit:1;
+	unsigned int		contents:2;
+	unsigned int		read_exec_only:1;
+	unsigned int		limit_in_pages:1;
+	unsigned int		seg_not_present:1;
+	unsigned int		useable:1;
+};
+
+struct linux_desc_struct {
+	unsigned long	a, b;
+};
+
+
+#define	LINUX_LOWERWORD	0x0000ffff
+
+/*
+ * Macros which does the same thing as those in Linux include/asm-um/ldt-i386.h.
+ * These convert Linux user space descriptor to machine one.
+ */
+#define	LINUX_LDT_entry_a(info)					\
+	((((info)->base_addr & LINUX_LOWERWORD) << 16) |	\
+	((info)->limit & LINUX_LOWERWORD))
+
+#define	LINUX_ENTRY_B_READ_EXEC_ONLY	9
+#define	LINUX_ENTRY_B_CONTENTS		10
+#define	LINUX_ENTRY_B_SEG_NOT_PRESENT	15
+#define	LINUX_ENTRY_B_BASE_ADDR		16
+#define	LINUX_ENTRY_B_USEABLE		20
+#define	LINUX_ENTRY_B_SEG32BIT		22
+#define	LINUX_ENTRY_B_LIMIT		23
+
+#define	LINUX_LDT_entry_b(info)						\
+	(((info)->base_addr & 0xff000000) |				\
+	((info)->limit & 0xf0000) |					\
+	((info)->contents << LINUX_ENTRY_B_CONTENTS) |			\
+	(((info)->seg_not_present == 0) << LINUX_ENTRY_B_SEG_NOT_PRESENT) |\
+	(((info)->base_addr & 0x00ff0000) >> LINUX_ENTRY_B_BASE_ADDR) |	\
+	(((info)->read_exec_only == 0) << LINUX_ENTRY_B_READ_EXEC_ONLY) |\
+	((info)->seg_32bit << LINUX_ENTRY_B_SEG32BIT) |			\
+	((info)->useable << LINUX_ENTRY_B_USEABLE) |			\
+	((info)->limit_in_pages << LINUX_ENTRY_B_LIMIT) | 0x7000)
+
+#define	LINUX_LDT_empty(info)		\
+	((info)->base_addr == 0 &&	\
+	(info)->limit == 0 &&		\
+	(info)->contents == 0 &&	\
+	(info)->seg_not_present == 1 &&	\
+	(info)->read_exec_only == 1 &&	\
+	(info)->seg_32bit == 0 &&	\
+	(info)->limit_in_pages == 0 &&	\
+	(info)->useable == 0)
+
+/*
+ * Macros for converting segments.
+ * They do the same as those in arch/i386/kernel/process.c in Linux.
+ */
+#define	LINUX_GET_BASE(desc)				\
+	((((desc)->a >> 16) & LINUX_LOWERWORD) |	\
+	(((desc)->b << 16) & 0x00ff0000) |		\
+	((desc)->b & 0xff000000))
+
+#define	LINUX_GET_LIMIT(desc)			\
+	(((desc)->a & LINUX_LOWERWORD) |	\
+	((desc)->b & 0xf0000))
+
+#define	LINUX_GET_32BIT(desc)		\
+	(((desc)->b >> LINUX_ENTRY_B_SEG32BIT) & 1)
+#define	LINUX_GET_CONTENTS(desc)	\
+	(((desc)->b >> LINUX_ENTRY_B_CONTENTS) & 3)
+#define	LINUX_GET_WRITABLE(desc)	\
+	(((desc)->b >> LINUX_ENTRY_B_READ_EXEC_ONLY) & 1)
+#define	LINUX_GET_LIMIT_PAGES(desc)	\
+	(((desc)->b >> LINUX_ENTRY_B_LIMIT) & 1)
+#define	LINUX_GET_PRESENT(desc)		\
+	(((desc)->b >> LINUX_ENTRY_B_SEG_NOT_PRESENT) & 1)
+#define	LINUX_GET_USEABLE(desc)		\
+	(((desc)->b >> LINUX_ENTRY_B_USEABLE) & 1)
+
 /*
  * Used in ugly patch to fake device numbers.
  */
@@ -203,10 +285,7 @@ struct linux_sigframe {
 #define LINUX_IOCTL_MAX_PASS	(LINUX_VMWARE_LAST+8)
 
 #define LINUX_UNAME_ARCH	linux_get_uname_arch()
-#ifdef notyet
-/* We need to implement GDT based TLS first */
 #define LINUX_NPTL
-#endif
 
 #ifdef _KERNEL
 __BEGIN_DECLS
