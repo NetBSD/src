@@ -434,7 +434,7 @@ com_attach_subr(struct com_softc *sc)
 			 * setting DLAB enable gives access to the EFR on
 			 * these chips.
 			 */
-			if (type != COM_TYPE_16550_NOERS) {
+			if (sc->sc_type != COM_TYPE_16550_NOERS) {
 				lcr = CSR_READ_1(regsp, COM_REG_LCR);
 				CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
 				CSR_WRITE_1(regsp, COM_REG_EFR, 0);
