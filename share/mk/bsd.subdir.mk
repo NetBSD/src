@@ -1,7 +1,9 @@
-#	$NetBSD: bsd.subdir.mk,v 1.48 2004/04/13 12:25:03 lukem Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.49 2008/10/25 14:58:00 apb Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
+
+.if !defined(NOSUBDIR)					# {
 
 .for dir in ${SUBDIR}
 .if exists(${dir}.${MACHINE})
@@ -38,5 +40,7 @@ subdir-${targ}: .PHONY ${SUBDIR_${targ}}
 ${targ}: subdir-${targ}
 .endif
 .endfor
+
+.endif	# ! NOSUBDIR					# }
 
 ${TARGETS}:	# ensure existence
