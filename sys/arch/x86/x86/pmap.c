@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.73 2008/07/16 18:56:34 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.74 2008/10/25 14:16:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.73 2008/07/16 18:56:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2008/10/25 14:16:35 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3600,7 +3600,7 @@ startover:
 	pp_lock(pp);
 	while ((pvpte = pv_pte_first(pp)) != NULL) {
 		struct pmap *pmap;
-		struct pv_entry *pve = NULL;
+		struct pv_entry *pve;
 		pt_entry_t opte;
 		vaddr_t va;
 		int error;
