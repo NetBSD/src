@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.19 2008/01/25 21:23:50 chris Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.20 2008/10/25 22:12:33 he Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.19 2008/01/25 21:23:50 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.20 2008/10/25 22:12:33 he Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -136,6 +136,17 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_addr->u_pcb.pcb_tf = tf;
 	/* Fabricate a new switchframe */
 	bzero(sf, sizeof(*sf));
+
+	cpu_setfunc(l2, func, arg);
+}
+
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = pcb->pcb_tf;
+	struct switchframe *sf = (struct switchframe *)tf - 1;
+
 	sf->sf_r13 = (register_t)tf; /* Initial stack pointer */
 	sf->sf_pc  = (register_t)lwp_trampoline | R15_MODE_SVC;
 
