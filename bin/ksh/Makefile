@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2008/10/20 07:11:55 apb Exp $
+#	$NetBSD: Makefile,v 1.25 2008/10/25 22:23:55 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,7 @@ USETBL=
 # Environment for scripts executed during build.
 SCRIPT_ENV= \
 	AWK=${TOOL_AWK:Q} \
+	SED=${TOOL_SED:Q}
 
 CLEANFILES+=	siglist.out siglist.out.tmp
 # two steps to prevent the creation of a bogus siglist.out
