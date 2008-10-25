@@ -1,8 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.1 2007/03/13 16:34:39 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:35:36 apb Exp $
 
 .PATH: ${.CURDIR}/KAZAKH
 
-CODESETS_KAZAKH!=	sed '/^\#/d;/^ *$$/d;/^[ 	]*/s///;s/[ 	].*//' \
+CODESETS_KAZAKH!=	${TOOL_SED} \
+			'/^\#/d;/^ *$$/d;/^[ 	]*/s///;s/[ 	].*//' \
 			${.CURDIR}/KAZAKH/esdb.dir.KAZAKH.src
 ESDB_KAZAKH:=	${CODESETS_KAZAKH:C/$/.esdb/:S/:/@/}
 

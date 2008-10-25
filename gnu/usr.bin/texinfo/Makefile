@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2008/10/25 22:27:35 apb Exp $
+#	$NetBSD: Makefile,v 1.23 2008/10/25 22:35:36 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,8 @@ SUBDIR=		makedoc .WAIT common .WAIT info infokey install-info makeinfo \
 .if ${MKSHARE} != "no"
 FILESDIR=	/usr/share/misc
 FILES=		epsf.tex texinfo.cat texinfo.dtd texinfo.tex texinfo.xsl
-VERSION!=	sed -n "s/^\#define VERSION \"\(.*\)\"/\1/p" ${NETBSDSRCDIR}/gnu/usr.bin/texinfo/common/config.h
+VERSION!=	${TOOL_SED} -n "s/^\#define VERSION \"\(.*\)\"/\1/p" \
+			${NETBSDSRCDIR}/gnu/usr.bin/texinfo/common/config.h
 
 texinfo.cat: texinfo-cat.in
 	${TOOL_SED} 's/__VERSION__/${VERSION}/g' ${.ALLSRC} >${.TARGET}

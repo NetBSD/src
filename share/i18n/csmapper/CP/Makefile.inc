@@ -1,11 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.5 2008/10/25 22:27:35 apb Exp $
+# $NetBSD: Makefile.inc,v 1.6 2008/10/25 22:35:36 apb Exp $
 
 .PATH: ${.CURDIR}/CP
 
 SRCS_mapper.dir+=	mapper.dir.CP
 SRCS_charset.pivot+=	charset.pivot.CP
 CLEANFILES+=		mapper.dir.CP charset.pivot.CP
-PART_CP!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/CP/CP.part
+PART_CP!=		${TOOL_SED} '/^\#/d;/^$$/d;' ${.CURDIR}/CP/CP.part
 
 mapper.dir.CP: ${.CURDIR}/CP/CP.part ${.CURDIR}/CP/mapper.dir.CP.src
 	${_MKTARGET_CREATE}

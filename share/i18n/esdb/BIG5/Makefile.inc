@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:27:35 apb Exp $
+# $NetBSD: Makefile.inc,v 1.3 2008/10/25 22:35:36 apb Exp $
 
 .PATH: ${.CURDIR}/BIG5
 
@@ -9,7 +9,7 @@ SUBDIR_Big5:=		BIG5
 .include "${.CURDIR}/Makefile.part"
 
 .for i in ${Big5_PART:S/:/@/}
-Big5_$i_variable!= sed \
+Big5_$i_variable!= ${TOOL_SED} \
 	'/^\#/d;/^ *$$/d;/^${i:S/@/:/}[ 	]/!d;s/^[^ 	]*[ 	]*//' \
 	${.CURDIR}/BIG5/Big5.variable
 .endfor

@@ -1,11 +1,12 @@
-# $NetBSD: Makefile.inc,v 1.3 2003/10/21 10:01:21 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.4 2008/10/25 22:35:36 apb Exp $
 
 .PATH: ${.CURDIR}/EBCDIC
 
 SRCS_mapper.dir+=	mapper.dir.EBCDIC
 SRCS_charset.pivot+=	charset.pivot.EBCDIC
 CLEANFILES+=		mapper.dir.EBCDIC charset.pivot.EBCDIC
-PART_EBCDIC!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/EBCDIC/EBCDIC.part
+PART_EBCDIC!=		${TOOL_SED} '/^\#/d;/^$$/d;' \
+				${.CURDIR}/EBCDIC/EBCDIC.part
 
 mapper.dir.EBCDIC: ${.CURDIR}/EBCDIC/EBCDIC.part
 	${_MKTARGET_CREATE}

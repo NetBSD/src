@@ -1,11 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.1 2006/04/01 04:13:21 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:35:36 apb Exp $
 
 .PATH: ${.CURDIR}/AST
 
 SRCS_mapper.dir+=	mapper.dir.AST
 SRCS_charset.pivot+=	charset.pivot.AST
 CLEANFILES+=		mapper.dir.AST charset.pivot.AST
-PART_ARMSCII!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/AST/ARMSCII.part
+PART_ARMSCII!=		${TOOL_SED} '/^\#/d;/^$$/d;' ${.CURDIR}/AST/ARMSCII.part
 
 .for i in ${PART_ARMSCII}
 .if exists(${.CURDIR}/AST/ARMSCII-$i%UCS.src)

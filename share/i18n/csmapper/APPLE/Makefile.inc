@@ -1,11 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.1 2006/03/13 19:45:36 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:35:36 apb Exp $
 
 .PATH: ${.CURDIR}/APPLE
 
 SRCS_mapper.dir+=	mapper.dir.APPLE
 SRCS_charset.pivot+=	charset.pivot.APPLE
 CLEANFILES+=		mapper.dir.APPLE charset.pivot.APPLE
-PART_MAC!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/APPLE/MAC.part
+PART_MAC!=		${TOOL_SED} '/^\#/d;/^$$/d;' ${.CURDIR}/APPLE/MAC.part
 
 .for i in ${PART_MAC}
 .if exists(${.CURDIR}/APPLE/$i%UCS.src)
