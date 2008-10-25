@@ -1,4 +1,4 @@
-/*	$NetBSD: x86emu.c,v 1.3 2007/12/13 16:41:59 joerg Exp $	*/
+/*	$NetBSD: x86emu.c,v 1.4 2008/10/25 19:01:18 jmcneill Exp $	*/
 
 /****************************************************************************
 *
@@ -5057,6 +5057,53 @@ x86emuOp2_pop_FS(struct X86EMU *emu)
 }
 /****************************************************************************
 REMARKS:
+Handles opcode 0x0f,0xa1
+****************************************************************************/
+#if defined(__i386__) || defined(__amd64__)
+static void
+hw_cpuid(uint32_t *a, uint32_t *b, uint32_t *c, uint32_t *d)
+{
+	__asm__ __volatile__("cpuid"
+			     : "=a" (*a), "=b" (*b),
+			       "=c" (*c), "=d" (*d)
+			     : "a" (*a), "c" (*c)
+			     : "cc");
+}
+#endif
+static void
+x86emuOp2_cpuid(struct X86EMU *emu)
+{
+#if defined(__i386__) || defined(__amd64__)
+	hw_cpuid(&emu->x86.R_EAX, &emu->x86.R_EBX, &emu->x86.R_ECX,
+	    &emu->x86.R_EDX);
+#endif
+	switch (emu->x86.R_EAX) {
+	case 0:
+		emu->x86.R_EAX = 1;
+#if !defined(__i386__) && !defined(__amd64__)
+		/* "GenuineIntel" */
+		emu->x86.R_EBX = 0x756e6547;
+		emu->x86.R_EDX = 0x49656e69;
+		emu->x86.R_ECX = 0x6c65746e;
+#endif
+		break;
+	case 1:
+#if !defined(__i386__) && !defined(__amd64__)
+		emu->x86.R_EAX = 0x00000480;
+		emu->x86.R_EBX = emu->x86.R_ECX = 0;
+		emu->x86.R_EDX = 0x00000002;
+#else
+		emu->x86.R_EDX &= 0x00000012;
+#endif
+		break;
+	default:
+		emu->x86.R_EAX = emu->x86.R_EBX = emu->x86.R_ECX =
+		    emu->x86.R_EDX = 0;
+		break;
+	}
+}
+/****************************************************************************
+REMARKS:
 Handles opcode 0x0f,0xa3
 ****************************************************************************/
 static void
@@ -5540,6 +5587,9 @@ X86EMU_exec_two_byte(struct X86EMU * emu)
 		break;
 	case 0xa1:
 		x86emuOp2_pop_FS(emu);
+		break;
+	case 0xa2:
+		x86emuOp2_cpuid(emu);
 		break;
 	case 0xa3:
 		x86emuOp2_bt_R(emu);
