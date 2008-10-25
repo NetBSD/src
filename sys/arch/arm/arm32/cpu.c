@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.70 2008/10/24 13:23:45 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.71 2008/10/25 18:15:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70 2008/10/24 13:23:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71 2008/10/25 18:15:19 matt Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -439,6 +439,7 @@ const struct cpu_classtab cpu_classes[] = {
 	{ "SA-1",	"CPU_SA110" },		/* CPU_CLASS_SA1 */
 	{ "XScale",	"CPU_XSCALE_..." },	/* CPU_CLASS_XSCALE */
 	{ "ARM11J",	"CPU_ARM11" },		/* CPU_CLASS_ARM11J */
+	{ "ARMv4",	"CPU_ARMV4" },		/* CPU_CLASS_ARMV4 */
 };
 
 /*
@@ -520,6 +521,7 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 	case CPU_CLASS_SA1:
 	case CPU_CLASS_XSCALE:
 	case CPU_CLASS_ARM11J:
+	case CPU_CLASS_ARMV4:
 		if ((ci->ci_ctrl & CPU_CONTROL_DC_ENABLE) == 0)
 			aprint_normal(" DC disabled");
 		else
@@ -611,6 +613,9 @@ identify_arm_cpu(struct device *dv, struct cpu_info *ci)
 #endif
 #if defined(CPU_ARM11)
 	case CPU_CLASS_ARM11J:
+#endif
+#if defined(CPU_FA526)
+	case CPU_CLASS_ARMV4:
 #endif
 		break;
 	default:
