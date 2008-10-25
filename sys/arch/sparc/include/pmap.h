@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.82 2008/01/02 11:48:29 ad Exp $ */
+/*	$NetBSD: pmap.h,v 1.83 2008/10/25 09:23:11 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,7 +50,7 @@
 #include "opt_sparc_arch.h"
 #endif
 
-#include <machine/pte.h>
+#include <sparc/pte.h>
 
 /*
  * Pmap structure.
