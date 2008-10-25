@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.140 2008/10/21 21:52:29 njoly Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.141 2008/10/25 23:38:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.140 2008/10/21 21:52:29 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.141 2008/10/25 23:38:28 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -1117,7 +1117,9 @@ linux_get_uname_arch(void)
 void *
 linux_get_newtls(struct lwp *l)
 {
+#if 0
 	struct trapframe *tf = l->l_md.md_regs;
+#endif
 
 	/* XXX: Implement me */
 	return NULL;

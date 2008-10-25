@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.10 2007/10/19 12:16:37 ad Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.11 2008/10/25 23:38:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.10 2007/10/19 12:16:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.11 2008/10/25 23:38:28 christos Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -249,3 +249,11 @@ ELFNAME2(linux,copyargs)(l, pack, arginfo, stackp, argp)
 
 	return 0;
 }
+
+#ifdef LINUX_NPTL
+int
+linux_init_thread_area(struct lwp *l, struct lwp *l2)
+{
+	return 0;
+}
+#endif

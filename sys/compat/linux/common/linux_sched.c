@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.57 2008/05/07 15:18:35 njoly Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.58 2008/10/25 23:38:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.57 2008/05/07 15:18:35 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.58 2008/10/25 23:38:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.57 2008/05/07 15:18:35 njoly Exp $
 #include <compat/linux/common/linux_emuldata.h>
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sem.h>
+#include <compat/linux/common/linux_exec.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
@@ -74,6 +75,7 @@ linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap, register_
 	} */
 	int flags, sig;
 	int error;
+	struct proc *p;
 #ifdef LINUX_NPTL
 	struct linux_emuldata *led;
 #endif
@@ -128,8 +130,13 @@ linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap, register_
 	 * that makes this adjustment is a noop.
 	 */
 	if ((error = fork1(l, flags, sig, SCARG(uap, stack), 0,
-	    NULL, NULL, retval, NULL)) != 0)
+	    NULL, NULL, retval, &p)) != 0)
 		return error;
+
+#ifdef LINUX_NPTL
+	if ((SCARG(uap, flags) & LINUX_CLONE_SETTLS) != 0)
+		return linux_init_thread_area(l, LIST_FIRST(&p->p_lwps));
+#endif /* LINUX_NPTL */
 
 	return 0;
 }
