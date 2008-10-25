@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2007/05/28 12:06:20 tls Exp $
+#	$NetBSD: Makefile,v 1.45 2008/10/25 23:59:42 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_FORT?= yes	# used primarily by setgid programs
@@ -19,7 +19,9 @@ SRCS=	kvm.c kvm_file.c kvm_getloadavg.c kvm_proc.c
 # the dispatch on ${MACHINE} should be done at run time (see m68k).
 
 .include <bsd.own.mk>
-.if exists(kvm_${MACHINE_ARCH}.c)
+.if exists(kvm_${KVM_MACHINE_ARCH}.c)
+SRCS+=	kvm_${KVM_MACHINE_ARCH}.c
+.elif exists(kvm_${MACHINE_ARCH}.c)
 SRCS+=	kvm_${MACHINE_ARCH}.c
 .elif  exists(kvm_${MACHINE_CPU}.c)
 SRCS+=	kvm_${MACHINE_CPU}.c
