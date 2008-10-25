@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mktokens,v 1.11 2008/10/19 22:10:04 apb Exp $
+#	$NetBSD: mktokens,v 1.12 2008/10/25 22:18:15 apb Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -34,6 +34,7 @@
 #	@(#)mktokens	8.1 (Berkeley) 5/31/93
 
 : ${AWK:=awk}
+: ${SED:=sed}
 
 # The following is a list of tokens.  The second column is nonzero if the
 # token marks the end of a list.  The third column is the name to print in
@@ -79,12 +80,12 @@ ${AWK} '{print "\t" $2 ","}' /tmp/ka$$
 echo '};
 
 const char *const tokname[] = {'
-sed -e 's/"/\\"/g' \
+${SED} -e 's/"/\\"/g' \
     -e 's/[^	 ]*[	 ][	 ]*[^	 ]*[	 ][	 ]*\(.*\)/	"\1",/' \
     /tmp/ka$$
 echo '};
 '
-sed 's/"//g' /tmp/ka$$ | ${AWK} '
+${SED} 's/"//g' /tmp/ka$$ | ${AWK} '
 /TIF/{print "#define KWDOFFSET " NR-1; print ""; 
       print "const char *const parsekwd[] = {"}
 /TIF/,/neverfound/{print "	\"" $3 "\","}'
