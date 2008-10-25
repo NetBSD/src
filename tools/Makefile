@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.122 2008/10/19 19:40:19 apb Exp $
+#	$NetBSD: Makefile,v 1.123 2008/10/25 14:59:35 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -33,8 +33,6 @@ LINT_BITS= lint lint2
 .endif
 
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
-.if !defined(NOSUBDIR)					# {
-
 SUBDIR=	host-mkdep .WAIT compat .WAIT \
 	binstall .WAIT mktemp .WAIT \
 		cap_mkdb crunchgen ctags genassym gencat hexdump join \
@@ -105,8 +103,6 @@ SUBDIR+=	amiga-txlt
 SUBDIR+=	hp300-mkboot
 .endif
 
-.endif	# ! NOSUBDIR					# }
-
 check_MKTOOLS: .PHONY .NOTMAIN
 .if ${MKTOOLS:Uyes} == "no"
 	@echo '*** WARNING: "MKTOOLS" is set to "no"; this will prevent building and'
@@ -167,10 +163,10 @@ realall realdepend: .MAKE
 _deps:=
 _prev:=
 
-.for d in ${SUBDIR}
+.for d in ${SUBDIR}				# {
 _this:=		${d}
 
-.if ${_this} == ".WAIT"
+.if ${_this} == ".WAIT"				# {
 
 # setup dependency to apply to all/depend targets in the next group
 _deps:=		${_deps} ${_prev:S/^/install-/}
@@ -183,7 +179,7 @@ _deps:=		${_deps} ${_prev:S/^/install-/}
 install-${_prev}: dependall-${_prev}
 .endif
 
-.else
+.else # ${_this} != ".WAIT"			# } {
 
 # order depend/all/install targets for ${d} subdir.
 .ORDER: depend-${d} all-${d} dependall-${d} install-${d}
@@ -196,11 +192,11 @@ install-${_prev}: dependall-${_prev}
 # make all/depend-${d} dependent on list of install targets
 depend-${d} all-${d} dependall-${d}: ${_deps}
 
-.endif
+.endif # ${_this} != ".WAIT"			# }
 
 # stash current name in case the next entry is .WAIT
 _prev:=		${d}
-.endfor
+.endfor						# }
 
 cleandir:
 	rm -f ${CLEANFILES}
