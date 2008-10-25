@@ -442,12 +442,18 @@ com_attach_subr(struct com_softc *sc)
 				if (CSR_READ_1(regsp, COM_REG_EFR) == 0) {
 					CSR_WRITE_1(regsp, COM_REG_LCR,
 					    lcr | LCR_DLAB);
-					CLR(sc->sc_hwflags, COM_HW_FIFO);
-					sc->sc_fifolen = 0;
-				} else {
-					SET(sc->sc_hwflags, COM_HW_FLOW);
-					sc->sc_fifolen = 32;
-				}
+					if (CSR_READ_1(regsp, COM_REG_EFR)
+					    == 0) {
+						CLR(sc->sc_hwflags,
+						    COM_HW_FIFO);
+						sc->sc_fifolen = 0;
+					} else {
+						SET(sc->sc_hwflags,
+						    COM_HW_FLOW);
+						sc->sc_fifolen = 32;
+					}
+				} else
+					sc->sc_fifolen = 16;
 				CSR_WRITE_1(regsp, COM_REG_LCR, lcr);
 			} else
 #endif
