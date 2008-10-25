@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.123 2008/10/25 14:59:35 apb Exp $
+#	$NetBSD: Makefile,v 1.124 2008/10/25 22:12:41 apb Exp $
 
 .include <bsd.own.mk>
 
@@ -34,11 +34,10 @@ LINT_BITS= lint lint2
 
 # Dependencies in SUBDIR below ordered to maximize parallel ability.
 SUBDIR=	host-mkdep .WAIT compat .WAIT \
-	binstall .WAIT mktemp .WAIT \
+	binstall .WAIT mktemp .WAIT sed .WAIT \
 		cap_mkdb crunchgen ctags genassym gencat hexdump join \
 		${LINT_BITS} \
 		lorder m4 makewhatis mkdep mtree rpcgen tsort uudecode \
-	sed .WAIT \
 	texinfo .WAIT \
 	yacc .WAIT \
 	awk .WAIT \
