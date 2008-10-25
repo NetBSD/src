@@ -1,11 +1,12 @@
-# $NetBSD: Makefile.inc,v 1.3 2003/10/21 10:01:21 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.4 2008/10/25 22:35:36 apb Exp $
 
 .PATH: ${.CURDIR}/ISO646
 
 SRCS_mapper.dir+=	mapper.dir.ISO646
 SRCS_charset.pivot+=	charset.pivot.ISO646
 CLEANFILES+=		mapper.dir.ISO646 charset.pivot.ISO646
-PART_ISO646!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/ISO646/ISO646.part
+PART_ISO646!=		${TOOL_SED} '/^\#/d;/^$$/d;' \
+				${.CURDIR}/ISO646/ISO646.part
 
 mapper.dir.ISO646: ${.CURDIR}/ISO646/ISO646.part
 	${_MKTARGET_CREATE}
