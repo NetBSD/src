@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2008/05/30 14:23:54 christos Exp $
+#	$NetBSD: Makefile,v 1.31 2008/10/25 22:35:37 apb Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -49,9 +49,10 @@
 #SITE			= NETBSD
 #SITE			= FREEBSD
 #SITE			= CMUCS
-SITE1			!= uname -s | tr '[a-z]' '[A-Z]' | sed -e s/_.*//g
+SITE1			!= uname -s | tr '[a-z]' '[A-Z]' \
+			    | ${TOOL_SED} -e s/_.*//g
 SITE2			= $(shell uname -s | tr '[a-z]' '[A-Z]' \
-			    | sed -e s/_.*//g)
+			    | ${TOOL_SED} -e s/_.*//g)
 SITE			= ${SITE1}${SITE2}
 TARDIR			= sup-0.3
 

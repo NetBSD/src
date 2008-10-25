@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.2 2006/09/16 08:38:20 tnozaki Exp $
+# $NetBSD: Makefile.inc,v 1.3 2008/10/25 22:35:36 apb Exp $
 
 .PATH: ${.CURDIR}/KOI
 
@@ -11,7 +11,7 @@ MAPS_KOI=		GOST19768-74%UCS.mps	\
 			UCS%ISO-5427.mps	\
 			KOI7%UCS.mps		\
 			UCS%KOI7.mps
-PART_KOI8!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/KOI/KOI8.part
+PART_KOI8!=		${TOOL_SED} '/^\#/d;/^$$/d;' ${.CURDIR}/KOI/KOI8.part
 
 mapper.dir.KOI: ${.CURDIR}/KOI/KOI8.part mapper.dir.KOI.src
 	${_MKTARGET_CREATE}

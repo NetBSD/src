@@ -1,11 +1,12 @@
-# $NetBSD: Makefile.inc,v 1.3 2003/10/21 10:01:21 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.4 2008/10/25 22:35:36 apb Exp $
 
 .PATH: ${.CURDIR}/ISO-8859
 
 SRCS_mapper.dir+=	mapper.dir.ISO-8859
 SRCS_charset.pivot+=	charset.pivot.ISO-8859
 CLEANFILES+=		mapper.dir.ISO-8859 charset.pivot.ISO-8859
-PART_ISO-8859!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/ISO-8859/ISO-8859.part
+PART_ISO-8859!=		${TOOL_SED} '/^\#/d;/^$$/d;' \
+				${.CURDIR}/ISO-8859/ISO-8859.part
 
 .for i in ${PART_ISO-8859}
 .if exists(${.CURDIR}/ISO-8859/ISO-8859-$i%UCS.src)

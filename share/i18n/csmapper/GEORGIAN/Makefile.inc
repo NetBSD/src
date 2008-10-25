@@ -1,11 +1,12 @@
-# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:27:35 apb Exp $
+# $NetBSD: Makefile.inc,v 1.3 2008/10/25 22:35:36 apb Exp $
 
 .PATH: ${.CURDIR}/GEORGIAN
 
 SRCS_mapper.dir+=	mapper.dir.GEORGIAN
 SRCS_charset.pivot+=	charset.pivot.GEORGIAN
 CLEANFILES+=		mapper.dir.GEORGIAN charset.pivot.GEORGIAN
-PART_GEORGIAN!=		sed '/^\#/d;/^$$/d;' ${.CURDIR}/GEORGIAN/GEORGIAN.part
+PART_GEORGIAN!=		${TOOL_SED} '/^\#/d;/^$$/d;' \
+				${.CURDIR}/GEORGIAN/GEORGIAN.part
 
 mapper.dir.GEORGIAN: ${.CURDIR}/GEORGIAN/GEORGIAN.part
 	${_MKTARGET_CREATE}

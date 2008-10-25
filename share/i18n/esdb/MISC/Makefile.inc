@@ -1,8 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.1 2003/06/27 08:40:57 tshiozak Exp $
+# $NetBSD: Makefile.inc,v 1.2 2008/10/25 22:35:36 apb Exp $
 
 .PATH: ${.CURDIR}/MISC
 
-CODESETS_MISC!=	sed '/^\#/d;/^ *$$/d;/^[ 	]*/s///;s/[ 	].*//' \
+CODESETS_MISC!=	${TOOL_SED} \
+			'/^\#/d;/^ *$$/d;/^[ 	]*/s///;s/[ 	].*//' \
 			${.CURDIR}/MISC/esdb.dir.MISC.src
 ESDB_MISC:=	${CODESETS_MISC:C/$/.esdb/:S/:/@/}
 
