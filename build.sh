@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.197 2008/08/22 23:41:24 lukem Exp $
+#	$NetBSD: build.sh,v 1.198 2008/10/26 23:40:06 apb Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -894,24 +894,51 @@ try_set_TOOLDIR()
 {
 	[ -n "${TOOLDIR}" ] && return
 
-	# Set guess_TOOLDIR, in the same way that <bsd.own.mk> would set
-	# TOOLDIR if /etc/mk.conf isn't interfering.
+	# Set host_ostype to something like "NetBSD-4.5.6-i386".  This
+	# is intended to match the HOST_OSTYPE variable in <bsd.own.mk>.
+	#
 	local host_ostype="${uname_s}-$(
 		echo "${uname_r}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
 		)-$(
 		echo "${uname_p}" | sed -e 's/([^)]*)//g' -e 's/ /_/g'
 		)"
-	local guess_TOOLDIR="${TOP_objdir}/tooldir.${host_ostype}"
 
-	# Look for a suitable ${toolprefix}make, nbmake, bmake, or make.
-	guess_make="${guess_TOOLDIR}/bin/${toolprefix}make"
-	[ -x "${guess_make}" ] || guess_make=""
+	# Look in a few potential locations for
+	# ${possible_TOOLDIR}/bin/${toolprefix}make.
+	# If we find it, then set guess_make.
+	#
+	# In the usual case (without interference from environment
+	# variables or /etc/mk.conf), <bsd.own.mk> should set TOOLDIR to
+	# "${TOP_objdir}/tooldir.${host_ostype}".  However, in practice
+	# we might have the wrong value of TOP_objdir, so we also try
+	# some other possibilities.
+	#
+	local possible_TOP_OBJ
+	local possible_TOOLDIR
+	for possible_TOP_OBJ in "${TOP_objdir}" "${TOP}" "${TOP}/obj" \
+		"${TOP}/obj.${MACHINE}"
+	do
+		possible_TOOLDIR="${possible_TOP_OBJ}/tooldir.${host_ostype}"
+		guess_make="${possible_TOOLDIR}/bin/${toolprefix}make"
+		if [ -x "${guess_make}" ]; then
+			break;
+		else
+			unset guess_make
+		fi
+	done
+
+	# If the above didn't work, search the PATH for a suitable
+	# ${toolprefix}make, nbmake, bmake, or make.
+	#
 	: ${guess_make:=$(find_in_PATH ${toolprefix}make '')}
 	: ${guess_make:=$(find_in_PATH nbmake '')}
 	: ${guess_make:=$(find_in_PATH bmake '')}
 	: ${guess_make:=$(find_in_PATH make '')}
 
-	# Use ${guess_make} with nobomb_getmakevar
+	# Use ${guess_make} with nobomb_getmakevar to try to find
+	# the value of TOOLDIR.  If this fails, unset TOOLDIR.
+	#
+	unset TOOLDIR
 	if [ -x "${guess_make}" ]; then
 		TOOLDIR=$(make="${guess_make}" nobomb_getmakevar TOOLDIR)
 		[ $? -eq 0 -a -n "${TOOLDIR}" ] || unset TOOLDIR
@@ -1172,7 +1199,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.197 2008/08/22 23:41:24 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.198 2008/10/26 23:40:06 apb Exp $
 # with these arguments: ${_args}
 #
 
