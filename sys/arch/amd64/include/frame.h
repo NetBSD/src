@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.14 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: frame.h,v 1.15 2008/10/26 00:08:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@
 #ifndef _AMD64_FRAME_H_
 #define _AMD64_FRAME_H_
 
+#ifdef __x86_64__
+
 #include <sys/signal.h>
 #include <machine/fpu.h>
 #include <machine/frame_regs.h>
@@ -119,5 +121,11 @@ struct sigframe_siginfo {
 #ifdef _KERNEL
 void buildcontext(struct lwp *, void *, void *);
 #endif
+
+#else	/*	__x86_64__	*/
+
+#include <i386/frame.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif  /* _AMD64_FRAME_H_ */

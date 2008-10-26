@@ -1,4 +1,6 @@
-/*	$NetBSD: param.h,v 1.8 2008/01/08 13:15:02 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2008/10/26 00:08:15 mrg Exp $	*/
+
+#ifdef __x86_64__
 
 #ifdef _KERNEL
 #include <machine/cpu.h>
@@ -127,3 +129,9 @@
 #define round_pdr(x)			x86_round_pdr(x)
 
 #define mstohz(ms) ((ms + 0UL) * hz / 1000)
+
+#else	/*	__x86_64__	*/
+
+#include <i386/param.h>
+
+#endif	/*	__x86_64__	*/
