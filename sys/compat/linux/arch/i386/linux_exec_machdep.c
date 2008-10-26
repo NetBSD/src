@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.10 2008/10/26 17:57:49 christos Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.11 2008/10/26 20:46:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.10 2008/10/26 17:57:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.11 2008/10/26 20:46:05 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -183,12 +183,9 @@ linux_init_thread_area(struct lwp *l, struct lwp *l2)
 	    sd.sd_hibase, sd.sd_lolimit, sd.sd_hilimit, sd.sd_type, sd.sd_dpl,
 	    sd.sd_p, sd.sd_xx, sd.sd_def32, sd.sd_gran));
 
-	kpreempt_disable();
 	(void)memcpy(&pcb2->pcb_gsd, &sd, sizeof(sd));
-	(void)memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
 	tf2->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
-	load_gs(tf2->tf_gs);
-	kpreempt_enable();
+
 	return 0;
 }
 
@@ -197,7 +194,6 @@ int
 linux_sys_set_thread_area(struct lwp *l,
     const struct linux_sys_set_thread_area_args *uap, register_t *retval)
 {
-	struct trapframe *tf = l->l_md.md_regs;
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct linux_user_desc info;
 	struct segment_descriptor sd;
@@ -271,8 +267,7 @@ linux_sys_set_thread_area(struct lwp *l,
 	kpreempt_disable();
 	(void)memcpy(&pcb->pcb_gsd, &sd, sizeof(sd));
 	(void)memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
-	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
-	load_gs(tf->tf_gs);
+	load_gs(GSEL(GUGS_SEL, SEL_UPL));
 	kpreempt_enable();
 	return 0;
 }
