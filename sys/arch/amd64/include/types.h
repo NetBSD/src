@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.26 2008/02/21 16:31:13 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.27 2008/10/26 00:08:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -31,8 +31,10 @@
  *	@(#)types.h	7.5 (Berkeley) 3/9/91
  */
 
-#ifndef	_MACHTYPES_H_
-#define	_MACHTYPES_H_
+#ifndef	_X86_64_MACHTYPES_H_
+#define	_X86_64_MACHTYPES_H_
+
+#ifdef __x86_64__
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
@@ -79,4 +81,10 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define __HAVE_RAS
 #endif
 
-#endif	/* _MACHTYPES_H_ */
+#else	/*	!__x86_64__	*/
+
+#include <i386/types.h>
+
+#endif	/*	__x86_64__	*/
+
+#endif	/* _X86_64_MACHTYPES_H_ */
