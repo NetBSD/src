@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.23 2008/04/04 12:38:52 njoly Exp $
+	$NetBSD: syscalls.master,v 1.24 2008/10/26 20:25:49 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -430,5 +430,56 @@
 234	STD		{ int linux_sys_tgkill(int tgid, int tid, int sig); }
 235	UNIMPL		utimes
 236	UNIMPL		vserver
-; Not really syscall 237, but we need it to be defined somewhere
-237	STD		{ int linux_sys_nosys(void); }
+237	UNIMPL		mbind
+238	UNIMPL		set_mempolicy
+239	UNIMPL		get_mempolicy
+240	UNIMPL		mq_open
+241	UNIMPL		mq_unlink
+242	UNIMPL		mq_timedsend
+243	UNIMPL		mq_timedreceive
+244	UNIMPL		mq_notify
+245	UNIMPL		mq_getsetattr
+246	UNIMPL		kexec_load
+247	UNIMPL		waitid
+248	UNIMPL		add_key
+249	UNIMPL		request_key
+250	UNIMPL		keyctl
+251	UNIMPL		ioprio_set
+252	UNIMPL		ioprio_get
+253	UNIMPL		inotify_init
+254	UNIMPL		inotify_add_watch
+255	UNIMPL		inotify_rm_watch
+256	UNIMPL		migrate_pages
+257	UNIMPL		openat
+258	UNIMPL		mkdirat
+259	UNIMPL		mknodat
+260	UNIMPL		fchownat
+261	UNIMPL		futimesat
+262	UNIMPL		newfstatat
+263	UNIMPL		unlinkat
+264	UNIMPL		renameat
+265	UNIMPL		linkat
+266	UNIMPL		symlinkat
+267	UNIMPL		readlinkat
+268	UNIMPL		fchmodat
+269	UNIMPL		faccessat
+270	UNIMPL		pselect6
+271	UNIMPL		ppoll
+272	UNIMPL		unshare
+273	STD		{ int linux_sys_set_robust_list( \
+			    struct linux_robust_list_head *head, size_t len); }
+274	STD		{ int linux_sys_get_robust_list(int pid, \
+			    struct linux_robust_list_head **head, \
+			    size_t *len); }
+275	UNIMPL		splice
+276	UNIMPL		tee
+277	UNIMPL		sync_file_range
+278	UNIMPL		vmsplice
+279	UNIMPL		move_pages
+280	UNIMPL		utimensat
+281	UNIMPL		epoll_pwait
+282	UNIMPL		signalfd
+283	UNIMPL		timerfd_create
+284	UNIMPL		eventfd
+285	UNIMPL		fallocate
+286	STD		{ int linux_sys_nosys(void); }
