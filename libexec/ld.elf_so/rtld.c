@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.122 2008/10/04 09:37:12 skrll Exp $	 */
+/*	$NetBSD: rtld.c,v 1.123 2008/10/26 07:11:54 mrg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.122 2008/10/04 09:37:12 skrll Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.123 2008/10/26 07:11:54 mrg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -255,6 +255,11 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 
 	_rtld_add_paths(execname, &_rtld_default_paths,
 	    RTLD_DEFAULT_LIBRARY_PATH);
+
+#ifdef RTLD_ARCH_SUBDIR
+	_rtld_add_paths(execname, &_rtld_default_paths,
+	    RTLD_DEFAULT_LIBRARY_PATH "/" RTLD_ARCH_SUBDIR);
+#endif
 
 	/*
 	 * Set up the _rtld_objlist pointer, so that rtld symbols can be found.
