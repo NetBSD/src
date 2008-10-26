@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.6 2008/10/26 19:37:59 uwe Exp $	*/
+/*	$NetBSD: reg.h,v 1.7 2008/10/26 19:53:03 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
 /*
  * Registers accessible to ptrace(2) syscall for debugger
  * The machine-dependent code for PT_{SET,GET}REGS needs to
- * use whichver order, defined above, is correct, so that it
+ * use whichever order, defined above, is correct, so that it
  * is all invisible to the user.
  */
 struct reg {
