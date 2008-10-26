@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2008/10/05 20:14:14 apb Exp $
+# $NetBSD: Makefile,v 1.5 2008/10/26 15:54:19 apb Exp $
 
 CLEANFILES+=	atf-host-compile
 CLEANFILES+=	atf-host-compile.tmp
@@ -8,15 +8,12 @@ CLEANFILES+=	atf-host-compile.tmp
 realall: atf-host-compile
 atf-host-compile: atf-host-compile.sh
 	@echo "create atf-host-compile"; \
-	if [ -x ${HOST_SH} ]; then \
-		H=${HOST_SH}; \
-	elif [ -x /bin/${HOST_SH} ]; then \
-		H=/bin/${HOST_SH}; \
-	else \
-		H=/usr/bin/${HOST_SH}; \
-	fi; \
+	if [ x${HOST_SH:C,^/.*,/,} != x/ ]; then \
+		echo "HOST_SH must be an absolute path"; \
+		false; \
+	fi && \
 	${TOOL_SED} -e s,__ATF_PKGDATADIR__,${SRCDIR}/atf-sh,g \
-	            -e s,__ATF_SHELL__,$$H,g \
+	            -e s,__ATF_SHELL__,${HOST_SH},g \
 	            <${SRCDIR}/tools/atf-host-compile.sh \
 	            >atf-host-compile.tmp && \
 	chmod +x atf-host-compile.tmp && \
