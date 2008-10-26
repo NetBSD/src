@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.5 2008/10/26 19:10:10 uwe Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.6 2008/10/26 19:16:51 uwe Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -45,4 +45,4 @@
 	"PT_GETREGS", \
 	"PT_SETREGS",
 
-#endif	/* _SH3_PTRACE_H_ */
+#endif /* !_SH3_PTRACE_H_ */
