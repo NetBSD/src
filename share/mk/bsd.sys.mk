@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.177 2008/10/25 18:29:03 apb Exp $
+#	$NetBSD: bsd.sys.mk,v 1.178 2008/10/26 15:51:20 apb Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -118,11 +118,8 @@ HOST_RANLIB?=	ranlib
 
 HOST_LN?=	ln
 
-.if !empty(HOST_CYGWIN)
-HOST_SH?=	/usr/bin/bash
-.else
-HOST_SH?=	sh
-.endif
+# HOST_SH must be an absolute path
+HOST_SH?=	/bin/sh
 
 ELF2ECOFF?=	elf2ecoff
 MKDEP?=		mkdep
