@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.13 2007/03/04 06:00:41 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.14 2008/10/26 19:43:20 uwe Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.13 2007/03/04 06:00:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2008/10/26 19:43:20 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,6 +127,7 @@ process_read_regs(struct lwp *l, struct reg *regs)
 
 	regs->r_spc = tf->tf_spc;
 	regs->r_ssr = tf->tf_ssr;
+	regs->r_gbr = tf->tf_gbr;
 	regs->r_macl = tf->tf_macl;
 	regs->r_mach = tf->tf_mach;
 	regs->r_pr = tf->tf_pr;
@@ -166,6 +167,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	tf->tf_ssr = regs->r_ssr;
 	tf->tf_pr = regs->r_pr;
 
+	tf->tf_gbr = regs->r_gbr;
 	tf->tf_mach = regs->r_mach;
 	tf->tf_macl = regs->r_macl;
 	tf->tf_r14 = regs->r_r14;
