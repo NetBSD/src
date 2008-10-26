@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.86 2008/10/16 14:36:20 christos Exp $
+#	$NetBSD: Makefile,v 1.87 2008/10/26 07:11:54 mrg Exp $
 
 # We are not building this with PIE
 PIE_CFLAGS=
@@ -6,7 +6,12 @@ PIE_LDFLAGS=
 .include <bsd.init.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
 
+.if defined(LDELFSO_MACHINE_CPU) && !empty(LDELFSO_MACHINE_CPU) && \
+    exists(${.CURDIR}/arch/${LDELFSO_MACHINE_CPU})
+ARCHSUBDIR=	${LDELFSO_MACHINE_CPU}
+.else
 ARCHSUBDIR=	${MACHINE_CPU}
+.endif
 M=		${.CURDIR}/arch/${ARCHSUBDIR}
 
 .if ((${MACHINE_ARCH} == "alpha") ||					\
@@ -23,7 +28,7 @@ M=		${.CURDIR}/arch/${ARCHSUBDIR}
      (${MACHINE_ARCH} == "vax")) &&					\
     ${OBJECT_FMT} == "ELF" && ${MKPIC} != "no"
 
-PROG=		ld.elf_so
+PROG?=		ld.elf_so
 
 LDFLAGS+=	-shared -symbolic -nostartfiles
 LDFLAGS+=	-Wl,-static
@@ -34,7 +39,12 @@ LDFLAGS+=	-Wl,-static
 .include "$M/Makefile.inc"
 .endif
 
+# Support src/compat/libexec/ld.elf_so.
+.if defined(LD32DIR)
+CLIBOBJ!=	cd ${NETBSDSRCDIR}/compat/lib/libc && ${PRINTOBJDIR}
+.else
 CLIBOBJ!=	cd ${NETBSDSRCDIR}/lib/libc && ${PRINTOBJDIR}
+.endif
 
 SRCS+=		rtld.c reloc.c symbol.c xmalloc.c xprintf.c debug.c \
 		map_object.c load.c search.c headers.c paths.c expand.c
