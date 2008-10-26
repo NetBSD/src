@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.19 2008/08/07 04:11:07 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.20 2008/10/26 16:23:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -129,11 +129,9 @@ void validate_trapframe __P((trapframe_t *, int));
 	teq	r0, #0			/* Test for 0. */		;\
 	beq	10f			/*   skip softints if != 0 */	;\
 	ldr	r0, [r4, #CI_CPL]	/* Get current priority level */;\
-	ldr	r0, [r4, #CI_CPL]	/* Get current priority level */;\
 	ldr	r1, [r4, #CI_SOFTINTS]	/* Get pending softint mask */	;\
-	mov	r0, r1, lsr r0		/* shift mask by cpl */		;\
-	beq	10f							;\
-	bl	_C_LABEL(dosoftints)	/* dosoftints(void) */		;\
+	movs	r0, r1, lsr r0		/* shift mask by cpl */		;\
+	blne	_C_LABEL(dosoftints)	/* dosoftints(void) */		;\
 10:
 #else
 #define	DO_PENDING_SOFTINTS		/* nothing */
