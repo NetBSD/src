@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.7 2008/10/26 03:43:42 christos Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.8 2008/10/26 11:02:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.7 2008/10/26 03:43:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.8 2008/10/26 11:02:14 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -176,6 +176,7 @@ linux_init_thread_area(struct lwp *l, struct lwp *l2)
 	a[1] = LINUX_LDT_entry_b(&info);
 
 	(void)memcpy(&sd, &a, sizeof(a));
+	KASSERT(ISMEMSDP((&sd)));
 	DPRINTF(("Segment created in clone with CLONE_SETTLS: lobase: %x, "
 	    "hibase: %x, lolimit: %x, hilimit: %x, type: %i, dpl: %i, p: %i, "
 	    "xx: %i, def32: %i, gran: %i\n", sd.sd_lobase,
@@ -260,6 +261,7 @@ linux_sys_set_thread_area(struct lwp *l,
 	}
 
 	(void)memcpy(&sd, &a, sizeof(a));
+	KASSERT(ISMEMSDP((&sd)));
 	DPRINTF(("Segment created in set_thread_area: lobase: %x, hibase: %x, "
 	    "lolimit: %x, hilimit: %x, type: %i, dpl: %i, p: %i, xx: %i, "
 	    "def32: %i, gran: %i\n", sd.sd_lobase, sd.sd_hibase, sd.sd_lolimit,
