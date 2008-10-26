@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_vm86.c,v 1.8 2008/04/28 20:22:55 martin Exp $	*/
+/*	$NetBSD: i386_vm86.c,v 1.9 2008/10/26 07:05:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/ucontext.h>
 #include <machine/segments.h>
 #include <machine/sysarch.h>
-#include <machine/vm86.h>
+#include <i386/vm86.h>
 
 int
 i386_vm86(vmcp)
