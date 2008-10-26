@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.2 2002/07/04 10:53:26 fvdl Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2008/10/26 07:05:33 mrg Exp $
 
-.if (${MACHINE_ARCH} == "x86_64")
+LD32DIR?=	none
+
+.if (${MACHINE_ARCH} == "x86_64" && ${LD32DIR} != "i386")
 SRCS+=	x86_64_mtrr.c x86_64_iopl.c
 .endif
 
