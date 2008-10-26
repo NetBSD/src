@@ -1,11 +1,14 @@
-#	$NetBSD: Makefile,v 1.54 2008/10/08 08:27:07 ad Exp $
+#	$NetBSD: Makefile,v 1.55 2008/10/26 00:00:27 mrg Exp $
 #
 
 WARNS=	4
 
 .include <bsd.own.mk>
 
-.if exists(${.CURDIR}/arch/${MACHINE_ARCH})
+.if defined(PTHREAD_MACHINE_ARCH) && !empty(PTHREAD_MACHINE_ARCH) && \
+    exists(${.CURDIR}/arch/${PTHREAD_MACHINE_ARCH})
+ARCHSUBDIR=	${PTHREAD_MACHINE_ARCH}
+.elif exists(${.CURDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=	${MACHINE_ARCH}
 .elif exists(${.CURDIR}/arch/${MACHINE_CPU}) 
 ARCHSUBDIR=	${MACHINE_CPU}
