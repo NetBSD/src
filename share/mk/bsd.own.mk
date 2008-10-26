@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.535 2008/10/19 19:44:47 apb Exp $
+#	$NetBSD: bsd.own.mk,v 1.536 2008/10/26 07:09:11 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -553,6 +553,18 @@ MK${var:S/^NO//}:=	no
 MK${var}:=	yes
 .endif
 .endfor
+
+# XXX for now.
+MKCOMPAT?=	no
+#
+# MK* options which have variable defaults.
+#
+.if ${MACHINE} == "amd64" || ${MACHINE} == "sparc64"
+MKCOMPAT?=	yes
+.else
+# Don't let this build where it really isn't supported.
+MKCOMPAT:=	no
+.endif
 
 #
 # MK* options which default to "yes".
