@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/10/26 07:38:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/26 13:00:38 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
@@ -7,15 +7,6 @@ NOINFO=	# defined
 NOSHARE=	# defined
 
 NOCHECKVER=	# defined
-
-# XXX
-.if ${MACHINE_ARCH} == "sparc64"
-ARCHSUBDIR=		sparc
-COMMON_ARCHSUBDIR=	sparc
-.elif ${MACHINE_ARCH} == "sparc64"
-ARCHSUBDIR=		i386
-COMMON_ARCHSUBDIR=	i386
-.endif
 
 .include <bsd.obj.mk>
 
