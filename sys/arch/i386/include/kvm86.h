@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.h,v 1.5 2005/12/26 19:23:59 perry Exp $ */
+/* $NetBSD: kvm86.h,v 1.6 2008/10/26 06:57:30 mrg Exp $ */
 
 void kvm86_init(void);
 void kvm86_gpfault(struct trapframe *);
@@ -10,5 +10,5 @@ size_t kvm86_bios_read(uint32_t, char *, size_t);
 int kvm86_bioscall(int, struct trapframe *);
 
 /* for migration from bioscall() */
-#include <machine/bioscall.h>
+#include <i386/bioscall.h>
 int kvm86_bioscall_simple(int, struct bioscallregs *);
