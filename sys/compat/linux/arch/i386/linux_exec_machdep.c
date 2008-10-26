@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.8 2008/10/26 11:02:14 ad Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.9 2008/10/26 17:42:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.8 2008/10/26 11:02:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.9 2008/10/26 17:42:37 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -158,15 +158,15 @@ linux_init_thread_area(struct lwp *l, struct lwp *l2)
 	 * looks like we're getting the idx we returned
 	 * in the set_thread_area() syscall
 	 */
-	if (idx != 6 && idx != 3) {
-		printf("resetting idx %d to 3", idx);
-		idx = 3;
+	if (idx != 6 && idx != GUGS_SEL) {
+		DPRINTF(("resetting idx %d to GUGS_SEL", idx));
+		idx = GUGS_SEL;
 	}
 
 	/* this doesnt happen in practice */
 	if (idx == 6) {
 		/* we might copy out the entry_number as 3 */
-		info.entry_number = 3;
+		info.entry_number = GUGS_SEL;
 		error = copyout(&info, (void *)tf->tf_esi, sizeof(info));
 		if (error)
 			return error;
@@ -237,7 +237,7 @@ linux_sys_set_thread_area(struct lwp *l,
 	 * we should let 3 proceed as well because we use this segment so
 	 * if code does two subsequent calls it should succeed
 	 */
-	if (idx != 6 && idx != -1 && idx != 3)
+	if (idx != 6 && idx != -1 && idx != GUGS_SEL)
 		return EINVAL;
 
 	/* 
@@ -247,7 +247,7 @@ linux_sys_set_thread_area(struct lwp *l,
 	 * XXX: what if a user space program doesn't check this value and tries
 	 * to use 6, 7 or 8? 
 	 */
-	idx = info.entry_number = 3;
+	idx = info.entry_number = GUGS_SEL;
 	error = copyout(&info, SCARG(uap, desc), sizeof(info));
 	if (error)
 		return error;
@@ -294,10 +294,10 @@ linux_sys_get_thread_area(struct lwp *l,
 
 	idx = info.entry_number;
 	/* XXX: I am not sure if we want 3 to be allowed too. */
-	if (idx != 6 && idx != 3)
+	if (idx != 6 && idx != GUGS_SEL)
 		return EINVAL;
 
-	idx = 3;
+	idx = GUGS_SEL;
 
 	(void)memset(&info, 0, sizeof(info));
 	(void)memcpy(&sd, pcb->pcb_gsd, sizeof(sd));
