@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.17 2008/10/26 16:38:22 christos Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.18 2008/10/26 19:13:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.17 2008/10/26 16:38:22 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.18 2008/10/26 19:13:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -527,7 +527,8 @@ linux_sys_get_robust_list(struct lwp *l,
 	error = copyout(&len, SCARG(uap, len), sizeof(size_t));
 	if (error)
 		return error;
-	return copyout(head, SCARG(uap, head), sizeof(head));
+	return copyout(head, SCARG(uap, head),
+	    sizeof(struct linux_robust_list_head));
 }
 
 static int
