@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.34 2008/10/25 23:38:28 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.35 2008/10/26 17:57:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -165,6 +165,8 @@ struct linux_desc_struct {
 
 
 #define	LINUX_LOWERWORD	0x0000ffff
+
+#define LINUX_GLIBC_TLS_SEL	6
 
 /*
  * Macros which does the same thing as those in Linux include/asm-um/ldt-i386.h.
