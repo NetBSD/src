@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.11 2008/10/25 23:38:28 christos Exp $ */
+/*	$NetBSD: linux_exec_machdep.c,v 1.12 2008/10/26 02:00:57 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.11 2008/10/25 23:38:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.12 2008/10/26 02:00:57 christos Exp $");
 
 #ifdef __amd64__
 #define ELFSIZE 64
@@ -59,11 +59,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.11 2008/10/25 23:38:28 chri
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_hdio.h>
 #include <compat/linux/common/linux_exec.h>
-#include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_errno.h>
 
 int
