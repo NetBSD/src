@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.6 2007/10/17 19:53:03 garbled Exp $	*/
+/*	$NetBSD: ansi.h,v 1.7 2008/10/26 00:08:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,8 +31,10 @@
  *	@(#)ansi.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef	_ANSI_H_
-#define	_ANSI_H_
+#ifndef	_X86_64_ANSI_H_
+#define	_X86_64_ANSI_H_
+
+#ifdef __x86_64__
 
 #include <sys/cdefs.h>
 
@@ -76,4 +78,10 @@ typedef union {
 } __mbstate_t;
 #define	_BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
 
-#endif	/* _ANSI_H_ */
+#else	/*	!__x86_64__	*/
+
+#include <i386/ansi.h>
+
+#endif	/*	__x86_64__	*/
+
+#endif	/* _X86_64_ANSI_H_ */

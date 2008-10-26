@@ -1,4 +1,4 @@
-/*	$NetBSD: int_const.h,v 1.2 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: int_const.h,v 1.3 2008/10/26 00:08:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _AMD64_INT_CONST_H_
 #define _AMD64_INT_CONST_H_
 
+#ifdef __x86_64__
+
 /*
  * 7.18.4 Macros for integer constants
  */
@@ -52,5 +54,11 @@
 
 #define	INTMAX_C(c)	c ## L
 #define	UINTMAX_C(c)	c ## UL
+
+#else	/*	__x86_64__	*/
+
+#include <i386/int_const.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* !_AMD64_INT_CONST_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.9 2007/02/18 01:45:37 pavel Exp $	*/
+/*	$NetBSD: signal.h,v 1.10 2008/10/26 00:08:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -34,6 +34,8 @@
 #ifndef _AMD64_SIGNAL_H_
 #define _AMD64_SIGNAL_H_
 
+#ifdef __x86_64__
+
 #include <sys/featuretest.h>
 
 typedef int sig_atomic_t;
@@ -59,4 +61,11 @@ typedef int sig_atomic_t;
 #endif
 
 #endif	/* _NETBSD_SOURCE */
+
+#else	/*	__x86_64__	*/
+
+#include <i386/signal.h>
+
+#endif	/*	__x86_64__	*/
+
 #endif	/* !_AMD64_SIGNAL_H_ */
