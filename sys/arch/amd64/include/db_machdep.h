@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.6 2007/02/21 22:59:37 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.7 2008/10/26 00:08:15 mrg Exp $	*/
 
 /* 
  * Mach Operating System
@@ -26,8 +26,8 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef	_I386_DB_MACHDEP_H_
-#define	_I386_DB_MACHDEP_H_
+#ifndef	_X86_64_DB_MACHDEP_H_
+#define	_X86_64_DB_MACHDEP_H_
 
 /*
  * Machine-dependent defines for new kernel debugger.
@@ -135,4 +135,4 @@ extern void db_machine_init __P((void));
 
 extern void cpu_debug_dump __P((void));
 
-#endif	/* _I386_DB_MACHDEP_H_ */
+#endif	/* _X86_64_DB_MACHDEP_H_ */
