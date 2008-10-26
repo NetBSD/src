@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.234 2008/10/26 07:09:11 mrg Exp $
+#	$NetBSD: bsd.README,v 1.235 2008/10/26 15:51:20 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1330,6 +1330,9 @@ FC		Fortran compiler.  [f77]
 
 FFLAGS		Options to {$FC}.  [-O]
 
+HOST_SH		Shell.	This must be an absolute path, because it may be
+		substituted into "#!" lines in scripts.	 [/bin/sh]
+
 INSTALL		install(1) command.  [install]
 
 LEX		Lexical analyzer.  [lex]
@@ -1367,8 +1370,6 @@ OBJCOPY		Copy and translate object files.  [objcopy]
 OBJDUMP		Display information from object files.  [objdump]
 
 RANLIB		Generate index to archive.  [ranlib]
-
-SHELL		Shell.  [sh]
 
 SIZE		List section sizes and total size.  [size]
 
