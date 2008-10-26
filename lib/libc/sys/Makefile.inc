@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.195 2008/08/06 16:22:48 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.196 2008/10/26 07:43:07 mrg Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -172,22 +172,22 @@ ${PSEUDONOERR}: ${ASMDEPS}
 	# add an _Exit alias to _exit
 	printf 'STRONG_ALIAS(${.PREFIX:S/e/E/},${.PREFIX})\n' >>${.TARGET}
 
-LintSysNormal.c: ${.CURDIR}/sys/makelintstub \
+LintSysNormal.c: ${LIBCDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h ${_LINTASM}
 	${_MKTARGET_CREATE}
-	CPP=${CPP:Q} ${HOST_SH} ${.CURDIR}/sys/makelintstub -o ${.TARGET} \
+	CPP=${CPP:Q} ${HOST_SH} ${LIBCDIR}/sys/makelintstub -o ${.TARGET} \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${_LINTASM:S/tmp_//}
 
-LintSysNoerr.c: ${.CURDIR}/sys/makelintstub \
+LintSysNoerr.c: ${LIBCDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	${_MKTARGET_CREATE}
-	CPP=${CPP:Q} ${HOST_SH} ${.CURDIR}/sys/makelintstub -o ${.TARGET} -n \
+	CPP=${CPP:Q} ${HOST_SH} ${LIBCDIR}/sys/makelintstub -o ${.TARGET} -n \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
 
-LintSysPseudoNoerr.c: ${.CURDIR}/sys/makelintstub \
+LintSysPseudoNoerr.c: ${LIBCDIR}/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	${_MKTARGET_CREATE}
-	CPP=${CPP:Q} ${HOST_SH} ${.CURDIR}/sys/makelintstub -o ${.TARGET} -p \
+	CPP=${CPP:Q} ${HOST_SH} ${LIBCDIR}/sys/makelintstub -o ${.TARGET} -p \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \

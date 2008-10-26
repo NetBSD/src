@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.70 2008/08/20 12:42:26 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.71 2008/10/26 07:43:07 mrg Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -23,10 +23,10 @@ SRCS+=	jemalloc.c
 SRCS+=	malloc.c
 .endif
 
-CPPFLAGS.strtoimax.c+=	-I${.CURDIR}/../../common/lib/libc/stdlib
-CPPFLAGS.strtol.c+=	-I${.CURDIR}/../../common/lib/libc/stdlib
-CPPFLAGS.strtoq.c+=	-I${.CURDIR}/../../common/lib/libc/stdlib
-CPPFLAGS.strtouq.c+=	-I${.CURDIR}/../../common/lib/libc/stdlib
+CPPFLAGS.strtoimax.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
+CPPFLAGS.strtol.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
+CPPFLAGS.strtoq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
+CPPFLAGS.strtouq.c+=	-I${LIBCDIR}/../../common/lib/libc/stdlib
 
 # machine-dependent stdlib sources
 # m-d Makefile.inc must include sources for:
