@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.5 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: reg.h,v 1.6 2008/10/26 19:37:59 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,6 +76,36 @@
  * is all invisible to the user.
  */
 struct reg {
+	int r_spc;
+	int r_ssr;
+	int r_pr;
+	int r_mach;
+	int r_macl;
+	int r_r15;
+	int r_r14;
+	int r_r13;
+	int r_r12;
+	int r_r11;
+	int r_r10;
+	int r_r9;
+	int r_r8;
+	int r_r7;
+	int r_r6;
+	int r_r5;
+	int r_r4;
+	int r_r3;
+	int r_r2;
+	int r_r1;
+	int r_r0;
+	int r_gbr;
+};
+
+
+/*
+ * Old struct reg that is missing r_gbr.  Compat ptrace(2) requests
+ * are renamed to PT___GETREGS40 and PT___SETREGS40.
+ */
+struct __reg40 {
 	int r_spc;
 	int r_ssr;
 	int r_pr;
