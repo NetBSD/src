@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.154 2008/10/25 17:47:20 christos Exp $
+# $NetBSD: mi,v 1.155 2008/10/26 02:14:18 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -813,8 +813,9 @@
 ./usr/share/examples/postfix/sample-virtual.cf	misc-obsolete		obsolete
 ./usr/share/examples/postfix/transport		misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/virtual		misc-postfix-examples	postfix,share
-./usr/share/examples/pppd/cingular3G		misc-pppd-examples	pppd,share
-./usr/share/examples/pppd/cingular3G.chat	misc-pppd-examples	pppd,share
+./usr/share/examples/pppd			misc-pppd-examples	share
+./usr/share/examples/pppd/cingular3G		misc-pppd-examples	share
+./usr/share/examples/pppd/cingular3G.chat	misc-pppd-examples	share
 ./usr/share/examples/racoon/FAQ			misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/README.certificate	misc-netutil-examples	crypto,share
 ./usr/share/examples/racoon/README.gssapi	misc-netutil-examples	crypto,share
