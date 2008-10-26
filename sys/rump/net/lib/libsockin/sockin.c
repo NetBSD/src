@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.3 2008/10/16 13:36:06 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.4 2008/10/26 18:39:01 minskim Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -80,7 +80,7 @@ struct domain sockindomain = {
 	.dom_externalize = NULL,
 	.dom_dispose = NULL,
 	.dom_protosw = sockinsw,
-	.dom_protoswNPROTOSW = &sockinsw[__arraycount(sockinsw)], 
+	.dom_protoswNPROTOSW = &sockinsw[__arraycount(sockinsw)],
 	.dom_rtattach = NULL,
 	.dom_rtoffset = 0,
 	.dom_maxrtkey = 0,
