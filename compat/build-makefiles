@@ -8,7 +8,6 @@ rwsrcdir=/home/current/src
 MAKE=${MAKE-make}
 
 CHECK_SUBDIRS="gnu/lib gnu/lib/libgcc4 lib lib/csu lib/i18n_module external/bsd/openldap/lib"
-CHECK_SUBDIRS="lib/csu"
 # lib/csu is spsecial
 # lib/libm needs to be special -- i387
 # gnu/lib/libsupc++ -- fails to get NOPROFILE properly
@@ -34,7 +33,7 @@ for _dir in ${CHECK_SUBDIRS}; do
 		mkdir -p ${rwsrcdir}/compat/${_dir}/${_sd}
 		(
 		 cat <<'EOF'
-#	$NetBSD: build-makefiles,v 1.1 2008/10/26 07:38:28 mrg Exp $
+#	$NetBSD: build-makefiles,v 1.2 2008/10/26 12:58:38 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
@@ -48,15 +47,6 @@ EOF
 		 cat <<'EOF'
 
 NOCHECKVER=	# defined
-
-# XXX
-.if ${MACHINE_ARCH} == "sparc64"
-ARCHSUBDIR=		sparc
-COMMON_ARCHSUBDIR=	sparc
-.elif ${MACHINE_ARCH} == "sparc64"
-ARCHSUBDIR=		i386
-COMMON_ARCHSUBDIR=	i386
-.endif
 
 .include <bsd.obj.mk>
 
@@ -87,19 +77,21 @@ EOF
 		) > ${rwsrcdir}/compat/${_dir}/${_sd}/Makefile
 	done
 
-	(printf '#	$'NetBSD'$\n\n'
-	 #printf ".include <bsd.obj.mk>\n\n"
-	 printf "_CURDIR:= \${.CURDIR}\n\n"
-	 printf ".CURDIR:=\${NETBSDSRCDIR}/${_dir}\n\n"
-	 printf ".include "'"'"\${.CURDIR}/Makefile"'"'"\n\n"
-	 printf ".CURDIR:= \${_CURDIR}\n"
-	) > ${rwsrcdir}/compat/${_dir}/Makefile
-
-	if [ -f "${srcdir}/${_dir}/Makefile.inc" ]; then
+	if [ ${_dir} != "lib/csu" ]; then
 		(printf '#	$'NetBSD'$\n\n'
+		 #printf ".include <bsd.obj.mk>\n\n"
 		 printf "_CURDIR:= \${.CURDIR}\n\n"
-		 printf ".include "'"'"\${NETBSDSRCDIR}/${_dir}/Makefile.inc"'"'"\n\n"
+		 printf ".CURDIR:=\${NETBSDSRCDIR}/${_dir}\n\n"
+		 printf ".include "'"'"\${.CURDIR}/Makefile"'"'"\n\n"
 		 printf ".CURDIR:= \${_CURDIR}\n"
-		) > ${rwsrcdir}/compat/${_dir}/Makefile.inc
+		) > ${rwsrcdir}/compat/${_dir}/Makefile
+
+		if [ -f "${srcdir}/${_dir}/Makefile.inc" ]; then
+			(printf '#	$'NetBSD'$\n\n'
+			 printf "_CURDIR:= \${.CURDIR}\n\n"
+			 printf ".include "'"'"\${NETBSDSRCDIR}/${_dir}/Makefile.inc"'"'"\n\n"
+			 printf ".CURDIR:= \${_CURDIR}\n"
+			) > ${rwsrcdir}/compat/${_dir}/Makefile.inc
+		fi
 	fi
 done
