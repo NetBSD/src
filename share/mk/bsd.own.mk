@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.537 2008/10/26 15:51:20 apb Exp $
+#	$NetBSD: bsd.own.mk,v 1.538 2008/10/26 23:13:24 apb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -275,7 +275,75 @@ TOOL_UUDECODE=		${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode
 TOOL_VGRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
 TOOL_ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
 
-.endif	# USETOOLS == yes						# }
+.else	# USETOOLS != yes						# } {
+
+TOOL_AMIGAAOUT2BB=	amiga-aout2bb
+TOOL_AMIGAELF2BB=	amiga-elf2bb
+TOOL_AMIGATXLT=		amiga-txlt
+TOOL_ASN1_COMPILE=	asn1_compile
+TOOL_ATF_COMPILE=	atf-compile
+TOOL_AWK=		awk
+TOOL_CAP_MKDB=		cap_mkdb
+TOOL_CAT=		cat
+TOOL_CKSUM=		cksum
+TOOL_COMPILE_ET=	compile_et
+TOOL_CONFIG=		config
+TOOL_CRUNCHGEN=		crunchgen
+TOOL_CTAGS=		ctags
+TOOL_DB=		db
+TOOL_DISKLABEL=		disklabel
+TOOL_EQN=		eqn
+TOOL_FDISK=		fdisk
+TOOL_FGEN=		fgen
+TOOL_GENASSYM=		genassym
+TOOL_GENCAT=		gencat
+TOOL_GMAKE=		gmake
+TOOL_GROFF=		groff
+TOOL_HEXDUMP=		hexdump
+TOOL_HP300MKBOOT=	hp300-mkboot
+TOOL_HP700MKBOOT=	hp700-mkboot
+TOOL_INDXBIB=		indxbib
+TOOL_INSTALLBOOT=	installboot
+TOOL_INSTALL_INFO=	install-info
+TOOL_JOIN=		join
+TOOL_M4=		m4
+TOOL_MACPPCFIXCOFF=	macppc-fixcoff
+TOOL_MAKEFS=		makefs
+TOOL_MAKEINFO=		makeinfo
+TOOL_MAKEWHATIS=	/usr/libexec/makewhatis
+TOOL_MDSETIMAGE=	mdsetimage
+TOOL_MENUC=		menuc
+TOOL_MIPSELF2ECOFF=	mips-elf2ecoff
+TOOL_MKCSMAPPER=	mkcsmapper
+TOOL_MKESDB=		mkesdb
+TOOL_MKLOCALE=		mklocale
+TOOL_MKMAGIC=		file
+TOOL_MKTEMP=		mktemp
+TOOL_MSGC=		msgc
+TOOL_MTREE=		mtree
+TOOL_PAX=		pax
+TOOL_PIC=		pic
+TOOL_POWERPCMKBOOTIMAGE=	powerpc-mkbootimage
+TOOL_PWD_MKDB=		pwd_mkdb
+TOOL_REFER=		refer
+TOOL_ROFF_ASCII=	nroff
+TOOL_ROFF_DVI=		${TOOL_GROFF} -Tdvi
+TOOL_ROFF_HTML=		${TOOL_GROFF} -Tlatin1 -mdoc2html
+TOOL_ROFF_PS=		${TOOL_GROFF} -Tps
+TOOL_ROFF_RAW=		${TOOL_GROFF} -Z
+TOOL_RPCGEN=		rpcgen
+TOOL_SED=		sed
+TOOL_SOELIM=		soelim
+TOOL_SPARKCRC=		sparkcrc
+TOOL_STAT=		stat
+TOOL_STRFILE=		strfile
+TOOL_SUNLABEL=		sunlabel
+TOOL_TBL=		tbl
+TOOL_UUDECODE=		uudecode
+TOOL_VGRIND=		vgrind -f
+TOOL_ZIC=		zic
+
+.endif	# USETOOLS != yes						# }
 
 #
 # Targets to check if DESTDIR or RELEASEDIR is provided
