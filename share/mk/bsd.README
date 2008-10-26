@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.235 2008/10/26 15:51:20 apb Exp $
+#	$NetBSD: bsd.README,v 1.236 2008/10/26 23:13:24 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -615,6 +615,144 @@ EXTERNAL_TOOLCHAIN
 		it should be.  Expect the exact semantics of this variable
 		to change in the short term as parts of the cross-compile
 		framework continue to be cleaned up.
+
+The following variables are defined to commands to perform the
+appropriate operation, with the default in [brackets].  Note that
+the defaults change if USETOOLS == "yes":
+
+TOOL_AMIGAAOUT2BB	aout to Amiga bootblock converter.  [amiga-aout2bb]
+
+TOOL_AMIGAELF2BB	ELF to Amiga bootblock converter.  [amiga-elf2bb]
+
+TOOL_AMIGATXLT		Amige assembly language format translator.  [amiga-txlt]
+
+TOOL_ASN1_COMPILE	ASN1 compiler.  [asn1_compile]
+
+TOOL_ATF_COMPILE	Generate POSIX shell test programs.  [atf-compile]
+
+TOOL_AWK		Pattern-directed scanning/processing language.  [awk]
+
+TOOL_CAP_MKDB		Create capability database.  [cap_mkdb]
+
+TOOL_CAT		Concatenate and print files.  [cat]
+
+TOOL_CKSUM		Display file checksums.  [cksum]
+
+TOOL_COMPILE_ET		Error table compiler.  [compile_et]
+
+TOOL_CONFIG		Build kernel compilation directories.  [config]
+
+TOOL_CRUNCHGEN		Generate crunched binary build environment.  [crunchgen]
+
+TOOL_CTAGS		Create a tags file.  [ctags]
+
+TOOL_DB			Manipulate db(3) databases.  [db]
+
+TOOL_DISKLABEL		Read and write disk pack label.  [disklabel]
+
+TOOL_EQN		Format equations for groff.  [eqn]
+
+TOOL_FDISK		MS-DOS partition maintenance program.  [fdisk]
+
+TOOL_FGEN		IEEE 1275 Open Firmware FCode Tokenizer.  [fgen]
+
+TOOL_GENASSYM		Generate constants for assembly files.  [genassym]
+
+TOOL_GENCAT		Generate NLS message catalogs.  [gencat]
+
+TOOL_GMAKE		GNU make utility.  [gmake]
+
+TOOL_GROFF		Front end for groff document formatting system.  [groff]
+
+TOOL_HEXDUMP		Ascii, decimal, hexadecimal, octal dump.  [hexdump]
+
+TOOL_HP300MKBOOT	Make bootable image for hp300.  [hp300-mkboot]
+
+TOOL_HP700MKBOOT	Make bootable image for hp700.  [hp700-mkboot]
+
+TOOL_INDXBIB		Make bibliographic database's inverted index.  [indxbib]
+
+TOOL_INSTALLBOOT	Install disk bootstrap software.  [installboot]
+
+TOOL_INSTALL_INFO	Update info/dir entries.  [install-info]
+
+TOOL_JOIN		Relational database operator.  [join]
+
+TOOL_M4			M4 macro language processor.  [m4]
+
+TOOL_MACPPCFIXCOFF	Fix up xcoff headers for macppc.  [macppc-fixcoff]
+
+TOOL_MAKEFS		Create file system image from directory tree.  [makefs]
+
+TOOL_MAKEINFO		Translate Texinfo documents.  [makeinfo]
+
+TOOL_MAKEWHATIS		Create a whatis.db database.  [makewhatis]
+
+TOOL_MDSETIMAGE		Set kernel RAM disk image.  [mdsetimage]
+
+TOOL_MENUC		Menu compiler.  [menuc]
+
+TOOL_MIPSELF2ECOFF	Convert ELF-format executable to ECOFF for mips.
+			[mips-elf2ecoff]
+
+TOOL_MKCSMAPPER		Make charset mapping table.  [mkcsmapper]
+
+TOOL_MKESDB		Make encoding scheme database.  [mkesdb]
+
+TOOL_MKLOCALE		Make LC_CTYPE locale files.  [mklocale]
+
+TOOL_MKMAGIC		Create database for file(1).  [file]
+
+TOOL_MKTEMP		Make (unique) temporary file name.  [mktemp]
+
+TOOL_MSGC		Simple message list compiler.  [msgc]
+
+TOOL_MTREE		Map a directory hierarchy.  [mtree]
+
+TOOL_PAX		Manipulate file archives and copy directories.  [pax]
+
+TOOL_PIC		Compile pictures for groff.  [pic]
+
+TOOL_POWERPCMKBOOTIMAGE	Make bootable image for powerpc.  [powerpc-mkbootimage]
+
+TOOL_PWD_MKDB		Generate the password databases.  [pwd_mkdb]
+
+TOOL_REFER		Preprocess bibliographic references for groff.  [refer]
+
+TOOL_ROFF_ASCII		Generate ASCII groff output.  [nroff]
+
+TOOL_ROFF_DVI		Generate DVI groff output.  [${TOOL_GROFF} -Tdvi]
+
+TOOL_ROFF_HTML		Generate HTML groff output.
+			[${TOOL_GROFF} -Tlatin1 -mdoc2html]
+
+TOOL_ROFF_PS		Generate PS groff output.  [${TOOL_GROFF} -Tps]
+
+TOOL_ROFF_RAW		Generate "raw" groff output.  [${TOOL_GROFF} -Z]
+
+TOOL_RPCGEN		Remote Procedure Call (RPC) protocol compiler.  [rpcgen]
+
+TOOL_SED		Stream editor.  [sed]
+
+TOOL_SOELIM		Eliminate .so's from groff input.  [soelim]
+
+TOOL_SPARKCRC		Generate a crc suitable for use in a sparkive file.
+			[sparkcrc]
+
+TOOL_STAT		Display file status.  [stat]
+
+TOOL_STRFILE		Create a random access file for storing strings.
+			[strfile]
+
+TOOL_SUNLABEL		Read or modify a SunOS disk label.  [sunlabel]
+
+TOOL_TBL		Format tables for groff.  [tbl]
+
+TOOL_UUDECODE		Uudecode a binary file.  [uudecode]
+
+TOOL_VGRIND		Grind nice listings of programs.  [vgrind -f]
+
+TOOL_ZIC		Time zone compiler.  [zic]
 
 <bsd.own.mk> is generally useful when building your own Makefiles so that
 they use the same default owners etc. as the rest of the tree.
@@ -1386,145 +1524,6 @@ YHEADER		If defined, add "-d" to YFLAGS, and add dependencies
 		<foo>.h to CLEANFILES.
 
 YPREFIX		If defined, add "-p ${YPREFIX}" to YFLAGS.
-
-
-The following variables are defined to commands to perform the
-appropriate operation, with the default in [brackets].
-(Note that these are overridden in <bsd.own.mk> if USETOOLS == "yes"):
-
-TOOL_AMIGAAOUT2BB	aout to Amiga bootblock converter.  [amiga-aout2bb]
-
-TOOL_AMIGAELF2BB	ELF to Amiga bootblock converter.  [amiga-elf2bb]
-
-TOOL_AMIGATXLT		Amige assembly language format translator.  [amiga-txlt]
-
-TOOL_ASN1_COMPILE	ASN1 compiler.  [asn1_compile]
-
-TOOL_ATF_COMPILE	Generate POSIX shell test programs.  [atf-compile]
-
-TOOL_AWK		Pattern-directed scanning/processing language.  [awk]
-
-TOOL_CAP_MKDB		Create capability database.  [cap_mkdb]
-
-TOOL_CAT		Concatenate and print files.  [cat]
-
-TOOL_CKSUM		Display file checksums.  [cksum]
-
-TOOL_COMPILE_ET		Error table compiler.  [compile_et]
-
-TOOL_CONFIG		Build kernel compilation directories.  [config]
-
-TOOL_CRUNCHGEN		Generate crunched binary build environment.  [crunchgen]
-
-TOOL_CTAGS		Create a tags file.  [ctags]
-
-TOOL_DB			Manipulate db(3) databases.  [db]
-
-TOOL_DISKLABEL		Read and write disk pack label.  [disklabel]
-
-TOOL_EQN		Format equations for groff.  [eqn]
-
-TOOL_FDISK		MS-DOS partition maintenance program.  [fdisk]
-
-TOOL_FGEN		IEEE 1275 Open Firmware FCode Tokenizer.  [fgen]
-
-TOOL_GENASSYM		Generate constants for assembly files.  [genassym]
-
-TOOL_GENCAT		Generate NLS message catalogs.  [gencat]
-
-TOOL_GMAKE		GNU make utility.  [gmake]
-
-TOOL_GROFF		Front end for groff document formatting system.  [groff]
-
-TOOL_HEXDUMP		Ascii, decimal, hexadecimal, octal dump.  [hexdump]
-
-TOOL_HP300MKBOOT	Make bootable image for hp300.  [hp300-mkboot]
-
-TOOL_HP700MKBOOT	Make bootable image for hp700.  [hp700-mkboot]
-
-TOOL_INDXBIB		Make bibliographic database's inverted index.  [indxbib]
-
-TOOL_INSTALLBOOT	Install disk bootstrap software.  [installboot]
-
-TOOL_INSTALL_INFO	Update info/dir entries.  [install-info]
-
-TOOL_JOIN		Relational database operator.  [join]
-
-TOOL_M4			M4 macro language processor.  [m4]
-
-TOOL_MACPPCFIXCOFF	Fix up xcoff headers for macppc.  [macppc-fixcoff]
-
-TOOL_MAKEFS		Create file system image from directory tree.  [makefs]
-
-TOOL_MAKEINFO		Translate Texinfo documents.  [makeinfo]
-
-TOOL_MAKEWHATIS		Create a whatis.db database.  [makewhatis]
-
-TOOL_MDSETIMAGE		Set kernel RAM disk image.  [mdsetimage]
-
-TOOL_MENUC		Menu compiler.  [menuc]
-
-TOOL_MIPSELF2ECOFF	Convert ELF-format executable to ECOFF for mips.
-			[mips-elf2ecoff]
-
-TOOL_MKCSMAPPER		Make charset mapping table.  [mkcsmapper]
-
-TOOL_MKESDB		Make encoding scheme database.  [mkesdb]
-
-TOOL_MKLOCALE		Make LC_CTYPE locale files.  [mklocale]
-
-TOOL_MKMAGIC		Create database for file(1).  [file]
-
-TOOL_MKTEMP		Make (unique) temporary file name.  [mktemp]
-
-TOOL_MSGC		Simple message list compiler.  [msgc]
-
-TOOL_MTREE		Map a directory hierarchy.  [mtree]
-
-TOOL_PAX		Manipulate file archives and copy directories.  [pax]
-
-TOOL_PIC		Compile pictures for groff.  [pic]
-
-TOOL_POWERPCMKBOOTIMAGE	Make bootable image for powerpc.  [powerpc-mkbootimage]
-
-TOOL_PWD_MKDB		Generate the password databases.  [pwd_mkdb]
-
-TOOL_REFER		Preprocess bibliographic references for groff.  [refer]
-
-TOOL_ROFF_ASCII		Generate ASCII groff output.  [nroff]
-
-TOOL_ROFF_DVI		Generate DVI groff output.  [${TOOL_GROFF} -Tdvi]
-
-TOOL_ROFF_HTML		Generate HTML groff output.
-			[${TOOL_GROFF} -Tlatin1 -mdoc2html]
-
-TOOL_ROFF_PS		Generate PS groff output.  [${TOOL_GROFF} -Tps]
-
-TOOL_ROFF_RAW		Generate "raw" groff output.  [${TOOL_GROFF} -Z]
-
-TOOL_RPCGEN		Remote Procedure Call (RPC) protocol compiler.  [rpcgen]
-
-TOOL_SED		Stream editor.  [sed]
-
-TOOL_SOELIM		Eliminate .so's from groff input.  [soelim]
-
-TOOL_SPARKCRC		Generate a crc suitable for use in a sparkive file.
-			[sparkcrc]
-
-TOOL_STAT		Display file status.  [stat]
-
-TOOL_STRFILE		Create a random access file for storing strings.
-			[strfile]
-
-TOOL_SUNLABEL		Read or modify a SunOS disk label.  [sunlabel]
-
-TOOL_TBL		Format tables for groff.  [tbl]
-
-TOOL_UUDECODE		Uudecode a binary file.  [uudecode]
-
-TOOL_VGRIND		Grind nice listings of programs.  [vgrind -f]
-
-TOOL_ZIC		Time zone compiler.  [zic]
 
 
 Other variables of note (incomplete list):
