@@ -1,4 +1,4 @@
-/* $NetBSD: linux_support.S,v 1.2 2008/10/26 20:22:01 christos Exp $ */
+/* $NetBSD: linux_support.S,v 1.3 2008/10/26 22:33:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2006,2007 Konstantin Belousov
@@ -35,6 +35,7 @@
 #include <machine/asm.h>
 
 #include "assym.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/errno.h>
 #include <machine/frameasm.h>
