@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.4 2008/01/25 12:03:36 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.5 2008/10/26 19:10:10 uwe Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -30,6 +30,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SH3_PTRACE_H_
+#define _SH3_PTRACE_H_
+
 /*
  * sh3-dependent ptrace definitions
  */
@@ -41,3 +44,5 @@
 	"(unused)", \
 	"PT_GETREGS", \
 	"PT_SETREGS",
+
+#endif	/* _SH3_PTRACE_H_ */
