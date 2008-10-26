@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2008/01/27 01:27:05 christos Exp $
+# $NetBSD: Makefile,v 1.8 2008/10/26 07:44:12 mrg Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -170,8 +170,14 @@ STATIC_MODULES+= pam_ssh
 .endif
  
 MODULE_DIR=../modules
+# XXX
+.ifdef _CURDIR
+PAM_DIR=${_CURDIR}
+.else
+PAM_DIR=${.CURDIR}
+.endif
 .for MOD in ${STATIC_MODULES}
-MODOBJDIR!=	cd ${.CURDIR}/${MODULE_DIR}/${MOD} && ${PRINTOBJDIR}
+MODOBJDIR!=	cd ${PAM_DIR}/${MODULE_DIR}/${MOD} && ${PRINTOBJDIR}
 STATIC_MODULE_LIBS:= ${STATIC_MODULE_LIBS} ${MODOBJDIR}/lib${MOD}.a
 .endfor
 
