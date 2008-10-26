@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.34 2008/10/12 23:00:53 mrg Exp $
+# $NetBSD: md.amd64,v 1.35 2008/10/26 02:14:59 mrg Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -66,10 +66,79 @@
 ./usr/include/amd64/varargs.h			comp-c-include
 ./usr/include/amd64/vmparam.h			comp-c-include
 ./usr/include/amd64/wchar_limits.h		comp-c-include
-./usr/include/ieeefp.h				comp-c-include
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
-./usr/include/mmintrin.h			comp-c-include		gcccmds
+./usr/include/i386				comp-c-include
+./usr/include/i386/ansi.h			comp-c-include
+./usr/include/i386/aout_machdep.h		comp-c-include
+./usr/include/i386/apmvar.h			comp-c-include
+./usr/include/i386/asm.h			comp-c-include
+./usr/include/i386/bioscall.h			comp-c-include
+./usr/include/i386/bootinfo.h			comp-c-include
+./usr/include/i386/bswap.h			comp-c-include
+./usr/include/i386/bus.h			comp-c-include
+./usr/include/i386/byte_swap.h			comp-c-include
+./usr/include/i386/cdefs.h			comp-c-include
+./usr/include/i386/cpu.h			comp-c-include
+./usr/include/i386/cpufunc.h			comp-c-include
+./usr/include/i386/cputypes.h			comp-c-include
+./usr/include/i386/disklabel.h			comp-c-include
+./usr/include/i386/elf_machdep.h		comp-c-include
+./usr/include/i386/endian.h			comp-c-include
+./usr/include/i386/endian_machdep.h		comp-c-include
+./usr/include/i386/float.h			comp-c-include
+./usr/include/i386/frame.h			comp-c-include
+./usr/include/i386/freebsd_machdep.h		comp-c-include
+./usr/include/i386/gdt.h			comp-c-include
+./usr/include/i386/ibcs2_machdep.h		comp-c-include
+./usr/include/i386/ieee.h			comp-c-include
+./usr/include/i386/ieeefp.h			comp-c-include
+./usr/include/i386/int_const.h			comp-c-include
+./usr/include/i386/int_fmtio.h			comp-c-include
+./usr/include/i386/int_limits.h			comp-c-include
+./usr/include/i386/int_mwgwtypes.h		comp-c-include
+./usr/include/i386/int_types.h			comp-c-include
+./usr/include/i386/intr.h			comp-c-include
+./usr/include/i386/intrdefs.h			comp-c-include
+./usr/include/i386/joystick.h			comp-c-include
+./usr/include/i386/kcore.h			comp-c-include
+./usr/include/i386/limits.h			comp-c-include
+./usr/include/i386/lock.h			comp-c-include
+./usr/include/i386/math.h			comp-c-include
+./usr/include/i386/mcontext.h			comp-c-include
+./usr/include/i386/mtrr.h			comp-c-include
+./usr/include/i386/multiboot.h			comp-c-include
+./usr/include/i386/mutex.h			comp-c-include
+./usr/include/i386/npx.h			comp-c-include
+./usr/include/i386/param.h			comp-c-include
+./usr/include/i386/pcb.h			comp-c-include
+./usr/include/i386/pio.h			comp-c-include
+./usr/include/i386/pmap.h			comp-c-include
+./usr/include/i386/pmc.h			comp-c-include
+./usr/include/i386/proc.h			comp-c-include
+./usr/include/i386/profile.h			comp-c-include
+./usr/include/i386/psl.h			comp-c-include
+./usr/include/i386/pte.h			comp-c-include
+./usr/include/i386/ptrace.h			comp-c-include
+./usr/include/i386/reg.h			comp-c-include
+./usr/include/i386/rwlock.h			comp-c-include
+./usr/include/i386/segments.h			comp-c-include
+./usr/include/i386/setjmp.h			comp-c-include
+./usr/include/i386/signal.h			comp-c-include
+./usr/include/i386/specialreg.h			comp-c-include
+./usr/include/i386/spkr.h			comp-c-include
+./usr/include/i386/stdarg.h			comp-c-include
+./usr/include/i386/svr4_machdep.h		comp-c-include
+./usr/include/i386/sysarch.h			comp-c-include
+./usr/include/i386/trap.h			comp-c-include
+./usr/include/i386/tss.h			comp-c-include
+./usr/include/i386/types.h			comp-c-include
+./usr/include/i386/varargs.h			comp-c-include
+./usr/include/i386/vm86.h			comp-c-include
+./usr/include/i386/vmparam.h			comp-c-include
+./usr/include/i386/wchar_limits.h		comp-c-include
+./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mm_malloc.h			comp-c-include		gcccmds,gcc=4
+./usr/include/mmintrin.h			comp-c-include		gcccmds
 ./usr/include/pmmintrin.h			comp-c-include		gcccmds,gcc=4
 ./usr/include/x64_64				comp-obsolete		obsolete
 ./usr/include/x64_64/ansi.h			comp-obsolete		obsolete
