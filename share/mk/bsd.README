@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.233 2008/10/25 14:58:00 apb Exp $
+#	$NetBSD: bsd.README,v 1.234 2008/10/26 07:09:11 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -122,6 +122,9 @@ MKBFD		If "no", don't build libbfd, libiberty, or any of the things
 
 MKCATPAGES	If "no", don't build or install the catman pages.
 		Default: yes
+
+MKCOMPAT  	If "no", don't build or install the src/compat.
+		Default: yes on amd64/sparc64, no elsewhere.
 
 MKCOMPLEX	If "no", don't build libm support for <complex.h>
 		Default: yes
