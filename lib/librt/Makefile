@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2008/07/02 20:05:16 rmind Exp $
+#	$NetBSD: Makefile,v 1.9 2008/10/26 07:28:49 mrg Exp $
 #
 
 WARNS=	2
@@ -33,15 +33,7 @@ MLINKS+=	sched.3 sched_yield.3
 
 .include <bsd.own.mk>
 
-.if exists(${NETBSDSRCDIR}/lib/libc/arch/${MACHINE_ARCH})
-ARCHDIR=	${NETBSDSRCDIR}/lib/libc/arch/${MACHINE_ARCH}
-.elif exists(${NETBSDSRCDIR}/lib/libc/arch/${MACHINE_CPU})
-ARCHDIR=	${NETBSDSRCDIR}/lib/libc/arch/${MACHINE_CPU}
-.else
-.BEGIN:
-	@echo no ARCHDIR for ${MACHINE_ARCH} nor ${MACHINE_CPU}
-	@false
-.endif
+.include "${.CURDIR}/../libc/libcincludes.mk"
 
 AFLAGS+=-I${ARCHDIR}
 
