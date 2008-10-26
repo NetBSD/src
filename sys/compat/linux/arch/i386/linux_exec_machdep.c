@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_machdep.c,v 1.6 2008/10/25 23:38:28 christos Exp $	*/
+/*	$NetBSD: linux_exec_machdep.c,v 1.7 2008/10/26 03:43:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.6 2008/10/25 23:38:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.7 2008/10/26 03:43:42 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_machdep.c,v 1.6 2008/10/25 23:38:28 chris
 #include <compat/linux/common/linux_exec.h>
 #include <compat/linux/common/linux_errno.h>
 #include <compat/linux//linux_syscallargs.h>
+
 
 int
 linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
@@ -132,6 +133,12 @@ linux_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 
 
 #ifdef LINUX_NPTL
+static __inline void
+load_gs(u_int sel)
+{
+        __asm __volatile("movl %0,%%gs" : : "rm" (sel)); 
+}
+
 
 int
 linux_init_thread_area(struct lwp *l, struct lwp *l2)
@@ -175,8 +182,12 @@ linux_init_thread_area(struct lwp *l, struct lwp *l2)
 	    sd.sd_hibase, sd.sd_lolimit, sd.sd_hilimit, sd.sd_type, sd.sd_dpl,
 	    sd.sd_p, sd.sd_xx, sd.sd_def32, sd.sd_gran));
 
-	(void)memcpy(pcb2->pcb_gsd, &sd, sizeof(pcb2->pcb_gsd));
+	kpreempt_disable();
+	(void)memcpy(&pcb2->pcb_gsd, &sd, sizeof(sd));
+	(void)memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
 	tf2->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
+	load_gs(tf2->tf_gs);
+	kpreempt_enable();
 	return 0;
 }
 
@@ -255,8 +266,12 @@ linux_sys_set_thread_area(struct lwp *l,
 	    sd.sd_hilimit, sd.sd_type, sd.sd_dpl, sd.sd_p, sd.sd_xx,
 	    sd.sd_def32, sd.sd_gran));
 
-	(void)memcpy(pcb->pcb_gsd, &sd, sizeof(pcb->pcb_gsd));
+	kpreempt_disable();
+	(void)memcpy(&pcb->pcb_gsd, &sd, sizeof(sd));
+	(void)memcpy(&curcpu()->ci_gdt[GUGS_SEL], &sd, sizeof(sd));
 	tf->tf_gs = GSEL(GUGS_SEL, SEL_UPL);
+	load_gs(tf->tf_gs);
+	kpreempt_enable();
 	return 0;
 }
 
