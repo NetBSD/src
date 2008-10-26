@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.92 2008/10/25 23:38:28 christos Exp $
+	$NetBSD: syscalls.master,v 1.93 2008/10/26 16:38:22 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -496,3 +496,39 @@
 281	UNIMPL		mq_notify
 282	UNIMPL		mq_getsetattr
 283	UNIMPL		sys_kexec_load
+284	UNIMPL		waitid
+285	OBSOL		/* XXXJDM really? */
+286	UNIMPL		add_key
+287	UNIMPL		request_key
+288	UNIMPL		keyctl
+289	UNIMPL		ioprio_set
+290	UNIMPL		ioprio_get
+291	UNIMPL		inotify_init
+292	UNIMPL		inotify_add_watch
+293	UNIMPL		inotify_rm_watch
+294	UNIMPL		migrate_pages
+295	UNIMPL		openat
+296	UNIMPL		mkdirat
+297	UNIMPL		mknodat
+298	UNIMPL		fchownat
+299	UNIMPL		futimesat
+300	UNIMPL		fstatat64
+301	UNIMPL		unlinkat
+302	UNIMPL		renameat
+303	UNIMPL		linkat
+304	UNIMPL		symlinkat
+305	UNIMPL		readlinkat
+306	UNIMPL		fchmodat
+307	UNIMPL		faccessat
+308	UNIMPL		pselect6
+309	UNIMPL		ppoll
+310	UNIMPL		unshare
+311	STD		{ int linux_sys_set_robust_list( \
+			    struct linux_robust_list_head *head, size_t len); }
+312	STD		{ int linux_sys_get_robust_list(int pid, \
+			    struct linux_robust_list_head **head, \
+			    size_t *len); }
+313	UNIMPL		splice
+314	UNIMPL		sync_file_range
+315	UNIMPL		tee
+316	UNIMPL		vmsplice

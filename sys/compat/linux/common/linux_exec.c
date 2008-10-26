@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.106 2008/10/15 06:51:19 wrstuden Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.107 2008/10/26 16:38:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.106 2008/10/15 06:51:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.107 2008/10/26 16:38:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,7 @@ linux_e_proc_init(p, parent, forkflags)
 	memset(e, '\0', sizeof(struct linux_emuldata));
 
 	e->proc = p;
+	e->robust_futexes = NULL;
 
 	if (parent)
 		ep = parent->p_emuldata;
@@ -246,6 +247,8 @@ linux_e_proc_exit(struct proc *p)
 #ifdef LINUX_NPTL
 	linux_nptl_proc_exit(p);
 #endif
+
+	release_futexes(p);
 
 	/* Remove the thread for the group thread list */
 	mutex_enter(proc_lock);
