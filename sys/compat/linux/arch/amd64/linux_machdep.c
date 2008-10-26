@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.33 2008/10/19 09:44:31 njoly Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.34 2008/10/26 20:25:49 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.33 2008/10/19 09:44:31 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.34 2008/10/26 20:25:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -567,8 +567,8 @@ linux_sys_arch_prctl(struct lwp *l, const struct linux_sys_arch_prctl_args *uap,
 const int linux_vsyscall_to_syscall[] = {
 	LINUX_SYS_gettimeofday,
 	LINUX_SYS_time,
-	LINUX_SYS_nosys,
-	LINUX_SYS_nosys,
+	LINUX_SYS_nosys,	/* nosys */
+	LINUX_SYS_nosys,	/* nosys */
 };
 
 int
