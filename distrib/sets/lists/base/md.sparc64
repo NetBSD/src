@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.19 2008/10/26 07:31:40 mrg Exp $
+# $NetBSD: md.sparc64,v 1.20 2008/10/27 15:17:58 mrg Exp $
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
@@ -197,6 +197,29 @@
 ./usr/lib/sparc/libwrap.so.0.2			base-i18n-shlib		compat
 ./usr/lib/sparc/libz.so.1			base-i18n-shlib		compat
 ./usr/lib/sparc/libz.so.1.0			base-i18n-shlib		compat
+./usr/lib/sparc/security			base-compat-shlib	compat
+./usr/lib/sparc/security/pam_afslog.so.1	base-compat-shlib	compat
+./usr/lib/sparc/security/pam_chroot.so.1	base-compat-shlib	compat
+./usr/lib/sparc/security/pam_deny.so.1		base-compat-shlib	compat
+./usr/lib/sparc/security/pam_echo.so.1		base-compat-shlib	compat
+./usr/lib/sparc/security/pam_exec.so.1		base-compat-shlib	compat
+./usr/lib/sparc/security/pam_ftpusers.so.1	base-compat-shlib	compat
+./usr/lib/sparc/security/pam_group.so.1		base-compat-shlib	compat
+./usr/lib/sparc/security/pam_guest.so.1		base-compat-shlib	compat
+./usr/lib/sparc/security/pam_krb5.so.1		base-compat-shlib	compat
+./usr/lib/sparc/security/pam_ksu.so.1		base-compat-shlib	compat
+./usr/lib/sparc/security/pam_lastlog.so.1	base-compat-shlib	compat
+./usr/lib/sparc/security/pam_login_access.so.1	base-compat-shlib	compat
+./usr/lib/sparc/security/pam_nologin.so.1	base-compat-shlib	compat
+./usr/lib/sparc/security/pam_permit.so.1	base-compat-shlib	compat
+./usr/lib/sparc/security/pam_radius.so.1	base-compat-shlib	compat
+./usr/lib/sparc/security/pam_rhosts.so.1	base-compat-shlib	compat
+./usr/lib/sparc/security/pam_rootok.so.1	base-compat-shlib	compat
+./usr/lib/sparc/security/pam_securetty.so.1	base-compat-shlib	compat
+./usr/lib/sparc/security/pam_self.so.1		base-compat-shlib	compat
+./usr/lib/sparc/security/pam_skey.so.1		base-compat-shlib	compat
+./usr/lib/sparc/security/pam_ssh.so.1		base-compat-shlib	compat
+./usr/lib/sparc/security/pam_unix.so.1		base-compat-shlib	compat
 ./usr/lkm/compat_netbsd32.o			base-netbsd32-lkm
 ./usr/lkm/compat_sunos32.o			base-sunos32-lkm
 ./usr/lkm/compat_svr4.o				base-svr4-lkm
