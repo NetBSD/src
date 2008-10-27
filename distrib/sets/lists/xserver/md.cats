@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.24 2008/09/24 10:11:29 rtr Exp $
+# $NetBSD: md.cats,v 1.25 2008/10/27 20:30:47 veego Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -360,12 +360,16 @@
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so.1	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/cirrus_alpine.so	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so	-obsolete-	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_alpine_drv.so.1	-obsolete-	obsolete
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_drv.so.1		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so.1	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/cirrus_laguna.so	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so	-obsolete-	obsolete
+./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so.1	-obsolete-	obsolete
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg
@@ -390,6 +394,8 @@
 ./usr/X11R7/lib/modules/drivers/nv_drv.so.2		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so.6		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/radeonhd_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/s3_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/s3_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/s3virge_drv.so		-unknown-	xorg
@@ -560,6 +566,7 @@
 ./usr/X11R7/man/cat4/nsc.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/nv.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/radeon.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/radeonhd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/s3virge.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/savage.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/siliconmotion.0			-unknown-	.cat,xorg
@@ -591,6 +598,7 @@
 ./usr/X11R7/man/html4/nsc.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/nv.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/radeon.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/radeonhd.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/s3virge.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/savage.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/siliconmotion.html		-unknown-	html,xorg
@@ -622,6 +630,7 @@
 ./usr/X11R7/man/man4/nsc.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/nv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/radeon.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/radeonhd.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/s3virge.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/savage.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/siliconmotion.4			-unknown-	.man,xorg
