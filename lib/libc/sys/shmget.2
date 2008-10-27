@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmget.2,v 1.21 2008/10/27 15:42:04 erh Exp $
+.\"	$NetBSD: shmget.2,v 1.22 2008/10/27 16:49:10 wiz Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 13, 2004
+.Dd October 27, 2008
 .Dt SHMGET 2
 .Os
 .Sh NAME
@@ -124,9 +124,24 @@ are set in
 .Fa shmflg ,
 and a shared memory segment is already associated with
 .Fa key .
-.It Bq Er ENOSPC
-A new shared memory identifier could not be created because the system limit
-for the number of shared memory identifiers has been reached.
+.It Bq Er EINVAL
+No shared memory segment is to be created, and a shared memory segment
+exists for
+.Fa key ,
+but the size of the segment associated with it is less
+than
+.Fa size ,
+which is non-zero.
+.Pp
+A shared memory segment
+.Em is
+to be created, and
+.Fa size
+is less than the system imposed minimum, or greater than the system
+imposed maximum (refer to the
+.Li kern.ipc
+values in
+.Xr sysctl 7 ) .
 .It Bq Er ENOENT
 .Dv IPC_CREAT
 is not set in
@@ -137,21 +152,9 @@ was found.
 .It Bq Er ENOMEM
 There is not enough memory left to create a shared memory segment of the
 requested size.
-.It Bq Er EINVAL
-No shared memory segment is to be created, and a shared memory segment 
-exists for 
-.Fa key ,
-but the size of the segment associated with it is less 
-than 
-.Fa size ,
-which is non-zero.
-.Pp
-A shared memory segment
-.Em is
-to be created, and 
-.Fa size 
-is less than the system imposed minimum, or greater than the system imposed maximum (Refer to the kern.ipc values in
-.Xr sysctl 7 ) .
+.It Bq Er ENOSPC
+A new shared memory identifier could not be created because the system limit
+for the number of shared memory identifiers has been reached.
 .El
 .Sh SEE ALSO
 .Xr ipcrm 1 ,
