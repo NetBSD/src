@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.22 2008/10/27 07:45:38 jnemeth Exp $
+# $NetBSD: md.amd64,v 1.23 2008/10/27 15:17:58 mrg Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -262,6 +262,29 @@
 ./usr/lib/i386/libwrap.so.0.2			base-i18n-shlib		compat
 ./usr/lib/i386/libz.so.1			base-i18n-shlib		compat
 ./usr/lib/i386/libz.so.1.0			base-i18n-shlib		compat
+./usr/lib/i386/security				base-compat-shlib	compat
+./usr/lib/i386/security/pam_afslog.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_chroot.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_deny.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_echo.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_exec.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_ftpusers.so.1	base-compat-shlib	compat
+./usr/lib/i386/security/pam_group.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_guest.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_krb5.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_ksu.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_lastlog.so.1	base-compat-shlib	compat
+./usr/lib/i386/security/pam_login_access.so.1	base-compat-shlib	compat
+./usr/lib/i386/security/pam_nologin.so.1	base-compat-shlib	compat
+./usr/lib/i386/security/pam_permit.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_radius.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_rhosts.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_rootok.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_securetty.so.1	base-compat-shlib	compat
+./usr/lib/i386/security/pam_self.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_skey.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_ssh.so.1		base-compat-shlib	compat
+./usr/lib/i386/security/pam_unix.so.1		base-compat-shlib	compat
 ./usr/lib/libx86_64.so.0			base-sys-shlib
 ./usr/lib/libx86_64.so.0.0			base-sys-shlib
 ./usr/libexec/ld.elf_so-i386			base-sys-shlib		compat
