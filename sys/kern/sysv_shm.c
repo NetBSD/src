@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.112 2008/10/07 09:35:03 rmind Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.113 2008/10/27 15:40:56 erh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.112 2008/10/07 09:35:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.113 2008/10/27 15:40:56 erh Exp $");
 
 #define SYSVSHM
 
@@ -623,15 +623,20 @@ again:
 		goto again;
 	}
 
-	/* Check the permission, segment size and appropriate flag */
+	/*
+	 * First check the flags, to generate a useful error when a
+	 * segment already exists.
+	 */
+	if ((SCARG(uap, shmflg) & (IPC_CREAT | IPC_EXCL)) ==
+	    (IPC_CREAT | IPC_EXCL))
+		return EEXIST;
+
+	/* Check the permission and segment size. */
 	error = ipcperm(cred, &shmseg->shm_perm, mode);
 	if (error)
 		return error;
 	if (SCARG(uap, size) && SCARG(uap, size) > shmseg->shm_segsz)
 		return EINVAL;
-	if ((SCARG(uap, shmflg) & (IPC_CREAT | IPC_EXCL)) ==
-	    (IPC_CREAT | IPC_EXCL))
-		return EEXIST;
 
 	*retval = IXSEQ_TO_IPCID(segnum, shmseg->shm_perm);
 	return 0;
