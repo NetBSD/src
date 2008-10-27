@@ -62,7 +62,7 @@ static const int regmap[] =
 };
 
 /* Sizeof `struct reg' in <machine/reg.h>.  */
-#define SHNBSD_SIZEOF_GREGS	(21 * 4)
+#define SHNBSD_SIZEOF_GREGS	(22 * 4)
 
 /* From <machine/mcontext.h>.  */
 static const int shnbsd_mc_reg_offset[] =
@@ -85,7 +85,7 @@ static const int shnbsd_mc_reg_offset[] =
   (21 * 4),	/* r15/sp */
   ( 1 * 4),	/* pc */
   ( 5 * 4),	/* pr */
-  -1,
+  ( 0 * 4),	/* gbr */
   -1,
   ( 4 * 4),	/* mach */
   ( 3 * 4),	/* macl */
@@ -128,6 +128,9 @@ shnbsd_supply_gregset (const struct regset *regset,
       if (regnum == i || regnum == -1)
 	regcache_raw_supply (regcache, i, regs + regmap[i - R0_REGNUM]);
     }
+
+  if (regnum == GBR_REGNUM || regnum == -1)
+    regcache_raw_supply (regcache, GBR_REGNUM, regs + (21 * 4));
 }
 
 /* Collect register REGNUM in the general-purpose register set
@@ -167,6 +170,9 @@ shnbsd_collect_gregset (const struct regset *regset,
       if (regnum == i || regnum == -1)
 	regcache_raw_collect (regcache, i, regs + regmap[i - R0_REGNUM]);
     }
+
+  if (regnum == GBR_REGNUM || regnum == -1)
+    regcache_raw_collect (regcache, GBR_REGNUM, regs + (21 * 4));
 }
 
 /* Hitachi SH instruction encoding masks and opcodes */
