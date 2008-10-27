@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.268 2008/08/30 18:33:47 tsutsui Exp $
+#	$NetBSD: BRANCHES,v 1.269 2008/10/27 08:13:08 skrll Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -419,6 +419,17 @@ Base Tag:	mjf-ufs-trans-base
 Maintainer:	Matt Fleming <mjf@NetBSD.org>
 Scope:		kernel
 Notes:
+
+Branch:		nick-hppapmap
+Description:	Update of hppa pmap with OpenBSD code.
+Status:		Active
+Start Date:	27 October 2008
+End Date:
+Base Tag:	nick-hppapmap-base
+Maintainer:	Nick Hudson <skrll@NetBSD.org>
+Scope:		sys/
+Notes:		Port of the OpenBSD pmap including support for PA2.0 CPUs in
+		32-bit mode.
 
 Branch:		nick-net80211-sync
 Description:	sync of net80211 with FreeBSD
