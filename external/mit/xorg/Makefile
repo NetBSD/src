@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/08/27 23:47:40 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2008/10/27 20:32:41 veego Exp $
 
 # Top level Makefile to cross build xorg inside the NetBSD tree.
 
@@ -36,9 +36,11 @@ do-build:
 	${MAKEDIRTARGET} . ${targ}
 .endfor
 
-.for dir in	tools lib/libX11 lib/libICE lib/libXau lib/libSM lib/libXext \
-		lib/libXt lib/libXpm lib/libXrender lib/libGL lib/libXmu \
-		lib/expat lib
+.for dir in	tools lib/libXdmcp lib/libXau lib/libX11 lib/libICE lib/libSM \
+		lib/libXext lib/libXpm lib/libXt lib/libXrender lib/libXfixes \
+		lib/libXdamage lib/libdrm lib/libXxf86vm lib/libGL lib/libXmu \
+		lib/expat lib/freetype lib/fontconfig lib/libXp lib/libXrandr \
+		lib
 do-${dir:S/\//-/g}:
 .  for targ in dependall install
 	${MAKEDIRTARGET} ${dir} ${targ}
