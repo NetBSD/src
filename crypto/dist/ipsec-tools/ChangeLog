@@ -4,6 +4,7 @@
 	* src/racoon/session.c: initfds() needs to be called only if
 	  monitored file descriptor numbers have changed
 	* src/racoon/grabmyaddr.c: fix indentation issues for readability
+	* src/racoon/pfkey.c: add missing return to error path
 	From Francis Dupont (sent by Arnaud Ebalard):
 	* src/racoon/grabmyaddr.c: recognize RTM_IFANNOUNCE
 
