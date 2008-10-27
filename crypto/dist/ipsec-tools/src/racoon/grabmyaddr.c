@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.9 2008/10/27 06:21:29 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.10 2008/10/27 06:24:27 tteras Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -667,6 +667,9 @@ update_myaddrs()
 	case RTM_DELADDR:
 	case RTM_DELETE:
 	case RTM_IFINFO:
+#ifdef RTM_IFANNOUNCE
+	case RTM_IFANNOUNCE:
+#endif
 		break;
 	case RTM_MISS:
 		/* ignore this message silently */
