@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.34 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.35 2008/10/27 06:27:05 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.34 2008/09/19 11:14:49 tteras Exp $ */
+/* $Id: pfkey.c,v 1.35 2008/10/27 06:27:05 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1033,6 +1033,7 @@ pk_sendupdate(iph2)
 	if (iph2->approval == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"no approvaled SAs found.\n");
+		return -1;
 	}
 
 	if (iph2->side == INITIATOR)
