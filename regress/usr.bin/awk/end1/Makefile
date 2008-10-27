@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2005/03/23 17:28:55 he Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/27 20:59:22 apb Exp $
 
 NOMAN=  	# defined
 
@@ -7,7 +7,7 @@ NOMAN=  	# defined
 CLEANFILES=	result
 
 regress:
-	${AWK} -f ${.CURDIR}/test.awk ${.CURDIR}/input > result
+	${TOOL_AWK} -f ${.CURDIR}/test.awk ${.CURDIR}/input > result
 	@cmp ${.CURDIR}/expected result
 
 .include <bsd.prog.mk>
