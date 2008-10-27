@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsdiskless.h,v 1.28 2008/10/24 17:17:12 cegger Exp $	*/
+/*	$NetBSD: nfsdiskless.h,v 1.29 2008/10/27 10:58:23 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -80,18 +80,22 @@ int nfs_boot_sendrecv (struct socket *, struct mbuf *,
 			   int (*)(struct mbuf*, void*), struct mbuf**,
 			   struct mbuf**, void*, struct lwp *);
 
-int nfs_bootdhcp  (struct nfs_diskless *, struct lwp *);
-int nfs_bootparam (struct nfs_diskless *, struct lwp *);
-int nfs_bootstatic (struct nfs_diskless *, struct lwp *);
+int nfs_bootdhcp  (struct nfs_diskless *, struct lwp *, int *);
+int nfs_bootparam (struct nfs_diskless *, struct lwp *, int *);
+int nfs_bootstatic (struct nfs_diskless *, struct lwp *, int *);
 
 extern int (*nfs_bootstatic_callback)(struct nfs_diskless *);
 
-#define	NFS_BOOTSTATIC_HAS_MYIP		0x01
-#define	NFS_BOOTSTATIC_HAS_GWIP		0x02
-#define	NFS_BOOTSTATIC_HAS_MASK		0x04
-#define	NFS_BOOTSTATIC_HAS_SERVADDR	0x08
-#define	NFS_BOOTSTATIC_HAS_SERVER	0x10
-#define	NFS_BOOTSTATIC_NOSTATIC		0x20
+#define NFS_BOOT_HAS_MYIP	0x01
+#define NFS_BOOT_HAS_GWIP	0x02
+#define NFS_BOOT_HAS_MASK	0x04
+#define NFS_BOOT_HAS_SERVADDR	0x08
+#define NFS_BOOT_HAS_SERVER	0x10
+#define NFS_BOOT_NOSTATIC	0x20
+#define NFS_BOOT_HAS_ROOTPATH	0x40
+
+#define NFS_BOOT_ALLINFO	(NFS_BOOT_HAS_MYIP|NFS_BOOT_HAS_GWIP|NFS_BOOT_HAS_MASK|NFS_BOOT_HAS_SERVADDR|NFS_BOOT_HAS_SERVER|NFS_BOOT_HAS_ROOTPATH)
+
 #endif /* _KERNEL */
 
 #endif /* _NFS_NFSDISKLESS_H_ */

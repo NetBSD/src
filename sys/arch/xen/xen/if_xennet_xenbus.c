@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.27 2008/10/25 17:12:29 jym Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.28 2008/10/27 10:58:22 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.27 2008/10/25 17:12:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.28 2008/10/27 10:58:22 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -1158,6 +1158,7 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	struct xennet_xenbus_softc *sc =
 	    (struct xennet_xenbus_softc *)ifp->if_softc;
 #endif
+	int flags = 0;
 	union xen_cmdline_parseinfo xcp;
 	struct sockaddr_in *sin;
 
@@ -1165,6 +1166,12 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	xcp.xcp_netinfo.xi_ifno = /* XXX sc->sc_ifno */ 0;
 	xcp.xcp_netinfo.xi_root = nd->nd_root.ndm_host;
 	xen_parse_cmdline(XEN_PARSE_NETINFO, &xcp);
+
+	if (xcp.xcp_netinfo.xi_root[0] != '\0') {
+		flags |= NFS_BOOT_HAS_SERVER;
+		if (strchr(xcp.xcp_netinfo.xi_root, ':') != NULL)
+			flags |= NFS_BOOT_HAS_ROOTPATH;
+	}
 
 	nd->nd_myip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[0]);
 	nd->nd_gwip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[2]);
@@ -1175,12 +1182,17 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
-	if (nd->nd_myip.s_addr == 0)
-		return NFS_BOOTSTATIC_NOSTATIC;
-	else
-		return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
-		    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
-		    NFS_BOOTSTATIC_HAS_SERVER);
+
+	if (nd->nd_myip.s_addr)
+		flags |= NFS_BOOT_HAS_MYIP;
+	if (nd->nd_gwip.s_addr)
+		flags |= NFS_BOOT_HAS_GWIP;
+	if (nd->nd_mask.s_addr)
+		flags |= NFS_BOOT_HAS_MASK;
+	if (sin->sin_addr.s_addr)
+		flags |= NFS_BOOT_HAS_SERVADDR;
+
+	return flags;
 }
 #endif /* defined(NFS_BOOT_BOOTSTATIC) */
 
