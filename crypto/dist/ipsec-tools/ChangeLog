@@ -1,6 +1,8 @@
 2008-08-27  Timo Teras  <timo.teras@iki.fi>
 	From Arnaud Ebalard <arno@natisbad.org>:
 	* src/racoon/isakmp_var.h: remove duplicate declaration
+	* src/racoon/session.c: initfds() needs to be called only if
+	  monitored file descriptor numbers have changed
 
 2008-08-06  Timo Teras  <timo.teras@iki.fi>
 	From Krzysztof Piotr Oledzki <olel@ans.pl>:
