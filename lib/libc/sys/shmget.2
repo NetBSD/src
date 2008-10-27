@@ -1,4 +1,4 @@
-.\"	$NetBSD: shmget.2,v 1.20 2004/05/13 10:10:46 wiz Exp $
+.\"	$NetBSD: shmget.2,v 1.21 2008/10/27 15:42:04 erh Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -137,6 +137,21 @@ was found.
 .It Bq Er ENOMEM
 There is not enough memory left to create a shared memory segment of the
 requested size.
+.It Bq Er EINVAL
+No shared memory segment is to be created, and a shared memory segment 
+exists for 
+.Fa key ,
+but the size of the segment associated with it is less 
+than 
+.Fa size ,
+which is non-zero.
+.Pp
+A shared memory segment
+.Em is
+to be created, and 
+.Fa size 
+is less than the system imposed minimum, or greater than the system imposed maximum (Refer to the kern.ipc values in
+.Xr sysctl 7 ) .
 .El
 .Sh SEE ALSO
 .Xr ipcrm 1 ,
@@ -144,7 +159,8 @@ requested size.
 .Xr mmap 2 ,
 .Xr shmat 2 ,
 .Xr shmctl 2 ,
-.Xr ftok 3
+.Xr ftok 3 ,
+.Xr sysctl 7
 .Sh STANDARDS
 The
 .Nm
