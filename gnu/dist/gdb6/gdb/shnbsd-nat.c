@@ -39,7 +39,7 @@
   (((regno) >= R0_REGNUM && (regno) <= (R0_REGNUM + 15)) \
 || (regno) == PC_REGNUM || (regno) == PR_REGNUM \
 || (regno) == MACH_REGNUM || (regno) == MACL_REGNUM \
-|| (regno) == SR_REGNUM)
+|| (regno) == SR_REGNUM || (regno) == GBR_REGNUM)
 
 void
 fetch_inferior_registers (int regno)
