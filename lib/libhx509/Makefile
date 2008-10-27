@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2008/08/29 00:02:22 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.5 2008/10/27 07:26:55 mrg Exp $
 
 USE_FORT?= yes	# cryptographic software
 
@@ -13,7 +13,7 @@ WARNS?=		1
 
 LIB=		hx509
 
-LIBDPLIBS=	crypto	${.CURDIR}/../libcrypto \
+LIBDPLIBS+=	crypto	${.CURDIR}/../libcrypto \
 		asn1	${.CURDIR}/../libasn1 \
 		roken	${.CURDIR}/../libroken
 
