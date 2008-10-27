@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.14 2008/10/26 19:43:20 uwe Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.15 2008/10/27 22:10:36 uwe Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2008/10/26 19:43:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15 2008/10/27 22:10:36 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,6 +112,12 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.14 2008/10/26 19:43:20 uwe Exp
 
 #include <machine/psl.h>
 #include <machine/reg.h>
+
+#include "opt_coredump.h"
+#include "opt_ptrace.h"
+
+
+#if defined(PTRACE) || defined(COREDUMP)
 
 static inline struct trapframe *
 process_frame(struct lwp *l)
@@ -150,6 +156,11 @@ process_read_regs(struct lwp *l, struct reg *regs)
 
 	return (0);
 }
+
+#endif /* PTRACE || COREDUMP */
+
+
+#ifdef PTRACE
 
 int
 process_write_regs(struct lwp *l, const struct reg *regs)
@@ -209,3 +220,5 @@ process_set_pc(struct lwp *l, void *addr)
 
 	return (0);
 }
+
+#endif /* PTRACE */
