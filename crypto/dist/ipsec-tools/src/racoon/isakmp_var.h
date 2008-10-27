@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.11 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.12 2008/10/27 06:14:04 tteras Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
@@ -57,7 +57,6 @@ struct sockaddr;
 struct ph1handle;
 struct ph2handle;
 struct remoteconf;
-struct isakmp_gen;
 struct ipsecdoi_pl_id;	/* XXX */
 struct isakmp_pl_ke;	/* XXX */
 struct isakmp_pl_nonce;	/* XXX */
