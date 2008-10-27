@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/26 13:00:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/27 07:22:55 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
@@ -11,7 +11,7 @@ NOCHECKVER=	# defined
 .include <bsd.obj.mk>
 
 # Resolve pathnames in variables.
-_RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD
+_RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD LIBDPLIBS
 .for var in ${_RESOLVE_VARS}
 ${var}:=        ${${var}}
 .endfor

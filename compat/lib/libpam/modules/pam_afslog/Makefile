@@ -1,24 +1,18 @@
-#	$NetBSD: Makefile,v 1.1 2008/10/26 07:38:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/27 07:22:54 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
 NONLS=	# defined
+NOINFO=	# defined
+NOSHARE=	# defined
+LIBDPLIBS=	krb5	${LIB_ROOT_DIR}/libkrb5  kafs	${LIB_ROOT_DIR}/libkafs  asn1	${LIB_ROOT_DIR}/libasn1  roken	${LIB_ROOT_DIR}/libroken  com_err	${LIB_ROOT_DIR}/libcom_err  crypt	${LIB_ROOT_DIR}/libcrypt  crypto	${LIB_ROOT_DIR}/libcrypto
 
 NOCHECKVER=	# defined
-
-# XXX
-.if ${MACHINE_ARCH} == "sparc64"
-ARCHSUBDIR=		sparc
-COMMON_ARCHSUBDIR=	sparc
-.elif ${MACHINE_ARCH} == "sparc64"
-ARCHSUBDIR=		i386
-COMMON_ARCHSUBDIR=	i386
-.endif
 
 .include <bsd.obj.mk>
 
 # Resolve pathnames in variables.
-_RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD
+_RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD LIBDPLIBS LIB_ROOT_DIR
 .for var in ${_RESOLVE_VARS}
 ${var}:=        ${${var}}
 .endfor
