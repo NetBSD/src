@@ -1,9 +1,9 @@
-/*	$NetBSD: cpu.c,v 1.10 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10.86.1 2008/10/27 08:02:40 skrll Exp $	*/
 
-/*	$OpenBSD: cpu.c,v 1.8 2000/08/15 20:38:24 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.28 2004/12/28 05:18:25 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998,1999 Michael Shalayeff
+ * Copyright (c) 1998-2003 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,26 +14,22 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
- * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * IN NO EVENT SHALL THE AUTHOR OR HIS RELATIVES BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF MIND, USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+ * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10 2005/12/11 12:17:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.10.86.1 2008/10/27 08:02:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,18 +93,20 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	cpu_attached = 1;
 
 	/* Print the CPU chip name, nickname, and rev. */
-	printf(": %s", hppa_cpu_info->hppa_cpu_info_chip_name);
-	if (hppa_cpu_info->hppa_cpu_info_chip_nickname != NULL)
-		printf(" (%s)", hppa_cpu_info->hppa_cpu_info_chip_nickname);
+// 	model = hppa_mod_info(HPPA_TYPE_CPU, pdc_model.hvers >> 4);                 <
+
+	printf(": %s", hppa_cpu_info->hci_chip_name);
+	if (hppa_cpu_info->hci_chip_nickname != NULL)
+		printf(" (%s)", hppa_cpu_info->hci_chip_nickname);
 	printf(" rev %d", (*hppa_cpu_info->desidhash)());
 
 	/* Print the CPU type, spec, level, category, and speed. */
 	printf("\n%s: %s, PA-RISC %d.%d",
 		self->dv_xname,
-		hppa_cpu_info->hppa_cpu_info_chip_type,
-		HPPA_PA_SPEC_MAJOR(hppa_cpu_info->hppa_cpu_info_pa_spec),
-		HPPA_PA_SPEC_MINOR(hppa_cpu_info->hppa_cpu_info_pa_spec));
-	c = HPPA_PA_SPEC_LETTER(hppa_cpu_info->hppa_cpu_info_pa_spec);
+		hppa_cpu_info->hci_chip_type,
+		HPPA_PA_SPEC_MAJOR(hppa_cpu_info->hci_pa_spec),
+		HPPA_PA_SPEC_MINOR(hppa_cpu_info->hci_pa_spec));
+	c = HPPA_PA_SPEC_LETTER(hppa_cpu_info->hci_pa_spec);
 	if (c != '\0') printf("%c", c);
 	printf(", lev %s, cat %c, ",
 		lvls[pdc_model.pa_lvl], "AB"[pdc_model.mc]);

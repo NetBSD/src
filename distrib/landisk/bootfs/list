@@ -1,4 +1,0 @@
-#	$NetBSD: list,v 1.1 2008/04/14 17:24:56 skrll Exp $
-
-COPY	${DESTDIR}/usr/mdec/boot		boot
-COPY	${RAMDISKDIR}/netbsd-INSTALL.gz		netbsd

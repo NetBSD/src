@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.45 2008/06/13 09:41:44 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.45.4.1 2008/10/27 08:02:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.45 2008/06/13 09:41:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.45.4.1 2008/10/27 08:02:40 skrll Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -214,12 +214,10 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 			if (btlb_size > hppa_btlb_size_max)
 				btlb_size = hppa_btlb_size_max;
 			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_insert(kernel_pmap->pmap_space, 
-						 bpa,
-						 bpa, &btlb_size,
-						 kernel_pmap->pmap_pid |
-					    	 pmap_prot(kernel_pmap,
-							   VM_PROT_ALL));
+			error = hppa_btlb_insert(pmap_kernel()->pmap_space, 
+			    bpa, bpa, &btlb_size,
+			    pmap_kernel()->pmap_pid |
+			    pmap_prot(pmap_kernel(), VM_PROT_READ | VM_PROT_WRITE));
 			if (error == 0) {
 				bpa += btlb_size;
 				frames -= (btlb_size >> PGSHIFT);
@@ -233,7 +231,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
 		/*
 		 * Enter another single-page mapping.
 		 */
-		pmap_kenter_pa(bpa, bpa, VM_PROT_ALL);
+		pmap_kenter_pa(bpa, bpa, VM_PROT_READ | VM_PROT_WRITE);
 		bpa += PAGE_SIZE;
 		frames--;
 	}
@@ -281,7 +279,7 @@ mbus_remove_mapping(bus_space_handle_t bsh, bus_size_t size, bus_addr_t *bpap)
 			if (btlb_size > hppa_btlb_size_max)
 				btlb_size = hppa_btlb_size_max;
 			btlb_size <<= PGSHIFT;
-			error = hppa_btlb_purge(kernel_pmap->pmap_space, 
+			error = hppa_btlb_purge(pmap_kernel()->pmap_space, 
 						bpa, &btlb_size);
 			if (error == 0) {
 				bpa += btlb_size;
@@ -1305,7 +1303,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 	TAILQ_FOREACH(pg, pglist, pageq.queue) {
 		KASSERT(size != 0);
 		pa = VM_PAGE_TO_PHYS(pg);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE | PMAP_NC);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.57 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.57.2.1 2008/10/27 08:02:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.57.2.1 2008/10/27 08:02:41 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -418,8 +418,6 @@ frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
 	extern int kernel_text;
 	extern int etext;
 	extern register_t kpsw;
-	extern vaddr_t hpt_base;
-	extern vsize_t hpt_mask;
 #define SANITY(e)					\
 do {							\
 	if (sanity_frame == NULL && !(e)) {		\
@@ -430,7 +428,6 @@ do {							\
 } while (/* CONSTCOND */ 0)
 
 	SANITY((tf->tf_ipsw & kpsw) == kpsw);
-	SANITY(tf->tf_hptm == hpt_mask && tf->tf_vtop == hpt_base);
 	SANITY((kpsw & PSW_I) == 0 || tf->tf_eiem != 0);
 	if (tf->tf_iisq_head == HPPA_SID_KERNEL) {
 		vaddr_t minsp, maxsp;
@@ -855,7 +852,7 @@ do_onfault:
 
 		va = trunc_page(va);
 
-		if (map->pmap->pmap_space != space) {
+		if (map->pmap->pm_space != space) {
 #ifdef TRAPDEBUG
 			printf("trap: space mismatch %d != %d\n",
 			    space, map->pmap->pmap_space);

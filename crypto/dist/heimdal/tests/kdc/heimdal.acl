@@ -1,4 +1,0 @@
-# $Heimdal$
-# $NetBSD: heimdal.acl,v 1.1 2008/03/22 09:42:44 mlelstv Exp $
-foo/admin@TEST.H5L.SE all
-bar@TEST.H5L.SE all

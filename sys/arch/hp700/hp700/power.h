@@ -1,4 +1,4 @@
-/* $NetBSD: power.h,v 1.2 2005/12/11 12:17:24 christos Exp $ */
+/* $NetBSD: power.h,v 1.2.86.1 2008/10/27 08:02:40 skrll Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -41,9 +41,8 @@
 #define		PWR_SW_CTRL_MIN		PWR_SW_CTRL_DISABLE
 #define		PWR_SW_CTRL_MAX		PWR_SW_CTRL_LOCK
 
-extern volatile u_int32_t *lasi_pwr_sw_reg;
+volatile u_int32_t *lasi_pwr_sw_reg;
 extern int pwr_sw_state;
 
-extern void pwr_sw_init(bus_space_tag_t);
-extern void pwr_sw_ctrl(int);
-
+void pwr_sw_init(bus_space_tag_t);
+void pwr_sw_ctrl(int);

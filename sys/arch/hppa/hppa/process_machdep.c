@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.9 2008/01/10 21:08:40 skrll Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.9.18.1 2008/10/27 08:02:41 skrll Exp $	*/
 
 /*	$OpenBSD: process_machdep.c,v 1.3 1999/06/18 05:19:52 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.9 2008/01/10 21:08:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.9.18.1 2008/10/27 08:02:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,4 +190,3 @@ process_set_pc(struct lwp *l, void *addr)
 
 	return 0;
 }
-
