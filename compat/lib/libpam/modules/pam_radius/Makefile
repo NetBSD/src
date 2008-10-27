@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/27 07:22:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/27 08:00:05 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
 NONLS=	# defined
 NOINFO=	# defined
 NOSHARE=	# defined
-LIBDPLIBS=	radius	${LIB_ROOT_DIR}/libradius
+LIBDPLIBS=	radius	${.CURDIR}/../../../libradius
 
 NOCHECKVER=	# defined
 
