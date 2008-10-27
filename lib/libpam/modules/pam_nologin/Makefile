@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2008/10/27 07:48:27 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2008/10/27 07:57:41 mrg Exp $
 # Copyright 2001 Mark R V Murray
 # All rights reserved.
 #
@@ -29,6 +29,6 @@ LIB=	pam_nologin
 SRCS=	pam_nologin.c
 MAN=	pam_nologin.8
 
-LIBDPLIBS=	util	${.CURDIR}/../../../libutil
+LIBDPLIBS+=	util	${.CURDIR}/../../../libutil
 
 .include "${.CURDIR}/../mod.mk"

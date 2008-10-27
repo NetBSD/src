@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2008/10/27 07:48:27 mrg Exp $
+# $NetBSD: Makefile,v 1.8 2008/10/27 07:57:41 mrg Exp $
 # Copyright 2001 Mark R V Murray
 # All rights reserved.
 #
@@ -31,6 +31,6 @@ MAN=	pam_lastlog.8
 
 CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX -DLOGIN_CAP
 
-LIBDPLIBS=	util	${.CURDIR}/../../../libutil
+LIBDPLIBS+=	util	${.CURDIR}/../../../libutil
 
 .include "${.CURDIR}/../mod.mk"
