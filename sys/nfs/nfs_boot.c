@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.76 2008/10/27 10:58:22 cegger Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.77 2008/10/27 13:24:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.76 2008/10/27 10:58:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.77 2008/10/27 13:24:01 cegger Exp $");
 
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
@@ -106,7 +106,12 @@ nfs_boot_init(struct nfs_diskless *nd, struct lwp *lwp)
 {
 	struct ifnet *ifp;
 	int error = 0;
-	int flags = 0;
+	int flags;
+
+	/* Explicitly necessary or build fails
+	 * due to unused variable, otherwise.
+	 */
+	flags = 0;
 
 	/*
 	 * Find the network interface.
