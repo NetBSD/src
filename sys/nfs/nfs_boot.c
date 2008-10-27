@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.75 2008/10/24 17:17:12 cegger Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.76 2008/10/27 10:58:22 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.75 2008/10/24 17:17:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.76 2008/10/27 10:58:22 cegger Exp $");
 
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
@@ -106,6 +106,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct lwp *lwp)
 {
 	struct ifnet *ifp;
 	int error = 0;
+	int flags = 0;
 
 	/*
 	 * Find the network interface.
@@ -122,7 +123,7 @@ nfs_boot_init(struct nfs_diskless *nd, struct lwp *lwp)
 #if defined(NFS_BOOT_BOOTSTATIC)
 	if (error && nfs_boot_bootstatic) {
 		printf("nfs_boot: trying static\n");
-		error = nfs_bootstatic(nd, lwp);
+		error = nfs_bootstatic(nd, lwp, &flags);
 	}
 #endif
 #if defined(NFS_BOOT_BOOTP) || defined(NFS_BOOT_DHCP)
@@ -132,13 +133,13 @@ nfs_boot_init(struct nfs_diskless *nd, struct lwp *lwp)
 #else
 		printf("nfs_boot: trying BOOTP\n");
 #endif
-		error = nfs_bootdhcp(nd, lwp);
+		error = nfs_bootdhcp(nd, lwp, &flags);
 	}
 #endif
 #ifdef NFS_BOOT_BOOTPARAM
 	if (error && nfs_boot_bootparam) {
 		printf("nfs_boot: trying RARP (and RPC/bootparam)\n");
-		error = nfs_bootparam(nd, lwp);
+		error = nfs_bootparam(nd, lwp, &flags);
 	}
 #endif
 	if (error)
@@ -528,6 +529,8 @@ nfs_boot_flushrt(struct ifnet *ifp)
  * Get an initial NFS file handle using Sun RPC/mountd.
  * Separate function because we used to call it twice.
  * (once for root and once for swap)
+ *
+ * ndm  output
  */
 static int
 nfs_boot_getfh(struct nfs_dlmount *ndm, struct lwp *l)
