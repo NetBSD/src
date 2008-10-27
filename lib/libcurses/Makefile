@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2008/05/13 15:27:30 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.61 2008/10/27 20:56:28 apb Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -178,7 +178,7 @@ SUBDIR+= PSD.doc
 .endif
 
 fileio.h: shlib_version genfileioh.awk
-	${AWK} -f genfileioh.awk < shlib_version > fileio.h
+	${TOOL_AWK} -f genfileioh.awk < shlib_version > fileio.h
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
