@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2008/10/24 19:43:57 macallan Exp $
+#	$NetBSD: Makefile,v 1.16 2008/10/27 20:39:32 veego Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -58,6 +58,7 @@ SUBDIR+= \
 	xf86-video-nv \
 	xf86-video-r128 \
 	xf86-video-radeon \
+	xf86-video-radeonhd \
 	xf86-video-s3 \
 	xf86-video-s3virge \
 	xf86-video-savage \
@@ -72,7 +73,6 @@ SUBDIR+= \
 .endif
 
 #xf86-video-wsfb
-#xf86-video-radeonhd
 #xf86-video-rendition
 
 .include <bsd.subdir.mk>
