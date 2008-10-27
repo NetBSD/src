@@ -1,5 +1,0 @@
-List of OpenLDAP Configuration OIDs allocated to contrib modules
-
-OLcfgCt{Oc|At}:1	smbk5pwd
-OLcfgCt{Oc|At}:2	autogroup
-OLcfgCt{Oc|At}:3	nssov

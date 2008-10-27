@@ -1,7 +1,0 @@
-Patch-name: Linux device-mapper
-Patch-id: device-mapper
-Path-strip-level: 1
-Architecture: all
-
-Patch-file: patches/linux-2.4.19-devmapper-ioctl.patch
-Kernel-version: 2.4.19

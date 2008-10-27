@@ -1,8 +1,8 @@
-/*	$NetBSD: locore.S,v 1.30 2008/08/08 17:23:19 skrll Exp $	*/
-/*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
+/*	$NetBSD: locore.S,v 1.30.2.1 2008/10/27 08:02:40 skrll Exp $	*/
+/*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
- * Copyright (c) 1998-2001 Michael Shalayeff
+ * Copyright (c) 1998-2004 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,11 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Michael Shalayeff.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -76,6 +71,7 @@
 #include <machine/intr.h>
 #include <machine/frame.h>
 #include <machine/reg.h>
+
 #include "assym.h"
 
 /* Some aliases for the macros in assym.h. */
@@ -83,31 +79,34 @@
 
 #define	ccr	cr10
 #define	rctr	cr0
-#define	vtop	cr25
-#define	hptmask	cr24
 
 /*
  * Very crude debugging macros that write to com1.
  */
+
+#if 1
+#define	COM1_TX_REG	(0xffd00000 + 0x5000 + 0x800)
+#else
 #define	COM1_TX_REG	(0xf0823000 + 0x800)
+#endif
 #define _DEBUG_PUTCHAR(reg1, reg2)		! \
 	ldil	L%COM1_TX_REG, %reg1		! \
 	stb	%reg2, R%COM1_TX_REG(%sr1, %reg1) ! \
-	ldil	L%60000000, %reg1		! \
+	ldil	L%10000000, %reg1		! \
 	ldi	1, %reg2			! \
 	comb,<>,n	%reg1, %r0, -8		! \
 	sub	%reg1, %reg2, %reg1
 #define DEBUG_PUTCHAR(reg1, reg2, ch)		! \
 	ldi	ch, %reg2			! \
-	_DEBUG_PUTCHAR(%reg1, %reg2)
+	_DEBUG_PUTCHAR(reg1,reg2)
 #define _DEBUG_DUMPN(reg1, reg2, reg3, p)	! \
 	extru	%reg3, p, 4, %reg2		! \
 	comib,>>,n	10, %reg2, 0		! \
 	addi	39, %reg2, %reg2		! \
 	addi	48, %reg2, %reg2		! \
-	_DEBUG_PUTCHAR(reg1, reg2)
+	_DEBUG_PUTCHAR(reg1,reg2)
 #define DEBUG_DUMP32(reg1, reg2, reg3)		! \
-	DEBUG_PUTCHAR(reg1, reg2, 58)		! \
+	DEBUG_PUTCHAR(reg1,reg2,58)		! \
 	_DEBUG_DUMPN(reg1, reg2, reg3, 3)	! \
 	_DEBUG_DUMPN(reg1, reg2, reg3, 7)	! \
 	_DEBUG_DUMPN(reg1, reg2, reg3, 11)	! \
@@ -117,22 +116,36 @@
 	_DEBUG_DUMPN(reg1, reg2, reg3, 27)	! \
 	_DEBUG_DUMPN(reg1, reg2, reg3, 31)
 
+#ifdef XXXNH
 /*
  * hv-specific instructions
  */
-#define	DR_PAGE0	diag (0x70 << 5)
-#define	DR_PAGE1	diag (0x72 << 5)
-#define	MTCPU_T(x,t)	diag ((t) << 21) | ((x) << 16) | (0xc0 << 5)
-#define	MTCPU_C(x,t)	diag ((t) << 21) | ((x) << 16) | (0x12 << 5)
+#define	DR_PAGE0	diag (0x70 << 5)				/* XXXNH Different */
+#define	DR_PAGE1	diag (0x72 << 5)				/* XXXNH Different */
+#define	MTCPU_T(x,t)	diag ((t) << 21) | ((x) << 16) | (0xc0 << 5)	/* XXXNH Different */
 #define	MFCPU_T(r,x)	diag ((r) << 21) | (0xa0 << 5) | (x)
+#define	MTCPU_C(x,t)	diag ((t) << 21) | ((x) << 16) | (0x12 << 5)
 #define	MFCPU_C(r,x)	diag ((r) << 21) | ((x) << 16) | (0x30 << 5)
+#define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
+#define	MTCPU_U(x,r)	.word	0x14001840 | ((r) << 21) | ((x) << 16)
+
+#else
+
+#define	DR_PAGE0	.word	0x14001200
+#define	DR_PAGE1	.word	0x14001240
+#define	MTCPU_T(x,t)	.word	0x14001400 | ((t) << 21) | ((x) << 16)
+#define	MFCPU_T(r,x)	.word	0x14001400 | ((r) << 21) | (x)
+#define	MTCPU_C(x,t)	.word	0x14000240 | ((t) << 21) | ((x) << 16)
+#define	MFCPU_C(r,x)	.word	0x14000600 | ((r) << 21) | ((x) << 16)
+#define	MFCPU_U(r,x)	.word	0x140008a0 | ((r) << 21) | ((x))
+#define	MTCPU_U(x,r)	.word	0x14001840 | ((r) << 21) | ((x) << 16)
+#endif
 
 	.import	$global$, data
 	.import pdc, data
 	.import	boothowto, data
 	.import	bootdev, data
 	.import	esym, data
-	.import	curlwp, data
 	.import virtual_avail, data
 	.import	lwp0, data
 	.import	proc0paddr, data
@@ -142,22 +155,26 @@
 	.import fpu_cur_uspace, data
 	.import hp700_int_regs, data
 
+#if 0
+	BSS(pdc_stack, 4)	/* temp stack for PDC call */
+	BSS(kernelmapped, 4)	/* set when kernel is mapped */
+	BSS(hppa_vtop, 4)	/* a vtop translation table addr (pa=va) */
+#else
 	.section .bss
+
 	.export	pdc_stack, data
 pdc_stack:
-	.block	4*NBPG
-kernelmapped:			/* set when kernel is mapped */
 	.block	4
-/*
-        .section .bss
-        .export pdc_stack, data
-pdc_stack:
-        .comm   4*(1 << 12)
+	.export	kernelmapped, data
 kernelmapped:
-        .comm   4
-*/
+	.block	4
+	.export hppa_vtop, data
+hppa_vtop:
+	.block	4
+#endif
 
 	.text
+	.import $kernel_setup, entry
 
 /*
  * This is the starting location for the kernel
@@ -202,25 +219,14 @@ ENTRY_NOPROFILE(start,0)
 	ldo	NBPG-1(%arg3), %arg3
 	dep	%r0, 31, PGSHIFT, %arg3
 
-	/*
-	 * disable interrupts and turn off all bits in the psw so that
-	 * we start in a known state.
-	 */
-	rsm	RESET_PSW, %r0
+	/* assuming size being page-aligned */
+#define STACK_ALLOC(n,s)		\
+	ldil	L%(n), %t1		! \
+	ldil	L%(s), %t2		! \
+	stw	%arg3, R%(n)(%t1)	! \
+	add	%arg3, %t2, %arg3
 
-	/*
-	 * to keep the spl() routines consistent we need to put the correct
-	 * spl level into eiem, and reset any pending interrupts
-	 */
-	ldi	-1, %r1
-	mtctl	%r0, %eiem	/* IPL_NONE */
-	mtctl	%r1, %eirr
-
-	/*
-	 * set up the dp pointer so that we can do quick references off of it
-	 */
-	ldil	L%$global$,%dp
-	ldo	R%$global$(%dp),%dp
+	STACK_ALLOC(pdc_stack, PDC_STACKSIZE)
 
 	/* zero fake trapframe and lwp0 u-area */
 	/* XXX - we should create a real trapframe for lwp0 */
@@ -237,11 +243,12 @@ $start_zero_tf:
 	 * arg0 will be available space for hppa_init()
 	 */
 	ldo	NBPG+TRAPFRAME_SIZEOF(%arg3), %sp
-	mtctl	%arg3, %cr30
+	mtctl	%arg3, CR_UPADDR
 	stw	%r0, U_PCB+PCB_ONFAULT(%arg3)
 	stw	%r0, U_PCB+PCB_SPACE(%arg3)	/* XXX HPPA_SID_KERNEL == 0 */
 	stw	%arg3, U_PCB+PCB_UVA(%arg3)
-	ldil	L%USPACE, %arg0
+						/* XXXNH test this */
+	ldil	L%(USPACE+NBPG), %arg0		/* normal U plus red zone */
 	add	%arg3, %arg0, %arg0
 	ldil	L%proc0paddr, %t1
 	stw	%arg3, R%proc0paddr(%t1)
@@ -255,48 +262,90 @@ $start_zero_tf:
 	stw	%arg3, TF_CR30-TRAPFRAME_SIZEOF(%sp)
 
 	/*
-	 * We need to set the Q bit so that we can take TLB misses after we
-	 * turn on virtual memory.
-	 */
-	mtctl	%r0, %pcsq
-	mtctl	%r0, %pcsq
-	ldil	L%$qisnowon, %t1
-	ldo	R%$qisnowon(%t1), %t1
-	mtctl	%t1, %pcoq
-	ldo	4(%t1),%t1
-	mtctl	%t1, %pcoq
-	ldi	PSW_Q|PSW_I, %t1
-	mtctl	%t1, %ipsw
-	rfi
-	nop
-
-$qisnowon:
-	/*
-	 * load address of interrupt vector table
-	 */
-	ldil	L%$ivaaddr,%t2
-	ldo	R%$ivaaddr(%t2),%t2
-	mtctl	%t2,%iva
-
-	/*
-	 * Create a stack frame for us to call C with. Clear out the previous
-	 * sp marker to mark that this is the first frame on the stack.
-	 */
-	copy	%sp, %t1
-	stwm	%r0, HPPA_FRAME_SIZE(%sp)
-	copy	%sp, %r3
-	stwm	%t1, HPPA_FRAME_SIZE(%sp)
-
-	/*
 	 * disable all coprocessors
 	 */
 	mtctl	%r0, %ccr
 
 	/*
+	 * We need to set the Q bit so that we can take TLB misses after we
+	 * turn on virtual memory.
+	 */
+	copy	%sp, %arg1
+	ldil	L%$qisnowon, %rp
+	ldo	R%$qisnowon(%rp), %rp
+
+	b	$kernel_setup
+	ldi	PSW_Q|PSW_I, %arg2
+
+$qisnowon:
+	/*
 	 * call C routine hppa_init() to initialize VM
 	 */
 	.import hppa_init, code
 	CALL(hppa_init, %r1)
+
+	/*
+	 * Cannot change the queues or IPSW with the Q-bit on
+	 */
+	rsm	RESET_PSW, %r0
+	nop ! nop ! nop ! nop ! nop ! nop ! nop
+
+	/*
+	 * We need to do an rfi to get the C bit set
+	 */
+	mtctl	%r0, %pcsq
+	mtctl	%r0, %pcsq
+	ldil	L%$virtual_mode, %t1
+	ldo	R%$virtual_mode(%t1), %t1
+	mtctl	%t1, %pcoq
+	ldo	4(%t1), %t1
+	mtctl	%t1, %pcoq
+	ldil	L%kpsw, %t1
+	ldw	R%kpsw(%t1), %t2
+	mtctl	%t2, %ipsw
+	rfi
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+
+$virtual_mode:
+
+	ldil	L%kernelmapped, %t1
+	stw	%t1, R%kernelmapped(%t1)
+
+#ifdef DDB
+	.import	Debugger, code
+	/* have to call debugger from here, from virtual mode */
+	ldil	L%boothowto, %r1
+	ldw	R%boothowto(%r1), %r1
+	bb,>=	%r1, 25, $noddb
+	nop
+
+	break	HPPA_BREAK_KERNEL, HPPA_BREAK_KGDB
+	nop
+$noddb:
+#endif
+
+	.import main,code
+	CALL(main, %r1)
+	/* should never return... */
+	bv	(%rp)
+	nop
+EXIT(start)
+
+
+LEAF_ENTRY_NOPROFILE($kernel_setup)
+
+	/*
+	 * disable interrupts and turn off all bits in the psw so that
+	 * we start in a known state.
+	 */
+	rsm	RESET_PSW, %r0
+	nop ! nop ! nop ! nop ! nop ! nop
 
 	/*
 	 * go to virtual mode...
@@ -319,50 +368,51 @@ $qisnowon:
 	mtsp	%r0, %sr7
 
 	/*
-	 * Cannot change the queues or IPSW with the Q-bit on
+	 * to keep the spl() routines consistent we need to put the correct
+	 * spl level into eiem, and reset any pending interrupts
 	 */
-	rsm	RESET_PSW, %r0
+	ldi	-1, %r1
+	mtctl	%r0, %eiem	/* IPL_NONE */
+	mtctl	%r1, %eirr
 
 	/*
-	 * We need to do an rfi to get the C bit set
+	 * load address of interrupt vector table
 	 */
+	ldil	L%$ivaaddr,%t2
+	ldo	R%$ivaaddr(%t2),%t2
+	mtctl	%t2,%iva
+
+	/*
+	 * set up the dp pointer so that we can do quick references off of it
+	 */
+	ldil	L%$global$,%dp
+	ldo	R%$global$(%dp),%dp
+
+	/*
+	 * Create a stack frame for us to call C with. Clear out the previous
+	 * sp marker to mark that this is the first frame on the stack.
+	 */
+	copy	%arg1, %sp
+	ldo	0(%arg1), %r3
+	stw,ma	%r0, HPPA_FRAME_SIZE(%sp)
+	stw	%r0, HPPA_FRAME_CRP(%sp)
+	stw	%r0, HPPA_FRAME_PSP(%sp)
+
+	/*
+	 * We need to set the Q bit so that we can take TLB misses after we
+	 * turn on virtual memory.
+	 */
+
 	mtctl	%r0, %pcsq
 	mtctl	%r0, %pcsq
-	ldil	L%$virtual_mode, %t1
-	ldo	R%$virtual_mode(%t1), %t1
-	mtctl	%t1, %pcoq
-	ldo	4(%t1), %t1
-	mtctl	%t1, %pcoq
-	ldil	L%kpsw, %t1
-	ldw	R%kpsw(%t1), %t2
-	mtctl	%t2, %ipsw
+	mtctl	%rp, %pcoq
+	ldo	4(%rp),%rp
+	mtctl	%rp, %pcoq
+	mtctl	%arg2, %ipsw
 	rfi
 	nop
-
-$virtual_mode:
-	ldil	L%kernelmapped, %t1
-	stw	%t1, R%kernelmapped(%t1)
-
-#ifdef DDB
-	.import	Debugger, code
-	/* have to call debugger from here, from virtual mode */
-	ldil	L%boothowto, %r1
-	ldw	R%boothowto(%r1), %r1
-	bb,>=	%r1, 25, $noddb
 	nop
-
-	break	HPPA_BREAK_KERNEL, HPPA_BREAK_KGDB
-	nop
-$noddb:
-#endif
-
-	.import main,code
-	CALL(main, %r1)
-
-	/* should never return... */
-	bv	(%rp)
-	nop
-EXIT(start)
+EXIT($kernel_setup)
 
 /*
  * int pdc_call(iodcio_t func,int pdc_flag, ...)
@@ -379,8 +429,9 @@ ENTRY(pdc_call,160)
 	ldw	R%kernelmapped(%ret0), %ret0
 	comb,=	%r0, %ret0, pdc_call_unmapped1
 	nop
+
 	ldil	L%pdc_stack, %ret1
-	ldo	R%pdc_stack(%ret1), %ret1
+	ldw	R%pdc_stack(%ret1), %ret1
 
 pdc_call_unmapped1:
 	copy	%sp, %r1
@@ -767,7 +818,7 @@ kstack_ok:
 
 	ldw	L_ADDR(%arg0), %t3	/* curl pcb */
 	stw	%sp, U_PCB+PCB_KSP(%t3)
-	fdc	%r0(%t3)		/* flush curl pcb */
+	fdc	%r0(%t3)		/* flush curl pcb  - surely fdc U_PCB+PCB_KSP(%t3) */
 
 	/*
 	 * Save the callee-save registers. We don't need to do 
@@ -796,19 +847,25 @@ kstack_ok:
 	 * arg1: new LWP (newl)
 	 */
 switch_exited:
-	ldw	L_MD(%arg1), %t1		/* M_TF??? */
+	ldw	L_MD(%arg1), %t1
 	ldw	L_ADDR(%arg1), %t3
 	ldw	U_PCB+PCB_KSP(%t3), %sp		/* restore stack of newl */
 
 	fdc	%r0(%t3)			/* Flush newl PCB - why? */
 
-	ldw	TF_CR30(%t1), %t2		/* pmap_activate? */
+#if 0
 	ldw	TF_CR9(%t1), %t3		/* pmap_activate? */
 	mtctl	%t3, %pidr2			/* pmap_activate? */
-	mtctl	%t2, %cr30			/* pmap_activate? */
+#endif
+	ldw	TF_CR30(%t1), %t2		/* pmap_activate? */
+	mtctl	%t2, CR_UPADDR			/* pmap_activate? */
 
-	ldil	L%curlwp, %t1
-	stw	%arg1, R%curlwp(%t1)
+	mtctl	%arg1, CR_CURLWP
+
+#ifdef MULTIPROCESSOR
+	ldw	L_CPU(%arg1),%t2		; %t2 = curcpu()
+	stw	%arg1, CI_CURLWP(%t2)
+#endif
 
 	ldo	-(HPPA_FRAME_SIZE+16*4)(%sp), %r3
 
@@ -874,7 +931,7 @@ ALTENTRY(hppa_fpu_nop1)
 	 */
 	ldil	L%fpu_cur_uspace, %t1
 	mfctl	%ccr, %r1
-	mfctl	%cr30, %t2
+	mfctl	CR_UPADDR, %t2
 	ldw	R%fpu_cur_uspace(%t1), %t1
 	depi	0, 25, 2, %r1		; disables the FPU
 	comb,<>,n %t1, %t2, 0		; nullify if LWPs different
@@ -923,8 +980,7 @@ ENTRY_NOPROFILE(lwp_trampoline,HPPA_FRAME_SIZE)
 	 * this LWP was created by the fork()
 	 * syscall, which we now return from.
 	 */
-	ldil	L%curlwp, %t1
-	ldw	R%curlwp(%t1), %t2
+	mfctl	CR_CURLWP, %t2
 	.call
 	b	$syscall_return
 	ldw	L_MD(%t2), %t3
