@@ -1,8 +1,0 @@
-multilog
-multilog_add_type
-multilog_clear_logging
-multilog_del_type
-multilog_custom
-multilog_init_verbose
-multilog_async
-logit

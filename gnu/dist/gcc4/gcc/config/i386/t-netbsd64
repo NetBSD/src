@@ -1,9 +1,0 @@
-# NetBSD has (will have) "non-native" libraries in /usr/lib/<arch>.
-# For NetBSD/amd64 we thus have /usr/lib and /usr/lib/i386.
-
-MULTILIB_OPTIONS = m64/m32
-MULTILIB_DIRNAMES = 64 32 
-MULTILIB_OSDIRNAMES = . ../lib/i386
-
-LIBGCC = stmp-multilib
-INSTALL_LIBGCC = install-multilib

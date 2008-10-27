@@ -1,4 +1,4 @@
-/* $NetBSD: power.c,v 1.8 2007/12/30 08:32:14 skrll Exp $ */
+/* $NetBSD: power.c,v 1.8.18.1 2008/10/27 08:02:40 skrll Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.8 2007/12/30 08:32:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.8.18.1 2008/10/27 08:02:40 skrll Exp $");
 
 
 /*
@@ -125,8 +125,7 @@ pwr_sw_init(bus_space_tag_t bst)
 	if (pdc_call((iodcio_t)pdc, 0, PDC_SOFT_POWER, PDC_SOFT_POWER_INFO,
 	    &pdc_power_info, 0) < 0 ||
 	    (pdc_power_info.addr == 0 &&
-	     (strcmp(hppa_cpu_info->hppa_cpu_info_chip_type, "PCX-L") != 0 ||
-	      lasi_pwr_sw_reg == NULL))) {
+	     (hppa_cpu_info->hci_type != hpcxl || lasi_pwr_sw_reg == NULL))) {
 		printf("No soft power available.\n");
 		pwr_sw_reg_bst = NULL;
 		lasi_pwr_sw_reg = NULL;

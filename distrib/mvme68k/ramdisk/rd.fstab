@@ -1,2 +1,0 @@
-# $NetBSD: rd.fstab,v 1.2 2000/01/21 12:32:56 tsutsui Exp $
-/dev/md0a / ufs rw 1 1

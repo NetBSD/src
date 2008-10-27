@@ -1,9 +1,0 @@
-#	$NetBSD: Makefile.real,v 1.1 2008/10/26 07:38:29 mrg Exp $
-
-.if ${MACHINE_ARCH} == "x86_64"
-SUBDIR=	i386_elf
-.elif ${MACHINE_ARCH} == "sparc64"
-SUBDIR=	sparc_elf
-.endif
-
-.include <bsd.subdir.mk>

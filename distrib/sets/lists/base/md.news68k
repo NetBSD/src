@@ -1,4 +1,0 @@
-# $NetBSD: md.news68k,v 1.5 2004/01/11 10:24:58 lukem Exp $
-./usr/mdec/boot					base-sysutil-bin
-./usr/mdec/bootxx				base-sysutil-bin
-./usr/mdec/installboot				base-obsolete		obsolete

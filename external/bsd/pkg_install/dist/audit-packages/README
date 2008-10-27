@@ -1,5 +1,0 @@
-# $NetBSD: README,v 1.1.1.1 2008/09/30 19:00:26 joerg Exp $
-
-audit-packages, an easy way to audit the current machine, checking
-for each vulnerability listed by the security officer.  If a vulnerable
-package is installed, it will be shown by output to stdout.

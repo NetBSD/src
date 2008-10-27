@@ -1,4 +1,4 @@
-/*	$NetBSD: hpt.h,v 1.3 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: hpt.h,v 1.3.8.1 2008/10/27 08:02:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -108,6 +108,7 @@
  *	Pmap header for hppa.
  */
 
+#if 0
 /* Predeclare struct hpt_entry. */
 struct hpt_entry;
 
@@ -125,13 +126,11 @@ struct pv_entry {
 	struct pv_entry *pv_hash;	/* VTOP hash bucket list */
 	struct hpt_entry *pv_hpt;	/* pointer to HPT entry */
 };
+#endif
 
 /*
  * If HPT is defined, we cache the last miss for each bucket using a
- * structure defined for the 7100 hardware TLB walker. On non-7100s, this
- * acts as a software cache that cuts down on the number of times we have
- * to search the hash chain. (thereby reducing the number of instructions
- * and cache misses incurred during the TLB miss).
+ * structure defined for the 7100 hardware TLB walker.
  *
  * The pv_entry pointer is the address of the associated hash bucket
  * list for fast tlbmiss search.
@@ -145,6 +144,7 @@ struct hpt_entry {
 	struct pv_entry	*hpt_entry;	/* Pointer to associated hash list */
 };
 
+#if 0
 /*
  * This structure contains information for a single physical page.
  */
@@ -173,8 +173,6 @@ struct pv_head {
 #define PV_HEAD_REF		(1 << (31 - PV_HEAD_REF_POS))
 #define PV_HEAD_WRITABLE_POS	29
 };
-
-#define	HPPA_MAX_PID	0xfffa
-#define	HPPA_PID_KERNEL	2
+#endif
 
 #define	KERNEL_ACCESS_ID 1

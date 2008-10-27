@@ -1,8 +1,0 @@
-$NetBSD: README.NetBSD,v 1.1.1.1 2008/08/24 05:34:48 gmcgarry Exp $
-
-This is a modified version of part of John Hauser's SoftFloat 2a package.
-This version has been heavily modified to support its use with GCC to
-implement built-in floating-point operations, but compiling
-softfloat.c without SOFTFLOAT_FOR_GCC defined should get you the same
-results as from the original.
-
