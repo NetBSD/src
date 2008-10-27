@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.15 2008/10/27 22:10:36 uwe Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.16 2008/10/27 23:50:12 uwe Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -76,30 +76,8 @@
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  */
 
-/*
- * This file may seem a bit stylized, but that so that it's easier to port.
- * Functions to be implemented here are:
- *
- * process_read_regs(proc, regs)
- *	Get the current user-visible register set from the process
- *	and copy it into the regs structure (<machine/reg.h>).
- *	The process is stopped at the time read_regs is called.
- *
- * process_write_regs(proc, regs)
- *	Update the current register set from the passed in regs
- *	structure.  Take care to avoid clobbering special CPU
- *	registers or privileged bits in the PSL.
- *	The process is stopped at the time write_regs is called.
- *
- * process_sstep(proc)
- *	Arrange for the process to trap after executing a single instruction.
- *
- * process_set_pc(proc)
- *	Set the process's program counter.
- */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15 2008/10/27 22:10:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16 2008/10/27 23:50:12 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +91,15 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15 2008/10/27 22:10:36 uwe Exp
 #include <machine/psl.h>
 #include <machine/reg.h>
 
+#include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
+
+#ifdef COMPAT_40
+static int process_machdep_doregs40(struct lwp *, struct lwp *, struct uio *);
+static int process_machdep_read_regs40(struct lwp *l, struct __reg40 *);
+static int process_machdep_write_regs40(struct lwp *l, struct __reg40 *);
+#endif /* COMPAT_40 */
 
 
 #if defined(PTRACE) || defined(COREDUMP)
@@ -200,6 +185,163 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 
 	return (0);
 }
+
+
+#ifdef __HAVE_PTRACE_MACHDEP
+
+int
+ptrace_machdep_dorequest(struct lwp *l, struct lwp *lt,
+			 int req, void *addr, int data)
+{
+	struct uio uio;
+	struct iovec iov;
+	int write = 0;
+
+	switch (req) {
+	default:
+		return EINVAL;
+
+#ifdef COMPAT_40
+	case PT___SETREGS40:
+		write = 1;
+		/* FALLTHROUGH*/
+
+	case PT___GETREGS40:
+		if (!process_validregs(lt))
+			return EINVAL;
+		iov.iov_base = addr;
+		iov.iov_len = sizeof(struct __reg40);
+		uio.uio_iov = &iov;
+		uio.uio_iovcnt = 1;
+		uio.uio_offset = 0;
+		uio.uio_resid = sizeof(struct __reg40);
+		uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+		uio.uio_vmspace = l->l_proc->p_vmspace;
+		return process_machdep_doregs40(l, lt, &uio);
+#endif	/* COMPAT_40 */
+	}
+}
+
+
+#ifdef COMPAT_40
+
+static int
+process_machdep_doregs40(struct lwp *curl, struct lwp *l, struct uio *uio)
+{
+	struct __reg40 r;
+	int error;
+	char *kv;
+	int kl;
+
+	kl = sizeof(r);
+	kv = (char *) &r;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	uvm_lwp_hold(l);
+
+	if (kl < 0)
+		error = EINVAL;
+	else
+		error = process_machdep_read_regs40(l, &r);
+	if (error == 0)
+		error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if (l->l_proc->p_stat != SSTOP)
+			error = EBUSY;
+		else
+			error = process_machdep_write_regs40(l, &r);
+	}
+
+	uvm_lwp_rele(l);
+
+	uio->uio_offset = 0;
+	return error;
+}
+
+/*
+ * Like process_read_regs() but for old struct reg w/out r_gbr.
+ */
+static int
+process_machdep_read_regs40(struct lwp *l, struct __reg40 *regs)
+{
+	struct trapframe *tf = process_frame(l);
+
+	regs->r_spc = tf->tf_spc;
+	regs->r_ssr = tf->tf_ssr;
+	/* no r_gbr in struct __reg40 */
+	regs->r_macl = tf->tf_macl;
+	regs->r_mach = tf->tf_mach;
+	regs->r_pr = tf->tf_pr;
+	regs->r_r14 = tf->tf_r14;
+	regs->r_r13 = tf->tf_r13;
+	regs->r_r12 = tf->tf_r12;
+	regs->r_r11 = tf->tf_r11;
+	regs->r_r10 = tf->tf_r10;
+	regs->r_r9 = tf->tf_r9;
+	regs->r_r8 = tf->tf_r8;
+	regs->r_r7 = tf->tf_r7;
+	regs->r_r6 = tf->tf_r6;
+	regs->r_r5 = tf->tf_r5;
+	regs->r_r4 = tf->tf_r4;
+	regs->r_r3 = tf->tf_r3;
+	regs->r_r2 = tf->tf_r2;
+	regs->r_r1 = tf->tf_r1;
+	regs->r_r0 = tf->tf_r0;
+	regs->r_r15 = tf->tf_r15;
+
+	return 0;
+}
+
+/*
+ * Like process_write_regs() but for old struct reg w/out r_gbr
+ */
+static int
+process_machdep_write_regs40(struct lwp *l, struct __reg40 *regs)
+{
+	struct trapframe *tf = process_frame(l);
+
+	/*
+	 * Check for security violations.
+	 */
+	if (((regs->r_ssr ^ tf->tf_ssr) & PSL_USERSTATIC) != 0) {
+		return EINVAL;
+	}
+
+	tf->tf_spc = regs->r_spc;
+	tf->tf_ssr = regs->r_ssr;
+	tf->tf_pr = regs->r_pr;
+
+	/* no r_gbr in struct __reg40 */
+	tf->tf_mach = regs->r_mach;
+	tf->tf_macl = regs->r_macl;
+	tf->tf_r14 = regs->r_r14;
+	tf->tf_r13 = regs->r_r13;
+	tf->tf_r12 = regs->r_r12;
+	tf->tf_r11 = regs->r_r11;
+	tf->tf_r10 = regs->r_r10;
+	tf->tf_r9 = regs->r_r9;
+	tf->tf_r8 = regs->r_r8;
+	tf->tf_r7 = regs->r_r7;
+	tf->tf_r6 = regs->r_r6;
+	tf->tf_r5 = regs->r_r5;
+	tf->tf_r4 = regs->r_r4;
+	tf->tf_r3 = regs->r_r3;
+	tf->tf_r2 = regs->r_r2;
+	tf->tf_r1 = regs->r_r1;
+	tf->tf_r0 = regs->r_r0;
+	tf->tf_r15 = regs->r_r15;
+
+	return 0;
+}
+
+#endif /* COMPAT_40 */
+
+#endif /* __HAVE_PTRACE_MACHDEP  */
+
 
 int
 process_sstep(struct lwp *l, int sstep)

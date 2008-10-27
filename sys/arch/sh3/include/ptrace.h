@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.7 2008/10/26 19:37:59 uwe Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.8 2008/10/27 23:50:12 uwe Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -51,4 +51,25 @@
 	"PT_GETREGS", \
 	"PT_SETREGS",
 
+
+#ifdef _KERNEL
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd.h"
+#endif
+
+#ifdef COMPAT_40
+
+#define __HAVE_PTRACE_MACHDEP
+
+#define	PTRACE_MACHDEP_REQUEST_CASES			\
+	case PT___GETREGS40:	/* FALLTHROUGH */	\
+	case PT___SETREGS40:
+
+#endif /* COMPAT_40 */
+
+#ifdef __HAVE_PTRACE_MACHDEP
+int ptrace_machdep_dorequest(struct lwp *, struct lwp *, int, void *, int);
+#endif
+
+#endif /* _KERNEL */
 #endif /* !_SH3_PTRACE_H_ */
