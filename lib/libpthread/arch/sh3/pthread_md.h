@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.5 2008/10/27 00:47:22 uwe Exp $ */
+/*	$NetBSD: pthread_md.h,v 1.6 2008/10/27 00:52:07 uwe Exp $ */
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -129,7 +129,7 @@ pthread__sp(void)
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
 	} while (/*CONSTCOND*/0)
 
-#else  /* SBUBS */
+#else  /* stubs */
 #define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)
 #define PTHREAD_FPREG_TO_UCONTEXT(uc, freg)
 #endif
