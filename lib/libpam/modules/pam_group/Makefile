@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/27 07:48:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2008/10/27 07:57:41 mrg Exp $
 # $FreeBSD: src/lib/libpam/modules/pam_group/Makefile,v 1.1 2003/02/06 14:27:48 des Exp $
 
 NOLINT=		# don't build a lint library
@@ -11,7 +11,7 @@ LIB=		pam_group
 SRCS=		pam_group.c
 MAN=		pam_group.8
 
-LIBDPLIBS=	util	${.CURDIR}/../../../libutil \
+LIBDPLIBS+=	util	${.CURDIR}/../../../libutil \
 		crypt	${.CURDIR}/../../../libcrypt
 
 .include "${.CURDIR}/../mod.mk"

@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.3 2008/10/27 07:48:27 mrg Exp $
+# $NetBSD: Makefile,v 1.4 2008/10/27 07:57:41 mrg Exp $
 
 LIB=	pam_afslog
 SRCS=	pam_afslog.c
 MAN=	pam_afslog.8
 
-LIBDPLIBS=	krb5	${.CURDIR}/../../../libkrb5 \
+LIBDPLIBS+=	krb5	${.CURDIR}/../../../libkrb5 \
 		kafs	${.CURDIR}/../../../libkafs \
 		asn1	${.CURDIR}/../../../libasn1 \
 		roken	${.CURDIR}/../../../libroken \

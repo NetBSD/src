@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2008/10/27 07:48:27 mrg Exp $
+# $NetBSD: Makefile,v 1.8 2008/10/27 07:57:41 mrg Exp $
 # Copyright 2001 FreeBSD, Inc.
 # All rights reserved.
 #
@@ -29,7 +29,7 @@ LIB=	pam_krb5
 SRCS=	pam_krb5.c
 MAN=	pam_krb5.8
 
-LIBDPLIBS=	krb5	${.CURDIR}/../../../libkrb5 \
+LIBDPLIBS+=	krb5	${.CURDIR}/../../../libkrb5 \
 		asn1	${.CURDIR}/../../../libasn1 \
 		roken	${.CURDIR}/../../../libroken \
 		com_err	${.CURDIR}/../../../libcom_err \

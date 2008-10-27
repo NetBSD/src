@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2008/10/27 07:48:27 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2008/10/27 07:57:42 mrg Exp $
 # Copyright 1998 Juniper Networks, Inc.
 # All rights reserved.
 # Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -45,7 +45,7 @@ LIB=	pam_unix
 SRCS=	pam_unix.c
 MAN=	pam_unix.8
 
-LIBDPLIBS=	util	${.CURDIR}/../../../libutil \
+LIBDPLIBS+=	util	${.CURDIR}/../../../libutil \
 		crypt	${.CURDIR}/../../../libcrypt
 
 .if (${USE_YP} != "no")
