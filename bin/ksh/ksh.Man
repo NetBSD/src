@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.20 2007/07/30 18:01:42 mjf Exp $
+.\" $NetBSD: ksh.Man,v 1.21 2008/10/27 19:52:28 apb Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -479,8 +479,12 @@ If a \fB\e\fP inside a double-quoted string is followed by \fB\e\fP, \fB$\fP,
 followed by a newline, both the \fB\e\fP and the newline are stripped;
 otherwise, both the \fB\e\fP and the character following are unchanged.
 .PP
-Note: see POSIX Mode below for a special rule regarding sequences
-of the form \fB"\fP...\fB`\fP...\fB\e"\fP...\fB`\fP..\fB"\fP.
+Note: An earlier version of ksh(1) changed the interpretation of sequences
+of the form \fB"\fP...\fB`\fP...\fB\e"\fP...\fB`\fP..\fB"\fP
+according to whether or not POSIX mode was in effect.
+In the current implementation, the backslash in \fB\e"\fP
+is seen and removed by the outer \fB"\fP...\fB"\fP,
+so the backslash is not seen by the inner \fB`\fP...\fB`\fP.
 .\"}}}
 .\"{{{  Aliases
 .SS "Aliases"
@@ -1531,15 +1535,16 @@ the \fBposix\fP option:
 reading of \fB$ENV\fP: if not in posix mode, the \fBENV\fP parameter
 is not expanded and included when the shell starts.
 .sh)
-.IP \ \ \(bu
-\fB\e"\fP inside double quoted \fB`\fP..\fB`\fP command substitutions:
-in posix mode, the \fB\e"\fP is interpreted when the command is interpreted;
-in non-posix mode, the backslash is stripped before the command substitution
-is interpreted.
-For example, \fBecho "`echo \e"hi\e"`"\fP produces `"hi"' in
-posix mode, `hi' in non-posix mode.
-To avoid problems, use the \fB$(...\fP)
-form of command substitution.
+.\" The following behaviour is not useful and has been removed in NetBSD
+.\" .IP \ \ \(bu
+.\" \fB\e"\fP inside double quoted \fB`\fP..\fB`\fP command substitutions:
+.\" in posix mode, the \fB\e"\fP is interpreted when the command is interpreted;
+.\" in non-posix mode, the backslash is stripped before the command substitution
+.\" is interpreted.
+.\" For example, \fBecho "`echo \e"hi\e"`"\fP produces `"hi"' in
+.\" posix mode, `hi' in non-posix mode.
+.\" To avoid problems, use the \fB$(...\fP)
+.\" form of command substitution.
 .IP \ \ \(bu
 \fBkill \-l\fP output: in posix mode, signal names are listed one a single line;
 in non-posix mode, signal numbers, names and descriptions are printed in
