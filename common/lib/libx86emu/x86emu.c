@@ -1,4 +1,4 @@
-/*	$NetBSD: x86emu.c,v 1.4 2008/10/25 19:01:18 jmcneill Exp $	*/
+/*	$NetBSD: x86emu.c,v 1.5 2008/10/27 00:20:22 joerg Exp $	*/
 
 /****************************************************************************
 *
@@ -7763,13 +7763,13 @@ idiv_byte(struct X86EMU *emu, uint8_t s)
 
 	dvd = (int16_t) emu->x86.R_AX;
 	if (s == 0) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	div = dvd / (int8_t) s;
 	mod = dvd % (int8_t) s;
 	if (div > 0x7f || div < -0x7f) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	emu->x86.R_AL = (int8_t) div;
@@ -7786,13 +7786,13 @@ idiv_word(struct X86EMU *emu, uint16_t s)
 
 	dvd = (((int32_t) emu->x86.R_DX) << 16) | emu->x86.R_AX;
 	if (s == 0) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	div = dvd / (int16_t) s;
 	mod = dvd % (int16_t) s;
 	if (div > 0x7fff || div < -0x7fff) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	CLEAR_FLAG(F_CF);
@@ -7814,13 +7814,13 @@ idiv_long(struct X86EMU *emu, uint32_t s)
 
 	dvd = (((int64_t) emu->x86.R_EDX) << 32) | emu->x86.R_EAX;
 	if (s == 0) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	div = dvd / (int32_t) s;
 	mod = dvd % (int32_t) s;
 	if (div > 0x7fffffff || div < -0x7fffffff) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	CLEAR_FLAG(F_CF);
@@ -7843,13 +7843,13 @@ div_byte(struct X86EMU *emu, uint8_t s)
 
 	dvd = emu->x86.R_AX;
 	if (s == 0) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	div = dvd / (uint8_t) s;
 	mod = dvd % (uint8_t) s;
 	if (div > 0xff) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	emu->x86.R_AL = (uint8_t) div;
@@ -7866,13 +7866,13 @@ div_word(struct X86EMU *emu, uint16_t s)
 
 	dvd = (((uint32_t) emu->x86.R_DX) << 16) | emu->x86.R_AX;
 	if (s == 0) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	div = dvd / (uint16_t) s;
 	mod = dvd % (uint16_t) s;
 	if (div > 0xffff) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	CLEAR_FLAG(F_CF);
@@ -7894,13 +7894,13 @@ div_long(struct X86EMU *emu, uint32_t s)
 
 	dvd = (((uint64_t) emu->x86.R_EDX) << 32) | emu->x86.R_EAX;
 	if (s == 0) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	div = dvd / (uint32_t) s;
 	mod = dvd % (uint32_t) s;
 	if (div > 0xffffffff) {
-		x86emu_intr_raise(emu, 0);
+		x86emu_intr_raise(emu, 8);
 		return;
 	}
 	CLEAR_FLAG(F_CF);
