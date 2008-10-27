@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2005/02/27 21:01:59 thorpej Exp $
+# $NetBSD: Makefile,v 1.2 2008/10/27 07:48:27 mrg Exp $
 
 NOLINT=		# don't build a lint library
 NOPROFILE=	# don't build a profile library
@@ -10,6 +10,6 @@ LIB=	pam_skey
 SRCS=	pam_skey.c
 MAN=	pam_skey.8
 
-LIBDPLIBS=	skey	${LIB_ROOT_DIR}/libskey
+LIBDPLIBS=	skey	${.CURDIR}/../../../libskey
 
 .include "${.CURDIR}/../mod.mk"
