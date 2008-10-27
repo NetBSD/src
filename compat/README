@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1 2008/10/26 07:38:28 mrg Exp $
+$NetBSD: README,v 1.2 2008/10/27 07:22:22 mrg Exp $
 
 This directory contains Makefile fragments that will build all of the
 NetBSD libraries in 32-bit mode and install them into /usr/lib/<arch>
@@ -25,16 +25,14 @@ that is used by crunchgen to build eg, installer media or /rescue.
 
 
 TODO:
-	- currently, LIBDPLIBS evaluation gets the src/lib directories
-	  not the src/compat/lib ones, and this causes build-time link
-	  failures.  it's work-around-able by running "nbmake-foo
-	  install" manually in each library not found.
 	- some yacc issue -- libc, libipsec and libpcap need "make" run
 	  to generate headers properly, otherwise it complains about
-	  no way to get to foo.h.
+	  no way to get to foo.h.  this is currently hacked by putting
+	  a rule "foo.h: foo.c" in the (generated) makefiles
 	- there's an ugly hack to make libpam build correctly again the
-	  right libc.  ld.elf_so has a similar (but less ugly hack.)
-
+	  right libc.  ld.elf_so has a similar (but less ugly hack)
+	- not sure that /usr/lib/{i386,sparc}{,/i18n} are created 
+	  properly yet
 
 Future work
 
