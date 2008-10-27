@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.21 2008/10/26 07:31:40 mrg Exp $
+# $NetBSD: md.amd64,v 1.22 2008/10/27 07:45:38 jnemeth Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -264,7 +264,7 @@
 ./usr/lib/i386/libz.so.1.0			base-i18n-shlib		compat
 ./usr/lib/libx86_64.so.0			base-sys-shlib
 ./usr/lib/libx86_64.so.0.0			base-sys-shlib
-./usr/libexec/ld.elf_so-i386			base-sys-shlib
+./usr/libexec/ld.elf_so-i386			base-sys-shlib		compat
 ./usr/lkm/aps.o					base-sys-lkm
 ./usr/lkm/compat_linux.o			base-sys-lkm
 ./usr/lkm/exec_linux_elf.o			base-sys-lkm
