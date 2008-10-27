@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.4 2008/10/16 18:21:45 wrstuden Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.5 2008/10/27 16:52:04 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.4 2008/10/16 18:21:45 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.5 2008/10/27 16:52:04 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1253,12 +1253,12 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 		== 0);
 
 	/* XXX prevent recursive upcalls if we sleep for memory */
-	SA_LWP_STATE_LOCK(l, f);
+	SA_LWP_STATE_LOCK(curlwp, f);
 	sau = sadata_upcall_alloc(1);
 	mutex_enter(&sa->sa_mutex);
 	sast = sa_getstack(sa);
 	mutex_exit(&sa->sa_mutex);
-	SA_LWP_STATE_UNLOCK(l, f);
+	SA_LWP_STATE_UNLOCK(curlwp, f);
 
 	if (sau == NULL || sast == NULL) {
 		if (sast != NULL) {
