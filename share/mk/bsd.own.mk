@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.538 2008/10/26 23:13:24 apb Exp $
+#	$NetBSD: bsd.own.mk,v 1.539 2008/10/27 22:32:51 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -621,8 +621,6 @@ MK${var}:=	yes
 .endif
 .endfor
 
-# XXX for now.
-MKCOMPAT?=	no
 #
 # MK* options which have variable defaults.
 #
