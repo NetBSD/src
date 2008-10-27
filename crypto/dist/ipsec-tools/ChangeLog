@@ -4,6 +4,8 @@
 	* src/racoon/session.c: initfds() needs to be called only if
 	  monitored file descriptor numbers have changed
 	* src/racoon/grabmyaddr.c: fix indentation issues for readability
+	From Francis Dupont (sent by Arnaud Ebalard):
+	* src/racoon/grabmyaddr.c: recognize RTM_IFANNOUNCE
 
 2008-08-06  Timo Teras  <timo.teras@iki.fi>
 	From Krzysztof Piotr Oledzki <olel@ans.pl>:
