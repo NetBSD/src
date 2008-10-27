@@ -1,17 +1,18 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/26 13:00:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/27 07:22:54 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
 NONLS=	# defined
 NOINFO=	# defined
 NOSHARE=	# defined
+LIBDPLIBS=	asn1    ${.CURDIR}/../libasn1  krb5    ${.CURDIR}/../libkrb5  roken  ${.CURDIR}/../libroken
 
 NOCHECKVER=	# defined
 
 .include <bsd.obj.mk>
 
 # Resolve pathnames in variables.
-_RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD
+_RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD LIBDPLIBS
 .for var in ${_RESOLVE_VARS}
 ${var}:=        ${${var}}
 .endfor
