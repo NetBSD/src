@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/09/13 04:32:30 cube Exp $
+#	$NetBSD: Makefile,v 1.6 2008/10/27 20:24:10 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -92,7 +92,7 @@ FILESDIR=	${X11LIBDIR}
 
 XlibConf.h: XlibConf.h.in
 	${_MKTARGET_CREATE}
-	${TOOL_SED} 's/#undef XTHREADS/#define XTHREADS 1/; \
+	${TOOL_SED} 's/#undef XTHREADS/#define XTHREADS/; \
 		    s/#undef XUSE_MTSAFE_API/#define XUSE_MTSAFE_API/ ' \
 		< ${.ALLSRC} > ${.TARGET}
 
