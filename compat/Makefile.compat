@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.compat,v 1.1 2008/10/26 07:38:27 mrg Exp $
+#	$NetBSD: Makefile.compat,v 1.2 2008/10/27 07:58:42 mrg Exp $
 
 COPTS+=			-m32
 CPUFLAGS+=		-m32
@@ -42,7 +42,7 @@ LIBC_DIR=	${NETBSDSRCDIR}/compat/lib/libc
 SHLINKINSTALLDIR=	/usr/libexec
 
 # XXX
-EXTRALIBDIRS=	${DESTDIR}${LIBDIR} ${DESTDIR}${LIBDIR}/i18n
+EXTRALIBDIRS=	${DESTDIR}${LIBDIR} ${DESTDIR}${LIBDIR}/i18n ${DESTDIR}${LIBDIR}/security
 .PRECIOUS:      ${EXTRALIBDIRS}
 install:	${EXTRALIBDIRS} .WAIT
 ${EXTRALIBDIRS}: .EXEC
@@ -54,4 +54,4 @@ ${EXTRALIBDIRS}: .EXEC
 		${.TARGET}; \
 	fi
 # Make sure the base dir is created first.
-${DESTDIR}${LIBDIR}/i18n: ${DESTDIR}${LIBDIR}
+${DESTDIR}${LIBDIR}/i18n ${DESTDIR}${LIBDIR}/security: ${DESTDIR}${LIBDIR}
