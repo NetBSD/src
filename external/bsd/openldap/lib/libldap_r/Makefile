@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/05/27 08:58:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/27 07:26:29 mrg Exp $
 
 USE_FORT?=	yes
 
@@ -15,6 +15,6 @@ SRCS+=		threads.c rdwr.c rmutex.c tpool.c rq.c \
 CPPFLAGS+=	-DLDAP_R_COMPILE
 
 COPTS+=		-pthread
-LIBDPLIBS+=	pthread	${NETBSDSRCDIR}/lib/libpthread
+LIBDPLIBS+=	pthread	${.CURDIR}/../../../../../lib/libpthread
 
 .include <bsd.lib.mk>
