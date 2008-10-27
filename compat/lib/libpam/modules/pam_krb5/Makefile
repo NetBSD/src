@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/27 07:22:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/27 08:00:04 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
 NONLS=	# defined
 NOINFO=	# defined
 NOSHARE=	# defined
-LIBDPLIBS=	krb5	${LIB_ROOT_DIR}/libkrb5  asn1	${LIB_ROOT_DIR}/libasn1  roken	${LIB_ROOT_DIR}/libroken  com_err	${LIB_ROOT_DIR}/libcom_err  crypt	${LIB_ROOT_DIR}/libcrypt  crypto	${LIB_ROOT_DIR}/libcrypto
+LIBDPLIBS=	krb5	${.CURDIR}/../../../libkrb5  asn1	${.CURDIR}/../../../libasn1  roken	${.CURDIR}/../../../libroken  com_err	${.CURDIR}/../../../libcom_err  crypt	${.CURDIR}/../../../libcrypt  crypto	${.CURDIR}/../../../libcrypto
 
 NOCHECKVER=	# defined
 

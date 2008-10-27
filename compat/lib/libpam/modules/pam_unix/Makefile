@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/27 07:22:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/10/27 08:00:05 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
 NONLS=	# defined
 NOINFO=	# defined
 NOSHARE=	# defined
-LIBDPLIBS=	util	${LIB_ROOT_DIR}/libutil  crypt	${LIB_ROOT_DIR}/libcrypt rpcsvc	${LIB_ROOT_DIR}/librpcsvc
+LIBDPLIBS=	util	${.CURDIR}/../../../libutil  crypt	${.CURDIR}/../../../libcrypt rpcsvc	${.CURDIR}/../../../librpcsvc
 
 NOCHECKVER=	# defined
 
