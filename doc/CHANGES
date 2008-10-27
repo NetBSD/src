@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1138 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1139 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1050,13 +1050,15 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		correctly. [ad 20081008]
 	i386, amd64: Add support for the multiboot protocol to boot(8).
 		This allows booting Xen without GRUB. [rjs,joerg 20081011]
-	jme(4): Add a driver for the JMicron Technologies JME250 Gigabit
+	jme(4): Add a driver for the JMicron Technologies JME250 Gigabit
 		Ethernet and JME260 Fast Ethernet controllers.
-		[bouyer, 20081011]
+		[bouyer 20081011]
 	rump: Add networking support to rump.  Support is available in
 		libraries prefixed with librumpnet.  [pooka 20081016]
 	rump_nfs(8): Add support for a userspace NFS client.  [pooka 20081016]
 	u3g(4): Add a driver for many 3G datacards to supersede ugensa(4) for
 		multi-port devices from FreeBSD. [joerg 20081019]
 	ps(1): Use 'O' for LSONPROC like solaris instead of bundling LSIDL,
-		LSRUN, LSONPROC to 'R' [christos 20081019]
+		LSRUN, LSONPROC to 'R'. [christos 20081019]
+	ksh(1): Fix posix mode interpretation of backslashes inside
+		backquotes inside double quotes.  [apb 20081027]
