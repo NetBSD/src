@@ -29,11 +29,12 @@ for _dir in ${CHECK_SUBDIRS}; do
 		if [ "$_sd" = ".WAIT" ]; then
 			continue
 		fi
+		_libdplibs="`cd ${srcdir}/${_dir}/${_sd}; ${MAKE} -V LIBDPLIBS`"
 		echo "creating stuff for subdir: $_sd"
 		mkdir -p ${rwsrcdir}/compat/${_dir}/${_sd}
 		(
 		 cat <<'EOF'
-#	$NetBSD: build-makefiles,v 1.2 2008/10/26 12:58:38 mrg Exp $
+#	$NetBSD: build-makefiles,v 1.3 2008/10/27 03:17:58 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
@@ -41,8 +42,27 @@ NONLS=	# defined
 NOINFO=	# defined
 NOSHARE=	# defined
 EOF
-		 if [ "${_sd}" = "libsupc++4" ]; then
+		 # XXX various hacks
+		 case "${_sd}" in
+		 libsupc++4)
 			echo "NOPROFILE=	# defined"
+			;;
+		 libc)
+			echo "# XXX"
+			echo "nsparser.h: nsparser.c"
+			;;
+		 libpcap)
+			echo "# XXX"
+			echo "grammar.h: grammar.c"
+			;;
+		 libc)
+			echo "# XXX"
+			echo "policy_parser.h: policy_parse.c"
+			;;
+		 esac
+
+		 if [ -n "${_libdplibs}" ]; then
+			echo "LIBDPLIBS=	${_libdplibs}"
 		 fi
 		 cat <<'EOF'
 
@@ -51,7 +71,7 @@ NOCHECKVER=	# defined
 .include <bsd.obj.mk>
 
 # Resolve pathnames in variables.
-_RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD
+_RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD LIBDPLIBS
 .for var in ${_RESOLVE_VARS}
 ${var}:=        ${${var}}
 .endfor
@@ -77,9 +97,8 @@ EOF
 		) > ${rwsrcdir}/compat/${_dir}/${_sd}/Makefile
 	done
 
-	if [ ${_dir} != "lib/csu" ]; then
+	if [ "${_dir}" = "lib" -a "${_sd}" = "csu" ]; then
 		(printf '#	$'NetBSD'$\n\n'
-		 #printf ".include <bsd.obj.mk>\n\n"
 		 printf "_CURDIR:= \${.CURDIR}\n\n"
 		 printf ".CURDIR:=\${NETBSDSRCDIR}/${_dir}\n\n"
 		 printf ".include "'"'"\${.CURDIR}/Makefile"'"'"\n\n"
