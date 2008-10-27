@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.8 2008/06/18 07:04:23 mgrooms Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.9 2008/10/27 06:21:29 tteras Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -403,10 +403,10 @@ grab_myaddrs()
 #endif
 #endif
 		if (getnameinfo(p->addr, sysdep_sa_len(p->addr),
-				addr1, sizeof(addr1),
-				NULL, 0,
+				addr1, sizeof(addr1), NULL, 0,
 				NI_NUMERICHOST | niflags))
-		strlcpy(addr1, "(invalid)", sizeof(addr1));
+			strlcpy(addr1, "(invalid)", sizeof(addr1));
+
 		plog(LLV_DEBUG, LOCATION, NULL,
 			"my interface: %s (%s)\n",
 			addr1, ifap->ifa_name);
@@ -519,10 +519,10 @@ grab_myaddrs()
 #endif
 #endif
 			if (getnameinfo(p->addr, sysdep_sa_len(p->addr),
-					addr1, sizeof(addr1),
-					NULL, 0,
+					addr1, sizeof(addr1), NULL, 0,
 					NI_NUMERICHOST | niflags))
-			strlcpy(addr1, "(invalid)", sizeof(addr1));
+				strlcpy(addr1, "(invalid)", sizeof(addr1));
+
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"my interface: %s (%s)\n",
 				addr1, ifr->ifr_name);
