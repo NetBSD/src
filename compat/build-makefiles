@@ -7,7 +7,7 @@ srcdir=/usr/src
 rwsrcdir=/home/current/src
 MAKE=${MAKE-make}
 
-CHECK_SUBDIRS="gnu/lib gnu/lib/libgcc4 lib lib/csu lib/i18n_module external/bsd/openldap/lib"
+CHECK_SUBDIRS="gnu/lib gnu/lib/libgcc4 lib lib/csu lib/i18n_module external/bsd/openldap/lib lib/libpam/modules"
 # lib/csu is spsecial
 # lib/libm needs to be special -- i387
 # gnu/lib/libsupc++ -- fails to get NOPROFILE properly
@@ -31,10 +31,11 @@ for _dir in ${CHECK_SUBDIRS}; do
 		fi
 		_libdplibs="`cd ${srcdir}/${_dir}/${_sd}; ${MAKE} -V LIBDPLIBS`"
 		echo "creating stuff for subdir: $_sd"
+		echo " - libdplibs = ${_libdplibs}"
 		mkdir -p ${rwsrcdir}/compat/${_dir}/${_sd}
 		(
 		 cat <<'EOF'
-#	$NetBSD: build-makefiles,v 1.3 2008/10/27 03:17:58 mrg Exp $
+#	$NetBSD: build-makefiles,v 1.4 2008/10/27 07:17:05 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
@@ -55,9 +56,9 @@ EOF
 			echo "# XXX"
 			echo "grammar.h: grammar.c"
 			;;
-		 libc)
+		 libipsec)
 			echo "# XXX"
-			echo "policy_parser.h: policy_parse.c"
+			echo "policy_parse.h: policy_parse.c"
 			;;
 		 esac
 
@@ -71,7 +72,7 @@ NOCHECKVER=	# defined
 .include <bsd.obj.mk>
 
 # Resolve pathnames in variables.
-_RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD LIBDPLIBS
+_RESOLVE_VARS=  CFLAGS CPPFLAGS DPADD LDADD LIBDPLIBS LIB_ROOT_DIR
 .for var in ${_RESOLVE_VARS}
 ${var}:=        ${${var}}
 .endfor
