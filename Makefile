@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.261 2008/10/25 15:03:44 apb Exp $
+#	$NetBSD: Makefile,v 1.262 2008/10/27 22:32:51 mrg Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -95,6 +95,13 @@
 #   do-sys-rump-fs-lib:  builds and installs prerequisites from sys/rump/fs/lib
 #   do-sys-rump-net-lib: builds and installs prerequisites from sys/rump/net/lib
 #   do-ld.so:        builds and installs prerequisites from libexec/ld.*_so.
+#   do-compat-lib-csu: builds and installs prerequisites from compat/lib/csu
+#                    if ${MKCOMPAT} != "no".
+#   do-compat-libgcc: builds and installs prerequisites from
+#                    compat/gnu/lib/crtstuff${LIBGCC_EXT} (if necessary) and
+#                    compat/gnu/lib/libgcc${LIBGCC_EXT} if ${MKCOMPAT} != "no".
+#   do-compat-lib-libc: builds and installs prerequisites from compat/lib/libc
+#                    if ${MKCOMPAT} != "no".
 #   do-build:        builds and installs the entire system.
 #   do-x11:          builds and installs X11; either
 #                    X11R7 from src/external/mit/xorg if ${MKXORG} != "no"
@@ -136,7 +143,7 @@ _SRC_TOP_OBJ_=
 # BUILD_${dir}=no, or that have no ${dir}/Makefile.
 #
 _SUBDIR=	tools lib include gnu external bin games libexec sbin usr.bin
-_SUBDIR+=	usr.sbin share rescue sys etc tests .WAIT distrib regress
+_SUBDIR+=	usr.sbin share rescue sys etc tests compat .WAIT distrib regress
 
 .for dir in ${_SUBDIR}
 .if "${dir}" == ".WAIT" \
@@ -228,6 +235,11 @@ BUILDTARGET+=	do-libpcc
 BUILDTARGETS+=	do-lib-libc
 BUILDTARGETS+=	do-lib do-gnu-lib do-external-lib
 BUILDTARGETS+=	do-sys-rump-fs-lib do-sys-rump-net-lib
+.if ${MKCOMPAT} != "no"
+BUILDTARGETS+=	do-compat-lib-csu
+BUILDTARGETS+=	do-compat-libgcc
+BUILDTARGETS+=	do-compat-lib-libc
+.endif
 BUILDTARGETS+=	do-ld.so
 BUILDTARGETS+=	do-build
 .if ${MKX11} != "no" || ${MKXORG} != "no"
@@ -385,7 +397,13 @@ BUILD_CC_LIB+= external/bsd/pcc/crtstuff
 BUILD_CC_LIB+= external/bsd/pcc/libpcc
 .endif
 
-.for dir in tools tools/compat lib/csu ${BUILD_CC_LIB} lib/libc lib/libdes lib gnu/lib external/lib sys/rump/fs/lib sys/rump/net/lib
+.if ${MKCOMPAT} != "no"
+BUILD_COMPAT_LIBS=	compat/lib/csu ${BUILD_CC_LIB:S/^/compat\//} compat/lib/libc
+.else
+BUILD_COMPAT_LIBS=
+.endif
+
+.for dir in tools tools/compat lib/csu ${BUILD_CC_LIB} lib/libc lib/libdes lib gnu/lib external/lib sys/rump/fs/lib sys/rump/net/lib ${BUILD_COMPAT_LIBS}
 do-${dir:S/\//-/g}: .PHONY .MAKE
 .for targ in dependall install
 	${MAKEDIRTARGET} ${dir} ${targ}
@@ -405,6 +423,14 @@ do-libgcc: .PHONY .MAKE
 	${MAKEDIRTARGET} . do-gnu-lib-crtstuff${LIBGCC_EXT}
 .endif
 	${MAKEDIRTARGET} . do-gnu-lib-libgcc${LIBGCC_EXT}
+.endif
+.endif
+
+do-compat-libgcc: .PHONY .MAKE
+.if defined(HAVE_GCC)
+.if ${MKGCC} != "no"
+	${MAKEDIRTARGET} . do-compat-gnu-lib-crtstuff${LIBGCC_EXT}
+	${MAKEDIRTARGET} . do-compat-gnu-lib-libgcc${LIBGCC_EXT}
 .endif
 .endif
 
