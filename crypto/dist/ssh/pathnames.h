@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.15 2006/09/28 21:22:14 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.16 2008/10/27 08:27:04 hubertf Exp $	*/
 /* $OpenBSD: pathnames.h,v 1.16 2006/03/25 22:22:43 djm Exp $ */
 
 /*
@@ -107,15 +107,22 @@
 #define _PATH_RHOSTS_EQUIV		"/etc/hosts.equiv"
 
 /*
+ * X11 base directory
+ */
+#ifndef X11BASE
+#define X11BASE				"/usr/X11R6"
+#endif
+
+/*
  * Default location of askpass
  */
-#define _PATH_SSH_ASKPASS_DEFAULT	"/usr/X11R6/bin/ssh-askpass"
+#define _PATH_SSH_ASKPASS_DEFAULT	X11BASE "/bin/ssh-askpass"
 
 /* Location of ssh-keysign for hostbased authentication */
 #define _PATH_SSH_KEY_SIGN		"/usr/libexec/ssh-keysign"
 
 /* xauth for X11 forwarding */
-#define _PATH_XAUTH			"/usr/X11R6/bin/xauth"
+#define _PATH_XAUTH			X11BASE "/bin/xauth"
 
 /* UNIX domain socket for X11 server; displaynum will replace %u */
 #define _PATH_UNIX_X "/tmp/.X11-unix/X%u"

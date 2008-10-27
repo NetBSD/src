@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2008/04/06 09:54:37 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2008/10/27 08:27:04 hubertf Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,10 @@ CPPFLAGS+=-DSKEY
 .if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DGSSAPI -I${DESTDIR}/usr/include/gssapi
 CPPFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/krb5 -DHEIMDAL
+.endif
+
+.if (${MKXORG} != "no")
+CPPFLAGS+=-DX11BASE=\"/usr/X11R7\"
 .endif
 
 CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
