@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.15 2008/07/13 20:07:48 dholland Exp $	*/
+/*	$NetBSD: utmpentry.c,v 1.16 2008/10/28 14:01:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.15 2008/07/13 20:07:48 dholland Exp $");
+__RCSID("$NetBSD: utmpentry.c,v 1.16 2008/10/28 14:01:46 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -52,7 +52,8 @@ __RCSID("$NetBSD: utmpentry.c,v 1.15 2008/07/13 20:07:48 dholland Exp $");
 
 
 /* Fail the compile if x is not true, by constructing an illegal type. */
-#define COMPILE_ASSERT(x) ((void)sizeof(struct { unsigned : ((x) ? 1 : -1); }))
+#define COMPILE_ASSERT(x) /*LINTED null effect */ \
+	((void)sizeof(struct { unsigned : ((x) ? 1 : -1); }))
 
 
 #ifdef SUPPORT_UTMP
