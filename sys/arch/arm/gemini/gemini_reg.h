@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_reg.h,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: gemini_reg.h,v 1.2 2008/10/28 23:18:44 cliff Exp $	*/
 
 #ifndef _ARM_GEMINI_REG_H_
 #define _ARM_GEMINI_REG_H_
@@ -16,9 +16,12 @@
  * Gemini SL3516 memory map
  */
 #define GEMINI_SRAM_BASE	0x00000000	/* Internal SRAM  */
+						/* NOTE: use the SHADOW to avoid conflict w/ DRAM */
 #define GEMINI_SRAM_SIZE	0x10000000 	/* 128 MB */
-#define GEMINI_DRAM_BASE	0x10000000 	/* DRAM (via DDR Control Module) */
+#define GEMINI_DRAM_BASE	0x00000000 	/* DRAM (via DDR Control Module) */
+						/* NOTE: this is a shadow of 0x10000000 */
 #define GEMINI_DRAM_SIZE	0x20000000	/* 512 MB */
+						/* NOTE: size of addr space, not necessarily populated */
 #define GEMINI_FLASH_BASE	0x30000000 	/* DRAM (via DDR Control Module) */
 #define GEMINI_FLASH_SIZE	0x10000000	/* 128 MB */
 
