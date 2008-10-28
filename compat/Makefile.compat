@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.compat,v 1.2 2008/10/27 07:58:42 mrg Exp $
+#	$NetBSD: Makefile.compat,v 1.3 2008/10/28 22:58:23 mrg Exp $
 
 COPTS+=			-m32
 CPUFLAGS+=		-m32
 LDADD+=			-m32
+MKDEPFLAGS+=		-m32
 
 # XXX ugly
 .if ${MACHINE} == "sparc64"
