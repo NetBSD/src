@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.107 2008/10/26 16:38:22 christos Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.108 2008/10/28 11:42:30 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.107 2008/10/26 16:38:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.108 2008/10/28 11:42:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,9 +246,8 @@ linux_e_proc_exit(struct proc *p)
 
 #ifdef LINUX_NPTL
 	linux_nptl_proc_exit(p);
-#endif
-
 	release_futexes(p);
+#endif
 
 	/* Remove the thread for the group thread list */
 	mutex_enter(proc_lock);
