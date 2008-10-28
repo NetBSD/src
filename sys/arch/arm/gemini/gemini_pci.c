@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.2 2008/10/24 16:18:34 cliff Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.3 2008/10/28 23:24:35 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.2 2008/10/24 16:18:34 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.3 2008/10/28 23:24:35 cliff Exp $");
 
 #include <sys/cdefs.h>
 
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.2 2008/10/24 16:18:34 cliff Exp $")
 
 #include <machine/pci_machdep.h>
 
+#include "opt_gemini.h"
 #include "opt_pci.h"
 #include "pci.h"
 
@@ -226,7 +227,7 @@ gemini_pci_init(pci_chipset_tag_t pc, void *cookie)
 
 	gemini_pci_conf_write(sc, 0, GEMINI_PCI_CFG_REG_MEM1,
 		PCI_CFG_REG_MEM_BASE(GEMINI_DRAM_BASE)
-			| gemini_pci_cfg_reg_mem_size(GEMINI_DRAM_SIZE));
+			| gemini_pci_cfg_reg_mem_size(MEMSIZE * 1024 * 1024));
 
 	extent_destroy(ioext);
 	extent_destroy(memext);
