@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.114 2008/10/28 02:03:06 dyoung Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.115 2008/10/28 11:41:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.114 2008/10/28 02:03:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.115 2008/10/28 11:41:23 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -255,12 +255,15 @@ route_output(struct mbuf *m, ...)
 #ifdef RTSOCK_DEBUG
 	if (info.rti_info[RTAX_DST]->sa_family == AF_INET) {
 		printf("%s: extracted info.rti_info[RTAX_DST] %s\n", __func__,
-		    inet_ntoa(((const struct sockaddr_in *)info.rti_info[RTAX_DST])->sin_addr));
+		    inet_ntoa(((const struct sockaddr_in *)
+		    info.rti_info[RTAX_DST])->sin_addr));
 	}
 #endif /* RTSOCK_DEBUG */
-	if (info.rti_info[RTAX_DST] == NULL || (info.rti_info[RTAX_DST]->sa_family >= AF_MAX))
+	if (info.rti_info[RTAX_DST] == NULL ||
+	    (info.rti_info[RTAX_DST]->sa_family >= AF_MAX))
 		senderr(EINVAL);
-	if (info.rti_info[RTAX_GATEWAY] != NULL && (info.rti_info[RTAX_GATEWAY]->sa_family >= AF_MAX))
+	if (info.rti_info[RTAX_GATEWAY] != NULL &&
+	    (info.rti_info[RTAX_GATEWAY]->sa_family >= AF_MAX))
 		senderr(EINVAL);
 
 	/*
@@ -295,7 +298,8 @@ route_output(struct mbuf *m, ...)
 	case RTM_GET:
 	case RTM_CHANGE:
 	case RTM_LOCK:
-                /* XXX This will mask info.rti_info[RTAX_DST] with info.rti_info[RTAX_NETMASK] before
+                /* XXX This will mask info.rti_info[RTAX_DST] with
+		 * info.rti_info[RTAX_NETMASK] before
                  * searching.  It did not used to do that.  --dyoung
 		 */
 		error = rtrequest1(RTM_GET, &info, &rt);
@@ -304,11 +308,14 @@ route_output(struct mbuf *m, ...)
 		if (rtm->rtm_type != RTM_GET) {/* XXX: too grotty */
 			struct radix_node *rn;
 
-			if (memcmp(info.rti_info[RTAX_DST], rt_getkey(rt), info.rti_info[RTAX_DST]->sa_len) != 0)
+			if (memcmp(info.rti_info[RTAX_DST], rt_getkey(rt),
+			    info.rti_info[RTAX_DST]->sa_len) != 0)
 				senderr(ESRCH);
-			info.rti_info[RTAX_NETMASK] = intern_netmask(info.rti_info[RTAX_NETMASK]);
+			info.rti_info[RTAX_NETMASK] = intern_netmask(
+			    info.rti_info[RTAX_NETMASK]);
 			for (rn = rt->rt_nodes; rn; rn = rn->rn_dupedkey)
-				if (info.rti_info[RTAX_NETMASK] == (const struct sockaddr *)rn->rn_mask)
+				if (info.rti_info[RTAX_NETMASK] ==
+				    (const struct sockaddr *)rn->rn_mask)
 					break;
 			if (rn == NULL)
 				senderr(ETOOMANYREFS);
@@ -334,18 +341,25 @@ route_output(struct mbuf *m, ...)
 				rtifa = rt_get_ifa(rt);
 				info.rti_info[RTAX_IFA] = rtifa->ifa_addr;
 #ifdef RTSOCK_DEBUG
-				if (info.rti_info[RTAX_IFA]->sa_family == AF_INET) {
+				if (info.rti_info[RTAX_IFA]->sa_family ==
+				    AF_INET) {
 					printf("%s: copying out RTAX_IFA %s ",
-					    __func__,
-					    inet_ntoa(((const struct sockaddr_in *)info.rti_info[RTAX_IFA])->sin_addr));
-					printf("for info.rti_info[RTAX_DST] %s ifa_getifa %p ifa_seqno %p\n",
-					    inet_ntoa(((const struct sockaddr_in *)info.rti_info[RTAX_DST])->sin_addr),
-					    (void *)rtifa->ifa_getifa, rtifa->ifa_seqno);
+					    __func__, inet_ntoa(
+					    (const struct sockaddr_in *)
+					    info.rti_info[RTAX_IFA])->sin_addr);
+					printf("for info.rti_info[RTAX_DST] %s "
+					    "ifa_getifa %p ifa_seqno %p\n",
+					    inet_ntoa(
+					    (const struct sockaddr_in *)
+					    info.rti_info[RTAX_DST])->sin_addr),
+					    (void *)rtifa->ifa_getifa,
+					    rtifa->ifa_seqno);
 				}
 #endif /* RTSOCK_DEBUG */
-				if (ifp->if_flags & IFF_POINTOPOINT)
-					info.rti_info[RTAX_BRD] = rtifa->ifa_dstaddr;
-				else
+				if (ifp->if_flags & IFF_POINTOPOINT) {
+					info.rti_info[RTAX_BRD] =
+					    rtifa->ifa_dstaddr;
+				} else
 					info.rti_info[RTAX_BRD] = NULL;
 				rtm->rtm_index = ifp->if_index;
 			} else {
@@ -375,19 +389,26 @@ route_output(struct mbuf *m, ...)
 			 */
 			if ((error = rt_getifa(&info)) != 0)
 				senderr(error);
-			if (info.rti_info[RTAX_GATEWAY] && rt_setgate(rt, info.rti_info[RTAX_GATEWAY]))
+			if (info.rti_info[RTAX_GATEWAY] &&
+			    rt_setgate(rt, info.rti_info[RTAX_GATEWAY]))
 				senderr(EDQUOT);
 			/* new gateway could require new ifaddr, ifp;
 			   flags may also be different; ifp may be specified
 			   by ll sockaddr when protocol address is ambiguous */
-			if (info.rti_info[RTAX_IFP] && (ifa = ifa_ifwithnet(info.rti_info[RTAX_IFP])) &&
-			    (ifp = ifa->ifa_ifp) && (info.rti_info[RTAX_IFA] || info.rti_info[RTAX_GATEWAY]))
-				ifa = ifaof_ifpforaddr(info.rti_info[RTAX_IFA] ? info.rti_info[RTAX_IFA] : info.rti_info[RTAX_GATEWAY],
-				    ifp);
-			else if ((info.rti_info[RTAX_IFA] && (ifa = ifa_ifwithaddr(info.rti_info[RTAX_IFA]))) ||
-			    (info.rti_info[RTAX_GATEWAY] && (ifa = ifa_ifwithroute(rt->rt_flags,
-			    rt_getkey(rt), info.rti_info[RTAX_GATEWAY]))))
+			if (info.rti_info[RTAX_IFP] &&
+			    (ifa = ifa_ifwithnet(info.rti_info[RTAX_IFP])) &&
+			    (ifp = ifa->ifa_ifp) && (info.rti_info[RTAX_IFA] ||
+			    info.rti_info[RTAX_GATEWAY])) {
+				ifa = ifaof_ifpforaddr(info.rti_info[RTAX_IFA] ?
+				    info.rti_info[RTAX_IFA] :
+				    info.rti_info[RTAX_GATEWAY], ifp);
+			} else if ((info.rti_info[RTAX_IFA] &&
+			    (ifa = ifa_ifwithaddr(info.rti_info[RTAX_IFA]))) ||
+			    (info.rti_info[RTAX_GATEWAY] &&
+			    (ifa = ifa_ifwithroute(rt->rt_flags,
+			    rt_getkey(rt), info.rti_info[RTAX_GATEWAY])))) {
 				ifp = ifa->ifa_ifp;
+			}
 			if (ifa) {
 				struct ifaddr *oifa = rt->rt_ifa;
 				if (oifa != ifa) {
@@ -403,9 +424,7 @@ route_output(struct mbuf *m, ...)
 			    &rt->rt_rmx);
 			if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
 				rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, &info);
-			/*
-			 * Fall into
-			 */
+			/*FALLTHROUGH*/
 		case RTM_LOCK:
 			rt->rt_rmx.rmx_locks &= ~(rtm->rtm_inits);
 			rt->rt_rmx.rmx_locks |=
@@ -425,7 +444,8 @@ flush:
 		else
 			rtm->rtm_flags |= RTF_DONE;
 	}
-	family = info.rti_info[RTAX_DST] ? info.rti_info[RTAX_DST]->sa_family : 0;
+	family = info.rti_info[RTAX_DST] ? info.rti_info[RTAX_DST]->sa_family :
+	    0;
 	if (rt)
 		rtfree(rt);
     {
@@ -484,7 +504,8 @@ rt_setmetrics(u_long which, const struct rt_metrics *in, struct rt_metrics *out)
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 static int
-rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo *rtinfo)
+rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim,
+    struct rt_addrinfo *rtinfo)
 {
 	const struct sockaddr *sa = NULL;	/* Quell compiler warning */
 	int i;
@@ -506,9 +527,13 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim, struct rt_addrinfo 
 		ADVANCE(cp, sa);
 	}
 
-	/* Check for extra addresses specified, except RTM_GET asking for interface info.  */
+	/*
+	 * Check for extra addresses specified, except RTM_GET asking
+	 * for interface info.
+	 */
 	if (rtmtype == RTM_GET) {
-		if (((rtinfo->rti_addrs & (~((1 << RTAX_IFP) | (1 << RTAX_IFA)))) & (~0 << i)) != 0)
+		if (((rtinfo->rti_addrs &
+		    (~((1 << RTAX_IFP) | (1 << RTAX_IFA)))) & (~0 << i)) != 0)
 			return 1;
 	} else if ((rtinfo->rti_addrs & (~0 << i)) != 0)
 		return 1;
@@ -1089,7 +1114,8 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 				w->w_where = (char *)w->w_where + len;
 			}
 		}
-		info.rti_info[RTAX_IFA] = info.rti_info[RTAX_NETMASK] = info.rti_info[RTAX_BRD] = NULL;
+		info.rti_info[RTAX_IFA] = info.rti_info[RTAX_NETMASK] =
+		    info.rti_info[RTAX_BRD] = NULL;
 	}
 	return 0;
 }
