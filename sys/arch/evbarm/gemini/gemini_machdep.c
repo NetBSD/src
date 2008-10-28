@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.2 2008/10/28 22:34:39 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.2 2008/10/28 22:34:39 cliff Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -621,6 +621,9 @@ gemini_putchar('4');
 	uvm_setpagesize();        /* initialize PAGE_SIZE-dependent variables */
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
+	    VM_FREELIST_DEFAULT);
+	uvm_page_physload(atop(GEMINI_DRAM_BASE), atop(KERNEL_BASE_phys),
+	    atop(GEMINI_DRAM_BASE), atop(KERNEL_BASE_phys),
 	    VM_FREELIST_DEFAULT);
 
 	/* Boot strap pmap telling it where the kernel page table is */
