@@ -1,4 +1,4 @@
-2008-08-27  Timo Teras  <timo.teras@iki.fi>
+2008-10-27  Timo Teras  <timo.teras@iki.fi>
 	From Arnaud Ebalard <arno@natisbad.org>:
 	* src/racoon/isakmp_var.h: remove duplicate declaration
 	* src/racoon/session.c: initfds() needs to be called only if
@@ -8,7 +8,7 @@
 	From Francis Dupont (sent by Arnaud Ebalard):
 	* src/racoon/grabmyaddr.c: recognize RTM_IFANNOUNCE
 
-2008-08-06  Timo Teras  <timo.teras@iki.fi>
+2008-10-23  Timo Teras  <timo.teras@iki.fi>
 	From Krzysztof Piotr Oledzki <olel@ans.pl>:
 	* src/racoon/{privsep.c|session.c|session.h}: revert parts of
 	  2008-08-06 commit; the problem those changes address are already
