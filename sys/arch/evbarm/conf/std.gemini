@@ -1,4 +1,4 @@
-#	$NetBSD: std.gemini,v 1.1 2008/10/24 04:23:18 matt Exp $
+#	$NetBSD: std.gemini,v 1.2 2008/10/28 17:12:05 matt Exp $
 #
 # standard NetBSD/evbarm for GEMINI options
 
@@ -14,10 +14,12 @@ options 	EXEC_SCRIPT
 # To support easy transit to ../arch/arm/arm32
 options 	ARM32
 options 	ARM9
-#options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_PCI_CONF_HOOK		# should be in types.h
 #options 	KERNEL_BASE_EXT=0x80000000
 
+makeoptions	KERNEL_BASE_PHYS="0x10200000"
+makeoptions	KERNEL_BASE_VIRT="0x80200000"
 makeoptions	LOADADDRESS="0x10200000"
 makeoptions	BOARDTYPE="gemini"
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.gemini"
@@ -25,5 +27,5 @@ makeoptions	CPPFLAGS+="-I$S/../../../include"
 
 options		EVBARM_BOARDTYPE=gemini
 options 	ARM_INTR_IMPL="<arch/arm/gemini/gemini_intr.h>"
-#options		ARM_GENERIC_TODR
+#options 	ARM_GENERIC_TODR
 
