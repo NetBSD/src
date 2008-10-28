@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.7 2008/10/26 00:08:15 mrg Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.8 2008/10/28 02:19:27 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -33,7 +33,7 @@
 #ifndef _X86_64_DISKLABEL_H_
 #define _X86_64_DISKLABEL_H_
 
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(HAVE_NBTOOL_CONFIG_H)
 
 #define	LABELSECTOR		1	/* sector containing label */
 #define	LABELOFFSET		0	/* offset of label in sector */
