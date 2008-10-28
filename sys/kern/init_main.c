@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.370 2008/10/25 15:40:59 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.371 2008/10/28 15:33:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.370 2008/10/25 15:40:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371 2008/10/28 15:33:10 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -806,12 +806,7 @@ start_init(void *arg)
 				printf(" (default %s)", initpaths[ipx]);
 			printf(": ");
 			len = cngetsn(ipath, sizeof(ipath)-1);
-			if (len == 0) {
-				if (initpaths[ipx])
-					path = initpaths[ipx++];
-				else
-					continue;
-			} else if (len == 4 && strcmp(ipath, "halt") == 0) {
+			if (len == 4 && strcmp(ipath, "halt") == 0) {
 				cpu_reboot(RB_HALT, NULL);
 			} else if (len == 6 && strcmp(ipath, "reboot") == 0) {
 				cpu_reboot(0, NULL);
@@ -820,9 +815,18 @@ start_init(void *arg)
 				console_debugger();
 				continue;
 #endif
-			} else {
+			} else if (len > 0 && ipath[0] == '/') {
 				ipath[len] = '\0';
 				path = ipath;
+			} else if (len == 0 && initpaths[ipx] != NULL) {
+				path = initpaths[ipx++];
+			} else {
+				printf("use absolute path, ");
+#if defined(DDB)
+				printf("\"ddb\", ");
+#endif
+				printf("\"halt\", or \"reboot\"\n");
+				continue;
 			}
 		} else {
 			if ((path = initpaths[ipx++]) == NULL) {
