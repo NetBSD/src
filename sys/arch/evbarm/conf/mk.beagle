@@ -1,12 +1,12 @@
-#	$NetBSD: mk.beagle,v 1.1 2008/10/22 10:50:56 matt Exp $
+#	$NetBSD: mk.beagle,v 1.2 2008/10/28 17:19:37 matt Exp $
 # gcc doesn't know about cortex-a8
 CPPFLAGS+= -mcpu=arm1136jf-s
 
 SYSTEM_FIRST_OBJ=	beagle_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/beagle/beagle_start.S
 
-KERNEL_BASE_PHYS=0x80300000
-KERNEL_BASE_VIRT=0x80300000
+KERNEL_BASE_PHYS=$(LOADADDRESS)
+KERNEL_BASE_VIRT=$(LOADADDRESS)
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
