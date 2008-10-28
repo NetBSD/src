@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sa.c,v 1.5 2008/10/27 16:52:04 wrstuden Exp $	*/
+/*	$NetBSD: compat_sa.c,v 1.6 2008/10/28 22:11:36 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005, 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
 #include "opt_sa.h"
-__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.5 2008/10/27 16:52:04 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sa.c,v 1.6 2008/10/28 22:11:36 wrstuden Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1117,6 +1117,13 @@ sa_yield(struct lwp *l)
 				 * upcalls.
 				 */
 				vp->savp_pflags |= SAVP_FLAG_NOUPCALLS;
+				/*
+				 * Now force us to call into sa_upcall_userret()
+				 * which will clear SAVP_FLAG_NOUPCALLS
+				 */
+				lwp_lock(l);
+				l->l_flag |= LW_SA_UPCALL;
+				lwp_unlock(l);
 			}
 		}
 
@@ -1997,11 +2004,25 @@ sa_upcall_userret(struct lwp *l)
 	vp = l->l_savp;
 
 	if (vp->savp_pflags & SAVP_FLAG_NOUPCALLS) {
+		int	do_clear = 0;
 		/*
 		 * We made upcalls in sa_yield() (otherwise we would
 		 * still be in the loop there!). Don't do it again.
+		 * Clear LW_SA_UPCALL, unless there are upcalls to deliver.
+		 * they will get delivered next time we return to user mode.
 		 */
 		vp->savp_pflags &= ~SAVP_FLAG_NOUPCALLS;
+		mutex_enter(&vp->savp_mutex);
+		if ((vp->savp_woken_count == 0)
+		    && SIMPLEQ_EMPTY(&vp->savp_upcalls)) {
+			do_clear = 1;
+		}
+		mutex_exit(&vp->savp_mutex);
+		if (do_clear) {
+			lwp_lock(l);
+			l->l_flag &= ~LW_SA_UPCALL;
+			lwp_unlock(l);
+		}
 		DPRINTFN(7,("sa_upcall_userret(%d.%d %x) skipping processing\n",
 		    p->p_pid, l->l_lid, l->l_flag));
 		return;
