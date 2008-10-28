@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.188 2008/09/16 12:30:38 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.189 2008/10/28 08:05:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.188 2008/09/16 12:30:38 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.189 2008/10/28 08:05:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -3663,7 +3663,8 @@ logrusage(const struct rusage *rusage_before,
 int
 checkpassword(const struct passwd *pwent, const char *password)
 {
-	char	*orig, *new;
+	const char *orig;
+	char	*new;
 	time_t	 change, expire, now;
 
 	change = expire = 0;
@@ -3673,7 +3674,9 @@ checkpassword(const struct passwd *pwent, const char *password)
 	time(&now);
 	orig = pwent->pw_passwd;	/* save existing password */
 	expire = pwent->pw_expire;
-	change = (pwent->pw_change == _PASSWORD_CHGNOW)? now : pwent->pw_change;
+	change = pwent->pw_change;
+	if (change == _PASSWORD_CHGNOW)
+		change = now;
 
 	if (orig[0] == '\0')		/* don't allow empty passwords */
 		return 1;
