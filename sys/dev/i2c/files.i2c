@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.21 2008/10/12 13:17:28 pgoyette Exp $
+#	$NetBSD: files.i2c,v 1.22 2008/10/29 17:26:56 jkunz Exp $
 
 defflag	opt_i2cbus.h				I2C_SCAN
 define	i2cbus { }
@@ -105,3 +105,9 @@ file	dev/i2c/xbseeprom.c		xbseeprom
 device	spdmem
 attach	spdmem at iic
 file	dev/i2c/spdmem.c		spdmem
+
+# ADM1021
+device	admtemp
+attach	admtemp at iic
+file	dev/i2c/adm1021.c		admtemp
+

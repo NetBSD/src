@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1108 2008/10/20 22:29:39 lukem Exp $
+# $NetBSD: mi,v 1.1109 2008/10/29 17:26:57 jkunz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -610,6 +610,7 @@
 ./usr/share/man/cat4/adbkbd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adbms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adc.0			man-sys-catman		.cat
+./usr/share/man/cat4/admtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adm1027.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adm1030.0			man-sys-catman		.cat
 ./usr/share/man/cat4/adt7463.0			man-sys-catman		.cat
@@ -633,6 +634,7 @@
 ./usr/share/man/cat4/aiboost.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/akbd.0			man-sys-catman		.cat
+./usr/share/man/cat4/alipm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/alpha/apecs.0		man-sys-catman		.cat
 ./usr/share/man/cat4/alpha/asc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/alpha/autoconf.0		man-sys-catman		.cat
@@ -3178,6 +3180,7 @@
 ./usr/share/man/html4/adc.html			man-sys-htmlman		html
 ./usr/share/man/html4/adm1027.html		man-sys-htmlman		html
 ./usr/share/man/html4/adm1030.html		man-sys-htmlman		html
+./usr/share/man/html4/admtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/adt7463.html		man-sys-htmlman		html
 ./usr/share/man/html4/adt7466.html		man-sys-htmlman		html
 ./usr/share/man/html4/adt7467.html		man-sys-htmlman		html
@@ -3199,6 +3202,7 @@
 ./usr/share/man/html4/aiboost.html		man-sys-htmlman		html
 ./usr/share/man/html4/aic.html			man-sys-htmlman		html
 ./usr/share/man/html4/akbd.html			man-sys-htmlman		html
+./usr/share/man/html4/alipm.html			man-sys-htmlman		html
 ./usr/share/man/html4/alpha/apecs.html		man-sys-htmlman		html
 ./usr/share/man/html4/alpha/asc.html		man-sys-htmlman		html
 ./usr/share/man/html4/alpha/autoconf.html	man-sys-htmlman		html
@@ -5442,6 +5446,7 @@
 ./usr/share/man/man4/adbkbd.4			man-sys-man		.man
 ./usr/share/man/man4/adbms.4			man-sys-man		.man
 ./usr/share/man/man4/adc.4			man-sys-man		.man
+./usr/share/man/man4/admtemp.4			man-sys-man		.man
 ./usr/share/man/man4/adm1027.4			man-sys-man		.man
 ./usr/share/man/man4/adm1030.4			man-sys-man		.man
 ./usr/share/man/man4/adt7463.4			man-sys-man		.man
@@ -5465,6 +5470,7 @@
 ./usr/share/man/man4/aiboost.4			man-sys-man		.man
 ./usr/share/man/man4/aic.4			man-sys-man		.man
 ./usr/share/man/man4/akbd.4			man-sys-man		.man
+./usr/share/man/man4/alipm.4			man-sys-man		.man
 ./usr/share/man/man4/alpha/apecs.4		man-sys-man		.man
 ./usr/share/man/man4/alpha/asc.4		man-sys-man		.man
 ./usr/share/man/man4/alpha/autoconf.4		man-sys-man		.man
