@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.1.1.2 2008/10/07 15:55:20 joerg Exp $	*/
+/*	$NetBSD: ftp.c,v 1.1.1.3 2008/10/29 16:18:14 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -629,7 +629,7 @@ ftp_transfer(conn_t *conn, const char *oper, const char *file, const char *op_ar
 
 	/* check flags */
 	low = CHECK_FLAG('l');
-	pasv = CHECK_FLAG('p');
+	pasv = !CHECK_FLAG('a');
 	verbose = CHECK_FLAG('v');
 
 	/* passive mode */
@@ -650,6 +650,8 @@ ftp_transfer(conn_t *conn, const char *oper, const char *file, const char *op_ar
 		goto sysouch;
 	if (sa.ss_family == AF_INET6)
 		unmappedaddr((struct sockaddr_in6 *)&sa, &l);
+
+retry_mode:
 
 	/* open data socket */
 	if ((sd = socket(sa.ss_family, SOCK_STREAM, IPPROTO_TCP)) == -1) {
@@ -723,6 +725,14 @@ ftp_transfer(conn_t *conn, const char *oper, const char *file, const char *op_ar
 				goto ouch;
 			}
 			break;
+		case FTP_SYNTAX_ERROR:
+			if (verbose)
+				fetch_info("passive mode failed");
+			/* Close socket and retry with passive mode. */
+			pasv = 0;
+			close(sd);
+			sd = -1;
+			goto retry_mode;
 		}
 
 		/* seek to required offset */
