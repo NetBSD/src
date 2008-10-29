@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.2 2008/10/29 17:50:49 christos Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.3 2008/10/29 19:57:27 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1074,7 +1074,7 @@ gtag_slist(SCR *sp, CHAR_T *tag, int ref)
 	int echk;
 	TAG *tp;
 	char *np;
-	char *name, *file, *line, *search;
+	char *name, *file, *search;
 	char command[BUFSIZ];
 	char buf[BUFSIZ];
 	CHAR_T *wp;
@@ -1101,14 +1101,15 @@ gtag_slist(SCR *sp, CHAR_T *tag, int ref)
 			else
 				while (fgetc(fp) != '\n')
 					;
-			if (getentry(buf, &name, &file, &line) == 0) {
+			if (getentry(buf, &name, &file, &search) == 0) {
 				echk = 1;
 				F_SET(tfp, TAGF_ERR);
 				break;
 			}
+			slen = strlen(search);
 			CALLOC_GOTO(sp, tp,
 			    TAG *, 1, sizeof(TAG) + strlen(file) + 1 +
-			    strlen(line) + 1);
+			    (slen + 1) * sizeof(CHAR_T));
 			tp->fname = (char *)tp->buf;
 			strcpy(tp->fname, file);
 			tp->fnlen = strlen(file);
