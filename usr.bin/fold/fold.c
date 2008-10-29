@@ -1,4 +1,4 @@
-/*	$NetBSD: fold.c,v 1.14 2008/07/21 14:19:22 lukem Exp $	*/
+/*	$NetBSD: fold.c,v 1.15 2008/10/29 01:31:09 ahoka Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: fold.c,v 1.14 2008/07/21 14:19:22 lukem Exp $");
+__RCSID("$NetBSD: fold.c,v 1.15 2008/10/29 01:31:09 ahoka Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -155,9 +155,10 @@ fold(int width)
 			}
 
 			if (split_words && last_space != -1) {
-				last_space++;
-
 				fwrite (buf, 1, last_space, stdout);
+
+				/* increase last_space here, so we skip trailing whitespace */
+				last_space++;
 				memmove (buf, buf+last_space, indx-last_space);
 
 				indx -= last_space;
