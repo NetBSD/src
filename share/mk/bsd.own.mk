@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.539 2008/10/27 22:32:51 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.540 2008/10/29 03:11:27 macallan Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -854,7 +854,7 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 	apm ark ast ati chips cirrus cyrix glint i128 i740 imstt intel \
 	mach64 mga neomagic nsc nv nvxbox r128 radeonhd rendition \
 	s3 s3virge savage \
-	siliconmotion sis tdfx tga trident tseng vesa vga via vmware wsfb
+	siliconmotion sis sunffb tdfx tga trident tseng vesa vga via vmware wsfb
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
 
