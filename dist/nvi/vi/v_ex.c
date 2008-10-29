@@ -1,4 +1,4 @@
-/*	$NetBSD: v_ex.c,v 1.1.1.2 2008/05/18 14:31:42 aymeric Exp $ */
+/*	$NetBSD: v_ex.c,v 1.2 2008/10/29 17:50:49 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -211,6 +211,11 @@ v_tagpush(SCR *sp, VICMD *vp)
 {
 	EXCMD cmd;
 
+#ifdef GTAGS
+	if (O_ISSET(sp, O_GTAGSMODE) && vp->m_start.cno == 0)
+		ex_cinit(sp, &cmd, C_RTAG, 0, OOBLNO, 0, 0);
+	else
+#endif
 	ex_cinit(sp, &cmd, C_TAG, 0, OOBLNO, 0, 0);
 	argv_exp0(sp, &cmd, VIP(sp)->keyw, STRLEN(VIP(sp)->keyw) + 1);
 	return (v_exec_ex(sp, vp, &cmd));

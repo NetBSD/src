@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.2 2008/05/18 14:29:47 aymeric Exp $ */
+/*	$NetBSD: main.c,v 1.2 2008/10/29 17:50:49 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -64,6 +64,9 @@ editor(WIN *wp, int argc, char **argv)
 	size_t len;
 	u_int flags;
 	int ch, flagchk, lflag, secure, startup, readonly, rval, silent;
+#ifdef GTAGS
+	int gtags = 0;
+#endif
 	char *tag_f, *wsizearg, path[256];
 	CHAR_T *w;
 	size_t wlen;
@@ -104,11 +107,15 @@ editor(WIN *wp, int argc, char **argv)
 	/* Set the file snapshot flag. */
 	F_SET(gp, G_SNAPSHOT);
 
+	while ((ch = getopt(argc, argv, "c:"
 #ifdef DEBUG
-	while ((ch = getopt(argc, argv, "c:D:eFlRrSsT:t:vw:")) != EOF)
-#else
-	while ((ch = getopt(argc, argv, "c:eFlRrSst:vw:")) != EOF)
+	    "D:"
 #endif
+	    "eF"
+#ifdef GTAGS
+	    "G"
+#endif
+	    "lRrSsT:t:vw:")) != EOF)
 		switch (ch) {
 		case 'c':		/* Run the command. */
 			/*
@@ -149,6 +156,11 @@ editor(WIN *wp, int argc, char **argv)
 		case 'l':		/* Set lisp, showmatch options. */
 			lflag = 1;
 			break;
+#ifdef GTAGS
+		case 'G':               /* gtags mode. */
+			gtags = 1;
+			break;
+#endif
 		case 'R':		/* Readonly. */
 			readonly = 1;
 			break;
@@ -242,6 +254,10 @@ editor(WIN *wp, int argc, char **argv)
 	}
 	if (readonly)
 		*oargp++ = O_READONLY;
+#ifdef GTAGS
+	if (gtags)
+		*oargp++ = O_GTAGSMODE;
+#endif
 	if (secure)
 		*oargp++ = O_SECURE;
 	*oargp = -1;			/* Options initialization. */

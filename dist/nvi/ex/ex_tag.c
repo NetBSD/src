@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.1.1.2 2008/05/18 14:31:20 aymeric Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.2 2008/10/29 17:50:49 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -48,6 +48,10 @@ static char	*binary_search __P((char *, char *, char *));
 static int	 compare __P((char *, char *, char *));
 static void	 ctag_file __P((SCR *, TAGF *, char *, char **, size_t *));
 static int	 ctag_search __P((SCR *, CHAR_T *, size_t, char *));
+#ifdef GTAGS
+static int	 getentry __P((char *, char **, char **, char **));
+static TAGQ	*gtag_slist __P((SCR *, CHAR_T *, int));
+#endif
 static int	 ctag_sfile __P((SCR *, TAGF *, TAGQ *, char *));
 static TAGQ	*ctag_slist __P((SCR *, CHAR_T *));
 static char	*linear_search __P((char *, char *, char *, long));
@@ -87,6 +91,23 @@ ex_tag_first(SCR *sp, CHAR_T *tagarg)
 
 	return (0);
 }
+
+#ifdef GTAGS
+/*
+ * ex_rtag_push -- ^]
+ *              :rtag[!] [string]
+ *
+ * Enter a new TAGQ context based on a ctag string.
+ *
+ * PUBLIC: int ex_rtag_push __P((SCR *, EXCMD *));
+ */
+int
+ex_rtag_push(SCR *sp, EXCMD *cmdp)
+{
+	F_SET(cmdp, E_REFERENCE);
+	return ex_tag_push(sp, cmdp);
+}
+#endif
 
 /*
  * ex_tag_push -- ^]
@@ -131,6 +152,13 @@ ex_tag_push(SCR *sp, EXCMD *cmdp)
 	}
 
 	/* Get the tag information. */
+#ifdef GTAGS
+	if (O_ISSET(sp, O_GTAGSMODE)) {
+		if ((tqp = gtag_slist(sp, exp->tag_last,
+		    F_ISSET(cmdp, E_REFERENCE))) == NULL)
+			return (1);
+	} else
+#endif
 	if ((tqp = ctag_slist(sp, exp->tag_last)) == NULL)
 		return (1);
 
@@ -980,6 +1008,132 @@ notfound:			tag_msg(sp, TAG_SEARCH, tag);
 	(void)nonblank(sp, sp->lno, &sp->cno);
 	return (0);
 }
+
+#ifdef GTAGS
+/*
+ * getentry --
+ *	get tag information from current line.
+ *
+ * gtags temporary file format.
+ * <tag>   <lineno>  <file>         <image>
+ *
+ * sample.
+ * +------------------------------------------------
+ * |main     30      main.c         main(argc, argv)
+ * |func     21      subr.c         func(arg)
+ */
+static int
+getentry(char *buf, char **tag, char **file, char **line)
+{
+	char *p = buf;
+
+	for (*tag = p; *p && !isspace(*p); p++)		/* tag name */
+		;
+	if (*p == 0)
+		goto err;
+	*p++ = 0;
+	for (; *p && isspace(*p); p++)			/* (skip blanks) */
+		;
+	if (*p == 0)
+		goto err;
+	*line = p;					/* line no */
+	for (*line = p; *p && !isspace(*p); p++)
+		;
+	if (*p == 0)
+		goto err;
+	*p++ = 0;
+	for (; *p && isspace(*p); p++)			/* (skip blanks) */
+		;
+	if (*p == 0)
+		goto err;
+	*file = p;					/* file name */
+	for (*file = p; *p && !isspace(*p); p++)
+		;
+	if (*p == 0)
+		goto err;
+	*p = 0;
+
+	/* value check */
+	if (strlen(*tag) && strlen(*line) && strlen(*file) && atoi(*line) > 0)
+		return 1;	/* OK */
+err:
+	return 0;		/* ERROR */
+}
+
+/*
+ * gtag_slist --
+ *	Search the list of tags files for a tag, and return tag queue.
+ */
+static TAGQ *
+gtag_slist(SCR *sp, CHAR_T *tag, int ref)
+{
+	EX_PRIVATE *exp;
+	TAGF *tfp;
+	TAGQ *tqp;
+	size_t len, nlen, slen, wlen;
+	int echk;
+	TAG *tp;
+	char *np;
+	char *name, *file, *line, *search;
+	char command[BUFSIZ];
+	char buf[BUFSIZ];
+	CHAR_T *wp;
+	FILE *fp;
+
+	/* Allocate and initialize the tag queue structure. */
+	INT2CHAR(sp, tag, STRLEN(tag) + 1, np, nlen);
+	len = nlen - 1;
+	CALLOC_GOTO(sp, tqp, TAGQ *, 1, sizeof(TAGQ) + len + 1);
+	CIRCLEQ_INIT(&tqp->tagq);
+	tqp->tag = tqp->buf;
+	memcpy(tqp->tag, np, (tqp->tlen = len) + 1);
+
+	/*
+	 * Find the tag, only display missing file messages once, and
+	 * then only if we didn't find the tag.
+	 */
+	snprintf(command, sizeof(command), "global -%s '%s'", ref ? "rx" : "x",
+	    np);
+	if (fp = popen(command, "r")) {
+		while (fgets(buf, sizeof(buf), fp)) {
+			if (buf[strlen(buf)-1] == '\n')		/* chop(buf) */
+				buf[strlen(buf)-1] = 0;
+			else
+				while (fgetc(fp) != '\n')
+					;
+			if (getentry(buf, &name, &file, &line) == 0) {
+				echk = 1;
+				F_SET(tfp, TAGF_ERR);
+				break;
+			}
+			CALLOC_GOTO(sp, tp,
+			    TAG *, 1, sizeof(TAG) + strlen(file) + 1 +
+			    strlen(line) + 1);
+			tp->fname = (char *)tp->buf;
+			strcpy(tp->fname, file);
+			tp->fnlen = strlen(file);
+			tp->search = (CHAR_T *)(tp->fname + tp->fnlen + 1);
+			CHAR2INT(sp, search, slen + 1, wp, wlen);
+			MEMCPYW(tp->search, wp, (tp->slen = slen) + 1);
+			CIRCLEQ_INSERT_TAIL(&tqp->tagq, tp, q);
+		}
+		pclose(fp);
+	}
+
+	/* Check to see if we found anything. */
+	if (tqp->tagq.cqh_first == (void *)&tqp->tagq) {
+		msgq_str(sp, M_ERR, np, "162|%s: tag not found");
+		free(tqp);
+		return (NULL);
+	}
+
+	tqp->current = tqp->tagq.cqh_first;
+	return (tqp);
+
+alloc_err:
+	return (NULL);
+}
+#endif
 
 /*
  * ctag_slist --
