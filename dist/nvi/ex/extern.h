@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1.1.1 2008/05/18 14:31:21 aymeric Exp $ */
+/*	$NetBSD: extern.h,v 1.2 2008/10/29 17:50:49 christos Exp $ */
 
 /* Do not edit: automatically built by build/distrib. */
 int ex __P((SCR **));
@@ -93,6 +93,7 @@ int re_compile __P((SCR *,
     CHAR_T *, size_t, CHAR_T **, size_t *, regex_t *, u_int));
 void re_error __P((SCR *, int, regex_t *));
 int ex_tag_first __P((SCR *, CHAR_T *));
+int ex_rtag_push __P((SCR *, EXCMD *));
 int ex_tag_push __P((SCR *, EXCMD *));
 int ex_tag_next __P((SCR *, EXCMD *));
 int ex_tag_prev __P((SCR *, EXCMD *));
