@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.41 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: cond.c,v 1.42 2008/10/29 15:37:08 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.41 2008/02/15 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.42 2008/10/29 15:37:08 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.41 2008/02/15 21:29:50 christos Exp $");
+__RCSID("$NetBSD: cond.c,v 1.42 2008/10/29 15:37:08 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -710,6 +710,8 @@ CondToken(Boolean doEval)
 		Boolean lhsQuoted;
 		Boolean rhsQuoted;
 
+do_compare_setup:
+
 		rhs = NULL;
 		lhsFree = rhsFree = FALSE;
 		lhsQuoted = rhsQuoted = FALSE;
@@ -985,6 +987,13 @@ error:
 		     * binary operator) and set to invert the evaluation
 		     * function if condInvert is TRUE.
 		     */
+		    if (isdigit((unsigned char)condExpr[0])) {
+			/*
+			 * Variables may already be substituted
+			 * by the time we get here.
+			 */
+			goto do_compare_setup;
+		    }
 		use_default:
 		    invert = condInvert;
 		    evalProc = condDefProc;

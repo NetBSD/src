@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.140 2008/10/06 22:09:21 joerg Exp $	*/
+/*	$NetBSD: job.c,v 1.141 2008/10/29 15:37:08 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.140 2008/10/06 22:09:21 joerg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.141 2008/10/29 15:37:08 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.140 2008/10/06 22:09:21 joerg Exp $");
+__RCSID("$NetBSD: job.c,v 1.141 2008/10/29 15:37:08 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2530,7 +2530,9 @@ JobInterrupt(int runINTERRUPT, int signo)
 int
 Job_Finish(void)
 {
-    if (postCommands != NILGNODE && !Lst_IsEmpty(postCommands->commands)) {
+    if (postCommands != NILGNODE &&
+	(!Lst_IsEmpty(postCommands->commands) ||
+	 !Lst_IsEmpty(postCommands->children))) {
 	if (errors) {
 	    Error("Errors reported so .END ignored");
 	} else {

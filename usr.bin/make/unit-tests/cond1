@@ -1,4 +1,4 @@
-# $Id: cond1,v 1.3 2004/04/13 16:06:23 sjg Exp $
+# $Id: cond1,v 1.4 2008/10/29 15:37:08 sjg Exp $
 
 # hard code these!
 TEST_UNAME_S= NetBSD
@@ -100,3 +100,5 @@ all:
 	@echo "A='$A' B='$B' C='$C' o='$o,${o2}'"
 	@echo "Passed:${.newline} ${Ok:S/,/${.newline}/}"
 	@echo "${NUMBERS:@n@$n is ${("${PRIMES:M$n}" == ""):?not:} prime${.newline}@}"
+	@echo "${"${DoNotQuoteHere:U0}" > 0:?OK:No}"
+	@echo "${${NoSuchNumber:U42} > 0:?OK:No}"
