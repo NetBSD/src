@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2.120.1 2008/10/27 08:02:41 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.2.120.2 2008/10/29 19:35:19 skrll Exp $	*/
 
 /*	$OpenBSD: pte.h,v 1.11 2002/09/05 18:41:19 mickey Exp $	*/
 
@@ -30,15 +30,6 @@
 #define	_HPPA_PTE_H_
 
 typedef	uint32_t	pt_entry_t;
-/*
- * bits 31 - 12		physical page 
- * bit  11		spare
- * bit  10		wired
- * bit   9		referenced (T)	(1 = false, 0 = true)
- * bit   8		dirty (D)	(0 = true, 1 = false)
- * bit   7		B
- * bit   6 .. 0 	Access rights
- */
 
 #define	PTE_PROT_SHIFT	19
 #define	PTE_PROT(tlb)	((tlb) >> PTE_PROT_SHIFT)
@@ -68,8 +59,6 @@ typedef	uint32_t	pt_entry_t;
 					/* bit 13-30, Access ID */
 #define TLB_PID_MASK	0x0000fffe
 
-#define	TLB_OLDBITS	"\020\024U\031W\032X\033N\034B\035D\036R\037H"
-
 #define TLB_BITS	\
 	"\177\020"	/* New bitmask */		\
 	"b\036WIRED\0"	/* bit 30 (1) */		\
@@ -77,20 +66,19 @@ typedef	uint32_t	pt_entry_t;
 	"b\034D\0"	/* bit 28 (3) */		\
 	"b\033B\0"	/* bit 27 (4) */		\
 	"b\023U\0"	/* bit 19 (12) */		\
-	"f\024\07AR\0"	/* bit 20 (11).. 26 (5) */	\
-	    "=\x73------\0"				\
-	    "=\x00r-----\0"				\
-	    "=\x10rw----\0"				\
-	    "=\x20r-x---\0"				\
-	    "=\x30rwx---\0"				\
-	    "=\x0fr--r--\0"				\
-	    "=\x1frw-rw-\0"				\
-	    "=\x2fr-xr-x\0"				\
-	    "=\x3frwxrwx\0"				\
-
-#if 0
-	"f\x1\xfPID\0"	/* bit 1-15 (30-xx)	*/
-#endif
+	"f\024\07AR\0"	/* bit 20 (11) .. 26 (5) */	\
+	    "=\x73" "------\0"				\
+	    "=\x00" "r-----\0"				\
+	    "=\x10" "rw----\0"				\
+	    "=\x20" "r-x---\0"				\
+	    "=\x30" "rwx---\0"				\
+	    "=\x0f" "r--r--\0"				\
+	    "=\x1f" "rw-rw-\0"				\
+	    "=\x2f" "r-xr-x\0"				\
+	    "=\x3f" "rwxrwx\0"				\
+	    "=\x4c" "gate\0"				\
+	    "=\x2c" "break\0"				\
+	"f\001\017PID\0\0" /* bit 1 (30) .. 15 (16)	*/
 
 /* protection for a gateway page */
 #define	TLB_GATE_PROT	0x04c00000
