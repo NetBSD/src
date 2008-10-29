@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.141 2008/10/22 15:04:49 apb Exp $
+.\"	$NetBSD: make.1,v 1.142 2008/10/29 23:30:08 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -998,6 +998,39 @@ evaluates to true, return as its value the
 .Ar true_string ,
 otherwise return the
 .Ar false_string .
+The expression parser needs careful feeding to avoid surprises.
+For example the following all do what one might expect,
+.Dl ${"${NUMBERS:M42}":?match:no}
+.Dl ${${NUMBER:U0} > 0:?set:zero}
+.Dl ${empty(NUMBER):?empty:set}
+The first case expands to
+.Ql match
+if
+.Dv NUMBERS
+contains the value 42 (the quotes are important).
+The second expands to
+.Ql zero
+unless 
+.Dv NUMBER
+is set to a value greater than 0.
+The last case expands to 
+.Ql empty
+or
+.Ql set
+depending on whether
+.Dv NUMBER
+is empty.  In this example, use of 
+.Ql {}
+rather than
+.Ql ()
+is important to avoid the parser getting confused.
+By contrast, the following examples will
+.Em not
+behave as expected.
+.Dl ${"1 < 0":?always:no}
+.Dl ${NUMBERS:M42:?always:no}
+in both cases the expansion will always be
+.Ql always .
 .It Ar :old_string=new_string
 This is the
 .At V
