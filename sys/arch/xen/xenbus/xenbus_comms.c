@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.9 2008/10/24 18:02:58 jym Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.10 2008/10/29 13:53:15 cegger Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.9 2008/10/24 18:02:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.10 2008/10/29 13:53:15 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.9 2008/10/24 18:02:58 jym Exp $")
 #include <sys/proc.h>
 #include <sys/systm.h>
 
+#include <xen/xen.h>	/* for xendomain_is_dom0() */
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/xenbus.h>
