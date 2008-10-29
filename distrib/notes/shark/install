@@ -1,4 +1,4 @@
-.\"     $NetBSD: install,v 1.3 2008/04/30 13:10:49 martin Exp $
+.\"     $NetBSD: install,v 1.4 2008/10/29 17:01:50 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -79,7 +79,7 @@ installation on your hard disk,
 you may copy the special installation kernel into your existing
 root file system.
 .Pp
-.Dl client# Ic gzcat .../shark/installation/instkernel/netbsd.gz > /netbsd.inst
+.Dl client# Ic gzcat .../shark/installation/instkernel/netbsd.gz \*[Gt] /netbsd.inst
 .Pp
 You may then boot the installation kernel.
 .Pp
@@ -92,7 +92,7 @@ You must configure a DHCP and TFTP server in order to do this.
 .Pp
 Place the installation kernel into the TFTP server's download area.
 .Pp
-.Dl server# Ic gzcat .../shark/installation/instkernel/netbsd.gz > /tftpboot/shark-inst
+.Dl server# Ic gzcat .../shark/installation/instkernel/netbsd.gz \*[Gt] /tftpboot/shark-inst
 .Pp
 Note that your DHCP server must be configured to specify
 this file as the boot file for the client.

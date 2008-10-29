@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.8 2006/12/20 07:34:44 wiz Exp $
+.\"	$NetBSD: prep,v 1.9 2008/10/29 17:01:50 tsutsui Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -39,7 +39,7 @@ tool.
 Note that some older bootproms have an interesting bug in reading the
 kernel via TFTP.
 They handle the port number as a signed entity, and
-can thus not connect to ports >32767.
+can thus not connect to ports \*[Gt]32767.
 You can work around this problem on the TFTP server
 (given that it is a NetBSD host) by using
 .Dq sysctl
@@ -69,7 +69,7 @@ Enter the Command Monitor from the System Maintenance Menu. In
 order to boot the kernel properly you also have to modify the PROM
 environment with
 .Pp
-.Dl "> setenv console serial
+.Dl "\*[Gt] setenv console serial
 .Pp
 Afterwards, just continue with the normal installation procedure.
 .\" The O2 internal MACE Ethernet chip isn't supported yet, so to boot the O2

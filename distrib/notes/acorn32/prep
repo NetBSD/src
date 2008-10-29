@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.11 2006/07/13 15:19:58 bjh21 Exp $
+.\"	$NetBSD: prep,v 1.12 2008/10/29 17:01:50 tsutsui Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -293,7 +293,7 @@ You should run this in a task window (press
 .Li *scsidm
 .Ed
 You will get the following prompt:
-.Dl scsidm>
+.Dl scsidm\*[Gt]
 Now you should enter the following commands:
 .Bl -tag -width Ic
 .It Ic probe
@@ -469,7 +469,7 @@ Specify the device
 .Nx
 should be looking for its kernel in.
 This is the
-.Ql "Run <BtNetBSD$Dir>.native.mountufs ADFS 4"
+.Ql "Run \*[Lt]BtNetBSD$Dir\*[Gt].native.mountufs ADFS 4"
 line that is there by default.
 See this document for other names.
 .Pp
