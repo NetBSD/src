@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.252 2008/10/15 06:51:20 wrstuden Exp $	*/
+/m	$NetBSD: kern_synch.c,v 1.253 2008/10/29 20:18:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.252 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.253 2008/10/29 20:18:20 skrll Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -723,7 +723,7 @@ mi_switch(lwp_t *l)
 		}
 
 		/*
-		 * Mark that context switch is going to be perfomed
+		 * Mark that context switch is going to be performed
 		 * for this LWP, to protect it from being switched
 		 * to on another CPU.
 		 */
