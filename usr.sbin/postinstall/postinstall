@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.75 2008/10/17 21:31:55 cube Exp $
+# $NetBSD: postinstall,v 1.76 2008/10/29 17:09:47 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -126,7 +126,7 @@ additem()
 
 # adddisableditem item description
 #	Add item to list of supported items to check/fix,
-#	but execute the item only if the user asks for it explicitely.
+#	but execute the item only if the user asks for it explicitly.
 #
 adddisableditem()
 {
@@ -1294,7 +1294,7 @@ list()
 		eval desc=\"\${desc_${i}}\"
 		printf "  %-12s  %s\n" "${i}" "${desc}"
 	done
-	echo "Items disabled by default (must be requested explicitely):"
+	echo "Items disabled by default (must be requested explicitly):"
 	echo "  Item          Description"
 	echo "  ----          -----------"
 	for i in ${otheritems}; do
