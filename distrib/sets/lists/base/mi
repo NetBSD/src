@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.777 2008/10/16 09:39:43 pooka Exp $
+# $NetBSD: mi,v 1.778 2008/10/29 11:29:39 kleink Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -3735,6 +3735,7 @@
 ./usr/share/zoneinfo/America/Argentina/La_Rioja	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Mendoza	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Rio_Gallegos	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Salta	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/San_Juan	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/San_Luis	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Tucuman	base-sys-share		share
