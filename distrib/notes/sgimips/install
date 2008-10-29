@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.8 2008/04/30 13:10:49 martin Exp $
+.\"	$NetBSD: install,v 1.9 2008/10/29 17:01:50 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,11 +81,11 @@ To boot from disk, use:
 .(bullet
 .Ic "All machine types:"
 .Pp
-.Dl ">> setenv systempartition scsi(0)disk(X)rdisk(0)partition(8)"
-.Dl ">> setenv osloadpartition scsi(0)disk(X)rdisk(0)partition(0)"
-.Dl ">> setenv osloadfilename netbsd"
-.Dl ">> setenv osloadoptions auto"
-.Dl ">> setenv osloader boot"
+.Dl "\*[Gt]\*[Gt] setenv systempartition scsi(0)disk(X)rdisk(0)partition(8)"
+.Dl "\*[Gt]\*[Gt] setenv osloadpartition scsi(0)disk(X)rdisk(0)partition(0)"
+.Dl "\*[Gt]\*[Gt] setenv osloadfilename netbsd"
+.Dl "\*[Gt]\*[Gt] setenv osloadoptions auto"
+.Dl "\*[Gt]\*[Gt] setenv osloader boot"
 .bullet)
 .Pp
 For all
@@ -131,15 +131,15 @@ with the SCSI-ID of the CD-ROM:
 .Pp
 (for most Indigo2 (IP22) and Indy (IP24) machines)
 .(tag 12n -offset indent -compact
-.It Ic ">> boot -f scsi(0)cdrom(X)rdisk(0)partition(8)ip2xboot"
+.It Ic "\*[Gt]\*[Gt] boot -f scsi(0)cdrom(X)rdisk(0)partition(8)ip2xboot"
 .tag)
 (for Indigo (IP20) and Indigo2/Indy machines with old PROMs)
 .(tag 12n -offset indent -compact
-.It Ic ">> boot -f scsi(0)cdrom(X)rdisk(0)partition(8)aoutboot"
+.It Ic "\*[Gt]\*[Gt] boot -f scsi(0)cdrom(X)rdisk(0)partition(8)aoutboot"
 .tag)
 (for O2 (IP32) machines)
 .(tag 12n -offset indent -compact
-.It Ic ">> boot -f pci(0)scsi(0)cdrom(X)rdisk(0)partition(8)ip3xboot"
+.It Ic "\*[Gt]\*[Gt] boot -f pci(0)scsi(0)cdrom(X)rdisk(0)partition(8)ip3xboot"
 .tag)
 .Pp
 .Ss2 Installation for diskless configurations
@@ -160,11 +160,11 @@ You will need GENERIC32_IP2x for the Indy and Indigo2,
 ecoff-GENERIC32_IP2x for the Indigo (and Indy/Indigo2 machines with old PROMs),
 and GENERIC32_IP3x for the O2.
 .Pp
-.Dl server# Ic gzip -d -c netbsd-GENERIC32_IP2x.gz > /tftpboot/netbsd-sgimips
+.Dl server# Ic gzip -d -c netbsd-GENERIC32_IP2x.gz \*[Gt] /tftpboot/netbsd-sgimips
 or
-.Dl server# Ic gzip -d -c netbsd.ecoff-GENERIC32_IP2x.gz > /tftpboot/netbsd-sgimips
+.Dl server# Ic gzip -d -c netbsd.ecoff-GENERIC32_IP2x.gz \*[Gt] /tftpboot/netbsd-sgimips
 or
-.Dl server# Ic gzip -d -c netbsd-GENERIC32_IP2x.gz > /tftpboot/netbsd-sgimips
+.Dl server# Ic gzip -d -c netbsd-GENERIC32_IP2x.gz \*[Gt] /tftpboot/netbsd-sgimips
 .
 .Pp
 Note that your DHCP server must be configured to specify
@@ -180,9 +180,9 @@ on the server.
 .It
 Load the kernel from the TFTP server:
 .Pp
-.Dl ">> setenv SystemPartition bootp():"
-.Dl ">> setenv netaddr your.ip.here.please"
-.Dl ">> boot"
+.Dl "\*[Gt]\*[Gt] setenv SystemPartition bootp():"
+.Dl "\*[Gt]\*[Gt] setenv netaddr your.ip.here.please"
+.Dl "\*[Gt]\*[Gt] boot"
 .enum)
 .Pp
 The installation of your diskless
@@ -215,9 +215,9 @@ this file as the boot file for the client.
 .It
 Load the kernel from the TFTP server:
 .Pp
-.Dl ">> setenv SystemPartition bootp():"
-.Dl ">> setenv netaddr your.ip.here.please"
-.Dl ">> boot"
+.Dl "\*[Gt]\*[Gt] setenv SystemPartition bootp():"
+.Dl "\*[Gt]\*[Gt] setenv netaddr your.ip.here.please"
+.Dl "\*[Gt]\*[Gt] boot"
 .enum)
 .Pp
 .Ss2 Once you've booted the diskimage
