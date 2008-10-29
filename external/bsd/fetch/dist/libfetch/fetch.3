@@ -24,7 +24,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\" $FreeBSD: fetch.3,v 1.64 2007/12/18 11:03:26 des Exp $
-.\" $NetBSD: fetch.3,v 1.1.1.2 2008/10/07 15:55:20 joerg Exp $
+.\" $NetBSD: fetch.3,v 1.1.1.3 2008/10/29 16:18:13 joerg Exp $
 .\"
 .Dd April 25, 2008
 .Dt FETCH 3
@@ -358,10 +358,14 @@ and
 .Fn fetchPutFTP
 implement the FTP protocol as described in RFC 959.
 .Pp
+By default
+.Nm libfetch
+will attempt to use passive mode first and only fallback to active mode
+if the server reports a syntax error.
 If the
-.Ql p
-(passive) flag is specified, a passive (rather than active) connection
-will be attempted.
+.Ql a
+(active) flag is specified, a passive connection is not tried and active mode
+is used directly.
 .Pp
 If the
 .Ql l
