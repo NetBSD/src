@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.19 2008/10/16 23:26:42 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.20 2008/10/29 02:04:32 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -64,6 +64,18 @@
  * to change table lists e.g. dm_dev_resume_ioctl, dm_dev_remove_ioctl,
  * dm_table_clear_ioctl.
  * 
+ * NOTE: It is not allowed to call dm_table_destroy, dm_table_switch_tables
+ *       with hold table reference counter. Table reference counter is hold
+ *       after calling dm_table_get_entry routine. After calling this
+ *       function user must call dm_table_release before any writer table
+ *       operation.
+ *
+ * Example: dm_table_get_entry
+ *          dm_table_destroy/dm_table_switch_tables
+ * This exaple will lead to deadlock situation because after dm_table_get_entry
+ * table reference counter is != 0 and dm_table_destroy have to wait on cv until
+ * reference counter is 0.
+ *
  */
 
 #include <sys/types.h>
@@ -176,7 +188,7 @@ dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 int
 dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	const char *name, *uuid;
 	uint32_t minor;
 	int r, flags;
@@ -305,7 +317,7 @@ int
 dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 {
 	prop_array_t cmd_array;
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	
 	const char *name, *uuid, *n_name;
 	uint32_t flags, minor;
@@ -357,7 +369,7 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 int
 dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	const char *name, *uuid;
 	uint32_t flags, minor;
 	
@@ -402,7 +414,7 @@ dm_dev_remove_ioctl(prop_dictionary_t dm_dict)
 int
 dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	const char *name, *uuid;
 	uint32_t flags, j, minor;
 	
@@ -457,7 +469,7 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 int
 dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	const char *name, *uuid;
 	uint32_t flags, minor;
 		
@@ -475,7 +487,7 @@ dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
 		return ENOENT;
 	}
 	
-	atomic_or_32(&dmv->flags, DM_SUSPEND_FLAG | DM_INACTIVE_PRESENT_FLAG);
+	atomic_or_32(&dmv->flags, DM_SUSPEND_FLAG);
 	
 	dm_dbg_print_flags(dmv->flags);
 	
@@ -498,7 +510,7 @@ dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
 int
 dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	const char *name, *uuid;
 	uint32_t flags, minor;
 
@@ -556,7 +568,7 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 int
 dm_table_clear_ioctl(prop_dictionary_t dm_dict)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	const char *name, *uuid;
 	uint32_t flags, minor;
 
@@ -599,9 +611,9 @@ dm_table_clear_ioctl(prop_dictionary_t dm_dict)
 int
 dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	struct dm_table *tbl;
-	struct dm_table_entry *table_en;
+	dm_table_entry_t *table_en;
 
 	prop_array_t cmd_array;
 	const char *name, *uuid;
@@ -661,10 +673,10 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 int
 dm_table_load_ioctl(prop_dictionary_t dm_dict)
 {
-	struct dm_dev *dmv;
-	struct dm_table_entry *table_en, *last_table;
+	dm_dev_t *dmv;
+	dm_table_entry_t *table_en, *last_table;
 	struct dm_table  *tbl;
-	struct dm_target *target;
+	dm_target_t *target;
 
 	prop_object_iterator_t iter;
 	prop_array_t cmd_array;
@@ -703,19 +715,20 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	}
 	
 	aprint_normal("Loading table to device: %s--%d\n",name,dmv->table_head.cur_active_table);
-
-	tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_INACTIVE);
 	
-	printf("dmv->name = %s\n", dmv->name);
-	
-	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
-
 	/*
 	 * I have to check if this table slot is not used by another table list.
 	 * if it is used I should free them.
 	 */
 	if (dmv->flags & DM_INACTIVE_PRESENT_FLAG)
 		dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
+
+	dm_dbg_print_flags(dmv->flags);
+	tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_INACTIVE);
+	
+	printf("dmv->name = %s\n", dmv->name);
+	
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 
 	while((target_dict = prop_object_iterator_next(iter)) != NULL){
 
@@ -729,7 +742,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		if ((target = dm_target_lookup_name(type)) == NULL)
 			return ENOENT;
 		
-		if ((table_en=kmem_alloc(sizeof(struct dm_table_entry),
+		if ((table_en=kmem_alloc(sizeof(dm_table_entry_t),
 			    KM_NOSLEEP)) == NULL)
 			return ENOMEM;
 		
@@ -814,9 +827,9 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 int
 dm_table_status_ioctl(prop_dictionary_t dm_dict)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	struct dm_table  *tbl;
-	struct dm_table_entry *table_en;
+	dm_table_entry_t *table_en;
 
 	prop_array_t cmd_array;
 	prop_dictionary_t target_dict;
