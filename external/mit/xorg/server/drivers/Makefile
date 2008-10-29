@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2008/10/27 20:39:32 veego Exp $
+#	$NetBSD: Makefile,v 1.17 2008/10/29 03:14:33 macallan Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -33,6 +33,7 @@ SUBDIR+= \
 	xf86-video-mga \
 	xf86-video-r128 \
 	xf86-video-radeon \
+	xf86-video-sunffb \
 	xf86-video-wsfb
 .else
 
