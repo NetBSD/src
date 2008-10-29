@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.12 2008/10/29 17:01:50 tsutsui Exp $
+.\"	$NetBSD: prep,v 1.13 2008/10/29 17:07:33 tsutsui Exp $
 .
 First and foremost, before beginning the installation process,
 .Em make sure you have a reliable backup
@@ -15,7 +15,7 @@ A self-extracting version of this
 can be found in the distribution directory at
 .Pa installation/misc/splug.bas
 or at David Pilling's W3 site:
-.Lk http://pilling.users.netlink.co.uk/free.html
+.Lk http://www.davidpilling.net/free.html
 .It
 A program to report your disk's geometry:
 .Bl -bullet
