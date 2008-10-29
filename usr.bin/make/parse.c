@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.147 2008/10/06 22:09:21 joerg Exp $	*/
+/*	$NetBSD: parse.c,v 1.148 2008/10/29 15:37:08 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.147 2008/10/06 22:09:21 joerg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.148 2008/10/29 15:37:08 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.147 2008/10/06 22:09:21 joerg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.148 2008/10/29 15:37:08 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -390,28 +390,31 @@ ParseVErrorInternal(FILE *f, const char *cfname, size_t clineno, int type,
 {
 	static Boolean fatal_warning_error_printed = FALSE;
 
-	(void)fprintf(f, "%s: \"", progname);
+	(void)fprintf(f, "%s: ", progname);
 
-	if (*cfname != '/' && strcmp(cfname, "(stdin)") != 0) {
-		char *cp;
-		const char *dir;
+	if (cfname != NULL) {
+		(void)fprintf(f, "\"");
+		if (*cfname != '/' && strcmp(cfname, "(stdin)") != 0) {
+			char *cp;
+			const char *dir;
 
-		/*
-		 * Nothing is more anoying than not knowing which Makefile
-		 * is the culprit.
-		 */
-		dir = Var_Value(".PARSEDIR", VAR_GLOBAL, &cp);
-		if (dir == NULL || *dir == '\0' ||
-		    (*dir == '.' && dir[1] == '\0'))
-			dir = Var_Value(".CURDIR", VAR_GLOBAL, &cp);
-		if (dir == NULL)
-			dir = ".";
-		
-		(void)fprintf(f, "%s/%s", dir, cfname);
-	} else
-		(void)fprintf(f, "%s", cfname);
+			/*
+			 * Nothing is more anoying than not knowing
+			 * which Makefile is the culprit.
+			 */
+			dir = Var_Value(".PARSEDIR", VAR_GLOBAL, &cp);
+			if (dir == NULL || *dir == '\0' ||
+			    (*dir == '.' && dir[1] == '\0'))
+				dir = Var_Value(".CURDIR", VAR_GLOBAL, &cp);
+			if (dir == NULL)
+				dir = ".";
 
-	(void)fprintf(f, "\" line %d: ", (int)clineno);
+			(void)fprintf(f, "%s/%s", dir, cfname);
+		} else
+			(void)fprintf(f, "%s", cfname);
+
+		(void)fprintf(f, "\" line %d: ", (int)clineno);
+	}
 	if (type == PARSE_WARNING)
 		(void)fprintf(f, "warning: ");
 	(void)vfprintf(f, fmt, ap);
@@ -471,6 +474,15 @@ Parse_Error(int type, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
+	if (curFile == (IFile *)NIL) {
+		/* avoid segfault */
+		static IFile intFile = {
+			.fname = NULL,
+			.lineno = 0,
+			.fd = -1,
+		};
+		curFile = &intFile;
+	}
 	ParseVErrorInternal(stderr, curFile->fname, curFile->lineno,
 		    type, fmt, ap);
 	va_end(ap);
@@ -480,6 +492,13 @@ Parse_Error(int type, const char *fmt, ...)
 		ParseVErrorInternal(debug_file, curFile->fname, curFile->lineno,
 			    type, fmt, ap);
 		va_end(ap);
+	}
+	/*
+	 * if we get this far, make sure we don't leave curFile
+	 * pointing to our dummy one.
+	 */
+	if (curFile->fname == NULL) {
+		curFile = (IFile *)NIL;
 	}
 }
 
