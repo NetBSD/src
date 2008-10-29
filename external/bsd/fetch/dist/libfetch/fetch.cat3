@@ -126,7 +126,7 @@ DDEESSCCRRIIPPTTIIOONN
 
      ffeettcchhPPaarrsseeUURRLL() takes a URL in the form of a null-terminated string and
      splits it into its components function according to the Common Internet
-     Scheme Syntax detailed in RFC1738.  A regular expression which produces
+     Scheme Syntax detailed in RFC 1738.  A regular expression which produces
      this syntax is:
 
          <scheme>:(//(<user>(:<pwd>)?@)?<host>(:<port>)?)?/(<document>)?
@@ -140,7 +140,7 @@ DDEESSCCRRIIPPTTIIOONN
      the URL automatically.  This is not done by ffeettcchhMMaakkeeUURRLL().
      ffeettcchhCCooppyyUURRLL() copies an existing _u_r_l structure.
 
-     ffeettcchhMMaakkeeUURRLL(), ffeettcchhPPaarrsseeUURRLL() and ffeettcchhCCooppyyUURRLL() return a pointer to a
+     ffeettcchhMMaakkeeUURRLL(), ffeettcchhPPaarrsseeUURRLL(), and ffeettcchhCCooppyyUURRLL() return a pointer to a
      _u_r_l structure, which is defined as follows in <_f_e_t_c_h_._h>:
 
      #define URL_SCHEMELEN 16
@@ -159,7 +159,7 @@ DDEESSCCRRIIPPTTIIOONN
          size_t       length;
      };
 
-     The pointer returned by ffeettcchhMMaakkeeUURRLL(), ffeettcchhCCooppyyUURRLL() and
+     The pointer returned by ffeettcchhMMaakkeeUURRLL(), ffeettcchhCCooppyyUURRLL(), and
      ffeettcchhPPaarrsseeUURRLL() should be freed using ffeettcchhFFrreeeeUURRLL().
 
      ffeettcchhXXGGeettUURRLL(), ffeettcchhGGeettUURRLL(), and ffeettcchhPPuuttUURRLL() constitute the recom-
@@ -201,23 +201,23 @@ DDEESSCCRRIIPPTTIIOONN
          struct url  *urls;
      };
 
-     The list should be initialised by calling ffeettcchhIInniittUURRLLLLiisstt() and the
+     The list should be initialized by calling ffeettcchhIInniittUURRLLLLiisstt() and the
      entries be freed by calling ffeettcchhFFrreeeeUURRLLLLiisstt().
 
      ffeettcchhSSttrriinnggiiffyyUURRLL() returns the URL as string.  ffeettcchhUUnnqquuootteePPaatthh()
      returns the path name part of the URL with any quoting undone.  Query
      arguments and fragment identifiers are not included.
      ffeettcchhUUnnqquuootteeFFiilleennaammee() returns the last component of the path name as
-     returned by ffeettcchhUUnnqquuootteePPaatthh().  ffeettcchhSSttrriinnggiiffyyUURRLL(), ffeettcchhUUnnqquuootteePPaatthh()
+     returned by ffeettcchhUUnnqquuootteePPaatthh().  ffeettcchhSSttrriinnggiiffyyUURRLL(), ffeettcchhUUnnqquuootteePPaatthh(),
      and ffeettcchhUUnnqquuootteeFFiilleennaammee() return a string that should be deallocated
      with ffrreeee() after use.
 
-     ffeettcchhXXGGeett(), ffeettcchhGGeett(), ffeettcchhPPuutt() and ffeettcchhSSttaatt() are similar to
-     ffeettcchhXXGGeettUURRLL(), ffeettcchhGGeettUURRLL(), ffeettcchhPPuuttUURRLL() and ffeettcchhSSttaattUURRLL(), except
+     ffeettcchhXXGGeett(), ffeettcchhGGeett(), ffeettcchhPPuutt(), and ffeettcchhSSttaatt() are similar to
+     ffeettcchhXXGGeettUURRLL(), ffeettcchhGGeettUURRLL(), ffeettcchhPPuuttUURRLL(), and ffeettcchhSSttaattUURRLL(), except
      that they expect a pre-parsed URL in the form of a pointer to a _s_t_r_u_c_t
      _u_r_l rather than a string.
 
-     All of the ffeettcchhXXGGeettXXXXXX(), ffeettcchhGGeettXXXXXX() and ffeettcchhPPuuttXXXXXX() functions
+     All of the ffeettcchhXXGGeettXXXXXX(), ffeettcchhGGeettXXXXXX(), and ffeettcchhPPuuttXXXXXX() functions
      return a pointer to a stream which can be used to read or write data from
      or to the requested document, respectively.  Note that although the
      implementation details of the individual access methods vary, it can gen-
@@ -226,9 +226,9 @@ DDEESSCCRRIIPPTTIIOONN
      of the ffeettcchhPPuuttXXXXXX() functions is write-only.
 
 FFIILLEE SSCCHHEEMMEE
-     ffeettcchhXXGGeettFFiillee(), ffeettcchhGGeettFFiillee() and ffeettcchhPPuuttFFiillee() provide access to doc-
-     uments which are files in a locally mounted file system.  Only the <docu-
-     ment> component of the URL is used.
+     ffeettcchhXXGGeettFFiillee(), ffeettcchhGGeettFFiillee(), and ffeettcchhPPuuttFFiillee() provide access to
+     documents which are files in a locally mounted file system.  Only the
+     <document> component of the URL is used.
 
      ffeettcchhXXGGeettFFiillee() and ffeettcchhGGeettFFiillee() do not accept any flags.
 
@@ -238,16 +238,18 @@ FFIILLEE SSCCHHEEMMEE
      them.
 
 FFTTPP SSCCHHEEMMEE
-     ffeettcchhXXGGeettFFTTPP(), ffeettcchhGGeettFFTTPP() and ffeettcchhPPuuttFFTTPP() implement the FTP proto-
-     col as described in RFC959.
+     ffeettcchhXXGGeettFFTTPP(), ffeettcchhGGeettFFTTPP(), and ffeettcchhPPuuttFFTTPP() implement the FTP proto-
+     col as described in RFC 959.
 
-     If the `p' (passive) flag is specified, a passive (rather than active)
-     connection will be attempted.
+     By default lliibbffeettcchh will attempt to use passive mode first and only fall-
+     back to active mode if the server reports a syntax error.  If the `a'
+     (active) flag is specified, a passive connection is not tried and active
+     mode is used directly.
 
      If the `l' (low) flag is specified, data sockets will be allocated in the
      low (or default) port range instead of the high port range (see ip(4)).
 
-     If the `d' (direct) flag is specified, ffeettcchhXXGGeettFFTTPP(), ffeettcchhGGeettFFTTPP() and
+     If the `d' (direct) flag is specified, ffeettcchhXXGGeettFFTTPP(), ffeettcchhGGeettFFTTPP(), and
      ffeettcchhPPuuttFFTTPP() will use a direct connection even if a proxy server is
      defined.
 
@@ -256,11 +258,11 @@ FFTTPP SSCCHHEEMMEE
      mous@<hostname>".
 
 HHTTTTPP SSCCHHEEMMEE
-     The ffeettcchhXXGGeettHHTTTTPP(), ffeettcchhGGeettHHTTTTPP() and ffeettcchhPPuuttHHTTTTPP() functions imple-
+     The ffeettcchhXXGGeettHHTTTTPP(), ffeettcchhGGeettHHTTTTPP(), and ffeettcchhPPuuttHHTTTTPP() functions imple-
      ment the HTTP/1.1 protocol.  With a little luck, there is even a chance
-     that they comply with RFC2616 and RFC2617.
+     that they comply with RFC 2616 and RFC 2617.
 
-     If the `d' (direct) flag is specified, ffeettcchhXXGGeettHHTTTTPP(), ffeettcchhGGeettHHTTTTPP()
+     If the `d' (direct) flag is specified, ffeettcchhXXGGeettHHTTTTPP(), ffeettcchhGGeettHHTTTTPP(),
      and ffeettcchhPPuuttHHTTTTPP() will use a direct connection even if a proxy server is
      defined.
 
@@ -338,7 +340,7 @@ RREETTUURRNN VVAALLUUEESS
      and message, e.g. "File is not available (404 Not Found)"
 
 EENNVVIIRROONNMMEENNTT
-     FETCH_BIND_ADDRESS  Specifies a hostname or IP address to which sockets
+     FETCH_BIND_ADDRESS  Specifies a host name or IP address to which sockets
                          used for outgoing connections will be bound.
 
      FTP_LOGIN           Default FTP login if none was provided in the URL.
@@ -437,24 +439,24 @@ EEXXAAMMPPLLEESS
            NO_PROXY=localhost,127.0.0.1
 
 SSEEEE AALLSSOO
-     fetch(1), ftpio(3), ip(4)
+     ftp(1), ip(4)
 
-     J. Postel and J. K. Reynolds, _F_i_l_e _T_r_a_n_s_f_e_r _P_r_o_t_o_c_o_l, October 1985,
-     RFC959.
+     J. Postel and J. K. Reynolds, _F_i_l_e _T_r_a_n_s_f_e_r _P_r_o_t_o_c_o_l, October 1985, RFC
+     959.
 
-     P. Deutsch, A. Emtage, and A. Marine., _H_o_w _t_o _U_s_e _A_n_o_n_y_m_o_u_s _F_T_P, May
-     1994, RFC1635.
+     P. Deutsch, A. Emtage, and A. Marine, _H_o_w _t_o _U_s_e _A_n_o_n_y_m_o_u_s _F_T_P, May 1994,
+     RFC 1635.
 
      T. Berners-Lee, L. Masinter, and M. McCahill, _U_n_i_f_o_r_m _R_e_s_o_u_r_c_e _L_o_c_a_t_o_r_s
-     _(_U_R_L_), December 1994, RFC1738.
+     _(_U_R_L_), December 1994, RFC 1738.
 
      R. Fielding, J. Gettys, J. Mogul, H. Frystyk, L. Masinter, P. Leach, and
      T. Berners-Lee, _H_y_p_e_r_t_e_x_t _T_r_a_n_s_f_e_r _P_r_o_t_o_c_o_l _-_- _H_T_T_P_/_1_._1, January 1999,
-     RFC2616.
+     RFC 2616.
 
      J. Franks, P. Hallam-Baker, J. Hostetler, S. Lawrence, P. Leach, A.
      Luotonen, and L. Stewart, _H_T_T_P _A_u_t_h_e_n_t_i_c_a_t_i_o_n_: _B_a_s_i_c _a_n_d _D_i_g_e_s_t _A_c_c_e_s_s
-     _A_u_t_h_e_n_t_i_c_a_t_i_o_n, June 1999, RFC2617.
+     _A_u_t_h_e_n_t_i_c_a_t_i_o_n, June 1999, RFC 2617.
 
 HHIISSTTOORRYY
      The ffeettcchh library first appeared in FreeBSD 3.0.
