@@ -1,4 +1,4 @@
-/m	$NetBSD: kern_synch.c,v 1.253 2008/10/29 20:18:20 skrll Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.254 2008/10/29 21:35:27 smb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.253 2008/10/29 20:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.254 2008/10/29 21:35:27 smb Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
