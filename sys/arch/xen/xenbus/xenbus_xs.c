@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.16 2008/10/24 21:09:24 jym Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.17 2008/10/29 13:53:15 cegger Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.16 2008/10/24 21:09:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.17 2008/10/29 13:53:15 cegger Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.16 2008/10/24 21:09:24 jym Exp $");
 
 #include <machine/stdarg.h>
 
+#include <xen/xen.h>	/* for xendomain_is_dom0() */
 #include <xen/xenbus.h>
 #include "xenbus_comms.h"
 
