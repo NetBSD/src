@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.306 2008/10/11 21:54:12 bouyer Exp $
+#	$NetBSD: files.pci,v 1.307 2008/10/29 17:26:56 jkunz Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -943,3 +943,9 @@ file dev/ic/siisata.c atapibus & atabus & siisata
 device siisata: ata, ata_dma, ata_udma, sata, siisata
 attach siisata at pci with siisata_pci
 file dev/pci/siisata_pci.c siisata_pci
+
+# Acer Labs M7101 power management controller
+device	alipm: i2cbus
+attach	alipm at pci
+file	dev/pci/alipm.c				alipm
+
