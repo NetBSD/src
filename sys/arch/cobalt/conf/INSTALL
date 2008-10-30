@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.35 2008/10/11 16:54:48 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.36 2008/10/30 00:02:16 tsutsui Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.35 $"
+#ident 		"INSTALL-$Revision: 1.36 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -18,20 +18,20 @@ makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
 maxusers	32
 
 # Standard system options
-options 	KTRACE		# system call tracing support
-options 	SYSVMSG		# System V message queues
-options 	SYSVSEM		# System V semaphores
+#options 	KTRACE		# system call tracing support
+#options 	SYSVMSG		# System V message queues
+#options 	SYSVSEM		# System V semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers
 #options 	SEMMNS=60	# number of semaphores in system
 #options 	SEMUME=10	# max number of undo entries per process
 #options 	SEMMNU=30	# number of undo structures in system
-options 	SYSVSHM		# System V shared memory
+#options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
-options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
+#options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 #options 	LKM		# loadable kernel modules
 #options 	NTP		# network time protocol
-options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	USERCONF	# userconf(4) support
+options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
@@ -73,7 +73,7 @@ file-system	NFS		# Sun NFS-compatible filesystem client
 #file-system	NULLFS		# NULL layered filesystem
 #file-system 	OVERLAY		# overlay file system
 file-system	MFS		# memory-based filesystem
-file-system	FDESC		# user file descriptor filesystem
+#file-system	FDESC		# user file descriptor filesystem
 #file-system	UMAPFS		# uid/gid remapping filesystem
 #file-system	LFS		# Log-based filesystem (still experimental)
 #file-system	PORTAL		# portal filesystem (still experimental)
@@ -112,7 +112,7 @@ options 	INET		# Internet protocols
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
-options 	IPFILTER_LOOKUP	# ippool(8) support
+#options 	IPFILTER_LOOKUP	# ippool(8) support
 #options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
@@ -151,7 +151,7 @@ options 	COM_16650
 
 zsc0		at mainbus? addr 0x1c800000 irq 4
 zstty0		at zsc0 channel 0
-zstty1		at zsc0 channel 1
+#zstty1		at zsc0 channel 1
 
 panel0 		at mainbus? addr 0x1f000000
 
@@ -215,16 +215,16 @@ com* 		at puc? port ?
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
-acardide*	at pci? dev ? function ?	# Acard IDE controllers
+#acardide*	at pci? dev ? function ?	# Acard IDE controllers
 #aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
 #artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
-cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
+#cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 #cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
-hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
+#hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 #optiide* 	at pci? dev ? function ?	# Opti IDE controllers
-pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
-pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
-satalink*	at pci? dev ? function ?	# SiI SATALink controllers
+#pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+#pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
+#satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 #siside* 	at pci? dev ? function ?	# SiS IDE controllers
 #slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
@@ -326,10 +326,11 @@ pseudo-device	loop				# network loopback
 
 # Miscellaneous pseudo-devices
 pseudo-device	pty				# pseudo-terminals
+options 	NO_DEV_PTM
 #pseudo-device	sequencer	1		# MIDI sequencer
 pseudo-device	rnd				# /dev/random & kernel generator
 #options 	RND_COM				# use "com" randomness (BROKEN)
-pseudo-device	clockctl		# user control of clock subsystem
+#pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	nullcons			# no-op console
 
 # A pseudo device needed for Coda		# also needs CODA (above)
