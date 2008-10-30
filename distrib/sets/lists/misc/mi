@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.156 2008/10/29 12:47:37 jmcneill Exp $
+# $NetBSD: mi,v 1.157 2008/10/30 21:21:55 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -629,7 +629,7 @@
 ./usr/share/examples/amd/master			misc-obsolete		obsolete
 ./usr/share/examples/amd/net			misc-amd-examples	share
 ./usr/share/examples/apm/script			misc-amd-examples	share
-./usr/share/examples/atf			misc-atf-examples	share
+./usr/share/examples/atf			misc-atf-examples
 ./usr/share/examples/atf/atf-run.hooks		misc-atf-examples	share
 ./usr/share/examples/atf/tests-results.css	misc-atf-examples	share
 ./usr/share/examples/dhcp/dhcpd.conf		misc-dhcpd-examples	share
@@ -813,7 +813,7 @@
 ./usr/share/examples/postfix/sample-virtual.cf	misc-obsolete		obsolete
 ./usr/share/examples/postfix/transport		misc-postfix-examples	postfix,share
 ./usr/share/examples/postfix/virtual		misc-postfix-examples	postfix,share
-./usr/share/examples/pppd			misc-pppd-examples	share
+./usr/share/examples/pppd			misc-pppd-examples
 ./usr/share/examples/pppd/cingular3G		misc-pppd-examples	share
 ./usr/share/examples/pppd/cingular3G.chat	misc-pppd-examples	share
 ./usr/share/examples/pppd/telus			misc-pppd-examples	share

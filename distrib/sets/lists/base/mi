@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.779 2008/10/30 00:27:31 joerg Exp $
+# $NetBSD: mi,v 1.780 2008/10/30 21:21:55 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1616,11 +1616,11 @@
 ./usr/sbin/zic					base-sysutil-bin
 ./usr/share					base-sys-share
 ./usr/share/atf					base-atf-share
-./usr/share/atf/atf-run.hooks			base-atf-bin
-./usr/share/atf/atf.config.subr			base-atf-share		obsolete
-./usr/share/atf/atf.footer.subr			base-atf-share
-./usr/share/atf/atf.header.subr			base-atf-share
-./usr/share/atf/atf.init.subr			base-atf-share
+./usr/share/atf/atf-run.hooks			base-atf-bin		share
+./usr/share/atf/atf.config.subr			base-atf-share		share,obsolete
+./usr/share/atf/atf.footer.subr			base-atf-share		share
+./usr/share/atf/atf.header.subr			base-atf-share		share
+./usr/share/atf/atf.init.subr			base-atf-share		share
 ./usr/share/calendar				base-calendar-share
 ./usr/share/calendar/calendar.birthday		base-calendar-share	share
 ./usr/share/calendar/calendar.christian		base-calendar-share	share
@@ -2516,7 +2516,7 @@
 ./usr/share/keymaps/x68k			base-sys-share
 ./usr/share/ldscripts				base-obsolete		obsolete
 ./usr/share/legal				base-sys-share
-./usr/share/legal/COPYRIGHT			base-sys-share
+./usr/share/legal/COPYRIGHT			base-sys-share		share
 ./usr/share/lkm					base-obsolete		obsolete
 ./usr/share/lkm/README				base-obsolete		obsolete
 ./usr/share/lkm/misc				base-obsolete		obsolete
