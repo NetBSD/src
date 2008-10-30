@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_dirhash.c,v 1.3 2008/10/30 16:41:18 reinoud Exp $ */
+/* $NetBSD: vfs_dirhash.c,v 1.4 2008/10/30 17:19:18 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.3 2008/10/30 16:41:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.4 2008/10/30 17:19:18 reinoud Exp $");
 #endif /* not lint */
 
 #if 1
@@ -73,8 +73,6 @@ static uint32_t dirhashsize    = 0;
 static TAILQ_HEAD(_dirhash, dirhash) dirhash_queue;
 
 
-#define CURDIRHASHSIZE_SYSCTLOPT 1
-#define MAXDIRHASHSIZE_SYSCTLOPT 2
 void
 dirhash_init(void)
 {
