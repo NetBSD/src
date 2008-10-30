@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.28 2008/10/27 10:58:22 cegger Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.29 2008/10/30 10:12:59 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.28 2008/10/27 10:58:22 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.29 2008/10/30 10:12:59 cegger Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -104,9 +104,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.28 2008/10/27 10:58:22 cegger
 
 #include <uvm/uvm.h>
 
-#include <xen/xen3-public/io/ring.h>
-
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
 #include <xen/granttables.h>
+#include <xen/xen3-public/io/netif.h>
+#include <xen/xenpmap.h>
+
 #include <xen/xenbus.h>
 #include "locators.h"
 

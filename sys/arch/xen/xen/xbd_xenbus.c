@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.33 2008/10/25 17:12:29 jym Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.34 2008/10/30 10:12:59 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.33 2008/10/25 17:12:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.34 2008/10/30 10:12:59 cegger Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -55,11 +55,12 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.33 2008/10/25 17:12:29 jym Exp $");
 
 #include <uvm/uvm.h>
 
-#include <xen/xen3-public/io/ring.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
+#include <xen/granttables.h>
 #include <xen/xen3-public/io/blkif.h>
 #include <xen/xen3-public/io/protocols.h>
 
-#include <xen/granttables.h>
 #include <xen/xenbus.h>
 #include "locators.h"
 
