@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.26 2008/10/15 13:02:29 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.27 2008/10/30 01:54:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@ struct pollfd;
 struct iovec;
 struct timespec;
 struct timeval;
+struct sockaddr;
 
 int rumpuser_stat(const char *, struct stat *, int *);
 int rumpuser_lstat(const char *, struct stat *, int *);
