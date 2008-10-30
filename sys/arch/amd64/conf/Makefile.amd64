@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.24 2008/03/10 22:03:40 ad Exp $
+#	$NetBSD: Makefile.amd64,v 1.25 2008/10/30 20:07:01 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -77,8 +77,9 @@ LINKFORMAT=	-T ${AMD64}/conf/${KERN_LDSCRIPT}
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-acpi_wakeup_low.o amd64func.o busfunc.o cpufunc.o cpu_in_cksum.o lock_stubs.o: assym.h
-linux32_sigcode.o mptramp.o netbsd32_sigcode.o: assym.h
+acpi_wakeup_low.o amd64func.o busfunc.o cpufunc.o cpu_in_cksum.o: assym.h
+linux_support.o linux32_sigcode.o lock_stubs.o mptramp.o: assym.h
+netbsd32_sigcode.o: assym.h
 
 ##
 ## (7) misc settings
