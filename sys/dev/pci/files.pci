@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.307 2008/10/29 17:26:56 jkunz Exp $
+#	$NetBSD: files.pci,v 1.308 2008/10/30 12:02:14 darran Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -948,4 +948,9 @@ file dev/pci/siisata_pci.c siisata_pci
 device	alipm: i2cbus
 attach	alipm at pci
 file	dev/pci/alipm.c				alipm
+
+#
+# NetOctave NSP2000
+#
+include "dev/pci/n8/files.n8"
 
