@@ -1,4 +1,4 @@
-/* $NetBSD: dirhash.h,v 1.1 2008/09/27 13:01:07 reinoud Exp $ */
+/* $NetBSD: dirhash.h,v 1.2 2008/10/30 16:41:18 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: dirhash.h,v 1.1 2008/09/27 13:01:07 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dirhash.h,v 1.2 2008/10/30 16:41:18 reinoud Exp $");
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -70,9 +70,6 @@ struct dirhash {
 #define DIRH_FLAGBITS \
 	"\10\1DIRH_PURGED\2DIRH_COMPLETE\3DIRH_BROKEN"
 
-
-extern uint32_t maxdirhashsize;
-extern uint32_t dirhashsize;
 
 void dirhash_init(void);
 /* void dirhash_finish(void); */
