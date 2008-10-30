@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1141 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1142 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -979,7 +979,12 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	file(1): Update to 4.26.  [christos 20080830]
 	nvi(1): 1.81 with internationalization is now the default, replacing
 		1.79 [christos 20080831]
+	gcc(1): Import GCC 4.1-branch from 20080831 / svn 139820. [mrg 20080831]
 	texinfo(1): Update to 4.8 (last GPLv2 version) [christos 20080902]
+	sysinst(8): Add Colemak and Dvorak keyboard support. [ghen 20080903]
+	od(1): Support -the "-A addressformat" flag. From FreeBSD.
+		[drochner 20080903]
+	compat_linux32: Fix getdents(2). [njoly 20080904]
 	db(1): Add support for encoding or decoding VIS_HTTPSTYLE, and
 		for tuning the page size of the database.  [lukem 20080905]
 	ataraid(4): Add JMicron RAID support contributed by Juan RP.
@@ -1005,13 +1010,17 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	uvideo(4): Add support for USB Video Class capture devices, part of
 		Patrick Mahoney's Google Summer of Code 2008 project.
 		[jmcneill 20080908]
-	altq(4): Add support for source address hashing in the WFQ scheduler.
-		[joerg 20080911]
+	bnx(4): Add support for SerDes controllers. From OpenBSD.
+		[mhitch 20080909]
 	ataraid(4): Add Intel MatrixRAID controller support contributed
 		by Juan RP. [tron 20080911]
+	altq(4): Add support for source address hashing in the WFQ scheduler.
+		[joerg 20080911]
 	cgd(4): Change default iv to encblkno1; encblkno (the old iv) used
 		to encrypt things 8 times leading to a 20% performance loss
 		for no real security benefit [christos 20080912]
+	ftpd(8): Fix large command handling to prevent CSRF-like attacks
+		(CVE-2008-4247). [lukem 20080913]
 	etcupdate(8): Remove the "-b binarydir" and "-s srcdir/etc"
 		options which were deprecated in NetBSD-4.0.  Deprecate
 		the "-s tgz1:tgz2" option; please use "-s tgz1 -s tgz2"
@@ -1021,49 +1030,121 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	ataraid(4): Add support for status reports via bio(4) contributed
 		by Juan RP. [tron 20080915]
 	gem(4): Add support for Sun SBus SX fibre cards.  [jdc 20080915]
+	zoneinfo: Import tzdata2008f. [kleink 20080915]
 	ataraid(4): Add support for multiple volumes attached to
 		Intel MatrixRAID controllers contributed by Juan RP.
 		[tron 20080916]
+	sed(1): Add a -r flag that is an alias for -E, for compatibility
+		with GNU sed. [perry 20080916]
+	compat_linux32: Fix linux32_shmat() so that nspluginwrapper works
+		on amd64. [scw 20080917]
 	patch(1): Merge improved version from DragonFly.
 		patch -b behaves as specified by POSIX. [joerg 20080919]
 	am-utils: Upgrade to 6.2a3 to add new fs flags (log,symperm,...)
 		and efs and tmpfs. [christos 20080919]
+	libarchive: Import libarchive-2.5.5. [joerg 20080919]
+	dhcpcd(8): Import dhcpcd-4.0.1. [joerg 20080919]
 	rc.conf(5): ifconfig_xxN variables may now have multi-line
 		values, just like /etc/ifconfig.xxN files, and
 		semicolons may be used instead of line breaks.
 		[apb 20080920]
 	uvideo(4): Add bulk endpoint support found in some cameras (like
 		the one in the ASUS Eee PC). [jmcneill,mjf 20080921]
+	gcc(1): Build and install a libgcov. [skrll 20080923]
+	fss(4): Build modular fss(4) driver. [hannken 20080923]
 	c99(1): Implement as wrapper for cc to run in C99 compatible mode.
 		[hubertf 20080924]
 	ls(1): -n now implies -l.  [lukem 20080925]
 	ps(1): Add the -A option, to display information about all processes.
 		[apb 20080926]
+	i386: Enable boot.cfg(5) support on install floppies. [tsutsui 20080926]
+	lint(1): Add support for long double _Complex (C99). [matt 20080926]
+	spdmem(4): Add support for DDR3. [pgoyette 20080928]
+	libpthread: Add PTHREAD__COMPAT flag which builds a libpthread
+		that can be dropped into a NetBSD 2/3/4 chroot.
+		This makes threading work in the chroot when using
+		a NetBSD 5 kernel, no other modifications required.
+		[ad 20080929]
+	esl(4): Removed unmaintained driver. [jmcneill 20080930]
+	libfetch: Import libfetch-2.16 from pkgsrc. [joerg 20080930]
+	fss(4): Make fss(4) D_MPSAFE. [hannken 20081001]
+	ichsmb(4), piixide(4): Add ICH10 support, from Brad du Plessis.
+		[christos 20081001]
+	dbcool(4): Replace chip-specific drivers for ADT7463, ADT7467, and
+		ADM1030 with generic dBCool(tm) driver. [pgoyette 20081002]
 	aac(4): Add support for >2TB arrays and implement raw I/O mode which
 		is a prerequisite for this [sborrill 20081002]
-	dbcool(4): Replace chip-specific drivers for ADT7463, ADT7467, and
-		ADM1030 with generic dBCool(tm) driver. [pgoyette 20081007]
+	inet6: Implement improved checking for MTU values on ICMP
+		'Packet Too Big Messages'. Fixes CVE-2008-3530.
+		[adrianp 20081003]
+	compat_linux(8), compat_linux32: Fix compat linux/linux32 nice(2).
+		[njoly 20081003]
+	zoneinfo: Import tzdata2008g. [kleink 20081006]
+	libfetch: Update to libfetch-2.17. [joerg 20081007]
 	libpthread: Diagnostic assertions are now disabled by default.
 		Application errors will be reported only by error return
 		from pthread APIs. The assertions can be re-enabled by
 		setting the PTHREAD_DIAGASSERT environment variable
 		correctly. [ad 20081008]
+	fsck_ext2fs(8), fsck_ffs(8), fsck_lfs(8): Disable userid to username
+		lookups by default and add -U flag to perform them.
+		[christos 20081009]
 	i386, amd64: Add support for the multiboot protocol to boot(8).
 		This allows booting Xen without GRUB. [rjs,joerg 20081011]
 	jme(4): Add a driver for the JMicron Technologies JME250 Gigabit
 		Ethernet and JME260 Fast Ethernet controllers.
 		[bouyer 20081011]
+	lm(4): Add an i2c attachment for the LM78 family of
+		temp sensor/fan controllers. [pgoyette 20081012]
+	jme(4): Add support for jumbo frames. [bouyer 20081013]
+	zoneinfo: Import tzdata2008h. [kleink 20081013]
+	amd64, i386: Recognize CD-ROM as a booted device,
+		for one CD-ROM systems. [tsutsui 20081014]
+	arm: Add FA526 support. [matt 20081014]
+	kernel: Merge wrstuden-revivesa branch which provides
+		compatibility support for the Scheduler Activations.
+		[wrstuden 20081015]
+	wm(4): Add support for more Ethernet ICH9 devices. [bouyer 20081015]
 	rump: Add networking support to rump.  Support is available in
 		libraries prefixed with librumpnet.  [pooka 20081016]
 	rump_nfs(8): Add support for a userspace NFS client.  [pooka 20081016]
-	u3g(4): Add a driver for many 3G datacards to supersede ugensa(4) for
-		multi-port devices from FreeBSD. [joerg 20081019]
+	thinkpad(4): Add fan sensor support, from Thomas E. Spanjaard.
+		[jmcneill 20081018]
 	ps(1): Use 'O' for LSONPROC like solaris instead of bundling LSIDL,
 		LSRUN, LSONPROC to 'R'. [christos 20081019]
+	compat_linux(8): Add native to linux siginfo si_code translation,
+		mostly for negative values. [njoly 20081019]
+	u3g(4): Add a driver for many 3G datacards to supersede ugensa(4) for
+		multi-port devices from FreeBSD. [joerg 20081019]
+	rum(4): Add support for Corega K.K CG-WLUSB2GPX. [jun 20081021]
+	uchcom(4): Add support for HL-340 usb2Serial addapter. [haad 20081022]
+	evbarm: Add initial BEAGLEBOARD support. [matt 20081022]
+	amd64: Add boot.cfg(5) files to bootcds. [tsutsui 20081022]
+	evbarm: Add support for Cortina Systems SL3516 eval board.
+		[matt 20081024]
+	kernel: If no usable init(8) program can be found, set the RB_ASKNAME
+		flag and prompt users for the init path, rather than panicking
+		with "no init". [tsutsui 20081025]
+	compat_linux(8): Add preliminary TLS support for i386. From FreeBSD.
+		[christos 20081025]
+	compat_linux(8): Fix futex support from FreeBSD. [christos 20081026]
+	sshd(8): Make sshd(8) find the xauth program, even with the new
+		/usr/X11R7. [hubertf 20081027]
 	ksh(1): Fix posix mode interpretation of backslashes inside
 		backquotes inside double quotes.  [apb 20081027]
 	amd64, sparc64: Add support for "cc -m32", including all 32 bit
 		libraries shipped with NetBSD.  [mrg 20081027]
+	amiga: Fix ncr5380 SCSI freezing problem during boot, from T. Makinen.
+		[abs 20081028]
+	zoneinfo: Import tzdata2008i. [kleink 20081029]
+	i386: Reenable ichlpcib(4) by default. [joerg 20081029]
+	libfetch: Import libfetch-2.19 from pkgsrc. [joerg 20081029]
+	alipm(4), admtemp(4): Add drivers for Acer Labs M7101 Power Management
+		Controller and Analog Devices ADM1021 temperature sensor.
+		Ported from OpenBSD. [jkunz 20081029]
 	ipw(4),iwi(4),wpi(4),iwn(4): Ship firmware images by default.
 		For ipw(4) and iwi(4), the Intel EULA has to be accepted
 		by setting a sysctl.  [joerg 20081029]
+	nsp(4): Add NetOctave NSP2000 driver, ported from FreeBSD and
+		integrated with opencrypto by CoyotePoint Systems.
+		[darran 20081030]
