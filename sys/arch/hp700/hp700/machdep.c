@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.1 2008/10/27 08:02:40 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.2 2008/10/30 10:20:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.1 2008/10/27 08:02:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.2 2008/10/30 10:20:23 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -210,7 +210,10 @@ int (*cpu_ibtlb_ins)(int, pa_space_t, vaddr_t, paddr_t, vsize_t, u_int);
 int (*cpu_dbtlb_ins)(int, pa_space_t, vaddr_t, paddr_t, vsize_t, u_int);
 
 dev_t	bootdev;
-int	totalphysmem, physmem, esym;
+int	physmem;		/* # pages supported by pmap */
+int	totalphysmem;		/* # pages in system */
+int	availphysmem;		/* # pages available to kernel */
+int	esym;
 paddr_t	avail_end;
 
 /*
@@ -477,10 +480,10 @@ hppa_init(paddr_t start, void *bi)
 	fcacheall();
 
 	avail_end = trunc_page(PAGE0->imm_max_mem);
+	totalphysmem = atop(avail_end);
 	if (avail_end > SYSCALLGATE)
 		avail_end = SYSCALLGATE;
 	physmem = atop(avail_end);
-	totalphysmem = avail_end;
 	resvmem = atop(resvmem);	/* XXXNH */
 
 	/* we hope this won't fail */
@@ -817,11 +820,18 @@ cpu_startup(void)
 	printf("%s\n", cpu_model);
 
 	/* Display some memory usage information. */
-	format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(totalphysmem));
+	format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(physmem));
 	format_bytes(pbuf[1], sizeof(pbuf[1]), ptoa(resvmem));
-	format_bytes(pbuf[2], sizeof(pbuf[2]), ptoa(physmem));
+	format_bytes(pbuf[2], sizeof(pbuf[2]), ptoa(availphysmem));
 	printf("real mem = %s (%s reserved for PROM, %s used by NetBSD)\n",
 	    pbuf[0], pbuf[1], pbuf[2]);
+
+#ifdef DEBUG
+	if (totalphysmem > physmem) {
+		format_bytes(pbuf[0], sizeof(pbuf[0]), ptoa(totalphysmem - physmem));
+		printf("lost mem = %s\n", pbuf[0]);
+	}
+#endif
 
 	minaddr = 0;
 

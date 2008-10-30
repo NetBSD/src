@@ -1,4 +1,4 @@
-// /*	$NetBSD: pmap.c,v 1.43.8.1 2008/10/27 08:02:41 skrll Exp $	*/
+// /*	$NetBSD: pmap.c,v 1.43.8.2 2008/10/30 10:20:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.1 2008/10/27 08:02:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.2 2008/10/30 10:20:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -886,6 +886,9 @@ pmap_bootstrap(vaddr_t vstart)
 	 * Finally, load physical pages into UVM.  There are three segments of
 	 * pages.
 	 */
+
+	availphysmem = 0;
+
 	/* The first segment runs from [resvmem..kernel_text). */
 	phys_start = resvmem;
 	phys_end = atop(&kernel_text);
@@ -895,9 +898,7 @@ pmap_bootstrap(vaddr_t vstart)
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
 			phys_start, phys_end, VM_FREELIST_DEFAULT);
-#if 0
-		physmem += phys_end - phys_start;
-#endif
+		availphysmem += phys_end - phys_start;
 	}
 
 	/* The second segment runs from [__rodata_end..__data_start). */
@@ -909,35 +910,31 @@ pmap_bootstrap(vaddr_t vstart)
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
 			phys_start, phys_end, VM_FREELIST_DEFAULT);
-#if 0
-		physmem += phys_end - phys_start;
-#endif
+		availphysmem += phys_end - phys_start;
 	}
 
-	/* XXXNH - variables */
-	/* The third segment runs from [kerw..totalphysmem). */
-// 	phys_start = atop(kerw);
+	/* The third segment runs from [vstart..physmem). */
 	phys_start = atop(vstart);
-	phys_end = atop(totalphysmem);
+	phys_end = physmem;
 
 	DPRINTF(PDB_INIT, ("%s: phys segment 0x%05x 0x%05x\n", __func__,
 	    (u_int)phys_start, (u_int)phys_end));
 	if (phys_end > phys_start) {
 		uvm_page_physload(phys_start, phys_end,
 			phys_start, phys_end, VM_FREELIST_DEFAULT);
-		physmem += phys_end - phys_start;
+		availphysmem += phys_end - phys_start;
 	}
 
 	mutex_init(&pmaps_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* TODO optimize/inline the kenter */
-	for (va = 0; va < totalphysmem; va += PAGE_SIZE) {
+	for (va = 0; va < ptoa(physmem); va += PAGE_SIZE) {
 		int opmapdebug;
-
 		vm_prot_t prot = UVM_PROT_RW;
 
 		if (va < kero)
 			prot = UVM_PROT_RX;
+
 		opmapdebug = pmapdebug;
 		pmapdebug = 0;
 		pmap_kenter_pa(va, va, prot);
