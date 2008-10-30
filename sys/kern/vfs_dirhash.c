@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_dirhash.c,v 1.1 2008/09/27 13:01:07 reinoud Exp $ */
+/* $NetBSD: vfs_dirhash.c,v 1.2 2008/10/30 16:17:53 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.1 2008/09/27 13:01:07 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.2 2008/10/30 16:17:53 reinoud Exp $");
 #endif /* not lint */
 
 #if 1
@@ -78,6 +78,7 @@ TAILQ_HEAD(_dirhash, dirhash) dirhash_queue;
 void
 dirhash_init(void)
 {
+	const struct sysctlnode *rnode, *cnode;
 	size_t size;
 	uint32_t max_entries;
 
@@ -100,25 +101,23 @@ dirhash_init(void)
 
 	/* create sysctl knobs and dials */
 	sysctl_log = NULL;
-#if 0
-	sysctl_createv(&sysctl_log, 0, NULL, &node,
+	sysctl_createv(&sysctl_log, 0, NULL, &rnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
+		       CTLTYPE_NODE, "dirhash", NULL,
 		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(&sysctl_log, 0, NULL, &node,
+		       CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
+	sysctl_createv(&sysctl_log, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "curdirhashsize",
-		       SYSCTL_DESCR("Current memory to be used by dirhash"),
+		       CTLTYPE_INT, "memused",
+		       SYSCTL_DESCR("current dirhash memory usage"),
 		       NULL, 0, &dirhashsize, 0,
-		       CTL_VFS, 0, CURDIRHASHSIZE_SYSCTLOPT, CTL_EOL);
-	sysctl_createv(&sysctl_log, 0, NULL, &node,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(&sysctl_log, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxdirhashsize",
-		       SYSCTL_DESCR("Max memory to be used by dirhash"),
+		       CTLTYPE_INT, "maxmem",
+		       SYSCTL_DESCR("maximum dirhash memory usage"),
 		       NULL, 0, &maxdirhashsize, 0,
-		       CTL_VFS, 0, MAXDIRHASHSIZE_SYSCTLOPT, CTL_EOL);
-#endif
+		       CTL_CREATE, CTL_EOL);
 }
 
 
