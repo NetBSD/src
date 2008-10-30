@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.157 2008/10/30 21:21:55 mrg Exp $
+# $NetBSD: mi,v 1.158 2008/10/30 21:37:55 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -864,10 +864,10 @@
 ./usr/share/misc/na.postal			misc-reference-share	share
 ./usr/share/misc/zipcodes			misc-reference-share	share
 ./usr/share/postfix				misc-obsolete		obsolete
-./usr/share/xml					misc-xml-share		share
-./usr/share/xml/atf				misc-atf-share		share
+./usr/share/xml					misc-xml-share
+./usr/share/xml/atf				misc-atf-share
 ./usr/share/xml/atf/tests-results.dtd		misc-atf-share		share
 ./usr/share/xml/catalog				misc-xml-share		share
-./usr/share/xsl					misc-xml-share		share
-./usr/share/xsl/atf				misc-atf-share		share
+./usr/share/xsl					misc-xml-share
+./usr/share/xsl/atf				misc-atf-share
 ./usr/share/xsl/atf/tests-results.xsl		misc-atf-share		share
