@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.17 2008/10/09 01:19:06 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.18 2008/10/30 01:54:25 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -80,6 +80,7 @@ struct rumpuser_aio *rua_aios[N_AIOS];
 struct rumpuser_rw rumpspl;
 
 static void *
+/*ARGSUSED*/
 iothread(void *arg)
 {
 	struct rumpuser_aio *rua;
