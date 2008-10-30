@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 2005/12/30 11:47:19 rjs Exp $
+#	$NetBSD: list,v 1.2 2008/10/30 12:39:16 tsutsui Exp $
 
 # extras in bin
 PROG	bin/csh
@@ -23,7 +23,7 @@ PROG	usr/bin/vi
 
 # crunchgen source directory specials: progs built in nonstandard places
 SPECIAL	dhclient	srcdir distrib/utils/x_dhclient
-SPECIAL	vi		srcdir usr.bin/vi/build
+SPECIAL	vi		srcdir usr.bin/nvi/build
 
 # Minimize use of MFS
 SYMLINK	/tmp	var/tmp

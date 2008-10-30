@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 2008/05/06 15:32:06 dyoung Exp $
+#	$NetBSD: list,v 1.3 2008/10/30 12:39:16 tsutsui Exp $
 #
 
 SRCDIRS	usr.bin/less
@@ -70,7 +70,7 @@ SPECIAL	dhclient	srcdir	distrib/utils/x_dhclient
 SPECIAL	ifconfig	srcdir	distrib/utils/x_ifconfig
 SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
-SPECIAL	vi		srcdir	usr.bin/vi/build
+SPECIAL	vi		srcdir	usr.bin/nvi/build
 
 LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz -lprop
 
