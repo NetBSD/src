@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.20 2008/09/23 10:17:06 ad Exp $ */
+/*	$NetBSD: ipmi.c,v 1.21 2008/10/30 20:28:02 cegger Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.20 2008/09/23 10:17:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.21 2008/10/30 20:28:02 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -186,8 +186,8 @@ int	ipmi_watchdog_setmode(struct sysmon_wdog *);
 int	ipmi_watchdog_tickle(struct sysmon_wdog *);
 
 int	ipmi_intr(void *);
-int	ipmi_match(struct device *, struct cfdata *, void *);
-void	ipmi_attach(struct device *, struct device *, void *);
+int	ipmi_match(device_t, cfdata_t, void *);
+void	ipmi_attach(device_t, device_t, void *);
 
 long	ipow(long, int);
 long	ipmi_convert(uint8_t, struct sdrtype1 *, long);
@@ -1702,8 +1702,7 @@ ipmi_probe(struct ipmi_attach_args *ia)
 }
 
 int
-ipmi_match(struct device *parent, struct cfdata *cf,
-    void *aux)
+ipmi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ipmi_softc	sc;
 	struct ipmi_attach_args *ia = aux;
@@ -1739,7 +1738,7 @@ unmap:
 static void
 ipmi_attach2(device_t self)
 {
-	struct ipmi_softc	*sc = (void *) self;
+	struct ipmi_softc	*sc = device_private(self);
 	struct ipmi_attach_args *ia = &sc->sc_ia;
 	uint16_t		rec;
 	struct ipmi_sensor *ipmi_s;
@@ -1847,11 +1846,14 @@ ipmi_attach2(device_t self)
 }
 
 void
-ipmi_attach(struct device *parent, struct device *self, void *aux)
+ipmi_attach(device_t parent, device_t self, void *aux)
 {
-	struct ipmi_softc	*sc = (void *) self;
+	struct ipmi_softc	*sc = device_private(self);
 
 	sc->sc_ia = *(struct ipmi_attach_args *)aux;
+#if notyet
+	sc->sc_dev = self;
+#endif
 	aprint_normal("\n");
 	config_interrupts(self, ipmi_attach2);
 }
