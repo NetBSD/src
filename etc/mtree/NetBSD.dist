@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.383 2008/10/25 17:44:32 christos Exp $
+#	$NetBSD: NetBSD.dist,v 1.384 2008/10/30 00:27:31 joerg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -56,6 +56,10 @@
 ./lib
 ./libdata
 ./libdata/firmware
+./libdata/firmware/if_ipw
+./libdata/firmware/if_iwi
+./libdata/firmware/if_iwn
+./libdata/firmware/if_wpi
 ./libdata/firmware/ral
 ./libdata/firmware/rum
 ./libdata/firmware/zyd
