@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.21 2008/10/30 05:51:26 mrg Exp $
+# $NetBSD: md.sparc64,v 1.22 2008/10/30 15:10:38 mrg Exp $
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
@@ -138,8 +138,8 @@
 ./usr/lib/sparc/libpam.so.1			base-compat-shlib	compat
 ./usr/lib/sparc/libpam.so.1.0			base-compat-shlib	compat
 ./usr/lib/sparc/librefuse.so.0			base-compat-shlib	compat
-./usr/lib/sparc/librefuse.so.0			base-compat-shlib	compat
-./usr/lib/sparc/libp2k.so.0.0			base-compat-shlib	compat
+./usr/lib/sparc/librefuse.so.0.0		base-compat-shlib	compat
+./usr/lib/sparc/libp2k.so.0			base-compat-shlib	compat
 ./usr/lib/sparc/libp2k.so.0.0			base-compat-shlib	compat
 ./usr/lib/sparc/libpcap.so.2			base-compat-shlib	compat
 ./usr/lib/sparc/libpcap.so.2.0			base-compat-shlib	compat
