@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.38 2008/10/30 21:21:55 mrg Exp $
+# $NetBSD: md.amd64,v 1.39 2008/10/30 22:19:17 njoly Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -532,10 +532,10 @@
 ./usr/lib/i386/libossaudio.so			comp-sys-shlib		compat
 ./usr/lib/i386/libossaudio_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libossaudio_pic.a		comp-c-piclib		compat
-./usr/lib/i386/libp2k.a				comp-c-lib		compat
-./usr/lib/i386/libp2k.so			comp-sys-shlib		compat
-./usr/lib/i386/libp2k_p.a			comp-c-proflib		compat,profile
-./usr/lib/i386/libp2k_pic.a			comp-c-piclib		compat
+./usr/lib/i386/libp2k.a				comp-c-lib		compat,puffs
+./usr/lib/i386/libp2k.so			comp-sys-shlib		compat,puffs
+./usr/lib/i386/libp2k_p.a			comp-c-proflib		compat,puffs,profile
+./usr/lib/i386/libp2k_pic.a			comp-c-piclib		compat,puffs
 ./usr/lib/i386/libpam.a				comp-c-lib		compat
 ./usr/lib/i386/libpam.so			comp-sys-shlib		compat
 ./usr/lib/i386/libpam_p.a			comp-c-proflib		compat,profile
@@ -572,10 +572,10 @@
 ./usr/lib/i386/libradius.so			comp-sys-shlib		compat
 ./usr/lib/i386/libradius_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libradius_pic.a			comp-c-piclib		compat
-./usr/lib/i386/librefuse.a			comp-c-lib		compat
-./usr/lib/i386/librefuse.so			comp-sys-shlib		compat
-./usr/lib/i386/librefuse_p.a			comp-c-proflib		compat,profile
-./usr/lib/i386/librefuse_pic.a			comp-c-piclib		compat
+./usr/lib/i386/librefuse.a			comp-c-lib		compat,puffs
+./usr/lib/i386/librefuse.so			comp-sys-shlib		compat,puffs
+./usr/lib/i386/librefuse_p.a			comp-c-proflib		compat,puffs,profile
+./usr/lib/i386/librefuse_pic.a			comp-c-piclib		compat,puffs
 ./usr/lib/i386/libresolv.a			comp-c-lib		compat
 ./usr/lib/i386/libresolv.so			comp-sys-shlib		compat
 ./usr/lib/i386/libresolv_p.a			comp-c-proflib		compat,profile

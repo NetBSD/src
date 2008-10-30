@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.36 2008/10/30 21:21:55 mrg Exp $
+# $NetBSD: md.sparc64,v 1.37 2008/10/30 22:19:17 njoly Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/sparc				comp-c-include
 ./usr/include/sparc/_G_config.h			comp-obsolete		obsolete
@@ -431,10 +431,10 @@
 ./usr/lib/sparc/libossaudio.so			base-sys-shlib		compat
 ./usr/lib/sparc/libossaudio_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libossaudio_pic.a		comp-c-piclib		compat
-./usr/lib/sparc/libp2k.a			comp-c-lib		compat
-./usr/lib/sparc/libp2k.so			base-sys-shlib		compat
-./usr/lib/sparc/libp2k_p.a			comp-c-proflib		compat,profile
-./usr/lib/sparc/libp2k_pic.a			comp-c-piclib		compat
+./usr/lib/sparc/libp2k.a			comp-c-lib		compat,puffs
+./usr/lib/sparc/libp2k.so			base-sys-shlib		compat,puffs
+./usr/lib/sparc/libp2k_p.a			comp-c-proflib		compat,puffs,profile
+./usr/lib/sparc/libp2k_pic.a			comp-c-piclib		compat,puffs
 ./usr/lib/sparc/libpam.a			comp-c-lib		compat
 ./usr/lib/sparc/libpam.so			base-sys-shlib		compat
 ./usr/lib/sparc/libpam_p.a			comp-c-proflib		compat,profile
@@ -471,10 +471,10 @@
 ./usr/lib/sparc/libradius.so			base-sys-shlib		compat
 ./usr/lib/sparc/libradius_p.a			comp-c-proflib		compat,profile
 ./usr/lib/sparc/libradius_pic.a			comp-c-piclib		compat
-./usr/lib/sparc/librefuse.a			comp-c-lib		compat
-./usr/lib/sparc/librefuse.so			base-sys-shlib		compat
-./usr/lib/sparc/librefuse_p.a			comp-c-proflib		compat,profile
-./usr/lib/sparc/librefuse_pic.a			comp-c-piclib		compat
+./usr/lib/sparc/librefuse.a			comp-c-lib		compat,puffs
+./usr/lib/sparc/librefuse.so			base-sys-shlib		compat,puffs
+./usr/lib/sparc/librefuse_p.a			comp-c-proflib		compat,puffs,profile
+./usr/lib/sparc/librefuse_pic.a			comp-c-piclib		compat,puffs
 ./usr/lib/sparc/libresolv.a			comp-c-lib		compat
 ./usr/lib/sparc/libresolv.so			base-sys-shlib		compat
 ./usr/lib/sparc/libresolv_p.a			comp-c-proflib		compat,profile

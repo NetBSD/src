@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.24 2008/10/30 05:51:26 mrg Exp $
+# $NetBSD: md.amd64,v 1.25 2008/10/30 22:19:17 njoly Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -132,10 +132,10 @@
 ./usr/lib/i386/libcrypt.so.0.2			base-compat-shlib	compat
 ./usr/lib/i386/libcrypto.so.4			base-compat-shlib	compat
 ./usr/lib/i386/libcrypto.so.4.1			base-compat-shlib	compat
-./usr/lib/i386/librefuse.so.0			base-compat-shlib	compat
-./usr/lib/i386/librefuse.so.0.0			base-compat-shlib	compat
-./usr/lib/i386/libp2k.so.0			base-compat-shlib	compat
-./usr/lib/i386/libp2k.so.0.0			base-compat-shlib	compat
+./usr/lib/i386/librefuse.so.0			base-compat-shlib	compat,puffs
+./usr/lib/i386/librefuse.so.0.0			base-compat-shlib	compat,puffs
+./usr/lib/i386/libp2k.so.0			base-compat-shlib	compat,puffs
+./usr/lib/i386/libp2k.so.0.0			base-compat-shlib	compat,puffs
 ./usr/lib/i386/libcurses.so.6			base-compat-shlib	compat
 ./usr/lib/i386/libcurses.so.6.4			base-compat-shlib	compat
 ./usr/lib/i386/libdes.so.7			base-compat-shlib	compat
