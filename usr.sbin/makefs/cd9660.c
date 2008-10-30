@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.21 2008/07/27 10:29:32 reinoud Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.22 2008/10/30 18:43:13 ahoka Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.21 2008/07/27 10:29:32 reinoud Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.22 2008/10/30 18:43:13 ahoka Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -693,6 +693,7 @@ cd9660_populate_iso_dir_record(struct _iso_directory_record_cd9660 *record,
 	record->interleave[0] = 0;
 	cd9660_bothendian_word(1, record->volume_sequence_number);
 	record->name_len[0] = name_len;
+	memset(record->name, '\0', sizeof (record->name));
 	memcpy(record->name, name, name_len);
 	record->length[0] = 33 + name_len;
 
@@ -1057,7 +1058,7 @@ cd9660_rename_filename(cd9660node *iter, int num, int delete_chars)
 	else
 		maxlength = ISO_FILENAME_MAXLENGTH_BEFORE_VERSION;
 
-	tmp = malloc(maxlength + 1);
+	tmp = malloc(ISO_FILENAME_MAXLENGTH_WITH_PADDING);
 
 	while (i < num) {
 		powers = 1;
@@ -1139,12 +1140,13 @@ cd9660_rename_filename(cd9660node *iter, int num, int delete_chars)
 
 		tmp[numbts] = ';';
 		tmp[numbts+1] = '1';
+		tmp[numbts+2] = '\0';
 
 		/*
 		 * now tmp has exactly the identifier
 		 * we want so we'll copy it back to record
 		 */
-		memcpy((iter->isoDirRecord->name), tmp, numbts + 2);
+		memcpy((iter->isoDirRecord->name), tmp, numbts + 3);
 
 		iter = TAILQ_NEXT(iter, cn_next_child);
 		i++;
