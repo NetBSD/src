@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.118 2008/10/30 00:03:07 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.119 2008/10/30 16:27:15 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.118 $"
+#ident 		"GENERIC-$Revision: 1.119 $"
 
 maxusers	32
 
@@ -298,10 +298,13 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 # PCI audio devices
 #clcs*		at pci? dev ? function ?	# Cirrus Logic CS4280
 #eap*		at pci? dev ? function ?	# Ensoniq AudioPCI
+#emuxki* 	at pci? dev ? function ?	# SoundBlaster Live!
 #eso*		at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 #fms*		at pci? dev ? function ?	# Forte Media FM801
-#sbl*		at pci? dev ? function ?	# SoundBlaster Live!
 #sv*		at pci? dev ? function ?	# S3 SonicVibes
+
+# Audio support
+#audio*		at audiobus?
 
 # Pseudo-devices
 
