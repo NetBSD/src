@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/09/13 04:32:31 cube Exp $
+#	$NetBSD: Makefile,v 1.6 2008/10/30 08:16:20 veego Exp $
 
 NOLINT=	1	# defined
 
@@ -7,7 +7,7 @@ NOLINT=	1	# defined
 LIB=		pixman-1
 
 DIST=	${X11SRCDIR.pixman}/pixman
-.PATH:	${DIST} ${DIST}/../../combine
+.PATH:	${DIST}
 
 SRCS=	pixman-access.c pixman-region16.c pixman-access-accessors.c \
 	pixman-region32.c pixman-image.c pixman-combine32.c \
@@ -21,10 +21,10 @@ SRCS=	pixman-access.c pixman-region16.c pixman-access-accessors.c \
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS+=	pixman-mmx.c
-SRCS+=	pixman-sse.c
+SRCS+=	pixman-sse2.c
 MKDEPFLAGS+=		-msse -mmmx -fvisibility=hidden
 COPTS.pixman-mmx.c=	-msse -mmmx -fvisibility=hidden
-COPTS.pixman-sse.c=	-msse -mmmx -fvisibility=hidden
+COPTS.pixman-sse2.c=	-msse -mmmx -fvisibility=hidden
 .endif
 
 # .if VMX

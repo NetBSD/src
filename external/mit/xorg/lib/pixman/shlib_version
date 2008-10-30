@@ -1,5 +1,5 @@
-#	$NetBSD: shlib_version,v 1.1 2008/08/02 04:28:12 mrg Exp $
+#	$NetBSD: shlib_version,v 1.2 2008/10/30 08:16:20 veego Exp $
 #
 major=0
-minor=11
-teeny=2
+minor=12
+teeny=0
