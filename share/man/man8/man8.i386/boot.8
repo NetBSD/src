@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.46 2008/10/15 14:32:26 sborrill Exp $
+.\"	$NetBSD: boot.8,v 1.47 2008/10/30 09:49:23 apb Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd October 13, 2008
+.Dd October 30, 2008
 .Os
 .Dt BOOT 8 i386
 .Sh NAME
@@ -283,10 +283,13 @@ Sets the
 .Sy RB_USERCONF
 flag in
 .Va boothowto .
-This causes the kernel to enter the device configuration manager
-as soon as possible, which allows devices to be enabled or disabled,
-and allows device locators can be tuned to the hardware; see
-.Xr userconf 4 .
+This causes the kernel to enter the
+.Xr userconf 4
+device configuration manager as soon as possible during the boot.
+.Xr userconf 4
+allows devices to be enabled or disabled, and allows device locators
+(such as hardware addresses or bus numbers)
+to be modified before the kernel attempts to attach the devices.
 .It Fl d
 Sets the
 .Sy RB_KDB
