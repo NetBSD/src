@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.238 2008/10/10 09:21:58 hannken Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.239 2008/10/30 17:03:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.238 2008/10/10 09:21:58 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.239 2008/10/30 17:03:09 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1778,7 +1778,7 @@ loop:
 		else {
 			if ((error = ffs_cgupdate(ump, waitfor)))
 				allerror = error;
-				UFS_WAPBL_END(mp);
+			UFS_WAPBL_END(mp);
 		}
 	}
 
