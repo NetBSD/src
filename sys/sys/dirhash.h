@@ -1,4 +1,4 @@
-/* $NetBSD: dirhash.h,v 1.2 2008/10/30 16:41:18 reinoud Exp $ */
+/* $NetBSD: dirhash.h,v 1.3 2008/10/30 16:50:03 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -27,9 +27,12 @@
  */
 
 
+#ifndef _SYS_DIRHASH_H_
+#define _SYS_DIRHASH_H_
+
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: dirhash.h,v 1.2 2008/10/30 16:41:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dirhash.h,v 1.3 2008/10/30 16:50:03 reinoud Exp $");
 #endif /* not lint */
 
 #include <sys/queue.h>
@@ -88,4 +91,6 @@ int dirhash_lookup(struct dirhash *dirh, const char *d_name, int d_namlen,
 	struct dirhash_entry **result);
 int dirhash_lookup_freed(struct dirhash *dirh, uint32_t min_entrysize,
 	struct dirhash_entry **result);
+
+#endif /* _SYS_DIRHASH_H_ */
 
