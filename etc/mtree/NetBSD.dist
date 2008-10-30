@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.384 2008/10/30 00:27:31 joerg Exp $
+#	$NetBSD: NetBSD.dist,v 1.385 2008/10/30 21:45:55 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1265,8 +1265,6 @@
 ./usr/share/xml/atf
 ./usr/share/xsl
 ./usr/share/xsl/atf
-./usr/share/vi
-./usr/share/vi/catalog
 ./usr/share/wscons
 ./usr/share/wscons/fonts
 ./usr/share/wscons/keymaps
