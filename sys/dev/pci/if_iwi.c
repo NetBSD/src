@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.73 2008/06/16 06:19:24 mlelstv Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.74 2008/10/30 00:27:32 joerg Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.73 2008/06/16 06:19:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.74 2008/10/30 00:27:32 joerg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -89,6 +89,9 @@ int iwi_debug = 4;
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
 #endif
+
+/* Permit loading the Intel firmware */
+static int iwi_accept_eula;
 
 static int	iwi_match(device_t, struct cfdata *, void *);
 static void	iwi_attach(device_t, device_t, void *);
@@ -2152,6 +2155,12 @@ iwi_cache_firmware(struct iwi_softc *sc)
 	char *fw;
 	int error;
 
+	if (iwi_accept_eula == 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "EULA not accepted, can't load firmware\n");
+		return EPERM;
+	}
+
 	iwi_free_firmware(sc);
 	error = firmware_open("if_iwi", sc->sc_fwname, &fwh);
 	if (error != 0) {
@@ -2903,4 +2912,34 @@ iwi_led_set(struct iwi_softc *sc, uint32_t state, int toggle)
 	MEM_WRITE_4(sc, IWI_MEM_EVENT_CTL, val);
 
 	return;
+}
+
+SYSCTL_SETUP(sysctl_hw_iwi_accept_eula_setup, "sysctl hw.iwi.accept_eula")
+{
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	sysctl_createv(NULL, 0, NULL, &rnode,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "hw",
+		NULL,
+		NULL, 0,
+		NULL, 0,
+		CTL_HW, CTL_EOL);
+
+	sysctl_createv(NULL, 0, &rnode, &rnode,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_NODE, "iwi",
+		NULL,
+		NULL, 0,
+		NULL, 0,
+		CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(NULL, 0, &rnode, &cnode,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "accept_eula",
+		SYSCTL_DESCR("Accept Intel EULA and permit use of iwi(4) firmware"),
+		NULL, 0,
+		&iwi_accept_eula, sizeof(iwi_accept_eula),
+		CTL_CREATE, CTL_EOL);
 }

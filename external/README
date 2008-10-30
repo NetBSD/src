@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 2008/07/29 04:54:58 mrg Exp $
+$NetBSD: README,v 1.5 2008/10/30 00:27:31 joerg Exp $
 
 Organization of Sources:
 
@@ -41,13 +41,18 @@ excised as necessary, either on a per-license or per-package basis.
 
 The licenses currently used are:
 
-	bsd	BSD (or equivalent) licensed software, possibly with
-		the "advertising clause".
+	bsd		BSD (or equivalent) licensed software, possibly with
+			the "advertising clause".
 
-	gpl2	GNU Public License, version 2 (or earlier).
+	gpl2		GNU Public License, version 2 (or earlier).
 
+	intel-fw-oem	Intel firmware license with redistribution
+			restricted to OEM.
 
-	mit	MIT (X11) style license.
+	intel-fw-public	Intel firmware license permitting redistribution with
+			terms similiar to BSD licensed software.
+
+	mit		MIT (X11) style license.
 
 If a package has components covered by different licenses
 (for example, GPL2 and the LGPL), use the <license> subdirectory

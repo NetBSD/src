@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1140 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1141 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1064,3 +1064,6 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		backquotes inside double quotes.  [apb 20081027]
 	amd64, sparc64: Add support for "cc -m32", including all 32 bit
 		libraries shipped with NetBSD.  [mrg 20081027]
+	ipw(4),iwi(4),wpi(4),iwn(4): Ship firmware images by default.
+		For ipw(4) and iwi(4), the Intel EULA has to be accepted
+		by setting a sysctl.  [joerg 20081029]
