@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.425 2008/10/29 17:02:54 tsutsui Exp $
+.\"	$NetBSD: main,v 1.426 2008/10/30 23:51:38 darran Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1500,6 +1500,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Eduardo Horvath Ta Mt eeh@NetBSD.org
 .It Ta Nick Hudson Ta Mt skrll@NetBSD.org
 .It Ta Shell Hung Ta Mt shell@NetBSD.org
+.It Ta Darran Hunt Ta Mt darran@NetBSD.org
 .It Ta Martin Husemann Ta Mt martin@NetBSD.org
 .It Ta Dean Huxley Ta Mt dean@NetBSD.org
 .It Ta Love H\(:ornquist \(oAstrand Ta Mt lha@NetBSD.org
