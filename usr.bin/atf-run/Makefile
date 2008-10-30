@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.3 2008/05/01 15:35:14 jmmv Exp $
+# $NetBSD: Makefile,v 1.4 2008/10/30 21:37:55 mrg Exp $
 
 .include <bsd.own.mk>
 
 SRCDIR=		${NETBSDSRCDIR}/dist/atf
 .PATH:		${SRCDIR}/tools
+.PATH:		${SRCDIR}/data ${SRCDIR}/atf-sh
 
 PROG_CXX=	atf-run
 SRCS=		atf-run.cpp
@@ -17,7 +18,33 @@ COPTS.atf-run.cpp+=	-Wno-stack-protector
 
 WARNS?=		2
 
+.if ${MKSHARE} != "no"
 FILESDIR=	/usr/share/atf
 FILES=		atf-run.hooks
+.endif
+
+# Files in ${SRCDIR}/data.
+FILES+=			atf-c.pc \
+			atf-c++.pc
+FILESDIR_atf-c.pc=	/usr/lib/pkgconfig
+FILESDIR_atf-c++.pc=	/usr/lib/pkgconfig
+
+realall: atf-c.pc
+atf-c.pc: atf-c.pc.in
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.5,g' \
+	    -e 's,__CC__,gcc,g' \
+	    -e 's,__INCLUDEDIR__,/usr/include,g' \
+	    -e 's,__LIBDIR__,/usr/lib,g' \
+	    <${SRCDIR}/data/atf-c.pc.in >atf-c.pc
+CLEANFILES+=	atf-c.pc
+
+realall: atf-c++.pc
+atf-c++.pc: atf-c++.pc.in
+	${TOOL_SED} -e 's,__ATF_VERSION__,0.5,g' \
+	    -e 's,__CXX__,g++,g' \
+	    -e 's,__INCLUDEDIR__,/usr/include,g' \
+	    -e 's,__LIBDIR__,/usr/lib,g' \
+	    <${SRCDIR}/data/atf-c++.pc.in >atf-c++.pc
+CLEANFILES+=	atf-c++.pc
 
 .include <bsd.prog.mk>
