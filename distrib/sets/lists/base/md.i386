@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.128 2008/08/25 07:58:37 lukem Exp $
+# $NetBSD: md.i386,v 1.129 2008/10/31 03:34:49 mrg Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -74,23 +74,23 @@
 ./dev/ttyv6					base-obsolete		obsolete
 ./dev/ttyv7					base-obsolete		obsolete
 ./dev/vga					base-obsolete		obsolete
-./lib/libm387.so				base-sys-shlib		dynamicroot
-./lib/libm387.so.0				base-sys-shlib		dynamicroot
-./lib/libm387.so.0.1				base-sys-shlib		dynamicroot
+./lib/libm387.so				base-sys-shlib		dynamicroot,pic
+./lib/libm387.so.0				base-sys-shlib		dynamicroot,pic
+./lib/libm387.so.0.1				base-sys-shlib		dynamicroot,pic
 ./sbin/ldconfig					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/fontedit				base-obsolete		obsolete
 ./usr/bin/pmc					base-util-bin
 ./usr/bin/vttest				base-obsolete		obsolete
-./usr/lib/libi386.so				base-sys-shlib
-./usr/lib/libi386.so.1				base-sys-shlib
-./usr/lib/libi386.so.1.0			base-sys-shlib
-./usr/lib/libm387.so				base-sys-shlib
-./usr/lib/libm387.so.0				base-sys-shlib
-./usr/lib/libm387.so.0.1			base-sys-shlib
-./usr/lib/libpmc.so				base-sys-shlib
-./usr/lib/libpmc.so.0				base-sys-shlib
-./usr/lib/libpmc.so.0.0				base-sys-shlib
+./usr/lib/libi386.so				base-sys-shlib		pic
+./usr/lib/libi386.so.1				base-sys-shlib		pic
+./usr/lib/libi386.so.1.0			base-sys-shlib		pic
+./usr/lib/libm387.so				base-sys-shlib		pic
+./usr/lib/libm387.so.0				base-sys-shlib		pic
+./usr/lib/libm387.so.0.1			base-sys-shlib		pic
+./usr/lib/libpmc.so				base-sys-shlib		pic
+./usr/lib/libpmc.so.0				base-sys-shlib		pic
+./usr/lib/libpmc.so.0.0				base-sys-shlib		pic
 ./usr/libexec/ld.so				base-sys-shlib
 ./usr/lkm/aps.o					base-sys-lkm
 ./usr/lkm/compat_freebsd.o			base-sys-lkm
