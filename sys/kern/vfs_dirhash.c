@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_dirhash.c,v 1.5 2008/10/31 15:01:12 reinoud Exp $ */
+/* $NetBSD: vfs_dirhash.c,v 1.6 2008/10/31 15:13:55 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.5 2008/10/31 15:01:12 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.6 2008/10/31 15:13:55 reinoud Exp $");
 
 /* CLEAN UP! */
 #include <sys/param.h>
@@ -386,9 +386,6 @@ dirhash_lookup(struct dirhash *dirh, const char *d_name, int d_namlen,
 	struct dirhash_entry *dirh_e;
 	uint32_t hashvalue, hashline;
 
-	/* vnode should be locked */
-	//KASSERT(VOP_ISLOCKED(dirh->vnode));
-
 	/* make sure we have a dirhash to work on */
 	KASSERT(dirh);
 	KASSERT(dirh->refcnt > 0);
@@ -433,8 +430,6 @@ dirhash_lookup_freed(struct dirhash *dirh, uint32_t min_entrysize,
 	struct dirhash_entry **result)
 {
 	struct dirhash_entry *dirh_e;
-
-	//KASSERT(VOP_ISLOCKED(dirh->vnode));
 
 	/* make sure we have a dirhash to work on */
 	KASSERT(dirh);
