@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.19 2008/10/12 01:40:37 dholland Exp $	*/
+/*	$NetBSD: output.h,v 1.20 2008/10/31 14:38:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -60,6 +60,8 @@ void open_mem(char *, int, struct output *);
 void out1str(const char *);
 void out2str(const char *);
 void outstr(const char *, struct output *);
+void out2shstr(const char *);
+void outshstr(const char *, struct output *);
 void emptyoutbuf(struct output *);
 void flushall(void);
 void flushout(struct output *);
