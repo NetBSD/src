@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.95 2008/10/03 10:35:45 jdc Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.96 2008/10/31 20:42:08 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2225,4 +2225,11 @@ src/sys/netinet6/nd6_nbr.c			1.89-1.90 via patch
 	make sure that the source address matches one of the interfaces
 	address prefixes.  Fixes CVE-2008-2476/VU#472363.
 	[adrianp, ticket #1210]
+
+sys/dev/pci/if_wm.c				1.162
+sys/dev/pci/pcidevs				1.961-1.962 via patch
+
+	Add support for more ethenet ICH9 devices. Tested by Pouya D.
+	Tafti on a 82801I_IGP_M_AMT.
+	[bouyer, ticket #1215]
 
