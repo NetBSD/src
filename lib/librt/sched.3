@@ -1,4 +1,4 @@
-.\"	$NetBSD: sched.3,v 1.6 2008/10/31 11:55:40 rmind Exp $
+.\"	$NetBSD: sched.3,v 1.7 2008/10/31 18:07:18 snj Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,8 +61,8 @@
 .Ft int
 .Fn sched_yield "void"
 .Sh DESCRIPTION
-This section describes the functions used to get the scheduling
-information about the processes, and control the scheduling of the process.
+This section describes the functions used to get scheduling information
+about processes, and control the scheduling of processes.
 .Pp
 Available scheduling policies (classes) are:
 .Bl -tag -width SCHED_OTHER
@@ -170,7 +170,6 @@ Otherwise, \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Pp
-The
 .Fn sched_get_priority_max
 and
 .Fn sched_get_priority_min
@@ -179,7 +178,6 @@ Otherwise, \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Pp
-The
 .Fn sched_setaffinity_np
 and
 .Fn sched_getaffinity_np
@@ -199,9 +197,9 @@ At least one of the specified scheduling parameters was invalid.
 .It Bq Er EPERM
 The calling process has no appropriate privileges to perform the operation.
 .It Bq Er ESRCH
-No process can be found corresponding to that specified by
+No process can be found corresponding to the specified by
 .Fa pid ,
-and value of
+and the value of
 .Fa pid
 is not zero.
 .El
@@ -218,7 +216,7 @@ match the effective user-id of the specified process.
 .It Bq Er ESRCH
 No process can be found corresponding to that specified by
 .Fa pid ,
-and value of
+and the value of
 .Fa pid
 is not zero.
 .El
@@ -240,12 +238,12 @@ function fails if:
 .It Bq Er ESRCH
 No process can be found corresponding to that specified by
 .Fa pid ,
-and value of
+and the value of
 .Fa pid
 is not zero.
 .El
 .Sh NOTES
-Portable applications should not use
+Portable applications should not use the
 .Fn sched_setaffinity_np
 and
 .Fn sched_getaffinity_np
