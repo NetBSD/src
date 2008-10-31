@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.42 2006/09/15 20:32:59 christos Exp $
+.\"	$NetBSD: syslogd.8,v 1.43 2008/10/31 16:12:19 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd September 15, 2006
+.Dd August 8, 2008
 .Dt SYSLOGD 8
 .Os
 .Sh NAME
@@ -91,6 +91,14 @@ Select the number of minutes between ``mark'' messages;
 the default is 20 minutes.
 .It Fl n
 Do not perform hostname lookups; report only numeric addresses.
+.It Fl o
+Select output message format.
+.Bl -hang
+.It Em rfc3164
+traditional BSD Syslog format (default)
+.It Em syslog
+new syslog-protocol format
+.El
 .It Fl P
 Specify the pathname of a file containing a list of sockets to be
 created.
@@ -219,26 +227,19 @@ Refer to
 .Xr hosts_access 5
 for details.
 .Ss SYSLOG PROTOCOL NOTES
-The message sent to
 .Nm
-should consist of a single line.
-The message can contain a priority code, which should be a preceding
-decimal number in angle braces, for example,
-.Sq Aq 5 .
-This priority code should map into the priorities defined in the
-include file
-.Aq Pa sys/syslog.h .
-See RFC 3164 for detailed description of the message format.
-.Pp
-Messages from the local kernel that are not tagged with a priority code
-receive the default facility
+accepts messages in traditional BSD Syslog or in newer Syslog Protocol
+format.
+See RFC 3164 (BSD Syslog) and RFC 
+.Em nnnn
+(Syslog Protocol) for detailed description of the message format.
 .Dv LOG_KERN
 and priority
 .Dv LOG_NOTICE .
 All other untagged messages receive the default facility
 .Dv LOG_USER
 and priority
-.Dv LOT_NOTICE .
+.Dv LOG_NOTICE .
 .Sh FILES
 .Bl -tag -width /var/run/syslogd.pid -compact
 .It Pa /etc/syslog.conf
@@ -264,6 +265,12 @@ The kernel log device.
 .%N 3164
 .%D August 2001
 .%T The BSD syslog Protocol
+.Re
+.Rs
+.%R Internet-Draft
+.%N draft-ietf-syslog-protocol-23
+.%D September 2007
+.%T The syslog Protocol
 .Re
 .Sh HISTORY
 The

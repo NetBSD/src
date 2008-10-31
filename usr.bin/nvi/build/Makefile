@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2008/10/19 22:05:24 apb Exp $
+#	$NetBSD: Makefile,v 1.8 2008/10/31 16:12:19 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ USE_WIDECHAR?=yes
 
 CPPFLAGS+=-I${DIST}/include -I${.CURDIR} -I. -DGTAGS
 WARNS=0
-#DBG=-g
+DBG=-g
 
 #CWARNFLAGS+=-Wno-parentheses -Wno-unused -Wno-missing-prototypes
 #.if defined(HAVE_GCC) && ${HAVE_GCC} == 4

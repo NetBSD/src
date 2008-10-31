@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.24 2006/11/22 17:23:25 christos Exp $
+.\"	$NetBSD: syslog.3,v 1.25 2008/10/31 16:12:18 christos Exp $
 .\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)syslog.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd November 22, 2006
+.Dd August 13, 2008
 .Dt SYSLOG 3
 .Os
 .Sh NAME
@@ -38,6 +38,10 @@
 .Nm syslog_r ,
 .Nm vsyslog ,
 .Nm vsyslog_r ,
+.Nm syslogp ,
+.Nm syslogp_r ,
+.Nm vsyslogp ,
+.Nm vsyslogp_r ,
 .Nm openlog ,
 .Nm openlog_r ,
 .Nm closelog ,
@@ -53,6 +57,10 @@
 .Fn syslog "int priority" "const char *message" "..."
 .Ft void
 .Fn syslog_r "int priority" "struct syslog_data *data" "const char *message" "..."
+.Ft void
+.Fn syslogp "int priority" "const char *msgid" "const char *sdfmt" "const char *message" "..."
+.Ft void
+.Fn syslogp_r "int priority" "struct syslog_data *data" "const char *msgid" "const char *sdfmt" "const char *message" "..."
 .\" .Ft void
 .\" .Fn syslog_ss "int priority" "struct syslog_data *data" "const char *message" "..."
 .Ft void
@@ -72,6 +80,10 @@
 .Fn vsyslog "int priority" "const char *message" "va_list args"
 .Ft void
 .Fn vsyslog_r "int priority" "struct syslog_data *data" "const char *message" "va_list args"
+.Ft void
+.Fn vsyslogp "int priority" "const char *msgid" "const char *sdfmt" "const char *message" "va_list args"
+.Ft void
+.Fn vsyslogp_r "int priority" "struct syslog_data *data" "const char *msgid" "const char *sdfmt" "const char *message" "va_list args"
 .\" .Ft void
 .\" .Fn vsyslog_ss "int priority" "struct syslog_data *data" "const char *message" "va_list args"
 .Bd -literal
@@ -114,6 +126,9 @@ message.
 see
 .Xr strerror 3 . )
 A trailing newline is added if none is present.
+.\" shouldn't the newline statement be removed?
+.\" when logging through a socket a newline is
+.\" not added nor is it required. -- ms
 The
 .Fn syslog_r
 function is a multithread-safe version of the
@@ -181,6 +196,16 @@ function
 is an alternative form in which the arguments have already been captured
 using the variable-length argument facilities of
 .Xr varargs 3 .
+.Pp
+The
+.Fn syslogp
+variants take additional arguments which correspond to new fields in the
+syslog-protocol message format. All three arguments are evaluated as
+.Xr printf 3
+format strings and any of them can be
+.Fa NULL .
+This enables applications to use message IDs, structured data, and UTF-8 encoded
+content in messages.
 .Pp
 The message is tagged with
 .Fa priority .
@@ -391,8 +416,12 @@ The routines
 .Fn syslog ,
 .Fn syslog_r ,
 .Fn vsyslog ,
+.Fn vsyslog_r ,
+.Fn syslogp ,
+.Fn syslogp_r ,
+.Fn vsyslogp ,
 and
-.Fn vsyslog_r
+.Fn vsyslogp_r
 return no value.
 .Pp
 The routines
@@ -411,6 +440,11 @@ setlogmask(LOG_UPTO(LOG_ERR));
 syslog(LOG_INFO, "Connection from host %d", CallingHost);
 
 syslog(LOG_INFO|LOG_LOCAL2, "foobar error: %m");
+
+syslogp(LOG_INFO|LOG_LOCAL2, NULL, NULL, "foobar error: %m");
+
+syslogp(LOG_INFO, "ID%d", "[meta language=\\"en-US\\"]",
+        "event: %s", 42, EventDescription);
 .Ed
 .Pp
 For the multithread-safe functions:
@@ -422,6 +456,18 @@ syslog_r(LOG_INFO|LOG_LOCAL2, \*[Am]sdata, "foobar error: %m");
 .Sh SEE ALSO
 .Xr logger 1 ,
 .Xr syslogd 8
+.Rs
+.%R RFC
+.%N 3164
+.%D August 2001
+.%T The BSD syslog Protocol
+.Re
+.Rs
+.%R Internet-Draft
+.%N draft-ietf-syslog-protocol-23
+.%D September 2007
+.%T The syslog Protocol
+.Re
 .Sh HISTORY
 These non-multithread-safe functions appeared in
 .Bx 4.2 .
@@ -431,6 +477,8 @@ and then in
 .Nx 4.0 .
 The async-signal-safe functions appeared in
 .Nx 4.0 .
+The syslog-protocol functions appeared in
+.Nx 5.0 .
 .Sh CAVEATS
 It is important never to pass a string with user-supplied data as a
 format without using
@@ -449,3 +497,13 @@ Always be sure to use the proper secure idiom:
 .Bd -literal -offset indent
 syslog(priority, "%s", string);
 .Ed
+.Pp
+With
+.Fn syslogp
+the caller is responsible to use the right formatting for the message fields. A
+.Fa msgid
+must only contain up to 32 ASCII characters. A
+.Fa sdfmt
+has strict rules for paranthesis and character quoting. If the
+.Fa msgfmt
+contains UTF-8 characters, then it has to start with a Byte Order Mark.
