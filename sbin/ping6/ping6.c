@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.70 2006/09/23 16:18:04 elad Exp $	*/
+/*	$NetBSD: ping6.c,v 1.70.2.1 2008/10/31 23:27:52 snj Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.70 2006/09/23 16:18:04 elad Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.70.2.1 2008/10/31 23:27:52 snj Exp $");
 #endif
 #endif
 
@@ -1008,7 +1008,7 @@ main(int argc, char *argv[])
 		itimer.it_interval = interval;
 		itimer.it_value = interval;
 		(void)setitimer(ITIMER_REAL, &itimer, NULL);
-		if (ntransmitted)
+		if (ntransmitted == 0)
 			retransmit();
 	}
 
