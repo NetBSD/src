@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.97 2008/10/31 21:02:49 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.98 2008/10/31 21:15:02 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2239,4 +2239,9 @@ libexec/ld.elf_so/symbol.c			1.47
 
 	Make dlsym follow dependencies.  Fixes PR lib/39649.
 	[jmcneill, ticket #1211]
+
+usr.bin/config/scan.l				1.11
+
+	Avoid memory leak in error case. PR bin/39721.
+	[dholland, ticket #1212]
 
