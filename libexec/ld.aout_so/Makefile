@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.45 2004/03/19 08:07:28 jmc Exp $
+#	$NetBSD: Makefile,v 1.46 2008/10/31 20:24:52 mrg Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
+.if ${MKPIC} != "no"
 .if (${OBJECT_FMT} == "a.out")
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c md.c vfprintf.c
@@ -55,6 +56,7 @@ all dependall: ${FILES}
 
 ld.so:	ld.so.${MACHINE_ARCH}
 
+.endif
 .endif
 
 MAN= ld.aout_so.1

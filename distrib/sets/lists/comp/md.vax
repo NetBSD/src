@@ -1,4 +1,4 @@
-# $NetBSD: md.vax,v 1.34 2008/08/22 13:42:19 lukem Exp $
+# $NetBSD: md.vax,v 1.35 2008/10/31 20:24:52 mrg Exp $
 ./usr/include/ieeefp.h				comp-obsolete		obsolete
 ./usr/include/vax				comp-c-include
 ./usr/include/vax/_G_config.h			comp-obsolete		obsolete
@@ -75,4 +75,4 @@
 ./usr/include/vax/wchar_limits.h		comp-c-include
 ./usr/lib/c++rt0.o				comp-obsolete		obsolete
 ./usr/lib/scrt0.o				comp-obsolete		obsolete
-./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic

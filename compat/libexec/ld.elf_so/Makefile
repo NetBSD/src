@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2008/10/26 07:38:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/10/31 20:24:51 mrg Exp $
 
 NOMAN=	# defined
 
+.include <bsd.own.mk>
 .include <bsd.obj.mk>
+
+.if ${MKPIC} != "no"
 
 SHLINKINSTALLDIR=	/usr/libexec
 
@@ -31,3 +34,5 @@ ARCHSUBDIR=	i386
 dependall: ${PROG}
 
 .include "${.CURDIR}/Makefile"
+
+.endif
