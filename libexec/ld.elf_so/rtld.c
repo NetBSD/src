@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.111.2.1 2007/07/19 14:38:16 liamjfoy Exp $	 */
+/*	$NetBSD: rtld.c,v 1.111.2.2 2008/10/31 21:00:36 snj Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.111.2.1 2007/07/19 14:38:16 liamjfoy Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.111.2.2 2008/10/31 21:00:36 snj Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -750,12 +750,14 @@ dlsym(void *handle, const char *name)
 			def = _rtld_symlook_list(name, hash, &_rtld_list_main,
 			    &defobj, false);
 		} else {
-			/*
-			 * XXX - This isn't correct.  The search should include
-			 * the whole DAG rooted at the given object.
-			 */
-			def = _rtld_symlook_obj(name, hash, obj, false);
-			defobj = obj;
+			Needed_Entry fake;
+
+			/* Search the object and all the libraries loaded by it. */
+			fake.next = NULL;
+			fake.obj = (Obj_Entry *)obj;
+			fake.name = 0;
+			def = _rtld_symlook_needed(name, hash, &fake, &defobj,
+			    false);
 		}
 		break;
 	}
