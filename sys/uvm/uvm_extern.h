@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.148 2008/08/08 14:41:50 skrll Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.149 2008/10/31 20:42:41 christos Exp $	*/
 
 /*
  *
@@ -219,6 +219,11 @@ typedef voff_t pgoff_t;		/* XXX: number of pages within a uvm object */
  */
 #define	UVM_LK_ENTER	0x00000001	/* map locked on entry */
 #define	UVM_LK_EXIT	0x00000002	/* leave map locked on exit */
+
+/*
+ * Default number of pages to allocate on the stack
+ */
+#define	UBC_MAX_PAGES	8
 
 /*
  * structures
