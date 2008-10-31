@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.15 2007/12/04 17:45:07 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.16 2008/10/31 16:12:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -55,6 +55,12 @@ struct syslog_data;
 void	syslog_ss(int, struct syslog_data *, const char *, ...)
     __attribute__((__format__(__printf__,3,4)));
 void	vsyslog_ss(int, struct syslog_data *, const char *, _BSD_VA_LIST_);
+void    vsyslog_ss(int, struct syslog_data *, const char *, _BSD_VA_LIST_) 
+    __attribute__((__format__(__printf__,3,0))); 
+void	syslogp_ss(int, struct syslog_data *, const char *, const char *, 
+    const char *, ...) __attribute__((__format__(__printf__,5,0))); 
+void	vsyslogp_ss(int, struct syslog_data *, const char *, const char *, 
+    const char *, _BSD_VA_LIST_) __attribute__((__format__(__printf__,5,0))); 
 
 int	snprintf_ss(char * __restrict, size_t, const char * __restrict, ...)
     __attribute__((__format__(__printf__, 3, 4)));

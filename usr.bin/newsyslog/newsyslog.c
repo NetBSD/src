@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.53 2007/12/21 06:46:31 dogcow Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.54 2008/10/31 16:12:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.53 2007/12/21 06:46:31 dogcow Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.54 2008/10/31 16:12:19 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -79,9 +79,9 @@ __RCSID("$NetBSD: newsyslog.c,v 1.53 2007/12/21 06:46:31 dogcow Exp $");
 #include <err.h>
 #include <paths.h>
 
-#define	PRHDRINFO(x)	\
+#define PRHDRINFO(x)	\
     (/*LINTED*/(void)(verbose ? printf x : 0))
-#define	PRINFO(x)	\
+#define PRINFO(x)	\
     (/*LINTED*/(void)(verbose ? printf("  ") + printf x : 0))
 
 #ifndef __arraycount
@@ -92,6 +92,8 @@ __RCSID("$NetBSD: newsyslog.c,v 1.53 2007/12/21 06:46:31 dogcow Exp $");
 #define	CE_NOSIGNAL	0x04	/* Don't send a signal when trimmed */
 #define	CE_CREATE	0x08	/* Create log file if none exists */
 #define	CE_PLAIN0	0x10	/* Do not compress zero'th history file */
+#define	CE_SYSLPROTOCOL 0x20	/* log in syslog-protocol format,
+				   not configurable but detected at runtime */
 
 struct conf_entry {
 	uid_t	uid;			/* Owner of log */
@@ -127,7 +129,7 @@ static struct compressor compress[] =
 static int	verbose;			/* Be verbose */
 static int	noaction;			/* Take no action */
 static int	nosignal;			/* Do not send signals */
-static char	hostname[MAXHOSTNAMELEN + 1];	/* Hostname, no domain */
+static char	hostname[MAXHOSTNAMELEN + 1];	/* Hostname, with domain */
 static uid_t	myeuid;				/* EUID we are running with */
 static int	ziptype;			/* compression type, if any */
 
@@ -145,6 +147,7 @@ static void	log_create(struct conf_entry *);
 static void	log_examine(struct conf_entry *, int);
 static void	log_trim(struct conf_entry *);
 static void	log_trimmed(struct conf_entry *);
+static void	log_get_format(struct conf_entry *);
 
 /*
  * Program entry point.
@@ -154,7 +157,6 @@ main(int argc, char **argv)
 {
 	struct conf_entry log;
 	FILE *fd;
-	char *p;
 	const char *cfile;
 	int c, needroot, i, force;
 	size_t lineno;
@@ -166,10 +168,6 @@ main(int argc, char **argv)
 
 	(void)gethostname(hostname, sizeof(hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
-
-	/* Truncate domain. */
-	if ((p = strchr(hostname, '.')) != NULL)
-		*p = '\0';
 
 	/* Parse command line options. */
 	while ((c = getopt(argc, argv, "f:nrsvF")) != -1) {
@@ -415,7 +413,7 @@ bad:
 }
 
 /* 
- * Examine a log file.  If the trim conditions are met, call log_trim() to
+ * Examine a log file.	If the trim conditions are met, call log_trim() to
  * trim the log file.
  */
 static void
@@ -435,7 +433,7 @@ log_examine(struct conf_entry *log, int force)
 	    compress[ziptype].flag));
 
 	/*
-	 * stat() the logfile.  If it doesn't exist and the `c' flag has
+	 * stat() the logfile.	If it doesn't exist and the `c' flag has
 	 * been specified, create it.  If it doesn't exist and the `c' flag
 	 * hasn't been specified, give up.
 	 */
@@ -486,7 +484,7 @@ log_examine(struct conf_entry *log, int force)
 	 *
 	 * Note: if `maxage' or `trimat' is used as a trim condition, we
 	 * need at least one historical log file to determine the `age' of
-	 * the active log file.  WRT `trimat', we will trim up to one hour
+	 * the active log file.	 WRT `trimat', we will trim up to one hour
 	 * after the specific trim time has passed - we need to know if
 	 * we've trimmed to meet that condition with a previous invocation
 	 * of newsyslog(8).
@@ -568,7 +566,7 @@ log_trim(struct conf_entry *log)
 	/*
 	 * If a historical log file isn't compressed, and 'z' has been
 	 * specified, compress it.  (This is convenient, but is also needed
-	 * if 'p' has been specified.)  It should be noted that gzip(1)
+	 * if 'p' has been specified.)	It should be noted that gzip(1)
 	 * preserves file ownership and file mode.
 	 */
 	if (ziptype) {
@@ -583,7 +581,7 @@ log_trim(struct conf_entry *log)
 			log_compress(log, file1);
 		}
 	}
-
+	log_get_format(log);
 	log_trimmed(log);
 
 	/* Create the historical log file if we're maintaining history. */
@@ -637,6 +635,30 @@ log_trim(struct conf_entry *log)
 	}
 }
 
+static void
+log_get_format(struct conf_entry *log)
+{
+	FILE *fd;
+	char *line;
+	size_t linelen;
+
+	if ((log->flags & CE_BINARY) != 0)
+		return;
+	PRINFO(("(read line format of %s)\n", log->logfile));
+	if (noaction)
+		return;
+
+	if ((fd = fopen(log->logfile, "r")) == NULL)
+		return;
+
+	/* read 2nd line */
+	line = fgetln(fd, &linelen);
+	if ((line = fgetln(fd, &linelen)) != NULL
+	  && line[10] == 'T')
+		log->flags |= CE_SYSLPROTOCOL;
+	(void)fclose(fd);
+}
+
 /* 
  * Write an entry to the log file recording the fact that it was trimmed.
  */
@@ -646,6 +668,7 @@ log_trimmed(struct conf_entry *log)
 	FILE *fd;
 	time_t now;
 	char *daytime;
+	char  trim_message[] = "log file turned over";
 
 	if ((log->flags & CE_BINARY) != 0)
 		return;
@@ -656,12 +679,54 @@ log_trimmed(struct conf_entry *log)
 	if ((fd = fopen(log->logfile, "at")) == NULL)
 		err(EXIT_FAILURE, "%s", log->logfile);
 
-	now = time(NULL);
-	daytime = ctime(&now) + 4;
-	daytime[15] = '\0';
+	if ((log->flags & CE_SYSLPROTOCOL) == 0) {
+		char shorthostname[MAXHOSTNAMELEN];
+		char *p;
 		
-	(void)fprintf(fd, "%s %s newsyslog[%lu]: log file turned over\n",
-	    daytime, hostname, (u_long)getpid());
+		/* Truncate domain. */
+		(void)strlcpy(shorthostname, hostname, sizeof(SHORTHOSTNAME));
+		if ((p = strchr(shorthostname, '.')) != NULL)
+			*p = '\0';
+
+		now = time(NULL);
+		daytime = ctime(&now) + 4;
+		daytime[15] = '\0';
+	
+		(void)fprintf(fd, "%s %s newsyslog[%lu]: %s\n",
+		    daytime, hostname, (u_long)getpid(), trim_message);
+	} else {
+		struct tm *tmnow;
+		struct timeval tv;
+		char timestamp[35];
+		unsigned i, j;
+		
+		if (gettimeofday(&tv, NULL) == -1) {
+			daytime = "-";
+		} else {
+			tzset();
+			now = (time_t) tv.tv_sec;
+			tmnow = localtime(&now);
+	
+			i = strftime(timestamp, sizeof(timestamp),
+				"%FT%T", tmnow);
+			i += snprintf(timestamp+i, sizeof(timestamp)-i,
+				".%06ld", tv.tv_usec);
+			i += j = strftime(timestamp+i, sizeof(timestamp)-i-1,
+				"%z", tmnow);
+			/* strftime gives eg. "+0200", but we need "+02:00" */
+			if (j == 5) {
+				timestamp[i+1] = timestamp[i];
+				timestamp[i]   = timestamp[i-1];
+				timestamp[i-1] = timestamp[i-2];
+				timestamp[i-2] = ':';
+				i += 1;
+			}
+			daytime = timestamp;
+		}
+		(void)fprintf(fd, "%s %s newsyslog %lu - - %s\n",
+			daytime, hostname, (u_long)getpid(), trim_message);
+		
+	}
 	(void)fclose(fd);
 }
 
@@ -861,7 +926,7 @@ parse_userspec(const char *name, struct passwd **pw, struct group **gr)
  * to rotate a log file cyclic at
  *
  *	- every day (D) within a specific hour (hh)	(hh = 0...23)
- *	- once a week (W) at a specific day (d)     OR	(d = 0..6, 0 = Sunday)
+ *	- once a week (W) at a specific day (d)	    OR	(d = 0..6, 0 = Sunday)
  *	- once a month (M) at a specific day (d)	(d = 1..31,l|L)
  *
  * We don't accept a timezone specification; missing fields are defaulted to
@@ -964,7 +1029,7 @@ parse_dwm(char *s)
 }
 
 /*
- * Parse a limited subset of ISO 8601.  The specific format is as follows:
+ * Parse a limited subset of ISO 8601.	The specific format is as follows:
  *
  * [CC[YY[MM[DD]]]][THH[MM[SS]]]	(where `T' is the literal letter)
  *
