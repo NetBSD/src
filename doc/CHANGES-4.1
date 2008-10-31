@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.98 2008/10/31 21:15:02 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.99 2008/10/31 23:29:28 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2244,4 +2244,13 @@ usr.bin/config/scan.l				1.11
 
 	Avoid memory leak in error case. PR bin/39721.
 	[dholland, ticket #1212]
+
+sbin/ping6/ping6.c				1.71
+
+	Fix reversed test in connection with combining -i and -l. If some
+	packets have already sent because of the preload count handling, we
+	shouldn't start off by sending another one right away. The reversed
+	test causes ping6 to wait one interval before sending anything at all
+	if you don't use -l. PR bin/39732.
+	[dholland, ticket #1214]
 
