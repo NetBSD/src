@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.30 2008/10/12 01:40:37 dholland Exp $	*/
+/*	$NetBSD: output.c,v 1.31 2008/10/31 14:38:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.30 2008/10/12 01:40:37 dholland Exp $");
+__RCSID("$NetBSD: output.c,v 1.31 2008/10/31 14:38:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,43 @@ outstr(const char *p, struct output *file)
 {
 	while (*p)
 		outc(*p++, file);
+	if (file == out2)
+		flushout(file);
+}
+
+
+void
+out2shstr(const char *p)
+{
+	outshstr(p, out2);
+}
+
+
+void
+outshstr(const char *p, struct output *file)
+{
+	static const char norm_chars [] \
+		= "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	int need_q = p[0] == 0 || p[strspn(p, norm_chars)] != 0;
+	char c;
+
+	if (need_q)
+		outc('\'', file);
+
+	while (c = *p++, c != 0){
+		if (c != '\''){
+			outc(c, file);
+		}else{
+			outc('\'', file);
+			outc('\\', file);
+			outc(c, file);
+			outc('\'', file);
+		}
+	}
+
+	if (need_q)
+		outc('\'', file);
+
 	if (file == out2)
 		flushout(file);
 }
