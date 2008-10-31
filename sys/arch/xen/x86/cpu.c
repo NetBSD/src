@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.28 2008/08/22 10:25:58 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.29 2008/10/31 00:36:22 rmind Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.28 2008/08/22 10:25:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 2008/10/31 00:36:22 rmind Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1012,7 +1012,7 @@ cpu_suspend(device_t dv PMF_FN_ARGS)
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
-		err = cpu_setonline(ci, false);
+		err = cpu_setstate(ci, false);
 		mutex_exit(&cpu_lock);
 
 		if (err)
@@ -1038,7 +1038,7 @@ cpu_resume(device_t dv PMF_FN_ARGS)
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
-		err = cpu_setonline(ci, true);
+		err = cpu_setstate(ci, true);
 		mutex_exit(&cpu_lock);
 	}
 
