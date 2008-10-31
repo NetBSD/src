@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_dirhash.c,v 1.7 2008/10/31 15:48:39 reinoud Exp $ */
+/* $NetBSD: vfs_dirhash.c,v 1.8 2008/10/31 16:04:59 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.7 2008/10/31 15:48:39 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.8 2008/10/31 16:04:59 reinoud Exp $");
 
 /* CLEAN UP! */
 #include <sys/param.h>
@@ -50,6 +50,19 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.7 2008/10/31 15:48:39 reinoud Exp 
 #	define DPRINTF(a) printf(a);
 #endif
 
+/*
+ * The locking protocol of the dirhash structures is fairly simple:
+ *
+ * The global dirhash_queue is protected by the dirhashmutex. This lock is
+ * internal only and is FS/mountpoint/vnode independent. On exit of the
+ * exported functions this mutex is not helt.
+ *
+ * The dirhash structure is considered part of the vnode/inode/udf_node
+ * structure and will thus use the lock that protects that vnode/inode.
+ *
+ * The dirhash entries are considered part of the dirhash structure and thus
+ * are on the same lock.
+ */
 
 static struct sysctllog *sysctl_log;
 static struct pool dirhash_pool;
@@ -313,12 +326,10 @@ dirhash_enter_freed(struct dirhash *dirh, uint64_t offset,
 	KASSERT(dirh);
 	KASSERT(dirh->refcnt > 0);
 
-#ifdef DEBUG
 	/* check for double entry of free space */
 	LIST_FOREACH(dirh_e, &dirh->free_entries, next) {
 		KASSERT(dirh_e->offset != offset);
 	}
-#endif
 
 	DPRINTF(("dirhash enter FREED %"PRIu64", %d\n",
 		offset, entry_size));
