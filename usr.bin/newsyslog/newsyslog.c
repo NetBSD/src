@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.54 2008/10/31 16:12:19 christos Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.55 2008/10/31 20:55:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.54 2008/10/31 16:12:19 christos Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.55 2008/10/31 20:55:41 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -667,8 +667,8 @@ log_trimmed(struct conf_entry *log)
 {
 	FILE *fd;
 	time_t now;
-	char *daytime;
-	char  trim_message[] = "log file turned over";
+	const char *daytime;
+	const char  trim_message[] = "log file turned over";
 
 	if ((log->flags & CE_BINARY) != 0)
 		return;
@@ -684,13 +684,13 @@ log_trimmed(struct conf_entry *log)
 		char *p;
 		
 		/* Truncate domain. */
-		(void)strlcpy(shorthostname, hostname, sizeof(SHORTHOSTNAME));
+		(void)strlcpy(shorthostname, hostname, sizeof(shorthostname));
 		if ((p = strchr(shorthostname, '.')) != NULL)
 			*p = '\0';
 
 		now = time(NULL);
-		daytime = ctime(&now) + 4;
-		daytime[15] = '\0';
+		daytime = p = ctime(&now) + 4;
+		p[15] = '\0';
 	
 		(void)fprintf(fd, "%s %s newsyslog[%lu]: %s\n",
 		    daytime, hostname, (u_long)getpid(), trim_message);
