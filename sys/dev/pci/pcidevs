@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.855.2.24 2008/09/29 20:10:15 jdc Exp $
+$NetBSD: pcidevs,v 1.855.2.25 2008/10/31 20:37:24 snj Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2049,11 +2049,14 @@ product INTEL 82572EI		0x10b9	i82572EI 1000baseT Ethernet
 product INTEL 80K3LAN_CPR_SPT 0x10ba	i80003 1000baseT Ethernet
 product INTEL 80K3LAN_SDS_SPT 0x10bb	i80003 Gigabit Ethernet (SERDES)
 product INTEL 82801I_IGP_AMT	0x10bd	82801I (AMT) LAN Controller
+product INTEL 82801I_IGP_M	0x10bf  82801I mobile LAN controller
 product INTEL 82801I_IFE	0x10c0	82801I LAN Controller
 product INTEL 82801I_IFE_G	0x10c2	82801I (G) LAN Controller
 product INTEL 82801I_IFE_GT	0x10c3	82801I (GT) LAN Controller
 product INTEL 82801H_IFE_GT 	0x10c4	i82801H IFE (GT) LAN Controller
 product INTEL 82801H_IFE_G 	0x10c5	i82801H IFE (G) LAN Controller
+product INTEL 82801H_IGP_M_V 	0x10cb	i82801H IGP (MV) LAN Controller
+product INTEL 82801I_IGP_M_AMT	0x10f5  82801I mobile (AMT) LAN controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
