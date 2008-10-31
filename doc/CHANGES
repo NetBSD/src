@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1143 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1144 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -25,3 +25,8 @@
 
 
 Changes from NetBSD 5.0 to NetBSD 6.0:
+
+	syslog: Import Martin Schuette's Summer of Code project: 
+		Reliable TCP connections, syslog protocol api,
+		encryption. [christos 20081031]
+
