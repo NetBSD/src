@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_dirhash.c,v 1.6 2008/10/31 15:13:55 reinoud Exp $ */
+/* $NetBSD: vfs_dirhash.c,v 1.7 2008/10/31 15:48:39 reinoud Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.6 2008/10/31 15:13:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.7 2008/10/31 15:48:39 reinoud Exp $");
 
 /* CLEAN UP! */
 #include <sys/param.h>
@@ -169,8 +169,11 @@ dirhash_purge(struct dirhash **dirhp)
 	if (dirh == NULL)
 		return;
 
-	mutex_enter(&dirhashmutex);
+	/* purge its entries */
 	dirhash_purge_entries(dirh);
+
+	/* recycle */
+	mutex_enter(&dirhashmutex);
 	TAILQ_REMOVE(&dirhash_queue, dirh, next);
 	mutex_exit(&dirhashmutex);
 
@@ -184,7 +187,6 @@ dirhash_get(struct dirhash **dirhp)
 {
 	struct dirhash *dirh;
 	uint32_t hashline;
-
 
 	/* if no dirhash was given, allocate one */
 	dirh = *dirhp;
@@ -270,6 +272,8 @@ dirhash_enter(struct dirhash *dirh,
 	/* ensure we are not passing the dirhash limit */
 	entrysize = sizeof(struct dirhash_entry);
 	if (dirhashsize + entrysize > maxdirhashsize) {
+		/* we walk the dirhash_queue, so need to lock it */
+		mutex_enter(&dirhashmutex);
 		del_dirh = TAILQ_LAST(&dirhash_queue, _dirhash);
 		KASSERT(del_dirh);
 		while (dirhashsize + entrysize > maxdirhashsize) {
@@ -281,6 +285,7 @@ dirhash_enter(struct dirhash *dirh,
 				dirhash_purge_entries(del_dirh);
 			del_dirh = prev_dirh;
 		}
+		mutex_exit(&dirhashmutex);
 	}
 
 	/* add to the hashline */
