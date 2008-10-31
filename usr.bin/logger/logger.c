@@ -1,4 +1,4 @@
-/*	$NetBSD: logger.c,v 1.11 2008/10/31 16:12:18 christos Exp $	*/
+/*	$NetBSD: logger.c,v 1.12 2008/10/31 20:53:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)logger.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: logger.c,v 1.11 2008/10/31 16:12:18 christos Exp $");
+__RCSID("$NetBSD: logger.c,v 1.12 2008/10/31 20:53:46 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -119,11 +119,11 @@ main(int argc, char *argv[])
 		for (p = buf, endp = buf + sizeof(buf) - 2; *argv != NULL;) {
 			len = strlen(*argv);
 			if (p + len > endp && p > buf) {
-				syslogp(pri, "%s", "%s", "%s", msgid, sd, buf);
+				syslogp(pri, "%s", msgid, sd, buf);
 				p = buf;
 			}
 			if (len > sizeof(buf) - 1)
-				syslogp(pri, "%s", "%s", "%s", msgid, sd, *argv++);
+				syslogp(pri, "%s", msgid, sd, *argv++);
 			else {
 				if (p != buf)
 					*p++ = ' ';
@@ -132,13 +132,13 @@ main(int argc, char *argv[])
 			}
 		}
 		if (p != buf)
-			syslogp(pri, "%s", "%s", "%s", msgid, sd, buf);
+			syslogp(pri, "%s", msgid, sd, buf);
 	} else	/* TODO: allow syslog-protocol messages from file/stdin
 		 *       but that will require parsing the line to split
 		 *       it into three fields.
 		 */
 		while (fgets(buf, sizeof(buf), stdin) != NULL)
-			syslogp(pri, "%s", "%s", "%s", msgid, sd, buf);
+			syslogp(pri, "%s", msgid, sd, buf);
 
 	exit(EXIT_SUCCESS);
 	/* NOTREACHED */
