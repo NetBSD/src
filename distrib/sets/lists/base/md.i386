@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.129 2008/10/31 03:34:49 mrg Exp $
+# $NetBSD: md.i386,v 1.130 2008/10/31 20:24:51 mrg Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -77,7 +77,7 @@
 ./lib/libm387.so				base-sys-shlib		dynamicroot,pic
 ./lib/libm387.so.0				base-sys-shlib		dynamicroot,pic
 ./lib/libm387.so.0.1				base-sys-shlib		dynamicroot,pic
-./sbin/ldconfig					base-sysutil-root
+./sbin/ldconfig					base-sysutil-root	pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/bin/fontedit				base-obsolete		obsolete
 ./usr/bin/pmc					base-util-bin
