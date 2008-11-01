@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.27 2006/11/18 14:28:55 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.27.2.1 2008/11/01 22:36:04 snj Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.27 $"
+#ident 		"INSTALL-$Revision: 1.27.2.1 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -137,7 +137,7 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 
 options 	NFS_BOOT_DHCP
 
-config		netbsd	root on ? type nfs
+config		netbsd	root on ? type ?
 
 mainbus0 	at root
 
