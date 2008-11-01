@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.106.8.2 2008/11/01 21:22:29 christos Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.106.8.3 2008/11/01 23:22:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.8.2 2008/11/01 21:22:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106.8.3 2008/11/01 23:22:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1779,9 +1779,10 @@ ffs_blkalloc(struct inode *ip, daddr_t bno, long size)
 
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
 	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
-		printf("dev = 0x%x, bno = %" PRId64 " bsize = %d, "
-		       "size = %ld, fs = %s\n",
-		    ip->i_dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
+		printf("dev = 0x%llx, bno = %" PRId64 " bsize = %d, "
+		    "size = %ld, fs = %s\n",
+		    (unsigned long long)ip->i_dev, bno, fs->fs_bsize, size,
+		    fs->fs_fsmnt);
 		panic("blkalloc: bad size");
 	}
 	cg = dtog(fs, bno);

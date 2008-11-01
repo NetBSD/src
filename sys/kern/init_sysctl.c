@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.125.2.2 2008/11/01 21:22:26 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.125.2.3 2008/11/01 23:22:23 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125.2.2 2008/11/01 21:22:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.125.2.3 2008/11/01 23:22:23 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -3064,7 +3064,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie)
 			ki->p_tpgid = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
 			ki->p_tsess = PTRTOUINT64(tp->t_session);
 		} else {
-			ki->p_tdev = NODEV;
+			ki->p_tdev = (int32_t)NODEV;
 		}
 	}
 

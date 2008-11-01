@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.1.2.1 2008/03/29 20:50:33 christos Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.1.2.2 2008/11/01 23:22:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.1.2.1 2008/03/29 20:50:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.1.2.2 2008/11/01 23:22:23 christos Exp $");
 
 #include "opt_ntp.h"
 
@@ -658,16 +658,16 @@ compat_50_sys_getrusage(struct lwp *l,
 
 	switch (SCARG(uap, who)) {
 	case RUSAGE_SELF:
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		memcpy(&ru, &p->p_stats->p_ru, sizeof(ru));
 		calcru(p, &ru.ru_utime, &ru.ru_stime, NULL, NULL);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		break;
 
 	case RUSAGE_CHILDREN:
-		mutex_enter(&p->p_smutex);
+		mutex_enter(p->p_lock);
 		memcpy(&ru, &p->p_stats->p_cru, sizeof(ru));
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		break;
 
 	default:
