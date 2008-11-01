@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.6.18.2 2008/03/30 21:01:59 christos Exp $	*/
+/*	$NetBSD: ansi.h,v 1.6.18.3 2008/11/01 21:22:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -31,8 +31,10 @@
  *	@(#)ansi.h	8.2 (Berkeley) 1/4/94
  */
 
-#ifndef	_ANSI_H_
-#define	_ANSI_H_
+#ifndef	_X86_64_ANSI_H_
+#define	_X86_64_ANSI_H_
+
+#ifdef __x86_64__
 
 #include <sys/cdefs.h>
 
@@ -47,10 +49,10 @@
  *	#undef	_BSD_SIZE_T_
  *	#endif
  */
-#define	_BSD_CLOCK_T_		unsigned int	/* clock() */
-#define	_BSD_PTRDIFF_T_		long		/* ptr1 - ptr2 */
-#define	_BSD_SIZE_T_		unsigned long	/* sizeof() */
-#define	_BSD_SSIZE_T_		long		/* byte count or error */
+#define	_BSD_CLOCK_T_		unsigned long	/* clock() */
+#define	_BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
+#define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
+#define	_BSD_SSIZE_T_		int		/* byte count or error */
 #define	_BSD_TIME_T_		__int64_t	/* time() */
 #ifdef __GNUC__
 #define	_BSD_VA_LIST_		__builtin_va_list /* GCC built-in type */
@@ -76,4 +78,10 @@ typedef union {
 } __mbstate_t;
 #define	_BSD_MBSTATE_T_		__mbstate_t	/* mbstate_t */
 
-#endif	/* _ANSI_H_ */
+#else	/*	!__x86_64__	*/
+
+#include <i386/ansi.h>
+
+#endif	/*	__x86_64__	*/
+
+#endif	/* _X86_64_ANSI_H_ */

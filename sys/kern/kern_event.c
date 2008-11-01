@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.53.2.1 2008/03/29 20:47:00 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.53.2.2 2008/11/01 21:22:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -62,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.53.2.1 2008/03/29 20:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.53.2.2 2008/11/01 21:22:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.53.2.1 2008/03/29 20:47:00 christos
 #include <sys/event.h>
 #include <sys/eventvar.h>
 #include <sys/poll.h>
-#include <sys/malloc.h>		/* for hashinit */
 #include <sys/kmem.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
@@ -127,8 +119,6 @@ static const struct filterops timer_filtops =
 
 static u_int	kq_ncallouts = 0;
 static int	kq_calloutmax = (4 * 1024);
-
-MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");	/* for hashinit */
 
 #define	KN_HASHSIZE		64		/* XXX should be tunable */
 #define	KN_HASH(val, mask)	(((val) ^ (val >> 8)) & (mask))
@@ -429,10 +419,10 @@ filt_procattach(struct knote *kn)
 	curl = curlwp;
 	curp = curl->l_proc;
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 	p = p_find(kn->kn_id, PFIND_LOCKED);
 	if (p == NULL) {
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		return ESRCH;
 	}
 
@@ -440,11 +430,11 @@ filt_procattach(struct knote *kn)
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	mutex_enter(&p->p_mutex);
-	mutex_exit(&proclist_lock);
+	mutex_enter(p->p_lock);
+	mutex_exit(proc_lock);
 	if (kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_KEVENT_FILTER,
 	    p, NULL, NULL, NULL) != 0) {
-	    	mutex_exit(&p->p_mutex);
+	    	mutex_exit(p->p_lock);
 		return EACCES;
 	}
 
@@ -460,7 +450,7 @@ filt_procattach(struct knote *kn)
 		kn->kn_flags &= ~EV_FLAG1;
 	}
 	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
-    	mutex_exit(&p->p_mutex);
+    	mutex_exit(p->p_lock);
 
 	return 0;
 }
@@ -485,9 +475,9 @@ filt_procdetach(struct knote *kn)
 
 	p = kn->kn_obj;
 
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
-	mutex_exit(&p->p_mutex);
+	mutex_exit(p->p_lock);
 }
 
 /*
@@ -600,7 +590,7 @@ filt_timerattach(struct knote *kn)
 		atomic_dec_uint(&kq_ncallouts);
 		return ENOMEM;
 	}
-	callout_init(calloutp, 0);
+	callout_init(calloutp, CALLOUT_MPSAFE);
 
 	kq = kn->kn_kq;
 	mutex_spin_enter(&kq->kq_lock);
@@ -619,7 +609,7 @@ filt_timerdetach(struct knote *kn)
 	callout_t *calloutp;
 
 	calloutp = (callout_t *)kn->kn_hook;
-	callout_stop(calloutp);
+	callout_halt(calloutp, NULL);
 	callout_destroy(calloutp);
 	kmem_free(calloutp, sizeof(*calloutp));
 	atomic_dec_uint(&kq_ncallouts);
@@ -731,10 +721,10 @@ kevent_put_events(void *private, struct kevent *events,
 }
 
 static const struct kevent_ops kevent_native_ops = {
-	keo_private: NULL,
-	keo_fetch_timeout: copyin,
-	keo_fetch_changes: kevent_fetch_changes,
-	keo_put_events: kevent_put_events,
+	.keo_private = NULL,
+	.keo_fetch_timeout = copyin,
+	.keo_fetch_changes = kevent_fetch_changes,
+	.keo_put_events = kevent_put_events,
 };
 
 int
@@ -936,7 +926,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 				if (fdp->fd_knhashmask == 0) {
 					/* XXXAD can block with fd_lock held */
 					fdp->fd_knhash = hashinit(KN_HASHSIZE,
-					    HASH_LIST, M_KEVENT, M_WAITOK,
+					    HASH_LIST, true,
 					    &fdp->fd_knhashmask);
 				}
 				list = &fdp->fd_knhash[KN_HASH(kn->kn_id,

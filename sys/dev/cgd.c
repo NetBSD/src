@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.51.2.1 2008/03/29 20:47:00 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.51.2.2 2008/11/01 21:22:26 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.51.2.1 2008/03/29 20:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.51.2.2 2008/11/01 21:22:26 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -493,6 +486,16 @@ cgddump(dev_t dev, daddr_t blkno, void *va, size_t size)
  */
 #define MAX_KEYSIZE	1024
 
+static const struct {
+	const char *n;
+	int v;
+	int d;
+} encblkno[] = {
+	{ "encblkno",  CGD_CIPHER_CBC_ENCBLKNO8, 1 },
+	{ "encblkno8", CGD_CIPHER_CBC_ENCBLKNO8, 1 },
+	{ "encblkno1", CGD_CIPHER_CBC_ENCBLKNO1, 8 },
+};
+
 /* ARGSUSED */
 static int
 cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
@@ -500,6 +503,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	struct	 cgd_ioctl *ci = data;
 	struct	 vnode *vp;
 	int	 ret;
+	size_t	 i;
 	size_t	 keybytes;			/* key length in bytes */
 	const char *cp;
 	char	 *inbuf;
@@ -523,12 +527,16 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 		goto bail;
 	}
 
-	/* right now we only support encblkno, so hard-code it */
 	(void)memset(inbuf, 0, MAX_KEYSIZE);
 	ret = copyinstr(ci->ci_ivmethod, inbuf, MAX_KEYSIZE, NULL);
 	if (ret)
 		goto bail;
-	if (strcmp("encblkno", inbuf)) {
+
+	for (i = 0; i < __arraycount(encblkno); i++)
+		if (strcmp(encblkno[i].n, inbuf) == 0)
+			break;
+
+	if (i == __arraycount(encblkno)) {
 		ret = EINVAL;
 		goto bail;
 	}
@@ -538,15 +546,22 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 		ret = EINVAL;
 		goto bail;
 	}
+
 	(void)memset(inbuf, 0, MAX_KEYSIZE);
 	ret = copyin(ci->ci_key, inbuf, keybytes);
 	if (ret)
 		goto bail;
 
 	cs->sc_cdata.cf_blocksize = ci->ci_blocksize;
-	cs->sc_cdata.cf_mode = CGD_CIPHER_CBC_ENCBLKNO;
+	cs->sc_cdata.cf_mode = encblkno[i].v;
 	cs->sc_cdata.cf_priv = cs->sc_cfuncs->cf_init(ci->ci_keylen, inbuf,
 	    &cs->sc_cdata.cf_blocksize);
+	/*
+	 * The blocksize is supposed to be in bytes. Unfortunately originally
+	 * it was expressed in bits. For compatibility we maintain encblkno
+	 * and encblkno8.
+	 */
+	cs->sc_cdata.cf_blocksize /= encblkno[i].d;
 	(void)memset(inbuf, 0, MAX_KEYSIZE);
 	if (!cs->sc_cdata.cf_priv) {
 		printf("cgd: unable to initialize cipher\n");

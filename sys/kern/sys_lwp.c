@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.37.2.1 2008/03/29 20:47:01 christos Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.37.2.2 2008/11/01 21:22:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.37.2.1 2008/03/29 20:47:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.37.2.2 2008/11/01 21:22:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.37.2.1 2008/03/29 20:47:01 christos Ex
 #include <sys/lwpctl.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "opt_sa.h"
 
 #define	LWP_UNPARK_MAX		1024
 
@@ -90,6 +85,15 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_
 	bool inmem;
 	ucontext_t *newuc;
 	int error, lid;
+
+#ifdef KERN_SA
+	mutex_enter(p->p_lock);
+	if ((p->p_sflag & (PS_SA | PS_WEXIT)) != 0 || p->p_sa != NULL) {
+		mutex_exit(p->p_lock);
+		return EINVAL;
+	}
+	mutex_exit(p->p_lock);
+#endif
 
 	newuc = pool_get(&lwp_uc_pool, PR_WAITOK);
 
@@ -128,7 +132,7 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_
 	 * it be created in suspended state.  If the process is stopping,
 	 * then the LWP is created stopped.
 	 */
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	lwp_lock(l2);
 	if ((SCARG(uap, flags) & LWP_SUSPENDED) == 0 &&
 	    (l->l_flag & (LW_WREBOOT | LW_WSUSPEND | LW_WEXIT)) == 0) {
@@ -145,7 +149,7 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_
 		l2->l_stat = LSSUSPENDED;
 		lwp_unlock_to(l2, l2->l_cpu->ci_schedstate.spc_lwplock);
 	}
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return 0;
 }
@@ -195,9 +199,17 @@ sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap, registe
 	struct lwp *t;
 	int error;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
+
+#ifdef KERN_SA
+	if ((p->p_sflag & PS_SA) != 0 || p->p_sa != NULL) {
+		mutex_exit(p->p_lock);
+		return EINVAL;
+	}
+#endif
+
 	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		return ESRCH;
 	}
 
@@ -212,7 +224,7 @@ sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap, registe
 	if ((t == l && p->p_nrlwps == 1) ||
 	    (l->l_flag & (LW_WCORE | LW_WEXIT)) != 0) {
 		lwp_unlock(t);
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		return EDEADLK;
 	}
 
@@ -224,7 +236,7 @@ sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap, registe
 	 */
 	error = lwp_suspend(l, t);
 	if (error) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		return error;
 	}
 
@@ -236,7 +248,7 @@ sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap, registe
 	 *  o target LWP exited
 	 */
 	for (;;) {
-		error = cv_wait_sig(&p->p_lwpcv, &p->p_smutex);
+		error = cv_wait_sig(&p->p_lwpcv, p->p_lock);
 		if (error) {
 			error = ERESTART;
 			break;
@@ -253,7 +265,7 @@ sys__lwp_suspend(struct lwp *l, const struct sys__lwp_suspend_args *uap, registe
 		    (t->l_flag & LW_WSUSPEND) == 0)
 			break;
 	}
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return error;
 }
@@ -270,15 +282,15 @@ sys__lwp_continue(struct lwp *l, const struct sys__lwp_continue_args *uap, regis
 
 	error = 0;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		return ESRCH;
 	}
 
 	lwp_lock(t);
 	lwp_continue(t);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return error;
 }
@@ -294,10 +306,10 @@ sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap, register_
 	int error;
 
 	p = l->l_proc;
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if ((t = lwp_find(p, SCARG(uap, target))) == NULL) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		return ESRCH;
 	}
 
@@ -316,7 +328,7 @@ sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap, register_
 		error = 0;
 	}
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return error;
 }
@@ -332,9 +344,9 @@ sys__lwp_wait(struct lwp *l, const struct sys__lwp_wait_args *uap, register_t *r
 	int error;
 	lwpid_t dep;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = lwp_wait1(l, SCARG(uap, wait_for), &dep, 0);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	if (error)
 		return error;
@@ -367,19 +379,19 @@ sys__lwp_kill(struct lwp *l, const struct sys__lwp_kill_args *uap, register_t *r
 
 	KSI_INIT(&ksi);
 	ksi.ksi_signo = signo;
-	ksi.ksi_code = SI_USER;
+	ksi.ksi_code = SI_LWP;
 	ksi.ksi_pid = p->p_pid;
 	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
 	ksi.ksi_lid = SCARG(uap, target);
 
-	mutex_enter(&proclist_mutex);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(proc_lock);
+	mutex_enter(p->p_lock);
 	if ((t = lwp_find(p, ksi.ksi_lid)) == NULL)
 		error = ESRCH;
 	else if (signo != 0)
 		kpsignal2(p, &ksi);
-	mutex_exit(&p->p_smutex);
-	mutex_exit(&proclist_mutex);
+	mutex_exit(p->p_lock);
+	mutex_exit(proc_lock);
 
 	return error;
 }
@@ -398,7 +410,7 @@ sys__lwp_detach(struct lwp *l, const struct sys__lwp_detach_args *uap, register_
 	target = SCARG(uap, target);
 	p = l->l_proc;
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 
 	if (l->l_lid == target)
 		t = l;
@@ -442,7 +454,7 @@ sys__lwp_detach(struct lwp *l, const struct sys__lwp_detach_args *uap, register_
 	} else
 		error = ESRCH;
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return error;
 }
@@ -460,6 +472,7 @@ lwp_unpark(lwpid_t target, const void *hint)
 	sleepq_t *sq;
 	wchan_t wchan;
 	int swapin;
+	kmutex_t *mp;
 	proc_t *p;
 	lwp_t *t;
 
@@ -469,15 +482,15 @@ lwp_unpark(lwpid_t target, const void *hint)
 	 */
 	p = curproc;
 	wchan = lwp_park_wchan(p, hint);
-	sq = sleeptab_lookup(&lwp_park_tab, wchan);
+	sq = sleeptab_lookup(&lwp_park_tab, wchan, &mp);
 
-	TAILQ_FOREACH(t, &sq->sq_queue, l_sleepchain)
+	TAILQ_FOREACH(t, sq, l_sleepchain)
 		if (t->l_proc == p && t->l_lid == target)
 			break;
 
 	if (__predict_true(t != NULL)) {
 		swapin = sleepq_remove(sq, t);
-		sleepq_unlock(sq);
+		mutex_spin_exit(mp);
 		if (swapin)
 			uvm_kick_scheduler();
 		return 0;
@@ -487,11 +500,11 @@ lwp_unpark(lwpid_t target, const void *hint)
 	 * The LWP hasn't parked yet.  Take the hit and mark the
 	 * operation as pending.
 	 */
-	sleepq_unlock(sq);
+	mutex_spin_exit(mp);
 
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if ((t = lwp_find(p, target)) == NULL) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		return ESRCH;
 	}
 
@@ -512,7 +525,7 @@ lwp_unpark(lwpid_t target, const void *hint)
 		lwp_unlock(t);
 	}
 
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	return 0;
 }
 
@@ -521,6 +534,7 @@ lwp_park(struct timespec *ts, const void *hint)
 {
 	struct timespec tsx;
 	sleepq_t *sq;
+	kmutex_t *mp;
 	wchan_t wchan;
 	int timo, error;
 	lwp_t *l;
@@ -541,7 +555,7 @@ lwp_park(struct timespec *ts, const void *hint)
 	/* Find and lock the sleep queue. */
 	l = curlwp;
 	wchan = lwp_park_wchan(l->l_proc, hint);
-	sq = sleeptab_lookup(&lwp_park_tab, wchan);
+	sq = sleeptab_lookup(&lwp_park_tab, wchan, &mp);
 
 	/*
 	 * Before going the full route and blocking, check to see if an
@@ -551,10 +565,10 @@ lwp_park(struct timespec *ts, const void *hint)
 	if ((l->l_flag & (LW_CANCELLED | LW_UNPARKED)) != 0) {
 		l->l_flag &= ~(LW_CANCELLED | LW_UNPARKED);
 		lwp_unlock(l);
-		sleepq_unlock(sq);
+		mutex_spin_exit(mp);
 		return EALREADY;
 	}
-	lwp_unlock_to(l, sq->sq_mutex);
+	lwp_unlock_to(l, mp);
 	l->l_biglocks = 0;
 	sleepq_enqueue(sq, wchan, "parked", &lwp_park_sobj);
 	error = sleepq_block(timo, true);
@@ -633,6 +647,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 	wchan_t wchan;
 	lwpid_t targets[32], *tp, *tpp, *tmax, target;
 	int swapin, error;
+	kmutex_t *mp;
 	u_int ntargets;
 	size_t sz;
 
@@ -672,7 +687,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 
 	swapin = 0;
 	wchan = lwp_park_wchan(p, SCARG(uap, hint));
-	sq = sleeptab_lookup(&lwp_park_tab, wchan);
+	sq = sleeptab_lookup(&lwp_park_tab, wchan, &mp);
 
 	for (tmax = tp + ntargets, tpp = tp; tpp < tmax; tpp++) {
 		target = *tpp;
@@ -681,7 +696,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 		 * Easy case: search for the LWP on the sleep queue.  If
 		 * it's parked, remove it from the queue and set running.
 		 */
-		TAILQ_FOREACH(t, &sq->sq_queue, l_sleepchain)
+		TAILQ_FOREACH(t, sq, l_sleepchain)
 			if (t->l_proc == p && t->l_lid == target)
 				break;
 
@@ -694,11 +709,11 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 		 * The LWP hasn't parked yet.  Take the hit and
 		 * mark the operation as pending.
 		 */
-		sleepq_unlock(sq);
-		mutex_enter(&p->p_smutex);
+		mutex_spin_exit(mp);
+		mutex_enter(p->p_lock);
 		if ((t = lwp_find(p, target)) == NULL) {
-			mutex_exit(&p->p_smutex);
-			sleepq_lock(sq);
+			mutex_exit(p->p_lock);
+			mutex_spin_enter(mp);
 			continue;
 		}
 		lwp_lock(t);
@@ -719,11 +734,11 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 			lwp_unlock(t);
 		}
 
-		mutex_exit(&p->p_smutex);
-		sleepq_lock(sq);
+		mutex_exit(p->p_lock);
+		mutex_spin_enter(mp);
 	}
 
-	sleepq_unlock(sq);
+	mutex_spin_exit(mp);
 	if (tp != targets)
 		kmem_free(tp, sz);
 	if (swapin)
@@ -763,9 +778,9 @@ sys__lwp_setname(struct lwp *l, const struct sys__lwp_setname_args *uap, registe
 	}
 
 	p = curproc;
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if ((t = lwp_find(p, target)) == NULL) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		kmem_free(name, MAXCOMLEN);
 		return ESRCH;
 	}
@@ -773,7 +788,7 @@ sys__lwp_setname(struct lwp *l, const struct sys__lwp_setname_args *uap, registe
 	oname = t->l_name;
 	t->l_name = name;
 	lwp_unlock(t);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	if (oname != NULL)
 		kmem_free(oname, MAXCOMLEN);
@@ -798,9 +813,9 @@ sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap, registe
 		target = l->l_lid;
 
 	p = curproc;
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	if ((t = lwp_find(p, target)) == NULL) {
-		mutex_exit(&p->p_smutex);
+		mutex_exit(p->p_lock);
 		return ESRCH;
 	}
 	lwp_lock(t);
@@ -809,7 +824,7 @@ sys__lwp_getname(struct lwp *l, const struct sys__lwp_getname_args *uap, registe
 	else
 		strcpy(name, t->l_name);
 	lwp_unlock(t);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return copyoutstr(name, SCARG(uap, name), SCARG(uap, len), NULL);
 }

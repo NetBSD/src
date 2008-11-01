@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.56.18.1 2008/03/29 20:47:03 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.56.18.2 2008/11/01 21:22:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -194,6 +194,7 @@ struct stat {
 #define	SF_APPEND	0x00040000	/* writes to file may only append */
 /*	SF_NOUNLINK	0x00100000	   [NOT IMPLEMENTED] */
 #define	SF_SNAPSHOT	0x00200000	/* snapshot inode */
+#define	SF_LOG		0x00400000	/* WAPBL log file inode */
 
 #ifdef _KERNEL
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.53.8.1 2008/03/29 20:47:03 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.53.8.2 2008/11/01 21:22:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -227,8 +227,6 @@ struct ktr_mool {
 
 /*
  * KTR_SAUPCALL - scheduler activated upcall.
- *
- * The structure is no longer used, but retained for compatibility.
  */
 #define	KTR_SAUPCALL	13
 struct ktr_saupcall {
@@ -265,6 +263,7 @@ struct ktr_saupcall {
 #define KTRFAC_EXEC_ARG	(1<<KTR_EXEC_ARG)
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
 #define KTRFAC_MOOL	(1<<KTR_MOOL)
+#define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
 #define	KTRFAC_MIB	(1<<KTR_MIB)
 /*
  * trace flags (also in p_traceflags)
@@ -320,6 +319,7 @@ void ktr_mib(const int *a , u_int b);
 void ktr_mool(const void *, size_t, const void *);
 void ktr_execarg(const void *, size_t);
 void ktr_execenv(const void *, size_t);
+void ktr_saupcall(struct lwp *, int, int, int, void *, void *, void *);
 
 static inline bool
 ktrpoint(int fac)
@@ -352,7 +352,7 @@ static inline void
 ktrgeniov(int a, enum uio_rw b, struct iovec *c, int d, int e)
 {
 	if (__predict_false(ktrace_on))
-		ktr_genio(a, b, c, d, e);
+		ktr_geniov(a, b, c, d, e);
 }
 
 static inline void
@@ -437,6 +437,13 @@ ktrexecenv(const void *a, size_t b)
 {
 	if (__predict_false(ktrace_on))
 		ktr_execenv(a, b);
+}
+
+static inline void
+ktrsaupcall(struct lwp *a, int b, int c, int d, void *e, void *f, void *g)
+{
+	if (__predict_false(ktrace_on))
+		ktr_saupcall(a, b, c, d, e, f, g);
 }
 
 #endif	/* !_KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.9.18.2 2008/03/30 21:01:59 christos Exp $	*/
+/*	$NetBSD: ansi.h,v 1.9.18.3 2008/11/01 21:22:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -47,19 +47,11 @@
  *	#undef	_BSD_SIZE_T_
  *	#endif
  */
-#ifdef __ELF__
 #define	_BSD_CLOCK_T_		unsigned int	/* clock() */
 #define	_BSD_PTRDIFF_T_		long int	/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_		unsigned long int /* sizeof() */
 #define	_BSD_SSIZE_T_		long int	/* byte count or error */
 #define	_BSD_TIME_T_		__int64_t	/* time() */
-#else
-#define	_BSD_CLOCK_T_		unsigned long	/* clock() */
-#define	_BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
-#define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
-#define	_BSD_SSIZE_T_		int		/* byte count or error */
-#define	_BSD_TIME_T_		long long	/* time() */
-#endif
 #if __GNUC_PREREQ__(2, 96)
 #define	_BSD_VA_LIST_		__builtin_va_list /* GCC built-in type */
 #else
