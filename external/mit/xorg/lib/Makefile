@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/09/21 01:34:18 cube Exp $
+#	$NetBSD: Makefile,v 1.5 2008/11/01 18:42:51 cube Exp $
 
 # build libraries for xorg
 
@@ -11,7 +11,7 @@ SUBDIR=	libFS libICE libXau libXdmcp libdrm freetype libfontenc expat \
 	libXxf86vm libXfontcache xkbdata liblbxutil .WAIT \
 	libXcomposite libXdamage libXcursor libXrandr libXTrap libXmu \
 	libXmuu libXpm pixman \
-	libXprintUtil libXprintAppUtil libXfont libXft libXvMC libxkbui .WAIT \
-	libXaw6 libXaw7 libXaw libGL .WAIT dri libGLU libGLw
+	libXprintUtil libXprintAppUtil libXfont libXvMC libxkbui .WAIT \
+	libXft libXaw6 libXaw7 libXaw libGL .WAIT dri libGLU libGLw
 
 .include <bsd.subdir.mk>
