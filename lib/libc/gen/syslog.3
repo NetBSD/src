@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.3,v 1.25 2008/10/31 16:12:18 christos Exp $
+.\"	$NetBSD: syslog.3,v 1.26 2008/11/01 13:54:01 wiz Exp $
 .\"	$OpenBSD: syslog.3,v 1.25 2005/07/22 03:16:58 jaredy Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
@@ -200,10 +200,11 @@ using the variable-length argument facilities of
 The
 .Fn syslogp
 variants take additional arguments which correspond to new fields in the
-syslog-protocol message format. All three arguments are evaluated as
+syslog-protocol message format.
+All three arguments are evaluated as
 .Xr printf 3
 format strings and any of them can be
-.Fa NULL .
+.Dv NULL .
 This enables applications to use message IDs, structured data, and UTF-8 encoded
 content in messages.
 .Pp
@@ -500,10 +501,13 @@ syslog(priority, "%s", string);
 .Pp
 With
 .Fn syslogp
-the caller is responsible to use the right formatting for the message fields. A
+the caller is responsible to use the right formatting for the message fields.
+A
 .Fa msgid
-must only contain up to 32 ASCII characters. A
+must only contain up to 32 ASCII characters.
+A
 .Fa sdfmt
-has strict rules for paranthesis and character quoting. If the
+has strict rules for paranthesis and character quoting.
+If the
 .Fa msgfmt
 contains UTF-8 characters, then it has to start with a Byte Order Mark.
