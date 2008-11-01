@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.100 2008/11/01 20:24:13 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.101 2008/11/01 22:43:23 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2263,4 +2263,10 @@ gnu/usr.bin/gcc4/libiberty/defs.mk		patch
 
 	Regenerate after vax shared support was added.
 	[skrll, ticket #1216]
+
+sys/arch/cobalt/conf/INSTALL			1.32,1.35
+
+	Enable bpfilter so that dhclient can work.  Allow root device to be
+	detected, rather than hardcoding it to nfs.
+	[tsutsui, ticket #1217]
 
