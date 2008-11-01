@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.2 2008/10/30 10:20:23 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.3 2008/11/01 12:11:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.2 2008/10/30 10:20:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.3 2008/11/01 12:11:10 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1279,6 +1279,7 @@ hppa_btlb_purge(pa_space_t space, vaddr_t va, vsize_t *sizep)
 	return (error);
 }
 
+#if 0
 /*
  * This maps page zero if it isn't already mapped, and 
  * returns a cookie for hp700_pagezero_unmap.
@@ -1315,6 +1316,19 @@ hp700_pagezero_unmap(int was_mapped_before)
 		splx(s);
 	}
 }
+#else
+int
+hp700_pagezero_map(void)
+{
+	return 0;
+}
+
+void
+hp700_pagezero_unmap(int was_mapped_before)
+{
+	was_mapped_before = was_mapped_before;
+}
+#endif
 
 int waittime = -1;
 
