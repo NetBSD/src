@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_wdt.c,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: obio_wdt.c,v 1.1.4.1 2008/11/01 19:41:57 snj Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -36,7 +36,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.1.4.1 2008/11/01 19:41:57 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -97,15 +97,15 @@ geminiwdt_attach(struct device *parent, struct device *self, void *aux)
 
 	geminiwdt_sc = sc;
 
+	sc->sc_armed = 1;	/* fake armed so can disarm */
+	geminiwdt_enable(0);	/* disable, stop, disarm */
+
+	if (sysmon_wdog_register(&sc->sc_smw) != 0) {
+		geminiwdt_sc = NULL;
+		aprint_error("%s: unable to register with sysmon\n",
+			     device_xname(&sc->sc_dev));
+	}
+
 	aprint_normal("\n");
 	aprint_naive("\n"); 
-
-#if 0
-	Debugger();	/* can try reboot function here to test wdt */
-#endif
-#if 0
-	geminiwdt_set_timeout(30);	/* test 30 sec reset */
-	geminiwdt_enable(1);
-#endif
-	
 }
