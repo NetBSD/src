@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2008/06/23 02:09:59 matt Exp $
+#	$NetBSD: Makefile,v 1.19.2.1 2008/11/01 19:45:40 snj Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -23,6 +23,9 @@ TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 								\
 		CP3100		IQ80321		CP3100_wd0	\
 		0xf0080000	netbsd-wd0			\
+								\
+		GEMINI		GEMINI		GEMINI		\
+		0x01600000	netbsd				\
 								\
 		IQ80310		IQ80310		IQ80310_sd0	\
 		0x00080000	netbsd-sd0			\
