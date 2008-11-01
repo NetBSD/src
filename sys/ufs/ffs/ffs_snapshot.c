@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.65.8.2 2008/11/01 21:22:29 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.65.8.3 2008/11/01 23:22:23 christos Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.65.8.2 2008/11/01 21:22:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.65.8.3 2008/11/01 23:22:23 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -380,8 +380,8 @@ out:
 #ifdef DEBUG
 		getmicrotime(&endtime);
 		timersub(&endtime, &starttime, &endtime);
-		printf("%s: suspended %ld.%03ld sec, redo %d of %d\n",
-		    mp->mnt_stat.f_mntonname, (long)endtime.tv_sec,
+		printf("%s: suspended %lld.%03d sec, redo %d of %d\n",
+		    mp->mnt_stat.f_mntonname, (long long)endtime.tv_sec,
 		    endtime.tv_usec / 1000, redo, fs->fs_ncg);
 #endif
 	}
