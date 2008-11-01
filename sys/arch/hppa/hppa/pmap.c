@@ -1,4 +1,4 @@
-// /*	$NetBSD: pmap.c,v 1.43.8.2 2008/10/30 10:20:23 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.3 2008/11/01 12:16:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.2 2008/10/30 10:20:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.3 2008/11/01 12:16:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,11 +604,13 @@ pmap_bootstrap(vaddr_t vstart)
 	int btlb_i;
 	int btlb_j;
 	vsize_t btlb_entry_min, btlb_entry_max, btlb_entry_got;
-	paddr_t ksro, kero, ksrw, kerw;
+	paddr_t ksrx, kerx, ksro, kero, ksrw, kerw;
 	paddr_t phys_start, phys_end;
 
 	/* Provided by the linker script */
-	extern int kernel_text, __data_start, __rodata_end;
+	extern int kernel_text, etext;
+	extern int __rodata_start, __rodata_end;
+	extern int __data_start;
 
 	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_bootstrap(0x%x)\n", (int)vstart));
 
@@ -700,9 +702,8 @@ pmap_bootstrap(vaddr_t vstart)
 	DPRINTF(PDB_INIT, ("pmap_bootstrap: curlwp set as %p\n", &lwp0));
 
 	/* kernel virtual is the last gig of the moohicans */
-	nkpdes = physmem >> 14;	/* at least 16/gig for kmem */
-	if (nkpdes < 4)
-		nkpdes = 4;		/* ... but no less than four */
+	/* at least 16/gig for kmem */
+	nkpdes = (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / PDE_SIZE;
 	nkpdes += HPPA_IOLEN / PDE_SIZE; /* ... and io space too */
 	npdes = nkpdes + (physmem + atop(PDE_SIZE) - 1) / atop(PDE_SIZE);
 
@@ -729,7 +730,6 @@ pmap_bootstrap(vaddr_t vstart)
 	 */
 	/* XXXNH */
 	resvphysmem = atop(addr);
-	kerw = addr;
 
 	/*
 	 * The kernel text, data, and bss must be direct-mapped,
@@ -746,19 +746,30 @@ pmap_bootstrap(vaddr_t vstart)
 	 * BTLB entries have a minimum and maximum possible size,
 	 * and MD code gives us these sizes in units of pages.
 	 */
-	ksro = (paddr_t) &kernel_text;
-	kero /*XXXNH &__rodata_end??? */ = ksrw = (paddr_t) &__data_start;
+	ksrx = (paddr_t) &kernel_text;
+	kerx = (paddr_t) &etext;
+	ksro = (paddr_t) &__rodata_start;
+	kero = (paddr_t) &__rodata_end;
+	ksrw = (paddr_t) &__data_start;
+	kerw = addr;
+
+	printf("%s: ksrx = %08x  kerx = %08x\n", __func__, (int)ksrx, (int)kerx);
+	printf("%s: ksro = %08x  kero = %08x\n", __func__, (int)ksro, (int)kero);
+	printf("%s: ksrw = %08x  kerw = %08x\n", __func__, (int)ksrw, (int)kerw);
 
 	btlb_entry_min = (vsize_t) hppa_btlb_size_min * PAGE_SIZE;
 	btlb_entry_max = (vsize_t) hppa_btlb_size_max * PAGE_SIZE;
 
+#if 0
 	/*
 	 * We begin by making BTLB entries for the kernel text.
 	 * To keep things simple, we insist that the kernel text
 	 * be aligned to the minimum BTLB entry size.
 	 */
+
 	if (((vaddr_t) &kernel_text) & (btlb_entry_min - 1))
 		panic("kernel text not aligned to BTLB minimum size");
+#endif
 
 	/*
 	 * To try to conserve BTLB entries, take a hint from how 
@@ -782,20 +793,20 @@ pmap_bootstrap(vaddr_t vstart)
 	 * BTLB entry for the kernel text may also cover some of
 	 * the data segment, meaning it will have to allow writing.
 	 */
-	addr = ksro;
+	addr = ksrx;
 
 	DPRINTF(PDB_INIT, ("%s: mapping text and rodata @ %p - %p\n",
 	    __func__, (void *)addr, (void *)&__rodata_end));
 
 	btlb_j = 0;
-	while (addr < (vaddr_t) &__rodata_end) {
+	while (addr < (vaddr_t) kero) {
 
 		/* Set up the next BTLB entry. */
 		KASSERT(btlb_j < BTLB_SET_SIZE);
 		btlb_entry_start[btlb_j] = addr;
 		btlb_entry_size[btlb_j] = btlb_entry_min;
 		btlb_entry_vm_prot[btlb_j] = VM_PROT_READ | VM_PROT_EXECUTE;
-		if (addr + btlb_entry_min > kero) /*XXX &__rodata_end*/
+		if (addr + btlb_entry_min > kero)
 			btlb_entry_vm_prot[btlb_j] |= VM_PROT_WRITE;
 
 		/* Coalesce BTLB entries whenever possible. */
@@ -889,9 +900,9 @@ pmap_bootstrap(vaddr_t vstart)
 
 	availphysmem = 0;
 
-	/* The first segment runs from [resvmem..kernel_text). */
+	/* The first segment runs from [resvmem..ksrx). */
 	phys_start = resvmem;
-	phys_end = atop(&kernel_text);
+	phys_end = atop(ksrx);
 
 	DPRINTF(PDB_INIT, ("%s: phys segment 0x%05x 0x%05x\n", __func__,
 	    (u_int)phys_start, (u_int)phys_end));
@@ -901,9 +912,9 @@ pmap_bootstrap(vaddr_t vstart)
 		availphysmem += phys_end - phys_start;
 	}
 
-	/* The second segment runs from [__rodata_end..__data_start). */
-	phys_start = atop(&__rodata_end);
-	phys_end = atop(&__data_start);
+	/* The second segment runs from [kero..ksrw). */
+	phys_start = atop(kero);
+	phys_end = atop(ksrw);
 
 	DPRINTF(PDB_INIT, ("%s: phys segment 0x%05x 0x%05x\n", __func__,
 	    (u_int)phys_start, (u_int)phys_end));
@@ -931,10 +942,19 @@ pmap_bootstrap(vaddr_t vstart)
 	for (va = 0; va < ptoa(physmem); va += PAGE_SIZE) {
 		int opmapdebug;
 		vm_prot_t prot = UVM_PROT_RW;
-
-		if (va < kero)
+#if 0
+		extern struct user *proc0paddr;
+#endif
+		if (va < resvmem)
 			prot = UVM_PROT_RX;
-
+		else if (va >= ksrx && va < kerx)
+			prot = UVM_PROT_RX;
+		else if (va >= ksro && va < kero)
+			prot = UVM_PROT_R;
+#if 0
+		else if (va == (vaddr_t)proc0paddr + USPACE)
+			prot = UVM_PROT_NONE;
+#endif
 		opmapdebug = pmapdebug;
 		pmapdebug = 0;
 		pmap_kenter_pa(va, va, prot);
