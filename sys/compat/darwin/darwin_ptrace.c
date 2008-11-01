@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ptrace.c,v 1.14.8.1 2008/03/29 20:46:57 christos Exp $ */
+/*	$NetBSD: darwin_ptrace.c,v 1.14.8.2 2008/11/01 21:22:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.14.8.1 2008/03/29 20:46:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ptrace.c,v 1.14.8.2 2008/11/01 21:22:25 christos Exp $");
 
 #include "opt_ptrace.h"
 
@@ -144,18 +137,18 @@ darwin_sys_ptrace(struct lwp *l, const struct darwin_sys_ptrace_args *uap, regis
 		 * If the process is not marked as stopped,
 		 * sys_ptrace sanity checks will return EBUSY.
 		 */
-		mutex_enter(&proclist_mutex);
-		mutex_enter(&t->p_smutex);
+		mutex_enter(proc_lock);
+		mutex_enter(t->p_lock);
 		proc_stop(t, 0, SIGSTOP);
-		mutex_exit(&t->p_smutex);
-		mutex_exit(&proclist_mutex);
+		mutex_exit(t->p_lock);
+		mutex_exit(proc_lock);
 
 		if ((error = sys_ptrace(l, &bsd_ua, retval)) != 0) {
-			mutex_enter(&proclist_mutex);
-			mutex_enter(&t->p_smutex);
+			mutex_enter(proc_lock);
+			mutex_enter(t->p_lock);
 			proc_unstop(t);
-			mutex_exit(&t->p_smutex);
-			mutex_exit(&proclist_mutex);
+			mutex_exit(t->p_lock);
+			mutex_exit(proc_lock);
 			if (had_sigexc)
 				ded->ded_flags |= DARWIN_DED_SIGEXC;
 		}

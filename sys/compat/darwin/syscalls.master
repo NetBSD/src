@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.35.8.1 2008/03/29 20:46:58 christos Exp $
+	$NetBSD: syscalls.master,v 1.35.8.2 2008/11/01 21:22:25 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -9,9 +9,6 @@
 ;	number	system call number, must be in order
 ;	type	one of STD, OBSOL, UNIMPL, NODEF, NOARGS, or one of
 ;		the compatibility options defined in syscalls.conf.
-;
-; An optional field, MPSAFE, after the type field, indicates that
-; the system call is MP-safe.
 ;
 ; types:
 ;	STD	always included

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.79.8.1 2008/03/29 20:47:01 christos Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.79.8.2 2008/11/01 21:22:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -46,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.79.8.1 2008/03/29 20:47:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.79.8.2 2008/11/01 21:22:27 christos Exp $");
 
 #define SYSVSEM
 
@@ -112,12 +105,12 @@ seminit(void)
 	if (v == 0)
 		panic("sysv_sem: cannot allocate memory");
 	sema = (void *)v;
-	sem = (void *)(ALIGN(sema) +
-	    seminfo.semmni * sizeof(struct semid_ds));
-	semcv = (void *)(ALIGN(sem) +
-	    seminfo.semmns * sizeof(struct __sem));
-	semu = (void *)(ALIGN(semcv) +
-	    seminfo.semmni * sizeof(kcondvar_t));
+	sem = (void *)((uintptr_t)sema +
+	    ALIGN(seminfo.semmni * sizeof(struct semid_ds)));
+	semcv = (void *)((uintptr_t)sem +
+	    ALIGN(seminfo.semmns * sizeof(struct __sem)));
+	semu = (void *)((uintptr_t)semcv +
+	    ALIGN(seminfo.semmni * sizeof(kcondvar_t)));
 
 	for (i = 0; i < seminfo.semmni; i++) {
 		sema[i]._sem_base = 0;
@@ -198,12 +191,12 @@ semrealloc(int newsemmni, int newsemmns, int newsemmnu)
 	}
 
 	new_sema = (void *)v;
-	new_sem = (void *)(ALIGN(new_sema) +
-	    newsemmni * sizeof(struct semid_ds));
-	new_semcv = (void *)(ALIGN(new_sem) +
-	    newsemmns * sizeof(struct __sem));
-	new_semu = (void *)(ALIGN(new_semcv) +
-	    newsemmni * sizeof(kcondvar_t));
+	new_sem = (void *)((uintptr_t)new_sema +
+	    ALIGN(newsemmni * sizeof(struct semid_ds)));
+	new_semcv = (void *)((uintptr_t)new_sem +
+	    ALIGN(newsemmns * sizeof(struct __sem)));
+	new_semu = (void *)((uintptr_t)new_semcv +
+	    ALIGN(newsemmni * sizeof(kcondvar_t)));
 
 	/* Initialize all semaphore identifiers and condvars */
 	for (i = 0; i < newsemmni; i++) {
@@ -548,6 +541,7 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 			break;
 		KASSERT(sembuf != NULL);
 		memcpy(sembuf, semaptr, sizeof(struct semid_ds));
+		sembuf->sem_perm.mode &= 0777;
 		break;
 
 	case GETNCNT:
@@ -610,6 +604,10 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 			break;
 		}
 		KASSERT(arg != NULL);
+		if ((unsigned int)arg->val > seminfo.semvmx) {
+			error = ERANGE;
+			break;
+		}
 		semaptr->_sem_base[semnum].semval = arg->val;
 		semundo_clear(ix, semnum);
 		cv_broadcast(&semcv[ix]);
@@ -620,11 +618,16 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 			break;
 		KASSERT(arg != NULL);
 		for (i = 0; i < semaptr->sem_nsems; i++) {
-			error = copyin(&arg->array[i],
-			    &semaptr->_sem_base[i].semval,
+			unsigned short semval;
+			error = copyin(&arg->array[i], &semval,
 			    sizeof(arg->array[i]));
 			if (error != 0)
 				break;
+			if ((unsigned int)semval > seminfo.semvmx) {
+				error = ERANGE;
+				break;
+			}
+			semaptr->_sem_base[i].semval = semval;
 		}
 		semundo_clear(ix, -1);
 		cv_broadcast(&semcv[ix]);
@@ -761,6 +764,13 @@ sys_semop(struct lwp *l, const struct sys_semop_args *uap, register_t *retval)
 	int do_wakeup, do_undos;
 
 	SEM_PRINTF(("call to semop(%d, %p, %zd)\n", semid, SCARG(uap,sops), nsops));
+
+	if (__predict_false((p->p_flag & PK_SYSVSEM) == 0)) {
+		mutex_enter(p->p_lock);
+		p->p_flag |= PK_SYSVSEM;
+		mutex_exit(p->p_lock);
+	}
+
 restart:
 	if (nsops <= SMALL_SOPS) {
 		sops = small_sops;
@@ -1021,6 +1031,9 @@ semexit(struct proc *p, void *v)
 {
 	struct sem_undo *suptr;
 	struct sem_undo **supptr;
+
+	if ((p->p_flag & PK_SYSVSEM) == 0)
+		return;
 
 	mutex_enter(&semlock);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.56.8.1 2008/03/29 20:46:57 christos Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.56.8.2 2008/11/01 21:22:25 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.56.8.1 2008/03/29 20:46:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.56.8.2 2008/11/01 21:22:25 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -630,7 +623,7 @@ darwin_sysctl_dokproc(SYSCTLFN_ARGS)
 		elem_count = name[3];
 	}
 
-	mutex_enter(&proclist_lock);
+	mutex_enter(proc_lock);
 
 	pd = proclists;
 again:
@@ -708,7 +701,7 @@ again:
 	pd++;
 	if (pd->pd_list != NULL)
 		goto again;
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 
 	if (where != NULL) {
 		*oldlenp = (char *)dp - where;
@@ -720,7 +713,7 @@ again:
 	}
 	return (0);
  cleanup:
-	mutex_exit(&proclist_lock);
+	mutex_exit(proc_lock);
 	return (error);
 }
 
@@ -735,7 +728,8 @@ darwin_fill_kproc(struct proc *p, struct darwin_kinfo_proc *dkp)
 	struct darwin_eproc *de;
 
 	printf("fillkproc: pid %d\n", p->p_pid);
-	l = proc_representative_lwp(p, NULL, 1);
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
 	(void)memset(dkp, 0, sizeof(*dkp));
 
 	dep = (struct darwin_extern_proc *)&dkp->kp_proc;
@@ -823,7 +817,7 @@ darwin_fill_kproc(struct proc *p, struct darwin_kinfo_proc *dkp)
 		/* de->e_tpgid */
 		/* (ptr) de->e_tsess */
 	}
-	if (l->l_wmesg)
+	if (l->l_wchan && l->l_wmesg)
 		strlcpy(de->e_wmesg, l->l_wmesg, DARWIN_WMESGLEN);
 	de->e_xsize = 0;
 	de->e_xrssize = 0;
@@ -847,8 +841,12 @@ native_to_darwin_pflag(int *dfp, struct proc *p)
 	int bf = p->p_flag;
 	int bsf = p->p_sflag;
 	int bslf = p->p_slflag;
-	struct lwp *l = proc_representative_lwp(p, NULL, 1);
-	int lf = l->l_flag;
+	struct lwp *l;
+	int lf;
+
+	l = LIST_FIRST(&p->p_lwps);
+	KASSERT(l != NULL);
+	lf = l->l_flag;
 
 	if (bf & PK_ADVLOCK)
 		df |= DARWIN_P_ADVLOCK;
@@ -856,7 +854,7 @@ native_to_darwin_pflag(int *dfp, struct proc *p)
 		df |= DARWIN_P_CONTROLT;
 	if (bsf & PS_NOCLDSTOP)
 		df |= DARWIN_P_NOCLDSTOP;
-	if (bsf & PS_PPWAIT)
+	if (p->p_lflag & PL_PPWAIT)
 		df |= DARWIN_P_PPWAIT;
 	if (bsf & PST_PROFIL)
 		df |= DARWIN_P_PROFIL;
