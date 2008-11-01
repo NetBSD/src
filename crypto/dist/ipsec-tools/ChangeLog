@@ -1,3 +1,7 @@
+2008-10-29  S.P.Zeidler <spz@serpens.de>
+	* src/racoon/ipsec_doi.c: Use sockaddr_storage to prevent
+	  stack overflow. Initialize scope id for non-linklocal addresses.
+
 2008-10-27  Timo Teras  <timo.teras@iki.fi>
 	From Arnaud Ebalard <arno@natisbad.org>:
 	* src/racoon/isakmp_var.h: remove duplicate declaration
@@ -91,8 +95,7 @@
 	  src/racoon/main.c
 	  src/racoon/racoon.conf.5
 	  src/racoon/session.c : add radius config options for racoon.conf
-
-src/racoon/isakmp_cfg.c : fix hybrid enabled builds
+	* src/racoon/isakmp_cfg.c : fix hybrid enabled builds
 
 2008-07-21  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/cfparse.y : do not set default gss id if xauth is used
@@ -191,7 +194,7 @@ src/racoon/isakmp_cfg.c : fix hybrid enabled builds
 	SADB_X_EXT_NAT_T_[SD]PORT if present in purge_ipsec_spi()
 
 2008-04-02  Emmanuel Dreyfus  <manu@netbsd.org>
-	From Timo Teräs <timo.teras@iki.fi>
+	From Timo Teras <timo.teras@iki.fi>
 	* src/racoon/{sockmisc.h|sockmisc.c|Makefile.am}: fix Linux build
 	  after 2008-03-28's change
 
