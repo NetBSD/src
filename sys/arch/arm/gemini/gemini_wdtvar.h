@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_wdtvar.h,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: gemini_wdtvar.h,v 1.2 2008/11/01 07:43:19 cliff Exp $	*/
 
 /*
  * adapted/extracted from omap_wdt.c
@@ -55,6 +55,5 @@ int	geminiwdt_tickle(struct sysmon_wdog *);
 
 void	geminiwdt_set_timeout(unsigned int period);
 int	geminiwdt_enable(int enable);
-void	geminiwdt_reboot(void);
 
 #endif  /* _ARM_GEMINI_WDTVAR_H */

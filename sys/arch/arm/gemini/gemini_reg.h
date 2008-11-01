@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_reg.h,v 1.2 2008/10/28 23:18:44 cliff Exp $	*/
+/*	$NetBSD: gemini_reg.h,v 1.3 2008/11/01 07:43:19 cliff Exp $	*/
 
 #ifndef _ARM_GEMINI_REG_H_
 #define _ARM_GEMINI_REG_H_
@@ -62,6 +62,15 @@
 #define GEMINI_USB1_BASE	0x69000000 	/* USB #1 registers */
 #define GEMINI_TVE_BASE		0x6a000000 	/* TVE registers */
 #define GEMINI_SRAM_SHADOW_BASE	0x70000000 	/* Shadow of internal SRAM */
+
+/*
+ * Gemini SL3516 Global register offsets and bits
+ */
+#define GEMINI_GLOBAL_WORD_ID	0x0		/* Global Word ID */			/* ro */
+#define  GLOBAL_ID_CHIP_ID	__BITS(31,8)
+#define  GLOBAL_ID_CHIP_REV	__BITS(7,0)
+#define GEMINI_GLOBAL_RESET_CTL	0xc		/* Global Soft Reset Control */		/* rw */
+#define GLOBAL_RESET_GLOBAL	__BIT(31)
 
 /*
  * Gemini SL3516 Watchdog device register offsets and bits
