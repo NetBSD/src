@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.3 2008/11/01 07:43:19 cliff Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.4 2008/11/01 07:58:33 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.3 2008/11/01 07:43:19 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.4 2008/11/01 07:58:33 cliff Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -454,26 +454,6 @@ gemini_putchar(char c)
 		if (--timo == 0)
 			break;
 }
-
-#if 0
-void gemini_putchar_xxx(bus_space_tag_t, bus_space_handle_t, char);
-void
-gemini_putchar_xxx(bus_space_tag_t bst, bus_space_handle_t bsh, char c)
-{
-	int timo = 150000;
-
-
-	while ((bus_space_read_1(bst, bsh, 5) & 0x20) == 0)
-		if (--timo == 0)
-			break;
-
-	bus_space_write_1(bst, bsh, 0, c);
-
-	while ((bus_space_read_1(bst, bsh, 5) & 0x40) == 0)
-		if (--timo == 0)
-			break;
-}
-#endif
 
 void gemini_puthex(unsigned int);
 void
