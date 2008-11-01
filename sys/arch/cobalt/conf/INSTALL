@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.27.46.1 2008/11/01 22:46:23 snj Exp $
+# $NetBSD: INSTALL,v 1.27.46.2 2008/11/01 22:47:07 snj Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.27.46.1 $"
+#ident 		"INSTALL-$Revision: 1.27.46.2 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -302,7 +302,7 @@ lxtphy*		at mii? phy ?			# Level One LXT-970 PHYs
 #pseudo-device	vnd				# disk-like interface to files
 
 # Network pseudo-devices
-#pseudo-device	bpfilter			# Berkeley packet filter
+pseudo-device	bpfilter			# Berkeley packet filter
 #pseudo-device	ipfilter			# IP filter (firewall) and NAT
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
