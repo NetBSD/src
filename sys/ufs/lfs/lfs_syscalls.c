@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.128.8.1 2008/03/29 20:47:04 christos Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.128.8.2 2008/11/01 21:22:29 christos Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
  *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -68,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.128.8.1 2008/03/29 20:47:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.128.8.2 2008/11/01 21:22:29 christos Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -139,6 +132,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 	if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
 		return (EINVAL);
 
+	KERNEL_LOCK(1, NULL);
 	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov,
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
@@ -149,6 +143,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 			blkcnt * sizeof(BLOCK_INFO));
     out:
 	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 #else
@@ -182,6 +177,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 	if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
 		return (EINVAL);
 
+	KERNEL_LOCK(1, NULL);
 	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	blkiov15 = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO_15), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov15,
@@ -214,6 +210,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
     out:
 	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 	lfs_free(fs, blkiov15, LFS_NB_BLKIOV);
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 #endif
@@ -255,7 +252,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 	cnt = blkcnt;
 
-	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
+	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
 	/*
@@ -506,7 +503,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 	lfs_segunlock(fs);
 
-	vfs_unbusy(mntp, false);
+	vfs_unbusy(mntp, false, NULL);
 	if (error)
 		return (error);
 	else if (do_again)
@@ -524,6 +521,7 @@ err2:
 	 */
 
 err3:
+	KERNEL_UNLOCK_ONE(NULL);
 	/*
 	 * XXX should do segwrite here anyway?
 	 */
@@ -534,7 +532,7 @@ err3:
 	}
 
 	lfs_segunlock(fs);
-	vfs_unbusy(mntp, false);
+	vfs_unbusy(mntp, false, NULL);
 #ifdef DIAGNOSTIC
 	if (numrefed != 0)
 		panic("lfs_markv: numrefed=%d", numrefed);
@@ -580,6 +578,7 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	blkcnt = SCARG(uap, blkcnt);
 	if ((u_int) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
 		return (EINVAL);
+	KERNEL_LOCK(1, NULL);
 	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov,
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
@@ -590,6 +589,7 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 			blkcnt * sizeof(BLOCK_INFO));
     out:
 	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 #else
@@ -622,6 +622,7 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	blkcnt = SCARG(uap, blkcnt);
 	if ((size_t) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
 		return (EINVAL);
+	KERNEL_LOCK(1, NULL);
 	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	blkiov15 = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO_15), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov15,
@@ -654,6 +655,7 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
     out:
 	lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 	lfs_free(fs, blkiov15, LFS_NB_BLKIOV);
+	KERNEL_UNLOCK_ONE(NULL);
 	return error;
 }
 #endif
@@ -680,7 +682,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		return (ENOENT);
 
 	ump = VFSTOUFS(mntp);
-	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
+	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
 	cnt = blkcnt;
@@ -820,7 +822,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		panic("lfs_bmapv: numrefed=%d", numrefed);
 #endif
 
-	vfs_unbusy(mntp, false);
+	vfs_unbusy(mntp, false, NULL);
 
 	return 0;
 }
@@ -858,13 +860,15 @@ sys_lfs_segclean(struct lwp *l, const struct sys_lfs_segclean_args *uap, registe
 	fs = VFSTOUFS(mntp)->um_lfs;
 	segnum = SCARG(uap, segment);
 
-	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
+	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
+	KERNEL_LOCK(1, NULL);
 	lfs_seglock(fs, SEGM_PROT);
 	error = lfs_do_segclean(fs, segnum);
 	lfs_segunlock(fs);
-	vfs_unbusy(mntp, false);
+	KERNEL_UNLOCK_ONE(NULL);
+	vfs_unbusy(mntp, false, NULL);
 	return error;
 }
 
@@ -951,6 +955,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
 	u_long timeout;
 	int error;
 
+	KERNEL_LOCK(1, NULL);
 	if (fsidp == NULL || (mntp = vfs_getvfs(fsidp)) == NULL)
 		addr = &lfs_allclean_wakeup;
 	else
@@ -961,6 +966,7 @@ lfs_segwait(fsid_t *fsidp, struct timeval *tv)
 	 */
 	timeout = tvtohz(tv);
 	error = tsleep(addr, PCATCH | PVFS, "segment", timeout);
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error == ERESTART ? EINTR : 0);
 }
 
@@ -1146,7 +1152,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 		retries = 0;
 	    again:
 		error = bread(ump->um_devvp, fsbtodb(fs, daddr), fs->lfs_ibsize,
-			      NOCRED, &bp);
+			      NOCRED, 0, &bp);
 		if (error) {
 			DLOG((DLOG_CLEAN, "lfs_fastvget: bread failed (%d)\n",
 			      error));

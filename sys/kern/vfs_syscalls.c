@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.348.2.1 2008/03/29 20:47:01 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.348.2.2 2008/11/01 21:22:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -12,13 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -70,12 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.348.2.1 2008/03/29 20:47:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.348.2.2 2008/11/01 21:22:28 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_fileassoc.h"
-#include "fss.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -102,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.348.2.1 2008/03/29 20:47:01 chris
 #include <sys/verified_exec.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
@@ -115,10 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.348.2.1 2008/03/29 20:47:01 chris
 #ifdef COMPAT_30
 #include <nfs/nfs.h>
 #include <nfs/nfs_var.h>
-#endif
-
-#if NFSS > 0
-#include <dev/fssvar.h>
 #endif
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
@@ -182,9 +171,11 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	/*
 	 * We only allow the filesystem to be reloaded if it
-	 * is currently mounted read-only.
+	 * is currently mounted read-only.  Additionally, we
+	 * prevent read-write to read-only downgrades.
 	 */
-	if (flags & MNT_RELOAD && !(mp->mnt_flag & MNT_RDONLY)) {
+	if ((flags & (MNT_RELOAD | MNT_RDONLY)) != 0 &&
+	    (mp->mnt_flag & MNT_RDONLY) == 0) {
 		error = EOPNOTSUPP;	/* Needs translation */
 		goto out;
 	}
@@ -194,10 +185,12 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if (error)
 		goto out;
 
-	if (vfs_trybusy(mp, RW_WRITER, 0)) {
+	if (vfs_busy(mp, NULL)) {
 		error = EPERM;
 		goto out;
 	}
+
+	mutex_enter(&mp->mnt_updating);
 
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	mp->mnt_flag |= flags & (MNT_RELOAD | MNT_FORCE | MNT_UPDATE);
@@ -212,12 +205,13 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	mp->mnt_flag &=
 	  ~(MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
-	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP);
+	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
+	    MNT_LOG);
 	mp->mnt_flag |= flags &
 	   (MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_IGNORE);
+	    MNT_LOG | MNT_IGNORE);
 
 	error = VFS_MOUNT(mp, path, data, data_len);
 
@@ -249,7 +243,8 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		if (mp->mnt_syncer != NULL)
 			vfs_deallocate_syncvnode(mp);
 	}
-	vfs_unbusy(mp, false);
+	mutex_exit(&mp->mnt_updating);
+	vfs_unbusy(mp, false, NULL);
 
  out:
 	return (error);
@@ -288,16 +283,25 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 		fstypename[0] = 'f';
 #endif
 
-	if ((*vfsops = vfs_getopsbyname(fstypename)) == NULL)
-		return ENODEV;
-	return 0;
+	if ((*vfsops = vfs_getopsbyname(fstypename)) != NULL)
+		return 0;
+
+	/* If we can autoload a vfs module, try again */
+	mutex_enter(&module_lock);
+	(void)module_autoload(fstype, MODULE_CLASS_VFS);
+	mutex_exit(&module_lock);
+
+	if ((*vfsops = vfs_getopsbyname(fstypename)) != NULL)
+		return 0;
+
+	return ENODEV;
 }
 
 static int
 mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
     const char *path, int flags, void *data, size_t *data_len, u_int recurse)
 {
-	struct mount *mp = NULL;
+	struct mount *mp;
 	struct vnode *vp = *vpp;
 	struct vattr va;
 	int error;
@@ -342,9 +346,12 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	mp->mnt_refcnt = 1;
 
 	TAILQ_INIT(&mp->mnt_vnodelist);
-	rw_init(&mp->mnt_lock);
+	rw_init(&mp->mnt_unmounting);
  	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
-	(void)vfs_busy(mp, RW_WRITER, 0);
+	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
+	error = vfs_busy(mp, NULL);
+	KASSERT(error == 0);
+	mutex_enter(&mp->mnt_updating);
 
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = kauth_cred_geteuid(l->l_cred);
@@ -360,7 +367,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	   (MNT_FORCE | MNT_NOSUID | MNT_NOEXEC | MNT_NODEV |
 	    MNT_SYNCHRONOUS | MNT_UNION | MNT_ASYNC | MNT_NOCOREDUMP |
 	    MNT_NOATIME | MNT_NODEVMTIME | MNT_SYMPERM | MNT_SOFTDEP |
-	    MNT_IGNORE | MNT_RDONLY);
+	    MNT_LOG | MNT_IGNORE | MNT_RDONLY);
 
 	error = VFS_MOUNT(mp, path, data, data_len);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
@@ -371,8 +378,8 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	cache_purge(vp);
 	if (error != 0) {
 		vp->v_mountedhere = NULL;
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp, false);
+		mutex_exit(&mp->mnt_updating);
+		vfs_unbusy(mp, false, NULL);
 		vfs_destroy(mp);
 		return error;
 	}
@@ -388,13 +395,12 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	if ((mp->mnt_flag & (MNT_RDONLY | MNT_ASYNC)) == 0)
 		error = vfs_allocate_syncvnode(mp);
 	/* Hold an additional reference to the mount across VFS_START(). */
-	vfs_unbusy(mp, true);
+	mutex_exit(&mp->mnt_updating);
+	vfs_unbusy(mp, true, NULL);
 	(void) VFS_STATVFS(mp, &mp->mnt_stat);
 	error = VFS_START(mp, 0);
-	if (error) {
+	if (error)
 		vrele(vp);
-		vfs_destroy(mp);
-	}
 	/* Drop reference held for VFS_START(). */
 	vfs_destroy(mp);
 	*vpp = NULL;
@@ -423,15 +429,17 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if ((vp->v_vflag & VV_ROOT) == 0)
 		return EINVAL;
 
-	if (vfs_trybusy(mp, RW_WRITER, NULL))
+	if (vfs_busy(mp, NULL))
 		return EPERM;
 
+	mutex_enter(&mp->mnt_updating);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	mp->mnt_flag |= MNT_GETARGS;
 	error = VFS_MOUNT(mp, path, data, data_len);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
+	mutex_exit(&mp->mnt_updating);
 
-	vfs_unbusy(mp, false);
+	vfs_unbusy(mp, false, NULL);
 	return (error);
 }
 
@@ -492,18 +500,22 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 	 * A lookup in VFS_MOUNT might result in an attempt to
 	 * lock this vnode again, so make the lock recursive.
 	 */
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	recurse = vn_setrecurse(vp);
-  
 	if (vfsops == NULL) {
-		if (flags & (MNT_GETARGS | MNT_UPDATE))
+		if (flags & (MNT_GETARGS | MNT_UPDATE)) {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			recurse = vn_setrecurse(vp);
 			vfsops = vp->v_mount->mnt_op;
-		else {
+		} else {
 			/* 'type' is userspace */
 			error = mount_get_vfsops(type, &vfsops);
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+			recurse = vn_setrecurse(vp);
 			if (error != 0)
 				goto done;
 		}
+	} else {
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+		recurse = vn_setrecurse(vp);
 	}
 
 	if (data != NULL && data_seg == UIO_USERSPACE) {
@@ -568,32 +580,59 @@ void
 checkdirs(struct vnode *olddp)
 {
 	struct cwdinfo *cwdi;
-	struct vnode *newdp;
+	struct vnode *newdp, *rele1, *rele2;
 	struct proc *p;
+	bool retry;
 
 	if (olddp->v_usecount == 1)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
-	mutex_enter(&proclist_lock);
-	PROCLIST_FOREACH(p, &allproc) {
-		cwdi = p->p_cwdi;
-		if (!cwdi)
-			continue;
-		rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-		if (cwdi->cwdi_cdir == olddp) {
-			vrele(cwdi->cwdi_cdir);
-			VREF(newdp);
-			cwdi->cwdi_cdir = newdp;
+
+	do {
+		retry = false;
+		mutex_enter(proc_lock);
+		PROCLIST_FOREACH(p, &allproc) {
+			if ((p->p_flag & PK_MARKER) != 0)
+				continue;
+			if ((cwdi = p->p_cwdi) == NULL)
+				continue;
+			/*
+			 * Can't change to the old directory any more,
+			 * so even if we see a stale value it's not a
+			 * problem.
+			 */
+			if (cwdi->cwdi_cdir != olddp &&
+			    cwdi->cwdi_rdir != olddp)
+			    	continue;
+			retry = true;
+			rele1 = NULL;
+			rele2 = NULL;
+			atomic_inc_uint(&cwdi->cwdi_refcnt);
+			mutex_exit(proc_lock);
+			rw_enter(&cwdi->cwdi_lock, RW_WRITER);
+			if (cwdi->cwdi_cdir == olddp) {
+				rele1 = cwdi->cwdi_cdir;
+				VREF(newdp);
+				cwdi->cwdi_cdir = newdp;
+			}
+			if (cwdi->cwdi_rdir == olddp) {
+				rele2 = cwdi->cwdi_rdir;
+				VREF(newdp);
+				cwdi->cwdi_rdir = newdp;
+			}
+			rw_exit(&cwdi->cwdi_lock);
+			cwdfree(cwdi);
+			if (rele1 != NULL)
+				vrele(rele1);
+			if (rele2 != NULL)
+				vrele(rele2);
+			mutex_enter(proc_lock);
+			break;
 		}
-		if (cwdi->cwdi_rdir == olddp) {
-			vrele(cwdi->cwdi_rdir);
-			VREF(newdp);
-			cwdi->cwdi_rdir = newdp;
-		}
-		rw_exit(&cwdi->cwdi_lock);
-	}
-	mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
+	} while (retry);
+
 	if (rootvnode == olddp) {
 		vrele(rootvnode);
 		VREF(newdp);
@@ -627,12 +666,14 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 		return (error);
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
+	atomic_inc_uint(&mp->mnt_refcnt);
 	VOP_UNLOCK(vp, 0);
 
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MOUNT,
 	    KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT, mp, NULL, NULL);
 	if (error) {
 		vrele(vp);
+		vfs_destroy(mp);
 		return (error);
 	}
 
@@ -641,6 +682,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	 */
 	if (mp->mnt_flag & MNT_ROOTFS) {
 		vrele(vp);
+		vfs_destroy(mp);
 		return (EINVAL);
 	}
 
@@ -649,27 +691,21 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	 */
 	if ((vp->v_vflag & VV_ROOT) == 0) {
 		vrele(vp);
+		vfs_destroy(mp);
 		return (EINVAL);
 	}
 
-	/*
-	 * XXX Freeze syncer.  Must do this before locking the
-	 * mount point.  See dounmount() for details.
-	 */
-	mutex_enter(&syncer_mutex);
-	error = vfs_busy(mp, RW_WRITER, NULL);
 	vrele(vp);
-	if (error != 0) {
-		mutex_exit(&syncer_mutex);
-		return (error);
-	}
-
-	return (dounmount(mp, SCARG(uap, flags), l));
+	error = dounmount(mp, SCARG(uap, flags), l);
+	vfs_destroy(mp);
+	return error;
 }
 
 /*
- * Do the actual file system unmount. File system is assumed to have been
- * marked busy by the caller.
+ * Do the actual file system unmount.  File system is assumed to have
+ * been locked by the caller.
+ *
+ * => Caller hold reference to the mount, explicitly for dounmount().
  */
 int
 dounmount(struct mount *mp, int flags, struct lwp *l)
@@ -679,13 +715,23 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 	int async;
 	int used_syncer;
 
-	KASSERT(rw_write_held(&mp->mnt_lock));
-
 #if NVERIEXEC > 0
 	error = veriexec_unmountchk(mp);
 	if (error)
 		return (error);
 #endif /* NVERIEXEC > 0 */
+
+	/*
+	 * XXX Freeze syncer.  Must do this before locking the
+	 * mount point.  See dounmount() for details.
+	 */
+	mutex_enter(&syncer_mutex);
+	rw_enter(&mp->mnt_unmounting, RW_WRITER);
+	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
+		rw_exit(&mp->mnt_unmounting);
+		mutex_exit(&syncer_mutex);
+		return ENOENT;
+	}
 
 	used_syncer = (mp->mnt_syncer != NULL);
 
@@ -714,11 +760,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		vfs_deallocate_syncvnode(mp);
 	error = 0;
 	if ((mp->mnt_flag & MNT_RDONLY) == 0) {
-#if NFSS > 0
-		error = fss_umount_hook(mp, (flags & MNT_FORCE));
-#endif
-		if (error == 0)
-			error = VFS_SYNC(mp, MNT_WAIT, l->l_cred);
+		error = VFS_SYNC(mp, MNT_WAIT, l->l_cred);
 	}
 	vfs_scrubvnlist(mp);
 	if (error == 0 || (flags & MNT_FORCE))
@@ -728,25 +770,25 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 			(void) vfs_allocate_syncvnode(mp);
 		mp->mnt_iflag &= ~IMNT_UNMOUNT;
 		mp->mnt_flag |= async;
+		rw_exit(&mp->mnt_unmounting);
 		if (used_syncer)
 			mutex_exit(&syncer_mutex);
-		vfs_unbusy(mp, false);
 		return (error);
 	}
 	vfs_scrubvnlist(mp);
 	mutex_enter(&mountlist_lock);
-	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP)
 		coveredvp->v_mountedhere = NULL;
+	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
+	mp->mnt_iflag |= IMNT_GONE;
 	mutex_exit(&mountlist_lock);
 	if (TAILQ_FIRST(&mp->mnt_vnodelist) != NULL)
 		panic("unmount: dangling vnode");
-	mp->mnt_iflag |= IMNT_GONE;
 	if (used_syncer)
 		mutex_exit(&syncer_mutex);
 	vfs_hooks_unmount(mp);
-	vfs_unbusy(mp, false);
-	vfs_destroy(mp);
+	rw_exit(&mp->mnt_unmounting);
+	vfs_destroy(mp);	/* reference from mount() */
 	if (coveredvp != NULLVP)
 		vrele(coveredvp);
 	return (0);
@@ -771,11 +813,12 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 		l = &lwp0;
 
 	mutex_enter(&mountlist_lock);
-	for (mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = mp->mnt_list.cqe_prev;
+	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
+	     mp = nmp) {
+		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
+		mutex_enter(&mp->mnt_updating);
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
@@ -783,10 +826,8 @@ sys_sync(struct lwp *l, const void *v, register_t *retval)
 			if (asyncflag)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}
-		mutex_enter(&mountlist_lock);
-		nmp = mp->mnt_list.cqe_prev;
-		vfs_unbusy(mp, false);
-
+		mutex_exit(&mp->mnt_updating);
+		vfs_unbusy(mp, false, &nmp);
 	}
 	mutex_exit(&mountlist_lock);
 #ifdef DEBUG
@@ -854,6 +895,7 @@ done:
 	if (cwdi->cwdi_rdir != NULL) {
 		size_t len;
 		char *bp;
+		char c;
 		char *path = PNBUF_GET();
 
 		bp = path + MAXPATHLEN;
@@ -873,8 +915,9 @@ done:
 		 * rest we cannot see, so we don't allow viewing the
 		 * data.
 		 */
-		if (strncmp(bp, sp->f_mntonname, len) == 0) {
-			strlcpy(sp->f_mntonname, &sp->f_mntonname[len],
+		if (strncmp(bp, sp->f_mntonname, len) == 0 &&
+		    ((c = sp->f_mntonname[len]) == '/' || c == '\0')) {
+			(void)strlcpy(sp->f_mntonname, &sp->f_mntonname[len],
 			    sizeof(sp->f_mntonname));
 			if (sp->f_mntonname[0] == '\0')
 				(void)strlcpy(sp->f_mntonname, "/",
@@ -992,33 +1035,29 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 	count = 0;
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
-			nmp = CIRCLEQ_NEXT(mp, mnt_list);
+		if (vfs_busy(mp, &nmp)) {
 			continue;
 		}
 		if (sfsp && count < maxcount) {
 			error = dostatvfs(mp, sb, l, flags, 0);
 			if (error) {
-				mutex_enter(&mountlist_lock);
-				nmp = CIRCLEQ_NEXT(mp, mnt_list);
-				vfs_unbusy(mp, false);
+				vfs_unbusy(mp, false, &nmp);
+				error = 0;
 				continue;
 			}
 			error = copyfn(sb, sfsp, entry_sz);
 			if (error) {
-				vfs_unbusy(mp, false);
+				vfs_unbusy(mp, false, NULL);
 				goto out;
 			}
 			sfsp = (char *)sfsp + entry_sz;
 			root |= strcmp(sb->f_mntonname, "/") == 0;
 		}
 		count++;
-		mutex_enter(&mountlist_lock);
-		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, &nmp);
 	}
-
 	mutex_exit(&mountlist_lock);
+
 	if (root == 0 && p->p_cwdi->cwdi_rdir) {
 		/*
 		 * fake a root entry
@@ -1027,8 +1066,11 @@ do_sys_getvfsstat(struct lwp *l, void *sfsp, size_t bufsize, int flags,
 		    sb, l, flags, 1);
 		if (error != 0)
 			goto out;
-		if (sfsp)
+		if (sfsp) {
 			error = copyfn(sb, sfsp, entry_sz);
+			if (error != 0)
+				goto out;
+		}
 		count++;
 	}
 	if (sfsp && count > maxcount)
@@ -1087,11 +1129,12 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 		goto out;
 	}
 	while ((mp = vp->v_mountedhere) != NULL) {
-		if (vfs_busy(mp, RW_READER, NULL))
-			continue;
+		error = vfs_busy(mp, NULL);
 		vput(vp);
+		if (error != 0)
+			goto out;
 		error = VFS_ROOT(mp, &tdp);
-		vfs_unbusy(mp, false);
+		vfs_unbusy(mp, false, NULL);
 		if (error)
 			goto out;
 		vp = tdp;
@@ -2981,41 +3024,52 @@ do_sys_utimes(struct lwp *l, struct vnode *vp, const char *path, int flag,
 	struct vattr vattr;
 	struct nameidata nd;
 	int error;
+	bool vanull, setbirthtime;
+	struct timespec ts[2];
 
-	VATTR_NULL(&vattr);
 	if (tptr == NULL) {
-		nanotime(&vattr.va_atime);
-		vattr.va_mtime = vattr.va_atime;
-		vattr.va_vaflags |= VA_UTIMES_NULL;
+		vanull = true;
+		nanotime(&ts[0]);
+		ts[1] = ts[0];
 	} else {
 		struct timeval tv[2];
 
+		vanull = false;
 		if (seg != UIO_SYSSPACE) {
 			error = copyin(tptr, &tv, sizeof (tv));
 			if (error != 0)
 				return error;
 			tptr = tv;
 		}
-		TIMEVAL_TO_TIMESPEC(tptr, &vattr.va_atime);
-		TIMEVAL_TO_TIMESPEC(tptr + 1, &vattr.va_mtime);
+		TIMEVAL_TO_TIMESPEC(&tptr[0], &ts[0]);
+		TIMEVAL_TO_TIMESPEC(&tptr[1], &ts[1]);
 	}
 
 	if (vp == NULL) {
 		NDINIT(&nd, LOOKUP, flag | TRYEMULROOT, UIO_USERSPACE, path);
 		if ((error = namei(&nd)) != 0)
-			return (error);
+			return error;
 		vp = nd.ni_vp;
 	} else
 		nd.ni_vp = NULL;
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	setbirthtime = (VOP_GETATTR(vp, &vattr, l->l_cred) == 0 &&
+	    timespeccmp(&ts[1], &vattr.va_birthtime, <));
+	VATTR_NULL(&vattr);
+	vattr.va_atime = ts[0];
+	vattr.va_mtime = ts[1];
+	if (setbirthtime)
+		vattr.va_birthtime = ts[1];
+	if (vanull)
+		vattr.va_flags |= VA_UTIMES_NULL;
 	error = VOP_SETATTR(vp, &vattr, l->l_cred);
 	VOP_UNLOCK(vp, 0);
 
 	if (nd.ni_vp != NULL)
 		vrele(nd.ni_vp);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -3498,7 +3552,7 @@ sys_rmdir(struct lwp *l, const struct sys_rmdir_args *uap, register_t *retval)
 	/*
 	 * The root of a mounted filesystem cannot be deleted.
 	 */
-	if (vp->v_vflag & VV_ROOT) {
+	if ((vp->v_vflag & VV_ROOT) != 0 || vp->v_mountedhere != NULL) {
 		error = EBUSY;
 		goto out;
 	}
@@ -3611,31 +3665,4 @@ sys_revoke(struct lwp *l, const struct sys_revoke_args *uap, register_t *retval)
 	error = dorevoke(vp, l->l_cred);
 	vrele(vp);
 	return (error);
-}
-
-/*
- * Convert a user file descriptor to a kernel file entry.
- */
-int
-getvnode(int fd, file_t **fpp)
-{
-	struct vnode *vp;
-	file_t *fp;
-
-	if ((fp = fd_getfile(fd)) == NULL)
-		return (EBADF);
-
-	if (fp->f_type != DTYPE_VNODE) {
-		fd_putfile(fd);
-		return (EINVAL);
-	}
-
-	vp = fp->f_data;
-	if (vp->v_type == VBAD) {
-		fd_putfile(fd);
-		return (EBADF);
-	}
-
-	*fpp = fp;
-	return (0);
 }

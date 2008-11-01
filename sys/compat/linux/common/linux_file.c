@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.93.2.1 2008/03/29 20:46:59 christos Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.93.2.2 2008/11/01 21:22:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -42,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.93.2.1 2008/03/29 20:46:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.93.2.2 2008/11/01 21:22:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,10 +221,9 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 	file_t *fp;
 	struct vnode *vp;
 	struct vattr va;
-	const struct cdevsw *cdev;
 	long pgid;
 	struct pgrp *pgrp;
-	struct tty *tp, *(*d_tty)(dev_t);
+	struct tty *tp;
 
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
@@ -350,19 +342,16 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 		if (error)
 			return error;
 
-		cdev = cdevsw_lookup(va.va_rdev);
-		if (cdev == NULL)
-			return (ENXIO);
-		d_tty = cdev->d_tty;
-		if (!d_tty || (!(tp = (*d_tty)(va.va_rdev))))
+		if ((tp = cdev_tty(va.va_rdev)) == NULL)
 			goto not_tty;
 
 		/* set tty pg_id appropriately */
+		mutex_enter(proc_lock);
 		if (cmd == LINUX_F_GETOWN) {
 			retval[0] = tp->t_pgrp ? tp->t_pgrp->pg_id : NO_PGID;
+			mutex_exit(proc_lock);
 			return 0;
 		}
-		mutex_enter(&proclist_lock);
 		if ((long)arg <= 0) {
 			pgid = -(long)arg;
 		} else {
@@ -373,11 +362,11 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 		}
 		pgrp = pg_find(pgid, PFIND_LOCKED);
 		if (pgrp == NULL || pgrp->pg_session != p->p_session) {
-			mutex_exit(&proclist_lock);
+			mutex_exit(proc_lock);
 			return EPERM;
 		}
 		tp->t_pgrp = pgrp;
-		mutex_exit(&proclist_lock);
+		mutex_exit(proc_lock);
 		return 0;
 
 	default:

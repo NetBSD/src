@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.10.2.1 2008/03/29 20:47:00 christos Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.10.2.2 2008/11/01 21:22:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.10.2.1 2008/03/29 20:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.10.2.2 2008/11/01 21:22:27 christos Exp $");
 
 #include "opt_coredump.h"
 
@@ -95,8 +95,8 @@ coredump(struct lwp *l, const char *pattern)
 	p = l->l_proc;
 	vm = p->p_vmspace;
 
-	mutex_enter(&proclist_lock);	/* p_session */
-	mutex_enter(&p->p_mutex);
+	mutex_enter(proc_lock);		/* p_session */
+	mutex_enter(p->p_lock);
 
 	/*
 	 * Refuse to core if the data + stack + user size is larger than
@@ -106,8 +106,8 @@ coredump(struct lwp *l, const char *pattern)
 	if (USPACE + ctob(vm->vm_dsize + vm->vm_ssize) >=
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur) {
 		error = EFBIG;		/* better error code? */
-		mutex_exit(&p->p_mutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
 		goto done;
 	}
 
@@ -131,8 +131,8 @@ coredump(struct lwp *l, const char *pattern)
 	if (vp->v_mount == NULL ||
 	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0) {
 		error = EPERM;
-		mutex_exit(&p->p_mutex);
-		mutex_exit(&proclist_lock);
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
 		goto done;
 	}
 
@@ -143,8 +143,8 @@ coredump(struct lwp *l, const char *pattern)
 	if (p->p_flag & PK_SUGID) {
 		if (!security_setidcore_dump) {
 			error = EPERM;
-			mutex_exit(&p->p_mutex);
-			mutex_exit(&proclist_lock);
+			mutex_exit(p->p_lock);
+			mutex_exit(proc_lock);
 			goto done;
 		}
 		pattern = security_setidcore_path;
@@ -157,8 +157,8 @@ coredump(struct lwp *l, const char *pattern)
 		pattern = lim->pl_corename;
 	error = coredump_buildname(p, name, pattern, MAXPATHLEN);
 	mutex_exit(&lim->pl_lock);
-	mutex_exit(&p->p_mutex);
-	mutex_exit(&proclist_lock);
+	mutex_exit(p->p_lock);
+	mutex_exit(proc_lock);
 	if (error)
 		goto done;
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name);
@@ -210,7 +210,7 @@ coredump_buildname(struct proc *p, char *dst, const char *src, size_t len)
 	char		*d, *end;
 	int		i;
 
-	KASSERT(mutex_owned(&proclist_lock));
+	KASSERT(mutex_owned(proc_lock));
 
 	for (s = src, d = dst, end = d + len; *s != '\0'; s++) {
 		if (*s == '%') {

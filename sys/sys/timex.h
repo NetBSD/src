@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.13.8.1 2008/03/29 20:47:04 christos Exp $	*/
+/*	$NetBSD: timex.h,v 1.13.8.2 2008/11/01 21:22:29 christos Exp $	*/
 
 /*-
  ***********************************************************************
@@ -95,13 +95,12 @@
  *	STA_NANO bit in the status word. See the description below for
  *	further information.
  */
+
 #ifndef _SYS_TIMEX_H_
 #define _SYS_TIMEX_H_ 1
 #define NTP_API		4	/* NTP API version */
 
-#ifndef MSDOS			/* Microsoft specific */
 #include <sys/syscall.h>
-#endif /* MSDOS */
 
 /*
  * The following defines establish the performance envelope of the
@@ -220,28 +219,23 @@ struct timex {
 	long	stbcnt;		/* stability limit exceeded (ro) */
 };
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#include <sys/cdefs.h>
-
 #ifdef _KERNEL
+#include <sys/mutex.h>
+
 void	ntp_update_second(int64_t *adjustment, time_t *newsec);
-#ifdef __NetBSD__
 void	ntp_adjtime1(struct timex *);
 void	ntp_gettime(struct ntptimeval *);
 int ntp_timestatus(void);
-#endif /* __NetBSD__ */
+
+extern kmutex_t timecounter_lock;
 #else /* !_KERNEL */
 
 __BEGIN_DECLS
-#ifdef __NetBSD__
 #ifndef __LIBC12_SOURCE__
 int ntp_gettime(struct ntptimeval *) __RENAME(__ntp_gettime50);
-#endif
 #endif
 int ntp_adjtime(struct timex *);
 __END_DECLS
 #endif /* _KERNEL */
-
-#endif /* __FreeBSD__ || __NetBSD__ */
 
 #endif /* _SYS_TIMEX_H_ */

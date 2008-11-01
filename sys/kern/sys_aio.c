@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.16.2.1 2008/03/29 20:47:00 christos Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.16.2.2 2008/11/01 21:22:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -13,27 +13,26 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 /*
- * TODO:
- *   1. Additional work for VCHR and maybe VBLK devices.
- *   2. Consider making the job-finding O(n) per one file descriptor.
+ * Implementation of POSIX asynchronous I/O.
+ * Defined in the Base Definitions volume of IEEE Std 1003.1-2001.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.16.2.1 2008/03/29 20:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.16.2.2 2008/11/01 21:22:27 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -129,18 +128,16 @@ aio_init(struct proc *p)
 	}
 
 	/* Recheck if we are really first */
-	mutex_enter(&p->p_mutex);
+	mutex_enter(p->p_lock);
 	if (p->p_aio) {
-		mutex_exit(&p->p_mutex);
+		mutex_exit(p->p_lock);
 		aio_exit(p, aio);
 		lwp_exit(l);
 		return 0;
 	}
 	p->p_aio = aio;
-	mutex_exit(&p->p_mutex);
 
 	/* Complete the initialization of thread, and run it */
-	mutex_enter(&p->p_smutex);
 	aio->aio_worker = l;
 	p->p_nrlwps++;
 	lwp_lock(l);
@@ -148,7 +145,7 @@ aio_init(struct proc *p)
 	l->l_priority = MAXPRI_USER;
 	sched_enqueue(l, false);
 	lwp_unlock(l);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 
 	return 0;
 }
@@ -197,9 +194,9 @@ aio_worker(void *arg)
 	 * handles only SIGKILL and SIGSTOP.
 	 */
 	sigfillset(&nss);
-	mutex_enter(&p->p_smutex);
+	mutex_enter(p->p_lock);
 	error = sigprocmask1(curlwp, SIG_SETMASK, &nss, &oss);
-	mutex_exit(&p->p_smutex);
+	mutex_exit(p->p_lock);
 	KASSERT(error == 0);
 
 	for (;;) {
@@ -390,9 +387,9 @@ aio_sendsig(struct proc *p, struct sigevent *sig)
 	ksi.ksi_signo = sig->sigev_signo;
 	ksi.ksi_code = SI_ASYNCIO;
 	ksi.ksi_value = sig->sigev_value;
-	mutex_enter(&proclist_mutex);
+	mutex_enter(proc_lock);
 	kpsignal(p, &ksi, NULL);
-	mutex_exit(&proclist_mutex);
+	mutex_exit(proc_lock);
 }
 
 /*

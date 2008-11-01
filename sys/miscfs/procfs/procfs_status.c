@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.32.38.1 2008/03/29 20:47:01 christos Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.32.38.2 2008/11/01 21:22:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.32.38.1 2008/03/29 20:47:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.32.38.2 2008/11/01 21:22:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,8 +110,8 @@ procfs_dostatus(
 	if (uio->uio_rw != UIO_READ)
 		return (EOPNOTSUPP);
 
-	mutex_enter(&proclist_lock);
-	mutex_enter(&p->p_mutex);
+	mutex_enter(proc_lock);
+	mutex_enter(p->p_lock);
 
 	pid = p->p_pid;
 	ppid = p->p_pptr ? p->p_pptr->p_pid : 0,
@@ -147,7 +147,6 @@ procfs_dostatus(
 	if (*sep != ',')
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "noflags");
 
-	mutex_enter(&p->p_smutex);
 	if (l->l_flag & LW_INMEM)
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %lld,%ld",
 		    (long long)p->p_stats->p_start.tv_sec,
@@ -163,7 +162,6 @@ procfs_dostatus(
 		    " %lld,%ld %lld,%ld", (long long)ut.tv_sec,
 		    (long)ut.tv_usec, (long long)st.tv_sec, (long)st.tv_usec);
 	}
-	mutex_exit(&p->p_smutex);
 
 	lwp_lock(l);
 	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), " %s",
@@ -182,8 +180,8 @@ procfs_dostatus(
 		    kauth_cred_group(cr, i));
 	ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "\n");
 
-	mutex_exit(&p->p_mutex);
-	mutex_exit(&proclist_lock);
+	mutex_exit(p->p_lock);
+	mutex_exit(proc_lock);
 
 	return (uiomove_frombuf(psbuf, ps - psbuf, uio));
 }

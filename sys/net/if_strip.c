@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.85.8.1 2008/03/29 20:47:02 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.85.8.2 2008/11/01 21:22:28 christos Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.85.8.1 2008/03/29 20:47:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.85.8.2 2008/11/01 21:22:28 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.85.8.1 2008/03/29 20:47:02 christos E
 #include <sys/syslog.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/socketvar.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -365,8 +366,7 @@ strip_clone_create(struct if_clone *ifc, int unit)
 
 	MALLOC(sc, struct strip_softc *, sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
 	sc->sc_unit = unit;
-	(void)snprintf(sc->sc_if.if_xname, sizeof(sc->sc_if.if_xname),
-	    "%s%d", ifc->ifc_name, unit);
+	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 	callout_init(&sc->sc_timo_ch, 0);
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = SLMTU;
@@ -1068,6 +1068,7 @@ stripintr(void *arg)
 	/*
 	 * Output processing loop.
 	 */
+	mutex_enter(softnet_lock);
 	for (;;) {
 #ifdef INET
 		struct ip *ip;
@@ -1259,6 +1260,7 @@ stripintr(void *arg)
 		splx(s);
 #endif
 	}
+	mutex_exit(softnet_lock);
 }
 
 /*

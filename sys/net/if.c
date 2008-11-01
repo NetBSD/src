@@ -1,7 +1,7 @@
-/*	$NetBSD: if.c,v 1.218.2.1 2008/03/29 20:47:02 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.218.2.2 2008/11/01 21:22:28 christos Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -97,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.218.2.1 2008/03/29 20:47:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.218.2.2 2008/11/01 21:22:28 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -184,12 +177,35 @@ ifinit(void)
 
 	callout_init(&if_slowtimo_ch, 0);
 	if_slowtimo(NULL);
+}
+
+/*
+ * XXX Initialization before configure().
+ * XXX hack to get pfil_add_hook working in autoconf.
+ */
+void
+ifinit1(void)
+{
+
 #ifdef PFIL_HOOKS
 	if_pfil.ph_type = PFIL_TYPE_IFNET;
 	if_pfil.ph_ifnet = NULL;
 	if (pfil_head_register(&if_pfil) != 0)
 		printf("WARNING: unable to register pfil hook\n");
 #endif
+}
+
+struct ifnet *
+if_alloc(u_char type)
+{
+	return malloc(sizeof(struct ifnet), M_DEVBUF, M_WAITOK|M_ZERO);
+}
+
+void
+if_initname(struct ifnet *ifp, const char *name, int unit)
+{
+	(void)snprintf(ifp->if_xname, sizeof(ifp->if_xname),
+	    "%s%d", name, unit);
 }
 
 /*
@@ -273,6 +289,7 @@ if_set_sadl(struct ifnet *ifp, const void *lla, u_char addrlen)
 	sdl = satosdl(ifa->ifa_addr);
 
 	(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, lla, ifp->if_addrlen);
+	/* TBD routing socket */
 }
 
 struct ifaddr *
@@ -305,6 +322,18 @@ if_dl_create(const struct ifnet *ifp, const struct sockaddr_dl **sdlp)
 	return ifa;
 }
 
+static void
+if_sadl_setrefs(struct ifnet *ifp, struct ifaddr *ifa)
+{
+	const struct sockaddr_dl *sdl;
+	ifnet_addrs[ifp->if_index] = ifa;
+	IFAREF(ifa);
+	ifp->if_dl = ifa;
+	IFAREF(ifa);
+	sdl = satosdl(ifa->ifa_addr);
+	ifp->if_sadl = sdl;
+}
+
 /*
  * Allocate the link level name for the specified interface.  This
  * is an attachment helper.  It must be called after ifp->if_addrlen
@@ -327,12 +356,40 @@ if_alloc_sadl(struct ifnet *ifp)
 
 	ifa = if_dl_create(ifp, &sdl);
 
-	ifnet_addrs[ifp->if_index] = ifa;
-	IFAREF(ifa);
 	ifa_insert(ifp, ifa);
-	ifp->if_dl = ifa;
-	IFAREF(ifa);
-	ifp->if_sadl = sdl;
+	if_sadl_setrefs(ifp, ifa);
+}
+
+static void
+if_deactivate_sadl(struct ifnet *ifp)
+{
+	struct ifaddr *ifa;
+
+	KASSERT(ifp->if_dl != NULL);
+
+	ifa = ifp->if_dl;
+
+	ifp->if_sadl = NULL;
+
+	ifnet_addrs[ifp->if_index] = NULL;
+	IFAFREE(ifa);
+	ifp->if_dl = NULL;
+	IFAFREE(ifa);
+}
+
+void
+if_activate_sadl(struct ifnet *ifp, struct ifaddr *ifa,
+    const struct sockaddr_dl *sdl)
+{
+	int s;
+
+	s = splnet();
+
+	if_deactivate_sadl(ifp);
+
+	if_sadl_setrefs(ifp, ifa);
+	splx(s);
+	rt_ifmsg(ifp);
 }
 
 /*
@@ -360,12 +417,7 @@ if_free_sadl(struct ifnet *ifp)
 	rtinit(ifa, RTM_DELETE, 0);
 	ifa_remove(ifp, ifa);
 
-	ifp->if_sadl = NULL;
-
-	ifnet_addrs[ifp->if_index] = NULL;
-	IFAFREE(ifa);
-	ifp->if_dl = NULL;
-	IFAFREE(ifa);
+	if_deactivate_sadl(ifp);
 	splx(s);
 }
 
@@ -434,20 +486,20 @@ if_attach(struct ifnet *ifp)
 		/* grow ifnet_addrs */
 		m = oldlim * sizeof(struct ifaddr *);
 		n = if_indexlim * sizeof(struct ifaddr *);
-		q = (void *)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
+		q = malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
 		if (ifnet_addrs != NULL) {
 			memcpy(q, ifnet_addrs, m);
-			free((void *)ifnet_addrs, M_IFADDR);
+			free(ifnet_addrs, M_IFADDR);
 		}
 		ifnet_addrs = (struct ifaddr **)q;
 
 		/* grow ifindex2ifnet */
 		m = oldlim * sizeof(struct ifnet *);
 		n = if_indexlim * sizeof(struct ifnet *);
-		q = (void *)malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
+		q = malloc(n, M_IFADDR, M_WAITOK|M_ZERO);
 		if (ifindex2ifnet != NULL) {
-			memcpy(q, (void *)ifindex2ifnet, m);
-			free((void *)ifindex2ifnet, M_IFADDR);
+			memcpy(q, ifindex2ifnet, m);
+			free(ifindex2ifnet, M_IFADDR);
 		}
 		ifindex2ifnet = (struct ifnet **)q;
 	}
@@ -1162,14 +1214,14 @@ ifaof_ifpforaddr(const struct sockaddr *addr, struct ifnet *ifp)
  * This should be moved to /sys/net/link.c eventually.
  */
 void
-link_rtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
+link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 {
 	struct ifaddr *ifa;
 	const struct sockaddr *dst;
 	struct ifnet *ifp;
 
-	if (cmd != RTM_ADD || ((ifa = rt->rt_ifa) == NULL) ||
-	    ((ifp = ifa->ifa_ifp) == NULL) || ((dst = rt_getkey(rt)) == NULL))
+	if (cmd != RTM_ADD || (ifa = rt->rt_ifa) == NULL ||
+	    (ifp = ifa->ifa_ifp) == NULL || (dst = rt_getkey(rt)) == NULL)
 		return;
 	if ((ifa = ifaof_ifpforaddr(dst, ifp)) != NULL) {
 		rt_replace_ifa(rt, ifa);
@@ -1308,7 +1360,7 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 	}
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_flags = ifp->if_flags;
-	ret = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (void *) &ifr);
+	ret = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, &ifr);
 	/* Restore interface state if not successful. */
 	if (ret != 0) {
 		ifp->if_pcount = pcount;
@@ -1491,7 +1543,7 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 		return ENETRESET;
 	default:
-		return EOPNOTSUPP;
+		return ENOTTY;
 	}
 	return 0;
 }
@@ -1633,16 +1685,16 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 
 	default:
 		error = ifioctl_common(ifp, cmd, data);
-		if (error != EOPNOTSUPP)
+		if (error != ENOTTY)
 			break;
 		if (so->so_proto == NULL)
 			return EOPNOTSUPP;
 #ifdef COMPAT_OSOCK
 		error = compat_ifioctl(so, ocmd, cmd, data, l);
 #else
-		error = ((*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
+		error = (*so->so_proto->pr_usrreq)(so, PRU_CONTROL,
 		    (struct mbuf *)cmd, (struct mbuf *)data,
-		    (struct mbuf *)ifp, l));
+		    (struct mbuf *)ifp, l);
 #endif
 		break;
 	}

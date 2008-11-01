@@ -1,4 +1,30 @@
-/*	$NetBSD: kern_ntptime.c,v 1.47.2.1 2008/03/29 20:47:00 christos Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.47.2.2 2008/11/01 21:22:27 christos Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  ***********************************************************************
@@ -34,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.47.2.1 2008/03/29 20:47:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.47.2.2 2008/11/01 21:22:27 christos Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -46,16 +72,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.47.2.1 2008/03/29 20:47:00 christ
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/timex.h>
+#include <sys/vnode.h>
+#include <sys/kauth.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
+#include <sys/cpu.h>
+
 #ifdef COMPAT_30
 #include <compat/sys/timex.h>
 #endif
-#include <sys/vnode.h>
-#include <sys/kauth.h>
-
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
-
-#include <sys/cpu.h>
 
 /*
  * Single-precision macros for 64-bit machines
@@ -215,11 +240,14 @@ static void hardupdate(long offset);
 void
 ntp_gettime(struct ntptimeval *ntv)
 {
+
+	mutex_spin_enter(&timecounter_lock);
 	nanotime(&ntv->time);
 	ntv->maxerror = time_maxerror;
 	ntv->esterror = time_esterror;
 	ntv->tai = time_tai;
 	ntv->time_state = time_state;
+	mutex_spin_exit(&timecounter_lock);
 }
 
 /* ARGSUSED */
@@ -258,7 +286,6 @@ ntp_adjtime1(struct timex *ntv)
 {
 	long freq;
 	int modes;
-	int s;
 
 	/*
 	 * Update selected clock variables - only the superuser can
@@ -269,11 +296,11 @@ ntp_adjtime1(struct timex *ntv)
 	 * the STA_PLL bit in the status word is cleared, the state and
 	 * status words are reset to the initial values at boot.
 	 */
+	mutex_spin_enter(&timecounter_lock);
 	modes = ntv->modes;
 	if (modes != 0)
 		/* We need to save the system time during shutdown */
 		time_adjusted |= 2;
-	s = splclock();
 	if (modes & MOD_MAXERROR)
 		time_maxerror = ntv->maxerror;
 	if (modes & MOD_ESTERROR)
@@ -374,7 +401,7 @@ ntp_adjtime1(struct timex *ntv)
 	ntv->jitcnt = pps_jitcnt;
 	ntv->stbcnt = pps_stbcnt;
 #endif /* PPS_SYNC */
-	splx(s);
+	mutex_spin_exit(&timecounter_lock);
 }
 #endif /* NTP */
 
@@ -391,6 +418,8 @@ ntp_update_second(int64_t *adjustment, time_t *newsec)
 {
 	int tickrate;
 	l_fp ftemp;		/* 32/64-bit temporary */
+
+	KASSERT(mutex_owned(&timecounter_lock));
 
 #ifdef NTP
 
@@ -584,6 +613,8 @@ hardupdate(long offset)
 	long mtemp;
 	l_fp ftemp;
 
+	KASSERT(mutex_owned(&timecounter_lock));
+
 	/*
 	 * Select how the phase is to be controlled and from which
 	 * source. If the PPS signal is present and enabled to
@@ -665,6 +696,8 @@ hardpps(struct timespec *tsp,		/* time at PPS */
 {
 	long u_sec, u_nsec, v_nsec; /* temps */
 	l_fp ftemp;
+
+	KASSERT(mutex_owned(&timecounter_lock));
 
 	/*
 	 * The signal is first processed by a range gate and frequency
@@ -849,6 +882,8 @@ hardpps(struct timespec *tsp,		/* time at PPS */
 int
 ntp_timestatus(void)
 {
+	int rv;
+
 	/*
 	 * Status word error decode. If any of these conditions
 	 * occur, an error is returned, instead of the status
@@ -858,6 +893,7 @@ ntp_timestatus(void)
 	 *
 	 * Hardware or software error
 	 */
+	mutex_spin_enter(&timecounter_lock);
 	if ((time_status & (STA_UNSYNC | STA_CLOCKERR)) ||
 
 	/*
@@ -880,9 +916,12 @@ ntp_timestatus(void)
 	 */
 	    (time_status & STA_PPSFREQ &&
 	     time_status & (STA_PPSWANDER | STA_PPSERROR)))
-		return (TIME_ERROR);
+		rv = TIME_ERROR;
 	else
-		return (time_state);
+		rv = time_state;
+	mutex_spin_exit(&timecounter_lock);
+
+	return rv;
 }
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.175.2.1 2008/03/29 20:47:03 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.175.2.2 2008/11/01 21:22:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -854,7 +854,7 @@ struct kinfo_file {
 #define	USER_POSIX2_SW_DEV	17	/* int: POSIX2_SW_DEV */
 #define	USER_POSIX2_UPE		18	/* int: POSIX2_UPE */
 #define	USER_STREAM_MAX		19	/* int: POSIX2_STREAM_MAX */
-#define	USER_TZNAME_MAX		20	/* int: POSIX2_TZNAME_MAX */
+#define	USER_TZNAME_MAX		20	/* int: _POSIX_TZNAME_MAX */
 #define	USER_ATEXIT_MAX		21	/* int: {ATEXIT_MAX} */
 #define	USER_MAXID		22	/* number of valid user ids */
 
@@ -1117,7 +1117,7 @@ typedef int (*sysctlfn)(SYSCTLFN_PROTO);
 /*
  * used in more than just sysctl
  */
-void	fill_eproc(struct proc *, struct eproc *);
+void	fill_eproc(struct proc *, struct eproc *, bool);
 
 /*
  * subsystem setup
