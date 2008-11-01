@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.99 2008/10/31 23:29:28 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.100 2008/11/01 20:24:13 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2253,4 +2253,14 @@ sbin/ping6/ping6.c				1.71
 	test causes ping6 to wait one interval before sending anything at all
 	if you don't use -l. PR bin/39732.
 	[dholland, ticket #1214]
+
+gnu/lib/crtstuff4/arch/vax.mk			patch
+gnu/lib/libgcc4/arch/vax.mk			patch
+gnu/usr.bin/gcc4/arch/vax/auto-host.h		patch
+gnu/usr.bin/gcc4/arch/vax/configargs.h		patch
+gnu/usr.bin/gcc4/arch/vax/defs.mk		patch
+gnu/usr.bin/gcc4/libiberty/defs.mk		patch
+
+	Regenerate after vax shared support was added.
+	[skrll, ticket #1216]
 
