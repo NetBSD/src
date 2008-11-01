@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.2 2008/10/28 22:34:39 cliff Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.3 2008/11/01 07:43:19 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.2 2008/10/28 22:34:39 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.3 2008/11/01 07:43:19 cliff Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -274,6 +274,24 @@ bs_protos(bs_notimpl);
 #include <dev/ic/comvar.h>
 #endif
 
+
+static void gemini_global_reset(void) __attribute__ ((noreturn));
+
+static void
+gemini_global_reset(void)
+{
+	volatile uint32_t *rp;
+	uint32_t r;
+
+	rp = (volatile uint32_t *)
+		(GEMINI_GLOBAL_VBASE + GEMINI_GLOBAL_RESET_CTL);
+	r = *rp;
+	r |= GLOBAL_RESET_GLOBAL;
+	*rp = r;
+	for(;;);
+	/* NOTREACHED */
+}
+
 /*
  * void cpu_reboot(int howto, char *bootstr)
  *
@@ -300,10 +318,8 @@ cpu_reboot(int howto, char *bootstr)
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
 		printf("rebooting...\n");
-#if NGEMINIWDT > 0
-		geminiwdt_reboot();
-#endif
-		cpu_reset();
+		delay(2000);			/* cnflush(); */
+		gemini_global_reset();
 		/*NOTREACHED*/
 	}
 
@@ -340,10 +356,8 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	printf("rebooting...\n");
-#if NGEMINIWDT > 0
-	geminiwdt_reboot();
-#endif
-	cpu_reset();
+	delay(2000);			/* cnflush(); */
+	gemini_global_reset();
 	/*NOTREACHED*/
 }
 
@@ -366,6 +380,15 @@ cpu_reboot(int howto, char *bootstr)
 #define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
 
 static const struct pmap_devmap devmap[] = {
+	/* Global regs */
+	{
+		.pd_va = _A(GEMINI_GLOBAL_VBASE),
+		.pd_pa = _A(GEMINI_GLOBAL_BASE),
+		.pd_size = _S(L1_S_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+
 	/* Watchdog */
 	{
 		.pd_va = _A(GEMINI_WATCHDOG_VBASE),
@@ -432,6 +455,7 @@ gemini_putchar(char c)
 			break;
 }
 
+#if 0
 void gemini_putchar_xxx(bus_space_tag_t, bus_space_handle_t, char);
 void
 gemini_putchar_xxx(bus_space_tag_t bst, bus_space_handle_t bsh, char c)
@@ -449,6 +473,7 @@ gemini_putchar_xxx(bus_space_tag_t bst, bus_space_handle_t bsh, char c)
 		if (--timo == 0)
 			break;
 }
+#endif
 
 void gemini_puthex(unsigned int);
 void
@@ -484,9 +509,8 @@ gemini_puthex(unsigned int val)
 u_int
 initarm(void *arg)
 {
-#if 1
 	gemini_putchar('0');
-#endif
+
 	/*
 	 * When we enter here, we are using a temporary first level
 	 * translation table with section entries in it to cover the OBIO
@@ -495,21 +519,19 @@ initarm(void *arg)
 	 */
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
-gemini_putchar('1');
+	gemini_putchar('1');
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
-gemini_putchar('2');
+	gemini_putchar('2');
 	init_clocks();
-gemini_putchar('3');
+	gemini_putchar('3');
 
 	/* The console is going to try to map things.  Give pmap a devmap. */
 	pmap_devmap_register(devmap);
-gemini_putchar('4');
+	gemini_putchar('4');
 	consinit();
-#if 1
 	gemini_putchar('5');
-#endif
 #ifdef KGDB
 	kgdb_port_init();
 #endif
@@ -693,7 +715,6 @@ consinit(void)
 
 	if (consinit_called != 0)
 		return;
-
 	consinit_called = 1;
 
 	if (bus_space_map(&gemini_a4x_bs_tag, consaddr,
