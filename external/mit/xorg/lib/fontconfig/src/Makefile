@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/05 18:32:40 cube Exp $
+#	$NetBSD: Makefile,v 1.5 2008/11/01 21:38:14 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -93,6 +93,10 @@ FCARCH_DEPFILE=	fccache.c
 .include "Makefile.fcarch"
 
 CLEANFILES+= fcarch.h
+
+PKGCONFIG=	fontconfig
+# fontconfig uses VERSION and not PACKAGE_VERSION
+PKGCONFIG_VERSION.fontconfig=	2.6.0
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
