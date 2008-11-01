@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.1 2008/10/05 17:46:09 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.2 2008/11/01 22:48:04 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -9,4 +9,10 @@ gnu/usr.bin/groff/tmac/mdoc.local		patch
 sys/sys/param.h					patch
 
 	Welcome to 4.0.1_PATCH
+
+sys/arch/cobalt/conf/INSTALL                    1.32,1.35
+
+        Enable bpfilter so that dhclient can work.  Allow root device to be
+        detected, rather than hardcoding it to nfs.
+        [tsutsui, ticket #1217]
 
