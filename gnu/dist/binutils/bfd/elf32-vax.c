@@ -1531,9 +1531,11 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	      || h->root.type == bfd_link_hash_defweak)
 	      && ((r_type == R_VAX_PLT32
 		   && h->plt.offset != (bfd_vma) -1
+		   && !h->forced_local
 		   && elf_hash_table (info)->dynamic_sections_created)
 		  || (r_type == R_VAX_GOT32
 		      && h->got.offset != (bfd_vma) -1
+		      && !h->forced_local
 		      && elf_hash_table (info)->dynamic_sections_created
 		      && (! info->shared
 			  || (! info->symbolic && h->dynindx != -1)
@@ -1563,7 +1565,7 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	case R_VAX_GOT32:
 	  /* Relocation is to the address of the entry for this symbol
 	     in the global offset table.  */
-	  if (h == NULL || h->got.offset == (bfd_vma) -1)
+	  if (h == NULL || h->got.offset == (bfd_vma) -1 || h->forced_local)
 	    break;
 
 	  /* Relocation is the offset of the entry for this symbol in
@@ -1629,6 +1631,7 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	    break;
 
 	  if (h->plt.offset == (bfd_vma) -1
+	      || h->forced_local
 	      || !elf_hash_table (info)->dynamic_sections_created)
 	    {
 	      /* We didn't make a PLT entry for this symbol.  This
