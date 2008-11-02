@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.4 2008/11/02 02:10:27 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.5 2008/11/02 02:28:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -20,4 +20,12 @@ etc/etc.cobalt/MAKEDEV.conf			1.10
 
 	Create bpf(4) device node on ramdisk for sysinst.
 	[tsutsui, ticket #4]
+
+sys/kern/vfs_dirhash.c				1.5-1.8
+
+	Clean up dirhash and use hash32_strn(). Remove old KASSERTS that
+	were commented out. Protect the dirhash_queue when purging hashed
+	directories in memory overflow situations. Clarify the dirhash
+	locking protocol and remove unnessiary #ifdef DEBUG flag.
+	[reinoud, ticket #5]
 
