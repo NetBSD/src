@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.1.2.9 2008/10/16 23:26:42 haad Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.1.2.10 2008/11/02 00:02:32 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  * target specific config area.
  */
 int
-dm_target_zero_init(struct dm_dev *dmv, void **target_config, char *argv)
+dm_target_zero_init(dm_dev_t *dmv, void **target_config, char *argv)
 {
 
 	printf("Zero target init function called!!\n");
@@ -69,7 +69,7 @@ dm_target_zero_status(void *target_config)
  * This routine does IO operations.
  */
 int
-dm_target_zero_strategy(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_zero_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
 
 	/* printf("Zero target read function called %d!!\n", bp->b_bcount); */
@@ -85,7 +85,7 @@ dm_target_zero_strategy(struct dm_table_entry *table_en, struct buf *bp)
 
 /* Doesn't not need to do anything here. */
 int
-dm_target_zero_destroy(struct dm_table_entry *table_en)
+dm_target_zero_destroy(dm_table_entry_t *table_en)
 {
 	table_en->target_config = NULL;
 	
@@ -94,14 +94,14 @@ dm_target_zero_destroy(struct dm_table_entry *table_en)
 
 /* Doesn't not need to do anything here. */
 int
-dm_target_zero_deps(struct dm_table_entry *table_en, prop_array_t prop_array)
+dm_target_zero_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
 {	
 	return 0;
 }
 
 /* Unsuported for this target. */
 int
-dm_target_zero_upcall(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_zero_upcall(dm_table_entry_t *table_en, struct buf *bp)
 {
 	return 0;
 }

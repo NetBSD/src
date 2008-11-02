@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.1.2.12 2008/10/16 23:43:03 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.1.2.13 2008/11/02 00:02:32 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -40,9 +40,9 @@
 #include "netbsd-dm.h"
 #include "dm.h"
 
-static struct dm_dev* dm_dev_lookup_name(const char *);
-static struct dm_dev* dm_dev_lookup_uuid(const char *);
-static struct dm_dev* dm_dev_lookup_minor(int);
+static dm_dev_t* dm_dev_lookup_name(const char *);
+static dm_dev_t* dm_dev_lookup_uuid(const char *);
+static dm_dev_t* dm_dev_lookup_minor(int);
 
 static struct dm_dev_head dm_dev_list =
 TAILQ_HEAD_INITIALIZER(dm_dev_list);
@@ -50,25 +50,25 @@ TAILQ_HEAD_INITIALIZER(dm_dev_list);
 kmutex_t dm_dev_mutex;
 
 __inline static void
-disable_dev(struct dm_dev *dmv)
+disable_dev(dm_dev_t *dmv)
 {
-	TAILQ_REMOVE(&dm_dev_list, dmv, next_devlist);
-	mutex_enter(&dmv->dev_mtx);
-	mutex_exit(&dm_dev_mutex);
-	while(dmv->ref_cnt != 0) 
-		cv_wait(&dmv->dev_cv, &dmv->dev_mtx);
-	mutex_exit(&dmv->dev_mtx);
+		TAILQ_REMOVE(&dm_dev_list, dmv, next_devlist);
+                mutex_enter(&dmv->dev_mtx);
+                mutex_exit(&dm_dev_mutex);
+                while(dmv->ref_cnt != 0) 
+	              cv_wait(&dmv->dev_cv, &dmv->dev_mtx);
+                mutex_exit(&dmv->dev_mtx);
 } 
 
 /*
- * Generic function used to lookup struct dm_dev. Calling with dm_dev_name 
+ * Generic function used to lookup dm_dev_t. Calling with dm_dev_name 
  * and dm_dev_uuid NULL is allowed.
  */
-struct dm_dev*
+dm_dev_t*
 dm_dev_lookup(const char *dm_dev_name, const char *dm_dev_uuid,
  	int dm_dev_minor) 
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	
 	dmv = NULL;
 	mutex_enter(&dm_dev_mutex);
@@ -102,10 +102,10 @@ dm_dev_lookup(const char *dm_dev_name, const char *dm_dev_uuid,
 /*
  * Lookup device with its minor number.
  */
-static struct dm_dev*
+static dm_dev_t*
 dm_dev_lookup_minor(int dm_dev_minor)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	
 	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist){
 		if (dm_dev_minor == dmv->minor)
@@ -118,10 +118,10 @@ dm_dev_lookup_minor(int dm_dev_minor)
 /*
  * Lookup device with it's device name.
  */
-static struct dm_dev*
+static dm_dev_t*
 dm_dev_lookup_name(const char *dm_dev_name)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	int dlen; int slen;
 
 	slen = strlen(dm_dev_name);
@@ -146,10 +146,10 @@ dm_dev_lookup_name(const char *dm_dev_name)
 /*
  * Lookup device with it's device uuid. Used mostly by LVM2tools.
  */
-static struct dm_dev*
+static dm_dev_t*
 dm_dev_lookup_uuid(const char *dm_dev_uuid)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	size_t len;
 	
 	len = 0;
@@ -174,9 +174,9 @@ dm_dev_lookup_uuid(const char *dm_dev_uuid)
  * Insert new device to the global list of devices.
  */
 int
-dm_dev_insert(struct dm_dev *dev)
+dm_dev_insert(dm_dev_t *dev)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	int r;
 
 	dmv = NULL;
@@ -206,7 +206,7 @@ dm_dev_insert(struct dm_dev *dev)
 int
 dm_dev_test_minor(int dm_dev_minor)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	
 	mutex_enter(&dm_dev_mutex);
 	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist){
@@ -223,11 +223,11 @@ dm_dev_test_minor(int dm_dev_minor)
 /* 
  * Remove device selected with dm_dev from global list of devices. 
  */
-struct dm_dev*
+dm_dev_t*
 dm_dev_rem(const char *dm_dev_name, const char *dm_dev_uuid,
  	int dm_dev_minor)
 {	
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	dmv = NULL;
 	
 	mutex_enter(&dm_dev_mutex);
@@ -261,7 +261,7 @@ dm_dev_rem(const char *dm_dev_name, const char *dm_dev_uuid,
 int
 dm_dev_destroy(void)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	mutex_enter(&dm_dev_mutex);
 
 	while (TAILQ_FIRST(&dm_dev_list) != NULL){
@@ -288,7 +288,7 @@ dm_dev_destroy(void)
 		mutex_destroy(&dmv->dev_mtx);
 		cv_destroy(&dmv->dev_cv);
 		
-		(void)kmem_free(dmv, sizeof(struct dm_dev));
+		(void)kmem_free(dmv, sizeof(dm_dev_t));
 	}
 	mutex_exit(&dm_dev_mutex);
 
@@ -299,12 +299,12 @@ dm_dev_destroy(void)
 /*
  * Allocate new device entry.
  */
-struct dm_dev*
+dm_dev_t*
 dm_dev_alloc()
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	
-	dmv = kmem_zalloc(sizeof(struct dm_dev), KM_NOSLEEP);
+	dmv = kmem_zalloc(sizeof(dm_dev_t), KM_NOSLEEP);
 	dmv->dk_label = kmem_zalloc(sizeof(struct disklabel), KM_NOSLEEP);
 
 	return dmv;
@@ -314,20 +314,20 @@ dm_dev_alloc()
  * Freed device entry.
  */
 int
-dm_dev_free(struct dm_dev *dmv)
+dm_dev_free(dm_dev_t *dmv)
 {
 	KASSERT(dmv != NULL);
 	
 	if (dmv->dk_label != NULL)
 		(void)kmem_free(dmv->dk_label, sizeof(struct disklabel));
 	
-	(void)kmem_free(dmv, sizeof(struct dm_dev));
+	(void)kmem_free(dmv, sizeof(dm_dev_t));
 	
 	return 0;
 }
 
 void
-dm_dev_busy(struct dm_dev *dmv)
+dm_dev_busy(dm_dev_t *dmv)
 {
 	mutex_enter(&dmv->dev_mtx);
 	dmv->ref_cnt++;
@@ -335,7 +335,7 @@ dm_dev_busy(struct dm_dev *dmv)
 }	
 
 void
-dm_dev_unbusy(struct dm_dev *dmv)
+dm_dev_unbusy(dm_dev_t *dmv)
 {
 	KASSERT(dmv->ref_cnt != 0);
 	
@@ -351,7 +351,7 @@ dm_dev_unbusy(struct dm_dev *dmv)
 prop_array_t
 dm_dev_prop_list(void)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	
 	int j;
 	

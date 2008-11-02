@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.20 2008/10/29 02:04:32 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.21 2008/11/02 00:02:32 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -353,7 +353,7 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 	 */
 	strlcpy(dmv->name, n_name, DM_NAME_LEN);
 	
-	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->ref_cnt);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 	prop_dictionary_set_cstring(dm_dict, DM_IOCTL_UUID, dmv->uuid);
 
@@ -435,7 +435,7 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 
 	dm_dbg_print_flags(dmv->flags);
 	
-	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->ref_cnt);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 	prop_dictionary_set_cstring(dm_dict, DM_IOCTL_UUID, dmv->uuid);
 
@@ -491,7 +491,7 @@ dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
 	
 	dm_dbg_print_flags(dmv->flags);
 	
-	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->ref_cnt);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 	
@@ -542,7 +542,7 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 
 	dmgetdisklabel(dmv->dk_label, &dmv->table_head);
 	
-	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->ref_cnt);
+	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_OPEN, dmv->table_head.io_cnt);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_FLAGS, dmv->flags);
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 
@@ -612,7 +612,7 @@ int
 dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 {
 	dm_dev_t *dmv;
-	struct dm_table *tbl;
+	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
 
 	prop_array_t cmd_array;
@@ -675,7 +675,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 {
 	dm_dev_t *dmv;
 	dm_table_entry_t *table_en, *last_table;
-	struct dm_table  *tbl;
+	dm_table_t  *tbl;
 	dm_target_t *target;
 
 	prop_object_iterator_t iter;
@@ -828,7 +828,7 @@ int
 dm_table_status_ioctl(prop_dictionary_t dm_dict)
 {
 	dm_dev_t *dmv;
-	struct dm_table  *tbl;
+	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
 
 	prop_array_t cmd_array;

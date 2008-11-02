@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.11 2008/10/16 23:26:42 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.1.2.12 2008/11/02 00:02:32 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -78,10 +78,10 @@
  *        snapshot_origin device, cow device, persistent flag, chunk size
  */
 int
-dm_target_snapshot_init(struct dm_dev *dmv, void **target_config, char *params)
+dm_target_snapshot_init(dm_dev_t *dmv, void **target_config, char *params)
 {
-	struct target_snapshot_config *tsc;
-	struct dm_pdev *dmp_snap, *dmp_cow;
+	dm_target_snapshot_config_t *tsc;
+	dm_pdev_t *dmp_snap, *dmp_cow;
 	char **ap, *argv[5];
 
 	dmp_cow = NULL;
@@ -106,7 +106,7 @@ dm_target_snapshot_init(struct dm_dev *dmv, void **target_config, char *params)
 	if ((dmp_snap = dm_pdev_insert(argv[0])) == NULL)
 		return ENOENT;
 	
-	if ((tsc = kmem_alloc(sizeof(struct target_snapshot_config), KM_NOSLEEP))
+	if ((tsc = kmem_alloc(sizeof(dm_target_snapshot_config_t), KM_NOSLEEP))
 	    == NULL)
 		return 1;
 		
@@ -141,7 +141,7 @@ dm_target_snapshot_init(struct dm_dev *dmv, void **target_config, char *params)
 char *
 dm_target_snapshot_status(void *target_config)
 {
-	struct target_snapshot_config *tsc;
+	dm_target_snapshot_config_t *tsc;
 	
 	uint32_t i;
 	uint32_t count;
@@ -184,7 +184,7 @@ dm_target_snapshot_status(void *target_config)
 
 /* Strategy routine called from dm_strategy. */
 int
-dm_target_snapshot_strategy(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_snapshot_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
 
 	printf("Snapshot target read function called!!\n");
@@ -199,9 +199,9 @@ dm_target_snapshot_strategy(struct dm_table_entry *table_en, struct buf *bp)
 
 /* Doesn't do anything here. */
 int
-dm_target_snapshot_destroy(struct dm_table_entry *table_en)
+dm_target_snapshot_destroy(dm_table_entry_t *table_en)
 {
-	struct target_snapshot_config *tsc;
+	dm_target_snapshot_config_t *tsc;
 	
 	/*
 	 * Destroy function is called for every target even if it
@@ -221,7 +221,7 @@ dm_target_snapshot_destroy(struct dm_table_entry *table_en)
 	if (tsc->tsc_persistent_dev)
 		dm_pdev_decr(tsc->tsc_cow_dev);
 	
-	kmem_free(table_en->target_config, sizeof(struct target_snapshot_config));
+	kmem_free(table_en->target_config, sizeof(dm_target_snapshot_config_t));
 
 	table_en->target_config = NULL;
 
@@ -230,10 +230,10 @@ dm_target_snapshot_destroy(struct dm_table_entry *table_en)
 
 /* Add this target dependiences to prop_array_t */
 int
-dm_target_snapshot_deps(struct dm_table_entry *table_en, 
+dm_target_snapshot_deps(dm_table_entry_t *table_en, 
 	prop_array_t prop_array)
 {
-	struct target_snapshot_config *tsc;
+	dm_target_snapshot_config_t *tsc;
 	struct vattr va;
 	
 	int error;
@@ -263,7 +263,7 @@ dm_target_snapshot_deps(struct dm_table_entry *table_en,
 
 /* Upcall is used to inform other depended devices about IO. */
 int
-dm_target_snapshot_upcall(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_snapshot_upcall(dm_table_entry_t *table_en, struct buf *bp)
 {
 	printf("dm_target_snapshot_upcall called\n");
 	
@@ -289,11 +289,11 @@ dm_target_snapshot_upcall(struct dm_table_entry *table_en, struct buf *bp)
  * argv: /dev/mapper/my_data_real
  */
 int
-dm_target_snapshot_orig_init(struct dm_dev *dmv, void **target_config, 
+dm_target_snapshot_orig_init(dm_dev_t *dmv, void **target_config, 
 	char *params)
 {
-	struct target_snapshot_origin_config *tsoc;
-	struct dm_pdev *dmp_real;
+	dm_target_snapshot_origin_config_t *tsoc;
+	dm_pdev_t *dmp_real;
 
 	if (params == NULL)
 		return EINVAL;
@@ -305,7 +305,7 @@ dm_target_snapshot_orig_init(struct dm_dev *dmv, void **target_config,
 	if ((dmp_real = dm_pdev_insert(params)) == NULL)
 		return ENOENT;
 	
-	if ((tsoc = kmem_alloc(sizeof(struct target_snapshot_origin_config), KM_NOSLEEP))
+	if ((tsoc = kmem_alloc(sizeof(dm_target_snapshot_origin_config_t), KM_NOSLEEP))
 	    == NULL)
 		return 1;
 
@@ -326,7 +326,7 @@ dm_target_snapshot_orig_init(struct dm_dev *dmv, void **target_config,
 char *
 dm_target_snapshot_orig_status(void *target_config)
 {
-	struct target_snapshot_origin_config *tsoc;
+	dm_target_snapshot_origin_config_t *tsoc;
 
 	size_t prm_len;
 	char *params;
@@ -354,7 +354,7 @@ dm_target_snapshot_orig_status(void *target_config)
 
 /* Strategy routine called from dm_strategy. */
 int
-dm_target_snapshot_orig_strategy(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_snapshot_orig_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
 
 	printf("Snapshot_Orig target read function called!!\n");
@@ -369,9 +369,9 @@ dm_target_snapshot_orig_strategy(struct dm_table_entry *table_en, struct buf *bp
 
 /* Decrement pdev and free allocated space. */
 int
-dm_target_snapshot_orig_destroy(struct dm_table_entry *table_en)
+dm_target_snapshot_orig_destroy(dm_table_entry_t *table_en)
 {
-	struct target_snapshot_origin_config *tsoc;
+	dm_target_snapshot_origin_config_t *tsoc;
 	
 	/*
 	 * Destroy function is called for every target even if it
@@ -386,7 +386,7 @@ dm_target_snapshot_orig_destroy(struct dm_table_entry *table_en)
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tsoc->tsoc_real_dev);
 	
-	kmem_free(table_en->target_config, sizeof(struct target_snapshot_origin_config));
+	kmem_free(table_en->target_config, sizeof(dm_target_snapshot_origin_config_t));
 
 	table_en->target_config = NULL;
 
@@ -397,10 +397,10 @@ dm_target_snapshot_orig_destroy(struct dm_table_entry *table_en)
  * Get target deps and add them to prop_array_t.
  */
 int
-dm_target_snapshot_orig_deps(struct dm_table_entry *table_en,
+dm_target_snapshot_orig_deps(dm_table_entry_t *table_en,
  	prop_array_t prop_array)
 {
-	struct target_snapshot_origin_config *tsoc;
+	dm_target_snapshot_origin_config_t *tsoc;
 	struct vattr va;
 	
 	int error;
@@ -421,7 +421,7 @@ dm_target_snapshot_orig_deps(struct dm_table_entry *table_en,
 
 /* Unsupported for this target. */
 int
-dm_target_snapshot_orig_upcall(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_snapshot_orig_upcall(dm_table_entry_t *table_en, struct buf *bp)
 {
 	return 0;
 }

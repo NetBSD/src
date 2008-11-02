@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.1.2.18 2008/10/16 23:26:42 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.1.2.19 2008/11/02 00:02:32 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  * applied to them.
  */
 
-struct dm_table_entry {
+typedef struct dm_table_entry {
 	struct dm_dev *dm_dev;		/* backlink */
 	uint64_t start;
 	uint64_t length;
@@ -71,10 +71,13 @@ struct dm_table_entry {
 	struct dm_target *target;      /* Link to table target. */
 	void *target_config;           /* Target specific data. */
 	SLIST_ENTRY(dm_table_entry) next;
-};
+} dm_table_entry_t;
+
 SLIST_HEAD(dm_table, dm_table_entry);
 
-struct dm_table_head {
+typedef struct dm_table dm_table_t;
+
+typedef struct dm_table_head {
 	/* Current active table is selected with this. */
 	int cur_active_table; 
 	struct dm_table tables[2];
@@ -83,7 +86,7 @@ struct dm_table_head {
 	kcondvar_t table_cv; /*IO waiting cv */
 
 	uint32_t io_cnt;
-};
+} dm_table_head_t;
 
 #define MAX_DEV_NAME 32
 
@@ -93,14 +96,14 @@ struct dm_table_head {
  * have more then one device on one partition.
  */
 
-struct dm_pdev {
+typedef struct dm_pdev {
 	char name[MAX_DEV_NAME];
 
 	struct vnode *pdev_vnode;
 	int ref_cnt; /* reference counter for users ofthis pdev */
 
 	SLIST_ENTRY(dm_pdev) next_pdev;
-};
+} dm_pdev_t;
 
 /*
  * This structure is called for every device-mapper device.
@@ -108,7 +111,7 @@ struct dm_pdev {
  */
 TAILQ_HEAD(dm_dev_head, dm_dev) dm_devs;
 				
-struct dm_dev {
+typedef struct dm_dev {
 	char name[DM_NAME_LEN];
 	char uuid[DM_UUID_LEN];
 
@@ -123,7 +126,7 @@ struct dm_dev {
 
 	uint32_t dev_type;
 
-	struct dm_table_head table_head;
+	dm_table_head_t table_head;
 
 	struct dm_dev_head upcalls;
 	
@@ -132,7 +135,7 @@ struct dm_dev {
 	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
 
 	TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
-};
+} dm_dev_t;
 
 /* Device types used for upcalls */
 #define DM_ZERO_DEV            (1 << 0)
@@ -154,65 +157,65 @@ struct dm_dev {
  */
 				
 /* for linear : */
-struct target_linear_config {
-	struct dm_pdev *pdev;
+typedef struct target_linear_config {
+	dm_pdev_t *pdev;
 	uint64_t offset;
-};
+} dm_target_linear_config_t;
 
 
 /* for mirror : */
-struct target_mirror_config {
+typedef struct target_mirror_config {
 #define MAX_MIRROR_COPIES 4
-	struct dm_pdev *orig;
-	struct dm_pdev *copies[MAX_MIRROR_COPIES];
+	dm_pdev_t *orig;
+	dm_pdev_t *copies[MAX_MIRROR_COPIES];
 
 	/* copied blocks bitmaps administration etc*/
-	struct dm_pdev *log_pdev;	/* for administration */
+	dm_pdev_t *log_pdev;	/* for administration */
 	uint64_t log_regionsize;	/* blocksize of mirror */
 
 	/* list of parts that still need copied etc.; run length encoded? */
-};
+} dm_target_mirror_config_t;
 
 
 /* for snapshot : */
-struct target_snapshot_config {
-	struct dm_pdev *tsc_snap_dev;
+typedef struct target_snapshot_config {
+	dm_pdev_t *tsc_snap_dev;
 	/* cow dev is set only for persistent snapshot devices */
-	struct dm_pdev *tsc_cow_dev;
+	dm_pdev_t *tsc_cow_dev;
 	
 	uint64_t tsc_chunk_size;
 	uint32_t tsc_persistent_dev;
-};
+} dm_target_snapshot_config_t;
 
 /* for snapshot-origin devices */
-struct target_snapshot_origin_config {
-	struct dm_pdev *tsoc_real_dev;
+typedef struct target_snapshot_origin_config {
+	dm_pdev_t *tsoc_real_dev;
 	/* list of snapshots ? */
-};
+} dm_target_snapshot_origin_config_t;
 
 /* constant dm_target structures for error, zero, linear, stripes etc. */
-struct dm_target {
+typedef struct dm_target {
 	char name[DM_MAX_TYPE_NAME];
 	/* Initialize target_config area */
-	int (*init)(struct dm_dev *, void **, char *);
+	int (*init)(dm_dev_t *, void **, char *);
 
 	/* Destroy target_config area */
-	int (*destroy)(struct dm_table_entry *);
+	int (*destroy)(dm_table_entry_t *);
 	
-	int (*deps) (struct dm_table_entry *, prop_array_t);
+	int (*deps) (dm_table_entry_t *, prop_array_t);
 	/*
 	 * Status routine is called to get params string, which is target
 	 * specific. When dm_table_status_ioctl is called with flag
 	 * DM_STATUS_TABLE_FLAG I have to sent params string back.
 	 */
 	char * (*status)(void *);
-	int (*strategy)(struct dm_table_entry *, struct buf *);
-	int (*upcall)(struct dm_table_entry *, struct buf *);
+	int (*strategy)(dm_table_entry_t *, struct buf *);
+	int (*upcall)(dm_table_entry_t *, struct buf *);
 	
 	uint32_t version[3];
 	
 	TAILQ_ENTRY(dm_target) dm_target_next;
-};
+} dm_target_t;
 
 /* Interface structures */
 
@@ -228,7 +231,7 @@ struct cmd_function {
 };
 
 /* device-mapper */
-void dmgetdisklabel(struct disklabel *, struct dm_table_head *);
+void dmgetdisklabel(struct disklabel *, dm_table_head_t *);
 
 /* dm_ioctl.c */
 int dm_dev_create_ioctl(prop_dictionary_t);
@@ -250,88 +253,88 @@ int dm_table_status_ioctl(prop_dictionary_t);
 
 /* dm_target.c */
 int dm_target_destroy(void);
-int dm_target_insert(struct dm_target *);
+int dm_target_insert(dm_target_t *);
 prop_array_t dm_target_prop_list(void);
-struct dm_target* dm_target_lookup_name(const char *);
+dm_target_t* dm_target_lookup_name(const char *);
 int dm_target_rem(char *);
 
 /* XXX temporally add */
 int dm_target_init(void);
 
 /* dm_target_zero.c */
-int dm_target_zero_init(struct dm_dev *, void**,  char *);
+int dm_target_zero_init(dm_dev_t *, void**,  char *);
 char * dm_target_zero_status(void *);
-int dm_target_zero_strategy(struct dm_table_entry *, struct buf *);
-int dm_target_zero_destroy(struct dm_table_entry *);
-int dm_target_zero_deps(struct dm_table_entry *, prop_array_t);
-int dm_target_zero_upcall(struct dm_table_entry *, struct buf *);
+int dm_target_zero_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_zero_destroy(dm_table_entry_t *);
+int dm_target_zero_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_zero_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm_target_error.c */
-int dm_target_error_init(struct dm_dev *, void**, char *);
+int dm_target_error_init(dm_dev_t *, void**, char *);
 char * dm_target_error_status(void *);
-int dm_target_error_strategy(struct dm_table_entry *, struct buf *);
-int dm_target_error_deps(struct dm_table_entry *, prop_array_t);
-int dm_target_error_destroy(struct dm_table_entry *);
-int dm_target_error_upcall(struct dm_table_entry *, struct buf *);
+int dm_target_error_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_error_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_error_destroy(dm_table_entry_t *);
+int dm_target_error_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm_target_linear.c */
-int dm_target_linear_init(struct dm_dev *, void**, char *);
+int dm_target_linear_init(dm_dev_t *, void**, char *);
 char * dm_target_linear_status(void *);
-int dm_target_linear_strategy(struct dm_table_entry *, struct buf *);
-int dm_target_linear_deps(struct dm_table_entry *, prop_array_t);
-int dm_target_linear_destroy(struct dm_table_entry *);
-int dm_target_linear_upcall(struct dm_table_entry *, struct buf *);
+int dm_target_linear_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_linear_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_linear_destroy(dm_table_entry_t *);
+int dm_target_linear_upcall(dm_table_entry_t *, struct buf *);
 
 /* Generic function used to convert char to string */
 uint64_t atoi(const char *); 
 
 /* dm_target_snapshot.c */
-int dm_target_snapshot_init(struct dm_dev *, void**, char *);
+int dm_target_snapshot_init(dm_dev_t *, void**, char *);
 char * dm_target_snapshot_status(void *);
-int dm_target_snapshot_strategy(struct dm_table_entry *, struct buf *);
-int dm_target_snapshot_deps(struct dm_table_entry *, prop_array_t);
-int dm_target_snapshot_destroy(struct dm_table_entry *);
-int dm_target_snapshot_upcall(struct dm_table_entry *, struct buf *);
+int dm_target_snapshot_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_snapshot_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_snapshot_destroy(dm_table_entry_t *);
+int dm_target_snapshot_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm snapshot origin driver */
-int dm_target_snapshot_orig_init(struct dm_dev *, void**, char *);
+int dm_target_snapshot_orig_init(dm_dev_t *, void**, char *);
 char * dm_target_snapshot_orig_status(void *);
-int dm_target_snapshot_orig_strategy(struct dm_table_entry *, struct buf *);
-int dm_target_snapshot_orig_deps(struct dm_table_entry *, prop_array_t);
-int dm_target_snapshot_orig_destroy(struct dm_table_entry *);
-int dm_target_snapshot_orig_upcall(struct dm_table_entry *, struct buf *);
+int dm_target_snapshot_orig_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_snapshot_orig_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_snapshot_orig_destroy(dm_table_entry_t *);
+int dm_target_snapshot_orig_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm_table.c  */
 #define DM_TABLE_ACTIVE 0
 #define DM_TABLE_INACTIVE 1
 
-int dm_table_destroy(struct dm_table_head *, uint8_t);
-uint64_t dm_table_size(struct dm_table_head *);
-struct dm_table * dm_table_get_entry(struct dm_table_head *, uint8_t);
-int dm_table_get_target_count(struct dm_table_head *, uint8_t);
-void dm_table_release(struct dm_table_head *, uint8_t s);
-void dm_table_switch_tables(struct dm_table_head *);
-void dm_table_head_init(struct dm_table_head *);
-void dm_table_head_destroy(struct dm_table_head *);
+int dm_table_destroy(dm_table_head_t *, uint8_t);
+uint64_t dm_table_size(dm_table_head_t *);
+dm_table_t * dm_table_get_entry(dm_table_head_t *, uint8_t);
+int dm_table_get_target_count(dm_table_head_t *, uint8_t);
+void dm_table_release(dm_table_head_t *, uint8_t s);
+void dm_table_switch_tables(dm_table_head_t *);
+void dm_table_head_init(dm_table_head_t *);
+void dm_table_head_destroy(dm_table_head_t *);
 
 /* dm_dev.c */
-struct dm_dev* dm_dev_alloc(void);
-void dm_dev_busy(struct dm_dev *);
+dm_dev_t* dm_dev_alloc(void);
+void dm_dev_busy(dm_dev_t *);
 int dm_dev_destroy(void);
-int dm_dev_free(struct dm_dev *);
+int dm_dev_free(dm_dev_t *);
 int dm_dev_init(void);
-int dm_dev_insert(struct dm_dev *);
-struct dm_dev* dm_dev_lookup(const char *, const char *, int);
+int dm_dev_insert(dm_dev_t *);
+dm_dev_t* dm_dev_lookup(const char *, const char *, int);
 prop_array_t dm_dev_prop_list(void);
-struct dm_dev* dm_dev_rem(const char *, const char *, int);
+dm_dev_t* dm_dev_rem(const char *, const char *, int);
 int dm_dev_test_minor(int);
-void dm_dev_unbusy(struct dm_dev *);
+void dm_dev_unbusy(dm_dev_t *);
 
 /* dm_pdev.c */
-int dm_pdev_decr(struct dm_pdev *);
+int dm_pdev_decr(dm_pdev_t *);
 int dm_pdev_destroy(void);
 int dm_pdev_init(void);
-struct dm_pdev* dm_pdev_insert(const char *);
+dm_pdev_t* dm_pdev_insert(const char *);
 
 #endif /*_KERNEL*/
 

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.1.2.11 2008/10/16 23:26:42 haad Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.1.2.12 2008/11/02 00:02:32 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -46,17 +46,17 @@ SLIST_HEAD(dm_pdevs, dm_pdev) dm_pdev_list;
 
 kmutex_t dm_pdev_mutex;
 
-static struct dm_pdev *dm_pdev_alloc(const char *);
-static int dm_pdev_rem(struct dm_pdev *);
-static struct dm_pdev* dm_pdev_lookup_name(const char *);
+static dm_pdev_t *dm_pdev_alloc(const char *);
+static int dm_pdev_rem(dm_pdev_t *);
+static dm_pdev_t* dm_pdev_lookup_name(const char *);
 
 /*
  * Find used pdev with name == dm_pdev_name.
  */
-struct dm_pdev*
+dm_pdev_t*
 dm_pdev_lookup_name(const char *dm_pdev_name)
 {
-	struct dm_pdev *dm_pdev;
+	dm_pdev_t *dm_pdev;
 	int dlen; int slen;
 
 	KASSERT(dm_pdev_name != NULL);
@@ -81,10 +81,10 @@ dm_pdev_lookup_name(const char *dm_pdev_name)
  * If entry already exists in global SLIST I will only increment
  * reference counter.
  */
-struct dm_pdev*
+dm_pdev_t*
 dm_pdev_insert(const char *dev_name)
 {
-	struct dm_pdev *dmp;
+	dm_pdev_t *dmp;
 	int error;
 	
 	KASSERT(dev_name != NULL);
@@ -107,7 +107,7 @@ dm_pdev_insert(const char *dev_name)
 	if (error) {
 		aprint_verbose("dk_lookup on device: %s failed with error %d!\n",
 		    dev_name, error);
-		kmem_free(dmp, sizeof(struct dm_pdev));
+		kmem_free(dmp, sizeof(dm_pdev_t));
 		return NULL;
 	}
 
@@ -136,12 +136,12 @@ dm_pdev_init(void)
  * Allocat new pdev structure if is not already present and
  * set name.
  */
-static struct dm_pdev*
+static dm_pdev_t*
 dm_pdev_alloc(const char *name)
 {
-	struct dm_pdev *dmp;
+	dm_pdev_t *dmp;
 
-	if ((dmp = kmem_zalloc(sizeof(struct dm_pdev), KM_NOSLEEP)) == NULL)
+	if ((dmp = kmem_zalloc(sizeof(dm_pdev_t), KM_NOSLEEP)) == NULL)
 		return NULL;
 
 	strlcpy(dmp->name, name, MAX_DEV_NAME);
@@ -156,7 +156,7 @@ dm_pdev_alloc(const char *name)
  * Destroy allocated dm_pdev.
  */
 static int
-dm_pdev_rem(struct dm_pdev *dmp)
+dm_pdev_rem(dm_pdev_t *dmp)
 {
 	int err;
 
@@ -180,7 +180,7 @@ dm_pdev_rem(struct dm_pdev *dmp)
 int
 dm_pdev_destroy(void)
 {
-	struct dm_pdev *dm_pdev;
+	dm_pdev_t *dm_pdev;
 
 	mutex_enter(&dm_pdev_mutex);
 	while (!SLIST_EMPTY(&dm_pdev_list)) {           /* List Deletion. */
@@ -209,7 +209,7 @@ dm_pdev_destroy(void)
  * Decrement pdev reference counter if 0 remove it.
  */
 int
-dm_pdev_decr(struct dm_pdev *dmp)
+dm_pdev_decr(dm_pdev_t *dmp)
 {
 	KASSERT(dmp != NULL);
 	/*
@@ -232,7 +232,7 @@ dm_pdev_decr(struct dm_pdev *dmp)
 /*static int
   dm_pdev_dump_list()
   {
-  struct dm_pdev *dmp;
+  dm_pdev_t *dmp;
 	
   aprint_verbose("Dumping dm_pdev_list \n");
 	

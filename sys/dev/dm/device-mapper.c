@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.1.2.14 2008/10/16 23:26:41 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.1.2.15 2008/11/02 00:02:32 haad Exp $ */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -175,7 +175,10 @@ static int
 dmopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	aprint_debug("open routine called %d\n", minor(dev));
-
+	
+	if (unload == 1)
+		return EBUSY;
+	
 	return 0;
 }
 
@@ -288,7 +291,7 @@ dm_ioctl_switch(u_long cmd)
 static int
 disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	
 	switch(cmd) {
 	case DIOCGWEDGEINFO:
@@ -358,9 +361,9 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 static void
 dmstrategy(struct buf *bp)
 {
-	struct dm_dev *dmv;
-	struct dm_table  *tbl;
-	struct dm_table_entry *table_en;
+	dm_dev_t *dmv;
+	dm_table_t  *tbl;
+	dm_table_entry_t *table_en;
 	struct buf *nestbuf;
 
 	uint32_t dev_type;
@@ -378,13 +381,6 @@ dmstrategy(struct buf *bp)
 	dev_type = 0;
 	issued_len = 0;
 
-	if (unload == 1){
-		bp->b_error = EIO;
-		bp->b_resid = bp->b_bcount;
-		biodone(bp);
-		return;
-	}
-		
 	if ((dmv = dm_dev_lookup(NULL, NULL, minor(bp->b_dev))) == NULL) {
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
@@ -474,7 +470,7 @@ dmdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 static int
 dmsize(dev_t dev)
 {
-	struct dm_dev *dmv;
+	dm_dev_t *dmv;
 	uint64_t size;
 	
 	size = 0;
@@ -504,7 +500,7 @@ dmminphys(struct buf *bp)
   * Copied from vnd code.
   */
 void
-dmgetdisklabel(struct disklabel *lp, struct dm_table_head *head)
+dmgetdisklabel(struct disklabel *lp, dm_table_head_t *head)
 {
 	struct partition *pp;
 	int dmp_size;

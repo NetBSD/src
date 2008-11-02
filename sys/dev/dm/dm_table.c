@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.1.2.10 2008/10/16 23:26:42 haad Exp $      */
+/*        $NetBSD: dm_table.c,v 1.1.2.11 2008/11/02 00:02:32 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@
  *
  */
 
-static int dm_table_busy(struct dm_table_head *, uint8_t );
-static void dm_table_unbusy(struct dm_table_head *);
+static int dm_table_busy(dm_table_head_t *, uint8_t );
+static void dm_table_unbusy(dm_table_head_t *);
 
 /*
  * Function to increment table user reference counter. Return id
@@ -61,7 +61,7 @@ static void dm_table_unbusy(struct dm_table_head *);
  * DM_TABLE_INACTIVE will return inactive table id.
  */
 static int
-dm_table_busy(struct dm_table_head *head, uint8_t table_id)
+dm_table_busy(dm_table_head_t *head, uint8_t table_id)
 {
 	uint8_t id;
 
@@ -84,7 +84,7 @@ dm_table_busy(struct dm_table_head *head, uint8_t table_id)
  * Function release table lock and eventually wakeup all waiters.
  */
 static void
-dm_table_unbusy(struct dm_table_head *head)
+dm_table_unbusy(dm_table_head_t *head)
 {
 	KASSERT(head->io_cnt != 0);
 
@@ -99,8 +99,8 @@ dm_table_unbusy(struct dm_table_head *head)
 /*
  * Return current active table to caller, increment io_cnt reference counter.
  */
-struct dm_table *
-dm_table_get_entry(struct dm_table_head *head, uint8_t table_id)
+dm_table_t *
+dm_table_get_entry(dm_table_head_t *head, uint8_t table_id)
 {
 	uint8_t id;
 
@@ -113,7 +113,7 @@ dm_table_get_entry(struct dm_table_head *head, uint8_t table_id)
  * Decrement io reference counter and wake up all callers, with table_head cv.
  */
 void
-dm_table_release(struct dm_table_head *head, uint8_t table_id)
+dm_table_release(dm_table_head_t *head, uint8_t table_id)
 {
 	dm_table_unbusy(head);
 }
@@ -122,7 +122,7 @@ dm_table_release(struct dm_table_head *head, uint8_t table_id)
  * Switch table from inactive to active mode. Have to wait until io_cnt is 0.
  */
 void
-dm_table_switch_tables(struct dm_table_head *head)
+dm_table_switch_tables(dm_table_head_t *head)
 {
 	mutex_enter(&head->table_mtx);
 
@@ -141,13 +141,15 @@ dm_table_switch_tables(struct dm_table_head *head)
  * XXX Is it ok to call kmem_free and potentialy VOP_CLOSE with held mutex ?xs
  */
 int
-dm_table_destroy(struct dm_table_head *head, uint8_t table_id)
+dm_table_destroy(dm_table_head_t *head, uint8_t table_id)
 {
-	struct dm_table       *tbl;
-	struct dm_table_entry *table_en;
+	dm_table_t       *tbl;
+	dm_table_entry_t *table_en;
 	uint8_t id;
 
 	mutex_enter(&head->table_mtx);
+
+	printf("dm_Table_destroy called with %d--%d\n", table_id, head->io_cnt);
 	
 	while (head->io_cnt != 0)
 		cv_wait(&head->table_cv, &head->table_mtx);
@@ -181,10 +183,10 @@ dm_table_destroy(struct dm_table_head *head, uint8_t table_id)
  * Return length of active table in device.
  */
 uint64_t
-dm_table_size(struct dm_table_head *head)
+dm_table_size(dm_table_head_t *head)
 {
-	struct dm_table  *tbl;
-	struct dm_table_entry *table_en;
+	dm_table_t  *tbl;
+	dm_table_entry_t *table_en;
 	uint64_t length;
 	uint8_t id;
 	
@@ -214,10 +216,10 @@ dm_table_size(struct dm_table_head *head)
  * there can be dm_dev_resume_ioctl), therfore this isonly informative.
  */
 int
-dm_table_get_target_count(struct dm_table_head *head, uint8_t table_id)
+dm_table_get_target_count(dm_table_head_t *head, uint8_t table_id)
 {	
-	struct dm_table_entry *table_en;
-	struct dm_table *tbl;
+	dm_table_entry_t *table_en;
+	dm_table_t *tbl;
 	uint32_t target_count;
 	uint8_t id;
 
@@ -241,7 +243,7 @@ dm_table_get_target_count(struct dm_table_head *head, uint8_t table_id)
  * opaque as possible.
  */
 void
-dm_table_head_init(struct dm_table_head *head)
+dm_table_head_init(dm_table_head_t *head)
 {
 	head->cur_active_table = 0;
 	head->io_cnt = 0;
@@ -258,7 +260,7 @@ dm_table_head_init(struct dm_table_head *head)
  * Destroy all variables in table_head
  */
 void
-dm_table_head_destroy(struct dm_table_head *head)
+dm_table_head_destroy(dm_table_head_t *head)
 {
 	KASSERT(!mutex_owned(&head->table_mtx));
 	KASSERT(!cv_has_waiters(&head->table_cv));
