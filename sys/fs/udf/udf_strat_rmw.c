@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.9.4.1 2008/11/02 22:56:06 snj Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.9.4.2 2008/11/02 23:03:45 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.9.4.1 2008/11/02 22:56:06 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.9.4.2 2008/11/02 23:03:45 snj Exp $");
 #endif /* not lint */
 
 
@@ -76,18 +76,21 @@ __KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.9.4.1 2008/11/02 22:56:06 snj Ex
 #define UDF_MAX_PACKET_SIZE	64			/* DONT change this */
 
 /* sheduler states */
-#define UDF_SHED_MAX		6
-#define UDF_SHED_READING	1
-#define UDF_SHED_WRITING	2
-#define UDF_SHED_SEQWRITING	3
-#define UDF_SHED_IDLE		4			/* resting */
-#define UDF_SHED_FREE		5			/* recycleable */
+#define UDF_SHED_WAITING	1			/* waiting on timeout */
+#define UDF_SHED_READING	2
+#define UDF_SHED_WRITING	3
+#define UDF_SHED_SEQWRITING	4
+#define UDF_SHED_IDLE		5			/* resting */
+#define UDF_SHED_FREE		6			/* recycleable */
+#define UDF_SHED_MAX		6+1
 
 /* flags */
 #define ECC_LOCKED		0x01			/* prevent access   */
 #define ECC_WANTED		0x02			/* trying access    */
 #define ECC_SEQWRITING		0x04			/* sequential queue */
 #define ECC_FLOATING		0x08			/* not queued yet   */
+
+#define ECC_WAITTIME		5
 
 
 TAILQ_HEAD(ecclineq, udf_eccline);
@@ -99,6 +102,7 @@ struct udf_eccline {
 	uint64_t		  error;		/* bitmap */
 	uint32_t		  refcnt;
 
+	struct timespec		  wait_time;
 	uint32_t		  flags;
 	uint32_t		  start_sector;		/* physical */
 
@@ -443,10 +447,8 @@ static void
 udf_puteccline(struct udf_eccline *eccline)
 {
 	struct strat_private *priv = PRIV(eccline->ump);
-	struct udf_eccline *deccline;
 	struct udf_mount *ump = eccline->ump;
 	uint64_t allbits = ((uint64_t) 1 << ump->packet_size)-1;
-	int newqueue, tries;
 
 	mutex_enter(&priv->discstrat_mutex);
 
@@ -460,45 +462,13 @@ udf_puteccline(struct udf_eccline *eccline)
 	DPRINTF(ECCLINE, ("put eccline start sector %d, refcnt %d\n",
 		eccline->start_sector, eccline->refcnt));
 
-	/* requeue */
-	newqueue = UDF_SHED_FREE;
+	/* if we have active nodes we dont set it on seqwriting */
 	if (eccline->refcnt > 1)
-		newqueue = UDF_SHED_IDLE;
-	if (eccline->flags & ECC_WANTED)
-		newqueue = UDF_SHED_IDLE;
-	if (eccline->dirty) {
-		newqueue = UDF_SHED_WRITING;
-		if (eccline->flags & ECC_SEQWRITING)
-			newqueue = UDF_SHED_SEQWRITING;
-	}
-
-	/* if we have active nodes */
-	if (eccline->refcnt > 1) {
-		/* we dont set it on seqwriting */
 		eccline->flags &= ~ECC_SEQWRITING;
-	}
 
-	/* if we need reading in or not all is yet present, queue reading */
-	if ((eccline->readin) || (eccline->present != allbits))
-		newqueue = UDF_SHED_READING;
-
-	/* reduce the number of kept free buffers */
-	tries = priv->num_queued[UDF_SHED_FREE] - UDF_ECCLINE_MAXFREE;
-	while (tries > 0 /* priv->num_queued[UDF_SHED_FREE] > UDF_ECCLINE_MAXFREE */) {
-		deccline = udf_pop_eccline(priv, UDF_SHED_FREE);
-		KASSERT(deccline);
-		KASSERT(deccline->refcnt == 0);
-		if (deccline->flags & ECC_WANTED) {
-			udf_push_eccline(deccline, UDF_SHED_IDLE);
-			DPRINTF(ECCLINE, ("Tried removing, pushed back to free list\n"));
-		} else {
-			DPRINTF(ECCLINE, ("Removing entry from free list\n"));
-			udf_dispose_eccline(deccline);
-		}
-		tries--;
-	}
-
-	udf_push_eccline(eccline, newqueue);
+	vfs_timestamp(&eccline->wait_time);
+	eccline->wait_time.tv_sec += ECC_WAITTIME;
+	udf_push_eccline(eccline, UDF_SHED_WAITING);
 
 	KASSERT(eccline->refcnt >= 1);
 	eccline->refcnt--;
@@ -1170,22 +1140,58 @@ udf_discstrat_thread(void *arg)
 	struct strat_private *priv = PRIV(ump);
 	struct udf_eccline *eccline;
 	struct timespec now, *last;
-	int new_queue, wait, work;
+	uint64_t allbits = ((uint64_t) 1 << ump->packet_size)-1;
+	int new_queue, wait, work, num, cnt;
 
 	work = 1;
 	mutex_enter(&priv->discstrat_mutex);
 	priv->num_floating = 0;
 	while (priv->run_thread || work || priv->num_floating) {
-		/* process the current selected queue */
+		/* get our time */
+		vfs_timestamp(&now);
+
+		/* maintenance: handle eccline state machine */
+		num = priv->num_queued[UDF_SHED_WAITING];
+		cnt = 0;
+		while (cnt < num) {
+			eccline = udf_pop_eccline(priv, UDF_SHED_WAITING);
+			/* requeue */
+			new_queue = UDF_SHED_FREE;
+			if (eccline->refcnt > 0)
+				new_queue = UDF_SHED_IDLE;
+			if (eccline->flags & ECC_WANTED)
+				new_queue = UDF_SHED_IDLE;
+			if (eccline->readin)
+				new_queue = UDF_SHED_READING;
+			if (eccline->dirty) {
+				new_queue = UDF_SHED_WAITING;
+				if (eccline->wait_time.tv_sec - now.tv_sec <= 0) {
+					new_queue = UDF_SHED_WRITING;
+					if (eccline->flags & ECC_SEQWRITING)
+						new_queue = UDF_SHED_SEQWRITING;
+					if (eccline->present != allbits)
+						new_queue = UDF_SHED_READING;
+				}
+			}
+			udf_push_eccline(eccline, new_queue);
+			cnt++;
+		}
+
 		/* maintenance: free exess ecclines */
 		while (priv->num_queued[UDF_SHED_FREE] > UDF_ECCLINE_MAXFREE) {
 			eccline = udf_pop_eccline(priv, UDF_SHED_FREE);
 			KASSERT(eccline);
 			KASSERT(eccline->refcnt == 0);
-			DPRINTF(ECCLINE, ("Removing entry from free list\n"));
-			udf_dispose_eccline(eccline);
+			if (eccline->flags & ECC_WANTED) {
+				udf_push_eccline(eccline, UDF_SHED_IDLE);
+				DPRINTF(ECCLINE, ("Tried removing, pushed back to free list\n"));
+			} else {
+				DPRINTF(ECCLINE, ("Removing entry from free list\n"));
+				udf_dispose_eccline(eccline);
+			}
 		}
 
+		/* process the current selected queue */
 		/* get our time */
 		vfs_timestamp(&now);
 		last = &priv->last_queued[priv->cur_queue];
@@ -1256,7 +1262,8 @@ udf_discstrat_thread(void *arg)
 			cv_timedwait(&priv->discstrat_cv,
 				&priv->discstrat_mutex, hz);	/* /8 */
 
-		work  = (BUFQ_PEEK(priv->queues[UDF_SHED_READING]) != NULL);
+		work  = (BUFQ_PEEK(priv->queues[UDF_SHED_WAITING]) != NULL);
+		work |= (BUFQ_PEEK(priv->queues[UDF_SHED_READING]) != NULL);
 		work |= (BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]) != NULL);
 		work |= (BUFQ_PEEK(priv->queues[UDF_SHED_SEQWRITING]) != NULL);
 
@@ -1271,11 +1278,13 @@ udf_discstrat_thread(void *arg)
 
 	/* tear down remaining ecclines */
 	mutex_enter(&priv->discstrat_mutex);
+	KASSERT(priv->num_queued[UDF_SHED_WAITING] == 0);
 	KASSERT(priv->num_queued[UDF_SHED_IDLE] == 0);
 	KASSERT(priv->num_queued[UDF_SHED_READING] == 0);
 	KASSERT(priv->num_queued[UDF_SHED_WRITING] == 0);
 	KASSERT(priv->num_queued[UDF_SHED_SEQWRITING] == 0);
 
+	KASSERT(BUFQ_PEEK(priv->queues[UDF_SHED_WAITING]) == NULL);
 	KASSERT(BUFQ_PEEK(priv->queues[UDF_SHED_IDLE]) == NULL);
 	KASSERT(BUFQ_PEEK(priv->queues[UDF_SHED_READING]) == NULL);
 	KASSERT(BUFQ_PEEK(priv->queues[UDF_SHED_WRITING]) == NULL);
@@ -1363,6 +1372,8 @@ udf_discstrat_init_rmw(struct udf_strat_args *args)
 		priv->num_queued[i] = 0;
 		vfs_timestamp(&priv->last_queued[i]);
 	}
+	bufq_alloc(&priv->queues[UDF_SHED_WAITING], "fcfs",
+		BUFQ_SORT_RAWBLOCK);
 	bufq_alloc(&priv->queues[UDF_SHED_READING], "disksort",
 		BUFQ_SORT_RAWBLOCK);
 	bufq_alloc(&priv->queues[UDF_SHED_WRITING], "disksort",
