@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1109 2008/10/29 17:26:57 jkunz Exp $
+# $NetBSD: mi,v 1.1110 2008/11/02 22:11:36 tls Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1217,6 +1217,7 @@
 ./usr/share/man/cat4/nsclpcsio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/nsip.0			man-obsolete		obsolete
 ./usr/share/man/cat4/nsmb.0			man-sys-catman		.cat
+./usr/share/man/cat4/nsp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nsphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/nsphyter.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ntwo.0			man-sys-catman		.cat
@@ -6053,6 +6054,7 @@
 ./usr/share/man/man4/nsclpcsio.4		man-sys-man		.man
 ./usr/share/man/man4/nsip.4			man-obsolete		obsolete
 ./usr/share/man/man4/nsmb.4			man-sys-man		.man
+./usr/share/man/man4/nsp.4			man-sys-man		.man
 ./usr/share/man/man4/nsphy.4			man-sys-man		.man
 ./usr/share/man/man4/nsphyter.4			man-sys-man		.man
 ./usr/share/man/man4/ntwo.4			man-sys-man		.man
