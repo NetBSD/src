@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.19 2008/08/17 00:24:35 gmcgarry Exp $	*/
+/*	$NetBSD: assert.h,v 1.20 2008/11/02 14:27:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
 
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
+#include <sys/null.h>
 
 #undef assert
 
