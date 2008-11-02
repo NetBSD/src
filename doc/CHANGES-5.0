@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.3 2008/11/01 19:53:16 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.4 2008/11/02 02:10:27 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -15,4 +15,9 @@ distrib/evbarm/gzboot/gzimg/Makefile		1.20
 	Register gemini watchdog with sysmon_wdog_register and rip out some
 	debugging code.  Create gemini instkernel and gzimg.	
 	[cliff, ticket #2]
+
+etc/etc.cobalt/MAKEDEV.conf			1.10
+
+	Create bpf(4) device node on ramdisk for sysinst.
+	[tsutsui, ticket #4]
 
