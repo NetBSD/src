@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.6 2008/11/02 18:07:53 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.7 2008/11/02 23:10:52 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -36,4 +36,33 @@ etc/etc.i386/MAKEDEV.conf			1.17-1.19
 	usable out-of-the-box.  Create 8 dk instances by default, since GPT
 	autodiscovery is enabled.
 	[joerg, ticket #3]
+
+sys/fs/udf/udf_strat_rmw.c			1.10
+
+	Explicitly set buffer's block numbers. Blocks were always read/written
+	correctly only the sheduling could go less than optimal.
+	[reinoud, ticket #6]
+
+external/mit/xorg/lib/Makefile			1.5
+
+	Move libXft down in the hierarchy, because it depends on libXrandr.
+	[cube, ticket #7]
+
+sys/fs/udf/udf_strat_rmw.c			1.11
+
+	Introduce an extra state to wich all pushed ecclines are pushed
+	on.  This extra state has a holding time in wich no writeouts will
+	be done effectively collecting more sectors before its even scheduled
+	for writing.  Significantly boosts write performance.
+	[reinoud, ticket #8]
+
+sys/miscfs/genfs/genfs_io.c			1.14
+sys/nfs/nfs_bio.c				1.180
+sys/uvm/uvm_extern.h				1.149
+
+	- allocate 8 pointers on the stack to avoid stack overflow in nfs.
+	- make that 8 a constant
+	- remove bogus panic
+	Fixes PR kern/39777. 
+	[tron, ticket #9]
 
