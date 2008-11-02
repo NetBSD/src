@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.9 2008/08/29 15:04:18 reinoud Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.9.4.1 2008/11/02 22:56:06 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.9 2008/08/29 15:04:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.9.4.1 2008/11/02 22:56:06 snj Exp $");
 #endif /* not lint */
 
 
@@ -268,6 +268,11 @@ udf_push_eccline(struct udf_eccline *eccline, int newqueue)
 		priv->num_queued[curqueue]--;
 	}
 
+	/* set buffer block numbers to make sure its queued correctly */
+	eccline->buf->b_lblkno   = eccline->start_sector;
+	eccline->buf->b_blkno    = eccline->start_sector;
+	eccline->buf->b_rawblkno = eccline->start_sector;
+
 	BUFQ_PUT(priv->queues[newqueue], eccline->buf);
 	eccline->queued_on = newqueue;
 	priv->num_queued[newqueue]++;
@@ -413,7 +418,11 @@ retry:
 	eccline->present = eccline->readin = eccline->dirty = 0;
 	eccline->error = 0;
 	eccline->refcnt = 0;
-	eccline->start_sector = start_sector;
+
+	eccline->start_sector    = start_sector;
+	eccline->buf->b_lblkno   = start_sector;
+	eccline->buf->b_blkno    = start_sector;
+	eccline->buf->b_rawblkno = start_sector;
 
 	LIST_INSERT_HEAD(&priv->eccline_hash[line], eccline, hashchain);
 
@@ -1184,10 +1193,11 @@ udf_discstrat_thread(void *arg)
 		/* don't shedule too quickly when there is only one */
 		if (priv->cur_queue == UDF_SHED_WRITING) {
 			if (priv->num_queued[priv->cur_queue] <= 2) {
-				if (now.tv_sec - last->tv_sec < 2) {
+				if (now.tv_sec - last->tv_sec < 4) {
 					/* wait some time */
 					cv_timedwait(&priv->discstrat_cv,
 						&priv->discstrat_mutex, hz);
+					continue;
 				}
 			}
 		}
