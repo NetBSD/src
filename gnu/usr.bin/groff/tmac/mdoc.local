@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.45 2008/10/31 04:32:54 agc Exp $
+.\" $NetBSD: mdoc.local,v 1.46 2008/11/02 22:11:36 tls Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,6 +58,7 @@
 .ds doc-operating-system-NetBSD-4.0    4.0
 .ds doc-operating-system-NetBSD-5.0    5.0
 .ds doc-operating-system-NetBSD-6.0    6.0
+.ds doc-operating-system-FreeBSD-4.11  4.11
 .ds doc-operating-system-FreeBSD-6.1   6.1
 .ds doc-operating-system-FreeBSD-6.3   6.3
 .ds doc-operating-system-FreeBSD-7.0   7.0
