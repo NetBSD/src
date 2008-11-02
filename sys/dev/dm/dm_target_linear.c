@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.1.2.17 2008/10/16 23:26:42 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.1.2.18 2008/11/02 00:02:32 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -54,10 +54,10 @@
  * @argv[1] is physical data offset.
  */
 int
-dm_target_linear_init(struct dm_dev *dmv, void **target_config, char *params)
+dm_target_linear_init(dm_dev_t *dmv, void **target_config, char *params)
 {
-	struct target_linear_config *tlc;
-	struct dm_pdev *dmp;
+	dm_target_linear_config_t *tlc;
+	dm_pdev_t *dmp;
 
 	char **ap, *argv[3];
 
@@ -81,7 +81,7 @@ dm_target_linear_init(struct dm_dev *dmv, void **target_config, char *params)
 	printf("Linear target init function called %s--%s!!\n",
 	    argv[0], argv[1]);
 	
-	if ((tlc = kmem_alloc(sizeof(struct target_linear_config), KM_NOSLEEP))
+	if ((tlc = kmem_alloc(sizeof(dm_target_linear_config_t), KM_NOSLEEP))
 	    == NULL)
 		return 1;
 
@@ -106,7 +106,7 @@ dm_target_linear_init(struct dm_dev *dmv, void **target_config, char *params)
 char *
 dm_target_linear_status(void *target_config)
 {
-	struct target_linear_config *tlc;
+	dm_target_linear_config_t *tlc;
 	char *params;
 	uint32_t i;
 	uint32_t count;
@@ -138,9 +138,9 @@ dm_target_linear_status(void *target_config)
  * Do IO operation, called from dmstrategy routine.
  */
 int
-dm_target_linear_strategy(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_linear_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
-	struct target_linear_config *tlc;
+	dm_target_linear_config_t *tlc;
 
 	tlc = table_en->target_config;
 	
@@ -159,9 +159,9 @@ dm_target_linear_strategy(struct dm_table_entry *table_en, struct buf *bp)
  * Destroy target specific data. Decrement table pdevs.
  */
 int
-dm_target_linear_destroy(struct dm_table_entry *table_en)
+dm_target_linear_destroy(dm_table_entry_t *table_en)
 {
-	struct target_linear_config *tlc;
+	dm_target_linear_config_t *tlc;
 
 	/*
 	 * Destroy function is called for every target even if it
@@ -176,7 +176,7 @@ dm_target_linear_destroy(struct dm_table_entry *table_en)
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tlc->pdev);
 	
-	kmem_free(table_en->target_config, sizeof(struct target_linear_config));
+	kmem_free(table_en->target_config, sizeof(dm_target_linear_config_t));
 
 	table_en->target_config = NULL;
 	
@@ -185,9 +185,9 @@ dm_target_linear_destroy(struct dm_table_entry *table_en)
 
 /* Add this target pdev dependiences to prop_array_t */
 int
-dm_target_linear_deps(struct dm_table_entry *table_en, prop_array_t prop_array)
+dm_target_linear_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
 {
-	struct target_linear_config *tlc;
+	dm_target_linear_config_t *tlc;
 	struct vattr va;
 	
 	int error;
@@ -211,7 +211,7 @@ dm_target_linear_deps(struct dm_table_entry *table_en, prop_array_t prop_array)
  * mirror, snapshot, multipath, stripe will use this functionality.
  */
 int
-dm_target_linear_upcall(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_linear_upcall(dm_table_entry_t *table_en, struct buf *bp)
 {
 	return 0;
 }

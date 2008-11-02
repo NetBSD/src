@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.1.2.14 2008/10/16 23:26:42 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.1.2.15 2008/11/02 00:02:32 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "netbsd-dm.h"
 #include "dm.h"
 
-static struct dm_target* dm_target_alloc(const char *);
+static dm_target_t* dm_target_alloc(const char *);
 
 TAILQ_HEAD(dm_target_head, dm_target);
 
@@ -47,10 +47,10 @@ TAILQ_HEAD_INITIALIZER(dm_target_list);
 /*
  * Search for name in TAIL and return apropriate pointer.
  */
-struct dm_target*
+dm_target_t*
 dm_target_lookup_name(const char *dm_target_name)
 {
-	struct dm_target *dm_target;
+	dm_target_t *dm_target;
         int dlen; int slen;
 
 	slen = strlen(dm_target_name)+1;
@@ -74,9 +74,9 @@ dm_target_lookup_name(const char *dm_target_name)
  *   contains name, version, function pointer to specifif target functions.
  */
 int
-dm_target_insert(struct dm_target *dm_target)
+dm_target_insert(dm_target_t *dm_target)
 {
-	struct dm_target *dmt;
+	dm_target_t *dmt;
 
 	dmt = dm_target_lookup_name(dm_target->name);
 
@@ -95,7 +95,7 @@ dm_target_insert(struct dm_target *dm_target)
 int
 dm_target_rem(char *dm_target_name)
 {
-	struct dm_target *dm_target;
+	dm_target_t *dm_target;
 	
 	KASSERT(dm_target_name != NULL);
 		    
@@ -106,7 +106,7 @@ dm_target_rem(char *dm_target_name)
 	TAILQ_REMOVE(&dm_target_list,
 	    dm_target, dm_target_next);
 	
-	(void)kmem_free(dm_target, sizeof(struct dm_target));
+	(void)kmem_free(dm_target, sizeof(dm_target_t));
 
 	return 0;
 }
@@ -120,7 +120,7 @@ dm_target_rem(char *dm_target_name)
 int
 dm_target_destroy(void)
 {
-	struct dm_target *dm_target;
+	dm_target_t *dm_target;
 
 	while (TAILQ_FIRST(&dm_target_list) != NULL){
 
@@ -129,7 +129,7 @@ dm_target_destroy(void)
 		TAILQ_REMOVE(&dm_target_list, TAILQ_FIRST(&dm_target_list),
 		dm_target_next);
 		
-		(void)kmem_free(dm_target, sizeof(struct dm_target));
+		(void)kmem_free(dm_target, sizeof(dm_target_t));
 	}
 	
 	return 0;
@@ -138,10 +138,10 @@ dm_target_destroy(void)
 /*
  * Allocate new target entry.
  */
-struct dm_target*
+dm_target_t*
 dm_target_alloc(const char *name)
 {
-	return kmem_zalloc(sizeof(struct dm_target), KM_NOSLEEP);
+	return kmem_zalloc(sizeof(dm_target_t), KM_NOSLEEP);
 }
 
 /*
@@ -152,7 +152,7 @@ dm_target_prop_list(void)
 {
 	prop_array_t target_array,ver;
 	prop_dictionary_t target_dict;
-	struct dm_target *dm_target;
+	dm_target_t *dm_target;
 
 	size_t i,j;
 
@@ -183,7 +183,7 @@ dm_target_prop_list(void)
 int
 dm_target_init(void)
 {
-	struct dm_target *dmt,*dmt1,*dmt2,*dmt3,*dmt4,*dmt5,*dmt6;
+	dm_target_t *dmt,*dmt1,*dmt2,*dmt3,*dmt4,*dmt5,*dmt6;
 	int r;
 
 	r = 0;

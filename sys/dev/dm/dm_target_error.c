@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_error.c,v 1.1.2.7 2008/09/11 13:40:47 haad Exp $      */
+/*        $NetBSD: dm_target_error.c,v 1.1.2.8 2008/11/02 00:02:32 haad Exp $      */
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 /* Init function called from dm_table_load_ioctl. */
 int
-dm_target_error_init(struct dm_dev *dmv, void **target_config, char *argv)
+dm_target_error_init(dm_dev_t *dmv, void **target_config, char *argv)
 {
 
 	printf("Error target init function called!!\n");
@@ -62,7 +62,7 @@ dm_target_error_status(void *target_config)
 
 /* Strategy routine called from dm_strategy. */
 int
-dm_target_error_strategy(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_error_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
 
 	printf("Error target read function called!!\n");
@@ -77,7 +77,7 @@ dm_target_error_strategy(struct dm_table_entry *table_en, struct buf *bp)
 
 /* Doesn't do anything here. */
 int
-dm_target_error_destroy(struct dm_table_entry *table_en)
+dm_target_error_destroy(dm_table_entry_t *table_en)
 {
 	table_en->target_config = NULL;
 
@@ -86,14 +86,14 @@ dm_target_error_destroy(struct dm_table_entry *table_en)
 
 /* Doesn't not need to do anything here. */
 int
-dm_target_error_deps(struct dm_table_entry *table_en, prop_array_t prop_array)
+dm_target_error_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
 {	
 	return 0;
 }
 
 /* Unsupported for this target. */
 int
-dm_target_error_upcall(struct dm_table_entry *table_en, struct buf *bp)
+dm_target_error_upcall(dm_table_entry_t *table_en, struct buf *bp)
 {
 	return 0;
 }
