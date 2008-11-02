@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.42 2006/12/14 14:15:26 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.43 2008/11/02 02:27:32 ahoka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.42 2006/12/14 14:15:26 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.43 2008/11/02 02:27:32 ahoka Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,6 +65,7 @@ extern int termwidth;
 static int	printaname(FTSENT *, int, int);
 static void	printlink(FTSENT *);
 static void	printtime(time_t);
+static void	printtotal(DISPLAY *dp);
 static int	printtype(u_int);
 
 static time_t	now;
@@ -94,19 +95,8 @@ printlong(DISPLAY *dp)
 
 	now = time(NULL);
 
-	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size)) {
-		if (f_humanize) {
-			if ((humanize_number(szbuf, sizeof(szbuf), (int64_t)dp->stotal,
-			    "", HN_AUTOSCALE,
-			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
-				err(1, "humanize_number");
-			(void)printf("total %s\n", szbuf);
-		} else {
-			(void)printf("total %llu\n",
-			    (long long)(howmany(dp->btotal, blocksize)));
-		}
-	}
-
+	printtotal(dp);		/* "total: %u\n" */
+	
 	for (p = dp->list; p; p = p->fts_link) {
 		if (IS_NOPRINT(p))
 			continue;
@@ -181,7 +171,6 @@ printcol(DISPLAY *dp)
 	FTSENT *p;
 	int base, chcnt, col, colwidth, num;
 	int numcols, numrows, row;
-	char szbuf[5];
 
 	colwidth = dp->maxlen;
 	if (f_inode)
@@ -224,18 +213,8 @@ printcol(DISPLAY *dp)
 	if (num % numcols)
 		++numrows;
 
-	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size)) {
-		if (f_humanize) {
-			if ((humanize_number(szbuf, sizeof(szbuf), (int64_t)dp->stotal,
-			    "", HN_AUTOSCALE,
-			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
-				err(1, "humanize_number");
-			(void)printf("total %s\n", szbuf);
-		} else {
-			(void)printf("total %llu\n",
-			    (long long)(howmany(dp->btotal, blocksize)));
-		}
-	}
+	printtotal(dp);				/* "total: %u\n" */
+
 	for (row = 0; row < numrows; ++row) {
 		for (base = row, chcnt = col = 0; col < numcols; ++col) {
 			chcnt = printaname(array[base], dp->s_inode,
@@ -255,7 +234,6 @@ printacol(DISPLAY *dp)
 	FTSENT *p;
 	int chcnt, col, colwidth;
 	int numcols;
-	char szbuf[5];
 
 	colwidth = dp->maxlen;
 	if (f_inode)
@@ -279,18 +257,8 @@ printacol(DISPLAY *dp)
 	numcols = termwidth / colwidth;
 	colwidth = termwidth / numcols;		/* spread out if possible */
 
-	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size)) {
-		if (f_humanize) {
-			if ((humanize_number(szbuf, sizeof(szbuf), (int64_t)dp->stotal,
-			    "", HN_AUTOSCALE,
-			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
-				err(1, "humanize_number");
-			(void)printf("total %s\n", szbuf);
-		} else {
-			(void)printf("total %llu\n",
-			    (long long)(howmany(dp->btotal, blocksize)));
-		}
-	}
+	printtotal(dp);				/* "total: %u\n" */
+
 	chcnt = col = 0;
 	for (p = dp->list; p; p = p->fts_link) {
 		if (IS_NOPRINT(p))
@@ -404,6 +372,30 @@ printtime(time_t ftime)
 			(void)putchar(longstring[i]);
 	}
 	(void)putchar(' ');
+}
+
+/*
+ * Display total used disk space in the form "total: %u\n".
+ * Note: POSIX (IEEE Std 1003.1-2001) says this should be always in 512 blocks,
+ * but we humanise it with -h and use 1024 with -k.
+ */
+static void
+printtotal(DISPLAY *dp)
+{
+	char szbuf[5];
+	
+	if (dp->list->fts_level != FTS_ROOTLEVEL && (f_longform || f_size)) {
+		if (f_humanize) {
+			if ((humanize_number(szbuf, sizeof(szbuf), (int64_t)dp->stotal,
+			    "", HN_AUTOSCALE,
+			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
+				err(1, "humanize_number");
+			(void)printf("total %s\n", szbuf);
+		} else {
+			(void)printf("total %llu\n",
+			    (long long)(howmany(dp->btotal, blocksize)));
+		}
+	}
 }
 
 static int
