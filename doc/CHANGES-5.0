@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.5 2008/11/02 02:28:00 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.6 2008/11/02 18:07:53 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -28,4 +28,12 @@ sys/kern/vfs_dirhash.c				1.5-1.8
 	directories in memory overflow situations. Clarify the dirhash
 	locking protocol and remove unnessiary #ifdef DEBUG flag.
 	[reinoud, ticket #5]
+
+etc/etc.amd64/MAKEDEV.conf			1.13-1.15
+etc/etc.i386/MAKEDEV.conf			1.17-1.19
+
+	Create 4 Xen disks by default and all three Xen devices to make it
+	usable out-of-the-box.  Create 8 dk instances by default, since GPT
+	autodiscovery is enabled.
+	[joerg, ticket #3]
 
