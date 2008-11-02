@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.26.2.2 2008/11/02 12:10:18 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.26.2.3 2008/11/02 13:07:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -2262,38 +2262,33 @@ $trap_return:
 $trap$all$end:
 EXIT(TLABEL(all))
 
-/* XXXNH - user r8,r9 instead of t1,t2 ??? */
 	.align	32
 	.export	TLABEL(ibrk), entry
 ENTRY_NOPROFILE(TLABEL(ibrk),0)
-	mtctl	%t1, %tr2
-	mtctl	%t2, %tr3
-
 	/* If called by a user process then always pass it to trap() */
-	mfctl	%pcoq, %t1
-	extru,=	%t1, 31, 2, %r0
+	mfctl	%pcoq, %r8
+	extru,=	%r8, 31, 2, %r0
 	b,n	$ibrk_bad
 
 	/* don't accept breaks from data segments */
 	.import etext
-	ldil	L%etext, %t2
-	ldo	R%etext(%t2), %t2
-	comb,>>=,n %t1, %t2, $ibrk_bad
+	ldil	L%etext, %r9
+	ldo	R%etext(%r9), %r9
+	comb,>>=,n %r8, %r9, $ibrk_bad
 
-	mfctl	%iir, %t1
-	extru	%t1, 31, 5, %t2
-	comib,<>,n HPPA_BREAK_KERNEL, %t2, $ibrk_bad
+	mfctl	%iir, %r8
+	extru	%r8, 31, 5, %r9
+	comib,<>,n HPPA_BREAK_KERNEL, %r9, $ibrk_bad
 
 	/* now process all those `break' calls we make */
-	extru	%t1, 18, 13, %t2
-	comib,=,n HPPA_BREAK_GET_PSW, %t2, $ibrk_getpsw
-	comib,=,n HPPA_BREAK_SET_PSW, %t2, $ibrk_setpsw
+	extru	%r8, 18, 13, %r9
+	comib,=,n HPPA_BREAK_GET_PSW, %r9, $ibrk_getpsw
+	comib,=,n HPPA_BREAK_SET_PSW, %r9, $ibrk_setpsw
 
 $ibrk_bad:
 	/* illegal (unimplemented) break entry point */
-	mfctl	%tr3, %t2
 	b	TLABEL(all)
-	mfctl	%tr2, %t1
+	nop
 
 $ibrk_getpsw:
 	b	$ibrk_exit
@@ -2310,13 +2305,10 @@ $ibrk_setpsw:
 $ibrk_exit:
 	/* skip the break */
 	mtctl	%r0, %pcoq
-	mfctl	%pcoq, %t1
-	mtctl	%t1, %pcoq
-	ldo	4(%t1), %t1
-	mtctl	%t1, %pcoq
-	mfctl	%tr3, %t2
-	mfctl	%tr2, %t1
-	mfctl	%tr7, %r1
-	rfi
+	mfctl	%pcoq, %r9
+	mtctl	%r9, %pcoq
+	ldo	4(%r9), %r9
+	mtctl	%r9, %pcoq
+	rfir
 	nop
 EXIT(TLABEL(ibrk))
