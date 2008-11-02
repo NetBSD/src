@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678.2.10 2007/11/25 08:57:05 xtraeme Exp $
+# $NetBSD: mi,v 1.678.2.10.2.1 2008/11/02 17:48:10 snj Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -3317,6 +3317,7 @@
 ./usr/share/zoneinfo/America/Argentina/Mendoza	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Rio_Gallegos	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/San_Juan	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/San_Luis	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Tucuman	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Ushuaia	base-sys-share		share
 ./usr/share/zoneinfo/America/Aruba		base-sys-share		share
@@ -3396,6 +3397,7 @@
 ./usr/share/zoneinfo/America/Maceio		base-sys-share		share
 ./usr/share/zoneinfo/America/Managua		base-sys-share		share
 ./usr/share/zoneinfo/America/Manaus		base-sys-share		share
+./usr/share/zoneinfo/America/Marigot		base-sys-share		share
 ./usr/share/zoneinfo/America/Martinique		base-sys-share		share
 ./usr/share/zoneinfo/America/Mazatlan		base-sys-share		share
 ./usr/share/zoneinfo/America/Mendoza		base-sys-share		share
@@ -3432,11 +3434,13 @@
 ./usr/share/zoneinfo/America/Resolute		base-sys-share		share
 ./usr/share/zoneinfo/America/Rio_Branco		base-sys-share		share
 ./usr/share/zoneinfo/America/Rosario		base-sys-share		share
+./usr/share/zoneinfo/America/Santarem		base-sys-share		share
 ./usr/share/zoneinfo/America/Santiago		base-sys-share		share
 ./usr/share/zoneinfo/America/Santo_Domingo	base-sys-share		share
 ./usr/share/zoneinfo/America/Sao_Paulo		base-sys-share		share
 ./usr/share/zoneinfo/America/Scoresbysund	base-sys-share		share
 ./usr/share/zoneinfo/America/Shiprock		base-sys-share		share
+./usr/share/zoneinfo/America/St_Barthelemy		base-sys-share		share
 ./usr/share/zoneinfo/America/St_Johns		base-sys-share		share
 ./usr/share/zoneinfo/America/St_Kitts		base-sys-share		share
 ./usr/share/zoneinfo/America/St_Lucia		base-sys-share		share
@@ -3499,6 +3503,7 @@
 ./usr/share/zoneinfo/Asia/Dushanbe		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Gaza			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Harbin		base-sys-share		share
+./usr/share/zoneinfo/Asia/Ho_Chi_Minh		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Hong_Kong		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Hovd			base-sys-share		share
 ./usr/share/zoneinfo/Asia/Irkutsk		base-sys-share		share
@@ -3512,6 +3517,7 @@
 ./usr/share/zoneinfo/Asia/Karachi		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kashgar		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Katmandu		base-sys-share		share
+./usr/share/zoneinfo/Asia/Kolkata		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Krasnoyarsk		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kuala_Lumpur		base-sys-share		share
 ./usr/share/zoneinfo/Asia/Kuching		base-sys-share		share
