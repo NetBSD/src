@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2008/06/14 12:01:28 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2008/11/03 15:13:16 rjs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2008/06/14 12:01:28 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2008/11/03 15:13:16 rjs Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -225,15 +225,15 @@ halt_sys:
 	doshutdownhooks();
 
 	if (howto & RB_HALT) {
-                printf("\n");
-                printf("The operating system has halted.\n");
-                printf("Please press any key to reboot.\n\n");
+                aprint_normal("\n");
+                aprint_normal("The operating system has halted.\n");
+                aprint_normal("Please press any key to reboot.\n\n");
                 cnpollc(1);	/* for proper keyboard command handling */
                 cngetc();
                 cnpollc(0);
 	}
 
-	printf("rebooting...\n\n");
+	aprint_normal("rebooting...\n\n");
 
 
         {
