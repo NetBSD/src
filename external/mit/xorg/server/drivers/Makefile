@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2008/10/29 23:49:56 macallan Exp $
+#	$NetBSD: Makefile,v 1.19 2008/11/03 04:49:44 macallan Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -35,6 +35,10 @@ SUBDIR+= \
 	xf86-video-radeon \
 	xf86-video-suncg6 \
 	xf86-video-sunffb \
+	xf86-video-wsfb
+.elif ${MACHINE} == "shark"
+SUBDIR+= \
+	xf86-video-chips \
 	xf86-video-wsfb
 .else
 
