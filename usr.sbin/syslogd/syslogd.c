@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.87 2008/10/31 16:12:19 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.88 2008/11/03 02:44:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.87 2008/10/31 16:12:19 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.88 2008/11/03 02:44:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2225,14 +2225,13 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 			*p = FORCE2ASCII(*p);
 			p++;
 		}
-		v->iov_base = line;
+		v->iov_base = line + tlsprefixlen + prilen;
 		v->iov_len = linelen - tlsprefixlen - prilen;
 		ADDEV();
 		v->iov_base = crnl;
 		v->iov_len = 2;
 		ADDEV();
 		break;
-	case F_USERS:
 	case F_WALL:
 		v->iov_base = greetings;
 		v->iov_len = snprintf(greetings, sizeof(greetings),
@@ -2240,13 +2239,14 @@ fprintlog(struct filed *f, struct buf_msg *passedbuffer, struct buf_queue *qentr
 		    (buffer->host ? buffer->host : buffer->recvhost),
 		    buffer->timestamp);
 		ADDEV();
+	case F_USERS: /* fallthrough */
 		/* filter non-ASCII */
 		p = line;
 		while (*p) {
 			*p = FORCE2ASCII(*p);
 			p++;
 		}
-		v->iov_base = line;
+		v->iov_base = line + tlsprefixlen + prilen;
 		v->iov_len = linelen - tlsprefixlen - prilen;
 		ADDEV();
 		v->iov_base = &crnl[1];
