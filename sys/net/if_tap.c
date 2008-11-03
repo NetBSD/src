@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.48 2008/11/02 14:46:55 hans Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.49 2008/11/03 00:52:07 hans Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.48 2008/11/02 14:46:55 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.49 2008/11/03 00:52:07 hans Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -389,6 +389,8 @@ tap_detach(device_t self, int flags)
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 	seldestroy(&sc->sc_rsel);
 	mutex_destroy(&sc->sc_rdlock);
+
+	pmf_device_deregister(self);
 
 	return (0);
 }

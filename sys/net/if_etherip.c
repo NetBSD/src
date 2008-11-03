@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.23 2008/11/02 14:46:55 hans Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.24 2008/11/03 00:52:07 hans Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.23 2008/11/02 14:46:55 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.24 2008/11/03 00:52:07 hans Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -323,6 +323,8 @@ etherip_detach(device_t self, int flags)
 	if_detach(ifp);
 	rtcache_free(&sc->sc_ro);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
+
+	pmf_device_deregister(self);
 
 	return 0;
 }
