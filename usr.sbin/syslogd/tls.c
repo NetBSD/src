@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.1 2008/10/31 16:12:19 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.2 2008/11/03 15:08:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.1 2008/10/31 16:12:19 christos Exp $");
+__RCSID("$NetBSD: tls.c,v 1.2 2008/11/03 15:08:16 christos Exp $");
 
 #ifndef DISABLE_TLS
 #include "syslogd.h"
@@ -1483,7 +1483,7 @@ dispatch_tls_read(int fd_lib, short event, void *arg)
 	struct TLS_Incoming_Conn *c = (struct TLS_Incoming_Conn *) arg;
 	int fd = c->socket;
 	int error;
-	int_fast16_t rc;
+	int rc;
 	sigset_t newmask, omask;
 	bool retrying;
 
