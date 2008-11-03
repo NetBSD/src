@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.22 2008/11/03 12:19:06 cegger Exp $ */
+/*	$NetBSD: ipmi.c,v 1.23 2008/11/03 12:25:53 cegger Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.22 2008/11/03 12:19:06 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.23 2008/11/03 12:25:53 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,7 +100,7 @@ int	ipmi_enabled = 0;
 
 #define SMBIOS_TYPE_IPMI	0x26
 
-#define DEVNAME(s)  (device_xname(&((s)->sc_dev)))
+#define DEVNAME(s)  (device_xname((s)->sc_dev))
 
 /*
  * Format of SMBIOS IPMI Flags
@@ -1704,22 +1704,27 @@ ipmi_probe(struct ipmi_attach_args *ia)
 int
 ipmi_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct ipmi_softc	sc;
+	struct ipmi_softc sc;
+	struct device dev;
 	struct ipmi_attach_args *ia = aux;
 	uint8_t		cmd[32];
 	int			len;
 	int			rv = 0;
 
+	/* functions called below access this field in their error path
+	 * via the DEVNAME macro. So initialize this. */
+	strlcpy(dev.dv_xname, "ipmiX", sizeof(dev.dv_xname));
+	sc.sc_dev = &dev;
+
 	/* Map registers */
-	if (ipmi_map_regs(&sc, ia) != 0)
+	if (ipmi_map_regs(&sc, ia) == 0)
 		return 0;
 
 	sc.sc_if->probe(&sc);
 
 	/* Identify BMC device early to detect lying bios */
 	if (ipmi_sendcmd(&sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID,
-	    0, NULL))
-	{
+	    0, NULL)) {
 		dbg_printf(1, ": unable to send get device id "
 		    "command\n");
 		goto unmap;
@@ -1853,9 +1858,7 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 	struct ipmi_softc	*sc = device_private(self);
 
 	sc->sc_ia = *(struct ipmi_attach_args *)aux;
-#if notyet
 	sc->sc_dev = self;
-#endif
 	aprint_normal("\n");
 	config_interrupts(self, ipmi_attach2);
 }
