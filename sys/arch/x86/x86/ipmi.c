@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.23 2008/11/03 12:25:53 cegger Exp $ */
+/*	$NetBSD: ipmi.c,v 1.24 2008/11/03 12:33:08 cegger Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.23 2008/11/03 12:25:53 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.24 2008/11/03 12:33:08 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1717,7 +1717,7 @@ ipmi_match(device_t parent, cfdata_t cf, void *aux)
 	sc.sc_dev = &dev;
 
 	/* Map registers */
-	if (ipmi_map_regs(&sc, ia) == 0)
+	if (ipmi_map_regs(&sc, ia) != 0)
 		return 0;
 
 	sc.sc_if->probe(&sc);
