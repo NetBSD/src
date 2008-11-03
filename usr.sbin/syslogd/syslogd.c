@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.88 2008/11/03 02:44:01 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.89 2008/11/03 22:59:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.88 2008/11/03 02:44:01 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.89 2008/11/03 22:59:51 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1727,6 +1727,8 @@ check_timestamp(unsigned char *from_buf, char **to_buf,
 		    && from_buf[i] != ' ' ; i++)
 			tsbuf[i] = from_buf[i]; /* copy TZ */
 
+		(void)memset(&parsed, 0, sizeof(parsed));
+		parsed.tm_isdst = -1;
 		(void)strptime(tsbuf, "%FT%T%z", &parsed);
 		timeval = mktime(&parsed);
 
@@ -1740,6 +1742,8 @@ check_timestamp(unsigned char *from_buf, char **to_buf,
 		time_t timeval;
 		char *rc;
 
+		(void)memset(&parsed, 0, sizeof(parsed));
+		parsed.tm_isdst = -1;
 		DPRINTF(D_CALL, "check_timestamp(): convert BSD->ISO\n");
 		rc = strptime((char *)from_buf, "%b %d %T", &parsed);
 		current = gmtime(&now);
