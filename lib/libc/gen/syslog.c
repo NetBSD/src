@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.44 2008/10/31 17:49:48 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.45 2008/11/03 23:21:19 cube Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.44 2008/10/31 17:49:48 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.45 2008/11/03 23:21:19 cube Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -508,7 +508,7 @@ init_hostname(void)
 	if (strchr(hostname, '.') != NULL) /* FQDN */
 		return;
 
-	if (getaddrinfo(hostname, NULL, &hints, &res) == 0)
+	if (getaddrinfo(hostname, NULL, &hints, &res) != 0)
 		return;
 	/* try to resolve back to hostname */
 	(void)getnameinfo(res->ai_addr, (socklen_t)res->ai_addr->sa_len,
