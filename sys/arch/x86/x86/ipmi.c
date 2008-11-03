@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.21 2008/10/30 20:28:02 cegger Exp $ */
+/*	$NetBSD: ipmi.c,v 1.22 2008/11/03 12:19:06 cegger Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.21 2008/10/30 20:28:02 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.22 2008/11/03 12:19:06 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1711,28 +1711,30 @@ ipmi_match(device_t parent, cfdata_t cf, void *aux)
 	int			rv = 0;
 
 	/* Map registers */
-	if (ipmi_map_regs(&sc, ia) == 0) {
-		sc.sc_if->probe(&sc);
+	if (ipmi_map_regs(&sc, ia) != 0)
+		return 0;
 
-		/* Identify BMC device early to detect lying bios */
-		if (ipmi_sendcmd(&sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID,
-		    0, NULL)) {
-			dbg_printf(1, ": unable to send get device id "
-			    "command\n");
-			goto unmap;
-		}
-		if (ipmi_recvcmd(&sc, sizeof(cmd), &len, cmd)) {
-			dbg_printf(1, ": unable to retrieve device id\n");
-			goto unmap;
-		}
+	sc.sc_if->probe(&sc);
 
-		dbg_dump(1, "bmc data", len, cmd);
-		rv = 1; /* GETID worked, we got IPMI */
-unmap:
-		ipmi_unmap_regs(&sc, ia);
+	/* Identify BMC device early to detect lying bios */
+	if (ipmi_sendcmd(&sc, BMC_SA, 0, APP_NETFN, APP_GET_DEVICE_ID,
+	    0, NULL))
+	{
+		dbg_printf(1, ": unable to send get device id "
+		    "command\n");
+		goto unmap;
+	}
+	if (ipmi_recvcmd(&sc, sizeof(cmd), &len, cmd)) {
+		dbg_printf(1, ": unable to retrieve device id\n");
+		goto unmap;
 	}
 
-	return (rv);
+	dbg_dump(1, "bmc data", len, cmd);
+	rv = 1; /* GETID worked, we got IPMI */
+unmap:
+	ipmi_unmap_regs(&sc, ia);
+
+	return rv;
 }
 
 static void
