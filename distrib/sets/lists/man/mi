@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1110 2008/11/02 22:11:36 tls Exp $
+# $NetBSD: mi,v 1.1111 2008/11/03 00:47:42 jnemeth Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3704,6 +3704,7 @@
 ./usr/share/man/html4/njs.html			man-sys-htmlman		html
 ./usr/share/man/html4/nsclpcsio.html		man-sys-htmlman		html
 ./usr/share/man/html4/nsmb.html			man-sys-htmlman		html
+./usr/share/man/html4/nsp.html			man-sys-htmlman		html
 ./usr/share/man/html4/nsphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/nsphyter.html		man-sys-htmlman		html
 ./usr/share/man/html4/ntwo.html			man-sys-htmlman		html
