@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.21 2008/08/07 04:15:52 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.22 2008/11/04 07:21:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,7 +76,7 @@
 #include "opt_arm32_pmap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.21 2008/08/07 04:15:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.22 2008/11/04 07:21:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -92,9 +92,9 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.21 2008/08/07 04:15:52 matt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-extern vaddr_t memhook;            /* poor name! */
+extern vaddr_t memhook;			/* in pmap.c (poor name!) */
+extern kmutex_t memlock;		/* in pmap.c */
 void *zeropage;
-int physlock;
 
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
@@ -120,14 +120,7 @@ mmrw(dev, uio, flags)
 
 	if (minor(dev) == DEV_MEM) {
 		/* lock against other uses of shared vmmap */
-		while (physlock > 0) {
-			physlock++;
-			error = tsleep((void *)&physlock, PZERO | PCATCH,
-			    "mmrw", 0);
-			if (error)
-				return (error);
-		}
-		physlock = 1;
+		mutex_enter(&memlock);
 	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
@@ -203,9 +196,7 @@ mmrw(dev, uio, flags)
 	}
 	if (minor(dev) == DEV_MEM) {
 /*unlock:*/
-		if (physlock > 1)
-			wakeup((void *)&physlock);
-		physlock = 0;
+		mutex_exit(&memlock);
 	}
 	return (error);
 }
