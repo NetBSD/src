@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.964 2008/11/04 12:30:54 cegger Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.965 2008/11/04 13:23:41 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.963 2008/11/04 12:30:07 cegger Exp
+ *	NetBSD: pcidevs,v 1.964 2008/11/04 13:22:29 cegger Exp
  */
 
 /*
@@ -1308,7 +1308,7 @@
 #define	PCI_PRODUCT_ATI_RD790_PPB_GFX1_A	0x5980		/* RD790 PCI Bridge GFX1 Port A */
 #define	PCI_PRODUCT_ATI_RD790_PPB_GFX1_B	0x5981		/* RD790 PCI Bridge GFX1 Port B */
 #define	PCI_PRODUCT_ATI_RD790_PPB_NBSB	0x5982		/* RD790 PCI Bridge (NB-SB link) */
-prodcut ATI RD890_NB_DS16	0x5910	RD890 Northbridge Dual Slot 2x16 GFX
+#define	PCI_PRODUCT_ATI_RD890_NB_DS16	0x5910		/* RD890 Northbridge Dual Slot 2x16 GFX */
 #define	PCI_PRODUCT_ATI_RD890_NB_SS	0x5911		/* RD890 Northbridge Single Slot GFX */
 #define	PCI_PRODUCT_ATI_RD890_NB_DS8	0x5912		/* RD890 Northbridge Dual Slot 2x8 GFX */
 #define	PCI_PRODUCT_ATI_RD890_PPB_GFX0_A	0x5913		/* RD890 PCI Bridge GFX0 Port A */

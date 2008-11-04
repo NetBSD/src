@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.963 2008/11/04 12:30:54 cegger Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.964 2008/11/04 13:23:41 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.963 2008/11/04 12:30:07 cegger Exp
+ *	NetBSD: pcidevs,v 1.964 2008/11/04 13:22:29 cegger Exp
  */
 
 /*
@@ -4782,6 +4782,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_NBSB,
 	    "RD790 PCI Bridge (NB-SB link)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_NB_DS16,
+	    "RD890 Northbridge Dual Slot 2x16 GFX",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_NB_SS,
@@ -14620,4 +14624,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3054;
+const int pci_nproducts = 3055;
