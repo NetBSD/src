@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.29 2008/11/04 18:37:28 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.30 2008/11/04 20:17:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.29 2008/11/04 18:37:28 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.30 2008/11/04 20:17:56 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -276,7 +276,7 @@ literal:
 				 * number with century.
 				 */
 			do
-				*bp++;
+				bp++;
 			while (isdigit(*bp));
 			continue;
 
