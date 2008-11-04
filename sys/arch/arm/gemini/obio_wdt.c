@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_wdt.c,v 1.2 2008/10/31 15:29:14 cliff Exp $	*/
+/*	$NetBSD: obio_wdt.c,v 1.3 2008/11/04 19:47:00 cliff Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -36,7 +36,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.2 2008/10/31 15:29:14 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.3 2008/11/04 19:47:00 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -77,7 +77,7 @@ geminiwdt_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 geminiwdt_attach(struct device *parent, struct device *self, void *aux)
 {
-	geminiwdt_softc_t *sc = (geminiwdt_softc_t *)self;
+	geminiwdt_softc_t *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
 
 	sc->sc_addr = obio->obio_addr;
