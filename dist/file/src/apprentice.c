@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.19 2008/08/31 07:53:33 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.20 2008/11/04 13:34:11 hubertf Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -30,11 +30,9 @@
 /*
  * apprentice - make one pass through /etc/magic, learning its secrets.
  */
-#include <sys/param.h>
 
 #include "file.h"
 #include "magic.h"
-
 #include "patchlevel.h"
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -45,6 +43,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #ifdef QUICK
 #include <sys/mman.h>
 #endif
@@ -55,7 +54,7 @@
 #if 0
 FILE_RCSID("@(#)$File: apprentice.c,v 1.140 2008/07/20 04:02:15 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.19 2008/08/31 07:53:33 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.20 2008/11/04 13:34:11 hubertf Exp $");
 #endif
 #endif	/* lint */
 
