@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.28 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: strptime.c,v 1.29 2008/11/04 18:37:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.28 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.29 2008/11/04 18:37:28 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: strptime.c,v 1.28 2008/04/28 20:23:01 martin Exp $");
 #include <string.h>
 #include <time.h>
 #include <tzfile.h>
+#include "private.h"
 
 #ifdef __weak_alias
 __weak_alias(strptime,_strptime)
@@ -56,7 +57,8 @@ __weak_alias(strptime,_strptime)
 #define ALT_O			0x02
 #define	LEGAL_ALT(x)		{ if (alt_format & ~(x)) return NULL; }
 
-static const char gmt[4] = { "GMT" };
+static char gmt[] = { "GMT" };
+static char utc[] = { "UTC" };
 
 static const u_char *conv_num(const unsigned char *, int *, uint, uint);
 static const u_char *find_string(const u_char *, int *, const char * const *,
@@ -68,7 +70,7 @@ strptime(const char *buf, const char *fmt, struct tm *tm)
 {
 	unsigned char c;
 	const unsigned char *bp;
-	int alt_format, i, split_year = 0;
+	int alt_format, i, split_year = 0, neg, offs;
 	const char *new_fmt;
 
 	bp = (const u_char *)buf;
@@ -258,6 +260,30 @@ literal:
 			LEGAL_ALT(ALT_O);
 			continue;
 
+		case 'u':	/* The day of week, monday = 1. */
+			bp = conv_num(bp, &i, 1, 7);
+			tm->tm_wday = i % 7;
+			LEGAL_ALT(ALT_O);
+			continue;
+
+		case 'g':	/* The year corresponding to the ISO week
+				 * number but without the century.
+				 */
+			bp = conv_num(bp, &i, 0, 99);
+			continue;
+
+		case 'G':	/* The year corresponding to the ISO week
+				 * number with century.
+				 */
+			do
+				*bp++;
+			while (isdigit(*bp));
+			continue;
+
+		case 'V':	/* The ISO 8601:1988 week number as decimal */
+			bp = conv_num(bp, &i, 0, 53);
+			continue;
+
 		case 'Y':	/* The year. */
 			i = TM_YEAR_BASE;	/* just for data sanity... */
 			bp = conv_num(bp, &i, 0, 9999);
@@ -310,6 +336,72 @@ literal:
 				}
 				bp = ep;
 			}
+			continue;
+
+		case 'z':
+			/*
+			 * We recognize all ISO 8601 formats:
+			 * Z	= Zulu time/UTC
+			 * [+-]hhmm
+			 * [+-]hh:mm
+			 * [+-]hh
+			 */
+			while (isspace(*bp))
+				bp++;
+
+			switch (*bp++) {
+			case 'Z':
+				tm->tm_isdst = 0;
+#ifdef TM_GMTOFF
+				tm->TM_GMTOFF = 0;
+#endif
+#ifdef TM_ZONE
+				tm->TM_ZONE = utc;
+#endif
+				continue;
+			case '+':
+				neg = 0;
+				break;
+			case '-':
+				neg = 1;
+				break;
+			default:
+				return NULL;
+			}
+			offs = 0;
+			for (i = 0; i < 4; ) {
+				if (isdigit(*bp)) {
+					offs = offs * 10 + (*bp++ - '0');
+					i++;
+					continue;
+				}
+				if (i == 2 && *bp == ':') {
+					bp++;
+					continue;
+				}
+				break;
+			}
+			switch (i) {
+			case 2:
+				offs *= 100;
+				break;
+			case 4:
+				i = offs % 100;
+				if (i >= 60)
+					return NULL;
+				/* Convert minutes into decimal */
+				offs = (offs / 100) * 100 + (i * 50) / 30;
+				break;
+			default:
+				return NULL;
+			}
+			tm->tm_isdst = 0;	/* XXX */
+#ifdef TM_GMTOFF
+			tm->TM_GMTOFF = offs;
+#endif
+#ifdef TM_ZONE
+			tm->TM_ZONE = NULL;	/* XXX */
+#endif
 			continue;
 
 		/*
