@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/31 20:24:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/11/04 15:25:58 christos Exp $
 
 NOMAN=	# defined
 
@@ -34,5 +34,11 @@ ARCHSUBDIR=	i386
 dependall: ${PROG}
 
 .include "${.CURDIR}/Makefile"
+
+.if ${MACHINE} == "sparc64"
+# XXX: Turn on big pic for sparc, because we somehow are generating GOT13
+# relocations. Why?!?
+CPPFLAGS+=-fPIC
+.endif
 
 .endif
