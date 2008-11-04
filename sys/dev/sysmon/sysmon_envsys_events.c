@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.59 2008/11/04 22:06:10 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.60 2008/11/04 22:16:15 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.59 2008/11/04 22:06:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.60 2008/11/04 22:16:15 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -642,7 +642,7 @@ sme_events_worker(struct work *wk, void *arg)
 		    see->see_evsent != edata->value_cur) {
 			sysmon_penvsys_event(&see->see_pes,
 					     PENVSYS_EVENT_CRITICAL);
-			see->see_evsent = edata->state;
+			see->see_evsent = edata->value_cur;
 		}
 		break;
 
