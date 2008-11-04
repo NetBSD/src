@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.tarfloppy,v 1.13 2008/06/23 02:16:53 matt Exp $
+#	$NetBSD: Makefile.tarfloppy,v 1.14 2008/11/04 23:02:52 dbj Exp $
 #
 # Makefile snippet to create a set of ustar floppies.
 # Each floppy has an 8KB header, followed by part or all of the ustar archive.
@@ -42,6 +42,13 @@ boot: ${FLOPPY_BOOT}
 .endif
 .endif	# FLOPPY_BOOT					# }
 
+.if defined(FLOPPY_BOOT_CFG)
+CLEANFILES+=	boot.cfg
+boot.cfg:	${FLOPPY_BOOT_CFG}
+	${_MKTARGET_CREATE} "(from: ${.ALLSRC})"
+	@rm -f ${.TARGET}
+	@cp ${.ALLSRC} ${.TARGET}
+.endif	# FLOPPY_BOOT_CFG
 
 .if defined(FLOPPY_NETBSD)				# {
 CLEANFILES+=	netbsd netbsd.tmp
