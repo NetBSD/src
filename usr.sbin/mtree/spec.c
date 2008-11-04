@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.65 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: spec.c,v 1.66 2008/11/04 23:22:48 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.65 2008/04/28 20:24:17 martin Exp $");
+__RCSID("$NetBSD: spec.c,v 1.66 2008/11/04 23:22:48 dbj Exp $");
 #endif
 #endif /* not lint */
 
@@ -430,7 +430,7 @@ parsedev(char *arg)
 			mtree_err("not enough arguments");
 		result = (*pack)(argc, numbers, &error);
 		if (error != NULL)
-			mtree_err(error);
+			mtree_err("%s", error);
 	} else {
 		result = (dev_t)strtoul(arg, &ep, 0);
 		if (*ep != '\0')
