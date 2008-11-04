@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.210 2008/09/11 09:14:46 hannken Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.211 2008/11/04 16:08:41 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.210 2008/09/11 09:14:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.211 2008/11/04 16:08:41 reinoud Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1653,7 +1653,8 @@ buf_syncwait(void)
 			 * written will be remarked as dirty until other
 			 * buffers are written.
 			 */
-			if (bp->b_vp && bp->b_vp->v_mount
+			if (bp->b_vp && bp->b_vp->v_tag != VT_NON
+			    && bp->b_vp->v_mount
 			    && (bp->b_vp->v_mount->mnt_flag & MNT_SOFTDEP)
 			    && (bp->b_oflags & BO_DELWRI)) {
 				bremfree(bp);
