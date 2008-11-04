@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2008/10/25 22:27:35 apb Exp $
+#	$NetBSD: Makefile,v 1.14 2008/11/04 23:58:40 dbj Exp $
 
 LIBISPRIVATE=	yes
 
@@ -177,7 +177,7 @@ auto-build.h: Makefile
 	mkdir .ab && \
 	(cd .ab && \
 		AWK=${TOOL_AWK:Q} \
-		CC=${HOST_CC:Q} \
+		CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} \
 		MAKE=${MAKE:Q} \
 		CONFIG_SHELL=${HOST_SH:Q} \
 		${HOST_SH} ${GNUHOSTDIST}/gcc/configure \
