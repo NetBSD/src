@@ -1,4 +1,4 @@
-/*	$NetBSD: gencat.c,v 1.25 2008/04/28 20:24:13 martin Exp $	*/
+/*	$NetBSD: gencat.c,v 1.26 2008/11/04 03:14:46 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: gencat.c,v 1.25 2008/04/28 20:24:13 martin Exp $");
+__RCSID("$NetBSD: gencat.c,v 1.26 2008/11/04 03:14:46 ginsbach Exp $");
 #endif
 
 /***********************************************************
@@ -373,7 +373,7 @@ getmsg(int fd, char *cptr, char quote)
 			} else {
 				*cptr = '\0';
 			}
-		} else
+		} else {
 			if (*cptr == '\\') {
 				++cptr;
 				switch (*cptr) {
@@ -436,6 +436,7 @@ getmsg(int fd, char *cptr, char quote)
 			} else {
 				*tptr++ = *cptr++;
 			}
+		}
 	}
 	*tptr = '\0';
 	return (msg);
@@ -498,9 +499,13 @@ MCParse(int fd)
 			if (isdigit((unsigned char) *cptr)) {
 				msgid = atoi(cptr);
 				cptr = cskip(cptr);
-				if (*cptr)
+				if (*cptr) {
 					cptr = wskip(cptr);
-				/* if (*cptr) ++cptr; */
+					if (!*cptr) {
+						MCAddMsg(msgid, "");
+						continue;
+					}
+				}
 			} else {
 				warning(cptr, "neither blank line nor start of a message id");
 				continue;
