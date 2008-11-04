@@ -1,4 +1,4 @@
-.\" $NetBSD: gencat.1,v 1.10 2008/10/19 17:57:19 wiz Exp $
+.\" $NetBSD: gencat.1,v 1.11 2008/11/04 03:14:46 ginsbach Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\" Written by Kee Hinckley <nazgul@somewhere.com>
 .\"
-.Dd October 17, 2008
+.Dd November 4, 2008
 .Os
 .Dt GENCAT 1
 .Sh NAME
@@ -132,18 +132,16 @@ the set identifier specified by the last
 .Li $set
 directive, and the message identifier
 .Ar m .
-.\" XXX Required by POSIX; the code must be fixed first.
-.\" If the
-.\" .Ar message-text
-.\" is empty and there is a space or tab character
-.\" following the message identifier,
-.\" an empty string is stored in the message catalog.
+If the
+.Ar message-text
+is empty and there is a space or tab character
+following the message identifier,
+an empty string is stored in the message catalog.
 If no
 .Ar message-text
 is provided,
-.\" XXX Required by POSIX; the code must be fixed first.
-.\" and if there is no space or tab character following the message
-.\" identifier,
+and if there is no space or tab character following the message
+identifier,
 the message with the message identifier
 .Ar m
 in the current set is removed from the catalog.
