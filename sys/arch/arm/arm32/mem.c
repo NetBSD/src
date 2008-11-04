@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.22 2008/11/04 07:21:24 matt Exp $	*/
+/*	$NetBSD: mem.c,v 1.23 2008/11/04 07:31:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,7 +76,7 @@
 #include "opt_arm32_pmap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.22 2008/11/04 07:21:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.23 2008/11/04 07:31:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -118,10 +118,6 @@ mmrw(dev, uio, flags)
 	int error = 0;
 	vm_prot_t prot;
 
-	if (minor(dev) == DEV_MEM) {
-		/* lock against other uses of shared vmmap */
-		mutex_enter(&memlock);
-	}
 	while (uio->uio_resid > 0 && error == 0) {
 		iov = uio->uio_iov;
 		if (iov->iov_len == 0) {
@@ -149,6 +145,7 @@ mmrw(dev, uio, flags)
 				m += o & arm_cache_prefer_mask;
 			}
 #endif
+			mutex_enter(&memlock);
 			pmap_enter(pmap_kernel(), m,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
@@ -157,6 +154,7 @@ mmrw(dev, uio, flags)
 			error = uiomove((char *)m + o, c, uio);
 			pmap_remove(pmap_kernel(), m, m + PAGE_SIZE);
 			pmap_update(pmap_kernel());
+			mutex_exit(&memlock);
 			break;
 
 		case DEV_KMEM:
@@ -193,10 +191,6 @@ mmrw(dev, uio, flags)
 		default:
 			return (ENXIO);
 		}
-	}
-	if (minor(dev) == DEV_MEM) {
-/*unlock:*/
-		mutex_exit(&memlock);
 	}
 	return (error);
 }
