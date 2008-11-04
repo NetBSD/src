@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962 2008/10/15 18:31:16 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.963 2008/11/04 12:30:54 cegger Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962 2008/10/15 18:30:29 bouyer Exp
+ *	NetBSD: pcidevs,v 1.963 2008/11/04 12:30:07 cegger Exp
  */
 
 /*
@@ -4738,6 +4738,118 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS482M,
 	    "Radeon Xpress Series (RS482M)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GFX0_A,
+	    "RD790 PCI Bridge GFX0 Port A",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GFX0_B,
+	    "RD790 PCI Bridge GFX0 Port B",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_A,
+	    "RD790 PCI Express Bridge GPP Port A",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_B,
+	    "RD790 PCI Express Bridge GPP Port B",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_C,
+	    "RD790 PCI Express Bridge GPP Port C",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_D,
+	    "RD790 PCI Express Bridge GPP Port D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_E,
+	    "RD790 PCI Express Bridge GPP Port E",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_F,
+	    "RD790 PCI Express Bridge GPP Port F",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GFX1_A,
+	    "RD790 PCI Bridge GFX1 Port A",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GFX1_B,
+	    "RD790 PCI Bridge GFX1 Port B",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_NBSB,
+	    "RD790 PCI Bridge (NB-SB link)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_NB_SS,
+	    "RD890 Northbridge Single Slot GFX",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_NB_DS8,
+	    "RD890 Northbridge Dual Slot 2x8 GFX",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GFX0_A,
+	    "RD890 PCI Bridge GFX0 Port A",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GFX0_B,
+	    "RD890 PCI Bridge GFX0 Port B",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_A,
+	    "RD890 PCI Express Bridge GPP Port A",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_B,
+	    "RD890 PCI Express Bridge GPP Port B",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_C,
+	    "RD890 PCI Express Bridge GPP Port C",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_D,
+	    "RD890 PCI Express Bridge GPP Port D",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_E,
+	    "RD890 PCI Express Bridge GPP Port E",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_F,
+	    "RD890 PCI Express Bridge GPP Port F",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_G,
+	    "RD890 PCI Express Bridge GPP Port G",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_H,
+	    "RD890 PCI Express Bridge GPP Port H",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GFX1_A,
+	    "RD890 PCI Bridge GFX1 Port A",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GFX1_B,
+	    "RD890 PCI Bridge GFX1 Port B",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_NBSB,
+	    "RD890 PCI Bridge (NB-SB link)",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_IOMMU,
+	    "RD890 IOMMU",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_XPRESS_200,
+	    "Radeon Xpress 200",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_XRP,
@@ -14508,4 +14620,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3026;
+const int pci_nproducts = 3054;
