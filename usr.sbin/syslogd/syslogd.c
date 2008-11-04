@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.90 2008/11/04 10:01:56 blymn Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.91 2008/11/04 18:52:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.90 2008/11/04 10:01:56 blymn Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.91 2008/11/04 18:52:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -4530,7 +4530,7 @@ make_timestamp(time_t *in_now, bool iso)
 	int frac_digits = 6;
 	struct timeval tv;
 	time_t mytime;
-	struct tm *ltime;
+	struct tm ltime;
 	int len = 0;
 	int tzlen = 0;
 	/* uses global var: time_t now; */
@@ -4548,12 +4548,12 @@ make_timestamp(time_t *in_now, bool iso)
 		return timestamp;
 	}
 
-	ltime = localtime(&mytime);
-	len += strftime(timestamp, TIMESTAMPBUFSIZE, "%FT%T", ltime);
+	localtime_r(&mytime, &ltime);
+	len += strftime(timestamp, TIMESTAMPBUFSIZE, "%FT%T", &ltime);
 	snprintf(&(timestamp[len]), frac_digits+2, ".%.*ld",
 		frac_digits, tv.tv_usec);
 	len += frac_digits+1;
-	tzlen = strftime(&(timestamp[len]), TIMESTAMPBUFSIZE-len, "%z", ltime);
+	tzlen = strftime(&(timestamp[len]), TIMESTAMPBUFSIZE-len, "%z", &ltime);
 	len += tzlen;
 	
 	if (tzlen == 5) {
