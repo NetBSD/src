@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.39 2008/10/24 21:09:24 jym Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.40 2008/11/05 21:04:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.39 2008/10/24 21:09:24 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.40 2008/11/05 21:04:05 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -287,29 +287,40 @@ splx:
 	 * C version of spllower(). ASTs will be checked when
 	 * hypevisor_callback() exits, so no need to check here.
 	 */
-	iplbit = 1 << (NIPL - 1);
-	i = (NIPL - 1);
 	iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending);
 	while (iplmask != 0) {
-		KASSERT(iplbit != 0);
-		while (iplmask & iplbit) {
-			ci->ci_ipending &= ~iplbit;
-			KASSERT(i > ilevel);
-			ci->ci_ilevel = i;
-			for (ih = ci->ci_isources[i]->ipl_handlers; ih != NULL;
-			    ih = ih->ih_ipl_next) {
-				KASSERT(ih->ih_level == i);
-				sti();
-				ih_fun = (void *)ih->ih_fun;
-				ih_fun(ih->ih_arg, regs);
-				cli();
+		iplbit = 1 << (NIPL - 1);
+		i = (NIPL - 1);
+		while (iplmask != 0 && i > ilevel) {
+			while (iplmask & iplbit) {
+				ci->ci_ipending &= ~iplbit;
+				ci->ci_ilevel = i;
+				for (ih = ci->ci_isources[i]->ipl_handlers;
+				    ih != NULL; ih = ih->ih_ipl_next) {
+					sti();
+					ih_fun = (void *)ih->ih_fun;
+					ih_fun(ih->ih_arg, regs);
+					cli();
+					if (ci->ci_ilevel != i) {
+						printf("evtchn_do_event: "
+						    "handler %p didn't lower "
+						    "ipl %d %d\n",
+						    ih_fun, ci->ci_ilevel, i);
+						ci->ci_ilevel = i;
+					}
+				}
+				hypervisor_enable_ipl(i);
+				/* more pending IPLs may have been registered */
+				iplmask =
+				    (IUNMASK(ci, ilevel) & ci->ci_ipending);
 			}
-			hypervisor_enable_ipl(i);
-			/* more pending IPLs may have been registered */
-			iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending);
+			i--;
+			iplbit >>= 1;
 		}
-		i--;
-		iplbit >>= 1;
+		if (iplmask != 0) {
+			printf("evtchn_do_event: iplmask %d ilevel %d\n",
+			    iplmask, ilevel);
+		}
 	}
 	ci->ci_ilevel = ilevel;
 	return 0;
