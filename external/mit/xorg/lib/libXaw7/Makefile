@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/12 20:20:49 hubertf Exp $
+#	$NetBSD: Makefile,v 1.4 2008/11/05 19:50:06 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ SRCS=	Actions.c AllWidgets.c AsciiSink.c AsciiSrc.c AsciiText.c \
 	XawI18n.c XawIm.c XawInit.c
 
 CPPFLAGS+=	-DHAS_WCHAR_H -DHAS_WCTYPE_H -DNO_WIDEC_H -DHAVE_ISWALNUM
-CPPFLAGS+=	-DPROJECT_ROOT=\"${X11ROOTDIR}\"
+CPPFLAGS+=	-DPROJECT_ROOT=\"${X11ROOTDIR}\" -DXAW7
 
 LIBDPLIBS=\
 	Xmu	${.CURDIR}/../libXmu \
