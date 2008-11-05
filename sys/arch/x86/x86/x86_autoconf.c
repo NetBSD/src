@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.24 2006/10/06 02:29:08 yamt Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.24.2.1 2008/11/05 20:34:12 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -418,6 +418,7 @@ findroot(void)
 	struct btinfo_rootdevice *biv;
 	struct btinfo_bootdisk *bid;
 	struct btinfo_bootwedge *biw;
+	struct btinfo_biosgeom *big;
 	struct device *dv;
 #ifdef COMPAT_OLDBOOT
 	const char *name;
@@ -551,6 +552,34 @@ findroot(void)
 
 		if (booted_device)
 			return;
+
+		/*
+		 * No booted device found; check CD-ROM boot at last.
+		 *
+		 * Our bootloader assumes CD-ROM boot if biosdev is larger
+		 * than the number of hard drives recognized by the BIOS.
+		 * The number of drives can be found in BTINFO_BIOSGEOM here.
+		 *
+		 * See src/sys/arch/i386/stand/boot/devopen.c and
+		 * src/sys/arch/i386/stand/lib/bootinfo_biosgeom.c .
+		 */
+		if ((big = lookup_bootinfo(BTINFO_BIOSGEOM)) != NULL &&
+		    bid->biosdev > 0x80 + big->num) {
+			/*
+			 * XXX
+			 * There is no proper way to detect which unit is
+			 * recognized as a bootable CD-ROM drive by the BIOS.
+			 * Assume the first unit is the one.
+			 */
+			TAILQ_FOREACH(dv, &alldevs, dv_list) {
+				if (device_class(dv) == DV_DISK &&
+				    device_is_a(dv, "cd")) {
+					booted_device = dv;
+					booted_partition = 0;
+					break;
+				}
+			}
+		}
 	}
 
 #ifdef COMPAT_OLDBOOT
