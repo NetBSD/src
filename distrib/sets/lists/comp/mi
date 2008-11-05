@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201 2008/10/16 09:39:43 pooka Exp $
+#	$NetBSD: mi,v 1.1202 2008/11/05 18:23:32 bjs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2269,11 +2269,14 @@
 ./usr/lib/libcrypto.a				comp-c-lib		crypto
 ./usr/lib/libcrypto_g.a		-unknown-	debuglib
 ./usr/lib/libcrypto_idea.a			comp-c-lib		crypto_idea
+./usr/lib/libcrypto_idea_g.a	-unknown-	debuglib
 ./usr/lib/libcrypto_idea_p.a			comp-c-proflib		crypto_idea,profile
 ./usr/lib/libcrypto_mdc2.a			comp-c-lib		crypto_mdc2
+./usr/lib/libcrypto_mdc2_g.a	-unknown-	debuglib
 ./usr/lib/libcrypto_mdc2_p.a			comp-c-proflib		crypto_mdc2,profile
 ./usr/lib/libcrypto_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libcrypto_rc5.a			comp-c-lib		crypto_rc5
+./usr/lib/libcrypto_rc5_g.a	-unknown-	debuglib
 ./usr/lib/libcrypto_rc5_p.a			comp-c-proflib		crypto_rc5,profile
 ./usr/lib/libcurses.a				comp-c-lib
 ./usr/lib/libcurses_g.a		-unknown-	debuglib
@@ -2314,6 +2317,7 @@
 ./usr/lib/libgcc_s.a				comp-obsolete		obsolete
 ./usr/lib/libgcc_s_g.a		-unknown-	debuglib
 ./usr/lib/libgcov.a				comp-c-lib
+./usr/lib/libgcov_g.a				debuglib
 ./usr/lib/libgnumalloc.a			comp-c-lib
 ./usr/lib/libgnumalloc_g.a		-unknown-	debuglib
 ./usr/lib/libgnumalloc_p.a			comp-c-proflib		profile
@@ -2409,6 +2413,7 @@
 ./usr/lib/libossaudio_g.a		-unknown-	debuglib
 ./usr/lib/libossaudio_p.a			comp-c-proflib		profile
 ./usr/lib/libp2k.a				comp-c-lib		puffs
+./usr/lib/libp2k_g.a		-unknown-	debuglib
 ./usr/lib/libp2k_p.a				comp-c-proflib		puffs,profile
 ./usr/lib/libpam.a				comp-c-lib		pam
 ./usr/lib/libpam_g.a		-unknown-	debuglib
@@ -2438,6 +2443,7 @@
 ./usr/lib/libradius_g.a		-unknown-	debuglib
 ./usr/lib/libradius_p.a				comp-c-proflib		profile
 ./usr/lib/librefuse.a				comp-c-lib		puffs
+./usr/lib/librefuse_g.a		-unknown-	debuglib 
 ./usr/lib/librefuse_p.a				comp-c-proflib		puffs,profile
 ./usr/lib/libresolv.a				comp-c-lib
 ./usr/lib/libresolv_g.a		-unknown-	debuglib
@@ -2571,6 +2577,7 @@
 ./usr/lib/liby_g.a		-unknown-	debuglib
 ./usr/lib/liby_p.a				comp-c-proflib		profile
 ./usr/lib/libz.a				comp-c-lib
+./usr/lib/libz_g.a		-unknown-	debuglib
 ./usr/lib/libz_p.a				comp-c-proflib		profile
 ./usr/lib/pkgconfig				comp-c-lib
 ./usr/lib/pkgconfig/atf-c++.pc			comp-atf-lib
