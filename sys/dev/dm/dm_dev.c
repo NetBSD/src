@@ -1,7 +1,7 @@
-/*        $NetBSD: dm_dev.c,v 1.1.2.13 2008/11/02 00:02:32 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.1.2.14 2008/11/05 13:45:02 haad Exp $      */
 
 /*
- * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -197,9 +197,7 @@ dm_dev_insert(dm_dev_t *dev)
 	return r;
 }
 
-
-
- 
+#ifdef notyet 
 /*
  * Lookup device with its minor number.
  */
@@ -219,6 +217,7 @@ dm_dev_test_minor(int dm_dev_minor)
 	
 	return 0;
 }
+#endif
 
 /* 
  * Remove device selected with dm_dev from global list of devices. 

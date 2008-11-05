@@ -1,7 +1,7 @@
-/*        $NetBSD: dm.h,v 1.1.2.19 2008/11/02 00:02:32 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.1.2.20 2008/11/05 13:45:02 haad Exp $      */
 
 /*
- * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -327,7 +327,7 @@ int dm_dev_insert(dm_dev_t *);
 dm_dev_t* dm_dev_lookup(const char *, const char *, int);
 prop_array_t dm_dev_prop_list(void);
 dm_dev_t* dm_dev_rem(const char *, const char *, int);
-int dm_dev_test_minor(int);
+/*int dm_dev_test_minor(int);*/
 void dm_dev_unbusy(dm_dev_t *);
 
 /* dm_pdev.c */

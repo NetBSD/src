@@ -1,7 +1,7 @@
-/*        $NetBSD: device-mapper.c,v 1.1.2.15 2008/11/02 00:02:32 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.1.2.16 2008/11/05 13:45:02 haad Exp $ */
 
 /*
- * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation

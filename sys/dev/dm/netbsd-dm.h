@@ -1,7 +1,7 @@
-/*        $NetBSD: netbsd-dm.h,v 1.1.2.5 2008/08/28 22:06:34 haad Exp $      */
+/*        $NetBSD: netbsd-dm.h,v 1.1.2.6 2008/11/05 13:45:02 haad Exp $      */
 
 /*
- * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
