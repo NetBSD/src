@@ -1,7 +1,7 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.21 2008/11/02 00:02:32 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.22 2008/11/05 13:45:02 haad Exp $      */
 
 /*
- * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -190,7 +190,6 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 {
 	dm_dev_t *dmv;
 	const char *name, *uuid;
-	uint32_t minor;
 	int r, flags;
 	
 	r = 0;
@@ -222,25 +221,9 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 		
 	if (name)
 		strlcpy(dmv->name, name, DM_NAME_LEN);
-	/*
-	 * If DM_PERSISTENT_DEV_FLAG is set I have to use out of order minor
-	 * number sent from userspace. With this libdevmapper doesn't
-	 * need to recreate all device nodes after reboot.
-	 */
-	if (flags & DM_PERSISTENT_DEV_FLAG)
-		prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR,
-		    &dmv->minor);
-	else {
-		for(;;) {
-			/* find next available minor number and use it */
-			minor = atomic_inc_32_nv(&sc_minor_num);
-			if (dm_dev_test_minor(minor) == 0) {
-				dmv->minor = minor;
-				break;
-			}
-		}
-	}
-	
+
+	dmv->minor = atomic_inc_32_nv(&sc_minor_num);
+
 	dmv->flags = 0; /* device flags are set when needed */
 	dmv->ref_cnt = 0;
 	dmv->event_nr = 0;
