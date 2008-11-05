@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.101 2008/02/04 01:54:56 riz Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.102 2008/11/05 22:58:37 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1051,3 +1051,8 @@ choisissez "Non", vous devez mettre à jour manuellement votre fichier
 /etc/mailer.conf pour que vos mails soient délivrés correctement.
 }
 
+message license
+{To use the network interface %s, you must agree to the license in
+file %s.
+To view this file now, you can type ^Z, look at the contents of
+the file and then type "fg" to resume.}
