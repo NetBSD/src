@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.43 2008/03/25 12:54:32 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.44 2008/11/05 22:58:37 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1014,3 +1014,9 @@ Möchten Sie /etc/mailer.conf automatisch auf eine Version für
 Postfix umstellen? Falls Sie "Nein" wählen, müssen Sie anschließend
 manuell /etc/mailer.conf korrigieren, um funktionierende Mailauslieferung
 zu gewährleisten.}
+
+message license
+{To use the network interface %s, you must agree to the license in
+file %s.
+To view this file now, you can type ^Z, look at the contents of
+the file and then type "fg" to resume.}
