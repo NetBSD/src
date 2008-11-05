@@ -1,4 +1,7 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.13 2008/10/14 18:31:42 mrg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.14 2008/11/05 00:54:25 elad Exp $
+
+# We are not building this with PIE
+MKPIE=no
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
