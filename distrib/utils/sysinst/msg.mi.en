@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.149 2008/02/04 01:54:56 riz Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.150 2008/11/05 22:58:37 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -955,3 +955,8 @@ postfix. The file /etc/mailer.conf still chooses the removed
 sendmail. Do you want to upgrade /etc/mailer.conf automatically for
 postfix? If you choose "No" you will have to update /etc/mailer.conf
 yourself to ensure proper email delivery.}
+
+message license
+{To use the network interface %s, you must agree to the license in
+file %s. To view this file now, you can type ^Z, look at the contents of
+the file and then type "fg" to resume.}
