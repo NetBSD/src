@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.86 2008/07/31 07:48:37 simonb Exp $
+# $NetBSD: ATARITT,v 1.87 2008/11/05 23:55:06 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -76,7 +76,7 @@ options TT_VIDEO # Graphics support for TT
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels
-options SERCONSOLE # modem1 console support
+options SERCONSOLE # modem1 console support, breaks Falcon
 options RELOC_KERNEL # TT/Falcon: relocate kernel to TT-RAM
 options MSGBUFSIZE=32768 # size of kernel msg. buffer
 options TRY_SCSI_LINKED_COMMANDS=0x7f
