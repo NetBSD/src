@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.22 2008/10/20 09:33:48 rtr Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.23 2008/11/05 09:42:20 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.22 2008/10/20 09:33:48 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.23 2008/11/05 09:42:20 blymn Exp $");
 
 
 /*
@@ -1032,7 +1032,7 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		/* FALLTHROUGH */
 	case IEEE80211_S_AUTH:
 		/* cancel any active scan - it apparently breaks auth */
-		(void)iwn_cmd(sc, IWN_CMD_SCAN_ABORT, NULL, 0, 1);
+		/*(void)iwn_cmd(sc, IWN_CMD_SCAN_ABORT, NULL, 0, 1);*/
 
 		if ((error = iwn_auth(sc)) != 0) {
 			aprint_error_dev(sc->sc_dev,
@@ -3886,6 +3886,9 @@ iwn_init(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
+
+	memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
+	ic->ic_des_esslen = 0;
 
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 		if (ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
