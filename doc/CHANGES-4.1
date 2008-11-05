@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.102 2008/11/02 17:38:34 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.103 2008/11/05 20:58:19 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2285,4 +2285,33 @@ share/zoneinfo/zone.tab				1.1.1.31
 
 	Update to tzdata2008g.
 	[jnemeth, ticket #1213]
+
+share/man/man8/afterboot.8                      1.35, 1.37, 1.38 via patch
+                                      
+        Fix reference to sshd_config and provide more information
+        about DHCP.
+        [tsutsui, ticket #1218]       
+                                      
+distrib/notes/common/main			1.421
+distrib/notes/common/sysinst			1.95
+distrib/notes/i386/hardware			1.124
+distrib/notes/mac68k/install			1.30
+
+	Use `\*[Am]' rather than `\*&' for ampersand.
+	[tsutsui, ticket #1219]
+
+sys/arch/x86/x86/x86_autoconf.c			1.35 via patch
+
+	If no booted_device is found in find_root(), also check CD-ROM boot
+	with strategy bootloader does.  This allows one CD system with cd9660
+	root file system and mfs using GENERIC.
+	[tsutsui, ticket #1220]
+
+sys/arch/sgimips/conf/files.sgimips		1.44
+sys/arch/sgimips/mace/if_mec.c			1.9,1.12,1.14,1.17-18,1.20-30
+sys/arch/sgimips/mace/if_mecreg.h		1.4
+sys/arch/sgimips/sgimips/bus.c			1.50
+
+	Improve the stability and performance of mec(4).
+	[tsutsui, ticket #1221]
 
