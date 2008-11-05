@@ -1,11 +1,11 @@
-.\"	$NetBSD: afterboot.8,v 1.29.2.1 2007/12/15 19:53:17 bouyer Exp $
+.\"	$NetBSD: afterboot.8,v 1.29.2.1.2.1 2008/11/05 19:54:29 snj Exp $
 .\"	$OpenBSD: afterboot.8,v 1.72 2002/02/22 02:02:33 miod Exp $
 .\"
 .\" Originally created by Marshall M. Midden -- 1997-10-20, m4@umn.edu
 .\" Adapted to NetBSD by Julio Merino -- 2002-05-10, jmmv@hispabsd.org
 .\"
 .\"
-.\" Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -66,7 +66,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 22, 2006
+.Dd October 20, 2008
 .Dt AFTERBOOT 8
 .Os
 .Sh NAME
@@ -114,7 +114,7 @@ file and set
 to
 .Dq yes
 (see
-.Xr sshd 8 ) .
+.Xr sshd_config 5 ) .
 The default is to not permit root logins over the network
 after fresh install in
 .Nx .
@@ -203,6 +203,11 @@ file to have it stick around for the next reboot.
 Note that hostname is supposed include a domainname, and that this should
 not be confused with YP (NIS)
 .Xr domainname 1 .
+If you are using
+.Xr dhclient 8
+to configure network interfaces, it might override these local hostname
+settings if your DHCP server specifies client's hostname with other network
+configurations.
 .Ss Verify network interface configuration
 The first thing to do is an
 .Ic ifconfig -a
@@ -221,6 +226,23 @@ and then using
 .Xr ifconfig 8
 to manually configure it
 if you do not wish to reboot.
+.Pp
+Alternatively, you can configure interfaces automatically via DHCP with
+.Xr dhclient 8
+if you have a DHCP server running somewhere on your network.
+To get
+.Xr dhclient 8
+to start automatically on boot,
+you will need to have this line in
+.Pa /etc/rc.conf :
+.Pp
+.Dl dhclient=YES
+.Pp
+See
+.Xr dhclient 8
+and
+.Xr dhclient.conf 5
+for more information on setting up a DHCP client.
 .Pp
 You can add new
 .Dq virtual interfaces
@@ -255,10 +277,6 @@ ppp0: flags=8051\*[Lt]UP,POINTOPOINT,RUNNING,MULTICAST\*[Gt]
 See
 .Xr mrouted 8
 for instructions on configuring multicast routing.
-.Pp
-See
-.Xr dhcpd 8
-for instructions on configuring interfaces with DHCP.
 .Ss Check routing tables
 Issue a
 .Ic netstat -rn
