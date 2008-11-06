@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/10/30 08:16:20 veego Exp $
+#	$NetBSD: Makefile,v 1.7 2008/11/06 22:28:26 veego Exp $
 
 NOLINT=	1	# defined
 
@@ -38,6 +38,8 @@ CPPFLAGS+=	-DPIXMAN_DISABLE_DEPRECATED -DHAVE_CONFIG_H \
 		-I${X11SRCDIR.pixman}/../include \
 		-I${X11SRCDIR.pixman}/../combine \
 		-I${X11SRCDIR.pixman}/pixman
+
+LIBDPLIBS=	m	${.CURDIR}/../../../../../lib/libm
 
 PKGCONFIG=	pixman-1
 PKGDIST=	pixman
