@@ -1,4 +1,4 @@
-/*	$NetBSD: sainfo.c,v 1.10 2007/09/12 23:39:51 mgrooms Exp $	*/
+/*	$NetBSD: sainfo.c,v 1.11 2008/11/06 14:12:28 vanhu Exp $	*/
 
 /*	$KAME: sainfo.c,v 1.16 2003/06/27 07:32:39 sakane Exp $	*/
 
@@ -209,7 +209,8 @@ delsainfo(si)
 
 	if (si->idsrc)
 		vfree(si->idsrc);
-	if (si->iddst)
+	if (si->iddst != NULL &&
+		si->iddst != SAINFO_CLIENTADDR)
 		vfree(si->iddst);
 
 #ifdef ENABLE_HYBRID
