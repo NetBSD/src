@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.52 2006/02/25 02:28:56 wiz Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.52.18.1 2008/11/06 22:40:48 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.52 2006/02/25 02:28:56 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.52.18.1 2008/11/06 22:40:48 snj Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -162,7 +162,6 @@ extern inline void finish_req(SC_REQ *reqp)
 	free_head  = reqp;
 	splx(sps);
 
-	xs->xs_status |= XS_STS_DONE;
 	if (!(reqp->dr_flag & DRIVER_LINKCHK))
 		scsipi_done(xs);
 }
