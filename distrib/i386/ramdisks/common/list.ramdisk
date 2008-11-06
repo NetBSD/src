@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.7 2008/05/06 04:33:42 dyoung Exp $
+#	$NetBSD: list.ramdisk,v 1.7.4.1 2008/11/06 23:11:12 snj Exp $
 
 SRCDIRS	usr.bin/less
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
@@ -31,6 +31,7 @@ PROG	sbin/mount_ffs
 # PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
+PROG	sbin/mount_tmpfs
 PROG	sbin/newfs	sbin/mount_mfs
 PROG	sbin/ping
 PROG	sbin/reboot	sbin/halt
