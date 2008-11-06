@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.7 2008/03/03 22:15:09 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.8 2008/11/06 06:38:43 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.18 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -60,6 +60,7 @@ static	int	Cflag;		/* added a cgi handler, always process_cgi() */
 static	const char *	content_cgihandler(http_req *, const char *);
 static	void		finish_cgi_output(http_req *request, int, int);
 static	int		parse_header(const char *, ssize_t, char **, char **);
+static	void		append_index_html(char **);
 
 void
 set_cgibin(char *path)
@@ -118,12 +119,6 @@ process_cgi(http_req *request)
 	info = NULL;
 
 	len = strlen(url);
-	if (len == 0 || url[len - 1] == '/') {	/* append index.html */
-		debug((DEBUG_FAT, "appending index.html"));
-		url = bozorealloc(url, len + strlen(index_html) + 1);
-		strcat(url, index_html);
-		debug((DEBUG_NORMAL, "process_cgi: url adjusted to `%s'", url));
-	}
 
 	auth_check(request, url + 1);
 
@@ -133,9 +128,12 @@ process_cgi(http_req *request)
 			free(url);
 			return;
 		}
+		if (len == 0 || url[len - 1] == '/')
+			append_index_html(&url);
 		debug((DEBUG_NORMAL, "process_cgi: cgihandler `%s'",
 		    cgihandler));
-	}
+	} else if (len - 1 == CGIBIN_PREFIX_LEN)	/* url is "/cgi-bin/" */
+		append_index_html(&url);
 
 	ix = 0;
 	if (cgihandler) {
@@ -428,6 +426,14 @@ content_cgihandler(http_req *request, const char *file)
 	if (map)
 		return (map->cgihandler);
 	return (NULL);
+}
+
+static void
+append_index_html(char **url)
+{
+	*url = bozorealloc(*url, strlen(*url) + strlen(index_html) + 1);
+	strcat(*url, index_html);
+	debug((DEBUG_NORMAL, "append_index_html: url adjusted to `%s'", *url));
 }
 
 #ifndef NO_DYNAMIC_CONTENT
