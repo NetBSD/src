@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.5 2008/11/05 20:13:46 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.6 2008/11/06 22:45:52 snj Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -46,3 +46,8 @@ distrib/notes/mac68k/install			1.30
 	Use `\*[Am]' rather than `\*&' for ampersand.
 	[tsutsui, ticket #1219]
 
+sys/arch/atari/dev/ncr5380.c                    1.56
+ 
+	Fix hang when using SCSI devices on Atari Falcon and TT030.
+	[abs, ticket #1222]
+        
