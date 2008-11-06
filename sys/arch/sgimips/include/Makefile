@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2007/02/18 16:25:44 ad Exp $
+#	$NetBSD: Makefile,v 1.18 2008/11/06 22:15:39 macallan Exp $
 
 INCSDIR= /usr/include/sgimips
 
@@ -21,6 +21,7 @@ INCS=	asm.h ansi.h aout_machdep.h autoconf.h \
 	trap.h types.h \
 	varargs.h vmparam.h \
 	wchar_limits.h \
-	z8530var.h
+	z8530var.h \
+	../dev/crmfbreg.h
 
 .include <bsd.kinc.mk>
