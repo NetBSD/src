@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.151 2008/02/04 01:54:56 riz Exp $	*/
+/*	$NetBSD: util.c,v 1.152 2008/11/06 15:30:23 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1253,6 +1253,24 @@ add_rc_conf(const char *fmt, ...)
 	f = target_fopen("/etc/rc.conf", "a");
 	if (f != 0) {
 		scripting_fprintf(NULL, "cat <<EOF >>%s/etc/rc.conf\n",
+		    target_prefix());
+		scripting_vfprintf(f, fmt, ap);
+		fclose(f);
+		scripting_fprintf(NULL, "EOF\n");
+	}
+	va_end(ap);
+}
+
+void
+add_sysctl_conf(const char *fmt, ...)
+{
+	FILE *f;
+	va_list ap;
+
+	va_start(ap, fmt);
+	f = target_fopen("/etc/sysctl.conf", "a");
+	if (f != 0) {
+		scripting_fprintf(NULL, "cat <<EOF >>%s/etc/sysctl.conf\n",
 		    target_prefix());
 		scripting_vfprintf(f, fmt, ap);
 		fclose(f);

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.136 2008/08/08 02:54:06 simonb Exp $	*/
+/*	$NetBSD: defs.h,v 1.137 2008/11/06 15:30:23 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -411,6 +411,7 @@ int	set_root_shell(void);
 void	scripting_fprintf(FILE *, const char *, ...);
 void	scripting_vfprintf(FILE *, const char *, va_list);
 void	add_rc_conf(const char *, ...);
+void	add_sysctl_conf(const char *, ...);
 void	enable_rc_conf(void);
 int	check_partitions(void);
 void	set_sizemultname_cyl(void);
