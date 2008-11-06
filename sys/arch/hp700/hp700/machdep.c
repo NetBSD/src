@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.3 2008/11/01 12:11:10 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.4 2008/11/06 12:50:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.3 2008/11/01 12:11:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.4 2008/11/06 12:50:55 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -630,7 +630,7 @@ cpuid(void)
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
 	    &pdc_model)) < 0) {
 #ifdef DEBUG
-		printf("WARNING: PDC_MODEL error %d\n", error);
+		printf("WARNING: PDC_MODEL_INFO error %d\n", error);
 #endif
 		pdc_model.hvers = 0;
 	} else {
@@ -645,8 +645,12 @@ cpuid(void)
 #endif
 
 	memset(&pdc_cpuid, 0, sizeof(pdc_cpuid));
-	if (pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_CPUID,
-	   &pdc_cpuid, 0, 0, 0, 0) >= 0) {
+	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_CPUID,
+	   &pdc_cpuid, 0, 0, 0, 0)) < 0) {
+#ifdef DEBUG
+		printf("WARNING: PDC_MODEL_CPUID error %d\n", error);
+#endif
+	} else {
 
 		/* XXXNH why? */
 		/* patch for old 8200 */
