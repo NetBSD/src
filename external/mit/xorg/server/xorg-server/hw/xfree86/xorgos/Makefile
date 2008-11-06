@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2008/10/25 03:47:00 macallan Exp $
+#	$NetBSD: Makefile,v 1.11 2008/11/06 22:10:47 macallan Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -48,7 +48,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endif
 
 .if ${MACHINE} == "sgimips"
-SRCS.bsd+=	mips_video.c bsdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=	ppc_video.c bsdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
@@ -57,7 +57,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .if ${MACHINE} == "cats" || \
     ${MACHINE} == "shark" || \
     ${MACHINE} == "netwinder"
-SRCS.bsd+=      arm_video.c bsdResource.c pm_noop.c agp_noop.c
+SRCS.bsd+=      ppc_video.c bsdResource.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=        -DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
