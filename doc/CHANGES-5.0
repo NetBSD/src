@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.7 2008/11/02 23:10:52 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.8 2008/11/06 00:37:07 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -65,4 +65,38 @@ sys/uvm/uvm_extern.h				1.149
 	- remove bogus panic
 	Fixes PR kern/39777. 
 	[tron, ticket #9]
+
+dist/file/src/apprentice.c			1.20
+
+	Fix build of file when cross-compiling on Solaris.
+	[hubertf, ticket #11]
+
+usr.sbin/mmcformat/mmcformat.8			1.2
+
+	Fix manpage; it showed option -i where it had to be -I
+	[reinoud, ticket #12]
+
+sys/arch/atari/dev/clock.c			1.42
+
+	Move tc_init(&clk_timecounter) to stop the "timecounter:" message
+	appearing in the middle of the clock0 attach message.
+	[abs, ticket #13]
+
+sys/arch/atari/dev/md_root.c			1.26
+
+	Use brelse() to unbusy bp buffer to allow user to swap floppy
+	disks when prompted.
+	[abs, ticket #14]
+
+sys/dev/sysmon/sysmon_envsys_events.c		1.59-1.60
+
+	Restore previous behavior concerning CRITICAL events.  Send an
+	event whenever state enters or exits CRITICAL, or whenever value
+	of sensor changes while the state is CRITICAL.
+	[pgoyette, ticket #15]
+
+external/mit/xorg/lib/libXaw7/Makefile		1.4
+
+	Add necessary defines (-DXAW7).
+	[cube, ticket #16]
 
