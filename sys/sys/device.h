@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.112 2008/06/11 15:56:11 drochner Exp $ */
+/* $NetBSD: device.h,v 1.113 2008/11/06 03:40:04 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -221,7 +221,7 @@ struct cfparent {
 	const char *cfp_iattr;		/* interface attribute */
 	const char *cfp_parent;		/* optional specific parent */
 	int cfp_unit;			/* optional specific unit
-					   (-1 to wildcard) */
+					   (DVUNIT_ANY to wildcard) */
 };
 
 /*
