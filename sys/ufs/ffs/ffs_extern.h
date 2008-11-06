@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.70 2008/10/10 09:21:58 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.71 2008/11/06 22:31:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -91,9 +91,6 @@ int	ffs_alloc(struct inode *, daddr_t, daddr_t , int, int, kauth_cred_t,
 		  daddr_t *);
 int	ffs_realloccg(struct inode *, daddr_t, daddr_t, int, int ,
 		      kauth_cred_t, struct buf **, daddr_t *);
-#if 0
-int	ffs_reallocblks(void *);
-#endif
 int	ffs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
 daddr_t	ffs_blkpref_ufs1(struct inode *, daddr_t, int, int, int32_t *);
 daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int, int64_t *);
