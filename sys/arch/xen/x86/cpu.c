@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.29 2008/10/31 00:36:22 rmind Exp $	*/
+/*	$NetBSD: cpu.c,v 1.30 2008/11/06 19:35:11 cegger Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.29 2008/10/31 00:36:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.30 2008/11/06 19:35:11 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -471,9 +471,14 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
+			struct cpu_info *tmp;
+
 			identifycpu(ci);
-			ci->ci_next = cpu_info_list->ci_next;
-			cpu_info_list->ci_next = ci;
+			tmp = cpu_info_list;
+			while (tmp->ci_next)
+				tmp = tmp->ci_next;
+
+			tmp->ci_next = ci;
 		}
 #else
 		aprint_normal_dev(sc->sc_dev, "not started\n");
