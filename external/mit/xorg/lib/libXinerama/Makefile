@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/04 22:41:42 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2008/11/06 22:28:26 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,9 @@ MLINKS=	Xinerama.3 XineramaQueryExtension.3 \
 	Xinerama.3 XineramaQueryVersion.3 \
 	Xinerama.3 XineramaIsActive.3 \
 	Xinerama.3 XineramaQueryScreens.3
+
+LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
+		X11	${.CURDIR}/../libX11/dynamic
 
 PKGDIST=	${LIB}
 
