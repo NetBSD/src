@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/05 02:05:39 cube Exp $
+#	$NetBSD: Makefile,v 1.4 2008/11/06 22:28:25 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,9 @@ MLINKS=	Xevie.3 XevieQueryVersion.3 \
 	Xevie.3 XevieSelectInput.3 \
 	Xevie.3 XevieSendEvent.3 \
 	Xevie.3 XevieEnd.3
+
+LIBDPLIBS=	X11	${.CURDIR}/../libX11/dynamic \
+		Xext	${.CURDIR}/../libXext
 
 PKGDIST=	${LIB}
 
