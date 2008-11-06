@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.2 2004/01/07 12:55:42 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.3 2008/11/06 16:20:55 tsutsui Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd January 7, 2004
+.Dd November 6, 2008
 .Dt BOOT 8 cobalt
 .Os
 .Sh NAME
@@ -77,6 +77,11 @@ with
 .Tn DHCP
 and
 .Tn NFS .
+.It
+network bootstrap NetBSD using the
+.Nx
+boot loader which can be loaded by the standard Cobalt Firmware
+with DHCP and NFS.
 .El
 .Ss Power fail and crash recovery
 Normally, the system will reboot itself at power-up or after crashes.
@@ -95,14 +100,14 @@ expects the disk to contain DOS-style partition information with
 the first partition being a boot one which is special in that it
 should reside close to the beginning of the disk and must contain
 an
-.Tn ext2
+.Tn Ext2
 file system with a
 .Pa boot
 directory which is treated specially by the
 .Tn Firmware .
 The default sequence is pretty straightforward, the
 .Tn Firmware
-finds the boot partition, mounts the ext2 file system from it and
+finds the boot partition, mounts the Ext2 file system from it and
 tries to load a compressed kernel image from the
 .Pa boot
 directory.
@@ -168,7 +173,7 @@ Second, the
 .Tn Firmware
 enforces a hard restriction on the kernel size
 .Po
-it cannot exceed approximately 1000000/2500000 bytes
+it cannot exceed approximately 900,000/2,500,000 bytes
 compressed/uncompressed
 .Pc
 resulting in a lock-up should this requirement not be fulfilled.
@@ -211,69 +216,42 @@ usually
 .Pa /dev/wd0a
 .Pc
 like it is on other platforms.
-Once running, the boot loader prints a banner similar to the following:
+Once running, the boot loader prints a banner to the serial console
+similar to the following:
 .Bd -unfilled -offset indent
-\*[Gt]\*[Gt] NetBSD/cobalt 1.6ZG Bootloader, Revision 0.1 [@0x81000000]
+\*[Gt]\*[Gt] NetBSD/cobalt 5.0 Bootloader, Revision 0.9 [@0x80f00000]
 \*[Gt]\*[Gt] (user@buildhost, builddate)
+\*[Gt]\*[Gt] Model:               Cobalt Qube 2
 \*[Gt]\*[Gt] Memory:              32768 k
-\*[Gt]\*[Gt] Firmware boot string:    root=/dev/hda1 ro
+\*[Gt]\*[Gt] PROM boot string:    root=/dev/hda1 ro
+Boot [wd0a:netbsd]: 
 Loading: wd0a:netbsd
-2249104+195856 [81872+73284]=0x27af90
+3763776+312244 [216944+209676]=0x44b97c
 Starting at 0x80001000
 .Ed
 .Pp
-by default, the boot loader uses
-.Dq Li wd0a:netbsd
-as kernel specification which corresponds to the file
-.Nm netbsd
-on partition
-.Dq a
-of the
-.Nx
-.Tn MBR
-partition of the first hard disk known to the
-.Tn Firmware
-.Po
-which is an
-.Tn IDE
-or similar device - see the
-.Sx BUGS
-section
-.Pc .
-In case this fails, the boot loader will try a few alternative
-kernel image names and if this also fails the loader will repeat
-the whole procedure for all other
-.Nx
-slices
-.Pq if any
-and will load the first kernel image found.
-.Ss Boot loader Options
-It is possible to specify some options to the boot loader by breaking
-into the
-.Tn Firmware
-and using the
-.Dq bfd
-command:
+The boot loader also prints a banner to the LCD panels as the following:
 .Bd -unfilled -offset indent
-Cobalt: bfd /boot/boot.gz [options]
-.Ed
+.Nx Ns /cobalt
+Bootloader
 .Pp
-The boot loader allows the following options:
-.Bl -tag -width 04n -offset 04n
-.It Xo Ic nbsd=
+Loading:
+wd0a:netbsd
+.Ed
+.Ss Boot loader Options
+It is possible to specify some options and boot devices on the boot loader
+prompt:
+.Pp
+.Xo No boot [wd0a:netbsd]:
 .Op Va device : Ns
 .Op Va filename
-.Op Fl acdqsv
+.Op Fl acdmqsvxz
 .Xc
+.Pp
 The default
-.Va device
-will be set to
-.Va wd0a
-which is the first
-.Nx
-partition on the first drive, as numbered by the
-.Tn Firmware .
-To boot from an alternate disk, the full name of the device should
+.Va device 
+will be set to the disk that the boot loader was loaded from.
+To boot from an alternate disk or partition, the full name of the device should
 be given at the prompt.
 .Va device
 is of the form
@@ -284,16 +262,19 @@ is the device from which to boot,
 .Va N
 is the unit number, and
 .Va x
-is the partition letter.
+is the partition letter of the NetBSD
+.Xr disklabel 5
+in the NetBSD partition of the MBR partitions.
+The
+.Nx
+boot loader recognizes FFS (both UFS1 and UFS2) and Linux Ext2fs.
 .Pp
 The following list of supported devices may vary from installation to
 installation:
 .Pp
 .Bl -hang -compact
 .It wd
-Hard disks as numbered by the BIOS. This includes ST506, IDE, ESDI,
-RLL disks on a WD100[2367] or lookalike controller(s), and SCSI
-disks on SCSI controllers recognized by the
+IDE hard disks recognized by the
 .Tn Firmware .
 .El
 .Pp
@@ -321,7 +302,10 @@ followed by
 and finally
 .Pa netbsd.elf.gz .
 Alternate system images can be loaded by just specifying the name
-of the image.
+of the image, so it is always a good idea to have a copy of working kernel
+in the
+.Nx
+root partition before trying a new kernel.
 .Pp
 Options are:
 .Bl -tag -width xxx
@@ -344,11 +328,32 @@ Bring the system up in single-user mode.
 .It Fl v
 Boot the system in verbose mode.
 .El
+.Pp
+As the older version of the boot loader, it is also possible to specify
+options to the boot loader by breaking into the
+.Tn Firmware
+and using the
+.Dq bfd
+command:
+.Bd -unfilled -offset indent
+Cobalt: bfd /boot/boot.gz [options]
+.Ed
+.Pp
+The boot loader allows the following options:
+.Bl -tag -width 04n -offset 04n
+.It Xo Ic nbsd=
+.Op Va device : Ns
+.Op Va filename
+.Op Fl acdqsv
+.Xc
+.Pp
+The device, filename and options on the bfd prompt are same with the boot
+loader.
 .El
 .Pp
-It is always a good idea to have a small rescue kernel in the
+It is also a good idea to have a small rescue kernel in the
 .Pa boot
-directory.
+directory in the Ext2 partition for the Firmware boot.
 In an emergency case, this will allow you to use the
 .Tn Firmware
 .Sq bfd
@@ -383,8 +388,6 @@ and the named kernel
 .Pq Pa netbsd.gz
 needs to be executable and in that directory.
 You will also need to setup
-.Xr rarpd 8
-and
 .Xr dhcpd 8 .
 Once the kernel is loaded with the command line values, the data
 given via DHCP is used to mount the root filesystem.
@@ -410,6 +413,43 @@ On RaQ 1's, the default kernel name is
 .Pa vmlinux_RAQ.gz
 and on RaQ 2's, it is
 .Pa vmlinux_raq-2800.gz .
+.Ss Network bootstrap using the NetBSD boot loader
+The idea here is the same with the bootstrap from disk using the NetBSD
+boot loader.
+Make the firmware loads the NetBSD boot loader via network and
+let the latter take care of loading the kernel even via network.
+A simple method to load the NetBSD boot loader is to use 
+.Dq bfd
+command as well as booting the NetBSD kernel via network as described above:
+.Bd -unfilled -offset indent
+Cobalt: bfd /boot/boot.gz nfsroot=/home/raq/root
+.Ed
+.Pp
+Note the boot loader binary needs to be
+.Xr gzip 1 Ns -compressed .
+Once the boot loader is successfully loaded it prints a banner as well as
+booting from disk:
+.Bd -unfilled -offset indent
+\*[Gt]\*[Gt] NetBSD/cobalt 5.0 Bootloader, Revision 0.9 [@0x80f00000]
+\*[Gt]\*[Gt] (user@buildhost, builddate)
+\*[Gt]\*[Gt] Model:               Cobalt Qube 2
+\*[Gt]\*[Gt] Memory:              32768 k
+\*[Gt]\*[Gt] PROM boot string:    root=/dev/nfs nfsroot=/nfsroot nfsaddrs=bootp
+Boot [nfs:netbsd]: 
+Loading: nfs:netbsd
+3763776+312244 [216944+209676]=0x44b97c
+Starting at 0x80001000
+.Ed
+.Pp
+The boot loader load the NetBSD kernel via NFS which should be specified
+by the DHCP configuration on the server. Note the nfsroot option specified
+on the
+.Dq bfd
+prompt will be ignored by the
+.Nx
+boot loader so it's recommeneded to use the same directory on the
+.Dq bfd
+prompt and in the DHCP configuration.
 .Sh FILES
 .Bl -tag -width /usr/mdec/bootxx_fstype -compact
 .It Pa /boot/boot.gz
@@ -424,20 +464,18 @@ system code
 .It Pa /netbsd.gz
 .Xr gzip 1 Ns -compressed
 system code
+.It Pa /usr/mdec/boot
+master copy of the boot program (to be compressed and copied to /boot/boot.gz)
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
 .Xr userconf 4 ,
+.Xr dhcpd.conf 5 ,
+.Xr dhcpd 8 ,
 .Xr fdisk 8 ,
 .Xr halt 8 ,
 .Xr reboot 8 ,
-.Xr shutdown 8
-.Sh BUGS
-The
-.Nx
-boot loader supports booting off IDE hard drives only.
-This is less a bug of the boot loader code than a shortcoming of
-the
-.Tn Cobalt
-.Tn Firmare
-and shall be considered as such.
+.Xr shutdown 8 ,
+.Xr printf 9
+.Pp
+.Lk http://www.NetBSD.org/docs/network/netboot/
