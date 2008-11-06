@@ -1,3 +1,7 @@
+2008-11-06  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/sainfo.c: fixed delsainfo() to avoid a crash when
+	  iddst's value is SAINFO_CLIENTADDR.
+
 2008-10-29  S.P.Zeidler <spz@serpens.de>
 	* src/racoon/ipsec_doi.c: Use sockaddr_storage to prevent
 	  stack overflow. Initialize scope id for non-linklocal addresses.
