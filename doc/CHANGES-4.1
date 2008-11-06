@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.103 2008/11/05 20:58:19 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.104 2008/11/06 22:46:09 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2314,4 +2314,10 @@ sys/arch/sgimips/sgimips/bus.c			1.50
 
 	Improve the stability and performance of mec(4).
 	[tsutsui, ticket #1221]
+
+sys/arch/atari/dev/ncr5380.c			1.56
+
+	Remove unwanted 'xs->xs_status |= XS_STS_DONE' which caused
+	scsipi_done() to bail out early.
+	[abs, ticket #1222]
 
