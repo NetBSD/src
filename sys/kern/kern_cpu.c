@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.37 2008/10/31 00:36:22 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.38 2008/11/06 16:48:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.37 2008/10/31 00:36:22 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.38 2008/11/06 16:48:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		if (ci == NULL)
 			error = ESRCH;
 		else
-			*(int *)data = ci->ci_cpuid;
+			*(int *)data = cpu_index(ci);
 		break;
 
 	case IOC_CPU_GETCOUNT:
