@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.5 2008/11/06 17:51:39 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.6 2008/11/06 19:40:03 wiz Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -102,14 +102,14 @@ expects the disk to contain DOS-style partition information with
 the first partition being a boot one which is special in that it
 should reside close to the beginning of the disk and must contain
 an
-.Tn ext2
+.Tn Ext2
 file system with a
 .Pa boot
 directory which is treated specially by the
 .Tn Firmware .
 The default sequence is pretty straightforward, the
 .Tn Firmware
-finds the boot partition, mounts the ext2 file system from it and
+finds the boot partition, mounts the Ext2 file system from it and
 tries to load a compressed kernel image from the
 .Pa boot
 directory.
@@ -355,7 +355,7 @@ loader.
 .Pp
 It is also a good idea to have a small rescue kernel in the
 .Pa boot
-directory in the ext2 partition for the Firmware boot.
+directory in the Ext2 partition for the Firmware boot.
 In an emergency case, this will allow you to use the
 .Tn Firmware
 .Sq bfd
