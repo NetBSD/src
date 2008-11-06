@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.106.4.1 2008/11/06 23:43:31 snj Exp $
+# $NetBSD: md.i386,v 1.106.4.2 2008/11/06 23:51:26 snj Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -121,7 +121,7 @@
 ./usr/lib/libpmc.a				comp-c-lib
 ./usr/lib/libpmc_p.a				comp-c-proflib		profile
 ./usr/lib/libpmc_pic.a				comp-c-piclib		pic
-./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/pmc.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/sbin/acpidump.debug	comp-sysutil-debug	debug
