@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.23 2008/11/05 09:42:20 blymn Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.24 2008/11/06 12:03:43 blymn Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.23 2008/11/05 09:42:20 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.24 2008/11/06 12:03:43 blymn Exp $");
 
 
 /*
@@ -377,6 +377,9 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 
 	/* IBSS channel undefined for now */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
+
+	memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
+	ic->ic_des_esslen = 0;
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -3886,9 +3889,6 @@ iwn_init(struct ifnet *ifp)
 
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_flags |= IFF_RUNNING;
-
-	memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
-	ic->ic_des_esslen = 0;
 
 	if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 		if (ic->ic_roaming != IEEE80211_ROAMING_MANUAL)
