@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.21.2.3 2008/11/06 22:59:13 snj Exp $ */
+/*	$NetBSD: ipmi.c,v 1.21.2.4 2008/11/06 23:01:13 snj Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.21.2.3 2008/11/06 22:59:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.21.2.4 2008/11/06 23:01:13 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -317,7 +317,7 @@ bmc_io_wait(struct ipmi_softc *sc, int offset, uint8_t mask, uint8_t value,
 	struct ipmi_bmc_args	args;
 
 	u = bmc_io_wait_spin(sc, offset, mask, value, lbl);
-	if (u != -1)
+	if (cold || u != -1)
 		return u;
 
 	sc->sc_retries = 0;
@@ -348,7 +348,8 @@ bmc_io_wait_spin(struct ipmi_softc *sc, int offset, uint8_t mask,
     uint8_t value, const char *lbl)
 {
 	volatile uint8_t	v;
-	int			count = 500; /* ~us */
+	int			count = cold ? 5000 : 500;
+	/* ~us */
 
 	while (count--) {
 		v = bmc_read(sc, offset);
