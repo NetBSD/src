@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.8 2008/11/06 00:37:07 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.9 2008/11/06 23:56:18 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -99,4 +99,61 @@ external/mit/xorg/lib/libXaw7/Makefile		1.4
 
 	Add necessary defines (-DXAW7).
 	[cube, ticket #16]
+
+sys/arch/x86/include/ipmivar.h			1.9
+sys/arch/x86/x86/ipmi.c				1.22-1.25
+
+	Initialize the sc_dev.dv_xname in ipmi_match, which is enough to
+	make DEVNAME work. Finally this also allows the device_t/softc
+	split. If ipmi failed to attach we would crash because we would
+	end up using callouts while cold. If cold, wait 10 times longer,
+	and if we spinout fail instead of trying to poll.
+	[cegger, ticket #10]
+
+distrib/amd64/ramdisks/ramdisk/list		1.8
+distrib/i386/ramdisks/common/list.ramdisk	1.8
+etc/etc.amd64/MAKEDEV.conf			1.16
+etc/etc.i386/MAKEDEV.conf			1.20
+sys/arch/i386/conf/INSTALL_FLOPPY		1.2
+
+	Make x86 installation use tmpfs and stop distinguishing MAKEDEV
+	init and MAKEDEV all.
+	[joerg, ticket #18]
+
+sys/arch/atari/conf/GENERIC.in			1.74
+sys/arch/atari/conf/README			1.3
+sys/arch/atari/conf/ATARITT			regen
+sys/arch/atari/conf/BOOT			regen
+sys/arch/atari/conf/HADES			regen
+sys/arch/atari/conf/BOOTX			regen
+sys/arch/atari/conf/FALCON			regen
+sys/arch/atari/conf/MILAN-ISAIDE		regen
+sys/arch/atari/conf/MILAN-PCIIDE		regen
+
+	Add a note that SERCONSOLE breaks on the Falcon, and remove from
+	FALCON config.
+	[abs, ticket #19]
+
+compat/libexec/ld.elf_so/Makefile		1.2
+distrib/sets/lists/base/md.i386			1.129-1.130
+distrib/sets/lists/comp/md.i386			1.107-1.108
+distrib/sets/lists/base/md.amd64		1.26
+distrib/sets/lists/base/md.sparc64		1.24
+distrib/sets/lists/comp/md.amd64		1.40
+distrib/sets/lists/comp/md.sparc64		1.38
+distrib/sets/lists/base/ad.arm			1.10
+distrib/sets/lists/base/md.shark		1.7
+distrib/sets/lists/base/md.sparc		1.75
+distrib/sets/lists/base/md.vax			1.26
+distrib/sets/lists/comp/ad.arm			1.31
+distrib/sets/lists/comp/md.pmax			1.59
+distrib/sets/lists/comp/md.shark		1.13
+distrib/sets/lists/comp/md.sparc		1.68
+distrib/sets/lists/comp/md.vax			1.35
+libexec/ld.aout_so/Makefile			1.46
+sbin/ldconfig/Makefile				1.22
+
+	Make MKPIC=no builds work on i368, shark, vax, pmax, sgimips,
+	sparc, maybe all mips and all arm as well.
+	[mrg, ticket #20]
 
