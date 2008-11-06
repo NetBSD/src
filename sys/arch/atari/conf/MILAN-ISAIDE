@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-ISAIDE,v 1.54 2008/11/05 23:55:06 abs Exp $
+# $NetBSD: MILAN-ISAIDE,v 1.55 2008/11/06 17:12:20 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.21 2006/09/03 13:51:24 bjh21 Exp $
-#		NetBSD: GENERIC.in,v 1.73 2008/07/31 07:47:43 simonb Exp $
+#		NetBSD: GENERIC.in,v 1.74 2008/11/05 23:55:06 abs Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
