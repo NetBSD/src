@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.118 2008/11/05 22:58:37 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.119 2008/11/06 15:30:23 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -508,6 +508,7 @@ handle_license(const char *dev)
 				if (sysctlbyname(buf, NULL, NULL, &val,
 				    0) == -1)
 					return 0;
+				add_sysctl_conf("%s=1", buf);
 				return 1;
 			} else
 				return 0;
