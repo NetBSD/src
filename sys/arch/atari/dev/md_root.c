@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.25 2008/01/02 11:48:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.25.20.1 2008/11/06 00:19:51 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,6 +247,8 @@ struct read_info	*rsp;
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
+		brelse(bp, 0);
+
 		bytes_left   -= done;
 		rsp->offset  += done;
 		rsp->bufp    += done;
@@ -317,6 +319,7 @@ int			nbyte;
 
 		/* Wait for results	*/
 		biowait(bp);
+		error = bp->b_error;
 
 		/* Dot counter */
 		printf(".");
@@ -324,6 +327,8 @@ int			nbyte;
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
+		brelse(bp, 0);
+
 		nbyte        -= done;
 		nread        += done;
 		rsp->offset  += done;
@@ -332,7 +337,6 @@ int			nbyte;
 			break;
 
 		if((rsp->offset == rsp->media_sz) && (nbyte != 0)) {
-		if(rsp->offset == rsp->media_sz) {
 			printf("\nInsert next media and hit any key...");
 			if(cngetc() != '\n')
 				printf("\n");
