@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.67 2008/03/11 05:34:01 matt Exp $ */
+/*      $NetBSD: if_qe.c,v 1.68 2008/11/07 00:20:12 dyoung Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.67 2008/03/11 05:34:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.68 2008/11/07 00:20:12 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -660,7 +660,7 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
@@ -673,8 +673,11 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
 			 * stop it. (by disabling receive mechanism).
@@ -682,19 +685,23 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 			QE_WCSR(QE_CSR_CSR,
 			    QE_RCSR(QE_CSR_CSR) & ~QE_RCV_ENABLE);
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface it marked up and it is stopped, then
 			 * start it.
 			 */
 			qeinit(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			break;
+		case IFF_UP|IFF_RUNNING:
 			/*
 			 * Send a new setup packet to match any new changes.
 			 * (Like IFF_PROMISC etc)
 			 */
 			qe_setup(sc);
+			break;
+		case 0:
+			break;
 		}
 		break;
 
@@ -715,8 +722,7 @@ qeioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
-
+		error = ether_ioctl(ifp, cmd, data);
 	}
 	splx(s);
 	return (error);

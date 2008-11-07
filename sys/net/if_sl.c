@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.112 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.113 2008/11/07 00:20:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.112 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.113 2008/11/07 00:20:13 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -984,7 +984,7 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			ifp->if_flags |= IFF_UP;
 		else
@@ -1053,7 +1053,8 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
+		break;
 	}
 	splx(s);
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.55 2007/10/17 19:53:16 garbled Exp $ */
+/*	$NetBSD: if_ed.c,v 1.56 2008/11/07 00:20:01 dyoung Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.55 2007/10/17 19:53:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.56 2008/11/07 00:20:01 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -865,7 +865,7 @@ ed_ioctl(register struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -899,6 +899,11 @@ ed_ioctl(register struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX if ed_init() would ed_stop(, 0), first, perhaps we
+		 * can re-use the code in ether_ioctl().
+		 */
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -941,7 +946,8 @@ ed_ioctl(register struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
+		break;
 	}
 
 	splx(s);

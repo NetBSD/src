@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.16 2008/04/05 19:16:49 cegger Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.17 2008/11/07 00:20:12 dyoung Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.16 2008/04/05 19:16:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.17 2008/11/07 00:20:12 dyoung Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -841,7 +841,7 @@ dmcioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			dmcinit(ifp);
@@ -853,6 +853,8 @@ dmcioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    sc->sc_flag & DMC_RUNNING)
 			dmcdown(sc);
@@ -862,7 +864,7 @@ dmcioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 	}
 	splx(s);
 	return (error);

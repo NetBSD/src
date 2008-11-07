@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.37 2008/09/26 03:39:23 macallan Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.38 2008/11/07 00:20:02 dyoung Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.37 2008/09/26 03:39:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.38 2008/11/07 00:20:02 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -719,10 +719,7 @@ bmac_watchdog(ifp)
 }
 
 int
-bmac_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+bmac_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct bmac_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
@@ -732,23 +729,25 @@ bmac_ioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
+		bmac_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			bmac_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			bmac_init(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX see the comment in ed_ioctl() about code re-use */
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -795,7 +794,8 @@ bmac_ioctl(ifp, cmd, data)
 		}
 		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
+		break;
 	}
 
 	splx(s);

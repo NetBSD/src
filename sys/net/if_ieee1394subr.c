@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.40 2008/04/28 20:24:09 martin Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.41 2008/11/07 00:20:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.40 2008/04/28 20:24:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.41 2008/11/07 00:20:13 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -685,7 +685,7 @@ ieee1394_ifattach(struct ifnet *ifp, const struct ieee1394_hwaddr *hwaddr)
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(100);
 
-	if_set_sadl(ifp, hwaddr, sizeof(struct ieee1394_hwaddr));
+	if_set_sadl(ifp, hwaddr, sizeof(struct ieee1394_hwaddr), true);
 
 	baddr = malloc(ifp->if_addrlen, M_DEVBUF, M_WAITOK);
 	memset(baddr->iha_uid, 0xff, IEEE1394_ADDR_LEN);
@@ -720,40 +720,23 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int error = 0;
-#if __NetBSD_Version__ < 105080000
-	int fw_init(struct ifnet *);
-	void fw_stop(struct ifnet *, int);
-#endif
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-#if __NetBSD_Version__ >= 105080000
 			if ((error = (*ifp->if_init)(ifp)) != 0)
-#else
-			if ((error = fw_init(ifp)) != 0)
-#endif
 				break;
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
 		default:
-#if __NetBSD_Version__ >= 105080000
 			error = (*ifp->if_init)(ifp);
-#else
-			error = fw_init(ifp);
-#endif
 			break;
 		}
 		break;
-
-	case SIOCGIFADDR:
-		memcpy(((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		    CLLADDR(ifp->if_sadl), IEEE1394_ADDR_LEN);
-		    break;
 
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > IEEE1394MTU)
@@ -762,10 +745,8 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		break;
 
-	case SIOCSIFCAP:
-		return ifioctl_common(ifp, cmd, data);
 	default:
-		error = ENOTTY;
+		error = ifioctl_common(ifp, cmd, data);
 		break;
 	}
 

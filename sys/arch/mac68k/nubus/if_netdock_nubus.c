@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.18 2008/04/04 09:49:33 hauke Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.19 2008/11/07 00:20:02 dyoung Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.18 2008/04/04 09:49:33 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.19 2008/11/07 00:20:02 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -383,23 +383,25 @@ netdock_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int temp;
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
+		(void)netdock_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			(void)netdock_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			(void)netdock_init(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((err = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX see the comment in ed_ioctl() about code re-use */
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			netdock_stop(sc);
@@ -427,7 +429,7 @@ netdock_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 	default:
-		err = EINVAL;
+		err = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 	splx(s);

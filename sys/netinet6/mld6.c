@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.47 2008/08/22 17:11:39 adrianp Exp $	*/
+/*	$NetBSD: mld6.c,v 1.48 2008/11/07 00:20:18 dyoung Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.47 2008/08/22 17:11:39 adrianp Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.48 2008/11/07 00:20:18 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -665,10 +665,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		 * filter appropriately for the new address.
 		 */
 		sockaddr_in6_init(&ifr.ifr_addr, maddr6, 0, 0, 0);
-		if (ifp->if_ioctl == NULL)
-			*errorp = ENXIO; /* XXX: appropriate? */
-		else
-			*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr);
+		*errorp = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr);
 		if (*errorp) {
 			LIST_REMOVE(in6m, in6m_entry);
 			free(in6m, M_IPMADDR);

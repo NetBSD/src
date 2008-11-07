@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.24 2008/11/03 00:52:07 hans Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.25 2008/11/07 00:20:13 dyoung Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.24 2008/11/03 00:52:07 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.25 2008/11/07 00:20:13 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -700,7 +700,7 @@ etherip_sysctl_handler(SYSCTLFN_ARGS)
 	if (ether_nonstatic_aton(enaddr, addr) != 0)
 		return EINVAL;
 
-	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN);
+	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN, false);
 	return error;
 }
 

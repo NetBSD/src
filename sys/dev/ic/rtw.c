@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.104 2008/03/15 00:21:12 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.105 2008/11/07 00:20:03 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.104 2008/03/15 00:21:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.105 2008/11/07 00:20:03 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2970,7 +2970,9 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 	if (cmd == SIOCSIFFLAGS) {
-		if ((ifp->if_flags & IFF_UP) != 0) {
+		if ((rc = ifioctl_common(ifp, cmd, data)) != 0)
+			;
+		else if ((ifp->if_flags & IFF_UP) != 0) {
 			if (device_is_active(sc->sc_dev))
 				rtw_pktfilt_load(sc);
 			else

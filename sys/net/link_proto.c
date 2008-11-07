@@ -1,4 +1,4 @@
-/*	$NetBSD: link_proto.c,v 1.4 2008/05/13 18:09:22 dyoung Exp $	*/
+/*	$NetBSD: link_proto.c,v 1.5 2008/11/07 00:20:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.4 2008/05/13 18:09:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: link_proto.c,v 1.5 2008/11/07 00:20:13 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -153,6 +153,9 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 			else
 				iflr->flags = 0;
 
+			if (ifa == ifp->if_hwdl)
+				iflr->flags |= IFLR_FACTORY;
+
 			sockaddr_copy(sstosa(&iflr->addr), sizeof(iflr->addr),
 			    ifa->ifa_addr);
 
@@ -160,7 +163,7 @@ link_control(struct socket *so, unsigned long cmd, void *data,
 		case SIOCDLIFADDR:
 			if (ifa == NULL)
 				error = EADDRNOTAVAIL;
-			else if (ifa == ifp->if_dl)
+			else if (ifa == ifp->if_dl || ifa == ifp->if_hwdl)
 				error = EBUSY;
 			else {
 				/* TBD routing socket */

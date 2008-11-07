@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.128 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: if_de.c,v 1.129 2008/11/07 00:20:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.128 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.129 2008/11/07 00:20:07 dyoung Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -4744,10 +4744,7 @@ tulip_txput_setup(
  * defined or not.
  */
 static int
-tulip_ifioctl(
-    struct ifnet * ifp,
-    ioctl_cmd_t cmd,
-    void *data)
+tulip_ifioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
     TULIP_PERFSTART(ifioctl)
     tulip_softc_t * const sc = TULIP_IFP_TO_SOFTC(ifp);
@@ -4762,32 +4759,24 @@ tulip_ifioctl(
     s = TULIP_RAISESPL();
 #endif
     switch (cmd) {
-	case SIOCSIFADDR: {
+	case SIOCINITIFADDR: {
 	    ifp->if_flags |= IFF_UP;
+	    tulip_init(sc);
 	    switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
-		case AF_INET: {
-		    tulip_init(sc);
+		case AF_INET:
 		    TULIP_ARP_IFINIT(sc, ifa);
 		    break;
-		}
 #endif /* INET */
-
-
-		default: {
-		    tulip_init(sc);
+		default:
 		    break;
-		}
 	    }
-	    break;
-	}
-	case SIOCGIFADDR: {
-	    memcpy((void *) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		(void *) sc->tulip_enaddr, ETHER_ADDR_LEN);
 	    break;
 	}
 
 	case SIOCSIFFLAGS: {
+	    if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+		break;
 #if !defined(IFM_ETHER)
 	    int flags = 0;
 	    if (ifp->if_flags & IFF_LINK0) flags |= 1;
@@ -4882,7 +4871,7 @@ tulip_ifioctl(
 	}
 #endif
 	default: {
-	    error = EINVAL;
+	    error = ether_ioctl(ifp, cmd, data);
 	    break;
 	}
     }

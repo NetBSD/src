@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.107 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.108 2008/11/07 00:20:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.107 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.108 2008/11/07 00:20:13 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -443,7 +443,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	simple_lock(&tp->tun_lock);
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		tuninit(tp);
 		TUNDEBUG("%s: address set\n", ifp->if_xname);
 		break;
@@ -483,10 +483,8 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		break;
-	case SIOCSIFFLAGS:
-		break;
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 	}
 
 	simple_unlock(&tp->tun_lock);

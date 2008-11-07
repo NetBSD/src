@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.49 2008/04/05 09:34:22 mlelstv Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.50 2008/11/07 00:20:18 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.49 2008/04/05 09:34:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.50 2008/11/07 00:20:18 dyoung Exp $");
 #endif
 
 /*
@@ -2547,51 +2547,6 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 			error = EINVAL;
 		else
 			ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCSIFADDR:
-		/*
-		 * XXX Handle this directly so we can supress if_init calls.
-		 * XXX This should be done in ether_ioctl but for the moment
-		 * XXX there are too many other parts of the system that
-		 * XXX set IFF_UP and so supress if_init being called when
-		 * XXX it should be.
-		 */
-		ifa = (struct ifaddr *) data;
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			if ((ifp->if_flags & IFF_UP) == 0) {
-				ifp->if_flags |= IFF_UP;
-				ifp->if_init(ifp->if_softc);
-			}
-			arp_ifinit(ifp, ifa);
-			break;
-#endif
-#ifdef IPX
-		/*
-		 * XXX - This code is probably wrong,
-		 *	 but has been copied many times.
-		 */
-		case AF_IPX: {
-			struct ipx_addr *ina = &(IA_SIPX(ifa)->sipx_addr);
-
-			if (ipx_nullhost(*ina))
-				ina->x_host = *(union ipx_host *)
-				    IFP2ENADDR(ifp);
-			else
-				bcopy((void *) ina->x_host.c_host,
-				      (void *) IFP2ENADDR(ifp),
-				      ETHER_ADDR_LEN);
-			/* fall thru... */
-		}
-#endif
-		default:
-			if ((ifp->if_flags & IFF_UP) == 0) {
-				ifp->if_flags |= IFF_UP;
-				ifp->if_init(ifp->if_softc);
-			}
-			break;
-		}
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);

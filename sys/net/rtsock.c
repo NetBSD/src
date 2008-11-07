@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.115 2008/10/28 11:41:23 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.116 2008/11/07 00:20:13 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.115 2008/10/28 11:41:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.116 2008/11/07 00:20:13 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -815,20 +815,28 @@ rt_ifmsg(struct ifnet *ifp)
 void
 rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 {
+#define	cmdpass(__cmd, __pass)	(((__cmd) << 2) | (__pass))
 	struct rt_addrinfo info;
-	const struct sockaddr *sa = NULL;
+	const struct sockaddr *sa;
 	int pass;
-	struct mbuf *m = NULL;
+	struct mbuf *m;
 	struct ifnet *ifp = ifa->ifa_ifp;
+	struct rt_msghdr rtm;
+	struct ifa_msghdr ifam;
+	int ncmd;
 
 	if (route_cb.any_count == 0)
 		return;
 	for (pass = 1; pass < 3; pass++) {
 		memset(&info, 0, sizeof(info));
-		if ((cmd == RTM_ADD && pass == 1) ||
-		    (cmd == RTM_DELETE && pass == 2)) {
-			struct ifa_msghdr ifam;
-			int ncmd = cmd == RTM_ADD ? RTM_NEWADDR : RTM_DELADDR;
+		switch (cmdpass(cmd, pass)) {
+		case cmdpass(RTM_ADD, 1):
+		case cmdpass(RTM_CHANGE, 1):
+		case cmdpass(RTM_DELETE, 2):
+			if (cmd == RTM_ADD)
+				ncmd = RTM_NEWADDR;
+			else
+				ncmd = RTM_DELADDR;
 
 			info.rti_info[RTAX_IFA] = sa = ifa->ifa_addr;
 			info.rti_info[RTAX_IFP] = ifp->if_dl->ifa_addr;
@@ -843,11 +851,10 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 				continue;
 			mtod(m, struct ifa_msghdr *)->ifam_addrs =
 			    info.rti_addrs;
-		}
-		if ((cmd == RTM_ADD && pass == 2) ||
-		    (cmd == RTM_DELETE && pass == 1)) {
-			struct rt_msghdr rtm;
-
+			break;
+		case cmdpass(RTM_ADD, 2):
+		case cmdpass(RTM_CHANGE, 2):
+		case cmdpass(RTM_DELETE, 1):
 			if (rt == NULL)
 				continue;
 			info.rti_info[RTAX_NETMASK] = rt_mask(rt);
@@ -861,6 +868,9 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			if (m == NULL)
 				continue;
 			mtod(m, struct rt_msghdr *)->rtm_addrs = info.rti_addrs;
+			break;
+		default:
+			continue;
 		}
 #ifdef DIAGNOSTIC
 		if (m == NULL)
@@ -868,6 +878,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 #endif
 		route_enqueue(m, sa ? sa->sa_family : 0);
 	}
+#undef cmdpass
 }
 
 static struct mbuf *

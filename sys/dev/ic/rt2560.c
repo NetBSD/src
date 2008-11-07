@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.19 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.20 2008/11/07 00:20:02 dyoung Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.19 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.20 2008/11/07 00:20:02 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2201,6 +2201,8 @@ rt2560_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
 				rt2560_update_promisc(sc);

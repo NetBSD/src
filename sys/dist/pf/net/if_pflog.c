@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.12 2008/06/18 09:06:27 yamt Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.13 2008/11/07 00:20:13 dyoung Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.24 2007/05/26 17:13:30 jason Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.12 2008/06/18 09:06:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.13 2008/11/07 00:20:13 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -223,21 +223,26 @@ pflogoutput(struct ifnet *ifp, struct mbuf *m,
 int
 pflogioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
+	int error = 0;
+
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/*FALLTHROUGH*/
+	case SIOCINITIFADDR:
 	case SIOCAIFADDR:
 	case SIOCSIFDSTADDR:
-	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP)
 			ifp->if_flags |= IFF_RUNNING;
 		else
 			ifp->if_flags &= ~IFF_RUNNING;
 		break;
 	default:
-		return (EINVAL);
+		error = ifioctl_common(ifp, cmd, data);
 	}
 
-	return (0);
+	return error;
 }
 
 int

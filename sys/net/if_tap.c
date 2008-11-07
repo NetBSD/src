@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.49 2008/11/03 00:52:07 hans Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.50 2008/11/07 00:20:13 dyoung Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.49 2008/11/03 00:52:07 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.50 2008/11/07 00:20:13 dyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -548,7 +548,7 @@ tap_lifaddr(struct ifnet *ifp, u_long cmd, struct ifaliasreq *ifra)
 	if (sdl->sdl_family != AF_LINK)
 		return (EINVAL);
 
-	if_set_sadl(ifp, CLLADDR(sdl), ETHER_ADDR_LEN);
+	if_set_sadl(ifp, CLLADDR(sdl), ETHER_ADDR_LEN, false);
 
 	return (0);
 }
@@ -1344,6 +1344,6 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 	/* Commit change */
 	if (ether_nonstatic_aton(enaddr, addr) != 0)
 		return (EINVAL);
-	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN);
+	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN, false);
 	return (error);
 }

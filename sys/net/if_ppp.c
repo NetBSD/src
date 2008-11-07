@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.123 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.124 2008/11/07 00:20:13 dyoung Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.123 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.124 2008/11/07 00:20:13 dyoung Exp $");
 
 #include "ppp.h"
 
@@ -760,11 +760,13 @@ pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
 
     switch (cmd) {
     case SIOCSIFFLAGS:
+	if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+		break;
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 	    ifp->if_flags &= ~IFF_UP;
 	break;
 
-    case SIOCSIFADDR:
+    case SIOCINITIFADDR:
 	switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 	case AF_INET:
@@ -794,17 +796,6 @@ pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
 	    error = EAFNOSUPPORT;
 	    break;
 	}
-	break;
-
-    case SIOCSIFMTU:
-	if ((error = kauth_authorize_network(l->l_cred,
-	    KAUTH_NETWORK_INTERFACE, KAUTH_REQ_NETWORK_INTERFACE_SETPRIV,
-	    ifp, (void *)cmd, NULL) != 0))
-	    break;
-	/*FALLTHROUGH*/
-    case SIOCGIFMTU:
-	if ((error = ifioctl_common(&sc->sc_if, cmd, data)) == ENETRESET)
-		error = 0;
 	break;
 
     case SIOCADDMULTI:
@@ -857,8 +848,16 @@ pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
 	break;
 #endif /* PPP_COMPRESS */
 
+    case SIOCSIFMTU:
+	if ((error = kauth_authorize_network(l->l_cred,
+	    KAUTH_NETWORK_INTERFACE, KAUTH_REQ_NETWORK_INTERFACE_SETPRIV,
+	    ifp, (void *)cmd, NULL) != 0))
+	    break;
+	/*FALLTHROUGH*/
     default:
-	error = EINVAL;
+	if ((error = ifioctl_common(&sc->sc_if, cmd, data)) == ENETRESET)
+		error = 0;
+	break;
     }
     splx(s);
     return (error);

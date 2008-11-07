@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.78 2008/09/15 19:50:28 jdc Exp $ */
+/*	$NetBSD: gem.c,v 1.79 2008/11/07 00:20:02 dyoung Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.78 2008/09/15 19:50:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.79 2008/11/07 00:20:02 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -118,6 +118,8 @@ void		gem_setladrf(struct gem_softc *);
 static int	gem_mii_readreg(struct device *, int, int);
 static void	gem_mii_writereg(struct device *, int, int, int);
 static void	gem_mii_statchg(struct device *);
+
+static int	gem_ifflags_cb(struct ethercom *);
 
 void		gem_statuschange(struct gem_softc *);
 
@@ -451,6 +453,7 @@ gem_attach(sc, enaddr)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, gem_ifflags_cb);
 
 	sc->sc_sh = shutdownhook_establish(gem_shutdown, sc);
 	if (sc->sc_sh == NULL)
@@ -2472,38 +2475,33 @@ gem_ser_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 }
 
+static int
+gem_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct gem_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	else if ((change & IFF_PROMISC) != 0)
+		gem_setladrf(sc);
+	return 0;
+}
+
 /*
  * Process an ioctl request.
  */
 int
-gem_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+gem_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct gem_softc *sc = ifp->if_softc;
 	int s, error = 0;
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFFLAGS:
-#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
-		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
-		    == (IFF_UP|IFF_RUNNING))
-		    && ((ifp->if_flags & (~RESETIGN))
-		    == (sc->sc_if_flags & (~RESETIGN)))) {
-			gem_setladrf(sc);
-			break;
-		}
-#undef RESETIGN
-		/*FALLTHROUGH*/
-	default:
-		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
-			break;
-
+	if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 		error = 0;
-
 		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {
@@ -2513,7 +2511,6 @@ gem_ioctl(ifp, cmd, data)
 			 */
 			gem_setladrf(sc);
 		}
-		break;
 	}
 
 	/* Try to get things going again */

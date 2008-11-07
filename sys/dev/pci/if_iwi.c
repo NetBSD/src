@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.74 2008/10/30 00:27:32 joerg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.75 2008/11/07 00:20:07 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.74 2008/10/30 00:27:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.75 2008/11/07 00:20:07 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -1824,6 +1824,8 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
 				iwi_init(ifp);
