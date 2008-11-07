@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.71 2008/11/07 15:08:43 christos Exp $	*/
+/*	$NetBSD: parser.c,v 1.72 2008/11/07 15:18:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.71 2008/11/07 15:08:43 christos Exp $");
+__RCSID("$NetBSD: parser.c,v 1.72 2008/11/07 15:18:11 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1463,7 +1463,7 @@ done:
 	} else
 		saveprompt = 0;
 
-	n = list(0);
+	n = list(oldstyle);
 
 	if (oldstyle)
 		doprompt = saveprompt;
