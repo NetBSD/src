@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/24 19:49:54 cube Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2008/11/07 23:23:35 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/Xft
 LIBDPLIBS=	X11		${.CURDIR}/../libX11/dynamic \
 		fontconfig	${.CURDIR}/../fontconfig/src \
 		freetype	${.CURDIR}/../freetype \
-		Xrandr		${.CURDIR}/../libXrandr
+		Xrandr		${.CURDIR}/../libXrandr \
+		Xrender		${.CURDIR}/../libXrender
 
 PKGDIST=	${LIB}
 

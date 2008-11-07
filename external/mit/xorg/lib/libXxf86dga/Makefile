@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:31 cube Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2008/11/07 23:23:36 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -34,6 +34,9 @@ CPPFLAGS+=	${X11FLAGS.THREADLIB}
 
 # XXX
 CPPFLAGS.XF86DGA2.c=	-Wno-error
+
+LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
+		X11	${.CURDIR}/../libX11/dynamic
 
 PKGDIST=	${LIB}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/05 03:15:20 cube Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2008/11/07 23:23:35 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,8 @@ SRCS=	XScrnSaver.c
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 #CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}
 
-LIBDPLIBS=	X11	${.CURDIR}/../libX11/dynamic
+LIBDPLIBS=	X11	${.CURDIR}/../libX11/dynamic \
+		Xext	${.CURDIR}/../libXext
 
 MAN=	Xss.3
 MLINKS=	Xss.3 XScreenSaverAllocInfo.3 \
