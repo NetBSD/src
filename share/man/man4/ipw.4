@@ -1,4 +1,4 @@
-.\" $NetBSD: ipw.4,v 1.2 2007/02/16 15:32:08 hubertf Exp $
+.\" $NetBSD: ipw.4,v 1.3 2008/11/07 11:41:34 joerg Exp $
 .\" Id: ipw.4,v 1.1.2.2 2004/08/19 16:25:41 damien Exp
 .\"
 .\" Copyright (c) 2004
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 16, 2007
+.Dd November 7, 2008
 .Os
 .Dt IPW 4
 .Sh NAME
@@ -39,6 +39,13 @@ The
 .Nm
 driver provides support for the Intel PRO/Wireless 2100 MiniPCI network
 adapter.
+.Pp
+The Intel firmware requires acceptance of the End User License Agreement.
+The full license text can be found in
+/libdata/firmware/if_ipw/LICENSE.
+The license is agreed to by setting the sysctl variable
+.Dv hw.iwp.accept_eula
+to 1.
 .Pp
 By default, the
 .Nm
@@ -80,8 +87,7 @@ This should not happen.
 .Xr pci 4 ,
 .Xr wi 4 ,
 .Xr ifconfig 8 ,
-.Xr ipwctl 8 ,
-.Pa pkgsrc/sysutils/ipw-firmware
+.Xr ipwctl 8
 .Rs
 .%T The IPW Web Page
 .%O http://damien.bergamini.free.fr/ipw/
