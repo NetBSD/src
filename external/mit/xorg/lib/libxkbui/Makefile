@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:31 cube Exp $
+#	$NetBSD: Makefile,v 1.2.8.1 2008/11/07 23:23:36 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,10 @@ INCS=	XKBui.h
 INCSDIR=${X11INCDIR}/X11/extensions
 
 CPPFLAGS+=-I${DESTDIR}${X11INCDIR}/X11/extensions
+
+LIBDPLIBS=	X11	${.CURDIR}/../libX11/dynamic \
+		xkbfile	${.CURDIR}/../libxkbfile \
+		m	${.CURDIR}/../../../../../lib/libm
 
 PKGCONFIG=	xkbui
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/10/04 21:59:49 cube Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2008/11/07 23:23:36 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,9 @@ MLINKS=	XRes.3 XResQueryExtension.3 \
 	XRes.3 XResQueryClients.3 \
 	XRes.3 XResQueryClientResources.3 \
 	XRes.3 XResQueryClientPixmapBytes.3
+
+LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
+		X11	${.CURDIR}/../libX11/dynamic
 
 PKGDIST=	Xres
 

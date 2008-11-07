@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/04 18:32:25 cube Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2008/11/07 23:23:36 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,9 @@ MLINKS=	XF86Misc.3 XF86MiscGetKbdSettings.3 \
 	XF86Misc.3 XF86MiscSetKbdSettings.3 \
 	XF86Misc.3 XF86MiscSetMouseSettings.3 \
 	XF86Misc.3 XF86MiscSetSaver.3
+
+LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
+		X11	${.CURDIR}/../libX11/dynamic
 
 PKGDIST=	${LIB}
 

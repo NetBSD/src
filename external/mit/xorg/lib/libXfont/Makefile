@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/09/13 04:32:30 cube Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2008/11/07 23:23:35 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -57,7 +57,11 @@ LIBDPLIBS=\
 	SM	${.CURDIR}/../libSM \
 	ICE	${.CURDIR}/../libICE \
 	Xext	${.CURDIR}/../libXext \
-	X11	${.CURDIR}/../libX11/dynamic
+	fontenc	${.CURDIR}/../libfontenc \
+	freetype	${.CURDIR}/../freetype \
+	X11	${.CURDIR}/../libX11/dynamic \
+	m	${.CURDIR}/../../../../../lib/libm \
+	z	${.CURDIR}/../../../../../lib/libz
 
 # XXX
 COPTS.ffcheck.c+=	-Wno-error
