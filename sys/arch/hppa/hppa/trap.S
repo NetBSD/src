@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.26.2.3 2008/11/02 13:07:48 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.26.2.4 2008/11/07 11:26:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -230,6 +230,7 @@ $syscall:
 
 	stw	%t4, TF_R19 -TRAPFRAME_SIZEOF(%sr1, %t3)    /* t4 for vfork */
 	stw	%t1, TF_R22 -TRAPFRAME_SIZEOF(%sr1, %t3)    /* syscall # */
+	copy	%sp, %t4
 
 	/* gotta save the args, in case we gonna restart */
 	stw	%arg3, TF_R23 -TRAPFRAME_SIZEOF(%sr1, %t3)
