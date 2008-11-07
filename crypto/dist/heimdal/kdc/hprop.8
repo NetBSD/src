@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE. 
 .\" 
 .\" $Heimdal: hprop.8 20456 2007-04-19 20:29:42Z lha $
-.\" $NetBSD: hprop.8,v 1.8 2008/03/22 08:37:03 mlelstv Exp $
+.\" $NetBSD: hprop.8,v 1.9 2008/11/07 15:50:38 reed Exp $
 .\"
 .Dd December  8, 2004
 .Dt HPROP 8
@@ -185,7 +185,8 @@ $ hprop slave-1 slave-2
 .Pp
 Convert a Kerberos 4 dump-file for use with a Heimdal KDC:
 .Bd -literal -offset indent
-$ hprop -n --source=krb4-dump -d /var/kerberos/principal.dump --master-key=/.k | hpropd -n
+$ hprop -n --source=krb4-dump -d /var/kerberos/principal.dump \\
+   --master-key=/.k | hpropd -n
 .Ed
 .Sh SEE ALSO
 .Xr hpropd 8
