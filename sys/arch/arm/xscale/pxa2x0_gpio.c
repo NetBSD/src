@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_gpio.c,v 1.10 2008/04/24 11:46:30 nonaka Exp $	*/
+/*	$NetBSD: pxa2x0_gpio.c,v 1.11 2008/11/07 16:13:16 rafal Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.10 2008/04/24 11:46:30 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_gpio.c,v 1.11 2008/11/07 16:13:16 rafal Exp $");
 
 #include "opt_pxa2x0_gpio.h"
 
@@ -202,14 +202,12 @@ pxa2x0_gpio_intr_establish(u_int gpio, int level, int spl, int (*func)(void *),
 	struct gpio_irq_handler *gh;
 	u_int32_t bit, reg;
 
-#ifdef DEBUG
 #ifdef PXAGPIO_HAS_GPION_INTRS
 	if (gpio >= GPIO_NPINS)
 		panic("pxa2x0_gpio_intr_establish: bad pin number: %d", gpio);
 #else
 	if (gpio > 1)
 		panic("pxa2x0_gpio_intr_establish: bad pin number: %d", gpio);
-#endif
 #endif
 
 	if (!GPIO_IS_GPIO_IN(pxa2x0_gpio_get_function(gpio)))
