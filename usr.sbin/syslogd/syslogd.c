@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.92 2008/11/07 07:36:38 minskim Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.93 2008/11/07 15:42:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.92 2008/11/07 07:36:38 minskim Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.93 2008/11/07 15:42:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1827,14 +1827,23 @@ logmsg(struct buf_msg *buffer)
 		/* do we compare with host (IMHO correct) or recvhost */
 		/* (compatible)? */
 		if (f->f_host != NULL && buffer->host != NULL) {
+			char shost[MAXHOSTNAMELEN + 1], *h;
+			if (!BSDOutputFormat) {
+				h = buffer->host;
+			} else {
+				(void)strlcpy(shost, buffer->host,
+				    sizeof(shost));
+				trim_anydomain(shost);
+				h = shost;
+			}
 			switch (f->f_host[0]) {
 			case '+':
-				if (! matches_spec(buffer->host, f->f_host + 1,
+				if (! matches_spec(h, f->f_host + 1,
 				    strcasestr))
 					continue;
 				break;
 			case '-':
-				if (matches_spec(buffer->host, f->f_host + 1,
+				if (matches_spec(h, f->f_host + 1,
 				    strcasestr))
 					continue;
 				break;
