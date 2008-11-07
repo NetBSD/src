@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.140 2008/07/09 20:07:19 joerg Exp $  */
+/*	$NetBSD: atw.c,v 1.141 2008/11/07 00:20:02 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.140 2008/07/09 20:07:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.141 2008/11/07 00:20:02 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3838,6 +3838,8 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (ATW_IS_ENABLED(sc)) {
 				/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.30 2008/06/10 22:44:07 he Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.31 2008/11/07 00:20:07 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.30 2008/06/10 22:44:07 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.31 2008/11/07 00:20:07 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -436,23 +436,25 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
+		error = gfe_whack(sc, GE_WHACK_START);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			error = gfe_whack(sc, GE_WHACK_START);
 			if (error == 0)
 				arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			error = gfe_whack(sc, GE_WHACK_START);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
 		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
 		case IFF_UP|IFF_RUNNING:/* active->active, update */
 			error = gfe_whack(sc, GE_WHACK_CHANGE);
@@ -490,7 +492,7 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 	splx(s);

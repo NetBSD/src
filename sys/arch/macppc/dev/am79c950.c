@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.23 2007/10/17 19:55:17 garbled Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.24 2008/11/07 00:20:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.23 2007/10/17 19:55:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.24 2008/11/07 00:20:02 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -190,23 +190,25 @@ mcioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifa = (struct ifaddr *)data;
 		ifp->if_flags |= IFF_UP;
+		mcinit(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			mcinit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			mcinit(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((err = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX see the comment in ed_ioctl() about code re-use */
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -252,7 +254,8 @@ mcioctl(ifp, cmd, data)
 		break;
 
 	default:
-		err = EINVAL;
+		err = ether_ioctl(ifp, cmd, data);
+		break;
 	}
 	splx(s);
 	return (err);

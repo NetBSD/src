@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.52 2008/07/03 18:10:07 drochner Exp $	*/
+/*	$NetBSD: an.c,v 1.53 2008/11/07 00:20:02 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.52 2008/07/03 18:10:07 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.53 2008/11/07 00:20:02 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -889,6 +889,8 @@ an_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	switch (command) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (sc->sc_enabled) {
 				/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.45 2008/04/28 20:23:57 martin Exp $	*/
+/*	$NetBSD: qe.c,v 1.46 2008/11/07 00:20:12 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.45 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.46 2008/11/07 00:20:12 dyoung Exp $");
 
 #define QEDEBUG
 
@@ -923,46 +923,48 @@ qeioctl(ifp, cmd, data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
+		qeinit(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			qeinit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
 		default:
-			qeinit(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
 			qestop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			qeinit(sc);
-
-		} else {
+			break;
+		default:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
 			qestop(sc);
 			qeinit(sc);
+			break;
 		}
 #ifdef QEDEBUG
 		sc->sc_debug = (ifp->if_flags & IFF_DEBUG) != 0 ? 1 : 0;

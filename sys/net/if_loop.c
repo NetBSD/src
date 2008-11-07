@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.69 2008/10/24 17:07:33 dyoung Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.70 2008/11/07 00:20:13 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.69 2008/10/24 17:07:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.70 2008/11/07 00:20:13 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -417,7 +417,7 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		ifa = (struct ifaddr *)data;
 		if (ifa != NULL /*&& ifa->ifa_addr->sa_family == AF_ISO*/)
@@ -460,7 +460,7 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 	}
 	return (error);
 }

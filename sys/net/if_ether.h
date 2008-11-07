@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.53 2008/07/25 20:04:50 dsl Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.54 2008/11/07 00:20:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -145,6 +145,10 @@ do {									\
 
 struct mii_data;
 
+struct ethercom;
+
+typedef int (*ether_cb_t)(struct ethercom *);
+
 /*
  * Structure shared between the ethernet driver modules and
  * the multicast list code.  For example, each ec_softc or il_softc
@@ -164,6 +168,11 @@ struct ethercom {
 	int	ec_nvlans;			/* # VLANs on this interface */
 	/* The device handle for the MII bus child device. */
 	struct mii_data				*ec_mii;
+	/* Called after a change to ec_if.if_flags.  Returns
+	 * ENETRESET if the device should be reinitialized with
+	 * ec_if.if_init, 0 on success, not 0 on failure.
+	 */
+	ether_cb_t				ec_ifflags_cb;
 #ifdef MBUFTRACE
 	struct	mowner ec_rx_mowner;		/* mbufs received */
 	struct	mowner ec_tx_mowner;		/* mbufs transmitted */
@@ -180,6 +189,7 @@ extern const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 
+void	ether_set_ifflags_cb(struct ethercom *, ether_cb_t);
 int	ether_ioctl(struct ifnet *, u_long, void *);
 int	ether_addmulti(const struct sockaddr *, struct ethercom *);
 int	ether_delmulti(const struct sockaddr *, struct ethercom *);

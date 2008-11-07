@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.24 2008/11/06 12:03:43 blymn Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.25 2008/11/07 00:20:07 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.24 2008/11/06 12:03:43 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.25 2008/11/07 00:20:07 dyoung Exp $");
 
 
 /*
@@ -2296,6 +2296,8 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void * data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
 				iwn_init(ifp);

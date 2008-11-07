@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.152 2008/08/31 19:57:03 tron Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.153 2008/11/07 00:20:07 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.152 2008/08/31 19:57:03 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.153 2008/11/07 00:20:07 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -4290,6 +4290,8 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	switch(command) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			/*
 			 * If only the state of the PROMISC flag changed,

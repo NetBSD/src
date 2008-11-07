@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.63 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.64 2008/11/07 00:20:12 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.63 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.64 2008/11/07 00:20:12 dyoung Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1069,7 +1069,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 	s = splnet();
 
 	switch(command) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		kue_init(sc);
 
@@ -1094,6 +1094,8 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
 			    ifp->if_flags & IFF_PROMISC &&
@@ -1122,7 +1124,7 @@ kue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		error = 0;
 		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, command, data);
 		break;
 	}
 
