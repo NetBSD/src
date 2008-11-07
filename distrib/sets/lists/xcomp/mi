@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.71 2008/10/05 20:24:33 cube Exp $
+# $NetBSD: mi,v 1.72 2008/11/07 10:24:18 rtr Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5592,8 +5592,8 @@
 ./usr/X11R7/include/freetype2/freetype/ftbdf.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftbitmap.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftcache.h	-unknown-	xorg
-./usr/X11R7/include/freetype2/freetype/ftcid.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftchapters.h	-unknown-	xorg
+./usr/X11R7/include/freetype2/freetype/ftcid.h		-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrdef.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/fterrors.h	-unknown-	xorg
 ./usr/X11R7/include/freetype2/freetype/ftgasp.h		-unknown-	xorg
@@ -6602,16 +6602,16 @@
 ./usr/X11R7/man/cat3/XSetWMProperties.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XSetWMProtocols.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XShape.0				-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/XShapeCombineRegion.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/XShapeCombineRectangles.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XShapeCombineMask.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XShapeCombineRectangles.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XShapeCombineRegion.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XShapeCombineShape.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XShapeGetRectangles.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XShapeInputSelected.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XShapeOffsetShape.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XShapeQueryExtensionXShapeQueryVersion.0	-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XShapeQueryExtents.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XShapeSelectInput.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/XShapeInputSelected.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/XShapeGetRectangles.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XShm.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XShmAttach.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XShmCreateImage.0			-unknown-	.cat,xorg
@@ -6693,11 +6693,11 @@
 ./usr/X11R7/man/cat3/XeviQueryExtension.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XeviQueryVersion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xevie.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XevieEnd.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XevieQueryVersion.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/XevieStart.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XevieSelectInput.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XevieSendEvent.0			-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/XevieEnd.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XevieStart.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xfixes.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xfontcache.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/Xft.0				-unknown-	.cat,xorg
@@ -6723,9 +6723,9 @@
 ./usr/X11R7/man/cat3/XmbufDestroyBuffers.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XmbufDisplayBuffers.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XmbufGetBufferAttributes.0		-unknown-	.cat,xorg
+./usr/X11R7/man/cat3/XmbufGetScreenInfo.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XmbufGetVersion.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XmbufGetWindowAttributes.0		-unknown-	.cat,xorg
-./usr/X11R7/man/cat3/XmbufGetScreenInfo.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XmbufQueryExtension.0		-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XpCancelDoc.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3/XpCancelJob.0			-unknown-	.cat,xorg
@@ -7522,9 +7522,9 @@
 ./usr/X11R7/man/html3/XTextExtents.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XTextWidth.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XTranslateCoordinates.html	-unknown-	html,xorg
+./usr/X11R7/man/html3/XUngrabDevice.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XUngrabDeviceButton.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XUngrabDeviceKey.html		-unknown-	html,xorg
-./usr/X11R7/man/html3/XUngrabDevice.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XUnmapEvent.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XUnmapWindow.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XVaCreateNestedList.html		-unknown-	html,xorg
@@ -7572,11 +7572,11 @@
 ./usr/X11R7/man/html3/XeviQueryExtension.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XeviQueryVersion.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xevie.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XevieEnd.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XevieQueryVersion.html		-unknown-	html,xorg
-./usr/X11R7/man/html3/XevieStart.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/XevieSelectInput.html		-unknown-	html,xorg
 ./usr/X11R7/man/html3/XevieSendEvent.html		-unknown-	html,xorg
-./usr/X11R7/man/html3/XevieEnd.html			-unknown-	html,xorg
+./usr/X11R7/man/html3/XevieStart.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xfixes.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xfontcache.html			-unknown-	html,xorg
 ./usr/X11R7/man/html3/Xft.html				-unknown-	html,xorg
@@ -8360,8 +8360,8 @@
 ./usr/X11R7/man/man3/XSetWMProtocols.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShape.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShapeCombineMask.3		-unknown-	.man,xorg
-./usr/X11R7/man/man3/XShapeCombineRegion.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShapeCombineRectangles.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XShapeCombineRegion.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShapeCombineShape.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShapeGetRectangles.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShapeInputSelected.3		-unknown-	.man,xorg
@@ -8371,9 +8371,9 @@
 ./usr/X11R7/man/man3/XShapeSelectInput.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShm.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShmAttach.3			-unknown-	.man,xorg
-./usr/X11R7/man/man3/XShmDetach.3			-unknown-	.man,xorg
-./usr/X11R7/man/man3/XShmCreatePixmap.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShmCreateImage.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XShmCreatePixmap.3			-unknown-	.man,xorg
+./usr/X11R7/man/man3/XShmDetach.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShmGetEventBase.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShmGetImage.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XShmPixmapFormat.3			-unknown-	.man,xorg
@@ -8400,9 +8400,9 @@
 ./usr/X11R7/man/man3/XTextExtents.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XTextWidth.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XTranslateCoordinates.3		-unknown-	.man,xorg
+./usr/X11R7/man/man3/XUngrabDevice.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XUngrabDeviceButton.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XUngrabDeviceKey.3			-unknown-	.man,xorg
-./usr/X11R7/man/man3/XUngrabDevice.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XUnmapEvent.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XUnmapWindow.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XVaCreateNestedList.3		-unknown-	.man,xorg
@@ -8450,11 +8450,11 @@
 ./usr/X11R7/man/man3/XeviQueryExtension.3		-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XeviQueryVersion.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xevie.3				-unknown-	.man,xorg
+./usr/X11R7/man/man3/XevieEnd.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XevieQueryVersion.3		-unknown-	.man,xorg
-./usr/X11R7/man/man3/XevieStart.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XevieSelectInput.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/XevieSendEvent.3			-unknown-	.man,xorg
-./usr/X11R7/man/man3/XevieEnd.3				-unknown-	.man,xorg
+./usr/X11R7/man/man3/XevieStart.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xfixes.3				-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xfontcache.3			-unknown-	.man,xorg
 ./usr/X11R7/man/man3/Xft.3				-unknown-	.man,xorg
