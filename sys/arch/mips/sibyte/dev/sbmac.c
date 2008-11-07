@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.28 2008/02/07 01:21:52 dyoung Exp $ */
+/* $NetBSD: sbmac.c,v 1.29 2008/11/07 00:20:02 dyoung Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28 2008/02/07 01:21:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.29 2008/11/07 00:20:02 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1957,7 +1957,7 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct sbmac_softc *sc = ifp->if_softc;
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -1990,7 +1990,7 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		return (EINVAL);
+		return ENOTTY;
 	}
 
 	return (0);
@@ -2022,8 +2022,7 @@ sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
 	s = splnet();
 
 	switch(command) {
-	case SIOCSIFADDR:
-	case SIOCGIFADDR:
+	case SIOCINITIFADDR:
 		error = sbmac_ether_ioctl(ifp, command, data);
 		break;
 	case SIOCSIFMTU:
@@ -2034,6 +2033,8 @@ sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
 			error = 0;
 		break;
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			/*
 			 * If only the state of the PROMISC flag changed,
@@ -2069,7 +2070,7 @@ sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
 		}
 		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, command, data);
 		break;
 	}
 

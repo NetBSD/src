@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.62 2008/04/28 20:23:50 martin Exp $	*/
+/*	$NetBSD: i82586.c,v 1.63 2008/11/07 00:20:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.62 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.63 2008/11/07 00:20:02 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1772,10 +1772,7 @@ i82586_stop(
 }
 
 int
-i82586_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+i82586_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct ie_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -1829,7 +1826,7 @@ again:
 		    memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
 			sc->sc_ethercom.ec_if.if_flags |= IFF_ALLMULTI;
 			i82586_ioctl(&sc->sc_ethercom.ec_if,
-				     SIOCSIFFLAGS, (void *)0);
+				     SIOCSIFFLAGS, NULL);
 			return;
 		}
 		ETHER_NEXT_MULTI(step, enm);

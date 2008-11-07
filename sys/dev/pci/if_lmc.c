@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.43 2008/06/27 00:53:41 gmcgarry Exp $ */
+/* $NetBSD: if_lmc.c,v 1.44 2008/11/07 00:20:07 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -142,7 +142,7 @@
 
 #if defined(__NetBSD__)
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.43 2008/06/27 00:53:41 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.44 2008/11/07 00:20:07 dyoung Exp $");
 # include <sys/param.h>	/* OS version */
 /* -DLKM is passed on the compiler command line */
 # include "opt_inet.h"	/* INET6, INET */
@@ -3549,11 +3549,13 @@ rawip_ioctl(softc_t *sc, u_long cmd, void *data)
     case SIOCDELMULTI:
       if (sc->config.debug)
         printf("%s: rawip_ioctl: SIOCADD/DELMULTI\n", NAME_UNIT);
-    case SIOCAIFADDR:
     case SIOCSIFFLAGS:
+      error = ifioctl_common(sc->ifp, cmd, data);
+      break;
+    case SIOCAIFADDR:
     case SIOCSIFDSTADDR:
       break;
-    case SIOCSIFADDR:
+    case SIOCINITIFADDR:
       sc->ifp->if_flags |= IFF_UP; /* a Unix tradition */
       break;
     case SIOCSIFMTU:
