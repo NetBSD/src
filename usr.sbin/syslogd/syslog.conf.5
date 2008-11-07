@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.14 2008/10/31 16:12:19 christos Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.15 2008/11/07 07:36:38 minskim Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -477,13 +477,13 @@ given:
 .Bl -ohang
 .It Em file_queue_length
 .It Em pipe_queue_length
-.It Em tls_queue_length 
+.It Em tls_queue_length
 The maximum number of messages buffered for one destination of type tls, file,
 or pipe respectively.
 Defaults are
 .Sq 1024 ,
 .Sq 1024 ,
-and 
+and
 .Sq -1
 (no limit).
 .It Em file_queue_size
