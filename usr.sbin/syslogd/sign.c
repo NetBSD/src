@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.c,v 1.1 2008/10/31 16:12:19 christos Exp $	*/
+/*	$NetBSD: sign.c,v 1.2 2008/11/07 07:36:38 minskim Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,8 +41,8 @@
  *
  * Martin Schütte
  */
-/* 
- * Issues with the current internet draft: 
+/*
+ * Issues with the current internet draft:
  * 1. The draft is a bit unclear on the input format for the signature,
  *    so this might have to be changed later. Cf. sign_string_sign()
  * 2. The draft only defines DSA signatures. I hope it will be extended
@@ -55,9 +55,9 @@
  * 1. check; next draft will be clearer and specify the format as implemented.
  * 2. check; definitely only DSA in this version.
  * 3. remains a problem, so far no statement from authors or WG.
- * 4. check; used EVP_dss1 method implements FIPS.  
+ * 4. check; used EVP_dss1 method implements FIPS.
  */
-/* 
+/*
  * Limitations of this implementation:
  * - cannot use OpenPGP keys, only PKIX or DSA due to OpenSSL capabilities
  * - only works for correctly formatted messages, because incorrect messages
@@ -66,8 +66,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sign.c,v 1.1 2008/10/31 16:12:19 christos Exp $");
- 
+__RCSID("$NetBSD: sign.c,v 1.2 2008/11/07 07:36:38 minskim Exp $");
+
 #ifndef DISABLE_SIGN
 #include "syslogd.h"
 #ifndef DISABLE_TLS
@@ -77,7 +77,7 @@ __RCSID("$NetBSD: sign.c,v 1.1 2008/10/31 16:12:19 christos Exp $");
 #include "extern.h"
 
 /*
- * init all SGs for a given algorithm 
+ * init all SGs for a given algorithm
  */
 bool
 sign_global_init(struct filed *Files)
@@ -116,7 +116,7 @@ sign_global_init(struct filed *Files)
 	assert(GlobalSign.pubkey_b64 && GlobalSign.privkey &&
 	    GlobalSign.pubkey);
 	assert(GlobalSign.privkey->pkey.dsa->priv_key);
-	
+
 	GlobalSign.gbc = 0;
 	STAILQ_INIT(&GlobalSign.SigGroups);
 
@@ -133,7 +133,7 @@ sign_global_init(struct filed *Files)
 	if (!sign_sg_init(Files))
 		return false;
 	sign_new_reboot_session();
-	
+
 	DPRINTF(D_SIGN, "length values: SIGN_MAX_SD_LENGTH %d, "
 	    "SIGN_MAX_FRAG_LENGTH %d, SIGN_MAX_SB_LENGTH %d, "
 	    "SIGN_MAX_HASH_NUM %d\n", SIGN_MAX_SD_LENGTH,
@@ -148,7 +148,7 @@ sign_global_init(struct filed *Files)
  * get keys for syslog-sign
  * either from the X.509 certificate used for TLS
  * or by generating a new one
- * 
+ *
  * sets the global variables
  * GlobalSign.keytype, GlobalSign.pubkey_b64,
  * GlobalSign.privkey, and GlobalSign.pubkey
@@ -160,7 +160,7 @@ sign_get_keys()
 	unsigned char *der_pubkey = NULL, *ptr_der_pubkey = NULL;
 	char *pubkey_b64 = NULL;
 	int der_len;
-	
+
 	/* try PKIX/TLS key first */
 #ifndef DISABLE_TLS
 	SSL *ssl;
@@ -168,7 +168,7 @@ sign_get_keys()
 	 && (ssl = SSL_new(tls_opt.global_TLS_CTX))) {
 		X509 *cert;
 		DPRINTF(D_SIGN, "Try to get keys from TLS X.509 cert...\n");
-		
+
 		if (!(cert = SSL_get_certificate(ssl))) {
 			logerror("SSL_get_certificate() failed");
 			FREE_SSL(ssl);
@@ -202,7 +202,7 @@ sign_get_keys()
 			GlobalSign.keytype = 'C';
 			GlobalSign.privkey = privkey;
 			GlobalSign.pubkey = pubkey;
-			
+
 			/* base64 certificate encoding */
 			der_len = i2d_X509(cert, NULL);
 			if (!(ptr_der_pubkey = der_pubkey = malloc(der_len))
@@ -272,7 +272,7 @@ sign_get_keys()
 }
 
 /*
- * init SGs 
+ * init SGs
  */
 bool
 sign_sg_init(struct filed *Files)
@@ -350,7 +350,7 @@ sign_sg_init(struct filed *Files)
 	case 2:
 		/* PRI ranges get one SG, boundaries given by the
 		 * SPRI, indicating the largest PRI in the SG
-		 * 
+		 *
 		 * either GlobalSign.sig2_delims has a list of
 		 * user configured delimiters, or we use a default
 		 * and set up one SG per facility
@@ -442,7 +442,7 @@ sign_sg_init(struct filed *Files)
 }
 
 /*
- * free all SGs for a given algorithm 
+ * free all SGs for a given algorithm
  */
 void
 sign_global_free()
@@ -479,7 +479,7 @@ sign_global_free()
 	if (GlobalSign.pubkey) {
 		EVP_PKEY_free(GlobalSign.pubkey);
 		GlobalSign.pubkey = NULL;
-	}		 
+	}
 	if(GlobalSign.mdctx) {
 		EVP_MD_CTX_destroy(GlobalSign.mdctx);
 		GlobalSign.mdctx = NULL;
@@ -541,7 +541,7 @@ sign_send_certificate_block(struct signature_group_t *sg)
 		assert(sd[sd_len] == '\0');
 		assert(sd[sd_len-1] == ']');
 		assert(sd[sd_len-2] == '"');
-		
+
 		if (!sign_msg_sign(&buffer, sd, sizeof(sd)))
 			return 0;
 		DPRINTF((D_CALL|D_SIGN), "sign_send_certificate_block(): "
@@ -570,7 +570,7 @@ struct signature_group_t *
 sign_get_sg(int pri, struct filed *f)
 {
 	struct signature_group_t *sg, *rc = NULL;
-	
+
 	if (GlobalSign.rsid && f)
 		switch (GlobalSign.sg) {
 		case 0:
@@ -599,10 +599,10 @@ sign_get_sg(int pri, struct filed *f)
 
 /*
  * create and send signature block
- * 
+ *
  * uses a sliding window for redundancy
  * if force==true then simply send all available hashes, e.g. on shutdown
- * 
+ *
  * sliding window checks implicitly assume that new hashes are appended
  * to the SG between two calls. if that is not the case (e.g. with repeated
  * messages) the queue size will shrink.
@@ -638,10 +638,10 @@ sign_send_signature_block(struct signature_group_t *sg, bool force)
 	/* if no CB sent so far then do now, just before first SB */
 	if (sg->resendcount == SIGN_RESENDCOUNT_CERTBLOCK)
 		sign_send_certificate_block(sg);
-	
+
 	/* shortly after reboot we have shorter SBs */
 	hashes_in_sb = MIN(sg_num_hashes, SIGN_HASH_NUM);
-	
+
 	DPRINTF(D_SIGN, "sign_send_signature_block(): "
 	    "sg_num_hashes = %zu, hashes_in_sb = %zu, SIGN_HASH_NUM = %d\n",
 	    sg_num_hashes, hashes_in_sb, SIGN_HASH_NUM);
@@ -677,7 +677,7 @@ sign_send_signature_block(struct signature_group_t *sg, bool force)
 		DPRINTF((D_CALL|D_SIGN), "sign_send_signature_block(): calling"
 		    " fprintlog(), sending %zu out of %zu hashes\n",
 		    MIN(SIGN_MAX_HASH_NUM, sg_num_hashes), sg_num_hashes);
-	
+
 		STAILQ_FOREACH(fq, &sg->files, entries) {
 			int tmpcnt;
 			tmpcnt = fq->f->f_prevcount;
@@ -713,7 +713,7 @@ void
 sign_free_string_queue(struct string_queue_head *sqhead)
 {
 	struct string_queue *qentry, *tmp_qentry;
-	
+
 	DPRINTF((D_CALL|D_SIGN), "sign_free_string_queue(%p)\n", sqhead);
 	STAILQ_FOREACH_SAFE(qentry, sqhead, entries, tmp_qentry) {
 		STAILQ_REMOVE(sqhead, qentry, string_queue, entries);
@@ -735,11 +735,11 @@ sign_msg_hash(char *line, char **hash)
 	unsigned md_len = 0;
 
 	DPRINTF((D_CALL|D_SIGN), "sign_msg_hash('%s')\n", line);
-	
+
 	SSL_CHECK_ONE(EVP_DigestInit_ex(GlobalSign.mdctx, GlobalSign.md, NULL));
 	SSL_CHECK_ONE(EVP_DigestUpdate(GlobalSign.mdctx, line, strlen(line)));
 	SSL_CHECK_ONE(EVP_DigestFinal_ex(GlobalSign.mdctx, md_value, &md_len));
-	
+
 	b64_ntop(md_value, md_len, (char *)md_b64, EVP_MAX_MD_SIZE*2);
 	*hash = strdup((char *)md_b64);
 
@@ -775,11 +775,11 @@ sign_append_hash(char *hash, struct signature_group_t *sg)
 
 /*
  * sign one syslog-sign message
- * 
+ *
  * requires a ssign or ssigt-cert SD element
  * ending with ' SIGN=""]' in sd
  * linesize is available memory (= sizeof(sd))
- * 
+ *
  * function will calculate signature and return a new buffer
  */
 bool
@@ -828,7 +828,7 @@ sign_msg_sign(struct buf_msg **bufferptr, char *sd, size_t linesize)
 	sd[endptr-2] = '\0';
 	newlinelen = strlcat(sd, signature, linesize);
 	newlinelen = strlcat(sd, "\"]", linesize);
-	
+
 	if (newlinelen >= linesize) {
 		DPRINTF(D_SIGN, "sign_send_signature_block(): "
 		    "buffer too small\n");
@@ -857,13 +857,13 @@ sign_string_sign(char *line, char **signature)
 	unsigned char sig_b64[SIGN_B64SIGLEN_DSS];
 	unsigned sig_len = 0;
 	char *p, *q;
-	/* 
+	/*
 	 * The signature is calculated over the completely formatted
 	 * syslog-message, including all of the PRI, HEADER, and hashes
 	 * in the hash block, excluding spaces between fields, and also
 	 * excluding the signature field (SD Parameter Name "SIGN", "=",
 	 * and corresponding value).
-	 * 
+	 *
 	 * -- I am not quite sure which spaces are to be removed.
 	 * Only the ones inside the "ssign" element or those between
 	 * header fields as well?
@@ -882,7 +882,7 @@ sign_string_sign(char *line, char **signature)
 	assert(GlobalSign.privkey);
 	SSL_CHECK_ONE(EVP_SignFinal(GlobalSign.sigctx, sig_value, &sig_len,
 	    GlobalSign.privkey));
-	
+
 	b64_ntop(sig_value, sig_len, (char *)sig_b64, sizeof(sig_b64));
 	*signature = strdup((char *)sig_b64);
 

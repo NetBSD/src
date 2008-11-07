@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.1 2008/10/31 16:12:19 christos Exp $	*/
+/*	$NetBSD: tls.h,v 1.2 2008/11/07 07:36:38 minskim Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 /*
  * tls.h
- * 
+ *
  */
 #ifndef _TLS_H
 #define _TLS_H
@@ -48,7 +48,7 @@
 
 /* initial size for TLS inbuf, minimum prefix + linelength
  * guaranteed to be accepted */
-#define TLS_MIN_LINELENGTH	   (2048 + 5) 
+#define TLS_MIN_LINELENGTH	   (2048 + 5)
 /* usually the inbuf is enlarged as needed and then kept.
  * if bigger than TLS_PERSIST_LINELENGTH, then shrink
  * to TLS_LARGE_LINELENGTH immediately	*/
@@ -67,8 +67,8 @@
  * This has to be <= 5h (with 10sec initial interval),
  * otherwise a daily SIGHUP from newsylog will reset
  * all timers and the giveup time will never be reached
- * 
- * set here: 2h, reached after ca. 7h of reconnecting 
+ *
+ * set here: 2h, reached after ca. 7h of reconnecting
  */
 #define TLS_RECONNECT_GIVEUP	     60*60*2
 
@@ -94,7 +94,7 @@
 #define ST_TLS_EST    1
 #define ST_TCP_EST    2
 #define ST_CONNECTING 3
-#define ST_ACCEPTING  4	 
+#define ST_ACCEPTING  4
 #define ST_READING    5
 #define ST_WRITING    6
 #define ST_EOF	      7
@@ -110,7 +110,7 @@
 /*
  * holds TLS related settings for one connection to be
  * included in the SSL object and available in callbacks
- * 
+ *
  * Many fields have a slightly different semantic for
  * incoming and outgoing connections:
  * - for outgoing connections it contains the values from syslog.conf and
@@ -123,7 +123,7 @@ struct tls_conn_settings {
 	unsigned      send_queue:1, /* currently sending buffer	     */
 		      errorcount:4, /* counter [0;TLS_MAXERRORCOUNT] */
 		      accepted:1,   /* workaround cf. check_peer_cert*/
-		      shutdown:1,   /* fast connection close on exit */ 
+		      shutdown:1,   /* fast connection close on exit */
 		      x509verify:2, /* kind of validation needed     */
 		      incoming:1,   /* set if we are server	     */
 		      state:4;	    /* outgoing connection state     */

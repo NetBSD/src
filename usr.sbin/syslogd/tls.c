@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.2 2008/11/03 15:08:16 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.3 2008/11/07 07:36:38 minskim Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.2 2008/11/03 15:08:16 christos Exp $");
+__RCSID("$NetBSD: tls.c,v 1.3 2008/11/07 07:36:38 minskim Exp $");
 
 #ifndef DISABLE_TLS
 #include "syslogd.h"
@@ -158,9 +158,9 @@ init_global_TLS_CTX()
 	FILE  *keyfile = NULL;
 	unsigned long err;
 	char *fp = NULL, *cn = NULL;
-	
+
 	char statusmsg[1024];
-	
+
 	if (tls_opt.global_TLS_CTX) /* already initialized */
 		return NULL;
 
@@ -178,7 +178,7 @@ init_global_TLS_CTX()
 		keyfilename = DEFAULT_X509_KEYFILE;
 	if (!certfilename)
 		certfilename = DEFAULT_X509_CERTFILE;
-	
+
 	/* TODO: would it be better to use stat() for access checking? */
 	if (!(keyfile  = fopen(keyfilename,  "r"))
 	 && !(certfile = fopen(certfilename, "r"))) {
@@ -278,7 +278,7 @@ init_global_TLS_CTX()
 		logerror("SSL_CTX_set_tmp_dh() failed: %s",
 		    ERR_error_string(ERR_get_error(), NULL));
 
-	/* make sure the OpenSSL error queue is empty */    
+	/* make sure the OpenSSL error queue is empty */
 	while ((err = ERR_get_error()) != 0)
 		logerror("Unexpected OpenSSL error: %s",
 		    ERR_error_string(err, NULL));
@@ -288,7 +288,7 @@ init_global_TLS_CTX()
 	 * but passed to the caller. The reason is that init() can continue
 	 * to initialize syslog-sign. When the status message is logged
 	 * after that it will get a valid signature and not cause errors
-	 * with signature verification. 
+	 * with signature verification.
 	 */
 	if (cert || read_certfile(&cert, certfilename)) {
 		get_fingerprint(cert, &fp, NULL);
@@ -325,13 +325,13 @@ get_fingerprint(const X509 *cert, char **returnstring, const char *alg_name)
 	unsigned len;
 	const EVP_MD *digest;
 	const char *openssl_algname;
-	/* RFC nnnn uses hash function names from 
+	/* RFC nnnn uses hash function names from
 	 * http://www.iana.org/assignments/hash-function-text-names/
 	 * in certificate fingerprints.
 	 * We have to map them to the hash function names used by OpenSSL.
 	 * Actually we use the union of both namespaces to be RFC compliant
 	 * and to let the user use "openssl -fingerprint ..."
-	 * 
+	 *
 	 * Intended behaviour is to prefer the IANA names,
 	 * but allow the user to use OpenSSL names as well
 	 * (e.g. for "RIPEMD160" wich has no IANA name)
@@ -392,7 +392,7 @@ get_fingerprint(const X509 *cert, char **returnstring, const char *alg_name)
 	return true;
 }
 
-/* 
+/*
  * gets first CN from cert in returnstring (has to be freed by caller)
  * on failure it returns false and *returnstring is NULL
  */
@@ -403,7 +403,7 @@ get_commonname(X509 *cert, char **returnstring)
 	X509_NAME_ENTRY *entry;
 	unsigned char *ubuf;
 	int len, i;
-	
+
 	x509name = X509_get_subject_name(cert);
 	i = X509_NAME_get_index_by_NID(x509name, NID_commonName, -1);
 	if (i != -1) {
@@ -586,7 +586,7 @@ read_certfile(X509 **cert, const char *certfilename)
 {
 	FILE *certfile;
 	errno = 0;
-	
+
 	DPRINTF((D_TLS|D_CALL), "read_certfile(%p, \"%s\")\n",
 		cert, certfilename);
 	if (!cert || !certfilename)
@@ -623,7 +623,7 @@ accept_cert(const char* reason, struct tls_conn_settings *conn_info,
 	if (!conn_info->accepted)
 		loginfo("Established connection and accepted %s certificate "
 		    "from %s due to %s. Subject is \"%s\", fingerprint is"
-		    " \"%s\"", conn_info->incoming ? "server" : "client", 
+		    " \"%s\"", conn_info->incoming ? "server" : "client",
 		    conn_info->hostname, reason, cur_subjectline,
 		    cur_fingerprint);
 
@@ -647,14 +647,14 @@ deny_cert(struct tls_conn_settings *conn_info,
 	if (!conn_info->accepted)
 		loginfo("Deny %s certificate from %s. "
 		    "Subject is \"%s\", fingerprint is \"%s\"",
-		    conn_info->incoming ? "client" : "server", 
+		    conn_info->incoming ? "client" : "server",
 		    conn_info->hostname,
 		    cur_subjectline, cur_fingerprint);
 	else
 		logerror("Error with TLS %s certificate authentication, "
 		    "already approved certificate became invalid. "
 		    "Subject is \"%s\", fingerprint is \"%s\"",
-		    conn_info->incoming ? "client" : "server", 
+		    conn_info->incoming ? "client" : "server",
 		    cur_subjectline, cur_fingerprint);
 	FREEPTR(cur_fingerprint);
 	FREEPTR(cur_subjectline);
@@ -678,7 +678,7 @@ check_peer_cert(int preverify_ok, X509_STORE_CTX *ctx)
 	int cur_err, cur_depth;
 	struct tls_conn_settings *conn_info;
 	struct peer_cred *cred, *tmp_cred;
-	
+
 	/* read context info */
 	cur_cert = X509_STORE_CTX_get_current_cert(ctx);
 	cur_err = X509_STORE_CTX_get_error(ctx);
@@ -692,7 +692,7 @@ check_peer_cert(int preverify_ok, X509_STORE_CTX *ctx)
 	(void)get_fingerprint(cur_cert, &cur_fingerprint, NULL);
 	DPRINTF((D_TLS|D_CALL), "check cert for connection with %s. "
 	    "depth is %d, preverify is %d, subject is %s, fingerprint "
-	    "is %s, conn_info@%p%s\n", conn_info->hostname, cur_depth, 
+	    "is %s, conn_info@%p%s\n", conn_info->hostname, cur_depth,
 	    preverify_ok, cur_subjectline, cur_fingerprint, conn_info,
 	    (conn_info->accepted ? ", cb was already called" : ""));
 
@@ -710,9 +710,9 @@ check_peer_cert(int preverify_ok, X509_STORE_CTX *ctx)
 		}
 	}
 
-	/* 
+	/*
 	 * quite a lot of variables here,
-	 * the big if/elseif covers all possible combinations. 
+	 * the big if/elseif covers all possible combinations.
 	 *
 	 * here is a list, ordered like the conditions below:
 	 * - conn_info->x509verify
@@ -726,7 +726,7 @@ check_peer_cert(int preverify_ok, X509_STORE_CTX *ctx)
 	 *	   but always accept, because most checks work on depth 0
 	 *   == 0: the peer's own cert. check this for final decision
 	 * - preverify_ok:
-	 *   true:  valid certificate chain from a trust anchor to this cert 
+	 *   true:  valid certificate chain from a trust anchor to this cert
 	 *   false: no valid and trusted certificate chain
 	 * - conn_info->incoming:
 	 *   true:  we are the server, means we authenticate against all
@@ -736,7 +736,7 @@ check_peer_cert(int preverify_ok, X509_STORE_CTX *ctx)
 	 * - conn_info->fingerprint (only if !conn_info->incoming)
 	 *   NULL:  no fingerprint configured, only check certificate chain
 	 *   !NULL: a peer cert with this fingerprint is trusted
-	 * 
+	 *
 	 */
 	/* shortcut */
 	if (cur_depth != 0) {
@@ -807,7 +807,7 @@ check_peer_cert(int preverify_ok, X509_STORE_CTX *ctx)
 /*
  * Create TCP sockets for incoming TLS connections.
  * To be used like socksetup(), hostname and port are optional,
- * returns bound stream sockets. 
+ * returns bound stream sockets.
  */
 struct socketEvent *
 socksetup_tls(const int af, const char *bindhostname, const char *port)
@@ -825,7 +825,7 @@ socksetup_tls(const int af, const char *bindhostname, const char *port)
 	hints.ai_flags = AI_PASSIVE;
 	hints.ai_family = af;
 	hints.ai_socktype = SOCK_STREAM;
-	
+
 	error = getaddrinfo(bindhostname, (port ? port : "syslog-tls"),
 	    &hints, &res);
 	if (error) {
@@ -964,7 +964,7 @@ dispatch_SSL_connect(int fd, short event, void *arg)
 }
 
 /*
- * establish TLS connection 
+ * establish TLS connection
  */
 bool
 tls_connect(struct tls_conn_settings *conn_info)
@@ -974,13 +974,13 @@ tls_connect(struct tls_conn_settings *conn_info)
 	const int one = 1;
 	char   buf[MAXLINE];
 	SSL    *ssl = NULL;
-	
+
 	DPRINTF((D_TLS|D_CALL), "tls_connect(conn_info@%p)\n", conn_info);
 	assert(conn_info->state == ST_NONE);
-	
+
 	if(!tls_opt.global_TLS_CTX)
 		return false;
-	
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -992,7 +992,7 @@ tls_connect(struct tls_conn_settings *conn_info)
 		logerror(gai_strerror(error));
 		return false;
 	}
-	
+
 	sock = -1;
 	for (res1 = res; res1; res1 = res1->ai_next) {
 		if ((sock = socket(res1->ai_family, res1->ai_socktype,
@@ -1020,7 +1020,7 @@ tls_connect(struct tls_conn_settings *conn_info)
 			close(sock);
 			sock = -1;
 			ST_CHANGE(conn_info->state, ST_NONE);
-			continue;				 
+			continue;
 		}
 		if (!SSL_set_fd(ssl, sock)) {
 			ERR_error_string_n(ERR_get_error(), buf, sizeof(buf));
@@ -1032,7 +1032,7 @@ tls_connect(struct tls_conn_settings *conn_info)
 			ST_CHANGE(conn_info->state, ST_NONE);
 			continue;
 		}
-		
+
 		SSL_set_app_data(ssl, conn_info);
 		SSL_set_connect_state(ssl);
 		while ((rc = ERR_get_error()) != 0) {
@@ -1040,7 +1040,7 @@ tls_connect(struct tls_conn_settings *conn_info)
 			DPRINTF(D_TLS, "Found SSL error in queue: %s\n", buf);
 		}
 		errno = 0;  /* reset to be sure we get the right one later on */
-		
+
 		if ((fcntl(sock, F_SETFL, O_NONBLOCK)) == -1) {
 			DPRINTF(D_NET, "Unable to fcntl(sock, O_NONBLOCK): "
 			    "%s\n", strerror(errno));
@@ -1078,7 +1078,7 @@ tls_examine_error(const char *functionname, const SSL *ssl,
 	struct tls_conn_settings *tls_conn, const int rc)
 {
 	int ssl_error, err_error;
-	
+
 	ssl_error = SSL_get_error(ssl, rc);
 	DPRINTF(D_TLS, "%s returned rc %d and error %s: %s\n", functionname,
 		rc, SSL_ERRCODE[ssl_error], ERR_error_string(ssl_error, NULL));
@@ -1109,7 +1109,7 @@ tls_examine_error(const char *functionname, const SSL *ssl,
 		    ERR_error_string(ERR_get_error(), NULL));
 		return TLS_PERM_ERROR;
 	default:
-		break;	   
+		break;
 	}
 	if (tls_conn)
 		tls_conn->errorcount++;
@@ -1126,9 +1126,9 @@ parse_tls_destination(const char *p, struct filed *f, size_t linenum)
 	if ((*p++ != '@') || *p++ != '[') {
 		logerror("parse_tls_destination() on non-TLS action "
 		    "in config line %zu", linenum);
-		return false; 
+		return false;
 	}
-	
+
 	if (!(q = strchr(p, ']'))) {
 		logerror("Unterminated [ "
 		    "in config line %zu", linenum);
@@ -1155,7 +1155,7 @@ parse_tls_destination(const char *p, struct filed *f, size_t linenum)
 		return false;
 	}
 	p = ++q;
-	
+
 	if (*p == ':') {
 		p++; q++;
 		while (isalnum((unsigned char)*q))
@@ -1202,7 +1202,7 @@ parse_tls_destination(const char *p, struct filed *f, size_t linenum)
 			}
 		}
 	}
-	
+
 	DPRINTF((D_TLS|D_PARSE),
 	    "got TLS config: host %s, port %s, "
 	    "subject: %s, certfile: %s, fingerprint: %s\n",
@@ -1256,7 +1256,7 @@ tls_reconnect(int fd, short event, void *arg)
 		assert(conn_info->state == ST_TLS_EST
 		    || conn_info->state == ST_CONNECTING
 		    || conn_info->state == ST_NONE);
-	}	 
+	}
 }
 /*
  * Dispatch routine for accepting TLS connections.
@@ -1388,13 +1388,13 @@ dispatch_socket_accept(int fd, short event, void *ev)
 		DPRINTF(D_NET, "Unable to fcntl(sock, O_NONBLOCK): %s\n",
 		    strerror(errno));
 	}
-	
+
 	if (!(ssl = SSL_new(tls_opt.global_TLS_CTX))) {
 		DPRINTF(D_TLS, "Unable to establish TLS: %s\n",
 		    ERR_error_string(ERR_get_error(), NULL));
 		close(newsock);
 		RESTORE_SIGNALS(omask);
-		return;				       
+		return;
 	}
 	if (!SSL_set_fd(ssl, newsock)) {
 		DPRINTF(D_TLS, "Unable to connect TLS to socket %d: %s\n",
@@ -1429,7 +1429,7 @@ dispatch_socket_accept(int fd, short event, void *ev)
 
 	assert(conn_info->event);
 	assert(conn_info->retryevent);
-	
+
 	ST_CHANGE(conn_info->state, ST_TCP_EST);
 	DPRINTF(D_TLS, "socket connection from %s accept()ed with fd %d, "
 		"calling SSL_accept()...\n",  peername, newsock);
@@ -1439,7 +1439,7 @@ dispatch_socket_accept(int fd, short event, void *ev)
 
 /*
  * Dispatch routine to read from outgoing TCP/TLS sockets.
- * 
+ *
  * I do not know if libevent can tell us the difference
  * between available data and an EOF. But it does not matter
  * because there should not be any incoming data.
@@ -1452,7 +1452,7 @@ dispatch_tls_eof(int fd, short event, void *arg)
 	struct tls_conn_settings *conn_info = (struct tls_conn_settings *) arg;
 	sigset_t newmask, omask;
 	struct timeval tv;
-	
+
 	BLOCK_SIGNALS(omask, newmask);
 	DPRINTF((D_TLS|D_EVENT|D_CALL), "dispatch_eof_tls(%d, %d, %p)\n",
 	    fd, event, arg);
@@ -1542,7 +1542,7 @@ dispatch_tls_read(int fd_lib, short event, void *arg)
 
 /* moved message splitting out of dispatching function.
  * now we can call it recursively.
- * 
+ *
  * TODO: the code for oversized messages still needs testing,
  * especially for the skipping case.
  */
@@ -1555,14 +1555,14 @@ tls_split_messages(struct TLS_Incoming_Conn *c)
 	size_t msglen = 0;
 	char *newbuf;
 	char buf_char;
-	
+
 	DPRINTF((D_TLS|D_CALL|D_DATA), "tls_split_messages() -- "
 		"incoming status is msg_start %zu, msg_len %zu, pos %zu\n",
 		c->cur_msg_start, c->cur_msg_len, c->read_pos);
 
 	if (!c->read_pos)
 		return;
-		
+
 	if (c->dontsave && c->read_pos < MSG_END_OFFSET) {
 		c->cur_msg_len -= c->read_pos;
 		c->read_pos = 0;
@@ -1584,7 +1584,7 @@ tls_split_messages(struct TLS_Incoming_Conn *c)
 	if (c->read_pos < MSG_END_OFFSET) {
 		return;
 	}
-		
+
 	/* read length prefix, always at start of buffer */
 	while (isdigit((unsigned char)c->inbuf[offset])
 	    && offset < c->read_pos) {
@@ -1618,15 +1618,15 @@ tls_split_messages(struct TLS_Incoming_Conn *c)
 		/* found non-digit in prefix */
 		/* Question: would it be useful to skip this message and
 		 * try to find next message by looking for its beginning?
-		 * IMHO not.   
+		 * IMHO not.
 		 */
 		logerror("Unable to handle TLS length prefix. "
 		    "Protocol error? Closing connection now.");
 		/* only set flag -- caller has to close then */
 		c->closenow = true;
 		return;
-	} 
-	/* read one syslog message */	     
+	}
+	/* read one syslog message */
 	if (c->read_pos >= MSG_END_OFFSET) {
 		/* process complete msg */
 		assert(MSG_END_OFFSET+1 <= c->inbuflen);
@@ -1652,7 +1652,7 @@ tls_split_messages(struct TLS_Incoming_Conn *c)
 			c->cur_msg_start = c->cur_msg_len = 0;
 		}
 	}
-	
+
 	/* shrink inbuf if too large */
 	if ((c->inbuflen > TLS_PERSIST_LINELENGTH)
 	 && (c->read_pos < TLS_LARGE_LINELENGTH)) {
@@ -1675,12 +1675,12 @@ tls_split_messages(struct TLS_Incoming_Conn *c)
 	return;
 }
 
-/* 
+/*
  * wrapper for dispatch_tls_send()
- * 
+ *
  * send one line with tls
  * f has to be of typ TLS
- * 
+ *
  * returns false if message cannot be sent right now,
  *	caller is responsible to enqueue it
  * returns true if message passed to dispatch_tls_send()
@@ -1732,7 +1732,7 @@ dispatch_tls_send(int fd, short event, void *arg)
 	sigset_t newmask, omask;
 	bool retrying;
 	struct timeval tv;
-	
+
 	BLOCK_SIGNALS(omask, newmask);
 	DPRINTF((D_TLS|D_CALL), "dispatch_tls_send(f=%p, buffer=%p, "
 	    "line@%p, len=%zu, offset=%zu) to %sconnected dest.\n",
@@ -1848,7 +1848,7 @@ dispatch_SSL_shutdown(int fd, short event, void *arg)
 	int rc, error;
 	sigset_t newmask, omask;
 	bool retrying;
-	
+
 	BLOCK_SIGNALS(omask, newmask);
 	DPRINTF((D_TLS|D_CALL),
 	    "dispatch_SSL_shutdown(conn_info@%p, fd %d)\n", conn_info, fd);
@@ -1870,9 +1870,9 @@ dispatch_SSL_shutdown(int fd, short event, void *arg)
 		 * loops and I keep getting rc == 0
 		 * maybe I hit this bug?
 		 * http://www.mail-archive.com/openssl-dev@openssl.org/msg24105.html
-		 * 
+		 *
 		 * anyway, now I use three closing states to make sure I abort
-		 * after two rc = 0. 
+		 * after two rc = 0.
 		 */
 		if (conn_info->state == ST_CLOSING0) {
 			ST_CHANGE(conn_info->state, ST_CLOSING1);
@@ -1925,7 +1925,7 @@ dispatch_SSL_shutdown(int fd, short event, void *arg)
 	    && (conn_info->state != ST_CLOSING0)
 	    && (conn_info->state != ST_CLOSING1)) {
 		int sock = SSL_get_fd(conn_info->sslptr);
-		
+
 		if (shutdown(sock, SHUT_RDWR) == -1)
 			logerror("Cannot shutdown socket");
 		DEL_EVENT(conn_info->retryevent);
@@ -1966,7 +1966,7 @@ write_x509files(EVP_PKEY *pkey, X509 *cert,
 	const char *keyfilename, const char *certfilename)
 {
 	FILE *certfile, *keyfile;
-	
+
 	if (!(umask(0177),(keyfile  = fopen(keyfilename,  "a")))
 	    || !(umask(0122),(certfile = fopen(certfilename, "a")))) {
 		logerror("Unable to write to files \"%s\" and \"%s\"",
@@ -2003,20 +2003,20 @@ x509_cert_add_subjectAltName(X509 *cert, X509V3_CTX *ctx)
 	STACK_OF(X509_EXTENSION) *extlist;
 	extlist = sk_X509_EXTENSION_new_null();
 #endif
-  
+
 	if (getifaddrs (&ifp) == -1) {
 		logerror("Unable to get list of local interfaces");
 		return false;
 	}
-	
+
 	idx = snprintf(subjectAltName, sizeof(subjectAltName),
 	    "DNS:%s", LocalFQDN);
-	
+
 	for (ifa = ifp; ifa; ifa = ifa->ifa_next) {
 		if(!ifa->ifa_addr)
 			continue;
-  
-		/* only IP4 and IP6 addresses, but filter loopbacks */		    
+
+		/* only IP4 and IP6 addresses, but filter loopbacks */
 		if (ifa->ifa_addr->sa_family == AF_INET) {
 			struct sockaddr_in *addr =
 			    (struct sockaddr_in *)ifa->ifa_addr;
@@ -2031,7 +2031,7 @@ x509_cert_add_subjectAltName(X509 *cert, X509V3_CTX *ctx)
 			salen = sizeof(struct sockaddr_in6);
 		} else
 			continue;
-	
+
 		if (getnameinfo(ifa->ifa_addr, salen, ip, sizeof(ip),
 		    NULL, 0, NI_NUMERICHOST)) {
 			continue;
@@ -2051,7 +2051,7 @@ x509_cert_add_subjectAltName(X509 *cert, X509V3_CTX *ctx)
 	return true;
 }
 
-/* 
+/*
  * generates a private key and a X.509 certificate
  */
 bool
@@ -2066,7 +2066,7 @@ mk_x509_cert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days)
 
 	DPRINTF((D_CALL|D_TLS), "mk_x509_cert(%p, %p, %d, %d, %d)\n",
 	    x509p, pkeyp, bits, serial, days);
-	
+
 	if (pkeyp && *pkeyp)
 		pk = *pkeyp;
 	else if ((pk = EVP_PKEY_new()) == NULL) {
@@ -2096,7 +2096,7 @@ mk_x509_cert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days)
 	ASN1_INTEGER_set(X509_get_serialNumber(cert), serial);
 	X509_gmtime_adj(X509_get_notBefore(cert), 0);
 	X509_gmtime_adj(X509_get_notAfter(cert), (long)60 * 60 * 24 * days);
-	
+
 	if (!X509_set_pubkey(cert, pk)) {
 		DPRINTF(D_TLS, "X509_set_pubkey() failed\n");
 		return false;
@@ -2123,7 +2123,7 @@ mk_x509_cert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days)
 	 * because we wont reference any other sections.
 	 */
 	X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
-	
+
 	ex = X509V3_EXT_conf_nid(NULL, &ctx, NID_netscape_comment,
 	    __UNCONST("auto-generated by the NetBSD syslogd"));
 	X509_add_ext(cert, ex, -1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1 2008/10/31 16:12:19 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.2 2008/11/07 07:36:38 minskim Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@
  */
 /*
  * extern.h
- * 
+ *
  * declarations for variables and functions from syslogd.c
- * that are used in tls.c and sign.c 
+ * that are used in tls.c and sign.c
  */
 #ifndef EXTERN_H_
 #define EXTERN_H_
@@ -52,7 +52,7 @@ extern struct TLS_Incoming TLS_Incoming_Head;
 extern struct sign_global_t GlobalSign;
 extern char  *linebuf;
 extern size_t linebufsize;
-extern int    RemoteAddDate; 
+extern int    RemoteAddDate;
 
 extern bool	BSDOutputFormat;
 extern time_t	now;
