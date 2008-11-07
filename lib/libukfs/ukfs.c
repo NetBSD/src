@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.10 2008/10/07 23:16:59 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.11 2008/11/07 00:18:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,7 @@
 #include <dlfcn.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,6 +72,7 @@ struct ukfs {
 	pthread_spinlock_t ukfs_spin;
 	pid_t ukfs_nextpid;
 	struct vnode *ukfs_cdir;
+	int ukfs_devfd;
 };
 
 struct mount *
@@ -156,8 +158,8 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 {
 	struct ukfs *fs = NULL;
 	struct vfsops *vfsops;
-	struct mount *mp;
-	int rv = 0;
+	struct mount *mp = NULL;
+	int rv = 0, devfd = -1, rdonly;
 
 	vfsops = rump_vfs_getopsbyname(vfsname);
 	if (vfsops == NULL) {
@@ -165,7 +167,31 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 		goto out;
 	}
 
-	mp = rump_mnt_init(vfsops, mntflags);
+	/*
+	 * Try open and lock the device.  if we can't open it, assume
+	 * it's a file system which doesn't use a real device and let
+	 * it slide.  The mount will fail anyway if the fs requires a
+	 * device.
+	 *
+	 * XXX: strictly speaking this is not 100% correct, as virtual
+	 * file systems can use a device path which does exist and can
+	 * be opened.  E.g. tmpfs should be mountable multiple times
+	 * with "device" path "/swap", but now isn't.  But I think the
+	 * chances are so low that it's currently acceptable to let
+	 * this one slip.
+	 */
+	rdonly = mntflags & MNT_RDONLY;
+	devfd = open(devpath, rdonly ? O_RDONLY : O_RDWR);
+	if (devfd != -1) {
+		if (flock(devfd, LOCK_NB | (rdonly ? LOCK_SH:LOCK_EX)) == -1) {
+			warnx("ukfs_mount: cannot get %s lock on device",
+			    rdonly ? "shared" : "exclusive");
+			close(devfd);
+			devfd = -1;
+			rv = errno;
+			goto out;
+		}
+	}
 
 	fs = malloc(sizeof(struct ukfs));
 	if (fs == NULL) {
@@ -173,7 +199,7 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 		goto out;
 	}
 	memset(fs, 0, sizeof(struct ukfs));
-	pthread_spin_init(&fs->ukfs_spin, PTHREAD_PROCESS_SHARED);
+	mp = rump_mnt_init(vfsops, mntflags);
 
 	rump_fakeblk_register(devpath);
 	rv = rump_mnt_mount(mp, mountpath, arg, &alen);
@@ -181,19 +207,29 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	if (rv) {
 		goto out;
 	}
-	fs->ukfs_mp = mp;
-
-	rv = rump_vfs_root(fs->ukfs_mp, &fs->ukfs_rvp, 0);
+	rv = rump_vfs_root(mp, &fs->ukfs_rvp, 0);
+	if (rv) {
+		goto out;
+	}
 	fs->ukfs_cdir = ukfs_getrvp(fs);
+
+	fs->ukfs_mp = mp;
+	pthread_spin_init(&fs->ukfs_spin, PTHREAD_PROCESS_SHARED);
+	fs->ukfs_devfd = devfd;
+	assert(rv == 0);
 
  out:
 	if (rv) {
-		if (fs && fs->ukfs_mp)
-			rump_mnt_destroy(fs->ukfs_mp);
+		if (mp)
+			rump_mnt_destroy(mp);
 		if (fs)
 			free(fs);
 		errno = rv;
 		fs = NULL;
+		if (devfd != -1) {
+			flock(devfd, LOCK_UN);
+			close(devfd);
+		}
 	}
 
 	return fs;
@@ -220,6 +256,8 @@ ukfs_release(struct ukfs *fs, int flags)
 	rump_mnt_destroy(fs->ukfs_mp);
 
 	pthread_spin_destroy(&fs->ukfs_spin);
+	if (fs->ukfs_devfd != -1)
+		flock(fs->ukfs_devfd, LOCK_UN);
 	free(fs);
 }
 
