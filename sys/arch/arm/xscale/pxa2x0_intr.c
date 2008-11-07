@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.14 2008/04/27 18:58:45 matt Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.15 2008/11/07 16:14:37 rafal Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.14 2008/04/27 18:58:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.15 2008/11/07 16:14:37 rafal Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,9 +207,11 @@ static int
 stray_interrupt(void *cookie)
 {
 	int irqno = (int)cookie;
+	int irqmin = CPU_IS_PXA250 ? PXA250_IRQ_MIN : PXA270_IRQ_MIN;
+
 	printf("stray interrupt %d\n", irqno);
 
-	if (PXA270_IRQ_MIN <= irqno && irqno < ICU_LEN){
+	if (irqmin <= irqno && irqno < ICU_LEN){
 		int save = disable_interrupts(I32_bit);
 		write_icu(SAIPIC_MR,
 		    read_icu(SAIPIC_MR) & ~(1U<<irqno));
