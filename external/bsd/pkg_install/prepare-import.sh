@@ -1,8 +1,8 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.1 2008/09/30 19:19:56 joerg Exp $
+# $NetBSD: prepare-import.sh,v 1.2 2008/11/07 15:24:44 joerg Exp $
 #
-# Extract the new tarball and rename the libarchive-X.Y.Z directory
-# to dist.  Run this script and check for additional files and
+# Copy new pkgsrc/pkg_install/files to dist.
+# Run this script and check for additional files and
 # directories to prune, only relevant content is included.
 
 set -e
