@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.h,v 1.1 2008/10/31 16:12:19 christos Exp $	*/
+/*	$NetBSD: sign.h,v 1.2 2008/11/07 07:36:38 minskim Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 /*
  * sign.h
- * 
+ *
  */
 #ifndef SIGN_H_
 #define SIGN_H_
@@ -55,7 +55,7 @@
  * 1 one SG per PRI
  * 2 SGs for PRI ranges
  * 3 other (SGs not defined by PRI)
- * 
+ *
  * We use '3' and assign one SG to every destination (=struct filed)
  */
 #define SIGN_SG 3
@@ -69,7 +69,7 @@
  */
 
 /* redundancy options */
-/* 
+/*
  * note on the implementation of redundancy:
  * - certificate blocks: sending the first CB just before first SB.
  *   after that domark() triggers resends until resend count is reached.
@@ -80,7 +80,7 @@
  *   * ...
  *   * the n-th hashcount/n hashes are sent for the n-th time
  *     (and deleted thereafter)
- */ 
+ */
 #define SIGN_RESENDCOUNT_CERTBLOCK  2
 #define SIGN_RESENDCOUNT_HASHES	    3
 
@@ -109,7 +109,7 @@
  * to have a SIGN_HASH_NUM that is a multiple of SIGN_HASH_DIVISION_NUM */
 #define SIGN_HASH_DIVISION_NUM (MIN(SIGN_HASH_NUM_WANT, SIGN_MAX_HASH_NUM) \
 				/ SIGN_RESENDCOUNT_HASHES)
-#define SIGN_HASH_NUM (SIGN_HASH_DIVISION_NUM * SIGN_RESENDCOUNT_HASHES) 
+#define SIGN_HASH_NUM (SIGN_HASH_DIVISION_NUM * SIGN_RESENDCOUNT_HASHES)
 
 /* the length of payload strings
  * since the payload is fragmented there is no technical limit
@@ -130,7 +130,7 @@
 
 /* structs use uint_fast64_t in different places because the standard
  * requires values in interval [0:9999999999 = SIGN_MAX_COUNT] */
- 
+
 /* queue of C-Strings (here used for hashes) */
 struct string_queue {
 	uint_fast64_t  key;
@@ -177,7 +177,7 @@ struct sign_global_t {
 	EVP_PKEY     *pubkey;
 	char	     *pubkey_b64;
 	char	      keytype;
-	
+
 	EVP_MD_CTX   *mdctx;	   /* hashing context */
 	const EVP_MD *md;	   /* hashing method/algorithm */
 	unsigned      md_len_b64;  /* length of b64 hash value */

@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.h,v 1.1 2008/10/31 16:12:19 christos Exp $	*/
+/*	$NetBSD: syslogd.h,v 1.2 2008/11/07 07:36:38 minskim Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
 #ifndef SYSLOGD_H_
 #define SYSLOGD_H_
 /*
- * hold common data structures and prototypes 
+ * hold common data structures and prototypes
  * for syslogd.c and tls.c
- * 
+ *
  */
- 
+
 #include <sys/cdefs.h>
 #define MAXLINE		1024		/* maximum line length */
 #define MAXSVLINE	120		/* maximum saved line length */
@@ -230,7 +230,7 @@ char *strndup(const char *str, size_t n);
 		DPRINTF(D_MEM2, "SSL_CTX_free(%s@%p)\n", #x, x);	\
 		SSL_CTX_free(x); x = NULL; }
 
-/* reference counting macros for buffers */ 
+/* reference counting macros for buffers */
 #define NEWREF(x) ((x) ? (DPRINTF(D_BUFFER, "inc refcount of " #x \
 			" @ %p: %zu --> %zu\n", (x), (x)->refcount, \
 			(x)->refcount + 1), (x)->refcount++, (x))\
@@ -240,7 +240,7 @@ char *strndup(const char *str, size_t n);
 			(x)->refcount - 1), buf_msg_free(x), NULL) \
 		       : (DPRINTF(D_BUFFER, "dec refcount of NULL!\n"), NULL))
 
-/* assumption: 
+/* assumption:
  * - malloc()/calloc() only fails if not enough memory available
  * - once init() has set up all global variables etc.
  *   the bulk of available memory is used for buffers
@@ -298,7 +298,7 @@ char *strndup(const char *str, size_t n);
 /* allowed number of priorities by IETF standards */
 #define IETF_NUM_PRIVALUES  192
 
-/* check if message with fac/sev belogs to a destination f */ 
+/* check if message with fac/sev belogs to a destination f */
 #define MATCH_PRI(f, fac, sev) \
 	   (  (((f)->f_pcmp[fac] & PRI_EQ) && ((f)->f_pmask[fac] == (sev))) \
 	    ||(((f)->f_pcmp[fac] & PRI_LT) && ((f)->f_pmask[fac]  < (sev)))  \
@@ -388,7 +388,7 @@ struct filed {
 #ifndef DISABLE_TLS
 		struct {
 			SSL	*ssl;			/* SSL object  */
-			struct tls_conn_settings *tls_conn;  /* certificate info */ 
+			struct tls_conn_settings *tls_conn;  /* certificate info */
 		} f_tls;		/* TLS forwarding address */
 #endif /* !DISABLE_TLS */
 		char	f_fname[MAXPATHLEN];
@@ -436,7 +436,7 @@ struct tls_global_options_t {
 	char *CAfile;	    /* file with CA certificate	 */
 	char *CAdir;	    /* alternative: path to directory with CA certs */
 	char *x509verify;   /* level of peer verification */
-	char *bindhost;	    /* hostname/IP to bind to	  */ 
+	char *bindhost;	    /* hostname/IP to bind to	  */
 	char *bindport;	    /* port/service to bind to	  */
 	char *server;	    /* if !NULL: do not listen to incoming TLS	  */
 	char *gen_cert;	    /* if !NULL: generate self-signed certificate */
@@ -450,7 +450,7 @@ struct tls_global_options_t {
 /* every connection has its own input buffer with status
  * variables for message reading */
 SLIST_HEAD(TLS_Incoming, TLS_Incoming_Conn);
- 
+
 struct TLS_Incoming_Conn {
 	SLIST_ENTRY(TLS_Incoming_Conn) entries;
 	struct tls_conn_settings *tls_conn;
