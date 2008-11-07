@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.9 2008/11/06 23:56:18 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.10 2008/11/07 23:35:44 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -156,4 +156,49 @@ sbin/ldconfig/Makefile				1.22
 	Make MKPIC=no builds work on i368, shark, vax, pmax, sgimips,
 	sparc, maybe all mips and all arm as well.
 	[mrg, ticket #20]
+
+sys/kern/kern_cpu.c				1.38
+
+	cpuctl_ioctl: use cpu_index(), instead of cpuid.  Fixes cpuctl(8)
+	on machines where the cpu's apic id are different from their
+	device unit.
+	[cegger, ticket #21]
+
+external/mit/xorg/lib/Makefile			1.6
+external/mit/xorg/lib/libOSMesa/Makefile	1.3
+external/mit/xorg/lib/libXScrnSaver/Makefile	1.4
+external/mit/xorg/lib/libXcomposite/Makefile	1.4
+external/mit/xorg/lib/libXdamage/Makefile	1.3
+external/mit/xorg/lib/libXevie/Makefile		1.4
+external/mit/xorg/lib/libXfixes/Makefile	1.4
+external/mit/xorg/lib/libXfont/Makefile		1.4
+external/mit/xorg/lib/libXft/Makefile		1.5
+external/mit/xorg/lib/libXinerama/Makefile	1.4
+external/mit/xorg/lib/libXprintAppUtil/Makefile	1.3
+external/mit/xorg/lib/libXprintUtil/Makefile	1.3
+external/mit/xorg/lib/libXres/Makefile		1.7
+external/mit/xorg/lib/libXvMC/Makefile		1.3
+external/mit/xorg/lib/libXxf86dga/Makefile	1.3
+external/mit/xorg/lib/libXxf86misc/Makefile	1.4
+external/mit/xorg/lib/libXxf86vm/Makefile	1.4
+external/mit/xorg/lib/liblbxutil/Makefile	1.4
+external/mit/xorg/lib/libxkbfile/Makefile	1.3
+external/mit/xorg/lib/libxkbui/Makefile		1.3
+external/mit/xorg/lib/pixman/Makefile		1.7
+
+	Add missing LIBDPLIBS, found by using 'LDFLAGS += -Wl,-z,defs' and
+	sort src/external/mit/xorg/lib/Makefile to match the new order.
+	[veego, ticket #22]
+
+lib/libc/arch/sparc/sys/brk.S			1.15
+
+	Redo rev.1.13.  We must refer to CURBRK via GOT in case of PIC.
+	[nakayama, ticket #23]
+
+sys/dev/fss.c					1.61
+
+	fss_bs_thread: initialize b_error and b_resid.
+	Before it was possible for fss reads to return bogus b_resid values
+	leading to "delta > 0" panics from physio().
+	[hannken, ticket #24]
 
