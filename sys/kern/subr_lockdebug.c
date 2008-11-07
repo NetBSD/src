@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.38 2008/11/07 02:40:35 rafal Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.39 2008/11/07 19:50:00 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.38 2008/11/07 02:40:35 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.39 2008/11/07 19:50:00 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -190,7 +190,7 @@ lockdebug_lookup(volatile void *lock, uintptr_t where)
 
 	ld = lockdebug_lookup1(lock);
 	if (ld == NULL)
-		panic("lockdebug_lookup: uninitialized lock (lock=%p, from=%08lx)", lock, where);
+		panic("lockdebug_lookup: uninitialized lock (lock=%p, from=%08"PRIxPTR")", lock, where);
 	return ld;
 }
 
