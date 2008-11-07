@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.32 2008/05/24 16:40:58 cube Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.33 2008/11/07 00:20:13 dyoung Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.32 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.33 2008/11/07 00:20:13 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -856,7 +856,7 @@ upl_ioctl(struct ifnet *ifp, u_long command, void *data)
 	s = splnet();
 
 	switch(command) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		upl_init(sc);
 
@@ -876,17 +876,22 @@ upl_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
-				upl_init(sc);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				upl_stop(sc);
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP:
+			upl_init(sc);
+			break;
+		case IFF_RUNNING:
+			upl_stop(sc);
+			break;
+		default:
+			break;
 		}
-		error = 0;
 		break;
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, command, data);
 		break;
 	}
 

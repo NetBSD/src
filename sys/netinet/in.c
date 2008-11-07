@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.127 2008/09/25 15:48:57 pooka Exp $	*/
+/*	$NetBSD: in.c,v 1.128 2008/11/07 00:20:18 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.127 2008/09/25 15:48:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.128 2008/11/07 00:20:18 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
@@ -466,9 +466,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			return (EINVAL);
 		oldaddr = ia->ia_dstaddr;
 		ia->ia_dstaddr = *satocsin(ifreq_getdstaddr(cmd, ifr));
-		if (ifp->if_ioctl != NULL &&
-		    (error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR,
-		                              (void *)ia)) != 0) {
+		if ((error = (*ifp->if_ioctl)(ifp, SIOCSIFDSTADDR, ia)) != 0) {
 			ia->ia_dstaddr = oldaddr;
 			return error;
 		}
@@ -569,11 +567,7 @@ in_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 #endif /* MROUTING */
 
 	default:
-		if (ifp == NULL || ifp->if_ioctl == NULL)
-			return EOPNOTSUPP;
-		error = (*ifp->if_ioctl)(ifp, cmd, data);
-		in_setmaxmtu();
-		break;
+		return ENOTTY;
 	}
 
 	if (error != 0 && newifaddr) {
@@ -891,8 +885,7 @@ in_ifinit(struct ifnet *ifp, struct in_ifaddr *ia,
 	 * if this is its first address,
 	 * and to validate the address if necessary.
 	 */
-	if (ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (void *)ia)))
+	if ((error = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ia)) != 0)
 		goto bad;
 	splx(s);
 	if (scrub) {
@@ -1152,8 +1145,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		 */
 		sockaddr_in_init(&sin, ap, 0);
 		ifreq_setaddr(SIOCADDMULTI, &ifr, sintosa(&sin));
-		if ((ifp->if_ioctl == NULL) ||
-		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI,(void *)&ifr) != 0) {
+		if ((*ifp->if_ioctl)(ifp, SIOCADDMULTI, &ifr) != 0) {
 			LIST_REMOVE(inm, inm_list);
 			pool_put(&inmulti_pool, inm);
 			splx(s);
@@ -1201,8 +1193,7 @@ in_delmulti(struct in_multi *inm)
 		 */
 		sockaddr_in_init(&sin, &inm->inm_addr, 0);
 		ifreq_setaddr(SIOCDELMULTI, &ifr, sintosa(&sin));
-		(*inm->inm_ifp->if_ioctl)(inm->inm_ifp, SIOCDELMULTI,
-							     (void *)&ifr);
+		(*inm->inm_ifp->if_ioctl)(inm->inm_ifp, SIOCDELMULTI, &ifr);
 		pool_put(&inmulti_pool, inm);
 	}
 	splx(s);

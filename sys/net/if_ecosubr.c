@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.28 2008/03/12 18:22:24 dyoung Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.29 2008/11/07 00:20:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.28 2008/03/12 18:22:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.29 2008/11/07 00:20:13 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -148,7 +148,8 @@ eco_ifattach(struct ifnet *ifp, const uint8_t *lla)
 } while (/*CONSTCOND*/0)
 
 int
-eco_init(struct ifnet *ifp) {
+eco_init(struct ifnet *ifp)
+{
 	struct ecocom *ec = (struct ecocom *)ifp;
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
@@ -525,20 +526,18 @@ eco_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	int error;
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
+		if ((ifp->if_flags & IFF_RUNNING) == 0 &&
+		    (error = (*ifp->if_init)(ifp)) != 0)
+			return error;
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			if ((ifp->if_flags & IFF_RUNNING) == 0 &&
-			    (error = (*ifp->if_init)(ifp)) != 0)
-				return error;
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			if ((ifp->if_flags & IFF_RUNNING) == 0)
-				return (*ifp->if_init)(ifp);
 			break;
 		}
 		return 0;
@@ -551,6 +550,8 @@ eco_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			return 0;
 		break;
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			return error;
 		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
 		case IFF_RUNNING:
 			/*
@@ -576,7 +577,7 @@ eco_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 	default:
-		return ENOTTY;
+		return ifioctl_common(ifp, cmd, data);
 	}
 
 	return 0;

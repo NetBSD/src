@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.18 2008/04/08 06:12:21 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.19 2008/11/07 00:20:07 dyoung Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -2522,10 +2522,7 @@ ndis_getstate_80211(sc)
 }
 
 static int
-ndis_ioctl(ifp, command, data)
-	struct ifnet		*ifp;
-	u_long			command;
-	void *			data;
+ndis_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct ndis_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *) data;
@@ -2541,6 +2538,8 @@ ndis_ioctl(ifp, command, data)
 
 	switch(command) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
 			    ifp->if_flags & IFF_PROMISC &&
@@ -2561,11 +2560,7 @@ ndis_ioctl(ifp, command, data)
 				    OID_GEN_CURRENT_PACKET_FILTER,
 				    &sc->ndis_filter, &i);
 			} else
-#ifdef __FreeBSD__			
-				ndis_init(sc);
-#else /* __NetBSD__ */
 				ndis_init(ifp);
-#endif
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				ndis_stop(sc);
@@ -2618,11 +2613,7 @@ ndis_ioctl(ifp, command, data)
 	default:
 		sc->ndis_skip = 1;
 		if (sc->ndis_80211) {
-#ifdef __FreeBSD__		
-			error = ieee80211_ioctl(ifp, command, data);
-#else /* __NetBSD__ */
 			error = ieee80211_ioctl(&sc->ic, command, data);
-#endif
 
 			if (error == ENETRESET) {
 				ndis_setstate_80211(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.42 2008/10/30 00:27:32 joerg Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.43 2008/11/07 00:20:07 dyoung Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.42 2008/10/30 00:27:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.43 2008/11/07 00:20:07 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1616,6 +1616,8 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
 				ipw_init(ifp);
@@ -1994,7 +1996,6 @@ ipw_config(struct ipw_softc *sc)
 	}
 
 	DPRINTF(("Setting MAC to %s\n", ether_sprintf(ic->ic_myaddr)));
-	if_set_sadl(ifp, ic->ic_myaddr, IEEE80211_ADDR_LEN);
 	error = ipw_cmd(sc, IPW_CMD_SET_MAC_ADDRESS, ic->ic_myaddr,
 	    IEEE80211_ADDR_LEN);
 	if (error != 0)
