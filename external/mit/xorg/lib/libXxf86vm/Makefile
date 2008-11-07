@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/09/13 04:32:31 cube Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2008/11/07 23:23:36 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -29,6 +29,9 @@ MLINKS=	XF86VM.3 XF86VidModeQueryExtension.3 \
 	XF86VM.3 XF86VidModeSetGammaRamp.3 \
 	XF86VM.3 XF86VidModeGetGammaRampSize.3 \
 	XF86VM.3 XF86VidModeGetPermissions.3
+
+LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
+		X11	${.CURDIR}/../libX11/dynamic
 
 PKGDIST=	${LIB}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/10/05 02:28:01 cube Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2008/11/07 23:23:35 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,8 @@ SRCS=		Xcomposite.c
 
 INCS=	Xcomposite.h
 INCSDIR=${X11INCDIR}/X11/extensions
+
+LIBDPLIBS=	X11	${.CURDIR}/../libX11/dynamic
 
 MAN=	Xcomposite.3
 MLINKS=	Xcomposite.3 XCompositeCreateRegionFromBorderClip.3 \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/09/13 04:32:31 cube Exp $
+#	$NetBSD: Makefile,v 1.3.8.1 2008/11/07 23:23:36 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,8 @@ CLEANFILES+=	g3states.h
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB} -I.
 
-LIBDPLIBS=z ${.CURDIR}/../../../../../lib/libz
+LIBDPLIBS=	z ${.CURDIR}/../../../../../lib/libz \
+		Xdmcp ${.CURDIR}/../libXdmcp
 
 PKGCONFIG=	lbxutil
 

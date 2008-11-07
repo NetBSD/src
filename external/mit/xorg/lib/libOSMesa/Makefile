@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/26 07:15:53 rtr Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2008/11/07 23:23:35 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -124,6 +124,8 @@ CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/${_path_}
 .for _path_ in ${INCLUDES.all}
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/${_path_}
 .endfor
+
+LIBDPLIBS=	m	${.CURDIR}/../../../../../lib/libm
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
