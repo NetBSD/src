@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.122 2008/06/12 23:04:37 cegger Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.123 2008/11/07 19:33:13 he Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.122 2008/06/12 23:04:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.123 2008/11/07 19:33:13 he Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -2066,6 +2066,9 @@ wsdisplay_kbdholdscreen(device_t dv, int hold)
 	struct wsscreen *scr;
 
 	scr = sc->sc_focus;
+
+	if (!scr)
+		return;
 
 	if (hold)
 		scr->scr_hold_screen = 1;
