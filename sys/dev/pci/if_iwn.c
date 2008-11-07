@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.25 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.26 2008/11/07 14:58:27 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.25 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.26 2008/11/07 14:58:27 joerg Exp $");
 
 
 /*
@@ -1233,7 +1233,7 @@ iwn_load_firmware(struct iwn_softc *sc)
 	int error;
 
 	/* load firmware image from disk */
-	if ((error = firmware_open("if_iwn","iwlwifi-4965.ucode", &fw)) != 0) {
+	if ((error = firmware_open("if_iwn","iwlwifi-4965-1.ucode", &fw)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
 		goto fail1;
 	}
