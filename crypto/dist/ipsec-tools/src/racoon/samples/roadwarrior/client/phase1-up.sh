@@ -7,10 +7,10 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
 case `uname -s` in
 NetBSD)
-	DEFAULT_GW=`netstat -rn | awk '($1 == "default"){print $2}'`
+	DEFAULT_GW=`netstat -finet -rn | awk '($1 == "default"){print $2; exit}'`
 	;;
 Linux)
-	DEFAULT_GW=`netstat -rn | awk '($1 == "0.0.0.0"){print $2}'`
+	DEFAULT_GW=`netstat --inet -rn | awk '($1 == "0.0.0.0"){print $2; exit}'`
 	;;
 esac
 
@@ -32,14 +32,14 @@ echo "nameserver ${INTERNAL_DNS4}" >> /etc/resolv.conf
 
 case `uname -s` in
 NetBSD)
-	if=`netstat -rn|awk '($1 == "default"){print $7}'`
+	if=`netstat -finet -rn|awk '($1 == "default"){print $7; exit}'`
 	ifconfig ${if} alias ${INTERNAL_ADDR4} netmask ${INTERNAL_NETMASK4}
 	route delete default
 	route add default ${DEFAULT_GW} -ifa ${INTERNAL_ADDR4}
 	route add ${REMOTE_ADDR} ${DEFAULT_GW}
 	;;
 Linux)
-	if=`netstat -rn|awk '($1 == "0.0.0.0"){print $8}'`
+	if=`netstat --inet -rn|awk '($1 == "0.0.0.0"){print $8; exit}'`
 	ifconfig ${if}:1 ${INTERNAL_ADDR4}      
 	route delete default
 	route add ${REMOTE_ADDR} gw ${DEFAULT_GW} dev ${if}
