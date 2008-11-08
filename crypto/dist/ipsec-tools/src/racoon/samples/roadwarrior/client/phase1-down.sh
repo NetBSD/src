@@ -8,10 +8,10 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 
 case `uname -s` in
 NetBSD)
-	DEFAULT_GW=`netstat -rn | awk '($1 == "default"){print $2}'`
+	DEFAULT_GW=`netstat -finet -rn | awk '($1 == "default"){print $2; exit}'`
 	;;
 Linux)
-	DEFAULT_GW=`netstat -rn | awk '($1 == "0.0.0.0"){print $2}'`
+	DEFAULT_GW=`netstat --inet -rn | awk '($1 == "0.0.0.0"){print $2; exit}'`
 	;;
 esac
 
@@ -31,14 +31,14 @@ test -f /etc/resolv.conf.bak && cp /etc/resolv.conf.bak /etc/resolv.conf
 
 case `uname -s` in
 NetBSD)
-	if=`netstat -rn|awk '($1 == "default"){print $7}'`
-	ifconfig ${if} delete ${INTERNAL_ADDR4}
+	if=`netstat -finet -rn|awk '($1 == "default"){print $7; exit}'`
 	route delete default
 	route delete ${REMOTE_ADDR}
+	ifconfig ${if} delete ${INTERNAL_ADDR4}
 	route add default ${DEFAULT_GW} -ifa ${LOCAL_ADDR}
 	;;
 Linux)
-	if=`netstat -rn|awk '($1 == "0.0.0.0"){print $8}'`
+	if=`netstat --inet -rn|awk '($1 == "0.0.0.0"){print $8; exit}'`
 	route delete default
 	route delete ${REMOTE_ADDR}
 	ifconfig ${if}:1 del ${INTERNAL_ADDR4}
