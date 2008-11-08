@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.c,v 1.12 2006/10/15 16:14:46 christos Exp $	*/
+/*	$NetBSD: randomid.c,v 1.12.26.1 2008/11/08 21:45:38 christos Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: randomid.c,v 1.12 2006/10/15 16:14:46 christos Exp $");
+__RCSID("$NetBSD: randomid.c,v 1.12.26.1 2008/11/08 21:45:38 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -130,7 +130,7 @@ struct randomid_ctx {
 	u_int32_t ru_seed, ru_seed2;
 	u_int32_t ru_a, ru_b;
 	u_int32_t ru_g;
-	long ru_reseed;
+	time_t ru_reseed;
 };
 
 static struct randomconf randomconf[] = {

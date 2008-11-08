@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigsetops.c,v 1.1 2005/09/13 01:44:09 christos Exp $	*/
+/*	$NetBSD: compat_sigsetops.c,v 1.1.28.1 2008/11/08 21:45:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -36,13 +36,15 @@
 #if 0
 static char sccsid[] = "@(#)sigsetops.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: compat_sigsetops.c,v 1.1 2005/09/13 01:44:09 christos Exp $");
+__RCSID("$NetBSD: compat_sigsetops.c,v 1.1.28.1 2008/11/08 21:45:37 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #define	__LIBC12_SOURCE__
 
 #include <errno.h>
+#include <sys/time.h>
+#include <compat/sys/time.h>
 #include <signal.h>
 #include <compat/include/signal.h>
 
