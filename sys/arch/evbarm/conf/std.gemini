@@ -1,4 +1,4 @@
-#	$NetBSD: std.gemini,v 1.4 2008/10/30 06:23:13 cliff Exp $
+#	$NetBSD: std.gemini,v 1.5 2008/11/08 09:42:46 cliff Exp $
 #
 # standard NetBSD/evbarm for GEMINI options
 
@@ -16,7 +16,6 @@ options 	ARM32
 options 	ARM9
 #options 	__HAVE_FAST_SOFTINTS		# should be in types.h
 options 	__HAVE_PCI_CONF_HOOK		# should be in types.h
-#options 	KERNEL_BASE_EXT=0x80000000
 
 makeoptions	KERNEL_BASE_PHYS="0x00200000"
 makeoptions	KERNEL_BASE_VIRT="0x80200000"
