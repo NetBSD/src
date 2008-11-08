@@ -29,7 +29,10 @@ echo ${INTERNAL_ADDR4} | grep '[0-9]' > /dev/null || exit 0
 echo ${INTERNAL_NETMASK4} | grep '[0-9]' > /dev/null || exit 0
 echo ${DEFAULT_GW} | grep '[0-9]' > /dev/null || exit 0
 
-test -f /etc/resolv.conf.bak && cp /etc/resolv.conf.bak /etc/resolv.conf
+if [ -f /etc/resolv.conf.bak ]; then
+	rm -f /etc/resolv.conf
+	mv /etc/resolv.conf.bak /etc/resolv.conf
+fi
 
 case `uname -s` in
 NetBSD)
