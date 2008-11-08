@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.h,v 1.41 2007/10/19 15:58:52 christos Exp $	*/
+/*	$NetBSD: pwd.h,v 1.41.16.1 2008/11/08 21:13:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -107,41 +107,52 @@
 struct passwd {
 	__aconst char *pw_name;		/* user name */
 	__aconst char *pw_passwd;	/* encrypted password */
-	uid_t	    pw_uid;		/* user uid */
-	gid_t	    pw_gid;		/* user gid */
-	time_t	    pw_change;		/* password change time */
+	uid_t	       pw_uid;		/* user uid */
+	gid_t	       pw_gid;		/* user gid */
+	time_t	       pw_change;	/* password change time */
 	__aconst char *pw_class;	/* user login class */
 	__aconst char *pw_gecos;	/* general information */
 	__aconst char *pw_dir;		/* home directory */
 	__aconst char *pw_shell;	/* default shell */
-	time_t	    pw_expire;		/* account expiration */
+	time_t 	       pw_expire;	/* account expiration */
 };
 
 __BEGIN_DECLS
-struct passwd	*getpwuid(uid_t);
-struct passwd	*getpwnam(const char *);
+#ifndef __LIBC12_SOURCE__
+struct passwd	*getpwuid(uid_t) __RENAME(__getpwuid50);
+struct passwd	*getpwnam(const char *) __RENAME(__getpwnam50);
+#endif
 #if (_POSIX_C_SOURCE - 0) >= 199506L || (_XOPEN_SOURCE - 0) >= 500 || \
     defined(_REENTRANT) || defined(_NETBSD_SOURCE)
+#ifndef __LIBC12_SOURCE__
 int		 getpwnam_r(const char *, struct passwd *, char *, size_t,
-				struct passwd **);
+    struct passwd **) __RENAME(__getpwnam_r50);
 int		 getpwuid_r(uid_t, struct passwd *, char *, size_t,
-				struct passwd **);
+    struct passwd **) __RENAME(__getpwuid_r50);
+#endif
 #endif
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-struct passwd	*getpwent(void);
+#ifndef __LIBC12_SOURCE__
+struct passwd	*getpwent(void) __RENAME(__getpwent50);
+#endif
 void		 setpwent(void);
 void		 endpwent(void);
 #endif
 #if defined(_NETBSD_SOURCE)
 int		 pw_gensalt(char *, size_t, const char *, const char *);
-int		 pw_scan(char *, struct passwd *, int *);
+#ifndef __LIBC12_SOURCE__
+int		 pw_scan(char *, struct passwd *, int *) __RENAME(__pw_scan50);
+int		 getpwent_r(struct passwd *, char *, size_t, struct passwd **)
+    __RENAME(__getpwent_r50);
+#endif
 int		 setpassent(int);
-int		 getpwent_r(struct passwd *, char *, size_t, struct passwd **);
 const char	*user_from_uid(uid_t, int);
 int		 uid_from_user(const char *, uid_t *);
+#ifndef __LIBC12_SOURCE__
 int		 pwcache_userdb(int (*)(int), void (*)(void),
-				struct passwd * (*)(const char *),
-				struct passwd * (*)(uid_t));
+    struct passwd * (*)(const char *), struct passwd * (*)(uid_t))
+    __RENAME(__pwcache_userdb50);
+#endif
 #endif
 __END_DECLS
 
