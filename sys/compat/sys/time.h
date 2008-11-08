@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.1.2.1 2008/03/29 20:50:33 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.1.2.2 2008/11/08 21:16:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -68,7 +68,6 @@ struct	itimerspec50 {
 	struct	timespec50 it_value;
 };
 
-#if defined(_KERNEL)
 static __inline void timeval50_to_timeval(const struct timeval50 *ts50,
     struct timeval *ts)
 {
@@ -124,7 +123,6 @@ static __inline void itimerspec_to_itimerspec50(const struct itimerspec *ts,
 	timespec_to_timespec50(&ts->it_interval, &ts50->it_interval);
 	timespec_to_timespec50(&ts->it_value, &ts50->it_value);
 }
-#endif /* _KERNEL */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 __BEGIN_DECLS
