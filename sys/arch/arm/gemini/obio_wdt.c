@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_wdt.c,v 1.3 2008/11/04 19:47:00 cliff Exp $	*/
+/*	$NetBSD: obio_wdt.c,v 1.4 2008/11/08 09:37:13 cliff Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -36,7 +36,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.3 2008/11/04 19:47:00 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.4 2008/11/08 09:37:13 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -65,7 +65,7 @@ geminiwdt_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct obio_attach_args *obio = aux;
 
-	if (obio->obio_addr == IICCF_ADDR_DEFAULT)
+	if (obio->obio_addr == OBIOCF_ADDR_DEFAULT)
 		panic("geminiwdt must have addr specified in config.");
 
 	if (obio->obio_addr == GEMINI_WATCHDOG_BASE)
@@ -81,7 +81,7 @@ geminiwdt_attach(struct device *parent, struct device *self, void *aux)
 	struct obio_attach_args *obio = aux;
 
 	sc->sc_addr = obio->obio_addr;
-	sc->sc_size = (obio->obio_size == IICCF_SIZE_DEFAULT)
+	sc->sc_size = (obio->obio_size == OBIOCF_SIZE_DEFAULT)
 		? GEMINI_WDT_WDINTERLEN + 4
 		: obio->obio_size;
 
