@@ -1,10 +1,11 @@
-/*	$NetBSD: compat___glob13.c,v 1.1 2006/03/26 18:11:22 christos Exp $	*/
+/*	$NetBSD: compat___glob13.c,v 1.1.28.1 2008/11/08 21:45:37 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
  * Public domain.
  */
 #include "namespace.h"
+#include <pwd.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #define __gl_size_t int
