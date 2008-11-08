@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.46 2008/07/21 14:19:26 lukem Exp $	*/
+/*	$NetBSD: sort.c,v 1.47 2008/11/08 17:11:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: sort.c,v 1.46 2008/07/21 14:19:26 lukem Exp $");
+__RCSID("$NetBSD: sort.c,v 1.47 2008/11/08 17:11:56 christos Exp $");
 __SCCSID("@(#)sort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -212,6 +212,17 @@ main(argc, argv)
 				usage("multiple record delimiters");
 			if ('\n' == (REC_D = *optarg))
 				break;
+			if (optarg[1] != '\0') {
+				char *ep;
+				int t = 0;
+				if (optarg[0] == '\\')
+					optarg++, t = 8;
+				REC_D = (int)strtol(optarg, &ep, t);
+				if (*ep != '\0' || REC_D < 0 ||
+				    REC_D >= __arraycount(d_mask))
+					errx(2, "invalid record delimiter %s",
+					    optarg);
+			}
 			d_mask['\n'] = d_mask[' '];
 			d_mask[REC_D] = REC_D_F;
 			break;
@@ -364,7 +375,7 @@ usage(msg)
 	const char *msg;
 {
 	if (msg != NULL)
-		(void)fprintf(stderr, "sort: %s\n", msg);
+		(void)fprintf(stderr, "%s: %s\n", getprogname(), msg);
 	(void)fprintf(stderr,
 	    "usage: %s [-bcdfHimnrSsu] [-k field1[,field2]] [-o output]"
 	    " [-R char] [-T dir]", getprogname());
