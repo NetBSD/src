@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.80.2.2 2008/04/03 13:03:05 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.80.2.3 2008/11/08 21:16:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -258,12 +258,12 @@ __END_DECLS
 
 #if defined(_NETBSD_SOURCE)
 /* Major, minor numbers, dev_t's. */
-#define	major(x)	((int32_t)((((x) & 0x000fff00) >>  8)))
-#define	minor(x)	((int32_t)((((x) & 0xfff00000) >> 12) | \
-				   (((x) & 0x000000ff) >>  0)))
-#define	makedev(x,y)	((dev_t)((((x) <<  8) & 0x000fff00) | \
-				 (((y) << 12) & 0xfff00000) | \
-				 (((y) <<  0) & 0x000000ff)))
+#define	major(x)	((dev_t)((((x) & 0x000fff00LL) >>  8)))
+#define	minor(x)	((dev_t)((((x) & 0xfff00000LL) >> 12) | \
+				   (((x) & 0x000000ffLL) >>  0)))
+#define	makedev(x,y)	((dev_t)((((x) <<  8) & 0x000fff00LL) | \
+				 (((y) << 12) & 0xfff00000LL) | \
+				 (((y) <<  0) & 0x000000ffLL)))
 #endif
 
 #ifdef	_BSD_CLOCK_T_
