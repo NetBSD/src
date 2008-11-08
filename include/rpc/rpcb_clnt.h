@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_clnt.h,v 1.3 2005/12/03 15:16:19 yamt Exp $	*/
+/*	$NetBSD: rpcb_clnt.h,v 1.3.30.1 2008/11/08 21:13:14 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -66,17 +66,23 @@ extern bool_t rpcb_set(const rpcprog_t, const rpcvers_t,
 extern bool_t rpcb_unset(const rpcprog_t, const rpcvers_t,
 			 const struct netconfig *);
 extern rpcblist	*rpcb_getmaps(const struct netconfig *, const char *);
+#ifndef __LIBC12_SOURCE__
 extern enum clnt_stat rpcb_rmtcall(const struct netconfig *,
 				   const char *, const rpcprog_t,
 				   const rpcvers_t, const rpcproc_t,
 				   const xdrproc_t, const char *,
 				   const xdrproc_t, caddr_t,
 				   const struct timeval,
-				   const struct netbuf *);
+				   const struct netbuf *)
+				   __RENAME(__rpcb_rmtcall50);
+#endif
 extern bool_t rpcb_getaddr(const rpcprog_t, const rpcvers_t,
 			   const struct netconfig *, struct netbuf *,
 			   const  char *);
-extern bool_t rpcb_gettime(const char *, time_t *);
+#ifndef __LIBC12_SOURCE__
+extern bool_t rpcb_gettime(const char *, time_t *)
+    __RENAME(__rpcb_gettime50);
+#endif
 extern char *rpcb_taddr2uaddr(struct netconfig *, struct netbuf *);
 extern struct netbuf *rpcb_uaddr2taddr(struct netconfig *, char *);
 __END_DECLS

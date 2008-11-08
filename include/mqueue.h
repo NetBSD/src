@@ -1,9 +1,9 @@
-/*	$NetBSD: utime.h,v 1.8.36.1 2008/11/08 21:13:13 christos Exp $	*/
+/*	$NetBSD: mqueue.h,v 1.3.8.2 2008/11/08 21:13:13 christos Exp $	*/
 
-/*-
- * Copyright (c) 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
+/*
+ * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * All rights reserved.
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,14 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -27,31 +24,37 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)utime.h	8.1 (Berkeley) 6/2/93
  */
 
-#ifndef	_UTIME_H_
-#define	_UTIME_H_
+#ifndef _MQUEUE_H_
+#define _MQUEUE_H_
 
-#include <machine/ansi.h>
-
-#ifdef	_BSD_TIME_T_
-typedef	_BSD_TIME_T_	time_t;
-#undef	_BSD_TIME_T_
-#endif
-
-struct utimbuf {
-	time_t actime;		/* Access time */
-	time_t modtime;		/* Modification time */
-};
+#include <fcntl.h>
+#include <signal.h>
+#include <time.h>
 
 #include <sys/cdefs.h>
+#include <sys/types.h>
+
+#include <sys/mqueue.h>
 
 __BEGIN_DECLS
+int	mq_close(mqd_t);
+int	mq_getattr(mqd_t, struct mq_attr *);
+int	mq_notify(mqd_t, const struct sigevent *);
+mqd_t	mq_open(const char *, int, ...);
+ssize_t	mq_receive(mqd_t, char *, size_t, unsigned *);
+int	mq_send(mqd_t, const char *, size_t, unsigned);
+int	mq_setattr(mqd_t, const struct mq_attr * __restrict,
+		    struct mq_attr * __restrict);
 #ifndef __LIBC12_SOURCE__
-int utime(const char *, const struct utimbuf *) __RENAME(__utime50);
+ssize_t	mq_timedreceive(mqd_t, char * __restrict, size_t,
+    unsigned * __restrict, const struct timespec * __restrict)
+    __RENAME(__mq_timedreceive50);
+int	mq_timedsend(mqd_t, const char *, size_t, unsigned,
+    const struct timespec *) __RENAME(__mq_timedsend50);
 #endif
+int	mq_unlink(const char *);
 __END_DECLS
 
-#endif /* !_UTIME_H_ */
+#endif	/* _MQUEUE_H_ */
