@@ -54,13 +54,13 @@ Linux)
 	;;
 esac
 
-# Use this for a NAT-T setup
-LOCAL="${LOCAL_ADDR}[${LOCAL_PORT}]"
-REMOTE="${REMOTE_ADDR}[${REMOTE_PORT}]"
-
-# Use this for a non NAT-T setup
-#LOCAL="${LOCAL_ADDR}"
-#REMOTE="${REMOTE_ADDR}"
+LOCAL="${LOCAL_ADDR}"
+REMOTE="${REMOTE_ADDR}"
+if [ "x${LOCAL_PORT}" != "x500" ]; then
+	# NAT-T setup
+	LOCAL="${LOCAL}[${LOCAL_PORT}]"
+	REMOTE="${REMOTE}[${REMOTE_PORT}]"
+fi
 
 echo "
 deleteall ${REMOTE_ADDR} ${LOCAL_ADDR} esp;
