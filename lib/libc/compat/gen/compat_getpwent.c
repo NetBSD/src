@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_getpwent.c,v 1.1.2.1 2008/11/08 21:49:34 christos Exp $	*/
+/*	$NetBSD: compat_getpwent.c,v 1.1.2.2 2008/11/08 23:18:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_getpwent.c,v 1.1.2.1 2008/11/08 21:49:34 christos Exp $");
+__RCSID("$NetBSD: compat_getpwent.c,v 1.1.2.2 2008/11/08 23:18:21 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -66,6 +66,16 @@ __warn_references(getpwent_r,
     "warning: reference to compatibility getpwent_r(); include <pwd.h> to generate correct reference")
 __warn_references(pwcache_userdb,
     "warning: reference to compatibility pwcache_userdb(); include <pwd.h> to generate correct reference")
+
+#ifdef __weak_alias
+__weak_alias(getpwent, _getpwent)
+__weak_alias(getpwent_r, _getpwent_r)
+__weak_alias(getpwuid, _getpwuid)
+__weak_alias(getpwuid_r, _getpwuid_r)
+__weak_alias(getpwnam, _getpwnam)
+__weak_alias(getpwnam_r, _getpwnam_r)
+__weak_alias(pwcache_userdb, _pwcache_userdb)
+#endif
 
 static struct passwd50 *
 cvt(struct passwd *p)

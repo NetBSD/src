@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_devname.c,v 1.1.2.1 2008/11/08 21:49:34 christos Exp $	*/
+/*	$NetBSD: compat_devname.c,v 1.1.2.2 2008/11/08 23:18:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_devname.c,v 1.1.2.1 2008/11/08 21:49:34 christos Exp $");
+__RCSID("$NetBSD: compat_devname.c,v 1.1.2.2 2008/11/08 23:18:21 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 
@@ -50,6 +50,10 @@ __RCSID("$NetBSD: compat_devname.c,v 1.1.2.1 2008/11/08 21:49:34 christos Exp $"
 
 __warn_references(devname,
     "warning: reference to compatibility devname(); include <stdlib.h> to generate correct reference")
+
+#ifdef __weak_alias
+__weak_alias(devname, _devname)
+#endif
 
 __aconst char *
 devname(int32_t dev, mode_t mode)
