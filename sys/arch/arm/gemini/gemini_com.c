@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_com.c,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: gemini_com.c,v 1.2 2008/11/08 09:39:27 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap_com.c,v 1.2 2008/03/14 15:09:09 cube Exp
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_com.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_com.c,v 1.2 2008/11/08 09:39:27 cliff Exp $");
 
 #include "opt_com.h"
 
@@ -112,7 +112,7 @@ gemini_com_attach(device_t parent, device_t self, void *aux)
 	iot = obio->obio_iot;
 	iobase = obio->obio_addr;
 	sc->sc_frequency = GEMINI_COM_FREQ;
-	sc->sc_type = COM_TYPE_NORMAL;
+	sc->sc_type = COM_TYPE_16550_NOERS;
 
 	if (com_is_console(iot, iobase, &ioh) == 0 &&
 	    bus_space_map(iot, iobase, obio->obio_size, 0, &ioh)) {
