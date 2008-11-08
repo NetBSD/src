@@ -21,10 +21,12 @@ echo "LOCAL_PORT = ${LOCAL_PORT}"
 echo "REMOTE_ADDR = ${REMOTE_ADDR}"
 echo "REMOTE_PORT = ${REMOTE_PORT}"
 echo "DEFAULT_GW = ${DEFAULT_GW}"
+echo "INTERNAL_NETMASK4 = ${INTERNAL_NETMASK4}"
 echo "INTERNAL_ADDR4 = ${INTERNAL_ADDR4}"
 echo "INTERNAL_DNS4 = ${INTERNAL_DNS4}"
 
 echo ${INTERNAL_ADDR4} | grep '[0-9]' > /dev/null || exit 0
+echo ${INTERNAL_NETMASK4} | grep '[0-9]' > /dev/null || exit 0
 echo ${DEFAULT_GW} | grep '[0-9]' > /dev/null || exit 0
 
 test -f /etc/resolv.conf.bak && cp /etc/resolv.conf.bak /etc/resolv.conf
