@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyslot.c,v 1.12 2004/11/11 00:01:38 christos Exp $	*/
+/*	$NetBSD: ttyslot.c,v 1.12.34.1 2008/11/08 21:45:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)ttyslot.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: ttyslot.c,v 1.12 2004/11/11 00:01:38 christos Exp $");
+__RCSID("$NetBSD: ttyslot.c,v 1.12.34.1 2008/11/08 21:45:38 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -90,7 +90,7 @@ ttyslot(void)
 		struct stat st;
 		if (fstat(cnt, &st) == -1)
 			return 0;
-		return slot + minor(st.st_rdev) + 1;
+		return slot + (int)minor(st.st_rdev) + 1;
 	}
 	return 0;
 }

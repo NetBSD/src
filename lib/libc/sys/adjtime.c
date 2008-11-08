@@ -1,4 +1,4 @@
-/*	$NetBSD: adjtime.c,v 1.10 2007/11/23 12:39:15 uebayasi Exp $ */
+/*	$NetBSD: adjtime.c,v 1.10.14.1 2008/11/08 21:45:38 christos Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.      
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: adjtime.c,v 1.10 2007/11/23 12:39:15 uebayasi Exp $");
+__RCSID("$NetBSD: adjtime.c,v 1.10.14.1 2008/11/08 21:45:38 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -49,18 +49,12 @@ __RCSID("$NetBSD: adjtime.c,v 1.10 2007/11/23 12:39:15 uebayasi Exp $");
 
 #include <sys/clockctl.h>
  
-#ifdef __weak_alias
-__weak_alias(adjtime,_adjtime)
-#endif 
-
 extern int __clockctl_fd;
 
-int __adjtime(const struct timeval *, struct timeval *);
+int ____adjtime50(const struct timeval *, struct timeval *);
 
 int
-adjtime(delta, olddelta)
-	const struct timeval *delta;
-	struct timeval *olddelta;
+adjtime(const struct timeval *delta, struct timeval *olddelta)
 {
 	struct clockctl_adjtime args;
 	int rv;
@@ -70,7 +64,7 @@ adjtime(delta, olddelta)
 	 * clockctl if that fails with EPERM
 	 */
 	if (__clockctl_fd == -1) {
-		rv = __adjtime(delta, olddelta);
+		rv = ____adjtime50(delta, olddelta);
 	
 		/*
 		 * try via clockctl if the call fails with EPERM

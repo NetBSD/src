@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___fts13.c,v 1.4 2006/07/27 15:46:30 christos Exp $	*/
+/*	$NetBSD: compat___fts13.c,v 1.4.28.1 2008/11/08 21:45:37 christos Exp $	*/
 
 #include "namespace.h"
 #include <sys/cdefs.h>
@@ -23,6 +23,7 @@ __warn_references(__fts_set13,
     " include <fts.h> for correct reference")
 
 #include <sys/stat.h>
+#include <compat/sys/time.h>
 #include <compat/sys/stat.h>
 
 #define __fts_stat_t	struct stat13
