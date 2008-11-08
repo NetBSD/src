@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.41 2008/11/03 23:43:16 mlelstv Exp $
+# $NetBSD: md.amd64,v 1.42 2008/11/08 19:01:05 wiz Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -679,7 +679,6 @@
 ./usr/lib/i386/libz_p.a				comp-c-proflib		compat,profile
 ./usr/lib/i386/libz_pic.a			comp-c-piclib		compat,pic
 ./usr/lib/libx86_64.a				comp-c-lib
-./usr/lib/libx86_64.so				comp-sys-shlib		pic
 ./usr/lib/libx86_64_p.a				comp-c-proflib		profile
 ./usr/lib/libx86_64_pic.a			comp-c-piclib		pic
 ./usr/libdata/debug/usr/bin/fdformat.debug	comp-util-debug		debug

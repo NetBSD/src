@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.26 2008/10/31 06:41:28 mrg Exp $
+# $NetBSD: md.amd64,v 1.27 2008/11/08 19:01:05 wiz Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -289,6 +289,7 @@
 ./usr/lib/i386/security/pam_skey.so.1		base-compat-shlib	compat,pic
 ./usr/lib/i386/security/pam_ssh.so.1		base-compat-shlib	compat,pic
 ./usr/lib/i386/security/pam_unix.so.1		base-compat-shlib	compat,pic
+./usr/lib/libx86_64.so				base-sys-shlib		pic
 ./usr/lib/libx86_64.so.0			base-sys-shlib		pic
 ./usr/lib/libx86_64.so.0.0			base-sys-shlib		pic
 ./usr/libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
