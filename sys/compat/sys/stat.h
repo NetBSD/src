@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.3.8.1 2008/03/29 20:46:59 christos Exp $	*/
+/*	$NetBSD: stat.h,v 1.3.8.2 2008/11/09 19:34:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -183,12 +183,14 @@ void compat_12_stat_conv(const struct stat *st, struct stat12 *ost);
 __BEGIN_DECLS
 int	stat(const char *, struct stat12 *);
 int	fstat(int, struct stat12 *);
+int	mknod(const char *, mode_t, uint32_t);
 int	__stat13(const char *, struct stat13 *);
 int	__fstat13(int, struct stat13 *);
 int	__stat30(const char *, struct stat30 *);
 int	__fstat30(int, struct stat30 *);
 int	__stat50(const char *, struct stat *);
 int	__fstat50(int, struct stat *);
+int	__mknod50(const char *, mode_t, dev_t);
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 int	lstat(const char *, struct stat12 *);
 int	__lstat13(const char *, struct stat13 *);
