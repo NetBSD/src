@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.543 2008/11/06 22:13:58 macallan Exp $
+#	$NetBSD: bsd.own.mk,v 1.544 2008/11/09 23:02:29 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -663,9 +663,20 @@ ${var}?=	yes
 	MKMANZ MKMODULAR MKOBJDIRS \
 	MKPCC MKPCCCMDS \
 	MKSOFTFLOAT MKSTRIPIDENT \
-	MKUNPRIVED MKUPDATE MKX11 MKXORG
+	MKUNPRIVED MKUPDATE MKX11
 ${var}?=no
 .endfor
+
+#
+# Do we default to XFree86 or Xorg for this platform?
+#
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || \
+    ${MACHINE} == "macppc" || ${MACHINE} == "shark" || \
+    ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+X11FLAVOUR?=	Xorg
+.else
+X11FLAVOUR?=	XFree86
+.endif
 
 #
 # Force some options off if their dependencies are off.
@@ -786,7 +797,7 @@ ${var}?= yes
 X11SRCDIR?=		/usr/xsrc
 X11SRCDIR.xc?=		${X11SRCDIR}/xfree/xc
 X11SRCDIR.local?=	${X11SRCDIR}/local
-.if ${MKXORG} != "no"
+.if ${X11FLAVOUR} == "Xorg"
 X11ROOTDIR?=		/usr/X11R7
 .else
 X11ROOTDIR?=		/usr/X11R6
@@ -860,10 +871,7 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 X11SRCDIR.xf86-video-${_v}?=	${X11SRCDIRMIT}/xf86-video-${_v}/dist
 .endfor
 
-# Default to no old Xserver builds for now
-MKXORG_WITH_XSRC_XSERVER?=	no
-
-.if ${MKXORG} != no
+.if ${X11FLAVOUR} == "Xorg"
 X11DRI?=			yes
 .endif
 

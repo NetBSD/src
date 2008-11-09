@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.41 2008/09/10 11:16:41 joerg Exp $
+.\"	$NetBSD: mk.conf.5,v 1.42 2008/11/09 23:02:29 mrg Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -679,23 +679,15 @@ This also has implications on full builds (see next subsection).
 .
 .It Sy MKX11
 .YorN
-Indicates whether X11R6 is built and installed
+Indicates whether X11 is built and installed
 (by descending into
-.Pa src/x11 ) .
+.Pa src/x11
+or
+.Pa src/external/mit/xorg
+depending on the value of
+.Sy X11FLAVOUR ) .
 .DFLTn
 .Pp
-This is mutually exclusive to
-.Sy MKXORG!=no .
-.
-.It Sy MKXORG
-.YorN
-Indicates whether X11R7 is built and installed
-(by descending into
-.Pa src/external/mit/xorg ) .
-.DFLTn
-.Pp
-This is mutually exclusive to
-.Sy MKX11!=no .
 .
 .It Sy MKYP
 .YorN
@@ -886,6 +878,22 @@ otherwise (to preserve traditional semantics of the
 .Aq bsd.*.mk
 .Xr make 1
 include files).
+.
+.It Sy X11FLAVOUR
+Picks which X11 distribution to cross-build with
+.Nx .
+Set to either
+.Dq Xorg
+or
+.Dq XFree86 .
+Only relevant if
+.Sy MKX11!=no .
+.Pp
+.Em Default :
+.Dq Xorg
+on alpha, i386, macppc, shark, sparc and sparc64 platforms.
+.Dq XFree86
+on everything else.
 .
 .El
 .

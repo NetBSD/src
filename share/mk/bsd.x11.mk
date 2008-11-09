@@ -1,16 +1,6 @@
-#	$NetBSD: bsd.x11.mk,v 1.70 2008/10/25 22:27:36 apb Exp $
+#	$NetBSD: bsd.x11.mk,v 1.71 2008/11/09 23:02:29 mrg Exp $
 
 .include <bsd.init.mk>
-
-.if make(depend) || make(all) || make(dependall)
-.if (${MKX11} != "no" && ${MKXORG} != "no")
-.BEGIN:
-	@echo
-	@echo "ERROR: \$$MKX11 and \$$MKXORG are mutually exclusive."
-	@echo
-	@false
-.endif
-.endif
 
 BINDIR=			${X11BINDIR}
 LIBDIR=			${X11USRLIBDIR}
@@ -37,7 +27,7 @@ X11FLAGS.CONNECTION+=	-DIPv6
 .endif
 
 #	 EXT_DEFINES
-.if ${MKXORG} != "no"
+.if ${X11FLAVOUR} == "Xorg"
 X11FLAGS.BASE_EXTENSION=	-DMITMISC -DXTEST -DXTRAP -DXSYNC -DXCMISC \
 				-DXRECORD -DMITSHM -DBIGREQS -DXF86VIDMODE \
 				-DXF86MISC -DDPMSExtension -DEVI \
@@ -131,7 +121,7 @@ X11FLAGS.LOADABLE=	-DXFree86LOADER -DIN_MODULE -DXFree86Module \
 .endif
   
 # XXX FIX ME
-.if ${MKXORG} != "no"
+.if ${X11FLAVOUR} == "Xorg"
 XVENDORNAMESHORT=	'"X.Org"'
 XVENDORNAME=		'"The X.Org Foundation"'
 XORG_RELEASE=		'"Release 1.4.2"'
@@ -355,7 +345,7 @@ _X11MANTRANSFORM= \
 	${X11EXTRAMANTRANSFORMS}
 
 # Note the escaping trick for _X11MANTRANSFORM using % to replace spaces
-.if ${MKXORG} == "no"
+.if ${X11FLAVOUR} != "Xorg"
 X11VERSION=	"XFree86 4.5.0"
 X11MANCPP?=	yes
 _X11MANTRANSFORM+= \
