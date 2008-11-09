@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1142 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1142.2.1 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1145,6 +1145,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	ipw(4),iwi(4),wpi(4),iwn(4): Ship firmware images by default.
 		For ipw(4) and iwi(4), the Intel EULA has to be accepted
 		by setting a sysctl.  [joerg 20081029]
-	nsp(4): Add NetOctave NSP2000 driver, ported from FreeBSD and
-		integrated with opencrypto by CoyotePoint Systems.
+	nsp(4): Add NetOctave NSP2000 driver, contributed by NBMK Encryption
+		Technologies, ported from vendor FreeBSD SDK and integrated
+		with opencrypto by CoyotePoint Systems.
 		[darran 20081030]
