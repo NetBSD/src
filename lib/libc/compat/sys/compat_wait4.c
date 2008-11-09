@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_wait4.c,v 1.1.2.2 2008/11/09 19:36:03 christos Exp $	*/
+/*	$NetBSD: compat_wait4.c,v 1.1.2.3 2008/11/09 20:00:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_wait4.c,v 1.1.2.2 2008/11/09 19:36:03 christos Exp $");
+__RCSID("$NetBSD: compat_wait4.c,v 1.1.2.3 2008/11/09 20:00:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -52,7 +52,7 @@ extern void __rusage_to_rusage50(const struct rusage *, struct rusage50 *);
 
 #ifdef __weak_alias
 __weak_alias(wait4, _wait4)
-__weak_alias(sys_wait4, _wait4)
+__weak_alias(_sys_wait4, _wait4)
 __weak_alias(wait3, _wait3)
 #endif
 

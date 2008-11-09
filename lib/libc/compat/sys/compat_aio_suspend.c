@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_aio_suspend.c,v 1.1.2.1 2008/11/09 19:36:03 christos Exp $ */
+/*	$NetBSD: compat_aio_suspend.c,v 1.1.2.2 2008/11/09 20:00:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_aio_suspend.c,v 1.1.2.1 2008/11/09 19:36:03 christos Exp $");
+__RCSID("$NetBSD: compat_aio_suspend.c,v 1.1.2.2 2008/11/09 20:00:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -51,7 +51,7 @@ __warn_references(aio_suspend,
 
 #ifdef __weak_alias
 __weak_alias(aio_suspend, _aio_suspend)
-__weak_alias(sys_aio_suspend, _aio_suspend)
+__weak_alias(_sys_aio_suspend, _aio_suspend)
 #endif
 /*
  * Copy timeout to local variable and call the syscall.
