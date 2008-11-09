@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.7 2007/07/17 20:31:03 christos Exp $	*/
+/*	$NetBSD: mount.h,v 1.7.46.1 2008/11/09 01:38:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -103,8 +103,11 @@ struct compat_30_fhandle;
 int	fhstatfs(const struct compat_30_fhandle *, struct statfs12 *);
 struct stat13;
 int	fhstat(const struct compat_30_fhandle *, struct stat13 *);
+struct stat30;
+int	__fhstat30(const struct compat_30_fhandle *, struct stat30 *);
+int	__fhstat40(void *, size_t, struct stat30 *);
 struct stat;
-int	__fhstat30(const struct compat_30_fhandle *, struct stat *);
+int	__fhstat50(void *, size_t, struct stat *);
 #endif /* _NETBSD_SOURCE */
 __END_DECLS
 
