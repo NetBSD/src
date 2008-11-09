@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.183.2.2 2008/11/01 21:22:27 christos Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.183.2.3 2008/11/09 01:54:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.183.2.2 2008/11/01 21:22:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.183.2.3 2008/11/09 01:54:31 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -986,8 +986,8 @@ setroot(struct device *bootdv, int bootpartition)
 			goto top;
 		}
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "%s%d", rootdevname,
-		    DISKUNIT(rootdev));
+		snprintf(buf, sizeof(buf), "%s%llu", rootdevname,
+		    (unsigned long long)DISKUNIT(rootdev));
 
 		rootdv = finddevice(buf);
 		if (rootdv == NULL) {
@@ -1007,7 +1007,7 @@ setroot(struct device *bootdv, int bootpartition)
 	case DV_DISK:
 		aprint_normal("root on %s", device_xname(rootdv));
 		if (DEV_USES_PARTITIONS(rootdv))
-			aprint_normal("%c", DISKPART(rootdev) + 'a');
+			aprint_normal("%c", (int)DISKPART(rootdev) + 'a');
 		break;
 
 	default:
@@ -1050,8 +1050,8 @@ setroot(struct device *bootdv, int bootpartition)
 		if (dumpdevname == NULL)
 			goto nodumpdev;
 		memset(buf, 0, sizeof(buf));
-		snprintf(buf, sizeof(buf), "%s%d", dumpdevname,
-		    DISKUNIT(dumpdev));
+		snprintf(buf, sizeof(buf), "%s%llu", dumpdevname,
+		    (unsigned long long)DISKUNIT(dumpdev));
 
 		dumpdv = finddevice(buf);
 		if (dumpdv == NULL) {
@@ -1084,7 +1084,7 @@ setroot(struct device *bootdv, int bootpartition)
 	dumpcdev = devsw_blk2chr(dumpdev);
 	aprint_normal(" dumps on %s", device_xname(dumpdv));
 	if (DEV_USES_PARTITIONS(dumpdv))
-		aprint_normal("%c", DISKPART(dumpdev) + 'a');
+		aprint_normal("%c", (int)DISKPART(dumpdev) + 'a');
 	aprint_normal("\n");
 	return;
 
