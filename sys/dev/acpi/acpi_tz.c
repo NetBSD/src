@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.38 2008/11/09 03:36:04 pgoyette Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.39 2008/11/09 13:54:06 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.38 2008/11/09 03:36:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.39 2008/11/09 13:54:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,12 +280,12 @@ acpitz_get_status(void *opaque)
 			sc->sc_flags = flags;
 			if (changed & ATZ_F_CRITICAL) {
 				sc->sc_sensor.state = ENVSYS_SCRITOVER;
-				aprint_normal_dev(dv,
+				aprint_debug_dev(dv,
 				    "zone went critical at temp %sC\n",
 				    acpitz_celcius_string(tmp));
 			} else if (changed & ATZ_F_HOT) {
 				sc->sc_sensor.state = ENVSYS_SWARNOVER;
-				aprint_normal_dev(dv,
+				aprint_debug_dev(dv,
 				    "zone went hot at temp %sC\n",
 				    acpitz_celcius_string(tmp));
 			}
