@@ -1,4 +1,4 @@
-/*	$NetBSD: ati_pcigart.c,v 1.5 2008/07/08 06:50:22 mrg Exp $	*/
+/*	$NetBSD: ati_pcigart.c,v 1.6 2008/11/09 14:26:14 bjs Exp $	*/
 
 /* ati_pcigart.h -- ATI PCI GART support -*- linux-c -*-
  * Created: Wed Dec 13 21:52:19 2000 by gareth@valinux.com
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ati_pcigart.c,v 1.5 2008/07/08 06:50:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ati_pcigart.c,v 1.6 2008/11/09 14:26:14 bjs Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/ati_pcigart.c,v 1.3 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -99,7 +99,7 @@ int drm_ati_pcigart_init(drm_device_t *dev, struct drm_ati_pcigart_info *gart_in
 		}
 	}
 
-	DRM_MEMORYBARRIER();
+	agp_flush_cache();
 
 	return 1;
 }
