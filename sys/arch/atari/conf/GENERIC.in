@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.74 2008/11/05 23:55:06 abs Exp $
+#	$NetBSD: GENERIC.in,v 1.75 2008/11/09 07:49:59 abs Exp $
 #
 # Generic atari
 #
@@ -37,11 +37,9 @@ options 	INSECURE	# disable kernel security levels
 #if defined(TT030_KERNEL) || defined(FALCON_KERNEL)
 options 	M68030		# support for 030
 options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
-#if !defined(INSTALL_KERNEL)
-options 	M68040		# support for 040
-options 	FPSP		# 68040 Floatingpoint support
 #endif
-#else /* for the Hades & Milan: */
+#if defined(HADES_KERNEL) || defined(MILAN_KERNEL) || ( defined(FALCON_KERNEL) \
+	&& (defined(INSTALLX_KERNEL) || !defined(INSTALL_KERNEL) ))
 options 	M68040		# support for 040
 options 	M68060		# support for 060
 options 	FPSP		# 68040 Floatingpoint support
@@ -98,7 +96,6 @@ options 	IPFILTER_LOOKUP	# ippool(8) support
 # File systems
 file-system 	FFS		# Berkeley fast file system
 file-system 	MFS		# Memory based filesystem
-file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	MSDOSFS		# MSDOS filesystem
 file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 #file-system	PTYFS		# experimental - /dev/ptm support
@@ -106,6 +103,7 @@ file-system 	CD9660		# ISO 9660 filesystem with Rock Ridge
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 #ifndef INSTALL_KERNEL
+file-system 	KERNFS		# Kernel parameter filesystem
 file-system 	NFS		# Network File System client side code
 file-system 	PROCFS		# Process filesystem
 file-system 	FDESC		# /dev/fd
