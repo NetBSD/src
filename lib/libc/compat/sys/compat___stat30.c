@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___stat30.c,v 1.1.2.1 2008/11/08 23:18:21 christos Exp $	*/
+/*	$NetBSD: compat___stat30.c,v 1.1.2.2 2008/11/09 03:05:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat___stat30.c,v 1.1.2.1 2008/11/08 23:18:21 christos Exp $");
+__RCSID("$NetBSD: compat___stat30.c,v 1.1.2.2 2008/11/09 03:05:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -69,13 +69,13 @@ static void
 cvtstat(struct stat30 *ost, const struct stat *st)
 {
 
-	ost->st_dev = st->st_dev;
+	ost->st_dev = (uint32_t)st->st_dev;
 	ost->st_ino = st->st_ino;
 	ost->st_mode = st->st_mode;
 	ost->st_nlink = st->st_nlink;
 	ost->st_uid = st->st_uid;
 	ost->st_gid = st->st_gid;
-	ost->st_rdev = st->st_rdev;
+	ost->st_rdev = (uint32_t)st->st_rdev;
 	timespec_to_timespec50(&st->st_atimespec, &ost->st_atimespec);
 	timespec_to_timespec50(&st->st_mtimespec, &ost->st_mtimespec);
 	timespec_to_timespec50(&st->st_ctimespec, &ost->st_ctimespec);
@@ -124,7 +124,7 @@ __lstat30(const char *file, struct stat30 *ost)
 }
 
 int
-__fhstat40(void *fh, size_t fh_size, struct stat30 *ost)
+__fhstat40(const void *fh, size_t fh_size, struct stat30 *ost)
 {
 	struct stat nst;
 	int ret;
