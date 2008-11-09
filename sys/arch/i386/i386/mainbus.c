@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.77 2008/05/18 02:06:14 jmcneill Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.78 2008/11/09 14:24:14 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.77 2008/05/18 02:06:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.78 2008/11/09 14:24:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,9 +194,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #ifdef MPBIOS
 	int mpbios_present = 0;
 #endif
-#if NACPI > 0 || defined(MPBIOS)
-	int numioapics = 0;
-#endif
 #if defined(PCI_BUS_FIXUP)
 	int pci_maxbus = 0;
 #endif
@@ -237,13 +234,13 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 * be done later (via a callback).
 	 */
 	if (acpi_present)
-		mpacpi_active = mpacpi_scan_apics(self, &numcpus, &numioapics);
+		mpacpi_active = mpacpi_scan_apics(self, &numcpus);
 #endif
 
 	if (!mpacpi_active) {
 #ifdef MPBIOS
 		if (mpbios_present)
-			mpbios_scan(self, &numcpus, &numioapics);
+			mpbios_scan(self, &numcpus);
 		else
 #endif
 		if (numcpus == 0) {
