@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.196.2.3 2008/11/09 01:54:31 christos Exp $
+	$NetBSD: syscalls.master,v 1.196.2.4 2008/11/09 23:29:58 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -798,7 +798,7 @@
 390	STD 		{ int sys___getdents30(int fd, char *buf, size_t count); }
 391	IGNORED		old posix_fadvise
 392	COMPAT_30 	{ int sys___fhstat30(const struct compat_30_fhandle \
-			    *fhp, struct stat *sb); }
+			    *fhp, struct stat30 *sb); }
 393	COMPAT_50	{ int sys___ntp_gettime30(struct ntptimeval50 *ntvp); }
 394	STD	 RUMP	{ int sys___socket30(int domain, int type, int protocol); }
 395	STD 		{ int sys___getfh30(const char *fname, void *fhp, \
