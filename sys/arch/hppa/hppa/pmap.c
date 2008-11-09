@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.3 2008/11/01 12:16:53 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.4 2008/11/09 15:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.3 2008/11/01 12:16:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.4 2008/11/09 15:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,30 +132,6 @@ int pmapdebug = 0
 	;
 #else
 #define	DPRINTF(l,s)	/* */
-#endif
-
-#if 0
-vaddr_t	virtual_start, virtual_end;
-
-/* These two virtual pages are available for copying and zeroing. */
-static vaddr_t tmp_vpages[2];
-
-/* Free list of PV entries. */
-static struct pv_entry *pv_free_list;
-
-/* This is an array of struct pv_head, one per physical page. */
-static struct pv_head *pv_head_tbl;
-
-/* 
- * This is a bitmap of page-is-aliased bits.
- * The magic 5 is log2(sizeof(u_int) * 8), and the magic 31 is 2^5 - 1.
- */
-static u_int *page_aliased_bitmap;
-#define _PAGE_ALIASED_WORD(pa) page_aliased_bitmap[((pa) >> PGSHIFT) >> 5]
-#define _PAGE_ALIASED_BIT(pa) (1 << (((pa) >> PGSHIFT) & 31))
-#define PAGE_IS_ALIASED(pa) (_PAGE_ALIASED_WORD(pa) & _PAGE_ALIASED_BIT(pa))
-
-paddr_t physical_steal, physical_end;
 #endif
 
 int		pmap_hptsize = 16 * PAGE_SIZE;	/* patchable */
