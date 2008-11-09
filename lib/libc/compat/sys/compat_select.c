@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_select.c,v 1.1.2.2 2008/11/09 19:36:03 christos Exp $	*/
+/*	$NetBSD: compat_select.c,v 1.1.2.3 2008/11/09 20:00:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_select.c,v 1.1.2.2 2008/11/09 19:36:03 christos Exp $");
+__RCSID("$NetBSD: compat_select.c,v 1.1.2.3 2008/11/09 20:00:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -54,11 +54,11 @@ __warn_references(pselect,
 
 #ifdef __weak_alias
 __weak_alias(select, _select)
-__weak_alias(sys_select, _select)
+__weak_alias(_sys_select, _select)
 __weak_alias(pselect, _pselect)
-__weak_alias(sys_pselect, _pselect)
+__weak_alias(_sys_pselect, _pselect)
 __weak_alias(pollts, _pollts)
-__weak_alias(sys_pollts, _pollts)
+__weak_alias(_sys_pollts, _pollts)
 #endif
 int
 pollts(struct pollfd * __restrict fds, nfds_t nfds,

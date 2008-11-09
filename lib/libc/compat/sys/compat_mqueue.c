@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_nanosleep.c,v 1.1.2.3 2008/11/09 20:00:20 christos Exp $ */
+/*	$NetBSD: compat_mqueue.c,v 1.1.2.1 2008/11/09 20:00:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,41 +37,50 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_nanosleep.c,v 1.1.2.3 2008/11/09 20:00:20 christos Exp $");
+__RCSID("$NetBSD: compat_mqueue.c,v 1.1.2.1 2008/11/09 20:00:20 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #define __LIBC12_SOURCE__
-#include <time.h>
-#include <compat/include/time.h>
+#include <sys/time.h>
+#include <compat/sys/time.h>
+#include <mqueue.h>
+#include <compat/include/mqueue.h>
 
-__warn_references(nanosleep,
-    "warning: reference to compatibility nanosleep(); include <time.h> to generate correct reference")
+__warn_references(mq_timedreceive,
+    "warning: reference to compatibility mq_timedreceive(); include <mqueue.h> to generate correct reference")
+__warn_references(mq_timedsend,
+    "warning: reference to compatibility mq_timedsend(); include <mqueue.h> to generate correct reference")
 
 #ifdef __weak_alias
-__weak_alias(nanosleep, _nanosleep)
-__weak_alias(_sys_nanosleep, _nanosleep)
+__weak_alias(mq_timedreceive, _mq_timedreceive)
+__weak_alias(mq_timedsend, _mq_timedsend)
+__weak_alias(_sys_mq_timedreceive, _mq_timedreceive)
+__weak_alias(_sys_mq_timedsend, _mq_timedsend)
 #endif
 
-/*
- * Copy timeout to local variable and call the syscall.
- */
-int
-nanosleep(const struct timespec50 *ts50, struct timespec50 *rts50)
+ssize_t
+mq_timedreceive(mqd_t mq, char * __restrict name, size_t len,
+    unsigned * __restrict buf, const struct timespec50 * __restrict ts50)
 {
 	struct timespec ts, *tsp;
-	struct timespec rts, *rtsp;
-	int error;
 
-	rtsp = rts50 ? &rts : NULL;
 	if (ts50)
 		timespec50_to_timespec(ts50, tsp = &ts);
 	else
 		tsp = NULL;
-	error = __nanosleep50(tsp, rtsp);
-	if (error)
-		return error;
-	if (rts50)
-		timespec_to_timespec50(rtsp, rts50);
-	return 0;
+	return __mq_timedreceive50(mq, name, len, buf, tsp);
+}
+
+ssize_t
+mq_timedsend(mqd_t mq, const char *name, size_t len,
+    unsigned buf, const struct timespec50 *ts50)
+{
+	struct timespec ts, *tsp;
+
+	if (ts50)
+		timespec50_to_timespec(ts50, tsp = &ts);
+	else
+		tsp = NULL;
+	return __mq_timedsend50(mq, name, len, buf, tsp);
 }
