@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.69 2008/08/26 12:04:18 cegger Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.70 2008/11/09 14:24:14 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.69 2008/08/26 12:04:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.70 2008/11/09 14:24:14 cegger Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -394,7 +394,7 @@ mpacpi_config_ioapic(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 }
 
 int
-mpacpi_scan_apics(struct device *self, int *ncpup, int *napic)
+mpacpi_scan_apics(struct device *self, int *ncpup)
 {
 	int rv = 0;
 
@@ -427,7 +427,6 @@ mpacpi_scan_apics(struct device *self, int *ncpup, int *napic)
 	rv = 1;
 done:
 	*ncpup = mpacpi_ncpu;
-	*napic = mpacpi_nioapic;
 	acpi_madt_unmap();
 	return rv;
 }

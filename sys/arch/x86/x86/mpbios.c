@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.47 2008/08/26 12:04:18 cegger Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.48 2008/11/09 14:24:14 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.47 2008/08/26 12:04:18 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.48 2008/11/09 14:24:14 cegger Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -492,7 +492,7 @@ static struct mp_bus nmi_bus = {
  *	nintrs
  */
 void
-mpbios_scan(struct device *self, int *ncpup, int *napic)
+mpbios_scan(struct device *self, int *ncpup)
 {
 	const uint8_t 	*position, *end;
 	int		count;
@@ -693,7 +693,6 @@ mpbios_scan(struct device *self, int *ncpup, int *napic)
 	mpbios_scanned = 1;
 
 	*ncpup = mpbios_ncpu;
-	*napic = mpbios_nioapic;
 }
 
 static void

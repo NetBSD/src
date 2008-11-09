@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2008/11/09 14:24:14 cegger Exp $	*/
 /*	NetBSD: mainbus.c,v 1.53 2003/10/27 14:11:47 junyoung Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2008/11/09 14:24:14 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,9 +133,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #ifdef MPBIOS
 	int mpbios_present = 0;
 #endif
-#if NACPI > 0 || defined(MPBIOS)
-	int numioapics = 0;     
-#endif
 #endif /* defined(DOM0OPS) && defined(XEN3) */
 
 	aprint_naive("\n");
@@ -169,14 +166,13 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #if NACPI > 0
 		acpi_present = acpi_probe();
 		if (acpi_present)
-			mpacpi_active = mpacpi_scan_apics(self,
-			    &numcpus, &numioapics);
+			mpacpi_active = mpacpi_scan_apics(self, &numcpus);
 		if (!mpacpi_active)
 #endif
 		{
 #ifdef MPBIOS
 			if (mpbios_present)
-				mpbios_scan(self, &numcpus, &numioapics);       
+				mpbios_scan(self, &numcpus);       
 			else
 #endif
 			if (numcpus == 0) {
