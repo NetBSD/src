@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.71.2.1 2008/11/09 04:35:27 snj Exp $
+# $NetBSD: mi,v 1.71.2.2 2008/11/09 04:36:43 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8964,7 +8964,9 @@
 ./usr/libdata/debug/usr/X11R7/bin/dga.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/editres.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fc-cache.debug	-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/fc-cat.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fc-list.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/fc-match.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fonttosfnt.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fslsfonts.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/fstobdf.debug		-unknown-	debug,xorg
@@ -9038,6 +9040,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/xman.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xmessage.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xmh.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/xmlwf.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xmodmap.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xmore.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/xphelloworld.debug	-unknown-	debug,xorg
