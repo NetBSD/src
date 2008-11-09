@@ -1,11 +1,11 @@
-/*	$NetBSD: mpacpi.h,v 1.6 2007/10/17 19:58:15 garbled Exp $	*/
+/*	$NetBSD: mpacpi.h,v 1.7 2008/11/09 14:24:14 cegger Exp $	*/
 
 #ifndef _X86_MPACPI_H_
 #define _X86_MPACPI_H_
 
 struct pcibus_attach_args;
 
-int mpacpi_scan_apics(struct device *, int *, int *);
+int mpacpi_scan_apics(struct device *, int *);
 int mpacpi_find_interrupts(void *);
 int mpacpi_pci_attach_hook(struct device *, struct device *,
 			   struct pcibus_attach_args *);
