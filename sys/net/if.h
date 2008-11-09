@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.134.8.2 2008/11/01 21:22:28 christos Exp $	*/
+/*	$NetBSD: if.h,v 1.134.8.3 2008/11/09 23:57:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -242,7 +242,17 @@ struct ifnet {				/* and the entries */
 		    (struct ifnet *);
 	struct ifaltq if_snd;		/* output queue (includes altq) */
 	struct ifaddr	*if_dl;		/* identity of this interface. */
-	const struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
+	const struct	sockaddr_dl *if_sadl;	/* pointer to sockaddr_dl
+						 * of if_dl
+						 */
+	/* if_hwdl: h/w identity
+	 *
+	 * May be NULL.  If not NULL, it is the address assigned
+	 * to the interface by the manufacturer, so it very likely
+	 * to be unique.  It MUST NOT be deleted.  It is highly
+	 * suitable for deriving the EUI64 for the interface.
+	 */
+	struct ifaddr	*if_hwdl;
 	const uint8_t *if_broadcastaddr;/* linklevel broadcast bytestring */
 	void	*if_bridge;		/* bridge glue */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
@@ -604,6 +614,7 @@ struct if_laddrreq {
 	unsigned int flags;
 #define IFLR_PREFIX	0x8000	/* in: prefix given  out: kernel fills id */
 #define IFLR_ACTIVE	0x4000	/* in/out: link-layer address activation */
+#define IFLR_FACTORY	0x2000	/* in/out: factory link-layer address */
 	unsigned int prefixlen;		/* in/out */
 	struct sockaddr_storage addr;	/* in/out */
 	struct sockaddr_storage dstaddr; /* out */
@@ -787,7 +798,7 @@ void if_initname(struct ifnet *, const char *, int);
 struct ifaddr *if_dl_create(const struct ifnet *, const struct sockaddr_dl **);
 void if_activate_sadl(struct ifnet *, struct ifaddr *,
     const struct sockaddr_dl *);
-void	if_set_sadl(struct ifnet *, const void *, u_char);
+void	if_set_sadl(struct ifnet *, const void *, u_char, bool);
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);
 void	if_attach(struct ifnet *);

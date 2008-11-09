@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.70.2.1 2008/03/29 20:47:02 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.70.2.2 2008/11/09 23:57:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -218,7 +218,9 @@ struct rt_msghdr {
 #define	RTM_SETGATE	0x12	/* set prototype gateway for clones
 				 * (see example in arp_rtrequest).
 				 */
-#define RTM_IFINFO	0x13	/* iface/link going up/down etc. */
+#define	RTM_LLINFO_UPD	0x13	/* indication to ARP/NDP/etc. that link-layer
+				 * address has changed
+				 */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
@@ -415,6 +417,13 @@ struct rtentry *rtcache_update(struct route *, int);
 void	rtcache_free(struct route *);
 int	rtcache_setdst(struct route *, const struct sockaddr *);
 
+static inline void
+rtcache_invariants(const struct route *ro)
+{
+	KASSERT(ro->ro_sa != NULL || ro->_ro_rt == NULL);
+	KASSERT(!ro->ro_invalid || ro->_ro_rt != NULL);
+}
+
 static inline struct rtentry *
 rtcache_lookup1(struct route *ro, const struct sockaddr *dst, int clone)
 {
@@ -438,6 +447,7 @@ rtcache_lookup(struct route *ro, const struct sockaddr *dst)
 static inline const struct sockaddr *
 rtcache_getdst(const struct route *ro)
 {
+	rtcache_invariants(ro);
 	return ro->ro_sa;
 }
 
@@ -449,6 +459,8 @@ static inline struct rtentry *
 rtcache_validate(const struct route *ro)
 {
 	struct rtentry *rt = ro->_ro_rt;
+
+	rtcache_invariants(ro);
 
 	if (ro->ro_invalid)
 		return NULL;

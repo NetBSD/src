@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.131.8.2 2008/11/01 21:22:28 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.131.8.3 2008/11/09 23:57:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.131.8.2 2008/11/01 21:22:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.131.8.3 2008/11/09 23:57:23 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -476,6 +476,19 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		}
 		callout_init(&arptimer_ch, CALLOUT_MPSAFE);
 		callout_reset(&arptimer_ch, hz, arptimer, NULL);
+	}
+
+	if (req == RTM_LLINFO_UPD) {
+		struct in_addr *in;
+
+		if ((ifa = info->rti_ifa) == NULL)
+			return;
+
+		in = &ifatoia(ifa)->ia_addr.sin_addr;
+
+		arprequest(ifa->ifa_ifp, in, in,
+		    CLLADDR(ifa->ifa_ifp->if_sadl));
+		return;
 	}
 
 	if ((rt->rt_flags & RTF_GATEWAY) != 0) {
