@@ -32,7 +32,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static char const n8_id[] = "$Id: helper.c,v 1.1 2008/10/30 12:02:14 darran Exp $";
+static char const n8_id[] = "$Id: helper.c,v 1.1.2.1 2008/11/09 04:57:06 snj Exp $";
 /*****************************************************************************/
 /** @file helper.c                                                           *
  *  @brief BSDi System Call Abstraction.                                     *
@@ -67,7 +67,6 @@ static char const n8_id[] = "$Id: helper.c,v 1.1 2008/10/30 12:02:14 darran Exp 
 #include "n8_pub_errors.h"
 #include "n8_driver_main.h"
 
-#include <machine/clock.h>
 #include <sys/proc.h>
 
 /* Since BSD does not give us a mechanism to update the write pointer */
