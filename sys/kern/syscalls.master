@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.196.2.2 2008/11/01 21:22:27 christos Exp $
+	$NetBSD: syscalls.master,v 1.196.2.3 2008/11/09 01:54:31 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -807,8 +807,8 @@
 			    int flags); }
 397	STD 		{ int sys___fhstatvfs140(const void *fhp, \
 			    size_t fh_size, struct statvfs *buf, int flags); }
-398	STD 		{ int sys___fhstat40(const void *fhp, \
-			    size_t fh_size, struct stat *sb); }
+398	COMPAT_50 	{ int sys___fhstat40(const void *fhp, \
+			    size_t fh_size, struct stat30 *sb); }
 
 ; Asynchronous I/O system calls
 399	STD 		{ int sys_aio_cancel(int fildes, struct aiocb *aiocbp); }
@@ -923,3 +923,5 @@
 				    int options, struct rusage *rusage); }
 450	STD  RUMP	{ int sys___mknod50(const char *path, mode_t mode, \
 			    dev_t dev); }
+451	STD	 	{ int sys___fhstat50(const void *fhp, \
+			    size_t fh_size, struct stat *sb); }
