@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_timer.c,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: gemini_timer.c,v 1.2 2008/11/09 09:11:09 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap2_geminitmr.c,v 1.1 2008/08/27 11:03:10 matt Exp
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_timer.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_timer.c,v 1.2 2008/11/09 09:11:09 cliff Exp $");
 
 #include "opt_gemini.h"
 #include "opt_cpuoptions.h"
@@ -238,6 +238,8 @@ clockintr(void *frame)
 	_timer_intr_clr(sc);
 	_timer_reload(sc, sc->sc_tf.tf_counter);
 	hardclock(frame);
+	if (clock_sc == stat_sc)
+		statclock(frame);
 	return 1;
 }
 
@@ -281,7 +283,8 @@ setstatclockrate(int schz)
 {
 	if (stat_sc == NULL)
 		panic("Statistics timer was not configured.");
-	timer_init(stat_sc, schz, FALSE, TRUE);
+	if (stat_sc != clock_sc)
+		timer_init(stat_sc, schz, FALSE, TRUE);
 }
 
 /*
@@ -311,11 +314,13 @@ cpu_initclocks(void)
 	intr_establish(clock_sc->sc_intr, IPL_CLOCK, IST_LEVEL_HIGH,
 		clockintr, 0);
 
-	intr_establish(stat_sc->sc_intr, IPL_HIGH, IST_LEVEL_HIGH,
-		statintr, 0);
+	if (clock_sc != stat_sc)
+		intr_establish(stat_sc->sc_intr, IPL_HIGH, IST_LEVEL_HIGH,
+			statintr, 0);
 
-	timer_init(clock_sc,     hz, FALSE, TRUE);
-	timer_init(stat_sc,  stathz, FALSE, TRUE);
+	timer_init(clock_sc, hz, FALSE, TRUE);
+	if (clock_sc != stat_sc)
+		timer_init(stat_sc, stathz, FALSE, TRUE);
 
 	tc_init(&gemini_timecounter);
 }
