@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2008/10/27 08:27:04 hubertf Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2008/11/09 23:02:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ CPPFLAGS+=-DGSSAPI -I${DESTDIR}/usr/include/gssapi
 CPPFLAGS+=-DKRB5 -I${DESTDIR}/usr/include/krb5 -DHEIMDAL
 .endif
 
-.if (${MKXORG} != "no")
+.if ${X11FLAVOUR} == "Xorg"
 CPPFLAGS+=-DX11BASE=\"/usr/X11R7\"
 .endif
 

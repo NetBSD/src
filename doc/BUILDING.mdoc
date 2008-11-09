@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.67 2008/09/24 07:36:52 apb Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.68 2008/11/09 23:02:29 mrg Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -549,20 +549,8 @@ This also has implications on full builds (see next subsection).
 .
 .It Sy MKX11
 .YorN
-Indicates whether X11R6 is built from
+Indicates whether X11 is built from
 .Sy X11SRCDIR .
-.Pp
-Mutually exclusive to 
-.Sy MKXORG != no .
-.DFLTn
-.
-.It Sy MKXORG
-.YorN
-Indicates whether X11R7 (modular Xorg) is built from
-.Sy X11SRCDIR .
-.Pp
-Mutually exclusive to 
-.Sy MKX11 != no .
 .DFLTn
 .
 .It Sy TOOLDIR
@@ -635,6 +623,17 @@ The main X11R6 source is found in
 .Sy X11SRCDIR Ns Pa /xfree/xc .
 .DFLT
 .Dq /usr/xsrc
+.
+.It Sy X11FLAVOUR
+The style of X11 cross-built, set to either
+.Dq Xorg
+or
+.Dq XFree86 .
+.DFLT
+.Dq Xorg
+on amd64, i386, macppc, shark, sparc and sparc64 platforms,
+.Dq XFree86
+on everything else.
 .
 .El
 .
