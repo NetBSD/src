@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.70 2008/11/09 14:24:14 cegger Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.71 2008/11/09 15:34:14 cegger Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.70 2008/11/09 14:24:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.71 2008/11/09 15:34:14 cegger Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -343,7 +343,7 @@ mpacpi_count(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 static ACPI_STATUS
 mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
-	struct device *parent = aux;
+	device_t parent = aux;
 	ACPI_MADT_LOCAL_APIC *p;
 	struct cpu_attach_args caa;
 	int cpunum = 0;
@@ -374,7 +374,7 @@ mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 static ACPI_STATUS
 mpacpi_config_ioapic(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
-	struct device *parent = aux;
+	device_t parent = aux;
 	struct apic_attach_args aaa;
 	ACPI_MADT_IO_APIC *p;
 	int locs[IOAPICBUSCF_NLOCS];
@@ -394,7 +394,7 @@ mpacpi_config_ioapic(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 }
 
 int
-mpacpi_scan_apics(struct device *self, int *ncpup)
+mpacpi_scan_apics(device_t self, int *ncpup)
 {
 	int rv = 0;
 
@@ -1107,7 +1107,7 @@ mpacpi_find_interrupts(void *self)
 #if NPCI > 0
 
 int
-mpacpi_pci_attach_hook(struct device *parent, struct device *self,
+mpacpi_pci_attach_hook(device_t parent, device_t self,
 		       struct pcibus_attach_args *pba)
 {
 	struct mp_bus *mpb;
@@ -1161,7 +1161,7 @@ mpacpi_pci_attach_hook(struct device *parent, struct device *self,
 }
 
 int
-mpacpi_scan_pci(struct device *self, struct pcibus_attach_args *pba,
+mpacpi_scan_pci(device_t self, struct pcibus_attach_args *pba,
 	        cfprint_t print)
 {
 	int i;
