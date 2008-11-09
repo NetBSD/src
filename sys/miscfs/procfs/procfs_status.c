@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_status.c,v 1.32.38.2 2008/11/01 21:22:28 christos Exp $	*/
+/*	$NetBSD: procfs_status.c,v 1.32.38.3 2008/11/09 02:02:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.32.38.2 2008/11/01 21:22:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_status.c,v 1.32.38.3 2008/11/09 02:02:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,9 @@ procfs_dostatus(
 	    pid, ppid, pgid, sid);
 
 	if ((p->p_lflag & PL_CONTROLT) && (tp = sess->s_ttyp))
-		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "%d,%d ",
-		    major(tp->t_dev), minor(tp->t_dev));
+		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "%llu,%llu ",
+		    (unsigned long long)major(tp->t_dev),
+		    (unsigned long long)minor(tp->t_dev));
 	else
 		ps += snprintf(ps, sizeof(psbuf) - (ps - psbuf), "%d,%d ",
 		    -1, -1);
