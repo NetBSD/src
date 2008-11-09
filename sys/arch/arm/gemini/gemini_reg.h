@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_reg.h,v 1.3 2008/11/01 07:43:19 cliff Exp $	*/
+/*	$NetBSD: gemini_reg.h,v 1.4 2008/11/09 08:54:46 cliff Exp $	*/
 
 #ifndef _ARM_GEMINI_REG_H_
 #define _ARM_GEMINI_REG_H_
@@ -37,7 +37,7 @@
 #define GEMINI_RTC_BASE		0x45000000 	/* Real Time Clock module */
 #define GEMINI_SATA_BASE	0x46000000 	/* Serial ATA module */
 #define GEMINI_LPCHC_BASE	0x47000000 	/* LPC Hosr Controller module */
-#define GEMINI_LPCP_BASE	0x47800000 	/* LPC Peripherals IO space */
+#define GEMINI_LPCIO_BASE	0x47800000 	/* LPC Peripherals IO space */
 #define GEMINI_IC0_BASE		0x48000000 	/* Interrupt Control module #0 */
 #define GEMINI_IC1_BASE		0x49000000 	/* Interrupt Control module #1 */
 #define GEMINI_SSPC_BASE	0x4a000000 	/* Synchronous Serial Port Control module */
@@ -70,7 +70,9 @@
 #define  GLOBAL_ID_CHIP_ID	__BITS(31,8)
 #define  GLOBAL_ID_CHIP_REV	__BITS(7,0)
 #define GEMINI_GLOBAL_RESET_CTL	0xc		/* Global Soft Reset Control */		/* rw */
-#define GLOBAL_RESET_GLOBAL	__BIT(31)
+#define GLOBAL_RESET_GLOBAL	__BIT(31)	/* Global Soft Reset */
+#define GLOBAL_RESET_CPU1	__BIT(30)	/* CPU#1 reset hold */
+#define GEMINI_GLOBAL_MISC_CTL	0x30		/* Miscellaneous Control */		/* rw */
 
 /*
  * Gemini SL3516 Watchdog device register offsets and bits
@@ -170,6 +172,46 @@
 #define GEMINI_ICU_IRQ_DEBOUNCE		0x58						/* ro */
 #define GEMINI_ICU_FIQ_DEBOUNCE		0x5c						/* ro */
 
+
+/*
+ * Gemini LPC controller register offsets and bits
+ */
+#define GEMINI_LPCHC_ID			0x00						/* ro */
+# define LPCHC_ID_DEVICE		__BITS(31,8)	/* Device ID */
+# define LPCHC_ID_REV			__BITS(7,0)	/* Revision */
+# define _LPCHC_ID_DEVICE(r)		((typeof(r))(((r) & LPCHC_ID_DEVICE) >> 8))
+# define _LPCHC_ID_REV(r)		((typeof(r))(((r) & LPCHC_ID_REV) >> 0))
+#define GEMINI_LPCHC_CSR		0x04						/* rw */
+# define LPCHC_CSR_RESa			__BITS(31,24)
+# define LPCHC_CSR_STO			__BIT(23)	/* Sync Time Out */
+# define LPCHC_CSR_SERR			__BIT(22)	/* Sync Error */
+# define LPCHC_CSR_RESb			__BITS(21,8)
+# define LPCHC_CSR_STOE			__BIT(7)	/* Sync Time Out Enable */
+# define LPCHC_CSR_SERRE		__BIT(6)	/* Sync Error Enable */
+# define LPCHC_CSR_RESc			__BITS(5,1)
+# define LPCHC_CSR_BEN			__BIT(0)	/* Bridge Enable */
+#define GEMINI_LPCHC_IRQCTL		0x08						/* rw */
+# define LPCHC_IRQCTL_RESV		__BITS(31,8)
+# define LPCHC_IRQCTL_SIRQEN		__BIT(7)	/* Serial IRQ Enable */
+# define LPCHC_IRQCTL_SIRQMS		__BIT(6)	/* Serial IRQ Mode Select */
+# define LPCHC_IRQCTL_SIRQFN		__BITS(5,2)	/* Serial IRQ Frame Number */
+# define LPCHC_IRQCTL_SIRQFW		__BITS(1,0)	/* Serial IRQ Frame Width */
+#  define IRQCTL_SIRQFW_4		0		
+#  define IRQCTL_SIRQFW_6		1		
+#  define IRQCTL_SIRQFW_8		2		
+#  define IRQCTL_SIRQFW_RESV		3		
+#define GEMINI_LPCHC_SERIRQSTS		0x0c						/* rwc */
+# define LPCHC_SERIRQSTS_RESV		__BITS(31,17)
+#define GEMINI_LPCHC_SERIRQTYP		0x10						/* rw */
+# define LPCHC_SERIRQTYP_RESV		__BITS(31,17)
+#  define SERIRQTYP_EDGE		1
+#  define SERIRQTYP_LEVEL		0
+#define GEMINI_LPCHC_SERIRQPOLARITY	0x14						/* rw */
+# define LPCHC_SERIRQPOLARITY_RESV	__BITS(31,17)
+#  define SERIRQPOLARITY_HI		1
+#  define SERIRQPOLARITY_LO		0
+#define GEMINI_LPCHC_SIZE		(GEMINI_LPCHC_SERIRQPOLARITY + 4)
+#define GEMINI_LPCHC_NSERIRQ		17
 
 /*
  * Gemini PCI controller register offsets and bits
@@ -284,6 +326,17 @@ gemini_pci_cfg_reg_mem_size(size_t sz)
 	/* NOTREACHED */
 }
 #endif	/* _LOCORE */
+
+/*
+ * Gemini SL3516 IDE device register offsets, &etc.
+ */
+#define GEMINI_MIDE_NCHAN		2
+#define GEMINI_MIDE_OFFSET(chan)	((chan == 0) ? 0x0 : 0x400000)
+#define GEMINI_MIDE_BASEn(chan)		(GEMINI_MIDE_BASE + GEMINI_MIDE_OFFSET(chan))
+#define GEMINI_MIDE_CMDBLK		0x20
+#define GEMINI_MIDE_CTLBLK		0x36
+#define GEMINI_MIDE_SIZE		0x40
+
 
 #else
 # error unknown gemini cpu type
