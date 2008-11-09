@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_nanosleep.c,v 1.1.2.2 2008/11/09 19:36:03 christos Exp $ */
+/*	$NetBSD: compat_adjtime.c,v 1.1.2.1 2008/11/09 19:36:03 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -21,7 +21,7 @@
  *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
+ *    from this software without valific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,41 +37,40 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_nanosleep.c,v 1.1.2.2 2008/11/09 19:36:03 christos Exp $");
+__RCSID("$NetBSD: compat_adjtime.c,v 1.1.2.1 2008/11/09 19:36:03 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #define __LIBC12_SOURCE__
-#include <time.h>
-#include <compat/include/time.h>
+#include <sys/time.h>
+#include <compat/sys/time.h>
 
-__warn_references(nanosleep,
-    "warning: reference to compatibility nanosleep(); include <time.h> to generate correct reference")
+__warn_references(adjtime,
+    "warning: reference to compatibility adjtime(); include <time.h> to generate correct reference")
 
 #ifdef __weak_alias
-__weak_alias(nanosleep, _nanosleep)
-__weak_alias(sys_nanosleep, _nanosleep)
+__weak_alias(adjtime, _adjtime)
 #endif
 
 /*
  * Copy timeout to local variable and call the syscall.
  */
 int
-nanosleep(const struct timespec50 *ts50, struct timespec50 *rts50)
+adjtime(const struct timeval50 *ts50, struct timeval50 *rts50)
 {
-	struct timespec ts, *tsp;
-	struct timespec rts, *rtsp;
+	struct timeval ts, *tsp;
+	struct timeval rts, *rtsp;
 	int error;
 
 	rtsp = rts50 ? &rts : NULL;
 	if (ts50)
-		timespec50_to_timespec(ts50, tsp = &ts);
+		timeval50_to_timeval(ts50, tsp = &ts);
 	else
 		tsp = NULL;
-	error = __nanosleep50(tsp, rtsp);
+	error = __adjtime50(tsp, rtsp);
 	if (error)
 		return error;
 	if (rts50)
-		timespec_to_timespec50(rtsp, rts50);
+		timeval_to_timeval50(rtsp, rts50);
 	return 0;
 }

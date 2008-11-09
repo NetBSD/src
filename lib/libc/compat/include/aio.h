@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_nanosleep.c,v 1.1.2.2 2008/11/09 19:36:03 christos Exp $ */
+/*	$NetBSD: aio.h,v 1.1.2.1 2008/11/09 19:36:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,43 +35,17 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_nanosleep.c,v 1.1.2.2 2008/11/09 19:36:03 christos Exp $");
-#endif /* LIBC_SCCS and not lint */
+#ifndef	_COMPAT_AIO_H_
+#define	_COMPAT_AIO_H_
 
-#include "namespace.h"
-#define __LIBC12_SOURCE__
-#include <time.h>
-#include <compat/include/time.h>
+__BEGIN_DECLS
+struct aiocb;
+struct timespec50;
+struct timespec;
+int	aio_suspend(const struct aiocb * const [], int,
+    const struct timespec50 *);
+int	__aio_suspend50(const struct aiocb * const [], int,
+    const struct timespec *);
+__END_DECLS
 
-__warn_references(nanosleep,
-    "warning: reference to compatibility nanosleep(); include <time.h> to generate correct reference")
-
-#ifdef __weak_alias
-__weak_alias(nanosleep, _nanosleep)
-__weak_alias(sys_nanosleep, _nanosleep)
-#endif
-
-/*
- * Copy timeout to local variable and call the syscall.
- */
-int
-nanosleep(const struct timespec50 *ts50, struct timespec50 *rts50)
-{
-	struct timespec ts, *tsp;
-	struct timespec rts, *rtsp;
-	int error;
-
-	rtsp = rts50 ? &rts : NULL;
-	if (ts50)
-		timespec50_to_timespec(ts50, tsp = &ts);
-	else
-		tsp = NULL;
-	error = __nanosleep50(tsp, rtsp);
-	if (error)
-		return error;
-	if (rts50)
-		timespec_to_timespec50(rtsp, rts50);
-	return 0;
-}
+#endif	/* _COMPAT_AIO_H_ */

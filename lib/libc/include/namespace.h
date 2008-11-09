@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.134.2.2 2008/11/08 21:45:38 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.134.2.3 2008/11/09 19:36:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef __lint__
+#define aio_suspend	_aio_suspend
 #define brk		_brk
 #define catclose	_catclose
 #define catgets		_catgets
@@ -527,6 +528,7 @@
 #define shquote			_shquote
 #define siginterrupt		_siginterrupt
 #define signal			_signal
+#define sigtimedwait		_sigtimedwait
 #define sl_add			_sl_add
 #define sl_create		_sl_create
 #define sl_delete		_sl_delete
