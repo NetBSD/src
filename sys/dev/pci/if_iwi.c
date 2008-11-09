@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.74 2008/10/30 00:27:32 joerg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.74.2.1 2008/11/09 04:00:06 snj Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.74 2008/10/30 00:27:32 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.74.2.1 2008/11/09 04:00:06 snj Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -329,7 +329,7 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
 
-	sc->sc_fwname = "iwi-bss.fw";
+	sc->sc_fwname = "ipw200-bss.fw";
 
 	/* set device capabilities */
 	ic->ic_caps =
@@ -1853,11 +1853,11 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCSIFMEDIA:
 		if (ifr->ifr_media & IFM_IEEE80211_ADHOC) {
-			sc->sc_fwname = "iwi-ibss.fw";
+			sc->sc_fwname = "ipw2200-ibss.fw";
 		} else if (ifr->ifr_media & IFM_IEEE80211_MONITOR) {
-			sc->sc_fwname = "iwi-sniffer.fw";
+			sc->sc_fwname = "ipw2200-sniffer.fw";
 		} else {
-			sc->sc_fwname = "iwi-bss.fw";
+			sc->sc_fwname = "ipw2200-bss.fw";
 		}
 		error = iwi_cache_firmware(sc);
 		if (error)
