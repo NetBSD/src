@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_50.c,v 1.1.2.2 2008/11/09 23:28:36 christos Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.17.12.2 2008/11/09 23:28:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,50 +31,50 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm_50.c,v 1.1.2.2 2008/11/09 23:28:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.17.12.2 2008/11/09 23:28:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
-#include <sys/shm.h>
+#include <sys/msg.h>
 
-#ifndef SYSVSHM
-#define	SYSVSHM
+#include <compat/sys/msg.h>
+
+#ifndef SYSVMSG
+#define	SYSVMSG
 #endif
 
 #include <sys/syscallargs.h>
 
-#include <compat/sys/shm.h>
-
 int
-compat_50_sys___shmctl13(struct lwp *l, const struct compat_50_sys___shmctl13_args *uap, register_t *retval)
+compat_14_sys_msgctl(struct lwp *l, const struct compat_14_sys_msgctl_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(int) shmid;
+		syscallarg(int) msqid;
 		syscallarg(int) cmd;
-		syscallarg(struct shmid_ds13 *) buf;
+		syscallarg(struct msqid_ds14 *) buf;
 	} */
-	struct shmid_ds shmbuf;
-	struct shmid_ds13 oshmbuf;
+	struct msqid_ds msqbuf;
+	struct msqid_ds14 omsqbuf;
 	int cmd, error;
 
 	cmd = SCARG(uap, cmd);
 
 	if (cmd == IPC_SET) {
-		error = copyin(SCARG(uap, buf), &oshmbuf, sizeof(oshmbuf));
+		error = copyin(SCARG(uap, buf), &omsqbuf, sizeof(omsqbuf));
 		if (error)
 			return (error);
-		__shmid_ds13_to_native(&oshmbuf, &shmbuf);
+		__msqid_ds14_to_native(&omsqbuf, &msqbuf);
 	}
 
-	error = shmctl1(l, SCARG(uap, shmid), cmd,
-	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
+	error = msgctl1(l, SCARG(uap, msqid), cmd,
+	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
-		__native_to_shmid_ds13(&shmbuf, &oshmbuf);
-		error = copyout(&oshmbuf, SCARG(uap, buf), sizeof(oshmbuf));
+		__native_to_msqid_ds14(&msqbuf, &omsqbuf);
+		error = copyout(&omsqbuf, SCARG(uap, buf), sizeof(omsqbuf));
 	}
 
 	return (error);

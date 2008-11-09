@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.2.78.1 2008/03/29 20:46:59 christos Exp $	*/
+/*	$NetBSD: msg.h,v 1.2.78.2 2008/11/09 23:28:36 christos Exp $	*/
 
 /*
  * SVID compatible msg.h file
@@ -22,7 +22,6 @@
 #ifndef _COMPAT_SYS_MSG_H_
 #define _COMPAT_SYS_MSG_H_
 
-#ifdef _KERNEL
 #include <compat/sys/ipc.h>
 /*
  * Old message queue data structure used before NetBSD 1.5.
@@ -63,6 +62,93 @@ struct msqid_ds13 {
 	struct __msg	*_msg_last;	/* last message in the queue */
 	msglen_t	_msg_cbytes;	/* # of bytes currently in queue */
 };
-#endif
+
+__BEGIN_DECLS
+static __inline void __msqid_ds14_to_native(const struct msqid_ds14 *, struct msqid_ds *);
+static __inline void __native_to_msqid_ds14(const struct msqid_ds *, struct msqid_ds14 *);
+static __inline void __msqid_ds13_to_native(const struct msqid_ds13 *, struct msqid_ds *);
+static __inline void __native_to_msqid_ds13(const struct msqid_ds *, struct msqid_ds13 *);
+
+static __inline void
+__msqid_ds13_to_native(const struct msqid_ds13 *omsqbuf, struct msqid_ds *msqbuf)
+{
+
+	msqbuf->msg_perm = omsqbuf->msg_perm;
+
+#define	CVT(x)	msqbuf->x = omsqbuf->x
+	CVT(msg_qnum);
+	CVT(msg_qbytes);
+	CVT(msg_lspid);
+	CVT(msg_lrpid);
+	CVT(msg_stime);
+	CVT(msg_rtime);
+	CVT(msg_ctime);
+#undef CVT
+}
+
+static __inline void
+__native_to_msqid_ds13(const struct msqid_ds *msqbuf, struct msqid_ds13 *omsqbuf)
+{
+
+	omsqbuf->msg_perm = msqbuf->msg_perm;
+
+#define	CVT(x)	omsqbuf->x = msqbuf->x
+#define	CVTI(x)	omsqbuf->x = (int)msqbuf->x
+	CVT(msg_qnum);
+	CVT(msg_qbytes);
+	CVT(msg_lspid);
+	CVT(msg_lrpid);
+	CVTI(msg_stime);
+	CVTI(msg_rtime);
+	CVTI(msg_ctime);
+#undef CVT
+#undef CVTI
+
+	/*
+	 * Not part of the API, but some programs might look at it.
+	 */
+	omsqbuf->_msg_cbytes = msqbuf->_msg_cbytes;
+}
+
+static __inline void
+__msqid_ds14_to_native(const struct msqid_ds14 *omsqbuf, struct msqid_ds *msqbuf)
+{
+
+	__ipc_perm14_to_native(&omsqbuf->msg_perm, &msqbuf->msg_perm);
+
+#define	CVT(x)	msqbuf->x = omsqbuf->x
+	CVT(msg_qnum);
+	CVT(msg_qbytes);
+	CVT(msg_lspid);
+	CVT(msg_lrpid);
+	CVT(msg_stime);
+	CVT(msg_rtime);
+	CVT(msg_ctime);
+#undef CVT
+}
+
+static __inline void
+__native_to_msqid_ds14(const struct msqid_ds *msqbuf, struct msqid_ds14 *omsqbuf)
+{
+
+	__native_to_ipc_perm14(&msqbuf->msg_perm, &omsqbuf->msg_perm);
+
+#define	CVT(x)	omsqbuf->x = msqbuf->x
+#define	CVTI(x)	omsqbuf->x = (int)msqbuf->x
+	CVT(msg_qnum);
+	CVT(msg_qbytes);
+	CVT(msg_lspid);
+	CVT(msg_lrpid);
+	CVTI(msg_stime);
+	CVTI(msg_rtime);
+	CVTI(msg_ctime);
+#undef CVT
+#undef CVTI
+}
+
+int	__msgctl13(int, int, struct msqid_ds13 *);
+int	__msgctl14(int, int, struct msqid_ds14 *);
+int	__msgctl50(int, int, struct msqid_ds *);
+__END_DECLS
 
 #endif /* !_COMPAT_SYS_MSG_H_ */
