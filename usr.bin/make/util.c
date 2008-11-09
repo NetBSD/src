@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.45 2008/10/06 22:09:21 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.45.2.1 2008/11/09 05:07:23 snj Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.45 2008/10/06 22:09:21 joerg Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.45.2.1 2008/11/09 05:07:23 snj Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.45 2008/10/06 22:09:21 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.45.2.1 2008/11/09 05:07:23 snj Exp $");
 #endif
 #endif
 
@@ -39,34 +39,115 @@ strerror(int e)
 #endif
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_SETENV)
-int
-setenv(const char *name, const char *value, int dum)
+extern char **environ;
+
+static char *
+findenv(const char *name, int *offset)
 {
-    char *p;
-    int len = strlen(name) + strlen(value) + 2; /* = \0 */
-    char *ptr = bmake_malloc(len);
+	size_t i, len;
+	char *p, *q;
 
-    (void) dum;
-
-    if (ptr == NULL)
-	return -1;
-
-    p = ptr;
-
-    while (*name)
-	*p++ = *name++;
-
-    *p++ = '=';
-
-    while (*value)
-	*p++ = *value++;
-
-    *p = '\0';
-
-    len = putenv(ptr);
-/*    free(ptr); */
-    return len;
+	for (i = 0; (q = environ[i]); i++) {
+		char *p = strchr(q, '=');
+		if (p == NULL)
+			continue;
+		if (strncmp(name, q, len = p - q) == 0) {
+			*offset = i;
+			return q + len + 1;
+		}
+	}
+	*offset = i;
+	return NULL;
 }
+
+int
+unsetenv(const char *name)
+{
+	char **p;
+	int offset;
+
+	if (name == NULL || *name == '\0' || strchr(name, '=') != NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	while (findenv(name, &offset))	{ /* if set multiple times */
+		for (p = &environ[offset];; ++p)
+			if (!(*p = *(p + 1)))
+				break;
+	}
+	return 0;
+}
+
+int
+setenv(const char *name, const char *value, int rewrite)
+{
+	static char **saveenv;	/* copy of previously allocated space */
+	char *c, **newenv;
+	const char *cc;
+	size_t l_value, size;
+	int offset;
+
+	if (name == NULL || value == NULL) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	if (*value == '=')			/* no `=' in value */
+		++value;
+	l_value = strlen(value);
+
+	/* find if already exists */
+	if ((c = findenv(name, &offset))) {
+		if (!rewrite)
+			return 0;
+		if (strlen(c) >= l_value)	/* old larger; copy over */
+			goto copy;
+	} else {					/* create new slot */
+		size = sizeof(char *) * (offset + 2);
+		if (saveenv == environ) {		/* just increase size */
+			if ((newenv = realloc(saveenv, size)) == NULL)
+				return -1;
+			saveenv = newenv;
+		} else {				/* get new space */
+			/*
+			 * We don't free here because we don't know if
+			 * the first allocation is valid on all OS's
+			 */
+			if ((saveenv = malloc(size)) == NULL)
+				return -1;
+			(void)memcpy(saveenv, environ, size - sizeof(char *));
+		}
+		environ = saveenv;
+		environ[offset + 1] = NULL;
+	}
+	for (cc = name; *cc && *cc != '='; ++cc)	/* no `=' in name */
+		continue;
+	size = cc - name;
+	/* name + `=' + value */
+	if ((environ[offset] = malloc(size + l_value + 2)) == NULL)
+		return -1;
+	c = environ[offset];
+	(void)memcpy(c, name, size);
+	c += size;
+	*c++ = '=';
+copy:
+	(void)memcpy(c, value, l_value + 1);
+	return 0;
+}
+
+#ifdef TEST
+int
+main(int argc, char *argv[])
+{
+	setenv(argv[1], argv[2], 0);
+	printf("%s\n", getenv(argv[1]));
+	unsetenv(argv[1]);
+	printf("%s\n", getenv(argv[1]));
+	return 0;
+}
+#endif
+
 #endif
 
 #if defined(__hpux__) || defined(__hpux)
