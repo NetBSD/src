@@ -127,6 +127,8 @@ enum radeon_family {
 	CHIP_R420,
 	CHIP_RV410,
 	CHIP_RS400,
+	CHIP_RV515,
+	CHIP_RV530,
 	CHIP_LAST,
 };
 
@@ -134,6 +136,7 @@ enum radeon_cp_microcode_version {
 	UCODE_R100,
 	UCODE_R200,
 	UCODE_R300,
+	UCODE_R500,
 };
 
 /*
