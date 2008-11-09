@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.44 2008/11/05 22:58:37 christos Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.45 2008/11/09 17:58:49 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1016,7 +1016,8 @@ manuell /etc/mailer.conf korrigieren, um funktionierende Mailauslieferung
 zu gewährleisten.}
 
 message license
-{To use the network interface %s, you must agree to the license in
-file %s.
-To view this file now, you can type ^Z, look at the contents of
-the file and then type "fg" to resume.}
+{Um den Netzwerkadapter %s zu benutzen müssen Sie der Lizenz in
+der Datei %s zustimmen.
+Um den Lizenztext zu lesen, geben Sie ^Z ein, schauen den Inhalt
+der Datei an und kehren mit dem Befehl "fg" zu sysinst zurück.}
+
