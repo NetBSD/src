@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.1.2.2 2008/04/26 18:27:50 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.1.2.3 2008/11/09 01:55:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.1.2.2 2008/04/26 18:27:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.1.2.3 2008/11/09 01:55:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,14 +84,10 @@ cvtstat(struct stat30 *ost, const struct stat *st)
 	ost->st_uid = st->st_uid;
 	ost->st_gid = st->st_gid;
 	ost->st_rdev = st->st_rdev;
-	ost->st_atimespec.tv_sec = (long)st->st_atimespec.tv_sec;
-	ost->st_atimespec.tv_nsec = st->st_atimespec.tv_nsec;
-	ost->st_mtimespec.tv_sec = (long)st->st_mtimespec.tv_sec;
-	ost->st_mtimespec.tv_nsec = st->st_mtimespec.tv_nsec;
-	ost->st_ctimespec.tv_sec = (long)st->st_ctimespec.tv_sec;
-	ost->st_ctimespec.tv_nsec = st->st_ctimespec.tv_nsec;
-	ost->st_birthtimespec.tv_sec = (long)st->st_birthtimespec.tv_sec;
-	ost->st_birthtimespec.tv_nsec = st->st_birthtimespec.tv_nsec;
+	timespec_to_timespec50(&st->st_atimespec, &ost->st_atimespec);
+	timespec_to_timespec50(&st->st_mtimespec, &ost->st_mtimespec);
+	timespec_to_timespec50(&st->st_ctimespec, &ost->st_ctimespec);
+	timespec_to_timespec50(&st->st_birthtimespec, &ost->st_birthtimespec);
 	ost->st_size = st->st_size;
 	ost->st_blocks = st->st_blocks;
 	ost->st_blksize = st->st_blksize;
@@ -169,6 +165,27 @@ compat_50_sys___fstat30(struct lwp *l, const struct compat_50_sys___fstat30_args
 	error = (*fp->f_ops->fo_stat)(fp, &sb);
 	fd_putfile(fd);
 
+	if (error)
+		return error;
+	cvtstat(&osb, &sb);
+	error = copyout(&osb, SCARG(uap, sb), sizeof (osb));
+	return error;
+}
+
+/* ARGSUSED */
+int
+compat_50_sys___fhstat40(struct lwp *l, const struct compat_50_sys___fhstat40_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const void *) fhp;
+		syscallarg(size_t) fh_size;
+		syscallarg(struct stat30 *) sb;
+	} */
+	struct stat sb;
+	struct stat30 osb;
+	int error;
+
+	error = do_fhstat(l, SCARG(uap, fhp), SCARG(uap, fh_size), &sb);
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
