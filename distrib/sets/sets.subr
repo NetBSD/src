@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.72 2008/11/09 23:02:29 mrg Exp $
+#	$NetBSD: sets.subr,v 1.73 2008/11/09 23:07:22 mrg Exp $
 #
 
 #
@@ -229,7 +229,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.72 2008/11/09 23:02:29 mrg Exp $
+# 	# $NetBSD: sets.subr,v 1.73 2008/11/09 23:07:22 mrg Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -288,8 +288,8 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	sendmail		${MKSENDMAIL} != no
 #	share			${MKSHARE} != no
 #	skey			${MKSKEY} != no
-#	x11			${MKX11} != no && ${X11FLAVOUR} == "XFree86"
-#	xorg			${MKX11} != no && ${X11FLAVOUR} == "XFree86"
+#	x11			${MKX11} != no && ${X11FLAVOUR} != "Xorg"
+#	xorg			${MKX11} != no && ${X11FLAVOUR} == "Xorg"
 #	yp			${MKYP} != no
 #
 #	gcc=<n>			<n> = value of ${HAVE_GCC}

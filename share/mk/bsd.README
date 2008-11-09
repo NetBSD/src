@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.237 2008/11/09 23:02:29 mrg Exp $
+#	$NetBSD: bsd.README,v 1.238 2008/11/09 23:07:22 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -387,8 +387,8 @@ USE_YP		If "no", disables building YP (NIS) support into
 
 X11FLAVOUR	Set to "Xorg" or "XFree86", depending on whether to build
 		XFree86 or modular Xorg.  Only matters if MKX11!=no.
-		Default: "yes" on amd64, i386, macppc, shark, sparc and
-		sparc64, "no" on everything else.
+		Default: "Xorg" on amd64, i386, macppc, shark, sparc and
+		sparc64, "XFree86" on everything else.
 
 COPTS.lib<lib>
 OBJCOPTS.lib<lib>
