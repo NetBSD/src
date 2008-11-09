@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_50.c,v 1.1.2.2 2008/11/09 23:28:36 christos Exp $	*/
+/*	$NetBSD: sysv_sem_14.c,v 1.14.12.2 2008/11/09 23:28:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -16,13 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -38,50 +31,61 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm_50.c,v 1.1.2.2 2008/11/09 23:28:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem_14.c,v 1.14.12.2 2008/11/09 23:28:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/proc.h>
 #include <sys/mount.h>
-#include <sys/shm.h>
+#include <sys/sem.h>
 
-#ifndef SYSVSHM
-#define	SYSVSHM
+#ifndef SYSVSEM
+#define	SYSVSEM
 #endif
 
 #include <sys/syscallargs.h>
 
-#include <compat/sys/shm.h>
+#include <compat/sys/sem.h>
+
 
 int
-compat_50_sys___shmctl13(struct lwp *l, const struct compat_50_sys___shmctl13_args *uap, register_t *retval)
+compat_14_sys___semctl(struct lwp *l, const struct compat_14_sys___semctl_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(int) shmid;
+		syscallarg(int) semid;
+		syscallarg(int) semnum;
 		syscallarg(int) cmd;
-		syscallarg(struct shmid_ds13 *) buf;
+		syscallarg(union __semun *) arg;
 	} */
-	struct shmid_ds shmbuf;
-	struct shmid_ds13 oshmbuf;
+	union __semun arg;
+	struct semid_ds sembuf;
+	struct semid_ds14 osembuf;
 	int cmd, error;
+	void *pass_arg;
 
 	cmd = SCARG(uap, cmd);
 
-	if (cmd == IPC_SET) {
-		error = copyin(SCARG(uap, buf), &oshmbuf, sizeof(oshmbuf));
+	pass_arg = get_semctl_arg(cmd, &sembuf, &arg);
+
+	if (pass_arg != NULL) {
+		error = copyin(SCARG(uap, arg), &arg, sizeof(arg));
 		if (error)
 			return (error);
-		__shmid_ds13_to_native(&oshmbuf, &shmbuf);
+		if (cmd == IPC_SET) {
+			error = copyin(arg.buf, &osembuf, sizeof(osembuf));
+			if (error)
+				return (error);
+			__semid_ds14_to_native(&osembuf, &sembuf);
+		}
 	}
 
-	error = shmctl1(l, SCARG(uap, shmid), cmd,
-	    (cmd == IPC_SET || cmd == IPC_STAT) ? &shmbuf : NULL);
+	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
+	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {
-		__native_to_shmid_ds13(&shmbuf, &oshmbuf);
-		error = copyout(&oshmbuf, SCARG(uap, buf), sizeof(oshmbuf));
+		__native_to_semid_ds14(&sembuf, &osembuf);
+		error = copyout(&osembuf, arg.buf, sizeof(osembuf));
 	}
 
 	return (error);

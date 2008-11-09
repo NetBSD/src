@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_50.c,v 1.1.2.1 2008/03/29 20:50:33 christos Exp $	*/
+/*	$NetBSD: sysv_msg_50.c,v 1.1.2.2 2008/11/09 23:28:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg_50.c,v 1.1.2.1 2008/03/29 20:50:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg_50.c,v 1.1.2.2 2008/11/09 23:28:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,48 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_msg_50.c,v 1.1.2.1 2008/03/29 20:50:33 christos
 #endif
 
 #include <sys/syscallargs.h>
-
-static void msqid_ds13_to_native(struct msqid_ds13 *, struct msqid_ds *);
-static void native_to_msqid_ds13(struct msqid_ds *, struct msqid_ds13 *);
-
-static void
-msqid_ds13_to_native(struct msqid_ds13 *omsqbuf, struct msqid_ds *msqbuf)
-{
-
-	omsqbuf->msg_perm = msqbuf->msg_perm;
-
-#define	CVT(x)	msqbuf->x = omsqbuf->x
-	CVT(msg_qnum);
-	CVT(msg_qbytes);
-	CVT(msg_lspid);
-	CVT(msg_lrpid);
-	CVT(msg_stime);
-	CVT(msg_rtime);
-	CVT(msg_ctime);
-#undef CVT
-}
-
-static void
-native_to_msqid_ds13(struct msqid_ds *msqbuf, struct msqid_ds13 *omsqbuf)
-{
-
-	msqbuf->msg_perm = omsqbuf->msg_perm;
-
-#define	CVT(x)	omsqbuf->x = msqbuf->x
-	CVT(msg_qnum);
-	CVT(msg_qbytes);
-	CVT(msg_lspid);
-	CVT(msg_lrpid);
-	CVT(msg_stime);
-	CVT(msg_rtime);
-	CVT(msg_ctime);
-#undef CVT
-
-	/*
-	 * Not part of the API, but some programs might look at it.
-	 */
-	omsqbuf->_msg_cbytes = msqbuf->_msg_cbytes;
-}
 
 int
 compat_50_sys___msgctl13(struct lwp *l, const struct compat_50_sys___msgctl13_args *uap, register_t *retval)
@@ -115,14 +73,14 @@ compat_50_sys___msgctl13(struct lwp *l, const struct compat_50_sys___msgctl13_ar
 		error = copyin(SCARG(uap, buf), &omsqbuf, sizeof(omsqbuf));
 		if (error)
 			return (error);
-		msqid_ds13_to_native(&omsqbuf, &msqbuf);
+		__msqid_ds13_to_native(&omsqbuf, &msqbuf);
 	}
 
 	error = msgctl1(l, SCARG(uap, msqid), cmd,
 	    (cmd == IPC_SET || cmd == IPC_STAT) ? &msqbuf : NULL);
 
 	if (error == 0 && cmd == IPC_STAT) {
-		native_to_msqid_ds13(&msqbuf, &omsqbuf);
+		__native_to_msqid_ds13(&msqbuf, &omsqbuf);
 		error = copyout(&omsqbuf, SCARG(uap, buf), sizeof(omsqbuf));
 	}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42.2.1 2008/03/29 20:46:57 christos Exp $
+#	$NetBSD: Makefile,v 1.42.2.2 2008/11/09 23:28:36 christos Exp $
 
 LIB=		compat
 NOPIC=		# defined
@@ -25,7 +25,7 @@ SRCS+=	kern_xxx_12.c vfs_syscalls_12.c vm_12.c
 SRCS+=	kern_sig_13.c
 
 # Compatibility code for NetBSD 1.4
-SRCS+=	sysv_ipc_14.c sysv_msg_14.c sysv_shm_14.c sysv_sem_14.c rtsock_14.c
+SRCS+=	sysv_msg_14.c sysv_shm_14.c sysv_sem_14.c rtsock_14.c
 
 # Compatibility code for NetBSD 2.0
 SRCS+=	vfs_syscalls_20.c
