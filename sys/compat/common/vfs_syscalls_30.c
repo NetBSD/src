@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.26.2.2 2008/11/01 21:22:25 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.26.2.3 2008/11/09 01:55:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.26.2.2 2008/11/01 21:22:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.26.2.3 2008/11/09 01:55:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,15 +391,18 @@ compat_30_sys___fhstat30(struct lwp *l, const struct compat_30_sys___fhstat30_ar
 {
 	/* {
 		syscallarg(const fhandle_t *) fhp;
-		syscallarg(struct stat *) sb;
+		syscallarg(struct stat30 *) sb;
 	} */
-	struct sys___fhstat40_args uap;
+	struct stat sb;
+	struct stat13 osb;
+	int error;
 
-	SCARG(&uap, fhp) = SCARG(uap_30, fhp);
-	SCARG(&uap, fh_size) = FHANDLE_SIZE_COMPAT;
-	SCARG(&uap, sb) = SCARG(uap_30, sb);
-
-	return sys___fhstat40(l, &uap, retval);
+	error = do_fhstat(l, SCARG(uap_30, fhp), FHANDLE_SIZE_COMPAT, &sb);
+	if (error)
+		return error;
+	cvtstat(&osb, &sb);
+	error = copyout(&osb, SCARG(uap_30, sb), sizeof (osb));
+	return error;
 }
 
 /* ARGSUSED */
