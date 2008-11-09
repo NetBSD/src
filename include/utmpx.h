@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.15.10.2 2008/11/08 21:13:13 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.15.10.3 2008/11/09 19:33:38 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -116,9 +116,10 @@ struct lastlogx {
 
 __BEGIN_DECLS
 
+void setutxent(void);
+void endutxent(void);
+
 #ifndef __LIBC12_SOURCE__
-void setutxent(void) __RENAME(__setutxent50);
-void endutxent(void) __RENAME(__endutxent50);
 struct utmpx *getutxent(void) __RENAME(__getutxent50);
 struct utmpx *getutxid(const struct utmpx *) __RENAME(__getutxid50);
 struct utmpx *getutxline(const struct utmpx *) __RENAME(__getutxline50);
