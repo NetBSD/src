@@ -1,7 +1,7 @@
-/*	$NetBSD: gemini_obio.c,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.2 2008/11/09 09:04:33 cliff Exp $	*/
 
 /* adapted from:
- *	$Id: gemini_obio.c,v 1.1 2008/10/24 04:23:18 matt Exp $
+ *	$Id: gemini_obio.c,v 1.2 2008/11/09 09:04:33 cliff Exp $
  */
 
 /*
@@ -103,11 +103,12 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.2 2008/11/09 09:04:33 cliff Exp $");
 
 #include "locators.h"
 #include "obio.h"
 #include "geminiicu.h"
+#include "pci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +156,9 @@ obio_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_softc *sc = device_private(self);
 	struct mainbus_attach_args *mb = (struct mainbus_attach_args *)aux;
+#if NPCI > 0
 	struct pcibus_attach_args pba;
+#endif
 
 	sc->sc_iot = &gemini_bs_tag;
 
@@ -171,6 +174,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	 */
 	obio_attach_critical(sc);
 
+#if NPCI > 0
 	/*
 	 * map PCI controller registers
 	 */
@@ -184,12 +188,14 @@ obio_attach(device_t parent, device_t self, void *aux)
 	 * initialize the PCI chipset tag
 	 */
 	gemini_pci_init(&sc->sc_pci_chipset, sc);
+#endif	/* NPCI */
 
 	/*
 	 * attach the rest of our devices
 	 */
 	config_search_ia(obio_search, self, "obio", NULL);
 
+#if NPCI > 0
 	/*
 	 * attach the PCI bus
 	 */
@@ -206,6 +212,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 
 	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
+#endif	/* NPCI */
 	
 }
 
@@ -319,11 +326,16 @@ static const struct {
 	bus_addr_t addr;
 	bool required;
 } critical_devs[] = {
+#ifdef GEMINI_MASTER
 	{ .name = "geminiicu0", .addr = 0x48000000, .required = true },
 	{ .name = "geminiwdt0", .addr = 0x41000000, .required = true },
 	{ .name = "geminitmr0", .addr = 0x43000000, .required = true },
+	{ .name = "geminitmr2", .addr = 0x43000000, .required = true },
+#else
+	{ .name = "geminiicu1", .addr = 0x49000000, .required = true },
 	{ .name = "geminitmr1", .addr = 0x43000000, .required = true },
 	{ .name = "geminitmr2", .addr = 0x43000000, .required = true },
+#endif
 	{ .name = "com0",     .addr = 0x42000000, .required = true },
 };
 
