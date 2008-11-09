@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_timer.c,v 1.1 2008/10/24 04:23:18 matt Exp $	*/
+/*	$NetBSD: obio_timer.c,v 1.2 2008/11/09 09:11:09 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: obio_mputmr.c,v 1.3 2008/08/27 11:03:10 matt Exp
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.2 2008/11/09 09:11:09 cliff Exp $");
 
 #include "opt_cpuoptions.h"
 #include "opt_gemini.h"
@@ -126,6 +126,10 @@ __KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.1 2008/10/24 04:23:18 matt Exp $");
 #include <arm/gemini/gemini_reg.h>
 #include <arm/gemini/gemini_obiovar.h>
 #include <arm/gemini/gemini_timervar.h>
+
+#if STATHZ != HZ
+# error system clock HZ and stat clock STATHZ must be same
+#endif
 
 
 #ifndef GEMINI_TIMER_CLOCK_FREQ
@@ -182,7 +186,7 @@ obiotimer_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct obio_attach_args *obio = aux;
 
-	if ((obio->obio_addr == IICCF_ADDR_DEFAULT)
+	if ((obio->obio_addr == OBIOCF_ADDR_DEFAULT)
 	||  (obio->obio_intr == OBIOCF_INTR_DEFAULT))
 		panic("geminitmr must have addr and intr specified in config.");
 
@@ -209,7 +213,7 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = obio->obio_iot;
 	sc->sc_intr = obio->obio_intr;
 	sc->sc_addr = obio->obio_addr;
-	sc->sc_size = (obio->obio_size == IICCF_SIZE_DEFAULT)
+	sc->sc_size = (obio->obio_size == OBIOCF_SIZE_DEFAULT)
 		? (GEMINI_TIMER_INTRMASK + 4)
 		: obio->obio_size;
 
@@ -232,19 +236,26 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 
 	switch (sc->sc_timerno) {
 	case 1:
+#ifndef GEMINI_SLAVE
 		/*
-		 * timer #1 is the system clock
+		 * timer #1 is the combined system clock and stat clock
+		 * for the Master (or only) Gemini CPU
 		 * it gets started later
 		 */
-		clock_sc = sc;
+		profhz = stathz = hz;
+		stat_sc = clock_sc = sc;
+#endif
 		break;
 	case 2:
+#ifdef GEMINI_SLAVE
 		/*
-		 * timer #2 is the stat clock
+		 * timer #2 is the combined system clock and stat clock
+		 * for the Slave Gemini CPU
 		 * it gets started later
 		 */
-		profhz = stathz = STATHZ;
-		stat_sc = sc;
+		profhz = stathz = hz;
+		stat_sc = clock_sc = sc;
+#endif
 		break;
 	case 3:
 		/*
