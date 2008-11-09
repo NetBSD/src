@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7.20.2 2008/11/08 23:18:21 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.7.20.3 2008/11/09 03:05:37 christos Exp $
 
 .PATH: ${COMPATDIR}/sys
 SRCS+= compat_getdents.c compat_getdirentries.c compat_msync.c \
@@ -9,7 +9,7 @@ SRCS+= compat_getdents.c compat_getdirentries.c compat_msync.c \
     compat_mount.c compat_getrusage.c compat_gettimeofday.c compat_utimes.c \
     compat_wait4.c compat_sigtimedwait.c compat_settimeofday.c compat_timer.c \
     compat_clock.c compat_itimer.c compat_select.c compat_nanosleep.c \
-    compat_stat30.c
+    compat___stat30.c
 MAN+=	getdirentries.3
 
 .if ${MKLINT} != "no"

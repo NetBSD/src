@@ -1,4 +1,4 @@
-/*	$NetBSD: compat___stat13.c,v 1.3.28.1 2008/11/08 21:45:38 christos Exp $	*/
+/*	$NetBSD: compat___stat13.c,v 1.3.28.2 2008/11/09 03:05:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat___stat13.c,v 1.3.28.1 2008/11/08 21:45:38 christos Exp $");
+__RCSID("$NetBSD: compat___stat13.c,v 1.3.28.2 2008/11/09 03:05:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -133,7 +133,7 @@ fhstat(const struct compat_30_fhandle *fh, struct stat13 *ost)
 	struct stat nst;
 	int ret;
 
-	if ((ret = __fhstat30(fh, &nst)) == -1)
+	if ((ret = __fhstat50((const void *)fh, /* FHANDLE_SIZE_COMPAT */28, &nst)) == -1)
 		return ret;
 	cvtstat(ost, &nst);
 	return ret;
