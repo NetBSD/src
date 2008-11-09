@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.92 2008/08/06 07:49:15 skrll Exp $
+.\"	$NetBSD: uvm.9,v 1.93 2008/11/09 19:37:37 rmind Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -551,7 +551,8 @@ on the memory described in
 .Pp
 .Ft struct vm_map *
 .br
-.Fn uvm_km_suballoc "struct vm_map *map" "vaddr_t *min" "vaddr_t *max" "vsize_t size" "bool pageable" "bool fixed" "struct vm_map *submap" ;
+.Fn uvm_km_suballoc "struct vm_map *map" "vaddr_t *min" "vaddr_t *max" \
+"vsize_t size" "int flags" "bool fixed" "struct vm_map *submap" ;
 .Pp
 .Fn uvm_km_alloc
 allocates
@@ -662,9 +663,17 @@ and the start and end addresses returned in
 .Fa min
 and
 .Fa max .
-If
-.Fa pageable
-is true, entries in the map may be paged out.
+The
+.Fa flags
+are used to initialize the created submap.
+The following flags could be set:
+.Bl -tag -width VM_MAP_PAGEABLE
+.It VM_MAP_PAGEABLE
+Entries in the map may be paged out.
+.It VM_MAP_INTRSAFE
+Map should be interrupt-safe.
+.It VM_MAP_TOPDOWN
+A top-down mapping should be arranged.
 .Sh ALLOCATION OF PHYSICAL MEMORY
 .Ft struct vm_page *
 .br
