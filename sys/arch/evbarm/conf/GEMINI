@@ -17,6 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	CPU_FA526
 options 	SL3516
+options 	GEMINI_MASTER
 
 # Architecture options
 
@@ -133,6 +134,7 @@ options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	KGDB
 makeoptions	DEBUG="-g"	# compile full symbol table
 ##options 	SYMTAB_SPACE=280000
+##options	ATADEBUG
 
 # Valid options for BOOT_ARGS:
 #  single		Boot to single user only
@@ -174,10 +176,9 @@ geminiwdt0	at obio0 addr 0x41000000 size 0x1c
 #   which is 150MHz`
 options GEMINI_WDT_CLOCK_FREQ=25000000	# 25 MHz
 
-# Operating System Timer
+# Combined Operating System Timer and Statistics Timer
 geminitmr0	at obio? addr 0x43000000 size 0x3c intr 14
-# Statistics Timer
-geminitmr1	at obio? addr 0x43000000 size 0x3c intr 15
+##geminitmr1	at obio? addr 0x43000000 size 0x3c intr 15
 # Microtime Reference Timer
 geminitmr2	at obio? addr 0x43000000 size 0x3c intr 16
 #
@@ -192,9 +193,12 @@ options GEMINI_TIMER_CLOCK_FREQ=25000000	# 25 MHz
 
 # Real Time Clock
 
-# ATA
-#wdc0	at obio? addr 0x63000000 intr 4
-#wdc1	at obio? addr 0x63400000 intr 5
+# IDE
+wdc0	at obio? addr 0x63000000 intr 4
+wdc1	at obio? addr 0x63400000 intr 5
+
+atabus* at ata? channel ?
+wd*	at atabus? drive ? flags 0x0000
 
 # USB
 ehci0	at obio? addr 0x68000000 size 0x400 intr 10 # 30?
@@ -204,6 +208,8 @@ usb* at ehci?
 uhub* at usb?
 uhub* at uhub? port ?
 axe* at uhub?
+umass* at uhub? port ? configuration ? interface ?
+wd* at umass?
 
 # PCI
 pci0	at obio? bus ?
