@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem_50.c,v 1.1.2.1 2008/03/29 20:50:33 christos Exp $	*/
+/*	$NetBSD: sysv_sem_50.c,v 1.1.2.2 2008/11/09 23:28:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem_50.c,v 1.1.2.1 2008/03/29 20:50:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem_50.c,v 1.1.2.2 2008/11/09 23:28:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,33 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_sem_50.c,v 1.1.2.1 2008/03/29 20:50:33 christos
 #include <sys/syscallargs.h>
 
 #include <compat/sys/sem.h>
-
-void
-semid_ds13_to_native(struct semid_ds13  *osembuf, struct semid_ds *sembuf)
-{
-
-	osembuf->sem_perm = sembuf->sem_perm;
-
-#define	CVT(x)	sembuf->x = osembuf->x
-	CVT(sem_nsems);
-	CVT(sem_otime);
-	CVT(sem_ctime);
-#undef CVT
-}
-
-void
-native_to_semid_ds13(struct semid_ds *sembuf, struct semid_ds13 *osembuf)
-{
-
-	memset(sembuf, 0, sizeof *sembuf);
-	sembuf->sem_perm = osembuf->sem_perm;
-
-#define	CVT(x)	osembuf->x = sembuf->x
-	CVT(sem_nsems);
-	CVT(sem_otime);
-	CVT(sem_ctime);
-#undef CVT
-}
 
 int
 compat_50_sys_____semctl13(struct lwp *l, const struct compat_50_sys_____semctl13_args *uap, register_t *retval)
@@ -109,7 +82,7 @@ compat_50_sys_____semctl13(struct lwp *l, const struct compat_50_sys_____semctl1
 			error = copyin(arg.buf, &osembuf, sizeof(osembuf));
 			if (error)
 				return (error);
-			semid_ds13_to_native(&osembuf, &sembuf);
+			__semid_ds13_to_native(&osembuf, &sembuf);
 		}
 	}
 
@@ -117,7 +90,7 @@ compat_50_sys_____semctl13(struct lwp *l, const struct compat_50_sys_____semctl1
 	    pass_arg, retval);
 
 	if (error == 0 && cmd == IPC_STAT) {
-		native_to_semid_ds13(&sembuf, &osembuf);
+		__native_to_semid_ds13(&sembuf, &osembuf);
 		error = copyout(&osembuf, arg.buf, sizeof(osembuf));
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.4.30.1 2008/03/29 20:46:59 christos Exp $	*/
+/*	$NetBSD: sem.h,v 1.4.30.2 2008/11/09 23:28:36 christos Exp $	*/
 
 /*
  * SVID compatible sem.h file
@@ -8,8 +8,6 @@
 
 #ifndef _COMPAT_SYS_SEM_H_
 #define _COMPAT_SYS_SEM_H_
-
-#ifdef _KERNEL
 
 #include <compat/sys/ipc.h>
 
@@ -38,20 +36,74 @@ struct semid_ds13 {
 	 */
 	struct __sem	*_sem_base;	/* pointer to first semaphore in set */
 };
-void	semid_ds14_to_native(struct semid_ds14 *, struct semid_ds *);
-void	native_to_semid_ds14(struct semid_ds *, struct semid_ds14 *);
-void	semid_ds13_to_native(struct semid_ds13 *, struct semid_ds *);
-void	native_to_semid_ds13(struct semid_ds *, struct semid_ds13 *);
-
-#else /* !_KERNEL */
-
 __BEGIN_DECLS
+static __inline void	__semid_ds14_to_native(const struct semid_ds14 *, struct semid_ds *);
+static __inline void	__native_to_semid_ds14(const struct semid_ds *, struct semid_ds14 *);
+static __inline void	__semid_ds13_to_native(const struct semid_ds13 *, struct semid_ds *);
+static __inline void	__native_to_semid_ds13(const struct semid_ds *, struct semid_ds13 *);
+
+static __inline void
+__semid_ds13_to_native(const struct semid_ds13  *osembuf, struct semid_ds *sembuf)
+{
+
+	sembuf->sem_perm = osembuf->sem_perm;
+
+#define	CVT(x)	sembuf->x = osembuf->x
+	CVT(sem_nsems);
+	CVT(sem_otime);
+	CVT(sem_ctime);
+#undef CVT
+}
+
+static __inline void
+__native_to_semid_ds13(const struct semid_ds *sembuf, struct semid_ds13 *osembuf)
+{
+
+	osembuf->sem_perm = sembuf->sem_perm;
+
+#define	CVT(x)	osembuf->x = sembuf->x
+#define	CVTI(x)	osembuf->x = (int)sembuf->x
+	CVT(sem_nsems);
+	CVTI(sem_otime);
+	CVTI(sem_ctime);
+#undef CVT
+#undef CVTI
+}
+
+static __inline void
+__semid_ds14_to_native(const struct semid_ds14  *osembuf, struct semid_ds *sembuf)
+{
+
+	__ipc_perm14_to_native(&osembuf->sem_perm, &sembuf->sem_perm);
+
+#define	CVT(x)	sembuf->x = osembuf->x
+	CVT(sem_nsems);
+	CVT(sem_otime);
+	CVT(sem_ctime);
+#undef CVT
+}
+
+static __inline void
+__native_to_semid_ds14(const struct semid_ds *sembuf, struct semid_ds14 *osembuf)
+{
+
+	__native_to_ipc_perm14(&sembuf->sem_perm, &osembuf->sem_perm);
+
+#define	CVT(x)	osembuf->x = sembuf->x
+#define	CVTI(x)	osembuf->x = (int)sembuf->x
+	CVT(sem_nsems);
+	CVTI(sem_otime);
+	CVTI(sem_ctime);
+#undef CVT
+#undef CVTI
+}
+
 int	semctl(int, int, int, union __semun);
 int	__semctl(int, int, int, union __semun *);
 int	__semctl13(int, int, int, ...);
 int	__semctl14(int, int, int, ...);
+int	__semctl50(int, int, int, ...);
+int	____semctl50(int, int, int, void *);
 __END_DECLS
-
-#endif /* !_KERNEL */
 
 #endif /* !_COMPAT_SYS_SEM_H_ */
