@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.12 2008/11/09 04:33:21 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.13 2008/11/09 05:08:31 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -264,4 +264,44 @@ sys/dev/pci/if_iwn.c				1.26
 	ones from pkgsrc.
 	(c) Use the second generation firmware for wpi(4).
 	[joerg, ticket #25]
+
+distrib/sets/lists/xcomp/mi			1.72, 1.73
+
+	Fix MKDEBUG=yes for MKXORG=yes.
+	[rtr, ticket #33]
+
+usr.bin/stat/stat.1				1.25
+
+	Be consistent: document the birthtime field of struct stat for
+	the "B" field specifier.
+	[reed, ticket #34]
+
+etc/etc.atari/MAKEDEV.conf			1.8
+
+	The NetBSD/atari installer can use md2a as a root device, so ensure
+	the 'floppy' target creates md2
+	[abs, ticket #35]
+
+doc/CHANGES					patch
+
+	Correct description of NSP2000 driver.  It didn't come from the
+	public FreeBSD sources, it was generously contributed by its owner,
+	NBMK Encryption Technologies, Inc.      
+	[tls, ticket #36]
+
+gnu/usr.bin/groff/tmac/mdoc.local		1.46 via patch
+distrib/sets/lists/man/mi			1.1110, 1.1111
+share/man/man4/nsp.4				1.1, 1.2
+sys/dev/pci/n8/helper.c				1.2
+
+	- Add nsp(4) manpage.
+	- Remove include of useless i386/include/clock.h which broke builds
+	on other architectures.
+	[tls, ticket #37]
+
+usr.bin/make/util.c				1.46
+
+	Don't use putenv() because it is not portable.  Fixes crossbuild
+	on Solaris.
+	[cube, ticket #38]
 
