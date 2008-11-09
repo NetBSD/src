@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.4 2008/11/01 07:58:33 cliff Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.5 2008/11/09 08:49:40 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.4 2008/11/01 07:58:33 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.5 2008/11/09 08:49:40 cliff Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -180,6 +180,14 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.4 2008/11/01 07:58:33 cliff Exp
 #include <arm/gemini/gemini_com.h>
 
 #include <evbarm/gemini/gemini.h>
+
+#ifdef VERBOSE_INIT_ARM
+# define GEMINI_PUTCHAR(c)	gemini_putchar(c)
+# define GEMINI_PUTHEX(n)	gemini_puthex(n)
+#else	/* VERBOSE_INIT_ARM */
+# define GEMINI_PUTCHAR(c)
+# define GEMINI_PUTHEX(n)
+#endif	/* VERBOSE_INIT_ARM */
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -280,6 +288,7 @@ static void gemini_global_reset(void) __attribute__ ((noreturn));
 static void
 gemini_global_reset(void)
 {
+#ifndef GEMINI_SLAVE
 	volatile uint32_t *rp;
 	uint32_t r;
 
@@ -288,6 +297,7 @@ gemini_global_reset(void)
 	r = *rp;
 	r |= GLOBAL_RESET_GLOBAL;
 	*rp = r;
+#endif	/* GEMINI_SLAVE */
 	for(;;);
 	/* NOTREACHED */
 }
@@ -303,6 +313,8 @@ gemini_global_reset(void)
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	extern struct geminitmr_softc *ref_sc;
+
 #ifdef DIAGNOSTIC
 	/* info */
 	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
@@ -318,7 +330,8 @@ cpu_reboot(int howto, char *bootstr)
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
 		printf("rebooting...\n");
-		delay(2000);			/* cnflush(); */
+		if (ref_sc != NULL)
+			delay(2000);			/* cnflush(); */
 		gemini_global_reset();
 		/*NOTREACHED*/
 	}
@@ -356,7 +369,8 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	printf("rebooting...\n");
-	delay(2000);			/* cnflush(); */
+	if (ref_sc != NULL)
+		delay(2000);			/* cnflush(); */
 	gemini_global_reset();
 	/*NOTREACHED*/
 }
@@ -380,6 +394,7 @@ cpu_reboot(int howto, char *bootstr)
 #define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
 
 static const struct pmap_devmap devmap[] = {
+#ifndef GEMINI_SLAVE
 	/* Global regs */
 	{
 		.pd_va = _A(GEMINI_GLOBAL_VBASE),
@@ -397,11 +412,30 @@ static const struct pmap_devmap devmap[] = {
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
+#endif	/* GEMINI_SLAVE */
 
 	/* UART */
 	{
 		.pd_va = _A(GEMINI_CONSOLE_VBASE),
 		.pd_pa = _A(CONSADDR),
+		.pd_size = _S(L1_S_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+
+	/* LPCHC */
+	{
+		.pd_va = _A(GEMINI_LPCHC_VBASE),
+		.pd_pa = _A(GEMINI_LPCHC_BASE),
+		.pd_size = _S(L1_S_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+
+	/* LPCIO */
+	{
+		.pd_va = _A(GEMINI_LPCIO_VBASE),
+		.pd_pa = _A(GEMINI_LPCIO_BASE),
 		.pd_size = _S(L1_S_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
@@ -415,6 +449,17 @@ static const struct pmap_devmap devmap[] = {
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
+
+#if defined(MEMORY_DISK_DYNAMIC) 
+	/* Ramdisk */
+	{
+		.pd_va = _A(GEMINI_RAMDISK_VBASE),
+		.pd_pa = _A(GEMINI_RAMDISK_PBASE),
+		.pd_size = _S(GEMINI_RAMDISK_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	}, 
+#endif
 
 	{0}	/* list terminator */
 };
@@ -437,6 +482,7 @@ static void gemini_db_trap(int where)
 }
 #endif
 
+#ifdef VERBOSE_INIT_ARM
 void gemini_putchar(char c);
 void
 gemini_putchar(char c)
@@ -472,6 +518,7 @@ gemini_puthex(unsigned int val)
 	gemini_putchar(hexc[(val >> 4) & 0xf]);
 	gemini_putchar(hexc[(val >> 0) & 0xf]);
 }
+#endif	/* VERBOSE_INIT_ARM */
 
 /*
  * u_int initarm(...)
@@ -489,7 +536,7 @@ gemini_puthex(unsigned int val)
 u_int
 initarm(void *arg)
 {
-	gemini_putchar('0');
+	GEMINI_PUTCHAR('0');
 
 	/*
 	 * When we enter here, we are using a temporary first level
@@ -499,19 +546,19 @@ initarm(void *arg)
 	 */
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
-	gemini_putchar('1');
+	GEMINI_PUTCHAR('1');
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
-	gemini_putchar('2');
+	GEMINI_PUTCHAR('2');
 	init_clocks();
-	gemini_putchar('3');
+	GEMINI_PUTCHAR('3');
 
 	/* The console is going to try to map things.  Give pmap a devmap. */
 	pmap_devmap_register(devmap);
-	gemini_putchar('4');
+	GEMINI_PUTCHAR('4');
 	consinit();
-	gemini_putchar('5');
+	GEMINI_PUTCHAR('5');
 #ifdef KGDB
 	kgdb_port_init();
 #endif
@@ -621,9 +668,19 @@ initarm(void *arg)
 	printf("page ");
 #endif
 	uvm_setpagesize();        /* initialize PAGE_SIZE-dependent variables */
+
+#if defined(MEMORY_DISK_DYNAMIC) 
+	uvm_page_physload(atop(physical_freestart), atop(GEMINI_RAMDISK_PBASE),
+	    atop(physical_freestart), atop(GEMINI_RAMDISK_PBASE),
+	    VM_FREELIST_DEFAULT);
+	uvm_page_physload(atop(GEMINI_RAMDISK_PEND), atop(physical_freeend),
+	    atop(GEMINI_RAMDISK_PEND), atop(physical_freeend),
+	    VM_FREELIST_DEFAULT);
+#else
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
+#endif
 	uvm_page_physload(atop(GEMINI_DRAM_BASE), atop(KERNEL_BASE_phys),
 	    atop(GEMINI_DRAM_BASE), atop(KERNEL_BASE_phys),
 	    VM_FREELIST_DEFAULT);
@@ -643,6 +700,10 @@ initarm(void *arg)
 	ipkdb_init();
 	if (boothowto & RB_KDB)
 		ipkdb_connect(0);
+#endif
+
+#if defined(MEMORY_DISK_DYNAMIC)
+	md_root_setconf((char *)GEMINI_RAMDISK_VBASE, GEMINI_RAMDISK_SIZE);
 #endif
 
 #ifdef KGDB
@@ -788,7 +849,9 @@ setup_real_page_tables(void)
 	pt_index = 0;
 	kernel_l1pt.pv_pa = 0;
 	kernel_l1pt.pv_va = 0;
-printf("%s: physical_freestart %#lx\n", __func__, physical_freestart);
+#ifdef VERBOSE_INIT_ARM
+	printf("%s: physical_freestart %#lx\n", __func__, physical_freestart);
+#endif
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
@@ -800,13 +863,18 @@ printf("%s: physical_freestart %#lx\n", __func__, physical_freestart);
 			++pt_index;
 		}
 	}
-pt_index=0;
-printf("%s: kernel_l1pt: %#lx:%#lx\n", __func__, kernel_l1pt.pv_va, kernel_l1pt.pv_pa);
-printf("%s: kernel_pt_table:\n", __func__);
-for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
-printf("\t%#lx:%#lx\n", kernel_pt_table[pt_index].pv_va, kernel_pt_table[pt_index].pv_pa);
-++pt_index;
-}
+
+#ifdef VERBOSE_INIT_ARM
+	pt_index=0;
+	printf("%s: kernel_l1pt: %#lx:%#lx\n",
+		__func__, kernel_l1pt.pv_va, kernel_l1pt.pv_pa);
+	printf("%s: kernel_pt_table:\n", __func__);
+	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
+		printf("\t%#lx:%#lx\n", kernel_pt_table[pt_index].pv_va,
+			kernel_pt_table[pt_index].pv_pa);
+		++pt_index;
+	}
+#endif
 
 	/* This should never be able to happen but better confirm that. */
 	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
