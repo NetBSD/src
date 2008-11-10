@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.239 2008/10/30 17:03:09 joerg Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.240 2008/11/10 20:12:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.239 2008/10/30 17:03:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.240 2008/11/10 20:12:13 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1325,8 +1325,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 out:
 #ifdef WAPBL
 	if (mp->mnt_wapbl_replay) {
-		if (wapbl_replay_isopen(mp->mnt_wapbl_replay))
-			wapbl_replay_stop(mp->mnt_wapbl_replay);
+		wapbl_replay_stop(mp->mnt_wapbl_replay);
 		wapbl_replay_free(mp->mnt_wapbl_replay);
 		mp->mnt_wapbl_replay = 0;
 	}
