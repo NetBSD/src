@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_localtime.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $	*/
+/*	$NetBSD: compat_localtime.c,v 1.1.2.3 2008/11/10 02:22:33 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -24,6 +24,8 @@ __weak_alias(time2posix,_time2posix)
 __weak_alias(timegm,_timegm)
 __weak_alias(timelocal,_timelocal)
 __weak_alias(timeoff,_timeoff)
+__weak_alias(tzset,_tzset)
+__weak_alias(tzsetwall,_tzsetwall)
 #endif
 
 __warn_references(ctime_r,
@@ -52,6 +54,12 @@ __warn_references(timelocal,
     " include <time.h> for correct reference")
 __warn_references(timeoff,
     "warning: reference to compatibility timeoff();"
+    " include <time.h> for correct reference")
+__warn_references(tzset,
+    "warning: reference to compatibility tzset();"
+    " include <time.h> for correct reference")
+__warn_references(tzsetwall,
+    "warning: reference to compatibility tzsetwall();"
     " include <time.h> for correct reference")
 
 #define timeval timeval50

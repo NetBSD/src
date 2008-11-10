@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.41.6.3 2008/11/10 00:13:02 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.41.6.4 2008/11/10 02:22:33 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.78";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.41.6.3 2008/11/10 00:13:02 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.41.6.4 2008/11/10 02:22:33 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -194,11 +194,12 @@ static struct state	gmtmem;
 #define TZ_STRLEN_MAX 255
 #endif /* !defined TZ_STRLEN_MAX */
 
-#if !defined(__LIBC12_SOURCE__)
 
-char		__lcl_TZname[TZ_STRLEN_MAX + 1];
-int		__lcl_is_set;
-int		__gmt_is_set;
+static char		__lcl_TZname[TZ_STRLEN_MAX + 1];
+static int		__lcl_is_set;
+static int		__gmt_is_set;
+
+#if !defined(__LIBC12_SOURCE__)
 
 __aconst char *		tzname[2] = {
 	(__aconst char *)__UNCONST(wildabbr),
@@ -206,10 +207,6 @@ __aconst char *		tzname[2] = {
 };
 
 #else
-
-extern char	__lcl_TZname[TZ_STRLEN_MAX + 1];
-extern int	__lcl_is_set;
-extern int	__gmt_is_set;
 
 extern __aconst char *	tzname[2];
 
@@ -977,7 +974,6 @@ __tzsetwall_unlocked P((void))
 	__settzname();
 }
 
-#ifndef __LIBC12_SOURCE__
 #ifndef STD_INSPIRED
 /*
 ** A non-static declaration of tzsetwall in a system header file
@@ -992,7 +988,6 @@ tzsetwall P((void))
 	__tzsetwall_unlocked();
 	rwlock_unlock(&__lcl_lock);
 }
-#endif
 
 static void
 __tzset_unlocked P((void))
@@ -1042,7 +1037,6 @@ __tzset_unlocked P((void))
 	__settzname();
 }
 
-#ifndef __LIBC12_SOURCE__
 void
 tzset P((void))
 {
@@ -1050,7 +1044,6 @@ tzset P((void))
 	__tzset_unlocked();
 	rwlock_unlock(&__lcl_lock);
 }
-#endif
 
 /*
 ** The easy way to behave "as if no library function calls" localtime
