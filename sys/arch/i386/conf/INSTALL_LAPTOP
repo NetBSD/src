@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.83.2.6 2007/03/31 15:25:34 bouyer Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.83.2.7 2008/11/10 16:55:30 snj Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -112,7 +112,7 @@ file-system 	NTFS		# Windows/NT Filesystem
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
+#file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	PORTAL		# portal filesystem (still experimental)
 #file-system 	PROCFS		# /proc
@@ -284,8 +284,8 @@ wsdisplay*	at pcdisplay? console ?
 wskbd*		at pckbd? console ?
 #wsmouse*	at pms? mux 0
 
-pcppi0		at isa?
-sysbeep0	at pcppi?
+#pcppi0		at isa?
+#sysbeep0	at pcppi?
 
 # Serial Devices
 
