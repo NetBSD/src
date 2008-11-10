@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.37.6.3 2008/11/08 22:12:36 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.37.6.4 2008/11/10 02:18:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -115,7 +115,9 @@ long __sysconf(int);
 #endif
 
 extern __aconst char *tzname[2];
-void tzset(void);
+#ifndef __LIBC12_SOURCE__
+void tzset(void) __RENAME(__tzset50);
+#endif
 
 /*
  * X/Open Portability Guide >= Issue 4
@@ -174,7 +176,9 @@ time_t timeoff(struct tm *, long) __RENAME(__timeoff50);
 time_t timelocal(struct tm *) __RENAME(__timelocal50);
 struct tm *offtime(const time_t *, long) __RENAME(__offtime50);
 #endif
-void tzsetwall(void);
+#ifndef __LIBC12_SOURCE__
+void tzsetwall(void) __RENAME(__tzsetwall50);
+#endif
 #endif /* _NETBSD_SOURCE */
 
 __END_DECLS
