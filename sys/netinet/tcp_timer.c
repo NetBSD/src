@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.83 2008/11/09 17:32:38 bouyer Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.84 2008/11/10 01:06:43 uebayasi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.83 2008/11/09 17:32:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.84 2008/11/10 01:06:43 uebayasi Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -279,7 +279,7 @@ tcp_timer_rexmt(void *arg)
 		mutex_exit(softnet_lock);
 		return;
 	}
-		
+
 	KERNEL_LOCK(1, NULL);
 	if ((tp->t_flags & TF_PMTUD_PEND) && tp->t_inpcb &&
 	    SEQ_GEQ(tp->t_pmtud_th_seq, tp->snd_una) &&
