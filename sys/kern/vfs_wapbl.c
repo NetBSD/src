@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.4 2008/11/10 20:12:13 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.5 2008/11/10 20:30:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.4 2008/11/10 20:12:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.5 2008/11/10 20:30:31 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -146,8 +146,10 @@ struct wapbl {
 	 * bits.  Note that flush may be skipped without calling this if
 	 * there are no outstanding buffers in the transaction.
 	 */
+#if _KERNEL
 	wapbl_flush_fn_t wl_flush;	/* r	*/
 	wapbl_flush_fn_t wl_flush_abort;/* r	*/
+#endif
 
 	size_t wl_bufbytes;	/* m:	Byte count of pages in wl_bufs */
 	size_t wl_bufcount;	/* m:	Count of buffers in wl_bufs */
