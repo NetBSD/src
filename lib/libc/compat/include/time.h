@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.1.28.2 2008/11/10 00:13:01 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.1.28.3 2008/11/10 02:22:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,6 +62,10 @@ struct tm *gmtime(const int32_t *);
 struct tm *localtime(const int32_t *);
 int32_t time(int32_t *);
 int32_t mktime(struct tm *);
+void tzset(void);
+void tzsetwall(void);
+void __tzset50(void);
+void __tzsetwall50(void);
 
 int clock_getres(clockid_t, struct timespec50 *);
 int clock_gettime(clockid_t, struct timespec50 *);
