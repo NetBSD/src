@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.2 2008/07/31 05:38:06 simonb Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.3 2008/11/10 20:12:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -338,6 +338,7 @@ wapbl_vphaswapbl(struct vnode *vp)
 /****************************************************************/
 /* Replay support */
 
+#ifdef WAPBL_INTERNAL
 struct wapbl_replay {
 	struct vnode *wr_logvp;
 	struct vnode *wr_devvp;
@@ -361,20 +362,23 @@ struct wapbl_replay {
 
 #define	wapbl_replay_isopen(wr) ((wr)->wr_scratch != 0)
 
-int	wapbl_replay_isopen1(struct wapbl_replay *);
+/* Supply this to provide i/o support */
+int wapbl_write(void *, size_t, struct vnode *, daddr_t);
+int wapbl_read(void *, size_t, struct vnode *, daddr_t);
+
+/****************************************************************/
+#else
+struct wapbl_replay;
+#endif /* WAPBL_INTERNAL */
+
+/****************************************************************/
+
 int	wapbl_replay_start(struct wapbl_replay **, struct vnode *,
 	daddr_t, size_t, size_t);
 void	wapbl_replay_stop(struct wapbl_replay *);
 void	wapbl_replay_free(struct wapbl_replay *);
-int	wapbl_replay_verify(struct wapbl_replay *, struct vnode *);
 int	wapbl_replay_write(struct wapbl_replay *, struct vnode *);
 int	wapbl_replay_read(struct wapbl_replay *, void *, daddr_t, long);
-
-/****************************************************************/
-
-/* Supply this to provide i/o support */
-int wapbl_write(void *, size_t, struct vnode *, daddr_t);
-int wapbl_read(void *, size_t, struct vnode *, daddr_t);
 
 /****************************************************************/
 

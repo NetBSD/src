@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.6 2008/09/08 03:16:43 joerg Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.7 2008/11/10 20:12:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.6 2008/09/08 03:16:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.7 2008/11/10 20:12:13 joerg Exp $");
+
+#define WAPBL_INTERNAL
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.3 2008/08/11 02:45:27 yamt Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.4 2008/11/10 20:12:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -32,8 +32,11 @@
 /*
  * This implements file system independent write ahead filesystem logging.
  */
+
+#define WAPBL_INTERNAL
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.3 2008/08/11 02:45:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.4 2008/11/10 20:12:13 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -219,6 +222,12 @@ static struct wapbl_ino *wapbl_inodetrk_get(struct wapbl *wl, ino_t ino);
 
 static size_t wapbl_transaction_len(struct wapbl *wl);
 static __inline size_t wapbl_transaction_inodes_len(struct wapbl *wl);
+
+#ifdef DEBUG
+int wapbl_replay_verify(struct wapbl_replay *, struct vnode *);
+#endif
+
+static int wapbl_replay_isopen1(struct wapbl_replay *);
 
 /*
  * This is useful for debugging.  If set, the log will
@@ -2358,9 +2367,10 @@ void
 wapbl_replay_stop(struct wapbl_replay *wr)
 {
 
-	WAPBL_PRINTF(WAPBL_PRINT_REPLAY, ("wapbl_replay_stop called\n"));
+	if (!wapbl_replay_isopen(wr))
+		return;
 
-	KDASSERT(wapbl_replay_isopen(wr));
+	WAPBL_PRINTF(WAPBL_PRINT_REPLAY, ("wapbl_replay_stop called\n"));
 
 	wapbl_free(wr->wr_scratch);
 	wr->wr_scratch = 0;
@@ -2382,12 +2392,14 @@ wapbl_replay_free(struct wapbl_replay *wr)
 	wapbl_free(wr);
 }
 
+#ifdef _KERNEL
 int
 wapbl_replay_isopen1(struct wapbl_replay *wr)
 {
 
 	return wapbl_replay_isopen(wr);
 }
+#endif
 
 static int
 wapbl_replay_prescan(struct wapbl_replay *wr)
