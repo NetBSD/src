@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN3_DOMU,v 1.1.2.4 2006/11/11 20:25:19 bouyer Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.1.2.5 2008/11/10 16:55:30 snj Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -90,7 +90,7 @@ file-system 	NTFS		# Windows/NT Filesystem
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 #file-system 	FDESC		# /dev/fd
-file-system 	KERNFS		# /kern
+#file-system 	KERNFS		# /kern
 #file-system 	NULLFS		# loopback file system
 #file-system 	PORTAL		# portal filesystem (still experimental)
 #file-system 	PROCFS		# /proc
