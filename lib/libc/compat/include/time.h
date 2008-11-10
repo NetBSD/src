@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.1.28.1 2008/11/08 21:45:38 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.1.28.2 2008/11/10 00:13:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,12 +56,12 @@ char *timezone(int, int);
 #endif
 
 #endif /* !_ANSI_SOURCE */
-char *ctime(const time_t *);
-double difftime(time_t, time_t);
-struct tm *gmtime(const time_t *);
-struct tm *localtime(const time_t *);
-time_t time(time_t *);
-time_t mktime(struct tm *);
+char *ctime(const int32_t *);
+double difftime(int32_t, int32_t);
+struct tm *gmtime(const int32_t *);
+struct tm *localtime(const int32_t *);
+int32_t time(int32_t *);
+int32_t mktime(struct tm *);
 
 int clock_getres(clockid_t, struct timespec50 *);
 int clock_gettime(clockid_t, struct timespec50 *);
@@ -78,13 +78,13 @@ int __timer_gettime50(timer_t, struct itimerspec *);
 int __timer_settime50(timer_t, int, const struct itimerspec * __restrict, 
     struct itimerspec * __restrict);
 int __timer_getres50(timer_t, struct itimerspec *);
-char *ctime_r(const time_t *, char *);
-struct tm *gmtime_r(const time_t * __restrict, struct tm * __restrict);
-struct tm *localtime_r(const time_t * __restrict, struct tm * __restrict);
-struct tm *offtime(const time_t *, long);
-time_t timelocal(struct tm *);
-time_t timegm(struct tm *);
-time_t timeoff(struct tm *, long);
-time_t time2posix(time_t);
-time_t posix2time(time_t);
+char *ctime_r(const int32_t *, char *);
+struct tm *gmtime_r(const int32_t * __restrict, struct tm * __restrict);
+struct tm *localtime_r(const int32_t * __restrict, struct tm * __restrict);
+struct tm *offtime(const int32_t *, long);
+int32_t timelocal(struct tm *);
+int32_t timegm(struct tm *);
+int32_t timeoff(struct tm *, long);
+int32_t time2posix(int32_t);
+int32_t posix2time(int32_t);
 #endif /* !_COMPAT_TIME_H_ */

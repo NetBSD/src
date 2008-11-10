@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_clock.c,v 1.1.2.1 2008/11/08 21:49:35 christos Exp $	*/
+/*	$NetBSD: compat_clock.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_clock.c,v 1.1.2.1 2008/11/08 21:49:35 christos Exp $");
+__RCSID("$NetBSD: compat_clock.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -52,6 +52,7 @@ __warn_references(clock_getres,
 
 #ifdef __weak_alias
 __weak_alias(clock_settime, _clock_settime)
+__weak_alias(__clock_settime, _clock_settime)
 __weak_alias(clock_gettime, _clock_gettime)
 __weak_alias(clock_getres, _clock_getres)
 #endif

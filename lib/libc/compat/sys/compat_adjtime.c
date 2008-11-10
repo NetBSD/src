@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_adjtime.c,v 1.1.2.1 2008/11/09 19:36:03 christos Exp $ */
+/*	$NetBSD: compat_adjtime.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_adjtime.c,v 1.1.2.1 2008/11/09 19:36:03 christos Exp $");
+__RCSID("$NetBSD: compat_adjtime.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -50,6 +50,7 @@ __warn_references(adjtime,
 
 #ifdef __weak_alias
 __weak_alias(adjtime, _adjtime)
+__weak_alias(__adjtime, _adjtime)
 #endif
 
 /*
