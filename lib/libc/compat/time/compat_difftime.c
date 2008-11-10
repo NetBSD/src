@@ -1,7 +1,6 @@
-/*	$NetBSD: compat_rpcb.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $	*/
-
+/*	$NetBSD: compat_difftime.c,v 1.1.2.1 2008/11/10 00:13:02 christos Exp $	*/
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,49 +34,21 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "namespace.h"
 #include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_rpcb.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $");
-#endif /* LIBC_SCCS and not lint */
-
 
 #define __LIBC12_SOURCE__
-
-#include "namespace.h"
-#include <sys/types.h>
+#include <time.h>
 #include <sys/time.h>
+#include <compat/include/time.h>
 #include <compat/sys/time.h>
-#include <rpc/rpcb_clnt.h>
-#include <compat/include/rpc/rpcb_clnt.h>
-
-__warn_references(rpcb_rmtcall,
-    "warning: reference to compatibility rpcb_rmtcall(); include <rpc/rpcb_clnt.h> to generate correct reference")
-__warn_references(rpcb_gettime,
-    "warning: reference to compatibility rpcb_gettime(); include <rpc/rpcb_clnt.h> to generate correct reference")
 
 #ifdef __weak_alias
-__weak_alias(rpcb_rmtcall, _rpcb_rmtcall)
-__weak_alias(rpcb_gettime, _rpcb_gettime)
+__weak_alias(difftime,_difftime)
 #endif
 
-enum clnt_stat
-rpcb_rmtcall(const struct netconfig *nc,
-    const char *name, const rpcprog_t prog, const rpcvers_t vers,
-    const rpcproc_t proc, const xdrproc_t inproc, const char *inbuf,
-    const xdrproc_t outproc, caddr_t outbuf,
-    const struct timeval50 tout50, const struct netbuf *nb)
-{
-	struct timeval tout;
-	timeval50_to_timeval(&tout50, &tout);
-	return __rpcb_rmtcall50(nc, name, prog, vers, proc, inproc, inbuf,
-	    outproc, outbuf, tout, nb);
-}
+#define timeval timeval50
+#define timespec timespec50
+#define	time_t	int32_t
 
-bool_t
-rpcb_gettime(const char *name, int32_t *t50)
-{
-	time_t t;
-	bool_t rv = __rpcb_gettime50(name, &t);
-	*t50 = (int32_t)t;
-	return rv;
-}
+#include "time/difftime.c"

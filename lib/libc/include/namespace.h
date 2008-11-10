@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.134.2.3 2008/11/09 19:36:03 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.134.2.4 2008/11/10 00:13:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -423,6 +423,8 @@
 #define mpool_open		_mpool_open
 #define mpool_put		_mpool_put
 #define mpool_sync		_mpool_sync
+#define mq_timedreceive		_mq_timedreceive
+#define mq_timedsend		_mq_timedsend
 #define mrand48			_mrand48
 #define nc_perror		_nc_perror
 #define nc_sperror		_nc_sperror

@@ -1,11 +1,11 @@
-/*	$NetBSD: compat_settimeofday.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $ */
+/*	$NetBSD: compat___fhstat30.c,v 1.3.8.2 2008/11/10 00:13:02 christos Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Martin Husemann <martin@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -35,31 +28,28 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_settimeofday.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $");
+__RCSID("$NetBSD: compat___fhstat30.c,v 1.3.8.2 2008/11/10 00:13:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-#include "namespace.h"
 #define __LIBC12_SOURCE__
-#include <time.h>
-#include <compat/include/time.h>
 
-__warn_references(settimeofday,
-    "warning: reference to compatibility settimeofday(); include <time.h> to generate correct reference")
+#include <sys/types.h>
+#include <sys/mount.h>
+#include <compat/include/fstypes.h>
+#include <compat/sys/mount.h>
 
-#ifdef __weak_alias
-__weak_alias(settimeofday, _settimeofday)
-__weak_alias(__settimeofday, _settimeofday)
-#endif
+__warn_references(fhstat,
+    "warning: reference to compatibility __fhstat30(); include <sys/mount.h> to generate correct reference")
+
 /*
- * Copy timeout to local variable and call the syscall.
+ * Convert old fhstat() call to new calling convention
  */
 int
-settimeofday(const struct timeval50 * __restrict tv50,
-    const void * __restrict tvp)
+__fhstat30(const struct compat_30_fhandle *fhp, struct stat30 *sb)
 {
-	struct timeval tv;
-	timeval50_to_timeval(tv50, &tv);
-	return __settimeofday50(&tv, tvp);
+	return __fhstat40(fhp, FHANDLE30_SIZE, sb);
 }
