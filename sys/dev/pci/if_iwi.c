@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.76 2008/11/07 14:58:27 joerg Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.77 2008/11/10 18:05:12 joerg Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.76 2008/11/07 14:58:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.77 2008/11/10 18:05:12 joerg Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -329,7 +329,7 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	ic->ic_opmode = IEEE80211_M_STA; /* default to BSS mode */
 	ic->ic_state = IEEE80211_S_INIT;
 
-	sc->sc_fwname = "ipw200-bss.fw";
+	sc->sc_fwname = "ipw2200-bss.fw";
 
 	/* set device capabilities */
 	ic->ic_caps =
