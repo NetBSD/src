@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.211 2008/11/04 16:08:41 reinoud Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.212 2008/11/10 21:02:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.211 2008/11/04 16:08:41 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.212 2008/11/10 21:02:15 joerg Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1282,7 +1282,7 @@ allocbuf(buf_t *bp, int size, int preserve)
 
 	oldsize = bp->b_bufsize;
 	if (oldsize == desired_size)
-		goto out;
+		return 0;
 
 	/*
 	 * If we want a buffer of a different size, re-allocate the
@@ -1321,7 +1321,6 @@ allocbuf(buf_t *bp, int size, int preserve)
 	}
 	mutex_exit(&bufcache_lock);
 
- out:
 	if (wapbl_vphaswapbl(bp->b_vp))
 		WAPBL_RESIZE_BUF(wapbl_vptomp(bp->b_vp), bp, oldsize, oldcount);
 
