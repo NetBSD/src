@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.25 2008/11/09 14:24:14 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26 2008/11/10 14:36:59 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2008/11/09 14:24:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2008/11/10 14:36:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,6 +173,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 
 #if NPCI > 0
+	/*
+	 * ACPI needs to be able to access PCI configuration space.
+	 */
 	pci_mode = pci_mode_detect();
 #if defined(PCI_BUS_FIXUP)
 	if (pci_mode != 0) {
@@ -225,7 +228,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	isa_dmainit(&x86_isa_chipset, X86_BUS_SPACE_IO, &isa_bus_dma_tag,
 	    self);
 #endif
-
 
 #if NACPI > 0
 	if (acpi_present) {
