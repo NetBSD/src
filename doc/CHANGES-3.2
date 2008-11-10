@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.148 2008/10/08 19:17:47 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.149 2008/11/10 17:07:11 snj Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5047,4 +5047,28 @@ libexec/ld.elf_so/symbol.c			1.47
 	Pull across code from FreeBSD to do a search of the passed object
 	and it's NEEDED objects (dependencies).
 	[jmcneill, ticket #1973]
+
+distrib/i386/floppies/common/dot.profile	patch
+distrib/i386/floppies/ramdisk-big/list		patch
+distrib/i386/floppies/ramdisk-rescuetiny/list	patch
+distrib/i386/floppies/ramdisk-small/list	patch
+distrib/i386/floppies/ramdisk-tiny/list		patch
+sys/arch/i386/conf/INSTALL			patch
+sys/arch/i386/conf/INSTALL_LAPTOP		patch
+sys/arch/i386/conf/INSTALL_SMALL		patch
+sys/arch/i386/conf/INSTALL_TINY			patch
+sys/arch/i386/conf/INSTALL_XEN2_DOMU		patch
+sys/arch/i386/conf/INSTALL_XEN3_DOMU		patch
+
+	Make i386 INSTALL kernels fit on a single 2.88MB floppy,
+	by removing KERNFS/mount_kernfs(8), pcppi(4), and sysbeep(4)
+	and adding dmesg(8) to INSTALL kernels and ramdisks.
+	[bouyer, ticket #1975]
+
+sys/dev/pci/if_wm.c				1.162
+sys/dev/pci/pcidevs				1.961, 1.962 via patch
+
+	Add support for more ethenet ICH9 devices. Tested on a
+	82801I_IGP_M_AMT.
+	[bouyer, ticket #1976]
 
