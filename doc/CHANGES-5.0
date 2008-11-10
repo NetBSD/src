@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.13 2008/11/09 05:08:31 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.14 2008/11/10 18:40:43 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -304,4 +304,9 @@ usr.bin/make/util.c				1.46
 	Don't use putenv() because it is not portable.  Fixes crossbuild
 	on Solaris.
 	[cube, ticket #38]
+
+sys/dev/pci/if_iwi.c				1.77
+
+	Fix typo in firmware name.
+	[joerg, ticket #43]
 
