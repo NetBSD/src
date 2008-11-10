@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.70.2.2 2008/11/09 23:57:23 christos Exp $	*/
+/*	$NetBSD: route.h,v 1.70.2.3 2008/11/10 00:08:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -212,7 +212,7 @@ struct rt_msghdr {
 #define RTM_NEWADDR	0xc	/* address being added to iface */
 #define RTM_DELADDR	0xd	/* address being removed from iface */
 #define RTM_OOIFINFO	0xe	/* Old (pre-1.5) RTM_IFINFO message */
-#define RTM_OIFINFO	0xf	/* iface/link going up/down etc. */
+#define RTM_OIFINFO	0xf	/* Old (pre-6.0) RTM_IFINFO message */
 #define	RTM_IFANNOUNCE	0x10	/* iface arrival/departure */
 #define	RTM_IEEE80211	0x11	/* IEEE80211 wireless event */
 #define	RTM_SETGATE	0x12	/* set prototype gateway for clones
@@ -221,6 +221,7 @@ struct rt_msghdr {
 #define	RTM_LLINFO_UPD	0x13	/* indication to ARP/NDP/etc. that link-layer
 				 * address has changed
 				 */
+#define RTM_IFINFO	0x14	/* iface/link going up/down etc. */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
