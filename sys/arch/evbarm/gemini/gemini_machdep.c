@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.5 2008/11/09 08:49:40 cliff Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.6 2008/11/10 04:30:46 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.5 2008/11/09 08:49:40 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.6 2008/11/10 04:30:46 cliff Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -178,10 +178,11 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.5 2008/11/09 08:49:40 cliff Exp
 #include <arm/gemini/gemini_var.h>
 #include <arm/gemini/gemini_wdtvar.h>
 #include <arm/gemini/gemini_com.h>
+#include <arm/gemini/lpc_com.h>
 
 #include <evbarm/gemini/gemini.h>
 
-#ifdef VERBOSE_INIT_ARM
+#if defined(VERBOSE_INIT_ARM)
 # define GEMINI_PUTCHAR(c)	gemini_putchar(c)
 # define GEMINI_PUTHEX(n)	gemini_puthex(n)
 #else	/* VERBOSE_INIT_ARM */
@@ -394,7 +395,6 @@ cpu_reboot(int howto, char *bootstr)
 #define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
 
 static const struct pmap_devmap devmap[] = {
-#ifndef GEMINI_SLAVE
 	/* Global regs */
 	{
 		.pd_va = _A(GEMINI_GLOBAL_VBASE),
@@ -412,12 +412,11 @@ static const struct pmap_devmap devmap[] = {
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
-#endif	/* GEMINI_SLAVE */
 
 	/* UART */
 	{
-		.pd_va = _A(GEMINI_CONSOLE_VBASE),
-		.pd_pa = _A(CONSADDR),
+		.pd_va = _A(GEMINI_UART_VBASE),
+		.pd_pa = _A(GEMINI_UART_BASE),
 		.pd_size = _S(L1_S_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
@@ -482,12 +481,12 @@ static void gemini_db_trap(int where)
 }
 #endif
 
-#ifdef VERBOSE_INIT_ARM
+#if defined(VERBOSE_INIT_ARM) || 1
 void gemini_putchar(char c);
 void
 gemini_putchar(char c)
 {
-	unsigned char *com0addr = (char *)GEMINI_CONSOLE_VBASE;
+	unsigned char *com0addr = (unsigned char *)GEMINI_UART_VBASE;
 	int timo = 150000;
 
 	while ((com0addr[COM_REG_LSR * 4] & LSR_TXRDY) == 0)
@@ -748,26 +747,80 @@ static const bus_addr_t consaddr = CONSADDR;
 static const int conspeed = CONSPEED;
 static const int conmode = CONMODE;
 
+#if CONSADDR==0x42000000
+/*
+ * console initialization for obio com console
+ */
 void
 consinit(void)
 {
-	bus_space_handle_t bh;
 	static int consinit_called = 0;
 
 	if (consinit_called != 0)
 		return;
 	consinit_called = 1;
 
-	if (bus_space_map(&gemini_a4x_bs_tag, consaddr,
-		GEMINI_UART_SIZE, 0, &bh))
-			panic("Serial console can not be mapped.");
-
 	if (comcnattach(&gemini_a4x_bs_tag, consaddr, conspeed,
 		GEMINI_COM_FREQ, COM_TYPE_16550_NOERS, conmode))
 			panic("Serial console can not be initialized.");
-
-	bus_space_unmap(&gemini_a4x_bs_tag, bh, GEMINI_UART_SIZE);
 }
+
+#elif CONSADDR==0x478003f8 
+# include <arm/gemini/gemini_lpcvar.h>
+/*
+ * console initialization for lpc com console
+ */
+void
+consinit(void)
+{
+	static int consinit_called = 0;
+	bus_space_tag_t iot = &gemini_bs_tag;
+	bus_space_handle_t lpchc_ioh;
+	bus_space_handle_t lpcio_ioh;
+	bus_size_t sz = L1_S_SIZE;
+	gemini_lpc_softc_t lpcsoftc;
+	gemini_lpc_bus_ops_t *ops;
+	void *lpctag = &lpcsoftc;
+	uint32_t r;
+	extern gemini_lpc_bus_ops_t gemini_lpc_bus_ops;
+
+	ops = &gemini_lpc_bus_ops;
+
+	if (consinit_called != 0)
+		return;
+	consinit_called = 1;
+
+	if (bus_space_map(iot, GEMINI_LPCHC_BASE, sz, 0, &lpchc_ioh))
+		panic("consinit: LPCHC can not be mapped.");
+
+	if (bus_space_map(iot, GEMINI_LPCIO_BASE, sz, 0, &lpcio_ioh))
+		panic("consinit: LPCIO can not be mapped.");
+
+	/* enable the LPC bus */
+	r = bus_space_read_4(iot, lpchc_ioh, GEMINI_LPCHC_CSR);
+	r |= LPCHC_CSR_BEN;
+	bus_space_write_4(iot, lpchc_ioh, GEMINI_LPCHC_CSR, r);
+
+	memset(&lpcsoftc, 0, sizeof(lpcsoftc));
+	lpcsoftc.sc_iot = iot;
+	lpcsoftc.sc_ioh = lpcio_ioh;
+
+	/* activate Serial Port 1 */
+	(*ops->lpc_pnp_enter)(lpctag);
+	(*ops->lpc_pnp_write)(lpctag, 1, 0x30, 0x01);
+	(*ops->lpc_pnp_exit)(lpctag);
+
+	if (comcnattach(iot, consaddr, conspeed,
+		IT8712F_COM_FREQ, COM_TYPE_NORMAL, conmode)) {
+			panic("Serial console can not be initialized.");
+	}
+
+	bus_space_unmap(iot, lpcio_ioh, sz);
+	bus_space_unmap(iot, lpchc_ioh, sz);
+}
+#else
+# error unknown console
+#endif
 
 #ifdef KGDB
 #ifndef KGDB_DEVADDR
