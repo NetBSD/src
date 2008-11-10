@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.100.2.10 2007/11/19 21:24:24 bouyer Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.100.2.11 2008/11/10 17:02:41 snj Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.10 2007/11/19 21:24:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.11 2008/11/10 17:02:41 snj Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -839,6 +839,15 @@ static const struct wm_product {
 	  WM_T_ICH9,		WMP_F_1000T },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_C,
 	  "82801I (C) LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_M,
+	  "82801I mobile LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801H_IGP_M_V,
+	  "82801I mobile (V) LAN Controller",
+	  WM_T_ICH9,		WMP_F_1000T },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82801I_IGP_M_AMT,
+	  "82801I mobile (AMT) LAN Controller",
 	  WM_T_ICH9,		WMP_F_1000T },
 	{ 0,			0,
 	  NULL,
