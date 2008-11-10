@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.4 2008/11/09 15:04:14 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.5 2008/11/10 13:46:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.4 2008/11/09 15:04:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.5 2008/11/10 13:46:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,15 +573,10 @@ pmap_bootstrap(vaddr_t vstart)
 	pmap_t kpm;
 	int npdes, nkpdes;
 	extern int resvphysmem;
-#define BTLB_SET_SIZE 16
-	vaddr_t btlb_entry_start[BTLB_SET_SIZE];
-	vsize_t btlb_entry_size[BTLB_SET_SIZE];
-	int btlb_entry_vm_prot[BTLB_SET_SIZE];
-	int btlb_i;
-	int btlb_j;
 	vsize_t btlb_entry_min, btlb_entry_max, btlb_entry_got;
 	paddr_t ksrx, kerx, ksro, kero, ksrw, kerw;
 	paddr_t phys_start, phys_end;
+	extern int usebtlb;
 
 	/* Provided by the linker script */
 	extern int kernel_text, etext;
@@ -678,9 +673,10 @@ pmap_bootstrap(vaddr_t vstart)
 	DPRINTF(PDB_INIT, ("pmap_bootstrap: curlwp set as %p\n", &lwp0));
 
 	/* kernel virtual is the last gig of the moohicans */
-	/* at least 16/gig for kmem */
 	nkpdes = (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / PDE_SIZE;
-	nkpdes += HPPA_IOLEN / PDE_SIZE; /* ... and io space too */
+
+	/* ... and io space too */
+	nkpdes += HPPA_IOLEN / PDE_SIZE;
 	npdes = nkpdes + (physmem + atop(PDE_SIZE) - 1) / atop(PDE_SIZE);
 
 	DPRINTF(PDB_INIT, ("pmap_bootstrap: npdes %d\n", npdes));
@@ -707,6 +703,13 @@ pmap_bootstrap(vaddr_t vstart)
 	/* XXXNH */
 	resvphysmem = atop(addr);
 
+	ksrx = (paddr_t) &kernel_text;
+	kerx = (paddr_t) &etext;
+	ksro = (paddr_t) &__rodata_start;
+	kero = (paddr_t) &__rodata_end;
+	ksrw = (paddr_t) &__data_start;
+	kerw = addr;
+
 	/*
 	 * The kernel text, data, and bss must be direct-mapped,
 	 * because the kernel often runs in physical mode, and 
@@ -722,30 +725,9 @@ pmap_bootstrap(vaddr_t vstart)
 	 * BTLB entries have a minimum and maximum possible size,
 	 * and MD code gives us these sizes in units of pages.
 	 */
-	ksrx = (paddr_t) &kernel_text;
-	kerx = (paddr_t) &etext;
-	ksro = (paddr_t) &__rodata_start;
-	kero = (paddr_t) &__rodata_end;
-	ksrw = (paddr_t) &__data_start;
-	kerw = addr;
-
-	printf("%s: ksrx = %08x  kerx = %08x\n", __func__, (int)ksrx, (int)kerx);
-	printf("%s: ksro = %08x  kero = %08x\n", __func__, (int)ksro, (int)kero);
-	printf("%s: ksrw = %08x  kerw = %08x\n", __func__, (int)ksrw, (int)kerw);
 
 	btlb_entry_min = (vsize_t) hppa_btlb_size_min * PAGE_SIZE;
 	btlb_entry_max = (vsize_t) hppa_btlb_size_max * PAGE_SIZE;
-
-#if 0
-	/*
-	 * We begin by making BTLB entries for the kernel text.
-	 * To keep things simple, we insist that the kernel text
-	 * be aligned to the minimum BTLB entry size.
-	 */
-
-	if (((vaddr_t) &kernel_text) & (btlb_entry_min - 1))
-		panic("kernel text not aligned to BTLB minimum size");
-#endif
 
 	/*
 	 * To try to conserve BTLB entries, take a hint from how 
@@ -762,114 +744,125 @@ pmap_bootstrap(vaddr_t vstart)
 	 */
 	btlb_entry_min = (vaddr_t) &kernel_text;
 
-	/*
-	 * Now make BTLB entries to direct-map the kernel text
-	 * read- and execute-only as much as possible.  Note that
-	 * if the data segment isn't nicely aligned, the last
-	 * BTLB entry for the kernel text may also cover some of
-	 * the data segment, meaning it will have to allow writing.
-	 */
-	addr = ksrx;
+	if (usebtlb) {
+#define BTLB_SET_SIZE 16
+		vaddr_t btlb_entry_start[BTLB_SET_SIZE];
+		vsize_t btlb_entry_size[BTLB_SET_SIZE];
+		int btlb_entry_vm_prot[BTLB_SET_SIZE];
+		int btlb_i;
+		int btlb_j;
 
-	DPRINTF(PDB_INIT, ("%s: mapping text and rodata @ %p - %p\n",
-	    __func__, (void *)addr, (void *)&__rodata_end));
+		/*
+		 * Now make BTLB entries to direct-map the kernel text
+		 * read- and execute-only as much as possible.  Note that
+		 * if the data segment isn't nicely aligned, the last
+		 * BTLB entry for the kernel text may also cover some of
+		 * the data segment, meaning it will have to allow writing.
+		 */
+		addr = ksrx;
 
-	btlb_j = 0;
-	while (addr < (vaddr_t) kero) {
+		DPRINTF(PDB_INIT,
+		    ("%s: BTLB mapping text and rodata @ %p - %p\n", __func__,
+		    (void *)addr, (void *)kero));
 
-		/* Set up the next BTLB entry. */
-		KASSERT(btlb_j < BTLB_SET_SIZE);
-		btlb_entry_start[btlb_j] = addr;
-		btlb_entry_size[btlb_j] = btlb_entry_min;
-		btlb_entry_vm_prot[btlb_j] = VM_PROT_READ | VM_PROT_EXECUTE;
-		if (addr + btlb_entry_min > kero)
-			btlb_entry_vm_prot[btlb_j] |= VM_PROT_WRITE;
+		btlb_j = 0;
+		while (addr < (vaddr_t) kero) {
 
-		/* Coalesce BTLB entries whenever possible. */
-		while (btlb_j > 0 &&
-		    btlb_entry_vm_prot[btlb_j] == 
-			btlb_entry_vm_prot[btlb_j - 1] &&
-		    btlb_entry_size[btlb_j] ==
-			btlb_entry_size[btlb_j - 1] &&
-		    !(btlb_entry_start[btlb_j - 1] &
-			((btlb_entry_size[btlb_j - 1] << 1) - 1)) &&
-		    (btlb_entry_size[btlb_j - 1] << 1) <=
-			btlb_entry_max)
-			btlb_entry_size[--btlb_j] <<= 1;
+			/* Set up the next BTLB entry. */
+			KASSERT(btlb_j < BTLB_SET_SIZE);
+			btlb_entry_start[btlb_j] = addr;
+			btlb_entry_size[btlb_j] = btlb_entry_min;
+			btlb_entry_vm_prot[btlb_j] =
+			    VM_PROT_READ | VM_PROT_EXECUTE;
+			if (addr + btlb_entry_min > kero)
+				btlb_entry_vm_prot[btlb_j] |= VM_PROT_WRITE;
 
-		/* Move on. */
-		addr = btlb_entry_start[btlb_j] + btlb_entry_size[btlb_j];
-		btlb_j++;
-	} 
+			/* Coalesce BTLB entries whenever possible. */
+			while (btlb_j > 0 &&
+			    btlb_entry_vm_prot[btlb_j] == 
+				btlb_entry_vm_prot[btlb_j - 1] &&
+			    btlb_entry_size[btlb_j] ==
+				btlb_entry_size[btlb_j - 1] &&
+			    !(btlb_entry_start[btlb_j - 1] &
+				((btlb_entry_size[btlb_j - 1] << 1) - 1)) &&
+			    (btlb_entry_size[btlb_j - 1] << 1) <=
+				btlb_entry_max)
+				btlb_entry_size[--btlb_j] <<= 1;
 
-	/*
-	 * Now make BTLB entries to direct-map the kernel data,
-	 * bss, and all of the preallocated space read-write.
-	 * 
-	 * Note that, unlike above, we're not concerned with 
-	 * making these BTLB entries such that they finish as 
-	 * close as possible to the end of the space we need 
-	 * them to map.  Instead, to minimize the number of BTLB 
-	 * entries we need, we make them as large as possible.
-	 * The only thing this wastes is kernel virtual space,
-	 * which is plentiful.
-	 */
+			/* Move on. */
+			addr =
+			    btlb_entry_start[btlb_j] + btlb_entry_size[btlb_j];
+			btlb_j++;
+		}
 
-	DPRINTF(PDB_INIT, ("%s: mapping data, bss, etc @ %p - %p\n",
-	    __func__, (void *)addr, (void *)kerw));
+		/*
+		 * Now make BTLB entries to direct-map the kernel data,
+		 * bss, and all of the preallocated space read-write.
+		 *
+		 * Note that, unlike above, we're not concerned with
+		 * making these BTLB entries such that they finish as
+		 * close as possible to the end of the space we need
+		 * them to map.  Instead, to minimize the number of BTLB
+		 * entries we need, we make them as large as possible.
+		 * The only thing this wastes is kernel virtual space,
+		 * which is plentiful.
+		 */
 
-	while (addr < kerw) {
+		DPRINTF(PDB_INIT, ("%s: mapping data, bss, etc @ %p - %p\n",
+		    __func__, (void *)addr, (void *)kerw));
 
-		/* Make the next BTLB entry. */
-		KASSERT(btlb_j < BTLB_SET_SIZE);
-		size = btlb_entry_min;
-		while ((addr + size) < kerw &&
-			(size << 1) < btlb_entry_max &&
-		    !(addr & ((size << 1) - 1)))
-			size <<= 1;
-		btlb_entry_start[btlb_j] = addr;
-		btlb_entry_size[btlb_j] = size;
-		btlb_entry_vm_prot[btlb_j] = VM_PROT_READ | VM_PROT_WRITE;
+		while (addr < kerw) {
 
-		/* Move on. */
-		addr = btlb_entry_start[btlb_j] + btlb_entry_size[btlb_j];
-		btlb_j++;
-	} 
+			/* Make the next BTLB entry. */
+			KASSERT(btlb_j < BTLB_SET_SIZE);
+			size = btlb_entry_min;
+			while ((addr + size) < kerw &&
+				(size << 1) < btlb_entry_max &&
+			    !(addr & ((size << 1) - 1)))
+				size <<= 1;
+			btlb_entry_start[btlb_j] = addr;
+			btlb_entry_size[btlb_j] = size;
+			btlb_entry_vm_prot[btlb_j] = 
+			    VM_PROT_READ | VM_PROT_WRITE;
+	
+			/* Move on. */
+			addr =
+			    btlb_entry_start[btlb_j] + btlb_entry_size[btlb_j];
+			btlb_j++;
+		} 
 
-#if 1
-	/* Now insert all of the BTLB entries. */
-	for (btlb_i = 0; btlb_i < btlb_j; btlb_i++) {
-		btlb_entry_got = btlb_entry_size[btlb_i];
-		if (hppa_btlb_insert(pmap_kernel()->pm_space, 
-				btlb_entry_start[btlb_i],
-				btlb_entry_start[btlb_i],
-				&btlb_entry_got,
-				pmap_kernel()->pm_pid |
-				pmap_prot(pmap_kernel(),
-					btlb_entry_vm_prot[btlb_i])) < 0)
-			panic("pmap_bootstrap: cannot insert BTLB entry");
-		if (btlb_entry_got != btlb_entry_size[btlb_i])
-			panic("pmap_bootstrap: BTLB entry mapped wrong amount");
+		/* Now insert all of the BTLB entries. */
+		for (btlb_i = 0; btlb_i < btlb_j; btlb_i++) {
+			int error;
+			int prot;
+
+			btlb_entry_got = btlb_entry_size[btlb_i];
+			prot = btlb_entry_vm_prot[btlb_i];
+
+			error = hppa_btlb_insert(pmap_kernel()->pm_space,
+			    btlb_entry_start[btlb_i], btlb_entry_start[btlb_i],
+			    &btlb_entry_got,
+			    kpm->pm_pid | pmap_prot(kpm, prot));
+
+			if (error)
+				panic("%s: cannot insert BTLB entry",
+				    __func__);
+			if (btlb_entry_got != btlb_entry_size[btlb_i])
+				panic("%s: BTLB entry mapped wrong amount",
+				    __func__);
+		}
+
+		kerw =
+		    btlb_entry_start[btlb_j - 1] + btlb_entry_size[btlb_j - 1];
 	}
 
-	/*
-	 * We now know the exact beginning of managed kernel
-	 * virtual space.
-	 */
-	vstart = btlb_entry_start[btlb_j - 1] + btlb_entry_size[btlb_j - 1];
-#else
-
-	/* XXX PCXS needs this inserted into an IBTLB */
-	/*	and can block-map the whole phys w/ another */
-	t = (vaddr_t)&etext;
-	if (btlb_insert(HPPA_SID_KERNEL, 0, 0, &t,
-	    pmap_sid2pid(HPPA_SID_KERNEL) |
-	    pmap_prot(pmap_kernel(), UVM_PROT_RX)) < 0)
-		printf("WARNING: cannot block map kernel text\n");
-
-#endif
+	printf("%s: ksrx = %08x kerx = %08x\n", __func__, (int)ksrx, (int)kerx);
+	printf("%s: ksro = %08x kero = %08x\n", __func__, (int)ksro, (int)kero);
+	printf("%s: ksrw = %08x kerw = %08x\n", __func__, (int)ksrw, (int)kerw);
 
 	/*
+	 * We now know the exact beginning of managed kernel virtual space.
+	 *
 	 * Finally, load physical pages into UVM.  There are three segments of
 	 * pages.
 	 */
@@ -900,8 +893,8 @@ pmap_bootstrap(vaddr_t vstart)
 		availphysmem += phys_end - phys_start;
 	}
 
-	/* The third segment runs from [vstart..physmem). */
-	phys_start = atop(vstart);
+	/* The third segment runs from [kerw..physmem). */
+	phys_start = atop(kerw);
 	phys_end = physmem;
 
 	DPRINTF(PDB_INIT, ("%s: phys segment 0x%05x 0x%05x\n", __func__,
