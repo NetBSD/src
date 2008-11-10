@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.78 2008/11/09 14:24:14 cegger Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.79 2008/11/10 14:36:59 cegger Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.78 2008/11/09 14:24:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.79 2008/11/10 14:36:59 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #if defined(PCI_BUS_FIXUP)
 	if (pci_mode != 0) {
 		pci_maxbus = pci_bus_fixup(NULL, 0);
-		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n", pci_maxbus);
+		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n",
+		    pci_maxbus);
 #if defined(PCI_ADDR_FIXUP)
 		pciaddr.extent_port = NULL;
 		pciaddr.extent_mem = NULL;
