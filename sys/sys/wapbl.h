@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.3 2008/11/10 20:12:13 joerg Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.4 2008/11/10 20:30:32 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -205,14 +205,14 @@ struct wapbl_wc_inodelist {
 #include <sys/vnode.h>
 #include <sys/buf.h>
 
-typedef void (*wapbl_flush_fn_t)(struct mount *, daddr_t *, int *, int);
-
 #ifdef _KERNEL
 
 struct wapbl_entry;
 struct wapbl_wc_header;
 struct wapbl_replay;
 struct wapbl;
+
+typedef void (*wapbl_flush_fn_t)(struct mount *, daddr_t *, int *, int);
 
 /*
  * This structure holds per transaction log information
