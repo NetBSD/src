@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.134.2.4 2008/11/10 00:13:02 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.134.2.5 2008/11/10 01:16:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #define catgets		_catgets
 #define catopen		_catopen
 #define daylight	_daylight
+#define difftime	_difftime
 #define err		_err
 #define errx		_errx
 #ifdef _REENTRANT
@@ -205,6 +206,7 @@
 #define daemon			_daemon
 #define dbopen			_dbopen
 #define devname			_devname
+#define difftime		_difftime
 #define dirname			_dirname
 #define dn_expand		_dn_expand
 #define drand48			_drand48
