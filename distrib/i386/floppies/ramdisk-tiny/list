@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.16 2004/10/06 21:28:12 dsl Exp $
+#	$NetBSD: list,v 1.16.2.1 2008/11/10 16:55:30 snj Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -14,6 +14,7 @@ PROG	bin/sh
 PROG	bin/stty
 
 PROG	sbin/disklabel
+PROG	sbin/dmesg
 PROG	sbin/fsck
 PROG	sbin/fsck_ffs
 PROG	sbin/ifconfig
@@ -22,7 +23,6 @@ PROG	sbin/mknod
 PROG	sbin/mount
 PROG	sbin/mount_cd9660
 PROG	sbin/mount_ffs
-PROG	sbin/mount_kernfs
 PROG	sbin/mount_msdos
 PROG	sbin/mount_nfs
 PROG	sbin/newfs	sbin/mount_mfs
@@ -47,5 +47,6 @@ SPECIAL	ping		srcdir	distrib/utils/x_ping
 SPECIAL	route		srcdir	distrib/utils/x_route
 SPECIAL	umount		srcdir	distrib/utils/x_umount
 SPECIAL	gzip		srcdir	distrib/utils/x_gzip
+SPECIAL	dmesg		srcdir	distrib/utils/x_dmesg
 
 LIBS	libhack.o -lbz2 -lutil -lcurses -ltermcap -lcrypt -ll -lm -lz
