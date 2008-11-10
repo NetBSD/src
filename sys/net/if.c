@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.218.2.3 2008/11/09 23:57:23 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.218.2.4 2008/11/10 00:03:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,11 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-<<<<<<< if.c
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.218.2.3 2008/11/09 23:57:23 christos Exp $");
-=======
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.218.2.3 2008/11/09 23:57:23 christos Exp $");
->>>>>>> 1.231
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.218.2.4 2008/11/10 00:03:37 christos Exp $");
 
 #include "opt_inet.h"
 
