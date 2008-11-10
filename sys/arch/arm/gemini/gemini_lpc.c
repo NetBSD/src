@@ -1,10 +1,10 @@
-/*	$NetBSD: gemini_lpc.c,v 1.1 2008/11/09 09:15:42 cliff Exp $	*/
+/*	$NetBSD: gemini_lpc.c,v 1.2 2008/11/10 04:05:35 cliff Exp $	*/
 
 #include "opt_gemini.h"
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_lpc.c,v 1.1 2008/11/09 09:15:42 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_lpc.c,v 1.2 2008/11/10 04:05:35 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ static void    it8712_pnp_exit(lpctag_t);
 CFATTACH_DECL_NEW(lpc, sizeof(struct gemini_lpc_softc),
     gemini_lpc_match, gemini_lpc_attach, NULL, NULL);
 
-static gemini_lpc_bus_ops_t gemini_lpc_bus_ops = {
+gemini_lpc_bus_ops_t gemini_lpc_bus_ops = {
 	it8712_pnp_read,
 	it8712_pnp_write,
 	it8712_pnp_enter,
