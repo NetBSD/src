@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc_com.c,v 1.1 2008/11/09 09:15:42 cliff Exp $	*/
+/*	$NetBSD: lpc_com.c,v 1.2 2008/11/10 04:07:30 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: gemini_com.c,v 1.1 2008/10/24 04:23:18 matt Exp
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpc_com.c,v 1.1 2008/11/09 09:15:42 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpc_com.c,v 1.2 2008/11/10 04:07:30 cliff Exp $");
 
 #include "opt_com.h"
 #include "locators.h"
@@ -181,7 +181,7 @@ lpc_com_attach(device_t parent, device_t self, void *aux)
 		/* callout based polliung */
 		callout_init(&sc->sc_callout, 0);
 		callout_setfunc(&sc->sc_callout, lpc_com_time, sc);
-		callout_schedule(&sc->sc_callout, hz/8);
+		callout_schedule(&sc->sc_callout, hz/16);
 		aprint_normal("%s: callout polling mode\n", device_xname(self));
 	} else {
 		/* interrupting */
@@ -210,6 +210,6 @@ lpc_com_time(void *arg)
 
 	s = splserial();
 	(void)comintr(&sc->sc_com);
-	callout_schedule(&sc->sc_callout, hz/8);
+	callout_schedule(&sc->sc_callout, hz/16);
 	splx(s);
 }
