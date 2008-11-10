@@ -1,7 +1,9 @@
-/*	$NetBSD: compat_rpcb.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $	*/
+/*	$NetBSD: compat___semctl13.c,v 1.1.2.1 2008/11/10 00:13:02 christos Exp $	*/
+
+/*	$NetBSD: compat___semctl13.c,v 1.1.2.1 2008/11/10 00:13:02 christos Exp $ */
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,47 +39,60 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_rpcb.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $");
+__RCSID("$NetBSD: compat___semctl13.c,v 1.1.2.1 2008/11/10 00:13:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-
-#define __LIBC12_SOURCE__
-
 #include "namespace.h"
-#include <sys/types.h>
+#define __LIBC12_SOURCE__
+#include <stdarg.h>
 #include <sys/time.h>
 #include <compat/sys/time.h>
-#include <rpc/rpcb_clnt.h>
-#include <compat/include/rpc/rpcb_clnt.h>
+#include <sys/sem.h>
+#include <compat/sys/sem.h>
 
-__warn_references(rpcb_rmtcall,
-    "warning: reference to compatibility rpcb_rmtcall(); include <rpc/rpcb_clnt.h> to generate correct reference")
-__warn_references(rpcb_gettime,
-    "warning: reference to compatibility rpcb_gettime(); include <rpc/rpcb_clnt.h> to generate correct reference")
+__warn_references(__semctl13,
+    "warning: reference to compatibility __semctl13(); include <sys/sem.h> to generate correct reference")
 
-#ifdef __weak_alias
-__weak_alias(rpcb_rmtcall, _rpcb_rmtcall)
-__weak_alias(rpcb_gettime, _rpcb_gettime)
+/*
+ * Copy timeout to local variable and call the syscall.
+ */
+int
+__semctl13(int semid, int semnum, int cmd, ...)
+{
+	va_list ap;
+	union __semun semun;
+	struct semid_ds13 *ds13;
+	struct semid_ds ds;
+	int error;
+
+	va_start(ap, cmd);
+	switch (cmd) {
+	case IPC_SET:
+	case IPC_STAT:
+	case GETALL:
+	case SETVAL:
+	case SETALL:
+#ifdef __lint__
+		memcpy(&semun, &ap, sizeof(semun));
+#else
+		semun = va_arg(ap, union __semun);
 #endif
+	}
+	va_end(ap);
 
-enum clnt_stat
-rpcb_rmtcall(const struct netconfig *nc,
-    const char *name, const rpcprog_t prog, const rpcvers_t vers,
-    const rpcproc_t proc, const xdrproc_t inproc, const char *inbuf,
-    const xdrproc_t outproc, caddr_t outbuf,
-    const struct timeval50 tout50, const struct netbuf *nb)
-{
-	struct timeval tout;
-	timeval50_to_timeval(&tout50, &tout);
-	return __rpcb_rmtcall50(nc, name, prog, vers, proc, inproc, inbuf,
-	    outproc, outbuf, tout, nb);
-}
+	ds13 = (struct semid_ds13 *)(void *)semun.buf;
+	semun.buf = &ds;
 
-bool_t
-rpcb_gettime(const char *name, int32_t *t50)
-{
-	time_t t;
-	bool_t rv = __rpcb_gettime50(name, &t);
-	*t50 = (int32_t)t;
-	return rv;
+	if (cmd == IPC_SET)
+		__semid_ds13_to_native(ds13, &ds);
+
+	error = ____semctl50(semid, semnum, cmd, &semun);
+	if (error)
+		return error;
+
+	if (cmd == IPC_STAT)
+		__native_to_semid_ds13(&ds, ds13);
+
+	semun.buf = (struct semid_ds *)(void *)ds13;
+	return 0;
 }

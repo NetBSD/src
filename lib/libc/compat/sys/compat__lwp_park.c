@@ -1,7 +1,7 @@
-/*	$NetBSD: compat_rpcb.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $	*/
+/*	$NetBSD: compat__lwp_park.c,v 1.1.2.1 2008/11/10 00:13:02 christos Exp $ */
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,47 +37,31 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_rpcb.c,v 1.1.2.2 2008/11/10 00:13:02 christos Exp $");
+__RCSID("$NetBSD: compat__lwp_park.c,v 1.1.2.1 2008/11/10 00:13:02 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
-
-#define __LIBC12_SOURCE__
-
 #include "namespace.h"
-#include <sys/types.h>
+#define __LIBC12_SOURCE__
 #include <sys/time.h>
 #include <compat/sys/time.h>
-#include <rpc/rpcb_clnt.h>
-#include <compat/include/rpc/rpcb_clnt.h>
+#include <lwp.h>
+#include <compat/include/lwp.h>
 
-__warn_references(rpcb_rmtcall,
-    "warning: reference to compatibility rpcb_rmtcall(); include <rpc/rpcb_clnt.h> to generate correct reference")
-__warn_references(rpcb_gettime,
-    "warning: reference to compatibility rpcb_gettime(); include <rpc/rpcb_clnt.h> to generate correct reference")
+__warn_references(_lwp_park,
+    "warning: reference to compatibility _lwp_park(); include <lwp.h> to generate correct reference")
 
-#ifdef __weak_alias
-__weak_alias(rpcb_rmtcall, _rpcb_rmtcall)
-__weak_alias(rpcb_gettime, _rpcb_gettime)
-#endif
-
-enum clnt_stat
-rpcb_rmtcall(const struct netconfig *nc,
-    const char *name, const rpcprog_t prog, const rpcvers_t vers,
-    const rpcproc_t proc, const xdrproc_t inproc, const char *inbuf,
-    const xdrproc_t outproc, caddr_t outbuf,
-    const struct timeval50 tout50, const struct netbuf *nb)
+/*
+ * Copy timeout to local variable and call the syscall.
+ */
+int
+_lwp_park(const struct timespec50 *ts50, lwpid_t unpark,
+    const void *hint, const void *unparkhint)
 {
-	struct timeval tout;
-	timeval50_to_timeval(&tout50, &tout);
-	return __rpcb_rmtcall50(nc, name, prog, vers, proc, inproc, inbuf,
-	    outproc, outbuf, tout, nb);
-}
+	struct timespec ts, *tsp;
 
-bool_t
-rpcb_gettime(const char *name, int32_t *t50)
-{
-	time_t t;
-	bool_t rv = __rpcb_gettime50(name, &t);
-	*t50 = (int32_t)t;
-	return rv;
+	if (ts50)
+		timespec50_to_timespec(ts50, tsp = &ts);
+	else
+		tsp = NULL;
+	return ___lwp_park50(tsp, unpark, hint, unparkhint);
 }

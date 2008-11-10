@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_pmap_rmtcall.c,v 1.1.2.1 2008/11/08 21:49:35 christos Exp $	*/
+/*	$NetBSD: compat_pmap_rmtcall.c,v 1.1.2.2 2008/11/10 00:13:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_pmap_rmtcall.c,v 1.1.2.1 2008/11/08 21:49:35 christos Exp $");
+__RCSID("$NetBSD: compat_pmap_rmtcall.c,v 1.1.2.2 2008/11/10 00:13:01 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 
@@ -52,6 +52,10 @@ __RCSID("$NetBSD: compat_pmap_rmtcall.c,v 1.1.2.1 2008/11/08 21:49:35 christos E
 
 __warn_references(pmap_rmtcall,
     "warning: reference to compatibility pmap_rmtcall(); include <rpc/pmap_clnt.h> to generate correct reference")
+
+#ifdef __weak_alias
+__weak_alias(pmap_rmtcall, _pmap_rmtcall)
+#endif
 
 enum clnt_stat
 pmap_rmtcall(struct sockaddr_in *addr, u_long prognum, u_long versnum,
