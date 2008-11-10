@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.14 2008/11/04 23:01:04 dbj Exp $
+# $NetBSD: buildfloppies.sh,v 1.15 2008/11/10 02:10:52 dogcow Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -97,7 +97,7 @@ rm -f ${floppybase}?${suffix}
 #	create tar file
 #
 dd if=/dev/zero of=${floppy} bs=8k count=1 2>/dev/null
-(printf "/set uname=root gname=wheel\n. type=dir\n"; for f in ${files}; do printf "%s\n" $f; done) | \
+(printf "/set uid=0 gid=0\n. type=dir\n"; for f in ${files}; do printf "%s\n" $f; done) | \
 ${PAX} -O -w -b8k -M >> ${floppy} || exit 1
 if [ -n "$instboot" ]; then
 	instboot=$( echo $instboot | sed -e s/@IMAGE@/${floppy}/ )
