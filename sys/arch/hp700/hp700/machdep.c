@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.4 2008/11/06 12:50:55 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.5 2008/11/10 13:46:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.4 2008/11/06 12:50:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.5 2008/11/10 13:46:05 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -164,6 +164,8 @@ static int pagezero_mapped = 1;
 struct pdc_cache pdc_cache PDC_ALIGNMENT;
 struct pdc_btlb pdc_btlb PDC_ALIGNMENT;
 struct pdc_model pdc_model PDC_ALIGNMENT;
+
+int usebtlb;
 
 /*
  * The BTLB slots.
@@ -510,9 +512,11 @@ hppa_init(paddr_t start, void *bi)
 	vstart += DMA24_SIZE;
 	vstart = round_page(vstart);
 
-	/* Allocate and initialize the BTLB slots array. */
-	btlb_slots = (struct btlb_slot *) ALIGN(vstart);
-	btlb_slot = btlb_slots;
+
+	if (usebtlb) {
+		/* Allocate and initialize the BTLB slots array. */
+		btlb_slots = (struct btlb_slot *) ALIGN(vstart);
+		btlb_slot = btlb_slots;
 #define BTLB_SLOTS(count, flags)					\
 do {									\
 	for (btlb_slot_i = 0;						\
@@ -525,16 +529,18 @@ do {									\
 	}								\
 } while (/* CONSTCOND */ 0)
 
-	BTLB_SLOTS(finfo.num_i, BTLB_SLOT_IBTLB);
-	BTLB_SLOTS(finfo.num_d, BTLB_SLOT_DBTLB);
-	BTLB_SLOTS(finfo.num_c, BTLB_SLOT_CBTLB);
-	BTLB_SLOTS(vinfo.num_i, BTLB_SLOT_IBTLB | BTLB_SLOT_VARIABLE_RANGE);
-	BTLB_SLOTS(vinfo.num_d, BTLB_SLOT_DBTLB | BTLB_SLOT_VARIABLE_RANGE);
-	BTLB_SLOTS(vinfo.num_c, BTLB_SLOT_CBTLB | BTLB_SLOT_VARIABLE_RANGE);
+		BTLB_SLOTS(finfo.num_i, BTLB_SLOT_IBTLB);
+		BTLB_SLOTS(finfo.num_d, BTLB_SLOT_DBTLB);
+		BTLB_SLOTS(finfo.num_c, BTLB_SLOT_CBTLB);
+		BTLB_SLOTS(vinfo.num_i, BTLB_SLOT_IBTLB | BTLB_SLOT_VARIABLE_RANGE);
+		BTLB_SLOTS(vinfo.num_d, BTLB_SLOT_DBTLB | BTLB_SLOT_VARIABLE_RANGE);
+		BTLB_SLOTS(vinfo.num_c, BTLB_SLOT_CBTLB | BTLB_SLOT_VARIABLE_RANGE);
 #undef BTLB_SLOTS
 
-	btlb_slots_count = (btlb_slot - btlb_slots);
-	vstart = round_page((vaddr_t) btlb_slot);
+		btlb_slots_count = (btlb_slot - btlb_slots);
+		vstart = round_page((vaddr_t) btlb_slot);
+	}
+
 	v = vstart;
 
 	/* sets resvphysmem */
@@ -621,6 +627,7 @@ cpuid(void)
 	const char *model;
 	u_int cpu_features;
 	int error;
+	extern int kpsw;
 
 	/* may the scientific guessing begin */
 	cpu_features = 0;
@@ -686,41 +693,48 @@ cpuid(void)
 	printf("%s: bootstrap fpu\n", __func__);
 #endif
 	
-	/* BTLB params */
-	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
-	    PDC_BTLB_DEFAULT, &pdc_btlb)) < 0) {
-#ifdef DEBUG
-		printf("WARNING: PDC_BTLB error %d\n", error);
-#endif
+	usebtlb = 0;
+	if (cpu_type == HPPA_CPU_PCXW || cpu_type > HPPA_CPU_PCXL2) {
+		printf("WARNING: BTLB no supported on cpu %d\n", cpu_type);
 	} else {
+
+		/* BTLB params */
+		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
+		    PDC_BTLB_DEFAULT, &pdc_btlb)) < 0) {
+#ifdef DEBUG
+			printf("WARNING: PDC_BTLB error %d\n", error);
+#endif
+		} else {
 #define BTLBDEBUG 1
 
 #ifdef BTLBDEBUG
-		printf("btlb info: minsz=%d, maxsz=%d\n",
-		    pdc_btlb.min_size, pdc_btlb.max_size);
-		printf("btlb fixed: i=%d, d=%d, c=%d\n",
-		    pdc_btlb.finfo.num_i,
-		    pdc_btlb.finfo.num_d,
-		    pdc_btlb.finfo.num_c);
-		printf("btlb varbl: i=%d, d=%d, c=%d\n",
-		    pdc_btlb.vinfo.num_i,
-		    pdc_btlb.vinfo.num_d,
-		    pdc_btlb.vinfo.num_c);
+			printf("btlb info: minsz=%d, maxsz=%d\n",
+			    pdc_btlb.min_size, pdc_btlb.max_size);
+			printf("btlb fixed: i=%d, d=%d, c=%d\n",
+			    pdc_btlb.finfo.num_i,
+			    pdc_btlb.finfo.num_d,
+			    pdc_btlb.finfo.num_c);
+			printf("btlb varbl: i=%d, d=%d, c=%d\n",
+			    pdc_btlb.vinfo.num_i,
+			    pdc_btlb.vinfo.num_d,
+			    pdc_btlb.vinfo.num_c);
 #endif /* BTLBDEBUG */
-		/* purge TLBs and caches */
-		if (pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
-		    PDC_BTLB_PURGE_ALL) < 0)
-			printf("WARNING: BTLB purge failed\n");
+			/* purge TLBs and caches */
+			if (pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
+			    PDC_BTLB_PURGE_ALL) < 0)
+				printf("WARNING: BTLB purge failed\n");
 
-		hppa_btlb_size_min = pdc_btlb.min_size;
-		hppa_btlb_size_max = pdc_btlb.max_size;
+			hppa_btlb_size_min = pdc_btlb.min_size;
+			hppa_btlb_size_max = pdc_btlb.max_size;
 #ifdef DEBUG
-		printf("hppa_btlb_size_min 0x%x\n", hppa_btlb_size_min);
-		printf("hppa_btlb_size_max 0x%x\n", hppa_btlb_size_max);
+			printf("hppa_btlb_size_min 0x%x\n", hppa_btlb_size_min);
+			printf("hppa_btlb_size_max 0x%x\n", hppa_btlb_size_max);
 #endif
 
-		if (pdc_btlb.finfo.num_c)
-			cpu_features |= HPPA_FTRS_BTLBU;
+			if (pdc_btlb.finfo.num_c)
+				cpu_features |= HPPA_FTRS_BTLBU;
+			usebtlb = 1;
+		}
 	}
 
 	error = pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb);
@@ -741,7 +755,7 @@ cpuid(void)
 		pmap_hptsize = 0;
 	}
 
-	if (cpu_type != -1)
+	if (cpu_type)
 		for (p = cpu_types; p->hci_chip_name; p++) {
 			if (p->hci_cpuid == cpu_type)
 				break;
@@ -752,11 +766,13 @@ cpuid(void)
 				break;
 		}
 
-	if (p->hci_chip_name == NULL)
+	hppa_cpu_info = p;
+
+	if (hppa_cpu_info->hci_chip_name == NULL)
 		panic("bad model string for 0x%x", pdc_model.hvers >> 4);
-	else if (p->desidhash == NULL)
+	else if (hppa_cpu_info->desidhash == NULL)
 		panic("no kernel support for %s",
-		    p->hci_chip_name);
+		    hppa_cpu_info->hci_chip_name);
 
 	/*
 	 * TODO: HPT on 7200 is not currently supported
@@ -764,35 +780,31 @@ cpuid(void)
 	if (pmap_hptsize && p->hci_type != hpcxl && p->hci_type != hpcxl2)
 		pmap_hptsize = 0;
 
-	cpu_type = p->hci_type;
-	cpu_ibtlb_ins = p->ibtlbins;
-	cpu_dbtlb_ins = p->dbtlbins;
-	cpu_hpt_init = p->hptinit;
-	cpu_desidhash = p->desidhash;
+	cpu_type = hppa_cpu_info->hci_type;
+	cpu_ibtlb_ins = hppa_cpu_info->ibtlbins;
+	cpu_dbtlb_ins = hppa_cpu_info->dbtlbins;
+	cpu_hpt_init = hppa_cpu_info->hptinit;
+	cpu_desidhash = hppa_cpu_info->desidhash;
 
-	hppa_cpu_info = p;
+	/* force strong ordering for now */
+	if (hppa_cpu_info->hci_features & HPPA_FTRS_W32B) {
+		kpsw |= PSW_O;
+	}
 
-	strncpy(cpu_model, model, sizeof(cpu_model));
-	cpu_model[strlen(cpu_model) - 1] = '\0';
+	snprintf(cpu_model, sizeof(cpu_model), "HP9000/%s", model);
 #ifdef DEBUG
-	printf("%s: %s, %s\n", __func__, cpu_model, hppa_cpu_info->hci_chip_name);
+	printf("%s: %s, %s level %d\n", __func__, cpu_model, hppa_cpu_info->hci_chip_name, (*cpu_desidhash)() + 0xa);
 #endif
 
 	printf("HP9000/... level %0x\n", (*cpu_desidhash)() + 0xa);
 
-#define	LDILDO(t,f) ((t)[0] = (f)[0], (t)[1] = (f)[1]); \
-	printf("%p[0] = 0x%08x\t%p[0] = 0x%08x\n", t, f[0], t, f[1])
+#define	LDILDO(t,f) ((t)[0] = (f)[0], (t)[1] = (f)[1]);
 	LDILDO(trap_ep_T_TLB_DIRTY , hppa_cpu_info->tlbdh);
 	LDILDO(trap_ep_T_DTLBMISS  , hppa_cpu_info->dtlbh);
 	LDILDO(trap_ep_T_DTLBMISSNA, hppa_cpu_info->dtlbnah);
 	LDILDO(trap_ep_T_ITLBMISS  , hppa_cpu_info->itlbh);
 	LDILDO(trap_ep_T_ITLBMISSNA, hppa_cpu_info->itlbnah);
 #undef LDILDO
-
-	/* force strong ordering for now */
-	if (p->hci_features & HPPA_FTRS_W32B) {
-		kpsw |= PSW_O;
-	}
 
 	/* Bootstrap any FPU. */
 	hppa_fpu_bootstrap(pdc_coproc.ccr_enable);
