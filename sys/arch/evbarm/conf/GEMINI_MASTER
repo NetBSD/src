@@ -166,10 +166,10 @@ com0		at obio? addr 0x42000000 intr 18 mult 4
 options CONSADDR=0x42000000, CONSPEED=19200
 
 # Aux COM at IT8712
-geminilpchc0	at obio? addr 0x47000000 intr 20
-lpc0		at geminilpchc0 addr 0x47800000
-com1		at lpc? ldn 0x01 addr 0x3f8 intr 4
+##geminilpchc0	at obio? addr 0x47000000 intr 20
+##lpc0		at geminilpchc0 addr 0x47800000
 ##com1		at lpc? ldn 0x01 addr 0x3f8 intr -1
+##com1		at lpc? ldn 0x01 addr 0x3f8 intr 4
 
 # Interrupt controller
 geminiicu0	at obio0 addr 0x48000000 intrbase 0
