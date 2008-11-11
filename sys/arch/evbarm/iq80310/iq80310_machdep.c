@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.70 2008/04/27 18:58:46 matt Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.71 2008/11/11 06:46:41 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.70 2008/04/27 18:58:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_machdep.c,v 1.71 2008/11/11 06:46:41 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -238,6 +238,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -267,6 +268,8 @@ cpu_reboot(int howto, char *bootstr)
 	
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97 2008/11/11 06:46:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -136,6 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2008/07/02 17:28:55 ad Exp $");
 #include <sys/mount.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -650,6 +651,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Finally, halt/reboot the system. */
 	if (howto & RB_HALT) {

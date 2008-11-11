@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.307 2008/10/15 06:51:17 wrstuden Exp $ */
+/* $NetBSD: machdep.c,v 1.308 2008/11/11 06:46:40 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.307 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.308 2008/11/11 06:46:40 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1029,6 +1029,8 @@ haltsys:
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 #ifdef BOOTKEY
 	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
