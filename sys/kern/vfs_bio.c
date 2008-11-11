@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.212 2008/11/10 21:02:15 joerg Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.213 2008/11/11 08:29:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.212 2008/11/10 21:02:15 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.213 2008/11/11 08:29:58 joerg Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -720,20 +720,6 @@ bread(struct vnode *vp, daddr_t blkno, int size, kauth_cred_t cred,
 	if (error == 0 && (flags & B_MODIFY) != 0)	/* XXXX before the next code block or after? */
 		error = fscow_run(bp, true);
 
-	if (!error) {
-		struct mount *mp = wapbl_vptomp(vp);
-
-		if (mp && mp->mnt_wapbl_replay &&
-		    WAPBL_REPLAY_ISOPEN(mp)) {
-			error = WAPBL_REPLAY_READ(mp, bp->b_data, bp->b_blkno,
-			    bp->b_bcount);
-			if (error) {
-				mutex_enter(&bufcache_lock);
-				SET(bp->b_cflags, BC_INVAL);
-				mutex_exit(&bufcache_lock);
-			}
-		}
-	}
 	return error;
 }
 
