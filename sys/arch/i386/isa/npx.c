@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.129 2008/04/30 00:16:30 cegger Exp $	*/
+/*	$NetBSD: npx.c,v 1.130 2008/11/11 13:45:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.129 2008/04/30 00:16:30 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.130 2008/11/11 13:45:10 ad Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -806,8 +806,7 @@ npxsave_lwp(struct lwp *l, bool save)
 		    device_xname(oci->ci_dev),
 		    save? "save" : "flush", l));
 
-		x86_send_ipi(oci,
-		    save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
+		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
 
 #ifdef DIAGNOSTIC
 		spincount = 0;
