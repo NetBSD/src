@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_timer.c,v 1.2 2008/11/09 09:11:09 cliff Exp $	*/
+/*	$NetBSD: obio_timer.c,v 1.3 2008/11/11 19:54:38 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: obio_mputmr.c,v 1.3 2008/08/27 11:03:10 matt Exp
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.2 2008/11/09 09:11:09 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.3 2008/11/11 19:54:38 cliff Exp $");
 
 #include "opt_cpuoptions.h"
 #include "opt_gemini.h"
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.2 2008/11/09 09:11:09 cliff Exp $")
 
 
 #ifndef GEMINI_TIMER_CLOCK_FREQ
-# error Specify the timer frequency in Hz with the GEMINI_TIMER_CLOCK_FREQ option.
+# error Specify the timer frequency in Hz with option GEMINI_TIMER_CLOCK_FREQ 
 #endif
 
 static int	obiotimer_match(device_t, struct cfdata *, void *);
@@ -239,7 +239,7 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 #ifndef GEMINI_SLAVE
 		/*
 		 * timer #1 is the combined system clock and stat clock
-		 * for the Master (or only) Gemini CPU
+		 * for the Master or Single Gemini CPU
 		 * it gets started later
 		 */
 		profhz = stathz = hz;
@@ -259,8 +259,8 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 		break;
 	case 3:
 		/*
-		 * Timer #3 is used for microtime reference clock and for delay()
-		 * autoloading, non-interrupting, just wraps around as an unsigned int.
+		 * Timer #3 is used for microtime reference clock and delay()
+		 * autoloading, non-interrupting, just wraps around
 		 * we start it now to make delay() available
 		 */
 		ref_sc = sc;

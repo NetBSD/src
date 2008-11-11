@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini.h,v 1.5 2008/11/10 04:35:25 cliff Exp $	*/
+/*	$NetBSD: gemini.h,v 1.6 2008/11/11 19:54:38 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -33,6 +33,26 @@
 #define _EVBARM_GEMINI_GEMINI_H
 
 #include <arm/gemini/gemini_reg.h>
+
+/*
+ * sanity check opt_gemini.h
+ */
+#include "opt_gemini.h"
+#if !defined(GEMINI)
+# error must define GEMINI to use gemini.h
+#endif
+#if !defined(GEMINI_SINGLE) && !defined(GEMINI_MASTER) && !defined(GEMINI_SLAVE)
+# error must define one of GEMINI_SINGLE, GEMINI_MASTER, or GEMINI_SLAVE
+#endif
+#if defined(GEMINI_SINGLE)
+# if defined(GEMINI_MASTER) || defined(GEMINI_SLAVE)
+#  error GEMINI_SINGLE can not define either GEMINI_MASTER or GEMINI_SLAVE
+# endif
+#else
+# if defined(GEMINI_MASTER) && defined(GEMINI_SLAVE)
+#  error can not define both GEMINI_MASTER and GEMINI_SLAVE
+# endif
+#endif
 
 /*
  * Kernel VM space: 192MB at KERNEL_VM_BASE
