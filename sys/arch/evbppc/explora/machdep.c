@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2008/08/08 06:29:21 hannken Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2008/11/11 06:46:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2008/08/08 06:29:21 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/msgbuf.h>
 #include <sys/kernel.h>
@@ -44,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2008/08/08 06:29:21 hannken Exp $")
 #include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -375,6 +377,8 @@ cpu_reboot(int howto, char *what)
 		/*XXX dumpsys()*/;
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
 		printf("halted\n\n");

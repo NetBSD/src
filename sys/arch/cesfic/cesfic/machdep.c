@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2008/09/14 15:03:17 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2008/11/11 06:46:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2008/09/14 15:03:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2008/11/11 06:46:40 dyoung Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -436,6 +436,8 @@ cpu_reboot(howto, bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {

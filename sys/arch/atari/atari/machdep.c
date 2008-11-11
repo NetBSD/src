@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.151 2008/11/11 06:46:40 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 2008/11/11 06:46:40 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -426,6 +426,8 @@ cpu_reboot(int howto, char *bootstr)
 	 * asked to the user in case nobody is there....
 	 */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	splhigh();			/* extreme priority */
 	if(howto & RB_HALT) {

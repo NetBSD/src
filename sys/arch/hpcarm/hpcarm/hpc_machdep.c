@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.86 2008/06/13 13:24:10 rafal Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.87 2008/11/11 06:46:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.86 2008/06/13 13:24:10 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.87 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.86 2008/06/13 13:24:10 rafal Exp $
 #include <sys/ksyms.h>
 #include <sys/boot_flag.h>
 #include <sys/conf.h>	/* XXX for consinit related hacks */
+#include <sys/device.h>
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
@@ -208,6 +209,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("Halted while still in the ICE age.\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -243,6 +245,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQs are disabled. */
 	IRQdisable;

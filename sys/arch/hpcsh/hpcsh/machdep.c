@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.61 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62 2008/11/11 06:46:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2008/04/28 20:23:22 martin Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/user.h>
+#include <sys/device.h>
 
 #include <sys/reboot.h>
 #include <sys/mount.h>
@@ -415,6 +416,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Finally, halt/reboot the system. */
 #ifdef KLOADER

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2008/11/11 06:46:42 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2008/04/28 20:23:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -377,12 +377,15 @@ cpu_reboot(int howto, char *what)
 	splhigh();
 	if (howto & RB_HALT) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("halted\n\n");
 		while(1);
 	}
 	if (!cold && (howto & RB_DUMP))
 		oea_dumpsys();
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 	printf("rebooting\n\n");
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)

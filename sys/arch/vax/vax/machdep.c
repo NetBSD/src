@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.167 2008/10/17 08:12:23 cegger Exp $	 */
+/* $NetBSD: machdep.c,v 1.168 2008/11/11 06:46:44 dyoung Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2008/10/17 08:12:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2008/11/11 06:46:44 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -349,6 +349,7 @@ cpu_reboot(int howto, char *b)
 	splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		if (dep_call->cpu_halt)
 			(*dep_call->cpu_halt) ();
 		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");

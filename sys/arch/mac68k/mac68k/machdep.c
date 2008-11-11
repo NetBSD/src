@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.322 2008/09/14 15:03:17 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.323 2008/11/11 06:46:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.322 2008/09/14 15:03:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323 2008/11/11 06:46:43 dyoung Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -146,6 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.322 2008/09/14 15:03:17 tsutsui Exp $"
 #endif
 #define ELFSIZE 32
 #include <sys/exec_elf.h>
+#include <sys/device.h>
 
 #include <m68k/cacheops.h>
 
@@ -546,6 +547,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		/* First try to power down under VIA control. */

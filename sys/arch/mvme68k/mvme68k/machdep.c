@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.129 2008/07/02 17:28:56 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130 2008/11/11 06:46:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2008/11/11 06:46:43 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2008/07/02 17:28:56 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include "ksyms.h"
 
@@ -748,6 +749,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {

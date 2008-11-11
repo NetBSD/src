@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.6 2008/11/10 04:30:46 cliff Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.7 2008/11/11 06:46:41 dyoung Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.6 2008/11/10 04:30:46 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.7 2008/11/11 06:46:41 dyoung Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -327,6 +327,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -359,6 +360,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;

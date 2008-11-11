@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.121 2008/08/03 00:35:03 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122 2008/11/11 06:46:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2008/08/03 00:35:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2008/11/11 06:46:43 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -794,6 +794,8 @@ cpu_reboot(int howto, char *bootstr)
 haltsys:
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/*
 	 * Calling ARCBIOS->PowerDown() results in a "CP1 unusable trap"

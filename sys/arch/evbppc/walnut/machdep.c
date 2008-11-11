@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2008/11/11 06:46:42 dyoung Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2008/07/02 17:28:55 ad Exp $");
 #include <sys/user.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -484,6 +485,8 @@ cpu_reboot(int howto, char *what)
 		dumpsys();
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 	  /* Power off here if we know how...*/

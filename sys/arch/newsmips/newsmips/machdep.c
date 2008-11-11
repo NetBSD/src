@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2008/07/02 17:28:56 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 2008/11/11 06:46:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2008/11/11 06:46:43 dyoung Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -584,6 +584,8 @@ haltsys:
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN)
 		prom_halt(0x80);	/* rom monitor RB_PWOFF */
