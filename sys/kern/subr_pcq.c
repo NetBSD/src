@@ -1,3 +1,5 @@
+/*	$NetBSD: subr_pcq.c,v 1.3 2008/11/11 21:45:33 rmind Exp $	*/
+
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -26,8 +28,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.2 2008/11/11 20:37:15 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.3 2008/11/11 21:45:33 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +52,7 @@ struct pcq {
 static inline pcq_entry_t *
 pcq_advance(pcq_t *pcq, pcq_entry_t *ptr)
 {
+
 	if (__predict_false(++ptr == pcq->pcq_limit))
 		return pcq->pcq_base;
 
@@ -92,7 +96,9 @@ pcq_put(pcq_t *pcq, void *item)
 			/*
 			 * Tell them we were able to enqueue it.
 			 */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
 			membar_producer();
+#endif
 			return true;
 		}
 
@@ -100,7 +106,9 @@ pcq_put(pcq_t *pcq, void *item)
 		 * If we've reached the consumer, we've filled all the
 		 * slots and there's no more room so return false.
 		 */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
 		membar_consumer();	/* see updates to pcq_consumer */
+#endif
 		if (producer == pcq->pcq_consumer)
 			return false;
 
@@ -161,6 +169,7 @@ pcq_get(pcq_t *pcq)
 void *
 pcq_peek(pcq_t *pcq)
 {
+
 	membar_consumer();	/* see updates to *pcq_consumer */ 
 	return *pcq->pcq_consumer;
 }
@@ -168,6 +177,7 @@ pcq_peek(pcq_t *pcq)
 size_t
 pcq_maxitems(pcq_t *pcq)
 {
+
 	return pcq->pcq_limit - pcq->pcq_base;
 }
 
@@ -192,6 +202,7 @@ pcq_create(size_t maxitems, km_flag_t kmflags)
 void
 pcq_destroy(pcq_t *pcq)
 {
+
 	KASSERT(*pcq->pcq_consumer == NULL);
 
 	kmem_free(pcq, (uintptr_t)pcq->pcq_limit - (uintptr_t)pcq);
