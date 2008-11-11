@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.37 2008/07/02 17:28:55 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.38 2008/11/11 06:46:42 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2008/07/02 17:28:55 ad Exp $");
 #include <sys/boot_flag.h>
 #include <sys/termios.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>
@@ -481,6 +482,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((boothowto & RB_POWERDOWN) == RB_POWERDOWN)
 		if (board && board->ab_poweroff)

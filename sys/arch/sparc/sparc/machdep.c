@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.282 2008/10/16 19:38:36 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.283 2008/11/11 06:46:44 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282 2008/10/16 19:38:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.283 2008/11/11 06:46:44 dyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1100,6 +1100,8 @@ cpu_reboot(int howto, char *user_boot_string)
 
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* If powerdown was requested, do it. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {

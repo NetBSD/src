@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 2008/11/11 06:46:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1364,6 +1364,8 @@ cpu_reboot(int howto, char *user_boot_string)
 
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 #ifdef POWER_SWITCH
 	if (pwr_sw_state == 0 &&

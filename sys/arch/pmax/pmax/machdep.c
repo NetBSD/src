@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223 2008/07/02 17:28:56 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.224 2008/11/11 06:46:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224 2008/11/11 06:46:43 dyoung Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223 2008/07/02 17:28:56 ad Exp $");
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/proc.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -548,6 +549,8 @@ haltsys:
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Finally, halt/reboot the system. */
 	printf("%s\n\n", ((howto & RB_HALT) != 0) ? "halted." : "rebooting...");

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2008/04/28 20:23:34 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2008/11/11 06:46:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2008/04/28 20:23:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2008/11/11 06:46:43 dyoung Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -504,6 +504,8 @@ cpu_reboot(int howto, char *what)
 
 halt_sys:
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
                 printf("\n");

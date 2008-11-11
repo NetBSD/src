@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 2008/11/11 06:46:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 2008/11/11 06:46:40 dyoung Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -156,6 +156,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2008/10/21 15:46:32 cegger Exp $")
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -690,6 +691,8 @@ cpu_reboot(int howto, char *bootstr)
 
 haltsys:
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN

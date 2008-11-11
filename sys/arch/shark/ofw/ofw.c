@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.43 2008/04/27 18:58:47 matt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.44 2008/11/11 06:46:44 dyoung Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,10 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.43 2008/04/27 18:58:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.44 2008/11/11 06:46:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/mbuf.h>
@@ -347,6 +348,7 @@ ofw_boot(howto, bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("Halted while still in the ICE age.\n");
 		printf("The operating system has halted.\n");
 		goto ofw_exit;
@@ -371,6 +373,8 @@ ofw_boot(howto, bootstr)
 	
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;

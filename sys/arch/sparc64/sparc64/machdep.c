@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.227 2008/10/15 06:51:19 wrstuden Exp $ */
+/*	$NetBSD: machdep.c,v 1.228 2008/11/11 06:46:44 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.227 2008/10/15 06:51:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2008/11/11 06:46:44 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -625,6 +625,8 @@ cpu_reboot(register int howto, char *user_boot_string)
 haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 #ifdef MULTIPROCESSOR
 	/* Stop all secondary cpus */
