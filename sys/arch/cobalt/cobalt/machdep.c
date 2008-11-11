@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 2008/11/11 06:46:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2008/11/11 06:46:40 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2008/07/02 17:28:55 ad Exp $");
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -396,6 +397,8 @@ cpu_reboot(int howto, char *bootstr)
 
  haltsys:
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
 		printf("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.645 2008/11/11 06:46:42 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.645 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $")
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
 
 #ifdef IPKDB
 #include <ipkdb/ipkdb.h>
@@ -896,6 +897,7 @@ int	waittime = -1;
 void
 cpu_reboot(int howto, char *bootstr)
 {
+	int s = 0;	/* XXX gcc */
 
 	if (cold) {
 		howto |= RB_HALT;
@@ -915,7 +917,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable interrupts. */
-	splhigh();
+	s = splhigh();
 
 	/* Do a dump if requested. */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
@@ -923,6 +925,14 @@ cpu_reboot(int howto, char *bootstr)
 
 haltsys:
 	doshutdownhooks();
+
+	if (!cold) {
+		splx(s);
+
+		pmf_system_shutdown(boothowto);
+
+		splhigh();
+	}
 
 #ifdef MULTIPROCESSOR
 	x86_broadcast_ipi(X86_IPI_HALT);

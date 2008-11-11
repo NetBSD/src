@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 2008/11/11 06:46:40 dyoung Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2008/11/11 06:46:40 dyoung Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -659,6 +659,8 @@ cpu_reboot(int howto, char *bootstr)
 		dumpsys();
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
 		printf("\n");
