@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.170 2008/10/15 08:13:17 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.171 2008/11/11 16:13:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.170 2008/10/15 08:13:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.171 2008/11/11 16:13:03 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2528,7 +2528,22 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 	KASSERT(cc->cc_previous->pcg_avail == cc->cc_previous->pcg_size);
 
 	pc = cc->cc_cache;
+	pcg = NULL;
 	cc->cc_misses++;
+
+	/*
+	 * If there are no empty groups in the cache then allocate one
+	 * while still unlocked.
+	 */
+	if (__predict_false(pc->pc_emptygroups == NULL)) {
+		if (__predict_true(!pool_cache_disable)) {
+			pcg = pool_get(pc->pc_pcgpool, PR_NOWAIT);
+		}
+		if (__predict_true(pcg != NULL)) {
+			pcg->pcg_avail = 0;
+			pcg->pcg_size = pc->pc_pcgsize;
+		}
+	}
 
 	/* Lock the cache. */
 	if (__predict_false(!mutex_tryenter(&pc->pc_lock))) {
@@ -2542,20 +2557,16 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int s, void *object)
 		 */
 		if (__predict_false(curlwp->l_ncsw != ncsw)) {
 			mutex_exit(&pc->pc_lock);
+			if (pcg != NULL) {
+				pool_put(pc->pc_pcgpool, pcg);
+			}
 			return true;
 		}
 	}
 
 	/* If there are no empty groups in the cache then allocate one. */
-	if (__predict_false((pcg = pc->pc_emptygroups) == NULL)) {
-		if (__predict_true(!pool_cache_disable)) {
-			pcg = pool_get(pc->pc_pcgpool, PR_NOWAIT);
-		}
-		if (__predict_true(pcg != NULL)) {
-			pcg->pcg_avail = 0;
-			pcg->pcg_size = pc->pc_pcgsize;
-		}
-	} else {
+	if (pcg == NULL && pc->pc_emptygroups != NULL) {
+		pcg = pc->pc_emptygroups;
 		pc->pc_emptygroups = pcg->pcg_next;
 		pc->pc_nempty--;
 	}
