@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.369 2008/09/13 09:16:34 wiz Exp $
+.\"	$NetBSD: options.4,v 1.370 2008/11/11 00:08:52 reed Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1044,7 +1044,9 @@ set and clear them.
 With this option, only the superuser can set them, and
 they can't be cleared if the securelevel is greater than 0.
 See also
-.Xr chflags 1 .
+.Xr chflags 1
+and
+.Xr secmodel_securelevel 9 .
 .It Cd options NFS_BOOT_BOOTP
 Enable use of the BOOTP protocol (RFCs 951 and 1048) to get configuration
 information if NFS is used to mount the root file system.
@@ -2262,6 +2264,7 @@ variable (the secure level may only be lowered by a call from process ID 1,
 i.e.,
 .Xr init 8 ) .
 See also
+.Xr secmodel_securelevel 9 ,
 .Xr sysctl 8
 and
 .Xr sysctl 3 .
