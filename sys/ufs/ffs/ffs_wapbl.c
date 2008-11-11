@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.7 2008/11/10 20:12:13 joerg Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.8 2008/11/11 21:02:54 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.7 2008/11/10 20:12:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.8 2008/11/11 21:02:54 joerg Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -153,8 +153,9 @@ ffs_wapbl_replay_finish(struct mount *mp)
 		}
 		vput(vp);
 	}
-	mp->mnt_wapbl_replay = 0;
+	wapbl_replay_stop(wr);
 	wapbl_replay_free(wr);
+	mp->mnt_wapbl_replay = NULL;
 }
 
 /* Callback for wapbl */
