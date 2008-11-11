@@ -1,4 +1,4 @@
-#	$NetBSD: files.gemini,v 1.3 2008/11/09 09:19:44 cliff Exp $
+#	$NetBSD: files.gemini,v 1.4 2008/11/11 19:54:38 cliff Exp $
 #
 # Configuration info for GEMINI CPU support
 # Based on omap/files.omap2
@@ -14,6 +14,7 @@ defflag opt_gemini.h				GEMINI
 defflag opt_gemini.h				SL3516: GEMINI
 defflag opt_gemini.h				GEMINI_MASTER: GEMINI
 defflag opt_gemini.h				GEMINI_SLAVE: GEMINI
+defflag opt_gemini.h				GEMINI_SINGLE: GEMINI
 
 # OBIO just an attach point
 define obio { [addr=-1], [size=0], [intr=-1], [mult=1], [intrbase=-1], [nobyteacc=0]
