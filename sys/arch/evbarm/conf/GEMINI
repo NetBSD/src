@@ -17,7 +17,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	CPU_FA526
 options 	SL3516
-options 	GEMINI_MASTER
+options 	GEMINI_SINGLE
 
 # Architecture options
 
@@ -219,9 +219,11 @@ options PCI_CONFIG_DUMP
 
 # PCI Ethernet
 ex*	at pci? dev ? function ? 	# 3Com 90x[BC]
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
+rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 
