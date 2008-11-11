@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.131 2008/11/11 14:40:19 ad Exp $	*/
+/*	$NetBSD: npx.c,v 1.132 2008/11/11 15:53:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.131 2008/11/11 14:40:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.132 2008/11/11 15:53:53 ad Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -700,13 +700,13 @@ npxsave_lwp(struct lwp *l, bool save)
 		oci = l->l_addr->u_pcb.pcb_fpcpu;
 		if (oci == NULL) {
 			splx(s);
-			return;
+			break;
 		}
 		if (oci == curcpu()) {
 			KASSERT(oci->ci_fpcurlwp == l);
 			npxsave_cpu(save);
 			splx(s);
-			return;
+			break;
 		}
 		splx(s);
 		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
@@ -718,5 +718,10 @@ npxsave_lwp(struct lwp *l, bool save)
 		if (spins > 100000000) {
 			panic("npxsave_lwp: did not");
 		}
+	}
+
+	if (!save) {
+		/* Ensure we restart with a clean slate. */
+	 	l->l_md.md_flags &= ~MDL_USEDFPU;
 	}
 }
