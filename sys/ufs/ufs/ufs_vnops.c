@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.169 2008/08/14 16:19:25 matt Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.170 2008/11/11 08:29:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.169 2008/08/14 16:19:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.170 2008/11/11 08:29:58 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1933,6 +1933,7 @@ ufs_strategy(void *v)
 	struct buf	*bp;
 	struct vnode	*vp;
 	struct inode	*ip;
+	struct mount	*mp;
 	int		error;
 
 	bp = ap->a_bp;
@@ -1957,7 +1958,31 @@ ufs_strategy(void *v)
 		return (0);
 	}
 	vp = ip->i_devvp;
-	return (VOP_STRATEGY(vp, bp));
+
+	error = VOP_STRATEGY(vp, bp);
+	if (error)
+		return error;
+
+	if (!BUF_ISREAD(bp))
+		return 0;
+
+	mp = wapbl_vptomp(vp);
+	if (mp == NULL || mp->mnt_wapbl_replay == NULL ||
+	    !WAPBL_REPLAY_ISOPEN(mp) ||
+	    !WAPBL_REPLAY_CAN_READ(mp, bp->b_blkno, bp->b_bcount))
+		return 0;
+
+	error = biowait(bp);
+	if (error)
+		return error;
+
+	error = WAPBL_REPLAY_READ(mp, bp->b_data, bp->b_blkno, bp->b_bcount);
+	if (error) {
+		mutex_enter(&bufcache_lock);
+		SET(bp->b_cflags, BC_INVAL);
+		mutex_exit(&bufcache_lock);
+	}
+	return error;
 }
 
 /*
