@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.1 2008/11/11 20:17:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.2 2008/11/11 20:37:15 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -82,8 +82,8 @@ pcq_put(pcq_t *pcq, void *item)
 		if (NULL == atomic_cas_ptr(producer, NULL, item)) {
 			/*
 			 * We need to use atomic_cas_ptr since another thread
-			 * might have inserted betweent these two cas operations
-			 * and we don't want to overwrite an producer that's
+			 * might have inserted between these two cas operations
+			 * and we don't want to overwrite a producer that's
 			 * more up-to-date.
 			 */
 			atomic_cas_ptr(&pcq->pcq_producer,
@@ -113,7 +113,7 @@ pcq_put(pcq_t *pcq, void *item)
 
 /*
  * It's assumed that the enclosing structure that contains the pcq will
- * provide appropriate locking to prevent concurrent gets from occuring.
+ * provide appropriate locking to prevent concurrent gets from occurring.
  */
 void *
 pcq_get(pcq_t *pcq)
