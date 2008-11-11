@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.4 2008/11/10 20:30:32 joerg Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.5 2008/11/11 12:45:40 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -378,6 +378,7 @@ int	wapbl_replay_start(struct wapbl_replay **, struct vnode *,
 void	wapbl_replay_stop(struct wapbl_replay *);
 void	wapbl_replay_free(struct wapbl_replay *);
 int	wapbl_replay_write(struct wapbl_replay *, struct vnode *);
+int	wapbl_replay_can_read(struct wapbl_replay *, daddr_t, long);
 int	wapbl_replay_read(struct wapbl_replay *, void *, daddr_t, long);
 
 /****************************************************************/
