@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.61 2008/11/11 16:55:01 pgoyette Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.62 2008/11/11 19:03:06 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.61 2008/11/11 16:55:01 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.62 2008/11/11 19:03:06 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -251,7 +251,7 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	/* Initialize sensor type and previously-sent state */
 
 	see->see_pes.pes_type = powertype;
-	switch (realcrittype) {
+	switch (real_crittype) {
 	case PENVSYS_EVENT_HW_LIMITS:
 	case PENVSYS_EVENT_USER_LIMITS:
 	case PENVSYS_EVENT_BATT_USER_LIMITS:
@@ -262,9 +262,11 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 			see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
 		else if (edata->units == ENVSYS_DRIVE)
 			see->see_evsent = ENVSYS_DRIVE_EMPTY;
+#ifdef DIAGNOSTIC
 		else
 			panic("%s: bad units for "
 			      "PENVSYS_EVENT_STATE_CHANGED", __func__);
+#endif
 		break;
 	case PENVSYS_EVENT_CRITICAL:
 	default:
