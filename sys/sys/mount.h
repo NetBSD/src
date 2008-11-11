@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.181 2008/07/31 05:38:05 simonb Exp $	*/
+/*	$NetBSD: mount.h,v 1.182 2008/11/11 08:29:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -291,6 +291,7 @@ int	fsname##_suspendctl(struct mount *, int)
 struct wapbl_ops {
 	void (*wo_wapbl_discard)(struct wapbl *);
 	int (*wo_wapbl_replay_isopen)(struct wapbl_replay *);
+	int (*wo_wapbl_replay_can_read)(struct wapbl_replay *, daddr_t, long);
 	int (*wo_wapbl_replay_read)(struct wapbl_replay *, void *, daddr_t, long);
 	void (*wo_wapbl_add_buf)(struct wapbl *, struct buf *);
 	void (*wo_wapbl_remove_buf)(struct wapbl *, struct buf *);
@@ -304,6 +305,9 @@ struct wapbl_ops {
     (*(MP)->mnt_wapbl_op->wo_wapbl_discard)((MP)->mnt_wapbl)
 #define WAPBL_REPLAY_ISOPEN(MP)						\
     (*(MP)->mnt_wapbl_op->wo_wapbl_replay_isopen)((MP)->mnt_wapbl_replay)
+#define WAPBL_REPLAY_CAN_READ(MP, BLK, LEN)				\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_replay_can_read)((MP)->mnt_wapbl_replay, \
+    (BLK), (LEN))
 #define WAPBL_REPLAY_READ(MP, DATA, BLK, LEN)				\
     (*(MP)->mnt_wapbl_op->wo_wapbl_replay_read)((MP)->mnt_wapbl_replay,	\
     (DATA), (BLK), (LEN))

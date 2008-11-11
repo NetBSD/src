@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.5 2008/11/10 20:30:31 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.6 2008/11/11 08:29:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.5 2008/11/10 20:30:31 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.6 2008/11/11 08:29:58 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -240,6 +240,7 @@ int wapbl_lazy_truncate = 0;
 struct wapbl_ops wapbl_ops = {
 	.wo_wapbl_discard	= wapbl_discard,
 	.wo_wapbl_replay_isopen	= wapbl_replay_isopen1,
+	.wo_wapbl_replay_can_read = wapbl_replay_can_read,
 	.wo_wapbl_replay_read	= wapbl_replay_read,
 	.wo_wapbl_add_buf	= wapbl_add_buf,
 	.wo_wapbl_remove_buf	= wapbl_remove_buf,
@@ -2768,6 +2769,24 @@ wapbl_replay_write(struct wapbl_replay *wr, struct vnode *fsdevvp)
  out:
 	wapbl_free(scratch1);
 	return error;
+}
+
+int
+wapbl_replay_can_read(struct wapbl_replay *wr, daddr_t blk, long len)
+{
+	struct wapbl_wc_header *wch = &wr->wr_wc_header;
+	int fsblklen = 1<<wch->wc_fs_dev_bshift;
+
+	KDASSERT(wapbl_replay_isopen(wr));
+	KASSERT((len % fsblklen) == 0);
+
+	while (len != 0) {
+		struct wapbl_blk *wb = wapbl_blkhash_get(wr, blk);
+		if (wb)
+			return 1;
+		len -= fsblklen;
+	}
+	return 0;
 }
 
 int
