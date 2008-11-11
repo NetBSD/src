@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.26 2008/06/29 21:00:08 bouyer Exp $	*/
+/*	$NetBSD: fpu.c,v 1.27 2008/11/11 13:45:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26 2008/06/29 21:00:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.27 2008/11/11 13:45:10 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -376,8 +376,7 @@ fpusave_lwp(struct lwp *l, bool save)
 #ifdef MULTIPROCESSOR
 		int spincount;
 
-		x86_send_ipi(oci,
-		    save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
+		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
 
 		spincount = 0;
 		while (l->l_addr->u_pcb.pcb_fpcpu != NULL) {
