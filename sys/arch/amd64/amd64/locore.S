@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.47 2008/06/02 14:41:41 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.48 2008/11/11 14:40:18 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -959,15 +959,14 @@ ENTRY(cpu_switchto)
 2:
 #ifndef XEN
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
-	movl	PCB_CR0(%r14),%ecx
+	movl	PCB_CR0(%r14),%ecx	/* has CR0_TS clear */
 	movq	%cr0,%rdx
 
 	/*
 	 * If our floating point registers are on a different CPU,
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
-	movq	PCB_FPCPU(%r14),%rax
-	cmpq	CPUVAR(SELF),%rax
+	cmpq	CPUVAR(FPCURLWP),%r12
 	je	3f
 	orq	$CR0_TS,%rcx
 
