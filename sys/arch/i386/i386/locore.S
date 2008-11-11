@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.78 2008/10/19 14:12:28 joerg Exp $	*/
+/*	$NetBSD: locore.S,v 1.79 2008/11/11 14:40:18 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.78 2008/10/19 14:12:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.79 2008/11/11 14:40:18 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -910,7 +910,7 @@ ENTRY(dumpsys)
 END(dumpsys)
 
 /*
- * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp,
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct *newlwp,
  *			    bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
@@ -1008,15 +1008,14 @@ ENTRY(cpu_switchto)
 2:
 #ifndef XEN
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
-	movl	PCB_CR0(%ebx),%ecx
+	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
 	movl	%cr0,%edx
 
 	/*
 	 * If our floating point registers are on a different CPU,
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
-	movl	PCB_FPCPU(%ebx),%eax
-	cmpl	CPUVAR(SELF),%eax
+	cmpl	CPUVAR(FPCURLWP),%edi
 	je	3f
 	orl	$CR0_TS,%ecx
 
