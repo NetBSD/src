@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_start.S,v 1.3 2008/11/10 04:33:42 cliff Exp $	*/
+/*	$NetBSD: gemini_start.S,v 1.4 2008/11/11 06:39:00 cliff Exp $	*/
 
 /*
  * Machine dependant startup code for GEMINI boards.
@@ -101,7 +101,7 @@
 #include <arm/gemini/gemini_reg.h>
 #include <evbarm/gemini/gemini.h>
 
-RCSID("$NetBSD: gemini_start.S,v 1.3 2008/11/10 04:33:42 cliff Exp $")
+RCSID("$NetBSD: gemini_start.S,v 1.4 2008/11/11 06:39:00 cliff Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -303,7 +303,7 @@ Ll1_s_frame:
 	.word	L1_S_FRAME
 Ltemp_l1_table:
 	/* Put the temporary L1 translation table at the end of SDRAM. */
-	.word	0x10000000 + MEMSIZE * 0x100000 - L1_TABLE_SIZE
+	.word	MEMSIZE * 0x100000 - L1_TABLE_SIZE
 
 /*
  * Coprocessor register initialization values
