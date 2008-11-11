@@ -1,7 +1,7 @@
-/*	$NetBSD: gemini_obio.c,v 1.3 2008/11/10 04:11:17 cliff Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.4 2008/11/11 19:54:38 cliff Exp $	*/
 
 /* adapted from:
- *	$Id: gemini_obio.c,v 1.3 2008/11/10 04:11:17 cliff Exp $
+ *	$Id: gemini_obio.c,v 1.4 2008/11/11 19:54:38 cliff Exp $
  */
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.3 2008/11/10 04:11:17 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.4 2008/11/11 19:54:38 cliff Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -326,13 +326,13 @@ static const struct {
 	bus_addr_t addr;
 	bool required;
 } critical_devs[] = {
-#ifdef GEMINI_MASTER
+#if defined(GEMINI_MASTER) || defined(GEMINI_SINGLE)
 	{ .name = "geminiicu0",   .addr = 0x48000000, .required = true },
 	{ .name = "geminiwdt0",   .addr = 0x41000000, .required = true },
 	{ .name = "geminitmr0",   .addr = 0x43000000, .required = true },
 	{ .name = "geminitmr2",   .addr = 0x43000000, .required = true },
 	{ .name = "com0",         .addr = 0x42000000, .required = true },
-#else
+#elif defined(GEMINI_SLAVE)
 	{ .name = "geminiicu1",   .addr = 0x49000000, .required = true },
 	{ .name = "geminitmr1",   .addr = 0x43000000, .required = true },
 	{ .name = "geminitmr2",   .addr = 0x43000000, .required = true },
