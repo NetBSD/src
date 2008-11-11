@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc,v 1.28 2008/11/03 16:45:45 macallan Exp $
+# $NetBSD: md.sparc,v 1.29 2008/11/11 03:44:45 macallan Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/Xsun					-unknown-	x11
@@ -302,6 +302,8 @@
 ./usr/X11R7/lib/modules/dri/r300_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so.0		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ag10e_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/ag10e_drv.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg
@@ -464,6 +466,7 @@
 ./usr/X11R7/man/cat1/pcitweak.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/scanpci.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/xorgconfig.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/ag10e.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/ati.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/exa.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg
@@ -482,6 +485,7 @@
 ./usr/X11R7/man/html1/pcitweak.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/scanpci.html			-unknown-	html,xorg
 ./usr/X11R7/man/html1/xorgconfig.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/ag10e.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/ati.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/exa.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg
@@ -500,6 +504,7 @@
 ./usr/X11R7/man/man1/pcitweak.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/scanpci.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/xorgconfig.1			-unknown-	.man,xorg
+./usr/X11R7/man/man4/ag10e.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/ati.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/exa.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg
