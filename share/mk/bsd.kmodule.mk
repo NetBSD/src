@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.14 2008/11/05 00:54:25 elad Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.15 2008/11/12 12:35:54 ad Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -73,7 +73,7 @@ ${_PROG}:	.MADE					# no build at install
 		${INSTALL_DIR} $$d; \
 	done
 	${INSTALL_DIR} ${KMODULEDIR}
-	${INSTALL_FILE} -o ${KMODOWN} -g ${KMODGRP} -m ${KMODMODE} \
+	${INSTALL_FILE} -o ${KMODULEOWN} -g ${KMODULEGRP} -m ${KMODULEMODE} \
 		${.ALLSRC} ${.TARGET}
 
 kmodinstall::	${_PROG}

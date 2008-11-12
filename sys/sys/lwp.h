@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.114 2008/10/21 12:22:00 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.115 2008/11/12 12:36:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -327,7 +327,7 @@ void lwp_whatis(uintptr_t, void (*)(const char *, ...));
 
 
 /*
- * Lock an LWP. XXXLKM
+ * Lock an LWP. XXX _MODULE
  */
 static inline void
 lwp_lock(lwp_t *l)
@@ -345,7 +345,7 @@ lwp_lock(lwp_t *l)
 }
 
 /*
- * Unlock an LWP. XXXLKM
+ * Unlock an LWP. XXX _MODULE
  */
 static inline void
 lwp_unlock(lwp_t *l)
@@ -387,7 +387,8 @@ int lwp_create(lwp_t *, struct proc *, vaddr_t, bool, int,
     void *, size_t, void (*)(void *), void *, lwp_t **, int);
 
 /*
- * We should provide real stubs for the below that LKMs can use.
+ * XXX _MODULE
+ * We should provide real stubs for the below that modules can use.
  */
 
 static inline void

@@ -1,8 +1,11 @@
-/*	$NetBSD: kern_module.c,v 1.24 2008/10/22 11:19:15 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.25 2008/11/12 12:36:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software developed for The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,10 +33,8 @@
  * Kernel module support.
  */
 
-#include "opt_modular.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.24 2008/10/22 11:19:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.25 2008/11/12 12:36:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.24 2008/10/22 11:19:15 ad Exp $");
 
 #include <machine/stdarg.h>
 
-#ifndef LKM	/* XXX */
-struct vm_map *lkm_map;
-#endif
+struct vm_map *module_map;
 
 struct modlist	module_list = TAILQ_HEAD_INITIALIZER(module_list);
 struct modlist	module_bootlist = TAILQ_HEAD_INITIALIZER(module_bootlist);
@@ -97,10 +96,11 @@ module_error(const char *fmt, ...)
 void
 module_init(void)
 {
-	extern struct vm_map *lkm_map;
+	extern struct vm_map *module_map;
 
-	if (lkm_map == NULL)
-		lkm_map = kernel_map;
+	if (module_map == NULL) {
+		module_map = kernel_map;
+	}
 	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
 #ifdef MODULAR	/* XXX */
 	module_init_md();

@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.23 2007/12/31 15:32:06 ad Exp $
+# $NetBSD: MRCOFFEE,v 1.24 2008/11/12 12:36:06 ad Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.23 $"
+#ident 		"MRCOFFEE-$Revision: 1.24 $"
 
 maxusers	32
 
@@ -69,7 +69,6 @@ options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 ## Loadable kernel module support; still under development.
-options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

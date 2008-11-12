@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_rssadapt.c,v 1.15 2008/06/24 10:33:46 gmcgarry Exp $ */
+/* $NetBSD: ieee80211_rssadapt.c,v 1.16 2008/11/12 12:36:28 ad Exp $ */
 /*-
  * Copyright (c) 2003, 2004 David Young.  All rights reserved.
  *
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.15 2008/06/24 10:33:46 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_rssadapt.c,v 1.16 2008/11/12 12:36:28 ad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -142,7 +142,7 @@ sysctl_ieee80211_rssadapt_expavgctl(SYSCTLFN_ARGS)
 /*
  * Setup sysctl(3) MIB, net.ieee80211.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_ieee80211_rssadapt,
     "sysctl ieee80211 rssadapt subtree setup")

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.160 2008/04/24 15:35:27 ad Exp $	   */
+/*	$NetBSD: pmap.c,v 1.161 2008/11/12 12:36:09 ad Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.160 2008/04/24 15:35:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.161 2008/11/12 12:36:09 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -237,8 +237,8 @@ calc_kvmsize(vsize_t usrptsize)
 #if VAX46 || VAX49
 	kvmsize += 0x800000; /* 8 MB framebuffer */
 #endif
-#ifdef LKM
-	/* LKMs are allocated out of kernel_map */
+#ifdef MODULAR
+	/* Modules are allocated out of kernel_map */
 #define MAXLKMSIZ	0x100000	/* XXX */
 	kvmsize += MAXLKMSIZ;
 #endif

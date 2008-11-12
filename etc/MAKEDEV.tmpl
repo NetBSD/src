@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.113 2008/09/14 13:59:54 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.114 2008/11/12 12:35:52 ad Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -246,7 +246,6 @@
 #	ite*	terminal emulator interface to HP300 graphics devices
 #	joy*	joystick device
 #	kttcp	kernel ttcp helper device
-#	lkm	loadable kernel modules interface
 #	lockstat kernel locking statistics
 #	magma*	Magma multiport serial/parallel cards
 #	midi*	MIDI
@@ -708,7 +707,7 @@ all)
 	makedev bpf
 	makedev tun0 tun1 tun2 tun3
 	makedev ipl pf crypto random
-	makedev lkm lockstat clockctl cpuctl
+	makedev lockstat clockctl cpuctl
 	makedev atabus0 atabus1 atabus2 atabus3
 	makedev tap tap0 tap1 tap2 tap3
 	makedev gpio gpio0 gpio1 gpio2 gpio3 gpio4 gpio5 gpio6 gpio7
@@ -1247,10 +1246,6 @@ cmos)
 
 speaker)
 	mkdev speaker c %spkr_chr% 0
-	;;
-
-lkm)
-	mkdev lkm c %lkm_chr% 0 640 $g_kmem
 	;;
 
 lockstat)

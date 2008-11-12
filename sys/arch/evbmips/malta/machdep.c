@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2008/11/11 06:46:42 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2008/11/12 12:35:59 ad Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2008/11/11 06:46:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2008/11/12 12:35:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -136,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -329,7 +329,7 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init(0, 0, 0);
 #endif
 

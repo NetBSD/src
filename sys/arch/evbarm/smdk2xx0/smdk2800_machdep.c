@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.27 2008/11/11 06:46:41 dyoung Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.28 2008/11/12 12:35:59 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.27 2008/11/11 06:46:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.28 2008/11/12 12:35:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -835,7 +835,7 @@ initarm(void *arg)
 	}
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* Firmware doesn't load symbols. */
 	ksyms_init(0, NULL, NULL);
 #endif
@@ -864,7 +864,7 @@ consinit(void)
 
 	pmap_devmap_register(smdk2800_devmap);
 
-	s3c2800_clock_freq2(ioreg_vaddr(S3C2800_CLKMAN_BASE), NULL, NULL, &pclk);
+	s3c2800_clock_freq2(ioreg_vaddr(S3C2800_CMODULARAN_BASE), NULL, NULL, &pclk);
 
 #if NSSCOM > 0
 #ifdef SSCOM0CONSOLE
@@ -919,7 +919,7 @@ kgdb_port_init(void)
 		unit = 1;
 
 	if (unit >= 0) {
-		s3c2800_clock_freq2(ioreg_vaddr(S3C2800_CLKMAN_BASE), 
+		s3c2800_clock_freq2(ioreg_vaddr(S3C2800_CMODULARAN_BASE), 
 		    NULL, NULL, &pclk);
 
 		s3c2800_sscom_kgdb_attach(&s3c2xx0_bs_tag,

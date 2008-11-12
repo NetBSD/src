@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2008/11/11 06:46:44 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 2008/11/12 12:36:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2008/11/11 06:46:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2008/11/12 12:36:08 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -180,7 +180,7 @@ consinit(void)
 	 */
 	cninit();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern int nsym;
 		extern char *ssym, *esym;

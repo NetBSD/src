@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.145 2008/10/15 06:51:19 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.146 2008/11/12 12:36:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.145 2008/10/15 06:51:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.146 2008/11/12 12:36:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.145 2008/10/15 06:51:19 wrstud
 #include "opt_sysv.h"
 #include "opt_nfsserver.h"
 #include "opt_syscall_debug.h"
-#include "opt_ptrace.h"
 #include "opt_sa.h"
 
 #include "fs_lfs.h"
@@ -47,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.145 2008/10/15 06:51:19 wrstud
 /*
  * Though COMPAT_OLDSOCK is needed only for COMPAT_43, SunOS, Linux,
  * HP-UX, FreeBSD, Ultrix, OSF1, we define it unconditionally so that
- * this would be LKM-safe.
+ * this would be module-safe.
  */
 #define COMPAT_OLDSOCK /* used by <sys/socket.h> */
 
@@ -424,7 +423,6 @@ netbsd32_setuid(struct lwp *l, const struct netbsd32_setuid_args *uap, register_
 int
 netbsd32_ptrace(struct lwp *l, const struct netbsd32_ptrace_args *uap, register_t *retval)
 {
-#if defined(PTRACE) || defined(_LKM)
 	/* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
@@ -437,14 +435,8 @@ netbsd32_ptrace(struct lwp *l, const struct netbsd32_ptrace_args *uap, register_
 	NETBSD32TO64_UAP(pid);
 	NETBSD32TOP_UAP(addr, void *);
 	NETBSD32TO64_UAP(data);
-#ifdef _LKM
+
 	return (*sysent[SYS_ptrace].sy_call)(l, &ua, retval);
-#else
-	return sys_ptrace(l, &ua, retval);
-#endif
-#else
-	return (ENOSYS);
-#endif /* PTRACE || _LKM */
 }
 
 int

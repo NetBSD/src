@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.121 2008/06/20 17:05:26 peter Exp $
+#	$NetBSD: special,v 1.122 2008/11/12 12:35:52 ad Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -92,7 +92,6 @@
 ./etc/iscsi/auths		type=file mode=0600
 ./etc/iscsi/targets		type=file mode=0644
 ./etc/ld.so.conf		type=file mode=0644 optional
-./etc/lkm.conf			type=file mode=0644 optional
 ./etc/localtime			type=link mode=0755
 ./etc/locate.conf		type=file mode=0644 optional
 ./etc/login.conf		type=file mode=0644 optional
@@ -219,9 +218,6 @@
 ./etc/rc.d/isdnd		type=file mode=0555
 ./etc/rc.d/kdc			type=file mode=0555
 ./etc/rc.d/ldconfig		type=file mode=0555
-./etc/rc.d/lkm1			type=file mode=0555
-./etc/rc.d/lkm2			type=file mode=0555
-./etc/rc.d/lkm3			type=file mode=0555
 ./etc/rc.d/local		type=file mode=0555
 ./etc/rc.d/lpd			type=file mode=0555
 ./etc/rc.d/mixerctl		type=file mode=0555
@@ -289,7 +285,6 @@
 ./etc/rc.d/ypbind		type=file mode=0555
 ./etc/rc.d/yppasswdd		type=file mode=0555
 ./etc/rc.d/ypserv		type=file mode=0555
-./etc/rc.lkm			type=file mode=0644
 ./etc/rc.local			type=file mode=0644 optional
 ./etc/rc.shutdown		type=file mode=0644
 ./etc/rc.shutdown.local		type=file mode=0644 optional

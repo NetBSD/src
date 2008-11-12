@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.163 2008/09/07 22:36:36 cube Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.164 2008/11/12 12:36:16 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.163 2008/09/07 22:36:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.164 2008/11/12 12:36:16 ad Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -800,7 +800,7 @@ rescan_with_cfdata(const struct cfdata *cf)
   
 
 	/*
-	 * "alldevs" is likely longer than an LKM's cfdata, so make it
+	 * "alldevs" is likely longer than a modules's cfdata, so make it
 	 * the outer loop.
 	 */
 	for (d = deviter_first(&di, 0); d != NULL; d = deviter_next(&di)) {

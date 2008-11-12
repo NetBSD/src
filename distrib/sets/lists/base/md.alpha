@@ -1,10 +1,10 @@
-# $NetBSD: md.alpha,v 1.35 2005/08/20 20:15:57 abs Exp $
+# $NetBSD: md.alpha,v 1.36 2008/11/12 12:35:50 ad Exp $
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/libalpha.so				base-sys-shlib
 ./usr/lib/libalpha.so.0				base-sys-shlib
 ./usr/lib/libalpha.so.0.0			base-sys-shlib
-./usr/lkm/dummy_pci.o				base-sys-lkm
-./usr/lkm/wi_pcmcia.o				base-sys-lkm
+./usr/lkm/dummy_pci.o				base-obsolete		obsolete
+./usr/lkm/wi_pcmcia.o				base-obsolete		obsolete
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/bootxx				base-obsolete		obsolete
 ./usr/mdec/bootxx.old				base-obsolete		obsolete

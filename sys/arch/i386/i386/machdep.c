@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.648 2008/11/12 01:14:01 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.649 2008/11/12 12:36:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.648 2008/11/12 01:14:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.649 2008/11/12 12:36:02 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1386,7 +1386,7 @@ init386_pte0(void)
 static void
 init386_ksyms(void)
 {
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	extern int end;
 	struct btinfo_symtab *symtab;
 

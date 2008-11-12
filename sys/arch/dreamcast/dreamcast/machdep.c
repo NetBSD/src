@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2008/11/11 06:46:41 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2008/11/12 12:35:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2008/11/11 06:46:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2008/11/12 12:35:58 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -139,7 +139,7 @@ dreamcast_startup(void)
 	pmap_bootstrap();
 
 	/* Debugger. */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init(0, NULL, NULL);
 #endif
 #if defined(KGDB) && (NSCIF > 0)

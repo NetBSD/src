@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.35 2008/05/30 20:10:02 tsutsui Exp $
+# $NetBSD: SLAB,v 1.36 2008/11/12 12:36:04 ad Exp $
 #
 # deberg's development machine
 #
@@ -19,7 +19,6 @@ options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE	# POSIX semaphore support
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
-options 	LKM		# loadable kernel modules
 options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

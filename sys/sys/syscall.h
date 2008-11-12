@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.217 2008/10/16 20:12:23 wrstuden Exp $ */
+/* $NetBSD: syscall.h,v 1.218 2008/11/12 12:36:28 ad Exp $ */
 
 /*
  * System call numbers.
@@ -618,19 +618,6 @@
 /* syscall: "poll" ret: "int" args: "struct pollfd *" "u_int" "int" */
 #define	SYS_poll	209
 
-#if defined(LKM) || !defined(_KERNEL)
-#else	/* !LKM */
-				/* 210 is excluded lkmnosys */
-				/* 211 is excluded lkmnosys */
-				/* 212 is excluded lkmnosys */
-				/* 213 is excluded lkmnosys */
-				/* 214 is excluded lkmnosys */
-				/* 215 is excluded lkmnosys */
-				/* 216 is excluded lkmnosys */
-				/* 217 is excluded lkmnosys */
-				/* 218 is excluded lkmnosys */
-				/* 219 is excluded lkmnosys */
-#endif	/* !LKM */
 #if defined(SYSVSEM) || !defined(_KERNEL)
 /* syscall: "compat_14___semctl" ret: "int" args: "int" "int" "int" "union __semun *" */
 #define	SYS_compat_14___semctl	220

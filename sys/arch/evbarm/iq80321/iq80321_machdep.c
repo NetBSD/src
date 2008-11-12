@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.40 2008/11/11 06:46:41 dyoung Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.41 2008/11/12 12:35:59 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.40 2008/11/11 06:46:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.41 2008/11/12 12:35:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -784,7 +784,7 @@ initarm(void *arg)
 	boothowto = BOOTHOWTO;
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* Firmware doesn't load symbols. */
 	ksyms_init(0, NULL, NULL);
 #endif

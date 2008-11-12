@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.23 2008/05/05 19:33:09 jmmv Exp $
+# $NetBSD: mi,v 1.24 2008/11/12 12:35:51 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -65,7 +65,7 @@
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs/h_tools.debug			tests-fs-debug		debug
 ./usr/libdata/debug/usr/tests/modules					tests-sys-debug
-./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug,modular
+./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/sys					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-net-debug		debug
@@ -388,11 +388,11 @@
 ./usr/tests/games/t_factor			tests-games-tests
 ./usr/tests/modules				tests-sys-tests
 ./usr/tests/modules/Atffile			tests-sys-tests
-./usr/tests/modules/k_helper			tests-sys-tests		modular
-./usr/tests/modules/k_helper/k_helper.kmod	tests-sys-tests		modular
+./usr/tests/modules/k_helper			tests-sys-tests	
+./usr/tests/modules/k_helper/k_helper.kmod	tests-sys-tests
 ./usr/tests/modules/k_helper.o			tests-obsolete		obsolete
-./usr/tests/modules/t_modctl			tests-sys-tests		modular
-./usr/tests/modules/t_modload			tests-sys-tests		modular
+./usr/tests/modules/t_modctl			tests-sys-tests
+./usr/tests/modules/t_modload			tests-sys-tests
 ./usr/tests/net					tests-net-tests
 ./usr/tests/net/Atffile				tests-net-tests
 ./usr/tests/net/sys				tests-net-tests

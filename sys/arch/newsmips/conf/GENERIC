@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.104 2008/08/10 15:31:21 tls Exp $
+# $NetBSD: GENERIC,v 1.105 2008/11/12 12:36:04 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.104 $"
+#ident 		"GENERIC-$Revision: 1.105 $"
 
 maxusers	16
 
@@ -38,7 +38,6 @@ options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-options 	LKM			# loadable kernel modules
 options 	NTP			# network time protocol
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

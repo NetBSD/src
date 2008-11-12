@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.119 2008/10/30 16:27:15 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.120 2008/11/12 12:35:58 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.119 $"
+#ident 		"GENERIC-$Revision: 1.120 $"
 
 maxusers	32
 
@@ -32,7 +32,6 @@ options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-options 	LKM		# loadable kernel modules
 options 	NTP		# network time protocol
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

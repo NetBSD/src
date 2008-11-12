@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.189 2008/11/04 07:21:24 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.190 2008/11/12 12:35:57 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.189 2008/11/04 07:21:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190 2008/11/12 12:35:57 ad Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -5797,7 +5797,7 @@ pmap_devmap_find_va(vaddr_t va, vsize_t size)
  * These routines are called when the CPU type is identified to set up
  * the PTE prototypes, cache modes, etc.
  *
- * The variables are always here, just in case LKMs need to reference
+ * The variables are always here, just in case modules need to reference
  * them (though, they shouldn't).
  */
 

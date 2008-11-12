@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2008/11/11 06:46:42 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 2008/11/12 12:36:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2008/11/11 06:46:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2008/11/12 12:36:01 ad Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -156,7 +156,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -261,7 +261,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #endif
 	extern struct user *proc0paddr;
 	extern char edata[], end[];
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	extern void *esym;
 #endif
 	void *kernend;
@@ -269,7 +269,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	int i;
 
 	/* clear the BSS segment */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	size_t symbolsz = 0;
 	Elf_Ehdr *eh = (void *)end;
 	if (memcmp(eh->e_ident, ELFMAG, SELFMAG) == 0 &&
@@ -293,7 +293,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		kernend = (void *)mips_round_page(esym);
 		bzero(edata, end - edata);
 	} else
-#endif /* NKSYMS || defined(DDB) || defined(LKM) */
+#endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 	{
 		kernend = (void *)mips_round_page(end);
 		memset(edata, 0, (char *)kernend - edata);
@@ -447,7 +447,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	}
 #endif /* MFS */
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
 		ksyms_init(symbolsz, &end, esym);

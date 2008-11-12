@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.87 2008/11/11 06:46:42 dyoung Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.88 2008/11/12 12:36:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.87 2008/11/11 06:46:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.88 2008/11/12 12:36:01 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.87 2008/11/11 06:46:42 dyoung Exp 
 #include <sys/conf.h>	/* XXX for consinit related hacks */
 #include <sys/device.h>
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -303,7 +303,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	vaddr_t freemempos;
 	vsize_t pt_size;
 	int loop, i;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	Elf_Shdr *sh;
 #endif
 
@@ -335,7 +335,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	kerneldatasize = (uint32_t)&end - (uint32_t)KERNEL_TEXT_BASE;
 
 	symbolsize = 0;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (!memcmp(&end, "\177ELF", 4)) {
 		sh = (Elf_Shdr *)((char *)&end + ((Elf_Ehdr *)&end)->e_shoff);
 		loop = ((Elf_Ehdr *)&end)->e_shnum;
@@ -706,7 +706,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 #ifdef DDB
 	db_machine_init();
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.8 2008/11/11 06:46:41 dyoung Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.9 2008/11/12 12:35:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.8 2008/11/11 06:46:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.9 2008/11/12 12:35:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -833,7 +833,7 @@ initarm(void *arg)
 	boothowto = BOOTHOWTO;
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* Firmware doesn't load symbols. */
 	ksyms_init(0, NULL, NULL);
 #endif

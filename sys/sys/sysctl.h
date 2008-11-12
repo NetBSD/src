@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.177 2008/08/27 08:53:55 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.178 2008/11/12 12:36:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1057,7 +1057,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	oldlenp, newp, newlen, \
 	oname, l, node
 
-#ifdef _LKM
+#ifdef _MODULE
 
 #define SYSCTL_SETUP_PROTO(name)				\
 	void name(struct sysctllog **)
@@ -1077,7 +1077,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
 
-#else /* !_LKM */
+#else /* !_MODULE */
 
 #define SYSCTL_SETUP_PROTO(name)
 #ifdef SYSCTL_DEBUG_SETUP
@@ -1096,7 +1096,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 #endif /* !SYSCTL_DEBUG_SETUP */
 typedef void (*sysctl_setup_func)(struct sysctllog **);
 
-#endif /* !_LKM */
+#endif /* !_MODULE */
 
 /*
  * Internal sysctl function calling convention:

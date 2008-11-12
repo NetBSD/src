@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 2008/11/11 06:46:40 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100 2008/11/12 12:35:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2008/11/11 06:46:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2008/11/12 12:35:58 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2008/11/11 06:46:40 dyoung Exp $");
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #define ELFSIZE		DB_ELFSIZE
@@ -152,7 +152,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	u_long first, last;
 	extern char edata[], end[];
 	const char *bi_msg;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	int nsym = 0;
 	char *ssym = 0;
 	struct btinfo_symtab *bi_syms;
@@ -165,7 +165,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	if (memcmp(((Elf_Ehdr *)end)->e_ident, ELFMAG, SELFMAG) == 0 &&
 	    ((Elf_Ehdr *)end)->e_ident[EI_CLASS] == ELFCLASS) {
 		esym = end;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 		esym += ((Elf_Ehdr *)end)->e_entry;
 #endif
 		kernend = (char *)mips_round_page(esym);
@@ -209,7 +209,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	} else
 		bi_msg = "invalid bootinfo (standalone boot?)\n";
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 
 	/* Load symbol table if present */
@@ -284,7 +284,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 
 	decode_bootstring();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if ((bi_syms != NULL) && (esym != NULL))
 		ksyms_init(esym - ssym, ssym, esym);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.227 2008/11/07 00:20:03 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.228 2008/11/12 12:36:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.227 2008/11/07 00:20:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.228 2008/11/12 12:36:11 ad Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -272,11 +272,11 @@ wi_card_ident[] = {
 	{ 0,	NULL,	0 },
 };
 
-#ifndef _LKM
+#ifndef _MODULE
 /*
  * Setup sysctl(3) MIB, hw.wi.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_wi, "sysctl wi(4) subtree setup")
 {

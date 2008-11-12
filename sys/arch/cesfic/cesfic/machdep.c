@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2008/11/11 06:46:40 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 2008/11/12 12:35:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2008/11/11 06:46:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2008/11/12 12:35:57 ad Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -272,7 +272,7 @@ consinit()
 		zscons.cn_getc = zs_kgdb_cngetc;
 	}
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init(0, 0, 0);
 #endif
 #ifdef DDB
