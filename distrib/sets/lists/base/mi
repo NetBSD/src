@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.782 2008/11/12 12:35:50 ad Exp $
+# $NetBSD: mi,v 1.783 2008/11/12 13:17:27 pooka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1047,7 +1047,7 @@
 ./usr/include/fs/efs				base-c-usr
 ./usr/include/fs/hfs				base-c-usr
 ./usr/include/fs/hfsp				base-obsolete		obsolete
-./usr/include/fs/puffs				base-c-usr
+./usr/include/fs/puffs				base-puffs-usr
 ./usr/include/fs/smbfs				base-c-usr
 ./usr/include/fs/sysvbfs			base-c-usr
 ./usr/include/fs/tmpfs				base-c-usr
@@ -1341,7 +1341,7 @@
 ./usr/sbin/fsinfo				base-sysutil-bin
 ./usr/sbin/fssconfig				base-sysutil-bin
 ./usr/sbin/ftp-proxy				base-pf-bin		pf
-./usr/sbin/fusermount				base-miscfs-bin		puffs
+./usr/sbin/fusermount				base-refuse-bin
 ./usr/sbin/fwctl				base-sysutil-bin
 ./usr/sbin/g711conv				base-obsolete		obsolete
 ./usr/sbin/getencstat				base-sysutil-bin
@@ -1424,10 +1424,10 @@
 ./usr/sbin/mopd					base-bootserver-bin
 ./usr/sbin/mopprobe				base-bootserver-bin
 ./usr/sbin/moptrace				base-bootserver-bin
-./usr/sbin/mount_9p				base-miscfs-bin		puffs
-./usr/sbin/mount_psshfs				base-miscfs-bin		puffs
-./usr/sbin/mount_puffsportal			base-miscfs-bin		puffs
-./usr/sbin/mount_sysctlfs			base-miscfs-bin		puffs
+./usr/sbin/mount_9p				base-puffs-bin
+./usr/sbin/mount_psshfs				base-puffs-bin
+./usr/sbin/mount_puffsportal			base-puffs-bin
+./usr/sbin/mount_sysctlfs			base-puffs-bin
 ./usr/sbin/mountd				base-nfsserver-bin
 ./usr/sbin/moused				base-sysutil-bin
 ./usr/sbin/mrinfo				base-router-bin
@@ -1525,19 +1525,19 @@
 ./usr/sbin/rtadvd				base-router-bin		use_inet6
 ./usr/sbin/rtquery				base-netutil-bin
 ./usr/sbin/rtsold				base-netutil-bin	inet6
-./usr/sbin/rump_cd9660				base-miscfs-bin		puffs
-./usr/sbin/rump_efs				base-miscfs-bin		puffs
-./usr/sbin/rump_ext2fs				base-miscfs-bin		puffs
-./usr/sbin/rump_ffs				base-miscfs-bin		puffs
-./usr/sbin/rump_hfs				base-miscfs-bin		puffs
-./usr/sbin/rump_lfs				base-miscfs-bin		puffs
-./usr/sbin/rump_msdos				base-miscfs-bin		puffs
-./usr/sbin/rump_nfs				base-miscfs-bin		puffs
-./usr/sbin/rump_ntfs				base-miscfs-bin		puffs
-./usr/sbin/rump_syspuffs			base-miscfs-bin		puffs
-./usr/sbin/rump_sysvbfs				base-miscfs-bin		puffs
-./usr/sbin/rump_tmpfs				base-miscfs-bin		puffs
-./usr/sbin/rump_udf				base-miscfs-bin		puffs
+./usr/sbin/rump_cd9660				base-puffs-bin
+./usr/sbin/rump_efs				base-puffs-bin
+./usr/sbin/rump_ext2fs				base-puffs-bin
+./usr/sbin/rump_ffs				base-puffs-bin
+./usr/sbin/rump_hfs				base-puffs-bin
+./usr/sbin/rump_lfs				base-puffs-bin
+./usr/sbin/rump_msdos				base-puffs-bin
+./usr/sbin/rump_nfs				base-puffs-bin
+./usr/sbin/rump_ntfs				base-puffs-bin
+./usr/sbin/rump_syspuffs			base-puffs-bin
+./usr/sbin/rump_sysvbfs				base-puffs-bin
+./usr/sbin/rump_tmpfs				base-puffs-bin
+./usr/sbin/rump_udf				base-puffs-bin
 ./usr/sbin/rwhod				base-netutil-bin
 ./usr/sbin/sa					base-sysutil-bin
 ./usr/sbin/screenblank				base-sysutil-bin

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.239 2008/11/12 12:35:54 ad Exp $
+#	$NetBSD: bsd.README,v 1.240 2008/11/12 13:17:27 pooka Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -283,13 +283,6 @@ MKPOSTFIX	If "no", don't build or install postfix(1).
 
 MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
 		Default: yes
-
-MKPUFFS		If "no", don't build librefuse (lib/librefuse) or
-		puffs applications (usr.sbin/puffs).  NOTE: libpuffs
-		is always built due to historic reasons.  This flag will
-		disappear once puffs is no longer considered experimental,
-		i.e. it will effectively default to "yes".
-		Default: no
 
 MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
 		MKMAN=no MKNLS=no".
