@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.11 2008/10/15 16:03:29 wrstuden Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.12 2008/11/12 14:29:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.11 2008/10/15 16:03:29 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.12 2008/11/12 14:29:31 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -72,10 +72,13 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.11 2008/10/15 16:03:29 wrstuden Exp 
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 #include <sys/ktrace.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 /*
  * Nonexistent system call-- signal process (may want to handle it).  Flag
@@ -160,7 +163,6 @@ cpu_kpreempt_disabled(void)
 # endif
 #endif	/* !__HAVE_PREEMPTION */
 
-/* ARGSUSED */
 int
 sys_nosys(struct lwp *l, const void *v, register_t *retval)
 {
@@ -169,6 +171,65 @@ sys_nosys(struct lwp *l, const void *v, register_t *retval)
 	psignal(l->l_proc, SIGSYS);
 	mutex_exit(proc_lock);
 	return ENOSYS;
+}
+
+int
+sys_nomodule(struct lwp *l, const void *v, register_t *retval)
+{
+#ifdef MODULAR
+	static struct {
+		u_int		al_code;
+		const char	*al_module;
+	} const autoload[] = {
+	     { SYS__ksem_init, "ksem" },
+	     { SYS__ksem_open, "ksem" },
+	     { SYS__ksem_unlink, "ksem" },
+	     { SYS__ksem_close, "ksem" },
+	     { SYS__ksem_post, "ksem" },
+	     { SYS__ksem_wait, "ksem" },
+	     { SYS__ksem_trywait, "ksem" },
+	     { SYS__ksem_getvalue, "ksem" },
+	     { SYS__ksem_destroy, "ksem" },
+	};
+	const struct sysent *sy;
+	const struct emul *em;
+	int code, i;
+
+	/*
+	 * Restart the syscall if we interrupted a module unload that
+	 * failed.  Acquiring module_lock delays us until any unload
+	 * has been completed or rolled back.
+	 */
+	mutex_enter(&module_lock);
+	sy = l->l_sysent;
+	if (sy->sy_call != sys_nomodule) {
+		mutex_exit(&module_lock);
+		return ERESTART;
+	}
+	/*
+	 * Try to autoload a module to satisfy the request.  If it 
+	 * works, retry the request.
+	 */
+	em = l->l_proc->p_emul;
+	if (em == &emul_netbsd) {
+		code = sy - em->e_sysent;
+		for (i = 0; i < __arraycount(autoload); i++) {
+			if (autoload[i].al_code != code) {
+				continue;
+			}
+			if (module_autoload(autoload[i].al_module,
+			    MODULE_CLASS_ANY) != 0 ||
+			    sy->sy_call == sys_nomodule) {
+			    	break;
+			}
+			mutex_exit(&module_lock);
+			return ERESTART;
+		}
+	}
+	mutex_exit(&module_lock);
+#endif	/* MODULAR */
+
+	return sys_nosys(l, v, retval);
 }
 
 /*

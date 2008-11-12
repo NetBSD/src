@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.229 2008/11/12 12:36:28 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.230 2008/11/12 14:29:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -157,6 +157,7 @@ void	*hashinit(u_int, enum hashtype, bool, u_long *);
 void	hashdone(void *, enum hashtype, u_long);
 int	seltrue(dev_t, int, struct lwp *);
 int	sys_nosys(struct lwp *, const void *, register_t *);
+int	sys_nomodule(struct lwp *, const void *, register_t *);
 
 void	aprint_normal(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));

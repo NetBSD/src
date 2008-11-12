@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.73 2008/10/13 18:16:33 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.74 2008/11/12 14:29:31 ad Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -345,6 +345,12 @@ function parseline() {
 		sycall_flags = "SYCALL_INDIRECT | " sycall_flags
 		f++
 	}
+	if ($f == "MODULAR") {		# registered at runtime
+		modular = 1
+		f++
+	} else {
+		modular =  0;
+	}
 	if ($f == "RUMP") {
 		rumpable = 1
 		f++
@@ -497,7 +503,9 @@ function putent(type, compatwrap) {
 	} else {
 		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > sysent
 	}
-	if (compatwrap == "")
+	if (modular) 
+		wfn = "(sy_call_t *)sys_nomodule";
+	else if (compatwrap == "")
 		wfn = "(sy_call_t *)" funcname;
 	else
 		wfn = "(sy_call_t *)" compatwrap "(" funcname ")";
