@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.57 2008/11/07 00:20:03 dyoung Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.58 2008/11/12 21:15:49 phx Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.57 2008/11/07 00:20:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.58 2008/11/12 21:15:49 phx Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.57 2008/11/07 00:20:03 dyoung Exp $")
 
 #include <net/if.h>
 #include <net/if_dl.h>
+#include <net/if_ether.h>
 #include <net/if_types.h>
 #include <net/if_arc.h>
 
