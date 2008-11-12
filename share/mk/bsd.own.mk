@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.547 2008/11/12 12:35:54 ad Exp $
+#	$NetBSD: bsd.own.mk,v 1.548 2008/11/12 13:17:27 pooka Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -644,7 +644,6 @@ MKCOMPAT:=	no
 	MKOBJ \
 	MKPAM \
 	MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
-	MKPUFFS \
 	MKSHARE MKSKEY MKSTATICLIB \
 	MKYP
 ${var}?=	yes
