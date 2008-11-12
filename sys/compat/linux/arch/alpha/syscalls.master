@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.62 2008/04/04 12:38:52 njoly Exp $
+	$NetBSD: syscalls.master,v 1.63 2008/11/12 18:07:40 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -537,8 +537,9 @@
 337	UNIMPL		sched_rr_get_interval
 338	UNIMPL		afs_syscall
 339	STD		{ int linux_sys_uname(struct linux_utsname *up); }
-340	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
-				struct timespec *rmtp); }
+340	STD		{ int linux_sys_nanosleep( \
+			    const struct linux_timespec *rqtp, \
+			    struct linux_timespec *rmtp); }
 341	STD		{ void *linux_sys_mremap(void *old_address, \
 			    size_t old_size, size_t new_size, u_long flags); }
 342	UNIMPL		nfsservctl
