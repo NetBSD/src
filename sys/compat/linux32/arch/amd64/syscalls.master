@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.38 2008/10/06 14:53:01 njoly Exp $
+	$NetBSD: syscalls.master,v 1.39 2008/11/12 18:07:41 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -279,8 +279,8 @@
 159	UNIMPL	sched_get_priority_max
 160	UNIMPL	sched_get_priority_min
 161	UNIMPL	sched_rr_get_interval
-162	NOARGS	{ int netbsd32_nanosleep(netbsd32_timespecp_t rqtp \
-		    netbsd32_timespecp_t rmtp); }
+162	STD	{ int linux32_sys_nanosleep(linux32_timespecp_t rqtp, \
+		    linux32_timespecp_t rmtp); }
 163	STD	{ int linux32_sys_mremap(netbsd32_voidp old_address, \
 		    netbsd32_size_t old_size, netbsd32_size_t new_size, \
 		    netbsd32_u_long flags); }
