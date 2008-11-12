@@ -1,4 +1,4 @@
-.\"	$NetBSD: init.8,v 1.53 2008/10/21 02:33:53 lukem Exp $
+.\"	$NetBSD: init.8,v 1.53.2.1 2008/11/12 23:42:16 snj Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)init.8	8.6 (Berkeley) 5/26/95
 .\"
-.Dd October 21, 2008
+.Dd November 10, 2008
 .Dt INIT 8
 .Os
 .Sh NAME
@@ -58,6 +58,9 @@ may be passed
 from the boot program to prevent the system from going multi-user and
 to instead execute a single user shell without starting the normal
 daemons.
+If the kernel is in a secure mode,
+.Nm
+will downgrade it to securelevel 0 (insecure mode).
 The system is then quiescent for maintenance work and may
 later be made to go to state 2 (multi-user) by exiting the single-user
 shell (with ^D).
@@ -88,6 +91,20 @@ at this point, the
 process will be run inside a
 .Xr chroot 2
 indicated by sysctl with the same error handling as above.
+.Pp
+If the administrator has not set the security level to -1
+to indicate that the kernel should not run multiuser in secure
+mode, and the
+.Pa /etc/rc
+script has not set a higher level of security
+than level 1, then
+.Nm
+will put the kernel into securelevel mode 1.
+See
+.Xr rc.conf 5
+and
+.Xr secmodel_securelevel 9
+for more information.
 .It
 Set up ttys as specified in
 .Xr ttys 5 .
@@ -349,7 +366,8 @@ device driver because of a persistent device error condition.
 .Xr rescue 8 ,
 .Xr shutdown 8 ,
 .Xr sysctl 8 ,
-.Xr secmodel_bsd44 9
+.Xr secmodel_bsd44 9 ,
+.Xr secmodel_securelevel 9
 .Sh HISTORY
 A
 .Nm
