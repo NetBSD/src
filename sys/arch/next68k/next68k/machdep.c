@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 2008/11/11 06:46:43 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 2008/11/12 12:36:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2008/11/11 06:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2008/11/12 12:36:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -286,7 +286,7 @@ consinit(void)
 #if defined(KGDB) && (NZSC > 0)
 		zs_kgdb_init();
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 		/* Initialize kernel symbol table, if compiled in. */
 		ksyms_init(nsym, ssym, esym);
 #endif

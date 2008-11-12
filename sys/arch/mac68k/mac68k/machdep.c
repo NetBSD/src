@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.323 2008/11/11 06:46:43 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.324 2008/11/12 12:36:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.323 2008/11/11 06:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.324 2008/11/12 12:36:03 ad Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -377,7 +377,7 @@ consinit(void)
 #if NZSC > 0 && defined(KGDB)
 		zs_kgdb_init();
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 		/*
 		 * Initialize kernel debugger, if compiled in.
 		 */

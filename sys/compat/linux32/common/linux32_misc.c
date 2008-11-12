@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.12 2008/06/18 22:58:21 njoly Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.13 2008/11/12 12:36:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,11 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.12 2008/06/18 22:58:21 njoly Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ptrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.13 2008/11/12 12:36:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -103,7 +99,6 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 		syscallarg(T) addr;
 		syscallarg(T) data;
 	} */
-#if defined(PTRACE) || defined(_LKM)
 	const int *ptr;
 	int request;
 	int error;
@@ -128,7 +123,7 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
 				SCARG(&pta, addr) = (void *) 1;
 
-			error = sys_ptrace(l, &pta, retval);
+			error = sysent[SYS_ptrace].sy_call(l, &pta, retval);
 			if (error)
 				return error;
 			switch (request) {
@@ -148,7 +143,4 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 			ptr++;
 
 	return EIO;
-#else
-	return ENOSYS;
-#endif /* PTRACE || _LKM */
 }

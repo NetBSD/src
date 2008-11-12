@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.7 2008/11/11 06:46:42 dyoung Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.8 2008/11/12 12:36:00 ad Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.7 2008/11/11 06:46:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.8 2008/11/12 12:36:00 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -108,7 +108,7 @@ char bootpath[256];
 
 extern paddr_t msgbuf_paddr;
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 void *startsym, *endsym;
 #endif
 
@@ -155,7 +155,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	openbios_board_print();
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef DDB

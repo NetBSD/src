@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscallargs.h,v 1.31 2008/06/21 19:59:09 he Exp $ */
+/* $NetBSD: aoutm68k_syscallargs.h,v 1.32 2008/11/12 12:36:09 ad Exp $ */
 
 /*
  * System call argument lists.
@@ -498,9 +498,6 @@ struct sys_getpgid_args;
 struct sys_reboot_args;
 
 struct sys_poll_args;
-#if defined(LKM) || !defined(_KERNEL)
-#else	/* !LKM */
-#endif	/* !LKM */
 #if defined(SYSVSEM) || !defined(_KERNEL)
 #if defined(COMPAT_14) || !defined(_KERNEL)
 
@@ -1150,11 +1147,6 @@ int	sys_reboot(struct lwp *, const struct sys_reboot_args *, register_t *);
 
 int	sys_poll(struct lwp *, const struct sys_poll_args *, register_t *);
 
-#if defined(LKM) || !defined(_KERNEL)
-int	sys_lkmnosys(struct lwp *, const void *, register_t *);
-
-#else	/* !LKM */
-#endif	/* !LKM */
 #if defined(SYSVSEM) || !defined(_KERNEL)
 #if defined(COMPAT_14) || !defined(_KERNEL)
 int	compat_14_sys___semctl(struct lwp *, const struct compat_14_sys___semctl_args *, register_t *);

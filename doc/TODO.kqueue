@@ -1,4 +1,4 @@
-#	$NetBSD: TODO.kqueue,v 1.7 2007/12/31 14:09:13 ad Exp $
+#	$NetBSD: TODO.kqueue,v 1.8 2008/11/12 12:35:52 ad Exp $
 
 items todo:
 	- dir watched - what happens if something is mounted over it?
@@ -12,9 +12,6 @@ items todo:
 	- kqfilter entry points for:
 		- smb_trantcp
 		- dev/pci/bktr/bktr_os.c		??? doesn't poll?
-	- kfilter_(un)register: not used by kernel code ATM, make conditional
-		on option LKM?
-
 	- Test-compile the following ports:
 		- amigappc		XXX not compilable even on trunk
 

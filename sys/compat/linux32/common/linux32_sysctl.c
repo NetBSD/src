@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysctl.c,v 1.9 2008/01/07 16:12:53 ad Exp $ */
+/*	$NetBSD: linux32_sysctl.c,v 1.10 2008/11/12 12:36:10 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.9 2008/01/07 16:12:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysctl.c,v 1.10 2008/11/12 12:36:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +105,6 @@ SYSCTL_SETUP(sysctl_emul_linux32_setup, "sysctl emul.linux32 subtree setup")
 		       EMUL_LINUX32_KERN_VERSION, CTL_EOL);
 }
 
-#ifndef _LKM
-static
-#endif
 struct sysctlnode linux32_sysctl_root = {
 	.sysctl_flags = SYSCTL_VERSION|
 	    CTLFLAG_ROOT|CTLTYPE_NODE|CTLFLAG_READWRITE,

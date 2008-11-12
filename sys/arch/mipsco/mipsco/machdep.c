@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2008/11/11 06:46:43 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 2008/11/12 12:36:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2008/11/11 06:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2008/11/12 12:36:04 ad Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -240,7 +240,7 @@ mach_init(argc, argv, envp, bim, bip)
 	int i, howto;
 	extern char edata[], end[];
 	const char *bi_msg;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	int nsym = 0;
 	char *ssym = 0;
 	char *esym = 0;
@@ -265,7 +265,7 @@ mach_init(argc, argv, envp, bim, bip)
 	kernend = (void *)mips_round_page(end);
 	memset(edata, 0, end - edata);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 
 	/* Load sysmbol table if present */
@@ -329,7 +329,7 @@ mach_init(argc, argv, envp, bim, bip)
 	}
 
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
 		ksyms_init(esym - ssym, ssym, esym);

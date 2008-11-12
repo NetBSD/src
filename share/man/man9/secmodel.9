@@ -1,4 +1,4 @@
-.\" $NetBSD: secmodel.9,v 1.12 2008/05/28 00:29:12 snj Exp $
+.\" $NetBSD: secmodel.9,v 1.13 2008/11/12 12:35:54 ad Exp $
 .\"
 .\" Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -77,8 +77,8 @@ It allows us to maintain the existing security model (based on a single
 superuser and above-superuser restrictions known as securelevel) but easily
 decouple it from the system, given we want to use a different one.
 .Pp
-The different security model can be implemented in the kernel or loaded as an
-LKM, base its decisions on available information, dispatch the decision to a
+The different security model can be implemented in the kernel or loaded as a
+module, base its decisions on available information, dispatch the decision to a
 userspace daemon, or even to a centralized network authorization server.
 .Ss The kauth(9) KPI
 Before writing a new security model, one should be familiar with the
@@ -148,7 +148,7 @@ compiled in it, a function called
 .Fn secmodel_start
 can be added to call the model's start routine.
 .Pp
-If the security model is to be built and used as an LKM, another function
+If the security model is to be built and used as a module, another function
 called
 .Fn secmodel_\*[Lt]model\*[Gt]_stop ,
 to stop the security model in case the module is to be unloaded.
@@ -162,7 +162,7 @@ All "knobs" for the model should be located under the new node, as well
 as a mandatory "name" variable, indicating a descriptive human-readable
 name for the model.
 .Pp
-If the module is to be used as an LKM, explicit calls to the setup
+If the module is to be used as a module, explicit calls to the setup
 routine and
 .Fn sysctl_teardown
 are to be used to create and destroy the
@@ -182,7 +182,7 @@ the model intends to implement.
 .It
 Finally, a security model should register itself when loaded using
 .Fn secmodel_register
-and deregister it when unloaded (if used as an LKM) using
+and deregister it when unloaded (if used as a module) using
 .Fn secmodel_deregister .
 .El
 .Pp

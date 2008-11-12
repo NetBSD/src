@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.70 2008/10/15 06:51:20 wrstuden Exp $
+	$NetBSD: syscalls.master,v 1.71 2008/11/12 12:36:10 ad Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -309,32 +309,16 @@
 207	STD		{ int netbsd32_getpgid(pid_t pid); }
 208	STD		{ int netbsd32_reboot(int opt, netbsd32_charp bootstr); }
 209	STD		{ int netbsd32_poll(netbsd32_pollfdp_t fds, u_int nfds, int timeout); }
-;
-; Syscalls 210-219 are reserved for dynamically loaded syscalls
-;
-#if defined(LKM) || !defined(_KERNEL)
-210	NODEF		{ int sys_lkmnosys(void); }
-211	NODEF		{ int sys_lkmnosys(void); }
-212	NODEF		{ int sys_lkmnosys(void); }
-213	NODEF		{ int sys_lkmnosys(void); }
-214	NODEF		{ int sys_lkmnosys(void); }
-215	NODEF		{ int sys_lkmnosys(void); }
-216	NODEF		{ int sys_lkmnosys(void); }
-217	NODEF		{ int sys_lkmnosys(void); }
-218	NODEF		{ int sys_lkmnosys(void); }
-219	NODEF		{ int sys_lkmnosys(void); }
-#else	/* !LKM || !_KERNEL */
-210	EXCL		lkmnosys
-211	EXCL		lkmnosys
-212	EXCL		lkmnosys
-213	EXCL		lkmnosys
-214	EXCL		lkmnosys
-215	EXCL		lkmnosys
-216	EXCL		lkmnosys
-217	EXCL		lkmnosys
-218	EXCL		lkmnosys
-219	EXCL		lkmnosys
-#endif	/* !LKM || !_KERNEL */
+210	UNIMPL
+211	UNIMPL
+212	UNIMPL
+213	UNIMPL
+214	UNIMPL
+215	UNIMPL
+216	UNIMPL
+217	UNIMPL
+218	UNIMPL
+219	UNIMPL
 ; System calls 220-300 are reserved for use by NetBSD
 #if defined(SYSVSEM) || !defined(_KERNEL)
 220	COMPAT_14	{ int netbsd32___semctl(int semid, int semnum, int cmd, netbsd32_semunu_t arg); }

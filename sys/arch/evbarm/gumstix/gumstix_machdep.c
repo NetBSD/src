@@ -1,4 +1,4 @@
-/*	$NetBSD: gumstix_machdep.c,v 1.10 2008/11/11 06:46:41 dyoung Exp $ */
+/*	$NetBSD: gumstix_machdep.c,v 1.11 2008/11/12 12:35:59 ad Exp $ */
 /*
  * Copyright (C) 2005, 2006, 2007  WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -387,9 +387,9 @@ static const struct pmap_devmap gumstix_devmap[] = {
 		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
 	},
 	{
-		GUMSTIX_CLKMAN_VBASE,
-		_A(PXA2X0_CLKMAN_BASE),
-		_S(PXA2X0_CLKMAN_SIZE),
+		GUMSTIX_CMODULARAN_VBASE,
+		_A(PXA2X0_CMODULARAN_BASE),
+		_S(PXA2X0_CMODULARAN_SIZE),
 		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
 	},
 	{
@@ -461,7 +461,7 @@ initarm(void *arg)
 	pmap_devmap_bootstrap((vaddr_t)read_ttb(), gumstix_devmap);
 
 	/* start 32.768kHz OSC */
-	ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_OSCC, OSCC_OON);
+	ioreg_write(GUMSTIX_CMODULARAN_VBASE + CMODULARAN_OSCC, OSCC_OON);
 
 	/* Get ready for splfoo() */
 	pxa2x0_intr_bootstrap(GUMSTIX_INTCTL_VBASE);
@@ -860,7 +860,7 @@ initarm(void *arg)
 	}
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* Firmware doesn't load symbols. */
 	ddb_init(0, NULL, NULL);
 #endif
@@ -983,7 +983,7 @@ void
 consinit(void)
 {
 	static int consinit_called = 0;
-	uint32_t ckenreg = ioreg_read(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN);
+	uint32_t ckenreg = ioreg_read(GUMSTIX_CMODULARAN_VBASE + CMODULARAN_CKEN);
 
 	if (consinit_called != 0)
 		return;
@@ -1001,7 +1001,7 @@ consinit(void)
 	{
 		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_FFUART_BASE, 
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
+			ioreg_write(GUMSTIX_CMODULARAN_VBASE + CMODULARAN_CKEN,
 			    ckenreg|CKEN_FFUART);
 
 			return;
@@ -1018,7 +1018,7 @@ consinit(void)
 	{
 		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_STUART_BASE,
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
+			ioreg_write(GUMSTIX_CMODULARAN_VBASE + CMODULARAN_CKEN,
 			    ckenreg|CKEN_STUART);
 			return;
 		}
@@ -1034,7 +1034,7 @@ consinit(void)
 	{
 		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_BTUART_BASE,
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
+			ioreg_write(GUMSTIX_CMODULARAN_VBASE + CMODULARAN_CKEN,
 			    ckenreg|CKEN_BTUART);
 			return;
 		}
@@ -1050,7 +1050,7 @@ consinit(void)
 	{
 		if (0 == comcnattach(&pxa2x0_a4x_bs_tag, PXA2X0_HWUART_BASE,
 		    comcnspeed, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comcnmode)) {
-			ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN,
+			ioreg_write(GUMSTIX_CMODULARAN_VBASE + CMODULARAN_CKEN,
 			    ckenreg|CKEN_HWUART);
 			return;
 		}
@@ -1067,7 +1067,7 @@ kgdb_port_init(void)
 {
 #if (NCOM > 0) && defined(COM_PXA2X0)
 	paddr_t paddr = 0;
-	uint32_t ckenreg = ioreg_read(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN);
+	uint32_t ckenreg = ioreg_read(GUMSTIX_CMODULARAN_VBASE + CMODULARAN_CKEN);
 
 	if (0 == strcmp(kgdb_devname, "ffuart")) {
 		paddr = PXA2X0_FFUART_BASE;
@@ -1087,7 +1087,7 @@ kgdb_port_init(void)
 	    0 == com_kgdb_attach(&pxa2x0_a4x_bs_tag, paddr,
 		kgdb_devrate, PXA2X0_COM_FREQ, COM_TYPE_PXA2x0, comkgdbmode)) {
 
-		ioreg_write(GUMSTIX_CLKMAN_VBASE + CLKMAN_CKEN, ckenreg);
+		ioreg_write(GUMSTIX_CMODULARAN_VBASE + CMODULARAN_CKEN, ckenreg);
 
 	}
 

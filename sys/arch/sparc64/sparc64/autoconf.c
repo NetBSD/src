@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.156 2008/10/21 06:07:14 macallan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.157 2008/11/12 12:36:06 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.156 2008/10/21 06:07:14 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.157 2008/11/12 12:36:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -251,7 +251,7 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	void *bi;
 	long bmagic;
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
 #endif
 	struct btinfo_count *bi_count;
@@ -311,7 +311,7 @@ die_old_boot_loader:
 		panic("Kernel end address is not found in bootinfo.\n");
 	}
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	LOOKUP_BOOTINFO(bi_sym, BTINFO_SYMTAB);
 	ksyms_init(bi_sym->nsym, (int *)(u_long)bi_sym->ssym,
 			(int *)(u_long)bi_sym->esym);

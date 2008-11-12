@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.376 2008/10/22 11:16:29 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.377 2008/11/12 12:36:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.376 2008/10/22 11:16:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.377 2008/11/12 12:36:16 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -523,7 +523,6 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 			/* No length supplied, use default for filesystem */
 			data_len = vfsops->vfs_min_mount_data;
 			if (data_len > VFS_MAX_MOUNT_DATA) {
-				/* maybe a force loaded old LKM */
 				error = EINVAL;
 				goto done;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.19 2008/11/11 06:46:41 dyoung Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.20 2008/11/12 12:35:59 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.19 2008/11/11 06:46:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.20 2008/11/12 12:35:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -365,7 +365,7 @@ cpu_reboot(int howto, char *bootstr)
 
 #define	GPIO_VBASE	_V(0)
 #define	INTCTL_VBASE	_V(1)
-#define	CLKMAN_VBASE	_V(2)
+#define	CMODULARAN_VBASE	_V(2)
 #define	UART_VBASE	_V(3)
 #ifdef	MEMORY_DISK_DYNAMIC
 #define	MEMORY_DISK_VADDR	_V(4)
@@ -386,9 +386,9 @@ static const struct pmap_devmap smdk2410_devmap[] = {
 		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
 	},
 	{
-		CLKMAN_VBASE,
-		_A(S3C2410_CLKMAN_BASE),
-		_S(S3C24X0_CLKMAN_SIZE),
+		CMODULARAN_VBASE,
+		_A(S3C2410_CMODULARAN_BASE),
+		_S(S3C24X0_CMODULARAN_SIZE),
 		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
 	},
 	{	/* UART registers for UART0, 1, 2. */
@@ -918,7 +918,7 @@ initarm(void *arg)
 	}
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* Firmware doesn't load symbols. */
 	ksyms_init(0, NULL, NULL);
 #endif
@@ -945,7 +945,7 @@ consinit(void)
 
 	consinit_done = 1;
 
-	s3c24x0_clock_freq2(CLKMAN_VBASE, NULL, NULL, &pclk);
+	s3c24x0_clock_freq2(CMODULARAN_VBASE, NULL, NULL, &pclk);
 
 #if NSSCOM > 0
 #ifdef SSCOM0CONSOLE
@@ -1000,7 +1000,7 @@ kgdb_port_init(void)
 		unit = 1;
 
 	if (unit >= 0) {
-		s3c24x0_clock_freq2(CLKMAN_VBASE, NULL, NULL, &pclk);
+		s3c24x0_clock_freq2(CMODULARAN_VBASE, NULL, NULL, &pclk);
 
 		s3c2410_sscom_kgdb_attach(&s3c2xx0_bs_tag,
 		    unit, kgdb_rate, pclk, kgdb_sscom_mode);

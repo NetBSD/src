@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.35 2008/11/11 06:46:41 dyoung Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.36 2008/11/12 12:35:59 ad Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.35 2008/11/11 06:46:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.36 2008/11/12 12:35:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.35 2008/11/11 06:46:41 dyoung 
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -360,7 +360,7 @@ initarm(void *arg)
 	u_int kerneldatasize, symbolsize;
 	vaddr_t l1pagetable;
 	vaddr_t freemempos;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
         Elf_Shdr *sh;
 #endif
 
@@ -394,7 +394,7 @@ initarm(void *arg)
 	pmap_debug(-1);
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
         if (! memcmp(&end, "\177ELF", 4)) {
                 sh = (Elf_Shdr *)((char *)&end + ((Elf_Ehdr *)&end)->e_shoff);
                 loop = ((Elf_Ehdr *)&end)->e_shnum;
@@ -741,7 +741,7 @@ initarm(void *arg)
 	printf("bootstrap done.\n");
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
 #endif
 

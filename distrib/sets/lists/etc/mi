@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.200 2008/06/18 09:06:26 yamt Exp $
+# $NetBSD: mi,v 1.201 2008/11/12 12:35:51 ad Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -71,7 +71,7 @@
 ./etc/inetd.conf				etc-netutil-etc
 ./etc/iscsi/auths				etc-iscsi-etc		iscsi
 ./etc/iscsi/targets				etc-iscsi-etc		iscsi
-./etc/lkm.conf					etc-sys-etc
+./etc/lkm.conf					etc-obsolete		obsolete
 ./etc/localtime					etc-sys-etc
 ./etc/locate.conf				etc-sys-etc
 ./etc/login.conf				etc-sys-etc
@@ -206,9 +206,9 @@
 ./etc/rc.d/kdc					etc-krb5-rc
 ./etc/rc.d/kerberos				etc-obsolete		obsolete
 ./etc/rc.d/ldconfig				etc-sys-rc
-./etc/rc.d/lkm1					etc-sys-rc
-./etc/rc.d/lkm2					etc-sys-rc
-./etc/rc.d/lkm3					etc-sys-rc
+./etc/rc.d/lkm1					etc-obsolete		obsolete
+./etc/rc.d/lkm2					etc-obsolete		obsolete
+./etc/rc.d/lkm3					etc-obsolete		obsolete
 ./etc/rc.d/local				etc-sys-rc
 ./etc/rc.d/lpd					etc-lpr-rc
 ./etc/rc.d/mixerctl				etc-audio-rc
@@ -279,7 +279,7 @@
 ./etc/rc.d/yppasswdd				etc-nis-rc
 ./etc/rc.d/ypserv				etc-nis-rc
 ./etc/rc.d/ypset				etc-obsolete		obsolete
-./etc/rc.lkm					etc-sys-rc
+./etc/rc.lkm					etc-obsolete		obsolete
 ./etc/rc.local					etc-sys-rc
 ./etc/rc.shutdown				etc-sys-rc
 ./etc/rc.subr					etc-sys-rc

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.924 2008/10/15 06:51:20 wrstuden Exp $
+#	$NetBSD: files,v 1.925 2008/11/12 12:36:11 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -24,7 +24,6 @@ defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
 defflag				COREDUMP
-defflag opt_modular.h		MODULAR
 
 defparam			DEFCORENAME
 defparam			HZ
@@ -1357,7 +1356,8 @@ file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
 file	kern/core_elf32.c		coredump & exec_elf32
 file	kern/core_elf64.c		coredump & exec_elf64
 file	kern/core_netbsd.c		coredump & (exec_aout | exec_coff |
-					     exec_ecoff | exec_macho | lkm)
+					     exec_ecoff | exec_macho |
+					     modular)
 file	kern/cnmagic.c
 file	kern/exec_aout.c		exec_aout
 file	kern/exec_conf.c
@@ -1384,8 +1384,7 @@ file	kern/kern_fork.c
 file	kern/kern_idle.c
 file	kern/kern_kthread.c
 file	kern/kern_ktrace.c		ktrace
-file	kern/kern_ksyms.c		ksyms | ddb | lkm needs-flag
-file	kern/kern_lkm.c			lkm
+file	kern/kern_ksyms.c		ksyms | ddb | modular needs-flag
 file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
@@ -1509,9 +1508,9 @@ file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_io.c
 file	miscfs/genfs/genfs_vfsops.c
 file	miscfs/genfs/genfs_vnops.c
-file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs | lkm
-file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs | lkm
-file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs | lkm
+file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs
+file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs
+file	miscfs/genfs/layer_vnops.c	nullfs | overlay | umapfs
 file	miscfs/specfs/spec_vnops.c
 file	miscfs/syncfs/sync_subr.c
 file	miscfs/syncfs/sync_vnops.c

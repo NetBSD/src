@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2008/02/18 10:37:19 elad Exp $
+#	$NetBSD: Makefile,v 1.61 2008/11/12 12:35:53 ad Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 # missing: dump.5 plot.5
@@ -8,7 +8,7 @@ MAN=	a.out.5 acct.5 ar.5 boot.cfg.5 \
 	ethers.5 forward.5 \
 	fs.5 fstab.5 genassym.cf.5 group.5 hesiod.conf.5 \
 	hosts.5 hosts.equiv.5 ifaliases.5 ifconfig.if.5 intro.5 \
-	ipsec.conf.5 ld.so.conf.5 link.5 lkm.conf.5 locale.alias.5 \
+	ipsec.conf.5 ld.so.conf.5 link.5 locale.alias.5 \
 	locate.conf.5 login.conf.5 mixerctl.conf.5 mk.conf.5 monthly.conf.5 \
 	motd.5 netconfig.5 netgroup.5 networks.5 nologin.5 \
 	nsswitch.conf.5 pam.conf.5 passwd.5 passwd.conf.5 phones.5 \

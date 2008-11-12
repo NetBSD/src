@@ -2,7 +2,7 @@
 #define _NBCOMPAT_H_
 
 #include <sys/systm.h>
-#include <sys/lkm.h>
+#include <sys/module.h>
 #include <sys/cdefs.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
@@ -83,7 +83,6 @@ TAILQ_HEAD(sysctl_ctx_list, sysctl_ctx_entry);
 typedef vaddr_t			vm_offset_t;
 typedef vsize_t			vm_size_t;
 typedef uint16_t		linker_file_t;
-typedef struct lkm_table *	module_t;
 
 /* Write our own versions of some FreeBSD functions */
 struct ndis_resource;

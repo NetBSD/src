@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1111 2008/11/03 00:47:42 jnemeth Exp $
+# $NetBSD: mi,v 1.1112 2008/11/12 12:35:51 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1122,7 +1122,7 @@
 ./usr/share/man/cat4/ld.0			man-sys-catman		.cat
 ./usr/share/man/cat4/le.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lii.0			man-sys-catman		.cat
-./usr/share/man/cat4/lkm.0			man-sys-catman		.cat
+./usr/share/man/cat4/lkm.0			man-obsolete		obsolete
 ./usr/share/man/cat4/lm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lmc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/lmtemp.0			man-sys-catman		.cat
@@ -1758,7 +1758,7 @@
 ./usr/share/man/cat5/ld.so.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/ldap_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/link.0			man-sys-catman		.cat
-./usr/share/man/cat5/lkm.conf.0			man-sys-catman		.cat
+./usr/share/man/cat5/lkm.conf.0			man-obsolete		obsolete
 ./usr/share/man/cat5/locale.alias.0		man-sys-catman		.cat
 ./usr/share/man/cat5/locate.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/login.access.0		man-sys-catman		pam,.cat
@@ -3618,7 +3618,7 @@
 ./usr/share/man/html4/ld.html			man-sys-htmlman		html
 ./usr/share/man/html4/le.html			man-sys-htmlman		html
 ./usr/share/man/html4/lii.html			man-sys-htmlman		html
-./usr/share/man/html4/lkm.html			man-sys-htmlman		html
+./usr/share/man/html4/lkm.html			man-obsolete		obsolete
 ./usr/share/man/html4/lm.html			man-sys-htmlman		html
 ./usr/share/man/html4/lmc.html			man-sys-htmlman		html
 ./usr/share/man/html4/lmtemp.html		man-sys-htmlman		html
@@ -4200,7 +4200,7 @@
 ./usr/share/man/html5/ld.so.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/ldap_table.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/link.html			man-sys-htmlman		html
-./usr/share/man/html5/lkm.conf.html		man-sys-htmlman		html
+./usr/share/man/html5/lkm.conf.html		man-obsolete		obsolete
 ./usr/share/man/html5/locale.alias.html		man-sys-htmlman		html
 ./usr/share/man/html5/locate.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/login.access.html		man-sys-htmlman		pam,html
@@ -5960,7 +5960,7 @@
 ./usr/share/man/man4/ld.4			man-sys-man		.man
 ./usr/share/man/man4/le.4			man-sys-man		.man
 ./usr/share/man/man4/lii.4			man-sys-man		.man
-./usr/share/man/man4/lkm.4			man-sys-man		.man
+./usr/share/man/man4/lkm.4			man-obsolete 		obsolete
 ./usr/share/man/man4/lm.4			man-sys-man		.man
 ./usr/share/man/man4/lmc.4			man-sys-man		.man
 ./usr/share/man/man4/lmtemp.4			man-sys-man		.man
@@ -6596,7 +6596,7 @@
 ./usr/share/man/man5/ld.so.conf.5		man-sys-man		.man
 ./usr/share/man/man5/ldap_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/link.5			man-sys-man		.man
-./usr/share/man/man5/lkm.conf.5			man-sys-man		.man
+./usr/share/man/man5/lkm.conf.5			man-obsolete		obsolete
 ./usr/share/man/man5/locale.alias.5		man-sys-man		.man
 ./usr/share/man/man5/locate.conf.5		man-sys-man		.man
 ./usr/share/man/man5/login.access.5		man-sys-man		.man,pam

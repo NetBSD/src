@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.39 2008/02/29 14:42:32 jmmv Exp $
+#	$NetBSD: MMTAROMNEW,v 1.40 2008/11/12 12:36:04 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -43,7 +43,6 @@ options 	HZ=10		# clock interrupt generates every 1/10 sec
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
-#options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

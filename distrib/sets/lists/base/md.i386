@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.130 2008/10/31 20:24:51 mrg Exp $
+# $NetBSD: md.i386,v 1.131 2008/11/12 12:35:50 ad Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -92,24 +92,24 @@
 ./usr/lib/libpmc.so.0				base-sys-shlib		pic
 ./usr/lib/libpmc.so.0.0				base-sys-shlib		pic
 ./usr/libexec/ld.so				base-sys-shlib
-./usr/lkm/aps.o					base-sys-lkm
-./usr/lkm/compat_freebsd.o			base-sys-lkm
-./usr/lkm/compat_linux.o			base-sys-lkm
-./usr/lkm/compat_pecoff.o			base-sys-lkm
-./usr/lkm/compat_svr4.o				base-sys-lkm
-./usr/lkm/dummy_pci.o				base-sys-lkm
-./usr/lkm/exec_freebsd_aout.o			base-sys-lkm
-./usr/lkm/exec_freebsd_elf.o			base-sys-lkm
-./usr/lkm/exec_linux_elf.o			base-sys-lkm
-./usr/lkm/exec_pecoff.o				base-sys-lkm
-./usr/lkm/exec_svr4_elf.o			base-sys-lkm
-./usr/lkm/finsio.o				base-sys-lkm
-./usr/lkm/itesio.o				base-sys-lkm
-./usr/lkm/nsclpcsio.o				base-sys-lkm
-./usr/lkm/powernow.o				base-sys-lkm
-./usr/lkm/smsc.o				base-sys-lkm
-./usr/lkm/ug.o					base-sys-lkm
-./usr/lkm/wi_pcmcia.o				base-sys-lkm
+./usr/lkm/aps.o					base-obsolete		obsolete
+./usr/lkm/compat_freebsd.o			base-obsolete		obsolete
+./usr/lkm/compat_linux.o			base-obsolete		obsolete
+./usr/lkm/compat_pecoff.o			base-obsolete		obsolete
+./usr/lkm/compat_svr4.o				base-obsolete		obsolete
+./usr/lkm/dummy_pci.o				base-obsolete		obsolete
+./usr/lkm/exec_freebsd_aout.o			base-obsolete		obsolete
+./usr/lkm/exec_freebsd_elf.o			base-obsolete		obsolete
+./usr/lkm/exec_linux_elf.o			base-obsolete		obsolete
+./usr/lkm/exec_pecoff.o				base-obsolete		obsolete
+./usr/lkm/exec_svr4_elf.o			base-obsolete		obsolete
+./usr/lkm/finsio.o				base-obsolete		obsolete
+./usr/lkm/itesio.o				base-obsolete		obsolete
+./usr/lkm/nsclpcsio.o				base-obsolete		obsolete
+./usr/lkm/powernow.o				base-obsolete		obsolete
+./usr/lkm/smsc.o				base-obsolete		obsolete
+./usr/lkm/ug.o					base-obsolete		obsolete
+./usr/lkm/wi_pcmcia.o				base-obsolete		obsolete
 ./usr/mdec/biosboot				base-obsolete		obsolete
 ./usr/mdec/biosboot.sym				base-obsolete		obsolete
 ./usr/mdec/biosboot_com0.sym			base-obsolete		obsolete

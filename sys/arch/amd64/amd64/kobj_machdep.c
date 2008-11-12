@@ -1,8 +1,11 @@
-/*	$NetBSD: kobj_machdep.c,v 1.3 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.4 2008/11/12 12:35:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software developed for The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.4 2008/11/12 12:35:56 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -110,8 +113,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		val = addr + addend;
 		if (addr == 0)
 			return -1;
-		if (*where != val)
-			*where = val;
+		*where = val;
 		break;
 
 	case R_X86_64_PC32:	/* S + A - P */
@@ -120,8 +122,7 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		val32 = (Elf32_Addr)(addr + addend - (Elf64_Addr)where);
 		if (addr == 0)
 			return -1;
-		if (*where32 != val32)
-			*where32 = val32;
+		*where32 = val32;
 		break;
 
 	case R_X86_64_32S:	/* S + A sign extend */
@@ -130,32 +131,21 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		where32 = (Elf32_Addr *)where;
 		if (addr == 0)
 			return -1;
-		if (*where32 != val32)
-			*where32 = val32;
+		*where32 = val32;
 		break;
-
-	case R_X86_64_COPY:	/* none */
-		/*
-		 * There shouldn't be copy relocations in kernel
-		 * objects.
-		 */
-		printf("kobj_reloc: unexpected R_COPY relocation\n");
-		return -1;
 
 	case R_X86_64_GLOB_DAT:	/* S */
 	case R_X86_64_JUMP_SLOT:/* XXX need addend + offset */
 		addr = kobj_sym_lookup(ko, symidx);
 		if (addr == 0)
 			return -1;
-		if (*where != addr)
-			*where = addr;
+		*where = addr;
 		break;
 
 	case R_X86_64_RELATIVE:	/* B + A */
 		addr = relocbase + addend;
 		val = addr;
-		if (*where != val)
-			*where = val;
+		*where = val;
 		break;
 
 	default:

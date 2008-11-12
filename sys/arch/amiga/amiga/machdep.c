@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.209 2008/07/02 17:28:54 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.210 2008/11/12 12:35:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2008/07/02 17:28:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.210 2008/11/12 12:35:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -229,7 +229,7 @@ consinit()
 	 */
 	cninit();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern int end[];
 		extern int *esym;
@@ -1466,7 +1466,7 @@ cpu_exec_aout_makecmds(l, epp)
 	return(error);
 }
 
-#ifdef LKM
+#ifdef MODULAR
 
 int _spllkm6(void);
 int _spllkm7(void);

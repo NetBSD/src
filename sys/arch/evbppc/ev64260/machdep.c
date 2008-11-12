@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2008/11/11 06:46:42 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2008/11/12 12:36:00 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21 2008/11/11 06:46:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2008/11/12 12:36:00 ad Exp $");
 
 #include "opt_marvell.h"
 #include "opt_ev64260.h"
@@ -231,7 +231,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern void *startsym, *endsym;
 		ksyms_init((int)((u_int)endsym - (u_int)startsym),

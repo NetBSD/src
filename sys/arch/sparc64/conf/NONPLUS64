@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.25 2008/05/30 20:10:03 tsutsui Exp $
+# 	$NetBSD: NONPLUS64,v 1.26 2008/11/12 12:36:06 ad Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.25 $"
+#ident		"NONPLUS64-$Revision: 1.26 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -48,7 +48,6 @@ options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support; still under development.
-options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

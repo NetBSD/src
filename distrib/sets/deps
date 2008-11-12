@@ -18,7 +18,6 @@ base-crypto-root base-sys-root
 base-crypto-shlib base-sys-usr
 base-cxx-usr base-c-usr
 base-debug-bin base-sys-usr
-base-dev-lkm base-sys-usr
 base-dhclient-root base-sys-root
 base-dhcpd-bin base-sys-share
 base-dhcpd-bin base-sys-usr
@@ -38,7 +37,6 @@ base-hesiod-bin base-sys-usr
 base-htmldoc-share base-sys-share
 base-i18n-root base-sys-usr
 base-i18n-shlib base-i18n-root
-base-ipf-lkm base-sys-usr
 base-isdn-bin base-sys-usr
 base-isdn-examples base-sys-share
 base-krb5-bin base-sys-usr
@@ -95,7 +93,6 @@ base-man-bin base-sys-usr
 base-man-share base-sys-share
 base-miscfs-examples base-sys-share
 base-miscfs-root base-sys-root
-base-net-lkm base-sys-usr
 base-net-shlib base-sys-usr
 base-netutil-bin base-sys-usr
 base-netutil-examples base-sys-share
@@ -115,7 +112,6 @@ base-postfix-examples base-sys-share
 base-postfix-root base-sys-root
 base-postfix-usr base-sys-usr
 base-ppp-bin base-sys-usr
-base-ppp-lkm base-sys-usr
 base-psd-share base-sys-share
 base-rcs-bin base-sys-usr
 base-reference-share base-termcap-share
@@ -139,7 +135,6 @@ base-smm-share base-sys-share
 base-sup-bin base-sys-usr
 base-sup-examples base-sys-share
 base-sys-examples base-sys-share
-base-sys-lkm base-sys-usr
 base-sys-share base-sys-root
 base-sys-shlib base-sys-usr
 base-sys-usr base-sys-root
@@ -186,7 +181,6 @@ base-util_locale-id base-locale-id
 base-util_locale-it base-locale-it
 base-util_locale-ja base-locale-ja
 base-util_locale-sv base-locale-sv
-base-vfs-lkm base-sys-usr
 base-x11-root base-sys-root
 comp-c-bin base-sys-usr
 comp-c-catman base-man-share

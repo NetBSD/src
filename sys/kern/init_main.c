@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.371 2008/10/28 15:33:10 tsutsui Exp $	*/
+/*	$NetBSD: init_main.c,v 1.372 2008/11/12 12:36:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371 2008/10/28 15:33:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.372 2008/11/12 12:36:16 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -186,9 +186,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.371 2008/10/28 15:33:10 tsutsui Exp 
 #include <sys/rnd.h>
 #endif
 #include <sys/pipe.h>
-#ifdef LKM
-#include <sys/lkm.h>
-#endif
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */

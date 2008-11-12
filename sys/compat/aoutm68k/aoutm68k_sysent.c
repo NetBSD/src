@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_sysent.c,v 1.35 2008/06/21 19:59:09 he Exp $ */
+/* $NetBSD: aoutm68k_sysent.c,v 1.36 2008/11/12 12:36:09 ad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_sysent.c,v 1.35 2008/06/21 19:59:09 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_sysent.c,v 1.36 2008/11/12 12:36:09 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -691,49 +691,26 @@ struct sysent aoutm68k_sysent[] = {
 	    (sy_call_t *)sys_reboot },		/* 208 = reboot */
 	{ ns(struct sys_poll_args), 0,
 	    (sy_call_t *)sys_poll },		/* 209 = poll */
-#if defined(LKM) || !defined(_KERNEL)
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_lkmnosys },	/* 210 = lkmnosys */
+	    sys_nosys },			/* 210 = unimplemented */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_lkmnosys },	/* 211 = lkmnosys */
+	    sys_nosys },			/* 211 = unimplemented */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_lkmnosys },	/* 212 = lkmnosys */
+	    sys_nosys },			/* 212 = unimplemented */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_lkmnosys },	/* 213 = lkmnosys */
+	    sys_nosys },			/* 213 = unimplemented */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_lkmnosys },	/* 214 = lkmnosys */
+	    sys_nosys },			/* 214 = unimplemented */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_lkmnosys },	/* 215 = lkmnosys */
+	    sys_nosys },			/* 215 = unimplemented */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_lkmnosys },	/* 216 = lkmnosys */
+	    sys_nosys },			/* 216 = unimplemented */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_lkmnosys },	/* 217 = lkmnosys */
+	    sys_nosys },			/* 217 = unimplemented */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_lkmnosys },	/* 218 = lkmnosys */
+	    sys_nosys },			/* 218 = unimplemented */
 	{ 0, 0, 0,
-	    (sy_call_t *)sys_lkmnosys },	/* 219 = lkmnosys */
-#else	/* !LKM */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 210 = excluded lkmnosys */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 211 = excluded lkmnosys */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 212 = excluded lkmnosys */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 213 = excluded lkmnosys */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 214 = excluded lkmnosys */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 215 = excluded lkmnosys */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 216 = excluded lkmnosys */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 217 = excluded lkmnosys */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 218 = excluded lkmnosys */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 219 = excluded lkmnosys */
-#endif	/* !LKM */
+	    sys_nosys },			/* 219 = unimplemented */
 #if defined(SYSVSEM) || !defined(_KERNEL)
 #if defined(COMPAT_14) || !defined(_KERNEL)
 	{ ns(struct compat_14_sys___semctl_args), 0,
