@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.647 2008/11/11 15:53:53 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.648 2008/11/12 01:14:01 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.647 2008/11/11 15:53:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.648 2008/11/12 01:14:01 cegger Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1166,7 +1166,7 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 	if (seg_end > 0x100000000ULL) {
 		printf("WARNING: skipping large "
 		    "memory map entry: "
-		    "0x%qx/0x%qx/0x%x\n",
+		    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n",
 		    seg_start,
 		    (seg_end - seg_start),
 		    type);
@@ -1205,7 +1205,7 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 		/* XXX What should we do? */
 		printf("WARNING: CAN'T ALLOCATE "
 		    "MEMORY SEGMENT "
-		    "(0x%qx/0x%qx/0x%x) FROM "
+		    "(0x%"PRIx64"/0x%"PRIx64"/0x%x) FROM "
 		    "IOMEM EXTENT MAP!\n",
 		    seg_start, seg_end - seg_start, type);
 		return;
@@ -1413,17 +1413,18 @@ init386_ksyms(void)
 void
 init386(paddr_t first_avail)
 {
-#ifndef XEN
-	union descriptor *tgdt;
-	extern struct extent *iomem_ex;
-	struct btinfo_memmap *bim;
-	struct region_descriptor region;
-	int first16q;
-	uint64_t seg_start, seg_end;
-	uint64_t seg_start1, seg_end1;
-#endif
 	extern void consinit(void);
 	int x;
+#ifndef XEN
+	int first16q;
+	union descriptor *tgdt;
+	extern struct extent *iomem_ex;
+	struct region_descriptor region;
+	uint64_t seg_start, seg_end;
+	uint64_t seg_start1, seg_end1;
+	struct btinfo_memmap *bim;
+	uint64_t addr, size;
+#endif
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
 	extern u_char biostramp_image[];
@@ -1563,11 +1564,12 @@ init386(paddr_t first_avail)
 		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
 #endif
 		for (x = 0; x < bim->num; x++) {
+			addr = bim->entry[x].addr;
+			size = bim->entry[x].size;
 #ifdef DEBUG_MEMLOAD
-			printf("    addr 0x%qx  size 0x%qx  type 0x%x\n",
-			    bim->entry[x].addr,
-			    bim->entry[x].size,
-			    bim->entry[x].type);
+			printf("    addr 0x%"PRIx64"  size 0x%"PRIx64
+				"  type 0x%x\n",
+				addr, size, bim->entry[x].type);
 #endif
 
 			/*
@@ -1585,9 +1587,8 @@ init386(paddr_t first_avail)
 			/*
 			 * If the segment is smaller than a page, skip it.
 			 */
-			if (bim->entry[x].size < NBPG) {
+			if (size < NBPG)
 				continue;
-			}
 
 			/*
 			 * Sanity check the entry.
@@ -1595,8 +1596,8 @@ init386(paddr_t first_avail)
 			 * XXX and 64-bit physical addresses in i386
 			 * XXX port.
 			 */
-			seg_start = bim->entry[x].addr;
-			seg_end = bim->entry[x].addr + bim->entry[x].size;
+			seg_start = addr;
+			seg_end = addr + size;
 
 			/*
 			 *   Avoid Compatibility Holes.
@@ -1612,7 +1613,7 @@ init386(paddr_t first_avail)
 			if (seg_start < 0x100000 && seg_end > 0xa0000) {
 				printf("WARNING: memory map entry overlaps "
 				    "with ``Compatibility Holes'': "
-				    "0x%qx/0x%qx/0x%x\n", seg_start,
+				    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
 				    seg_end - seg_start, bim->entry[x].type);
 				add_mem_cluster(seg_start, 0xa0000,
 				    bim->entry[x].type);
@@ -1679,6 +1680,7 @@ init386(paddr_t first_avail)
 
 		avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
 	}
+
 	/*
 	 * If we have 16M of RAM or less, just put it all on
 	 * the default free list.  Otherwise, put the first
@@ -1744,8 +1746,8 @@ init386(paddr_t first_avail)
 
 				if (tmp != seg_start) {
 #ifdef DEBUG_MEMLOAD
-					printf("loading 0x%qx-0x%qx "
-					    "(0x%lx-0x%lx)\n",
+					printf("loading 0x%"PRIx64"-0x%"PRIx64
+					    " (0x%lx-0x%lx)\n",
 				    	    seg_start, tmp,
 				  	    atop(seg_start), atop(tmp));
 #endif
@@ -1758,7 +1760,8 @@ init386(paddr_t first_avail)
 
 			if (seg_start != seg_end) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
+				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%lx-0x%lx)\n",
 				    seg_start, seg_end,
 				    atop(seg_start), atop(seg_end));
 #endif
@@ -1781,8 +1784,8 @@ init386(paddr_t first_avail)
 
 				if (tmp != seg_start1) {
 #ifdef DEBUG_MEMLOAD
-					printf("loading 0x%qx-0x%qx "
-					    "(0x%lx-0x%lx)\n",
+					printf("loading 0x%"PRIx64"-0x%"PRIx64
+					    " (0x%lx-0x%lx)\n",
 				    	    seg_start1, tmp,
 				    	    atop(seg_start1), atop(tmp));
 #endif
@@ -1795,7 +1798,8 @@ init386(paddr_t first_avail)
 
 			if (seg_start1 != seg_end1) {
 #ifdef DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
+				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%lx-0x%lx)\n",
 				    seg_start1, seg_end1,
 				    atop(seg_start1), atop(seg_end1));
 #endif
