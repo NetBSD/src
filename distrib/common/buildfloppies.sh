@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: buildfloppies.sh,v 1.16 2008/11/11 19:55:21 dbj Exp $
+# $NetBSD: buildfloppies.sh,v 1.17 2008/11/12 14:22:16 apb Exp $
 #
 # Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,19 +34,23 @@
 #
 : ${PAX=pax}
 prog=${0##*/}
+etcdir=/etc
 
 
 usage()
 {
 	cat 1>&2 << _USAGE_
-Usage: ${prog} [-i instboot] [-m max] [-p] [-s suffix] base size file [...]
-	-i instboot	run instboot to install a bootstrap on @IMAGE@
+Usage: ${prog} [options] base size file [...]
+	-i instboot	eval instboot as a shell command to install a
+			bootstrap.  @IMAGE@ is replaced with with the
+			file name of the floppy image.
 	-m max		maximum number of floppies to build
+	-N etcdir	directory in which to find passwd and group files.
 	-p		pad last floppy to floppy size
 	-s suffix	suffix for floppies
 	base		basename of generated floppies
 	size		size of a floppy in 512 byte blocks
-	file [...]	file(s) to build
+	file [...]	file(s) to store in the floppies
 _USAGE_
 	exit 1
 }
@@ -65,12 +69,14 @@ roundup()
 #	parse and check arguments
 #
 
-while getopts i:m:ps: opt; do
+while getopts i:m:N:ps: opt; do
 	case ${opt} in
 	i)
 		instboot=${OPTARG} ;;
 	m)
 		maxdisks=${OPTARG} ;;
+	N)
+		etcdir=${OPTARG} ;;
 	p)
 		pad=1 ;;
 	s)
@@ -92,13 +98,21 @@ files=$*
 #
 floppy=floppy.$$.tar
 trap "rm -f ${floppy}" 0 1 2 3			# EXIT HUP INT QUIT
-rm -f ${floppybase}?${suffix}
+rm -f ${floppybase}?${suffix}			# XXX breaks if maxdisks > 9
 
 #	create tar file
 #
 dd if=/dev/zero of=${floppy} bs=8k count=1 2>/dev/null
-${PAX} -O -w -b8k ${files} >> ${floppy} || exit 1
-	# XXX: use pax metafile and set perms?
+(
+	echo ". type=dir optional"
+	for f in ${files}; do
+		echo "./$f type=file uname=root gname=wheel mode=0444"
+	done
+) | \
+${PAX} -O -w -b8k -M -N "${etcdir}" -s,^./,, >> ${floppy} || exit 1
+
+#	install bootstrap before the image is split into multiple disks
+#
 if [ -n "$instboot" ]; then
 	instboot=$( echo $instboot | sed -e s/@IMAGE@/${floppy}/ )
 	echo "Running instboot: ${instboot}"
@@ -121,10 +135,11 @@ fi
 #	Try to accurately summarise free space
 #
 msg=
-# First floppy has 8k boot code, the rest an 8k 'multivolume header'
-# Each file has a 512 byte header and is rounded to a multiple of 512
-# The archive ends with two 512 byte blocks of zeros
-# The output file is then rounded up to a multiple of 8k
+# First floppy has 8k boot code, the rest an 8k 'multivolume header'.
+# Each file has a 512 byte header and is rounded to a multiple of 512.
+# The archive ends with two 512 byte blocks of zeros.
+# The output file is then rounded up to a multiple of 8k.
+# floppysize is in units of 512-byte blocks; free_space is in bytes.
 free_space=$(($maxdisks * ($floppysize - 16) * 512 - 512 * 2))
 for file in $files; do
 	set -- $(ls -ln $file)
@@ -193,6 +208,6 @@ fi
 #	final status
 #
 echo "Final result:"
-ls -l ${floppybase}?${suffix}
+ls -l ${floppybase}?${suffix}			# XXX breaks if maxdisks > 9
 
 exit 0
