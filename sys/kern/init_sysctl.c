@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.149 2008/10/22 11:25:19 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.150 2008/11/12 14:32:34 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149 2008/10/22 11:25:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.150 2008/11/12 14:32:34 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_sa.h"
+#include "opt_posix.h"
 #include "pty.h"
 #include "rnd.h"
 
@@ -80,7 +81,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.149 2008/10/22 11:25:19 ad Exp $")
 
 #include <sys/cpu.h>
 
+#if defined(MODULAR) || defined(P1003_1B_SEMAPHORE)
+int posix_semaphores = 200112;
+#else
 int posix_semaphores;
+#endif
+
 int security_setidcore_dump;
 char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
 uid_t security_setidcore_owner = 0;
@@ -846,6 +852,20 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, CTL_CREATE, CTL_EOL);
 #endif
+
+	/* kern.posix. */
+	sysctl_createv(clog, 0, NULL, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "posix",
+			SYSCTL_DESCR("POSIX options"),
+			NULL, 0, NULL, 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+			CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+			CTLTYPE_INT, "semmax",
+			SYSCTL_DESCR("Maximal number of semaphores"),
+			NULL, 0, &ksem_max, 0,
+			CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
