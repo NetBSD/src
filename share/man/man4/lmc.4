@@ -53,7 +53,7 @@
 .\"           *  PLEASE DO NOT "UN-IFDEF" THIS FILE!  *
 .\"           * * * * * * * * * * * * * * * * * * * * *
 .\"
-.\" $NetBSD: lmc.4,v 1.14 2006/12/23 06:58:20 wiz Exp $
+.\" $NetBSD: lmc.4,v 1.15 2008/11/12 12:35:53 ad Exp $
 .\"
 .Dd April 11, 2006
 .Dt LMC 4
@@ -149,20 +149,6 @@ neither SPPP nor Netgraph are configured into the kernel.
 .if \n[allos] .Ss NetBSD & OpenBSD Synopsis
 .if (\n[nbsd] : \n[obsd]) \{\
 This driver is built into the GENERIC kernel so it should "just work".
-The driver can be loaded into a running kernel with
-.Xr modload 8 .
-.Bd -unfilled -offset indent -compact
-.Ic modload if_lmc.o
-.Ed
-The kernel must be built with support for Loadable Kernel Modules,
-.Xr lkm 8 .
-.Bd -unfilled -offset indent -compact
-.if \n[nbsd] .Cd options	LKM
-.if \n[obsd] .Cd option	LKM
-.Ed
-.Ic securelevel
-must be 0 to load modules; see
-.Xr init 8 .
 .Pp
 The driver can be built into a kernel by adding the following to
 .Pa /sys/arch/ARCH/conf/YOURKERNEL :
@@ -1300,8 +1286,6 @@ to the distant input signal.
 .if \n[nbsd] .Xr init 8 ,
 .if \n[obsd] .Xr init 8 ,
 .if \n[fbsd] .Xr kldload 8 ,
-.if \n[nbsd] .Xr lkm 8 ,
-.if \n[obsd] .Xr lkm 8 ,
 .Xr lmcconfig 8 ,
 .if \n[nbsd] .Xr modload 8 ,
 .if \n[obsd] .Xr modload 8 ,

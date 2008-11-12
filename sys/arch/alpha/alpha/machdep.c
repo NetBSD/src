@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.308 2008/11/11 06:46:40 dyoung Exp $ */
+/* $NetBSD: machdep.c,v 1.309 2008/11/12 12:35:55 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.308 2008/11/11 06:46:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.309 2008/11/12 12:35:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ u_int8_t	dec_3000_scsiid[2], dec_3000_scsifast[2];
 
 struct platform platform;
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 /* start and end of kernel symbol table */
 void	*ksym_start, *ksym_end;
 #endif
@@ -421,7 +421,7 @@ nobootinfo:
 	 * stack).
 	 */
 	kernstart = trunc_page((vaddr_t)kernel_text) - 2 * PAGE_SIZE;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksym_start = (void *)bootinfo.ssym;
 	ksym_end   = (void *)bootinfo.esym;
 	kernend = (vaddr_t)round_page((vaddr_t)ksym_end);
@@ -767,7 +767,7 @@ nobootinfo:
 	/*
 	 * Initialize debuggers, and break into them if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
 	    ksym_start, ksym_end);
 #endif

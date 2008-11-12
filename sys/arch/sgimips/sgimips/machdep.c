@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 2008/11/11 06:46:43 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123 2008/11/12 12:36:06 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2008/11/11 06:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2008/11/12 12:36:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2008/11/11 06:46:43 dyoung Exp $")
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM) || defined(KGDB)
+#if NKSYMS || defined(DDB) || defined(MODULAR) || defined(KGDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
@@ -255,7 +255,7 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	vaddr_t kernend;
 	int kernstartpfn, kernendpfn;
 	int i, rv;
-#if NKSYMS > 0 || defined(DDB) || defined(LKM)
+#if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	int nsym = 0;
 	char *ssym = NULL;
 	char *esym = NULL;
@@ -302,7 +302,7 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	} else
 		bootinfo_msg = "no bootinfo found. (old bootblocks?)\n";
 
-#if NKSYM > 0 || defined(DDB) || defined(LKM)
+#if NKSYM > 0 || defined(DDB) || defined(MODULAR)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 
 	/* check whether there is valid bootinfo symtab info */
@@ -482,7 +482,7 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	for (i = 0; i < argc; i++)
 		aprint_debug("argv[%d] = %s\n", i, argv[i]);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
 		ksyms_init(nsym, ssym, esym);
@@ -490,7 +490,7 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 	else
 		ksyms_init(0, NULL, NULL);
 #endif /* SYMTAB_SPACE */
-#endif /* NKSYMS || defined(DDB) || defined(LKM) */
+#endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 
 #if defined(KGDB) || defined(DDB)
 	/* Set up DDB hook to turn off watchdog on entry */

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sun2,v 1.18 2007/12/31 15:32:07 ad Exp $
+#	$NetBSD: majors.sun2,v 1.19 2008/11/12 12:36:07 ad Exp $
 #
 # Device majors for sun2
 #
@@ -44,7 +44,6 @@ device-major	ch		char 59			ch
 device-major	ss		char 60			ss
 device-major	uk		char 61			uk
 
-device-major	lkm		char 72			lkm
 
 device-major	rnd		char 80			rnd
 device-major	scsibus		char 81			scsibus

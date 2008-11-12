@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.51 2008/09/07 12:01:26 tron Exp $
+#	$NetBSD: GENERIC,v 1.52 2008/11/12 12:36:02 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.51 $"
+#ident 		"GENERIC-$Revision: 1.52 $"
 
 maxusers	32		# estimated number of users
 
@@ -59,7 +59,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions

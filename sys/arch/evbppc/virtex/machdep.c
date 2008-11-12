@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2008/11/11 06:46:42 dyoung Exp $ */
+/*	$NetBSD: machdep.c,v 1.8 2008/11/12 12:36:00 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2008/11/11 06:46:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2008/11/12 12:36:00 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -105,7 +105,7 @@ char bootpath[256];
 paddr_t msgbuf_paddr;
 vaddr_t msgbuf_vaddr;
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 void *startsym, *endsym;
 #endif
 
@@ -246,7 +246,7 @@ initppc(u_int startkernel, u_int endkernel)
 	uvm_setpagesize();
 	pmap_bootstrap(startkernel, endkernel);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef DDB

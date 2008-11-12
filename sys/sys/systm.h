@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.228 2008/09/23 22:20:24 pooka Exp $	*/
+/*	$NetBSD: systm.h,v 1.229 2008/11/12 12:36:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -466,7 +466,7 @@ void	kernel_lock_init(void);
 void	_kernel_lock(int);
 void	_kernel_unlock(int, int *);
 
-#if defined(MULTIPROCESSOR) || defined(_LKM)
+#if defined(MULTIPROCESSOR) || defined(_MODULE)
 #define	KERNEL_LOCK(count, lwp)			\
 do {						\
 	if ((count) != 0)			\

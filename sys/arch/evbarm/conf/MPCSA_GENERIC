@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.5 2008/10/07 12:43:31 pgoyette Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.6 2008/11/12 12:35:58 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -68,7 +68,6 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-#options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

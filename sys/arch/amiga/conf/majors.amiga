@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amiga,v 1.20 2007/12/31 15:31:48 ad Exp $
+#	$NetBSD: majors.amiga,v 1.21 2008/11/12 12:35:56 ad Exp $
 #
 # Device majors for amiga
 #
@@ -27,7 +27,6 @@ device-major	st		char 20  block 5	st
 device-major	filedesc	char 21
 device-major	bpf		char 22			bpfilter
 device-major	tun		char 23			tun
-device-major	lkm		char 24			lkm
 
 device-major	msc		char 31			msc
 device-major	com		char 32			com

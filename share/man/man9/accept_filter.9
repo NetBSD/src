@@ -25,7 +25,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man9/accept_filter.9,v 1.13 2004/06/16 08:33:57 ru Exp $
 .\" "
-.Dd August 10, 2008
+.Dd November 12, 2008
 .Os
 .Dt ACCEPT_FILTER 9
 .Sh NAME
@@ -39,7 +39,6 @@
 .Fd #define ACCEPT_FILTER_MOD
 .In sys/param.h
 .In sys/kernel.h
-.In sys/lkm.h
 .In sys/sysctl.h
 .In sys/signalvar.h
 .In sys/socketvar.h
@@ -90,7 +89,7 @@ The accept filters currently provided with
 .Xr accf_http 9 )
 are implemented as pseudo-devices, but an accept filter may use any
 supported means of initializing and registering itself at system startup
-or later, including the LKM or module frameworks if they are supported
+or later, including the module framework if supported
 by the running kernel.
 .Pp
 The fields of

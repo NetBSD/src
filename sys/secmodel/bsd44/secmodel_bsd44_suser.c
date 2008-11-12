@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.59 2008/10/22 11:16:29 ad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.60 2008/11/12 12:36:28 ad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.59 2008/10/22 11:16:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.60 2008/11/12 12:36:28 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -351,7 +351,6 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_SYSTEM_CHSYSFLAGS:
-	case KAUTH_SYSTEM_LKM:
 	case KAUTH_SYSTEM_SETIDCORE:
 		/*
 		 * Decisions here are root-agnostic.
@@ -359,8 +358,6 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		 * CHSYSFLAGS - Should be used only after the caller was
 		 *              determined as root. Needs to be re-factored
 		 *              anyway. Infects ufs, ext2fs, tmpfs, and rump.
-		 *
-		 * LKM - Subject to permissions on /dev/lkm for now.
 		 *
 		 * SETIDCORE - Should be used only after the caller was
 		 *             determined as someone who can modify sysctl

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.75 2008/08/15 15:17:18 tsutsui Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.76 2008/11/12 12:36:05 ad Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.75 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.76 $"
 
 maxusers	32
 
@@ -56,7 +56,6 @@ options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
-#options 	LKM		# loadable kernel modules (XXX: working?)
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

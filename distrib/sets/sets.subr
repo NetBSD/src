@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.73 2008/11/09 23:07:22 mrg Exp $
+#	$NetBSD: sets.subr,v 1.74 2008/11/12 12:35:50 ad Exp $
 #
 
 #
@@ -49,7 +49,6 @@ MKVARS="\
 	MKMAN		\
 	MKMANPAGES	\
 	MKMANZ		\
-	MKMODULAR	\
 	MKNLS		\
 	MKNVI		\
 	MKPAM		\
@@ -229,7 +228,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.73 2008/11/09 23:07:22 mrg Exp $
+# 	# $NetBSD: sets.subr,v 1.74 2008/11/12 12:35:50 ad Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -276,7 +275,6 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	man			${MKMAN} != no
 #	manpages		${MKMANPAGES} != no
 #	manz			${MKMANZ} != no
-#	modular			${MKMODULAR} != no
 #	nls			${MKNLS} != no
 #	nvi			${MKNVI} != no
 #	pam			${MKPAM} != no

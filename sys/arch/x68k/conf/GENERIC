@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.141 2008/08/10 15:31:22 tls Exp $
+# $NetBSD: GENERIC,v 1.142 2008/11/12 12:36:09 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.141 $"
+#ident 		"GENERIC-$Revision: 1.142 $"
 
 maxusers	8
 
@@ -79,7 +79,6 @@ options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 ## Loadable kernel module support
-#options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.50 2008/04/28 20:23:37 martin Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.51 2008/11/12 12:36:06 ad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,9 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.50 2008/04/28 20:23:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.51 2008/11/12 12:36:06 ad Exp $");
 
-#ifndef _LKM
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #endif
 

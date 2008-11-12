@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.56 2008/11/11 06:46:43 dyoung Exp $ */
+/* $NetBSD: machdep.c,v 1.57 2008/11/12 12:36:02 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.56 2008/11/11 06:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2008/11/12 12:36:02 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -214,7 +214,7 @@ consinit()
 		ws_cnattach();
 	}
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern char end[];
 		extern int *esym;

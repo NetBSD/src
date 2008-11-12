@@ -1,4 +1,4 @@
-/*	$NetBSD: accf_data.c,v 1.2 2008/10/14 13:05:44 ad Exp $	*/
+/*	$NetBSD: accf_data.c,v 1.3 2008/11/12 12:36:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Alfred Perlstein <alfred@FreeBSD.org>
@@ -27,18 +27,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_data.c,v 1.2 2008/10/14 13:05:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_data.c,v 1.3 2008/11/12 12:36:28 ad Exp $");
 
 #define ACCEPT_FILTER_MOD
 
 #include <sys/param.h>
 #include <sys/kernel.h>
-#include <sys/lkm.h>
+#include <sys/module.h>
 #include <sys/sysctl.h>
 #include <sys/signalvar.h>
 #include <sys/socketvar.h>
 
 #include <netinet/accept_filter.h>
+
+MODULE(MODULE_CLASS_MISC, accf_data, NULL);
 
 /* accept filter that holds a socket until data arrives */
 
@@ -49,40 +51,30 @@ static struct accept_filter accf_data_filter = {
 	.accf_callback = sohasdata,
 };
 
-void accf_dataattach(int);
-void accf_dataattach(int num)
+/* XXX pseudo-device */
+void	accf_dataattach(int);
+
+void
+accf_dataattach(int junk)
 {
-	accept_filt_generic_mod_event(NULL, LKM_E_LOAD, &accf_data_filter);
+
 }
 
-/*
- * This code is to make DATA ready accept filer as LKM.
- * To compile as LKM we need to move this set of code into
- * another file and include this file for compilation when
- * making LKM
- */
-
-#ifdef _LKM
-static int accf_data_handle(struct lkm_table * lkmtp, int cmd);
-int accf_data_lkmentry(struct lkm_table * lkmtp, int cmd, int ver);
-
-MOD_MISC("accf_data");
-
-static int accf_data_handle(struct lkm_table * lkmtp, int cmd)
+static int
+accf_data_modcmd(modcmd_t cmd, void *arg)
 {
-	return accept_filt_generic_mod_event(lkmtp, cmd, &accf_data_filter);
-}
 
-/*
- * the module entry point.
- */
-int
-accf_data_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
-{
-	DISPATCH(lkmtp, cmd, ver, accf_data_handle, accf_data_handle,
-	    accf_data_handle)
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return accept_filt_add(&accf_data_filter);
+
+	case MODULE_CMD_FINI:
+		return accept_filt_del(&accf_data_filter);
+
+	default:
+		return ENOTTY;
+	}
 }
-#endif
 
 static void
 sohasdata(struct socket *so, void *arg, int waitflag)

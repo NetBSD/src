@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.13 2008/08/10 08:53:29 cegger Exp $
+# $NetBSD: XEN3_DOMU,v 1.14 2008/11/12 12:35:56 ad Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -34,7 +34,6 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel

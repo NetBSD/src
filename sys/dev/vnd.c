@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.187 2008/09/24 07:57:30 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.188 2008/11/12 12:36:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.187 2008/09/24 07:57:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.188 2008/11/12 12:36:11 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -194,7 +194,7 @@ struct vndxfer {
 #define VNDLABELDEV(dev) \
     (MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
 
-/* called by main() at boot time (XXX: and the LKM driver) */
+/* called by main() at boot time */
 void	vndattach(int);
 
 static void	vndclear(struct vnd_softc *, int);
