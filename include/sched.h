@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.10 2008/06/15 21:38:08 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.10.4.1 2008/11/12 23:50:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -58,13 +58,16 @@ __END_DECLS
 
 #if defined(_NETBSD_SOURCE)
 
-/*
- * Stuff that for historical reasons is in <sched.h>, but not defined
- * by any standard.
- */
 __BEGIN_DECLS
+
+/* Process affinity functions (not portable) */
+int	sched_getaffinity_np(pid_t, size_t, cpuset_t *);
+int	sched_setaffinity_np(pid_t, size_t, cpuset_t *);
+
+/* Historical functions, not defined in standard */
 pid_t	 clone(int (*)(void *), void *, int, void *);
 pid_t	__clone(int (*)(void *), void *, int, void *);
+
 __END_DECLS
 
 #endif /* _NETBSD_SOURCE */
