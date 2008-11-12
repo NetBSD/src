@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_sem.c,v 1.26 2008/10/22 11:17:08 ad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.27 2008/11/12 14:32:34 ad Exp $	*/
 
 /*-
- * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,9 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.26 2008/10/22 11:17:08 ad Exp $");
-
-#include "opt_posix.h"
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.27 2008/11/12 14:32:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,13 +68,12 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.26 2008/10/22 11:17:08 ad Exp $");
 #include <sys/kmem.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
-#include <sys/sysctl.h>
-
+#include <sys/module.h>
 #include <sys/mount.h>
-
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 
-#define SEM_MAX 128
 #define SEM_MAX_NAMELEN	14
 #define SEM_VALUE_MAX (~0U)
 #define SEM_HASHTBL_SIZE 13
@@ -84,7 +81,20 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.26 2008/10/22 11:17:08 ad Exp $");
 #define SEM_TO_ID(x)	(((x)->ks_id))
 #define SEM_HASH(id)	((id) % SEM_HASHTBL_SIZE)
 
-MALLOC_DEFINE(M_SEM, "p1003_1b_sem", "p1003_1b semaphores");
+MODULE(MODULE_CLASS_MISC, ksem, NULL);
+
+static const struct syscall_package ksem_syscalls[] = {
+	{ SYS__ksem_init, 0, (sy_call_t *)sys__ksem_init },
+	{ SYS__ksem_open, 0, (sy_call_t *)sys__ksem_open },
+	{ SYS__ksem_unlink, 0, (sy_call_t *)sys__ksem_unlink },
+	{ SYS__ksem_close, 0, (sy_call_t *)sys__ksem_close },
+	{ SYS__ksem_post, 0, (sy_call_t *)sys__ksem_post },
+	{ SYS__ksem_wait, 0, (sy_call_t *)sys__ksem_wait },
+	{ SYS__ksem_trywait, 0, (sy_call_t *)sys__ksem_trywait },
+	{ SYS__ksem_getvalue, 0, (sy_call_t *)sys__ksem_getvalue },
+	{ SYS__ksem_destroy, 0, (sy_call_t *)sys__ksem_destroy },
+	{ 0, 0, NULL },
+};
 
 /*
  * Note: to read the ks_name member, you need either the ks_interlock
@@ -126,7 +136,6 @@ LIST_HEAD(ksem_list, ksem);
 static kmutex_t ksem_mutex;
 static struct ksem_list ksem_head = LIST_HEAD_INITIALIZER(&ksem_head);
 static struct ksem_list ksem_hash[SEM_HASHTBL_SIZE];
-static u_int sem_max = SEM_MAX;
 static int nsems = 0;
 
 /*
@@ -136,6 +145,8 @@ static int nsems = 0;
 static uint32_t ksem_counter = 1;
 
 static specificdata_key_t ksem_specificdata_key;
+static void *ksem_ehook;
+static void *ksem_fhook;
 
 static void
 ksem_free(struct ksem *ks)
@@ -338,7 +349,7 @@ ksem_create(struct lwp *l, const char *name, struct ksem **ksret,
 	cv_init(&ret->ks_cv, "psem");
 
 	mutex_enter(&ksem_mutex);
-	if (nsems >= sem_max) {
+	if (nsems >= ksem_max) {
 		mutex_exit(&ksem_mutex);
 		if (ret->ks_name != NULL)
 			kmem_free(ret->ks_name, ret->ks_namelen);
@@ -819,51 +830,64 @@ ksem_exechook(struct proc *p, void *arg)
 	}
 }
 
-void
-ksem_init(void)
+static int
+ksem_fini(bool interface)
 {
-	int i, error;
+	int error;
 
-	mutex_init(&ksem_mutex, MUTEX_DEFAULT, IPL_NONE);
-	exechook_establish(ksem_exechook, NULL);
-	forkhook_establish(ksem_forkhook);
-
-	for (i = 0; i < SEM_HASHTBL_SIZE; i++)
-		LIST_INIT(&ksem_hash[i]);
-
-	error = proc_specific_key_create(&ksem_specificdata_key,
-					 ksem_proc_dtor);
-	KASSERT(error == 0);
-	posix_semaphores = 200112;
+	if (interface) {
+		error = syscall_disestablish(NULL, ksem_syscalls);
+		if (error != 0) {
+			return error;
+		}
+		if (nsems != 0) {
+			error = syscall_establish(NULL, ksem_syscalls);
+			KASSERT(error == 0);
+			return EBUSY;
+		}
+	}
+	exechook_disestablish(ksem_ehook);
+	forkhook_disestablish(ksem_fhook);
+	proc_specific_key_delete(ksem_specificdata_key);
+	mutex_destroy(&ksem_mutex);
+	return 0;
 }
 
-/*
- * Sysctl initialization and nodes.
- */
-
-SYSCTL_SETUP(sysctl_posix_sem_setup, "sysctl kern.posix subtree setup")
+static int
+ksem_init(void)
 {
-	const struct sysctlnode *node = NULL;
+	int error, i;
 
-	sysctl_createv(clog, 0, NULL, NULL,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "kern", NULL,
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, &node,
-		CTLFLAG_PERMANENT,
-		CTLTYPE_NODE, "posix",
-		SYSCTL_DESCR("POSIX options"),
-		NULL, 0, NULL, 0,
-		CTL_KERN, CTL_CREATE, CTL_EOL);
+	mutex_init(&ksem_mutex, MUTEX_DEFAULT, IPL_NONE);
+	for (i = 0; i < SEM_HASHTBL_SIZE; i++)
+		LIST_INIT(&ksem_hash[i]);
+	error = proc_specific_key_create(&ksem_specificdata_key,
+	    ksem_proc_dtor);
+	if (error != 0) {
+		mutex_destroy(&ksem_mutex);
+		return error;
+	}
+	ksem_ehook = exechook_establish(ksem_exechook, NULL);
+	ksem_fhook = forkhook_establish(ksem_forkhook);
+	error = syscall_establish(NULL, ksem_syscalls);
+	if (error != 0) {
+		(void)ksem_fini(false);
+	}
+	return error;
+}
 
-	if (node == NULL)
-		return;
+static int
+ksem_modcmd(modcmd_t cmd, void *arg)
+{
 
-	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "semmax",
-		SYSCTL_DESCR("Maximal number of semaphores"),
-		NULL, 0, &sem_max, 0,
-		CTL_CREATE, CTL_EOL);
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return ksem_init();
+
+	case MODULE_CMD_FINI:
+		return ksem_fini(true);
+
+	default:
+		return ENOTTY;
+	}
 }

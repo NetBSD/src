@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.372 2008/11/12 12:36:16 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.373 2008/11/12 14:32:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,13 +97,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.372 2008/11/12 12:36:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.373 2008/11/12 14:32:34 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
-#include "opt_posix.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
 #include "opt_fileassoc.h"
@@ -176,9 +175,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.372 2008/11/12 12:36:16 ad Exp $");
 #endif
 #ifdef SYSVMSG
 #include <sys/msg.h>
-#endif
-#ifdef P1003_1B_SEMAPHORE
-#include <sys/ksem.h>
 #endif
 #include <sys/domain.h>
 #include <sys/namei.h>
@@ -519,11 +515,6 @@ main(void)
 #ifdef SYSVMSG
 	/* Initialize System V style message queues. */
 	msginit();
-#endif
-
-#ifdef P1003_1B_SEMAPHORE
-	/* Initialize posix semaphores */
-	ksem_init();
 #endif
 
 #if NVERIEXEC > 0
