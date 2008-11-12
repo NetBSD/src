@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.16 2006/08/31 22:33:14 hubertf Exp $
+#	$NetBSD: dot.cshrc,v 1.16.26.1 2008/11/12 23:33:45 snj Exp $
 
 alias	h	history
 alias	j	jobs -l
@@ -17,6 +17,10 @@ alias	pd2	pushd +2
 alias	pd3	pushd +3
 alias	pd4	pushd +4
 alias	tset	'set noglob histchars=""; eval `\tset -s \!*`; unset noglob histchars'
+
+# Uncomment the following line to install binary packages
+# from ftp.NetBSD.org via pkg_add.
+#setenv PKG_PATH ftp://ftp.netbsd.org/pkgsrc/packages/NetBSD/`uname -m`/5.0/All
 
 setenv BLOCKSIZE 1k
 
