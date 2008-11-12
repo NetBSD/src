@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.11 2008/11/12 12:36:28 ad Exp $
+# $NetBSD: Makefile,v 1.12 2008/11/12 14:32:34 ad Exp $
 
 SUBDIR=		accf_data
 SUBDIR+=	accf_http
-SUBDIR+=	miniroot
 SUBDIR+=	fss
+SUBDIR+=	ksem
+SUBDIR+=	miniroot
 SUBDIR+=	putter
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64"

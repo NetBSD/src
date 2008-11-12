@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.212 2008/11/12 12:36:16 ad Exp $
+	$NetBSD: syscalls.master,v 1.213 2008/11/12 14:32:34 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -44,7 +44,6 @@
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
-#include "opt_posix.h"
 
 #include "fs_lfs.h"
 #include "fs_nfs.h"
@@ -504,32 +503,19 @@
 			    siginfo_t *info, \
 			    struct timespec *timeout); }
 245	UNIMPL		sys_sigqueue
-246	STD 		{ int sys_modctl(int cmd, void *arg); }
-#if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL) && defined(_LIBC))
-247	STD 		{ int sys__ksem_init(unsigned int value, semid_t *idp); }
-248	STD 		{ int sys__ksem_open(const char *name, int oflag, \
+246	STD 	 	{ int sys_modctl(int cmd, void *arg); }
+247	STD MODULAR 	{ int sys__ksem_init(unsigned int value, semid_t *idp); }
+248	STD MODULAR 	{ int sys__ksem_open(const char *name, int oflag, \
 			    mode_t mode, unsigned int value, semid_t *idp); }
-249	STD 		{ int sys__ksem_unlink(const char *name); }
-250	STD 		{ int sys__ksem_close(semid_t id); }
-251	STD 		{ int sys__ksem_post(semid_t id); }
-252	STD 		{ int sys__ksem_wait(semid_t id); }
-253	STD 		{ int sys__ksem_trywait(semid_t id); }
-254	STD 		{ int sys__ksem_getvalue(semid_t id, \
+249	STD MODULAR 	{ int sys__ksem_unlink(const char *name); }
+250	STD MODULAR 	{ int sys__ksem_close(semid_t id); }
+251	STD MODULAR 	{ int sys__ksem_post(semid_t id); }
+252	STD MODULAR 	{ int sys__ksem_wait(semid_t id); }
+253	STD MODULAR 	{ int sys__ksem_trywait(semid_t id); }
+254	STD MODULAR 	{ int sys__ksem_getvalue(semid_t id, \
 			    unsigned int *value); }
-255	STD 		{ int sys__ksem_destroy(semid_t id); }
+255	STD MODULAR 	{ int sys__ksem_destroy(semid_t id); }
 256	UNIMPL		sys__ksem_timedwait
-#else
-247	EXCL		sys__ksem_init
-248	EXCL		sys__ksem_open
-249	EXCL 		sys__ksem_unlink
-250	EXCL		sys__ksem_close
-251	EXCL		sys__ksem_post
-252	EXCL		sys__ksem_wait
-253	EXCL		sys__ksem_trywait
-254	EXCL		sys__ksem_getvalue
-255	EXCL		sys__ksem_destroy
-256	UNIMPL		sys__ksem_timedwait
-#endif
 257	STD 		{ mqd_t sys_mq_open(const char * name, int oflag, \
 			    mode_t mode, struct mq_attr *attr); }
 258	STD 		{ int sys_mq_close(mqd_t mqdes); }
