@@ -1,4 +1,4 @@
-/*	$NetBSD: ksem.h,v 1.9 2008/10/22 11:57:14 ad Exp $	*/
+/*	$NetBSD: ksem.h,v 1.10 2008/11/12 14:32:34 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Alfred Perlstein <alfred@FreeBSD.org>
@@ -32,13 +32,14 @@
 #include <sys/cdefs.h>
 
 #ifdef _KERNEL
-void ksem_init(void);
+#define	KSEM_MAX	128
 
 int do_ksem_init(struct lwp *, unsigned int, semid_t *, copyout_t);
 int do_ksem_open(struct lwp *, const char *, int, mode_t, unsigned int,
     semid_t *, copyout_t);
 
 extern int	posix_semaphores;
+extern int	ksem_max;
 #endif
 
 #ifdef _LIBC
