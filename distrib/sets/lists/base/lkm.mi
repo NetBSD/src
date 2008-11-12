@@ -1,4 +1,4 @@
-# $NetBSD: lkm.mi,v 1.30 2008/11/12 12:35:50 ad Exp $
+# $NetBSD: lkm.mi,v 1.31 2008/11/12 14:33:11 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -35,6 +35,8 @@
 ./@MODULEDIR@/hfs/hfs.kmod			base-kernel-modules
 ./@MODULEDIR@/kernfs				base-kernel-modules
 ./@MODULEDIR@/kernfs/kernfs.kmod		base-kernel-modules
+./@MODULEDIR@/ksem				base-kernel-modules
+./@MODULEDIR@/ksem/ksem.kmod			base-kernel-modules
 ./@MODULEDIR@/lfs				base-kernel-modules
 ./@MODULEDIR@/lfs/lfs.kmod			base-kernel-modules
 ./@MODULEDIR@/mfs				base-kernel-modules
