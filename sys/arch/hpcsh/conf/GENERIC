@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.84 2008/11/12 12:36:01 ad Exp $
+# $NetBSD: GENERIC,v 1.85 2008/11/12 19:47:18 uwe Exp $
 #
 # GENERIC machine description file
 #
@@ -72,6 +72,7 @@ options 	KTRACE		# system call tracing via ktrace(1)
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
+#options 	MODULAR		# new style module framework
 
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
