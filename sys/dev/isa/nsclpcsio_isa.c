@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.27 2008/04/04 13:10:41 xtraeme Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.28 2008/11/12 12:36:12 ad Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.27 2008/04/04 13:10:41 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.28 2008/11/12 12:36:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,15 +41,15 @@ __KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.27 2008/04/04 13:10:41 xtraeme E
 #include <sys/gpio.h>
 #include <sys/bus.h>
 
-/* Don't use gpio for now in the LKM */
-#ifdef _LKM
+/* Don't use gpio for now in the module */
+#ifdef _MODULE
 #undef NGPIO
 #endif
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
-#ifndef _LKM
+#ifndef _MODULE
 #include "gpio.h"
 #endif
 #if NGPIO > 0

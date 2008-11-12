@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2008/11/11 06:46:43 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2008/11/12 12:36:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2008/11/11 06:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2008/11/12 12:36:04 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -240,7 +240,7 @@ initSH3(void *pc)	/* XXX return address */
 	consinit();
 
 	kernend = atop(round_page(SH3_P1SEG_TO_PHYS(end)));
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* XXX Currently symbol table size is not passed to the kernel. */
 	kernend += atop(0x40000);			/* XXX */
 #endif
@@ -258,7 +258,7 @@ initSH3(void *pc)	/* XXX return address */
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init(1, end, end + 0x40000);			/* XXX */
 #endif
 	/*

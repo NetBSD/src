@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.53 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: an.c,v 1.54 2008/11/12 12:36:11 ad Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.53 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.54 2008/11/12 12:36:11 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -347,7 +347,7 @@ an_attach(struct an_softc *sc)
 /*
  * Setup sysctl(3) MIB, hw.an.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_an, "sysctl an(4) subtree setup")
 {

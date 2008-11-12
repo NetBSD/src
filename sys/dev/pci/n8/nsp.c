@@ -77,8 +77,7 @@
 #include <sys/mbuf.h>
 #include <sys/device.h>
 #include <sys/queue.h>
-
-#include <sys/lkm.h>
+#include <sys/module.h>
 #include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
@@ -111,7 +110,7 @@ static void nsp_attach(struct device *parent, struct device *self, void *aux);
 static int nsp_detach(device_t dev, int flags);
 
 
-#ifdef _LKM
+#ifdef _MODULE
 CFATTACH_DECL(nsp2000, sizeof(struct nsp_softc), nsp_probe, nsp_attach, nsp_detach, NULL);
 
 int nsp2000_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
@@ -149,7 +148,7 @@ nsp2000_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
 	LKM_DISPATCH(lkmtp, cmd, NULL, lkm_nofunc, lkm_nofunc, lkm_nofunc);
 
 }
-#else /* _LKM */
+#else /* _MODULE */
 CFATTACH_DECL(nsp, sizeof(struct nsp_softc), nsp_probe, nsp_attach, nsp_detach, NULL);
 #endif
 

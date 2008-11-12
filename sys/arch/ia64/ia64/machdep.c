@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2008/11/12 12:36:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -122,7 +122,7 @@
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 /* start and end of kernel symbol table */
 void	*ksym_start, *ksym_end;
 vaddr_t ia64_unwindtab;
@@ -749,7 +749,7 @@ ia64_init()
 	/*
 	 * Initialize debuggers, and break into them if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
 	    ksym_start, ksym_end);
 #endif

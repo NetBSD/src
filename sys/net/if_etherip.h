@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.h,v 1.9 2008/10/24 21:41:04 dyoung Exp $        */
+/*      $NetBSD: if_etherip.h,v 1.10 2008/11/12 12:36:28 ad Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -34,7 +34,7 @@
 
 #include <sys/queue.h>
 
-#if defined(_KERNEL) && !defined(_LKM)
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
 

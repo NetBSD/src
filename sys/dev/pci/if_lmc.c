@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.44 2008/11/07 00:20:07 dyoung Exp $ */
+/* $NetBSD: if_lmc.c,v 1.45 2008/11/12 12:36:12 ad Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -142,7 +142,7 @@
 
 #if defined(__NetBSD__)
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.44 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.45 2008/11/12 12:36:12 ad Exp $");
 # include <sys/param.h>	/* OS version */
 /* -DLKM is passed on the compiler command line */
 # include "opt_inet.h"	/* INET6, INET */
@@ -161,7 +161,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.44 2008/11/07 00:20:07 dyoung Exp $");
 #
 # include <sys/systm.h>
 # include <sys/kernel.h>
-# include <sys/lkm.h>
+# include <sys/module.h>
 # include <sys/mbuf.h>
 # include <sys/socket.h>
 # include <sys/sockio.h>
@@ -216,7 +216,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.44 2008/11/07 00:20:07 dyoung Exp $");
 # include <sys/kernel.h>
 # include <sys/conf.h>
 # include <sys/exec.h>
-# include <sys/lkm.h>
+# include <sys/module.h>
 # include <sys/mbuf.h>
 # include <sys/socket.h>
 # include <sys/sockio.h>
@@ -7372,7 +7372,7 @@ struct cfattach lmc_ca =
   .ca_activate	= NULL,
   };
 
-# if defined(LKM)
+# if defined(_MODULE)
 
 struct cfdriver lmc_cd =
   {
@@ -7479,7 +7479,7 @@ int if_lmc_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
   return error;
   }
 
-# endif /* LKM */
+# endif /* _MODULE */
 
 #endif  /* __OpenBSD__ */
 

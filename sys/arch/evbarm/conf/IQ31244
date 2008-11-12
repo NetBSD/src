@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.40 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: IQ31244,v 1.41 2008/11/12 12:35:58 ad Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -117,7 +117,6 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions

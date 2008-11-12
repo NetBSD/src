@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.229 2008/07/17 14:39:26 cegger Exp $ */
+/*	$NetBSD: autoconf.c,v 1.230 2008/11/12 12:36:06 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.229 2008/07/17 14:39:26 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.230 2008/11/12 12:36:06 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -119,7 +119,7 @@ extern	int kgdb_debug_panic;
 #endif
 extern void *bootinfo;
 
-#if !NKSYMS && !defined(DDB) && !defined(LKM)
+#if !NKSYMS && !defined(DDB) && !defined(MODULAR)
 void bootinfo_relocate(void *);
 #endif
 
@@ -263,7 +263,7 @@ void
 bootstrap(void)
 {
 	extern struct user *proc0paddr;
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	struct btinfo_symtab *bi_sym;
 #else
 	extern int end[];
@@ -288,7 +288,7 @@ bootstrap(void)
 	}
 #endif /* SUN4M || SUN4D */
 
-#if !NKSYMS && !defined(DDB) && !defined(LKM)
+#if !NKSYMS && !defined(DDB) && !defined(MODULAR)
 	/*
 	 * We want to reuse the memory where the symbols were stored
 	 * by the loader. Relocate the bootinfo array which is loaded
@@ -314,7 +314,7 @@ bootstrap(void)
 	initmsgbuf((void *)KERNBASE, 8192);
 #endif
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL) {
 		if (bi_sym->ssym < KERNBASE) {
 			/* Assume low-loading boot loader */
@@ -1867,7 +1867,7 @@ lookup_bootinfo(int type)
 	return (NULL);
 }
 
-#if !NKSYMS && !defined(DDB) && !defined(LKM)
+#if !NKSYMS && !defined(DDB) && !defined(MODULAR)
 /*
  * Move bootinfo from the current kernel top to the proposed
  * location. As a side-effect, `kernel_top' is adjusted to point
@@ -1929,4 +1929,4 @@ bootinfo_relocate(void *newloc)
 	bootinfo = newloc;
 	kernel_top = (char *)newloc + ALIGN(bi_size);
 }
-#endif /* !NKSYMS && !defined(DDB) && !defined(LKM) */
+#endif /* !NKSYMS && !defined(DDB) && !defined(MODULAR) */

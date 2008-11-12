@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_pecoff.8,v 1.12 2005/06/20 13:25:25 peter Exp $
+.\"	$NetBSD: compat_pecoff.8,v 1.13 2008/11/12 12:35:54 ad Exp $
 .\"
 .\" Copyright (c) 2000 The PEACE Project.
 .\" All rights reserved.
@@ -121,14 +121,7 @@ system call, just like other binary compatibility options.
 It is activated by enabling the
 .Dv COMPAT_PECOFF
 kernel option (see
-.Xr options 4 ) ,
-or enabling
-.Pa /usr/lkm/compat_pecoff.o
-and
-.Pa /usr/lkm/exec_pecoff.o
-with
-.Xr modload 8 .
-.Pp
+.Xr options 4 ) .
 The dynamic loader is the
 .Tn PE/COFF
 version of

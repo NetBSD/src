@@ -1,10 +1,14 @@
-# $NetBSD: lkm.mi,v 1.29 2008/09/23 07:56:59 hannken Exp $
+# $NetBSD: lkm.mi,v 1.30 2008/11/12 12:35:50 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./stand/@MACHINE@				base-kernel-modules
 ./stand/@MACHINE@/@OSRELEASE@			base-kernel-modules
 ./@MODULEDIR@					base-kernel-modules
+./@MODULEDIR@/accf_data				base-kernel-modules
+./@MODULEDIR@/accf_data/accf_data.kmod		base-kernel-modules
+./@MODULEDIR@/accf_http				base-kernel-modules
+./@MODULEDIR@/accf_http/accf_http.kmod		base-kernel-modules
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/cd9660				base-kernel-modules
@@ -65,35 +69,35 @@
 ./@MODULEDIR@/umapfs/umapfs.kmod		base-kernel-modules
 ./@MODULEDIR@/union				base-kernel-modules
 ./@MODULEDIR@/union/union.kmod			base-kernel-modules
-./usr/lkm/adosfs.o				base-vfs-lkm
-./usr/lkm/bsdcomp.o				base-ppp-lkm
-./usr/lkm/cd9660.o				base-vfs-lkm
-./usr/lkm/coda.o				base-vfs-lkm
-./usr/lkm/coda5.o				base-vfs-lkm
-./usr/lkm/deflate.o				base-ppp-lkm
-./usr/lkm/efs.o					base-vfs-lkm
-./usr/lkm/ext2fs.o				base-vfs-lkm
-./usr/lkm/fdesc.o				base-vfs-lkm
-./usr/lkm/filecorefs.o				base-vfs-lkm
-./usr/lkm/hfs.o					base-vfs-lkm
+./usr/lkm/adosfs.o				base-obsolete	obsolete
+./usr/lkm/bsdcomp.o				base-obsolete	obsolete
+./usr/lkm/cd9660.o				base-obsolete	obsolete
+./usr/lkm/coda.o				base-obsolete	obsolete
+./usr/lkm/coda5.o				base-obsolete	obsolete
+./usr/lkm/deflate.o				base-obsolete	obsolete
+./usr/lkm/efs.o					base-obsolete	obsolete
+./usr/lkm/ext2fs.o				base-obsolete	obsolete
+./usr/lkm/fdesc.o				base-obsolete	obsolete
+./usr/lkm/filecorefs.o				base-obsolete	obsolete
+./usr/lkm/hfs.o					base-obsolete	obsolete
 ./usr/lkm/hfsp.o				base-obsolete	obsolete
-./usr/lkm/if_ipl.o				base-ipf-lkm	ipfilter
-./usr/lkm/lfs.o					base-vfs-lkm
-./usr/lkm/kernfs.o				base-vfs-lkm
-./usr/lkm/mfs.o					base-vfs-lkm
-./usr/lkm/msdosfs.o				base-vfs-lkm
-./usr/lkm/ntfs.o				base-vfs-lkm
-./usr/lkm/nullfs.o				base-vfs-lkm
-./usr/lkm/overlay.o				base-vfs-lkm
-./usr/lkm/pf.o					base-pf-lkm	pf
-./usr/lkm/portal.o				base-vfs-lkm
-./usr/lkm/procfs.o				base-vfs-lkm
-./usr/lkm/ptyfs.o				base-vfs-lkm
-./usr/lkm/puffs.o				base-vfs-lkm	puffs
-./usr/lkm/smbfs.o				base-vfs-lkm
-./usr/lkm/tap.o					base-net-lkm
-./usr/lkm/tmpfs.o				base-vfs-lkm
-./usr/lkm/udf.o					base-vfs-lkm
-./usr/lkm/umapfs.o				base-vfs-lkm
-./usr/lkm/union.o				base-vfs-lkm
-./usr/lkm/vnd.o					base-dev-lkm
+./usr/lkm/if_ipl.o				base-obsolete	obsolete
+./usr/lkm/lfs.o					base-obsolete	obsolete
+./usr/lkm/kernfs.o				base-obsolete	obsolete
+./usr/lkm/mfs.o					base-obsolete	obsolete
+./usr/lkm/msdosfs.o				base-obsolete	obsolete
+./usr/lkm/ntfs.o				base-obsolete	obsolete
+./usr/lkm/nullfs.o				base-obsolete	obsolete
+./usr/lkm/overlay.o				base-obsolete	obsolete
+./usr/lkm/pf.o					base-obsolete	obsolete
+./usr/lkm/portal.o				base-obsolete	obsolete
+./usr/lkm/procfs.o				base-obsolete	obsolete
+./usr/lkm/ptyfs.o				base-obsolete	obsolete
+./usr/lkm/puffs.o				base-obsolete	obsolete
+./usr/lkm/smbfs.o				base-obsolete	obsolete
+./usr/lkm/tap.o					base-obsolete	obsolete
+./usr/lkm/tmpfs.o				base-obsolete	obsolete
+./usr/lkm/udf.o					base-obsolete	obsolete
+./usr/lkm/umapfs.o				base-obsolete	obsolete
+./usr/lkm/union.o				base-obsolete	obsolete
+./usr/lkm/vnd.o					base-obsolete	obsolete

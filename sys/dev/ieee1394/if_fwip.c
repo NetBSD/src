@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.16 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.17 2008/11/12 12:36:11 ad Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.16 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.17 2008/11/12 12:36:11 ad Exp $");
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
 #include "opt_device_polling.h"
@@ -158,7 +158,7 @@ MALLOC_DEFINE(M_FWIP, "if_fwip", "IP over IEEE1394 interface");
 /*
  * Setup sysctl(3) MIB, hw.fwip.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_fwip, "sysctl fwip(4) subtree setup")
 {

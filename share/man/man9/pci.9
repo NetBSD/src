@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.26 2008/05/11 14:15:53 he Exp $
+.\"     $NetBSD: pci.9,v 1.27 2008/11/12 12:35:54 ad Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -284,8 +284,7 @@ The argument
 is filled in if the device is matched.
 .Fn pci_find_device
 returns 1 if the device is matched, and zero otherwise.
-This function is specifically for use by LKMs (see
-.Xr lkm 4 )
+This function is specifically for use by kernel modules
 and its use otherwise is strongly discouraged.
 .It Fn pci_get_capability "pc" "tag" "capid" "offsetp" "valuep"
 Parse the device capability list in configuration space looking for

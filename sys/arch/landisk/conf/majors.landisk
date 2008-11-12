@@ -1,4 +1,4 @@
-#	$NetBSD: majors.landisk,v 1.3 2007/12/31 15:31:58 ad Exp $
+#	$NetBSD: majors.landisk,v 1.4 2008/11/12 12:36:02 ad Exp $
 #
 # Device majors for landisk
 #
@@ -28,7 +28,6 @@ device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
-device-major	lkm		char 28			lkm
 
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd

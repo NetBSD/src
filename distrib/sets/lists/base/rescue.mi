@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.27 2008/01/03 20:47:57 jdc Exp $
+# $NetBSD: rescue.mi,v 1.28 2008/11/12 12:35:50 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -73,6 +73,7 @@
 ./rescue/mkdir					base-rescue-root
 ./rescue/mknod					base-rescue-root
 ./rescue/modload				base-rescue-root
+./rescue/modstat				base-rescue-root
 ./rescue/modunload				base-rescue-root
 ./rescue/more					base-rescue-root
 ./rescue/mount					base-rescue-root

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.915 2008/10/29 11:56:53 joerg Exp $
+# $NetBSD: GENERIC,v 1.916 2008/11/12 12:36:01 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.915 $"
+#ident 		"GENERIC-$Revision: 1.916 $"
 
 maxusers	64		# estimated number of users
 
@@ -95,7 +95,6 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 options		MODULAR		# new style module framework
 options 	APM_NO_IDLE	# needed for SMP
 

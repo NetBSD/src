@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2008/11/11 06:46:42 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2008/11/12 12:36:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2008/11/11 06:46:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2008/11/12 12:36:00 ad Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2008/11/11 06:46:42 dyoung Exp $");
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dcr403cgx.h>
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -264,7 +264,7 @@ bootstrap(u_int startkernel, u_int endkernel)
 	 */
 	pmap_bootstrap(startkernel, endkernel);
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init(0, NULL, NULL);
 #endif
 

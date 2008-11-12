@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.9 2007/08/20 04:49:41 skd Exp $	*/
+/*	$NetBSD: socket.h,v 1.10 2008/11/12 12:36:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -42,7 +42,7 @@
 #include "opt_compat_43.h"
 
 #if defined(COMPAT_43) || defined(COMPAT_LINUX) || defined(COMPAT_SVR4) || \
-    defined(COMPAT_ULTRIX) || defined(LKM)
+    defined(COMPAT_ULTRIX) || defined(MODULAR)
 #define COMPAT_OSOCK
 #endif
 

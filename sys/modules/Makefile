@@ -1,6 +1,8 @@
-# $NetBSD: Makefile,v 1.10 2008/09/23 07:56:59 hannken Exp $
+# $NetBSD: Makefile,v 1.11 2008/11/12 12:36:28 ad Exp $
 
-SUBDIR=		miniroot
+SUBDIR=		accf_data
+SUBDIR+=	accf_http
+SUBDIR+=	miniroot
 SUBDIR+=	fss
 SUBDIR+=	putter
 

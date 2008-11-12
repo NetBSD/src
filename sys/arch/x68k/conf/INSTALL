@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.80 2008/07/31 07:41:08 simonb Exp $
+#	$NetBSD: INSTALL,v 1.81 2008/11/12 12:36:09 ad Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.80 $"
+#ident 		"INSTALL-$Revision: 1.81 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -73,7 +73,6 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support
-#options 	LKM
 
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

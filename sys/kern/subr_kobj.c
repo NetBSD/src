@@ -1,8 +1,11 @@
-/*	$NetBSD: subr_kobj.c,v 1.24 2008/10/20 20:07:35 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.25 2008/11/12 12:36:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software developed for The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -59,10 +62,8 @@
  * TODO: adjust kmem_alloc() calls to avoid needless fragmentation.
  */
 
-#include "opt_modular.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.24 2008/10/20 20:07:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.25 2008/11/12 12:36:16 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -80,14 +81,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.24 2008/10/20 20:07:35 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/ksyms.h>
-#include <sys/lkm.h>
+#include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 
 #include <machine/stdarg.h>
 
 #include <uvm/uvm_extern.h>
-
 
 typedef struct {
 	void		*addr;
@@ -118,7 +118,7 @@ typedef enum kobjtype {
 } kobjtype_t;
 
 struct kobj {
-	char		ko_name[MAXLKMNAME];
+	char		ko_name[MAXMODNAME];
 	kobjtype_t	ko_type;
 	void		*ko_source;
 	ssize_t		ko_memsize;
@@ -152,7 +152,7 @@ static void	kobj_free(kobj_t, void *, size_t);
 static void	kobj_close(kobj_t);
 static int	kobj_load(kobj_t);
 
-extern struct vm_map *lkm_map;
+extern struct vm_map *module_map;
 
 /*
  * kobj_load_file:
@@ -503,7 +503,7 @@ kobj_load(kobj_t ko)
 	if (ko->ko_type == KT_MEMORY) {
 		mapbase += (vaddr_t)ko->ko_source;
 	} else {
-		mapbase = uvm_km_alloc(lkm_map, round_page(mapsize),
+		mapbase = uvm_km_alloc(module_map, round_page(mapsize),
 		    0, UVM_KMF_WIRED | UVM_KMF_EXEC);
 		if (mapbase == 0) {
 			error = ENOMEM;
@@ -674,7 +674,7 @@ kobj_unload(kobj_t ko)
 		}
 	}
 	if (ko->ko_address != 0 && ko->ko_type != KT_MEMORY) {
-		uvm_km_free(lkm_map, ko->ko_address, round_page(ko->ko_size),
+		uvm_km_free(module_map, ko->ko_address, round_page(ko->ko_size),
 		    UVM_KMF_WIRED);
 	}
 	if (ko->ko_ksyms == true) {
@@ -737,7 +737,8 @@ kobj_affix(kobj_t ko, const char *name)
 
 	/*
 	 * Now that we know the name, register the symbol table.
-	 * Do after global relocations because ksyms will pack it.
+	 * Do after global relocations because ksyms will pack
+	 * the table.
 	 */
 	ksyms_modload(ko->ko_name, ko->ko_symtab, ko->ko_symcnt *
 	    sizeof(Elf_Sym), ko->ko_strtab, ko->ko_strtabsz);

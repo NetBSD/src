@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62 2008/11/11 06:46:42 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63 2008/11/12 12:36:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2008/11/11 06:46:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2008/11/12 12:36:01 ad Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.62 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(LKM) || defined(DDB) || defined(KGDB)
+#if NKSYMS || defined(MODULAR) || defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -292,7 +292,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (symbolsize) {
 		ksyms_init(symbolsize, &end, end + symbolsize);
 		_DPRINTF("symbol size = %d byte\n", symbolsize);

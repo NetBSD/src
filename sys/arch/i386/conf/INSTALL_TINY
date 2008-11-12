@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.120 2008/05/13 13:43:47 ad Exp $
+#	$NetBSD: INSTALL_TINY,v 1.121 2008/11/12 12:36:02 ad Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -52,7 +52,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 
-#options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

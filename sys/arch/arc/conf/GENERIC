@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.157 2008/09/15 04:42:58 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.158 2008/11/12 12:35:56 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.157 $"
+#ident		"GENERIC-$Revision: 1.158 $"
 
 maxusers	32		# estimated number of users
 
@@ -54,7 +54,6 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

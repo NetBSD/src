@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.32 2008/08/08 13:59:24 hauke Exp $
+#	$NetBSD: SMALLRAM,v 1.33 2008/11/12 12:36:03 ad Exp $
 #
 # This is an example of how to configure a small, efficient kernel for
 # a system with limited RAM. Even so it's capable of doing quite a
@@ -26,7 +26,6 @@ no options 	FPU_EMULATE
 
 no options 	INSECURE
 
-no options 	LKM
 no options 	SYSCTL_INCLUDE_DESCR
 no options 	KMEMSTATS
 

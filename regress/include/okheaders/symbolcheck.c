@@ -73,7 +73,6 @@
 #include <sys/ksem.h>
 #include <sys/ksyms.h>
 #include <sys/ktrace.h>
-#include <sys/lkm.h>
 #include <sys/localedef.h>
 #include <sys/lock.h>
 #include <sys/lockf.h>

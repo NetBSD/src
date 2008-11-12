@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.41 2008/10/24 13:55:42 christos Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.42 2008/11/12 12:36:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.41 2008/10/24 13:55:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.42 2008/11/12 12:36:16 ad Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -316,6 +316,7 @@ findsym(const char *name, struct ksyms_symtab *table)
 void
 ksymsattach(int arg)
 {
+
 	if (baseidx == 0)
 		ptree_gen(0, &kernel_symtab);
 }
@@ -351,7 +352,6 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	tab->sd_maxsym = NULL;
 	tab->sd_usroffset = 0;
 	tab->sd_gone = false;
-	tab->sd_malloc = false;	/* XXXLKM */
 #ifdef KSYMS_DEBUG
 	printf("newstart %p sym %p ksyms_symsz %d str %p strsz %d send %p\n",
 	    newstart, symstart, symsize, strstart, strsize,
@@ -488,6 +488,8 @@ ksyms_init_explicit(void *ehdr, void *symstart, size_t symsize,
 		    void *strstart, size_t strsize)
 {
 
+	mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	if (!ksyms_verify(symstart, strstart))
 		return;
 
@@ -507,7 +509,7 @@ ksyms_init_explicit(void *ehdr, void *symstart, size_t symsize,
  */
 int
 ksyms_getval_unlocked(const char *mod, const char *sym, unsigned long *val,
-    int type)
+		      int type)
 {
 	struct ksyms_symtab *st;
 	Elf_Sym *es;
@@ -553,7 +555,6 @@ ksyms_getval(const char *mod, const char *sym, unsigned long *val, int type)
 	mutex_exit(&ksyms_lock);
 	return rc;
 }
-
 
 /*
  * Get "mod" and "symbol" associated with an address.
@@ -616,252 +617,6 @@ ksyms_getname(const char **mod, const char **sym, vaddr_t v, int f)
 }
 
 /*
- * Temporary work structure for dynamic loaded symbol tables.
- *
- * XXX REMOVE WHEN LKMS GO.
- */
-struct syminfo {
-	size_t cursyms;
-	size_t curnamep;
-	size_t maxsyms;
-	size_t maxnamep;
-	Elf_Sym *syms;
-	char *symnames;
-};
-
-/*
- * Add a symbol to the temporary save area for symbols.
- *
- * XXX REMOVE WHEN LKMS GO.
- */
-static void
-addsym(struct syminfo *info, const Elf_Sym *sym, const char *name,
-       const char *mod)
-{
-	int len, mlen;
-
-#ifdef KSYMS_DEBUG
-	if (ksyms_debug & FOLLOW_MORE_CALLS)
-		printf("addsym: name %s val %lx\n", name, (long)sym->st_value);
-#endif
-	len = strlen(name) + 1;
-	if (mod)
-		mlen = 1 + strlen(mod);
-	else
-		mlen = 0;
-	if (info->cursyms == info->maxsyms ||
-	    (len + mlen + info->curnamep) > info->maxnamep) {
-		printf("addsym: too many symbols, skipping '%s'\n", name);
-		return;
-	}
-	strlcpy(&info->symnames[info->curnamep], name,
-	    info->maxnamep - info->curnamep);
-	if (mlen) {
-		info->symnames[info->curnamep + len - 1] = '.';
-		strlcpy(&info->symnames[info->curnamep + len], mod,
-		    info->maxnamep - (info->curnamep + len));
-		len += mlen;
-	}
-	info->syms[info->cursyms] = *sym;
-	info->syms[info->cursyms].st_name = info->curnamep;
-	info->curnamep += len;
-	if (len > ksyms_maxlen)
-		ksyms_maxlen = len;
-	info->cursyms++;
-}
-
-/*
- * XXX REMOVE WHEN LKMS GO.
- */
-static int
-specialsym(const char *symname)
-{
-
-	return	!strcmp(symname, "_bss_start") ||
-	    !strcmp(symname, "__bss_start") ||
-	    !strcmp(symname, "_bss_end__") ||
-	    !strcmp(symname, "__bss_end__") ||
-	    !strcmp(symname, "_edata") ||
-	    !strcmp(symname, "_end") ||
-	    !strcmp(symname, "__end") ||
-	    !strcmp(symname, "__end__") ||
-	    !strncmp(symname, "__start_link_set_", 17) ||
-	    !strncmp(symname, "__stop_link_set_", 16);
-}
-
-/*
- * Adds a symbol table.
- * "name" is the module name, "start" and "size" is where the symbol table
- * is located, and "type" is in which binary format the symbol table is.
- * New memory for keeping the symbol table is allocated in this function.
- * Returns 0 if success and EEXIST if the module name is in use.
- *
- * XXX REMOVE WHEN LKMS GO.
- */
-int
-ksyms_addsymtab(const char *mod, void *symstart, vsize_t symsize,
-		char *strstart, vsize_t strsize)
-{
-	Elf_Sym *sym = symstart;
-	struct ksyms_symtab *st;
-	unsigned long rval;
-	int i;
-	char *name;
-	struct syminfo info;
-
-#ifdef KSYMS_DEBUG
-	if (ksyms_debug & FOLLOW_CALLS)
-		printf("ksyms_addsymtab: mod %s symsize %lx strsize %lx\n",
-		    mod, symsize, strsize);
-#endif
-
-	mutex_enter(&ksyms_lock);
-
-	/* Check if this symtab already loaded */
-	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-		if (st->sd_gone)
-			continue;
-		if (strcmp(mod, st->sd_name) == 0) {
-			mutex_exit(&ksyms_lock);
-			return EEXIST;
-		}
-	}
-
-	/*
-	 * XXX - Only add a symbol if it do not exist already.
-	 * This is because of a flaw in the current LKM implementation,
-	 * these loops will be removed once the in-kernel linker is in place.
-	 */
-	memset(&info, 0, sizeof(info));
-	for (i = 0; i < symsize/sizeof(Elf_Sym); i++) {
-		char * const symname = strstart + sym[i].st_name;
-		if (sym[i].st_name == 0)
-			continue; /* Just ignore */
-
-		/* check validity of the symbol */
-		/* XXX - save local symbols if DDB */
-		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
-			continue;
-
-		/* Check if the symbol exists */
-		if (ksyms_getval_unlocked(NULL, symname, &rval, KSYMS_EXTERN)
-		    == 0) {
-			/* Check (and complain) about differing values */
-			if (sym[i].st_value != rval &&
-			    sym[i].st_shndx != SHN_UNDEF) {
-				if (specialsym(symname)) {
-					info.maxsyms++;
-					info.maxnamep += strlen(symname) + 1 +
-					    strlen(mod) + 1;
-				} else {
-					printf("%s: symbol '%s' redeclared with"
-					    " different value (%lx != %lx)\n",
-					    mod, symname,
-					    rval, (long)sym[i].st_value);
-				}
-			}
-		} else {
-			/*
-			 * Count this symbol
-			 */
-			info.maxsyms++;
-			info.maxnamep += strlen(symname) + 1;
-		}
-	}
-
-	/*
-	 * Now that we know the sizes, malloc the structures.
-	 */
-	info.syms = malloc(sizeof(Elf_Sym)*info.maxsyms, M_DEVBUF, M_WAITOK);
-	info.symnames = malloc(info.maxnamep, M_DEVBUF, M_WAITOK);
-
-	/*
-	 * Now that we have the symbols, actually fill in the structures.
-	 */
-	for (i = 0; i < symsize/sizeof(Elf_Sym); i++) {
-		char * const symname = strstart + sym[i].st_name;
-		if (sym[i].st_name == 0)
-			continue; /* Just ignore */
-
-		/* check validity of the symbol */
-		/* XXX - save local symbols if DDB */
-		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
-			continue;
-
-		/* Check if the symbol exists */
-		if (ksyms_getval_unlocked(NULL, symname, &rval, KSYMS_EXTERN)
-		    == 0) {
-			if ((sym[i].st_value != rval) && specialsym(symname)) {
-				addsym(&info, &sym[i], symname, mod);
-			}
-		} else
-			/* Ok, save this symbol */
-			addsym(&info, &sym[i], symname, NULL);
-	}
-
-	st = kmem_zalloc(sizeof(*st), KM_SLEEP);
-	i = strlen(mod) + 1;
-	name = malloc(i, M_DEVBUF, M_WAITOK);
-	strlcpy(name, mod, i);
-	st->sd_name = name;
-	st->sd_symstart = info.syms;
-	st->sd_symsize = sizeof(Elf_Sym)*info.maxsyms;
-	st->sd_strstart = info.symnames;
-	st->sd_strsize = info.maxnamep;
-	st->sd_malloc = true;
-
-	/* Make them absolute references */
-	sym = st->sd_symstart;
-	for (i = 0; i < st->sd_symsize/sizeof(Elf_Sym); i++)
-		sym[i].st_shndx = SHN_ABS;
-
-	/* ksymsread() is unlocked, so membar. */
-	membar_producer();
-	TAILQ_INSERT_TAIL(&ksyms_symtabs, st, sd_queue);
-	ksyms_sizes_calc();
-	mutex_exit(&ksyms_lock);
-
-	return 0;
-}
-
-/*
- * Remove a symbol table specified by name.
- * Returns 0 if success, EBUSY if device open and ENOENT if no such name.
- *
- * XXX REMOVE WHEN LKMS GO.
- */
-int
-ksyms_delsymtab(const char *mod)
-{
-	struct ksyms_symtab *st;
-
-	mutex_enter(&ksyms_lock);
-	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-		if (st->sd_gone)
-			continue;
-		if (strcmp(mod, st->sd_name) != 0)
-			continue;
-		if (ksyms_isopen) {
-			st->sd_gone = true;
-			mutex_exit(&ksyms_lock);
-			return 0;
-		} 
-		TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
-		ksyms_sizes_calc();
-		mutex_exit(&ksyms_lock);
-		KASSERT(st->sd_malloc);
-		free(st->sd_symstart, M_DEVBUF);
-		free(st->sd_strstart, M_DEVBUF);
-		/* XXXUNCONST LINTED - const castaway */
-		free(__UNCONST(st->sd_name), M_DEVBUF);
-		kmem_free(st, sizeof(*st));
-		return 0;
-	}
-	mutex_exit(&ksyms_lock);
-	return ENOENT;
-}
-
-/*
  * Add a symbol table from a loadable module.
  */
 void
@@ -890,7 +645,6 @@ ksyms_modunload(const char *name)
 			continue;
 		if (strcmp(name, st->sd_name) != 0)
 			continue;
-		KASSERT(!st->sd_malloc);	/* XXXLKM */
 		st->sd_gone = true;
 		if (!ksyms_isopen) {
 			TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
@@ -1091,12 +845,6 @@ ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 		if (st->sd_gone) {
 			TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
 			kmem_free(st, sizeof(*st));
-			if (st->sd_malloc) {	/* XXXLKM */
-				free(st->sd_symstart, M_DEVBUF);
-				free(st->sd_strstart, M_DEVBUF);
-				/* XXXUNCONST LINTED - const castaway */
-				free(__UNCONST(st->sd_name), M_DEVBUF);
-			}
 			resize = true;
 		}
 	}

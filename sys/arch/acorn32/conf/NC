@@ -1,4 +1,4 @@
-#	$NetBSD: NC,v 1.47 2008/05/30 20:10:01 tsutsui Exp $
+#	$NetBSD: NC,v 1.48 2008/11/12 12:35:55 ad Exp $
 #
 #	NC - with wscons
 #
@@ -105,7 +105,6 @@ options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

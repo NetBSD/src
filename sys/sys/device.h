@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.113 2008/11/06 03:40:04 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.114 2008/11/12 12:36:28 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -350,7 +350,7 @@ struct cfattachinit {
 };
 /*
  * the same, but with a non-constant list so it can be modified
- * for LKM bookkeeping
+ * for module bookkeeping
  */
 struct cfattachlkminit {
 	const char *cfai_name;		/* driver name */

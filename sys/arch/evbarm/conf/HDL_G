@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.11 2008/07/31 07:41:00 simonb Exp $
+# $NetBSD: HDL_G,v 1.12 2008/11/12 12:35:58 ad Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -120,7 +120,6 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing via ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions

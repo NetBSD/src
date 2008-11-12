@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO210,v 1.8 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: ARMADILLO210,v 1.9 2008/11/12 12:35:58 ad Exp $
 #
 #	ARMADILLO210 -- Atmark Techno, Armadillo-210
 #
@@ -111,7 +111,6 @@ options 	CONUNIT=1		# Console port number
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	PCIVERBOSE	# Verbose PCI descriptions

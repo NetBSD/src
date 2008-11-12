@@ -1,4 +1,4 @@
-#	$NetBSD: VIRTEX_GSRD1,v 1.3 2008/07/31 07:41:01 simonb Exp $
+#	$NetBSD: VIRTEX_GSRD1,v 1.4 2008/11/12 12:36:00 ad Exp $
 #
 # VIRTEX_GSRD1
 #
@@ -36,7 +36,6 @@ options 	UVMHIST
 #options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
-#options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

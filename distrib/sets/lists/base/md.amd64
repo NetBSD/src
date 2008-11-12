@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.27 2008/11/08 19:01:05 wiz Exp $
+# $NetBSD: md.amd64,v 1.28 2008/11/12 12:35:50 ad Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -293,14 +293,14 @@
 ./usr/lib/libx86_64.so.0			base-sys-shlib		pic
 ./usr/lib/libx86_64.so.0.0			base-sys-shlib		pic
 ./usr/libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
-./usr/lkm/aps.o					base-sys-lkm
-./usr/lkm/compat_linux.o			base-sys-lkm
-./usr/lkm/exec_linux_elf.o			base-sys-lkm
-./usr/lkm/finsio.o				base-sys-lkm
-./usr/lkm/itesio.o				base-sys-lkm
-./usr/lkm/nsclpcsio.o				base-sys-lkm
-./usr/lkm/smsc.o				base-sys-lkm
-./usr/lkm/ug.o					base-sys-lkm
+./usr/lkm/aps.o					base-obsolete		obsolete
+./usr/lkm/compat_linux.o			base-obsolete		obsolete
+./usr/lkm/exec_linux_elf.o			base-obsolete		obsolete
+./usr/lkm/finsio.o				base-obsolete		obsolete
+./usr/lkm/itesio.o				base-obsolete		obsolete
+./usr/lkm/nsclpcsio.o				base-obsolete		obsolete
+./usr/lkm/smsc.o				base-obsolete		obsolete
+./usr/lkm/ug.o					base-obsolete		obsolete
 ./usr/mdec/biosboot				base-obsolete		obsolete
 ./usr/mdec/biosboot.sym				base-obsolete		obsolete
 ./usr/mdec/biosboot_com0.sym			base-obsolete		obsolete

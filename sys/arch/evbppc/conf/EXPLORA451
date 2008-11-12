@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.35 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: EXPLORA451,v 1.36 2008/11/12 12:35:59 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -35,7 +35,6 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 
-options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

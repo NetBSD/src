@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.14 2005/09/27 20:15:15 hubertf Exp $
+#	$NetBSD: TODO,v 1.15 2008/11/12 12:35:52 ad Exp $
 
 THINGS TO BE DONE:
 
@@ -34,7 +34,6 @@ High Kernel:
 	swap to file of dynamic size; see apollo
     nfs:
 	kernel support for lockd(8), lockf(3)
-    clean up support for LKM and protections checking (cgd)
 
 User programs:
     rwall nfs-mountees on shutdown
@@ -83,7 +82,6 @@ This is a list of suggested smaller projects (in no particular order):
 + investigate which userland utilities and daemons would benefit from
   kqueue, and rewrite them
 + better testing in general; in particular, more regression tests
-+ better LKM version checking
 + add a native scheme interpreter
 + add platform support for TenDRA compiler suite
 + merge moused(8) with wsmoused(8) as a new work mode (i.e. serial)

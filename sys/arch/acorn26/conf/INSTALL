@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.22 2008/07/31 07:40:59 simonb Exp $
+# $NetBSD: INSTALL,v 1.23 2008/11/12 12:35:55 ad Exp $
 
 # INSTALL configuration, used to generate installation media
 
@@ -94,7 +94,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Miscellaneous kernel options
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	BUFPAGES=2

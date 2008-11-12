@@ -1,4 +1,3 @@
-base-adosfs-lkm loadable kernel module for Amiga DOS file system support
 base-adosfs-root Root file system support for Amiga DOS file system support
 base-amd-bin auto-mounter daemon
 base-amd-examples example configuration files for the auto-mounter daemon and utilities
@@ -12,7 +11,6 @@ base-c-bin utilities for the C programming language
 base-c-usr /usr file system directories required by C programming language utilities
 base-calendar-bin calendar(1) displays lines from the calendar database matching certain dates
 base-calendar-share database of important dates for calendar(1)
-base-coda-lkm loadable kernel modules for the CODA distributed file system
 base-cron-bin the cron daemon and related utilities
 base-cron-root root file system directories required by the cron daemon
 base-crypto-bin cryptographic utilities
@@ -24,9 +22,7 @@ base-debug-bin debugging utilities
 base-dhclient-root root file system support for DHCP client software
 base-dhcpd-bin DHCP server
 base-dhcpd-examples example configuration files for DHCP server
-base-efs-lkm loadable kernel module for efs file system
 base-efs-root root file system support for efs file system
-base-ext2fs-lkm loadable kernel module for ext2fs file system
 base-ext2fs-root root file system support for ext2fs file system
 base-filecorefs-root root file system support for the Acorn FILECORE file system
 base-fstab-examples various example file system tables
@@ -42,7 +38,6 @@ base-htmldoc-share HTML documentation
 base-i18n-root directories for internationalisation support
 base-i18n-shlib shared library modules for internationalisation support
 base-ipf-bin IPfilter utilities
-base-ipf-lkm loadable kernel module for IPfilter
 base-ipf-root directories for IPfilter
 base-isdn-bin utilities and daemons for ISDN network connectivity
 base-isdn-examples directories for the ISDN example files
@@ -96,7 +91,6 @@ base-mailwrapper-bin the mailwrapper(8) program for multiple mailer support
 base-man-bin utilities for reading online manual pages
 base-man-share shared data files for the online manual pages
 base-miscfs-examples example configuration files for miscellaneous file systems
-base-miscfs-lkm loadable kernel modules for miscellaneous file systems
 base-miscfs-root root file system support for miscellaneous file systems
 base-net-shlib shared libraries for network programming
 base-netutil-bin networking utilities
@@ -107,13 +101,11 @@ base-nfsclient-root root file system support for network file system client util
 base-nfsserver-bin network file system server program
 base-nis-bin progams and utilities for the NIS network information system
 base-nis-root root file system support for the NIS network information system
-base-ntfs-lkm loadable kernel module for Windows NTFS file system support
 base-ntfs-root root file system support for the Windows NT file system
 base-ntp-bin utilities for network time protocol support
 base-ntp-root	basic directories for network time protocol support
 base-objc-usr /usr file system support for the Objective C programming language
 base-pf-bin utilities for the PF packet filter
-base-pf-lkm loadable kernel module for the PF packet filter
 base-pf-root directories for the PF packet filter
 base-pkgutil-bin package system utilities
 base-postfix-bin the Postfix mailer
@@ -121,7 +113,6 @@ base-postfix-examples example configuration files for the Postfix mailer
 base-postfix-root root file system support for the Postfix mailer
 base-postfix-usr /usr file system support for the Postfix mailer
 base-ppp-bin utilities for the PPP point-to-point remote access protocol
-base-ppp-lkm object files for loadable kernel modules for the PPP point-to-point remote access protocol
 base-psd-share directory structure for the Programmer's Supplementary Documentation
 base-rcs-bin utilities for the RCS Revision Control System
 base-reference-share directory structure for miscellaneous reference documents
@@ -142,7 +133,6 @@ base-sup-bin utilities for the SUP software update protocol
 base-sup-examples example configuration files for the SUP software update protocol
 base-sys-devlinks device node symbolic links
 base-sys-examples example configuration files for kernel functionality
-base-sys-lkm system support for loadable kernel modules
 base-sys-root required root file system structure
 base-sys-share required /usr/share file system structure
 base-sys-shlib shared libraries for basic system functionality
@@ -188,7 +178,6 @@ base-util_locale-id	Indonesian language support for standard utilities
 base-util_locale-it	Italian language support for standard utilities
 base-util_locale-ja	Japanese language support for standard utilities
 base-util_locale-sv Swedish language support for standard utilities
-base-vfs-lkm loadable kernel modules for filesystems
 comp-c-bin compilers and tools for the C programming language
 comp-c-catman formatted manual pages
 comp-c-include header files for the C programming language

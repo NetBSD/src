@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.82 2008/05/25 19:22:21 ad Exp $	*/
+/*	$NetBSD: tty.h,v 1.83 2008/11/12 12:36:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -308,7 +308,7 @@ void	clfree(struct clist *);
 #endif
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_SVR4) || \
-    defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || defined(LKM)
+    defined(COMPAT_FREEBSD) || defined(COMPAT_OSF1) || defined(MODULAR)
 # define COMPAT_OLDTTY
 int 	ttcompat(struct tty *, u_long, void *, int, struct lwp *);
 #endif

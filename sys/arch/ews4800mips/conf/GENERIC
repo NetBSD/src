@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.25 2008/08/10 15:31:20 tls Exp $
+# $NetBSD: GENERIC,v 1.26 2008/11/12 12:36:00 ad Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.25 $"
+#ident		"GENERIC-$Revision: 1.26 $"
 
 maxusers	16
 
@@ -53,7 +53,6 @@ options 	SEMMNI=10		# number of semaphore identifiers
 options 	SYSVSHM			# System V shared memory
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM			# loadable kernel modules
 
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

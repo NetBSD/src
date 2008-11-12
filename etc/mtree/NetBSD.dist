@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.385 2008/10/30 21:45:55 christos Exp $
+#	$NetBSD: NetBSD.dist,v 1.386 2008/11/12 12:35:52 ad Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -557,7 +557,6 @@
 ./usr/libexec/ching
 ./usr/libexec/lpr
 ./usr/libexec/postfix
-./usr/lkm
 ./usr/mdec
 ./usr/pkg			ignore optional
 ./usr/sbin

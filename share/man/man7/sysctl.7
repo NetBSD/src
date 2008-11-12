@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.16 2008/10/07 09:36:17 rmind Exp $
+.\"	$NetBSD: sysctl.7,v 1.17 2008/11/12 12:35:53 ad Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1999,7 +1999,7 @@ PCBs), and
 .It Li security.models
 .Nx
 supports pluggable security models.
-Every security model used, whether if loaded as an LKM or built with the system,
+Every security model used, whether if loaded as a module or built with the system,
 is required to add an entry to this node with at least one element,
 .Dq name ,
 indicating the name of the security model.

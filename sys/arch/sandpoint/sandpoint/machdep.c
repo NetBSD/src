@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2008/11/11 06:46:43 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 2008/11/12 12:36:05 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2008/11/11 06:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2008/11/12 12:36:05 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -110,7 +110,7 @@ paddr_t avail_end;
 struct pic_ops *isa_pic = NULL;
 extern int primary_pic;
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 extern void *startsym, *endsym;
 #endif
 
@@ -196,7 +196,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	/* Initialize pmap module */
 	pmap_bootstrap(startkernel, endkernel);
 
-#if 0 /* NKSYMS || defined(DDB) || defined(LKM) */
+#if 0 /* NKSYMS || defined(DDB) || defined(MODULAR) */
 	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef IPKDB

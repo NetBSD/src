@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.370 2008/11/11 00:08:52 reed Exp $
+.\"	$NetBSD: options.4,v 1.371 2008/11/12 12:35:53 ad Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 11, 2008
+.Dd November 12, 2008
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1141,13 +1141,6 @@ Synonym of
 .El
 .Ss Miscellaneous Options
 .Bl -ohang
-.It Cd options LKM
-Enable loadable kernel modules.
-See
-.Xr lkm 4
-for details.
-.Em NOTE :
-not available on all architectures.
 .It Cd options MEMORY_DISK_DYNAMIC
 This option makes the
 .Xr md 4
@@ -1182,15 +1175,7 @@ Do not include the interface to a userland memory disk server process.
 Per default, this option is set to 1, including the support code.
 Useful for install media kernels.
 .It Cd options MODULAR
-Enables the new framework for kernel modules, which will eventually
-replace LKMs.
-This adds an in-kernel linker and loader, and requires userland support
-to be useful.
-See the
-.Sy MKMODULAR
-variable in
-.Xr mk.conf 5
-for more details.
+Enables the framework for kernel modules.
 .It Cd options VND_COMPRESSION
 Enables the
 .Xr vnd 4
@@ -2807,7 +2792,6 @@ bolded
 .Xr ddb 4 ,
 .Xr inet 4 ,
 .Xr iso 4 ,
-.Xr lkm 4 ,
 .Xr md 4 ,
 .Xr ns 4 ,
 .Xr pcibios 4 ,

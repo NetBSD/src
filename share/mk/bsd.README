@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.238 2008/11/09 23:07:22 mrg Exp $
+#	$NetBSD: bsd.README,v 1.239 2008/11/12 12:35:54 ad Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -233,17 +233,6 @@ MKMAN		If "no", don't build or install the man or catman pages,
 		Default: yes
 
 MKMANZ		If not "no", compress manual pages at installation time.
-		Default: no
-
-MKMODULAR	If "no", don't build the versions of modload(8), modstat(8)
-		and modunload(8) that use the new modules framework present
-		in the kernel (enabled separately using 'options MODULAR'
-		int the configuration file).  Also don't build any other
-		stuff that may rely on this support, such as tests or kernel
-		modules.
-		Note: This flag will disappear when the new modules framework
-		is complete enough to replace the old LKM, effectively
-		switching it to "yes" by default.
 		Default: no
 
 MKNLS		If "no", don't build or install the NLS files and locale

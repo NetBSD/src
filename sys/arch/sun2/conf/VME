@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.32 2008/01/11 11:45:24 tsutsui Exp $
+# $NetBSD: VME,v 1.33 2008/11/12 12:36:07 ad Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.32 $"
+#ident 		"VME-$Revision: 1.33 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -25,7 +25,6 @@ options 	SYSVSEM		# System V semaphores
 #options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
-options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

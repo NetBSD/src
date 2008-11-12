@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1204 2008/11/10 04:06:16 dogcow Exp $
+#	$NetBSD: mi,v 1.1205 2008/11/12 12:35:50 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1958,7 +1958,7 @@
 ./usr/include/sys/ksem.h			comp-c-include
 ./usr/include/sys/ksyms.h			comp-c-include
 ./usr/include/sys/ktrace.h			comp-c-include
-./usr/include/sys/lkm.h				comp-c-include
+./usr/include/sys/lkm.h				comp-obsolete		obsolete
 ./usr/include/sys/localedef.h			comp-c-include
 ./usr/include/sys/lock.h			comp-c-include
 ./usr/include/sys/lockf.h			comp-c-include
@@ -2650,7 +2650,7 @@
 ./usr/libdata/debug/sbin/mbrlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mknod.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/modload.debug		comp-sysutil-debug	debug
-./usr/libdata/debug/sbin/modstat.debug		comp-sysutil-debug	modular,debug
+./usr/libdata/debug/sbin/modstat.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/modunload.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_ados.debug	comp-adosfs-debug	debug
@@ -2895,7 +2895,7 @@
 ./usr/libdata/debug/usr/bin/mklocale.debug	comp-locale-debug	debug
 ./usr/libdata/debug/usr/bin/mkstr.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/mktemp.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/modstat.debug	comp-util-debug		!modular,debug
+./usr/libdata/debug/usr/bin/modstat.debug	comp-obolete		obsolete
 ./usr/libdata/debug/usr/bin/mset.debug		comp-tn3270-debug	debug
 ./usr/libdata/debug/usr/bin/msgattrib.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/msgc.debug		comp-c-debug		debug
@@ -19611,7 +19611,7 @@
 ./usr/share/mk/bsd.kernobj.mk			comp-util-share		share
 ./usr/share/mk/bsd.kinc.mk			comp-util-share		share
 ./usr/share/mk/bsd.klinks.mk			comp-util-share		share
-./usr/share/mk/bsd.kmod.mk			comp-util-share		share
+./usr/share/mk/bsd.kmod.mk			comp-obsolete		obsolete
 ./usr/share/mk/bsd.kmodule.mk			comp-util-share		share
 ./usr/share/mk/bsd.lib.mk			comp-util-share		share
 ./usr/share/mk/bsd.links.mk			comp-util-share		share

@@ -1,8 +1,11 @@
-/*	$NetBSD: kobj_machdep.c,v 1.5 2008/05/01 14:48:19 ad Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.6 2008/11/12 12:36:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software developed for The NetBSD Foundation
+ * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.5 2008/05/01 14:48:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.6 2008/11/12 12:36:02 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -108,14 +111,6 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 			return -1;
 		addr += addend - (Elf_Addr)where;
 		break;
-
-	case R_386_COPY:	/* none */
-		/*
-		 * There shouldn't be copy relocations in kernel
-		 * objects.
-		 */
-		printf("kobj_reloc: unexpected R_COPY relocation\n");
-		return -1;
 
 	case R_386_GLOB_DAT:	/* S */
 		addr = kobj_sym_lookup(ko, symidx);

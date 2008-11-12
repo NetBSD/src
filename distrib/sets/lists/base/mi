@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.781 2008/11/07 15:18:24 joerg Exp $
+# $NetBSD: mi,v 1.782 2008/11/12 12:35:50 ad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -212,7 +212,7 @@
 ./sbin/mbrlabel					base-sysutil-root
 ./sbin/mknod					base-sysutil-root
 ./sbin/modload					base-sysutil-root
-./sbin/modstat					base-sysutil-root	modular
+./sbin/modstat					base-sysutil-root
 ./sbin/modunload				base-sysutil-root
 ./sbin/mount					base-sysutil-root
 ./sbin/mount_ados				base-adosfs-root
@@ -772,7 +772,6 @@
 ./usr/bin/lam					base-util-bin
 ./usr/bin/last					base-util-bin
 ./usr/bin/lastcomm				base-util-bin
-# needed by modload for now
 ./usr/bin/ld					comp-util-bin		bfd
 ./usr/bin/ldapadd				base-ldap-bin		ldap
 ./usr/bin/ldapcompare				base-ldap-bin		ldap
@@ -822,7 +821,7 @@
 ./usr/bin/mkfifo				base-util-bin
 ./usr/bin/mklocale				base-locale-bin
 ./usr/bin/mktemp				base-util-bin
-./usr/bin/modstat				base-util-bin		!modular
+./usr/bin/modstat				base-obsolete		obsolete
 ./usr/bin/more					base-util-bin
 ./usr/bin/mset					base-tn3270-bin
 ./usr/bin/msgs					base-util-bin
@@ -1280,7 +1279,7 @@
 ./usr/libexec/uucpd				base-obsolete		obsolete
 ./usr/libexec/uugetty				base-obsolete		obsolete
 ./usr/libexec/virecover				base-util-bin
-./usr/lkm					base-sys-usr
+./usr/lkm					base-obsolete		obsolete
 ./usr/mdec					base-sys-usr
 ./usr/sbin					base-sys-usr
 ./usr/sbin/ac					base-sysutil-bin

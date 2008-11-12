@@ -1,4 +1,4 @@
-#	$NetBSD: majors.ia64,v 1.4 2007/12/31 15:31:57 ad Exp $
+#	$NetBSD: majors.ia64,v 1.5 2008/11/12 12:36:02 ad Exp $
 #
 # Device majors for ia64
 #
@@ -31,7 +31,6 @@ device-major	md		char 24  block 17	md
 
 device-major	joy		char 26			joy
 device-major	spkr		char 27			spkr
-device-major	lkm		char 28			lkm
 
 # next three are obsolete
 #device-major	omms		char 35			omms

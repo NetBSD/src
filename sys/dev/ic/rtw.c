@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.105 2008/11/07 00:20:03 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.106 2008/11/12 12:36:11 ad Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.105 2008/11/07 00:20:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.106 2008/11/12 12:36:11 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -135,7 +135,7 @@ static void rtw_txring_fixup(struct rtw_softc *sc, const char *fn, int ln);
 /*
  * Setup sysctl(3) MIB, hw.rtw.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_rtw, "sysctl rtw(4) subtree setup")
 {

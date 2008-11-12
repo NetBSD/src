@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.50 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.51 2008/11/12 12:36:28 ad Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.50 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.51 2008/11/12 12:36:28 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.50 2008/11/07 00:20:13 dyoung Exp $");
  * sysctl node management
  *
  * It's not really possible to use a SYSCTL_SETUP block with
- * current LKM implementation, so it is easier to just define
+ * current module implementation, so it is easier to just define
  * our own function.
  *
  * The handler function is a "helper" in Andrew Brown's sysctl
@@ -1230,7 +1230,7 @@ tap_kqread(struct knote *kn, long hint)
  * (called a link set) which is used at init_sysctl() time to cycle
  * through all those functions to create the kernel's sysctl tree.
  *
- * It is not (currently) possible to use link sets in a LKM, so the
+ * It is not possible to use link sets in a module, so the
  * easiest is to simply call our own setup routine at load time.
  *
  * In the SYSCTL_SETUP blocks you find in the kernel, nodes have the

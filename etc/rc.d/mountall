@@ -1,10 +1,9 @@
 #!/bin/sh
 #
-# $NetBSD: mountall,v 1.4 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: mountall,v 1.5 2008/11/12 12:35:52 ad Exp $
 #
 
 # PROVIDE: mountall
-# REQUIRE: beforemountlkm
 
 $_rc_subr_loaded . /etc/rc.subr
 

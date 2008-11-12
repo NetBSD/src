@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.151 2008/11/11 06:46:44 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.152 2008/11/12 12:36:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 2008/11/11 06:46:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2008/11/12 12:36:09 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.151 2008/11/11 06:46:44 dyoung Exp $")
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <sys/exec_elf.h>
 #endif
 
@@ -227,7 +227,7 @@ consinit(void)
 #ifdef KGDB
 	zs_kgdb_init();			/* XXX */
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		 (void *)&end, esym);
 #endif

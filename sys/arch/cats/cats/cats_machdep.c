@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.61 2008/11/11 06:46:40 dyoung Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.62 2008/11/12 12:35:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.61 2008/11/11 06:46:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.62 2008/11/12 12:35:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -882,7 +882,7 @@ initarm(void *arm_bootargs)
 	footbridge_intr_init();
 	printf("done.\n");
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #ifdef __ELF__
 	/* ok this is really rather sick, in ELF what happens is that the
 	 * ELF symbol table is added after the text section.

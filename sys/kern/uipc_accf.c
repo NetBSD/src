@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.6 2008/10/15 08:25:28 ad Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.7 2008/11/12 12:36:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.6 2008/10/15 08:25:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.7 2008/11/12 12:36:16 ad Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.6 2008/10/15 08:25:28 ad Exp $");
 #include <sys/lock.h>
 #include <sys/kmem.h>
 #include <sys/mbuf.h>
-#include <sys/lkm.h>
 #include <sys/rwlock.h>
 #include <sys/protosw.h>
 #include <sys/sysctl.h>
@@ -112,6 +111,8 @@ int
 accept_filt_add(struct accept_filter *filt)
 {
 	struct accept_filter *p;
+
+	accept_filter_init();
 
 	rw_enter(&accept_filter_lock, RW_WRITER);
 	LIST_FOREACH(p, &accept_filtlsthd, accf_next) {
@@ -183,34 +184,6 @@ accept_filter_init(void)
 	static ONCE_DECL(accept_filter_init_once);
 
 	RUN_ONCE(&accept_filter_init_once, accept_filter_init0);
-}
-
-int
-accept_filt_generic_mod_event(struct lkm_table *lkmtp, int event, void *data)
-{
-	struct accept_filter *accfp = (struct accept_filter *) data;
-	int error;
-
-	switch (event) {
-	case LKM_E_LOAD:
-		accept_filter_init();
-		error = accept_filt_add(accfp);
-		break;
-
-	case LKM_E_UNLOAD:
-		error = accept_filt_del(accfp);
-		break;
-
-	case LKM_E_STAT:
-		error = 0;
-		break;
-
-	default:
-		error = EOPNOTSUPP;
-		break;
-	}
-
-	return error;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 2008/11/12 01:33:44 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108 2008/11/12 12:35:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2008/11/12 01:33:44 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2008/11/12 12:35:56 ad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -260,9 +260,9 @@ paddr_t	idt_paddr;
 vaddr_t lo32_vaddr;
 paddr_t lo32_paddr;
 
-vaddr_t lkm_start, lkm_end;
-static struct vm_map lkm_map_store;
-extern struct vm_map *lkm_map;
+vaddr_t module_start, module_end;
+static struct vm_map module_map_store;
+extern struct vm_map *module_map;
 vaddr_t kern_end;
 
 struct vm_map *mb_map = NULL;
@@ -359,9 +359,9 @@ cpu_startup(void)
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
-	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, 0);
-	lkm_map_store.pmap = pmap_kernel();
-	lkm_map = &lkm_map_store;
+	uvm_map_setup(&module_map_store, module_start, module_end, 0);
+	module_map_store.pmap = pmap_kernel();
+	module_map = &module_map_store;
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -1329,7 +1329,7 @@ init_x86_64_msgbuf(void)
 static void
 init_x86_64_ksyms(void)
 {
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	extern int end;
 	extern int *esym;
 #ifndef XEN
@@ -1587,8 +1587,8 @@ init_x86_64(paddr_t first_avail)
 	first_avail = round_page(first_avail);
 
 	kern_end = KERNBASE + first_avail;
-	lkm_start = kern_end;
-	lkm_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
+	module_start = kern_end;
+	module_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
 
 	/*
 	 * Now, load the memory clusters (which have already been

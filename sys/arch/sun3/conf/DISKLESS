@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.58 2008/04/05 22:08:41 tsutsui Exp $
+# $NetBSD: DISKLESS,v 1.59 2008/11/12 12:36:08 ad Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/50, 3/60, 3/110)
@@ -24,7 +24,6 @@ maxusers	2
 #options 	SYSVSEM		# System V semaphores
 #options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
-#options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

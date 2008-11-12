@@ -1,4 +1,4 @@
-.\"	$NetBSD: hier.7,v 1.81 2008/05/22 12:51:43 lukem Exp $
+.\"	$NetBSD: hier.7,v 1.82 2008/11/12 12:35:53 ad Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -461,8 +461,6 @@ system daemons \*[Am] system utilities (executed by other programs)
 UUCP binaries and scripts (historically placed; to be moved)
 .El
 .Pp
-.It Sy lkm/
-loadable kernel modules
 .It Sy mdec/
 boot blocks, etc.
 .It Sy obj/
@@ -547,8 +545,6 @@ text files used by various games
 .It Sy i18n/
 internationalization databases; see
 .Xr iconv 3
-.It Sy lkm/
-documentation on the loadable kernel modules interface
 .It Sy locale/
 locale databases and gettext message catalogs; see
 .Xr setlocale 3
@@ -933,24 +929,6 @@ C library routines used in the kernel
 machine independent stand alone kernel library
 .It Sy libz/
 compression library
-.El
-.Pp
-.It Sy lkm/
-loadable kernel modules
-.Pp
-.Bl -tag -width "gdbscripts/" -compact
-.It Sy compat/
-LKM support compatibility modules;  currently unsupported.
-.It Sy netinet/
-LKM support networking modules
-.Pp
-.Bl -tag -width "if_ipl/" -compact
-.It Sy if_ipl/
-LKM for IP-Filter
-.El
-.Pp
-.It Sy vfs/
-LKM support for file systems.
 .El
 .Pp
 .It Sy miscfs/

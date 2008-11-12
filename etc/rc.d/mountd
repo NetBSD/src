@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: mountd,v 1.12 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: mountd,v 1.13 2008/11/12 12:35:52 ad Exp $
 #
 
 # PROVIDE: mountd
-# REQUIRE: NETWORKING mountall beforemountlkm rpcbind quota
+# REQUIRE: NETWORKING mountall rpcbind quota
 
 $_rc_subr_loaded . /etc/rc.subr
 

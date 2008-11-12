@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: iscsi_target,v 1.1 2006/02/08 19:02:59 agc Exp $
+# $NetBSD: iscsi_target,v 1.2 2008/11/12 12:35:52 ad Exp $
 #
 
 # PROVIDE: iscsi_target
-# REQUIRE: NETWORKING mountall beforemountlkm quota
+# REQUIRE: NETWORKING mountall quota
 
 $_rc_subr_loaded . /etc/rc.subr
 

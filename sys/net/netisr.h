@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.38 2008/10/14 17:15:20 pooka Exp $ */
+/* $NetBSD: netisr.h,v 1.39 2008/11/12 12:36:28 ad Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -48,13 +48,13 @@
 
 #if defined(_KERNEL)
 
-#if !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_iso.h"
 #include "opt_natm.h"
 #include "arp.h"
-#endif /* !defined(_LKM) */
+#endif /* defined(_KERNEL_OPT) */
 
 #if !defined(_LOCORE)
 

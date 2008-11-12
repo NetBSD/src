@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.17 2008/10/24 13:55:42 christos Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.18 2008/11/12 12:36:28 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -46,7 +46,6 @@ struct ksyms_symtab {
 	int sd_symsize;		/* Size in bytes of symbol table */
 	int sd_strsize;		/* Size of string table */
 	bool sd_gone;		/* dead but around for open() */
-	bool sd_malloc;		/* XXX REMOVE WHEN LKMS GO */
 };
 
 /*

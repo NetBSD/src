@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.HOSTUSB,v 1.2 2008/07/31 07:41:08 simonb Exp $
+#	$NetBSD: GENERIC.HOSTUSB,v 1.3 2008/11/12 12:36:09 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -109,7 +109,6 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 # Miscellaneous kernel options
 #options 	KTRACE          # system call tracing via ktrace(1)
-#options 	LKM             # loadable kernel modules
 #options 	KMEMSTATS       # kernel memory statistics
 #options 	SCSIVERBOSE     # Verbose SCSI errors
 #options 	MIIVERBOSE      # Verbose MII autoconfuration messages

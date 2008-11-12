@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 2008/11/11 06:46:43 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.131 2008/11/12 12:36:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2008/11/11 06:46:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2008/11/12 12:36:04 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -109,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2008/11/11 06:46:43 dyoung Exp $")
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <sys/exec_elf.h>
 #endif
 
@@ -438,7 +438,7 @@ consinit(void)
 	 */
 	cninit();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern char end[];
 		extern int *esym;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.280 2008/10/21 20:52:11 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.281 2008/11/12 12:36:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280 2008/10/21 20:52:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.281 2008/11/12 12:36:16 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -132,7 +132,6 @@ static int			nexecs;
 
 u_int	exec_maxhdrsz;		/* must not be static - netbsd32 needs it */
 
-#ifdef LKM
 /* list of supported emulations */
 static
 LIST_HEAD(emlist_head, emul_entry) el_head = LIST_HEAD_INITIALIZER(el_head);
@@ -155,7 +154,6 @@ struct execsw_entry {
 	struct execsw_entry	*next;
 	const struct execsw	*es;
 };
-#endif /* LKM */
 
 #ifdef SYSCALL_DEBUG
 extern const char * const syscallnames[];
@@ -236,7 +234,6 @@ const struct emul emul_netbsd = {
 	startlwp,
 };
 
-#ifdef LKM
 /*
  * Exec lock. Used to control access to execsw[] structures.
  * This must not be static so that netbsd32 can access it, too.
@@ -244,7 +241,6 @@ const struct emul emul_netbsd = {
 krwlock_t exec_lock;
 
 static void link_es(struct execsw_entry **, const struct execsw *);
-#endif /* LKM */
 
 static kmutex_t sigobject_lock;
 
@@ -572,9 +568,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	pack.ep_esch = NULL;
 	pack.ep_pax_flags = 0;
 
-#ifdef LKM
 	rw_enter(&exec_lock, RW_READER);
-#endif
 
 	/* see if we can run it. */
 	if ((error = check_exec(l, &pack)) != 0) {
@@ -1091,9 +1085,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Allow new references from the debugger/procfs. */
 	rw_exit(&p->p_reflock);
-#ifdef LKM
 	rw_exit(&exec_lock);
-#endif
 
 	mutex_enter(proc_lock);
 
@@ -1149,9 +1141,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
 
-#ifdef LKM
 	rw_exit(&exec_lock);
-#endif
 
  clrflg:
 	lwp_lock(l);
@@ -1165,9 +1155,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
  exec_abort:
 	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
-#ifdef LKM
 	rw_exit(&exec_lock);
-#endif
 
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.
@@ -1240,7 +1228,6 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	return 0;
 }
 
-#ifdef LKM
 /*
  * Find an emulation of given name in list of emulations.
  * Needs to be called with the exec_lock held.
@@ -1556,45 +1543,6 @@ exec_init(int init_boot)
 
 	return 0;
 }
-#endif
-
-#ifndef LKM
-/*
- * Simplified exec_init() for kernels without LKMs. Only initialize
- * exec_maxhdrsz and execsw[].
- */
-int
-exec_init(int init_boot)
-{
-	int i;
-
-#ifdef DIAGNOSTIC
-	if (!init_boot)
-		panic("exec_init(): called with init_boot == 0");
-#endif
-
-	/* do one-time initializations */
-	nexecs = nexecs_builtin;
-	execsw = kmem_alloc(nexecs * sizeof(struct execsw *), KM_SLEEP);
-
-	pool_init(&exec_pool, NCARGS, 0, 0, PR_NOALIGN|PR_NOTOUCH,
-	    "execargs", &exec_palloc, IPL_NONE);
-	pool_sethardlimit(&exec_pool, maxexec, "should not happen", 0);
-
-	/*
-	 * Fill in execsw[] and figure out the maximum size of an exec header.
-	 */
-	exec_maxhdrsz = 0;
-	for(i=0; i < nexecs; i++) {
-		execsw[i] = &execsw_builtin[i];
-		if (execsw_builtin[i].es_hdrsz > exec_maxhdrsz)
-			exec_maxhdrsz = execsw_builtin[i].es_hdrsz;
-	}
-
-	return 0;
-
-}
-#endif /* !LKM */
 
 static int
 exec_sigcode_map(struct proc *p, const struct emul *e)

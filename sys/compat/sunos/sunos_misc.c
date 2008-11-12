@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.161 2008/08/07 20:15:32 plunky Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.162 2008/11/12 12:36:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,11 +50,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.161 2008/08/07 20:15:32 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.162 2008/11/12 12:36:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
-#include "opt_ptrace.h"
 #include "fs_nfs.h"
 #endif
 
@@ -974,7 +973,6 @@ sunos_sys_setrlimit(struct lwp *l, const struct sunos_sys_setrlimit_args *uap, r
 	return compat_43_sys_setrlimit(l, &ua_43, retval);
 }
 
-#if defined(PTRACE) || defined(_LKM)
 /* for the m68k machines */
 #ifndef PT_GETFPREGS
 #define PT_GETFPREGS -1
@@ -990,20 +988,16 @@ static const int sreq2breq[] = {
 	PT_GETREGS,     PT_SETREGS,     PT_GETFPREGS,   PT_SETFPREGS
 };
 static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
-#endif /* PTRACE || _LKM */
 
 int
 sunos_sys_ptrace(struct lwp *l, const struct sunos_sys_ptrace_args *uap, register_t *retval)
 {
-#if defined(PTRACE) || defined(_LKM)
 	struct sys_ptrace_args pa;
 	int req;
 
-#ifdef _LKM
 #define	sys_ptrace sysent[SYS_ptrace].sy_call 
 	if (sys_ptrace == sys_nosys)
 		return ENOSYS;
-#endif
 
 	req = SCARG(uap, req);
 
@@ -1020,9 +1014,6 @@ sunos_sys_ptrace(struct lwp *l, const struct sunos_sys_ptrace_args *uap, registe
 	SCARG(&pa, data) = SCARG(uap, data);
 
 	return sys_ptrace(l, &pa, retval);
-#else
-	return ENOSYS;
-#endif /* PTRACE || _LKM */
 }
 
 /*

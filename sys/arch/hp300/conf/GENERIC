@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.147 2008/08/10 15:31:20 tls Exp $
+# $NetBSD: GENERIC,v 1.148 2008/11/12 12:36:00 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.147 $"
+#ident 		"GENERIC-$Revision: 1.148 $"
 
 maxusers	32		# estimated number of users
 
@@ -46,7 +46,6 @@ options 	FPSP		# floating point interface for 68040
 
 # Standard system options
 options 	KTRACE		# system call tracing support
-options 	LKM		# Loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.7 2008/11/11 06:46:42 dyoung Exp $ */
+/* $NetBSD: machdep.c,v 1.8 2008/11/12 12:35:59 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2008/11/11 06:46:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2008/11/12 12:35:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -140,7 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2008/11/11 06:46:42 dyoung Exp $");
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
@@ -447,7 +447,7 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	ksyms_init(0, 0, 0);
 #endif
 #ifdef DDB

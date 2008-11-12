@@ -1,11 +1,11 @@
-#	$NetBSD: ALCHEMY,v 1.20 2008/07/31 07:41:00 simonb Exp $
+#	$NetBSD: ALCHEMY,v 1.21 2008/11/12 12:35:59 ad Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.alchemy"
 
-#ident 		"ALCHEMY-$Revision: 1.20 $"
+#ident 		"ALCHEMY-$Revision: 1.21 $"
 
 maxusers	32
 
@@ -38,7 +38,6 @@ options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
-#options 	LKM		# loadable kernel modules
 options 	NTP		# network time protocol
 
 # Debugging options

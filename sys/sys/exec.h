@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.124 2008/07/02 17:28:57 ad Exp $	*/
+/*	$NetBSD: exec.h,v 1.125 2008/11/12 12:36:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -259,14 +259,12 @@ int	cpu_coredump(struct lwp *, void *, struct core *);
 int	cpu_coredump32(struct lwp *, void *, struct core32 *);
 
 
-#ifdef LKM
 int	emul_register		(const struct emul *, int);
 int	emul_unregister		(const char *);
 const struct emul *emul_search(const char *);
 
 int	exec_add		(struct execsw *, const char *);
 int	exec_remove		(const struct execsw *);
-#endif /* LKM */
 
 void	new_vmcmd(struct exec_vmcmd_set *,
 		    int (*)(struct lwp *, struct exec_vmcmd *),

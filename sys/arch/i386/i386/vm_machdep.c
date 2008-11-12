@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.139 2008/05/27 14:25:11 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.140 2008/11/12 12:36:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.139 2008/05/27 14:25:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.140 2008/11/12 12:36:02 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_mtrr.h"
@@ -266,7 +266,7 @@ cpu_lwp_free2(struct lwp *l)
 }
 
 #if (defined(EXEC_AOUT) || defined(EXEC_COFF) || defined(EXEC_ECOFF) || \
-    defined(EXEC_MACHO) || defined(LKM)) && defined(COREDUMP)
+    defined(EXEC_MACHO) || defined(MODULAR)) && defined(COREDUMP)
 /*
  * Dump the machine specific segment at the start of a core dump.
  */
