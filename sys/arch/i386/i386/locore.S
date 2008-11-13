@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.79 2008/11/11 14:40:18 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.80 2008/11/13 10:53:30 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.79 2008/11/11 14:40:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.80 2008/11/13 10:53:30 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -193,7 +193,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.79 2008/11/11 14:40:18 ad Exp $");
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
 #endif /* XEN3 */
 	.ascii	",LOADER=generic"
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte	0
@@ -517,7 +517,7 @@ try586:	/* Use the `cpuid' instruction. */
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
 
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
