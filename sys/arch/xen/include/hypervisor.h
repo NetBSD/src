@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.27 2008/09/16 19:55:32 bouyer Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.28 2008/11/13 01:45:48 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -87,7 +87,10 @@ struct xen_npx_attach_args {
 #ifdef XEN3
 #include <xen/xen3-public/xen.h>
 #include <xen/xen3-public/sched.h>
+#include <xen/xen3-public/platform.h>
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 #include <xen/xen3-public/dom0_ops.h>
+#endif
 #include <xen/xen3-public/event_channel.h>
 #include <xen/xen3-public/physdev.h>
 #include <xen/xen3-public/memory.h>

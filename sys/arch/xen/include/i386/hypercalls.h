@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.6 2008/10/24 22:06:06 jym Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.7 2008/11/13 01:45:48 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -149,6 +149,7 @@ HYPERVISOR_set_callbacks(
     return ret;
 }
 
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 static __inline int
 HYPERVISOR_dom0_op(dom0_op_t *dom0_op)
 {
@@ -161,6 +162,7 @@ HYPERVISOR_dom0_op(dom0_op_t *dom0_op)
 
     return ret;
 }
+#endif	/* __XEN_INTERFACE_VERSION__ */
 
 static __inline int
 HYPERVISOR_set_debugreg(int reg, unsigned long value)
