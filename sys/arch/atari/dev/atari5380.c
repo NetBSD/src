@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.41.12.1 2008/11/13 00:26:30 snj Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.41.12.2 2008/11/13 00:27:57 snj Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.41.12.1 2008/11/13 00:26:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.41.12.2 2008/11/13 00:27:57 snj Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -342,8 +342,8 @@ scsi_tt_dmasetup(SC_REQ *reqp, u_int phase, u_char	mode)
 		SCSI_DMA->s_dma_ctrl = SD_IN;
 		if (machineid & ATARI_HADES)
 		    SCSI_DMA->s_hdma_ctrl &= ~(SDH_BUSERR|SDH_EOP);
-		set_scsi_dma(&(SCSI_DMA->s_dma_ptr), reqp->dm_cur->dm_addr);
-		set_scsi_dma(&(SCSI_DMA->s_dma_cnt), reqp->dm_cur->dm_count);
+		set_scsi_dma(SCSI_DMA->s_dma_ptr, reqp->dm_cur->dm_addr);
+		set_scsi_dma(SCSI_DMA->s_dma_cnt, reqp->dm_cur->dm_count);
 		SET_TT_REG(NCR5380_ICOM, 0);
 		SET_TT_REG(NCR5380_MODE, mode);
 		SCSI_DMA->s_dma_ctrl = SD_ENABLE;
@@ -353,8 +353,8 @@ scsi_tt_dmasetup(SC_REQ *reqp, u_int phase, u_char	mode)
 		SCSI_DMA->s_dma_ctrl = SD_OUT;
 		if (machineid & ATARI_HADES)
 		    SCSI_DMA->s_hdma_ctrl &= ~(SDH_BUSERR|SDH_EOP);
-		set_scsi_dma(&(SCSI_DMA->s_dma_ptr), reqp->dm_cur->dm_addr);
-		set_scsi_dma(&(SCSI_DMA->s_dma_cnt), reqp->dm_cur->dm_count);
+		set_scsi_dma(SCSI_DMA->s_dma_ptr, reqp->dm_cur->dm_addr);
+		set_scsi_dma(SCSI_DMA->s_dma_cnt, reqp->dm_cur->dm_count);
 		SET_TT_REG(NCR5380_MODE, mode);
 		SET_TT_REG(NCR5380_ICOM, SC_ADTB);
 		SET_TT_REG(NCR5380_DMSTAT, 0);
