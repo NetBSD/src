@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.7 2008/11/13 01:45:48 cegger Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.8 2008/11/13 18:35:20 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -471,6 +471,19 @@ HYPERVISOR_set_timer_op(uint64_t timeout)
     _hypercall(__HYPERVISOR_set_timer_op,
 	 _harg("1" (timeout_lo), "2" (timeout_hi)),
 	 _harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+
+    return ret;
+}
+
+static __inline int
+HYPERVISOR_platform_op(struct xen_platform_op *platform_op)
+{
+    int ret;
+    unsigned long ign1;
+
+    platform_op->interface_version = XENPF_INTERFACE_VERSION;
+    _hypercall(__HYPERVISOR_platform_op, _harg("1" (platform_op)),
+	_harg("=a" (ret), "=b" (ign1)));
 
     return ret;
 }
