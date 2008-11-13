@@ -157,6 +157,9 @@ cpu0		at mainbus?
 # Specify the memory size in megabytes.
 options		MEMSIZE=128
 
+# Specify the (DMA) Bus Address base in megabytes
+options		GEMINI_BUSBASE=0
+
 # On-board IO
 obio0		at mainbus?
 

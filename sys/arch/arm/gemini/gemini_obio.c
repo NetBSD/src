@@ -1,12 +1,13 @@
-/*	$NetBSD: gemini_obio.c,v 1.5 2008/11/13 05:03:05 cliff Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.6 2008/11/13 07:21:59 cliff Exp $	*/
 
 /* adapted from:
- *	$Id: gemini_obio.c,v 1.5 2008/11/13 05:03:05 cliff Exp $
+ *      NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp
  */
 
 /*
- * Autoconfiguration support for the Texas Instruments OMAP "On Board" I/O.
+ * Autoconfiguration support for the Gemini "On Board" I/O.
  *
+ * Based on arm/omap/omap2_obio.c which in turn was derived
  * Based on arm/omap/omap_emifs.c which in turn was derived
  * Based on arm/xscale/pxa2x0.c which in turn was derived
  * from arm/sa11x0/sa11x0.c
@@ -103,7 +104,7 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.5 2008/11/13 05:03:05 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.6 2008/11/13 07:21:59 cliff Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -164,9 +165,9 @@ obio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal(": On-Board IO\n");
 
-#ifdef GEMINI_SLAVE
+#if (GEMINI_BUSBASE != 0)
 	sc->sc_dmarange.dr_sysbase = 0;
-	sc->sc_dmarange.dr_busbase = (128 - MEMSIZE) * 1024 * 1024;
+	sc->sc_dmarange.dr_busbase = (GEMINI_BUSBASE * 1024 * 1024);
 	sc->sc_dmarange.dr_len = MEMSIZE * 1024 * 1024;
 	gemini_bus_dma_tag._ranges = &sc->sc_dmarange;
 	gemini_bus_dma_tag._nranges = 1;
