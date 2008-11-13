@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.57 2008/10/15 08:13:17 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.57.4.1 2008/11/13 00:04:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57 2008/10/15 08:13:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.57.4.1 2008/11/13 00:04:07 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1002,7 +1002,7 @@ cpu_suspend(device_t dv PMF_FN_ARGS)
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
-		err = cpu_setonline(ci, false);
+		err = cpu_setstate(ci, false);
 		mutex_exit(&cpu_lock);
 	
 		if (err)
@@ -1028,7 +1028,7 @@ cpu_resume(device_t dv PMF_FN_ARGS)
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
-		err = cpu_setonline(ci, true);
+		err = cpu_setstate(ci, true);
 		mutex_exit(&cpu_lock);
 	}
 
