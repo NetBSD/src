@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.548 2008/11/12 13:17:27 pooka Exp $
+#	$NetBSD: bsd.own.mk,v 1.549 2008/11/13 20:40:11 apb Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -898,9 +898,11 @@ MAKEDIRTARGET=\
 
 #
 # MAKEVERBOSE support.  Levels are:
-#	0	No messages
-#	1	Enable info messages, suppress command output
-#	2	Enable info messages and command output
+#	0	Minimal output ("quiet")
+#	1	Describe what is occurring
+#	2	Describe what is occurring and echo the actual command
+#	3	Ignore the effect of the "@" prefix in make commands
+#	4	Trace shell commands using the shell's -x flag
 #		
 MAKEVERBOSE?=		2
 
@@ -914,12 +916,18 @@ _MKMSG?=	@echo '   '
 _MKSHMSG?=	echo '   '
 _MKSHECHO?=	: echo
 .SILENT:
-.else	# MAKEVERBOSE == 2 ?
+.else	# MAKEVERBOSE >= 2
 _MKMSG?=	@echo '\#  '
 _MKSHMSG?=	echo '\#  '
 _MKSHECHO?=	echo
 .SILENT: __makeverbose_dummy_target__
-.endif
+.endif	# MAKEVERBOSE >= 2
+.if ${MAKEVERBOSE} >= 3
+.MAKEFLAGS:	-dl
+.endif	# ${MAKEVERBOSE} >= 3
+.if ${MAKEVERBOSE} >= 4
+.MAKEFLAGS:	-dx
+.endif	# ${MAKEVERBOSE} >= 4
 
 _MKMSG_BUILD?=		${_MKMSG} "  build "
 _MKMSG_CREATE?=		${_MKMSG} " create "

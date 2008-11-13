@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.198 2008/10/26 23:40:06 apb Exp $
+#	$NetBSD: build.sh,v 1.199 2008/11/13 20:40:11 apb Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -572,9 +572,11 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras]
                 Unsets MAKEOBJDIR.
     -m mach     Set MACHINE to mach; not required if NetBSD native.
     -N noisy    Set the noisyness (MAKEVERBOSE) level of the build:
-                    0   Quiet
-                    1   Operations are described, commands are suppressed
-                    2   Full output
+                    0   Minimal output ("quiet")
+                    1   Describe what is occurring
+                    2   Describe what is occurring and echo the actual command
+                    3   Ignore the effect of the "@" prefix in make commands
+                    4   Trace shell commands using the shell's -x flag
                 [Default: 2]
     -n          Show commands that would be executed, but do not execute them.
     -O obj      Set obj root directory to obj; sets a MAKEOBJDIR pattern.
@@ -678,7 +680,7 @@ parseoptions()
 		-N)
 			eval ${optargcmd}
 			case "${OPTARG}" in
-			0|1|2)
+			0|1|2|3|4)
 				setmakeenv MAKEVERBOSE "${OPTARG}"
 				;;
 			*)
@@ -1199,7 +1201,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.198 2008/10/26 23:40:06 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.199 2008/11/13 20:40:11 apb Exp $
 # with these arguments: ${_args}
 #
 
