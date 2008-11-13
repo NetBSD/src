@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.29 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: xencons.c,v 1.30 2008/11/13 18:44:51 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.29 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.30 2008/11/13 18:44:51 cegger Exp $");
 
 #include "opt_xen.h"
 
@@ -223,10 +223,10 @@ xencons_attach(device_t parent, device_t self, void *aux)
 		} else {
 #ifdef XEN3
 			printf("%s: using event channel %d\n",
-			    device_xname(self), xen_start_info.console_evtchn);
-			event_set_handler(xen_start_info.console_evtchn,
+			    device_xname(self), xen_start_info.console.domU.evtchn);
+			event_set_handler(xen_start_info.console.domU.evtchn,
 			    xencons_handler, sc, IPL_TTY, "xencons");
-			hypervisor_enable_event(xen_start_info.console_evtchn);
+			hypervisor_enable_event(xen_start_info.console.domU.evtchn);
 #else
 			(void)ctrl_if_register_receiver(CMSG_CONSOLE,
 			    xencons_rx, 0);
@@ -405,7 +405,7 @@ xencons_start(struct tty *tp)
 		x86_sfence();
 		xencons_interface->out_prod = prod;
 		x86_sfence();
-		hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+		hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 #undef XNC_OUT
 #else /* XEN3 */
 		ctrl_msg_t msg;
@@ -482,7 +482,7 @@ xencons_handler(void *arg)
 			x86_sfence();
 		}
 	}
-	hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+	hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 	splx(s);
 	return 1;
 #undef XNC_IN
@@ -686,7 +686,7 @@ xenconscn_putc(dev_t dev, int c)
 		x86_lfence();
 		xencons_interface->out_prod++;
 		x86_lfence();
-		hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+		hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 #else
 		ctrl_msg_t msg;
 

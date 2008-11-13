@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.10 2008/10/25 17:12:29 jym Exp $      */
+/*      $NetBSD: xengnt.c,v 1.11 2008/11/13 18:44:51 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.10 2008/10/25 17:12:29 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.11 2008/11/13 18:44:51 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,7 +122,7 @@ xengnt_resume()
  * Returns 0 on success, ENOMEM on failure
  */
 static int
-xengnt_more_entries()
+xengnt_more_entries(void)
 {
 	gnttab_setup_table_t setup;
 	unsigned long *pages;
@@ -138,7 +138,7 @@ xengnt_more_entries()
 
 	setup.dom = DOMID_SELF;
 	setup.nr_frames = nframes_new;
-	setup.frame_list = pages;
+	xenguest_handle(setup.frame_list) = pages;
 
 	/*
 	 * setup the grant table, made of nframes_new frames
