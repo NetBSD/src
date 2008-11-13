@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.267 2008/06/28 15:50:20 rumble Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.268 2008/11/13 11:09:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.267 2008/06/28 15:50:20 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.268 2008/11/13 11:09:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -181,6 +181,7 @@ static const struct ufs_ops lfs_ufsops = {
 	.uo_valloc = lfs_valloc,
 	.uo_vfree = lfs_vfree,
 	.uo_balloc = lfs_balloc,
+	.uo_unmark_vnode = lfs_unmark_vnode,
 };
 
 struct shortlong {

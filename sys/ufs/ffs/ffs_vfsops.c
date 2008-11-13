@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.240 2008/11/10 20:12:13 joerg Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.241 2008/11/13 11:09:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.240 2008/11/10 20:12:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.241 2008/11/13 11:09:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -171,6 +171,7 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_valloc = ffs_valloc,
 	.uo_vfree = ffs_vfree,
 	.uo_balloc = ffs_balloc,
+	.uo_unmark_vnode = (void (*)(vnode_t *))nullop,
 };
 
 static int
