@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.40 2008/11/05 21:04:05 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.41 2008/11/13 21:39:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.40 2008/11/05 21:04:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.41 2008/11/13 21:39:29 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -316,10 +316,6 @@ splx:
 			}
 			i--;
 			iplbit >>= 1;
-		}
-		if (iplmask != 0) {
-			printf("evtchn_do_event: iplmask %d ilevel %d\n",
-			    iplmask, ilevel);
 		}
 	}
 	ci->ci_ilevel = ilevel;
