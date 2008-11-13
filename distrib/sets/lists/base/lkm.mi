@@ -1,4 +1,4 @@
-# $NetBSD: lkm.mi,v 1.31 2008/11/12 14:33:11 ad Exp $
+# $NetBSD: lkm.mi,v 1.32 2008/11/13 10:05:52 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -17,6 +17,8 @@
 ./@MODULEDIR@/coda/coda.kmod			base-kernel-modules
 ./@MODULEDIR@/coda5				base-kernel-modules
 ./@MODULEDIR@/coda5/coda5.kmod			base-kernel-modules
+./@MODULEDIR@/compat_ossaudio			base-kernel-modules
+./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules
 ./@MODULEDIR@/dirhash				base-obsolete	obsolete
 ./@MODULEDIR@/dirhash/dirhash.kmod		base-obsolete	obsolete
 ./@MODULEDIR@/efs				base-kernel-modules
