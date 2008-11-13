@@ -1,4 +1,4 @@
-#	$NetBSD: files.gemini,v 1.4 2008/11/11 19:54:38 cliff Exp $
+#	$NetBSD: files.gemini,v 1.5 2008/11/13 07:21:59 cliff Exp $
 #
 # Configuration info for GEMINI CPU support
 # Based on omap/files.omap2
@@ -11,6 +11,7 @@ file	arch/arm/arm32/irq_dispatch.S
 # Memory size in megabytes
 defparam opt_gemini.h				MEMSIZE
 defflag opt_gemini.h				GEMINI
+defparam opt_gemini.h				GEMINI_BUSBASE: GEMINI
 defflag opt_gemini.h				SL3516: GEMINI
 defflag opt_gemini.h				GEMINI_MASTER: GEMINI
 defflag opt_gemini.h				GEMINI_SLAVE: GEMINI
