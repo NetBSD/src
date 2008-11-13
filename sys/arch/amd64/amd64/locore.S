@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.48 2008/11/11 14:40:18 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.49 2008/11/13 10:53:30 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -206,7 +206,7 @@
 	.ascii	",ELF_PADDR_OFFSET=0xffffffff80000000"
 	.ascii	",VIRT_ENTRY=0xffffffff80100000"
 	.ascii	",HYPERCALL_PAGE=0x00000101" /*  (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
-#if NKSYMS > 0 || defined(DDB) || defined(LKM)
+#if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte   0
@@ -476,7 +476,7 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
