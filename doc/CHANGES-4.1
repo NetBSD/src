@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.105 2008/11/07 21:36:50 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.106 2008/11/13 00:37:05 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2325,4 +2325,10 @@ tools/gcc/mknative-gcc				1.23
 
 	Collect the libobjc config.h
 	[mrg, ticket #1228]
+
+sys/arch/atari/dev/atari5380.c			1.43-1.45
+
+	Fix a pointer arithmetic botch and specify volatile to some
+	pointers to access DMA registers.
+	[abs, ticket #1223]
 
