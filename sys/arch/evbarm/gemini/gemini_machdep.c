@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.7 2008/11/11 06:46:41 dyoung Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.8 2008/11/13 01:32:48 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.7 2008/11/11 06:46:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.8 2008/11/13 01:32:48 cliff Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -285,11 +285,12 @@ bs_protos(bs_notimpl);
 
 
 static void gemini_global_reset(void) __attribute__ ((noreturn));
+static void gemini_cpu1_start(void);
 
 static void
 gemini_global_reset(void)
 {
-#ifndef GEMINI_SLAVE
+#if defined(GEMINI_MASTER) || defined(GEMINI_SINGLE)
 	volatile uint32_t *rp;
 	uint32_t r;
 
@@ -298,9 +299,24 @@ gemini_global_reset(void)
 	r = *rp;
 	r |= GLOBAL_RESET_GLOBAL;
 	*rp = r;
-#endif	/* GEMINI_SLAVE */
+#endif
 	for(;;);
 	/* NOTREACHED */
+}
+
+static void
+gemini_cpu1_start(void)
+{
+#ifdef GEMINI_MASTER
+	volatile uint32_t *rp;
+	uint32_t r;
+
+	rp = (volatile uint32_t *)
+		(GEMINI_GLOBAL_VBASE + GEMINI_GLOBAL_RESET_CTL);
+	r = *rp;
+	r &= ~GLOBAL_RESET_CPU1;
+	*rp = r;
+#endif
 }
 
 /*
@@ -339,7 +355,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable console buffering */
-/*	cnpollc(1);*/
+	cnpollc(1);
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.
@@ -539,6 +555,11 @@ u_int
 initarm(void *arg)
 {
 	GEMINI_PUTCHAR('0');
+
+	/*
+	 * start cpu#1 now
+	 */
+	gemini_cpu1_start();
 
 	/*
 	 * When we enter here, we are using a temporary first level
