@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.29 2008/11/07 00:20:02 dyoung Exp $ */
+/* $NetBSD: sbmac.c,v 1.30 2008/11/13 19:44:02 dyoung Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.29 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.30 2008/11/13 19:44:02 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -256,7 +256,7 @@ static void sbmac_intr(void *xsc, uint32_t status, uint32_t pc);
 static void sbmac_start(struct ifnet *ifp);
 static void sbmac_setmulti(struct sbmac_softc *sc);
 static int sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data);
-static int sbmac_ioctl(struct ifnet *ifp, u_long command, void *data);
+static int sbmac_ioctl(struct ifnet *, u_long, void *);
 static void sbmac_watchdog(struct ifnet *ifp);
 static int sbmac_match(struct device *parent, struct cfdata *match, void *aux);
 static void sbmac_attach(struct device *parent, struct device *self, void *aux);
@@ -1997,14 +1997,14 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 }
 
 /*
- *  SBMAC_IOCTL(ifp, command, data)
+ *  SBMAC_IOCTL(ifp, cmd, data)
  *
  *  Main IOCTL handler - dispatches to other IOCTLs for various
  *  types of requests.
  *
  *  Input parameters:
  *	ifp - interface pointer
- *	command - command code
+ *	cmd - command code
  *	data - pointer to argument data
  *
  *  Return value:
@@ -2013,7 +2013,7 @@ sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
  */
 
 static int
-sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
+sbmac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct sbmac_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -2021,14 +2021,14 @@ sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch(command) {
+	switch (cmd) {
 	case SIOCINITIFADDR:
-		error = sbmac_ether_ioctl(ifp, command, data);
+		error = sbmac_ether_ioctl(ifp, cmd, data);
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
 			/* XXX Program new MTU here */
 			error = 0;
 		break;
@@ -2063,14 +2063,14 @@ sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCDELMULTI:
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			error = 0;
 			if (ifp->if_flags & IFF_RUNNING)
 				sbmac_setmulti(sc);
 		}
 		break;
 	default:
-		error = ether_ioctl(ifp, command, data);
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 
