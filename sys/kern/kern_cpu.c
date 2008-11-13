@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.36.4.1 2008/11/07 23:04:37 snj Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.36.4.2 2008/11/13 00:04:07 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,8 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.36.4.1 2008/11/07 23:04:37 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.36.4.2 2008/11/13 00:04:07 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -174,7 +173,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			error = EOPNOTSUPP;
 			break;
 		}
-		error = cpu_setonline(ci, cs->cs_online);
+		error = cpu_setstate(ci, cs->cs_online);
 		break;
 
 	case IOC_CPU_GETSTATE:
@@ -235,45 +234,72 @@ static void
 cpu_xc_offline(struct cpu_info *ci)
 {
 	struct schedstate_percpu *spc, *mspc = NULL;
-	struct cpu_info *mci;
+	struct cpu_info *target_ci;
 	struct lwp *l;
 	CPU_INFO_ITERATOR cii;
 	int s;
 
+	/*
+	 * Thread which sent unicast (separate context) is holding
+	 * the cpu_lock for us.
+	 */
 	spc = &ci->ci_schedstate;
 	s = splsched();
 	spc->spc_flags |= SPCF_OFFLINE;
 	splx(s);
 
 	/* Take the first available CPU for the migration */
-	for (CPU_INFO_FOREACH(cii, mci)) {
-		mspc = &mci->ci_schedstate;
+	for (CPU_INFO_FOREACH(cii, target_ci)) {
+		mspc = &target_ci->ci_schedstate;
 		if ((mspc->spc_flags & SPCF_OFFLINE) == 0)
 			break;
 	}
-	KASSERT(mci != NULL);
+	KASSERT(target_ci != NULL);
 
 	/*
-	 * Migrate all non-bound threads to the other CPU.
-	 *
-	 * Please note, that this runs from the xcall thread, thus handling
-	 * of LSONPROC is not needed.  Threads which change the state will
-	 * be handled by sched_takecpu().
+	 * Migrate all non-bound threads to the other CPU.  Note that this
+	 * runs from the xcall thread, thus handling of LSONPROC is not needed.
 	 */
 	mutex_enter(proc_lock);
 	LIST_FOREACH(l, &alllwp, l_list) {
+		struct cpu_info *mci;
+
 		lwp_lock(l);
-		if ((l->l_pflag & LP_BOUND) == 0 && l->l_cpu == ci) {
-			lwp_migrate(l, mci);
-		} else {
+		if (l->l_cpu != ci || (l->l_pflag & (LP_BOUND | LP_INTR))) {
 			lwp_unlock(l);
+			continue;
 		}
+		/* Normal case - no affinity */
+		if ((l->l_flag & LW_AFFINITY) == 0) {
+			lwp_migrate(l, target_ci);
+			continue;
+		}
+		/* Affinity is set, find an online CPU in the set */
+		KASSERT(l->l_affinity != NULL);
+		for (CPU_INFO_FOREACH(cii, mci)) {
+			mspc = &mci->ci_schedstate;
+			if ((mspc->spc_flags & SPCF_OFFLINE) == 0 &&
+			    kcpuset_isset(cpu_index(mci), l->l_affinity))
+				break;
+		}
+		if (mci == NULL) {
+			lwp_unlock(l);
+			mutex_exit(proc_lock);
+			goto fail;
+		}
+		lwp_migrate(l, mci);
 	}
 	mutex_exit(proc_lock);
 
 #ifdef __HAVE_MD_CPU_OFFLINE
 	cpu_offline_md();
 #endif
+	return;
+fail:
+	/* Just unset the SPCF_OFFLINE flag, caller will check */
+	s = splsched();
+	spc->spc_flags &= ~SPCF_OFFLINE;
+	splx(s);
 }
 
 static void
@@ -289,7 +315,7 @@ cpu_xc_online(struct cpu_info *ci)
 }
 
 int
-cpu_setonline(struct cpu_info *ci, bool online)
+cpu_setstate(struct cpu_info *ci, bool online)
 {
 	struct schedstate_percpu *spc;
 	CPU_INFO_ITERATOR cii;
@@ -332,10 +358,11 @@ cpu_setonline(struct cpu_info *ci, bool online)
 	xc_wait(where);
 	if (online) {
 		KASSERT((spc->spc_flags & SPCF_OFFLINE) == 0);
-	} else {
-		KASSERT(spc->spc_flags & SPCF_OFFLINE);
+	} else if ((spc->spc_flags & SPCF_OFFLINE) == 0) {
+		/* If was not set offline, then it is busy */
+		return EBUSY;
 	}
-	spc->spc_lastmod = time_second;
 
+	spc->spc_lastmod = time_second;
 	return 0;
 }
