@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.15 2008/11/11 02:19:46 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.16 2008/11/13 00:14:57 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -331,4 +331,59 @@ sys/dev/acpi/acpi_tz.c				1.38, 1.39
 	- Leave the task of displaying sensor states to envsys_sysmon()
 	unless we are in debug mode.
 	[pgoyette, ticket #41]
+
+sys/dev/pci/ixpide.c				1.14
+
+	Implement powersave for ixpide(4).
+	[reinoud, ticket #42]
+
+etc/root/dot.cshrc				patch
+etc/root/dot.profile				patch
+
+	Add commented out example of PKG_PATH to make using binary
+	packages easier.
+	[joerg, ticket #45]
+
+lib/libc/gen/sysctl.3				1.195
+share/man/man4/options.4			1.370
+share/man/man5/rc.conf.5			1.121
+sbin/init/init.8				1.54, 1.55
+sbin/sysctl/sysctl.8				1.159
+
+	Reference secmodel_securelevel(9) manual page.
+	Add some details about init's role with securelevel.
+	Add references to other manual pages for more details.
+	[reed, ticket #46]
+
+include/sched.h					1.11 
+lib/libc/sys/sched.c         			1.2
+lib/librt/sched.3				1.6
+
+	Add sched_getaffinity_np() and sched_setaffinity_np() wrappers,
+	mainly for compatibility purposes.
+	[rmind, ticket #47]
+
+sys/arch/x86/x86/cpu.c				1.58
+sys/arch/xen/x86/cpu.c				1.29
+sys/kern/kern_cpu.c				1.37
+sys/kern/sys_sched.c				1.31
+sys/sys/cpu.h					1.24
+
+	- Avoid the race with CPU online/offline state changes, when
+	  setting the affinity (cpu_lock protects these operations now).
+	- Disallow setting of state of CPU to to offline, if there are
+	  bound LWPs, which have no CPU to migrate.
+	- Disallow setting of affinity for the LWP(s), if all CPUs in the
+	  dynamic CPU-set are offline.
+	- sched_setaffinity: fix invalid check of kcpuset_isset().
+	- Rename cpu_setonline() to cpu_setstate().
+	Should fix PR/39349.
+	[rmind, ticket #48]
+
+sys/dev/sysmon/sysmon_envsys_events.c		1.61, 1.62
+
+	Initialize event's "previous sent state" based on the event monitor
+	type, regardless of sensor type.  Fixes spurious "device: normal
+	state on 'sensor-name' messages which interfere with sysinst.          
+	[tls, ticket #49]
 
