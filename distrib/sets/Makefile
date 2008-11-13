@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.64 2008/11/09 23:02:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.65 2008/11/13 20:40:11 apb Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -33,7 +33,7 @@ MAKEFLIST_FLAGS=
 MAKESRCTARS_FLAGS= 	-N ${NETBSDSRCDIR}/etc
 .endif
 
-.if ${MAKEVERBOSE} != 2
+.if ${MAKEVERBOSE} < 2
 MAKETARS_FLAGS+=	-q
 MAKESRCTARS_FLAGS+= 	-q
 .endif
@@ -199,7 +199,7 @@ REGPKG.sloppy=		-m
 REGPKG.verbose?= -q
 .elif ${MAKEVERBOSE} == 1
 REGPKG.verbose?=
-.else	# MAKEVERBOSE == 2
+.else	# MAKEVERBOSE >= 2
 REGPKG.verbose?= -v
 .endif
 REGPKG.force?=		# -f, or empty

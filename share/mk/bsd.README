@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.240 2008/11/12 13:17:27 pooka Exp $
+#	$NetBSD: bsd.README,v 1.241 2008/11/13 20:40:11 apb Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -110,7 +110,8 @@ MAKEVERBOSE	Control how "verbose" the standard make(1) rules are.
 		    0	Minimal output ("quiet")
 		    1	Describe what is occurring
 		    2	Describe what is occurring and echo the actual command
-
+		    3	Ignore the effect of the "@" prefix in make commands
+		    4	Trace shell commands using the shell's -x flag
 
 MKATF		If "no", don't build libatf-c, libatf-c++ libraries associated
 		with the Automated Testing Framework (ATF).

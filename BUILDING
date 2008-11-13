@@ -165,12 +165,24 @@ CONFIGURATION
      MAKEVERBOSE
                  Level of verbosity of status messages.  Supported values:
 
-                 0    No descriptive messages are shown.
+                 0    No descriptive messages or commands executed by make(1)
+                      are shown.
 
-                 1    Descriptive messages are shown.
+                 1    Brief messages are shown describing what is being done,
+                      but the actual commands executed by make(1) are not dis-
+                      played.
 
-                 2    Descriptive messages (prefixed with a `#') and command
-                      output is not suppressed.
+                 2    Descriptive messages are shown as above (prefixed with a
+                      `#'), and ordinary commands performed by make(1) are
+                      displayed.
+
+                 3    In addition to the above, all commands performed by
+                      make(1) are displayed, even if they would ordinarily
+                      have been hidden through use of the ``@'' prefix in the
+                      relevant makefile.
+
+                 4    In addition to the above, commands executed by make(1)
+                      are traced through use of the sh(1) ``-x'' flag.
 
                  Default: 2
 
