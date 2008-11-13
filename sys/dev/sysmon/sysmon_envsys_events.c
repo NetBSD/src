@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.58.4.2 2008/11/06 00:30:17 snj Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.58.4.3 2008/11/13 00:08:34 snj Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.58.4.2 2008/11/06 00:30:17 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.58.4.3 2008/11/13 00:08:34 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -251,23 +251,25 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	/* Initialize sensor type and previously-sent state */
 
 	see->see_pes.pes_type = powertype;
-	switch (powertype) {
-	case PENVSYS_TYPE_BATTERY:
-		see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
-		break;
-	case PENVSYS_TYPE_DRIVE:
-		see->see_evsent = ENVSYS_DRIVE_EMPTY;
-		break;
-	case PENVSYS_TYPE_FAN:
-	case PENVSYS_TYPE_INDICATOR:
-	case PENVSYS_TYPE_TEMP:
-	case PENVSYS_TYPE_POWER:
-	case PENVSYS_TYPE_RESISTANCE:
-	case PENVSYS_TYPE_VOLTAGE:
+	switch (realcrittype) {
+	case PENVSYS_EVENT_HW_LIMITS:
+	case PENVSYS_EVENT_USER_LIMITS:
+	case PENVSYS_EVENT_BATT_USER_LIMITS:
 		see->see_evsent = ENVSYS_SVALID;
 		break;
+	case PENVSYS_EVENT_STATE_CHANGED:
+		if (edata->units == ENVSYS_BATTERY_CAPACITY)
+			see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
+		else if (edata->units == ENVSYS_DRIVE)
+			see->see_evsent = ENVSYS_DRIVE_EMPTY;
+		else
+			panic("%s: bad units for "
+			      "PENVSYS_EVENT_STATE_CHANGED", __func__);
+		break;
+	case PENVSYS_EVENT_CRITICAL:
 	default:
 		see->see_evsent = 0;
+		break;
 	}
 
 	(void)strlcpy(see->see_pes.pes_dvname, sme->sme_name,
