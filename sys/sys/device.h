@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.114 2008/11/12 12:36:28 ad Exp $ */
+/* $NetBSD: device.h,v 1.115 2008/11/13 21:15:01 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -120,6 +120,7 @@ typedef struct cfdata *cfdata_t;
 typedef struct cfdriver *cfdriver_t;
 typedef struct cfattach *cfattach_t;
 
+#ifdef _KERNEL
 struct device {
 	devclass_t	dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
@@ -187,6 +188,7 @@ struct deviter {
 };
 
 typedef struct deviter deviter_t;
+#endif
 
 /*
  * Description of a locator, as part of interface attribute definitions.
