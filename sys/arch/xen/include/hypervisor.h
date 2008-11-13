@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.28 2008/11/13 01:45:48 cegger Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.29 2008/11/13 18:44:51 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -132,6 +132,14 @@ extern union start_info_union start_info_union;
 
 /* For use in guest OSes. */
 extern volatile shared_info_t *HYPERVISOR_shared_info;
+
+
+/* Structural guest handles introduced in 0x00030201. */
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+#define xenguest_handle(hnd)	(hnd).p
+#else
+#define xenguest_handle(hnd)	hnd
+#endif
 
 /* hypervisor.c */
 struct intrframe;

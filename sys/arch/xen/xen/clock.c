@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.47 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: clock.c,v 1.48 2008/11/13 18:44:51 cegger Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.48 2008/11/13 18:44:51 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,11 +308,19 @@ static int
 xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 {
 #ifdef DOM0OPS
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 	dom0_op_t op;
+#else
+	xen_platform_op_t op;
+#endif
 	int s;
 
 	if (xendomain_is_privileged()) {
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 		op.cmd = DOM0_SETTIME;
+#else
+		op.cmd = XENPF_settime;
+#endif
 		/* XXX is rtc_offset handled correctly everywhere? */
 		op.u.settime.secs	 = tvp->tv_sec;
 #ifdef XEN3
@@ -323,7 +331,11 @@ xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 		s = splhigh();
 		op.u.settime.system_time = get_system_time();
 		splx(s);
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 		HYPERVISOR_dom0_op(&op);
+#else
+		HYPERVISOR_platform_op(&op);
+#endif
 	}
 #endif
 

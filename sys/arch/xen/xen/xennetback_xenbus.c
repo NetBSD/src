@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.24 2008/10/24 18:02:58 jym Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.25 2008/11/13 18:44:51 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -566,7 +566,7 @@ xennetback_get_new_mcl_pages(void)
 	struct xen_memory_reservation res;
 
 	/* get some new pages. */
-	res.extent_start = mcl_pages;
+	xenguest_handle(res.extent_start) = mcl_pages;
 	res.nr_extents = NB_XMIT_PAGES_BATCH;
 	res.extent_order = 0;
 	res.address_bits = 0;
