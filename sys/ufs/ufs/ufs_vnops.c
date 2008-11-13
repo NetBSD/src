@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.170 2008/11/11 08:29:58 joerg Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.171 2008/11/13 11:09:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,12 +66,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.170 2008/11/11 08:29:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.171 2008/11/13 11:09:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
-#include "fs_lfs.h"
 #endif
 
 #include <sys/param.h>
@@ -1554,10 +1553,8 @@ ufs_mkdir(void *v)
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
 		ip->i_flag |= IN_CHANGE;
-#ifdef LFS
 		/* If IN_ADIROP, account for it */
-		lfs_unmark_vnode(tvp);
-#endif
+		UFS_UNMARK_VNODE(tvp);
 		UFS_WAPBL_UPDATE(tvp, NULL, NULL, UPDATE_DIROP);
 		if (DOINGSOFTDEP(tvp))
 			softdep_change_linkcnt(ip);
@@ -2362,10 +2359,8 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip->i_nlink = 0;
 	DIP_ASSIGN(ip, nlink, 0);
 	ip->i_flag |= IN_CHANGE;
-#ifdef LFS
 	/* If IN_ADIROP, account for it */
-	lfs_unmark_vnode(tvp);
-#endif
+	UFS_UNMARK_VNODE(tvp);
 	UFS_WAPBL_UPDATE(tvp, NULL, NULL, 0);
 	if (DOINGSOFTDEP(tvp))
 		softdep_change_linkcnt(ip);

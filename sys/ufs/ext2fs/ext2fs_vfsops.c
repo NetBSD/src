@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.137 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.138 2008/11/13 11:09:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.137 2008/06/28 01:34:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.138 2008/11/13 11:09:45 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -166,6 +166,7 @@ static const struct ufs_ops ext2fs_ufsops = {
 	.uo_itimes = ext2fs_itimes,
 	.uo_update = ext2fs_update,
 	.uo_vfree = ext2fs_vfree,
+	.uo_unmark_vnode = (void (*)(vnode_t *))nullop,
 };
 
 static int
