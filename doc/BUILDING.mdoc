@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.68 2008/11/09 23:02:29 mrg Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.69 2008/11/13 20:40:11 apb Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -358,13 +358,34 @@ Level of verbosity of status messages.
 Supported values:
 .Bl -tag -width xxx
 .It 0
-No descriptive messages are shown.
+No descriptive messages or commands executed by
+.Xr make 1
+are shown.
 .It 1
-Descriptive messages are shown.
+Brief messages are shown describing what is being done,
+but the actual commands executed by
+.Xr make 1
+are not displayed.
 .It 2
-Descriptive messages (prefixed with a
-.Sq # )
-and command output is not suppressed.
+Descriptive messages are shown as above (prefixed with a
+.Sq # ) ,
+and ordinary commands performed by
+.Xr make 1
+are displayed.
+.It 3
+In addition to the above, all commands performed by
+.Xr make 1
+are displayed, even if they would ordinarily have been hidden
+through use of the
+.Dq \&@
+prefix in the relevant makefile.
+.It 4
+In addition to the above, commands executed by
+.Xr make 1
+are traced through use of the
+.Xr sh 1
+.Dq Fl x
+flag.
 .El
 .DFLT
 2
