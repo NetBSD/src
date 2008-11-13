@@ -1,7 +1,7 @@
-/*	$NetBSD: gemini_obio.c,v 1.4 2008/11/11 19:54:38 cliff Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.5 2008/11/13 05:03:05 cliff Exp $	*/
 
 /* adapted from:
- *	$Id: gemini_obio.c,v 1.4 2008/11/11 19:54:38 cliff Exp $
+ *	$Id: gemini_obio.c,v 1.5 2008/11/13 05:03:05 cliff Exp $
  */
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.4 2008/11/11 19:54:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.5 2008/11/13 05:03:05 cliff Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -163,6 +163,14 @@ obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = &gemini_bs_tag;
 
 	aprint_normal(": On-Board IO\n");
+
+#ifdef GEMINI_SLAVE
+	sc->sc_dmarange.dr_sysbase = 0;
+	sc->sc_dmarange.dr_busbase = (128 - MEMSIZE) * 1024 * 1024;
+	sc->sc_dmarange.dr_len = MEMSIZE * 1024 * 1024;
+	gemini_bus_dma_tag._ranges = &sc->sc_dmarange;
+	gemini_bus_dma_tag._nranges = 1;
+#endif
 
 	sc->sc_ioh = 0;
 	sc->sc_dmat = &gemini_bus_dma_tag;
