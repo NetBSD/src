@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.120 2008/10/03 14:52:11 rmind Exp $	*/
+/*	$NetBSD: db_command.c,v 1.121 2008/11/14 23:37:30 ad Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,8 +58,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.120 2008/10/03 14:52:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.121 2008/11/14 23:37:30 ad Exp $");
 
+#include "opt_aio.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_inet.h"
@@ -223,9 +224,11 @@ static const struct db_command db_show_cmds[] = {
 	    0 ,"List all processes.",NULL,NULL) },
 	{ DDB_ADD_CMD("pools",	db_show_all_pools,
 	    0 ,"Show all poolS",NULL,NULL) },
+#ifdef AIO
 	/*added from all sub cmds*/
 	{ DDB_ADD_CMD("aio_jobs",	db_show_aio_jobs,	0,
 	    "Show aio jobs",NULL,NULL) },
+#endif
 	{ DDB_ADD_CMD("all",	NULL,
 	    CS_COMPAT, NULL,NULL,NULL) },
 #if defined(INET) && (NARP > 0)
