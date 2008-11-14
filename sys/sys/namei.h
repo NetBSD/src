@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.61 2008/11/14 21:57:14 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.62 2008/11/14 21:59:15 ad Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
@@ -109,6 +109,7 @@ struct nameidata {
  */
 #define	LOCKLEAF	0x0004	/* lock inode on return */
 #define	LOCKPARENT	0x0008	/* want parent vnode returned locked */
+#define	NOCHROOT	0x0010	/* no chroot on abs path lookups */
 #define	NOCACHE		0x0020	/* name must not be left in cache */
 #define	FOLLOW		0x0040	/* follow symbolic links */
 #define	NOFOLLOW	0x0000	/* do not follow symbolic links (pseudo) */
@@ -143,7 +144,6 @@ struct nameidata {
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
 #define	PARAMASK	0x02fff00	/* mask of parameter descriptors */
-#define	NOCHROOT	0x0400000	/* no chroot on abs paths */
 
 /*
  * Initialization of an nameidata structure.
