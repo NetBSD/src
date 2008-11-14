@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.93 2008/09/23 08:55:52 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.94 2008/11/14 23:06:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93 2008/09/23 08:55:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.94 2008/11/14 23:06:45 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.93 2008/09/23 08:55:52 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/buf.h>
+#include <sys/module.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
@@ -980,7 +981,15 @@ uvmpd_scan(void)
 		mutex_exit(&uvm_pageqlock);
 		uvm_swapout_threads();
 		mutex_enter(&uvm_pageqlock);
+	}
 
+	/*
+	 * if still below the minimum target, try unloading kernel
+	 * modules.
+	 */
+
+	if (uvmexp.free < uvmexp.freemin) {
+		module_thread_kick();
 	}
 }
 
