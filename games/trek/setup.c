@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.8 2003/08/07 09:37:54 agc Exp $	*/
+/*	$NetBSD: setup.c,v 1.9 2008/11/14 21:10:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: setup.c,v 1.8 2003/08/07 09:37:54 agc Exp $");
+__RCSID("$NetBSD: setup.c,v 1.9 2008/11/14 21:10:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,11 +234,14 @@ setup()
 	for (i = 0; i < NQUADS; i++)
 		for (j = 0; j < NQUADS; j++)
 		{
+			short s5;
 			q = &Quad[i][j];
 			q->klings = q->bases = 0;
 			q->scanned = -1;
 			q->stars = ranf(9) + 1;
-			q->holes = ranf(3) - q->stars / 5;
+			q->holes = ranf(3);
+			s5 = q->stars / 5;
+			q->holes = q->holes > s5 ? q->holes - s5 : 0;
 			q->qsystemname = 0;
 		}
 
