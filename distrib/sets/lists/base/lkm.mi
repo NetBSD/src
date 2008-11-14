@@ -1,4 +1,4 @@
-# $NetBSD: lkm.mi,v 1.32 2008/11/13 10:05:52 ad Exp $
+# $NetBSD: lkm.mi,v 1.33 2008/11/14 23:33:45 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -11,6 +11,8 @@
 ./@MODULEDIR@/accf_http/accf_http.kmod		base-kernel-modules
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
+./@MODULEDIR@/aio				base-kernel-modules
+./@MODULEDIR@/aio/aio.kmod			base-kernel-modules
 ./@MODULEDIR@/cd9660				base-kernel-modules
 ./@MODULEDIR@/cd9660/cd9660.kmod		base-kernel-modules
 ./@MODULEDIR@/coda				base-kernel-modules
