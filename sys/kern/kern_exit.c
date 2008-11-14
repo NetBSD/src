@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.215 2008/11/01 05:59:33 wrstuden Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.216 2008/11/14 23:33:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.215 2008/11/01 05:59:33 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.216 2008/11/14 23:33:45 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.215 2008/11/01 05:59:33 wrstuden Exp
 #include "opt_sysv.h"
 
 #include <sys/param.h>
-#include <sys/aio.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -259,9 +258,6 @@ exit1(struct lwp *l, int rv)
 	/* Destroy any lwpctl info. */
 	if (p->p_lwpctl != NULL)
 		lwp_ctl_exit();
-
-	/* Destroy all AIO works */
-	aio_exit(p, p->p_aio);
 
 	/*
 	 * Drain all remaining references that procfs, ptrace and others may

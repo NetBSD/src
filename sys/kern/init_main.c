@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.373 2008/11/12 14:32:34 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.374 2008/11/14 23:33:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.373 2008/11/12 14:32:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.374 2008/11/14 23:33:45 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -454,9 +454,6 @@ main(void)
 
 	/* Initialize kqueue. */
 	kqueue_init();
-
-	/* Initialize asynchronous I/O. */
-	aio_sysinit();
 
 	/* Initialize message queues. */
 	mqueue_sysinit();

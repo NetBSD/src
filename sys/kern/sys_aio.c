@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.19 2008/05/26 17:45:51 rmind Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.20 2008/11/14 23:33:45 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,9 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.19 2008/05/26 17:45:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.20 2008/11/14 23:33:45 ad Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -49,14 +51,19 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.19 2008/05/26 17:45:51 rmind Exp $");
 #include <sys/queue.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
 #include <sys/atomic.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
+
+MODULE(MODULE_CLASS_MISC, aio, NULL);
 
 /*
  * System-wide limits and counter of AIO operations.
@@ -67,31 +74,102 @@ static u_int aio_jobs_count;
 
 static struct pool aio_job_pool;
 static struct pool aio_lio_pool;
+static void *aio_ehook;
 
 /* Prototypes */
 void aio_worker(void *);
 static void aio_process(struct aio_job *);
 static void aio_sendsig(struct proc *, struct sigevent *);
 static int aio_enqueue_job(int, void *, struct lio_req *);
+static void aio_exit(proc_t *, void *);
+
+static const struct syscall_package aio_syscalls[] = {
+	{ SYS_aio_cancel, 0, (sy_call_t *)sys_aio_cancel },
+	{ SYS_aio_error, 0, (sy_call_t *)sys_aio_error },
+	{ SYS_aio_fsync, 0, (sy_call_t *)sys_aio_fsync },
+	{ SYS_aio_read, 0, (sy_call_t *)sys_aio_read },
+	{ SYS_aio_return, 0, (sy_call_t *)sys_aio_return },
+	{ SYS_aio_suspend, 0, (sy_call_t *)sys_aio_suspend },
+	{ SYS_aio_write, 0, (sy_call_t *)sys_aio_write },
+	{ SYS_lio_listio, 0, (sy_call_t *)sys_lio_listio },
+	{ 0, 0, NULL },
+};
 
 /*
- * Initialize the AIO system.
+ * Tear down all AIO state.
  */
-void
-aio_sysinit(void)
+static int
+aio_fini(bool interface)
 {
+	int error;
+	proc_t *p;
+
+	if (interface) {
+		/* Stop syscall activity. */
+		error = syscall_disestablish(NULL, aio_syscalls);
+		if (error != 0)
+			return error;
+		/* Abort if any processes are using AIO. */
+		mutex_enter(proc_lock);
+		PROCLIST_FOREACH(p, &allproc) {
+			if (p->p_aio != NULL)
+				break;
+		}
+		mutex_exit(proc_lock);
+		if (p != NULL) {
+			error = syscall_establish(NULL, aio_syscalls);
+			KASSERT(error == 0);
+			return EBUSY;
+		}
+	}
+	KASSERT(aio_jobs_count == 0);
+	exithook_disestablish(aio_ehook);
+	pool_destroy(&aio_job_pool);
+	pool_destroy(&aio_lio_pool);
+	return 0;
+}
+
+/*
+ * Initialize global AIO state.
+ */
+static int
+aio_init(void)
+{
+	int error;
 
 	pool_init(&aio_job_pool, sizeof(struct aio_job), 0, 0, 0,
 	    "aio_jobs_pool", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&aio_lio_pool, sizeof(struct lio_req), 0, 0, 0,
 	    "aio_lio_pool", &pool_allocator_nointr, IPL_NONE);
+	aio_ehook = exithook_establish(aio_exit, NULL);
+	error = syscall_establish(NULL, aio_syscalls);
+	if (error != 0)
+		aio_fini(false);
+	return error;
+}
+
+/*
+ * Module interface.
+ */
+static int
+aio_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return aio_init();
+	case MODULE_CMD_FINI:
+		return aio_fini(true);
+	default:
+		return ENOTTY;
+	}
 }
 
 /*
  * Initialize Asynchronous I/O data structures for the process.
  */
-int
-aio_init(struct proc *p)
+static int
+aio_procinit(struct proc *p)
 {
 	struct aioproc *aio;
 	struct lwp *l;
@@ -153,12 +231,15 @@ aio_init(struct proc *p)
 /*
  * Exit of Asynchronous I/O subsystem of process.
  */
-void
-aio_exit(struct proc *p, struct aioproc *aio)
+static void
+aio_exit(struct proc *p, void *cookie)
 {
 	struct aio_job *a_job;
+	struct aioproc *aio;
 
-	if (aio == NULL)
+	if (cookie != NULL)
+		aio = cookie;
+	else if ((aio = p->p_aio) == NULL)
 		return;
 
 	/* Free AIO queue */
@@ -464,10 +545,10 @@ aio_enqueue_job(int op, void *aiocb_uptr, struct lio_req *lio)
 	/*
 	 * Check if AIO structure is initialized, if not - initialize it.
 	 * In LIO case, we did that already.  We will recheck this with
-	 * the lock in aio_init().
+	 * the lock in aio_procinit().
 	 */
 	if (lio == NULL && p->p_aio == NULL)
-		if (aio_init(p))
+		if (aio_procinit(p))
 			return EAGAIN;
 	aio = p->p_aio;
 
@@ -858,7 +939,7 @@ sys_lio_listio(struct lwp *l, const struct sys_lio_listio_args *uap, register_t 
 
 	/* Check if AIO structure is initialized, if not - initialize it */
 	if (p->p_aio == NULL)
-		if (aio_init(p))
+		if (aio_procinit(p))
 			return EAGAIN;
 	aio = p->p_aio;
 
