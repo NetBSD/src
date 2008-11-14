@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.26 2008/11/12 14:22:17 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.27 2008/11/14 22:00:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.26 2008/11/12 14:22:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.27 2008/11/14 22:00:23 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -189,7 +189,7 @@ kobj_load_file(kobj_t *kop, const char *filename, const char *base,
 		path = PNBUF_GET();
 		snprintf(path, MAXPATHLEN - 1, "%s/%s/%s.kmod", base,
 		    filename, filename);
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path);
+		NDINIT(&nd, LOOKUP, FOLLOW | NOCHROOT, UIO_SYSSPACE, path);
 		error = vn_open(&nd, FREAD, 0);
 		PNBUF_PUT(path);
 	}
