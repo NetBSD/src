@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.71.2.6 2005/12/29 16:04:17 riz Exp $	*/
+/*	$NetBSD: gzip.c,v 1.71.2.7 2008/11/14 03:08:32 snj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.71.2.6 2005/12/29 16:04:17 riz Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.71.2.7 2008/11/14 03:08:32 snj Exp $");
 #endif /* not lint */
 
 /*
@@ -561,7 +561,7 @@ gz_compress(int in, int out, off_t *gsizep, const char *origname, uint32_t mtime
 		if (z.avail_out == 0) {
 			if (write(out, outbufp, BUFLEN) != BUFLEN) {
 				maybe_warn("write");
-				in_tot = -1;
+				out_tot = -1;
 				goto out;
 			}
 
