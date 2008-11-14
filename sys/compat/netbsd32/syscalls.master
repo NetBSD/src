@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.71 2008/11/12 12:36:10 ad Exp $
+	$NetBSD: syscalls.master,v 1.72 2008/11/14 15:49:20 ad Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -381,13 +381,13 @@
 248	STD		{ int netbsd32__ksem_open(netbsd32_charp name, int oflag, \
 			    mode_t mode, unsigned int value, netbsd32_semidp_t idp); }
 249	STD		{ int netbsd32__ksem_unlink(netbsd32_charp name); }
-250	STD		{ int netbsd32__ksem_close(netbsd32_semid_t id); }
-251	STD		{ int netbsd32__ksem_post(netbsd32_semid_t id); }
-252	STD		{ int netbsd32__ksem_wait(netbsd32_semid_t id); }
-253	STD		{ int netbsd32__ksem_trywait(netbsd32_semid_t id); }
-254	STD		{ int netbsd32__ksem_getvalue(netbsd32_semid_t id, \
+250	STD		{ int netbsd32__ksem_close(netbsd32_intptr_t id); }
+251	STD		{ int netbsd32__ksem_post(netbsd32_intptr_t id); }
+252	STD		{ int netbsd32__ksem_wait(netbsd32_intptr_t id); }
+253	STD		{ int netbsd32__ksem_trywait(netbsd32_intptr_t id); }
+254	STD		{ int netbsd32__ksem_getvalue(netbsd32_intptr_t id, \
 			    netbsd32_intp value); }
-255	STD		{ int netbsd32__ksem_destroy(netbsd32_semid_t id); }
+255	STD		{ int netbsd32__ksem_destroy(netbsd32_intptr_t id); }
 256	UNIMPL		sys__ksem_timedwait
 #else
 247	EXCL		sys__ksem_init
