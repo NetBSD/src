@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.194 2008/11/12 14:29:31 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.195 2008/11/14 13:01:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.194 2008/11/12 14:29:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.195 2008/11/14 13:01:18 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -544,17 +544,26 @@ doexechooks(struct proc *p)
 }
 
 static hook_list_t exithook_list;
+extern krwlock_t exec_lock;
 
 void *
 exithook_establish(void (*fn)(struct proc *, void *), void *arg)
 {
-	return hook_establish(&exithook_list, (void (*)(void *))fn, arg);
+	void *rv;
+
+	rw_enter(&exec_lock, RW_WRITER);
+	rv = hook_establish(&exithook_list, (void (*)(void *))fn, arg);
+	rw_exit(&exec_lock);
+	return rv;
 }
 
 void
 exithook_disestablish(void *vhook)
 {
+
+	rw_enter(&exec_lock, RW_WRITER);
 	hook_disestablish(&exithook_list, vhook);
+	rw_exit(&exec_lock);
 }
 
 /*
