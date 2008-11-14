@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.4 2008/04/28 20:23:02 martin Exp $	*/
+/*	$NetBSD: sem.c,v 1.5 2008/11/14 15:49:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.4 2008/04/28 20:23:02 martin Exp $");
+__RCSID("$NetBSD: sem.c,v 1.5 2008/11/14 15:49:20 ad Exp $");
 
 /*
  * If an application is linked against both librt and libpthread, the
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: sem.c,v 1.4 2008/04/28 20:23:02 martin Exp $");
 #define	sem_post	_librt_sem_post
 #define	sem_getvalue	_librt_sem_getvalue
 
-#define	_LIBC		/* XXX to get semid_t type */
+#define	_LIBC
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -92,11 +92,11 @@ struct _sem_st {
 #define	KSEM_MAGIC	0x90af0421U
 
 	LIST_ENTRY(_sem_st) ksem_list;
-	semid_t		ksem_semid;	/* 0 -> user (non-shared) */
+	intptr_t		ksem_semid;	/* 0 -> user (non-shared) */
 	sem_t		*ksem_identity;
 };
 
-static int sem_alloc(unsigned int value, semid_t semid, sem_t *semp);
+static int sem_alloc(unsigned int value, intptr_t semid, sem_t *semp);
 static void sem_free(sem_t sem);
 
 static LIST_HEAD(, _sem_st) named_sems = LIST_HEAD_INITIALIZER(&named_sems);
@@ -122,7 +122,7 @@ sem_free(sem_t sem)
 }
 
 static int
-sem_alloc(unsigned int value, semid_t semid, sem_t *semp)
+sem_alloc(unsigned int value, intptr_t semid, sem_t *semp)
 {
 	sem_t sem;
 
@@ -143,7 +143,7 @@ sem_alloc(unsigned int value, semid_t semid, sem_t *semp)
 int
 sem_init(sem_t *sem, int pshared, unsigned int value)
 {
-	semid_t	semid;
+	intptr_t	semid;
 	int error;
 
 	if (_ksem_init(value, &semid) == -1)
@@ -181,7 +181,7 @@ sem_t *
 sem_open(const char *name, int oflag, ...)
 {
 	sem_t *sem, s;
-	semid_t semid;
+	intptr_t semid;
 	mode_t mode;
 	unsigned int value;
 	int error;
