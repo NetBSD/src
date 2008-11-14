@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.378 2008/11/14 23:10:57 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.379 2008/11/14 23:13:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.378 2008/11/14 23:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.379 2008/11/14 23:13:02 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -216,7 +216,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 		/*
 		 * Update failed; let's try and see if it was an
-		 * export request.  For compa with 3.0 and earlier.
+		 * export request.  For compat with 3.0 and earlier.
 		 */
 		error2 = nfs_update_exports_30(mp, path, data, l);
 
