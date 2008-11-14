@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.140 2008/10/09 14:38:21 christos Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.141 2008/11/14 13:33:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,14 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.140 2008/10/09 14:38:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.141 2008/11/14 13:33:56 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
 #include "opt_nfsserver.h"
 #include "opt_iso.h"
 #include "opt_inet.h"
-#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,8 +181,9 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 	mutex_exit(&nfsd_lock);
 #endif
 	if (SCARG(uap, flag) & NFSSVC_BIOD) {
-#if defined(NFS) && defined(COMPAT_14)
-		error = kpause("nfsbiod", true, 0, NULL); /* dummy impl */
+#if defined(NFS)
+		/* Dummy implementation of nfsios for 1.4 and earlier. */
+		error = kpause("nfsbiod", true, 0, NULL);
 #else
 		error = ENOSYS;
 #endif
