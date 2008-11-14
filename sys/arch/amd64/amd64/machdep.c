@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.109 2008/11/14 00:41:36 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.110 2008/11/14 15:03:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,19 +112,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.109 2008/11/14 00:41:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2008/11/14 15:03:44 ad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_compat_netbsd.h"
-#include "opt_compat_netbsd32.h"
-#include "opt_compat_ibcs2.h"
 #include "opt_cpureset_delay.h"
-#include "opt_multiprocessor.h"
-#include "opt_lockdebug.h"
 #include "opt_mtrr.h"
 #include "opt_realmem.h"
 #include "opt_xen.h"
@@ -708,9 +703,7 @@ haltsys:
 #endif /* XEN */
 	}
 
-#ifdef MULTIPROCESSOR
 	x86_broadcast_ipi(X86_IPI_HALT);
-#endif
 
 	if (howto & RB_HALT) {
 		printf("\n");
@@ -1149,12 +1142,8 @@ cpu_init_idt(void)
 typedef void (vector)(void);
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(syscall32);
-#if defined(COMPAT_16) || defined(COMPAT_NETBSD32)
 extern vector IDTVEC(osyscall);
-#endif
-#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 extern vector IDTVEC(oosyscall);
-#endif
 extern vector *IDTVEC(exceptions)[];
 
 static void
@@ -1414,11 +1403,9 @@ init_x86_64(paddr_t first_avail)
 	    x86_btop(VM_MAXUSER_ADDRESS) - 1, SDT_MEMRWA, SEL_UPL, 1, 0, 1);
 
 	/* make ldt gates and memory segments */
-#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 	setgate((struct gate_descriptor *)(ldtstore + LSYS5CALLS_SEL),
 	    &IDTVEC(oosyscall), 0, SDT_SYS386CGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-#endif
 	*(struct mem_segment_descriptor *)(ldtstore + LUCODE_SEL) =
 	    *GDT_ADDR_MEM(gdtstore, GUCODE_SEL);
 	*(struct mem_segment_descriptor *)(ldtstore + LUDATA_SEL) =
@@ -1496,7 +1483,6 @@ init_x86_64(paddr_t first_avail)
 #endif /* XEN */
 	}
 
-#if defined(COMPAT_16) || defined(COMPAT_NETBSD32)
 	/* new-style interrupt gate for syscalls */
 #ifndef XEN
 	idt_vec_reserve(128);
@@ -1509,7 +1495,6 @@ init_x86_64(paddr_t first_avail)
 	xen_idt[xen_idt_idx].address =  (unsigned long) &IDTVEC(osyscall);
 	xen_idt_idx++;
 #endif /* XEN */
-#endif
 #ifdef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
 #endif
