@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.213 2008/11/12 14:32:34 ad Exp $
+	$NetBSD: syscalls.master,v 1.214 2008/11/14 15:49:21 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -504,17 +504,17 @@
 			    struct timespec *timeout); }
 245	UNIMPL		sys_sigqueue
 246	STD 	 	{ int sys_modctl(int cmd, void *arg); }
-247	STD MODULAR 	{ int sys__ksem_init(unsigned int value, semid_t *idp); }
+247	STD MODULAR 	{ int sys__ksem_init(unsigned int value, intptr_t *idp); }
 248	STD MODULAR 	{ int sys__ksem_open(const char *name, int oflag, \
-			    mode_t mode, unsigned int value, semid_t *idp); }
+			    mode_t mode, unsigned int value, intptr_t *idp); }
 249	STD MODULAR 	{ int sys__ksem_unlink(const char *name); }
-250	STD MODULAR 	{ int sys__ksem_close(semid_t id); }
-251	STD MODULAR 	{ int sys__ksem_post(semid_t id); }
-252	STD MODULAR 	{ int sys__ksem_wait(semid_t id); }
-253	STD MODULAR 	{ int sys__ksem_trywait(semid_t id); }
-254	STD MODULAR 	{ int sys__ksem_getvalue(semid_t id, \
+250	STD MODULAR 	{ int sys__ksem_close(intptr_t id); }
+251	STD MODULAR 	{ int sys__ksem_post(intptr_t id); }
+252	STD MODULAR 	{ int sys__ksem_wait(intptr_t id); }
+253	STD MODULAR 	{ int sys__ksem_trywait(intptr_t id); }
+254	STD MODULAR 	{ int sys__ksem_getvalue(intptr_t id, \
 			    unsigned int *value); }
-255	STD MODULAR 	{ int sys__ksem_destroy(semid_t id); }
+255	STD MODULAR 	{ int sys__ksem_destroy(intptr_t id); }
 256	UNIMPL		sys__ksem_timedwait
 257	STD 		{ mqd_t sys_mq_open(const char * name, int oflag, \
 			    mode_t mode, struct mq_attr *attr); }
