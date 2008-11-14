@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.17 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.18 2008/11/14 23:10:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,11 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.17 2008/10/15 06:51:20 wrstuden Exp $");
-
-#include "opt_ptrace.h"
-#include "opt_compat_netbsd.h"
-#include "opt_compat_netbsd32.h"
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.18 2008/11/14 23:10:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,38 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.17 2008/10/15 06:51:20 wrstuden Exp $"
 #include <sys/kauth.h>
 #include <sys/wait.h>
 #include <sys/kmem.h>
-
-#ifdef COMPAT_16
-/* ARGSUSED */
-int
-compat_16_sys___sigaction14(struct lwp *l, const struct compat_16_sys___sigaction14_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int)				signum;
-		syscallarg(const struct sigaction *)	nsa;
-		syscallarg(struct sigaction *)		osa;
-	} */
-	struct sigaction	nsa, osa;
-	int			error;
-
-	if (SCARG(uap, nsa)) {
-		error = copyin(SCARG(uap, nsa), &nsa, sizeof(nsa));
-		if (error)
-			return (error);
-	}
-	error = sigaction1(l, SCARG(uap, signum),
-	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
-	    NULL, 0);
-	if (error)
-		return (error);
-	if (SCARG(uap, osa)) {
-		error = copyout(&osa, SCARG(uap, osa), sizeof(osa));
-		if (error)
-			return (error);
-	}
-	return (0);
-}
-#endif
 
 /* ARGSUSED */
 int
