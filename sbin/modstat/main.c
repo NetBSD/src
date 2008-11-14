@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2008/04/28 20:23:09 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2008/11/14 09:55:38 hira Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.3 2008/04/28 20:23:09 martin Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 2008/11/14 09:55:38 hira Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -125,6 +125,6 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-n name]", getprogname());
+	(void)fprintf(stderr, "Usage: %s [-n name]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
