@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.5 2008/04/28 20:23:40 martin Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.5.10.1 2008/11/14 02:49:37 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.5 2008/04/28 20:23:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.5.10.1 2008/11/14 02:49:37 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,19 @@ p3_get_bus_clock(struct cpu_info *ci)
 	switch (CPUID2MODEL(ci->ci_signature)) {
 	case 0x9: /* Pentium M (130 nm, Banias) */
 		bus_clock = 10000;
+		break;
+	case 0xc: /* Atom, model 1 */
+		msr = rdmsr(MSR_FSB_FREQ);
+		bus = (msr >> 0) & 0x7;
+		switch (bus) {
+		case 1:
+			bus_clock = 13333;
+			break;
+		default:
+			aprint_debug("%s: unknown Atom FSB_FREQ "
+			    "value %d", device_xname(ci->ci_dev), bus);
+			goto print_msr;
+		}
 		break;
 	case 0xd: /* Pentium M (90 nm, Dothan) */
 		msr = rdmsr(MSR_FSB_FREQ);
