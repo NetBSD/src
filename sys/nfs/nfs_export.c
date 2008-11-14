@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.38 2008/05/10 02:26:10 rumble Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.39 2008/11/14 13:33:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -75,9 +75,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.38 2008/05/10 02:26:10 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.39 2008/11/14 13:33:55 ad Exp $");
 
-#include "opt_compat_netbsd.h"
 #include "opt_inet.h"
 
 #include <sys/param.h>
@@ -374,7 +373,6 @@ netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
 	return 0;
 }
 
-#ifdef COMPAT_30
 /*
  * Handles legacy export requests.  In this case, the export information
  * is hardcoded in a specific place of the mount arguments structure (given
@@ -410,7 +408,6 @@ nfs_update_exports_30(struct mount *mp, const char *path,
 
 	return mountd_set_exports_list(&mel, l);
 }
-#endif
 
 /*
  * INTERNAL FUNCTIONS

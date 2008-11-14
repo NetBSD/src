@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.203 2008/10/22 12:29:35 matt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.204 2008/11/14 13:33:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,10 +35,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.203 2008/10/22 12:29:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.204 2008/11/14 13:33:56 ad Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_compat_netbsd.h"
 #include "opt_nfs.h"
 #endif
 
@@ -214,11 +213,9 @@ nfs_statvfs(mp, sbp)
 		tquad = ((quad_t)tquad / (quad_t)NFS_FABLKSIZE);
 		sbp->f_bresvd = sbp->f_bfree - tquad;
 		sbp->f_bavail = tquad;
-#ifdef COMPAT_20
 		/* Handle older NFS servers returning negative values */
 		if ((quad_t)sbp->f_bavail < 0)
 			sbp->f_bavail = 0;
-#endif
 		tquad = fxdr_hyper(&sfp->sf_tfiles);
 		sbp->f_files = tquad;
 		tquad = fxdr_hyper(&sfp->sf_ffiles);
