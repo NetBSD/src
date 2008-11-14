@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.149 2008/11/10 17:07:11 snj Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.150 2008/11/14 03:24:24 snj Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5071,4 +5071,15 @@ sys/dev/pci/pcidevs				1.961, 1.962 via patch
 	Add support for more ethenet ICH9 devices. Tested on a
 	82801I_IGP_M_AMT.
 	[bouyer, ticket #1976]
+
+usr.bin/gzip/gzip.c				1.89
+
+	Properly detect when the output fails (eg, full filesystem) and
+	do not delete the input file.  Fixes PR#35048.
+	[mrg, ticket #1978]
+
+usr.sbin/config/scan.l				1.11 (usr.bin/config/scan.l)
+
+	Avoid memory leak in error case. Fixes PR bin/39721.
+	[dholland, ticket #1974]
 
