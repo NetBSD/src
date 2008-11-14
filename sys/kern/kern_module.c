@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.25 2008/11/12 12:36:16 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.26 2008/11/14 23:06:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.25 2008/11/12 12:36:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.26 2008/11/14 23:06:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
@@ -45,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.25 2008/11/12 12:36:16 ad Exp $");
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/kauth.h>
+#include <sys/kthread.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -58,6 +60,11 @@ static module_t	*module_active;
 static char	module_base[64];
 u_int		module_count;
 kmutex_t	module_lock;
+u_int		module_autotime = 10;
+u_int		module_gen = 1;
+static kcondvar_t module_thread_cv;
+static kmutex_t module_thread_lock;
+static int	module_thread_ticks;
 
 /* Ensure that the kernel's link set isn't empty. */
 static modinfo_t module_dummy;
@@ -70,6 +77,7 @@ static int	module_do_unload(const char *);
 static void	module_error(const char *, ...);
 static int	module_do_builtin(const char *, module_t **);
 static int	module_fetch_info(module_t *);
+static void	module_thread(void *);
 
 /*
  * module_error:
@@ -97,11 +105,14 @@ void
 module_init(void)
 {
 	extern struct vm_map *module_map;
+	int error;
 
 	if (module_map == NULL) {
 		module_map = kernel_map;
 	}
 	mutex_init(&module_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&module_thread_cv, "modunload");
+	mutex_init(&module_thread_lock, MUTEX_DEFAULT, IPL_NONE);
 #ifdef MODULAR	/* XXX */
 	module_init_md();
 #endif
@@ -114,6 +125,11 @@ module_init(void)
 	    machine, __NetBSD_Version__ / 100000000,
 	    __NetBSD_Version__ / 1000000 % 100);
 #endif
+
+	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, module_thread,
+	    NULL, NULL, "modunload");
+	if (error != 0)
+		panic("module_init: %d", error);
 }
 
 /*
@@ -490,7 +506,9 @@ module_do_load(const char *filename, bool isdep, int flags,
 		if (error != 0) {
 			kmem_free(mod, sizeof(*mod));
 			depth--;
-			module_error("unable to load kernel object");
+			if (!autoload) {
+				module_error("unable to load kernel object");
+			}
 			return error;
 		}
 		TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
@@ -634,6 +652,15 @@ module_do_load(const char *filename, bool isdep, int flags,
 	if (modp != NULL) {
 		*modp = mod;
 	}
+	if (autoload) {
+		/*
+		 * Arrange to try unloading the module after
+		 * a short delay.
+		 */
+		mod->mod_autotime = time_second + module_autotime;
+		module_thread_kick();
+	}
+	module_gen++;
 	depth--;
 	return 0;
 
@@ -683,6 +710,7 @@ module_do_unload(const char *name)
 		kobj_unload(mod->mod_kobj);
 	}
 	kmem_free(mod, sizeof(*mod));
+	module_gen++;
 
 	return 0;
 }
@@ -768,4 +796,58 @@ module_find_section(const char *name, void **addr, size_t *size)
 	KASSERT(module_active != NULL);
 
 	return kobj_find_section(module_active->mod_kobj, name, addr, size);
+}
+
+/*
+ * module_thread:
+ *
+ *	Automatically unload modules.  We try once to unload autoloaded
+ *	modules after module_autotime seconds.  If the system is under
+ *	severe memory pressure, we'll try unloading all modules.
+ */
+static void
+module_thread(void *cookie)
+{
+	module_t *mod, *next;
+
+	for (;;) {
+		mutex_enter(&module_lock);
+		for (mod = TAILQ_FIRST(&module_list); mod != NULL; mod = next) {
+			next = TAILQ_NEXT(mod, mod_chain);
+			if (uvmexp.free < uvmexp.freemin) {
+				module_thread_ticks = hz;
+			} else if (mod->mod_autotime == 0) {
+				continue;
+			} else if (time_second < mod->mod_autotime) {
+				module_thread_ticks = hz;
+			    	continue;
+			} else {
+				mod->mod_autotime = 0;
+			}
+			(void)module_do_unload(mod->mod_info->mi_name);
+		}
+		mutex_exit(&module_lock);
+
+		mutex_enter(&module_thread_lock);
+		(void)cv_timedwait(&module_thread_cv, &module_thread_lock,
+		    module_thread_ticks);
+		module_thread_ticks = 0;
+		mutex_exit(&module_thread_lock);
+	}
+}
+
+/*
+ * module_thread:
+ *
+ *	Kick the module thread into action, perhaps because the
+ *	system is low on memory.
+ */
+void
+module_thread_kick(void)
+{
+
+	mutex_enter(&module_thread_lock);
+	module_thread_ticks = hz;
+	cv_broadcast(&module_thread_cv);
+	mutex_exit(&module_thread_lock);
 }
