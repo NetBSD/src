@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.16 2008/11/13 00:14:57 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.17 2008/11/14 03:04:51 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -386,4 +386,31 @@ sys/dev/sysmon/sysmon_envsys_events.c		1.61, 1.62
 	type, regardless of sensor type.  Fixes spurious "device: normal
 	state on 'sensor-name' messages which interfere with sysinst.          
 	[tls, ticket #49]
+
+sys/arch/x86/x86/intel_busclock.c		1.6
+
+	Add support for enhanced speedstep on Intel Atom CPUs
+	[jmcneill, ticket #52]
+
+etc/MAKEDEV.tmpl				1.115
+
+	Fix generation of /dev/videoN devices in 'all' target.
+	[jmcneill, ticket #53]
+
+
+sys/dev/pci/azalia_codec.c			1.72
+
+	Add support for Realtek ALC269 as found in Eee PC 1000HA.
+	[jmcneill, ticket #54]
+
+sys/arch/xen/xen/evtchn.c			1.41
+
+	Remove a debug printf(). It will call splx(), which may panic
+	in spllowwer() on KASSERT(psl == 0);
+	[bouyer, ticket #55]
+
+sys/netinet/tcp_timer.c				1.83
+
+	Fix kern/39769: race condition in TCP timers.
+	[bouyer, ticket #56]
 
