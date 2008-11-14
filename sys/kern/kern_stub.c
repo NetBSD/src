@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.12 2008/11/12 14:29:31 ad Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.13 2008/11/14 23:33:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.12 2008/11/12 14:29:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.13 2008/11/14 23:33:45 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
@@ -181,15 +181,23 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 		u_int		al_code;
 		const char	*al_module;
 	} const autoload[] = {
-	     { SYS__ksem_init, "ksem" },
-	     { SYS__ksem_open, "ksem" },
-	     { SYS__ksem_unlink, "ksem" },
-	     { SYS__ksem_close, "ksem" },
-	     { SYS__ksem_post, "ksem" },
-	     { SYS__ksem_wait, "ksem" },
-	     { SYS__ksem_trywait, "ksem" },
-	     { SYS__ksem_getvalue, "ksem" },
-	     { SYS__ksem_destroy, "ksem" },
+	    { SYS_aio_cancel, "aio" },
+	    { SYS_aio_error, "aio" },
+	    { SYS_aio_fsync, "aio" },
+	    { SYS_aio_read, "aio" },
+	    { SYS_aio_return, "aio" },
+	    { SYS_aio_suspend, "aio" },
+	    { SYS_aio_write, "aio" },
+	    { SYS_lio_listio, "aio" },
+	    { SYS__ksem_init, "ksem" },
+	    { SYS__ksem_open, "ksem" },
+	    { SYS__ksem_unlink, "ksem" },
+	    { SYS__ksem_close, "ksem" },
+	    { SYS__ksem_post, "ksem" },
+	    { SYS__ksem_wait, "ksem" },
+	    { SYS__ksem_trywait, "ksem" },
+	    { SYS__ksem_getvalue, "ksem" },
+	    { SYS__ksem_destroy, "ksem" },
 	};
 	const struct sysent *sy;
 	const struct emul *em;
