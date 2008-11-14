@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.32 2008/11/14 12:53:18 ad Exp $	*/
+/*	$NetBSD: frame.h,v 1.33 2008/11/14 13:05:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,6 +141,7 @@ struct switchframe {
 	int	sf_eip;
 };
 
+#ifdef _KERNEL
 /*
  * Old-style signal frame
  */
@@ -151,6 +152,7 @@ struct sigframe_sigcontext {
 	struct	sigcontext *sf_scp;	/* "scp" argument for handler */
 	struct	sigcontext sf_sc;	/* actual saved context */
 };
+#endif
 
 /*
  * New-style signal frame
