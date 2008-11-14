@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.14 2008/09/30 20:08:23 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.15 2008/11/14 11:57:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -363,7 +363,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		lbn = (smallest + bufoff) >> bshift;
 		error = VOP_BMAP(vp, lbn, &devvp, &bn, &run);
 		if (error)
-			panic("%s: VOP_BMAP failed: %d", __func__, error);
+			panic("%s: VOP_BMAP lazy bum: %d", __func__, error);
 
 		xfersize = MIN(((lbn+1+run) << bshift) - (smallest+bufoff),
 		     curoff - (smallest+bufoff));
