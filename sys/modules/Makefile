@@ -1,7 +1,8 @@
-# $NetBSD: Makefile,v 1.13 2008/11/13 10:15:52 ad Exp $
+# $NetBSD: Makefile,v 1.14 2008/11/14 23:33:45 ad Exp $
 
 SUBDIR=		accf_data
 SUBDIR+=	accf_http
+SUBDIR+=	aio
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	fss
 SUBDIR+=	ksem
