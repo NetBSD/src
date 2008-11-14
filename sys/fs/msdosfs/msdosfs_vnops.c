@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.52 2008/05/16 09:21:59 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.53 2008/11/14 12:59:44 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.52 2008/05/16 09:21:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.53 2008/11/14 12:59:44 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -631,8 +631,7 @@ msdosfs_write(v)
 	if (uio->uio_offset + resid > osize) {
 		count = de_clcount(pmp, uio->uio_offset + resid) -
 			de_clcount(pmp, osize);
-		if ((error = extendfile(dep, count, NULL, NULL, 0)) &&
-		    (error != ENOSPC || (ioflag & IO_UNIT)))
+		if ((error = extendfile(dep, count, NULL, NULL, 0)))
 			goto errexit;
 
 		dep->de_FileSize = uio->uio_offset + resid;
