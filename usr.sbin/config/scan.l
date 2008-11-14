@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.44 2004/06/04 04:38:28 thorpej Exp $	*/
+/*	$NetBSD: scan.l,v 1.44.2.1 2008/11/14 03:16:54 snj Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -211,8 +211,10 @@ curdir_push(const char *fname)
 	else {
 		char *cwd, buf[PATH_MAX];
 
-		if ((cwd = getcwd(buf, sizeof(buf))) == NULL)
+		if ((cwd = getcwd(buf, sizeof(buf))) == NULL) {
+			free(f);
 			return (-1);
+		}
 		p = emalloc(strlen(cwd) + strlen(d) + 2);
 		sprintf(p, "%s/%s", cwd, d);
 	}
