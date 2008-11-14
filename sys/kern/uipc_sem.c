@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.27 2008/11/12 14:32:34 ad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.28 2008/11/14 13:35:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.27 2008/11/12 14:32:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.28 2008/11/14 13:35:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ static const struct syscall_package ksem_syscalls[] = {
 
 /*
  * Note: to read the ks_name member, you need either the ks_interlock
- * or the ksem_slock.  To write the ks_name member, you need both.  Make
- * sure the order is ksem_slock -> ks_interlock.
+ * or the ksem_mutex.  To write the ks_name member, you need both.  Make
+ * sure the order is ksem_mutex -> ks_interlock.
  */
 struct ksem {
 	LIST_ENTRY(ksem) ks_entry;	/* global list entry */
@@ -130,7 +130,7 @@ struct ksem_proc {
 LIST_HEAD(ksem_list, ksem);
 
 /*
- * ksem_slock protects ksem_head and nsems.  Only named semaphores go
+ * ksem_mutex protects ksem_head and nsems.  Only named semaphores go
  * onto ksem_head.
  */
 static kmutex_t ksem_mutex;
