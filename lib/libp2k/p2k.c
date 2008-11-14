@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.5 2008/10/07 23:14:58 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.6 2008/11/14 13:43:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -144,6 +144,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	struct ukfs *ukfs;
 	extern int puffs_fakecc;
 	int rv, sverrno;
+	bool dodaemon;
 
 	rv = -1;
 	if (ukfs_init() == -1)
@@ -188,10 +189,17 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, inactive);
 	PUFFSOP_SET(pops, p2k, node, reclaim);
 
+	dodaemon = true;
+	if (getenv("P2K_DEBUG") != NULL) {
+		puffs_flags |= PUFFS_FLAG_OPDUMP;
+		dodaemon = false;
+	}
+
 	strcpy(typebuf, "p2k|");
 	if (strcmp(vfsname, "puffs") == 0) { /* XXX */
 		struct puffs_kargs *args = arg;
 		strlcat(typebuf, args->pa_typename, sizeof(typebuf));
+		dodaemon = false;
 	} else {
 		strlcat(typebuf, vfsname, sizeof(typebuf));
 	}
@@ -208,6 +216,9 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	puffs_fakecc = 1;
 
 	puffs_set_prepost(pu, makelwp, clearlwp);
+
+	if (dodaemon)
+		puffs_daemon(pu, 1, 1);
 
 	if ((rv = puffs_mount(pu, mountpath, mntflags, rvp))== -1)
 		goto out;
