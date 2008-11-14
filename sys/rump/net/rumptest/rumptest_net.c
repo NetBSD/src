@@ -1,4 +1,4 @@
-/*	$NetBSD: rumptest_net.c,v 1.4 2008/11/14 14:17:53 pooka Exp $	*/
+/*	$NetBSD: rumptest_net.c,v 1.5 2008/11/14 14:24:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -47,11 +47,21 @@
 #define DEST_ADDR "204.152.190.12"	/* www.NetBSD.org */
 #define DEST_PORT 80			/* take a wild guess */
 
+#ifdef FULL_NETWORK_STACK
 /*
  * If we are running with the full networking stack, configure
- * virtual interface
+ * virtual interface.  For this to currently work, you *must* have
+ * tap0 bridged with your main networking interface.  Essentially
+ * the following steps are required:
+ *
+ * # ifconfig tap0 create
+ * # ifconfig tap0 up
+ * # ifconfig bridge0 create
+ * # brconfig bridge0 add tap0 add yourrealif0
+ * # brconfig bridge0 up
+ *
+ * The usability is likely to be improved later.
  */
-#ifdef FULL_NETWORK_STACK
 #define MYADDR "10.181.181.11"
 #define MYBCAST "10.181.181.255"
 #define MYMASK "255.255.255.0"
