@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.h,v 1.16 2008/04/28 20:23:24 martin Exp $	*/
+/*	$NetBSD: vm86.h,v 1.17 2008/11/14 12:53:18 ad Exp $	*/
 
 #undef	VM86_USE_VIF
 
@@ -70,9 +70,7 @@ struct vm86_struct {
 
 #ifdef _KERNEL
 int x86_vm86(struct lwp *, char *, register_t *);
-#ifdef COMPAT_16
 int compat_16_x86_vm86(struct lwp *, char *, register_t *);
-#endif
 void vm86_gpfault(struct lwp *, int);
 void vm86_return(struct lwp *, int);
 static __inline void clr_vif(struct lwp *);
