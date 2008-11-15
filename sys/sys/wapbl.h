@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.5 2008/11/11 12:45:40 joerg Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.6 2008/11/15 10:04:31 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ struct wapbl_wc_header {
  * previously listed blocks should not be written into the filesystem.
  * This is important so that deallocated and reallocated data blocks
  * do not get overwritten with stale data from the journal.  The
- * revocation records to not contain a copy of any actual block data.
+ * revocation records do not contain a copy of any actual block data.
  */
 struct wapbl_wc_blocklist {
 	uint32_t	wc_type; /* WAPBL_WC_{REVOCATIONS,BLOCKS} */
