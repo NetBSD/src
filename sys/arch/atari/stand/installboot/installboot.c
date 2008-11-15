@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.20 2005/12/11 12:17:00 christos Exp $	*/
+/*	$NetBSD: installboot.c,v 1.21 2008/11/15 21:33:12 abs Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -98,6 +98,7 @@ main (argc, argv)
 {
 	struct disklabel dl;
 	char		 *dn;
+	char		 *devchr;
 	int		 fd, c;
 
 	/* check OS bootversion */
@@ -150,23 +151,27 @@ main (argc, argv)
 	if (close(fd))
 		err(EXIT_FAILURE, "%s", dn);
 
-	switch (dl.d_type) {
-		case DTYPE_FLOPPY:
+	/* Eg: in /dev/fd0c, set devchr to point to the 'f' */
+	devchr = strrchr(dn, '/') + 1;
+	if (*devchr == 'r')
+		++devchr;
+
+	switch (*devchr) {
+		case 'f': /* fd */
 			install_fd(dn, &dl);
 			break;
-		case DTYPE_ST506:
-		case DTYPE_ESDI:
+		case 'w': /* wd */
 			install_wd(dn, &dl);
 			setNVpref();
 			break;
-		case DTYPE_SCSI:
+		case 's': /* sd */
 			install_sd(dn, &dl);
 			setNVpref();
 			break;
 		default:
 			errx(EXIT_FAILURE,
-			     "%s: %s: Device type not supported.",
-			     dn, dktypenames[dl.d_type]);
+			     "%s: '%c': Device type not supported.",
+			     dn, *devchr);
 	}
 
 	return(EXIT_SUCCESS);
