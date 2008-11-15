@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.21 2008/10/21 19:01:00 matt Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.22 2008/11/15 11:15:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,6 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
 #include "opt_cputypes.h"
 #include "opt_arm_debug.h"
@@ -79,7 +78,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.21 2008/10/21 19:01:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.22 2008/11/15 11:15:22 ad Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -139,9 +138,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	memset(tf, 0, sizeof(*tf));
 	tf->tf_r0 = (u_int)l->l_proc->p_psstr;
-#ifdef COMPAT_13
 	tf->tf_r12 = stack;			/* needed by pre 1.4 crt0.c */
-#endif
 	tf->tf_usr_sp = stack;
 	tf->tf_usr_lr = pack->ep_entry;
 	tf->tf_svc_lr = 0x77777777;		/* Something we can see */
