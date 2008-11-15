@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.18 2008/11/15 03:33:43 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.19 2008/11/15 22:15:16 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -451,4 +451,20 @@ sys/arch/sun3/dev/fd.c				1.67
 
 	Make this compile with options DIAGNOSTIC.
 	[tsutsui, ticket #61]
+
+BUILDING					1.79, 1.81
+Makefile					1.263
+distrib/sets/Makefile				1.64
+distrib/sets/sets.subr				1.72, 1.73
+doc/BUILDING.mdoc				1.68, 1.70
+etc/Makefile					1.360
+external/mit/xorg/server/Makefile		1.5
+share/man/man5/mk.conf.5			1.42, 1.46
+share/mk/bsd.README				1.237, 1.238, 1.242
+share/mk/bsd.own.mk				1.544, 1.550
+share/mk/bsd.x11.mk				1.71
+usr.bin/ssh/Makefile.inc			1.18
+
+	Switch to Xorg on amd64, i386, macppc, shark and sparc64.
+	[mrg, ticket #64]
 
