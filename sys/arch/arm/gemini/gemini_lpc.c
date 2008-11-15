@@ -1,10 +1,10 @@
-/*	$NetBSD: gemini_lpc.c,v 1.2 2008/11/10 04:05:35 cliff Exp $	*/
+/*	$NetBSD: gemini_lpc.c,v 1.3 2008/11/15 05:48:34 cliff Exp $	*/
 
 #include "opt_gemini.h"
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_lpc.c,v 1.2 2008/11/10 04:05:35 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_lpc.c,v 1.3 2008/11/15 05:48:34 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,8 @@ static uint8_t it8712_pnp_read(lpctag_t, int, uint);
 static void    it8712_pnp_write(lpctag_t, int, uint, uint8_t);
 static void    it8712_pnp_enter(lpctag_t);
 static void    it8712_pnp_exit(lpctag_t);
+static void   *it8712_intr_establish(lpctag_t, uint, int, int, int (*)(void *), void *);
+static void    it8712_intr_disestablish(lpctag_t, void *);
 
 CFATTACH_DECL_NEW(lpc, sizeof(struct gemini_lpc_softc),
     gemini_lpc_match, gemini_lpc_attach, NULL, NULL);
@@ -45,8 +47,8 @@ gemini_lpc_bus_ops_t gemini_lpc_bus_ops = {
 	it8712_pnp_write,
 	it8712_pnp_enter,
 	it8712_pnp_exit,
-	gemini_lpchc_intr_establish,
-	gemini_lpchc_intr_disestablish,
+	it8712_intr_establish,
+	it8712_intr_disestablish,
 };
 
 
@@ -102,6 +104,7 @@ gemini_lpc_attach(struct device *parent, struct device *self, void *aux)
 		device_xname(self), clk, susp);
 
 	sc->sc_lpchctag = lpchc->lpchc_tag;
+	sc->sc_bus_ops  = &gemini_lpc_bus_ops;
 
 	aprint_normal("\n");
 	aprint_naive("\n"); 
@@ -125,8 +128,6 @@ gemini_lpc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	lpc.lpc_iot      = sc->sc_iot;
 	lpc.lpc_tag      = sc;
 	lpc.lpc_base     = sc->sc_addr;
-	lpc.lpc_intrtag  = sc->sc_lpchctag;
-	lpc.lpc_bus_ops  = &gemini_lpc_bus_ops;
 
 	if (config_match(parent, cf, &lpc)) {
 		config_attach(parent, cf, &lpc, gemini_lpc_busprint);
@@ -209,4 +210,24 @@ it8712_pnp_exit(lpctag_t tag)
 
 	bus_space_write_1(iot, ioh, IT8712_ADDR, IT8712_CFGCTL);
 	bus_space_write_1(iot, ioh, IT8712_DATA, CFGCTL_WAITKEY);
+}
+
+static void *
+it8712_intr_establish(lpctag_t tag, uint intr, int ipl, int ist,
+	int (*func)(void *), void *arg)
+{
+	gemini_lpc_softc_t *sc = tag;
+	void *ih;
+
+	ih = gemini_lpchc_intr_establish(sc->sc_lpchctag, intr, ipl, ist, func, arg);
+	
+	return ih;
+}
+
+static void
+it8712_intr_disestablish(lpctag_t tag, void *ih)
+{
+	gemini_lpc_softc_t *sc = tag;
+
+	gemini_lpchc_intr_disestablish(sc->sc_lpchctag, ih);
 }

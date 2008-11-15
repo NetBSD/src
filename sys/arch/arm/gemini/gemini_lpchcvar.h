@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_lpchcvar.h,v 1.1 2008/11/09 09:15:42 cliff Exp $	*/
+/*	$NetBSD: gemini_lpchcvar.h,v 1.2 2008/11/15 05:48:34 cliff Exp $	*/
 
 #ifndef  _ARM_GEMINI_LPHCVAR_H
 #define  _ARM_GEMINI_LPHCVAR_H
@@ -35,11 +35,11 @@ typedef struct gemini_lpchc_softc {
 	SIMPLEQ_HEAD(, gemini_lpchc_intrq) sc_intrq;
 } gemini_lpchc_softc_t;
 
-void gemini_lpchc_init(lpcintrtag_t);
-void *gemini_lpchc_intr_establish(lpcintrtag_t, uint, int, int,
+extern void gemini_lpchc_init(lpcintrtag_t);
+extern void *gemini_lpchc_intr_establish(lpcintrtag_t, uint, int, int,
         int (*)(void *), void *);
-void gemini_lpchc_intr_disestablish(lpcintrtag_t, void *);
-int  gemini_lpchc_intr(void *);
+extern void gemini_lpchc_intr_disestablish(lpcintrtag_t, void *);
+extern int  gemini_lpchc_intr(void *);
 
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lpc_com.c,v 1.2 2008/11/10 04:07:30 cliff Exp $	*/
+/*	$NetBSD: lpc_com.c,v 1.3 2008/11/15 05:48:34 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: gemini_com.c,v 1.1 2008/10/24 04:23:18 matt Exp
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpc_com.c,v 1.2 2008/11/10 04:07:30 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpc_com.c,v 1.3 2008/11/15 05:48:34 cliff Exp $");
 
 #include "opt_com.h"
 #include "locators.h"
@@ -89,7 +89,6 @@ static int
 lpc_com_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct gemini_lpc_attach_args *lpc = aux;
-	gemini_lpc_bus_ops_t *ops;
 	lpctag_t lpctag;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -112,32 +111,32 @@ lpc_com_match(device_t parent, cfdata_t cf, void *aux)
 		return 1;
 
 	lpctag = lpc->lpc_tag;
-	ops = lpc->lpc_bus_ops;
-	(*ops->lpc_pnp_enter)(lpctag);
+
+	lpc_pnp_enter(lpctag);
 
 	/* Activate */
-	(*ops->lpc_pnp_write)(lpctag, lpc->lpc_ldn, 0x30, 0x01);
+	lpc_pnp_write(lpctag, lpc->lpc_ldn, 0x30, 0x01);
 
 	/* Set address */
-	(*ops->lpc_pnp_write)(lpctag, lpc->lpc_ldn, 0x60,
+	lpc_pnp_write(lpctag, lpc->lpc_ldn, 0x60,
 		(lpc->lpc_addr % 0xff00) >> 8);
-	(*ops->lpc_pnp_write)(lpctag, lpc->lpc_ldn, 0x61,
+	lpc_pnp_write(lpctag, lpc->lpc_ldn, 0x61,
 		(lpc->lpc_addr % 0x00ff) >> 0);
 
 	/* Set Interrupt Level */
-	(*ops->lpc_pnp_write)(lpctag, lpc->lpc_ldn, 0x70, lpc->lpc_intr);
+	lpc_pnp_write(lpctag, lpc->lpc_ldn, 0x70, lpc->lpc_intr);
 
 	/* Set Special Configuration Regs */
-	(*ops->lpc_pnp_write)(lpctag, lpc->lpc_ldn, 0xf0, 0x00);
+	lpc_pnp_write(lpctag, lpc->lpc_ldn, 0xf0, 0x00);
 #if 0
-	(*ops->lpc_pnp_write)(lpctag, lpc->lpc_ldn, 0xf1, 0x50);
+	lpc_pnp_write(lpctag, lpc->lpc_ldn, 0xf1, 0x50);
 #else
-	(*ops->lpc_pnp_write)(lpctag, lpc->lpc_ldn, 0xf1, 0x58);	/* LO */
+	lpc_pnp_write(lpctag, lpc->lpc_ldn, 0xf1, 0x58);	/* LO */
 #endif
-	(*ops->lpc_pnp_write)(lpctag, lpc->lpc_ldn, 0xf2, 0x00);
-	(*ops->lpc_pnp_write)(lpctag, lpc->lpc_ldn, 0xf3, 0x7f);
+	lpc_pnp_write(lpctag, lpc->lpc_ldn, 0xf2, 0x00);
+	lpc_pnp_write(lpctag, lpc->lpc_ldn, 0xf3, 0x7f);
 
-	(*ops->lpc_pnp_exit)(lpctag);
+	lpc_pnp_exit(lpctag);
 
 	iot = lpc->lpc_iot;
 	if (bus_space_map(iot, iobase, lpc->lpc_size, 0, &ioh))
@@ -155,7 +154,6 @@ lpc_com_attach(device_t parent, device_t self, void *aux)
 {
 	struct lpc_com_softc *sc = device_private(self);
 	struct gemini_lpc_attach_args *lpc = aux;
-	gemini_lpc_bus_ops_t *ops = lpc->lpc_bus_ops;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_addr_t iobase;
@@ -186,10 +184,10 @@ lpc_com_attach(device_t parent, device_t self, void *aux)
 	} else {
 		/* interrupting */
 #if 0
-		(*ops->lpc_intr_establish)(lpc->lpc_intrtag, lpc->lpc_intr,
+		lpc_intr_establish(lpc->lpc_tag, lpc->lpc_intr,
 			IPL_SERIAL, IST_LEVEL_HIGH, comintr, &sc->sc_com);
 #else
-		(*ops->lpc_intr_establish)(lpc->lpc_intrtag, lpc->lpc_intr,
+		lpc_intr_establish(lpc->lpc_tag, lpc->lpc_intr,
 			IPL_SERIAL, IST_LEVEL_LOW, lpc_com_intr, &sc->sc_com);
 #endif
 	}
