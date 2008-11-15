@@ -1,7 +1,7 @@
-.\"	$NetBSD: hardware,v 1.24 2008/03/15 18:21:15 martin Exp $
+.\"	$NetBSD: hardware,v 1.25 2008/11/15 03:46:32 snj Exp $
 .
 .Ss2 Supported machines
-The minimal configuration requires 32 MB of RAM and ~60 MB of disk space.
+The minimal configuration requires 32 MB of RAM and ~120 MB of disk space.
 To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended, as
 .Nx
@@ -145,12 +145,15 @@ On-board and SBUS card
 .Pq Em cgsix
 .br
 8 bpp accelerated framebuffer.
-Accelerated X via the integrated XFree.
+Accelerated X via the integrated Xorg.
 .It
 UPA devices
 .Pq ffb and afb, also called Creator3D
 24 bpp accelerated framebuffer.
-Accelerated X via the integrated XFree.
+Accelerated X via the integrated Xorg.
+.br
+.It
+On-board ATI mach64 framebuffers (found in Ultra 5/10).
 .bullet)
 .It
 SCSI host controllers
@@ -190,7 +193,7 @@ Acard ATP-850/860 based IDE controllers
 CMD Tech PCI064[3689] and Silicon Image 0680 IDE Controllers
 .Pq Em cmdide
 .It
-Silicon Image 3112 SATA Controller
+Silicon Image 3112, 3114, and 3512 SATA Controller
 .Pq Em satalink
 .(Note
 Some IDE cards that support booting on
@@ -242,4 +245,4 @@ been tested on UltraSPARC PCI systems that may
 .Sq "just work" .
 .
 .Ss2 Unsupported devices
-smart card reader
+Smart card readers.
