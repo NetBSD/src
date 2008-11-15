@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.427 2008/11/10 11:30:59 hasso Exp $
+.\"	$NetBSD: main,v 1.428 2008/11/15 03:47:49 snj Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -182,7 +182,7 @@ or the floppy disk images,
 You need either the pair of floppies or the CD to boot your system.
 .\}
 .if \n[sparc64] \{\
-CD image,
+This is either a CD image,
 .Pa sparc64cd-\*V.iso
 or the installation kernel and bootloader,
 .Pa sparc64/binary/kernel/netbsd-INSTALL.gz No and Pa sparc64/installation/misc/ofwboot
@@ -539,7 +539,7 @@ texinfo 4.8 (last GPLv2 version)
 .bullet)
 .
 .Pp
-Besides this list, there have also been innumerable bug fixes and other miscellaneous enhancements of course.
+Besides this list, there have been innumerable bug fixes and other miscellaneous enhancements.
 .Ss2 Components removed from NetBSD
 .Pp
 In this release of NetBSD, some software components known from previous releases were removed from the system. In some cases those were components that are not useful anymore or their utility does not justify maintenance overhead. Other components were not working properly and there was lack of interest in fixing them.
