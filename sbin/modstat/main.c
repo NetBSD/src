@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2008/11/14 09:55:38 hira Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2008/11/15 11:29:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.4 2008/11/14 09:55:38 hira Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 2008/11/15 11:29:04 ad Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -51,7 +51,7 @@ static const char *classes[] = {
 };
 
 static const char *sources[] = {
-	"kernel",
+	"builtin",
 	"boot",
 	"filesys",
 };
