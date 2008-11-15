@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.359 2008/10/19 22:05:20 apb Exp $
+#	$NetBSD: Makefile,v 1.359.2.1 2008/11/15 22:05:12 snj Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -158,11 +158,13 @@ distribution: .PHONY .MAKE check_DESTDIR distrib-dirs
 	${MAKEDIRTARGET} ${NETBSDSRCDIR} install _DISTRIB=
 .endif	# !INSTALL_DONE
 	${MAKEDIRTARGET} . install-etc-files
-.if ${MKXORG} != "no"
+. if ${MKX11} != "no"
+.  if ${X11FLAVOUR} == "Xorg"
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/mit/xorg distribution
-.elif ${MKX11} != "no"
+.  else
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/x11 distribution
-.endif
+.  endif
+. endif
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/distrib/sets makesetfiles
 .endif	# !DISTRIBUTION_DONE
 
@@ -190,7 +192,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		MKMAN MKMANZ MKNLS MKNVI MKOBJ MKOBJDIRS \
 		MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
 		MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
-		MKUNPRIVED MKUPDATE MKX11 MKXORG MKYP \
+		MKUNPRIVED MKUPDATE MKX11 MKYP \
 		NBUILDJOBS NETBSDSRCDIR \
 		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
 		OBJMACHINE \
@@ -198,7 +200,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		USE_HESIOD USE_INET6 USE_JEMALLOC USE_KERBEROS USE_LDAP \
 		USE_PAM USE_SKEY USE_YP \
 		USETOOLS USR_OBJMACHINE \
-		X11SRCDIR
+		X11SRCDIR X11FLAVOUR
 
 params: .PHONY
 .for var in ${RELEASEVARS}
@@ -357,13 +359,13 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 #
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 OBSOLETE.files=		base comp etc games man misc tests text
-.if ${MKX11} != "no" || ${MKXORG} != "no"
+.if ${MKX11} != "no"
 OBSOLETE.files+=	xbase xcomp xetc xfont xserver
 .endif
 
 install-obsolete-lists: .PHONY .MAKE
 	mkdir -p ${OBSOLETE.dir}
-.if ${MKX11} != "no" || ${MKXORG} != "no"
+.if ${MKX11} != "no"
 	(cd ${NETBSDSRCDIR}/distrib/sets && \
 	    MAKE=${MAKE:Q} ${HOST_SH} ./makeobsolete -b -t ${OBSOLETE.dir})
 .else

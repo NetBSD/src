@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.71 2008/10/26 07:31:00 mrg Exp $
+#	$NetBSD: sets.subr,v 1.71.2.1 2008/11/15 22:05:12 snj Exp $
 #
 
 #
@@ -171,6 +171,14 @@ MKMANPAGES=no
 .else
 MKMANPAGES=yes
 .endif
+.if \${MKX11} != "no"
+. if \${X11FLAVOUR} == "Xorg"
+MKXORG:=yes
+MKX11:=no
+. else
+MKXORG:=no
+. endif
+.endif
 all:
 .for i in MACHINE MACHINE_ARCH MACHINE_CPU \
 		HAVE_GCC HAVE_GDB OBJECT_FMT TOOLCHAIN_MISSING \
@@ -221,7 +229,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.71 2008/10/26 07:31:00 mrg Exp $
+# 	# $NetBSD: sets.subr,v 1.71.2.1 2008/11/15 22:05:12 snj Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -280,8 +288,8 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	sendmail		${MKSENDMAIL} != no
 #	share			${MKSHARE} != no
 #	skey			${MKSKEY} != no
-#	x11			${MKX11} != no
-#	xorg			${MKXORG} != no
+#	x11			${MKX11} != no && ${X11FLAVOUR} == "XFree86"
+#	xorg			${MKX11} != no && ${X11FLAVOUR} == "XFree86"
 #	yp			${MKYP} != no
 #
 #	gcc=<n>			<n> = value of ${HAVE_GCC}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.262 2008/10/27 22:32:51 mrg Exp $
+#	$NetBSD: Makefile,v 1.262.2.1 2008/11/15 22:05:11 snj Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -103,9 +103,9 @@
 #   do-compat-lib-libc: builds and installs prerequisites from compat/lib/libc
 #                    if ${MKCOMPAT} != "no".
 #   do-build:        builds and installs the entire system.
-#   do-x11:          builds and installs X11; either
-#                    X11R7 from src/external/mit/xorg if ${MKXORG} != "no"
-#                    or X11R6 from src/x11 if ${MKX11} != "no"
+#   do-x11:          builds and installs X11 if ${MKX11} != "no"; either
+#                    X11R7 from src/external/mit/xorg if ${X11FLAVOUR} == "Xorg"
+#                    or X11R6 from src/x11
 #   do-obsolete:     installs the obsolete sets (for the postinstall-* targets).
 #
 
@@ -242,7 +242,7 @@ BUILDTARGETS+=	do-compat-lib-libc
 .endif
 BUILDTARGETS+=	do-ld.so
 BUILDTARGETS+=	do-build
-.if ${MKX11} != "no" || ${MKXORG} != "no"
+.if ${MKX11} != "no"
 BUILDTARGETS+=	do-x11
 .endif
 BUILDTARGETS+=	do-obsolete
@@ -458,12 +458,14 @@ do-build: .PHONY .MAKE
 .endfor
 
 do-x11: .PHONY .MAKE
-.if ${MKXORG} != "no"
+.if ${MKX11} != "no"
+.if ${X11FLAVOUR} == "Xorg"
 	${MAKEDIRTARGET} external/mit/xorg build
-.elif ${MKX11} != "no"
-	${MAKEDIRTARGET} x11 build
 .else
-	@echo "Neither MKX11 or MKXORG is enabled"
+	${MAKEDIRTARGET} x11 build
+.endif
+.else
+	@echo "MKX11 is not enabled"
 	@false
 .endif
 

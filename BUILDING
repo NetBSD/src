@@ -305,17 +305,8 @@ CONFIGURATION
 
                  Default: ``no''
 
-     MKX11       Can be set to ``yes'' or ``no''.  Indicates whether X11R6 is
+     MKX11       Can be set to ``yes'' or ``no''.  Indicates whether X11 is
                  built from X11SRCDIR.
-
-                 Mutually exclusive to MKXORG != no.
-
-                 Default: ``no''
-
-     MKXORG      Can be set to ``yes'' or ``no''.  Indicates whether X11R7
-                 (modular Xorg) is built from X11SRCDIR.
-
-                 Mutually exclusive to MKX11 != no.
 
                  Default: ``no''
 
@@ -357,6 +348,12 @@ CONFIGURATION
                  X11SRCDIR/xfree/xc.
 
                  Default: ``/usr/xsrc''
+
+     X11FLAVOUR  The style of X11 cross-built, set to either ``Xorg'' or
+                 ``XFree86''.
+
+                 Default: ``Xorg'' on amd64, i386, macppc, shark, sparc and
+                 sparc64 platforms, ``XFree86'' on everything else.
 
    "make" variables for full builds
      These variables only affect the top level ``Makefile'' and do not affect
