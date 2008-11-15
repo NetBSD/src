@@ -1,12 +1,12 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.60 2008/11/09 07:50:39 abs Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.61 2008/11/15 21:22:03 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: MILAN.in,v 1.21 2006/09/03 13:51:24 bjh21 Exp $
-#		NetBSD: GENERIC.in,v 1.75 2008/11/09 07:49:59 abs Exp $
+#		NetBSD: GENERIC.in,v 1.76 2008/11/15 21:21:23 abs Exp $
 include "arch/atari/conf/std.milan"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -72,7 +72,7 @@ options SYSCTL_INCLUDE_DESCR # Include sysctl descriptions in kernel
 options SCSIVERBOSE # human readable SCSI error messages
 options MIIVERBOSE # verbose PHY autoconfig messages
 options PCIVERBOSE # verbose PCI device autoconfig messages
-options ST_POOL_SIZE=22 # smallest that allows TT-HIGH
+options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
 options MEMORY_DISK_HOOKS # Boot RAM-disk
 options DISKLABEL_NBDA # NetBSD disklabels (required)
 options DISKLABEL_AHDI # NetBSD/AHDI disklabels

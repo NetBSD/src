@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOT,v 1.79 2008/11/09 07:50:39 abs Exp $
+# $NetBSD: BOOT,v 1.80 2008/11/15 21:22:03 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.8 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.75 2008/11/09 07:49:59 abs Exp $
+#		NetBSD: GENERIC.in,v 1.76 2008/11/15 21:21:23 abs Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -40,7 +40,7 @@ options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
 options PIPE_SOCKETPAIR # smaller, but slower pipe(2)
-options ST_POOL_SIZE=22 # smallest that allows TT-HIGH
+options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
 options TT_SCSI # SCSI-support for TT
 options TT_VIDEO # Graphics support for TT
 options FALCON_SCSI # SCSI-support for Falcon
