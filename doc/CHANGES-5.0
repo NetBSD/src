@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.17 2008/11/14 03:04:51 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.18 2008/11/15 03:33:43 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -413,4 +413,42 @@ sys/netinet/tcp_timer.c				1.83
 
 	Fix kern/39769: race condition in TCP timers.
 	[bouyer, ticket #56]
+
+sys/dev/pci/if_bge.c				1.154
+
+	PR kern/39608: bge(4) constant freeze on BCM5906M.
+	Correct DMA values.
+	[cegger, ticket #44]
+
+share/man/man8/man8.cobalt/boot.8		1.3-1.6
+
+	Sync with reality.
+	[tsutsui, ticket #57]
+
+sys/dev/pci/if_iwn.c				1.23, 1.24
+
+	* Disable aborting the scan for the moment - it causes a firmware
+	error if a scan was never initiated which breaks WEP and open
+	wireless connections
+	* Make sure the ESSID is cleared.
+	* Move init of essid to the attach code.
+	[blymn, ticket #58]
+
+etc/etc.cobalt/MAKEDEV.conf			1.11, 1.12
+
+	Create audio and USB devices on all_md target.
+	[tsutsui, ticket #59]
+
+distrib/amd64/floppies/common/Makefile.bootfloppy 1.10
+distrib/common/Makefile.tarfloppy		1.14
+distrib/i386/floppies/common/Makefile.bootfloppy 1.22
+
+	Avoid full path to boot.cfg file when building amd64 boot floppy
+	and share code with i386.
+	[tsutsui, ticket #60]
+
+sys/arch/sun3/dev/fd.c				1.67
+
+	Make this compile with options DIAGNOSTIC.
+	[tsutsui, ticket #61]
 
