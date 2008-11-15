@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.113 2008/11/14 23:04:42 ad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.114 2008/11/15 05:58:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.113 2008/11/14 23:04:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.114 2008/11/15 05:58:33 mrg Exp $");
 
 #include "opt_ptm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
+#include <sys/ioctl_compat.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
 #include <sys/stat.h>
