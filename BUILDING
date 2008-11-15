@@ -352,8 +352,8 @@ CONFIGURATION
      X11FLAVOUR  The style of X11 cross-built, set to either ``Xorg'' or
                  ``XFree86''.
 
-                 Default: ``Xorg'' on amd64, i386, macppc, shark, sparc and
-                 sparc64 platforms, ``XFree86'' on everything else.
+                 Default: ``Xorg'' on amd64, i386, macppc, shark and sparc64
+                 platforms, ``XFree86'' on everything else.
 
    "make" variables for full builds
      These variables only affect the top level ``Makefile'' and do not affect
