@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootfloppy,v 1.21 2008/09/26 18:36:44 tsutsui Exp $
+#	$NetBSD: Makefile.bootfloppy,v 1.21.2.1 2008/11/15 03:27:58 snj Exp $
 #
 # Makefile snippet to create a set of USTAR floppies
 #
@@ -40,12 +40,6 @@ FLOPPYFILES=		boot boot.cfg ${FLOPPYMETAFILE} netbsd
 FLOPPYPAD=		1
 
 FLOPPY_RELEASEDIR=	installation/floppy
-
-CLEANFILES+=	boot.cfg
-boot.cfg:	${FLOPPY_BOOT_CFG}
-	${_MKTARGET_CREATE} "(from: ${.ALLSRC})"
-	@rm -f ${.TARGET}
-	@cp ${FLOPPY_BOOT_CFG} ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.tarfloppy"
 
