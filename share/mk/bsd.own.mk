@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.549 2008/11/13 20:40:11 apb Exp $
+#	$NetBSD: bsd.own.mk,v 1.550 2008/11/15 11:27:49 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -666,7 +666,7 @@ ${var}?=no
 #
 .if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || \
     ${MACHINE} == "macppc" || ${MACHINE} == "shark" || \
-    ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
+    ${MACHINE} == "sparc64"
 X11FLAVOUR?=	Xorg
 .else
 X11FLAVOUR?=	XFree86
