@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.2.40.2 2008/11/15 02:45:41 snj Exp $
+.\"	$NetBSD: boot.8,v 1.2.40.3 2008/11/15 02:47:44 snj Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -392,15 +392,15 @@ needs to be executable and in that directory.
 You will also need to setup
 .Xr dhcpd 8 .
 Once the kernel is loaded with the command line values, the data
-given via DHCP is used to mount the root filesystem.
+given via DHCP is used to mount the root file system.
 Here is a known working DHCP entry:
 .Bd -unfilled -offset indent
 host raq {
         hardware ethernet 0:10:e0:0:52:62;      # raq MAC
         fixed-address 10.0.0.15;                # raq address
         filename "/netbsd.gz";                  # kernel name in root-path
-        option root-path "/home/raq/root";      # absolute dir on nfs server
-        server-name="10.0.0.3";                 # IP of nfs server
+        option root-path "/home/raq/root";      # absolute dir on NFS server
+        server-name="10.0.0.3";                 # IP of NFS server
 }
 .Ed
 .Pp
@@ -418,9 +418,9 @@ and on RaQ 2's, it is
 .Ss Network bootstrap using the NetBSD boot loader
 The idea here is the same with the bootstrap from disk using the NetBSD
 boot loader.
-Make the firmware loads the NetBSD boot loader via network and
+Make the firmware load the NetBSD boot loader via network and
 let the latter take care of loading the kernel even via network.
-A simple method to load the NetBSD boot loader is to use 
+A simple method to load the NetBSD boot loader is to use  the
 .Dq bfd
 command as well as booting the NetBSD kernel via network as described above:
 .Bd -unfilled -offset indent
@@ -444,12 +444,12 @@ Starting at 0x80001000
 .Ed
 .Pp
 The boot loader load the NetBSD kernel via NFS which should be specified
-by the DHCP configuration on the server. Note the nfsroot option specified
-on the
+by the DHCP configuration on the server.
+Note the nfsroot option specified on the
 .Dq bfd
 prompt will be ignored by the
 .Nx
-boot loader so it's recommeneded to use the same directory on the
+boot loader so it's recommended to use the same directory on the
 .Dq bfd
 prompt and in the DHCP configuration.
 .Sh FILES
