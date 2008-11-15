@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.36 2008/01/11 14:03:47 he Exp $	*/
+/*	$NetBSD: pmap.h,v 1.37 2008/11/15 21:30:50 abs Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -200,7 +200,7 @@ pmap_remove_all(struct pmap *pmap)
 	(curproc && \
 	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
-void	pmap_bootstrap __P((psize_t, u_int, u_int));
+void	pmap_bootstrap __P((psize_t, u_int));
 void	pmap_changebit __P((paddr_t, int, bool));
 
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
