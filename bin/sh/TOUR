@@ -1,4 +1,4 @@
-#	$NetBSD: TOUR,v 1.9 2006/04/24 18:00:53 snj Exp $
+#	$NetBSD: TOUR,v 1.10 2008/11/15 17:01:38 snj Exp $
 #	@(#)TOUR	8.1 (Berkeley) 5/31/93
 
 NOTE -- This is the original TOUR paper distributed with ash and
@@ -22,7 +22,7 @@ SOURCE CODE GENERATORS:  Files whose names begin with "mk" are
 programs that generate source code.  A complete list of these
 programs is:
 
-        program         intput files        generates
+        program         input files         generates
         -------         ------------        ---------
         mkbuiltins      builtins            builtins.h builtins.c
         mkinit          *.c                 init.c
@@ -91,7 +91,7 @@ INTERRUPTS:  In an interactive shell, an interrupt will cause an
 EXINT exception to return to the main command loop.  (Exception:
 EXINT is not raised if the user traps interrupts using the trap
 command.)  The INTOFF and INTON macros (defined in exception.h)
-provide uninterruptable critical sections.  Between the execution
+provide uninterruptible critical sections.  Between the execution
 of INTOFF and the execution of INTON, interrupt signals will be
 held for later delivery.  INTOFF and INTON can be nested.
 
@@ -110,7 +110,7 @@ string was going to be:
         p = stackptr;
         *p++ = c;       /* repeated as many times as needed */
         stackptr = p;
-The folloing three macros (defined in memalloc.h) perform these
+The following three macros (defined in memalloc.h) perform these
 operations, but grow the stack if you run off the end:
         STARTSTACKSTR(p);
         STPUTC(c, p);   /* repeated as many times as needed */
@@ -232,7 +232,7 @@ control is defined.
 REDIR.C:  Ash allows file descriptors to be redirected and then
 restored without forking off a child process.  This is accom-
 plished by duplicating the original file descriptors.  The redir-
-tab structure records where the file descriptors have be dupli-
+tab structure records where the file descriptors have been dupli-
 cated to.
 
 EXEC.C:  The routine find_command locates a command, and enters
