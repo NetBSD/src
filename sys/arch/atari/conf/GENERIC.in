@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.75 2008/11/09 07:49:59 abs Exp $
+#	$NetBSD: GENERIC.in,v 1.76 2008/11/15 21:21:23 abs Exp $
 #
 # Generic atari
 #
@@ -202,7 +202,7 @@ options 	PCIVERBOSE		# verbose PCI device autoconfig messages
 # Atari specific options
 #
 #options 	KFONT_8x8		# Use 8x8 font instead of 8x16
-options 	ST_POOL_SIZE=22		# smallest that allows TT-HIGH
+options 	ST_POOL_SIZE=24		# smallest that allows TT-HIGH
 #if defined(TT030_KERNEL) || defined(HADES_KERNEL)
 options 	TT_SCSI			# SCSI-support for TT
 options 	TT_VIDEO		# Graphics support for TT
