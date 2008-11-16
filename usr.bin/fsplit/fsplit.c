@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.19 2008/11/16 04:27:31 dholland Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.20 2008/11/16 04:39:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,8 +100,7 @@ static int scan_name(char *, const char *);
 static const char *skiplab(const char *);
 static const char *skipws(const char *);
 
-static bool	extr = false;
-static int	extrknt = -1;
+static int	numextonly = 0;
 static bool	extrfnd[100];
 static char	extrbuf[1000];
 static char	*extrnames[100];
@@ -118,7 +117,6 @@ main(int argc, char **argv)
 
 	/*  scan -e options */
 	while (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'e') {
-		extr = true;
 		ptr = argv[1] + 2;
 		if (!*ptr) {
 			argc--;
@@ -128,9 +126,9 @@ main(int argc, char **argv)
 			}
 			ptr = argv[1];
 		}
-		extrknt = extrknt + 1;
-		extrnames[extrknt] = extrptr;
-		extrfnd[extrknt] = false;
+		extrnames[numextonly] = extrptr;
+		extrfnd[numextonly] = false;
+		numextonly++;
 		while (*ptr) {
 			*extrptr++ = *ptr++;
 		}
@@ -179,7 +177,7 @@ main(int argc, char **argv)
 			/* no lines in file, forget the file */
 			unlink(x);
 			retval = 0;
-			for (i = 0; i <= extrknt; i++) {
+			for (i = 0; i < numextonly; i++) {
 				if (!extrfnd[i]) {
 					retval = 1;
 					warnx("%s not found\n", extrnames[i]);
@@ -209,7 +207,7 @@ main(int argc, char **argv)
 				continue;
 			}
 		}
-		if (!extr) {
+		if (numextonly == 0) {
 			printf("%s\n", x);
 		} else {
 			unlink(x);
@@ -230,7 +228,7 @@ saveit(const char *name)
 	char fname[50];
 	char *fptr = fname;
 
-	if (!extr) {
+	if (numextonly == 0) {
 		return 1;
 	}
 	while (*name) {
@@ -238,7 +236,7 @@ saveit(const char *name)
 	}
 	*--fptr = '\0';
 	*--fptr = '\0';
-	for (i = 0; i <= extrknt; i++) {
+	for (i = 0; i < numextonly; i++) { 
 		if (strcmp(fname, extrnames[i]) == 0) {
 			extrfnd[i] = true;
 			return 1;
