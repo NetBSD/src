@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.21 2008/11/16 04:51:27 dholland Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.22 2008/11/16 05:11:35 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,40 +105,33 @@ struct extract {
 	char *name;
 };
 
-static int	numextonly = 0;
-static struct extract extonly[100];
-static char	extrbuf[1000];
+#define MAXEXTONLY 100
+static struct extract extonly[MAXEXTONLY];
+static int numextonly = 0;
 
 int
 main(int argc, char **argv)
 {
 	FILE *ofp;	/* output file */
 	int rv;		/* 1 if got card in output file, 0 otherwise */
-	char *ptr;
 	int nflag;	/* 1 if got name of subprog., 0 otherwise */
-	int retval, i;
-	char name[20], *extrptr = extrbuf;
+	int retval, i, ch;
+	char name[20];
 
-	/*  scan -e options */
-	while (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'e') {
-		ptr = argv[1] + 2;
-		if (!*ptr) {
-			argc--;
-			argv++;
-			if (argc <= 1) {
-				badparms();
+	while ((ch = getopt(argc, argv, "e:")) != -1) {
+		switch (ch) {
+		    case 'e':
+			if (numextonly >= MAXEXTONLY) {
+				errx(1, "Too many -e options");
 			}
-			ptr = argv[1];
+			extonly[numextonly].name = optarg;
+			extonly[numextonly].found = false;
+			numextonly++;
+			break;
+		    default:
+			badparms();
+			break;
 		}
-		extonly[numextonly].name = extrptr;
-		extonly[numextonly].found = false;
-		numextonly++;
-		while (*ptr) {
-			*extrptr++ = *ptr++;
-		}
-		*extrptr++ = '\0';
-		argc--;
-		argv++;
 	}
 
 	if (argc > 2) {
