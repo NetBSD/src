@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwscanf.c,v 1.3 2008/08/28 16:41:21 christos Exp $	*/
+/*	$NetBSD: vfwscanf.c,v 1.4 2008/11/16 16:26:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwscanf.c,v 1.12 2004/05/02 20:13:29 obrien Exp $");
 #else
-__RCSID("$NetBSD: vfwscanf.c,v 1.3 2008/08/28 16:41:21 christos Exp $");
+__RCSID("$NetBSD: vfwscanf.c,v 1.4 2008/11/16 16:26:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -712,20 +712,16 @@ literal:
 			if ((width = parsefloat(fp, buf, buf + width)) == 0)
 				goto match_failure;
 			if ((flags & SUPPRESS) == 0) {
-#ifdef notyet
 				if (flags & LONGDBL) {
 					long double res = wcstold(buf, &p);
 					*va_arg(ap, long double *) = res;
 				} else
-#endif
 				if (flags & LONG) {
 					double res = wcstod(buf, &p);
 					*va_arg(ap, double *) = res;
-#ifdef notyet
 				} else {
 					float res = wcstof(buf, &p);
 					*va_arg(ap, float *) = res;
-#endif
 				}
 #ifdef DEBUG
 				if (p - buf != width)
