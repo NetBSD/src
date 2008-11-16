@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.20 2008/11/16 04:39:34 dholland Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.21 2008/11/16 04:51:27 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,10 +100,14 @@ static int scan_name(char *, const char *);
 static const char *skiplab(const char *);
 static const char *skipws(const char *);
 
+struct extract {
+	bool found;
+	char *name;
+};
+
 static int	numextonly = 0;
-static bool	extrfnd[100];
+static struct extract extonly[100];
 static char	extrbuf[1000];
-static char	*extrnames[100];
 
 int
 main(int argc, char **argv)
@@ -126,8 +130,8 @@ main(int argc, char **argv)
 			}
 			ptr = argv[1];
 		}
-		extrnames[numextonly] = extrptr;
-		extrfnd[numextonly] = false;
+		extonly[numextonly].name = extrptr;
+		extonly[numextonly].found = false;
 		numextonly++;
 		while (*ptr) {
 			*extrptr++ = *ptr++;
@@ -178,9 +182,9 @@ main(int argc, char **argv)
 			unlink(x);
 			retval = 0;
 			for (i = 0; i < numextonly; i++) {
-				if (!extrfnd[i]) {
+				if (!extonly[i].found) {
 					retval = 1;
-					warnx("%s not found\n", extrnames[i]);
+					warnx("%s not found", extonly[i].name);
 				}
 			}
 			exit(retval);
@@ -237,8 +241,8 @@ saveit(const char *name)
 	*--fptr = '\0';
 	*--fptr = '\0';
 	for (i = 0; i < numextonly; i++) { 
-		if (strcmp(fname, extrnames[i]) == 0) {
-			extrfnd[i] = true;
+		if (strcmp(fname, extonly[i].name) == 0) {
+			extonly[i].found = true;
 			return 1;
 		}
 	}
