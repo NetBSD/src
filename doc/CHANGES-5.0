@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.19 2008/11/15 22:15:16 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.20 2008/11/16 07:43:16 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -467,4 +467,17 @@ usr.bin/ssh/Makefile.inc			1.18
 
 	Switch to Xorg on amd64, i386, macppc, shark and sparc64.
 	[mrg, ticket #64]
+
+sys/dev/pci/if_wpi.c				1.41
+sys/dev/pci/if_wpivar.h				1.13
+
+	Cache wpi firmware in memory, free it only on invalid content or
+	when the last user is detached. This stops wpi from accessing the
+	disk on resume.
+	[joerg, ticket #62]
+
+share/man/man4/vlan.4				1.30
+
+	Add etherip to the list of interfaces supporting ETHER_VLAN_MTU.
+	[bouyer, ticket #63]
 
