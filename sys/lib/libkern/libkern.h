@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.83 2008/11/16 15:01:26 ad Exp $	*/
+/*	$NetBSD: libkern.h,v 1.84 2008/11/16 16:15:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -340,5 +340,6 @@ u_long	 strtoul __P((const char *, char **, int));
 long long strtoll __P((const char *, char **, int));
 unsigned long long strtoull __P((const char *, char **, int));
 uintmax_t strtoumax __P((const char *, char **, int));
-void	 qsort(void *, size_t, size_t, int (*)(const void *, const void *));
+int	 kheapsort(void *, size_t, size_t, int (*)(const void *, const void *),
+		   void *);
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */

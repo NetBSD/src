@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.45 2008/11/16 15:29:53 ad Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.46 2008/11/16 16:15:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.45 2008/11/16 15:29:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.46 2008/11/16 16:15:58 ad Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -250,7 +250,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	  void *strstart, size_t strsize, struct ksyms_symtab *tab,
 	  void *newstart)
 {
-	Elf_Sym *sym, *nsym;
+	Elf_Sym *sym, *nsym, ts;
 	int i, j, n, nglob;
 	char *str;
 
@@ -316,7 +316,8 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	tab->sd_symsize = n * sizeof(Elf_Sym);
 	tab->sd_nglob = nglob;
 	addsymtab_strstart = str;
-	qsort(nsym, n, sizeof(Elf_Sym), addsymtab_compar);
+	if (kheapsort(nsym, n, sizeof(Elf_Sym), addsymtab_compar, &ts) != 0)
+		panic("addsymtab");
 
 	/* ksymsread() is unlocked, so membar. */
 	membar_producer();

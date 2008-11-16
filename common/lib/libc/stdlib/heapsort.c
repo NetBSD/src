@@ -1,4 +1,4 @@
-/*	$NetBSD: heapsort.c,v 1.16 2008/03/11 18:04:59 rmind Exp $	*/
+/*	$NetBSD: heapsort.c,v 1.1 2008/11/16 16:15:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,10 +46,15 @@
 #if 0
 static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: heapsort.c,v 1.16 2008/03/11 18:04:59 rmind Exp $");
+__RCSID("$NetBSD: heapsort.c,v 1.1 2008/11/16 16:15:58 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef _KERNEL
+#include <sys/types.h>
+
+#include <lib/libkern/libkern.h>
+#else	/* _KERNEL */
 #include "namespace.h"
 #include <sys/types.h>
 
@@ -65,6 +70,7 @@ __RCSID("$NetBSD: heapsort.c,v 1.16 2008/03/11 18:04:59 rmind Exp $");
 #ifdef __weak_alias
 __weak_alias(heapsort,_heapsort)
 #endif
+#endif	/* _KERNEL */
 
 /*
  * Swap two areas of size number of bytes.  Although qsort(3) permits random
@@ -161,13 +167,22 @@ __weak_alias(heapsort,_heapsort)
  * a data set that will trigger the worst case is nonexistent.  Heapsort's
  * only advantage over quicksort is that it requires little additional memory.
  */
+#ifdef _KERNEL
+int
+kheapsort(void *vbase, size_t nmemb, size_t size,
+    int (*compar)(const void *, const void *), void *k)
+#else
 int
 heapsort(void *vbase, size_t nmemb, size_t size,
-    int (*compar) __P((const void *, const void *)))
+    int (*compar)(const void *, const void *))
+#endif
 {
 	size_t cnt, i, j, l;
 	char tmp, *tmp1, *tmp2;
-	char *base, *k, *p, *t;
+	char *base, *p, *t;
+#ifndef _KERNEL
+	char *k;
+#endif
 
 	_DIAGASSERT(vbase != NULL);
 	_DIAGASSERT(compar != NULL);
@@ -176,12 +191,16 @@ heapsort(void *vbase, size_t nmemb, size_t size,
 		return (0);
 
 	if (!size) {
+#ifndef _KERNEL
 		errno = EINVAL;
+#endif
 		return (-1);
 	}
 
+#ifndef _KERNEL
 	if ((k = malloc(size)) == NULL)
 		return (-1);
+#endif
 
 	/*
 	 * Items are numbered from 1 to nmemb, so offset from size bytes
@@ -203,6 +222,8 @@ heapsort(void *vbase, size_t nmemb, size_t size,
 		--nmemb;
 		SELECT(i, j, nmemb, t, p, size, k, cnt, tmp1, tmp2);
 	}
+#ifndef _KERNEL
 	free(k);
+#endif
 	return (0);
 }
