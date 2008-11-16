@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.119 2008/09/19 14:37:13 joerg Exp $	*/
+/*	$NetBSD: pci.c,v 1.120 2008/11/16 17:31:03 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.119 2008/09/19 14:37:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.120 2008/11/16 17:31:03 bouyer Exp $");
 
 #include "opt_pci.h"
 
@@ -633,8 +633,7 @@ int
 pci_dma64_available(struct pci_attach_args *pa)
 {
 #ifdef _PCI_HAVE_DMA64
-	if (BUS_DMA_TAG_VALID(pa->pa_dmat64) &&
-		((uint64_t)physmem << PAGE_SHIFT) > 0xffffffffULL)
+	if (BUS_DMA_TAG_VALID(pa->pa_dmat64))
                         return 1;
 #endif
         return 0;
