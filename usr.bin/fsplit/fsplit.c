@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.15 2008/11/16 03:23:12 dholland Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.16 2008/11/16 03:52:24 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,30 +81,30 @@ __RCSID("$NetBSD: fsplit.c,v 1.15 2008/11/16 03:23:12 dholland Exp $");
  */
 
 #define BSZ 512
-char buf[BSZ];
-FILE *ifp;
-char 	x[]="zzz000.f",
-	mainp[]="main000.f",
-	blkp[]="blkdta000.f";
+static char buf[BSZ];
+static FILE *ifp;
 
-void	badparms(void);
-char   *functs(char *);
-int	getline(void);
-void	get_name(char *, int);
-int	main(int, char **);
-int	lend(void);
-int	lname(char *, size_t);
-char   *look(char *, char *);
-int	saveit(char *);
-int	scan_name(char *, char *);
-char   *skiplab(char *);
+static char x[]="zzz000.f";
+static char mainp[]="main000.f";
+static char blkp[]="blkdta000.f";
 
-bool	extr = false;
-int	extrknt = -1;
-bool	extrfnd[100];
-char	extrbuf[1000];
-char	*extrnames[100];
-struct stat sbuf;
+static void badparms(void);
+static const char *functs(const char *);
+static int getline(void);
+static void get_name(char *, int);
+static int lend(void);
+static int lname(char *, size_t);
+static const char *look(const char *, const char *);
+static int saveit(const char *);
+static int scan_name(char *, const char *);
+static const char *skiplab(const char *);
+
+static bool	extr = false;
+static int	extrknt = -1;
+static bool	extrfnd[100];
+static char	extrbuf[1000];
+static char	*extrnames[100];
+static struct stat sbuf;
 
 #define trim(p)	while (*p == ' ' || *p == '\t') p++
 
@@ -132,7 +132,7 @@ main(int argc, char **argv)
 		extrnames[extrknt] = extrptr;
 		extrfnd[extrknt] = false;
 		while(*ptr) *extrptr++ = *ptr++;
-		*extrptr++ = 0;
+		*extrptr++ = '\0';
 		argc--;
 		argv++;
 	}
@@ -198,14 +198,14 @@ main(int argc, char **argv)
     }
 }
 
-void
+static void
 badparms(void)
 {
 	err(1, "Usage: fsplit [-e efile] ... [file]");
 }
 
-int
-saveit(char *name)
+static int
+saveit(const char *name)
 {
 	int i;
 	char	fname[50],
@@ -213,8 +213,8 @@ saveit(char *name)
 
 	if(!extr) return(1);
 	while(*name) *fptr++ = *name++;
-	*--fptr = 0;
-	*--fptr = 0;
+	*--fptr = '\0';
+	*--fptr = '\0';
 	for ( i=0 ; i<=extrknt; i++ ) 
 		if( strcmp(fname, extrnames[i]) == 0 ) {
 			extrfnd[i] = true;
@@ -223,7 +223,7 @@ saveit(char *name)
 	return(0);
 }
 
-void
+static void
 get_name(char *name, int letters)
 {
 	char *ptr;
@@ -241,7 +241,7 @@ get_name(char *name, int letters)
 	}
 }
 
-int
+static int
 getline(void)
 {
 	char *ptr;
@@ -251,7 +251,7 @@ getline(void)
 		if (feof(ifp))
 			return (-1);
 		if (*ptr++ == '\n') {
-			*ptr = 0;
+			*ptr = '\0';
 			return (1);
 		}
 	}
@@ -261,10 +261,10 @@ getline(void)
 }
 
 /* return 1 for 'end' alone on card (up to col. 72),  0 otherwise */
-int
+static int
 lend(void)
 {
-	char *p;
+	const char *p;
 
 	if ((p = skiplab(buf)) == 0)
 		return (0);
@@ -288,11 +288,11 @@ lend(void)
 		name and put in arg string. invent name for unnamed
 		block datas and main programs.		*/
 
-int
+static int
 lname(char *s, size_t l)
 {
 #	define LINESIZE 80 
-	char *ptr, *p;
+	const char *ptr, *p;
 	char	line[LINESIZE], *iptr = line;
 
 	/* first check for comment cards */
@@ -303,7 +303,7 @@ lname(char *s, size_t l)
 
 
 	ptr = skiplab(buf);
-	if (ptr == 0)
+	if (ptr == NULL)
 		return (0);
 
 
@@ -316,20 +316,20 @@ lname(char *s, size_t l)
 	}
 	*iptr = '\n';
 
-	if ((ptr = look(line, "subroutine")) != 0 ||
-	    (ptr = look(line, "function")) != 0 ||
-	    (ptr = functs(line)) != 0) {
+	if ((ptr = look(line, "subroutine")) != NULL ||
+	    (ptr = look(line, "function")) != NULL ||
+	    (ptr = functs(line)) != NULL) {
 		if(scan_name(s, ptr)) return(1);
 		strlcpy(s, x, l);
-	} else if((ptr = look(line, "program")) != 0) {
+	} else if((ptr = look(line, "program")) != NULL) {
 		if(scan_name(s, ptr)) return(1);
 		get_name(mainp, 4);
 		strlcpy(s, mainp, l);
-	} else if((ptr = look(line, "blockdata")) != 0) {
+	} else if((ptr = look(line, "blockdata")) != NULL) {
 		if(scan_name(s, ptr)) return(1);
 		get_name( blkp, 6);
 		strlcpy(s, blkp, l);
-	} else if((ptr = functs(line)) != 0) {
+	} else if((ptr = functs(line)) != NULL) {
 		if(scan_name(s, ptr)) return(1);
 		strlcpy(s, x, l);
 	} else {
@@ -339,8 +339,8 @@ lname(char *s, size_t l)
 	return(1);
 }
 
-int
-scan_name(char *s, char *ptr)
+static int
+scan_name(char *s, const char *ptr)
 {
 	char *sptr;
 
@@ -357,25 +357,25 @@ scan_name(char *s, char *ptr)
 
 	*sptr++ = '.';
 	*sptr++ = 'f';
-	*sptr++ = 0;
+	*sptr++ = '\0';
 	return(1);
 }
 
-char *
-functs(char *p)
+static const char *
+functs(const char *p)
 {
-        char *ptr;
+        const char *ptr;
 
 /*      look for typed functions such as: real*8 function,
                 character*16 function, character*(*) function  */
 
-        if((ptr = look(p,"character")) != 0 ||
-           (ptr = look(p,"logical")) != 0 ||
-           (ptr = look(p,"real")) != 0 ||
-           (ptr = look(p,"integer")) != 0 ||
-           (ptr = look(p,"doubleprecision")) != 0 ||
-           (ptr = look(p,"complex")) != 0 ||
-           (ptr = look(p,"doublecomplex")) != 0 ) {
+        if((ptr = look(p,"character")) != NULL ||
+           (ptr = look(p,"logical")) != NULL ||
+           (ptr = look(p,"real")) != NULL ||
+           (ptr = look(p,"integer")) != NULL ||
+           (ptr = look(p,"doubleprecision")) != NULL ||
+           (ptr = look(p,"complex")) != NULL ||
+           (ptr = look(p,"doublecomplex")) != NULL ) {
                 while ( *ptr == ' ' || *ptr == '\t' || *ptr == '*'
 			|| (*ptr >= '0' && *ptr <= '9')
 			|| *ptr == '(' || *ptr == ')') ptr++;
@@ -383,17 +383,17 @@ functs(char *p)
 		return(ptr);
 	}
         else
-                return(0);
+                return NULL;
 }
 
 /* 	if first 6 col. blank, return ptr to col. 7,
 	if blanks and then tab, return ptr after tab,
-	else return 0 (labelled statement, comment or continuation */
+	else return NULL (labelled statement, comment or continuation) */
 
-char *
-skiplab(char *p)
+static const char *
+skiplab(const char *p)
 {
-	char *ptr;
+	const char *ptr;
 
 	for (ptr = p; ptr < &p[6]; ptr++) {
 		if (*ptr == ' ')
@@ -402,24 +402,24 @@ skiplab(char *p)
 			ptr++;
 			break;
 		}
-		return (0);
+		return NULL;
 	}
 	return (ptr);
 }
 
-/* 	return 0 if m doesn't match initial part of s;
+/* 	return NULL if m doesn't match initial part of s;
 	otherwise return ptr to next char after m in s */
 
-char *
-look(char *s, char *m)
+static const char *
+look(const char *s, const char *m)
 {
-	char *sp, *mp;
+	const char *sp, *mp;
 
 	sp = s; mp = m;
 	while (*mp) {
 		trim(sp);
 		if (*sp++ != *mp++)
-			return (0);
+			return NULL;
 	}
 	return (sp);
 }
