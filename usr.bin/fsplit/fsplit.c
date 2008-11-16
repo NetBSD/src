@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.22 2008/11/16 05:11:35 dholland Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.23 2008/11/16 05:20:11 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ static int lend(void);
 static int lname(char *, size_t);
 static const char *look(const char *, const char *);
 static int saveit(const char *);
-static int scan_name(char *, const char *);
+static int scan_name(char *, size_t, const char *);
 static const char *skiplab(const char *);
 static const char *skipws(const char *);
 
@@ -357,24 +357,24 @@ lname(char *s, size_t l)
 	if ((ptr = look(line, "subroutine")) != NULL ||
 	    (ptr = look(line, "function")) != NULL ||
 	    (ptr = functs(line)) != NULL) {
-		if (scan_name(s, ptr)) {
+		if (scan_name(s, l, ptr)) {
 			return 1;
 		}
 		strlcpy(s, x, l);
 	} else if ((ptr = look(line, "program")) != NULL) {
-		if (scan_name(s, ptr)) {
+		if (scan_name(s, l, ptr)) {
 			return 1;
 		}
 		get_name(mainp, 4);
 		strlcpy(s, mainp, l);
 	} else if ((ptr = look(line, "blockdata")) != NULL) {
-		if (scan_name(s, ptr)) {
+		if (scan_name(s, l, ptr)) {
 			return 1;
 		}
 		get_name(blkp, 6);
 		strlcpy(s, blkp, l);
 	} else if ((ptr = functs(line)) != NULL) {
-		if (scan_name(s, ptr)) {
+		if (scan_name(s, l, ptr)) {
 			return 1;
 		}
 		strlcpy(s, x, l);
@@ -386,16 +386,25 @@ lname(char *s, size_t l)
 }
 
 static int
-scan_name(char *s, const char *ptr)
+scan_name(char *s, size_t smax, const char *ptr)
 {
 	char *sptr;
+	size_t sptrmax;
 
 	/* scan off the name */
 	ptr = skipws(ptr);
 	sptr = s;
+	sptrmax = smax - 3;
 	while (*ptr != '(' && *ptr != '\n') {
-		if (*ptr != ' ' && *ptr != '\t')
+		if (*ptr != ' ' && *ptr != '\t') {
+			if (sptrmax == 0) {
+				/* Not sure this is the right thing, so warn */
+				warnx("Output name too long; truncated");
+				break;
+			}
 			*sptr++ = *ptr;
+			sptrmax--;
+		}
 		ptr++;
 	}
 
