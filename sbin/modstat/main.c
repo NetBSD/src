@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2008/11/15 11:29:04 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2008/11/16 11:30:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.5 2008/11/15 11:29:04 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 2008/11/16 11:30:55 ad Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: main.c,v 1.5 2008/11/15 11:29:04 ad Exp $");
 
 int	main(int, char **);
 static void	usage(void) __dead;
+static int	modstatcmp(const void *, const void *);
 
 static const char *classes[] = {
 	"any",
@@ -99,6 +100,7 @@ main(int argc, char **argv)
 
 	printf("NAME\t\tCLASS\tSOURCE\tREFS\tSIZE\tREQUIRES\n");
 	len = iov.iov_len / sizeof(modstat_t);
+	qsort(iov.iov_base, len, sizeof(modstat_t), modstatcmp);
 	for (ms = iov.iov_base; len != 0; ms++, len--) {
 		if (name != NULL && strcmp(ms->ms_name, name) != 0) {
 			continue;
@@ -128,3 +130,15 @@ usage(void)
 	(void)fprintf(stderr, "Usage: %s [-n name]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
+
+static int
+modstatcmp(const void *a, const void *b)
+{
+	const modstat_t *msa, *msb;
+
+	msa = a;
+	msb = b;
+
+	return strcmp(msa->ms_name, msb->ms_name);
+}
+
