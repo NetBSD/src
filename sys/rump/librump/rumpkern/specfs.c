@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.27 2008/09/11 13:42:35 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.28 2008/11/16 18:44:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,9 +28,8 @@
  */
 
 #include <sys/param.h>
-#include <sys/types.h>
+#include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/vnode_if.h>
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include <sys/stat.h>
