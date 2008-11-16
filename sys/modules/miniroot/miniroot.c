@@ -1,4 +1,4 @@
-/*	$NetBSD: miniroot.c,v 1.2 2008/11/16 15:46:10 ad Exp $	*/
+/*	$NetBSD: miniroot.c,v 1.3 2008/11/16 15:47:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: miniroot.c,v 1.2 2008/11/16 15:46:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: miniroot.c,v 1.3 2008/11/16 15:47:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -47,9 +47,14 @@ miniroot_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = module_find_section("miniroot", &addr, &size);
-		if (error == 0 && size != 0)
-			 md_root_setconf(addr, size);
-		break;
+		if (error == 0) {
+			if (size == 0) {
+				error = EINVAL;
+			} else {
+				md_root_setconf(addr, size);
+			}
+		}
+		return error;
 
 	case MODULE_CMD_FINI:
 		return EOPNOTSUPP;
@@ -57,6 +62,4 @@ miniroot_modcmd(modcmd_t cmd, void *arg)
 	default:
 		return ENOTTY;
 	}
-
-	return 0;
 }
