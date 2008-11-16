@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.10 2008/09/03 22:57:46 gmcgarry Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.11 2008/11/16 19:34:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.10 2008/09/03 22:57:46 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.11 2008/11/16 19:34:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.10 2008/09/03 22:57:46 gmcgarry Exp $
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/buf.h>
 
 #include <fs/hfs/hfs.h>
 
