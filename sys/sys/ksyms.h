@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.19 2008/11/16 15:13:35 ad Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.20 2008/11/16 15:28:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -39,8 +39,8 @@ struct ksyms_symtab {
 	TAILQ_ENTRY(ksyms_symtab) sd_queue; /* All active tables */
 	const char *sd_name;	/* Name of this table */
 	Elf_Sym *sd_symstart;	/* Address of symbol table */
-	Elf_Sym *sd_minsym;	/* symbol with minimum value */
-	Elf_Sym *sd_maxsym;	/* symbol with maximum value */
+	uintptr_t sd_minsym;	/* symbol with minimum value */
+	uintptr_t sd_maxsym;	/* symbol with maximum value */
 	char *sd_strstart;	/* Address of corresponding string table */
 	int sd_usroffset;	/* Real address for userspace */
 	int sd_symsize;		/* Size in bytes of symbol table */
