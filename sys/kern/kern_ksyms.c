@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.43 2008/11/16 15:13:35 ad Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.44 2008/11/16 15:28:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.43 2008/11/16 15:13:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.44 2008/11/16 15:28:15 ad Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -264,8 +264,8 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	tab->sd_strstart = strstart;
 	tab->sd_strsize = strsize;
 	tab->sd_name = name;
-	tab->sd_minsym = NULL;
-	tab->sd_maxsym = NULL;
+	tab->sd_minsym = UINTPTR_MAX;
+	tab->sd_maxsym = 0;
 	tab->sd_usroffset = 0;
 	tab->sd_gone = false;
 #ifdef KSYMS_DEBUG
@@ -307,13 +307,11 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 		nglob += (ELF_ST_BIND(nsym[n].st_info) == STB_GLOBAL);
 
 		/* Compute min and max symbols. */
-		if (tab->sd_minsym == NULL ||
-		    tab->sd_minsym->st_value > nsym[n].st_value) {
-		    	tab->sd_minsym = &nsym[n];
+		if (nsym[n].st_value < tab->sd_minsym) {
+		    	tab->sd_minsym = nsym[n].st_value;
 		}
-		if (tab->sd_maxsym == NULL ||
-		    tab->sd_maxsym->st_value < nsym[n].st_value) {
-		    	tab->sd_maxsym = &nsym[n];
+		if (nsym[n].st_value > tab->sd_maxsym) {
+		    	tab->sd_maxsym = nsym[n].st_value;
 		}
 		n++;
 	}
@@ -502,9 +500,7 @@ ksyms_getname(const char **mod, const char **sym, vaddr_t v, int f)
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
 		if (st->sd_gone)
 			continue;
-		if (st->sd_minsym != NULL && v < st->sd_minsym->st_value)
-			continue;
-		if (st->sd_maxsym != NULL && v > st->sd_maxsym->st_value)
+		if (v < st->sd_minsym || v > st->sd_maxsym)
 			continue;
 		sz = st->sd_symsize/sizeof(Elf_Sym);
 		for (i = 0; i < sz; i++) {
