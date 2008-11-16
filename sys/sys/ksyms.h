@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.18 2008/11/12 12:36:28 ad Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.19 2008/11/16 15:13:35 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -45,6 +45,7 @@ struct ksyms_symtab {
 	int sd_usroffset;	/* Real address for userspace */
 	int sd_symsize;		/* Size in bytes of symbol table */
 	int sd_strsize;		/* Size of string table */
+	int sd_nglob;		/* Number of global symbols */
 	bool sd_gone;		/* dead but around for open() */
 };
 
