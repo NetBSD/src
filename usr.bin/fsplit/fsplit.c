@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.18 2008/11/16 04:21:24 dholland Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.19 2008/11/16 04:27:31 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,14 +98,13 @@ static const char *look(const char *, const char *);
 static int saveit(const char *);
 static int scan_name(char *, const char *);
 static const char *skiplab(const char *);
+static const char *skipws(const char *);
 
 static bool	extr = false;
 static int	extrknt = -1;
 static bool	extrfnd[100];
 static char	extrbuf[1000];
 static char	*extrnames[100];
-
-#define trim(p)	while (*p == ' ' || *p == '\t') p++
 
 int
 main(int argc, char **argv)
@@ -299,22 +298,22 @@ lend(void)
 	if ((p = skiplab(buf)) == 0) {
 		return 0;
 	}
-	trim(p);
+	p = skipws(p);
 	if (*p != 'e' && *p != 'E') {
 		return 0;
 	}
 	p++;
-	trim(p);
+	p = skipws(p);
 	if (*p != 'n' && *p != 'N') {
 		return 0;
 	}
 	p++;
-	trim(p);
+	p = skipws(p);
 	if (*p != 'd' && *p != 'D') {
 		return 0;
 	}
 	p++;
-	trim(p);
+	p = skipws(p);
 	if (p - buf >= 72 || *p == '\n') {
 		return 1;
 	}
@@ -397,7 +396,7 @@ scan_name(char *s, const char *ptr)
 	char *sptr;
 
 	/* scan off the name */
-	trim(ptr);
+	ptr = skipws(ptr);
 	sptr = s;
 	while (*ptr != '(' && *ptr != '\n') {
 		if (*ptr != ' ' && *ptr != '\t')
@@ -477,9 +476,18 @@ look(const char *s, const char *m)
 
 	sp = s; mp = m;
 	while (*mp) {
-		trim(sp);
+		sp = skipws(sp);
 		if (*sp++ != *mp++)
 			return NULL;
 	}
 	return sp;
+}
+
+static const char *
+skipws(const char *p)
+{
+	while (*p == ' ' || *p == '\t') {
+		p++;
+	}
+	return p;
 }
