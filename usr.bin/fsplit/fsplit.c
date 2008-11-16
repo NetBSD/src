@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.14 2008/11/16 03:13:39 dholland Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.15 2008/11/16 03:23:12 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,11 +48,12 @@ __RCSID("$NetBSD: fsplit.c,v 1.14 2008/11/16 03:13:39 dholland Exp $");
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <err.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <err.h>
 
 /*
  *	usage:		fsplit [-e efile] ... [file]
@@ -98,13 +99,11 @@ int	saveit(char *);
 int	scan_name(char *, char *);
 char   *skiplab(char *);
 
-#define TRUE 1
-#define FALSE 0
-int	extr = FALSE,
-	extrknt = -1,
-	extrfnd[100];
-char	extrbuf[1000],
-	*extrnames[100];
+bool	extr = false;
+int	extrknt = -1;
+bool	extrfnd[100];
+char	extrbuf[1000];
+char	*extrnames[100];
 struct stat sbuf;
 
 #define trim(p)	while (*p == ' ' || *p == '\t') p++
@@ -121,7 +120,7 @@ main(int argc, char **argv)
 
 	/*  scan -e options */
 	while ( argc > 1  && argv[1][0] == '-' && argv[1][1] == 'e') {
-		extr = TRUE;
+		extr = true;
 		ptr = argv[1] + 2;
 		if(!*ptr) {
 			argc--;
@@ -131,7 +130,7 @@ main(int argc, char **argv)
 		}
 		extrknt = extrknt + 1;
 		extrnames[extrknt] = extrptr;
-		extrfnd[extrknt] = FALSE;
+		extrfnd[extrknt] = false;
 		while(*ptr) *extrptr++ = *ptr++;
 		*extrptr++ = 0;
 		argc--;
@@ -142,8 +141,7 @@ main(int argc, char **argv)
 		badparms();
 	else if (argc == 2) {
 		if ((ifp = fopen(argv[1], "r")) == NULL) {
-			fprintf(stderr, "fsplit: cannot open %s\n", argv[1]);
-			exit(1);
+			err(1, "%s", argv[1]);
 		}
 	}
 	else
@@ -172,8 +170,7 @@ main(int argc, char **argv)
 		for ( i = 0; i <= extrknt; i++ )
 			if(!extrfnd[i]) {
 				retval = 1;
-				fprintf( stderr, "fsplit: %s not found\n",
-					extrnames[i]);
+				warnx("%s not found\n", extrnames[i]);
 			}
 		exit( retval );
 	}
@@ -204,8 +201,7 @@ main(int argc, char **argv)
 void
 badparms(void)
 {
-	fprintf(stderr, "fsplit: usage:  fsplit [-e efile] ... [file] \n");
-	exit(1);
+	err(1, "Usage: fsplit [-e efile] ... [file]");
 }
 
 int
@@ -221,7 +217,7 @@ saveit(char *name)
 	*--fptr = 0;
 	for ( i=0 ; i<=extrknt; i++ ) 
 		if( strcmp(fname, extrnames[i]) == 0 ) {
-			extrfnd[i] = TRUE;
+			extrfnd[i] = true;
 			return(1);
 		}
 	return(0);
@@ -240,8 +236,7 @@ get_name(char *name, int letters)
 			*ptr = '0';
 		}
 		if(ptr < name + letters) {
-			fprintf( stderr, "fsplit: ran out of file names\n");
-			exit(1);
+			errx(1, "Ran out of file names.\n");
 		}
 	}
 }
@@ -261,7 +256,7 @@ getline(void)
 		}
 	}
 	while (getc(ifp) != '\n' && feof(ifp) == 0) ;
-	fprintf(stderr, "line truncated to %d characters\n", BSZ);
+	warnx("Line truncated to %d characters.", BSZ);
 	return (1);
 }
 
