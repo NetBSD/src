@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.20 2008/11/14 23:33:45 ad Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.21 2008/11/16 19:34:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.20 2008/11/14 23:33:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.21 2008/11/16 19:34:29 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.20 2008/11/14 23:33:45 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/atomic.h>
 #include <sys/module.h>
+#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 

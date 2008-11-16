@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.121 2008/11/14 23:37:30 ad Exp $	*/
+/*	$NetBSD: db_command.c,v 1.122 2008/11/16 19:34:29 pooka Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.121 2008/11/14 23:37:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.122 2008/11/16 19:34:29 pooka Exp $");
 
 #include "opt_aio.h"
 #include "opt_ddb.h"
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.121 2008/11/14 23:37:30 ad Exp $");
 #include <sys/lockdebug.h>
 #include <sys/sleepq.h>
 #include <sys/cpu.h>
+#include <sys/buf.h>
 
 /*include queue macros*/
 #include <sys/queue.h>
