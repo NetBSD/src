@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.23 2008/07/31 15:21:34 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.24 2008/11/16 07:06:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -62,7 +62,7 @@ extern	int	blklev;
 extern	int	mblklev;
 extern	int	yydebug;
 
-extern	int	yyerror(char *);
+extern	int	yyerror(const char *);
 extern	int	yyparse(void);
 
 /*

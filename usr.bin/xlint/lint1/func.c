@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.23 2008/07/25 18:33:53 dsl Exp $	*/
+/*	$NetBSD: func.c,v 1.24 2008/11/16 07:06:37 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.23 2008/07/25 18:33:53 dsl Exp $");
+__RCSID("$NetBSD: func.c,v 1.24 2008/11/16 07:06:37 dholland Exp $");
 #endif
 
 #include <stdlib.h>
@@ -210,7 +210,7 @@ chkreach(void)
 void
 funcdef(sym_t *fsym)
 {
-	int	n, warn;
+	int	n, dowarn;
 	sym_t	*arg, *sym, *rdsym;
 
 	funcsym = fsym;
@@ -285,14 +285,14 @@ funcdef(sym_t *fsym)
 
 	if ((rdsym = dcs->d_rdcsym) != NULL) {
 
-		if (!isredec(fsym, (warn = 0, &warn))) {
+		if (!isredec(fsym, (dowarn = 0, &dowarn))) {
 
 			/*
 			 * Print nothing if the newly defined function
 			 * is defined in old style. A better warning will
 			 * be printed in cluparg().
 			 */
-			if (warn && !fsym->s_osdef) {
+			if (dowarn && !fsym->s_osdef) {
 				/* redeclaration of %s */
 				(*(sflag ? error : warning))(27, fsym->s_name);
 				prevdecl(-1, rdsym);

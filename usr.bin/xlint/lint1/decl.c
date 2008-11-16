@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.43 2008/09/27 20:04:24 dholland Exp $ */
+/* $NetBSD: decl.c,v 1.44 2008/11/16 07:06:37 dholland Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.43 2008/09/27 20:04:24 dholland Exp $");
+__RCSID("$NetBSD: decl.c,v 1.44 2008/11/16 07:06:37 dholland Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1793,7 +1793,7 @@ ename(sym_t *sym, int val, int impl)
 void
 decl1ext(sym_t *dsym, int initflg)
 {
-	int	warn, rval, redec;
+	int	dowarn, rval, redec;
 	sym_t	*rdsym;
 
 	chkfdef(dsym, 1);
@@ -1846,9 +1846,9 @@ decl1ext(sym_t *dsym, int initflg)
 			redec = 0;
 		}
 
-		if (!redec && !isredec(dsym, (warn = 0, &warn))) {
+		if (!redec && !isredec(dsym, (dowarn = 0, &dowarn))) {
 
-			if (warn) {
+			if (dowarn) {
 				/* redeclaration of %s */
 				(*(sflag ? error : warning))(27, dsym->s_name);
 				prevdecl(-1, rdsym);
@@ -1925,7 +1925,7 @@ cpuinfo(sym_t *sym, sym_t *rdsym)
  * a warning.
  */
 int
-isredec(sym_t *dsym, int *warn)
+isredec(sym_t *dsym, int *dowarn)
 {
 	sym_t	*rsym;
 
@@ -1953,7 +1953,7 @@ isredec(sym_t *dsym, int *warn)
 		prevdecl(-1, rsym);
 		return(1);
 	}
-	if (!eqtype(rsym->s_type, dsym->s_type, 0, 0, warn)) {
+	if (!eqtype(rsym->s_type, dsym->s_type, 0, 0, dowarn)) {
 		/* redeclaration of %s */
 		error(27, dsym->s_name);
 		prevdecl(-1, rsym);
@@ -2000,11 +2000,11 @@ isredec(sym_t *dsym, int *warn)
  * ignqual	ignore qualifiers of type; used for function params
  * promot	promote left type; used for comparison of params of
  *		old style function definitions with params of prototypes.
- * *warn	set to 1 if an old style function declaration is not
+ * *dowarn	set to 1 if an old style function declaration is not
  *		compatible with a prototype
  */
 int
-eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *warn)
+eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *dowarn)
 {
 	tspec_t	t;
 
@@ -2046,13 +2046,13 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *warn)
 		/* dont check prototypes for traditional */
 		if (t == FUNC && !tflag) {
 			if (tp1->t_proto && tp2->t_proto) {
-				if (!eqargs(tp1, tp2, warn))
+				if (!eqargs(tp1, tp2, dowarn))
 					return (0);
 			} else if (tp1->t_proto) {
-				if (!mnoarg(tp1, warn))
+				if (!mnoarg(tp1, dowarn))
 					return (0);
 			} else if (tp2->t_proto) {
-				if (!mnoarg(tp2, warn))
+				if (!mnoarg(tp2, dowarn))
 					return (0);
 			}
 		}
@@ -2070,7 +2070,7 @@ eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int *warn)
  * Compares the parameter types of two prototypes.
  */
 static int
-eqargs(type_t *tp1, type_t *tp2, int *warn)
+eqargs(type_t *tp1, type_t *tp2, int *dowarn)
 {
 	sym_t	*a1, *a2;
 
@@ -2082,7 +2082,7 @@ eqargs(type_t *tp1, type_t *tp2, int *warn)
 
 	while (a1 != NULL && a2 != NULL) {
 
-		if (eqtype(a1->s_type, a2->s_type, 1, 0, warn) == 0)
+		if (eqtype(a1->s_type, a2->s_type, 1, 0, dowarn) == 0)
 			return (0);
 
 		a1 = a1->s_nxt;
@@ -2104,21 +2104,21 @@ eqargs(type_t *tp1, type_t *tp2, int *warn)
  *	   is applied on it
  */
 static int
-mnoarg(type_t *tp, int *warn)
+mnoarg(type_t *tp, int *dowarn)
 {
 	sym_t	*arg;
 	tspec_t	t;
 
 	if (tp->t_vararg) {
-		if (warn != NULL)
-			*warn = 1;
+		if (dowarn != NULL)
+			*dowarn = 1;
 	}
 	for (arg = tp->t_args; arg != NULL; arg = arg->s_nxt) {
 		if ((t = arg->s_type->t_tspec) == FLOAT ||
 		    t == CHAR || t == SCHAR || t == UCHAR ||
 		    t == SHORT || t == USHORT) {
-			if (warn != NULL)
-				*warn = 1;
+			if (dowarn != NULL)
+				*dowarn = 1;
 		}
 	}
 	return (1);
@@ -2133,7 +2133,7 @@ chkosdef(sym_t *rdsym, sym_t *dsym)
 {
 	sym_t	*args, *pargs, *arg, *parg;
 	int	narg, nparg, n;
-	int	warn, msg;
+	int	dowarn, msg;
 
 	args = rdsym->s_args;
 	pargs = dsym->s_type->t_args;
@@ -2156,12 +2156,12 @@ chkosdef(sym_t *rdsym, sym_t *dsym)
 	parg = pargs;
 	n = 1;
 	while (narg--) {
-		warn = 0;
+		dowarn = 0;
 		/*
 		 * If it does not match due to promotion and sflag is
 		 * not set we print only a warning.
 		 */
-		if (!eqtype(arg->s_type, parg->s_type, 1, 1, &warn) || warn) {
+		if (!eqtype(arg->s_type, parg->s_type, 1, 1, &dowarn) || dowarn) {
 			/* prototype does not match old-style def., arg #%d */
 			error(299, n);
 			msg = 1;
@@ -2416,16 +2416,16 @@ static int
 chkptdecl(sym_t *arg, sym_t *parg)
 {
 	type_t	*tp, *ptp;
-	int	warn, msg;
+	int	dowarn, msg;
 
 	tp = arg->s_type;
 	ptp = parg->s_type;
 
 	msg = 0;
-	warn = 0;
+	dowarn = 0;
 
-	if (!eqtype(tp, ptp, 1, 1, &warn)) {
-		if (eqtype(tp, ptp, 1, 0, &warn)) {
+	if (!eqtype(tp, ptp, 1, 1, &dowarn)) {
+		if (eqtype(tp, ptp, 1, 0, &dowarn)) {
 			/* type does not match prototype: %s */
 			msg = gnuism(58, arg->s_name);
 		} else {
@@ -2433,7 +2433,7 @@ chkptdecl(sym_t *arg, sym_t *parg)
 			error(58, arg->s_name);
 			msg = 1;
 		}
-	} else if (warn) {
+	} else if (dowarn) {
 		/* type does not match prototype: %s */
 		(*(sflag ? error : warning))(58, arg->s_name);
 		msg = 1;
@@ -2589,7 +2589,7 @@ decl1loc(sym_t *dsym, int initflg)
 static void
 ledecl(sym_t *dsym)
 {
-	int	eqt, warn;
+	int	eqt, dowarn;
 	sym_t	*esym;
 
 	/* look for a symbol with the same name */
@@ -2612,10 +2612,10 @@ ledecl(sym_t *dsym)
 		return;
 	}
 
-	warn = 0;
-	eqt = eqtype(esym->s_type, dsym->s_type, 0, 0, &warn);
+	dowarn = 0;
+	eqt = eqtype(esym->s_type, dsym->s_type, 0, 0, &dowarn);
 
-	if (!eqt || warn) {
+	if (!eqt || dowarn) {
 		if (esym->s_scl == EXTERN) {
 			/* inconsistent redeclaration of extern: %s */
 			warning(90, dsym->s_name);
@@ -2644,29 +2644,29 @@ ledecl(sym_t *dsym)
 static int
 chkinit(sym_t *sym)
 {
-	int	err;
+	int	erred;
 
-	err = 0;
+	erred = 0;
 
 	if (sym->s_type->t_tspec == FUNC) {
 		/* cannot initialize function: %s */
 		error(24, sym->s_name);
-		err = 1;
+		erred = 1;
 	} else if (sym->s_scl == TYPEDEF) {
 		/* cannot initialize typedef: %s */
 		error(25, sym->s_name);
-		err = 1;
+		erred = 1;
 	} else if (sym->s_scl == EXTERN && sym->s_def == DECL) {
 		/* cannot initialize "extern" declaration: %s */
 		if (dcs->d_ctx == EXTERN) {
 			warning(26, sym->s_name);
 		} else {
 			error(26, sym->s_name);
-			err = 1;
+			erred = 1;
 		}
 	}
 
-	return (err);
+	return (erred);
 }
 
 /*
