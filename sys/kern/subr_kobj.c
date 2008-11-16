@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.29 2008/11/16 14:55:42 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.30 2008/11/16 16:23:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.29 2008/11/16 14:55:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.30 2008/11/16 16:23:58 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -143,7 +143,7 @@ struct kobj {
 };
 
 static int	kobj_relocate(kobj_t, bool);
-static int	kobj_checksyms(kobj_t);
+static int	kobj_checksyms(kobj_t, bool);
 static void	kobj_error(const char *, ...);
 static int	kobj_read(kobj_t, void **, size_t, off_t);
 static int	kobj_read_bits(kobj_t, void *, size_t, off_t);
@@ -626,7 +626,7 @@ kobj_load(kobj_t ko)
 	 * Perform local relocations only.  Relocations relating to global
 	 * symbols will be done by kobj_affix().
 	 */
-	error = kobj_checksyms(ko);
+	error = kobj_checksyms(ko, false);
 	if (error == 0) {
 		error = kobj_relocate(ko, true);
 	}
@@ -724,17 +724,23 @@ kobj_affix(kobj_t ko, const char *name)
 
 	strlcpy(ko->ko_name, name, sizeof(ko->ko_name));
 
+	/* Cache addresses of undefined symbols. */
+	error = kobj_checksyms(ko, true);
+
 	/* Now do global relocations. */
-	error = kobj_relocate(ko, false);
+	if (error == 0)
+		error = kobj_relocate(ko, false);
 
 	/*
 	 * Now that we know the name, register the symbol table.
 	 * Do after global relocations because ksyms will pack
 	 * the table.
 	 */
-	ksyms_modload(ko->ko_name, ko->ko_symtab, ko->ko_symcnt *
-	    sizeof(Elf_Sym), ko->ko_strtab, ko->ko_strtabsz);
-	ko->ko_ksyms = true;
+	if (error == 0) {
+		ksyms_modload(ko->ko_name, ko->ko_symtab, ko->ko_symcnt *
+		    sizeof(Elf_Sym), ko->ko_strtab, ko->ko_strtabsz);
+		ko->ko_ksyms = true;
+	}
 
 	/* Jettison unneeded memory post-link. */
 	kobj_jettison(ko);
@@ -897,11 +903,11 @@ kobj_findbase(kobj_t ko, int sec)
 /*
  * kobj_checksyms:
  *
- *	Scan symbol table for duplicates and resolve references to
+ *	Scan symbol table for duplicates or resolve references to
  *	exernal symbols.
  */
 static int
-kobj_checksyms(kobj_t ko)
+kobj_checksyms(kobj_t ko, bool undefined)
 {
 	unsigned long rval;
 	Elf_Sym *sym, *ms;
@@ -915,6 +921,9 @@ kobj_checksyms(kobj_t ko)
 		if (ELF_ST_BIND(sym->st_info) != STB_GLOBAL ||
 		    sym->st_name == 0)
 			continue;
+		if (undefined != (sym->st_shndx == SHN_UNDEF)) {
+			continue;
+		}
 
 		/*
 		 * Look it up.  Don't need to lock, as it is known that
@@ -924,7 +933,7 @@ kobj_checksyms(kobj_t ko)
 		name = ko->ko_strtab + sym->st_name;
 		if (ksyms_getval_unlocked(NULL, name, &rval,
 		    KSYMS_EXTERN) != 0) {
-			if (sym->st_shndx == SHN_UNDEF) {
+			if (undefined) {
 				kobj_error("symbol `%s' not found", name);
 				error = ENOEXEC;
 			}
@@ -932,7 +941,7 @@ kobj_checksyms(kobj_t ko)
 		}
 
 		/* Save values of undefined globals. */
-		if (sym->st_shndx == SHN_UNDEF) {
+		if (undefined) {
 			sym->st_value = (Elf_Addr)rval;
 			continue;
 		}
