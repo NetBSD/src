@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.44 2008/11/16 15:28:15 ad Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.45 2008/11/16 15:29:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.44 2008/11/16 15:28:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.45 2008/11/16 15:29:53 ad Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -81,19 +81,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.44 2008/11/16 15:28:15 ad Exp $");
 #define _KSYMS_PRIVATE
 
 #include <sys/param.h>
-#include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/exec.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/kmem.h>
 #include <sys/proc.h>
-#include <sys/module.h>
 #include <sys/atomic.h>
 #include <sys/ksyms.h>
-
-#include <lib/libkern/libkern.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>
