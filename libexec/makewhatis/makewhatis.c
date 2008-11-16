@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.45 2008/11/16 06:17:05 dholland Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.46 2008/11/16 06:26:12 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: makewhatis.c,v 1.45 2008/11/16 06:17:05 dholland Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.46 2008/11/16 06:26:12 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: makewhatis.c,v 1.45 2008/11/16 06:17:05 dholland Exp $");
 
 typedef struct manpagestruct manpage;
 struct manpagestruct {
-	manpage *mp_left,*mp_right;
+	manpage *mp_left, *mp_right;
 	ino_t	 mp_inode;
 	size_t	 mp_sdoff;
 	size_t	 mp_sdlen;
@@ -80,14 +80,14 @@ struct manpagestruct {
 
 typedef struct whatisstruct whatis;
 struct whatisstruct {
-	whatis	*wi_left,*wi_right;
+	whatis	*wi_left, *wi_right;
 	char	*wi_data;
 	char	wi_prefix[1];
 };
 
 int		main(int, char * const *);
 static char	*findwhitespace(char *);
-static char	*strmove(char *,char *);
+static char	*strmove(char *, char *);
 static char	*GetS(gzFile, char *, size_t);
 static int	pathnamesection(const char *, const char *);
 static int	manpagesection(char *);
@@ -102,7 +102,7 @@ static int	manpreprocess(char *);
 static char	*nroff(const char *, gzFile *);
 static char	*parsemanpage(const char *, gzFile *, int);
 static char	*getwhatisdata(char *);
-static void	processmanpages(manpage **,whatis **);
+static void	processmanpages(manpage **, whatis **);
 static void	dumpwhatis(FILE *, whatis *);
 static int	makewhatis(char * const *manpath);
 
@@ -160,10 +160,10 @@ main(int argc, char *const *argv)
 	}
 	argc -= optind;
 	argv += optind;
-			
+
 	if (argc >= 1) {
 		manpath = &argv[0];
-	
+
 	    mkwhatis:
 		return makewhatis(manpath);
 	}
@@ -222,7 +222,7 @@ main(int argc, char *const *argv)
 				jobs++;
 				break;
 			}
-			
+
 		}
 
 		globfree(&pg);
@@ -235,7 +235,7 @@ main(int argc, char *const *argv)
 			retval = EXIT_FAILURE;
 		jobs--;
 	}
-				
+
 	return retval;
 }
 
@@ -277,9 +277,11 @@ makewhatis(char * const * manpath)
 						if (lsl == NULL)
 							lsl = s;
 					}
-					
-					/* Include trailing '/', so we get
-					 * 'arch/'. */
+
+					/*
+					 * Include trailing '/', so we get
+					 * 'arch/'.
+					 */
 					sdoff = s + 1 - fe->fts_path;
 					sdlen = lsl - s + 1;
 				} else {
@@ -418,8 +420,8 @@ findwhitespace(char *str)
 	return str;
 }
 
-static char
-*strmove(char *dest,char *src)
+static char *
+strmove(char *dest, char *src)
 {
 	return memmove(dest, src, strlen(src) + 1);
 }
@@ -498,7 +500,7 @@ createsectionstring(char *section_id)
 }
 
 static void
-addmanpage(manpage **tree,ino_t inode,char *name, size_t sdoff, size_t sdlen)
+addmanpage(manpage **tree, ino_t inode, char *name, size_t sdoff, size_t sdlen)
 {
 	manpage *mp;
 
@@ -1115,7 +1117,7 @@ processmanpages(manpage **source, whatis **dest)
 		char *data;
 
 		if (mp->mp_left != NULL)
-			processmanpages(&mp->mp_left,dest);
+			processmanpages(&mp->mp_left, dest);
 
 		if ((data = getwhatisdata(mp->mp_name)) != NULL) {
 			/* Pass eventual directory prefix to addwhatis() */
