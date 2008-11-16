@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.379 2008/11/14 23:13:02 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.380 2008/11/16 18:44:07 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.379 2008/11/14 23:13:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.380 2008/11/16 18:44:07 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.379 2008/11/14 23:13:02 ad Exp $"
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 #include <sys/module.h>
+#include <sys/buf.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
