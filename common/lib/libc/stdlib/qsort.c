@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.15 2008/03/11 18:04:59 rmind Exp $	*/
+/*	$NetBSD: qsort.c,v 1.1 2008/11/16 15:01:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,15 +34,21 @@
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qsort.c,v 1.15 2008/03/11 18:04:59 rmind Exp $");
+__RCSID("$NetBSD: qsort.c,v 1.1 2008/11/16 15:01:26 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
+#ifdef _LIBC
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
+#endif
+
+#ifdef _KERNEL
+#include <lib/libkern/libkern.h>
+#endif
 
 static inline char	*med3 __P((char *, char *, char *,
     int (*)(const void *, const void *)));
