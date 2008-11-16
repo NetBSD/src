@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.15 2008/11/14 11:57:07 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.16 2008/11/16 18:37:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,6 +29,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/buf.h>
 #include <sys/kmem.h>
 #include <sys/lock.h>
 #include <sys/vnode.h>
