@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.28 2008/11/16 11:26:28 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.29 2008/11/16 14:55:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.28 2008/11/16 11:26:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.29 2008/11/16 14:55:42 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -927,8 +927,8 @@ kobj_checksyms(kobj_t ko)
 			if (sym->st_shndx == SHN_UNDEF) {
 				kobj_error("symbol `%s' not found", name);
 				error = ENOEXEC;
-				continue;
 			}
+			continue;
 		}
 
 		/* Save values of undefined globals. */
