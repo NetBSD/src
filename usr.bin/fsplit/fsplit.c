@@ -40,13 +40,14 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.23 2008/11/16 05:20:11 dholland Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.24 2008/11/16 05:30:24 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <stdbool.h>
@@ -188,9 +189,13 @@ main(int argc, char **argv)
 				struct stat sbuf;
 
 				if (stat(name, &sbuf) < 0) {
-					link(x, name);
-					unlink(x);
-					printf("%s\n", name);
+					if (rename(x, name) < 0) {
+						warn("%s: rename", x);
+						printf("%s left in %s\n",
+						    name, x);
+					} else {
+						printf("%s\n", name);
+					}
 					continue;
 				} else if (strcmp(name, x) == 0) {
 					printf("%s\n", x);
@@ -223,16 +228,18 @@ saveit(const char *name)
 {
 	int i;
 	char fname[50];
-	char *fptr = fname;
+	size_t fnamelen;
 
 	if (numextonly == 0) {
 		return 1;
 	}
-	while (*name) {
-		*fptr++ = *name++;
-	}
-	*--fptr = '\0';
-	*--fptr = '\0';
+	strlcpy(fname, name, sizeof(fname));
+	fnamelen = strlen(fname);
+	assert(fnamelen > 2);
+	assert(fname[fnamelen-2] = '.');
+	assert(fname[fnamelen-1] = 'f');
+	fname[fnamelen-2] = '\0';
+
 	for (i = 0; i < numextonly; i++) { 
 		if (strcmp(fname, extonly[i].name) == 0) {
 			extonly[i].found = true;
@@ -332,10 +339,7 @@ lname(char *s, size_t l)
 	if (buf[0] == 'c' || buf[0] == 'C' || buf[0] == '*') {
 		return 0;
 	}
-	ptr = buf;
-	while (*ptr == ' ' || *ptr == '\t') {
-		ptr++;
-	}
+	ptr = skipws(buf);
 	if (*ptr == '\n') {
 		return 0;
 	}
