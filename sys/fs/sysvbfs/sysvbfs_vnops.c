@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.19 2008/04/30 14:07:14 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.20 2008/11/16 19:34:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.19 2008/04/30 14:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.20 2008/11/16 19:34:30 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.19 2008/04/30 14:07:14 ad Exp $"
 #include <sys/unistd.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
+#include <sys/buf.h>
 
 #include <fs/sysvbfs/sysvbfs.h>
 #include <fs/sysvbfs/bfs.h>
