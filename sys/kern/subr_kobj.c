@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.27 2008/11/14 22:00:23 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.28 2008/11/16 11:26:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.27 2008/11/14 22:00:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.28 2008/11/16 11:26:28 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -143,7 +143,7 @@ struct kobj {
 };
 
 static int	kobj_relocate(kobj_t, bool);
-static int	kobj_checkdup(kobj_t);
+static int	kobj_checksyms(kobj_t);
 static void	kobj_error(const char *, ...);
 static int	kobj_read(kobj_t, void **, size_t, off_t);
 static int	kobj_read_bits(kobj_t, void *, size_t, off_t);
@@ -626,7 +626,7 @@ kobj_load(kobj_t ko)
 	 * Perform local relocations only.  Relocations relating to global
 	 * symbols will be done by kobj_affix().
 	 */
-	error = kobj_checkdup(ko);
+	error = kobj_checksyms(ko);
 	if (error == 0) {
 		error = kobj_relocate(ko, true);
 	}
@@ -836,8 +836,6 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 {
 	const Elf_Sym *sym;
 	const char *symbol;
-	int error;
-	u_long addr;
 
 	/* Don't even try to lookup the symbol if the index is bogus. */
 	if (symidx >= ko->ko_symcnt)
@@ -847,7 +845,7 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 
 	/* Quick answer if there is a definition included. */
 	if (sym->st_shndx != SHN_UNDEF) {
-		return sym->st_value;
+		return (uintptr_t)sym->st_value;
 	}
 
 	/* If we get here, then it is undefined and needs a lookup. */
@@ -867,16 +865,7 @@ kobj_sym_lookup(kobj_t ko, uintptr_t symidx)
 			return 0;
 		}
 
-		/*
-		 * Don't need to lock, as it is known that the symbol
-		 * tables aren't going to change (we hold module_lock).
-		 */
-		error = ksyms_getval(NULL, symbol, &addr, KSYMS_ANY);
-		if (error != 0) {
-			kobj_error("symbol `%s' not found", symbol);
-			return (uintptr_t)0;
-		}
-		return (uintptr_t)addr;
+		return (uintptr_t)sym->st_value;
 
 	case STB_WEAK:
 		kobj_error("weak symbols not supported\n");
@@ -906,33 +895,50 @@ kobj_findbase(kobj_t ko, int sec)
 }
 
 /*
- * kobj_checkdup:
+ * kobj_checksyms:
  *
- *	Scan symbol table for duplicates.
+ *	Scan symbol table for duplicates and resolve references to
+ *	exernal symbols.
  */
 static int
-kobj_checkdup(kobj_t ko)
+kobj_checksyms(kobj_t ko)
 {
 	unsigned long rval;
 	Elf_Sym *sym, *ms;
 	const char *name;
-	bool dup;
+	int error;
 
-	dup = false;
+	error = 0;
+
 	for (ms = (sym = ko->ko_symtab) + ko->ko_symcnt; sym < ms; sym++) {
 		/* Check validity of the symbol. */
 		if (ELF_ST_BIND(sym->st_info) != STB_GLOBAL ||
 		    sym->st_name == 0)
 			continue;
 
-		/* Check if the symbol already exists */
+		/*
+		 * Look it up.  Don't need to lock, as it is known that
+		 * the symbol tables aren't going to change (we hold
+		 * module_lock).
+		 */
 		name = ko->ko_strtab + sym->st_name;
-		if (ksyms_getval(NULL, name, &rval, KSYMS_EXTERN) != 0) {
+		if (ksyms_getval_unlocked(NULL, name, &rval,
+		    KSYMS_EXTERN) != 0) {
+			if (sym->st_shndx == SHN_UNDEF) {
+				kobj_error("symbol `%s' not found", name);
+				error = ENOEXEC;
+				continue;
+			}
+		}
+
+		/* Save values of undefined globals. */
+		if (sym->st_shndx == SHN_UNDEF) {
+			sym->st_value = (Elf_Addr)rval;
 			continue;
 		}
 
-		/* Check (and complain) about differing values */
-		if (sym->st_value == rval || sym->st_shndx == SHN_UNDEF) {
+		/* Check (and complain) about differing values. */
+		if (sym->st_value == rval) {
 			continue;
 		}
 		if (strcmp(name, "_bss_start") == 0 ||
@@ -948,10 +954,10 @@ kobj_checkdup(kobj_t ko)
 		    	continue;
 		}
 		kobj_error("global symbol `%s' redefined\n", name);
-		dup = true;
+		error = ENOEXEC;
 	}
 
-	return dup ? EEXIST : 0;
+	return error;
 }
 
 /*
