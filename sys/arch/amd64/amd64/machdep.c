@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.110 2008/11/14 15:03:44 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.111 2008/11/16 20:13:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.110 2008/11/14 15:03:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2008/11/16 20:13:50 bouyer Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1460,6 +1460,7 @@ init_x86_64(paddr_t first_avail)
 		    (x == 3 || x == 4) ? SEL_UPL : SEL_KPL,
 		    GSEL(GCODE_SEL, SEL_KPL));
 #else /* XEN */
+		pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
 		xen_idt[xen_idt_idx].vector = x;
 
 		switch (x) {
@@ -1494,10 +1495,8 @@ init_x86_64(paddr_t first_avail)
 	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 	xen_idt[xen_idt_idx].address =  (unsigned long) &IDTVEC(osyscall);
 	xen_idt_idx++;
-#endif /* XEN */
-#ifdef XEN
 	pmap_changeprot_local(idt_vaddr, VM_PROT_READ);
-#endif
+#endif /* XEN */
 	kpreempt_enable();
 
 	setregion(&region, gdtstore, DYNSEL_START - 1);
