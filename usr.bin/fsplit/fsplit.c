@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.17 2008/11/16 04:13:45 dholland Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.18 2008/11/16 04:21:24 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,6 @@ static int	extrknt = -1;
 static bool	extrfnd[100];
 static char	extrbuf[1000];
 static char	*extrnames[100];
-static struct stat sbuf;
 
 #define trim(p)	while (*p == ' ' || *p == '\t') p++
 
@@ -192,6 +191,8 @@ main(int argc, char **argv)
 		if (nflag) {
 			/* rename the file */
 			if (saveit(name)) {
+				struct stat sbuf;
+
 				if (stat(name, &sbuf) < 0) {
 					link(x, name);
 					unlink(x);
@@ -250,6 +251,7 @@ saveit(const char *name)
 static void
 get_name(char *name, int letters)
 {
+	struct stat sbuf;
 	char *ptr;
 
 	while (stat(name, &sbuf) >= 0) {
