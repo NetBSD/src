@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.20 2008/10/24 18:02:58 jym Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.21 2008/11/17 14:12:52 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.20 2008/10/24 18:02:58 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.21 2008/11/17 14:12:52 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.20 2008/10/24 18:02:58 jym Exp 
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/workqueue.h>
+#include <sys/buf.h>
 
 #include <xen/xen.h>
 #include <xen/xen_shm.h>
