@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.5 2008/11/10 13:46:05 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.6 2008/11/17 07:13:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.5 2008/11/10 13:46:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.6 2008/11/17 07:13:36 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -658,7 +658,12 @@ cpuid(void)
 		printf("WARNING: PDC_MODEL_CPUID error %d\n", error);
 #endif
 	} else {
-
+#ifdef DEBUG
+		printf("%s: cpuid.version  = %x\n", __func__,
+		    pdc_cpuid.version);
+		printf("%s: cpuid.revision = %x\n", __func__,
+		    pdc_cpuid.revision);
+#endif
 		/* XXXNH why? */
 		/* patch for old 8200 */
 		if (pdc_cpuid.version == HPPA_CPU_PCXU &&
@@ -666,9 +671,6 @@ cpuid(void)
 			pdc_cpuid.version = HPPA_CPU_PCXUP;
 
 		cpu_type = pdc_cpuid.version;
-#ifdef DEBUG
-		printf("cpu_type %d\n", pdc_cpuid.version);
-#endif
 	}
 
 	/* locate coprocessors and SFUs */
@@ -745,8 +747,7 @@ cpuid(void)
 		else if (pmap_hptsize && pmap_hptsize < pdc_hwtlb.min_size)
 			pmap_hptsize = pdc_hwtlb.min_size;
 #ifdef DEBUG
-		printf("pdc_hwtlb.min_size 0x%x\n", pdc_hwtlb.min_size);
-		printf("pdc_hwtlb.max_size 0x%x\n", pdc_hwtlb.max_size);
+		printf("%s: pmap_hptsize 0x%x\n", __func__, pmap_hptsize);
 #endif
 	} else {
 #ifdef DEBUG
