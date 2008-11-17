@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.18.1 2008/10/27 08:02:41 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.18.2 2008/11/17 11:02:09 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -62,12 +62,6 @@ typedef struct pmap *pmap_t;
 #define	HPPA_SID_KERNEL	0
 #endif
 #define	HPPA_PID_KERNEL	2
-
-#if 0
-#define KERNEL_ACCESS_ID 1
-#define KERNEL_TEXT_PROT (TLB_AR_KRX | (KERNEL_ACCESS_ID << 1))
-#define KERNEL_DATA_PROT (TLB_AR_KRW | (KERNEL_ACCESS_ID << 1))
-#endif
 
 struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pv_entry	*pv_next;
