@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.15 2008/05/04 17:06:09 xtraeme Exp $ */
+/* $NetBSD: ciphy.c,v 1.16 2008/11/17 03:04:27 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.15 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.16 2008/11/17 03:04:27 dyoung Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -142,9 +142,6 @@ ciphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
