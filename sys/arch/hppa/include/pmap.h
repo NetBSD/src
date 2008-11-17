@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.18.2 2008/11/17 11:02:09 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.18.3 2008/11/17 11:06:21 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -55,6 +55,8 @@ struct pmap {
 	struct pmap_statistics	pm_stats;
 };
 typedef struct pmap *pmap_t;
+
+#define PMAP_NC		0x100
 
 #define	HPPA_MAX_PID	0xfffa
 #define	HPPA_SID_MAX	0x7ffd
