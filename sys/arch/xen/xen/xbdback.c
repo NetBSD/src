@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.34 2008/10/21 15:46:32 cegger Exp $      */
+/*      $NetBSD: xbdback.c,v 1.35 2008/11/17 16:32:04 cegger Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.34 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.35 2008/11/17 16:32:04 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.34 2008/10/21 15:46:32 cegger Exp $");
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/workqueue.h>
+#include <sys/buf.h>
 
 #include <machine/pmap.h>
 #include <xen/hypervisor.h>
