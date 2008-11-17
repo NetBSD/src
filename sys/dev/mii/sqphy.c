@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.47 2008/05/04 17:06:10 xtraeme Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.48 2008/11/17 03:04:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.47 2008/05/04 17:06:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sqphy.c,v 1.48 2008/11/17 03:04:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,9 +165,6 @@ sqphyattach(device_t parent, device_t self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
