@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.63 2008/11/12 12:36:02 ad Exp $
+# $NetBSD: NET4501,v 1.64 2008/11/17 11:18:30 is Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.63 $"
+#ident 		"NET4501-$Revision: 1.64 $"
 
 maxusers	32		# estimated number of users
 
@@ -263,13 +263,13 @@ nsphyter* at mii? phy ?			# NS83843 PHYs
 pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-#pseudo-device	ppp			# Point-to-Point Protocol
-#pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
+pseudo-device	ppp			# Point-to-Point Protocol
+pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
 #pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
-#pseudo-device	tap			# virtual Ethernet
-#pseudo-device	gre			# generic L3 over IP tunnel
+pseudo-device	tap			# virtual Ethernet
+pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
