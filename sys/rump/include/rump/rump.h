@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.34 2008/10/07 23:21:02 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.1 2008/11/17 08:53:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
