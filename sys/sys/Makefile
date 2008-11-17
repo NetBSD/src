@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.115 2008/11/12 12:36:28 ad Exp $
+#	$NetBSD: Makefile,v 1.116 2008/11/17 08:57:23 pooka Exp $
 
 .include <bsd.sys.mk>
 
@@ -55,6 +55,6 @@ INCSYMLINKS=\
 INCSYMLINKS+=	../soundcard.h ${INCSDIR}/soundcard.h
 
 namei: namei.src gennameih.awk
-	${TOOL_AWK} -f gennameih.awk < namei.src > namei.h
+	${TOOL_AWK} -f gennameih.awk < namei.src
 
 .include <bsd.kinc.mk>
