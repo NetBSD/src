@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.54 2008/11/17 08:41:28 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.55 2008/11/17 08:43:41 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -412,7 +412,12 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct lwp *l;
 	int rv;
 
-	/* we don't want a module unload thread */
+	/*
+	 * We don't want a module unload thread.
+	 * (XXX: yes, this is a kludge too, and the kernel should
+	 * have a more flexible method for configuring which threads
+	 * we want).
+	 */
 	if (strcmp(fmt, "modunload") == 0) {
 		return 0;
 	}
