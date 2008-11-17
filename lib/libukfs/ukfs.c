@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.11 2008/11/07 00:18:33 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.12 2008/11/17 13:22:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -262,10 +262,10 @@ ukfs_release(struct ukfs *fs, int flags)
 }
 
 /* don't need vn_lock(), since we don't have VXLOCK */
-#define VLE(a) rump_vp_lock_exclusive(a)
-#define VLS(a) rump_vp_lock_shared(a)
-#define VUL(a) rump_vp_unlock(a)
-#define AUL(a) assert(rump_vp_islocked(a) == 0)
+#define VLE(a) RUMP_VOP_LOCK(a, RUMP_LK_EXCLUSIVE)
+#define VLS(a) RUMP_VOP_LOCK(a, RUMP_LK_SHARED)
+#define VUL(a) RUMP_VOP_UNLOCK(a, 0)
+#define AUL(a) assert(RUMP_VOP_ISLOCKED(a) == 0)
 
 #define STDCALL(ukfs, thecall)						\
 	int rv = 0;							\
