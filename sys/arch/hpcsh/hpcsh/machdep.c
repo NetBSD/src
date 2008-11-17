@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2008/11/12 12:36:01 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64 2008/11/17 02:05:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2008/11/12 12:36:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2008/11/17 02:05:13 uwe Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2008/11/12 12:36:01 ad Exp $");
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -638,3 +639,14 @@ intc_intr(int ssr, int spc, int ssp)
 		__dbg_heart_beat(HEART_BEAT_BLUE);
 	}
 }
+
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */

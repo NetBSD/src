@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2008/11/12 12:36:02 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2008/11/17 01:55:00 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2008/11/12 12:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2008/11/17 01:55:00 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2008/11/12 12:36:02 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/ksyms.h>
 #include <sys/device.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
@@ -505,3 +506,14 @@ InitializeBsc(void)
 	_reg_write_2(SH4_FRQCR, FRQCR_VAL);
 }
 #endif /* !DONT_INIT_BSC */
+
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */
