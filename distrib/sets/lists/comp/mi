@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1206 2008/11/12 13:17:27 pooka Exp $
+#	$NetBSD: mi,v 1.1207 2008/11/17 08:56:56 pooka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1831,6 +1831,7 @@
 ./usr/include/rump/p2k.h			comp-puffs-include
 ./usr/include/rump/rump.h			comp-c-include
 ./usr/include/rump/rump_syscalls.h		comp-c-include
+./usr/include/rump/rump_namei.h			comp-c-include
 ./usr/include/rump/rumpdefs.h			comp-c-include
 ./usr/include/rump/rumpuser.h			comp-c-include
 ./usr/include/rump/rumpvnode_if.h		comp-c-include
