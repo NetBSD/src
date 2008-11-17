@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.644.4.1 2008/11/17 18:53:54 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.4.1 2008/11/17 18:53:54 snj Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -538,7 +538,7 @@ i386_proc0_tss_ldt_init()
 	pcb = &l->l_addr->u_pcb;
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_cr0 = rcr0();
+	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	pcb->pcb_esp0 = USER_TO_UAREA(l->l_addr) + KSTACK_SIZE - 16;
 	pcb->pcb_iopl = SEL_KPL;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_esp0 - 1;
