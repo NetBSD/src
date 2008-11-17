@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.6 2008/11/15 10:04:31 joerg Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.7 2008/11/17 19:31:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -97,9 +97,6 @@ extern int wapbl_debug_print;
  * The journal header as well as its records are marked by a 32bit
  * type tag and length for ease of parsing.  Journal records are
  * padded so as to fall on journal device block boundaries.
- * (XXX i think there is currently a bug wrt WC_BLOCKS not ending
- * correctly on a journal device block boundary. this would need
- * to be fixed if the journal blocksize does not match filesystem.)
  */
 
 /*

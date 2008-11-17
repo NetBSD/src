@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.6 2008/11/11 08:29:58 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.7 2008/11/17 19:31:47 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.6 2008/11/11 08:29:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.7 2008/11/17 19:31:47 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -1922,6 +1922,7 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 	struct buf *bp;
 	off_t off = *offp;
 	int error;
+	size_t padding;
 
 	KASSERT(rw_write_held(&wl->wl_rwlock));
 
@@ -1962,9 +1963,17 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 			wc->wc_blkcount++;
 			bp = LIST_NEXT(bp, b_wapbllist);
 		}
+		if (wc->wc_len % blocklen != 0) {
+			printf("Padding WAPBL record...");
+			padding = blocklen - wc->wc_len % blocklen;
+			wc->wc_len += padding;
+		} else {
+			padding = 0;
+		}
+
 		WAPBL_PRINTF(WAPBL_PRINT_WRITE,
-		    ("wapbl_write_blocks: len = %u off = %"PRIdMAX"\n",
-		    wc->wc_len, (intmax_t)off));
+		    ("wapbl_write_blocks: len = %u (padding %zu) off = %"PRIdMAX"\n",
+		    wc->wc_len, padding, (intmax_t)off));
 
 		error = wapbl_circ_write(wl, wc, blocklen, &off);
 		if (error)
@@ -1977,6 +1986,16 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 			if (error)
 				return error;
 			bp = LIST_NEXT(bp, b_wapbllist);
+		}
+		if (padding) {
+			void *zero;
+			
+			zero = wapbl_malloc(padding);
+			memset(zero, 0, padding);
+			error = wapbl_circ_write(wl, zero, padding, &off);
+			wapbl_free(zero);
+			if (error)
+				return error;
 		}
 	}
 	*offp = off;
