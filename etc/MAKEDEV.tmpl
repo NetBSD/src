@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.115 2008/11/12 13:14:28 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.116 2008/11/17 12:54:57 uch Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1662,12 +1662,14 @@ leo*)
 
 scif*)
 	unit=${i#scif}
-	mkdev scif$unit c %scif_chr% $unit "" "" $u_uucp
+	mkdev scif$unit c %scif_chr% $(($unit + $dialin )) "" "" $u_uucp
+	mkdev dscif$unit c %scif_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
 sci*)
 	unit=${i#sci}
-	mkdev sci$unit c %sci_chr% $unit "" "" $u_uucp
+	mkdev sci$unit c %sci_chr% $(($unit + $dialin )) "" "" $u_uucp
+	mkdev dsci$unit c %sci_chr% $(($unit + $dialout)) "" "" $u_uucp
 	;;
 
 maple*)
