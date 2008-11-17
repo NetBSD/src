@@ -1,7 +1,7 @@
-/*	$NetBSD: obio_wdc.c,v 1.1 2008/11/09 08:59:05 cliff Exp $	*/
+/*	$NetBSD: obio_wdc.c,v 1.2 2008/11/17 23:51:30 cliff Exp $	*/
 
-/* adapted from:
- *	$NetBSD: obio_wdc.c,v 1.1 2008/11/09 08:59:05 cliff Exp $
+/* adapted from iq31244/wdc_obio.c:
+ *	NetBSD: wdc_obio.c,v 1.5 2008/04/28 20:23:16 martin Exp
  */
 
 /*-
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdc.c,v 1.1 2008/11/09 08:59:05 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdc.c,v 1.2 2008/11/17 23:51:30 cliff Exp $");
 
 #include "locators.h"
 
@@ -146,12 +146,6 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	/* 
-	 * The interrupt line is controlled by a jumper.  We can't detect 
-	 * this, except by allowing a request to time out, so assume that
-	 * if the config file hasn't specified the IRQ, then the jumper isn't
-	 * fitted.
-	 */
 	if (obio->obio_intr != OBIOCF_INTR_DEFAULT)
 		sc->sc_ih = intr_establish(obio->obio_intr, IPL_BIO, IST_LEVEL_HIGH,
 			wdcintr, &sc->ata_channel);
