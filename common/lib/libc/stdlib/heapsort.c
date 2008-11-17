@@ -1,4 +1,4 @@
-/*	$NetBSD: heapsort.c,v 1.1 2008/11/16 16:15:58 ad Exp $	*/
+/*	$NetBSD: heapsort.c,v 1.2 2008/11/17 09:56:48 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,15 +46,15 @@
 #if 0
 static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: heapsort.c,v 1.1 2008/11/16 16:15:58 ad Exp $");
+__RCSID("$NetBSD: heapsort.c,v 1.2 2008/11/17 09:56:48 jnemeth Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
 
 #include <lib/libkern/libkern.h>
-#else	/* _KERNEL */
+#else	/* _KERNEL || _STANDALONE */
 #include "namespace.h"
 #include <sys/types.h>
 
@@ -70,7 +70,7 @@ __RCSID("$NetBSD: heapsort.c,v 1.1 2008/11/16 16:15:58 ad Exp $");
 #ifdef __weak_alias
 __weak_alias(heapsort,_heapsort)
 #endif
-#endif	/* _KERNEL */
+#endif	/* _KERNEL || _STANDALONE */
 
 /*
  * Swap two areas of size number of bytes.  Although qsort(3) permits random
@@ -167,7 +167,7 @@ __weak_alias(heapsort,_heapsort)
  * a data set that will trigger the worst case is nonexistent.  Heapsort's
  * only advantage over quicksort is that it requires little additional memory.
  */
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 int
 kheapsort(void *vbase, size_t nmemb, size_t size,
     int (*compar)(const void *, const void *), void *k)
@@ -180,7 +180,7 @@ heapsort(void *vbase, size_t nmemb, size_t size,
 	size_t cnt, i, j, l;
 	char tmp, *tmp1, *tmp2;
 	char *base, *p, *t;
-#ifndef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 	char *k;
 #endif
 
@@ -191,13 +191,13 @@ heapsort(void *vbase, size_t nmemb, size_t size,
 		return (0);
 
 	if (!size) {
-#ifndef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 		errno = EINVAL;
 #endif
 		return (-1);
 	}
 
-#ifndef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 	if ((k = malloc(size)) == NULL)
 		return (-1);
 #endif
@@ -222,7 +222,7 @@ heapsort(void *vbase, size_t nmemb, size_t size,
 		--nmemb;
 		SELECT(i, j, nmemb, t, p, size, k, cnt, tmp1, tmp2);
 	}
-#ifndef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 	free(k);
 #endif
 	return (0);
