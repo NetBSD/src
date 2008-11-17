@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.5 2008/11/10 13:46:05 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.6 2008/11/17 07:18:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.5 2008/11/10 13:46:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.6 2008/11/17 07:18:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1278,7 +1278,7 @@ enter:
 
 /*
  * pmap_remove(pmap, sva, eva)
- *	unmaps all virtual addresses v in the virtual address
+ *	unmaps all virtual addresses in the virtual address
  *	range determined by [sva, eva) and pmap.
  *	sva and eva must be on machine independent page boundaries and
  *	sva must be less than or equal to eva.
