@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.60 2008/05/04 17:06:09 xtraeme Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.61 2008/11/17 03:04:27 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.60 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.61 2008/11/17 03:04:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -403,6 +403,7 @@ void
 mii_phy_add_media(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
+	device_t self = sc->mii_dev;
 	const char *sep = "";
 	int fdx = 0;
 
@@ -425,7 +426,7 @@ mii_phy_add_media(struct mii_softc *sc)
 			    MII_MEDIA_10_T);
 			PRINT("HomePNA1");
 		}
-		return;
+		goto out;
 	}
 
 	if (sc->mii_capabilities & BMSR_10THDX) {
@@ -517,6 +518,11 @@ mii_phy_add_media(struct mii_softc *sc)
 #undef PRINT
 	if (fdx != 0 && (sc->mii_flags & MIIF_DOPAUSE))
 		mii->mii_media.ifm_mask |= IFM_ETH_FMASK;
+out:
+	if (!pmf_device_register(self, NULL, mii_phy_resume)) {
+		aprint_normal("\n");
+		aprint_error_dev(self, "couldn't establish power handler");
+	}
 }
 
 void
