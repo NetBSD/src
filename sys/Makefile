@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 2008/11/16 19:55:38 veego Exp $
+#	$NetBSD: Makefile,v 1.74 2008/11/17 08:54:39 pooka Exp $
 
 SUBDIR=	altq arch compat dev fs miscfs \
 	net net80211 netatalk netbt netipsec netinet netinet6 \
@@ -14,7 +14,7 @@ SUBDIR+=modules
 includes-modules:
 	@true
 
-.if make(obj) || make(cleandir)
+.if make(includes) || make(obj) || make(cleandir)
 SUBDIR+= rump
 .endif
 
