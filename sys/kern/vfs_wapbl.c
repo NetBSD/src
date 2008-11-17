@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.8 2008/11/17 19:36:11 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.9 2008/11/17 22:08:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.8 2008/11/17 19:36:11 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.9 2008/11/17 22:08:09 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -2711,81 +2711,32 @@ wapbl_replay_verify(struct wapbl_replay *wr, struct vnode *fsdevvp)
 int
 wapbl_replay_write(struct wapbl_replay *wr, struct vnode *fsdevvp)
 {
-	off_t off;
 	struct wapbl_wc_header *wch = &wr->wr_wc_header;
-	int logblklen = 1<<wch->wc_log_dev_bshift;
-	int fsblklen = 1<<wch->wc_fs_dev_bshift;
-	void *scratch1 = wapbl_malloc(MAXBSIZE);
+	struct wapbl_blk *wb;
+	size_t i;
+	off_t off;
+	void *scratch;
 	int error = 0;
+	int fsblklen = 1 << wch->wc_fs_dev_bshift;
 
 	KDASSERT(wapbl_replay_isopen(wr));
 
-	/*
-	 * This parses the journal for replay, although it could
-	 * just as easily walk the hashtable instead.
-	 */
+	scratch = wapbl_malloc(MAXBSIZE);
 
-	off = wch->wc_tail;
-	while (off != wch->wc_head) {
-		struct wapbl_wc_null *wcn;
-#ifdef DEBUG
-		off_t saveoff = off;
-#endif
-		error = wapbl_circ_read(wr, wr->wr_scratch, logblklen, &off);
-		if (error)
-			goto out;
-		wcn = (struct wapbl_wc_null *)wr->wr_scratch;
-		switch (wcn->wc_type) {
-		case WAPBL_WC_BLOCKS:
-			{
-				struct wapbl_wc_blocklist *wc =
-				    (struct wapbl_wc_blocklist *)wr->wr_scratch;
-				int i;
-				for (i = 0; i < wc->wc_blkcount; i++) {
-					int j, n;
-					/*
-					 * Check each physical block against
-					 * the hashtable independently
-					 */
-					n = wc->wc_blocks[i].wc_dlen >>
-					    wch->wc_fs_dev_bshift;
-					for (j = 0; j < n; j++) {
-						struct wapbl_blk *wb =
-						   wapbl_blkhash_get(wr,
-						   wc->wc_blocks[i].wc_daddr + j);
-						if (wb && (wb->wb_off == off)) {
-							error = wapbl_circ_read(
-							    wr, scratch1,
-							    fsblklen, &off);
-							if (error)
-								goto out;
-							error =
-							   wapbl_write(scratch1,
-							   fsblklen, fsdevvp,
-							   wb->wb_blk);
-							if (error)
-								goto out;
-						} else {
-							wapbl_circ_advance(wr,
-							    fsblklen, &off);
-						}
-					}
-				}
-			}
-			break;
-		case WAPBL_WC_REVOCATIONS:
-		case WAPBL_WC_INODES:
-			break;
-		default:
-			KASSERT(0);
+	for (i = 0; i < wr->wr_blkhashmask; ++i) {
+		LIST_FOREACH(wb, &wr->wr_blkhash[i], wb_hash) {
+			off = wb->wb_off;
+			error = wapbl_circ_read(wr, scratch, fsblklen, &off);
+			if (error)
+				break;
+			error = wapbl_write(scratch, fsblklen, fsdevvp,
+			    wb->wb_blk);
+			if (error)
+				break;
 		}
-#ifdef DEBUG
-		wapbl_circ_advance(wr, wcn->wc_len, &saveoff);
-		KASSERT(off == saveoff);
-#endif
 	}
- out:
-	wapbl_free(scratch1);
+
+	wapbl_free(scratch);
 	return error;
 }
 
