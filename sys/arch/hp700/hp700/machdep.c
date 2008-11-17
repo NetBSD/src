@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.6 2008/11/17 07:13:36 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.7 2008/11/17 07:20:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.6 2008/11/17 07:13:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.7 2008/11/17 07:20:08 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -664,13 +664,13 @@ cpuid(void)
 		printf("%s: cpuid.revision = %x\n", __func__,
 		    pdc_cpuid.revision);
 #endif
+		cpu_type = pdc_cpuid.version;
+
 		/* XXXNH why? */
 		/* patch for old 8200 */
 		if (pdc_cpuid.version == HPPA_CPU_PCXU &&
 		    pdc_cpuid.revision > 0x0d)
-			pdc_cpuid.version = HPPA_CPU_PCXUP;
-
-		cpu_type = pdc_cpuid.version;
+			cpu_type = HPPA_CPU_PCXUP;
 	}
 
 	/* locate coprocessors and SFUs */
