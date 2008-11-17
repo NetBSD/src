@@ -1,4 +1,4 @@
-/*	$NetBSD: heapsort.c,v 1.2 2008/11/17 09:56:48 jnemeth Exp $	*/
+/*	$NetBSD: heapsort.c,v 1.3 2008/11/17 10:21:30 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: heapsort.c,v 1.2 2008/11/17 09:56:48 jnemeth Exp $");
+__RCSID("$NetBSD: heapsort.c,v 1.3 2008/11/17 10:21:30 jnemeth Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -180,7 +180,7 @@ heapsort(void *vbase, size_t nmemb, size_t size,
 	size_t cnt, i, j, l;
 	char tmp, *tmp1, *tmp2;
 	char *base, *p, *t;
-#if defined(_KERNEL) || defined(_STANDALONE)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 	char *k;
 #endif
 
@@ -191,13 +191,13 @@ heapsort(void *vbase, size_t nmemb, size_t size,
 		return (0);
 
 	if (!size) {
-#if defined(_KERNEL) || defined(_STANDALONE)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 		errno = EINVAL;
 #endif
 		return (-1);
 	}
 
-#if defined(_KERNEL) || defined(_STANDALONE)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 	if ((k = malloc(size)) == NULL)
 		return (-1);
 #endif
@@ -222,7 +222,7 @@ heapsort(void *vbase, size_t nmemb, size_t size,
 		--nmemb;
 		SELECT(i, j, nmemb, t, p, size, k, cnt, tmp1, tmp2);
 	}
-#if defined(_KERNEL) || defined(_STANDALONE)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 	free(k);
 #endif
 	return (0);
