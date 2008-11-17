@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.53 2008/10/14 10:42:27 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.54 2008/11/17 08:41:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -411,6 +411,11 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct kthdesc *k;
 	struct lwp *l;
 	int rv;
+
+	/* we don't want a module unload thread */
+	if (strcmp(fmt, "modunload") == 0) {
+		return 0;
+	}
 
 	if (!rump_threads) {
 		/* fake them */
