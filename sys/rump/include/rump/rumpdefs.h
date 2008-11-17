@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.1 2008/11/17 08:52:18 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.2 2008/11/17 13:11:24 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -39,5 +39,16 @@ enum vtype	{ VNON, VREG, VDIR, VBLK, VCHR, VLNK, VSOCK, VFIFO, VBAD };
 #ifndef EJUSTRETURN
 #define	EJUSTRETURN	-2		/* don't modify regs, just return */
 #endif /* EJUSTRETURN */
+
+/*	NetBSD: lock.h,v 1.83 2008/04/28 20:24:10 martin Exp 	*/
+#define	RUMP_LK_TYPE_MASK	0x0000000f	/* type of lock sought */
+#define	RUMP_LK_SHARED	0x00000001	/* shared lock */
+#define	RUMP_LK_EXCLUSIVE	0x00000002	/* exclusive lock */
+#define	RUMP_LK_RELEASE	0x00000006	/* release any type of lock */
+#define	RUMP_LK_EXCLOTHER	0x00000008	/* other process holds lock */
+#define	RUMP_LK_NOWAIT	0x00000010	/* do not sleep to await lock */
+#define	RUMP_LK_CANRECURSE	0x00000040	/* this may be recursive lock attempt */
+#define	RUMP_LK_INTERLOCK	0x00010000	/* unlock passed simple lock after
+#define	RUMP_LK_RETRY	0x00020000	/* vn_lock: retry until locked */
 
 #endif /* _RUMP_RUMPDEFS_H_ */
