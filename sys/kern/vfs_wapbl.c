@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.7 2008/11/17 19:31:47 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.8 2008/11/17 19:36:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.7 2008/11/17 19:31:47 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.8 2008/11/17 19:36:11 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -1964,7 +1964,6 @@ wapbl_write_blocks(struct wapbl *wl, off_t *offp)
 			bp = LIST_NEXT(bp, b_wapbllist);
 		}
 		if (wc->wc_len % blocklen != 0) {
-			printf("Padding WAPBL record...");
 			padding = blocklen - wc->wc_len % blocklen;
 			wc->wc_len += padding;
 		} else {
