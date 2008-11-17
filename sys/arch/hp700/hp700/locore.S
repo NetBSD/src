@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.30.2.1 2008/10/27 08:02:40 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.30.2.2 2008/11/17 07:02:26 skrll Exp $	*/
 /*	$OpenBSD: locore.S,v 1.158 2008/07/28 19:08:46 miod Exp $	*/
 
 /*
@@ -163,13 +163,15 @@
 	.section .bss
 
 	.export	pdc_stack, data
-pdc_stack:
+pdc_stack:			/* temp stack for PDC call */
 	.block	4
+
 	.export	kernelmapped, data
-kernelmapped:
+kernelmapped:			/* set when kernel is mapped */
 	.block	4
+
 	.export hppa_vtop, data
-hppa_vtop:
+hppa_vtop:			/* a vtop translation table addr (pa=va) */
 	.block	4
 #endif
 
