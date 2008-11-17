@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.2 2003/07/26 17:06:33 salo Exp $
+# $NetBSD: dot.profile,v 1.3 2008/11/17 20:14:35 abs Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -48,11 +48,14 @@ umask 022
 
 makerootwritable() {
 	if [ ! -e /tmp/.root_writable ]; then
-		if [ ! -e /kern/msgbuf ]; then
-			mount -t kernfs /kern /kern
+		# note, only handles up to partition 'j'
+		rootdev=/dev/$(sysctl -n kern.root_device)$(sysctl -n kern.root_partition | sed y/0123456789/abcdefghij/)
+		if ! mount $rootdev / ; then
+		    echo "Unable to mount $rootdev read-write"
+		    exit 1
 		fi
-		mount -t ffs -u /kern/rootdev /
 		cp /dev/null /tmp/.root_writable
+		echo "Mounted $rootdev read-write"
 	fi
 }
 
@@ -85,7 +88,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 		# Delete all non-nummeric characters from the users answer
 		if [ ! -z "$_ans" ]; then
-			_ans=`echo $_ans | sed 's/[^0-9]//g`
+			_ans=`echo $_ans | sed 's/[^0-9]//g'`
 		fi
 
 		# Check if the answer is valid (in range). Note that an answer
@@ -103,35 +106,5 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		break
 	done
 
-	if [ -x /sysinst ]; then
-		sysinst
-	else
-	   if [ -x /upgrade ]; then
-		#
-		# Original installation script.
-		# Installing or upgrading?
-		_forceloop=""
-		while [ "X${_forceloop}" = X"" ]; do
-			echo -n '(I)nstall or (U)pgrade? '
-			read _forceloop
-			case "$_forceloop" in
-				i*|I*)
-					/install
-					;;
-
-				u*|U*)
-					/upgrade
-					;;
-
-				*)
-					_forceloop=""
-					;;
-			esac
-		done
-	    else
-		#
-		# Stripped down preparation version
-		/install
-	    fi
-	fi
+	sysinst
 fi
