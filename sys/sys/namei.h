@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.60 2008/04/11 15:51:38 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.60.14.1 2008/11/17 19:01:15 snj Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
@@ -143,6 +143,7 @@ struct nameidata {
 #define	REQUIREDIR	0x0080000	/* must be a directory */
 #define	CREATEDIR	0x0200000	/* trailing slashes are ok */
 #define	PARAMASK	0x02fff00	/* mask of parameter descriptors */
+#define	NOCHROOT	0x0400000	/* no chroot on abs paths */
 
 /*
  * Initialization of an nameidata structure.
