@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.1 2008/11/17 08:53:12 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.2 2008/11/17 13:24:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -107,10 +107,6 @@ size_t		rump_uio_getresid(struct uio *);
 off_t		rump_uio_getoff(struct uio *);
 size_t		rump_uio_free(struct uio *);
 
-void	rump_vp_lock_exclusive(struct vnode *);
-void	rump_vp_lock_shared(struct vnode *);
-void	rump_vp_unlock(struct vnode *);
-int	rump_vp_islocked(struct vnode *);
 void	rump_vp_interlock(struct vnode *);
 
 kauth_cred_t	rump_cred_create(uid_t, gid_t, size_t, gid_t *);
