@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102.4.1 2008/11/17 18:53:53 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.1 2008/11/17 18:53:53 snj Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -421,7 +421,7 @@ x86_64_proc0_tss_ldt_init(void)
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel =
 	    GSYSSEL(GLDT_SEL, SEL_KPL);
-	pcb->pcb_cr0 = rcr0();
+	pcb->pcb_cr0 = rcr0() & ~CR0_TS;
 	l->l_md.md_regs = (struct trapframe *)pcb->pcb_rsp0 - 1;
 
 #if !defined(XEN)
