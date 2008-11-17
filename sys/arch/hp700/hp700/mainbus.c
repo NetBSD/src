@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.45.4.1 2008/10/27 08:02:40 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.45.4.2 2008/11/17 11:06:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.45.4.1 2008/10/27 08:02:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.45.4.2 2008/11/17 11:06:21 skrll Exp $");
 
 #include "locators.h"
 #include "opt_power_switch.h"
@@ -1303,7 +1303,7 @@ mbus_dmamem_map(void *v, bus_dma_segment_t *segs, int nsegs, size_t size,
 	TAILQ_FOREACH(pg, pglist, pageq.queue) {
 		KASSERT(size != 0);
 		pa = VM_PAGE_TO_PHYS(pg);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE | PMAP_NC);
 		va += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}

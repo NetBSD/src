@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.6 2008/11/17 07:18:32 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.7 2008/11/17 11:06:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.6 2008/11/17 07:18:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.7 2008/11/17 11:06:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1681,8 +1681,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 		panic("pmap_kenter_pa: cannot allocate pde for va=0x%lx", va);
 	opte = pmap_pte_get(pde, va);
 	pte = pa | PTE_PROT(TLB_WIRED | TLB_REFTRAP |
-	    pmap_prot(pmap_kernel(), prot));
-	if (pa >= HPPA_IOBEGIN)
+	    pmap_prot(pmap_kernel(), prot & VM_PROT_ALL));
+	if (pa >= HPPA_IOBEGIN || (prot & PMAP_NC))
 		pte |= PTE_PROT(TLB_UNCACHEABLE);
 	pmap_pte_set(pde, va, pte);
 	pmap_kernel()->pm_stats.wired_count++;
