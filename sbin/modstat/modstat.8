@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.2 2008/11/12 12:35:53 ad Exp $
+.\" $NetBSD: modstat.8,v 1.3 2008/11/17 02:22:49 uwe Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -64,11 +64,11 @@ Module class, such as
 "vfs", "driver", "exec" or "misc".
 .It Li SOURCE
 Where the module was loaded from.
-.Dv Qo builtin Qc
+.Qq Dv builtin
 indicates that the module was built into the running kernel.
-.Dv Qo boot Qc
+.Qq Dv boot
 indicates that the module was loaded during system bootstrap.
-.Dv Qo filesys Qc
+.Qq Dv filesys
 indicates that the module was loaded from the file system.
 .It Li SIZE
 Size of the module in bytes.
