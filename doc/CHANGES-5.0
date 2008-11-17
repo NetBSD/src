@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.20 2008/11/16 07:43:16 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.21 2008/11/17 19:04:39 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -480,4 +480,48 @@ share/man/man4/vlan.4				1.30
 
 	Add etherip to the list of interfaces supporting ETHER_VLAN_MTU.
 	[bouyer, ticket #63]
+
+sys/kern/subr_pool.c				1.171
+
+	Avoid recursive mutex_enter() when the system is low on KVA.
+	[ad, ticket #72]
+
+sys/arch/amd64/amd64/fpu.c			1.27
+sys/arch/amd64/amd64/ipifuncs.c			1.20
+sys/arch/i386/i386/ipifuncs.c			1.28
+sys/arch/i386/isa/npx.c				1.130
+sys/arch/x86/include/intrdefs.h			1.14
+
+	PR port-amd64/38293 panic: fp_save ipi didn't
+	Kill the FP flush IPI and always save. The synchronization here
+        isn't strong and we could easily pull the chain on an innocent
+        LWP's FP state.
+	[ad, ticket #73]
+
+sys/arch/amd64/amd64/fpu.c			1.28
+sys/arch/amd64/amd64/genassym.cf		1.38
+sys/arch/amd64/amd64/locore.S			1.48
+sys/arch/amd64/amd64/machdep.c			1.104
+sys/arch/i386/i386/autoconf.c			1.93
+sys/arch/i386/i386/genassym.cf			1.77
+sys/arch/i386/i386/locore.S			1.79
+sys/arch/i386/i386/machdep.c			1.646
+sys/arch/i386/isa/npx.c				1.131
+
+	PR port-amd64/38293 panic: fp_save ipi didn't
+	Fix race conditions in FPU IPI handling.
+	[ad, ticket #74]
+
+sys/kern/kern_subr.c				1.195
+
+	Acquire exec_lock where needed.  Addresses PR kern/39913.
+	[ad, ticket #75]
+
+sys/kern/vfs_lookup.c				1.111
+sys/sys/namei.h					1.61
+
+	Add a NOCHROOT flag for namei(). Looks outside any chroot and
+        performs the lookup from the root directory if given an absolute
+        path.
+	[ad, ticket #76]
 
