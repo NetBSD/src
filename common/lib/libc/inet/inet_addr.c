@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr.c,v 1.1 2005/12/20 19:28:51 christos Exp $	*/
+/*	$NetBSD: inet_addr.c,v 1.1.6.1 2008/11/18 19:10:02 snj Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -77,7 +77,7 @@
 static const char sccsid[] = "@(#)inet_addr.c	8.1 (Berkeley) 6/17/93";
 static const char rcsid[] = "Id: inet_addr.c,v 1.2.206.2 2004/03/17 00:29:45 marka Exp";
 #else
-__RCSID("$NetBSD: inet_addr.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
+__RCSID("$NetBSD: inet_addr.c,v 1.1.6.1 2008/11/18 19:10:02 snj Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -106,7 +106,7 @@ __weak_alias(inet_aton,_inet_aton)
  * Ascii internet address interpretation routine.
  * The value returned is in network order.
  */
-u_int32_t
+uint32_t
 inet_addr(const char *cp) {
 	struct in_addr val;
 
@@ -124,11 +124,11 @@ inet_addr(const char *cp) {
  */
 int
 inet_aton(const char *cp, struct in_addr *addr) {
-	u_int32_t val;
+	uint32_t val;
 	int base, n;
 	char c;
-	u_int8_t parts[4];
-	u_int8_t *pp = parts;
+	uint8_t parts[4];
+	uint8_t *pp = parts;
 	int digit;
 
 	c = *cp;
