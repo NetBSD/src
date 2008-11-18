@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.71 2005/03/02 10:20:18 mycroft Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.71.2.1 2008/11/18 22:57:09 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.71 2005/03/02 10:20:18 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.71.2.1 2008/11/18 22:57:09 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -232,6 +232,10 @@ tcp_delack(void *arg)
 		splx(s);
 		return;
 	}
+	if (!callout_expired(&tp->t_delack_ch)) {
+		splx(s);
+		return;
+	}
 
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
@@ -290,6 +294,10 @@ tcp_timer_rexmt(void *arg)
 	s = splsoftnet();
 	callout_ack(&tp->t_timer[TCPT_REXMT]);
 	if (tcp_isdead(tp)) {
+		splx(s);
+		return;
+	}
+	if (!callout_expired(&tp->t_timer[TCPT_REXMT])) {
 		splx(s);
 		return;
 	}
@@ -453,6 +461,10 @@ tcp_timer_persist(void *arg)
 		splx(s);
 		return;
 	}
+	if (!callout_expired(&tp->t_timer[TCPT_PERSIST])) {
+		splx(s);
+		return;
+	}
 
 #ifdef TCP_DEBUG
 #ifdef INET
@@ -517,6 +529,10 @@ tcp_timer_keep(void *arg)
 	s = splsoftnet();
 	callout_ack(&tp->t_timer[TCPT_KEEP]);
 	if (tcp_isdead(tp)) {
+		splx(s);
+		return;
+	}
+	if (!callout_expired(&tp->t_timer[TCPT_KEEP])) {
 		splx(s);
 		return;
 	}
@@ -604,6 +620,10 @@ tcp_timer_2msl(void *arg)
 	s = splsoftnet();
 	callout_ack(&tp->t_timer[TCPT_2MSL]);
 	if (tcp_isdead(tp)) {
+		splx(s);
+		return;
+	}
+	if (!callout_expired(&tp->t_timer[TCPT_2MSL])) {
 		splx(s);
 		return;
 	}
