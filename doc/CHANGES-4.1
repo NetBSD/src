@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.110 2008/11/18 22:33:58 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.111 2008/11/18 23:04:51 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2445,4 +2445,9 @@ sys/arch/x86/x86/mtrr_i686.c			1.18
 	   addresses of 0
 	still needs a bunch of reworking to handle VCNT > 8 case.
 	[sborrill, ticket #1173]
+
+sys/netinet/tcp_timer.c				1.83 via patch
+
+	Fix kern/39769: race condition in TCP timers
+	[bouyer, ticket #1234]
 
