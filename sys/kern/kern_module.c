@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.26 2008/11/14 23:06:45 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.27 2008/11/18 11:39:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.26 2008/11/14 23:06:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.27 2008/11/18 11:39:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,6 +335,36 @@ module_rele(const char *name)
 }
 
 /*
+ * module_enqueue:
+ *
+ *	Put a module onto the global list and update counters.
+ */
+static void
+module_enqueue(module_t *mod)
+{
+	int i;
+
+	/*
+	 * If there are requisite modules, put at the head of the queue.
+	 * This is so that autounload can unload requisite modules with
+	 * only one pass through the queue.
+	 */
+	if (mod->mod_nrequired) {
+		TAILQ_INSERT_HEAD(&module_list, mod, mod_chain);
+
+		/* Add references to the requisite modules. */
+		for (i = 0; i < mod->mod_nrequired; i++) {
+			KASSERT(mod->mod_required[i] != NULL);
+			mod->mod_required[i]->mod_refcnt++;
+		}
+	} else {
+		TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
+	}
+	module_count++;
+	module_gen++;
+}
+
+/*
  * module_do_builtin:
  *
  *	Initialize a single module from the list of modules that are
@@ -350,7 +380,7 @@ module_do_builtin(const char *name, module_t **modp)
 	modinfo_t *mi;
 	module_t *mod, *mod2;
 	size_t len;
-	int error, i;
+	int error;
 
 	KASSERT(mutex_owned(&module_lock));
 
@@ -432,16 +462,7 @@ module_do_builtin(const char *name, module_t **modp)
 	}
 	mod->mod_info = mi;
 	mod->mod_source = MODULE_SOURCE_KERNEL;
-	module_count++;
-	TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
-
-	/*
-	 * If that worked, count dependencies.
-	 */
-	for (i = 0; i < mod->mod_nrequired; i++) {
-		mod->mod_required[i]->mod_refcnt++;
-	}
-
+	module_enqueue(mod);
 	return 0;
 }
 
@@ -452,7 +473,7 @@ module_do_builtin(const char *name, module_t **modp)
  *	pushed by the boot loader.
  */
 static int
-module_do_load(const char *filename, bool isdep, int flags,
+module_do_load(const char *name, bool isdep, int flags,
 	       prop_dictionary_t props, module_t **modp, modclass_t class,
 	       bool autoload)
 {
@@ -465,7 +486,6 @@ module_do_load(const char *filename, bool isdep, int flags,
 	const char *s, *p;
 	int error;
 	size_t len;
-	u_int i;
 
 	KASSERT(mutex_owned(&module_lock));
 
@@ -485,10 +505,10 @@ module_do_load(const char *filename, bool isdep, int flags,
 	 * scan the list of modules loaded by the boot loader.  Just
 	 * before init is started the list of modules loaded at boot
 	 * will be purged.  Before init is started we can assume that
-	 * `filename' is a module name and not a path name.
+	 * `name' is a module name and not a path name.
 	 */
 	TAILQ_FOREACH(mod, &module_bootlist, mod_chain) {
-		if (strcmp(mod->mod_info->mi_name, filename) == 0) {
+		if (strcmp(mod->mod_info->mi_name, name) == 0) {
 			TAILQ_REMOVE(&module_bootlist, mod, mod_chain);
 			break;
 		}
@@ -496,12 +516,30 @@ module_do_load(const char *filename, bool isdep, int flags,
 	if (mod != NULL) {
 		TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
 	} else {
+		/*
+		 * If a requisite module, check to see if it is
+		 * already present.
+		 */
+		if (isdep) {
+			TAILQ_FOREACH(mod, &module_list, mod_chain) {
+				if (strcmp(mod->mod_info->mi_name, name) == 0) {
+					break;
+				}
+			}
+			if (mod != NULL) {
+				if (modp != NULL) {
+					*modp = mod;
+				}
+				depth--;
+				return 0;
+			}
+		}				
 		mod = kmem_zalloc(sizeof(*mod), KM_SLEEP);
 		if (mod == NULL) {
 			depth--;
 			return ENOMEM;
 		}
-		error = kobj_load_file(&mod->mod_kobj, filename, module_base,
+		error = kobj_load_file(&mod->mod_kobj, name, module_base,
 		    autoload);
 		if (error != 0) {
 			kmem_free(mod, sizeof(*mod));
@@ -548,10 +586,10 @@ module_do_load(const char *filename, bool isdep, int flags,
 	}
 
 	/*
-	 * If loading a dependency, `filename' is a plain module name.
+	 * If loading a dependency, `name' is a plain module name.
 	 * The name must match.
 	 */
-	if (isdep && strcmp(mi->mi_name, filename) != 0) {
+	if (isdep && strcmp(mi->mi_name, name) != 0) {
 		error = ENOENT;
 		goto fail;
 	}
@@ -614,7 +652,7 @@ module_do_load(const char *filename, bool isdep, int flags,
 			error = module_do_load(buf, true, flags, NULL,
 			    &mod->mod_required[mod->mod_nrequired++],
 			    MODULE_CLASS_ANY, true);
-			if (error != 0 && error != EEXIST)
+			if (error != 0)
 				goto fail;
 		}
 	}
@@ -642,13 +680,8 @@ module_do_load(const char *filename, bool isdep, int flags,
 	 * Good, the module loaded successfully.  Put it onto the
 	 * list and add references to its requisite modules.
 	 */
-	module_count++;
 	TAILQ_REMOVE(&pending, mod, mod_chain);
-	TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
-	for (i = 0; i < mod->mod_nrequired; i++) {
-		KASSERT(mod->mod_required[i] != NULL);
-		mod->mod_required[i]->mod_refcnt++;
-	}
+	module_enqueue(mod);
 	if (modp != NULL) {
 		*modp = mod;
 	}
@@ -660,7 +693,6 @@ module_do_load(const char *filename, bool isdep, int flags,
 		mod->mod_autotime = time_second + module_autotime;
 		module_thread_kick();
 	}
-	module_gen++;
 	depth--;
 	return 0;
 
