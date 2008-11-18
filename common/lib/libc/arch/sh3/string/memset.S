@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.S,v 1.1 2005/12/20 19:28:50 christos Exp $	*/
+/*	$NetBSD: memset.S,v 1.1.6.1 2008/11/18 19:10:02 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002 SHIMIZU Ryo.  All rights reserved.
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: memset.S,v 1.1 2005/12/20 19:28:50 christos Exp $")
+	RCSID("$NetBSD: memset.S,v 1.1.6.1 2008/11/18 19:10:02 snj Exp $")
 #endif
 
 #define	REG_PTR				r0
@@ -273,7 +273,7 @@ unaligned_dst:
 2:					/* }                            */
 					/* if (dst & 2) {               */
 	bt	4f
-	mov.w	REG_C,@REG_DST		/*   *(u_int16_t*)dst++ = c;    */
+	mov.w	REG_C,@REG_DST		/*   *(uint16_t*)dst++ = c;    */
 	add	#2,REG_DST
 4:					/* }                            */
 
@@ -288,7 +288,7 @@ unaligned_len:
 2:					/*   }                          */
 					/*   if (ptr & 2) {             */
 	bt	4f
-	mov.w	REG_C,@-REG_PTR		/*     *--(u_int16_t*)ptr = c;  */
+	mov.w	REG_C,@-REG_PTR		/*     *--(uint16_t*)ptr = c;  */
 4:					/*   }                          */
 					/* }                            */
 

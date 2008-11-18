@@ -1,4 +1,4 @@
-/*	$NetBSD: md5c.c,v 1.2 2005/12/24 08:34:10 matt Exp $	*/
+/*	$NetBSD: md5c.c,v 1.2.6.1 2008/11/18 19:10:02 snj Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD5 Message-Digest
@@ -36,7 +36,7 @@
 #else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: md5c.c,v 1.2 2005/12/24 08:34:10 matt Exp $");
+__RCSID("$NetBSD: md5c.c,v 1.2.6.1 2008/11/18 19:10:02 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 #include "namespace.h"
 #include <sys/types.h>
@@ -54,8 +54,8 @@ __RCSID("$NetBSD: md5c.c,v 1.2 2005/12/24 08:34:10 matt Exp $");
 #define	ZEROIZE(d, l)		memset((d), 0, (l))
 
 typedef unsigned char *POINTER;
-typedef u_int16_t UINT2;
-typedef u_int32_t UINT4;
+typedef uint16_t UINT2;
+typedef uint32_t UINT4;
 
 /*
  * Constants for MD5Transform routine.

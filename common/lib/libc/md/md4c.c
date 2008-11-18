@@ -1,4 +1,4 @@
-/*	$NetBSD: md4c.c,v 1.2 2005/12/24 08:34:10 matt Exp $	*/
+/*	$NetBSD: md4c.c,v 1.2.6.1 2008/11/18 19:10:02 snj Exp $	*/
 
 /*
  * This file is derived from the RSA Data Security, Inc. MD4 Message-Digest
@@ -31,7 +31,7 @@
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: md4c.c,v 1.2 2005/12/24 08:34:10 matt Exp $");
+__RCSID("$NetBSD: md4c.c,v 1.2.6.1 2008/11/18 19:10:02 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -57,8 +57,8 @@ __RCSID("$NetBSD: md4c.c,v 1.2 2005/12/24 08:34:10 matt Exp $");
 #if !HAVE_MD4_H
 
 typedef unsigned char *POINTER;
-typedef u_int16_t UINT2;
-typedef u_int32_t UINT4;
+typedef uint16_t UINT2;
+typedef uint32_t UINT4;
 
 /*
  * Constants for MD4Transform routine.

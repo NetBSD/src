@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap_4.S,v 1.2 2005/12/27 09:22:08 yamt Exp $ */
+/* $NetBSD: byte_swap_4.S,v 1.2.6.1 2008/11/18 19:10:02 snj Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 /*
  * Byte-swap a 4-byte quantity.  (Convert 0x01234567 to 0x67452301.)
  *
- * Argument is an unsigned 4-byte integer (u_int32_t).
+ * Argument is an unsigned 4-byte integer (uint32_t).
  */
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define	BSWAP32	bswap32
