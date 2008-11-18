@@ -1,4 +1,4 @@
-/* $NetBSD: sha2.c,v 1.2.4.3 2007/07/18 20:20:27 liamjfoy Exp $ */
+/* $NetBSD: sha2.c,v 1.2.4.4 2008/11/18 19:02:57 snj Exp $ */
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -39,14 +39,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2.4.3 2007/07/18 20:20:27 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2.4.4 2008/11/18 19:02:57 snj Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha2.c,v 1.2.4.3 2007/07/18 20:20:27 liamjfoy Exp $");
+__RCSID("$NetBSD: sha2.c,v 1.2.4.4 2008/11/18 19:02:57 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -119,7 +119,7 @@ __RCSID("$NetBSD: sha2.c,v 1.2.4.3 2007/07/18 20:20:27 liamjfoy Exp $");
 /*
  * Define the followingsha2_* types to types of the correct length on
  * the native archtecture.   Most BSD systems and Linux define u_intXX_t
- * types.  Machines with very recent ANSI C headers, can use the
+ * types.  Machines with recent ANSI C headers, can use the standard C99
  * uintXX_t definintions from inttypes.h by defining SHA2_USE_INTTYPES_H
  * during compile or in the sha.h header file.
  *
@@ -130,7 +130,7 @@ __RCSID("$NetBSD: sha2.c,v 1.2.4.3 2007/07/18 20:20:27 liamjfoy Exp $");
  * Thank you, Jun-ichiro itojun Hagino, for suggesting using u_intXX_t
  * types and pointing out recent ANSI C support for uintXX_t in inttypes.h.
  */
-#if 0 /*def SHA2_USE_INTTYPES_H*/
+#if 1 /*def SHA2_USE_INTTYPES_H*/
 
 typedef uint8_t  sha2_byte;	/* Exactly 1 byte */
 typedef uint32_t sha2_word32;	/* Exactly 4 bytes */
