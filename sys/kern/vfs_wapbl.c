@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.11 2008/11/18 13:29:34 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.12 2008/11/18 18:54:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.11 2008/11/18 13:29:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.12 2008/11/18 18:54:39 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -2469,8 +2469,10 @@ wapbl_replay_process_inodes(struct wapbl_replay *wr, off_t oldoff, off_t newoff)
 	if (wc->wc_clear) {
 		wr->wr_inodestail = oldoff;
 		wr->wr_inodescnt = 0;
-		wapbl_free(wr->wr_inodes);
-		wr->wr_inodes = NULL;
+		if (wr->wr_inodes != NULL) {
+			wapbl_free(wr->wr_inodes);
+			wr->wr_inodes = NULL;
+		}
 	}
 	wr->wr_inodeshead = newoff;
 	if (wc->wc_inocnt == 0)
