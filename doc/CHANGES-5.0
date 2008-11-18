@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.23 2008/11/18 16:46:12 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.24 2008/11/18 17:57:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -566,4 +566,20 @@ sys/arch/sparc/dev/zs.c				1.112
 	PR port-sparc/39942: ifdef ch0_is_cons declaration and all
 	uses consistently.
 	[martin, ticket #77]
+
+sys/kern/kern_exec.c				patch
+
+	Expose exec_lock for the changes in ticket #75.
+	[ad, ticket #83]
+
+distrib/sets/lists/comp/mi			1.1204 via patch
+distrib/sets/lists/xcomp/mi:			1.74-1.75 via patch
+
+	Move all the xorg/x11 linty stuff from comp to xcomp.
+	[abs, ticket #85]
+
+xsrc/external/mit/xorg-server/dist/hw/xfree86/os-support/bsd/bsdResource.c 1.5
+
+	add __mips__
+	[macallan, ticket #86]
 
