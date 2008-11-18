@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.182 2008/07/02 16:45:19 matt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.183 2008/11/18 11:36:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.182 2008/07/02 16:45:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.183 2008/11/18 11:36:58 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.182 2008/07/02 16:45:19 matt Exp 
 #include <sys/syscallargs.h>
 #include <sys/cpu.h>
 
-static int	cwdi_ctor(void *, void *, int);
-static void	cwdi_dtor(void *, void *);
 static int	file_ctor(void *, void *, int);
 static void	file_dtor(void *, void *);
 static int	fdfile_ctor(void *, void *, int);
@@ -109,7 +107,6 @@ kmutex_t	filelist_lock;	/* lock on filehead */
 struct filelist	filehead;	/* head of list of open files */
 u_int		nfiles;		/* actual number of open files */
 
-static pool_cache_t cwdi_cache;
 static pool_cache_t filedesc_cache;
 static pool_cache_t file_cache;
 static pool_cache_t fdfile_cache;
@@ -142,10 +139,6 @@ fd_sys_init(void)
 	    PR_LARGECACHE, "fdfile", NULL, IPL_NONE, fdfile_ctor, fdfile_dtor,
 	    NULL);
 	KASSERT(fdfile_cache != NULL);
-
-	cwdi_cache = pool_cache_init(sizeof(struct cwdinfo), coherency_unit,
-	    0, 0, "cwdi", NULL, IPL_NONE, cwdi_ctor, cwdi_dtor, NULL);
-	KASSERT(cwdi_cache != NULL);
 
 	filedesc_cache = pool_cache_init(sizeof(filedesc_t), coherency_unit,
 	    0, 0, "filedesc", NULL, IPL_NONE, filedesc_ctor, filedesc_dtor,
@@ -1042,54 +1035,6 @@ ffree(file_t *fp)
 	pool_cache_put(file_cache, fp);
 }
 
-/*
- * Create an initial cwdinfo structure, using the same current and root
- * directories as curproc.
- */
-struct cwdinfo *
-cwdinit(void)
-{
-	struct cwdinfo *cwdi;
-	struct cwdinfo *copy;
-
-	cwdi = pool_cache_get(cwdi_cache, PR_WAITOK);
-	copy = curproc->p_cwdi;
-
-	rw_enter(&copy->cwdi_lock, RW_READER);
-	cwdi->cwdi_cdir = copy->cwdi_cdir;
-	if (cwdi->cwdi_cdir)
-		VREF(cwdi->cwdi_cdir);
-	cwdi->cwdi_rdir = copy->cwdi_rdir;
-	if (cwdi->cwdi_rdir)
-		VREF(cwdi->cwdi_rdir);
-	cwdi->cwdi_edir = copy->cwdi_edir;
-	if (cwdi->cwdi_edir)
-		VREF(cwdi->cwdi_edir);
-	cwdi->cwdi_cmask =  copy->cwdi_cmask;
-	cwdi->cwdi_refcnt = 1;
-	rw_exit(&copy->cwdi_lock);
-
-	return (cwdi);
-}
-
-static int
-cwdi_ctor(void *arg, void *obj, int flags)
-{
-	struct cwdinfo *cwdi = obj;
-
-	rw_init(&cwdi->cwdi_lock);
-
-	return 0;
-}
-
-static void
-cwdi_dtor(void *arg, void *obj)
-{
-	struct cwdinfo *cwdi = obj;
-
-	rw_destroy(&cwdi->cwdi_lock);
-}
-
 static int
 file_ctor(void *arg, void *obj, int flags)
 {
@@ -1157,38 +1102,6 @@ fputdummy(file_t *fp)
 
 	mutex_destroy(&fp->f_lock);
 	kmem_free(fp, sizeof(*fp));
-}
-
-/*
- * Make p2 share p1's cwdinfo.
- */
-void
-cwdshare(struct proc *p2)
-{
-	struct cwdinfo *cwdi;
-
-	cwdi = curproc->p_cwdi;
-
-	atomic_inc_uint(&cwdi->cwdi_refcnt);
-	p2->p_cwdi = cwdi;
-}
-
-/*
- * Release a cwdinfo structure.
- */
-void
-cwdfree(struct cwdinfo *cwdi)
-{
-
-	if (atomic_dec_uint_nv(&cwdi->cwdi_refcnt) > 0)
-		return;
-
-	vrele(cwdi->cwdi_cdir);
-	if (cwdi->cwdi_rdir)
-		vrele(cwdi->cwdi_rdir);
-	if (cwdi->cwdi_edir)
-		vrele(cwdi->cwdi_edir);
-	pool_cache_put(cwdi_cache, cwdi);
 }
 
 /*
@@ -1611,7 +1524,6 @@ fd_dupopen(int old, int *new, int mode, int error)
 void
 fd_closeexec(void)
 {
-	struct cwdinfo *cwdi;
 	proc_t *p;
 	filedesc_t *fdp;
 	fdfile_t *ff;
@@ -1621,13 +1533,9 @@ fd_closeexec(void)
 	l = curlwp;
 	p = l->l_proc;
 	fdp = p->p_fd;
-	cwdi = p->p_cwdi;
 
-	if (cwdi->cwdi_refcnt > 1) {
-		cwdi = cwdinit();
-		cwdfree(p->p_cwdi);
-		p->p_cwdi = cwdi;
-	}
+	cwdunshare(p);
+
 	if (p->p_cwdi->cwdi_edir) {
 		vrele(p->p_cwdi->cwdi_edir);
 	}
