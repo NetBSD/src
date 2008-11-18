@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.1 2008/11/17 08:53:12 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.2 2008/11/18 12:39:35 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -54,14 +54,16 @@ int rumpuser_ioctl(int, u_long, void *, int *);
 int rumpuser_close(int, int *);
 int rumpuser_fsync(int, int *);
 
+typedef void (*rump_biodone_fn)(void *, size_t, int);
+
 ssize_t rumpuser_read(int, void *, size_t, int *);
 ssize_t rumpuser_pread(int, void *, size_t, off_t, int *);
 ssize_t rumpuser_readv(int, const struct iovec *, int, int *);
 ssize_t rumpuser_write(int, const void *, size_t, int *);
 ssize_t rumpuser_pwrite(int, const void *, size_t, off_t, int *);
 ssize_t rumpuser_writev(int, const struct iovec *, int, int *);
-void rumpuser_read_bio(int, void *, size_t, off_t, void *);
-void rumpuser_write_bio(int, const void *, size_t, off_t, void *);
+void rumpuser_read_bio(int, void *, size_t, off_t, rump_biodone_fn, void *);
+void rumpuser_write_bio(int, const void *, size_t, off_t,rump_biodone_fn,void*);
 
 int rumpuser_gettimeofday(struct timeval *, int *);
 int rumpuser_getenv(const char *, char *, size_t, int *);
@@ -79,6 +81,7 @@ int rumpuser_poll(struct pollfd *, int, int, int *);
 /* rumpuser_pth */
 
 int  rumpuser_thrinit(void);
+int  rumpuser_bioinit(rump_biodone_fn);
 void rumpuser_thrdestroy(void);
 
 int  rumpuser_thread_create(void *(*f)(void *), void *);
@@ -119,9 +122,6 @@ struct lwp;
 
 void rumpuser_set_curlwp(struct lwp *);
 struct lwp *rumpuser_get_curlwp(void);
-
-/* actually part of the rumpkern */
-void rump_biodone(void *, size_t, int);
 
 /* "aio" stuff for being able to fire of a B_ASYNC I/O and continue */
 struct rumpuser_aio {
