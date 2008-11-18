@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.11 2008/11/14 23:06:45 ad Exp $	*/
+/*	$NetBSD: module.h,v 1.12 2008/11/18 11:56:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -56,9 +56,10 @@ typedef enum modsrc {
 
 /* Commands passed to module control routine. */
 typedef enum modcmd {
-	MODULE_CMD_INIT,
-	MODULE_CMD_FINI,
-	MODULE_CMD_STAT
+	MODULE_CMD_INIT,		/* mandatory */
+	MODULE_CMD_FINI,		/* mandatory */
+	MODULE_CMD_STAT,		/* optional */
+	MODULE_CMD_AUTOUNLOAD,		/* optional */
 } modcmd_t;
 
 #ifdef _KERNEL
