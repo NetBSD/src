@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.60.2.1 2007/08/30 22:37:36 pavel Exp $
+#	$NetBSD: configure.ac,v 1.60.2.2 2008/11/18 19:12:57 snj Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -24,7 +24,7 @@ AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
 # Autoheader header and footer
-AH_TOP([/*      $NetBSD: configure.ac,v 1.60.2.1 2007/08/30 22:37:36 pavel Exp $    */
+AH_TOP([/*      $NetBSD: configure.ac,v 1.60.2.2 2008/11/18 19:12:57 snj Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__])
@@ -81,7 +81,8 @@ AC_HEADER_DIRENT
 AC_CHECK_HEADERS(sys/sysmacros.h sys/syslimits.h \
 	getopt.h features.h malloc.h sys/poll.h stddef.h)
 AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
-	sys/featuretest.h err.h inttypes.h libgen.h paths.h stdint.h util.h,,
+	sys/featuretest.h err.h inttypes.h libgen.h paths.h stdint.h util.h \
+	resolv.h arpa/nameser.h,,
 	[test -f include/$ac_header || touch include/$ac_header])
 AC_CHECK_HEADERS(rpc/types.h netconfig.h,,
 	[echo '#include "nbtool_config.h"' >include/$ac_header.new
