@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.30.2.1 2007/01/06 13:18:16 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.30.2.2 2008/11/18 22:33:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.30.2.1 2007/01/06 13:18:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.30.2.2 2008/11/18 22:33:28 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
 #include "opt_execfmt.h"
 #include "opt_user_ldt.h"
+#include "opt_mtrr.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -626,7 +627,7 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 		return error;
 
 	if (args32.mtrrp == 0) {
-		n = (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR);
+		n = (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR_MAX);
 		return copyout(&n, (void *)(uintptr_t)args32.n, sizeof n);
 	}
 
@@ -634,7 +635,7 @@ x86_64_get_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (error != 0)
 		return error;
 
-	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR))
+	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR_MAX))
 		return EINVAL;
 
 	m64p = malloc(n * sizeof (struct mtrr), M_TEMP, M_WAITOK);
@@ -696,7 +697,7 @@ x86_64_set_mtrr32(struct lwp *l, void *args, register_t *retval)
 	if (error != 0)
 		return error;
 
-	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR)) {
+	if (n <= 0 || n > (MTRR_I686_NFIXED_SOFT + MTRR_I686_NVAR_MAX)) {
 		error = EINVAL;
 		goto fail;
 	}
