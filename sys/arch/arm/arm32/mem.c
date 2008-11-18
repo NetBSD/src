@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.24 2008/11/15 11:04:39 ad Exp $	*/
+/*	$NetBSD: mem.c,v 1.25 2008/11/18 09:52:43 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,9 +73,10 @@
  */
 
 #include "opt_arm32_pmap.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.24 2008/11/15 11:04:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.25 2008/11/18 09:52:43 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -170,7 +171,9 @@ mmrw(dev, uio, flags)
 				uio->uio_resid = 0;
 			return (0);
 
+#ifdef COMPAT_16
 		case _DEV_ZERO_oARM:
+#endif
 		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;
