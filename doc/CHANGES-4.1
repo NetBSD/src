@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.106 2008/11/13 00:37:05 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.107 2008/11/18 01:21:46 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2331,4 +2331,33 @@ sys/arch/atari/dev/atari5380.c			1.43-1.45
 	Fix a pointer arithmetic botch and specify volatile to some
 	pointers to access DMA registers.
 	[abs, ticket #1223]
+
+gnu/lib/libobjc4/Makefile: revision 1.10 via patch
+gnu/lib/libobjc4/arch/alpha/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/arm/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/armeb/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/hppa/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/i386/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/m68000/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/m68k/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/mipseb/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/mipsel/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/powerpc/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/sh3eb/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/sh3el/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/sparc/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/sparc64/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/vax/config.h: 1.1 via patch
+gnu/lib/libobjc4/arch/x86_64/config.h: 1.1 via patch
+
+	Regenerate all mknative-gcc files after skrll@'s fix to grab the
+        objc config.h.  Use this config.h in libobjc4.
+	This should address PR 37966.
+	[mrg, ticket #1230]
+
+sys/arch/atari/dev/md_root.c			1.26 via patch
+
+	Use brelse() to unbusy bp buffer to allow user to swap floppy
+        disks when prompted.
+	[abs, ticket #1226]
 
