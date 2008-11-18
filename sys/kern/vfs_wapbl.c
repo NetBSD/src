@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.12 2008/11/18 18:54:39 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.13 2008/11/18 19:31:35 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.12 2008/11/18 18:54:39 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.13 2008/11/18 19:31:35 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -226,7 +226,7 @@ static struct wapbl_ino *wapbl_inodetrk_get(struct wapbl *wl, ino_t ino);
 static size_t wapbl_transaction_len(struct wapbl *wl);
 static __inline size_t wapbl_transaction_inodes_len(struct wapbl *wl);
 
-#ifdef DEBUG
+#if 0
 int wapbl_replay_verify(struct wapbl_replay *, struct vnode *);
 #endif
 
@@ -2537,7 +2537,7 @@ wapbl_replay_process(struct wapbl_replay *wr)
 	return error;
 }
 
-#ifdef DEBUG
+#if 0
 int
 wapbl_replay_verify(struct wapbl_replay *wr, struct vnode *fsdevvp)
 {
