@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.183 2008/11/18 11:36:58 pooka Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.184 2008/11/18 13:01:41 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,16 +67,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.183 2008/11/18 11:36:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.184 2008/11/18 13:01:41 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/kernel.h>
-#include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/file.h>
-#include <sys/namei.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
@@ -84,16 +82,16 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.183 2008/11/18 11:36:58 pooka Exp
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-#include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
 #include <sys/event.h>
 #include <sys/kauth.h>
 #include <sys/atomic.h>
-#include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/cpu.h>
+#include <sys/kmem.h>
+#include <sys/vnode.h>
 
 static int	file_ctor(void *, void *, int);
 static void	file_dtor(void *, void *);
@@ -1517,122 +1515,6 @@ fd_dupopen(int old, int *new, int mode, int error)
 	fd_putfile(old);
 	return error;
 }
-
-/*
- * Close open files on exec.
- */
-void
-fd_closeexec(void)
-{
-	proc_t *p;
-	filedesc_t *fdp;
-	fdfile_t *ff;
-	lwp_t *l;
-	int fd;
-
-	l = curlwp;
-	p = l->l_proc;
-	fdp = p->p_fd;
-
-	cwdunshare(p);
-
-	if (p->p_cwdi->cwdi_edir) {
-		vrele(p->p_cwdi->cwdi_edir);
-	}
-
-	if (fdp->fd_refcnt > 1) {
-		fdp = fd_copy();
-		fd_free();
-		p->p_fd = fdp;
-		l->l_fd = fdp;
-	}
-	if (!fdp->fd_exclose) {
-		return;
-	}
-	fdp->fd_exclose = false;
-
-	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
-		if ((ff = fdp->fd_ofiles[fd]) == NULL) {
-			KASSERT(fd >= NDFDFILE);
-			continue;
-		}
-		KASSERT(fd >= NDFDFILE ||
-		    ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
-		if (ff->ff_file == NULL)
-			continue;
-		if (ff->ff_exclose) {
-			/*
-			 * We need a reference to close the file.
-			 * No other threads can see the fdfile_t at
-			 * this point, so don't bother locking.
-			 */
-			KASSERT((ff->ff_refcnt & FR_CLOSING) == 0);
-			ff->ff_refcnt++;
-			fd_close(fd);
-		}
-	}
-}
-
-/*
- * It is unsafe for set[ug]id processes to be started with file
- * descriptors 0..2 closed, as these descriptors are given implicit
- * significance in the Standard C library.  fdcheckstd() will create a
- * descriptor referencing /dev/null for each of stdin, stdout, and
- * stderr that is not already open.
- */
-#define CHECK_UPTO 3
-int
-fd_checkstd(void)
-{
-	struct proc *p;
-	struct nameidata nd;
-	filedesc_t *fdp;
-	file_t *fp;
-	struct proc *pp;
-	int fd, i, error, flags = FREAD|FWRITE;
-	char closed[CHECK_UPTO * 3 + 1], which[3 + 1];
-
-	p = curproc;
-	closed[0] = '\0';
-	if ((fdp = p->p_fd) == NULL)
-		return (0);
-	for (i = 0; i < CHECK_UPTO; i++) {
-		KASSERT(i >= NDFDFILE ||
-		    fdp->fd_ofiles[i] == (fdfile_t *)fdp->fd_dfdfile[i]);
-		if (fdp->fd_ofiles[i]->ff_file != NULL)
-			continue;
-		snprintf(which, sizeof(which), ",%d", i);
-		strlcat(closed, which, sizeof(closed));
-		if ((error = fd_allocfile(&fp, &fd)) != 0)
-			return (error);
-		KASSERT(fd < CHECK_UPTO);
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null");
-		if ((error = vn_open(&nd, flags, 0)) != 0) {
-			fd_abort(p, fp, fd);
-			return (error);
-		}
-		fp->f_data = nd.ni_vp;
-		fp->f_flag = flags;
-		fp->f_ops = &vnops;
-		fp->f_type = DTYPE_VNODE;
-		VOP_UNLOCK(nd.ni_vp, 0);
-		fd_affix(p, fp, fd);
-	}
-	if (closed[0] != '\0') {
-		mutex_enter(proc_lock);
-		pp = p->p_pptr;
-		mutex_enter(pp->p_lock);
-		log(LOG_WARNING, "set{u,g}id pid %d (%s) "
-		    "was invoked by uid %d ppid %d (%s) "
-		    "with fd %s closed\n",
-		    p->p_pid, p->p_comm, kauth_cred_geteuid(pp->p_cred),
-		    pp->p_pid, pp->p_comm, &closed[1]);
-		mutex_exit(pp->p_lock);
-		mutex_exit(proc_lock);
-	}
-	return (0);
-}
-#undef CHECK_UPTO
 
 /*
  * Sets descriptor owner. If the owner is a process, 'pgid'
