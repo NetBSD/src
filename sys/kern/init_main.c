@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.374 2008/11/14 23:33:45 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.375 2008/11/18 11:36:58 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.374 2008/11/14 23:33:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.375 2008/11/18 11:36:58 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -451,6 +451,9 @@ main(void)
 
 	/* Initialize the file descriptor system. */
 	fd_sys_init();
+
+	/* Initialize cwd structures */
+	cwd_sys_init();
 
 	/* Initialize kqueue. */
 	kqueue_init();

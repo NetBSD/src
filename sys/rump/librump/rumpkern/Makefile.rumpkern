@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.18 2008/11/17 08:53:12 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.19 2008/11/18 11:36:58 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -33,9 +33,9 @@ SRCS+=	subr_bufq.c subr_callback.c subr_hash.c subr_iostat.c		\
 	subr_time.c subr_workqueue.c
 
 # sys/kern vfs
-SRCS+=	vfs_bio.c vfs_cache.c vfs_dirhash.c vfs_getcwd.c vfs_hooks.c	\
-	vfs_init.c vfs_lookup.c vfs_subr.c vfs_syscalls.c vfs_vnops.c	\
-	vfs_wapbl.c vnode_if.c
+SRCS+=	vfs_bio.c vfs_cache.c vfs_cwd.c vfs_dirhash.c vfs_getcwd.c	\
+	vfs_hooks.c vfs_init.c vfs_lookup.c vfs_subr.c vfs_syscalls.c	\
+	vfs_vnops.c vfs_wapbl.c vnode_if.c
 
 # sys/miscfs
 SRCS+=	genfs_vfsops.c genfs_vnops.c sync_subr.c
