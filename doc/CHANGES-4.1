@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.108 2008/11/18 21:12:05 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.109 2008/11/18 22:22:09 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2397,4 +2397,37 @@ tools/compat/nbtool_config.h.in			regen
 
         Fix crossbuilding on Cygwin (PR toolchain/29032).
 	[tsutsui, ticket #1224]
+
+etc/etc.atari/MAKEDEV.conf			1.8
+
+	The NetBSD/atari installer can use md2a as a root device, so ensure
+	the 'floppy' target creates md2
+	[abs, ticket #1231]
+
+bin/echo/echo.c					1.18
+bin/sh/bltin/bltin.h				1.13 via patch
+bin/sh/bltin/echo.c				1.14
+bin/sh/output.c					1.30
+bin/sh/output.h					1.19
+
+	Check ferror(stdout) and exit(1) if there's been a problem.
+	Fixes PR bin/39574 from Ed Ravin, but with a simpler patch.
+	output.c output.h: expose OUTPUT_ERR (flag for an exposed flags
+	variable)
+	bltin.h: support ferror()
+	echo.c: use ferror() to fail on output write errors
+	Another piece of PR bin/39574.
+	[dholland, ticket #1232]
+
+sys/dev/wscons/wsdisplay.c			1.123
+
+	In wsdisplay_kbdholdscreen(), just return if sc->sc_focus is NULL.
+	There is apparently no guarantee sc->sc_focus will be non-NULL,
+	as proved by a crash I experienced earlier today (admittedly on 4.0.1).
+	[he, ticket #1235]
+
+etc/rc.d/wpa_supplicant				1.2
+
+	Add a 'reload' option - from Peter Bex
+	[abs, ticket #1236]
 
