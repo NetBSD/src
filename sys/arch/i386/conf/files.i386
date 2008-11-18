@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.338 2008/06/13 17:26:33 christos Exp $
+#	$NetBSD: files.i386,v 1.338.6.1 2008/11/18 01:56:59 snj Exp $
 #
 # new style config file for i386 architecture
 #
@@ -358,6 +358,8 @@ file	arch/i386/i386/kvm86.c			kvm86
 file	arch/i386/i386/kvm86call.S		kvm86
 
 # Binary compatibility with previous NetBSD releases (COMPAT_XX)
+defflag opt_sa.h	COMPAT_30_PTHREAD
+
 file	arch/i386/i386/compat_13_machdep.c	compat_13
 file	arch/i386/i386/compat_16_machdep.c	compat_16 | compat_ibcs2
 

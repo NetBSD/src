@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.114 2008/05/13 13:43:47 ad Exp $
+#	$NetBSD: GENERIC_TINY,v 1.114.8.1 2008/11/18 01:56:58 snj Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -77,6 +77,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30_PTHREAD # NetBSD 3.0 pthreads compatibility.
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID

@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.62 2008/04/30 15:29:12 ad Exp $
+# $NetBSD: NET4501,v 1.62.10.1 2008/11/18 01:56:59 snj Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.62 $"
+#ident 		"NET4501-$Revision: 1.62.10.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -92,6 +92,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30_PTHREAD # NetBSD 3.0 pthreads compatibility.
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID

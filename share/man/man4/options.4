@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.369.2.1 2008/11/12 23:39:00 snj Exp $
+.\"	$NetBSD: options.4,v 1.369.2.2 2008/11/18 01:56:58 snj Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 11, 2008
+.Dd November 14, 2008
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2485,6 +2485,19 @@ and Hades.
 .El
 .Ss i386-specific Options
 .Bl -ohang
+.It Cd options COMPAT_30_PTHREAD
+Enable binary compatibility with
+.Nx 3.0
+libpthread.
+.Nx 3.0
+libpthread uses hardcoded values for GDT entries on i386.
+The order of GDT entries in kernel changed, this option restores the
+order to what it was in
+.Nx 3.0 .
+libpthread from
+.Nx 4.0
+and later was fixed to not use hardcoded values and will work with or
+without this option.
 .It Cd options ENHANCED_SPEEDSTEP
 Include support for the
 .Tn Enhanced SpeedStep Technology

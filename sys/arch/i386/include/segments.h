@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.50 2008/10/26 17:41:11 christos Exp $	*/
+/*	$NetBSD: segments.h,v 1.50.4.1 2008/11/18 01:56:59 snj Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,6 +82,7 @@
 #define _I386_SEGMENTS_H_
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
+#include "opt_sa.h"
 #endif
 
 /*
@@ -302,9 +303,16 @@ void idt_vec_free(int);
 #define	GNULL_SEL	0	/* Null descriptor */
 #define	GCODE_SEL	1	/* Kernel code descriptor */
 #define	GDATA_SEL	2	/* Kernel data descriptor */
+#ifdef COMPAT_30_PTHREAD
+/* this is incompatible with sysenter/sysexit */
+#define	GLDT_SEL	3	/* User code descriptor */
+#define	GUCODE_SEL	4	/* User data descriptor */
+#define	GUDATA_SEL	5	/* Default LDT descriptor */
+#else
 #define	GUCODE_SEL	3	/* User code descriptor */
 #define	GUDATA_SEL	4	/* User data descriptor */
 #define	GLDT_SEL	5	/* Default LDT descriptor */
+#endif
 #define GCPU_SEL	6	/* per-CPU segment */
 #define	GMACHCALLS_SEL	7	/* Darwin (mach trap) system call gate */
 #define	GEXTBIOSDATA_SEL 8	/* magic to catch BIOS refs to EBDA */
