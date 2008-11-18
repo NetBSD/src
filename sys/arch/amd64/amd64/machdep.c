@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102.4.1 2008/11/17 18:53:53 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.102.4.2 2008/11/18 01:46:57 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.1 2008/11/17 18:53:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102.4.2 2008/11/18 01:46:57 snj Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1340,13 +1340,13 @@ init_x86_64(paddr_t first_avail)
 	 */
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if (bim != NULL && bim->num > 0) {
-#if DEBUG_MEMLOAD
+#ifdef DEBUG_MEMLOAD
 		printf("BIOS MEMORY MAP (%d ENTRIES):\n", bim->num);
 #endif
 		for (x = 0; x < bim->num; x++) {
 			addr = bim->entry[x].addr;
 			size = bim->entry[x].size;
-#if DEBUG_MEMLOAD
+#ifdef DEBUG_MEMLOAD
 			printf("    addr 0x%lx  size 0x%lx  type 0x%x\n",
 			    addr, size, bim->entry[x].type);
 #endif
@@ -1569,10 +1569,10 @@ init_x86_64(paddr_t first_avail)
 					tmp = (16 * 1024 * 1024);
 				else
 					tmp = seg_end;
-#if DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    (unsigned long long)seg_start,
-				    (unsigned long long)tmp,
+#ifdef DEBUG_MEMLOAD
+				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%lx-0x%lx)\n",
+				    seg_start, tmp,
 				    atop(seg_start), atop(tmp));
 #endif
 				uvm_page_physload(atop(seg_start),
@@ -1582,10 +1582,10 @@ init_x86_64(paddr_t first_avail)
 			}
 
 			if (seg_start != seg_end) {
-#if DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    (unsigned long long)seg_start,
-				    (unsigned long long)seg_end,
+#ifdef DEBUG_MEMLOAD
+				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%lx-0x%lx)\n",
+				    seg_start, seg_end,
 				    atop(seg_start), atop(seg_end));
 #endif
 				uvm_page_physload(atop(seg_start),
@@ -1604,10 +1604,10 @@ init_x86_64(paddr_t first_avail)
 					tmp = (16 * 1024 * 1024);
 				else
 					tmp = seg_end1;
-#if DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    (unsigned long long)seg_start1,
-				    (unsigned long long)tmp,
+#ifdef DEBUG_MEMLOAD
+				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%lx-0x%lx)\n",
+				    seg_start1, tmp,
 				    atop(seg_start1), atop(tmp));
 #endif
 				uvm_page_physload(atop(seg_start1),
@@ -1617,10 +1617,10 @@ init_x86_64(paddr_t first_avail)
 			}
 
 			if (seg_start1 != seg_end1) {
-#if DEBUG_MEMLOAD
-				printf("loading 0x%qx-0x%qx (0x%lx-0x%lx)\n",
-				    (unsigned long long)seg_start1,
-				    (unsigned long long)seg_end1,
+#ifdef DEBUG_MEMLOAD
+				printf("loading 0x%"PRIx64"-0x%"PRIx64
+				    " (0x%lx-0x%lx)\n",
+				    seg_start1, seg_end1,
 				    atop(seg_start1), atop(seg_end1));
 #endif
 				uvm_page_physload(atop(seg_start1),
