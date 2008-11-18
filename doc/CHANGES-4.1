@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.109 2008/11/18 22:22:09 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.110 2008/11/18 22:33:58 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2430,4 +2430,19 @@ etc/rc.d/wpa_supplicant				1.2
 
 	Add a 'reload' option - from Peter Bex
 	[abs, ticket #1236]
+
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.54
+sys/arch/x86/include/mtrr.h			1.4
+sys/arch/x86/x86/mtrr_i686.c			1.18
+
+	hack around PR#38480:
+	- rename MTRR_I686_NVAR to MTRR_I686_NVAR_MAX, still set to 8
+	- store mtrr VCNT value into i686_mtrr_vcnt.  if it is less than 8,
+	   zero out the relevant parts of mtrr_raw[].msraddr
+	- replace all usage of MTRR_I686_NVAR with either i686_mtrr_vcnt or
+	   with MTRR_I686_NVAR_MAX as appropriate
+	- in i686_mtrr_reload() and mtrr_init_first() don't use mtrr_raw[]
+	   addresses of 0
+	still needs a bunch of reworking to handle VCNT > 8 case.
+	[sborrill, ticket #1173]
 
