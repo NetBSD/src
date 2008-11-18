@@ -1,4 +1,4 @@
-/*	$NetBSD: echo.c,v 1.12 2005/02/06 04:43:43 perry Exp $	*/
+/*	$NetBSD: echo.c,v 1.12.10.1 2008/11/18 22:17:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -112,5 +112,8 @@ main(int argc, char **argv)
 	}
 	if (! nflag)
 		putchar('\n');
+	fflush(stdout);
+	if (ferror(stdout))
+		return 1;
 	return 0;
 }

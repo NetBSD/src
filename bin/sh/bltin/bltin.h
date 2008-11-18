@@ -1,4 +1,4 @@
-/*	$NetBSD: bltin.h,v 1.11 2003/08/07 09:05:40 agc Exp $	*/
+/*	$NetBSD: bltin.h,v 1.11.16.1 2008/11/18 22:17:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,6 +50,7 @@
 #undef putc
 #undef putchar
 #undef fileno
+#undef ferror
 #define stdout out1
 #define stderr out2
 #define printf out1fmt
@@ -60,6 +61,7 @@
 #define fputs outstr
 #define fflush flushout
 #define fileno(f) ((f)->fd)
+#define ferror(f) ((f)->flags & OUTPUT_ERR)
 #define INITARGS(argv)
 #define	err sh_err
 #define	verr sh_verr
