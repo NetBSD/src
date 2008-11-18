@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.164 2008/11/12 12:36:16 ad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.165 2008/11/18 21:20:32 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.164 2008/11/12 12:36:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.165 2008/11/18 21:20:32 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -2454,7 +2454,7 @@ device_active_register(device_t dev, void (*handler)(device_t, devactive_t))
 	splx(s);
 
 	if (old_handlers != NULL)
-		kmem_free(old_handlers, sizeof(int [old_size]));
+		kmem_free(old_handlers, sizeof(void * [old_size]));
 
 	return true;
 }
