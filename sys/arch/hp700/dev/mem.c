@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16.4.1 2008/10/27 08:02:40 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.16.4.2 2008/11/18 14:09:39 skrll Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.30 2007/09/22 16:21:32 krw Exp $	*/
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16.4.1 2008/10/27 08:02:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.16.4.2 2008/11/18 14:09:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ memattach(struct device *parent, struct device *self, void *aux)
 	struct pdc_iodc_minit pdc_minit PDC_ALIGNMENT;
 	struct confargs *ca = aux;
 	struct mem_softc *sc = (struct mem_softc *)self;
-	int s, err, pagezero_cookie;
+	int err, pagezero_cookie;
 	char bits[128];
 
 	printf (":");
@@ -200,24 +200,51 @@ memattach(struct device *parent, struct device *self, void *aux)
 
 		/* XXX other values seem to blow it up */
 		if (sc->sc_vp->vi_status.hw_rev == 0) {
-			bitmask_snprintf(VI_CTRL, VIPER_BITS, bits, 
+			uint32_t vic;
+			int s, settimeout;
+
+			switch (cpu_hvers) {
+			case HPPA_BOARD_HP715_33:
+			case HPPA_BOARD_HP715S_33:
+			case HPPA_BOARD_HP715T_33:
+			case HPPA_BOARD_HP715_50:
+			case HPPA_BOARD_HP715S_50:
+			case HPPA_BOARD_HP715T_50:
+			case HPPA_BOARD_HP715_75:
+			case HPPA_BOARD_HP725_50:
+			case HPPA_BOARD_HP725_75:
+				settimeout = 1;
+				break;
+			default:
+				settimeout = 0;
+				break;
+			}
+			if (sc->sc_dev.dv_cfdata->cf_flags & 1)
+				settimeout = !settimeout;
+
+			bitmask_snprintf(VI_CTRL, VIPER_BITS, bits,
 			    sizeof(bits));
 			printf (" viper rev %x, ctrl %s",
-			    sc->sc_vp->vi_status.hw_rev,
-			    bits);
+			    sc->sc_vp->vi_status.hw_rev, bits);
 
 			s = splhigh();
-#if 0
-			VI_CTRL |= VI_CTRL_ANYDEN;
-			((struct vi_ctrl *)&VI_CTRL)->core_den = 0;
-			((struct vi_ctrl *)&VI_CTRL)->sgc0_den = 0;
-			((struct vi_ctrl *)&VI_CTRL)->sgc1_den = 0;
-			((struct vi_ctrl *)&VI_CTRL)->core_prf = 1;
-			sc->sc_vp->vi_control = VI_CTRL;
+			vic = VI_CTRL;
+			((struct vi_ctrl *)&vic)->core_den = 0;
+			((struct vi_ctrl *)&vic)->sgc0_den = 0;
+			((struct vi_ctrl *)&vic)->sgc1_den = 0;
+			((struct vi_ctrl *)&vic)->eisa_den = 1;
+			((struct vi_ctrl *)&vic)->core_prf = 1;
+
+			if (settimeout && ((struct vi_ctrl *)&vic)->vsc_tout == 0)
+				((struct vi_ctrl *)&vic)->vsc_tout = 850;	/* clks */
+
+			sc->sc_vp->vi_control = vic;
+
+			__asm __volatile("stwas %1, 0(%0)"
+			    :: "r" (&VI_CTRL), "r" (vic) : "memory");
 			splx(s);
-#endif
 #ifdef DEBUG
-			bitmask_snprintf(VI_CTRL, VIPER_BITS, bits, 
+			bitmask_snprintf(VI_CTRL, VIPER_BITS, bits,
 			    sizeof(bits));
 			printf (" >> %s", bits);
 #endif
@@ -271,14 +298,24 @@ void
 viper_eisa_en(void)
 {
 	struct mem_softc *sc;
-	int pagezero_cookie;
 
 	sc = device_lookup_private(&mem_cd, 0);
 
-	pagezero_cookie = hp700_pagezero_map();
-	if (sc->sc_vp)
-		((struct vi_ctrl *)&VI_CTRL)->eisa_den = 0;
-	hp700_pagezero_unmap(pagezero_cookie);
+	if (sc->sc_vp) {
+		int pagezero_cookie;
+		uint32_t vic;
+		int s;
+
+		pagezero_cookie = hp700_pagezero_map();
+		s = splhigh();
+		vic = VI_CTRL;
+		((struct vi_ctrl *)&vic)->eisa_den = 0;
+		sc->sc_vp->vi_control = vic;
+		__asm __volatile("stwas %1, 0(%0)"
+		   :: "r" (&VI_CTRL), "r" (vic) : "memory");
+		splx(s);
+		hp700_pagezero_unmap(pagezero_cookie);
+	}
 }
 
 int

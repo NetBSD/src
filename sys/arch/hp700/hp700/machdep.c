@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48.4.7 2008/11/17 07:20:08 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.4.8 2008/11/18 14:09:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.7 2008/11/17 07:20:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.4.8 2008/11/18 14:09:39 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -200,8 +200,9 @@ u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
 /* exported info */
 char	machine[] = MACHINE;
 char	cpu_model[128];
-enum hppa_cpu_type cpu_type;
 const struct hppa_cpu_info *hppa_cpu_info;
+enum hppa_cpu_type cpu_type;
+int	cpu_hvers;
 
 /*
  * exported methods for cpus
@@ -646,7 +647,8 @@ cpuid(void)
 #endif
 	}
 	/* XXXNH - check */
-	model = hppa_mod_info(HPPA_TYPE_BOARD, pdc_model.hvers >> 4);
+	cpu_hvers = pdc_model.hvers >> 4;
+	model = hppa_mod_info(HPPA_TYPE_BOARD, cpu_hvers);
 #ifdef DEBUG
 	printf("%s: model %s\n", __func__, model);
 #endif
