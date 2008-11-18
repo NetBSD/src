@@ -1,4 +1,4 @@
-/* $NetBSD: mtrr.h,v 1.2.52.2 2008/08/23 17:10:12 bouyer Exp $ */
+/* $NetBSD: mtrr.h,v 1.2.52.3 2008/11/18 22:33:28 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #define MTRR_I686_FIXED_IDX16K	1
 #define MTRR_I686_FIXED_IDX4K	3
 
-#define MTRR_I686_NVAR		8
+#define MTRR_I686_NVAR_MAX	8	/* could be upto 255? */
 
 #define MTRR_I686_64K_START		0x00000
 #define MTRR_I686_16K_START		0x80000
