@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.280 2008/10/21 20:52:11 matt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.280.4.1 2008/11/18 17:11:52 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280 2008/10/21 20:52:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.1 2008/11/18 17:11:52 snj Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -236,13 +236,13 @@ const struct emul emul_netbsd = {
 	startlwp,
 };
 
-#ifdef LKM
 /*
  * Exec lock. Used to control access to execsw[] structures.
  * This must not be static so that netbsd32 can access it, too.
  */
 krwlock_t exec_lock;
 
+#ifdef LKM
 static void link_es(struct execsw_entry **, const struct execsw *);
 #endif /* LKM */
 
@@ -572,9 +572,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	pack.ep_esch = NULL;
 	pack.ep_pax_flags = 0;
 
-#ifdef LKM
 	rw_enter(&exec_lock, RW_READER);
-#endif
 
 	/* see if we can run it. */
 	if ((error = check_exec(l, &pack)) != 0) {
@@ -1091,9 +1089,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 
 	/* Allow new references from the debugger/procfs. */
 	rw_exit(&p->p_reflock);
-#ifdef LKM
 	rw_exit(&exec_lock);
-#endif
 
 	mutex_enter(proc_lock);
 
@@ -1149,9 +1145,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (pack.ep_interp != NULL)
 		vrele(pack.ep_interp);
 
-#ifdef LKM
 	rw_exit(&exec_lock);
-#endif
 
  clrflg:
 	lwp_lock(l);
@@ -1165,9 +1159,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
  exec_abort:
 	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
-#ifdef LKM
 	rw_exit(&exec_lock);
-#endif
 
 	/*
 	 * the old process doesn't exist anymore.  exit gracefully.
@@ -1577,6 +1569,7 @@ exec_init(int init_boot)
 	nexecs = nexecs_builtin;
 	execsw = kmem_alloc(nexecs * sizeof(struct execsw *), KM_SLEEP);
 
+	rw_init(&exec_lock);
 	pool_init(&exec_pool, NCARGS, 0, 0, PR_NOALIGN|PR_NOTOUCH,
 	    "execargs", &exec_palloc, IPL_NONE);
 	pool_sethardlimit(&exec_pool, maxexec, "should not happen", 0);
