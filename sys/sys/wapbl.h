@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl.h,v 1.7 2008/11/17 19:31:47 joerg Exp $	*/
+/*	$NetBSD: wapbl.h,v 1.8 2008/11/18 22:21:49 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -205,7 +205,6 @@ struct wapbl_wc_inodelist {
 #ifdef _KERNEL
 
 struct wapbl_entry;
-struct wapbl_wc_header;
 struct wapbl_replay;
 struct wapbl;
 
@@ -341,7 +340,12 @@ struct wapbl_replay {
 	struct vnode *wr_devvp;
 	daddr_t wr_logpbn;
 
-	struct wapbl_wc_header wr_wc_header;
+	int wr_log_dev_bshift;
+	int wr_fs_dev_bshift;
+	int64_t wr_circ_off;
+	int64_t wr_circ_size;	
+	uint32_t wr_generation;
+
 	void *wr_scratch;
 
 	LIST_HEAD(wapbl_blk_head, wapbl_blk) *wr_blkhash;
