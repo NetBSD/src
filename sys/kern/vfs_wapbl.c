@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.10 2008/11/18 11:37:37 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.11 2008/11/18 13:29:34 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.10 2008/11/18 11:37:37 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.11 2008/11/18 13:29:34 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -201,7 +201,7 @@ static int wapbl_write_revocations(struct wapbl *wl, off_t *offp);
 static int wapbl_write_inodes(struct wapbl *wl, off_t *offp);
 #endif /* _KERNEL */
 
-static int wapbl_replay_prescan(struct wapbl_replay *wr);
+static int wapbl_replay_process(struct wapbl_replay *wr);
 
 static __inline size_t wapbl_space_free(size_t avail, off_t head,
 	off_t tail);
@@ -2363,7 +2363,8 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 	    wch->wc_circ_size, used));
 
 	wapbl_blkhash_init(wr, (used >> wch->wc_fs_dev_bshift));
-	error = wapbl_replay_prescan(wr);
+
+	error = wapbl_replay_process(wr);
 	if (error) {
 		wapbl_replay_stop(wr);
 		wapbl_replay_free(wr);
@@ -2483,7 +2484,7 @@ wapbl_replay_process_inodes(struct wapbl_replay *wr, off_t oldoff, off_t newoff)
 }
 
 static int
-wapbl_replay_prescan(struct wapbl_replay *wr)
+wapbl_replay_process(struct wapbl_replay *wr)
 {
 	off_t off;
 	struct wapbl_wc_header *wch = &wr->wr_wc_header;
