@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.21 2008/06/20 16:45:13 cube Exp $ */
+/* $NetBSD: if_msk.c,v 1.22 2008/11/18 09:30:43 chris Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.21 2008/06/20 16:45:13 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.22 2008/11/18 09:30:43 chris Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -808,6 +808,26 @@ void msk_reset(struct sk_softc *sc)
 		reg1 |= (SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
 	else
 		reg1 &= ~(SK_Y2_REG1_PHY1_COMA | SK_Y2_REG1_PHY2_COMA);
+	
+	if (sc->sk_type == SK_YUKON_EC_U) {
+		uint32_t our;
+
+		CSR_WRITE_2(sc, SK_CSR, SK_CSR_WOL_ON);
+		
+		/* enable all clocks. */
+		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG3), 0);
+		our = sk_win_read_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG4));
+		our &= (SK_Y2_REG4_FORCE_ASPM_REQUEST|
+			SK_Y2_REG4_ASPM_GPHY_LINK_DOWN|
+			SK_Y2_REG4_ASPM_INT_FIFO_EMPTY|
+			SK_Y2_REG4_ASPM_CLKRUN_REQUEST);
+		/* Set all bits to 0 except bits 15..12 */ 
+		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG4), our);
+		/* Set to default value */
+		sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG5), 0);
+	}
+
+	/* release PHY from PowerDown/Coma mode. */
 	sk_win_write_4(sc, SK_Y2_PCI_REG(SK_PCI_OURREG1), reg1);
  
 	if (sc->sk_type == SK_YUKON_XL && sc->sk_rev > SK_YUKON_XL_REV_A1)
@@ -1803,8 +1823,12 @@ msk_tick(void *xsc_if)
 {
 	struct sk_if_softc *sc_if = xsc_if;  
 	struct mii_data *mii = &sc_if->sk_mii;
+	int s;
 
+	s = splnet();
 	mii_tick(mii);
+	splx(s);
+
 	callout_schedule(&sc_if->sk_tick_ch, hz);
 }
 
