@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.21 2008/11/17 19:04:39 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.22 2008/11/18 02:38:07 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -524,4 +524,46 @@ sys/sys/namei.h					1.61
         performs the lookup from the root directory if given an absolute
         path.
 	[ad, ticket #76]
+
+sys/arch/amd64/amd64/machdep.c			1.106, 1.107
+
+	- introduce add_mem_cluster() as done in i386
+	- apply rev. 1.480 from i386/i386/machdep.c: fixes PR 17199
+	- apply rev. 1.492 from i386/i386/machdep.c: fixes PR 13399
+	[cegger, ticket #51]
+
+share/man/man4/options.4			patch
+sys/arch/i386/conf/ALL				patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/GENERIC_TINY			patch
+sys/arch/i386/conf/INSTALL_FLOPPY		patch
+sys/arch/i386/conf/INSTALL_TINY			patch
+sys/arch/i386/conf/NET4501			patch
+sys/arch/i386/conf/XBOX				patch
+sys/arch/i386/conf/XEN2_DOM0			patch
+sys/arch/i386/conf/XEN2_DOMU			patch
+sys/arch/i386/conf/files.i386			patch
+sys/arch/i386/include/segments.h		patch
+
+	Add i386-specific COMPAT_30_PTHREAD option (enabled where
+        COMPAT_30 is enabled), which restore binary compatibility
+	with netbsd-3 libpthread.
+	[bouyer, ticket #65]
+
+sys/dev/wscons/wsdisplay.c			1.123
+
+	In wsdisplay_kbdholdscreen(), just return if sc->sc_focus is
+	NULL.  Avoids a crash.
+	[he, ticket #68]
+
+etc/rc.d/wpa_supplicant				1.2
+
+	Add a 'reload' option.
+	[abs, ticket #69]
+
+sys/arch/sparc/dev/zs.c				1.112
+
+	PR port-sparc/39942: ifdef ch0_is_cons declaration and all
+	uses consistently.
+	[martin, ticket #77]
 
