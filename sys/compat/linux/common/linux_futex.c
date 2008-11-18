@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.18 2008/10/26 19:13:16 jmcneill Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.19 2008/11/18 15:25:13 njoly Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.18 2008/10/26 19:13:16 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.19 2008/11/18 15:25:13 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -94,7 +94,7 @@ static ONCE_DECL(futex_once);
 static int
 futex_init(void)
 {
-	printf("futex_init: initializing futex\n");
+	FUTEXPRINTF(("futex_init: initializing futex\n"));
 	mutex_init(&futex_lock, MUTEX_DEFAULT, IPL_NONE);
 	return 0;
 }
