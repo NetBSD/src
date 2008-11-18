@@ -1,4 +1,4 @@
-.\"	$NetBSD: login.conf.5,v 1.21 2008/02/25 23:52:48 lukem Exp $
+.\"	$NetBSD: login.conf.5,v 1.22 2008/11/18 13:04:04 reed Exp $
 .\"
 .\" Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\" BSDI login.conf.5,v 2.19 1998/02/19 23:39:39 prb Exp
 .\"
-.Dd February 26, 2008
+.Dd November 18, 2008
 .Dt LOGIN.CONF 5
 .Os
 .Sh NAME
@@ -88,6 +88,9 @@ The types are described after the capability table.
 .sp
 .It Sy copyright Ta file Ta "" Ta
 File containing additional copyright information.
+(If the file exists,
+.Xr login 1
+displays it before the welcome message.)
 .\"
 .sp
 .It Sy coredumpsize Ta size Ta "" Ta
@@ -265,6 +268,10 @@ See
 .sp
 .It Sy welcome Ta file Ta Li /etc/motd Ta
 File containing welcome message.
+.Xr login 1
+displays this and
+.Xr sshd 8
+sends this.
 .El
 .Pp
 The resource limit entries
