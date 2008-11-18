@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.118 2008/04/28 20:23:56 martin Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.119 2008/11/18 14:29:55 ad Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,9 +66,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.118 2008/04/28 20:23:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.119 2008/11/18 14:29:55 ad Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
