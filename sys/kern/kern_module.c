@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.27 2008/11/18 11:39:41 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.28 2008/11/18 11:56:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.27 2008/11/18 11:39:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.28 2008/11/18 11:56:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -841,6 +841,8 @@ static void
 module_thread(void *cookie)
 {
 	module_t *mod, *next;
+	modinfo_t *mi;
+	int error;
 
 	for (;;) {
 		mutex_enter(&module_lock);
@@ -856,7 +858,17 @@ module_thread(void *cookie)
 			} else {
 				mod->mod_autotime = 0;
 			}
-			(void)module_do_unload(mod->mod_info->mi_name);
+			/*
+			 * If this module wants to avoid autounload then
+			 * skip it.  Some modules can ping-pong in and out
+			 * because their use is transient but often. 
+			 * Example: exec_script.
+			 */
+			mi = mod->mod_info;
+			error = (*mi->mi_modcmd)(MODULE_CMD_AUTOUNLOAD, NULL);
+			if (error == 0 || error == ENOTTY) {
+				(void)module_do_unload(mi->mi_name);
+			}
 		}
 		mutex_exit(&module_lock);
 
