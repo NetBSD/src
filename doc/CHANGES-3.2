@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.151 2008/11/18 21:34:48 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.152 2008/11/18 23:06:29 snj Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5091,4 +5091,9 @@ distrib/sets/lists/mi				1.778
 
 	update zoneinfo to tzdata2008i
 	[lukem, ticket #1977]
+
+sys/netinet/tcp_timer.c				1.83 via patch
+
+	Fix kern/39769: race condition in TCP timers
+	[bouyer, ticket #1981]
 
