@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.19 2008/08/04 03:55:47 tls Exp $
+# $NetBSD: XEN2_DOMU,v 1.19.4.1 2008/11/18 01:56:59 snj Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -69,6 +69,7 @@ options 	COMPAT_15	# NetBSD 1.5
 options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30_PTHREAD # NetBSD 3.0 pthreads compatibility.
 options 	COMPAT_40	# NetBSD 4.0
 options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID

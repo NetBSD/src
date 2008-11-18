@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.1.16.1 2008/11/06 23:11:12 snj Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.1.16.2 2008/11/18 01:56:58 snj Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -91,6 +91,7 @@ options 	DDB		# in-kernel debugger
 #options 	COMPAT_16	# NetBSD 1.6
 options 	COMPAT_20	# NetBSD 2.0
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_30_PTHREAD # NetBSD 3.0 pthreads compatibility.
 options 	COMPAT_40	# NetBSD 4.0
 #options 	COMPAT_43	# 4.3BSD, 386BSD, and BSDI
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
