@@ -1,4 +1,4 @@
-/* 	$NetBSD: rmd160.c,v 1.2.4.1 2007/07/18 20:20:28 liamjfoy Exp $ */
+/* 	$NetBSD: rmd160.c,v 1.2.4.2 2008/11/18 19:10:02 snj Exp $ */
 /*	$KAME: rmd160.c,v 1.2 2003/07/25 09:37:55 itojun Exp $	*/
 /*	$OpenBSD: rmd160.c,v 1.3 2001/09/26 21:40:13 markus Exp $	*/
 /*
@@ -33,14 +33,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.2.4.1 2007/07/18 20:20:28 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmd160.c,v 1.2.4.2 2008/11/18 19:10:02 snj Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: rmd160.c,v 1.2.4.1 2007/07/18 20:20:28 liamjfoy Exp $");
+__RCSID("$NetBSD: rmd160.c,v 1.2.4.2 2008/11/18 19:10:02 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -130,11 +130,11 @@ RMD160Init(RMD160_CTX *ctx)
 }
 
 void
-RMD160Update(RMD160_CTX *ctx, const u_char *input, u_int32_t len)
+RMD160Update(RMD160_CTX *ctx, const u_char *input, uint32_t len)
 {
-	u_int32_t have, off, need;
+	uint32_t have, off, need;
 
-	have = (u_int32_t)((ctx->count/8) % 64);
+	have = (uint32_t)((ctx->count/8) % 64);
 	need = 64 - have;
 	ctx->count += 8 * len;
 	off = 0;
@@ -161,7 +161,7 @@ RMD160Final(u_char digest[20], RMD160_CTX *ctx)
 {
 	int i;
 	u_char size[8];
-	u_int32_t padlen;
+	uint32_t padlen;
 
 	PUT_64BIT_LE(size, ctx->count);
 
@@ -169,7 +169,7 @@ RMD160Final(u_char digest[20], RMD160_CTX *ctx)
 	 * pad to 64 byte blocks, at least one byte from PADDING plus 8 bytes
 	 * for the size
 	 */
-	padlen = (u_int32_t)(64 - ((ctx->count/8) % 64));
+	padlen = (uint32_t)(64 - ((ctx->count/8) % 64));
 	if (padlen < 1 + 8)
 		padlen += 64;
 	RMD160Update(ctx, PADDING, padlen - 8);		/* padlen - 8 <= 64 */
@@ -183,9 +183,9 @@ RMD160Final(u_char digest[20], RMD160_CTX *ctx)
 }
 
 void
-RMD160Transform(u_int32_t state[5], const u_char block[64])
+RMD160Transform(uint32_t state[5], const u_char block[64])
 {
-	u_int32_t a, b, c, d, e, aa, bb, cc, dd, ee, t, x[16];
+	uint32_t a, b, c, d, e, aa, bb, cc, dd, ee, t, x[16];
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	memcpy(x, block, (size_t)64);

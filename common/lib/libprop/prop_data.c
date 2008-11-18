@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_data.c,v 1.5.4.1 2007/09/27 16:16:26 xtraeme Exp $	*/
+/*	$NetBSD: prop_data.c,v 1.5.4.2 2008/11/18 19:10:02 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 		output[0] = (uint32_t)input[0] >> 2;
 		output[1] = ((uint32_t)(input[0] & 0x03) << 4) +
 		    ((uint32_t)input[1] >> 4);
-		output[2] = ((u_int32_t)(input[1] & 0x0f) << 2) +
+		output[2] = ((uint32_t)(input[1] & 0x0f) << 2) +
 		    ((uint32_t)input[2] >> 6);
 		output[3] = input[2] & 0x3f;
 		_PROP_ASSERT(output[0] < 64);
@@ -155,7 +155,7 @@ _prop_data_externalize(struct _prop_object_externalize_context *ctx, void *v)
 		output[0] = (uint32_t)input[0] >> 2;
 		output[1] = ((uint32_t)(input[0] & 0x03) << 4) +
 		    ((uint32_t)input[1] >> 4);
-		output[2] = ((u_int32_t)(input[1] & 0x0f) << 2) +
+		output[2] = ((uint32_t)(input[1] & 0x0f) << 2) +
 		    ((uint32_t)input[2] >> 6);
 		_PROP_ASSERT(output[0] < 64);
 		_PROP_ASSERT(output[1] < 64);

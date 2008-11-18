@@ -1,4 +1,4 @@
-/*  $NetBSD: bswap16.c,v 1.1 2005/12/20 19:28:51 christos Exp $    */
+/*  $NetBSD: bswap16.c,v 1.1.6.1 2008/11/18 19:10:02 snj Exp $    */
 
 /*
  * Written by Manuel Bouyer <bouyer@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: bswap16.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
+__RCSID("$NetBSD: bswap16.c,v 1.1.6.1 2008/11/18 19:10:02 snj Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -15,9 +15,9 @@ __RCSID("$NetBSD: bswap16.c,v 1.1 2005/12/20 19:28:51 christos Exp $");
 
 #undef bswap16
 
-u_int16_t
+uint16_t
 bswap16(x)
-	u_int16_t x;
+	uint16_t x;
 {
 	return ((x << 8) & 0xff00) | ((x >> 8) & 0x00ff);
 }
