@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.17 2003/08/07 09:05:36 agc Exp $	*/
+/*	$NetBSD: output.h,v 1.17.16.1 2008/11/18 22:17:03 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,6 +46,9 @@ struct output {
 	short fd;
 	short flags;
 };
+
+/* flags for ->flags */
+#define OUTPUT_ERR 01		/* error occurred on output */
 
 extern struct output output;
 extern struct output errout;
