@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.9 2008/11/17 22:08:09 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.10 2008/11/18 11:37:37 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.9 2008/11/17 22:08:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.10 2008/11/18 11:37:37 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -67,6 +67,7 @@ MALLOC_JUSTDEFINE(M_WAPBL, "wapbl", "write-ahead physical block logging");
 #define	wapbl_malloc(s) malloc((s), M_WAPBL, M_WAITOK)
 #define	wapbl_free(a) free((a), M_WAPBL)
 #define	wapbl_calloc(n, s) malloc((n)*(s), M_WAPBL, M_WAITOK | M_ZERO)
+#define	wapbl_realloc(ptr, s) realloc((ptr), (s), M_WAPBL, M_WAITOK | M_ZERO)
 
 #else /* !_KERNEL */
 #include <assert.h>
@@ -84,6 +85,7 @@ MALLOC_JUSTDEFINE(M_WAPBL, "wapbl", "write-ahead physical block logging");
 #define	wapbl_malloc(s) malloc(s)
 #define	wapbl_free(a) free(a)
 #define	wapbl_calloc(n, s) calloc((n), (s))
+#define	wapbl_realloc(ptr, s) realloc((ptr), (s))
 
 #endif /* !_KERNEL */
 
@@ -200,7 +202,6 @@ static int wapbl_write_inodes(struct wapbl *wl, off_t *offp);
 #endif /* _KERNEL */
 
 static int wapbl_replay_prescan(struct wapbl_replay *wr);
-static int wapbl_replay_get_inodes(struct wapbl_replay *wr);
 
 static __inline size_t wapbl_space_free(size_t avail, off_t head,
 	off_t tail);
@@ -2369,13 +2370,6 @@ wapbl_replay_start(struct wapbl_replay **wrp, struct vnode *vp,
 		return error;
 	}
 
-	error = wapbl_replay_get_inodes(wr);
-	if (error) {
-		wapbl_replay_stop(wr);
-		wapbl_replay_free(wr);
-		return error;
-	}
-
 	*wrp = wr;
 	return 0;
 
@@ -2422,6 +2416,72 @@ wapbl_replay_isopen1(struct wapbl_replay *wr)
 }
 #endif
 
+static void
+wapbl_replay_process_blocks(struct wapbl_replay *wr, off_t *offp)
+{
+	struct wapbl_wc_header *wch = &wr->wr_wc_header;
+	struct wapbl_wc_blocklist *wc =
+	    (struct wapbl_wc_blocklist *)wr->wr_scratch;
+	int fsblklen = 1<<wch->wc_fs_dev_bshift;
+	int i, j, n;
+
+	for (i = 0; i < wc->wc_blkcount; i++) {
+		/*
+		 * Enter each physical block into the hashtable independently.
+		 */
+		n = wc->wc_blocks[i].wc_dlen >> wch->wc_fs_dev_bshift;
+		for (j = 0; j < n; j++) {
+			wapbl_blkhash_ins(wr, wc->wc_blocks[i].wc_daddr + j,
+			    *offp);
+			wapbl_circ_advance(wr, fsblklen, offp);
+		}
+	}
+}
+
+static void
+wapbl_replay_process_revocations(struct wapbl_replay *wr)
+{
+	struct wapbl_wc_header *wch = &wr->wr_wc_header;
+	struct wapbl_wc_blocklist *wc =
+	    (struct wapbl_wc_blocklist *)wr->wr_scratch;
+	int i, j, n;
+
+	for (i = 0; i < wc->wc_blkcount; i++) {
+		/*
+		 * Remove any blocks found from the hashtable.
+		 */
+		n = wc->wc_blocks[i].wc_dlen >> wch->wc_fs_dev_bshift;
+		for (j = 0; j < n; j++)
+			wapbl_blkhash_rem(wr, wc->wc_blocks[i].wc_daddr + j);
+	}
+}
+
+static void
+wapbl_replay_process_inodes(struct wapbl_replay *wr, off_t oldoff, off_t newoff)
+{
+	struct wapbl_wc_inodelist *wc =
+	    (struct wapbl_wc_inodelist *)wr->wr_scratch;
+	/*
+	 * Keep track of where we found this so location won't be
+	 * overwritten.
+	 */
+	if (wc->wc_clear) {
+		wr->wr_inodestail = oldoff;
+		wr->wr_inodescnt = 0;
+		wapbl_free(wr->wr_inodes);
+		wr->wr_inodes = NULL;
+	}
+	wr->wr_inodeshead = newoff;
+	if (wc->wc_inocnt == 0)
+		return;
+
+	wr->wr_inodes = wapbl_realloc(wr->wr_inodes,
+	    (wr->wr_inodescnt + wc->wc_inocnt) * sizeof(wc->wc_inodes[0]));
+	memcpy(&wr->wr_inodes[wr->wr_inodescnt], wc->wc_inodes,
+	    wc->wc_inocnt * sizeof(wc->wc_inodes[0]));
+	wr->wr_inodescnt += wc->wc_inocnt;
+}
+
 static int
 wapbl_replay_prescan(struct wapbl_replay *wr)
 {
@@ -2430,7 +2490,6 @@ wapbl_replay_prescan(struct wapbl_replay *wr)
 	int error;
 
 	int logblklen = 1<<wch->wc_log_dev_bshift;
-	int fsblklen = 1<<wch->wc_fs_dev_bshift;
 
 	wapbl_blkhash_clear(wr);
 
@@ -2444,67 +2503,17 @@ wapbl_replay_prescan(struct wapbl_replay *wr)
 		wcn = (struct wapbl_wc_null *)wr->wr_scratch;
 		switch (wcn->wc_type) {
 		case WAPBL_WC_BLOCKS:
-			{
-				struct wapbl_wc_blocklist *wc =
-				    (struct wapbl_wc_blocklist *)wr->wr_scratch;
-				int i;
-				for (i = 0; i < wc->wc_blkcount; i++) {
-					int j, n;
-					/*
-					 * Enter each physical block into the
-					 * hashtable independently
-					 */
-					n = wc->wc_blocks[i].wc_dlen >>
-					    wch->wc_fs_dev_bshift;
-					for (j = 0; j < n; j++) {
-						wapbl_blkhash_ins(wr,
-						    wc->wc_blocks[i].wc_daddr + j,
-						    off);
-						wapbl_circ_advance(wr,
-						    fsblklen, &off);
-					}
-				}
-			}
+			wapbl_replay_process_blocks(wr, &off);
 			break;
 
 		case WAPBL_WC_REVOCATIONS:
-			{
-				struct wapbl_wc_blocklist *wc =
-				    (struct wapbl_wc_blocklist *)wr->wr_scratch;
-				int i;
-				for (i = 0; i < wc->wc_blkcount; i++) {
-					int j, n;
-					/*
-					 * Remove any blocks found from the
-					 * hashtable
-					 */
-					n = wc->wc_blocks[i].wc_dlen >>
-					    wch->wc_fs_dev_bshift;
-					for (j = 0; j < n; j++) {
-						wapbl_blkhash_rem(wr,
-						   wc->wc_blocks[i].wc_daddr + j);
-					}
-				}
-			}
+			wapbl_replay_process_revocations(wr);
 			break;
 
 		case WAPBL_WC_INODES:
-			{
-				struct wapbl_wc_inodelist *wc =
-				    (struct wapbl_wc_inodelist *)wr->wr_scratch;
-				/*
-				 * Keep track of where we found this so we
-				 * can use it later
-				 */
-				if (wc->wc_clear) {
-					wr->wr_inodestail = saveoff;
-					wr->wr_inodescnt = 0;
-				}
-				if (wr->wr_inodestail)
-					wr->wr_inodeshead = off;
-				wr->wr_inodescnt += wc->wc_inocnt;
-			}
+			wapbl_replay_process_inodes(wr, saveoff, off);
 			break;
+
 		default:
 			printf("Unrecognized wapbl type: 0x%08x\n",
 			       wcn->wc_type);
@@ -2523,68 +2532,6 @@ wapbl_replay_prescan(struct wapbl_replay *wr)
  errout:
 	wapbl_blkhash_clear(wr);
 	return error;
-}
-
-static int
-wapbl_replay_get_inodes(struct wapbl_replay *wr)
-{
-	off_t off;
-	struct wapbl_wc_header *wch = &wr->wr_wc_header;
-	int logblklen = 1<<wch->wc_log_dev_bshift;
-	int cnt= 0;
-
-	KDASSERT(wapbl_replay_isopen(wr));
-
-	if (wr->wr_inodescnt == 0)
-		return 0;
-
-	KASSERT(!wr->wr_inodes);
-
-	wr->wr_inodes = wapbl_malloc(wr->wr_inodescnt*sizeof(wr->wr_inodes[0]));
-
-	off = wr->wr_inodestail;
-
-	while (off != wr->wr_inodeshead) {
-		struct wapbl_wc_null *wcn;
-		int error;
-		off_t saveoff = off;
-		error = wapbl_circ_read(wr, wr->wr_scratch, logblklen, &off);
-		if (error) {
-			wapbl_free(wr->wr_inodes);
-			wr->wr_inodes = 0;
-			return error;
-		}
-		wcn = (struct wapbl_wc_null *)wr->wr_scratch;
-		switch (wcn->wc_type) {
-		case WAPBL_WC_BLOCKS:
-		case WAPBL_WC_REVOCATIONS:
-			break;
-		case WAPBL_WC_INODES:
-			{
-				struct wapbl_wc_inodelist *wc =
-				    (struct wapbl_wc_inodelist *)wr->wr_scratch;
-				/*
-				 * Keep track of where we found this so we
-				 * can use it later
-				 */
-				if (wc->wc_clear) {
-					cnt = 0;
-				}
-                                /* This memcpy assumes that wr_inodes is
-                                 * laid out the same as wc_inodes. */
-				memcpy(&wr->wr_inodes[cnt], wc->wc_inodes,
-				       wc->wc_inocnt*sizeof(wc->wc_inodes[0]));
-				cnt += wc->wc_inocnt;
-			}
-			break;
-		default:
-			KASSERT(0);
-		}
-		off = saveoff;
-		wapbl_circ_advance(wr, wcn->wc_len, &off);
-	}
-	KASSERT(cnt == wr->wr_inodescnt);
-	return 0;
 }
 
 #ifdef DEBUG
