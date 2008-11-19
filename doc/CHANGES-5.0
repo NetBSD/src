@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.25 2008/11/19 00:41:45 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.26 2008/11/19 03:45:32 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -794,4 +794,25 @@ share/mk/bsd.own.mk				1.546
 
 	Add MesaGLUT and reachover glue.
 	[cube, ticket #79]
+
+xsrc/external/mit/twm/dist/src/deftwmrc.c	delete
+xsrc/external/mit/twm/dist/src/gram.c		delete
+xsrc/external/mit/twm/dist/src/gram.h		delete
+xsrc/external/mit/twm/dist/src/lex.c		delete
+
+	Remove generated files that should not have been here.
+	This fixes twm's config file parser.
+	[cube, ticket #87]
+
+xsrc/external/mit/xfs/include/xfs-config.h	1.2
+external/mit/xorg/bin/xfs/Makefile		1.3
+
+	Fix DEFAULT_CONFIG_FILE for xfs.
+	[hans, ticket #88]
+
+sys/net/if_etherip.c				1.23, 1.24
+sys/net/if_tap.c				1.48, 1.49
+
+	Allow etherip and tap to suspend/resume.
+	[hans, ticket #89]
 
