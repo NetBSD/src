@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.26 2008/11/12 14:47:22 pooka Exp $
+# $NetBSD: md.sparc64,v 1.27 2008/11/19 14:10:48 pooka Exp $
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
@@ -171,6 +171,8 @@
 ./usr/lib/sparc/librumpnet.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpuser.so.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/librumpuser.so.0.0		base-compat-shlib	compat,pic
+./usr/lib/sparc/librumpvfs.so.0			base-compat-shlib	compat,pic
+./usr/lib/sparc/librumpvfs.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libsdp.so.2			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libsdp.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libskey.so.1			base-compat-shlib	compat,pic

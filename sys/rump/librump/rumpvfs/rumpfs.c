@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.39 2008/07/29 13:17:47 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.1 2008/11/19 14:10:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,6 +48,7 @@
 #include <rump/rumpuser.h>
 
 #include "rump_private.h"
+#include "rump_vfs_private.h"
 
 static int rump_vop_lookup(void *);
 
@@ -89,33 +90,6 @@ const struct vnodeopv_desc * const rump_opv_descs[] = {
 	&rump_vnodeop_opv_desc,
 	NULL
 };
-
-vnode_t *specfs_hash[SPECHSZ];
-int (*mountroot)(void);
-
-int
-vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
-	int attrnamespace, const char *attrname)
-{
-
-	if (vp != NULL)
-		VOP_UNLOCK(vp, 0);
-	return EOPNOTSUPP;
-}
-
-int
-vfs_allocate_syncvnode(struct mount *mp)
-{
-
-	panic("%s: unimplemented", __func__);
-}
-
-void
-vfs_deallocate_syncvnode(struct mount *mp)
-{
-
-	panic("%s: unimplemented", __func__);
-}
 
 struct mount mnt_dummy;
 
@@ -216,59 +190,10 @@ rump_vop_lookup(void *v)
 	return 0;
 }
 
-int
-lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
-{
-
-	panic("%s: unimplemented", __func__);
-}
-
 void
-fifo_printinfo(struct vnode *vp)
-{
-
-	return;
-}
-
-void
-rumpvfs_init()
+rumpfs_init()
 {
 
 	vfs_opv_init(rump_opv_descs);
 	rootvnode = rump_makevnode("/", 0, VDIR, -1);
-}
-
-void
-rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
-{
-	struct lwp *l = curlwp;
-	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
-
-	KASSERT(cvp);
-
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-	if (cwdi->cwdi_rdir)
-		vrele(cwdi->cwdi_rdir);
-	if (rvp)
-		vref(rvp);
-	cwdi->cwdi_rdir = rvp;
-
-	vrele(cwdi->cwdi_cdir);
-	vref(cvp);
-	cwdi->cwdi_cdir = cvp;
-	rw_exit(&cwdi->cwdi_lock);
-}
-
-struct vnode *
-rump_cdir_get()
-{
-	struct vnode *vp;
-	struct cwdinfo *cwdi = curlwp->l_proc->p_cwdi;
-
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	vp = cwdi->cwdi_cdir;
-	rw_exit(&cwdi->cwdi_lock);
-	vref(vp);
-
-	return vp;
 }
