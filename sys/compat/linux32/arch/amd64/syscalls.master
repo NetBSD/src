@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.39 2008/11/12 18:07:41 njoly Exp $
+	$NetBSD: syscalls.master,v 1.40 2008/11/19 18:36:04 ad Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -31,10 +31,6 @@
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
 
-#if defined(_KERNEL_OPT)
-#include "opt_compat_43.h"
-#endif
-
 #include <sys/param.h>
 #include <sys/poll.h>
 #include <sys/systm.h>
@@ -57,7 +53,8 @@
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/common/linux_machdep.h>
-
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 %%

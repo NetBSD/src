@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.36 2008/11/12 18:07:40 njoly Exp $
+	$NetBSD: syscalls.master,v 1.37 2008/11/19 18:36:03 ad Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -33,10 +33,6 @@
 ;
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
-
-#if defined(_KERNEL_OPT)
-#include "opt_compat_43.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/poll.h>

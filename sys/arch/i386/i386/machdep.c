@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.650 2008/11/14 00:41:36 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.651 2008/11/19 18:35:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.650 2008/11/14 00:41:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.651 2008/11/19 18:35:59 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -774,7 +774,7 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 	l->l_md.md_flags &= ~MDL_USEDFPU;
 }
 
-static void
+void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -792,18 +792,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	KASSERT(mutex_owned(p->p_lock));
 
 	fp--;
-
-	/* Build stack frame for signal trampoline. */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* handled by sendsig_sigcontext */
-	case 1:		/* handled by sendsig_sigcontext */
-	default:	/* unknown version */
-		printf("nsendsig: bad version %d\n",
-		    ps->sa_sigdesc[sig].sd_vers);
-		sigexit(l, SIGILL);
-	case 2:
-		break;
-	}
 
 	frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
 	frame.sf_signum = sig;
@@ -843,22 +831,8 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-
-	KASSERT(mutex_owned(curproc->p_lock));
-
-#ifdef COMPAT_16
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		sendsig_sigcontext(ksi, mask);
-	else
-#endif
-		sendsig_siginfo(ksi, mask);
-}
-
-void
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas,
-    void *ap, void *sp, sa_upcall_t upcall)
+	   void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct pmap *pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	struct saframe *sf, frame;
@@ -1132,9 +1106,9 @@ typedef void (vector)(void);
 extern vector IDTVEC(syscall);
 extern vector IDTVEC(osyscall);
 extern vector *IDTVEC(exceptions)[];
-#ifdef COMPAT_SVR4
 extern vector IDTVEC(svr4_fasttrap);
-#endif /* COMPAT_SVR4 */
+void (*svr4_fasttrap_vec)(void) = (void (*)(void))nullop;
+krwlock_t svr4_fasttrap_lock;
 #ifdef COMPAT_MACH
 extern vector IDTVEC(mach_trap);
 #endif
@@ -1551,11 +1525,9 @@ init386(paddr_t first_avail)
 	idt_vec_reserve(128);
 	setgate(&idt[128], &IDTVEC(syscall), 0, SDT_SYS386TGT, SEL_UPL,
 	    GSEL(GCODE_SEL, SEL_KPL));
-#ifdef COMPAT_SVR4
 	idt_vec_reserve(0xd2);
 	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
 	    SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));
-#endif /* COMPAT_SVR4 */
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
@@ -1593,14 +1565,12 @@ init386(paddr_t first_avail)
 	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 	xen_idt[xen_idt_idx].address = (uint32_t)&IDTVEC(syscall);
 	xen_idt_idx++;
-#ifdef COMPAT_SVR4
 	KASSERT(xen_idt_idx < MAX_XEN_IDT);
 	xen_idt[xen_idt_idx].vector = 0xd2;
 	xen_idt[xen_idt_idx].flags = SEL_UPL;
 	xen_idt[xen_idt_idx].cs = GSEL(GCODE_SEL, SEL_KPL);
 	xen_idt[xen_idt_idx].address = (uint32_t)&IDTVEC(svr4_fasttrap);
 	xen_idt_idx++;
-#endif /* COMPAT_SVR4 */
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 
 	XENPRINTF(("HYPERVISOR_set_trap_table %p\n", xen_idt));
@@ -1652,6 +1622,8 @@ init386(paddr_t first_avail)
 		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
+
+	rw_init(&svr4_fasttrap_lock);
 }
 
 #ifdef COMPAT_NOMID

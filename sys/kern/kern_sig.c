@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.289 2008/10/24 18:07:36 wrstuden Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.290 2008/11/19 18:36:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289 2008/10/24 18:07:36 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.290 2008/11/19 18:36:07 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.289 2008/10/24 18:07:36 wrstuden Exp 
 #include <sys/callout.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 #ifdef PAX_SEGVGUARD
 #include <sys/pax.h>
@@ -121,6 +122,10 @@ static void	*sigacts_poolpage_alloc(struct pool *, int);
 static callout_t proc_stop_ch;
 static pool_cache_t siginfo_cache;
 static pool_cache_t ksiginfo_cache;
+
+void (*sendsig_sigcontext_vec)(const struct ksiginfo *, const sigset_t *);
+int (*coredump_vec)(struct lwp *, const char *) =
+    (int (*)(struct lwp *, const char *))enosys;
 
 static struct pool_allocator sigactspool_allocator = {
         .pa_alloc = sigacts_poolpage_alloc,
@@ -1967,6 +1972,40 @@ postsig(int signo)
 }
 
 /*
+ * sendsig:
+ *
+ *	Default signal delivery method for NetBSD.
+ */
+void
+sendsig(const struct ksiginfo *ksi, const sigset_t *mask)
+{
+	struct sigacts *sa;
+	int sig;
+
+	sig = ksi->ksi_signo;
+	sa = curproc->p_sigacts;
+
+	switch (sa->sa_sigdesc[sig].sd_vers)  {
+	case 0:
+	case 1:
+		/* Compat for 1.6 and earlier. */
+		if (sendsig_sigcontext_vec == NULL) {
+			break;
+		}
+		(*sendsig_sigcontext_vec)(ksi, mask);
+		return;
+	case 2:
+		sendsig_siginfo(ksi, mask);
+		return;
+	default:
+		break;
+	}
+
+	printf("sendsig: bad version %d\n", sa->sa_sigdesc[sig].sd_vers);
+	sigexit(curlwp, SIGILL);
+}
+
+/*
  * sendsig_reset:
  *
  *	Reset the signal action.  Called from emulation specific sendsig()
@@ -2094,7 +2133,7 @@ sigexit(struct lwp *l, int signo)
 
 	if (docore) {
 		mutex_exit(p->p_lock);
-		if ((error = coredump(l, NULL)) == 0)
+		if ((error = (*coredump_vec)(l, NULL)) == 0)
 			exitsig |= WCOREFLAG;
 
 		if (kern_logsigexit) {

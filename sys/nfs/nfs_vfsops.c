@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.204 2008/11/14 13:33:56 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.205 2008/11/19 18:36:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.204 2008/11/14 13:33:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.205 2008/11/19 18:36:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -129,25 +129,37 @@ struct vfsops nfs_vfsops = {
 	{ NULL, NULL },
 };
 
+extern u_int32_t nfs_procids[NFS_NPROCS];
+extern u_int32_t nfs_prog, nfs_vers;
+static struct sysctllog *nfs_clog;
+
+static int nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
+    struct mount **, struct vnode **, struct lwp *));
+static void nfs_sysctl_init(void);
+static void nfs_sysctl_fini(void);
+
 static int
 nfs_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return vfs_attach(&nfs_vfsops);
+		error = vfs_attach(&nfs_vfsops);
+		if (error == 0) {
+			nfs_sysctl_init();
+		}
+		return error;
 	case MODULE_CMD_FINI:
-		return vfs_detach(&nfs_vfsops);
+		error = vfs_detach(&nfs_vfsops);
+		if (error == 0) {
+			nfs_sysctl_fini();
+		}
+		return error;
 	default:
 		return ENOTTY;
 	}
 }
-
-extern u_int32_t nfs_procids[NFS_NPROCS];
-extern u_int32_t nfs_prog, nfs_vers;
-
-static int nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
-    struct mount **, struct vnode **, struct lwp *));
 
 /*
  * nfs statvfs call
@@ -1030,15 +1042,16 @@ sysctl_vfs_nfs_iothreads(SYSCTLFN_ARGS)
 	return nfs_set_niothreads(val);
 }
 
-SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
+static void
+nfs_sysctl_init(void)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&nfs_clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vfs", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&nfs_clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "nfs",
 		       SYSCTL_DESCR("NFS vfs options"),
@@ -1050,18 +1063,25 @@ SYSCTL_SETUP(sysctl_vfs_nfs_setup, "sysctl vfs.nfs subtree setup")
 	 * "2" is the order as taken from sys/mount.h
 	 */
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&nfs_clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_STRUCT, "nfsstats",
 		       SYSCTL_DESCR("NFS operation statistics"),
 		       NULL, 0, &nfsstats, sizeof(nfsstats),
 		       CTL_VFS, 2, NFS_NFSSTATS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&nfs_clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "iothreads",
 		       SYSCTL_DESCR("Number of NFS client processes desired"),
 		       sysctl_vfs_nfs_iothreads, 0, NULL, 0,
 		       CTL_VFS, 2, NFS_IOTHREADS, CTL_EOL);
+}
+
+static void
+nfs_sysctl_fini(void)
+{
+
+	sysctl_teardown(&nfs_clog);
 }
 
 /* ARGSUSED */

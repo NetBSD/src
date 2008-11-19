@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallvar.h,v 1.3 2008/11/12 14:29:31 ad Exp $	*/
+/*	$NetBSD: syscallvar.h,v 1.4 2008/11/19 18:36:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 
-extern const struct emul emul_netbsd;
+extern struct emul emul_netbsd;
 
 struct syscall_package {
 	u_short		sp_code;

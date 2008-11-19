@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.338 2008/06/13 17:26:33 christos Exp $
+#	$NetBSD: files.i386,v 1.339 2008/11/19 18:35:58 ad Exp $
 #
 # new style config file for i386 architecture
 #
@@ -66,6 +66,7 @@ defflag 	POWERNOW_K7
 
 file	arch/i386/i386/autoconf.c
 file	arch/i386/i386/busfunc.S
+file	arch/i386/i386/core_machdep.c	coredump
 file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0

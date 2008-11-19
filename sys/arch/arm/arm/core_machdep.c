@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep_arm.c,v 1.11 2006/08/30 22:24:55 matt Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:35:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -37,8 +37,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.11 2006/08/30 22:24:55 matt Exp $");
-#include "opt_coredump.h"
+__KERNEL_RCSID(0, "$NetBSD: core_machdep.c,v 1.1 2008/11/19 18:35:58 ad Exp $");
 
 #include <sys/core.h>
 #include <sys/exec.h>
@@ -54,8 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep_arm.c,v 1.11 2006/08/30 22:24:55 matt Exp
 /*
  * Dump the machine specific segment at the start of a core dump.
  */
-
-#ifdef COREDUMP
 int
 cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 {
@@ -96,4 +93,3 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 	return coredump_write(iocookie, UIO_SYSSPACE,
 	    &cpustate, sizeof(cpustate));
 }
-#endif

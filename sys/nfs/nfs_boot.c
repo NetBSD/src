@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.77 2008/10/27 13:24:01 cegger Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.78 2008/11/19 18:36:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -35,11 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.77 2008/10/27 13:24:01 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_boot.c,v 1.78 2008/11/19 18:36:09 ad Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_nfs.h"
 #include "opt_tftproot.h"
 #include "opt_nfs_boot.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -602,9 +604,7 @@ nfs_boot_getfh(struct nfs_dlmount *ndm, struct lwp *l)
 
 	/* Set port number for NFS use. */
 	/* XXX: NFS port is always 2049, right? */
-#ifdef NFS_BOOT_TCP
 retry:
-#endif
 	error = krpc_portmap(sin, NFS_PROG,
 		    (args->flags & NFSMNT_NFSV3) ? NFS_VER3 : NFS_VER2,
 		    (args->sotype == SOCK_STREAM) ? IPPROTO_TCP : IPPROTO_UDP,
@@ -612,12 +612,10 @@ retry:
 	if (port == htons(0))
 		error = EIO;
 	if (error) {
-#ifdef NFS_BOOT_TCP
 		if (args->sotype == SOCK_STREAM) {
 			args->sotype = SOCK_DGRAM;
 			goto retry;
 		}
-#endif
 		printf("nfs_boot: portmap NFS, error=%d\n", error);
 		return (error);
 	}

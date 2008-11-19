@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_resource.c,v 1.9 2008/09/22 13:07:46 njoly Exp $ */
+/*	$NetBSD: linux32_resource.c,v 1.10 2008/11/19 18:36:04 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.9 2008/09/22 13:07:46 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.10 2008/11/19 18:36:04 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.9 2008/09/22 13:07:46 njoly E
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_limit.h>
 #include <compat/linux/common/linux_oldolduname.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>

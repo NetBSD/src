@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.13 2008/11/14 23:33:45 ad Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.14 2008/11/19 18:36:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,11 +62,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.13 2008/11/14 23:33:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.14 2008/11/19 18:36:07 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
 #include "opt_sa.h"
+
+/* XXX To get syscall prototypes. */
+#define SYSVSHM
+#define SYSVSEM
+#define SYSVMSG
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -189,6 +194,80 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	    { SYS_aio_suspend, "aio" },
 	    { SYS_aio_write, "aio" },
 	    { SYS_lio_listio, "aio" },
+	    { SYS_compat_43_fstat43, "compat" },
+	    { SYS_compat_43_lstat43, "compat" },
+	    { SYS_compat_43_oaccept, "compat" },
+	    { SYS_compat_43_ocreat, "compat" },
+	    { SYS_compat_43_oftruncate, "compat" },
+	    { SYS_compat_43_ogetdirentries, "compat" },
+	    { SYS_compat_43_ogetdtablesize, "compat" },
+	    { SYS_compat_43_ogethostid, "compat" },
+	    { SYS_compat_43_ogethostname, "compat" },
+	    { SYS_compat_43_ogetkerninfo, "compat" },
+	    { SYS_compat_43_ogetpagesize, "compat" },
+	    { SYS_compat_43_ogetpeername, "compat" },
+	    { SYS_compat_43_ogetrlimit, "compat" },
+	    { SYS_compat_43_ogetsockname, "compat" },
+	    { SYS_compat_43_okillpg, "compat" },
+	    { SYS_compat_43_olseek, "compat" },
+	    { SYS_compat_43_ommap, "compat" },
+	    { SYS_compat_43_oquota, "compat" },
+	    { SYS_compat_43_orecv, "compat" },
+	    { SYS_compat_43_orecvfrom, "compat" },
+	    { SYS_compat_43_orecvmsg, "compat" },
+	    { SYS_compat_43_osend, "compat" },
+	    { SYS_compat_43_osendmsg, "compat" },
+	    { SYS_compat_43_osethostid, "compat" },
+	    { SYS_compat_43_osethostname, "compat" },
+	    { SYS_compat_43_osetrlimit, "compat" },
+	    { SYS_compat_43_osigblock, "compat" },
+	    { SYS_compat_43_osigsetmask, "compat" },
+	    { SYS_compat_43_osigstack, "compat" },
+	    { SYS_compat_43_osigvec, "compat" },
+	    { SYS_compat_43_otruncate, "compat" },
+	    { SYS_compat_43_owait, "compat" },
+	    { SYS_compat_43_stat43, "compat" },
+	    { SYS_compat_09_ogetdomainname, "compat" },
+	    { SYS_compat_09_osetdomainname, "compat" },
+	    { SYS_compat_09_ouname, "compat" },
+#ifndef _LP64
+	    { SYS_compat_10_omsgsys, "compat" },
+	    { SYS_compat_10_osemsys, "compat" },
+	    { SYS_compat_10_oshmsys, "compat" },
+#endif
+	    { SYS_compat_12_fstat12, "compat" },
+	    { SYS_compat_12_getdirentries, "compat" },
+	    { SYS_compat_12_lstat12, "compat" },
+	    { SYS_compat_12_msync, "compat" },
+	    { SYS_compat_12_oreboot, "compat" },
+	    { SYS_compat_12_oswapon, "compat" },
+	    { SYS_compat_12_stat12, "compat" },
+	    { SYS_compat_13_sigaction13, "compat" },
+	    { SYS_compat_13_sigaltstack13, "compat" },
+	    { SYS_compat_13_sigpending13, "compat" },
+	    { SYS_compat_13_sigprocmask13, "compat" },
+	    { SYS_compat_13_sigreturn13, "compat" },
+	    { SYS_compat_13_sigsuspend13, "compat" },
+	    { SYS_compat_14___semctl, "compat" },
+	    { SYS_compat_14_msgctl, "compat" },
+	    { SYS_compat_14_shmctl, "compat" },
+	    { SYS_compat_16___sigaction14, "compat" },
+	    { SYS_compat_16___sigreturn14, "compat" },
+	    { SYS_compat_20_fhstatfs, "compat" },
+	    { SYS_compat_20_fstatfs, "compat" },
+	    { SYS_compat_20_getfsstat, "compat" },
+	    { SYS_compat_20_statfs, "compat" },
+	    { SYS_compat_30___fhstat30, "compat" },
+	    { SYS_compat_30___fstat13, "compat" },
+	    { SYS_compat_30___lstat13, "compat" },
+	    { SYS_compat_30___stat13, "compat" },
+	    { SYS_compat_30_fhopen, "compat" },
+	    { SYS_compat_30_fhstat, "compat" },
+	    { SYS_compat_30_fhstatvfs1, "compat" },
+	    { SYS_compat_30_getdents, "compat" },
+	    { SYS_compat_30_getfh, "compat" },
+	    { SYS_compat_30_socket, "compat" },
+	    { SYS_compat_40_mount, "compat" },
 	    { SYS__ksem_init, "ksem" },
 	    { SYS__ksem_open, "ksem" },
 	    { SYS__ksem_unlink, "ksem" },
@@ -198,6 +277,7 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	    { SYS__ksem_trywait, "ksem" },
 	    { SYS__ksem_getvalue, "ksem" },
 	    { SYS__ksem_destroy, "ksem" },
+	    { SYS_nfssvc, "nfsserver" },
 	};
 	const struct sysent *sy;
 	const struct emul *em;

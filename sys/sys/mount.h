@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.182 2008/11/11 08:29:58 joerg Exp $	*/
+/*	$NetBSD: mount.h,v 1.183 2008/11/19 18:36:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -327,14 +327,21 @@ struct wapbl_ops {
     (*(MP)->mnt_wapbl_op->wo_wapbl_junlock_assert)((MP)->mnt_wapbl)
 
 struct vfs_hooks {
-	void	(*vh_unmount)(struct mount *);
 	LIST_ENTRY(vfs_hooks) vfs_hooks_list;
+	void	(*vh_unmount)(struct mount *);
+	int	(*vh_reexport)(struct mount *, const char *, void *);
+	void	(*vh_future_expansion_1)(void);
+	void	(*vh_future_expansion_2)(void);
+	void	(*vh_future_expansion_3)(void);
+	void	(*vh_future_expansion_4)(void);
+	void	(*vh_future_expansion_5)(void);
 };
 
 void	vfs_hooks_init(void);
 int	vfs_hooks_attach(struct vfs_hooks *);
 int	vfs_hooks_detach(struct vfs_hooks *);
 void	vfs_hooks_unmount(struct mount *);
+int	vfs_hooks_reexport(struct mount *, const char *, void *);
 
 #endif /* _KERNEL */
 

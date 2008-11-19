@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.49 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.50 2008/11/19 18:36:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,10 +60,9 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.49 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.50 2008/11/19 18:36:06 ad Exp $");
 
 #include "opt_ntp.h"
-#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -78,9 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.49 2008/04/28 20:24:03 martin Exp
 #include <sys/syscallargs.h>
 #include <sys/cpu.h>
 
-#ifdef COMPAT_30
 #include <compat/sys/timex.h>
-#endif
 
 /*
  * Single-precision macros for 64-bit machines
@@ -949,9 +946,8 @@ sys___ntp_gettime30(struct lwp *l, const struct sys___ntp_gettime30_args *uap, r
 	return(error);
 }
 
-#ifdef COMPAT_30
 int
-compat_30_sys_ntp_gettime(struct lwp *l, const struct compat_30_sys_ntp_gettime_args *uap, register_t *retval)
+sys_ntp_gettime(struct lwp *l, const struct sys_ntp_gettime_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(struct ntptimeval30 *) ontvp;
@@ -974,7 +970,6 @@ compat_30_sys_ntp_gettime(struct lwp *l, const struct compat_30_sys_ntp_gettime_
 
 	return (error);
 }
-#endif
 
 /*
  * return information about kernel precision timekeeping
@@ -1020,12 +1015,10 @@ sys___ntp_gettime30(struct lwp *l, const struct sys___ntp_gettime30_args *uap, r
 	return(ENOSYS);
 }
 
-#ifdef COMPAT_30
 int
-compat_30_sys_ntp_gettime(struct lwp *l, const struct compat_30_sys_ntp_gettime_args *uap, register_t *retval)
+sys_ntp_gettime(struct lwp *l, const struct sys_ntp_gettime_args *uap, register_t *retval)
 {
 
  	return(ENOSYS);
 }
-#endif
 #endif /* !NTP */

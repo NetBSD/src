@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.59 2008/11/14 15:49:20 ad Exp $
+	$NetBSD: syscalls.master,v 1.60 2008/11/19 18:36:02 ad Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -33,14 +33,12 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
-#include "opt_nfsserver.h"
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #include "opt_posix.h"
 
 #include "fs_lfs.h"
-#include "fs_nfs.h"
 #endif
 
 #include <sys/param.h>
@@ -293,11 +291,7 @@
 152	UNIMPL		sem_wakeup
 153	UNIMPL		asyncdaemon
 154	UNIMPL
-#if defined(NFS) || defined(NFSSERVER)
-155	NOARGS		{ int sys_nfssvc(int flag, void *argp); }
-#else
 155	UNIMPL		nfssvc
-#endif
 156	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
 157	NOARGS		{ int compat_20_sys_statfs(const char *path, \

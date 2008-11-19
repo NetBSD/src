@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 2008/11/16 20:13:50 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 2008/11/19 18:35:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.111 2008/11/16 20:13:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2008/11/19 18:35:58 ad Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -538,7 +538,15 @@ buildcontext(struct lwp *l, void *catcher, void *f)
 }
 
 void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
+sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
+{
+
+	printf("sendsig_sigcontext: illegal\n");
+	sigexit(curlwp, SIGILL);
+}
+
+void
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -569,16 +577,6 @@ sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * fxsave and the ABI.
 	 */
 	fp = (struct sigframe_siginfo *)(((unsigned long)sp & ~15) - 8);
-
-	/* Build stack frame for signal trampoline. */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	default:	/* unknown version */
-		printf("nsendsig: bad version %d\n",
-		    ps->sa_sigdesc[sig].sd_vers);
-		sigexit(l, SIGILL);
-	case 2:
-		break;
-	}
 
 	/*
 	 * Don't bother copying out FP state if there is none.

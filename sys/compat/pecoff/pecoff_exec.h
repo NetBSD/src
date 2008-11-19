@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.h,v 1.9 2005/12/11 12:20:23 christos Exp $	*/
+/*	$NetBSD: pecoff_exec.h,v 1.10 2008/11/19 18:36:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -113,7 +113,7 @@ struct pecoff_args {
 	struct pecoff_opthdr a_opthdr;
 };
 
-extern const struct emul emul_pecoff;
+extern struct emul emul_pecoff;
 
 struct exec_package;
 int     exec_pecoff_makecmds (struct lwp *, struct exec_package *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.76 2008/10/15 06:51:18 wrstuden Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.77 2008/11/19 18:36:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.76 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.77 2008/11/19 18:36:00 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_memsize.h"
@@ -371,7 +371,7 @@ getframe(struct lwp *l, int sig, int *onstack)
  * frame pointer, it returns to the user
  * specified pc, psl.
  */
-static void
+void
 sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -461,7 +461,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 #endif /* COMPAT_16 */
 
-static void
+void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -472,18 +472,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sigframe_siginfo *fp, frame;
 	int onstack;
-
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* FALLTHROUGH */ /* handled by sendsig_sigcontext */
-	case 1:		/* FALLTHROUGH */ /* handled by sendsig_sigcontext */
-	default:	/* unknown version */
-		printf("sendsig_siginfo: bad version %d\n",
-		       ps->sa_sigdesc[sig].sd_vers);
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
-	case 2:
-		break;
-	}
 
 	fp = getframe(l, sig, &onstack);
 	--fp;
@@ -520,20 +508,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Remember if we're now on the signal stack. */
 	if (onstack)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
-}
-
-/*
- * Send an interrupt to process.
- */
-void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-#ifdef COMPAT_16
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
-		sendsig_sigcontext(ksi, mask);
-	else
-#endif
-		sendsig_siginfo(ksi, mask);
 }
 
 #ifdef COMPAT_16

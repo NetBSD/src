@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.309 2008/11/12 12:35:55 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.310 2008/11/19 18:35:57 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -63,12 +63,11 @@
 #include "opt_dec_3000_300.h"
 #include "opt_dec_3000_500.h"
 #include "opt_compat_osf1.h"
-#include "opt_compat_netbsd.h"
 #include "opt_execfmt.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.309 2008/11/12 12:35:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.310 2008/11/19 18:35:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1462,18 +1461,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Allocate space for the signal handler context. */
 	fp--;
 
-	/* Build stack frame for signal trampoline. */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* handled by sendsig_sigcontext */
-	case 1:		/* handled by sendsig_sigcontext */
-	default:	/* unknown version */
-		printf("nsendsig: bad version %d\n",
-		    ps->sa_sigdesc[sig].sd_vers);
-		sigexit(l, SIGILL);
-	case 2:
-		break;
-	}
-
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig_siginfo(%d): sig %d ssp %p usp %p\n", p->p_pid,
@@ -1540,26 +1527,6 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 #endif
 }
 
-
-void
-sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-#ifdef COMPAT_16
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2) {
-		sendsig_sigcontext(ksi, mask);
-	} else {
-#endif
-#ifdef DEBUG
-	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig: sendsig called: sig %d vers %d\n",
-		       ksi->ksi_signo,
-		       curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers);
-#endif
-		sendsig_siginfo(ksi, mask);
-#ifdef COMPAT_16
-	}
-#endif
-}
 
 void 
 cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)

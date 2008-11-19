@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.144 2008/10/15 06:51:20 wrstuden Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.145 2008/11/19 18:36:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.144 2008/10/15 06:51:20 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.145 2008/11/19 18:36:06 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -143,7 +143,7 @@ static pid_t pid_max = PID_MAX;		/* largest value we allocate */
 
 /* Components of the first process -- never freed. */
 
-extern const struct emul emul_netbsd;	/* defined in kern_exec.c */
+extern struct emul emul_netbsd;	/* defined in kern_exec.c */
 
 struct session session0 = {
 	.s_count = 1,

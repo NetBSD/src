@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.928 2008/11/18 13:01:41 pooka Exp $
+#	$NetBSD: files,v 1.929 2008/11/19 18:36:06 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1320,6 +1320,7 @@ include "secmodel/files.secmodel"
 #
 # kernel sources
 #
+file	compat/common/compat_mod.c	compat_netbsd
 file	compat/sa/compat_sa.c
 file	conf/debugsyms.c
 file	dev/auconv.c			auconv | mulaw
@@ -1357,14 +1358,12 @@ file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
 file	kern/bufq_priocscan.c		bufq_priocscan
 file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
-file	kern/core_elf32.c		coredump & exec_elf32
-file	kern/core_elf64.c		coredump & exec_elf64
-file	kern/core_netbsd.c		coredump & (exec_aout | exec_coff |
-					     exec_ecoff | exec_macho |
-					     modular)
+file	kern/core_elf32.c		exec_elf32
+file	kern/core_elf64.c		exec_elf64
+file	kern/core_netbsd.c		exec_aout | exec_coff |
+					exec_ecoff | exec_macho
 file	kern/cnmagic.c
 file	kern/exec_aout.c		exec_aout
-file	kern/exec_conf.c
 file	kern/exec_ecoff.c		exec_ecoff
 file	kern/exec_elf32.c		exec_elf32
 file	kern/exec_elf64.c		exec_elf64
@@ -1378,7 +1377,7 @@ file	kern/kern_acct.c
 file	kern/kern_auth.c
 file	kern/kern_clock.c
 file	kern/kern_condvar.c
-file	kern/kern_core.c
+file	kern/kern_core.c		coredump
 file	kern/kern_cpu.c
 file	kern/kern_descrip.c
 file	kern/kern_event.c

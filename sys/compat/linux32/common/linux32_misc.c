@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.14 2008/11/12 15:22:18 njoly Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.15 2008/11/19 18:36:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.14 2008/11/12 15:22:18 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.15 2008/11/19 18:36:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.14 2008/11/12 15:22:18 njoly Exp 
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_statfs.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 extern const struct linux_mnttypes linux_fstypes[];

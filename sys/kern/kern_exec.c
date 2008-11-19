@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.281 2008/11/12 12:36:16 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.282 2008/11/19 18:36:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,11 +59,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.281 2008/11/12 12:36:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.282 2008/11/19 18:36:06 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
-#include "opt_compat_netbsd.h"
 #include "veriexec.h"
 #include "opt_pax.h"
 #include "opt_sa.h"
@@ -93,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.281 2008/11/12 12:36:16 ad Exp $");
 #include <sys/lwpctl.h>
 #include <sys/pax.h>
 #include <sys/cpu.h>
-
+#include <sys/module.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
@@ -125,43 +124,22 @@ static int exec_sigcode_map(struct proc *, const struct emul *);
  * Functions for specific exec types should be defined in their own
  * header file.
  */
-extern const struct execsw	execsw_builtin[];
-extern int			nexecs_builtin;
 static const struct execsw	**execsw = NULL;
 static int			nexecs;
 
-u_int	exec_maxhdrsz;		/* must not be static - netbsd32 needs it */
-
-/* list of supported emulations */
-static
-LIST_HEAD(emlist_head, emul_entry) el_head = LIST_HEAD_INITIALIZER(el_head);
-struct emul_entry {
-	LIST_ENTRY(emul_entry)	el_list;
-	const struct emul	*el_emul;
-	int			ro_entry;
-};
+u_int	exec_maxhdrsz;	 /* must not be static - used by netbsd32 */
 
 /* list of dynamically loaded execsw entries */
-static
-LIST_HEAD(execlist_head, exec_entry) ex_head = LIST_HEAD_INITIALIZER(ex_head);
+static LIST_HEAD(execlist_head, exec_entry) ex_head =
+    LIST_HEAD_INITIALIZER(ex_head);
 struct exec_entry {
 	LIST_ENTRY(exec_entry)	ex_list;
-	const struct execsw	*es;
-};
-
-/* structure used for building execw[] */
-struct execsw_entry {
-	struct execsw_entry	*next;
-	const struct execsw	*es;
+	SLIST_ENTRY(exec_entry)	ex_slist;
+	const struct execsw	*ex_sw;
 };
 
 #ifdef SYSCALL_DEBUG
 extern const char * const syscallnames[];
-#endif
-
-#ifdef COMPAT_16
-extern char	sigcode[], esigcode[];
-struct uvm_object *emul_netbsd_object;
 #endif
 
 #ifndef __HAVE_SYSCALL_INTERN
@@ -169,7 +147,7 @@ void	syscall(void);
 #endif
 
 #ifdef KERN_SA
-static const struct sa_emul saemul_netbsd = {
+static struct sa_emul saemul_netbsd = {
 	sizeof(ucontext_t),
 	sizeof(struct sa_t),
 	sizeof(struct sa_t *),
@@ -182,7 +160,7 @@ static const struct sa_emul saemul_netbsd = {
 #endif /* KERN_SA */
 
 /* NetBSD emul struct */
-const struct emul emul_netbsd = {
+struct emul emul_netbsd = {
 	"netbsd",
 	NULL,		/* emulation path */
 #ifndef __HAVE_MINIMAL_EMUL
@@ -200,15 +178,9 @@ const struct emul emul_netbsd = {
 	sendsig,
 	trapsignal,
 	NULL,
-#ifdef COMPAT_16
-	sigcode,
-	esigcode,
-	&emul_netbsd_object,
-#else
 	NULL,
 	NULL,
 	NULL,
-#endif
 	setregs,
 	NULL,
 	NULL,
@@ -239,8 +211,6 @@ const struct emul emul_netbsd = {
  * This must not be static so that netbsd32 can access it, too.
  */
 krwlock_t exec_lock;
-
-static void link_es(struct execsw_entry **, const struct execsw *);
 
 static kmutex_t sigobject_lock;
 
@@ -469,6 +439,60 @@ sys_execve(struct lwp *l, const struct sys_execve_args *uap, register_t *retval)
 	    SCARG(uap, envp), execve_fetch_element);
 }
 
+/*
+ * Load modules to try and execute an image that we do not understand.
+ * If no execsw entries are present, we load those likely to be needed
+ * in order to run native images only.  Otherwise, we autoload all
+ * possible modules that could let us run the binary.  XXX lame
+ */
+static void
+exec_autoload(void)
+{
+#ifdef MODULAR
+	static const char * const native[] = {
+		"exec_elf32",
+		"exec_elf64",
+		"exec_script",
+		NULL
+	};
+	static const char * const compat[] = {
+		"exec_elf32",
+		"exec_elf64",
+		"exec_script",
+		"exec_aout",
+		"exec_coff",
+		"exec_ecoff",
+		"compat_aoutm68k",
+		"compat_freebsd",
+		"compat_ibcs2",
+		"compat_irix",
+		"compat_linux",
+		"compat_linux32",
+		"compat_netbsd32",
+		"compat_sunos",
+		"compat_sunos32",
+		"compat_svr4",
+		"compat_svr4_32",
+		"compat_ultrix",
+		NULL
+	};
+	char const * const *list;
+	int i;
+
+	mutex_enter(&module_lock);
+	list = (nexecs == 0 ? native : compat);
+	for (i = 0; list[i] != NULL; i++) {
+		if (module_autoload(list[i], MODULE_CLASS_MISC) != 0) {
+		    	continue;
+		}
+		mutex_exit(&module_lock);
+	   	yield();
+		mutex_enter(&module_lock);
+	}
+	mutex_exit(&module_lock);
+#endif
+}
+
 int
 execve1(struct lwp *l, const char *path, char * const *args,
     char * const *envs, execve_fetch_element_t fetch_element)
@@ -494,8 +518,10 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	ksiginfoq_t		kq;
 	char			*pathbuf;
 	size_t			pathbuflen;
+	u_int			modgen;
 
 	p = l->l_proc;
+ 	modgen = 0;
 
 	/*
 	 * Check if we have exceeded our number of processes limit.
@@ -512,7 +538,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	 * to execute a new image, because eventually the process will need
 	 * to call exec in order to do something useful.
 	 */
-			
+ retry:
 	if ((p->p_flag & PK_SUGID) &&
 	    chgproccnt(kauth_cred_getuid(l->l_cred), 0) >
 	    p->p_rlimit[RLIMIT_NPROC].rlim_cur)
@@ -1150,6 +1176,12 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	PNBUF_PUT(pathbuf);
 	rw_exit(&p->p_reflock);
 
+	if (modgen != module_gen && error == ENOEXEC) {
+		modgen = module_gen;
+		exec_autoload();
+		goto retry;
+	}
+
 	return error;
 
  exec_abort:
@@ -1228,237 +1260,91 @@ copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo,
 	return 0;
 }
 
-/*
- * Find an emulation of given name in list of emulations.
- * Needs to be called with the exec_lock held.
- */
-const struct emul *
-emul_search(const char *name)
-{
-	struct emul_entry *it;
-
-	LIST_FOREACH(it, &el_head, el_list) {
-		if (strcmp(name, it->el_emul->e_name) == 0)
-			return it->el_emul;
-	}
-
-	return NULL;
-}
 
 /*
- * Add an emulation to list, if it's not there already.
+ * Add execsw[] entries.
  */
 int
-emul_register(const struct emul *emul, int ro_entry)
+exec_add(struct execsw *esp, int count)
 {
-	struct emul_entry	*ee;
-	int			error;
+	struct exec_entry	*it;
+	int			i;
 
-	error = 0;
+	KASSERT(count > 0);
+
+	/* Check for duplicates. */
 	rw_enter(&exec_lock, RW_WRITER);
-
-	if (emul_search(emul->e_name)) {
-		error = EEXIST;
-		goto out;
-	}
-
-	ee = kmem_alloc(sizeof(*ee), KM_SLEEP);
-	ee->el_emul = emul;
-	ee->ro_entry = ro_entry;
-	LIST_INSERT_HEAD(&el_head, ee, el_list);
-
- out:
-	rw_exit(&exec_lock);
-	return error;
-}
-
-/*
- * Remove emulation with name 'name' from list of supported emulations.
- */
-int
-emul_unregister(const char *name)
-{
-	const struct proclist_desc *pd;
-	struct emul_entry	*it;
-	int			i, error;
-	struct proc		*ptmp;
-
-	error = 0;
-	rw_enter(&exec_lock, RW_WRITER);
-
-	LIST_FOREACH(it, &el_head, el_list) {
-		if (strcmp(it->el_emul->e_name, name) == 0)
-			break;
-	}
-
-	if (!it) {
-		error = ENOENT;
-		goto out;
-	}
-
-	if (it->ro_entry) {
-		error = EBUSY;
-		goto out;
-	}
-
-	/* test if any execw[] entry is still using this */
-	for(i=0; i < nexecs; i++) {
-		if (execsw[i]->es_emul == it->el_emul) {
-			error = EBUSY;
-			goto out;
-		}
-	}
-
-	/*
-	 * Test if any process is running under this emulation - since
-	 * emul_unregister() is running quite sendomly, it's better
-	 * to do expensive check here than to use any locking.
-	 */
-	mutex_enter(proc_lock);
-	for (pd = proclists; pd->pd_list != NULL && !error; pd++) {
-		PROCLIST_FOREACH(ptmp, pd->pd_list) {
-			if (ptmp->p_emul == it->el_emul) {
-				error = EBUSY;
-				break;
+	for (i = 0; i < count; i++) {
+		LIST_FOREACH(it, &ex_head, ex_list) {
+			/* assume unique (makecmds, probe_func, emulation) */
+			if (it->ex_sw->es_makecmds == esp[i].es_makecmds &&
+			    it->ex_sw->u.elf_probe_func ==
+			    esp[i].u.elf_probe_func &&
+			    it->ex_sw->es_emul == esp[i].es_emul) {
+				rw_exit(&exec_lock);
+				return EEXIST;
 			}
 		}
 	}
-	mutex_exit(proc_lock);
 
-	if (error)
-		goto out;
-
-
-	/* entry is not used, remove it */
-	LIST_REMOVE(it, el_list);
-	kmem_free(it, sizeof(*it));
-
- out:
-	rw_exit(&exec_lock);
-	return error;
-}
-
-/*
- * Add execsw[] entry.
- */
-int
-exec_add(struct execsw *esp, const char *e_name)
-{
-	struct exec_entry	*it;
-	int			error;
-
-	error = 0;
-	rw_enter(&exec_lock, RW_WRITER);
-
-	if (!esp->es_emul) {
-		esp->es_emul = emul_search(e_name);
-		if (!esp->es_emul) {
-			error = ENOENT;
-			goto out;
-		}
+	/* Allocate new entries. */
+	for (i = 0; i < count; i++) {
+		it = kmem_alloc(sizeof(*it), KM_SLEEP);
+		it->ex_sw = &esp[i];
+		LIST_INSERT_HEAD(&ex_head, it, ex_list);
 	}
-
-	LIST_FOREACH(it, &ex_head, ex_list) {
-		/* assume tuple (makecmds, probe_func, emulation) is unique */
-		if (it->es->es_makecmds == esp->es_makecmds
-		    && it->es->u.elf_probe_func == esp->u.elf_probe_func
-		    && it->es->es_emul == esp->es_emul) {
-			error = EEXIST;
-			goto out;
-		}
-	}
-
-	/* if we got here, the entry doesn't exist yet */
-	it = kmem_alloc(sizeof(*it), KM_SLEEP);
-	it->es = esp;
-	LIST_INSERT_HEAD(&ex_head, it, ex_list);
 
 	/* update execsw[] */
 	exec_init(0);
-
- out:
 	rw_exit(&exec_lock);
-	return error;
+	return 0;
 }
 
 /*
  * Remove execsw[] entry.
  */
 int
-exec_remove(const struct execsw *esp)
+exec_remove(struct execsw *esp, int count)
 {
-	struct exec_entry	*it;
-	int			error;
+	struct exec_entry	*it, *next;
+	int			i;
+	const struct proclist_desc *pd;
+	proc_t			*p;
 
-	error = 0;
+	KASSERT(count > 0);
+
+	/* Abort if any are busy. */
 	rw_enter(&exec_lock, RW_WRITER);
-
-	LIST_FOREACH(it, &ex_head, ex_list) {
-		/* assume tuple (makecmds, probe_func, emulation) is unique */
-		if (it->es->es_makecmds == esp->es_makecmds
-		    && it->es->u.elf_probe_func == esp->u.elf_probe_func
-		    && it->es->es_emul == esp->es_emul)
-			break;
+	for (i = 0; i < count; i++) {
+		mutex_enter(proc_lock);
+		for (pd = proclists; pd->pd_list != NULL; pd++) {
+			PROCLIST_FOREACH(p, pd->pd_list) {
+				if (p->p_execsw == &esp[i]) {
+					mutex_exit(proc_lock);
+					rw_exit(&exec_lock);
+					return EBUSY;
+				}
+			}
+		}
+		mutex_exit(proc_lock);
 	}
-	if (!it) {
-		error = ENOENT;
-		goto out;
-	}
 
-	/* remove item from list and free resources */
-	LIST_REMOVE(it, ex_list);
-	kmem_free(it, sizeof(*it));
+	/* None are busy, so remove them all. */
+	for (i = 0; i < count; i++) {
+		for (it = LIST_FIRST(&ex_head); it != NULL; it = next) {
+			next = LIST_NEXT(it, ex_list);
+			if (it->ex_sw == &esp[i]) {
+				LIST_REMOVE(it, ex_list);
+				kmem_free(it, sizeof(*it));
+				break;
+			}
+		}
+	}
 
 	/* update execsw[] */
 	exec_init(0);
-
- out:
 	rw_exit(&exec_lock);
-	return error;
-}
-
-static void
-link_es(struct execsw_entry **listp, const struct execsw *esp)
-{
-	struct execsw_entry *et, *e1;
-
-	et = (struct execsw_entry *) malloc(sizeof(struct execsw_entry),
-			M_TEMP, M_WAITOK);
-	et->next = NULL;
-	et->es = esp;
-	if (*listp == NULL) {
-		*listp = et;
-		return;
-	}
-
-	switch(et->es->es_prio) {
-	case EXECSW_PRIO_FIRST:
-		/* put new entry as the first */
-		et->next = *listp;
-		*listp = et;
-		break;
-	case EXECSW_PRIO_ANY:
-		/* put new entry after all *_FIRST and *_ANY entries */
-		for(e1 = *listp; e1->next
-			&& e1->next->es->es_prio != EXECSW_PRIO_LAST;
-			e1 = e1->next);
-		et->next = e1->next;
-		e1->next = et;
-		break;
-	case EXECSW_PRIO_LAST:
-		/* put new entry as the last one */
-		for(e1 = *listp; e1->next; e1 = e1->next);
-		e1->next = et;
-		break;
-	default:
-#ifdef DIAGNOSTIC
-		panic("execw[] entry with unknown priority %d found",
-			et->es->es_prio);
-#else
-		free(et, M_TEMP);
-#endif
-		break;
-	}
+	return 0;
 }
 
 /*
@@ -1470,10 +1356,12 @@ link_es(struct execsw_entry **listp, const struct execsw *esp)
 int
 exec_init(int init_boot)
 {
-	const struct execsw	**new_es, * const *old_es;
-	struct execsw_entry	*list, *e1;
-	struct exec_entry	*e2;
-	int			i, es_sz;
+	const struct execsw 	**sw;
+	struct exec_entry	*ex;
+	SLIST_HEAD(,exec_entry)	first;
+	SLIST_HEAD(,exec_entry)	any;
+	SLIST_HEAD(,exec_entry)	last;
+	int			i, sz;
 
 	if (init_boot) {
 		/* do one-time initializations */
@@ -1482,60 +1370,59 @@ exec_init(int init_boot)
 		pool_init(&exec_pool, NCARGS, 0, 0, PR_NOALIGN|PR_NOTOUCH,
 		    "execargs", &exec_palloc, IPL_NONE);
 		pool_sethardlimit(&exec_pool, maxexec, "should not happen", 0);
+	} else {
+		KASSERT(rw_write_held(&exec_lock));
+	}
 
-		/* register compiled-in emulations */
-		for(i=0; i < nexecs_builtin; i++) {
-			if (execsw_builtin[i].es_emul)
-				emul_register(execsw_builtin[i].es_emul, 1);
+	/* Sort each entry onto the appropriate queue. */
+	SLIST_INIT(&first);
+	SLIST_INIT(&any);
+	SLIST_INIT(&last);
+	sz = 0;
+	LIST_FOREACH(ex, &ex_head, ex_list) {
+		switch(ex->ex_sw->es_prio) {
+		case EXECSW_PRIO_FIRST:
+			SLIST_INSERT_HEAD(&first, ex, ex_slist);
+			break;
+		case EXECSW_PRIO_ANY:
+			SLIST_INSERT_HEAD(&any, ex, ex_slist);
+			break;
+		case EXECSW_PRIO_LAST:
+			SLIST_INSERT_HEAD(&last, ex, ex_slist);
+			break;
+		default:
+			panic("exec_init");
+			break;
 		}
-#ifdef DIAGNOSTIC
-		if (i == 0)
-			panic("no emulations found in execsw_builtin[]");
-#endif
+		sz++;
 	}
 
 	/*
-	 * Build execsw[] array from builtin entries and entries added
-	 * at runtime.
+	 * Create new execsw[].  Ensure we do not try a zero-sized
+	 * allocation.
 	 */
-	list = NULL;
-	for(i=0; i < nexecs_builtin; i++)
-		link_es(&list, &execsw_builtin[i]);
-
-	/* Add dynamically loaded entries */
-	es_sz = nexecs_builtin;
-	LIST_FOREACH(e2, &ex_head, ex_list) {
-		link_es(&list, e2->es);
-		es_sz++;
+	sw = kmem_alloc(sz * sizeof(struct execsw *) + 1, KM_SLEEP);
+	i = 0;
+	SLIST_FOREACH(ex, &first, ex_slist) {
+		sw[i++] = ex->ex_sw;
+	}
+	SLIST_FOREACH(ex, &any, ex_slist) {
+		sw[i++] = ex->ex_sw;
+	}
+	SLIST_FOREACH(ex, &last, ex_slist) {
+		sw[i++] = ex->ex_sw;
 	}
 
-	/*
-	 * Now that we have sorted all execw entries, create new execsw[]
-	 * and free no longer needed memory in the process.
-	 */
-	new_es = kmem_alloc(es_sz * sizeof(struct execsw *), KM_SLEEP);
-	for(i=0; list; i++) {
-		new_es[i] = list->es;
-		e1 = list->next;
-		free(list, M_TEMP);
-		list = e1;
+	/* Replace old execsw[] and free used memory. */
+	if (execsw != NULL) {
+		kmem_free(__UNCONST(execsw),
+		    nexecs * sizeof(struct execsw *) + 1);
 	}
+	execsw = sw;
+	nexecs = sz;
 
-	/*
-	 * New execsw[] array built, now replace old execsw[] and free
-	 * used memory.
-	 */
-	old_es = execsw;
-	if (old_es)
-		/*XXXUNCONST*/
-		kmem_free(__UNCONST(old_es), nexecs * sizeof(struct execsw *));
-	execsw = new_es;
-	nexecs = es_sz;
-
-	/*
-	 * Figure out the maximum size of an exec header.
-	 */
-	exec_maxhdrsz = 0;
+	/* Figure out the maximum size of an exec header. */
+	exec_maxhdrsz = sizeof(int);
 	for (i = 0; i < nexecs; i++) {
 		if (execsw[i]->es_hdrsz > exec_maxhdrsz)
 			exec_maxhdrsz = execsw[i]->es_hdrsz;

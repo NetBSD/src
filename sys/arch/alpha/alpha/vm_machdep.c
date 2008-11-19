@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.96 2007/10/17 19:52:56 garbled Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.97 2008/11/19 18:35:57 ad Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,8 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.96 2007/10/17 19:52:56 garbled Exp $");
-#include "opt_coredump.h"
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97 2008/11/19 18:35:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,49 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.96 2007/10/17 19:52:56 garbled Exp 
 #include <machine/alpha.h>
 #include <machine/pmap.h>
 #include <machine/reg.h>
-
-#ifdef COREDUMP
-/*
- * Dump the machine specific header information at the start of a core dump.
- */
-int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
-{
-	int error;
-	struct md_coredump cpustate;
-	struct coreseg cseg;
-
-	if (iocookie == NULL) {
-		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-		chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-		chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-		chdr->c_cpusize = sizeof(cpustate);
-		chdr->c_nseg++;
-		return 0;
-	}
-
-	cpustate.md_tf = *l->l_md.md_tf;
-	cpustate.md_tf.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
-	if (l->l_md.md_flags & MDP_FPUSED) {
-		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-			fpusave_proc(l, 1);
-		cpustate.md_fpstate = l->l_addr->u_pcb.pcb_fp;
-	} else
-		memset(&cpustate.md_fpstate, 0, sizeof(cpustate.md_fpstate));
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
-	if (error)
-		return error;
-
-	return coredump_write(iocookie, UIO_SYSSPACE, &cpustate,
-	    sizeof(cpustate));
-}
-#endif
 
 void
 cpu_lwp_free(struct lwp *l, int proc)

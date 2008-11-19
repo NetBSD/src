@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.41 2007/12/04 18:40:20 dsl Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.42 2008/11/19 18:36:05 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.41 2007/12/04 18:40:20 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec.c,v 1.42 2008/11/19 18:36:05 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -60,7 +60,7 @@ void syscall(void);
 
 struct uvm_object *emul_osf1_object;
 
-const struct emul emul_osf1 = {
+struct emul emul_osf1 = {
 	"osf1",
 	"/emul/osf1",
 #ifndef __HAVE_MINIMAL_EMUL
