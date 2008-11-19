@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.12 2008/11/18 11:56:09 ad Exp $	*/
+/*	$NetBSD: module.h,v 1.13 2008/11/19 11:08:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,6 @@ typedef enum modcmd {
 #ifdef _KERNEL
 
 #include <sys/mutex.h>
-#include <sys/condvar.h>
 
 #include <prop/proplib.h>
 
