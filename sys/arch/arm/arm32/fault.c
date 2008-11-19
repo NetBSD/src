@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.71 2008/10/17 08:20:48 cegger Exp $	*/
+/*	$NetBSD: fault.c,v 1.72 2008/11/19 06:32:58 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -79,9 +79,10 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_sa.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.71 2008/10/17 08:20:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.72 2008/11/19 06:32:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,8 +244,9 @@ data_abort_handler(trapframe_t *tf)
 	uvmexp.traps++;
 
 	/* Re-enable interrupts if they were enabled previously */
-	if (__predict_true((tf->tf_spsr & I32_bit) == 0))
-		enable_interrupts(I32_bit);
+	KASSERT(!TRAP_USERMODE(tf) || (tf->tf_spsr & IF32_bits) == 0);
+	if (__predict_true((tf->tf_spsr & IF32_bits) != IF32_bits))
+		restore_interrupts(tf->tf_spsr & IF32_bits);
 
 	/* Get the current lwp structure */
 	KASSERT(curlwp != NULL);
@@ -381,10 +383,12 @@ data_abort_handler(trapframe_t *tf)
 		}
 	} else {
 		map = &l->l_proc->p_vmspace->vm_map;
+#ifdef KERN_SA
 		if ((l->l_flag & LW_SA) && (~l->l_pflag & LP_SA_NOBLOCK)) {
 			l->l_savp->savp_faultaddr = (vaddr_t)far;
 			l->l_pflag |= LP_SA_PAGEFAULT;
 		}
+#endif
 	}
 
 	/*
@@ -445,8 +449,10 @@ data_abort_handler(trapframe_t *tf)
 	last_fault_code = fsr;
 #endif
 	if (pmap_fault_fixup(map->pmap, va, ftype, user)) {
+#ifdef KERN_SA
 		if (map != kernel_map)
 			l->l_pflag &= ~LP_SA_PAGEFAULT;
+#endif
 		UVMHIST_LOG(maphist, " <- ref/mod emul", 0, 0, 0, 0);
 		goto out;
 	}
@@ -466,8 +472,10 @@ data_abort_handler(trapframe_t *tf)
 	error = uvm_fault(map, va, ftype);
 	pcb->pcb_onfault = onfault;
 
+#ifdef KERN_SA
 	if (map != kernel_map)
 		l->l_pflag &= ~LP_SA_PAGEFAULT;
+#endif
 
 	if (__predict_true(error == 0)) {
 		if (user)
@@ -787,12 +795,14 @@ prefetch_abort_handler(trapframe_t *tf)
 	 * from user mode so we know interrupts were not disabled.
 	 * But we check anyway.
 	 */
-	if (__predict_true((tf->tf_spsr & I32_bit) == 0))
-		enable_interrupts(I32_bit);
+	KASSERT(!TRAP_USERMODE(tf) || (tf->tf_spsr & IF32_bits) == 0);
+	if (__predict_true((tf->tf_spsr & I32_bit) != IF32_bits))
+		restore_interrupts(tf->tf_spsr & IF32_bits);
 
 	/* See if the CPU state needs to be fixed up */
 	switch (prefetch_abort_fixup(tf)) {
 	case ABORT_FIXUP_RETURN:
+		KASSERT(!TRAP_USERMODE(tf) || (tf->tf_spsr & IF32_bits) == 0);
 		return;
 	case ABORT_FIXUP_FAILED:
 		/* Deliver a SIGILL to the process */
@@ -848,15 +858,20 @@ prefetch_abort_handler(trapframe_t *tf)
 		dab_fatal(tf, 0, tf->tf_pc, NULL, NULL);
 	}
 #endif
-	if (map != kernel_map && l->l_flag & LW_SA) {
+
+#ifdef KERN_SA
+	if (map != kernel_map && (l->l_flag & LW_SA)) {
 		l->l_savp->savp_faultaddr = fault_pc;
 		l->l_pflag |= LP_SA_PAGEFAULT;
 	}
+#endif
 
 	error = uvm_fault(map, va, VM_PROT_READ);
 
+#ifdef KERN_SA
 	if (map != kernel_map)
 		l->l_pflag &= ~LP_SA_PAGEFAULT;
+#endif
 
 	if (__predict_true(error == 0)) {
 		UVMHIST_LOG (maphist, " <- uvm", 0, 0, 0, 0);
@@ -881,6 +896,7 @@ do_trapsignal:
 	call_trapsignal(l, &ksi);
 
 out:
+	KASSERT(!TRAP_USERMODE(tf) || (tf->tf_spsr & IF32_bits) == 0);
 	userret(l);
 }
 
