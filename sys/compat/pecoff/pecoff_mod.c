@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: pecoff_mod.c,v 1.2 2008/11/19 22:27:19 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,12 +34,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_mod.c,v 1.2 2008/11/19 22:27:19 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
+#include <sys/signalvar.h> /* for coredump_netbsd */
 
 #include <compat/pecoff/pecoff_exec.h>
 
@@ -61,8 +62,6 @@ static struct execsw pecoff_execsw[] = {
 static int
 compat_pecoff_modcmd(modcmd_t cmd, void *arg)
 {
-	int error;
-
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		return exec_add(pecoff_execsw,
