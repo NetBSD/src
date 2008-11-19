@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.71.2.3 2008/11/18 17:46:39 snj Exp $
+# $NetBSD: mi,v 1.71.2.4 2008/11/19 00:36:52 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5132,6 +5132,8 @@
 ./usr/X11R7/include/GL/glext.h				-unknown-	xorg
 ./usr/X11R7/include/GL/glu.h				-unknown-	xorg
 ./usr/X11R7/include/GL/glu_mangle.h			-unknown-	xorg
+./usr/X11R7/include/GL/glut.h				-unknown-	xorg
+./usr/X11R7/include/GL/glutf90.h			-unknown-	xorg
 ./usr/X11R7/include/GL/glx.h				-unknown-	xorg
 ./usr/X11R7/include/GL/glx_mangle.h			-unknown-	xorg
 ./usr/X11R7/include/GL/glxext.h				-unknown-	xorg
@@ -6074,6 +6076,9 @@
 ./usr/X11R7/lib/libfreetype.a				-unknown-	xorg
 ./usr/X11R7/lib/libfreetype_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/libfreetype_p.a				-unknown-	profile,xorg
+./usr/X11R7/lib/libglut.a				-unknown-	xorg
+./usr/X11R7/lib/libglut_g.a				-unknown-	debuglib,xorg
+./usr/X11R7/lib/libglut_p.a				-unknown-	profile,xorg
 ./usr/X11R7/lib/liblbxutil.a				-unknown-	xorg
 ./usr/X11R7/lib/liblbxutil_g.a				-unknown-	debuglib,xorg
 ./usr/X11R7/lib/liblbxutil_p.a				-unknown-	profile,xorg
@@ -6109,6 +6114,7 @@
 ./usr/X11R7/lib/pkgconfig/gl.pc				-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/glproto.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/glu.pc			-unknown-	xorg
+./usr/X11R7/lib/pkgconfig/glut.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/glw.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/ice.pc			-unknown-	xorg
 ./usr/X11R7/lib/pkgconfig/inputproto.pc			-unknown-	xorg
@@ -9157,6 +9163,7 @@
 ./usr/libdata/lint/llib-lfontenc.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lfreetype.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lfreetype.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lglut.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-llbxutil.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-llbxutil.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-llisp.ln			-unknown-	lint,xorg
