@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.146 2008/11/12 12:36:10 ad Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.147 2008/11/19 18:36:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.146 2008/11/12 12:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.147 2008/11/19 18:36:05 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -35,12 +35,10 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.146 2008/11/12 12:36:10 ad Exp
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
 #include "opt_sysv.h"
-#include "opt_nfsserver.h"
 #include "opt_syscall_debug.h"
 #include "opt_sa.h"
 
 #include "fs_lfs.h"
-#include "fs_nfs.h"
 #endif
 
 /*
@@ -133,7 +131,7 @@ const struct sa_emul saemul_netbsd32 = {
 #endif
 }; 
 
-const struct emul emul_netbsd32 = {
+struct emul emul_netbsd32 = {
 	"netbsd32",
 	"/emul/netbsd32",
 #ifndef __HAVE_MINIMAL_EMUL
@@ -1221,7 +1219,6 @@ netbsd32_quotactl(struct lwp *l, const struct netbsd32_quotactl_args *uap, regis
 	return (sys_quotactl(l, &ua, retval));
 }
 
-#if defined(NFS) || defined(NFSSERVER)
 int
 netbsd32_nfssvc(struct lwp *l, const struct netbsd32_nfssvc_args *uap, register_t *retval)
 {
@@ -1240,7 +1237,6 @@ netbsd32_nfssvc(struct lwp *l, const struct netbsd32_nfssvc_args *uap, register_
 	return (ENOSYS);
 #endif
 }
-#endif
 
 int
 netbsd32___getfh30(struct lwp *l, const struct netbsd32___getfh30_args *uap, register_t *retval)

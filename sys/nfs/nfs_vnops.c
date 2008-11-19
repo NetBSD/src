@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.267 2008/10/15 14:21:35 pooka Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.268 2008/11/19 18:36:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,10 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.267 2008/10/15 14:21:35 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.268 2008/11/19 18:36:10 ad Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>

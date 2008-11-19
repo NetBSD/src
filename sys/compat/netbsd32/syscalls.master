@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.72 2008/11/14 15:49:20 ad Exp $
+	$NetBSD: syscalls.master,v 1.73 2008/11/19 18:36:05 ad Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -37,7 +37,6 @@
 ; #include's are copied to the syscall names and switch definition files only.
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ntp.h"
 #include "opt_sysv.h"
@@ -228,11 +227,7 @@
 152	UNIMPL
 153	UNIMPL
 154	UNIMPL
-#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 155	STD		{ int netbsd32_nfssvc(int flag, netbsd32_voidp argp); }
-#else
-155	EXCL		netbsd32_nfssvc
-#endif
 156	COMPAT_43	{ int netbsd32_ogetdirentries(int fd, netbsd32_charp buf, u_int count, netbsd32_longp basep); }
 157	COMPAT_20	{ int netbsd32_statfs(netbsd32_charp path, netbsd32_statfsp_t buf); }
 158	COMPAT_20	{ int netbsd32_fstatfs(int fd, netbsd32_statfsp_t buf); }

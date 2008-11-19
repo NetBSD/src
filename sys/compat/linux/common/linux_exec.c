@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.c,v 1.108 2008/10/28 11:42:30 jmcneill Exp $	*/
+/*	$NetBSD: linux_exec.c,v 1.109 2008/11/19 18:36:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.108 2008/10/28 11:42:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec.c,v 1.109 2008/11/19 18:36:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ void linux_userret(void);
 
 struct uvm_object *emul_linux_object;
 
-const struct emul emul_linux = {
+struct emul emul_linux = {
 	"linux",
 	"/emul/linux",
 #ifndef __HAVE_MINIMAL_EMUL

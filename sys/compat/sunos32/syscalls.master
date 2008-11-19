@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.16 2007/03/04 07:54:09 christos Exp $
+;	$NetBSD: syscalls.master,v 1.17 2008/11/19 18:36:05 ad Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp
 
@@ -32,7 +32,6 @@
 ; #include's are copied to the syscall names and switch definition files only.
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #include "opt_compat_sunos.h"
 
@@ -249,11 +248,7 @@
 153	NOARGS		{ int netbsd32_poll(netbsd32_pollfdp_t fds, u_int nfds, \
 			    int timeout); }
 154	UNIMPL
-#ifdef NFSSERVER
 155	STD		{ int sunos32_sys_nfssvc(int fd); }
-#else
-155	UNIMPL
-#endif
 156	NOARGS		{ int compat_43_netbsd32_ogetdirentries(int fd, netbsd32_charp buf, \
 			    u_int count, netbsd32_longp basep); }
 157	STD		{ int sunos32_sys_statfs(const netbsd32_charp path, \

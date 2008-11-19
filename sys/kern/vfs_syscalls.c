@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.380 2008/11/16 18:44:07 pooka Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.381 2008/11/19 18:36:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,11 +63,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.380 2008/11/16 18:44:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.381 2008/11/19 18:36:07 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
-#include "opt_nfsserver.h"
 #include "veriexec.h"
 #endif
 
@@ -211,7 +210,6 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	error = VFS_MOUNT(mp, path, data, data_len);
 
-#if defined(NFSSERVER)
 	if (error && data != NULL) {
 		int error2;
 
@@ -219,15 +217,17 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		 * Update failed; let's try and see if it was an
 		 * export request.  For compat with 3.0 and earlier.
 		 */
-		error2 = nfs_update_exports_30(mp, path, data, l);
+		error2 = vfs_hooks_reexport(mp, path, data);
 
-		/* Only update error code if the export request was
+		/*
+		 * Only update error code if the export request was
 		 * understood but some problem occurred while
-		 * processing it. */
+		 * processing it.
+		 */
 		if (error2 != EJUSTRETURN)
 			error = error2;
 	}
-#endif
+
 	if (mp->mnt_iflag & IMNT_WANTRDWR)
 		mp->mnt_flag &= ~MNT_RDONLY;
 	if (error)

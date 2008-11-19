@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_fcntl.c,v 1.6 2008/02/04 22:23:43 dsl Exp $ */
+/*	$NetBSD: linux32_fcntl.c,v 1.7 2008/11/19 18:36:04 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.6 2008/02/04 22:23:43 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.7 2008/11/19 18:36:04 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.6 2008/02/04 22:23:43 dsl Exp $"
 #include <compat/linux/common/linux_fcntl.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_misc.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>

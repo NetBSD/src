@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.282 2008/10/22 11:14:33 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.283 2008/11/19 18:36:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -282,7 +282,7 @@ struct proc {
 	struct vnode 	*p_textvp;	/* :: Vnode of executable */
 
 	void	     (*p_userret)(void);/* p: return-to-user hook */
-	const struct emul *p_emul;	/* :: emulation information */
+	struct emul	*p_emul;	/* :: emulation information */
 	void		*p_emuldata;	/* :: per-proc emul data, or NULL */
 	const struct execsw *p_execsw;	/* :: exec package information */
 	struct klist	p_klist;	/* p: knotes attached to proc */
@@ -394,6 +394,7 @@ struct proc {
  */
 #define	PL_CONTROLT	0x00000002 /* Has a controlling terminal */
 #define	PL_PPWAIT	0x00000010 /* Parent is waiting for child exec/exit */
+#define	PL_SIGCOMPAT	0x00000200 /* Has used compat signal trampoline */
 #define	PL_ORPHANPG	0x20000000 /* Member of an orphaned pgrp */
 
 /*
@@ -579,6 +580,8 @@ void kstack_check_magic(const struct lwp *);
 #ifndef KSTACK_SIZE
 #define	KSTACK_SIZE	(USPACE - ALIGN(sizeof(struct user)))
 #endif
+
+extern struct emul emul_netbsd;
 
 #endif	/* _KERNEL */
 #endif	/* !_SYS_PROC_H_ */

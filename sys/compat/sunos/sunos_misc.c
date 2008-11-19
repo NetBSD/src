@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.162 2008/11/12 12:36:10 ad Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.163 2008/11/19 18:36:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,12 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.162 2008/11/12 12:36:10 ad Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
-#include "fs_nfs.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.163 2008/11/19 18:36:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,18 +292,12 @@ sunos_sys_mount(struct lwp *l, const struct sunos_sys_mount_args *uap, register_
 	    UIO_USERSPACE, 0, &dummy);
 }
 
-#if defined(NFS)
 int
 async_daemon(struct lwp *l, const void *v, register_t *retval)
 {
-	struct sys_nfssvc_args ouap;
 
-	SCARG(&ouap, flag) = NFSSVC_BIOD;
-	SCARG(&ouap, argp) = NULL;
-
-	return (sys_nfssvc(l, &ouap, retval));
+	return kpause("fakeniod", false, 0, NULL);
 }
-#endif /* NFS */
 
 void	native_to_sunos_sigset(const sigset_t *, int *);
 void	sunos_to_native_sigset(const int, sigset_t *);
@@ -725,7 +714,6 @@ sunos_sys_open(struct lwp *l, const struct sunos_sys_open_args *uap, register_t 
 	return ret;
 }
 
-#if defined (NFSSERVER)
 int
 sunos_sys_nfssvc(struct lwp *l, const struct sunos_sys_nfssvc_args *uap, register_t *retval)
 {
@@ -755,7 +743,6 @@ sunos_sys_nfssvc(struct lwp *l, const struct sunos_sys_nfssvc_args *uap, registe
 	return (ENOSYS);
 #endif
 }
-#endif /* NFSSERVER */
 
 int
 sunos_sys_ustat(struct lwp *l, const struct sunos_sys_ustat_args *uap, register_t *retval)
