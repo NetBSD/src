@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.29 2008/11/12 14:47:22 pooka Exp $
+# $NetBSD: md.amd64,v 1.30 2008/11/19 14:10:48 pooka Exp $
 ./@MODULEDIR@/adosfs				base-kernel-modules
 ./@MODULEDIR@/adosfs/adosfs.kmod		base-kernel-modules
 ./@MODULEDIR@/azalia				base-kernel-modules
@@ -236,6 +236,8 @@
 ./usr/lib/i386/librumpnet.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpuser.so.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/librumpuser.so.0.0		base-compat-shlib	compat,pic
+./usr/lib/i386/librumpvfs.so.0			base-compat-shlib	compat,pic
+./usr/lib/i386/librumpvfs.so.0.0		base-compat-shlib	compat,pic
 ./usr/lib/i386/libsdp.so.2			base-compat-shlib	compat,pic
 ./usr/lib/i386/libsdp.so.2.0			base-compat-shlib	compat,pic
 ./usr/lib/i386/libskey.so.1			base-compat-shlib	compat,pic

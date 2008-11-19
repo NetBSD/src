@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.29 2008/11/18 12:39:35 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.1 2008/11/19 14:10:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -74,6 +74,8 @@ const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
 };
 const struct vnodeopv_desc spec_vnodeop_opv_desc =
 	{ &spec_vnodeop_p, rumpspec_vnodeop_entries };
+
+vnode_t *specfs_hash[SPECHSZ];
 
 static int
 rump_specopen(void *v)
