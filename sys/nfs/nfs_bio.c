@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.180 2008/10/31 20:42:41 christos Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.181 2008/11/19 18:36:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,10 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.180 2008/10/31 20:42:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.181 2008/11/19 18:36:09 ad Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_nfs.h"
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.39 2008/11/14 13:33:55 ad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.40 2008/11/19 18:36:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -75,9 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.39 2008/11/14 13:33:55 ad Exp $");
-
-#include "opt_inet.h"
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.40 2008/11/19 18:36:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,6 +148,8 @@ static void netexport_insert(struct netexport *);
 static void netexport_remove(struct netexport *);
 static void netexport_wrlock(void);
 static void netexport_wrunlock(void);
+static int nfs_export_update_30(struct mount *mp, const char *path, void *);
+
 
 /*
  * PUBLIC INTERFACE
@@ -161,8 +161,9 @@ static void netexport_wrunlock(void);
 static void nfs_export_unmount(struct mount *);
 
 struct vfs_hooks nfs_export_hooks = {
-	nfs_export_unmount,
-	{ NULL, NULL }
+	{ NULL, NULL },
+	.vh_unmount = nfs_export_unmount,
+	.vh_reexport = nfs_export_update_30,
 };
 
 /*
@@ -382,12 +383,13 @@ netexport_check(const fsid_t *fsid, struct mbuf *mb, struct mount **mpp,
  * Returns EJUSTRETURN if the given command was not a export request.
  * Otherwise, returns 0 on success or an appropriate error code otherwise.
  */
-int
-nfs_update_exports_30(struct mount *mp, const char *path,
-    struct mnt_export_args30 *args, struct lwp *l)
+static int
+nfs_export_update_30(struct mount *mp, const char *path, void *data)
 {
 	struct mountd_exports_list mel;
+	struct mnt_export_args30 *args;
 
+	args = data;
 	mel.mel_path = path;
 
 	if (args->fspec != NULL)
@@ -406,7 +408,7 @@ nfs_update_exports_30(struct mount *mp, const char *path,
 		mel.mel_exports = (void *)&args->eargs;
 	}
 
-	return mountd_set_exports_list(&mel, l);
+	return mountd_set_exports_list(&mel, curlwp);
 }
 
 /*
@@ -570,7 +572,6 @@ sacheck(struct sockaddr *sa)
 {
 
 	switch (sa->sa_family) {
-#ifdef INET
 	case AF_INET: {
 		struct sockaddr_in *sin = (struct sockaddr_in *)sa;
 		char *p = (char *)sin->sin_zero;
@@ -585,8 +586,6 @@ sacheck(struct sockaddr *sa)
 				return -1;
 		return 0;
 	}
-#endif
-#ifdef INET6
 	case AF_INET6: {
 		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
 
@@ -596,7 +595,6 @@ sacheck(struct sockaddr *sa)
 			return -1;
 		return 0;
 	}
-#endif
 	default:
 		return -1;
 	}

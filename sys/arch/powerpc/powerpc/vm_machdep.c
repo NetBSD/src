@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.74 2008/10/25 09:10:07 mrg Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.75 2008/11/19 18:36:00 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.74 2008/10/25 09:10:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75 2008/11/19 18:36:00 ad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
-#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/core.h>
@@ -184,60 +183,6 @@ cpu_lwp_free(struct lwp *l, int proc)
 #endif
 
 }
-
-#ifdef COREDUMP
-/*
- * Write the machine-dependent part of a core dump.
- */
-int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
-{
-	struct coreseg cseg;
-	struct md_coredump md_core;
-	struct pcb *pcb = &l->l_addr->u_pcb;
-	int error;
-
-	if (iocookie == NULL) {
-		CORE_SETMAGIC(*chdr, COREMAGIC, MID_POWERPC, 0);
-		chdr->c_hdrsize = ALIGN(sizeof *chdr);
-		chdr->c_seghdrsize = ALIGN(sizeof cseg);
-		chdr->c_cpusize = sizeof md_core;
-		chdr->c_nseg++;
-		return 0;
-	}
-
-	md_core.frame = *trapframe(l);
-	if (pcb->pcb_flags & PCB_FPU) {
-#ifdef PPC_HAVE_FPU
-		if (pcb->pcb_fpcpu)
-			save_fpu_lwp(l, FPU_SAVE);
-#endif
-		md_core.fpstate = pcb->pcb_fpu;
-	} else
-		memset(&md_core.fpstate, 0, sizeof(md_core.fpstate));
-
-#ifdef ALTIVEC
-	if (pcb->pcb_flags & PCB_ALTIVEC) {
-		if (pcb->pcb_veccpu)
-			save_vec_lwp(l, ALTIVEC_SAVE);
-		md_core.vstate = pcb->pcb_vr;
-	} else
-#endif
-		memset(&md_core.vstate, 0, sizeof(md_core.vstate));
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-		    chdr->c_seghdrsize);
-	if (error)
-		return error;
-
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
-}
-#endif
 
 #ifdef PPC_IBM4XX
 /*

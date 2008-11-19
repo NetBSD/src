@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.18 2008/11/14 23:10:57 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.19 2008/11/19 18:36:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.18 2008/11/14 23:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.19 2008/11/19 18:36:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.18 2008/11/14 23:10:57 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/wait.h>
 #include <sys/kmem.h>
+#include <sys/module.h>
 
 /* ARGSUSED */
 int
@@ -341,16 +342,30 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	 * vers if a new sigaction was supplied. Emulations use legacy
 	 * kernel trampolines with version 0, alternatively check for that
 	 * too.
+	 *
+	 * If version < 2, we try to autoload the compat module.  Note
+	 * that we interlock with the unload check in compat_modcmd()
+	 * using module_lock.  If the autoload fails, we don't try it
+	 * again for this process.
 	 */
-	if ((vers != 0 && tramp == NULL) ||
-#ifdef SIGTRAMP_VALID
-	    (nsa != NULL &&
-	    ((vers == 0) ?
-		(p->p_emul->e_sigcode == NULL) :
-		!SIGTRAMP_VALID(vers))) ||
-#endif
-	    (vers == 0 && tramp != NULL)) {
-		return (EINVAL);
+#ifdef MODULAR
+	if (__predict_false(vers < 2) && (p->p_lflag & PL_SIGCOMPAT) == 0) {
+		mutex_enter(&module_lock);
+		if (sendsig_sigcontext_vec == NULL) {
+			(void)module_autoload("compat", MODULE_CLASS_ANY);
+		}
+		mutex_enter(proc_lock);
+		p->p_lflag |= PL_SIGCOMPAT;
+		mutex_exit(proc_lock);
+		mutex_exit(&module_lock);
+	}
+#endif	/* MODULAR */
+
+	if (vers == 0 && (tramp != NULL || p->p_emul->e_sigcode == NULL)) {
+		return EINVAL;
+	}
+	if (vers != 0 && (tramp == NULL || vers > 2)) {
+		return EINVAL;
 	}
 
 	mutex_enter(p->p_lock);

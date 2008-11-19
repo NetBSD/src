@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.28 2008/11/14 23:10:57 ad Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.29 2008/11/19 18:36:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.28 2008/11/14 23:10:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.29 2008/11/19 18:36:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,11 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: tty_43.c,v 1.28 2008/11/14 23:10:57 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/ioctl_compat.h>
-
-/*
- * XXX libcompat files should be included with config attributes
- */
-#ifdef COMPAT_OLDTTY
 
 int ttydebug = 0;
 
@@ -516,5 +511,3 @@ ttcompatsetlflags(struct tty *tp, struct termios *t)
 	t->c_lflag = lflag;
 	t->c_cflag = cflag;
 }
-
-#endif /* COMPAT_OLDTTY */

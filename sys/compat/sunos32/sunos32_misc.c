@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.63 2008/11/12 12:36:11 ad Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.64 2008/11/19 18:36:05 ad Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,12 +77,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.63 2008/11/12 12:36:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.64 2008/11/19 18:36:05 ad Exp $");
 
 #define COMPAT_SUNOS 1
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "opt_compat_43.h"
 #include "opt_compat_netbsd.h"
 #include "fs_nfs.h"
@@ -1008,7 +1007,6 @@ sunos32_sys_open(struct lwp *l, const struct sunos32_sys_open_args *uap, registe
 	return ret;
 }
 
-#if defined (NFSSERVER)
 int
 sunos32_sys_nfssvc(struct lwp *l, const struct sunos32_sys_nfssvc_args *uap, register_t *retval)
 {
@@ -1037,7 +1035,6 @@ sunos32_sys_nfssvc(struct lwp *l, const struct sunos32_sys_nfssvc_args *uap, reg
 	return (ENOSYS);
 #endif
 }
-#endif /* NFSSERVER */
 
 int
 sunos32_sys_ustat(struct lwp *l, const struct sunos32_sys_ustat_args *uap, register_t *retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.80 2008/11/13 10:53:30 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.81 2008/11/19 18:35:58 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.80 2008/11/13 10:53:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.81 2008/11/19 18:35:58 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1175,6 +1175,38 @@ syscall1:
 	addl	$4,%esp
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 IDTVEC_END(syscall)
+
+IDTVEC(svr4_fasttrap)
+	pushl	$2		# size of instruction for restart
+	pushl	$T_ASTFLT	# trap # for doing ASTs
+	INTRENTRY
+	pushl	$RW_READER
+	pushl	$_C_LABEL(svr4_fasttrap_lock)
+	call	_C_LABEL(rw_enter)
+	addl	$8,%esp
+	call	*_C_LABEL(svr4_fasttrap_vec)
+	pushl	$_C_LABEL(svr4_fasttrap_lock)
+	call	_C_LABEL(rw_exit)
+	addl	$4,%esp
+2:	/* Check for ASTs on exit to user mode. */
+	cli
+	CHECK_ASTPENDING(%eax)		
+	je	1f
+	/* Always returning to user mode here. */
+	CLEAR_ASTPENDING(%eax)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
+	call	_C_LABEL(trap)
+	addl	$4,%esp
+	jmp	2b
+1:	CHECK_DEFERRED_SWITCH
+	jnz	9f
+	INTRFASTEXIT
+9:	sti
+	call	_C_LABEL(pmap_load)
+	cli
+	jmp	2b
 
 #if NNPX > 0
 /*
