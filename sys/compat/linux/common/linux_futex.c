@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.19 2008/11/18 15:25:13 njoly Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.20 2008/11/19 13:09:19 njoly Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.19 2008/11/18 15:25:13 njoly Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.20 2008/11/19 13:09:19 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -53,8 +53,11 @@ __KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.19 2008/11/18 15:25:13 njoly Exp $
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_futex.h>
 #include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sched.h>
 #include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
+
+void linux_to_native_timespec(struct timespec *, struct linux_timespec *);
 
 struct futex;
 
@@ -119,18 +122,18 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		syscallarg(int *) uaddr;
 		syscallarg(int) op;
 		syscallarg(int) val;
-		syscallarg(const struct timespec *) timeout;
+		syscallarg(const struct linux_timespec *) timeout;
 		syscallarg(int *) uaddr2;
 		syscallarg(int) val3;
 	} */
 	int val;
 	int ret;
-	struct timespec timeout = { 0, 0 };
+	struct linux_timespec timeout = { 0, 0 };
 	int error = 0;
 	struct futex *f;
 	struct futex *newf;
 	int timeout_hz;
-	struct timeval tv = {0, 0};
+	struct timespec ts;
 	struct futex *f2;
 	int op_ret;
 
@@ -172,11 +175,12 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		    SCARG(uap, uaddr), val, (long long)timeout.tv_sec,
 		    timeout.tv_nsec));
 
-		tv.tv_usec = timeout.tv_sec * 1000000 + timeout.tv_nsec / 1000;
-		timeout_hz = tvtohz(&tv);
-
-		if (timeout.tv_sec == 0 && timeout.tv_nsec == 0)
-			timeout_hz = 0;
+		linux_to_native_timespec(&ts, &timeout);
+		if ((error = itimespecfix(&ts)) != 0) {
+			FUTEX_SYSTEM_UNLOCK;
+			return error;
+		}
+		timeout_hz = tstohz(&ts);
 
 		/*
 		 * If the user process requests a non null timeout,
@@ -186,8 +190,7 @@ linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_
 		 * We use a minimal timeout of 1/hz. Maybe it would make
 		 * sense to just return ETIMEDOUT without sleeping.
 		 */
-		if (((timeout.tv_sec != 0) || (timeout.tv_nsec != 0)) &&
-		    (timeout_hz == 0))
+		if (timeout_hz == 0)
 			timeout_hz = 1;
 
 		f = futex_get(SCARG(uap, uaddr), FUTEX_UNLOCKED);
