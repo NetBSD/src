@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.27 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.28 2008/11/19 21:29:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.27 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.28 2008/11/19 21:29:32 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_coredump.h"
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.27 2008/11/19 18:36:06 ad Exp $");
 
 MODULE(MODULE_CLASS_MISC, exec_ecoff, DEP)
 
-static const struct exec_ecoff_execsw = {
+static struct execsw exec_ecoff_execsw = {
 	ECOFF_HDR_SIZE,
 	exec_ecoff_makecmds,
 	{ .ecoff_probe_func = cpu_exec_ecoff_probe },
@@ -74,8 +74,6 @@ static const struct exec_ecoff_execsw = {
 static int
 exec_ecoff_modcmd(modcmd_t cmd, void *arg)
 {
-	int error;
-
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		return exec_add(&exec_ecoff_execsw, 1);
