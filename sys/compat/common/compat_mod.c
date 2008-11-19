@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.2 2008/11/19 21:27:54 ad Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.3 2008/11/19 21:29:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.2 2008/11/19 21:27:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.3 2008/11/19 21:29:25 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -262,6 +262,7 @@ compat_modcmd(modcmd_t cmd, void *arg)
 			(*emul_netbsd_object->pgops->pgo_detach)
 			    (emul_netbsd_object);
 		}
+		emul_netbsd_object = NULL;
 		emul_netbsd.e_sigcode = NULL;
 		emul_netbsd.e_esigcode = NULL;
 		emul_netbsd.e_sigobject = NULL;
