@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.542.2.2 2008/11/15 22:10:33 snj Exp $
+#	$NetBSD: bsd.own.mk,v 1.542.2.3 2008/11/19 00:30:52 snj Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -834,7 +834,7 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 	xkbcomp xorg-cf-files imake xorg-server xbiff xkbdata \
 	xbitmaps appres xeyes xev xedit sessreg pixman \
 	beforelight bitmap editres makedepend fonttosfnt fslsfonts \
-	fstobdf MesaDemos MesaLib ico iceauth lbxproxy listres lndir \
+	fstobdf MesaDemos MesaGLUT MesaLib ico iceauth lbxproxy listres lndir \
 	luit xproxymanagementprotocol mkfontdir oclock proxymngr rgb \
 	setxkbmap smproxy twm viewres x11perf xauth xcalc xclipboard \
 	xclock xcmsdb xconsole xcutsel xditview xdpyinfo xdriinfo xdm \
