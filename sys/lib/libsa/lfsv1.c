@@ -1,4 +1,4 @@
-/* $NetBSD: lfsv1.c,v 1.2 2003/04/11 11:27:06 dsl Exp $ */
+/* $NetBSD: lfsv1.c,v 1.3 2008/11/19 12:36:41 ad Exp $ */
 
 #define	LIBSA_LFS
 #define	REQUIRED_LFS_VERSION	1
@@ -15,5 +15,8 @@
 
 #define	FSBTODB(fs, daddr)	(daddr)		/* LFSv1 uses sectors for addresses */
 #define	INOPBx(fs) INOPB(fs)
+
+#define	FSMOD			"lfs"
+#define	FSMOD2			"ffs"
 
 #include "lib/libsa/ufs.c"

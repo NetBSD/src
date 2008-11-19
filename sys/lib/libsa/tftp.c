@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.26 2008/05/11 11:29:12 chris Exp $	 */
+/*	$NetBSD: tftp.c,v 1.27 2008/11/19 12:36:41 ad Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -270,6 +270,7 @@ tftp_open(const char *path, struct open_file *f)
 		return res;
 	}
 	f->f_fsdata = (void *)tftpfile;
+	fsmod = "nfs";
 	return 0;
 }
 
