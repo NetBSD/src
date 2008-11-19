@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.13 2008/10/15 08:13:17 ad Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.14 2008/11/19 12:20:40 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -80,6 +80,12 @@ cpu_lookup(u_int index)
 void
 evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
     const char *group, const char *name)
+{
+
+}
+
+void
+evcnt_detach(struct evcnt *ev)
 {
 
 }
