@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.5 2008/08/27 11:03:10 matt Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.6 2008/11/19 06:26:27 matt Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.5 2008/08/27 11:03:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.6 2008/11/19 06:26:27 matt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.5 2008/08/27 11:03:10 matt Exp $");
  
 #include <sys/param.h>
 #include <sys/evcnt.h>
+#include <sys/atomic.h>
  
 #include <uvm/uvm_extern.h>
   
@@ -47,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.5 2008/08/27 11:03:10 matt Exp $");
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 
-#include <machine/atomic.h>
 #include <machine/bus.h>
 
 #include <arm/omap/omap2_reg.h>

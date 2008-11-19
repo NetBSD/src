@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.h,v 1.3 2008/04/27 18:58:45 matt Exp $ */
+/*	$NetBSD: omap_intr.h,v 1.4 2008/11/19 06:26:27 matt Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,6 @@
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <machine/atomic.h>
 
 #define OMAP_IRQ_MIN			0
 #define OMAP_NIRQ			(OMAP_INT_L1_NIRQ + OMAP_INT_L2_NIRQ)
