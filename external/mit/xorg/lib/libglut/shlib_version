@@ -1,0 +1,5 @@
+#	$NetBSD: shlib_version,v 1.1.2.2 2008/11/19 00:33:28 snj Exp $
+#
+major=3
+minor=7
+teeny=1
