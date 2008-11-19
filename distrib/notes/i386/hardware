@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.124 2008/09/27 23:15:21 tsutsui Exp $
+.\"	$NetBSD: hardware,v 1.125 2008/11/19 00:56:38 snj Exp $
 .
 .Nx
 \*V
@@ -17,7 +17,7 @@ Note that until you have around 16 MB of RAM, getting
 more RAM is more important than getting a faster CPU.)
 .
 .Ss2 Supported devices
-Explanation of bracketted footnote tags [] follows this listing.
+Explanation of bracketed footnote tags [] follows this listing.
 .(bullet -offset indent
 .Te 2 "Floppy controllers."
 .It
