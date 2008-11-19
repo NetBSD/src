@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.16 2008/11/16 18:37:28 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.1 2008/11/19 14:10:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
