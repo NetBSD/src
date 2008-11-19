@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.h,v 1.10 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: pecoff_exec.h,v 1.11 2008/11/19 22:27:19 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -33,6 +33,8 @@
 
 #ifndef _PECOFF_EXEC_H_
 #define _PECOFF_EXEC_H_
+
+#include <sys/exec_coff.h> /* for COFF_HDR_SIZE */
 
 struct pecoff_dos_filehdr {
 	u_int16_t	d_magic;	/* +0x00 'MZ' */
