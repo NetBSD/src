@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.18 2008/11/11 01:05:48 agc Exp $
+#	$NetBSD: dot.cshrc,v 1.19 2008/11/19 18:07:20 cube Exp $
 
 alias	h	history
 alias	j	jobs -l
@@ -25,7 +25,7 @@ setenv BLOCKSIZE 1k
 #setenv PKG_PATH ftp://ftp.netbsd.org/pkgsrc/packages/NetBSD/`uname -m`/5.99/All
 
 set history=1000
-set path=(/sbin /usr/sbin /bin /usr/bin /usr/pkg/sbin /usr/pkg/bin /usr/X11R6/bin /usr/local/sbin /usr/local/bin)
+set path=(/sbin /usr/sbin /bin /usr/bin /usr/pkg/sbin /usr/pkg/bin /usr/X11R7/bin /usr/X11R6/bin /usr/local/sbin /usr/local/bin)
 
 # directory stuff: cdpath/cd/back
 set cdpath=(/usr/src/{sys,bin,sbin,usr.{bin,sbin},lib,libexec,share,local,games,gnu/{usr.{bin,sbin},libexec,lib,games}})
