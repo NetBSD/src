@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.25 2008/11/12 18:07:40 njoly Exp $
+	$NetBSD: syscalls.master,v 1.26 2008/11/19 13:09:19 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -387,7 +387,7 @@
 200	STD		{ int linux_sys_tkill(int tid, int sig); }
 201	STD		{ int linux_sys_time(linux_time_t *t); }
 202	STD		{ int linux_sys_futex(int *uaddr, int op, int val, \
-			    const struct timespec *timeout, int *uaddr2, \
+			    const struct linux_timespec *timeout, int *uaddr2, \
 			    int val3); }
 203	STD		{ int linux_sys_sched_setaffinity(pid_t pid, \
 			    unsigned int len, unsigned long *mask); }
