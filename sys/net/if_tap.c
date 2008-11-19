@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.47 2008/08/26 11:06:59 rmind Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.47.4.1 2008/11/19 03:39:13 snj Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.47 2008/08/26 11:06:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.47.4.1 2008/11/19 03:39:13 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -256,6 +256,9 @@ tap_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_sih = softint_establish(SOFTINT_CLOCK, tap_softintr, sc);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,
