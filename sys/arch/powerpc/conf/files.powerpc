@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.69 2008/02/05 22:31:49 garbled Exp $
+#	$NetBSD: files.powerpc,v 1.70 2008/11/19 18:36:00 ad Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -8,6 +8,7 @@ defflag opt_pmap.h	PMAPDEBUG PMAPCHECK PMAPCOUNTERS
 defparam opt_pmap.h	PTEGCOUNT PMAP_MEMLIMIT
 
 file	arch/powerpc/powerpc/copystr.c
+file	arch/powerpc/powerpc/core_machdep.c		coredump
 file	arch/powerpc/powerpc/fubyte.c
 file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb

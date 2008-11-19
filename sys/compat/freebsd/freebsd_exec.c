@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec.c,v 1.35 2008/10/15 06:51:19 wrstuden Exp $	*/
+/*	$NetBSD: freebsd_exec.c,v 1.36 2008/11/19 18:36:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.35 2008/10/15 06:51:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec.c,v 1.36 2008/11/19 18:36:02 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -62,7 +62,7 @@ struct uvm_object *emul_freebsd_object;
 void	syscall(void);
 #endif
 
-const struct emul emul_freebsd = {
+struct emul emul_freebsd = {
 	"freebsd",
 	"/emul/freebsd",
 #ifndef __HAVE_MINIMAL_EMUL

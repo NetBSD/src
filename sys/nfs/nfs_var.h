@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.83 2008/11/14 13:33:56 ad Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.84 2008/11/19 18:36:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ int nfs_doio(struct buf *);
 
 /* nfs_kq.c */
 void nfs_kqinit(void);
+void nfs_kqfini(void);
 
 /* nfs_node.c */
 void nfs_rbtinit(struct nfsmount *);
@@ -178,7 +179,10 @@ int nfs_rephead(int, struct nfsrv_descript *, struct nfssvc_sock *,
 	int, int, u_quad_t *, struct mbuf **, struct mbuf **, char **);
 void nfs_timer(void *);
 void nfs_timer_init(void);
+void nfs_timer_fini(void);
 void nfs_timer_start(void);
+void nfs_timer_srvinit(bool (*)(void));
+void nfs_timer_srvfini(void);
 int nfs_sigintr(struct nfsmount *, struct nfsreq *, struct lwp *);
 int nfs_getreq(struct nfsrv_descript *, struct nfsd *, int);
 int nfs_msg(struct lwp *, const char *, const char *);
@@ -193,8 +197,10 @@ void nfsdsock_unlock(struct nfssvc_sock *);
 int nfsdsock_drain(struct nfssvc_sock *);
 int nfsdsock_sendreply(struct nfssvc_sock *, struct nfsrv_descript *);
 void nfsdreq_init(void);
+void nfsdreq_fini(void);
 struct nfsrv_descript *nfsdreq_alloc(void);
 void nfsdreq_free(struct nfsrv_descript *);
+bool nfsrv_timer(void);
 
 void nfsdsock_setbits(struct nfssvc_sock *, int);
 void nfsdsock_clearbits(struct nfssvc_sock *, int);
@@ -202,6 +208,7 @@ bool nfsdsock_testbits(struct nfssvc_sock *, int);
 
 /* nfs_srvcache.c */
 void nfsrv_initcache(void);
+void nfsrv_finicache(void);
 int nfsrv_getcache(struct nfsrv_descript *, struct nfssvc_sock *,
 	struct mbuf **);
 void nfsrv_updatecache(struct nfsrv_descript *, int, struct mbuf *);
@@ -226,7 +233,8 @@ void nfs_putdircache(struct nfsnode *, struct nfsdircache *);
 void nfs_invaldircache(struct vnode *, int);
 #define	NFS_INVALDIRCACHE_FORCE		1
 #define	NFS_INVALDIRCACHE_KEEPEOF	2
-void nfs_init __P((void));
+void nfs_init(void);
+void nfs_fini(void);
 int nfsm_loadattrcache(struct vnode **, struct mbuf **, char **,
 	struct vattr *, int flags);
 int nfs_loadattrcache(struct vnode **, struct nfs_fattr *, struct vattr *,
@@ -282,7 +290,9 @@ int nfssvc_nfsd(struct nfsd_srvargs *, void *, struct lwp *);
 void nfsrv_zapsock(struct nfssvc_sock *);
 void nfsrv_slpderef(struct nfssvc_sock *);
 void nfsrv_init(int);
+void nfsrv_fini(void);
 void nfs_iodinit(void);
+void nfs_iodfini(void);
 int nfs_set_niothreads(int);
 int nfs_getauth(struct nfsmount *, struct nfsreq *, kauth_cred_t, char **,
 	int *, char *, int *, NFSKERBKEY_T);
@@ -298,6 +308,4 @@ int netexport_check(const fsid_t *, struct mbuf *, struct mount **, int *,
     kauth_cred_t *);
 void netexport_rdlock(void);
 void netexport_rdunlock(void);
-int nfs_update_exports_30(struct mount *, const char *,
-    struct mnt_export_args30 *, struct lwp *);
 #endif /* _KERNEL */

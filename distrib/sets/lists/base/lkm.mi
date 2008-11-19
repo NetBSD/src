@@ -1,4 +1,4 @@
-# $NetBSD: lkm.mi,v 1.33 2008/11/14 23:33:45 ad Exp $
+# $NetBSD: lkm.mi,v 1.34 2008/11/19 18:35:57 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -19,12 +19,20 @@
 ./@MODULEDIR@/coda/coda.kmod			base-kernel-modules
 ./@MODULEDIR@/coda5				base-kernel-modules
 ./@MODULEDIR@/coda5/coda5.kmod			base-kernel-modules
+./@MODULEDIR@/compat				base-kernel-modules
+./@MODULEDIR@/compat/compat.kmod		base-kernel-modules
 ./@MODULEDIR@/compat_ossaudio			base-kernel-modules
 ./@MODULEDIR@/compat_ossaudio/compat_ossaudio.kmod	base-kernel-modules
+./@MODULEDIR@/coredump				base-kernel-modules
+./@MODULEDIR@/coredump/coredump.kmod		base-kernel-modules
 ./@MODULEDIR@/dirhash				base-obsolete	obsolete
 ./@MODULEDIR@/dirhash/dirhash.kmod		base-obsolete	obsolete
 ./@MODULEDIR@/efs				base-kernel-modules
 ./@MODULEDIR@/efs/efs.kmod			base-kernel-modules
+./@MODULEDIR@/exec_elf32			base-kernel-modules
+./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules
+./@MODULEDIR@/exec_script			base-kernel-modules
+./@MODULEDIR@/exec_script/exec_script.kmod	base-kernel-modules
 ./@MODULEDIR@/ext2fs				base-kernel-modules
 ./@MODULEDIR@/ext2fs/ext2fs.kmod		base-kernel-modules
 ./@MODULEDIR@/fdesc				base-kernel-modules
@@ -49,6 +57,10 @@
 ./@MODULEDIR@/miniroot/miniroot.kmod		base-kernel-modules
 ./@MODULEDIR@/msdosfs				base-kernel-modules
 ./@MODULEDIR@/msdosfs/msdosfs.kmod		base-kernel-modules
+./@MODULEDIR@/nfs				base-kernel-modules
+./@MODULEDIR@/nfs/nfs.kmod			base-kernel-modules
+./@MODULEDIR@/nfsserver				base-kernel-modules
+./@MODULEDIR@/nfsserver/nfsserver.kmod		base-kernel-modules
 ./@MODULEDIR@/ntfs				base-kernel-modules
 ./@MODULEDIR@/ntfs/ntfs.kmod			base-kernel-modules
 ./@MODULEDIR@/nullfs				base-kernel-modules

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.18 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.19 2008/11/19 18:36:00 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,13 +61,6 @@ struct sigcontext {
 
 #ifdef _KERNEL
 void	sendsig_sigcontext(int, const sigset_t *, u_long);
-
-#ifdef COMPAT_16
-#define	SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
-#else
-#define	SIGTRAMP_VALID(vers)	((vers) == 2)
-#endif
-
 #endif	/* _KERNEL */
 
 #endif	/* _NETBSD_SOURCE */

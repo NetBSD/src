@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.93 2008/10/14 16:01:22 matt Exp $
+#	$NetBSD: files.arm,v 1.94 2008/11/19 18:35:58 ad Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -94,6 +94,7 @@ file	arch/arm/arm/bootconfig.c
 file	arch/arm/arm/compat_13_machdep.c	compat_13
 file	arch/arm/arm/compat_16_machdep.c	compat_16
 file	arch/arm/arm/copystr.S
+file	arch/arm/arm/core_machdep.c
 file	arch/arm/arm/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
@@ -143,7 +144,6 @@ file	arch/arm/arm/undefined.c
 # vectors.S gets included manually by Makefile.acorn26, since it needs
 # to be at the start of the text segment on those machines.
 file	arch/arm/arm/vectors.S			arm32
-file	arch/arm/arm/vm_machdep_arm.c
 
 # files common to arm32 implementations
 file	arch/arm/arm32/arm32_machdep.c		arm32

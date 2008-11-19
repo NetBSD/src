@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.138 2008/03/28 05:02:08 dholland Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.139 2008/11/19 18:36:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138 2008/03/28 05:02:08 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.139 2008/11/19 18:36:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,6 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138 2008/03/28 05:02:08 dholland Exp 
 #include <sys/kernel.h>
 #include <sys/hash.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
+#include <sys/syscall.h>
+#include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm.h>
 
@@ -81,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.138 2008/03/28 05:02:08 dholland Exp 
 #include <nfs/xdr_subs.h>
 #include <nfs/nfsm_subs.h>
 #include <nfs/nfs_var.h>
+
+MODULE(MODULE_CLASS_MISC, nfsserver, "nfs");
 
 /* Global vars */
 extern u_int32_t nfs_xdrneg1;
@@ -93,6 +99,47 @@ int nfsrvw_procrastinate = NFS_GATHERDELAY * 1000;
 int nfsd_use_loan = 1;	/* use page-loan for READ OP */
 
 #define	nqsrv_getl(vp, rw)	/* nothing */
+
+static const struct syscall_package nfsserver_syscalls[] = {
+	{ SYS_nfssvc, 0, (sy_call_t *)sys_nfssvc },
+	{ 0, 0, NULL },
+};
+
+static int
+nfsserver_modcmd(modcmd_t cmd, void *arg)
+{
+	extern krwlock_t netexport_lock;		/* XXX */
+	extern struct vfs_hooks nfs_export_hooks;	/* XXX */
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = syscall_establish(NULL, nfsserver_syscalls);
+		if (error != 0) {
+			return error;
+		}
+		nfs_init();	/* XXX for monolithic kernel */
+		rw_init(&netexport_lock);
+		nfsrv_init(0);		/* Init server data structures */
+		nfsrv_initcache();	/* Init the server request cache */
+		vfs_hooks_attach(&nfs_export_hooks);
+		nfs_timer_srvinit(nfsrv_timer);
+		return 0;
+	case MODULE_CMD_FINI:
+		error = syscall_disestablish(NULL, nfsserver_syscalls);
+		if (error != 0) {
+			return error;
+		}
+		nfs_timer_srvfini();
+		vfs_hooks_detach(&nfs_export_hooks);
+		nfsrv_finicache();
+		nfsrv_fini();
+		rw_destroy(&netexport_lock);
+		return 0;
+	default:
+		return ENOTTY;
+	}
+}
 
 /*
  * nfs v3 access service

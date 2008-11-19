@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.95 2008/10/16 19:28:52 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.96 2008/11/19 18:36:01 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,10 +49,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.95 2008/10/16 19:28:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.96 2008/11/19 18:36:01 ad Exp $");
 
 #include "opt_multiprocessor.h"
-#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,46 +338,3 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 	pcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
 	pcb->pcb_wim = 1;		/* Fence at window #1 */
 }
-
-#ifdef COREDUMP
-/*
- * cpu_coredump is called to write a core dump header.
- * (should this be defined elsewhere?  machdep.c?)
- */
-int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
-{
-	int error;
-	struct md_coredump md_core;
-	struct coreseg cseg;
-
-	if (iocookie == NULL) {
-		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-		chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-		chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-		chdr->c_cpusize = sizeof(md_core);
-		chdr->c_nseg++;
-		return 0;
-	}
-
-	md_core.md_tf = *l->l_md.md_tf;
-	if (l->l_md.md_fpstate) {
-		if (l == cpuinfo.fplwp)
-			savefpstate(l->l_md.md_fpstate);
-		md_core.md_fpstate = *l->l_md.md_fpstate;
-	} else
-		bzero((void *)&md_core.md_fpstate, sizeof(struct fpstate));
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
-	if (error)
-		return error;
-
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
-}
-#endif

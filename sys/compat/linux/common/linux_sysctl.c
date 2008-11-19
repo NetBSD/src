@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_sysctl.c,v 1.37 2008/11/12 12:36:10 ad Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.38 2008/11/19 18:36:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.37 2008/11/12 12:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.38 2008/11/19 18:36:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,34 +73,82 @@ struct sysctlnode linux_sysctl_root = {
 	sysc_init_field(_sysctl_size, sizeof(struct sysctlnode)),
 };
 
-/*
- * setup for small sysctl tree used by emulation
- */
-SYSCTL_SETUP(linux_sysctl_setup, "linux emulated sysctl subtree setup")
+static struct sysctllog *linux_clog1;
+static struct sysctllog *linux_clog2;
+
+void
+linux_sysctl_fini(void)
+{
+
+	sysctl_teardown(&linux_clog2);
+	sysctl_teardown(&linux_clog1);
+	sysctl_free(&linux_sysctl_root);
+}
+
+void
+linux_sysctl_init(void)
 {
 	const struct sysctlnode *node = &linux_sysctl_root;
 
-	sysctl_createv(clog, 0, &node, &node,
+	sysctl_createv(&linux_clog1, 0, &node, &node,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       LINUX_CTL_KERN, CTL_EOL);
-
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&linux_clog1, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "ostype", NULL,
 		       NULL, 0, linux_sysname, sizeof(linux_sysname),
 		       LINUX_KERN_OSTYPE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&linux_clog1, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "osrelease", NULL,
 		       NULL, 0, linux_release, sizeof(linux_release),
 		       LINUX_KERN_OSRELEASE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
+	sysctl_createv(&linux_clog1, 0, &node, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "version", NULL,
 		       NULL, 0, linux_version, sizeof(linux_version),
 		       LINUX_KERN_VERSION, CTL_EOL);
+
+	sysctl_createv(&linux_clog2, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "emul", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, CTL_EOL);
+	sysctl_createv(&linux_clog2, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "linux",
+		       SYSCTL_DESCR("Linux emulation settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, EMUL_LINUX, CTL_EOL);
+	sysctl_createv(&linux_clog2, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "kern",
+		       SYSCTL_DESCR("Linux kernel emulation settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN, CTL_EOL);
+	sysctl_createv(&linux_clog2, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "ostype",
+		       SYSCTL_DESCR("Linux operating system type"),
+		       NULL, 0, linux_sysname, sizeof(linux_sysname),
+		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
+		       EMUL_LINUX_KERN_OSTYPE, CTL_EOL);
+	sysctl_createv(&linux_clog2, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "osrelease",
+		       SYSCTL_DESCR("Linux operating system release"),
+		       NULL, 0, linux_release, sizeof(linux_release),
+		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
+		       EMUL_LINUX_KERN_OSRELEASE, CTL_EOL);
+	sysctl_createv(&linux_clog2, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "osversion",
+		       SYSCTL_DESCR("Linux operating system revision"),
+		       NULL, 0, linux_version, sizeof(linux_version),
+		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
+		       EMUL_LINUX_KERN_VERSION, CTL_EOL);
 
 	linux_sysctl_root.sysctl_flags &= ~CTLFLAG_READWRITE;
 }
@@ -171,52 +219,4 @@ linux_sys___sysctl(struct lwp *l, const struct linux_sys___sysctl_args *uap, reg
 		error = ENOMEM;
 
 	return (error);
-}
-
-/*
- * kernel related system variables under emul.linux in the main sysctl
- * tree
- */
-SYSCTL_SETUP(sysctl_emul_linux_setup, "sysctl emul.linux subtree setup")
-{
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "emul", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_EMUL, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "linux",
-		       SYSCTL_DESCR("Linux emulation settings"),
-		       NULL, 0, NULL, 0,
-		       CTL_EMUL, EMUL_LINUX, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "kern",
-		       SYSCTL_DESCR("Linux kernel emulation settings"),
-		       NULL, 0, NULL, 0,
-		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "ostype",
-		       SYSCTL_DESCR("Linux operating system type"),
-		       NULL, 0, linux_sysname, sizeof(linux_sysname),
-		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
-		       EMUL_LINUX_KERN_OSTYPE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "osrelease",
-		       SYSCTL_DESCR("Linux operating system release"),
-		       NULL, 0, linux_release, sizeof(linux_release),
-		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
-		       EMUL_LINUX_KERN_OSRELEASE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRING, "osversion",
-		       SYSCTL_DESCR("Linux operating system revision"),
-		       NULL, 0, linux_version, sizeof(linux_version),
-		       CTL_EMUL, EMUL_LINUX, EMUL_LINUX_KERN,
-		       EMUL_LINUX_KERN_VERSION, CTL_EOL);
 }
