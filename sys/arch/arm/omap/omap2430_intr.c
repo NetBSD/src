@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430_intr.c,v 1.3 2008/08/27 11:03:10 matt Exp $	*/
+/*	$NetBSD: omap2430_intr.c,v 1.4 2008/11/19 06:26:27 matt Exp $	*/
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
  * interrupt header.
@@ -35,10 +35,11 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.3 2008/08/27 11:03:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.4 2008/11/19 06:26:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -47,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.3 2008/08/27 11:03:10 matt Exp $
 #include <arm/cpu.h>
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <machine/atomic.h>
 #include <arm/omap/omap2_reg.h>
 
 #include <machine/bus.h>
