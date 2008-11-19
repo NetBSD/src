@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.26 2008/11/19 13:11:15 njoly Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.27 2008/11/19 18:39:44 ad Exp $ */
 
 /*
  * System call argument lists.
