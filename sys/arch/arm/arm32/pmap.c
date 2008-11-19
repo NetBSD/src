@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.190 2008/11/12 12:35:57 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.191 2008/11/19 06:24:04 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.190 2008/11/12 12:35:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.191 2008/11/19 06:24:04 matt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -442,6 +442,7 @@ static pt_entry_t *csrc_pte, *cdst_pte;
 static vaddr_t csrcp, cdstp;
 vaddr_t memhook;			/* used by mem.c */
 kmutex_t memlock;			/* used by mem.c */
+void *zeropage;				/* used by mem.c */
 extern void *msgbufaddr;
 int pmap_kmpages;
 /*
@@ -5287,9 +5288,11 @@ pmap_init(void)
 	pool_setlowat(&pmap_pv_pool,
 	    (PAGE_SIZE / sizeof(struct pv_entry)) * 2);
 
-	pmap_initialized = true;
-
 	mutex_init(&memlock, MUTEX_DEFAULT, IPL_NONE);
+	zeropage = (void *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_WIRED|UVM_KMF_ZERO);
+
+	pmap_initialized = true;
 }
 
 static vaddr_t last_bootstrap_page = 0;
