@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.15 2007/12/03 15:33:42 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.16 2008/11/19 06:41:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15 2007/12/03 15:33:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.16 2008/11/19 06:41:01 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -44,16 +44,15 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.15 2007/12/03 15:33:42 ad Exp $");
 #include <sys/systm.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/intr.h>
 #include <machine/cpu.h>
 
-u_int soft_interrupts = 0;
+volatile u_int soft_interrupts = 0;
 
-extern int current_spl_level;
 extern int softintr_dispatch(int);
 
 /* Generate soft interrupt counts if IRQSTATS is defined */
@@ -88,27 +87,24 @@ void dosoftints(void);
 void
 setsoftintr(u_int intrmask)
 {
-	atomic_set_bit(&soft_interrupts, intrmask);
+	atomic_or_uint(&soft_interrupts, intrmask);
 }
 
 void
 clearsoftintr(u_int intrmask)
 {
-	atomic_clear_bit(&soft_interrupts, intrmask);
+	atomic_and_uint(&soft_interrupts, ~intrmask);
 }
 
 void
 setsoftnet(void)
 {
-	atomic_set_bit(&soft_interrupts, SOFTIRQ_BIT(SOFTIRQ_NET));
+	atomic_or_uint(&soft_interrupts, SOFTIRQ_BIT(SOFTIRQ_NET));
 }
 #endif
 
-int astpending;
-
 void    set_spl_masks(void);
 
-int current_spl_level = _SPL_HIGH;
 u_int spl_masks[_SPL_LEVELS + 1];
 u_int spl_smasks[_SPL_LEVELS];
 int safepri = _SPL_0;
@@ -122,7 +118,7 @@ dosoftints(void)
 	u_int softints;
 	int s;
 
-	softintr_dispatch(current_spl_level);
+	softintr_dispatch(curcpu()->ci_cpl);
 }
 #endif
 
