@@ -1,7 +1,9 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.7 2008/03/21 21:55:01 ad Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.8 2008/11/19 10:37:27 pooka Exp $        */
 
 #ifndef _SYS_VFS_SYSCALLS_H_
 #define _SYS_VFS_SYSCALLS_H_
+
+#include <sys/fstypes.h>
 
 struct stat;
 struct statvfs;
