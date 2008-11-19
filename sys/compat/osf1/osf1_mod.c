@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $	*/
+/*	$NetBSD: osf1_mod.c,v 1.2 2008/11/19 22:02:21 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,15 +34,16 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.1 2008/11/19 18:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mod.c,v 1.2 2008/11/19 22:02:21 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/exec_coff.h>
+#include <sys/exec_ecoff.h>
 #include <sys/signalvar.h>
 
+#include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_exec.h>
 
 MODULE(MODULE_CLASS_MISC, compat_osf1, "compat,exec_ecoff");
