@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.15 2008/07/22 07:07:23 matt Exp $	*/
+/*	$NetBSD: ast.c,v 1.16 2008/11/19 06:29:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.15 2008/07/22 07:07:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.16 2008/11/19 06:29:48 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -76,6 +76,10 @@ userret(struct lwp *l)
 {
 	/* Invoke MI userret code */
 	mi_userret(l);
+
+#ifdef __PROG32
+	KASSERT((l->l_addr->u_pcb.pcb_tf->tf_spsr & IF32_bits) == 0);
+#endif
 }
 
 
@@ -99,10 +103,16 @@ ast(struct trapframe *tf)
 	/* Interrupts were restored by exception_exit. */
 #endif
 
+#ifdef __PROG32
+	KASSERT((tf->tf_spsr & IF32_bits) == 0);
+#endif
+
+
 	uvmexp.traps++;
 	uvmexp.softs++;
 
 #ifdef DEBUG
+	KDASSERT(curcpu()->ci_cpl == IPL_NONE);
 	if (l == NULL)
 		panic("ast: no curlwp!");
 	if (&l->l_addr->u_pcb == NULL)
