@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.75 2008/11/19 18:36:00 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.76 2008/11/19 23:04:34 cegger Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75 2008/11/19 18:36:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.76 2008/11/19 23:04:34 cegger Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.75 2008/11/19 18:36:00 ad Exp $");
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
+#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 
