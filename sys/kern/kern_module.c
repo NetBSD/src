@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.28 2008/11/18 11:56:09 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.29 2008/11/19 13:07:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.28 2008/11/18 11:56:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.29 2008/11/19 13:07:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,6 +234,12 @@ module_autoload(const char *filename, modclass_t class)
 	int error;
 
 	KASSERT(mutex_owned(&module_lock));
+
+        /* Disallow path seperators and magic symlinks. */
+        if (strchr(filename, '/') != NULL || strchr(filename, '@') != NULL ||
+            strchr(filename, '.') != NULL) {
+        	return EPERM;
+	}
 
 	/* Authorize. */
 	error = kauth_authorize_system(kauth_cred_get(), KAUTH_SYSTEM_MODULE,
