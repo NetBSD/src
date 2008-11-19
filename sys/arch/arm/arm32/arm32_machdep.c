@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.58 2008/08/07 04:17:25 matt Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.59 2008/11/19 06:22:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.58 2008/08/07 04:17:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.59 2008/11/19 06:22:15 matt Exp $");
 
 #include "opt_md.h"
 #include "opt_cpuoptions.h"
@@ -457,10 +457,13 @@ cpu_intr_p(void)
 
 /*
  * This returns a mask of softint IPLs that be dispatch at <ipl>
- * SOFTIPLMASK(IPL_NONE)	= 0xffffffff
- * SOFTIPLMASK(IPL_SOFTCLOCK)	= 0xfffffff0
+ * SOFTIPLMASK(IPL_NONE)	= 0x0000000f
+ * SOFTIPLMASK(IPL_SOFTCLOCK)	= 0x0000000e
+ * SOFTIPLMASK(IPL_SOFTBIO)	= 0x0000000c
+ * SOFTIPLMASK(IPL_SOFTNET)	= 0x00000008
+ * SOFTIPLMASK(IPL_SOFTSERIAL)	= 0x00000000
  */
-#define	SOFTIPLMASK(ipl) (~0 << (ipl))
+#define	SOFTIPLMASK(ipl) (0x0f << (ipl))
 
 void softint_switch(lwp_t *, int);
 
@@ -477,6 +480,10 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 	KASSERT(*lp == NULL || *lp == l);
 	*lp = l;
 	*machdep = 1 << SOFTINT2IPL(level);
+	KASSERT(level != SOFTINT_CLOCK || *machdep == (1 << (IPL_SOFTCLOCK - IPL_SOFTCLOCK)));
+	KASSERT(level != SOFTINT_BIO || *machdep == (1 << (IPL_SOFTBIO - IPL_SOFTCLOCK)));
+	KASSERT(level != SOFTINT_NET || *machdep == (1 << (IPL_SOFTNET - IPL_SOFTCLOCK)));
+	KASSERT(level != SOFTINT_SERIAL || *machdep == (1 << (IPL_SOFTSERIAL - IPL_SOFTCLOCK)));
 }
 
 void
@@ -488,6 +495,7 @@ dosoftints(void)
 
 	for (;;) {
 		u_int softints = ci->ci_softints & softiplmask;
+		KASSERT((softints != 0) == ((ci->ci_softints >> opl) != 0));
 		if (softints == 0)
 			return;
 		ci->ci_cpl = IPL_HIGH;
