@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2008/08/06 20:14:08 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2008/11/19 14:10:49 pooka Exp $
 
 USE_FORT?= yes	# network client
 
@@ -21,10 +21,11 @@ LDADD+=		-lrumpfs_${MOUNTNAME}
 .PATH:		${MOUNT} ${MOUNTDIR}/mount_${MOUNTNAME}
 .endif # MOUNTNAME
 
-LDADD+=		-lp2k -lukfs -lrump -lrumpuser -lpuffs -lutil -lpthread
+LDADD+=		-lp2k -lukfs -lrumpvfs -lrump -lrumpuser -lpuffs -lutil
+LDADD+=		-lpthread
 
-DPADD+=		${LIBP2K} ${LIBUKFS} ${LIBRUMP} ${LIBRUMPUSER} ${LIBPUFFS}
-DPADD+=		${LIBUTIL} ${LIBPTHREAD}
+DPADD+=		${LIBP2K} ${LIBUKFS} ${LIBRUMPVFS} ${LIBRUMP} ${LIBRUMPUSER}
+DPADD+=		${LIBPUFFS} ${LIBUTIL} ${LIBPTHREAD}
 
 LDFLAGS+=	-Wl,--wrap=malloc
 .endif # ISRUMP

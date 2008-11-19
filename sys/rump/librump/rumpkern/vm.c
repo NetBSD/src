@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.41 2008/10/15 13:04:26 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.42 2008/11/19 14:10:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -56,7 +56,6 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_prot.h>
-#include <uvm/uvm_readahead.h>
 
 #include "rump_private.h"
 
@@ -65,17 +64,10 @@
   (((((len) + PAGE_MASK) & ~(PAGE_MASK)) >> PAGE_SHIFT)			\
     + (((off & PAGE_MASK) + (len & PAGE_MASK)) > PAGE_SIZE))
 
-static int vn_get(struct uvm_object *, voff_t, struct vm_page **,
-	int *, int, vm_prot_t, int, int);
-static int vn_put(struct uvm_object *, voff_t, voff_t, int);
 static int ao_get(struct uvm_object *, voff_t, struct vm_page **,
 	int *, int, vm_prot_t, int, int);
 static int ao_put(struct uvm_object *, voff_t, voff_t, int);
 
-const struct uvm_pagerops uvm_vnodeops = {
-	.pgo_get = vn_get,
-	.pgo_put = vn_put,
-};
 const struct uvm_pagerops aobj_pager = {
 	.pgo_get = ao_get,
 	.pgo_put = ao_put,
@@ -166,29 +158,6 @@ rumpvm_flushva()
 		kmem_free(rva, sizeof(*rva));
 	}
 	mutex_exit(&rvamtx);
-}
-
-/*
- * vnode pager
- */
-
-static int
-vn_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
-	int *npages, int centeridx, vm_prot_t access_type,
-	int advice, int flags)
-{
-	struct vnode *vp = (struct vnode *)uobj;
-
-	return VOP_GETPAGES(vp, off, pgs, npages, centeridx, access_type,
-	    advice, flags);
-}
-
-static int
-vn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
-{
-	struct vnode *vp = (struct vnode *)uobj;
-
-	return VOP_PUTPAGES(vp, offlo, offhi, flags);
 }
 
 /*
@@ -526,28 +495,6 @@ uvm_estimatepageable(int *active, int *inactive)
 }
 
 void
-uvm_aio_biodone1(struct buf *bp)
-{
-
-	panic("%s: unimplemented", __func__);
-}
-
-void
-uvm_aio_biodone(struct buf *bp)
-{
-
-	uvm_aio_aiodone(bp);
-}
-
-void
-uvm_aio_aiodone(struct buf *bp)
-{
-
-	if (((bp->b_flags | bp->b_cflags) & (B_READ | BC_NOCACHE)) == 0 && bioopsp)
-		bioopsp->io_pageiodone(bp);
-}
-
-void
 uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 {
 
@@ -600,28 +547,6 @@ uvm_vnp_zerorange(struct vnode *vp, off_t off, size_t len)
 	kmem_free(pgs, maxpages * sizeof(pgs));
 
 	return;
-}
-
-struct uvm_ractx *
-uvm_ra_allocctx()
-{
-
-	return NULL;
-}
-
-void
-uvm_ra_freectx(struct uvm_ractx *ra)
-{
-
-	return;
-}
-
-bool
-uvn_clean_p(struct uvm_object *uobj)
-{
-	struct vnode *vp = (void *)uobj;
-
-	return (vp->v_iflag & VI_ONWORKLST) == 0;
 }
 
 struct vm_map_kernel *

@@ -1,0 +1,42 @@
+#	$NetBSD: Makefile.rumpvfs,v 1.1 2008/11/19 14:10:49 pooka Exp $
+#
+
+.include "${RUMPTOP}/Makefile.rump"
+
+LIB=	rumpvfs
+
+.PATH:	${RUMPTOP}/librump/rumpvfs				\
+	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern		\
+	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs
+
+#
+# Source modules, first the ones specifically implemented for librump.
+# 
+SRCS=	genfs_io.c rump_vfs.c rumpfs.c specfs.c vm_vfs.c
+
+SRCS+=	fstrans_stub.c vfsops_stub.c
+
+# sys/kern vfs
+SRCS+=	vfs_bio.c vfs_cache.c vfs_cwd.c vfs_dirhash.c vfs_getcwd.c	\
+	vfs_hooks.c vfs_init.c vfs_lookup.c vfs_subr.c vfs_syscalls.c	\
+	vfs_vnops.c vfs_wapbl.c
+
+# sys/miscfs
+SRCS+=	genfs_vfsops.c genfs_vnops.c sync_subr.c
+
+# sys/kern bufq
+SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
+	bufq_readprio.c
+
+SRCS+=	rumpvnode_if.c
+
+# no shlib_version because this is automatically in sync with lib/librump
+SHLIB_MAJOR=    0
+SHLIB_MINOR=    0
+
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt -DMAXUSERS=32
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
+CFLAGS+=	-Wno-pointer-sign
+
+.include <bsd.lib.mk>
+.include <bsd.klinks.mk>

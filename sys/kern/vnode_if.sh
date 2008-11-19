@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.50 2008/11/17 08:46:03 pooka Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.51 2008/11/19 14:10:49 pooka Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -48,7 +48,7 @@ SRC_ID=`head -1 $src | sed -e 's/.*\$\(.*\)\$.*/\1/'`
 
 # Names of the created files.
 out_c=vnode_if.c
-out_rumpc=../rump/librump/rumpkern/rumpvnode_if.c
+out_rumpc=../rump/librump/rumpvfs/rumpvnode_if.c
 out_h=../sys/vnode_if.h
 out_rumph=../rump/include/rump/rumpvnode_if.h
 

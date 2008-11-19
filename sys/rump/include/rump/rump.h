@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.2 2008/11/17 13:24:14 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.3 2008/11/19 14:10:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -136,6 +136,8 @@ void		rump_clear_curlwp(void);
 void		rump_rcvp_set(struct vnode *, struct vnode *);
 struct vnode 	*rump_cdir_get(void);
 
+void	rump_intr_enter(void);
+void	rump_intr_exit(void);
 int	rump_splfoo(void);
 void	rump_splx(int);
 

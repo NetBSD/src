@@ -1,4 +1,4 @@
-/*	$NetBSD: vfsops_stub.c,v 1.7 2008/09/30 21:47:33 pooka Exp $	*/
+/*	$NetBSD: vfsops_stub.c,v 1.1 2008/11/19 14:10:49 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -29,10 +29,15 @@
 
 #include <sys/param.h>
 #include <sys/errno.h>
+#include <sys/lockf.h>
 #include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
+#include <miscfs/syncfs/syncfs.h>
+
+int (*mountroot)(void);
 
 #define VFSSTUB(name)							\
     int name(void *arg) {panic("%s: unimplemented vfs stub", __func__);}
@@ -71,3 +76,41 @@ VFSSTUB(fifo_pathconf)
 VFSSTUB(fifo_bmap)
 VFSSTUB(fifo_read)
 VFSSTUB(fifo_write)
+
+int
+vfs_allocate_syncvnode(struct mount *mp)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+void
+vfs_deallocate_syncvnode(struct mount *mp)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+int
+lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+void
+fifo_printinfo(struct vnode *vp)
+{
+
+	return;
+}
+
+int
+vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
+	int attrnamespace, const char *attrname)
+{
+
+	if (vp != NULL)
+		VOP_UNLOCK(vp, 0);
+	return EOPNOTSUPP;
+}
