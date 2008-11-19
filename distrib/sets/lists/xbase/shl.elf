@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.18 2008/09/28 06:34:49 lukem Exp $
+# $NetBSD: shl.elf,v 1.18.2.1 2008/11/19 00:36:52 snj Exp $
 ./usr/X11R6/lib/X11/locale/lib/common/ximcp.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcDef.so.2	-unknown-		x11
 ./usr/X11R6/lib/X11/locale/lib/common/xlcUTF8Load.so.2	-unknown-		x11
@@ -208,6 +208,8 @@
 ./usr/X11R7/lib/libfontenc.so.1			-unknown-		xorg
 ./usr/X11R7/lib/libfreetype.so			-unknown-		xorg
 ./usr/X11R7/lib/libfreetype.so.6		-unknown-		xorg
+./usr/X11R7/lib/libglut.so			-unknown-		xorg
+./usr/X11R7/lib/libglut.so.3			-unknown-		xorg
 ./usr/X11R7/lib/liblbxutil.so			-unknown-		xorg
 ./usr/X11R7/lib/liblbxutil.so.1			-unknown-		xorg
 ./usr/X11R7/lib/libpixman-1.so			-unknown-		xorg
