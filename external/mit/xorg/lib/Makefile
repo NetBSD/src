@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.6.2 2008/11/07 23:23:35 snj Exp $
+#	$NetBSD: Makefile,v 1.4.6.3 2008/11/19 00:34:33 snj Exp $
 
 # build libraries for xorg
 
@@ -19,6 +19,6 @@ SUBDIR=	dri expat libfontenc freetype libFS libICE libOSMesa \
 	libGLU libGLw libXaw6 libXaw7 libXaw libXcursor libXprintAppUtil \
 	libXrandr \
 	.WAIT \
-	libXft
+	libXft libglut
 	
 .include <bsd.subdir.mk>
