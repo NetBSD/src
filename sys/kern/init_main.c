@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.347.2.2 2008/11/01 21:22:26 christos Exp $	*/
+/*	$NetBSD: init_main.c,v 1.347.2.3 2008/11/20 20:45:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,13 +97,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.347.2.2 2008/11/01 21:22:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.347.2.3 2008/11/20 20:45:38 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
 #include "opt_pipe.h"
-#include "opt_posix.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
 #include "opt_fileassoc.h"
@@ -178,18 +177,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.347.2.2 2008/11/01 21:22:26 christos
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
-#ifdef P1003_1B_SEMAPHORE
-#include <sys/ksem.h>
-#endif
 #include <sys/domain.h>
 #include <sys/namei.h>
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
 #include <sys/pipe.h>
-#ifdef LKM
-#include <sys/lkm.h>
-#endif
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
@@ -465,11 +458,11 @@ main(void)
 	/* Initialize the file descriptor system. */
 	fd_sys_init();
 
+	/* Initialize cwd structures */
+	cwd_sys_init();
+
 	/* Initialize kqueue. */
 	kqueue_init();
-
-	/* Initialize asynchronous I/O. */
-	aio_sysinit();
 
 	/* Initialize message queues. */
 	mqueue_sysinit();
@@ -528,11 +521,6 @@ main(void)
 #ifdef SYSVMSG
 	/* Initialize System V style message queues. */
 	msginit();
-#endif
-
-#ifdef P1003_1B_SEMAPHORE
-	/* Initialize posix semaphores */
-	ksem_init();
 #endif
 
 #if NVERIEXEC > 0

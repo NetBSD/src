@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.47.2.2 2008/11/01 21:22:27 christos Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.47.2.3 2008/11/20 20:45:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,10 +60,9 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.47.2.2 2008/11/01 21:22:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.47.2.3 2008/11/20 20:45:39 christos Exp $");
 
 #include "opt_ntp.h"
-#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -78,9 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.47.2.2 2008/11/01 21:22:27 christ
 #include <sys/syscallargs.h>
 #include <sys/cpu.h>
 
-#ifdef COMPAT_30
 #include <compat/sys/timex.h>
-#endif
 
 /*
  * Single-precision macros for 64-bit machines

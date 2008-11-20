@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.80.2.3 2008/11/08 21:16:09 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.80.2.4 2008/11/20 20:45:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -232,9 +232,7 @@ union __semun {
 	struct semid_ds	*buf;		/* buffer for IPC_STAT & IPC_SET */
 	unsigned short	*array;		/* array for GETALL & SETALL */
 };
-/* For the same reason as above */
 #include <sys/stdint.h>
-typedef intptr_t semid_t;
 #endif /* _KERNEL || _LIBC */
 
 /*

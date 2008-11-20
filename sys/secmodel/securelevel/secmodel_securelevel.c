@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.8.8.1 2008/03/29 20:47:03 christos Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.8.8.2 2008/11/20 20:45:39 christos Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.8.8.1 2008/03/29 20:47:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.8.8.2 2008/11/20 20:45:39 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -196,7 +196,6 @@ secmodel_securelevel_system_cb(kauth_cred_t cred,
 		}
 		break;
 
-	case KAUTH_SYSTEM_LKM:
 	case KAUTH_SYSTEM_MODULE:
 		if (securelevel > 0)
 			result = KAUTH_RESULT_DENY;
