@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.644.4.1 2008/11/17 18:53:54 snj Exp $	*/
+/*	$NetBSD: machdep.c,v 1.644.4.2 2008/11/20 03:45:29 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.4.1 2008/11/17 18:53:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.644.4.2 2008/11/20 03:45:29 snj Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -769,6 +769,9 @@ buildcontext(struct lwp *l, int sel, void *catcher, void *fp)
 	tf->tf_eflags &= ~PSL_CLEARSIG;
 	tf->tf_esp = (int)fp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
+
+	/* Ensure FP state is reset, if FP is used. */
+	l->l_md.md_flags &= ~MDL_USEDFPU;
 }
 
 static void
@@ -2201,8 +2204,6 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		/*
 		 * If this process is the current FP owner, dump its
 		 * context to the PCB first.
-		 * XXX npxsave() also clears the FPU state; depending on the
-		 * XXX application this might be a penalty.
 		 */
 		if (l->l_addr->u_pcb.pcb_fpcpu) {
 			npxsave_lwp(l, true);
@@ -2284,15 +2285,16 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		tf->tf_ss     = gr[_REG_SS];
 	}
 
+#if NNPX > 0
+	/*
+	 * If we were using the FPU, forget that we were.
+	 */
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_lwp(l, false);
+#endif
+
 	/* Restore floating point register context, if any. */
 	if ((flags & _UC_FPU) != 0) {
-#if NNPX > 0
-		/*
-		 * If we were using the FPU, forget that we were.
-		 */
-		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-			npxsave_lwp(l, false);
-#endif
 		if (flags & _UC_FXSAVE) {
 			if (i386_use_fxsave) {
 				memcpy(
@@ -2316,12 +2318,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 				    sizeof (l->l_addr->u_pcb.pcb_savefpu.sv_87));
 			}
 		}
-		/* If not set already. */
 		l->l_md.md_flags |= MDL_USEDFPU;
-#if 0
-		/* Apparently unused. */
-		l->l_addr->u_pcb.pcb_saveemc = mcp->mc_fp.fp_emcsts;
-#endif
 	}
 	mutex_enter(p->p_lock);
 	if (flags & _UC_SETSTACK)
