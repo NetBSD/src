@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.89 2008/11/19 18:36:02 ad Exp $
+#	$NetBSD: files.xen,v 1.90 2008/11/20 10:53:09 ad Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -33,6 +33,7 @@ defparam		PCI_CONF_MODE
 
 file	arch/xen/x86/autoconf.c
 ifdef i386
+file	arch/i386/i386/aout_machdep.c	exec_aout
 file	arch/i386/i386/busfunc.S
 file	arch/i386/i386/core_machdep.c	coredump
 file	arch/i386/i386/cpufunc.S
