@@ -1,4 +1,4 @@
-/*	$NetBSD: accf_http.c,v 1.3 2008/11/12 12:36:28 ad Exp $	*/
+/*	$NetBSD: accf_http.c,v 1.4 2008/11/20 09:58:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Paycounter, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.3 2008/11/12 12:36:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.4 2008/11/20 09:58:45 ad Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.3 2008/11/12 12:36:28 ad Exp $");
 
 #include <netinet/accept_filter.h>
 
-MODULE(MODULE_CLASS_MISC, accf_http, NULL);
+MODULE(MODULE_CLASS_MISC, accf_httpready, NULL);
 
 /* check for GET/HEAD */
 static void sohashttpget(struct socket *so, void *arg, int waitflag);
