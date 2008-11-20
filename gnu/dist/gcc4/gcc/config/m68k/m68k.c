@@ -1791,25 +1791,6 @@ output_move_himode (rtx *operands)
     }
   else if (CONSTANT_P (operands[1]))
     return "move%.l %1,%0";
-  /* Recognize the insn before a tablejump, one that refers
-     to a table of offsets.  Such an insn will need to refer
-     to a label on the insn.  So output one.  Use the label-number
-     of the table of offsets to generate this label.  This code,
-     and similar code below, assumes that there will be at most one
-     reference to each table.  */
-  if (GET_CODE (operands[1]) == MEM
-      && GET_CODE (XEXP (operands[1], 0)) == PLUS
-      && GET_CODE (XEXP (XEXP (operands[1], 0), 1)) == LABEL_REF
-      && GET_CODE (XEXP (XEXP (operands[1], 0), 0)) != PLUS)
-    {
-      rtx labelref = XEXP (XEXP (operands[1], 0), 1);
-      if (MOTOROLA)
-	asm_fprintf (asm_out_file, "\t.set %LLI%d,.+2\n",
-		     CODE_LABEL_NUMBER (XEXP (labelref, 0)));
-      else
-	(*targetm.asm_out.internal_label) (asm_out_file, "LI",
-		     CODE_LABEL_NUMBER (XEXP (labelref, 0)));
-    }
   return "move%.w %1,%0";
 }
 
@@ -2726,16 +2707,6 @@ print_operand (FILE *file, rtx op, int letter)
    It is possible for PIC to generate a (plus (label_ref...) (reg...))
    and we handle that just like we would a (plus (symbol_ref...) (reg...)).
 
-   Some SGS assemblers have a bug such that "Lnnn-LInnn-2.b(pc,d0.l*2)"
-   fails to assemble.  Luckily "Lnnn(pc,d0.l*2)" produces the results
-   we want.  This difference can be accommodated by using an assembler
-   define such "LDnnn" to be either "Lnnn-LInnn-2.b", "Lnnn", or any other
-   string, as necessary.  This is accomplished via the ASM_OUTPUT_CASE_END
-   macro.  See m68k/sgs.h for an example; for versions without the bug.
-   Some assemblers refuse all the above solutions.  The workaround is to
-   emit "K(pc,d0.l*2)" with K being a small constant known to give the
-   right behavior.
-
    They also do not like things like "pea 1.w", so we simple leave off
    the .w on small constants. 
 
@@ -2746,10 +2717,10 @@ print_operand (FILE *file, rtx op, int letter)
 
 #if MOTOROLA
 #  define ASM_OUTPUT_CASE_FETCH(file, labelno, regname)\
-	asm_fprintf (file, "%LL%d-%LLI%d.b(%Rpc,%s.", labelno, labelno, regname)
+	asm_fprintf (file, "%LL%d(%Rpc,%s.", labelno, regname)
 #else /* !MOTOROLA */
 # define ASM_OUTPUT_CASE_FETCH(file, labelno, regname)\
-	asm_fprintf (file, "%Rpc@(%LL%d-%LLI%d-2:b,%s:", labelno, labelno, regname)
+	asm_fprintf (file, "%Rpc@(%LL%d,%s:", labelno, regname)
 #endif /* !MOTOROLA */
 
 void
