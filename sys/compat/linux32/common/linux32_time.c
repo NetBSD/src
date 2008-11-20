@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.21 2008/09/08 15:31:19 christos Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.21.4.1 2008/11/20 03:03:05 snj Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.21 2008/09/08 15:31:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.21.4.1 2008/11/20 03:03:05 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -252,6 +252,32 @@ linux32_to_native_timespec(struct timespec *ntp, struct linux32_timespec *ltp)
 {
 	ntp->tv_sec = ltp->tv_sec;
 	ntp->tv_nsec = ltp->tv_nsec;
+}
+
+int
+linux32_sys_nanosleep(struct lwp *l,
+    const struct linux32_sys_nanosleep_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_timespecp_t) rqtp;
+		syscallarg(linux32_timespecp_t) rmtp;
+	} */
+	struct timespec rqts, rmts;
+	struct linux32_timespec lrqts, lrmts;
+	int error, error1;
+
+	error = copyin(SCARG_P32(uap, rqtp), &lrqts, sizeof(lrqts));
+	if (error != 0)
+		return error;
+	linux32_to_native_timespec(&rqts, &lrqts);
+
+	error = nanosleep1(l, &rqts, SCARG_P32(uap, rmtp) ? &rmts : NULL);
+	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
+		return error;
+
+	native_to_linux32_timespec(&lrmts, &rmts);
+	error1 = copyout(&lrmts, SCARG_P32(uap, rmtp), sizeof(lrmts));
+	return error1 ? error1 : error;
 }
 
 int

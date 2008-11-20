@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.29 2008/04/23 14:07:50 ad Exp $  
+	$NetBSD: syscalls.master,v 1.29.12.1 2008/11/20 03:03:05 snj Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -278,8 +278,9 @@
 163	STD		{ int linux_sys_sched_get_priority_max(int policy); }
 164	STD		{ int linux_sys_sched_get_priority_min(int policy); }
 165	UNIMPL		sched_rr_get_interval
-166	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
-				struct timespec *rmtp); }
+166	STD		{ int linux_sys_nanosleep( \
+			    const struct linux_timespec *rqtp, \
+			    struct linux_timespec *rmtp); }
 167	STD		{ void *linux_sys_mremap(void *old_address, \
 			    size_t old_size, size_t new_size, u_long flags); }
 168	NOARGS		{ int linux_sys_accept(int s, \
