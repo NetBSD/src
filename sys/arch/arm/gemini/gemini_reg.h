@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_reg.h,v 1.5 2008/11/20 07:47:06 cliff Exp $	*/
+/*	$NetBSD: gemini_reg.h,v 1.6 2008/11/20 22:36:36 cliff Exp $	*/
 
 #ifndef _ARM_GEMINI_REG_H_
 #define _ARM_GEMINI_REG_H_
@@ -216,6 +216,44 @@
 #  define SERIRQPOLARITY_LO		0
 #define GEMINI_LPCHC_SIZE		(GEMINI_LPCHC_SERIRQPOLARITY + 4)
 #define GEMINI_LPCHC_NSERIRQ		17
+
+/*
+ * Gemini GPIO controller register offsets and bits
+ */
+#define GEMINI_GPIO_DATAOUT		0x00		/* Data Out */			/* rw */
+#define GEMINI_GPIO_DATAIN		0x04		/* Data Out */			/* ro */
+#define GEMINI_GPIO_PINDIR		0x08		/* Pin Direction */		/* rw */
+#define  GPIO_PINDIR_INPUT		0
+#define  GPIO_PINDIR_OUTPUT		1
+#define GEMINI_GPIO_PINBYPASS		0x0c		/* Pin Bypass */		/* rw */
+#define GEMINI_GPIO_DATASET		0x10		/* Data Set */			/* wo */
+#define GEMINI_GPIO_DATACLR		0x14		/* Data Clear */		/* wo */
+#define GEMINI_GPIO_PULLENB		0x18		/* Pullup Enable */		/* rw */
+#define GEMINI_GPIO_PULLTYPE		0x1c		/* Pullup Type */		/* rw */
+#define  GPIO_PULLTYPE_LOW		0
+#define  GPIO_PULLTYPE_HIGH		1
+#define GEMINI_GPIO_INTRENB		0x20		/* Interrupt Enable */		/* rw */
+#define GEMINI_GPIO_INTRRAWSTATE	0x24		/* Interrupt Raw State */	/* ro */
+#define GEMINI_GPIO_INTRMSKSTATE	0x28		/* Interrupt Masked State */	/* ro */
+#define GEMINI_GPIO_INTRMASK		0x2c		/* Interrupt Mask */		/* rw */
+#define GEMINI_GPIO_INTRCLR		0x30		/* Interrupt Clear */		/* wo */
+#define GEMINI_GPIO_INTRTRIG		0x34		/* Interrupt Trigger Method */	/* rw */
+#define  GPIO_INTRTRIG_EDGE		0
+#define  GPIO_INTRTRIG_LEVEL		1
+#define GEMINI_GPIO_INTREDGEBOTH	0x38		/* Both edges trigger Intr. */	/* rw */
+#define GEMINI_GPIO_INTRDIR		0x3c		/* edge/level direction */	/* rw */
+#define  GPIO_INTRDIR_EDGE_RISING	0
+#define  GPIO_INTRDIR_EDGE_FALLING	1
+#define  GPIO_INTRDIR_LEVEL_HIGH	0
+#define  GPIO_INTRDIR_LEVEL_LOW		1
+#define GEMINI_GPIO_BOUNCEENB		0x40		/* Bounce Enable */		/* rw */
+#define GEMINI_GPIO_BOUNCESCALE		0x44		/* Bounce Pre-Scale */		/* rw */
+#define  GPIO_BOUNCESCALE_RESV		__BITS(31,16)
+#define  GPIO_BOUNCESCALE_VAL		__BITS(15,0)	/* NOTE:
+							 * if bounce is enabled, and bounce pre-scale == 0
+							 * then the the pin will not detect any interrupt 
+							 */
+#define GEMINI_GPIO_SIZE		(GEMINI_GPIO_BOUNCESCALE + 4)
 
 /*
  * Gemini PCI controller register offsets and bits

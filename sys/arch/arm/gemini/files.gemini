@@ -1,4 +1,4 @@
-#	$NetBSD: files.gemini,v 1.6 2008/11/20 08:02:48 cliff Exp $
+#	$NetBSD: files.gemini,v 1.7 2008/11/20 22:36:36 cliff Exp $
 #
 # Configuration info for GEMINI CPU support
 # Based on omap/files.omap2
@@ -87,6 +87,10 @@ file	arch/arm/gemini/gemini_lpchc.c		geminilpchc needs-count
 attach	com at lpc with lpc_com
 file	arch/arm/gemini/lpc_com.c		lpc_com
 
+# GEMINI GPIO controllers
+device	geminigpio: gpiobus
+attach	geminigpio at obio with geminigpio
+file	arch/arm/gemini/gemini_gpio.c		geminigpio
 
 # GEMINI USB controller
 attach ehci at obio with ehci_obio
