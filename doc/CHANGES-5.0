@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.26 2008/11/19 03:45:32 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.27 2008/11/20 03:49:05 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -815,4 +815,131 @@ sys/net/if_tap.c				1.48, 1.49
 
 	Allow etherip and tap to suspend/resume.
 	[hans, ticket #89]
+
+sys/dev/pci/pci.c				1.120
+
+	Do not depend on physmem for pci_dma64_available(). On some systems
+	(e.g. Xen, or any system with non-contigous physical memory),
+	physmem may not represent the hightest physical address available.
+	[bouyer, ticket #66]
+
+sys/dev/ata/ata.c				1.102
+sys/dev/ata/ata_wdc.c				1.91
+sys/dev/ata/atavar.h				1.78
+sys/dev/ic/wdc.c				1.256
+sys/dev/scsipi/atapi_wdc.c			1.109
+
+	cpu_intr_p() doesn't account for software interrupts (e.g.
+	callouts) so we can't use it here. Rssurect ATACH_TH_RUN.
+	Should fix kern/39927 and kern/39725.
+	[bouyer, ticket #67]
+
+sys/arch/i386/conf/NET4501			1.64
+
+	Add pppoe, tap, ppp, gre to the NET4501 config file.
+	[is, ticket #70]
+
+sys/dev/scsipi/st.c				1.208
+
+	If we return an error make sure we don't return a b_resid of 0;
+	or this will trigger a KASSERT in physio_done().
+	[bouyer, ticket #78]
+
+sys/dev/pcmcia/aic_pcmcia.c			patch
+doc/HACKS					patch
+
+	Work around rbus resource allocation problem so aic PCMCIA
+	cards work again.
+	[jnemeth, ticket #80]
+
+sys/compat/linux/arch/alpha/syscalls.master	1.63
+sys/compat/linux/arch/amd64/syscalls.master	1.25
+sys/compat/linux/arch/arm/syscalls.master	1.36
+sys/compat/linux/arch/i386/syscalls.master	1.94
+sys/compat/linux/arch/m68k/syscalls.master	1.63
+sys/compat/linux/arch/mips/syscalls.master	1.30
+sys/compat/linux/arch/powerpc/syscalls.master	1.38
+sys/compat/linux/common/linux_time.c		1.26
+sys/compat/linux32/arch/amd64/syscalls.master	1.39
+sys/compat/linux32/common/linux32_time.c	1.22
+
+	Fix nanosleep(2) on 64-bit archs. Do not call native nanosleep
+	syscall, but rather a modified version the will take care of
+	`struct timespec' conversions.
+	[njoly, ticket #81]
+
+sys/dev/i2c/dbcool.c				1.6
+
+	PR/39947: dbcool_detach implicitly called sysmon_envsys_destroy()
+	twice.
+	[jnemeth, ticket #82]
+
+sys/dev/pci/if_msk.c				1.22
+sys/dev/pci/if_skreg.h				1.13
+
+	Fix Yukon EC Ultra cold power up issue (system hang at boot).
+	Also increases stability.
+	[chris, ticket #84]
+
+sys/dev/acpi/thinkpad_acpi.c			1.17
+
+	Make this driver work (except for setting display brightness)
+	on older machines.
+	[hans, ticket #90]
+
+sys/dev/acpi/atppc_acpi.c			1.15
+
+	Initialize sc->sc_dev before using it, and use it as argument
+	for the interrupt handler. Makes this work again.
+	[hans, ticket #91]
+
+sys/opencrypto/crypto.c				1.30
+sys/opencrypto/cryptodev.c			1.45
+sys/opencrypto/cryptodev.h			1.15
+sys/sys/queue.h					1.50
+
+	Fix a race condition in opencrypto that lead to several panics.
+	Add a macro for TAILQ_FOREACH_REVERSE_SAFE() to queue.h.
+	[darran, ticket #92]
+
+sys/compat/osf1/osf1_exec_ecoff.c		1.21
+
+	Do not call namei anymore, but use the result from the previous
+	emul_find_interp call instead. This makes dynamic executables work
+	again under compat OSF1 (fixes PR/39255).
+	[njoly, ticket #93]
+
+sys/arch/x86/x86/ipmi.c				1.26
+
+	Fix sloppy device_private conversion that prevented systems with
+	IPMI from booting.
+	[ad, ticket #94]
+
+etc/man.conf					1.23
+
+	Also search /usr/X11R7, and do it before X11R6
+	[cube, ticket #95]
+
+etc/login.conf					1.3
+etc/root/dot.cshrc				1.19
+etc/root/dot.profile				1.20
+etc/skel/dot.cshrc				1.4
+etc/skel/dot.profile				1.5
+
+	Sprinkle /usr/X11R7 where relevant.
+	[cube, ticket #96]
+
+sys/dev/vnd.c					1.189
+
+	Check that vnd is not NULL before using it, return ENXIO if
+	it is.  Avoids a panic when vnconfig -uF is used on a busy vnd.
+	[bouyer, ticket #97]
+
+sys/arch/amd64/amd64/fpu.c			1.29
+sys/arch/amd64/amd64/machdep.c			1.105
+sys/arch/i386/i386/machdep.c			1.647
+sys/arch/i386/isa/npx.c				1.132
+
+	PR port-i386/39299: FPU use in signal handlers is unsafe.
+	[ad, ticket #71]
 
