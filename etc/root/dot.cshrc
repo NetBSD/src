@@ -1,4 +1,4 @@
-#	$NetBSD: dot.cshrc,v 1.16.26.1 2008/11/12 23:33:45 snj Exp $
+#	$NetBSD: dot.cshrc,v 1.16.26.2 2008/11/20 03:37:42 snj Exp $
 
 alias	h	history
 alias	j	jobs -l
@@ -25,7 +25,7 @@ alias	tset	'set noglob histchars=""; eval `\tset -s \!*`; unset noglob histchars
 setenv BLOCKSIZE 1k
 
 set history=1000
-set path=(/sbin /usr/sbin /bin /usr/bin /usr/pkg/sbin /usr/pkg/bin /usr/X11R6/bin /usr/local/sbin /usr/local/bin)
+set path=(/sbin /usr/sbin /bin /usr/bin /usr/pkg/sbin /usr/pkg/bin /usr/X11R7/bin /usr/X11R6/bin /usr/local/sbin /usr/local/bin)
 
 # directory stuff: cdpath/cd/back
 set cdpath=(/usr/src/{sys,bin,sbin,usr.{bin,sbin},lib,libexec,share,local,games,gnu/{usr.{bin,sbin},libexec,lib,games}})
