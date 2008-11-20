@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.12 2004/10/01 23:36:35 hubertf Exp $
+.\"	$NetBSD: prep,v 1.13 2008/11/20 20:52:17 jdc Exp $
 .
 .Ss2 Deciding on partition sizes
 .
@@ -46,6 +46,9 @@ partition.
 A good initial size for the swap partition is the amount of physical
 memory in your machine, if you've got more than 128 MB RAM.  If you've got 
 less RAM, you may want swap to be at least 128 MB.
+.Pp
+Note that the OBP on Ultra 1 and Ultra 2 machines can only boot from the first
+4Gb of the disk, so this limits the size of the root parition on these models.
 .
 .Ss2 Setting up Open Firmware
 .
