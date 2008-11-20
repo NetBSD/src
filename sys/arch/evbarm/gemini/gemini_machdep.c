@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.9 2008/11/20 07:49:54 cliff Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.10 2008/11/20 23:27:10 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.9 2008/11/20 07:49:54 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.10 2008/11/20 23:27:10 cliff Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -333,11 +333,15 @@ gemini_memchk(void)
 	r = *rp;
 	base = (r & DRAMC_RMCR_RMBAR) >> DRAMC_RMCR_RMBAR_SHFT;
 	size = (r & DRAMC_RMCR_RMSZR) >> DRAMC_RMCR_RMSZR_SHFT;
-#if defined(GEMINI_MASTER) || defined(GEMINI_SINGLE)
+#if defined(GEMINI_SINGLE)
+	if (r != 0)
+		panic("%s: RMCR %#x, MEMSIZE %d mismatch\n",
+			__FUNCTION__, r, MEMSIZE);
+#elif defined(GEMINI_MASTER)
 	if (base != MEMSIZE)
 		panic("%s: RMCR %#x, MEMSIZE %d mismatch\n",
 			__FUNCTION__, r, MEMSIZE);
-#else
+#elif defined(GEMINI_SLAVE)
 	if (size != MEMSIZE)
 		panic("%s: RMCR %#x, MEMSIZE %d mismatch\n",
 			__FUNCTION__, r, MEMSIZE);
