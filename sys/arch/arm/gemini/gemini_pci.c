@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.5 2008/11/13 07:21:59 cliff Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.6 2008/11/20 20:23:05 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.5 2008/11/13 07:21:59 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.6 2008/11/20 20:23:05 cliff Exp $");
 
 #include <sys/cdefs.h>
 
@@ -205,7 +205,7 @@ gemini_pci_init(pci_chipset_tag_t pc, void *cookie)
 	 */
 
 	aprint_normal("%s: configuring Secondary PCI bus\n",
-		sc->sc_dev.dv_xname);
+		device_xname(sc->sc_dev));
 
 	/*
 	 * XXX PCI IO addr should be inherited ?

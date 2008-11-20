@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_obiovar.h,v 1.2 2008/11/13 05:03:05 cliff Exp $	*/
+/*	$NetBSD: gemini_obiovar.h,v 1.3 2008/11/20 20:23:05 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap2_obiovar.h,v 1.1 2008/08/27 11:03:10 matt Exp
@@ -49,7 +49,7 @@ struct obio_attach_args {
 };
 
 typedef struct obio_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_dma_tag_t		sc_dmat;
 	struct arm32_dma_range	sc_dmarange;
 	bus_space_tag_t		sc_iot;
