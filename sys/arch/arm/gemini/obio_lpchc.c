@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_lpchc.c,v 1.1 2008/11/09 09:15:42 cliff Exp $	*/
+/*	$NetBSD: obio_lpchc.c,v 1.2 2008/11/20 20:23:05 cliff Exp $	*/
 
 /*
  * obio attachment for GEMINI LPC Host Controller
@@ -7,7 +7,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_lpchc.c,v 1.1 2008/11/09 09:15:42 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_lpchc.c,v 1.2 2008/11/20 20:23:05 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -28,7 +28,7 @@ static int  gemini_lpchc_match(struct device *, struct cfdata *, void *);
 static void gemini_lpchc_attach(struct device *, struct device *, void *);
 static int  gemini_lpchc_print(void *, const char *);
 
-CFATTACH_DECL(obio_lpchc, sizeof(struct gemini_lpchc_softc),
+CFATTACH_DECL_NEW(obio_lpchc, sizeof(struct gemini_lpchc_softc),
     gemini_lpchc_match, gemini_lpchc_attach, NULL, NULL);
 
 
@@ -55,6 +55,7 @@ gemini_lpchc_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t r;
 	void *ih=NULL;
 	
+	sc->sc_dev = self;
 	sc->sc_addr = obio->obio_addr;
 	sc->sc_size = (obio->obio_size == OBIOCF_SIZE_DEFAULT)
 		? GEMINI_LPCHC_SIZE : obio->obio_size;
@@ -89,8 +90,7 @@ gemini_lpchc_attach(struct device *parent, struct device *self, void *aux)
 	lpchc.lpchc_size = LPCCF_SIZE_DEFAULT;	/* XXX placeholder */
 	lpchc.lpchc_tag  = sc;
 
-	(void)config_found_ia(&sc->sc_dev, "lpcbus", &lpchc,
-		gemini_lpchc_print);
+	(void)config_found_ia(sc->sc_dev, "lpcbus", &lpchc, gemini_lpchc_print);
 }
 
 int

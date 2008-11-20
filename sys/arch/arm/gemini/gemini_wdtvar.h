@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_wdtvar.h,v 1.2 2008/11/01 07:43:19 cliff Exp $	*/
+/*	$NetBSD: gemini_wdtvar.h,v 1.3 2008/11/20 20:23:05 cliff Exp $	*/
 
 /*
  * adapted/extracted from omap_wdt.c
@@ -38,7 +38,7 @@
 #include <dev/sysmon/sysmonvar.h>
  
 typedef struct geminiwdt_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_addr_t sc_addr;
 	bus_size_t sc_size;
 	bus_space_tag_t sc_iot;
