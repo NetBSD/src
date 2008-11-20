@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.109 2008/11/20 21:54:42 dyoung Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.110 2008/11/20 21:55:15 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.109 2008/11/20 21:54:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.110 2008/11/20 21:55:15 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -378,7 +378,7 @@ out_nolock:
 }
 
 /*
- * Call at splnet() with tp locked.
+ * Call at splnet().
  */
 static void
 tuninit(struct tun_softc *tp)
