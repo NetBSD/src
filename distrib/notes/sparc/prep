@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.24 2008/09/07 05:11:55 tsutsui Exp $
+.\"	$NetBSD: prep,v 1.25 2008/11/20 20:52:17 jdc Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -430,8 +430,22 @@ part of your memory unusable). A full binary installation takes about 275 MB
 in
 .Pa /usr .
 .Pp
-Most sparc systems have trouble booting if the root partition extends
-beyond the first 2 GB of your disk.
+Note that there are limitations on the size of the root partition for
+various models.
+.Pp
+On sun4 machines, the
+.Nx
+sparc boot loader can only boot from RAID partitions that start at the
+beginning of the disk.
+.Pp
+On sun4 and early PROM version sun4c machines, the PROM can only boot from
+the first 1Gb of the disk.
+.Pp
+On later PROM version sun4c and early PROM version sun4m machines, the PROM
+can only boot from the first 2Gb of the disk.
+.Pp
+On later PROM version sun4m machines, the PROM can only boot from the first
+4Gb of the disk.
 .
 .Ss2 Configuration of network interfaces
 .
