@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_reg.h,v 1.4 2008/11/09 08:54:46 cliff Exp $	*/
+/*	$NetBSD: gemini_reg.h,v 1.5 2008/11/20 07:47:06 cliff Exp $	*/
 
 #ifndef _ARM_GEMINI_REG_H_
 #define _ARM_GEMINI_REG_H_
@@ -73,6 +73,10 @@
 #define GLOBAL_RESET_GLOBAL	__BIT(31)	/* Global Soft Reset */
 #define GLOBAL_RESET_CPU1	__BIT(30)	/* CPU#1 reset hold */
 #define GEMINI_GLOBAL_MISC_CTL	0x30		/* Miscellaneous Control */		/* rw */
+#define GEMINI_GLOBAL_CPU0	0x38		/* CPU #0 Status and Control */		/* rw */
+#define  GLOBAL_CPU0_IPICPU1	__BIT(31)	/* IPI to CPU#1 */
+#define GEMINI_GLOBAL_CPU1	0x3c		/* CPU #1 Status and Control */		/* rw */
+#define  GLOBAL_CPU1_IPICPU0	__BIT(31)	/* IPI to CPU#0 */
 
 /*
  * Gemini SL3516 Watchdog device register offsets and bits
@@ -337,6 +341,17 @@ gemini_pci_cfg_reg_mem_size(size_t sz)
 #define GEMINI_MIDE_CTLBLK		0x36
 #define GEMINI_MIDE_SIZE		0x40
 
+
+/*
+ * Gemini DRAM Controller register offsets, &etc.
+ */
+#define GEMINI_DRAMC_RMCR		0x40		/* CPU Remap Control */				/* rw */
+#define  DRAMC_RMCR_RESa		__BITS(31,29)
+#define  DRAMC_RMCR_RMBAR		__BITS(28,20)	/* Remap Base Address */
+#define  DRAMC_RMCR_RMBAR_SHFT		20
+#define  DRAMC_RMCR_RESb		__BITS(19,9)
+#define  DRAMC_RMCR_RMSZR		__BITS(8,0)	/* Remap Size Address */
+#define  DRAMC_RMCR_RMSZR_SHFT		0
 
 #else
 # error unknown gemini cpu type
