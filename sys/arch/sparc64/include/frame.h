@@ -1,11 +1,7 @@
-/*       $NetBSD: frame.h,v 1.14 2005/12/11 12:19:10 christos Exp $        */
+/*       $NetBSD: frame.h,v 1.15 2008/11/20 22:50:52 martin Exp $        */
 
 #include <sparc/frame.h>
 
 #ifndef _LOCORE
-#ifdef COMPAT_16
-void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
-#endif
-
 void *getframe(struct lwp *, int, int *);
 #endif
