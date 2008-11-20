@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_obio.c,v 1.6 2008/11/13 07:21:59 cliff Exp $	*/
+/*	$NetBSD: gemini_obio.c,v 1.7 2008/11/20 20:23:05 cliff Exp $	*/
 
 /* adapted from:
  *      NetBSD: omap2_obio.c,v 1.5 2008/10/21 18:50:25 matt Exp
@@ -104,7 +104,7 @@
 
 #include "opt_gemini.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.6 2008/11/13 07:21:59 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_obio.c,v 1.7 2008/11/20 20:23:05 cliff Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -142,7 +142,7 @@ static int	obio_print(void *, const char *);
 static void	obio_attach_critical(struct obio_softc *);
 
 /* attach structures */
-CFATTACH_DECL(obio, sizeof(struct obio_softc),
+CFATTACH_DECL_NEW(obio, sizeof(struct obio_softc),
 	obio_match, obio_attach, NULL, NULL);
 
 
@@ -160,6 +160,8 @@ obio_attach(device_t parent, device_t self, void *aux)
 #if NPCI > 0
 	struct pcibus_attach_args pba;
 #endif
+
+	sc->sc_dev = self;
 
 	sc->sc_iot = &gemini_bs_tag;
 
@@ -220,7 +222,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY;
 
-	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
+	(void) config_found_ia(sc->sc_dev, "pcibus", &pba, pcibusprint);
 #endif	/* NPCI */
 	
 }
@@ -372,7 +374,7 @@ obio_attach_critical(struct obio_softc *sc)
 			continue;
 #endif
 
-		cf = config_search_ia(obio_find, &sc->sc_dev, "obio", &oa);
+		cf = config_search_ia(obio_find, sc->sc_dev, "obio", &oa);
 		if (cf == NULL && critical_devs[i].required)
 			panic("obio_attach_critical: failed to find %s!",
 			    critical_devs[i].name);
@@ -381,7 +383,7 @@ obio_attach_critical(struct obio_softc *sc)
 		oa.obio_size = cf->cf_loc[OBIOCF_SIZE];
 		oa.obio_intr = cf->cf_loc[OBIOCF_INTR];
 		oa.obio_intrbase = cf->cf_loc[OBIOCF_INTRBASE];
-		config_attach(&sc->sc_dev, cf, &oa, obio_print);
+		config_attach(sc->sc_dev, cf, &oa, obio_print);
 	}
 }
 
