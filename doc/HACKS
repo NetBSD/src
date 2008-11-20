@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.110 2008/09/27 03:57:37 macallan Exp $
+# $NetBSD: HACKS,v 1.110.2.1 2008/11/20 02:56:40 snj Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -306,6 +306,18 @@ descr
 	asn1_compile does not check if generated header files do not have to
 	be rebuild.
 	Generate .hx files and copy it in the Makefiles if they changed.
+kcah
+
+hack	rbus resource allocation work around
+cdate	10 May 2007
+who	jnemeth
+file	src/sys/dev/pcmcia/aic_pcmcia.c : 1.35
+pr	26909 31245
+descr
+	On some cards, the card align field property value interferes
+	with the rbus resource allocation causing the card not to
+	configure properly.  Setting it to 0 fixes the problem but it
+	is not the proper solution.
 kcah
 
 port	vax
