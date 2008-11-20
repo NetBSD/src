@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.12.8.2 2008/11/01 21:22:27 christos Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.12.8.3 2008/11/20 20:45:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,11 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.12.8.2 2008/11/01 21:22:27 christos Exp $");
-
-#include "opt_ptrace.h"
-#include "opt_compat_netbsd.h"
-#include "opt_compat_netbsd32.h"
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.12.8.3 2008/11/20 20:45:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -83,38 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.12.8.2 2008/11/01 21:22:27 christos Ex
 #include <sys/kauth.h>
 #include <sys/wait.h>
 #include <sys/kmem.h>
-
-#ifdef COMPAT_16
-/* ARGSUSED */
-int
-compat_16_sys___sigaction14(struct lwp *l, const struct compat_16_sys___sigaction14_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int)				signum;
-		syscallarg(const struct sigaction *)	nsa;
-		syscallarg(struct sigaction *)		osa;
-	} */
-	struct sigaction	nsa, osa;
-	int			error;
-
-	if (SCARG(uap, nsa)) {
-		error = copyin(SCARG(uap, nsa), &nsa, sizeof(nsa));
-		if (error)
-			return (error);
-	}
-	error = sigaction1(l, SCARG(uap, signum),
-	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
-	    NULL, 0);
-	if (error)
-		return (error);
-	if (SCARG(uap, osa)) {
-		error = copyout(&osa, SCARG(uap, osa), sizeof(osa));
-		if (error)
-			return (error);
-	}
-	return (0);
-}
-#endif
+#include <sys/module.h>
 
 /* ARGSUSED */
 int
@@ -378,16 +343,30 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	 * vers if a new sigaction was supplied. Emulations use legacy
 	 * kernel trampolines with version 0, alternatively check for that
 	 * too.
+	 *
+	 * If version < 2, we try to autoload the compat module.  Note
+	 * that we interlock with the unload check in compat_modcmd()
+	 * using module_lock.  If the autoload fails, we don't try it
+	 * again for this process.
 	 */
-	if ((vers != 0 && tramp == NULL) ||
-#ifdef SIGTRAMP_VALID
-	    (nsa != NULL &&
-	    ((vers == 0) ?
-		(p->p_emul->e_sigcode == NULL) :
-		!SIGTRAMP_VALID(vers))) ||
-#endif
-	    (vers == 0 && tramp != NULL)) {
-		return (EINVAL);
+#ifdef MODULAR
+	if (__predict_false(vers < 2) && (p->p_lflag & PL_SIGCOMPAT) == 0) {
+		mutex_enter(&module_lock);
+		if (sendsig_sigcontext_vec == NULL) {
+			(void)module_autoload("compat", MODULE_CLASS_ANY);
+		}
+		mutex_enter(proc_lock);
+		p->p_lflag |= PL_SIGCOMPAT;
+		mutex_exit(proc_lock);
+		mutex_exit(&module_lock);
+	}
+#endif	/* MODULAR */
+
+	if (vers == 0 && (tramp != NULL || p->p_emul->e_sigcode == NULL)) {
+		return EINVAL;
+	}
+	if (vers != 0 && (tramp == NULL || vers > 2)) {
+		return EINVAL;
 	}
 
 	mutex_enter(p->p_lock);

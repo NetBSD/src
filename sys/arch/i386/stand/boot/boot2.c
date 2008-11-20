@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.22.2.2 2008/11/01 21:22:25 christos Exp $	*/
+/*	$NetBSD: boot2.c,v 1.22.2.3 2008/11/20 20:45:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -799,31 +799,11 @@ command_modules(char *arg)
 void
 command_load(char *arg)
 {
-	boot_module_t *bm, *bmp;
-	size_t len;
-	char *str;
 
 	while (*arg == ' ' || *arg == '\t')
 		++arg;
 
-	bm = alloc(sizeof(boot_module_t));
-	len = strlen(arg) + 1;
-	str = alloc(len);
-	if (bm == NULL || str == NULL) {
-		printf("couldn't allocate module\n");
-		return;
-	}
-	memcpy(str, arg, len);
-	bm->bm_path = str;
-	bm->bm_next = NULL;
-	if (boot_modules == NULL)
-		boot_modules = bm;
-	else {
-		for (bmp = boot_modules; bmp->bm_next;
-		    bmp = bmp->bm_next)
-			;
-		bmp->bm_next = bm;
-	}
+	module_add(arg);
 }
 
 void

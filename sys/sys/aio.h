@@ -1,4 +1,4 @@
-/*	$NetBSD: aio.h,v 1.6.16.2 2008/11/01 21:22:28 christos Exp $	*/
+/*	$NetBSD: aio.h,v 1.6.16.3 2008/11/20 20:45:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -115,9 +115,6 @@ struct aioproc {
 
 extern u_int aio_listio_max;
 /* Prototypes */
-void	aio_sysinit(void);
-int	aio_init(struct proc *);
-void	aio_exit(struct proc *, struct aioproc *);
 void	aio_print_jobs(void (*pr)(const char *, ...));
 int	aio_suspend1(struct lwp *, struct aiocb **, int, struct timespec *);
 
