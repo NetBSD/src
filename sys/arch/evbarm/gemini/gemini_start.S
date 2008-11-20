@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_start.S,v 1.4 2008/11/11 06:39:00 cliff Exp $	*/
+/*	$NetBSD: gemini_start.S,v 1.5 2008/11/20 07:49:54 cliff Exp $	*/
 
 /*
  * Machine dependant startup code for GEMINI boards.
@@ -101,7 +101,7 @@
 #include <arm/gemini/gemini_reg.h>
 #include <evbarm/gemini/gemini.h>
 
-RCSID("$NetBSD: gemini_start.S,v 1.4 2008/11/11 06:39:00 cliff Exp $")
+RCSID("$NetBSD: gemini_start.S,v 1.5 2008/11/20 07:49:54 cliff Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -393,6 +393,11 @@ mmu_init_table:
 
 	/* Map Gemini LPC IO Space */
 	MMU_INIT(GEMINI_LPCIO_VBASE, GEMINI_LPCIO_BASE,
+		1,
+		L1_S_PROTO | L1_S_AP(AP_KRW))
+
+	/* Map Gemini DRAM Controller Space */
+	MMU_INIT(GEMINI_DRAMC_VBASE, GEMINI_DRAMC_BASE,
 		1,
 		L1_S_PROTO | L1_S_AP(AP_KRW))
 

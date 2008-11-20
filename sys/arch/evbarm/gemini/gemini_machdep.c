@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.8 2008/11/13 01:32:48 cliff Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.9 2008/11/20 07:49:54 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.8 2008/11/13 01:32:48 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.9 2008/11/20 07:49:54 cliff Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -286,6 +286,7 @@ bs_protos(bs_notimpl);
 
 static void gemini_global_reset(void) __attribute__ ((noreturn));
 static void gemini_cpu1_start(void);
+static void gemini_memchk(void);
 
 static void
 gemini_global_reset(void)
@@ -316,6 +317,33 @@ gemini_cpu1_start(void)
 	r = *rp;
 	r &= ~GLOBAL_RESET_CPU1;
 	*rp = r;
+#endif
+}
+
+static void
+gemini_memchk(void)
+{
+	volatile uint32_t *rp;
+	uint32_t r;
+	uint32_t base;
+	uint32_t size;
+
+	rp = (volatile uint32_t *)
+		(GEMINI_DRAMC_VBASE + GEMINI_DRAMC_RMCR);
+	r = *rp;
+	base = (r & DRAMC_RMCR_RMBAR) >> DRAMC_RMCR_RMBAR_SHFT;
+	size = (r & DRAMC_RMCR_RMSZR) >> DRAMC_RMCR_RMSZR_SHFT;
+#if defined(GEMINI_MASTER) || defined(GEMINI_SINGLE)
+	if (base != MEMSIZE)
+		panic("%s: RMCR %#x, MEMSIZE %d mismatch\n",
+			__FUNCTION__, r, MEMSIZE);
+#else
+	if (size != MEMSIZE)
+		panic("%s: RMCR %#x, MEMSIZE %d mismatch\n",
+			__FUNCTION__, r, MEMSIZE);
+#endif
+#if defined(VERBOSE_INIT_ARM) || 1
+	printf("DRAM Remap: base=%dMB, size=%dMB\n", base, size);
 #endif
 }
 
@@ -468,6 +496,15 @@ static const struct pmap_devmap devmap[] = {
 		.pd_cache = PTE_NOCACHE
 	},
 
+	/* DRAM Controller */
+	{
+		.pd_va = _A(GEMINI_DRAMC_VBASE),
+		.pd_pa = _A(GEMINI_DRAMC_BASE),
+		.pd_size = _S(L1_S_SIZE),
+		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
+		.pd_cache = PTE_NOCACHE
+	},
+
 #if defined(MEMORY_DISK_DYNAMIC) 
 	/* Ramdisk */
 	{
@@ -586,10 +623,8 @@ initarm(void *arg)
 	kgdb_port_init();
 #endif
 
-#ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
 	printf("\nNetBSD/evbarm (gemini) booting ...\n");
-#endif
 
 #ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
@@ -604,6 +639,7 @@ initarm(void *arg)
 	 * Set up the variables that define the availability of physical
 	 * memory.
 	 */
+	gemini_memchk();
 	physical_start = GEMINI_DRAM_BASE;
 #define	MEMSIZE_BYTES 	(MEMSIZE * 1024 * 1024)
 	physical_end = (physical_start & ~(0x400000-1)) + MEMSIZE_BYTES;
@@ -1020,11 +1056,20 @@ setup_real_page_tables(void)
 	/* offset of kernel in RAM */
 	u_int offset = (u_int)KERNEL_BASE_virt - KERNEL_BASE;
 
+#ifdef DDB
+	/* Map text section read-write. */
+	offset += pmap_map_chunk(l1_va,
+				(vaddr_t)KERNEL_BASE + offset,
+				 physical_start + offset, textsize,
+				 VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE,
+				 PTE_CACHE);
+#else
 	/* Map text section read-only. */
 	offset += pmap_map_chunk(l1_va,
 				(vaddr_t)KERNEL_BASE + offset,
 				 physical_start + offset, textsize,
 				 VM_PROT_READ|VM_PROT_EXECUTE, PTE_CACHE);
+#endif
 	/* Map data and bss sections read-write. */
 	offset += pmap_map_chunk(l1_va,
 				(vaddr_t)KERNEL_BASE + offset,
