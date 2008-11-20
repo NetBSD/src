@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.194.2.2 2008/11/01 21:22:26 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.194.2.3 2008/11/20 20:45:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,11 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.194.2.2 2008/11/01 21:22:26 christos Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ptrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.194.2.3 2008/11/20 20:45:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1046,13 +1042,9 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 		syscallarg(T) addr;
 		syscallarg(T) data;
 	} */
-#if defined(PTRACE) || defined(_LKM)
 	const int *ptr;
 	int request;
 	int error;
-#ifdef _LKM
-#define sys_ptrace (*sysent[SYS_ptrace].sy_call)
-#endif
 
 	ptr = linux_ptrace_request_map;
 	request = SCARG(uap, request);
@@ -1068,13 +1060,13 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 			/*
 			 * Linux ptrace(PTRACE_CONT, pid, 0, 0) means actually
 			 * to continue where the process left off previously.
-			 * The same thing is achieved by addr == (void *) 1
+ 			 * The same thing is achieved by addr == (void *) 1
 			 * on NetBSD, so rewrite 'addr' appropriately.
 			 */
 			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
 				SCARG(&pta, addr) = (void *) 1;
 
-			error = sys_ptrace(l, &pta, retval);
+			error = sysent[SYS_ptrace].sy_call(l, &pta, retval);
 			if (error)
 				return error;
 			switch (request) {
@@ -1094,9 +1086,6 @@ linux_sys_ptrace(struct lwp *l, const struct linux_sys_ptrace_args *uap, registe
 			ptr++;
 
 	return LINUX_SYS_PTRACE_ARCH(l, uap, retval);
-#else
-	return ENOSYS;
-#endif /* PTRACE || _LKM */
 }
 
 int

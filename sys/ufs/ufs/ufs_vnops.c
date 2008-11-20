@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.169.6.2 2008/11/09 23:29:16 christos Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.169.6.3 2008/11/20 20:45:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,12 +66,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.169.6.2 2008/11/09 23:29:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.169.6.3 2008/11/20 20:45:40 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
-#include "fs_lfs.h"
 #endif
 
 #include <sys/param.h>
@@ -1554,10 +1553,8 @@ ufs_mkdir(void *v)
 		ip->i_nlink = 0;
 		DIP_ASSIGN(ip, nlink, 0);
 		ip->i_flag |= IN_CHANGE;
-#ifdef LFS
 		/* If IN_ADIROP, account for it */
-		lfs_unmark_vnode(tvp);
-#endif
+		UFS_UNMARK_VNODE(tvp);
 		UFS_WAPBL_UPDATE(tvp, NULL, NULL, UPDATE_DIROP);
 		if (DOINGSOFTDEP(tvp))
 			softdep_change_linkcnt(ip);
@@ -1933,6 +1930,7 @@ ufs_strategy(void *v)
 	struct buf	*bp;
 	struct vnode	*vp;
 	struct inode	*ip;
+	struct mount	*mp;
 	int		error;
 
 	bp = ap->a_bp;
@@ -1957,7 +1955,31 @@ ufs_strategy(void *v)
 		return (0);
 	}
 	vp = ip->i_devvp;
-	return (VOP_STRATEGY(vp, bp));
+
+	error = VOP_STRATEGY(vp, bp);
+	if (error)
+		return error;
+
+	if (!BUF_ISREAD(bp))
+		return 0;
+
+	mp = wapbl_vptomp(vp);
+	if (mp == NULL || mp->mnt_wapbl_replay == NULL ||
+	    !WAPBL_REPLAY_ISOPEN(mp) ||
+	    !WAPBL_REPLAY_CAN_READ(mp, bp->b_blkno, bp->b_bcount))
+		return 0;
+
+	error = biowait(bp);
+	if (error)
+		return error;
+
+	error = WAPBL_REPLAY_READ(mp, bp->b_data, bp->b_blkno, bp->b_bcount);
+	if (error) {
+		mutex_enter(&bufcache_lock);
+		SET(bp->b_cflags, BC_INVAL);
+		mutex_exit(&bufcache_lock);
+	}
+	return error;
 }
 
 /*
@@ -2338,10 +2360,8 @@ ufs_makeinode(int mode, struct vnode *dvp, struct vnode **vpp,
 	ip->i_nlink = 0;
 	DIP_ASSIGN(ip, nlink, 0);
 	ip->i_flag |= IN_CHANGE;
-#ifdef LFS
 	/* If IN_ADIROP, account for it */
-	lfs_unmark_vnode(tvp);
-#endif
+	UFS_UNMARK_VNODE(tvp);
 	UFS_WAPBL_UPDATE(tvp, NULL, NULL, 0);
 	if (DOINGSOFTDEP(tvp))
 		softdep_change_linkcnt(ip);

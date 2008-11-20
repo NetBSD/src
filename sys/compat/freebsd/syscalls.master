@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.58.30.1 2008/03/29 20:46:58 christos Exp $
+	$NetBSD: syscalls.master,v 1.58.30.2 2008/11/20 20:45:38 christos Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -33,14 +33,12 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
-#include "opt_nfsserver.h"
 #include "opt_ntp.h"
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
 #include "opt_posix.h"
 
 #include "fs_lfs.h"
-#include "fs_nfs.h"
 #endif
 
 #include <sys/param.h>
@@ -296,11 +294,7 @@
 152	UNIMPL		sem_wakeup
 153	UNIMPL		asyncdaemon
 154	UNIMPL
-#if defined(NFS) || defined(NFSSERVER)
-155	NOARGS		{ int sys_nfssvc(int flag, void *argp); }
-#else
 155	UNIMPL		nfssvc
-#endif
 156	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); } ogetdirentries
 157	NOARGS		{ int compat_20_sys_statfs(const char *path, \
@@ -669,16 +663,16 @@
 398	UNIMPL		fhstatfs
 399	UNIMPL		nosys
 #if defined(P1003_1B_SEMAPHORE) || !defined(_KERNEL)
-400	NOARGS		{ int sys__ksem_close(semid_t id); }
-401	NOARGS		{ int sys__ksem_post(semid_t id); }
-402	NOARGS		{ int sys__ksem_wait(semid_t id); }
-403	NOARGS		{ int sys__ksem_trywait(semid_t id); }
+400	NOARGS		{ int sys__ksem_close(intptr_t id); }
+401	NOARGS		{ int sys__ksem_post(intptr_t id); }
+402	NOARGS		{ int sys__ksem_wait(intptr_t id); }
+403	NOARGS		{ int sys__ksem_trywait(intptr_t id); }
 404	UNIMPL		ksem_init
 405	UNIMPL		ksem_open
 406	NOARGS		{ int sys__ksem_unlink(const char *name); }
-407	NOARGS		{ int sys__ksem_getvalue(semid_t id, \
+407	NOARGS		{ int sys__ksem_getvalue(intptr_t id, \
 			    unsigned int *value); }
-408	NOARGS		{ int sys__ksem_destroy(semid_t id); }
+408	NOARGS		{ int sys__ksem_destroy(intptr_t id); }
 #else
 400	EXCL		ksem_close
 401	EXCL		ksem_post
