@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sa.c,v 1.7 2008/10/15 06:52:38 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_sa.c,v 1.8 2008/11/20 11:56:40 tron Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.7 2008/10/15 06:52:38 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sa.c,v 1.8 2008/11/20 11:56:40 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,6 +132,7 @@ int
 netbsd32_sa_register(struct lwp *l,
     const struct netbsd32_sa_register_args *uap, register_t *retval)
 {
+#ifdef COMPAT_40
 	/* {
 		syscallarg(netbsd32_sa_upcall_t) new;
 		syscallarg(netbsd32_sa_upcallp_t) old;
@@ -154,9 +155,13 @@ netbsd32_sa_register(struct lwp *l,
 		    sizeof(old));
 	}
 
-	return 0;	
+	return 0;
+#else
+	return ENOSYS;
+#endif	
 }
 
+#ifdef COMPAT_40
 static int
 netbsd32_sa_copyin_stack(stack_t *stacks, int index, stack_t *dest)
 {
@@ -174,11 +179,13 @@ netbsd32_sa_copyin_stack(stack_t *stacks, int index, stack_t *dest)
 
 	return 0;
 }
+#endif
 
 int
 netbsd32_sa_stacks(struct lwp *l, const struct netbsd32_sa_stacks_args *uap,
     register_t *retval)
 {
+#ifdef COMPAT_40
 	 /* {
 		syscallarg(int) num;
 		syscallarg(netbsd32_stackp_t) stacks;
@@ -186,6 +193,9 @@ netbsd32_sa_stacks(struct lwp *l, const struct netbsd32_sa_stacks_args *uap,
 
 	return sa_stacks1(l, retval, SCARG(uap, num),
 	    NETBSD32PTR64(SCARG(uap, stacks)), netbsd32_sa_copyin_stack);
+#else
+	return ENOSYS;
+#endif
 }
 
 int
