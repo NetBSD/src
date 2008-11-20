@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/11/20 10:54:38 ad Exp $
+#	$NetBSD: Makefile,v 1.3 2008/11/20 11:01:54 ad Exp $
 
 .include "../Makefile.inc"
 
@@ -10,7 +10,7 @@ CPPFLAGS+=	-DEXEC_AOUT -DCOREDUMP -DCOMPAT_NOMID
 SRCS=	exec_aout.c
 
 .PATH:	${S}/compat/common
-SRCS=	compat_exec.c
+SRCS+=	compat_exec.c
 
 .PATH:	${S}/arch/${MACHINE}/${MACHINE}
 .PATH:	${S}/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
