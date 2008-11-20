@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.27 2008/11/20 03:49:05 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.28 2008/11/20 17:10:00 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -862,6 +862,38 @@ sys/compat/linux/arch/powerpc/syscalls.master	1.38
 sys/compat/linux/common/linux_time.c		1.26
 sys/compat/linux32/arch/amd64/syscalls.master	1.39
 sys/compat/linux32/common/linux32_time.c	1.22
+sys/compat/linux/arch/alpha/linux_syscall.h	regen
+sys/compat/linux/arch/alpha/linux_syscallargs.h regen
+sys/compat/linux/arch/alpha/linux_syscalls.c	regen
+sys/compat/linux/arch/alpha/linux_sysent.c	regen
+sys/compat/linux/arch/amd64/linux_syscall.h	regen
+sys/compat/linux/arch/amd64/linux_syscallargs.h	regen
+sys/compat/linux/arch/amd64/linux_syscalls.c	regen
+sys/compat/linux/arch/amd64/linux_sysent.c	regen
+sys/compat/linux/arch/arm/linux_syscall.h	regen
+sys/compat/linux/arch/arm/linux_syscallargs.h	regen
+sys/compat/linux/arch/arm/linux_syscallc.	regen
+sys/compat/linux/arch/arm/linux_sysent.c	regen
+sys/compat/linux/arch/i386/linux_syscall.h	regen
+sys/compat/linux/arch/i386/linux_syscallargs.h	regen
+sys/compat/linux/arch/i386/linux_syscalls.c	regen
+sys/compat/linux/arch/i386/linux_sysent.c	regen
+sys/compat/linux/arch/m68k/linux_syscall.h	regen
+sys/compat/linux/arch/m68k/linux_syscallargs.h	regen
+sys/compat/linux/arch/m68k/linux_syscalls.c	regen
+sys/compat/linux/arch/m68k/linux_sysent.c	regen
+sys/compat/linux/arch/mips/linux_syscall.h	regen
+sys/compat/linux/arch/mips/linux_syscallargs.h	regen
+sys/compat/linux/arch/mips/linux_syscalls.c	regen
+sys/compat/linux/arch/mips/linux_sysent.c	regen
+sys/compat/linux/arch/powerpc/linux_syscall.h	regen
+sys/compat/linux/arch/powerpc/linux_syscallargs.h regen
+sys/compat/linux/arch/powerpc/linux_syscalls.c	regen
+sys/compat/linux/arch/powerpc/linux_sysent.c	regen
+sys/compat/linux32/arch/amd64/linux32_syscall.h	regen
+sys/compat/linux32/arch/amd64/linux32_syscallargs.h regen
+sys/compat/linux32/arch/amd64/linux32_syscalls.c regen
+sys/compat/linux32/arch/amd64/linux32_sysent.c	regen
 
 	Fix nanosleep(2) on 64-bit archs. Do not call native nanosleep
 	syscall, but rather a modified version the will take care of
