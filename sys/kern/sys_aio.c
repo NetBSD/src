@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.16.2.3 2008/11/20 20:45:39 christos Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.16.2.4 2008/11/20 22:21:56 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.16.2.3 2008/11/20 20:45:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.16.2.4 2008/11/20 22:21:56 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -90,7 +90,7 @@ static const struct syscall_package aio_syscalls[] = {
 	{ SYS_aio_fsync, 0, (sy_call_t *)sys_aio_fsync },
 	{ SYS_aio_read, 0, (sy_call_t *)sys_aio_read },
 	{ SYS_aio_return, 0, (sy_call_t *)sys_aio_return },
-	{ SYS_aio_suspend, 0, (sy_call_t *)sys_aio_suspend },
+	{ SYS___aio_suspend50, 0, (sy_call_t *)sys___aio_suspend50 },
 	{ SYS_aio_write, 0, (sy_call_t *)sys_aio_write },
 	{ SYS_lio_listio, 0, (sy_call_t *)sys_lio_listio },
 	{ 0, 0, NULL },
