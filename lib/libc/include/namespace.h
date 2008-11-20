@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.134 2008/10/31 16:12:18 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.135 2008/11/20 23:50:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -446,6 +446,12 @@
 #define pread			_pread
 #define psignal			_psignal
 #define pthread_atfork		_pthread_atfork
+#define ptree_init		ptree_init
+#define ptree_insert_node	ptree_insert_node
+#define ptree_insert_mask_node	ptree_insert_mask_node
+#define ptree_find_filtered_node	ptree_find_filtered_node
+#define ptree_remove_node	ptree_remove_node
+#define ptree_iterate		ptree_iterate
 #define putenv			_putenv
 #define pwcache_groupdb		_pwcache_groupdb
 #define pwcache_userdb		_pwcache_userdb
