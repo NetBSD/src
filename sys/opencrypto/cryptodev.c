@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.44 2008/05/24 16:42:00 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.44.8.1 2008/11/20 03:22:38 snj Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.44 2008/05/24 16:42:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.44.8.1 2008/11/20 03:22:38 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,7 +452,12 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	}
 
 	crp->crp_ilen = cop->len;
-	crp->crp_flags = CRYPTO_F_IOV | (cop->flags & COP_F_BATCH);
+	/* The reqest is flagged as CRYPTO_F_USER as long as it is running
+	 * in the user IOCTL thread.  This flag lets us skip using the retq for
+	 * the request if it completes immediately. If the request ends up being
+	 * delayed or is not completed immediately the flag is removed.
+	 */
+	crp->crp_flags = CRYPTO_F_IOV | (cop->flags & COP_F_BATCH) | CRYPTO_F_USER;
 	crp->crp_buf = (void *)&cse->uio;
 	crp->crp_callback = (int (*) (struct cryptop *)) cryptodev_cb;
 	crp->crp_sid = cse->sid;
@@ -507,6 +512,14 @@ eagain:
 	error = crypto_dispatch(crp);
 	mutex_spin_enter(&crypto_mtx);
 
+	/* 
+	 * If the request was going to be completed by the
+	 * ioctl thread then it would have been done by now.
+	 * Remove the F_USER flag it so crypto_done() is not confused
+	 * if the crypto device calls it after this point.
+	 */
+	crp->crp_flags &= ~(CRYPTO_F_USER);
+
 	switch (error) {
 #ifdef notyet	/* don't loop forever -- but EAGAIN not possible here yet */
 	case EAGAIN:
@@ -521,13 +534,16 @@ eagain:
 		mutex_spin_exit(&crypto_mtx);
 		goto bail;
 	}
-		
+
 	while (!(crp->crp_flags & CRYPTO_F_DONE)) {
 		DPRINTF(("cryptodev_op: sleeping on cv %08x for crp %08x\n", \
 		    (uint32_t)&crp->crp_cv, (uint32_t)crp));
 		cv_wait(&crp->crp_cv, &crypto_mtx);	/* XXX cv_wait_sig? */
 	}
 	if (crp->crp_flags & CRYPTO_F_ONRETQ) {
+		/* XXX this should never happen now with the CRYPTO_F_USER flag
+		 * changes.
+		 */
 		DPRINTF(("cryptodev_op: DONE, not woken by cryptoret.\n"));
 		(void)crypto_ret_q_remove(crp);
 	}
@@ -559,8 +575,9 @@ eagain:
 	}
 
 bail:
-	if (crp)
+	if (crp) {
 		crypto_freereq(crp);
+	}
 	if (cse->uio.uio_iov[0].iov_base)
 		kmem_free(cse->uio.uio_iov[0].iov_base,
 		    cse->uio.uio_iov[0].iov_len);
@@ -771,6 +788,7 @@ fail:
 			kmem_free(kp->crp_p, size);
 		}
 	}
+	cv_destroy(&krp->krp_cv);
 	pool_put(&cryptkop_pool, krp);
 	DPRINTF(("cryptodev_key: error=0x%08x\n", error));
 	return error;
@@ -800,10 +818,10 @@ cryptof_close(struct file *fp)
 static struct csession *
 csefind(struct fcrypt *fcr, u_int ses)
 {
-	struct csession *cse, *ret = NULL;
+	struct csession *cse, *cnext, *ret = NULL;
 
 	KASSERT(mutex_owned(&crypto_mtx));
-	TAILQ_FOREACH(cse, &fcr->csessions, next)
+	TAILQ_FOREACH_SAFE(cse, &fcr->csessions, next, cnext)
 		if (cse->ses == ses)
 			ret = cse;
 	
@@ -814,11 +832,11 @@ csefind(struct fcrypt *fcr, u_int ses)
 static int
 csedelete(struct fcrypt *fcr, struct csession *cse_del)
 {
-	struct csession *cse;
+	struct csession *cse, *cnext;
 	int ret = 0;
 
 	KASSERT(mutex_owned(&crypto_mtx));
-	TAILQ_FOREACH(cse, &fcr->csessions, next) {
+	TAILQ_FOREACH_SAFE(cse, &fcr->csessions, next, cnext) {
 		if (cse == cse_del) {
 			TAILQ_REMOVE(&fcr->csessions, cse, next);
 			ret = 1;
@@ -1274,6 +1292,7 @@ fail:
 						kmem_free(kp->crp_p, size);
 					}
 				}
+				cv_destroy(&krp->krp_cv);
 				pool_put(&cryptkop_pool, krp);
 			}
 		}
@@ -1284,7 +1303,8 @@ fail:
 }
 
 static int
-cryptodev_session(struct fcrypt *fcr, struct session_op *sop) {
+cryptodev_session(struct fcrypt *fcr, struct session_op *sop) 
+{
 	struct cryptoini cria, crie;
 	struct enc_xform *txform = NULL;
 	struct auth_hash *thash = NULL;
@@ -1616,6 +1636,7 @@ fail:
 			}
 		}
 		SLIST_REMOVE_HEAD(&krp_delfree_l, krp_qun.krp_lnext);
+		cv_destroy(&krp->krp_cv);
 		pool_put(&cryptkop_pool, krp);
 	}
 	return completed;	
@@ -1624,15 +1645,15 @@ fail:
 static int
 cryptodev_getstatus (struct fcrypt *fcr, struct crypt_result *crypt_res)
 {
-        struct cryptop *crp = NULL;
-        struct cryptkop *krp = NULL;
+        struct cryptop *crp = NULL, *cnext;
+        struct cryptkop *krp = NULL, *knext;
         struct csession *cse;
         int i, size, req = 0;
 
 	mutex_spin_enter(&crypto_mtx);		
 	/* Here we dont know for which request the user is requesting the 
 	 * response so checking in both the queues */
-	TAILQ_FOREACH(crp, &fcr->crp_ret_mq, crp_next) {
+	TAILQ_FOREACH_SAFE(crp, &fcr->crp_ret_mq, crp_next, cnext) {
 		if(crp && (crp->crp_reqid == crypt_res->reqid)) {
 			cse = (struct csession *)crp->crp_opaque;
 		        crypt_res->opaque = crp->crp_usropaque;
@@ -1671,7 +1692,7 @@ bail:
 		}
 	}
 
-	TAILQ_FOREACH(krp, &fcr->crp_ret_mkq, krp_next) {
+	TAILQ_FOREACH_SAFE(krp, &fcr->crp_ret_mkq, krp_next, knext) {
 		if(krp && (krp->krp_reqid == crypt_res->reqid)) {
 			crypt_res[req].opaque = krp->krp_usropaque;
 			if (krp->krp_status != 0) {
@@ -1712,6 +1733,7 @@ fail:
 					kmem_free(kp->crp_p, size);
 				}
 			}
+			cv_destroy(&krp->krp_cv);
 			pool_put(&cryptkop_pool, krp);
 			return 0;
 		}
