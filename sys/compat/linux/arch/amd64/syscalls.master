@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 2008/10/26 20:25:49 christos Exp $
+	$NetBSD: syscalls.master,v 1.24.4.1 2008/11/20 03:03:05 snj Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -125,8 +125,9 @@
 32	NOARGS		{ int sys_dup(u_int fd); }
 33	NOARGS		{ int sys_dup2(u_int from, u_int to); }
 34	STD		{ int linux_sys_pause(void); }
-35	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
-				struct timespec *rmtp); }
+35	STD		{ int linux_sys_nanosleep( \
+			    const struct linux_timespec *rqtp, \
+			    struct linux_timespec *rmtp); }
 36	NOARGS		{ int sys_getitimer(u_int which, \
 			    struct itimerval *itv); }
 37	STD		{ int linux_sys_alarm(unsigned int secs); }
