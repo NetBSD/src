@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.14 2008/11/18 22:21:48 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.15 2008/11/20 00:17:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.14 2008/11/18 22:21:48 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.15 2008/11/20 00:17:08 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -261,6 +261,51 @@ wapbl_init()
 	malloc_type_attach(M_WAPBL);
 }
 
+static  int
+wapbl_start_flush_inodes(struct wapbl *wl, struct wapbl_replay *wr)
+{
+	int error, i;
+
+	WAPBL_PRINTF(WAPBL_PRINT_REPLAY,
+	    ("wapbl_start: reusing log with %d inodes\n", wr->wr_inodescnt));
+
+	/*
+	 * Its only valid to reuse the replay log if its
+	 * the same as the new log we just opened.
+	 */
+	KDASSERT(!wapbl_replay_isopen(wr));
+	KASSERT(wl->wl_devvp->v_rdev == wr->wr_devvp->v_rdev);
+	KASSERT(wl->wl_logpbn == wr->wr_logpbn);
+	KASSERT(wl->wl_circ_size == wr->wr_circ_size);
+	KASSERT(wl->wl_circ_off == wr->wr_circ_off);
+	KASSERT(wl->wl_log_dev_bshift == wr->wr_log_dev_bshift);
+	KASSERT(wl->wl_fs_dev_bshift == wr->wr_fs_dev_bshift);
+
+	wl->wl_wc_header->wc_generation = wr->wr_generation + 1;
+
+	for (i = 0; i < wr->wr_inodescnt; i++)
+		wapbl_register_inode(wl, wr->wr_inodes[i].wr_inumber,
+		    wr->wr_inodes[i].wr_imode);
+
+	/* Make sure new transaction won't overwrite old inodes list */
+	KDASSERT(wapbl_transaction_len(wl) <= 
+	    wapbl_space_free(wl->wl_circ_size, wr->wr_inodeshead,
+	    wr->wr_inodestail));
+
+	wl->wl_head = wl->wl_tail = wr->wr_inodeshead;
+	wl->wl_reclaimable_bytes = wl->wl_reserved_bytes =
+	    wapbl_transaction_len(wl);
+
+	error = wapbl_write_inodes(wl, &wl->wl_head);
+	if (error)
+		return error;
+
+	KASSERT(wl->wl_head != wl->wl_tail);
+	KASSERT(wl->wl_head != 0);
+
+	return 0;
+}
+
 int
 wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	daddr_t off, size_t count, size_t blksize, struct wapbl_replay *wr,
@@ -411,45 +456,9 @@ wapbl_start(struct wapbl ** wlp, struct mount *mp, struct vnode *vp,
 	 * log.
 	 */
 	if (wr && wr->wr_inodescnt) {
-		int i;
-
-		WAPBL_PRINTF(WAPBL_PRINT_REPLAY,
-		    ("wapbl_start: reusing log with %d inodes\n",
-		    wr->wr_inodescnt));
-
-		/*
-		 * Its only valid to reuse the replay log if its
-		 * the same as the new log we just opened.
-		 */
-		KDASSERT(!wapbl_replay_isopen(wr));
-		KASSERT(devvp->v_rdev == wr->wr_devvp->v_rdev);
-		KASSERT(logpbn == wr->wr_logpbn);
-		KASSERT(wl->wl_circ_size == wr->wr_circ_size);
-		KASSERT(wl->wl_circ_off == wr->wr_circ_off);
-		KASSERT(wl->wl_log_dev_bshift == wr->wr_log_dev_bshift);
-		KASSERT(wl->wl_fs_dev_bshift == wr->wr_fs_dev_bshift);
-
-		wl->wl_wc_header->wc_generation = wr->wr_generation + 1;
-
-		for (i = 0; i < wr->wr_inodescnt; i++)
-			wapbl_register_inode(wl, wr->wr_inodes[i].wr_inumber,
-			    wr->wr_inodes[i].wr_imode);
-
-		/* Make sure new transaction won't overwrite old inodes list */
-		KDASSERT(wapbl_transaction_len(wl) <= 
-		    wapbl_space_free(wl->wl_circ_size, wr->wr_inodeshead,
-		      wr->wr_inodestail));
-
-		wl->wl_head = wl->wl_tail = wr->wr_inodeshead;
-		wl->wl_reclaimable_bytes = wl->wl_reserved_bytes =
-			wapbl_transaction_len(wl);
-
-		error = wapbl_write_inodes(wl, &wl->wl_head);
+		error = wapbl_start_flush_inodes(wl, wr);
 		if (error)
 			goto errout;
-
-		KASSERT(wl->wl_head != wl->wl_tail);
-		KASSERT(wl->wl_head != 0);
 	}
 
 	error = wapbl_write_commit(wl, wl->wl_head, wl->wl_tail);
