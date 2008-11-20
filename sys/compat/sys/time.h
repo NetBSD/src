@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.1.2.2 2008/11/08 21:16:56 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.1.2.3 2008/11/20 20:48:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -42,7 +42,7 @@
  * and used in other calls.
  */
 struct timeval50 {
-	int32_t tv_sec;		/* seconds */
+	long	tv_sec;		/* seconds */
 	long	tv_usec;	/* and microseconds */
 };
 
