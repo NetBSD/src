@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.16 2008/10/18 16:35:40 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.16.4.1 2008/11/20 03:16:06 snj Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.16 2008/10/18 16:35:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.16.4.1 2008/11/20 03:16:06 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,17 +139,12 @@ static int
 thinkpad_match(device_t parent, struct cfdata *match, void *opaque)
 {
 	struct acpi_attach_args *aa = (struct acpi_attach_args *)opaque;
-	ACPI_HANDLE hdl;
 	ACPI_INTEGER ver;
 
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
 
 	if (!acpi_match_hid(aa->aa_node->ad_devinfo, thinkpad_ids))
-		return 0;
-
-	/* No point in attaching if we can't find the CMOS method */
-	if (ACPI_FAILURE(AcpiGetHandle(NULL, "\\UCMS", &hdl)))
 		return 0;
 
 	/* We only support hotkey version 0x0100 */
