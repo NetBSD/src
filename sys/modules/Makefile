@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.15 2008/11/19 18:36:07 ad Exp $
+#	$NetBSD: Makefile,v 1.16 2008/11/20 09:58:45 ad Exp $
 
 # For all platforms
 
-SUBDIR=		accf_data
-SUBDIR+=	accf_http
+SUBDIR=		accf_dataready
+SUBDIR+=	accf_httpready
 SUBDIR+=	adosfs
 SUBDIR+=	aio
 SUBDIR+=	cd9660

@@ -1,4 +1,4 @@
-/*	$NetBSD: accf_data.c,v 1.3 2008/11/12 12:36:28 ad Exp $	*/
+/*	$NetBSD: accf_data.c,v 1.4 2008/11/20 09:58:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Alfred Perlstein <alfred@FreeBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_data.c,v 1.3 2008/11/12 12:36:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_data.c,v 1.4 2008/11/20 09:58:45 ad Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: accf_data.c,v 1.3 2008/11/12 12:36:28 ad Exp $");
 
 #include <netinet/accept_filter.h>
 
-MODULE(MODULE_CLASS_MISC, accf_data, NULL);
+MODULE(MODULE_CLASS_MISC, accf_dataready, NULL);
 
 /* accept filter that holds a socket until data arrives */
 
