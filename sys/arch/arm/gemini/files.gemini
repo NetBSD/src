@@ -1,4 +1,4 @@
-#	$NetBSD: files.gemini,v 1.5 2008/11/13 07:21:59 cliff Exp $
+#	$NetBSD: files.gemini,v 1.6 2008/11/20 08:02:48 cliff Exp $
 #
 # Configuration info for GEMINI CPU support
 # Based on omap/files.omap2
@@ -42,7 +42,10 @@ device	geminiicu: pic
 attach	geminiicu at obio with geminiicu
 file	arch/arm/gemini/gemini_icu.c		geminiicu needs-flag
 
-
+# Gemini inter-processor-interrupts
+device geminiipi
+attach geminiipi at obio
+file arch/arm/gemini/gemini_ipi.c		geminiipi needs-flag
 
 # GEMINI GPIO controllers
 

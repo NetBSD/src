@@ -196,6 +196,9 @@ geminitmr2	at obio? addr 0x43000000 size 0x3c intr 16
 options GEMINI_TIMER_CLOCK_FREQ=25000000	# 25 MHz
 
 
+# Gemini Inter-processor-interrupt (IPI)
+geminiipi0	at obio? intr 0
+
 # On-board GPIO controllers
 
 
