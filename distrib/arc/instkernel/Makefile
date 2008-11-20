@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2008/02/02 13:47:04 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.11 2008/11/20 13:57:09 tsutsui Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -8,10 +8,6 @@ RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
 MDSETTARGETS=		RAMDISK ${RAMDISK} -
 MDSET_RELEASEDIR=	binary/kernel
-
-# do not strip kernels, there's no space constraints here.
-MDSET_NOSTRIP.netbsd-RAMDISK=
-MDSET_NOSYMBOLS.netbsd-RAMDISK=
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
