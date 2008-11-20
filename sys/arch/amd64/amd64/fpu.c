@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.26.6.2 2008/11/17 18:53:53 snj Exp $	*/
+/*	$NetBSD: fpu.c,v 1.26.6.3 2008/11/20 03:45:28 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26.6.2 2008/11/17 18:53:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26.6.3 2008/11/20 03:45:28 snj Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -394,13 +394,13 @@ fpusave_lwp(struct lwp *l, bool save)
 		oci = l->l_addr->u_pcb.pcb_fpcpu;
 		if (oci == NULL) {
 			splx(s);
-			return;
+			break;
 		}
 		if (oci == curcpu()) {
 			KASSERT(oci->ci_fpcurlwp == l);
 			fpusave_cpu(save);
 			splx(s);
-			return;
+			break;
 		}
 		splx(s);
 		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
@@ -412,5 +412,10 @@ fpusave_lwp(struct lwp *l, bool save)
 		if (spins > 100000000) {
 			panic("fpusave_lwp: did not");
 		}
+	}
+
+	if (!save) {
+		/* Ensure we restart with a clean slate. */
+	 	l->l_md.md_flags &= ~MDP_USEDFPU;
 	}
 }
