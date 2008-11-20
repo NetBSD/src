@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_accf.c,v 1.7 2008/11/12 12:36:16 ad Exp $	*/
+/*	$NetBSD: uipc_accf.c,v 1.8 2008/11/20 10:00:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.7 2008/11/12 12:36:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.8 2008/11/20 10:00:54 ad Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_accf.c,v 1.7 2008/11/12 12:36:16 ad Exp $");
 #include <sys/queue.h>
 #include <sys/once.h>
 #include <sys/atomic.h>
+#include <sys/module.h>
 
 static krwlock_t accept_filter_lock;
 
@@ -146,15 +147,29 @@ struct accept_filter *
 accept_filt_get(char *name)
 {
 	struct accept_filter *p;
+	char buf[32];
+	u_int gen;
 
-	rw_enter(&accept_filter_lock, RW_READER);
-	LIST_FOREACH(p, &accept_filtlsthd, accf_next) {
-		if (strcmp(p->accf_name, name) == 0) {
-			atomic_inc_uint(&p->accf_refcnt);
+	do {
+		rw_enter(&accept_filter_lock, RW_READER);
+		LIST_FOREACH(p, &accept_filtlsthd, accf_next) {
+			if (strcmp(p->accf_name, name) == 0) {
+				atomic_inc_uint(&p->accf_refcnt);
+				break;
+			}
+		}
+		rw_exit(&accept_filter_lock);
+		if (p != NULL) {
 			break;
 		}
-	}
-	rw_exit(&accept_filter_lock);
+		/* Try to autoload a module to satisfy the request. */
+		strcpy(buf, "accf_");
+		strlcat(buf, name, sizeof(buf));
+		mutex_enter(&module_lock);
+		gen = module_gen;
+		(void)module_autoload(buf, MODULE_CLASS_ANY);
+		mutex_exit(&module_lock);
+	} while (gen != module_gen);
 
 	return p;
 }
