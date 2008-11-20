@@ -1,4 +1,4 @@
-/*	$NetBSD: accf_data.c,v 1.4 2008/11/20 09:58:45 ad Exp $	*/
+/*	$NetBSD: accf_data.c,v 1.5 2008/11/20 10:22:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Alfred Perlstein <alfred@FreeBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_data.c,v 1.4 2008/11/20 09:58:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_data.c,v 1.5 2008/11/20 10:22:11 ad Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -61,7 +61,7 @@ accf_dataattach(int junk)
 }
 
 static int
-accf_data_modcmd(modcmd_t cmd, void *arg)
+accf_dataready_modcmd(modcmd_t cmd, void *arg)
 {
 
 	switch (cmd) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: accf_http.c,v 1.4 2008/11/20 09:58:45 ad Exp $	*/
+/*	$NetBSD: accf_http.c,v 1.5 2008/11/20 10:22:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Paycounter, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.4 2008/11/20 09:58:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.5 2008/11/20 10:22:11 ad Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -82,7 +82,7 @@ accf_httpattach(int junk)
 }
 
 static int
-accf_http_modcmd(modcmd_t cmd, void *arg)
+accf_httpready_modcmd(modcmd_t cmd, void *arg)
 {
 	static struct sysctllog *clog;
 	int error;
