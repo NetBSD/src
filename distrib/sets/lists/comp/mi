@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1208 2008/11/19 14:10:48 pooka Exp $
+#	$NetBSD: mi,v 1.1209 2008/11/20 23:50:09 matt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1995,6 +1995,7 @@
 ./usr/include/sys/protosw.h			comp-c-include
 ./usr/include/sys/pset.h			comp-c-include
 ./usr/include/sys/ptrace.h			comp-c-include
+./usr/include/sys/ptree.h			comp-c-include
 ./usr/include/sys/queue.h			comp-c-include
 ./usr/include/sys/radioio.h			comp-c-include
 ./usr/include/sys/ras.h				comp-c-include
