@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_mod.c,v 1.1 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: ultrix_mod.c,v 1.2 2008/11/20 00:28:07 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,13 +34,13 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_mod.c,v 1.1 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_mod.c,v 1.2 2008/11/20 00:28:07 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/exec_coff.h>
+#include <sys/exec_ecoff.h>
 #include <sys/signalvar.h>
 
 #include <compat/ultrix/ultrix_exec.h>
