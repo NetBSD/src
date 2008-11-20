@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_wdt.c,v 1.4 2008/11/08 09:37:13 cliff Exp $	*/
+/*	$NetBSD: obio_wdt.c,v 1.5 2008/11/20 20:23:05 cliff Exp $	*/
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -36,7 +36,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.4 2008/11/08 09:37:13 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.5 2008/11/20 20:23:05 cliff Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio_wdt.c,v 1.4 2008/11/08 09:37:13 cliff Exp $");
 static int geminiwdt_match(struct device *, struct cfdata *, void *);
 static void geminiwdt_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(obiowdt, sizeof(struct geminiwdt_softc),
+CFATTACH_DECL_NEW(obiowdt, sizeof(struct geminiwdt_softc),
     geminiwdt_match, geminiwdt_attach, NULL, NULL);
 
 static int
@@ -80,12 +80,13 @@ geminiwdt_attach(struct device *parent, struct device *self, void *aux)
 	geminiwdt_softc_t *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
 
+	sc->sc_dev = self;
 	sc->sc_addr = obio->obio_addr;
 	sc->sc_size = (obio->obio_size == OBIOCF_SIZE_DEFAULT)
 		? GEMINI_WDT_WDINTERLEN + 4
 		: obio->obio_size;
 
-	sc->sc_smw.smw_name = device_xname(&sc->sc_dev);
+	sc->sc_smw.smw_name = device_xname(sc->sc_dev);
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = geminiwdt_setmode;
 	sc->sc_smw.smw_tickle = geminiwdt_tickle;
@@ -103,7 +104,7 @@ geminiwdt_attach(struct device *parent, struct device *self, void *aux)
 	if (sysmon_wdog_register(&sc->sc_smw) != 0) {
 		geminiwdt_sc = NULL;
 		aprint_error("%s: unable to register with sysmon\n",
-			     device_xname(&sc->sc_dev));
+			     device_xname(sc->sc_dev));
 	}
 
 	aprint_normal("\n");
