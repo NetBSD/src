@@ -1,10 +1,44 @@
-# $NetBSD: Makefile.cdrom,v 1.5 2008/05/02 23:13:05 ad Exp $
+# $NetBSD: Makefile.cdrom,v 1.6 2008/11/21 15:49:51 ad Exp $
 
 .include <bsd.own.mk>
 
-KMODOBJDIR!=    cd ${.CURDIR}/../../kmod && ${PRINTOBJDIR}
+# Need multidot for the boot loader to read kernel modules as it doesn't
+# understand rockridge.
+CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot
+CDINSTKERNEL=	../../instkernel
+CDKERNELS=	netbsd-GENERIC.gz       netbsd
+CDRELEASE_NOISOS=	true
 
-CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot
-CDBUILDEXTRA+=	${KMODOBJDIR}/miniroot.kmod
-CDINSTKERNEL=	../../instkernel                                                                                                                                               
-CDKERNELS=	netbsd-GENERIC.gz       netbsd 
+CDRUNTIME+=	./bin
+CDRUNTIME+=	./dev/MAKEDEV
+CDRUNTIME+=	./etc
+CDRUNTIME+=	./lib
+CDRUNTIME+=	./libexec
+CDRUNTIME+=	./mnt
+CDRUNTIME+=	./sbin
+CDRUNTIME+=	./stand
+CDRUNTIME+=	./tmp
+CDRUNTIME+=	./usr/bin/ftp
+CDRUNTIME+=	./usr/bin/gzip
+CDRUNTIME+=	./usr/bin/less
+CDRUNTIME+=	./usr/bin/more
+CDRUNTIME+=	./usr/bin/netstat
+CDRUNTIME+=	./usr/bin/progress
+CDRUNTIME+=	./usr/bin/sed
+CDRUNTIME+=	./usr/bin/tip
+CDRUNTIME+=	./usr/bin/vmstat
+CDRUNTIME+=	./usr/lib/libbz2.so*
+CDRUNTIME+=	./usr/lib/libc.so*
+CDRUNTIME+=	./usr/lib/libcurses.so*
+CDRUNTIME+=	./usr/lib/libedit.so*
+CDRUNTIME+=	./usr/lib/libkvm.so*
+CDRUNTIME+=	./usr/lib/libtermcap.so*
+CDRUNTIME+=	./usr/lib/libutil.so*
+CDRUNTIME+=	./usr/lib/libz.so*
+CDRUNTIME+=	./usr/libexec/ld.elf_so
+CDRUNTIME+=	./usr/mdec
+CDRUNTIME+=	./usr/sbin/chown
+CDRUNTIME+=	./usr/sbin/chroot
+CDRUNTIME+=	./usr/sbin/installboot
+CDRUNTIME+=	./usr/sbin/wiconfig
+CDRUNTIME+=	./usr/share/misc/termcap
