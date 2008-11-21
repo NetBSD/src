@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.13 2008/11/21 06:07:23 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.14 2008/11/21 06:10:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -605,7 +605,7 @@ ukfs_modload(const char *fname)
 
 	thesym = dlsym(handle, "__start_link_set_modules");
 	if (thesym) {
-		error = rump_vfs_load(thesym);
+		error = rump_module_load(thesym);
 		if (error)
 			goto errclose;
 		return 1;
