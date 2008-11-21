@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.53 2008/09/12 16:51:55 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.54 2008/11/21 20:14:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.53 2008/09/12 16:51:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.54 2008/11/21 20:14:20 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -621,14 +621,34 @@ cgd_ioctl_clr(struct cgd_softc *cs, void *data, struct lwp *l)
 }
 
 static int
+getsize(struct lwp *l, struct vnode *vp, size_t *size)
+{
+	struct partinfo dpart;
+	struct dkwedge_info dkw;
+	int ret;
+
+	if ((ret = VOP_IOCTL(vp, DIOCGWEDGEINFO, &dkw, FREAD,
+	    l->l_cred)) == 0) {
+		*size = dkw.dkw_size;
+		return 0;
+	}
+
+	if ((ret = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred)) == 0) {
+		*size = dpart.part->p_size;
+		return 0;
+	}
+
+	return ret;
+}
+
+
+static int
 cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	struct lwp *l)
 {
 	struct	dk_geom *pdg;
-	struct	partinfo dpart;
 	struct	vattr va;
 	size_t	size;
-	int	maxsecsize = 0;
 	int	ret;
 	char	*tmppath;
 
@@ -648,14 +668,8 @@ cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 
 	cs->sc_tdev = va.va_rdev;
 
-	ret = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, l->l_cred);
-	if (ret)
+	if ((ret = getsize(l, vp, &size)) != 0)
 		goto bail;
-
-	maxsecsize =
-	    ((dpart.disklab->d_secsize > maxsecsize) ?
-	    dpart.disklab->d_secsize : maxsecsize);
-	size = dpart.part->p_size;
 
 	if (!size) {
 		ret = ENODEV;
