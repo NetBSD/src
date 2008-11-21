@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.119 2008/11/06 15:30:23 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.120 2008/11/21 15:31:20 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,6 +46,7 @@
 #include <unistd.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #ifdef INET6
 #include <sys/sysctl.h>
 #endif
@@ -1007,9 +1008,17 @@ get_via_ftp(const char *xfer_type)
 int
 get_via_nfs(void)
 {
+	struct statvfs sb;
 
 	if (do_config_network() != 0)
 		return SET_RETRY;
+
+	/* If root is on NFS and we have sets, skip this step. */
+	if (statvfs(set_dir, &sb) == 0 &&
+	    strcmp(sb.f_fstypename, "nfs") == 0) {
+	    	strlcpy(ext_dir, set_dir, sizeof ext_dir);
+		return SET_OK;
+	}
 
 	/* Get server and filepath */
 	process_menu(MENU_nfssource, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.152 2008/11/06 15:30:23 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.153 2008/11/21 15:31:20 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,6 +45,7 @@
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <curses.h>
 #include <errno.h>
 #include <dirent.h>
@@ -318,6 +319,14 @@ get_via_floppy(void)
 int
 get_via_cdrom(void)
 {
+	struct statvfs sb;
+
+	/* If root is a CD-ROM and we have sets, skip this step. */
+	if (statvfs(set_dir, &sb) == 0 &&
+	    strcmp(sb.f_fstypename, "cd9660") == 0) {
+	    	strlcpy(ext_dir, set_dir, sizeof ext_dir);
+		return SET_OK;
+	}
 
 	/* Get CD-rom device name and path within CD-rom */
 	process_menu(MENU_cdromsource, NULL);
