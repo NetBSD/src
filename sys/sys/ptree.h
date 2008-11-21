@@ -1,4 +1,4 @@
-/* $NetBSD: ptree.h,v 1.1 2008/11/20 23:50:08 matt Exp $ */
+/* $NetBSD: ptree.h,v 1.2 2008/11/21 01:58:41 matt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 
 typedef enum {
 	PT_DESCENDING=-1,
-	PT_ASCENDING=1,
+	PT_ASCENDING=1
 } pt_direction_t;
 
 typedef unsigned int pt_slot_t;
