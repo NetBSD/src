@@ -1,4 +1,4 @@
-/* $NetBSD: ptree.c,v 1.1 2008/11/20 23:50:08 matt Exp $ */
+/* $NetBSD: ptree.c,v 1.2 2008/11/21 01:58:41 matt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
-__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.1 2008/11/20 23:50:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.2 2008/11/21 01:58:41 matt Exp $");
 #else
 #include <stddef.h>
 #include <stdint.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptree.c,v 1.1 2008/11/20 23:50:08 matt Exp $");
 #else
 #define	KASSERT(e)	do { } while (/*CONSTCOND*/ 0)
 #endif
-__RCSID("$NetBSD: ptree.c,v 1.1 2008/11/20 23:50:08 matt Exp $");
+__RCSID("$NetBSD: ptree.c,v 1.2 2008/11/21 01:58:41 matt Exp $");
 #endif /* _KERNEL || _STANDALONE */
 
 #ifdef _LIBC
@@ -114,7 +114,7 @@ bool ptree_check(const pt_tree_t *);
 #if PTCHECK > 1
 #define	PTREE_CHECK(pt)		ptree_check(pt)
 #else
-#define	PTREE_CHECK(pt)		(void) 0
+#define	PTREE_CHECK(pt)		do { } while (/*CONSTCOND*/ 0)
 #endif
 
 static inline bool
@@ -189,6 +189,7 @@ typedef bool (*pt_insertfunc_t)(pt_tree_t *, pt_node_t *, pt_insertdata_t *);
  * Move a branch identify from src to dst.  The leaves don't care since 
  * nothing for them has changed.
  */
+/*ARGSUSED*/
 static uintptr_t
 ptree_move_branch(pt_tree_t * const pt, pt_node_t * const dst,
 	const pt_node_t * const src)
@@ -285,6 +286,7 @@ ptree_insert_leaf_after_mask(pt_tree_t * const pt, pt_node_t * const target,
 	return true;
 }
 
+/*ARGSUSED*/
 static bool
 ptree_insert_mask_before_node(pt_tree_t * const pt, pt_node_t * const target,
 	pt_insertdata_t * const id)
@@ -319,6 +321,7 @@ ptree_insert_mask_before_node(pt_tree_t * const pt, pt_node_t * const target,
 }
 #endif /* !PTNOMASK */
 
+/*ARGSUSED*/
 static bool
 ptree_insert_branch_at_node(pt_tree_t * const pt, pt_node_t * const target,
 	pt_insertdata_t * const id)
@@ -1173,6 +1176,7 @@ ptree_check_branch(const pt_tree_t *pt, const pt_node_t *parent,
 }
 #endif /* PTCHECK */
 
+/*ARGSUSED*/
 bool
 ptree_check(const pt_tree_t *pt)
 {
