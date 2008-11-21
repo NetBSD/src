@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.h,v 1.4 2008/11/19 06:26:27 matt Exp $ */
+/*	$NetBSD: omap_intr.h,v 1.5 2008/11/21 17:13:07 matt Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -184,8 +184,8 @@ void	_setsoftintr(int);
 void omap_irq_handler(void *);
 void *omap_intr_establish(int, int, const char *, int (*)(void *), void *);
 void omap_intr_disestablish(void *);
-int omapintc_match(struct device *, struct cfdata *, void *);
-void omapintc_attach(struct device *, struct device *, void *);
+int omapintc_match(device_t, cfdata_t, void *);
+void omapintc_attach(device_t, device_t, void *);
 
 #endif /* ! _LOCORE */
 
