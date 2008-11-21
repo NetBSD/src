@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.3 2008/11/19 14:10:49 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.4 2008/11/21 06:09:52 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -64,6 +64,7 @@ struct modinfo;
  */
 #define RUMP_VERSION	01
 #define rump_init()	_rump_init(RUMP_VERSION)
+int	rump_module_load(struct modinfo **);
 
 int		_rump_init(int);
 struct mount	*rump_mnt_init(struct vfsops *, int);
@@ -125,7 +126,6 @@ int	rump_vfs_sync(struct mount *, int, kauth_cred_t);
 int	rump_vfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	rump_vfs_vptofh(struct vnode *, struct fid *, size_t *);
 void	rump_vfs_syncwait(struct mount *);
-int	rump_vfs_load(struct modinfo **);
 
 void	rump_bioops_sync(void);
 

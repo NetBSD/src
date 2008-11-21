@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.75 2008/11/19 14:10:49 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.76 2008/11/21 06:09:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -399,6 +399,16 @@ rump_nextlid()
 	} while (lwpid == 0);
 
 	return (lwpid_t)lwpid;
+}
+
+int
+rump_module_load(struct modinfo **mi)
+{
+
+	if (!module_compatible((*mi)->mi_version, __NetBSD_Version__))
+		return EPROGMISMATCH;
+
+	return (*mi)->mi_modcmd(MODULE_CMD_INIT, NULL);
 }
 
 int _syspuffs_stub(int, int *);
