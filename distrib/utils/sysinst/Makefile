@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/03/31 23:55:29 chris Exp $
+#	$NetBSD: Makefile,v 1.12 2008/11/21 15:39:29 ad Exp $
 #
 # sysinst is usually built when the crunched install binary is built,
 # but can be built here as a normal program for testing.
@@ -42,5 +42,6 @@ SUBDIR += arch/zaurus
 # XXX notyet SUBDIR += arch/iyonix
 .endif
 
+install:
 
 .include <bsd.subdir.mk>
