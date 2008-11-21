@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/11/19 18:36:08 ad Exp $
+#	$NetBSD: Makefile,v 1.2 2008/11/21 10:04:58 ad Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -14,7 +14,7 @@ SRCS+=	linux32_ioctl.c linux32_ipccall.c linux32_misc.c linux32_mman.c
 SRCS+=	linux32_mod.c linux32_resource.c linux32_sched.c linux32_signal.c
 SRCS+=	linux32_socket.c linux32_socketcall.c linux32_stat.c linux32_sysctl.c
 SRCS+=	linux32_sysinfo.c linux32_termios.c linux32_time.c linux32_uid16.c
-SRCS+=	linux32_unistd.c linux32_utsname.c linux32_wait.c linux_mod.c
+SRCS+=	linux32_unistd.c linux32_utsname.c linux32_wait.c
 
 .if ${MACHINE} == "amd64"
 CPPFLAGS+=	-DEXEC_ELF32
