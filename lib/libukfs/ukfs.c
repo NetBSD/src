@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.12 2008/11/17 13:22:15 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.13 2008/11/21 06:07:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008  Antti Kantee.  All Rights Reserved.
@@ -581,9 +581,10 @@ ukfs_modload(const char *fname)
 
 	handle = dlopen(fname, RTLD_GLOBAL);
 	if (handle == NULL) {
-		if (strstr(dlerror(), "Undefined symbol"))
+		const char *dlmsg = dlerror();
+		if (strstr(dlmsg, "Undefined symbol"))
 			return 0;
-		warnx("dlopen %s failed: %s\n", fname, dlerror());
+		warnx("dlopen %s failed: %s\n", fname, dlmsg);
 		/* XXXerrno */
 		return -1;
 	}
