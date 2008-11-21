@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mod.c,v 1.1 2008/11/19 18:36:03 ad Exp $	*/
+/*	$NetBSD: irix_mod.c,v 1.2 2008/11/21 20:53:28 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mod.c,v 1.1 2008/11/19 18:36:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mod.c,v 1.2 2008/11/21 20:53:28 cegger Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE ARCH_ELFSIZE
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_mod.c,v 1.1 2008/11/19 18:36:03 ad Exp $");
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 
-#include <compat/irix/irix_util.h>
+#include <compat/irix/irix_sysctl.h>
 #include <compat/irix/irix_exec.h>
 
 #if defined(EXEC_ELF32)
