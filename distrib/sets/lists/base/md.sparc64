@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.27 2008/11/19 14:10:48 pooka Exp $
+# $NetBSD: md.sparc64,v 1.28 2008/11/21 13:35:23 jnemeth Exp $
 ./sbin/edlabel					base-sysutil-root
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/sparc					base-compat-lib		compat
@@ -62,7 +62,7 @@
 ./usr/lib/sparc/libbz2.so.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libbz2.so.1.1			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libc.so.12			base-compat-shlib	compat,pic
-./usr/lib/sparc/libc.so.12.163			base-compat-shlib	compat,pic
+./usr/lib/sparc/libc.so.12.164			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcom_err.so.5			base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcom_err.so.5.0		base-compat-shlib	compat,pic
 ./usr/lib/sparc/libcrypt.so.0			base-compat-shlib	compat,pic
