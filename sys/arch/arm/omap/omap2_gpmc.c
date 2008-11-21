@@ -1,7 +1,7 @@
-/*	$Id: omap2_gpmc.c,v 1.4 2008/08/27 11:03:10 matt Exp $	*/
+/*	$Id: omap2_gpmc.c,v 1.5 2008/11/21 17:13:07 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_gpmc.c,v 1.4 2008/08/27 11:03:10 matt Exp $ */
+/*	$NetBSD: omap2_gpmc.c,v 1.5 2008/11/21 17:13:07 matt Exp $ */
 
 
 /*
@@ -102,7 +102,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.4 2008/08/27 11:03:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpmc.c,v 1.5 2008/11/21 17:13:07 matt Exp $");
 
 #include "locators.h"
 
@@ -129,7 +129,7 @@ typedef struct {
 } gpmc_csconfig_t;
 
 struct gpmc_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_dma_tag_t		sc_dmac;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -150,21 +150,20 @@ static bus_size_t csreg7[GPMC_NCS] = {
 
 
 /* prototypes */
-static int	gpmc_match(struct device *, struct cfdata *, void *);
-static void	gpmc_attach(struct device *, struct device *, void *);
+static int	gpmc_match(device_t, cfdata_t, void *);
+static void	gpmc_attach(device_t, device_t, void *);
 static void	gpmc_csconfig_init(struct gpmc_softc *);
-static int 	gpmc_search(struct device *, struct cfdata *,
-			     const int *, void *);
+static int 	gpmc_search(device_t, cfdata_t, const int *, void *);
 static int	gpmc_print(void *, const char *);
 
 /* attach structures */
-CFATTACH_DECL(gpmc, sizeof(struct gpmc_softc),
+CFATTACH_DECL_NEW(gpmc, sizeof(struct gpmc_softc),
 	gpmc_match, gpmc_attach, NULL, NULL);
 
 static int gpmc_attached;	/* XXX assumes only 1 instance */
 
 static int
-gpmc_match(struct device *parent, struct cfdata *match, void *aux)
+gpmc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *mb = aux;
 
@@ -180,21 +179,21 @@ gpmc_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-gpmc_attach(struct device *parent, struct device *self, void *aux)
+gpmc_attach(device_t parent, device_t self, void *aux)
 {
-	struct gpmc_softc *sc = (struct gpmc_softc *)self;
+	struct gpmc_softc *sc = device_private(self);
 	struct mainbus_attach_args *mb = aux;
 	bus_space_handle_t ioh;
 	uint32_t rev;
 	int err;
 
+	sc->sc_dev = self;
 	sc->sc_iot = &omap_bs_tag;
 
-	err = bus_space_map(sc->sc_iot, mb->mb_iobase,
-		GPMC_SIZE, 0, &ioh);
+	err = bus_space_map(sc->sc_iot, mb->mb_iobase, GPMC_SIZE, 0, &ioh);
 	if (err != 0)
 		panic("%s: Cannot map registers, error %d",
-			self->dv_xname, err);
+			device_xname(self), err);
 
 	aprint_normal(": General Purpose Memory Controller");
 
@@ -235,7 +234,7 @@ gpmc_csconfig_init(struct gpmc_softc *sc)
 			cs->cs_size = omap_gpmc_config7_size(r);
 			aprint_normal("%s: CS#%d valid, "
 				"addr 0x%08lx, size %3ldMB\n",
-				sc->sc_dev.dv_xname, i,
+				device_xname(sc->sc_dev), i,
 				cs->cs_addr, (cs->cs_size >> 20));
 		}
 		cs++;
@@ -243,10 +242,9 @@ gpmc_csconfig_init(struct gpmc_softc *sc)
 }
 
 static int
-gpmc_search(struct device *parent, struct cfdata *cf,
-	     const int *ldesc, void *aux)
+gpmc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct gpmc_softc *sc = (struct gpmc_softc *)parent;
+	struct gpmc_softc *sc = device_private(parent);
 	struct gpmc_attach_args aa;
 	gpmc_csconfig_t *cs;
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_gpio.c,v 1.6 2008/11/19 06:26:27 matt Exp $	*/
+/*	$NetBSD: omap2_gpio.c,v 1.7 2008/11/21 17:13:07 matt Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.6 2008/11/19 06:26:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.7 2008/11/21 17:13:07 matt Exp $");
 
 #define _INTR_PRIVATE
 
@@ -72,7 +72,7 @@ const struct pic_ops gpio_pic_ops = {
 };
 
 struct gpio_softc {
-	struct device gpio_dev;
+	device_t gpio_dev;
 	struct pic_softc gpio_pic;
 	struct intrsource *gpio_is;
 	bus_space_tag_t gpio_memt;
@@ -226,7 +226,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 static int gpio_match(device_t, cfdata_t, void *);
 static void gpio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(omap2gpio,
+CFATTACH_DECL_NEW(omap2gpio,
 	sizeof(struct gpio_softc),
 	gpio_match, gpio_attach,
 	NULL, NULL);
@@ -358,6 +358,8 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	struct obio_attach_args * const oa = aux;
 	struct gpio_softc * const gpio = device_private(self);
 	int error;
+
+	gpio->gpio_dev = self;
 
 	if (oa->obio_intr == OBIOCF_INTR_DEFAULT)
 		panic("\n%s: no intr assigned", device_xname(self));

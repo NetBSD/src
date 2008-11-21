@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_mputmr.c,v 1.3 2008/01/20 16:28:23 joerg Exp $	*/
+/*	$NetBSD: omap_mputmr.c,v 1.4 2008/11/21 17:13:07 matt Exp $	*/
 
 /*
  * Based on i80321_timer.c and arch/arm/sa11x0/sa11x0_ost.c
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.3 2008/01/20 16:28:23 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.4 2008/11/21 17:13:07 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,8 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.3 2008/01/20 16:28:23 joerg Exp $"
 
 #include "opt_omap.h"
 
-static int	omapmputmr_match(struct device *, struct cfdata *, void *);
-static void	omapmputmr_attach(struct device *, struct device *, void *);
+static int	omapmputmr_match(device_t, cfdata_t, void *);
+static void	omapmputmr_attach(device_t, device_t, void *);
 
 static int	clockintr(void *);
 static int	statintr(void *);
@@ -108,7 +108,7 @@ typedef struct timer_factors {
 static void	calc_timer_factors(int, timer_factors*);
 
 struct omapmputmr_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	int			sc_intr;
@@ -143,7 +143,7 @@ CFATTACH_DECL(omapmputmr, sizeof(struct omapmputmr_softc),
     omapmputmr_match, omapmputmr_attach, NULL, NULL);
 
 static int
-omapmputmr_match(struct device *parent, struct cfdata *match, void *aux)
+omapmputmr_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct tipb_attach_args *tipb = aux;
 
@@ -158,9 +158,9 @@ omapmputmr_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-omapmputmr_attach(struct device *parent, struct device *self, void *aux)
+omapmputmr_attach(device_t parent, device_t self, void *aux)
 {
-	struct omapmputmr_softc *sc = (struct omapmputmr_softc*)self;
+	struct omapmputmr_softc *sc = device_private(self);
 	struct tipb_attach_args *tipb = aux;
 	int ints_per_sec;
 
@@ -169,9 +169,9 @@ omapmputmr_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(tipb->tipb_iot, tipb->tipb_addr, tipb->tipb_size, 0,
 			 &sc->sc_ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 
-	switch (self->dv_unit) {
+	switch (device_unit(self)) {
 	case 0:
 		clock_sc = sc;
 		ints_per_sec = hz;
@@ -199,7 +199,7 @@ omapmputmr_attach(struct device *parent, struct device *self, void *aux)
 	timer_factors tf;
 	calc_timer_factors(ints_per_sec, &tf);
 
-	switch (self->dv_unit) {
+	switch (device_unit(self)) {
 	case 0:
 		counts_per_hz = tf.reload + 1;
 		counts_per_usec = tf.counts_per_usec;
@@ -345,9 +345,9 @@ cpu_initclocks(void)
 	 */
 
 	omap_intr_establish(clock_sc->sc_intr, IPL_CLOCK,
-			    clock_sc->sc_dev.dv_xname, clockintr, 0);
+		    device_xname(clock_sc->sc_dev), clockintr, 0);
 	omap_intr_establish(stat_sc->sc_intr, IPL_HIGH,
-			    stat_sc->sc_dev.dv_xname, statintr, 0);
+		    device_xname(stat_sc->sc_dev), statintr, 0);
 
 	tc_init(&mpu_timecounter);
 }

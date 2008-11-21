@@ -1,4 +1,4 @@
-/* $NetBSD: obio_mputmr.c,v 1.3 2008/08/27 11:03:10 matt Exp $ */
+/* $NetBSD: obio_mputmr.c,v 1.4 2008/11/21 17:13:07 matt Exp $ */
 
 /*
  * Based on omap_mputmr.c
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.3 2008/08/27 11:03:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_mputmr.c,v 1.4 2008/11/21 17:13:07 matt Exp $");
 
 #include "opt_omap.h"
 #include "opt_cpuoptions.h"
@@ -169,7 +169,7 @@ static int	obiomputmr_match(device_t, struct cfdata *, void *);
 static void	obiomputmr_attach(device_t, device_t, void *);
 
 
-CFATTACH_DECL(obiomputmr, sizeof(struct mputmr_softc),
+CFATTACH_DECL_NEW(obiomputmr, sizeof(struct mputmr_softc),
     obiomputmr_match, obiomputmr_attach, NULL, NULL);
 
 static int
@@ -197,14 +197,15 @@ obiomputmr_attach(device_t parent, device_t self, void *aux)
 	struct obio_attach_args *obio = aux;
 	int ints_per_sec;
 
+	sc->sc_dev = self;
 	sc->sc_iot = obio->obio_iot;
 	sc->sc_intr = obio->obio_intr;
 
 	if (bus_space_map(obio->obio_iot, obio->obio_addr, obio->obio_size, 0,
 			 &sc->sc_ioh))
-		panic("%s: Cannot map registers", self->dv_xname);
+		panic("%s: Cannot map registers", device_xname(self));
 
-	switch (self->dv_unit) { /* XXX broken */
+	switch (device_unit(self)) { /* XXX broken */
 	case 0:
 		clock_sc = sc;
 		ints_per_sec = hz;
@@ -234,7 +235,7 @@ obiomputmr_attach(device_t parent, device_t self, void *aux)
 	timer_factors tf;
 	calc_timer_factors(ints_per_sec, &tf);
 
-	switch (self->dv_unit) {	/* XXX broken */
+	switch (device_unit(self)) {	/* XXX broken */
 	case 0:
 #ifndef ARM11_PMC
 		counts_per_hz = tf.reload + 1;

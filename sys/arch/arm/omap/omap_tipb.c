@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_tipb.c,v 1.2 2008/05/02 23:46:12 martin Exp $ */
+/*	$NetBSD: omap_tipb.c,v 1.3 2008/11/21 17:13:07 matt Exp $ */
 
 /*
  * Autoconfiguration support for the Texas Instruments OMAP TIPB.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.2 2008/05/02 23:46:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.3 2008/11/21 17:13:07 matt Exp $");
 
 #include "locators.h"
 
@@ -116,14 +116,14 @@ __KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.2 2008/05/02 23:46:12 martin Exp $")
 #include <arm/omap/omap_tipb.h>
 
 struct tipb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	bus_dma_tag_t sc_dmac;
 };
 
 /* prototypes */
-static int	tipb_match(struct device *, struct cfdata *, void *);
-static void	tipb_attach(struct device *, struct device *, void *);
-static int 	tipb_search(struct device *, struct cfdata *,
+static int	tipb_match(device_t, cfdata_t, void *);
+static void	tipb_attach(device_t, device_t, void *);
+static int 	tipb_search(device_t, cfdata_t,
 			     const int *, void *);
 static int	tipb_print(void *, const char *);
 
@@ -146,7 +146,7 @@ static const char * const earlies[] = {
 };
 
 static int
-tipb_match(struct device *parent, struct cfdata *match, void *aux)
+tipb_match(device_t parent, cfdata_t match, void *aux)
 {
 	if (tipb_attached)
 		return 0;
@@ -154,9 +154,9 @@ tipb_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-tipb_attach(struct device *parent, struct device *self, void *aux)
+tipb_attach(device_t parent, device_t self, void *aux)
 {
-	struct tipb_softc *sc = (struct tipb_softc *)self;
+	struct tipb_softc *sc = device_private(self);
 
 	tipb_attached = 1;
 
@@ -193,10 +193,9 @@ tipb_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-tipb_search(struct device *parent, struct cfdata *cf,
-	     const int *ldesc, void *aux)
+tipb_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct tipb_softc *sc = (struct tipb_softc *)parent;
+	struct tipb_softc *sc = device_private(parent);
 	struct tipb_attach_args aa;
 	const char *const name = (const char *const)aux;
 
