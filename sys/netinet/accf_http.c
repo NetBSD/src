@@ -1,4 +1,4 @@
-/*	$NetBSD: accf_http.c,v 1.5 2008/11/20 10:22:11 ad Exp $	*/
+/*	$NetBSD: accf_http.c,v 1.6 2008/11/21 16:08:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Paycounter, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.5 2008/11/20 10:22:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.6 2008/11/21 16:08:57 joerg Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -323,10 +323,10 @@ soparsehttpvers(struct socket *so, void *arg, int waitflag)
 					} else if (
 					    mbufstrcmp(m, n, i, "HTTP/1.0") ||
 					    mbufstrcmp(m, n, i, "HTTP/1.1")) {
-							DPRINT("ok");
-							soishttpconnected(so,
-							    arg, waitflag);
-							return;
+						DPRINT("ok");
+						soishttpconnected(so,
+						    arg, waitflag);
+						return;
 					} else {
 						DPRINT("bad");
 						goto fallout;
