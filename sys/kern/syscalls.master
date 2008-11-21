@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.216 2008/11/19 18:36:07 ad Exp $
+	$NetBSD: syscalls.master,v 1.217 2008/11/21 07:34:46 pooka Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -11,8 +11,9 @@
 ;		the compatibility options defined in syscalls.conf.
 ;
 ; Optional fields are specified after the type field
-; (NOTE! they must be specified in this order):
-;     RUMP:	the system call can be called directly from rumps
+; (NOTE! they *must* be specified in this order):
+;	MODULAR:attempt to autoload system call if not present
+;	RUMP:	the system call can be called directly from rumps
 ;
 ; types:
 ;	STD	always included
