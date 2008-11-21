@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.54 2008/07/21 13:36:59 lukem Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.55 2008/11/21 07:42:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.54 2008/07/21 13:36:59 lukem Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.55 2008/11/21 07:42:30 pooka Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,11 @@ __RCSID("$NetBSD: nfsd.c,v 1.54 2008/07/21 13:36:59 lukem Exp $");
 
 /* Global defs */
 #ifdef DEBUG
-#define	syslog(e, s)	fprintf(stderr,(s))
+#define	syslog(e, s, args...)						\
+do {									\
+    fprintf(stderr,(s), ## args);					\
+    fprintf(stderr, "\n");						\
+} while (/*CONSTCOND*/0)
 int	debug = 1;
 #else
 int	debug = 0;
