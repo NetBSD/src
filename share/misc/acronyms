@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.183 2008/08/24 23:12:10 dholland Exp $
+$NetBSD: acronyms,v 1.184 2008/11/21 11:32:21 sketch Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -276,6 +276,7 @@ W/	with
 W/O	without
 WAG	wild-ass guess
 WB	welcome back
+WCPGW	what could possibly go wrong
 WFH	working from home
 WFM	works for me
 WIBNI	wouldn't it be nice if
