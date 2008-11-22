@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.1 2008/11/19 18:36:01 ad Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.2 2008/11/22 15:34:18 he Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1 2008/11/19 18:36:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2008/11/22 15:34:18 he Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -83,6 +83,11 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.1 2008/11/19 18:36:01 ad Exp
 #include <sys/syscallargs.h>
 
 #include <machine/frame.h>
+
+#ifdef COMPAT_13
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+#endif /* COMPAT_13 */
 
 struct sigframe_sigcontext {
 	int	sf_signo;		/* signal number */
