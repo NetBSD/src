@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.225 2008/10/18 04:20:37 nakayama Exp $	*/
+/*	$NetBSD: pmap.c,v 1.226 2008/11/22 13:01:08 spz Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.225 2008/10/18 04:20:37 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.226 2008/11/22 13:01:08 spz Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -146,11 +146,11 @@ int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
 struct pmap kernel_pmap_;
 
 static int ctx_alloc(struct pmap *);
+static bool pmap_is_referenced_locked(struct vm_page *);
+
 #ifdef MULTIPROCESSOR
 static void ctx_free(struct pmap *, struct cpu_info *);
 #define pmap_ctx(PM)	((PM)->pm_ctx[cpu_number()])
-
-static bool pmap_is_referenced_locked(struct vm_page *);
 
 /*
  * Check if any MMU has a non-zero context
