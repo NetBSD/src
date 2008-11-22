@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.44 2008/11/22 18:47:47 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.45 2008/11/22 23:42:16 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.44 2008/11/22 18:47:47 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.45 2008/11/22 23:42:16 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.44 2008/11/22 18:47:47 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.45 2008/11/22 23:42:16 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -515,7 +515,7 @@ CondCvtArg(char *str, double *value)
 	    if (isdigit((unsigned char) *str))
 		x  = *str - '0';
 	    else if (isxdigit((unsigned char) *str))
-		x = 10 + *str - isupper((unsigned char) *str) ? 'A' : 'a';
+		x = 10 + *str - (isupper((unsigned char) *str) ? 'A' : 'a');
 	    else
 		break;
 	    i = (i << 4) + x;
