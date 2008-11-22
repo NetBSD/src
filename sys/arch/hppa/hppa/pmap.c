@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.8 2008/11/22 19:28:18 mjf Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.9 2008/11/22 19:45:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.8 2008/11/22 19:28:18 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.9 2008/11/22 19:45:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -486,7 +486,7 @@ pmap_check_alias(struct pv_entry *pve, vaddr_t va, pt_entry_t pte)
 		    (pte & PTE_PROT(TLB_WRITE))) {
 			DPRINTF(PDB_FOLLOW|PDB_PARANOIA, ("pmap_check_alias: "
 			    "aliased writable mapping 0x%x:0x%x\n",
-			    pve->pv_pmap->pm_space, pve->pv_va));
+			    pve->pv_pmap->pm_space, (uint32_t)pve->pv_va));
 			ret++;
 		}
 	}
