@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2008/07/29 05:01:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/11/22 00:57:23 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -13,8 +13,8 @@ SRCS=	xmlparse.c xmlrole.c xmltok.c
 INCS=	expat.h expat_external.h
 INCSDIR=${X11INCDIR}
 
-CPPFLAGS+=	-DXML_BYTE_ORDER=0 -I${DIST}
-CPPFLAGS+=	-DHAVE_MEMMOVE=1
+CPPFLAGS+=	-I${DIST} -I${.CURDIR}
+CPPFLAGS+=	-DHAVE_EXPAT_CONFIG_H
 COPTS.xmlparse.c=	-Wno-error # macppc
 COPTS.xmlrole.c=	-Wno-error # macppc
 COPTS.xmltok.c=		-Wno-error # macppc
