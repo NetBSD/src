@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.31 2008/10/03 10:49:05 jdc Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.32 2008/11/22 17:12:06 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -1096,4 +1096,21 @@ src/sys/netinet6/nd6_nbr.c			1.89-1.90 via patch
 	make sure that the source address matches one of the interfaces
 	address prefixes.  Fixes CVE-2008-2476/VU#472363.
 	[adrianp, ticket #1967]
+
+distrib/sets/lists/base/mi		1.699,	1.721,	1.725,	1.773
+share/zoneinfo/Makefile			patch
+share/zoneinfo/africa			patch
+share/zoneinfo/antarctica		patch
+share/zoneinfo/asia			patch
+share/zoneinfo/australasia		patch
+share/zoneinfo/backward			patch
+share/zoneinfo/europe			patch
+share/zoneinfo/iso3166.tab		patch
+share/zoneinfo/leapseconds		patch
+share/zoneinfo/northamerica		patch
+share/zoneinfo/southamerica		patch
+share/zoneinfo/zone.tab	patch
+
+	Update for tzdata2008f.
+	[lukem, ticket #1968]
 
