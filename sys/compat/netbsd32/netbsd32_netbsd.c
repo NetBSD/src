@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.145 2008/10/15 06:51:19 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.145.4.1 2008/11/22 04:54:41 snj Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.145 2008/10/15 06:51:19 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.145.4.1 2008/11/22 04:54:41 snj Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -177,7 +177,11 @@ const struct emul emul_netbsd32 = {
 
 	netbsd32_vm_default_addr,
 	NULL,
+#ifdef COMPAT_40
 	&saemul_netbsd32,
+#else
+	NULL,
+#endif
 	sizeof(ucontext32_t),
 	startlwp32,
 };
@@ -380,6 +384,7 @@ netbsd32_break(struct lwp *l, const struct netbsd32_break_args *uap, register_t 
 int
 netbsd32_mount(struct lwp *l, const struct netbsd32_mount_args *uap, register_t *retval)
 {
+#ifdef COMPAT_40
 	/* {
 		syscallarg(const netbsd32_charp) type;
 		syscallarg(const netbsd32_charp) path;
@@ -393,6 +398,9 @@ netbsd32_mount(struct lwp *l, const struct netbsd32_mount_args *uap, register_t 
 	NETBSD32TO64_UAP(flags);
 	NETBSD32TOP_UAP(data, void);
 	return (compat_40_sys_mount(l, &ua, retval));
+#else
+	return ENOSYS;
+#endif
 }
 
 int
