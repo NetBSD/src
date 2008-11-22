@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.10 2008/10/15 08:22:06 ad Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.10.2.1 2008/11/22 16:32:24 snj Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.10 2008/10/15 08:22:06 ad Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.10.2.1 2008/11/22 16:32:24 snj Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -147,13 +147,17 @@ void
 cpu_identify(char **argv)
 {
 	char name[32];
-	int id, np;
+	unsigned int id, np;
 	cpuset_t *cpuset;
 
+	np = sysconf(_SC_NPROCESSORS_CONF);
 	id = getcpuid(argv);
+
+	if (id >= np)
+		errx(EXIT_FAILURE, "invalid CPU number");
+
 	snprintf(name, sizeof(name), "cpu%d", id);
 
-	np = sysconf(_SC_NPROCESSORS_CONF);
 	if (np != 0) {
 		cpuset = cpuset_create();
 		if (cpuset == NULL)
