@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.33 2008/03/11 05:34:03 matt Exp $ */
+/*	$NetBSD: sbi.c,v 1.33.14.1 2008/11/22 05:05:10 snj Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.33 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbi.c,v 1.33.14.1 2008/11/22 05:05:10 snj Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,6 +90,7 @@ sbi_mainbus_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args * const ma = aux;
 	struct sbi_attach_args sa;
 	u_int nexnum, minnex = 0;	/* default only one SBI, as on 780 */
+	paddr_t nexbase;
 
 	aprint_normal("\n");
 
@@ -97,18 +98,24 @@ sbi_mainbus_attach(device_t parent, device_t self, void *aux)
 	sa.sa_dmat = ma->ma_dmat;
 
 #define NEXPAGES (sizeof(struct nexus) / VAX_NBPG)
+#if VAX780 || VAXANY
 	if (vax_boardtype == VAX_BTYP_780) {
+		nexbase = (paddr_t) NEX780;
 		sa.sa_sbinum = 0;
 	}
+#endif
+#if VAX8600 || VAXANY
 	if (vax_boardtype == VAX_BTYP_790) {
+		nexbase = (paddr_t) NEXA8600;
 		minnex = ma->ma_num * NNEXSBI;
 		sa.sa_sbinum = ma->ma_num;
 	}
+#endif
 	for (nexnum = minnex; nexnum < minnex + NNEXSBI; nexnum++) {
 		struct nexus *nexusP = 0;
 		volatile int tmp;
 
-		nexusP = (struct nexus *)vax_map_physmem((paddr_t)NEXA8600 +
+		nexusP = (struct nexus *)vax_map_physmem(nexbase +
 		    sizeof(struct nexus) * nexnum, NEXPAGES);
 		if (badaddr((void *)nexusP, 4)) {
 			vax_unmap_physmem((vaddr_t)nexusP, NEXPAGES);
