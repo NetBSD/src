@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.12 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: buf.h,v 1.13 2008/11/22 17:33:57 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -93,9 +93,14 @@ typedef struct Buffer {
 } *Buffer;
 
 /* Buf_AddByte adds a single byte to a buffer. */
-#define	Buf_AddByte(bp, byte) \
-	(void) (--(bp)->left <= 0 ? Buf_OvAddByte(bp, byte), 1 : \
-		(*(bp)->inPtr++ = (byte), *(bp)->inPtr = 0), 1)
+#define	Buf_AddByte(bp, byte) do { \
+	if (--(bp)->left <= 0) \
+		Buf_OvAddByte(bp, byte); \
+	else { \
+		*(bp)->inPtr++ = (byte); \
+		*(bp)->inPtr = 0; \
+	} \
+    } while (0)
 
 #define BUF_ERROR 256
 
