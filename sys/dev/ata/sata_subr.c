@@ -1,4 +1,4 @@
-/*	$NetBSD: sata_subr.c,v 1.11 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: sata_subr.c,v 1.11.10.1 2008/11/22 04:48:41 snj Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * Common functions for Serial ATA.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.11 2008/04/28 20:23:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sata_subr.c,v 1.11.10.1 2008/11/22 04:48:41 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,7 +55,7 @@ sata_speed(uint32_t sstatus)
 		"no negotiated speed",
 		"1.5Gb/s",
 		"3.0Gb/s",
-		"<unknown 3>",
+		"6.0Gb/s",
 		"<unknown 4>",
 		"<unknown 5>",
 		"<unknown 6>",
