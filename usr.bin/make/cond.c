@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.43 2008/11/22 18:05:13 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.44 2008/11/22 18:47:47 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.43 2008/11/22 18:05:13 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.44 2008/11/22 18:47:47 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.43 2008/11/22 18:05:13 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.44 2008/11/22 18:47:47 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -660,6 +660,322 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt)
  *-----------------------------------------------------------------------
  */
 static Token
+compare_expression(Boolean doEval)
+{
+    Token	t;
+    char	*lhs;
+    char	*rhs;
+    char	*op;
+    void	*lhsFree;
+    void	*rhsFree;
+    Boolean lhsQuoted;
+    Boolean rhsQuoted;
+
+    rhs = NULL;
+    lhsFree = rhsFree = FALSE;
+    lhsQuoted = rhsQuoted = FALSE;
+    
+    /*
+     * Parse the variable spec and skip over it, saving its
+     * value in lhs.
+     */
+    t = Err;
+    lhs = CondGetString(doEval, &lhsQuoted, &lhsFree);
+    if (!lhs) {
+	if (lhsFree)
+	    free(lhsFree);
+	return Err;
+    }
+    /*
+     * Skip whitespace to get to the operator
+     */
+    while (isspace((unsigned char) *condExpr))
+	condExpr++;
+
+    /*
+     * Make sure the operator is a valid one. If it isn't a
+     * known relational operator, pretend we got a
+     * != 0 comparison.
+     */
+    op = condExpr;
+    switch (*condExpr) {
+	case '!':
+	case '=':
+	case '<':
+	case '>':
+	    if (condExpr[1] == '=') {
+		condExpr += 2;
+	    } else {
+		condExpr += 1;
+	    }
+	    break;
+	default:
+	    op = UNCONST("!=");
+	    if (lhsQuoted)
+		rhs = UNCONST("");
+	    else
+		rhs = UNCONST("0");
+
+	    goto do_compare;
+    }
+    while (isspace((unsigned char) *condExpr)) {
+	condExpr++;
+    }
+    if (*condExpr == '\0') {
+	Parse_Error(PARSE_WARNING,
+		    "Missing right-hand-side of operator");
+	goto error;
+    }
+    rhs = CondGetString(doEval, &rhsQuoted, &rhsFree);
+    if (!rhs) {
+	if (lhsFree)
+	    free(lhsFree);
+	if (rhsFree)
+	    free(rhsFree);
+	return Err;
+    }
+do_compare:
+    if (rhsQuoted || lhsQuoted) {
+do_string_compare:
+	if (((*op != '!') && (*op != '=')) || (op[1] != '=')) {
+	    Parse_Error(PARSE_WARNING,
+    "String comparison operator should be either == or !=");
+	    goto error;
+	}
+
+	if (DEBUG(COND)) {
+	    fprintf(debug_file, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
+		   lhs, rhs, op);
+	}
+	/*
+	 * Null-terminate rhs and perform the comparison.
+	 * t is set to the result.
+	 */
+	if (*op == '=') {
+	    t = strcmp(lhs, rhs) ? False : True;
+	} else {
+	    t = strcmp(lhs, rhs) ? True : False;
+	}
+    } else {
+	/*
+	 * rhs is either a float or an integer. Convert both the
+	 * lhs and the rhs to a double and compare the two.
+	 */
+	double  	left, right;
+	char	*cp;
+    
+	if (CondCvtArg(lhs, &left))
+	    goto do_string_compare;
+	if ((cp = CondCvtArg(rhs, &right)) &&
+		cp == rhs)
+	    goto do_string_compare;
+
+	if (DEBUG(COND)) {
+	    fprintf(debug_file, "left = %f, right = %f, op = %.2s\n", left,
+		   right, op);
+	}
+	switch(op[0]) {
+	case '!':
+	    if (op[1] != '=') {
+		Parse_Error(PARSE_WARNING,
+			    "Unknown operator");
+		goto error;
+	    }
+	    t = (left != right ? True : False);
+	    break;
+	case '=':
+	    if (op[1] != '=') {
+		Parse_Error(PARSE_WARNING,
+			    "Unknown operator");
+		goto error;
+	    }
+	    t = (left == right ? True : False);
+	    break;
+	case '<':
+	    if (op[1] == '=') {
+		t = (left <= right ? True : False);
+	    } else {
+		t = (left < right ? True : False);
+	    }
+	    break;
+	case '>':
+	    if (op[1] == '=') {
+		t = (left >= right ? True : False);
+	    } else {
+		t = (left > right ? True : False);
+	    }
+	    break;
+	}
+    }
+error:
+    if (lhsFree)
+	free(lhsFree);
+    if (rhsFree)
+	free(rhsFree);
+    return t;
+}
+
+static Token
+compare_function(Boolean doEval)
+{
+    Token	t;
+    Boolean (*evalProc)(int, char *);
+    Boolean invert = FALSE;
+    char	*arg = NULL;
+    int	arglen = 0;
+
+    if (istoken(condExpr, "defined", 7)) {
+	/*
+	 * Use CondDoDefined to evaluate the argument and
+	 * CondGetArg to extract the argument from the 'function
+	 * call'.
+	 */
+	evalProc = CondDoDefined;
+	condExpr += 7;
+	arglen = CondGetArg(&condExpr, &arg, "defined", TRUE);
+	if (arglen == 0) {
+	    condExpr -= 7;
+	    goto use_default;
+	}
+    } else if (istoken(condExpr, "make", 4)) {
+	/*
+	 * Use CondDoMake to evaluate the argument and
+	 * CondGetArg to extract the argument from the 'function
+	 * call'.
+	 */
+	evalProc = CondDoMake;
+	condExpr += 4;
+	arglen = CondGetArg(&condExpr, &arg, "make", TRUE);
+	if (arglen == 0) {
+	    condExpr -= 4;
+	    goto use_default;
+	}
+    } else if (istoken(condExpr, "exists", 6)) {
+	/*
+	 * Use CondDoExists to evaluate the argument and
+	 * CondGetArg to extract the argument from the
+	 * 'function call'.
+	 */
+	evalProc = CondDoExists;
+	condExpr += 6;
+	arglen = CondGetArg(&condExpr, &arg, "exists", TRUE);
+	if (arglen == 0) {
+	    condExpr -= 6;
+	    goto use_default;
+	}
+    } else if (istoken(condExpr, "empty", 5)) {
+	/*
+	 * Use Var_Parse to parse the spec in parens and return
+	 * True if the resulting string is empty.
+	 */
+	int	    did_warn, length;
+	void    *freeIt;
+	char    *val;
+
+	condExpr += 5;
+
+	did_warn = 0;
+	for (arglen = 0; condExpr[arglen] != '\0'; arglen += 1) {
+	    if (condExpr[arglen] == '(')
+		break;
+	    if (!isspace((unsigned char)condExpr[arglen]) &&
+		!did_warn) {
+
+		Parse_Error(PARSE_WARNING,
+		    "Extra characters after \"empty\"");
+		did_warn = 1;
+	    }
+	}
+
+	if (condExpr[arglen] != '\0') {
+	    val = Var_Parse(&condExpr[arglen - 1], VAR_CMD,
+			    FALSE, &length, &freeIt);
+	    if (val == var_Error) {
+		t = Err;
+	    } else {
+		/*
+		 * A variable is empty when it just contains
+		 * spaces... 4/15/92, christos
+		 */
+		char *p;
+		for (p = val; *p && isspace((unsigned char)*p); p++)
+		    continue;
+		t = (*p == '\0') ? True : False;
+	    }
+	    if (freeIt) {
+		free(freeIt);
+	    }
+	    /*
+	     * Advance condExpr to beyond the closing ). Note that
+	     * we subtract one from arglen + length b/c length
+	     * is calculated from condExpr[arglen - 1].
+	     */
+	    condExpr += arglen + length - 1;
+	} else {
+	    condExpr -= 5;
+	    goto use_default;
+	}
+	return t;
+    } else if (istoken(condExpr, "target", 6)) {
+	/*
+	 * Use CondDoTarget to evaluate the argument and
+	 * CondGetArg to extract the argument from the
+	 * 'function call'.
+	 */
+	evalProc = CondDoTarget;
+	condExpr += 6;
+	arglen = CondGetArg(&condExpr, &arg, "target", TRUE);
+	if (arglen == 0) {
+	    condExpr -= 6;
+	    goto use_default;
+	}
+    } else if (istoken(condExpr, "commands", 8)) {
+	/*
+	 * Use CondDoCommands to evaluate the argument and
+	 * CondGetArg to extract the argument from the
+	 * 'function call'.
+	 */
+	evalProc = CondDoCommands;
+	condExpr += 8;
+	arglen = CondGetArg(&condExpr, &arg, "commands", TRUE);
+	if (arglen == 0) {
+	    condExpr -= 8;
+	    goto use_default;
+	}
+    } else {
+	/*
+	 * The symbol is itself the argument to the default
+	 * function. We advance condExpr to the end of the symbol
+	 * by hand (the next whitespace, closing paren or
+	 * binary operator) and set to invert the evaluation
+	 * function if condInvert is TRUE.
+	 */
+	if (isdigit((unsigned char)condExpr[0])) {
+	    /*
+	     * Variables may already be substituted
+	     * by the time we get here.
+	     */
+	    return compare_expression(doEval);
+	}
+    use_default:
+	invert = condInvert;
+	evalProc = condDefProc;
+	arglen = CondGetArg(&condExpr, &arg, "", FALSE);
+    }
+
+    /*
+     * Evaluate the argument using the set function. If invert
+     * is TRUE, we invert the sense of the function.
+     */
+    t = (!doEval || (* evalProc) (arglen, arg) ?
+	 (invert ? False : True) :
+	 (invert ? True : False));
+    if (arg)
+	free(arg);
+    return t;
+}
+
+static Token
 CondToken(Boolean doEval)
 {
     Token	  t;
@@ -701,316 +1017,12 @@ CondToken(Boolean doEval)
 		t = EndOfFile;
 		break;
 	    case '"':
-	    case '$': {
-		char	*lhs;
-		char	*rhs;
-		char	*op;
-		void	*lhsFree;
-		void	*rhsFree;
-		Boolean lhsQuoted;
-		Boolean rhsQuoted;
+	    case '$':
+		return compare_expression(doEval);
 
-do_compare_setup:
+	    default:
+		return compare_function(doEval);
 
-		rhs = NULL;
-		lhsFree = rhsFree = FALSE;
-		lhsQuoted = rhsQuoted = FALSE;
-		
-		/*
-		 * Parse the variable spec and skip over it, saving its
-		 * value in lhs.
-		 */
-		t = Err;
-		lhs = CondGetString(doEval, &lhsQuoted, &lhsFree);
-		if (!lhs) {
-		    if (lhsFree)
-			free(lhsFree);
-		    return Err;
-		}
-		/*
-		 * Skip whitespace to get to the operator
-		 */
-		while (isspace((unsigned char) *condExpr))
-		    condExpr++;
-
-		/*
-		 * Make sure the operator is a valid one. If it isn't a
-		 * known relational operator, pretend we got a
-		 * != 0 comparison.
-		 */
-		op = condExpr;
-		switch (*condExpr) {
-		    case '!':
-		    case '=':
-		    case '<':
-		    case '>':
-			if (condExpr[1] == '=') {
-			    condExpr += 2;
-			} else {
-			    condExpr += 1;
-			}
-			break;
-		    default:
-			op = UNCONST("!=");
-			if (lhsQuoted)
-			    rhs = UNCONST("");
-			else
-			    rhs = UNCONST("0");
-
-			goto do_compare;
-		}
-		while (isspace((unsigned char) *condExpr)) {
-		    condExpr++;
-		}
-		if (*condExpr == '\0') {
-		    Parse_Error(PARSE_WARNING,
-				"Missing right-hand-side of operator");
-		    goto error;
-		}
-		rhs = CondGetString(doEval, &rhsQuoted, &rhsFree);
-		if (!rhs) {
-		    if (lhsFree)
-			free(lhsFree);
-		    if (rhsFree)
-			free(rhsFree);
-		    return Err;
-		}
-do_compare:
-		if (rhsQuoted || lhsQuoted) {
-do_string_compare:
-		    if (((*op != '!') && (*op != '=')) || (op[1] != '=')) {
-			Parse_Error(PARSE_WARNING,
-		"String comparison operator should be either == or !=");
-			goto error;
-		    }
-
-		    if (DEBUG(COND)) {
-			fprintf(debug_file, "lhs = \"%s\", rhs = \"%s\", op = %.2s\n",
-			       lhs, rhs, op);
-		    }
-		    /*
-		     * Null-terminate rhs and perform the comparison.
-		     * t is set to the result.
-		     */
-		    if (*op == '=') {
-			t = strcmp(lhs, rhs) ? False : True;
-		    } else {
-			t = strcmp(lhs, rhs) ? True : False;
-		    }
-		} else {
-		    /*
-		     * rhs is either a float or an integer. Convert both the
-		     * lhs and the rhs to a double and compare the two.
-		     */
-		    double  	left, right;
-		    char	*cp;
-		
-		    if (CondCvtArg(lhs, &left))
-			goto do_string_compare;
-		    if ((cp = CondCvtArg(rhs, &right)) &&
-			    cp == rhs)
-			goto do_string_compare;
-
-		    if (DEBUG(COND)) {
-			fprintf(debug_file, "left = %f, right = %f, op = %.2s\n", left,
-			       right, op);
-		    }
-		    switch(op[0]) {
-		    case '!':
-			if (op[1] != '=') {
-			    Parse_Error(PARSE_WARNING,
-					"Unknown operator");
-			    goto error;
-			}
-			t = (left != right ? True : False);
-			break;
-		    case '=':
-			if (op[1] != '=') {
-			    Parse_Error(PARSE_WARNING,
-					"Unknown operator");
-			    goto error;
-			}
-			t = (left == right ? True : False);
-			break;
-		    case '<':
-			if (op[1] == '=') {
-			    t = (left <= right ? True : False);
-			} else {
-			    t = (left < right ? True : False);
-			}
-			break;
-		    case '>':
-			if (op[1] == '=') {
-			    t = (left >= right ? True : False);
-			} else {
-			    t = (left > right ? True : False);
-			}
-			break;
-		    }
-		}
-error:
-		if (lhsFree)
-		    free(lhsFree);
-		if (rhsFree)
-		    free(rhsFree);
-		break;
-	    }
-	    default: {
-		Boolean (*evalProc)(int, char *);
-		Boolean invert = FALSE;
-		char	*arg = NULL;
-		int	arglen = 0;
-
-		if (istoken(condExpr, "defined", 7)) {
-		    /*
-		     * Use CondDoDefined to evaluate the argument and
-		     * CondGetArg to extract the argument from the 'function
-		     * call'.
-		     */
-		    evalProc = CondDoDefined;
-		    condExpr += 7;
-		    arglen = CondGetArg(&condExpr, &arg, "defined", TRUE);
-		    if (arglen == 0) {
-			condExpr -= 7;
-			goto use_default;
-		    }
-		} else if (istoken(condExpr, "make", 4)) {
-		    /*
-		     * Use CondDoMake to evaluate the argument and
-		     * CondGetArg to extract the argument from the 'function
-		     * call'.
-		     */
-		    evalProc = CondDoMake;
-		    condExpr += 4;
-		    arglen = CondGetArg(&condExpr, &arg, "make", TRUE);
-		    if (arglen == 0) {
-			condExpr -= 4;
-			goto use_default;
-		    }
-		} else if (istoken(condExpr, "exists", 6)) {
-		    /*
-		     * Use CondDoExists to evaluate the argument and
-		     * CondGetArg to extract the argument from the
-		     * 'function call'.
-		     */
-		    evalProc = CondDoExists;
-		    condExpr += 6;
-		    arglen = CondGetArg(&condExpr, &arg, "exists", TRUE);
-		    if (arglen == 0) {
-			condExpr -= 6;
-			goto use_default;
-		    }
-		} else if (istoken(condExpr, "empty", 5)) {
-		    /*
-		     * Use Var_Parse to parse the spec in parens and return
-		     * True if the resulting string is empty.
-		     */
-		    int	    did_warn, length;
-		    void    *freeIt;
-		    char    *val;
-
-		    condExpr += 5;
-
-		    did_warn = 0;
-		    for (arglen = 0; condExpr[arglen] != '\0'; arglen += 1) {
-			if (condExpr[arglen] == '(')
-			    break;
-			if (!isspace((unsigned char)condExpr[arglen]) &&
-			    !did_warn) {
-
-			    Parse_Error(PARSE_WARNING,
-				"Extra characters after \"empty\"");
-			    did_warn = 1;
-			}
-		    }
-
-		    if (condExpr[arglen] != '\0') {
-			val = Var_Parse(&condExpr[arglen - 1], VAR_CMD,
-					FALSE, &length, &freeIt);
-			if (val == var_Error) {
-			    t = Err;
-			} else {
-			    /*
-			     * A variable is empty when it just contains
-			     * spaces... 4/15/92, christos
-			     */
-			    char *p;
-			    for (p = val; *p && isspace((unsigned char)*p); p++)
-				continue;
-			    t = (*p == '\0') ? True : False;
-			}
-			if (freeIt) {
-			    free(freeIt);
-			}
-			/*
-			 * Advance condExpr to beyond the closing ). Note that
-			 * we subtract one from arglen + length b/c length
-			 * is calculated from condExpr[arglen - 1].
-			 */
-			condExpr += arglen + length - 1;
-		    } else {
-			condExpr -= 5;
-			goto use_default;
-		    }
-		    break;
-		} else if (istoken(condExpr, "target", 6)) {
-		    /*
-		     * Use CondDoTarget to evaluate the argument and
-		     * CondGetArg to extract the argument from the
-		     * 'function call'.
-		     */
-		    evalProc = CondDoTarget;
-		    condExpr += 6;
-		    arglen = CondGetArg(&condExpr, &arg, "target", TRUE);
-		    if (arglen == 0) {
-			condExpr -= 6;
-			goto use_default;
-		    }
-		} else if (istoken(condExpr, "commands", 8)) {
-		    /*
-		     * Use CondDoCommands to evaluate the argument and
-		     * CondGetArg to extract the argument from the
-		     * 'function call'.
-		     */
-		    evalProc = CondDoCommands;
-		    condExpr += 8;
-		    arglen = CondGetArg(&condExpr, &arg, "commands", TRUE);
-		    if (arglen == 0) {
-			condExpr -= 8;
-			goto use_default;
-		    }
-		} else {
-		    /*
-		     * The symbol is itself the argument to the default
-		     * function. We advance condExpr to the end of the symbol
-		     * by hand (the next whitespace, closing paren or
-		     * binary operator) and set to invert the evaluation
-		     * function if condInvert is TRUE.
-		     */
-		    if (isdigit((unsigned char)condExpr[0])) {
-			/*
-			 * Variables may already be substituted
-			 * by the time we get here.
-			 */
-			goto do_compare_setup;
-		    }
-		use_default:
-		    invert = condInvert;
-		    evalProc = condDefProc;
-		    arglen = CondGetArg(&condExpr, &arg, "", FALSE);
-		}
-
-		/*
-		 * Evaluate the argument using the set function. If invert
-		 * is TRUE, we invert the sense of the function.
-		 */
-		t = (!doEval || (* evalProc) (arglen, arg) ?
-		     (invert ? False : True) :
-		     (invert ? True : False));
-		if (arg)
-		    free(arg);
-		break;
-	    }
 	}
     } else {
 	t = condPushBack;
