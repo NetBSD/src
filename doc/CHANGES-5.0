@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.29 2008/11/22 05:20:49 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.30 2008/11/22 16:51:14 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1019,4 +1019,30 @@ gnu/dist/gcc4/gcc/version.c			1.17
 
 	Fix jump table addressing in the M68k codegen.
 	[phx, ticket #104]
+
+usr.sbin/cpuctl/cpuctl.c			1.11, 1.12
+
+	Check ID against number of processors.  Fixes PR 39955.
+	[cegger, ticket #105]
+
+compat/lib/libcrypto_idea/Makefile		1.1
+compat/lib/libcrypto_mdc2/Makefile		1.1
+compat/lib/libcrypto_rc5/Makefile		1.1
+distrib/sets/lists/comp/md.amd64		1.41
+distrib/sets/lists/comp/md.sparc64		1.39
+
+	Build 32bit compat libraries on amd64 and sparc64 for
+	libcrypto_{idea,mdc2,rc5}.  Fixes PR lib/39846.
+	[mlelstv, ticket #106]
+
+sys/arch/sparc64/sparc64/pmap.c			1.226
+
+	Fix DEBUG build of sparc64 non-MULTIPROCESSOR kernels.
+	[spz, ticket #107]
+
+external/mit/xorg/lib/expat/Makefile		1.2
+external/mit/xorg/lib/expat/expat_config.h	1.1
+
+	Unbreak expat by providing a proper configuration include for it.
+	[cube, ticket #108]
 
