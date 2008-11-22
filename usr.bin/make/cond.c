@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.42 2008/10/29 15:37:08 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.43 2008/11/22 18:05:13 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.42 2008/10/29 15:37:08 sjg Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.43 2008/11/22 18:05:13 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.42 2008/10/29 15:37:08 sjg Exp $");
+__RCSID("$NetBSD: cond.c,v 1.43 2008/11/22 18:05:13 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1288,6 +1288,8 @@ Cond_Eval(char *line)
 	    }
 	    /* Return state for previous conditional */
 	    cond_depth--;
+	    if (cond_depth > MAXIF)
+		return COND_SKIP;
 	    return cond_state[cond_depth] <= ELSE_ACTIVE ? COND_PARSE : COND_SKIP;
 	}
 
@@ -1297,9 +1299,11 @@ Cond_Eval(char *line)
 	    /* It is else... */
 	    if (cond_depth == cond_min_depth) {
 		Parse_Error(level, "if-less else");
-		return COND_INVALID;
+		return COND_PARSE;
 	    }
 
+	    if (cond_depth > MAXIF)
+		return COND_SKIP;
 	    state = cond_state[cond_depth];
 	    switch (state) {
 	    case SEARCH_FOR_ELIF:
@@ -1342,25 +1346,34 @@ Cond_Eval(char *line)
     }
 
     /* Now we know what sort of 'if' it is... */
-    state = cond_state[cond_depth];
 
     if (isElif) {
 	if (cond_depth == cond_min_depth) {
 	    Parse_Error(level, "if-less elif");
-	    return COND_INVALID;
+	    return COND_PARSE;
 	}
-	if (state == SKIP_TO_ENDIF || state == ELSE_ACTIVE)
+	if (cond_depth > MAXIF)
+	    /* Error reported when we saw the .if ... */
+	    return COND_SKIP;
+	state = cond_state[cond_depth];
+	if (state == SKIP_TO_ENDIF || state == ELSE_ACTIVE) {
 	    Parse_Error(PARSE_WARNING, "extra elif");
+	    cond_state[cond_depth] = SKIP_TO_ENDIF;
+	    return COND_SKIP;
+	}
 	if (state != SEARCH_FOR_ELIF) {
 	    /* Either just finished the 'true' block, or already SKIP_TO_ELSE */
 	    cond_state[cond_depth] = SKIP_TO_ELSE;
 	    return COND_SKIP;
 	}
     } else {
+	/* Normal .if */
 	if (cond_depth >= MAXIF) {
+	    cond_depth++;
 	    Parse_Error(PARSE_FATAL, "Too many nested if's. %d max.", MAXIF);
-	    return COND_INVALID;
+	    return COND_SKIP;
 	}
+	state = cond_state[cond_depth];
 	cond_depth++;
 	if (state > ELSE_ACTIVE) {
 	    /* If we aren't parsing the data, treat as always false */
@@ -1375,9 +1388,10 @@ Cond_Eval(char *line)
 
     /* And evaluate the conditional expresssion */
     if (Cond_EvalExpression(0, line, &value, 1) == COND_INVALID) {
-	/* Although we get make to reprocess the line, set a state */
-	cond_state[cond_depth] = SEARCH_FOR_ELIF;
-	return COND_INVALID;
+	/* Syntax error in conditional, error message already output. */
+	/* Skip everything to matching .endif */
+	cond_state[cond_depth] = SKIP_TO_ELSE;
+	return COND_SKIP;
     }
 
     if (!value) {
