@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.6 2008/11/22 13:21:21 pgoyette Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.7 2008/11/22 19:25:38 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -394,7 +394,7 @@ struct spdmem_ddr3 {				/* Dual Data Rate 3 SDRAM */
 		uint8_t ddr3_chipsize:4,	\
 		/* logbanks is offset by 3 */	\
 		uint8_t ddr3_logbanks:3,	\
-		uint8_t ddr3_unused1:2,		\
+		uint8_t ddr3_unused1:1,		\
 	);
 	/* cols is offset by 9, rows offset by 12 */
 	SPD_BITFIELD(				\
