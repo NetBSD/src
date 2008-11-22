@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.41 2008/11/19 18:36:00 ad Exp $
+#	$NetBSD: files.sh3,v 1.42 2008/11/22 01:53:41 uwe Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -47,6 +47,9 @@ file	dev/cons.c
 file	arch/sh3/sh3/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 
 file	arch/sh3/sh3/procfs_machdep.c	procfs
+
+file	arch/sh3/sh3/compat_16_machdep.c	compat_16
+
 
 #
 # Executable file format
