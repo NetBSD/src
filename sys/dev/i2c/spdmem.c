@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.12 2008/11/16 14:03:48 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.13 2008/11/22 13:21:21 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.12 2008/11/16 14:03:48 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.13 2008/11/22 13:21:21 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -604,7 +604,7 @@ spdmem_attach(device_t parent, device_t self, void *aux)
 		    "%d rows, %d cols, %d internal banks, %d physical banks, "
 		    "%d.%03dns cycle time\n",
 		    s->sm_ddr3.ddr3_rows + 9, s->sm_ddr3.ddr3_cols + 12,
-		    8 << s->sm_ddr3.ddr3_logbanks,
+		    1 << (s->sm_ddr3.ddr3_logbanks + 3),
 		    s->sm_ddr3.ddr3_physbanks + 1,
 		    cycle_time/1000, cycle_time % 1000);
 		aprint_verbose_dev(self, latency, tAA, tRCD, tRP, tRAS);
