@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.167 2008/10/17 08:12:23 cegger Exp $	 */
+/* $NetBSD: machdep.c,v 1.167.4.1 2008/11/22 05:03:59 snj Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2008/10/17 08:12:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167.4.1 2008/11/22 05:03:59 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -173,7 +173,9 @@ int iospace_inited = 0;
 void
 cpu_startup(void)
 {
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	vaddr_t		minaddr, maxaddr;
+#endif
 	extern paddr_t avail_end;
 	char pbuf[9];
 
@@ -197,9 +199,9 @@ cpu_startup(void)
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
 
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	minaddr = 0;
 
-#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	/*
 	 * Allocate a submap for physio.  This map effectively limits the
 	 * number of processes doing physio at any one time.
