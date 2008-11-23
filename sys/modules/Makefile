@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2008/11/20 09:58:45 ad Exp $
+#	$NetBSD: Makefile,v 1.17 2008/11/23 15:29:42 martin Exp $
 
 # For all platforms
 
@@ -14,7 +14,6 @@ SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
 SUBDIR+=	efs
 SUBDIR+=	ext2fs
-SUBDIR+=	exec_elf32
 SUBDIR+=	exec_script
 SUBDIR+=	fdesc
 SUBDIR+=	ffs
@@ -47,6 +46,9 @@ SUBDIR+=	unionfs
 .endif
 
 # Machine dependent section
+.if ${MACHINE} != "alpha"
+SUBDIR+=	exec_elf32
+.endif
 
 .if ${MACHINE} == "amd64"
 SUBDIR+=	azalia
