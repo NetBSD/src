@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.20 2008/11/19 13:09:19 njoly Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.21 2008/11/23 00:15:13 mrg Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.20 2008/11/19 13:09:19 njoly Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.21 2008/11/23 00:15:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -583,7 +583,7 @@ void
 release_futexes(struct proc *p)
 {
 	struct linux_robust_list_head *head = NULL;
-	struct linux_robust_list *entry, *next_entry, *pending;
+	struct linux_robust_list *entry, *next_entry = NULL, *pending;
 	unsigned int limit = 2048, pi, next_pi, pip;
 	struct linux_emuldata *led;
 	unsigned long futex_offset;
