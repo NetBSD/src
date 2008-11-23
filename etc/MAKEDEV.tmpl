@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.113.2.3 2008/11/14 02:52:01 snj Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.113.2.4 2008/11/23 21:01:18 riz Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1916,8 +1916,6 @@ local)
 			sh "$0.local" $opts all
 		fi
 		umask 077
-	else
-		warn "missing $0.local"
 	fi
 	;;
 
