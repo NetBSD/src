@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_wait4.c,v 1.1.2.3 2008/11/09 20:00:20 christos Exp $	*/
+/*	$NetBSD: compat_wait4.c,v 1.1.2.4 2008/11/23 23:26:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_wait4.c,v 1.1.2.3 2008/11/09 20:00:20 christos Exp $");
+__RCSID("$NetBSD: compat_wait4.c,v 1.1.2.4 2008/11/23 23:26:09 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #define __LIBC12_SOURCE__
@@ -65,9 +65,10 @@ wait3(int *status, int options, struct rusage50 *ru50)
 	struct rusage ru;
 	int rv;
 
-	if ((rv = __wait350(status, options, &ru)) == -1)
+	if ((rv = __wait350(status, options, ru50 ? &ru : NULL)) == -1)
 		return rv;
-	__rusage_to_rusage50(&ru, ru50);
+	if (ru50)
+		__rusage_to_rusage50(&ru, ru50);
 	return rv;
 }
 
@@ -77,8 +78,9 @@ wait4(pid_t wpid, int *status, int options, struct rusage50 *ru50)
 	struct rusage ru;
 	int rv;
 
-	if ((rv = __wait450(wpid, status, options, &ru)) == -1)
+	if ((rv = __wait450(wpid, status, options, ru50 ? &ru : NULL)) == -1)
 		return rv;
-	__rusage_to_rusage50(&ru, ru50);
+	if (ru50)
+		__rusage_to_rusage50(&ru, ru50);
 	return rv;
 }
