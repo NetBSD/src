@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_time.c,v 1.1.2.1 2008/11/08 21:49:34 christos Exp $	*/
+/*	$NetBSD: compat_time.c,v 1.1.2.2 2008/11/23 21:41:57 christos Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@NetBSD.org>, October 21, 1997.
@@ -9,11 +9,8 @@
 #include <sys/cdefs.h>
 
 #define __LIBC12_SOURCE__
-#define time_t __time_t
 #include <time.h>
 #include <sys/time.h>
-#undef time_t
-typedef int32_t time_t;
 #include <compat/include/time.h>
 #include <compat/sys/time.h>
 
@@ -26,4 +23,5 @@ __warn_references(time,
     " include <time.h> for correct reference")
 
 #define timeval timeval50
+#define time_t int32_t
 #include "gen/time.c"
