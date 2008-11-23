@@ -1,4 +1,6 @@
-# $NetBSD: md.ofppc,v 1.8 2008/01/23 23:15:37 garbled Exp $
+# $NetBSD: md.ofppc,v 1.9 2008/11/23 15:47:43 martin Exp $
+./@MODULEDIR@/exec_elf32			base-kernel-modules
+./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules
 ./usr/mdec/ofwboot				base-sysutil-bin
 ./usr/mdec/mkbootinfo				base-sysutil-bin
 ./usr/mdec/netbsd.chrp				base-sysutil-bin

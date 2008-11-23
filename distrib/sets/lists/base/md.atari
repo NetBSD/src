@@ -1,4 +1,6 @@
-# $NetBSD: md.atari,v 1.47 2004/01/11 10:24:58 lukem Exp $
+# $NetBSD: md.atari,v 1.48 2008/11/23 15:47:43 martin Exp $
+./@MODULEDIR@/exec_elf32			base-kernel-modules
+./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules
 ./boot.atari					base-sysutil-bin
 ./sbin/ahdilabel				base-sysutil-root
 ./sbin/binpatch					base-sysutil-root
