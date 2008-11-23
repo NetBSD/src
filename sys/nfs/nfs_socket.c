@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.174 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.175 2008/11/23 08:22:07 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.174 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.175 2008/11/23 08:22:07 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "fs_nfs.h"
@@ -113,6 +113,16 @@ extern u_int32_t rpc_reply, rpc_msgdenied, rpc_mismatch, rpc_vers,
 extern u_int32_t nfs_prog;
 extern const int nfsv3_procid[NFS_NPROCS];
 extern int nfs_ticks;
+
+#ifdef DEBUG
+/*
+ * Avoid spamming the console with debugging messages.  We only print
+ * the nfs timer and reply error debugs every 10 seconds.
+ */
+static const struct timeval nfs_err_interval = { 10, 0 };
+static struct timeval nfs_reply_last_err_time;
+static struct timeval nfs_timer_last_err_time;
+#endif
 
 /*
  * Defines which timer to use for the procnum.
@@ -835,7 +845,10 @@ nfs_reply(struct nfsreq *myrep, struct lwp *lwp)
 			if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
 				nmp->nm_so->so_error = 0;
 #ifdef DEBUG
-				printf("nfs_reply: ignoring error %d\n", error);
+				if (ratecheck(&nfs_reply_last_err_time,
+				    &nfs_err_interval))
+					printf("%s: ignoring error %d\n",
+					       __func__, error);
 #endif
 				continue;
 			}
@@ -1710,8 +1723,10 @@ nfs_timer(void *arg)
 			if (error) {
 				if (NFSIGNORE_SOERROR(nmp->nm_soflags, error)) {
 #ifdef DEBUG
-					printf("nfs_timer: ignoring error %d\n",
-						error);
+					if (ratecheck(&nfs_timer_last_err_time,
+					    &nfs_err_interval))
+						printf("%s: ignoring error "
+						       "%d\n", __func__, error);
 #endif
 					so->so_error = 0;
 				}
