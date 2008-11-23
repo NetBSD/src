@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.11 2008/11/12 12:35:55 ad Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.12 2008/11/23 11:55:27 chris Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.11 2008/11/12 12:35:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.12 2008/11/23 11:55:27 chris Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -391,7 +391,6 @@ initarm(void *cookie)
 	u_int kerneldatasize;
 	u_int l1pagetable;
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
-	pv_addr_t kernel_l1pt = { {0} };
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -753,16 +752,16 @@ initarm(void *cookie)
 	 * REAL kernel page tables.
 	 */
 
-	/* Switch tables */
-#ifdef VERBOSE_INIT_ARM
-	printf("switching to new L1 page table\n");
-#endif
 #ifdef VERBOSE_INIT_ARM
 	printf("switching domains\n");
 #endif
 	/* be a client to all domains */
 	cpu_domains(0x55555555);
 
+	/* Switch tables */
+#ifdef VERBOSE_INIT_ARM
+	printf("switching to new L1 page table\n");
+#endif
 	setttb(kernel_l1pt.pv_pa);
 
 	/*
@@ -906,8 +905,7 @@ initarm(void *cookie)
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
-	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 	console_flush();
 
 	/* Setup the IRQ system */
