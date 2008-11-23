@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.32 2008/11/23 21:11:47 riz Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.33 2008/11/23 21:37:33 riz Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1086,4 +1086,20 @@ sys/dev/cgd.c					1.54
 
 	Allow cgd(4) to be backed by wedges. PR#38735
 	[jakllsch, ticket #111]
+
+bin/pax/tar.1					1.27
+
+	"compatibility", not "compatability".
+	[dholland, ticket #113]
+
+bin/pax/options.c				1.102
+
+	Don't pass strings from argv[] to free(). Fixes PR 39992.
+	[dholland, ticket #114]
+
+libexec/httpd/cgi-bozo.c			1.8
+
+	Change the cgi index.html code to only run if you set the index.html
+	name.  PR#38466
+	[mrg, ticket #115]
 
