@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.101 2007/10/26 16:38:12 hira Exp $	*/
+/*	$NetBSD: options.c,v 1.101.12.1 2008/11/23 21:26:50 riz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.101 2007/10/26 16:38:12 hira Exp $");
+__RCSID("$NetBSD: options.c,v 1.101.12.1 2008/11/23 21:26:50 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -1173,6 +1173,7 @@ tar_options(int argc, char **argv)
 			int sawpat = 0;
 			int dirisnext = 0;
 			char *file, *dir = NULL;
+			int mustfreedir = 0;
 
 			while (nincfiles || *argv != NULL) {
 				/*
@@ -1185,6 +1186,7 @@ tar_options(int argc, char **argv)
 				if (nincfiles) {
 					file = incfiles->file;
 					dir = incfiles->dir;
+					mustfreedir = 0;
 					incfiles++;
 					nincfiles--;
 				} else if (strcmp(*argv, "-I") == 0) {
@@ -1192,9 +1194,11 @@ tar_options(int argc, char **argv)
 						break;
 					file = *argv++;
 					dir = chdname;
+					mustfreedir = 0;
 				} else {
 					file = NULL;
 					dir = NULL;
+					mustfreedir = 0;
 				}
 				if (file != NULL) {
 					FILE *fp;
@@ -1208,9 +1212,10 @@ tar_options(int argc, char **argv)
 					}
 					while ((str = getline(fp)) != NULL) {
 						if (dirisnext) {
-							if (dir)
+							if (dir && mustfreedir)
 								free(dir);
 							dir = str;
+							mustfreedir = 1;
 							dirisnext = 0;
 							continue;
 						}
@@ -1222,9 +1227,10 @@ tar_options(int argc, char **argv)
 						}
 						if (strncmp(str, "-C ", 3) == 0) {
 							havechd++;
-							if (dir)
+							if (dir && mustfreedir)
 								free(dir);
 							dir = strdup(str + 3);
+							mustfreedir = 1;
 							free(str);
 							continue;
 						}
@@ -1235,7 +1241,7 @@ tar_options(int argc, char **argv)
 					/* Bomb if given -C w/out a dir. */
 					if (dirisnext)
 						tar_usage();
-					if (dir)
+					if (dir && mustfreedir)
 						free(dir);
 					if (strcmp(file, "-") != 0)
 						fclose(fp);
