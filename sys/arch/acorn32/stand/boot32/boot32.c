@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.34 2008/04/12 16:10:46 chris Exp $	*/
+/*	$NetBSD: boot32.c,v 1.35 2008/11/23 17:33:45 chris Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -121,6 +121,7 @@ char	*memory_image, *bottom_memory, *top_memory;
 /* kernel info */
 u_long	 marks[MARK_MAX];		/* loader mark pointers 	*/
 u_long	 kernel_physical_start;		/* where does it get relocated	*/
+u_long	 kernel_physical_maxsize;	/* Max allowed size of kernel	*/
 u_long	 kernel_free_vm_start;		/* where does the free VM start	*/
 /* some free space to mess with	*/
 u_long	 scratch_virtualbase, scratch_physicalbase;
@@ -788,10 +789,12 @@ main(int argc, char **argv)
 		free_relocation_page =
 		    mem_pages_info + first_mapped_PODRAM_page_index;
 		kernel_physical_start = PODRAM_addr[0];
+		kernel_physical_maxsize = PODRAM_pages[0] * nbpp;
 	} else {
 		free_relocation_page =
 		    mem_pages_info + first_mapped_DRAM_page_index;
 		kernel_physical_start = DRAM_addr[0];
+		kernel_physical_maxsize = DRAM_pages[0] * nbpp;
 	}
 
 	printf("\nLoading %s ", booted_file);
@@ -800,6 +803,11 @@ main(int argc, char **argv)
 	ret = loadfile(booted_file, marks, COUNT_KERNEL);
 	if (ret == -1) panic("Kernel load failed"); /* lie to the user ... */
 	close(ret);
+
+	if (marks[MARK_END] - marks[MARK_START] > kernel_physical_maxsize) 
+	{
+		panic("\nKernel is bigger than the first DRAM module, unable to boot\n");
+	}
 
 	/*
 	 * calculate how much the difference is between physical and
