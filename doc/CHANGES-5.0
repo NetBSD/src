@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.31 2008/11/23 18:34:19 bouyer Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.32 2008/11/23 21:11:47 riz Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1065,4 +1065,25 @@ usr.bin/make/parse.c				1.150
 
 	intFile.fd should be initialised to -1, not 0.
 	[dsl, ticket #117]
+
+distrib/arc/instkernel/Makefile			1.11
+distrib/arc/ramdisk/dot.profile			1.4
+sys/arch/arc/conf/GENERIC			1.159
+sys/arch/arc/conf/RAMDISK			1.76
+
+	Use vt100 rather than wsvt25 for TERM since the latter makes
+	both FG/BG colors white during sysinst on Express5800/230 with tga(4).
+	Also, work around an ARC BIOS limitation.
+	[tsutsui, ticket #109]
+
+etc/MAKEDEV.tmpl				1.117
+
+	Don't warn about missing MAKEDEV.local. It doesn't exist in some
+	environments.
+	[tsutsui, ticket #110]
+
+sys/dev/cgd.c					1.54
+
+	Allow cgd(4) to be backed by wedges. PR#38735
+	[jakllsch, ticket #111]
 
