@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.25 2008/11/16 05:41:39 dholland Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.26 2008/11/23 09:13:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ main(int argc, char **argv)
 	int rv;		/* 1 if got card in output file, 0 otherwise */
 	int nflag;	/* 1 if got name of subprog., 0 otherwise */
 	int retval, i, ch;
-	char name[20];
+	char name[80];
 
 	while ((ch = getopt(argc, argv, "e:")) != -1) {
 		switch (ch) {
@@ -400,7 +400,7 @@ scan_name(char *s, size_t smax, const char *ptr)
 	sptr = s;
 	sptrmax = smax - 3;
 	while (*ptr != '(' && *ptr != '\n') {
-		if (*ptr != ' ' && *ptr != '\t') {
+		if (*ptr != ' ' && *ptr != '\t' && *ptr != '/') {
 			if (sptrmax == 0) {
 				/* Not sure this is the right thing, so warn */
 				warnx("Output name too long; truncated");
