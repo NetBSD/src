@@ -1,4 +1,4 @@
-/*	$NetBSD: rside.c,v 1.9 2008/03/18 20:46:35 cube Exp $	*/
+/*	$NetBSD: rside.c,v 1.10 2008/11/23 11:55:27 chris Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.9 2008/03/18 20:46:35 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rside.c,v 1.10 2008/11/23 11:55:27 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ rside_attach(device_t parent, device_t self, void *aux)
 	 * cookie.
 	 */
 
-	sc->sc_wdcdev.dev = self;
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.regs = sc->sc_wdc_regs;
 	sc->sc_tag = *rs->sa_iot;
 	sc->sc_tag.bs_cookie = (void *) DRIVE_REGISTER_SPACING_SHIFT;
@@ -188,8 +188,6 @@ rside_attach(device_t parent, device_t self, void *aux)
 	/* Fill in wdc and channel infos */
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
-	sc->sc_wdcdev.sc_atac.atac_dma_cap = 0;
-	sc->sc_wdcdev.sc_atac.atac_udma_cap = 0;
 	sc->sc_wdcdev.sc_atac.atac_channels = sc->sc_chanarray;
 	sc->sc_wdcdev.sc_atac.atac_nchannels = 2;
 	for (channel = 0 ; channel < 2; channel++) {
