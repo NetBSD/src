@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.32 2008/11/22 17:12:06 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.33 2008/11/23 17:59:41 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -1113,4 +1113,12 @@ share/zoneinfo/zone.tab	patch
 
 	Update for tzdata2008f.
 	[lukem, ticket #1968]
+
+usr.bin/fsplit/fsplit.c				1.26 via patch
+
+	Two robustness fixes:
+	   (1) make ridiculously small filename buffer larger;
+	   (2) don't accidentally try to generate files with names
+	       containing '/'.
+	[dholland, ticket #1982]
 
