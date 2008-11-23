@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.148 2008/10/29 15:37:08 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.148.2.1 2008/11/23 18:31:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.148 2008/10/29 15:37:08 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.148.2.1 2008/11/23 18:31:28 bouyer Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.148 2008/10/29 15:37:08 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.148.2.1 2008/11/23 18:31:28 bouyer Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -477,9 +477,7 @@ Parse_Error(int type, const char *fmt, ...)
 	if (curFile == (IFile *)NIL) {
 		/* avoid segfault */
 		static IFile intFile = {
-			.fname = NULL,
-			.lineno = 0,
-			.fd = -1,
+		    NULL, 0, 0, 0, NULL, NULL, NULL, 0
 		};
 		curFile = &intFile;
 	}
