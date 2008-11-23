@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.11 2004/10/30 17:27:28 dsl Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.11.22.1 2008/11/23 18:08:01 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ main(argc, argv)
 	char *ptr;
 	int nflag;	/* 1 if got name of subprog., 0 otherwise */
 	int retval, i;
-	char name[20], *extrptr = extrbuf;
+	char name[80], *extrptr = extrbuf;
 
 	/*  scan -e options */
 	while ( argc > 1  && argv[1][0] == '-' && argv[1][1] == 'e') {
@@ -357,7 +357,7 @@ scan_name(s, ptr)
 	trim(ptr);
 	sptr = s;
 	while (*ptr != '(' && *ptr != '\n') {
-		if (*ptr != ' ' && *ptr != '\t')
+		if (*ptr != ' ' && *ptr != '\t' && *ptr != '/')
 			*sptr++ = *ptr;
 		ptr++;
 	}
