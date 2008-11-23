@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_utmpx.c,v 1.2.8.2 2008/11/08 21:45:38 christos Exp $	 */
+/*	$NetBSD: compat_utmpx.c,v 1.2.8.3 2008/11/23 21:46:04 christos Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: compat_utmpx.c,v 1.2.8.2 2008/11/08 21:45:38 christos Exp $");
+__RCSID("$NetBSD: compat_utmpx.c,v 1.2.8.3 2008/11/23 21:46:04 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -68,6 +68,8 @@ __warn_references(getutmpx,
 static struct utmpx50 *
 cvt(struct utmpx *ut)
 {
+	if (ut == NULL)
+		return NULL;
 	timeval_to_timeval50(&ut->ut_tv, (void *)&ut->ut_tv);
 	return (void *)ut;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.25.8.2 2008/11/08 21:45:38 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.25.8.3 2008/11/23 21:46:05 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.25.8.2 2008/11/08 21:45:38 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.25.8.3 2008/11/23 21:46:05 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -56,12 +56,38 @@ __RCSID("$NetBSD: utmpx.c,v 1.25.8.2 2008/11/08 21:45:38 christos Exp $");
 
 static FILE *fp;
 static int readonly = 0;
+static int version = 1;
 static struct utmpx ut;
 static char utfile[MAXPATHLEN] = _PATH_UTMPX;
 
 static struct utmpx *utmp_update(const struct utmpx *);
 
 static const char vers[] = "utmpx-2.00";
+
+struct otimeval {
+	long tv_sec;
+	long tv_usec;
+};
+
+static void
+old2new(struct utmpx *utx)
+{
+	struct otimeval otv;
+	struct timeval *tv = &utx->ut_tv;
+	(void)memcpy(&otv, tv, sizeof(otv));
+	tv->tv_sec = otv.tv_sec;
+	tv->tv_usec = otv.tv_usec;
+}
+
+static void
+new2old(struct utmpx *utx)
+{
+	struct timeval tv;
+	struct otimeval *otv = (void *)&utx->ut_tv;
+	(void)memcpy(&tv, otv, sizeof(tv));
+	otv->tv_sec = (long)tv.tv_sec;
+	otv->tv_usec = (long)tv.tv_usec;
+}
 
 void
 setutxent()
@@ -118,15 +144,19 @@ getutxent()
 			/* old file, read signature record */
 			if (fread(&ut, sizeof(ut), 1, fp) != 1)
 				goto failclose;
-			if (memcmp(ut.ut_user, vers, sizeof(vers)) != 0 ||
+			if (memcmp(ut.ut_user, vers, 5) != 0 ||
 			    ut.ut_type != SIGNATURE)
 				goto failclose;
 		}
+		version = ut.ut_user[6] - '0';
 	}
 
 	if (fread(&ut, sizeof(ut), 1, fp) != 1)
 		goto fail;
+	if (version == 1)
+		old2new(&ut);
 
+printf(">%d %s\n", version, ut.ut_name);
 	return &ut;
 failclose:
 	(void)fclose(fp);
@@ -248,6 +278,8 @@ pututxline(const struct utmpx *utx)
 			return NULL;
 	}
 
+	if (version == 1)
+		new2old(&temp);
 	if (fwrite(&temp, sizeof (temp), 1, fp) != 1)
 		goto fail;
 
