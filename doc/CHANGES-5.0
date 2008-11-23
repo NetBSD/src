@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.30 2008/11/22 16:51:14 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.31 2008/11/23 18:34:19 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1045,4 +1045,24 @@ external/mit/xorg/lib/expat/expat_config.h	1.1
 
 	Unbreak expat by providing a proper configuration include for it.
 	[cube, ticket #108]
+
+usr.bin/fsplit/fsplit.c				1.26 via patch
+
+	Two robustness fixes:
+	   (1) make ridiculously small filename buffer larger;
+	   (2) don't accidentally try to generate files with names
+	       containing '/'.
+	[dholland, ticket #112]
+
+usr.bin/make/parse.c				1.149
+
+	avoid using c99 struct named initializers because this is a host
+	tool and needs to be compiled by a host compiler which might not
+	be c99 compliant.
+	[dsl, ticket #116]
+
+usr.bin/make/parse.c				1.150
+
+	intFile.fd should be initialised to -1, not 0.
+	[dsl, ticket #117]
 
