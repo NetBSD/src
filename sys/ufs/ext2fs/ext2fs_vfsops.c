@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.139 2008/11/13 11:10:41 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.140 2008/11/23 10:09:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.139 2008/11/13 11:10:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.140 2008/11/23 10:09:25 mrg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -113,6 +113,7 @@ extern kmutex_t ufs_hashlock;
 
 int ext2fs_sbupdate(struct ufsmount *, int);
 static int ext2fs_checksb(struct ext2fs *, int);
+static void ext2fs_set_inode_guid(struct inode *);
 
 static struct sysctllog *ext2fs_sysctl_log;
 
@@ -168,6 +169,19 @@ static const struct ufs_ops ext2fs_ufsops = {
 	.uo_vfree = ext2fs_vfree,
 	.uo_unmark_vnode = (void (*)(vnode_t *))nullop,
 };
+
+/* Fill in the inode uid/gid from ext2 halves.  */
+static void
+ext2fs_set_inode_guid(struct inode *ip)
+{
+
+	ip->i_gid = ip->i_e2fs_gid;
+	ip->i_uid = ip->i_e2fs_uid;
+	if (ip->i_e2fs->e2fs.e2fs_rev > E2FS_REV0) {
+		ip->i_gid |= ip->i_e2fs_gid_high << 16;
+		ip->i_uid |= ip->i_e2fs_uid_high << 16;
+	}
+}
 
 static int
 ext2fs_modcmd(modcmd_t cmd, void *arg)
@@ -628,6 +642,7 @@ loop:
 		cp = (char *)bp->b_data +
 		    (ino_to_fsbo(fs, ip->i_number) * EXT2_DINODE_SIZE);
 		e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
+		ext2fs_set_inode_guid(ip);
 		brelse(bp, 0);
 		vput(vp);
 		mutex_enter(&mntvnode_lock);
@@ -1060,6 +1075,7 @@ retry:
 	cp = (char *)bp->b_data + (ino_to_fsbo(fs, ino) * EXT2_DINODE_SIZE);
 	ip->i_din.e2fs_din = pool_get(&ext2fs_dinode_pool, PR_WAITOK);
 	e2fs_iload((struct ext2fs_dinode *)cp, ip->i_din.e2fs_din);
+	ext2fs_set_inode_guid(ip);
 	brelse(bp, 0);
 
 	/* If the inode was deleted, reset all fields */
