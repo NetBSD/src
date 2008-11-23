@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.112 2008/11/22 16:34:15 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.113 2008/11/23 18:07:43 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2458,4 +2458,12 @@ sys/arch/amd64/amd64/machdep.c			1.106, 1.107 via patch
 	- apply rev. 1.480 from i386/i386/machdep.c: fixes PR 17199 for amd64
 	- apply rev. 1.492 from i386/i386/machdep.c: fixes PR 13399 for amd64
 	[cegger, ticket #1233]
+
+usr.bin/fsplit/fsplit.c				1.26 via patch
+
+	Two robustness fixes:
+	   (1) make ridiculously small filename buffer larger;
+	   (2) don't accidentally try to generate files with names
+	       containing '/'.
+	[dholland, ticket #1238]
 
