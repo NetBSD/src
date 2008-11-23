@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.75 2008/02/02 04:25:54 tsutsui Exp $
+#	$NetBSD: RAMDISK,v 1.75.20.1 2008/11/23 20:58:38 riz Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -12,3 +12,78 @@ options 	MEMORY_DISK_SERVER=0		# no userspace md(4) support
 options 	MEMORY_DISK_ROOT_SIZE=5120	# size of memory disk, in blocks
 
 makeoptions	COPTS="-Os -mmemcpy"	# generates smaller code than -O2, -O1
+
+# shrink kernel since ARC BIOS seems to have 8MB limit
+options 	FFS_NO_SNAPSHOT
+
+no options 	KTRACE
+no options 	NTP
+no options 	SYSVMSG
+no options 	SYSVSEM
+no options 	SYSVSHM
+no options 	P1003_1B_SEMAPHORE
+no options 	SYSCTL_INCLUDE_DESCR
+no options 	COMPAT_10
+no options 	COMPAT_11
+no options 	COMPAT_12
+no options 	COMPAT_13
+no options 	COMPAT_14
+no options 	COMPAT_ULTRIX
+no options 	EXEC_ECOFF
+
+no file-system	EXT2FS
+no file-system	LFS
+no file-system	FDESC
+no file-system	KERNFS
+no file-system	NULLFS
+no file-system	OVERLAY
+no file-system	PORTAL
+no file-system	UMAPFS
+no file-system	UNION
+no file-system	TMPFS
+no file-system	PTYFS
+
+no options 	QUOTA
+no options 	NFSSERVER
+no options 	PPP_FILTER
+no options 	NETATALK
+no options 	MIIVERBOSE
+no options 	PCIVERBOSE
+no options 	SCSIVERBOSE
+
+no lpt0 at jazzio?
+no ast0 at isa?
+no lpt0 at isa?
+
+no hifn* at pci?
+no ubsec* at pci?
+
+no pms* at pckbc?
+no wsmouse* at pms?
+
+no ch*  at scsibus?
+no ss*  at scsibus?
+no uk*  at scsibus?
+no uk*  at atapibus?
+
+no pseudo-device crypto
+no pseudo-device swcrypto
+
+no pseudo-device raid
+no pseudo-device vnd
+no pseudo-device fss
+
+no pseudo-device ipfilter
+no pseudo-device ppp
+no pseudo-device pppoe
+no pseudo-device tap
+no pseudo-device tun
+no pseudo-device gif
+no pseudo-device stf
+no pseudo-device vlan
+no pseudo-device bridge
+no pseudo-device agr
+no pseudo-device clockctl
+
+no pseudo-device accf_data
+no pseudo-device accf_http

@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.3 2008/02/02 04:23:06 tsutsui Exp $
+# $NetBSD: dot.profile,v 1.3.12.1 2008/11/23 20:58:38 riz Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=wsvt25
+TERM=vt100
 export TERM
 HOME=/
 export HOME

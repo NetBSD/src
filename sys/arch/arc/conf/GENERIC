@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.157 2008/09/15 04:42:58 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.157.4.1 2008/11/23 20:58:38 riz Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.157 $"
+#ident		"GENERIC-$Revision: 1.157.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -319,9 +319,9 @@ trm*		at pci? dev ? function ?	# Tekram DC-395/315 SCSI
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
 #aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
-artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
+#artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
-cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+#cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
@@ -344,7 +344,7 @@ fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 gsip*		at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #hme*		at pci? dev ? function ?	# Sun STP2002-STQ
 #le*		at pci? dev ? function ?	# PCnet-PCI Ethernet
-lmc*		at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+#lmc*		at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
 #mtd*		at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*		at pci? dev ? function ?	# NE2000-compatible
 #ntwoc*		at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
@@ -357,12 +357,12 @@ sip*		at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 #sk*		at skc?				# SysKonnect SK9821
 ste*		at pci? dev ? function ?	# Sundance ST-201 Ethernet
 #stge*		at pci? dev ? function ?	# Sundance/Tamarack TC9021
-ti*		at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
+#ti*		at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet
 tl*		at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 vge*		at pci? dev ? function ?	# VIA VT612X Gigabit Ethernet
 vr*		at pci? dev ? function ?        # VIA Rhine Fast Ethernet
-wi*		at pci? dev ? function ?	# Intersil Prism Mini-PCI
+#wi*		at pci? dev ? function ?	# Intersil Prism Mini-PCI
 wm*		at pci? dev ? function ?	# Intel 82543/82544 gigabit
 
 #### MII/PHY support
@@ -373,7 +373,7 @@ brgphy* 	at mii? phy ?		# Broadcom BCM5400-family PHYs
 ciphy*		at mii? phy ?		# Cicada CS8201 Gig-E PHYs
 dmphy*		at mii? phy ?		# Davicom DM9101 PHYs
 exphy*		at mii? phy ?		# 3Com internal PHYs
-gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
+#gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy* 	at mii? phy ?		# Level One LXT-1000 PHYs
 gphyter* 	at mii? phy ?		# NS83861 Gig-E PHY
 icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
