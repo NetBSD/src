@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.45 2008/11/22 23:42:16 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.46 2008/11/23 10:52:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.45 2008/11/22 23:42:16 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.46 2008/11/23 10:52:58 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.45 2008/11/22 23:42:16 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.46 2008/11/23 10:52:58 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -92,6 +92,7 @@ __RCSID("$NetBSD: cond.c,v 1.45 2008/11/22 23:42:16 dsl Exp $");
  */
 
 #include    <ctype.h>
+#include    <errno.h>    /* For strtoul() error checking */
 
 #include    "make.h"
 #include    "hash.h"
@@ -146,7 +147,7 @@ static Boolean CondDoMake(int, char *);
 static Boolean CondDoExists(int, char *);
 static Boolean CondDoTarget(int, char *);
 static Boolean CondDoCommands(int, char *);
-static char * CondCvtArg(char *, double *);
+static Boolean CondCvtArg(char *, double *);
 static Token CondToken(Boolean);
 static Token CondT(Boolean);
 static Token CondF(Boolean);
@@ -488,47 +489,40 @@ CondDoCommands(int argLen, char *arg)
 /*-
  *-----------------------------------------------------------------------
  * CondCvtArg --
- *	Convert the given number into a double. If the number begins
- *	with 0x, it is interpreted as a hexadecimal integer
- *	and converted to a double from there. All other strings just have
- *	strtod called on them.
+ *	Convert the given number into a double.
+ *	We try a base 10 or 16 integer conversion first, if that fails
+ *	then we try a floating point conversion instead.
  *
  * Results:
  *	Sets 'value' to double value of string.
- *	Returns NULL if string was fully consumed,
- *	else returns remaining input.
- *
- * Side Effects:
- *	Can change 'value' even if string is not a valid number.
- *
+ *	Returns 'true' if the convertion suceeded
  *
  *-----------------------------------------------------------------------
  */
-static char *
+static Boolean
 CondCvtArg(char *str, double *value)
 {
-    if ((*str == '0') && (str[1] == 'x')) {
-	long i;
+    char *eptr, ech;
+    unsigned long l_val;
+    double d_val;
 
-	for (str += 2, i = 0; *str; str++) {
-	    int x;
-	    if (isdigit((unsigned char) *str))
-		x  = *str - '0';
-	    else if (isxdigit((unsigned char) *str))
-		x = 10 + *str - (isupper((unsigned char) *str) ? 'A' : 'a');
-	    else
-		break;
-	    i = (i << 4) + x;
-	}
-	*value = (double) i;
-	return *str ? str : NULL;
+    errno = 0;
+    l_val = strtoul(str, &eptr, str[1] == 'x' ? 16 : 10);
+    ech = *eptr;
+    if (ech == 0 && errno != ERANGE) {
+	d_val = str[0] == '-' ? -(double)-l_val : (double)l_val;
     } else {
-	char *eptr;
-	*value = strtod(str, &eptr);
-	return *eptr ? eptr : NULL;
+	if (ech != 0 && ech != '.' && ech != 'e' && ech != 'E')
+	    return FALSE;
+	d_val = strtod(str, &eptr);
+	if (*eptr)
+	    return FALSE;
     }
+
+    *value = d_val;
+    return TRUE;
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * CondGetString --
@@ -762,12 +756,8 @@ do_string_compare:
 	 * lhs and the rhs to a double and compare the two.
 	 */
 	double  	left, right;
-	char	*cp;
     
-	if (CondCvtArg(lhs, &left))
-	    goto do_string_compare;
-	if ((cp = CondCvtArg(rhs, &right)) &&
-		cp == rhs)
+	if (!CondCvtArg(lhs, &left) || !CondCvtArg(rhs, &right))
 	    goto do_string_compare;
 
 	if (DEBUG(COND)) {
@@ -950,7 +940,7 @@ compare_function(Boolean doEval)
 	 * binary operator) and set to invert the evaluation
 	 * function if condInvert is TRUE.
 	 */
-	if (isdigit((unsigned char)condExpr[0])) {
+	if (isdigit((unsigned char)condExpr[0]) || strchr("+-", condExpr[0])) {
 	    /*
 	     * Variables may already be substituted
 	     * by the time we get here.
