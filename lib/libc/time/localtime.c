@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.41.6.4 2008/11/10 02:22:33 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.41.6.5 2008/11/23 21:41:08 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	7.78";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.41.6.4 2008/11/10 02:22:33 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.41.6.5 2008/11/23 21:41:08 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -232,7 +232,7 @@ long 			timezone = 0;
 int			daylight = 0;
 #else
 extern int		daylight;
-extern int		timezone;
+extern long		timezone __RENAME(__timezone13);
 #endif
 #endif /* defined USG_COMPAT */
 
@@ -1223,7 +1223,7 @@ register struct tm * const		tmp;
 	register const struct lsinfo *	lp;
 	register time_t			days;
 	register time_t			rem;
-	register int			y;
+	register time_t			y;
 	register int			yleap;
 	register const int *		ip;
 	register long			corr;
@@ -1261,7 +1261,7 @@ register struct tm * const		tmp;
 	days = *timep / SECSPERDAY;
 	rem = *timep % SECSPERDAY;
 #ifdef mc68k
-	if (*timep == 0x80000000) {
+	if (*timep == (((time_t)1) << (TYPE_BITS(time_t) - 1))) {
 		/*
 		** A 3B1 muffs the division on the most negative number.
 		*/
@@ -1292,9 +1292,8 @@ register struct tm * const		tmp;
 	y = EPOCH_YEAR;
 #define LEAPS_THRU_END_OF(y)	((y) / 4 - (y) / 100 + (y) / 400)
 	while (days < 0 || days >= (long) year_lengths[yleap = isleap(y)]) {
-		register int	newy;
-
-		newy = (int)(y + days / DAYSPERNYEAR);
+		register time_t	newy;
+		newy = (y + days / DAYSPERNYEAR);
 		if (days < 0)
 			--newy;
 		days -= (newy - y) * DAYSPERNYEAR +
@@ -1302,7 +1301,7 @@ register struct tm * const		tmp;
 			LEAPS_THRU_END_OF(y - 1);
 		y = newy;
 	}
-	tmp->tm_year = y - TM_YEAR_BASE;
+	tmp->tm_year = (int) y - TM_YEAR_BASE;
 	tmp->tm_yday = (int) days;
 	ip = mon_lengths[yleap];
 	for (tmp->tm_mon = 0; days >= (long) ip[tmp->tm_mon]; ++(tmp->tm_mon))
