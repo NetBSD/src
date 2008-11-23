@@ -1,4 +1,6 @@
-# $NetBSD: md.bebox,v 1.16 2008/05/31 02:18:24 kiyohara Exp $
+# $NetBSD: md.bebox,v 1.17 2008/11/23 15:47:43 martin Exp $
+./@MODULEDIR@/exec_elf32			base-kernel-modules
+./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules
 ./dev/pms0					base-obsolete		obsolete
 ./usr/bin/fdformat				base-util-bin
 ./usr/mdec/boot					base-sysutil-root

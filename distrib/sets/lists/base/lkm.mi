@@ -1,4 +1,4 @@
-# $NetBSD: lkm.mi,v 1.35 2008/11/20 09:58:45 ad Exp $
+# $NetBSD: lkm.mi,v 1.36 2008/11/23 15:47:42 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -29,8 +29,6 @@
 ./@MODULEDIR@/dirhash/dirhash.kmod		base-obsolete	obsolete
 ./@MODULEDIR@/efs				base-kernel-modules
 ./@MODULEDIR@/efs/efs.kmod			base-kernel-modules
-./@MODULEDIR@/exec_elf32			base-kernel-modules
-./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules
 ./@MODULEDIR@/exec_script			base-kernel-modules
 ./@MODULEDIR@/exec_script/exec_script.kmod	base-kernel-modules
 ./@MODULEDIR@/ext2fs				base-kernel-modules

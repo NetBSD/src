@@ -1,2 +1,4 @@
-# $NetBSD: md.evbarm.armeb,v 1.1 2003/05/26 15:43:14 thorpej Exp $
+# $NetBSD: md.evbarm.armeb,v 1.2 2008/11/23 15:47:43 martin Exp $
+./@MODULEDIR@/exec_elf32			base-kernel-modules
+./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules
 ./usr/mdec/gzboot_ADI_BRH_0x00140000.bin	base-sysutil-bin
