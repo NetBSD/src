@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.25.8.3 2008/11/23 21:46:05 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.25.8.4 2008/11/23 22:54:47 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.25.8.3 2008/11/23 21:46:05 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.25.8.4 2008/11/23 22:54:47 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -156,7 +156,6 @@ getutxent()
 	if (version == 1)
 		old2new(&ut);
 
-printf(">%d %s\n", version, ut.ut_name);
 	return &ut;
 failclose:
 	(void)fclose(fp);
