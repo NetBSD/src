@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.36 2008/05/16 09:22:00 hannken Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.37 2008/11/23 10:09:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.36 2008/05/16 09:22:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.37 2008/11/23 10:09:25 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -516,7 +516,7 @@ ext2fs_blkfree(struct inode *ip, daddr_t bno)
 	if ((u_int)bno >= fs->e2fs.e2fs_bcount) {
 		printf("bad block %lld, ino %llu\n", (long long)bno,
 		    (unsigned long long)ip->i_number);
-		ext2fs_fserr(fs, ip->i_e2fs_uid, "bad block");
+		ext2fs_fserr(fs, ip->i_uid, "bad block");
 		return;
 	}
 	error = bread(ip->i_devvp,
