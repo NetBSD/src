@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.2,v 1.1.2.6 2008/11/06 22:45:52 snj Exp $
+#	$NetBSD: CHANGES-4.0.2,v 1.1.2.7 2008/11/23 18:08:18 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0.1 release to the NetBSD 4.0.2
 release:
@@ -51,3 +51,11 @@ sys/arch/atari/dev/ncr5380.c                    1.56
 	Fix hang when using SCSI devices on Atari Falcon and TT030.
 	[abs, ticket #1222]
         
+usr.bin/fsplit/fsplit.c				1.26 via patch
+
+	Two robustness fixes:
+	   (1) make ridiculously small filename buffer larger;
+	   (2) don't accidentally try to generate files with names
+	       containing '/'.
+	[dholland, ticket #1238]
+
