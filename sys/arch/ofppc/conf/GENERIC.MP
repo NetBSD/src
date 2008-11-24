@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.3 2008/11/12 12:36:05 ad Exp $
+# $NetBSD: GENERIC.MP,v 1.4 2008/11/24 11:41:13 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.4 $"
 
 maxusers	32
 
@@ -108,7 +108,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server

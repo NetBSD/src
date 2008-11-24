@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.7 2008/11/12 12:36:05 ad Exp $
+# $NetBSD: GENERIC,v 1.8 2008/11/24 11:41:13 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.7 $"
+#ident		"GENERIC-$Revision: 1.8 $"
 
 maxusers	32
 
@@ -106,7 +106,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server

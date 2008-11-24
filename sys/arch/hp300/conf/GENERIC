@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.148 2008/11/12 12:36:00 ad Exp $
+# $NetBSD: GENERIC,v 1.149 2008/11/24 11:41:11 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.148 $"
+#ident 		"GENERIC-$Revision: 1.149 $"
 
 maxusers	32		# estimated number of users
 
@@ -118,7 +118,6 @@ file-system	PTYFS		# /dev/pts/N support
 # Filesystem options
 options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network filesystem server
