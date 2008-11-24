@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.1 2008/11/18 17:03:58 cube Exp $
+#	$NetBSD: libmesa.mk,v 1.2 2008/11/24 01:31:57 cube Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -111,4 +111,4 @@ CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/${_path_}
 CPPFLAGS+=	-I${X11SRCDIR.MesaLib}/src/mesa/${_path_}
 .endfor
 
-LIBDPLIBS=	m	${.CURDIR}/../../../../../lib/libm
+LIBDPLIBS=	m	${NETBSDSRCDIR}/lib/libm
