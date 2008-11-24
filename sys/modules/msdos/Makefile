@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2008/06/28 16:11:36 rumble Exp $
+#	$NetBSD: Makefile,v 1.1 2008/11/24 11:26:49 ad Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/fs/msdosfs
 
-KMOD=	msdosfs
+KMOD=	msdos
 SRCS=	msdosfs_conv.c msdosfs_denode.c msdosfs_fat.c msdosfs_lookup.c \
 	msdosfs_vfsops.c msdosfs_vnops.c
 
