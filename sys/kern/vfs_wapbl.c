@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.15 2008/11/20 00:17:08 joerg Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.16 2008/11/24 16:05:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.15 2008/11/20 00:17:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.16 2008/11/24 16:05:21 joerg Exp $");
 
 #include <sys/param.h>
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.15 2008/11/20 00:17:08 joerg Exp $")
 #include <sys/mutex.h>
 #include <sys/atomic.h>
 #include <sys/wapbl.h>
+#include <sys/wapbl_replay.h>
 
 #if WAPBL_UVM_ALLOC
 #include <uvm/uvm.h>
@@ -79,6 +80,7 @@ MALLOC_JUSTDEFINE(M_WAPBL, "wapbl", "write-ahead physical block logging");
 
 #include <sys/time.h>
 #include <sys/wapbl.h>
+#include <sys/wapbl_replay.h>
 
 #define	KDASSERT(x) assert(x)
 #define	KASSERT(x) assert(x)

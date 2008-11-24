@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.117 2008/11/20 23:50:08 matt Exp $
+#	$NetBSD: Makefile,v 1.118 2008/11/24 16:05:21 joerg Exp $
 
 .include <bsd.sys.mk>
 
@@ -38,7 +38,7 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h atomic.h audioio.h \
 	ttydefaults.h ttydev.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h uuid.h \
 	vadvise.h verified_exec.h videoio.h vmmeter.h vnode.h vnode_if.h \
-	wait.h wapbl.h wdog.h
+	wait.h wapbl.h wapbl_replay.h wdog.h
 
 INCSYMLINKS=\
 	sys/exec_elf.h /usr/include/elf.h \
