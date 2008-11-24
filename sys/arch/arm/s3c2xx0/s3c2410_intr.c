@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_intr.c,v 1.10 2008/11/19 06:37:51 matt Exp $ */
+/* $NetBSD: s3c2410_intr.c,v 1.11 2008/11/24 11:29:52 dogcow Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.10 2008/11/19 06:37:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.11 2008/11/24 11:29:52 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ void
 s3c2410_mask_subinterrupts(int bits)
 {
 	int psw = disable_interrupts(IF32_bits);
-	icreg(INTCTL_INTSUBMSK |= bits;
+	icreg(INTCTL_INTSUBMSK) |= bits;
 	restore_interrupts(psw);
 }
 
