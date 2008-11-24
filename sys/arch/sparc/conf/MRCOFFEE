@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.24 2008/11/12 12:36:06 ad Exp $
+# $NetBSD: MRCOFFEE,v 1.25 2008/11/24 11:41:14 ad Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.24 $"
+#ident 		"MRCOFFEE-$Revision: 1.25 $"
 
 maxusers	32
 
@@ -185,7 +185,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

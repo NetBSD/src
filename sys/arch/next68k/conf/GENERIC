@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.114 2008/11/12 12:36:04 ad Exp $
+# $NetBSD: GENERIC,v 1.115 2008/11/24 11:41:13 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.114 $"
+#ident 		"GENERIC-$Revision: 1.115 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -117,7 +117,6 @@ file-system	PTYFS		# /dev/pts/N support
 
 options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
-#options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

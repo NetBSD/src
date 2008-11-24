@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.76 2008/11/15 21:21:23 abs Exp $
+#	$NetBSD: GENERIC.in,v 1.77 2008/11/24 11:41:08 ad Exp $
 #
 # Generic atari
 #
@@ -122,7 +122,6 @@ options 	WAPBL		# File system journaling support - Experimental
 #ifndef INSTALL_KERNEL
 options 	QUOTA		# Disk quotas for local disks
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.192 2008/11/12 12:36:02 ad Exp $
+# $NetBSD: GENERIC,v 1.193 2008/11/24 11:41:12 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.192 $"
+#ident 		"GENERIC-$Revision: 1.193 $"
 
 maxusers	16		# estimated number of users
 
@@ -122,7 +122,6 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server

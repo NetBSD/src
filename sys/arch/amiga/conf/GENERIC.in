@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.70 2008/11/12 12:35:56 ad Exp $
+# $NetBSD: GENERIC.in,v 1.71 2008/11/24 11:41:08 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.70 $"
+#ident 		"GENERIC-$Revision: 1.71 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -172,7 +172,6 @@ options 	WAPBL		# File system journaling support - Experimental
 
 m4_ifdef(`INSTALL_CONFIGURATION', `', `m4_dnl
 options 	QUOTA		# User and group quotas in FFS
-options 	SOFTDEP		# FFS soft updates support.
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server side code
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

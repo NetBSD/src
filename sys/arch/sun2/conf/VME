@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.33 2008/11/12 12:36:07 ad Exp $
+# $NetBSD: VME,v 1.34 2008/11/24 11:41:15 ad Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.33 $"
+#ident 		"VME-$Revision: 1.34 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -74,7 +74,6 @@ file-system	PTYFS		# /dev/pts/N support
 options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.82 2008/11/12 12:36:06 ad Exp $
+#	$NetBSD: GENERIC,v 1.83 2008/11/24 11:41:14 ad Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.82 $"
+#ident		"GENERIC-$Revision: 1.83 $"
 
 # estimated number of users
 maxusers	32
@@ -65,7 +65,6 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER
