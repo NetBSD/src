@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.26 2008/11/12 12:36:00 ad Exp $
+# $NetBSD: GENERIC,v 1.27 2008/11/24 11:41:11 ad Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.26 $"
+#ident		"GENERIC-$Revision: 1.27 $"
 
 maxusers	16
 
@@ -116,7 +116,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Indpendent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server

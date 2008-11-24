@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.71 2008/11/12 12:36:01 ad Exp $
+#	$NetBSD: JORNADA720,v 1.72 2008/11/24 11:41:11 ad Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.72 $"
 
 # estimated number of users
 maxusers	32
@@ -53,7 +53,6 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	NFSSERVER

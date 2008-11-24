@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.89 2008/11/12 12:35:55 ad Exp $
+# 	$NetBSD: GENERIC,v 1.90 2008/11/24 11:41:07 ad Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.89 $"
+#ident		"GENERIC-$Revision: 1.90 $"
 
 # estimated number of users
 maxusers	32
@@ -71,7 +71,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER

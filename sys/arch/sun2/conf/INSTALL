@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.36 2008/11/12 12:36:07 ad Exp $
+# $NetBSD: INSTALL,v 1.37 2008/11/24 11:41:14 ad Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
@@ -6,7 +6,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.36 $"
+#ident 		"INSTALL-$Revision: 1.37 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -66,7 +66,6 @@ file-system	KERNFS		# /kern
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

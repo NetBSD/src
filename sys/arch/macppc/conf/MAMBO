@@ -6,7 +6,7 @@ include		"arch/macppc/conf/std.macppc.g5"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 maxusers	32
 
@@ -84,7 +84,6 @@ file-system 	UNION		# union file system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# ffs snapshots
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

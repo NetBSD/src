@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.42 2008/11/12 12:36:07 ad Exp $
+# $NetBSD: RAMDISK,v 1.43 2008/11/24 11:41:15 ad Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -71,7 +71,6 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

@@ -1,4 +1,4 @@
-#	$NetBSD: NSLU2,v 1.12 2008/11/12 12:35:58 ad Exp $
+#	$NetBSD: NSLU2,v 1.13 2008/11/24 11:41:10 ad Exp $
 #
 #	Linksys NSLU2 "Slug" NAS Device
 #
@@ -54,7 +54,6 @@ file-system	NFS		# Network file system
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
-#options 	SOFTDEP
 
 # Networking options
 

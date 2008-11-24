@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.37 2008/11/12 12:35:59 ad Exp $
+#	$NetBSD: EV64260,v 1.38 2008/11/24 11:41:10 ad Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -99,7 +99,6 @@ file-system 	MSDOSFS		# MS-DOS file system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

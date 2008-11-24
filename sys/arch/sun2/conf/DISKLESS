@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.39 2008/11/12 12:36:06 ad Exp $
+# $NetBSD: DISKLESS,v 1.40 2008/11/24 11:41:14 ad Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.39 $"
+#ident 		"DISKLESS-$Revision: 1.40 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -71,7 +71,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 
 # Networking options

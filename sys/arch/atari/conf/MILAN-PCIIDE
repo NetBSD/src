@@ -1,5 +1,5 @@
 #
-# $NetBSD: MILAN-PCIIDE,v 1.61 2008/11/15 21:22:03 abs Exp $
+# $NetBSD: MILAN-PCIIDE,v 1.62 2008/11/24 11:41:08 ad Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -43,7 +43,6 @@ file-system LFS # log-structured file system
 file-system PTYFS # /dev/pts/N support
 options WAPBL # File system journaling support - Experimental
 options QUOTA # Disk quotas for local disks
-options SOFTDEP # FFS soft updates support.
 options NFSSERVER # Network File System server side code
 options PANICWAIT # Require keystroke to dump/reboot
 options DDB # Kernel debugger

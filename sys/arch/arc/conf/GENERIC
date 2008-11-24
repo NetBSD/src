@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.159 2008/11/20 13:57:09 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.160 2008/11/24 11:41:08 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.159 $"
+#ident		"GENERIC-$Revision: 1.160 $"
 
 maxusers	32		# estimated number of users
 
@@ -120,7 +120,6 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server

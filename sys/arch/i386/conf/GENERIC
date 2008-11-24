@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.918 2008/11/21 15:55:59 ad Exp $
+# $NetBSD: GENERIC,v 1.919 2008/11/24 11:41:11 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.918 $"
+#ident 		"GENERIC-$Revision: 1.919 $"
 
 maxusers	64		# estimated number of users
 
@@ -198,7 +198,6 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	NFSSERVER	# Network File System server

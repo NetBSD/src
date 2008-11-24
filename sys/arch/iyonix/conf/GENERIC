@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.52 2008/11/12 12:36:02 ad Exp $
+#	$NetBSD: GENERIC,v 1.53 2008/11/24 11:41:12 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.52 $"
+#ident 		"GENERIC-$Revision: 1.53 $"
 
 maxusers	32		# estimated number of users
 
@@ -140,7 +140,6 @@ file-system     FILECORE        # Acorn filecore file system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.

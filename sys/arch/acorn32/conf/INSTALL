@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.50 2008/11/12 12:35:55 ad Exp $
+#	$NetBSD: INSTALL,v 1.51 2008/11/24 11:41:07 ad Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.50 $"
+#ident		"INSTALL-$Revision: 1.51 $"
 
 # estimated number of users
 maxusers	32
@@ -69,7 +69,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
