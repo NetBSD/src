@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_mod.c,v 1.2 2008/11/20 00:28:07 cegger Exp $	*/
+/*	$NetBSD: ultrix_mod.c,v 1.3 2008/11/24 11:19:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,20 +34,29 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_mod.c,v 1.2 2008/11/20 00:28:07 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_mod.c,v 1.3 2008/11/24 11:19:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
 #include <sys/exec.h>
-#include <sys/exec_elf.h>
-#include <sys/exec_ecoff.h>
 #include <sys/signalvar.h>
+#include <sys/exec_elf.h>
+#ifdef EXEC_ECOFF
+#include <sys/exec_ecoff.h>
+#endif
 
 #include <compat/ultrix/ultrix_exec.h>
 
-MODULE(MODULE_CLASS_MISC, compat_ultrix, "compat,exec_ecoff");
+#ifdef EXEC_ECOFF
+#define	MD1	",exec_ecoff"
+#else
+#define	MD1	""
+#endif
+
+MODULE(MODULE_CLASS_MISC, compat_ultrix, "compat" MD1);
 
 static struct execsw ultrix_execsw[] = {
+#ifdef EXEC_ECOFF
 	{ ECOFF_HDR_SIZE,
 	  exec_ecoff_makecmds,
 	  { .ecoff_probe_func = ultrix_exec_ecoff_probe },
@@ -58,6 +67,7 @@ static struct execsw ultrix_execsw[] = {
   	  cpu_exec_ecoff_setregs,
 	  coredump_netbsd,
 	  exec_setup_stack },
+#endif
 };
 
 static int
