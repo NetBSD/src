@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.270 2008/09/16 16:40:23 pgoyette Exp $
+#       $NetBSD: Makefile,v 1.271 2008/11/24 12:09:55 tsutsui Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -373,6 +373,11 @@ MLINKS+=mca.9 mca_intr_establish.9 \
 	mca.9 mca_intr_evcnt.9 \
 	mca.9 mca_conf_read.9 \
 	mca.9 mca_conf_write.9
+MLINKS+=microuptime.9 binuptime.9 \
+	microuptime.9 getbinuptime.9 \
+	microuptime.9 getmicrouptime.9 \
+	microuptime.9 nanouptime.9 \
+	microuptime.9 getnanouptime.9
 MLINKS+=mutex.9 mutex_init.9 mutex.9 mutex_destroy.9 mutex.9 mutex_enter.9 \
 	mutex.9 mutex_exit.9 mutex.9 mutex_tryenter.9 mutex.9 mutex_owned.9 \
 	mutex.9 mutex_spin_enter.9 mutex.9 mutex_spin_exit.9
