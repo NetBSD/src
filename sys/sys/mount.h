@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.183 2008/11/19 18:36:10 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.184 2008/11/24 11:35:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -224,6 +224,8 @@ struct vfsops {
 	const struct vnodeopv_desc * const *vfs_opv_descs;
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
+	int	vfs_spare1[8];
+	void	*vfs_spare2[8];
 };
 
 /* XXX vget is actually file system internal. */
