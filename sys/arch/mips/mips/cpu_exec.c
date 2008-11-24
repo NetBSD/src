@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.52 2008/11/19 13:55:00 tsutsui Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.53 2008/11/24 17:07:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.52 2008/11/19 13:55:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.53 2008/11/24 17:07:19 tsutsui Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_exec.c,v 1.52 2008/11/19 13:55:00 tsutsui Exp $"
 #include <sys/exec_ecoff.h>
 #endif
 #include <sys/exec_elf.h>			/* mandatory */
-#include <machine/bsd-aout.h>
+#include <mips/bsd-aout.h>
 #include <machine/reg.h>
 #include <mips/regnum.h>			/* symbolic register indices */
 
