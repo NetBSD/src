@@ -1,88 +1,105 @@
-.\"	$NetBSD: timecounter.9,v 1.2 2006/06/24 18:41:37 wiz Exp $
+.\"	$NetBSD: timecounter.9,v 1.3 2008/11/24 14:25:15 tsutsui Exp $
+.\"	$OpenBSD: tc_init.9,v 1.4 2007/05/31 19:20:01 jmc Exp $
 .\"
-.\" Copyright (c) 1994 Christopher G. Demetriou
-.\" All rights reserved.
+.\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"      This product includes software developed by Christopher G. Demetriou
-.\"      for the NetBSD Project.
-.\" 3. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
-.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
-.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
-.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $FreeBSD$
-.\"
-.Dd September 17, 2004
-.Dt TIME 9
+.Dd November 24, 2008
+.Dt TIMECOUNTER 9
 .Os
 .Sh NAME
-.Nm boottime ,
-.Nm time_second ,
-.Nm time_uptime
-.Nd system time variables
+.Nm timecounter ,
+.Nm tc_init
+.Nd machine-independent binary timescale
 .Sh SYNOPSIS
-.In sys/time.h
-.Pp
-.Vt extern struct timeval boottime ;
-.Vt extern time_t time_second ;
-.Vt extern time_t time_uptime ;
+.Fd #include <sys/timetc.h>
+.Ft void
+.Fn tc_init "struct timecounter *tc"
 .Sh DESCRIPTION
-The
-.Va boottime
-variable holds the system boot time.
+The timecounter interface is a machine-independent implementation
+of a binary timescale using whatever hardware support is at hand
+for tracking time.
 .Pp
-The
-.Va time_second
-variable is the system's
-.Dq wall time
-clock to the second.
+A timecounter is a binary counter which has two properties:
+.Bl -bullet -offset indent
+.It
+it runs at a fixed, known frequency
+.It
+it has sufficient bits to not roll over in less than approximately
+max(2 msec, 2/HZ seconds) (the value 2 here is really 1 + delta, for some
+indeterminate value of delta)
+.El
 .Pp
-The
-.Va time_uptime
-variable is the number of seconds since boot.
+The interface between the hardware which implements a timecounter and the
+machine-independent code which uses this to keep track of time is a
+.Va timecounter
+structure:
+.Bd -literal -offset indent
+struct timecounter {
+	timecounter_get_t	*tc_get_timecount;
+	timecounter_pps_t	*tc_poll_pps;
+	u_int 			tc_counter_mask;
+	u_int64_t		tc_frequency;
+	const char		*tc_name;
+	int			tc_quality;
+	void			*tc_priv;
+	struct timecounter	*tc_next;
+}
+.Ed
 .Pp
-The
-.Xr bintime 9 ,
-.Xr getbintime 9 ,
-.Xr microtime 9 ,
-.Xr getmicrotime 9 ,
-.Xr nanotime 9 ,
-and
-.Xr getnanotime 9
-functions can be used to get the current time more accurately and in an
-atomic manner.
-Similarly, the
-.Xr binuptime 9 ,
-.Xr getbinuptime 9 ,
-.Xr microuptime 9 ,
-.Xr getmicrouptime 9 ,
-.Xr nanouptime 9 ,
-and
-.Xr getnanouptime 9
-functions can be used to get the time elapse since boot more accurately
-and in an atomic manner.
-The
-.Va boottime
-variable may be read and written without special precautions.
+The fields of the
+.Va timecounter
+structure are described below.
+.Bl -tag -width indent
+.It Fn "u_int (*tc_get_timecount)" "struct timecounter *"
+This function reads the counter.
+It is not required to mask any unimplemented bits out, as long as they
+are constant.
+.It Fn "void (*tc_poll_pps)" "struct timecounter *"
+This function is optional and can be set to NULL.
+It will be called whenever the timecounter is rewound, and is intended
+to check for PPS events.
+Normal hardware does not need it but timecounters which latch PPS in
+hardware do.
+.It Va tc_counter_mask
+This mask should mask off any unimplemented bits.
+.It Va tc_frequency
+Frequency of the counter in Hz.
+.It Va tc_name
+Name of the timecounter.
+Can be any null-terminated string.
+.It Va tc_quality
+Used to determine if this timecounter is better than another timecounter \-
+higher means better.
+Negative means ``only use at explicit request''.
+.It Va tc_priv
+Pointer to the timecounter's private parts.
+.It Va tc_next
+For internal use.
+.El
+.Pp
+To register a new timecounter,
+the hardware device driver should fill a
+.Va timecounter
+structure with appropriate values and call the
+.Fn tc_init
+function, giving a pointer to the structure as a
+.Fa tc
+parameter.
+.Sh CODE REFERENCES
+The timecounter framework is implemented in the file
+.Pa sys/kern/kern_tc.c .
 .Sh SEE ALSO
 .Xr clock_settime 2 ,
 .Xr ntp_adjtime 2 ,
@@ -103,13 +120,11 @@ variable may be read and written without special precautions.
 .%A "Poul-Henning Kamp"
 .%T "Timecounters: Efficient and precise timekeeping in SMP kernels"
 .%J "Proceedings of EuroBSDCon 2002, Amsterdam"
-.\" .%O /usr/share/doc/papers/timecounter.ascii.gz
+.Lk http://phk.freebsd.dk/pubs/timecounter.pdf
 .Re
-.Rs
-.%A "Marshall Kirk McKusick"
-.%A "George V. Neville-Neil"
-.%B "The Design and Implementation of the FreeBSD Operating System"
-.%D "July 2004"
-.%I "Addison-Wesley"
-.%P "57-61,65-66"
-.Re
+.Sh HISTORY
+The timecounter interface first appeared in
+.Fx ,
+and was ported to
+.Nx 4.0
+by Frank Kardel and Simon Burge.
