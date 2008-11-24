@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.71 2008/11/12 12:36:05 ad Exp $
+# $NetBSD: GENERIC,v 1.72 2008/11/24 11:41:14 ad Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.71 $"
+#ident 		"GENERIC-$Revision: 1.72 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -78,7 +78,6 @@ options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

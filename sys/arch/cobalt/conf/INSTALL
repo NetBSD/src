@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.38 2008/11/12 12:35:58 ad Exp $
+# $NetBSD: INSTALL,v 1.39 2008/11/24 11:41:09 ad Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.38 $"
+#ident 		"INSTALL-$Revision: 1.39 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -87,7 +87,6 @@ file-system	MFS		# memory-based filesystem
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

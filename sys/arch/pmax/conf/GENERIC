@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.159 2008/11/12 12:36:05 ad Exp $
+# $NetBSD: GENERIC,v 1.160 2008/11/24 11:41:13 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.159 $"
+#ident		"GENERIC-$Revision: 1.160 $"
 
 maxusers	64
 
@@ -98,7 +98,6 @@ file-system	PTYFS		# /dev/pts/N support
 options 	NFSSERVER	# Sun NFS-compatible filesystem (server)
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
