@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.650 2008/11/17 03:05:01 perry Exp $
+#	$NetBSD: 3RDPARTY,v 1.651 2008/11/24 01:44:11 perry Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -296,18 +296,16 @@ use file2netbsd
 
 Package:	flex
 Version:	2.5.4
-Current Vers:	2.5.4a/2.5.33
-Maintainer:	Vern Paxson <vern@ee.lbl.gov>
-Archive Site:	ftp://ftp.gnu.org/gnu/non-gnu/flex/
-Home Page:	http://lex.sourceforge.net/
-Mailing List:
-Responsible:	mikel
+Current Vers:	2.5.35
+Maintainer:	Will Estes <wlestes@users.sourceforge.net>
+Archive Site:	http://flex.sourceforge.net/
+Home Page:	http://flex.sourceforge.net/
+Mailing List:	http://lists.sourceforge.net/mailman/listinfo/flex-announce
+Responsible:
 License:	BSD-like	
 Notes:
-flex 2.5.4a contains only copyright notice changes over version 2.5.4;
-internally not even the version number changed.
-Newer flex will be found in:
-	http://sourceforge.net/projects/lex/
+The newest version is far more advanced than the one in NetBSD --
+among other features, it can produce re-entrant scanners.
 
 Package:	gcc
 Version:	4.1.3-20080831
