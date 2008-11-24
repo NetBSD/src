@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1211 2008/11/24 12:43:43 tsutsui Exp $
+#	$NetBSD: mi,v 1.1212 2008/11/24 13:50:07 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8022,6 +8022,7 @@
 ./usr/share/man/cat9/bdevvp.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bdwrite.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bintobcd.0			comp-sys-catman		.cat
+./usr/share/man/cat9/bintime.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/binuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/biodone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/biowait.0			comp-sys-catman		.cat
@@ -8336,12 +8337,15 @@
 ./usr/share/man/cat9/fuswintr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fusword.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fuword.0			comp-sys-catman		.cat
+./usr/share/man/cat9/getbintime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getbinuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getblk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/geteblk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getiobuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getiobuf_nowait.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/getmicrouptime.0		comp-sys-catman		.cat
+./usr/share/man/cat9/getmicrotime.0		comp-sys-catman		.cat
+./usr/share/man/cat9/getnanotime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnanouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/gsignal.0			comp-sys-catman		.cat
@@ -8545,6 +8549,7 @@
 ./usr/share/man/cat9/namecache.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/namecache_print.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/namei.0			comp-sys-catman		.cat
+./usr/share/man/cat9/nanotime.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/nanouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/need_resched.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/nextrunqueue.0		comp-obsolete		obsolete
@@ -13230,6 +13235,7 @@
 ./usr/share/man/html9/bdevvp.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bdwrite.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bintobcd.html		comp-sys-htmlman	html
+./usr/share/man/html9/bintime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/binuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/biodone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/biowait.html		comp-sys-htmlman	html
@@ -13523,11 +13529,14 @@
 ./usr/share/man/html9/fuswintr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fusword.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fuword.html		comp-sys-htmlman	html
+./usr/share/man/html9/getbintime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getbinuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getblk.html		comp-sys-htmlman	html
 ./usr/share/man/html9/geteblk.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getiobuf.html		comp-sys-htmlman	html
+./usr/share/man/html9/getmicrotime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getmicrouptime.html	comp-sys-htmlman	html
+./usr/share/man/html9/getnanotime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/getnanouptime.html	comp-sys-htmlman	html
 ./usr/share/man/html9/getnewvnode.html		comp-sys-htmlman	html
 ./usr/share/man/html9/gsignal.html		comp-sys-htmlman	html
@@ -13727,6 +13736,7 @@
 ./usr/share/man/html9/namecache.html		comp-sys-htmlman	html
 ./usr/share/man/html9/namecache_print.html	comp-sys-htmlman	html
 ./usr/share/man/html9/namei.html		comp-sys-htmlman	html
+./usr/share/man/html9/nanotime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/nanouptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/old_sysctl.html		comp-sys-htmlman	html
 ./usr/share/man/html9/opencrypto.html		comp-sys-htmlman	html
@@ -18550,6 +18560,7 @@
 ./usr/share/man/man9/bdevvp.9			comp-sys-man		.man
 ./usr/share/man/man9/bdwrite.9			comp-sys-man		.man
 ./usr/share/man/man9/bintobcd.9			comp-sys-man		.man
+./usr/share/man/man9/bintime.9			comp-sys-man		.man
 ./usr/share/man/man9/binuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/biodone.9			comp-sys-man		.man
 ./usr/share/man/man9/biowait.9			comp-sys-man		.man
@@ -18864,12 +18875,15 @@
 ./usr/share/man/man9/fuswintr.9			comp-sys-man		.man
 ./usr/share/man/man9/fusword.9			comp-sys-man		.man
 ./usr/share/man/man9/fuword.9			comp-sys-man		.man
+./usr/share/man/man9/getbintime.9		comp-sys-man		.man
 ./usr/share/man/man9/getbinuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/getblk.9			comp-sys-man		.man
 ./usr/share/man/man9/geteblk.9			comp-sys-man		.man
 ./usr/share/man/man9/getiobuf.9			comp-sys-man		.man
 ./usr/share/man/man9/getiobuf_nowait.9		comp-obsolete		obsolete
+./usr/share/man/man9/getmicrotime.9		comp-sys-man		.man
 ./usr/share/man/man9/getmicrouptime.9		comp-sys-man		.man
+./usr/share/man/man9/getnanotime.9		comp-sys-man		.man
 ./usr/share/man/man9/getnanouptime.9		comp-sys-man		.man
 ./usr/share/man/man9/getnewvnode.9		comp-sys-man		.man
 ./usr/share/man/man9/gsignal.9			comp-sys-man		.man
@@ -19073,6 +19087,7 @@
 ./usr/share/man/man9/namecache.9		comp-sys-man		.man
 ./usr/share/man/man9/namecache_print.9		comp-sys-man		.man
 ./usr/share/man/man9/namei.9			comp-sys-man		.man
+./usr/share/man/man9/nanotime.9			comp-sys-man		.man
 ./usr/share/man/man9/nanouptime.9		comp-sys-man		.man
 ./usr/share/man/man9/need_resched.9		comp-obsolete		obsolete
 ./usr/share/man/man9/nextrunqueue.9		comp-obsolete		obsolete
