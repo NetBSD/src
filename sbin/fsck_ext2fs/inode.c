@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.26 2008/11/24 17:37:17 tsutsui Exp $	*/
+/*	$NetBSD: inode.c,v 1.27 2008/11/24 17:41:29 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.26 2008/11/24 17:37:17 tsutsui Exp $");
+__RCSID("$NetBSD: inode.c,v 1.27 2008/11/24 17:41:29 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -617,6 +617,8 @@ pinode(ino_t ino)
 		return;
 	dp = ginode(ino);
 	uid = fs2h16(dp->e2di_uid);
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0)
+		uid |= fs2h16(dp->e2di_uid_high) << 16;
 	printf(" OWNER=");
 #ifndef SMALL
 	if (Uflag && (pw = getpwuid(uid)) != 0)
