@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.289 2008/10/19 22:05:21 apb Exp $
+#	$NetBSD: bsd.lib.mk,v 1.290 2008/11/24 02:01:46 cube Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -24,7 +24,12 @@ MKSTATICLIB:=	no
 .if ${LIBISPRIVATE} != "no"
 MKDEBUGLIB:=	no
 MKLINT:=	no
+MKPICINSTALL:=	no
+. if defined(NOSTATICLIB) && ${MKPICLIB} != "no"
+MKSTATICLIB:=	no
+. else
 MKPIC:=		no
+. endif
 MKPROFILE:=	no
 .endif
 
@@ -367,7 +372,7 @@ LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .if ${LIBISPRIVATE} != "no"
 # No installation is required
 libinstall::
-.else	# ${LIBISPRIVATE} == "no"					# {
+.endif	# ${LIBISPRIVATE} == "no"					# {
 
 .if ${MKDEBUGLIB} != "no"
 _LIBS+=lib${LIB}_g.a
@@ -405,8 +410,6 @@ _LIBS+=lib${LIB}.so.${SHLIB_FULLVERSION}
 .if ${MKLINT} != "no" && !empty(LOBJS)
 _LIBS+=llib-l${LIB}.ln
 .endif
-
-.endif	# ${LIBISPRIVATE} == "no"					# }
 
 ALLOBJS=
 .if (${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
