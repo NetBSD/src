@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1212 2008/11/24 13:50:07 tsutsui Exp $
+#	$NetBSD: mi,v 1.1213 2008/11/24 14:08:12 tsutsui Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8878,6 +8878,7 @@
 ./usr/share/man/cat9/ttyldisc_lookup.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ttyldisc_remove.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/ttyprintf.0		comp-sys-catman		.cat
+./usr/share/man/cat9/tvtohz.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/uao_create.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uao_detach.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/uao_reference.0		comp-sys-catman		.cat
@@ -14039,6 +14040,7 @@
 ./usr/share/man/html9/ttyldisc_lookup.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ttyldisc_remove.html	comp-sys-htmlman	html
 ./usr/share/man/html9/ttyprintf.html		comp-sys-htmlman	html
+./usr/share/man/html9/tvtohz.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uao_create.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uao_detach.html		comp-sys-htmlman	html
 ./usr/share/man/html9/uao_reference.html	comp-sys-htmlman	html
@@ -19416,6 +19418,7 @@
 ./usr/share/man/man9/ttyldisc_lookup.9		comp-sys-man		.man
 ./usr/share/man/man9/ttyldisc_remove.9		comp-sys-man		.man
 ./usr/share/man/man9/ttyprintf.9		comp-sys-man		.man
+./usr/share/man/man9/tvtohz.9			comp-sys-man		.man
 ./usr/share/man/man9/uao_create.9		comp-sys-man		.man
 ./usr/share/man/man9/uao_detach.9		comp-sys-man		.man
 ./usr/share/man/man9/uao_reference.9		comp-sys-man		.man
