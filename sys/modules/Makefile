@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2008/11/23 15:29:42 martin Exp $
+#	$NetBSD: Makefile,v 1.18 2008/11/24 11:26:49 ad Exp $
 
 # For all platforms
 
@@ -17,18 +17,18 @@ SUBDIR+=	ext2fs
 SUBDIR+=	exec_script
 SUBDIR+=	fdesc
 SUBDIR+=	ffs
-SUBDIR+=	filecorefs
+SUBDIR+=	filecore
 SUBDIR+=	fss
 SUBDIR+=	hfs
 SUBDIR+=	kernfs
 SUBDIR+=	ksem
 SUBDIR+=	lfs
 SUBDIR+=	mfs
-SUBDIR+=	msdosfs
+SUBDIR+=	msdos
 SUBDIR+=	nfs
 SUBDIR+=	nfsserver
 SUBDIR+=	ntfs
-SUBDIR+=	nullfs
+SUBDIR+=	null
 SUBDIR+=	overlay
 SUBDIR+=	portal
 SUBDIR+=	procfs
@@ -39,7 +39,7 @@ SUBDIR+=	miniroot
 SUBDIR+=	smbfs
 SUBDIR+=	tmpfs
 SUBDIR+=	udf
-SUBDIR+=	umapfs
+SUBDIR+=	umap
 SUBDIR+=	union
 .if (defined(NOTYET))
 SUBDIR+=	unionfs
