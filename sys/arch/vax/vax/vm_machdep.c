@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.104 2008/11/19 18:36:01 ad Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.105 2008/11/24 13:45:37 cegger Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104 2008/11/19 18:36:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.105 2008/11/24 13:45:37 cegger Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.104 2008/11/19 18:36:01 ad Exp $");
 #include <sys/core.h>
 #include <sys/mount.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 
