@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.17 2008/03/16 23:17:55 lukem Exp $	*/
+/*	$NetBSD: utilities.c,v 1.18 2008/11/24 18:05:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.17 2008/03/16 23:17:55 lukem Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.18 2008/11/24 18:05:25 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ bufinit(void)
 	if (bufcnt < MINBUFS)
 		bufcnt = MINBUFS;
 	for (i = 0; i < bufcnt; i++) {
-		bp = (struct bufarea *)malloc(sizeof(struct bufarea));
+		bp = malloc(sizeof(struct bufarea));
 		bufp = malloc((unsigned int)sblock.e2fs_bsize);
 		if (bp == NULL || bufp == NULL) {
 			if (i >= MINBUFS)
@@ -283,7 +283,7 @@ ckfini(int markclean)
 		flush(fswritefd, bp);
 		nbp = bp->b_prev;
 		free(bp->b_un.b_buf);
-		free((char *)bp);
+		free(bp);
 	}
 	if (bufhead.b_size != cnt)
 		errexit("Panic: lost %d buffers", bufhead.b_size - cnt);
