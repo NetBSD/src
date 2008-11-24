@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.25 2008/11/24 17:30:12 tsutsui Exp $	*/
+/*	$NetBSD: inode.c,v 1.26 2008/11/24 17:37:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.25 2008/11/24 17:30:12 tsutsui Exp $");
+__RCSID("$NetBSD: inode.c,v 1.26 2008/11/24 17:37:17 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -553,7 +553,7 @@ clri(struct inodesc *idesc, const char *type, int flag)
 	dp = ginode(idesc->id_number);
 	if (flag == 1) {
 		pwarn("%s %s", type,
-		    (dp->e2di_mode & IFMT) == IFDIR ? "DIR" : "FILE");
+		    (fs2h16(dp->e2di_mode) & IFMT) == IFDIR ? "DIR" : "FILE");
 		pinode(idesc->id_number);
 	}
 	if (preen || reply("CLEAR") == 1) {
@@ -610,18 +610,20 @@ pinode(ino_t ino)
 	char *p;
 	struct passwd *pw;
 	time_t t;
+	uid_t uid;
 
 	printf(" I=%llu ", (unsigned long long)ino);
 	if ((ino < EXT2_FIRSTINO && ino != EXT2_ROOTINO) || ino > maxino)
 		return;
 	dp = ginode(ino);
+	uid = fs2h16(dp->e2di_uid);
 	printf(" OWNER=");
 #ifndef SMALL
-	if (Uflag && (pw = getpwuid((int)dp->e2di_uid)) != 0)
+	if (Uflag && (pw = getpwuid(uid)) != 0)
 		printf("%s ", pw->pw_name);
 	else
 #endif
-		printf("%u ", (unsigned int)fs2h16(dp->e2di_uid));
+		printf("%u ", (unsigned int)uid);
 	printf("MODE=%o\n", fs2h16(dp->e2di_mode));
 	if (preen)
 		printf("%s: ", cdevname());
