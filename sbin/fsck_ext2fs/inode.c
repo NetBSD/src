@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.23 2008/10/09 16:56:23 christos Exp $	*/
+/*	$NetBSD: inode.c,v 1.24 2008/11/24 17:19:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.23 2008/10/09 16:56:23 christos Exp $");
+__RCSID("$NetBSD: inode.c,v 1.24 2008/11/24 17:19:53 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -169,7 +169,7 @@ ckinode(struct ext2fs_dinode *dp, struct inodesc *idesc)
 	dino = *dp;
 	ndb = howmany(inosize(&dino), sblock.e2fs_bsize);
 	for (ap = &dino.e2di_blocks[0]; ap < &dino.e2di_blocks[NDADDR];
-																ap++,ndb--) {
+	    ap++,ndb--) {
 		idesc->id_numfrags = 1;
 		if (*ap == 0) {
 			if (idesc->id_type == DATA && ndb > 0) {
@@ -325,7 +325,7 @@ chkrange(daddr_t blk, int cnt)
 {
 	int c, overh;
 
-	if ((unsigned)(blk + cnt) > maxfsblock)
+	if ((unsigned int)(blk + cnt) > maxfsblock)
 		return (1);
 	c = dtog(&sblock, blk);
 	overh = cgoverhead(c);
@@ -444,8 +444,7 @@ resetinodebuf(void)
 		partialsize = inobufsize;
 	}
 	if (inodebuf == NULL &&
-	    (inodebuf = (struct ext2fs_dinode *)malloc((unsigned)inobufsize)) ==
-		NULL)
+	    (inodebuf = malloc((unsigned int)inobufsize)) == NULL)
 		errexit("Cannot allocate space for inode buffer");
 	while (nextino < EXT2_ROOTINO)
 		(void)getnextinode(nextino);
@@ -456,7 +455,7 @@ freeinodebuf(void)
 {
 
 	if (inodebuf != NULL)
-		free((char *)inodebuf);
+		free(inodebuf);
 	inodebuf = NULL;
 }
 
@@ -478,8 +477,7 @@ cacheino(struct ext2fs_dinode *dp, ino_t inumber)
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
 	/* XXX ondisk32 */
-	inp = (struct inoinfo *)
-		malloc(sizeof(*inp) + (blks - 1) * sizeof(int32_t));
+	inp = malloc(sizeof(*inp) + (blks - 1) * sizeof(int32_t));
 	if (inp == NULL)
 		return;
 	inpp = &inphead[inumber % numdirs];
@@ -499,7 +497,7 @@ cacheino(struct ext2fs_dinode *dp, ino_t inumber)
 	if (inplast == listmax) {
 		listmax += 100;
 		inpsort = (struct inoinfo **)realloc((char *)inpsort,
-		    (unsigned)listmax * sizeof(struct inoinfo *));
+		    (unsigned int)listmax * sizeof(struct inoinfo *));
 		if (inpsort == NULL)
 			errexit("cannot increase directory list");
 	}
@@ -534,9 +532,9 @@ inocleanup(void)
 	if (inphead == NULL)
 		return;
 	for (inpp = &inpsort[inplast - 1]; inpp >= inpsort; inpp--)
-		free((char *)(*inpp));
-	free((char *)inphead);
-	free((char *)inpsort);
+		free(*inpp);
+	free(inphead);
+	free(inpsort);
 	inphead = inpsort = NULL;
 }
 	
@@ -623,7 +621,7 @@ pinode(ino_t ino)
 		printf("%s ", pw->pw_name);
 	else
 #endif
-		printf("%u ", (unsigned)fs2h16(dp->e2di_uid));
+		printf("%u ", (unsigned int)fs2h16(dp->e2di_uid));
 	printf("MODE=%o\n", fs2h16(dp->e2di_mode));
 	if (preen)
 		printf("%s: ", cdevname());
