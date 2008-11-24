@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1214 2008/11/24 14:25:15 tsutsui Exp $
+#	$NetBSD: mi,v 1.1215 2008/11/24 16:05:21 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2077,6 +2077,7 @@
 ./usr/include/sys/vsio.h			comp-obsolete		obsolete
 ./usr/include/sys/wait.h			comp-c-include
 ./usr/include/sys/wapbl.h			comp-c-include
+./usr/include/sys/wapbl_replay.h		comp-c-include
 ./usr/include/sys/wdog.h			comp-c-include
 ./usr/include/sysexits.h			comp-c-include
 ./usr/include/syslog.h				comp-c-include
