@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.651 2008/11/24 01:44:11 perry Exp $
+#	$NetBSD: 3RDPARTY,v 1.652 2008/11/25 14:54:03 tsutsui Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -153,7 +153,7 @@ since then but there are a bunch of bug fixes we probably want to pull
 in.
 
 Package:	bzip2
-Version:	1.0.2
+Version:	1.0.5
 Current Vers:	1.0.5
 Maintainer:	Julian Seward <jseward@acm.org>
 Archive Site:	http://sources.redhat.com/bzip2/
@@ -506,21 +506,6 @@ Notes:
 Distribution is stripped down to the relevant part. cpio is currently
 not usable, so it was left out.
 
-Package:	libcdk
-Version:	4.9.9-20000407-myc3
-Current Vers:	cdk-4.9.10-20000923
-Maintainer:	mike@vexus.ca
-Archive Site:	http://www.vexus.ca/products/CDK/
-Home Page:	http://www.vexus.ca/products/CDK/
-Responsible:	garbled
-License:	BSD (4-clause)
-Notes:
-Initial port to netbsd curses was done by mycroft.  This is a heavily
-modified version of the released CDK 4.9.9.  The current version has been
-taken over by the Ncurses people, and has a number of changes to it.  It
-might be worthwhile to import at some future date, but for now we should
-leave it alone.  (garbled 1/4/2001)
-
 Package:	libevent
 Version:	1.4.4-stable
 Current Vers:	1.4.4-stable
@@ -533,7 +518,7 @@ Notes:
 
 Package:	libpcap
 Version:	0.9.4
-Current Vers:	0.9.8
+Current Vers:	1.0.0
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
@@ -608,18 +593,16 @@ Notes:
 See /usr/src/dist/ntp/ntp2netbsd for update instructions.
 
 Package:	nvi
-Version:	1.79
-Current Vers:	1.79
+Version:	1.81.6
+Current Vers:	1.81.6
 Maintainer:	Keith Bostic <bostic@bsdi.com>
 Archive Site:	ftp://ftp.bostic.com/pub/
 Home Page:	http://www.bostic.com/vi/
 Mailing List:
-Responsible:	aymeric
+Responsible:	aymeric, christos
 License:	BSD (3/4-clause)
 Notes:
-We have lots of local bug fixes, and the point of importing 1.81.x would
-be to get multibyte characters support. For now this means waiting for
-additions in our libcurses.
+We have lots of local fixes.
 
 Package:	OpenLDAP
 Version:	2.4.11
@@ -737,8 +720,8 @@ definition (files.pf).  userland code is imported into src/dist/pf, and
 reachover Makefiles are in src/usr.sbin/pf.
 
 Package:	pkg_install
-Version:	20080202
-Current Vers.:	200820202
+Version:	20081002
+Current Vers.:	20081002
 Maintainer:	The pkgsrc developers
 Home Page:	http://www.pkgsrc.org
 Mailing List:	tech-pkg@NetBSD.org
@@ -865,7 +848,7 @@ original.
 
 Package:	tcpdump
 Version:	3.9.7
-Current Vers:	3.9.8
+Current Vers:	4.0.0
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
