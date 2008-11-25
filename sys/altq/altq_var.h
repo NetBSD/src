@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_var.h,v 1.11 2007/07/09 21:10:46 ad Exp $	*/
+/*	$NetBSD: altq_var.h,v 1.12 2008/11/25 15:59:10 tsutsui Exp $	*/
 /*	$KAME: altq_var.h,v 1.18 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -118,7 +118,6 @@ struct acc_classifier {
  * machine dependent clock
  * a 64bit high resolution time counter.
  */
-extern int machclk_usepcc;
 extern u_int32_t machclk_freq;
 extern u_int32_t machclk_per_tick;
 extern void init_machclk(void);
