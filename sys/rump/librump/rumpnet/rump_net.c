@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_net.c,v 1.3 2008/10/16 19:27:24 pooka Exp $	*/
+/*	$NetBSD: rump_net.c,v 1.4 2008/11/25 18:44:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,8 @@
 #include <sys/mbuf.h>
 #include <sys/socketvar.h>
 
+#include <net/radix.h>
+
 #include "rump_net_private.h"
 
 /* XXX: tempkludge */
@@ -50,6 +52,7 @@ rump_net_init()
 
 	mbinit();
 	domaininit();
+	rn_init();
 	soinit();
 	soinit2();
 	rump_netisr_init();
