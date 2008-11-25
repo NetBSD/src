@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.13 2008/11/25 21:50:47 bad Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.14 2008/11/25 21:54:05 bad Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -663,12 +663,13 @@ update_myaddrs()
 	switch (rtm->rtm_type) {
 	case RTM_NEWADDR:
 	case RTM_DELADDR:
-	case RTM_DELETE:
-	case RTM_IFINFO:
 #ifdef RTM_IFANNOUNCE
 	case RTM_IFANNOUNCE:
 #endif
 		break;
+	case RTM_DELETE:
+	case RTM_IFINFO:
+	case RTM_OIFINFO:
 	case RTM_MISS:
 		/* ignore this message silently */
 		return 0;
