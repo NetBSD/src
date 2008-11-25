@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.2 2008/11/21 15:49:51 ad Exp $
+#	$NetBSD: dot.profile,v 1.3 2008/11/25 14:25:59 ad Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -57,6 +57,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# set up some sane defaults
 	stty newcrt werase ^W intr ^C kill ^U erase ^H
 	mount -t tmpfs tmpfs /tmp
+	mount -t tmpfs -o union tmpfs /etc
 
 	grep() sed -n "/$1/p"
 
