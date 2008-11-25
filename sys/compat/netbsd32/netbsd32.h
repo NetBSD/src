@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32.h,v 1.77 2008/10/15 06:51:19 wrstuden Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.77.4.1 2008/11/25 17:31:26 snj Exp $	*/
 
 /*
- * Copyright (c) 1998, 2001 Matthew R. Green
+ * Copyright (c) 1998, 2001, 2008 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -673,6 +673,10 @@ struct netbsd32_kevent {
 	netbsd32_int64		data;
 	netbsd32_intptr_t	udata;
 };
+
+/* from <sys/sched.h> */
+typedef netbsd32_pointer_t netbsd32_sched_paramp_t;
+typedef netbsd32_pointer_t netbsd32_cpusetp_t;
 
 #if 0
 int	netbsd32_kevent(struct lwp *, void *, register_t *);
