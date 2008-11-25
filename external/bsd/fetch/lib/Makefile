@@ -26,11 +26,11 @@ CLEANFILES+=	ftperr.h httperr.h
 .PATH: ${LIBFETCHDIR}
 
 ftperr.h: ${LIBFETCHDIR}/ftp.errors ${LIBFETCHDIR}/errlist.sh
-	${SH} ${LIBFETCHDIR}/errlist.sh ftp_errlist FTP \
+	${HOST_SH} ${LIBFETCHDIR}/errlist.sh ftp_errlist FTP \
 	    ${LIBFETCHDIR}/ftp.errors > ${.TARGET}
 
 httperr.h: ${LIBFETCHDIR}/http.errors ${LIBFETCHDIR}/errlist.sh
-	${SH} ${LIBFETCHDIR}/errlist.sh http_errlist HTTP \
+	${HOST_SH} ${LIBFETCHDIR}/errlist.sh http_errlist HTTP \
 	    ${LIBFETCHDIR}/http.errors > ${.TARGET}
 
 .include <bsd.lib.mk>
