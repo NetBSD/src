@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.33 2008/11/23 21:37:33 riz Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.34 2008/11/25 04:16:16 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1102,4 +1102,19 @@ libexec/httpd/cgi-bozo.c			1.8
 	Change the cgi index.html code to only run if you set the index.html
 	name.  PR#38466
 	[mrg, ticket #115]
+
+sys/kern/kern_drvctl.c				1.20
+
+	Add poll support for drvctl notification events.
+	[jmcneill, ticket #118]
+
+sys/netinet/ip_input.c				1.276
+
+	ip_input: fix an IPQ "lock" leak.
+	[rmind, ticket #119]
+
+xsrc/external/mit/xorg-server/dist/hw/xfree86/os-support/bsd/bsd_init.c 1.2
+
+	Add a log message to notify what VT is in use.  Helps gdm/consolekit.
+	[jmcneill, ticket #120]
 
