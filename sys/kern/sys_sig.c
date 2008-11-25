@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.19 2008/11/19 18:36:07 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.20 2008/11/25 16:42:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.19 2008/11/19 18:36:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.20 2008/11/25 16:42:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -327,6 +327,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	sigset_t tset;
 	int prop, error;
 	ksiginfoq_t kq;
+	static bool v0v1valid;
 
 	if (signum <= 0 || signum >= NSIG)
 		return (EINVAL);
@@ -348,24 +349,56 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	 * using module_lock.  If the autoload fails, we don't try it
 	 * again for this process.
 	 */
-#ifdef MODULAR
-	if (__predict_false(vers < 2) && (p->p_lflag & PL_SIGCOMPAT) == 0) {
-		mutex_enter(&module_lock);
-		if (sendsig_sigcontext_vec == NULL) {
-			(void)module_autoload("compat", MODULE_CLASS_ANY);
+	if (nsa != NULL) {
+		if (__predict_false(vers < 2) &&
+		    (p->p_lflag & PL_SIGCOMPAT) == 0) {
+			mutex_enter(&module_lock);
+			if (sendsig_sigcontext_vec == NULL) {
+				(void)module_autoload("compat",
+				    MODULE_CLASS_ANY);
+			}
+			if (sendsig_sigcontext_vec != NULL) {
+				/*
+				 * We need to remember if the
+				 * sigcontext method may be useable,
+				 * because libc may use it even
+				 * if siginfo is available.
+				 */
+				v0v1valid = true;
+			}
+			mutex_enter(proc_lock);
+			/*
+			 * Prevent unload of compat module while
+			 * this process remains.
+			 */
+			p->p_lflag |= PL_SIGCOMPAT;
+			mutex_exit(proc_lock);
+			mutex_exit(&module_lock);
 		}
-		mutex_enter(proc_lock);
-		p->p_lflag |= PL_SIGCOMPAT;
-		mutex_exit(proc_lock);
-		mutex_exit(&module_lock);
-	}
-#endif	/* MODULAR */
 
-	if (vers == 0 && (tramp != NULL || p->p_emul->e_sigcode == NULL)) {
-		return EINVAL;
-	}
-	if (vers != 0 && (tramp == NULL || vers > 2)) {
-		return EINVAL;
+		switch (vers) {
+		case 0:
+			/* sigcontext, kernel supplied trampoline. */
+			if (tramp != NULL || !v0v1valid) {
+				return EINVAL;
+			}
+			break;
+		case 1:
+			/* sigcontext, user supplied trampoline. */
+			if (tramp == NULL || !v0v1valid) {
+				return EINVAL;
+			}
+			break;
+		case 2:
+		case 3:
+			/* siginfo, user supplied trampoline. */
+			if (tramp == NULL) {
+				return EINVAL;
+			}
+			break;
+		default:
+			return EINVAL;
+		}
 	}
 
 	mutex_enter(p->p_lock);
