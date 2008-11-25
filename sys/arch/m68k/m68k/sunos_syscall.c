@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_syscall.c,v 1.19 2008/10/21 12:16:59 ad Exp $	*/
+/*	$NetBSD: sunos_syscall.c,v 1.20 2008/11/25 14:02:16 tsutsui Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,9 +110,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.19 2008/10/21 12:16:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_syscall.c,v 1.20 2008/11/25 14:02:16 tsutsui Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
