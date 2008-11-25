@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.10 2008/10/27 06:24:27 tteras Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.11 2008/11/25 21:37:11 bad Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -774,6 +774,7 @@ newmyaddr()
 
 	new->next = NULL;
 	new->addr = NULL;
+	new->sock = -1;
 
 	return new;
 }
