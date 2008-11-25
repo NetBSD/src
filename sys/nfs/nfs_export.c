@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.41 2008/11/25 14:04:23 pooka Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.42 2008/11/25 14:28:42 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.41 2008/11/25 14:04:23 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.42 2008/11/25 14:28:42 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,13 +414,10 @@ nfs_export_update_30(struct mount *mp, const char *path, void *data)
  */
 
 /*
- * Initializes NFS exports for the file system given in 'mp' if it supports
- * file handles; this is determined by checking whether mp's vfs_vptofh and
- * vfs_fhtovp operations are NULL or not.
- *
- * If successful, returns 0 and sets *mnpp to the address of the new
- * mount_netexport_pair item; otherwise returns an appropriate error code
- * and *mnpp remains unmodified.
+ * Initializes NFS exports for the mountpoint given in 'mp'.
+ * If successful, returns 0 and sets *nep to the address of the new
+ * netexport item; otherwise returns an appropriate error code
+ * and *nep remains unmodified.
  */
 static int
 init_exports(struct mount *mp, struct netexport **nep)
