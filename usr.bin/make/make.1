@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.144 2008/10/30 08:44:18 wiz Exp $
+.\"	$NetBSD: make.1,v 1.145 2008/11/25 20:34:19 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd October 29, 2008
+.Dd November 25, 2008
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -575,7 +575,7 @@ These variables are
 and
 .Ql Va .MEMBER .
 .El
-.Ss Additional inbuilt variables
+.Ss Additional built-in variables
 In addition,
 .Nm
 sets or knows about the following variables:
@@ -779,6 +779,14 @@ is set to the value of
 for all programs which
 .Nm
 executes.
+.It Ev VPATH
+Column-separated
+.Dq \&: 
+lists of directories that make will search for files.
+The variable is supported for compatibility with old make programs only,
+use
+.Ql Va .PATH
+instead.
 .El
 .Ss Variable modifiers
 Variable expansion may be modified to select or modify each word of the
