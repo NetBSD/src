@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.210 2008/11/12 12:35:56 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211 2008/11/25 15:51:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.210 2008/11/12 12:35:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2008/11/25 15:51:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -704,7 +704,7 @@ dumpsys()
 		/* Print out how many MBs we have to go. */
 		n = bytes - i;
 		if (n && (n % (1024 * 1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
+			printf_nolog("%d ", n / (1024 * 1024));
 
 		/* Limit size for next transfer. */
 		if (n > BYTES_PER_DUMP)
