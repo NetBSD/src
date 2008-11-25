@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.14 2008/11/25 21:54:05 bad Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.15 2008/11/25 22:00:15 bad Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -558,6 +558,18 @@ suitable_ifaddr(ifname, ifaddr)
 #endif
 	switch(ifaddr->sa_family) {
 	case AF_INET:
+		if (((struct sockaddr_in *)ifaddr)->sin_addr.s_addr ==
+		    htonl(INADDR_ANY)) {
+			plog(LLV_DEBUG, LOCATION, NULL,
+			     "discarding unsuitable wildcard address\n");
+			return 0;
+		}
+		else if (((struct sockaddr_in *)ifaddr)->sin_addr.s_addr ==
+			 htonl(INADDR_LOOPBACK)) {
+			plog(LLV_DEBUG, LOCATION, NULL,
+			     "discarding unsuitable loopback address\n");
+			return 0;
+		}
 		return 1;
 #ifdef INET6
 	case AF_INET6:
@@ -582,6 +594,18 @@ suitable_ifaddr6(ifname, ifaddr)
 
 	if (ifaddr->sa_family != AF_INET6)
 		return 0;
+
+	if (IN6_IS_ADDR_UNSPECIFIED(&((const struct sockaddr_in6 *)ifaddr)->sin6_addr)) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+		     "discarding unsuitable unspecified v6 address\n");
+		return 0;
+	}
+
+	if (IN6_IS_ADDR_LOOPBACK(&((const struct sockaddr_in6 *)ifaddr)->sin6_addr)) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+		     "discarding unsuitable loopback v6 address\n");
+		return 0;
+	}
 
 #ifndef __linux__
 	s = socket(PF_INET6, SOCK_DGRAM, 0);
