@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.284 2008/11/19 18:36:01 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.285 2008/11/25 15:51:34 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.284 2008/11/19 18:36:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.285 2008/11/25 15:51:34 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1044,7 +1044,7 @@ dumpsys(void)
 
 			/* print out how many MBs we have dumped */
 			if (i && (i % (1024*1024)) == 0)
-				printf("%d ", i / (1024*1024));
+				printf_nolog("%d ", i / (1024*1024));
 
 			(void) pmap_map(dumpspace, maddr, maddr + n,
 					VM_PROT_READ);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.187 2008/11/12 12:36:08 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.188 2008/11/25 15:51:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.187 2008/11/12 12:36:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 2008/11/25 15:51:35 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -674,7 +674,7 @@ dumpsys(void)
 		chunk = todo;
 	do {
 		if ((todo & 0xf) == 0)
-			printf("\r%4d", todo);
+			printf_nolog("\r%4d", todo);
 		vaddr = (char*)(paddr + KERNBASE);
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, PAGE_SIZE);
 		if (error)
@@ -688,7 +688,7 @@ dumpsys(void)
 	vaddr = (char*)vmmap;	/* Borrow /dev/mem VA */
 	do {
 		if ((todo & 0xf) == 0)
-			printf("\r%4d", todo);
+			printf_nolog("\r%4d", todo);
 		pmap_kenter_pa(vmmap, paddr | PMAP_NC, VM_PROT_READ);
 		pmap_update(pmap_kernel());
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, PAGE_SIZE);
