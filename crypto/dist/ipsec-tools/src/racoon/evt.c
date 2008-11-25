@@ -1,4 +1,4 @@
-/*	$NetBSD: evt.c,v 1.6 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: evt.c,v 1.7 2008/11/25 22:38:31 bad Exp $	*/
 
 /* Id: evt.c,v 1.5 2006/06/22 20:11:35 manubsd Exp */
 
@@ -268,8 +268,7 @@ evtmsg_broadcast(ll, e)
 	for (l = LIST_FIRST(ll); l != NULL; l = nl) {
 		nl = LIST_NEXT(l, ll_chain);
 
-		if (send(l->fd, e, e->adm.ac_len,
-			 MSG_NOSIGNAL | MSG_DONTWAIT) < 0) {
+		if (send(l->fd, e, e->adm.ac_len, MSG_DONTWAIT) < 0) {
 			plog(LLV_DEBUG, LOCATION, NULL, "Cannot send event to fd: %s\n",
 				strerror(errno));
 			evt_unsubscribe(l);

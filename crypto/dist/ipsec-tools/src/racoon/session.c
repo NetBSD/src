@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.18 2008/10/27 06:18:09 tteras Exp $	*/
+/*	$NetBSD: session.c,v 1.19 2008/11/25 22:38:31 bad Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -565,6 +565,12 @@ static void
 init_signal()
 {
 	int i;
+
+	/*
+	 * Ignore SIGPIPE as we check the return value of system calls
+	 * that write to pipe-like fds.
+	 */
+	signal(SIGPIPE, SIG_DFL);
 
 	for (i = 0; signals[i] != 0; i++)
 		if (set_signal(signals[i], signal_handler) < 0) {
