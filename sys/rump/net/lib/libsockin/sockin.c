@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.5 2008/11/25 20:39:57 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.6 2008/11/25 20:42:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -38,6 +38,8 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/time.h>
+
+#include <net/radix.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -81,9 +83,9 @@ struct domain sockindomain = {
 	.dom_dispose = NULL,
 	.dom_protosw = sockinsw,
 	.dom_protoswNPROTOSW = &sockinsw[__arraycount(sockinsw)],
-	.dom_rtattach = NULL,
-	.dom_rtoffset = 0,
-	.dom_maxrtkey = 0,
+	.dom_rtattach = rn_inithead,
+	.dom_rtoffset = 32,
+	.dom_maxrtkey = sizeof(struct sockaddr_in),
 	.dom_ifattach = NULL,
 	.dom_ifdetach = NULL,
 	.dom_ifqueues = { NULL },
