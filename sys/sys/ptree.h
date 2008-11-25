@@ -1,4 +1,4 @@
-/* $NetBSD: ptree.h,v 1.2 2008/11/21 01:58:41 matt Exp $ */
+/* $NetBSD: ptree.h,v 1.3 2008/11/25 15:13:47 ad Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifndef _SYS_PTREE_H_
 #define _SYS_PTREE_H_
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
 #include <stdint.h>
 #endif
