@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2008/11/12 12:36:00 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2008/11/25 09:43:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,13 +63,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2008/11/12 12:36:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2008/11/25 09:43:05 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_useleds.h"
 #include "opt_power_switch.h"
+#include "opt_modular.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2008/11/12 12:36:00 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/module.h>
 #include <sys/extent.h>
 #include <sys/ksyms.h>
 #include <sys/mount.h>
@@ -1808,3 +1810,14 @@ consinit(void)
 		cninit();
 	}
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */
+
