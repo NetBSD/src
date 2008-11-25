@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.123 2008/11/25 15:14:07 ad Exp $	*/
+/*	$NetBSD: db_command.c,v 1.124 2008/11/25 15:41:12 nakayama Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.123 2008/11/25 15:14:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.124 2008/11/25 15:41:12 nakayama Exp $");
 
 #include "opt_aio.h"
 #include "opt_ddb.h"
@@ -1242,7 +1242,7 @@ db_lock_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-	lockdebug_lock_print((void *)addr, db_printf);
+	lockdebug_lock_print((void *)(uintptr_t)addr, db_printf);
 }
 
 /*
