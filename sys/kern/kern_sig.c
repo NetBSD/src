@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.290 2008/11/19 18:36:07 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.291 2008/11/25 15:05:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.290 2008/11/19 18:36:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.291 2008/11/25 15:05:38 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -1995,6 +1995,7 @@ sendsig(const struct ksiginfo *ksi, const sigset_t *mask)
 		(*sendsig_sigcontext_vec)(ksi, mask);
 		return;
 	case 2:
+	case 3:
 		sendsig_siginfo(ksi, mask);
 		return;
 	default:
