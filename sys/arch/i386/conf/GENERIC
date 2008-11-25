@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.919 2008/11/24 11:41:11 ad Exp $
+# $NetBSD: GENERIC,v 1.920 2008/11/25 02:47:19 cube Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.919 $"
+#ident 		"GENERIC-$Revision: 1.920 $"
 
 maxusers	64		# estimated number of users
 
@@ -218,8 +218,8 @@ options 	INET6		# IPV6
 #options 	ISO,TPIP	# OSI
 #options 	EON		# OSI tunneling over IP
 options 	NETATALK	# AppleTalk networking protocols
-options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-options 	PPP_DEFLATE	# Deflate compression support for PPP
+#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+#options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
