@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.275 2008/10/04 00:09:34 pooka Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.275.4.1 2008/11/25 04:04:38 snj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.275 2008/10/04 00:09:34 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.275.4.1 2008/11/25 04:04:38 snj Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -931,6 +931,7 @@ ours:
 				 */
 				if (ip->ip_tos != fp->ipq_tos) {
 					IP_STATINC(IP_STAT_BADFRAGS);
+					IPQ_UNLOCK();
 					goto bad;
 				}
 				goto found;
