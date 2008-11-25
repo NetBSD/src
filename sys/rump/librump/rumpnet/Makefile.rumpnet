@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.2 2008/11/25 18:36:08 pooka Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.3 2008/11/25 18:38:08 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -15,7 +15,7 @@ SRCS=	net_stub.c netisr.c rump_net.c
 SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c uipc_mbuf2.c	\
 	uipc_socket.c uipc_socket2.c uipc_syscalls.c
 
-# routing
+# radix trie support
 SRCS+=	radix.c
 
 # src/lib/libkern
