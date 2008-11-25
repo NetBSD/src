@@ -1,4 +1,4 @@
-# $NetBSD: lkm.mi,v 1.37 2008/11/24 11:26:49 ad Exp $
+# $NetBSD: lkm.mi,v 1.38 2008/11/25 02:45:14 cube Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -67,6 +67,10 @@
 ./@MODULEDIR@/overlay/overlay.kmod		base-kernel-modules
 ./@MODULEDIR@/portal				base-kernel-modules
 ./@MODULEDIR@/portal/portal.kmod		base-kernel-modules
+./@MODULEDIR@/ppp_bsdcomp			base-kernel-modules
+./@MODULEDIR@/ppp_bsdcomp/ppp_bsdcomp.kmod	base-kernel-modules
+./@MODULEDIR@/ppp_deflate			base-kernel-modules
+./@MODULEDIR@/ppp_deflate/ppp_deflate.kmod	base-kernel-modules
 ./@MODULEDIR@/procfs				base-kernel-modules
 ./@MODULEDIR@/procfs/procfs.kmod		base-kernel-modules
 ./@MODULEDIR@/ptyfs				base-kernel-modules
