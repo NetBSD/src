@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.26.6.3 2008/11/20 03:45:28 snj Exp $	*/
+/*	$NetBSD: fpu.c,v 1.26.6.4 2008/11/25 18:26:27 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26.6.3 2008/11/20 03:45:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.26.6.4 2008/11/25 18:26:27 snj Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -262,6 +262,7 @@ fpudna(struct cpu_info *ci)
 
 	if (ci->ci_fpsaving) {
 		/* Recursive trap. */
+		x86_enable_intr();
 		return;
 	}
 
