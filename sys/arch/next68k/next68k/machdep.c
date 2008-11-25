@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.87 2008/11/12 12:36:05 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88 2008/11/25 15:51:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.87 2008/11/12 12:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2008/11/25 15:51:34 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -782,7 +782,7 @@ dumpsys(void)
 #define NPGMB	(1024*1024/PAGE_SIZE)
 		/* print out how many MBs we have dumped */
 		if (pg && (pg % NPGMB) == 0)
-			printf("%d ", pg / NPGMB);
+			printf_nolog("%d ", pg / NPGMB);
 #undef NPGMB
 		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
