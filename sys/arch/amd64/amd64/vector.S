@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.28 2008/06/29 21:00:08 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.29 2008/11/25 16:25:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -168,7 +168,6 @@ IDTVEC(trap07)
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif /* DIAGNOSTIC */
-  	STI(si)
 	movq	CPUVAR(SELF),%rdi
 	call	_C_LABEL(fpudna)
 	jmp	.Lalltraps_checkusr
