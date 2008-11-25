@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2008/11/24 11:26:49 ad Exp $
+#	$NetBSD: Makefile,v 1.19 2008/11/25 12:50:03 cube Exp $
 
 # For all platforms
 
@@ -31,6 +31,8 @@ SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	overlay
 SUBDIR+=	portal
+SUBDIR+=	ppp_bsdcomp
+SUBDIR+=	ppp_deflate
 SUBDIR+=	procfs
 SUBDIR+=	ptyfs
 SUBDIR+=	puffs
