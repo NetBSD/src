@@ -1,12 +1,12 @@
 #
-# $NetBSD: BOOTX,v 1.71.4.1 2008/11/06 23:34:26 snj Exp $
+# $NetBSD: BOOTX,v 1.71.4.2 2008/11/25 18:10:44 snj Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
 #
 # Created from:
 #		NetBSD: FALCON.in,v 1.8 2005/12/11 12:16:54 christos Exp $
-#		NetBSD: GENERIC.in,v 1.73.4.1 2008/11/06 23:30:51 snj Exp $
+#		NetBSD: GENERIC.in,v 1.73.4.3 2008/11/25 18:07:16 snj Exp $
 include "arch/atari/conf/std.atari"
 options INCLUDE_CONFIG_FILE # embed config file in kernel binary
 maxusers 16
@@ -14,13 +14,16 @@ options HZ=64 # Set the clock-rate (48/64/96)
 options INSECURE # disable kernel security levels
 options M68030 # support for 030
 options FPU_EMULATE # Support for MC68881/MC68882 emulator
+options M68040 # support for 040
+options M68060 # support for 060
+options FPSP # 68040 Floatingpoint support
+options M060SP # MC68060 software support (Required for 060)
 options INET # IP + ICMP + TCP + UDP
 options PPP_BSDCOMP # BSD-Compress compression support for PPP
 options PPP_DEFLATE # Deflate compression support for PPP
 options PPP_FILTER # Active filter support for PPP (requires bpf)
 file-system FFS # Berkeley fast file system
 file-system MFS # Memory based filesystem
-file-system KERNFS # Kernel parameter filesystem
 file-system MSDOSFS # MSDOS filesystem
 file-system CD9660 # ISO 9660 filesystem with Rock Ridge
 options WAPBL # File system journaling support - Experimental
@@ -41,7 +44,7 @@ options COMPAT_AOUT_M68K # Compatibility to a.out executables
 options EXEC_AOUT # a.out format executables
 options COMPAT_BSDPTY # /dev/[pt]ty?? ptys.
 options PIPE_SOCKETPAIR # smaller, but slower pipe(2)
-options ST_POOL_SIZE=22 # smallest that allows TT-HIGH
+options ST_POOL_SIZE=24 # smallest that allows TT-HIGH
 options TT_SCSI # SCSI-support for TT
 options TT_VIDEO # Graphics support for TT
 options FALCON_SCSI # SCSI-support for Falcon
