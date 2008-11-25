@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.34 2008/11/25 04:16:16 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.35 2008/11/25 18:27:39 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1117,4 +1117,67 @@ xsrc/external/mit/xorg-server/dist/hw/xfree86/os-support/bsd/bsd_init.c 1.2
 
 	Add a log message to notify what VT is in use.  Helps gdm/consolekit.
 	[jmcneill, ticket #120]
+
+sys/compat/netbsd32/netbsd32.h			1.78
+sys/compat/netbsd32/netbsd32_netbsd.c		1.149
+sys/compat/netbsd32/syscalls.master		1.74
+sys/compat/netbsd32/netbsd32_syscall.h		regen
+sys/compat/netbsd32/netbsd32_syscallargs.h	regen
+sys/compat/netbsd32/netbsd32_syscalls.c		regen
+sys/compat/netbsd32/netbsd32_sysent.c		regen
+
+	implement netbsd32__sched_setparam(), netbsd32__sched_getparam(),
+	netbsd32__sched_setaffinity() and netbsd32__sched_getaffinity().
+	[mrg, ticket #121]
+
+distrib/sets/lists/xserver/md.netwinder		1.12
+external/mit/xorg/lib/dri/Makefile		1.7 via patch
+external/mit/xorg/server/drivers/Makefile	1.22
+
+	* install only wsfb driver and manpages for netwinder
+	* don't install client side dri modules for netwinder
+	[rtr, ticket #122]
+
+sys/arch/atari/conf/GENERIC.in			1.75, 1.76
+sys/arch/atari/conf/ATARITT			regen
+sys/arch/atari/conf/BOOT			regen
+sys/arch/atari/conf/HADES			regen
+sys/arch/atari/conf/BOOTX			regen
+sys/arch/atari/conf/FALCON			regen
+sys/arch/atari/conf/MILAN-ISAIDE		regen
+sys/arch/atari/conf/MILAN-PCIIDE		regen
+
+	* Enable 68060 support in FALCON & BOOTX kernels for CT60/63
+	upgrades.
+	* Drop KERNFS from INSTALL kernels. Drop 68040 support from
+	ATARITT kernels. 
+	* Increase min ST_POOL_SIZE from 22 to 24 to avoid out of ST memory
+	issues.
+	[abs, ticket #123]
+
+lib/libc/arch/sparc64/sys/__sigaction14_sigtramp.c 1.8
+
+	Properly use siginfo based signal delivery on sparc64 in all
+	cases.  Previously calls to signal(3) would cause use of the
+	legacy signal trampoline.
+	[martin, ticket #124]
+
+sys/arch/x86/acpi/acpi_wakeup.c			1.11
+sys/dev/acpi/acpi_pci_link.c			1.14
+sys/dev/acpi/acpivar.h				1.34
+
+	On resum-from-RAM explicitly restore PCI link device state before
+	reenabling interrupts.
+	[joerg, ticket #125]
+
+sys/arch/amd64/amd64/vector.S			1.29
+
+	trap07: do NOT enable interrupts before calling fpudna or we could
+	be preempted.
+	[ad, ticket #126]
+
+sys/arch/amd64/amd64/fpu.c			1.30
+
+	fpudna: enable interrupts in an error path.
+	[ad, ticket #127]
 
