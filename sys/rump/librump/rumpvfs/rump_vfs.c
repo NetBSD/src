@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.2 2008/11/21 06:09:52 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.3 2008/11/25 20:35:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -88,6 +88,7 @@ rump_vfs_init()
 
 	rw_init(&rump_cwdi.cwdi_lock);
 	rump_cwdi.cwdi_cdir = rootvnode;
+	vref(rump_cwdi.cwdi_cdir);
 	proc0.p_cwdi = &rump_cwdi;
 }
 
