@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.12 2008/11/25 21:46:12 bad Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.13 2008/11/25 21:50:47 bad Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -361,7 +361,7 @@ grab_myaddrs()
 			continue;
 
 		if (!suitable_ifaddr(ifap->ifa_name, ifap->ifa_addr)) {
-			plog(LLV_ERROR, LOCATION, NULL,
+			plog(LLV_INFO, LOCATION, NULL,
 				"unsuitable address: %s %s\n",
 				ifap->ifa_name,
 				saddrwop2str(ifap->ifa_addr));
@@ -488,7 +488,7 @@ grab_myaddrs()
 		case AF_INET6:
 #endif
 			if (!suitable_ifaddr(ifr->ifr_name, &ifr->ifr_addr)) {
-				plog(LLV_ERROR, LOCATION, NULL,
+				plog(LLV_INFO, LOCATION, NULL,
 					"unsuitable address: %s %s\n",
 					ifr->ifr_name,
 					saddrwop2str(&ifr->ifr_addr));
@@ -674,7 +674,7 @@ update_myaddrs()
 		return 0;
 	default:
 		plog(LLV_DEBUG, LOCATION, NULL,
-			"msg %d not interesting\n", rtm->rtm_type);
+			"rtm msg %d not interesting\n", rtm->rtm_type);
 		return 0;
 	}
 	/* XXX more filters here? */
