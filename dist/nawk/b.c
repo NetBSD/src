@@ -278,7 +278,7 @@ void freetr(Node *p)	/* free parse tree */
 /* in the parsing of regular expressions, metacharacters like . have */
 /* to be seen literally;  \056 is not a metacharacter. */
 
-int hexstr(char **pp)	/* find and eval hex string at pp, return new p */
+int hexstr(uschar **pp)	/* find and eval hex string at pp, return new p */
 {			/* only pick up one 8-bit byte (2 chars) */
 	uschar *p;
 	int n = 0;
@@ -301,7 +301,7 @@ int hexstr(char **pp)	/* find and eval hex string at pp, return new p */
 int quoted(uschar **pp)	/* pick up next thing after a \\ */
 			/* and increment *pp */
 {
-	char *p = *pp;
+	uschar *p = *pp;
 	int c;
 
 	if ((c = *p++) == 't')
