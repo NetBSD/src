@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.30 2008/11/25 15:14:07 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.31 2008/11/25 15:15:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.30 2008/11/25 15:14:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.31 2008/11/25 15:15:28 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -961,7 +961,7 @@ module_print_list(void (*pr)(const char *, ...))
 			break;
 		}
 		kobj_stat(mod->mod_kobj, &maddr, &msize);
-		(*pr)("%16s %16lx %8lx %8s\n", mod->mod_info->mi_name,
+		(*pr)("%16s %16lx %8ld %8s\n", mod->mod_info->mi_name,
 		    (long)maddr, (long)msize, src);
 	}
 }
