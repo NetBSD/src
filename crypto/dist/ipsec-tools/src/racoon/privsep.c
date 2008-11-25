@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.15 2008/10/23 10:56:10 tteras Exp $	*/
+/*	$NetBSD: privsep.c,v 1.16 2008/11/25 22:38:31 bad Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -311,6 +311,7 @@ privsep_init(void)
 	 * Don't catch any signal
 	 * This duplicate session:signals[], which is static...
 	 */
+	signal(SIGPIPE, SIG_DFL);
 	signal(SIGHUP, SIG_DFL);
 	signal(SIGINT, SIG_DFL);
 	signal(SIGTERM, SIG_DFL);
