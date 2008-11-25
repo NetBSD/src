@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.40 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.41 2008/11/25 14:04:23 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.40 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.41 2008/11/25 14:04:23 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,6 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	struct netexport *ne;
 	struct nameidata nd;
 	struct vnode *vp;
-	struct fid *fid;
 	size_t fid_size;
 
 	if (kauth_authorize_network(l->l_cred, KAUTH_NETWORK_NFS,
@@ -228,15 +227,14 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 	vp = nd.ni_vp;
 	mp = vp->v_mount;
 
+	/*
+	 * Make sure the file system can do vptofh.  If the file system
+	 * knows the handle's size, just trust it's able to do the
+	 * actual translation also (otherwise we should check fhtovp
+	 * also, and that's getting a wee bit ridiculous).
+	 */
 	fid_size = 0;
-	if ((error = VFS_VPTOFH(vp, NULL, &fid_size)) == E2BIG) {
-		fid = malloc(fid_size, M_TEMP, M_NOWAIT);
-		if (fid != NULL) {
-			error = VFS_VPTOFH(vp, fid, &fid_size);
-			free(fid, M_TEMP);
-		}
-	}
-	if (error != 0) {
+	if ((error = VFS_VPTOFH(vp, NULL, &fid_size)) != E2BIG) {
 		vput(vp);
 		return EOPNOTSUPP;
 	}
