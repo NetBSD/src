@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.11 2008/11/25 21:37:11 bad Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.12 2008/11/25 21:46:12 bad Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -415,8 +415,7 @@ grab_myaddrs()
 			p->sock = q->sock;
 		else
 			p->sock = -1;
-		p->next = lcconf->myaddrs;
-		lcconf->myaddrs = p;
+		insmyaddr(p, &lcconf->myaddrs);
 	}
 
 	freeifaddrs(ifa0);
@@ -531,8 +530,7 @@ grab_myaddrs()
 				p->sock = q->sock;
 			else
 				p->sock = -1;
-			p->next = lcconf->myaddrs;
-			lcconf->myaddrs = p;
+			insmyaddr(p, &lcconf->myaddrs);
 			break;
 		default:
 			break;
