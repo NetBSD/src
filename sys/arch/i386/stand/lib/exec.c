@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.34 2008/11/19 12:36:41 ad Exp $	 */
+/*	$NetBSD: exec.c,v 1.35 2008/11/25 13:23:54 ad Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -141,6 +141,9 @@ module_add(char *name)
 	boot_module_t *bm, *bmp;
 	size_t len;
 	char *str;
+
+	while (*name == ' ' || *name == '\t')
+		++name;
 
 	bm = alloc(sizeof(boot_module_t));
 	len = strlen(name) + 1;
