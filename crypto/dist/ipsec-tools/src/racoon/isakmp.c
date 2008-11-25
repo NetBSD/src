@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.42 2008/09/25 09:34:13 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.43 2008/11/25 21:37:12 bad Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1718,6 +1718,7 @@ isakmp_open()
 				"failed to bind to address %s (%s).\n",
 				saddr2str(p->addr), strerror(errno));
 			close(p->sock);
+			p->sock = -1;
 			goto err_and_next;
 		}
 
@@ -1798,6 +1799,7 @@ isakmp_close()
 			continue;
 		}
 		close(p->sock);
+		p->sock = -1;
 		racoon_free(p->addr);
 		racoon_free(p);
 	}
