@@ -1,3 +1,26 @@
+2008-11-25  Christoph Badura  <bad@netbsd.org>
+	* src/racoon/isakmp.c:
+	  Keep myaddr.sock at -1 when no socket is opened.
+	  Fix error handling when setting IPV6_USE_MIN_MTU socket option.
+	* src/racoon/grabmyaddr.c:
+	  Keep myaddr.sock at -1 when no socket is opened.
+	  Use insmyaddr() instead of open coding it.
+	  Log ignored addresses at informational level.
+	  Make log message for ignored route messages more explicit.
+	  Ignore RTM_DELETE and RTM_IFINFO as they aren't pertinant.
+	  Ignore unspecified and looback addresses assigned to interfaces.
+	* src/racoon/{evt.c|session.c|privsep.c}:
+	  Avoid using non-portable MSG_NOSIGNAL.  Ignore SIGPIPE instead.
+
+2008-11-08  Christoph Badura  <bad@netbsd.org>
+	* src/racoon/samples/roadwarrior/client/{phase1-down.sh|phase1-up.sh}:
+	  Prevent the scripts from becoming confused by IPv6 default routes.
+	  Delete the VPN address after deleting the VPN routes on NetBSD, too.
+	  Make the handling of NAT-T SPD entries automatic.
+	  Print and check INTERNAL_NETMASK4.
+	  Preserve owner and permissions of original /etc/resolv.conf.
+	  Ensure that new /etc/resolv.conf isn't group or world writable.
+
 2008-11-06  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/sainfo.c: fixed delsainfo() to avoid a crash when
 	  iddst's value is SAINFO_CLIENTADDR.
