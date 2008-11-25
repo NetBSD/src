@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18.2.1 2008/11/08 01:56:11 snj Exp $
+#	$NetBSD: Makefile,v 1.18.2.2 2008/11/25 17:58:08 snj Exp $
 
 SUBDIR= \
 	xf86-input-keyboard \
@@ -24,6 +24,9 @@ SUBDIR+= \
 	xf86-video-radeon \
 	xf86-video-r128 \
 	xf86-video-tdfx \
+	xf86-video-wsfb
+.elif ${MACHINE} == "netwinder"
+SUBDIR+= \
 	xf86-video-wsfb
 .elif ${MACHINE} == "sparc64" || ${MACHINE} == "sparc"
 SUBDIR+= \
