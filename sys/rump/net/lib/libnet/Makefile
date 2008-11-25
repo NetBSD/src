@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/16 19:14:51 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2008/11/25 18:36:08 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net
@@ -6,7 +6,7 @@
 LIB=	rumpnet_net
 
 # iffy stuff
-SRCS=	if.c if_loop.c route.c radix.c rtsock.c raw_usrreq.c raw_cb.c	\
+SRCS=	if.c if_loop.c route.c rtsock.c raw_usrreq.c raw_cb.c		\
 	if_media.c link_proto.c net_stats.c if_ethersubr.c
 
 CPPFLAGS+=	-I${.CURDIR}/opt -I${.CURDIR}/../libnetinet/opt
