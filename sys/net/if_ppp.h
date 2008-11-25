@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.23 2005/12/11 23:05:25 thorpej Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.24 2008/11/25 02:40:36 cube Exp $	*/
 /*	Id: if_ppp.h,v 1.16 1997/04/30 05:46:04 paulus Exp 	*/
 
 /*
@@ -173,5 +173,9 @@ struct ppp_rawin {
 
 #if defined(_KERNEL) || defined(KERNEL)
 void	pppattach(void);
+
+struct compressor;
+int	ppp_register_compressor(struct compressor *);
+int	ppp_unregister_compressor(struct compressor *);
 #endif
 #endif /* !_NET_IF_PPP_H_ */
