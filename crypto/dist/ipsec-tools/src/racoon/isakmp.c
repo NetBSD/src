@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.43 2008/11/25 21:37:12 bad Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.44 2008/11/25 21:42:36 bad Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1692,7 +1692,7 @@ isakmp_open()
 			plog(LLV_ERROR, LOCATION, NULL,
 			    "setsockopt IPV6_USE_MIN_MTU (%s)\n", 
 			    strerror(errno));
-			return -1;
+			goto err_and_next;
 		}
 #endif
 
