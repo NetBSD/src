@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.122 2008/11/16 19:34:29 pooka Exp $	*/
+/*	$NetBSD: db_command.c,v 1.123 2008/11/25 15:14:07 ad Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.122 2008/11/16 19:34:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.123 2008/11/25 15:14:07 ad Exp $");
 
 #include "opt_aio.h"
 #include "opt_ddb.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.122 2008/11/16 19:34:29 pooka Exp $
 #include <sys/sleepq.h>
 #include <sys/cpu.h>
 #include <sys/buf.h>
+#include <sys/module.h>
 
 /*include queue macros*/
 #include <sys/queue.h>
@@ -248,6 +249,8 @@ static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("malloc",	db_malloc_print_cmd,0,NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
 	    "Print the vm_map at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("module", db_show_module_cmd,	0,
+	    "Print kernel modules", NULL, NULL) },
 	{ DDB_ADD_CMD("mount",	db_mount_print_cmd,	0,
 	    "Print the mount structure at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("mqueue", db_show_mqueue_cmd,	0,
@@ -1401,4 +1404,5 @@ db_whatis_cmd(db_expr_t address, bool have_addr,
 	pool_whatis(addr, db_printf);
 	vmem_whatis(addr, db_printf);
 	uvm_whatis(addr, db_printf);
+	module_whatis(addr, db_printf);
 }

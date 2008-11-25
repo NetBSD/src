@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.29 2008/11/19 13:07:42 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.30 2008/11/25 15:14:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.29 2008/11/19 13:07:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.30 2008/11/25 15:14:07 ad Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -901,3 +905,64 @@ module_thread_kick(void)
 	cv_broadcast(&module_thread_cv);
 	mutex_exit(&module_thread_lock);
 }
+
+#ifdef DDB
+/*
+ * module_whatis:
+ *
+ *	Helper routine for DDB.
+ */
+void
+module_whatis(uintptr_t addr, void (*pr)(const char *, ...))
+{
+	module_t *mod;
+	size_t msize;
+	vaddr_t maddr;
+
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+		kobj_stat(mod->mod_kobj, &maddr, &msize);
+		if (addr < maddr || addr >= maddr + msize) {
+			continue;
+		}
+		(*pr)("%p is %p+%zu, in kernel module `%s'\n",
+		    (void *)addr, (void *)maddr,
+		    (size_t)(addr - maddr), mod->mod_info->mi_name);
+	}
+}
+
+/*
+ * module_print_list:
+ *
+ *	Helper routine for DDB.
+ */
+void
+module_print_list(void (*pr)(const char *, ...))
+{
+	const char *src;
+	module_t *mod;
+	size_t msize;
+	vaddr_t maddr;
+
+	(*pr)("%16s %16s %8s %8s\n", "NAME", "TEXT/DATA", "SIZE", "SOURCE");
+
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+		switch (mod->mod_source) {
+		case MODULE_SOURCE_KERNEL:
+			src = "builtin";
+			break;
+		case MODULE_SOURCE_FILESYS:
+			src = "filesys";
+			break;
+		case MODULE_SOURCE_BOOT:
+			src = "boot";
+			break;
+		default:
+			src = "unknown";
+			break;
+		}
+		kobj_stat(mod->mod_kobj, &maddr, &msize);
+		(*pr)("%16s %16lx %8lx %8s\n", mod->mod_info->mi_name,
+		    (long)maddr, (long)msize, src);
+	}
+}
+#endif	/* DDB */
