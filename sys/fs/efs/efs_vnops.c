@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.15 2008/11/16 19:34:30 pooka Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.16 2008/11/26 20:17:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.15 2008/11/16 19:34:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.16 2008/11/26 20:17:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,12 +232,11 @@ efs_read(void *v)
 	} */ *ap = v;
 	struct efs_extent ex;
 	struct efs_extent_iterator exi;
-	void *win;
 	struct uio *uio = ap->a_uio;
 	struct efs_inode *eip = EFS_VTOI(ap->a_vp);
 	off_t start;
 	vsize_t len;
-	int err, ret, flags;
+	int err, ret;
 	const int advice = IO_ADV_DECODE(ap->a_ioflag);
 
 	if (ap->a_vp->v_type == VDIR)
@@ -267,13 +266,8 @@ efs_read(void *v)
 		len = MIN(len - start, uio->uio_resid);
 		len = MIN(len, eip->ei_size - uio->uio_offset);
 
-		win = ubc_alloc(&ap->a_vp->v_uobj, uio->uio_offset,
-		    &len, advice, UBC_READ);
-
-		flags = UBC_WANT_UNMAP(ap->a_vp) ? UBC_UNMAP : 0;
-
-		err = uiomove(win, len, uio);
-		ubc_release(win, flags);
+		err = ubc_uiomove(&ap->a_vp->v_uobj, uio, len, advice,
+		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(ap->a_vp));
 		if (err) {
 			EFS_DPRINTF(("efs_read: uiomove error %d\n",
 			    err));

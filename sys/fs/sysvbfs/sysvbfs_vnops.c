@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.20 2008/11/16 19:34:30 pooka Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.21 2008/11/26 20:17:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.20 2008/11/16 19:34:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.21 2008/11/26 20:17:33 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -347,7 +347,6 @@ sysvbfs_read(void *arg)
 	struct bfs_inode *inode = bnode->inode;
 	vsize_t sz, filesz = bfs_file_size(inode);
 	int err;
-	void *win;
 	const int advice = IO_ADV_DECODE(a->a_ioflag);
 
 	DPRINTF("%s: type=%d\n", __func__, v->v_type);
@@ -358,10 +357,8 @@ sysvbfs_read(void *arg)
 		if ((sz = MIN(filesz - uio->uio_offset, uio->uio_resid)) == 0)
 			break;
 
-		win = ubc_alloc(&v->v_uobj, uio->uio_offset, &sz, advice,
-		    UBC_READ);
-		err = uiomove(win, sz, uio);
-		ubc_release(win, 0);
+		err = ubc_uiomove(&v->v_uobj, uio, sz, advice,
+		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(v));
 		if (err)
 			break;
 		DPRINTF("%s: read %ldbyte\n", __func__, sz);
@@ -381,11 +378,11 @@ sysvbfs_write(void *arg)
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
 	struct uio *uio = a->a_uio;
+	int advice = IO_ADV_DECODE(a->a_ioflag);
 	struct sysvbfs_node *bnode = v->v_data;
 	struct bfs_inode *inode = bnode->inode;
 	bool extended = false;
 	vsize_t sz;
-	void *win;
 	int err = 0;
 
 	if (a->a_vp->v_type != VREG)
@@ -405,10 +402,8 @@ sysvbfs_write(void *arg)
 
 	while (uio->uio_resid > 0) {
 		sz = uio->uio_resid;
-		win = ubc_alloc(&v->v_uobj, uio->uio_offset, &sz,
-		    UVM_ADV_NORMAL, UBC_WRITE);
-		err = uiomove(win, sz, uio);
-		ubc_release(win, 0);
+		err = ubc_uiomove(&v->v_uobj, uio, sz, advice,
+		    UBC_WRITE | UBC_UNMAP_FLAG(v));
 		if (err)
 			break;
 		DPRINTF("%s: write %ldbyte\n", __func__, sz);
