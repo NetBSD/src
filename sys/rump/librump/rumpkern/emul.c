@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.55 2008/11/17 08:43:41 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.56 2008/11/26 15:04:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -72,6 +72,7 @@ const int schedppq = 1;
 int hardclock_ticks;
 bool mp_online = false;
 struct vm_map *mb_map;
+struct timeval boottime;
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
