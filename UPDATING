@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.179 2008/11/25 14:27:43 tsutsui Exp $
+$NetBSD: UPDATING,v 1.180 2008/11/26 19:00:34 wiz Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,25 +19,25 @@ Recent changes:
 
 20081122:
 	On i386 and amd64, various kernel options(4) in GENERIC including
-	file-system have been disabled and moved into kernel modules.
-	Before trying a new GENERIC kernel, you have to prepare
+	file systems have been disabled and moved into kernel modules.
+	Before trying a new GENERIC kernel, you have to prepare the
 	following files as well as a new GENERIC kernel:
 
 	- build and install kernel modules from src/sys/modules
 
 	- install the latest bootloader, which will load a module
-	  for a file system where the kernel is loaded from automatically
+	  for the file system from which the kernel is loaded automatically
 
-	If you have to load your kernel from file system which is not
-	the same type with the root file system, you have to load a necessary
-	file system module manually on the boot prompt or in boot.cfg file.
+	If you have to load your kernel from a file system which is not of
+	the same type as the root file system, you have to load the necessary
+	file system module manually on the boot prompt or in the boot.cfg file.
 
 20080827:
 	If you built and installed a libc from sources between
 	2008/08/20 and 2008/08/26 you got a broken strtouq(3)
 	which results in false errors reported by lint(1).
 	Since this breaks the libc build itself, manual help is
-	needed -- lint must be disabled temporarily, e.g:
+	needed -- lint must be disabled temporarily, e.g.:
 	  $ (cd lib/libc && make MKLINT=no dependall install)
 
 20080813:
