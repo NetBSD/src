@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.25 2008/08/12 19:44:39 pooka Exp $	*/
+/*	$NetBSD: null.c,v 1.26 2008/11/26 14:02:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.25 2008/08/12 19:44:39 pooka Exp $");
+__RCSID("$NetBSD: null.c,v 1.26 2008/11/26 14:02:23 pooka Exp $");
 #endif /* !lint */
 
 /*
@@ -165,6 +165,8 @@ puffs_null_setops(struct puffs_ops *pops)
 	PUFFSOP_SET(pops, puffs_null, fs, statvfs);
 	PUFFSOP_SETFSNOP(pops, unmount);
 	PUFFSOP_SETFSNOP(pops, sync);
+	PUFFSOP_SET(pops, puffs_null, fs, fhtonode);
+	PUFFSOP_SET(pops, puffs_null, fs, nodetofh);
 
 	PUFFSOP_SET(pops, puffs_null, node, lookup);
 	PUFFSOP_SET(pops, puffs_null, node, create);
@@ -194,6 +196,99 @@ puffs_null_fs_statvfs(struct puffs_usermount *pu, struct statvfs *svfsb)
 		return errno;
 
 	return 0;
+}
+
+/*
+ * XXX: this is the stupidest crap ever, but:
+ * getfh() returns the fhandle type, when we are expected to deliver
+ * the fid type.  Just adjust it a bit and stop whining.
+ *
+ * Yes, this really really needs fixing.  Yes, *REALLY*.
+ */
+#define FHANDLE_HEADERLEN 8
+struct kernfid {
+	unsigned short	fid_len;		/* length of data in bytes */
+	unsigned short	fid_reserved;		/* compat: historic align */
+	char		fid_data[0];		/* data (variable length) */
+};
+
+/*ARGSUSED*/
+static void *
+fhcmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
+{
+	struct kernfid *kf1, *kf2;
+
+	if ((kf1 = pn->pn_data) == NULL)
+		return NULL;
+	kf2 = arg;
+
+	if (kf1->fid_len != kf2->fid_len)
+		return NULL;
+
+	/*LINTED*/
+	if (memcmp(kf1, kf2, kf1->fid_len) == 0)
+		return pn;
+	return NULL;
+}
+
+/*
+ * This routine only supports file handles which have been issued while
+ * the server was alive.  Not really stable ones, that is.
+ */
+/*ARGSUSED*/
+int
+puffs_null_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
+	struct puffs_newinfo *pni)
+{
+	struct puffs_node *pn_res;
+
+	pn_res = puffs_pn_nodewalk(pu, fhcmp, fid);
+	if (pn_res == NULL)
+		return ENOENT;
+
+	puffs_newinfo_setcookie(pni, pn_res);
+	puffs_newinfo_setvtype(pni, pn_res->pn_va.va_type);
+	puffs_newinfo_setsize(pni, (voff_t)pn_res->pn_va.va_size);
+	puffs_newinfo_setrdev(pni, pn_res->pn_va.va_rdev);
+	return 0;
+}
+
+/*ARGSUSED*/
+int
+puffs_null_fs_nodetofh(struct puffs_usermount *pu, puffs_cookie_t opc,
+	void *fid, size_t *fidsize)
+{
+	struct puffs_node *pn = opc;
+	struct kernfid *kfid;
+	void *bounce;
+	int rv;
+
+	rv = 0;
+	bounce = NULL;
+	if (*fidsize) {
+		bounce = malloc(*fidsize + FHANDLE_HEADERLEN);
+		if (!bounce)
+			return ENOMEM;
+		*fidsize += FHANDLE_HEADERLEN;
+	}
+	if (getfh(PNPATH(pn), bounce, fidsize) == -1)
+		rv = errno;
+	else
+		memcpy(fid, (uint8_t *)bounce + FHANDLE_HEADERLEN,
+		    *fidsize - FHANDLE_HEADERLEN);
+	kfid = fid;
+	if (rv == 0) {
+		*fidsize = kfid->fid_len;
+		pn->pn_data = malloc(*fidsize);
+		if (pn->pn_data == NULL)
+			abort(); /* lazy */
+		memcpy(pn->pn_data, fid, *fidsize);
+	} else {
+		*fidsize -= FHANDLE_HEADERLEN;
+	}
+	free(bounce);
+
+	return rv;
 }
 
 int
@@ -452,6 +547,7 @@ puffs_null_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 	off_t i;
 	int rv;
 
+	*ncookies = 0;
 	dp = opendir(PNPATH(pn));
 	if (dp == NULL)
 		return errno;
@@ -474,8 +570,10 @@ puffs_null_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 		if (rv != 0)
 			goto out;
 
-		if (!result)
+		if (!result) {
+			*eofflag = 1;
 			goto out;
+		}
 
 		if (_DIRENT_SIZE(result) > *reslen)
 			goto out;
@@ -485,6 +583,7 @@ puffs_null_node_readdir(struct puffs_usermount *pu, puffs_cookie_t opc,
 		de = _DIRENT_NEXT(de);
 
 		(*off)++;
+		PUFFS_STORE_DCOOKIE(cookies, ncookies, *off);
 	}
 
  out:
