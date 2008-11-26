@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.42 2008/11/19 14:10:49 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.43 2008/11/26 15:04:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -611,6 +611,14 @@ uvm_loan(struct vm_map *map, vaddr_t start, vsize_t len, void *v, int flags)
 
 void
 uvm_unloan(void *v, int npages, int flags)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+int
+uvm_loanuobjpages(struct uvm_object *uobj, voff_t pgoff, int orignpages,
+	struct vm_page **opp)
 {
 
 	panic("%s: unimplemented", __func__);
