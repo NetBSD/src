@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.11 2008/09/03 22:57:46 gmcgarry Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.12 2008/11/26 20:17:33 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.11 2008/09/03 22:57:46 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.12 2008/11/26 20:17:33 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -817,19 +817,14 @@ hfs_vop_read(void *v)
 
 	error = 0;
 	while (uio->uio_resid > 0 && error == 0) {
-		int flags;
 		vsize_t len;
-		void *win;
 
 		len = MIN(uio->uio_resid, fsize - uio->uio_offset);
 		if (len == 0)
 			break;
 		
-		win = ubc_alloc(&vp->v_uobj, uio->uio_offset, &len,
-				advice, UBC_READ);
-		error = uiomove(win, len, uio);
-		flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-		ubc_release(win, flags);
+		error = ubc_uiomove(&vp->v_uobj, uio, len, advice,
+		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 	}
 
         return error;
