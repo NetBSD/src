@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.149 2008/10/31 20:42:41 christos Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.150 2008/11/26 20:17:33 pooka Exp $	*/
 
 /*
  *
@@ -483,6 +483,7 @@ extern struct uvmexp uvmexp;
 #else
 #define UBC_WANT_UNMAP(vp) false
 #endif
+#define UBC_UNMAP_FLAG(vp) (UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0)
 
 /*
  * Shareable process virtual address space.
@@ -567,7 +568,6 @@ void			ubc_init(void);
 void *			ubc_alloc(struct uvm_object *, voff_t, vsize_t *, int,
 			    int);
 void			ubc_release(void *, int);
-void			ubc_flush(struct uvm_object *, voff_t, voff_t);
 int			ubc_uiomove(struct uvm_object *, struct uio *, vsize_t,
 			    int, int);
 
