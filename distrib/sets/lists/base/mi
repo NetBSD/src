@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.783 2008/11/12 13:17:27 pooka Exp $
+# $NetBSD: mi,v 1.784 2008/11/26 15:45:56 tsutsui Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1280,6 +1280,38 @@
 ./usr/libexec/uugetty				base-obsolete		obsolete
 ./usr/libexec/virecover				base-util-bin
 ./usr/lkm					base-obsolete		obsolete
+./usr/lkm/adosfs.o				base-obsolete		obsolete
+./usr/lkm/bsdcomp.o				base-obsolete		obsolete
+./usr/lkm/cd9660.o				base-obsolete		obsolete
+./usr/lkm/coda.o				base-obsolete		obsolete
+./usr/lkm/coda5.o				base-obsolete		obsolete
+./usr/lkm/deflate.o				base-obsolete		obsolete
+./usr/lkm/efs.o					base-obsolete		obsolete
+./usr/lkm/ext2fs.o				base-obsolete		obsolete
+./usr/lkm/fdesc.o				base-obsolete		obsolete
+./usr/lkm/filecorefs.o				base-obsolete		obsolete
+./usr/lkm/hfs.o					base-obsolete		obsolete
+./usr/lkm/hfsp.o				base-obsolete		obsolete
+./usr/lkm/if_ipl.o				base-obsolete		obsolete
+./usr/lkm/lfs.o					base-obsolete		obsolete
+./usr/lkm/kernfs.o				base-obsolete		obsolete
+./usr/lkm/mfs.o					base-obsolete		obsolete
+./usr/lkm/msdosfs.o				base-obsolete		obsolete
+./usr/lkm/ntfs.o				base-obsolete		obsolete
+./usr/lkm/nullfs.o				base-obsolete		obsolete
+./usr/lkm/overlay.o				base-obsolete		obsolete
+./usr/lkm/pf.o					base-obsolete		obsolete
+./usr/lkm/portal.o				base-obsolete		obsolete
+./usr/lkm/procfs.o				base-obsolete		obsolete
+./usr/lkm/ptyfs.o				base-obsolete		obsolete
+./usr/lkm/puffs.o				base-obsolete		obsolete
+./usr/lkm/smbfs.o				base-obsolete		obsolete
+./usr/lkm/tap.o					base-obsolete		obsolete
+./usr/lkm/tmpfs.o				base-obsolete		obsolete
+./usr/lkm/udf.o					base-obsolete		obsolete
+./usr/lkm/umapfs.o				base-obsolete		obsolete
+./usr/lkm/union.o				base-obsolete		obsolete
+./usr/lkm/vnd.o					base-obsolete		obsolete
 ./usr/mdec					base-sys-usr
 ./usr/sbin					base-sys-usr
 ./usr/sbin/ac					base-sysutil-bin
