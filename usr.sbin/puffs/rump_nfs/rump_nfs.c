@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_nfs.c,v 1.2 2008/11/14 13:45:25 pooka Exp $	*/
+/*	$NetBSD: rump_nfs.c,v 1.3 2008/11/26 07:20:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -30,6 +30,7 @@
 
 #include <nfs/nfsmount.h>
 
+#include <rump/rump.h>
 #include <rump/p2k.h>
 
 #include <err.h>
@@ -45,6 +46,14 @@ main(int argc, char *argv[])
 	struct nfs_args args;
 	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
 	int rv, mntflags;
+	extern int rump_threads, nfs_niothreads; /* XXX */
+
+	rv = rump_init();
+	if (rv)
+		errx(1, "rump_init failed: %d", rv);
+
+	if (!rump_threads)
+		nfs_niothreads = 0;
 
 	setprogname(argv[0]);
 	mount_nfs_parseargs(argc, argv, &args, &mntflags, canon_dev, canon_dir);
