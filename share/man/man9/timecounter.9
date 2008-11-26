@@ -1,4 +1,4 @@
-.\"	$NetBSD: timecounter.9,v 1.4 2008/11/26 13:11:34 tsutsui Exp $
+.\"	$NetBSD: timecounter.9,v 1.5 2008/11/26 18:57:01 wiz Exp $
 .\"	$OpenBSD: tc_init.9,v 1.4 2007/05/31 19:20:01 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -45,7 +45,7 @@
 .Nm tc_init
 .Nd machine-independent binary timescale
 .Sh SYNOPSIS
-.Fd #include <sys/timetc.h>
+.In sys/timetc.h
 .Ft void
 .Fn tc_init "struct timecounter *tc"
 .Sh DESCRIPTION
@@ -89,7 +89,8 @@ This function reads the counter.
 It is not required to mask any unimplemented bits out, as long as they
 are constant.
 .It Fn "void (*tc_poll_pps)" "struct timecounter *"
-This function is optional and can be set to NULL.
+This function is optional and can be set to
+.Dv NULL .
 It will be called whenever the timecounter is rewound, and is intended
 to check for PPS events.
 Normal hardware does not need it but timecounters which latch PPS in
@@ -100,11 +101,12 @@ This mask should mask off any unimplemented bits.
 Frequency of the counter in Hz.
 .It Va tc_name
 Name of the timecounter.
-Can be any null-terminated string.
+Can be any nul-terminated string.
 .It Va tc_quality
 Used to determine if this timecounter is better than another timecounter \-
 higher means better.
-Negative means ``only use at explicit request''.
+Negative means
+.Dq only use at explicit request .
 .It Va tc_priv
 Pointer to the timecounter's private parts.
 .It Va tc_next
@@ -149,7 +151,8 @@ i.e. it goes all the way from
 .Li 0
 through
 .Li 0xFFFFFFFFFFFFFFFF
-per each second. The effective resolution of the
+per each second.
+The effective resolution of the
 .Va frac
 value depends on a frequency of the machine dependent timecounter source.
 .Pp
