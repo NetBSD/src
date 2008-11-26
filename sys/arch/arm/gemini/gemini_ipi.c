@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_ipi.c,v 1.2 2008/11/26 05:25:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_ipi.c,v 1.3 2008/11/26 05:30:50 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ gemini_ipi_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 
 #if NGNP > 0
-	config_found(self, "gnp", NULL);
+	config_found(self, "gpn", NULL);
 #endif
 }
 
