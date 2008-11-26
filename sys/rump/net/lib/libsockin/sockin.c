@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.6 2008/11/25 20:42:01 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.7 2008/11/26 07:19:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -58,6 +58,7 @@ DOMAIN_DEFINE(sockindomain);
 static void	sockin_init(void);
 static int	sockin_usrreq(struct socket *, int, struct mbuf *,
 			      struct mbuf *, struct mbuf *, struct lwp *);
+static int	sockin_ctloutput(int op, struct socket *, struct sockopt *);
 
 const struct protosw sockinsw[] = {
 {
@@ -66,6 +67,7 @@ const struct protosw sockinsw[] = {
 	.pr_protocol = IPPROTO_UDP,
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_usrreq = sockin_usrreq,
+	.pr_ctloutput = sockin_ctloutput,
 },
 {
 	.pr_type = SOCK_STREAM,
@@ -73,6 +75,7 @@ const struct protosw sockinsw[] = {
 	.pr_protocol = IPPROTO_TCP,
 	.pr_flags = PR_CONNREQUIRED|PR_WANTRCVD|PR_LISTEN|PR_ABRTACPTDIS,
 	.pr_usrreq = sockin_usrreq,
+	.pr_ctloutput = sockin_ctloutput,
 }};
 
 struct domain sockindomain = {
@@ -417,4 +420,12 @@ sockin_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 	}
 
 	return error;
+}
+
+static int
+sockin_ctloutput(int op, struct socket *so, struct sockopt *sopt)
+{
+
+	/* XXX: we should also do something here */
+	return 0;
 }
