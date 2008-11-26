@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2008/10/14 14:09:29 pooka Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2008/11/26 15:04:02 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,6 +41,7 @@ void rump_splx(int);
 #define spllower(x) ((void)0)
 #define splraise(x) 0
 #define splsoftnet() rump_splfoo()
+#define splsoftclock() rump_splfoo()
 #define splhigh() rump_splfoo()
 #define splsched() rump_splfoo()
 #define splvm() rump_splfoo()
