@@ -1,4 +1,4 @@
-/*	$NetBSD: pnullfs.c,v 1.17 2008/09/12 14:40:46 christos Exp $	*/
+/*	$NetBSD: pnullfs.c,v 1.18 2008/11/26 14:03:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -103,6 +103,7 @@ main(int argc, char *argv[])
 	if (pn_root == NULL)
 		err(1, "puffs_pn_new");
 	puffs_setroot(pu, pn_root);
+	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
 
 	po_root = puffs_getrootpathobj(pu);
 	if (po_root == NULL)
