@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.19 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.20 2008/11/27 15:04:16 vanhu Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -2059,7 +2059,7 @@ isakmp_cfg_resize_pool(size)
 	/* If a pool already exists, check if we can shrink it */
 	if ((isakmp_cfg_config.port_pool != NULL) &&
 	    (size < isakmp_cfg_config.pool_size)) {
-		for (i = isakmp_cfg_config.pool_size; i >= size; --i) {
+		for (i = isakmp_cfg_config.pool_size-1; i >= size; --i) {
 			if (isakmp_cfg_config.port_pool[i].used) {
 				plog(LLV_ERROR, LOCATION, NULL, 
 				    "resize pool from %zu to %d impossible "
@@ -2152,10 +2152,12 @@ isakmp_cfg_init(cold)
 	isakmp_cfg_config.splitdns_list = NULL;
 	isakmp_cfg_config.splitdns_len = 0;
 
+#if 0
 	if (cold == ISAKMP_CFG_INIT_COLD) {
 		if ((error = isakmp_cfg_resize_pool(ISAKMP_CFG_MAX_CNX)) != 0)
 			return error;
 	}
+#endif
 
 	return 0;
 }
