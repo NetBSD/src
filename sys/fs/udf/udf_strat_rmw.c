@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.9.4.2 2008/11/02 23:03:45 snj Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.9.4.3 2008/11/27 17:08:18 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.9.4.2 2008/11/02 23:03:45 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.9.4.3 2008/11/27 17:08:18 snj Exp $");
 #endif /* not lint */
 
 
@@ -1364,8 +1364,9 @@ udf_discstrat_init_rmw(struct udf_strat_args *args)
 		0, 0, 0, "udf_eccline_pool", NULL, IPL_NONE);
 
 	/* initialise eccline blob pool */
+        ecclinepool_allocator.pa_pagesz = blobsize;
 	pool_init(&priv->ecclineblob_pool, blobsize, 
-		0,0,0, "udf_eccline_blob", &ecclinepool_allocator, IPL_NONE);
+		0, 0, 0, "udf_eccline_blob", &ecclinepool_allocator, IPL_NONE);
 
 	/* initialise main queues */
 	for (i = 0; i < UDF_SHED_MAX; i++) {
