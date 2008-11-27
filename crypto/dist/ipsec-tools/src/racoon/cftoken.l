@@ -1,4 +1,4 @@
-/*	$NetBSD: cftoken.l,v 1.16 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: cftoken.l,v 1.17 2008/11/27 10:53:48 tteras Exp $	*/
 
 /* Id: cftoken.l,v 1.53 2006/08/22 18:17:17 manubsd Exp */
 
@@ -173,6 +173,9 @@ hexstring	0x{hexdigit}+
 
 	/* include */
 <S_INI>include		{ YYDB; return(INCLUDE); }
+
+    /* pfkey_buffer */
+<S_INI>pfkey_buffer { YYDB; return(PFKEY_BUFFER); }
 
 	/* self information */
 <S_INI>identifier	{ BEGIN S_INF; YYDB; yywarn("it is obsoleted.  use \"my_identifier\" in each remote directives."); return(IDENTIFIER); }
