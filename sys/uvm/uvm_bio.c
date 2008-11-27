@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.65 2008/05/05 17:11:17 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.66 2008/11/27 08:46:09 pooka Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.65 2008/05/05 17:11:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.66 2008/11/27 08:46:09 pooka Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -696,48 +696,3 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo, int advice,
 
 	return error;
 }
-
-#if 0 /* notused */
-/*
- * removing a range of mappings from the ubc mapping cache.
- */
-
-void
-ubc_flush(struct uvm_object *uobj, voff_t start, voff_t end)
-{
-	struct ubc_map *umap;
-	vaddr_t va;
-	UVMHIST_FUNC("ubc_flush");  UVMHIST_CALLED(ubchist);
-
-	UVMHIST_LOG(ubchist, "uobj %p start 0x%lx end 0x%lx",
-		    uobj, start, end, 0);
-
-	mutex_enter(&ubc_object.uobj.vmobjlock);
-	for (umap = ubc_object.umap;
-	     umap < &ubc_object.umap[ubc_nwins];
-	     umap++) {
-
-		if (umap->uobj != uobj || umap->offset < start ||
-		    (umap->offset >= end && end != 0) ||
-		    umap->refcount > 0) {
-			continue;
-		}
-
-		/*
-		 * remove from hash,
-		 * move to head of inactive queue.
-		 */
-
-		va = (vaddr_t)(ubc_object.kva +
-		    ((umap - ubc_object.umap) << ubc_winshift));
-		pmap_remove(pmap_kernel(), va, va + ubc_winsize);
-
-		LIST_REMOVE(umap, hash);
-		umap->uobj = NULL;
-		TAILQ_REMOVE(UBC_QUEUE(umap->offset), umap, inactive);
-		TAILQ_INSERT_HEAD(UBC_QUEUE(umap->offset), umap, inactive);
-	}
-	pmap_update(pmap_kernel());
-	mutex_exit(&ubc_object.uobj.vmobjlock);
-}
-#endif /* notused */
