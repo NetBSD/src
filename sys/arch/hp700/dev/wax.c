@@ -1,4 +1,4 @@
-/*	$NetBSD: wax.c,v 1.9 2008/03/29 15:59:26 skrll Exp $	*/
+/*	$NetBSD: wax.c,v 1.9.12.1 2008/11/27 21:59:25 skrll Exp $	*/
 
 /*	$OpenBSD: wax.c,v 1.1 1998/11/23 03:04:10 mickey Exp $	*/
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.9 2008/03/29 15:59:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wax.c,v 1.9.12.1 2008/11/27 21:59:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,6 +154,16 @@ waxattach(struct device *parent, struct device *self, void *aux)
 
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
+	if (strcmp(parent->dv_xname, "mainbus0") == 0) {
+		ga.ga_dp.dp_bc[0] = ga.ga_dp.dp_bc[1];
+		ga.ga_dp.dp_bc[1] = ga.ga_dp.dp_bc[2];
+		ga.ga_dp.dp_bc[2] = ga.ga_dp.dp_bc[3];
+		ga.ga_dp.dp_bc[3] = ga.ga_dp.dp_bc[4];
+		ga.ga_dp.dp_bc[4] = ga.ga_dp.dp_bc[5];
+		ga.ga_dp.dp_bc[5] = ga.ga_dp.dp_mod;
+		ga.ga_dp.dp_mod = 0;
+	}
+
 	ga.ga_name = "gsc";
 	ga.ga_int_reg = &sc->sc_int_reg;
 	ga.ga_fix_args = wax_fix_args;

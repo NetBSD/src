@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.83.2.1 2008/10/27 08:02:40 skrll Exp $
+# $NetBSD: GENERIC,v 1.83.2.2 2008/11/27 21:59:25 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.83.2.1 $"
+#ident 		"GENERIC-$Revision: 1.83.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -237,6 +237,11 @@ phantomas*	at mainbus0	# Phantom PseudoBC GSC+ Port
 lasi*	at phantomas?		# LASI on [ABCJ?]*
 dino*	at phantomas?		# PCI bus bridge
 wax*	at phantomas?		# Wax GSC to GSC Bus Adapter
+uturn0	at mainbus0		# U2/UTurn Runway IOA
+uturn1	at mainbus0
+lasi*	at uturn?		# LASI on [CJ]*
+dino*	at uturn?		# PCI bus bridge
+astro*	at mainbus0		# Astro memory & I/O controller
 
 # GSC bus support
 gsc*	at lasi?		# 712
@@ -247,7 +252,11 @@ gsc*	at wax?			# {725,715}/{64,80,100}, C*, B*, J*
 #weisa*	at mainbus0		# 7xx
 #weisa*	at gsc?			# C*, B*
 
+# 
+elroy*	at astro?
+
 # PCI bus support
+pci*	at elroy?
 pci*	at dino?
 com*	at dino?
 ppb*	at pci? dev ? function ?
