@@ -1,4 +1,4 @@
-/*	$NetBSD: phantomas.c,v 1.4 2008/03/29 15:59:26 skrll Exp $	*/
+/*	$NetBSD: phantomas.c,v 1.4.12.1 2008/11/27 21:59:25 skrll Exp $	*/
 /*	$OpenBSD: phantomas.c,v 1.1 2002/12/18 23:52:45 mickey Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/iomod.h>
 #include <machine/autoconf.h>
 
 #include <hp700/dev/cpudevs.h>
@@ -66,10 +67,14 @@ phantomasmatch(struct device *parent, struct cfdata *cfdata, void *aux)
 void
 phantomasattach(struct device *parent, struct device *self, void *aux)
 {
-	struct confargs *ca = aux;
+	struct confargs *ca = aux, nca;
+
+	nca = *ca;
+	nca.ca_hpabase = 0;
+	nca.ca_nmodules = MAXMODBUS;
 
 	printf("\n");
-	(*pdc_scanbus)(self, ca, phantomas_callback);
+	pdc_scanbus(self, &nca, phantomas_callback);
 }
 
 static void

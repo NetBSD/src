@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.13 2006/09/22 14:08:04 skrll Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.13.64.1 2008/11/27 21:59:26 skrll Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.13 2006/09/22 14:08:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gscbus.c,v 1.13.64.1 2008/11/27 21:59:26 skrll Exp $");
 
 #define GSCDEBUG
 
@@ -153,10 +153,11 @@ gscattach(struct device *parent, struct device *self, void *aux)
 
 	/* Add the I/O subsystem's interrupt register. */
 	ga->ga_int_reg->int_reg_dev = parent->dv_xname;
-	sc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_NONE,
-					 NULL, ga->ga_int_reg,
-					 &int_reg_cpu, ga->ga_irq);
+	sc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_NONE,	 NULL,
+	    ga->ga_int_reg, &int_reg_cpu, ga->ga_irq);
 
+	ga->ga_ca.ca_nmodules = MAXMODBUS;
+	ga->ga_ca.ca_hpabase = 0;
 	pdc_scanbus(self, &ga->ga_ca, gsc_module_callback);
 }
 
