@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.141.2.2 2008/11/01 21:22:27 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.141.2.3 2008/11/27 21:34:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.141.2.2 2008/11/01 21:22:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.141.2.3 2008/11/27 21:34:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -460,8 +460,6 @@ sys___adjtime50(struct lwp *l, const struct sys___adjtime50_args *uap,
 void
 adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 {
-	struct timeval atv;
-
 	extern int64_t time_adjtime;  /* in kern_ntptime.c */
 
 	if (olddelta) {
@@ -476,7 +474,7 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 	
 	if (delta) {
 		mutex_spin_enter(&timecounter_lock);
-		time_adjtime = (int64_t)delta->tv_sec * 1000000 + atv.tv_usec;
+		time_adjtime = (int64_t)delta->tv_sec * 1000000 + delta->tv_usec;
 
 		if (time_adjtime) {
 			/* We need to save the system time during shutdown */
