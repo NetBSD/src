@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.56 2008/11/26 15:04:02 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.57 2008/11/27 08:05:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -237,18 +237,9 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	struct iovec *iov;
 	uint8_t *b = buf;
 	size_t cnt;
-	int rv;
 
 	if (uio->uio_vmspace != UIO_VMSPACE_SYS)
 		panic("%s: vmspace != UIO_VMSPACE_SYS", __func__);
-
-	/*
-	 * See if rump ubc code claims the offset.  This is of course
-	 * a blatant violation of abstraction levels, but let's keep
-	 * me simple & stupid for now.
-	 */
-	if (rump_ubc_magic_uiomove(buf, n, uio, &rv, NULL))
-		return rv;
 
 	while (n && uio->uio_resid) {
 		iov = uio->uio_iov;
