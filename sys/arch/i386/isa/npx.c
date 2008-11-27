@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.129.10.3 2008/11/20 03:45:29 snj Exp $	*/
+/*	$NetBSD: npx.c,v 1.129.10.4 2008/11/27 03:33:15 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.129.10.3 2008/11/20 03:45:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.129.10.4 2008/11/27 03:33:15 snj Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -679,6 +679,7 @@ npxsave_cpu(bool save)
 	stts();
 	l->l_addr->u_pcb.pcb_fpcpu = NULL;
 	ci->ci_fpcurlwp = NULL;
+	ci->ci_fpused = 1;
 }
 
 /*
