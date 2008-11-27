@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.35 2008/11/25 18:27:39 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.36 2008/11/27 03:47:57 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1180,4 +1180,33 @@ sys/arch/amd64/amd64/fpu.c			1.30
 
 	fpudna: enable interrupts in an error path.
 	[ad, ticket #127]
+
+sys/arch/i386/isa/npx.c				1.133
+
+	npxsave_cpu() set ci_fpused so that the FPU will be disabled on
+	next context switch on Xen. Fix "npxintr: came from nowhere"
+	kernel messages on Xen/i386.
+	[bouyer, ticket #128]
+
+sys/arch/i386/isa/npx.c				1.134
+
+	npxdna(): even if there's no effective FPU context switch
+	set ci_fpused; FPU will be used and needs to be switched on next
+	context switch.  Fix "panic: npxintr: wrong process" with Xen.
+	[bouyer, ticket #129]
+
+usr.sbin/postinstall/postinstall		1.78
+
+	Add scan obsolete minor shared libraries in /usr/X11R7/lib.
+	Also scan in /usr/lib/i386 for amd64, /usr/lib/sparc for sparc64.
+	[nakayama, ticket #130]
+
+sys/arch/sparc64/include/db_machdep.h		1.26
+sys/arch/sparc64/sparc64/db_disasm.c		1.15
+sys/arch/sparc64/sparc64/db_interface.c		1.113
+sys/arch/sparc64/sparc64/db_trace.c		1.41
+sys/ddb/db_command.c				1.124
+
+	Make DDB show the right register values on 32-bit sparc64 kernels.
+	[nakayama, ticket #131]
 
