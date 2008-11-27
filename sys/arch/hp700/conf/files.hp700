@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.20 2008/03/30 12:32:13 skrll Exp $
+#	$NetBSD: files.hp700,v 1.20.12.1 2008/11/27 21:59:25 skrll Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -91,6 +91,16 @@ device	phantomas: gedoens
 attach	phantomas at gedoens
 file	arch/hp700/dev/phantomas.c	phantomas
 
+# U2/Uturn, Runway to GSC Bus bridge & IOA
+device	uturn: gedoens
+attach	uturn at gedoens
+file	arch/hp700/dev/uturn.c		uturn
+
+# Astro memory & I/O controller
+device	astro: gedoens
+attach	astro at gedoens
+file	arch/hp700/dev/astro.c			astro
+
 # 1FT1-0002, 1FU2-0002
 # as goes w/ 7100LC, 7300LC, 7200, 8000, 8200, 8500
 device	lasi: gscbus
@@ -119,6 +129,13 @@ file	arch/hp700/dev/dino.c		dino
 
 attach	com at dino with com_dino
 file	arch/hp700/dev/com_dino.c	com_dino
+
+# Elroy, Ropes to PCI Bridge. Supports 4X PCI and dual address cycle.
+# Mercury; QuickSilver is an AGP also
+device	elroy: pcibus
+attach	elroy at gedoens
+file	arch/hp700/dev/elroy.c		elroy
+file	arch/hp700/dev/apic.c		elroy
 
 attach	sti at gedoens with sti_gedoens
 file	arch/hp700/dev/sti_sgc.c	sti_gedoens

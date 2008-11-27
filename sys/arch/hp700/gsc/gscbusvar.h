@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbusvar.h,v 1.5 2005/12/11 12:17:24 christos Exp $	*/
+/*	$NetBSD: gscbusvar.h,v 1.5.86.1 2008/11/27 21:59:26 skrll Exp $	*/
 
 /*	$OpenBSD: gscbusvar.h,v 1.3 1999/08/16 02:48:39 mickey Exp $	*/
 
@@ -37,6 +37,7 @@
 struct gsc_attach_args {
 	struct confargs ga_ca;
 #define	ga_name		ga_ca.ca_name
+#define	ga_dp		ga_ca.ca_dp
 #define	ga_iot		ga_ca.ca_iot
 #define	ga_mod		ga_ca.ca_mod
 #define	ga_type		ga_ca.ca_type
