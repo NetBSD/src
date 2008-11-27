@@ -4,6 +4,8 @@
 	  localconf.c,localconf.h,pfkey.c,racoon.conf.5}: ability to set
 	  pfkey buffer size via a configuration directive (indentation and
 	  other minor fixes by Timo)
+	From Arnaud Ebalard <arno@natisbad.org>:
+	* src/racoon/pfkey.c: remove the unused MAXNESTEDSA
 
 2008-11-25  Christoph Badura  <bad@netbsd.org>
 	* src/racoon/isakmp.c:
