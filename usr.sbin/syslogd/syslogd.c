@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.93 2008/11/07 15:42:01 christos Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.94 2008/11/27 20:37:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.93 2008/11/07 15:42:01 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.94 2008/11/27 20:37:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1025,10 +1025,17 @@ printline_syslogprotocol(const char *hname, char *msg,
 
 	buffer = buf_msg_new(0);
 	p = msg;
-	start = p += check_timestamp((unsigned char*) p,
+	p += check_timestamp((unsigned char*) p,
 		&buffer->timestamp, true, !BSDOutputFormat);
 	DPRINTF(D_DATA, "Got timestamp \"%s\"\n", buffer->timestamp);
 
+	if (flags & ADDDATE) {
+		FREEPTR(buffer->timestamp);
+		buffer->timestamp = strdup(make_timestamp(NULL,
+			!BSDOutputFormat));
+	}
+
+	start = p;
 	NEXTFIELD(p);
 	/* extract host */
 	for (start = p;; p++) {
@@ -1235,9 +1242,15 @@ printline_bsdsyslog(const char *hname, char *msg,
 
 	buffer = buf_msg_new(0);
 	p = msg;
-	start = p += check_timestamp((unsigned char*) p,
+	p += check_timestamp((unsigned char*) p,
 		&buffer->timestamp, false, !BSDOutputFormat);
 	DPRINTF(D_DATA, "Got timestamp \"%s\"\n", buffer->timestamp);
+
+	if (flags & ADDDATE || !buffer->timestamp) {
+		FREEPTR(buffer->timestamp);
+		buffer->timestamp = strdup(make_timestamp(NULL,
+			!BSDOutputFormat));
+	}
 
 	if (*p == ' ') p++; /* SP */
 	else goto all_bsd_msg;
@@ -1451,7 +1464,8 @@ printline(const char *hname, char *msg, int flags)
 		if (*q == '>' && n >= 0 && n < INT_MAX && errno == 0) {
 			p = q + 1;
 			pri = (int)n;
-			if (*p == '1') { /* syslog-protocol version */
+			/* check for syslog-protocol version */
+			if (*p == '1' && p[1] == ' ') {
 				p += 2;	 /* skip version and space */
 				bsdsyslog = false;
 			} else {
@@ -1676,21 +1690,24 @@ check_timestamp(unsigned char *from_buf, char **to_buf,
 		    && islower(from_buf[2]))
 			found_ts = true;
 	}
-	if (!found_ts && from_buf[0] == '-' && from_buf[1] == ' ') {
-		/* NILVALUE */
-		if (to_iso) {
-			/* with ISO = syslog-protocol output leave
-			 * it as is, because it is better to have
-			 * no timestamp than a wrong one.
-			 */
-			*to_buf = strdup("-");
-		} else {
-			/* with BSD Syslog the field is reqired
-			 * so replace it with current time
-			 */
-			 *to_buf = strdup(make_timestamp(NULL, false));
+	if (!found_ts) {
+		if (from_buf[0] == '-' && from_buf[1] == ' ') {
+			/* NILVALUE */
+			if (to_iso) {
+				/* with ISO = syslog-protocol output leave
+			 	 * it as is, because it is better to have
+			 	 * no timestamp than a wrong one.
+			 	 */
+				*to_buf = strdup("-");
+			} else {
+				/* with BSD Syslog the field is reqired
+				 * so replace it with current time
+				 */
+				*to_buf = strdup(make_timestamp(NULL, false));
+			}
+			return 2;
 		}
-		return 2;
+		return 0;
 	}
 
 	if (!from_iso && !to_iso) {
