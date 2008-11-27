@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76 2008/10/29 17:09:47 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.1 2008/11/27 03:42:00 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1236,6 +1236,9 @@ do_obsolete()
 		obsolete_libs /usr/lib
 		obsolete_libs /usr/lib/i18n
 		obsolete_libs /usr/X11R6/lib
+		obsolete_libs /usr/X11R7/lib
+		[ "$MACHINE" = "amd64" ] && obsolete_libs /usr/lib/i386
+		[ "$MACHINE" = "sparc64" ] && obsolete_libs /usr/lib/sparc
 	) | obsolete_paths "${op}"
 	failed=$(( ${failed} + $? ))
 
