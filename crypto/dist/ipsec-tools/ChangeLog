@@ -1,3 +1,8 @@
+2008-11-27  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp_cfg.c: Fixed pool resizing.
+	* src/racoon/main.c: Set up a default value for Mode Config Pool
+	  size if pool address specified but pool size not specified.
+
 2008-09-25  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/isakmp.c: Fixed resending mechanism to have non-ESP
 	  marker for retransmitted packets.
