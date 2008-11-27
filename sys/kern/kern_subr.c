@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.195 2008/11/14 13:01:18 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.196 2008/11/27 21:36:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.195 2008/11/14 13:01:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.196 2008/11/27 21:36:51 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1364,6 +1364,9 @@ syscall_establish(const struct emul *em, const struct syscall_package *sp)
 	 */
 	for (i = 0; sp[i].sp_call != NULL; i++) {
 		if (sy[sp[i].sp_code].sy_call != sys_nomodule) {
+#ifdef DIAGNOSTIC
+			printf("syscall %d is busy\n", sp[i].sp_code);
+#endif
 			return EBUSY;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.31 2008/11/25 15:15:28 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.32 2008/11/27 21:36:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.31 2008/11/25 15:15:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.32 2008/11/27 21:36:51 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -554,15 +554,18 @@ module_do_load(const char *name, bool isdep, int flags,
 		if (error != 0) {
 			kmem_free(mod, sizeof(*mod));
 			depth--;
-			if (!autoload) {
-				module_error("unable to load kernel object");
-			}
+#ifndef DIAGNOSTIC
+			if (!autoload)
+#endif
+				module_error("Cannot load kernel object `%s'"
+				    " error=%d", name), error;
 			return error;
 		}
 		TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
 		mod->mod_source = MODULE_SOURCE_FILESYS;
 		error = module_fetch_info(mod);
 		if (error != 0) {
+			module_error("cannot fetch module info for `%s'", name);
 			goto fail;
 		}
 	}
@@ -573,11 +576,12 @@ module_do_load(const char *name, bool isdep, int flags,
 	mi = mod->mod_info;
 	if (strlen(mi->mi_name) >= MAXMODNAME) {
 		error = EINVAL;
-		module_error("module name too long");
+		module_error("module name `%s' too long", mi->mi_name);
 		goto fail;
 	}
 	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
-		module_error("module built for different version of system");
+		module_error("module built for `%s', system `%s'",
+		    mi->mi_version, __NetBSD_Version__);
 		if ((flags & MODCTL_LOAD_FORCE) != 0) {
 			module_error("forced load, system may be unstable");
 		} else {
@@ -591,6 +595,10 @@ module_do_load(const char *name, bool isdep, int flags,
 	 * a match.
 	 */
 	if (class != MODULE_CLASS_ANY && class != mi->mi_class) {
+#ifdef DIAGNOSTIC
+		module_error("incompatible module class for `%s' (%d != %d)",
+		    name, class, mi->mi_class);
+#endif
 		error = ENOENT;
 		goto fail;
 	}
@@ -600,6 +608,10 @@ module_do_load(const char *name, bool isdep, int flags,
 	 * The name must match.
 	 */
 	if (isdep && strcmp(mi->mi_name, name) != 0) {
+#ifdef DIAGNOSTIC
+		module_error("dependency name mismatch (`%s' != `%s')",
+		    name, mi->mi_name);
+#endif
 		error = ENOENT;
 		goto fail;
 	}
@@ -612,6 +624,9 @@ module_do_load(const char *name, bool isdep, int flags,
 	if ((mod2 = module_lookup(mi->mi_name)) != NULL) {
 		if (modp != NULL)
 			*modp = mod2;
+#ifdef DIAGNOSTIC
+		module_error("module `%s' already loaded", mi->mi_name);
+#endif
 		error = EEXIST;
 		goto fail;
 	}
@@ -625,7 +640,8 @@ module_do_load(const char *name, bool isdep, int flags,
 		}
 		if (strcmp(mod2->mod_info->mi_name, mi->mi_name) == 0) {
 		    	error = EDEADLK;
-			module_error("circular dependency detected");
+			module_error("circular dependency detected for `%s'",
+			    mi->mi_name);
 		    	goto fail;
 		}
 	}
@@ -643,7 +659,8 @@ module_do_load(const char *name, bool isdep, int flags,
 			len = p - s + 1;
 			if (len >= MAXMODNAME) {
 				error = EINVAL;
-				module_error("required module name too long");
+				module_error("required module name `%s'"
+				    " too long", mi->mi_required);
 				goto fail;
 			}
 			strlcpy(buf, s, len);
@@ -651,12 +668,14 @@ module_do_load(const char *name, bool isdep, int flags,
 				break;
 			if (mod->mod_nrequired == MAXMODDEPS - 1) {
 				error = EINVAL;
-				module_error("too many required modules");
+				module_error("too many required modules (%d)",
+				    mod->mod_nrequired);
 				goto fail;
 			}
 			if (strcmp(buf, mi->mi_name) == 0) {
 				error = EDEADLK;
-				module_error("self-dependency detected");
+				module_error("self-dependency detected for "
+				   "`%s'", mi->mi_name);
 				goto fail;
 			}
 			error = module_do_load(buf, true, flags, NULL,
@@ -673,7 +692,7 @@ module_do_load(const char *name, bool isdep, int flags,
 	 */
 	error = kobj_affix(mod->mod_kobj, mi->mi_name);
 	if (error != 0) {
-		module_error("unable to affix module");
+		module_error("unable to affix module `%s'", mi->mi_name);
 		goto fail2;
 	}
 
@@ -682,7 +701,8 @@ module_do_load(const char *name, bool isdep, int flags,
 	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
 	module_active = NULL;
 	if (error != 0) {
-		module_error("modctl function returned error %d", error);
+		module_error("modcmd function returned error %d for `%s'",
+		    error, mi->mi_name);
 		goto fail;
 	}
 
@@ -731,9 +751,15 @@ module_do_unload(const char *name)
 
 	mod = module_lookup(name);
 	if (mod == NULL) {
+#ifdef DIAGNOSTIC
+		module_error("module `%s' not found", name);
+#endif
 		return ENOENT;
 	}
 	if (mod->mod_refcnt != 0 || mod->mod_source == MODULE_SOURCE_KERNEL) {
+#ifdef DIAGNOSTIC
+		module_error("module `%s' busy", name);
+#endif
 		return EBUSY;
 	}
 	KASSERT(module_active == NULL);
@@ -741,6 +767,9 @@ module_do_unload(const char *name)
 	error = (*mod->mod_info->mi_modcmd)(MODULE_CMD_FINI, NULL);
 	module_active = NULL;
 	if (error != 0) {
+#ifdef DIAGNOSTIC
+		module_error("cannot unload module `%s' error=%d", name, error);
+#endif
 		return error;
 	}
 	module_count--;
