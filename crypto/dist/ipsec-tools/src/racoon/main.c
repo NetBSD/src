@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2008/07/22 01:30:02 mgrooms Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2008/11/27 15:04:21 vanhu Exp $	*/
 
 /* Id: main.c,v 1.25 2006/06/20 20:31:34 manubsd Exp */
 
@@ -218,6 +218,12 @@ main(ac, av)
 	if (error != 0)
 		errx(1, "failed to parse configuration file.");
 	restore_params();
+
+#ifdef ENABLE_HYBRID
+	if(isakmp_cfg_config.network4 && isakmp_cfg_config.pool_size == 0)
+		if ((error = isakmp_cfg_resize_pool(ISAKMP_CFG_MAX_CNX)) != 0)
+			return error;
+#endif
 
 	if (dump_config)
 		dumprmconf ();
