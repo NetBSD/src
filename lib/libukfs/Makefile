@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2008/07/29 13:17:41 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2008/11/27 16:14:46 pooka Exp $
 #
 
 LIB=		ukfs
-LIBDPLIBS+=	rump	${.CURDIR}/../librump
+LIBDPLIBS+=	rump	${.CURDIR}/../librump		\
+		rumpvfs	${.CURDIR}/../librumpvfs
 
 INCS=		ukfs.h
 INCSDIR=	/usr/include/rump

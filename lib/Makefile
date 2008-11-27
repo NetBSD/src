@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.130 2008/11/19 14:10:48 pooka Exp $
+#	$NetBSD: Makefile,v 1.131 2008/11/27 16:14:46 pooka Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -119,10 +119,13 @@ SUBDIR+=	libpam		# depends on libkrb5, libkafs and more
 
 SUBDIR+=	librumpnet	# depends on librump
 SUBDIR+=	librumpvfs	# depends on librump
-SUBDIR+=	libukfs		# depends on librump
 
 #==================== 4th library dependency barrier ====================
 SUBDIR+=	.WAIT
-SUBDIR+=	libp2k		# depends on libpuffs and libukfs
+SUBDIR+=	libukfs		# depends on librump and librumpvfs
+
+#==================== 5th library dependency barrier ====================
+SUBDIR+=	.WAIT
+SUBDIR+=	libp2k		# depends on libpuffs, librumpvfs and libukfs
 
 .include <bsd.subdir.mk>
