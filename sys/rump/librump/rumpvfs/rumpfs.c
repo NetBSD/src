@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.1 2008/11/19 14:10:49 pooka Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.2 2008/11/27 16:40:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -196,4 +196,5 @@ rumpfs_init()
 
 	vfs_opv_init(rump_opv_descs);
 	rootvnode = rump_makevnode("/", 0, VDIR, -1);
+	rootvnode->v_vflag |= VV_ROOT;
 }
