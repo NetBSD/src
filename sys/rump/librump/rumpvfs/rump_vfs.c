@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.3 2008/11/25 20:35:46 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.4 2008/11/27 16:40:40 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -106,6 +106,7 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 	mutex_init(&mp->mnt_updating, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
 	mp->mnt_refcnt = 1;
+	mp->mnt_vnodecovered = rootvnode;
 
 	mount_initspecific(mp);
 
