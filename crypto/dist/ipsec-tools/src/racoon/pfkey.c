@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.36 2008/11/27 10:53:48 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.37 2008/11/27 11:08:48 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.36 2008/11/27 10:53:48 tteras Exp $ */
+/* $Id: pfkey.c,v 1.37 2008/11/27 11:08:48 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1693,15 +1693,12 @@ pk_recvacquire(mhp)
 	struct sadb_msg *msg;
 	struct sadb_x_policy *xpl;
 	struct secpolicy *sp_out = NULL, *sp_in = NULL;
-#define MAXNESTEDSA	5	/* XXX */
-	struct ph2handle *iph2[MAXNESTEDSA];
+	struct ph2handle *iph2;
 	struct sockaddr *src, *dst;
-	int n;	/* # of phase 2 handler */
 #ifdef HAVE_SECCTX
 	struct sadb_x_sec_ctx *m_sec_ctx;
 #endif /* HAVE_SECCTX */
 	struct policyindex spidx;
-
 
 	/* ignore this message because of local test mode. */
 	if (f_local)
@@ -1800,15 +1797,15 @@ pk_recvacquire(mhp)
 	 *       has to prcesss such a acquire message because racoon may
 	 *       lost the expire message.
 	 */
-	iph2[0] = getph2byid(src, dst, xpl->sadb_x_policy_id);
-	if (iph2[0] != NULL) {
-		if (iph2[0]->status < PHASE2ST_ESTABLISHED) {
+	iph2 = getph2byid(src, dst, xpl->sadb_x_policy_id);
+	if (iph2 != NULL) {
+		if (iph2->status < PHASE2ST_ESTABLISHED) {
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"ignore the acquire because ph2 found\n");
 			return -1;
 		}
-		if (iph2[0]->status == PHASE2ST_EXPIRED)
-			iph2[0] = NULL;
+		if (iph2->status == PHASE2ST_EXPIRED)
+			iph2 = NULL;
 		/*FALLTHROUGH*/
 	}
 
@@ -1856,67 +1853,55 @@ pk_recvacquire(mhp)
 	}
     }
 
-	memset(iph2, 0, MAXNESTEDSA);
-
-	n = 0;
-
 	/* allocate a phase 2 */
-	iph2[n] = newph2();
-	if (iph2[n] == NULL) {
+	iph2 = newph2();
+	if (iph2 == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to allocate phase2 entry.\n");
 		return -1;
 	}
-	iph2[n]->side = INITIATOR;
-	iph2[n]->spid = xpl->sadb_x_policy_id;
-	iph2[n]->satype = msg->sadb_msg_satype;
-	iph2[n]->seq = msg->sadb_msg_seq;
-	iph2[n]->status = PHASE2ST_STATUS2;
+	iph2->side = INITIATOR;
+	iph2->spid = xpl->sadb_x_policy_id;
+	iph2->satype = msg->sadb_msg_satype;
+	iph2->seq = msg->sadb_msg_seq;
+	iph2->status = PHASE2ST_STATUS2;
 
 	/* set end addresses of SA */
-	iph2[n]->dst = dupsaddr(PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]));
-	if (iph2[n]->dst == NULL) {
-		delph2(iph2[n]);
+	iph2->dst = dupsaddr(PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]));
+	if (iph2->dst == NULL) {
+		delph2(iph2);
 		return -1;
 	}
-	iph2[n]->src = dupsaddr(PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]));
-	if (iph2[n]->src == NULL) {
-		delph2(iph2[n]);
-		return -1;
-	}
-
-	if (isakmp_get_sainfo(iph2[n], sp_out, sp_in) < 0) {
-		delph2(iph2[n]);
+	iph2->src = dupsaddr(PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]));
+	if (iph2->src == NULL) {
+		delph2(iph2);
 		return -1;
 	}
 
+	if (isakmp_get_sainfo(iph2, sp_out, sp_in) < 0) {
+		delph2(iph2);
+		return -1;
+	}
 
 #ifdef HAVE_SECCTX
 	if (m_sec_ctx) {
-		set_secctx_in_proposal(iph2[n], spidx);
+		set_secctx_in_proposal(iph2, spidx);
 	}
 #endif /* HAVE_SECCTX */
 
-	insph2(iph2[n]);
+	insph2(iph2);
 
 	/* start isakmp initiation by using ident exchange */
 	/* XXX should be looped if there are multiple phase 2 handler. */
-	if (isakmp_post_acquire(iph2[n]) < 0) {
+	if (isakmp_post_acquire(iph2) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to begin ipsec sa negotication.\n");
-		goto err;
+		remph2(iph2);
+		delph2(iph2);
+		return -1;
 	}
 
 	return 0;
-
-err:
-	while (n >= 0) {
-		remph2(iph2[n]);
-		delph2(iph2[n]);
-		iph2[n] = NULL;
-		n--;
-	}
-	return -1;
 }
 
 static int
