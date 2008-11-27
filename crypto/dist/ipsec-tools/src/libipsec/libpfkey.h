@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.13 2007/07/18 12:07:50 vanhu Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.14 2008/11/27 10:53:48 tteras Exp $	*/
 
 /* Id: libpfkey.h,v 1.13 2005/12/04 20:26:43 manubsd Exp */
 
@@ -156,6 +156,7 @@ int pfkey_send_migrate __P((int, struct sockaddr *, u_int,
 
 int pfkey_open __P((void));
 void pfkey_close __P((int));
+int pfkey_set_buffer_size __P((int, int));
 struct sadb_msg *pfkey_recv __P((int));
 int pfkey_send __P((int, struct sadb_msg *, int));
 int pfkey_align __P((struct sadb_msg *, caddr_t *));
