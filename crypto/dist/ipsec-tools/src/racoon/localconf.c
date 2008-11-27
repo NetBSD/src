@@ -1,4 +1,4 @@
-/*	$NetBSD: localconf.c,v 1.4 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: localconf.c,v 1.5 2008/11/27 10:53:48 tteras Exp $	*/
 
 /*	$KAME: localconf.c,v 1.33 2001/08/09 07:32:19 sakane Exp $	*/
 
@@ -124,6 +124,7 @@ setdefault()
 	lcconf->complex_bundle = TRUE; /*XXX FALSE;*/
 	lcconf->gss_id_enc = LC_GSSENC_UTF16LE; /* Windows compatibility */
 	lcconf->natt_ka_interval = LC_DEFAULT_NATT_KA_INTERVAL;
+	lcconf->pfkey_buffer_size = LC_DEFAULT_PFKEY_BUFFER_SIZE;
 }
 
 /*

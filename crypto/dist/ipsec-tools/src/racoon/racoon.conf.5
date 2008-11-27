@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoon.conf.5,v 1.46 2008/09/19 17:33:24 wiz Exp $
+.\"	$NetBSD: racoon.conf.5,v 1.47 2008/11/27 10:53:48 tteras Exp $
 .\"
 .\"	Id: racoon.conf.5,v 1.54 2006/08/22 18:17:17 manubsd Exp
 .\"
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 9, 2006
+.Dd November 27, 2008
 .Dt RACOON.CONF 5
 .Os
 .\"
@@ -237,6 +237,7 @@ Default is
 Specifies other configuration files to be included.
 .El
 .\"
+
 .Ss Identifier Specification
 is obsolete.
 It must be defined at each
@@ -362,6 +363,20 @@ Use ISO-Latin-1 to encode the GSS-API identifier attribute.
 This is the encoding used by older versions of
 .Xr racoon 8 .
 .El
+.El
+.\"
+.Pp
+.Bl -tag -width Ds -compact
+.It Ic pfkey_buffer Ar kBytes
+Specifies the soket send/receive buffer size in kilobytes. Numerous kernel
+PF_KEY implementations have problems with dumping SAD/SDP with large amount
+of entries (this happens when 100s to 1000s of tunnels are configured).
+.Pp
+The default value of 0 leaves everything at the OS-specific default value.
+If the default buffer size is greater than what is specified here racoon
+will not decrease it.
+.Pp
+This problem is known to be fixed in Linux 2.6.25 and later.
 .El
 .\"
 .Ss Remote Nodes Specifications

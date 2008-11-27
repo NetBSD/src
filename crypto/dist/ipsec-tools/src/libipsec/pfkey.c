@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.16 2008/09/03 09:57:28 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.17 2008/11/27 10:53:48 tteras Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -1809,6 +1809,44 @@ pfkey_open()
 	(void)setsockopt(so, SOL_SOCKET, SO_RCVBUF, &bufsiz, sizeof(bufsiz));
 	__ipsec_errcode = EIPSEC_NO_ERROR;
 	return so;
+}
+
+int
+pfkey_set_buffer_size(so, size)
+	int so;
+	int size;
+{
+	int newsize;
+	int actual_bufsiz;
+	socklen_t sizebufsiz;
+	int desired_bufsiz;
+
+	/*
+	 * on linux you may need to allow the kernel to allocate
+	 * more buffer space by increasing:
+	 * /proc/sys/net/core/rmem_max and wmem_max
+	 */
+	if (size > 0) {
+		actual_bufsiz = 0;
+		sizebufsiz = sizeof(actual_bufsiz);
+		desired_bufsiz = size * 1024;
+		if ((getsockopt(so, SOL_SOCKET, SO_RCVBUF,
+				&actual_bufsiz, &sizebufsiz) < 0)
+		    || (actual_bufsiz < desired_bufsiz)) {
+			if (setsockopt(so, SOL_SOCKET, SO_RCVBUF,
+				       &desired_bufsiz, sizeof(desired_bufsiz)) < 0) {
+				__ipsec_set_strerror(strerror(errno));
+				return -1;
+			}
+		}
+	}
+
+	/* return actual buffer size */
+	actual_bufsiz = 0;
+	sizebufsiz = sizeof(actual_bufsiz);
+	getsockopt(so, SOL_SOCKET, SO_RCVBUF,
+		   &actual_bufsiz, &sizebufsiz);
+	return actual_bufsiz / 1024;
 }
 
 /*
