@@ -1,4 +1,4 @@
-.\" $NetBSD: mmcformat.8,v 1.1.8.2 2008/11/27 17:03:33 snj Exp $
+.\" $NetBSD: mmcformat.8,v 1.1.8.3 2008/11/27 17:05:49 snj Exp $
 .\"
 .\" Copyright (c) 2008 Reinoud Zandijk
 .\" All rights reserved.
@@ -43,15 +43,16 @@
 The
 .Nm
 utility formats optical media conforming to the MMC standard.
-These include CD, DVD, and Blu-Ray (BD) media.
+This includes CD, DVD, and Blu-Ray (BD) media.
 .Pp
 The options are as follows:
 .Bl -tag -width XbXblockingnrXX
 .It Fl B
 Blank media when possible before formatting it.
 .It Fl b Ar blockingnr
-Explicit select packet size in sectors for CD-RW only; not recommended to
-change from its default 32.
+Explicitly select packet size in sectors
+.Pq for CD-RW only .
+It is not recommended to change this from its default of 32.
 .It Fl c Ar cert-num
 Certify media for DVD-RAM / DV-RE.
 The argument cert-num specifies:
@@ -64,17 +65,18 @@ full certification
 quick certification
 .El
 .It Fl D
-Verbose report all SCSI/ATAPI command errors.
+Debug mode.
+Print all SCSI/ATAPI command errors.
 .It Fl F
 Format media.
 .It Fl G
 Grow last CD-RW/DVD-RW session.
 .It Fl H
-Show help or inquiry format possibilities for inserted media.
+Show help and print formatting choices for the inserted media.
 .It Fl h
-Show help or inquiry format possibilities for inserted media.
+Show help and print formatting choices for the inserted media.
 .It Fl I
-Show help or inquiry format possibilities for inserted media.
+Show help and print formatting choices for the inserted media.
 .It Fl M
 Select MRW (Mount Rainier) error correcting background format.
 .It Fl O
@@ -93,20 +95,19 @@ Format DVD+MRW / BD-RE with extra spare space.
 Wait until completion of background format.
 .El
 .Sh NOTES
-Due to the enormous varieties in optical media, the tool is made
-as generic as possible.
+Due to the enormous varieties in optical media,
+.Nm
+is made as generic as possible.
 This can result in confusion.
 .Sh EXAMPLES
-.Bd -literal -offset indent
-mmcformat -B -O /dev/rcd0d
-.Ed
+.Dl Ic mmcformat -B -O /dev/rcd0d
 .Pp
 Blanks and then formats a CD-RW disc using the
-.Dq old-style
+.Dq old style
 format command.
-Its recommended to use this
-.Dq old-style
-command unless your drive reports its not supported; if so, resort
+It is recommended to use this
+.Dq old style
+command unless your drive reports that it's not supported; in that case, resort
 to the default
 .Fl F .
 Note that a CD-RW disc can be reformatted without being blanked.
@@ -114,9 +115,7 @@ Blanking switches between sequential and fixed packet writing by
 erasing the disc.
 This can also help to revive old discs.
 .Pp
-.Bd -literal -offset indent
-mmcformat -F -M /dev/rcd0d
-.Ed
+.Dl Ic mmcformat -F -M /dev/rcd0d
 .Pp
 Format a CD-RW or a DVD+RW to use MRW (Mount Rainier).
 This format tries to hide media flaws as much as possible by
@@ -131,6 +130,7 @@ command first appeared in
 .Sh AUTHORS
 .An Reinoud Zandijk Aq reinoud@NetBSD.org
 .Sh BUGS
-It could be merged with
+.Nm
+could be merged with
 .Xr scsictl 8
-but that tool is very hard disc oriented.
+but that tool is very hard disk oriented.
