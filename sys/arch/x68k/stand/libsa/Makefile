@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2007/11/11 13:23:07 isaki Exp $
+#	$NetBSD: Makefile,v 1.23 2008/11/28 08:15:51 he Exp $
 
 S=		${.CURDIR}/../../../..
 LIBSADIR=	$S/lib/libsa
@@ -16,6 +16,7 @@ SRCS+=		close.c closeall.c cread.c dev.c fstat.c ioctl.c lseek.c
 SRCS+=		open.c read.c stat.c
 SRCS+=		loadfile.c loadfile_aout.c loadfile_elf32.c
 SRCS+=		cd9660.c lfsv1.c lfsv2.c nfs.c ufs.c ufs_ls.c ustarfs.c
+SRCS+=		globals.c
 #SRCS+=		arp.c ether.c in_cksum.c net.c netif.c rpc.c udp.c
 #SRCS+=		bootp.c
 
