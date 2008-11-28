@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_direct.c,v 1.5 2008/08/29 15:04:18 reinoud Exp $ */
+/* $NetBSD: udf_strat_direct.c,v 1.6 2008/11/28 15:29:47 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.5 2008/08/29 15:04:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_direct.c,v 1.6 2008/11/28 15:29:47 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -278,7 +278,8 @@ udf_queue_buf_direct(struct udf_strat_args *args)
 	/* use disc sheduler */
 	class = ump->discinfo.mmc_class;
 	KASSERT((class == MMC_CLASS_UNKN) || (class == MMC_CLASS_DISC) ||
-		(ump->discinfo.mmc_cur & MMC_CAP_HW_DEFECTFREE));
+		(ump->discinfo.mmc_cur & MMC_CAP_HW_DEFECTFREE) ||
+		(ump->vfs_mountp->mnt_flag & MNT_RDONLY));
 
 	if (queue == UDF_SHED_READING) {
 		DPRINTF(SHEDULE, ("\nudf_issue_buf READ %p : sector %d type %d,"
