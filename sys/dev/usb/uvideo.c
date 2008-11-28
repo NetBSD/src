@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.22 2008/11/28 17:20:02 jmorse Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.23 2008/11/28 23:31:11 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.22 2008/11/28 17:20:02 jmorse Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.23 2008/11/28 23:31:11 jmcneill Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1537,6 +1537,9 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 			 * several packets can make up one payload which would
 			 * call into question this method of selecting an
 			 * alternate interface... */
+
+			if (alt_maybe->max_packet_size > vs->vs_max_payload_size)
+				continue;
 
 			if (alt == NULL ||
 			    alt_maybe->max_packet_size >= alt->max_packet_size)
