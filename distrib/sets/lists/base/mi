@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.532.2.30.2.2 2008/11/22 16:50:09 bouyer Exp $
+# $NetBSD: mi,v 1.532.2.30.2.3 2008/11/28 20:45:14 bouyer Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -2928,6 +2928,7 @@
 ./usr/share/zoneinfo/America/Argentina/La_Rioja	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Mendoza	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Rio_Gallegos	base-sys-share		share
+./usr/share/zoneinfo/America/Argentina/Salta	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/San_Juan	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/San_Luis	base-sys-share		share
 ./usr/share/zoneinfo/America/Argentina/Tucuman	base-sys-share		share
