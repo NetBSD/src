@@ -1,4 +1,4 @@
-.\" $NetBSD: microuptime.9,v 1.7 2008/11/26 18:40:22 wiz Exp $
+.\" $NetBSD: microuptime.9,v 1.8 2008/11/28 10:52:22 tsutsui Exp $
 .\"
 .\" Copyright (c) 2000 Kelly Yancey
 .\" All rights reserved.
@@ -97,8 +97,11 @@ and
 .Fn getnanouptime
 functions is to enforce the user's preference for timer accuracy versus
 execution time.
-They should be used where a precision of 1/HZ (e.g., 10 msec on a
-100HZ machine, see
+They should be used where a precision of
+.Pf 1/ Em HZ
+(e.g., 10 msec on a
+.Pf 100 Em HZ
+machine, see
 .Xr hz 9 )
 is acceptable or where performance is priority.
 .Sh SEE ALSO
@@ -106,6 +109,7 @@ is acceptable or where performance is priority.
 .Xr getbintime 9 ,
 .Xr getmicrotime 9 ,
 .Xr getnanotime 9 ,
+.Xr hz 9 ,
 .Xr microtime 9 ,
 .Xr nanotime 9 ,
 .Xr timecounter 9 ,
