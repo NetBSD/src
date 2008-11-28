@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/03/10 02:02:56 dholland Exp $
+#	$NetBSD: Makefile,v 1.4 2008/11/28 10:27:29 martin Exp $
 
 NOMAN=# defined (must come before bsd.own.mk)
 
@@ -22,4 +22,4 @@ opt_drm.h:
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/bsd/drm/kernel \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support/shared/drm/kernel
 
-.include <bsd.kmod.mk>
+.include <bsd.kmodule.mk>
