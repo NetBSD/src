@@ -1,4 +1,4 @@
-.\" $NetBSD: time_second.9,v 1.1 2006/09/06 18:04:30 gdamore Exp $
+.\" $NetBSD: time_second.9,v 1.2 2008/11/28 11:13:47 tsutsui Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,20 +32,24 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd September 6, 2006
+.Dd November 28, 2008
 .Dt TIME_SECOND 9
 .Os
 .Sh NAME
-.Nm boottime ,
 .Nm time_second ,
-.Nm time_uptime
+.Nm time_uptime ,
+.Nm boottime
 .Nd system time variables
 .Sh SYNOPSIS
-.Va extern struct timeval boottime;
+.In sys/time.h
+.Pp
+.Va extern time_t time_second;
 .br
 .Va extern time_t time_uptime;
-.br
-.Va extern time_t time_second;
+.Pp
+.In sys/kernel.h
+.Pp
+.Va extern struct timeval boottime;
 .Sh DESCRIPTION
 The
 .Va time_second
@@ -54,46 +58,72 @@ variable is the system's
 clock.
 It is set at boot by
 .Xr inittodr 9 ,
-and is updated by the
+and is updated periodically via
+.Xr timecounter 9
+framework, and also updated by the
 .Xr settimeofday 2
-system call and by periodic clock interrupts.
-.Pp
-The
-.Va boottime
-variable holds the system boot time.
-It is set from
-.Va time
-at system boot, and is updated when the system time is adjusted
-with
-.Xr settimeofday 2 .
+system call.
 .Pp
 The
 .Va time_uptime
 variable is a monotonically increasing system clock.
-It is set from
-.Va time_second
-at boot, and is updated by the periodic timer interrupt.
+It is set at boot, and is updated periodically.
 (It is not updated by
 .Xr settimeofday 2 . )
+.Pp
+The
+.Va boottime
+variable holds the system boot time.
+It is set at system boot, and is updated when the system time is adjusted
+with
+.Xr settimeofday 2 .
 .Pp
 All of these variables contain times
 expressed in seconds and microseconds since midnight (0 hour),
 January 1, 1970.
 .Pp
-Clock interrupts should be blocked
-when reading or writing
-.Va time_second
-or
-.Va time_uptime ,
-because those variables are updated by
-.Fn hardclock .
-.Va boottime
+The
+.Xr bintime 9 ,
+.Xr getbintime 9 ,
+.Xr microtime 9 ,
+.Xr getmicrotime 9 ,
+.Xr nanotime 9 ,
 and
-.Va runtime
+.Xr getnanotime 9
+functions can be used to get the current time more accurately and in an
+atomic manner.
+.Pp
+Similarly, the
+.Xr binuptime 9 ,
+.Xr getbinuptime 9 ,
+.Xr microuptime 9 ,
+.Xr getmicrouptime 9 ,
+.Xr nanouptime 9 ,
+and
+.Xr getnanouptime 9
+functions can be used to get the time elapse since boot more accurately
+and in an atomic manner.
+.Pp
+.Va boottime
 may be read and written without special precautions.
+.Pp
 .Sh SEE ALSO
+.Xr clock_settime 2 ,
+.Xr ntp_adjtime 2 ,
 .Xr settimeofday 2 ,
+.Xr bintime 9 ,
+.Xr binuptime 9 ,
+.Xr getbintime 9 ,
+.Xr getbinuptime 9 ,
+.Xr getmicrotime 9 ,
+.Xr getmicrouptime 9 ,
+.Xr getnanotime 9 ,
+.Xr getnanouptime 9 ,
 .Xr hardclock 9 ,
 .Xr hz 9 ,
 .Xr inittodr 9 ,
-.Xr microtime 9
+.Xr microtime 9 ,
+.Xr microuptime 9 ,
+.Xr nanotime 9 ,
+.Xr nanouptime 9 ,
+.Xr timecounter 9
