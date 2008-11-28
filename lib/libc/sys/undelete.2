@@ -1,4 +1,4 @@
-.\"	$NetBSD: undelete.2,v 1.12 2004/05/13 10:20:58 wiz Exp $
+.\"	$NetBSD: undelete.2,v 1.13 2008/11/28 09:48:58 pooka Exp $
 .\"
 .\" Copyright (c) 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,12 +60,12 @@
 .\"
 .\"     @(#)undelete.2	8.4 (Berkeley) 10/18/94
 .\"
-.Dd October 18, 1994
+.Dd November 28, 2008
 .Dt UNDELETE 2
 .Os
 .Sh NAME
 .Nm undelete
-.Nd attempt to recover a deleted file
+.Nd remove whiteout
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -73,20 +73,13 @@
 .Ft int
 .Fn undelete "const char *path"
 .Sh DESCRIPTION
-The
-.Fn undelete
-function attempts to recover the deleted file named by
-.Fa path .
-Currently, this works only when the named object
+Currently
+.Nm
+works only when the named object
 is a whiteout in a union filesystem.
 The system call removes the whiteout causing
 any objects in a lower layer of the
 union stack to become visible once more.
-.Pp
-Eventually, the
-.Nm undelete
-functionality may be expanded to other filesystems able to recover
-deleted files such as the log-structured filesystem.
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
 Otherwise, a value of \-1 is returned and
