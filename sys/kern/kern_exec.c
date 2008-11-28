@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.282 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.283 2008/11/28 10:55:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.282 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.283 2008/11/28 10:55:10 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1270,7 +1270,9 @@ exec_add(struct execsw *esp, int count)
 	struct exec_entry	*it;
 	int			i;
 
-	KASSERT(count > 0);
+	if (count == 0) {
+		return 0;
+	}
 
 	/* Check for duplicates. */
 	rw_enter(&exec_lock, RW_WRITER);
@@ -1311,7 +1313,9 @@ exec_remove(struct execsw *esp, int count)
 	const struct proclist_desc *pd;
 	proc_t			*p;
 
-	KASSERT(count > 0);
+	if (count == 0) {
+		return 0;
+	}
 
 	/* Abort if any are busy. */
 	rw_enter(&exec_lock, RW_WRITER);
