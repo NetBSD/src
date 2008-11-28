@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.2 2008/11/22 15:34:18 he Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.3 2008/11/28 09:01:00 he Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2008/11/22 15:34:18 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.3 2008/11/28 09:01:00 he Exp $");
 
 #include <sys/param.h>
 #include <sys/signal.h>
@@ -82,6 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.2 2008/11/22 15:34:18 he Exp
 #include <sys/kernel.h>
 #include <sys/syscallargs.h>
 
+#ifdef COMPAT_13
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+#endif
 #include <machine/frame.h>
 
 #ifdef COMPAT_13
@@ -96,6 +100,14 @@ struct sigframe_sigcontext {
 	int	sf_addr;		/* SunOS compat, always 0 for now */
 	struct	sigcontext sf_sc;	/* actual sigcontext */
 };
+
+#ifdef DEBUG
+extern int sigdebug;
+extern int sigpid;
+#define SDB_FOLLOW	0x01
+#define SDB_KSTACK	0x02
+#define SDB_FPSTATE	0x04
+#endif
 
 void
 sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
