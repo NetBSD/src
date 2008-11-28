@@ -43,7 +43,7 @@ extern	fa	*mkdfa(const char *, int);
 extern	int	makeinit(fa *, int);
 extern	void	penter(Node *);
 extern	void	freetr(Node *);
-extern	int	hexstr(char **);
+extern	int	hexstr(uschar **);
 extern	int	quoted(uschar **);
 extern	char	*cclenter(const char *);
 extern	void	overflo(const char *);
