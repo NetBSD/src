@@ -1,4 +1,4 @@
-.\"	$NetBSD: timecounter.9,v 1.5 2008/11/26 18:57:01 wiz Exp $
+.\"	$NetBSD: timecounter.9,v 1.6 2008/11/28 11:16:26 tsutsui Exp $
 .\"	$OpenBSD: tc_init.9,v 1.4 2007/05/31 19:20:01 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -59,7 +59,9 @@ A timecounter is a binary counter which has two properties:
 it runs at a fixed, known frequency
 .It
 it has sufficient bits to not roll over in less than approximately
-max(2 msec, 2/HZ seconds) (the value 2 here is really 1 + delta, for some
+max(2 msec,
+.Pf 2/ Em HZ
+seconds) (the value 2 here is really 1 + delta, for some
 indeterminate value of delta)
 .El
 .Pp
@@ -181,10 +183,12 @@ structure and related functions are defined in the file
 .Xr getmicrouptime 9 ,
 .Xr getnanotime 9 ,
 .Xr getnanouptime 9 ,
+.Xr hz 9 ,
 .Xr microtime 9 ,
 .Xr microuptime 9 ,
 .Xr nanotime 9 ,
-.Xr nanouptime 9
+.Xr nanouptime 9 ,
+.Xr time_second 9
 .Rs
 .%A "Poul-Henning Kamp"
 .%T "Timecounters: Efficient and precise timekeeping in SMP kernels"
