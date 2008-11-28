@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.42 2008/11/25 14:28:42 pooka Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.43 2008/11/28 07:23:22 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.42 2008/11/25 14:28:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.43 2008/11/28 07:23:22 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,9 +122,6 @@ struct netexport {
 };
 CIRCLEQ_HEAD(, netexport) netexport_list =
     CIRCLEQ_HEAD_INITIALIZER(netexport_list);
-
-/* Malloc type used by the mount<->netexport map. */
-MALLOC_DEFINE(M_NFS_EXPORT, "nfs_export", "NFS export data");
 
 /* Publicly exported file system. */
 struct nfs_public nfs_pub;
@@ -189,7 +186,7 @@ nfs_export_unmount(struct mount *mp)
 	netexport_clear(ne);
 	netexport_remove(ne);
 	netexport_wrunlock();
-	free(ne, M_NFS_EXPORT);
+	kmem_free(ne, sizeof(*ne));
 }
 
 /*
@@ -431,7 +428,7 @@ init_exports(struct mount *mp, struct netexport **nep)
 	/* Ensure that we do not already have this mount point. */
 	KASSERT(netexport_lookup(mp) == NULL);
 
-	ne = malloc(sizeof(*ne), M_NFS_EXPORT, M_WAITOK | M_ZERO);
+	ne = kmem_zalloc(sizeof(*ne), KM_SLEEP);
 	ne->ne_mount = mp;
 
 	/* Set the default export entry.  Handled internally by export upon
@@ -442,7 +439,7 @@ init_exports(struct mount *mp, struct netexport **nep)
 		ea.ex_flags |= MNT_EXRDONLY;
 	error = export(ne, &ea);
 	if (error != 0) {
-		free(ne, M_NFS_EXPORT);
+		kmem_free(ne, sizeof(*ne));
 	} else {
 		netexport_insert(ne);
 		*nep = ne;
