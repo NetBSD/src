@@ -1,4 +1,4 @@
-.\"     $NetBSD: microtime.9,v 1.14 2008/11/24 14:36:40 tsutsui Exp $
+.\"     $NetBSD: microtime.9,v 1.15 2008/11/28 10:55:41 tsutsui Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -136,7 +136,12 @@ and
 .Fn getnanotime
 functions is to enforce the user's preference for timer accuracy versus
 execution time.
-They should be used where a precision of 1/HZ (eg 10 msec on a 100HZ machine)
+They should be used where a precision of
+.Pf 1/ Em HZ
+(e.g., 10 msec on a
+.Pf 100 Em HZ
+machine, see
+.Xr hz 9 )
 is acceptable or where performance is priority.
 .Pp
 The system realtime clock is guaranteed to be monotonically increasing
