@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.117 2008/11/21 11:44:38 ad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.118 2008/11/28 16:04:31 joerg Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2062,25 +2062,30 @@ create_mfs_dev()
 	# Add 2 reserved inodes (needed for both mfs and tmpfs), and round
 	# up to a multiple of 32 (needed for mfs, not needed for tmpfs).
 	ninode=$(( (ninode + 2 + 31) / 32 * 32 ))
-	# This file system size calculation is exact for mount_mfs(8)
-	# with 512-byte sectors; it's larger than necessary
-	# for mount_tmpfs(8).  40960 bytes (80 blocks) is the minimum size
-	# allowed by mount_mfs.
-	fs_bytes=$((8192 + 2 * 8192 + 4096 + ninode*(128+18) + 8192))
-	[ "$fs_bytes" -lt 40960 ] && fs_bytes=40960
-	fs_blocks=$((fs_bytes/512))
-
 	# Try tmpfs; if that fails try mfs.
+	#
+	# For tmpfs, allocate 16KB and 512 byte per node.
+	# Actual requirements are much lower, but the size limit
+	# is only intended to avoid accidental writing to /dev.
+	fs_bytes=$((16384 + ninode * 512))
 	if mount_tmpfs -s $fs_bytes -n $ninode -m 0755 \
 		-o union tmpfs "$dev_mountpoint"
 	then
-	    fstype=tmpfs
-	elif mount_mfs -b 4096 -f 512 -s $fs_blocks -n $ninode -p 0755 \
-		-o union swap "$dev_mountpoint"
-	then
-	    fstype=mfs
+		fstype=tmpfs
 	else
-	    die "Failed to create memory file system"
+		# This file system size calculation is exact for mount_mfs(8)
+		# with 512-byte sectors.  40960 bytes (80 blocks) is the
+		# minimum size allowed by mount_mfs.
+		fs_bytes=$((8192 + 2 * 8192 + 4096 + ninode*512 + 8192))
+		[ "$fs_bytes" -lt 40960 ] && fs_bytes=40960
+		fs_blocks=$((fs_bytes/512))
+		if mount_mfs -b 4096 -f 512 -s $fs_blocks -n $ninode -p 0755 \
+		    -o union swap "$dev_mountpoint"
+		then
+			fstype=mfs
+		else
+			die "Failed to create memory file system"
+		fi
 	fi
 
 	# Our current directory was in the lower file system; change it to
@@ -2095,7 +2100,7 @@ create_mfs_dev()
 	fi
 
 	echo "Created $fstype $dev_mountpoint" \
-		"($fs_blocks blocks, $ninode inodes)"
+		"($fs_bytes byte, $ninode inodes)"
 }
 
 #
