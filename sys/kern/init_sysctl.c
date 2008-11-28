@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.150 2008/11/12 14:32:34 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.151 2008/11/28 18:58:59 elad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.150 2008/11/12 14:32:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.151 2008/11/28 18:58:59 elad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd32.h"
@@ -2058,6 +2058,11 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			    NULL, NULL);
 			mutex_exit(p->p_lock);
 			if (error != 0) {
+				/*
+				 * Don't leak kauth retval if we're silently
+				 * skipping this entry.
+				 */
+				error = 0;
 				continue;
 			}
 
