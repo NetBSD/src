@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.163 2008/10/22 11:36:58 matt Exp $ */
+/* $NetBSD: vmstat.c,v 1.164 2008/11/28 05:58:22 dholland Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.163 2008/10/22 11:36:58 matt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.164 2008/11/28 05:58:22 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -504,6 +504,7 @@ main(int argc, char *argv[])
 				(void)putchar('\n');
 			}
 
+			fflush(stdout);
 			if (reps >= 0 && --reps <=0)
 				break;
 			(void)nanosleep(&interval, NULL);
