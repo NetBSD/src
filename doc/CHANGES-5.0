@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.38 2008/11/28 04:42:34 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.39 2008/11/28 06:46:03 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1229,4 +1229,11 @@ usr.bin/make/make.1				1.145, 1.146
 
 	PR/40026: Document VPATH in make(1).
 	[christos, ticket #135]
+
+tools/awk/Makefile				1.2
+dist/nawk/b.c					1.17
+dist/nawk/proto.h				1.7
+
+	Fix crossbuild on Solaris.
+	[christos, ticket #136]
 
