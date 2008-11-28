@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.114 2008/11/23 18:21:25 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.115 2008/11/28 06:32:39 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2489,4 +2489,16 @@ usr.bin/make/parse.c				1.146
 	PR/38840: Pierre Pronchery: make crashes while parsing long
 	lines in Makefiles
 	[dsl, ticket #1240]
+
+lib/libc/arch/sparc64/sys/__sigaction14_sigtramp.c 1.8
+
+	Properly use siginfo based signal delivery on sparc64 in all
+	cases.  Previously calls to signal(3) would cause use of the
+	legacy signal trampoline.
+	[martin, ticket #1241]
+
+usr.bin/who/who.c				1.23
+
+	Don't strip "pts/" when using ptyfs. Fixes PR/39201.
+	[dholland, ticket #1242]
 
