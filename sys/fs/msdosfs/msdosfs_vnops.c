@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.54 2008/11/26 20:17:33 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.55 2008/11/28 10:57:03 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.54 2008/11/26 20:17:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.55 2008/11/28 10:57:03 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -487,7 +487,7 @@ msdosfs_read(v)
 			if (bytelen == 0)
 				break;
 			error = ubc_uiomove(&vp->v_uobj, uio, bytelen, advice,
-			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(v));
+			    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 			if (error)
 				break;
 		}
