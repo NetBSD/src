@@ -1,8 +1,4 @@
-# $NetBSD: md.alpha,v 1.37 2008/11/26 11:06:12 he Exp $
-./@MODULEDIR@/compat_linux			base-kernel-modules
-./@MODULEDIR@/compat_linux/compat_linux.kmod	base-kernel-modules
-./@MODULEDIR@/exec_elf64			base-kernel-modules
-./@MODULEDIR@/exec_elf64/exec_elf64.kmod	base-kernel-modules
+# $NetBSD: md.alpha,v 1.38 2008/11/28 15:16:02 tsutsui Exp $
 ./usr/bin/fdformat				base-util-bin
 ./usr/lib/libalpha.so				base-sys-shlib
 ./usr/lib/libalpha.so.0				base-sys-shlib
