@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.218.2.4 2008/11/10 00:03:37 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.218.2.5 2008/11/28 20:32:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.218.2.4 2008/11/10 00:03:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.218.2.5 2008/11/28 20:32:43 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1584,6 +1584,11 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case OSIOCGIFCONF:
 	case OOSIOCGIFCONF:
 		return compat_ifconf(cmd, data);
+#endif
+#ifdef COMPAT_OIFDATA
+	case OSIOCGIFDATA:
+	case OSIOCZIFDATA:
+		return compat_ifdatareq(l, cmd, data);
 #endif
 	case SIOCGIFCONF:
 		return ifconf(cmd, data);
