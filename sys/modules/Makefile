@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2008/11/25 12:50:03 cube Exp $
+#	$NetBSD: Makefile,v 1.20 2008/11/28 21:17:08 he Exp $
 
 # For all platforms
 
@@ -50,6 +50,11 @@ SUBDIR+=	unionfs
 # Machine dependent section
 .if ${MACHINE} != "alpha"
 SUBDIR+=	exec_elf32
+.endif
+
+.if ${MACHINE} == "alpha"
+SUBDIR+=	compat_linux
+SUBDIR+=	exec_elf64
 .endif
 
 .if ${MACHINE} == "amd64"
