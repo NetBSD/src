@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.142 2008/11/19 18:36:09 ad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.143 2008/11/28 06:47:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.142 2008/11/19 18:36:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.143 2008/11/28 06:47:08 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,8 +294,6 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 		error = 0;
 	return (error);
 }
-
-MALLOC_DEFINE(M_NFSD, "NFS daemon", "Nfs server daemon structure");
 
 static struct nfssvc_sock *
 nfsrv_sockalloc()
