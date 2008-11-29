@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.15 2008/11/25 02:40:36 cube Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.16 2008/11/29 23:15:20 cube Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -96,7 +96,7 @@ struct compressor {
 	void	(*decomp_stat)(void *, struct compstat *);
 
 	LIST_ENTRY(compressor)	comp_list;
-	const char *comp_name;
+	unsigned int		comp_refcnt;
 };
 #endif /* PACKETPTR */
 

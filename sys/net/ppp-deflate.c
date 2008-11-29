@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.18 2008/11/25 02:40:36 cube Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.19 2008/11/29 23:15:20 cube Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.18 2008/11/25 02:40:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.19 2008/11/29 23:15:20 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ static void	z_comp_stats(void *state, struct compstat *stats);
 /*
  * Procedures exported to if_ppp.c.
  */
-static struct compressor ppp_deflate = {
+static struct compressor ppp_deflate[2] = { {
     .compress_proto =	CI_DEFLATE,
     .comp_alloc =	z_comp_alloc,
     .comp_free =	z_comp_free,
@@ -110,10 +110,8 @@ static struct compressor ppp_deflate = {
     .decompress =	z_decompress,
     .incomp =		z_incomp,
     .decomp_stat =	z_comp_stats,
-    .comp_name =	"ppp_deflate"
-};
-
-static struct compressor ppp_deflate_draft = {
+},
+{
     .compress_proto =	CI_DEFLATE_DRAFT,
     .comp_alloc =	z_comp_alloc,
     .comp_free =	z_comp_free,
@@ -128,8 +126,7 @@ static struct compressor ppp_deflate_draft = {
     .decompress =	z_decompress,
     .incomp =		z_incomp,
     .decomp_stat =	z_comp_stats,
-    .comp_name =	"ppp_deflate"
-};
+} };
 /*
  * Space allocation and freeing routines for use by zlib routines.
  */
@@ -674,22 +671,12 @@ MODULE(MODULE_CLASS_MISC, ppp_deflate, NULL);
 static int
 ppp_deflate_modcmd(modcmd_t cmd, void *arg)
 {
-	int error, error1;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if ((error = ppp_register_compressor(&ppp_deflate)) != 0)
-			return error;
-		if ((error =
-		    ppp_register_compressor(&ppp_deflate_draft)) != 0)
-			(void)ppp_unregister_compressor(&ppp_deflate);
-		return error;
+		return ppp_register_compressor(ppp_deflate, 2);
 	case MODULE_CMD_FINI:
-		error = ppp_unregister_compressor(&ppp_deflate);
-		error1 = ppp_unregister_compressor(&ppp_deflate_draft);
-		if (error)
-			return error;
-		return error1;
+		return ppp_unregister_compressor(ppp_deflate, 2);
 	case MODULE_CMD_STAT:
 		return 0;
 	default:
