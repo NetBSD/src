@@ -1,4 +1,4 @@
-/*	$NetBSD: uuencode.c,v 1.13 2008/07/21 14:19:27 lukem Exp $	*/
+/*	$NetBSD: uuencode.c,v 1.14 2008/11/29 22:36:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)uuencode.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: uuencode.c,v 1.13 2008/07/21 14:19:27 lukem Exp $");
+__RCSID("$NetBSD: uuencode.c,v 1.14 2008/11/29 22:36:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,7 +196,7 @@ encode(void)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-m] [infile] remotefile\n",
+	(void)fprintf(stderr, "usage: %s [-m] [inputfile] outputname\n",
 		      getprogname());
 	exit(1);
 }
