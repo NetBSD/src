@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.55 2007/12/08 19:29:53 pooka Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.55.26.1 2008/11/29 23:10:18 snj Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.55 2007/12/08 19:29:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.55.26.1 2008/11/29 23:10:18 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,8 +603,8 @@ found:
 		 */
 		if ((dp->i_e2fs_mode & ISVTX) &&
 		    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) &&
-		    kauth_cred_geteuid(cred) != dp->i_e2fs_uid &&
-		    VTOI(tdp)->i_e2fs_uid != kauth_cred_geteuid(cred)) {
+		    kauth_cred_geteuid(cred) != dp->i_uid &&
+		    VTOI(tdp)->i_uid != kauth_cred_geteuid(cred)) {
 			vput(tdp);
 			return (EPERM);
 		}
