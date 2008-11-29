@@ -1,20 +1,4 @@
-# $NetBSD: md.amd64,v 1.35 2008/11/26 11:41:07 tsutsui Exp $
-./@MODULEDIR@/azalia				base-kernel-modules
-./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules
-./@MODULEDIR@/compat_linux			base-kernel-modules
-./@MODULEDIR@/compat_linux/compat_linux.kmod	base-kernel-modules
-./@MODULEDIR@/compat_linux32			base-kernel-modules
-./@MODULEDIR@/compat_linux32/compat_linux32.kmod	base-kernel-modules
-./@MODULEDIR@/compat_netbsd32			base-kernel-modules
-./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod	base-kernel-modules
-./@MODULEDIR@/drm				base-kernel-modules
-./@MODULEDIR@/drm/drm.kmod			base-kernel-modules
-./@MODULEDIR@/exec_elf32			base-kernel-modules
-./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules
-./@MODULEDIR@/exec_elf64			base-kernel-modules
-./@MODULEDIR@/exec_elf64/exec_elf64.kmod	base-kernel-modules
-./@MODULEDIR@/i915drm				base-kernel-modules
-./@MODULEDIR@/i915drm/i915drm.kmod		base-kernel-modules
+# $NetBSD: md.amd64,v 1.36 2008/11/29 17:57:33 tsutsui Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./usr/bin/fdformat				base-util-bin
