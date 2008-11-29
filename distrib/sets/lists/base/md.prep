@@ -1,6 +1,4 @@
-# $NetBSD: md.prep,v 1.14 2008/11/23 15:47:43 martin Exp $
-./@MODULEDIR@/exec_elf32			base-kernel-modules
-./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules
+# $NetBSD: md.prep,v 1.15 2008/11/29 17:57:34 tsutsui Exp $
 ./usr/mdec/boot					base-sysutil-bin
 ./usr/mdec/boot_com0				base-sysutil-bin
 ./usr/mdec/boot_com0_vreset				base-sysutil-bin
