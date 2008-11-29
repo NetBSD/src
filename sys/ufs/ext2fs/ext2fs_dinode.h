@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.16 2007/11/17 08:51:51 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.16.28.1 2008/11/29 23:10:18 snj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -117,7 +117,9 @@ struct ext2fs_dinode {
 	u_int8_t	e2di_nfrag;	/* 116: fragment number */
 	u_int8_t	e2di_fsize;	/* 117: fragment size */
 	u_int16_t	e2di_linux_reserved2; /* 118 */
-	u_int32_t	e2di_linux_reserved3[2]; /* 120 */
+	u_int16_t	e2di_uid_high;	/* 120: Owner UID top 16 bits */
+	u_int16_t	e2di_gid_high;	/* 122: Owner GID top 16 bits */
+	u_int32_t	e2di_linux_reserved3; /* 124 */
 };
 
 
