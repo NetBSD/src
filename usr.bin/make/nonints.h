@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.49 2008/10/06 22:09:21 joerg Exp $	*/
+/*	$NetBSD: nonints.h,v 1.50 2008/11/29 17:50:11 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -102,6 +102,7 @@ unsigned int Cond_save_depth(void);
 
 /* for.c */
 int For_Eval(char *);
+int For_Accum(char *);
 void For_Run(int);
 
 /* main.c */

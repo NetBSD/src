@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.150 2008/11/12 15:56:57 apb Exp $	*/
+/*	$NetBSD: parse.c,v 1.151 2008/11/29 17:50:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.150 2008/11/12 15:56:57 apb Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.151 2008/11/29 17:50:11 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.150 2008/11/12 15:56:57 apb Exp $");
+__RCSID("$NetBSD: parse.c,v 1.151 2008/11/29 17:50:11 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2369,6 +2369,7 @@ ParseReadLine(void)
     char 	  *line;    	/* Result */
     int	    	  lineLength;	/* Length of result */
     int	    	  lineno;	/* Saved line # */
+    int	    	  rval;
 
     for (;;) {
 	line = ParseGetLine(0, &lineLength);
@@ -2394,10 +2395,17 @@ ParseReadLine(void)
 	case COND_PARSE:
 	    continue;
 	case COND_INVALID:    /* Not a conditional line */
-	    if (!For_Eval(line))
+	    /* Check for .for loops */
+	    rval = For_Eval(line);
+	    if (rval == 0)
+		/* Not a .for line */
 		break;
+	    if (rval < 0)
+		/* Syntax error - error printed, ignore line */
+		continue;
+	    /* Start of a .for loop */
 	    lineno = curFile->lineno;
-	    /* Skip after the matching end */
+	    /* Accumulate loop lines until matching .endfor */
 	    do {
 		line = ParseGetLine(PARSE_RAW, &lineLength);
 		if (line == NULL) {
@@ -2405,7 +2413,7 @@ ParseReadLine(void)
 			     "Unexpected end of file in for loop.\n");
 		    break;
 		}
-	    } while (For_Eval(line));
+	    } while (For_Accum(line));
 	    /* Stash each iteration as a new 'input file' */
 	    For_Run(lineno);
 	    /* Read next line from for-loop buffer */

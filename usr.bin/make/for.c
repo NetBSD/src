@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.31 2008/11/22 17:34:56 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.32 2008/11/29 17:50:11 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.31 2008/11/22 17:34:56 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.32 2008/11/29 17:50:11 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.31 2008/11/22 17:34:56 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.32 2008/11/29 17:50:11 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -147,119 +147,124 @@ int
 For_Eval(char *line)
 {
     char	    *ptr = line, *sub, *in, *wrd;
-    int	    	    level;  	/* Level at which to report errors. */
+    Buffer	    buf;
+    int	    varlen;
+    static const char instr[] = "in";
 
-    level = PARSE_FATAL;
+    forLevel = 0;
+    for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
+	continue;
+    /*
+     * If we are not in a for loop quickly determine if the statement is
+     * a for.
+     */
+    if (ptr[0] != 'f' || ptr[1] != 'o' || ptr[2] != 'r' ||
+	    !isspace((unsigned char) ptr[3])) {
+	if (ptr[0] == 'e' && strncmp(ptr+1, "ndfor", 5) == 0) {
+	    Parse_Error(PARSE_FATAL, "for-less endfor");
+	    return -1;
+	}
+	return 0;
+    }
+    ptr += 3;
 
+    /*
+     * we found a for loop, and now we are going to parse it.
+     */
+    while (*ptr && isspace((unsigned char) *ptr))
+	ptr++;
 
-    if (forLevel == 0) {
-	Buffer	    buf;
-	int	    varlen;
-	static const char instr[] = "in";
+    /*
+     * Find the "in".
+     */
+    for (in = ptr; *in; in++) {
+	if (isspace((unsigned char) in[0]) && in[1]== 'i' &&
+	    in[2] == 'n' &&
+	    (in[3] == '\0' || isspace((unsigned char) in[3])))
+	    break;
+    }
+    if (*in == '\0') {
+	Parse_Error(PARSE_FATAL, "missing `in' in for");
+	return -1;
+    }
 
-	for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
-	    continue;
-	/*
-	 * If we are not in a for loop quickly determine if the statement is
-	 * a for.
-	 */
-	if (ptr[0] != 'f' || ptr[1] != 'o' || ptr[2] != 'r' ||
-		!isspace((unsigned char) ptr[3]))
-	    return FALSE;
-	ptr += 3;
+    /*
+     * Grab the variables.
+     */
+    accumFor.vars = NULL;
 
-	/*
-	 * we found a for loop, and now we are going to parse it.
-	 */
+    while (ptr < in) {
+	wrd = ptr;
+	while (*ptr && !isspace((unsigned char) *ptr))
+	    ptr++;
+	ForAddVar(wrd, ptr - wrd);
 	while (*ptr && isspace((unsigned char) *ptr))
 	    ptr++;
+    }
 
-	/*
-	 * Find the "in".
-	 */
-	for (in = ptr; *in; in++) {
-	    if (isspace((unsigned char) in[0]) && in[1]== 'i' &&
-		in[2] == 'n' &&
-		(in[3] == '\0' || isspace((unsigned char) in[3])))
-		break;
-	}
-	if (*in == '\0') {
-	    Parse_Error(level, "missing `in' in for");
-	    return 0;
-	}
+    if (accumFor.nvars == 0) {
+	Parse_Error(PARSE_FATAL, "no iteration variables in for");
+	return -1;
+    }
 
-	/*
-	 * Grab the variables.
-	 */
-	accumFor.vars = NULL;
+    /* At this point we should be pointing right at the "in" */
+    /*
+     * compensate for hp/ux's brain damaged assert macro that
+     * does not handle double quotes nicely.
+     */
+    assert(!memcmp(ptr, instr, 2));
+    ptr += 2;
 
-	while (ptr < in) {
-	    wrd = ptr;
-	    while (*ptr && !isspace((unsigned char) *ptr))
-	        ptr++;
-	    ForAddVar(wrd, ptr - wrd);
-	    while (*ptr && isspace((unsigned char) *ptr))
-		ptr++;
-	}
+    while (*ptr && isspace((unsigned char) *ptr))
+	ptr++;
 
-	if (accumFor.nvars == 0) {
-	    Parse_Error(level, "no iteration variables in for");
-	    return 0;
-	}
-
-	/* At this point we should be pointing right at the "in" */
-	/*
-	 * compensate for hp/ux's brain damaged assert macro that
-	 * does not handle double quotes nicely.
-	 */
-	assert(!memcmp(ptr, instr, 2));
-	ptr += 2;
-
-	while (*ptr && isspace((unsigned char) *ptr))
-	    ptr++;
-
-	/*
-	 * Make a list with the remaining words
-	 */
-	accumFor.lst = Lst_Init(FALSE);
-	buf = Buf_Init(0);
-	sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
+    /*
+     * Make a list with the remaining words
+     */
+    accumFor.lst = Lst_Init(FALSE);
+    buf = Buf_Init(0);
+    sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
 
 #define ADDWORD() do { \
-	Buf_AddBytes(buf, ptr - wrd, (Byte *)wrd); \
-	Buf_AddByte(buf, (Byte)'\0'); \
-	Lst_AtFront(accumFor.lst, Buf_GetAll(buf, &varlen)); \
-	Buf_Destroy(buf, FALSE); \
-    } while (0)
+    Buf_AddBytes(buf, ptr - wrd, (Byte *)wrd); \
+    Buf_AddByte(buf, (Byte)'\0'); \
+    Lst_AtFront(accumFor.lst, Buf_GetAll(buf, &varlen)); \
+    Buf_Destroy(buf, FALSE); \
+} while (0)
 
-	for (ptr = sub; *ptr && isspace((unsigned char) *ptr); ptr++)
-	    continue;
+    for (ptr = sub; *ptr && isspace((unsigned char) *ptr); ptr++)
+	continue;
 
-	for (wrd = ptr; *ptr; ptr++)
-	    if (isspace((unsigned char) *ptr)) {
-		ADDWORD();
-		buf = Buf_Init(0);
-		while (*ptr && isspace((unsigned char) *ptr))
-		    ptr++;
-		wrd = ptr--;
-	    }
-	if (DEBUG(FOR)) {
-	    int i;
-	    for (i = 0; i < accumFor.nvars; i++) {
-		(void)fprintf(debug_file, "For: variable %s\n", accumFor.vars[i]);
-	    }
-	    (void)fprintf(debug_file, "For: list %s\n", sub);
-	}
-	if (ptr - wrd > 0)
+    for (wrd = ptr; *ptr; ptr++)
+	if (isspace((unsigned char) *ptr)) {
 	    ADDWORD();
-	else
-	    Buf_Destroy(buf, TRUE);
-	free(sub);
-
-	accumFor.buf = Buf_Init(0);
-	forLevel++;
-	return 1;
+	    buf = Buf_Init(0);
+	    while (*ptr && isspace((unsigned char) *ptr))
+		ptr++;
+	    wrd = ptr--;
+	}
+    if (DEBUG(FOR)) {
+	int i;
+	for (i = 0; i < accumFor.nvars; i++) {
+	    (void)fprintf(debug_file, "For: variable %s\n", accumFor.vars[i]);
+	}
+	(void)fprintf(debug_file, "For: list %s\n", sub);
     }
+    if (ptr - wrd > 0)
+	ADDWORD();
+    else
+	Buf_Destroy(buf, TRUE);
+    free(sub);
+
+    accumFor.buf = Buf_Init(0);
+    forLevel = 1;
+    return 1;
+}
+
+int
+For_Accum(char *line)
+{
+    char *ptr = line;
 
     if (*ptr == '.') {
 
@@ -270,10 +275,8 @@ For_Eval(char *line)
 		(isspace((unsigned char) ptr[6]) || !ptr[6])) {
 	    if (DEBUG(FOR))
 		(void)fprintf(debug_file, "For: end for %d\n", forLevel);
-	    if (--forLevel < 0) {
-		Parse_Error(level, "for-less endfor");
+	    if (--forLevel <= 0)
 		return 0;
-	    }
 	} else if (strncmp(ptr, "for", 3) == 0 &&
 		 isspace((unsigned char) ptr[3])) {
 	    forLevel++;
@@ -282,13 +285,9 @@ For_Eval(char *line)
 	}
     }
 
-    if (forLevel != 0 && accumFor.buf) {
-	Buf_AddBytes(accumFor.buf, strlen(line), (Byte *)line);
-	Buf_AddByte(accumFor.buf, (Byte)'\n');
-	return 1;
-    }
-
-    return 0;
+    Buf_AddBytes(accumFor.buf, strlen(line), (Byte *)line);
+    Buf_AddByte(accumFor.buf, (Byte)'\n');
+    return 1;
 }
 
 
