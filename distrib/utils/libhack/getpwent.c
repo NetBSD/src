@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.9 2005/03/31 12:56:49 he Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.9.28.1 2008/11/29 20:52:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1989, 1993, 1994, 1995
@@ -40,6 +40,7 @@
 #ifdef __weak_alias
 #define endpwent		_endpwent
 #define getpwent		_getpwent
+#define getpwent_r		_getpwent_r
 #define getpwuid		_getpwuid
 #define getpwnam		_getpwnam
 #define setpwent		_setpwent
@@ -49,6 +50,7 @@
 
 __weak_alias(endpwent,_endpwent)
 __weak_alias(getpwent,_getpwent)
+__weak_alias(getpwent_r,_getpwent_r)
 __weak_alias(getpwuid,_getpwuid)
 __weak_alias(getpwnam,_getpwnam)
 __weak_alias(setpwent,_setpwent)
@@ -88,6 +90,22 @@ getpwent(void)
 	    !pwscan(0, 0, NULL, &_pw_passwd, pwline, sizeof(pwline)))
 		return (NULL);
 	return (&_pw_passwd);
+}
+
+int
+getpwent_r(struct passwd *pwres, char *buf, size_t bufsiz,
+    struct passwd **pwd)
+{
+	int rval;
+
+	if (!_pw_fp && !pwstart())
+		return 1;
+	rval = !pwscan(0, 0, NULL, pwres, buf, bufsiz);
+	if (rval)
+		*pwd = NULL;
+	else
+		*pwd = pwres;
+	return rval;
 }
 
 struct passwd *
