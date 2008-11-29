@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.48 2008/06/13 13:57:58 cegger Exp $	*/
+/*	$NetBSD: mha.c,v 1.49 2008/11/29 05:59:40 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.48 2008/06/13 13:57:58 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.49 2008/11/29 05:59:40 isaki Exp $");
 
 #include "opt_ddb.h"
 
@@ -217,7 +217,7 @@ SPC_SHOWSTART|SPC_SHOWTRAC;
 #define SPC_DMA(str)   do {if (mha_debug & SPC_SHOWDMA) printf str;}while (0)
 #define SPC_MSGS(str)  do {if (mha_debug & SPC_SHOWMSGS) printf str;}while (0)
 #define	SPC_BREAK()    do {if ((mha_debug & SPC_DOBREAK) != 0) Debugger();} while (0)
-#define	SPC_ASSERT(x)  do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
+#define	SPC_ASSERT(x)  do {if (x) {} else {printf("%s at line %d: assertion failed\n", device_xname(sc->sc_dev), __LINE__); Debugger();}} while (0)
 #else
 #define SPC_ACBS(str)
 #define SPC_MISC(str)
@@ -232,8 +232,8 @@ SPC_SHOWSTART|SPC_SHOWTRAC;
 #define	SPC_ASSERT(x)
 #endif
 
-int	mhamatch(struct device *, struct cfdata *, void *);
-void	mhaattach(struct device *, struct device *, void *);
+int	mhamatch(device_t, cfdata_t, void *);
+void	mhaattach(device_t, device_t, void *);
 void	mhaselect(struct mha_softc *, u_char, u_char, u_char *, u_char);
 void	mha_scsi_reset(struct mha_softc *);
 void	mha_reset(struct mha_softc *);
@@ -265,7 +265,7 @@ void	mha_dump_driver(struct mha_softc *);
 
 static int mha_dataio_dma(int, int, struct mha_softc *, u_char *, int);
 
-CFATTACH_DECL(mha, sizeof(struct mha_softc),
+CFATTACH_DECL_NEW(mha, sizeof(struct mha_softc),
     mhamatch, mhaattach, NULL, NULL);
 
 extern struct cfdriver mha_cd;
@@ -274,7 +274,7 @@ extern struct cfdriver mha_cd;
  * returns non-zero value if a controller is found.
  */
 int
-mhamatch(struct device *parent, struct cfdata *cf, void *aux)
+mhamatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_bst;
@@ -304,14 +304,15 @@ mhamatch(struct device *parent, struct cfdata *cf, void *aux)
 struct mha_softc *tmpsc;
 
 void
-mhaattach(struct device *parent, struct device *self, void *aux)
+mhaattach(device_t parent, device_t self, void *aux)
 {
-	struct mha_softc *sc = (void *)self;
+	struct mha_softc *sc = device_private(self);
 	struct intio_attach_args *ia = aux;
 
 	tmpsc = sc;	/* XXX */
+	sc->sc_dev = self;
 
-	printf(": Mankai Mach-2 Fast SCSI Host Adaptor\n");
+	aprint_normal(": Mankai Mach-2 Fast SCSI Host Adaptor\n");
 
 	SPC_TRACE(("mhaattach  "));
 	sc->sc_state = SPC_INIT;
@@ -337,7 +338,7 @@ mhaattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Fill in the adapter.
 	 */
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
+	sc->sc_adapter.adapt_dev = sc->sc_dev;
 	sc->sc_adapter.adapt_nchannels = 1;
 	sc->sc_adapter.adapt_openings = 7;
 	sc->sc_adapter.adapt_max_periph = 1;
@@ -607,7 +608,7 @@ mha_reselect(struct mha_softc *sc, u_char message)
 	selid = sc->sc_selid & ~(1 << sc->sc_id);
 	if (selid & (selid - 1)) {
 		printf("%s: reselect with invalid selid %02x; sending DEVICE RESET\n",
-		    sc->sc_dev.dv_xname, selid);
+		    device_xname(sc->sc_dev), selid);
 		SPC_BREAK();
 		goto reset;
 	}
@@ -629,7 +630,7 @@ mha_reselect(struct mha_softc *sc, u_char message)
 	}
 	if (acb == NULL) {
 		printf("%s: reselect from target %d lun %d with no nexus; sending ABORT\n",
-		    sc->sc_dev.dv_xname, target, lun);
+		    device_xname(sc->sc_dev), target, lun);
 		SPC_BREAK();
 		goto abort;
 	}
@@ -908,7 +909,7 @@ mha_done(struct mha_softc *sc, struct acb *acb)
 				xs->error = XS_DRIVER_STUFFUP;
 #if SPC_DEBUG
 				printf("%s: mha_done: bad stat 0x%x\n",
-					sc->sc_dev.dv_xname, acb->stat);
+					device_xname(sc->sc_dev), acb->stat);
 #endif
 				break;
 			}
@@ -932,7 +933,7 @@ mha_done(struct mha_softc *sc, struct acb *acb)
 	switch (acb->flags & ACB_QBITS) {
 	case ACB_QNONE:
 		if (acb != sc->sc_nexus) {
-			panic("%s: floating acb", sc->sc_dev.dv_xname);
+			panic("%s: floating acb", device_xname(sc->sc_dev));
 		}
 		sc->sc_nexus = NULL;
 		sc->sc_state = SPC_IDLE;
@@ -948,11 +949,11 @@ mha_done(struct mha_softc *sc, struct acb *acb)
 		break;
 	case ACB_QFREE:
 		panic("%s: dequeue: busy acb on free list",
-			sc->sc_dev.dv_xname);
+			device_xname(sc->sc_dev));
 		break;
 	default:
 		panic("%s: dequeue: unknown queue %d",
-			sc->sc_dev.dv_xname, acb->flags & ACB_QBITS);
+			device_xname(sc->sc_dev), acb->flags & ACB_QBITS);
 	}
 
 	/* Put it on the free list, and clear flags. */
@@ -1094,7 +1095,7 @@ gotit:
 #if SPC_DEBUG
 			if (mha_debug & SPC_SHOWMSGS)
 				printf("%s: our msg rejected by target\n",
-					sc->sc_dev.dv_xname);
+					device_xname(sc->sc_dev));
 #endif
 #if 1 /* XXX - must remember last message */
 			scsipi_printaddr(acb->xs->xs_periph);
@@ -1130,7 +1131,7 @@ gotit:
 			if (!acb) {
 				mha_sched_msgout(SEND_ABORT);
 				printf("%s: no DATAPOINTERs to restore\n",
-				    sc->sc_dev.dv_xname);
+				    device_xname(sc->sc_dev));
 				break;
 			}
 			sc->sc_dp = acb->daddr;
@@ -1138,7 +1139,7 @@ gotit:
 			break;
 		case MSG_PARITY_ERROR:
 			printf("%s:target%d: MSG_PARITY_ERROR\n",
-				sc->sc_dev.dv_xname,
+				device_xname(sc->sc_dev),
 				acb->xs->xs_periph->periph_target);
 			break;
 		case MSG_EXTENDED:
@@ -1207,7 +1208,7 @@ gotit:
 			/* thanks for that ident... */
 			if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
 				SPC_MISC(("unknown "));
-printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
+printf("%s: unimplemented message: %d\n", device_xname(sc->sc_dev), sc->sc_imess[0]);
 				CMR = CMD_SET_ATN; /* XXX? */
 			}
 			break;
@@ -1264,12 +1265,12 @@ printf("%s: unimplemented message: %d\n", sc->sc_dev.dv_xname, sc->sc_imess[0]);
 			}
 		} else {
 			printf("%s: bogus reselect (no IDENTIFY) %0x2x\n",
-			    sc->sc_dev.dv_xname, sc->sc_selid);
+			    device_xname(sc->sc_dev), sc->sc_selid);
 			mha_sched_msgout(SEND_DEV_RESET);
 		}
 	} else { /* Neither SPC_HASNEXUS nor SPC_RESELECTED! */
 		printf("%s: unexpected message in; will send DEV_RESET\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		mha_sched_msgout(SEND_DEV_RESET);
 	}
 
@@ -1396,7 +1397,7 @@ nextmsg:
 
 	default:
 		printf("%s: unexpected MESSAGE OUT; sending NOOP\n",
-		    sc->sc_dev.dv_xname);
+		    device_xname(sc->sc_dev));
 		SPC_BREAK();
 		sc->sc_omess[0] = MSG_NOOP;
 		n = 1;
@@ -1959,7 +1960,7 @@ mha_timeout(void *arg)
 	scsipi_printaddr(periph);
 	printf("%s: timed out [acb %p (flags 0x%x, dleft %x, stat %x)], "
 	       "<state %d, nexus %p, phase(c %x, p %x), resid %x, msg(q %x,o %x) >",
-		sc->sc_dev.dv_xname,
+		device_xname(sc->sc_dev),
 		acb, acb->flags, acb->dleft, acb->stat,
 		sc->sc_state, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,
 		sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout
