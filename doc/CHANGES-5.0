@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.39 2008/11/28 06:46:03 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.40 2008/11/29 21:01:08 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1236,4 +1236,73 @@ dist/nawk/proto.h				1.7
 
 	Fix crossbuild on Solaris.
 	[christos, ticket #136]
+
+etc/MAKEDEV.tmpl				1.118
+
+	Change the formula for tmpfs size. The per-inode memory usage is
+	higher than old estimate on 64bit platforms and the resulting tmpfs
+	wouldn't be able to hold the required number of devices.
+	[joerg, ticket #137]
+
+sys/dev/usb/ehci.c				1.155
+sys/dev/usb/ehcireg.h				1.29
+
+	Fixed high-speed isoc USB transfers, 64 bit capable host controllers
+	have a different transfer descriptor to non-capable controllers.
+	Added dma-sync of data buffer before scheduling transfers
+	[jmorse, ticket #138]
+
+sys/dev/usb/uvideo.c				1.22
+
+	Modified uvideo_stream_init_desc to correctly calculate max
+	packet size for high speed endpoints.
+	[jmorse, ticket #139]
+
+sys/kern/init_sysctl.c				1.151
+
+	If the kauth call failed, we'd silently continue the loop, but
+	the error code would remain and eventually "leak" to userspace.
+	Reset the error to zero when continuing.
+	Fix PR/40002: sockstat doesn't work for user with sysctl
+	security.curtain=1
+	[elad, ticket #140]
+
+distrib/utils/libhack/getpwent.c		1.10
+
+	Add cut-down getpwent_r() to join existing getpwent() and friends
+	for ramdisks. This fixes PR 40003
+	[sborrill, ticket #141]
+
+xsrc/external/mit/libX11/dist/src/xlibi18n/XlcDL.c	1.2
+
+	Do not special case locale names for sparc _LP64 machines -
+	this probably is a Solaris'm not needed on NetBSD.
+	Fixes PR xsrc/40046.
+	[martin, ticket #142]
+
+sys/dev/pci/if_vge.c				1.43
+
+	- ifconfig down support
+	- ALTQ support
+	[joerg, ticket #143]
+
+sys/dev/usb/uvideo.c				1.23
+
+	Don't select an endpoint with a larger packet size than the
+	maximum for the current video stream.
+	[jmcneill, ticket #144]
+
+usr.bin/rev/rev.1				1.7
+
+	May have multiple files on command line.
+	Fixed PR #40058.
+	[reed, ticket #145]
+
+lib/libkvm/kvm_proc.c				1.79
+
+	check error case for kvm_getlwps or SIGSEGV occurs due to
+	dereferecing a NULL pointer.
+	return NULL if there are no threads or proceed further through
+	all loops.  Fixes PR 40004. Ok rmind@
+	[cegger, ticket #146]
 
