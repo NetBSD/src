@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.19 2008/11/25 02:40:36 cube Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.20 2008/11/29 23:15:20 cube Exp $	*/
 /*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.19 2008/11/25 02:40:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.20 2008/11/29 23:15:20 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,6 @@ static struct compressor ppp_bsd_compress = {
     .decompress =	bsd_decompress,
     .incomp =		bsd_incomp,
     .decomp_stat =	bsd_comp_stats,
-    .comp_name =	"ppp_bsdcomp"
 };
 
 /*
@@ -1099,9 +1098,9 @@ ppp_bsdcomp_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		return ppp_register_compressor(&ppp_bsd_compress);
+		return ppp_register_compressor(&ppp_bsd_compress, 1);
 	case MODULE_CMD_FINI:
-		return ppp_unregister_compressor(&ppp_bsd_compress);
+		return ppp_unregister_compressor(&ppp_bsd_compress, 1);
 	case MODULE_CMD_STAT:
 		return 0;
 	default:
