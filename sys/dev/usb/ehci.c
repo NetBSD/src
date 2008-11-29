@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.154 2008/10/14 18:32:53 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.154.4.1 2008/11/29 20:47:05 bouyer Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154 2008/10/14 18:32:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.154.4.1 2008/11/29 20:47:05 bouyer Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -908,6 +908,9 @@ ehci_idone(struct ehci_xfer *ex)
 
 				status = le32toh(itd->itd.itd_ctl[i]);
 				len = EHCI_ITD_GET_LEN(status);
+				if (EHCI_ITD_GET_STATUS(status) != 0)
+					len = 0; /*No valid data on error*/
+
 				xfer->frlengths[nframes++] = len;
 				actlen += len;
 			}
@@ -918,11 +921,6 @@ ehci_idone(struct ehci_xfer *ex)
 
 		xfer->actlen = actlen;
 		xfer->status = USBD_NORMAL_COMPLETION;
-		if (xfer->rqflags & URQ_DEV_DMABUF) {
-       		usb_syncmem(&xfer->dmabuf, 0, ex->isoc_len,
-				BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-		}
-
 		goto end;
 	}
 
@@ -3953,11 +3951,12 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 			if (page_offs >= dma_buf->block->size)
 				break;
 
-			int page = DMAADDR(dma_buf, page_offs);
+			long long page = DMAADDR(dma_buf, page_offs);
 			page = EHCI_PAGE(page);
 			itd->itd.itd_bufr[j] =
-			    htole32(EHCI_ITD_SET_BPTR(page) | 
-				    EHCI_LINK_ITD);
+			    htole32(EHCI_ITD_SET_BPTR(page));
+			itd->itd.itd_bufr_hi[j] =
+			    htole32(page >> 32);
 		}
 
 		/*
@@ -3989,6 +3988,9 @@ ehci_device_isoc_start(usbd_xfer_handle xfer)
 	stop = itd;
 	stop->xfer_next = NULL;
 	exfer->isoc_len = total_length;
+
+	usb_syncmem(&exfer->xfer.dmabuf, 0, total_length,
+		BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Part 2: Transfer descriptors have now been set up, now they must
