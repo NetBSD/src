@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.31 2008/06/25 13:30:24 isaki Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.32 2008/11/29 06:16:49 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.31 2008/06/25 13:30:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio_dmac.c,v 1.32 2008/11/29 06:16:49 isaki Exp $");
 
 #include "opt_m680x0.h"
 
@@ -164,13 +164,13 @@ dmac_alloc_channel(device_t self, int ch, const char *name, int normalv,
     dmac_intr_handler_t error, void *errorarg)
 {
 	struct intio_softc *intio = device_private(self);
-	struct dmac_softc *sc = device_private(intio->sc_dmac);
-	struct dmac_channel_stat *chan = &sc->sc_channels[ch];
+	struct dmac_softc *dmac = device_private(intio->sc_dmac);
+	struct dmac_channel_stat *chan = &dmac->sc_channels[ch];
 #ifdef DMAC_ARRAYCHAIN
 	int r, dummy;
 #endif
 
-	aprint_normal_dev(sc->sc_dev, "allocating ch %d for %s.\n",
+	aprint_normal_dev(dmac->sc_dev, "allocating ch %d for %s.\n",
 		ch, name);
 	DPRINTF(3, ("dmamap=%p\n", (void *)chan->ch_xfer.dx_dmamap));
 #ifdef DIAGNOSTIC
@@ -213,26 +213,26 @@ dmac_alloc_channel(device_t self, int ch, const char *name, int normalv,
 	chan->ch_xfer.dx_dmamap = 0;
 
 	/* setup the device-specific registers */
-	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
-	bus_space_write_1(sc->sc_bst, chan->ch_bht,
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CSR, 0xff);
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht,
 			   DMAC_REG_DCR, chan->ch_dcr);
-	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_CPR, 0);
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_CPR, 0);
 
 	/*
 	 * X68k physical user space is a subset of the kernel space;
 	 * the memory is always included in the physical user space,
 	 * while the device is not.
 	 */
-	bus_space_write_1(sc->sc_bst, chan->ch_bht,
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht,
 			   DMAC_REG_BFCR, DMAC_FC_USER_DATA);
-	bus_space_write_1(sc->sc_bst, chan->ch_bht,
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht,
 			   DMAC_REG_MFCR, DMAC_FC_USER_DATA);
-	bus_space_write_1(sc->sc_bst, chan->ch_bht,
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht,
 			   DMAC_REG_DFCR, DMAC_FC_KERNEL_DATA);
 
 	/* setup the interrupt handlers */
-	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_NIVR, normalv);
-	bus_space_write_1(sc->sc_bst, chan->ch_bht, DMAC_REG_EIVR, errorv);
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_NIVR, normalv);
+	bus_space_write_1(dmac->sc_bst, chan->ch_bht, DMAC_REG_EIVR, errorv);
 
 	intio_intr_establish_ext(normalv, name, "dma", dmac_done, chan);
 	intio_intr_establish_ext(errorv, name, "dmaerr", dmac_error, chan);
