@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.78 2008/04/28 20:23:01 martin Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.79 2008/11/29 18:24:58 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.78 2008/04/28 20:23:01 martin Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.79 2008/11/29 18:24:58 cegger Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -560,6 +560,16 @@ again:
 			kl = kvm_getlwps(kd, kp->kp_proc.p_pid,
 			    (u_long)PTRTOUINT64(kp->kp_eproc.e_paddr),
 			    sizeof(struct kinfo_lwp), &nlwps);
+
+			if (kl == NULL) {
+				_kvm_syserr(kd, NULL,
+					"kvm_getlwps() failed on process %u\n",
+					kp->kp_proc.p_pid);
+				if (nlwps == 0)
+					return NULL;
+				else
+					continue;
+			}
 
 			/* We use kl[0] as the "representative" LWP */
 			memset(kp2p, 0, sizeof(kp2));
