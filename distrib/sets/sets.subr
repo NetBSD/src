@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.76 2008/11/26 15:45:56 tsutsui Exp $
+#	$NetBSD: sets.subr,v 1.77 2008/11/29 17:57:33 tsutsui Exp $
 #
 
 #
@@ -227,7 +227,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.76 2008/11/26 15:45:56 tsutsui Exp $
+# 	# $NetBSD: sets.subr,v 1.77 2008/11/29 17:57:33 tsutsui Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -403,7 +403,10 @@ list_set_files()
 #	stl.stlib
 #	shl.mi
 #	shl.shlib
-#	module.mi		if ${module} != no
+#	module.mi			if ${module} != no
+#	module.${MACHINE}		if ${module} != no
+#	module.ad.${MACHINE_ARCH}	if ${module} != no
+# (or)	module.ad.${MACHINE_CPU}	if ${module} != no
 #	rescue.shl
 #	rescue.${MACHINE}
 #	rescue.ad.${MACHINE_ARCH}
@@ -456,6 +459,20 @@ list_set_lists()
 	if [ "$module" != "no" ]; then
 		if [ -f $setdir/module.mi ]; then
 			echo $setdir/module.mi
+		fi
+		if [ -f $setdir/module.${MACHINE} ]; then
+			echo $setdir/module.${MACHINE}
+		fi
+		if [ "${MACHINE}" != "${MACHINE_ARCH}" ]; then
+			# Prefer a module.ad.${MACHINE_ARCH} over a
+			# module.ad.${MACHINE_CPU}, since the arch-
+			# specific one will be more specific than the
+			# cpu-specific one.
+			if [ -f $setdir/module.ad.${MACHINE_ARCH} ]; then
+				echo $setdir/module.ad.${MACHINE_ARCH}
+			elif [ -f $setdir/module.ad.${MACHINE_CPU} ]; then
+				echo $setdir/module.ad.${MACHINE_CPU}
+			fi
 		fi
 	fi
 
