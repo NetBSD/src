@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile.inc,v 1.2 2008/11/29 15:23:32 tsutsui Exp $
+
 PROG=	ifconfig
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/
