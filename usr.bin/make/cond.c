@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.46 2008/11/23 10:52:58 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.47 2008/11/29 14:12:48 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.46 2008/11/23 10:52:58 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.47 2008/11/29 14:12:48 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.46 2008/11/23 10:52:58 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.47 2008/11/29 14:12:48 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -805,161 +805,112 @@ error:
     return t;
 }
 
+static int
+get_mpt_arg(char **linePtr, char **argPtr, const char *func, Boolean parens)
+{
+    /*
+     * Use Var_Parse to parse the spec in parens and return
+     * True if the resulting string is empty.
+     */
+    int	    length;
+    void    *freeIt;
+    char    *val;
+    char    *cp = *linePtr;
+
+    /* We do all the work here and return the result as the length */
+    *argPtr = NULL;
+
+    val = Var_Parse(cp - 1, VAR_CMD, FALSE, &length, &freeIt);
+    /*
+     * Advance *linePtr to beyond the closing ). Note that
+     * we subtract one because 'length' is calculated from 'cp - 1'.
+     */
+    *linePtr = cp - 1 + length;
+
+    if (val == var_Error) {
+	free(freeIt);
+	return -1;
+    }
+
+    /* A variable is empty when it just contains spaces... 4/15/92, christos */
+    while (isspace(*(unsigned char *)val))
+	val++;
+
+    /*
+     * For consistency with the other functions we can't generate the
+     * true/false here.
+     */
+    length = *val ? 2 : 1;
+    if (freeIt)
+	free(freeIt);
+    return length;
+}
+
+static Boolean
+CondDoEmpty(int arglen, char *arg)
+{
+    return arglen == 1;
+}
+
 static Token
 compare_function(Boolean doEval)
 {
+    static const struct fn_def {
+	const char  *fn_name;
+	int         fn_name_len;
+        int         (*fn_getarg)(char **, char **, const char *, Boolean);
+	Boolean     (*fn_proc)(int, char *);
+    } fn_defs[] = {
+	{ "defined",   7, CondGetArg, CondDoDefined },
+	{ "make",      4, CondGetArg, CondDoMake },
+	{ "exists",    6, CondGetArg, CondDoExists },
+	{ "empty",     5, get_mpt_arg, CondDoEmpty },
+	{ "target",    6, CondGetArg, CondDoTarget },
+	{ "commands",  8, CondGetArg, CondDoCommands },
+	{ NULL,        0, NULL, NULL },
+    };
+    const struct fn_def *fn_def;
     Token	t;
-    Boolean (*evalProc)(int, char *);
-    Boolean invert = FALSE;
     char	*arg = NULL;
-    int	arglen = 0;
+    int	arglen;
+    char *cp = condExpr;
 
-    if (istoken(condExpr, "defined", 7)) {
-	/*
-	 * Use CondDoDefined to evaluate the argument and
-	 * CondGetArg to extract the argument from the 'function
-	 * call'.
-	 */
-	evalProc = CondDoDefined;
-	condExpr += 7;
-	arglen = CondGetArg(&condExpr, &arg, "defined", TRUE);
-	if (arglen == 0) {
-	    condExpr -= 7;
-	    goto use_default;
-	}
-    } else if (istoken(condExpr, "make", 4)) {
-	/*
-	 * Use CondDoMake to evaluate the argument and
-	 * CondGetArg to extract the argument from the 'function
-	 * call'.
-	 */
-	evalProc = CondDoMake;
-	condExpr += 4;
-	arglen = CondGetArg(&condExpr, &arg, "make", TRUE);
-	if (arglen == 0) {
-	    condExpr -= 4;
-	    goto use_default;
-	}
-    } else if (istoken(condExpr, "exists", 6)) {
-	/*
-	 * Use CondDoExists to evaluate the argument and
-	 * CondGetArg to extract the argument from the
-	 * 'function call'.
-	 */
-	evalProc = CondDoExists;
-	condExpr += 6;
-	arglen = CondGetArg(&condExpr, &arg, "exists", TRUE);
-	if (arglen == 0) {
-	    condExpr -= 6;
-	    goto use_default;
-	}
-    } else if (istoken(condExpr, "empty", 5)) {
-	/*
-	 * Use Var_Parse to parse the spec in parens and return
-	 * True if the resulting string is empty.
-	 */
-	int	    did_warn, length;
-	void    *freeIt;
-	char    *val;
+    for (fn_def = fn_defs; fn_def->fn_name != NULL; fn_def++) {
+	if (!istoken(cp, fn_def->fn_name, fn_def->fn_name_len))
+	    continue;
+	cp += fn_def->fn_name_len;
+	/* There can only be whitespace before the '(' */
+	while (isspace(*(unsigned char *)cp))
+	    cp++;
+	if (*cp != '(')
+	    break;
 
-	condExpr += 5;
-
-	did_warn = 0;
-	for (arglen = 0; condExpr[arglen] != '\0'; arglen += 1) {
-	    if (condExpr[arglen] == '(')
-		break;
-	    if (!isspace((unsigned char)condExpr[arglen]) &&
-		!did_warn) {
-
-		Parse_Error(PARSE_WARNING,
-		    "Extra characters after \"empty\"");
-		did_warn = 1;
+	arglen = fn_def->fn_getarg(&cp, &arg, fn_def->fn_name, TRUE);
+	if (arglen <= 0) {
+	    if (arglen < 0) {
+		condExpr = cp;
+		return Err;
 	    }
+	    break;
 	}
-
-	if (condExpr[arglen] != '\0') {
-	    val = Var_Parse(&condExpr[arglen - 1], VAR_CMD,
-			    FALSE, &length, &freeIt);
-	    if (val == var_Error) {
-		t = Err;
-	    } else {
-		/*
-		 * A variable is empty when it just contains
-		 * spaces... 4/15/92, christos
-		 */
-		char *p;
-		for (p = val; *p && isspace((unsigned char)*p); p++)
-		    continue;
-		t = (*p == '\0') ? True : False;
-	    }
-	    if (freeIt) {
-		free(freeIt);
-	    }
-	    /*
-	     * Advance condExpr to beyond the closing ). Note that
-	     * we subtract one from arglen + length b/c length
-	     * is calculated from condExpr[arglen - 1].
-	     */
-	    condExpr += arglen + length - 1;
-	} else {
-	    condExpr -= 5;
-	    goto use_default;
-	}
+	/* Evaluate the argument using the required function. */
+	t = !doEval || fn_def->fn_proc(arglen, arg) ? True : False;
+	if (arg)
+	    free(arg);
+	condExpr = cp;
 	return t;
-    } else if (istoken(condExpr, "target", 6)) {
-	/*
-	 * Use CondDoTarget to evaluate the argument and
-	 * CondGetArg to extract the argument from the
-	 * 'function call'.
-	 */
-	evalProc = CondDoTarget;
-	condExpr += 6;
-	arglen = CondGetArg(&condExpr, &arg, "target", TRUE);
-	if (arglen == 0) {
-	    condExpr -= 6;
-	    goto use_default;
-	}
-    } else if (istoken(condExpr, "commands", 8)) {
-	/*
-	 * Use CondDoCommands to evaluate the argument and
-	 * CondGetArg to extract the argument from the
-	 * 'function call'.
-	 */
-	evalProc = CondDoCommands;
-	condExpr += 8;
-	arglen = CondGetArg(&condExpr, &arg, "commands", TRUE);
-	if (arglen == 0) {
-	    condExpr -= 8;
-	    goto use_default;
-	}
-    } else {
-	/*
-	 * The symbol is itself the argument to the default
-	 * function. We advance condExpr to the end of the symbol
-	 * by hand (the next whitespace, closing paren or
-	 * binary operator) and set to invert the evaluation
-	 * function if condInvert is TRUE.
-	 */
-	if (isdigit((unsigned char)condExpr[0]) || strchr("+-", condExpr[0])) {
-	    /*
-	     * Variables may already be substituted
-	     * by the time we get here.
-	     */
-	    return compare_expression(doEval);
-	}
-    use_default:
-	invert = condInvert;
-	evalProc = condDefProc;
-	arglen = CondGetArg(&condExpr, &arg, "", FALSE);
     }
 
+    /* Push anything numeric through the compare expression */
+    if (isdigit((unsigned char)condExpr[0]) || strchr("+-", condExpr[0]))
+	return compare_expression(doEval);
+
     /*
-     * Evaluate the argument using the set function. If invert
-     * is TRUE, we invert the sense of the function.
+     * Evaluate the argument using the default function. If invert
+     * is TRUE, we invert the sense of the result.
      */
-    t = (!doEval || (* evalProc) (arglen, arg) ?
-	 (invert ? False : True) :
-	 (invert ? True : False));
+    arglen = CondGetArg(&condExpr, &arg, "", FALSE);
+    t = !doEval || (* condDefProc)(arglen, arg) != condInvert ? True : False;
     if (arg)
 	free(arg);
     return t;
@@ -968,59 +919,60 @@ compare_function(Boolean doEval)
 static Token
 CondToken(Boolean doEval)
 {
-    Token	  t;
+    Token t;
 
-    if (condPushBack == None) {
-	while (*condExpr == ' ' || *condExpr == '\t') {
+    t = condPushBack;
+    if (t != None) {
+	condPushBack = None;
+	return t;
+    }
+
+    while (*condExpr == ' ' || *condExpr == '\t') {
+	condExpr++;
+    }
+
+    switch (*condExpr) {
+
+    case '(':
+	condExpr++;
+	return LParen;
+
+    case ')':
+	condExpr++;
+	return RParen;
+
+    case '|':
+	if (condExpr[1] == '|') {
 	    condExpr++;
 	}
-	switch (*condExpr) {
-	    case '(':
-		t = LParen;
-		condExpr++;
-		break;
-	    case ')':
-		t = RParen;
-		condExpr++;
-		break;
-	    case '|':
-		if (condExpr[1] == '|') {
-		    condExpr++;
-		}
-		condExpr++;
-		t = Or;
-		break;
-	    case '&':
-		if (condExpr[1] == '&') {
-		    condExpr++;
-		}
-		condExpr++;
-		t = And;
-		break;
-	    case '!':
-		t = Not;
-		condExpr++;
-		break;
-	    case '#':
-	    case '\n':
-	    case '\0':
-		t = EndOfFile;
-		break;
-	    case '"':
-	    case '$':
-		return compare_expression(doEval);
+	condExpr++;
+	return Or;
 
-	    default:
-		return compare_function(doEval);
-
+    case '&':
+	if (condExpr[1] == '&') {
+	    condExpr++;
 	}
-    } else {
-	t = condPushBack;
-	condPushBack = None;
+	condExpr++;
+	return And;
+
+    case '!':
+	condExpr++;
+	return Not;
+
+    case '#':
+    case '\n':
+    case '\0':
+	return EndOfFile;
+
+    case '"':
+    case '$':
+	return compare_expression(doEval);
+
+    default:
+	return compare_function(doEval);
     }
-    return (t);
 }
-
+
 /*-
  *-----------------------------------------------------------------------
  * CondT --
