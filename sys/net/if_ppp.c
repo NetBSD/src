@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.125 2008/11/25 02:40:36 cube Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.126 2008/11/29 23:15:20 cube Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.125 2008/11/25 02:40:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.126 2008/11/29 23:15:20 cube Exp $");
 
 #include "ppp.h"
 
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.125 2008/11/25 02:40:36 cube Exp $");
 #include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
+#include <sys/once.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/intr.h>
@@ -216,10 +217,13 @@ struct if_clone ppp_cloner =
 static struct simplelock ppp_list_mutex = SIMPLELOCK_INITIALIZER;
 
 #ifdef PPP_COMPRESS
+ONCE_DECL(ppp_compressor_mtx_init);
 static LIST_HEAD(, compressor) ppp_compressors = { NULL };
 static kmutex_t ppp_compressors_mtx;
 
+static int ppp_compressor_init(void);
 static struct compressor *ppp_get_compressor(uint8_t);
+static void ppp_compressor_rele(struct compressor *);
 #endif /* PPP_COMPRESS */
 
 
@@ -235,7 +239,7 @@ pppattach(void)
     	panic("pppattach");
     LIST_INIT(&ppp_softc_list);
     if_clone_attach(&ppp_cloner);
-    mutex_init(&ppp_compressors_mtx, MUTEX_DEFAULT, IPL_NONE);
+    RUN_ONCE(&ppp_compressor_mtx_init, ppp_compressor_init);
 }
 
 static struct ppp_softc *
@@ -601,7 +605,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, void *data, int flag,
 	    s = splsoftnet();
 	    if (sc->sc_xc_state != NULL) {
 		(*sc->sc_xcomp->comp_free)(sc->sc_xc_state);
-		module_rele(sc->sc_xcomp->comp_name);
+		ppp_compressor_rele(sc->sc_xcomp);
 	    }
 	    sc->sc_xcomp = cp;
 	    sc->sc_xc_state = cp->comp_alloc(ccp_option, nb);
@@ -618,7 +622,7 @@ pppioctl(struct ppp_softc *sc, u_long cmd, void *data, int flag,
 	    s = splsoftnet();
 	    if (sc->sc_rc_state != NULL) {
 		(*sc->sc_rcomp->decomp_free)(sc->sc_rc_state);
-		module_rele(sc->sc_rcomp->comp_name);
+		ppp_compressor_rele(sc->sc_rcomp);
 	    }
 	    sc->sc_rcomp = cp;
 	    sc->sc_rc_state = cp->decomp_alloc(ccp_option, nb);
@@ -1384,12 +1388,12 @@ ppp_ccp_closed(struct ppp_softc *sc)
 {
     if (sc->sc_xc_state) {
 	(*sc->sc_xcomp->comp_free)(sc->sc_xc_state);
-	module_rele(sc->sc_xcomp->comp_name);
+	ppp_compressor_rele(sc->sc_xcomp);
 	sc->sc_xc_state = NULL;
     }
     if (sc->sc_rc_state) {
 	(*sc->sc_rcomp->decomp_free)(sc->sc_rc_state);
-	module_rele(sc->sc_rcomp->comp_name);
+	ppp_compressor_rele(sc->sc_rcomp);
 	sc->sc_rc_state = NULL;
     }
 }
@@ -1786,21 +1790,36 @@ static const struct ppp_known_compressor {
 	{ 0, NULL }
 };
 
+static int
+ppp_compressor_init(void)
+{
+
+	mutex_init(&ppp_compressors_mtx, MUTEX_DEFAULT, IPL_NONE);
+	return 0;
+}
+
+static void
+ppp_compressor_rele(struct compressor *cp)
+{
+
+	mutex_enter(&ppp_compressors_mtx);
+	--cp->comp_refcnt;
+	mutex_exit(&ppp_compressors_mtx);
+}
+
 static struct compressor *
 ppp_get_compressor_noload(uint8_t ci, bool hold)
 {
 	struct compressor *cp;
 
-	mutex_enter(&ppp_compressors_mtx);
+	KASSERT(mutex_owned(&ppp_compressors_mtx));
 	LIST_FOREACH(cp, &ppp_compressors, comp_list) {
 		if (cp->compress_proto == ci) {
-			mutex_exit(&ppp_compressors_mtx);
-			if (hold && module_hold(cp->comp_name) != 0)
-				return NULL;
+			if (hold)
+				++cp->comp_refcnt;
 			return cp;
 		}
 	}
-	mutex_exit(&ppp_compressors_mtx);
 
 	return NULL;
 }
@@ -1808,48 +1827,75 @@ ppp_get_compressor_noload(uint8_t ci, bool hold)
 static struct compressor *
 ppp_get_compressor(uint8_t ci)
 {
-	struct compressor *cp;
+	struct compressor *cp = NULL;
 	const struct ppp_known_compressor *pkc;
 
-	if ((cp = ppp_get_compressor_noload(ci, true)) != NULL)
-		return cp;
-
-	/* Not found, so try to autoload a module */
-	for (pkc = ppp_known_compressors; pkc->module != NULL; pkc++) {
-		if (pkc->code == ci) {
-			if (module_autoload(pkc->module, MODULE_CLASS_MISC))
+	mutex_enter(&ppp_compressors_mtx);
+	cp = ppp_get_compressor_noload(ci, true);
+	mutex_exit(&ppp_compressors_mtx);
+	if (cp == NULL) {
+		/* Not found, so try to autoload a module */
+		for (pkc = ppp_known_compressors; pkc->module != NULL; pkc++) {
+			if (pkc->code == ci) {
+				if (module_autoload(pkc->module,
+				    MODULE_CLASS_MISC) != 0)
+					break;
+				mutex_enter(&ppp_compressors_mtx);
+				cp = ppp_get_compressor_noload(ci, true);
+				mutex_exit(&ppp_compressors_mtx);
 				break;
-			return ppp_get_compressor_noload(ci, true);
+			}
 		}
 	}
 
-	return NULL;
+	return cp;
 }
 
 int
-ppp_register_compressor(struct compressor *pc)
+ppp_register_compressor(struct compressor *pc, size_t ncomp)
 {
+	int error = 0;
+	size_t i;
 
-	if (ppp_get_compressor_noload(pc->compress_proto, false) != NULL)
-		return EEXIST;
+	RUN_ONCE(&ppp_compressor_mtx_init, ppp_compressor_init);
 
 	mutex_enter(&ppp_compressors_mtx);
-	LIST_INSERT_HEAD(&ppp_compressors, pc, comp_list);
+	for (i = 0; i < ncomp; i++) {
+		if (ppp_get_compressor_noload(pc[i].compress_proto,
+		    false) != NULL)
+			error = EEXIST;
+	}
+	if (!error) {
+		for (i = 0; i < ncomp; i++) {
+			pc[i].comp_refcnt = 0;
+			LIST_INSERT_HEAD(&ppp_compressors, &pc[i], comp_list);
+		}
+	}
 	mutex_exit(&ppp_compressors_mtx);
 
-	return 0;
+	return error;
 }
 
 int
-ppp_unregister_compressor(struct compressor *pc)
+ppp_unregister_compressor(struct compressor *pc, size_t ncomp)
 {
-
-	if (ppp_get_compressor_noload(pc->compress_proto, false) != pc)
-		return ENOENT;
+	int error = 0;
+	size_t i;
 
 	mutex_enter(&ppp_compressors_mtx);
-	LIST_REMOVE(pc, comp_list);
+	for (i = 0; i < ncomp; i++) {
+		if (ppp_get_compressor_noload(pc[i].compress_proto,
+		    false) != &pc[i])
+			error = ENOENT;
+		else if (pc[i].comp_refcnt != 0)
+			error = EBUSY;
+	}
+	if (!error) {
+		for (i = 0; i < ncomp; i++) {
+			LIST_REMOVE(&pc[i], comp_list);
+		}
+	}
 	mutex_exit(&ppp_compressors_mtx);
 
-	return 0;
+	return error;
 }
