@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.40 2008/11/29 21:01:08 bouyer Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.41 2008/11/29 23:20:25 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1305,4 +1305,28 @@ lib/libkvm/kvm_proc.c				1.79
 	return NULL if there are no threads or proceed further through
 	all loops.  Fixes PR 40004. Ok rmind@
 	[cegger, ticket #146]
+
+sys/ufs/ext2fs/ext2fs_alloc.c			1.37
+sys/ufs/ext2fs/ext2fs_bswap.c			1.14
+sys/ufs/ext2fs/ext2fs_dinode.h			1.17
+sys/ufs/ext2fs/ext2fs_lookup.c			1.56
+sys/ufs/ext2fs/ext2fs_vfsops.c			1.140
+sys/ufs/ext2fs/ext2fs_vnops.c			1.83
+sys/ufs/ufs/inode.h				1.55
+
+	Add support for 32 bit uid/gid fields in ext2.
+	[mrg, ticket #147]
+
+external/mit/xorg/server/xorg-server/hw/xfree86/utils/scanpci/Makefile 1.4
+
+	Help scanpci find libscanpci.so.0.  Fixes PR#40050.
+	[mrg, ticket #148]
+
+usr.bin/uuencode/uuencode.1			1.17, 1.18
+usr.bin/uuencode/uuencode.c			1.14
+usr.bin/uudecode/uudecode.c			1.24
+
+	Clarify man page with respect to input and output files, and sync
+	usage messages.  Modernize usage example.  Fixes PR 40063.
+	[dholland, ticket #149]
 
