@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.47 2008/11/29 14:12:48 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.48 2008/11/29 14:42:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.47 2008/11/29 14:12:48 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.48 2008/11/29 14:42:21 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.47 2008/11/29 14:12:48 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.48 2008/11/29 14:42:21 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -874,6 +874,7 @@ compare_function(Boolean doEval)
     char	*arg = NULL;
     int	arglen;
     char *cp = condExpr;
+    char *cp1;
 
     for (fn_def = fn_defs; fn_def->fn_name != NULL; fn_def++) {
 	if (!istoken(cp, fn_def->fn_name, fn_def->fn_name_len))
@@ -902,14 +903,30 @@ compare_function(Boolean doEval)
     }
 
     /* Push anything numeric through the compare expression */
-    if (isdigit((unsigned char)condExpr[0]) || strchr("+-", condExpr[0]))
+    cp = condExpr;
+    if (isdigit((unsigned char)cp[0]) || strchr("+-", cp[0]))
 	return compare_expression(doEval);
+
+    /*
+     * Most likely we have a naked token to apply the default function to.
+     * However ".if a == b" gets here when the "a" is unquoted and doesn't
+     * start with a '$'. This surprises people - especially given the way
+     * that for loops get expanded.
+     * If what follows the function argument is a '=' or '!' then the syntax
+     * would be invalid if we did "defined(a)" - so instead treat as an
+     * expression.
+     */
+    arglen = CondGetArg(&cp, &arg, "", FALSE);
+    for (cp1 = cp; isspace(*(unsigned char *)cp1); cp1++)
+	continue;
+    if (*cp1 == '=' || *cp1 == '!')
+	return compare_expression(doEval);
+    condExpr = cp;
 
     /*
      * Evaluate the argument using the default function. If invert
      * is TRUE, we invert the sense of the result.
      */
-    arglen = CondGetArg(&condExpr, &arg, "", FALSE);
     t = !doEval || (* condDefProc)(arglen, arg) != condInvert ? True : False;
     if (arg)
 	free(arg);
