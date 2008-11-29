@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2008/11/28 21:17:08 he Exp $
+#	$NetBSD: Makefile,v 1.21 2008/11/29 18:41:06 tsutsui Exp $
 
 # For all platforms
 
@@ -48,12 +48,13 @@ SUBDIR+=	unionfs
 .endif
 
 # Machine dependent section
-.if ${MACHINE} != "alpha"
+.if ${MACHINE_ARCH} != "alpha"
 SUBDIR+=	exec_elf32
 .endif
 
-.if ${MACHINE} == "alpha"
-SUBDIR+=	compat_linux
+.if ${MACHINE_ARCH} == "alpha" || \
+    ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	exec_elf64
 .endif
 
@@ -63,7 +64,6 @@ SUBDIR+=	compat_linux
 SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	drm
-SUBDIR+=	exec_elf64
 SUBDIR+=	i915drm
 .endif
 
