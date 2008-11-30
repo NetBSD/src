@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.41.14.2 2008/11/30 12:49:22 bouyer Exp $ */
+/* $NetBSD: if_vge.c,v 1.41.14.3 2008/11/30 16:41:17 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.41.14.2 2008/11/30 12:49:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.41.14.3 2008/11/30 16:41:17 bouyer Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -312,7 +312,7 @@ static void vge_tick(void *);
 static void vge_start(struct ifnet *);
 static int vge_ioctl(struct ifnet *, u_long, void *);
 static int vge_init(struct ifnet *);
-static void vge_stop(struct ifnet *, int);
+static void vge_stop(struct vge_softc *);
 static void vge_watchdog(struct ifnet *);
 #if VGE_POWER_MANAGEMENT
 static int vge_suspend(struct device *);
@@ -1004,8 +1004,6 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = vge_ioctl;
 	ifp->if_start = vge_start;
-	ifp->if_init = vge_init;
-	ifp->if_stop = vge_stop;
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames and jumbo
@@ -1029,8 +1027,8 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #endif
 	ifp->if_watchdog = vge_watchdog;
+	ifp->if_init = vge_init;
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(VGE_IFQ_MAXLEN, IFQ_MAXLEN));
-	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * Initialize our media structures and probe the MII.
@@ -1774,7 +1772,7 @@ vge_init(struct ifnet *ifp)
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
-	vge_stop(ifp, 0);
+	vge_stop(sc);
 	vge_reset(sc);
 
 	/* Initialize the RX descriptors and mbufs. */
@@ -2035,7 +2033,7 @@ vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 				vge_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				vge_stop(sc, 1);
+				vge_stop(sc);
 		}
 		sc->sc_if_flags = ifp->if_flags;
 		break;
@@ -2085,12 +2083,14 @@ vge_watchdog(struct ifnet *ifp)
  * RX and TX lists.
  */
 static void
-vge_stop(struct ifnet *ifp, int disable)
+vge_stop(struct vge_softc *sc)
 {
-	struct vge_softc *sc = ifp->if_softc;
+	struct ifnet *ifp;
 	struct vge_txsoft *txs;
 	struct vge_rxsoft *rxs;
 	int i, s;
+
+	ifp = &sc->sc_ethercom.ec_if;
 
 	s = splnet();
 	ifp->if_timer = 0;
@@ -2214,5 +2214,5 @@ vge_shutdown(void *arg)
 	struct vge_softc *sc;
 
 	sc = arg;
-	vge_stop(&sc->sc_ethercom.ec_if, 1);
+	vge_stop(sc);
 }
