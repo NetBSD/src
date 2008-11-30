@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.41 2008/11/29 23:20:25 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.42 2008/11/30 02:43:34 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1329,4 +1329,12 @@ usr.bin/uudecode/uudecode.c			1.24
 	Clarify man page with respect to input and output files, and sync
 	usage messages.  Modernize usage example.  Fixes PR 40063.
 	[dholland, ticket #149]
+
+common/lib/libprop/prop_dictionary.c		1.33
+common/lib/libprop/prop_number.c		1.20
+common/lib/libprop/prop_object.c		1.23
+common/lib/libprop/prop_object_impl.h		1.28
+
+	Fix two race conditions in proplib.
+	[haad, ticket #150]
 
