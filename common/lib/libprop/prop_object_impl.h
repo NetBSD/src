@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object_impl.h,v 1.27 2008/08/03 04:00:12 thorpej Exp $	*/
+/*	$NetBSD: prop_object_impl.h,v 1.28 2008/11/30 00:17:07 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -211,6 +211,8 @@ struct _prop_object_type {
 	 * _PROP_OBJECT_EQUALS_RECURSE
 	 */
 	void	(*pot_equals_finish)(prop_object_t, prop_object_t);
+	void    (*pot_lock)(void);
+	void    (*pot_unlock)(void);
 };
 
 struct _prop_object {
