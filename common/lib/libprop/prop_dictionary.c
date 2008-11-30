@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.32 2008/08/03 04:00:12 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.32.4.1 2008/11/30 02:40:01 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -125,6 +125,9 @@ static prop_object_t
 static prop_object_t
 		_prop_dictionary_get(prop_dictionary_t, const char *, bool);
 
+static void _prop_dictionary_lock(void);
+static void _prop_dictionary_unlock(void);
+
 static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_type		=	PROP_TYPE_DICTIONARY,
 	.pot_free		=	_prop_dictionary_free,
@@ -132,6 +135,8 @@ static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_extern		=	_prop_dictionary_externalize,
 	.pot_equals		=	_prop_dictionary_equals,
 	.pot_equals_finish	=	_prop_dictionary_equals_finish,
+	.pot_lock 	        =       _prop_dictionary_lock,
+	.pot_unlock 	        =       _prop_dictionary_unlock,		
 };
 
 static _prop_object_free_rv_t
@@ -220,10 +225,7 @@ _prop_dict_keysym_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_dictionary_keysym_t pdk = *obj;
 
-	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
 	_prop_rb_tree_remove_node(&_prop_dict_keysym_tree, &pdk->pdk_link);
-	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
-
 	_prop_dict_keysym_put(pdk);
 
 	return _PROP_OBJECT_FREE_DONE;
@@ -381,9 +383,24 @@ _prop_dictionary_free(prop_stack_t stack, prop_object_t *obj)
 	--pd->pd_count;
 	pdk = pd->pd_array[pd->pd_count].pde_key;
 	_PROP_ASSERT(pdk != NULL);
+
 	prop_object_release(pdk);
+
 	*obj = po;
 	return (_PROP_OBJECT_FREE_RECURSE);
+}
+
+
+static void
+_prop_dictionary_lock(void)
+{
+	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
+}
+
+static void
+_prop_dictionary_unlock(void)
+{
+	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 }
 
 static void
@@ -1075,7 +1092,9 @@ _prop_dictionary_remove(prop_dictionary_t pd, struct _prop_dict_entry *pde,
 	pd->pd_count--;
 	pd->pd_version++;
 
+
 	prop_object_release(pdk);
+
 	prop_object_release(po);
 }
 
