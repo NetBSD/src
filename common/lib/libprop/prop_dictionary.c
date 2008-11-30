@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.16.4.1 2007/09/27 16:16:26 xtraeme Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.16.4.1.2.1 2008/11/30 23:53:04 snj Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -121,6 +121,9 @@ static bool	_prop_dictionary_equals(prop_object_t, prop_object_t,
 					prop_object_t *, prop_object_t *);
 static void	_prop_dictionary_equals_finish(prop_object_t, prop_object_t);
 
+static void _prop_dictionary_lock(void);
+static void _prop_dictionary_unlock(void);
+
 static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_type		=	PROP_TYPE_DICTIONARY,
 	.pot_free		=	_prop_dictionary_free,
@@ -128,6 +131,8 @@ static const struct _prop_object_type _prop_object_type_dictionary = {
 	.pot_extern		=	_prop_dictionary_externalize,
 	.pot_equals		=	_prop_dictionary_equals,
 	.pot_equals_finish	=	_prop_dictionary_equals_finish,
+	.pot_lock 	        =       _prop_dictionary_lock,
+	.pot_unlock 	        =       _prop_dictionary_unlock,		
 };
 
 static int		_prop_dict_keysym_free(prop_stack_t, prop_object_t *);
@@ -214,10 +219,7 @@ _prop_dict_keysym_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_dictionary_keysym_t pdk = *obj;
 
-	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
 	_prop_rb_tree_remove_node(&_prop_dict_keysym_tree, &pdk->pdk_link);
-	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
-
 	_prop_dict_keysym_put(pdk);
 
 	return _PROP_OBJECT_FREE_DONE;
@@ -375,9 +377,24 @@ _prop_dictionary_free(prop_stack_t stack, prop_object_t *obj)
 	--pd->pd_count;
 	pdk = pd->pd_array[pd->pd_count].pde_key;
 	_PROP_ASSERT(pdk != NULL);
+
 	prop_object_release(pdk);
+
 	*obj = po;
 	return (_PROP_OBJECT_FREE_RECURSE);
+}
+
+
+static void
+_prop_dictionary_lock(void)
+{
+	_PROP_MUTEX_LOCK(_prop_dict_keysym_tree_mutex);
+}
+
+static void
+_prop_dictionary_unlock(void)
+{
+	_PROP_MUTEX_UNLOCK(_prop_dict_keysym_tree_mutex);
 }
 
 static void
@@ -1004,7 +1021,9 @@ _prop_dictionary_remove(prop_dictionary_t pd, struct _prop_dict_entry *pde,
 	pd->pd_count--;
 	pd->pd_version++;
 
+
 	prop_object_release(pdk);
+
 	prop_object_release(po);
 }
 
