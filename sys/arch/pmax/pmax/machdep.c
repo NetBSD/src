@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.225 2008/11/12 12:36:05 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.226 2008/11/30 18:21:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2008/11/12 12:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2008/11/30 18:21:35 martin Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -333,7 +333,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init((char *)esym - (char *)ssym, ssym, esym);
+		ksyms_addsyms_elf((char *)esym - (char *)ssym, ssym, esym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)

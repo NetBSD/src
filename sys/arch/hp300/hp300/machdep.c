@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.202 2008/11/12 12:36:00 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.203 2008/11/30 18:21:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2008/11/12 12:36:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2008/11/30 18:21:34 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -294,7 +294,7 @@ consinit(void)
 		extern int end;
 		extern int *esym;
 
-		ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
 	}
 #endif

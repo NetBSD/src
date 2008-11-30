@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.375 2008/11/18 11:36:58 pooka Exp $	*/
+/*	$NetBSD: init_main.c,v 1.376 2008/11/30 18:21:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.375 2008/11/18 11:36:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.376 2008/11/30 18:21:36 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -334,6 +334,8 @@ main(void)
 	once_init();
 
 	uvm_init();
+
+	ksyms_init();
 
 	percpu_init();
 

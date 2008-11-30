@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.73 2008/11/12 12:35:55 ad Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.74 2008/11/30 18:21:31 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.73 2008/11/12 12:35:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.74 2008/11/30 18:21:31 martin Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -1044,7 +1044,7 @@ initarm(void *cookie)
 #endif	/* CPU_SA110 */
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init(bootconfig.ksym_end - bootconfig.ksym_start,
+	ksyms_addsyms_elf(bootconfig.ksym_end - bootconfig.ksym_start,
 		(void *) bootconfig.ksym_start, (void *) bootconfig.ksym_end);
 #endif
 

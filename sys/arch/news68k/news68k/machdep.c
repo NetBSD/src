@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.75 2008/11/25 15:51:34 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.76 2008/11/30 18:21:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.75 2008/11/25 15:51:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2008/11/30 18:21:35 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1085,7 +1085,7 @@ consinit(void)
 		break;
 	}
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+	ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
 #endif
 #ifdef DDB

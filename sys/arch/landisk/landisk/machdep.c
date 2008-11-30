@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2008/11/17 01:55:00 uwe Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2008/11/30 18:21:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2008/11/17 01:55:00 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2008/11/30 18:21:34 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -230,7 +230,7 @@ landisk_startup(int howto, void *bi)
 	/* Debugger. */
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (symbolsize != 0) {
-		ksyms_init(symbolsize, &end, end + symbolsize);
+		ksyms_addsyms_elf(symbolsize, &end, end + symbolsize);
 	}
 #endif
 #if defined(DDB)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.36 2008/11/12 12:35:59 ad Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.37 2008/11/30 18:21:33 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.36 2008/11/12 12:35:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.37 2008/11/30 18:21:33 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -742,7 +742,7 @@ initarm(void *arg)
 #endif
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
+	ksyms_addsyms_elf(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
 #endif
 
 #ifdef DDB

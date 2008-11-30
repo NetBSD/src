@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.40 2008/11/12 12:36:05 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.41 2008/11/30 18:21:35 martin Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2008/11/12 12:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2008/11/30 18:21:35 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -331,7 +331,7 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init(((uintptr_t)ksym_end - (uintptr_t)ksym_start),
+	ksyms_addsyms_elf(((uintptr_t)ksym_end - (uintptr_t)ksym_start),
 	    ksym_start, ksym_end);
 #endif
 

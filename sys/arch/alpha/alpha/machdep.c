@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.311 2008/11/25 15:51:34 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.312 2008/11/30 18:21:32 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.311 2008/11/25 15:51:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.312 2008/11/30 18:21:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -767,7 +767,7 @@ nobootinfo:
 	 * Initialize debuggers, and break into them if appropriate.
 	 */
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
+	ksyms_addsyms_elf((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
 	    ksym_start, ksym_end);
 #endif
 
