@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.41.14.1 2008/11/29 20:55:24 bouyer Exp $ */
+/* $NetBSD: if_vge.c,v 1.41.14.2 2008/11/30 12:49:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.41.14.1 2008/11/29 20:55:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.41.14.2 2008/11/30 12:49:22 bouyer Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -2035,7 +2035,7 @@ vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 				vge_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				vge_stop(sc);
+				vge_stop(sc, 1);
 		}
 		sc->sc_if_flags = ifp->if_flags;
 		break;
