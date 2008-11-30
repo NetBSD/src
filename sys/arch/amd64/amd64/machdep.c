@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112 2008/11/19 18:35:58 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.113 2008/11/30 18:21:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2008/11/19 18:35:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2008/11/30 18:21:32 martin Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1220,15 +1220,15 @@ init_x86_64_ksyms(void)
 	if (symtab) {
 		tssym = (vaddr_t)symtab->ssym + KERNBASE;
 		tesym = (vaddr_t)symtab->esym + KERNBASE;
-		ksyms_init(symtab->nsym, (void *)tssym, (void *)tesym);
+		ksyms_addsyms_elf(symtab->nsym, (void *)tssym, (void *)tesym);
 	} else
-		ksyms_init(*(long *)(void *)&end,
+		ksyms_addsyms_elf(*(long *)(void *)&end,
 		    ((long *)(void *)&end) + 1, esym);
 #else  /* XEN */
 	esym = xen_start_info.mod_start ?
 	    (void *)xen_start_info.mod_start :
 	    (void *)xen_start_info.mfn_list;
-	ksyms_init(*(int *)(void *)&end,
+	ksyms_addsyms_elf(*(int *)(void *)&end,
 	    ((int *)(void *)&end) + 1, esym);
 #endif /* XEN */
 #endif

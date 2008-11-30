@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.62 2008/11/12 12:35:57 ad Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.63 2008/11/30 18:21:32 martin Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.62 2008/11/12 12:35:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.63 2008/11/30 18:21:32 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -883,17 +883,12 @@ initarm(void *arm_bootargs)
 	printf("done.\n");
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-#ifdef __ELF__
-	/* ok this is really rather sick, in ELF what happens is that the
-	 * ELF symbol table is added after the text section.
-	 */
-	ksyms_init(0, NULL, NULL);	/* XXX */
-#else
+#ifndef __ELF__		/* XXX */
 	{
 		extern int end;
 		extern int *esym;
 
-		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #endif /* __ELF__ */
 #endif

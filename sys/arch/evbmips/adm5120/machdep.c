@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.8 2008/11/12 12:35:59 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.9 2008/11/30 18:21:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2008/11/12 12:35:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2008/11/30 18:21:33 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -447,9 +447,6 @@ mach_init(int argc, char **argv, void *a2, void *a3)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init(0, 0, 0);
-#endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();

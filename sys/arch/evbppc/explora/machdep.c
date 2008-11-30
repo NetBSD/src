@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2008/11/12 12:36:00 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2008/11/30 18:21:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2008/11/12 12:36:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2008/11/30 18:21:33 martin Exp $");
 
 #include "opt_explora.h"
 #include "ksyms.h"
@@ -263,11 +263,6 @@ bootstrap(u_int startkernel, u_int endkernel)
 	 * Initialize pmap module.
 	 */
 	pmap_bootstrap(startkernel, endkernel);
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init(0, NULL, NULL);
-#endif
-
 	fake_mapiodev = 0;
 }
 

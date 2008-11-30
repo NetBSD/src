@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.88 2008/11/12 12:36:01 ad Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.89 2008/11/30 18:21:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.88 2008/11/12 12:36:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.89 2008/11/30 18:21:34 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -707,7 +707,7 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 	db_machine_init();
 #endif
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
+	ksyms_addsyms_elf(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
 #endif
 
 	printf("kernsize=0x%x", kerneldatasize);

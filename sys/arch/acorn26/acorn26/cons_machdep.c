@@ -1,4 +1,4 @@
-/* $NetBSD: cons_machdep.c,v 1.8 2008/11/12 12:35:54 ad Exp $ */
+/* $NetBSD: cons_machdep.c,v 1.9 2008/11/30 18:21:31 martin Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.8 2008/11/12 12:35:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.9 2008/11/30 18:21:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/syslog.h>
@@ -67,7 +67,7 @@ consinit()
 	db_machine_init();
 #endif /* DDB */
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init(bootconfig.esym - bootconfig.ssym,
+	ksyms_addsyms_elf(bootconfig.esym - bootconfig.ssym,
 		 (char*)MEMC_PHYS_BASE + bootconfig.ssym,
 		 (char*)MEMC_PHYS_BASE + bootconfig.esym);
 #endif
