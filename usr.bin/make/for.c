@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.32 2008/11/29 17:50:11 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.33 2008/11/30 22:37:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.32 2008/11/29 17:50:11 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.33 2008/11/30 22:37:55 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.32 2008/11/29 17:50:11 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.33 2008/11/30 22:37:55 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -87,6 +87,7 @@ typedef struct _For {
     Buffer	  buf;			/* Body of loop		*/
     char	**vars;			/* Iteration variables	*/
     int           nvars;		/* # of iteration vars	*/
+    int           nitem;		/* # of substitution items */
     Lst  	  lst;			/* List of items	*/
 } For;
 
@@ -96,6 +97,17 @@ static void ForAddVar(const char *, size_t);
 
 
 
+
+static char *
+make_str(const char *ptr, int len)
+{
+	char *new_ptr;
+
+	new_ptr = bmake_malloc(len + 1);
+	memcpy(new_ptr, ptr, len);
+	new_ptr[len] = 0;
+	return new_ptr;
+}
 
 /*-
  *-----------------------------------------------------------------------
@@ -109,18 +121,13 @@ static void ForAddVar(const char *, size_t);
 static void
 ForAddVar(const char *data, size_t len)
 {
-	Buffer buf;
-	int varlen;
+	int nvars;
 
-	buf = Buf_Init(0);
-	Buf_AddBytes(buf, len, (Byte *)UNCONST(data));
+	nvars = accumFor.nvars;
+	accumFor.nvars = nvars + 1;
+	accumFor.vars = bmake_realloc(accumFor.vars, nvars * sizeof(char *));
 
-	accumFor.nvars++;
-	accumFor.vars = bmake_realloc(accumFor.vars, accumFor.nvars*sizeof(char *));
-
-	accumFor.vars[accumFor.nvars-1] = (char *)Buf_GetAll(buf, &varlen);
-
-	Buf_Destroy(buf, FALSE);
+	accumFor.vars[nvars] = make_str(data, len);
 }
 
 /*-
@@ -146,10 +153,11 @@ ForAddVar(const char *data, size_t len)
 int
 For_Eval(char *line)
 {
-    char	    *ptr = line, *sub, *in, *wrd;
-    Buffer	    buf;
-    int	    varlen;
-    static const char instr[] = "in";
+    char *ptr = line, *sub;
+    int len;
+
+    /* Forget anything we previously knew about - it cannot be useful */
+    memset(&accumFor, 0, sizeof accumFor);
 
     forLevel = 0;
     for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
@@ -171,49 +179,28 @@ For_Eval(char *line)
     /*
      * we found a for loop, and now we are going to parse it.
      */
-    while (*ptr && isspace((unsigned char) *ptr))
-	ptr++;
 
-    /*
-     * Find the "in".
-     */
-    for (in = ptr; *in; in++) {
-	if (isspace((unsigned char) in[0]) && in[1]== 'i' &&
-	    in[2] == 'n' &&
-	    (in[3] == '\0' || isspace((unsigned char) in[3])))
-	    break;
-    }
-    if (*in == '\0') {
-	Parse_Error(PARSE_FATAL, "missing `in' in for");
-	return -1;
-    }
-
-    /*
-     * Grab the variables.
-     */
-    accumFor.vars = NULL;
-
-    while (ptr < in) {
-	wrd = ptr;
-	while (*ptr && !isspace((unsigned char) *ptr))
-	    ptr++;
-	ForAddVar(wrd, ptr - wrd);
+    /* Grab the variables. Terminate on "in". */
+    for (;; ptr += len) {
 	while (*ptr && isspace((unsigned char) *ptr))
 	    ptr++;
+	if (*ptr == '\0') {
+	    Parse_Error(PARSE_FATAL, "missing `in' in for");
+	    return -1;
+	}
+	for (len = 1; ptr[len] && !isspace((unsigned char)ptr[len]); len++)
+	    continue;
+	if (len == 2 && ptr[0] == 'i' && ptr[1] == 'n') {
+	    ptr += 2;
+	    break;
+	}
+	ForAddVar(ptr, len);
     }
 
     if (accumFor.nvars == 0) {
 	Parse_Error(PARSE_FATAL, "no iteration variables in for");
 	return -1;
     }
-
-    /* At this point we should be pointing right at the "in" */
-    /*
-     * compensate for hp/ux's brain damaged assert macro that
-     * does not handle double quotes nicely.
-     */
-    assert(!memcmp(ptr, instr, 2));
-    ptr += 2;
 
     while (*ptr && isspace((unsigned char) *ptr))
 	ptr++;
@@ -222,39 +209,29 @@ For_Eval(char *line)
      * Make a list with the remaining words
      */
     accumFor.lst = Lst_Init(FALSE);
-    buf = Buf_Init(0);
     sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
 
-#define ADDWORD() do { \
-    Buf_AddBytes(buf, ptr - wrd, (Byte *)wrd); \
-    Buf_AddByte(buf, (Byte)'\0'); \
-    Lst_AtFront(accumFor.lst, Buf_GetAll(buf, &varlen)); \
-    Buf_Destroy(buf, FALSE); \
-} while (0)
-
-    for (ptr = sub; *ptr && isspace((unsigned char) *ptr); ptr++)
-	continue;
-
-    for (wrd = ptr; *ptr; ptr++)
-	if (isspace((unsigned char) *ptr)) {
-	    ADDWORD();
-	    buf = Buf_Init(0);
-	    while (*ptr && isspace((unsigned char) *ptr))
-		ptr++;
-	    wrd = ptr--;
-	}
-    if (DEBUG(FOR)) {
-	int i;
-	for (i = 0; i < accumFor.nvars; i++) {
-	    (void)fprintf(debug_file, "For: variable %s\n", accumFor.vars[i]);
-	}
-	(void)fprintf(debug_file, "For: list %s\n", sub);
+    for (ptr = sub;; ptr += len, accumFor.nitem++) {
+	while (*ptr && isspace((unsigned char)*ptr))
+	    ptr++;
+	if (*ptr == 0)
+	    break;
+	for (len = 1; ptr[len] && !isspace((unsigned char)ptr[len]); len++)
+	    continue;
+	Lst_AtFront(accumFor.lst, make_str(ptr, len));
     }
-    if (ptr - wrd > 0)
-	ADDWORD();
-    else
-	Buf_Destroy(buf, TRUE);
+
     free(sub);
+
+    if (accumFor.nitem % accumFor.nvars) {
+	Parse_Error(PARSE_FATAL,
+		"Wrong number of words in .for substitution list %d %d",
+		accumFor.nitem, accumFor.nvars);
+	/*
+	 * Return 'success' so that the body of the .for loop is accumulated.
+	 * The loop will have zero iterations expanded due a later test.
+	 */
+    }
 
     accumFor.buf = Buf_Init(0);
     forLevel = 1;
@@ -313,13 +290,15 @@ For_Run(int lineno)
     int i, done = 0, len;
     char *guy, *orig_guy, *old_guy;
 
-    if (accumFor.buf == NULL || accumFor.vars == NULL || accumFor.lst == NULL)
-	return;
     arg = accumFor;
     accumFor.buf = NULL;
     accumFor.vars = NULL;
     accumFor.nvars = 0;
     accumFor.lst = NULL;
+
+    if (arg.nitem % arg.nvars)
+	/* Error message already printed */
+	return;
 
     if (Lst_Open(arg.lst) != SUCCESS)
 	return;
@@ -334,10 +313,6 @@ For_Run(int lineno)
 	for (i = arg.nvars - 1; i >= 0; i--) {
 	    ln = Lst_Next(arg.lst);
 	    if (ln == NILLNODE) {
-		if (i != arg.nvars-1) {
-		    Parse_Error(PARSE_FATAL, 
-			"Not enough words in for substitution list");
-		}
 		done = 1;
 		break;
 	    } else {
