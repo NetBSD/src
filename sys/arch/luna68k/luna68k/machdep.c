@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.57 2008/11/12 12:36:02 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.58 2008/11/30 18:21:34 martin Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.57 2008/11/12 12:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58 2008/11/30 18:21:34 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -219,7 +219,7 @@ consinit()
 		extern char end[];
 		extern int *esym;
 
-		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #endif
 #ifdef DDB

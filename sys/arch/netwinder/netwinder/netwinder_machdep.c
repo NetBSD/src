@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.68 2008/11/12 12:36:04 ad Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.69 2008/11/30 18:21:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.68 2008/11/12 12:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.69 2008/11/30 18:21:35 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -854,11 +854,6 @@ initarm(void *arg)
 	 */
 	if (nwbootinfo.bi_pagesize == 0xdeadbeef)
 		printf("WARNING: NeTTrom boot info corrupt\n");
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	/* Firmware doesn't load symbols. */
-	ksyms_init(0, NULL, NULL);
-#endif
 
 #ifdef DDB
 	db_machine_init();

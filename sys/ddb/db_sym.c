@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.57 2008/10/24 13:55:42 christos Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.58 2008/11/30 18:21:36 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.57 2008/10/24 13:55:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.58 2008/11/30 18:21:36 martin Exp $");
 
 #include "opt_ddbparam.h"
 
@@ -72,7 +72,7 @@ ddb_init(int symsize, void *vss, void *vse)
 		return;
 	}
 #endif
-	ksyms_init(symsize, vss, vse);	/* Will complain if necessary */
+	ksyms_addsyms_elf(symsize, vss, vse);	/* Will complain if necessary */
 }
 
 bool

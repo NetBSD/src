@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2008/11/12 12:36:04 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2008/11/30 18:21:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2008/11/12 12:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2008/11/30 18:21:35 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -259,7 +259,7 @@ initSH3(void *pc)	/* XXX return address */
 	pmap_bootstrap();
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init(1, end, end + 0x40000);			/* XXX */
+	ksyms_addsyms_elf(1, end, end + 0x40000);			/* XXX */
 #endif
 	/*
 	 * XXX We can't return here, because we change stack pointer.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2008/11/12 12:36:02 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2008/11/30 18:21:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003,2004 Marcel Moolenaar
@@ -750,7 +750,7 @@ ia64_init()
 	 * Initialize debuggers, and break into them if appropriate.
 	 */
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
+	ksyms_addsyms_elf((int)((u_int64_t)ksym_end - (u_int64_t)ksym_start),
 	    ksym_start, ksym_end);
 #endif
 

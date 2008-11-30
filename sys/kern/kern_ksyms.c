@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.46 2008/11/16 16:15:58 ad Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.47 2008/11/30 18:21:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.46 2008/11/16 16:15:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.47 2008/11/30 18:21:36 martin Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -204,6 +204,13 @@ ksymsattach(int arg)
 
 }
 
+void
+ksyms_init()
+{
+
+	mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
+}
+
 /*
  * Add a symbol table.
  * This is intended for use when the symbol table and its corresponding
@@ -330,7 +337,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
  * Setup the kernel symbol table stuff.
  */
 void
-ksyms_init(int symsize, void *start, void *end)
+ksyms_addsyms_elf(int symsize, void *start, void *end)
 {
 	int i, j;
 	Elf_Shdr *shdr;
@@ -338,7 +345,6 @@ ksyms_init(int symsize, void *start, void *end)
 	size_t strsize = 0;
 	Elf_Ehdr *ehdr;
 
-	mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
 #ifdef SYMTAB_SPACE
 	if (symsize <= 0 &&
 	    strncmp(db_symtab, SYMTAB_FILLER, sizeof(SYMTAB_FILLER))) {
@@ -411,11 +417,9 @@ ksyms_init(int symsize, void *start, void *end)
  * a void *rather than a pointer to avoid exposing the Elf_Ehdr type.
  */
 void
-ksyms_init_explicit(void *ehdr, void *symstart, size_t symsize,
+ksyms_addsyms_explicit(void *ehdr, void *symstart, size_t symsize,
 		    void *strstart, size_t strsize)
 {
-
-	mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	if (!ksyms_verify(symstart, strstart))
 		return;

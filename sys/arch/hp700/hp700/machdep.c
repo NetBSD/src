@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 2008/11/25 15:51:34 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54 2008/11/30 18:21:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2008/11/25 15:51:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2008/11/30 18:21:34 martin Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -818,12 +818,12 @@ do {									\
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL)
-                ksyms_init(bi_sym->nsym, (int *)bi_sym->ssym,
+                ksyms_addsyms_elf(bi_sym->nsym, (int *)bi_sym->ssym,
                     (int *)bi_sym->esym);
         else {
 		extern int end;
 
-		ksyms_init(esym - (int)&end, &end, (int*)esym);
+		ksyms_addsyms_elf(esym - (int)&end, &end, (int*)esym);
 	}
 #endif
 

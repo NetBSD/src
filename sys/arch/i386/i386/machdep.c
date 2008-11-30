@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.652 2008/11/20 10:53:09 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.653 2008/11/30 18:21:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.652 2008/11/20 10:53:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.653 2008/11/30 18:21:34 martin Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1262,18 +1262,18 @@ init386_ksyms(void)
 #endif
 
 #if defined(MULTIBOOT)
-	if (multiboot_ksyms_init())
+	if (multiboot_ksyms_addsyms_elf())
 		return;
 #endif
 
 	if ((symtab = lookup_bootinfo(BTINFO_SYMTAB)) == NULL) {
-		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
 		return;
 	}
 
 	symtab->ssym += KERNBASE;
 	symtab->esym += KERNBASE;
-	ksyms_init(symtab->nsym, (int *)symtab->ssym, (int *)symtab->esym);
+	ksyms_addsyms_elf(symtab->nsym, (int *)symtab->ssym, (int *)symtab->esym);
 #endif
 }
 

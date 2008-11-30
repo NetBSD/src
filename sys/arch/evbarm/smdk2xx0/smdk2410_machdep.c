@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.21 2008/11/18 18:20:10 cliff Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.22 2008/11/30 18:21:33 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.21 2008/11/18 18:20:10 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.22 2008/11/30 18:21:33 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -916,11 +916,6 @@ initarm(void *arg)
 		kgdb_debug_init = 1;
 		kgdb_connect(1);
 	}
-#endif
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	/* Firmware doesn't load symbols. */
-	ksyms_init(0, NULL, NULL);
 #endif
 
 #ifdef DDB

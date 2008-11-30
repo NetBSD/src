@@ -1,4 +1,4 @@
-/* $NetBSD: prep_machdep.c,v 1.4 2008/11/12 12:36:05 ad Exp $ */
+/* $NetBSD: prep_machdep.c,v 1.5 2008/11/30 18:21:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.4 2008/11/12 12:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_machdep.c,v 1.5 2008/11/30 18:21:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -166,7 +166,7 @@ prep_initppc(u_long startkernel, u_long endkernel, u_int args)
 	pmap_bootstrap(startkernel, endkernel);
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
+	ksyms_addsyms_elf((int)((u_long)endsym - (u_long)startsym), startsym, endsym);
 #endif
 
 #ifdef DDB

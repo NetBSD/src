@@ -1,4 +1,4 @@
-/*	$NetBSD: obs266_machdep.c,v 1.8 2008/11/12 12:36:00 ad Exp $	*/
+/*	$NetBSD: obs266_machdep.c,v 1.9 2008/11/30 18:21:33 martin Exp $	*/
 /*	Original: md_machdep.c,v 1.3 2005/01/24 18:47:37 shige Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.8 2008/11/12 12:36:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs266_machdep.c,v 1.9 2008/11/30 18:21:33 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -156,7 +156,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 #endif
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)

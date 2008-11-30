@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.324 2008/11/12 12:36:03 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.325 2008/11/30 18:21:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.324 2008/11/12 12:36:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.325 2008/11/30 18:21:34 martin Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -382,7 +382,7 @@ consinit(void)
 		 * Initialize kernel debugger, if compiled in.
 		 */
 
-		ksyms_init(symsize, ssym, esym);
+		ksyms_addsyms_elf(symsize, ssym, esym);
 #endif
 
 		if (boothowto & RB_KDB) {

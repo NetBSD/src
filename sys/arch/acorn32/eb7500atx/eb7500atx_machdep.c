@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.12 2008/11/23 11:55:27 chris Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.13 2008/11/30 18:21:31 martin Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.12 2008/11/23 11:55:27 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.13 2008/11/30 18:21:31 martin Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -955,7 +955,7 @@ initarm(void *cookie)
 	    bootconfig.vram[0].pages * bootconfig.pagesize);
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init(bootconfig.ksym_end - bootconfig.ksym_start,
+	ksyms_addsyms_elf(bootconfig.ksym_end - bootconfig.ksym_start,
 		(void *) bootconfig.ksym_start, (void *) bootconfig.ksym_end);
 #endif
 

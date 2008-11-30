@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2008/11/11 06:46:42 dyoung Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2008/11/30 18:21:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2008/11/11 06:46:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2008/11/30 18:21:34 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -197,7 +197,7 @@ option(int argc, char *argv[], struct bootinfo *bi)
 #ifdef DDB
 	/* Load symbol table */
 	if (bi->bi_nsym)
-		ksyms_init(bi->bi_esym - bi->bi_ssym,
+		ksyms_addsyms_elf(bi->bi_esym - bi->bi_ssym,
 		    (void *)bi->bi_ssym, (void *)bi->bi_esym);
 #endif
 	/* Parse option */

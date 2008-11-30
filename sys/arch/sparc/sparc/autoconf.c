@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.230 2008/11/12 12:36:06 ad Exp $ */
+/*	$NetBSD: autoconf.c,v 1.231 2008/11/30 18:21:36 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.230 2008/11/12 12:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.231 2008/11/30 18:21:36 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -321,7 +321,7 @@ bootstrap(void)
 			bi_sym->ssym += KERNBASE;
 			bi_sym->esym += KERNBASE;
 		}
-		ksyms_init(bi_sym->nsym, (int *)bi_sym->ssym,
+		ksyms_addsyms_elf(bi_sym->nsym, (int *)bi_sym->ssym,
 		    (int *)bi_sym->esym);
 	}
 #endif

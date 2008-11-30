@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.60 2008/11/12 12:35:59 ad Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.61 2008/11/30 18:21:33 martin Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.60 2008/11/12 12:35:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.61 2008/11/30 18:21:33 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -777,11 +777,6 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
-#endif
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	/* Firmware doesn't load symbols. */
-	ksyms_init(0, NULL, NULL);
 #endif
 
 #ifdef DDB
