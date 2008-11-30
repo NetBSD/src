@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.20.24.1 2008/11/18 01:19:54 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.20.24.2 2008/11/30 13:03:50 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,7 @@ struct read_info	*rsp;
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
-		brelse(bp, 0);
+		brelse(bp);
 
 		bytes_left   -= done;
 		rsp->offset  += done;
@@ -335,7 +335,7 @@ int			nbyte;
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
-		brelse(bp, 0);
+		brelse(bp);
 
 		nbyte        -= done;
 		nread        += done;
