@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.42 2008/11/30 02:43:34 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.43 2008/11/30 12:50:31 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1280,7 +1280,7 @@ xsrc/external/mit/libX11/dist/src/xlibi18n/XlcDL.c	1.2
 	Fixes PR xsrc/40046.
 	[martin, ticket #142]
 
-sys/dev/pci/if_vge.c				1.43
+sys/dev/pci/if_vge.c				1.43 via patch
 
 	- ifconfig down support
 	- ALTQ support
