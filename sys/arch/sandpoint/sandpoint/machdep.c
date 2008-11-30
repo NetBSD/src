@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2008/11/12 12:36:05 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2008/11/30 18:21:35 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2008/11/12 12:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2008/11/30 18:21:35 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -179,7 +179,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	cn_tab = &kcomcons;
 	(*cn_tab->cn_init)(&kcomcons);
 
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -197,7 +197,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	pmap_bootstrap(startkernel, endkernel);
 
 #if 0 /* NKSYMS || defined(DDB) || defined(MODULAR) */
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 #ifdef IPKDB
 	/*

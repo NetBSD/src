@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30 2008/11/12 12:35:59 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.31 2008/11/30 18:21:33 martin Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2008/11/12 12:35:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2008/11/30 18:21:33 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -329,10 +329,6 @@ mach_init(int argc, char **argv, yamon_env_var *envp, u_long memsize)
 	/*
 	 * Initialize debuggers, and break into them, if appropriate.
 	 */
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init(0, 0, 0);
-#endif
-
 #if defined(DDB)
 	if (boothowto & RB_KDB)
 		Debugger();

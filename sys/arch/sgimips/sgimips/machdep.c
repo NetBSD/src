@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123 2008/11/12 12:36:06 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.124 2008/11/30 18:21:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2008/11/12 12:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 2008/11/30 18:21:35 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -485,11 +485,7 @@ mach_init(int argc, char *argv[], u_int magic, void *bip)
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(nsym, ssym, esym);
-#ifdef SYMTAB_SPACE
-	else
-		ksyms_init(0, NULL, NULL);
-#endif /* SYMTAB_SPACE */
+		ksyms_addsyms_elf(nsym, ssym, esym);
 #endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 
 #if defined(KGDB) || defined(DDB)

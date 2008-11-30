@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2008/11/12 12:36:01 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 2008/11/30 18:21:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2008/11/12 12:36:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2008/11/30 18:21:34 martin Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -450,7 +450,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(symbolsz, &end, esym);
+		ksyms_addsyms_elf(symbolsz, &end, esym);
 #endif /* DDB */
 	/*
 	 * Alloc u pages for lwp0 stealing KSEG0 memory.

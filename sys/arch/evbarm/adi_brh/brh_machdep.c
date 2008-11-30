@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.30 2008/11/12 12:35:58 ad Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.31 2008/11/30 18:21:32 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.30 2008/11/12 12:35:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.31 2008/11/30 18:21:32 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -801,11 +801,6 @@ initarm(void *arg)
 	becc_intr_init();
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
-#endif
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	/* Firmware doesn't load symbols. */
-	ksyms_init(0, NULL, NULL);
 #endif
 
 #ifdef DDB

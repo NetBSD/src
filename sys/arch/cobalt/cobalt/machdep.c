@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2008/11/12 12:35:58 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 2008/11/30 18:21:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 Izumi Tsutsui.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2008/11/12 12:35:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2008/11/30 18:21:32 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -287,9 +287,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if ((bi_syms != NULL) && (esym != NULL))
-		ksyms_init(esym - ssym, ssym, esym);
-	else
-		ksyms_init(0, NULL, NULL);
+		ksyms_addsyms_elf(esym - ssym, ssym, esym);
 #endif
 #ifdef DDB
 	if (boothowto & RB_KDB)

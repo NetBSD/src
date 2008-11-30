@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.10 2008/11/12 12:36:02 ad Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.11 2008/11/30 18:21:34 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.10 2008/11/12 12:36:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.11 2008/11/30 18:21:34 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -810,11 +810,6 @@ initarm(void *arg)
 
 #ifdef BOOTHOWTO
 	boothowto = BOOTHOWTO;
-#endif
-
-#if NKSYMS || defined(DDB) || defined(MODULAR)
-	/* Firmware doesn't load symbols. */
-	ksyms_init(0, NULL, NULL);
 #endif
 
 #ifdef DDB

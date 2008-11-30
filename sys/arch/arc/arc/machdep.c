@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2008/11/12 12:35:56 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 2008/11/30 18:21:32 martin Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2008/11/12 12:35:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 2008/11/30 18:21:32 martin Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -416,11 +416,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* init symbols if present */
 	if (esym)
-		ksyms_init(esym - ssym, ssym, esym);
-#ifdef SYMTAB_SPACE
-	else
-		ksyms_init(0, NULL, NULL);
-#endif
+		ksyms_addsyms_elf(esym - ssym, ssym, esym);
 #endif
 
 	maxmem = physmem;

@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.15 2008/11/12 12:36:05 ad Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.16 2008/11/30 18:21:35 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.15 2008/11/12 12:36:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.16 2008/11/30 18:21:35 martin Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -239,7 +239,7 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	restore_ofmap(ofmap, ofmaplen);
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
+	ksyms_addsyms_elf((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 
 	/* CPU clock stuff */
