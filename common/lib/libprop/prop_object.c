@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.22 2008/08/03 04:00:12 thorpej Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.23 2008/11/30 00:17:07 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -1019,6 +1019,7 @@ static void
 prop_object_release_emergency(prop_object_t obj)
 {
 	struct _prop_object *po;
+	void (*unlock)(void);
 	prop_object_t parent = NULL;
 	uint32_t ocnt;
 
@@ -1026,19 +1027,34 @@ prop_object_release_emergency(prop_object_t obj)
 		po = obj;
 		_PROP_ASSERT(obj);
 
+		if (po->po_type->pot_lock != NULL)
+		po->po_type->pot_lock();
+
+		/* Save pointerto unlock function */
+		unlock = po->po_type->pot_unlock;
+		
 		_PROP_REFCNT_LOCK();
     		ocnt = po->po_refcnt--;
 		_PROP_REFCNT_UNLOCK();
 
 		_PROP_ASSERT(ocnt != 0);
-		if (ocnt != 1)
+		if (ocnt != 1) {
+			if (unlock != NULL)
+				unlock();
 			break;
-
+		}
+		
 		_PROP_ASSERT(po->po_type);		
 		if ((po->po_type->pot_free)(NULL, &obj) ==
-						_PROP_OBJECT_FREE_DONE)
+		    _PROP_OBJECT_FREE_DONE) {
+			if (unlock != NULL)
+				unlock();
 			break;
+		}
 
+		if (unlock != NULL)
+			unlock();
+		
 		parent = po;
 		_PROP_REFCNT_LOCK();
 		++po->po_refcnt;
@@ -1062,6 +1078,7 @@ prop_object_release(prop_object_t obj)
 {
 	struct _prop_object *po;
 	struct _prop_stack stack;
+	void (*unlock)(void); 
 	int ret;
 	uint32_t ocnt;
 
@@ -1072,6 +1089,12 @@ prop_object_release(prop_object_t obj)
 			po = obj;
 			_PROP_ASSERT(obj);
 
+			if (po->po_type->pot_lock != NULL)
+				po->po_type->pot_lock();
+
+			/* Save pointer to object unlock function */
+			unlock = po->po_type->pot_unlock;
+			
 			_PROP_REFCNT_LOCK();
 			ocnt = po->po_refcnt--;
 			_PROP_REFCNT_UNLOCK();
@@ -1079,10 +1102,15 @@ prop_object_release(prop_object_t obj)
 			_PROP_ASSERT(ocnt != 0);
 			if (ocnt != 1) {
 				ret = 0;
+				if (unlock != NULL)
+					unlock();
 				break;
 			}
-
+			
 			ret = (po->po_type->pot_free)(&stack, &obj);
+
+			if (unlock != NULL)
+				unlock();
 
 			if (ret == _PROP_OBJECT_FREE_DONE)
 				break;
