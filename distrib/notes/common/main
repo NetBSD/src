@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.429 2008/11/19 00:56:53 snj Exp $
+.\"	$NetBSD: main,v 1.430 2008/11/30 21:13:03 tjam Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1572,6 +1572,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Simas Mockevicius Ta Mt symka@NetBSD.org
 .It Ta der Mouse Ta Mt mouse@NetBSD.org
 .It Ta Joseph Myers Ta Mt jsm@NetBSD.org
+.It Ta Tuomo M\(:akinen Ta Mt tjam@NetBSD.org
 .It Ta Ken Nakata Ta Mt kenn@NetBSD.org
 .It Ta Takeshi Nakayama Ta Mt nakayama@NetBSD.org
 .It Ta Phil Nelson Ta Mt phil@NetBSD.org
