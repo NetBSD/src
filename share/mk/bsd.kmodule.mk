@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.15 2008/11/12 12:35:54 ad Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.16 2008/11/30 22:05:56 hubertf Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -69,7 +69,8 @@ ${_PROG}:	.MADE					# no build at install
 .endif
 .endif
 	${_MKTARGET_INSTALL}
-	for d in ${_INST_DIRS}; do \
+	dirs=${_INST_DIRS:Q}; \
+	for d in $$dirs; do \
 		${INSTALL_DIR} $$d; \
 	done
 	${INSTALL_DIR} ${KMODULEDIR}
