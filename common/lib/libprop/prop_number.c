@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_number.c,v 1.19 2008/08/03 04:00:12 thorpej Exp $	*/
+/*	$NetBSD: prop_number.c,v 1.20 2008/11/30 00:17:07 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -74,11 +74,16 @@ static _prop_object_equals_rv_t
 				    void **, void **,
 				    prop_object_t *, prop_object_t *);
 
+static void _prop_number_lock(void);
+static void _prop_number_unlock(void);
+
 static const struct _prop_object_type _prop_object_type_number = {
 	.pot_type	=	PROP_TYPE_NUMBER,
 	.pot_free	=	_prop_number_free,
 	.pot_extern	=	_prop_number_externalize,
 	.pot_equals	=	_prop_number_equals,
+	.pot_lock       =       _prop_number_lock,
+	.pot_unlock     =    	_prop_number_unlock,
 };
 
 #define	prop_object_is_number(x)	\
@@ -152,15 +157,25 @@ _prop_number_free(prop_stack_t stack, prop_object_t *obj)
 {
 	prop_number_t pn = *obj;
 
-	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
 	_prop_rb_tree_remove_node(&_prop_number_tree, &pn->pn_link);
-	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
 
 	_PROP_POOL_PUT(_prop_number_pool, pn);
 
 	return (_PROP_OBJECT_FREE_DONE);
 }
 
+static void 
+_prop_number_lock()
+{
+	_PROP_MUTEX_LOCK(_prop_number_tree_mutex);
+}
+
+static void
+_prop_number_unlock()
+{
+	_PROP_MUTEX_UNLOCK(_prop_number_tree_mutex);
+}
+	
 static bool
 _prop_number_externalize(struct _prop_object_externalize_context *ctx,
 			 void *v)
