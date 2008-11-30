@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.71 2008/11/06 22:31:08 joerg Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.72 2008/11/30 16:20:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -95,6 +95,7 @@ int	ffs_valloc(struct vnode *, int, kauth_cred_t, struct vnode **);
 daddr_t	ffs_blkpref_ufs1(struct inode *, daddr_t, int, int, int32_t *);
 daddr_t	ffs_blkpref_ufs2(struct inode *, daddr_t, int, int, int64_t *);
 int	ffs_blkalloc(struct inode *, daddr_t, long);
+int	ffs_blkalloc_ump(struct ufsmount *, daddr_t, long);
 void	ffs_blkfree(struct fs *, struct vnode *, daddr_t, long, ino_t);
 int	ffs_vfree(struct vnode *, ino_t, int);
 void	ffs_clusteracct(struct fs *, struct cg *, int32_t, int);

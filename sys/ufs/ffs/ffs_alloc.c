@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.114 2008/11/06 22:31:08 joerg Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.115 2008/11/30 16:20:44 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.114 2008/11/06 22:31:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.115 2008/11/30 16:20:44 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1385,14 +1385,7 @@ gotit:
 int
 ffs_blkalloc(struct inode *ip, daddr_t bno, long size)
 {
-	struct ufsmount *ump = ip->i_ump;
 	struct fs *fs = ip->i_fs;
-	struct cg *cgp;
-	struct buf *bp;
-	int32_t fragno, cgbno;
-	int i, error, cg, blk, frags, bbase;
-	u_int8_t *blksfree;
-	const int needswap = UFS_FSNEEDSWAP(fs);
 
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
 	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
@@ -1401,14 +1394,33 @@ ffs_blkalloc(struct inode *ip, daddr_t bno, long size)
 		    ip->i_dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
 		panic("blkalloc: bad size");
 	}
-	cg = dtog(fs, bno);
 	if (bno >= fs->fs_size) {
 		printf("bad block %" PRId64 ", ino %" PRId64 "\n", bno,
 		    ip->i_number);
 		ffs_fserr(fs, ip->i_uid, "bad block");
 		return EINVAL;
 	}
-	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
+
+	return ffs_blkalloc_ump(ip->i_ump, bno, size);
+}
+
+int
+ffs_blkalloc_ump(struct ufsmount *ump, daddr_t bno, long size)
+{
+	struct fs *fs = ump->um_fs;
+	struct cg *cgp;
+	struct buf *bp;
+	int32_t fragno, cgbno;
+	int i, error, cg, blk, frags, bbase;
+	u_int8_t *blksfree;
+	const int needswap = UFS_FSNEEDSWAP(fs);
+
+	KASSERT((u_int)size <= fs->fs_bsize && fragoff(fs, size) == 0 &&
+	    fragnum(fs, bno) + numfrags(fs, size) <= fs->fs_frag);
+	KASSERT(bno < fs->fs_size);
+
+	cg = dtog(fs, bno);
+	error = bread(ump->um_devvp, fsbtodb(fs, cgtod(fs, cg)),
 		(int)fs->fs_cgsize, NOCRED, B_MODIFY, &bp);
 	if (error) {
 		brelse(bp, 0);
