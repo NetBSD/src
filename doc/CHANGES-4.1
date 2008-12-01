@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.115 2008/11/28 06:32:39 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.116 2008/12/01 00:07:19 snj Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2501,4 +2501,19 @@ usr.bin/who/who.c				1.23
 
 	Don't strip "pts/" when using ptyfs. Fixes PR/39201.
 	[dholland, ticket #1242]
+
+common/lib/libprop/prop_dictionary.c		1.33
+common/lib/libprop/prop_number.c		1.20
+common/lib/libprop/prop_object.c		1.23 via patch
+common/lib/libprop/prop_object_impl.h		1.28
+
+	Fix two race conditions in proplib.
+	[haad, ticket #1243]
+
+share/man/man5/statvfs.5			1.10
+share/man/man7/symlink.7			1.13, 1.15 via patch
+
+	Remove description of ST_MAGICLINKS; it went away a long time
+	ago.  Fixes PR 36947.
+	[dholland, ticket #1244]
 
