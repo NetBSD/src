@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.33 2008/11/30 22:37:55 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.34 2008/12/01 19:35:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.33 2008/11/30 22:37:55 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.34 2008/12/01 19:35:55 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.33 2008/11/30 22:37:55 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.34 2008/12/01 19:35:55 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -125,8 +125,8 @@ ForAddVar(const char *data, size_t len)
 
 	nvars = accumFor.nvars;
 	accumFor.nvars = nvars + 1;
-	accumFor.vars = bmake_realloc(accumFor.vars, nvars * sizeof(char *));
-
+	accumFor.vars = bmake_realloc(accumFor.vars,
+	    accumFor.nvars * sizeof(*accumFor.vars));
 	accumFor.vars[nvars] = make_str(data, len);
 }
 
