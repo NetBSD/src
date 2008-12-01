@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.34 2008/12/01 19:35:55 christos Exp $	*/
+/*	$NetBSD: for.c,v 1.35 2008/12/01 21:05:21 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.34 2008/12/01 19:35:55 christos Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.35 2008/12/01 21:05:21 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.34 2008/12/01 19:35:55 christos Exp $");
+__RCSID("$NetBSD: for.c,v 1.35 2008/12/01 21:05:21 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -141,9 +141,9 @@ ForAddVar(const char *data, size_t len)
  *	line		Line to parse
  *
  * Results:
- *	TRUE: We found a for loop, or we are inside a for loop
- *	FALSE: We did not find a for loop, or we found the end of the for
- *	       for loop.
+ *      0: Not a .for statement, parse the line
+ *	1: We found a for loop
+ *     -1: A .for statement with a bad syntax error, discard.
  *
  * Side Effects:
  *	None.
@@ -237,6 +237,11 @@ For_Eval(char *line)
     forLevel = 1;
     return 1;
 }
+
+/*
+ * Add another line to a .for loop.
+ * Returns 0 when the matching .enfor is reached.
+ */
 
 int
 For_Accum(char *line)
