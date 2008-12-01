@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.82 2008/10/23 17:16:24 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.83 2008/12/01 13:22:06 joerg Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.82 2008/10/23 17:16:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.83 2008/12/01 13:22:06 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -649,7 +649,7 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		if (loc < NDADDR) {
 			len = fragroundup(fs, blkoff(fs, xp->i_size));
 			if (len > 0 && len < fs->fs_bsize) {
-				ffs_blkfree(copy_fs, vp, db_get(xp, loc),
+				ffs_blkfree_snap(copy_fs, vp, db_get(xp, loc),
 				    len, xp->i_number);
 				blkno = db_get(xp, loc);
 				db_assign(xp, loc, 0);
@@ -1241,7 +1241,7 @@ mapacct(struct vnode *vp, void *bap, int oldblkp, int lastblkp,
 			*ip->i_snapblklist++ = lblkno;
 		if (blkno == BLK_SNAP)
 			blkno = blkstofrags(fs, lblkno);
-		ffs_blkfree(fs, vp, blkno, fs->fs_bsize, inum);
+		ffs_blkfree_snap(fs, vp, blkno, fs->fs_bsize, inum);
 	}
 	return (0);
 }
