@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.117 2008/12/01 13:33:39 cegger Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.118 2008/12/01 13:45:51 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.117 2008/12/01 13:33:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.118 2008/12/01 13:45:51 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1535,6 +1535,9 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	int error, cg;
 	dev_t dev;
 	const bool devvp_is_snapshot = (devvp->v_type != VBLK);
+#ifdef FFS_EI
+	const int needswap = UFS_FSNEEDSWAP(fs);
+#endif
 
 	KASSERT(!devvp_is_snapshot);
 
@@ -1584,6 +1587,9 @@ ffs_blkfree_snap(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	int error, cg;
 	dev_t dev;
 	const bool devvp_is_snapshot = (devvp->v_type != VBLK);
+#ifdef FFS_EI
+	const int needswap = UFS_FSNEEDSWAP(fs);
+#endif
 
 	KASSERT(devvp_is_snapshot);
 
