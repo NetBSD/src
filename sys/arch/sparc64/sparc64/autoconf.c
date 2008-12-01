@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.158 2008/11/30 18:21:36 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.159 2008/12/01 00:09:47 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.158 2008/11/30 18:21:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.159 2008/12/01 00:09:47 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -757,6 +757,11 @@ dev_path_drive_match(struct device *dev, int ctrlnode, int target, int lun)
 	if (child == ofbootpackage) {
 		/* boot device is on this controller */
 		DPRINTF(ACDB_BOOTDEV, ("found controller of bootdevice\n"));
+		/*
+		 * Note: "child" here is == ofbootpackage (s.a.), which
+		 * may be completely wrong for the device we are checking,
+		 * what we realy do here is to match "target" and "lun".
+		 */
 		sprintf(buf, "%s@%d,%d", prom_getpropstring(child, "name"),
 		    target, lun);
 		if (ofboottarget && strcmp(buf, ofboottarget) == 0) {
@@ -858,6 +863,7 @@ device_register(struct device *dev, void *aux)
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
+		int off = 0;
 
 		/*
 		 * There are two "cd" attachments:
@@ -865,10 +871,20 @@ device_register(struct device *dev, void *aux)
 		 *   scsibus -> controller
 		 * We want the node of the controller.
 		 */
-		if (device_is_a(busdev, "atapibus"))
+		if (device_is_a(busdev, "atapibus")) {
 			busdev = device_parent(busdev);
+			/*
+			 * if the atapibus is connected to the secondary
+			 * channel of the atabus, we need an offset of 2
+			 * to match OF's idea of the target number.
+			 * (i.e. on U5/U10 "cdrom" and "disk2" have the
+			 * same target encoding, though different names)
+			 */
+			if (periph->periph_channel->chan_channel == 1)
+				off = 2;
+		}
 		ofnode = device_ofnode(device_parent(busdev));
-		dev_path_drive_match(dev, ofnode, periph->periph_target,
+		dev_path_drive_match(dev, ofnode, periph->periph_target + off,
 		    periph->periph_lun);
 	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;
