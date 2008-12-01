@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.64 2007/10/09 18:43:26 martin Exp $	*/
+/*	$NetBSD: run.c,v 1.65 2008/12/01 10:22:36 ad Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -121,7 +121,7 @@ log_flip(menudesc *m, void *arg)
 		fflush(logfp);
 		fclose(logfp);
 	} else {
-		logfp = fopen("sysinst.log", "a");
+		logfp = fopen("/tmp/sysinst.log", "a");
 		if (logfp != NULL) {
 			logging = 1;
 			fprintf(logfp,
@@ -147,7 +147,7 @@ script_flip(menudesc *m, void *arg)
 		fflush(script);
 		fclose(script);
 	} else {
-		script = fopen("sysinst.sh", "w");
+		script = fopen("/tmp/sysinst.sh", "w");
 		if (script != NULL) {
 			scripting = 1;
 			scripting_fprintf(NULL, "#!/bin/sh\n");
