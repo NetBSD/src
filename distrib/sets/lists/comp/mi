@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201.2.2 2008/12/01 01:14:31 snj Exp $
+#	$NetBSD: mi,v 1.1201.2.3 2008/12/01 01:18:41 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8329,7 +8329,7 @@
 ./usr/share/man/cat9/geteblk.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getiobuf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/getiobuf_nowait.0		comp-obsolete		obsolete
-./usr/share/man/cat9/getmicroptime.0		comp-sys-catman		.cat
+./usr/share/man/cat9/getmicrouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnanouptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/getnewvnode.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/gsignal.0			comp-sys-catman		.cat
@@ -13715,6 +13715,7 @@
 ./usr/share/man/html9/namecache.html		comp-sys-htmlman	html
 ./usr/share/man/html9/namecache_print.html	comp-sys-htmlman	html
 ./usr/share/man/html9/namei.html		comp-sys-htmlman	html
+./usr/share/man/html9/nanouptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/old_sysctl.html		comp-sys-htmlman	html
 ./usr/share/man/html9/opencrypto.html		comp-sys-htmlman	html
 ./usr/share/man/html9/optstr.html		comp-sys-htmlman	html
