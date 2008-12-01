@@ -1,8 +1,9 @@
 #!/bin/sh
 #
-# $NetBSD: mountall,v 1.5 2008/11/12 12:35:52 ad Exp $
+# $NetBSD: mountall,v 1.6 2008/12/01 14:47:14 tsutsui Exp $
 #
 
+# REQUIRE: mountcritremote named ypbind
 # PROVIDE: mountall
 
 $_rc_subr_loaded . /etc/rc.subr
