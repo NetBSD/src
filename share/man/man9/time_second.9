@@ -1,4 +1,4 @@
-.\" $NetBSD: time_second.9,v 1.1.24.1 2008/12/01 01:40:09 snj Exp $
+.\" $NetBSD: time_second.9,v 1.1.24.2 2008/12/01 01:44:14 snj Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -101,12 +101,11 @@ Similarly, the
 .Xr nanouptime 9 ,
 and
 .Xr getnanouptime 9
-functions can be used to get the time elapse since boot more accurately
+functions can be used to get the time elapsed since boot more accurately
 and in an atomic manner.
 .Pp
 .Va boottime
 may be read and written without special precautions.
-.Pp
 .Sh SEE ALSO
 .Xr clock_settime 2 ,
 .Xr ntp_adjtime 2 ,
