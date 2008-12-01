@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.15 2008/11/16 19:34:29 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.16 2008/12/01 11:22:12 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.15 2008/11/16 19:34:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.16 2008/12/01 11:22:12 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1560,6 +1560,8 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 	size_t len;
 	const int mask = DEV_BSIZE - 1;
 	int error;
+	bool need_wapbl = (vp->v_mount && vp->v_mount->mnt_wapbl &&
+	    (ioflag & IO_JOURNALLOCKED) == 0);
 
 	/*
 	 * We only support direct I/O to user space for now.
@@ -1581,7 +1583,7 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 		return;
 	}
 
-	if ((ioflag & IO_JOURNALLOCKED) == 0) {
+	if (need_wapbl) {
 		error = WAPBL_BEGIN(vp->v_mount);
 		if (error)
 			return;
@@ -1633,7 +1635,7 @@ genfs_directio(struct vnode *vp, struct uio *uio, int ioflag)
 		uio->uio_resid -= len;
 	}
 
-	if ((ioflag & IO_JOURNALLOCKED) == 0)
+	if (need_wapbl)
 		WAPBL_END(vp->v_mount);
 }
 
