@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.16 2008/11/26 20:17:33 pooka Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.17 2008/12/01 14:34:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.16 2008/11/26 20:17:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.17 2008/12/01 14:34:50 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,6 +34,8 @@ __KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.16 2008/11/26 20:17:33 pooka Exp $")
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
+#include <miscfs/fifofs/fifo.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <fs/efs/efs.h>
 #include <fs/efs/efs_sb.h>
@@ -825,4 +827,114 @@ const struct vnodeopv_entry_desc efs_vnodeop_entries[] = {
 const struct vnodeopv_desc efs_vnodeop_opv_desc = {
 	&efs_vnodeop_p,
 	efs_vnodeop_entries
+};
+
+int (**efs_specop_p)(void *);
+const struct vnodeopv_entry_desc efs_specop_entries[] = {
+	{ &vop_default_desc,	vn_default_error},	/* error handler */
+	{ &vop_lookup_desc,	spec_lookup	},	/* lookup */
+	{ &vop_create_desc,	spec_create	},	/* create */
+	{ &vop_mknod_desc,	spec_mknod	},	/* mknod */
+	{ &vop_open_desc,	spec_open	},	/* open */
+	{ &vop_close_desc,	spec_close	},	/* close */
+	{ &vop_access_desc,	efs_access	},	/* access */
+	{ &vop_getattr_desc,	efs_getattr	},	/* getattr */
+	{ &vop_setattr_desc,	genfs_eopnotsupp},	/* setattr */
+	{ &vop_read_desc,	spec_read	},	/* read */
+	{ &vop_write_desc,	spec_write	},	/* write */
+	{ &vop_ioctl_desc,	spec_ioctl	},	/* ioctl */
+	{ &vop_fcntl_desc,	genfs_fcntl	},	/* fcntl */
+	{ &vop_poll_desc,	spec_poll	},	/* poll */
+	{ &vop_kqfilter_desc,	spec_kqfilter	},	/* kqfilter */
+	{ &vop_revoke_desc,	spec_revoke	},	/* revoke */
+	{ &vop_mmap_desc,	spec_mmap	},	/* mmap */
+	{ &vop_fsync_desc,	spec_fsync	},	/* fsync */
+	{ &vop_seek_desc,	spec_seek	},	/* seek */
+	{ &vop_remove_desc,	spec_remove	},	/* remove */
+	{ &vop_link_desc,	spec_link	},	/* link */
+	{ &vop_rename_desc,	spec_rename	},	/* rename */
+	{ &vop_mkdir_desc,	spec_mkdir	},	/* mkdir */
+	{ &vop_rmdir_desc,	spec_rmdir	},	/* rmdir */
+	{ &vop_symlink_desc,	spec_symlink	},	/* symlink */
+	{ &vop_readdir_desc,	spec_readdir	},	/* readdir */
+	{ &vop_readlink_desc,	spec_readlink	},	/* readlink */
+	{ &vop_abortop_desc,	spec_abortop	},	/* abortop */
+	{ &vop_inactive_desc,	efs_inactive	},	/* inactive */
+	{ &vop_reclaim_desc,	efs_reclaim	},	/* reclaim */
+	{ &vop_lock_desc,	genfs_lock,	},	/* lock */
+	{ &vop_unlock_desc,	genfs_unlock,	},	/* unlock */
+	{ &vop_islocked_desc,	genfs_islocked,	},	/* islocked */
+	{ &vop_bmap_desc,	spec_bmap	},	/* bmap */
+	{ &vop_print_desc,	efs_print	},	/* print */
+	{ &vop_pathconf_desc,	spec_pathconf	},	/* pathconf */
+	{ &vop_advlock_desc,	spec_advlock	},	/* advlock */
+							/* blkatoff */
+							/* valloc */
+							/* balloc */
+							/* vfree */
+							/* truncate */
+							/* whiteout */
+	{ &vop_getpages_desc,	spec_getpages	},	/* getpages */
+	{ &vop_putpages_desc,	spec_putpages	},	/* putpages */
+	{ &vop_bwrite_desc,	vn_bwrite	},	/* bwrite */
+	{ &vop_strategy_desc,	spec_strategy	},	/* strategy */
+	{ NULL, NULL }
+};
+const struct vnodeopv_desc efs_specop_opv_desc = {
+	&efs_specop_p,
+	efs_specop_entries
+};
+
+int (**efs_fifoop_p)(void *);
+const struct vnodeopv_entry_desc efs_fifoop_entries[] = {
+	{ &vop_default_desc,	vn_default_error},	/* error handler */
+	{ &vop_lookup_desc,	fifo_lookup	},	/* lookup */
+	{ &vop_create_desc,	fifo_create	},	/* create */
+	{ &vop_mknod_desc,	fifo_mknod	},	/* mknod */
+	{ &vop_open_desc,	fifo_open	},	/* open */
+	{ &vop_close_desc,	fifo_close	},	/* close */
+	{ &vop_access_desc,	efs_access	},	/* access */
+	{ &vop_getattr_desc,	efs_getattr	},	/* getattr */
+	{ &vop_setattr_desc,	genfs_eopnotsupp},	/* setattr */
+	{ &vop_read_desc,	fifo_read	},	/* read */
+	{ &vop_write_desc,	fifo_write	},	/* write */
+	{ &vop_ioctl_desc,	fifo_ioctl	},	/* ioctl */
+	{ &vop_fcntl_desc,	genfs_fcntl	},	/* fcntl */
+	{ &vop_poll_desc,	fifo_poll	},	/* poll */
+	{ &vop_kqfilter_desc,	fifo_kqfilter	},	/* kqfilter */
+	{ &vop_revoke_desc,	fifo_revoke	},	/* revoke */
+	{ &vop_mmap_desc,	fifo_mmap	},	/* mmap */
+	{ &vop_fsync_desc,	fifo_fsync	},	/* fsync */
+	{ &vop_seek_desc,	fifo_seek	},	/* seek */
+	{ &vop_remove_desc,	fifo_remove	},	/* remove */
+	{ &vop_link_desc,	fifo_link	},	/* link */
+	{ &vop_rename_desc,	fifo_rename	},	/* rename */
+	{ &vop_mkdir_desc,	fifo_mkdir	},	/* mkdir */
+	{ &vop_rmdir_desc,	fifo_rmdir	},	/* rmdir */
+	{ &vop_symlink_desc,	fifo_symlink	},	/* symlink */
+	{ &vop_readdir_desc,	fifo_readdir	},	/* readdir */
+	{ &vop_readlink_desc,	fifo_readlink	},	/* readlink */
+	{ &vop_abortop_desc,	fifo_abortop	},	/* abortop */
+	{ &vop_inactive_desc,	efs_inactive	},	/* inactive */
+	{ &vop_reclaim_desc,	efs_reclaim	},	/* reclaim */
+	{ &vop_lock_desc,	genfs_lock,	},	/* lock */
+	{ &vop_unlock_desc,	genfs_unlock,	},	/* unlock */
+	{ &vop_islocked_desc,	genfs_islocked,	},	/* islocked */
+	{ &vop_bmap_desc,	fifo_bmap	},	/* bmap */
+	{ &vop_print_desc,	efs_print	},	/* print */
+	{ &vop_pathconf_desc,	fifo_pathconf	},	/* pathconf */
+	{ &vop_advlock_desc,	fifo_advlock	},	/* advlock */
+							/* blkatoff */
+							/* valloc */
+							/* balloc */
+							/* vfree */
+							/* truncate */
+							/* whiteout */
+	{ &vop_bwrite_desc,	vn_bwrite	},	/* bwrite */
+	{ &vop_strategy_desc,	fifo_strategy	},	/* strategy */
+	{ NULL, NULL }
+};
+const struct vnodeopv_desc efs_fifoop_opv_desc = {
+	&efs_fifoop_p,
+	efs_fifoop_entries
 };
