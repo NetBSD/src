@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.101 2008/08/04 13:37:33 pooka Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.102 2008/12/01 10:54:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.101 2008/08/04 13:37:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.102 2008/12/01 10:54:57 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -462,15 +462,16 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
  */
 
 void
-uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
+uvm_km_pgremove_intrsafe(struct vm_map *map, vaddr_t start, vaddr_t end)
 {
 	struct vm_page *pg;
 	paddr_t pa;
 	UVMHIST_FUNC("uvm_km_pgremove_intrsafe"); UVMHIST_CALLED(maphist);
 
-	KASSERT(VM_MIN_KERNEL_ADDRESS <= start);
+	KASSERT(VM_MAP_IS_KERNEL(map));
+	KASSERT(vm_map_min(map) <= start);
 	KASSERT(start < end);
-	KASSERT(end <= VM_MAX_KERNEL_ADDRESS);
+	KASSERT(end <= vm_map_max(map));
 
 	for (; start < end; start += PAGE_SIZE) {
 		if (!pmap_extract(pmap_kernel(), start, &pa)) {
@@ -485,23 +486,23 @@ uvm_km_pgremove_intrsafe(vaddr_t start, vaddr_t end)
 
 #if defined(DEBUG)
 void
-uvm_km_check_empty(vaddr_t start, vaddr_t end, bool intrsafe)
+uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 {
+	struct vm_page *pg;
 	vaddr_t va;
 	paddr_t pa;
 
-	KDASSERT(VM_MIN_KERNEL_ADDRESS <= start);
+	KDASSERT(VM_MAP_IS_KERNEL(map));
+	KDASSERT(vm_map_min(map) <= start);
 	KDASSERT(start < end);
-	KDASSERT(end <= VM_MAX_KERNEL_ADDRESS);
+	KDASSERT(end <= vm_map_max(map));
 
 	for (va = start; va < end; va += PAGE_SIZE) {
 		if (pmap_extract(pmap_kernel(), va, &pa)) {
 			panic("uvm_km_check_empty: va %p has pa 0x%llx",
 			    (void *)va, (long long)pa);
 		}
-		if (!intrsafe) {
-			const struct vm_page *pg;
-
+		if ((map->flags & VM_MAP_INTRSAFE) == 0) {
 			mutex_enter(&uvm_kernel_object->vmobjlock);
 			pg = uvm_pagelookup(uvm_kernel_object,
 			    va - vm_map_min(kernel_map));
@@ -655,7 +656,7 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 		uvm_km_pgremove(addr, addr + size);
 		pmap_remove(pmap_kernel(), addr, addr + size);
 	} else if (flags & UVM_KMF_WIRED) {
-		uvm_km_pgremove_intrsafe(addr, addr + size);
+		uvm_km_pgremove_intrsafe(map, addr, addr + size);
 		pmap_kremove(addr, size);
 	}
 
@@ -765,7 +766,7 @@ uvm_km_free_poolpage_cache(struct vm_map *map, vaddr_t addr)
 	}
 
 	KASSERT(pmap_extract(pmap_kernel(), addr, NULL));
-	uvm_km_pgremove_intrsafe(addr, addr + PAGE_SIZE);
+	uvm_km_pgremove_intrsafe(map, addr, addr + PAGE_SIZE);
 	pmap_kremove(addr, PAGE_SIZE);
 #if defined(DEBUG)
 	pmap_update(pmap_kernel());
