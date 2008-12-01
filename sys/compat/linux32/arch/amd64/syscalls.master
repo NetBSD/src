@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.40 2008/11/19 18:36:04 ad Exp $
+	$NetBSD: syscalls.master,v 1.41 2008/12/01 14:18:44 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -273,8 +273,8 @@
 		    int policy, linux32_sched_paramp_t sp); }
 157	STD	{ int linux32_sys_sched_getscheduler(pid_t pid); }
 158	NOARGS	{ int linux_sys_sched_yield(void); }
-159	UNIMPL	sched_get_priority_max
-160	UNIMPL	sched_get_priority_min
+159	STD	{ int linux32_sys_sched_get_priority_max(int policy); }
+160	STD	{ int linux32_sys_sched_get_priority_min(int policy); }
 161	UNIMPL	sched_rr_get_interval
 162	STD	{ int linux32_sys_nanosleep(linux32_timespecp_t rqtp, \
 		    linux32_timespecp_t rmtp); }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sched.c,v 1.7 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_sched.c,v 1.8 2008/12/01 14:18:44 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sched.c,v 1.7 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sched.c,v 1.8 2008/12/01 14:18:44 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,4 +146,32 @@ linux32_sys_exit_group(struct lwp *l, const struct linux32_sys_exit_group_args *
 	NETBSD32TO64_UAP(error_code);
 
 	return linux_sys_exit_group(l, &ua, retval);
+}
+
+int
+linux32_sys_sched_get_priority_max(struct lwp *l, const struct linux32_sys_sched_get_priority_max_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) policy;
+	} */
+
+	struct linux_sys_sched_get_priority_max_args ua;
+
+	NETBSD32TO64_UAP(policy);
+
+	return linux_sys_sched_get_priority_max(l, &ua, retval);
+}
+
+int
+linux32_sys_sched_get_priority_min(struct lwp *l, const struct linux32_sys_sched_get_priority_min_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) policy;
+	} */
+
+	struct linux_sys_sched_get_priority_min_args ua;
+
+	NETBSD32TO64_UAP(policy);
+
+	return linux_sys_sched_get_priority_min(l, &ua, retval);
 }
