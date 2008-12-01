@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/11/21 15:49:51 ad Exp $
+#	$NetBSD: Makefile,v 1.7 2008/12/01 10:20:57 ad Exp $
 #
 
 # Install CD, to be made after 'build.sh release'
@@ -15,12 +15,5 @@ SYSINSTDIR!=	cd ${.CURDIR}/../../../utils/sysinst/arch/${MACHINE} && ${PRINTOBJD
 
 prepare_md_post:
 	${TOOL_SED} "s/@@VERSION@@/${DISTRIBVER}/" < ${.CURDIR}/boot.cfg.in > boot.cfg
-
-image_md_pre:
-	${CP} ${.CURDIR}/../../ramdisks/common/dot.profile cdrom/etc/rc
-	${MKDIR} cdrom/mnt2 cdrom/targetroot
-	${CP} ${SYSINSTDIR}/sysinst cdrom
-	${CHMOD} ugo+rx cdrom/sysinst
-	${CP} ${SYSINSTDIR}/sysinstmsgs.?? cdrom
 
 .include "${.CURDIR}/../../../common/Makefile.bootcd"
