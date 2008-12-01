@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1201.2.5 2008/12/01 01:25:59 snj Exp $
+#	$NetBSD: mi,v 1.1201.2.6 2008/12/01 01:28:10 snj Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8838,6 +8838,7 @@
 ./usr/share/man/cat9/sysmon_envsys_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/tc.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_badaddr.0		comp-sys-catman		.cat
+./usr/share/man/cat9/tc_init.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_intr_disestablish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_intr_establish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/tc_intr_evcnt.0		comp-sys-catman		.cat
@@ -14004,6 +14005,7 @@
 ./usr/share/man/html9/sysmon_envsys_unregister.html	comp-sys-htmlman	html
 ./usr/share/man/html9/tc.html			comp-sys-htmlman	html
 ./usr/share/man/html9/tc_badaddr.html		comp-sys-htmlman	html
+./usr/share/man/html9/tc_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/tc_intr_disestablish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/tc_intr_establish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/tc_intr_evcnt.html	comp-sys-htmlman	html
@@ -19378,6 +19380,7 @@
 ./usr/share/man/man9/sysmon_envsys_unregister.9	comp-sys-man		.man
 ./usr/share/man/man9/tc.9			comp-sys-man		.man
 ./usr/share/man/man9/tc_badaddr.9		comp-sys-man		.man
+./usr/share/man/man9/tc_init.9			comp-sys-man		.man
 ./usr/share/man/man9/tc_intr_disestablish.9	comp-sys-man		.man
 ./usr/share/man/man9/tc_intr_establish.9	comp-sys-man		.man
 ./usr/share/man/man9/tc_intr_evcnt.9		comp-sys-man		.man
