@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.25.8.1 2008/12/01 00:55:55 snj Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.25.8.2 2008/12/01 00:57:03 snj Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.25.8.1 2008/12/01 00:55:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.25.8.2 2008/12/01 00:57:03 snj Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -728,6 +728,8 @@ write_dsfield(struct mbuf *m, struct altq_pktattr *pktattr, u_int8_t dsfield)
 	return;
 }
 
+#define BINTIME_SHIFT	2
+
 u_int32_t machclk_freq = 0;
 u_int32_t machclk_per_tick = 0;
 
@@ -738,12 +740,12 @@ init_machclk(void)
 	callout_init(&tbr_callout, 0);
 
 	/*
-	 * Always emulate 1GHz counter using nanotime(9)
+	 * Always emulate 1GiHz counter using bintime(9)
 	 * since it has enough resolution via timecounter(9).
 	 * Using machine dependent cpu_counter() is not MP safe
 	 * and it won't work even on UP with Speedstep etc.
 	 */
-	machclk_freq = 1000000000;
+	machclk_freq = 1024 * 1024 * 1024;	/* 2^30 to emulate ~1GHz */
 	machclk_per_tick = machclk_freq / hz;
 #ifdef ALTQ_DEBUG
 	printf("altq: emulate %uHz CPU clock\n", machclk_freq);
@@ -753,11 +755,11 @@ init_machclk(void)
 u_int64_t
 read_machclk(void)
 {
-	struct timespec tsp;
+	struct bintime bt;
 	u_int64_t val;
 
-	nanouptime(&tsp);
-	val = (u_int64_t)tsp.tv_sec * 1000000000 + tsp.tv_nsec;
+	binuptime(&bt);
+	val = (((u_int64_t)bt.sec << 32) + (bt.frac >> 32)) >> BINTIME_SHIFT;
 	return (val);
 }
 
