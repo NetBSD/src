@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.18.3 2008/11/17 11:06:21 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.18.4 2008/12/02 11:57:30 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -78,6 +78,12 @@ extern struct pmap kernel_pmap_store;
 extern int pmap_hptsize;
 extern struct pdc_hwtlb pdc_hwtlb;
 #endif
+
+/*
+ * pool quickmaps
+ */
+#define	PMAP_MAP_POOLPAGE(pa)	(pa)
+#define	PMAP_UNMAP_POOLPAGE(va)	(va)
 
 /*
  * according to the parisc manual aliased va's should be
