@@ -65,7 +65,10 @@ static const device_info_t device_info[] = {
 	{"sd", 64},	
 	{"dk", 1},
 	{"wd", 64},	
-	{"vnd",1},
+	{"vnd", 1},
+	{"raid", 64},
+	{"cgd", 1},
+	{"ccd", 1},	
 	{NULL, -1}
 };
 
@@ -137,12 +140,12 @@ static int _scan_dev(const struct config_node *cn)
 	memset(_block_device_major, -1, sizeof(int) * NUMBER_OF_MAJORS);
 
 	/* get size kernel drivers array from kernel*/
-	if (sysctlbyname("kern.drivers",NULL,&val_len,NULL,0) < 0) {
+	if (sysctlbyname("kern.drivers", NULL, &val_len, NULL, 0) < 0) {
 		printf("sysctlbyname failed");
 		return LVM_FAILURE;
 	}
 	
-	if ((kd = malloc (val_len)) == NULL){
+	if ((kd = malloc(val_len)) == NULL){
 		printf("malloc kd info error\n");
 		return LVM_FAILURE;
 	}
