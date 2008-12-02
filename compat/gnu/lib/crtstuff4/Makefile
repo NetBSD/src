@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/10/27 08:00:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2008/12/02 21:43:09 mrg Exp $
 
 NOLINT= # defined
 NOMAN=	# defined
@@ -18,7 +18,7 @@ ${var}:=        ${${var}}
 
 _CURDIR:= ${.CURDIR}
 
-.PATH: ${NETBSDSRCDIR}/gnu/lib/crtstuff4
+.PATH.c: ${NETBSDSRCDIR}/gnu/lib/crtstuff4
 .CURDIR:=${NETBSDSRCDIR}/gnu/lib/crtstuff4
 
 .include "${NETBSDSRCDIR}/compat/Makefile.compat"
