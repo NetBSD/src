@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.46 2008/11/24 00:25:30 njoly Exp $
+	$NetBSD: syscalls.master,v 1.47 2008/12/02 13:45:02 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -266,8 +266,8 @@
 			    struct osf1_sigaction *osa); }
 157	UNIMPL		sigwaitprim
 158	UNIMPL		nfssvc
-159	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
-			    u_int count, long *basep); }
+159	STD		{ int osf1_sys_getdirentries(int fd, char *buf, \
+			    int nbytes, long *basep); }
 160	STD		{ int osf1_sys_statfs(const char *path, \
 			    struct osf1_statfs *buf, int len); }
 161	STD		{ int osf1_sys_fstatfs(int fd, \
