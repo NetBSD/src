@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.94 2008/11/14 23:06:45 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.95 2008/12/02 10:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.94 2008/11/14 23:06:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.95 2008/12/02 10:46:43 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -192,26 +192,30 @@ uvm_kick_pdaemon(void)
 static void
 uvmpd_tune(void)
 {
+	int val;
+
 	UVMHIST_FUNC("uvmpd_tune"); UVMHIST_CALLED(pdhist);
 
 	/*
 	 * try to keep 0.5% of available RAM free, but limit to between
 	 * 128k and 1024k per-CPU.  XXX: what are these values good for?
 	 */
-	uvmexp.freemin = uvmexp.npages / 200;
-	uvmexp.freemin = MAX(uvmexp.freemin, (128*1024) >> PAGE_SHIFT);
-	uvmexp.freemin = MIN(uvmexp.freemin, (1024*1024) >> PAGE_SHIFT);
-	uvmexp.freemin *= ncpu;
+	val = uvmexp.npages / 200;
+	val = MAX(val, (128*1024) >> PAGE_SHIFT);
+	val = MIN(val, (1024*1024) >> PAGE_SHIFT);
+	val *= ncpu;
 
 	/* Make sure there's always a user page free. */
-	if (uvmexp.freemin < uvmexp.reserve_kernel + 1)
-		uvmexp.freemin = uvmexp.reserve_kernel + 1;
+	if (val < uvmexp.reserve_kernel + 1)
+		val = uvmexp.reserve_kernel + 1;
+	uvmexp.freemin = val;
 
-	uvmexp.freetarg = (uvmexp.freemin * 4) / 3;
-	if (uvmexp.freetarg <= uvmexp.freemin)
-		uvmexp.freetarg = uvmexp.freemin + 1;
+	val = (uvmexp.freemin * 4) / 3;
+	if (val <= uvmexp.freemin)
+		val = uvmexp.freemin + 1;
 
-	uvmexp.freetarg += uvm_extrapages;
+	val += uvm_extrapages;
+	uvmexp.freetarg = val;
 	uvm_extrapages = 0;
 
 	uvmexp.wiredmax = uvmexp.npages / 3;
