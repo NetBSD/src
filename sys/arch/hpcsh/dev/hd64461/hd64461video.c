@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.49 2008/12/02 20:44:43 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.50 2008/12/02 20:48:24 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.49 2008/12/02 20:44:43 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.50 2008/12/02 20:48:24 uwe Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -1029,7 +1029,7 @@ hd64461video_set_display_mode_lcdc(struct hd64461video_chip *hvc)
 		uint16_t clor;	/* display size 640 x 240 */
 		uint16_t ldr3;
 		const char *name;
-	} disp_conf[] = {
+	} *conf, disp_conf[] = {
 		[LCD256_C]	= { 640, HD64461_LCDLDR3_CG_COLOR8,
 				    "8bit color" },
 		[LCD64K_C]	= { 640 * 2, HD64461_LCDLDR3_CG_COLOR16,
@@ -1042,7 +1042,7 @@ hd64461video_set_display_mode_lcdc(struct hd64461video_chip *hvc)
 				    "2bit grayscale" },
 		[LCD2_MONO]	= { 640 / 8, HD64461_LCDLDR3_CG_GRAY1,
 				    "monochrome" },
-	}, *conf;
+	};
 	uint16_t r;
 	int omode;
 	
