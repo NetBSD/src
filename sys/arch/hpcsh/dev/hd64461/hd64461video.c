@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.46 2008/04/28 20:23:22 martin Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.47 2008/12/02 16:39:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.46 2008/04/28 20:23:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.47 2008/12/02 16:39:47 uwe Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -1305,7 +1305,7 @@ hd64461video_info(struct hd64461video_softc *sc)
 		printf("8-bit grayscale");
 		break;
 	case HD64461_LCDLDR2_LM_GRAY4:
-		printf("8-bit grayscale");
+		printf("4-bit grayscale");
 		break;
 	}
 	printf(" LCD interface\n");
