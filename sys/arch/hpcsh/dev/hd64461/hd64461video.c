@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.47 2008/12/02 16:39:47 uwe Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.48 2008/12/02 20:39:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.47 2008/12/02 16:39:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.48 2008/12/02 20:39:36 uwe Exp $");
 
 #include "opt_hd64461video.h"
 // #define HD64461VIDEO_HWACCEL
@@ -1030,17 +1030,17 @@ hd64461video_set_display_mode_lcdc(struct hd64461video_chip *hvc)
 		uint16_t ldr3;
 		const char *name;
 	} disp_conf[] = {
-		[LCD256_C]	= { 0x280 , HD64461_LCDLDR3_CG_COLOR8 ,
+		[LCD256_C]	= { 640, HD64461_LCDLDR3_CG_COLOR8,
 				    "8bit color" },
-		[LCD64K_C]	= { 0x500 , HD64461_LCDLDR3_CG_COLOR16 ,
+		[LCD64K_C]	= { 640 * 2, HD64461_LCDLDR3_CG_COLOR16,
 				    "16bit color" },
-		[LCD64_MONO]	= { 0x280 , HD64461_LCDLDR3_CG_GRAY6 ,
+		[LCD64_MONO]	= { 640, HD64461_LCDLDR3_CG_GRAY6 ,
 				    "6bit gray scale" },
-		[LCD16_MONO]	= { 0x140 , HD64461_LCDLDR3_CG_GRAY4 ,
+		[LCD16_MONO]	= { 640 / 2, HD64461_LCDLDR3_CG_GRAY4,
 				    "4bit gray scale" },
-		[LCD4_MONO]	= { 0x0a0 , HD64461_LCDLDR3_CG_GRAY2 ,
+		[LCD4_MONO]	= { 640 / 4, HD64461_LCDLDR3_CG_GRAY2,
 				    "2bit gray scale" },
-		[LCD2_MONO]	= { 0x050 , HD64461_LCDLDR3_CG_GRAY1 ,
+		[LCD2_MONO]	= { 640 / 8, HD64461_LCDLDR3_CG_GRAY1,
 				    "mono chrome" },
 	}, *conf;
 	uint16_t r;
