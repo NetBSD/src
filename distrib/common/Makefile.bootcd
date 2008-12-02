@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.15 2008/11/21 14:49:45 ad Exp $
+#	$NetBSD: Makefile.bootcd,v 1.16 2008/12/02 10:06:00 hubertf Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -154,17 +154,20 @@ copy-releasedir:
 		cd $$curdir;						\
 	fi
 	if [ "X${CDEXTRA}${CDBUILDEXTRA}" != "X" ]; then		\
-		curdir=$$(pwd);						\
+		curdir=`pwd`;						\
 		skipflag="";						\
-		if [ "X${CDEXTRA_SKIP}" != "X" ]; then			\
+		cdextra_skip="${CDEXTRA_SKIP}";				\
+		if [ "X$${cdextra_skip}" != "X" ]; then			\
 			rm -f cdskip;					\
-			for skip in ${CDEXTRA_SKIP};			\
+			for skip in $${cdextra_skip};			\
 			do						\
 				echo $${skip} >> cdskip;		\
 			done;						\
 			skipflag="-X $${curdir}/cdskip";		\
 		fi;							\
-		for cde in ${CDEXTRA} ${CDBUILDEXTRA};			\
+		cdextra="${CDEXTRA}"; 					\
+		cdbuildextra="${CDBUILDEXTRA}"; 			\
+		for cde in $${cdextra} $${cdbuildextra};		\
 		do							\
 			release_destdir=$${curdir}/cdrom;		\
 			if [ -f $${cde} ]; then				\
