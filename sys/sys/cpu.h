@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2008/12/02 17:57:32 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.26 2008/12/02 18:02:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -93,6 +93,6 @@ cpu_index(struct cpu_info *ci)
 /* flags for cpu_need_resched */
 #define	RESCHED_LAZY		0x01
 #define	RESCHED_IMMED		0x02
-#define	RESCHED_KPREEMPT	0x03
+#define	RESCHED_KPREEMPT	0x04
 
 #endif	/* !_SYS_CPU_H_ */
