@@ -1,3 +1,7 @@
+2008-12-02  Timo Teras  <timo.teras@iki.fi>
+	* src/racoon/session.c: Default action for SIGPIPE in Linux is
+	  terminate; explicitly ignore it.
+
 2008-11-27  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/isakmp_cfg.c: Fixed pool resizing.
 	* src/racoon/main.c: Set up a default value for Mode Config Pool
