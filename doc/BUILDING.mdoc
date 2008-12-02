@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.70 2008/11/15 11:27:49 mrg Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.71 2008/12/02 22:28:21 mrg Exp $
 .\"
 .\" Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -236,7 +236,10 @@ can be provided only in the environment or via the
 .Fl O
 flag of
 .Nm build.sh ;
-it cannot usefully be set inside a Makefile.
+it cannot usefully be set inside a Makefile, including
+.Pa mk.conf
+or
+.Sy ${MAKECONF} .
 .
 .It Sy MAKEOBJDIRPREFIX
 Top level directory of the object directory tree.
@@ -252,7 +255,10 @@ can be provided only in the environment or via the
 .Fl M
 flag of
 .Nm build.sh ;
-it cannot usefully be set inside a Makefile.
+it cannot usefully be set inside a Makefile, including 
+.Pa mk.conf
+or
+.Sy ${MAKECONF} .
 .
 .El
 .
