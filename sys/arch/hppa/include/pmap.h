@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.18.4 2008/12/02 11:57:30 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.18.5 2008/12/02 14:24:19 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -56,7 +56,7 @@ struct pmap {
 };
 typedef struct pmap *pmap_t;
 
-#define PMAP_NC		0x100
+#define	PMAP_NC		0x100
 
 #define	HPPA_MAX_PID	0xfffa
 #define	HPPA_SID_MAX	0x7ffd
@@ -98,19 +98,19 @@ extern struct pdc_hwtlb pdc_hwtlb;
 } while(0)
 
 #define	pmap_sid2pid(s)			(((s) + 1) << 1)
-#define pmap_kernel()			(&kernel_pmap_store)
+#define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
-#define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_update(p)
 
-#define pmap_copy(dpmap,spmap,da,len,sa)
+#define	pmap_copy(dpmap,spmap,da,len,sa)
 
-#define pmap_clear_modify(pg)	pmap_changebit(pg, 0, PTE_PROT(TLB_DIRTY))
-#define pmap_clear_reference(pg) \
+#define	pmap_clear_modify(pg)	pmap_changebit(pg, 0, PTE_PROT(TLB_DIRTY))
+#define	pmap_clear_reference(pg) \
 				pmap_changebit(pg, PTE_PROT(TLB_REFTRAP), 0)
-#define pmap_is_modified(pg)	pmap_testbit(pg, PTE_PROT(TLB_DIRTY))
-#define pmap_is_referenced(pg)	pmap_testbit(pg, PTE_PROT(TLB_REFTRAP))
-#define pmap_phys_address(ppn)	((ppn) << PAGE_SHIFT)
+#define	pmap_is_modified(pg)	pmap_testbit(pg, PTE_PROT(TLB_DIRTY))
+#define	pmap_is_referenced(pg)	pmap_testbit(pg, PTE_PROT(TLB_REFTRAP))
+#define	pmap_phys_address(ppn)	((ppn) << PAGE_SHIFT)
 
 void	pmap_activate(struct lwp *);
 
