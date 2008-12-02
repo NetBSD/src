@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.45 2008/12/01 01:52:17 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.46 2008/12/02 01:35:39 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1359,4 +1359,24 @@ share/man/man9/tvtohz.9				1.1-1.2
 
 	Documentation fixes for timecounters.
 	[tsutsui, ticket #153]
+
+usr.bin/uuencode/uuencode.1			1.19, 1.20
+
+	Update SEE ALSO per PR 40071: compress -> gzip, add missing
+	tar, comment out uucp because uucp was removed from base.
+	[dholland, ticket #155]
+
+share/man/man7/symlink.7			1.15
+
+	Bump date for mjf's Dec 4 2007 commit that corrected the
+	description of magiclinks and added @ruid.
+	[dholland, ticket #156]
+
+distrib/notes/sparc/prep			1.25
+distrib/notes/sparc64/prep			1.13
+share/man/man8/man8.sparc64/boot.8		1.15
+
+	Mention root partition size limitations for booting certain
+	sparc and sparc64 models.
+	[jdc, ticket #159]
 
