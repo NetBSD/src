@@ -114,7 +114,8 @@ CONFIGURATION
                        the value of .CURDIR.  Used only if MAKEOBJDIRPREFIX is
                        not defined.  MAKEOBJDIR can be provided only in the
                        environment or via the -O flag of build.sh; it cannot
-                       usefully be set inside a Makefile.
+                       usefully be set inside a Makefile, including mk.conf or
+                       ${MAKECONF}.
 
      MAKEOBJDIRPREFIX  Top level directory of the object directory tree.  If
                        specified, must be an absolute path.  If this is
@@ -122,7 +123,8 @@ CONFIGURATION
                        .OBJDIR for the current directory.  The current direc-
                        tory may be read only.  MAKEOBJDIRPREFIX can be pro-
                        vided only in the environment or via the -M flag of
-                       build.sh; it cannot usefully be set inside a Makefile.
+                       build.sh; it cannot usefully be set inside a Makefile,
+                       including mk.conf or ${MAKECONF}.
 
    "make" variables
      Several variables control the behavior of NetBSD builds.  Unless other-
