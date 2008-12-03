@@ -1,3 +1,5 @@
+/*	$NetBSD: rgephyreg.h,v 1.4 2008/12/03 13:55:20 tsutsui Exp $	*/
+
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
