@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.32 2008/11/27 21:36:51 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.33 2008/12/03 11:23:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.32 2008/11/27 21:36:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.33 2008/12/03 11:23:15 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -558,14 +558,15 @@ module_do_load(const char *name, bool isdep, int flags,
 			if (!autoload)
 #endif
 				module_error("Cannot load kernel object `%s'"
-				    " error=%d", name), error;
+				    " error=%d", name, error);
 			return error;
 		}
 		TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
 		mod->mod_source = MODULE_SOURCE_FILESYS;
 		error = module_fetch_info(mod);
 		if (error != 0) {
-			module_error("cannot fetch module info for `%s'", name);
+			module_error("cannot fetch module info for `%s'",
+			    name);
 			goto fail;
 		}
 	}
@@ -580,7 +581,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		goto fail;
 	}
 	if (!module_compatible(mi->mi_version, __NetBSD_Version__)) {
-		module_error("module built for `%s', system `%s'",
+		module_error("module built for `%d', system `%d'",
 		    mi->mi_version, __NetBSD_Version__);
 		if ((flags & MODCTL_LOAD_FORCE) != 0) {
 			module_error("forced load, system may be unstable");
@@ -768,7 +769,8 @@ module_do_unload(const char *name)
 	module_active = NULL;
 	if (error != 0) {
 #ifdef DIAGNOSTIC
-		module_error("cannot unload module `%s' error=%d", name, error);
+		module_error("cannot unload module `%s' error=%d", name,
+		    error);
 #endif
 		return error;
 	}
