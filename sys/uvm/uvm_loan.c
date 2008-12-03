@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.72 2008/06/17 02:29:10 yamt Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.73 2008/12/03 14:46:24 pooka Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.72 2008/06/17 02:29:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.73 2008/12/03 14:46:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,7 +535,7 @@ reget:
 		    pgoff + (ndone << PAGE_SHIFT), pgpp, &npages, 0,
 		    VM_PROT_READ, 0, PGO_SYNCIO);
 		if (error == EAGAIN) {
-			tsleep(&lbolt, PVM, "nfsread", 0);
+			tsleep(&lbolt, PVM, "loanuopg", 0);
 			continue;
 		}
 		if (error)
