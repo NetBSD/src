@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.106 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.107 2008/12/03 15:36:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.106 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.107 2008/12/03 15:36:11 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1133,7 +1133,7 @@ ex_start(struct ifnet *ifp)
 			 *
 			 * XXX Should we still consider if such short
 			 *     (36 bytes or less) packets might already
-			 *     occupy EX_NTFRAG (== 32) fragements here?
+			 *     occupy EX_NTFRAG (== 32) fragments here?
 			 */
 			KASSERT(segment < EX_NTFRAGS);
 			fr->fr_addr = htole32(DPDMEMPAD_DMADDR(sc));
