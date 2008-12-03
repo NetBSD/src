@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.1.2.22 2008/11/05 13:45:02 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.1.2.23 2008/12/03 00:10:41 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@
 
 #include <sys/disklabel.h>
 #include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/vnode.h>
 
 #include <machine/int_fmtio.h>
@@ -112,37 +113,37 @@ static int dm_dbg_print_flags(int);
 static int
 dm_dbg_print_flags(int flags)
 {
-	aprint_normal("dbg_print --- %d\n",flags);
+	aprint_debug("dbg_print --- %d\n",flags);
 	
 	if (flags & DM_READONLY_FLAG)
-		aprint_normal("dbg_flags: DM_READONLY_FLAG set In/Out\n");
+		aprint_debug("dbg_flags: DM_READONLY_FLAG set In/Out\n");
 
 	if (flags & DM_SUSPEND_FLAG)
-		aprint_normal("dbg_flags: DM_SUSPEND_FLAG set In/Out \n");
+		aprint_debug("dbg_flags: DM_SUSPEND_FLAG set In/Out \n");
 
 	if (flags & DM_PERSISTENT_DEV_FLAG)
-		aprint_normal("db_flags: DM_PERSISTENT_DEV_FLAG set In\n");
+		aprint_debug("db_flags: DM_PERSISTENT_DEV_FLAG set In\n");
 
 	if (flags & DM_STATUS_TABLE_FLAG)
-		aprint_normal("dbg_flags: DM_STATUS_TABLE_FLAG set In\n");
+		aprint_debug("dbg_flags: DM_STATUS_TABLE_FLAG set In\n");
 
 	if (flags & DM_ACTIVE_PRESENT_FLAG)
-		aprint_normal("dbg_flags: DM_ACTIVE_PRESENT_FLAG set Out\n");
+		aprint_debug("dbg_flags: DM_ACTIVE_PRESENT_FLAG set Out\n");
 
 	if (flags & DM_INACTIVE_PRESENT_FLAG)
-		aprint_normal("dbg_flags: DM_INACTIVE_PRESENT_FLAG set Out\n");
+		aprint_debug("dbg_flags: DM_INACTIVE_PRESENT_FLAG set Out\n");
 
 	if (flags & DM_BUFFER_FULL_FLAG)
-		aprint_normal("dbg_flags: DM_BUFFER_FULL_FLAG set Out\n");
+		aprint_debug("dbg_flags: DM_BUFFER_FULL_FLAG set Out\n");
 
 	if (flags & DM_SKIP_BDGET_FLAG)
-		aprint_normal("dbg_flags: DM_SKIP_BDGET_FLAG set In\n");
+		aprint_debug("dbg_flags: DM_SKIP_BDGET_FLAG set In\n");
 
 	if (flags & DM_SKIP_LOCKFS_FLAG)
-		aprint_normal("dbg_flags: DM_SKIP_LOCKFS_FLAG set In\n");
+		aprint_debug("dbg_flags: DM_SKIP_LOCKFS_FLAG set In\n");
 
 	if (flags & DM_NOFLUSH_FLAG)
-		aprint_normal("dbg_flags: DM_NOFLUSH_FLAG set In\n");
+		aprint_debug("dbg_flags: DM_NOFLUSH_FLAG set In\n");
 	
 	return 0;
 }
@@ -176,6 +177,8 @@ dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 	target_list = dm_target_prop_list();
 
 	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, target_list);
+
+	prop_object_release(target_list);
 	
 	return 0;
 }
@@ -283,6 +286,7 @@ dm_dev_list_ioctl(prop_dictionary_t dm_dict)
 	dev_list = dm_dev_prop_list();
 
 	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, dev_list);
+	prop_object_release(dev_list);
 	
 	return 0;
 }
@@ -341,7 +345,7 @@ dm_dev_rename_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_set_cstring(dm_dict, DM_IOCTL_UUID, dmv->uuid);
 
 	dm_dev_insert(dmv);
-		
+	
 	return 0;
 }
 
@@ -566,7 +570,7 @@ dm_table_clear_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 	
-	aprint_verbose("Clearing inactive table from device: %s--%s\n",
+	aprint_debug("Clearing inactive table from device: %s--%s\n",
 	    name, uuid);
 	
 	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL){
@@ -628,7 +632,7 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_set_cstring(dm_dict, DM_IOCTL_NAME, dmv->name);
 	prop_dictionary_set_cstring(dm_dict, DM_IOCTL_UUID, dmv->uuid);
 	
-	aprint_verbose("Getting table deps for device: %s\n", dmv->name);
+	aprint_debug("Getting table deps for device: %s\n", dmv->name);
 
 	tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
 
@@ -639,6 +643,7 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	dm_dev_unbusy(dmv);
 		
 	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, cmd_array);
+	prop_object_release(cmd_array);
 	
 	return 0;
 }
@@ -697,7 +702,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		return ENOENT;
 	}
 	
-	aprint_normal("Loading table to device: %s--%d\n",name,dmv->table_head.cur_active_table);
+	aprint_debug("Loading table to device: %s--%d\n",name,dmv->table_head.cur_active_table);
 	
 	/*
 	 * I have to check if this table slot is not used by another table list.
@@ -709,7 +714,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	dm_dbg_print_flags(dmv->flags);
 	tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_INACTIVE);
 	
-	printf("dmv->name = %s\n", dmv->name);
+	aprint_debug("dmv->name = %s\n", dmv->name);
 	
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 
@@ -764,17 +769,17 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 			    str)) != 0) {
 
 			dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
+			free(str, M_TEMP);
+			
 			return ret;
 		}
 		
 		last_table = table_en;
 
-		if (str != NULL)
-			prop_object_release(str);
+		free(str, M_TEMP);
 	}
-
-	prop_object_release(cmd_array);
-
+	prop_object_iterator_release(iter);
+	
 	DM_ADD_FLAG(flags, DM_INACTIVE_PRESENT_FLAG);
 	atomic_or_32(&dmv->flags, DM_INACTIVE_PRESENT_FLAG);
 	
@@ -835,8 +840,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_FLAGS, &flags);
 	prop_dictionary_get_uint32(dm_dict, DM_IOCTL_MINOR, &minor);
 
-	if ((cmd_array = prop_dictionary_get(dm_dict, DM_IOCTL_CMD_DATA)) == NULL)
-		cmd_array = prop_array_create();
+	cmd_array = prop_array_create();
 		
 	if ((dmv = dm_dev_lookup(name, uuid, minor)) == NULL){
 		DM_REMOVE_FLAG(flags, DM_EXISTS_FLAG);
@@ -863,7 +867,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	/* I should use mutex here and not rwlock there can be IO operation
 	   during this ioctl on device. */
 
-	aprint_normal("Status of device tables: %s--%d\n",
+	aprint_debug("Status of device tables: %s--%d\n",
 	    name, dmv->table_head.cur_active_table);
 	
 	tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
@@ -871,7 +875,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	SLIST_FOREACH(table_en, tbl, next)
 	{
 		target_dict = prop_dictionary_create();
-		aprint_verbose("%016" PRIu64 ", length %016" PRIu64
+		aprint_debug("%016" PRIu64 ", length %016" PRIu64
 		    ", target %s\n", table_en->start, table_en->length,
 		    table_en->target->name);
 
@@ -898,6 +902,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 				kmem_free(params, strlen(params) + 1);
 			}
 		}
+
 		prop_array_add(cmd_array, target_dict);
 		prop_object_release(target_dict);
 	}
@@ -906,6 +911,8 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	dm_dev_unbusy(dmv);
 	
 	prop_dictionary_set(dm_dict, DM_IOCTL_CMD_DATA, cmd_array);
+	prop_object_release(cmd_array);
+	
 	return 0;
 }
 
@@ -927,10 +934,9 @@ dm_check_version(prop_dictionary_t dm_dict)
 	
 	for(i=0; i < 3; i++) 
 		prop_array_get_uint32(ver, i, &dm_version[i]);
-	
 
 	if (DM_VERSION_MAJOR != dm_version[0] || DM_VERSION_MINOR < dm_version[1]){
-		aprint_verbose("libdevmapper/kernel version mismatch "
+		aprint_debug("libdevmapper/kernel version mismatch "
 		    "kernel: %d.%d.%d libdevmapper: %d.%d.%d\n",
 		    DM_VERSION_MAJOR, DM_VERSION_MINOR, DM_VERSION_PATCHLEVEL,
 		    dm_version[0], dm_version[1], dm_version[2]);

@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.1.2.16 2008/11/05 13:45:02 haad Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.1.2.17 2008/12/03 00:10:41 haad Exp $ */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -208,22 +208,24 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 
 		if((r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in)) != 0)
 			return r;
-		
+
 		dm_check_version(dm_dict_in);
 
 		/* call cmd selected function */
-		if ((r = dm_ioctl_switch(cmd)) != 0)
+		if ((r = dm_ioctl_switch(cmd)) != 0) {
+			prop_object_release(dm_dict_in);
 			return r;
-
-		char *xml;
-		xml = prop_dictionary_externalize(dm_dict_in);
-		aprint_verbose("%s\n",xml);
-
+		}
+		
 		/* run ioctl routine */
-		if ((r = dm_cmd_to_fun(dm_dict_in)) != 0)
+		if ((r = dm_cmd_to_fun(dm_dict_in)) != 0) {
+			prop_object_release(dm_dict_in);
 			return r;
+		}
 		
 		r = prop_dictionary_copyout_ioctl(pref, cmd, dm_dict_in);
+
+		prop_object_release(dm_dict_in);
 	}
 
 	return r;
@@ -234,29 +236,23 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
  */
 static int
 dm_cmd_to_fun(prop_dictionary_t dm_dict){
-	int i,len,slen;
-	int r;
-	const char *command;
+	int i, r;
+	prop_string_t command;
 	
 	r = 0;
 		
-	(void)prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_COMMAND,
-	    &command);
-
-	len = strlen(command);
-		
-	for(i=0; cmd_fn[i].cmd != NULL; i++){
-		slen = strlen(cmd_fn[i].cmd);
-
-		if (len != slen)
-			continue;
-
-		if ((strncmp(command, cmd_fn[i].cmd, slen)) == 0) {
-			aprint_normal("ioctl command: %s\n", command);
-			r = cmd_fn[i].fn(dm_dict);
+	if ((command = prop_dictionary_get(dm_dict, DM_IOCTL_COMMAND)) == NULL)
+		return EINVAL;
+	
+	for(i = 0; cmd_fn[i].cmd != NULL; i++)
+		if (prop_string_equals_cstring(command, cmd_fn[i].cmd))
 			break;
-		}
-	}
+
+	if (cmd_fn[i].cmd == NULL)
+		return EINVAL;
+
+	aprint_debug("ioctl %s called\n", cmd_fn[i].cmd);
+	r = cmd_fn[i].fn(dm_dict);
 	
 	return r;
 }
@@ -407,7 +403,7 @@ dmstrategy(struct buf *bp)
 		 * off by one error
 		 */
 		table_end = table_start + (table_en->length)* DEV_BSIZE;
-		
+
 		start = MAX(table_start, buf_start);
 
 		end = MIN(table_end, buf_start + buf_len);

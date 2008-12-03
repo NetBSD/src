@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.1.2.14 2008/11/05 13:45:02 haad Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.1.2.15 2008/12/03 00:10:41 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -351,30 +351,21 @@ prop_array_t
 dm_dev_prop_list(void)
 {
 	dm_dev_t *dmv;
-	
-	int j;
-	
 	prop_array_t dev_array;
 	prop_dictionary_t dev_dict;
-	
-	j =0;
 	
 	dev_array = prop_array_create();
 	
 	mutex_enter(&dm_dev_mutex);
 	
-	TAILQ_FOREACH(dmv, &dm_dev_list,next_devlist) {
+	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist) {
 		dev_dict  = prop_dictionary_create();
 		
 		prop_dictionary_set_cstring(dev_dict, DM_DEV_NAME, dmv->name);
-		
 		prop_dictionary_set_uint32(dev_dict, DM_DEV_DEV, dmv->minor);
 
-		prop_array_set(dev_array, j, dev_dict);
-		
+		prop_array_add(dev_array, dev_dict);
 		prop_object_release(dev_dict);
-		
-		j++;
 	}
 
 	mutex_exit(&dm_dev_mutex);	

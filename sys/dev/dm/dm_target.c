@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.1.2.16 2008/11/05 13:45:02 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.1.2.17 2008/12/03 00:10:41 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -154,9 +154,7 @@ dm_target_prop_list(void)
 	prop_dictionary_t target_dict;
 	dm_target_t *dm_target;
 
-	size_t i,j;
-
-	j = 0;
+	size_t i;
 
 	target_array = prop_array_create();
 	
@@ -171,9 +169,10 @@ dm_target_prop_list(void)
 			prop_array_add_uint32(ver, dm_target->version[i]);
 
 		prop_dictionary_set(target_dict, DM_TARGETS_VERSION, ver);
-		prop_array_set(target_array, j, target_dict);
+		prop_array_add(target_array, target_dict);
+
+		prop_object_release(ver);
 		prop_object_release(target_dict);
-		j++;
 	}
 
 	return target_array;
