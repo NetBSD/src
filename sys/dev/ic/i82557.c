@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.115 2008/07/31 12:28:28 ws Exp $	*/
+/*	$NetBSD: i82557.c,v 1.116 2008/12/03 14:21:15 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.115 2008/07/31 12:28:28 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.116 2008/12/03 14:21:15 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1582,6 +1582,7 @@ fxp_init(struct ifnet *ifp)
 	struct fxp_txdesc *txd;
 	bus_dmamap_t rxmap;
 	int i, prm, save_bf, lrxen, vlan_drop, allm, error = 0;
+	uint16_t status;
 
 	if ((error = fxp_enable(sc)) != 0)
 		goto out;
@@ -1767,12 +1768,15 @@ fxp_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDCONFIGOFF);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	i = 1000;
-	do {
+	for (i = 1000; i > 0; i--) {
 		FXP_CDCONFIGSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		status = le16toh(cbp->cb_status);
+		FXP_CDCONFIGSYNC(sc, BUS_DMASYNC_PREREAD);
+		if ((status & FXP_CB_STATUS_C) != 0)
+			break;
 		DELAY(1);
-	} while ((le16toh(cbp->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
+	} 
 	if (i == 0) {
 		log(LOG_WARNING, "%s: line %d: dmasync timeout\n",
 		    device_xname(sc->sc_dev), __LINE__);
@@ -1799,12 +1803,15 @@ fxp_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDIASOFF);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	i = 1000;
-	do {
+	for (i = 1000; i > 0; i++) {
 		FXP_CDIASSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		status = le16toh(cb_ias->cb_status);
+		FXP_CDIASSYNC(sc, BUS_DMASYNC_PREREAD);
+		if ((status & FXP_CB_STATUS_C) != 0)
+			break;
 		DELAY(1);
-	} while ((le16toh(cb_ias->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
+	}
 	if (i == 0) {
 		log(LOG_WARNING, "%s: line %d: dmasync timeout\n",
 		    device_xname(sc->sc_dev), __LINE__);
@@ -2119,6 +2126,7 @@ fxp_mc_setup(struct fxp_softc *sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int count, nmcasts;
+	uint16_t status;
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_txpending)
@@ -2189,12 +2197,15 @@ fxp_mc_setup(struct fxp_softc *sc)
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 
 	/* ...and wait for it to complete. */
-	count = 1000;
-	do {
+	for (count = 1000; count > 0; count--) {
 		FXP_CDMCSSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		status = le16toh(mcsp->cb_status);
+		FXP_CDMCSSYNC(sc, BUS_DMASYNC_PREREAD);
+		if ((status & FXP_CB_STATUS_C) != 0)
+			break;
 		DELAY(1);
-	} while ((le16toh(mcsp->cb_status) & FXP_CB_STATUS_C) == 0 && --count);
+	}
 	if (count == 0) {
 		log(LOG_WARNING, "%s: line %d: dmasync timeout\n",
 		    device_xname(sc->sc_dev), __LINE__);
@@ -2245,6 +2256,7 @@ fxp_load_ucode(struct fxp_softc *sc)
 	const struct ucode *uc;
 	struct fxp_cb_ucode *cbp = &sc->sc_control_data->fcd_ucode;
 	int count, i;
+	uint16_t status;
 
 	if (sc->sc_flags & FXPF_UCODE_LOADED)
 		return;
@@ -2291,12 +2303,15 @@ fxp_load_ucode(struct fxp_softc *sc)
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 
 	/* ...and wait for it to complete. */
-	count = 10000;
-	do {
+	for (count = 10000; count > 0; count--) {
 		FXP_CDUCODESYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		status = le16toh(cbp->cb_status);
+		FXP_CDUCODESYNC(sc, BUS_DMASYNC_PREREAD);
+		if ((status & FXP_CB_STATUS_C) != 0)
+			break;
 		DELAY(2);
-	} while ((le16toh(cbp->cb_status) & FXP_CB_STATUS_C) == 0 && --count);
+	}
 	if (count == 0) {
 		sc->sc_int_delay = 0;
 		sc->sc_bundle_max = 0;
