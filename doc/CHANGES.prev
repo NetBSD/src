@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.81 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.82 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8942,7 +8942,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[is 20070820]
 	btbc(4): Add support for AnyCom BlueCard. [kiyohara 20070820]
 	libm: Add C99 complex support (float/double). [drochner 20070820]
-	amd64: Enalbe LFS from sysinstall. [skd 20070821]
+	amd64: Enable LFS from sysinstall. [skd 20070821]
 	atactl(8): Improve SATA support. [bouyer 20070821]
 	agten(4): Add support for Fujitsu AG-10e graphics cards working as
 		accelerated framebuffer console. [macallan 20070826]
@@ -9442,7 +9442,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[matt 20080427]
 	kernel: Add MI code to support in-kernel preemption. [ad 20080428]
 	prep: Support for floppy controller/drive. [garbled 20080428]
-	amd64, i386: Add support for kernel preeemption to i386 and amd64.
+	amd64, i386: Add support for kernel preemption to i386 and amd64.
 		[ad 20080428]
 	gpio(4): Extend with open/close to handle request/release the
 		ppbus(4) on open/close. From Hans Rosenfeld. [cegger 20080429]
