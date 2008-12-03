@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.25 2008/11/14 00:41:36 cegger Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.26 2008/12/03 11:40:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.25 2008/11/14 00:41:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.26 2008/12/03 11:40:17 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,7 +172,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 	KASSERT(kpreempt_disabled());
 	cur = curcpu();
 	l = ci->ci_data.cpu_onproc;
-	ci->ci_want_resched = 1;
+	ci->ci_want_resched |= flags;
 
 	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
 		/*
