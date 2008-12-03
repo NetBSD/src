@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_mod.c,v 1.1 2008/11/19 18:36:04 ad Exp $	*/
+/*	$NetBSD: linux32_mod.c,v 1.2 2008/12/03 12:51:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.1 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.2 2008/12/03 12:51:11 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_mod.c,v 1.1 2008/11/19 18:36:04 ad Exp $");
 #include <compat/linux32/common/linux32_exec.h>
 
 #if defined(EXEC_ELF32)
-# define	MD1	",exec_elf32"
+# define	MD1	",exec_elf32,compat_netbsd32"
 #else
 # define	MD1	""
 #endif
