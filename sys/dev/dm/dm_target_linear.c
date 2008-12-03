@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.1.2.19 2008/11/05 13:45:02 haad Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.1.2.20 2008/12/03 00:10:41 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ dm_target_linear_init(dm_dev_t *dmv, void **target_config, char *params)
 	if ((dmp = dm_pdev_insert(argv[0])) == NULL)
 		return ENOENT;
 	
-	printf("Linear target init function called %s--%s!!\n",
+	aprint_debug("Linear target init function called %s--%s!!\n",
 	    argv[0], argv[1]);
 	
 	if ((tlc = kmem_alloc(sizeof(dm_target_linear_config_t), KM_NOSLEEP))
@@ -120,7 +120,7 @@ dm_target_linear_status(void *target_config)
 	for(i = tlc->offset; i != 0; i /= 10)
 		count++;
 	
-	/*printf("Linear target status function called\n");*/
+	aprint_debug("Linear target status function called\n");
 
 	/* length of name + count of chars + one space and null char */
 	prm_len = strlen(tlc->pdev->name) + count + 2;
@@ -128,7 +128,7 @@ dm_target_linear_status(void *target_config)
 	if ((params = kmem_alloc(prm_len, KM_NOSLEEP)) == NULL)
 		return NULL;
 
-	printf("%s %"PRIu64, tlc->pdev->name, tlc->offset);
+	aprint_debug("%s %"PRIu64, tlc->pdev->name, tlc->offset);
 	snprintf(params, prm_len,"%s %"PRIu64, tlc->pdev->name, tlc->offset);
 	
 	return params;
