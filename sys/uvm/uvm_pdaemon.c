@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.95 2008/12/02 10:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.96 2008/12/03 11:43:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.95 2008/12/02 10:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.96 2008/12/03 11:43:51 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.95 2008/12/02 10:46:43 ad Exp $");
 #include <sys/pool.h>
 #include <sys/buf.h>
 #include <sys/module.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
@@ -111,7 +112,7 @@ unsigned int uvm_pagedaemon_waiters;
 /*
  * XXX hack to avoid hangs when large processes fork.
  */
-int uvm_extrapages;
+u_int uvm_extrapages;
 
 /*
  * uvm_wait: wait (sleep) for the page daemon to free some pages
@@ -210,13 +211,11 @@ uvmpd_tune(void)
 		val = uvmexp.reserve_kernel + 1;
 	uvmexp.freemin = val;
 
+	/* Calculate free target. */
 	val = (uvmexp.freemin * 4) / 3;
 	if (val <= uvmexp.freemin)
 		val = uvmexp.freemin + 1;
-
-	val += uvm_extrapages;
-	uvmexp.freetarg = val;
-	uvm_extrapages = 0;
+	uvmexp.freetarg = val + atomic_swap_uint(&uvm_extrapages, 0);
 
 	uvmexp.wiredmax = uvmexp.npages / 3;
 	UVMHIST_LOG(pdhist, "<- done, freemin=%d, freetarg=%d, wiredmax=%d",
