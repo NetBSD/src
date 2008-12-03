@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.140 2008/11/27 14:04:58 pooka Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.141 2008/12/03 14:56:05 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.140 2008/11/27 14:04:58 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.141 2008/12/03 14:56:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ extern struct nfsstats nfsstats;
 extern const nfstype nfsv2_type[9];
 extern const nfstype nfsv3_type[9];
 int nfsrvw_procrastinate = NFS_GATHERDELAY * 1000;
-int nfsd_use_loan = 1;	/* use page-loan for READ OP */
+bool nfsd_use_loan = true;	/* use page-loan for READ OP */
 
 #define	nqsrv_getl(vp, rw)	/* nothing */
 
