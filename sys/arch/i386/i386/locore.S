@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.81 2008/11/19 18:35:58 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.82 2008/12/03 11:40:17 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,7 +134,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.81 2008/11/19 18:35:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.82 2008/12/03 11:40:17 ad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -1272,7 +1272,7 @@ ENTRY(sse2_idlezero_page)
 	xorl	%eax, %eax
 	.align	16
 1:
-	cmpl	$0, CPUVAR(RESCHED)
+	testl	$RESCHED_KPREEMPT, CPUVAR(RESCHED)
 	jnz	2f
 	movnti	%eax, 0(%edx)
 	movnti	%eax, 4(%edx)
