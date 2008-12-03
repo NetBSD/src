@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.116 2008/12/03 14:21:15 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.117 2008/12/03 15:34:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.116 2008/12/03 14:21:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.117 2008/12/03 15:34:38 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -386,12 +386,16 @@ fxp_attach(struct fxp_softc *sc)
 		/*
 		 * IFCAP_CSUM_IPv4_Tx seems to have a problem,
 		 * at least, on i82550 rev.12.
-		 * specifically, it doesn't calculate ipv4 checksum correctly
-		 * when sending 20 byte ipv4 header + 1 or 2 byte data.
+		 * specifically, it doesn't set ipv4 checksum properly
+		 * when sending UDP (and probably TCP) packets with
+		 * 20 byte ipv4 header + 1 or 2 byte data,
+		 * though ICMP packets seem working.
 		 * FreeBSD driver has related comments.
+		 * We've added a workaround to handle the bug by padding
+		 * such packets manually.
 		 */
 		ifp->if_capabilities =
-		    IFCAP_CSUM_IPv4_Rx |
+		    IFCAP_CSUM_IPv4_Rx  | IFCAP_CSUM_IPv4_Tx  |
 		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
@@ -800,7 +804,7 @@ fxp_start(struct ifnet *ifp)
 	struct fxp_txdesc *txd;
 	struct fxp_txsoft *txs;
 	bus_dmamap_t dmamap;
-	int error, lasttx, nexttx, opending, seg;
+	int error, lasttx, nexttx, opending, seg, nsegs, len;
 
 	/*
 	 * If we want a re-init, bail out now.
@@ -894,13 +898,29 @@ fxp_start(struct ifnet *ifp)
 
 		/* Initialize the fraglist. */
 		tbdp = txd->txd_tbd;
+		len = m0->m_pkthdr.len;
+		nsegs = dmamap->dm_nsegs;
 		if (sc->sc_flags & FXPF_IPCB)
 			tbdp++;
-		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
+		for (seg = 0; seg < nsegs; seg++) {
 			tbdp[seg].tb_addr =
 			    htole32(dmamap->dm_segs[seg].ds_addr);
 			tbdp[seg].tb_size =
 			    htole32(dmamap->dm_segs[seg].ds_len);
+		}
+		if (__predict_false(len <= FXP_IP4CSUMTX_PADLEN &&
+		    (csum_flags & M_CSUM_IPv4) != 0)) {
+			/*
+			 * Pad short packets to avoid ip4csum-tx bug.
+			 *
+			 * XXX Should we still consider if such short
+			 *     (36 bytes or less) packets might already
+			 *     occupy FXP_IPCB_NTXSEG (15) fragments here?
+			 */
+			KASSERT(nsegs < FXP_IPCB_NTXSEG);
+			nsegs++;
+			tbdp[seg].tb_addr = htole32(FXP_CDTXPADADDR(sc));
+			tbdp[seg].tb_size = FXP_IP4CSUMTX_PADLEN + 1 - len;
 		}
 
 		/* Sync the DMA map. */
@@ -920,7 +940,7 @@ fxp_start(struct ifnet *ifp)
 		txd->txd_txcb.cb_command =
 		    sc->sc_txcmd | htole16(FXP_CB_COMMAND_SF);
 		txd->txd_txcb.tx_threshold = tx_threshold;
-		txd->txd_txcb.tbd_number = dmamap->dm_nsegs;
+		txd->txd_txcb.tbd_number = nsegs;
 
 		KASSERT((csum_flags & (M_CSUM_TCPv6 | M_CSUM_UDPv6)) == 0);
 		if (sc->sc_flags & FXPF_IPCB) {
