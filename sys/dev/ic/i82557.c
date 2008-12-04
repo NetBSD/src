@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.117 2008/12/03 15:34:38 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.118 2008/12/04 15:22:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.117 2008/12/03 15:34:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.118 2008/12/04 15:22:01 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -395,7 +395,7 @@ fxp_attach(struct fxp_softc *sc)
 		 * such packets manually.
 		 */
 		ifp->if_capabilities =
-		    IFCAP_CSUM_IPv4_Rx  | IFCAP_CSUM_IPv4_Tx  |
+		    IFCAP_CSUM_IPv4_Tx  | IFCAP_CSUM_IPv4_Rx  |
 		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
