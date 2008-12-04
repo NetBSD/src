@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.46 2008/12/02 01:35:39 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.47 2008/12/04 02:22:48 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1379,4 +1379,35 @@ share/man/man8/man8.sparc64/boot.8		1.15
 	Mention root partition size limitations for booting certain
 	sparc and sparc64 models.
 	[jdc, ticket #159]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.159
+
+	Fix boot device matching on U5/U10 machines to properly
+	distinguish cd0 from wd0.
+	[martin, ticket #157]
+
+external/bsd/fetch/lib/Makefile			1.2
+
+	Use ${HOST_SH} to ensure that the errlist.sh script is run
+	under the correct shell while building libfetch.
+	[apb, ticket #158]
+
+distrib/notes/common/list-portmasters.pl	1.6
+distrib/notes/common/list-setsizes.sh		1.5
+
+	Hand over copyright to TNF.
+	[hubertf, ticket #161]
+
+share/mk/bsd.kmodule.mk				1.16
+
+	Work around a bug in Solaris' shs (both /bin and /usr/xpg4/bin)
+	where "for d in ; ..." results in a syntax error.
+	[hubertf, ticket #162]
+
+gnu/dist/binutils/bfd/archive.c			1.6
+
+	sprintf to temporary buffer and memcpy, rather than sprintf directly
+	into place; this avoids possible corruption and coredumping on systems
+	that more aggressively bounds-check.
+	[dogcow, ticket #163]
 
