@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.376 2008/11/30 18:21:36 martin Exp $	*/
+/*	$NetBSD: init_main.c,v 1.377 2008/12/04 23:18:13 he Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.376 2008/11/30 18:21:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.377 2008/12/04 23:18:13 he Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -110,6 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.376 2008/11/30 18:21:36 martin Exp $
 #include "opt_pax.h"
 #include "opt_wapbl.h"
 
+#include "ksyms.h"
 #include "rnd.h"
 #include "sysmon_envsys.h"
 #include "sysmon_power.h"
@@ -335,7 +336,9 @@ main(void)
 
 	uvm_init();
 
+#if ((NKSYMS > 0) || (NDDB > 0) || (NMODULAR > 0))
 	ksyms_init();
+#endif
 
 	percpu_init();
 
