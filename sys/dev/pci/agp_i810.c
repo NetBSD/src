@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.58 2008/11/29 23:48:12 christos Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.59 2008/12/04 19:07:35 alc Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.58 2008/11/29 23:48:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.59 2008/12/04 19:07:35 alc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,9 @@ agp_i810_write_gtt_entry(struct agp_i810_softc *isc, off_t off, u_int32_t v)
 		break;
 	case CHIP_I915:
 	case CHIP_G33:
-		break;
+		bus_space_write_4(isc->gtt_bst, isc->gtt_bsh,
+		    (u_int32_t)((off) >> AGP_PAGE_SHIFT) * 4, (v));
+		return;
 	}
 		
 	WRITE4(base_off + (u_int32_t)(off >> AGP_PAGE_SHIFT) * 4, v);
