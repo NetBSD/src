@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.61 2008/11/13 10:53:30 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.62 2008/12/04 23:17:47 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -84,7 +84,8 @@ _C_LABEL(kernel_text):
 	.text
 	.globl	__start
 __start:
-	bl	_C_LABEL(ofwinit)	/* init OF */
+	bl	_C_LABEL(cpu_model_init)	/* init oeacpufeat */
+	bl	_C_LABEL(ofwinit)		/* init OF */
 
 	li	0,0
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
