@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.9 2008/11/22 19:45:36 mjf Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.10 2008/12/04 20:26:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.9 2008/11/22 19:45:36 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.10 2008/12/04 20:26:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,9 +167,9 @@ static struct pool_allocator pmap_bootstrap_pv_allocator = {
  * NB: currently, the CPU-specific desidhash() functions disable the
  * use of the space in all cache hashing functions.  This means that
  * this macro definition is stricter than it has to be (because it
- * takes space into account), but one day cache space hashing should 
- * be re-enabled.  Cache space hashing should yield better performance 
- * through better utilization of the cache, assuming that most aliasing 
+ * takes space into account), but one day cache space hashing should
+ * be re-enabled.  Cache space hashing should yield better performance
+ * through better utilization of the cache, assuming that most aliasing
  * is the read-only kind, which we do allow in the cache.
  */
 #define NON_EQUIVALENT_ALIAS(sp1, va1, sp2, va2) \
@@ -249,6 +249,7 @@ pmap_pagealloc(struct uvm_object *obj, voff_t off)
 static inline struct hpt_entry *
 pmap_hash(pmap_t pmap, vaddr_t va)
 {
+
 	return (struct hpt_entry *)(pmap_hpt +
 	    (((va >> 8) ^ (pmap->pm_space << 9)) & (pmap_hptsize - 1)));
 }
@@ -256,6 +257,7 @@ pmap_hash(pmap_t pmap, vaddr_t va)
 static inline u_int32_t
 pmap_vtag(pmap_t pmap, vaddr_t va)
 {
+
 	return (0x80000000 | (pmap->pm_space & 0xffff) |
 	    ((va >> 1) & 0x7fff0000));
 }
@@ -286,12 +288,14 @@ pmap_sdir_get(pa_space_t space)
 static inline volatile pt_entry_t *
 pmap_pde_get(volatile uint32_t *pd, vaddr_t va)
 {
+
 	return ((pt_entry_t *)pd[va >> 22]);
 }
 
 static inline void
 pmap_pde_set(pmap_t pm, vaddr_t va, paddr_t ptp)
 {
+
 #ifdef PMAPDEBUG
 	if (ptp & PGOFSET)
 		panic("pmap_pde_set, unaligned ptp 0x%x", (int)ptp);
@@ -346,6 +350,7 @@ pmap_pde_ptp(pmap_t pm, volatile pt_entry_t *pde)
 static inline void
 pmap_pde_release(pmap_t pmap, vaddr_t va, struct vm_page *ptp)
 {
+
 	DPRINTF(PDB_FOLLOW|PDB_PV,
 	    ("pmap_pde_release(%p, 0x%x, %p)\n", pmap, (int)va, ptp));
 
@@ -368,12 +373,14 @@ pmap_pde_release(pmap_t pmap, vaddr_t va, struct vm_page *ptp)
 static inline pt_entry_t
 pmap_pte_get(volatile pt_entry_t *pde, vaddr_t va)
 {
+
 	return (pde[(va >> 12) & 0x3ff]);
 }
 
 static inline void
 pmap_pte_set(volatile pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 {
+
 	DPRINTF(PDB_FOLLOW|PDB_VP, ("pmap_pte_set(%p, 0x%x, 0x%x)\n",
 	    pde, (int)va, (int)pte));
 
@@ -391,6 +398,7 @@ pmap_pte_set(volatile pt_entry_t *pde, vaddr_t va, pt_entry_t pte)
 void
 pmap_pte_flush(pmap_t pmap, vaddr_t va, pt_entry_t pte)
 {
+
 	if (pte & PTE_PROT(TLB_EXECUTE)) {
 		ficache(pmap->pm_space, va, PAGE_SIZE);
 		pitlb(pmap->pm_space, va);
@@ -515,6 +523,7 @@ pmap_pv_alloc(void)
 static inline void
 pmap_pv_free(struct pv_entry *pv)
 {
+
 	if (pv->pv_ptp)
 		pmap_pde_release(pv->pv_pmap, pv->pv_va, pv->pv_ptp);
 
@@ -730,8 +739,8 @@ pmap_bootstrap(vaddr_t vstart)
 	btlb_entry_max = (vsize_t) hppa_btlb_size_max * PAGE_SIZE;
 
 	/*
-	 * To try to conserve BTLB entries, take a hint from how 
-	 * the kernel was linked: take the kernel text start as 
+	 * To try to conserve BTLB entries, take a hint from how
+	 * the kernel was linked: take the kernel text start as
 	 * our effective minimum BTLB entry size, assuming that
 	 * the data segment was also aligned to that size.
 	 *
@@ -1034,6 +1043,7 @@ pmap_bootstrap_pv_page_free(struct pool *pp, void *v)
 void
 pmap_virtual_space(vaddr_t *startp, vaddr_t *endp)
 {
+
 	*startp = SYSCALLGATE + PAGE_SIZE;
 	*endp = VM_MAX_KERNEL_ADDRESS;
 }
@@ -1157,6 +1167,7 @@ pmap_destroy(pmap_t pmap)
 void
 pmap_reference(pmap_t pmap)
 {
+
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_reference(%p)\n", pmap));
 
 	mutex_enter(&pmap->pm_lock);
@@ -1167,6 +1178,7 @@ pmap_reference(pmap_t pmap)
 void
 pmap_collect(pmap_t pmap)
 {
+
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_collect(%p)\n", pmap));
 	/* nothing yet */
 }
@@ -1573,7 +1585,6 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 void
 pmap_activate(struct lwp *l)
 {
-
 	struct proc *p = l->l_proc;
 	pmap_t pmap = p->p_vmspace->vm_map.pmap;
 	pa_space_t space = pmap->pm_space;
