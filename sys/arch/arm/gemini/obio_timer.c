@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_timer.c,v 1.3 2008/11/11 19:54:38 cliff Exp $	*/
+/*	$NetBSD: obio_timer.c,v 1.4 2008/12/04 00:38:07 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: obio_mputmr.c,v 1.3 2008/08/27 11:03:10 matt Exp
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.3 2008/11/11 19:54:38 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_timer.c,v 1.4 2008/12/04 00:38:07 cliff Exp $");
 
 #include "opt_cpuoptions.h"
 #include "opt_gemini.h"
@@ -202,7 +202,9 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 	struct geminitmr_softc *sc = device_private(self);
 	struct obio_attach_args *obio = aux;
 	const obiotimer_instance_t *ip;
+#ifndef GEMINI_SLAVE
 	static int once=1;
+#endif
 
 	ip = obiotimer_lookup(obio);
 	if (ip == NULL)
@@ -224,6 +226,7 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("\n");
 	aprint_naive("\n");
 
+#ifndef GEMINI_SLAVE
 	if (once) {
 		once = 0;
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
@@ -233,6 +236,7 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 			GEMINI_TIMER_INTRSTATE, 0);
 	}
+#endif
 
 	switch (sc->sc_timerno) {
 	case 1:
@@ -264,7 +268,9 @@ obiotimer_attach(device_t parent, device_t self, void *aux)
 		 * we start it now to make delay() available
 		 */
 		ref_sc = sc;
+#ifndef GEMINI_SLAVE
 		gemini_microtime_init();
+#endif
 		break;
 	default:
 		panic("bad gemini timer number %d\n", sc->sc_timerno);
