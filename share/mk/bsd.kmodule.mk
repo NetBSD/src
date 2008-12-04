@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.13 2008/10/14 18:31:42 mrg Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.13.2.1 2008/12/04 02:18:06 snj Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -66,7 +66,8 @@ ${_PROG}:	.MADE					# no build at install
 .endif
 .endif
 	${_MKTARGET_INSTALL}
-	for d in ${_INST_DIRS}; do \
+	dirs=${_INST_DIRS:Q}; \
+	for d in $$dirs; do \
 		${INSTALL_DIR} $$d; \
 	done
 	${INSTALL_DIR} ${KMODULEDIR}
