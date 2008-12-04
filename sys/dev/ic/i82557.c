@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.118 2008/12/04 15:22:01 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.119 2008/12/04 16:32:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.118 2008/12/04 15:22:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.119 2008/12/04 16:32:34 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -920,7 +920,8 @@ fxp_start(struct ifnet *ifp)
 			KASSERT(nsegs < FXP_IPCB_NTXSEG);
 			nsegs++;
 			tbdp[seg].tb_addr = htole32(FXP_CDTXPADADDR(sc));
-			tbdp[seg].tb_size = FXP_IP4CSUMTX_PADLEN + 1 - len;
+			tbdp[seg].tb_size =
+			    htole32(FXP_IP4CSUMTX_PADLEN + 1 - len);
 		}
 
 		/* Sync the DMA map. */
