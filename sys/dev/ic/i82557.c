@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.119 2008/12/04 16:32:34 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.120 2008/12/04 16:40:47 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.119 2008/12/04 16:32:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.120 2008/12/04 16:40:47 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1212,8 +1212,8 @@ fxp_txintr(struct fxp_softc *sc)
 int
 fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 {
-	u_int16_t rxparsestat;
-	u_int16_t csum_stat;
+	u_int8_t rxparsestat;
+	u_int8_t csum_stat;
 	u_int32_t csum_data;
 	int csum_flags;
 
@@ -1235,8 +1235,8 @@ fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 	 * check H/W Checksumming.
 	 */
 
-	csum_stat = le16toh(rfa->cksum_stat);
-	rxparsestat = le16toh(rfa->rx_parse_stat);
+	csum_stat = rfa->cksum_stat;
+	rxparsestat = rfa->rx_parse_stat;
 	if (!(rfa->rfa_status & htole16(FXP_RFA_STATUS_PARSE)))
 		return 0;
 
