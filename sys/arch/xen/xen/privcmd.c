@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.34 2008/11/15 11:21:41 ad Exp $ */
+/* $NetBSD: privcmd.c,v 1.35 2008/12/04 20:56:57 jym Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,7 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.34 2008/11/15 11:21:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.35 2008/12/04 20:56:57 jym Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,15 +452,12 @@ privcmd_ioctl(void *v)
 				maddr[i] = ma;
 			}
 		}
-		error  = privcmd_map_obj(vmm, va0, maddr, pmb->num, pmb->dom);
-		if (error) {
-			uvm_km_free(kernel_map, trymap, PAGE_SIZE,
-			    UVM_KMF_VAONLY);
+		error = privcmd_map_obj(vmm, va0, maddr, pmb->num, pmb->dom);
+		uvm_km_free(kernel_map, trymap, PAGE_SIZE, UVM_KMF_VAONLY);
+
+		if (error != 0)
 			return error;
-		}
-		uvm_km_free(kernel_map, trymap, PAGE_SIZE,
-		    UVM_KMF_VAONLY);
-		error = 0;
+
 		break;
 	}
 #ifndef XEN3
