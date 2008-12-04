@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.11 2008/12/04 20:37:37 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.12 2008/12/04 20:57:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.11 2008/12/04 20:37:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.12 2008/12/04 20:57:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1077,9 +1077,9 @@ pmap_create(void)
 	pmap_t pmap;
 	pa_space_t space;
 
-	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_create()\n"));
-
 	pmap = pool_get(&pmap_pool, PR_WAITOK);
+
+	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s: pmap = %p\n", __func__, pmap));
 
 	UVM_OBJ_INIT(&pmap->pm_obj, NULL, 1);
 
@@ -1107,6 +1107,9 @@ pmap_create(void)
 	pmap->pm_stats.wired_count = 0;
 
 	mutex_exit(&pmaps_lock);
+
+	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s: pm = %p, space = %d, pid = %d\n",
+	    __func__, pmap, space, pmap->pm_pid));
 
 	return (pmap);
 }
@@ -1143,7 +1146,7 @@ pmap_destroy(pmap_t pmap)
 		if (pg == pmap->pm_pdir_pg)
 			continue;
 
-		DPRINTF(PDB_FOLLOW|PDB_PMAP, ("pmap_destroy(%p): stray ptp "
+		DPRINTF(PDB_FOLLOW, ("pmap_destroy(%p): stray ptp "
 		    "0x%lx w/ %d ents:", pmap, VM_PAGE_TO_PHYS(pg),
 		    pg->wire_count - 1));
 
@@ -1157,7 +1160,7 @@ pmap_destroy(pmap_t pmap)
 			for (haggis = sheep->mdpage.pvh_list; haggis != NULL; )
 				if (haggis->pv_pmap == pmap) {
 
-					DPRINTF(PDB_FOLLOW|PDB_PMAP, (" 0x%x",
+					DPRINTF(PDB_FOLLOW, (" 0x%x",
 					    (int)haggis->pv_va));
 
 					pmap_remove(pmap, haggis->pv_va,
@@ -1169,7 +1172,7 @@ pmap_destroy(pmap_t pmap)
 				} else
 					haggis = haggis->pv_next;
 		}
-		DPRINTF(PDB_FOLLOW|PDB_PMAP, ("\n"));
+		DPRINTF(PDB_FOLLOW, ("\n"));
 	}
 #endif
 	pmap_sdir_set(pmap->pm_space, 0);
