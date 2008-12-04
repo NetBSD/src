@@ -1325,6 +1325,7 @@ bfd_ar_hdr_from_filesystem (bfd *abfd, const char *filename, bfd *member)
   struct ar_hdr *hdr;
   char *temp, *temp1;
   bfd_size_type amt;
+  char tmpbuf[11];
 
   if (member && (member->flags & BFD_IN_MEMORY) != 0)
     {
@@ -1372,7 +1373,8 @@ bfd_ar_hdr_from_filesystem (bfd *abfd, const char *filename, bfd *member)
 #endif
   sprintf ((hdr->ar_gid), "%ld", (long) status.st_gid);
   sprintf ((hdr->ar_mode), "%-8o", (unsigned int) status.st_mode);
-  sprintf ((hdr->ar_size), "%-10ld", (long) status.st_size);
+  sprintf (tmpbuf, "%-10ld", (long) status.st_size);
+  memcpy(hdr->ar_size, tmpbuf, sizeof(hdr->ar_size));
   /* Correct for a lossage in sprintf whereby it null-terminates.  I cannot
      understand how these C losers could design such a ramshackle bunch of
      IO operations.  */
@@ -1660,12 +1662,14 @@ _bfd_write_archive_contents (bfd *arch)
   if (elength != 0)
     {
       struct ar_hdr hdr;
+      char tmpbuf[11];
 
       memset (&hdr, 0, sizeof (struct ar_hdr));
       strcpy (hdr.ar_name, ename);
       /* Round size up to even number in archive header.  */
-      sprintf (&(hdr.ar_size[0]), "%-10d",
+      sprintf (tmpbuf, "%-10d",
 	       (int) ((elength + 1) & ~(bfd_size_type) 1));
+      memcpy(hdr.ar_size, tmpbuf, sizeof(hdr.ar_size));
       strncpy (hdr.ar_fmag, ARFMAG, 2);
       for (i = 0; i < sizeof (struct ar_hdr); i++)
 	if (((char *) (&hdr))[i] == '\0')
@@ -1914,6 +1918,7 @@ bsd_write_armap (bfd *arch,
   struct ar_hdr hdr;
   struct stat statbuf;
   unsigned int i;
+  char tmpbuf[11];
 
   firstreal = mapsize + elength + sizeof (struct ar_hdr) + SARMAG;
 
@@ -1927,7 +1932,8 @@ bsd_write_armap (bfd *arch,
   sprintf (hdr.ar_date, "%ld", bfd_ardata (arch)->armap_timestamp);
   sprintf (hdr.ar_uid, "%ld", (long) getuid ());
   sprintf (hdr.ar_gid, "%ld", (long) getgid ());
-  sprintf (hdr.ar_size, "%-10d", (int) mapsize);
+  sprintf (tmpbuf, "%-10d", (int) mapsize);
+  memcpy(hdr.ar_size, tmpbuf, sizeof(hdr.ar_size));
   strncpy (hdr.ar_fmag, ARFMAG, 2);
   for (i = 0; i < sizeof (struct ar_hdr); i++)
     if (((char *) (&hdr))[i] == '\0')
@@ -2073,6 +2079,7 @@ coff_write_armap (bfd *arch,
   struct ar_hdr hdr;
   unsigned int i;
   int padit = mapsize & 1;
+  char tmpbuf[11];
 
   if (padit)
     mapsize++;
@@ -2085,7 +2092,8 @@ coff_write_armap (bfd *arch,
 
   memset (&hdr, 0, sizeof (struct ar_hdr));
   hdr.ar_name[0] = '/';
-  sprintf (hdr.ar_size, "%-10d", (int) mapsize);
+  sprintf (tmpbuf, "%-10d", (int) mapsize);
+  memcpy(hdr.ar_size, tmpbuf, sizeof(hdr.ar_size));
   sprintf (hdr.ar_date, "%ld", (long) time (NULL));
   /* This, at least, is what Intel coff sets the values to.  */
   sprintf ((hdr.ar_uid), "%d", 0);
