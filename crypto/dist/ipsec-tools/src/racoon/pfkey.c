@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.37 2008/11/27 11:08:48 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.38 2008/12/05 06:02:20 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.37 2008/11/27 11:08:48 tteras Exp $ */
+/* $Id: pfkey.c,v 1.38 2008/12/05 06:02:20 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -128,6 +128,9 @@ static int pk_recvspdexpire __P((caddr_t *));
 static int pk_recvspdget __P((caddr_t *));
 static int pk_recvspddump __P((caddr_t *));
 static int pk_recvspdflush __P((caddr_t *));
+#if defined(SADB_X_MIGRATE) && defined(SADB_X_EXT_KMADDRESS)
+static int pk_recvmigrate __P((caddr_t *));
+#endif
 static struct sadb_msg *pk_recv __P((int, int *));
 
 static int (*pkrecvf[]) __P((caddr_t *)) = {
@@ -155,13 +158,17 @@ NULL,	/* SADB_X_SPDSETIDX */
 pk_recvspdexpire,
 NULL,	/* SADB_X_SPDDELETE2 */
 NULL,	/* SADB_X_NAT_T_NEW_MAPPING */
+#if defined(SADB_X_MIGRATE) && defined(SADB_X_EXT_KMADDRESS)
+pk_recvmigrate,
+#else
 NULL,	/* SADB_X_MIGRATE */
+#endif
 #if (SADB_MAX > 24)
 #error "SADB extra message?"
 #endif
 };
 
-static int addnewsp __P((caddr_t *));
+static int addnewsp __P((caddr_t *, struct sockaddr *, struct sockaddr *));
 
 /* cope with old kame headers - ugly */
 #ifndef SADB_X_AALG_MD5
@@ -856,27 +863,22 @@ pk_sendgetspi(iph2)
 	struct saprop *pp;
 	struct saproto *pr;
 	u_int32_t minspi, maxspi;
-	int proxy = 0;
 
-	if (iph2->side == INITIATOR) {
+	if (iph2->side == INITIATOR)
 		pp = iph2->proposal;
-		proxy = iph2->ph1->rmconf->support_proxy;
-	} else {
+	else
 		pp = iph2->approval;
-		if (iph2->sainfo && iph2->sainfo->id_i)
-			proxy = 1;
-	}
 
-	/* for mobile IPv6 */
-	if (proxy && iph2->src_id && iph2->dst_id &&
-	    ipsecdoi_transportmode(pp)) {
-		src = dupsaddr(iph2->src_id);
-		dst = dupsaddr(iph2->dst_id);
+	if (iph2->sa_src && iph2->sa_dst) {
+		/* MIPv6: Use SA addresses, not IKE ones */
+		src = dupsaddr(iph2->sa_src);
+		dst = dupsaddr(iph2->sa_dst);
 	} else {
+		/* Common case: SA addresses and IKE ones are the same */
 		src = dupsaddr(iph2->src);
 		dst = dupsaddr(iph2->dst);
 	}
-	
+
 	if (src == NULL || dst == NULL) {
 		racoon_free(src);
 		racoon_free(dst);
@@ -956,7 +958,7 @@ pk_recvgetspi(mhp)
 	struct sadb_msg *msg;
 	struct sadb_sa *sa;
 	struct ph2handle *iph2;
-	struct sockaddr *dst;
+	struct sockaddr *src, *dst;
 	int proto_id;
 	int allspiok, notfound;
 	struct saprop *pp;
@@ -964,7 +966,8 @@ pk_recvgetspi(mhp)
 
 	/* validity check */
 	if (mhp[SADB_EXT_SA] == NULL
-	 || mhp[SADB_EXT_ADDRESS_DST] == NULL) {
+	 || mhp[SADB_EXT_ADDRESS_DST] == NULL
+	 || mhp[SADB_EXT_ADDRESS_SRC] == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"inappropriate sadb getspi message passed.\n");
 		return -1;
@@ -972,6 +975,7 @@ pk_recvgetspi(mhp)
 	msg = (struct sadb_msg *)mhp[0];
 	sa = (struct sadb_sa *)mhp[SADB_EXT_SA];
 	dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]); /* note SA dir */
+	src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 
 	/* the message has to be processed or not ? */
 	if (msg->sadb_msg_pid != getpid()) {
@@ -1011,7 +1015,7 @@ pk_recvgetspi(mhp)
 			notfound = 0;
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"pfkey GETSPI succeeded: %s\n",
-				sadbsecas2str(iph2->dst, iph2->src,
+				sadbsecas2str(dst, src,
 				    msg->sadb_msg_satype,
 				    sa->sadb_sa_spi,
 				    ipsecdoi2pfkey_mode(pr->encmode)));
@@ -1023,7 +1027,7 @@ pk_recvgetspi(mhp)
 	if (notfound) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"get spi for unknown address %s\n",
-			saddrwop2str(iph2->dst));
+			saddrwop2str(dst));
 		return -1;
 	}
 
@@ -1052,7 +1056,6 @@ pk_sendupdate(iph2)
 {
 	struct saproto *pr;
 	struct pfkey_send_sa_args sa_args;
-	int proxy = 0;
 
 	/* sanity check */
 	if (iph2->approval == NULL) {
@@ -1060,11 +1063,6 @@ pk_sendupdate(iph2)
 			"no approvaled SAs found.\n");
 		return -1;
 	}
-
-	if (iph2->side == INITIATOR)
-		proxy = iph2->ph1->rmconf->support_proxy;
-	else if (iph2->sainfo && iph2->sainfo->id_i)
-		proxy = 1;
 
 	/* fill in some needed for pfkey_send_update2 */
 	memset (&sa_args, 0, sizeof (sa_args));
@@ -1076,12 +1074,12 @@ pk_sendupdate(iph2)
 	sa_args.seq = iph2->seq; 
 	sa_args.wsize = 4;
 
-	/* for mobile IPv6 */
-	if (proxy && iph2->src_id && iph2->dst_id &&
-	    ipsecdoi_transportmode(iph2->approval)) {
-		sa_args.dst = dupsaddr(iph2->src_id);
-		sa_args.src = dupsaddr(iph2->dst_id);
+	if (iph2->sa_src && iph2->sa_dst) {
+		/* MIPv6: Use SA addresses, not IKE ones */
+		sa_args.dst = dupsaddr(iph2->sa_src);
+		sa_args.src = dupsaddr(iph2->sa_dst);
 	} else {
+		/* Common case: SA addresses and IKE ones are the same */
 		sa_args.dst = dupsaddr(iph2->src);
 		sa_args.src = dupsaddr(iph2->dst);
 	}
@@ -1289,14 +1287,14 @@ pk_recvupdate(mhp)
 			pr->ok = 1;
 			plog(LLV_DEBUG, LOCATION, NULL,
 				"pfkey UPDATE succeeded: %s\n",
-				sadbsecas2str(iph2->dst, iph2->src,
+				sadbsecas2str(dst, src,
 				    msg->sadb_msg_satype,
 				    sa->sadb_sa_spi,
 				    sa_mode));
 
 			plog(LLV_INFO, LOCATION, NULL,
 				"IPsec-SA established: %s\n",
-				sadbsecas2str(iph2->dst, iph2->src,
+				sadbsecas2str(dst, src,
 					msg->sadb_msg_satype, sa->sadb_sa_spi,
 					sa_mode));
 		}
@@ -1352,7 +1350,6 @@ pk_sendadd(iph2)
 	struct ph2handle *iph2;
 {
 	struct saproto *pr;
-	int proxy = 0;
 	struct pfkey_send_sa_args sa_args;
 
 	/* sanity check */
@@ -1361,11 +1358,6 @@ pk_sendadd(iph2)
 			"no approvaled SAs found.\n");
 		return -1;
 	}
-
-	if (iph2->side == INITIATOR)
-		proxy = iph2->ph1->rmconf->support_proxy;
-	else if (iph2->sainfo && iph2->sainfo->id_i)
-		proxy = 1;
 
 	/* fill in some needed for pfkey_send_update2 */
 	memset (&sa_args, 0, sizeof (sa_args));
@@ -1377,12 +1369,12 @@ pk_sendadd(iph2)
 	sa_args.seq = iph2->seq;
 	sa_args.wsize = 4;
 
-	/* for mobile IPv6 */
-	if (proxy && iph2->src_id && iph2->dst_id &&
-	    ipsecdoi_transportmode(iph2->approval)) {
-		sa_args.src = dupsaddr(iph2->src_id);
-		sa_args.dst = dupsaddr(iph2->dst_id);
+	if (iph2->sa_src && iph2->sa_dst) {
+		/* MIPv6: Use SA addresses, not IKE ones */
+		sa_args.src = dupsaddr(iph2->sa_src);
+		sa_args.dst = dupsaddr(iph2->sa_dst);
 	} else {
+		/* Common case: SA addresses and IKE ones are the same */
 		sa_args.src = dupsaddr(iph2->src);
 		sa_args.dst = dupsaddr(iph2->dst);
 	}
@@ -1571,7 +1563,7 @@ pk_recvadd(mhp)
 
 	plog(LLV_INFO, LOCATION, NULL,
 		"IPsec-SA established: %s\n",
-		sadbsecas2str(iph2->src, iph2->dst,
+		sadbsecas2str(src, dst,
 			msg->sadb_msg_satype, sa->sadb_sa_spi, sa_mode));
 
 	plog(LLV_DEBUG, LOCATION, NULL, "===\n");
@@ -1694,7 +1686,9 @@ pk_recvacquire(mhp)
 	struct sadb_x_policy *xpl;
 	struct secpolicy *sp_out = NULL, *sp_in = NULL;
 	struct ph2handle *iph2;
-	struct sockaddr *src, *dst;
+	struct sockaddr *src, *dst;     /* IKE addresses (for exchanges) */
+	struct sockaddr *sp_src, *sp_dst;   /* SP addresses (selectors). */
+	struct sockaddr *sa_src = NULL, *sa_dst = NULL ; /* SA addresses */
 #ifdef HAVE_SECCTX
 	struct sadb_x_sec_ctx *m_sec_ctx;
 #endif /* HAVE_SECCTX */
@@ -1715,8 +1709,8 @@ pk_recvacquire(mhp)
 	}
 	msg = (struct sadb_msg *)mhp[0];
 	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
-	src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
-	dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
+	sp_src = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
+	sp_dst = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
 
 #ifdef HAVE_SECCTX
 	m_sec_ctx = (struct sadb_x_sec_ctx *)mhp[SADB_X_EXT_SEC_CTX];
@@ -1741,50 +1735,82 @@ pk_recvacquire(mhp)
 		return 0;
 	}
 
-	/* ignore it if src is multicast address */
-    {
-	struct sockaddr *sa = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]);
-
-	if ((sa->sa_family == AF_INET
-	  && IN_MULTICAST(ntohl(((struct sockaddr_in *)sa)->sin_addr.s_addr)))
+	/* ignore it if src or dst are multicast addresses. */
+	if ((sp_dst->sa_family == AF_INET
+	  && IN_MULTICAST(ntohl(((struct sockaddr_in *)sp_dst)->sin_addr.s_addr)))
 #ifdef INET6
-	 || (sa->sa_family == AF_INET6
-	  && IN6_IS_ADDR_MULTICAST(&((struct sockaddr_in6 *)sa)->sin6_addr))
+	 || (sp_dst->sa_family == AF_INET6
+	  && IN6_IS_ADDR_MULTICAST(&((struct sockaddr_in6 *)sp_dst)->sin6_addr))
 #endif
 	) {
 		plog(LLV_DEBUG, LOCATION, NULL,
-			"ignore due to multicast address: %s.\n",
-			saddrwop2str(sa));
+			"ignore due to multicast destination address: %s.\n",
+			saddrwop2str(sp_dst));
 		return 0;
 	}
-    }
-   	
-    	/* ignore, if we do not listen on source address */
-	{
-		/* reasons behind:
-		 * - if we'll contact peer from address we do not listen -
-		 *   we will be unable to complete negotiation;
-		 * - if we'll negotiate using address we're listening -
-		 *   remote peer will send packets to address different
-		 *   than one in the policy, so kernel will drop them;
-		 * => therefore this acquire is not for us! --Aidas
-		 */
-		struct sockaddr *sa = PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]);
-		struct myaddrs *p;
-		int do_listen = 0;
-		for (p = lcconf->myaddrs; p; p = p->next) {
-			if (!cmpsaddrwop(p->addr, sa)) {
-				do_listen = 1;
-				break;
-			}
-		}
 
-		if (!do_listen) {
-			plog(LLV_DEBUG, LOCATION, NULL,
-				"ignore because do not listen on source address : %s.\n",
-				saddrwop2str(sa));
-			return 0;
+	if ((sp_src->sa_family == AF_INET
+	  && IN_MULTICAST(ntohl(((struct sockaddr_in *)sp_src)->sin_addr.s_addr)))
+#ifdef INET6
+	 || (sp_src->sa_family == AF_INET6
+	  && IN6_IS_ADDR_MULTICAST(&((struct sockaddr_in6 *)sp_src)->sin6_addr))
+#endif
+	) {
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"ignore due to multicast source address: %s.\n",
+			saddrwop2str(sp_src));
+		return 0;
+	}
+
+	/* search for proper policyindex */
+	sp_out = getspbyspid(xpl->sadb_x_policy_id);
+	if (sp_out == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "no policy found: id:%d.\n",
+			xpl->sadb_x_policy_id);
+		return -1;
+	}
+	plog(LLV_DEBUG, LOCATION, NULL,
+		"suitable outbound SP found: %s.\n", spidx2str(&sp_out->spidx));
+
+	/* Before going further, let first get the source and destination
+	 * address that would be used for IKE negotiation. The logic is:
+	 * - if SP from SPD image contains local and remote hints, we
+	 *   use them (provided by MIGRATE).
+	 * - otherwise, we use the ones from the ipsecrequest, which means:
+	 *   - the addresses from the selector for transport mode
+	 *   - the endpoints addresses for tunnel mode
+	 *
+	 * Note that:
+	 * 1) racoon does not support negotiation of bundles which
+	 *    simplifies the lookup for the addresses in the ipsecrequest
+	 *    list, as we expect only one.
+	 * 2) We do source and destination parts all together and do not
+	 *    accept semi-defined information. This is just a decision,
+	 *    there might be needs.
+	 *
+	 * --arno
+	 */
+	if (sp_out->local && sp_out->remote) {
+		/* hints available, let's use them */
+		src = (struct sockaddr *)sp_out->local;
+		dst = (struct sockaddr *)sp_out->remote;
+		if (sp_out->req && sp_out->req->saidx.mode == IPSEC_MODE_TUNNEL) {
+			/* For Tunnel mode, SA addresses are the endpoints */
+			sa_src = (struct sockaddr *)&sp_out->req->saidx.src;
+			sa_dst = (struct sockaddr *)&sp_out->req->saidx.dst;
+		} else {
+			/* Otherwise, use selectors */
+			sa_src = (struct sockaddr *)&sp_out->spidx.src;
+			sa_dst = (struct sockaddr *)&sp_out->spidx.dst;
 		}
+	} else if (sp_out->req && sp_out->req->saidx.mode == IPSEC_MODE_TUNNEL) {
+		/* Tunnel mode and no hint, use endpoints */
+		src = (struct sockaddr *)&sp_out->req->saidx.src;
+		dst = (struct sockaddr *)&sp_out->req->saidx.dst;
+	} else {
+		/* default, use selectors as fallback */
+		src = (struct sockaddr *)&sp_out->spidx.src;
+		dst = (struct sockaddr *)&sp_out->spidx.dst;
 	}
 
 	/*
@@ -1809,15 +1835,24 @@ pk_recvacquire(mhp)
 		/*FALLTHROUGH*/
 	}
 
-	/* search for proper policyindex */
-	sp_out = getspbyspid(xpl->sadb_x_policy_id);
-	if (sp_out == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL, "no policy found: id:%d.\n",
-			xpl->sadb_x_policy_id);
-		return -1;
+	/* Check we are listening on source address. If not, ignore. */
+	{
+		struct myaddrs *p;
+		int do_listen = 0;
+		for (p = lcconf->myaddrs; p; p = p->next) {
+			if (!cmpsaddrwop(p->addr, src)) {
+				do_listen = 1;
+				break;
+			}
+		}
+
+		if (!do_listen) {
+			plog(LLV_DEBUG, LOCATION, NULL,
+			     "Not listening on source address %s. Ignoring ACQUIRE.\n",
+			     saddrwop2str(src));
+			return 0;
+		}
 	}
-	plog(LLV_DEBUG, LOCATION, NULL,
-		"suitable outbound SP found: %s.\n", spidx2str(&sp_out->spidx));
 
 	/* get inbound policy */
     {
@@ -1866,16 +1901,28 @@ pk_recvacquire(mhp)
 	iph2->seq = msg->sadb_msg_seq;
 	iph2->status = PHASE2ST_STATUS2;
 
-	/* set end addresses of SA */
-	iph2->dst = dupsaddr(PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_DST]));
+	/* set address used by IKE for the negotiation (might differ from
+	 * SA address, i.e. might not be tunnel endpoints or addresses
+	 * of transport mode SA) */
+	iph2->dst = dupsaddr(dst);
 	if (iph2->dst == NULL) {
 		delph2(iph2);
 		return -1;
 	}
-	iph2->src = dupsaddr(PFKEY_ADDR_SADDR(mhp[SADB_EXT_ADDRESS_SRC]));
+	iph2->src = dupsaddr(src);
 	if (iph2->src == NULL) {
 		delph2(iph2);
 		return -1;
+	}
+
+	/* If sa_src and sa_dst have been set, this mean we have to
+	 * set iph2->sa_src and iph2->sa_dst to provide the addresses
+	 * of the SA because iph2->src and iph2->dst are only the ones
+	 * used for the IKE exchanges. Those that need these addresses
+	 * are for instance pk_sendupdate() or pk_sendgetspi() */
+	if (sa_src) {
+		iph2->sa_src = dupsaddr(sa_src);
+		iph2->sa_dst = dupsaddr(sa_dst);
 	}
 
 	if (isakmp_get_sainfo(iph2, sp_out, sp_in) < 0) {
@@ -1960,7 +2007,7 @@ pk_recvdelete(mhp)
 
 	plog(LLV_ERROR, LOCATION, NULL,
 		"pfkey DELETE received: %s\n",
-		sadbsecas2str(iph2->src, iph2->dst,
+		sadbsecas2str(src, dst,
 			msg->sadb_msg_satype, sa->sadb_sa_spi, IPSEC_MODE_ANY));
 
 	/* send delete information */
@@ -2000,6 +2047,7 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 	struct ph2handle *iph2;
 {
 	struct policyindex *spidx = (struct policyindex *)iph2->spidx_gen;
+	struct sockaddr *src = NULL, *dst = NULL;
 	struct sadb_x_policy *xpl;
 	struct sadb_x_ipsecrequest *xisr;
 	struct saproto *pr;
@@ -2018,11 +2066,19 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 	/* get policy buffer size */
 	policylen = sizeof(struct sadb_x_policy);
 	if (type != SADB_X_SPDDELETE) {
+		if (iph2->sa_src && iph2->sa_dst) {
+			src = iph2->sa_src; /* MIPv6: Use SA addresses, */
+			dst = iph2->sa_dst; /* not IKE ones             */
+		} else {
+			src = iph2->src; /* Common case: SA addresses */
+			dst = iph2->dst; /* and IKE ones are the same */
+		}
+
 		for (pr = iph2->approval->head; pr; pr = pr->next) {
 			xisrlen = sizeof(*xisr);
 			if (pr->encmode == IPSECDOI_ATTR_ENC_MODE_TUNNEL) {
-				xisrlen += (sysdep_sa_len(iph2->src)
-				          + sysdep_sa_len(iph2->dst));
+				xisrlen += (sysdep_sa_len(src) +
+					    sysdep_sa_len(dst));
 			}
 
 			policylen += PFKEY_ALIGN8(xisrlen);
@@ -2127,14 +2183,14 @@ getsadbpolicy(policy0, policylen0, type, iph2)
 		if (pr->encmode == IPSECDOI_ATTR_ENC_MODE_TUNNEL) {
 			int src_len, dst_len;
 
-			src_len = sysdep_sa_len(iph2->src);
-			dst_len = sysdep_sa_len(iph2->dst);
+			src_len = sysdep_sa_len(src);
+			dst_len = sysdep_sa_len(dst);
 			xisrlen += src_len + dst_len;
 
-			memcpy(p, iph2->src, src_len);
+			memcpy(p, src, src_len);
 			p += src_len;
 
-			memcpy(p, iph2->dst, dst_len);
+			memcpy(p, dst, dst_len);
 			p += dst_len;
 		}
 
@@ -2205,10 +2261,12 @@ pk_recvspdupdate(mhp)
 {
 	struct sadb_address *saddr, *daddr;
 	struct sadb_x_policy *xpl;
- 	struct sadb_lifetime *lt;
+	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
- 	u_int64_t created;
+	struct sockaddr *local=NULL, *remote=NULL;
+	u_int64_t created;
+	int ret;
 
 	/* sanity check */
 	if (mhp[0] == NULL
@@ -2267,11 +2325,25 @@ pk_recvspdupdate(mhp)
 			"such policy does not already exist: \"%s\"\n",
 			spidx2str(&spidx));
 	} else {
+		/* preserve hints before deleting the SP */
+		local = sp->local;
+		remote = sp->remote;
+		sp->local = NULL;
+		sp->remote = NULL;
+
 		remsp(sp);
 		delsp(sp);
 	}
 
-	if (addnewsp(mhp) < 0)
+	/* Add new SP (with old hints) */
+	ret = addnewsp(mhp, local, remote);
+
+	if (local != NULL)
+		racoon_free(local);
+	if (remote != NULL)
+		racoon_free(remote);
+
+	if (ret < 0)
 		return -1;
 
 	return 0;
@@ -2330,7 +2402,9 @@ pk_recvspdadd(mhp)
 	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+	struct sockaddr *local = NULL, *remote = NULL;
 	u_int64_t created;
+	int ret;
 
 	/* sanity check */
 	if (mhp[0] == NULL
@@ -2389,11 +2463,26 @@ pk_recvspdadd(mhp)
 			"such policy already exists. "
 			"anyway replace it: %s\n",
 			spidx2str(&spidx));
+
+		/* preserve hints before deleting the SP */
+		local = sp->local;
+		remote = sp->remote;
+		sp->local = NULL;
+		sp->remote = NULL;
+
 		remsp(sp);
 		delsp(sp);
 	}
 
-	if (addnewsp(mhp) < 0)
+	/* Add new SP (with old hints) */
+	ret = addnewsp(mhp, local, remote);
+
+	if (local != NULL)
+		racoon_free(local);
+	if (remote != NULL)
+		racoon_free(remote);
+
+	if (ret < 0)
 		return -1;
 
 	return 0;
@@ -2614,7 +2703,9 @@ pk_recvspddump(mhp)
 	struct sadb_lifetime *lt;
 	struct policyindex spidx;
 	struct secpolicy *sp;
+	struct sockaddr *local=NULL, *remote=NULL;
 	u_int64_t created;
+	int ret;
 
 	/* sanity check */
 	if (mhp[0] == NULL) {
@@ -2678,11 +2769,26 @@ pk_recvspddump(mhp)
 			"such policy already exists. "
 			"anyway replace it: %s\n",
 			spidx2str(&spidx));
+
+		/* preserve hints before deleting the SP */
+		local = sp->local;
+		remote = sp->remote;
+		sp->local = NULL;
+		sp->remote = NULL;
+
 		remsp(sp);
 		delsp(sp);
 	}
 
-	if (addnewsp(mhp) < 0)
+	/* Add new SP (with old hints) */
+	ret = addnewsp(mhp, local, remote);
+
+	if (local != NULL)
+		racoon_free(local);
+	if (remote != NULL)
+		racoon_free(remote);
+
+	if (ret < 0)
 		return -1;
 
 	return 0;
@@ -2703,6 +2809,629 @@ pk_recvspdflush(mhp)
 
 	return 0;
 }
+
+#if defined(SADB_X_MIGRATE) && defined(SADB_X_EXT_KMADDRESS)
+
+/* MIGRATE support (pk_recvmigrate() is the handler of MIGRATE message).
+ *
+ * pk_recvmigrate()
+ *   1) some preprocessing and checks
+ *   2) parsing of sadb_x_kmaddress extension
+ *   3) SP lookup using selectors and content of policy extension from MIGRATE
+ *   4) resolution of current local and remote IKE addresses
+ *   5) Use of addresses to get Phase 1 handler if any
+ *   6) Update of IKE addresses in Phase 1 (iph1->local and iph1->remote)
+ *   7) Update of IKE addresses in Phase 2 (iph2->src and iph2->dst)
+ *   8) Update of IKE addresses in SP (sp->local and sp->remote)
+ *   9) Loop on sadb_x_ipsecrequests pairs from MIGRATE
+ *      - update of associated ipsecrequests entries in sp->req (should be
+ *        only one as racoon does not support bundles), i.e. update of
+ *        tunnel endpoints when required.
+ *      - If tunnel mode endpoints have been updated, lookup of associated
+ *        Phase 2 handle to also update sa_src and sa_dst entries
+ *
+ * XXX Note that we do not support yet the update of SA addresses for transport
+ *     mode, but only the update of SA addresses for tunnel mode (endpoints).
+ *     Reasons are:
+ *      - there is no initial need for MIPv6
+ *      - racoon does not support bundles
+ *      - this would imply more work to deal with sainfo update (if feasible).
+ */
+
+/* Generic argument structure for migration callbacks */
+struct migrate_args {
+	struct sockaddr *local;
+	struct sockaddr *remote;
+};
+
+/* Update src and dst of all current Phase 2 handles.
+ * with provided local and remote addresses.
+ * Our intent is NOT to modify IPsec SA endpoints but IKE
+ * addresses so we need to take care to separate those if
+ * they are different. -1 is returned on error. 0 if everything
+ * went right.
+ *
+ * Note: we do not maintain port information as it is not
+ *       expected to be meaningful --arno
+ */
+static int
+migrate_ph2_ike_addresses(iph2, arg)
+	struct ph2handle *iph2;
+	void *arg;
+{
+	struct migrate_args *ma = (struct migrate_args *) arg;
+
+	/* Already up-to-date? */
+	if (CMPSADDR(iph2->src, ma->local) == 0 &&
+	    CMPSADDR(iph2->dst, ma->remote) == 0)
+		return 0;
+
+	/* save src/dst as sa_src/sa_dst before rewriting */
+	if (iph2->sa_src == NULL && iph2->sa_dst == NULL) {
+		iph2->sa_src = iph2->src;
+		iph2->sa_dst = iph2->dst;
+		iph2->src = NULL;
+		iph2->dst = NULL;
+	}
+
+	if (iph2->src != NULL)
+		racoon_free(iph2->src);
+	iph2->src = dupsaddr(ma->local);
+	if (iph2->src == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "unable to allocate Phase 2 src address.\n");
+		return -1;
+	}
+
+	if (iph2->dst != NULL)
+		racoon_free(iph2->dst);
+	iph2->dst = dupsaddr(ma->remote);
+	if (iph2->dst == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "unable to allocate Phase 2 dst address.\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/* Consider existing Phase 2 handles with given spid and update their source
+ * and destination addresses for SA. As racoon does not support bundles, if
+ * we modify multiple occurrences, this probably imply rekeying has happened.
+ *
+ * Note that the code below tries to automatically garbage collect
+ * iph2->sa_src and iph2->sa_dst when possible (when new SA addresses
+ * (sa_src and sa_dst) match current iph2->src and iph2->dst)
+ *
+ * Both addresses passed to the function are expected not to be NULL and of
+ * same family. -1 is returned on error. 0 if everything went right.
+ *
+ * XXX We do not check Phase 2 status yet in order to deal with (postpone?)
+ *     some ongoing rekeying --arno
+ */
+static int
+migrate_ph2_sa_addresses(iph2, args)
+	struct ph2handle *iph2;
+	void *args;
+{
+	struct migrate_args *ma = (struct migrate_args *) args;
+
+	if (iph2->sa_src != NULL) {
+		racoon_free(iph2->sa_src);
+		iph2->sa_src = NULL;
+	}
+
+	if (iph2->sa_dst != NULL) {
+		racoon_free(iph2->sa_dst);
+		iph2->sa_dst = NULL;
+	}
+
+	/* IKE addresses and Phase 2 addresses up-to-date? */
+	if (CMPSADDR(iph2->src, ma->local) == 0 &&
+	    CMPSADDR(iph2->dst, ma->remote) == 0)
+		return 0;
+
+	iph2->sa_src = dupsaddr(ma->local);
+	if (iph2->sa_src == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "unable to allocate Phase 2 sa_src address.\n");
+		return -1;
+	}
+
+	iph2->sa_dst = dupsaddr(ma->remote);
+	if (iph2->sa_dst == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "unable to allocate Phase 2 sa_dst address.\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/* Update SP hints (local and remote addresses) for future IKE
+ * negotiations of SA associated with that SP. -1 is returned
+ * on error. 0 if everything went right.
+ *
+ * Note: we do not maintain port information as it is not
+ *       expected to be meaningful --arno
+ */
+static int
+migrate_sp_ike_addresses(sp, local, remote)
+        struct secpolicy *sp;
+        struct sockaddr *local, *remote;
+{
+	if (sp == NULL || local == NULL || remote == NULL)
+		return -1;
+
+	if (sp->local != NULL)
+		racoon_free(sp->local);
+
+	sp->local = dupsaddr(local);
+	if (sp->local == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "unable to allocate "
+		     "local hint for SP.\n");
+		return -1;
+	}
+
+	if (sp->remote != NULL)
+		racoon_free(sp->remote);
+
+	sp->remote = dupsaddr(remote);
+	if (sp->remote == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "unable to allocate "
+		     "remote hint for SP.\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/*
+ * Update local and remote addresses of given Phase 1.
+ *
+ * -1 is returned on error. 0 if everything went right.
+ * Note: we do need to maintain port information here. --arno
+ */
+static int
+migrate_ph1_ike_addresses(iph1, arg)
+        struct ph1handle *iph1;
+        void *arg;
+{
+	struct migrate_args *ma = (struct migrate_args *) arg;
+	u_int16_t port;
+
+	if (iph1->local != NULL) {
+		plog(LLV_DEBUG, LOCATION, NULL, "Migrating Phase 1 local "
+		     "address from %s to %s\n", saddr2str(iph1->local),
+		     saddr2str(ma->local));
+		port = extract_port(iph1->local);
+		racoon_free(iph1->local);
+	} else
+		port = 0;
+
+	iph1->local = dupsaddr(ma->local);
+	if (iph1->local == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "unable to allocate "
+		     "Phase 1 local address.\n");
+		return -1;
+	}
+	set_port(iph1->local, port);
+
+	if (iph1->remote != NULL) {
+		plog(LLV_DEBUG, LOCATION, NULL, "Migrating Phase 1 remote "
+		     "address from %s to %s\n", saddr2str(iph1->remote),
+		     saddr2str(ma->remote));
+		port = extract_port(iph1->remote);
+		racoon_free(iph1->remote);
+	} else
+		port = 0;
+
+	iph1->remote = dupsaddr(ma->remote);
+	if (iph1->remote == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "unable to allocate "
+		     "Phase 1 remote address.\n");
+		return -1;
+	}
+	set_port(iph1->remote, port);
+
+	return 0;
+}
+
+/* Given current ipsecrequest (isr_cur) to be migrated in considered
+   tree, the function first checks that it matches the expected one
+   (xisr_old) provided in MIGRATE message and then updates the addresses
+   if it is tunnel mode (with content of xisr_new). Various other checks
+   are performed. For transport mode, structures are not modified, only
+   the checks are done. -1 is returned on error. */
+static int
+migrate_ph2_one_isr(spid, isr_cur, xisr_old, xisr_new)
+        u_int32_t spid;
+        struct ipsecrequest *isr_cur;
+	struct sadb_x_ipsecrequest *xisr_old, *xisr_new;
+{
+	struct secasindex *saidx = &isr_cur->saidx;
+	struct sockaddr *osaddr, *odaddr, *nsaddr, *ndaddr;
+	struct ph2selector ph2sel;
+	struct migrate_args ma;
+
+	/* First, check that mode and proto do match */
+	if (xisr_old->sadb_x_ipsecrequest_proto != saidx->proto ||
+	    xisr_old->sadb_x_ipsecrequest_mode != saidx->mode ||
+	    xisr_new->sadb_x_ipsecrequest_proto != saidx->proto ||
+	    xisr_new->sadb_x_ipsecrequest_mode != saidx->mode)
+		return -1;
+
+	/* Then, verify reqid if necessary */
+	if (isr_cur->saidx.reqid &&
+	    (xisr_old->sadb_x_ipsecrequest_reqid != IPSEC_LEVEL_UNIQUE ||
+	     xisr_new->sadb_x_ipsecrequest_reqid != IPSEC_LEVEL_UNIQUE ||
+	     isr_cur->saidx.reqid != xisr_old->sadb_x_ipsecrequest_reqid ||
+	     isr_cur->saidx.reqid != xisr_new->sadb_x_ipsecrequest_reqid))
+		return -1;
+
+	/* If not tunnel mode, our work is over */
+	if (saidx->mode != IPSEC_MODE_TUNNEL) {
+		plog(LLV_DEBUG, LOCATION, NULL, "SADB_X_MIGRATE: "
+		     "non tunnel mode isr, skipping SA address migration.\n");
+		return 0;
+	}
+
+	/* Tunnel mode: let's check addresses do match and then update them. */
+	osaddr = (struct sockaddr *)(xisr_old + 1);
+	odaddr = (struct sockaddr *)(((u_int8_t *)osaddr) + sysdep_sa_len(osaddr));
+	nsaddr = (struct sockaddr *)(xisr_new + 1);
+	ndaddr = (struct sockaddr *)(((u_int8_t *)nsaddr) + sysdep_sa_len(nsaddr));
+
+	/* Check family does match */
+	if (osaddr->sa_family != odaddr->sa_family ||
+	    nsaddr->sa_family != ndaddr->sa_family)
+		return -1;
+
+	/* Check family does match */
+	if (saidx->src.ss_family != osaddr->sa_family)
+		return -1;
+
+	/* We log IPv4 to IPv6 and IPv6 to IPv4 switches */
+	if (nsaddr->sa_family != osaddr->sa_family)
+		plog(LLV_INFO, LOCATION, NULL, "SADB_X_MIGRATE: "
+		     "changing address families (%d to %d) for endpoints.\n",
+		     osaddr->sa_family, nsaddr->sa_family);
+
+	if (CMPSADDR(osaddr, (struct sockaddr *)&saidx->src) ||
+	    CMPSADDR(odaddr, (struct sockaddr *)&saidx->dst)) {
+		plog(LLV_DEBUG, LOCATION, NULL, "SADB_X_MIGRATE: "
+		     "mismatch of addresses in saidx and xisr.\n");
+		return -1;
+	}
+
+	/* Excellent. Let's grab associated Phase 2 handle (if any)
+	 * and update its sa_src and sa_dst entries.  Note that we
+	 * make the assumption that racoon does not support bundles
+	 * and make the lookup using spid: we blindly update
+	 * sa_src and sa_dst for _all_ found Phase 2 handles */
+	memset(&ph2sel, 0, sizeof(ph2sel));
+	ph2sel.spid = spid;
+
+	memset(&ma, 0, sizeof(ma));
+	ma.local = nsaddr;
+	ma.remote = ndaddr;
+
+	if (enumph2(&ph2sel, migrate_ph2_sa_addresses, &ma) < 0)
+		return -1;
+
+	/* Now we can do the update of endpoints in secasindex */
+	memcpy(&saidx->src, nsaddr, sysdep_sa_len(nsaddr));
+	memcpy(&saidx->dst, ndaddr, sysdep_sa_len(ndaddr));
+
+	return 0;
+}
+
+/* Process the raw (unparsed yet) list of sadb_x_ipsecrequests of MIGRATE
+ * message. For each sadb_x_ipsecrequest pair (old followed by new),
+ * the corresponding ipsecrequest entry in the SP is updated. Associated
+ * existing Phase 2 handle is also updated (if any) */
+static int
+migrate_sp_isr_list(sp, xisr_list, xisr_list_len)
+        struct secpolicy *sp;
+	struct sadb_x_ipsecrequest *xisr_list;
+	int xisr_list_len;
+{
+	struct sadb_x_ipsecrequest *xisr_new, *xisr_old = xisr_list;
+	int xisr_old_len, xisr_new_len;
+	struct ipsecrequest *isr_cur;
+
+	isr_cur = sp->req; /* ipsecrequest list from from sp */
+
+	while (xisr_list_len > 0 && isr_cur != NULL) {
+		/* Get old xisr (length field is in bytes) */
+		xisr_old_len = xisr_old->sadb_x_ipsecrequest_len;
+		if (xisr_old_len < sizeof(*xisr_old) ||
+		    xisr_old_len + sizeof(*xisr_new) > xisr_list_len) {
+			plog(LLV_ERROR, LOCATION, NULL, "SADB_X_MIGRATE: "
+			     "invalid ipsecrequest length. Exiting.\n");
+			return -1;
+		}
+
+		/* Get new xisr with updated info */
+		xisr_new = (struct sadb_x_ipsecrequest *)(((u_int8_t *)xisr_old) + xisr_old_len);
+		xisr_new_len = xisr_new->sadb_x_ipsecrequest_len;
+		if (xisr_new_len < sizeof(*xisr_new) ||
+		    xisr_new_len + xisr_old_len > xisr_list_len) {
+			plog(LLV_ERROR, LOCATION, NULL, "SADB_X_MIGRATE: "
+			     "invalid ipsecrequest length. Exiting.\n");
+			return -1;
+		}
+
+		/* Start by migrating current ipsecrequest from SP */
+		if (migrate_ph2_one_isr(sp->id, isr_cur, xisr_old, xisr_new) == -1) {
+			plog(LLV_ERROR, LOCATION, NULL, "SADB_X_MIGRATE: "
+			     "Unable to match and migrate isr. Exiting.\n");
+			return -1;
+		}
+
+		/* Update pointers for next round */
+		xisr_list_len -= xisr_old_len + xisr_new_len;
+		xisr_old = (struct sadb_x_ipsecrequest *)(((u_int8_t *)xisr_new) +
+							  xisr_new_len);
+
+		isr_cur = isr_cur->next; /* Get next ipsecrequest from SP */
+	}
+
+	/* Check we had the same amount of pairs in the MIGRATE
+	   as the number of ipsecrequests in the SP */
+	if ((xisr_list_len != 0) || isr_cur != NULL) {
+		plog(LLV_ERROR, LOCATION, NULL, "SADB_X_MIGRATE: "
+		     "number of ipsecrequest does not match the one in SP.\n");
+		return -1;
+	}
+
+	return 0;
+}
+
+/* Parse sadb_x_kmaddress extension and make local and remote
+ * parameters point to the new addresses (zero copy). -1 is
+ * returned on error, meaning that addresses are not usable */
+static int
+parse_kmaddress(kmaddr, local, remote)
+        struct sadb_x_kmaddress *kmaddr;
+	struct sockaddr **local, **remote;
+{
+	int addrslen, local_len=0;
+	struct ph1handle *iph1;
+
+	if (kmaddr == NULL)
+		return -1;
+
+	/* Grab addresses in sadb_x_kmaddress extension */
+	addrslen = PFKEY_EXTLEN(kmaddr) - sizeof(*kmaddr);
+	if (addrslen < sizeof(struct sockaddr))
+		return -1;
+
+	*local = (struct sockaddr *)(kmaddr + 1);
+
+	switch ((*local)->sa_family) {
+	case AF_INET:
+		local_len = sizeof(struct sockaddr_in);
+		break;
+#ifdef INET6
+	case AF_INET6:
+		local_len = sizeof(struct sockaddr_in6);
+		break;
+#endif
+	default:
+		return -1;
+	}
+
+	if (addrslen != PFKEY_ALIGN8(2*local_len))
+		return -1;
+
+	*remote = (struct sockaddr *)(((u_int8_t *)(*local)) + local_len);
+
+	if ((*local)->sa_family != (*remote)->sa_family)
+		return -1;
+
+	return 0;
+}
+
+/* Handler of PF_KEY MIGRATE message. Helpers are above */
+static int
+pk_recvmigrate(mhp)
+	caddr_t *mhp;
+{
+	struct sadb_address *saddr, *daddr;
+	struct sockaddr *old_saddr, *new_saddr;
+	struct sockaddr *old_daddr, *new_daddr;
+	struct sockaddr *old_local, *old_remote;
+	struct sockaddr *local, *remote;
+	struct sadb_x_kmaddress *kmaddr;
+	struct sadb_x_policy *xpl;
+	struct sadb_x_ipsecrequest *xisr_list;
+	struct sadb_lifetime *lt;
+	struct policyindex spidx;
+	struct secpolicy *sp;
+	struct ipsecrequest *isr_cur;
+	struct secasindex *oldsaidx;
+	struct ph2handle *iph2;
+	struct ph1handle *iph1;
+	struct ph2selector ph2sel;
+	struct ph1selector ph1sel;
+	u_int32_t spid;
+	u_int64_t created;
+	int xisr_list_len;
+	int ulproto;
+	struct migrate_args ma;
+
+	/* Some sanity checks */
+
+	if (mhp[0] == NULL
+	 || mhp[SADB_EXT_ADDRESS_SRC] == NULL
+	 || mhp[SADB_EXT_ADDRESS_DST] == NULL
+	 || mhp[SADB_X_EXT_KMADDRESS] == NULL
+	 || mhp[SADB_X_EXT_POLICY] == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"SADB_X_MIGRATE: invalid MIGRATE message received.\n");
+		return -1;
+	}
+	kmaddr = (struct sadb_x_kmaddress *)mhp[SADB_X_EXT_KMADDRESS];
+	saddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_SRC];
+	daddr = (struct sadb_address *)mhp[SADB_EXT_ADDRESS_DST];
+	xpl = (struct sadb_x_policy *)mhp[SADB_X_EXT_POLICY];
+	lt = (struct sadb_lifetime*)mhp[SADB_EXT_LIFETIME_HARD];
+	if (lt != NULL)
+		created = lt->sadb_lifetime_addtime;
+	else
+		created = 0;
+
+	if (xpl->sadb_x_policy_type != IPSEC_POLICY_IPSEC) {
+		plog(LLV_WARNING, LOCATION, NULL,"SADB_X_MIGRATE: "
+		     "found non IPsec policy in MIGRATE message. Exiting.\n");
+		return -1;
+	}
+
+	if (PFKEY_EXTLEN(xpl) < sizeof(*xpl)) {
+		plog(LLV_ERROR, LOCATION, NULL, "SADB_X_MIGRATE: "
+		     "invalid size for sadb_x_policy. Exiting.\n");
+		return -1;
+	}
+
+	/* Some logging to help debbugging */
+	if (xpl->sadb_x_policy_dir == IPSEC_DIR_OUTBOUND)
+		plog(LLV_DEBUG, LOCATION, NULL,
+		     "SADB_X_MIGRATE: Outbound SA being migrated.\n");
+	else
+		plog(LLV_DEBUG, LOCATION, NULL,
+		     "SADB_X_MIGRATE: Inbound SA being migrated.\n");
+
+	/* validity check */
+	xisr_list = (struct sadb_x_ipsecrequest *)(xpl + 1);
+	xisr_list_len = PFKEY_EXTLEN(xpl) - sizeof(*xpl);
+	if (xisr_list_len < sizeof(*xisr_list)) {
+		plog(LLV_ERROR, LOCATION, NULL, "SADB_X_MIGRATE: "
+		     "invalid sadb_x_policy message length. Exiting.\n");
+		return -1;
+	}
+
+	if (parse_kmaddress(kmaddr, &local, &remote) == -1) {
+		plog(LLV_ERROR, LOCATION, NULL, "SADB_X_MIGRATE: "
+		     "invalid sadb_x_kmaddress extension. Exiting.\n");
+		return -1;
+	}
+
+	/* 0 means ANY */
+	if (saddr->sadb_address_proto == 0)
+		ulproto = IPSEC_ULPROTO_ANY;
+	else
+		ulproto = saddr->sadb_address_proto;
+
+#ifdef HAVE_PFKEY_POLICY_PRIORITY
+	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
+			saddr + 1,
+			daddr + 1,
+			saddr->sadb_address_prefixlen,
+			daddr->sadb_address_prefixlen,
+			ulproto,
+			xpl->sadb_x_policy_priority,
+			created,
+			&spidx);
+#else
+	KEY_SETSECSPIDX(xpl->sadb_x_policy_dir,
+			saddr + 1,
+			daddr + 1,
+			saddr->sadb_address_prefixlen,
+			daddr->sadb_address_prefixlen,
+			ulproto,
+			created,
+			&spidx);
+#endif
+
+	/* Everything seems ok, let's get the SP.
+	 *
+	 * XXX We could also do the lookup using the spid from xpl.
+	 *     I don't know which one is better.  --arno */
+	sp = getsp(&spidx);
+	if (sp == NULL) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"SADB_X_MIGRATE: Passed policy does not exist: %s\n",
+			spidx2str(&spidx));
+		return -1;
+	}
+
+	/* Get the best source and destination addresses used for IKE
+	 * negotiation, to find and migrate existing Phase 1 */
+	if (sp->local && sp->remote) {
+		/* hints available, let's use them */
+		old_local  = (struct sockaddr *)sp->local;
+		old_remote = (struct sockaddr *)sp->remote;
+	} else if (sp->req && sp->req->saidx.mode == IPSEC_MODE_TUNNEL) {
+		/* Tunnel mode and no hint, use endpoints */
+		old_local  = (struct sockaddr *)&sp->req->saidx.src;
+		old_remote = (struct sockaddr *)&sp->req->saidx.dst;
+	} else {
+		/* default, use selectors as fallback */
+		old_local  = (struct sockaddr *)&sp->spidx.src;
+		old_remote = (struct sockaddr *)&sp->spidx.dst;
+	}
+
+	/* We migrate all Phase 1 that match our old local and remote
+	 * addresses (no matter their state).
+	 *
+	 * XXX In fact, we should probably havea special treatment for
+	 * Phase 1 that are being established when we receive a MIGRATE.
+	 * This can happen if a movement occurs during the initial IKE
+	 * negotiation. In that case, I wonder if should restart the
+	 * negotiation from the new address or just update things like
+	 * we do it now.
+	 *
+	 * XXX while looking at getph1byaddr(), the comment at the
+	 * beginning of the function expects comparison to happen
+	 * without ports considerations but it uses CMPSADDR() which
+	 * relies either on cmpsaddrstrict() or cmpsaddrwop() based
+	 * on NAT-T support being activated. That make me wonder if I
+	 * should force ports to 0 (ANY) in local and remote values
+	 * used below.
+	 *
+	 * -- arno */
+
+	/* Apply callback data ...*/
+	memset(&ma, 0, sizeof(ma));
+	ma.local = local;
+	ma.remote = remote;
+
+	/* Fill phase1 match criteria ... */
+	memset(&ph1sel, 0, sizeof(ph1sel));
+	ph1sel.local = old_local;
+	ph1sel.remote = old_remote;
+
+	/* have matching Phase 1 founds and addresses updated */
+	if (enumph1(&ph1sel, migrate_ph1_ike_addresses, &ma) < 0) {
+		plog(LLV_ERROR, LOCATION, NULL, "SADB_X_MIGRATE: Unable "
+		     "to migrate Phase 1 addresses.\n");
+		return -1;
+	}
+
+	/* We can now update IKE addresses in Phase 1 handle, Phase 2
+	 * handles and _then_ in SP. */
+	memset(&ph2sel, 0, sizeof(ph2sel));
+	ph2sel.spid = sp->id;
+	if ((enumph2(&ph2sel, migrate_ph2_ike_addresses, &ma) < 0) ||
+	    (migrate_sp_ike_addresses(sp, local, remote) < 0)) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "SADB_X_MIGRATE: Unable to migrate IKE addresses.\n");
+		return -1;
+	}
+
+	/* Loop on sadb_x_ipsecrequest list to possibly update sp->req
+	 * entries and associated live Phase 2 handles (their sa_src
+	 * and sa_dst) */
+	if (migrate_sp_isr_list(sp, xisr_list, xisr_list_len) < 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+		     "SADB_X_MIGRATE: Unable to migrate isr list.\n");
+		return -1;
+	}
+
+	return 0;
+}
+#endif
 
 /*
  * send error against acquire message to kenrel.
@@ -2860,8 +3589,9 @@ pk_getseq()
 }
 
 static int
-addnewsp(mhp)
+addnewsp(mhp, local, remote)
 	caddr_t *mhp;
+	struct sockaddr *local, *remote;
 {
 	struct secpolicy *new = NULL;
 	struct sadb_address *saddr, *daddr;
@@ -3069,6 +3799,12 @@ addnewsp(mhp)
 		memcpy(new->spidx.sec_ctx.ctx_str,ctx + 1,ctx->sadb_x_ctx_len);
 	}
 #endif /* HAVE_SECCTX */
+
+	/* Set local and remote hints for that SP, if available */
+	if (local && remote) {
+		new->local = dupsaddr(local);
+		new->remote = dupsaddr(remote);
+	}
 
 	inssp(new);
 
