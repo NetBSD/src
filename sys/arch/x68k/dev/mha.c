@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.49 2008/11/29 05:59:40 isaki Exp $	*/
+/*	$NetBSD: mha.c,v 1.50 2008/12/05 13:14:42 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.49 2008/11/29 05:59:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.50 2008/12/05 13:14:42 isaki Exp $");
 
 #include "opt_ddb.h"
 
@@ -479,7 +479,7 @@ mha_init(struct mha_softc *sc)
 			acb->xs->error = XS_DRIVER_STUFFUP;
 			mha_done(sc, acb);
 		}
-		while ((acb = sc->nexus_list.tqh_first) != NULL) {
+		while ((acb = TAILQ_FIRST(&sc->nexus_list)) != NULL) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
 			mha_done(sc, acb);
 		}
@@ -517,7 +517,7 @@ mha_free_acb(struct mha_softc *sc, struct acb *acb, int flags)
 	 * If there were none, wake anybody waiting for one to come free,
 	 * starting with queued entries.
 	 */
-	if (acb->chain.tqe_next == 0)
+	if (TAILQ_NEXT(acb, chain) == NULL)
 		wakeup(&sc->free_list);
 
 	splx(s);
@@ -621,8 +621,7 @@ mha_reselect(struct mha_softc *sc, u_char message)
 	 */
 	target = ffs(selid) - 1;
 	lun = message & 0x07;
-	for (acb = sc->nexus_list.tqh_first; acb != NULL;
-	     acb = acb->chain.tqe_next) {
+	TAILQ_FOREACH(acb, &sc->nexus_list, chain) {
 		periph = acb->xs->xs_periph;
 		if (periph->periph_target == target &&
 		    periph->periph_lun == lun)
@@ -693,7 +692,7 @@ mha_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 		/* Get a mha command block */
 		s = splbio();
-		acb = sc->free_list.tqh_first;
+		acb = TAILQ_FIRST(&sc->free_list);
 		if (acb) {
 			TAILQ_REMOVE(&sc->free_list, acb, chain);
 			ACB_SETQ(acb, ACB_QNONE);
@@ -837,7 +836,7 @@ mha_sched(struct mha_softc *sc)
 	 * Find first acb in ready queue that is for a target/lunit
 	 * combinations that is not busy.
 	 */
-	for (acb = sc->ready_list.tqh_first; acb ; acb = acb->chain.tqe_next) {
+	TAILQ_FOREACH(acb, &sc->ready_list, chain) {
 		struct spc_tinfo *ti;
 		periph = acb->xs->xs_periph;
 		t = periph->periph_target;
@@ -1228,8 +1227,7 @@ printf("%s: unimplemented message: %d\n", device_xname(sc->sc_dev), sc->sc_imess
 			 * singly linked list.
 			 */
 			lunit = sc->sc_imess[0] & 0x07;
-			for (acb = sc->nexus_list.tqh_first; acb;
-			     acb = acb->chain.tqe_next) {
+			TAILQ_FOREACH(acb, &sc->nexus_list, chain) {
 				periph = acb->xs->xs_periph;
 				if (periph->periph_lun == lunit &&
 				    sc->sc_selid == (1<<periph->periph_target)) {
@@ -2026,15 +2024,13 @@ mha_print_active_acb(void)
 	struct mha_softc *sc = device_lookup_private(&mha_cd, 0); /* XXX */
 
 	printf("ready list:\n");
-	for (acb = sc->ready_list.tqh_first; acb != NULL;
-	    acb = acb->chain.tqe_next)
+	TAILQ_FOREACH(acb, &sc->ready_list, chain)
 		mha_print_acb(acb);
 	printf("nexus:\n");
 	if (sc->sc_nexus != NULL)
 		mha_print_acb(sc->sc_nexus);
 	printf("nexus list:\n");
-	for (acb = sc->nexus_list.tqh_first; acb != NULL;
-	    acb = acb->chain.tqe_next)
+	TAILQ_FOREACH(acb, &sc->nexus_list, chain)
 		mha_print_acb(acb);
 }
 
