@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.361 2008/11/12 12:35:52 ad Exp $
+#	$NetBSD: Makefile,v 1.362 2008/12/05 18:52:59 cube Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -634,7 +634,10 @@ snap_md_post: .PHONY check_DESTDIR check_RELEASEDIR snap_post
 clean:
 	-rm -rf ${CDROM.dir} ${CDROM.pathlist} ${OBSOLETE.dir}
 
+SUBDIR=	rc.d
+
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
 
 test:
 	@echo ${OBSOLETE.files}
