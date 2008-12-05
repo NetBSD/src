@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.8 2008/09/04 17:45:00 njoly Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.9 2008/12/05 23:30:19 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -56,6 +56,8 @@ typedef netbsd32_pointer_t linux32_tmsp_t;
 typedef netbsd32_pointer_t linux32_sched_paramp_t;
 typedef netbsd32_pointer_t linux32_utimbufp_t;
 typedef netbsd32_pointer_t linux32_oldold_utsnamep_t;
+typedef netbsd32_pointer_t linux32_uidp_t;
+typedef netbsd32_pointer_t linux32_gidp_t;
 typedef netbsd32_pointer_t linux32_uid16p_t;
 typedef netbsd32_pointer_t linux32_gid16p_t;
 typedef netbsd32_pointer_t linux32_oldselectp_t;
