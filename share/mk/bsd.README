@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.242 2008/11/15 11:27:49 mrg Exp $
+#	$NetBSD: bsd.README,v 1.243 2008/12/05 18:51:16 cube Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -787,6 +787,10 @@ FILESMODE_<fn>	File mode of the specific file <fn>.
 FILESDIR_<fn>	The location to install the specific file <fn>.
 
 FILESNAME_<fn>	Optional name to install <fn> as.
+
+FILESBUILD_<fn>	A value different from "no" will add the file to the list of
+		targets to be built by `realall'.  Users of that variable
+		should provide a target to build the file.
 
 
 BUILDSYMLINKS	List of two word items:
