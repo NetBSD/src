@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.16 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: handler.h,v 1.17 2008/12/05 06:02:20 tteras Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -218,6 +218,12 @@ struct ph1handle {
 	EVT_LISTENER_LIST(evt_listeners);
 };
 
+/* For limiting enumeration of ph1 tree */
+struct ph1selector {
+	struct sockaddr *local;
+	struct sockaddr *remote;
+};
+
 /* Phase 2 handler */
 /* allocated per a SA or SA bundles of a pair of peer's IP addresses. */
 /*
@@ -248,15 +254,32 @@ struct ph1handle {
 #define PHASE2ST_MAX		11
 
 struct ph2handle {
-	struct sockaddr *src;		/* my address of SA. */
-	struct sockaddr *dst;		/* peer's address of SA. */
+	/* source and destination addresses used for IKE exchange. Might
+	 * differ from source and destination of SA. On the initiator,
+	 * they are tweaked if a hint is available in the SPD (set by
+	 * MIGRATE for instance). Otherwise they are the source and
+	 * destination of SA for transport mode and the tunnel endpoints
+	 * for tunnel mode */
+	struct sockaddr *src;
+	struct sockaddr *dst;
 
-		/*
-		 * copy ip address from ID payloads when ID type is ip address.
-		 * In other case, they must be null.
-		 */
-	struct sockaddr *src_id;
-	struct sockaddr *dst_id;
+	/* source and destination addresses of the SA in the case addresses
+	 * used for IKE exchanges (src and dst) do differ. On the initiator,
+	 * they are set (if needed) in pk_recvacquire(). On the responder,
+	 * they are _derived_ from the local and remote parameters of the
+	 * SP, if available. */
+	struct sockaddr *sa_src;
+	struct sockaddr *sa_dst;
+
+	/* Store our Phase 2 ID and the peer ID (ID minus general header).
+	 * On the initiator, they are set during ACQUIRE processing.
+	 * On the responder, they are set from the content of ID payload
+	 * in quick_r1recv(). Then, if they are of type address or
+	 * tunnel, they are compared to sainfo selectors.
+	 */
+	vchar_t *id;			/* ID minus gen header */
+	vchar_t *id_p;			/* peer's ID minus general header */
+
 #ifdef ENABLE_NATT
 	struct sockaddr *natoa_src;	/* peer's view of my address */
 	struct sockaddr *natoa_dst;	/* peer's view of his address */
@@ -305,8 +328,6 @@ struct ph2handle {
 	vchar_t *dhpub;			/* DH; public value */
 	vchar_t *dhpub_p;		/* DH; partner's public value */
 	vchar_t *dhgxy;			/* DH; shared secret */
-	vchar_t *id;			/* ID minus gen header */
-	vchar_t *id_p;			/* peer's ID minus general header */
 	vchar_t *nonce;			/* nonce value in phase 2 */
 	vchar_t *nonce_p;		/* partner's nonce value in phase 2 */
 
@@ -331,6 +352,13 @@ struct ph2handle {
 	LIST_ENTRY(ph2handle) chain;
 	LIST_ENTRY(ph2handle) ph1bind;	/* chain to ph1handle */
 	EVT_LISTENER_LIST(evt_listeners);
+};
+
+/* For limiting enumeration of ph2 tree */
+struct ph2selector {
+	u_int32_t spid;
+	struct sockaddr *src;
+	struct sockaddr *dst;
 };
 
 /*
@@ -434,6 +462,11 @@ struct policyindex;
 
 extern struct ph1handle *getph1byindex __P((isakmp_index *));
 extern struct ph1handle *getph1byindex0 __P((isakmp_index *));
+
+extern int enumph1 __P((struct ph1selector *ph1sel,
+			int (* enum_func)(struct ph1handle *iph1, void *arg),
+			void *enum_arg));
+
 extern struct ph1handle *getph1byaddr __P((struct sockaddr *,
 					   struct sockaddr *, int));
 extern struct ph1handle *getph1byaddrwop __P((struct sockaddr *,
@@ -453,8 +486,9 @@ extern void remph1 __P((struct ph1handle *));
 extern void flushph1 __P((void));
 extern void initph1tree __P((void));
 
-extern struct ph2handle *getph2byspidx __P((struct policyindex *));
-extern struct ph2handle *getph2byspid __P((u_int32_t));
+extern int enumph2 __P((struct ph2selector *ph2sel,
+			int (* enum_func)(struct ph2handle *iph2, void *arg),
+			void *enum_arg));
 extern struct ph2handle *getph2byseq __P((u_int32_t));
 extern struct ph2handle *getph2bysaddr __P((struct sockaddr *,
 	struct sockaddr *));

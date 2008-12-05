@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.44 2008/11/25 21:42:36 bad Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.45 2008/12/05 06:02:20 tteras Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -1292,8 +1292,8 @@ isakmp_ph2begin_i(iph1, iph2)
 #ifdef ENABLE_STATS
 	gettimeofday(&iph2->start, NULL);
 #endif
-	/* found isakmp-sa */
-	bindph12(iph1, iph2);
+	if (iph2->status != PHASE2ST_EXPIRED) /* Phase 1 is already bound (ongoing rekeying) */
+		bindph12(iph1, iph2);
 	iph2->status = PHASE2ST_STATUS2;
 
 	if ((ph2exchange[etypesw2(ISAKMP_ETYPE_QUICK)]
@@ -2214,7 +2214,14 @@ isakmp_post_acquire(iph2)
 	
 	plog(LLV_DEBUG, LOCATION, NULL, "in post_acquire\n");
 
-	/* search appropreate configuration with masking port. */
+	/* Search appropriate configuration with masking port. Note that
+	 * we always use iph2->dst, and not iph2->sa_dst.
+	 *
+	 * XXX One possible need for using iph2->sa_dst if not NULL would
+	 * be for selecting a remote configuration based on a stable
+	 * address of a mobile node (not a CoA provided by MIGRATE/KMADDRESS
+	 * as iph2->dst hint). This scenario would require additional changes,
+	 * so no need to bother yet. --arno */
 	rmconf = getrmconf(iph2->dst);
 	if (rmconf == NULL) {
 		plog(LLV_ERROR, LOCATION, NULL,
@@ -3568,8 +3575,8 @@ delete_spd(iph2, created)
 			|| _XIDT(iph2->id_p) == IPSECDOI_ID_IPV6_ADDR_SUBNET)) {
 		/* get a source address of inbound SA */
 		error = ipsecdoi_id2sockaddr(iph2->id_p,
-									 (struct sockaddr *)&spidx.src,
-									 &spidx.prefs, &spidx.ul_proto);
+					     (struct sockaddr *)&spidx.src,
+					     &spidx.prefs, &spidx.ul_proto);
 		if (error)
 			goto purge;
 
@@ -3587,19 +3594,19 @@ delete_spd(iph2, created)
 		}
 #endif
 
-		/* make id[src,dst] if both ID types are IP address and same */
+		/* make sa_[src,dst] if both ID types are IP address and same */
 		if (_XIDT(iph2->id_p) == idi2type
 			&& spidx.dst.ss_family == spidx.src.ss_family) {
-			iph2->src_id = 
+			iph2->sa_src =
 				dupsaddr((struct sockaddr *)&spidx.dst);
-			if (iph2->src_id == NULL) {
+			if (iph2->sa_src == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					 "allocation failed\n");
 				goto purge;
 			}
-			iph2->dst_id = 
+			iph2->sa_dst =
 				dupsaddr((struct sockaddr *)&spidx.src);
-			if (iph2->dst_id == NULL) {
+			if (iph2->sa_dst == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					 "allocation failed\n");
 				goto purge;

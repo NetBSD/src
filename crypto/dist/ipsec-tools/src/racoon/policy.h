@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.h,v 1.7 2007/05/31 19:54:55 manu Exp $	*/
+/*	$NetBSD: policy.h,v 1.8 2008/12/05 06:02:20 tteras Exp $	*/
 
 /* Id: policy.h,v 1.5 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -82,6 +82,12 @@ struct secpolicy {
 	struct ipsecrequest *req;
 				/* pointer to the ipsec request tree, */
 				/* if policy == IPSEC else this value == NULL.*/
+
+	/* MIPv6 needs to perform negotiation of SA using different addresses
+	 * than the endpoints of the SA (CoA for the source). In that case,
+	 * MIGRATE msg provides that info (before movement occurs on the MN) */
+	struct sockaddr *local;
+	struct sockaddr *remote;
 };
 
 /* Security Assocciation Index */

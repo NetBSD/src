@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_quick.c,v 1.22 2008/10/09 15:53:12 tteras Exp $	*/
+/*	$NetBSD: isakmp_quick.c,v 1.23 2008/12/05 06:02:20 tteras Exp $	*/
 
 /* Id: isakmp_quick.c,v 1.29 2006/08/22 18:17:17 manubsd Exp */
 
@@ -256,13 +256,16 @@ quick_i1send(iph2, msg)
 	 * - no MIP6 or proxy
 	 * - id payload suggests to encrypt all the traffic (no specific
 	 *   protocol type)
+	 * - SA endpoints and IKE addresses for the nego are the same
+	 *   (iph2->src/dst)
 	 */
 	id = (struct ipsecdoi_id_b *)iph2->id->v;
 	id_p = (struct ipsecdoi_id_b *)iph2->id_p->v;
-	if (id->proto_id == 0
-	 && id_p->proto_id == 0
-	 && iph2->ph1->rmconf->support_proxy == 0
-	 && ipsecdoi_transportmode(iph2->proposal)) {
+	if (id->proto_id == 0 &&
+	    id_p->proto_id == 0 &&
+	    iph2->ph1->rmconf->support_proxy == 0 &&
+	    iph2->sa_src == NULL && iph2->sa_dst == NULL &&
+	    ipsecdoi_transportmode(iph2->proposal)) {
 		idci = idcr = 0;
 	} else
 		idci = idcr = 1;
@@ -2214,8 +2217,8 @@ get_proposal_r(iph2)
 		return ISAKMP_NTYPE_INVALID_ID_INFORMATION;
 	}
 
-	/* make sure if id[src,dst] is null. */
-	if (iph2->src_id || iph2->dst_id) {
+	/* make sure if sa_[src, dst] are null. */
+	if (iph2->sa_src || iph2->sa_dst) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"Why do ID[src,dst] exist already.\n");
 		return ISAKMP_INTERNAL_ERROR;
@@ -2319,34 +2322,45 @@ get_proposal_r(iph2)
 		}
 #endif
 
-		/* make id[src,dst] if both ID types are IP address and same */
-		if (_XIDT(iph2->id_p) == idi2type
-		 && spidx.dst.ss_family == spidx.src.ss_family) {
-			iph2->src_id = dupsaddr((struct sockaddr *)&spidx.dst);
-			if (iph2->src_id  == NULL) {
+		/* Before setting iph2->[sa_src, sa_dst] with the addresses
+		 * provided in ID payloads, we check:
+		 * - they are both addresses of same family
+		 * - sainfo has not been selected only based on ID payload
+		 *   information but also based on specific Phase 1
+		 *   credentials (iph2->sainfo->id_i is defined), i.e.
+		 *   local configuration _explicitly_ expect that user
+		 *   (e.g. from asn1dn "C=FR, ...") with those IDs) */
+		if (_XIDT(iph2->id_p) == idi2type &&
+		    spidx.dst.ss_family == spidx.src.ss_family &&
+		    iph2->sainfo && iph2->sainfo->id_i) {
+
+			iph2->sa_src = dupsaddr((struct sockaddr *)&spidx.dst);
+			if (iph2->sa_src  == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL,
 				    "buffer allocation failed.\n");
 				return ISAKMP_INTERNAL_ERROR;
 			}
-			iph2->dst_id = dupsaddr((struct sockaddr *)&spidx.src);
-			if (iph2->dst_id  == NULL) {
+
+			iph2->sa_dst = dupsaddr((struct sockaddr *)&spidx.src);
+			if (iph2->sa_dst  == NULL) {
 				plog(LLV_ERROR, LOCATION, NULL,
 				    "buffer allocation failed.\n");
 				return ISAKMP_INTERNAL_ERROR;
 			}
 		} else {
 			plog(LLV_DEBUG, LOCATION, NULL,
-			     "Family (%d - %d) or types (%d - %d) of ID"
-			     "from initiator differ.\n",
+			     "Either family (%d - %d), types (%d - %d) of ID"
+			     "from initiator differ or matching sainfo has"
+			     "has no id_i defined for the peer. Not filling"
+			     "iph2->sa_src and iph2->sa_dst.\n",
 			     spidx.src.ss_family, spidx.dst.ss_family,
 			     _XIDT(iph2->id_p),idi2type);
 		}
 	} else {
 		plog(LLV_DEBUG, LOCATION, NULL,
-			"get a source address of SP index "
-			"from phase1 address "
-			"due to no ID payloads found "
-			"OR because ID type is not address.\n");
+		     "get a source address of SP index from Phase 1"
+		     "addresses due to no ID payloads found"
+		     "OR because ID type is not address.\n");
 
 		/* see above comment. */
 		memcpy(&spidx.src, iph2->dst, sysdep_sa_len(iph2->dst));
