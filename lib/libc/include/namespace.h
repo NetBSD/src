@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.135 2008/11/20 23:50:08 matt Exp $	*/
+/*	$NetBSD: namespace.h,v 1.136 2008/12/05 13:08:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -432,6 +432,7 @@
 #define nsdispatch		_nsdispatch
 #define offtime			_offtime
 #define opendir			_opendir
+#define fdopendir		_fdopendir
 #define openlog			_openlog
 #define openlog_r		_openlog_r
 #define pause			_pause
