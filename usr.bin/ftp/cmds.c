@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.126 2008/09/30 03:41:53 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.127 2008/12/05 05:28:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.126 2008/09/30 03:41:53 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.127 2008/12/05 05:28:12 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1276,7 +1276,7 @@ renamefile(int argc, char *argv[])
  *	mlsd		MLSD
  *	nlist		NLST
  *	pdir, pls	LIST |$PAGER
- *	mmlsd		MLSD |$PAGER
+ *	pmlsd		MLSD |$PAGER
  */
 void
 ls(int argc, char *argv[])
