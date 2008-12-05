@@ -1,4 +1,4 @@
-.\"	$NetBSD: directory.3,v 1.27 2008/12/05 13:08:53 ad Exp $
+.\"	$NetBSD: directory.3,v 1.28 2008/12/05 13:26:41 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)directory.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd May 18, 2006
+.Dd December 5, 2008
 .Dt DIRECTORY 3
 .Os
 .Sh NAME
@@ -112,7 +112,8 @@ provides the same functionality as
 .Fn readdir ,
 but the caller must provide a directory
 .Fa entry
-buffer to store the results in.  If the read succeeds,
+buffer to store the results in.
+If the read succeeds,
 .Fa result
 is pointed at the
 .Fa entry ;
