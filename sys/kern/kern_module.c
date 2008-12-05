@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.35 2008/12/03 15:15:01 christos Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.36 2008/12/05 12:51:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.35 2008/12/03 15:15:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.36 2008/12/05 12:51:17 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -750,7 +750,8 @@ module_do_load(const char *name, bool isdep, int flags,
 	 */
 	error = kobj_affix(mod->mod_kobj, mi->mi_name);
 	if (error != 0) {
-		module_error("unable to affix module `%s'", mi->mi_name);
+		/* Cannot touch 'mi' as the module is now gone. */
+		module_error("unable to affix module `%s'", name);
 		goto fail2;
 	}
 
