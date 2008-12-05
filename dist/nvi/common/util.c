@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2008/08/27 10:18:41 christos Exp $ */
+/*	$NetBSD: util.c,v 1.3 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -107,10 +107,10 @@ nonblank(SCR *sp, db_recno_t lno, size_t *cnop)
  *
  * PUBLIC: char *tail __P((char *));
  */
-char *
-tail(char *path)
+const char *
+tail(const char *path)
 {
-	char *p;
+	const char *p;
 
 	if ((p = strrchr(path, '/')) == NULL)
 		return (path);

@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.1.1.2 2008/05/18 14:31:36 aymeric Exp $ */
+/*	$NetBSD: engine.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -150,8 +150,8 @@ int eflags;
 	struct match mv;
 	register struct match *m = &mv;
 	register RCHAR_T *dp;
-	const register sopno gf = g->firststate+1;	/* +1 for OEND */
-	const register sopno gl = g->laststate;
+	register const sopno gf = g->firststate+1;	/* +1 for OEND */
+	register const sopno gl = g->laststate;
 	RCHAR_T *start;
 	RCHAR_T *stop;
 
@@ -688,6 +688,7 @@ sopno lev;			/* PLUS nesting level */
 	/* "can't happen" */
 	assert(nope);
 	/* NOTREACHED */
+	return NULL;
 }
 
 /*

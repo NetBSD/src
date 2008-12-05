@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_bsd.c,v 1.2 2008/05/20 17:52:10 aymeric Exp $ */
+/*	$NetBSD: cl_bsd.c,v 1.3 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1995, 1996
@@ -195,8 +195,8 @@ setupterm(ttype, fno, errp)
 #ifndef	HAVE_CURSES_TIGETSTR
 /* Terminfo-to-termcap translation table. */
 typedef struct _tl {
-	char *terminfo;			/* Terminfo name. */
-	char *termcap;			/* Termcap name. */
+	const char *terminfo;		/* Terminfo name. */
+	const char *termcap;		/* Termcap name. */
 } TL;
 static const TL list[] = {
 	{ "cols",	"co", },	/* Terminal columns. */
@@ -270,7 +270,7 @@ static const char codes[] = {
 static int
 lcmp(const void *a, const void *b)
 {
-	return (strcmp(a, ((TL *)b)->terminfo));
+	return (strcmp(a, ((const TL *)b)->terminfo));
 }
 
 /*
@@ -288,29 +288,29 @@ lcmp(const void *a, const void *b)
  */
 char *
 tigetstr(name)
-	char *name;
+	const char *name;
 {
 	static char sbuf[256];
 	TL *tlp;
 	int n;
-	char *p, keyname[3];
+	char *p, mykeyname[3];
 
 	if ((tlp = bsearch(name,
 	    list, sizeof(list) / sizeof(TL), sizeof(TL), lcmp)) == NULL) {
 #ifdef _AIX
 		if (name[0] == 'k' &&
 		    name[1] == 'f' && (n = atoi(name + 2)) <= 36) {
-			keyname[0] = 'k';
-			keyname[1] = codes[n];
-			keyname[2] = '\0';
+			mykeyname[0] = 'k';
+			mykeyname[1] = codes[n];
+			mykeyname[2] = '\0';
 #else
 		if (name[0] == 'k' &&
 		    name[1] == 'f' && (n = atoi(name + 2)) <= 63) {
-			keyname[0] = n <= 10 ? 'k' : 'F';
-			keyname[1] = codes[n];
-			keyname[2] = '\0';
+			mykeyname[0] = n <= 10 ? 'k' : 'F';
+			mykeyname[1] = codes[n];
+			mykeyname[2] = '\0';
 #endif
-			name = keyname;
+			name = mykeyname;
 		}
 	} else
 		name = tlp->termcap;
@@ -332,7 +332,7 @@ tigetstr(name)
  */
 int
 tigetnum(name)
-	char *name;
+	const char *name;
 {
 	TL *tlp;
 	int val;

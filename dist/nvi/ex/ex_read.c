@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_read.c,v 1.1.1.2 2008/05/18 14:31:17 aymeric Exp $ */
+/*	$NetBSD: ex_read.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -46,8 +46,8 @@ ex_read(SCR *sp, EXCMD *cmdp)
 {
 	enum { R_ARG, R_EXPANDARG, R_FILTER } which;
 	struct stat sb;
-	CHAR_T *arg;
-	char *name;
+	CHAR_T *arg = NULL;
+	const char *name;
 	size_t nlen;
 	EX_PRIVATE *exp;
 	FILE *fp;
@@ -55,10 +55,9 @@ ex_read(SCR *sp, EXCMD *cmdp)
 	GS *gp;
 	MARK rm;
 	db_recno_t nlines;
-	size_t arglen;
+	size_t arglen = 0;
 	int argc, rval;
 	char *p;
-	char *np;
 
 	gp = sp->gp;
 
@@ -298,7 +297,7 @@ ex_read(SCR *sp, EXCMD *cmdp)
  * PUBLIC: int ex_readfp __P((SCR *, char *, FILE *, MARK *, db_recno_t *, int));
  */
 int
-ex_readfp(SCR *sp, char *name, FILE *fp, MARK *fm, db_recno_t *nlinesp, int silent)
+ex_readfp(SCR *sp, const char *name, FILE *fp, MARK *fm, db_recno_t *nlinesp, int silent)
 {
 	EX_PRIVATE *exp;
 	GS *gp;
@@ -306,9 +305,9 @@ ex_readfp(SCR *sp, char *name, FILE *fp, MARK *fm, db_recno_t *nlinesp, int sile
 	size_t len;
 	u_long ccnt;			/* XXX: can't print off_t portably. */
 	int nf, rval;
-	char *p;
+	const char *p;
 	size_t wlen;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 
 	gp = sp->gp;
 	exp = EXP(sp);
@@ -344,11 +343,11 @@ ex_readfp(SCR *sp, char *name, FILE *fp, MARK *fm, db_recno_t *nlinesp, int sile
 		*nlinesp = lcnt;
 
 	if (!silent) {
-		p = msg_print(sp, name, &nf);
+		char *q = msg_print(sp, name, &nf);
 		msgq(sp, M_INFO,
-		    "148|%s: %lu lines, %lu characters", p, lcnt, ccnt);
+		    "148|%s: %lu lines, %lu characters", q, lcnt, ccnt);
 		if (nf)
-			FREE_SPACE(sp, p, 0);
+			FREE_SPACE(sp, q, 0);
 	}
 
 	rval = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.1.1.2 2008/05/18 14:29:36 aymeric Exp $ */
+/*	$NetBSD: cl_funcs.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -35,7 +35,7 @@ static const char sccsid[] = "Id: cl_funcs.c,v 10.72 2002/03/02 23:18:33 skimo E
 static void cl_rdiv __P((SCR *));
 
 static int 
-addstr4(SCR *sp, void *str, size_t len, int wide)
+addstr4(SCR *sp, const void *str, size_t len, int wide)
 {
 	CL_PRIVATE *clp;
 	WINDOW *win;
@@ -80,7 +80,7 @@ addstr4(SCR *sp, void *str, size_t len, int wide)
 int
 cl_waddstr(SCR *sp, const CHAR_T *str, size_t len)
 {
-    return addstr4(sp, (void *)str, len, 1);
+    return addstr4(sp, (const void *)str, len, 1);
 }
 
 /*
@@ -92,7 +92,7 @@ cl_waddstr(SCR *sp, const CHAR_T *str, size_t len)
 int
 cl_addstr(SCR *sp, const char *str, size_t len)
 {
-    return addstr4(sp, (void *)str, len, 0);
+    return addstr4(sp, (const void *)str, len, 0);
 }
 
 /*
@@ -257,7 +257,9 @@ int
 cl_clrtoeol(SCR *sp)
 {
 	WINDOW *win;
+#if 0
 	size_t spcnt, y, x;
+#endif
 
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
 

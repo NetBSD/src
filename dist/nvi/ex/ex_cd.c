@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cd.c,v 1.1.1.2 2008/05/18 14:31:12 aymeric Exp $ */
+/*	$NetBSD: ex_cd.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -40,8 +40,8 @@ ex_cd(SCR *sp, EXCMD *cmdp)
 {
 	struct passwd *pw;
 	ARGS *ap;
-	CHAR_T savech;
-	char *dir, *p, *t;	/* XXX: END OF THE STACK, DON'T TRUST GETCWD. */
+	const char *p, *t;	/* XXX: END OF THE STACK, DON'T TRUST GETCWD. */
+	const char *dir;
 	char buf[MAXPATHLEN * 2];
 	size_t dlen;
 
@@ -93,9 +93,9 @@ ex_cd(SCR *sp, EXCMD *cmdp)
 	 */
 	if (cmdp->argc == 0 ||
 	    (ap = cmdp->argv[0])->bp[0] == '/' ||
-	    ap->len == 1 && ap->bp[0] == '.' ||
-	    ap->len >= 2 && ap->bp[0] == '.' && ap->bp[1] == '.' &&
-	    (ap->bp[2] == '/' || ap->bp[2] == '\0'))
+	    (ap->len == 1 && ap->bp[0] == '.') ||
+	    (ap->len >= 2 && ap->bp[0] == '.' && ap->bp[1] == '.' &&
+	    (ap->bp[2] == '/' || ap->bp[2] == '\0')))
 		goto err;
 
 	/* Try the O_CDPATH option values. */
@@ -110,11 +110,9 @@ ex_cd(SCR *sp, EXCMD *cmdp)
 			 * already tried dot, we ignore tham all.
 			 */
 			if (t < p - 1) {
-				savech = *p;
-				*p = '\0';
 				(void)snprintf(buf,
-				    sizeof(buf), "%s/%s", t, dir);
-				*p = savech;
+				    sizeof(buf), "%.*s/%s", (int)(p - t),
+					t, dir);
 				if (!chdir(buf)) {
 					if (getcwd(buf, sizeof(buf)) != NULL)
 		msgq_str(sp, M_INFO, buf, "122|New current directory: %s");

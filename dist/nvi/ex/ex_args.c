@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_args.c,v 1.1.1.2 2008/05/18 14:31:11 aymeric Exp $ */
+/*	$NetBSD: ex_args.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -50,9 +50,9 @@ ex_next(SCR *sp, EXCMD *cmdp)
 	FREF *frp;
 	int noargs;
 	char **ap;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	/* Check for file to move to. */
@@ -135,7 +135,7 @@ ex_N_next(SCR *sp, EXCMD *cmdp)
 {
 	SCR *new;
 	FREF *frp;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	/* Get a new screen. */
@@ -180,7 +180,7 @@ ex_prev(SCR *sp, EXCMD *cmdp)
 {
 	FREF *frp;
 	size_t wlen;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 
 	if (sp->cargv == sp->argv) {
 		msgq(sp, M_ERR, "112|No previous files to edit");
@@ -309,7 +309,7 @@ ex_buildargv(SCR *sp, EXCMD *cmdp, char *name)
 	ARGS **argv;
 	int argc;
 	char **ap, **s_argv;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	argc = cmdp == NULL ? 1 : cmdp->argc;
