@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.76 2008/10/20 10:34:54 ad Exp $	*/
+/*	$NetBSD: savecore.c,v 1.77 2008/12/05 21:41:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.76 2008/10/20 10:34:54 ad Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.77 2008/12/05 21:41:10 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -783,7 +783,7 @@ err2:			syslog(LOG_WARNING,
 	    dirname, bounds, compress ? ".gz" : "");
 	syslog(LOG_NOTICE, "writing %skernel to %s",
 	    compress ? "compressed " : "", path);
-	for (tryksyms = 0 /* XXX disable for now */;; tryksyms = 0) {
+	for (tryksyms = 1;; tryksyms = 0) {
 		if (compress) {
 			if ((fp = zopen(path, gzmode)) == NULL) {
 				syslog(LOG_ERR, "%s: %m", path);
