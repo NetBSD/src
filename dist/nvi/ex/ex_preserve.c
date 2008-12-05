@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_preserve.c,v 1.1.1.2 2008/05/18 14:31:09 aymeric Exp $ */
+/*	$NetBSD: ex_preserve.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -71,7 +71,7 @@ ex_recover(SCR *sp, EXCMD *cmdp)
 {
 	ARGS *ap;
 	FREF *frp;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	ap = cmdp->argv[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.h,v 1.2 2008/10/29 17:50:49 christos Exp $ */
+/*	$NetBSD: ex.h,v 1.3 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -14,7 +14,7 @@
 #define	PROMPTCHAR	':'		/* Prompt using a colon. */
 
 typedef struct _excmdlist {		/* Ex command table structure. */
-	CHAR_T *name;			/* Command name, underlying function. */
+	const CHAR_T *name;		/* Command name, underlying function. */
 	int (*fn) __P((SCR *, EXCMD *));
 
 #define	E_ADDR1		0x00000001	/* One address. */
@@ -31,9 +31,9 @@ typedef struct _excmdlist {		/* Ex command table structure. */
 #define	__INUSE1	0xfffff800	/* Same name space as EX_PRIVATE. */
 	u_int16_t flags;
 
-	char *syntax;			/* Syntax script. */
-	char *usage;			/* Usage line. */
-	char *help;			/* Help line. */
+	const char *syntax;		/* Syntax script. */
+	const char *usage;		/* Usage line. */
+	const char *help;		/* Help line. */
 } EXCMDLIST;
 
 #define	MAXCMDNAMELEN	12		/* Longest command name. */

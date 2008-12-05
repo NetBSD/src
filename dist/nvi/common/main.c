@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2008/10/29 17:50:49 christos Exp $ */
+/*	$NetBSD: main.c,v 1.3 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,8 +41,7 @@ static const char sccsid[] = "Id: main.c,v 10.63 2001/11/01 15:24:43 skimo Exp (
 #include "../vi/vi.h"
 #include "pathnames.h"
 
-static void	 attach __P((GS *));
-static void	 v_estr __P((char *, int, char *));
+static void	 v_estr __P((const char *, int, const char *));
 static int	 v_obsolete __P((char *, char *[]));
 
 /*
@@ -68,7 +67,7 @@ editor(WIN *wp, int argc, char **argv)
 	int gtags = 0;
 #endif
 	char *tag_f, *wsizearg, path[256];
-	CHAR_T *w;
+	const CHAR_T *w;
 	size_t wlen;
 
 	gp = wp->gp;
@@ -519,7 +518,7 @@ attach(GS *gp)
 #endif
 
 static void
-v_estr(char *name, int eno, char *msg)
+v_estr(const char *name, int eno, const char *msg)
 {
 	(void)fprintf(stderr, "%s", name);
 	if (msg != NULL)

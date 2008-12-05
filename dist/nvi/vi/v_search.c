@@ -1,4 +1,4 @@
-/*	$NetBSD: v_search.c,v 1.1.1.2 2008/05/18 14:31:44 aymeric Exp $ */
+/*	$NetBSD: v_search.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -65,7 +65,7 @@ v_searchf(SCR *sp, VICMD *vp)
 static int
 v_exaddr(SCR *sp, VICMD *vp, dir_t dir)
 {
-	static EXCMDLIST fake = { L("search") };
+	static EXCMDLIST fake = { .name = L("search") };
 	EXCMD *cmdp;
 	WIN *wp;
 	TEXT *tp;
@@ -74,7 +74,7 @@ v_exaddr(SCR *sp, VICMD *vp, dir_t dir)
 	int err, nb, type;
 	char buf[20];
 	CHAR_T *cmd, *t;
-	CHAR_T *w;
+	const CHAR_T *w;
 	size_t wlen;
 
 	/*
@@ -483,8 +483,8 @@ v_correct(SCR *sp, VICMD *vp, int isdelta)
 	 * because of the wrapscan option.
 	 */
 	if (vp->m_start.lno > vp->m_stop.lno ||
-	    vp->m_start.lno == vp->m_stop.lno &&
-	    vp->m_start.cno > vp->m_stop.cno) {
+	    (vp->m_start.lno == vp->m_stop.lno &&
+	    vp->m_start.cno > vp->m_stop.cno)) {
 		m = vp->m_start;
 		vp->m_start = vp->m_stop;
 		vp->m_stop = m;

@@ -1,4 +1,4 @@
-/*	$NetBSD: v_section.c,v 1.1.1.2 2008/05/18 14:31:44 aymeric Exp $ */
+/*	$NetBSD: v_section.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -69,7 +69,7 @@ v_sectionf(SCR *sp, VICMD *vp)
 	db_recno_t cnt, lno;
 	size_t len;
 	CHAR_T *p;
-	char *list, *lp;
+	const char *list, *lp;
 
 	/* Get the macro list. */
 	if ((list = O_STR(sp, O_SECTIONS)) == NULL)
@@ -83,7 +83,7 @@ v_sectionf(SCR *sp, VICMD *vp)
 	 * check here, because we know that the end is going to be the start
 	 * or end of a line.
 	 */
-	if (ISMOTION(vp))
+	if (ISMOTION(vp)) {
 		if (vp->m_start.cno == 0)
 			F_SET(vp, VM_LMODE);
 		else {
@@ -94,12 +94,13 @@ v_sectionf(SCR *sp, VICMD *vp)
 			if (vp->m_start.cno <= vp->m_stop.cno)
 				F_SET(vp, VM_LMODE);
 		}
+	}
 
 	cnt = F_ISSET(vp, VC_C1SET) ? vp->count : 1;
 	for (lno = vp->m_start.lno; !db_get(sp, ++lno, 0, &p, &len);) {
 		if (len == 0)
 			continue;
-		if (p[0] == '{' || ISMOTION(vp) && p[0] == '}') {
+		if (p[0] == '{' || (ISMOTION(vp) && p[0] == '}')) {
 			if (!--cnt) {
 				if (p[0] == '{')
 					goto adjust1;
@@ -123,7 +124,7 @@ v_sectionf(SCR *sp, VICMD *vp)
 			continue;
 		for (lp = list; *lp != '\0'; lp += 2 * sizeof(*lp))
 			if (lp[0] == p[1] &&
-			    (lp[1] == ' ' && len == 2 || lp[1] == p[2]) &&
+			    ((lp[1] == ' ' && len == 2) || lp[1] == p[2]) &&
 			    !--cnt) {
 				/*
 				 * !!!
@@ -176,7 +177,7 @@ v_sectionb(SCR *sp, VICMD *vp)
 	size_t len;
 	db_recno_t cnt, lno;
 	CHAR_T *p;
-	char *list, *lp;
+	const char *list, *lp;
 
 	/* An empty file or starting from line 1 is always illegal. */
 	if (vp->m_start.lno <= 1) {
@@ -213,7 +214,7 @@ v_sectionb(SCR *sp, VICMD *vp)
 			continue;
 		for (lp = list; *lp != '\0'; lp += 2 * sizeof(*lp))
 			if (lp[0] == p[1] &&
-			    (lp[1] == ' ' && len == 2 || lp[1] == p[2]) &&
+			    ((lp[1] == ' ' && len == 2) || lp[1] == p[2]) &&
 			    !--cnt) {
 adjust1:			vp->m_stop.lno = lno;
 				vp->m_stop.cno = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: v_ex.c,v 1.2 2008/10/29 17:50:49 christos Exp $ */
+/*	$NetBSD: v_ex.c,v 1.3 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -178,7 +178,7 @@ v_switch(SCR *sp, VICMD *vp)
 {
 	EXCMD cmd;
 	char *name;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	/*

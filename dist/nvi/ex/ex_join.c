@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_join.c,v 1.1.1.2 2008/05/18 14:31:16 aymeric Exp $ */
+/*	$NetBSD: ex_join.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,8 +38,8 @@ ex_join(SCR *sp, EXCMD *cmdp)
 {
 	db_recno_t from, to;
 	size_t blen, clen, len, tlen;
-	int echar, extra, first;
-	CHAR_T *bp, *tbp;
+	int echar = 0, extra, first;
+	CHAR_T *bp, *tbp = NULL;
 	CHAR_T *p;
 
 	NEEDFILE(sp, cmdp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: regerror.c,v 1.1.1.2 2008/05/18 14:31:38 aymeric Exp $ */
+/*	$NetBSD: regerror.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -87,26 +87,26 @@ static char *regatoi __P((const regex_t *preg, char *localbuf));
  */
 static struct rerr {
 	int code;
-	char *name;
-	char *explain;
+	const char *name;
+	const char *explain;
 } rerrs[] = {
-	REG_NOMATCH,	"REG_NOMATCH",	"regexec() failed to match",
-	REG_BADPAT,	"REG_BADPAT",	"invalid regular expression",
-	REG_ECOLLATE,	"REG_ECOLLATE",	"invalid collating element",
-	REG_ECTYPE,	"REG_ECTYPE",	"invalid character class",
-	REG_EESCAPE,	"REG_EESCAPE",	"trailing backslash (\\)",
-	REG_ESUBREG,	"REG_ESUBREG",	"invalid backreference number",
-	REG_EBRACK,	"REG_EBRACK",	"brackets ([ ]) not balanced",
-	REG_EPAREN,	"REG_EPAREN",	"parentheses not balanced",
-	REG_EBRACE,	"REG_EBRACE",	"braces not balanced",
-	REG_BADBR,	"REG_BADBR",	"invalid repetition count(s)",
-	REG_ERANGE,	"REG_ERANGE",	"invalid character range",
-	REG_ESPACE,	"REG_ESPACE",	"out of memory",
-	REG_BADRPT,	"REG_BADRPT",	"repetition-operator operand invalid",
-	REG_EMPTY,	"REG_EMPTY",	"empty (sub)expression",
-	REG_ASSERT,	"REG_ASSERT",	"\"can't happen\" -- you found a bug",
-	REG_INVARG,	"REG_INVARG",	"invalid argument to regex routine",
-	0,		"",		"*** unknown regexp error code ***",
+	{ REG_NOMATCH,	"REG_NOMATCH",	"regexec() failed to match" },
+	{ REG_BADPAT,	"REG_BADPAT",	"invalid regular expression" },
+	{ REG_ECOLLATE,	"REG_ECOLLATE",	"invalid collating element" },
+	{ REG_ECTYPE,	"REG_ECTYPE",	"invalid character class" },
+	{ REG_EESCAPE,	"REG_EESCAPE",	"trailing backslash (\\)" },
+	{ REG_ESUBREG,	"REG_ESUBREG",	"invalid backreference number" },
+	{ REG_EBRACK,	"REG_EBRACK",	"brackets ([ ]) not balanced" },
+	{ REG_EPAREN,	"REG_EPAREN",	"parentheses not balanced" },
+	{ REG_EBRACE,	"REG_EBRACE",	"braces not balanced" },
+	{ REG_BADBR,	"REG_BADBR",	"invalid repetition count(s)" },
+	{ REG_ERANGE,	"REG_ERANGE",	"invalid character range" },
+	{ REG_ESPACE,	"REG_ESPACE",	"out of memory" },
+	{ REG_BADRPT,	"REG_BADRPT",	"repetition-operator operand invalid" },
+	{ REG_EMPTY,	"REG_EMPTY",	"empty (sub)expression" },
+	{ REG_ASSERT,	"REG_ASSERT",	"\"can't happen\" -- you found a bug" },
+	{ REG_INVARG,	"REG_INVARG",	"invalid argument to regex routine" },
+	{ 0,		"",		"*** unknown regexp error code ***" },
 };
 
 /*
@@ -120,7 +120,7 @@ regerror(int errcode, const regex_t *preg, char *errbuf, size_t errbuf_size)
 	register struct rerr *r;
 	register size_t len;
 	register int target = errcode &~ REG_ITOA;
-	register char *s;
+	register const char *s;
 	char convbuf[50];
 
 	if (errcode == REG_ATOI)

@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.3 2008/05/21 16:02:30 aymeric Exp $ */
+/*	$NetBSD: conv.c,v 1.4 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,12 +43,12 @@ typedef int	iconv_t;
 #include <locale.h>
 
 #ifdef USE_WIDECHAR
-int 
+static int 
 raw2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, size_t *tolen,
-	CHAR_T **dst)
+	const CHAR_T **dst)
 {
     int i;
-    CHAR_T **tostr = (CHAR_T **)&cw->bp1;
+    CHAR_T **tostr = (CHAR_T **)(void *)&cw->bp1;
     size_t  *blen = &cw->blen1;
 
     BINC_RETW(NULL, *tostr, *blen, len);
@@ -87,17 +87,17 @@ raw2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, size_t *tolen,
 #define CONVERT(str, left, src, len)
 #endif
 
-int 
+static int 
 default_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, 
-		size_t *tolen, CHAR_T **dst, char *enc)
+		size_t *tolen, const CHAR_T **dst, const char *enc)
 {
     int i = 0, j;
-    CHAR_T **tostr = (CHAR_T **)&cw->bp1;
+    CHAR_T **tostr = (CHAR_T **)(void *)&cw->bp1;
     size_t  *blen = &cw->blen1;
     mbstate_t mbs;
     size_t   n;
     ssize_t  nlen = len;
-    char *src = (char *)str;
+    const char *src = (const char *)str;
     iconv_t	id = (iconv_t)-1;
     char	buffer[CONV_BUFFER_SIZE];
     size_t	left = len;
@@ -148,53 +148,53 @@ err:
     return error;
 }
 
-int 
+static int 
 fe_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, 
-	    size_t *tolen, CHAR_T **dst)
+	    size_t *tolen, const CHAR_T **dst)
 {
     return default_char2int(sp, str, len, cw, tolen, dst, O_STR(sp, O_FILEENCODING));
 }
 
-int 
+static int 
 ie_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, 
-	    size_t *tolen, CHAR_T **dst)
+	    size_t *tolen, const CHAR_T **dst)
 {
     return default_char2int(sp, str, len, cw, tolen, dst, O_STR(sp, O_INPUTENCODING));
 }
 
-int 
+static int 
 cs_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, 
-	    size_t *tolen, CHAR_T **dst)
+	    size_t *tolen, const CHAR_T **dst)
 {
     return default_char2int(sp, str, len, cw, tolen, dst, LANGCODESET);
 }
 
-int 
+static int 
 CHAR_T_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, 
-	size_t *tolen, char **dst)
+	size_t *tolen, const char **dst)
 {
     *tolen = len * sizeof(CHAR_T);
-    *dst = (char*) str;
+    *dst = (const char *)(const void *)str;
 
     return 0;
 }
 
-int 
+static int 
 CHAR_T_char2int(SCR *sp, const char * str, ssize_t len, CONVWIN *cw, 
-	size_t *tolen, CHAR_T **dst)
+	size_t *tolen, const CHAR_T **dst)
 {
     *tolen = len / sizeof(CHAR_T);
-    *dst = (CHAR_T*) str;
+    *dst = (const CHAR_T*) str;
 
     return 0;
 }
 
-int 
+static int 
 int2raw(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, size_t *tolen,
-	char **dst)
+	const char **dst)
 {
     int i;
-    char **tostr = (char **)&cw->bp1;
+    char **tostr = (char **)(void *)&cw->bp1;
     size_t  *blen = &cw->blen1;
 
     BINC_RETC(NULL, *tostr, *blen, len);
@@ -208,12 +208,12 @@ int2raw(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, size_t *tolen,
     return 0;
 }
 
-int 
+static int 
 default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, 
-		size_t *tolen, char **pdst, char *enc)
+		size_t *tolen, const char **pdst, const char *enc)
 {
     int i, j, offset = 0;
-    char **tostr = (char **)&cw->bp1;
+    char **tostr = (char **)(void *)&cw->bp1;
     size_t  *blen = &cw->blen1;
     mbstate_t mbs;
     size_t n;
@@ -299,16 +299,16 @@ err:
     return 1;
 }
 
-int 
+static int 
 fe_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, 
-	    size_t *tolen, char **dst)
+	    size_t *tolen, const char **dst)
 {
     return default_int2char(sp, str, len, cw, tolen, dst, O_STR(sp, O_FILEENCODING));
 }
 
-int 
+static int 
 cs_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, 
-	    size_t *tolen, char **dst)
+	    size_t *tolen, const char **dst)
 {
     return default_int2char(sp, str, len, cw, tolen, dst, LANGCODESET);
 }
@@ -338,7 +338,7 @@ conv_init (SCR *orig, SCR *sp)
 }
 
 int
-conv_enc (SCR *sp, int option, char *enc)
+conv_enc (SCR *sp, int option, const char *enc)
 {
 #if defined(USE_WIDECHAR) && defined(USE_ICONV)
     iconv_t id;
@@ -352,6 +352,10 @@ conv_enc (SCR *sp, int option, char *enc)
 	break;
     case O_INPUTENCODING:
 	c2w = &sp->conv.input2int;
+	w2c = NULL;
+	break;
+    default:
+	c2w = NULL;
 	w2c = NULL;
 	break;
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: v_increment.c,v 1.1.1.2 2008/05/18 14:31:40 aymeric Exp $ */
+/*	$NetBSD: v_increment.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -30,7 +30,7 @@ static const char sccsid[] = "Id: v_increment.c,v 10.16 2001/06/25 15:19:31 skim
 #include "../common/common.h"
 #include "vi.h"
 
-static char * const fmt[] = {
+static const char * const fmt[] = {
 #define	DEC	0
 	"%ld",
 #define	SDEC	1
@@ -59,7 +59,8 @@ v_increment(SCR *sp, VICMD *vp)
 	long change, ltmp, lval;
 	size_t beg, blen, end, len, nlen, wlen;
 	int base, isempty, rval;
-	char *ntype, nbuf[100];
+	const char *ntype;
+	char nbuf[100];
 	CHAR_T *bp, *p, *t;
 
 	/* Validate the operator. */

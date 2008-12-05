@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_edit.c,v 1.1.1.2 2008/05/18 14:31:14 aymeric Exp $ */
+/*	$NetBSD: ex_edit.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -52,7 +52,7 @@ ex_edit(SCR *sp, EXCMD *cmdp)
 {
 	FREF *frp;
 	int attach, setalt;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	switch (cmdp->argc) {
@@ -119,8 +119,8 @@ ex_N_edit(SCR *sp, EXCMD *cmdp, FREF *frp, int attach)
 	/* Get a new screen. */
 	if (screen_init(sp->gp, sp, &new))
 		return (1);
-	if (cmdp->cmd == &cmds[C_VSPLIT] && vs_vsplit(sp, new) ||
-	    cmdp->cmd != &cmds[C_VSPLIT] && vs_split(sp, new, 0)) {
+	if ((cmdp->cmd == &cmds[C_VSPLIT] && vs_vsplit(sp, new)) ||
+	    (cmdp->cmd != &cmds[C_VSPLIT] && vs_split(sp, new, 0))) {
 		(void)screen_end(new);
 		return (1);
 	}

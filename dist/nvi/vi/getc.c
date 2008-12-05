@@ -1,4 +1,4 @@
-/*	$NetBSD: getc.c,v 1.1.1.2 2008/05/18 14:31:40 aymeric Exp $ */
+/*	$NetBSD: getc.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -147,7 +147,7 @@ cs_fblank(SCR *sp, VCS *csp)
 		if (cs_next(sp, csp))
 			return (1);
 		if (csp->cs_flags == CS_EOL || csp->cs_flags == CS_EMP ||
-		    csp->cs_flags == 0 && isblank(csp->cs_ch))
+		    (csp->cs_flags == 0 && isblank(csp->cs_ch)))
 			continue;
 		break;
 	}
@@ -216,7 +216,7 @@ cs_bblank(SCR *sp, VCS *csp)
 		if (cs_prev(sp, csp))
 			return (1);
 		if (csp->cs_flags == CS_EOL || csp->cs_flags == CS_EMP ||
-		    csp->cs_flags == 0 && isblank(csp->cs_ch))
+		    (csp->cs_flags == 0 && isblank(csp->cs_ch)))
 			continue;
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: v_match.c,v 1.2 2008/10/01 21:20:09 christos Exp $ */
+/*	$NetBSD: v_match.c,v 1.3 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ v_match(SCR *sp, VICMD *vp)
 	int cnt, isempty, matchc, startc, (*gc)__P((SCR *, VCS *));
 	CHAR_T *p;
 	char *cp;
-	char *match_chars;
+	const char *match_chars;
 
 	static int match_lno, match_col, match_dir;
 
@@ -131,8 +131,8 @@ nomatch:		msgq(sp, M_BERR, "184|No match character on this line");
 	 * starting cursor position when deleting to a match.
 	 */
 	if (vp->m_start.lno < vp->m_stop.lno ||
-	    vp->m_start.lno == vp->m_stop.lno &&
-	    vp->m_start.cno < vp->m_stop.cno)
+	    (vp->m_start.lno == vp->m_stop.lno &&
+	    vp->m_start.cno < vp->m_stop.cno))
 		vp->m_final = ISMOTION(vp) ? vp->m_start : vp->m_stop;
 	else
 		vp->m_final = vp->m_stop;

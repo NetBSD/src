@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_screen.c,v 1.1.1.2 2008/05/18 14:29:38 aymeric Exp $ */
+/*	$NetBSD: cl_screen.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -35,7 +35,7 @@ static int	cl_ex_init __P((SCR *));
 static void	cl_freecap __P((CL_PRIVATE *));
 static int	cl_vi_end __P((GS *));
 static int	cl_vi_init __P((SCR *));
-static int	cl_putenv __P((SCR *sp, char *, char *, u_long));
+static int	cl_putenv __P((SCR *, const char *, const char *, u_long));
 
 /*
  * cl_screen --
@@ -186,7 +186,8 @@ cl_vi_init(SCR *sp)
 {
 	CL_PRIVATE *clp;
 	GS *gp;
-	char *o_cols, *o_lines, *o_term, *ttype;
+	char *o_cols, *o_lines, *o_term;
+	const char *ttype;
 
 	gp = sp->gp;
 	clp = CLP(sp);
@@ -246,7 +247,7 @@ cl_vi_init(SCR *sp)
 	 * have to specify the terminal type.
 	 */
 	errno = 0;
-	if (newterm(ttype, stdout, stdin) == NULL) {
+	if (newterm(__UNCONST(ttype), stdout, stdin) == NULL) {
 		if (errno)
 			msgq(sp, M_SYSERR, "%s", ttype);
 		else
@@ -520,7 +521,7 @@ cl_ex_end(GS *gp)
  * PUBLIC: int cl_getcap __P((SCR *, char *, char **));
  */
 int
-cl_getcap(SCR *sp, char *name, char **elementp)
+cl_getcap(SCR *sp, const char *name, char **elementp)
 {
 	size_t len;
 	char *t;
@@ -567,7 +568,7 @@ cl_freecap(CL_PRIVATE *clp)
  *	Put a value into the environment.
  */
 static int
-cl_putenv(SCR *sp, char *name, char *str, u_long value)
+cl_putenv(SCR *sp, const char *name, const char *str, u_long value)
 {
 	char buf[40];
 

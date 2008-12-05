@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_main.c,v 1.1.1.2 2008/05/18 14:29:37 aymeric Exp $ */
+/*	$NetBSD: cl_main.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,12 +37,14 @@ GS *__global_list;				/* GLOBAL: List of screens. */
 sigset_t __sigblockset;				/* GLOBAL: Blocked signals. */
 
 static void	   cl_func_std __P((WIN *));
+#ifdef notused
 static void	   cl_end __P((CL_PRIVATE *));
+#endif
 static CL_PRIVATE *cl_init __P((WIN *));
-static void	   perr __P((char *, char *));
+static void	   perr __P((const char *, const char *));
 static int	   setsig __P((int, struct sigaction *, void (*)(int)));
 static void	   sig_end __P((GS *));
-static void	   term_init __P((char *, char *));
+static void	   term_init __P((const char *, const char *));
 
 /*
  * main --
@@ -57,7 +59,8 @@ main(int argc, char **argv)
 	WIN *wp;
 	size_t rows, cols;
 	int rval;
-	char **p_av, **t_av, *ttype;
+	char **p_av, **t_av;
+	const char *ttype;
 
 	/* If loaded at 0 and jumping through a NULL pointer, stop. */
 	if (reenter++)
@@ -212,6 +215,7 @@ tcfail:			perr(gp->progname, "tcgetattr");
 	return (clp);
 }
 
+#ifdef notused
 /*
  * cl_end --
  *	Discard the CL structure.
@@ -223,18 +227,19 @@ cl_end(CL_PRIVATE *clp)
 		free(clp->oname);
 	free(clp);
 }
+#endif
 
 /*
  * term_init --
  *	Initialize terminal information.
  */
 static void
-term_init(char *name, char *ttype)
+term_init(const char *name, const char *ttype)
 {
 	int err;
 
 	/* Set up the terminal database information. */
-	setupterm(ttype, STDOUT_FILENO, &err);
+	setupterm(__UNCONST(ttype), STDOUT_FILENO, &err);
 	switch (err) {
 	case -1:
 		(void)fprintf(stderr,
@@ -421,7 +426,7 @@ cl_func_std(WIN *wp)
  *	Print system error.
  */
 static void
-perr(char *name, char *msg)
+perr(const char *name, const char *msg)
 {
 	(void)fprintf(stderr, "%s:", name);
 	if (msg != NULL)

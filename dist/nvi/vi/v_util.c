@@ -1,4 +1,4 @@
-/*	$NetBSD: v_util.c,v 1.1.1.2 2008/05/18 14:31:47 aymeric Exp $ */
+/*	$NetBSD: v_util.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -134,10 +134,10 @@ v_isempty(CHAR_T *p, size_t len)
  * v_emsg --
  *	Display a few common vi messages.
  *
- * PUBLIC: void v_emsg __P((SCR *, char *, vim_t));
+ * PUBLIC: void v_emsg __P((SCR *, const char *, vim_t));
  */
 void
-v_emsg(SCR *sp, char *p, vim_t which)
+v_emsg(SCR *sp, const char *p, vim_t which)
 {
 	switch (which) {
 	case VIM_COMBUF:

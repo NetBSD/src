@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.1.1.2 2008/05/18 14:29:40 aymeric Exp $ */
+/*	$NetBSD: db.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -24,11 +24,12 @@ static const char sccsid[] = "Id: db.c,v 10.48 2002/06/08 19:32:52 skimo Exp (Be
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "common.h"
 #include "../vi/vi.h"
 
-static int append __P((SCR*, db_recno_t, CHAR_T*, size_t, lnop_t, int));
+static int append __P((SCR*, db_recno_t, const CHAR_T*, size_t, lnop_t, int));
 
 /*
  * db_eget --
@@ -88,7 +89,7 @@ db_get(SCR *sp, db_recno_t lno, u_int32_t flags, CHAR_T **pp, size_t *lenp)
 	EXF *ep;
 	TEXT *tp;
 	db_recno_t l1, l2;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 	size_t nlen;
 
@@ -276,12 +277,12 @@ db_delete(SCR *sp, db_recno_t lno)
  *				line
  */
 static int
-append(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len, lnop_t op, int update)
+append(SCR *sp, db_recno_t lno, const CHAR_T *p, size_t len, lnop_t op, int update)
 {
 	DBT data, key;
 	DBC *dbcp_put;
 	EXF *ep;
-	char *fp;
+	const char *fp;
 	size_t flen;
 	int rval;
 
@@ -313,7 +314,7 @@ append(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len, lnop_t op, int update)
 	    if ((sp->db_error = dbcp_put->c_get(dbcp_put, &key, &data, DB_SET)) != 0) 
 		goto err2;
 
-	    data.data = fp;
+	    data.data = __UNCONST(fp);
 	    data.size = flen;
 	    if ((sp->db_error = dbcp_put->c_put(dbcp_put, &key, &data, DB_AFTER)) != 0) {
 err2:
@@ -330,7 +331,7 @@ err2:
 		if (sp->db_error != DB_NOTFOUND)
 		    goto err2;
 
-		data.data = fp;
+		data.data = __UNCONST(fp);
 		data.size = flen;
 		if ((sp->db_error = ep->db->put(ep->db, NULL, &key, &data, DB_APPEND)) != 0) {
 		    goto err2;
@@ -338,7 +339,7 @@ err2:
 	    } else {
 		key.data = &lno;
 		key.size = sizeof(lno);
-		data.data = fp;
+		data.data = __UNCONST(fp);
 		data.size = flen;
 		if ((sp->db_error = dbcp_put->c_put(dbcp_put, &key, &data, DB_BEFORE)) != 0) {
 		    goto err2;
@@ -383,7 +384,7 @@ err2:
  * PUBLIC: int db_append __P((SCR *, int, db_recno_t, CHAR_T *, size_t));
  */
 int
-db_append(SCR *sp, int update, db_recno_t lno, CHAR_T *p, size_t len)
+db_append(SCR *sp, int update, db_recno_t lno, const CHAR_T *p, size_t len)
 {
 #if defined(DEBUG) && 0
 	vtrace(sp, "append to %lu: len %u {%.*s}\n", lno, len, MIN(len, 20), p);
@@ -420,7 +421,7 @@ db_set(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len)
 {
 	DBT data, key;
 	EXF *ep;
-	char *fp;
+	const char *fp;
 	size_t flen;
 
 #if defined(DEBUG) && 0
@@ -447,7 +448,7 @@ db_set(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len)
 	key.data = &lno;
 	key.size = sizeof(lno);
 	memset(&data, 0, sizeof(data));
-	data.data = fp;
+	data.data = __UNCONST(fp);
 	data.size = flen;
 	if ((sp->db_error = ep->db->put(ep->db, NULL, &key, &data, 0)) != 0) {
 		msgq(sp, M_DBERR, "006|unable to store line %lu", (u_long)lno);
@@ -515,7 +516,7 @@ db_last(SCR *sp, db_recno_t *lnop)
 	DBC *dbcp;
 	EXF *ep;
 	db_recno_t lno;
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	/* Check for no underlying file. */
@@ -652,6 +653,8 @@ update_cache(SCR *sp, lnop_t op, db_recno_t lno)
 			if (lno == scrp->c_lno)
 				scrp->c_lno = OOBLNO;
 			break;
+		case LINE_APPEND:
+			abort();
 		}
 
 	if (ep->c_nlines != OOBLNO)
@@ -662,6 +665,9 @@ update_cache(SCR *sp, lnop_t op, db_recno_t lno)
 		case LINE_DELETE:
 			--ep->c_nlines;
 			break;
+		case LINE_APPEND:
+		case LINE_RESET:
+			abort();
 		}
 }
 

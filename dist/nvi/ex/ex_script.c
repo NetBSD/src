@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.2 2008/05/20 17:55:05 aymeric Exp $ */
+/*	$NetBSD: ex_script.c,v 1.3 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -90,7 +90,7 @@ static int
 sscr_init(SCR *sp)
 {
 	SCRIPT *sc;
-	char *sh, *sh_path;
+	const char *sh, *sh_path;
 
 	/* We're going to need a shell. */
 	if (opts_empty(sp, O_SHELL, 0))
@@ -303,7 +303,7 @@ sscr_exec(SCR *sp, db_recno_t lno)
 	db_recno_t last_lno;
 	size_t blen, len, last_len, tlen;
 	int isempty, matchprompt, nw, rval;
-	CHAR_T *bp;
+	CHAR_T *bp = NULL;
 	CHAR_T *p;
 
 	/* If there's a prompt on the last line, append the command. */
@@ -470,7 +470,7 @@ sscr_insert(SCR *sp)
 	SCRIPT *sc;
 	fd_set rdfd;
 	db_recno_t lno;
-	size_t blen, len, tlen;
+	size_t blen, len = 0, tlen;
 	u_int value;
 	int nr, rval;
 	CHAR_T *bp;
@@ -555,7 +555,7 @@ static int
 sscr_setprompt(SCR *sp, CHAR_T *buf, size_t len)
 {
 	SCRIPT *sc;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	sc = sp->script;
@@ -673,7 +673,7 @@ static int ptym_open __P((char *));
 static int
 sscr_pty(int *amaster, int *aslave, char *name, struct termios *termp, void *winp)
 {
-	int master, slave, ttygid;
+	int master, slave;
 
 	/* open master terminal */
 	if ((master = ptym_open(name)) < 0)  {
@@ -708,7 +708,7 @@ static int
 ptym_open(char *pts_name)
 {
 	int fdm;
-	char *ptr, *ptsname();
+	char *ptr;
 
 	strcpy(pts_name, _PATH_SYSV_PTY);
 	if ((fdm = open(pts_name, O_RDWR)) < 0 )

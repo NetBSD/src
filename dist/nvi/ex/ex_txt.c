@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_txt.c,v 1.1.1.2 2008/05/18 14:31:20 aymeric Exp $ */
+/*	$NetBSD: ex_txt.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -392,8 +392,8 @@ txt_dent(SCR *sp, TEXT *tp)
 			++scno;
 
 	/* Get the previous shiftwidth column. */
-	cno = scno;
-	scno -= --scno % sw;
+	cno = scno--;
+	scno -= scno % sw;
 
 	/*
 	 * Since we don't know what comes before the character(s) being
