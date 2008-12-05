@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.47 2008/11/30 18:21:36 martin Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.48 2008/12/05 21:38:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.47 2008/11/30 18:21:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.48 2008/12/05 21:38:10 ad Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -89,6 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.47 2008/11/30 18:21:36 martin Exp $
 #include <sys/proc.h>
 #include <sys/atomic.h>
 #include <sys/ksyms.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>
@@ -302,7 +304,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 
 		/* Save symbol. Set it as an absolute offset */
 		nsym[n] = sym[i];
-		nsym[n].st_shndx = SHN_ABS;
+		nsym[n].st_shndx = SHBSS;
 		j = strlen(nsym[n].st_name + str) + 1;
 		if (j > ksyms_maxlen)
 			ksyms_maxlen = j;
@@ -680,17 +682,12 @@ ksyms_hdr_init(void *hdraddr)
 	ksyms_hdr.kh_ehdr.e_shoff = offsetof(struct ksyms_hdr, kh_shdr[0]);
 	ksyms_hdr.kh_ehdr.e_shentsize = sizeof(Elf_Shdr);
 	ksyms_hdr.kh_ehdr.e_shnum = NSECHDR;
-	ksyms_hdr.kh_ehdr.e_shstrndx = NSECHDR - 1; /* Last section */
+	ksyms_hdr.kh_ehdr.e_shstrndx = SHSTRTAB;
 
-	/* Text */
+	/* Text/data - fake */
 	ksyms_hdr.kh_phdr[0].p_type = PT_LOAD;
 	ksyms_hdr.kh_phdr[0].p_memsz = (unsigned long)-1L;
-	ksyms_hdr.kh_phdr[0].p_flags = PF_R | PF_X;
-
-	/* Data */
-	ksyms_hdr.kh_phdr[1].p_type = PT_LOAD;
-	ksyms_hdr.kh_phdr[1].p_memsz = (unsigned long)-1L;
-	ksyms_hdr.kh_phdr[1].p_flags = PF_R | PF_W | PF_X;
+	ksyms_hdr.kh_phdr[0].p_flags = PF_R | PF_X | PF_W;
 
 	/* First section is null */
 
@@ -718,6 +715,14 @@ ksyms_hdr_init(void *hdraddr)
 	ksyms_hdr.kh_shdr[SHSTRTAB].sh_size = SHSTRSIZ;
 	ksyms_hdr.kh_shdr[SHSTRTAB].sh_addralign = sizeof(char);
 
+	/* Fifth section, ".bss". All symbols reside here. */
+	ksyms_hdr.kh_shdr[SHBSS].sh_name = 27; /* This section name offset */
+	ksyms_hdr.kh_shdr[SHBSS].sh_type = SHT_NOBITS;
+	ksyms_hdr.kh_shdr[SHBSS].sh_offset = 0;
+	ksyms_hdr.kh_shdr[SHBSS].sh_size = (unsigned long)-1L;
+	ksyms_hdr.kh_shdr[SHBSS].sh_addralign = PAGE_SIZE;
+	ksyms_hdr.kh_shdr[SHBSS].sh_flags = SHF_ALLOC | SHF_EXECINSTR;
+
 	/* Set section names */
 	strlcpy(&ksyms_hdr.kh_strtab[1], ".symtab",
 	    sizeof(ksyms_hdr.kh_strtab) - 1);
@@ -725,6 +730,8 @@ ksyms_hdr_init(void *hdraddr)
 	    sizeof(ksyms_hdr.kh_strtab) - 9);
 	strlcpy(&ksyms_hdr.kh_strtab[17], ".shstrtab",
 	    sizeof(ksyms_hdr.kh_strtab) - 17);
+	strlcpy(&ksyms_hdr.kh_strtab[27], ".bss",
+	    sizeof(ksyms_hdr.kh_strtab) - 27);
 }
 
 static int
