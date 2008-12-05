@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.1 2008/11/26 15:45:56 tsutsui Exp $
+# $NetBSD: module.mi,v 1.2 2008/12/05 13:05:37 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -47,6 +47,8 @@
 ./@MODULEDIR@/kernfs/kernfs.kmod		base-kernel-modules
 ./@MODULEDIR@/ksem				base-kernel-modules
 ./@MODULEDIR@/ksem/ksem.kmod			base-kernel-modules
+./@MODULEDIR@/layerfs				base-kernel-modules
+./@MODULEDIR@/layerfs/layerfs.kmod		base-kernel-modules
 ./@MODULEDIR@/lfs				base-kernel-modules
 ./@MODULEDIR@/lfs/lfs.kmod			base-kernel-modules
 ./@MODULEDIR@/mfs				base-kernel-modules
