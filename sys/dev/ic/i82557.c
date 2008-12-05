@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.120 2008/12/04 16:40:47 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.121 2008/12/05 11:17:38 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.120 2008/12/04 16:40:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.121 2008/12/05 11:17:38 tsutsui Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -302,8 +302,8 @@ fxp_attach(struct fxp_softc *sc)
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct fxp_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to map control data, error = %d\n",
-		    error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
 	sc->sc_cdseg = seg;
@@ -314,8 +314,9 @@ fxp_attach(struct fxp_softc *sc)
 	if ((error = bus_dmamap_create(sc->sc_dmat,
 	    sizeof(struct fxp_control_data), 1,
 	    sizeof(struct fxp_control_data), 0, 0, &sc->sc_dmamap)) != 0) {
-		aprint_error_dev(sc->sc_dev, "unable to create control data DMA map, "
-		    "error = %d\n", error);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create control data DMA map, error = %d\n",
+		    error);
 		goto fail_2;
 	}
 
@@ -335,8 +336,9 @@ fxp_attach(struct fxp_softc *sc)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    (sc->sc_flags & FXPF_IPCB) ? FXP_IPCB_NTXSEG : FXP_NTXSEG,
 		    MCLBYTES, 0, 0, &FXP_DSTX(sc, i)->txs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to create tx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create tx DMA map %d, error = %d\n",
+			    i, error);
 			goto fail_4;
 		}
 	}
@@ -347,8 +349,9 @@ fxp_attach(struct fxp_softc *sc)
 	for (i = 0; i < FXP_NRFABUFS; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
 		    MCLBYTES, 0, 0, &sc->sc_rxmaps[i])) != 0) {
-			aprint_error_dev(sc->sc_dev, "unable to create rx DMA map %d, "
-			    "error = %d\n", i, error);
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create rx DMA map %d, error = %d\n",
+			    i, error);
 			goto fail_5;
 		}
 	}
@@ -504,7 +507,8 @@ fxp_80c24_initmedia(struct fxp_softc *sc)
 	 * media is sensed automatically based on how the link partner
 	 * is configured.  This is, in essence, manual configuration.
 	 */
-	aprint_normal_dev(sc->sc_dev, "Seeq 80c24 AutoDUPLEX media interface present\n");
+	aprint_normal_dev(sc->sc_dev,
+	    "Seeq 80c24 AutoDUPLEX media interface present\n");
 	ifmedia_init(&sc->sc_mii.mii_media, 0, fxp_80c24_mediachange,
 	    fxp_80c24_mediastatus);
 	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
@@ -592,7 +596,8 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	/* Due to false positives we make it conditional on setting link1 */
 	fxp_read_eeprom(sc, &data, 3, 1);
 	if ((data & 0x03) != 0x03) {
-		aprint_verbose_dev(sc->sc_dev, "May need receiver lock-up workaround\n");
+		aprint_verbose_dev(sc->sc_dev,
+		    "May need receiver lock-up workaround\n");
 	}
 }
 
@@ -871,9 +876,9 @@ fxp_start(struct ifnet *ifp)
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
-					log(LOG_ERR,
-					    "%s: unable to allocate Tx "
-					    "cluster\n", device_xname(sc->sc_dev));
+					log(LOG_ERR, "%s: unable to allocate "
+					    "Tx cluster\n",
+					    device_xname(sc->sc_dev));
 					m_freem(m);
 					break;
 				}
@@ -884,7 +889,8 @@ fxp_start(struct ifnet *ifp)
 			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				log(LOG_ERR, "%s: unable to load Tx buffer, "
-				    "error = %d\n", device_xname(sc->sc_dev), error);
+				    "error = %d\n",
+				    device_xname(sc->sc_dev), error);
 				break;
 			}
 		}
@@ -2031,7 +2037,8 @@ fxp_add_rfabuf(struct fxp_softc *sc, bus_dmamap_t rxmap, int unload)
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		/* XXX XXX XXX */
-		aprint_error_dev(sc->sc_dev, "can't load rx DMA map %d, error = %d\n",
+		aprint_error_dev(sc->sc_dev,
+		    "can't load rx DMA map %d, error = %d\n",
 		    sc->sc_rxq.ifq_len, error);
 		panic("fxp_add_rfabuf");
 	}
