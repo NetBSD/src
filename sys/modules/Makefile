@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2008/11/29 18:41:06 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.22 2008/12/05 13:05:37 ad Exp $
 
 # For all platforms
 
@@ -22,6 +22,7 @@ SUBDIR+=	fss
 SUBDIR+=	hfs
 SUBDIR+=	kernfs
 SUBDIR+=	ksem
+SUBDIR+=	layerfs
 SUBDIR+=	lfs
 SUBDIR+=	mfs
 SUBDIR+=	msdos
