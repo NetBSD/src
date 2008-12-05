@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1215 2008/11/24 16:05:21 joerg Exp $
+#	$NetBSD: mi,v 1.1216 2008/12/05 13:08:53 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5292,6 +5292,7 @@
 ./usr/share/man/cat3/fabsf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fclose.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fdopen.0			comp-c-catman		.cat
+./usr/share/man/cat3/fdopendir.0		comp-c-catman		.cat
 ./usr/share/man/cat3/feof.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ferror.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fetch.0			comp-c-catman		.cat
@@ -15839,6 +15840,7 @@
 ./usr/share/man/man3/fabsf.3			comp-c-man		.man
 ./usr/share/man/man3/fclose.3			comp-c-man		.man
 ./usr/share/man/man3/fdopen.3			comp-c-man		.man
+./usr/share/man/man3/fdopendir.3		comp-c-man		.man
 ./usr/share/man/man3/feof.3			comp-c-man		.man
 ./usr/share/man/man3/ferror.3			comp-c-man		.man
 ./usr/share/man/man3/fetch.3			comp-c-man		.man
