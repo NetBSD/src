@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_split.c,v 1.1.1.2 2008/05/18 14:31:53 aymeric Exp $ */
+/*	$NetBSD: vs_split.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -31,7 +31,7 @@ static const char sccsid[] = "Id: vs_split.c,v 10.42 2001/06/25 15:19:38 skimo E
 
 typedef enum { HORIZ_FOLLOW, HORIZ_PRECEDE, VERT_FOLLOW, VERT_PRECEDE } jdir_t;
 
-static SCR	*vs_getbg __P((SCR *, char *));
+static SCR	*vs_getbg __P((SCR *, const char *));
 static void      vs_insert __P((SCR *sp, WIN *wp));
 static int	 vs_join __P((SCR *, SCR **, jdir_t *));
 
@@ -623,7 +623,7 @@ vs_fg(SCR *sp, SCR **nspp, CHAR_T *name, int newscreen)
 	GS *gp;
 	WIN *wp;
 	SCR *nsp;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	gp = sp->gp;
@@ -710,10 +710,10 @@ vs_bg(SCR *sp)
  * vs_swap --
  *	Swap the current screen with a backgrounded one.
  *
- * PUBLIC: int vs_swap __P((SCR *, SCR **, char *));
+ * PUBLIC: int vs_swap __P((SCR *, SCR **, const char *));
  */
 int
-vs_swap(SCR *sp, SCR **nspp, char *name)
+vs_swap(SCR *sp, SCR **nspp, const char *name)
 {
 	GS *gp;
 	WIN *wp;
@@ -931,7 +931,7 @@ toosmall:			msgq(sp, M_BERR,
  *	background screen.
  */
 static SCR *
-vs_getbg(SCR *sp, char *name)
+vs_getbg(SCR *sp, const char *name)
 {
 	GS *gp;
 	SCR *nsp;

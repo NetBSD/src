@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_term.c,v 1.1.1.2 2008/05/18 14:29:38 aymeric Exp $ */
+/*	$NetBSD: cl_term.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -40,40 +40,43 @@ static int cl_pfmap __P((SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t));
  * THIS REQUIRES THAT ALL SCREENS SHARE A TERMINAL TYPE.
  */
 typedef struct _tklist {
-	char	*ts;			/* Key's termcap string. */
-	char	*output;		/* Corresponding vi command. */
-	char	*name;			/* Name. */
+	const char	*ts;		/* Key's termcap string. */
+	const char	*output;	/* Corresponding vi command. */
+	const char	*name;		/* Name. */
 	u_char	 value;			/* Special value (for lookup). */
 } TKLIST;
+
+#define TKINIT(a, b, c) { a, b, c, 0 }
+
 static TKLIST const c_tklist[] = {	/* Command mappings. */
-	{"kil1",	"O",	"insert line"},
-	{"kdch1",	"x",	"delete character"},
-	{"kcud1",	"j",	"cursor down"},
-	{"kel",		"D",	"delete to eol"},
-	{"kind",     "\004",	"scroll down"},			/* ^D */
-	{"kll",		"$",	"go to eol"},
-	{"kend",	"$",	"go to eol"},
-	{"khome",	"^",	"go to sol"},
-	{"kich1",	"i",	"insert at cursor"},
-	{"kdl1",       "dd",	"delete line"},
-	{"kcub1",	"h",	"cursor left"},
-	{"knp",	     "\006",	"page down"},			/* ^F */
-	{"kpp",	     "\002",	"page up"},			/* ^B */
-	{"kri",	     "\025",	"scroll up"},			/* ^U */
-	{"ked",	       "dG",	"delete to end of screen"},
-	{"kcuf1",	"l",	"cursor right"},
-	{"kcuu1",	"k",	"cursor up"},
-	{NULL},
+	TKINIT("kil1",	"O",	"insert line"),
+	TKINIT("kdch1",	"x",	"delete character"),
+	TKINIT("kcud1",	"j",	"cursor down"),
+	TKINIT("kel",	"D",	"delete to eol"),
+	TKINIT("kind",  "\004",	"scroll down"),			/* ^D */
+	TKINIT("kll",	"$",	"go to eol"),
+	TKINIT("kend",	"$",	"go to eol"),
+	TKINIT("khome",	"^",	"go to sol"),
+	TKINIT("kich1",	"i",	"insert at cursor"),
+	TKINIT("kdl1",  "dd",	"delete line"),
+	TKINIT("kcub1",	"h",	"cursor left"),
+	TKINIT("knp",	"\006",	"page down"),			/* ^F */
+	TKINIT("kpp",	"\002",	"page up"),			/* ^B */
+	TKINIT("kri",	"\025",	"scroll up"),			/* ^U */
+	TKINIT("ked",	"dG",	"delete to end of screen"),
+	TKINIT("kcuf1",	"l",	"cursor right"),
+	TKINIT("kcuu1",	"k",	"cursor up"),
+	TKINIT(NULL, NULL, NULL),
 };
 static TKLIST const m1_tklist[] = {	/* Input mappings (lookup). */
-	{NULL},
+	TKINIT(NULL, NULL, NULL),
 };
 static TKLIST const m2_tklist[] = {	/* Input mappings (set or delete). */
-	{"kcud1",  "\033ja",	"cursor down"},			/* ^[ja */
-	{"kcub1",  "\033ha",	"cursor left"},			/* ^[ha */
-	{"kcuu1",  "\033ka",	"cursor up"},			/* ^[ka */
-	{"kcuf1",  "\033la",	"cursor right"},		/* ^[la */
-	{NULL},
+	TKINIT("kcud1",  "\033ja",	"cursor down"),		/* ^[ja */
+	TKINIT("kcub1",  "\033ha",	"cursor left"),		/* ^[ha */
+	TKINIT("kcuu1",  "\033ka",	"cursor up"),		/* ^[ka */
+	TKINIT("kcuf1",  "\033la",	"cursor right"),	/* ^[la */
+	TKINIT(NULL, NULL, NULL),
 };
 
 /*
@@ -92,7 +95,7 @@ cl_term_init(SCR *sp)
 	CHAR_T name[60];
 	CHAR_T output[5];
 	CHAR_T ts[20];
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	/* Command mappings. */
@@ -224,9 +227,9 @@ cl_pfmap(SCR *sp, seq_t stype, CHAR_T *from, size_t flen, CHAR_T *to, size_t tle
 	size_t nlen;
 	char *p;
 	char name[64];
-	CHAR_T keyname[64];
+	CHAR_T mykeyname[64];
 	CHAR_T ts[20];
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	size_t wlen;
 
 	(void)snprintf(name, sizeof(name), "kf%d", 
@@ -239,12 +242,12 @@ cl_pfmap(SCR *sp, seq_t stype, CHAR_T *from, size_t flen, CHAR_T *to, size_t tle
 		return (1);
 	}
 
-	nlen = SPRINTF(keyname,
-	    SIZE(keyname), L("function key %d"), 
+	nlen = SPRINTF(mykeyname,
+	    SIZE(mykeyname), L("function key %d"), 
 			(int)STRTOL(from+1,NULL,10));
 	CHAR2INT(sp, p, strlen(p), wp, wlen);
 	MEMCPYW(ts, wp, wlen);
-	return (seq_set(sp, keyname, nlen,
+	return (seq_set(sp, mykeyname, nlen,
 	    ts, strlen(p), to, tlen, stype, SEQ_NOOVERWRITE | SEQ_SCREEN));
 }
 
@@ -252,10 +255,10 @@ cl_pfmap(SCR *sp, seq_t stype, CHAR_T *from, size_t flen, CHAR_T *to, size_t tle
  * cl_optchange --
  *	Curses screen specific "option changed" routine.
  *
- * PUBLIC: int cl_optchange __P((SCR *, int, char *, u_long *));
+ * PUBLIC: int cl_optchange __P((SCR *, int, const char *, u_long *));
  */
 int
-cl_optchange(SCR *sp, int opt, char *str, u_long *valp)
+cl_optchange(SCR *sp, int opt, const char *str, u_long *valp)
 {
 	CL_PRIVATE *clp;
 
@@ -424,16 +427,18 @@ cl_ssize(SCR *sp, int sigwinch, size_t *rowp, size_t *colp, int *changedp)
 	if (row == 0 || col == 0) {
 		if ((p = getenv("TERM")) == NULL)
 			goto noterm;
-		if (row == 0)
+		if (row == 0) {
 			if ((rval = tigetnum("lines")) < 0)
 				msgq(sp, M_SYSERR, "tigetnum: lines");
 			else
 				row = rval;
-		if (col == 0)
+		}
+		if (col == 0) {
 			if ((rval = tigetnum("cols")) < 0)
 				msgq(sp, M_SYSERR, "tigetnum: cols");
 			else
 				col = rval;
+		}
 	}
 
 	/* If nothing else, well, it's probably a VT100. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.1.1.2 2008/05/18 14:31:51 aymeric Exp $ */
+/*	$NetBSD: vs_refresh.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -147,7 +147,7 @@ vs_paint(SCR *sp, u_int flags)
 	VI_PRIVATE *vip;
 	db_recno_t lastline, lcnt;
 	size_t cwtotal, cnt, len, notused, off, y;
-	int ch, didpaint, isempty, leftright_warp;
+	int ch = 0, didpaint, isempty, leftright_warp;
 	CHAR_T *p;
 
 #define	 LNO	sp->lno			/* Current file line. */
@@ -223,7 +223,7 @@ vs_paint(SCR *sp, u_int flags)
 	 * screen but the column offset is not, we'll end up in the adjust
 	 * code, when we should probably have compressed the screen.
 	 */
-	if (IS_SMALL(sp))
+	if (IS_SMALL(sp)) {
 		if (LNO < HMAP->lno) {
 			lcnt = vs_sm_nlines(sp, HMAP, LNO, sp->t_maxrows);
 			if (lcnt <= HALFSCREEN(sp))
@@ -260,6 +260,7 @@ small_fill:			(void)gp->scr_move(sp, LASTLINE(sp), 0);
 				goto adjust;
 			}
 		}
+	}
 
 	/*
 	 * 6b: Line down, or current screen.
@@ -371,7 +372,7 @@ top:		if (vs_sm_fill(sp, LNO, P_TOP))
 adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 	    (LNO == HMAP->lno || LNO == TMAP->lno)) {
 		cnt = vs_screens(sp, LNO, &CNO);
-		if (LNO == HMAP->lno && cnt < HMAP->soff)
+		if (LNO == HMAP->lno && cnt < HMAP->soff) {
 			if ((HMAP->soff - cnt) > HALFTEXT(sp)) {
 				HMAP->soff = cnt;
 				vs_sm_fill(sp, OOBLNO, P_TOP);
@@ -380,7 +381,8 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 				while (cnt < HMAP->soff)
 					if (vs_sm_1down(sp))
 						return (1);
-		if (LNO == TMAP->lno && cnt > TMAP->soff)
+		}
+		if (LNO == TMAP->lno && cnt > TMAP->soff) {
 			if ((cnt - TMAP->soff) > HALFTEXT(sp)) {
 				TMAP->soff = cnt;
 				vs_sm_fill(sp, OOBLNO, P_BOTTOM);
@@ -389,6 +391,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 				while (cnt > TMAP->soff)
 					if (vs_sm_1up(sp))
 						return (1);
+		}
 	}
 
 	/*
@@ -589,8 +592,8 @@ slow:	for (smp = HMAP; smp->lno != LNO; ++smp);
 		}
 
 		/* Adjust the window towards the end of the line. */
-		if (off == 0 && off + SCREEN_COLS(sp) < cnt ||
-		    off != 0 && off + sp->cols < cnt) {
+		if ((off == 0 && off + SCREEN_COLS(sp) < cnt) ||
+		    (off != 0 && off + sp->cols < cnt)) {
 			do {
 				off += O_VAL(sp, O_SIDESCROLL);
 			} while (off + sp->cols < cnt);
@@ -744,7 +747,7 @@ number:	if (O_ISSET(sp, O_NUMBER) &&
 static void
 vs_modeline(SCR *sp)
 {
-	static char * const modes[] = {
+	static const char * const modes[] = {
 		"215|Append",			/* SM_APPEND */
 		"216|Change",			/* SM_CHANGE */
 		"217|Command",			/* SM_COMMAND */
@@ -753,7 +756,7 @@ vs_modeline(SCR *sp)
 	};
 	GS *gp;
 	size_t cols, curcol, curlen, endpoint, len, midpoint;
-	const char *t;
+	const char *t = NULL;
 	int ellipsis;
 	char *p, buf[20];
 
@@ -797,13 +800,14 @@ vs_modeline(SCR *sp)
 		if (ellipsis) {
 			while (ellipsis--)
 				(void)gp->scr_addstr(sp,
-				    KEY_NAME(sp, '.'), KEY_LEN(sp, '.'));
+				    (const char *)KEY_NAME(sp, '.'),
+				    KEY_LEN(sp, '.'));
 			(void)gp->scr_addstr(sp,
-			    KEY_NAME(sp, ' '), KEY_LEN(sp, ' '));
+			    (const char *)KEY_NAME(sp, ' '), KEY_LEN(sp, ' '));
 		}
 		for (; *p != '\0'; ++p)
 			(void)gp->scr_addstr(sp,
-			    KEY_NAME(sp, *p), KEY_LEN(sp, *p));
+			    (const char *)KEY_NAME(sp, *p), KEY_LEN(sp, *p));
 	}
 
 	/* Clear the rest of the line. */
@@ -824,7 +828,8 @@ vs_modeline(SCR *sp)
 	if (O_ISSET(sp, O_RULER)) {
 		vs_column(sp, &curcol);
 		len =
-		    snprintf(buf, sizeof(buf), "%lu,%lu", sp->lno, curcol + 1);
+		    snprintf(buf, sizeof(buf), "%lu,%lu",
+			(unsigned long)sp->lno, (unsigned long)curcol + 1);
 
 		midpoint = (cols - ((len + 1) / 2)) / 2;
 		if (curlen < midpoint) {
@@ -856,7 +861,8 @@ vs_modeline(SCR *sp)
 		if (O_ISSET(sp, O_SHOWMODE)) {
 			if (F_ISSET(sp->ep, F_MODIFIED))
 				(void)gp->scr_addstr(sp,
-				    KEY_NAME(sp, '*'), KEY_LEN(sp, '*'));
+				    (const char *)KEY_NAME(sp, '*'),
+				    KEY_LEN(sp, '*'));
 			(void)gp->scr_addstr(sp, t, len);
 		}
 	}

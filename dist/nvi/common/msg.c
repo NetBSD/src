@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.1.1.2 2008/05/18 14:29:48 aymeric Exp $ */
+/*	$NetBSD: msg.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,6 +38,7 @@ static const char sccsid[] = "Id: msg.c,v 10.61 2003/07/18 23:17:30 skimo Exp (B
 #endif
 
 #include "common.h"
+#include "dbinternal.h"
 #include "../vi/vi.h"
 
 /*
@@ -68,13 +69,18 @@ msgq(sp, mt, fmt, va_alist)
 	} str[__NL_ARGMAX];
 #endif
 	static int reenter;		/* STATIC: Re-entrancy check. */
-	CHAR_T ch;
 	GS *gp;
-	WIN *wp;
-	size_t blen, cnt1, cnt2, len, mlen, nlen, soff;
-	const char *p, *t, *u;
-	char *bp, *mp, *rbp, *s_rbp;
+	WIN *wp = NULL;
+	size_t blen, len, mlen, nlen;
+	const char *p;
+	char *bp, *mp;
         va_list ap;
+#ifndef NL_ARGMAX
+	CHAR_T ch;
+	char *rbp, *s_rbp;
+	const char *t, *u;
+	size_t cnt1, cnt2, soff;
+#endif
 
 	/*
 	 * !!!
@@ -277,7 +283,9 @@ retry:		FREE_SPACE(sp, bp, blen);
 	fmt = rbp;
 #endif
 
+#ifndef NL_ARGMAX
 format:	/* Format the arguments into the string. */
+#endif
 #ifdef __STDC__
         va_start(ap, fmt);
 #else
@@ -359,7 +367,10 @@ nofmt:	mp += len;
 		(void)fprintf(stderr, "%.*s", (int)mlen, bp);
 
 	/* Cleanup. */
-ret:	FREE_SPACE(sp, bp, blen);
+#ifndef NL_ARGMAX
+ret:
+#endif
+	FREE_SPACE(sp, bp, blen);
 alloc_err:
 	reenter = 0;
 }
@@ -368,13 +379,13 @@ alloc_err:
  * msgq_str --
  *	Display a message with an embedded string.
  *
- * PUBLIC: void msgq_wstr __P((SCR *, mtype_t, CHAR_T *, char *));
+ * PUBLIC: void msgq_wstr __P((SCR *, mtype_t, const CHAR_T *, const char *));
  */
 void
-msgq_wstr(SCR *sp, mtype_t mtype, CHAR_T *str, char *fmt)
+msgq_wstr(SCR *sp, mtype_t mtype, const CHAR_T *str, const char *fmt)
 {
 	size_t nlen;
-	char *nstr;
+	const char *nstr;
 
 	if (str == NULL) {
 		msgq(sp, mtype, fmt);
@@ -391,7 +402,7 @@ msgq_wstr(SCR *sp, mtype_t mtype, CHAR_T *str, char *fmt)
  * PUBLIC: void msgq_str __P((SCR *, mtype_t, char *, char *));
  */
 void
-msgq_str(SCR *sp, mtype_t mtype, char *str, char *fmt)
+msgq_str(SCR *sp, mtype_t mtype, const char *str, const char *fmt)
 {
 	int nf, sv_errno;
 	char *p;
@@ -432,7 +443,7 @@ msgq_str(SCR *sp, mtype_t mtype, char *str, char *fmt)
 void
 mod_rpt(SCR *sp)
 {
-	static char * const action[] = {
+	static const char * const action[] = {
 		"293|added",
 		"294|changed",
 		"295|deleted",
@@ -441,7 +452,7 @@ mod_rpt(SCR *sp)
 		"298|shifted",
 		"299|yanked",
 	};
-	static char * const lines[] = {
+	static const char * const lines[] = {
 		"300|line",
 		"301|lines",
 	};
@@ -450,7 +461,7 @@ mod_rpt(SCR *sp)
 	int first, cnt;
 	size_t blen, len, tlen;
 	const char *t;
-	char * const *ap;
+	const char * const *ap;
 	char *bp, *p;
 
 	/* Change reports are turned off in batch mode. */
@@ -699,10 +710,10 @@ alloc_err:
  * msg_open --
  *	Open the message catalogs.
  *
- * PUBLIC: int msg_open __P((SCR *, char *));
+ * PUBLIC: int msg_open __P((SCR *, const char *));
  */
 int
-msg_open(SCR *sp, char *file)
+msg_open(SCR *sp, const char *file)
 {
 	/*
 	 * !!!
@@ -717,7 +728,8 @@ msg_open(SCR *sp, char *file)
 	DB *db;
 	DBT data, key;
 	db_recno_t msgno;
-	char *p, *t, buf[MAXPATHLEN];
+	char buf[MAXPATHLEN];
+	const char *p, *t;
 
 	if ((p = strrchr(file, '/')) != NULL && p[1] == '\0' &&
 	    (((t = getenv("LC_MESSAGES")) != NULL && t[0] != '\0') ||
@@ -834,8 +846,9 @@ msg_cat(SCR *sp, const char *str, size_t *lenp)
 	 * If it's not a catalog message, i.e. has doesn't have a leading
 	 * number and '|' symbol, we're done.
 	 */
-	if (isdigit(str[0]) &&
-	    isdigit(str[1]) && isdigit(str[2]) && str[3] == '|') {
+	if (isdigit((unsigned char)str[0]) &&
+	    isdigit((unsigned char)str[1]) && isdigit((unsigned char)str[2]) &&
+	    str[3] == '|') {
 		memset(&key, 0, sizeof(key));
 		key.data = &msgno;
 		key.size = sizeof(db_recno_t);
@@ -877,15 +890,16 @@ msg_print(SCR *sp, const char *s, int *needfree)
 {
 	size_t blen, nlen;
 	const char *cp;
-	char *bp, *ep, *p, *t;
+	char *bp, *ep, *p;
+	unsigned char *t;
 
 	*needfree = 0;
 
 	for (cp = s; *cp != '\0'; ++cp)
-		if (!isprint(*cp))
+		if (!isprint((unsigned char)*cp))
 			break;
 	if (*cp == '\0')
-		return ((char *)s);	/* SAFE: needfree set to 0. */
+		return ((char *)__UNCONST(s));	/* SAFE: needfree set to 0. */
 
 	nlen = 0;
 	if (0) {
@@ -902,7 +916,7 @@ retry:		if (sp == NULL)
 	} else
 		GET_SPACE_GOTOC(sp, bp, blen, nlen);
 	if (0) {
-alloc_err:	return ("");
+alloc_err:	return __UNCONST("");
 	}
 	*needfree = 1;
 
