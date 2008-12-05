@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.c,v 1.21 2008/09/19 11:14:49 tteras Exp $	*/
+/*	$NetBSD: handler.c,v 1.22 2008/12/05 06:02:20 tteras Exp $	*/
 
 /* Id: handler.c,v 1.28 2006/05/26 12:17:29 manubsd Exp */
 
@@ -99,6 +99,38 @@ static void rem_recvdpkt __P((struct recvdpkt *));
  */
 
 extern caddr_t val2str(const char *, size_t);
+
+/*
+ * Enumerate the Phase 1 tree.
+ * If enum_func() internally return a non-zero value,  this specific
+ * error value is returned. 0 is returned if everything went right.
+ */
+int
+enumph1(sel, enum_func, enum_arg)
+	struct ph1selector *sel;
+	int (* enum_func)(struct ph1handle *iph1, void *arg);
+	void *enum_arg;
+{
+	struct ph1handle *p;
+	int ret;
+
+	LIST_FOREACH(p, &ph1tree, chain) {
+		if (sel != NULL) {
+			if (sel->local != NULL &&
+			    CMPSADDR(sel->local, p->local) != 0)
+				continue;
+
+			if (sel->remote != NULL &&
+			    CMPSADDR(sel->remote, p->remote) != 0)
+				continue;
+		}
+
+		if ((ret = enum_func(p, enum_arg)) != 0)
+			return ret;
+	}
+
+	return 0;
+}
 
 struct ph1handle *
 getph1byindex(index)
@@ -467,25 +499,35 @@ initph1tree()
 }
 
 /* %%% management phase 2 handler */
-/*
- * search ph2handle with policy id.
- */
-struct ph2handle *
-getph2byspid(spid)
-      u_int32_t spid;
+
+int
+enumph2(sel, enum_func, enum_arg)
+	struct ph2selector *sel;
+	int (*enum_func)(struct ph2handle *ph2, void *arg);
+	void *enum_arg;
 {
 	struct ph2handle *p;
+	int ret;
 
 	LIST_FOREACH(p, &ph2tree, chain) {
-		/*
-		 * there are ph2handle independent on policy
-		 * such like informational exchange.
-		 */
-		if (p->spid == spid)
-			return p;
+		if (sel != NULL) {
+			if (sel->spid != 0 && sel->spid != p->spid)
+				continue;
+
+			if (sel->src != NULL &&
+			    CMPSADDR(sel->src, p->src) != 0)
+				continue;
+
+			if (sel->dst != NULL &&
+			    CMPSADDR(sel->dst, p->dst) != 0)
+				continue;
+		}
+
+		if ((ret = enum_func(p, enum_arg)) != 0)
+			return ret;
 	}
 
-	return NULL;
+	return 0;
 }
 
 /*
@@ -523,6 +565,15 @@ getph2bymsgid(iph1, msgid)
 	return NULL;
 }
 
+/* Note that src and dst are not the selectors of the SP
+ * but the source and destination addresses used for
+ * for SA negotiation (best example is tunnel mode SA
+ * where src and dst are the endpoints). There is at most
+ * a unique match because racoon does not support bundles
+ * which makes that there is at most a single established
+ * SA for a given spid. One could say that src and dst
+ * are in fact useless ...
+ */
 struct ph2handle *
 getph2byid(src, dst, spid)
 	struct sockaddr *src, *dst;
@@ -701,13 +752,13 @@ delph2(iph2)
 		racoon_free(iph2->dst);
 		iph2->dst = NULL;
 	}
-	if (iph2->src_id) {
-		racoon_free(iph2->src_id);
-		iph2->src_id = NULL;
+	if (iph2->sa_src) {
+		racoon_free(iph2->sa_src);
+		iph2->sa_src = NULL;
 	}
-	if (iph2->dst_id) {
-		racoon_free(iph2->dst_id);
-		iph2->dst_id = NULL;
+	if (iph2->sa_dst) {
+		racoon_free(iph2->sa_dst);
+		iph2->sa_dst = NULL;
 	}
 #ifdef ENABLE_NATT
 	if (iph2->natoa_src) {

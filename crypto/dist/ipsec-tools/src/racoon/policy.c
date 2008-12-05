@@ -1,4 +1,4 @@
-/*	$NetBSD: policy.c,v 1.9 2007/12/31 01:42:07 mgrooms Exp $	*/
+/*	$NetBSD: policy.c,v 1.10 2008/12/05 06:02:20 tteras Exp $	*/
 
 /*	$KAME: policy.c,v 1.46 2001/11/16 04:08:10 sakane Exp $	*/
 
@@ -312,6 +312,11 @@ delsp(sp)
 		racoon_free(req);
 	}
 	
+	if (sp->local)
+		racoon_free(sp->local);
+	if (sp->remote)
+		racoon_free(sp->remote);
+
 	racoon_free(sp);
 }
 

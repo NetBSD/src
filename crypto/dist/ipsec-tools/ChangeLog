@@ -1,3 +1,12 @@
+2008-12-05  Timo Teras  <timo.teras@iki.fi> 
+	From Arnaud Ebalard <arno@natisbad.org>:
+	* src/libipsec/{key_debug.c|libpfkey.h|pfkey.c}: library functions
+	  for SADB_X_EXT_KMADDRESS and updated SADB_X_MIGRATE support
+	* src/racoon/{handler.c|handler.h|ipsec_doi.c|isakmp.c|
+	  isakmp_quick.c|pfkey.c|policy.c|policy.h}: support Mobile IPv6
+	  per draft-ebalard-mext-pfkey-enhanced-migrate (minor fixes to
+	  the patch by me)
+
 2008-12-02  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/session.c: Default action for SIGPIPE in Linux is
 	  terminate; explicitly ignore it.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.c,v 1.17 2008/11/27 10:53:48 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.18 2008/12/05 06:02:20 tteras Exp $	*/
 
 /*	$KAME: pfkey.c,v 1.47 2003/10/02 19:52:12 itojun Exp $	*/
 
@@ -71,6 +71,12 @@ static caddr_t pfkey_setsadbsa __P((caddr_t, caddr_t, u_int32_t, u_int,
 	u_int, u_int, u_int32_t));
 static caddr_t pfkey_setsadbaddr __P((caddr_t, caddr_t, u_int,
 	struct sockaddr *, u_int, u_int));
+
+#ifdef SADB_X_EXT_KMADDRESS
+static caddr_t pfkey_setsadbkmaddr __P((caddr_t, caddr_t, struct sockaddr *,
+	struct sockaddr *));
+#endif
+
 static caddr_t pfkey_setsadbkey __P((caddr_t, caddr_t, u_int, caddr_t, u_int));
 static caddr_t pfkey_setsadblifetime __P((caddr_t, caddr_t, u_int, u_int32_t,
 	u_int32_t, u_int32_t, u_int32_t));
@@ -1125,9 +1131,10 @@ pfkey_send_spddump(so)
  *	-1	: error occured, and set errno.
  */
 int
-pfkey_send_migrate(so, src, prefs, dst, prefd, proto, policy, policylen, seq)
+pfkey_send_migrate(so, local, remote, src, prefs, dst, prefd, proto, policy, policylen, seq)
 	int so;
 	struct sockaddr *src, *dst;
+	struct sockaddr *local, *remote;
 	u_int prefs, prefd, proto;
 	caddr_t policy;
 	int policylen;
@@ -1149,6 +1156,17 @@ pfkey_send_migrate(so, src, prefs, dst, prefd, proto, policy, policylen, seq)
 		return -1;
 	}
 
+	if (local == NULL || remote == NULL) {
+		__ipsec_errcode = EIPSEC_INVAL_ARGUMENT;
+		return -1;
+	}
+#ifdef SADB_X_EXT_KMADDRESS
+	if (local->sa_family != remote->sa_family) {
+		__ipsec_errcode = EIPSEC_FAMILY_MISMATCH;
+		return -1;
+	}
+#endif
+
 	switch (src->sa_family) {
 	case AF_INET:
 		plen = sizeof(struct in_addr) << 3;
@@ -1167,6 +1185,10 @@ pfkey_send_migrate(so, src, prefs, dst, prefd, proto, policy, policylen, seq)
 
 	/* create new sadb_msg to reply. */
 	len = sizeof(struct sadb_msg)
+#ifdef SADB_X_EXT_KMADDRESS
+		+ sizeof(struct sadb_x_kmaddress)
+		+ PFKEY_ALIGN8(2*sysdep_sa_len(local))
+#endif
 		+ sizeof(struct sadb_address)
 		+ PFKEY_ALIGN8(sysdep_sa_len(src))
 		+ sizeof(struct sadb_address)
@@ -1185,6 +1207,13 @@ pfkey_send_migrate(so, src, prefs, dst, prefd, proto, policy, policylen, seq)
 		free(newmsg);
 		return -1;
 	}
+#ifdef SADB_X_EXT_KMADDRESS
+	p = pfkey_setsadbkmaddr(p, ep, local, remote);
+	if (!p) {
+		free(newmsg);
+		return -1;
+	}
+#endif
 	p = pfkey_setsadbaddr(p, ep, SADB_EXT_ADDRESS_SRC, src, prefs, proto);
 	if (!p) {
 		free(newmsg);
@@ -2039,6 +2068,9 @@ pfkey_align(msg, mhp)
 #ifdef SADB_X_EXT_PACKET
 		case SADB_X_EXT_PACKET:
 #endif
+#ifdef SADB_X_EXT_KMADDRESS
+		case SADB_X_EXT_KMADDRESS:
+#endif
 #ifdef SADB_X_EXT_SEC_CTX
 		case SADB_X_EXT_SEC_CTX:
 #endif
@@ -2300,6 +2332,46 @@ pfkey_setsadbaddr(buf, lim, exttype, saddr, prefixlen, ul_proto)
 
 	return(buf + len);
 }
+
+#ifdef SADB_X_EXT_KMADDRESS
+/*
+ * set data into sadb_x_kmaddress.
+ * `buf' must has been allocated sufficiently.
+ */
+static caddr_t
+pfkey_setsadbkmaddr(buf, lim, local, remote)
+	caddr_t buf;
+	caddr_t lim;
+	struct sockaddr *local, *remote;
+{
+	struct sadb_x_kmaddress *p;
+	struct sockaddr *sa;
+	u_int salen = sysdep_sa_len(local);
+	u_int len;
+
+	/* sanity check */
+	if (local->sa_family != remote->sa_family)
+		return NULL;
+
+	p = (void *)buf;
+	len = sizeof(struct sadb_x_kmaddress) + PFKEY_ALIGN8(2*salen);
+
+	if (buf + len > lim)
+		return NULL;
+
+	memset(p, 0, len);
+	p->sadb_x_kmaddress_len = PFKEY_UNIT64(len);
+	p->sadb_x_kmaddress_exttype = SADB_X_EXT_KMADDRESS;
+	p->sadb_x_kmaddress_reserved = 0;
+
+	sa = (struct sockaddr *)(p + 1);
+	memcpy(sa, local, salen);
+	sa = (struct sockaddr *)((char *)sa + salen);
+	memcpy(sa, remote, salen);
+
+	return(buf + len);
+}
+#endif
 
 /*
  * set sadb_key structure after clearing buffer with zero.

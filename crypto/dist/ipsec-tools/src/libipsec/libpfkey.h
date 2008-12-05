@@ -1,4 +1,4 @@
-/*	$NetBSD: libpfkey.h,v 1.14 2008/11/27 10:53:48 tteras Exp $	*/
+/*	$NetBSD: libpfkey.h,v 1.15 2008/12/05 06:02:20 tteras Exp $	*/
 
 /* Id: libpfkey.h,v 1.13 2005/12/04 20:26:43 manubsd Exp */
 
@@ -150,8 +150,9 @@ int pfkey_send_spdsetidx __P((int, struct sockaddr *, u_int,
 int pfkey_send_spdflush __P((int));
 int pfkey_send_spddump __P((int));
 #ifdef SADB_X_MIGRATE
-int pfkey_send_migrate __P((int, struct sockaddr *, u_int,
-	struct sockaddr *, u_int, u_int, caddr_t, int, u_int32_t));
+int pfkey_send_migrate __P((int, struct sockaddr *, struct sockaddr *,
+        struct sockaddr *, u_int, struct sockaddr *, u_int, u_int,
+        caddr_t, int, u_int32_t));
 #endif
 
 int pfkey_open __P((void));
