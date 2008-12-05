@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.25 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.26 2008/12/05 23:30:19 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.25 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.26 2008/12/05 23:30:19 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.25 2008/11/19 18:36:04 ad Exp $
 #include <sys/proc.h>
 #include <sys/ucred.h>
 #include <sys/swap.h>
+#include <sys/kauth.h>
 
 #include <machine/types.h>
 
@@ -371,6 +372,30 @@ linux32_sys_setresuid(struct lwp *l, const struct linux32_sys_setresuid_args *ua
 }
 
 int
+linux32_sys_getresuid(struct lwp *l, const struct linux32_sys_getresuid_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_uidp_t) ruid;
+		syscallarg(linux32_uidp_t) euid;
+		syscallarg(linux32_uidp_t) suid;
+	} */
+	kauth_cred_t pc = l->l_cred;
+	int error;
+	uid_t uid;
+
+	uid = kauth_cred_getuid(pc);
+	if ((error = copyout(&uid, SCARG_P32(uap, ruid), sizeof(uid_t))) != 0)
+		return error;
+
+	uid = kauth_cred_geteuid(pc);
+	if ((error = copyout(&uid, SCARG_P32(uap, euid), sizeof(uid_t))) != 0)
+		return error;
+
+	uid = kauth_cred_getsvuid(pc);
+	return copyout(&uid, SCARG_P32(uap, suid), sizeof(uid_t));
+}
+
+int
 linux32_sys_setresgid(struct lwp *l, const struct linux32_sys_setresgid_args *uap, register_t *retval)
 {
 	/* {
@@ -385,6 +410,30 @@ linux32_sys_setresgid(struct lwp *l, const struct linux32_sys_setresgid_args *ua
 	SCARG(&ua, sgid) = (SCARG(uap, sgid) == -1) ? -1 : SCARG(uap, sgid);
 
 	return linux_sys_setresgid(l, &ua, retval);
+}
+
+int
+linux32_sys_getresgid(struct lwp *l, const struct linux32_sys_getresgid_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_gidp_t) rgid;
+		syscallarg(linux32_gidp_t) egid;
+		syscallarg(linux32_gidp_t) sgid;
+	} */
+	kauth_cred_t pc = l->l_cred;
+	int error;
+	gid_t gid;
+
+	gid = kauth_cred_getgid(pc);
+	if ((error = copyout(&gid, SCARG_P32(uap, rgid), sizeof(gid_t))) != 0)
+		return error;
+
+	gid = kauth_cred_getegid(pc);
+	if ((error = copyout(&gid, SCARG_P32(uap, egid), sizeof(gid_t))) != 0)
+		return error;
+
+	gid = kauth_cred_getsvgid(pc);
+	return copyout(&gid, SCARG_P32(uap, sgid), sizeof(gid_t));
 }
 
 int

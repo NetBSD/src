@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.41 2008/12/01 14:18:44 njoly Exp $
+	$NetBSD: syscalls.master,v 1.42 2008/12/05 23:30:19 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -355,10 +355,12 @@
 207	NOARGS	{ int netbsd32___posix_fchown(int fd, uid_t uid, gid_t gid); }
 208	STD	{ int linux32_sys_setresuid(uid_t ruid, uid_t euid, \
 		    uid_t suid); }
-209	UNIMPL	getresuid
+209	STD	{ int linux32_sys_getresuid(linux32_uidp_t ruid, \
+		    linux32_uidp_t euid, linux32_uidp_t suid); }
 210	STD	{ int linux32_sys_setresgid(gid_t rgid, gid_t egid, \
 		    gid_t sgid); }
-211	UNIMPL	getresgid
+211	STD	{ int linux32_sys_getresgid(linux32_gidp_t rgid, \
+		    linux32_gidp_t egid, linux32_gidp_t sgid); }
 212	NOARGS	{ int netbsd32___posix_chown(netbsd32_charp path, \
 		    uid_t uid, gid_t gid); }
 213 	NOARGS	{ int netbsd32_setuid(uid_t uid); }
