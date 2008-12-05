@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.69 2008/11/12 12:35:52 ad Exp $
+# $NetBSD: Makefile,v 1.70 2008/12/05 18:55:22 cube Exp $
 
 .include <bsd.own.mk>
 
@@ -30,9 +30,19 @@ CONFIGFILES=\
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
 		veriexec virecover wdogctl wpa_supplicant wscons wsmoused \
-		xdm xfs \
 		ypbind yppasswdd ypserv
 FILESDIR=	/etc/rc.d
 FILESMODE=	${BINMODE}
+
+.if ${MKX11} != "no"
+CONFIGFILES+=	xdm xfs
+FILESBUILD_xdm=	yes
+FILESBUILD_xfs=	yes
+
+.SUFFIXES: .in
+.in:
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e 's,@X11ROOTDIR@,${X11ROOTDIR},g' < ${.IMPSRC} > ${.TARGET}
+.endif
 
 .include <bsd.prog.mk>

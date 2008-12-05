@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: xfs,v 1.8 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: xfs.in,v 1.1 2008/12/05 18:55:22 cube Exp $
 #
 
 # PROVIDE: xfs
@@ -11,7 +11,7 @@ $_rc_subr_loaded . /etc/rc.subr
 
 name="xfs"
 rcvar=$name
-command="/usr/X11R6/bin/${name}"
+command="@X11ROOTDIR@/bin/${name}"
 command_args="& sleep 2"
 required_files="/etc/X11/fs/config"
 extra_commands="reload"
