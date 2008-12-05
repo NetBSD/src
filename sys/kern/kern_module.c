@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.36 2008/12/05 12:51:17 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.37 2008/12/05 12:55:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.36 2008/12/05 12:51:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.37 2008/12/05 12:55:09 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -941,17 +941,16 @@ module_thread(void *cookie)
 		mutex_enter(&module_lock);
 		for (mod = TAILQ_FIRST(&module_list); mod != NULL; mod = next) {
 			next = TAILQ_NEXT(mod, mod_chain);
-			if (mod->mod_source == MODULE_SOURCE_KERNEL) {
-				continue;
-			} else if (uvmexp.free < uvmexp.freemin) {
+			if (uvmexp.free < uvmexp.freemin) {
 				module_thread_ticks = hz;
 			} else if (mod->mod_autotime == 0) {
 				continue;
 			} else if (time_second < mod->mod_autotime) {
 				module_thread_ticks = hz;
 			    	continue;
-			} else
+			} else {
 				mod->mod_autotime = 0;
+			}
 			/*
 			 * If this module wants to avoid autounload then
 			 * skip it.  Some modules can ping-pong in and out
@@ -961,9 +960,7 @@ module_thread(void *cookie)
 			mi = mod->mod_info;
 			error = (*mi->mi_modcmd)(MODULE_CMD_AUTOUNLOAD, NULL);
 			if (error == 0 || error == ENOTTY) {
-				if (module_do_unload(mi->mi_name) == EBUSY)
-					mod->mod_autotime = time_second +
-					    module_autotime;
+				(void)module_do_unload(mi->mi_name);
 			}
 		}
 		mutex_exit(&module_lock);
