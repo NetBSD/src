@@ -1,4 +1,4 @@
-/*	$NetBSD: v_scroll.c,v 1.1.1.2 2008/05/18 14:31:44 aymeric Exp $ */
+/*	$NetBSD: v_scroll.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -192,8 +192,8 @@ goto_adjust(VICMD *vp)
 	 * stay at the start of the range.  Ignore others.
 	 */
 	if (vp->m_stop.lno < vp->m_start.lno ||
-	    vp->m_stop.lno == vp->m_start.lno &&
-	    vp->m_stop.cno < vp->m_start.cno) {
+	    (vp->m_stop.lno == vp->m_start.lno &&
+	    vp->m_stop.cno < vp->m_start.cno)) {
 		if (ISCMD(vp->rkp, 'y') && vp->m_stop.lno == vp->m_start.lno)
 			vp->m_final = vp->m_start;
 	} else

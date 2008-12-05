@@ -1,4 +1,4 @@
-/*	$NetBSD: v_sentence.c,v 1.1.1.2 2008/05/18 14:31:44 aymeric Exp $ */
+/*	$NetBSD: v_sentence.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -74,7 +74,7 @@ v_sentencef(SCR *sp, VICMD *vp)
 	 * This may not handle "  .  " correctly, but it's real unclear
 	 * what correctly means in that case.
 	 */
-	if (cs.cs_flags == CS_EMP || cs.cs_flags == 0 && isblank(cs.cs_ch)) {
+	if (cs.cs_flags == CS_EMP || (cs.cs_flags == 0 && isblank(cs.cs_ch))) {
 		if (cs_fblank(sp, &cs))
 			return (1);
 		if (--cnt == 0) {
@@ -342,7 +342,7 @@ okret:	vp->m_stop.lno = cs.cs_lno;
 	 * All commands move to the end of the range.  Adjust the start of
 	 * the range for motion commands.
 	 */
-	if (ISMOTION(vp))
+	if (ISMOTION(vp)) {
 		if (vp->m_start.cno == 0 &&
 		    (cs.cs_flags != 0 || vp->m_stop.cno == 0)) {
 			if (db_get(sp,
@@ -352,6 +352,7 @@ okret:	vp->m_stop.lno = cs.cs_lno;
 			F_SET(vp, VM_LMODE);
 		} else
 			--vp->m_start.cno;
+	}
 	vp->m_final = vp->m_stop;
 	return (0);
 }

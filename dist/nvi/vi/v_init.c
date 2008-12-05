@@ -1,4 +1,4 @@
-/*	$NetBSD: v_init.c,v 1.1.1.2 2008/05/18 14:31:42 aymeric Exp $ */
+/*	$NetBSD: v_init.c,v 1.2 2008/12/05 22:51:43 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -105,10 +105,10 @@ v_screen_end(SCR *sp)
  * v_optchange --
  *	Handle change of options for vi.
  *
- * PUBLIC: int v_optchange __P((SCR *, int, char *, u_long *));
+ * PUBLIC: int v_optchange __P((SCR *, int, const char *, u_long *));
  */
 int
-v_optchange(SCR *sp, int offset, char *str, u_long *valp)
+v_optchange(SCR *sp, int offset, const char *str, u_long *valp)
 {
 	switch (offset) {
 	case O_PARAGRAPHS:

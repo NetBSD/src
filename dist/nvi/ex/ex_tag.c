@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.3 2008/10/29 19:57:27 christos Exp $ */
+/*	$NetBSD: ex_tag.c,v 1.4 2008/12/05 22:51:42 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -68,7 +68,7 @@ static int	 tagq_copy __P((SCR *, TAGQ *, TAGQ **));
  * PUBLIC: int ex_tag_first __P((SCR *, CHAR_T *));
  */
 int
-ex_tag_first(SCR *sp, CHAR_T *tagarg)
+ex_tag_first(SCR *sp, const CHAR_T *tagarg)
 {
 	EXCMD cmd;
 
@@ -181,7 +181,7 @@ ex_tag_next(SCR *sp, EXCMD *cmdp)
 	EX_PRIVATE *exp;
 	TAG *tp;
 	TAGQ *tqp;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	exp = EXP(sp);
@@ -221,7 +221,7 @@ ex_tag_prev(SCR *sp, EXCMD *cmdp)
 	EX_PRIVATE *exp;
 	TAG *tp;
 	TAGQ *tqp;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	exp = EXP(sp);
@@ -351,7 +351,8 @@ ex_tag_pop(SCR *sp, EXCMD *cmdp)
 	TAGQ *tqp, *dtqp;
 	size_t arglen;
 	long off;
-	char *arg, *p, *t;
+	const char *arg;
+	char *p, *t;
 	size_t nlen;
 
 	/* Check for an empty stack. */
@@ -757,7 +758,7 @@ tagq_push(SCR *sp, TAGQ *tqp, int new_screen, int force)
 	db_recno_t lno;
 	size_t cno;
 	int istmp;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	exp = EXP(sp);
@@ -787,8 +788,7 @@ tagq_push(SCR *sp, TAGQ *tqp, int new_screen, int force)
 	frp = sp->frp;
 	lno = sp->lno;
 	cno = sp->cno;
-	istmp = frp == NULL ||
-	    F_ISSET(frp, FR_TMPFILE) && !new_screen;
+	istmp = frp == NULL || (F_ISSET(frp, FR_TMPFILE) && !new_screen);
 
 	/* Try to switch to the tag. */
 	if (new_screen) {
@@ -882,15 +882,15 @@ tag_msg(SCR *sp, tagmsg_t msg, char *tag)
  * ex_tagf_alloc --
  *	Create a new list of ctag files.
  *
- * PUBLIC: int ex_tagf_alloc __P((SCR *, char *));
+ * PUBLIC: int ex_tagf_alloc __P((SCR *, const char *));
  */
 int
-ex_tagf_alloc(SCR *sp, char *str)
+ex_tagf_alloc(SCR *sp, const char *str)
 {
 	EX_PRIVATE *exp;
 	TAGF *tfp;
 	size_t len;
-	char *p, *t;
+	const char *p, *t;
 
 	/* Free current queue. */
 	exp = EXP(sp);
@@ -953,7 +953,7 @@ ctag_search(SCR *sp, CHAR_T *search, size_t slen, char *tag)
 {
 	MARK m;
 	char *p;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	/*
@@ -1027,27 +1027,27 @@ getentry(char *buf, char **tag, char **file, char **line)
 {
 	char *p = buf;
 
-	for (*tag = p; *p && !isspace(*p); p++)		/* tag name */
+	for (*tag = p; *p && !isspace((unsigned char)*p); p++)	/* tag name */
 		;
 	if (*p == 0)
 		goto err;
 	*p++ = 0;
-	for (; *p && isspace(*p); p++)			/* (skip blanks) */
+	for (; *p && isspace((unsigned char)*p); p++)	/* (skip blanks) */
 		;
 	if (*p == 0)
 		goto err;
 	*line = p;					/* line no */
-	for (*line = p; *p && !isspace(*p); p++)
+	for (*line = p; *p && !isspace((unsigned char)*p); p++)
 		;
 	if (*p == 0)
 		goto err;
 	*p++ = 0;
-	for (; *p && isspace(*p); p++)			/* (skip blanks) */
+	for (; *p && isspace((unsigned char)*p); p++)	/* (skip blanks) */
 		;
 	if (*p == 0)
 		goto err;
 	*file = p;					/* file name */
-	for (*file = p; *p && !isspace(*p); p++)
+	for (*file = p; *p && !isspace((unsigned char)*p); p++)
 		;
 	if (*p == 0)
 		goto err;
@@ -1067,17 +1067,15 @@ err:
 static TAGQ *
 gtag_slist(SCR *sp, CHAR_T *tag, int ref)
 {
-	EX_PRIVATE *exp;
-	TAGF *tfp;
 	TAGQ *tqp;
 	size_t len, nlen, slen, wlen;
 	int echk;
 	TAG *tp;
-	char *np;
+	const char *np;
 	char *name, *file, *search;
 	char command[BUFSIZ];
 	char buf[BUFSIZ];
-	CHAR_T *wp;
+	const CHAR_T *wp;
 	FILE *fp;
 
 	/* Allocate and initialize the tag queue structure. */
@@ -1094,7 +1092,7 @@ gtag_slist(SCR *sp, CHAR_T *tag, int ref)
 	 */
 	snprintf(command, sizeof(command), "global -%s '%s'", ref ? "rx" : "x",
 	    np);
-	if (fp = popen(command, "r")) {
+	if ((fp = popen(command, "r")) != NULL) {
 		while (fgets(buf, sizeof(buf), fp)) {
 			if (buf[strlen(buf)-1] == '\n')		/* chop(buf) */
 				buf[strlen(buf)-1] = 0;
@@ -1103,7 +1101,6 @@ gtag_slist(SCR *sp, CHAR_T *tag, int ref)
 					;
 			if (getentry(buf, &name, &file, &search) == 0) {
 				echk = 1;
-				F_SET(tfp, TAGF_ERR);
 				break;
 			}
 			slen = strlen(search);
@@ -1148,7 +1145,7 @@ ctag_slist(SCR *sp, CHAR_T *tag)
 	TAGQ *tqp;
 	size_t len;
 	int echk;
-	char *np;
+	const char *np;
 	size_t nlen;
 
 	exp = EXP(sp);
@@ -1205,10 +1202,11 @@ ctag_sfile(SCR *sp, TAGF *tfp, TAGQ *tqp, char *tname)
 {
 	struct stat sb;
 	TAG *tp;
-	size_t dlen, nlen, slen;
+	size_t dlen, nlen = 0, slen;
 	int fd, i, nf1, nf2;
-	char *back, *cname, *dname, *front, *map, *name, *p, *search, *t;
-	CHAR_T *wp;
+	char *back, *front, *map, *p, *search, *t;
+	char *cname = NULL, *dname = NULL, *name = NULL;
+	const CHAR_T *wp;
 	size_t wlen;
 	long tl;
 

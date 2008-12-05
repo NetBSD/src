@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.1.1.1 2008/05/18 14:29:38 aymeric Exp $ */
+/*	$NetBSD: extern.h,v 1.2 2008/12/05 22:51:42 christos Exp $ */
 
 /* Do not edit: automatically built by build/distrib. */
 #ifndef HAVE_CURSES_WADDNSTR
@@ -25,10 +25,10 @@ void setupterm __P((char *, int, int *));
 #ifdef HAVE_CURSES_TIGETSTR
 char *tigetstr();
 #else
-char *tigetstr __P((char *));
+char *tigetstr __P((const char *));
 #endif
 #ifndef HAVE_CURSES_TIGETSTR
-int tigetnum __P((char *));
+int tigetnum __P((const char *));
 #endif
 int cl_waddstr __P((SCR *, const CHAR_T *, size_t));
 int cl_addstr __P((SCR *, const char *, size_t));
@@ -53,11 +53,11 @@ int sig_init __P((GS *, SCR *));
 int cl_event __P((SCR *, EVENT *, u_int32_t, int));
 int cl_screen __P((SCR *, u_int32_t));
 int cl_quit __P((GS *));
-int cl_getcap __P((SCR *, char *, char **));
+int cl_getcap __P((SCR *, const char *, char **));
 int cl_term_init __P((SCR *));
 int cl_term_end __P((GS *));
 int cl_fmap __P((SCR *, seq_t, CHAR_T *, size_t, CHAR_T *, size_t));
-int cl_optchange __P((SCR *, int, char *, u_long *));
+int cl_optchange __P((SCR *, int, const char *, u_long *));
 int cl_omesg __P((SCR *, CL_PRIVATE *, int));
 int cl_ssize __P((SCR *, int, size_t *, size_t *, int *));
 int cl_putchar __P((int));
