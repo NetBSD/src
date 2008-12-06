@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.39 2008/08/25 08:11:04 lukem Exp $
+#	$NetBSD: bsd.files.mk,v 1.39.2.1 2008/12/06 21:58:43 snj Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -8,12 +8,17 @@ _BSD_FILES_MK_=1
 .if !target(__fileinstall)
 ##### Basic targets
 realinstall:	filesinstall
+realall:	filesbuild
 
 ##### Default values
 FILESDIR?=	${BINDIR}
 FILESOWN?=	${BINOWN}
 FILESGRP?=	${BINGRP}
 FILESMODE?=	${NONBINMODE}
+
+##### Build rules
+filesbuild:
+.PHONY:		filesbuild
 
 ##### Install rules
 filesinstall::	# ensure existence
@@ -36,17 +41,23 @@ __fileinstall: .USE
 _FDIR:=		${FILESDIR_${F}:U${FILESDIR}}		# dir override
 _FNAME:=	${FILESNAME_${F}:U${FILESNAME:U${F:T}}}	# name override
 _F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
+_FDOBUILD:=	${FILESBUILD_${F}:Uno}
 
 .if ${MKUPDATE} == "no"
 ${_F}!		${F} __fileinstall			# install rule
-.if !defined(BUILD) && !make(all) && !make(${F})
+.if !defined(BUILD) && !make(all) && !make(${F}) && (${_FDOBUILD} == "no")
 ${_F}!		.MADE					# no build at install
 .endif
 .else
 ${_F}:		${F} __fileinstall			# install rule
-.if !defined(BUILD) && !make(all) && !make(${F})
+.if !defined(BUILD) && !make(all) && !make(${F}) && (${_FDOBUILD} == "no")
 ${_F}:		.MADE					# no build at install
 .endif
+.endif
+
+.if ${_FDOBUILD} != "no"
+filesbuild:	${F}
+CLEANFILES+=	${F}
 .endif
 
 filesinstall::	${_F}
@@ -63,17 +74,23 @@ configinstall:	configfilesinstall
 _FDIR:=		${FILESDIR_${F}:U${FILESDIR}}		# dir override
 _FNAME:=	${FILESNAME_${F}:U${FILESNAME:U${F:T}}}	# name override
 _F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
+_FDOBUILD:=	${FILESBUILD_${F}:Uno}
 
 .if ${MKUPDATE} == "no"
 ${_F}!		${F} __fileinstall	# install rule
-.if !defined(BUILD) && !make(all) && !make(${F})
+.if !defined(BUILD) && !make(all) && !make(${F}) && (${_FDOBUILD} == "no")
 ${_F}!		.MADE					# no build at install
 .endif
 .else
 ${_F}:		${F} __fileinstall	# install rule
-.if !defined(BUILD) && !make(all) && !make(${F})
+.if !defined(BUILD) && !make(all) && !make(${F}) && (${_FDOBUILD} == "no")
 ${_F}:		.MADE					# no build at install
 .endif
+.endif
+
+.if ${_FDOBUILD} != "no"
+filesbuild:	${F}
+CLEANFILES+=	${F}
 .endif
 
 configfilesinstall::	${_F}
