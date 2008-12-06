@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.h,v 1.1 2008/08/17 13:20:57 plunky Exp $	*/
+/*	$NetBSD: sdp.h,v 1.2 2008/12/06 20:01:15 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -30,7 +30,7 @@
 #include <stdbool.h>
 #include <uuid.h>
 
-bool sdp_match_uuid16(uint8_t **, uint8_t *, uint16_t);
-bool sdp_get_uuid(uint8_t **, uint8_t *, uuid_t *);
-bool sdp_get_seq(uint8_t **, uint8_t *, uint8_t **);
-bool sdp_get_uint16(uint8_t **, uint8_t *, uint16_t *);
+bool _sdp_match_uuid16(uint8_t **, uint8_t *, uint16_t);
+bool _sdp_get_uuid(uint8_t **, uint8_t *, uuid_t *);
+bool _sdp_get_seq(uint8_t **, uint8_t *, uint8_t **);
+bool _sdp_get_uint16(uint8_t **, uint8_t *, uint16_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.1 2008/08/17 13:20:57 plunky Exp $	*/
+/*	$NetBSD: sdp.c,v 1.2 2008/12/06 20:01:14 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.1 2008/08/17 13:20:57 plunky Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.2 2008/12/06 20:01:14 plunky Exp $");
 
 #include <string.h>
 
@@ -47,14 +47,14 @@ static const uuid_t BASE_UUID = {
 };
 
 /*
- * sdp_match_uuid16(ptr, limit, uuid)
+ * _sdp_match_uuid16(ptr, limit, uuid)
  *
  *	examine SDP data stream at ptr for a UUID, and return
  *	true if it matches the supplied short alias bluetooth UUID.
  *	limit is the first address past the end of valid data.
  */
 bool
-sdp_match_uuid16(uint8_t **ptr, uint8_t *limit, uint16_t uuid)
+_sdp_match_uuid16(uint8_t **ptr, uint8_t *limit, uint16_t uuid)
 {
 	uint8_t *p = *ptr;
 	uuid_t u1, u2;
@@ -62,7 +62,7 @@ sdp_match_uuid16(uint8_t **ptr, uint8_t *limit, uint16_t uuid)
 	memcpy(&u1, &BASE_UUID, sizeof(uuid_t));
 	u1.time_low = uuid;
 
-	if (!sdp_get_uuid(&p, limit, &u2)
+	if (!_sdp_get_uuid(&p, limit, &u2)
 	    || !uuid_equal(&u1, &u2, NULL))
 		return false;
 
@@ -71,14 +71,14 @@ sdp_match_uuid16(uint8_t **ptr, uint8_t *limit, uint16_t uuid)
 }
 
 /*
- * sdp_get_uuid(ptr, limit, uuid)
+ * _sdp_get_uuid(ptr, limit, uuid)
  *
  *	examine SDP data stream at ptr for a UUID, and extract
  *	to given storage, advancing ptr.
  *	limit is the first address past the end of valid data.
  */
 bool
-sdp_get_uuid(uint8_t **ptr, uint8_t *limit, uuid_t *uuid)
+_sdp_get_uuid(uint8_t **ptr, uint8_t *limit, uuid_t *uuid)
 {
 	uint8_t *p = *ptr;
 
@@ -121,14 +121,14 @@ sdp_get_uuid(uint8_t **ptr, uint8_t *limit, uuid_t *uuid)
 }
 
 /*
- * sdp_get_seq(ptr, limit, seq)
+ * _sdp_get_seq(ptr, limit, seq)
  *
  *	examine SDP data stream at ptr for a sequence. return
  *	seq pointer if found and advance ptr to next object.
  *	limit is the first address past the end of valid data.
  */
 bool
-sdp_get_seq(uint8_t **ptr, uint8_t *limit, uint8_t **seq)
+_sdp_get_seq(uint8_t **ptr, uint8_t *limit, uint8_t **seq)
 {
 	uint8_t *p = *ptr;
 	int32_t l;
@@ -173,14 +173,14 @@ sdp_get_seq(uint8_t **ptr, uint8_t *limit, uint8_t **seq)
 }
 
 /*
- * sdp_get_uint16(ptr, limit, value)
+ * _sdp_get_uint16(ptr, limit, value)
  *
  *	examine SDP data stream at ptr for a uint16_t, and
  *	extract to given storage, advancing ptr.
  *	limit is the first address past the end of valid data.
  */
 bool
-sdp_get_uint16(uint8_t **ptr, uint8_t *limit, uint16_t *value)
+_sdp_get_uint16(uint8_t **ptr, uint8_t *limit, uint16_t *value)
 {
 	uint8_t *p = *ptr;
 	uint16_t v;

@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1 2008/08/17 13:20:57 plunky Exp $	*/
+/*	$NetBSD: client.c,v 1.2 2008/12/06 20:01:14 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: client.c,v 1.1 2008/08/17 13:20:57 plunky Exp $");
+__RCSID("$NetBSD: client.c,v 1.2 2008/12/06 20:01:14 plunky Exp $");
 
 #include <bluetooth.h>
 #include <errno.h>
@@ -182,12 +182,12 @@ client_query(void)
 	 *	  seq len
 	 *	    uuid value == BNEP
 	 */
-	if (sdp_get_seq(&attr.value, attr.value + attr.vlen, &seq0)
-	    && sdp_get_seq(&seq0, attr.value, &seq1)
-	    && sdp_match_uuid16(&seq1, seq0, SDP_UUID_PROTOCOL_L2CAP)
-	    && sdp_get_uint16(&seq1, seq0, &l2cap_psm)
-	    && sdp_get_seq(&seq0, attr.value, &seq1)
-	    && sdp_match_uuid16(&seq1, seq0, SDP_UUID_PROTOCOL_BNEP)) {
+	if (_sdp_get_seq(&attr.value, attr.value + attr.vlen, &seq0)
+	    && _sdp_get_seq(&seq0, attr.value, &seq1)
+	    && _sdp_match_uuid16(&seq1, seq0, SDP_UUID_PROTOCOL_L2CAP)
+	    && _sdp_get_uint16(&seq1, seq0, &l2cap_psm)
+	    && _sdp_get_seq(&seq0, attr.value, &seq1)
+	    && _sdp_match_uuid16(&seq1, seq0, SDP_UUID_PROTOCOL_BNEP)) {
 		log_info("Found PSM %d for service %s", l2cap_psm, service_name);
 		return;
 	}
