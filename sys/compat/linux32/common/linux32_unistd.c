@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.26 2008/12/05 23:30:19 njoly Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.27 2008/12/06 23:01:32 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.26 2008/12/05 23:30:19 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.27 2008/12/06 23:01:32 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -364,9 +364,9 @@ linux32_sys_setresuid(struct lwp *l, const struct linux32_sys_setresuid_args *ua
 	} */
 	struct linux_sys_setresuid_args ua;
 
-	SCARG(&ua, ruid) = (SCARG(uap, ruid) == -1) ? -1 : SCARG(uap, ruid);
-	SCARG(&ua, euid) = (SCARG(uap, euid) == -1) ? -1 : SCARG(uap, euid);
-	SCARG(&ua, suid) = (SCARG(uap, suid) == -1) ? -1 : SCARG(uap, suid);
+	NETBSD32TO64_UAP(ruid);
+	NETBSD32TO64_UAP(euid);
+	NETBSD32TO64_UAP(suid);
 
 	return linux_sys_setresuid(l, &ua, retval);
 }
@@ -405,9 +405,9 @@ linux32_sys_setresgid(struct lwp *l, const struct linux32_sys_setresgid_args *ua
 	} */
 	struct linux_sys_setresgid_args ua;
 
-	SCARG(&ua, rgid) = (SCARG(uap, rgid) == -1) ? -1 : SCARG(uap, rgid);
-	SCARG(&ua, egid) = (SCARG(uap, egid) == -1) ? -1 : SCARG(uap, egid);
-	SCARG(&ua, sgid) = (SCARG(uap, sgid) == -1) ? -1 : SCARG(uap, sgid);
+	NETBSD32TO64_UAP(rgid);
+	NETBSD32TO64_UAP(egid);
+	NETBSD32TO64_UAP(sgid);
 
 	return linux_sys_setresgid(l, &ua, retval);
 }
