@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.290 2008/11/24 02:01:46 cube Exp $
+#	$NetBSD: bsd.lib.mk,v 1.291 2008/12/06 19:32:05 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -9,6 +9,7 @@
 
 LIBISMODULE?=	no
 LIBISPRIVATE?=	no
+LIBISCXX?=	no
 
 _LIB_PREFIX=	lib
 
@@ -492,19 +493,25 @@ LDADD+= -lgcc_pic
 .endif
 .endif
 
+.if ${LIBISCXX} != "no"
+LIBCC:=	${CXX}
+.else
+LIBCC:=	${CC}
+.endif
+
 lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} ${DPLIBC} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	${_MKTARGET_BUILD}
 	rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
-	${CC} ${LDLIBC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
+	${LIBCC} ${LDLIBC} -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
 	    ${_LIBLDOPTS} \
 	    -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} -o ${.TARGET} \
 	    -Wl,--whole-archive ${SOLIB} \
 	    -Wl,--no-whole-archive ${LDADD} \
 	    -L${_GCC_LIBGCCDIR}
 .else
-	${CC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} \
+	${LIBCC} ${LDLIBC} -Wl,-x -shared ${SHLIB_SHFLAGS} ${LDFLAGS} \
 	    -o ${.TARGET} ${_LIBLDOPTS} \
 	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD}
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.243 2008/12/05 18:51:16 cube Exp $
+#	$NetBSD: bsd.README,v 1.244 2008/12/06 19:32:05 mrg Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -940,6 +940,11 @@ LIBISMODULE	If not "no", install as ${LIB}.so (without the "lib" prefix),
 LIBISPRIVATE	If not "no", act as "MKDEBUGLIB=no MKLINT=no MKPIC=no
 		MKPROFILE=no", and don't install the (.a) library.
 		This is useful for "build only" helper libraries.
+		Default: no
+
+LIBISCXX	If not "no", Use ${CXX} instead of ${CC} to link
+		shared libraries.
+		This is useful for C++ libraries.
 		Default: no
 
 LINTLIBDIR	Target directory for lint libraries.
