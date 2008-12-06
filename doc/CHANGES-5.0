@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.47 2008/12/04 02:22:48 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.48 2008/12/06 22:12:42 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1410,4 +1410,50 @@ gnu/dist/binutils/bfd/archive.c			1.6
 	into place; this avoids possible corruption and coredumping on systems
 	that more aggressively bounds-check.
 	[dogcow, ticket #163]
+
+doc/HACKS					1.111 via patch
+sbin/ifconfig/Makefile				1.39
+
+	Specify -fno-loop-optimize on m68000 as workaround for gcc -O1
+	codegen bug mentioned in PR bin/40036 and PR toolchain/40066.
+	[tsutsui, ticket #164]
+
+distrib/common/Makefile.bootcd			1.16
+
+	Work around another bunch of places where Solaris' /usr/xpg4/bin/sh
+	can't handle for-loops with no arguments ("for foo in") which result
+	from empty make-variables.  Helps crossbuilding on Solaris 10.
+	[hubertf, ticket #165]
+
+external/mit/xorg/server/xorg-server/hw/xfree86/common/Makefile 1.7
+
+	Use TOOL_AWK over hardcoded 'awk' - the latter is not good enough
+	on Solaris.
+	[hubertf, ticket #166]
+
+sys/fs/udf/udf.h				1.28
+sys/fs/udf/udf_strat_direct.c			1.6
+sys/fs/udf/udf_strat_rmw.c			1.13
+sys/fs/udf/udf_subr.c				1.74-1.76
+sys/fs/udf/udf_vnops.c				1.32
+
+	Significant performance increases for UDF.
+	[reinoud, ticket #167]
+
+Makefile					1.264
+UPDATING					1.181
+etc/Makefile					1.362
+etc/rc.d/Makefile				1.70
+etc/rc.d/xdm					delete
+etc/rc.d/xdm.in					1.1
+etc/rc.d/xfs					delete
+etc/rc.d/xfs.in					1.1
+share/mk/bsd.prog.mk				1.240
+share/mk/bsd.README				1.243
+share/mk/bsd.files.mk				1.40
+usr.sbin/postinstall/postinstall		1.79
+
+	- Generate xdm and xfs depending on the value of X11FLAVOUR
+	- Only generate and install them for MKX11 builds
+	[cube, ticket #168]
 
