@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.73 2008/09/27 13:05:34 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.73.4.1 2008/12/06 21:36:48 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73 2008/09/27 13:05:34 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.1 2008/12/06 21:36:48 snj Exp $");
 #endif /* not lint */
 
 
@@ -4088,9 +4088,6 @@ dirhash_fill(struct udf_node *dir_node)
 /*
  * Directory read and manipulation functions.
  *
- * Note that if the file is found, the cached diroffset position *before* the
- * advance is remembered. Thus if the same filename is lookup again just after
- * this lookup its immediately found.
  */
 
 int 
@@ -4483,7 +4480,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 	struct icb_tag       *icbtag;
 	struct charspec osta_charspec;
 	struct dirent   dirent;
-	uint64_t unique_id, dir_size, diroffset;
+	uint64_t unique_id, dir_size;
 	uint64_t fid_pos, end_fid_pos, chosen_fid_pos;
 	uint32_t chosen_size, chosen_size_diff;
 	int lb_size, lb_rest, fidsize, this_fidsize, size_diff;
@@ -4624,7 +4621,6 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 		}
 	}
 	chosen_size_diff = chosen_size - fidsize;
-	diroffset = chosen_fid_pos + chosen_size;
 
 	/* populate the FID */
 	memset(fid, 0, lb_size);
