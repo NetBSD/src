@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.13 2008/12/05 13:19:42 reinoud Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.14 2008/12/06 14:02:08 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.13 2008/12/05 13:19:42 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.14 2008/12/06 14:02:08 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -286,7 +286,8 @@ udf_push_eccline(struct udf_eccline *eccline, int newqueue)
 		priv->num_floating--;
 	}
 
-	if ((newqueue != UDF_SHED_FREE) && (newqueue != UDF_SHED_IDLE))
+	/* tickle disc strategy statemachine */
+	if (newqueue != UDF_SHED_IDLE)
 		cv_signal(&priv->discstrat_cv);
 }
 
