@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.73.4.1 2008/12/06 21:36:48 snj Exp $ */
+/* $NetBSD: udf_subr.c,v 1.73.4.2 2008/12/06 21:41:34 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.1 2008/12/06 21:36:48 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.2 2008/12/06 21:41:34 snj Exp $");
 #endif /* not lint */
 
 
@@ -1990,6 +1990,12 @@ udf_process_vds(struct udf_mount *ump) {
 			ump->strategy = &udf_strat_direct;
 	if (n_spar)
 		ump->strategy = &udf_strat_rmw;
+
+#if 0
+	/* read-only access won't benefit from the other shedulers */
+	if (ump->vfs_mountp->mnt_flag & MNT_RDONLY)
+		ump->strategy = &udf_strat_direct;
+#endif
 
 	/* print results */
 	DPRINTF(VOLUMES, ("\tdata partition    %d\n", ump->data_part));
