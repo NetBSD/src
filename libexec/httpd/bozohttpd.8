@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.7 2008/12/06 13:30:35 wiz Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.8 2008/12/06 14:17:43 wiz Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.78 2008/03/03 03:36:11 mrg Exp $
 .\"
@@ -308,55 +308,6 @@ Using the
 .Xr inetd 8 ,
 you can provide multiple IP-address based HTTP servers by having multiple
 listening ports with different configurations.
-.Sh FILES
-.Nm
-looks for a couple of special files in directories that allow certain features
-to be provided on a per-directory basis.
-In addition to the
-.Pa .htpasswd
-used by HTTP basic authorisation,
-if a
-.Pa .bzdirect
-file is found (contents are irrelevant)
-.Nm
-will allow direct access even with the
-.Fl r
-option.
-If a
-.Pa .bzredirect
-symbolic link is found,
-.Nm
-will perform a smart redirect to the target of this symlink.
-The target is assumed to live on the same server.
-If a
-.Pa .bzabsredirect
-symbolic link is found,
-.Nm
-will redirect to the absolute url pointed to by this symlink.
-This is useful to redirect to different servers.
-.Sh EXAMPLES
-To configure set of virtual hosts, one would use an
-.Xr inetd.conf 5
-entry like:
-.Bd -literal
-http stream tcp  nowait:600 _httpd /usr/libexec/httpd httpd -v /var/vroot /var/www
-.Ed
-.Pp
-and inside
-.Pa /var/vroot
-create a directory (or a symlink to a directory) with the same name as
-the virtual host, for each virtual host.
-Lookups for these names are done in a case-insensitive manner.
-.Pp
-To use
-.Nm
-with PHP, one must use the
-.Fl C
-option to specify a CGI handler for a particular file type.
-Typically this, this will be like:
-.Bd -literal
-httpd -C .php /usr/pkg/bin/php /var/www
-.Ed
 .Ss NOTES
 This server supports the
 .Em HTTP/0.9 ,
@@ -431,6 +382,55 @@ To disable SSL SUPPORT compile
 with
 .Dq -DNO_SSL_SUPPORT
 on the compiler command line.
+.Sh FILES
+.Nm
+looks for a couple of special files in directories that allow certain features
+to be provided on a per-directory basis.
+In addition to the
+.Pa .htpasswd
+used by HTTP basic authorisation,
+if a
+.Pa .bzdirect
+file is found (contents are irrelevant)
+.Nm
+will allow direct access even with the
+.Fl r
+option.
+If a
+.Pa .bzredirect
+symbolic link is found,
+.Nm
+will perform a smart redirect to the target of this symlink.
+The target is assumed to live on the same server.
+If a
+.Pa .bzabsredirect
+symbolic link is found,
+.Nm
+will redirect to the absolute url pointed to by this symlink.
+This is useful to redirect to different servers.
+.Sh EXAMPLES
+To configure set of virtual hosts, one would use an
+.Xr inetd.conf 5
+entry like:
+.Bd -literal
+http stream tcp  nowait:600 _httpd /usr/libexec/httpd httpd -v /var/vroot /var/www
+.Ed
+.Pp
+and inside
+.Pa /var/vroot
+create a directory (or a symlink to a directory) with the same name as
+the virtual host, for each virtual host.
+Lookups for these names are done in a case-insensitive manner.
+.Pp
+To use
+.Nm
+with PHP, one must use the
+.Fl C
+option to specify a CGI handler for a particular file type.
+Typically this, this will be like:
+.Bd -literal
+httpd -C .php /usr/pkg/bin/php /var/www
+.Ed
 .Sh SEE ALSO
 .Xr inetd.conf 5 ,
 .Xr inetd 8
