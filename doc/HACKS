@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.110.2.1 2008/11/20 02:56:40 snj Exp $
+# $NetBSD: HACKS,v 1.110.2.2 2008/12/06 21:27:36 snj Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -318,6 +318,19 @@ descr
 	with the rbus resource allocation causing the card not to
 	configure properly.  Setting it to 0 fixes the problem but it
 	is not the proper solution.
+kcah
+
+hack	avoid gcc4 -O1 bug in loop optimize
+cdate	29 November 2008
+who	tsutsui
+file	src/sbin/ifconfig/Makefile	: 1.39
+pr	40036 40066
+descr
+	gcc -O1 seems to generate wrong code in loop optimize so that
+	ifconfig lo0 inet6 doesn't return error even if a kernel
+	doesn't have IPv6 support. (see the above PRs for details)
+	For workaround, specify -fno-loop-optimize on m68000,
+	which uses -O1 by default.
 kcah
 
 port	vax
