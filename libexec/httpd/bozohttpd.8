@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.5 2008/09/13 14:00:34 reed Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.6 2008/12/06 13:18:09 jnemeth Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.78 2008/03/03 03:36:11 mrg Exp $
 .\"
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 3, 2008
+.Dd December 6, 2008
 .Dt HTTPD 8
 .Sh NAME
 .Nm httpd
@@ -43,6 +43,7 @@
 .Op Fl c Ar cgibin
 .Op Fl i Ar address
 .Op Fl p Ar pubdir
+.Op Fl t Ar chrootdir
 .Op Fl v Ar virtualroot
 .Op Fl x Ar index
 .Op Fl Z Ar cert privkey
@@ -123,7 +124,8 @@ Also see
 .It Fl I Ar port
 This option is only valid with the
 .Fl b
-option.  It causes
+option.
+It causes
 .Ar port
 to use used as the port to bind daemon mode.
 The default is the
@@ -132,7 +134,8 @@ port.
 .It Fl i Ar address
 This option is only valid with the
 .Fl b
-option.  It causes
+option.
+It causes
 .Ar address
 to use used as the address to bind daemon mode.
 If otherwise unspecified, the address used to bind is derived from the
@@ -253,7 +256,8 @@ to
 .Ar index .
 .It Fl Z Ar certificate_path privatekey_path
 This option sets the path to the server certificate file and the private key file
-in pem format.  It also causes
+in pem format.
+It also causes
 .Nm
 to start SSL mode.
 .El
@@ -366,7 +370,7 @@ usernames and passwords hashed with
 .Xr crypt 3 ,
 for example:
 .Bd -literal
-heather:$1$pZWI4tH/$DzDPl63i6VvVRv2lJNV7k1 
+heather:$1$pZWI4tH/$DzDPl63i6VvVRv2lJNV7k1
 jeremy:A.xewbx2DpQ8I
 .Ed
 .Pp
@@ -376,7 +380,7 @@ the
 .Xr pwhash 1
 utility may be used to generate hashed passwords.
 .Pp
-While 
+While
 .Nm
 distributed with
 .Nx
@@ -386,7 +390,8 @@ Compile
 .Nm
 with
 .Dq -DDO_HTPASSWD
-on the compiler command line to enable this support.  It may require
+on the compiler command line to enable this support.
+It may require
 linking with the crypt library, using
 .Dq -lcrypt .
 .Sh FILES
@@ -394,7 +399,7 @@ linking with the crypt library, using
 looks for a couple of special files in directories that allow certain features
 to be provided on a per-directory basis.
 In addition to the
-.Pa .htpasswd 
+.Pa .htpasswd
 used by HTTP basic authorisation,
 if a
 .Pa .bzdirect
@@ -418,7 +423,8 @@ This is useful to redirect to different servers.
 .Sh SSL SUPPORT
 .Nm
 has support for SSLv2, SSLv3, and TLSv1 protocols that is included by
-default. It requires linking with the crypto and ssl library, using
+default.
+It requires linking with the crypto and ssl library, using
 .Dq -lcrypto -lssl .
 To disable SSL SUPPORT compile
 .Nm
