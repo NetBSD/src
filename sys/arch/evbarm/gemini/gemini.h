@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini.h,v 1.7 2008/11/20 07:49:54 cliff Exp $	*/
+/*	$NetBSD: gemini.h,v 1.8 2008/12/06 05:22:39 cliff Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,8 +32,6 @@
 #ifndef _EVBARM_GEMINI_GEMINI_H
 #define _EVBARM_GEMINI_GEMINI_H
 
-#include <arm/gemini/gemini_reg.h>
-
 /*
  * sanity check opt_gemini.h
  */
@@ -54,6 +52,10 @@
 # endif
 #endif
 
+#include <machine/vmparam.h>
+#include <arm/gemini/gemini_reg.h>
+
+
 /*
  * Kernel VM space: 192MB at KERNEL_VM_BASE
  */
@@ -71,10 +73,66 @@
 #define	GEMINI_LPCIO_VBASE	(GEMINI_LPCHC_VBASE    + L1_S_SIZE)
 #define	GEMINI_TIMER_VBASE	(GEMINI_LPCIO_VBASE    + L1_S_SIZE)
 #define	GEMINI_DRAMC_VBASE	(GEMINI_TIMER_VBASE    + L1_S_SIZE)
+
+/*
+ * mapping of physical RAM
+ */
 #define	GEMINI_RAMDISK_VBASE	(GEMINI_DRAMC_VBASE    + L1_S_SIZE)
 #define	GEMINI_RAMDISK_PBASE	0x00800000
 #define	GEMINI_RAMDISK_SIZE	0x00300000
 #define	GEMINI_RAMDISK_PEND	(GEMINI_RAMDISK_PBASE + GEMINI_RAMDISK_SIZE)
+
+#define	GEMINI_IPMQ_VBASE 					\
+	((GEMINI_RAMDISK_VBASE + GEMINI_RAMDISK_SIZE		\
+	  + (L1_S_SIZE * 4) - 1) & ~((L1_S_SIZE * 4) - 1))
+		/* round up for l2pt alignment */
+#ifdef GEMINI_SLAVE
+# define	GEMINI_IPMQ_PBASE	(GEMINI_RAMDISK_PEND + (GEMINI_BUSBASE * 1024 * 1024))
+#else
+# define	GEMINI_IPMQ_PBASE	GEMINI_RAMDISK_PEND
+#endif
+#if 0
+# define	GEMINI_IPMQ_SIZE	(2 * sizeof(ipm_queue_t))
+#else
+# define	GEMINI_IPMQ_SIZE	(2 * 4096)
+#endif
+#define	GEMINI_IPMQ_PEND	(GEMINI_IPMQ_PBASE + GEMINI_IPMQ_SIZE)
+
+/*
+ * reserve physical RAM, as needed
+ *
+ * NOTE: the RAM used for the IPM queues is owned by the MASTER
+ * so MASTER needs to reserve those pages from VM; the slave does not.
+ * Hence, GEMINI_RAM_RESV_PEND is adjusted for the MASTER but not the SLAVE.
+ */
+#define GEMINI_RAM_RESV_PBASE	0
+#define GEMINI_RAM_RESV_PEND	0
+#if defined(MEMORY_DISK_DYNAMIC)
+# undef  GEMINI_RAM_RESV_PBASE
+# undef  GEMINI_RAM_RESV_PEND
+# define GEMINI_RAM_RESV_PBASE	GEMINI_RAMDISK_PBASE
+# define GEMINI_RAM_RESV_PEND	GEMINI_RAMDISK_PEND
+#endif
+#if (NGEMINIIPM > 0) && !defined(GEMINI_SLAVE)
+# if (NGEMINIIPM > 1)
+#  error unexpected NGEMINIIPM > 1
+# endif
+# if (GEMINI_RAM_RESV_PBASE == 0)
+#  undef  GEMINI_RAM_RESV_PBASE
+#  define GEMINI_RAM_RESV_PBASE	GEMINI_IPMQ_PBASE
+# endif
+# undef  GEMINI_RAM_RESV_PEND
+# define GEMINI_RAM_RESV_PEND	GEMINI_IPMQ_PEND
+#endif
+
+/*
+ * to map all of memory, including RAM owned by both core.
+ * we start at nice round vbase to simplify conversion
+ * from VA to PA and back
+ */
+#define GEMINI_ALLMEM_PBASE	0
+#define GEMINI_ALLMEM_VBASE	0xf0000000
+#define GEMINI_ALLMEM_SIZE	128		/* units of MB */
 
 
 #endif /* _EVBARM_GEMINI_GEMINI_H */

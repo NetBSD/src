@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.10 2008/11/20 23:27:10 cliff Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.11 2008/12/06 05:22:39 cliff Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.10 2008/11/20 23:27:10 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.11 2008/12/06 05:22:39 cliff Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -139,6 +139,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.10 2008/11/20 23:27:10 cliff Ex
 #include "opt_com.h"
 #include "opt_gemini.h"
 #include "geminiwdt.h"
+#include "geminiipm.h"
 #include "md.h"
 
 #include <sys/param.h>
@@ -250,6 +251,16 @@ extern char _end[];
 #define NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
+
+
+#if (NGEMINIIPM > 0)
+pv_addr_t ipmq_pt;		/* L2 Page table for mapping IPM queues */
+#if defined(DEBUG) || 1
+unsigned long gemini_ipmq_pbase = GEMINI_IPMQ_PBASE;
+unsigned long gemini_ipmq_vbase = GEMINI_IPMQ_VBASE;
+#endif	/* DEBUG */
+#endif	/* NGEMINIIPM > 0 */
+
 
 extern struct user *proc0paddr;
 
@@ -732,12 +743,12 @@ initarm(void *arg)
 #endif
 	uvm_setpagesize();        /* initialize PAGE_SIZE-dependent variables */
 
-#if defined(MEMORY_DISK_DYNAMIC) 
-	uvm_page_physload(atop(physical_freestart), atop(GEMINI_RAMDISK_PBASE),
-	    atop(physical_freestart), atop(GEMINI_RAMDISK_PBASE),
+#if (GEMINI_RAM_RESV_PBASE != 0)
+	uvm_page_physload(atop(physical_freestart), atop(GEMINI_RAM_RESV_PBASE),
+	    atop(physical_freestart), atop(GEMINI_RAM_RESV_PBASE),
 	    VM_FREELIST_DEFAULT);
-	uvm_page_physload(atop(GEMINI_RAMDISK_PEND), atop(physical_freeend),
-	    atop(GEMINI_RAMDISK_PEND), atop(physical_freeend),
+	uvm_page_physload(atop(GEMINI_RAM_RESV_PEND), atop(physical_freeend),
+	    atop(GEMINI_RAM_RESV_PEND), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
 #else
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
@@ -981,6 +992,10 @@ setup_real_page_tables(void)
 		}
 	}
 
+#if (NGEMINIIPM > 0)
+	valloc_pages(ipmq_pt, L2_TABLE_SIZE / PAGE_SIZE);
+#endif
+
 #ifdef VERBOSE_INIT_ARM
 	pt_index=0;
 	printf("%s: kernel_l1pt: %#lx:%#lx\n",
@@ -991,6 +1006,10 @@ setup_real_page_tables(void)
 			kernel_pt_table[pt_index].pv_pa);
 		++pt_index;
 	}
+#if (NGEMINIIPM > 0)
+	printf("%s: ipmq_pt:\n", __func__);
+	printf("\t%#lx:%#lx\n", ipmq_pt.pv_va, ipmq_pt.pv_pa);
+#endif
 #endif
 
 	/* This should never be able to happen but better confirm that. */
@@ -1048,6 +1067,11 @@ setup_real_page_tables(void)
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
 	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
+
+#if (NGEMINIIPM > 0)
+printf("%s:%d: pmap_link_l2pt ipmq_pt\n", __FUNCTION__, __LINE__);
+	pmap_link_l2pt(l1_va, GEMINI_IPMQ_VBASE, &ipmq_pt);
+#endif
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
@@ -1108,6 +1132,38 @@ setup_real_page_tables(void)
 	/* Map the vector page. */
 	pmap_map_entry(l1_va, ARM_VECTORS_HIGH, systempage.pv_pa,
 		       VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+
+#if (NGEMINIIPM > 0)
+	/* Map the IPM queue l2pt */
+	pmap_map_chunk(l1_va, ipmq_pt.pv_va, ipmq_pt.pv_pa,
+		L2_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+
+	/* Map the IPM queue pages */
+	pmap_map_chunk(l1_va, GEMINI_IPMQ_VBASE, GEMINI_IPMQ_PBASE,
+	    GEMINI_IPMQ_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+
+#ifdef GEMINI_SLAVE
+	/*
+	 * Map all memory, incluuding that owned by other core
+	 * take into account the RAM remap, so view in this region
+	 * is consistent with MASTER
+	 */
+	pmap_map_chunk(l1_va,
+	    GEMINI_ALLMEM_VBASE,
+	    GEMINI_ALLMEM_PBASE + ((GEMINI_ALLMEM_SIZE - MEMSIZE) * 1024 * 1024),
+	    (GEMINI_ALLMEM_SIZE - MEMSIZE) * 1024 * 1024,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	pmap_map_chunk(l1_va,
+	    GEMINI_ALLMEM_VBASE + GEMINI_BUSBASE * 1024 * 1024,
+	    GEMINI_ALLMEM_PBASE,
+	    (MEMSIZE * 1024 * 1024),
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#else
+	/* Map all memory, incluuding that owned by other core */
+	pmap_map_chunk(l1_va, GEMINI_ALLMEM_VBASE, GEMINI_ALLMEM_PBASE,
+	    GEMINI_ALLMEM_SIZE * 1024 * 1024, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#endif	/* GEMINI_SLAVE */
+#endif	/* NGEMINIIPM */
 
 	/*
 	 * Map integrated peripherals at same address in first level page

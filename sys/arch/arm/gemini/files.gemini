@@ -1,4 +1,4 @@
-#	$NetBSD: files.gemini,v 1.8 2008/11/26 05:25:27 matt Exp $
+#	$NetBSD: files.gemini,v 1.9 2008/12/06 05:22:39 cliff Exp $
 #
 # Configuration info for GEMINI CPU support
 # Based on omap/files.omap2
@@ -47,8 +47,13 @@ device	geminiipi {}
 attach	geminiipi at obio
 file	arch/arm/gemini/gemini_ipi.c		geminiipi needs-flag
 
+# Gemini inter-processor-messages
+device	geminiipm {}
+attach	geminiipm at geminiipi
+file	arch/arm/gemini/gemini_ipm.c		geminiipm needs-flag
+
 device	gpn: ifnet, ether, arp
-attach	gpn at geminiipi
+attach	gpn at geminiipm
 file	arch/arm/gemini/if_gpn.c		gpn needs-flag
 
 # GEMINI GPIO controllers
