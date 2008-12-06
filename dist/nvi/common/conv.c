@@ -1,4 +1,4 @@
-/*	$NetBSD: conv.c,v 1.4 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: conv.c,v 1.5 2008/12/06 18:39:20 christos Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994
@@ -212,7 +212,8 @@ static int
 default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw, 
 		size_t *tolen, const char **pdst, const char *enc)
 {
-    int i, j, offset = 0;
+    size_t i, j;
+    int offset = 0;
     char **tostr = (char **)(void *)&cw->bp1;
     size_t  *blen = &cw->blen1;
     mbstate_t mbs;
@@ -240,7 +241,7 @@ default_int2char(SCR *sp, const CHAR_T * str, ssize_t len, CONVWIN *cw,
 		BINC_RETC(NULL, cw->bp1, cw->blen1, nlen);		\
 	    }						    		\
 	    errno = 0;						    	\
-	    if (iconv(id, &bp, (size_t *) &len, &obp, &outleft) == -1 && \
+	    if (iconv(id, &bp, &len, &obp, &outleft) == -1 && 		\
 		    errno != E2BIG)					\
 		goto err;						\
 	    offset = cw->blen1 - outleft;			        \
