@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.73 2008/12/01 13:22:06 joerg Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.74 2008/12/06 20:05:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -101,6 +101,8 @@ void	ffs_blkfree_snap(struct fs *, struct vnode *, daddr_t, long, ino_t);
 int	ffs_vfree(struct vnode *, ino_t, int);
 void	ffs_clusteracct(struct fs *, struct cg *, int32_t, int);
 int	ffs_checkfreefile(struct fs *, struct vnode *, ino_t);
+int	ffs_freefile(struct mount *, ino_t, int);
+int	ffs_freefile_snap(struct fs *, struct vnode *, ino_t, int);
 
 /* ffs_balloc.c */
 int	ffs_balloc(struct vnode *, off_t, int, kauth_cred_t, int,
@@ -217,7 +219,6 @@ void	ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 void	ffs_load_inode(struct buf *, struct inode *, struct fs *, ino_t);
 int	ffs_getblk(struct vnode *, daddr_t, daddr_t, int, bool, buf_t **);
 #endif /* defined(_KERNEL) */
-int	ffs_freefile(struct fs *, struct vnode *, ino_t, int);
 void	ffs_fragacct(struct fs *, int, int32_t[], int, int);
 int	ffs_isblock(struct fs *, u_char *, int32_t);
 int	ffs_isfreeblock(struct fs *, u_char *, int32_t);

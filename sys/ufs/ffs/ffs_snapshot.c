@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.83 2008/12/01 13:22:06 joerg Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.84 2008/12/06 20:05:55 joerg Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.83 2008/12/01 13:22:06 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.84 2008/12/06 20:05:55 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -660,7 +660,7 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 		if (blkno)
 			db_assign(xp, loc, blkno);
 		if (!error)
-			error = ffs_freefile(copy_fs, vp, xp->i_number,
+			error = ffs_freefile_snap(copy_fs, vp, xp->i_number,
 			    xp->i_mode);
 		if (error) {
 			(void)vunmark(mvp);
@@ -729,7 +729,7 @@ snapshot_expunge_snap(struct mount *mp, struct vnode *vp,
 			break;
 		if (xp->i_ffs_effnlink != 0)
 			continue;
-		error = ffs_freefile(copy_fs, vp, xp->i_number, xp->i_mode);
+		error = ffs_freefile_snap(copy_fs, vp, xp->i_number, xp->i_mode);
 		if (error)
 			break;
 	}
