@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: xdm,v 1.8 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: xdm.in,v 1.1.2.2 2008/12/06 22:03:15 snj Exp $
 #
 
 # PROVIDE: xdm
@@ -11,7 +11,7 @@ $_rc_subr_loaded . /etc/rc.subr
 
 name="xdm"
 rcvar=$name
-command="/usr/X11R6/bin/${name}"
+command="@X11ROOTDIR@/bin/${name}"
 pidfile="/var/run/${name}.pid"
 required_files="/etc/X11/xdm/xdm-config"
 extra_commands="reload"
