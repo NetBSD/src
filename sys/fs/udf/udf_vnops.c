@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.30 2008/07/17 19:10:22 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.30.4.1 2008/12/06 21:44:05 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30 2008/07/17 19:10:22 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.4.1 2008/12/06 21:44:05 snj Exp $");
 #endif /* not lint */
 
 
@@ -860,10 +860,10 @@ udf_getattr(void *v)
 	}
 
 	/* do the uid/gid translation game */
-	if ((uid == (uid_t) -1) && (gid == (gid_t) -1)) {
+	if (uid == (uid_t) -1)
 		uid = ump->mount_args.anon_uid;
+	if (gid == (gid_t) -1)
 		gid = ump->mount_args.anon_gid;
-	}
 
 	/* fill in struct vattr with values from the node */
 	VATTR_NULL(vap);

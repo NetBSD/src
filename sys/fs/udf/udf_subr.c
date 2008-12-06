@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.73.4.2 2008/12/06 21:41:34 snj Exp $ */
+/* $NetBSD: udf_subr.c,v 1.73.4.3 2008/12/06 21:44:05 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.2 2008/12/06 21:41:34 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.3 2008/12/06 21:44:05 snj Exp $");
 #endif /* not lint */
 
 
@@ -3971,10 +3971,11 @@ udf_getownership(struct udf_node *udf_node, uid_t *uidp, gid_t *gidp)
 	}
 	
 	/* do the uid/gid translation game */
-	if ((uid == (uid_t) -1) && (gid == (gid_t) -1)) {
+	if (uid == (uid_t) -1)
 		uid = ump->mount_args.anon_uid;
+	if (gid == (gid_t) -1)
 		gid = ump->mount_args.anon_gid;
-	}
+
 	*uidp = uid;
 	*gidp = gid;
 
@@ -3996,10 +3997,10 @@ udf_setownership(struct udf_node *udf_node, uid_t uid, gid_t gid)
 	/* do the uid/gid translation game */
 	nobody_uid = ump->mount_args.nobody_uid;
 	nobody_gid = ump->mount_args.nobody_gid;
-	if ((uid == nobody_uid) && (gid == nobody_gid)) {
+	if (uid == nobody_uid)
 		uid = (uid_t) -1;
+	if (gid == nobody_gid)
 		gid = (gid_t) -1;
-	}
 
 	if (fe) {
 		fe->uid  = udf_rw32((uint32_t) uid);
