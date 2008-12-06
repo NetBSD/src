@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42 2008/12/05 23:30:19 njoly Exp $
+	$NetBSD: syscalls.master,v 1.43 2008/12/06 23:14:03 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -242,7 +242,7 @@
 138	NOARGS	setfsuid16 { int linux32_sys_setfsuid(uid_t uid); }
 139	NOARGS	setfsgid16 { int linux32_sys_setfsgid(gid_t gid); }
 140	STD	{ int linux32_sys_llseek(int fd, u_int32_t ohigh, \
-		    u_int32_t olow, netbsd32_caddr_t res, int whence); }
+		    u_int32_t olow, netbsd32_voidp res, int whence); }
 141	STD	{ int linux32_sys_getdents(int fd, \
 		    linux32_direntp_t dent, unsigned int count); }
 142	STD	{ int linux32_sys_select(int nfds, \
