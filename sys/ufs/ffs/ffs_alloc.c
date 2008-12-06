@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.118 2008/12/01 13:45:51 joerg Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.119 2008/12/06 20:05:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.118 2008/12/01 13:45:51 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.119 2008/12/06 20:05:55 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -110,8 +110,10 @@ static daddr_t ffs_hashalloc(struct inode *, int, daddr_t, int, int,
 static daddr_t ffs_nodealloccg(struct inode *, int, daddr_t, int, int);
 static int32_t ffs_mapsearch(struct fs *, struct cg *,
 				      daddr_t, int);
-static void ffs_blkfree_common(struct ufsmount *, dev_t, struct buf *,
+static void ffs_blkfree_common(struct ufsmount *, struct fs *, dev_t, struct buf *,
     daddr_t, long, bool);
+static void ffs_freefile_common(struct ufsmount *, struct fs *, dev_t, struct buf *, ino_t,
+    int, bool);
 
 /* if 1, changes in optimalization strategy are logged */
 int ffs_log_changeopt = 0;
@@ -1544,6 +1546,7 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 	cg = dtog(fs, bno);
 	dev = devvp->v_rdev;
 	ump = VFSTOUFS(devvp->v_specmountpoint);
+	KASSERT(fs == ump->um_fs);
 	cgblkno = fsbtodb(fs, cgtod(fs, cg));
 	if (ffs_snapblkfree(fs, devvp, bno, size, inum))
 		return;
@@ -1564,7 +1567,9 @@ ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 		return;
 	}
 
-	ffs_blkfree_common(ump, dev, bp, bno, size, devvp_is_snapshot);
+	ffs_blkfree_common(ump, fs, dev, bp, bno, size, devvp_is_snapshot);
+
+	bdwrite(bp);
 }
 
 /*
@@ -1614,14 +1619,15 @@ ffs_blkfree_snap(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
 		return;
 	}
 
-	ffs_blkfree_common(ump, dev, bp, bno, size, devvp_is_snapshot);
+	ffs_blkfree_common(ump, fs, dev, bp, bno, size, devvp_is_snapshot);
+
+	bdwrite(bp);
 }
 
 static void
-ffs_blkfree_common(struct ufsmount *ump, dev_t dev, struct buf *bp,
-    daddr_t bno, long size, bool devvp_is_snapshot)
+ffs_blkfree_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
+    struct buf *bp, daddr_t bno, long size, bool devvp_is_snapshot)
 {
-	struct fs *fs = ump->um_fs;
 	struct cg *cgp;
 	int32_t fragno, cgbno;
 	int i, cg, blk, frags, bbase;
@@ -1642,7 +1648,6 @@ ffs_blkfree_common(struct ufsmount *ump, dev_t dev, struct buf *bp,
 		if (!ffs_isfreeblock(fs, blksfree, fragno)) {
 			if (devvp_is_snapshot) {
 				mutex_exit(&ump->um_lock);
-				brelse(bp, 0);
 				return;
 			}
 			printf("dev = 0x%x, block = %" PRId64 ", fs = %s\n",
@@ -1721,7 +1726,6 @@ ffs_blkfree_common(struct ufsmount *ump, dev_t dev, struct buf *bp,
 	fs->fs_fmod = 1;
 	ACTIVECG_CLR(fs, cg);
 	mutex_exit(&ump->um_lock);
-	bdwrite(bp);
 }
 
 /*
@@ -1735,7 +1739,7 @@ ffs_vfree(struct vnode *vp, ino_t ino, int mode)
 		softdep_freefile(vp, ino, mode);
 		return (0);
 	}
-	return ffs_freefile(VTOI(vp)->i_fs, VTOI(vp)->i_devvp, ino, mode);
+	return ffs_freefile(vp->v_mount, ino, mode);
 }
 
 /*
@@ -1745,34 +1749,25 @@ ffs_vfree(struct vnode *vp, ino_t ino, int mode)
  * => um_lock not held on entry or exit
  */
 int
-ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
+ffs_freefile(struct mount *mp, ino_t ino, int mode)
 {
-	struct ufsmount *ump;
+	struct ufsmount *ump = VFSTOUFS(mp);
+	struct fs *fs = ump->um_fs;
+	struct vnode *devvp;
 	struct cg *cgp;
 	struct buf *bp;
 	int error, cg;
 	daddr_t cgbno;
-	u_int8_t *inosused;
 	dev_t dev;
-	const bool devvp_is_snapshot = (devvp->v_type != VBLK);
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
 
-	if (!devvp_is_snapshot) {
-		UFS_WAPBL_JLOCK_ASSERT(devvp->v_specinfo->si_mountpoint);
-	}
-
 	cg = ino_to_cg(fs, ino);
-	if (devvp_is_snapshot) {
-		dev = VTOI(devvp)->i_devvp->v_rdev;
-		ump = VFSTOUFS(devvp->v_mount);
-		cgbno = fragstoblks(fs, cgtod(fs, cg));
-	} else {
-		dev = devvp->v_rdev;
-		ump = VFSTOUFS(devvp->v_specmountpoint);
-		cgbno = fsbtodb(fs, cgtod(fs, cg));
-	}
+	devvp = ump->um_devvp;
+	dev = devvp->v_rdev;
+	cgbno = fsbtodb(fs, cgtod(fs, cg));
+
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
 		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
 		    dev, (unsigned long long)ino, fs->fs_fsmnt);
@@ -1787,6 +1782,67 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 		brelse(bp, 0);
 		return (0);
 	}
+
+	ffs_freefile_common(ump, fs, dev, bp, ino, mode, false);
+
+	bdwrite(bp);
+
+	return 0;
+}
+
+int
+ffs_freefile_snap(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
+{
+	struct ufsmount *ump;
+	struct cg *cgp;
+	struct buf *bp;
+	int error, cg;
+	daddr_t cgbno;
+	dev_t dev;
+#ifdef FFS_EI
+	const int needswap = UFS_FSNEEDSWAP(fs);
+#endif
+
+	KASSERT(devvp->v_type != VBLK);
+
+	cg = ino_to_cg(fs, ino);
+	dev = VTOI(devvp)->i_devvp->v_rdev;
+	ump = VFSTOUFS(devvp->v_mount);
+	cgbno = fragstoblks(fs, cgtod(fs, cg));
+	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
+		panic("ifree: range: dev = 0x%x, ino = %llu, fs = %s",
+		    dev, (unsigned long long)ino, fs->fs_fsmnt);
+	error = bread(devvp, cgbno, (int)fs->fs_cgsize,
+	    NOCRED, B_MODIFY, &bp);
+	if (error) {
+		brelse(bp, 0);
+		return (error);
+	}
+	cgp = (struct cg *)bp->b_data;
+	if (!cg_chkmagic(cgp, needswap)) {
+		brelse(bp, 0);
+		return (0);
+	}
+	ffs_freefile_common(ump, fs, dev, bp, ino, mode, true);
+
+	bdwrite(bp);
+
+	return 0;
+}
+
+static void
+ffs_freefile_common(struct ufsmount *ump, struct fs *fs, dev_t dev,
+    struct buf *bp, ino_t ino, int mode, bool devvp_is_snapshot)
+{
+	int cg;
+	struct cg *cgp;
+	u_int8_t *inosused;
+#ifdef FFS_EI
+	const int needswap = UFS_FSNEEDSWAP(fs);
+#endif
+
+	cg = ino_to_cg(fs, ino);
+	cgp = (struct cg *)bp->b_data;
 	cgp->cg_old_time = ufs_rw32(time_second, needswap);
 	if ((fs->fs_magic != FS_UFS1_MAGIC) ||
 	    (fs->fs_old_flags & FS_FLAGS_UPDATED))
@@ -1802,7 +1858,7 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	}
 	clrbit(inosused, ino);
 	if (!devvp_is_snapshot)
-		UFS_WAPBL_UNREGISTER_INODE(devvp->v_specmountpoint,
+		UFS_WAPBL_UNREGISTER_INODE(ump->um_mountp,
 		    ino + cg * fs->fs_ipg, mode);
 	if (ino < ufs_rw32(cgp->cg_irotor, needswap))
 		cgp->cg_irotor = ufs_rw32(ino, needswap);
@@ -1818,8 +1874,6 @@ ffs_freefile(struct fs *fs, struct vnode *devvp, ino_t ino, int mode)
 	fs->fs_fmod = 1;
 	ACTIVECG_CLR(fs, cg);
 	mutex_exit(&ump->um_lock);
-	bdwrite(bp);
-	return (0);
 }
 
 /*
@@ -1834,6 +1888,8 @@ ffs_checkfreefile(struct fs *fs, struct vnode *devvp, ino_t ino)
 	int ret, cg;
 	u_int8_t *inosused;
 	const bool devvp_is_snapshot = (devvp->v_type != VBLK);
+
+	KASSERT(devvp_is_snapshot);
 
 	cg = ino_to_cg(fs, ino);
 	if (devvp_is_snapshot)
