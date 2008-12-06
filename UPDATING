@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.178 2008/09/02 07:34:15 lukem Exp $
+$NetBSD: UPDATING,v 1.178.2.1 2008/12/06 22:09:18 snj Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -16,6 +16,10 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+20081205:
+	If you build with MKX11=no, you should remove /etc/rc.d/xdm and
+	/etc/rc.d/xfs from DESTDIR because those files were moved to the xetc
+	set and will appear as extra files for MKX11=no update builds.
 
 20080827:
 	If you built and installed a libc from sources between
