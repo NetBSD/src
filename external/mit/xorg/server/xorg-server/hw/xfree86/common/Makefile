@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/09/07 14:52:48 lukem Exp $
+#	$NetBSD: Makefile,v 1.6.8.1 2008/12/06 21:33:48 snj Exp $
 
 .include <bsd.sys.mk> # for HOST_SH
 
@@ -50,7 +50,7 @@ xf86DefModeSet.c:
 	cat \
 	${X11SRCDIR.xorg-server}/hw/xfree86/common/vesamodes \
 	${X11SRCDIR.xorg-server}/hw/xfree86/common/extramodes | \
-	awk -f ${.CURDIR}/modeline2c.awk > ${.TARGET}
+	${TOOL_AWK} -f ${.CURDIR}/modeline2c.awk > ${.TARGET}
 
 CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/hw/xfree86/common \
 		-I${X11SRCDIR.xorg-server}/hw/xfree86/os-support \
