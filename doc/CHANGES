@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1145 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1146 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -31,3 +31,5 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		encryption. [christos 20081031]
 	rump: Move VFS functionality away from librump to a new library:
 		librumpvfs [pooka 20081119]
+	fxp(4): Add a workaround for hardware ip4csum-tx bug.
+		[tsutsui 20081203]
