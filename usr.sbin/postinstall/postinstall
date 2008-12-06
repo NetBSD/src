@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.76.2.1 2008/11/27 03:42:00 snj Exp $
+# $NetBSD: postinstall,v 1.76.2.2 2008/12/06 22:06:26 snj Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -592,6 +592,38 @@ contents_owner()
 	fi	
 }
 
+# get_makevar var [var ...]
+#	Retrieve the value of a user-settable system make variable
+get_makevar()
+{
+	$SOURCEMODE || err 3 "get_makevar must be used in source mode"
+	[ $# -eq 0 ] && err 3 "USAGE: get_makevar var [var ...]"
+
+	for _var in "$@"; do
+		_value="$(echo '.include <bsd.own.mk>' | \
+		    ${MAKE:-make} -f - -V "${_var}")"
+
+		eval ${_var}=\"${_value}\"
+	done
+}
+
+# detect_x11
+#	Detect if X11 components should be analysed and set values of
+#	relevant variables.
+detect_x11()
+{
+	if $SOURCEMODE; then
+		get_makevar MKX11 X11ROOTDIR
+	else
+		if [ -f "${SRC_DIR}/etc/mtree/set.xetc" ]; then
+			MKX11=yes
+			X11ROOTDIR=/this/value/isnt/used/yet
+		else
+			MKX11=no
+			X11ROOTDIR=
+		fi
+	fi
+}
 
 #
 #	items
@@ -899,10 +931,20 @@ do_rc()
 	[ -n "$1" ] || err 3 "USAGE: do_rc  fix|check"
 	op="$1"
 	failed=0
+	generated_scripts=""
+	if [ "${MKX11}" != "no" ]; then
+		generated_scripts="${generated_scripts} xdm xfs"
+	fi
 
 	compare_dir "${op}" "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
 		rc rc.subr rc.shutdown
 	failed=$(( ${failed} + $? ))
+
+	if ! $SOURCEMODE; then
+		extra_scripts="${generated_scripts}"
+	else
+		extra_scripts=""
+	fi
 
 	compare_dir "${op}" "${SRC_DIR}/etc/rc.d" "${DEST_DIR}/etc/rc.d" 555 \
 		DAEMON LOGIN NETWORKING SERVERS \
@@ -927,9 +969,23 @@ do_rc()
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \
 		veriexec virecover wdogctl wpa_supplicant wscons wsmoused \
-		xdm xfs \
-		ypbind yppasswdd ypserv
+		ypbind yppasswdd ypserv \
+		${extra_scripts}
 	failed=$(( ${failed} + $? ))
+
+	if $SOURCEMODE && [ -n "${generated_scripts}" ]; then
+		# generate scripts
+		mkdir "${SCRATCHDIR}/rc"
+		for f in ${generated_scripts}; do
+			sed -e "s,@X11ROOTDIR@,${X11ROOTDIR},g" \
+			    < "${SRC_DIR}/etc/rc.d/${f}.in" \
+			    > "${SCRATCHDIR}/rc/${f}"
+		done
+		compare_dir "${op}" "${SCRATCHDIR}/rc" \
+		    "${DEST_DIR}/etc/rc.d" 555 \
+		    ${generated_scripts}
+		failed=$(( ${failed} + $? ))
+	fi
 
 		# check for obsolete rc.d files
 	for f in NETWORK btcontrol btuartd fsck.sh kerberos nfsiod servers \
@@ -1427,6 +1483,8 @@ EOF
 		#
 	[ "${SRC_DIR}" = "/" ]	&& SRC_DIR=""
 	[ "${DEST_DIR}" = "/" ]	&& DEST_DIR=""
+
+	detect_x11
 
 	op="$1"
 	shift
