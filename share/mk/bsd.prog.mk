@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.239 2008/10/19 15:22:50 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.239.2.1 2008/12/06 21:56:37 snj Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -26,11 +26,6 @@ clean:		cleanprog
 .for __gdbinit in ${GDBINIT}
 	echo "source ${__gdbinit}" >> .gdbinit
 .endfor
-
-cleanextra: .PHONY
-.if defined(CLEANFILES) && !empty(CLEANFILES)
-	rm -f ${CLEANFILES}
-.endif
 
 cleanobjs: .PHONY
 
@@ -454,6 +449,11 @@ scriptsinstall::
 .include <bsd.links.mk>
 .include <bsd.sys.mk>
 .include <bsd.dep.mk>
+
+cleanextra: .PHONY
+.if defined(CLEANFILES) && !empty(CLEANFILES)
+	rm -f ${CLEANFILES}
+.endif
 
 ${TARGETS}:	# ensure existence
 
