@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.6 2008/12/06 13:18:09 jnemeth Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.7 2008/12/06 13:30:35 wiz Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.78 2008/03/03 03:36:11 mrg Exp $
 .\"
@@ -69,7 +69,7 @@ option for virtual hosting.)
 .Nm
 is designed to be small, simple and relatively featureless,
 hopefully increasing its security.
-.Sh OPTIONS
+.Ss OPTIONS
 The following options are available:
 .Bl -tag -width xxxcgibin
 .It Fl b
@@ -96,9 +96,9 @@ The
 directory is expected to contain the CGI programs to be used.
 .Nm
 looks for URL's in the form of
-.Em /cgi-bin/<scriptname>
+.Em /cgi-bin/\*[Lt]scriptname\*[Gt]
 where
-.Em <scriptname>
+.Em \*[Lt]scriptname\*[Gt]
 is a valid CGI program in the
 .Ar cgibin
 directory.
@@ -148,13 +148,13 @@ content type and encoding.
 This option takes four additional arguments containing
 the file prefix, its
 .Dq Content-Type ,
-.Dq Content-Encoding
+.Dq Content-Encoding ,
 and
 .Dq Content-Encoding
 for HTTP/1.1 connections, respectively.
-If any of these are a single
-.Dq -
-(dash), the empty string is used instead.
+If any of these are a single dash
+.Pq Dq - ,
+the empty string is used instead.
 Multiple
 .Fl M
 options may be passed.
@@ -273,7 +273,7 @@ since version 20040828, they take multiple options (2 in the case of
 .Fl C
 and 4 in the case of
 .Fl M . )
-.Sh INETD CONFIGURATION
+.Ss INETD CONFIGURATION
 As
 .Nm
 uses
@@ -308,6 +308,32 @@ Using the
 .Xr inetd 8 ,
 you can provide multiple IP-address based HTTP servers by having multiple
 listening ports with different configurations.
+.Sh FILES
+.Nm
+looks for a couple of special files in directories that allow certain features
+to be provided on a per-directory basis.
+In addition to the
+.Pa .htpasswd
+used by HTTP basic authorisation,
+if a
+.Pa .bzdirect
+file is found (contents are irrelevant)
+.Nm
+will allow direct access even with the
+.Fl r
+option.
+If a
+.Pa .bzredirect
+symbolic link is found,
+.Nm
+will perform a smart redirect to the target of this symlink.
+The target is assumed to live on the same server.
+If a
+.Pa .bzabsredirect
+symbolic link is found,
+.Nm
+will redirect to the absolute url pointed to by this symlink.
+This is useful to redirect to different servers.
 .Sh EXAMPLES
 To configure set of virtual hosts, one would use an
 .Xr inetd.conf 5
@@ -331,10 +357,10 @@ Typically this, this will be like:
 .Bd -literal
 httpd -C .php /usr/pkg/bin/php /var/www
 .Ed
-.Sh NOTES
+.Ss NOTES
 This server supports the
 .Em HTTP/0.9 ,
-.Em HTTP/1.0
+.Em HTTP/1.0 ,
 and
 .Em HTTP/1.1
 standards.
@@ -348,7 +374,7 @@ daemon mode support (NO_DAEMON_MODE), and dynamic MIME content
 (NO_DYNAMIC_CONTENT), and SSL support (NO_SSL_SUPPORT) by defining the listed
 macros when building
 .Nm .
-.Sh HTTP BASIC AUTHORISATION
+.Ss HTTP BASIC AUTHORISATION
 .Nm
 has support for HTTP Basic Authorisation.
 If a file named
@@ -394,33 +420,7 @@ on the compiler command line to enable this support.
 It may require
 linking with the crypt library, using
 .Dq -lcrypt .
-.Sh FILES
-.Nm
-looks for a couple of special files in directories that allow certain features
-to be provided on a per-directory basis.
-In addition to the
-.Pa .htpasswd
-used by HTTP basic authorisation,
-if a
-.Pa .bzdirect
-file is found (contents are irrelevant)
-.Nm
-will allow direct access even with the
-.Fl r
-option.
-If a
-.Pa .bzredirect
-symbolic link is found,
-.Nm
-will perform a smart redirect to the target of this symlink.
-The target is assumed to live on the same server.
-If a
-.Pa .bzabsredirect
-symbolic link is found,
-.Nm
-will redirect to the absolute url pointed to by this symlink.
-This is useful to redirect to different servers.
-.Sh SSL SUPPORT
+.Ss SSL SUPPORT
 .Nm
 has support for SSLv2, SSLv3, and TLSv1 protocols that is included by
 default.
@@ -515,7 +515,7 @@ provided man page fixes
 .It
 Luke Mewburn
 .Aq lukem@netbsd.org
-provided many various fixes, including cgi-bin fixes & enhancements,
+provided many various fixes, including cgi-bin fixes and enhancements,
 HTTP basic authorisation support and much code clean up
 .It
 Jeremy C. Reed
