@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.124 2008/11/25 15:41:12 nakayama Exp $	*/
+/*	$NetBSD: db_command.c,v 1.125 2008/12/07 00:51:15 cegger Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.124 2008/11/25 15:41:12 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.125 2008/12/07 00:51:15 cegger Exp $");
 
 #include "opt_aio.h"
 #include "opt_ddb.h"
@@ -215,6 +215,8 @@ static void	db_uvmexp_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_uvmhist_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 static void	db_vnode_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_vmem_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_show_all_vmems(db_expr_t, bool, db_expr_t, const char *);
 
 static const struct db_command db_show_cmds[] = {
 	/*added from all sub cmds*/
@@ -280,6 +282,10 @@ static const struct db_command db_show_cmds[] = {
 #endif
 	{ DDB_ADD_CMD("vnode",	db_vnode_print_cmd,	0,
 	    "Print the vnode at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("vmem", db_vmem_print_cmd,	0,
+	    "Print the vmem usage.", "[/a] address", NULL) },
+	{ DDB_ADD_CMD("vmems", db_show_all_vmems,	0,
+	    "Show all vmems.", NULL, NULL) },
 	{ DDB_ADD_CMD("watches",	db_listwatch_cmd, 	0,
 	    "Display all watchpoints.", NULL,NULL) },
 	{ DDB_ADD_CMD(NULL,		NULL,			0,NULL,NULL,NULL) }
@@ -1175,6 +1181,22 @@ db_vnode_print_cmd(db_expr_t addr, bool have_addr,
 		full = true;
 
 	vfs_vnode_print((struct vnode *)(uintptr_t) addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+static void
+db_vmem_print_cmd(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+	vmem_print((uintptr_t) addr, modif, db_printf);
+}
+
+/*ARGSUSED*/
+static void
+db_show_all_vmems(db_expr_t addr, bool have_addr,
+    db_expr_t count, const char *modif)
+{
+	vmem_print((uintptr_t)addr, "a", db_printf);
 }
 
 static void
