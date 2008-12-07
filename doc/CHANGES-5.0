@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.49 2008/12/07 15:29:11 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.50 2008/12/07 19:14:19 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1458,4 +1458,17 @@ usr.sbin/postinstall/postinstall		1.79
 	- Generate xdm and xfs depending on the value of X11FLAVOUR
 	- Only generate and install them for MKX11 builds
 	[cube, ticket #168]
+
+sys/dev/pci/if_vge.c				1.43 via patch
+	- ifconfig down support
+	- ALTQ support
+	[joerg, ticket #143]
+
+sys/dev/pci/if_wm.c				1.163
+
+	Fix '||' vs '&&' mix-up from when ich9 support was added.  Fixes nasty
+	EEPROM-trashing bug on ich8 and ich9 chipsets as described in
+	  http://mail-index.netbsd.org/current-users/2008/12/02/msg006435.html
+	caused by setting the wrong type of EEPROM.
+	[sketch, ticket #160]
 
