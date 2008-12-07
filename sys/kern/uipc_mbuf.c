@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.128 2008/07/02 14:47:34 matt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.129 2008/12/07 20:58:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.128 2008/07/02 14:47:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.129 2008/12/07 20:58:46 pooka Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -101,6 +101,10 @@ static int mb_ctor(void *, void *, int);
 
 static void	*mclpool_alloc(struct pool *, int);
 static void	mclpool_release(struct pool *, void *);
+
+static void	sysctl_kern_mbuf_setup(void);
+
+static struct sysctllog *mbuf_sysctllog;
 
 static struct pool_allocator mclpool_allocator = {
 	.pa_alloc = mclpool_alloc,
@@ -162,6 +166,8 @@ mbinit(void)
 
 	CTASSERT(sizeof(struct _m_ext) <= MHLEN);
 	CTASSERT(sizeof(struct mbuf) == MSIZE);
+
+	sysctl_kern_mbuf_setup();
 
 	mclpool_allocator.pa_backingmap = mb_map;
 
@@ -359,59 +365,61 @@ sysctl_kern_mbuf_stats(SYSCTLFN_ARGS)
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 }
 
-SYSCTL_SETUP(sysctl_kern_mbuf_setup, "sysctl kern.mbuf subtree setup")
+static void
+sysctl_kern_mbuf_setup()
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	KASSERT(mbuf_sysctllog == NULL);
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "mbuf",
 		       SYSCTL_DESCR("mbuf control variables"),
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, KERN_MBUF, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "msize",
 		       SYSCTL_DESCR("mbuf base size"),
 		       NULL, msize, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MSIZE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "mclbytes",
 		       SYSCTL_DESCR("mbuf cluster size"),
 		       NULL, mclbytes, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MCLBYTES, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "nmbclusters",
 		       SYSCTL_DESCR("Limit on the number of mbuf clusters"),
 		       sysctl_kern_mbuf, 0, &nmbclusters, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_NMBCLUSTERS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mblowat",
 		       SYSCTL_DESCR("mbuf low water mark"),
 		       sysctl_kern_mbuf, 0, &mblowat, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MBLOWAT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "mcllowat",
 		       SYSCTL_DESCR("mbuf cluster low water mark"),
 		       sysctl_kern_mbuf, 0, &mcllowat, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_MCLLOWAT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("mbuf allocation statistics"),
 		       sysctl_kern_mbuf_stats, 0, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_STATS, CTL_EOL);
 #ifdef MBUFTRACE
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&mbuf_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "mowners",
 		       SYSCTL_DESCR("Information about mbuf owners"),

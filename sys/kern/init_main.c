@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.377 2008/12/04 23:18:13 he Exp $	*/
+/*	$NetBSD: init_main.c,v 1.378 2008/12/07 20:58:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.377 2008/12/04 23:18:13 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.378 2008/12/07 20:58:46 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -351,6 +351,9 @@ main(void)
 	/* Do machine-dependent initialization. */
 	cpu_startup();
 
+	/* Initialize the sysctl subsystem. */
+	sysctl_init();
+
 	/* Initialize callouts, part 1. */
 	callout_startup();
 
@@ -422,9 +425,6 @@ main(void)
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
 	 */
 	mbinit();
-
-	/* Initialize the sysctl subsystem. */
-	sysctl_init();
 
 	/* Initialize I/O statistics. */
 	iostat_init();

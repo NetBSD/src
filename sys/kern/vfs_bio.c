@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.214 2008/11/16 19:34:19 joerg Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.215 2008/12/07 20:58:46 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.214 2008/11/16 19:34:19 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.215 2008/12/07 20:58:46 pooka Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -176,6 +176,8 @@ static void biointr(void *);
 static void biodone2(buf_t *);
 static void bref(buf_t *);
 static void brele(buf_t *);
+static void sysctl_kern_buf_setup(void);
+static void sysctl_vm_buf_setup(void);
 
 /*
  * Definitions for the buffer hash lists.
@@ -505,6 +507,9 @@ bufinit(void)
 	 */
 	nbuf = (bufmem_hiwater / 1024) / 3;
 	bufhashtbl = hashinit(nbuf, HASH_LIST, true, &bufhash);
+
+	sysctl_kern_buf_setup();
+	sysctl_vm_buf_setup();
 }
 
 void
@@ -1850,15 +1855,18 @@ sysctl_bufvm_update(SYSCTLFN_ARGS)
 	return 0;
 }
 
-SYSCTL_SETUP(sysctl_kern_buf_setup, "sysctl kern.buf subtree setup")
+static struct sysctllog *vfsbio_sysctllog;
+
+static void
+sysctl_kern_buf_setup(void)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "buf",
 		       SYSCTL_DESCR("Kernel buffer cache information"),
@@ -1866,37 +1874,37 @@ SYSCTL_SETUP(sysctl_kern_buf_setup, "sysctl kern.buf subtree setup")
 		       CTL_KERN, KERN_BUF, CTL_EOL);
 }
 
-SYSCTL_SETUP(sysctl_vm_buf_setup, "sysctl vm.buf* subtree setup")
+static void
+sysctl_vm_buf_setup(void)
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "vm", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_VM, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufcache",
 		       SYSCTL_DESCR("Percentage of physical memory to use for "
 				    "buffer cache"),
 		       sysctl_bufvm_update, 0, &bufcache, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "bufmem",
 		       SYSCTL_DESCR("Amount of kernel memory used by buffer "
 				    "cache"),
 		       NULL, 0, &bufmem, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufmem_lowater",
 		       SYSCTL_DESCR("Minimum amount of kernel memory to "
 				    "reserve for buffer cache"),
 		       sysctl_bufvm_update, 0, &bufmem_lowater, 0,
 		       CTL_VM, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&vfsbio_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "bufmem_hiwater",
 		       SYSCTL_DESCR("Maximum amount of kernel memory to use "
