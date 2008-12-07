@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.23 2007/12/15 19:44:51 perry Exp $	*/
+/*	$NetBSD: list.c,v 1.24 2008/12/07 19:21:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.23 2007/12/15 19:44:51 perry Exp $");
+__RCSID("$NetBSD: list.c,v 1.24 2008/12/07 19:21:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ getrawlist(const char line[], char **argv, int argc)
 			if (quotec != '\0') {
 				if (c == quotec)
 					quotec = '\0';
-				else if (c == '\\')
+				else if (quotec != '\'' && c == '\\')
 					switch (c = *cp++) {
 					case '\0':
 						*cp2++ = '\\';
