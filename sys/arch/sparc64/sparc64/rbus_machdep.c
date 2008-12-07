@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.12 2008/06/26 15:08:48 nakayama Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.13 2008/12/07 21:03:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.12 2008/06/26 15:08:48 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.13 2008/12/07 21:03:58 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -147,17 +147,17 @@ pccbb_attach_hook(device_t parent, device_t self, struct pci_attach_args *pa)
 			printf("pccbb_attach_hook: broken bus %d\n", bus);
 		else {
 #ifdef DIAGNOSTIC
-			if ((*pp->pp_busnode)[bus].node != 0)
+			if ((*pc->spc_busnode)[bus].node != 0)
 				printf("pccbb_attach_hook: override bus %d"
 				       " node %08x -> %08x\n",
-				       bus, (*pp->pp_busnode)[bus].node, node);
+				       bus, (*pc->spc_busnode)[bus].node, node);
 #endif
-			(*pp->pp_busnode)[bus].arg = device_private(self);
-			(*pp->pp_busnode)[bus].valid = pccbb_cardbus_isvalid;
-			(*pp->pp_busnode)[bus].node = node;
+			(*pc->spc_busnode)[bus].arg = device_private(self);
+			(*pc->spc_busnode)[bus].valid = pccbb_cardbus_isvalid;
+			(*pc->spc_busnode)[bus].node = node;
 		}
 	} else {
-		bus = ++pp->pp_busmax;
+		bus = ++pc->spc_busmax;
 		DPRINTF("pccbb_attach_hook: bus %d\n", bus);
 		if (bus >= 256)
 			printf("pccbb_attach_hook: 256 >= busses exist\n");
@@ -167,14 +167,14 @@ pccbb_attach_hook(device_t parent, device_t self, struct pci_attach_args *pa)
 			reg |= pa->pa_bus | (bus << 8) | (bus << 16);
 			pci_conf_write(pc, pa->pa_tag, PPB_REG_BUSINFO, reg);
 #ifdef DIAGNOSTIC
-			if ((*pp->pp_busnode)[bus].node != 0)
+			if ((*pc->spc_busnode)[bus].node != 0)
 				printf("pccbb_attach_hook: override bus %d"
 				       " node %08x -> %08x\n",
-				       bus, (*pp->pp_busnode)[bus].node, node);
+				       bus, (*pc->spc_busnode)[bus].node, node);
 #endif
-			(*pp->pp_busnode)[bus].arg = device_private(self);
-			(*pp->pp_busnode)[bus].valid = pccbb_cardbus_isvalid;
-			(*pp->pp_busnode)[bus].node = node;
+			(*pc->spc_busnode)[bus].arg = device_private(self);
+			(*pc->spc_busnode)[bus].valid = pccbb_cardbus_isvalid;
+			(*pc->spc_busnode)[bus].node = node;
 		}
 	}
 
