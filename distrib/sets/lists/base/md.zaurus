@@ -1,6 +1,0 @@
-# $NetBSD: md.zaurus,v 1.5 2008/11/29 17:57:34 tsutsui Exp $
-./usr/mdec/zbsdmod.o				base-sysutil-bin
-./usr/sbin/apm					base-sysutil-bin
-./usr/sbin/apmd					base-sysutil-bin
-./usr/sbin/tpctl				base-sysutil-bin
-./usr/sbin/zzz					base-sysutil-bin

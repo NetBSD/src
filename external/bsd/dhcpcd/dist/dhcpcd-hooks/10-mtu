@@ -1,5 +1,0 @@
-# Configure the MTU for the interface
-
-if [ -n "${new_interface_mtu}" ]; then
-	ifconfig "${interface}" mtu "${new_interface_mtu}"
-fi

@@ -1,6 +1,0 @@
-#	$NetBSD: shlib_version,v 1.1.1.1 2008/07/29 05:01:22 mrg Exp $
-#
-# XXX netbsd-4 has major=1 minor=2
-major=1
-minor=0
-teeny=2

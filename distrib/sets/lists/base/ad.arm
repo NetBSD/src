@@ -1,9 +1,0 @@
-# $NetBSD: ad.arm,v 1.10 2008/10/31 20:24:51 mrg Exp $
-./sbin/ldconfig					base-sysutil-root	pic
-./usr/lib/libarm.so				base-sys-shlib		pic
-./usr/lib/libarm.so.0				base-sys-shlib		pic
-./usr/lib/libarm.so.0.0				base-sys-shlib		pic
-./usr/lib/libpmc.so				base-sys-shlib		pic
-./usr/lib/libpmc.so.0				base-sys-shlib		pic
-./usr/lib/libpmc.so.0.0				base-sys-shlib		pic
-./usr/libexec/ld.so				base-sys-shlib		pic

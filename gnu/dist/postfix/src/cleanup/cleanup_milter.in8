@@ -1,7 +1,0 @@
-open test-queue-file8.tmp
-
-ins_header 1 inserted-at-1 hya
-ins_header 2 inserted-at-2 hya
-ins_header 3 inserted-at-3 hya
-
-close

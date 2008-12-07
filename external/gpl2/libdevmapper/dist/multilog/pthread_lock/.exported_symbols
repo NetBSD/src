@@ -1,4 +1,0 @@
-init_locking
-lock_fn
-unlock_fn
-destroy_locking
