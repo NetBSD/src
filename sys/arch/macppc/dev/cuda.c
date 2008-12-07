@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.8 2008/05/16 02:45:16 macallan Exp $ */
+/*	$NetBSD: cuda.c,v 1.9 2008/12/07 08:24:26 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.8 2008/05/16 02:45:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.9 2008/12/07 08:24:26 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ cuda_attach(device_t parent, device_t dev, void *aux)
 	if (node)
 		OF_getprop(node, "interrupts", &irq, 4);
 
-	printf(" irq %d: ", irq);
+	printf(" irq %d", irq);
 
 	sc->sc_node = ca->ca_node;
 	sc->sc_memt = ca->ca_tag;
@@ -200,7 +200,7 @@ cuda_attach(device_t parent, device_t dev, void *aux)
 	if (bus_space_map(sc->sc_memt, ca->ca_reg[0] + ca->ca_baseaddr,
 	    ca->ca_reg[1], 0, &sc->sc_memh) != 0) {
 
-		printf("%s: unable to map registers\n", dev->dv_xname);
+		printf(": unable to map registers\n");
 		return;
 	}
 	sc->sc_ih = intr_establish(irq, IST_EDGE, IPL_TTY, cuda_intr, sc);
