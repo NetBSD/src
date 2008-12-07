@@ -1,3 +1,0 @@
-# $NetBSD: ttys,v 1.5 2008/10/07 10:00:01 abs Exp $
-console "/usr/libexec/getty std.9600"   unknown on secure
-constty "/usr/libexec/getty std.9600"   unknown off secure

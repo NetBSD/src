@@ -1,5 +1,0 @@
-#	$NetBSD: shlib_version,v 1.2 2008/10/30 08:16:20 veego Exp $
-#
-major=0
-minor=12
-teeny=0

@@ -1,3 +1,0 @@
-# $NetBSD: module.alpha,v 1.2 2008/11/29 18:41:06 tsutsui Exp $
-./@MODULEDIR@/exec_elf64			base-kernel-modules
-./@MODULEDIR@/exec_elf64/exec_elf64.kmod	base-kernel-modules
