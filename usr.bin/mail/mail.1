@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail.1,v 1.52 2007/10/30 02:29:22 christos Exp $
+.\"	$NetBSD: mail.1,v 1.53 2008/12/07 19:17:09 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)mail.1	8.8 (Berkeley) 4/28/95
 .\"
-.Dd October 29, 2007
+.Dd December 7, 2008
 .Dt MAIL 1
 .Os
 .Sh NAME
@@ -943,6 +943,15 @@ Arguments are of the form
 Quotation marks may be placed around any part of the assignment
 statement to quote blanks or tabs, i.e.
 .Dq Li "set indentprefix=\*q-\*[Gt]\*q"
+Inside single quotes everything is parsed literarly, including 
+.Sq \e
+escaped characters.
+Inside double quotes
+.Sq \e
+character escapes are interpreted.
+This is an extension as POSIX specifies that 
+.Sq \e
+should be left uninterpreted for both single and double quoted strings.
 .It Ic saveignore
 .Ic Saveignore
 is to
