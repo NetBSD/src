@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.22.6.1 2008/12/07 13:02:13 ad Exp $	*/
+/*	$NetBSD: btsco.c,v 1.22.6.2 2008/12/07 15:32:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.22.6.1 2008/12/07 13:02:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.22.6.2 2008/12/07 15:32:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -292,7 +292,7 @@ btsco_attach(device_t parent, device_t self, void *aux)
 	sc->sc_state = BTSCO_CLOSED;
 	sc->sc_name = device_xname(self);
 	cv_init(&sc->sc_connect, "connect");
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/*
 	 * copy in our configuration info
@@ -772,7 +772,7 @@ btsco_round_blocksize(void *hdl, int bs, int mode,
 /*
  * Start Output
  *
- * We dont want to be calling the network stack with a spinlock held
+ * We dont want to be calling the network stack with sc_intr_lock held
  * so make a note of what is to be sent, and schedule an interrupt to
  * bundle it up and queue it.
  */
