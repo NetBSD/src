@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.48 2008/12/06 22:12:42 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.49 2008/12/07 15:29:11 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1442,6 +1442,8 @@ sys/fs/udf/udf_vnops.c				1.32
 
 Makefile					1.264
 UPDATING					1.181
+distrib/sets/lists/etc/mi			1.202
+distrib/sets/lists/xetc/mi			1.11
 etc/Makefile					1.362
 etc/rc.d/Makefile				1.70
 etc/rc.d/xdm					delete
