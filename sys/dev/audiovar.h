@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.45.12.1 2008/12/07 13:02:13 ad Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.45.12.2 2008/12/07 15:29:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -146,7 +146,9 @@ struct audio_softc {
 	kmutex_t	*sc_lock;
 	kcondvar_t	sc_rchan;
 	kcondvar_t	sc_wchan;
-	kcondvar_t	sc_dchan;
+	kcondvar_t	sc_lchan;
+	int		sc_dvlock;
+	bool		sc_dying;
 
 	bool		sc_blkset;	/* Blocksize has been set */
 
@@ -175,9 +177,6 @@ struct audio_softc {
 	audio_stream_t		sc_pstreams[AUDIO_MAX_FILTERS];
 	stream_filter_t		*sc_pfilters[AUDIO_MAX_FILTERS];
 	struct audio_ringbuffer	sc_pr;		/* Play ring */
-	int			sc_writing;
-	int			sc_waitcomp;
-	int			sc_changing;
 
 	/**
 	 *  hardware
@@ -208,10 +207,6 @@ struct audio_softc {
 
 	struct	au_mixer_ports sc_inports, sc_outports;
 	int		sc_monitor_port;
-
-	int		sc_refcnt;
-	int		sc_opencnt;
-	bool		sc_dying;
 
 #ifdef AUDIO_INTR_TIME
 	u_long	sc_pfirstintr;	/* first time we saw a play interrupt */
