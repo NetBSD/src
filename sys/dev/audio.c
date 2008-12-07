@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.243.8.2 2008/12/07 15:29:35 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.243.8.3 2008/12/07 18:27:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -87,11 +87,11 @@
  * Locking: there are three locks.
  *
  * - sc_lock, provided by the underlying driver.  This is an adaptive lock. 
- *   It serializes access to state in all places except the underlying
- *   hardware driver's interrupt service routine.  This lock is taken from
- *   process context (example: access to /dev/audio).  It is also taken from
- *   soft interrupt handlers in this module, primarily to serialize delivery
- *   of wakeups.  This lock may be used/provided by modules external to the
+ *   It serializes access to state in all places except the 
+ *   driver's interrupt service routine.  This lock is taken from process
+ *   context (example: access to /dev/audio).  It is also taken from soft
+ *   interrupt handlers in this module, primarily to serialize delivery of
+ *   wakeups.  This lock may be used/provided by modules external to the
  *   audio subsystem, so take care not to introduce a lock order problem. 
  *   LONG TERM SLEEPS MUST NOT OCCUR WITH THIS LOCK HELD.
  *
@@ -101,7 +101,7 @@
  *   channel data that may be accessed by the hardware driver's ISR.
  *   In all places outside the ISR, sc_lock must be held before taking
  *   sc_intr_lock.  This is to ensure that groups of hardware operations are
- *   made atomically.  LONG TERM SLEEPS CANNOT OCCUR WITH THIS LOCK HELD.
+ *   made atomically.  SLEEPS CANNOT OCCUR WITH THIS LOCK HELD.
  *
  * - sc_dvlock, private to this module.  This is a custom reader/writer lock
  *   built on sc_lock and a condition variable.  Some operations release
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.2 2008/12/07 15:29:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.3 2008/12/07 18:27:45 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1105,7 +1105,7 @@ audio_enter(dev_t dev, krw_t rw, struct audio_softc **scp)
 {
 	struct audio_softc *sc;
 
-	/* First, find the device. */
+	/* First, find the device and take sc_lock. */
 	sc = device_lookup_private(&audio_cd, AUDIOUNIT(dev));
 	if (sc == NULL)
 		return ENXIO;
@@ -1158,29 +1158,42 @@ audio_exit(struct audio_softc *sc)
 }
 
 /*
- * Wait for I/O to complete, releasing device lock.  Caller must hold
- * sc_lock, and must have a read hold on sc_dvlock.
+ * Wait for I/O to complete, releasing device lock.
  */
 static int
 audio_waitio(struct audio_softc *sc, kcondvar_t *chan)
 {
 	int error;
+	krw_t rw;
 
 	KASSERT(mutex_owned(sc->sc_lock));
-	KASSERT(sc->sc_dvlock > 0);
 
 	/* Release device level lock while sleeping. */
-	sc->sc_dvlock--;
+	if (__predict_false(sc->sc_dvlock < 0)) {
+		sc->sc_dvlock = 0;
+		rw = RW_WRITER;
+	} else {
+		KASSERT(sc->sc_dvlock > 0);
+		sc->sc_dvlock--;
+		rw = RW_READER;
+	}
 	cv_broadcast(&sc->sc_lchan);
 
 	/* Wait for pending I/O to complete. */
 	error = cv_wait_sig(chan, sc->sc_lock);
 
 	/* Re-acquire device level lock. */
-	while (__predict_false(sc->sc_dvlock < 0)) {
-		cv_wait(&sc->sc_lchan, sc->sc_lock);
+	if (__predict_false(rw) == RW_WRITER) {
+		while (__predict_false(sc->sc_dvlock != 0)) {
+			cv_wait(&sc->sc_lchan, sc->sc_lock);
+		}
+		sc->sc_dvlock = -1;
+	} else {
+		while (__predict_false(sc->sc_dvlock < 0)) {
+			cv_wait(&sc->sc_lchan, sc->sc_lock);
+		}
+		sc->sc_dvlock++;
 	}
-	sc->sc_dvlock++;
 
 	return error;
 }
