@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.46 2008/12/07 11:49:51 cegger Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.47 2008/12/07 22:39:01 cegger Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.46 2008/12/07 11:49:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.47 2008/12/07 22:39:01 cegger Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -575,6 +575,7 @@ vmem_add1(vmem_t *vm, vmem_addr_t addr, vmem_size_t size, vm_flag_t flags,
 
 	KASSERT((flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
 	KASSERT((~flags & (VM_SLEEP|VM_NOSLEEP)) != 0);
+	KASSERT(spanbttype == BT_TYPE_SPAN || spanbttype == BT_TYPE_SPAN_STATIC);
 
 	btspan = bt_alloc(vm, flags);
 	if (btspan == NULL) {
@@ -762,7 +763,11 @@ vmem_check_sanity(vmem_t *vm)
 				__func__, vm->vm_name,
 				(uint64_t)bt->bt_start, (uint64_t)BT_END(bt),
 				(bt->bt_type == BT_TYPE_BUSY) ?
-				"allocated" : "free");
+				"allocated" :
+				(bt->bt_type == BT_TYPE_FREE) ?
+				"free" :
+				(bt->bt_type == BT_TYPE_SPAN) ?
+				"span" : "static span");
 			return false;
 		}
 
@@ -774,7 +779,11 @@ vmem_check_sanity(vmem_t *vm)
 					(uint64_t)bt2->bt_start,
 					(uint64_t)BT_END(bt2),
 					(bt2->bt_type == BT_TYPE_BUSY) ?
-					"allocated" : "free");
+					"allocated" :
+					(bt2->bt_type == BT_TYPE_FREE) ?
+					"free" :
+					(bt2->bt_type == BT_TYPE_SPAN) ?
+					"span" : "static span");
 				return false;
 			}
 			if (bt == bt2)
@@ -790,14 +799,22 @@ vmem_check_sanity(vmem_t *vm)
 					(uint64_t)bt->bt_start,
 					(uint64_t)BT_END(bt),
 					(bt->bt_type == BT_TYPE_BUSY) ?
-					"allocated" : "free");
+					"allocated" :
+					(bt->bt_type == BT_TYPE_FREE) ?
+					"free" :
+					(bt->bt_type == BT_TYPE_SPAN) ?
+					"span" : "static span");
 				printf("%s: overlapping VMEM '%s' span 0x%"
 					PRIx64" - 0x%"PRIx64" %s\n",
 					__func__, vm->vm_name,
 					(uint64_t)bt2->bt_start,
 					(uint64_t)BT_END(bt2),
 					(bt2->bt_type == BT_TYPE_BUSY) ?
-					"allocated" : "free");
+					"allocated" :
+					(bt2->bt_type == BT_TYPE_FREE) ?
+					"free" :
+					(bt2->bt_type == BT_TYPE_SPAN) ?
+					"span" : "static span");
 				return false;
 			}
 			if (BT_END(bt) > bt2->bt_start) {
@@ -807,14 +824,22 @@ vmem_check_sanity(vmem_t *vm)
 					(uint64_t)bt->bt_start,
 					(uint64_t)BT_END(bt),
 					(bt->bt_type == BT_TYPE_BUSY) ?
-					"allocated" : "free");
+					"allocated" :
+					(bt->bt_type == BT_TYPE_FREE) ?
+					"free" :
+					(bt->bt_type == BT_TYPE_SPAN) ?
+					"span" : "static span");
 				printf("%s: overlapping VMEM '%s' span 0x%"
 					PRIx64" - 0x%"PRIx64" %s\n",
 					__func__, vm->vm_name,
 					(uint64_t)bt2->bt_start,
 					(uint64_t)BT_END(bt2),
 					(bt2->bt_type == BT_TYPE_BUSY) ?
-					"allocated" : "free");
+					"allocated" :
+					(bt2->bt_type == BT_TYPE_FREE) ?
+					"free" :
+					(bt2->bt_type == BT_TYPE_SPAN) ?
+					"span" : "static span");
 				return false;
 			}
 		}
@@ -1345,22 +1370,27 @@ vmem_show(uintptr_t addr, void (*pr)(const char *, ...))
 	LIST_FOREACH(vm, &vmem_list, vm_alllist) {
 		if ((uintptr_t)vm == addr)
 			goto found;
+	}
 
+	LIST_FOREACH(vm, &vmem_list, vm_alllist) {
 		bt = vmem_whatis_lookup(vm, addr);
 		if (bt != NULL)
 			goto found;
 	}
 
-	if (bt == NULL)
-		return;
+	return;
 found:
 
 	(*pr)("VMEM '%s' spans\n", vm->vm_name);
 	CIRCLEQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
-		(*pr)(" 0x%"PRIx64" - 0x%"PRIx64" %s %s\n",
+		(*pr)(" 0x%"PRIx64" - 0x%"PRIx64" %s\n",
 			bt->bt_start, BT_END(bt),
-			(bt->bt_type == BT_TYPE_SPAN_STATIC) ? "static" : "",
-			(bt->bt_type == BT_TYPE_BUSY) ? "allocated" : "free");
+			(bt->bt_type == BT_TYPE_BUSY) ?
+			"allocated" :
+			(bt->bt_type == BT_TYPE_FREE) ?
+			"free" :
+			(bt->bt_type == BT_TYPE_SPAN) ?
+			"span" : "static span");
 	}
 }
 
