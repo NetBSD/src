@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.181 2008/12/06 20:23:38 cube Exp $
+$NetBSD: UPDATING,v 1.182 2008/12/07 10:29:39 tsutsui Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -22,7 +22,7 @@ Recent changes:
 	set and will appear as extra files for MKX11=no update builds.
 
 20081122:
-	On i386 and amd64, various kernel options(4) in GENERIC including
+	On i386, various kernel options(4) in GENERIC including
 	file systems have been disabled and moved into kernel modules.
 	Before trying a new GENERIC kernel, you have to prepare the
 	following files as well as a new GENERIC kernel:
