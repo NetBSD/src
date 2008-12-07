@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.45 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.45.12.1 2008/12/07 13:02:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,6 +65,9 @@
  */
 #ifndef _SYS_DEV_AUDIOVAR_H_
 #define _SYS_DEV_AUDIOVAR_H_
+
+#include <sys/condvar.h>
+
 #include <dev/audio_if.h>
 
 /*
@@ -130,17 +133,20 @@ struct audio_softc {
 
 	struct	selinfo sc_wsel; /* write selector */
 	struct	selinfo sc_rsel; /* read selector */
-	struct	proc *sc_async_audio;	/* process who wants audio SIGIO */
+	pid_t		sc_async_audio;	/* process who wants audio SIGIO */
 	void		*sc_sih_rd;
 	void		*sc_sih_wr;
 	struct	mixer_asyncs {
 		struct mixer_asyncs *next;
-		struct proc *proc;
+		pid_t	pid;
 	} *sc_async_mixer;  /* processes who want mixer SIGIO */
 
-	/* Sleep channels for reading and writing. */
-	int		sc_rchan;
-	int		sc_wchan;
+	/* Locks and sleep channels for reading, writing and draining. */
+	kmutex_t	*sc_intr_lock;
+	kmutex_t	*sc_lock;
+	kcondvar_t	sc_rchan;
+	kcondvar_t	sc_wchan;
+	kcondvar_t	sc_dchan;
 
 	bool		sc_blkset;	/* Blocksize has been set */
 

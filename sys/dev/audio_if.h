@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.65 2008/03/04 18:23:44 cube Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.65.16.1 2008/12/07 13:02:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -36,8 +36,10 @@
 
 #ifndef _SYS_DEV_AUDIO_IF_H_
 #define _SYS_DEV_AUDIO_IF_H_
+
 #include <sys/types.h>
 #include <sys/audioio.h>
+#include <sys/mutex.h>
 
 /* check we have an audio(4) configured into kernel */
 #if defined(_KERNEL_OPT)
@@ -119,7 +121,8 @@ audio_stream_add_outp(audio_stream_t *s, const uint8_t *v, int diff)
  * an interface to fill a audio stream buffer
  */
 typedef struct stream_fetcher {
-	int (*fetch_to)(struct stream_fetcher *, audio_stream_t *, int);
+	int (*fetch_to)(struct audio_softc *, struct stream_fetcher *,
+            audio_stream_t *, int);
 } stream_fetcher_t;
 
 /**
@@ -237,6 +240,7 @@ struct audio_hw_if {
 		    void (*)(void *), void *, const audio_params_t *);
 	int	(*dev_ioctl)(void *, u_long, void *, int, struct lwp *);
 	int	(*powerstate)(void *, int);
+	void	(*get_locks)(void *, kmutex_t **, kmutex_t **);
 #define	AUDIOPOWER_ON	1
 #define	AUDIOPOWER_OFF	0
 };
