@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1147 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1148 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -29,7 +29,47 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	syslog(3): Import Martin Schuette's Summer of Code project: 
 		Reliable TCP connections, syslog protocol API,
 		encryption. [christos 20081031]
+	agp(4): Add support for Intel G35. [christos 20081108]
+	kernel: Add generic producer/consumer queue. [matt 20081111]
+	lkm: Removed. Superseded by the new module framework. [ad 20081112]
+	module: Allow the POSIX semaphore code to be loaded as a module.
+		[ad 20081112]
+	module: Make compat_ossaudio a module. [ad 20081113]
+	module: Make compat_ndis a module. [ad 20081113]
+	build.sh: Add support for new MAKEVERBOSE levels 3 and 4.
+		[apb 20081113]
+	libfetch: Update to libfetch 2.20. Allow HTTP auth to be provided in
+		URL. [joerg 20081114]
+	module: Make POSIX AIO loadable as a module. [ad 20081114]
+	amd64, i386: Make boot loader autoload a kernel module corresponding
+		to the root file system type. [ad 20081119]
+	module: Make the emulations, exec formats, coredump, NFS, and
+		the NFS server into modules. [ad 20081119]
 	rump(3): Move VFS functionality away from librump to a new library:
 		librumpvfs [pooka 20081119]
+	kernel, libc: Add new ptree (Patricia / RADIX tree) implementation.
+		[matt 20081120]
+	i386: Switch the i386 installation CDs away from RAM disks and
+		instead use the CD-ROM as the root file system. [ad 20081121]
+	i386: Remove most compat and file system options from GENERIC
+		since they are also provided by modules. [ad 20081122]
+	nfs: Avoid noisy nfs_timer/nfs_reply DEBUG output that occurs
+		when the NFS server goes away. [mrg 20081123]
+	compat_osf1(8): Add getpgid, needed for Tru64 4.0g ksh.
+		[njoly 20081124]
+	module: Make PPP compressors modules. [cube 20081125]
+	i386: Make pxeboot(8) understand boot.cfg(5). [ad 20081125]
+	wscons(4): Add wscons/vcons support for Sun cg3. [jdc 20081128]
+	agp(4): Add support for the Intel G45 AGP. [christos 20081129]
+	compat_osf1(8): Fix getdirentries(2). [njoly 20081202]
+	module: Add a couple of sysctl(8) entries, kern.module.autoload and
+		kern.module.verbose. [ad 20081203]
 	fxp(4): Add a workaround for hardware ip4csum-tx bug.
 		[tsutsui 20081203]
+	wscons(4): Add wscons/vcons support for Sun bw2. [jdc 20081205]
+	module: Add a layerfs module. [ad 20081205]
+	libc: Add fdopendir(3), from Solaris/Linux. [ad 20051205]
+	compat_linux32: Add getresuid() and getresgid() syscalls.
+		[njoly 20081205]
+	ddb(4): Add 'show vmem' and 'show all vmems' commands.
+		[cegger 20081207]
