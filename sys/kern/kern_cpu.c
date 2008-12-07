@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.38 2008/11/06 16:48:51 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.39 2008/12/07 11:40:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.38 2008/11/06 16:48:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.39 2008/12/07 11:40:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,4 +365,11 @@ cpu_setstate(struct cpu_info *ci, bool online)
 
 	spc->spc_lastmod = time_second;
 	return 0;
+}
+
+bool
+cpu_softintr_p(void)
+{
+
+	return (curlwp->l_pflag & LP_INTR) != 0;
 }
