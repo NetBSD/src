@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.154 2008/10/22 15:04:49 apb Exp $	*/
+/*	$NetBSD: main.c,v 1.155 2008/12/07 04:50:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.154 2008/10/22 15:04:49 apb Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.155 2008/12/07 04:50:15 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.154 2008/10/22 15:04:49 apb Exp $");
+__RCSID("$NetBSD: main.c,v 1.155 2008/12/07 04:50:15 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -203,6 +203,9 @@ parse_debug_options(const char *argvalue)
 			break;
 		case 'a':
 			debug |= DEBUG_ARCH;
+			break;
+		case 'C':
+			debug |= DEBUG_CWD;
 			break;
 		case 'c':
 			debug |= DEBUG_COND;
@@ -1262,12 +1265,17 @@ Check_Cwd_av(int ac, char **av, int copy)
     int i;
     int n;
 
-    if (Check_Cwd_Off)
+    if (Check_Cwd_Off) {
+	if (DEBUG(CWD))
+	    fprintf(debug_file, "check_cwd: check is off.\n");
 	return NULL;
+    }
     
     if (make[0] == NULL) {
 	if (Var_Exists("NOCHECKMAKECHDIR", VAR_GLOBAL)) {
 	    Check_Cwd_Off = 1;
+	    if (DEBUG(CWD))
+		fprintf(debug_file, "check_cwd: turning check off.\n");
 	    return NULL;
 	}
 	    
@@ -1280,12 +1288,18 @@ Check_Cwd_av(int ac, char **av, int copy)
         make[2] = NULL;
         cur_dir = Var_Value(".CURDIR", VAR_GLOBAL, &cp);
     }
-    if (ac == 0 || av == NULL)
+    if (ac == 0 || av == NULL) {
+	if (DEBUG(CWD))
+	    fprintf(debug_file, "check_cwd: empty command.\n");
         return NULL;			/* initialization only */
+    }
 
     if (getenv("MAKEOBJDIR") == NULL &&
-        getenv("MAKEOBJDIRPREFIX") == NULL)
+        getenv("MAKEOBJDIRPREFIX") == NULL) {
+	if (DEBUG(CWD))
+	    fprintf(debug_file, "check_cwd: no obj dirs.\n");
         return NULL;
+    }
 
     
     next_cmd = 1;
@@ -1308,8 +1322,8 @@ Check_Cwd_av(int ac, char **av, int copy)
 		/*
 		 * XXX this should not happen.
 		 */
-		fprintf(stderr, "WARNING: raw arg ends in shell meta '%s'\n",
-			av[i]);
+		fprintf(stderr, "%s: WARNING: raw arg ends in shell meta '%s'\n",
+		    progname, av[i]);
 	    }
 	} else
 	    next_cmd = 0;
@@ -1318,10 +1332,9 @@ Check_Cwd_av(int ac, char **av, int copy)
 	if (*cp == ';' || *cp == '&' || *cp == '|')
 	    is_cmd = 1;
 	
-#ifdef check_cwd_debug
-	fprintf(stderr, "av[%d] == %s '%s'",
+	if (DEBUG(CWD))
+	    fprintf(debug_file, "av[%d] == %s '%s'",
 		i, (is_cmd) ? "cmd" : "arg", av[i]);
-#endif
 	if (is_cmd != 0) {
 	    if (*cp == '(' || *cp == '{' ||
 		*cp == ';' || *cp == '&' || *cp == '|') {
@@ -1335,25 +1348,22 @@ Check_Cwd_av(int ac, char **av, int copy)
 		}
 	    }
 	    if (strcmp(cp, "cd") == 0 || strcmp(cp, "chdir") == 0) {
-#ifdef check_cwd_debug
-		fprintf(stderr, " == cd, done.\n");
-#endif
+		if (DEBUG(CWD))
+		    fprintf(debug_file, " == cd, done.\n");
 		return NULL;
 	    }
 	    for (mp = make; *mp != NULL; ++mp) {
 		n = strlen(*mp);
 		if (strcmp(cp, *mp) == 0) {
-#ifdef check_cwd_debug
-		    fprintf(stderr, " %s == '%s', chdir(%s)\n",
+		    if (DEBUG(CWD))
+			fprintf(debug_file, " %s == '%s', chdir(%s)\n",
 			    cp, *mp, cur_dir);
-#endif
 		    return cur_dir;
 		}
 	    }
 	}
-#ifdef check_cwd_debug
-	fprintf(stderr, "\n");
-#endif
+	if (DEBUG(CWD))
+	    fprintf(debug_file, "\n");
     }
     return NULL;
 }
@@ -1370,10 +1380,9 @@ Check_Cwd_Cmd(const char *cmd)
     
     if (cmd) {
 	av = brk_string(cmd, &ac, TRUE, &bp);
-#ifdef check_cwd_debug
-	fprintf(stderr, "splitting: '%s' -> %d words\n",
+	if (DEBUG(CWD))
+	    fprintf(debug_file, "splitting: '%s' -> %d words\n",
 		cmd, ac);
-#endif
     } else {
 	ac = 0;
 	av = NULL;
