@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.78 2008/10/18 04:41:14 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.79 2008/12/07 08:59:31 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.78 2008/10/18 04:41:14 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.79 2008/12/07 08:59:31 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -117,7 +117,8 @@ alloc_cpuinfo(u_int cpu_node)
 	/*
 	 * Check for UPAID in the cpus list.
 	 */
-	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0)
+	if (OF_getprop(cpu_node, "upa-portid", &portid, sizeof(portid)) <= 0 &&
+	    OF_getprop(cpu_node, "portid", &portid, sizeof(portid)) <= 0)
 		panic("alloc_cpuinfo: upa-portid");
 
 	for (cpi = cpus; cpi != NULL; cpi = cpi->ci_next)
