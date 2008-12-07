@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.45 2008/12/07 09:40:42 cegger Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.46 2008/12/07 11:49:51 cegger Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.45 2008/12/07 09:40:42 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.46 2008/12/07 11:49:51 cegger Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -800,10 +800,7 @@ vmem_check_sanity(vmem_t *vm)
 					"allocated" : "free");
 				return false;
 			}
-			if (BT_END(bt) <= bt2->bt_start) {
-				if (BT_END(bt) < BT_END(bt2))
-					continue;
-
+			if (BT_END(bt) > bt2->bt_start) {
 				printf("%s: overlapping VMEM '%s' span 0x%"
 					PRIx64" - 0x%"PRIx64" %s\n",
 					__func__, vm->vm_name,
