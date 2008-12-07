@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1216 2008/12/05 13:08:53 ad Exp $
+#	$NetBSD: mi,v 1.1217 2008/12/07 01:46:06 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -10612,6 +10612,7 @@
 ./usr/share/man/html3/fabsf.html		comp-c-htmlman		html
 ./usr/share/man/html3/fclose.html		comp-c-htmlman		html
 ./usr/share/man/html3/fdopen.html		comp-c-htmlman		html
+./usr/share/man/html3/fdopendir.html		comp-c-htmlman		html
 ./usr/share/man/html3/feof.html			comp-c-htmlman		html
 ./usr/share/man/html3/fetch.html		comp-c-htmlman		html
 ./usr/share/man/html3/ferror.html		comp-c-htmlman		html
