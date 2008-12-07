@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.147 2008/12/07 04:50:15 christos Exp $
+.\"	$NetBSD: make.1,v 1.148 2008/12/07 16:10:34 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -248,6 +248,14 @@ may have running at any one time.
 Turns compatibility mode off, unless the
 .Ar B
 flag is also specified.
+When compatibility mode is off, all commands associated with a
+target are executed in a single shell invocation as opposed to the
+traditional one shell invocation per line.
+This can break traditional scripts which change directories on each
+command invocation and then expect to start with a fresh environment
+on the next line.
+It is more efficient to correct the scripts rather than turn backwards
+compatibility on.
 .It Fl k
 Continue processing after errors are encountered, but only on those targets
 that do not depend on the target whose creation caused the error.
