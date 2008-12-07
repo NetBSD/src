@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.84 2008/12/06 20:05:55 joerg Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.85 2008/12/07 10:01:09 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.84 2008/12/06 20:05:55 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.85 2008/12/07 10:01:09 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1783,7 +1783,7 @@ ffs_copyonwrite(void *v, struct buf *bp, bool data_valid)
 		return 0;
 	}
 	snapblklist = si->si_snapblklist;
-	upper = si->si_snapblklist[0] - 1;
+	upper = (snapblklist != NULL ? snapblklist[0] - 1 : 0);
 	lower = 1;
 	while (lower <= upper) {
 		mid = (lower + upper) / 2;
@@ -1949,7 +1949,10 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 	fstrans_start(vp->v_mount, FSTRANS_SHARED);
 	mutex_enter(&si->si_snaplock);
 
-	fsbytes = lfragtosize(fs, fs->fs_size);
+	if (VMSPACE_IS_KERNEL_P(uio->uio_vmspace))
+		fsbytes = ip->i_size;
+	else
+		fsbytes = lfragtosize(fs, fs->fs_size);
 	for (error = 0, bp = NULL; uio->uio_resid > 0; bp = NULL) {
 		bytesinfile = fsbytes - uio->uio_offset;
 		if (bytesinfile <= 0)
@@ -1963,7 +1966,8 @@ ffs_snapshot_read(struct vnode *vp, struct uio *uio, int ioflag)
 
 		if (lblktosize(fs, nextlbn + 1) >= fsbytes) {
 			if (lblktosize(fs, lbn) + size > fsbytes)
-				size = fsbytes - lblktosize(fs, lbn);
+				size = fragroundup(fs,
+				    fsbytes - lblktosize(fs, lbn));
 			error = bread(vp, lbn, size, NOCRED, 0, &bp);
 		} else {
 			int nextsize = fs->fs_bsize;
