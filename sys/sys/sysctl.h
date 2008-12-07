@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.178 2008/11/12 12:36:28 ad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.179 2008/12/07 20:58:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1178,6 +1178,7 @@ int	sysctl_kern_vnode(SYSCTLFN_PROTO);
 int	sysctl_net_inet_ip_ports(SYSCTLFN_PROTO);
 int	sysctl_consdev(SYSCTLFN_PROTO);
 int	sysctl_root_device(SYSCTLFN_PROTO);
+int	sysctl_vfs_generic_fstypes(SYSCTLFN_PROTO);
 
 /*
  * primitive helper stubs
