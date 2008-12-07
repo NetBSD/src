@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.42 2008/03/17 08:27:50 yamt Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.43 2008/12/07 00:51:15 cegger Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.42 2008/03/17 08:27:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.43 2008/12/07 00:51:15 cegger Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -1235,6 +1235,58 @@ vmem_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 		    (size_t)(addr - bt->bt_start), vm->vm_name,
 		    (bt->bt_type == BT_TYPE_BUSY) ? "allocated" : "free");
 	}
+}
+
+static void
+vmem_showall(void (*pr)(const char *, ...))
+{
+	vmem_t *vm;
+
+	LIST_FOREACH(vm, &vmem_list, vm_alllist) {
+		(*pr)("VMEM '%s' at %p\n", vm->vm_name, vm);
+		if (vm->vm_source)
+			(*pr)("  VMEM backend '%s' at %p\n",
+				vm->vm_source->vm_name, vm->vm_source);
+	}
+}
+
+static void
+vmem_show(uintptr_t addr, void (*pr)(const char *, ...))
+{
+	vmem_t *vm;
+	bt_t *bt = NULL;
+
+	LIST_FOREACH(vm, &vmem_list, vm_alllist) {
+		if ((uintptr_t)vm == addr)
+			goto found;
+
+		bt = vmem_whatis_lookup(vm, addr);
+		if (bt != NULL)
+			goto found;
+	}
+
+	if (bt == NULL)
+		return;
+found:
+
+	(*pr)("VMEM '%s' spans\n", vm->vm_name);
+	CIRCLEQ_FOREACH(bt, &vm->vm_seglist, bt_seglist) {
+		(*pr)(" 0x%"PRIx64" - 0x%"PRIx64" %s %s\n",
+			bt->bt_start, BT_END(bt),
+			(bt->bt_type == BT_TYPE_SPAN_STATIC) ? "static" : "",
+			(bt->bt_type == BT_TYPE_BUSY) ? "allocated" : "free");
+	}
+}
+
+void
+vmem_print(uintptr_t addr, const char *modif, void (*pr)(const char *, ...))
+{
+	if (modif[0] == 'a') {
+		vmem_showall(pr);
+		return;
+	}
+
+	vmem_show(addr, pr);
 }
 #endif /* defined(DDB) */
 
