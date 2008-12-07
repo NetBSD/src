@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.269 2008/10/27 08:13:08 skrll Exp $
+#	$NetBSD: BRANCHES,v 1.270 2008/12/07 12:57:00 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -210,9 +210,9 @@ Notes:
 
 Branch:		ad-audiomp
 Description:	Add MP locking to the audio drivers
-Status:		Active
+Status:		Terminated
 Start Date:	28 February 2007
-End Date:
+End Date:	7 December 2008
 Base Tag:	ad-audiomp-base
 Maintainer:	Andrew Doran <ad@NetBSD.org>
 Scope:		kernel
@@ -241,6 +241,16 @@ Notes:		Making the audio drivers MP safe is necessary before efforts
 		"while true; do mixerctl -a > /dev/null; done" may suffice).
 		Play audio, run lockstat and verify that that there is
 		contention on the ISR lock.
+
+Branch:		ad-audiomp2
+Description:	Add MP locking to the audio drivers
+Status:		Active
+Start Date:	7 December 2008
+End Date:	
+Base Tag:	ad-audiomp2-base
+Maintainer:	Andrew Doran <ad@NetBSD.org>
+Scope:		kernel
+Notes:		Ressurect ad-audiomp, make the audio drivers MP safe.
 
 Branch:		bjh21-hydra
 Description:	Simtec Hydra support and ARM SMP in general
