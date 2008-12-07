@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_start.S,v 1.2 2005/12/11 12:17:11 christos Exp $ */
+/*	$NetBSD: tsarm_start.S,v 1.3 2008/12/07 07:15:03 matt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -95,7 +95,8 @@ Lunmapped:
         ldr     r0, [r4]
         add     r0, r0, #(0xc00 * 4)            /* offset to 0xc00xxxxx */
 
-        mov     r1, #0x8                        /* 8MB */
+	ldr	r1, Lend			/* load last addr */
+        mov     r1, r1, lsr #20			/* convert to MB */
         mov     r3, #(L1_S_AP(AP_KRW))
         orr     r3, r3, #(L1_TYPE_S)
 1:
@@ -188,3 +189,6 @@ Ltable:
 
 Lstart:
 	.word	start
+
+Lend:
+	.word	_end
