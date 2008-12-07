@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1148 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1149 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -68,7 +68,7 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 		[tsutsui 20081203]
 	wscons(4): Add wscons/vcons support for Sun bw2. [jdc 20081205]
 	module: Add a layerfs module. [ad 20081205]
-	libc: Add fdopendir(3), from Solaris/Linux. [ad 20051205]
+	libc: Add fdopendir(3), from Solaris/Linux. [ad 20081205]
 	compat_linux32: Add getresuid() and getresgid() syscalls.
 		[njoly 20081205]
 	ddb(4): Add 'show vmem' and 'show all vmems' commands.
