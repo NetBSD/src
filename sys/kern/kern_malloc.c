@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.121 2008/10/26 12:23:28 blymn Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.122 2008/12/07 14:24:28 cegger Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.121 2008/10/26 12:23:28 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.122 2008/12/07 14:24:28 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -348,8 +348,9 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #endif
 #ifdef MALLOC_DEBUG
 	if (debug_malloc(size, ksp, flags, (void *) &va)) {
-		if (va != 0)
+		if (va != 0) {
 			FREECHECK_OUT(&malloc_freecheck, (void *)va);
+		}
 		return ((void *) va);
 	}
 #endif
