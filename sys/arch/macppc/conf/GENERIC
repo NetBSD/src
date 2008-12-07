@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.273 2008/11/24 11:41:12 ad Exp $
+# $NetBSD: GENERIC,v 1.274 2008/12/07 08:26:02 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.273 $"
+#ident 		"GENERIC-$Revision: 1.274 $"
 
 maxusers	32
 
@@ -171,8 +171,6 @@ options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-
-#options 	FONT_GALLANT12x22
 
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	FONT_GALLANT12x22
