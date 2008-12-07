@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.18 2008/04/28 20:23:46 martin Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.18.12.1 2008/12/07 13:02:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.18 2008/04/28 20:23:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.18.12.1 2008/12/07 13:02:13 ad Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -65,7 +65,8 @@ typedef struct aurateconv {
 	int32_t	next[AUDIO_MAX_CHANNELS];
 } aurateconv_t;
 
-static int aurateconv_fetch_to(stream_fetcher_t *, audio_stream_t *, int);
+static int aurateconv_fetch_to(struct audio_softc *, stream_fetcher_t *,
+			       audio_stream_t *, int);
 static void aurateconv_dtor(stream_filter_t *);
 static int aurateconv_slinear16_LE(aurateconv_t *, audio_stream_t *,
 				   int, int, int);
@@ -160,7 +161,8 @@ aurateconv_dtor(struct stream_filter *this)
 }
 
 static int
-aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
+aurateconv_fetch_to(struct audio_softc *sc, stream_fetcher_t *self,
+		    audio_stream_t *dst, int max_used)
 {
 	aurateconv_t *this;
 	int m, err, frame_dst, frame_src;
@@ -179,7 +181,7 @@ aurateconv_fetch_to(stream_fetcher_t *self, audio_stream_t *dst, int max_used)
 	if (m <= 0)
 		m = frame_src;
 
-	if ((err = this->base.prev->fetch_to(this->base.prev, this->base.src, m)))
+	if ((err = this->base.prev->fetch_to(sc, this->base.prev, this->base.src, m)))
 	    return err;
 	m = (dst->end - dst->start) / frame_dst * frame_dst;
 	m = min(m, max_used);
