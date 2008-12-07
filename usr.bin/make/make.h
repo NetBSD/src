@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.74 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.75 2008/12/07 04:50:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -410,23 +410,24 @@ extern char	*progname;	/* The program name */
  */
 FILE *debug_file;		/* Output written here - default stdout */
 extern int debug;
-#define	DEBUG_ARCH	0x0001
-#define	DEBUG_COND	0x0002
-#define	DEBUG_DIR	0x0004
-#define	DEBUG_GRAPH1	0x0008
-#define	DEBUG_GRAPH2	0x0010
-#define	DEBUG_JOB	0x0020
-#define	DEBUG_MAKE	0x0040
-#define	DEBUG_SUFF	0x0080
-#define	DEBUG_TARG	0x0100
-#define	DEBUG_VAR	0x0200
-#define DEBUG_FOR	0x0400
-#define DEBUG_SHELL	0x0800
-#define DEBUG_ERROR	0x1000
-#define DEBUG_LOUD	0x2000
+#define	DEBUG_ARCH	0x00001
+#define	DEBUG_COND	0x00002
+#define	DEBUG_DIR	0x00004
+#define	DEBUG_GRAPH1	0x00008
+#define	DEBUG_GRAPH2	0x00010
+#define	DEBUG_JOB	0x00020
+#define	DEBUG_MAKE	0x00040
+#define	DEBUG_SUFF	0x00080
+#define	DEBUG_TARG	0x00100
+#define	DEBUG_VAR	0x00200
+#define DEBUG_FOR	0x00400
+#define DEBUG_SHELL	0x00800
+#define DEBUG_ERROR	0x01000
+#define DEBUG_LOUD	0x02000
 #define DEBUG_GRAPH3	0x10000
 #define DEBUG_SCRIPT	0x20000
 #define DEBUG_PARSE	0x40000
+#define DEBUG_CWD	0x80000
 
 #define CONCAT(a,b)	a##b
 
