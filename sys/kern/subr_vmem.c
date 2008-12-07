@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.44 2008/12/07 02:21:04 cegger Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.45 2008/12/07 09:40:42 cegger Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.44 2008/12/07 02:21:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.45 2008/12/07 09:40:42 cegger Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -760,7 +760,7 @@ vmem_check_sanity(vmem_t *vm)
 			printf("%s: bogus VMEM '%s' span 0x%"PRIx64
 				" - 0x%"PRIx64" %s\n",
 				__func__, vm->vm_name,
-				bt->bt_start, BT_END(bt),
+				(uint64_t)bt->bt_start, (uint64_t)BT_END(bt),
 				(bt->bt_type == BT_TYPE_BUSY) ?
 				"allocated" : "free");
 			return false;
@@ -771,7 +771,8 @@ vmem_check_sanity(vmem_t *vm)
 				printf("%s: bogus VMEM '%s' span 0x%"PRIx64
 					" - 0x%"PRIx64" %s\n",
 					__func__, vm->vm_name,
-					bt2->bt_start, BT_END(bt2),
+					(uint64_t)bt2->bt_start,
+					(uint64_t)BT_END(bt2),
 					(bt2->bt_type == BT_TYPE_BUSY) ?
 					"allocated" : "free");
 				return false;
@@ -786,13 +787,15 @@ vmem_check_sanity(vmem_t *vm)
 				printf("%s: overlapping VMEM '%s' span 0x%"
 					PRIx64" - 0x%"PRIx64" %s\n",
 					__func__, vm->vm_name,
-					bt->bt_start, BT_END(bt),
+					(uint64_t)bt->bt_start,
+					(uint64_t)BT_END(bt),
 					(bt->bt_type == BT_TYPE_BUSY) ?
 					"allocated" : "free");
 				printf("%s: overlapping VMEM '%s' span 0x%"
 					PRIx64" - 0x%"PRIx64" %s\n",
 					__func__, vm->vm_name,
-					bt2->bt_start, BT_END(bt2),
+					(uint64_t)bt2->bt_start,
+					(uint64_t)BT_END(bt2),
 					(bt2->bt_type == BT_TYPE_BUSY) ?
 					"allocated" : "free");
 				return false;
@@ -804,13 +807,15 @@ vmem_check_sanity(vmem_t *vm)
 				printf("%s: overlapping VMEM '%s' span 0x%"
 					PRIx64" - 0x%"PRIx64" %s\n",
 					__func__, vm->vm_name,
-					bt->bt_start, BT_END(bt),
+					(uint64_t)bt->bt_start,
+					(uint64_t)BT_END(bt),
 					(bt->bt_type == BT_TYPE_BUSY) ?
 					"allocated" : "free");
 				printf("%s: overlapping VMEM '%s' span 0x%"
 					PRIx64" - 0x%"PRIx64" %s\n",
 					__func__, vm->vm_name,
-					bt2->bt_start, BT_END(bt2),
+					(uint64_t)bt2->bt_start,
+					(uint64_t)BT_END(bt2),
 					(bt2->bt_type == BT_TYPE_BUSY) ?
 					"allocated" : "free");
 				return false;
