@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.256 2008/11/16 19:31:21 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.257 2008/12/08 11:23:39 pooka Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.256 2008/11/16 19:31:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.257 2008/12/08 11:23:39 pooka Exp $");
 
 #include "opt_ata.h"
 
@@ -280,7 +280,7 @@ wdc_sataprobe(struct ata_channel *chp)
 void
 wdc_drvprobe(struct ata_channel *chp)
 {
-	struct ataparams params;
+	struct ataparams params; /* XXX: large struct */
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
