@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.291 2008/12/06 19:32:05 mrg Exp $
+#	$NetBSD: bsd.lib.mk,v 1.292 2008/12/08 13:10:21 pooka Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -69,8 +69,12 @@ DPADD+=		${LIBDO.${_lib}}/lib${_lib}.so
 
 ##### Build and install rules
 MKDEP_SUFFIXES?=	.o .po .so .go .ln
+
+# Use purely kernel private headers in rump builds
+.if !defined(RUMPKERNEL)
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
 CXXFLAGS+=	${DESTDIR:D-nostdinc++ ${CPPFLAG_ISYSTEMXX} ${DESTDIR}/usr/include/g++}
+.endif
 
 .if !defined(SHLIB_MAJOR) && exists(${SHLIB_VERSION_FILE})		# {
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major
