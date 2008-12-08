@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2008/11/19 18:36:07 ad Exp $
+#	$NetBSD: Makefile,v 1.2 2008/12/08 12:56:00 njoly Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
 
 KMOD=	compat_freebsd
 
-CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVIPC -DKTRACE -DPTRACE -DNTP
+CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVMSG -DKTRACE -DPTRACE -DNTP
 CPPFLAGS+=	-DCOMPAT_FREEBSD
 
 .PATH:	${S}/compat/freebsd
