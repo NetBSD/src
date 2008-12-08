@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.140 2008/11/23 10:09:25 mrg Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.141 2008/12/08 11:34:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.140 2008/11/23 10:09:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.141 2008/12/08 11:34:30 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1087,7 +1087,6 @@ retry:
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.
-	 * Note that the underlying vnode may have changed.
 	 */
 
 	error = ext2fs_vinit(mp, ext2fs_specop_p, ext2fs_fifoop_p, &vp);
