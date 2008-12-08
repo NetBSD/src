@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.243.8.3 2008/12/07 18:27:45 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.243.8.4 2008/12/08 13:12:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.3 2008/12/07 18:27:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.4 2008/12/08 13:12:22 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -454,6 +454,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	 * names from the mixer descriptions. We'll need them to decode the
 	 * mixer descriptions on the next pass through the loop.
 	 */
+	mutex_enter(sc->sc_lock);
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
 			break;
@@ -472,6 +473,7 @@ audioattach(device_t parent, device_t self, void *aux)
 				rclass = mi.mixer_class;
 		}
 	}
+	mutex_exit(sc->sc_lock);
 
 	/* Allocate save area.  Ensure non-zero allocation. */
 	sc->sc_nmixer_states = mi.index;
@@ -485,6 +487,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	 */
 	record_master_found = 0;
 	record_source_found = 0;
+	mutex_enter(sc->sc_lock);
 	for(mi.index = 0; ; mi.index++) {
 		if (hwp->query_devinfo(hdlp, &mi) != 0)
 			break;
@@ -559,6 +562,7 @@ audioattach(device_t parent, device_t self, void *aux)
 			}
 		}
 	}
+	mutex_exit(sc->sc_lock);
 	DPRINTF(("audio_attach: inputs ports=0x%x, input master=%d, "
 		 "output ports=0x%x, output master=%d\n",
 		 sc->sc_inports.allports, sc->sc_inports.master,
@@ -1420,7 +1424,13 @@ audiommap(dev_t dev, off_t off, int prot)
 	struct audio_softc *sc;
 	paddr_t error;
 
-	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
+	/*
+	 * Acquire a writer lock.  audio_mmap() will drop sc_lock
+	 * in order to allow the device's mmap routine to sleep.
+	 * Although not yet possible, we want to prevent memory
+	 * from being allocated or freed out from under us.
+	 */
+	if ((error = audio_enter(dev, RW_WRITER, &sc)) != 0)
 		return 1;
 	device_active(sc->dev, DVA_SYSTEM); /* XXXJDM */
 	switch (AUDIODEV(dev)) {
@@ -2577,8 +2587,10 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot)
 {
 	const struct audio_hw_if *hw;
 	struct audio_ringbuffer *cb;
+	paddr_t rv;
 
 	KASSERT(mutex_owned(sc->sc_lock));
+	KASSERT(sc->sc_dvlock < 0);
 
 	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", (long long)off, prot));
 	hw = sc->hw_if;
@@ -2629,7 +2641,11 @@ audio_mmap(struct audio_softc *sc, off_t off, int prot)
 		}
 	}
 
-	return hw->mappage(sc->hw_hdl, cb->s.start, off, prot);
+	mutex_exit(sc->sc_lock);
+	rv = hw->mappage(sc->hw_hdl, cb->s.start, off, prot);
+	mutex_enter(sc->sc_lock);
+
+	return rv;
 }
 
 int
