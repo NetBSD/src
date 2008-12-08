@@ -1,4 +1,4 @@
-/*	$NetBSD: autrivar.h,v 1.4 2007/12/09 20:28:06 jmcneill Exp $	*/
+/*	$NetBSD: autrivar.h,v 1.4.26.1 2008/12/08 13:06:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -69,6 +69,8 @@ struct autri_chstatus {
 
 struct autri_softc {
 	struct device		sc_dev;		/* base device */
+	kmutex_t		sc_lock;
+	kmutex_t		sc_intr_lock;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pt;
 	pcireg_t		sc_devid;

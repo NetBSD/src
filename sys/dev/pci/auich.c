@@ -1,7 +1,7 @@
-/*	$NetBSD: auich.c,v 1.128 2008/11/08 00:26:35 dyoung Exp $	*/
+/*	$NetBSD: auich.c,v 1.128.2.1 2008/12/08 13:06:36 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.128 2008/11/08 00:26:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.128.2.1 2008/12/08 13:06:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,8 @@ struct auich_cdata {
 struct auich_softc {
 	device_t sc_dev;
 	void *sc_ih;
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 
 	device_t sc_audiodev;
 	audio_device_t sc_audev;
@@ -273,6 +275,7 @@ static int	auich_trigger_output(void *, void *, void *, int,
 static int	auich_trigger_input(void *, void *, void *, int,
 		    void (*)(void *), void *, const audio_params_t *);
 static int	auich_powerstate(void *, int);
+static void	auich_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static int	auich_alloc_cdata(struct auich_softc *);
 
@@ -323,6 +326,7 @@ static const struct audio_hw_if auich_hw_if = {
 	auich_trigger_input,
 	NULL,			/* dev_ioctl */
 	auich_powerstate,
+	auich_get_locks,
 };
 
 #define AUICH_FORMATS_1CH	0
@@ -523,6 +527,9 @@ auich_attach(device_t parent, device_t self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    v | PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_BACKTOBACK_ENABLE);
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &sc->intrh)) {
 		aprint_error_dev(self, "can't map interrupt\n");
@@ -599,7 +606,8 @@ auich_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	if (ac97_attach_type(&sc->host_if, self, sc->sc_codectype) != 0)
+	if (ac97_attach_type(&sc->host_if, self, sc->sc_codectype,
+	    &sc->sc_lock) != 0)
 		return;
 	sc->codec_if->vtbl->unlock(sc->codec_if);
 
@@ -703,6 +711,8 @@ auich_detach(device_t self, int flags)
 	/* sysctl */
 	sysctl_teardown(&sc->sc_log);
 
+	mutex_enter(&sc->sc_lock);
+
 	/* audio_encoding_set */
 	auconv_delete_encodings(sc->sc_encodings);
 	auconv_delete_encodings(sc->sc_spdif_encodings);
@@ -710,6 +720,10 @@ auich_detach(device_t self, int flags)
 	/* ac97 */
 	if (sc->codec_if != NULL)
 		sc->codec_if->vtbl->detach(sc->codec_if);
+
+	mutex_exit(&sc->sc_lock);
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
 
 	/* PCI */
 	if (sc->sc_ih != NULL)
@@ -739,7 +753,9 @@ auich_sysctl_verify(SYSCTLFN_ARGS)
 
 		if (tmp < 48000 || tmp > 96000)
 			return EINVAL;
+		mutex_enter(&sc->sc_lock);
 		sc->sc_ac97_clock = tmp;
+		mutex_exit(&sc->sc_lock);
 	}
 
 	return 0;
@@ -1223,6 +1239,8 @@ auich_intr(void *v)
 	if (!device_has_power(sc->sc_dev))
 		return (0);
 
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	ret = 0;
 #ifdef DIAGNOSTIC
 	csts = pci_conf_read(sc->sc_pc, sc->sc_pt, PCI_COMMAND_STATUS_REG);
@@ -1320,6 +1338,8 @@ auich_intr(void *v)
 		ret++;
 	}
 #endif
+
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return ret;
 }
@@ -1469,22 +1489,22 @@ auich_allocmem(struct auich_softc *sc, size_t size, size_t align,
 	p->size = size;
 	error = bus_dmamem_alloc(sc->dmat, p->size, align, 0,
 				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
-				 &p->nsegs, BUS_DMA_NOWAIT);
+				 &p->nsegs, BUS_DMA_WAITOK);
 	if (error)
 		return error;
 
 	error = bus_dmamem_map(sc->dmat, p->segs, p->nsegs, p->size,
-			       &p->addr, BUS_DMA_NOWAIT|sc->sc_dmamap_flags);
+			       &p->addr, BUS_DMA_WAITOK|sc->sc_dmamap_flags);
 	if (error)
 		goto free;
 
 	error = bus_dmamap_create(sc->dmat, p->size, 1, p->size,
-				  0, BUS_DMA_NOWAIT, &p->map);
+				  0, BUS_DMA_WAITOK, &p->map);
 	if (error)
 		goto unmap;
 
 	error = bus_dmamap_load(sc->dmat, p->map, p->addr, p->size, NULL,
-				BUS_DMA_NOWAIT);
+				BUS_DMA_WAITOK);
 	if (error)
 		goto destroy;
 	return 0;
@@ -1573,6 +1593,9 @@ auich_resume(device_t dv PMF_FN_ARGS)
 	struct auich_softc *sc = device_private(dv);
 	pcireg_t v;
 
+	mutex_enter(&sc->sc_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	if (sc->sc_native_mode) {
 		v = pci_conf_read(sc->sc_pc, sc->sc_pt, ICH_CFG);
 		pci_conf_write(sc->sc_pc, sc->sc_pt, ICH_CFG,
@@ -1580,8 +1603,10 @@ auich_resume(device_t dv PMF_FN_ARGS)
 	}
 
 	auich_reset_codec(sc);
+	mutex_spin_exit(&sc->sc_intr_lock);
 	DELAY(1000);
 	(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
@@ -1702,4 +1727,15 @@ auich_clear_cas(struct auich_softc *sc)
 	    AC97_REG_RESET * (sc->sc_codecnum * ICH_CODEC_OFFSET));
 
 	return;
+}
+
+
+static void
+auich_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct auich_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }
