@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.92.12.1 2008/12/07 13:02:13 ad Exp $	*/
+/*	$NetBSD: eap.c,v 1.92.12.2 2008/12/08 13:02:38 ad Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.92.12.1 2008/12/07 13:02:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.92.12.2 2008/12/08 13:02:38 ad Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -981,22 +981,22 @@ eap_allocmem(struct eap_softc *sc, size_t size, size_t align, struct eap_dma *p)
 	p->size = size;
 	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
 				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
-				 &p->nsegs, BUS_DMA_NOWAIT);
+				 &p->nsegs, BUS_DMA_WAITOK);
 	if (error)
 		return error;
 
 	error = bus_dmamem_map(sc->sc_dmatag, p->segs, p->nsegs, p->size,
-			       &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+			       &p->addr, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 	if (error)
 		goto free;
 
 	error = bus_dmamap_create(sc->sc_dmatag, p->size, 1, p->size,
-				  0, BUS_DMA_NOWAIT, &p->map);
+				  0, BUS_DMA_WAITOK, &p->map);
 	if (error)
 		goto unmap;
 
 	error = bus_dmamap_load(sc->sc_dmatag, p->map, p->addr, p->size, NULL,
-				BUS_DMA_NOWAIT);
+				BUS_DMA_WAITOK);
 	if (error)
 		goto destroy;
 	return (0);
@@ -1854,7 +1854,6 @@ eap_mappage(void *addr, void *mem, off_t off, int prot)
 	struct eap_instance *ei;
 	struct eap_softc *sc;
 	struct eap_dma *p;
-	paddr_t rv;
 
 	if (off < 0)
 		return -1;
@@ -1865,11 +1864,8 @@ eap_mappage(void *addr, void *mem, off_t off, int prot)
 	if (!p)
 		return -1;
 
-	mutex_exit(&sc->sc_lock);
-	rv = bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
+	return bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
 			       off, prot, BUS_DMA_WAITOK);
-	mutex_enter(&sc->sc_lock);
-	return rv;
 }
 
 static int
