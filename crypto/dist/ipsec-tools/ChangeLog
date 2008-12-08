@@ -1,4 +1,10 @@
-2008-12-05  Timo Teras  <timo.teras@iki.fi> 
+2008-12-08  Timo Teras  <timo.teras@iki.fi>
+	* src/racoon/{pfkey.c|privsep.c|privsep.h}: do not cache pfkey
+	  sockets for SA dumps: it might cause some notifications to
+	  not be handled when select() has triggered pfkey, but timer
+	  event calls pfkey_dump_sadb() before reading pfkey socket
+
+2008-12-05  Timo Teras  <timo.teras@iki.fi>
 	From Arnaud Ebalard <arno@natisbad.org>:
 	* src/libipsec/{key_debug.c|libpfkey.h|pfkey.c}: library functions
 	  for SADB_X_EXT_KMADDRESS and updated SADB_X_MIGRATE support

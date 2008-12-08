@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.h,v 1.5 2008/03/28 04:18:52 manu Exp $	*/
+/*	$NetBSD: privsep.h,v 1.6 2008/12/08 06:00:54 tteras Exp $	*/
 
 /* Id: privsep.h,v 1.5 2005/06/07 12:22:11 fredsen Exp */
 
@@ -61,8 +61,6 @@ struct privsep_com_msg {
 int privsep_init __P((void));
 
 vchar_t *privsep_eay_get_pkcs1privkey __P((char *));
-int privsep_pfkey_open __P((void));
-void privsep_pfkey_close __P((int));
 int privsep_script_exec __P((char *, int, char * const *));
 int privsep_setsockopt __P((int, int, int, const void *, socklen_t));
 int privsep_socket __P((int, int, int));
