@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2008/11/20 09:26:06 ad Exp $
+#	$NetBSD: Makefile,v 1.3 2008/12/08 12:56:00 njoly Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
 
 KMOD=	compat_linux
 
-CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVIPC -DCOMPAT_LINUX
+CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVMSG -DCOMPAT_LINUX
 
 .PATH:	${S}/compat/linux/common
 SRCS=	linux_blkio.c linux_cdrom.c linux_errno.c linux_exec.c
