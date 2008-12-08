@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.23 2008/11/19 18:36:04 ad Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.24 2008/12/08 11:52:35 njoly Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.23 2008/11/19 18:36:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.24 2008/12/08 11:52:35 njoly Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -151,12 +151,6 @@ linux32_sys_time(struct lwp *l, const struct linux32_sys_time_args *uap, registe
         return 0;
 }
 
-
-static inline linux32_clock_t
-timeval_to_clock_t(struct timeval *tv)
-{
-	return tv->tv_sec * hz + tv->tv_usec / (1000000 / hz);
-}
 
 #define	CONVTCK(r)	(r.tv_sec * hz + r.tv_usec / (1000000 / hz))
 
