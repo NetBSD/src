@@ -1,8 +1,8 @@
-# $NetBSD: Makefile.cdrom,v 1.9 2008/12/03 15:24:40 ad Exp $
+# $NetBSD: Makefile.cdrom,v 1.10 2008/12/08 04:47:28 jnemeth Exp $
 
 .include <bsd.own.mk>
 
-SYSINSTDIR!=	cd ${.CURDIR}/../../utils/sysinst/arch/${MACHINE} && ${PRINTOBJDIR}
+SYSINSTDIR=	${.OBJDIR}/../../../utils/sysinst/arch/${MACHINE}
 
 # Need multidot for the boot loader to read kernel modules as it doesn't
 # understand rockridge.
