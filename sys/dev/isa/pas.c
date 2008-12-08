@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.67 2008/03/15 21:09:02 cube Exp $	*/
+/*	$NetBSD: pas.c,v 1.67.16.1 2008/12/08 13:06:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.67 2008/03/15 21:09:02 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.67.16.1 2008/12/08 13:06:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,7 @@ const struct audio_hw_if pas_hw_if = {
 	sbdsp_trigger_input,
 	0,
 	NULL,
+	sbdsp_get_locks,
 };
 
 /* The Address Translation code is used to convert I/O register addresses to
@@ -472,10 +473,13 @@ pasattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	mutex_init(&sc->sc_sbdsp.sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_sbdsp.sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+
 	sc->sc_sbdsp.sc_ic = ia->ia_ic;
 	sc->sc_sbdsp.sc_iobase = iobase;
 	sc->sc_sbdsp.sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_AUDIO, sbdsp_intr, &sc->sc_sbdsp);
+	    IST_EDGE, IPL_SCHED, sbdsp_intr, &sc->sc_sbdsp);
 
 	aprint_normal(" ProAudio Spectrum %s [rev %d] ", pasnames[sc->model],
 	    sc->rev);

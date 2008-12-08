@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.40 2008/07/03 12:26:41 gson Exp $	*/
+/*	$NetBSD: autri.c,v 1.40.8.1 2008/12/08 13:06:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.40 2008/07/03 12:26:41 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.40.8.1 2008/12/08 13:06:36 ad Exp $");
 
 #include "midi.h"
 
@@ -134,6 +134,7 @@ static size_t	autri_round_buffersize(void *, int, size_t);
 static paddr_t autri_mappage(void *, void *, off_t, int);
 static int	autri_get_props(void *);
 static int	autri_query_devinfo(void *, mixer_devinfo_t *);
+static void	autri_get_locks(void *, kmutex_t **, kmutex_t **);
 
 static const struct audio_hw_if autri_hw_if = {
 	autri_open,
@@ -164,6 +165,7 @@ static const struct audio_hw_if autri_hw_if = {
 	autri_trigger_input,
 	NULL,			/* dev_ioctl */
 	NULL,			/* powerstate */
+	autri_get_locks,
 };
 
 #if NMIDI > 0
@@ -179,6 +181,7 @@ static const struct midi_hw_if autri_midi_hw_if = {
 	autri_midi_output,
 	autri_midi_getinfo,
 	NULL,			/* ioctl */
+	autri_get_locks,
 };
 #endif
 
@@ -543,13 +546,16 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+
 	/* map and establish the interrupt */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, autri_intr, sc);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, autri_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -583,7 +589,8 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	codec->host_if.write = autri_write_codec;
 	codec->host_if.flags = autri_flags_codec;
 
-	if ((r = ac97_attach(&codec->host_if, self)) != 0) {
+	r = ac97_attach(&codec->host_if, self, &sc->sc_lock);
+	if (r != 0) {
 		aprint_error_dev(&sc->sc_dev, "can't attach codec (error 0x%X)\n", r);
 		return;
 	}
@@ -606,8 +613,12 @@ autri_resume(device_t dv PMF_FN_ARGS)
 {
 	struct autri_softc *sc = device_private(dv);
 
+	mutex_enter(&sc->sc_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
 	autri_init(sc);
+	mutex_spin_exit(&sc->sc_intr_lock);
 	(sc->sc_codec.codec_if->vtbl->restore_ports)(sc->sc_codec.codec_if);
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
@@ -773,9 +784,13 @@ autri_intr(void *p)
 	u_int32_t cso,eso;
 */
 	sc = p;
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	intsrc = TREAD4(sc, AUTRI_MISCINT);
-	if ((intsrc & (ADDRESS_IRQ | MPU401_IRQ)) == 0)
+	if ((intsrc & (ADDRESS_IRQ | MPU401_IRQ)) == 0) {
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 
 	if (intsrc & ADDRESS_IRQ) {
 
@@ -832,6 +847,7 @@ autri_intr(void *p)
 	autri_reg_set_4(sc,AUTRI_MISCINT,
 		ST_TARGET_REACHED | MIXER_OVERFLOW | MIXER_UNDERFLOW);
 
+	mutex_spin_exit(&sc->sc_intr_lock);
 	return 1;
 }
 
@@ -848,22 +864,22 @@ autri_allocmem(struct autri_softc *sc, size_t size, size_t align,
 	p->size = size;
 	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
 	    p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
-	    &p->nsegs, BUS_DMA_NOWAIT);
+	    &p->nsegs, BUS_DMA_WAITOK);
 	if (error)
 		return error;
 
 	error = bus_dmamem_map(sc->sc_dmatag, p->segs, p->nsegs, p->size,
-	    &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	    &p->addr, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 	if (error)
 		goto free;
 
 	error = bus_dmamap_create(sc->sc_dmatag, p->size, 1, p->size,
-	    0, BUS_DMA_NOWAIT, &p->map);
+	    0, BUS_DMA_WAITOK, &p->map);
 	if (error)
 		goto unmap;
 
 	error = bus_dmamap_load(sc->sc_dmatag, p->map, p->addr, p->size, NULL,
-	    BUS_DMA_NOWAIT);
+	    BUS_DMA_WAITOK);
 	if (error)
 		goto destroy;
 	return (0);
@@ -1379,6 +1395,17 @@ autri_trigger_input(void *addr, void *start, void *end, int blksize,
 	return 0;
 }
 
+
+static void
+autri_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct autri_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
+}
+
 #if 0
 static int
 autri_halt(struct autri_softc *sc)
@@ -1474,7 +1501,7 @@ autri_midi_close(void *addr)
 
 	DPRINTF(("autri_midi_close()\n"));
 	sc = addr;
-	tsleep(sc, PWAIT, "autri", hz/10); /* give uart a chance to drain */
+	kpause("autri", FALSE, hz/10, &sc->sc_lock); /* give uart a chance to drain */
 
 	sc->sc_iintr = NULL;
 	sc->sc_ointr = NULL;
