@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.92 2008/10/19 18:17:14 hannken Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.93 2008/12/08 11:48:03 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.92 2008/10/19 18:17:14 hannken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.93 2008/12/08 11:48:03 pooka Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -405,8 +405,8 @@ WRITE(void *v)
 		 */
 
 		ubc_flags |= UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
-		error = ubc_uiomove(&vp->v_uobj, uio, bytelen, UVM_ADV_RANDOM,
-		    ubc_flags);
+		error = ubc_uiomove(&vp->v_uobj, uio, bytelen,
+		    IO_ADV_DECODE(ioflag), ubc_flags);
 
 		/*
 		 * update UVM's notion of the size now that we've
