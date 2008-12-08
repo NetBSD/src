@@ -1,8 +1,12 @@
-# $NetBSD: Makefile,v 1.9 2008/08/16 23:51:51 gmcgarry Exp $
+# $NetBSD: Makefile,v 1.10 2008/12/08 12:39:04 pooka Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	fs games modules net util
+SUBDIR=	fs games net util
+
+.if ${MACHINE} != "evbppc"
+SUBDIR+= modules
+.endif
 
 .if ${MKATF} != "no"
 SUBDIR+= atf
