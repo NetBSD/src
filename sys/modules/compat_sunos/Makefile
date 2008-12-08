@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2008/11/19 18:36:08 ad Exp $
+#	$NetBSD: Makefile,v 1.2 2008/12/08 12:56:00 njoly Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
 
 KMOD=	compat_sunos
 
-CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVIPC -DCOMPAT_SUNOS
+CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVMSG -DCOMPAT_SUNOS
 CPPFLAGS+=	-DEXEC_AOUT
 
 .PATH:	${S}/compat/sunos
