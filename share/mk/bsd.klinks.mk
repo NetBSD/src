@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.klinks.mk,v 1.2 2008/07/29 20:18:25 pooka Exp $
+#	$NetBSD: bsd.klinks.mk,v 1.3 2008/12/08 22:47:55 pooka Exp $
 #
 
 ##### Default values
@@ -54,6 +54,8 @@ CLEANFILES+=	x86
 .if ${MACHINE} == "amd64"
 	@rm -f x86 && \
 	    ln -s $S/arch/x86/include x86
+	@rm -f i386 && \
+	    ln -s $S/arch/i386/include i386
 .endif
 .if ${MACHINE_CPU} == "i386"
 	@rm -f x86 && \
