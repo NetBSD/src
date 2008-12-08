@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.55 2008/09/06 22:36:40 rmind Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.56 2008/12/08 19:32:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.55 2008/09/06 22:36:40 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.56 2008/12/08 19:32:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1043,6 +1043,18 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_LPT, 0x18, 0x00, 0x00 },
 	    },
 	},
+
+	/* NetMos 4S0P PCI NM9845 : 4S, 0P */
+	{   "NetMos NM9845 Quad UART",
+	   {   0x9710, 0x9845, 0x1000, 0x0004  },
+	   {   0xffff, 0xffff, 0xffff, 0xffff  },
+	   {
+	       { PUC_PORT_TYPE_COM, 0x10, 0x00, COM_FREQ },
+	       { PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+	       { PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
+	       { PUC_PORT_TYPE_COM, 0x1c, 0x00, COM_FREQ },
+	   },
+       },
 
 	/* NetMos 4S1P PCI NM9845 : 4S, 1P */
 	{   "NetMos NM9845 Quad UART and 1284 Printer port",
