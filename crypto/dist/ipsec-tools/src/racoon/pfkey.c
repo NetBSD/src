@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.38 2008/12/05 06:02:20 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.39 2008/12/08 06:00:53 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.38 2008/12/05 06:02:20 tteras Exp $ */
+/* $Id: pfkey.c,v 1.39 2008/12/08 06:00:53 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -291,7 +291,7 @@ vchar_t *
 pfkey_dump_sadb(satype)
 	int satype;
 {
-	int s = -1;
+	int s;
 	vchar_t *buf = NULL;
 	pid_t pid = getpid();
 	struct sadb_msg *msg = NULL;
@@ -299,7 +299,7 @@ pfkey_dump_sadb(satype)
 	int len;
 	int bufsiz;
 
-	if ((s = privsep_pfkey_open()) < 0) {
+	if ((s = privsep_socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"libipsec failed pfkey open: %s\n",
 			ipsec_strerror());
@@ -367,8 +367,7 @@ fail:
 done:
 	if (msg)
 		racoon_free(msg);
-	if (s >= 0)
-		privsep_pfkey_close(s);
+	close(s);
 	return buf;
 }
 
@@ -420,7 +419,7 @@ pfkey_init()
 	int i, reg_fail;
 	int bufsiz;
 
-	if ((lcconf->sock_pfkey = privsep_pfkey_open()) < 0) {
+	if ((lcconf->sock_pfkey = pfkey_open()) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"libipsec failed pfkey open (%s)\n", ipsec_strerror());
 		return -1;
