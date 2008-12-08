@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.12 2008/10/09 13:40:38 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.13 2008/12/08 12:57:33 pooka Exp $
 #
 
 WARNS?=		4
@@ -13,6 +13,11 @@ CPPFLAGS+=	-nostdinc -I${RUMPTOP}/..
 #CPPFLAGS+=	-DDEBUG
 
 RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
+
+# workaround: evbppc is not a well-defined arch
+.if (${MACHINE} == "evbppc")
+CPPFLAGS+=	-DPPC_IBM4XX
+.endif
 
 # If an options are changed, trigger a rebuild
 ${SRCS:S/.c/.o/g}: ${RUMPTOP}/Makefile.rump
