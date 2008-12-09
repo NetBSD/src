@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.430 2008/11/30 21:13:03 tjam Exp $
+.\"	$NetBSD: main,v 1.431 2008/12/09 00:50:27 roy Exp $
 .\"
 .\" Copyright (c) 1999-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1557,6 +1557,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Paul Mackerras Ta Mt paulus@NetBSD.org
 .It Ta MAEKAWA Masahide Ta Mt gehenna@NetBSD.org
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.org
+.It Ta Roy Marples Ta Mt roy@NetBSD.org
 .It Ta Cherry G. Mathew Ta Mt cherry@NetBSD.org
 .It Ta David Maxwell Ta Mt david@NetBSD.org
 .It Ta Gregory McGarry Ta Mt gmcgarry@NetBSD.org
