@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.88 2008/08/13 06:05:54 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.89 2008/12/09 20:45:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -186,8 +186,6 @@ struct pmap {
 	LIST_ENTRY(pmap)	pm_list;
 };
 
-typedef struct pmap *pmap_t;
-
 /*
  * Physical / virtual address structure. In a number of places (particularly
  * during bootstrapping) we need to keep track of the physical and virtual
@@ -246,13 +244,11 @@ extern pv_addr_t kernel_l1pt;
 /*
  * Commonly referenced structures
  */
-extern struct pmap	kernel_pmap_store;
 extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
 /*
  * Macros that we need to export
  */
-#define pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 

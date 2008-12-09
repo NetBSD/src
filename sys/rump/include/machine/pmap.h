@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2 2008/10/15 13:04:26 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3 2008/12/09 20:45:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,11 +30,6 @@
 #ifndef _SYS_RUMP_PMAP_H_
 #define _SYS_RUMP_PMAP_H_
 
-struct pmap;
-typedef struct pmap *pmap_t;
-
-#define PMAP_KERNEL_MAGIC ((void *)0x7847)
-#define pmap_kernel() (PMAP_KERNEL_MAGIC)
 #define pmap_update(v)
 
 #endif /* _SYS_RUMP_PMAP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.322 2008/01/02 11:48:29 ad Exp $ */
+/*	$NetBSD: pmap.c,v 1.323 2008/12/09 20:45:45 pooka Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.322 2008/01/02 11:48:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.323 2008/12/09 20:45:45 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -352,7 +352,8 @@ void *	vmmap;			/* one reserved MI vpage for /dev/mem */
 
 smeg_t		tregion;	/* [4/3mmu] Region for temporary mappings */
 
-struct pmap	kernel_pmap_store;		/* the kernel's pmap */
+static struct pmap	kernel_pmap_store;	/* the kernel's pmap */
+struct pmap *kernel_pmap_ptr = &kernel_pmap_store; /* pmap_kernel() */
 struct regmap	kernel_regmap_store[NKREG];	/* the kernel's regmap */
 struct segmap	kernel_segmap_store[NKREG*NSEGRG];/* the kernel's segmaps */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.2 2008/10/15 13:04:26 pooka Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.3 2008/12/09 20:45:44 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,6 +30,8 @@
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>
+
+struct pmap *kernel_pmap_ptr;
 
 /* safe defaults */
 
