@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.14 2008/12/06 14:02:08 reinoud Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.15 2008/12/09 17:17:02 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.14 2008/12/06 14:02:08 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.15 2008/12/09 17:17:02 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -1061,7 +1061,6 @@ udf_issue_eccline(struct udf_eccline *eccline, int queued_on)
 		KASSERT(eccline->readin);
 		start = eccline->start_sector;
 		buf = eccline->buf;
-		buf_init(buf);
 		buf->b_flags    = B_READ | B_ASYNC;
 		SET(buf->b_cflags, BC_BUSY);	/* mark buffer busy */
 		buf->b_oflags   = 0;
@@ -1112,7 +1111,6 @@ udf_issue_eccline(struct udf_eccline *eccline, int queued_on)
 		}
 		start = eccline->start_sector;
 		buf = eccline->buf;
-		buf_init(buf);
 		buf->b_flags    = B_WRITE | B_ASYNC;
 		SET(buf->b_cflags, BC_BUSY);	/* mark buffer busy */
 		buf->b_oflags   = 0;
@@ -1349,7 +1347,7 @@ udf_discstrat_init_rmw(struct udf_strat_args *args)
 
 	/* initialise locks */
 	cv_init(&priv->discstrat_cv, "udfstrat");
-	mutex_init(&priv->discstrat_mutex, MUTEX_DRIVER, IPL_BIO);
+	mutex_init(&priv->discstrat_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&priv->seqwrite_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	/* initialise struct eccline pool */
