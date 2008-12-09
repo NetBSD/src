@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: db.c,v 1.3 2008/12/09 16:50:22 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -652,9 +652,9 @@ update_cache(SCR *sp, lnop_t op, db_recno_t lno)
 		case LINE_RESET:
 			if (lno == scrp->c_lno)
 				scrp->c_lno = OOBLNO;
-			break;
+		/*FALLTHROUGH*/
 		case LINE_APPEND:
-			abort();
+			break;
 		}
 
 	if (ep->c_nlines != OOBLNO)
@@ -664,10 +664,10 @@ update_cache(SCR *sp, lnop_t op, db_recno_t lno)
 			break;
 		case LINE_DELETE:
 			--ep->c_nlines;
-			break;
+		/*FALLTHROUGH*/
 		case LINE_APPEND:
 		case LINE_RESET:
-			abort();
+			break;
 		}
 }
 
