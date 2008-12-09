@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.13 2008/12/07 21:03:58 mrg Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.14 2008/12/09 13:14:38 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.13 2008/12/07 21:03:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.14 2008/12/09 13:14:38 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -125,7 +125,6 @@ void
 pccbb_attach_hook(device_t parent, device_t self, struct pci_attach_args *pa)
 {
 	pci_chipset_tag_t pc = pa->pa_pc;
-	struct psycho_pbm *pp = pc->cookie;
 	pcireg_t reg;
 	int node = PCITAG_NODE(pa->pa_tag);
 	int error;
