@@ -1,11 +1,11 @@
-/*	$NetBSD: mpu_sb.c,v 1.15 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: mpu_sb.c,v 1.15.12.1 2008/12/09 13:09:13 ad Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@NetBSD.org).
+ * by Lennart Augustsson (augustss@NetBSD.org) and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.15 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_sb.c,v 1.15.12.1 2008/12/09 13:09:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ mpu_sb_attach(device_t parent, device_t self, void *aux)
 	sc->iot = ssc->sc_mpu_iot;
 	sc->model = "SB MPU-401 MIDI UART";
 	sc->sc_dev = self;
+	sc->lock = &ssc->sc_intr_lock;
 
 	mpu_attach(sc);
 }
