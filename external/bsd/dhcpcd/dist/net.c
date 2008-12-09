@@ -112,9 +112,9 @@ get_netmask(uint32_t addr)
 	dst = htonl(addr);
 	if (IN_CLASSA(dst))
 		return ntohl(IN_CLASSA_NET);
-	if (IN_CLASSB (dst))
+	if (IN_CLASSB(dst))
 		return ntohl(IN_CLASSB_NET);
-	if (IN_CLASSC (dst))
+	if (IN_CLASSC(dst))
 		return ntohl(IN_CLASSC_NET);
 
 	return 0;

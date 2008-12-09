@@ -181,7 +181,7 @@ reverse_routes(struct rt *routes)
 }
 
 static int
-delete_route(const char *iface, struct rt *rt, int metric)
+delete_route(const struct interface *iface, struct rt *rt, int metric)
 {
 	char *addr;
 	int retval;
@@ -206,7 +206,7 @@ delete_routes(struct interface *iface, int metric)
 	rt = reverse_routes(iface->routes);
 	while (rt) {
 		rtn = rt->next;
-		retval += delete_route(iface->name, rt, metric);
+		retval += delete_route(iface, rt, metric);
 		free(rt);
 		rt = rtn;
 	}
@@ -272,7 +272,7 @@ configure_routes(struct interface *iface, const struct dhcp_message *dhcp,
 	iface->routes = reverse_routes(iface->routes);
 	for (rt = iface->routes; rt; rt = rt->next)
 		if (in_routes(ort, rt) != 0)
-			delete_route(iface->name, rt, options->metric);
+			delete_route(iface, rt, options->metric);
 
 	for (rt = ort; rt; rt = rt->next) {
 		/* Don't set default routes if not asked to */
@@ -285,7 +285,7 @@ configure_routes(struct interface *iface, const struct dhcp_message *dhcp,
 		logger(LOG_DEBUG, "adding route to %s/%d via %s",
 			addr, inet_ntocidr(rt->net), inet_ntoa(rt->gate));
 		free(addr);
-		remember = add_route(iface->name, &rt->dest,
+		remember = add_route(iface, &rt->dest,
 				     &rt->net, &rt->gate,
 				     options->metric);
 		retval += remember;
@@ -400,21 +400,17 @@ configure(struct interface *iface, const char *reason,
 	{
 		dest.s_addr = addr.s_addr & net.s_addr;
 		gate.s_addr = 0;
-		add_route(iface->name, &dest, &net, &gate, options->metric);
-		del_route(iface->name, &dest, &net, &gate, 0);
+		add_route(iface, &dest, &net, &gate, options->metric);
+		del_route(iface, &dest, &net, &gate, 0);
 	}
 #endif
 
-	configure_routes(iface, dhcp, options);
-	up = (iface->addr.s_addr != addr.s_addr ||
-	      iface->net.s_addr != net.s_addr);
 	iface->addr.s_addr = addr.s_addr;
 	iface->net.s_addr = net.s_addr;
-
+	configure_routes(iface, dhcp, options);
 	if (!lease->frominfo)
 		if (write_lease(iface, dhcp) == -1)
 			logger(LOG_ERR, "write_lease: %s", strerror(errno));
-
 	run_script(options, iface->name, reason, dhcp, old);
 	return 0;
 }
