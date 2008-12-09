@@ -233,7 +233,7 @@ parse_string_hwaddr(char *sbuf, ssize_t slen, char *str, int clid)
 	l = 0;
 	/* If processing a string on the clientid, first byte should be
 	 * 0 to indicate a non hardware type */
-	if (clid) {
+	if (clid && *str) {
 		*sbuf++ = 0;
 		l++;
 	}
@@ -521,10 +521,14 @@ parse_option(int opt, char *oarg, struct options *options)
 			return -1;
 		}
 		options->clientid[0] = (uint8_t)s;
+#ifdef CMDLINE_COMPAT
 		if (s == 0) {
 			options->options &= ~DHCPCD_DUID;
 			options->options &= ~DHCPCD_CLIENTID;
 		}
+#else
+		options->options |= DHCPCD_CLIENTID;
+#endif
 		break;
 	case 'K':
 		options->options &= ~DHCPCD_LINK;
@@ -618,7 +622,7 @@ main(int argc, char **argv)
 	setlogprefix(PACKAGE ": ");
 
 	options = xzalloc(sizeof(*options));
-	options->options |= DHCPCD_CLIENTID | DHCPCD_GATEWAY | DHCPCD_DAEMONISE;
+	options->options |= DHCPCD_GATEWAY | DHCPCD_DAEMONISE;
 	options->options |= DHCPCD_ARP | DHCPCD_IPV4LL | DHCPCD_LINK;
 	options->timeout = DEFAULT_TIMEOUT;
 	strlcpy(options->script, SCRIPT, sizeof(options->script));
@@ -628,6 +632,7 @@ main(int argc, char **argv)
 					     "%s %s", PACKAGE, VERSION);
 
 #ifdef CMDLINE_COMPAT
+	options->options |= DHCPCD_CLIENTID;
 	add_option_mask(options->requestmask, DHO_DNSSERVER);
 	add_option_mask(options->requestmask, DHO_DNSDOMAIN);
 	add_option_mask(options->requestmask, DHO_DNSSEARCH);
@@ -783,14 +788,17 @@ main(int argc, char **argv)
 		case 'H': /* FALLTHROUGH */
 		case 'M':
 			del_option_mask(options->requestmask, DHO_MTU);
+			add_environ(options, "skip_hooks=mtu", 0);
 			break;
 		case 'N':
 			del_option_mask(options->requestmask, DHO_NTPSERVER);
+			add_environ(options, "skip_hooks=ntp.conf", 0);
 			break;
 		case 'R':
 			del_option_mask(options->requestmask, DHO_DNSSERVER);
 			del_option_mask(options->requestmask, DHO_DNSDOMAIN);
 			del_option_mask(options->requestmask, DHO_DNSSEARCH);
+			add_environ(options, "skip_hooks=resolv.conf", 0);
 			break;
 		case 'S':
 			add_option_mask(options->requestmask, DHO_MSCSR);
@@ -798,6 +806,7 @@ main(int argc, char **argv)
 		case 'Y':
 			del_option_mask(options->requestmask, DHO_NISSERVER);
 			del_option_mask(options->requestmask, DHO_NISDOMAIN);
+			add_environ(options, "skip_hooks=yp.conf", 0);
 			break;
 #endif
 		default:
