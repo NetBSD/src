@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.71 2008/04/28 20:23:11 martin Exp $ */
+/* $NetBSD: pmap.h,v 1.72 2008/12/09 20:45:44 pooka Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -144,7 +144,6 @@ struct pmap {
 	struct pmap_asn_info	pm_asni[1];	/* ASN information */
 			/*	variable length		*/
 };
-typedef struct pmap	*pmap_t;
 
 /*
  * Compute the sizeof of a pmap structure.  Subtract one because one
@@ -155,8 +154,6 @@ typedef struct pmap	*pmap_t;
 	       (sizeof(struct pmap_asn_info) * ((x) - 1))))
 
 #define	PMAP_ASN_RESERVED	0	/* reserved for Lev1map users */
-
-extern struct pmap	kernel_pmap_store[];
 
 /*
  * For each struct vm_page, there is a list of all currently valid virtual
@@ -212,8 +209,6 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #endif /* MULTIPROCESSOR */
 #endif /* _LKM */
 
-#define pmap_kernel()			(kernel_pmap_store)
- 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 

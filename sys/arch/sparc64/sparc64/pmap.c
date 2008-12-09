@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.226 2008/11/22 13:01:08 spz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.227 2008/12/09 20:45:45 pooka Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.226 2008/11/22 13:01:08 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.227 2008/12/09 20:45:45 pooka Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -143,7 +143,8 @@ int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
 #define TSBENTS (512<<tsbsize)
 #define	TSBSIZE	(TSBENTS * 16)
 
-struct pmap kernel_pmap_;
+static struct pmap kernel_pmap_;
+struct pmap *kernel_pmap_ptr = &kernel_pmap_;
 
 static int ctx_alloc(struct pmap *);
 static bool pmap_is_referenced_locked(struct vm_page *);

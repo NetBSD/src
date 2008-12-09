@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.113 2008/11/25 15:41:12 nakayama Exp $ */
+/*	$NetBSD: db_interface.c,v 1.114 2008/12/09 20:45:45 pooka Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.113 2008/11/25 15:41:12 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.114 2008/12/09 20:45:45 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -671,7 +671,6 @@ db_dump_pmap(struct pmap *pm)
 void
 db_pmap_kernel(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	extern struct pmap kernel_pmap_;
 	int i, j, full = 0;
 	uint64_t data;
 
@@ -685,7 +684,7 @@ db_pmap_kernel(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 	if (have_addr) {
 		/* lookup an entry for this VA */
 		
-		if ((data = pseg_get(&kernel_pmap_, (vaddr_t)addr))) {
+		if ((data = pseg_get(pmap_kernel(), (vaddr_t)addr))) {
 			db_printf("pmap_kernel(%p)->pm_segs[%lx][%lx][%lx]=>%qx\n",
 				  (void *)(uintptr_t)addr, (u_long)va_to_seg(addr), 
 				  (u_long)va_to_dir(addr), (u_long)va_to_pte(addr),
@@ -697,13 +696,13 @@ db_pmap_kernel(db_expr_t addr, bool have_addr, db_expr_t count, const char *modi
 	}
 
 	db_printf("pmap_kernel(%p) psegs %p phys %llx\n",
-		  &kernel_pmap_, kernel_pmap_.pm_segs,
-		  (unsigned long long)kernel_pmap_.pm_physaddr);
+		  pmap_kernel(), pmap_kernel()->pm_segs,
+		  (unsigned long long)pmap_kernel()->pm_physaddr);
 	if (full) {
-		db_dump_pmap(&kernel_pmap_);
+		db_dump_pmap(pmap_kernel());
 	} else {
 		for (j=i=0; i<STSZ; i++) {
-			long seg = (long)ldxa((vaddr_t)&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
+			long seg = (long)ldxa((vaddr_t)pmap_kernel()->pm_segs[i], ASI_PHYS_CACHED);
 			if (seg)
 				db_printf("seg %d => %lx%c", i, seg, (j++%4)?'\t':'\n');
 		}
@@ -751,7 +750,7 @@ db_pmap_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		db_dump_pmap(pm);
 	} else {
 		for (i=0; i<STSZ; i++) {
-			long seg = (long)ldxa((vaddr_t)&kernel_pmap_.pm_segs[i], ASI_PHYS_CACHED);
+			long seg = (long)ldxa((vaddr_t)pmap_kernel()->pm_segs[i], ASI_PHYS_CACHED);
 			if (seg)
 				db_printf("seg %d => %lx%c", i, seg, (j++%4)?'\t':'\n');
 		}

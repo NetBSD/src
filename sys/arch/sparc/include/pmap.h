@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.83 2008/10/25 09:23:11 mrg Exp $ */
+/*	$NetBSD: pmap.h,v 1.84 2008/12/09 20:45:45 pooka Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -178,8 +178,6 @@ struct segmap {
 	int8_t	sg_nwired;		/* number of wired pages */
 };
 
-typedef struct pmap *pmap_t;
-
 #if 0
 struct kvm_cpustate {
 	int		kvm_npmemarr;
@@ -192,8 +190,6 @@ struct kvm_cpustate {
 #ifdef _KERNEL
 
 #define PMAP_NULL	((pmap_t)0)
-
-extern struct pmap	kernel_pmap_store;
 
 /*
  * Bounds on managed physical addresses. Used by (MD) users
@@ -241,7 +237,6 @@ extern psize_t		vm_num_phys;
 int	pmap_dumpsize(void);
 int	pmap_dumpmmu(int (*)(dev_t, daddr_t, void *, size_t), daddr_t);
 
-#define	pmap_kernel()	(&kernel_pmap_store)
 #define	pmap_resident_count(pm)	((pm)->pm_stats.resident_count)
 #define	pmap_wired_count(pm)	((pm)->pm_stats.wired_count)
 

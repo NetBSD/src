@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 2008/02/07 00:36:57 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 2008/12/09 20:45:45 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -61,8 +61,6 @@ struct pmap {
 #endif
 };
 
-typedef	struct pmap *pmap_t;
-
 struct pmap_ops {
 	int (*pmapop_pte_spill)(struct pmap *, vaddr_t, bool);
 	void (*pmapop_real_memory)(paddr_t *, psize_t *);
@@ -112,8 +110,6 @@ __BEGIN_DECLS
 extern register_t iosrtable[];
 #endif
 extern int pmap_use_altivec;
-extern struct pmap kernel_pmap_;
-#define	pmap_kernel()	(&kernel_pmap_)
 
 #define pmap_clear_modify(pg)		(pmap_clear_bit((pg), PTE_CHG))
 #define	pmap_clear_reference(pg)	(pmap_clear_bit((pg), PTE_REF))
