@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.243.8.4 2008/12/08 13:12:22 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.243.8.5 2008/12/09 12:22:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.4 2008/12/08 13:12:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.5 2008/12/09 12:22:41 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -426,9 +426,9 @@ audioattach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_sih_rd = softint_establish(SOFTINT_SERIAL | SOFTINT_MPSAFE,
+	sc->sc_sih_rd = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    audio_softintr_rd, sc);
-	sc->sc_sih_wr = softint_establish(SOFTINT_SERIAL | SOFTINT_MPSAFE,
+	sc->sc_sih_wr = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    audio_softintr_wr, sc);
 
 	iclass = mclass = oclass = rclass = -1;
