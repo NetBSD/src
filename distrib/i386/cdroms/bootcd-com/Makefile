@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2008/11/21 15:49:51 ad Exp $
+#	$NetBSD: Makefile,v 1.7 2008/12/09 12:01:55 hannken Exp $
 #
 
 .include "${.CURDIR}/../Makefile.cdrom"
@@ -11,8 +11,5 @@ CLEANFILES+=	boot.cfg
 
 prepare_md_post:
 	${TOOL_SED} "s/@@VERSION@@/${DISTRIBVER}/" < ${.CURDIR}/../bootcd/boot.cfg.in > boot.cfg
-
-image_md_pre:
-	${CP} ${.CURDIR}/../../ramdisks/common/dot.profile cdrom/etc/rc
 
 .include "${.CURDIR}/../../../common/Makefile.bootcd"
