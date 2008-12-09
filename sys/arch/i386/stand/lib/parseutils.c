@@ -1,4 +1,4 @@
-/*	$NetBSD: parseutils.c,v 1.3 2000/09/24 12:32:35 jdolecek Exp $	*/
+/*	$NetBSD: parseutils.c,v 1.4 2008/12/09 15:38:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -73,7 +73,7 @@ parseopts(opts, howto)
 	int r, tmpopt = 0;
 
 	opts++; 	/* skip - */
-	while (*opts && *opts != ' ') {
+	while (*opts) {
 		r = 0;
 		BOOT_FLAG(*opts, r);
 		if (r == 0) {
@@ -83,6 +83,18 @@ parseopts(opts, howto)
 		}
 		tmpopt |= r;
 		opts++;
+		if (*opts == ' ' || *opts == '\t') {
+			do
+				opts++;		/* skip whitespace */
+			while (*opts == ' ' || *opts == '\t');
+			if (*opts == '-')
+				opts++;		/* skip - */
+			else if (*opts != '\0') {
+				printf("invalid arguments\n");
+				command_help(NULL);
+				return(0);
+			}
+		}
 	}
 
 	*howto = tmpopt;
