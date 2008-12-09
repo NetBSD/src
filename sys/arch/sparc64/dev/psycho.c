@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.92 2008/12/07 21:03:57 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.93 2008/12/09 13:14:38 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.92 2008/12/07 21:03:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.93 2008/12/09 13:14:38 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -466,7 +466,6 @@ found:
 
 	pba.pba_bus = psycho_br[0];
 	pba.pba_bridgetag = NULL;
-	pp->pp_busmax = psycho_br[1];
 
 	aprint_normal("bus range %u to %u", psycho_br[0], psycho_br[1]);
 	aprint_normal("; PCI bus %d", psycho_br[0]);
@@ -482,9 +481,7 @@ found:
 
 	/* allocate a chipset for this */
 	pp->pp_pc = psycho_alloc_chipset(pp, sc->sc_node, &_sparc_pci_chipset);
-
-	/* setup the rest of the psycho pbm */
-	pba.pba_pc = psycho_alloc_chipset(pp, sc->sc_node, pp->pp_pc);
+	pp->pp_pc->spc_busmax = psycho_br[1];
 
 	switch((ma->ma_reg[0].ur_paddr) & 0xf000) {
 	case 0x2000:
@@ -673,6 +670,7 @@ found:
 	pba.pba_dmat64 = NULL;
 	pba.pba_iot = sc->sc_psycho_this->pp_iot;
 	pba.pba_memt = sc->sc_psycho_this->pp_memt;
+	pba.pba_pc = pp->pp_pc;
 
 	config_found_ia(self, "pcibus", &pba, psycho_print);
 }
