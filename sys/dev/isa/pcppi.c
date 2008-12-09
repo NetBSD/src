@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.32 2008/03/05 22:46:43 cube Exp $ */
+/* $NetBSD: pcppi.c,v 1.32.16.1 2008/12/09 13:09:13 ad Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.32 2008/03/05 22:46:43 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.32.16.1 2008/12/09 13:09:13 ad Exp $");
 
 #include "attimer.h"
 
@@ -39,8 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.32 2008/03/05 22:46:43 cube Exp $");
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-
 #include <sys/bus.h>
+#include <sys/tty.h>
 
 #include <dev/ic/attimervar.h>
 
@@ -64,13 +64,12 @@ CFATTACH_DECL2_NEW(pcppi, sizeof(struct pcppi_softc),
     pcppi_match, pcppi_isa_attach, pcppi_detach, NULL, NULL, pcppi_childdet);
 
 static int pcppisearch(device_t, cfdata_t, const int *, void *);
-static void pcppi_bell_stop(void*);
+static void pcppi_bell_stop(struct pcppi_softc *);
+static void pcppi_bell_callout(void *);
 
 #if NATTIMER > 0
 static void pcppi_attach_speaker(device_t);
 #endif
-
-#define PCPPIPRI (PZERO - 1)
 
 int
 pcppi_match(device_t parent, cfdata_t match, void *aux)
@@ -172,6 +171,7 @@ pcppi_isa_attach(device_t parent, device_t self, void *aux)
 void
 pcppi_childdet(device_t self, device_t child)
 {
+
 	/* we hold no child references, so do nothing */
 }
 
@@ -189,10 +189,13 @@ pcppi_detach(device_t self, int flags)
 #if NPCKBD > 0
 	pckbd_unhook_bell(pcppi_pckbd_bell, sc);
 #endif
-	pcppi_bell_stop(sc);
 
-	callout_stop(&sc->sc_bell_ch);
+	mutex_spin_enter(&tty_lock);
+	pcppi_bell_stop(sc);
+	mutex_spin_exit(&tty_lock);
+	callout_halt(&sc->sc_bell_ch, NULL);
 	callout_destroy(&sc->sc_bell_ch);
+	cv_destroy(&sc->sc_slp);
 	bus_space_unmap(sc->sc_iot, sc->sc_ppi_ioh, sc->sc_size);
 	return 0;
 }
@@ -203,9 +206,11 @@ pcppi_attach(struct pcppi_softc *sc)
         struct pcppi_attach_args pa;
 	device_t self = sc->sc_dv;
 
-        callout_init(&sc->sc_bell_ch, 0);
+        callout_init(&sc->sc_bell_ch, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_bell_ch, pcppi_bell_callout, sc);
+        cv_init(&sc->sc_slp, "pcppi");
 
-        sc->sc_bellactive = sc->sc_bellpitch = sc->sc_slp = 0;
+        sc->sc_bellactive = sc->sc_bellpitch = 0;
 
 #if NPCKBD > 0
 	/* Provide a beeper for the PC Keyboard, if there isn't one already. */
@@ -251,22 +256,27 @@ pcppi_attach_speaker(device_t self)
 void
 pcppi_bell(pcppi_tag_t self, int pitch, int period, int slp)
 {
-	struct pcppi_softc *sc = self;
-	int s;
 
-	s = spltty(); /* ??? */
+	mutex_spin_enter(&tty_lock);
+	pcppi_bell_locked(self, pitch, period, slp);
+	mutex_spin_exit(&tty_lock);
+}
+
+void
+pcppi_bell_locked(pcppi_tag_t self, int pitch, int period, int slp)
+{
+	struct pcppi_softc *sc = self;
+
 	if (sc->sc_bellactive) {
 		if (sc->sc_timeout) {
 			sc->sc_timeout = 0;
 			callout_stop(&sc->sc_bell_ch);
 		}
-		if (sc->sc_slp)
-			wakeup(pcppi_bell_stop);
+		cv_broadcast(&sc->sc_slp);
 	}
 	if (pitch == 0 || period == 0) {
 		pcppi_bell_stop(sc);
 		sc->sc_bellpitch = 0;
-		splx(s);
 		return;
 	}
 	if (!sc->sc_bellactive || sc->sc_bellpitch != pitch) {
@@ -287,33 +297,35 @@ pcppi_bell(pcppi_tag_t self, int pitch, int period, int slp)
 		pcppi_bell_stop(sc);
 	} else {
 		sc->sc_timeout = 1;
-		callout_reset(&sc->sc_bell_ch, period, pcppi_bell_stop, sc);
+		callout_schedule(&sc->sc_bell_ch, period);
 		if (slp & PCPPI_BELL_SLEEP) {
-			sc->sc_slp = 1;
-			tsleep(pcppi_bell_stop, PCPPIPRI | PCATCH, "bell", 0);
-			sc->sc_slp = 0;
+			cv_wait(&sc->sc_slp, &tty_lock);
 		}
 	}
-	splx(s);
 }
 
 static void
-pcppi_bell_stop(void *arg)
+pcppi_bell_callout(void *arg)
 {
 	struct pcppi_softc *sc = arg;
-	int s;
 
-	s = spltty(); /* ??? */
-	sc->sc_timeout = 0;
+	mutex_spin_enter(&tty_lock);
+	if (sc->sc_timeout != 0) {
+		pcppi_bell_stop(sc);
+	}
+	mutex_spin_exit(&tty_lock);
+}
+
+static void
+pcppi_bell_stop(struct pcppi_softc *sc)
+{
 
 	/* disable bell */
+	sc->sc_timeout = 0;
 	bus_space_write_1(sc->sc_iot, sc->sc_ppi_ioh, 0,
-			  bus_space_read_1(sc->sc_iot, sc->sc_ppi_ioh, 0)
-			  & ~PIT_SPKR);
+	    bus_space_read_1(sc->sc_iot, sc->sc_ppi_ioh, 0) & ~PIT_SPKR);
 	sc->sc_bellactive = 0;
-	if (sc->sc_slp)
-		wakeup(pcppi_bell_stop);
-	splx(s);
+	cv_broadcast(&sc->sc_slp);
 }
 
 #if NPCKBD > 0
@@ -321,6 +333,8 @@ void
 pcppi_pckbd_bell(void *arg, u_int pitch, u_int period, u_int volume,
     int poll)
 {
+
+	KASSERT(mutex_owned(&tty_lock));
 
 	/*
 	 * Comes in as ms, goes out at ticks; volume ignored.

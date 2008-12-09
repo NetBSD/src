@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.88.16.1 2008/12/08 13:06:36 ad Exp $	*/
+/*	$NetBSD: sb.c,v 1.88.16.2 2008/12/09 13:09:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.88.16.1 2008/12/08 13:06:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.88.16.2 2008/12/09 13:09:13 ad Exp $");
 
 #include "midi.h"
 
@@ -69,6 +69,7 @@ const struct midi_hw_if sb_midi_hw_if = {
 	sbdsp_midi_output,
 	sbdsp_midi_getinfo,
 	0,			/* ioctl */
+	sbdsp_get_locks,
 };
 #endif
 

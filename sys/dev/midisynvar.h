@@ -1,4 +1,4 @@
-/*	$NetBSD: midisynvar.h,v 1.12 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: midisynvar.h,v 1.12.12.1 2008/12/09 13:09:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -164,6 +164,7 @@ struct midisyn {
 	int nvoice;
 	int flags;
 	void *data;
+	kmutex_t *lock;
 
 	/* Set up by midisyn but available to synth driver for reading ctls */
 	/*
