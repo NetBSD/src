@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.227 2008/12/09 20:45:45 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.228 2008/12/09 21:01:02 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.227 2008/12/09 20:45:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.228 2008/12/09 21:01:02 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1196,16 +1196,19 @@ cpu_pmap_prepare(struct cpu_info *ci, bool initial)
 
 /*
  * Initialize the per CPU parts for the cpu running this code (despite the
- * passed cpuinfo) - get_maxctx() only works on the local cpu.
+ * passed cpuinfo).
  */
 void
 cpu_pmap_init(struct cpu_info *ci)
 {
-	extern int	get_maxctx(void);
 	size_t ctxsize;
 
 	ci->ci_pmap_next_ctx = 1;
-	ci->ci_numctx = get_maxctx();
+#ifdef SUN4V
+#error find out if we have 16 or 13 bit context ids
+#else
+	ci->ci_numctx = 0x2000; /* all SUN4U use 13 bit contexts */
+#endif
 	ctxsize = sizeof(paddr_t)*ci->ci_numctx;
 	ci->ci_ctxbusy = (paddr_t *)kdata_alloc(ctxsize, sizeof(uint64_t));
 	memset(ci->ci_ctxbusy, 0, ctxsize);

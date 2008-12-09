@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.286 2008/10/30 12:29:45 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.287 2008/12/09 21:01:02 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -5242,24 +5242,6 @@ cpu_mp_startup_end:
 ENTRY(get_romtba)
 	retl
 	 rdpr	%tba, %o0
-/*
- * int get_maxctx(void)
- *
- * Get number of available contexts.
- *
- */
-	.align 8
-ENTRY(get_maxctx)
-	set	CTX_SECONDARY, %o1		! Store -1 in the context register
-	mov	-1, %o2
-	stxa	%o2, [%o1] ASI_DMMU
-	membar	#Sync
-	ldxa	[%o1] ASI_DMMU, %o0		! then read it back
-	membar	#Sync
-	stxa	%g0, [%o1] ASI_DMMU
-	membar	#Sync
-	retl
-	 inc	%o0
 
 /*
  * openfirmware(cell* param);
