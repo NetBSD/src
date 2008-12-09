@@ -13,6 +13,10 @@
 	  per draft-ebalard-mext-pfkey-enhanced-migrate (minor fixes to
 	  the patch by me)
 
+2008-12-04  Christoph Badura  <bad@netbsd.org>
+	* src/racoon/privsep.c: use SIG_IGN to ignore SIGPIPE as I intended
+	to.
+
 2008-12-02  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/session.c: Default action for SIGPIPE in Linux is
 	  terminate; explicitly ignore it.
