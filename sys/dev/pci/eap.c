@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.92.12.2 2008/12/08 13:02:38 ad Exp $	*/
+/*	$NetBSD: eap.c,v 1.92.12.3 2008/12/09 13:09:13 ad Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.92.12.2 2008/12/08 13:02:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.92.12.3 2008/12/09 13:09:13 ad Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -307,6 +307,7 @@ static const struct midi_hw_if eap_midi_hw_if = {
 	eap_midi_output,
 	eap_midi_getinfo,
 	0,				/* ioctl */
+	eap_get_locks,
 };
 #endif
 

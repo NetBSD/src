@@ -1,7 +1,7 @@
-/*	$NetBSD: oplvar.h,v 1.15 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.15.12.1 2008/12/09 13:09:13 ad Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,6 +44,7 @@ struct opl_softc {
 	struct midi_softc mididev;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	kmutex_t *lock;
 	int	offs;
 	int	model;
 #define OPL_2 2

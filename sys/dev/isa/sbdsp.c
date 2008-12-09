@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.131.12.1 2008/12/08 13:06:36 ad Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.131.12.2 2008/12/09 13:09:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.131.12.1 2008/12/08 13:06:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.131.12.2 2008/12/09 13:09:13 ad Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -2486,7 +2486,7 @@ sbdsp_midi_intr(void *addr)
 
 	sc = addr;
 
-	KASSERT(mutex_owned(&sc->sc_intr_mutex));
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	sc->sc_intrm(sc->sc_argm, sbdsp_rdsp(sc));
 	return (0);
