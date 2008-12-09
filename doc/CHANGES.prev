@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.82 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.83 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -9747,7 +9747,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		backquotes inside double quotes.  [apb 20081027]
 	amd64, sparc64: Add support for "cc -m32", including all 32 bit
 		libraries shipped with NetBSD.  [mrg 20081027]
-	amiga: Fix ncr5380 SCSI freezing problem during boot, from T. Makinen.
+	atari: Fix ncr5380 SCSI freezing problem during boot, from T. Makinen.
 		[abs 20081028]
 	zoneinfo: Import tzdata2008i. [kleink 20081029]
 	i386: Reenable ichlpcib(4) by default. [joerg 20081029]
