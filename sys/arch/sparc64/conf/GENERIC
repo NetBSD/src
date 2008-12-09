@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.106 2008/11/24 11:41:14 ad Exp $
+# $NetBSD: GENERIC,v 1.107 2008/12/09 13:16:22 nakayama Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.106 $"
+#ident 		"GENERIC-$Revision: 1.107 $"
 
 maxusers	64
 
@@ -546,9 +546,6 @@ ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci?	dev ? function ?	# Universal Host Controller (Intel)
 
-# PCMCIA USB controllers
-#slhci*	at pcmcia? function ?		# ScanLogic SL811HS
-
 # USB bus support
 usb*	at ehci?
 usb*	at ohci?
@@ -747,12 +744,15 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #ex*	at cardbus? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? function ?	# Intel i8255x UT
 #ral*	at cardbus? function ?	# Ralink Technology RT25x0 802.11a/b/g UT
+#re*	at cardbus? function ?	# Realtek 8139C+/8169/8169S/8110S UT
 #rtk*	at cardbus? function ?	# Realtek 8129/8139 UT
+#rtw*	at cardbus? function ?	# Realtek 8180L (802.11) UT
 #tlp*	at cardbus? function ?	# DECchip 21143
 
 # CardBus USB controllers
 #ehci*	at cardbus? function ?	# Enhanced Host Controller
 #ohci*	at cardbus? function ?	# Open Host Controller
+#uhci*	at cardbus? function ?	# Universal Host Controller (Intel) UT
 
 ## PCMCIA cards; UT marks untested.
 
@@ -790,8 +790,8 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #com*	at mhzc?
 #sm*	at mhzc?
 
-# PCMCIA audio devices
-#esl*	at pcmcia? function ?			# ESS 1688 AudioDrive UT
+# PCMCIA USB controllers
+#slhci*	at pcmcia? function ?		# ScanLogic SL811HS UT
 
 #### Bluetooth Controller and Device support
 
