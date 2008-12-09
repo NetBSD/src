@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.72 2008/12/09 20:45:44 pooka Exp $ */
+/* $NetBSD: pmap.h,v 1.73 2008/12/09 23:05:25 pooka Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -181,13 +181,16 @@ typedef struct pv_entry {
 
 #include <sys/atomic.h>
 
-#ifndef _LKM
+#ifdef _KERNEL_OPT
 #include "opt_dec_kn8ae.h"			/* XXX */
-
 #if defined(DEC_KN8AE)
 #define	_PMAP_MAY_USE_PROM_CONSOLE
 #endif
+#else
+#define	_PMAP_MAY_USE_PROM_CONSOLE
+#endif
 
+#ifndef _LKM
 #if defined(MULTIPROCESSOR)
 struct cpu_info;
 struct trapframe;
