@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.20 2008/12/07 21:03:57 mrg Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.21 2008/12/09 13:14:38 nakayama Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -72,6 +72,7 @@ struct sparc_pci_chipset {
 	/* private interfaces */
 	int		(*spc_find_ino)(struct pci_attach_args *, pci_intr_handle_t *);
 
+	int		spc_busmax;
 	struct spc_busnode {
 		int	node;
 		int	(*valid)(void *);
