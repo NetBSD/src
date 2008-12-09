@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: exf.c,v 1.3 2008/12/09 18:26:20 christos Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -187,7 +187,7 @@ file_init(SCR *sp, FREF *frp, char *rcv_name, int flags)
 	CALLOC_RET(sp, ep, EXF *, 1, sizeof(EXF));
 	CIRCLEQ_INIT(&ep->scrq);
 	sp->c_lno = ep->c_nlines = OOBLNO;
-	ep->rcv_fd = ep->fcntl_fd = -1;
+	ep->fd = ep->rcv_fd = ep->fcntl_fd = -1;
 	F_SET(ep, F_FIRSTMODIFY);
 
 	/*
