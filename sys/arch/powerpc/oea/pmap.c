@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61 2008/10/29 07:31:18 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.62 2008/12/09 20:45:45 pooka Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2008/10/29 07:31:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2008/12/09 20:45:45 pooka Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -105,6 +105,7 @@ static paddr_t pmap_memlimit = -PAGE_SIZE;		/* there is no limit */
 #endif
 
 struct pmap kernel_pmap_;
+struct pmap *kernel_pmap_ptr = &kernel_pmap_;
 unsigned int pmap_pages_stolen;
 u_long pmap_pte_valid;
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)

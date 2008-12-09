@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.191 2008/11/19 06:24:04 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.192 2008/12/09 20:45:44 pooka Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.191 2008/11/19 06:24:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.192 2008/12/09 20:45:44 pooka Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -255,7 +255,8 @@ int pmapdebug = 0;
 /*
  * pmap_kernel() points here
  */
-struct pmap     kernel_pmap_store;
+static struct pmap	kernel_pmap_store;
+struct pmap		*kernel_pmap_ptr = &kernel_pmap_store;
 
 /*
  * Which pmap is currently 'live' in the cache

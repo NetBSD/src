@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179 2008/04/28 20:23:28 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.180 2008/12/09 20:45:45 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.179 2008/04/28 20:23:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180 2008/12/09 20:45:45 pooka Exp $");
 
 /*
  *	Manages physical address maps.
@@ -178,7 +178,8 @@ int pmapdebug = 0;
 
 #endif
 
-struct pmap	kernel_pmap_store;
+static struct pmap	kernel_pmap_store;
+struct pmap		*kernel_pmap_ptr = &kernel_pmap_store;
 
 paddr_t avail_start;	/* PA of first available physical page */
 paddr_t avail_end;	/* PA of last available physical page */

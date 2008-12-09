@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2008/10/25 14:16:35 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75 2008/12/09 20:45:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2008/10/25 14:16:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2008/12/09 20:45:46 pooka Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -382,7 +382,8 @@ union {
  * global data structures
  */
 
-struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
+static struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
+struct pmap *kernel_pmap_ptr = &kernel_pmap_store;
 
 /*
  * pmap_pg_g: if our processor supports PG_G in the PTE then we
