@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.230 2008/11/25 15:51:34 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.231 2008/12/10 03:36:22 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230 2008/11/25 15:51:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.231 2008/12/10 03:36:22 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1632,8 +1632,8 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t	addr, bus_size_t size,
 		hp->_ptr = addr;
 		hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
 		hp->_sasi = ASI_PHYS_NON_CACHED;
-		DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
-			"addr %016llx size %016llx virt %llx\n",
+		DPRINTF(BSDB_MAP, ("\n%s: config type %x flags %x "
+			"addr %016llx size %016llx virt %llx\n", __func__,
 			(int)t->type, (int) flags, (unsigned long long)addr,
 			(unsigned long long)size,
 			(unsigned long long)hp->_ptr));
@@ -1681,14 +1681,15 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t	addr, bus_size_t size,
 	if (!(flags&BUS_SPACE_MAP_READONLY))
 		pm_prot |= VM_PROT_WRITE;
 
-	DPRINTF(BSDB_MAP, ("\nsparc_bus_map: type %x flags %x "
-		"addr %016llx size %016llx virt %llx paddr %016llx\n",
+	DPRINTF(BSDB_MAP, ("\n%s: type %x flags %x addr %016llx size "
+		"%016llx virt %llx paddr %016llx\n", __func__,
 		(int)t->type, (int) flags, (unsigned long long)addr,
 		(unsigned long long)size, (unsigned long long)hp->_ptr,
 		(unsigned long long)pa));
 
 	do {
-		DPRINTF(BSDB_MAP, ("sparc_bus_map: phys %llx virt %p hp %llx\n",
+		DPRINTF(BSDB_MAP, ("%s: phys %llx virt %p hp %llx\n",
+			__func__, 
 			(unsigned long long)pa, (char *)v,
 			(unsigned long long)hp->_ptr));
 		pmap_kenter_pa(v, pa | pm_flags, pm_prot);
