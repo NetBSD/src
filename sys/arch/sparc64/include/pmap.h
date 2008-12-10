@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.41 2008/12/09 20:45:45 pooka Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42 2008/12/10 04:23:11 mrg Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -168,6 +168,8 @@ struct prom_map {
    then there is an aliasing in the d$ */
 #define VA_ALIAS_MASK   (1 << 13)
 
+typedef	struct pmap *pmap_t;
+
 #ifdef	_KERNEL
 #ifdef PMAP_COUNT_DEBUG
 /* diagnostic versions if PMAP_COUNT_DEBUG option is used */
@@ -180,6 +182,8 @@ int pmap_count_wired(struct pmap *);
 #define	pmap_wired_count(pm)		((pm)->pm_stats.wired_count)
 #endif
 
+extern struct pmap kernel_pmap_store;
+#define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_phys_address(x)		(x)
 
 void pmap_activate_pmap(struct pmap *);
