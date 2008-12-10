@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.4.10.1 2008/12/10 22:11:44 snj Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.4.10.2 2008/12/10 22:12:57 snj Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /* 
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.4.10.1 2008/12/10 22:11:44 snj Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.4.10.2 2008/12/10 22:12:57 snj Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,7 +338,8 @@ amdtemp_k8_init(struct amdtemp_softc *sc, pcireg_t cpu_signature)
 
 			switch (amdtemp_core[i].cpu[j].socket) {
 			case K8_SOCKET_AM2:
-				sc->sc_adjustment = 21000000;
+				if (sc->sc_rev == 'G')
+					sc->sc_adjustment = 21000000;
 				aprint_normal(", socket AM2");
 				break;
 			case K8_SOCKET_S1:
