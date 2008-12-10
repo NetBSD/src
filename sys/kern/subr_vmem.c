@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.50 2008/12/10 17:32:32 christos Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.51 2008/12/10 18:07:30 christos Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.50 2008/12/10 17:32:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.51 2008/12/10 18:07:30 christos Exp $");
 
 #if defined(_KERNEL)
 #include "opt_ddb.h"
@@ -871,7 +871,7 @@ vmem_check_sanity(vmem_t *vm)
 
 	return true;
 }
-#endif	/* DEBUG */
+#endif	/* VMEM_DEBUG */
 
 /* ---- vmem API */
 
