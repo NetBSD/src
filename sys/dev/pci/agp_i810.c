@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.59 2008/12/04 19:07:35 alc Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.60 2008/12/10 15:48:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.59 2008/12/04 19:07:35 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.60 2008/12/10 15:48:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,7 @@ static int agp_i810_init(struct agp_softc *sc)
 			gtt_size = 256;
 			break;
 		case CHIP_I965:
-			switch (pgtblctl) {
+			switch (pgtblctl & AGP_I810_PGTBL_SIZE_MASK) {
 			case AGP_I810_PGTBL_SIZE_128KB:
 			case AGP_I810_PGTBL_SIZE_512KB:
 				gtt_size = 512;
