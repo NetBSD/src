@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.17 2008/12/10 11:10:18 pooka Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.18 2008/12/10 17:12:07 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -164,6 +164,8 @@ struct pv_page {
 	struct pv_page_info pvp_pgi;
 	struct pv_entry pvp_pv[NPVPPG];
 };
+
+extern struct pmap	kernel_pmap_store;
 
 #define	active_pmap(pm) \
 	((pm) == pmap_kernel() || (pm) == curproc->p_vmspace->vm_map.pmap)
