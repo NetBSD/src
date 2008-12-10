@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.76 2008/11/30 18:21:35 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.77 2008/12/10 14:19:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.76 2008/11/30 18:21:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2008/12/10 14:19:02 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -998,16 +998,12 @@ intrhand_lev3(void)
 {
 	int stat;
 
-	idepth++;
-
 	stat = *int_status;
 	intrcnt[3]++;
 	uvmexp.intrs++;
 #if 1
 	printf("level 3 interrupt: INT_STATUS = 0x%02x\n", stat);
 #endif
-
-	idepth--;
 }
 
 extern int leintr(int);
@@ -1017,8 +1013,6 @@ void
 intrhand_lev4(void)
 {
 	int stat;
-
-	idepth++;
 
 #define INTST_LANCE	0x04
 #define INTST_SCSI	0x80
@@ -1040,8 +1034,6 @@ intrhand_lev4(void)
 #if 0
 	printf("level 4 interrupt\n");
 #endif
-
-	idepth--;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45 2007/12/03 15:34:03 ad Exp $	*/
+/*	$NetBSD: locore.s,v 1.46 2008/12/10 14:19:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -838,21 +838,25 @@ ENTRY_NOPROFILE(spurintr)	/* Level 0 */
 	rte
 
 ENTRY_NOPROFILE(intrhand_autovec)	/* Levels 1 through 6 */
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	movw	%sp@(22),%sp@-		| push exception vector
 	clrw	%sp@-
 	jbsr	_C_LABEL(isrdispatch_autovec) | call dispatcher
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 
 ENTRY_NOPROFILE(lev1intr)		/* Level 1: AST interrupt */
+	addql	#1,_C_LABEL(idepth)
 	movl	%a0,%sp@-
 	addql	#1,_C_LABEL(intrcnt)+4
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	movl	_C_LABEL(ctrl_ast),%a0
 	clrb	%a0@			| disable AST interrupt
 	movl	%sp@+,%a0
+	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		| handle AST
 
 #ifdef notyet
@@ -864,32 +868,40 @@ ENTRY_NOPROFILE(_softintr)		/* Level 2: software interrupt */
 #endif
 
 ENTRY_NOPROFILE(lev3intr)		/* Level 3: fd, lpt, vme etc. */
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev3)
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 
 ENTRY_NOPROFILE(lev4intr)		/* Level 4: scsi, le, vme etc. */
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev4)
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 
 #if 0
 ENTRY_NOPROFILE(lev5intr)		/* Level 5: kb, ms (zs is vectored) */
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev5)
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 #endif
 
 ENTRY_NOPROFILE(_isr_clock)		/* Level 6: clock (see clock_hb.c) */
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	lea	%sp@(16),%a1
 	movl	%a1,%sp@-
 	jbsr	_C_LABEL(clock_intr)
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 
 #if 0
@@ -908,6 +920,7 @@ ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
 #endif
 
 ENTRY_NOPROFILE(intrhand_vectored)
+	addql	#1,_C_LABEL(idepth)
 	INTERRUPT_SAVEREG
 	lea	%sp@(16),%a1		| get pointer to frame
 	movl	%a1,%sp@-
@@ -917,6 +930,7 @@ ENTRY_NOPROFILE(intrhand_vectored)
 	jbsr	_C_LABEL(isrdispatch_vectored) | call dispatcher
 	lea	%sp@(12),%sp		| pop value args
 	INTERRUPT_RESTOREREG
+	subql	#1,_C_LABEL(idepth)
 	rte
 
 #undef INTERRUPT_SAVEREG
