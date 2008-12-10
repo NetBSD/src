@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2008/12/09 20:45:44 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 2008/12/10 11:10:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2008/12/09 20:45:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2008/12/10 11:10:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ static u_int *page_aliased_bitmap;
 #define PAGE_IS_ALIASED(pa) (_PAGE_ALIASED_WORD(pa) & _PAGE_ALIASED_BIT(pa))
 
 static struct pmap	kernel_pmap_store;
-struct pmap		*kernel_pmap_ptr = &kernel_pmap_store;
+struct pmap		*const kernel_pmap_ptr = &kernel_pmap_store;
 bool		pmap_initialized = false;
 
 TAILQ_HEAD(, pmap)	pmap_freelist;	/* list of free pmaps */

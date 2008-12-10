@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.107 2008/12/09 20:45:44 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.108 2008/12/10 11:10:18 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.107 2008/12/09 20:45:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.108 2008/12/10 11:10:18 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ u_int		*Segtabzero, *Segtabzeropa;
 vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 static struct pmap	kernel_pmap_store;
-struct pmap		*kernel_pmap_ptr = &kernel_pmap_store;
+struct pmap		*const kernel_pmap_ptr = &kernel_pmap_store;
 struct vm_map	*pt_map;
 struct vm_map_kernel pt_map_store;
 

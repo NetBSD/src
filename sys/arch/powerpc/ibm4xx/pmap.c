@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2008/12/09 20:45:45 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 2008/12/10 11:10:19 pooka Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2008/12/09 20:45:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2008/12/10 11:10:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -128,7 +128,7 @@ struct evcnt tlbenter_ev = EVCNT_INITIALIZER(EVCNT_TYPE_TRAP,
 	NULL, "cpu", "tlbenter");
 
 struct pmap kernel_pmap_;
-struct pmap *kernel_pmap_ptr = &kernel_pmap_;
+struct pmap *const kernel_pmap_ptr = &kernel_pmap_;
 
 int physmem;
 static int npgs;

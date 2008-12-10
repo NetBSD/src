@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 2008/12/09 20:45:45 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 2008/12/10 11:10:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2008/12/09 20:45:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2008/12/10 11:10:19 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -221,7 +221,7 @@ int tmp_vpages_inuse;
 
 static int pmap_version = 1;
 static struct pmap kernel_pmap_store;
-struct pmap *kernel_pmap_ptr = &kernel_pmap_store;
+struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 #define kernel_pmap (kernel_pmap_ptr)
 static u_char kernel_segmap[NSEGMAP];
 

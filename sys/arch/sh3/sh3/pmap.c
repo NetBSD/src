@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.68 2008/12/09 20:45:45 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.69 2008/12/10 11:10:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2008/12/09 20:45:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.69 2008/12/10 11:10:19 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2008/12/09 20:45:45 pooka Exp $");
 #define	__PMAP_PTP_OFSET(va)	((va >> PGSHIFT) & (__PMAP_PTP_PG_N - 1))
 
 static struct pmap __pmap_kernel;
-struct pmap *kernel_pmap_ptr = &__pmap_kernel;
+struct pmap *const kernel_pmap_ptr = &__pmap_kernel;
 STATIC vaddr_t __pmap_kve;	/* VA of last kernel virtual */
 paddr_t avail_start;		/* PA of first available physical page */
 paddr_t avail_end;		/* PA of last available physical page */

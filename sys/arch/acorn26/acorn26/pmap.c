@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.20 2008/12/09 20:45:44 pooka Exp $ */
+/* $NetBSD: pmap.c,v 1.21 2008/12/10 11:10:17 pooka Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.20 2008/12/09 20:45:44 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2008/12/10 11:10:17 pooka Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -180,7 +180,7 @@ struct pv_entry *pv_table;
 /* Kernel pmap -- statically allocated to make life slightly less odd. */
 
 static struct pmap kernel_pmap_store;
-struct pmap *kernel_pmap_ptr = &kernel_pmap_store;
+struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 struct pv_entry *kernel_pmap_entries[PM_NENTRIES];
 
 static bool pmap_initialised = false;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.24 2008/12/09 20:45:46 pooka Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.25 2008/12/10 11:10:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ struct lwp;		/* for pmap_activate()/pmap_deactivate() proto */
 struct pmap;
 typedef struct pmap *pmap_t;
 
-extern struct pmap	*kernel_pmap_ptr;
+extern struct pmap	*const kernel_pmap_ptr;
 #define pmap_kernel()	kernel_pmap_ptr
 
 /*
