@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 2008/12/09 20:45:46 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101 2008/12/10 11:10:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2008/12/09 20:45:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2008/12/10 11:10:19 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -244,7 +244,7 @@ static c_tmgr_t		*Ctmgrbase;
 static pv_t 		*pvbase;
 static pv_elem_t	*pvebase;
 static struct pmap	kernel_pmap;
-struct pmap		*kernel_pmap_ptr = &kernel_pmap;
+struct pmap		*const kernel_pmap_ptr = &kernel_pmap;
 
 /*
  * This holds the CRP currently loaded into the MMU.
