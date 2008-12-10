@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.49 2008/12/10 16:59:12 christos Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.50 2008/12/10 17:32:32 christos Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,9 +38,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.49 2008/12/10 16:59:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.50 2008/12/10 17:32:32 christos Exp $");
 
-#define	VMEM_DEBUG
 #if defined(_KERNEL)
 #include "opt_ddb.h"
 #define	QCACHE
