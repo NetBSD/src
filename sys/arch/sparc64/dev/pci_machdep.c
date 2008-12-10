@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.60 2008/12/07 21:03:57 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.61 2008/12/10 03:31:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.60 2008/12/07 21:03:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.61 2008/12/10 03:31:51 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.60 2008/12/07 21:03:57 mrg Exp $")
 #define SPDB_INTR	0x04
 #define SPDB_INTMAP	0x08
 #define SPDB_PROBE	0x20
+#define SPDB_TAG	0x40
 int sparc_pci_debug = 0x0;
 #define DPRINTF(l, s)	do { if (sparc_pci_debug & l) printf s; } while (0)
 #else
@@ -78,13 +79,20 @@ static pcitag_t
 ofpci_make_tag(pci_chipset_tag_t pc, int node, int b, int d, int f)
 {
 	pcitag_t tag;
+	pcireg_t reg;
 
 	tag = PCITAG_CREATE(node, b, d, f);
 
+	DPRINTF(SPDB_TAG,
+		("%s: creating tag for node %d bus %d dev %d fn %d\n",
+		 __func__, node, b, d, f));
+
 	/* Enable all the different spaces for this device */
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
-		PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE|
-		PCI_COMMAND_IO_ENABLE);
+	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	reg |= PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_MASTER_ENABLE|
+	       PCI_COMMAND_IO_ENABLE;
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
+
 	return (tag);
 }
 
@@ -448,4 +456,32 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 
 	/* XXX */
 	/* panic("can't disestablish PCI interrupts yet"); */
+}
+
+int
+sparc_pci_childspace(int type)
+{
+	int ss;
+
+	switch (type) {
+	case PCI_CONFIG_BUS_SPACE:
+		ss = 0x00;
+		break;
+	case PCI_IO_BUS_SPACE:
+		ss = 0x01;
+		break;
+	case PCI_MEMORY_BUS_SPACE:
+		ss = 0x02;
+		break;
+#if 0
+	/* we don't do 64 bit memory space */
+	case PCI_MEMORY64_BUS_SPACE:
+		ss = 0x03;
+		break;
+#endif
+	default:
+		panic("get_childspace: unknown bus type");
+	}
+
+	return (ss);
 }
