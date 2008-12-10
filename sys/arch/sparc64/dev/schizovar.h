@@ -1,3 +1,4 @@
+/*	$NetBSD: schizovar.h,v 1.2 2008/12/10 05:56:22 mrg Exp $	*/
 /*	$OpenBSD: schizovar.h,v 1.10 2007/01/14 16:19:49 kettenis Exp $	*/
 
 /*
@@ -45,7 +46,6 @@ struct schizo_pbm {
 	int			sp_bus;
 	int			sp_flags;
 	int			sp_bus_a;
-	bus_addr_t		sp_confpaddr;
 	struct iommu_state	sp_is;
 	struct strbuf_ctl	sp_sb;
 	char			sp_flush[0x80];
@@ -56,17 +56,19 @@ struct schizo_softc {
 	int sc_node;
 	int sc_ign;
 	bus_dma_tag_t sc_dmat;
-	bus_space_tag_t sc_bust;
+	bus_space_tag_t sc_bustag;
 	bus_addr_t sc_ctrl;
 	bus_space_handle_t sc_ctrlh;
+	bus_space_handle_t sc_confh;
 
+	int sc_busa;
 	int sc_tomatillo;
 };
 
 #define	schizo_read(sc,r) \
-    bus_space_read_8((sc)->sc_bust, (sc)->sc_ctrlh, (r))
+    bus_space_read_8((sc)->sc_bustag, (sc)->sc_ctrlh, (r))
 #define	schizo_write(sc,r,v) \
-    bus_space_write_8((sc)->sc_bust, (sc)->sc_ctrlh, (r), (v))
+    bus_space_write_8((sc)->sc_bustag, (sc)->sc_ctrlh, (r), (v))
 #define	schizo_pbm_read(pbm,r) \
     bus_space_read_8((pbm)->sp_regt, (pbm)->sp_regh, (r))
 #define	schizo_pbm_write(pbm,r,v) \
