@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.48 2008/12/09 07:54:59 cegger Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.49 2008/12/10 16:59:12 christos Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.48 2008/12/09 07:54:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.49 2008/12/10 16:59:12 christos Exp $");
 
 #define	VMEM_DEBUG
 #if defined(_KERNEL)
@@ -745,7 +745,7 @@ vmem_fit(const bt_t *bt, vmem_size_t size, vmem_size_t align, vmem_size_t phase,
 	return VMEM_ADDR_NULL;
 }
 
-#if !defined(DEBUG)
+#if !defined(VMEM_DEBUG)
 #define vmem_check_sanity(vm)	true
 #else
 
