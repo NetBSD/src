@@ -1,3 +1,4 @@
+/*	$NetBSD: schizoreg.h,v 1.2 2008/12/10 05:56:22 mrg Exp $	*/
 /*	$OpenBSD: schizoreg.h,v 1.20 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
@@ -79,22 +80,22 @@ struct schizo_regs {
 	struct schizo_pbm_regs pbm_b;
 };
 
-#define	SCZ_PCIA_MEM_MATCH		0x00040
-#define	SCZ_PCIA_MEM_MASK		0x00048
-#define	SCZ_PCIA_IO_MATCH		0x00050
-#define	SCZ_PCIA_IO_MASK		0x00058
-#define	SCZ_PCIB_MEM_MATCH		0x00060
-#define	SCZ_PCIB_MEM_MASK		0x00068
-#define	SCZ_PCIB_IO_MATCH		0x00070
-#define	SCZ_PCIB_IO_MASK		0x00078
-#define	SCZ_CONTROL_STATUS		0x10000
-#define	SCZ_SAFARI_INTCTRL		0x10010
-#define	SCZ_SAFARI_ERRLOG		0x10018
-#define	SCZ_ECCCTRL			0x10020
-#define	SCZ_UE_AFSR			0x10030
-#define	SCZ_UE_AFAR			0x10038
-#define	SCZ_CE_AFSR			0x10040
-#define	SCZ_CE_AFAR			0x10048
+//#define	SCZ_PCIA_MEM_MATCH		0x00040
+//#define	SCZ_PCIA_MEM_MASK		0x00048
+//#define	SCZ_PCIA_IO_MATCH		0x00050
+//#define	SCZ_PCIA_IO_MASK		0x00058
+//#define	SCZ_PCIB_MEM_MATCH		0x00060
+//#define	SCZ_PCIB_MEM_MASK		0x00068
+//#define	SCZ_PCIB_IO_MATCH		0x00070
+//#define	SCZ_PCIB_IO_MASK		0x00078
+#define	SCZ_CONTROL_STATUS		0x00000
+#define	SCZ_SAFARI_INTCTRL		0x00010
+#define	SCZ_SAFARI_ERRLOG		0x00018
+#define	SCZ_ECCCTRL			0x00020
+#define	SCZ_UE_AFSR			0x00030
+#define	SCZ_UE_AFAR			0x00038
+#define	SCZ_CE_AFSR			0x00040
+#define	SCZ_CE_AFAR			0x00048
 
 /* These are relative to the PBM */
 #define	SCZ_PCI_IOMMU_CTRL		0x00200
