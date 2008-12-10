@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.41 2008/10/13 14:00:37 dholland Exp $ */
+/* $NetBSD: scan.l,v 1.42 2008/12/10 16:12:39 joerg Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.41 2008/10/13 14:00:37 dholland Exp $");
+__RCSID("$NetBSD: scan.l,v 1.42 2008/12/10 16:12:39 joerg Exp $");
 #endif
 
 #include <stdlib.h>
@@ -225,6 +225,7 @@ static	struct	kwtab {
 	{ "long",	T_TYPE,		0,	LONG,	0,	  0, 0, 0 },
 	{ "__real__",	T_REAL,		0,	0,	0,	  0, 1, 0 },
 	{ "register",	T_SCLASS,	REG,	0,	0,	  0, 0, 0 },
+	{ "restrict",	T_QUAL,		0,	0,	RESTRICT, 0, 1, 0 },
 	{ "return",	T_RETURN,	0,	0,	0,	  0, 0, 0 },
 	{ "short",	T_TYPE,		0,	SHORT,	0,	  0, 0, 0 },
 	{ "signed",	T_TYPE,		0,	SIGNED,	0,	  1, 0, 0 },
