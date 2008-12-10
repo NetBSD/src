@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.61 2008/12/10 03:31:51 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.62 2008/12/10 12:53:49 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.61 2008/12/10 03:31:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.62 2008/12/10 12:53:49 nakayama Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -130,6 +130,7 @@ pci_make_tag(pci_chipset_tag_t pc, int b, int d, int f)
 	 * It returns a tag if node is present and bus is valid.
 	 */
 	if (0 <= b && b < 256) {
+		KASSERT(pc->spc_busnode != NULL);
 		node = (*pc->spc_busnode)[b].node;
 		valid = (*pc->spc_busnode)[b].valid;
 		if (node != 0 && d == 0 &&
