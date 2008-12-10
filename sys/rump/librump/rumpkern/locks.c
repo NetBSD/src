@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.20 2008/10/10 13:14:41 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.21 2008/12/10 14:55:25 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -269,7 +269,7 @@ cv_has_waiters(kcondvar_t *cv)
  * giant lock
  */
 
-static int lockcnt;
+static volatile int lockcnt;
 void
 _kernel_lock(int nlocks)
 {
