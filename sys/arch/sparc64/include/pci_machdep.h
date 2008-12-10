@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.21 2008/12/09 13:14:38 nakayama Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.22 2008/12/10 03:31:51 mrg Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -103,5 +103,8 @@ int		sparc64_pci_enumerate_bus(struct pci_softc *, const int *,
 		((pc)->spc_conf_write(pc, tag, reg, val))
 #define	pci_intr_establish(pc, handle, level, func, arg) \
 		((pc)->spc_intr_establish(pc, handle, level, func, arg))
+
+/* SPARC specific PCI interfaces */
+int		sparc_pci_childspace(int);
 
 #endif /* _MACHINE_PCI_MACHDEP_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.93 2008/12/09 13:14:38 nakayama Exp $	*/
+/*	$NetBSD: psycho.c,v 1.94 2008/12/10 03:31:51 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.93 2008/12/09 13:14:38 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.94 2008/12/10 03:31:51 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -138,7 +138,6 @@ static void psycho_iommu_init(struct psycho_softc *, int);
  * bus space and bus DMA support for UltraSPARC `psycho'.  note that most
  * of the bus DMA support is provided by the iommu dvma controller.
  */
-static int get_childspace(int);
 static struct psycho_ranges *get_psychorange(struct psycho_pbm *, int);
 
 static paddr_t psycho_bus_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
@@ -1039,12 +1038,11 @@ psycho_alloc_bus_tag(struct psycho_pbm *pp, int type)
 	struct psycho_softc *sc = pp->pp_sc;
 	bus_space_tag_t bt;
 
-	bt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
+	bt = (bus_space_tag_t) malloc(sizeof(struct sparc_bus_space_tag),
+		    M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (bt == NULL)
 		panic("could not allocate psycho bus tag");
 
-	memset(bt, 0, sizeof *bt);
 	bt->cookie = pp;
 	bt->parent = sc->sc_bustag;
 	bt->type = type;
@@ -1094,34 +1092,6 @@ psycho_alloc_dma_tag(struct psycho_pbm *pp)
  * PCI physical addresses.
  */
 
-static int
-get_childspace(int type)
-{
-	int ss;
-
-	switch (type) {
-	case PCI_CONFIG_BUS_SPACE:
-		ss = 0x00;
-		break;
-	case PCI_IO_BUS_SPACE:
-		ss = 0x01;
-		break;
-	case PCI_MEMORY_BUS_SPACE:
-		ss = 0x02;
-		break;
-#if 0
-	/* we don't do 64 bit memory space */
-	case PCI_MEMORY64_BUS_SPACE:
-		ss = 0x03;
-		break;
-#endif
-	default:
-		panic("get_childspace: unknown bus type");
-	}
-
-	return (ss);
-}
-
 static struct psycho_ranges *
 get_psychorange(struct psycho_pbm *pp, int ss)
 {
@@ -1150,7 +1120,7 @@ _psycho_bus_map(bus_space_tag_t t, bus_addr_t offset, bus_size_t size,
 			t->type, (unsigned long long)offset, 
 			(unsigned long long)size, flags));
 
-	ss = get_childspace(t->type);
+	ss = sparc_pci_childspace(t->type);
 	DPRINTF(PDB_BUSMAP, (" cspace %d", ss));
 
 	pr = get_psychorange(pp, ss);
@@ -1177,7 +1147,7 @@ psycho_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 	struct psycho_ranges *pr;
 	int ss;
 
-	ss = get_childspace(t->type);
+	ss = sparc_pci_childspace(t->type);
 
 	DPRINTF(PDB_BUSMAP, ("_psycho_bus_mmap: prot %x flags %d pa %qx\n", 
 		prot, flags, (unsigned long long)paddr));
@@ -1209,7 +1179,7 @@ psycho_bus_offset(bus_space_tag_t t, bus_space_handle_t *hp)
 	int ss;
 
 	addr = hp->_ptr;
-	ss = get_childspace(t->type);
+	ss = sparc_pci_childspace(t->type);
 	DPRINTF(PDB_BUSMAP, ("psycho_bus_offset: type %d addr %" PRIx64
 			     " cspace %d", t->type, addr, ss));
 
