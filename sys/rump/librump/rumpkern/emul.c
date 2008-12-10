@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.57 2008/11/27 08:05:27 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.58 2008/12/10 18:47:01 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -378,6 +378,7 @@ struct kthdesc {
 	void (*f)(void *);
 	void *arg;
 	struct lwp *mylwp;
+	bool mpsafe;
 };
 
 static void *
@@ -392,6 +393,8 @@ threadbouncer(void *arg)
 	rumpuser_set_curlwp(k->mylwp);
 	kmem_free(k, sizeof(struct kthdesc));
 
+	if (!k->mpsafe)
+		KERNEL_LOCK(1, NULL);
 	f(thrarg);
 	panic("unreachable, should kthread_exit()");
 }
@@ -436,6 +439,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k->f = func;
 	k->arg = arg;
 	k->mylwp = l = rump_setup_curlwp(0, rump_nextlid(), 0);
+	k->mpsafe = flags & KTHREAD_MPSAFE;
 	rv = rumpuser_thread_create(threadbouncer, k);
 	if (rv)
 		return rv;
@@ -449,6 +453,7 @@ void
 kthread_exit(int ecode)
 {
 
+	panic("FIXME: kthread_exit() does not support mpsafe locking");
 	rumpuser_thread_exit();
 }
 
