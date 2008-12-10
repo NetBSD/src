@@ -1,4 +1,4 @@
-/*      $NetBSD: amdtemp.c,v 1.4 2008/05/20 14:45:22 cegger Exp $ */
+/*      $NetBSD: amdtemp.c,v 1.4.10.1 2008/12/10 22:11:44 snj Exp $ */
 /*      $OpenBSD: kate.c,v 1.2 2008/03/27 04:52:03 cnst Exp $   */
 
 /* 
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.4 2008/05/20 14:45:22 cegger Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.4.10.1 2008/12/10 22:11:44 snj Exp $ ");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,16 +109,36 @@ __KERNEL_RCSID(0, "$NetBSD: amdtemp.c,v 1.4 2008/05/20 14:45:22 cegger Exp $ ");
  * Revision Guide for AMD NPT Family 0Fh Processors, 
  * Publication # 33610, Revision 3.30, February 2008
  */
+#define K8_SOCKET_F	1	/* Server */
+#define K8_SOCKET_AM2	2	/* Desktop */
+#define K8_SOCKET_S1	3	/* Laptop */
+
 static const struct {
 	const char      rev[5];
-	const pcireg_t  cpuid[5];
+	const struct {
+		const pcireg_t  cpuid;
+		const uint8_t   socket;
+	} cpu[5];
 } amdtemp_core[] = {
-	{ "BH-F", { 0x00040FB0, 0x00040F80, 0, 0, 0 } },        /* F2 */
-	{ "DH-F", { 0x00040FF0, 0x00050FF0, 0x00040FC0, 0, 0 } }, /* F2, F3 */
-	{ "JH-F", { 0x00040F10, 0x00040F30, 0x000C0F10, 0, 0 } }, /* F2, F3 */
-	{ "BH-G", { 0x00060FB0, 0x00060F80, 0, 0, 0 } },        /* G1, G2 */
-	{ "DH-G", { 0x00070FF0, 0x00060FF0,
-	    0x00060FC0, 0x00070FC0, 0 } }       /* G1, G2 */
+	{ "BH-F", { { 0x00040FB0, K8_SOCKET_AM2 },	/* F2 */
+		  { 0x00040F80, K8_SOCKET_S1 },		/* F2 */
+		  { 0, 0 }, { 0, 0 }, { 0, 0 } } },
+	{ "DH-F", { { 0x00040FF0, K8_SOCKET_AM2 },	/* F2 */
+		  { 0x00040FC0, K8_SOCKET_S1 },		/* F2 */
+		  { 0x00050FF0, K8_SOCKET_AM2 },	/* F2, F3 */
+		  { 0, 0 }, { 0, 0 } } },
+	{ "JH-F", { { 0x00040F10, K8_SOCKET_F },	/* F2, F3 */
+		  { 0x00040F30, K8_SOCKET_AM2 },	/* F2, F3 */
+		  { 0x000C0F10, K8_SOCKET_F },		/* F3 */
+		  { 0, 0 }, { 0, 0 } } },
+	{ "BH-G", { { 0x00060FB0, K8_SOCKET_AM2 },	/* G1, G2 */
+		  { 0x00060F80, K8_SOCKET_S1 },		/* G1, G2 */
+		  { 0, 0 }, { 0, 0 }, { 0, 0 } } },
+	{ "DH-G", { { 0x00060FF0, K8_SOCKET_AM2 },	/* G1, G2 */
+		  { 0x00060FC0, K8_SOCKET_S1 },		/* G2 */
+		  { 0x00070FF0, K8_SOCKET_AM2 },	/* G1, G2 */
+		  { 0x00070FC0, K8_SOCKET_S1 },		/* G2 */
+		  { 0, 0 } } }
 };
 
 
@@ -132,6 +152,7 @@ struct amdtemp_softc {
         char sc_rev;
         int8_t sc_numsensors;
 	uint32_t sc_family;
+	int32_t sc_adjustment;
 };
 
 
@@ -214,6 +235,7 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+	sc->sc_adjustment = 0;
 
 	switch (sc->sc_family) {
 	case 0xf:  /* AMD K8 NPT */
@@ -231,6 +253,9 @@ amdtemp_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal("\n");
+
+	if (sc->sc_adjustment != 0)
+		aprint_debug_dev(self, "Workaround enabled\n");
 
 	sc->sc_sme = sysmon_envsys_create();
 	len = sizeof(envsys_data_t) * sc->sc_numsensors;
@@ -301,14 +326,27 @@ amdtemp_k8_init(struct amdtemp_softc *sc, pcireg_t cpu_signature)
 	aprint_normal(" (K8");
 
 	for (i = 0; i < __arraycount(amdtemp_core) && sc->sc_rev == '\0'; i++) {
-		for (j = 0; amdtemp_core[i].cpuid[j] != 0; j++) {
+		for (j = 0; amdtemp_core[i].cpu[j].cpuid != 0; j++) {
 			if ((cpu_signature & ~0xf)
-			    == amdtemp_core[i].cpuid[j])
-			{
-				sc->sc_rev = amdtemp_core[i].rev[3];
-				aprint_normal(": core rev %.4s%.1x",
-					amdtemp_core[i].rev,
-					CPUID2STEPPING(cpu_signature));
+			    != amdtemp_core[i].cpu[j].cpuid)
+				continue;
+
+			sc->sc_rev = amdtemp_core[i].rev[3];
+			aprint_normal(": core rev %.4s%.1x",
+				amdtemp_core[i].rev,
+				CPUID2STEPPING(cpu_signature));
+
+			switch (amdtemp_core[i].cpu[j].socket) {
+			case K8_SOCKET_AM2:
+				sc->sc_adjustment = 21000000;
+				aprint_normal(", socket AM2");
+				break;
+			case K8_SOCKET_S1:
+				aprint_normal(", socket S1");
+				break;
+			case K8_SOCKET_F:
+				aprint_normal(", socket F");
+				break;
 			}
 		}
 	}
@@ -389,7 +427,8 @@ amdtemp_k8_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	edata->state = ENVSYS_SINVALID;
 	if ((tmp == match) && ((value & ~0x3) != 0)) {
 		edata->state = ENVSYS_SVALID;
-		edata->value_cur = (value * 250000 - 49000000) + 273150000;
+		edata->value_cur = (value * 250000 - 49000000) + 273150000
+			+ sc->sc_adjustment;
 	}
 }
 
