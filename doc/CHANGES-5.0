@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.50 2008/12/07 19:14:19 bouyer Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.51 2008/12/10 21:31:58 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -518,12 +518,13 @@ sys/kern/kern_subr.c				1.195
 	[ad, ticket #75]
 
 sys/kern/vfs_lookup.c				1.111
-sys/sys/namei.h					1.61
+sys/sys/namei.src				1.9
+sys/sys/namei.h					regen
 
 	Add a NOCHROOT flag for namei(). Looks outside any chroot and
         performs the lookup from the root directory if given an absolute
         path.
-	[ad, ticket #76]
+	[ad/tsutsui, ticket #76]
 
 sys/arch/amd64/amd64/machdep.c			1.106, 1.107
 
