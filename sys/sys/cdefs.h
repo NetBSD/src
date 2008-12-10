@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.69 2008/08/17 00:23:02 gmcgarry Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.70 2008/12/10 22:10:47 alc Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -319,6 +319,24 @@
 #else
 #define	__predict_true(exp)	(exp)
 #define	__predict_false(exp)	(exp)
+#endif
+
+/*
+ * Compiler-dependent macros to declare that functions take printf-like
+ * or scanf-like arguments.  They are null except for versions of gcc
+ * that are known to support the features properly (old versions of gcc-2
+ * didn't permit keeping the keywords out of the application namespace).
+ */
+#if __GNUC_PREREQ__(2, 7)
+#define __printflike(fmtarg, firstvararg)	\
+	    __attribute__((__format__ (__printf__, fmtarg, firstvararg)))
+#define __scanflike(fmtarg, firstvararg)	\
+	    __attribute__((__format__ (__scanf__, fmtarg, firstvararg)))
+#define __format_arg(fmtarg)    __attribute__((__format_arg__ (fmtarg)))
+#else
+#define __printflike(fmtarg, firstvararg)	/* nothing */
+#define __scanflike(fmtarg, firstvararg)	/* nothing */
+#define __format_arg(fmtarg)			/* nothing */
 #endif
 
 /*
