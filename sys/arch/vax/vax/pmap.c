@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.162 2008/12/09 20:45:46 pooka Exp $	   */
+/*	$NetBSD: pmap.c,v 1.163 2008/12/10 11:10:20 pooka Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.162 2008/12/09 20:45:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.163 2008/12/10 11:10:20 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -93,7 +93,7 @@ uintptr_t scratch;
 
 
 static struct pmap kernel_pmap_store;
-struct pmap *kernel_pmap_ptr = &kernel_pmap_store;
+struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 
 struct	pte *Sysmap;		/* System page table */
 struct	pv_entry *pv_table;	/* array of entries, one per LOGICAL page */
