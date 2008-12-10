@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.2 2008/12/10 05:56:22 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.3 2008/12/10 12:17:02 nakayama Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -227,6 +227,11 @@ printf("mapped regs, sp_cfgh._ptr = %lx ._asi = %x ._sasi = %x\n", pbm->sp_cfgh.
 
 	pbm->sp_pc = schizo_alloc_chipset(pbm, sc->sc_node,
 	    &_sparc_pci_chipset);
+	pbm->sp_pc->spc_busmax = busranges[1];
+	pbm->sp_pc->spc_busnode = malloc(sizeof(*pbm->sp_pc->spc_busnode),
+	    M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (pbm->sp_pc->spc_busnode == NULL)
+		panic("schizo: malloc busnode");
 
 	pba.pba_bus = busranges[0];
 	pba.pba_bridgetag = NULL;
