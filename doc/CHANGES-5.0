@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.51 2008/12/10 21:31:58 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.52 2008/12/10 22:31:48 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1472,4 +1472,45 @@ sys/dev/pci/if_wm.c				1.163
 	  http://mail-index.netbsd.org/current-users/2008/12/02/msg006435.html
 	caused by setting the wrong type of EEPROM.
 	[sketch, ticket #160]
+
+sys/ufs/ffs/ffs_snapshot.c			1.87
+
+	Make persistent snapshots work again.
+	PR kern/37425: fss_snapshot_mount panic during fsck.
+	[hannken, ticket #169]
+
+sys/dev/pci/ahcisata_pci.c			1.13
+
+	Force the nVidia nForce 630i MCP73 to attach to ahcisata(4) as well.
+	It would otherwise attach to pciide(4) and use PIO mode.
+        PR kern/40134.
+	[tron, ticket #170]
+
+xsrc/external/mit/xf86-video-mach64/dist/src/atiprobe.c 1.2
+
+	Allow the mach64 driver to work on PowerMac G3s with onboard graphics.
+	[macallan, ticket #171]
+
+sys/arch/amiga/dev/clock.c			1.48
+
+	Fix timecounters using interval timers.  Process cpu usage was
+	returning negative or very large values.
+	[mhitch, ticket #172]
+
+sys/arch/x86/pci/amdtemp.c			1.5, 1.6
+
+	Fix strange temperature values with AMD K8 RevG CPUs on Socket AM2.
+	[cegger, ticket #173]
+
+sys/fs/udf/udf.h				1.29
+sys/fs/udf/udf_strat_rmw.c			1.15, 1.15
+
+	UDF_SHED_FREE state is now also handled by the state machine,
+	so DO signal it.  Free'd up ecclines can now far more quicker
+	be recycled.
+	Fix two buf_init()'s that are not needed since they were already
+	initialised by getiobuf().
+	Remove ancient IPL_BIO reference from the time it was called from
+	interrupt context instead of the current soft interrupt.
+	[reinoud, ticket #174]
 
