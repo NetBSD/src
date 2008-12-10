@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.45 2008/11/03 23:21:19 cube Exp $	*/
+/*	$NetBSD: syslog.c,v 1.46 2008/12/10 15:20:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.45 2008/11/03 23:21:19 cube Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.46 2008/12/10 15:20:04 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -487,36 +487,6 @@ connectlog_r(struct syslog_data *data)
 }
 
 static void
-init_hostname(void)
-{
-	struct addrinfo *res;
-	struct addrinfo hints = {
-		.ai_family = PF_UNSPEC,
-		.ai_socktype = 0,
-		.ai_protocol = 0,
-		.ai_flags = AI_CANONNAME,
-	};
-
-	if (gethostname(hostname, sizeof(hostname)) == -1
-	    || hostname[0] == '\0') {
-		/* can this really happen? */
-		hostname[0] = '-';
-		hostname[1] = '\0';
-		return;
-	}
-
-	if (strchr(hostname, '.') != NULL) /* FQDN */
-		return;
-
-	if (getaddrinfo(hostname, NULL, &hints, &res) != 0)
-		return;
-	/* try to resolve back to hostname */
-	(void)getnameinfo(res->ai_addr, (socklen_t)res->ai_addr->sa_len,
-	    hostname, sizeof(hostname), NULL, 0, 0);
-	freeaddrinfo(res);
-}
-
-static void
 openlog_unlocked_r(const char *ident, int logstat, int logfac,
     struct syslog_data *data)
 {
@@ -530,7 +500,12 @@ openlog_unlocked_r(const char *ident, int logstat, int logfac,
 		connectlog_r(data);
 
 	/* We could cache this, but then it might change */
-	init_hostname();
+	if (gethostname(hostname, sizeof(hostname)) == -1
+	    || hostname[0] == '\0') {
+		/* can this really happen? */
+		hostname[0] = '-';
+		hostname[1] = '\0';
+	}
 	data->opened = 1;
 }
 
