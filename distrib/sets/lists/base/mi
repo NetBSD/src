@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.784 2008/11/26 15:45:56 tsutsui Exp $
+# $NetBSD: mi,v 1.785 2008/12/11 11:14:36 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -923,6 +923,7 @@
 ./usr/bin/sum					base-util-bin
 ./usr/bin/sysstat				base-util-bin
 ./usr/bin/systat				base-util-bin
+./usr/bin/tabs					base-util-bin
 ./usr/bin/tail					base-util-bin
 ./usr/bin/talk					base-netutil-bin
 ./usr/bin/tar					base-util-bin

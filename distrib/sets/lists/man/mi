@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1113 2008/11/12 13:17:27 pooka Exp $
+# $NetBSD: mi,v 1.1114 2008/12/11 11:14:36 roy Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -471,6 +471,7 @@
 ./usr/share/man/cat1/sysstat.0			man-util-catman		.cat
 ./usr/share/man/cat1/systat.0			man-util-catman		.cat
 ./usr/share/man/cat1/systrace.0			man-obsolete		obsolete
+./usr/share/man/cat1/tabs.0			man-util-catman		.cat
 ./usr/share/man/cat1/tail.0			man-util-catman		.cat
 ./usr/share/man/cat1/talk.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/tar.0			man-util-catman		.cat
@@ -3060,6 +3061,7 @@
 ./usr/share/man/html1/suspend.html		man-util-htmlman	html
 ./usr/share/man/html1/sysstat.html		man-util-htmlman	html
 ./usr/share/man/html1/systat.html		man-util-htmlman	html
+./usr/share/man/html1/tabs.html			man-util-htmlman	html
 ./usr/share/man/html1/tail.html			man-util-htmlman	html
 ./usr/share/man/html1/talk.html			man-netutil-htmlman	html
 ./usr/share/man/html1/tar.html			man-util-htmlman	html
@@ -5309,6 +5311,7 @@
 ./usr/share/man/man1/sysstat.1			man-util-man		.man
 ./usr/share/man/man1/systat.1			man-util-man		.man
 ./usr/share/man/man1/systrace.1			man-obsolete		obsolete
+./usr/share/man/man1/tabs.1			man-util-man		.man
 ./usr/share/man/man1/tail.1			man-util-man		.man
 ./usr/share/man/man1/talk.1			man-netutil-man		.man
 ./usr/share/man/man1/tar.1			man-util-man		.man

@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1149 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1150 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -26,6 +26,7 @@
 
 Changes from NetBSD 5.0 to NetBSD 6.0:
 
+	tab(1): Add tabs utility, fixes PR bin/11227. [roy 20081211]
 	syslog(3): Import Martin Schuette's Summer of Code project: 
 		Reliable TCP connections, syslog protocol API,
 		encryption. [christos 20081031]
