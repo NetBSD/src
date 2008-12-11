@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.243.8.5 2008/12/09 12:22:41 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.243.8.6 2008/12/11 19:49:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.5 2008/12/09 12:22:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.6 2008/12/11 19:49:29 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -824,8 +824,7 @@ audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 	if (hw->round_buffersize)
 		bufsize = hw->round_buffersize(hdl, direction, bufsize);
 	if (hw->allocm)
-		r->s.start = hw->allocm(hdl, direction, bufsize,
-					M_DEVBUF, M_WAITOK);
+		r->s.start = hw->allocm(hdl, direction, bufsize);
 	else
 		r->s.start = kmem_alloc(bufsize, KM_SLEEP);
 	if (r->s.start == 0)
@@ -839,7 +838,7 @@ audio_free_ring(struct audio_softc *sc, struct audio_ringbuffer *r)
 {
 
 	if (sc->hw_if->freem)
-		sc->hw_if->freem(sc->hw_hdl, r->s.start, M_DEVBUF);
+		sc->hw_if->freem(sc->hw_hdl, r->s.start, r->s.bufsize);
 	else
 		kmem_free(r->s.start, r->s.bufsize);
 	r->s.start = 0;
@@ -1187,7 +1186,7 @@ audio_waitio(struct audio_softc *sc, kcondvar_t *chan)
 	error = cv_wait_sig(chan, sc->sc_lock);
 
 	/* Re-acquire device level lock. */
-	if (__predict_false(rw) == RW_WRITER) {
+	if (__predict_false(rw == RW_WRITER)) {
 		while (__predict_false(sc->sc_dvlock != 0)) {
 			cv_wait(&sc->sc_lchan, sc->sc_lock);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.131.12.2 2008/12/09 13:09:13 ad Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.131.12.3 2008/12/11 19:49:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.131.12.2 2008/12/09 13:09:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.131.12.3 2008/12/11 19:49:30 ad Exp $");
 
 #include "midi.h"
 #include "mpu.h"
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.131.12.2 2008/12/09 13:09:13 ad Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
-
+#include <sys/malloc.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
@@ -2344,8 +2344,7 @@ sbdsp_mixer_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 void *
-sb_malloc(void *addr, int direction, size_t size,
-    struct malloc_type *pool, int flags)
+sb_malloc(void *addr, int direction, size_t size)
 {
 	struct sbdsp_softc *sc;
 	int drq;
@@ -2355,14 +2354,14 @@ sb_malloc(void *addr, int direction, size_t size,
 		drq = sc->sc_drq8;
 	else
 		drq = sc->sc_drq16;
-	return isa_malloc(sc->sc_ic, drq, size, pool, flags);
+	return isa_malloc(sc->sc_ic, drq, size, M_DEVBUF, M_WAITOK);
 }
 
 void
-sb_free(void *addr, void *ptr, struct malloc_type *pool)
+sb_free(void *addr, void *ptr, size_t size)
 {
 
-	isa_free(ptr, pool);
+	isa_free(ptr, M_DEVBUF);
 }
 
 size_t

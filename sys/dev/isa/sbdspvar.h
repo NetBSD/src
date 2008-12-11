@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.59.16.1 2008/12/08 13:06:36 ad Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.59.16.2 2008/12/11 19:49:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -248,8 +248,8 @@ int	sbdsp_mixer_set_port(void *, mixer_ctrl_t *);
 int	sbdsp_mixer_get_port(void *, mixer_ctrl_t *);
 int	sbdsp_mixer_query_devinfo(void *, mixer_devinfo_t *);
 
-void	*sb_malloc(void *, int, size_t, struct malloc_type *, int);
-void	sb_free(void *, void *, struct malloc_type *);
+void	*sb_malloc(void *, int, size_t);
+void	sb_free(void *, void *, size_t);
 size_t	sb_round_buffersize(void *, int, size_t);
 paddr_t	sb_mappage(void *, void *, off_t, int);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.39 2008/04/10 19:13:37 cegger Exp $	*/
+/*	$NetBSD: neo.c,v 1.39.16.1 2008/12/11 19:49:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.39 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.39.16.1 2008/12/11 19:49:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.39 2008/04/10 19:13:37 cegger Exp $");
 /* device private data */
 struct neo_softc {
 	struct device	dev;
+	kmutex_t	lock;
+	kmutex_t	intr_lock;
 
 	bus_space_tag_t bufiot;
 	bus_space_handle_t bufioh;
@@ -205,6 +207,7 @@ static void	neo_free(void *, void *, struct malloc_type *);
 static size_t	neo_round_buffersize(void *, int, size_t);
 static paddr_t	neo_mappage(void *, void *, off_t, int);
 static int	neo_get_props(void *);
+static void	neo_get_locks(void *, kmutex_t **, kmutex_t **);
 
 CFATTACH_DECL(neo, sizeof(struct neo_softc),
     neo_match, neo_attach, NULL, NULL);
@@ -271,6 +274,7 @@ static const struct audio_hw_if neo_hw_if = {
 	neo_trigger_input,
 	NULL,
 	NULL,
+	neo_get_locks,
 };
 
 /* -------------------------------------------------------------------- */
@@ -365,6 +369,8 @@ neo_intr(void *p)
 	int rv;
 
 	sc = (struct neo_softc *)p;
+	mutex_spin_enter(&sc->intr_lock);
+
 	rv = 0;
 	status = (sc->irsz == 2) ?
 	    nm_rd_2(sc, NM_INT_REG) :
@@ -420,6 +426,7 @@ neo_intr(void *p)
 		rv = 1;
 	}
 
+	mutex_spin_exit(&sc->intr_lock);
 	return rv;
 }
 
@@ -498,8 +505,7 @@ nm_init(struct neo_softc *sc)
 }
 
 static int
-neo_match(struct device *parent, struct cfdata *match,
-    void *aux)
+neo_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
 	pcireg_t subdev;
@@ -554,8 +560,12 @@ neo_resume(device_t dv PMF_FN_ARGS)
 {
 	struct neo_softc *sc = device_private(dv);
 
+	mutex_enter(&sc->sc_lock);
+	mutex_enter(&sc->sc_intr_lock);
 	nm_init(sc);
-	sc->codec_if->vtbl->restore_ports(sc->codec_if);	
+	mutex_exit(&sc->sc_intr_lock);
+	sc->codec_if->vtbl->restore_ports(sc->codec_if);
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
@@ -569,6 +579,7 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
+	int error;
 
 	sc = (struct neo_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -598,36 +609,50 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	mutex_init(&sc->lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+
 	intrstr = pci_intr_string(pc, ih);
-	sc->ih = pci_intr_establish(pc, ih, IPL_AUDIO, neo_intr, sc);
+	sc->ih = pci_intr_establish(pc, ih, IPL_SCHED, neo_intr, sc);
 
 	if (sc->ih == NULL) {
 		aprint_error_dev(&sc->dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 	printf("%s: interrupting at %s\n", device_xname(&sc->dev), intrstr);
-
-	if (nm_init(sc) != 0)
-		return;
 
 	/* Enable the device. */
 	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
-	sc->host_if.arg = sc;
+	mutex_spin_enter(&sc->sc_intr_lock);
+	error = nm_init(sc);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
+	if (error != 0) {
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
+		return;
+	}
+
+	sc->host_if.arg = sc;
 	sc->host_if.attach = neo_attach_codec;
 	sc->host_if.read   = neo_read_codec;
 	sc->host_if.write  = neo_write_codec;
 	sc->host_if.reset  = neo_reset_codec;
 	sc->host_if.flags  = neo_flags_codec;
 
-	if (ac97_attach(&sc->host_if, self) != 0)
+	if (ac97_attach(&sc->host_if, self, &sc->lock) != 0) {
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
+	}
 
 	if (!pmf_device_register(self, NULL, neo_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -943,8 +968,7 @@ neo_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 static void *
-neo_malloc(void *addr, int direction, size_t size,
-    struct malloc_type *pool, int flags)
+neo_malloc(void *addr, int direction, size_t size)
 {
 	struct neo_softc *sc;
 	void *rv;
@@ -971,7 +995,7 @@ neo_malloc(void *addr, int direction, size_t size,
 }
 
 static void
-neo_free(void *addr, void *ptr, struct malloc_type *pool)
+neo_free(void *addr, void *ptr, size_t size)
 {
 	struct neo_softc *sc;
 	vaddr_t v;
@@ -1020,4 +1044,14 @@ neo_get_props(void *addr)
 
 	return AUDIO_PROP_INDEPENDENT | AUDIO_PROP_MMAP |
 	    AUDIO_PROP_FULLDUPLEX;
+}
+
+static void
+neo_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
+{
+	struct neo_softc *sc;
+
+	sc = addr;
+	*intr = &sc->intr_lock;
+	*thread = &sc->lock;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.29 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.29.12.1 2008/12/11 19:49:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -91,11 +91,11 @@
  * Portions of this code are from the VOXware support for the ad1848
  * by Hannu Savolainen <hannu@voxware.pp.fi>
  *
- * Portions also supplied from the SoundBlaster driver for NetBSD.
+ * Portions also ripped from the SoundBlaster driver for NetBSD.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.29 2008/04/28 20:23:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.29.12.1 2008/12/11 19:49:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1085,13 +1085,12 @@ ad1848_commit_settings(void *addr)
 	struct ad1848_softc *sc;
 	int timeout;
 	u_char fs;
-	int s;
 
 	sc = addr;
 	if (!sc->need_commit)
 		return 0;
 
-	s = splaudio();
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	ad1848_mute_wave_output(sc, WAVE_MUTE0, 1);
 
@@ -1155,9 +1154,10 @@ ad1848_commit_settings(void *addr)
 
 	ad1848_mute_wave_output(sc, WAVE_MUTE0, 0);
 
-	splx(s);
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	sc->need_commit = 0;
+
 	return 0;
 }
 
@@ -1287,4 +1287,14 @@ ad1848_halt_input(void *addr)
 	ad_write(sc, SP_INTERFACE_CONFIG, reg & ~CAPTURE_ENABLE);
 
 	return 0;
+}
+
+void
+ad1848_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
+{
+	struct ad1848_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }

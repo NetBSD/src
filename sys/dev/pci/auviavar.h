@@ -1,7 +1,7 @@
-/*	$NetBSD: auviavar.h,v 1.14.12.1 2008/12/08 13:06:36 ad Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.14.12.2 2008/12/11 19:49:30 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
