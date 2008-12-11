@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.104 2008/12/11 05:45:29 alc Exp $	*/
+/*	$NetBSD: ath.c,v 1.105 2008/12/11 06:04:01 alc Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.104 2008/12/11 05:45:29 alc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.105 2008/12/11 06:04:01 alc Exp $");
 #endif
 
 /*
@@ -515,7 +515,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 		ic->ic_caps |= IEEE80211_C_CKIP;
 	if (ath_hal_ciphersupported(ah, HAL_CIPHER_TKIP)) {
 		ic->ic_caps |= IEEE80211_C_TKIP;
-#if 0
 		/*
 		 * Check if h/w does the MIC and/or whether the
 		 * separate key cache entries are required to
@@ -530,7 +529,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 			if (ath_hal_wmetkipmic(ah))
 				ic->ic_caps |= IEEE80211_C_WME_TKIPMIC;
 		}
-#endif
 
 		/*
 		 * If the h/w supports storing tx+rx MIC keys
