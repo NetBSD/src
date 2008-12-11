@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.202 2008/12/05 18:56:47 cube Exp $
+# $NetBSD: mi,v 1.203 2008/12/11 13:55:16 mishka Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -191,6 +191,7 @@
 ./etc/rc.d/ftp_proxy				etc-net-rc
 ./etc/rc.d/ftpd					etc-net-rc
 ./etc/rc.d/hostapd				etc-net-rc
+./etc/rc.d/httpd				etc-net-rc
 ./etc/rc.d/gated				etc-obsolete		obsolete
 ./etc/rc.d/identd				etc-net-rc
 ./etc/rc.d/ifwatchd				etc-net-rc
