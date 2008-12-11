@@ -14,11 +14,12 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar2317.c,v 1.1.1.1 2008/12/11 04:46:36 alc Exp $
+ * $Id: ar2317.c,v 1.2 2008/12/11 05:30:29 alc Exp $
  */
 #include "opt_ah.h"
 
 #include "ah.h"
+#include "ah_devid.h"
 #include "ah_internal.h"
 
 #include "ar5212/ar5212.h"
