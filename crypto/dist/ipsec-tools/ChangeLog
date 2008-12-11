@@ -1,3 +1,6 @@
+2008-12-08  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/isakmp.c: Fixed compilation when DPD support is disabled.
+
 2008-12-08  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/{pfkey.c|privsep.c|privsep.h}: do not cache pfkey
 	  sockets for SA dumps: it might cause some notifications to
