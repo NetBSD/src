@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.107 2008/12/09 13:16:22 nakayama Exp $
+# $NetBSD: GENERIC,v 1.108 2008/12/11 17:18:03 hauke Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.107 $"
+#ident 		"GENERIC-$Revision: 1.108 $"
 
 maxusers	64
 
@@ -294,10 +294,10 @@ ms0	at com?					# mouse
 #mtty*	at magma?
 #mbpp*	at magma?
 
-## SUNW,spif Serial/Parallel driver (not tested)
-#spif*  at sbus? slot ? offset ?
-#stty*  at spif?
-#sbpp*  at spif?
+## SUNW,spif Serial/Parallel driver
+spif*  at sbus? slot ? offset ?
+stty*  at spif?
+sbpp*  at spif?
 
 ## PCI serial interfaces
 com*	at puc? port ?			# 16x50s on "universal" comm boards
