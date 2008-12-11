@@ -1,11 +1,11 @@
-/*	$NetBSD: auvia.c,v 1.67.6.1 2008/12/08 13:06:36 ad Exp $	*/
+/*	$NetBSD: auvia.c,v 1.67.6.2 2008/12/11 19:49:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Tyler C. Sarna
+ * by Tyler C. Sarna.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,11 +40,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.67.6.1 2008/12/08 13:06:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.67.6.2 2008/12/11 19:49:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/audioio.h>
 
@@ -101,8 +101,8 @@ static int	auvia_getdev(void *, struct audio_device *);
 static int	auvia_set_port(void *, mixer_ctrl_t *);
 static int	auvia_get_port(void *, mixer_ctrl_t *);
 static int	auvia_query_devinfo(void *, mixer_devinfo_t *);
-static void *	auvia_malloc(void *, int, size_t, struct malloc_type *, int);
-static void	auvia_free(void *, void *, struct malloc_type *);
+static void *	auvia_malloc(void *, int, size_t);
+static void	auvia_free(void *, void *, size_t);
 static size_t	auvia_round_buffersize(void *, int, size_t);
 static paddr_t	auvia_mappage(void *, void *, off_t, int);
 static int	auvia_get_props(void *);
@@ -122,7 +122,7 @@ static bool	auvia_resume(device_t PMF_FN_PROTO);
 static int	auvia_attach_codec(void *, struct ac97_codec_if *);
 static int	auvia_intr(void *);
 static int	auvia_write_codec(void *, uint8_t, uint16_t);
-static void *	auvia_malloc_dmamem(void *, int, size_t, struct malloc_type *, int);
+static void *	auvia_malloc_dmamem(void *, int, size_t);
 static int	auvia_malloc_channel(struct auvia_softc *, struct auvia_softc_chan *,
 				     size_t);
 static int	auvia_read_codec(void *, uint8_t, uint16_t *);
@@ -322,10 +322,14 @@ auvia_detach(device_t self, int flags)
 
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 	if (sc->sc_play.sc_dma_ops != NULL) {
-		auvia_free(sc, sc->sc_play.sc_dma_ops, M_DEVBUF);
+		auvia_free(sc, sc->sc_play.sc_dma_ops,
+		    sc->sc_play.sc_dma_op_count *
+		    sizeof(struct auvia_dma_op));
 	}
 	if (sc->sc_record.sc_dma_ops != NULL) {
-		auvia_free(sc, sc->sc_record.sc_dma_ops, M_DEVBUF);
+		auvia_free(sc, sc->sc_record.sc_dma_ops,
+		    sc->sc_play.sc_dma_op_count *
+		    sizeof(struct auvia_dma_op));
 	}
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
@@ -775,19 +779,16 @@ static int
 auvia_round_blocksize(void *addr, int blk,
     int mode, const audio_params_t *param)
 {
-#if 0
 	struct auvia_softc *sc;
 
 	sc = addr;
+
 	/* XXX VT823x might have the limitation of dma_ops size */
 	if (sc->sc_flags & AUVIA_FLAGS_VT8233 && blk < 288)
 		blk = 288;
 
-	return (blk & -32);
-#else
 	/* Avoid too many dma_ops. */
 	return min((blk & -32), AUVIA_MINBLKSZ);
-#endif
 }
 
 static int
@@ -871,18 +872,19 @@ auvia_malloc_channel(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 	struct auvia_dma *dp;
 	int segs;
 
+	/* if old list is large enough, nothing to do */
 	segs = (size + AUVIA_MINBLKSZ - 1) / AUVIA_MINBLKSZ;
 	if (segs <= ch->sc_dma_op_count) {
 		return 0;
 	}
 
-	/* if old list was too small, free it */
 	if (ch->sc_dma_ops) {
-		auvia_free(sc, ch->sc_dma_ops, M_DEVBUF);
+		auvia_free(sc, ch->sc_dma_ops,
+		    ch->sc_dma_op_count * sizeof(*dp));
 	}
 
 	ch->sc_dma_ops = auvia_malloc_dmamem(sc, 0,
-		sizeof(struct auvia_dma_op) * segs, M_DEVBUF, M_WAITOK);
+		sizeof(struct auvia_dma_op) * segs);
 
 	if (ch->sc_dma_ops == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't build dmaops\n");
@@ -906,43 +908,43 @@ auvia_malloc_channel(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 }
 
 static void *
-auvia_malloc_dmamem(void *addr, int direction, size_t size,
-    struct malloc_type * pool, int flags)
+auvia_malloc_dmamem(void *addr, int direction, size_t size)
 {
 	struct auvia_softc *sc;
 	struct auvia_dma *p;
 	int error;
 	int rseg;
 
-	p = malloc(sizeof(*p), pool, flags);
+	p = kmem_alloc(sizeof(*p), KM_SLEEP);
 	if (p == NULL)
 		return NULL;
 	sc = addr;
 	p->size = size;
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0, &p->seg,
-				      1, &rseg, BUS_DMA_WAITOK)) != 0) {
-		aprint_error_dev(&sc->sc_dev, "unable to allocate DMA, error = %d\n", error);
+	    1, &rseg, BUS_DMA_WAITOK)) != 0) {
+		aprint_error_dev(&sc->sc_dev, "unable to allocate DMA, "
+		    "error = %d\n", error);
 		goto fail_alloc;
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &p->seg, rseg, size, &p->addr,
-				    BUS_DMA_WAITOK | BUS_DMA_COHERENT)) != 0) {
+	    BUS_DMA_WAITOK | BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(&sc->sc_dev, "unable to map DMA, error = %d\n",
-		       error);
+		    error);
 		goto fail_map;
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,
-				       BUS_DMA_WAITOK, &p->map)) != 0) {
+	    BUS_DMA_WAITOK, &p->map)) != 0) {
 		aprint_error_dev(&sc->sc_dev, "unable to create DMA map, error = %d\n",
-		       error);
+		    error);
 		goto fail_create;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, p->map, p->addr, size, NULL,
-				     BUS_DMA_WAITOK)) != 0) {
+	    BUS_DMA_WAITOK)) != 0) {
 		aprint_error_dev(&sc->sc_dev, "unable to load DMA map, error = %d\n",
-		       error);
+		    error);
 		goto fail_load;
 	}
 
@@ -958,36 +960,35 @@ fail_create:
 fail_map:
 	bus_dmamem_free(sc->sc_dmat, &p->seg, 1);
 fail_alloc:
-	free(p, pool);
+	kmem_free(p, sizeof(*p));
 	return NULL;
 }
 
 static void *
-auvia_malloc(void *addr, int direction, size_t size,
-    struct malloc_type * pool, int flags)
+auvia_malloc(void *addr, int direction, size_t size)
 {
 	struct auvia_softc *sc;
 	void *p;
 
 	sc = addr;
 
-	p = auvia_malloc_dmamem(addr, direction, size, pool, flags);
+	p = auvia_malloc_dmamem(addr, direction, size);
 	if (p == NULL) {
 		return NULL;
 	}
 	if (auvia_malloc_channel(sc, &sc->sc_play, size) != 0) {
-		auvia_free(addr, sc, pool);
+		auvia_free(addr, p, size);
 		return NULL;
 	}
 	if (auvia_malloc_channel(sc, &sc->sc_record, size) != 0) {
-		auvia_free(addr, sc, pool);
+		auvia_free(addr, p, size);
 		return NULL;
 	}
 	return p;
 }
 
 static void
-auvia_free(void *addr, void *ptr, struct malloc_type *pool)
+auvia_free(void *addr, void *ptr, size_t size)
 {
 	struct auvia_softc *sc;
 	struct auvia_dma **pp, *p;
@@ -1001,7 +1002,7 @@ auvia_free(void *addr, void *ptr, struct malloc_type *pool)
 			bus_dmamem_free(sc->sc_dmat, &p->seg, 1);
 
 			*pp = p->next;
-			free(p, pool);
+			kmem_free(p, sizeof(*p));
 			return;
 		}
 
@@ -1053,13 +1054,13 @@ auvia_get_props(void *addr)
 }
 
 static void
-auvia_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+auvia_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
 {
 	struct auvia_softc *sc;
 
 	sc = addr;
 	*intr = &sc->sc_intr_lock;
-	*proc = &sc->sc_lock;
+	*thread = &sc->sc_lock;
 }
 
 static int

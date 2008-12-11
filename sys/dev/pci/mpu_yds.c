@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_yds.c,v 1.15 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: mpu_yds.c,v 1.15.12.1 2008/12/11 19:49:31 ad Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_yds.c,v 1.15 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_yds.c,v 1.15.12.1 2008/12/11 19:49:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,7 @@ mpu_yds_attach(device_t parent, device_t self, void *aux)
 #ifndef AUDIO_NO_POWER_CTL
 	sc->powerctl = 0;
 #endif
+	sc->lock = &ysc->sc_intr_lock;
 	sc->sc_dev = self;
 
 	mpu_attach(sc);

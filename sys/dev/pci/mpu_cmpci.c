@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_cmpci.c,v 1.15 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: mpu_cmpci.c,v 1.15.12.1 2008/12/11 19:49:31 ad Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.15 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.15.12.1 2008/12/11 19:49:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,6 +79,7 @@ mpu_cmpci_attach(device_t parent, device_t self, void *aux)
 	sc->ioh = ysc->sc_mpu_ioh;
 	sc->model = "CMPCI MPU-401 MIDI UART";
 	sc->sc_dev = self;
+	sc->lock = &ysc->sc_intr_lock;
 
 	mpu_attach(sc);
 }

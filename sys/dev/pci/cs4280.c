@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.51 2008/03/21 08:20:04 dyoung Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.51.16.1 2008/12/11 19:49:30 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51 2008/03/21 08:20:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51.16.1 2008/12/11 19:49:30 ad Exp $");
 
 #include "midi.h"
 
@@ -188,6 +188,7 @@ static const struct audio_hw_if cs4280_hw_if = {
 	cs4280_trigger_input,
 	NULL,
 	NULL,
+	cs428x_get_locks,
 };
 
 #if NMIDI > 0
@@ -204,6 +205,7 @@ static const struct midi_hw_if cs4280_midi_hw_if = {
 	cs4280_midi_output,
 	cs4280_midi_getinfo,
 	0,
+	cs428x_get_locks,
 };
 #endif
 
@@ -399,13 +401,18 @@ cs4280_intr(void *p)
 
 	sc = p;
 	handled = 0;
+
+	mutex_enter(&sc->sc_intr_lock);
+
 	/* grab interrupt register then clear it */
 	intr = BA0READ4(sc, CS4280_HISR);
 	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
 
 	/* not for us ? */
-	if ((intr & HISR_INTENA) == 0)
+	if ((intr & HISR_INTENA) == 0) {
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
+	}
 
 	/* Playback Interrupt */
 	if (intr & HISR_PINT) {
@@ -543,6 +550,7 @@ cs4280_intr(void *p)
 	}
 #endif
 
+	mutex_spin_exit(&sc->sc_intr_lock);
 	return handled;
 }
 

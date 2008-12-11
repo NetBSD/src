@@ -1,7 +1,7 @@
-/*	$NetBSD: ad1848var.h,v 1.16 2008/04/28 20:23:48 martin Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.16.12.1 2008/12/11 19:49:30 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -96,6 +96,8 @@ struct ad1848_volume {
 
 struct ad1848_softc {
 	struct	device sc_dev;		/* base device */
+	kmutex_t sc_lock;
+	kmutex_t sc_intr_lock;
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
 
@@ -194,6 +196,8 @@ int	ad1848_from_vol(mixer_ctrl_t *, struct ad1848_volume *);
 int	ad1848_halt_output(void *);
 int	ad1848_halt_input(void *);
 paddr_t	ad1848_mappage(void *, void *, off_t, int);
+void	ad1848_get_locks(void *, kmutex_t **, kmutex_t **);
+
 
 #ifdef AUDIO_DEBUG
 void	ad1848_dump_regs(struct ad1848_softc *);
