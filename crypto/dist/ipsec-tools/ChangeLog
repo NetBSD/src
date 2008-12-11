@@ -1,5 +1,8 @@
 2008-12-08  Yvan Vanhullebus  <vanhu@netasq.com>
-	* src/racoon/isakmp.c: Fixed compilation when DPD support is disabled.
+	* src/racoon/isakmp.c: Fixed compilation when DPD support is
+	  disabled.
+	* src/racoon/grabmyaddr.c: Fixed compilation on FreeBSD
+	  (RTM_IFINFO and RTM_OIFINFO stuff).
 
 2008-12-08  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/{pfkey.c|privsep.c|privsep.h}: do not cache pfkey
