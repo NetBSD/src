@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5312_attach.c,v 1.1.1.1 2008/12/11 04:46:45 alc Exp $
+ * $Id: ar5312_attach.c,v 1.2 2008/12/11 05:30:29 alc Exp $
  */
 #include "opt_ah.h"
 
@@ -317,7 +317,6 @@ ar5312Probe(uint16_t vendorid, uint16_t devid)
 			return "Atheros 5312 WiSoC";
 		case AR5212_AR2313_REV8:
 			return "Atheros 2313 WiSoC";
-		case AR5212_AR2315_REV6:
 		case AR5212_AR2315_REV6:
 		case AR5212_AR2315_REV7:
 			return "Atheros 2315 WiSoC";

@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5211_reset.c,v 1.1.1.1 2008/12/11 04:46:34 alc Exp $
+ * $Id: ar5211_reset.c,v 1.2 2008/12/11 05:30:29 alc Exp $
  */
 #include "opt_ah.h"
 
@@ -46,7 +46,7 @@ typedef struct {
 } CHAN_INFO_2GHZ;
 
 #define CI_2GHZ_INDEX_CORRECTION 19
-const static CHAN_INFO_2GHZ chan2GHzData[] = {
+static const CHAN_INFO_2GHZ chan2GHzData[] = {
 	{ 1, 0x46, 96  },	/* 2312 -19 */
 	{ 1, 0x46, 97  },	/* 2317 -18 */
 	{ 1, 0x46, 98  },	/* 2322 -17 */
@@ -951,9 +951,11 @@ ar5211IsNfGood(struct ath_hal *ah, HAL_CHANNEL_INTERNAL *chan)
 
 	if (!getNoiseFloorThresh(ah, chan, &nfThresh))
 		return AH_FALSE;
+#ifdef AH_DEBUG
 	if (OS_REG_READ(ah, AR_PHY_AGC_CONTROL) & AR_PHY_AGC_CONTROL_NF)
 		HALDEBUG(ah, HAL_DEBUG_ANY,
 		    "%s: NF did not complete in calibration window\n", __func__);
+#endif
 	nf = ar5211GetNoiseFloor(ah);
 	if (nf > nfThresh) {
 		HALDEBUG(ah, HAL_DEBUG_ANY,

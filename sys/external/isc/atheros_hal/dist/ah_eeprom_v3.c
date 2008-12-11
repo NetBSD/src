@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_eeprom_v3.c,v 1.1.1.1 2008/12/11 04:46:25 alc Exp $
+ * $Id: ah_eeprom_v3.c,v 1.2 2008/12/11 05:30:29 alc Exp $
  */
 #include "opt_ah.h"
 
@@ -26,9 +26,9 @@ static void
 getPcdacInterceptsFromPcdacMinMax(HAL_EEPROM *ee,
 	uint16_t pcdacMin, uint16_t pcdacMax, uint16_t *vp)
 {
-	const static uint16_t intercepts3[] =
+	static const uint16_t intercepts3[] =
 		{ 0, 5, 10, 20, 30, 50, 70, 85, 90, 95, 100 };
-	const static uint16_t intercepts3_2[] =
+	static const uint16_t intercepts3_2[] =
 		{ 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 };
 	const uint16_t *ip = ee->ee_version < AR_EEPROM_VER3_2 ?
 		intercepts3 : intercepts3_2;

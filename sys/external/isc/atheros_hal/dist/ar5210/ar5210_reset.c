@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5210_reset.c,v 1.1.1.1 2008/12/11 04:46:28 alc Exp $
+ * $Id: ar5210_reset.c,v 1.2 2008/12/11 05:30:29 alc Exp $
  */
 #include "opt_ah.h"
 
@@ -54,7 +54,7 @@ static const uint8_t ar5k0007_pwrSettings[17] = {
 #define	AR_RC_SETTLE_TIME	20000
 
 static HAL_BOOL ar5210SetResetReg(struct ath_hal *,
-		uint32_t resetMask, u_int delay);
+		uint32_t resetMask, u_int waitTime);
 static HAL_BOOL ar5210SetChannel(struct ath_hal *, HAL_CHANNEL_INTERNAL *);
 static void ar5210SetOperatingMode(struct ath_hal *, int opmode);
 
@@ -531,9 +531,11 @@ ar5210PerCalibrationN(struct ath_hal *ah,  HAL_CHANNEL *chan, u_int chainMask,
 	/* AGC calibration (this was added to make the NF threshold check work) */
 	OS_REG_WRITE(ah, AR_PHY_AGCCTL,
 		 OS_REG_READ(ah, AR_PHY_AGCCTL) | AR_PHY_AGC_CAL);
+#ifdef AH_DEBUG
 	if (!ath_hal_wait(ah, AR_PHY_AGCCTL, AR_PHY_AGC_CAL, 0))
 		HALDEBUG(ah, HAL_DEBUG_ANY, "%s: AGC calibration timeout\n",
 		    __func__);
+#endif
 
 	/* Rewrite our AGC values we stored off earlier (return AGC to normal operation) */
 	OS_REG_WRITE(ah, 0x9858, reg9858);
@@ -582,14 +584,14 @@ ar5210ResetCalValid(struct ath_hal *ah, HAL_CHANNEL *chan)
  * Writes the given reset bit mask into the reset register
  */
 static HAL_BOOL
-ar5210SetResetReg(struct ath_hal *ah, uint32_t resetMask, u_int delay)
+ar5210SetResetReg(struct ath_hal *ah, uint32_t resetMask, u_int waitTime)
 {
 	uint32_t mask = resetMask ? resetMask : ~0;
 	HAL_BOOL rt;
 
 	OS_REG_WRITE(ah, AR_RC, resetMask);
 	/* need to wait at least 128 clocks when reseting PCI before read */
-	OS_DELAY(delay);
+	OS_DELAY(waitTime);
 
 	resetMask &= AR_RC_RPCU | AR_RC_RDMA | AR_RC_RPHY | AR_RC_RMAC;
 	mask &= AR_RC_RPCU | AR_RC_RDMA | AR_RC_RPHY | AR_RC_RMAC;

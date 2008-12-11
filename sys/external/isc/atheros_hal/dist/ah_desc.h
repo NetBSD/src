@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_desc.h,v 1.1.1.1 2008/12/11 04:46:23 alc Exp $
+ * $Id: ah_desc.h,v 1.2 2008/12/11 05:30:29 alc Exp $
  */
 
 #ifndef _DEV_ATH_DESC_H
@@ -190,9 +190,6 @@ struct ath_desc {
 	uint32_t	ds_ctl0;	/* opaque DMA control 0 */
 	uint32_t	ds_ctl1;	/* opaque DMA control 1 */
 	uint32_t	ds_hw[HAL_DESC_HW_SIZE];	/* opaque h/w region */
-};
-
-struct ath_desc_status {
 	union {
 		struct ath_tx_status tx;/* xmit status */
 		struct ath_rx_status rx;/* recv status */
