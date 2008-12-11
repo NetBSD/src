@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2008/10/12 22:08:08 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2008/12/11 16:25:23 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #define _SYS_RUMP_CPU_H_
 
 #include <sys/cpu_data.h>
+#include <machine/pcb.h>
 
 struct cpu_info {
 	struct cpu_data ci_data;
