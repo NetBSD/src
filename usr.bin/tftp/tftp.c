@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.28 2006/10/22 16:45:35 christos Exp $	*/
+/*	$NetBSD: tftp.c,v 1.29 2008/12/11 18:40:02 seanb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.28 2006/10/22 16:45:35 christos Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.29 2008/12/11 18:40:02 seanb Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,12 +139,12 @@ get_options(struct tftphdr *ap, int size)
 			strlcpy(multicast, valp, sizeof(multicast));
 			pmulticast = multicast;
 			addr = strsep(&pmulticast, ",");
-			if (multicast == NULL)
+			if (pmulticast == NULL)
 				continue; /* Report error? */
 			mcport = atoi(strsep(&pmulticast, ","));
-			if (multicast == NULL)
+			if (pmulticast == NULL)
 				continue; /* Report error? */
-			mcmasterslave = atoi(multicast);
+			mcmasterslave = atoi(pmulticast);
 			mcaddr = inet_addr(addr);
 			if (mcaddr == INADDR_NONE)
 				continue; /* Report error? */
