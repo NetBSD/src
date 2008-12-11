@@ -1,4 +1,4 @@
-/*	$NetBSD: grabmyaddr.c,v 1.15 2008/11/25 22:00:15 bad Exp $	*/
+/*	$NetBSD: grabmyaddr.c,v 1.16 2008/12/11 15:45:24 vanhu Exp $	*/
 
 /* Id: grabmyaddr.c,v 1.27 2006/04/06 16:27:05 manubsd Exp */
 
@@ -61,6 +61,9 @@
 #include <ifaddrs.h>
 #include <net/if.h>
 #endif 
+#if defined(__FreeBSD__)
+#include <net/route.h>
+#endif
 
 #include "var.h"
 #include "misc.h"
@@ -693,7 +696,9 @@ update_myaddrs()
 		break;
 	case RTM_DELETE:
 	case RTM_IFINFO:
+#ifdef RTM_OIFINFO
 	case RTM_OIFINFO:
+#endif
 	case RTM_MISS:
 		/* ignore this message silently */
 		return 0;
