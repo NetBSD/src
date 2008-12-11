@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5211_phy.c,v 1.1.1.1 2008/12/11 04:46:32 alc Exp $
+ * $Id: ar5211_phy.c,v 1.2 2008/12/11 05:30:29 alc Exp $
  */
 #include "opt_ah.h"
 
@@ -34,14 +34,14 @@ HAL_RATE_TABLE ar5211_11a_table = {
 	{
 /*                                                  short            ctrl  */
 /*                valid                 rateCode Preamble  dot11Rate Rate */
-/*   6 Mb */ {  AH_TRUE, OFDM,    6000,     0x0b,    0x00, (0x80|12),   0 },
-/*   9 Mb */ {  AH_TRUE, OFDM,    9000,     0x0f,    0x00,        18,   0 },
-/*  12 Mb */ {  AH_TRUE, OFDM,   12000,     0x0a,    0x00, (0x80|24),   2 },
-/*  18 Mb */ {  AH_TRUE, OFDM,   18000,     0x0e,    0x00,        36,   2 },
-/*  24 Mb */ {  AH_TRUE, OFDM,   24000,     0x09,    0x00, (0x80|48),   4 },
-/*  36 Mb */ {  AH_TRUE, OFDM,   36000,     0x0d,    0x00,        72,   4 },
-/*  48 Mb */ {  AH_TRUE, OFDM,   48000,     0x08,    0x00,        96,   4 },
-/*  54 Mb */ {  AH_TRUE, OFDM,   54000,     0x0c,    0x00,       108,   4 }
+/*   6 Mb */ {  AH_TRUE, OFDM,    6000,     0x0b,    0x00, (0x80|12),   0, 0, 0 },
+/*   9 Mb */ {  AH_TRUE, OFDM,    9000,     0x0f,    0x00,        18,   0, 0, 0 },
+/*  12 Mb */ {  AH_TRUE, OFDM,   12000,     0x0a,    0x00, (0x80|24),   2, 0, 0 },
+/*  18 Mb */ {  AH_TRUE, OFDM,   18000,     0x0e,    0x00,        36,   2, 0, 0 },
+/*  24 Mb */ {  AH_TRUE, OFDM,   24000,     0x09,    0x00, (0x80|48),   4, 0, 0 },
+/*  36 Mb */ {  AH_TRUE, OFDM,   36000,     0x0d,    0x00,        72,   4, 0, 0 },
+/*  48 Mb */ {  AH_TRUE, OFDM,   48000,     0x08,    0x00,        96,   4, 0, 0 },
+/*  54 Mb */ {  AH_TRUE, OFDM,   54000,     0x0c,    0x00,       108,   4, 0, 0 }
 	},
 };
 
@@ -51,14 +51,14 @@ HAL_RATE_TABLE ar5211_turbo_table = {
 	{
 /*                                                 short            ctrl  */
 /*                valid                rateCode Preamble  dot11Rate Rate */
-/*   6 Mb */ {  AH_TRUE, TURBO,   6000,    0x0b,    0x00, (0x80|12),   0 },
-/*   9 Mb */ {  AH_TRUE, TURBO,   9000,    0x0f,    0x00,        18,   0 },
-/*  12 Mb */ {  AH_TRUE, TURBO,  12000,    0x0a,    0x00, (0x80|24),   2 },
-/*  18 Mb */ {  AH_TRUE, TURBO,  18000,    0x0e,    0x00,        36,   2 },
-/*  24 Mb */ {  AH_TRUE, TURBO,  24000,    0x09,    0x00, (0x80|48),   4 },
-/*  36 Mb */ {  AH_TRUE, TURBO,  36000,    0x0d,    0x00,        72,   4 },
-/*  48 Mb */ {  AH_TRUE, TURBO,  48000,    0x08,    0x00,        96,   4 },
-/*  54 Mb */ {  AH_TRUE, TURBO,  54000,    0x0c,    0x00,       108,   4 }
+/*   6 Mb */ {  AH_TRUE, TURBO,   6000,    0x0b,    0x00, (0x80|12),   0, 0, 0 },
+/*   9 Mb */ {  AH_TRUE, TURBO,   9000,    0x0f,    0x00,        18,   0, 0, 0 },
+/*  12 Mb */ {  AH_TRUE, TURBO,  12000,    0x0a,    0x00, (0x80|24),   2, 0, 0 },
+/*  18 Mb */ {  AH_TRUE, TURBO,  18000,    0x0e,    0x00,        36,   2, 0, 0 },
+/*  24 Mb */ {  AH_TRUE, TURBO,  24000,    0x09,    0x00, (0x80|48),   4, 0, 0 },
+/*  36 Mb */ {  AH_TRUE, TURBO,  36000,    0x0d,    0x00,        72,   4, 0, 0 },
+/*  48 Mb */ {  AH_TRUE, TURBO,  48000,    0x08,    0x00,        96,   4, 0, 0 },
+/*  54 Mb */ {  AH_TRUE, TURBO,  54000,    0x0c,    0x00,       108,   4, 0, 0 }
 	},
 };
 
@@ -68,10 +68,10 @@ HAL_RATE_TABLE ar5211_11b_table = {
 	{
 /*                                                 short            ctrl  */
 /*                valid                rateCode Preamble  dot11Rate Rate */
-/*   1 Mb */ {  AH_TRUE,  CCK,    1000,    0x0b,    0x00, (0x80| 2),   0 },
-/*   2 Mb */ {  AH_TRUE,  CCK,    2000,    0x0a,    0x04, (0x80| 4),   1 },
-/* 5.5 Mb */ {  AH_TRUE,  CCK,    5500,    0x09,    0x04, (0x80|11),   1 },
-/*  11 Mb */ {  AH_TRUE,  CCK,   11000,    0x08,    0x04, (0x80|22),   1 }
+/*   1 Mb */ {  AH_TRUE,  CCK,    1000,    0x0b,    0x00, (0x80| 2),   0, 0, 0 },
+/*   2 Mb */ {  AH_TRUE,  CCK,    2000,    0x0a,    0x04, (0x80| 4),   1, 0, 0 },
+/* 5.5 Mb */ {  AH_TRUE,  CCK,    5500,    0x09,    0x04, (0x80|11),   1, 0, 0 },
+/*  11 Mb */ {  AH_TRUE,  CCK,   11000,    0x08,    0x04, (0x80|22),   1, 0, 0 }
 	},
 };
 

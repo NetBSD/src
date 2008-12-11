@@ -14,8 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_eeprom_v14.c,v 1.1.1.1 2008/12/11 04:46:24 alc Exp $
+ * $Id: ah_eeprom_v14.c,v 1.2 2008/12/11 05:30:29 alc Exp $
  */
+#include <sys/endian.h>
 #include "opt_ah.h"
 
 #include "ah.h"
@@ -159,6 +160,7 @@ v14EepromDiag(struct ath_hal *ah, int request,
 	return AH_FALSE;
 }
 
+#if 0
 /* XXX conditionalize by target byte order */
 #ifndef bswap16
 static __inline__ uint16_t
@@ -169,6 +171,7 @@ __bswap16(uint16_t _x)
 	      (((const uint8_t *)(&_x))[1]<< 8))
 	);
 }
+#endif
 #endif
 
 /* Do structure specific swaps if Eeprom format is non native to host */
