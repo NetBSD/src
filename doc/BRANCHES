@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.270 2008/12/07 12:57:00 ad Exp $
+#	$NetBSD: BRANCHES,v 1.271 2008/12/11 02:25:26 snj Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -146,7 +146,7 @@ Notes:
 
 Branch:		netbsd-2
 Description:    The NetBSD 2 release branch
-Status:		Active
+Status:		Terminated
 Start Date:	23 Dec 2004
 End Date:
 Base Tag:	netbsd-2-base
@@ -158,7 +158,7 @@ Notes:
 Branch:		netbsd-2-0
 Description:	Originally the NetBSD 2.0 release branch and now the branch 
 		tracking security/critical fixes for the NetBSD 2.0 series
-Status:		Active
+Status:		Terminated
 Start Date:	28 Mar 2004 and changed for security/critical function on
        		23 Dec 2004
 End Date:
@@ -172,7 +172,7 @@ Notes:		Branch was re-purposed to security/critical change function
 
 Branch:		netbsd-2-1
 Description:	Tracking security/critical fixes for NetBSD 2.1
-Status:		Active
+Status:		Terminated
 Start Date:     26 Oct 2005 
 End Date:
 Base Tag:	netbsd-2-1-RELEASE
@@ -200,6 +200,17 @@ Start Date:	8 Aug 2006
 End Date:
 Base Tag:	netbsd-4-base
 Maintainer:	4 Release Engineering <releng-4@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:
+		Commits restricted to Release Engineering.
+
+Branch:		netbsd-5
+Description:	The NetBSD 5 release branch
+Status:		Active
+Start Date:	31 Oct 2008
+End Date:
+Base Tag:	netbsd-5-base
+Maintainer:	5.0 Release Engineering <releng-5@NetBSD.org>
 Scope:		Entire tree. (src + xsrc)
 Notes:
 		Commits restricted to Release Engineering.
