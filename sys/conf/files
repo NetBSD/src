@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.929 2008/11/19 18:36:06 ad Exp $
+#	$NetBSD: files,v 1.930 2008/12/11 05:42:18 alc Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -585,15 +585,16 @@ file	dev/ic/am79c930.c		awi
 device	wi: arp, wlan, ifnet
 file	dev/ic/wi.c			wi
 
+# Atheros HAL
+#
+include "external/isc/atheros_hal/conf/files.ath_hal"
+
 # Atheros 5210/5211/5212 multi-mode 802.11
 #
-defflag	opt_athhal.h	ATHHAL_ASSERT ATHHAL_DEBUG ATHHAL_DEBUG_ALQ
 device	ath: arp, wlan, ifnet
 file	dev/ic/ath.c					ath
 file	dev/ic/ath_netbsd.c				ath
 file	dev/ic/athrate-sample.c				ath
-file	contrib/dev/ath/netbsd/ah_osdep.c		ath
-object	/athhal.o					ath
 
 # ADMtek ADM8211 802.11
 #
