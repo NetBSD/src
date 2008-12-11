@@ -1,4 +1,4 @@
-.\" $NetBSD: wprintf.3,v 1.2 2005/06/03 20:32:20 wiz Exp $
+.\" $NetBSD: wprintf.3,v 1.3 2008/12/11 04:33:22 yamt Exp $
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -94,11 +94,6 @@ string that specifies how subsequent arguments
 (or arguments accessed via the variable-length argument facilities of
 .Xr stdarg 3 )
 are converted for output.
-.Pp
-These functions return the number of characters printed
-(not including the trailing
-.Ql \e0
-used to end output to strings).
 .Pp
 The
 .Fn swprintf
@@ -593,6 +588,11 @@ In no case does a non-existent or small field width cause truncation of
 a numeric field; if the result of a conversion is wider than the field
 width, the
 field is expanded to contain the conversion result.
+.Sh RETURN VALUES
+These functions return the number of characters printed
+(not including the trailing
+.Ql \e0
+used to end output to strings).
 .Sh SEE ALSO
 .Xr btowc 3 ,
 .Xr fputws 3 ,
