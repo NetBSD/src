@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.161 2008/11/27 01:57:40 joerg Exp $
+#	$NetBSD: Makefile.i386,v 1.162 2008/12/11 05:27:42 alc Exp $
 
 # Makefile for NetBSD
 #
@@ -117,8 +117,7 @@ acpi_wakeup_low.o busfunc.o kvm86call.o: assym.h
 
 %RULES
 
-## Include rules for Atheros WLAN
-.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
+## Include rules for ACPI wakecode
 .include "$S/arch/x86/acpi/Makefile.wakecode.inc"
 
 ##
