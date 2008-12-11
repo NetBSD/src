@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.122 2008/11/12 12:35:52 ad Exp $
+#	$NetBSD: special,v 1.123 2008/12/11 13:55:17 mishka Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -205,6 +205,7 @@
 ./etc/rc.d/ftp_proxy		type=file mode=0555
 ./etc/rc.d/ftpd			type=file mode=0555
 ./etc/rc.d/hostapd		type=file mode=0555
+./etc/rc.d/httpd		type=file mode=0555
 ./etc/rc.d/identd		type=file mode=0555
 ./etc/rc.d/ifwatchd		type=file mode=0555
 ./etc/rc.d/inetd		type=file mode=0555

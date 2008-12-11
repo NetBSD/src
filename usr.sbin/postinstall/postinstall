@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.79 2008/12/05 19:01:23 cube Exp $
+# $NetBSD: postinstall,v 1.80 2008/12/11 13:55:17 mishka Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -953,7 +953,7 @@ do_rc()
 		ccd cgd cleartmp cron \
 		dhclient dhcpd dhcrelay dmesg downinterfaces envsys \
 		fsck ftp_proxy ftpd \
-		hostapd \
+		hostapd httpd \
 		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
 		irdaattach iscsi_target isdnd \
 		kdc \
