@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.18 2008/04/28 20:23:52 martin Exp $ */
+/* $NetBSD: cms.c,v 1.18.12.1 2008/12/11 19:49:30 ad Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.18 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.18.12.1 2008/12/11 19:49:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,6 +189,7 @@ cms_attach(device_t parent, device_t self, void *aux)
 	strcpy(ms->name, "Creative Music System");
 	ms->nvoice = CMS_NVOICES;
 	ms->data = sc;
+	ms->lock = &sc->sc_lock;
 
 	/* use the synthesiser */
 	midisyn_attach(&sc->sc_mididev, ms);

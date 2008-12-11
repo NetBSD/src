@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.15 2008/04/10 19:13:36 cegger Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.15.16.1 2008/12/11 19:49:30 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.15 2008/04/10 19:13:36 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.15.16.1 2008/12/11 19:49:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,4 +368,14 @@ cs428x_src_wait(struct cs428x_softc *sc)
 		}
 	}
 	return 0;
+}
+
+void
+cs428x_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+{
+	struct cs428x_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*proc = &sc->sc_lock;
 }

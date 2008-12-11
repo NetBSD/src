@@ -1,7 +1,7 @@
-/*	$NetBSD: ad1848_isa.c,v 1.36 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.36.12.1 2008/12/11 19:49:30 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.36 2008/04/28 20:23:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.36.12.1 2008/12/11 19:49:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,11 +105,10 @@ __KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.36 2008/04/28 20:23:51 martin Exp $
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
-
 #include <sys/cpu.h>
 #include <sys/bus.h>
-
 #include <sys/audioio.h>
+#include <sys/malloc.h>
 
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
@@ -694,6 +693,9 @@ ad1848_isa_intr(void *arg)
 
 	isc = arg;
 	sc = &isc->sc_ad1848;
+
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	retval = 0;
 	/* Get intr status */
 	status = ADREAD(sc, AD1848_STATUS);
@@ -727,6 +729,7 @@ ad1848_isa_intr(void *arg)
 		/* Clear interrupt */
 		ADWRITE(sc, AD1848_STATUS, 0);
 	}
+	mutex_spin_exit(&sc->sc_intr_lock);
 	return retval;
 }
 
@@ -734,9 +737,7 @@ void *
 ad1848_isa_malloc(
 	void *addr,
 	int direction,
-	size_t size,
-	struct malloc_type *pool,
-	int flags)
+	size_t size)
 {
 	struct ad1848_isa_softc *isc;
 	int drq;
@@ -746,14 +747,14 @@ ad1848_isa_malloc(
 		drq = isc->sc_playdrq;
 	else
 		drq = isc->sc_recdrq;
-	return isa_malloc(isc->sc_ic, drq, size, pool, flags);
+	return isa_malloc(isc->sc_ic, drq, size, M_DEVBUF, M_WAITOK);
 }
 
 void
-ad1848_isa_free(void *addr, void *ptr, struct malloc_type *pool)
+ad1848_isa_free(void *addr, void *ptr, size_t size)
 {
 
-	isa_free(ptr, pool);
+	isa_free(ptr, M_DEVBUF);
 }
 
 size_t

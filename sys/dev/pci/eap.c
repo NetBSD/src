@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.92.12.3 2008/12/09 13:09:13 ad Exp $	*/
+/*	$NetBSD: eap.c,v 1.92.12.4 2008/12/11 19:49:30 ad Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.92.12.3 2008/12/09 13:09:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.92.12.4 2008/12/11 19:49:30 ad Exp $");
 
 #include "midi.h"
 #include "joy_eap.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: eap.c,v 1.92.12.3 2008/12/09 13:09:13 ad Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/select.h>
@@ -208,8 +208,8 @@ static int	eap1370_mixer_get_port(void *, mixer_ctrl_t *);
 static int	eap1371_mixer_set_port(void *, mixer_ctrl_t *);
 static int	eap1371_mixer_get_port(void *, mixer_ctrl_t *);
 static int	eap1370_query_devinfo(void *, mixer_devinfo_t *);
-static void	*eap_malloc(void *, int, size_t, struct malloc_type *, int);
-static void	eap_free(void *, void *, struct malloc_type *);
+static void	*eap_malloc(void *, int, size_t);
+static void	eap_free(void *, void *, size_t);
 static size_t	eap_round_buffersize(void *, int, size_t);
 static paddr_t	eap_mappage(void *, void *, off_t, int);
 static int	eap_get_props(void *);
@@ -1800,22 +1800,21 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 static void *
-eap_malloc(void *addr, int direction, size_t size,
-    struct malloc_type *pool, int flags)
+eap_malloc(void *addr, int direction, size_t size)
 {
 	struct eap_instance *ei;
 	struct eap_softc *sc;
 	struct eap_dma *p;
 	int error;
 
-	p = malloc(sizeof(*p), pool, flags);
+	p = kmem_alloc(sizeof(*p), KM_SLEEP);
 	if (!p)
 		return NULL;
 	ei = addr;
 	sc = device_private(ei->parent);
 	error = eap_allocmem(sc, size, 16, p);
 	if (error) {
-		free(p, pool);
+		kmem_free(p, sizeof(*p));
 		return NULL;
 	}
 	p->next = sc->sc_dmas;
@@ -1824,7 +1823,7 @@ eap_malloc(void *addr, int direction, size_t size,
 }
 
 static void
-eap_free(void *addr, void *ptr, struct malloc_type *pool)
+eap_free(void *addr, void *ptr, size_t size)
 {
 	struct eap_instance *ei;
 	struct eap_softc *sc;
@@ -1836,7 +1835,7 @@ eap_free(void *addr, void *ptr, struct malloc_type *pool)
 		if (KERNADDR(p) == ptr) {
 			eap_freemem(sc, p);
 			*pp = p->next;
-			free(p, pool);
+			kmem_free(p, sizeof(*p));
 			return;
 		}
 	}
@@ -1878,7 +1877,7 @@ eap_get_props(void *addr)
 }
 
 static void
-eap_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+eap_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
 {
 	struct eap_instance *ei;
 	struct eap_softc *sc;
@@ -1886,7 +1885,7 @@ eap_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
 	ei = addr;
 	sc = device_private(ei->parent);
 	*intr = &sc->sc_intr_lock;
-	*proc = &sc->sc_lock;
+	*thread = &sc->sc_lock;
 }
 
 #if NMIDI > 0
@@ -1921,7 +1920,8 @@ eap_midi_close(void *addr)
 	struct eap_softc *sc;
 
 	sc = addr;
-	tsleep(sc, PWAIT, "eapclm", hz/10); /* give uart a chance to drain */
+	/* give uart a chance to drain */
+	(void)kpause("eapclm", false, hz/10, &sc->sc_intr_lock);
 	EWRITE1(sc, EAP_UART_CONTROL, 0);
 	EWRITE4(sc, EAP_ICSC, EREAD4(sc, EAP_ICSC) & ~EAP_UART_EN);
 
