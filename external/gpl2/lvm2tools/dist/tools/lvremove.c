@@ -1,3 +1,5 @@
+/*	$NetBSD: lvremove.c,v 1.1.1.2 2008/12/12 11:43:10 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -30,6 +32,8 @@ int lvremove(struct cmd_context *cmd, int argc, char **argv)
 		log_error("Please enter one or more logical volume paths");
 		return EINVALID_CMD_LINE;
 	}
+
+	cmd->handles_missing_pvs = 1;
 
 	return process_each_lv(cmd, argc, argv, LCK_VG_WRITE, NULL,
 			       &lvremove_single);

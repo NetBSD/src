@@ -206,7 +206,7 @@ if (( $metadata )); then
 
 	pvs="$("$LVM" pvs --separator , --noheadings --units s --nosuffix -o \
 	    name,pe_start 2>> "$log" | $SED -e 's/^ *//')"
-	for line in "$pvs"
+	for line in $pvs
 	do
 		test -z "$line" && continue
 		pv="$(echo $line | $CUT -d, -f1)"

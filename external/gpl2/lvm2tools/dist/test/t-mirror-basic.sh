@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2007 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2008 Red Hat, Inc. All rights reserved.
 # Copyright (C) 2007 NEC Corporation
 #
 # This copyrighted material is made available to anyone wishing to use,
@@ -11,51 +11,13 @@
 # Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 test_description="ensure that basic operations on mirrored LV works"
-privileges_required_=1
 
-. ./test-lib.sh
+. ./test-utils.sh
 
-dmsetup_has_dm_devdir_support_ ||
-{
-  say "Your version of dmsetup lacks support for changing DM_DEVDIR."
-  say "Skipping this test"
-  exit 0
-}
-
-cleanup_()
-{
-  test -n "$vg" && {
-    lvremove -ff $vg
-    vgremove $vg
-  } > /dev/null
-  test -n "$pvs" && {
-    pvremove $pvs > /dev/null
-    for d in $pvs; do
-      dmsetup remove $(basename $d)
-    done
-  }
-  losetup -d $lodev
-  rm -f $lofile
-}
-
-# ---------------------------------------------------------------------
-# config
-
-nr_pvs=5
-pvsize=$((80 * 1024 * 2))
-
-vg=mirror-basic-vg-$$
-lv1=lv1
-lv2=lv2
-lv3=lv3
+dmsetup_has_dm_devdir_support_ || exit 200
 
 # ---------------------------------------------------------------------
 # Utilities
-
-pv_()
-{
-  echo "$G_dev_/mapper/pv$1"
-}
 
 lvdev_()
 {
@@ -132,9 +94,8 @@ mirrorlog_is_on_()
   local lv="$1"_mlog
   shift 1
   lvs -a -odevices --noheadings $lv | sed 's/,/\n/g' > out
-  for d in $*; do grep "$d(" out || return 1; done
-  for d in $*; do grep -v "$d(" out > out2; mv out2 out; done
-  grep . out && return 1
+  for d in $*; do grep "$d(" out; done
+  for d in $*; do ! grep -v "$d(" out; done
   return 0
 }
 
@@ -152,31 +113,7 @@ check_dev_sum_()
 # ---------------------------------------------------------------------
 # Initialize PVs and VGs
 
-test_expect_success \
-  'set up temp file and loopback device' \
-  'lofile=$(pwd)/lofile && lodev=$(loop_setup_ "$lofile")'
-
-offset=0
-pvs=
-for n in $(seq 1 $nr_pvs); do
-  test_expect_success \
-      "create pv$n" \
-      'echo "0 $pvsize linear $lodev $offset" > in &&
-       dmsetup create pv$n < in'
-  offset=$(($offset + $pvsize))
-done
-
-for n in $(seq 1 $nr_pvs); do
-  pvs="$pvs $(pv_ $n)"
-done
-
-test_expect_success \
-  "Run this: pvcreate $pvs" \
-  'pvcreate $pvs'
-
-test_expect_success \
-  'set up a VG' \
-  'vgcreate $vg $pvs'
+aux prepare_vg 5 80
 
 # ---------------------------------------------------------------------
 # Common environment setup/cleanup for each sub testcases
@@ -184,18 +121,26 @@ test_expect_success \
 prepare_lvs_()
 {
   lvremove -ff $vg;
+	if dmsetup table|grep $vg; then
+		echo "ERROR: lvremove did leave some some mappings in DM behind!"
+		return 1
+	fi
   :
 }
 
 check_and_cleanup_lvs_()
 {
-  lvs -a -o+devices $vg &&
+  lvs -a -o+devices $vg
   lvremove -ff $vg
+	if dmsetup table|grep $vg; then
+		echo "ERROR: lvremove did leave some some mappings in DM behind!"
+		return 1
+	fi
 }
 
-test_expect_success "check environment setup/cleanup" \
-  'prepare_lvs_ &&
-   check_and_cleanup_lvs_'
+#COMM "check environment setup/cleanup"
+prepare_lvs_ 
+check_and_cleanup_lvs_
 
 # ---------------------------------------------------------------------
 # mirrored LV tests
@@ -203,126 +148,137 @@ test_expect_success "check environment setup/cleanup" \
 # ---
 # create
 
-test_expect_success "create 2-way mirror with disklog from 3 PVs" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -m1 -n $lv1 $vg $(pv_ 1) $(pv_ 2) $(pv_ 3):0-1 &&
-   mimages_are_redundant_ $vg $lv1 &&
-   mirrorlog_is_on_ $vg/$lv1 $(pv_ 3) &&
-   check_and_cleanup_lvs_'
+#COMM "create 2-way mirror with disklog from 3 PVs"
+prepare_lvs_ 
+lvcreate -l2 -m1 -n $lv1 $vg $dev1 $dev2 $dev3:0-1 
+mimages_are_redundant_ $vg $lv1 
+mirrorlog_is_on_ $vg/$lv1 $dev3 
+check_and_cleanup_lvs_
 
-test_expect_success "create 2-way mirror with corelog from 2 PVs" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -m1 --mirrorlog core -n $lv1 $vg $(pv_ 1) $(pv_ 2) &&
-   mimages_are_redundant_ $vg $lv1 &&
-   check_and_cleanup_lvs_'
+#COMM "create 2-way mirror with corelog from 2 PVs"
+prepare_lvs_ 
+lvcreate -l2 -m1 --mirrorlog core -n $lv1 $vg $dev1 $dev2 
+mimages_are_redundant_ $vg $lv1 
+check_and_cleanup_lvs_
 
-test_expect_success "create 3-way mirror with disklog from 4 PVs" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -m2 -n $lv1 $vg $(pv_ 1) $(pv_ 2) $(pv_ 4) $(pv_ 3):0-1 &&
-   mimages_are_redundant_ $vg $lv1 &&
-   mirrorlog_is_on_ $vg/$lv1 $(pv_ 3) &&
-   check_and_cleanup_lvs_'
+#COMM "create 3-way mirror with disklog from 4 PVs"
+prepare_lvs_ 
+lvcreate -l2 -m2 -n $lv1 $vg $dev1 $dev2 $dev4 $dev3:0-1 
+mimages_are_redundant_ $vg $lv1 
+mirrorlog_is_on_ $vg/$lv1 $dev3 
+check_and_cleanup_lvs_
+
+#COMM "lvcreate --nosync is in 100% sync after creation (bz429342)"
+prepare_lvs_ 
+lvcreate -l2 -m1 --nosync -n $lv1 $vg $dev1 $dev2 $dev3:0-1 2>out
+grep "New mirror won't be synchronised." out
+lvs -o copy_percent --noheadings $vg/$lv1 |grep 100.00
+check_and_cleanup_lvs_
 
 # ---
 # convert
 
-test_expect_success "convert from linear to 2-way mirror" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -n $lv1 $vg $(pv_ 1) &&
-   lvconvert -m+1 $vg/$lv1 $(pv_ 2) $(pv_ 3):0-1 &&
-   mimages_are_redundant_ $vg $lv1 &&
-   mirrorlog_is_on_ $vg/$lv1 $(pv_ 3) &&
-   check_and_cleanup_lvs_'
+#COMM "convert from linear to 2-way mirror"
+prepare_lvs_ 
+lvcreate -l2 -n $lv1 $vg $dev1 
+lvconvert -m+1 $vg/$lv1 $dev2 $dev3:0-1 
+mimages_are_redundant_ $vg $lv1 
+mirrorlog_is_on_ $vg/$lv1 $dev3 
+check_and_cleanup_lvs_
 
-test_expect_success "convert from 2-way mirror to linear" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -m1 -n $lv1 $vg $(pv_ 1) $(pv_ 2) $(pv_ 3):0-1 &&
-   lvconvert -m-1 $vg/$lv1 &&
-   mimages_are_redundant_ $vg $lv1 &&
-   check_and_cleanup_lvs_'
+#COMM "convert from 2-way mirror to linear"
+prepare_lvs_ 
+lvcreate -l2 -m1 -n $lv1 $vg $dev1 $dev2 $dev3:0-1 
+lvconvert -m-1 $vg/$lv1 
+mimages_are_redundant_ $vg $lv1 
+check_and_cleanup_lvs_
 
-test_expect_success "convert from disklog to corelog" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -m1 -n $lv1 $vg $(pv_ 1) $(pv_ 2) $(pv_ 3):0-1 &&
-   lvconvert --mirrorlog core $vg/$lv1 &&
-   mimages_are_redundant_ $vg $lv1 &&
-   check_and_cleanup_lvs_'
+for status in active inactive; do 
+# bz192865 lvconvert log of an inactive mirror lv
+#COMM "convert from disklog to corelog"
+prepare_lvs_ 
+lvcreate -l2 -m1 -n $lv1 $vg $dev1 $dev2 $dev3:0-1 
+	test $status = "inactive" && lvchange -an $vg/$lv1
+	yes | lvconvert --mirrorlog core $vg/$lv1 
+mimages_are_redundant_ $vg $lv1 
+check_and_cleanup_lvs_
 
-test_expect_success "convert from corelog to disklog" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -m1 --mirrorlog core -n $lv1 $vg $(pv_ 1) $(pv_ 2) &&
-   lvconvert --mirrorlog disk $vg/$lv1 $(pv_ 3):0-1 &&
-   mimages_are_redundant_ $vg $lv1 &&
-   mirrorlog_is_on_ $vg/$lv1 $(pv_ 3) &&
-   check_and_cleanup_lvs_'
+#COMM "convert from corelog to disklog"
+prepare_lvs_ 
+lvcreate -l2 -m1 --mirrorlog core -n $lv1 $vg $dev1 $dev2 
+	test $status = "inactive" && lvchange -an $vg/$lv1
+lvconvert --mirrorlog disk $vg/$lv1 $dev3:0-1 
+mimages_are_redundant_ $vg $lv1 
+mirrorlog_is_on_ $vg/$lv1 $dev3 
+check_and_cleanup_lvs_
+done
 
 # ---
 # resize
 
-test_expect_success "extend 2-way mirror" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -m1 -n $lv1 $vg $(pv_ 1) $(pv_ 2) $(pv_ 3):0-1 &&
-   lvchange -an $vg/$lv1 &&
-   lvextend -l+2 $vg/$lv1 &&
-   mimages_are_redundant_ $vg $lv1 &&
-   mimages_are_contiguous_ $vg $lv1 &&
-   check_and_cleanup_lvs_'
+#COMM "extend 2-way mirror"
+prepare_lvs_ 
+lvcreate -l2 -m1 -n $lv1 $vg $dev1 $dev2 $dev3:0-1 
+lvchange -an $vg/$lv1 
+lvextend -l+2 $vg/$lv1 
+mimages_are_redundant_ $vg $lv1 
+mimages_are_contiguous_ $vg $lv1 
+check_and_cleanup_lvs_
 
-test_expect_success "reduce 2-way mirror" \
-  'prepare_lvs_ &&
-   lvcreate -l4 -m1 -n $lv1 $vg $(pv_ 1) $(pv_ 2) $(pv_ 3):0-1 &&
-   lvchange -an $vg/$lv1 &&
-   lvreduce -l-2 $vg/$lv1 &&
-   check_and_cleanup_lvs_'
+#COMM "reduce 2-way mirror"
+prepare_lvs_ 
+lvcreate -l4 -m1 -n $lv1 $vg $dev1 $dev2 $dev3:0-1 
+lvchange -an $vg/$lv1 
+lvreduce -l-2 $vg/$lv1 
+check_and_cleanup_lvs_
 
-test_expect_success "extend 2-way mirror (cling if not contiguous)" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -m1 -n $lv1 $vg $(pv_ 1) $(pv_ 2) $(pv_ 3):0-1 &&
-   lvcreate -l1 -n $lv2 $vg $(pv_ 1) &&
-   lvcreate -l1 -n $lv3 $vg $(pv_ 2) &&
-   lvchange -an $vg/$lv1 &&
-   lvextend -l+2 $vg/$lv1 &&
-   mimages_are_redundant_ $vg $lv1 &&
-   mimages_are_clung_ $vg $lv1 &&
-   check_and_cleanup_lvs_'
+#COMM "extend 2-way mirror (cling if not contiguous)"
+prepare_lvs_ 
+lvcreate -l2 -m1 -n $lv1 $vg $dev1 $dev2 $dev3:0-1 
+lvcreate -l1 -n $lv2 $vg $dev1 
+lvcreate -l1 -n $lv3 $vg $dev2 
+lvchange -an $vg/$lv1 
+lvextend -l+2 $vg/$lv1 
+mimages_are_redundant_ $vg $lv1 
+mimages_are_clung_ $vg $lv1 
+check_and_cleanup_lvs_
 
 # ---
 # failure cases
 
-test_expect_failure "create 2-way mirror with disklog from 2 PVs" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -m1 -n $lv1 $vg $(pv_ 1) $(pv_ 2)'
-test_expect_success "(cleanup previous test)" \
-  'check_and_cleanup_lvs_'
+#COMM "create 2-way mirror with disklog from 2 PVs"
+prepare_lvs_ 
+not lvcreate -l2 -m1 -n $lv1 $vg $dev1 $dev2
+# "(cleanup previous test)"
+check_and_cleanup_lvs_
 
-test_expect_failure "convert linear to 2-way mirror with 1 PV" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -n $lv1 $vg $(pv_ 1) &&
-   lvconvert -m+1 --mirrorlog core $vg/$lv1 $(pv_ 1)'
-test_expect_success "(cleanup previous test)" \
-  'check_and_cleanup_lvs_'
+#COMM "convert linear to 2-way mirror with 1 PV"
+prepare_lvs_ 
+lvcreate -l2 -n $lv1 $vg $dev1 
+not lvconvert -m+1 --mirrorlog core $vg/$lv1 $dev1
+# "(cleanup previous test)"
+check_and_cleanup_lvs_
 
 # ---
 # resync
 # FIXME: using dm-delay to properly check whether the resync really started
 
-test_expect_success "force resync 2-way active mirror" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -m1 -n $lv1 $vg $(pv_ 1) $(pv_ 2) $(pv_ 3):0-1 &&
-   mirrorlog_is_on_ $vg/$lv1 $(pv_ 3) &&
-   yes | lvchange --resync $vg/$lv1 &&
-   mirrorlog_is_on_ $vg/$lv1 $(pv_ 3) &&
-   check_and_cleanup_lvs_'
+#COMM "force resync 2-way active mirror"
+prepare_lvs_ 
+lvcreate -l2 -m1 -n $lv1 $vg $dev1 $dev2 $dev3:0-1 
+mirrorlog_is_on_ $vg/$lv1 $dev3 
+yes | lvchange --resync $vg/$lv1 
+mirrorlog_is_on_ $vg/$lv1 $dev3 
+check_and_cleanup_lvs_
 
-test_expect_success "force resync 2-way inactive mirror" \
-  'prepare_lvs_ &&
-   lvcreate -l2 -m1 -n $lv1 $vg $(pv_ 1) $(pv_ 2) $(pv_ 3):0-1 &&
-   lvchange -an $vg/$lv1 &&
-   mirrorlog_is_on_ $vg/$lv1 $(pv_ 3) &&
-   lvchange --resync $vg/$lv1 &&
-   mirrorlog_is_on_ $vg/$lv1 $(pv_ 3) &&
-   check_and_cleanup_lvs_'
+#COMM "force resync 2-way inactive mirror"
+prepare_lvs_ 
+lvcreate -l2 -m1 -n $lv1 $vg $dev1 $dev2 $dev3:0-1 
+lvchange -an $vg/$lv1 
+mirrorlog_is_on_ $vg/$lv1 $dev3 
+lvchange --resync $vg/$lv1 
+mirrorlog_is_on_ $vg/$lv1 $dev3 
+check_and_cleanup_lvs_
 
 # ---------------------------------------------------------------------
 
-test_done

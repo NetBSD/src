@@ -66,12 +66,14 @@ TARGETS =\
 	.commands \
 	lvm
 
-INSTALL_TARGETS = install_tools_dynamic
+INSTALL_LVM_TARGETS = install_tools_dynamic
+INSTALL_DMSETUP_TARGETS = install_dmsetup_dynamic
 INSTALL_CMDLIB_TARGETS = install_cmdlib_dynamic
 
 ifeq ("@STATIC_LINK@", "yes")
   TARGETS += lvm.static
-  INSTALL_TARGETS += install_tools_static
+  INSTALL_LVM_TARGETS += install_tools_static
+  INSTALL_DMSETUP_TARGETS += install_dmsetup_static
   INSTALL_CMDLIB_TARGETS += install_cmdlib_static
 endif
 
@@ -80,11 +82,11 @@ LVMLIBS = -llvm
 CLEAN_TARGETS = liblvm2cmd.so liblvm2cmd.a liblvm2cmd-static.a lvm lvm.o \
 		lvm2cmd.o lvm2cmd-static.o lvm2cmdlib.o lvm.static \
 		lvm.cflow lvm.xref lvm.tree lvm.rxref lvm.rtree \
-		lvmcmdlib.o lvm-static.o
+		lvmcmdlib.o lvm-static.o dmsetup.o
 
 ifeq ("@CMDLIB@", "yes")
 	TARGETS += liblvm2cmd.so
-	INSTALL_TARGETS += $(INSTALL_CMDLIB_TARGETS)
+	INSTALL_LVM_TARGETS += $(INSTALL_CMDLIB_TARGETS)
 endif
 
 ifeq ("@DMEVENTD@", "yes")
@@ -97,6 +99,19 @@ DEFS += -DLVM_SHARED_PATH=\"$(exec_prefix)/sbin/lvm\"
 
 include $(top_srcdir)/make.tmpl
 
+device-mapper: dmsetup
+
+dmsetup: dmsetup.o $(top_srcdir)/libdm/libdevmapper.$(LIB_SUFFIX)
+	$(CC) -o $@ dmsetup.o $(CFLAGS) $(LDFLAGS) \
+	      -L$(top_srcdir)/libdm -L$(DESTDIR)/lib -ldevmapper $(LIBS)
+
+dmsetup.static: dmsetup.o $(interfacedir)/libdevmapper.a
+	$(CC) -o $@ dmsetup.o $(CFLAGS) $(LDFLAGS) -static \
+	      -L$(interfacedir) -L$(DESTDIR)/lib -ldevmapper $(LIBS) \
+	      $(LIB_PTHREAD)
+
+all: device-mapper
+
 lvm: $(OBJECTS) lvm.o $(top_srcdir)/lib/liblvm.a
 	$(CC) -o $@ $(CFLAGS) $(OBJECTS) lvm.o \
 		$(LDFLAGS) $(LVMLIBS) $(LIBS) -rdynamic
@@ -104,7 +119,7 @@ lvm: $(OBJECTS) lvm.o $(top_srcdir)/lib/liblvm.a
 LIB_PTHREAD = @LIB_PTHREAD@
 lvm.static: $(OBJECTS) lvm-static.o $(top_srcdir)/lib/liblvm.a
 	$(CC) -o $@ $(CFLAGS) $(OBJECTS) lvm-static.o -static \
-		$(LDFLAGS) $(LVMLIBS) $(LIBS) $(LIB_PTHREAD) -rdynamic
+		-L$(interfacedir) $(LDFLAGS) $(LVMLIBS) $(LIBS) $(LIB_PTHREAD) -rdynamic
 
 liblvm2cmd.a: $(top_srcdir)/lib/liblvm.a $(OBJECTS) lvmcmdlib.o lvm2cmd.o
 	cat $(top_srcdir)/lib/liblvm.a > $@
@@ -169,4 +184,12 @@ install_tools_static: lvm.static
 	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) lvm.static \
 		$(staticdir)/lvm.static
 
-install: $(INSTALL_TARGETS)
+install_dmsetup_dynamic: dmsetup
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< $(sbindir)/$<
+
+install_dmsetup_static: dmsetup.static
+	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< $(sbindir)/$<
+
+install_device-mapper: $(INSTALL_DMSETUP_TARGETS)
+
+install: $(INSTALL_LVM_TARGETS) install_device-mapper
