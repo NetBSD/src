@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.94 2008/12/12 19:45:16 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.95 2008/12/12 19:56:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.94 2008/12/12 19:45:16 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.95 2008/12/12 19:56:12 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -428,10 +428,12 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 	pu->pu_state |= PU_PUFFSDAEMON;
 
 	if (parent) {
+		close(pu->pu_dpipe[1]);
 		n = read(pu->pu_dpipe[0], &value, sizeof(int));
 		if (n == -1)
 			err(1, "puffs_daemon");
-		assert(n == sizeof(value));
+		if (n != sizeof(value))
+			errx(1, "puffs_daemon got %d bytes", n);
 		if (value) {
 			errno = value;
 			err(1, "puffs_daemon");
