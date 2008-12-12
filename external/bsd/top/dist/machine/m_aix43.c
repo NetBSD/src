@@ -254,14 +254,9 @@ machine_init(struct statics *statics)
     if (nprocs > 1024) nprocs = 1024;
 
     ptsize = nprocs * sizeof (struct proc);
-    p_proc = (struct proc *)malloc(ptsize);
-    p_info = (struct procsinfo *)malloc(nprocs * sizeof (struct procsinfo));
-    pref = (struct procsinfo **)malloc(nprocs * sizeof (struct procsinfo *));
-
-    if (!p_proc || !p_info || !pref) {
-	fprintf(stderr, "top: not enough memory\n");
-	return -1;
-    }
+    p_proc = emalloc(ptsize);
+    p_info = emalloc(nprocs * sizeof (struct procsinfo));
+    pref = emalloc(nprocs * sizeof (struct procsinfo *));
 
     /* set boot time */
     now = time(NULL);
