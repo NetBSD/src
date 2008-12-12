@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.89 2008/10/15 16:56:49 matt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.90 2008/12/12 18:13:55 matt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.89 2008/10/15 16:56:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.90 2008/12/12 18:13:55 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2392,9 +2392,6 @@ arm10_setup(args)
 	/* Now really make sure they are clean.  */
 	__asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
 
-	/* Allow detection code to find the VFP if it's fitted.  */
-	__asm volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
-
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
@@ -2455,6 +2452,9 @@ arm11_setup(args)
 
 	/* Now really make sure they are clean.  */
 	__asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
+
+	/* Allow detection code to find the VFP if it's fitted.  */
+	__asm volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
@@ -2541,6 +2541,9 @@ arm1136_setup(char *args)
 
 	/* Now really make sure they are clean.  */
 	__asm volatile ("mcr\tp15, 0, %0, c7, c7, 0" : : "r"(sbz));
+
+	/* Allow detection code to find the VFP if it's fitted.  */
+	__asm volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;
