@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.24.88.1 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: essvar.h,v 1.24.88.2 2008/12/12 23:06:57 ad Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.24.88.1 $ (SHARK) $Date: 2008/12/11 19:49:30 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.24.88.2 $ (SHARK) $Date: 2008/12/12 23:06:57 $
 **
 **++
 **
@@ -130,8 +130,8 @@ struct ess_softc
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
 
-	struct callout sc_poll1_ch;	/* audio1 poll */
-	struct callout sc_poll2_ch;	/* audio2 poll */
+	callout_t sc_poll1_ch;		/* audio1 poll */
+	callout_t sc_poll2_ch;		/* audio2 poll */
 
 	int	sc_iobase;		/* I/O port base address */
 

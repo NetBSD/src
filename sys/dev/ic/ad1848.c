@@ -1,7 +1,7 @@
-/*	$NetBSD: ad1848.c,v 1.29.12.1 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.29.12.2 2008/12/12 23:06:57 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.29.12.1 2008/12/11 19:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.29.12.2 2008/12/12 23:06:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1051,9 +1051,6 @@ ad1848_open(void *addr, int flags)
 	return 0;
 }
 
-/*
- * Close function is called at splaudio().
- */
 void
 ad1848_close(void *addr)
 {
@@ -1297,4 +1294,20 @@ ad1848_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
 	sc = addr;
 	*intr = &sc->sc_intr_lock;
 	*thread = &sc->sc_lock;
+}
+
+void
+ad1848_init_locks(struct ad1848_softc *sc, int ipl)
+{
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, ipl);
+}
+
+void
+ad1848_destroy_locks(struct ad1848_softc *sc)
+{
+
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
 }

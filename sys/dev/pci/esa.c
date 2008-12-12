@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.50.8.1 2008/12/08 13:06:36 ad Exp $ */
+/*	$NetBSD: esa.c,v 1.50.8.2 2008/12/12 23:06:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,32 +39,31 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.50.8.1 2008/12/08 13:06:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.50.8.2 2008/12/12 23:06:58 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/null.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/select.h>
 #include <sys/audioio.h>
-
 #include <sys/bus.h>
 #include <sys/intr.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcivar.h>
 
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
+
 #include <dev/ic/ac97var.h>
 #include <dev/ic/ac97reg.h>
 
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/esareg.h>
 #include <dev/pci/esadsp.h>
 #include <dev/pci/esavar.h>
@@ -117,9 +116,8 @@ static int		esa_halt_input(void *);
 static int		esa_set_port(void *, mixer_ctrl_t *);
 static int		esa_get_port(void *, mixer_ctrl_t *);
 static int		esa_query_devinfo(void *, mixer_devinfo_t *);
-static void *		esa_malloc(void *, int, size_t, struct malloc_type *,
-				   int);
-static void		esa_free(void *, void *, struct malloc_type *);
+static void *		esa_malloc(void *, int, size_t);
+static void		esa_free(void *, void *, size_t);
 static int		esa_getdev(void *, struct audio_device *);
 static size_t		esa_round_buffersize(void *, int, size_t);
 static int		esa_get_props(void *);
@@ -458,22 +456,21 @@ esa_halt_input(void *hdl)
 }
 
 static void *
-esa_malloc(void *hdl, int direction, size_t size,
-    struct malloc_type *type, int flags)
+esa_malloc(void *hdl, int direction, size_t size)
 {
 	struct esa_voice *vc;
 	struct esa_softc *sc;
 	struct esa_dma *p;
 	int error;
 
-	p = malloc(sizeof(*p), type, flags);
+	p = kmem_alloc(sizeof(*p), KM_SLEEP);
 	if (p == NULL)
 		return NULL;
 	vc = hdl;
 	sc = device_private(vc->parent);
 	error = esa_allocmem(sc, size, 16, p);
 	if (error) {
-		free(p, type);
+		kmem_free(p, sizeof(*p));
 		aprint_error_dev(sc->sc_dev,
 		    "%s: not enough memory\n", __func__);
 		return 0;
@@ -485,7 +482,7 @@ esa_malloc(void *hdl, int direction, size_t size,
 }
 
 static void
-esa_free(void *hdl, void *addr, struct malloc_type *type)
+esa_free(void *hdl, void *addr, size_t size)
 {
 	struct esa_voice *vc;
 	struct esa_softc *sc;
@@ -498,7 +495,7 @@ esa_free(void *hdl, void *addr, struct malloc_type *type)
 		if (KERNADDR(p) == addr) {
 			esa_freemem(sc, p);
 			*pp = p->next;
-			free(p, type);
+			kmem_free(p, sizeof(*p));
 			return;
 		}
 }
@@ -1013,9 +1010,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	uint32_t data;
 	char devinfo[256];
-	int revision, len;
-	int i;
-	int error;
+	int revision, i, error;
 
 	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
@@ -1096,9 +1091,9 @@ esa_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* create suspend save area */
-	len = sizeof(uint16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
+	sc->savememsz = sizeof(uint16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
 	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
-	sc->savemem = (uint16_t *)malloc(len, M_DEVBUF, M_WAITOK | M_ZERO);
+	sc->savemem = (uint16_t *)kmem_zalloc(sc->savememsz, KM_SLEEP);
 	if (sc->savemem == NULL) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to allocate suspend buffer\n");
@@ -1202,7 +1197,7 @@ esa_detach(device_t self, int flags)
 	if (sc->sc_ios)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 
-	free(sc->savemem, M_DEVBUF);
+	kmem_free(sc->savemem, sc->savememsz);
 	mutex_destroy(&sc->sc_lock);
 	mutex_destroy(&sc->sc_intr_lock);
 
