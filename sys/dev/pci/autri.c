@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.40.8.1 2008/12/08 13:06:36 ad Exp $	*/
+/*	$NetBSD: autri.c,v 1.40.8.2 2008/12/12 23:06:57 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.40.8.1 2008/12/08 13:06:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.40.8.2 2008/12/12 23:06:57 ad Exp $");
 
 #include "midi.h"
 
@@ -43,26 +43,25 @@ __KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.40.8.1 2008/12/08 13:06:36 ad Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcivar.h>
-
 #include <sys/audioio.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
+
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
+
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 #include <dev/ic/mpuvar.h>
 
-#include <sys/bus.h>
-#include <sys/intr.h>
-
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/autrireg.h>
 #include <dev/pci/autrivar.h>
 
@@ -128,8 +127,8 @@ static int	autri_halt_input(void *);
 static int	autri_getdev(void *, struct audio_device *);
 static int	autri_mixer_set_port(void *, mixer_ctrl_t *);
 static int	autri_mixer_get_port(void *, mixer_ctrl_t *);
-static void*	autri_malloc(void *, int, size_t, struct malloc_type *, int);
-static void	autri_free(void *, void *, struct malloc_type *);
+static void*	autri_malloc(void *, int, size_t);
+static void	autri_free(void *, void *, size_t);
 static size_t	autri_round_buffersize(void *, int, size_t);
 static paddr_t autri_mappage(void *, void *, off_t, int);
 static int	autri_get_props(void *);
@@ -1090,14 +1089,13 @@ autri_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 static void *
-autri_malloc(void *addr, int direction, size_t size,
-    struct malloc_type *pool, int flags)
+autri_malloc(void *addr, int direction, size_t size)
 {
 	struct autri_softc *sc;
 	struct autri_dma *p;
 	int error;
 
-	p = malloc(sizeof(*p), pool, flags);
+	p = kmem_alloc(sizeof(*p), KM_SLEEP);
 	if (!p)
 		return NULL;
 	sc = addr;
@@ -1106,7 +1104,7 @@ autri_malloc(void *addr, int direction, size_t size,
 #endif
 	error = autri_allocmem(sc, size, 0x10000, p);
 	if (error) {
-		free(p, pool);
+		kmem_free(p, sizeof(*p));
 		return NULL;
 	}
 
@@ -1116,7 +1114,7 @@ autri_malloc(void *addr, int direction, size_t size,
 }
 
 static void
-autri_free(void *addr, void *ptr, struct malloc_type *pool)
+autri_free(void *addr, void *ptr, size_t size)
 {
 	struct autri_softc *sc;
 	struct autri_dma **pp, *p;
@@ -1126,7 +1124,7 @@ autri_free(void *addr, void *ptr, struct malloc_type *pool)
 		if (KERNADDR(p) == ptr) {
 			autri_freemem(sc, p);
 			*pp = p->next;
-			free(p, pool);
+			kmem_free(p, sizeof(*p));
 			return;
 		}
 	}

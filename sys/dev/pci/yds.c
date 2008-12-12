@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.43.6.1 2008/12/11 19:49:31 ad Exp $	*/
+/*	$NetBSD: yds.c,v 1.43.6.2 2008/12/12 23:06:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.43.6.1 2008/12/11 19:49:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.43.6.2 2008/12/12 23:06:58 ad Exp $");
 
 #include "mpu.h"
 
@@ -771,7 +771,7 @@ yds_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, yds_intr, sc);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, yds_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)

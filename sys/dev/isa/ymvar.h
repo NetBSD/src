@@ -1,4 +1,4 @@
-/*	$NetBSD: ymvar.h,v 1.11.12.1 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: ymvar.h,v 1.11.12.2 2008/12/12 23:06:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2002, 2008 The NetBSD Foundation, Inc.
@@ -155,6 +155,7 @@ struct ym_softc {
 	bus_space_handle_t sc_sb_ioh;	/* only used to disable it */
 
 	callout_t sc_powerdown_ch;
+	kcondvar_t sc_cv;
 
 	int  master_mute, mic_mute;
 	struct ad1848_volume master_gain;

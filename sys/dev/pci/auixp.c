@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.28.16.1 2008/12/08 13:06:36 ad Exp $ */
+/* $NetBSD: auixp.c,v 1.28.16.2 2008/12/12 23:06:57 ad Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,33 +50,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.28.16.1 2008/12/08 13:06:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.28.16.2 2008/12/12 23:06:57 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/null.h>
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/select.h>
 #include <sys/audioio.h>
 #include <sys/queue.h>
-
 #include <sys/bus.h>
 #include <sys/intr.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcivar.h>
 
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
+
 #include <dev/ic/ac97var.h>
 #include <dev/ic/ac97reg.h>
 
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcivar.h>
 #include <dev/pci/auixpreg.h>
 #include <dev/pci/auixpvar.h>
 
@@ -153,8 +152,8 @@ static int	auixp_halt_input(void *);
 static int	auixp_set_port(void *, mixer_ctrl_t *);
 static int	auixp_get_port(void *, mixer_ctrl_t *);
 static int	auixp_query_devinfo(void *, mixer_devinfo_t *);
-static void *	auixp_malloc(void *, int, size_t, struct malloc_type *, int);
-static void	auixp_free(void *, void *, struct malloc_type *);
+static void *	auixp_malloc(void *, int, size_t);
+static void	auixp_free(void *, void *, size_t);
 static int	auixp_getdev(void *, struct audio_device *);
 static size_t	auixp_round_buffersize(void *, int, size_t);
 static int	auixp_get_props(void *);
@@ -461,8 +460,7 @@ auixp_round_blocksize(void *hdl, int bs, int mode,
  * kernel virtual address we return here as a reference to the mapping.
  */
 static void *
-auixp_malloc(void *hdl, int direction, size_t size,
-	     struct malloc_type *type, int flags)
+auixp_malloc(void *hdl, int direction, size_t size)
 {
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
@@ -472,14 +470,14 @@ auixp_malloc(void *hdl, int direction, size_t size,
 	co = (struct auixp_codec *) hdl;
 	sc = co->sc;
 	/* get us a auixp_dma structure */
-	dma = malloc(sizeof(*dma), type, flags);
+	dma = kmem_alloc(sizeof(*dma), KM_SLEEP);
 	if (!dma)
 		return NULL;
 
 	/* get us a dma buffer itself */
 	error = auixp_allocmem(sc, size, 16, dma);
 	if (error) {
-		free(dma, type);
+		kmem_free(dma, sizeof(*dma));
 		aprint_error_dev(&sc->sc_dev, "auixp_malloc: not enough memory\n");
 
 		return NULL;
@@ -500,7 +498,7 @@ auixp_malloc(void *hdl, int direction, size_t size,
  * recording
  */
 static void
-auixp_free(void *hdl, void *addr, struct malloc_type *type)
+auixp_free(void *hdl, void *addr, size_t size)
 {
 	struct auixp_codec *co;
 	struct auixp_softc *sc;
@@ -513,7 +511,7 @@ auixp_free(void *hdl, void *addr, struct malloc_type *type)
 			SLIST_REMOVE(&sc->sc_dma_list, dma, auixp_dma,
 			    dma_chain);
 			auixp_freemem(sc, dma);
-			free(dma, type);
+			kmem_free(dma, sizeof(*dma));
 			return;
 		}
 	}
@@ -646,7 +644,7 @@ auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 
 	/* allocate keeper of dma area */
 	*dmap = NULL;
-	dma = malloc(sizeof(struct auixp_dma), M_DEVBUF, M_WAITOK | M_ZERO);
+	dma = kmem_zalloc(sizeof(struct auixp_dma), KM_SLEEP);
 	if (!dma)
 		return ENOMEM;
 
@@ -655,7 +653,7 @@ auixp_allocate_dma_chain(struct auixp_softc *sc, struct auixp_dma **dmap)
 	    16, dma);
 	if (error) {
 		aprint_error_dev(&sc->sc_dev, "can't malloc dma descriptor chain\n");
-		free(dma, M_DEVBUF);
+		kmem_free(dma, sizeof(*dma));
 		return ENOMEM;
 	}
 
@@ -1174,8 +1172,8 @@ auixp_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
-	/* establish interrupt routine hookup at IPL_AUDIO level */
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, auixp_intr, self);
+	/* establish interrupt routine hookup at IPL_SCHED level */
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, auixp_intr, self);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)

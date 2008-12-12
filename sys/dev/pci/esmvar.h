@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.16.16.1 2008/12/08 13:06:36 ad Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.16.16.2 2008/12/12 23:06:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -220,8 +220,8 @@ int	esm_set_params(void *, int, int, audio_params_t *, audio_params_t *,
 int	esm_set_port(void *, mixer_ctrl_t *);
 int	esm_get_port(void *, mixer_ctrl_t *);
 int	esm_query_devinfo(void *, mixer_devinfo_t *);
-void	*esm_malloc(void *, int, size_t, struct malloc_type *, int);
-void	esm_free(void *, void *, struct malloc_type *);
+void	*esm_malloc(void *, int, size_t);
+void	esm_free(void *, void *, size_t);
 size_t	esm_round_buffersize(void *, int, size_t);
 paddr_t	esm_mappage(void *, void *, off_t, int);
 int	esm_get_props(void *);

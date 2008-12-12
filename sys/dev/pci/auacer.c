@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.21.12.1 2008/12/08 13:06:36 ad Exp $	*/
+/*	$NetBSD: auacer.c,v 1.21.12.2 2008/12/12 23:06:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -44,12 +44,12 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.21.12.1 2008/12/08 13:06:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.21.12.2 2008/12/12 23:06:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
@@ -167,8 +167,8 @@ static int	auacer_getdev(void *, struct audio_device *);
 static int	auacer_set_port(void *, mixer_ctrl_t *);
 static int	auacer_get_port(void *, mixer_ctrl_t *);
 static int	auacer_query_devinfo(void *, mixer_devinfo_t *);
-static void	*auacer_allocm(void *, int, size_t, struct malloc_type *, int);
-static void	auacer_freem(void *, void *, struct malloc_type *);
+static void	*auacer_allocm(void *, int, size_t);
+static void	auacer_freem(void *, void *, size_t);
 static size_t	auacer_round_buffersize(void *, int, size_t);
 static paddr_t	auacer_mappage(void *, void *, off_t, int);
 static int	auacer_get_props(void *);
@@ -694,8 +694,7 @@ auacer_query_devinfo(void *v, mixer_devinfo_t *dp)
 }
 
 static void *
-auacer_allocm(void *v, int direction, size_t size,
-    struct malloc_type *pool, int flags)
+auacer_allocm(void *v, int direction, size_t size)
 {
 	struct auacer_softc *sc;
 	struct auacer_dma *p;
@@ -704,13 +703,13 @@ auacer_allocm(void *v, int direction, size_t size,
 	if (size > (ALI_DMALIST_MAX * ALI_DMASEG_MAX))
 		return NULL;
 
-	p = malloc(sizeof(*p), pool, flags | M_ZERO);
+	p = kmem_zalloc(sizeof(*p), KM_SLEEP);
 	if (p == NULL)
 		return NULL;
 	sc = v;
 	error = auacer_allocmem(sc, size, 0, p);
 	if (error) {
-		free(p, pool);
+		kmem_free(p, sizeof(*p));
 		return NULL;
 	}
 
@@ -721,7 +720,7 @@ auacer_allocm(void *v, int direction, size_t size,
 }
 
 static void
-auacer_freem(void *v, void *ptr, struct malloc_type *pool)
+auacer_freem(void *v, void *ptr, size_t size)
 {
 	struct auacer_softc *sc;
 	struct auacer_dma *p, **pp;
@@ -731,7 +730,7 @@ auacer_freem(void *v, void *ptr, struct malloc_type *pool)
 		if (KERNADDR(p) == ptr) {
 			auacer_freemem(sc, p);
 			*pp = p->next;
-			free(p, pool);
+			kmem_free(p, sizeof(*p));
 			return;
 		}
 	}

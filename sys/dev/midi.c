@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.68.8.1 2008/12/09 13:09:12 ad Exp $	*/
+/*	$NetBSD: midi.c,v 1.68.8.2 2008/12/12 23:06:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.68.8.1 2008/12/09 13:09:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.68.8.2 2008/12/12 23:06:56 ad Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -300,7 +300,6 @@ midi_register_hw_if_ext(struct midi_hw_if_ext *exthw)
 		hwif_softc->hw_if_ext = exthw; /* uses of getinfo */
 }
 
-/* XXX SEQUENCER */
 int
 midi_unit_count(void)
 {
@@ -1500,7 +1499,6 @@ midiwrite(dev_t dev, struct uio *uio, int ioflag)
 	return error;
 }
 
-/* XXX SEQUENCER */
 /*
  * This write routine is only called from sequencer code and expects
  * a write that is smaller than the MIDI buffer.
@@ -1735,7 +1733,6 @@ midikqfilter(dev_t dev, struct knote *kn)
 	return (0);
 }
 
-/* XXXSEQUENCER */
 void
 midi_getinfo(dev_t dev, struct midi_info *mi)
 {
@@ -1744,9 +1741,9 @@ midi_getinfo(dev_t dev, struct midi_info *mi)
 	sc = device_lookup_private(&midi_cd, MIDIUNIT(dev));
 	if (sc == NULL)
 		return;
-	if (sc->dying)
-		return;
+	mutex_enter(sc->lock);
 	sc->hw_if->getinfo(sc->hw_hdl, mi);
+	mutex_exit(sc->lock);
 }
 
 #elif NMIDIBUS > 0 /* but NMIDI == 0 */
