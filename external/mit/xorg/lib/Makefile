@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2008/11/11 16:12:05 cube Exp $
+#	$NetBSD: Makefile,v 1.8 2008/12/12 19:59:52 hubertf Exp $
 
 # build libraries for xorg
 
@@ -7,10 +7,10 @@ SUBDIR=	dri expat libfontenc freetype libFS libICE libOSMesa \
 	.WAIT \
 	fontconfig libSM libX11 liblbxutil \
 	.WAIT \
-	libXcomposite libXdamage libXext libXfixes libXi libXt \
+	libXcomposite libXdamage libXext libXfixes libXt \
 	libxkbfile \
 	.WAIT \
-	libXp libXxf86vm \
+	libXi libXp libXxf86vm \
 	.WAIT \
 	libGL libXScrnSaver libXTrap libXevie libXfont libXfontcache \
 	libXinerama libXmu libXmuu libXpm libXprintUtil libXrender \
