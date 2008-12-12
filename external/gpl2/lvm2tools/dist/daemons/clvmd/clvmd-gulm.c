@@ -1,3 +1,5 @@
+/*	$NetBSD: clvmd-gulm.c,v 1.1.1.2 2008/12/12 11:42:02 haad Exp $	*/
+
 /******************************************************************************
 *******************************************************************************
 **
@@ -44,9 +46,8 @@
 #include <ccs.h>
 #include <libgulm.h>
 
-#include "list.h"
 #include "locking.h"
-#include "log.h"
+#include "lvm-logging.h"
 #include "clvm.h"
 #include "clvmd-comms.h"
 #include "lvm-functions.h"

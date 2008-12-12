@@ -1,3 +1,5 @@
+/*	$NetBSD: timestamp.h,v 1.1.1.2 2008/12/12 11:42:39 haad Exp $	*/
+
 /*
  * Copyright (C) 2006 Rackable Systems All rights reserved.  
  *

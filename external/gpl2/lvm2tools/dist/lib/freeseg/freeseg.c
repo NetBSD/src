@@ -1,3 +1,5 @@
+/*	$NetBSD: freeseg.c,v 1.1.1.2 2008/12/12 11:42:24 haad Exp $	*/
+
 /*
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
  *

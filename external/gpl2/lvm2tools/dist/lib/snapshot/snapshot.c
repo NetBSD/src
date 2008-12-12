@@ -1,3 +1,5 @@
+/*	$NetBSD: snapshot.c,v 1.1.1.2 2008/12/12 11:42:43 haad Exp $	*/
+
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
@@ -23,7 +25,7 @@
 #include "str_list.h"
 #ifdef DMEVENTD
 #  include "sharedlib.h"
-#  include <libdevmapper-event.h>
+#  include "libdevmapper-event.h"
 #endif
 
 static const char *_snap_name(const struct lv_segment *seg)
@@ -95,20 +97,14 @@ static int _snap_target_percent(void **target_state __attribute((unused)),
 			   struct cmd_context *cmd __attribute((unused)),
 			   struct lv_segment *seg __attribute((unused)),
 			   char *params, uint64_t *total_numerator,
-			   uint64_t *total_denominator, float *percent)
+			   uint64_t *total_denominator)
 {
-	float percent2;
 	uint64_t numerator, denominator;
 
-	if (strchr(params, '/')) {
-		if (sscanf(params, "%" PRIu64 "/%" PRIu64,
-			   &numerator, &denominator) == 2) {
-			*total_numerator += numerator;
-			*total_denominator += denominator;
-		}
-	} else if (sscanf(params, "%f", &percent2) == 1) {
-		*percent += percent2;
-		*percent /= 2;
+	if (sscanf(params, "%" PRIu64 "/%" PRIu64,
+		   &numerator, &denominator) == 2) {
+		*total_numerator += numerator;
+		*total_denominator += denominator;
 	}
 
 	return 1;
@@ -260,7 +256,7 @@ static int _target_unregister_events(struct lv_segment *seg,
 
 static int _snap_modules_needed(struct dm_pool *mem,
 				const struct lv_segment *seg __attribute((unused)),
-				struct list *modules)
+				struct dm_list *modules)
 {
 	if (!str_list_add(mem, modules, "snapshot")) {
 		log_error("snapshot string list allocation failed");

@@ -1,3 +1,5 @@
+/*	$NetBSD: filter-persistent.c,v 1.1.1.2 2008/12/12 11:42:20 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -273,7 +275,7 @@ static int _lookup_p(struct dev_filter *f, struct device *dev)
 		l = pf->real->passes_filter(pf->real, dev) ?
 		    PF_GOOD_DEVICE : PF_BAD_DEVICE;
 
-		list_iterate_items(sl, &dev->aliases)
+		dm_list_iterate_items(sl, &dev->aliases)
 			dm_hash_insert(pf->devices, sl->str, l);
 
 	} else if (l == PF_BAD_DEVICE)

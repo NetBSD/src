@@ -1,3 +1,5 @@
+/*	$NetBSD: merge.c,v 1.1.1.2 2008/12/12 11:42:32 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -37,17 +39,17 @@ static int _merge(struct lv_segment *first, struct lv_segment *second)
 
 int lv_merge_segments(struct logical_volume *lv)
 {
-	struct list *segh, *t;
+	struct dm_list *segh, *t;
 	struct lv_segment *current, *prev = NULL;
 
 	if (lv->status & LOCKED || lv->status & PVMOVE)
 		return 1;
 
-	list_iterate_safe(segh, t, &lv->segments) {
-		current = list_item(segh, struct lv_segment);
+	dm_list_iterate_safe(segh, t, &lv->segments) {
+		current = dm_list_item(segh, struct lv_segment);
 
 		if (_merge(prev, current))
-			list_del(&current->list);
+			dm_list_del(&current->list);
 		else
 			prev = current;
 	}
@@ -67,7 +69,7 @@ int check_lv_segments(struct logical_volume *lv, int complete_vg)
 	uint32_t area_multiplier, s;
 	struct seg_list *sl;
 
-	list_iterate_items(seg, &lv->segments) {
+	dm_list_iterate_items(seg, &lv->segments) {
 		seg_count++;
 		if (seg->le != le) {
 			log_error("LV %s invalid: segment %u should begin at "
@@ -175,7 +177,7 @@ int check_lv_segments(struct logical_volume *lv, int complete_vg)
 				}
  */
 				seg_found = 0;
-				list_iterate_items(sl, &seg_lv(seg, s)->segs_using_this_lv)
+				dm_list_iterate_items(sl, &seg_lv(seg, s)->segs_using_this_lv)
 					if (sl->seg == seg)
 						seg_found++;
 				if (!seg_found) {
@@ -198,7 +200,7 @@ int check_lv_segments(struct logical_volume *lv, int complete_vg)
 		le += seg->len;
 	}
 
-	list_iterate_items(sl, &lv->segs_using_this_lv) {
+	dm_list_iterate_items(sl, &lv->segs_using_this_lv) {
 		seg = sl->seg;
 		seg_found = 0;
 		for (s = 0; s < seg->area_count; s++) {
@@ -226,7 +228,7 @@ int check_lv_segments(struct logical_volume *lv, int complete_vg)
 		}
 
 		seg_found = 0;
-		list_iterate_items(seg2, &seg->lv->segments)
+		dm_list_iterate_items(seg2, &seg->lv->segments)
 			if (sl->seg == seg2) {
 				seg_found++;
 				break;
@@ -334,7 +336,7 @@ static int _lv_split_segment(struct logical_volume *lv, struct lv_segment *seg,
 	}
 
 	/* Add split off segment to the list _after_ the original one */
-	list_add_h(&seg->list, &split_seg->list);
+	dm_list_add_h(&seg->list, &split_seg->list);
 
 	return 1;
 }

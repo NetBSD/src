@@ -1,3 +1,5 @@
+/*	$NetBSD: mirrored.c,v 1.1.1.2 2008/12/12 11:42:37 haad Exp $	*/
+
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -29,7 +31,7 @@
 #include "str_list.h"
 
 #ifdef DMEVENTD
-#  include <libdevmapper-event.h>
+#  include "libdevmapper-event.h"
 #endif
 
 static int _block_on_error_available = 0;
@@ -176,8 +178,7 @@ static struct mirror_state *_mirrored_init_target(struct dm_pool *mem,
 static int _mirrored_target_percent(void **target_state, struct dm_pool *mem,
 			   struct cmd_context *cmd, struct lv_segment *seg,
 			   char *params, uint64_t *total_numerator,
-			   uint64_t *total_denominator,
-			   float *percent __attribute((unused)))
+			   uint64_t *total_denominator)
 {
 	struct mirror_state *mirr_state;
 	uint64_t numerator, denominator;
@@ -376,7 +377,7 @@ static int _mirrored_target_present(const struct lv_segment *seg __attribute((un
 	 * FIXME: Fails incorrectly if cmirror was built into kernel.
 	 */
 	if (attributes) {
-		if (!_mirror_attributes && module_present("cmirror"))
+		if (!_mirror_attributes && module_present("log-clustered"))
 			_mirror_attributes |= MIRROR_LOG_CLUSTERED;
 		*attributes = _mirror_attributes;
 	}
@@ -513,7 +514,7 @@ static int _target_unmonitor_events(struct lv_segment *seg, int events)
 
 static int _mirrored_modules_needed(struct dm_pool *mem,
 				    const struct lv_segment *seg,
-				    struct list *modules)
+				    struct dm_list *modules)
 {
 	if (seg->log_lv &&
 	    !list_segment_modules(mem, first_seg(seg->log_lv), modules))

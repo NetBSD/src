@@ -1,3 +1,5 @@
+/*	$NetBSD: format_pool.c,v 1.1.1.2 2008/12/12 11:42:13 haad Exp $	*/
+
 /*
  * Copyright (C) 1997-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -25,7 +27,7 @@
 #include "pool_label.h"
 
 /* Must be called after pvs are imported */
-static struct user_subpool *_build_usp(struct list *pls, struct dm_pool *mem,
+static struct user_subpool *_build_usp(struct dm_list *pls, struct dm_pool *mem,
 				       int *sps)
 {
 	struct pool_list *pl;
@@ -36,7 +38,7 @@ static struct user_subpool *_build_usp(struct list *pls, struct dm_pool *mem,
 	 * FIXME: Need to do some checks here - I'm tempted to add a
 	 * user_pool structure and build the entire thing to check against.
 	 */
-	list_iterate_items(pl, pls) {
+	dm_list_iterate_items(pl, pls) {
 		*sps = pl->pd.pl_subpools;
 		if (!usp && (!(usp = dm_pool_zalloc(mem, sizeof(*usp) * (*sps))))) {
 			log_error("Unable to allocate %d subpool structures",
@@ -100,7 +102,7 @@ static int _check_usp(char *vgname, struct user_subpool *usp, int sp_count)
 
 static struct volume_group *_build_vg_from_pds(struct format_instance
 					       *fid, struct dm_pool *mem,
-					       struct list *pds)
+					       struct dm_list *pds)
 {
 	struct dm_pool *smem = fid->fmt->cmd->mem;
 	struct volume_group *vg = NULL;
@@ -122,9 +124,9 @@ static struct volume_group *_build_vg_from_pds(struct format_instance
 	vg->snapshot_count = 0;
 	vg->seqno = 1;
 	vg->system_id = NULL;
-	list_init(&vg->pvs);
-	list_init(&vg->lvs);
-	list_init(&vg->tags);
+	dm_list_init(&vg->pvs);
+	dm_list_init(&vg->lvs);
+	dm_list_init(&vg->tags);
 
 	if (!import_pool_vg(vg, smem, pds))
 		return_NULL;
@@ -161,10 +163,10 @@ static struct volume_group *_pool_vg_read(struct format_instance *fid,
 				     struct metadata_area *mda __attribute((unused)))
 {
 	struct dm_pool *mem = dm_pool_create("pool vg_read", 1024);
-	struct list pds;
+	struct dm_list pds;
 	struct volume_group *vg = NULL;
 
-	list_init(&pds);
+	dm_list_init(&pds);
 
 	/* We can safely ignore the mda passed in */
 
@@ -193,7 +195,7 @@ static int _pool_pv_setup(const struct format_type *fmt __attribute((unused)),
 			  uint32_t extent_size __attribute((unused)),
 			  int pvmetadatacopies __attribute((unused)),
 			  uint64_t pvmetadatasize __attribute((unused)),
-			  struct list *mdas __attribute((unused)),
+			  struct dm_list *mdas __attribute((unused)),
 			  struct physical_volume *pv __attribute((unused)),
 			  struct volume_group *vg __attribute((unused)))
 {
@@ -202,7 +204,7 @@ static int _pool_pv_setup(const struct format_type *fmt __attribute((unused)),
 
 static int _pool_pv_read(const struct format_type *fmt, const char *pv_name,
 			 struct physical_volume *pv,
-			 struct list *mdas __attribute((unused)))
+			 struct dm_list *mdas __attribute((unused)))
 {
 	struct dm_pool *mem = dm_pool_create("pool pv_read", 1024);
 	struct pool_list *pl;
@@ -258,7 +260,7 @@ static struct format_instance *_pool_create_instance(const struct format_type *f
 	}
 
 	fid->fmt = fmt;
-	list_init(&fid->metadata_areas);
+	dm_list_init(&fid->metadata_areas);
 
 	/* Define a NULL metadata area */
 	if (!(mda = dm_pool_zalloc(fmt->cmd->mem, sizeof(*mda)))) {
@@ -270,7 +272,7 @@ static struct format_instance *_pool_create_instance(const struct format_type *f
 
 	mda->ops = &_metadata_format_pool_ops;
 	mda->metadata_locn = NULL;
-	list_add(&fid->metadata_areas, &mda->list);
+	dm_list_add(&fid->metadata_areas, &mda->list);
 
 	return fid;
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: archiver.c,v 1.1.1.2 2008/12/12 11:42:45 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -134,10 +136,8 @@ int archive_display(struct cmd_context *cmd, const char *vg_name)
 {
 	int r1, r2;
 
-	init_partial(1);
 	r1 = archive_list(cmd, cmd->archive_params->dir, vg_name);
 	r2 = backup_list(cmd, cmd->backup_params->dir, vg_name);
-	init_partial(0);
 
 	return r1 && r2;
 }
@@ -146,9 +146,7 @@ int archive_display_file(struct cmd_context *cmd, const char *file)
 {
 	int r;
 
-	init_partial(1);
 	r = archive_list_file(cmd, file);
-	init_partial(0);
 
 	return r;
 }
@@ -265,7 +263,7 @@ struct volume_group *backup_read_vg(struct cmd_context *cmd,
 		return NULL;
 	}
 
-	list_iterate_items(mda, &tf->metadata_areas) {
+	dm_list_iterate_items(mda, &tf->metadata_areas) {
 		if (!(vg = mda->ops->vg_read(tf, vg_name, mda)))
 			stack;
 		break;
@@ -295,7 +293,7 @@ int backup_restore_vg(struct cmd_context *cmd, struct volume_group *vg)
 	}
 
 	/* Add any metadata areas on the PVs */
-	list_iterate_items(pvl, &vg->pvs) {
+	dm_list_iterate_items(pvl, &vg->pvs) {
 		pv = pvl->pv;
 		if (!(info = info_from_pvid(pv->dev->pvid, 0))) {
 			log_error("PV %s missing from cache",
@@ -370,7 +368,7 @@ int backup_to_file(const char *file, const char *desc, struct volume_group *vg)
 	}
 
 	/* Write and commit the metadata area */
-	list_iterate_items(mda, &tf->metadata_areas) {
+	dm_list_iterate_items(mda, &tf->metadata_areas) {
 		if (!(r = mda->ops->vg_write(tf, vg, mda))) {
 			stack;
 			continue;
@@ -393,7 +391,7 @@ void check_current_backup(struct volume_group *vg)
 	char path[PATH_MAX];
 	struct volume_group *vg_backup;
 
-	if ((vg->status & PARTIAL_VG) || (vg->status & EXPORTED_VG))
+	if (vg->status & EXPORTED_VG)
 		return;
 
 	if (dm_snprintf(path, sizeof(path), "%s/%s",
