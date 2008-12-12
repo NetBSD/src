@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.116 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.117 2008/12/12 22:34:58 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.116 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.117 2008/12/12 22:34:58 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -209,6 +209,7 @@ route_output(struct mbuf *m, ...)
 {
 	struct sockproto proto = { .sp_family = PF_ROUTE, };
 	struct rt_msghdr *rtm = NULL;
+	struct rt_msghdr *old_rtm = NULL;
 	struct rtentry *rt = NULL;
 	struct rtentry *saved_nrt = NULL;
 	struct rt_addrinfo info;
@@ -368,12 +369,11 @@ route_output(struct mbuf *m, ...)
 			}
 			(void)rt_msg2(rtm->rtm_type, &info, NULL, NULL, &len);
 			if (len > rtm->rtm_msglen) {
-				struct rt_msghdr *new_rtm;
-				R_Malloc(new_rtm, struct rt_msghdr *, len);
-				if (new_rtm == NULL)
+				old_rtm = rtm;
+				R_Malloc(rtm, struct rt_msghdr *, len);
+				if (rtm == NULL)
 					senderr(ENOBUFS);
-				(void)memcpy(new_rtm, rtm, rtm->rtm_msglen);
-				Free(rtm); rtm = new_rtm;
+				(void)memcpy(rtm, old_rtm, old_rtm->rtm_msglen);
 			}
 			(void)rt_msg2(rtm->rtm_type, &info, rtm, NULL, 0);
 			rtm->rtm_flags = rt->rt_flags;
@@ -446,6 +446,12 @@ flush:
 	}
 	family = info.rti_info[RTAX_DST] ? info.rti_info[RTAX_DST]->sa_family :
 	    0;
+	/* We cannot free old_rtm until we have stopped using the
+	 * pointers in info, some of which may point to sockaddrs
+	 * in old_rtm.
+	 */
+	if (old_rtm != NULL)
+		Free(old_rtm);
 	if (rt)
 		rtfree(rt);
     {
@@ -510,20 +516,10 @@ rt_xaddrs(u_char rtmtype, const char *cp, const char *cplim,
 	const struct sockaddr *sa = NULL;	/* Quell compiler warning */
 	int i;
 
-#ifdef DIAGNOSTIC
-	if (rtinfo->rti_addrs & (1 << RTAX_GENMASK)) {
-		struct proc *p = curproc;
-		if (p != NULL)
-			printf("rt_xaddrs: process %d (%s) tried to alter "
-			    "the route table with RTAX_GENMASK\n",
-			    p->p_pid, p->p_comm);
-	}
-#endif
 	for (i = 0; i < RTAX_MAX && cp < cplim; i++) {
 		if ((rtinfo->rti_addrs & (1 << i)) == 0)
 			continue;
-		if (i != RTAX_GENMASK)
-			rtinfo->rti_info[i] = sa = (const struct sockaddr *)cp;
+		rtinfo->rti_info[i] = sa = (const struct sockaddr *)cp;
 		ADVANCE(cp, sa);
 	}
 
