@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.243.8.7 2008/12/12 09:57:35 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.243.8.8 2008/12/12 12:47:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.7 2008/12/12 09:57:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.8 2008/12/12 12:47:02 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1641,10 +1641,12 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 	return 0;
 
 bad:
+	mutex_enter(sc->sc_intr_lock);
 	if (hw->close != NULL)
 		hw->close(sc->hw_hdl);
 	sc->sc_open = 0;
 	sc->sc_mode = 0;
+	mutex_exit(sc->sc_intr_lock);
 	sc->sc_full_duplex = 0;
 	return error;
 }
