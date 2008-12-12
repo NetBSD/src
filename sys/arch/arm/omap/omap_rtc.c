@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_rtc.c,v 1.3 2008/11/21 17:13:07 matt Exp $	*/
+/*	$NetBSD: omap_rtc.c,v 1.4 2008/12/12 17:36:14 matt Exp $	*/
 
 /*
  * OMAP RTC driver, based on i80321_timer.c.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_rtc.c,v 1.3 2008/11/21 17:13:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_rtc.c,v 1.4 2008/12/12 17:36:14 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +90,7 @@ struct omaprtc_softc {
 	struct todr_chip_handle	sc_todr;
 };
 
-CFATTACH_DECL(omaprtc, sizeof(struct omaprtc_softc),
+CFATTACH_DECL_NEW(omaprtc, sizeof(struct omaprtc_softc),
     omaprtc_match, omaprtc_attach, NULL, NULL);
 
 static int omaprtc_gettime(todr_chip_handle_t, struct clock_ymdhms *);

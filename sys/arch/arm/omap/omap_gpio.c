@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_gpio.c,v 1.3 2008/11/21 17:13:07 matt Exp $ */
+/*	$NetBSD: omap_gpio.c,v 1.4 2008/12/12 17:36:14 matt Exp $ */
 
 /*
  * The OMAP GPIO Controller interface is inspired by pxa2x0_gpio.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.3 2008/11/21 17:13:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.4 2008/12/12 17:36:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ static void	omapgpio_attach(device_t, device_t, void *);
 
 extern struct cfdriver omapgpio_cd;
 
-CFATTACH_DECL(omapgpio, sizeof(struct omapgpio_softc),
+CFATTACH_DECL_NEW(omapgpio, sizeof(struct omapgpio_softc),
     omapgpio_match, omapgpio_attach, NULL, NULL);
 
 static int	omapgpio_intr(void *);
