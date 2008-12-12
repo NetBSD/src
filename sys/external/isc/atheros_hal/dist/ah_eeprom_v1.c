@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ah_eeprom_v1.c,v 1.2 2008/12/11 05:30:29 alc Exp $
+ * $Id: ah_eeprom_v1.c,v 1.3 2008/12/12 21:01:59 cegger Exp $
  */
 #include "opt_ah.h"
 
@@ -148,7 +148,7 @@ ath_hal_v1EepromAttach(struct ath_hal *ah)
 		 * This code only groks the version 1 EEPROM layout.
 		 */
 		HALDEBUG(ah, HAL_DEBUG_ANY,
-		    "%s: unsupported EEPROM version 0x%x found\n",
+		    "%s: unsupported EEPROM version 0x%s found\n",
 		    __func__, version);
 		return HAL_EEVERSION;
 	}
