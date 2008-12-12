@@ -1,3 +1,5 @@
+/*	$NetBSD: pogen.h,v 1.1.1.2 2008/12/12 11:42:59 haad Exp $	*/
+
 /*
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
  *
@@ -13,11 +15,11 @@
  */
 
 /*
- * Macro to change log messages into a format that xgettext can handle.
+ * Macros to change log messages into a format that xgettext can handle.
  *
  * Note that different PRI* definitions lead to different strings for
  * different architectures.
  */
 
 #define print_log(level, file, line, format, args...) print_log(format, args)
-
+#define dm_log(level, file, line, format, args...) dm_log(format, args)

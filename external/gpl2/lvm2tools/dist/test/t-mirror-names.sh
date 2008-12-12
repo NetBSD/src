@@ -11,53 +11,15 @@
 # Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 test_description="check namings of mirrored LV"
-privileges_required_=1
 
-. ./test-lib.sh
+. ./test-utils.sh
 
-dmsetup_has_dm_devdir_support_ ||
-{
-  say "Your version of dmsetup lacks support for changing DM_DEVDIR."
-  say "Skipping this test"
-  exit 0
-}
-
-cleanup_()
-{
-  test -n "$vg" && {
-    lvremove -ff $vg
-    vgremove $vg
-  } > /dev/null
-  test -n "$pvs" && {
-    pvremove $pvs > /dev/null
-    for d in $pvs; do
-      dmsetup remove $(basename $d)
-    done
-  }
-  losetup -d $lodev
-  rm -f $lofile
-}
-
-# ---------------------------------------------------------------------
-# config
-
-nr_pvs=5
-pvsize=$((80 * 1024 * 2))
-
-vg=mirror-names-vg-$$
-lv1=lv1
-lv2=lv2
+dmsetup_has_dm_devdir_support_ || exit 200
 
 # ---------------------------------------------------------------------
 # Utilities
 
-pv_()
-{
-  echo "$G_dev_/mapper/pv$1"
-}
-
-lv_devices_()
-{
+lv_devices_() {
   local d
   local lv=$1
   shift
@@ -74,15 +36,13 @@ lv_devices_()
   [ "$(echo $devices | sed 's/ //g')" = "" ]
 }
 
-lv_mirror_log_()
-{
+lv_mirror_log_() {
   local lv=$1
 
   echo $(lvs -a -omirror_log --noheadings $lv | sed 's/ //g')
 }
 
-lv_convert_lv_()
-{
+lv_convert_lv_() {
   local lv=$1
 
   echo $(lvs -a -oconvert_lv --noheadings $lv | sed 's/ //g')
@@ -91,111 +51,104 @@ lv_convert_lv_()
 # ---------------------------------------------------------------------
 # Initialize PVs and VGs
 
-test_expect_success \
-  'set up temp file and loopback device' \
-  'lofile=$(pwd)/lofile && lodev=$(loop_setup_ "$lofile")'
-
-offset=0
-pvs=
-for n in $(seq 1 $nr_pvs); do
-  test_expect_success \
-      "create pv$n" \
-      'echo "0 $pvsize linear $lodev $offset" > in &&
-       dmsetup create pv$n < in'
-  offset=$(($offset + $pvsize))
-done
-
-for n in $(seq 1 $nr_pvs); do
-  pvs="$pvs $(pv_ $n)"
-done
-
-test_expect_success \
-  "Run this: pvcreate $pvs" \
-  'pvcreate $pvs'
-
-test_expect_success \
-  'set up a VG' \
-  'vgcreate $vg $pvs'
+aux prepare_vg 5 80
 
 # ---------------------------------------------------------------------
 # Common environment setup/cleanup for each sub testcases
 
-prepare_lvs_()
-{
-  lvremove -ff $vg;
+prepare_lvs_() {
+	lvremove -ff $vg
+	if dmsetup table|grep $vg; then
+		echo "ERROR: lvremove did leave some some mappings in DM behind!"
+		return 1
+	fi
   :
 }
 
-check_and_cleanup_lvs_()
-{
-  lvs -a -o+devices $vg &&
+check_and_cleanup_lvs_() {
+  lvs -a -o+devices $vg 
   lvremove -ff $vg
+	if dmsetup table|grep $vg; then
+		echo "ERROR: lvremove did leave some some mappings in DM behind!"
+		return 1
+	fi
 }
 
-test_expect_success "check environment setup/cleanup" \
-  'prepare_lvs_ &&
-   check_and_cleanup_lvs_'
+prepare_lvs_ 
+check_and_cleanup_lvs_
 
 # ---------------------------------------------------------------------
 # basic
 
-test_expect_success "init: lvcreate" "prepare_lvs_"
+#COMM "init: lvcreate" 
+prepare_lvs_
 
-test_expect_success "mirror images are ${lv1}_mimage_x" \
-  'lvcreate -l2 -m1 -n $lv1 $vg &&
-   lv_devices_ $vg/$lv1 "$lv1"_mimage_0 "$lv1"_mimage_1'
+#COMM "mirror images are ${lv1}_mimage_x"
+lvcreate -l2 -m1 -n $lv1 $vg 
+lv_devices_ $vg/$lv1 "$lv1"_mimage_0 "$lv1"_mimage_1
 
-test_expect_success "mirror log is ${lv1}_mlog" \
-  'lv_mirror_log_ $vg/$lv1 "$lv1"_mlog'
+#COMM "mirror log is ${lv1}_mlog"
+lv_mirror_log_ $vg/$lv1 "$lv1"_mlog
 
-test_expect_success "cleanup" "check_and_cleanup_lvs_"
+# "cleanup" 
+check_and_cleanup_lvs_
+
+#COMM "mirror with name longer than 22 characters (bz221322)"
+name="LVwithanamelogerthan22characters_butidontwonttocounthem"
+lvcreate -m1 -l2 -n"$name" $vg
+lvs $vg/"$name"
+check_and_cleanup_lvs_
 
 # ---------------------------------------------------------------------
 # lvrename
 
-test_expect_success "init: lvrename" "prepare_lvs_"
+#COMM "init: lvrename" 
+prepare_lvs_
 
-test_expect_success "renamed mirror names: $lv1 to $lv2" \
-  'lvcreate -l2 -m1 -n $lv1 $vg &&
-   lvrename $vg/$lv1 $vg/$lv2 &&
-   lv_devices_ $vg/$lv2 "$lv2"_mimage_0 "$lv2"_mimage_1 &&
-   lv_mirror_log_ $vg/$lv2 "$lv2"_mlog'
+#COMM "renamed mirror names: $lv1 to $lv2" 
+lvcreate -l2 -m1 -n $lv1 $vg 
+lvrename $vg/$lv1 $vg/$lv2 
+lv_devices_ $vg/$lv2 "$lv2"_mimage_0 "$lv2"_mimage_1 
+lv_mirror_log_ $vg/$lv2 "$lv2"_mlog
 
-test_expect_success "cleanup" "check_and_cleanup_lvs_"
+#COMM "cleanup" 
+check_and_cleanup_lvs_
 
 # ---------------------------------------------------------------------
 # lvconvert
 
-test_expect_success "init: lvconvert" "prepare_lvs_"
+#COMM "init: lvconvert" 
+prepare_lvs_
 
-test_expect_success "converting mirror names is ${lv1}_mimagetmp_2" \
-  'lvcreate -l2 -m1 -n $lv1 $vg &&
-   lvconvert -m+1 -i1000 -b $vg/$lv1 &&
-   convlv=$(lv_convert_lv_ "$vg/$lv1") &&
-   test "$convlv" = "$lv1"_mimagetmp_2 &&
-   lv_devices_ $vg/$lv1 "$convlv" "$lv1"_mimage_2 &&
-   lv_devices_ "$vg/$convlv" "$lv1"_mimage_0 "$lv1"_mimage_1 &&
-   loglv=$(lv_mirror_log_ "$vg/$convlv") &&
-   test "$loglv" = "$lv1"_mlog'
+#COMM "converting mirror names is ${lv1}_mimagetmp_2"
+lvcreate -l2 -m1 -n $lv1 $vg 
+lvconvert -m+1 -i1000 -b $vg/$lv1 
+convlv=$(lv_convert_lv_ "$vg/$lv1") 
+test "$convlv" = "$lv1"_mimagetmp_2 
+lv_devices_ $vg/$lv1 "$convlv" "$lv1"_mimage_2 
+lv_devices_ "$vg/$convlv" "$lv1"_mimage_0 "$lv1"_mimage_1 
+loglv=$(lv_mirror_log_ "$vg/$convlv") 
+test "$loglv" = "$lv1"_mlog
 
-test_expect_success "mirror log name after re-adding is ${lv1}_mlog" \
-  'lvconvert --mirrorlog core $vg/$lv1 &&
-   lvconvert --mirrorlog disk $vg/$lv1 &&
-   convlv=$(lv_convert_lv_ "$vg/$lv1") &&
-   lv_devices_ $vg/$lv1 "$convlv" "$lv1"_mimage_2 &&
-   lv_devices_ "$vg/$convlv" "$lv1"_mimage_0 "$lv1"_mimage_1 &&
-   loglv=$(lv_mirror_log_ "$vg/$convlv") &&
-   test "$loglv" = "$lv1"_mlog'
+#COMM "mirror log name after re-adding is ${lv1}_mlog" \
+lvconvert --mirrorlog core $vg/$lv1 
+lvconvert --mirrorlog disk $vg/$lv1 
+convlv=$(lv_convert_lv_ "$vg/$lv1") 
+lv_devices_ $vg/$lv1 "$convlv" "$lv1"_mimage_2 
+lv_devices_ "$vg/$convlv" "$lv1"_mimage_0 "$lv1"_mimage_1 
+loglv=$(lv_mirror_log_ "$vg/$convlv") 
+test "$loglv" = "$lv1"_mlog
 
-test_expect_success "renamed converting mirror names: $lv1 to $lv2" \
-  'lvrename $vg/$lv1 $vg/$lv2 &&
-   convlv=$(lv_convert_lv_ "$vg/$lv2") &&
-   lv_devices_ $vg/$lv2 "$convlv" "$lv2"_mimage_2 &&
-   lv_devices_ "$vg/$convlv" "$lv2"_mimage_0 "$lv2"_mimage_1 &&
-   loglv=$(lv_mirror_log_ "$vg/$convlv") &&
-   test "$loglv" = "$lv2"_mlog'
+#COMM "renamed converting mirror names: $lv1 to $lv2" \
+lvrename $vg/$lv1 $vg/$lv2 
+convlv=$(lv_convert_lv_ "$vg/$lv2") 
+lv_devices_ $vg/$lv2 "$convlv" "$lv2"_mimage_2 
+lv_devices_ "$vg/$convlv" "$lv2"_mimage_0 "$lv2"_mimage_1 
+loglv=$(lv_mirror_log_ "$vg/$convlv") 
+test "$loglv" = "$lv2"_mlog
 
-test_expect_success "cleanup" "check_and_cleanup_lvs_"
+#COMM "cleanup" 
+check_and_cleanup_lvs_
 
 # Temporary mirror log should have "_mlogtmp_<n>" suffix
 # but currently lvconvert doesn't have an option to add the log.
@@ -203,4 +156,3 @@ test_expect_success "cleanup" "check_and_cleanup_lvs_"
 # be added.
 
 # ---------------------------------------------------------------------
-test_done

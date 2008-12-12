@@ -26,12 +26,15 @@ abs_top_builddir = @abs_top_builddir@
 abs_top_srcdir = @abs_top_srcdir@
 
 all: init.sh
+	sh harness.sh
+
 init.sh: Makefile.in .bin-dir-stamp
 	rm -f $@-t $@
 	echo 'top_srcdir=$(top_srcdir)' >> $@-t
 	echo 'abs_top_builddir=$(abs_top_builddir)' >> $@-t
 	echo 'abs_top_srcdir=$(abs_top_builddir)' >> $@-t
 	echo 'PATH=$(abs_top_builddir)/test/bin:$$PATH' >> $@-t
+	echo 'export LD_LIBRARY_PATH="$(abs_top_builddir)/libdm:$(abs_top_builddir)/dmeventd"' >> $@-t
 	echo 'abs_srcdir=$(abs_srcdir)' >> $@-t
 	echo 'abs_builddir=$(abs_builddir)' >> $@-t
 	echo 'export PATH' >> $@-t
@@ -47,8 +50,7 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
 
 $(T): init.sh
-	@echo "*** $@ ***"; '$(SHELL_PATH_SQ)' \
-	  $(TESTS_ENVIRONMENT) $@ $(GIT_TEST_OPTS)
+	sh harness.sh $@
 
 .bin-dir-stamp: lvm-wrapper
 	rm -rf bin
@@ -56,14 +58,12 @@ $(T): init.sh
 	for i in lvm $$(cat $(top_srcdir)/tools/.commands); do \
 	  ln -s ../lvm-wrapper bin/$$i; \
 	done
-	test -n "@DMDIR@" && ln -s "@DMDIR@/dmsetup/dmsetup" bin/dmsetup
+	ln -s "$(abs_top_builddir)/tools/dmsetup" bin/dmsetup
 	touch $@
 
 lvm-wrapper: Makefile
 	rm -f $@-t $@
 	echo '#!/bin/sh'                                          >  $@-t
-	test -n "@DMDIR@" \
-	  && echo 'export LD_LIBRARY_PATH="@DMDIR@/lib"'          >> $@-t
 	echo 'cmd=$$(echo ./$$0|sed "s,.*/,,")'                   >> $@-t
 	echo 'test "$$cmd" = lvm &&'                              >> $@-t
 	echo 'exec "$(abs_top_builddir)/tools/lvm" "$$@"'         >> $@-t
@@ -76,6 +76,5 @@ clean:
 
 distclean: clean
 
-all: $(T)
 .PHONY: $(T) clean distclean
 .NOTPARALLEL:

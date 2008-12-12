@@ -1,3 +1,5 @@
+/*	$NetBSD: vgcfgbackup.c,v 1.1.1.2 2008/12/12 11:43:14 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -34,8 +36,7 @@ static char *_expand_filename(const char *template, const char *vg_name,
 		dm_free(filename);	
 		return NULL;
 	}
-	if (*last_filename && !strncmp(*last_filename, filename,
-				      strlen(template))) {
+	if (*last_filename && !strncmp(*last_filename, filename, PATH_MAX)) {
 		log_error("VGs must be backed up into different files. "
 			  "Use %%s in filename for VG name.");
 		dm_free(filename);
@@ -70,7 +71,8 @@ static int vg_backup_single(struct cmd_context *cmd, const char *vg_name,
 			return ECMD_FAILED;
 		}
 
-		backup_to_file(filename, vg->cmd->cmd_line, vg);
+		if (!backup_to_file(filename, vg->cmd->cmd_line, vg))
+			return ECMD_FAILED;
 	} else {
 		if (!consistent) {
 			log_error("No backup taken: specify filename with -f "
@@ -96,8 +98,7 @@ int vgcfgbackup(struct cmd_context *cmd, int argc, char **argv)
 	int ret;
 	char *last_filename = NULL;
 
-	if (partial_mode())
-		init_pvmove(1);
+	init_pvmove(1);
 
 	ret = process_each_vg(cmd, argc, argv, LCK_VG_READ, 0, &last_filename,
 			      &vg_backup_single);
