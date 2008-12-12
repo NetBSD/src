@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43 2008/12/10 09:35:02 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.44 2008/12/12 18:16:58 pooka Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,9 @@
 #include <machine/pte.h>
 #include <sys/queue.h>
 #include <uvm/uvm_object.h>
+#ifdef _KERNEL
+#include <machine/cpuset.h>
+#endif
 #endif
 
 /*
