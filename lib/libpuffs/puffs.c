@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.93 2008/12/12 18:59:53 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.94 2008/12/12 19:45:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.93 2008/12/12 18:59:53 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.94 2008/12/12 19:45:16 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -463,12 +463,23 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 	return -1;
 }
 
+static void
+shutdaemon(struct puffs_usermount *pu, int error)
+{
+	ssize_t n;
+
+	n = write(pu->pu_dpipe[1], &error, sizeof(int));
+	assert(n == 4);
+	close(pu->pu_dpipe[0]);
+	close(pu->pu_dpipe[1]);
+	pu->pu_state &= ~PU_PUFFSDAEMON;
+}
+
 int
 puffs_mount(struct puffs_usermount *pu, const char *dir, int mntflags,
 	puffs_cookie_t cookie)
 {
 	char rp[MAXPATHLEN];
-	ssize_t n;
 	int rv, fd, sverrno;
 	char *comfd;
 
@@ -566,12 +577,8 @@ do {									\
 	free(pu->pu_kargp);
 	pu->pu_kargp = NULL;
 
-	if (pu->pu_state & PU_PUFFSDAEMON) {
-		n = write(pu->pu_dpipe[1], &sverrno, sizeof(int));
-		assert(n == 4);
-		close(pu->pu_dpipe[0]);
-		close(pu->pu_dpipe[1]);
-	}
+	if (pu->pu_state & PU_PUFFSDAEMON)
+		shutdaemon(pu, sverrno);
 
 	errno = sverrno;
 	return rv;
@@ -658,6 +665,15 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	return NULL;
 }
 
+void
+puffs_cancel(struct puffs_usermount *pu, int error)
+{
+
+	assert(puffs_getstate(pu) < PUFFS_STATE_RUNNING);
+	shutdaemon(pu, error);
+	free(pu);
+}
+
 /*
  * XXX: there's currently no clean way to request unmount from
  * within the user server, so be very brutal about it.
@@ -669,6 +685,7 @@ puffs_exit(struct puffs_usermount *pu, int force)
 	struct puffs_node *pn;
 
 	force = 1; /* currently */
+	assert((pu->pu_state & PU_PUFFSDAEMON) == 0);
 
 	if (pu->pu_fd)
 		close(pu->pu_fd);
