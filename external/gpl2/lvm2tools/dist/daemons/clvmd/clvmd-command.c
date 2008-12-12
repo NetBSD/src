@@ -1,3 +1,5 @@
+/*	$NetBSD: clvmd-command.c,v 1.1.1.2 2008/12/12 11:42:05 haad Exp $	*/
+
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
@@ -50,6 +52,10 @@
 
 */
 
+#define _GNU_SOURCE
+#define _FILE_OFFSET_BITS 64
+
+#include <configure.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
@@ -67,9 +73,8 @@
 #include <libdevmapper.h>
 #include <libdlm.h>
 
-#include "list.h"
 #include "locking.h"
-#include "log.h"
+#include "lvm-logging.h"
 #include "lvm-functions.h"
 #include "clvmd-comms.h"
 #include "clvm.h"

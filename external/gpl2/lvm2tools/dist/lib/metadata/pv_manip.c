@@ -1,3 +1,5 @@
+/*	$NetBSD: pv_manip.c,v 1.1.1.2 2008/12/12 11:42:35 haad Exp $	*/
+
 /*
  * Copyright (C) 2003 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -40,7 +42,7 @@ static struct pv_segment *_alloc_pv_segment(struct dm_pool *mem,
 	peg->lvseg = lvseg;
 	peg->lv_area = lv_area;
 
-	list_init(&peg->list);
+	dm_list_init(&peg->list);
 
 	return peg;
 }
@@ -56,23 +58,23 @@ int alloc_pv_segment_whole_pv(struct dm_pool *mem, struct physical_volume *pv)
 	if (!(peg = _alloc_pv_segment(mem, pv, 0, pv->pe_count, NULL, 0)))
 		return_0;
 
-	list_add(&pv->segments, &peg->list);
+	dm_list_add(&pv->segments, &peg->list);
 
 	return 1;
 }
 
-int peg_dup(struct dm_pool *mem, struct list *peg_new, struct list *peg_old)
+int peg_dup(struct dm_pool *mem, struct dm_list *peg_new, struct dm_list *peg_old)
 {
 	struct pv_segment *peg, *pego;
 
-	list_init(peg_new);
+	dm_list_init(peg_new);
 
-	list_iterate_items(pego, peg_old) {
+	dm_list_iterate_items(pego, peg_old) {
 		if (!(peg = _alloc_pv_segment(mem, pego->pv, pego->pe,
 					      pego->len, pego->lvseg,
 					      pego->lv_area)))
 			return_0;
-		list_add(peg_new, &peg->list);
+		dm_list_add(peg_new, &peg->list);
 	}
 
 	return 1;
@@ -94,7 +96,7 @@ static int _pv_split_segment(struct physical_volume *pv, struct pv_segment *peg,
 
 	peg->len = peg->len - peg_new->len;
 
-	list_add_h(&peg->list, &peg_new->list);
+	dm_list_add_h(&peg->list, &peg_new->list);
 
 	if (peg->lvseg) {
 		peg->pv->pe_alloc_count -= peg_new->len;
@@ -199,7 +201,7 @@ void merge_pv_segments(struct pv_segment *peg1, struct pv_segment *peg2)
 {
 	peg1->len += peg2->len;
 
-	list_del(&peg2->list);
+	dm_list_del(&peg2->list);
 }
 
 /*
@@ -223,16 +225,16 @@ static uint32_t _overlap_pe(const struct pv_segment *pvseg,
 /*
  * Returns: number of free PEs in a struct pv_list
  */
-uint32_t pv_list_extents_free(const struct list *pvh)
+uint32_t pv_list_extents_free(const struct dm_list *pvh)
 {
 	struct pv_list *pvl;
 	struct pe_range *per;
 	uint32_t extents = 0;
 	struct pv_segment *pvseg;
 
-	list_iterate_items(pvl, pvh) {
-		list_iterate_items(per, pvl->pe_ranges) {
-			list_iterate_items(pvseg, &pvl->pv->segments) {
+	dm_list_iterate_items(pvl, pvh) {
+		dm_list_iterate_items(per, pvl->pe_ranges) {
+			dm_list_iterate_items(pvseg, &pvl->pv->segments) {
 				if (!pvseg_is_allocated(pvseg))
 					extents += _overlap_pe(pvseg, per);
 			}
@@ -255,14 +257,14 @@ int check_pv_segments(struct volume_group *vg)
 	uint32_t pv_count = 0, free_count = 0, extent_count = 0;
 	int ret = 1;
 
-	list_iterate_items(pvl, &vg->pvs) {
+	dm_list_iterate_items(pvl, &vg->pvs) {
 		pv = pvl->pv;
 		segno = 0;
 		start_pe = 0;
 		alloced = 0;
 		pv_count++;
 
-		list_iterate_items(peg, &pv->segments) {
+		dm_list_iterate_items(peg, &pv->segments) {
 			s = peg->lv_area;
 
 			/* FIXME Remove this next line eventually */
@@ -347,7 +349,7 @@ static int _reduce_pv(struct physical_volume *pv, struct volume_group *vg, uint3
 	}
 
 	/* Check PEs to be removed are not already allocated */
-	list_iterate_items(peg, &pv->segments) {
+	dm_list_iterate_items(peg, &pv->segments) {
  		if (peg->pe + peg->len <= new_pe_count)
 			continue;
 
@@ -362,9 +364,9 @@ static int _reduce_pv(struct physical_volume *pv, struct volume_group *vg, uint3
 	if (!pv_split_segment(pv, new_pe_count))
 		return_0;
 
-	list_iterate_items_safe(peg, pegt, &pv->segments) {
+	dm_list_iterate_items_safe(peg, pegt, &pv->segments) {
  		if (peg->pe + peg->len > new_pe_count)
-			list_del(&peg->list);
+			dm_list_del(&peg->list);
 	}
 
 	pv->pe_count = new_pe_count;
@@ -392,7 +394,7 @@ static int _extend_pv(struct physical_volume *pv, struct volume_group *vg,
 				old_pe_count,
 				new_pe_count - old_pe_count,
 				NULL, 0);
-	list_add(&pv->segments, &peg->list);
+	dm_list_add(&pv->segments, &peg->list);
 
 	pv->pe_count = new_pe_count;
 

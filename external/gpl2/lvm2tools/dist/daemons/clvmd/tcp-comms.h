@@ -1,3 +1,5 @@
+/*	$NetBSD: tcp-comms.h,v 1.1.1.2 2008/12/12 11:42:01 haad Exp $	*/
+
 #include <netinet/in.h>
 
 #define GULM_MAX_CLUSTER_MESSAGE 1600

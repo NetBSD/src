@@ -1,3 +1,5 @@
+/*	$NetBSD: dev_manager.c,v 1.1.1.2 2008/12/12 11:42:24 haad Exp $	*/
+
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -47,7 +49,6 @@ struct dev_manager {
 
 	struct cmd_context *cmd;
 
-	const char *stripe_filler;
 	void *target_state;
 	uint32_t pvmove_mirror_count;
 
@@ -58,8 +59,6 @@ struct lv_layer {
 	struct logical_volume *lv;
 	const char *old_name;
 };
-
-static const char *stripe_filler = NULL;
 
 static char *_build_dlid(struct dm_pool *mem, const char *lvid, const char *layer)
 {
@@ -333,7 +332,7 @@ static int _percent_run(struct dev_manager *dm, const char *name,
 	uint64_t start, length;
 	char *type = NULL;
 	char *params = NULL;
-	struct list *segh = &lv->segments;
+	struct dm_list *segh = &lv->segments;
 	struct lv_segment *seg = NULL;
 	struct segment_type *segtype;
 
@@ -361,12 +360,12 @@ static int _percent_run(struct dev_manager *dm, const char *name,
 		next = dm_get_next_target(dmt, next, &start, &length, &type,
 					  &params);
 		if (lv) {
-			if (!(segh = list_next(&lv->segments, segh))) {
+			if (!(segh = dm_list_next(&lv->segments, segh))) {
 				log_error("Number of segments in active LV %s "
 					  "does not match metadata", lv->name);
 				goto out;
 			}
-			seg = list_item(segh, struct lv_segment);
+			seg = dm_list_item(segh, struct lv_segment);
 		}
 
 		if (!type || !params || strcmp(type, target_type))
@@ -379,13 +378,12 @@ static int _percent_run(struct dev_manager *dm, const char *name,
 		    !segtype->ops->target_percent(&dm->target_state, dm->mem,
 						  dm->cmd, seg, params,
 						  &total_numerator,
-						  &total_denominator,
-						  percent))
+						  &total_denominator))
 			goto_out;
 
 	} while (next);
 
-	if (lv && (segh = list_next(&lv->segments, segh))) {
+	if (lv && (segh = dm_list_next(&lv->segments, segh))) {
 		log_error("Number of segments in active LV %s does not "
 			  "match metadata", lv->name);
 		goto out;
@@ -393,7 +391,7 @@ static int _percent_run(struct dev_manager *dm, const char *name,
 
 	if (total_denominator)
 		*percent = (float) total_numerator *100 / total_denominator;
-	else if (*percent < 0)
+	else
 		*percent = 100;
 
 	log_debug("LV percent: %f", *percent);
@@ -443,13 +441,6 @@ struct dev_manager *dev_manager_create(struct cmd_context *cmd,
 
 	dm->cmd = cmd;
 	dm->mem = mem;
-
-	if (!stripe_filler) {
-		stripe_filler = find_config_tree_str(cmd,
-						"activation/missing_stripe_filler",
-						DEFAULT_STRIPE_FILLER);
-	}
-	dm->stripe_filler = stripe_filler;
 
 	if (!(dm->vg_name = dm_pool_strdup(dm->mem, vg_name)))
 		goto_bad;
@@ -587,7 +578,7 @@ static int _belong_to_vg(const char *vgname, const char *name)
 	old_origin = snap_seg->origin;
 
 	/* Was this the last active snapshot with this origin? */
-	list_iterate_items(lvl, active_head) {
+	dm_list_iterate_items(lvl, active_head) {
 		active = lvl->lv;
 		if ((snap_seg = find_cow(active)) &&
 		    snap_seg->origin == old_origin) {
@@ -668,7 +659,7 @@ static int _add_lv_to_dtree(struct dev_manager *dm, struct dm_tree *dtree, struc
 static struct dm_tree *_create_partial_dtree(struct dev_manager *dm, struct logical_volume *lv)
 {
 	struct dm_tree *dtree;
-	struct list *snh, *snht;
+	struct dm_list *snh, *snht;
 	struct lv_segment *seg;
 	uint32_t s;
 
@@ -681,12 +672,12 @@ static struct dm_tree *_create_partial_dtree(struct dev_manager *dm, struct logi
 		goto_bad;
 
 	/* Add any snapshots of this LV */
-	list_iterate_safe(snh, snht, &lv->snapshot_segs)
-		if (!_add_lv_to_dtree(dm, dtree, list_struct_base(snh, struct lv_segment, origin_list)->cow))
+	dm_list_iterate_safe(snh, snht, &lv->snapshot_segs)
+		if (!_add_lv_to_dtree(dm, dtree, dm_list_struct_base(snh, struct lv_segment, origin_list)->cow))
 			goto_bad;
 
 	/* Add any LVs used by segments in this LV */
-	list_iterate_items(seg, &lv->segments)
+	dm_list_iterate_items(seg, &lv->segments)
 		for (s = 0; s < seg->area_count; s++)
 			if (seg_type(seg, s) == AREA_LV && seg_lv(seg, s)) {
 				if (!_add_lv_to_dtree(dm, dtree, seg_lv(seg, s)))
@@ -698,6 +689,68 @@ static struct dm_tree *_create_partial_dtree(struct dev_manager *dm, struct logi
 bad:
 	dm_tree_free(dtree);
 	return NULL;
+}
+
+static char *_add_error_device(struct dev_manager *dm, struct dm_tree *dtree,
+			       struct lv_segment *seg, int s)
+{
+	char *id, *name;
+	char errid[32];
+	struct dm_tree_node *node;
+	struct lv_segment *seg_i;
+	int segno = -1, i = 0;;
+	uint64_t size = seg->len * seg->lv->vg->extent_size;
+
+	dm_list_iterate_items(seg_i, &seg->lv->segments) {
+		if (seg == seg_i)
+			segno = i;
+		++i;
+	}
+
+	if (segno < 0) {
+		log_error("_add_error_device called with bad segment");
+		return_NULL;
+	}
+
+	sprintf(errid, "missing_%d_%d", segno, s);
+
+	if (!(id = build_dlid(dm, seg->lv->lvid.s, errid))) 
+		return_NULL;
+
+	if (!(name = build_dm_name(dm->mem, seg->lv->vg->name,
+				   seg->lv->name, errid)))
+		return_NULL;
+	if (!(node = dm_tree_add_new_dev(dtree, name, id, 0, 0, 0, 0, 0)))
+		return_NULL;
+	if (!dm_tree_node_add_error_target(node, size))
+		return_NULL;
+
+	return id;
+}
+
+static int _add_error_area(struct dev_manager *dm, struct dm_tree_node *node,
+			   struct lv_segment *seg, int s)
+{
+	char *dlid;
+	uint64_t extent_size = seg->lv->vg->extent_size;
+
+	if (!strcmp(dm->cmd->stripe_filler, "error")) {
+		/*
+		 * FIXME, the tree pointer is first field of dm_tree_node, but
+		 * we don't have the struct definition available.
+		 */
+		struct dm_tree **tree = (struct dm_tree **) node;
+		dlid = _add_error_device(dm, *tree, seg, s);
+		if (!dlid)
+			return_0;
+		dm_tree_node_add_target_area(node, NULL, dlid,
+					     extent_size * seg_le(seg, s));
+	} else
+		dm_tree_node_add_target_area(node,
+					     dm->cmd->stripe_filler,
+					     NULL, UINT64_C(0));
+
+	return 1;
 }
 
 int add_areas_line(struct dev_manager *dm, struct lv_segment *seg,
@@ -713,11 +766,10 @@ int add_areas_line(struct dev_manager *dm, struct lv_segment *seg,
 		     (!seg_pvseg(seg, s) ||
 		      !seg_pv(seg, s) ||
 		      !seg_dev(seg, s))) ||
-		    (seg_type(seg, s) == AREA_LV && !seg_lv(seg, s)))
-			dm_tree_node_add_target_area(node,
-							dm->stripe_filler,
-							NULL, UINT64_C(0));
-		else if (seg_type(seg, s) == AREA_PV)
+		    (seg_type(seg, s) == AREA_LV && !seg_lv(seg, s))) {
+			if (!_add_error_area(dm, node, seg, s))
+				return_0;
+		} else if (seg_type(seg, s) == AREA_PV)
 			dm_tree_node_add_target_area(node,
 							dev_name(seg_dev(seg, s)),
 							NULL,
@@ -812,7 +864,7 @@ static int _add_segment_to_dtree(struct dev_manager *dm,
 				   const char *layer)
 {
 	uint32_t s;
-	struct list *snh;
+	struct dm_list *snh;
 	struct lv_segment *seg_present;
 
 	/* Ensure required device-mapper targets are loaded */
@@ -865,8 +917,8 @@ static int _add_segment_to_dtree(struct dev_manager *dm,
 
 	if (lv_is_origin(seg->lv) && !layer)
 		/* Add any snapshots of this LV */
-		list_iterate(snh, &seg->lv->snapshot_segs)
-			if (!_add_new_lv_to_dtree(dm, dtree, list_struct_base(snh, struct lv_segment, origin_list)->cow, NULL))
+		dm_list_iterate(snh, &seg->lv->snapshot_segs)
+			if (!_add_new_lv_to_dtree(dm, dtree, dm_list_struct_base(snh, struct lv_segment, origin_list)->cow, NULL))
 				return_0;
 
 	return 1;
@@ -920,7 +972,7 @@ static int _add_new_lv_to_dtree(struct dev_manager *dm, struct dm_tree *dtree,
 
 	/* Create table */
 	dm->pvmove_mirror_count = 0u;
-	list_iterate_items(seg, &lv->segments) {
+	dm_list_iterate_items(seg, &lv->segments) {
 		if (!_add_segment_to_dtree(dm, dtree, dnode, seg, layer))
 			return_0;
 		/* These aren't real segments in the LVM2 metadata */

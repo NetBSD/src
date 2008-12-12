@@ -1,3 +1,5 @@
+/*	$NetBSD: metadata.h,v 1.1.1.2 2008/12/12 11:42:34 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -61,6 +63,14 @@
 //#define MIRROR_NOTSYNCED	0x00080000U	/* LV */
 #define ACTIVATE_EXCL		0x00100000U	/* LV - internal use only */
 #define PRECOMMITTED		0x00200000U	/* VG - internal use only */
+//#define CONVERTING		0x00400000U	/* LV */
+
+//#define MISSING_PV		0x00800000U	/* PV */
+//#define PARTIAL_LV		0x01000000U	/* LV - derived flag, not
+//						   written out in metadata*/
+
+#define POSTORDER_FLAG		0x02000000U /* Not real flags, reserved for  */
+#define POSTORDER_OPEN_FLAG	0x04000000U /* temporary use inside vg_read. */
 
 //#define LVM_READ              	0x00000100U	/* LV VG */
 //#define LVM_WRITE             	0x00000200U	/* LV VG */
@@ -133,7 +143,7 @@ struct metadata_area_ops {
 };
 
 struct metadata_area {
-	struct list list;
+	struct dm_list list;
 	struct metadata_area_ops *ops;
 	void *metadata_locn;
 };
@@ -144,22 +154,22 @@ struct metadata_area {
 #define seg_le(seg, s)		(seg)->areas[(s)].u.lv.le
 
 struct name_list {
-	struct list list;
+	struct dm_list list;
 	char *name;
 };
 
 struct mda_list {
-	struct list list;
+	struct dm_list list;
 	struct device_area mda;
 };
 
 struct peg_list {
-	struct list list;
+	struct dm_list list;
 	struct pv_segment *peg;
 };
 
 struct seg_list {
-	struct list list;
+	struct dm_list list;
 	unsigned count;
 	struct lv_segment *seg;
 };
@@ -177,7 +187,7 @@ struct format_handler {
 	 * Return PV with given path.
 	 */
 	int (*pv_read) (const struct format_type * fmt, const char *pv_name,
-			struct physical_volume * pv, struct list * mdas);
+			struct physical_volume * pv, struct dm_list * mdas);
 
 	/*
 	 * Tweak an already filled out a pv ready for importing into a
@@ -187,7 +197,7 @@ struct format_handler {
 			 uint64_t pe_start, uint32_t extent_count,
 			 uint32_t extent_size,
 			 int pvmetadatacopies,
-			 uint64_t pvmetadatasize, struct list * mdas,
+			 uint64_t pvmetadatasize, struct dm_list * mdas,
 			 struct physical_volume * pv, struct volume_group * vg);
 
 	/*
@@ -195,7 +205,7 @@ struct format_handler {
 	 * pv->vg_name must be a valid orphan VG name
 	 */
 	int (*pv_write) (const struct format_type * fmt,
-			 struct physical_volume * pv, struct list * mdas,
+			 struct physical_volume * pv, struct dm_list * mdas,
 			 int64_t label_sector);
 
 	/*
@@ -239,7 +249,7 @@ struct format_handler {
 /*
  * Utility functions
  */
-unsigned long pe_align(void);
+unsigned long pe_align(struct physical_volume *pv);
 int vg_validate(struct volume_group *vg);
 
 int pv_write_orphan(struct cmd_context *cmd, struct physical_volume *pv);
@@ -257,7 +267,7 @@ int get_pv_from_vg_by_id(const struct format_type *fmt, const char *vg_name,
 struct lv_list *find_lv_in_vg_by_lvid(struct volume_group *vg,
 				      const union lvid *lvid);
 
-struct lv_list *find_lv_in_lv_list(const struct list *ll,
+struct lv_list *find_lv_in_lv_list(const struct dm_list *ll,
 				   const struct logical_volume *lv);
 
 /* Return the VG that contains a given LV (based on path given in lv_name) */
@@ -272,7 +282,7 @@ struct logical_volume *lv_from_lvid(struct cmd_context *cmd,
 /* FIXME Merge these functions with ones above */
 struct physical_volume *find_pv(struct volume_group *vg, struct device *dev);
 
-struct pv_list *find_pv_in_pv_list(const struct list *pl,
+struct pv_list *find_pv_in_pv_list(const struct dm_list *pl,
 				   const struct physical_volume *pv);
 
 /* Find LV segment containing given LE */

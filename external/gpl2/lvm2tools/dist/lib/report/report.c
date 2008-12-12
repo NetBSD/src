@@ -1,3 +1,5 @@
+/*	$NetBSD: report.c,v 1.1.1.2 2008/12/12 11:42:41 haad Exp $	*/
+
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -173,7 +175,7 @@ static int _tags_disp(struct dm_report *rh __attribute((unused)), struct dm_pool
 		      struct dm_report_field *field,
 		      const void *data, void *private __attribute((unused)))
 {
-	const struct list *tags = (const struct list *) data;
+	const struct dm_list *tags = (const struct dm_list *) data;
 	struct str_list *sl;
 
 	if (!dm_pool_begin_object(mem, 256)) {
@@ -181,7 +183,7 @@ static int _tags_disp(struct dm_report *rh __attribute((unused)), struct dm_pool
 		return 0;
 	}
 
-	list_iterate_items(sl, tags) {
+	dm_list_iterate_items(sl, tags) {
 		if (!dm_pool_grow_object(mem, sl->str, strlen(sl->str)) ||
 		    (sl->list.n != tags && !dm_pool_grow_object(mem, ",", 1))) {
 			log_error("dm_pool_grow_object failed");
@@ -204,7 +206,7 @@ static int _modules_disp(struct dm_report *rh, struct dm_pool *mem,
 			 const void *data, void *private)
 {
 	const struct logical_volume *lv = (const struct logical_volume *) data;
-	struct list *modules;
+	struct dm_list *modules;
 
 	if (!(modules = str_list_create(mem))) {
 		log_error("modules str_list allocation failed");
@@ -439,7 +441,7 @@ static int _vgstatus_disp(struct dm_report *rh __attribute((unused)), struct dm_
 	else
 		repstr[2] = '-';
 
-	if (vg->status & PARTIAL_VG)
+	if (vg_missing_pv_count(vg))
 		repstr[3] = 'p';
 	else
 		repstr[3] = '-';
@@ -492,7 +494,7 @@ static int _loglv_disp(struct dm_report *rh, struct dm_pool *mem __attribute((un
 	const struct logical_volume *lv = (const struct logical_volume *) data;
 	struct lv_segment *seg;
 
-	list_iterate_items(seg, &lv->segments) {
+	dm_list_iterate_items(seg, &lv->segments) {
 		if (!seg_is_mirrored(seg) || !seg->log_lv)
 			continue;
 		return dm_report_field_string(rh, field,
@@ -545,7 +547,7 @@ static int _movepv_disp(struct dm_report *rh, struct dm_pool *mem __attribute((u
 	const char *name;
 	struct lv_segment *seg;
 
-	list_iterate_items(seg, &lv->segments) {
+	dm_list_iterate_items(seg, &lv->segments) {
 		if (!(seg->status & PVMOVE))
 			continue;
 		name = dev_name(seg_dev(seg, 0));
@@ -842,7 +844,7 @@ static int _pvmdas_disp(struct dm_report *rh, struct dm_pool *mem,
 	const char *pvid = (const char *)(&((struct id *) data)->uuid);
 
 	info = info_from_pvid(pvid, 0);
-	count = info ? list_size(&info->mdas) : 0;
+	count = info ? dm_list_size(&info->mdas) : 0;
 
 	return _uint32_disp(rh, mem, field, &count, private);
 }
@@ -854,7 +856,7 @@ static int _vgmdas_disp(struct dm_report *rh, struct dm_pool *mem,
 	const struct volume_group *vg = (const struct volume_group *) data;
 	uint32_t count;
 
-	count = list_size(&vg->fid->metadata_areas);
+	count = dm_list_size(&vg->fid->metadata_areas);
 
 	return _uint32_disp(rh, mem, field, &count, private);
 }
@@ -870,7 +872,7 @@ static int _pvmdafree_disp(struct dm_report *rh, struct dm_pool *mem,
 
 	info = info_from_pvid(pvid, 0);
 
-	list_iterate_items(mda, &info->mdas) {
+	dm_list_iterate_items(mda, &info->mdas) {
 		if (!mda->ops->mda_free_sectors)
 			continue;
 		mda_free = mda->ops->mda_free_sectors(mda);
@@ -892,7 +894,7 @@ static int _vgmdafree_disp(struct dm_report *rh, struct dm_pool *mem,
 	uint64_t freespace = UINT64_MAX, mda_free;
 	struct metadata_area *mda;
 
-	list_iterate_items(mda, &vg->fid->metadata_areas) {
+	dm_list_iterate_items(mda, &vg->fid->metadata_areas) {
 		if (!mda->ops->mda_free_sectors)
 			continue;
 		mda_free = mda->ops->mda_free_sectors(mda);
@@ -914,7 +916,7 @@ static int _lvcount_disp(struct dm_report *rh, struct dm_pool *mem,
         struct lv_list *lvl;
 	uint32_t count = 0;
 
-        list_iterate_items(lvl, &vg->lvs)
+        dm_list_iterate_items(lvl, &vg->lvs)
 		if (lv_is_visible(lvl->lv) && !(lvl->lv->status & SNAPSHOT))
 			count++;
 
@@ -928,7 +930,7 @@ static int _lvsegcount_disp(struct dm_report *rh, struct dm_pool *mem,
 	const struct logical_volume *lv = (const struct logical_volume *) data;
 	uint32_t count;
 
-	count = list_size(&lv->segments);
+	count = dm_list_size(&lv->segments);
 
 	return _uint32_disp(rh, mem, field, &count, private);
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: last-path-component.h,v 1.1.1.2 2008/12/12 11:42:39 haad Exp $	*/
+
 /*
  * Copyright (C) 2007 Red Hat, Inc. All rights reserved.
  *
@@ -21,7 +23,8 @@
 
 static inline char *last_path_component(char const *name)
 {
-	char const *slash = strrchr (name, '/');
+	char const *slash = strrchr(name, '/');
 	char const *res = slash ? slash + 1 : name;
-	return (char *) res;
+
+	return (char *)res;
 }

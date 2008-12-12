@@ -20,7 +20,7 @@ VPATH = @srcdir@
 
 LN_S = @LN_S@
 
-.PHONY: clean distclean all install pofile install_cluster
+.PHONY: clean distclean all install pofile install_cluster install_device-mapper
 
 all: .symlinks_created
 
@@ -35,11 +35,15 @@ distclean:
 
 pofile: all
 
+device-mapper: all
+
 clean:
 
 install:
 
 install_cluster:
+
+install_device-mapper:
 
 cflow:
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: tcp-comms.c,v 1.1.1.2 2008/12/12 11:42:05 haad Exp $	*/
+
 /******************************************************************************
 *******************************************************************************
 **
@@ -13,7 +15,10 @@
    It can also make outgoing connnections to the other clvmd nodes.
 */
 
+#define _GNU_SOURCE
+#define _FILE_OFFSET_BITS 64
 
+#include <configure.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/utsname.h>

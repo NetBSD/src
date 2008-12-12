@@ -1,3 +1,5 @@
+/*	$NetBSD: archive.c,v 1.1.1.2 2008/12/12 11:42:44 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -48,7 +50,7 @@
  * with the least recent at the head.
  */
 struct archive_file {
-	struct list list;
+	struct dm_list list;
 
 	char *path;
 	uint32_t index;
@@ -87,24 +89,24 @@ static int _split_vg(const char *filename, char *vgname, size_t vg_size,
 	return 1;
 }
 
-static void _insert_archive_file(struct list *head, struct archive_file *b)
+static void _insert_archive_file(struct dm_list *head, struct archive_file *b)
 {
 	struct archive_file *bf = NULL;
 
-	if (list_empty(head)) {
-		list_add(head, &b->list);
+	if (dm_list_empty(head)) {
+		dm_list_add(head, &b->list);
 		return;
 	}
 
 	/* index reduces through list */
-	list_iterate_items(bf, head) {
+	dm_list_iterate_items(bf, head) {
 		if (b->index > bf->index) {
-			list_add(&bf->list, &b->list);
+			dm_list_add(&bf->list, &b->list);
 			return;
 		}
 	}
 
-	list_add_h(&bf->list, &b->list);
+	dm_list_add_h(&bf->list, &b->list);
 }
 
 static char *_join_file_to_dir(struct dm_pool *mem, const char *dir, const char *name)
@@ -122,7 +124,7 @@ static char *_join_file_to_dir(struct dm_pool *mem, const char *dir, const char 
 /*
  * Returns a list of archive_files.
  */
-static struct list *_scan_archive(struct dm_pool *mem,
+static struct dm_list *_scan_archive(struct dm_pool *mem,
 				  const char *vgname, const char *dir)
 {
 	int i, count;
@@ -130,12 +132,12 @@ static struct list *_scan_archive(struct dm_pool *mem,
 	char vgname_found[64], *path;
 	struct dirent **dirent;
 	struct archive_file *af;
-	struct list *results;
+	struct dm_list *results;
 
 	if (!(results = dm_pool_alloc(mem, sizeof(*results))))
 		return_NULL;
 
-	list_init(results);
+	dm_list_init(results);
 
 	/* Sort fails beyond 5-digit indexes */
 	if ((count = scandir(dir, &dirent, NULL, alphasort)) < 0) {
@@ -186,7 +188,7 @@ static struct list *_scan_archive(struct dm_pool *mem,
 	return results;
 }
 
-static void _remove_expired(struct list *archives, uint32_t archives_size,
+static void _remove_expired(struct dm_list *archives, uint32_t archives_size,
 			    uint32_t retain_days, uint32_t min_archive)
 {
 	struct archive_file *bf;
@@ -202,7 +204,7 @@ static void _remove_expired(struct list *archives, uint32_t archives_size,
 	retain_time = time(NULL) - (time_t) retain_days *SECS_PER_DAY;
 
 	/* Assume list is ordered newest first (by index) */
-	list_iterate_back_items(bf, archives) {
+	dm_list_iterate_back_items(bf, archives) {
 		/* Get the mtime of the file and unlink if too old */
 		if (stat(bf->path, &sb)) {
 			log_sys_error("stat", bf->path);
@@ -231,7 +233,7 @@ int archive_vg(struct volume_group *vg,
 	struct archive_file *last;
 	FILE *fp = NULL;
 	char temp_file[PATH_MAX], archive_name[PATH_MAX];
-	struct list *archives;
+	struct dm_list *archives;
 
 	/*
 	 * Write the vg out to a temporary file.
@@ -263,10 +265,10 @@ int archive_vg(struct volume_group *vg,
 	if (!(archives = _scan_archive(vg->cmd->mem, vg->name, dir)))
 		return_0;
 
-	if (list_empty(archives))
+	if (dm_list_empty(archives))
 		ix = 0;
 	else {
-		last = list_item(list_first(archives), struct archive_file);
+		last = dm_list_item(dm_list_first(archives), struct archive_file);
 		ix = last->index + 1;
 	}
 
@@ -286,7 +288,7 @@ int archive_vg(struct volume_group *vg,
 	if (!renamed)
 		log_error("Archive rename failed for %s", temp_file);
 
-	_remove_expired(archives, list_size(archives) + renamed, retain_days,
+	_remove_expired(archives, dm_list_size(archives) + renamed, retain_days,
 			min_archive);
 
 	return 1;
@@ -331,16 +333,16 @@ static void _display_archive(struct cmd_context *cmd, struct archive_file *af)
 
 int archive_list(struct cmd_context *cmd, const char *dir, const char *vgname)
 {
-	struct list *archives;
+	struct dm_list *archives;
 	struct archive_file *af;
 
 	if (!(archives = _scan_archive(cmd->mem, vgname, dir)))
 		return_0;
 
-	if (list_empty(archives))
+	if (dm_list_empty(archives))
 		log_print("No archives found in %s.", dir);
 
-	list_iterate_back_items(af, archives)
+	dm_list_iterate_back_items(af, archives)
 		_display_archive(cmd, af);
 
 	dm_pool_free(cmd->mem, archives);

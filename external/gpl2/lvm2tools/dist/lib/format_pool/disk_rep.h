@@ -1,3 +1,5 @@
+/*	$NetBSD: disk_rep.h,v 1.1.1.2 2008/12/12 11:42:13 haad Exp $	*/
+
 /*
  * Copyright (C) 1997-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -106,7 +108,7 @@ struct pool_disk {
 };
 
 struct pool_list {
-	struct list list;
+	struct dm_list list;
 	struct pool_disk pd;
 	struct physical_volume *pv;
 	struct id pv_uuid;
@@ -137,18 +139,18 @@ int read_pool_label(struct pool_list *pl, struct labeller *l,
 void pool_label_out(struct pool_disk *pl, void *buf);
 void pool_label_in(struct pool_disk *pl, void *buf);
 void get_pool_uuid(char *uuid, uint64_t poolid, uint32_t spid, uint32_t devid);
-int import_pool_vg(struct volume_group *vg, struct dm_pool *mem, struct list *pls);
+int import_pool_vg(struct volume_group *vg, struct dm_pool *mem, struct dm_list *pls);
 int import_pool_lvs(struct volume_group *vg, struct dm_pool *mem,
-		    struct list *pls);
+		    struct dm_list *pls);
 int import_pool_pvs(const struct format_type *fmt, struct volume_group *vg,
-		    struct list *pvs, struct dm_pool *mem, struct list *pls);
+		    struct dm_list *pvs, struct dm_pool *mem, struct dm_list *pls);
 int import_pool_pv(const struct format_type *fmt, struct dm_pool *mem,
 		   struct volume_group *vg, struct physical_volume *pv,
 		   struct pool_list *pl);
-int import_pool_segments(struct list *lvs, struct dm_pool *mem,
+int import_pool_segments(struct dm_list *lvs, struct dm_pool *mem,
 			 struct user_subpool *usp, int sp_count);
 int read_pool_pds(const struct format_type *fmt, const char *vgname,
-		  struct dm_pool *mem, struct list *head);
+		  struct dm_pool *mem, struct dm_list *head);
 struct pool_list *read_pool_disk(const struct format_type *fmt,
 				 struct device *dev, struct dm_pool *mem,
 				 const char *vg_name);

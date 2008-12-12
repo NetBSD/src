@@ -22,15 +22,11 @@ ifeq ("@INTL@", "yes")
   SUBDIRS += po
 endif
 
-SUBDIRS += lib tools daemons
-
-ifeq ("@DMEVENTD@", "yes")
-  SUBDIRS += dmeventd
-endif
+SUBDIRS += lib tools daemons libdm
 
 ifeq ($(MAKECMDGOALS),distclean)
   SUBDIRS += daemons/clvmd \
-	     dmeventd \
+	     daemons/dmeventd/plugins \
 	     lib/format1 \
 	     lib/format_pool \
 	     lib/locking \
@@ -44,18 +40,22 @@ endif
 
 include make.tmpl
 
+libdm: include
+lib: libdm
 daemons: lib
-lib: include
-tools: lib
-dmeventd: tools
-po: tools daemons dmeventd
+tools: lib device-mapper
+po: tools daemons
+
+libdm.device-mapper: include.device-mapper
+daemons.device-mapper: libdm.device-mapper
+tools.device-mapper: libdm.device-mapper
+device-mapper: tools.device-mapper daemons.device-mapper man.device-mapper
 
 ifeq ("@INTL@", "yes")
 lib.pofile: include.pofile
 tools.pofile: lib.pofile
 daemons.pofile: lib.pofile
-dmeventd.pofile: tools.pofile
-po.pofile: tools.pofile daemons.pofile dmeventd.pofile
+po.pofile: tools.pofile daemons.pofile
 pofile: po.pofile
 endif
 
@@ -84,18 +84,21 @@ endif
 
 lcov-reset:
 	$(LCOV) -d $(top_srcdir)/dmeventd --zerocounters
+	$(LCOV) -d $(top_srcdir)/libdm --zerocounters
 	$(LCOV) -d $(top_srcdir)/lib --zerocounters
 	$(LCOV) -d $(top_srcdir)/tools --zerocounters
 
 lcov: all
 	$(RM) -rf $(LCOV_REPORTS_DIR)
 	$(MKDIR_P) $(LCOV_REPORTS_DIR)
+	$(LCOV) -b ${top_srcdir}/libdm -d $(top_srcdir)/libdm -c -o $(LCOV_REPORTS_DIR)/libdm.info
 	$(LCOV) -b $(top_srcdir)/lib -d $(top_srcdir)/lib -c -o $(LCOV_REPORTS_DIR)/lib.info
 	$(LCOV) -b $(top_srcdir)/tools -d $(top_srcdir)/tools -c -o $(LCOV_REPORTS_DIR)/tools.info
 	DMEVENTD_INFO="$(LCOV_REPORTS_DIR)/dmeventd.info" ;\
 	DMEVENTD_INFO_A="-a $$DMEVENTDINFO" ;\
 	$(LCOV) -b $(top_srcdir)/dmeventd -d $(top_srcdir)/dmeventd -c -o $$DMEVENTD_INFO || DMEVENTD_INFO_A="" ;\
 	$(LCOV) $$DMEVENTD_INFO_A -a $(LCOV_REPORTS_DIR)/lib.info \
+		-a $(LCOV_REPORTS_DIR)/libdm.info \
 		-a $(LCOV_REPORTS_DIR)/tools.info \
 		-o $(LCOV_REPORTS_DIR)/lvm.info
 ifneq ("@GENHTML@", "")

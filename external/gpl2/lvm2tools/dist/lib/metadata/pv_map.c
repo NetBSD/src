@@ -1,3 +1,5 @@
+/*	$NetBSD: pv_map.c,v 1.1.1.2 2008/12/12 11:42:35 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -17,21 +19,23 @@
 #include "pv_map.h"
 #include "pv_alloc.h"
 
+#include <assert.h>
+
 /*
  * Areas are maintained in size order, largest first.
  *
  * FIXME Cope with overlap.
  */
-static void _insert_area(struct list *head, struct pv_area *a)
+static void _insert_area(struct dm_list *head, struct pv_area *a)
 {
 	struct pv_area *pva;
 
-	list_iterate_items(pva, head) {
+	dm_list_iterate_items(pva, head) {
 		if (a->count > pva->count)
 			break;
 	}
 
-	list_add(&pva->list, &a->list);
+	dm_list_add(&pva->list, &a->list);
 	a->map->pe_count += a->count;
 }
 
@@ -67,7 +71,7 @@ static int _create_alloc_areas_for_pv(struct dm_pool *mem, struct pv_map *pvm,
 	pe = start;
 
 	/* Walk through complete ordered list of device segments */
-	list_iterate_items(peg, &pvm->pv->segments) {
+	dm_list_iterate_items(peg, &pvm->pv->segments) {
 		/* pe holds the next extent we want to check */
 
 		/* Beyond the range we're interested in? */
@@ -97,7 +101,7 @@ static int _create_alloc_areas_for_pv(struct dm_pool *mem, struct pv_map *pvm,
 }
 
 static int _create_all_areas_for_pv(struct dm_pool *mem, struct pv_map *pvm,
-				    struct list *pe_ranges)
+				    struct dm_list *pe_ranges)
 {
 	struct pe_range *aa;
 
@@ -110,7 +114,7 @@ static int _create_all_areas_for_pv(struct dm_pool *mem, struct pv_map *pvm,
 		return 1;
 	}
 
-	list_iterate_items(aa, pe_ranges) {
+	dm_list_iterate_items(aa, pe_ranges) {
 		if (!_create_alloc_areas_for_pv(mem, pvm, aa->start,
 						aa->count))
 			return_0;
@@ -119,18 +123,18 @@ static int _create_all_areas_for_pv(struct dm_pool *mem, struct pv_map *pvm,
 	return 1;
 }
 
-static int _create_maps(struct dm_pool *mem, struct list *pvs, struct list *pvms)
+static int _create_maps(struct dm_pool *mem, struct dm_list *pvs, struct dm_list *pvms)
 {
 	struct pv_map *pvm, *pvm2;
 	struct pv_list *pvl;
 
-	list_iterate_items(pvl, pvs) {
+	dm_list_iterate_items(pvl, pvs) {
 		if (!(pvl->pv->status & ALLOCATABLE_PV))
 			continue;
 
 		pvm = NULL;
 
-		list_iterate_items(pvm2, pvms)
+		dm_list_iterate_items(pvm2, pvms)
 			if (pvm2->pv->dev == pvl->pv->dev) {
 				pvm = pvm2;
 				break;
@@ -141,8 +145,8 @@ static int _create_maps(struct dm_pool *mem, struct list *pvs, struct list *pvms
 				return_0;
 
 			pvm->pv = pvl->pv;
-			list_init(&pvm->areas);
-			list_add(pvms, &pvm->list);
+			dm_list_init(&pvm->areas);
+			dm_list_add(pvms, &pvm->list);
 		}
 
 		if (!_create_all_areas_for_pv(mem, pvm, pvl->pe_ranges))
@@ -155,17 +159,17 @@ static int _create_maps(struct dm_pool *mem, struct list *pvs, struct list *pvms
 /*
  * Create list of PV areas available for this particular allocation
  */
-struct list *create_pv_maps(struct dm_pool *mem, struct volume_group *vg,
-			    struct list *allocatable_pvs)
+struct dm_list *create_pv_maps(struct dm_pool *mem, struct volume_group *vg,
+			    struct dm_list *allocatable_pvs)
 {
-	struct list *pvms;
+	struct dm_list *pvms;
 
 	if (!(pvms = dm_pool_zalloc(mem, sizeof(*pvms)))) {
 		log_error("create_pv_maps alloc failed");
 		return NULL;
 	}
 
-	list_init(pvms);
+	dm_list_init(pvms);
 
 	if (!_create_maps(mem, allocatable_pvs, pvms)) {
 		log_error("Couldn't create physical volume maps in %s",
@@ -179,7 +183,7 @@ struct list *create_pv_maps(struct dm_pool *mem, struct volume_group *vg,
 
 void consume_pv_area(struct pv_area *pva, uint32_t to_go)
 {
-	list_del(&pva->list);
+	dm_list_del(&pva->list);
 	pva->map->pe_count -= pva->count;
 
 	assert(to_go <= pva->count);
@@ -192,12 +196,12 @@ void consume_pv_area(struct pv_area *pva, uint32_t to_go)
 	}
 }
 
-uint32_t pv_maps_size(struct list *pvms)
+uint32_t pv_maps_size(struct dm_list *pvms)
 {
 	struct pv_map *pvm;
 	uint32_t pe_count = 0;
 
-	list_iterate_items(pvm, pvms)
+	dm_list_iterate_items(pvm, pvms)
 		pe_count += pvm->pe_count;
 
 	return pe_count;

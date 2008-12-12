@@ -1,3 +1,5 @@
+/*	$NetBSD: import_vsn1.c,v 1.1.1.2 2008/12/12 11:42:46 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -125,6 +127,31 @@ static int _read_id(struct id *id, struct config_node *cn, const char *path)
 	return 1;
 }
 
+static int _read_flag_config(struct config_node *n, uint32_t *status, int type)
+{
+	struct config_node *cn;
+	*status = 0;
+
+	if (!(cn = find_config_node(n, "status"))) {
+		log_error("Could not find status flags.");
+		return 0;
+	}
+
+	if (!(read_flags(status, type | STATUS_FLAG, cn->v))) {
+		log_error("Could not read status flags.");
+		return 0;
+	}
+
+	if ((cn = find_config_node(n, "flags"))) {
+		if (!(read_flags(status, type, cn->v))) {
+			log_error("Could not read flags.");
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
 static int _read_pv(struct format_instance *fid, struct dm_pool *mem,
 		    struct volume_group *vg, struct config_node *pvn,
 		    struct config_node *vgn __attribute((unused)),
@@ -169,11 +196,6 @@ static int _read_pv(struct format_instance *fid, struct dm_pool *mem,
 		else
 			log_error("Couldn't find device with uuid '%s'.",
 				  buffer);
-
-		if (partial_mode())
-			vg->status |= PARTIAL_VG;
-		else
-			return 0;
 	}
 
 	if (!(pv->vg_name = dm_pool_strdup(mem, vg->name)))
@@ -181,15 +203,13 @@ static int _read_pv(struct format_instance *fid, struct dm_pool *mem,
 
 	memcpy(&pv->vgid, &vg->id, sizeof(vg->id));
 
-	if (!(cn = find_config_node(pvn, "status"))) {
-		log_error("Couldn't find status flags for physical volume.");
-		return 0;
-	}
-
-	if (!(read_flags(&pv->status, PV_FLAGS, cn->v))) {
+	if (!_read_flag_config(pvn, &pv->status, PV_FLAGS)) {
 		log_error("Couldn't read status flags for physical volume.");
 		return 0;
 	}
+
+	if (!pv->dev)
+		pv->status |= MISSING_PV;
 
 	/* Late addition */
 	_read_int64(pvn, "dev_size", &pv->size);
@@ -205,8 +225,8 @@ static int _read_pv(struct format_instance *fid, struct dm_pool *mem,
 		return 0;
 	}
 
-	list_init(&pv->tags);
-	list_init(&pv->segments);
+	dm_list_init(&pv->tags);
+	dm_list_init(&pv->segments);
 
 	/* Optional tags */
 	if ((cn = find_config_node(pvn, "tags")) &&
@@ -223,6 +243,7 @@ static int _read_pv(struct format_instance *fid, struct dm_pool *mem,
 	pv->pe_size = vg->extent_size;
 
 	pv->pe_alloc_count = 0;
+	pv->pe_align = 0;
 	pv->fmt = fid->fmt;
 
 	/* Fix up pv size if missing or impossibly large */
@@ -248,7 +269,7 @@ static int _read_pv(struct format_instance *fid, struct dm_pool *mem,
 		return_0;
 
 	vg->pv_count++;
-	list_add(&vg->pvs, &pvl->list);
+	dm_list_add(&vg->pvs, &pvl->list);
 
 	return 1;
 }
@@ -257,15 +278,15 @@ static void _insert_segment(struct logical_volume *lv, struct lv_segment *seg)
 {
 	struct lv_segment *comp;
 
-	list_iterate_items(comp, &lv->segments) {
+	dm_list_iterate_items(comp, &lv->segments) {
 		if (comp->le > seg->le) {
-			list_add(&comp->list, &seg->list);
+			dm_list_add(&comp->list, &seg->list);
 			return;
 		}
 	}
 
 	lv->le_count += seg->len;
-	list_add(&lv->segments, &seg->list);
+	dm_list_add(&lv->segments, &seg->list);
 }
 
 static int _read_segment(struct dm_pool *mem, struct volume_group *vg,
@@ -493,13 +514,9 @@ static int _read_lvnames(struct format_instance *fid __attribute((unused)),
 		return 0;
 	}
 
-	if (!(cn = find_config_node(lvn, "status"))) {
-		log_error("Couldn't find status flags for logical volume.");
-		return 0;
-	}
-
-	if (!(read_flags(&lv->status, LV_FLAGS, cn->v))) {
-		log_error("Couldn't read status flags for logical volume.");
+	if (!_read_flag_config(lvn, &lv->status, LV_FLAGS)) {
+		log_error("Couldn't read status flags for logical volume %s.",
+			  lv->name);
 		return 0;
 	}
 
@@ -533,10 +550,10 @@ static int _read_lvnames(struct format_instance *fid __attribute((unused)),
 	}
 
 	lv->snapshot = NULL;
-	list_init(&lv->snapshot_segs);
-	list_init(&lv->segments);
-	list_init(&lv->tags);
-	list_init(&lv->segs_using_this_lv);
+	dm_list_init(&lv->snapshot_segs);
+	dm_list_init(&lv->segments);
+	dm_list_init(&lv->tags);
+	dm_list_init(&lv->segs_using_this_lv);
 
 	/* Optional tags */
 	if ((cn = find_config_node(lvn, "tags")) &&
@@ -548,7 +565,7 @@ static int _read_lvnames(struct format_instance *fid __attribute((unused)),
 
 	lv->vg = vg;
 	vg->lv_count++;
-	list_add(&vg->lvs, &lvl->list);
+	dm_list_add(&vg->lvs, &lvl->list);
 
 	return 1;
 }
@@ -594,7 +611,7 @@ static int _read_lvsegs(struct format_instance *fid __attribute((unused)),
 	 */
 	if (lv->status & SNAPSHOT) {
 		vg->lv_count--;
-		list_del(&lvl->list);
+		dm_list_del(&lvl->list);
 		return 1;
 	}
 
@@ -692,14 +709,8 @@ static struct volume_group *_read_vg(struct format_instance *fid,
 		goto bad;
 	}
 
-	if (!(cn = find_config_node(vgn, "status"))) {
-		log_error("Couldn't find status flags for volume group %s.",
-			  vg->name);
-		goto bad;
-	}
-
-	if (!(read_flags(&vg->status, VG_FLAGS, cn->v))) {
-		log_error("Couldn't read status flags for volume group %s.",
+	if (!_read_flag_config(vgn, &vg->status, VG_FLAGS)) {
+		log_error("Error reading flags of volume group %s.",
 			  vg->name);
 		goto bad;
 	}
@@ -749,7 +760,7 @@ static struct volume_group *_read_vg(struct format_instance *fid,
 		goto bad;
 	}
 
-	list_init(&vg->pvs);
+	dm_list_init(&vg->pvs);
 	if (!_read_sections(fid, "physical_volumes", _read_pv, mem, vg,
 			    vgn, pv_hash, 0)) {
 		log_error("Couldn't find all physical volumes for volume "
@@ -757,8 +768,8 @@ static struct volume_group *_read_vg(struct format_instance *fid,
 		goto bad;
 	}
 
-	list_init(&vg->lvs);
-	list_init(&vg->tags);
+	dm_list_init(&vg->lvs);
+	dm_list_init(&vg->tags);
 
 	/* Optional tags */
 	if ((cn = find_config_node(vgn, "tags")) &&
@@ -788,11 +799,6 @@ static struct volume_group *_read_vg(struct format_instance *fid,
 	}
 
 	dm_hash_destroy(pv_hash);
-
-	if (vg->status & PARTIAL_VG) {
-		vg->status &= ~LVM_WRITE;
-		vg->status |= LVM_READ;
-	}
 
 	/*
 	 * Finished.
@@ -826,7 +832,7 @@ static const char *_read_vgname(const struct format_type *fmt,
 				struct config_tree *cft, struct id *vgid,
 				uint32_t *vgstatus, char **creation_host)
 {
-	struct config_node *vgn, *cn;
+	struct config_node *vgn;
 	struct dm_pool *mem = fmt->cmd->mem;
 	char *vgname;
 	int old_suppress;
@@ -855,14 +861,8 @@ static const char *_read_vgname(const struct format_type *fmt,
 		return 0;
 	}
 
-	if (!(cn = find_config_node(vgn, "status"))) {
+	if (!_read_flag_config(vgn, vgstatus, VG_FLAGS)) {
 		log_error("Couldn't find status flags for volume group %s.",
-			  vgname);
-		return 0;
-	}
-
-	if (!(read_flags(vgstatus, VG_FLAGS, cn->v))) {
-		log_error("Couldn't read status flags for volume group %s.",
 			  vgname);
 		return 0;
 	}

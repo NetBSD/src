@@ -1,3 +1,5 @@
+/*	$NetBSD: filter-regex.c,v 1.1.1.2 2008/12/12 11:42:20 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -151,7 +153,7 @@ static int _accept_p(struct dev_filter *f, struct device *dev)
 	struct rfilter *rf = (struct rfilter *) f->private;
 	struct str_list *sl;
 
-	list_iterate_items(sl, &dev->aliases) {
+	dm_list_iterate_items(sl, &dev->aliases) {
 		m = dm_regex_match(rf->engine, sl->str);
 
 		if (m >= 0) {

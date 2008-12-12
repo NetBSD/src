@@ -26,6 +26,8 @@ MSGFMT = @MSGFMT@
 LCOV = @LCOV@
 GENHTML = @GENHTML@
 LN_S = @LN_S@
+SED = @SED@
+
 LIBS = @LIBS@
 DEFS += @DEFS@
 CFLAGS += @CFLAGS@
@@ -41,11 +43,16 @@ bindir = $(DESTDIR)@bindir@
 confdir = $(DESTDIR)@CONFDIR@/lvm
 includedir = $(DESTDIR)@includedir@
 libdir = $(DESTDIR)@libdir@
+usrlibdir = $(DESTDIR)@usrlibdir@
 sbindir = $(DESTDIR)@sbindir@
+usrsbindir = $(DESTDIR)@usrsbindir@
 infodir = $(DESTDIR)@infodir@
 mandir = $(DESTDIR)@mandir@
 localedir = $(DESTDIR)@LOCALEDIR@
 staticdir = $(DESTDIR)@STATICDIR@
+
+interface = @interface@
+interfacedir = $(top_srcdir)/libdm/$(interface)
 
 # setup misc variables
 # define the ownership variables for the binaries and man pages
@@ -76,14 +83,21 @@ ifeq ("@INTL@", "yes")
   DEFS += -DINTL_PACKAGE=\"@INTL_PACKAGE@\" -DLOCALEDIR=\"@LOCALEDIR@\"
 endif
 
-ifneq ("@DMDIR@", "")
-  LDFLAGS += -L@DMDIR@/lib/ioctl
-  ifeq ("@DMEVENTD@", "yes")
-    LDFLAGS += -L@DMDIR@/dmeventd
-  endif
+LDFLAGS += -L$(top_srcdir)/libdm -L$(top_srcdir)/lib
+CLDFLAGS += -L$(top_srcdir)/libdm -L$(top_srcdir)/lib
+
+ifeq ("@DMEVENTD@", "yes")
+  LDFLAGS += -L$(top_srcdir)/daemons/dmeventd
+  CLDFLAGS += -L$(top_srcdir)/daemons/dmeventd
 endif
 
-LDFLAGS += -L$(top_srcdir)/lib -L$(libdir)
+ifeq ("@DM_COMPAT@", "yes")
+  DEFS += -DDM_COMPAT
+endif
+
+ifeq ("@DM_IOCTLS@", "yes")
+  DEFS += -DDM_IOCTLS
+endif
 
 #DEFS += -DDEBUG_POOL
 #DEFS += -DBOUNDS_CHECK
@@ -94,14 +108,15 @@ LDFLAGS += -L$(top_srcdir)/lib -L$(libdir)
 STRIP=
 #STRIP = -s
 
-LIB_VERSION := $(shell cat $(top_srcdir)/VERSION | \
-		 awk -F '.' '{printf "%s.%s",$$1,$$2}')
+LVM_VERSION := $(shell cat $(top_srcdir)/VERSION)
 
-INCLUDES += -I$(top_srcdir)/include
+LIB_VERSION_LVM := $(shell cat $(top_srcdir)/VERSION | \
+		     awk -F '.' '{printf "%s.%s",$$1,$$2}')
 
-ifneq ("@DMDIR@", "")
-  INCLUDES += -I@DMDIR@/include
-endif
+LIB_VERSION_DM := $(shell cat $(top_srcdir)/VERSION_DM | \
+		    awk -F '.' '{printf "%s.%s",$$1,$$2}')
+
+INCLUDES += -I. -I$(top_srcdir)/include
 
 ifdef DESTDIR
   INCLUDES += -I$(DESTDIR)/usr/include
@@ -114,32 +129,43 @@ DEPS = $(top_srcdir)/make.tmpl $(top_srcdir)/VERSION Makefile $(INC_LNS)
 OBJECTS = $(SOURCES:%.c=%.o)
 POTFILES = $(SOURCES:%.c=%.pot)
 
-.PHONY: all install install_cluster pofile distclean clean cflow
+.PHONY: all install install_cluster pofile distclean clean cflow device-mapper 
+.PHONY: install_device-mapper
 .PHONY: $(SUBDIRS) $(SUBDIRS.install) $(SUBDIRS.clean) $(SUBDIRS.distclean)
 .PHONY: $(SUBDIRS.pofile) $(SUBDIRS.install_cluster) $(SUBDIRS.cflow)
+.PHONY: $(SUBDIRS.device-mapper) $(SUBDIRS.install-device-mapper)
 
+SUBDIRS.device-mapper := $(SUBDIRS:=.device-mapper)
 SUBDIRS.install := $(SUBDIRS:=.install)
 SUBDIRS.install_cluster := $(SUBDIRS:=.install_cluster)
+SUBDIRS.install_device-mapper := $(SUBDIRS:=.install_device-mapper)
 SUBDIRS.pofile := $(SUBDIRS:=.pofile)
 SUBDIRS.cflow := $(SUBDIRS:=.cflow)
 SUBDIRS.clean := $(SUBDIRS:=.clean)
 SUBDIRS.distclean := $(SUBDIRS:=.distclean)
 
-TARGETS += $(LIB_SHARED) $(LIB_STATIC)
+TARGETS += $(LIB_SHARED) $(LIB_STATIC) $(VERSIONED_SHLIB)
 
 all: $(SUBDIRS) $(TARGETS)
 
 install: all $(SUBDIRS.install)
 install_cluster: all $(SUBDIRS.install_cluster)
+install_device-mapper: $(SUBDIRS.install_device-mapper)
 
 $(SUBDIRS):
 	$(MAKE) -C $@
+
+$(SUBDIRS.device-mapper):
+	$(MAKE) -C $(@:.device-mapper=) device-mapper
 
 $(SUBDIRS.install): $(SUBDIRS)
 	$(MAKE) -C $(@:.install=) install
 
 $(SUBDIRS.install_cluster): $(SUBDIRS)
 	$(MAKE) -C $(@:.install_cluster=) install_cluster
+
+$(SUBDIRS.install_device-mapper): device-mapper
+	$(MAKE) -C $(@:.install_device-mapper=) install_device-mapper
 
 $(SUBDIRS.clean):
 	-$(MAKE) -C $(@:.clean=) clean

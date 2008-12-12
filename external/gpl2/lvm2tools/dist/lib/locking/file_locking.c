@@ -1,3 +1,5 @@
+/*	$NetBSD: file_locking.c,v 1.1.1.2 2008/12/12 11:42:25 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -31,12 +33,12 @@
 #include <signal.h>
 
 struct lock_list {
-	struct list list;
+	struct dm_list list;
 	int lf;
 	char *res;
 };
 
-static struct list _lock_list;
+static struct dm_list _lock_list;
 static char _lock_dir[NAME_LEN];
 
 static sig_t _oldhandler;
@@ -46,15 +48,15 @@ static volatile sig_atomic_t _handler_installed;
 static int _release_lock(const char *file, int unlock)
 {
 	struct lock_list *ll;
-	struct list *llh, *llt;
+	struct dm_list *llh, *llt;
 
 	struct stat buf1, buf2;
 
-	list_iterate_safe(llh, llt, &_lock_list) {
-		ll = list_item(llh, struct lock_list);
+	dm_list_iterate_safe(llh, llt, &_lock_list) {
+		ll = dm_list_item(llh, struct lock_list);
 
 		if (!file || !strcmp(ll->res, file)) {
-			list_del(llh);
+			dm_list_del(llh);
 			if (unlock) {
 				log_very_verbose("Unlocking %s", ll->res);
 				if (flock(ll->lf, LOCK_NB | LOCK_UN))
@@ -194,7 +196,7 @@ static int _lock_file(const char *file, uint32_t flags)
 			break;
 	} while (!(flags & LCK_NONBLOCK));
 
-	list_add(&_lock_list, &ll->list);
+	dm_list_add(&_lock_list, &ll->list);
 	return 1;
 
       err:
@@ -290,7 +292,7 @@ int init_file_locking(struct locking_type *locking, struct cmd_context *cmd)
 	if ((access(_lock_dir, R_OK | W_OK | X_OK) == -1) && (errno == EROFS))
 		return 0;
 
-	list_init(&_lock_list);
+	dm_list_init(&_lock_list);
 
 	if (sigfillset(&_intsigset) || sigfillset(&_fullsigset)) {
 		log_sys_error("sigfillset", "init_file_locking");

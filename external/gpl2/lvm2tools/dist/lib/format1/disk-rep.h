@@ -1,3 +1,5 @@
+/*	$NetBSD: disk-rep.h,v 1.1.1.2 2008/12/12 11:42:22 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -147,24 +149,24 @@ struct pe_disk {
 } __attribute__ ((packed));
 
 struct uuid_list {
-	struct list list;
+	struct dm_list list;
 	char uuid[NAME_LEN] __attribute((aligned(8)));
 };
 
 struct lvd_list {
-	struct list list;
+	struct dm_list list;
 	struct lv_disk lvd;
 };
 
 struct disk_list {
-	struct list list;
+	struct dm_list list;
 	struct dm_pool *mem;
 	struct device *dev;
 
 	struct pv_disk pvd __attribute((aligned(8)));
 	struct vg_disk vgd __attribute((aligned(8)));
-	struct list uuids __attribute((aligned(8)));
-	struct list lvds __attribute((aligned(8)));
+	struct dm_list uuids __attribute((aligned(8)));
+	struct dm_list lvds __attribute((aligned(8)));
 	struct pe_disk *extents __attribute((aligned(8)));
 };
 
@@ -195,9 +197,9 @@ struct disk_list *read_disk(const struct format_type *fmt, struct device *dev,
 
 int read_pvs_in_vg(const struct format_type *fmt, const char *vg_name,
 		   struct dev_filter *filter,
-		   struct dm_pool *mem, struct list *results);
+		   struct dm_pool *mem, struct dm_list *results);
 
-int write_disks(const struct format_type *fmt, struct list *pvds);
+int write_disks(const struct format_type *fmt, struct dm_list *pvds);
 
 /*
  * Functions to translate to between disk and in
@@ -212,39 +214,39 @@ int export_pv(struct cmd_context *cmd, struct dm_pool *mem,
 	      struct pv_disk *pvd, struct physical_volume *pv);
 
 int import_vg(struct dm_pool *mem,
-	      struct volume_group *vg, struct disk_list *dl, int partial);
+	      struct volume_group *vg, struct disk_list *dl);
 int export_vg(struct vg_disk *vgd, struct volume_group *vg);
 
 int import_lv(struct dm_pool *mem, struct logical_volume *lv, struct lv_disk *lvd);
 
 int import_extents(struct cmd_context *cmd, struct volume_group *vg,
-		   struct list *pvds);
+		   struct dm_list *pvds);
 int export_extents(struct disk_list *dl, uint32_t lv_num,
 		   struct logical_volume *lv, struct physical_volume *pv);
 
 int import_pvs(const struct format_type *fmt, struct dm_pool *mem,
 	       struct volume_group *vg,
-	       struct list *pvds, struct list *results, uint32_t *count);
+	       struct dm_list *pvds, struct dm_list *results, uint32_t *count);
 
-int import_lvs(struct dm_pool *mem, struct volume_group *vg, struct list *pvds);
+int import_lvs(struct dm_pool *mem, struct volume_group *vg, struct dm_list *pvds);
 int export_lvs(struct disk_list *dl, struct volume_group *vg,
 	       struct physical_volume *pv, const char *dev_dir);
 
 int import_snapshots(struct dm_pool *mem, struct volume_group *vg,
-		     struct list *pvds);
+		     struct dm_list *pvds);
 
 int export_uuids(struct disk_list *dl, struct volume_group *vg);
 
-void export_numbers(struct list *pvds, struct volume_group *vg);
+void export_numbers(struct dm_list *pvds, struct volume_group *vg);
 
-void export_pv_act(struct list *pvds);
+void export_pv_act(struct dm_list *pvds);
 int munge_pvd(struct device *dev, struct pv_disk *pvd);
 int read_vgd(struct device *dev, struct vg_disk *vgd, struct pv_disk *pvd);
 
 /* blech */
 int get_free_vg_number(struct format_instance *fid, struct dev_filter *filter,
 		       const char *candidate_vg, int *result);
-int export_vg_number(struct format_instance *fid, struct list *pvds,
+int export_vg_number(struct format_instance *fid, struct dm_list *pvds,
 		     const char *vg_name, struct dev_filter *filter);
 
 #endif

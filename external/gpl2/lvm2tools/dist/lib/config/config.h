@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.1.1.2 2008/12/12 11:42:16 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -49,7 +51,7 @@ struct config_tree {
 };
 
 struct config_tree_list {
-	struct list list;
+	struct dm_list list;
 	struct config_tree *cft;
 };
 

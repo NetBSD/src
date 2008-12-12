@@ -19,6 +19,7 @@ VPATH = @srcdir@
 SOURCES = cluster_locking.c
 
 LIB_SHARED = liblvm2clusterlock.so
+LIB_VERSION = $(LIB_VERSION_LVM)
 
 include $(top_srcdir)/make.tmpl
 

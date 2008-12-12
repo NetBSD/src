@@ -90,7 +90,7 @@ clvmd: $(OBJECTS) $(top_srcdir)/lib/liblvm.a
 
 install_clvmd: $(TARGETS)
 	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) clvmd \
-		$(sbindir)/clvmd
+		$(usrsbindir)/clvmd
 
 install: $(INSTALL_TARGETS)
 

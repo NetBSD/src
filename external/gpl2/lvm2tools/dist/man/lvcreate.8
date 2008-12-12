@@ -1,4 +1,6 @@
-.TH LVCREATE 8 "LVM TOOLS" "Sistina Software UK" \" -*- nroff -*-
+.\"	$NetBSD: lvcreate.8,v 1.1.1.2 2008/12/12 11:41:58 haad Exp $
+.\"
+.TH LVCREATE 8 "LVM TOOLS 2.2.02.43-cvs (12-08-08)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 lvcreate \- create a logical volume in an existing volume group
 .SH SYNOPSIS
@@ -14,7 +16,7 @@ lvcreate \- create a logical volume in an existing volume group
 [\-m/\-\-mirrors Mirrors [\-\-nosync] [\-\-mirrorlog {disk|core}] [\-\-corelog]
 [\-R/\-\-regionsize MirrorLogRegionSize]]
 [\-n/\-\-name LogicalVolumeName]
-[\-p/\-\-permission r/rw] [\-r/\-\-readahead ReadAheadSectors|auto|none]
+[\-p/\-\-permission r|rw] [\-r/\-\-readahead ReadAheadSectors|auto|none]
 [\-t/\-\-test]
 [\-v/\-\-verbose] [\-Z/\-\-zero y/n]
 VolumeGroupName [PhysicalVolumePath...]
@@ -113,7 +115,7 @@ The name for the new logical volume.
 Without this option a default names of "lvol#" will be generated where
 # is the LVM internal number of the logical volume.
 .TP
-.I \-p, \-\-permission r/w
+.I \-p, \-\-permission r|rw
 Set access permissions to read only or read and write.
 .br
 Default is read and write.

@@ -1,3 +1,5 @@
+/*	$NetBSD: import_export.c,v 1.1.1.2 2008/12/12 11:42:14 haad Exp $	*/
+
 /*
  * Copyright (C) 1997-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -28,11 +30,11 @@
 
 /* This file contains only imports at the moment... */
 
-int import_pool_vg(struct volume_group *vg, struct dm_pool *mem, struct list *pls)
+int import_pool_vg(struct volume_group *vg, struct dm_pool *mem, struct dm_list *pls)
 {
 	struct pool_list *pl;
 
-	list_iterate_items(pl, pls) {
+	dm_list_iterate_items(pl, pls) {
 		vg->extent_count +=
 		    ((pl->pd.pl_blocks) / POOL_PE_SIZE);
 
@@ -55,7 +57,7 @@ int import_pool_vg(struct volume_group *vg, struct dm_pool *mem, struct list *pl
 	return 1;
 }
 
-int import_pool_lvs(struct volume_group *vg, struct dm_pool *mem, struct list *pls)
+int import_pool_lvs(struct volume_group *vg, struct dm_pool *mem, struct dm_list *pls)
 {
 	struct pool_list *pl;
 	struct lv_list *lvl = dm_pool_zalloc(mem, sizeof(*lvl));
@@ -80,12 +82,12 @@ int import_pool_lvs(struct volume_group *vg, struct dm_pool *mem, struct list *p
 	lv->le_count = 0;
 	lv->read_ahead = vg->cmd->default_settings.read_ahead;
 	lv->snapshot = NULL;
-	list_init(&lv->snapshot_segs);
-	list_init(&lv->segments);
-	list_init(&lv->tags);
-	list_init(&lv->segs_using_this_lv);
+	dm_list_init(&lv->snapshot_segs);
+	dm_list_init(&lv->segments);
+	dm_list_init(&lv->tags);
+	dm_list_init(&lv->segs_using_this_lv);
 
-	list_iterate_items(pl, pls) {
+	dm_list_iterate_items(pl, pls) {
 		lv->size += pl->pd.pl_blocks;
 
 		if (lv->name)
@@ -109,26 +111,26 @@ int import_pool_lvs(struct volume_group *vg, struct dm_pool *mem, struct list *p
 			lv->minor = -1;
 		}
 		lv->snapshot = NULL;
-		list_init(&lv->snapshot_segs);
-		list_init(&lv->segments);
-		list_init(&lv->tags);
+		dm_list_init(&lv->snapshot_segs);
+		dm_list_init(&lv->segments);
+		dm_list_init(&lv->tags);
 	}
 
 	lv->le_count = lv->size / POOL_PE_SIZE;
 	lvl->lv = lv;
-	list_add(&vg->lvs, &lvl->list);
+	dm_list_add(&vg->lvs, &lvl->list);
 	vg->lv_count++;
 
 	return 1;
 }
 
 int import_pool_pvs(const struct format_type *fmt, struct volume_group *vg,
-		    struct list *pvs, struct dm_pool *mem, struct list *pls)
+		    struct dm_list *pvs, struct dm_pool *mem, struct dm_list *pls)
 {
 	struct pv_list *pvl;
 	struct pool_list *pl;
 
-	list_iterate_items(pl, pls) {
+	dm_list_iterate_items(pl, pls) {
 		if (!(pvl = dm_pool_zalloc(mem, sizeof(*pvl)))) {
 			log_error("Unable to allocate pv list structure");
 			return 0;
@@ -143,7 +145,7 @@ int import_pool_pvs(const struct format_type *fmt, struct volume_group *vg,
 		pl->pv = pvl->pv;
 		pvl->mdas = NULL;
 		pvl->pe_ranges = NULL;
-		list_add(pvs, &pvl->list);
+		dm_list_add(pvs, &pvl->list);
 	}
 
 	return 1;
@@ -173,9 +175,10 @@ int import_pool_pv(const struct format_type *fmt, struct dm_pool *mem,
 	pv->pe_start = POOL_PE_START;
 	pv->pe_count = pv->size / POOL_PE_SIZE;
 	pv->pe_alloc_count = 0;
+	pv->pe_align = 0;
 
-	list_init(&pv->tags);
-	list_init(&pv->segments);
+	dm_list_init(&pv->tags);
+	dm_list_init(&pv->segments);
 
 	if (!alloc_pv_segment_whole_pv(mem, pv))
 		return_0;
@@ -231,7 +234,7 @@ static int _add_stripe_seg(struct dm_pool *mem,
 	/* add the subpool type to the segment tag list */
 	str_list_add(mem, &seg->tags, _cvt_sptype(usp->type));
 
-	list_add(&lv->segments, &seg->list);
+	dm_list_add(&lv->segments, &seg->list);
 
 	*le_cur += seg->len;
 
@@ -267,7 +270,7 @@ static int _add_linear_seg(struct dm_pool *mem,
 
 		if (!set_lv_segment_area_pv(seg, 0, usp->devs[j].pv, 0))
 			return_0;
-		list_add(&lv->segments, &seg->list);
+		dm_list_add(&lv->segments, &seg->list);
 
 		*le_cur += seg->len;
 	}
@@ -275,7 +278,7 @@ static int _add_linear_seg(struct dm_pool *mem,
 	return 1;
 }
 
-int import_pool_segments(struct list *lvs, struct dm_pool *mem,
+int import_pool_segments(struct dm_list *lvs, struct dm_pool *mem,
 			 struct user_subpool *usp, int subpools)
 {
 	struct lv_list *lvl;
@@ -283,7 +286,7 @@ int import_pool_segments(struct list *lvs, struct dm_pool *mem,
 	uint32_t le_cur = 0;
 	int i;
 
-	list_iterate_items(lvl, lvs) {
+	dm_list_iterate_items(lvl, lvs) {
 		lv = lvl->lv;
 
 		if (lv->status & SNAPSHOT)

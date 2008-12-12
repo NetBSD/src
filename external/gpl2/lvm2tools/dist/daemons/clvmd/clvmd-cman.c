@@ -1,3 +1,5 @@
+/*	$NetBSD: clvmd-cman.c,v 1.1.1.2 2008/12/12 11:42:02 haad Exp $	*/
+
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
@@ -17,6 +19,10 @@
  * CMAN communication layer for clvmd.
  */
 
+#define _GNU_SOURCE
+#define _FILE_OFFSET_BITS 64
+
+#include <configure.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -41,7 +47,7 @@
 
 #include "clvmd-comms.h"
 #include "clvm.h"
-#include "log.h"
+#include "lvm-logging.h"
 #include "clvmd.h"
 #include "lvm-functions.h"
 

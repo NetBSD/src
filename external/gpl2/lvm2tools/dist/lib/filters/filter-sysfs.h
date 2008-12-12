@@ -1,3 +1,5 @@
+/*	$NetBSD: filter-sysfs.h,v 1.1.1.2 2008/12/12 11:42:21 haad Exp $	*/
+
 /*
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
  *
@@ -18,6 +20,6 @@
 #include "config.h"
 #include "dev-cache.h"
 
-struct dev_filter *sysfs_filter_create(const char *proc);
+struct dev_filter *sysfs_filter_create(const char *sysfs_dir);
 
 #endif

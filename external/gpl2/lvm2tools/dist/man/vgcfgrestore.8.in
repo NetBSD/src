@@ -1,0 +1,44 @@
+.TH VGCFGRESTORE 8 "LVM TOOLS #VERSION#" "Sistina Software UK" \" -*- nroff -*-
+.SH NAME
+vgcfgrestore \- restore volume group descriptor area
+.SH SYNOPSIS
+.B vgcfgrestore
+.RB [ \-d | \-\-debug ]
+.RB [ \-f | \-\-file " filename" ]
+.RB [ \-l[l] | \-\-list ]
+.RB [ \-h | \-\-help ]
+.RB [ \-M | \-\-Metadatatype 1|2]
+.RB [ \-t | \-\-test ]
+.RB [ \-v | \-\-verbose ]
+.RI \fIVolumeGroupName\fP
+.SH DESCRIPTION
+.B vgcfgrestore
+allows you to restore the metadata of \fIVolumeGroupName\fP from a text 
+backup file produced by \fBvgcfgbackup\fP.  You can specify a backup file 
+with \fP--file\fP.  If no backup file is specified, the most recent
+one is used.  Use \fB--list\fP for a list of the available
+backup and archive files of \fIVolumeGroupName\fP.
+.SH OPTIONS
+.TP
+\fB-l | --list\fP \(em List files pertaining to \fIVolumeGroupName\fP
+List metadata backup and archive files pertaining to \fIVolumeGroupName\fP.
+May be used with the \fB-f\fP option.  Does not restore \fIVolumeGroupName\fP.
+.TP
+\fB-f | --file\fP filename \(em Name of LVM metadata backup file
+Specifies a metadata backup or archive file to be used for restoring 
+VolumeGroupName.  Often this file has been created with \fBvgcfgbackup\fP.
+.TP
+See \fBlvm\fP for common options.
+.SH REPLACING PHYSICAL VOLUMES
+\fBvgdisplay --partial --verbose\fP will show you the UUIDs and sizes of
+any PVs that are no longer present.
+If a PV in the VG is lost and you wish to substitute 
+another of the same size, use 
+\fBpvcreate --restorefile filename --uuid uuid\fP (plus additional 
+arguments as appropriate) to initialise it with the same UUID as 
+the missing PV.  Repeat for all other missing PVs in the VG. 
+Then use \fBvgcfgrestore --file filename\fP to restore the volume
+group's metadata.
+.SH SEE ALSO
+.BR lvm (8),
+.BR vgcreate (8)

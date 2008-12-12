@@ -1,3 +1,5 @@
+/*	$NetBSD: activate.c,v 1.1.1.2 2008/12/12 11:42:23 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -52,11 +54,11 @@ int lvm1_present(struct cmd_context *cmd)
 }
 
 int list_segment_modules(struct dm_pool *mem, const struct lv_segment *seg,
-			 struct list *modules)
+			 struct dm_list *modules)
 {
 	unsigned int s;
 	struct lv_segment *seg2, *snap_seg;
-	struct list *snh;
+	struct dm_list *snh;
 
 	if (seg->segtype->ops->modules_needed &&
 	    !seg->segtype->ops->modules_needed(mem, seg, modules)) {
@@ -65,9 +67,9 @@ int list_segment_modules(struct dm_pool *mem, const struct lv_segment *seg,
 	}
 
 	if (lv_is_origin(seg->lv))
-		list_iterate(snh, &seg->lv->snapshot_segs)
+		dm_list_iterate(snh, &seg->lv->snapshot_segs)
 			if (!list_lv_modules(mem,
-					     list_struct_base(snh,
+					     dm_list_struct_base(snh,
 							      struct lv_segment,
 							      origin_list)->cow,
 					     modules))
@@ -100,11 +102,11 @@ int list_segment_modules(struct dm_pool *mem, const struct lv_segment *seg,
 }
 
 int list_lv_modules(struct dm_pool *mem, const struct logical_volume *lv,
-		    struct list *modules)
+		    struct dm_list *modules)
 {
 	struct lv_segment *seg;
 
-	list_iterate_items(seg, &lv->segments)
+	dm_list_iterate_items(seg, &lv->segments)
 		if (!list_segment_modules(mem, seg, modules))
 			return_0;
 
@@ -264,7 +266,7 @@ static int _passes_activation_filter(struct cmd_context *cmd,
 
 	if (!(cn = find_config_tree_node(cmd, "activation/volume_list"))) {
 		/* If no host tags defined, activate */
-		if (list_empty(&cmd->tags))
+		if (dm_list_empty(&cmd->tags))
 			return 1;
 
 		/* If any host tag matches any LV or VG tag, activate */
@@ -517,7 +519,7 @@ int lv_mirror_percent(struct cmd_context *cmd, struct logical_volume *lv,
 
 	/* If mirrored LV is temporarily shrinked to 1 area (= linear),
 	 * it should be considered in-sync. */
-	if (list_size(&lv->segments) == 1 && first_seg(lv)->area_count == 1) {
+	if (dm_list_size(&lv->segments) == 1 && first_seg(lv)->area_count == 1) {
 		*percent = 100.0;
 		return 1;
 	}
@@ -639,7 +641,7 @@ static int _lvs_in_vg_activated(struct volume_group *vg, unsigned by_uuid_only)
 	if (!activation())
 		return 0;
 
-	list_iterate_items(lvl, &vg->lvs) {
+	dm_list_iterate_items(lvl, &vg->lvs) {
 		if (lvl->lv->status & VISIBLE_LV)
 			count += (_lv_active(vg->cmd, lvl->lv, by_uuid_only) == 1);
 	}
@@ -665,7 +667,7 @@ int lvs_in_vg_opened(const struct volume_group *vg)
 	if (!activation())
 		return 0;
 
-	list_iterate_items(lvl, &vg->lvs) {
+	dm_list_iterate_items(lvl, &vg->lvs) {
 		if (lvl->lv->status & VISIBLE_LV)
 			count += (_lv_open_count(vg->cmd, lvl->lv) > 0);
 	}
@@ -715,7 +717,7 @@ int monitor_dev_for_events(struct cmd_context *cmd,
 #ifdef DMEVENTD
 	int i, pending = 0, monitored;
 	int r = 1;
-	struct list *tmp, *snh, *snht;
+	struct dm_list *tmp, *snh, *snht;
 	struct lv_segment *seg;
 	int (*monitor_fn) (struct lv_segment *s, int e);
 	uint32_t s;
@@ -745,15 +747,15 @@ int monitor_dev_for_events(struct cmd_context *cmd,
 	 * TODO: This may change when snapshots of mirrors are allowed.
 	 */
 	if (lv_is_origin(lv)) {
-		list_iterate_safe(snh, snht, &lv->snapshot_segs)
-			if (!monitor_dev_for_events(cmd, list_struct_base(snh,
+		dm_list_iterate_safe(snh, snht, &lv->snapshot_segs)
+			if (!monitor_dev_for_events(cmd, dm_list_struct_base(snh,
 				    struct lv_segment, origin_list)->cow, monitor))
 				r = 0;
 		return r;
 	}
 
-	list_iterate(tmp, &lv->segments) {
-		seg = list_item(tmp, struct lv_segment);
+	dm_list_iterate(tmp, &lv->segments) {
+		seg = dm_list_item(tmp, struct lv_segment);
 
 		/* Recurse for AREA_LV */
 		for (s = 0; s < seg->area_count; s++) {
@@ -1025,6 +1027,12 @@ static int _lv_activate(struct cmd_context *cmd, const char *lvid_s,
 		log_verbose("Not activating %s/%s due to config file settings",
 			    lv->vg->name, lv->name);
 		return 0;
+	}
+
+	if ((!lv->vg->cmd->partial_activation) && (lv->status & PARTIAL_LV)) {
+		log_error("Refusing activation of partial LV %s. Use --partial to override.",
+			  lv->name);
+		return_0;
 	}
 
 	if (test_mode()) {

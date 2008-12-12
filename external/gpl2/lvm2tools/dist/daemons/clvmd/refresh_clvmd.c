@@ -1,3 +1,5 @@
+/*	$NetBSD: refresh_clvmd.c,v 1.1.1.2 2008/12/12 11:42:04 haad Exp $	*/
+
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -18,6 +20,10 @@
  *
  */
 
+#define _GNU_SOURCE
+#define _FILE_OFFSET_BITS 64
+
+#include <configure.h>
 #include <stddef.h>
 #include <sys/socket.h>
 #include <sys/un.h>

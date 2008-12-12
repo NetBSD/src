@@ -1,3 +1,5 @@
+/*	$NetBSD: clvmd.c,v 1.1.1.2 2008/12/12 11:42:04 haad Exp $	*/
+
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -16,6 +18,12 @@
 /*
  * CLVMD: Cluster LVM daemon
  */
+
+#define _GNU_SOURCE
+#define _FILE_OFFSET_BITS 64
+
+#include <configure.h>
+#include <libdevmapper.h>
 
 #include <pthread.h>
 #include <sys/types.h>
@@ -46,8 +54,7 @@
 #include "version.h"
 #include "clvmd.h"
 #include "refresh_clvmd.h"
-#include "list.h"
-#include "log.h"
+#include "lvm-logging.h"
 
 #ifndef TRUE
 #define TRUE 1
@@ -75,7 +82,7 @@ static unsigned max_cluster_member_name_len;
 
 /* Structure of items on the LVM thread list */
 struct lvm_thread_cmd {
-	struct list list;
+	struct dm_list list;
 
 	struct local_client *client;
 	struct clvm_header *msg;
@@ -90,7 +97,7 @@ static pthread_t lvm_thread;
 static pthread_mutex_t lvm_thread_mutex;
 static pthread_cond_t lvm_thread_cond;
 static pthread_mutex_t lvm_start_mutex;
-static struct list lvm_cmd_head;
+static struct dm_list lvm_cmd_head;
 static volatile sig_atomic_t quit = 0;
 static volatile sig_atomic_t reread_config = 0;
 static int child_pipe[2];
@@ -352,7 +359,7 @@ int main(int argc, char *argv[])
 	sigprocmask(SIG_BLOCK, &ss, NULL);
 
 	/* Initialise the LVM thread variables */
-	list_init(&lvm_cmd_head);
+	dm_list_init(&lvm_cmd_head);
 	pthread_mutex_init(&lvm_thread_mutex, NULL);
 	pthread_cond_init(&lvm_thread_cond, NULL);
 	pthread_mutex_init(&lvm_start_mutex, NULL);
@@ -1749,7 +1756,7 @@ static int process_work_item(struct lvm_thread_cmd *cmd)
  */
 static __attribute__ ((noreturn)) void *lvm_thread_fn(void *arg)
 {
-	struct list *cmdl, *tmp;
+	struct dm_list *cmdl, *tmp;
 	sigset_t ss;
 	int using_gulm = (int)(long)arg;
 
@@ -1775,15 +1782,15 @@ static __attribute__ ((noreturn)) void *lvm_thread_fn(void *arg)
 		DEBUGLOG("LVM thread waiting for work\n");
 
 		pthread_mutex_lock(&lvm_thread_mutex);
-		if (list_empty(&lvm_cmd_head))
+		if (dm_list_empty(&lvm_cmd_head))
 			pthread_cond_wait(&lvm_thread_cond, &lvm_thread_mutex);
 
-		list_iterate_safe(cmdl, tmp, &lvm_cmd_head) {
+		dm_list_iterate_safe(cmdl, tmp, &lvm_cmd_head) {
 			struct lvm_thread_cmd *cmd;
 
 			cmd =
-			    list_struct_base(cmdl, struct lvm_thread_cmd, list);
-			list_del(&cmd->list);
+			    dm_list_struct_base(cmdl, struct lvm_thread_cmd, list);
+			dm_list_del(&cmd->list);
 			pthread_mutex_unlock(&lvm_thread_mutex);
 
 			process_work_item(cmd);
@@ -1833,7 +1840,7 @@ static int add_to_lvmqueue(struct local_client *client, struct clvm_header *msg,
 	    ("add_to_lvmqueue: cmd=%p. client=%p, msg=%p, len=%d, csid=%p, xid=%d\n",
 	     cmd, client, msg, msglen, csid, cmd->xid);
 	pthread_mutex_lock(&lvm_thread_mutex);
-	list_add(&lvm_cmd_head, &cmd->list);
+	dm_list_add(&lvm_cmd_head, &cmd->list);
 	pthread_cond_signal(&lvm_thread_cond);
 	pthread_mutex_unlock(&lvm_thread_mutex);
 

@@ -32,8 +32,11 @@ MAN8=lvchange.8 lvconvert.8 lvcreate.8 lvdisplay.8 lvextend.8 lvm.8 \
 	vgimport.8 vgmerge.8 vgmknodes.8 vgreduce.8 vgremove.8 vgrename.8 \
 	vgs.8 vgscan.8 vgsplit.8 $(FSADMMAN)
 MAN8CLUSTER=clvmd.8
+MAN8DM=dmsetup.8
 MAN5DIR=${mandir}/man5
 MAN8DIR=${mandir}/man8
+
+CLEAN_TARGETS=$(MAN5) $(MAN8) $(MAN8CLUSTER) $(FSADMMAN) $(MAN8DM)
 
 include $(top_srcdir)/make.tmpl
 
@@ -41,7 +44,20 @@ ifneq ("@CLVMD@", "none")
   install: install_cluster
 endif
 
-install:
+all: man
+
+.PHONY: man
+
+device-mapper: $(MAN8DM)
+
+man: $(MAN5) $(MAN8) $(MAN8CLUSTER)
+
+$(MAN5) $(MAN8) $(MAN8CLUSTER):	Makefile
+
+%: %.in
+	$(SED) -e "s/#VERSION#/$(LVM_VERSION)/" $< > $@
+
+install: install_device-mapper
 	@echo "Installing $(MAN8) in $(MAN8DIR)"
 	@for f in $(MAN8); \
 	do \
@@ -59,6 +75,14 @@ install:
 install_cluster:
 	@echo "Installing $(MAN8CLUSTER) in $(MAN8DIR)"
 	@for f in $(MAN8CLUSTER); \
+	do \
+	   $(RM) $(MAN8DIR)/$$f; \
+	   @INSTALL@ -D $(OWNER) $(GROUP) -m 444 $$f $(MAN8DIR)/$$f; \
+	done
+
+install_device-mapper:
+	@echo "Installing $(MAN8DM) in $(MAN8DIR)"
+	@for f in $(MAN8DM); \
 	do \
 	   $(RM) $(MAN8DIR)/$$f; \
 	   @INSTALL@ -D $(OWNER) $(GROUP) -m 444 $$f $(MAN8DIR)/$$f; \

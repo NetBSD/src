@@ -1,3 +1,5 @@
+/*	$NetBSD: lvm-wrappers.h,v 1.1.1.2 2008/12/12 11:42:39 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
