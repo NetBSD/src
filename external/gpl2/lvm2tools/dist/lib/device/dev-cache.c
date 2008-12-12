@@ -1,3 +1,5 @@
+/*	$NetBSD: dev-cache.c,v 1.1.1.1.2.3 2008/12/12 16:32:59 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -35,7 +37,7 @@ struct dev_iter {
 };
 
 struct dir_list {
-	struct list list;
+	struct dm_list list;
 	char dir[0];
 };
 
@@ -46,8 +48,8 @@ static struct {
 	struct dm_regex *preferred_names_matcher;
 
 	int has_scanned;
-	struct list dirs;
-	struct list files;
+	struct dm_list dirs;
+	struct dm_list files;
 
 } _cache;
 
@@ -101,15 +103,15 @@ struct device *dev_create_file(const char *filename, struct device *dev,
 	}
 
 	dev->flags |= DEV_REGULAR;
-	list_init(&dev->aliases);
-	list_add(&dev->aliases, &alias->list);
+	dm_list_init(&dev->aliases);
+	dm_list_add(&dev->aliases, &alias->list);
 	dev->end = UINT64_C(0);
 	dev->dev = 0;
 	dev->fd = -1;
 	dev->open_count = 0;
 	dev->block_size = -1;
 	memset(dev->pvid, 0, sizeof(dev->pvid));
-	list_init(&dev->open_list);
+	dm_list_init(&dev->open_list);
 
 	return dev;
 }
@@ -123,14 +125,14 @@ static struct device *_dev_create(dev_t d)
 		return NULL;
 	}
 	dev->flags = 0;
-	list_init(&dev->aliases);
+	dm_list_init(&dev->aliases);
 	dev->dev = d;
 	dev->fd = -1;
 	dev->open_count = 0;
 	dev->block_size = -1;
 	dev->end = UINT64_C(0);
 	memset(dev->pvid, 0, sizeof(dev->pvid));
-	list_init(&dev->open_list);
+	dm_list_init(&dev->open_list);
 
 	return dev;
 }
@@ -144,8 +146,8 @@ void dev_set_preferred_name(struct str_list *sl, struct device *dev)
 		return;
 
 	log_debug("%s: New preferred name", sl->str);
-	list_del(&sl->list);
-	list_add_h(&dev->aliases, &sl->list);
+	dm_list_del(&sl->list);
+	dm_list_add_h(&dev->aliases, &sl->list);
 }
 
 /* Return 1 if we prefer path1 else return 0 */
@@ -244,7 +246,7 @@ static int _add_alias(struct device *dev, const char *path)
 		return_0;
 
 	/* Is name already there? */
-	list_iterate_items(strl, &dev->aliases) {
+	dm_list_iterate_items(strl, &dev->aliases) {
 		if (!strcmp(strl->str, path)) {
 			log_debug("%s: Already in device cache", path);
 			return 1;
@@ -254,8 +256,8 @@ static int _add_alias(struct device *dev, const char *path)
 	if (!(sl->str = dm_pool_strdup(_cache.mem, path)))
 		return_0;
 
-	if (!list_empty(&dev->aliases)) {
-		oldpath = list_item(dev->aliases.n, struct str_list)->str;
+	if (!dm_list_empty(&dev->aliases)) {
+		oldpath = dm_list_item(dev->aliases.n, struct str_list)->str;
 		prefer_old = _compare_paths(path, oldpath);
 		log_debug("%s: Aliased to %s in device cache%s",
 			  path, oldpath, prefer_old ? "" : " (preferred name)");
@@ -264,9 +266,9 @@ static int _add_alias(struct device *dev, const char *path)
 		log_debug("%s: Added to device cache", path);
 
 	if (prefer_old)
-		list_add(&dev->aliases, &sl->list);
+		dm_list_add(&dev->aliases, &sl->list);
 	else
-		list_add_h(&dev->aliases, &sl->list);
+		dm_list_add_h(&dev->aliases, &sl->list);
 
 	return 1;
 }
@@ -459,10 +461,10 @@ static void _full_scan(int dev_scan)
 	if (_cache.has_scanned && !dev_scan)
 		return;
 
-	list_iterate_items(dl, &_cache.dirs)
+	dm_list_iterate_items(dl, &_cache.dirs)
 		_insert_dir(dl->dir);
 
-	list_iterate_items(dl, &_cache.files)
+	dm_list_iterate_items(dl, &_cache.files)
 		_insert_file(dl->dir);
 
 	_cache.has_scanned = 1;
@@ -559,8 +561,8 @@ int dev_cache_init(struct cmd_context *cmd)
 		goto bad;
 	}
 
-	list_init(&_cache.dirs);
-	list_init(&_cache.files);
+	dm_list_init(&_cache.dirs);
+	dm_list_init(&_cache.files);
 
 	if (!_init_preferred_names(cmd))
 		goto_bad;
@@ -603,8 +605,8 @@ void dev_cache_exit(void)
 
 	_cache.devices = NULL;
 	_cache.has_scanned = 0;
-	list_init(&_cache.dirs);
-	list_init(&_cache.files);
+	dm_list_init(&_cache.dirs);
+	dm_list_init(&_cache.files);
 }
 
 int dev_cache_add_dir(const char *path)
@@ -629,7 +631,7 @@ int dev_cache_add_dir(const char *path)
 	}
 
 	strcpy(dl->dir, path);
-	list_add(&_cache.dirs, &dl->list);
+	dm_list_add(&_cache.dirs, &dl->list);
 	return 1;
 }
 
@@ -655,7 +657,7 @@ int dev_cache_add_loopfile(const char *path)
 	}
 
 	strcpy(dl->dir, path);
-	list_add(&_cache.files, &dl->list);
+	dm_list_add(&_cache.files, &dl->list);
 	return 1;
 }
 
@@ -672,7 +674,7 @@ const char *dev_name_confirmed(struct device *dev, int quiet)
 	if ((dev->flags & DEV_REGULAR))
 		return dev_name(dev);
 
-	while ((r = stat(name = list_item(dev->aliases.n,
+	while ((r = stat(name = dm_list_item(dev->aliases.n,
 					  struct str_list)->str, &buf)) ||
 	       (buf.st_rdev != dev->dev)) {
 		if (r < 0) {
@@ -696,8 +698,8 @@ const char *dev_name_confirmed(struct device *dev, int quiet)
 		/* Leave list alone if there isn't an alternative name */
 		/* so dev_name will always find something to return. */
 		/* Otherwise add the name to the correct device. */
-		if (list_size(&dev->aliases) > 1) {
-			list_del(dev->aliases.n);
+		if (dm_list_size(&dev->aliases) > 1) {
+			dm_list_del(dev->aliases.n);
 			if (!r)
 				_insert(name, 0);
 			continue;
@@ -792,6 +794,6 @@ int dev_fd(struct device *dev)
 
 const char *dev_name(const struct device *dev)
 {
-	return (dev) ? list_item(dev->aliases.n, struct str_list)->str :
+	return (dev) ? dm_list_item(dev->aliases.n, struct str_list)->str :
 	    "unknown device";
 }
