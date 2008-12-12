@@ -1,3 +1,5 @@
+/*	$NetBSD: pvscan.c,v 1.1.1.2 2008/12/12 11:43:13 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -103,7 +105,7 @@ int pvscan(struct cmd_context *cmd, int argc __attribute((unused)),
 	int new_pvs_found = 0;
 	int pvs_found = 0;
 
-	struct list *pvslist;
+	struct dm_list *pvslist;
 	struct pv_list *pvl;
 	struct physical_volume *pv;
 
@@ -139,13 +141,13 @@ int pvscan(struct cmd_context *cmd, int argc __attribute((unused)),
 	}
 
 	/* eliminate exported/new if required */
-	list_iterate_items(pvl, pvslist) {
+	dm_list_iterate_items(pvl, pvslist) {
 		pv = pvl->pv;
 
 		if ((arg_count(cmd, exported_ARG)
 		     && !(pv_status(pv) & EXPORTED_VG))
 		    || (arg_count(cmd, novolumegroup_ARG) && (!is_orphan(pv)))) {
-			list_del(&pvl->list);
+			dm_list_del(&pvl->list);
 			continue;
 		}
 
@@ -171,7 +173,7 @@ int pvscan(struct cmd_context *cmd, int argc __attribute((unused)),
 
 	/* find maximum pv name length */
 	pv_max_name_len = vg_max_name_len = 0;
-	list_iterate_items(pvl, pvslist) {
+	dm_list_iterate_items(pvl, pvslist) {
 		pv = pvl->pv;
 		len = strlen(pv_dev_name(pv));
 		if (pv_max_name_len < len)
@@ -183,7 +185,7 @@ int pvscan(struct cmd_context *cmd, int argc __attribute((unused)),
 	pv_max_name_len += 2;
 	vg_max_name_len += 2;
 
-	list_iterate_items(pvl, pvslist)
+	dm_list_iterate_items(pvl, pvslist)
 	    _pvscan_display_single(cmd, pvl->pv, NULL);
 
 	if (!pvs_found) {

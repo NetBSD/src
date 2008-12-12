@@ -1,3 +1,5 @@
+/*	$NetBSD: lvscan.c,v 1.1.1.2 2008/12/12 11:43:11 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -32,7 +34,7 @@ static int lvscan_single(struct cmd_context *cmd, struct logical_volume *lv,
 
 	inkernel = lv_info(cmd, lv, &info, 1, 0) && info.exists;
 	if (lv_is_origin(lv)) {
-		list_iterate_items_gen(snap_seg, &lv->snapshot_segs,
+		dm_list_iterate_items_gen(snap_seg, &lv->snapshot_segs,
 				       origin_list) {
 			if (inkernel &&
 			    (snap_active = lv_snapshot_percent(snap_seg->cow,

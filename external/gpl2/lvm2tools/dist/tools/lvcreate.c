@@ -1,3 +1,5 @@
+/*	$NetBSD: lvcreate.c,v 1.1.1.2 2008/12/12 11:43:09 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -500,6 +502,9 @@ static int _lvcreate_params(struct lvcreate_params *lp, struct cmd_context *cmd,
 				return 0;
 			}
 		}
+	} else if (arg_count(cmd, minor_ARG) || arg_count(cmd, major_ARG)) {
+		log_error("--major and --minor require -My");
+		return 0;
 	}
 
 	lp->pv_count = argc;
@@ -515,15 +520,13 @@ static int _lvcreate(struct cmd_context *cmd, struct volume_group *vg,
 	uint32_t status = 0;
 	uint64_t tmp_size;
 	struct logical_volume *lv, *org = NULL;
-	struct list *pvh;
+	struct dm_list *pvh;
 	const char *tag = NULL;
 	int origin_active = 0;
 	char lv_name_buf[128];
 	const char *lv_name;
 	struct lvinfo info;
 	uint32_t pv_extent_count;
-
-	status |= lp->permission | VISIBLE_LV;
 
 	if (lp->lv_name && find_lv_in_vg(vg, lp->lv_name)) {
 		log_error("Logical volume \"%s\" already exists in "
@@ -543,16 +546,6 @@ static int _lvcreate(struct cmd_context *cmd, struct volume_group *vg,
 		log_error("Metadata only supports readahead values between 2 and 120.");
 		return 0;
 	}
-
-	/*
-	 * Create the pv list.
-	 */
-	if (lp->pv_count) {
-		if (!(pvh = create_pv_list(cmd->mem, vg,
-					   lp->pv_count, lp->pvs, 1)))
-			return_0;
-	} else
-		pvh = &vg->pvs;
 
 	if (lp->stripe_size > vg->extent_size) {
 		log_error("Reducing requested stripe size %s to maximum, "
@@ -594,6 +587,16 @@ static int _lvcreate(struct cmd_context *cmd, struct volume_group *vg,
 		lp->extents = (uint64_t) tmp_size / vg->extent_size;
 	}
 
+	/*
+	 * Create the pv list.
+	 */
+	if (lp->pv_count) {
+		if (!(pvh = create_pv_list(cmd->mem, vg,
+					   lp->pv_count, lp->pvs, 1)))
+			return_0;
+	} else
+		pvh = &vg->pvs;
+
 	switch(lp->percent) {
 		case PERCENT_VG:
 			lp->extents = lp->extents * vg->extent_count / 100;
@@ -630,6 +633,8 @@ static int _lvcreate(struct cmd_context *cmd, struct volume_group *vg,
 			  "device-mapper kernel driver");
 		return 0;
 	}
+
+	status |= lp->permission | VISIBLE_LV;
 
 	if (lp->snapshot) {
 		if (!activation()) {
@@ -687,10 +692,10 @@ static int _lvcreate(struct cmd_context *cmd, struct volume_group *vg,
 		return 0;
 	}
 
-	if (lp->stripes > list_size(pvh) && lp->alloc != ALLOC_ANYWHERE) {
+	if (lp->stripes > dm_list_size(pvh) && lp->alloc != ALLOC_ANYWHERE) {
 		log_error("Number of stripes (%u) must not exceed "
 			  "number of physical volumes (%d)", lp->stripes,
-			  list_size(pvh));
+			  dm_list_size(pvh));
 		return 0;
 	}
 

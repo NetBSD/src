@@ -1,3 +1,5 @@
+/*	$NetBSD: pvchange.c,v 1.1.1.2 2008/12/12 11:43:11 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -23,9 +25,11 @@ static int _pvchange_single(struct cmd_context *cmd, struct physical_volume *pv,
 	struct volume_group *vg = NULL;
 	const char *vg_name = NULL;
 	struct pv_list *pvl;
-	struct list mdas;
 	uint64_t sector;
 	uint32_t orig_pe_alloc_count;
+	/* FIXME Next three only required for format1. */
+	uint32_t orig_pe_count, orig_pe_size;
+	uint64_t orig_pe_start;
 
 	const char *pv_name = pv_dev_name(pv);
 	const char *tag = NULL;
@@ -34,8 +38,6 @@ static int _pvchange_single(struct cmd_context *cmd, struct physical_volume *pv,
 
 	int allocatable = 0;
 	int tagarg = 0;
-
-	list_init(&mdas);
 
 	if (arg_count(cmd, addtag_ARG))
 		tagarg = addtag_ARG;
@@ -51,7 +53,6 @@ static int _pvchange_single(struct cmd_context *cmd, struct physical_volume *pv,
 	}
 
 	/* If in a VG, must change using volume group. */
-	/* FIXME: handle PVs with no MDAs */
 	if (!is_orphan(pv)) {
 		vg_name = pv_vg_name(pv);
 
@@ -98,7 +99,7 @@ static int _pvchange_single(struct cmd_context *cmd, struct physical_volume *pv,
 			return 0;
 		}
 
-		if (!(pv = pv_read(cmd, pv_name, &mdas, &sector, 1))) {
+		if (!(pv = pv_read(cmd, pv_name, NULL, &sector, 1))) {
 			unlock_vg(cmd, vg_name);
 			log_error("Unable to read PV \"%s\"", pv_name);
 			return 0;
@@ -171,6 +172,12 @@ static int _pvchange_single(struct cmd_context *cmd, struct physical_volume *pv,
 		if (!is_orphan(pv)) {
 			orig_vg_name = pv_vg_name(pv);
 			orig_pe_alloc_count = pv_pe_alloc_count(pv);
+
+			/* FIXME format1 pv_write doesn't preserve these. */
+			orig_pe_size = pv_pe_size(pv);
+			orig_pe_start = pv_pe_start(pv);
+			orig_pe_count = pv_pe_count(pv);
+
 			pv->vg_name = pv->fmt->orphan_vg_name;
 			pv->pe_alloc_count = 0;
 			if (!(pv_write(cmd, pv, NULL, INT64_C(-1)))) {
@@ -181,6 +188,10 @@ static int _pvchange_single(struct cmd_context *cmd, struct physical_volume *pv,
 			}
 			pv->vg_name = orig_vg_name;
 			pv->pe_alloc_count = orig_pe_alloc_count;
+
+			pv->pe_size = orig_pe_size;
+			pv->pe_start = orig_pe_start;
+			pv->pe_count = orig_pe_count;
 		}
 	}
 
@@ -217,10 +228,8 @@ int pvchange(struct cmd_context *cmd, int argc, char **argv)
 	char *pv_name;
 
 	struct pv_list *pvl;
-	struct list *pvslist;
-	struct list mdas;
-
-	list_init(&mdas);
+	struct dm_list *pvslist;
+	struct dm_list mdas;
 
 	if (arg_count(cmd, allocatable_ARG) + arg_count(cmd, addtag_ARG) +
 	    arg_count(cmd, deltag_ARG) + arg_count(cmd, uuid_ARG) != 1) {
@@ -243,12 +252,34 @@ int pvchange(struct cmd_context *cmd, int argc, char **argv)
 		log_verbose("Using physical volume(s) on command line");
 		for (; opt < argc; opt++) {
 			pv_name = argv[opt];
-			/* FIXME Read VG instead - pv_read will fail */
+			dm_list_init(&mdas);
 			if (!(pv = pv_read(cmd, pv_name, &mdas, NULL, 1))) {
 				log_error("Failed to read physical volume %s",
 					  pv_name);
 				continue;
 			}
+			/*
+			 * If a PV has no MDAs it may appear to be an
+			 * orphan until the metadata is read off
+			 * another PV in the same VG.  Detecting this
+			 * means checking every VG by scanning every
+			 * PV on the system.
+			 */
+			if (is_orphan(pv) && !dm_list_size(&mdas)) {
+				if (!scan_vgs_for_pvs(cmd)) {
+					log_error("Rescan for PVs without "
+						  "metadata areas failed.");
+					continue;
+				}
+				if (!(pv = pv_read(cmd, pv_name,
+						   NULL, NULL, 1))) {
+					log_error("Failed to read "
+						  "physical volume %s",
+						  pv_name);
+					continue;
+				}
+			}
+
 			total++;
 			done += _pvchange_single(cmd, pv, NULL);
 		}
@@ -258,7 +289,7 @@ int pvchange(struct cmd_context *cmd, int argc, char **argv)
 			return ECMD_FAILED;
 		}
 
-		list_iterate_items(pvl, pvslist) {
+		dm_list_iterate_items(pvl, pvslist) {
 			total++;
 			done += _pvchange_single(cmd, pvl->pv, NULL);
 		}
