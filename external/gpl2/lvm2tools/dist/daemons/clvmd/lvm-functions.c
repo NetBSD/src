@@ -1,3 +1,5 @@
+/*	$NetBSD: lvm-functions.c,v 1.1.1.2 2008/12/12 11:42:04 haad Exp $	*/
+
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
@@ -13,6 +15,10 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
+#define _GNU_SOURCE
+#define _FILE_OFFSET_BITS 64
+
+#include <configure.h>
 #include <pthread.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
@@ -33,7 +39,6 @@
 #include <libdevmapper.h>
 #include <libdlm.h>
 
-#include "list.h"
 #include "lvm-types.h"
 #include "clvm.h"
 #include "clvmd-comms.h"
@@ -43,7 +48,8 @@
 /* LVM2 headers */
 #include "toolcontext.h"
 #include "lvmcache.h"
-#include "log.h"
+#include "lvm-logging.h"
+#include "lvm-globals.h"
 #include "activate.h"
 #include "locking.h"
 #include "archiver.h"
@@ -141,8 +147,7 @@ static const char *decode_flags(unsigned char flags)
 {
 	static char buf[128];
 
-	sprintf(buf, "0x%x (%s%s%s)", flags,
-		flags & LCK_PARTIAL_MODE	  ? "PARTIAL " : "",
+	sprintf(buf, "0x%x (%s%s)", flags,
 		flags & LCK_MIRROR_NOSYNC_MODE	  ? "MIRROR_NOSYNC " : "",
 		flags & LCK_DMEVENTD_MONITOR_MODE ? "DMEVENTD_MONITOR " : "");
 
@@ -413,9 +418,6 @@ int do_lock_lv(unsigned char command, unsigned char lock_flags, char *resource)
 		}
 	}
 
-	if (lock_flags & LCK_PARTIAL_MODE)
-		init_partial(1);
-
 	if (lock_flags & LCK_MIRROR_NOSYNC_MODE)
 		init_mirror_in_sync(1);
 
@@ -453,9 +455,6 @@ int do_lock_lv(unsigned char command, unsigned char lock_flags, char *resource)
 		status = EINVAL;
 		break;
 	}
-
-	if (lock_flags & LCK_PARTIAL_MODE)
-		init_partial(0);
 
 	if (lock_flags & LCK_MIRROR_NOSYNC_MODE)
 		init_mirror_in_sync(0);

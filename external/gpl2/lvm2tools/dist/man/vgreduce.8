@@ -1,4 +1,6 @@
-.TH VGREDUCE 8 "LVM TOOLS" "Sistina Software UK" \" -*- nroff -*-
+.\"	$NetBSD: vgreduce.8,v 1.1.1.2 2008/12/12 11:42:01 haad Exp $
+.\"
+.TH VGREDUCE 8 "LVM TOOLS 2.2.02.43-cvs (12-08-08)" "Sistina Software UK" \" -*- nroff -*-
 .SH NAME
 vgreduce \- reduce a volume group
 .SH SYNOPSIS
@@ -18,11 +20,13 @@ See \fBlvm\fP for common options.
 Removes all empty physical volumes if none are given on command line.
 .TP
 .I \-\-removemissing
-Removes all missing physical volumes from the volume group and makes 
-the volume group consistent again.  
+Removes all missing physical volumes from the volume group, if there are no
+logical volumes allocated on those. This resumes normal operation of the volume
+group (new logical volumes may again be created, changed and so on).
 
-It's a good idea to run this option with --test first to find out what it 
-would remove before running it for real.  
+If this is not possible (there are logical volumes referencing the missing
+physical volumes) and you cannot or do not want to remove them manually, you
+can run this option with --force to have vgreduce remove any partial LVs.
 
 Any logical volumes and dependent snapshots that were partly on the 
 missing disks get removed completely. This includes those parts 
@@ -33,5 +37,5 @@ lost, you might want to try to salvage data first by activating your
 logical volumes with --partial as described in \fBlvm (8)\fP.
 
 .SH SEE ALSO
-.BR lvm (8), 
+.BR lvm (8),
 .BR vgextend (8)

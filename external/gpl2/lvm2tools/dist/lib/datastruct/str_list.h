@@ -1,3 +1,5 @@
+/*	$NetBSD: str_list.h,v 1.1.1.2 2008/12/12 11:42:18 haad Exp $	*/
+
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2005 Red Hat, Inc. All rights reserved.
@@ -16,13 +18,13 @@
 #ifndef _LVM_STR_LIST_H
 #define _LVM_STR_LIST_H
 
-struct list *str_list_create(struct dm_pool *mem);
-int str_list_add(struct dm_pool *mem, struct list *sll, const char *str);
-int str_list_del(struct list *sll, const char *str);
-int str_list_match_item(const struct list *sll, const char *str);
-int str_list_match_list(const struct list *sll, const struct list *sll2);
-int str_list_lists_equal(const struct list *sll, const struct list *sll2);
-int str_list_dup(struct dm_pool *mem, struct list *sllnew,
-		 const struct list *sllold);
+struct dm_list *str_list_create(struct dm_pool *mem);
+int str_list_add(struct dm_pool *mem, struct dm_list *sll, const char *str);
+int str_list_del(struct dm_list *sll, const char *str);
+int str_list_match_item(const struct dm_list *sll, const char *str);
+int str_list_match_list(const struct dm_list *sll, const struct dm_list *sll2);
+int str_list_lists_equal(const struct dm_list *sll, const struct dm_list *sll2);
+int str_list_dup(struct dm_pool *mem, struct dm_list *sllnew,
+		 const struct dm_list *sllold);
 
 #endif

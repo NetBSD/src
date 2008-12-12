@@ -1,3 +1,5 @@
+/*	$NetBSD: disk_rep.c,v 1.1.1.2 2008/12/12 11:42:13 haad Exp $	*/
+
 /*
  * Copyright (C) 1997-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -19,8 +21,9 @@
 #include "lvmcache.h"
 #include "filter.h"
 #include "xlate.h"
-
 #include "disk_rep.h"
+
+#include <assert.h>
 
 /* FIXME: memcpy might not be portable */
 #define CPIN_8(x, y, z) {memcpy((x), (y), (z));}
@@ -51,11 +54,11 @@ static int __read_pool_disk(const struct format_type *fmt, struct device *dev,
 	return 1;
 }
 
-static void _add_pl_to_list(struct list *head, struct pool_list *data)
+static void _add_pl_to_list(struct dm_list *head, struct pool_list *data)
 {
 	struct pool_list *pl;
 
-	list_iterate_items(pl, head) {
+	dm_list_iterate_items(pl, head) {
 		if (id_equal(&data->pv_uuid, &pl->pv_uuid)) {
 			char uuid[ID_LEN + 7] __attribute((aligned(8)));
 
@@ -69,11 +72,11 @@ static void _add_pl_to_list(struct list *head, struct pool_list *data)
 			}
 			log_very_verbose("Duplicate PV %s - using md %s",
 					 uuid, dev_name(data->dev));
-			list_del(&pl->list);
+			dm_list_del(&pl->list);
 			break;
 		}
 	}
-	list_add(head, &data->list);
+	dm_list_add(head, &data->list);
 }
 
 int read_pool_label(struct pool_list *pl, struct labeller *l,
@@ -102,7 +105,7 @@ int read_pool_label(struct pool_list *pl, struct labeller *l,
 		*label = info->label;
 
 	info->device_size = xlate32_be(pd->pl_blocks) << SECTOR_SHIFT;
-	list_init(&info->mdas);
+	dm_list_init(&info->mdas);
 
 	info->status &= ~CACHE_INVALID;
 
@@ -235,7 +238,7 @@ void get_pool_uuid(char *uuid, uint64_t poolid, uint32_t spid, uint32_t devid)
 }
 
 static int _read_vg_pds(const struct format_type *fmt, struct dm_pool *mem,
-			struct lvmcache_vginfo *vginfo, struct list *head,
+			struct lvmcache_vginfo *vginfo, struct dm_list *head,
 			uint32_t *devcount)
 {
 	struct lvmcache_info *info;
@@ -251,7 +254,7 @@ static int _read_vg_pds(const struct format_type *fmt, struct dm_pool *mem,
 	if (!(tmpmem = dm_pool_create("pool read_vg", 512)))
 		return_0;
 
-	list_iterate_items(info, &vginfo->infos) {
+	dm_list_iterate_items(info, &vginfo->infos) {
 		if (info->dev &&
 		    !(pl = read_pool_disk(fmt, info->dev, mem, vginfo->vgname)))
 			    break;
@@ -298,7 +301,7 @@ static int _read_vg_pds(const struct format_type *fmt, struct dm_pool *mem,
 }
 
 int read_pool_pds(const struct format_type *fmt, const char *vg_name,
-		  struct dm_pool *mem, struct list *pdhead)
+		  struct dm_pool *mem, struct dm_list *pdhead)
 {
 	struct lvmcache_vginfo *vginfo;
 	uint32_t totaldevs;
@@ -316,7 +319,7 @@ int read_pool_pds(const struct format_type *fmt, const char *vg_name,
 				 * If we found all the devices we were
 				 * expecting, return success
 				 */
-				if (list_size(pdhead) == totaldevs)
+				if (dm_list_size(pdhead) == totaldevs)
 					return 1;
 
 				/*
@@ -328,7 +331,7 @@ int read_pool_pds(const struct format_type *fmt, const char *vg_name,
 			}
 		}
 		/* Failed */
-		list_init(pdhead);
+		dm_list_init(pdhead);
 
 		full_scan++;
 		if (full_scan > 1) {

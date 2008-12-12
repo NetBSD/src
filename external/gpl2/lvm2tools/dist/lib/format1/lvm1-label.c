@@ -1,3 +1,5 @@
+/*	$NetBSD: lvm1-label.c,v 1.1.1.2 2008/12/12 11:42:22 haad Exp $	*/
+
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -80,7 +82,7 @@ static int _lvm1_read(struct labeller *l, struct device *dev, void *buf,
 	*label = info->label;
 
 	info->device_size = xlate32(pvd->pv_size) << SECTOR_SHIFT;
-	list_init(&info->mdas);
+	dm_list_init(&info->mdas);
 
 	info->status &= ~CACHE_INVALID;
 

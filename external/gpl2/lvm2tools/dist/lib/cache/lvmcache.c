@@ -1,3 +1,5 @@
+/*	$NetBSD: lvmcache.c,v 1.1.1.2 2008/12/12 11:42:14 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
@@ -30,7 +32,7 @@ static struct dm_hash_table *_pvid_hash = NULL;
 static struct dm_hash_table *_vgid_hash = NULL;
 static struct dm_hash_table *_vgname_hash = NULL;
 static struct dm_hash_table *_lock_hash = NULL;
-static struct list _vginfos;
+static struct dm_list _vginfos;
 static int _scanning_in_progress = 0;
 static int _has_scanned = 0;
 static int _vgs_locked = 0;
@@ -38,7 +40,7 @@ static int _vg_global_lock_held = 0;	/* Global lock held when cache wiped? */
 
 int lvmcache_init(void)
 {
-	list_init(&_vginfos);
+	dm_list_init(&_vginfos);
 
 	if (!(_vgname_hash = dm_hash_create(128)))
 		return 0;
@@ -97,9 +99,10 @@ static void _update_cache_info_lock_state(struct lvmcache_info *info,
 	int was_locked = (info->status & CACHE_LOCKED) ? 1 : 0;
 
 	/*
-	 * Cache becomes invalid whenever lock state changes
+	 * Cache becomes invalid whenever lock state changes unless
+	 * exclusive VG_GLOBAL is held (i.e. while scanning).
 	 */
-	if (was_locked != locked) {
+	if (!vgname_is_locked(VG_GLOBAL) && (was_locked != locked)) {
 		info->status |= CACHE_INVALID;
 		*cached_vgmetadata_valid = 0;
 	}
@@ -116,7 +119,7 @@ static void _update_cache_vginfo_lock_state(struct lvmcache_vginfo *vginfo,
 	struct lvmcache_info *info;
 	int cached_vgmetadata_valid = 1;
 
-	list_iterate_items(info, &vginfo->infos)
+	dm_list_iterate_items(info, &vginfo->infos)
 		_update_cache_info_lock_state(info, locked,
 					      &cached_vgmetadata_valid);
 
@@ -150,7 +153,7 @@ static void _drop_metadata(const char *vgname)
 	 */
 
 	if (!vginfo->precommitted)
-		list_iterate_items(info, &vginfo->infos)
+		dm_list_iterate_items(info, &vginfo->infos)
 			info->status |= CACHE_INVALID;
 
 	_free_cached_vgmetadata(vginfo);
@@ -166,7 +169,7 @@ void lvmcache_drop_metadata(const char *vgname)
 
 		/* Indicate that PVs could now be missing from the cache */
 		init_full_scan_done(0);
-	} else
+	} else if (!vgname_is_locked(VG_GLOBAL))
 		_drop_metadata(vgname);
 }
 
@@ -225,14 +228,14 @@ static void _vginfo_attach_info(struct lvmcache_vginfo *vginfo,
 		return;
 
 	info->vginfo = vginfo;
-	list_add(&vginfo->infos, &info->list);
+	dm_list_add(&vginfo->infos, &info->list);
 }
 
 static void _vginfo_detach_info(struct lvmcache_info *info)
 {
-	if (!list_empty(&info->list)) {
-		list_del(&info->list);
-		list_init(&info->list);
+	if (!dm_list_empty(&info->list)) {
+		dm_list_del(&info->list);
+		dm_list_init(&info->list);
 	}
 
 	info->vginfo = NULL;
@@ -266,8 +269,8 @@ const struct format_type *fmt_from_vgname(const char *vgname, const char *vgid)
 	struct lvmcache_vginfo *vginfo;
 	struct lvmcache_info *info;
 	struct label *label;
-	struct list *devh, *tmp;
-	struct list devs;
+	struct dm_list *devh, *tmp;
+	struct dm_list devs;
 	struct device_list *devl;
 	char vgid_found[ID_LEN + 1] __attribute((aligned(8)));
 
@@ -276,22 +279,22 @@ const struct format_type *fmt_from_vgname(const char *vgname, const char *vgid)
 
 	/* This function is normally called before reading metadata so
  	 * we check cached labels here. Unfortunately vginfo is volatile. */
-	list_init(&devs);
-	list_iterate_items(info, &vginfo->infos) {
+	dm_list_init(&devs);
+	dm_list_iterate_items(info, &vginfo->infos) {
 		if (!(devl = dm_malloc(sizeof(*devl)))) {
 			log_error("device_list element allocation failed");
 			return NULL;
 		}
 		devl->dev = info->dev;
-		list_add(&devs, &devl->list);
+		dm_list_add(&devs, &devl->list);
 	}
 
 	memcpy(vgid_found, vginfo->vgid, sizeof(vgid_found));
 
-	list_iterate_safe(devh, tmp, &devs) {
-		devl = list_item(devh, struct device_list);
+	dm_list_iterate_safe(devh, tmp, &devs) {
+		devl = dm_list_item(devh, struct device_list);
 		label_read(devl->dev, &label, UINT64_C(0));
-		list_del(&devl->list);
+		dm_list_del(&devl->list);
 		dm_free(devl);
 	}
 
@@ -361,7 +364,7 @@ static int _vginfo_is_valid(struct lvmcache_vginfo *vginfo)
 	struct lvmcache_info *info;
 
 	/* Invalid if any info is invalid */
-	list_iterate_items(info, &vginfo->infos)
+	dm_list_iterate_items(info, &vginfo->infos)
 		if (!_info_is_valid(info))
 			return 0;
 
@@ -373,7 +376,7 @@ static int _vginfo_is_invalid(struct lvmcache_vginfo *vginfo)
 {
 	struct lvmcache_info *info;
 
-	list_iterate_items(info, &vginfo->infos)
+	dm_list_iterate_items(info, &vginfo->infos)
 		if (_info_is_valid(info))
 			return 0;
 
@@ -457,7 +460,7 @@ int lvmcache_label_scan(struct cmd_context *cmd, int full_scan)
 	_has_scanned = 1;
 
 	/* Perform any format-specific scanning e.g. text files */
-	list_iterate_items(fmt, &cmd->formats) {
+	dm_list_iterate_items(fmt, &cmd->formats) {
 		if (fmt->ops->scan && !fmt->ops->scan(fmt))
 			goto out;
 	}
@@ -515,9 +518,9 @@ struct volume_group *lvmcache_get_vg(const char *vgid, unsigned precommitted)
 	return vg;
 }
 
-struct list *lvmcache_get_vgids(struct cmd_context *cmd, int full_scan)
+struct dm_list *lvmcache_get_vgids(struct cmd_context *cmd, int full_scan)
 {
-	struct list *vgids;
+	struct dm_list *vgids;
 	struct lvmcache_vginfo *vginfo;
 
 	lvmcache_label_scan(cmd, full_scan);
@@ -527,7 +530,7 @@ struct list *lvmcache_get_vgids(struct cmd_context *cmd, int full_scan)
 		return NULL;
 	}
 
-	list_iterate_items(vginfo, &_vginfos) {
+	dm_list_iterate_items(vginfo, &_vginfos) {
 		if (!str_list_add(cmd->mem, vgids,
 				  dm_pool_strdup(cmd->mem, vginfo->vgid))) {
 			log_error("strlist allocation failed");
@@ -538,9 +541,9 @@ struct list *lvmcache_get_vgids(struct cmd_context *cmd, int full_scan)
 	return vgids;
 }
 
-struct list *lvmcache_get_vgnames(struct cmd_context *cmd, int full_scan)
+struct dm_list *lvmcache_get_vgnames(struct cmd_context *cmd, int full_scan)
 {
-	struct list *vgnames;
+	struct dm_list *vgnames;
 	struct lvmcache_vginfo *vginfo;
 
 	lvmcache_label_scan(cmd, full_scan);
@@ -550,7 +553,7 @@ struct list *lvmcache_get_vgnames(struct cmd_context *cmd, int full_scan)
 		return NULL;
 	}
 
-	list_iterate_items(vginfo, &_vginfos) {
+	dm_list_iterate_items(vginfo, &_vginfos) {
 		if (!str_list_add(cmd->mem, vgnames,
 				  dm_pool_strdup(cmd->mem, vginfo->vgname))) {
 			log_error("strlist allocation failed");
@@ -561,10 +564,10 @@ struct list *lvmcache_get_vgnames(struct cmd_context *cmd, int full_scan)
 	return vgnames;
 }
 
-struct list *lvmcache_get_pvids(struct cmd_context *cmd, const char *vgname,
+struct dm_list *lvmcache_get_pvids(struct cmd_context *cmd, const char *vgname,
 				const char *vgid)
 {
-	struct list *pvids;
+	struct dm_list *pvids;
 	struct lvmcache_vginfo *vginfo;
 	struct lvmcache_info *info;
 
@@ -576,7 +579,7 @@ struct list *lvmcache_get_pvids(struct cmd_context *cmd, const char *vgname,
 	if (!(vginfo = vginfo_from_vgname(vgname, vgid)))
 		return pvids;
 
-	list_iterate_items(info, &vginfo->infos) {
+	dm_list_iterate_items(info, &vginfo->infos) {
 		if (!str_list_add(cmd->mem, pvids,
 				  dm_pool_strdup(cmd->mem, info->dev->pvid))) {
 			log_error("strlist allocation failed");
@@ -663,7 +666,7 @@ static int _free_vginfo(struct lvmcache_vginfo *vginfo)
 	    vginfo_from_vgid(vginfo->vgid) == vginfo)
 		dm_hash_remove(_vgid_hash, vginfo->vgid);
 
-	list_del(&vginfo->list);
+	dm_list_del(&vginfo->list);
 
 	dm_free(vginfo);
 
@@ -680,7 +683,7 @@ static int _drop_vginfo(struct lvmcache_info *info, struct lvmcache_vginfo *vgin
 
 	/* vginfo still referenced? */
 	if (!vginfo || is_orphan_vg(vginfo->vgname) ||
-	    !list_empty(&vginfo->infos))
+	    !dm_list_empty(&vginfo->infos))
 		return 1;
 
 	if (!_free_vginfo(vginfo))
@@ -903,7 +906,7 @@ static int _lvmcache_update_vgname(struct lvmcache_info *info,
 			log_error("cache vgname alloc failed for %s", vgname);
 			return 0;
 		}
-		list_init(&vginfo->infos);
+		dm_list_init(&vginfo->infos);
 
 		/*
 		 * If we're scanning and there's an invalidated entry, remove it.
@@ -911,13 +914,13 @@ static int _lvmcache_update_vgname(struct lvmcache_info *info,
 		 */
 		while ((primary_vginfo = vginfo_from_vgname(vgname, NULL)) &&
 		       _scanning_in_progress && _vginfo_is_invalid(primary_vginfo))
-			list_iterate_items_safe(info2, info3, &primary_vginfo->infos) {
+			dm_list_iterate_items_safe(info2, info3, &primary_vginfo->infos) {
 				orphan_vginfo = vginfo_from_vgname(primary_vginfo->fmt->orphan_vg_name, NULL);
 				_drop_vginfo(info2, primary_vginfo);	
 				_vginfo_attach_info(orphan_vginfo, info2);
 				if (info2->mdas.n)
 					sprintf(mdabuf, " with %u mdas",
-						list_size(&info2->mdas));
+						dm_list_size(&info2->mdas));
 				else
 					mdabuf[0] = '\0';
 				log_debug("lvmcache: %s: now in VG %s%s%s%s%s",
@@ -935,9 +938,9 @@ static int _lvmcache_update_vgname(struct lvmcache_info *info,
 		}
 		/* Ensure orphans appear last on list_iterate */
 		if (is_orphan_vg(vgname))
-			list_add(&_vginfos, &vginfo->list);
+			dm_list_add(&_vginfos, &vginfo->list);
 		else
-			list_add_h(&_vginfos, &vginfo->list);
+			dm_list_add_h(&_vginfos, &vginfo->list);
 /***
 		}
 ***/
@@ -955,7 +958,7 @@ static int _lvmcache_update_vgname(struct lvmcache_info *info,
 
 	if (info) {
 		if (info->mdas.n)
-			sprintf(mdabuf, " with %u mdas", list_size(&info->mdas));
+			sprintf(mdabuf, " with %u mdas", dm_list_size(&info->mdas));
 		else
 			mdabuf[0] = '\0';
 		log_debug("lvmcache: %s: now in VG %s%s%s%s%s",
@@ -1026,7 +1029,7 @@ int lvmcache_update_vgname_and_id(struct lvmcache_info *info,
 	}
 
 	/* If PV without mdas is already in a real VG, don't make it orphan */
-	if (is_orphan_vg(vgname) && info->vginfo && !list_size(&info->mdas) &&
+	if (is_orphan_vg(vgname) && info->vginfo && !dm_list_size(&info->mdas) &&
 	    !is_orphan_vg(info->vginfo->vgname) && memlock())
 		return 1;
 
@@ -1052,7 +1055,7 @@ int lvmcache_update_vg(struct volume_group *vg, unsigned precommitted)
 
 	pvid_s[sizeof(pvid_s) - 1] = '\0';
 
-	list_iterate_items(pvl, &vg->pvs) {
+	dm_list_iterate_items(pvl, &vg->pvs) {
 		strncpy(pvid_s, (char *) &pvl->pv->id, sizeof(pvid_s) - 1);
 		/* FIXME Could pvl->pv->dev->pvid ever be different? */
 		if ((info = info_from_pvid(pvid_s, 0)) &&
@@ -1100,7 +1103,7 @@ struct lvmcache_info *lvmcache_add(struct labeller *labeller, const char *pvid,
 
 		label->info = info;
 		info->label = label;
-		list_init(&info->list);
+		dm_list_init(&info->list);
 		info->dev = dev;
 	} else {
 		if (existing->dev != dev) {
@@ -1245,9 +1248,9 @@ void lvmcache_destroy(struct cmd_context *cmd, int retain_orphans)
 		_lock_hash = NULL;
 	}
 
-	if (!list_empty(&_vginfos))
+	if (!dm_list_empty(&_vginfos))
 		log_error("Internal error: _vginfos list should be empty");
-	list_init(&_vginfos);
+	dm_list_init(&_vginfos);
 
 	if (retain_orphans)
 		init_lvmcache_orphans(cmd);

@@ -1,3 +1,5 @@
+/*	$NetBSD: text_label.c,v 1.1.1.2 2008/12/12 11:42:43 haad Exp $	*/
+
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -58,7 +60,7 @@ static int _text_write(struct label *label, void *buf)
 	pvh_dlocn_xl = &pvhdr->disk_areas_xl[0];
 
 	/* List of data areas (holding PEs) */
-	list_iterate_items(da, &info->das) {
+	dm_list_iterate_items(da, &info->das) {
 		pvh_dlocn_xl->offset = xlate64(da->disk_locn.offset);
 		pvh_dlocn_xl->size = xlate64(da->disk_locn.size);
 		pvh_dlocn_xl++;
@@ -70,7 +72,7 @@ static int _text_write(struct label *label, void *buf)
 	pvh_dlocn_xl++;
 
 	/* List of metadata area header locations */
-	list_iterate_items(mda, &info->mdas) {
+	dm_list_iterate_items(mda, &info->mdas) {
 		mdac = (struct mda_context *) mda->metadata_locn;
 
 		if (mdac->area.dev != info->dev)
@@ -88,7 +90,7 @@ static int _text_write(struct label *label, void *buf)
 	return 1;
 }
 
-int add_da(struct dm_pool *mem, struct list *das,
+int add_da(struct dm_pool *mem, struct dm_list *das,
 	   uint64_t start, uint64_t size)
 {
 	struct data_area_list *dal;
@@ -108,24 +110,24 @@ int add_da(struct dm_pool *mem, struct list *das,
 	dal->disk_locn.offset = start;
 	dal->disk_locn.size = size;
 
-	list_add(das, &dal->list);
+	dm_list_add(das, &dal->list);
 
 	return 1;
 }
 
-void del_das(struct list *das)
+void del_das(struct dm_list *das)
 {
-	struct list *dah, *tmp;
+	struct dm_list *dah, *tmp;
 	struct data_area_list *da;
 
-	list_iterate_safe(dah, tmp, das) {
-		da = list_item(dah, struct data_area_list);
-		list_del(&da->list);
+	dm_list_iterate_safe(dah, tmp, das) {
+		da = dm_list_item(dah, struct data_area_list);
+		dm_list_del(&da->list);
 		dm_free(da);
 	}
 }
 
-int add_mda(const struct format_type *fmt, struct dm_pool *mem, struct list *mdas,
+int add_mda(const struct format_type *fmt, struct dm_pool *mem, struct dm_list *mdas,
 	    struct device *dev, uint64_t start, uint64_t size)
 {
 /* FIXME List size restricted by pv_header SECTOR_SIZE */
@@ -165,19 +167,19 @@ int add_mda(const struct format_type *fmt, struct dm_pool *mem, struct list *mda
 	mdac->free_sectors = UINT64_C(0);
 	memset(&mdac->rlocn, 0, sizeof(mdac->rlocn));
 
-	list_add(mdas, &mdal->list);
+	dm_list_add(mdas, &mdal->list);
 	return 1;
 }
 
-void del_mdas(struct list *mdas)
+void del_mdas(struct dm_list *mdas)
 {
-	struct list *mdah, *tmp;
+	struct dm_list *mdah, *tmp;
 	struct metadata_area *mda;
 
-	list_iterate_safe(mdah, tmp, mdas) {
-		mda = list_item(mdah, struct metadata_area);
+	dm_list_iterate_safe(mdah, tmp, mdas) {
+		mda = dm_list_item(mdah, struct metadata_area);
 		dm_free(mda->metadata_locn);
-		list_del(&mda->list);
+		dm_list_del(&mda->list);
 		dm_free(mda);
 	}
 }
@@ -217,11 +219,11 @@ static int _text_read(struct labeller *l, struct device *dev, void *buf,
 
 	if (info->das.n)
 		del_das(&info->das);
-	list_init(&info->das);
+	dm_list_init(&info->das);
 
 	if (info->mdas.n)
 		del_mdas(&info->mdas);
-	list_init(&info->mdas);
+	dm_list_init(&info->mdas);
 
 	/* Data areas holding the PEs */
 	dlocn_xl = pvhdr->disk_areas_xl;
@@ -239,7 +241,7 @@ static int _text_read(struct labeller *l, struct device *dev, void *buf,
 		dlocn_xl++;
 	}
 
-	list_iterate_items(mda, &info->mdas) {
+	dm_list_iterate_items(mda, &info->mdas) {
 		mdac = (struct mda_context *) mda->metadata_locn;
 		if ((vgname = vgname_from_mda(info->fmt, &mdac->area,
 					      &vgid, &vgstatus, &creation_host,

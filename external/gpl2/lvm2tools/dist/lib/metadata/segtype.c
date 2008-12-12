@@ -1,3 +1,5 @@
+/*	$NetBSD: segtype.c,v 1.1.1.2 2008/12/12 11:42:35 haad Exp $	*/
+
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
@@ -22,7 +24,7 @@ struct segment_type *get_segtype_from_string(struct cmd_context *cmd,
 {
 	struct segment_type *segtype;
 
-	list_iterate_items(segtype, &cmd->segtypes) {
+	dm_list_iterate_items(segtype, &cmd->segtypes) {
 		if (!strcmp(segtype->name, str))
 			return segtype;
 	}
