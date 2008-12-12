@@ -1,3 +1,5 @@
+/*	$NetBSD: vgsplit.c,v 1.1.1.2 2008/12/12 11:43:05 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -28,7 +30,7 @@ static int _move_pv(struct volume_group *vg_from, struct volume_group *vg_to,
 		return 0;
 	}
 
-	list_move(&vg_to->pvs, &pvl->list);
+	dm_list_move(&vg_to->pvs, &pvl->list);
 
 	vg_from->pv_count--;
 	vg_to->pv_count++;
@@ -60,7 +62,7 @@ static int _move_pvs_used_by_lv(struct volume_group *vg_from,
 		return 0;
 	}
 
-	list_iterate_items(lvseg, &lvl->lv->segments) {
+	dm_list_iterate_items(lvseg, &lvl->lv->segments) {
 		if (lvseg->log_lv)
 			if (!_move_pvs_used_by_lv(vg_from, vg_to,
 						     lvseg->log_lv->name))
@@ -86,7 +88,7 @@ static int _lv_is_in_vg(struct volume_group *vg, struct logical_volume *lv)
 {
 	struct lv_list *lvl;
 
-	list_iterate_items(lvl, &vg->lvs)
+	dm_list_iterate_items(lvl, &vg->lvs)
 		if (lv == lvl->lv)
 			 return 1;
 
@@ -95,11 +97,11 @@ static int _lv_is_in_vg(struct volume_group *vg, struct logical_volume *lv)
 
 static int _move_one_lv(struct volume_group *vg_from,
 			 struct volume_group *vg_to,
-			 struct list *lvh)
+			 struct dm_list *lvh)
 {
-	struct logical_volume *lv = list_item(lvh, struct lv_list)->lv;
+	struct logical_volume *lv = dm_list_item(lvh, struct lv_list)->lv;
 
-	list_move(&vg_to->lvs, lvh);
+	dm_list_move(&vg_to->lvs, lvh);
 	
 	if (lv_is_active(lv)) {
 		log_error("Logical volume \"%s\" must be inactive", lv->name);
@@ -118,15 +120,15 @@ static int _move_one_lv(struct volume_group *vg_from,
 
 static int _move_lvs(struct volume_group *vg_from, struct volume_group *vg_to)
 {
-	struct list *lvh, *lvht;
+	struct dm_list *lvh, *lvht;
 	struct logical_volume *lv;
 	struct lv_segment *seg;
 	struct physical_volume *pv;
 	struct volume_group *vg_with;
 	unsigned s;
 
-	list_iterate_safe(lvh, lvht, &vg_from->lvs) {
-		lv = list_item(lvh, struct lv_list)->lv;
+	dm_list_iterate_safe(lvh, lvht, &vg_from->lvs) {
+		lv = dm_list_item(lvh, struct lv_list)->lv;
 
 		if ((lv->status & SNAPSHOT))
 			continue;
@@ -137,7 +139,7 @@ static int _move_lvs(struct volume_group *vg_from, struct volume_group *vg_to)
 		/* Ensure all the PVs used by this LV remain in the same */
 		/* VG as each other */
 		vg_with = NULL;
-		list_iterate_items(seg, &lv->segments) {
+		dm_list_iterate_items(seg, &lv->segments) {
 			for (s = 0; s < seg->area_count; s++) {
 				/* FIXME Check AREA_LV too */
 				if (seg_type(seg, s) != AREA_PV)
@@ -189,19 +191,19 @@ static int _move_lvs(struct volume_group *vg_from, struct volume_group *vg_to)
 static int _move_snapshots(struct volume_group *vg_from,
 			   struct volume_group *vg_to)
 {
-	struct list *lvh, *lvht;
+	struct dm_list *lvh, *lvht;
 	struct logical_volume *lv;
 	struct lv_segment *seg;
 	int cow_from = 0;
 	int origin_from = 0;
 
-	list_iterate_safe(lvh, lvht, &vg_from->lvs) {
-		lv = list_item(lvh, struct lv_list)->lv;
+	dm_list_iterate_safe(lvh, lvht, &vg_from->lvs) {
+		lv = dm_list_item(lvh, struct lv_list)->lv;
 
 		if (!(lv->status & SNAPSHOT))
 			continue;
 
-		list_iterate_items(seg, &lv->segments) {
+		dm_list_iterate_items(seg, &lv->segments) {
 			cow_from = _lv_is_in_vg(vg_from, seg->cow);
 			origin_from = _lv_is_in_vg(vg_from, seg->origin);
 
@@ -233,13 +235,13 @@ static int _move_snapshots(struct volume_group *vg_from,
 static int _move_mirrors(struct volume_group *vg_from,
 			 struct volume_group *vg_to)
 {
-	struct list *lvh, *lvht;
+	struct dm_list *lvh, *lvht;
 	struct logical_volume *lv;
 	struct lv_segment *seg;
 	unsigned s, seg_in, log_in;
 
-	list_iterate_safe(lvh, lvht, &vg_from->lvs) {
-		lv = list_item(lvh, struct lv_list)->lv;
+	dm_list_iterate_safe(lvh, lvht, &vg_from->lvs) {
+		lv = dm_list_item(lvh, struct lv_list)->lv;
 
 		if (!(lv->status & MIRRORED))
 			continue;

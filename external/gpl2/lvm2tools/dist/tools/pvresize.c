@@ -1,3 +1,5 @@
+/*	$NetBSD: pvresize.c,v 1.1.1.2 2008/12/12 11:43:13 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2005 Red Hat, Inc. All rights reserved.
@@ -32,11 +34,13 @@ static int _pv_resize_single(struct cmd_context *cmd,
 	int consistent = 1;
 	uint64_t size = 0;
 	uint32_t new_pe_count = 0;
-	struct list mdas;
+	struct dm_list mdas;
 	const char *pv_name = pv_dev_name(pv);
 	const char *vg_name;
+	struct lvmcache_info *info;
+	int mda_count = 0;
 
-	list_init(&mdas);
+	dm_list_init(&mdas);
 
 	if (is_orphan_vg(pv_vg_name(pv))) {
 		vg_name = VG_ORPHANS;
@@ -51,13 +55,7 @@ static int _pv_resize_single(struct cmd_context *cmd,
 			return 0;
 		}
 
-		/* FIXME Create function to test compatibility properly */
-		if (list_size(&mdas) > 1) {
-			log_error("%s: too many metadata areas for pvresize",
-				  pv_name);
-			unlock_vg(cmd, vg_name);
-			return 0;
-		}
+		mda_count = dm_list_size(&mdas);
 	} else {
 		vg_name = pv_vg_name(pv);
 
@@ -87,8 +85,24 @@ static int _pv_resize_single(struct cmd_context *cmd,
 
 		pv = pvl->pv;
 
+		if (!(info = info_from_pvid(pv->dev->pvid, 0))) {
+			unlock_vg(cmd, vg_name);
+			log_error("Can't get info for PV %s in volume group %s",
+				  pv_name, vg->name);
+			return 0;
+		}
+
+		mda_count = dm_list_size(&info->mdas);
+
 		if (!archive(vg))
 			return 0;
+	}
+
+	/* FIXME Create function to test compatibility properly */
+	if (mda_count > 1) {
+		log_error("%s: too many metadata areas for pvresize", pv_name);
+		unlock_vg(cmd, vg_name);
+		return 0;
 	}
 
 	if (!(pv->fmt->features & FMT_RESIZE_PV)) {

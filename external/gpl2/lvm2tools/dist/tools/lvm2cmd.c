@@ -1,3 +1,5 @@
+/*	$NetBSD: lvm2cmd.c,v 1.1.1.2 2008/12/12 11:43:10 haad Exp $	*/
+
 /*
  * Copyright (C) 2006-2007 Red Hat, Inc. All rights reserved.
  *

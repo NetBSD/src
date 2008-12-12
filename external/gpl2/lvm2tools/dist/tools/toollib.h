@@ -1,3 +1,5 @@
+/*	$NetBSD: toollib.h,v 1.1.1.2 2008/12/12 11:43:14 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved. 
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -66,7 +68,7 @@ typedef int (*process_single_pv_fn_t) (struct cmd_context *cmd,
 				  void *handle);
 
 int process_each_pv_in_vg(struct cmd_context *cmd, struct volume_group *vg,
-			  const struct list *tags, void *handle,
+			  const struct dm_list *tags, void *handle,
 			  process_single_pv_fn_t process_single);
 
 typedef int (*process_single_lv_fn_t) (struct cmd_context *cmd,
@@ -75,8 +77,8 @@ typedef int (*process_single_lv_fn_t) (struct cmd_context *cmd,
 
 int process_each_lv_in_vg(struct cmd_context *cmd,
 			  const struct volume_group *vg,
-			  const struct list *arg_lvnames,
-			  const struct list *tags,
+			  const struct dm_list *arg_lvnames,
+			  const struct dm_list *tags,
 			  void *handle,
 			  process_single_lv_fn_t process_single);
 
@@ -89,10 +91,10 @@ char *skip_dev_dir(struct cmd_context *cmd, const char *vg_name,
  * Builds a list of pv's from the names in argv.  Used in
  * lvcreate/extend.
  */
-struct list *create_pv_list(struct dm_pool *mem, struct volume_group *vg, int argc,
+struct dm_list *create_pv_list(struct dm_pool *mem, struct volume_group *vg, int argc,
 			    char **argv, int allocatable_only);
 
-struct list *clone_pv_list(struct dm_pool *mem, struct list *pvs);
+struct dm_list *clone_pv_list(struct dm_pool *mem, struct dm_list *pvs);
 
 int apply_lvname_restrictions(const char *name);
 int is_reserved_lvname(const char *name);

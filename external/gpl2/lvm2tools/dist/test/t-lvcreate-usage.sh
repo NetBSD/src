@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2007 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2008 Red Hat, Inc. All rights reserved.
 #
 # This copyrighted material is made available to anyone wishing to use,
 # modify, copy, or redistribute it subject to the terms and conditions
@@ -9,73 +9,52 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-test_description='Exercise some lvcreate diagnostics'
-privileges_required_=1
+# 'Exercise some lvcreate diagnostics'
 
-. ./test-lib.sh
+. ./test-utils.sh
 
-cleanup_()
-{
-  test -n "$vg" && {
-    vgchange -an "$vg"
-    lvremove -ff "$vg"
-    vgremove "$vg"
-  } > "$test_dir_/cleanup.log"
-  test -n "$d1" && losetup -d "$d1"
-  test -n "$d2" && losetup -d "$d2"
-  rm -f "$f1" "$f2"
-}
+aux prepare_pvs 2
+aux pvcreate --metadatacopies 0 $dev1
+vgcreate -cn $vg $devs
 
-test_expect_success \
-  'set up temp files, loopback devices, PVs, and a VG' \
-  'f1=$(pwd)/1 && d1=$(loop_setup_ "$f1") &&
-   f2=$(pwd)/2 && d2=$(loop_setup_ "$f2") &&
-   pvcreate $d1 $d2                       &&
-   vg=$(this_test_)-test-vg-$$            &&
-   vgcreate $vg $d1 $d2'
+# "lvcreate rejects repeated invocation (run 2 times) (bz178216)" 
+lvcreate -n $lv -l 4 $vg 
+not lvcreate -n $lv -l 4 $vg
+lvremove -ff $vg/$lv
 
-lv=lvcreate-usage-$$
+# "lvcreate rejects a negative stripe_size"
+not lvcreate -L 64M -n $lv -i2 --stripesize -4 $vg 2>err;
+grep "^  Negative stripesize is invalid\$" err
 
-test_expect_success \
-  'lvcreate rejects a negative stripe_size' \
-  'lvcreate -L 64M -n $lv -i2 --stripesize -4 $vg 2>err;
-   status=$?; echo status=$status; test $status = 3 &&
-   grep "^  Negative stripesize is invalid\$" err'
+# 'lvcreate rejects a too-large stripesize'
+not lvcreate -L 64M -n $lv -i2 --stripesize 4294967291 $vg 2>err
+grep "^  Stripe size cannot be larger than 512.00 GB\$" err
 
-test_expect_success \
-  'lvcreate rejects a too-large stripesize' \
-  'lvcreate -L 64M -n $lv -i2 --stripesize 4294967291 $vg 2>err; test $? = 3 &&
-   grep "^  Stripe size cannot be larger than 512.00 GB\$" err'
+# 'lvcreate w/single stripe succeeds with diagnostics to stdout' 
+lvcreate -L 64M -n $lv -i1 --stripesize 4 $vg >out 2>err 
+grep "^  Redundant stripes argument: default is 1\$" out 
+grep "^  Ignoring stripesize argument with single stripe\$" out 
+lvdisplay $vg 
+lvremove -ff $vg
 
-test_expect_success \
-  'lvcreate w/single stripe succeeds with diagnostics to stdout' \
-  'lvcreate -L 64M -n $lv -i1 --stripesize 4 $vg >out 2>err &&
-   grep "^  Redundant stripes argument: default is 1\$" out &&
-   grep "^  Ignoring stripesize argument with single stripe\$" out &&
-   lvdisplay $vg &&
-   lvremove -ff $vg'
+# 'lvcreate w/default (64KB) stripe size succeeds with diagnostics to stdout'
+lvcreate -L 64M -n $lv -i2 $vg > out
+grep "^  Using default stripesize" out 
+lvdisplay $vg 
+check_lv_field_ $vg/$lv stripesize "64.00K" 
+lvremove -ff $vg
 
-test_expect_success \
-  'lvcreate w/default (64KB) stripe size succeeds with diagnostics to stdout' \
-  'lvcreate -L 64M -n $lv -i2 $vg > out &&
-   grep "^  Using default stripesize" out &&
-   lvdisplay $vg &&
-   check_lv_field_ $vg/$lv stripesize "64.00K" &&
-   lvremove -ff $vg'
+# 'lvcreate rejects an invalid number of stripes' 
+not lvcreate -L 64M -n $lv -i129 $vg 2>err
+grep "^  Number of stripes (129) must be between 1 and 128\$" err
 
-test_expect_success \
-  'lvcreate rejects an invalid number of stripes' \
-  'lvcreate -L 64M -n $lv -i129 $vg 2>err; test $? = 3 &&
-   grep "^  Number of stripes (129) must be between 1 and 128\$" err'
+# 'lvcreate rejects an invalid regionsize (bz186013)' 
+not lvcreate -L 64M -n $lv -R0 $vg 2>err
+grep "Non-zero region size must be supplied." err
 
 # The case on lvdisplay output is to verify that the LV was not created.
-test_expect_success \
-  'lvcreate rejects an invalid stripe size' \
-  'lvcreate -L 64M -n $lv -i2 --stripesize 3 $vg 2>err; test $? = 3 &&
-   grep "^  Invalid stripe size 3\.00 KB\$" err &&
-   case $(lvdisplay $vg) in "") true ;; *) false ;; esac'
+# 'lvcreate rejects an invalid stripe size'
+not lvcreate -L 64M -n $lv -i2 --stripesize 3 $vg 2>err
+grep "^  Invalid stripe size 3\.00 KB\$" err
+case $(lvdisplay $vg) in "") true ;; *) false ;; esac
 
-test_done
-# Local Variables:
-# indent-tabs-mode: nil
-# End:
