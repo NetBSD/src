@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.47.16.1 2008/12/08 13:06:36 ad Exp $      */
+/*      $NetBSD: esm.c,v 1.47.16.2 2008/12/12 23:06:58 ad Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,26 +66,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.47.16.1 2008/12/08 13:06:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.47.16.2 2008/12/12 23:06:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
-
 #include <sys/bus.h>
-
 #include <sys/audioio.h>
+
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
+
 #include <dev/ic/ac97var.h>
 #include <dev/ic/ac97reg.h>
 
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcivar.h>
-
 #include <dev/pci/esmreg.h>
 #include <dev/pci/esmvar.h>
 
@@ -1320,15 +1319,13 @@ esm_query_devinfo(void *sc, mixer_devinfo_t *dip)
 }
 
 void *
-esm_malloc(void *sc, int direction, size_t size,
-    struct malloc_type *pool, int flags)
+esm_malloc(void *sc, int direction, size_t size)
 {
 	struct esm_softc *ess;
 	int off;
 
 	DPRINTF(ESM_DEBUG_DMA,
-	    ("esm_malloc(%p, %d, 0x%lx, %p, 0x%x)",
-	    sc, direction, (unsigned long int)size, pool, flags));
+	    ("esm_malloc(%p, %d, 0x%zd)", sc, direction, size));
 	ess = sc;
 	/*
 	 * Each buffer can only be allocated once.
@@ -1352,13 +1349,11 @@ esm_malloc(void *sc, int direction, size_t size,
 }
 
 void
-esm_free(void *sc, void *ptr, struct malloc_type *pool)
+esm_free(void *sc, void *ptr, size_t size)
 {
 	struct esm_softc *ess;
 
-	DPRINTF(ESM_DEBUG_DMA,
-	    ("esm_free(%p, %p, %p)\n",
-	    sc, ptr, pool));
+	DPRINTF(ESM_DEBUG_DMA, ("esm_free(%p, %p, %zd)\n", sc, ptr, size));
 	ess = sc;
 	if ((char *)ptr == (char *)ess->sc_dma.addr + MAESTRO_PLAYBUF_OFF)
 		ess->rings_alloced &= ~AUMODE_PLAY;
@@ -1654,7 +1649,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	ess->ih = pci_intr_establish(pc, ih, IPL_AUDIO, esm_intr, self);
+	ess->ih = pci_intr_establish(pc, ih, IPL_SCHED, esm_intr, self);
 	if (ess->ih == NULL) {
 		aprint_error_dev(&ess->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)

@@ -1,7 +1,7 @@
-/*	$NetBSD: joy_eso.c,v 1.14 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: joy_eso.c,v 1.14.12.1 2008/12/12 23:06:58 ad Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.14 2008/04/28 20:23:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_eso.c,v 1.14.12.1 2008/12/12 23:06:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ joy_eso_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = esc->sc_game_ioh;
 	sc->sc_iot = esc->sc_game_iot;
 	sc->sc_dev = self;
+	sc->sc_lock = &esc->sc_lock;
 
 	joyattach(sc);
 }

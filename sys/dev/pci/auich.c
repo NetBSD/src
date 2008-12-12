@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.128.2.1 2008/12/08 13:06:36 ad Exp $	*/
+/*	$NetBSD: auich.c,v 1.128.2.2 2008/12/12 23:06:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,16 +111,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.128.2.1 2008/12/08 13:06:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.128.2.2 2008/12/12 23:06:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/sysctl.h>
+#include <sys/audioio.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>	/* for PAGE_SIZE */
 
@@ -128,12 +130,9 @@ __KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.128.2.1 2008/12/08 13:06:36 ad Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/auichreg.h>
 
-#include <sys/audioio.h>
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
-
-#include <sys/bus.h>
 
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
@@ -263,8 +262,8 @@ static int	auich_getdev(void *, struct audio_device *);
 static int	auich_set_port(void *, mixer_ctrl_t *);
 static int	auich_get_port(void *, mixer_ctrl_t *);
 static int	auich_query_devinfo(void *, mixer_devinfo_t *);
-static void	*auich_allocm(void *, int, size_t, struct malloc_type *, int);
-static void	auich_freem(void *, void *, struct malloc_type *);
+static void	*auich_allocm(void *, int, size_t);
+static void	auich_freem(void *, void *, size_t);
 static size_t	auich_round_buffersize(void *, int, size_t);
 static paddr_t	auich_mappage(void *, void *, off_t, int);
 static int	auich_get_props(void *);
@@ -536,7 +535,7 @@ auich_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, sc->intrh);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, sc->intrh, IPL_AUDIO,
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, sc->intrh, IPL_SCHED,
 	    auich_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
@@ -1135,8 +1134,7 @@ auich_query_devinfo(void *v, mixer_devinfo_t *dp)
 }
 
 static void *
-auich_allocm(void *v, int direction, size_t size,
-    struct malloc_type *pool, int flags)
+auich_allocm(void *v, int direction, size_t size)
 {
 	struct auich_softc *sc;
 	struct auich_dma *p;
@@ -1145,14 +1143,14 @@ auich_allocm(void *v, int direction, size_t size,
 	if (size > (ICH_DMALIST_MAX * ICH_DMASEG_MAX))
 		return NULL;
 
-	p = malloc(sizeof(*p), pool, flags|M_ZERO);
+	p = kmem_alloc(sizeof(*p), KM_SLEEP);
 	if (p == NULL)
 		return NULL;
 
 	sc = v;
 	error = auich_allocmem(sc, size, 0, p);
 	if (error) {
-		free(p, pool);
+		kmem_free(p, sizeof(*p));
 		return NULL;
 	}
 
@@ -1163,7 +1161,7 @@ auich_allocm(void *v, int direction, size_t size,
 }
 
 static void
-auich_freem(void *v, void *ptr, struct malloc_type *pool)
+auich_freem(void *v, void *ptr, size_t size)
 {
 	struct auich_softc *sc;
 	struct auich_dma *p, **pp;
@@ -1173,7 +1171,7 @@ auich_freem(void *v, void *ptr, struct malloc_type *pool)
 		if (KERNADDR(p) == ptr) {
 			auich_freemem(sc, p);
 			*pp = p->next;
-			free(p, pool);
+			kmem_free(p, sizeof(*p));
 			return;
 		}
 	}
@@ -1640,7 +1638,7 @@ auich_calibrate(struct auich_softc *sc)
 
 	/* Setup a buffer */
 	bytes = 64000;
-	temp_buffer = auich_allocm(sc, AUMODE_RECORD, bytes, M_DEVBUF, M_WAITOK);
+	temp_buffer = auich_allocm(sc, AUMODE_RECORD, bytes);
 
 	for (p = sc->sc_dmas; p && KERNADDR(p) != temp_buffer; p = p->next)
 		continue;
@@ -1695,7 +1693,7 @@ auich_calibrate(struct auich_softc *sc)
 	/* turn time delta into us */
 	wait_us = ((t2.tv_sec - t1.tv_sec) * 1000000) + t2.tv_usec - t1.tv_usec;
 
-	auich_freem(sc, temp_buffer, M_DEVBUF);
+	auich_freem(sc, temp_buffer, bytes);
 
 	if (nciv == ociv) {
 		printf("%s: ac97 link rate calibration timed out after %"

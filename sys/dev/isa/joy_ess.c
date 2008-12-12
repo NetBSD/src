@@ -1,7 +1,7 @@
-/* $NetBSD: joy_ess.c,v 1.5 2008/03/26 18:27:07 xtraeme Exp $ */
+/* $NetBSD: joy_ess.c,v 1.5.16.1 2008/12/12 23:06:57 ad Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_ess.c,v 1.5 2008/03/26 18:27:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_ess.c,v 1.5.16.1 2008/12/12 23:06:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ joy_ess_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = esc->sc_joy_iot;
 	sc->sc_ioh = esc->sc_joy_ioh;
 	sc->sc_dev = self;
+	sc->sc_lock = &esc->sc_lock;
 
 	joyattach(sc);
 }

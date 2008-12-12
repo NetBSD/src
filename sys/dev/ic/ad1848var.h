@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.16.12.1 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.16.12.2 2008/12/12 23:06:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -192,12 +192,13 @@ int	ad1848_get_mic_gain(struct ad1848_softc *, struct ad1848_volume *);
 void	ad1848_mute_channel(struct ad1848_softc *, int, int);
 int	ad1848_to_vol(mixer_ctrl_t *, struct ad1848_volume *);
 int	ad1848_from_vol(mixer_ctrl_t *, struct ad1848_volume *);
+void	ad1848_init_locks(struct ad1848_softc *, int);
+void	ad1848_destroy_locks(struct ad1848_softc *);
 
 int	ad1848_halt_output(void *);
 int	ad1848_halt_input(void *);
 paddr_t	ad1848_mappage(void *, void *, off_t, int);
 void	ad1848_get_locks(void *, kmutex_t **, kmutex_t **);
-
 
 #ifdef AUDIO_DEBUG
 void	ad1848_dump_regs(struct ad1848_softc *);

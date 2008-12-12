@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.39.16.1 2008/12/11 19:49:31 ad Exp $	*/
+/*	$NetBSD: neo.c,v 1.39.16.2 2008/12/12 23:06:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,29 +32,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.39.16.1 2008/12/11 19:49:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.39.16.2 2008/12/12 23:06:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/device.h>
-
 #include <sys/bus.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcivar.h>
-
-#include <dev/pci/neoreg.h>
-#include <dev/pci/neo-coeff.h>
-
 #include <sys/audioio.h>
+
 #include <dev/audio_if.h>
 #include <dev/mulaw.h>
 #include <dev/auconv.h>
 
 #include <dev/ic/ac97var.h>
 
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/neoreg.h>
+#include <dev/pci/neo-coeff.h>
 
 /* -------------------------------------------------------------------- */
 /*
@@ -202,8 +199,8 @@ static int	neo_write_codec(void *, uint8_t, uint16_t);
 static int     neo_reset_codec(void *);
 static enum ac97_host_flags neo_flags_codec(void *);
 static int	neo_query_devinfo(void *, mixer_devinfo_t *);
-static void *	neo_malloc(void *, int, size_t, struct malloc_type *, int);
-static void	neo_free(void *, void *, struct malloc_type *);
+static void *	neo_malloc(void *, int, size_t);
+static void	neo_free(void *, void *, size_t);
 static size_t	neo_round_buffersize(void *, int, size_t);
 static paddr_t	neo_mappage(void *, void *, off_t, int);
 static int	neo_get_props(void *);
@@ -560,12 +557,12 @@ neo_resume(device_t dv PMF_FN_ARGS)
 {
 	struct neo_softc *sc = device_private(dv);
 
-	mutex_enter(&sc->sc_lock);
-	mutex_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->lock);
+	mutex_spin_enter(&sc->intr_lock);
 	nm_init(sc);
-	mutex_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&sc->intr_lock);
 	sc->codec_if->vtbl->restore_ports(sc->codec_if);
-	mutex_exit(&sc->sc_lock);
+	mutex_exit(&sc->lock);
 
 	return true;
 }
@@ -620,8 +617,8 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
-		mutex_destroy(&sc->sc_lock);
-		mutex_destroy(&sc->sc_intr_lock);
+		mutex_destroy(&sc->lock);
+		mutex_destroy(&sc->intr_lock);
 		return;
 	}
 	printf("%s: interrupting at %s\n", device_xname(&sc->dev), intrstr);
@@ -631,13 +628,13 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&sc->intr_lock);
 	error = nm_init(sc);
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_spin_exit(&sc->intr_lock);
 
 	if (error != 0) {
-		mutex_destroy(&sc->sc_lock);
-		mutex_destroy(&sc->sc_intr_lock);
+		mutex_destroy(&sc->lock);
+		mutex_destroy(&sc->intr_lock);
 		return;
 	}
 
@@ -649,8 +646,8 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.flags  = neo_flags_codec;
 
 	if (ac97_attach(&sc->host_if, self, &sc->lock) != 0) {
-		mutex_destroy(&sc->sc_lock);
-		mutex_destroy(&sc->sc_intr_lock);
+		mutex_destroy(&sc->lock);
+		mutex_destroy(&sc->intr_lock);
 		return;
 	}
 
@@ -1011,8 +1008,7 @@ neo_free(void *addr, void *ptr, size_t size)
 }
 
 static size_t
-neo_round_buffersize(void *addr, int direction,
-    size_t size)
+neo_round_buffersize(void *addr, int direction, size_t size)
 {
 
 	return NM_BUFFSIZE;

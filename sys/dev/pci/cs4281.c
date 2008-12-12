@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.39 2008/03/21 08:20:04 dyoung Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.39.16.1 2008/12/12 23:06:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.39 2008/03/21 08:20:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.39.16.1 2008/12/12 23:06:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,6 +138,7 @@ static const struct audio_hw_if cs4281_hw_if = {
 	cs4281_trigger_input,
 	NULL,
 	NULL,
+	cs428x_get_locks,
 };
 
 #if NMIDI > 0 && 0
@@ -154,6 +155,7 @@ static const struct midi_hw_if cs4281_midi_hw_if = {
 	cs4281_midi_output,
 	cs4281_midi_getinfo,
 	0,
+	cs428x_get_locks,
 };
 #endif
 
@@ -249,13 +251,18 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, sc->intrh);
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh, IPL_AUDIO,
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh, IPL_SCHED,
 	    cs4281_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
@@ -263,8 +270,11 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Sound System start-up
 	 */
-	if (cs4281_init(sc, 1) != 0)
+	if (cs4281_init(sc, 1) != 0) {
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
+	}
 
 	sc->type = TYPE_CS4281;
 	sc->halt_input  = cs4281_halt_input;
@@ -280,8 +290,10 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.read   = cs428x_read_codec;
 	sc->host_if.write  = cs428x_write_codec;
 	sc->host_if.reset  = cs4281_reset_codec;
-	if (ac97_attach(&sc->host_if, self) != 0) {
+	if (ac97_attach(&sc->host_if, self, &sc->sc_lock) != 0) {
 		aprint_error_dev(&sc->sc_dev, "ac97_attach failed\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 	audio_attach_mi(&cs4281_hw_if, sc, &sc->sc_dev);
@@ -307,6 +319,8 @@ cs4281_intr(void *p)
 	hdsr0 = 0;
 	hdsr1 = 0;
 
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	/* grab interrupt register */
 	intr = BA0READ4(sc, CS4281_HISR);
 
@@ -315,6 +329,7 @@ cs4281_intr(void *p)
 	if ((intr & HISR_INTENA) == 0) {
 		/* clear the interrupt register */
 		BA0WRITE4(sc, CS4281_HICR, HICR_CHGM | HICR_IEV);
+		mutex_spin_exit(&sc->sc_intr_lock);
 		return 0;
 	}
 
@@ -372,6 +387,8 @@ cs4281_intr(void *p)
 		}
 	}
 	DPRINTF(("\n"));
+
+	mutex_spin_exit(&sc->sc_intr_lock);
 
 	return handled;
 }
@@ -722,6 +739,9 @@ cs4281_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct cs428x_softc *sc = device_private(dv);
 
+	mutex_enter(&sc->sc_lock);
+	mutex_spin_exit(&sc->sc_intr_lock);
+
 	/* save current playback status */
 	if (sc->sc_prun) {
 		sc->sc_suspend_state.cs4281.dcr0 = BA0READ4(sc, CS4281_DCR0);
@@ -741,6 +761,9 @@ cs4281_suspend(device_t dv PMF_FN_ARGS)
 	BA0WRITE4(sc, CS4281_DCR0, BA0READ4(sc, CS4281_DCR0) | DCRn_MSK);
 	BA0WRITE4(sc, CS4281_DCR1, BA0READ4(sc, CS4281_DCR1) | DCRn_MSK);
 
+	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_lock);
+
 	return true;
 }
 
@@ -749,11 +772,16 @@ cs4281_resume(device_t dv PMF_FN_ARGS)
 {
 	struct cs428x_softc *sc = device_private(dv);
 
+	mutex_enter(&sc->sc_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	cs4281_init(sc, 0);
 	cs4281_reset_codec(sc);
 
 	/* restore ac97 registers */
+	mutex_spin_exit(&sc->sc_intr_lock);
 	(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	/* restore DMA related status */
 	if (sc->sc_prun) {
@@ -773,6 +801,9 @@ cs4281_resume(device_t dv PMF_FN_ARGS)
 	/* enable intterupts */
 	if (sc->sc_prun || sc->sc_rrun)
 		BA0WRITE4(sc, CS4281_HICR, HICR_IEV | HICR_CHGM);
+
+	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }

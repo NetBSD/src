@@ -1,7 +1,7 @@
-/*	$NetBSD: joy_isapnp.c,v 1.12 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.12.12.1 2008/12/12 23:06:57 ad Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.12 2008/04/28 20:23:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.12.12.1 2008/12/12 23:06:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +46,15 @@ __KERNEL_RCSID(0, "$NetBSD: joy_isapnp.c,v 1.12 2008/04/28 20:23:53 martin Exp $
 
 #include <dev/ic/joyvar.h>
 
+struct joy_isapnp_softc {
+	struct joy_softc sc_joy;
+	kmutex_t sc_lock;
+};
+
 static int	joy_isapnp_match(device_t, cfdata_t, void *);
 static void	joy_isapnp_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(joy_isapnp, sizeof(struct joy_softc),
+CFATTACH_DECL_NEW(joy_isapnp, sizeof(struct joy_isapnp_softc),
     joy_isapnp_match, joy_isapnp_attach, NULL, NULL);
 
 static int
@@ -67,6 +72,7 @@ static void
 joy_isapnp_attach(device_t parent, device_t self, void *aux)
 {
 	struct joy_softc *sc = device_private(self);
+	struct joy_isapnp_softc *isc = device_private(self);
 	struct isapnp_attach_args *ipa = aux;
 	bus_space_handle_t ioh;
 
@@ -86,9 +92,12 @@ joy_isapnp_attach(device_t parent, device_t self, void *aux)
 	} else
 		ioh = ipa->ipa_io[0].h;
 
+	mutex_init(&isc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	sc->sc_iot = ipa->ipa_iot;
 	sc->sc_ioh = ioh;
 	sc->sc_dev = self;
+	sc->sc_lock = &isc->sc_lock;
 
 	aprint_normal_dev(self, "%s %s\n", ipa->ipa_devident,
 	    ipa->ipa_devclass);

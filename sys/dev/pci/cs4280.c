@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.51.16.1 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.51.16.2 2008/12/12 23:06:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51.16.1 2008/12/11 19:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51.16.2 2008/12/12 23:06:58 ad Exp $");
 
 #include "midi.h"
 
@@ -64,14 +64,10 @@ __KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51.16.1 2008/12/11 19:49:30 ad Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/pcivar.h>
-#include <dev/pci/cs4280reg.h>
-#include <dev/pci/cs4280_image.h>
-#include <dev/pci/cs428xreg.h>
-
 #include <sys/audioio.h>
+#include <sys/bus.h>
+#include <sys/bswap.h>
+
 #include <dev/audio_if.h>
 #include <dev/midi_if.h>
 #include <dev/mulaw.h>
@@ -80,10 +76,12 @@ __KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.51.16.1 2008/12/11 19:49:30 ad Exp $");
 #include <dev/ic/ac97reg.h>
 #include <dev/ic/ac97var.h>
 
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/cs4280reg.h>
+#include <dev/pci/cs4280_image.h>
+#include <dev/pci/cs428xreg.h>
 #include <dev/pci/cs428x.h>
-
-#include <sys/bus.h>
-#include <sys/bswap.h>
 
 #define BA1READ4(sc, r) bus_space_read_4((sc)->ba1t, (sc)->ba1h, (r))
 #define BA1WRITE4(sc, r, x) bus_space_write_4((sc)->ba1t, (sc)->ba1h, (r), (x))
@@ -318,20 +316,28 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, sc->intrh);
 
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh, IPL_AUDIO,
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->intrh, IPL_SCHED,
 	    cs4280_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
 	}
 	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/* Initialization */
-	if(cs4280_init(sc, 1) != 0)
+	if(cs4280_init(sc, 1) != 0) {
+		mutex_destroy(&sc->sc_lock);
+		mutex_destroy(&sc->sc_intr_lock);
 		return;
+	}
 
 	sc->type = TYPE_CS4280;
 	sc->halt_input  = cs4280_halt_input;
@@ -353,7 +359,7 @@ cs4280_attach(struct device *parent, struct device *self, void *aux)
 	sc->host_if.reset  = NULL;
 #endif
 	sc->host_if.flags  = cs4280_flags_codec;
-	if (ac97_attach(&sc->host_if, self) != 0) {
+	if (ac97_attach(&sc->host_if, self, &sc->sc_lock) != 0) {
 		aprint_error_dev(&sc->sc_dev, "ac97_attach failed\n");
 		return;
 	}
@@ -402,7 +408,7 @@ cs4280_intr(void *p)
 	sc = p;
 	handled = 0;
 
-	mutex_enter(&sc->sc_intr_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
 
 	/* grab interrupt register then clear it */
 	intr = BA0READ4(sc, CS4280_HISR);
@@ -921,6 +927,9 @@ cs4280_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct cs428x_softc *sc = device_private(dv);
 
+	mutex_exit(&sc->sc_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
+
 	if (sc->sc_prun) {
 		sc->sc_suspend_state.cs4280.pctl = BA1READ4(sc, CS4280_PCTL);
 		sc->sc_suspend_state.cs4280.pfie = BA1READ4(sc, CS4280_PFIE);
@@ -948,6 +957,9 @@ cs4280_suspend(device_t dv PMF_FN_ARGS)
 	BA1WRITE4(sc, CS4280_PCTL, sc->sc_suspend_state.cs4280.pctl & ~PCTL_MASK);
 	BA1WRITE4(sc, CS4280_CCTL, BA1READ4(sc, CS4280_CCTL) & ~CCTL_MASK);
 
+	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_lock);
+
 	return true;
 }
 
@@ -956,12 +968,12 @@ cs4280_resume(device_t dv PMF_FN_ARGS)
 {
 	struct cs428x_softc *sc = device_private(dv);
 
+	mutex_exit(&sc->sc_lock);
+	mutex_spin_enter(&sc->sc_intr_lock);
 	cs4280_init(sc, 0);
 #if 0
 	cs4280_reset_codec(sc);
 #endif
-	/* restore ac97 registers */
-	(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 
 	/* restore DMA related status */
 	if(sc->sc_prun) {
@@ -987,6 +999,13 @@ cs4280_resume(device_t dv PMF_FN_ARGS)
 		BA1WRITE4(sc, CS4280_CIE,  sc->sc_suspend_state.cs4280.cie);
 		BA1WRITE4(sc, CS4280_CCTL, sc->sc_suspend_state.cs4280.cctl);
 	}
+
+	mutex_spin_exit(&sc->sc_intr_lock);
+
+	/* restore ac97 registers */
+	(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
@@ -1058,7 +1077,8 @@ cs4280_reset_codec(void *addr)
 }
 #endif
 
-static enum ac97_host_flags cs4280_flags_codec(void *addr)
+static enum ac97_host_flags
+cs4280_flags_codec(void *addr)
 {
 	struct cs428x_softc *sc;
 
@@ -1628,7 +1648,8 @@ cs4280_midi_close(void *addr)
 
 	DPRINTF(("midi_close\n"));
 	sc = addr;
-	tsleep(sc, PWAIT, "cs0clm", hz/10); /* give uart a chance to drain */
+	/* give uart a chance to drain */
+	kpause("cs0clm", false, hz/10, &sc->sc_intr_lock);
 	mem = BA0READ4(sc, CS4280_MIDCR);
 	mem &= ~MIDCR_MASK;
 	BA0WRITE4(sc, CS4280_MIDCR, mem);

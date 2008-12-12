@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.54.6.1 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.54.6.2 2008/12/12 23:06:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.54.6.1 2008/12/11 19:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.54.6.2 2008/12/12 23:06:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -443,7 +443,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	intrstr = pci_intr_string(pa->pa_pc, ih);
-	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, emuxki_intr,
+	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_SCHED, emuxki_intr,
 		sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");

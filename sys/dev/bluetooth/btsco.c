@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.22.6.2 2008/12/07 15:32:15 ad Exp $	*/
+/*	$NetBSD: btsco.c,v 1.22.6.3 2008/12/12 23:06:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.22.6.2 2008/12/07 15:32:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.22.6.3 2008/12/12 23:06:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.22.6.2 2008/12/07 15:32:15 ad Exp $");
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/queue.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/socketvar.h>
@@ -158,8 +158,8 @@ static int btsco_setfd(void *, int);
 static int btsco_set_port(void *, mixer_ctrl_t *);
 static int btsco_get_port(void *, mixer_ctrl_t *);
 static int btsco_query_devinfo(void *, mixer_devinfo_t *);
-static void *btsco_allocm(void *, int, size_t, struct malloc_type *, int);
-static void btsco_freem(void *, void *, struct malloc_type *);
+static void *btsco_allocm(void *, int, size_t);
+static void btsco_freem(void *, void *, size_t);
 static int btsco_get_props(void *);
 static int btsco_dev_ioctl(void *, u_long, void *, int, struct lwp *);
 static void btsco_get_locks(void *, kmutex_t **, kmutex_t **);
@@ -1011,17 +1011,16 @@ btsco_query_devinfo(void *hdl, mixer_devinfo_t *di)
  * Allocate Ring Buffers.
  */
 static void *
-btsco_allocm(void *hdl, int direction, size_t size,
-		struct malloc_type *type, int flags)
+btsco_allocm(void *hdl, int direction, size_t size)
 {
 	struct btsco_softc *sc = hdl;
 	void *addr;
 
 	DPRINTF("%s: size %d direction %d\n", sc->sc_name, size, direction);
 
-	addr = malloc(size, type, flags);
+	addr = kmem_alloc(size, KM_SLEEP);
 
-	if (direction == AUMODE_PLAY) {
+	if (addr != NULL && direction == AUMODE_PLAY) {
 		sc->sc_tx_buf = addr;
 		sc->sc_tx_refcnt = 0;
 	}
@@ -1039,7 +1038,7 @@ btsco_allocm(void *hdl, int direction, size_t size,
  * This would be a memory leak but at least there is a warning..
  */
 static void
-btsco_freem(void *hdl, void *addr, struct malloc_type *type)
+btsco_freem(void *hdl, void *addr, size_t size)
 {
 	struct btsco_softc *sc = hdl;
 	int count = hz / 2;
@@ -1050,7 +1049,7 @@ btsco_freem(void *hdl, void *addr, struct malloc_type *type)
 		sc->sc_tx_buf = NULL;
 
 		while (sc->sc_tx_refcnt> 0 && count-- > 0)
-			tsleep(sc, PWAIT, "drain", 1);
+			kpause("drain", false, 1, NULL);
 
 		if (sc->sc_tx_refcnt > 0) {
 			aprint_error("%s: ring buffer unreleased!\n", sc->sc_name);
@@ -1058,7 +1057,7 @@ btsco_freem(void *hdl, void *addr, struct malloc_type *type)
 		}
 	}
 
-	free(addr, type);
+	kmem_free(addr, size);
 }
 
 static int
@@ -1069,12 +1068,12 @@ btsco_get_props(void *hdl)
 }
 
 static void
-btsco_get_locks(void *hdl, kmutex_t **intr, kmutex_t **proc)
+btsco_get_locks(void *hdl, kmutex_t **intr, kmutex_t **thread)
 {
 	struct btsco_softc *sc = hdl;
 
 	*intr = &sc->sc_intr_lock;
-	*proc = bt_lock;
+	*thread = bt_lock;
 }
 
 /*

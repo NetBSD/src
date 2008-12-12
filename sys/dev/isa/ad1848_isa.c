@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.36.12.1 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.36.12.2 2008/12/12 23:06:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.36.12.1 2008/12/11 19:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.36.12.2 2008/12/12 23:06:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -501,8 +501,11 @@ ad1848_isa_open(void *addr, int flags)
 
 #ifndef AUDIO_NO_POWER_CTL
 	/* Power-up chip */
-	if (isc->powerctl)
+	if (isc->powerctl) {
+		mutex_spin_enter(&sc->sc_intr_lock);
 		isc->powerctl(isc->powerarg, flags);
+		mutex_spin_exit(&sc->sc_intr_lock);
+	}
 #endif
 
 	/* Init and mute wave output */
@@ -511,8 +514,11 @@ ad1848_isa_open(void *addr, int flags)
 	error = ad1848_open(sc, flags);
 	if (error) {
 #ifndef AUDIO_NO_POWER_CTL
-		if (isc->powerctl)
+		if (isc->powerctl) {
+			mutex_spin_enter(&sc->sc_intr_lock);
 			isc->powerctl(isc->powerarg, 0);
+			mutex_spin_exit(&sc->sc_intr_lock);
+		}
 #endif
 		goto bad;
 	}
@@ -529,9 +535,6 @@ bad:
 	return error;
 }
 
-/*
- * Close function is called at splaudio().
- */
 void
 ad1848_isa_close(void *addr)
 {
@@ -545,8 +548,11 @@ ad1848_isa_close(void *addr)
 
 #ifndef AUDIO_NO_POWER_CTL
 	/* Power-down chip */
-	if (isc->powerctl)
+	if (isc->powerctl) {
+		mutex_spin_enter(&sc->sc_intr_lock);
 		isc->powerctl(isc->powerarg, 0);
+		mutex_spin_exit(&sc->sc_intr_lock);
+	}
 #endif
 
 	if (isc->sc_playdrq != -1)
@@ -694,7 +700,7 @@ ad1848_isa_intr(void *arg)
 	isc = arg;
 	sc = &isc->sc_ad1848;
 
-	mutex_spin_enter(&sc->sc_intr_lock);
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
 	retval = 0;
 	/* Get intr status */
@@ -729,7 +735,6 @@ ad1848_isa_intr(void *arg)
 		/* Clear interrupt */
 		ADWRITE(sc, AD1848_STATUS, 0);
 	}
-	mutex_spin_exit(&sc->sc_intr_lock);
 	return retval;
 }
 

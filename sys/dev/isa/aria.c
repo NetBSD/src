@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.29.16.1 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: aria.c,v 1.29.16.2 2008/12/12 23:06:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.29.16.1 2008/12/11 19:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.29.16.2 2008/12/12 23:06:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,17 +61,15 @@ __KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.29.16.1 2008/12/11 19:49:30 ad Exp $");
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/fcntl.h>
-
 #include <sys/cpu.h>
 #include <sys/bus.h>
-
 #include <sys/audioio.h>
+
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
-
 #include <dev/mulaw.h>
-#include <dev/isa/isavar.h>
 
+#include <dev/isa/isavar.h>
 #include <dev/isa/ariareg.h>
 
 #ifdef AUDIO_DEBUG
@@ -420,7 +418,7 @@ ariaattach(struct device *parent, struct device *self, void *aux)
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
-	    IST_EDGE, IPL_AUDIO, aria_intr, sc);
+	    IST_EDGE, IPL_SCHED, aria_intr, sc);
 
 	DPRINTF(("isa_intr_establish() returns (%x)\n", (unsigned) sc->sc_ih));
 
@@ -1672,11 +1670,11 @@ mute:
 }
 
 static void
-aria_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+aria_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
 {
 	struct aria_softc *sc;
 
 	sc = addr;
 	*intr = &sc->sc_intr_lock;
-	*proc = &sc->sc_lock;
+	*thread = &sc->sc_lock;
 }

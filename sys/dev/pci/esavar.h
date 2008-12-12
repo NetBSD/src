@@ -1,4 +1,4 @@
-/* $NetBSD: esavar.h,v 1.10.16.1 2008/12/08 13:06:36 ad Exp $ */
+/* $NetBSD: esavar.h,v 1.10.16.2 2008/12/12 23:06:58 ad Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -135,4 +135,5 @@ struct esa_softc
 	int			delay1, delay2;
 
 	uint16_t		*savemem;
+	size_t			savememsz;
 };

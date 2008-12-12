@@ -1,4 +1,4 @@
-/* $NetBSD: ics2101.c,v 1.15 2008/04/28 20:23:52 martin Exp $ */
+/* $NetBSD: ics2101.c,v 1.15.12.1 2008/12/12 23:06:57 ad Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.15 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ics2101.c,v 1.15.12.1 2008/12/12 23:06:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,6 @@ ics2101_mix_doit(sc, chan, side, value, flags)
 	unsigned char ctrl_addr;
 	unsigned char attn_addr;
 	unsigned char normal;
-	int s;
 
 	if (/* chan < ICSMIX_CHAN_0 || */ chan > ICSMIX_CHAN_5)
 		return;
@@ -121,15 +120,11 @@ ics2101_mix_doit(sc, chan, side, value, flags)
 			normal = 0x02;
 	}
 
-	s = splaudio();
-
 	bus_space_write_1(iot, sc->sc_selio_ioh, sc->sc_selio, ctrl_addr);
 	bus_space_write_1(iot, sc->sc_dataio_ioh, sc->sc_dataio, normal);
 
 	bus_space_write_1(iot, sc->sc_selio_ioh, sc->sc_selio, attn_addr);
 	bus_space_write_1(iot, sc->sc_dataio_ioh, sc->sc_dataio, (unsigned char) value);
-
-	splx(s);
 }
 
 void

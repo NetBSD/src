@@ -1,7 +1,7 @@
-/*	$NetBSD: azalia.h,v 1.20.6.1 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: azalia.h,v 1.20.6.2 2008/12/12 23:06:58 ad Exp $	*/
 
 /*-
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -552,7 +552,6 @@ typedef struct {
 
 typedef struct codec_t {
 	int (*comresp)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
-	int (*comresp_locked)(const struct codec_t *, nid_t, uint32_t, uint32_t, uint32_t *);
 	int (*init_dacgroup)(struct codec_t *);
 	int (*init_widget)(const struct codec_t *, widget_t *, nid_t);
 	int (*mixer_init)(struct codec_t *);
@@ -579,13 +578,16 @@ typedef struct codec_t {
 	int running;
 
 	int nmixers, maxmixers;
+	size_t szmixers;
 	mixer_item_t *mixers;
 
 	struct audio_format *formats;
 	int nformats;
+	size_t szformats;
 	struct audio_encoding_set *encodings;
 
 	uint32_t *extra;
+	size_t szextra;
 } codec_t;
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.76.16.1 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: ess.c,v 1.76.16.2 2008/12/12 23:06:57 ad Exp $	*/
 
 /*
  * Copyright 1997
@@ -66,7 +66,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.76.16.1 2008/12/11 19:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.76.16.2 2008/12/12 23:06:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,12 +76,12 @@ __KERNEL_RCSID(0, "$NetBSD: ess.c,v 1.76.16.1 2008/12/11 19:49:30 ad Exp $");
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
-
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
-
 #include <sys/audioio.h>
+#include <sys/malloc.h>
+
 #include <dev/audio_if.h>
 #include <dev/auconv.h>
 #include <dev/mulaw.h>
@@ -147,8 +147,8 @@ int	ess_getdev(void *, struct audio_device *);
 int	ess_set_port(void *, mixer_ctrl_t *);
 int	ess_get_port(void *, mixer_ctrl_t *);
 
-void   *ess_malloc(void *, int, size_t, struct malloc_type *, int);
-void	ess_free(void *, void *, struct malloc_type *);
+void   *ess_malloc(void *, int, size_t);
+void	ess_free(void *, void *, size_t);
 size_t	ess_round_buffersize(void *, int, size_t);
 paddr_t	ess_mappage(void *, void *, off_t, int);
 
@@ -814,9 +814,6 @@ int
 ess_setup_sc(struct ess_softc *sc, int doinit)
 {
 
-	callout_init(&sc->sc_poll1_ch, 0);
-	callout_init(&sc->sc_poll2_ch, 0);
-
 	/* Reset the chip. */
 	if (ess_reset(sc) != 0) {
 		DPRINTF(("ess_setup_sc: couldn't reset chip\n"));
@@ -920,9 +917,6 @@ essattach(struct ess_softc *sc, int enablejoy)
 	int i;
 	u_int v;
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
-
 	if (ess_setup_sc(sc, 0)) {
 		printf(": setup failed\n");
 		return;
@@ -931,10 +925,15 @@ essattach(struct ess_softc *sc, int enablejoy)
 	printf(": ESS Technology ES%s [version 0x%04x]\n",
 	    essmodel[sc->sc_model], sc->sc_version);
 
+	callout_init(&sc->sc_poll1_ch, CALLOUT_MPSAFE);
+	callout_init(&sc->sc_poll2_ch, CALLOUT_MPSAFE);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+
 	sc->sc_audio1.polled = sc->sc_audio1.irq == -1;
 	if (!sc->sc_audio1.polled) {
 		sc->sc_audio1.ih = isa_intr_establish(sc->sc_ic,
-		    sc->sc_audio1.irq, sc->sc_audio1.ist, IPL_AUDIO,
+		    sc->sc_audio1.irq, sc->sc_audio1.ist, IPL_SCHED,
 		    ess_audio1_intr, sc);
 		printf("%s: audio1 interrupting at irq %d\n",
 		    device_xname(&sc->sc_dev), sc->sc_audio1.irq);
@@ -945,21 +944,21 @@ essattach(struct ess_softc *sc, int enablejoy)
 	if (isa_drq_alloc(sc->sc_ic, sc->sc_audio1.drq) != 0) {
 		aprint_error_dev(&sc->sc_dev, "can't reserve drq %d\n",
 		    sc->sc_audio1.drq);
-		return;
+		goto fail;
 	}
 
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_audio1.drq,
-	    sc->sc_audio1.maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+	    sc->sc_audio1.maxsize, BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW)) {
 		aprint_error_dev(&sc->sc_dev, "can't create map for drq %d\n",
 		    sc->sc_audio1.drq);
-		return;
+		goto fail;
 	}
 
 	if (!ESS_USE_AUDIO1(sc->sc_model)) {
 		sc->sc_audio2.polled = sc->sc_audio2.irq == -1;
 		if (!sc->sc_audio2.polled) {
 			sc->sc_audio2.ih = isa_intr_establish(sc->sc_ic,
-			    sc->sc_audio2.irq, sc->sc_audio2.ist, IPL_AUDIO,
+			    sc->sc_audio2.irq, sc->sc_audio2.ist, IPL_SCHED,
 			    ess_audio2_intr, sc);
 			printf("%s: audio2 interrupting at irq %d\n",
 			    device_xname(&sc->sc_dev), sc->sc_audio2.irq);
@@ -971,14 +970,14 @@ essattach(struct ess_softc *sc, int enablejoy)
 		if (isa_drq_alloc(sc->sc_ic, sc->sc_audio2.drq) != 0) {
 			aprint_error_dev(&sc->sc_dev, "can't reserve drq %d\n",
 			    sc->sc_audio2.drq);
-			return;
+			goto fail;
 		}
 
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_audio2.drq,
-		    sc->sc_audio2.maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+		    sc->sc_audio2.maxsize, BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW)) {
 			aprint_error_dev(&sc->sc_dev, "can't create map for drq %d\n",
 			    sc->sc_audio2.drq);
-			return;
+			goto fail;
 		}
 	}
 
@@ -1075,6 +1074,12 @@ essattach(struct ess_softc *sc, int enablejoy)
 	if (essdebug > 0)
 		ess_printsc(sc);
 #endif
+
+ fail:
+	callout_destroy(&sc->sc_poll1_ch);
+	callout_destroy(&sc->sc_poll2_ch);
+	mutex_destroy(&sc->sc_lock);
+	mutex_destroy(&sc->sc_intr_lock);
 }
 
 /*
@@ -1084,6 +1089,7 @@ essattach(struct ess_softc *sc, int enablejoy)
 int
 ess_open(void *addr, int flags)
 {
+
 	return 0;
 }
 
@@ -1111,7 +1117,13 @@ ess_drain(void *addr)
 	struct ess_softc *sc;
 
 	sc = addr;
-	kpause("essdr", FALSE, hz/20, &sc->sc_lock); /* XXX */
+	mutex_exit(&sc->sc_lock);
+	kpause("essdr", FALSE, hz/20, &sc->sc_intr_lock); /* XXX */
+	if (!mutex_tryenter(&sc->sc_lock)) {
+		mutex_spin_exit(&sc->sc_intr_lock);
+		mutex_enter(&sc->sc_lock);
+		mutex_spin_enter(&sc->sc_intr_lock);
+	}
 
 	return 0;
 }
@@ -2171,8 +2183,7 @@ ess_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 void *
-ess_malloc(void *addr, int direction, size_t size,
-	   struct malloc_type *pool, int flags)
+ess_malloc(void *addr, int direction, size_t size)
 {
 	struct ess_softc *sc;
 	int drq;
@@ -2182,14 +2193,14 @@ ess_malloc(void *addr, int direction, size_t size,
 		drq = sc->sc_audio2.drq;
 	else
 		drq = sc->sc_audio1.drq;
-	return (isa_malloc(sc->sc_ic, drq, size, pool, flags));
+	return (isa_malloc(sc->sc_ic, drq, size, M_DEVBUF, M_WAITOK));
 }
 
 void
-ess_free(void *addr, void *ptr, struct malloc_type *pool)
+ess_free(void *addr, void *ptr, size_t size)
 {
 
-	isa_free(ptr, pool);
+	isa_free(ptr, M_DEVBUF);
 }
 
 size_t
@@ -2231,13 +2242,13 @@ ess_1888_get_props(void *addr)
 }
 
 void
-ess_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+ess_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
 {
 	struct ess_softc *sc;
 
 	sc = addr;
 	*intr = &sc->sc_intr_lock;
-	*proc = &sc->sc_lock;
+	*thread = &sc->sc_lock;
 }
 
 

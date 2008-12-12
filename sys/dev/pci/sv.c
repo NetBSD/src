@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.39.12.1 2008/12/11 19:49:31 ad Exp $ */
+/*      $NetBSD: sv.c,v 1.39.12.2 2008/12/12 23:06:58 ad Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.39.12.1 2008/12/11 19:49:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sv.c,v 1.39.12.2 2008/12/12 23:06:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,8 +159,8 @@ static int	sv_getdev(void *, struct audio_device *);
 static int	sv_mixer_set_port(void *, mixer_ctrl_t *);
 static int	sv_mixer_get_port(void *, mixer_ctrl_t *);
 static int	sv_query_devinfo(void *, mixer_devinfo_t *);
-static void *	sv_malloc(void *, int, size_t, struct malloc_type *, int);
-static void	sv_free(void *, void *, struct malloc_type *);
+static void *	sv_malloc(void *, int, size_t);
+static void	sv_free(void *, void *, size_t);
 static size_t	sv_round_buffersize(void *, int, size_t);
 static paddr_t	sv_mappage(void *, void *, off_t, int);
 static int	sv_get_props(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.50.6.1 2008/12/09 13:09:13 ad Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.50.6.2 2008/12/12 23:06:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.50.6.1 2008/12/09 13:09:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.50.6.2 2008/12/12 23:06:56 ad Exp $");
 
 #include "sequencer.h"
 
@@ -1310,11 +1310,6 @@ midiseq_open(int unit, int flags)
 	major = devsw_name2chr("midi", NULL, 0);
 	dev = makedev(major, unit);
 
-	midi_getinfo(dev, &mi);
-	if ( !(mi.props & MIDI_PROP_CAN_INPUT) )
-	        flags &= ~FREAD;
-	if ( 0 == ( flags & ( FREAD | FWRITE ) ) )
-	        return NULL;
 	DPRINTFN(2, ("midiseq_open: %d %d\n", unit, flags));
 
 	error = cdevvp(dev, &vp);
@@ -1327,6 +1322,16 @@ midiseq_open(int unit, int flags)
 		vrele(vp);
 		return NULL;
 	}
+
+	/* Only after we have acquired reference via VOP_OPEN(). */
+	midi_getinfo(dev, &mi);
+	if ((mi.props & MIDI_PROP_CAN_INPUT) == 0)
+	        flags &= ~FREAD;
+	if ((flags & (FREAD|FWRITE)) == 0) {
+		vrele(vp);
+	        return NULL;
+	}
+
 	sc = device_lookup_private(&midi_cd, unit);
 	md = kmem_zalloc(sizeof(*md), KM_SLEEP);
 	md->msc = sc;

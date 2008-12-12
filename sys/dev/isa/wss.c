@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.68.32.1 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: wss.c,v 1.68.32.2 2008/12/12 23:06:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,18 +36,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.68.32.1 2008/12/11 19:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.68.32.2 2008/12/12 23:06:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
-
 #include <sys/audioio.h>
+
 #include <dev/audio_if.h>
 
 #include <dev/isa/isavar.h>
@@ -130,8 +129,7 @@ wssattach(struct wss_softc *sc)
 
 	ac = &sc->sc_ad1848.sc_ad1848;
 
-	mutex_init(&ac->sc_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&ac->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	ad1848_init_locks(ac, IPL_SCHED);
 
 	madattach(sc);
 
