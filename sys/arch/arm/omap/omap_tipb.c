@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_tipb.c,v 1.3 2008/11/21 17:13:07 matt Exp $ */
+/*	$NetBSD: omap_tipb.c,v 1.4 2008/12/12 17:36:14 matt Exp $ */
 
 /*
  * Autoconfiguration support for the Texas Instruments OMAP TIPB.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.3 2008/11/21 17:13:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_tipb.c,v 1.4 2008/12/12 17:36:14 matt Exp $");
 
 #include "locators.h"
 
@@ -123,12 +123,11 @@ struct tipb_softc {
 /* prototypes */
 static int	tipb_match(device_t, cfdata_t, void *);
 static void	tipb_attach(device_t, device_t, void *);
-static int 	tipb_search(device_t, cfdata_t,
-			     const int *, void *);
+static int 	tipb_search(device_t, cfdata_t, const int *, void *);
 static int	tipb_print(void *, const char *);
 
 /* attach structures */
-CFATTACH_DECL(tipb, sizeof(struct tipb_softc),
+CFATTACH_DECL_NEW(tipb, sizeof(struct tipb_softc),
     tipb_match, tipb_attach, NULL, NULL);
 
 static int tipb_attached;

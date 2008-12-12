@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_emifs.c,v 1.3 2008/11/21 17:13:07 matt Exp $ */
+/*	$NetBSD: omap_emifs.c,v 1.4 2008/12/12 17:36:14 matt Exp $ */
 
 
 /*
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_emifs.c,v 1.3 2008/11/21 17:13:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_emifs.c,v 1.4 2008/12/12 17:36:14 matt Exp $");
 
 #include "locators.h"
 
@@ -165,7 +165,7 @@ static const timing_parm_info timing_parms[] = {
 };
 
 /* attach structures */
-CFATTACH_DECL(emifs, sizeof(struct emifs_softc),
+CFATTACH_DECL_NEW(emifs, sizeof(struct emifs_softc),
     emifs_match, emifs_attach, NULL, NULL);
 
 static int emifs_attached;
