@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.8 2006/04/13 13:30:25 macallan Exp $ */
+/*	$NetBSD: fbio.h,v 1.9 2008/12/12 18:35:12 macallan Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -72,8 +72,9 @@
 #define	FBTYPE_P9100		21	/* tadpole 3gx p9100 controller */
 #define FBTYPE_CREATOR		22	/* ffb creator or elite */
 #define FBTYPE_GENERIC_PCI	23	/* machfb, ofb and so on */
+#define FBTYPE_AG10E		24	/* Fujitsu AG-10e */
 
-#define	FBTYPE_LASTPLUSONE	24	/* max number of fbs (change as add) */
+#define	FBTYPE_LASTPLUSONE	25	/* max number of fbs (change as add) */
 
 /*
  * XXX These really shouldn't be here, but this is what the pmax
