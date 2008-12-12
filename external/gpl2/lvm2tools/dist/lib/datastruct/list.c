@@ -1,3 +1,5 @@
+/*	$NetBSD: list.c,v 1.1.1.2 2008/12/12 11:42:16 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -19,7 +21,7 @@
  * Initialise a list before use.
  * The list head's next and previous pointers point back to itself.
  */
-void list_init(struct list *head)
+void dm_list_init(struct dm_list *head)
 {
 	head->n = head->p = head;
 }
@@ -28,7 +30,7 @@ void list_init(struct list *head)
  * Insert an element before 'head'.
  * If 'head' is the list head, this adds an element to the end of the list.
  */
-void list_add(struct list *head, struct list *elem)
+void dm_list_add(struct dm_list *head, struct dm_list *elem)
 {
 	assert(head->n);
 
@@ -43,7 +45,7 @@ void list_add(struct list *head, struct list *elem)
  * Insert an element after 'head'.
  * If 'head' is the list head, this adds an element to the front of the list.
  */
-void list_add_h(struct list *head, struct list *elem)
+void dm_list_add_h(struct dm_list *head, struct dm_list *elem)
 {
 	assert(head->n);
 
@@ -59,7 +61,7 @@ void list_add_h(struct list *head, struct list *elem)
  * Note that this doesn't change the element itself - it may still be safe
  * to follow its pointers.
  */
-void list_del(struct list *elem)
+void dm_list_del(struct dm_list *elem)
 {
 	elem->n->p = elem->p;
 	elem->p->n = elem->n;
@@ -68,16 +70,16 @@ void list_del(struct list *elem)
 /*
  * Remove an element from existing list and insert before 'head'.
  */
-void list_move(struct list *head, struct list *elem)
+void dm_list_move(struct dm_list *head, struct dm_list *elem)
 {
-        list_del(elem);
-        list_add(head, elem);
+        dm_list_del(elem);
+        dm_list_add(head, elem);
 }
 
 /*
  * Is the list empty?
  */
-int list_empty(const struct list *head)
+int dm_list_empty(const struct dm_list *head)
 {
 	return head->n == head;
 }
@@ -85,7 +87,7 @@ int list_empty(const struct list *head)
 /*
  * Is this the first element of the list?
  */
-int list_start(const struct list *head, const struct list *elem)
+int dm_list_start(const struct dm_list *head, const struct dm_list *elem)
 {
 	return elem->p == head;
 }
@@ -93,7 +95,7 @@ int list_start(const struct list *head, const struct list *elem)
 /*
  * Is this the last element of the list?
  */
-int list_end(const struct list *head, const struct list *elem)
+int dm_list_end(const struct dm_list *head, const struct dm_list *elem)
 {
 	return elem->n == head;
 }
@@ -101,44 +103,44 @@ int list_end(const struct list *head, const struct list *elem)
 /*
  * Return first element of the list or NULL if empty
  */
-struct list *list_first(const struct list *head)
+struct dm_list *dm_list_first(const struct dm_list *head)
 {
-	return (list_empty(head) ? NULL : head->n);
+	return (dm_list_empty(head) ? NULL : head->n);
 }
 
 /*
  * Return last element of the list or NULL if empty
  */
-struct list *list_last(const struct list *head)
+struct dm_list *dm_list_last(const struct dm_list *head)
 {
-	return (list_empty(head) ? NULL : head->p);
+	return (dm_list_empty(head) ? NULL : head->p);
 }
 
 /*
  * Return the previous element of the list, or NULL if we've reached the start.
  */
-struct list *list_prev(const struct list *head, const struct list *elem)
+struct dm_list *dm_list_prev(const struct dm_list *head, const struct dm_list *elem)
 {
-	return (list_start(head, elem) ? NULL : elem->p);
+	return (dm_list_start(head, elem) ? NULL : elem->p);
 }
 
 /*
  * Return the next element of the list, or NULL if we've reached the end.
  */
-struct list *list_next(const struct list *head, const struct list *elem)
+struct dm_list *dm_list_next(const struct dm_list *head, const struct dm_list *elem)
 {
-	return (list_end(head, elem) ? NULL : elem->n);
+	return (dm_list_end(head, elem) ? NULL : elem->n);
 }
 
 /*
  * Return the number of elements in a list by walking it.
  */
-unsigned int list_size(const struct list *head)
+unsigned int dm_list_size(const struct dm_list *head)
 {
 	unsigned int s = 0;
-	const struct list *v;
+	const struct dm_list *v;
 
-	list_iterate(v, head)
+	dm_list_iterate(v, head)
 	    s++;
 
 	return s;

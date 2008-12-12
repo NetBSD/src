@@ -1,3 +1,5 @@
+/*	$NetBSD: zero.c,v 1.1.1.2 2008/12/12 11:42:15 haad Exp $	*/
+
 /*
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
  *
@@ -67,7 +69,7 @@ static int _zero_target_present(const struct lv_segment *seg __attribute((unused
 
 static int _zero_modules_needed(struct dm_pool *mem,
 				const struct lv_segment *seg __attribute((unused)),
-				struct list *modules)
+				struct dm_list *modules)
 {
 	if (!str_list_add(mem, modules, "zero")) {
 		log_error("zero module string list allocation failed");

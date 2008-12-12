@@ -1,3 +1,77 @@
+Version 2.02.43 - 10th November 2008
+====================================
+  Merge device-mapper into the lvm2 tree.
+  Correct prototype for --permission on lvchange and lvcreate man pages.
+  Exit with non-zero status from vgdisplay if couldn't show any requested VG.
+  Move list.c into libdevmapper and rename functions.
+  Rename a couple of variables that matched function names.
+  Use simplified x.y.z version number in libdevmapper.pc.
+  Remove ancient debian directory.
+  Split out lvm-logging.h from log.h and lvm-globals.[ch] from log.[ch].
+
+Version 2.02.42 - 26th October 2008
+===================================
+  Accept locking fallback_to_* options in the global section as documented.
+  Fix temp table activation in mirror conversions not to happen in other cmds.
+  Fix temp table in mirror conversions to use always-present error not zero.
+
+Version 2.02.41 - 17th October 2008
+===================================
+  Use temp table to set device size when converting mirrors.
+  In resume_mirror_images replace activate_lv with resume_lv as workaround.
+  Avoid overwriting in-use on-disk text metadata by forgetting MDA_HEADER_SIZE.
+  Fix snapshot monitoring library to not cancel monitoring invalid snapshot.
+  Generate man pages from templates and include version.
+  Add usrlibdir and usrsbindir to configure.
+  Fix conversion of md chunk size into sectors.
+  Free text metadata buffer after a failure writing it.
+  Fix misleading error message when there are no allocatable extents in VG.
+  Fix handling of PVs which reappeared with old metadata version.
+  Fix mirror DSO to call vgreduce with proper parameters.
+  Fix validation of --minor and --major in lvcreate to require -My always.
+  Fix release: clvmd build, vgreduce consolidate & tests, /dev/ioerror warning.
+
+Version 2.02.40 - 19th September 2008
+=====================================
+  Allow lvremove to remove LVs from VGs with missing PVs.
+  In VG with PVs missing, by default allow activation of LVs that are complete.
+  Track PARTIAL_LV and MISSING_PV flags internally.
+  Require --force with --removemissing in vgreduce to remove partial LVs.
+  No longer write out PARTIAL flag into metadata backups.
+  Treat new default activation/missing_stripe_filler "error" as an error target.
+  Remove internal partial_mode.
+  Add devices/md_chunk_alignment to lvm.conf.
+  Pass struct physical_volume to pe_align and adjust for md chunk size.
+  Store sysfs location in struct cmd_context.
+  Avoid shuffling remaining mirror images when removing one, retaining primary.
+  Add missing LV error target activation in _remove_mirror_images.
+  Prevent resizing an LV while lvconvert is using it.
+  Avoid repeatedly wiping cache while VG_GLOBAL is held in vgscan & pvscan.
+  Fix pvresize to not allow resize if PV has two metadata areas.
+  Fix setting of volume limit count if converting to lvm1 format.
+  Fix vgconvert logical volume id metadata validation.
+  Fix lvmdump metadata gather option (-m) to work correctly.
+  Fix allocation bug in text metadata format write error path.
+  Fix vgcfgbackup to properly check filename if template is used.
+  configure aborts if lcov or genhtml are missing with --enable-profiling
+  vgremove tries to remove lv snapshot first.
+  Added function lv_remove_with_dependencies().
+  Improve file descriptor leak detection to display likely culprit and filename.
+  Change clustered mirror kernel module name from cmirror to dm-log-clustered.
+  Avoid looping forever in _pv_analyze_mda_raw used by pvck.
+  Change lvchange exit status to indicate if any part of the operation failed.
+  Fix pvchange and pvremove to handle PVs without mdas.
+  Refactor _text_pv_read and always return mda list if requested.
+  Fix configure to work w/o readline unless --enable-readline used. (2.02.39)
+  Remove is_lvm_partition template which has not yet been coded.
+  Refactor pvcreate to separate parameter parsing from validation logic.
+  Check for label_write() failure in _text_pv_write().
+  Add pvcreate tests and update vgsplit tests to handle lvm1 and lvm2 metadata.
+  Fix pvchange -M1 -u to preserve existing extent locations when there's a VG.
+  Cease recognising snapshot-in-use percentages returned by early devt kernels.
+  Add backward-compatible flags field to on-disk format_text metadata.
+  Fix dmeventd monitoring libraries to link against liblvm2cmd again. (2.02.39)
+
 Version 2.02.39 - 27th June 2008
 ================================
   Enable readline by default if available.
@@ -17,12 +91,12 @@ Version 2.02.39 - 27th June 2008
   Fix and improve readahead 'auto' calculation for stripe_size.
   Fix lvchange output for -r auto setting if auto is already set.
   Add test case for readahead.
-  Fix ambiguous use of identifier error_message_produced.
+  Avoid ambiguous use of identifier error_message_produced.
   Begin syncing configure.in for merge/unification with device-mapper.
   Fix add_mirror_images not to dereference uninitialized log_lv upon failure.
   Don't call openlog for every debug line output by clvmd.
   Add --force to lvextend and lvresize.
-  Fix vgchange to not activate mirror leg and log volumes directly.
+  Fix vgchange not to activate component mirror volumes directly.
   Fix test directory clean up in make distclean.
 
 Version 2.02.38 - 11th June 2008

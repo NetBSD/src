@@ -38,7 +38,6 @@ SOURCES =\
 	commands/toolcontext.c \
 	config/config.c \
 	datastruct/btree.c \
-	datastruct/list.c \
 	datastruct/str_list.c \
 	device/dev-cache.c \
 	device/dev-io.c \
@@ -78,6 +77,7 @@ SOURCES =\
 	misc/crc.c \
 	misc/lvm-exec.c \
 	misc/lvm-file.c \
+	misc/lvm-globals.c \
 	misc/lvm-string.c \
 	misc/lvm-wrappers.c \
 	misc/timestamp.c \

@@ -663,6 +663,7 @@ target
 target_cpu
 target_vendor
 target_os
+SED
 AWK
 CC
 CFLAGS
@@ -700,7 +701,6 @@ CMDLIB
 COPTIMISE_FLAG
 DEBUG
 DEVMAPPER
-DMDIR
 DMEVENTD
 DM_COMPAT
 DM_DEVICE_GID
@@ -708,6 +708,7 @@ DM_DEVICE_MODE
 DM_DEVICE_UID
 DM_IOCTLS
 DM_LIB_VERSION
+DM_LIB_PATCHLEVEL
 FSADM
 GROUP
 HAVE_LIBDL
@@ -731,6 +732,13 @@ SNAPSHOTS
 STATICDIR
 STATIC_LINK
 LIB_PTHREAD
+interface
+kerneldir
+missingkernel
+kernelvsn
+tmpdir
+usrlibdir
+usrsbindir
 LTLIBOBJS'
 ac_subst_files=''
       ac_precious_vars='build_alias
@@ -1321,9 +1329,12 @@ Optional Features:
   --disable-realtime      Disable realtime clock support
   --enable-debug          Enable debugging
   --enable-profiling      Gather gcov profiling data
-  --disable-devmapper     Disable device-mapper interaction
+  --disable-devmapper     Disable LVM2 device-mapper interaction
+  --enable-compat         Enable support for old device-mapper versions
+  --disable-driver        Disable calls to device-mapper in the kernel
   --disable-o_direct      Disable O_DIRECT
   --enable-cmdlib         Build shared command library
+  --enable-pkgconfig      Install pkgconfig support
   --enable-fsadm          Enable fsadm
   --enable-dmeventd       Enable the device-mapper event daemon
   --enable-static_link    Use this to link the tools to their libraries
@@ -1336,6 +1347,9 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-user=USER        Set the owner of installed files [USER=root]
   --with-group=GROUP      Set the group owner of installed files [GROUP=root]
+  --with-device-uid=UID   Set the owner used for new device nodes [UID=0]
+  --with-device-gid=UID   Set the group used for new device nodes [GID=0]
+  --with-device-mode=MODE Set the mode used for new device nodes [MODE=0600]
   --with-lvm1=TYPE        LVM1 metadata support: internal/shared/none
                           TYPE=internal
   --with-pool=TYPE        GFS pool read-only support: internal/shared/none
@@ -1352,7 +1366,11 @@ Optional Packages:
   --with-localedir=DIR    Translation files in DIR [PREFIX/share/locale]
   --with-confdir=DIR      Configuration files in DIR /etc
   --with-staticdir=DIR    Static binary in DIR EXEC_PREFIX/sbin
-  --with-dmdir=DIR        Build against device-mapper source tree in DIR
+  --with-usrlibdir=DIR
+  --with-usrsbindir=DIR
+  --with-dmeventd-pidfile=PATH    dmeventd pidfile [/var/run/dmeventd.pid]
+  --with-dmeventd-path=PATH       dmeventd path [${exec_prefix}/sbin/dmeventd]
+  --with-interface=IFACE  Choose kernel interface (ioctl) [ioctl]
 
 Some influential environment variables:
   CC          C compiler command
@@ -1966,7 +1984,7 @@ case "$host_os" in
 		SELINUX=yes
 		REALTIME=yes
 		CLUSTER=internal
-		FSADM=no
+		FSADM=yes
 		;;
 	darwin*)
 		CFLAGS="$CFLAGS -no-cpp-precomp -fno-common"
@@ -1986,6 +2004,90 @@ case "$host_os" in
 esac
 
 ################################################################################
+{ echo "$as_me:$LINENO: checking for a sed that does not truncate output" >&5
+echo $ECHO_N "checking for a sed that does not truncate output... $ECHO_C" >&6; }
+if test "${ac_cv_path_SED+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+            ac_script=s/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/
+     for ac_i in 1 2 3 4 5 6 7; do
+       ac_script="$ac_script$as_nl$ac_script"
+     done
+     echo "$ac_script" | sed 99q >conftest.sed
+     $as_unset ac_script || ac_script=
+     # Extract the first word of "sed gsed" to use in msg output
+if test -z "$SED"; then
+set dummy sed gsed; ac_prog_name=$2
+if test "${ac_cv_path_SED+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_path_SED_found=false
+# Loop through the user's path and test for each of PROGNAME-LIST
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_prog in sed gsed; do
+  for ac_exec_ext in '' $ac_executable_extensions; do
+    ac_path_SED="$as_dir/$ac_prog$ac_exec_ext"
+    { test -f "$ac_path_SED" && $as_test_x "$ac_path_SED"; } || continue
+    # Check for GNU ac_path_SED and select it if it is found.
+  # Check for GNU $ac_path_SED
+case `"$ac_path_SED" --version 2>&1` in
+*GNU*)
+  ac_cv_path_SED="$ac_path_SED" ac_path_SED_found=:;;
+*)
+  ac_count=0
+  echo $ECHO_N "0123456789$ECHO_C" >"conftest.in"
+  while :
+  do
+    cat "conftest.in" "conftest.in" >"conftest.tmp"
+    mv "conftest.tmp" "conftest.in"
+    cp "conftest.in" "conftest.nl"
+    echo '' >> "conftest.nl"
+    "$ac_path_SED" -f conftest.sed < "conftest.nl" >"conftest.out" 2>/dev/null || break
+    diff "conftest.out" "conftest.nl" >/dev/null 2>&1 || break
+    ac_count=`expr $ac_count + 1`
+    if test $ac_count -gt ${ac_path_SED_max-0}; then
+      # Best one so far, save it but keep looking for a better one
+      ac_cv_path_SED="$ac_path_SED"
+      ac_path_SED_max=$ac_count
+    fi
+    # 10*(2^10) chars as input seems more than enough
+    test $ac_count -gt 10 && break
+  done
+  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
+esac
+
+
+    $ac_path_SED_found && break 3
+  done
+done
+
+done
+IFS=$as_save_IFS
+
+
+fi
+
+SED="$ac_cv_path_SED"
+if test -z "$SED"; then
+  { { echo "$as_me:$LINENO: error: no acceptable $ac_prog_name could be found in \$PATH" >&5
+echo "$as_me: error: no acceptable $ac_prog_name could be found in \$PATH" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+else
+  ac_cv_path_SED=$SED
+fi
+
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_path_SED" >&5
+echo "${ECHO_T}$ac_cv_path_SED" >&6; }
+ SED="$ac_cv_path_SED"
+  rm -f conftest.sed
+
 for ac_prog in gawk mawk nawk awk
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
@@ -8334,6 +8436,51 @@ if test x$GROUP != x; then
 fi
 
 ################################################################################
+{ echo "$as_me:$LINENO: checking device node uid" >&5
+echo $ECHO_N "checking device node uid... $ECHO_C" >&6; }
+
+
+# Check whether --with-device-uid was given.
+if test "${with_device_uid+set}" = set; then
+  withval=$with_device_uid;  DM_DEVICE_UID="$withval"
+else
+   DM_DEVICE_UID="0"
+fi
+
+{ echo "$as_me:$LINENO: result: $DM_DEVICE_UID" >&5
+echo "${ECHO_T}$DM_DEVICE_UID" >&6; }
+
+################################################################################
+{ echo "$as_me:$LINENO: checking device node gid" >&5
+echo $ECHO_N "checking device node gid... $ECHO_C" >&6; }
+
+
+# Check whether --with-device-gid was given.
+if test "${with_device_gid+set}" = set; then
+  withval=$with_device_gid;  DM_DEVICE_GID="$withval"
+else
+   DM_DEVICE_GID="0"
+fi
+
+{ echo "$as_me:$LINENO: result: $DM_DEVICE_GID" >&5
+echo "${ECHO_T}$DM_DEVICE_GID" >&6; }
+
+################################################################################
+{ echo "$as_me:$LINENO: checking device node mode" >&5
+echo $ECHO_N "checking device node mode... $ECHO_C" >&6; }
+
+
+# Check whether --with-device-mode was given.
+if test "${with_device_mode+set}" = set; then
+  withval=$with_device_mode;  DM_DEVICE_MODE="$withval"
+else
+   DM_DEVICE_MODE="0600"
+fi
+
+{ echo "$as_me:$LINENO: result: $DM_DEVICE_MODE" >&5
+echo "${ECHO_T}$DM_DEVICE_MODE" >&6; }
+
+################################################################################
 { echo "$as_me:$LINENO: checking whether to enable lvm1 fallback" >&5
 echo $ECHO_N "checking whether to enable lvm1 fallback... $ECHO_C" >&6; }
 # Check whether --enable-lvm1_fallback was given.
@@ -8509,7 +8656,7 @@ echo $ECHO_N "checking whether to enable readline... $ECHO_C" >&6; }
 if test "${enable_readline+set}" = set; then
   enableval=$enable_readline; READLINE=$enableval
 else
-  READLINE=yes
+  READLINE=maybe
 fi
 
 { echo "$as_me:$LINENO: result: $READLINE" >&5
@@ -8620,6 +8767,7 @@ done
 done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_LCOV" && ac_cv_path_LCOV="no"
   ;;
 esac
 fi
@@ -8660,6 +8808,7 @@ done
 done
 IFS=$as_save_IFS
 
+  test -z "$ac_cv_path_GENHTML" && ac_cv_path_GENHTML="no"
   ;;
 esac
 fi
@@ -8673,6 +8822,11 @@ echo "${ECHO_T}no" >&6; }
 fi
 
 
+  if test "$LCOV" = no -o "$GENHTML" = no ; then
+    { { echo "$as_me:$LINENO: error: lcov and genhtml are required for profiling" >&5
+echo "$as_me: error: lcov and genhtml are required for profiling" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
 fi
 
 ################################################################################
@@ -8693,6 +8847,22 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 fi
+
+################################################################################
+# Check whether --enable-compat was given.
+if test "${enable_compat+set}" = set; then
+  enableval=$enable_compat; DM_COMPAT=$enableval
+else
+  DM_COMPAT=no
+fi
+
+
+################################################################################
+# Check whether --enable-ioctl was given.
+if test "${enable_ioctl+set}" = set; then
+  enableval=$enable_ioctl; DM_IOCTLS=$enableval
+fi
+
 
 ################################################################################
 { echo "$as_me:$LINENO: checking whether to enable O_DIRECT" >&5
@@ -8726,9 +8896,18 @@ fi
 { echo "$as_me:$LINENO: result: $CMDLIB" >&5
 echo "${ECHO_T}$CMDLIB" >&6; }
 
-test $CMDLIB=yes \
+test x$CMDLIB = xyes \
   && LVM2CMD_LIB=-llvm2cmd \
   || LVM2CMD_LIB=
+
+################################################################################
+# Check whether --enable-pkgconfig was given.
+if test "${enable_pkgconfig+set}" = set; then
+  enableval=$enable_pkgconfig; PKGCONFIG=$enableval
+else
+  PKGCONFIG=no
+fi
+
 
 ################################################################################
 { echo "$as_me:$LINENO: checking whether to install fsadm" >&5
@@ -8752,12 +8931,23 @@ fi
 { echo "$as_me:$LINENO: result: $DMEVENTD" >&5
 echo "${ECHO_T}$DMEVENTD" >&6; }
 
-if test x$DMEVENTD = xyes && test x$MIRRORS != xinternal; then
-{ { echo "$as_me:$LINENO: error: --enable-dmeventd currently requires --with-mirrors=internal
-" >&5
+BUILD_DMEVENTD=$DMEVENTD
+
+if test x$DMEVENTD = xyes; then
+   if test x$MIRRORS != xinternal; then
+      { { echo "$as_me:$LINENO: error: --enable-dmeventd currently requires --with-mirrors=internal
+      " >&5
 echo "$as_me: error: --enable-dmeventd currently requires --with-mirrors=internal
-" >&2;}
+      " >&2;}
    { (exit 1); exit 1; }; }
+   fi
+   if test x$CMDLIB = xno; then
+      { { echo "$as_me:$LINENO: error: --enable-dmeventd requires --enable-cmdlib to be used as well
+      " >&5
+echo "$as_me: error: --enable-dmeventd requires --enable-cmdlib to be used as well
+      " >&2;}
+   { (exit 1); exit 1; }; }
+   fi
 fi
 
 if test x$DMEVENTD = xyes; then
@@ -8767,13 +8957,158 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 fi
+
+################################################################################
+
+{ echo "$as_me:$LINENO: checking for getline in -lc" >&5
+echo $ECHO_N "checking for getline in -lc... $ECHO_C" >&6; }
+if test "${ac_cv_lib_c_getline+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lc  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char getline ();
+int
+main ()
+{
+return getline ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_c_getline=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_c_getline=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_c_getline" >&5
+echo "${ECHO_T}$ac_cv_lib_c_getline" >&6; }
+if test $ac_cv_lib_c_getline = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_GETLINE 1
+_ACEOF
+
+fi
+
+
+################################################################################
+
+{ echo "$as_me:$LINENO: checking for canonicalize_file_name in -lc" >&5
+echo $ECHO_N "checking for canonicalize_file_name in -lc... $ECHO_C" >&6; }
+if test "${ac_cv_lib_c_canonicalize_file_name+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lc  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char canonicalize_file_name ();
+int
+main ()
+{
+return canonicalize_file_name ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_c_canonicalize_file_name=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_c_canonicalize_file_name=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_c_canonicalize_file_name" >&5
+echo "${ECHO_T}$ac_cv_lib_c_canonicalize_file_name" >&6; }
+if test $ac_cv_lib_c_canonicalize_file_name = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_CANONICALIZE_FILE_NAME 1
+_ACEOF
+
+fi
+
+
 ################################################################################
 if [ "x$exec_prefix" = xNONE -a "x$prefix" = xNONE ];
  then  exec_prefix="";
 fi;
 
 ################################################################################
-if test x$READLINE = xyes; then
+if test x$READLINE != xno; then
 	{ echo "$as_me:$LINENO: checking for library containing tgetent" >&5
 echo $ECHO_N "checking for library containing tgetent... $ECHO_C" >&6; }
 if test "${ac_cv_search_tgetent+set}" = set; then
@@ -8854,9 +9189,13 @@ echo "${ECHO_T}$ac_cv_search_tgetent" >&6; }
 ac_res=$ac_cv_search_tgetent
 if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
-
+  tg_found=yes
 else
-  { { echo "$as_me:$LINENO: error: termcap could not be found which is required for the
+  tg_found=no
+fi
+
+	test x$READLINE:$tg_found = xyes:no &&
+	  { { echo "$as_me:$LINENO: error: termcap could not be found which is required for the
 --enable-readline option (which is enabled by default).  Either disable readline
 support with --disable-readline or download and install termcap from:
 	ftp.gnu.org/gnu/termcap
@@ -8875,9 +9214,6 @@ Note: (n)curses also seems to work as a substitute for termcap.  This was
   not found either - but you could try installing that as well.
 " >&2;}
    { (exit 1); exit 1; }; }
-
-fi
-
 fi
 
 ################################################################################
@@ -9478,7 +9814,8 @@ done
 
 
 ################################################################################
-if test x$READLINE = xyes; then
+if test x$READLINE != xno; then
+	rl_found=yes
 
 { echo "$as_me:$LINENO: checking for readline in -lreadline" >&5
 echo $ECHO_N "checking for readline in -lreadline... $ECHO_C" >&6; }
@@ -9549,7 +9886,11 @@ _ACEOF
   LIBS="-lreadline $LIBS"
 
 else
-  { { echo "$as_me:$LINENO: error: GNU Readline could not be found which is required for the
+  rl_found=no
+fi
+
+	test x$READLINE:$rl_found = xyes:no &&
+	  { { echo "$as_me:$LINENO: error: GNU Readline could not be found which is required for the
 --enable-readline option (which is enabled by default).  Either disable readline
 support with --disable-readline or download and install readline from:
 	ftp.gnu.org/gnu/readline
@@ -9564,12 +9905,14 @@ Note: if you are using precompiled packages you will also need the development
 package as well (which may be called readline-devel or something similar).
 " >&2;}
    { (exit 1); exit 1; }; }
+	if test $rl_found = yes; then
 
-fi
-
-	{ echo "$as_me:$LINENO: checking for rl_completion_matches" >&5
-echo $ECHO_N "checking for rl_completion_matches... $ECHO_C" >&6; }
-if test "${ac_cv_func_rl_completion_matches+set}" = set; then
+for ac_func in rl_completion_matches
+do
+as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+{ echo "$as_me:$LINENO: checking for $ac_func" >&5
+echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6; }
+if { as_var=$as_ac_var; eval "test \"\${$as_var+set}\" = set"; }; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.$ac_ext <<_ACEOF
@@ -9578,12 +9921,12 @@ _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
-/* Define rl_completion_matches to an innocuous variant, in case <limits.h> declares rl_completion_matches.
+/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
    For example, HP-UX 11i <limits.h> declares gettimeofday.  */
-#define rl_completion_matches innocuous_rl_completion_matches
+#define $ac_func innocuous_$ac_func
 
 /* System header to define __stub macros and hopefully few prototypes,
-    which can conflict with char rl_completion_matches (); below.
+    which can conflict with char $ac_func (); below.
     Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
     <limits.h> exists even on freestanding compilers.  */
 
@@ -9593,7 +9936,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 # include <assert.h>
 #endif
 
-#undef rl_completion_matches
+#undef $ac_func
 
 /* Override any GCC internal prototype to avoid an error.
    Use char because int might match the return type of a GCC
@@ -9601,18 +9944,18 @@ cat >>conftest.$ac_ext <<_ACEOF
 #ifdef __cplusplus
 extern "C"
 #endif
-char rl_completion_matches ();
+char $ac_func ();
 /* The GNU C library defines this for functions which it implements
     to always fail with ENOSYS.  Some functions are actually named
     something starting with __ and the normal name is an alias.  */
-#if defined __stub_rl_completion_matches || defined __stub___rl_completion_matches
+#if defined __stub_$ac_func || defined __stub___$ac_func
 choke me
 #endif
 
 int
 main ()
 {
-return rl_completion_matches ();
+return $ac_func ();
   ;
   return 0;
 }
@@ -9635,32 +9978,34 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
 	 test ! -s conftest.err
        } && test -s conftest$ac_exeext &&
        $as_test_x conftest$ac_exeext; then
-  ac_cv_func_rl_completion_matches=yes
+  eval "$as_ac_var=yes"
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	ac_cv_func_rl_completion_matches=no
+	eval "$as_ac_var=no"
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
-{ echo "$as_me:$LINENO: result: $ac_cv_func_rl_completion_matches" >&5
-echo "${ECHO_T}$ac_cv_func_rl_completion_matches" >&6; }
-if test $ac_cv_func_rl_completion_matches = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_RL_COMPLETION_MATCHES 1
+ac_res=`eval echo '${'$as_ac_var'}'`
+	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+echo "${ECHO_T}$ac_res" >&6; }
+if test `eval echo '${'$as_ac_var'}'` = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
+done
 
 
 cat >>confdefs.h <<\_ACEOF
 #define READLINE_SUPPORT 1
 _ACEOF
 
+	fi
 fi
 
 ################################################################################
@@ -9677,6 +10022,7 @@ fi
 echo "${ECHO_T}$INTL" >&6; }
 
 if test x$INTL = xyes; then
+# FIXME - Move this - can be device-mapper too
 	INTL_PACKAGE="lvm2"
 	# Extract the first word of "msgfmt", so it can be a program name with args.
 set dummy msgfmt; ac_word=$2
@@ -9756,19 +10102,22 @@ fi
 
 
 
-# Check whether --with-dmdir was given.
-if test "${with_dmdir+set}" = set; then
-  withval=$with_dmdir;  DMDIR="$withval" CPPFLAGS="$CPPFLAGS -I$DMDIR/include"
+# Check whether --with-usrlibdir was given.
+if test "${with_usrlibdir+set}" = set; then
+  withval=$with_usrlibdir;  usrlibdir="$withval"
 else
-   DMDIR=
+   usrlibdir='${prefix}/lib'
 fi
 
 
-# Convert a relative dir name to absolute.
-case $DMDIR in
-  /*) ;;
-  *) DMDIR="`pwd`/$DMDIR" ;;
-esac
+
+# Check whether --with-usrsbindir was given.
+if test "${with_usrsbindir+set}" = set; then
+  withval=$with_usrsbindir;  usrsbindir="$withval"
+else
+   usrsbindir='${prefix}/sbin'
+fi
+
 
 ################################################################################
 if test x$READLINE = xyes; then
@@ -11040,151 +11389,6 @@ done
 
 fi
 
-
-for ac_header in libdevmapper.h
-do
-as_ac_Header=`echo "ac_cv_header_$ac_header" | $as_tr_sh`
-if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
-  { echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6; }
-if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-fi
-ac_res=`eval echo '${'$as_ac_Header'}'`
-	       { echo "$as_me:$LINENO: result: $ac_res" >&5
-echo "${ECHO_T}$ac_res" >&6; }
-else
-  # Is the header compilable?
-{ echo "$as_me:$LINENO: checking $ac_header usability" >&5
-echo $ECHO_N "checking $ac_header usability... $ECHO_C" >&6; }
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-$ac_includes_default
-#include <$ac_header>
-_ACEOF
-rm -f conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  ac_header_compiler=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_header_compiler=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-{ echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
-echo "${ECHO_T}$ac_header_compiler" >&6; }
-
-# Is the header present?
-{ echo "$as_me:$LINENO: checking $ac_header presence" >&5
-echo $ECHO_N "checking $ac_header presence... $ECHO_C" >&6; }
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <$ac_header>
-_ACEOF
-if { (ac_try="$ac_cpp conftest.$ac_ext"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } >/dev/null && {
-	 test -z "$ac_c_preproc_warn_flag$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       }; then
-  ac_header_preproc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-  ac_header_preproc=no
-fi
-
-rm -f conftest.err conftest.$ac_ext
-{ echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
-echo "${ECHO_T}$ac_header_preproc" >&6; }
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
-  yes:no: )
-    { echo "$as_me:$LINENO: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&5
-echo "$as_me: WARNING: $ac_header: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the compiler's result" >&5
-echo "$as_me: WARNING: $ac_header: proceeding with the compiler's result" >&2;}
-    ac_header_preproc=yes
-    ;;
-  no:yes:* )
-    { echo "$as_me:$LINENO: WARNING: $ac_header: present but cannot be compiled" >&5
-echo "$as_me: WARNING: $ac_header: present but cannot be compiled" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header:     check for missing prerequisite headers?" >&5
-echo "$as_me: WARNING: $ac_header:     check for missing prerequisite headers?" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header: see the Autoconf documentation" >&5
-echo "$as_me: WARNING: $ac_header: see the Autoconf documentation" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&5
-echo "$as_me: WARNING: $ac_header:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header: proceeding with the preprocessor's result" >&5
-echo "$as_me: WARNING: $ac_header: proceeding with the preprocessor's result" >&2;}
-    { echo "$as_me:$LINENO: WARNING: $ac_header: in the future, the compiler will take precedence" >&5
-echo "$as_me: WARNING: $ac_header: in the future, the compiler will take precedence" >&2;}
-
-    ;;
-esac
-{ echo "$as_me:$LINENO: checking for $ac_header" >&5
-echo $ECHO_N "checking for $ac_header... $ECHO_C" >&6; }
-if { as_var=$as_ac_Header; eval "test \"\${$as_var+set}\" = set"; }; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  eval "$as_ac_Header=\$ac_header_preproc"
-fi
-ac_res=`eval echo '${'$as_ac_Header'}'`
-	       { echo "$as_me:$LINENO: result: $ac_res" >&5
-echo "${ECHO_T}$ac_res" >&6; }
-
-fi
-if test `eval echo '${'$as_ac_Header'}'` = yes; then
-  cat >>confdefs.h <<_ACEOF
-#define `echo "HAVE_$ac_header" | $as_tr_cpp` 1
-_ACEOF
-
-else
-  { { echo "$as_me:$LINENO: error: bailing out" >&5
-echo "$as_me: error: bailing out" >&2;}
-   { (exit 1); exit 1; }; }
-fi
-
-done
-
-
 if test x$HAVE_SELINUX = xyes; then
 
 for ac_header in selinux/selinux.h
@@ -11383,6 +11587,81 @@ _ACEOF
 fi
 
 ################################################################################
+
+
+if test "$BUILD_DMEVENTD" = yes; then
+
+# Check whether --with-dmeventd-pidfile was given.
+if test "${with_dmeventd_pidfile+set}" = set; then
+  withval=$with_dmeventd_pidfile;  cat >>confdefs.h <<_ACEOF
+#define DMEVENTD_PIDFILE "$withval"
+_ACEOF
+
+else
+   cat >>confdefs.h <<_ACEOF
+#define DMEVENTD_PIDFILE "/var/run/dmeventd.pid"
+_ACEOF
+
+fi
+
+fi
+
+
+
+if test "$BUILD_DMEVENTD" = yes; then
+        dmeventd_prefix="$exec_prefix"
+        if test "x$dmeventd_prefix" = "xNONE"; then
+                dmeventd_prefix="$prefix"
+        fi
+        if test "x$dmeventd_prefix" = "xNONE"; then
+                dmeventd_prefix=""
+        fi
+
+# Check whether --with-dmeventd-path was given.
+if test "${with_dmeventd_path+set}" = set; then
+  withval=$with_dmeventd_path;  cat >>confdefs.h <<_ACEOF
+#define DMEVENTD_PATH "$withval"
+_ACEOF
+
+else
+   cat >>confdefs.h <<_ACEOF
+#define DMEVENTD_PATH "$dmeventd_prefix/sbin/dmeventd"
+_ACEOF
+
+fi
+
+fi
+
+################################################################################
+{ echo "$as_me:$LINENO: checking for kernel interface choice" >&5
+echo $ECHO_N "checking for kernel interface choice... $ECHO_C" >&6; }
+
+# Check whether --with-interface was given.
+if test "${with_interface+set}" = set; then
+  withval=$with_interface;  interface="$withval"
+else
+   interface=ioctl
+fi
+
+if [ "x$interface" != xioctl ];
+then
+  { { echo "$as_me:$LINENO: error: --with-interface=ioctl required. fs no longer supported." >&5
+echo "$as_me: error: --with-interface=ioctl required. fs no longer supported." >&2;}
+   { (exit 1); exit 1; }; }
+fi
+{ echo "$as_me:$LINENO: result: $interface" >&5
+echo "${ECHO_T}$interface" >&6; }
+
+################################################################################
+DM_LIB_VERSION="\"`cat VERSION_DM 2>/dev/null || echo Unknown`\""
+
+cat >>confdefs.h <<_ACEOF
+#define DM_LIB_VERSION $DM_LIB_VERSION
+_ACEOF
+
+
+DM_LIB_PATCHLEVEL=`cat VERSION_DM | awk -F '[-. ]' '{printf "%s.%s.%s",$1,$2,$3}'`
+
 LVM_VERSION="\"`cat VERSION 2>/dev/null || echo Unknown`\""
 
 ################################################################################
@@ -11400,7 +11679,6 @@ LVM_VERSION="\"`cat VERSION 2>/dev/null || echo Unknown`\""
 
 
 
-# FIXME: rename to LVM_USE_DMEVENTD
 
 
 
@@ -11422,7 +11700,13 @@ LVM_VERSION="\"`cat VERSION 2>/dev/null || echo Unknown`\""
 
 
 
-# FIXME: rename to LVM_CONF_DIR
+
+
+
+
+
+
+
 
 
 
@@ -11436,7 +11720,7 @@ LVM_VERSION="\"`cat VERSION 2>/dev/null || echo Unknown`\""
 
 
 ################################################################################
-ac_config_files="$ac_config_files Makefile make.tmpl include/Makefile lib/Makefile man/Makefile po/Makefile dmeventd/Makefile daemons/Makefile daemons/clvmd/Makefile dmeventd/mirror/Makefile dmeventd/snapshot/Makefile doc/Makefile lib/format1/Makefile lib/format_pool/Makefile lib/locking/Makefile lib/mirror/Makefile lib/snapshot/Makefile test/Makefile scripts/Makefile tools/Makefile tools/version.h"
+ac_config_files="$ac_config_files Makefile make.tmpl daemons/Makefile daemons/clvmd/Makefile daemons/dmeventd/Makefile daemons/dmeventd/libdevmapper-event.pc daemons/dmeventd/plugins/Makefile daemons/dmeventd/plugins/mirror/Makefile daemons/dmeventd/plugins/snapshot/Makefile doc/Makefile include/Makefile lib/Makefile lib/format1/Makefile lib/format_pool/Makefile lib/locking/Makefile lib/mirror/Makefile lib/snapshot/Makefile libdm/Makefile libdm/libdevmapper.pc man/Makefile po/Makefile scripts/Makefile test/Makefile tools/Makefile tools/version.h"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -11995,23 +12279,27 @@ do
     "lib/misc/configure.h") CONFIG_HEADERS="$CONFIG_HEADERS lib/misc/configure.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "make.tmpl") CONFIG_FILES="$CONFIG_FILES make.tmpl" ;;
-    "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
-    "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
-    "man/Makefile") CONFIG_FILES="$CONFIG_FILES man/Makefile" ;;
-    "po/Makefile") CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;
-    "dmeventd/Makefile") CONFIG_FILES="$CONFIG_FILES dmeventd/Makefile" ;;
     "daemons/Makefile") CONFIG_FILES="$CONFIG_FILES daemons/Makefile" ;;
     "daemons/clvmd/Makefile") CONFIG_FILES="$CONFIG_FILES daemons/clvmd/Makefile" ;;
-    "dmeventd/mirror/Makefile") CONFIG_FILES="$CONFIG_FILES dmeventd/mirror/Makefile" ;;
-    "dmeventd/snapshot/Makefile") CONFIG_FILES="$CONFIG_FILES dmeventd/snapshot/Makefile" ;;
+    "daemons/dmeventd/Makefile") CONFIG_FILES="$CONFIG_FILES daemons/dmeventd/Makefile" ;;
+    "daemons/dmeventd/libdevmapper-event.pc") CONFIG_FILES="$CONFIG_FILES daemons/dmeventd/libdevmapper-event.pc" ;;
+    "daemons/dmeventd/plugins/Makefile") CONFIG_FILES="$CONFIG_FILES daemons/dmeventd/plugins/Makefile" ;;
+    "daemons/dmeventd/plugins/mirror/Makefile") CONFIG_FILES="$CONFIG_FILES daemons/dmeventd/plugins/mirror/Makefile" ;;
+    "daemons/dmeventd/plugins/snapshot/Makefile") CONFIG_FILES="$CONFIG_FILES daemons/dmeventd/plugins/snapshot/Makefile" ;;
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
+    "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
+    "lib/Makefile") CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
     "lib/format1/Makefile") CONFIG_FILES="$CONFIG_FILES lib/format1/Makefile" ;;
     "lib/format_pool/Makefile") CONFIG_FILES="$CONFIG_FILES lib/format_pool/Makefile" ;;
     "lib/locking/Makefile") CONFIG_FILES="$CONFIG_FILES lib/locking/Makefile" ;;
     "lib/mirror/Makefile") CONFIG_FILES="$CONFIG_FILES lib/mirror/Makefile" ;;
     "lib/snapshot/Makefile") CONFIG_FILES="$CONFIG_FILES lib/snapshot/Makefile" ;;
-    "test/Makefile") CONFIG_FILES="$CONFIG_FILES test/Makefile" ;;
+    "libdm/Makefile") CONFIG_FILES="$CONFIG_FILES libdm/Makefile" ;;
+    "libdm/libdevmapper.pc") CONFIG_FILES="$CONFIG_FILES libdm/libdevmapper.pc" ;;
+    "man/Makefile") CONFIG_FILES="$CONFIG_FILES man/Makefile" ;;
+    "po/Makefile") CONFIG_FILES="$CONFIG_FILES po/Makefile" ;;
     "scripts/Makefile") CONFIG_FILES="$CONFIG_FILES scripts/Makefile" ;;
+    "test/Makefile") CONFIG_FILES="$CONFIG_FILES test/Makefile" ;;
     "tools/Makefile") CONFIG_FILES="$CONFIG_FILES tools/Makefile" ;;
     "tools/version.h") CONFIG_FILES="$CONFIG_FILES tools/version.h" ;;
 
@@ -12124,6 +12412,7 @@ target!$target$ac_delim
 target_cpu!$target_cpu$ac_delim
 target_vendor!$target_vendor$ac_delim
 target_os!$target_os$ac_delim
+SED!$SED$ac_delim
 AWK!$AWK$ac_delim
 CC!$CC$ac_delim
 CFLAGS!$CFLAGS$ac_delim
@@ -12161,7 +12450,6 @@ CMDLIB!$CMDLIB$ac_delim
 COPTIMISE_FLAG!$COPTIMISE_FLAG$ac_delim
 DEBUG!$DEBUG$ac_delim
 DEVMAPPER!$DEVMAPPER$ac_delim
-DMDIR!$DMDIR$ac_delim
 DMEVENTD!$DMEVENTD$ac_delim
 DM_COMPAT!$DM_COMPAT$ac_delim
 DM_DEVICE_GID!$DM_DEVICE_GID$ac_delim
@@ -12169,9 +12457,9 @@ DM_DEVICE_MODE!$DM_DEVICE_MODE$ac_delim
 DM_DEVICE_UID!$DM_DEVICE_UID$ac_delim
 DM_IOCTLS!$DM_IOCTLS$ac_delim
 DM_LIB_VERSION!$DM_LIB_VERSION$ac_delim
+DM_LIB_PATCHLEVEL!$DM_LIB_PATCHLEVEL$ac_delim
 FSADM!$FSADM$ac_delim
 GROUP!$GROUP$ac_delim
-HAVE_LIBDL!$HAVE_LIBDL$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -12213,6 +12501,7 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+HAVE_LIBDL!$HAVE_LIBDL$ac_delim
 HAVE_REALTIME!$HAVE_REALTIME$ac_delim
 HAVE_SELINUX!$HAVE_SELINUX$ac_delim
 INTL!$INTL$ac_delim
@@ -12233,10 +12522,17 @@ SNAPSHOTS!$SNAPSHOTS$ac_delim
 STATICDIR!$STATICDIR$ac_delim
 STATIC_LINK!$STATIC_LINK$ac_delim
 LIB_PTHREAD!$LIB_PTHREAD$ac_delim
+interface!$interface$ac_delim
+kerneldir!$kerneldir$ac_delim
+missingkernel!$missingkernel$ac_delim
+kernelvsn!$kernelvsn$ac_delim
+tmpdir!$tmpdir$ac_delim
+usrlibdir!$usrlibdir$ac_delim
+usrsbindir!$usrsbindir$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 21; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 29; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -12675,14 +12971,4 @@ fi
 if test x$ODIRECT != xyes; then
   { echo "$as_me:$LINENO: WARNING: Warning: O_DIRECT disabled: low-memory pvmove may lock up" >&5
 echo "$as_me: WARNING: Warning: O_DIRECT disabled: low-memory pvmove may lock up" >&2;}
-fi
-
-if test x$FSADM == xyes; then
-  { echo "$as_me:$LINENO: WARNING: fsadm support is untested" >&5
-echo "$as_me: WARNING: fsadm support is untested" >&2;}
-fi
-
-if test x$DMEVENTD == xyes; then
-  { echo "$as_me:$LINENO: WARNING: dmeventd support is untested" >&5
-echo "$as_me: WARNING: dmeventd support is untested" >&2;}
 fi
