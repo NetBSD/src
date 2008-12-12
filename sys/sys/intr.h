@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.7 2008/04/28 20:24:10 martin Exp $	*/
+/*	$NetBSD: intr.h,v 1.7.12.1 2008/12/12 12:47:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,6 @@ extern int	safepri;
 #define	IPL_NET		IPL_VM
 #define	IPL_TTY		IPL_VM
 #define	IPL_LPT		IPL_VM
-#define	IPL_AUDIO	IPL_VM
 #define	IPL_CLOCK	IPL_SCHED
 #define	IPL_IPI		IPL_HIGH
 #define	IPL_SERIAL	IPL_HIGH
@@ -84,7 +83,6 @@ extern int	safepri;
 #define	splnet()	splvm()
 #define	spltty()	splvm()
 #define	spllpt()	splvm()
-#define	splaudio()	splvm()
 #define	splclock()	splsched()
 #define	splipi()	splhigh()
 #define	splserial()	splhigh()
