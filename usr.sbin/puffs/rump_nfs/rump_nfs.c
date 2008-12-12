@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_nfs.c,v 1.3 2008/11/26 07:20:22 pooka Exp $	*/
+/*	$NetBSD: rump_nfs.c,v 1.4 2008/12/12 19:59:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -46,13 +46,15 @@ main(int argc, char *argv[])
 	struct nfs_args args;
 	char canon_dev[MAXPATHLEN], canon_dir[MAXPATHLEN];
 	int rv, mntflags;
-	extern int rump_threads, nfs_niothreads; /* XXX */
+	extern int nfs_niothreads; /* XXX */
+	char *thr;
 
-	rv = rump_init();
-	if (rv)
-		errx(1, "rump_init failed: %d", rv);
-
-	if (!rump_threads)
+	/*
+	 * XXX: but we can't call rump init before we detach (fork()) in
+	 * p2k_run_fs() lest we lose our threads.
+	 */
+	thr = getenv("RUMP_THREADS");
+	if (!thr || !*thr)
 		nfs_niothreads = 0;
 
 	setprogname(argv[0]);
