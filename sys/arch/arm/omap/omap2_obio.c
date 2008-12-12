@@ -1,7 +1,7 @@
-/*	$Id: omap2_obio.c,v 1.6 2008/11/21 17:13:07 matt Exp $	*/
+/*	$Id: omap2_obio.c,v 1.7 2008/12/12 17:36:14 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: omap2_obio.c,v 1.6 2008/11/21 17:13:07 matt Exp $ */
+/*	$NetBSD: omap2_obio.c,v 1.7 2008/12/12 17:36:14 matt Exp $ */
 
 
 /*
@@ -103,7 +103,7 @@
 
 #include "opt_omap.h"
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.6 2008/11/21 17:13:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_obio.c,v 1.7 2008/12/12 17:36:14 matt Exp $");
 
 #include "locators.h"
 #include "obio.h"
@@ -383,9 +383,12 @@ obio_attach_critical(struct obio_softc *sc)
 			continue;
 
 		cf = config_search_ia(obio_find, sc->sc_dev, "obio", &oa);
-		if (cf == NULL && critical_devs[i].required)
-			panic("obio_attach_critical: failed to find %s!",
-			    critical_devs[i].name);
+		if (cf == NULL) {
+			if (critical_devs[i].required)
+				panic("obio_attach_critical: failed to find %s!",
+				    critical_devs[i].name);
+			continue;
+		}
 
 		oa.obio_addr = cf->cf_loc[OBIOCF_ADDR];
 		oa.obio_size = cf->cf_loc[OBIOCF_SIZE];

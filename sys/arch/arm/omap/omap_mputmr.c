@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_mputmr.c,v 1.4 2008/11/21 17:13:07 matt Exp $	*/
+/*	$NetBSD: omap_mputmr.c,v 1.5 2008/12/12 17:36:14 matt Exp $	*/
 
 /*
  * Based on i80321_timer.c and arch/arm/sa11x0/sa11x0_ost.c
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.4 2008/11/21 17:13:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.5 2008/12/12 17:36:14 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -139,7 +139,7 @@ static struct omapmputmr_softc *ref_sc = NULL;
 #define MPU_LOAD_TIMER	0x04
 #define MPU_READ_TIMER	0x08
 
-CFATTACH_DECL(omapmputmr, sizeof(struct omapmputmr_softc),
+CFATTACH_DECL_NEW(omapmputmr, sizeof(struct omapmputmr_softc),
     omapmputmr_match, omapmputmr_attach, NULL, NULL);
 
 static int

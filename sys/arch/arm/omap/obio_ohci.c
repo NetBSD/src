@@ -1,7 +1,7 @@
-/*	$Id: obio_ohci.c,v 1.3 2008/10/24 05:39:00 matt Exp $	*/
+/*	$Id: obio_ohci.c,v 1.4 2008/12/12 17:36:14 matt Exp $	*/
 
 /* adapted from: */
-/*	$NetBSD: obio_ohci.c,v 1.3 2008/10/24 05:39:00 matt Exp $	*/
+/*	$NetBSD: obio_ohci.c,v 1.4 2008/12/12 17:36:14 matt Exp $	*/
 /*	$OpenBSD: pxa2x0_ohci.c,v 1.19 2005/04/08 02:32:54 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.3 2008/10/24 05:39:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_ohci.c,v 1.4 2008/12/12 17:36:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ static int	obioohci_detach(struct device *, int);
 void *		obioohci_fake_intr_establish(int (*)(void *), void *);
 void		obioohci_fake_intr(void);
 
-CFATTACH_DECL(obioohci, sizeof(struct obioohci_softc),
+CFATTACH_DECL_NEW(obioohci, sizeof(struct obioohci_softc),
     obioohci_match, obioohci_attach, obioohci_detach, ohci_activate);
 
 static void	obioohci_clkinit(struct obio_attach_args *);
