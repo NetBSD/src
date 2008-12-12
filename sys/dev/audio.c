@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.243.8.6 2008/12/11 19:49:29 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.243.8.7 2008/12/12 09:57:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.6 2008/12/11 19:49:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.7 2008/12/12 09:57:35 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1424,12 +1424,12 @@ audiommap(dev_t dev, off_t off, int prot)
 	paddr_t error;
 
 	/*
-	 * Acquire a writer lock.  audio_mmap() will drop sc_lock
+	 * Acquire a reader lock.  audio_mmap() will drop sc_lock
 	 * in order to allow the device's mmap routine to sleep.
 	 * Although not yet possible, we want to prevent memory
 	 * from being allocated or freed out from under us.
 	 */
-	if ((error = audio_enter(dev, RW_WRITER, &sc)) != 0)
+	if ((error = audio_enter(dev, RW_READER, &sc)) != 0)
 		return 1;
 	device_active(sc->dev, DVA_SYSTEM); /* XXXJDM */
 	switch (AUDIODEV(dev)) {
