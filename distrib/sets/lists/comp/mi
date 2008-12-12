@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1217 2008/12/07 01:46:06 pgoyette Exp $
+#	$NetBSD: mi,v 1.1218 2008/12/12 23:49:28 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3008,6 +3008,7 @@
 ./usr/libdata/debug/usr/bin/strip.debug		comp-util-debug		bfd,debug
 ./usr/libdata/debug/usr/bin/su.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/systat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/tabs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/tail.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/talk.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/tbl.debug		comp-groff-debug	debug
