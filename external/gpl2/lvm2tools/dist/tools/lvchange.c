@@ -1,3 +1,5 @@
+/*	$NetBSD: lvchange.c,v 1.1.1.2 2008/12/12 11:43:08 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -545,7 +547,7 @@ static int lvchange_tag(struct cmd_context *cmd, struct logical_volume *lv,
 static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 			   void *handle __attribute((unused)))
 {
-	int doit = 0;
+	int doit = 0, docmds = 0;
 	int archived = 0;
 
 	if (!(lv->vg->status & LVM_WRITE) &&
@@ -606,6 +608,7 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 			return ECMD_FAILED;
 		archived = 1;
 		doit += lvchange_permission(cmd, lv);
+		docmds++;
 	}
 
 	/* allocation policy change */
@@ -614,6 +617,7 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 			return ECMD_FAILED;
 		archived = 1;
 		doit += lvchange_alloc(cmd, lv);
+		docmds++;
 	}
 
 	/* read ahead sector change */
@@ -622,6 +626,7 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 			return ECMD_FAILED;
 		archived = 1;
 		doit += lvchange_readahead(cmd, lv);
+		docmds++;
 	}
 
 	/* read ahead sector change */
@@ -630,6 +635,7 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 			return ECMD_FAILED;
 		archived = 1;
 		doit += lvchange_persistent(cmd, lv);
+		docmds++;
 		if (sigint_caught())
 			return ECMD_FAILED;
 	}
@@ -640,6 +646,7 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 			return ECMD_FAILED;
 		archived = 1;
 		doit += lvchange_tag(cmd, lv, addtag_ARG);
+		docmds++;
 	}
 
 	/* del tag */
@@ -648,6 +655,7 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 			return ECMD_FAILED;
 		archived = 1;
 		doit += lvchange_tag(cmd, lv, deltag_ARG);
+		docmds++;
 	}
 
 	if (doit)
@@ -673,6 +681,9 @@ static int lvchange_single(struct cmd_context *cmd, struct logical_volume *lv,
 		if (!lvchange_monitoring(cmd, lv))
 			return ECMD_FAILED;
 	}
+
+	if (doit != docmds)
+		return ECMD_FAILED;
 
 	return ECMD_PROCESSED;
 }

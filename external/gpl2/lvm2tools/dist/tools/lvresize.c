@@ -1,3 +1,5 @@
+/*	$NetBSD: lvresize.c,v 1.1.1.2 2008/12/12 11:43:11 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -267,7 +269,7 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 	struct lv_segment *seg;
 	uint32_t seg_extents;
 	uint32_t sz, str;
-	struct list *pvh = NULL;
+	struct dm_list *pvh = NULL;
 	char size_buf[SIZE_BUF];
 	char lv_path[PATH_MAX];
 
@@ -305,6 +307,11 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 
 	if (lv->status & LOCKED) {
 		log_error("Can't resize locked LV %s", lv->name);
+		return ECMD_FAILED;
+	}
+
+	if (lv->status & CONVERTING) {
+		log_error("Can't resize %s while lvconvert in progress", lv->name);
 		return ECMD_FAILED;
 	}
 
@@ -376,7 +383,7 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 	seg_size = lp->extents - lv->le_count;
 
 	/* Use segment type of last segment */
-	list_iterate_items(seg, &lv->segments) {
+	dm_list_iterate_items(seg, &lv->segments) {
 		lp->segtype = seg->segtype;
 	}
 
@@ -389,7 +396,7 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 	/* If extending, find stripes, stripesize & size of last segment */
 	if ((lp->extents > lv->le_count) &&
 	    !(lp->stripes == 1 || (lp->stripes > 1 && lp->stripe_size))) {
-		list_iterate_items(seg, &lv->segments) {
+		dm_list_iterate_items(seg, &lv->segments) {
 			if (!seg_is_striped(seg))
 				continue;
 
@@ -429,7 +436,7 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 
 	/* If extending, find mirrors of last segment */
 	if ((lp->extents > lv->le_count)) {
-		list_iterate_back_items(seg, &lv->segments) {
+		dm_list_iterate_back_items(seg, &lv->segments) {
 			if (seg_is_mirrored(seg))
 				seg_mirrors = lv_mirror_count(seg->lv);
 			else
@@ -456,7 +463,7 @@ static int _lvresize(struct cmd_context *cmd, struct volume_group *vg,
 			log_error("Ignoring stripes, stripesize and mirrors "
 				  "arguments when reducing");
 
-		list_iterate_items(seg, &lv->segments) {
+		dm_list_iterate_items(seg, &lv->segments) {
 			seg_extents = seg->len;
 
 			if (seg_is_striped(seg)) {

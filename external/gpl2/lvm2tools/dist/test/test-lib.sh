@@ -42,19 +42,28 @@ this_test_() { expr "./$0" : '.*/t-\([^/]*\)\.sh$'; }
 test "${test_description}" != "" ||
 error "Test script did not set test_description."
 
+verboselevel=0
 while test "$#" -ne 0
 do
 	case "$1" in
 	-d|--d|--de|--deb|--debu|--debug)
-		debug=t; shift ;;
+		debug=t ;;
 	-i|--i|--im|--imm|--imme|--immed|--immedi|--immedia|--immediat|--immediate)
-		immediate=t; shift ;;
+		immediate=t ;;
 	-h|--h|--he|--hel|--help)
 		echo "$test_description"
 		exit 0 ;;
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
-		verbose=t; shift ;;
+		verbose=t ;;
+	-vv|-vvv|-vvvv)
+		verboselevel=${#1}
+		verboselevel=$(($verboselevel - 1))
+		verbose=t ;;
+	*)
+		echo "$0: unsupported option $1"
+		exit 0 ;;
 	esac
+        shift
 done
 
 exec 5>&1
@@ -238,10 +247,14 @@ done
 test_dir_rand_=$($abs_srcdir/mkdtemp $test_dir_ lvm-$this_test.XXXXXXXXXX) \
     || error "failed to create temporary directory in $test_dir_"
 
+testlib_cleanup_() {
+    d="$test_dir_rand_";
+    cd "$test_dir_" && chmod -R u+rwx "$d" && rm -rf "$d"
+}
+
 # Run each test from within a temporary sub-directory named after the
 # test itself, and arrange to remove it upon exception or normal exit.
-trap 'st=$?; cleanup_; d='"$test_dir_rand_"';
-    cd '"$test_dir_"' && chmod -R u+rwx "$d" && rm -rf "$d" && exit $st' 0
+trap 'st=$?; cleanup_; testlib_cleanup_; exit $st' 0
 trap '(exit $?); exit $?' 1 2 13 15
 
 cd $test_dir_rand_ || error "failed to cd to $test_dir_rand_"

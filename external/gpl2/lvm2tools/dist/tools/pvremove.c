@@ -1,3 +1,5 @@
+/*	$NetBSD: pvremove.c,v 1.1.1.2 2008/12/12 11:43:12 haad Exp $	*/
+
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -25,21 +27,38 @@ const char _really_wipe[] =
 static int pvremove_check(struct cmd_context *cmd, const char *name)
 {
 	struct physical_volume *pv;
+	struct dm_list mdas;
 
-	/* is the partition type set correctly ? */
-	if ((arg_count(cmd, force_ARG) < 1) && !is_lvm_partition(name)) {
-		log_error("%s: Not LVM partition type: use -f to override",
-			  name);
-		return 0;
-	}
+	dm_list_init(&mdas);
+
+	/* FIXME Check partition type is LVM unless --force is given */
 
 	/* Is there a pv here already? */
 	/* If not, this is an error unless you used -f. */
-	if (!(pv = pv_read(cmd, name, NULL, NULL, 1))) {
+	if (!(pv = pv_read(cmd, name, &mdas, NULL, 1))) {
 		if (arg_count(cmd, force_ARG))
 			return 1;
 		log_error("Physical Volume %s not found", name);
 		return 0;
+	}
+
+	/*
+	 * If a PV has no MDAs it may appear to be an
+	 * orphan until the metadata is read off
+	 * another PV in the same VG.  Detecting this
+	 * means checking every VG by scanning every
+	 * PV on the system.
+	 */
+	if (is_orphan(pv) && !dm_list_size(&mdas)) {
+		if (!scan_vgs_for_pvs(cmd)) {
+			log_error("Rescan for PVs without metadata areas "
+				  "failed.");
+			return 0;
+		}
+		if (!(pv = pv_read(cmd, name, NULL, NULL, 1))) {
+			log_error("Failed to read physical volume %s", name);
+			return 0;
+		}
 	}
 
 	/* orphan ? */

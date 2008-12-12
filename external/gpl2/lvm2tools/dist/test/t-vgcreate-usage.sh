@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2007 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2008 Red Hat, Inc. All rights reserved.
 #
 # This copyrighted material is made available to anyone wishing to use,
 # modify, copy, or redistribute it subject to the terms and conditions
@@ -10,84 +10,59 @@
 # Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
 test_description='Exercise some vgcreate diagnostics'
-privileges_required_=1
 
-. ./test-lib.sh
+. ./test-utils.sh
 
-cleanup_()
-{
-  test -n "$d1" && losetup -d "$d1"
-  test -n "$d2" && losetup -d "$d2"
-  rm -f "$f1" "$f2"
-}
+aux prepare_devs 3
+pvcreate $dev1 $dev2
+pvcreate --metadatacopies 0 $dev3
 
-test_expect_success \
-  'set up temp files, loopback devices, PVs, vgname' \
-  'f1=$(pwd)/1 && d1=$(loop_setup_ "$f1") &&
-   f2=$(pwd)/2 && d2=$(loop_setup_ "$f2") &&
-   vg=$(this_test_)-test-vg-$$            &&
-   pvcreate $d1 $d2'
+#COMM 'vgcreate accepts 8.00M physicalextentsize for VG'
+vgcreate $vg --physicalextentsize 8.00M $dev1 $dev2 
+check_vg_field_ $vg vg_extent_size 8.00M 
+vgremove $vg
 
-lv=vgcreate-usage-$$
+#COMM 'vgcreate accepts smaller (128) maxlogicalvolumes for VG'
+vgcreate $vg --maxlogicalvolumes 128 $dev1 $dev2 
+check_vg_field_ $vg max_lv 128 
+vgremove $vg
 
-test_expect_success \
-  'vgcreate accepts 8.00M physicalextentsize for VG' \
-  'vgcreate $vg --physicalextentsize 8.00M $d1 $d2 &&
-   check_vg_field_ $vg vg_extent_size 8.00M &&
-   vgremove $vg'
+#COMM 'vgcreate accepts smaller (128) maxphysicalvolumes for VG'
+vgcreate $vg --maxphysicalvolumes 128 $dev1 $dev2
+check_vg_field_ $vg max_pv 128
+vgremove $vg
 
-test_expect_success \
-  'vgcreate accepts smaller (128) maxlogicalvolumes for VG' \
-  'vgcreate $vg --maxlogicalvolumes 128 $d1 $d2 &&
-   check_vg_field_ $vg max_lv 128 &&
-   vgremove $vg'
+#COMM 'vgcreate rejects a zero physical extent size'
+not vgcreate --physicalextentsize 0 $vg $dev1 $dev2 2>err
+grep "^  Physical extent size may not be zero\$" err
 
-test_expect_success \
-  'vgcreate accepts smaller (128) maxphysicalvolumes for VG' \
-  'vgcreate $vg --maxphysicalvolumes 128 $d1 $d2 &&
-   check_vg_field_ $vg max_pv 128 &&
-   vgremove $vg'
+#COMM 'vgcreate rejects "inherit" allocation policy'
+not vgcreate --alloc inherit $vg $dev1 $dev2 2>err
+grep "^  Volume Group allocation policy cannot inherit from anything\$" err
 
-test_expect_success \
-  'vgcreate rejects a zero physical extent size' \
-  'vgcreate --physicalextentsize 0 $vg $d1 $d2 2>err;
-   status=$?; echo status=$status; test $status = 3 &&
-   grep "^  Physical extent size may not be zero\$" err'
+#COMM 'vgcreate rejects vgname "."'
+vginvalid=.; 
+not vgcreate $vginvalid $dev1 $dev2 2>err
+grep "New volume group name \"$vginvalid\" is invalid\$" err
 
-test_expect_success \
-  'vgcreate rejects "inherit" allocation policy' \
-  'vgcreate --alloc inherit $vg $d1 $d2 2>err;
-   status=$?; echo status=$status; test $status = 3 &&
-   grep "^  Volume Group allocation policy cannot inherit from anything\$" err'
+#COMM 'vgcreate rejects vgname greater than 128 characters'
+vginvalid=thisnameisridiculouslylongtotestvalidationcodecheckingmaximumsizethisiswhathappenswhenprogrammersgetboredandorarenotcreativedonttrythisathome
+not vgcreate $vginvalid $dev1 $dev2 2>err
+grep "New volume group name \"$vginvalid\" is invalid\$" err
 
-test_expect_success \
-  'vgcreate rejects vgname "."' \
-  'vg=.; vgcreate $vg $d1 $d2 2>err;
-   status=$?; echo status=$status; test $status = 3 &&
-   grep "New volume group name \"$vg\" is invalid\$" err'
+#COMM 'vgcreate rejects already existing vgname "/tmp/$vg"'
+#touch /tmp/$vg
+#not vgcreate $vg $dev1 $dev2 2>err
+#grep "New volume group name \"$vg\" is invalid\$" err
 
-test_expect_success \
-  'vgcreate rejects vgname greater than 128 characters' \
-  'vginvalid=thisnameisridiculouslylongtotestvalidationcodecheckingmaximumsizethisiswhathappenswhenprogrammersgetboredandorarenotcreativedonttrythisathome;
-   vgcreate $vginvalid $d1 $d2 2>err;
-   status=$?; echo status=$status; test $status = 3 &&
-   grep "New volume group name \"$vginvalid\" is invalid\$" err'
+#COMM "vgcreate rejects repeated invocation (run 2 times) (bz178216)"
+vgcreate $vg $dev1 $dev2
+not vgcreate $vg $dev1 $dev2
+vgremove -ff $vg
 
-test_expect_success \
-  'vgcreate rejects already existing vgname "/tmp/$vg"' \
-  'touch /tmp/$vg; vgcreate $vg $d1 $d2 2>err;
-   status=$?; echo status=$status; test $status = 3 &&
-   grep "New volume group name \"$vg\" is invalid\$" err'
+#COMM 'vgcreate rejects MaxLogicalVolumes > 255'
+not vgcreate --metadatatype 1 --maxlogicalvolumes 1024 $vg $dev1 $dev2 2>err
+grep "^  Number of volumes may not exceed 255\$" err
 
-# FIXME: Not sure why this fails
-#test_expect_success \
-#  'vgcreate rejects MaxLogicalVolumes > 255' \
-#  'vgcreate --metadatatype 1 --maxlogicalvolumes 1024 $vg $d1 $d2 2>err;
-#   cp err save;
-#   status=$?; echo status=$status; test $status = 3 &&
-#   grep "^  Number of volumes may not exceed 255\$" err'
-
-test_done
-# Local Variables:
-# indent-tabs-mode: nil
-# End:
+#COMM "vgcreate fails when the only pv has --metadatacopies 0"
+not vgcreate $vg $dev3

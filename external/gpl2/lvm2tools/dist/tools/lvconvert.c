@@ -1,3 +1,5 @@
+/*	$NetBSD: lvconvert.c,v 1.1.1.2 2008/12/12 11:43:09 haad Exp $	*/
+
 /*
  * Copyright (C) 2005-2007 Red Hat, Inc. All rights reserved.
  *
@@ -39,7 +41,7 @@ struct lvconvert_params {
 
 	int pv_count;
 	char **pvs;
-	struct list *pvh;
+	struct dm_list *pvh;
 };
 
 static int _lvconvert_name_params(struct lvconvert_params *lp,
@@ -257,7 +259,7 @@ static struct logical_volume *_get_lvconvert_lv(struct cmd_context *cmd __attrib
 static int _update_lvconvert_mirror(struct cmd_context *cmd __attribute((unused)),
 				    struct volume_group *vg __attribute((unused)),
 				    struct logical_volume *lv __attribute((unused)),
-				    struct list *lvs_changed __attribute((unused)),
+				    struct dm_list *lvs_changed __attribute((unused)),
 				    unsigned flags __attribute((unused)))
 {
 	/* lvconvert mirror doesn't require periodical metadata update */
@@ -267,7 +269,7 @@ static int _update_lvconvert_mirror(struct cmd_context *cmd __attribute((unused)
 static int _finish_lvconvert_mirror(struct cmd_context *cmd,
 				    struct volume_group *vg,
 				    struct logical_volume *lv,
-				    struct list *lvs_changed __attribute((unused)))
+				    struct dm_list *lvs_changed __attribute((unused)))
 {
 	if (!collapse_mirrored_lv(lv)) {
 		log_error("Failed to remove temporary sync layer.");
@@ -477,7 +479,7 @@ static int lvconvert_mirrors(struct cmd_context * cmd, struct logical_volume * l
 		/* FIXME Share code with lvcreate */
 
 		/* FIXME Why is this restriction here?  Fix it! */
-		list_iterate_items(seg, &lv->segments) {
+		dm_list_iterate_items(seg, &lv->segments) {
 			if (seg_is_striped(seg) && seg->area_count > 1) {
 				log_error("Mirrors of striped volumes are not yet supported.");
 				return 0;
@@ -501,7 +503,7 @@ static int lvconvert_mirrors(struct cmd_context * cmd, struct logical_volume * l
 	 * Converting from mirror to mirror with different leg count,
 	 * or different log type.
 	 */
-	if (list_size(&lv->segments) != 1) {
+	if (dm_list_size(&lv->segments) != 1) {
 		log_error("Logical volume %s has multiple "
 			  "mirror segments.", lv->name);
 		return 0;

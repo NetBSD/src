@@ -1,3 +1,5 @@
+/*	$NetBSD: commands.h,v 1.1.1.2 2008/12/12 11:43:05 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -850,13 +852,15 @@ xx(vgreduce,
    "\t[-h|--help]\n"
    "\t[--mirrorsonly]\n"
    "\t[--removemissing]\n"
+   "\t[-f|--force]\n"
    "\t[-t|--test]\n"
    "\t[-v|--verbose]\n"
    "\t[--version]" "\n"
    "\tVolumeGroupName\n"
    "\t[PhysicalVolumePath...]\n",
 
-   all_ARG, autobackup_ARG, mirrorsonly_ARG, removemissing_ARG, test_ARG)
+   all_ARG, autobackup_ARG, force_ARG, mirrorsonly_ARG, removemissing_ARG,
+   test_ARG)
 
 xx(vgremove,
    "Remove volume group(s)",

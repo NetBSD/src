@@ -1,3 +1,5 @@
+/*	$NetBSD: pvmove.c,v 1.1.1.2 2008/12/12 11:43:12 haad Exp $	*/
+
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -102,12 +104,12 @@ static struct volume_group *_get_vg(struct cmd_context *cmd, const char *vgname)
 }
 
 /* Create list of PVs for allocation of replacement extents */
-static struct list *_get_allocatable_pvs(struct cmd_context *cmd, int argc,
+static struct dm_list *_get_allocatable_pvs(struct cmd_context *cmd, int argc,
 					 char **argv, struct volume_group *vg,
 					 struct physical_volume *pv,
 					 alloc_policy_t alloc)
 {
-	struct list *allocatable_pvs, *pvht, *pvh;
+	struct dm_list *allocatable_pvs, *pvht, *pvh;
 	struct pv_list *pvl;
 
 	if (argc)
@@ -118,21 +120,21 @@ static struct list *_get_allocatable_pvs(struct cmd_context *cmd, int argc,
 	if (!allocatable_pvs)
 		return_NULL;
 
-	list_iterate_safe(pvh, pvht, allocatable_pvs) {
-		pvl = list_item(pvh, struct pv_list);
+	dm_list_iterate_safe(pvh, pvht, allocatable_pvs) {
+		pvl = dm_list_item(pvh, struct pv_list);
 
 		/* Don't allocate onto the PV we're clearing! */
 		if ((alloc != ALLOC_ANYWHERE) && (pvl->pv->dev == pv_dev(pv))) {
-			list_del(&pvl->list);
+			dm_list_del(&pvl->list);
 			continue;
 		}
 
 		/* Remove PV if full */
 		if ((pvl->pv->pe_count == pvl->pv->pe_alloc_count))
-			list_del(&pvl->list);
+			dm_list_del(&pvl->list);
 	}
 
-	if (list_empty(allocatable_pvs)) {
+	if (dm_list_empty(allocatable_pvs)) {
 		log_error("No extents available for allocation");
 		return NULL;
 	}
@@ -146,16 +148,16 @@ static struct list *_get_allocatable_pvs(struct cmd_context *cmd, int argc,
  */
 static int _insert_pvmove_mirrors(struct cmd_context *cmd,
 				  struct logical_volume *lv_mirr,
-				  struct list *source_pvl,
+				  struct dm_list *source_pvl,
 				  struct logical_volume *lv,
-				  struct list *lvs_changed)
+				  struct dm_list *lvs_changed)
 
 {
 	struct pv_list *pvl;
 	uint32_t prev_le_count;
 
 	/* Only 1 PV may feature in source_pvl */
-	pvl = list_item(source_pvl->n, struct pv_list);
+	pvl = dm_list_item(source_pvl->n, struct pv_list);
 
 	prev_le_count = lv_mirr->le_count;
 	if (!insert_layer_for_segments_on_pv(cmd, lv, lv_mirr, PVMOVE,
@@ -177,11 +179,11 @@ static int _insert_pvmove_mirrors(struct cmd_context *cmd,
 /* Create new LV with mirror segments for the required copies */
 static struct logical_volume *_set_up_pvmove_lv(struct cmd_context *cmd,
 						struct volume_group *vg,
-						struct list *source_pvl,
+						struct dm_list *source_pvl,
 						const char *lv_name,
-						struct list *allocatable_pvs,
+						struct dm_list *allocatable_pvs,
 						alloc_policy_t alloc,
-						struct list **lvs_changed)
+						struct dm_list **lvs_changed)
 {
 	struct logical_volume *lv_mirr, *lv;
 	struct lv_list *lvl;
@@ -203,10 +205,10 @@ static struct logical_volume *_set_up_pvmove_lv(struct cmd_context *cmd,
 		return NULL;
 	}
 
-	list_init(*lvs_changed);
+	dm_list_init(*lvs_changed);
 
 	/* Find segments to be moved and set up mirrors */
-	list_iterate_items(lvl, &vg->lvs) {
+	dm_list_iterate_items(lvl, &vg->lvs) {
 		lv = lvl->lv;
 		if ((lv == lv_mirr))
 			continue;
@@ -276,7 +278,7 @@ static int _activate_lv(struct cmd_context *cmd, struct logical_volume *lv_mirr,
 
 static int _update_metadata(struct cmd_context *cmd, struct volume_group *vg,
 			    struct logical_volume *lv_mirr,
-			    struct list *lvs_changed, unsigned flags)
+			    struct dm_list *lvs_changed, unsigned flags)
 {
 	unsigned exclusive = _pvmove_is_exclusive(cmd, vg);
 	unsigned first_time = (flags & PVMOVE_FIRST_TIME) ? 1 : 0;
@@ -347,10 +349,10 @@ static int _set_up_pvmove(struct cmd_context *cmd, const char *pv_name,
 	const char *lv_name = NULL;
 	char *pv_name_arg;
 	struct volume_group *vg;
-	struct list *source_pvl;
-	struct list *allocatable_pvs;
+	struct dm_list *source_pvl;
+	struct dm_list *allocatable_pvs;
 	alloc_policy_t alloc;
-	struct list *lvs_changed;
+	struct dm_list *lvs_changed;
 	struct physical_volume *pv;
 	struct logical_volume *lv_mirr;
 	unsigned first_time = 1;
@@ -474,14 +476,14 @@ static int _set_up_pvmove(struct cmd_context *cmd, const char *pv_name,
 
 static int _finish_pvmove(struct cmd_context *cmd, struct volume_group *vg,
 			  struct logical_volume *lv_mirr,
-			  struct list *lvs_changed)
+			  struct dm_list *lvs_changed)
 {
 	int r = 1;
-	struct list lvs_completed;
+	struct dm_list lvs_completed;
 	struct lv_list *lvl;
 
 	/* Update metadata to remove mirror segments and break dependencies */
-	list_init(&lvs_completed);
+	dm_list_init(&lvs_completed);
 	if (!lv_remove_mirrors(cmd, lv_mirr, 1, 0, NULL, PVMOVE) ||
 	    !remove_layers_for_segments_all(cmd, lv_mirr, PVMOVE,
 					    &lvs_completed)) {
@@ -489,7 +491,7 @@ static int _finish_pvmove(struct cmd_context *cmd, struct volume_group *vg,
 		return 0;
 	}
 
-	list_iterate_items(lvl, &lvs_completed)
+	dm_list_iterate_items(lvl, &lvs_completed)
 		/* FIXME Assumes only one pvmove at a time! */
 		lvl->lv->status &= ~LOCKED;
 

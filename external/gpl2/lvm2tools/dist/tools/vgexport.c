@@ -1,3 +1,5 @@
+/*	$NetBSD: vgexport.c,v 1.1.1.2 2008/12/12 11:43:15 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -48,7 +50,7 @@ static int vgexport_single(struct cmd_context *cmd __attribute((unused)),
 
 	vg->status |= EXPORTED_VG;
 
-	list_iterate_items(pvl, &vg->pvs) {
+	dm_list_iterate_items(pvl, &vg->pvs) {
 		pv = pvl->pv;
 		pv->status |= EXPORTED_VG;
 	}

@@ -1,3 +1,5 @@
+/*	$NetBSD: polldaemon.h,v 1.1.1.2 2008/12/12 11:43:11 haad Exp $	*/
+
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
@@ -29,11 +31,11 @@ struct poll_functions {
 	int (*update_metadata) (struct cmd_context *cmd,
 				struct volume_group *vg,
 				struct logical_volume *lv_mirr,
-				struct list *lvs_changed, unsigned flags);
+				struct dm_list *lvs_changed, unsigned flags);
 	int (*finish_copy) (struct cmd_context *cmd,
 			    struct volume_group *vg,
 			    struct logical_volume *lv_mirr,
-			    struct list *lvs_changed);
+			    struct dm_list *lvs_changed);
 };
 
 struct daemon_parms {

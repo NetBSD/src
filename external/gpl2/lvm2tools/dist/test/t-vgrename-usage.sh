@@ -1,5 +1,4 @@
-#!/bin/sh
-# Copyright (C) 2007 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2008 Red Hat, Inc. All rights reserved.
 #
 # This copyrighted material is made available to anyone wishing to use,
 # modify, copy, or redistribute it subject to the terms and conditions
@@ -9,38 +8,22 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 
-test_description='Exercise some vgrename diagnostics'
-privileges_required_=1
+. ./test-utils.sh
 
-. ./test-lib.sh
+aux prepare_devs 4
+pvcreate $dev1 $dev2
+pvcreate --metadatacopies 0 $dev3 $dev4
 
-cleanup_()
-{
-  test -n "$d1" && losetup -d "$d1"
-  test -n "$d2" && losetup -d "$d2"
-  test -n "$d3" && losetup -d "$d3"
-  test -n "$d4" && losetup -d "$d4"
-  rm -f "$f1" "$f2" "$f3" "$f4"
-}
+# vgrename normal operation - rename vg1 to vg2
+vgcreate $vg1 $dev1 $dev2
+vgrename $vg1 $vg2
+check_vg_field_ $vg2 vg_name $vg2
+vgremove $vg2
 
-test_expect_success \
-  'set up temp files, loopback devices, PVs, vgnames' \
-  'f1=$(pwd)/1 && d1=$(loop_setup_ "$f1") &&
-   f2=$(pwd)/2 && d2=$(loop_setup_ "$f2") &&
-   f3=$(pwd)/3 && d3=$(loop_setup_ "$f3") &&
-   f4=$(pwd)/4 && d4=$(loop_setup_ "$f4") &&
-   vg1=$(this_test_)-1-$$          &&
-   vg2=$(this_test_)-2-$$          &&
-   pvcreate $d1 $d2 $d3 $d4'
-
-test_expect_success \
-  'vgrename normal operation - rename vg1 to vg2' \
-  'vgcreate $vg1 $d1 $d2 &&
-   vgrename $vg1 $vg2 &&
-   check_vg_field_ $vg2 vg_name $vg2 &&
-   vgremove $vg2'
-
-test_done
-# Local Variables:
-# indent-tabs-mode: nil
-# End:
+# vgrename by uuid (bz231187)
+vgcreate $vg1 $dev1 $dev3
+UUID=$(vgs --noheading -o vg_uuid $vg1)
+check_vg_field_ $vg1 vg_uuid $UUID
+vgrename $UUID $vg2
+check_vg_field_ $vg2 vg_name $vg2
+vgremove $vg2

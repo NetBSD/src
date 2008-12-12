@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (C) 2007 Red Hat, Inc. All rights reserved.
+# Copyright (C) 2008 Red Hat, Inc. All rights reserved.
 #
 # This copyrighted material is made available to anyone wishing to use,
 # modify, copy, or redistribute it subject to the terms and conditions
@@ -14,55 +14,32 @@
 #
 
 test_description='Test read-ahead functionality'
-privileges_required_=1
 
-. ./test-lib.sh
+. ./test-utils.sh
 
-cleanup_()
-{
-  test -n "$d1" && losetup -d "$d1"
-  test -n "$d2" && losetup -d "$d2"
-  test -n "$d3" && losetup -d "$d3"
-  test -n "$d4" && losetup -d "$d4"
-  test -n "$d5" && losetup -d "$d5"
-  rm -f "$f1" "$f2" "$f3" "$f4" "$f5"
+
+get_lvs_() {
+   lvs --units s --nosuffix --noheadings -o $1 "$vg"/"$lv"
 }
 
-get_lvs_()
-{
-   case $(lvs --units s --nosuffix --noheadings -o $1_read_ahead "$vg"/"$lv") in
+check_lvs_() {
+   case $(get_lvs_ $1) in
     *$2) true ;;
     *) false ;;
    esac
 }
 
-test_expect_success "set up temp files, loopback devices" \
-  'f1=$(pwd)/1 && d1=$(loop_setup_ "$f1") &&
-   f2=$(pwd)/2 && d2=$(loop_setup_ "$f2") &&
-   f3=$(pwd)/3 && d3=$(loop_setup_ "$f3") &&
-   f4=$(pwd)/4 && d4=$(loop_setup_ "$f4") &&
-   f5=$(pwd)/5 && d5=$(loop_setup_ "$f5") &&
-   vg=$(this_test_)-test-vg-$$            &&
-   lv=$(this_test_)-test-lv-$$'
+aux prepare_vg 5
 
-test_expect_success "test various read ahead settings" \
-  'pvcreate "$d1"                                    &&
-   pvcreate "$d2"                                    &&
-   pvcreate "$d3"                                    &&
-   pvcreate "$d4"                                    &&
-   pvcreate "$d5"                                    &&
-   vgcreate -c n "$vg" "$d1" "$d2" "$d3" "$d4" "$d5" &&
-   lvcreate -n "$lv" -l 100%FREE -i5 -I256 "$vg"     &&
-   lvdisplay "$vg"/"$lv"                             &&
-   lvchange -r auto "$vg"/"$lv" || true | grep auto  &&
-   get_lvs_ lv auto                                  &&
-   get_lvs_ lv_kernel 5120                           &&
-   lvchange -r 400 "$vg/$lv"                         &&
-   get_lvs_ lv 400                                   &&
-   vgremove -f "$vg"'
+#COMM "test various read ahead settings (bz450922)"
+lvcreate -n "$lv" -l 100%FREE -i5 -I256 "$vg"     
+ra="$(get_lvs_ lv_kernel_read_ahead)"
+test "$(( ( $ra / 5 ) * 5 ))" -eq $ra
+lvdisplay "$vg"/"$lv"                             
+lvchange -r auto "$vg"/"$lv" 2>&1 | grep auto     
+check_lvs_ lv_read_ahead auto                                  
+check_lvs_ lv_kernel_read_ahead 5120                           
+lvchange -r 400 "$vg/$lv"                         
+check_lvs_ lv_read_ahead 400                                   
+lvremove -ff "$vg"
 
-test_done
-
-# Local Variables:
-# indent-tabs-mode: nil
-# End:
