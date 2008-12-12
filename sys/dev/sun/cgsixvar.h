@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.9 2008/04/28 20:23:58 martin Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.10 2008/12/12 18:39:55 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct cg6_cursor {		/* cg6 hardware cursor status */
 
 /* per-display variables */
 struct cgsix_softc {
-	struct device	sc_dev;		/* base device */
+	device_t	sc_dev;		/* base device */
 	struct fbdevice	sc_fb;		/* frame buffer device */
 	bus_space_tag_t	sc_bustag;
 	bus_addr_t	sc_paddr;	/* phys address for device mmap() */
@@ -72,7 +72,8 @@ struct cgsix_softc {
 	int sc_mode;
 	uint32_t sc_bg;
 	struct vcons_data vd;
-#endif	
+#endif
+	uint8_t sc_default_cmap[768];
 	union	bt_cmap sc_cmap;	/* Brooktree color map */
 };
 
