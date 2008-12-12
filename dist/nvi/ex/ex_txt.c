@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_txt.c,v 1.2 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: ex_txt.c,v 1.3 2008/12/12 22:55:56 lukem Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -405,8 +405,12 @@ txt_dent(SCR *sp, TEXT *tp)
 	 *
 	 * Count up spaces/tabs needed to get to the target.
 	 */
-	for (cno = 0, tabs = 0; cno + COL_OFF(cno, ts) <= scno; ++tabs)
-		cno += COL_OFF(cno, ts);
+	cno = 0;
+	tabs = 0;
+	if (!O_ISSET(sp, O_EXPANDTABS)) {
+		for (; cno + COL_OFF(cno, ts) <= scno; ++tabs)
+			cno += COL_OFF(cno, ts);
+	}
 	spaces = scno - cno;
 
 	/* Make sure there's enough room. */

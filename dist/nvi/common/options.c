@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.4 2008/12/05 22:51:42 christos Exp $ */
+/*	$NetBSD: options.c,v 1.5 2008/12/12 22:55:55 lukem Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -84,6 +84,8 @@ OPTLIST const optlist[] = {
 	{L("errorbells"),	NULL,		OPT_0BOOL,	0},
 /* O_ESCAPETIME	  4.4BSD */
 	{L("escapetime"),	NULL,		OPT_NUM,	0},
+/* O_EXPANDTABS	  NetBSD 5.0 */
+	{L("expandtabs"),	NULL,		OPT_0BOOL,	0},
 /* O_EXRC	System V (undocumented) */
 	{L("exrc"),	NULL,		OPT_0BOOL,	0},
 /* O_EXTENDED	  4.4BSD */
