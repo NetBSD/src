@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.6 2008/11/14 13:43:20 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.7 2008/12/12 19:50:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -138,20 +138,13 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 {
 	char typebuf[PUFFS_TYPELEN];
 	struct puffs_ops *pops;
-	struct puffs_usermount *pu;
+	struct puffs_usermount *pu = NULL;
 	struct puffs_node *pn_root;
 	struct vnode *rvp;
-	struct ukfs *ukfs;
+	struct ukfs *ukfs = NULL;
 	extern int puffs_fakecc;
-	int rv, sverrno;
+	int rv = -1, sverrno;
 	bool dodaemon;
-
-	rv = -1;
-	if (ukfs_init() == -1)
-		return -1;
-	ukfs = ukfs_mount(vfsname, devpath, mountpath, mntflags, arg, alen);
-	if (ukfs == NULL)
-		return -1;
 
 	PUFFSOP_INIT(pops);
 
@@ -204,8 +197,17 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 		strlcat(typebuf, vfsname, sizeof(typebuf));
 	}
 
-	pu = puffs_init(pops, devpath, typebuf, ukfs_getmp(ukfs), puffs_flags);
+	pu = puffs_init(pops, devpath, typebuf, NULL, puffs_flags);
 	if (pu == NULL)
+		goto out;
+
+	if (dodaemon)
+		puffs_daemon(pu, 1, 1);
+
+	if (ukfs_init() == -1)
+		return -1;
+	ukfs = ukfs_mount(vfsname, devpath, mountpath, mntflags, arg, alen);
+	if (ukfs == NULL)
 		goto out;
 
 	rvp = ukfs_getrvp(ukfs);
@@ -217,16 +219,19 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 
 	puffs_set_prepost(pu, makelwp, clearlwp);
 
-	if (dodaemon)
-		puffs_daemon(pu, 1, 1);
-
+	puffs_setspecific(pu, ukfs_getmp(ukfs));
 	if ((rv = puffs_mount(pu, mountpath, mntflags, rvp))== -1)
 		goto out;
 	rv = puffs_mainloop(pu);
+	puffs_exit(pu, 1);
+	pu = NULL;
 
  out:
 	sverrno = errno;
-	ukfs_release(ukfs, UKFS_RELFLAG_NOUNMOUNT);
+	if (ukfs)
+		ukfs_release(ukfs, UKFS_RELFLAG_NOUNMOUNT);
+	if (pu)
+		puffs_cancel(pu, sverrno);
 	if (rv) {
 		errno = sverrno;
 		rv = -1;
