@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.24 2008/04/28 20:23:57 martin Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.25 2008/12/12 18:46:41 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.24 2008/04/28 20:23:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.25 2008/12/12 18:46:41 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix_sbus.c,v 1.24 2008/04/28 20:23:57 martin Exp $
 #include <dev/sun/cgsixvar.h>
 
 /* autoconfiguration driver */
-static int	cgsixmatch(struct device *, struct cfdata *, void *);
-static void	cgsixattach(struct device *, struct device *, void *);
+static int	cgsixmatch(device_t, struct cfdata *, void *);
+static void	cgsixattach(device_t, device_t, void *);
 
 /* Allocate an `sbusdev' in addition to the cgsix softc */
 struct cgsix_sbus_softc {
@@ -73,7 +73,7 @@ struct cgsix_sbus_softc {
 	struct sbusdev bss_sd;
 };
 
-CFATTACH_DECL(cgsix_sbus, sizeof(struct cgsix_sbus_softc),
+CFATTACH_DECL_NEW(cgsix_sbus, sizeof(struct cgsix_sbus_softc),
     cgsixmatch, cgsixattach, NULL, NULL);
 
 /*
@@ -81,7 +81,7 @@ CFATTACH_DECL(cgsix_sbus, sizeof(struct cgsix_sbus_softc),
  */
 int
 cgsixmatch(parent, cf, aux)
-	struct device *parent;
+	device_t parent;
 	struct cfdata *cf;
 	void *aux;
 {
@@ -96,11 +96,12 @@ cgsixmatch(parent, cf, aux)
  */
 void
 cgsixattach(parent, self, aux)
-	struct device *parent, *self;
+	device_t parent, self;
 	void *aux;
 {
-	struct cgsix_softc *sc = (struct cgsix_softc *)self;
-	struct sbusdev *sd = &((struct cgsix_sbus_softc *)self)->bss_sd;
+	struct cgsix_sbus_softc *ssc = device_private(self);
+	struct cgsix_softc *sc = &ssc->bss_softc;
+	struct sbusdev *sd = &ssc->bss_sd;
 	struct sbus_attach_args *sa = aux;
 	struct fbdevice *fb = &sc->sc_fb;
 	int node, isconsole;
@@ -110,12 +111,13 @@ cgsixattach(parent, self, aux)
 	/* Remember cookies for cgsix_mmap() */
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_paddr = sbus_bus_addr(sa->sa_bustag, sa->sa_slot, sa->sa_offset);
+	sc->sc_dev = self;
 
 	node = sa->sa_node;
 	
-	fb->fb_device = &sc->sc_dev;
+	fb->fb_device = sc->sc_dev;
 	fb->fb_type.fb_type = FBTYPE_SUNFAST_COLOR;
-	fb->fb_flags = device_cfdata(&sc->sc_dev)->cf_flags & FB_USERMASK;
+	fb->fb_flags = device_cfdata(sc->sc_dev)->cf_flags & FB_USERMASK;
 	fb->fb_type.fb_depth = 8;
 
 	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
@@ -175,7 +177,7 @@ cgsixattach(parent, self, aux)
 	}
 	sc->sc_fbc = (struct cg6_fbc *)bus_space_vaddr(sa->sa_bustag, bh);
 
-	sbus_establish(sd, &sc->sc_dev);
+	sbus_establish(sd, sc->sc_dev);
 	name = prom_getpropstring(node, "model");
 
 	isconsole = fb_is_console(node);
