@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.10 2008/05/17 00:45:38 macallan Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.11 2008/12/12 18:52:40 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -91,6 +91,7 @@ struct cgfourteen_softc {
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
+	void *sc_shadowfb;
 	int sc_mode;	/* wsdisplay mode - EMUL, DUMB etc. */
 	int sc_depth;	/* current colour depth */
 #endif
@@ -107,4 +108,5 @@ struct cgfourteen_softc {
 	struct	cg14clut *sc_clut2;
 	struct	cg14clut *sc_clut3;
 	uint	*sc_clutincr;
+	int	sc_opens;
 };
