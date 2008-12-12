@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.108 2008/08/12 19:44:39 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.109 2008/12/12 18:59:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -438,6 +438,7 @@ void			puffs_setrootinfo(struct puffs_usermount *,
 					  enum vtype, vsize_t, dev_t); 
 
 void			*puffs_getspecific(struct puffs_usermount *);
+void			puffs_setspecific(struct puffs_usermount *, void *);
 void			puffs_setmaxreqlen(struct puffs_usermount *, size_t);
 size_t			puffs_getmaxreqlen(struct puffs_usermount *);
 void			puffs_setfhsize(struct puffs_usermount *, size_t, int);
