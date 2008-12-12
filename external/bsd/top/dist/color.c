@@ -102,9 +102,9 @@ color_slot(char *str)
     if (num_color_ansi >= max_color_ansi)
     {
 	max_color_ansi += COLOR_ANSI_SLOTS;
-	color_ansi = (char **)realloc(color_ansi, max_color_ansi * sizeof(char *));
+	color_ansi = erealloc(color_ansi, max_color_ansi * sizeof(char *));
     }
-    color_ansi[num_color_ansi] = strdup(str);
+    color_ansi[num_color_ansi] = estrdup(str);
     return num_color_ansi++;
 }
 
@@ -128,7 +128,7 @@ color_env_parse(char *env)
     color_entry *ce;
 
     /* initialization */
-    color_ansi = (char **)malloc(COLOR_ANSI_SLOTS * sizeof(char *));
+    color_ansi = emalloc(COLOR_ANSI_SLOTS * sizeof(char *));
     max_color_ansi = COLOR_ANSI_SLOTS;
 
     /* color slot 0 is always "0" */
@@ -143,9 +143,9 @@ color_env_parse(char *env)
 		(max = strchr(min, ',')) != NULL &&
 		(str = strchr(max, '#')) != NULL)
 	    {
-		ce = (color_entry *)malloc(sizeof(color_entry));
+		ce = emalloc(sizeof(color_entry));
 		len = min - p;
-		ce->tag = (char *)malloc(len + 1);
+		ce->tag = emalloc(len + 1);
 		strncpy(ce->tag, p, len);
 		ce->tag[len] = '\0';
 		ce->min = atoi(++min);
@@ -199,16 +199,16 @@ color_tag(char *tag)
     if (bytag == NULL)
     {
 	totaltags = 10;
-	bytag = (color_entry **)malloc(totaltags * sizeof(color_entry *));
-	bytag_names = (char **)malloc(totaltags * sizeof(char *));
+	bytag = emalloc(totaltags * sizeof(color_entry *));
+	bytag_names = emalloc(totaltags * sizeof(char *));
     }
 
     /* if we dont have enough room then reallocate */
     if (tagcnt >= totaltags)
     {
 	totaltags *= 2;
-	bytag = (color_entry **)realloc(bytag, totaltags * sizeof(color_entry *));
-	bytag_names = (char **)realloc(bytag_names, totaltags * sizeof(char *));
+	bytag = erealloc(bytag, totaltags * sizeof(color_entry *));
+	bytag_names = erealloc(bytag_names, totaltags * sizeof(char *));
     }
 
     /* initialize scan */
@@ -228,7 +228,7 @@ color_tag(char *tag)
 
     /* we track names in the array bytag */
     bytag[tagcnt] = tp;
-    bytag_names[tagcnt] = strdup(tag);
+    bytag_names[tagcnt] = estrdup(tag);
 
     /* return this index number as a reference */
     dprintf("color_tag: returns %d\n", tagcnt);

@@ -98,7 +98,7 @@ username(int uid)
     if (data == NULL)
     {
 	/* make space */
-	data = (struct hash_data *)malloc(sizeof(struct hash_data));
+	data = emalloc(sizeof(struct hash_data));
 
 	/* fill in some data, including an already expired time */
 	data->uid = uid;

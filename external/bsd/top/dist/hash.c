@@ -42,54 +42,13 @@
  * that contains all the key/value pairs which hashed to that index.
  */
 
-#include "config.h"
-
-#if STDC_HEADERS
-#include <string.h>
-#include <stdlib.h>
-#define memzero(a, b)		memset((a), 0, (b))
-#else /* !STDC_HEADERS */
-#ifdef HAVE_MEMCPY
-#define memzero(a, b)		memset((a), 0, (b))
-#else
-#define memcpy(a, b, c)		bcopy((b), (a), (c))
-#define memzero(a, b)		bzero((a), (b))
-#define memcmp(a, b, c)		bcmp((a), (b), (c))
-#endif /* HAVE_MEMCPY */
-#ifdef HAVE_STRINGS_H
-#include <strings.h>
-#else
-#ifdef HAVE_STRING_H
-#include <string.h>
-#endif
-#endif
-void *malloc();
-void free();
-char *strdup();
-#endif /* !STDC_HEADERS */
-
-/* After all that there are still some systems that don't have NULL defined */
-#ifndef NULL
-#define NULL 0
-#endif
+#include "os.h"
 
 #ifdef HAVE_MATH_H
 #include <math.h>
 #endif
 
-#if !HAVE_PID_T
-typedef long pid_t;
-#endif
-#if !HAVE_ID_T
-typedef long id_t;
-#endif
-
 #include "hash.h"
-
-
-
-
-
 
 static int
 next_prime(int x)
@@ -157,8 +116,8 @@ llistitem *ll_newitem(int size)
 {
     llistitem *qi;
 
-    qi = (llistitem *)malloc(sizeof(llistitem) + size);
-    qi->datum = ((void *)qi + sizeof(llistitem));
+    qi = emalloc(sizeof(llistitem) + size);
+    qi->datum = ((char *)qi + sizeof(llistitem));
     return qi;
 }
 
@@ -231,14 +190,14 @@ hash_create(int num)
     int i;
 
     /* create the resultant structure */
-    result = (hash_table *)malloc(sizeof(hash_table));
+    result = emalloc(sizeof(hash_table));
 
     /* adjust bucket count to be prime */
     num = next_prime(num);
 
     /* create the buckets */
     bytes = sizeof(bucket_t) * num;
-    result->buckets = b = (bucket_t *)malloc(bytes);
+    result->buckets = b = emalloc(bytes);
     result->num_buckets = num;
 
     /* create each bucket as a linked list */
@@ -1012,7 +971,7 @@ hash_add_string(hash_table *ht, char * key, void *value)
     hi = (hash_item_string *)newli->datum;
 
     /* fill in the values */
-    hi->key = strdup(key);
+    hi->key = estrdup(key);
     hi->value = value;
 
     /* hash to the bucket */
@@ -1094,7 +1053,7 @@ hash_replace_string(hash_table *ht, char * key, void *value)
     {
 	li = ll_newitem(sizeof(hash_item_string));
 	hi = (hash_item_string *)li->datum;
-	hi->key = strdup(key);
+	hi->key = estrdup(key);
 	hi->value = value;
 	ll_add(&(bucket->list), li);
     }

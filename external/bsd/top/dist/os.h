@@ -51,6 +51,15 @@
 # endif
 #endif
 
+#ifdef __NetBSD__
+#include <util.h>
+#else
+#define emalloc malloc
+#define estrdup strdup
+#define ecalloc calloc
+#define erealloc realloc
+#endif
+
 #if STDC_HEADERS
 #include <string.h>
 #include <stdlib.h>
