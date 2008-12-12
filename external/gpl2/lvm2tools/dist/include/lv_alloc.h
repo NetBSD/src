@@ -1,4 +1,4 @@
-/*	$NetBSD: lv_alloc.h,v 1.1.1.1 2008/12/12 11:42:11 haad Exp $	*/
+/*	$NetBSD: lv_alloc.h,v 1.2 2008/12/12 11:55:06 haad Exp $	*/
 
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.  

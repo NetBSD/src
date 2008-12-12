@@ -1,4 +1,4 @@
-/*	$NetBSD: defaults.h,v 1.1.1.1 2008/12/12 11:42:12 haad Exp $	*/
+/*	$NetBSD: defaults.h,v 1.2 2008/12/12 11:55:06 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.1.1.1 2008/12/12 11:42:10 haad Exp $	*/
+/*	$NetBSD: util.h,v 1.2 2008/12/12 11:55:06 haad Exp $	*/
 
 /*
  * Copyright (C) 2007 Red Hat, Inc. All rights reserved.
