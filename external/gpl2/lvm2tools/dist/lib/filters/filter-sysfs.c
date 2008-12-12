@@ -1,3 +1,5 @@
+/*	$NetBSD: filter-sysfs.c,v 1.1.1.2 2008/12/12 11:42:21 haad Exp $	*/
+
 /*
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
  *
@@ -20,46 +22,10 @@
 
 #include <dirent.h>
 
-static int _locate_sysfs_blocks(const char *proc, char *path, size_t len,
+static int _locate_sysfs_blocks(const char *sysfs_dir, char *path, size_t len,
 				unsigned *sysfs_depth)
 {
-	char proc_mounts[PATH_MAX];
-	FILE *fp;
-	char *split[4], buffer[PATH_MAX + 16];
-	const char *sys_mnt = NULL;
 	struct stat info;
-
-	if (!*proc) {
-		log_verbose("No proc filesystem found: skipping sysfs filter");
-		return 0;
-	}
-		
-	if (dm_snprintf(proc_mounts, sizeof(proc_mounts),
-			 "%s/mounts", proc) < 0) {
-		log_error("Failed to create /proc/mounts string");
-		return 0;
-	}
-
-	if (!(fp = fopen(proc_mounts, "r"))) {
-		log_sys_error("fopen %s", proc_mounts);
-		return 0;
-	}
-
-	while (fgets(buffer, sizeof(buffer), fp)) {
-		if (dm_split_words(buffer, 4, 0, split) == 4 &&
-		    !strcmp(split[2], "sysfs")) {
-			sys_mnt = split[1];
-			break;
-		}
-	}
-
-	if (fclose(fp))
-		log_sys_error("fclose", proc_mounts);
-
-	if (!sys_mnt) {
-		log_error("Failed to find sysfs mount point");
-		return 0;
-	}
 
 	/*
 	 * unified classification directory for all kernel subsystems
@@ -70,7 +36,7 @@ static int _locate_sysfs_blocks(const char *proc, char *path, size_t len,
 	 *  `-- sr0 -> ../../../devices/pci0000:00/0000:00:1f.2/host1/target1:0:0/1:0:0:0/block/sr0
 	 *
 	 */
-	if (dm_snprintf(path, len, "%s/%s", sys_mnt,
+	if (dm_snprintf(path, len, "%s/%s", sysfs_dir,
 			"subsystem/block/devices") >= 0) {
 		if (!stat(path, &info)) {
 			*sysfs_depth = 0;
@@ -87,7 +53,7 @@ static int _locate_sysfs_blocks(const char *proc, char *path, size_t len,
 	 *  `-- sr0 -> ../../devices/pci0000:00/0000:00:1f.2/host1/target1:0:0/1:0:0:0/block/sr0
 	 *
 	 */
-	if (dm_snprintf(path, len, "%s/%s", sys_mnt, "class/block") >= 0) {
+	if (dm_snprintf(path, len, "%s/%s", sysfs_dir, "class/block") >= 0) {
 		if (!stat(path, &info)) {
 			*sysfs_depth = 0;
 			return 1;
@@ -112,7 +78,7 @@ static int _locate_sysfs_blocks(const char *proc, char *path, size_t len,
 	 * ...
 	 *
 	 */
-	if (dm_snprintf(path, len, "%s/%s", sys_mnt, "block") >= 0) {
+	if (dm_snprintf(path, len, "%s/%s", sysfs_dir, "block") >= 0) {
 		if (!stat(path, &info)) {
 			*sysfs_depth = 1;
 			return 1;
@@ -321,7 +287,7 @@ static void _destroy(struct dev_filter *f)
 	dm_pool_destroy(ds->mem);
 }
 
-struct dev_filter *sysfs_filter_create(const char *proc)
+struct dev_filter *sysfs_filter_create(const char *sysfs_dir)
 {
 	char sys_block[PATH_MAX];
 	unsigned sysfs_depth;
@@ -329,7 +295,12 @@ struct dev_filter *sysfs_filter_create(const char *proc)
 	struct dev_set *ds;
 	struct dev_filter *f;
 
-	if (!_locate_sysfs_blocks(proc, sys_block, sizeof(sys_block), &sysfs_depth))
+	if (!*sysfs_dir) {
+		log_verbose("No proc filesystem found: skipping sysfs filter");
+		return NULL;
+	}
+
+	if (!_locate_sysfs_blocks(sysfs_dir, sys_block, sizeof(sys_block), &sysfs_depth))
 		return NULL;
 
 	if (!(mem = dm_pool_create("sysfs", 256))) {
@@ -357,7 +328,7 @@ struct dev_filter *sysfs_filter_create(const char *proc)
 
 #else
 
-struct dev_filter *sysfs_filter_create(const char *proc __attribute((unused)))
+struct dev_filter *sysfs_filter_create(const char *sysfs_dir __attribute((unused)))
 {
 	return NULL;
 }

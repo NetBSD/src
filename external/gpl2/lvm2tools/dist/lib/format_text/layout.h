@@ -1,3 +1,5 @@
+/*	$NetBSD: layout.h,v 1.1.1.2 2008/12/12 11:42:46 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -29,7 +31,7 @@ struct disk_locn {
 
 /* Data areas (holding PEs) */
 struct data_area_list {
-	struct list list;
+	struct dm_list list;
 	struct disk_locn disk_locn;
 };
 
@@ -67,8 +69,8 @@ struct mda_header {
 } __attribute__ ((packed));
 
 struct mda_lists {
-	struct list dirs;
-	struct list raws;
+	struct dm_list dirs;
+	struct dm_list raws;
 	struct metadata_area_ops *file_ops;
 	struct metadata_area_ops *raw_ops;
 };

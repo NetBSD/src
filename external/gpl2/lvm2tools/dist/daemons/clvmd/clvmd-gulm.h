@@ -1,3 +1,5 @@
+/*	$NetBSD: clvmd-gulm.h,v 1.1.1.2 2008/12/12 11:42:02 haad Exp $	*/
+
 
 /* DLM constant that clvmd uses as a generic NONBLOCK lock flag */
 #define LKF_NOQUEUE 1

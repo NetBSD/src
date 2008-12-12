@@ -19,6 +19,7 @@ VPATH = @srcdir@
 SOURCES = mirrored.c
 
 LIB_SHARED = liblvm2mirror.so
+LIB_VERSION = $(LIB_VERSION_LVM)
 
 include $(top_srcdir)/make.tmpl
 

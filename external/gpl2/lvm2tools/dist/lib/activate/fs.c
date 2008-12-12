@@ -1,3 +1,5 @@
+/*	$NetBSD: fs.c,v 1.1.1.2 2008/12/12 11:42:24 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -243,10 +245,10 @@ static int _do_fs_op(fs_op_t type, const char *dev_dir, const char *vg_name,
 	return 1;
 }
 
-static LIST_INIT(_fs_ops);
+static DM_LIST_INIT(_fs_ops);
 
 struct fs_op_parms {
-	struct list list;
+	struct dm_list list;
 	fs_op_t type;
 	char *dev_dir;
 	char *vg_name;
@@ -286,21 +288,21 @@ static int _stack_fs_op(fs_op_t type, const char *dev_dir, const char *vg_name,
 	_store_str(&pos, &fsp->dev, dev);
 	_store_str(&pos, &fsp->old_lv_name, old_lv_name);
 
-	list_add(&_fs_ops, &fsp->list);
+	dm_list_add(&_fs_ops, &fsp->list);
 
 	return 1;
 }
 
 static void _pop_fs_ops(void)
 {
-	struct list *fsph, *fspht;
+	struct dm_list *fsph, *fspht;
 	struct fs_op_parms *fsp;
 
-	list_iterate_safe(fsph, fspht, &_fs_ops) {
-		fsp = list_item(fsph, struct fs_op_parms);
+	dm_list_iterate_safe(fsph, fspht, &_fs_ops) {
+		fsp = dm_list_item(fsph, struct fs_op_parms);
 		_do_fs_op(fsp->type, fsp->dev_dir, fsp->vg_name, fsp->lv_name,
 			  fsp->dev, fsp->old_lv_name);
-		list_del(&fsp->list);
+		dm_list_del(&fsp->list);
 		dm_free(fsp);
 	}
 }

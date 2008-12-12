@@ -1,3 +1,5 @@
+/*	$NetBSD: locking.c,v 1.1.1.2 2008/12/12 11:42:25 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -23,6 +25,7 @@
 #include "defaults.h"
 #include "lvmcache.h"
 
+#include <assert.h>
 #include <signal.h>
 #include <sys/stat.h>
 #include <limits.h>
@@ -233,7 +236,8 @@ int init_locking(int type, struct cmd_context *cmd)
 				return 1;
 		}
 		if (!find_config_tree_int(cmd, "locking/fallback_to_clustered_locking",
-					  DEFAULT_FALLBACK_TO_CLUSTERED_LOCKING))
+			    find_config_tree_int(cmd, "global/fallback_to_clustered_locking",
+						 DEFAULT_FALLBACK_TO_CLUSTERED_LOCKING)))
 			break;
 #endif
 
@@ -255,7 +259,8 @@ int init_locking(int type, struct cmd_context *cmd)
 
 	if ((type == 2 || type == 3) &&
 	    find_config_tree_int(cmd, "locking/fallback_to_local_locking",
-				 DEFAULT_FALLBACK_TO_LOCAL_LOCKING)) {
+	    	    find_config_tree_int(cmd, "global/fallback_to_local_locking",
+					 DEFAULT_FALLBACK_TO_LOCAL_LOCKING))) {
 		log_warn("WARNING: Falling back to local file-based locking.");
 		log_warn("Volume Groups with the clustered attribute will "
 			  "be inaccessible.");
@@ -290,6 +295,10 @@ int check_lvm1_vg_inactive(struct cmd_context *cmd, const char *vgname)
 
 	/* We'll allow operations on orphans */
 	if (is_orphan_vg(vgname))
+		return 1;
+
+	/* LVM1 is only present in 2.4 kernels. */
+	if (strncmp(cmd->kernel_vsn, "2.4.", 4))
 		return 1;
 
 	if (dm_snprintf(path, sizeof(path), "%s/lvm/VGs/%s", cmd->proc_dir,
@@ -395,27 +404,27 @@ int lock_vol(struct cmd_context *cmd, const char *vol, uint32_t flags)
 }
 
 /* Unlock list of LVs */
-int resume_lvs(struct cmd_context *cmd, struct list *lvs)
+int resume_lvs(struct cmd_context *cmd, struct dm_list *lvs)
 {
 	struct lv_list *lvl;
 
-	list_iterate_items(lvl, lvs)
+	dm_list_iterate_items(lvl, lvs)
 		resume_lv(cmd, lvl->lv);
 
 	return 1;
 }
 
 /* Lock a list of LVs */
-int suspend_lvs(struct cmd_context *cmd, struct list *lvs)
+int suspend_lvs(struct cmd_context *cmd, struct dm_list *lvs)
 {
-	struct list *lvh;
+	struct dm_list *lvh;
 	struct lv_list *lvl;
 
-	list_iterate_items(lvl, lvs) {
+	dm_list_iterate_items(lvl, lvs) {
 		if (!suspend_lv(cmd, lvl->lv)) {
 			log_error("Failed to suspend %s", lvl->lv->name);
-			list_uniterate(lvh, lvs, &lvl->list) {
-				lvl = list_item(lvh, struct lv_list);
+			dm_list_uniterate(lvh, lvs, &lvl->list) {
+				lvl = dm_list_item(lvh, struct lv_list);
 				resume_lv(cmd, lvl->lv);
 			}
 
@@ -427,12 +436,12 @@ int suspend_lvs(struct cmd_context *cmd, struct list *lvs)
 }
 
 /* Lock a list of LVs */
-int activate_lvs(struct cmd_context *cmd, struct list *lvs, unsigned exclusive)
+int activate_lvs(struct cmd_context *cmd, struct dm_list *lvs, unsigned exclusive)
 {
-	struct list *lvh;
+	struct dm_list *lvh;
 	struct lv_list *lvl;
 
-	list_iterate_items(lvl, lvs) {
+	dm_list_iterate_items(lvl, lvs) {
 		if (!exclusive) {
 			if (!activate_lv(cmd, lvl->lv)) {
 				log_error("Failed to activate %s", lvl->lv->name);
@@ -440,8 +449,8 @@ int activate_lvs(struct cmd_context *cmd, struct list *lvs, unsigned exclusive)
 			}
 		} else if (!activate_lv_excl(cmd, lvl->lv)) {
 			log_error("Failed to activate %s", lvl->lv->name);
-			list_uniterate(lvh, lvs, &lvl->list) {
-				lvl = list_item(lvh, struct lv_list);
+			dm_list_uniterate(lvh, lvs, &lvl->list) {
+				lvl = dm_list_item(lvh, struct lv_list);
 				activate_lv(cmd, lvl->lv);
 			}
 			return 0;

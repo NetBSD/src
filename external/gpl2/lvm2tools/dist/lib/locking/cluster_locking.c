@@ -1,3 +1,5 @@
+/*	$NetBSD: cluster_locking.c,v 1.1.1.2 2008/12/12 11:42:25 haad Exp $	*/
+
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -25,6 +27,7 @@
 #include "locking.h"
 #include "locking_types.h"
 
+#include <assert.h>
 #include <stddef.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -314,9 +317,6 @@ static int _lock_for_cluster(unsigned char cmd, uint32_t flags, const char *name
 
 	args[0] = flags & 0x7F; /* Maskoff lock flags */
 	args[1] = flags & 0xC0; /* Bitmap flags */
-
-	if (partial_mode())
-		args[1] |= LCK_PARTIAL_MODE;
 
 	if (mirror_in_sync())
 		args[1] |= LCK_MIRROR_NOSYNC_MODE;

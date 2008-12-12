@@ -1,3 +1,5 @@
+/*	$NetBSD: mirror.c,v 1.1.1.2 2008/12/12 11:42:35 haad Exp $	*/
+
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.
  * Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
@@ -136,6 +138,53 @@ uint32_t adjusted_mirror_region_size(uint32_t extent_size, uint32_t extents,
 }
 
 /*
+ * shift_mirror_images
+ * @mirrored_seg
+ * @mimage:  The position (index) of the image to move to the end
+ *
+ * When dealing with removal of legs, we often move a 'removable leg'
+ * to the back of the 'areas' array.  It is critically important not
+ * to simply swap it for the last area in the array.  This would have
+ * the affect of reordering the remaining legs - altering position of
+ * the primary.  So, we must shuffle all of the areas in the array
+ * to maintain their relative position before moving the 'removable
+ * leg' to the end.
+ *
+ * Short illustration of the problem:
+ *   - Mirror consists of legs A, B, C and we want to remove A
+ *   - We swap A and C and then remove A, leaving C, B
+ * This scenario is problematic in failure cases where A dies, because
+ * B becomes the primary.  If the above happens, we effectively throw
+ * away any changes made between the time of failure and the time of
+ * restructuring the mirror.
+ *
+ * So, any time we want to move areas to the end to be removed, use
+ * this function.
+ */
+int shift_mirror_images(struct lv_segment *mirrored_seg, unsigned mimage)
+{
+	int i;
+	struct lv_segment_area area;
+
+	if (mimage >= mirrored_seg->area_count) {
+		log_error("Invalid index (%u) of mirror image supplied "
+			  "to shift_mirror_images()", mimage);
+		return 0;
+	}
+
+	area = mirrored_seg->areas[mimage];
+
+	/* Shift remaining images down to fill the hole */
+	for (i = mimage + 1; i < mirrored_seg->area_count; i++)
+		mirrored_seg->areas[i-1] = mirrored_seg->areas[i];
+
+	/* Place this one at the end */
+	mirrored_seg->areas[i-1] = area;
+
+	return 1;
+}
+
+/*
  * This function writes a new header to the mirror log header to the lv
  *
  * Returns: 1 on success, 0 on failure
@@ -192,7 +241,7 @@ static int _write_log_header(struct cmd_context *cmd, struct logical_volume *lv)
  */
 static int _init_mirror_log(struct cmd_context *cmd,
 			    struct logical_volume *log_lv, int in_sync,
-			    struct list *tags, int remove_on_failure)
+			    struct dm_list *tags, int remove_on_failure)
 {
 	struct str_list *sl;
 	struct lvinfo info;
@@ -216,7 +265,7 @@ static int _init_mirror_log(struct cmd_context *cmd,
 	log_lv->status |= VISIBLE_LV;
 
 	/* Temporary tag mirror log for activation */
-	list_iterate_items(sl, tags)
+	dm_list_iterate_items(sl, tags)
 		if (!str_list_add(cmd->mem, &log_lv->tags, sl->str)) {
 			log_error("Aborting. Unable to tag mirror log.");
 			goto activate_lv;
@@ -237,7 +286,7 @@ static int _init_mirror_log(struct cmd_context *cmd,
 	}
 
 	/* Remove the temporary tags */
-	list_iterate_items(sl, tags)
+	dm_list_iterate_items(sl, tags)
 		if (!str_list_del(&log_lv->tags, sl->str))
 			log_error("Failed to remove tag %s from mirror log.",
 				  sl->str);
@@ -276,7 +325,7 @@ deactivate_and_revert_new_lv:
 revert_new_lv:
 	log_lv->status = orig_status;
 
-	list_iterate_items(sl, tags)
+	dm_list_iterate_items(sl, tags)
 		if (!str_list_del(&log_lv->tags, sl->str))
 			log_error("Failed to remove tag %s from mirror log.",
 				  sl->str);
@@ -308,7 +357,7 @@ static int _delete_lv(struct logical_volume *mirror_lv, struct logical_volume *l
 
 	/* Inherit tags - maybe needed for activation */
 	if (!str_list_match_list(&mirror_lv->tags, &lv->tags)) {
-		list_iterate_items(sl, &mirror_lv->tags)
+		dm_list_iterate_items(sl, &mirror_lv->tags)
 			if (!str_list_add(cmd->mem, &lv->tags, sl->str)) {
 				log_error("Aborting. Unable to tag.");
 				return 0;
@@ -334,9 +383,9 @@ static int _delete_lv(struct logical_volume *mirror_lv, struct logical_volume *l
 }
 
 static int _merge_mirror_images(struct logical_volume *lv,
-				const struct list *mimages)
+				const struct dm_list *mimages)
 {
-	uint32_t addition = list_size(mimages);
+	uint32_t addition = dm_list_size(mimages);
 	struct logical_volume **img_lvs;
 	struct lv_list *lvl;
 	int i = 0;
@@ -347,7 +396,7 @@ static int _merge_mirror_images(struct logical_volume *lv,
 	if (!(img_lvs = alloca(sizeof(*img_lvs) * addition)))
 		return_0;
 
-	list_iterate_items(lvl, mimages)
+	dm_list_iterate_items(lvl, mimages)
 		img_lvs[i++] = lvl->lv;
 
 	return lv_add_mirror_lvs(lv, img_lvs, addition,
@@ -373,7 +422,7 @@ struct logical_volume *detach_mirror_log(struct lv_segment *mirrored_seg)
 
 /* Check if mirror image LV is removable with regard to given removable_pvs */
 static int _is_mirror_image_removable(struct logical_volume *mimage_lv,
-				      struct list *removable_pvs)
+				      struct dm_list *removable_pvs)
 {
 	struct physical_volume *pv;
 	struct lv_segment *seg;
@@ -381,7 +430,7 @@ static int _is_mirror_image_removable(struct logical_volume *mimage_lv,
 	struct pv_list *pvl;
 	uint32_t s;
 
-	list_iterate_items(seg, &mimage_lv->segments) {
+	dm_list_iterate_items(seg, &mimage_lv->segments) {
 		for (s = 0; s < seg->area_count; s++) {
 			if (seg_type(seg, s) != AREA_PV) {
 				/* FIXME Recurse for AREA_LV? */
@@ -393,7 +442,7 @@ static int _is_mirror_image_removable(struct logical_volume *mimage_lv,
 			pv = seg_pv(seg, s);
 
 			pv_found = 0;
-			list_iterate_items(pvl, removable_pvs) {
+			dm_list_iterate_items(pvl, removable_pvs) {
 				if (pv->dev->dev == pvl->pv->dev->dev) {
 					pv_found = 1;
 					break;
@@ -434,7 +483,7 @@ static int _is_mirror_image_removable(struct logical_volume *mimage_lv,
  */
 static int _remove_mirror_images(struct logical_volume *lv,
 				 uint32_t num_removed,
-				 struct list *removable_pvs,
+				 struct dm_list *removable_pvs,
 				 unsigned remove_log, unsigned collapse,
 				 uint32_t *removed)
 {
@@ -444,11 +493,10 @@ static int _remove_mirror_images(struct logical_volume *lv,
 	struct logical_volume *detached_log_lv = NULL;
 	struct logical_volume *lv1 = NULL;
 	struct lv_segment *mirrored_seg = first_seg(lv);
-	struct lv_segment_area area;
 	uint32_t old_area_count = mirrored_seg->area_count;
 	uint32_t new_area_count = mirrored_seg->area_count;
 	struct lv_list *lvl;
-	struct list tmp_orphan_lvs;
+	struct dm_list tmp_orphan_lvs;
 
 	if (removed)
 		*removed = 0;
@@ -469,13 +517,12 @@ static int _remove_mirror_images(struct logical_volume *lv,
 		for (s = 0; s < mirrored_seg->area_count &&
 			    old_area_count - new_area_count < num_removed; s++) {
 			sub_lv = seg_lv(mirrored_seg, s);
+
 			if (!is_temporary_mirror_layer(sub_lv) &&
 			    _is_mirror_image_removable(sub_lv, removable_pvs)) {
-				/* Swap segment to end */
+				if (!shift_mirror_images(mirrored_seg, s))
+					return_0;
 				new_area_count--;
-				area = mirrored_seg->areas[new_area_count];
-				mirrored_seg->areas[new_area_count] = mirrored_seg->areas[s];
-				mirrored_seg->areas[s] = area;
 			}
 		}
 		if (num_removed && old_area_count == new_area_count)
@@ -484,7 +531,7 @@ static int _remove_mirror_images(struct logical_volume *lv,
 		new_area_count = old_area_count - num_removed;
 
 	/* Remove mimage LVs from the segment */
-	list_init(&tmp_orphan_lvs);
+	dm_list_init(&tmp_orphan_lvs);
 	for (m = new_area_count; m < mirrored_seg->area_count; m++) {
 		seg_lv(mirrored_seg, m)->status &= ~MIRROR_IMAGE;
 		seg_lv(mirrored_seg, m)->status |= VISIBLE_LV;
@@ -493,7 +540,7 @@ static int _remove_mirror_images(struct logical_volume *lv,
 			return 0;
 		}
 		lvl->lv = seg_lv(mirrored_seg, m);
-		list_add(&tmp_orphan_lvs, &lvl->list);
+		dm_list_add(&tmp_orphan_lvs, &lvl->list);
 		release_lv_segment_area(mirrored_seg, m, mirrored_seg->area_len);
 	}
 	mirrored_seg->area_count = new_area_count;
@@ -552,6 +599,17 @@ static int _remove_mirror_images(struct logical_volume *lv,
 
 	log_very_verbose("Updating \"%s\" in kernel", mirrored_seg->lv->name);
 
+	/*
+	 * Avoid having same mirror target loaded twice simultaneously by first
+	 * resuming the removed LV which now contains an error segment.
+	 * As it's now detached from mirrored_seg->lv we must resume it
+	 * explicitly.
+	 */
+	if (lv1 && !resume_lv(lv1->vg->cmd, lv1)) {
+		log_error("Problem resuming temporary LV, %s", lv1->name);
+		return 0;
+	}
+
 	if (!resume_lv(mirrored_seg->lv->vg->cmd, mirrored_seg->lv)) {
 		log_error("Problem reactivating %s", mirrored_seg->lv->name);
 		return 0;
@@ -559,7 +617,7 @@ static int _remove_mirror_images(struct logical_volume *lv,
 
 	/* Save or delete the 'orphan' LVs */
 	if (!collapse) {
-		list_iterate_items(lvl, &tmp_orphan_lvs)
+		dm_list_iterate_items(lvl, &tmp_orphan_lvs)
 			if (!_delete_lv(lv, lvl->lv))
 				return_0;
 	}
@@ -595,7 +653,7 @@ static int _remove_mirror_images(struct logical_volume *lv,
  * Remove the number of mirror images from the LV
  */
 int remove_mirror_images(struct logical_volume *lv, uint32_t num_mirrors,
-			 struct list *removable_pvs, unsigned remove_log)
+			 struct dm_list *removable_pvs, unsigned remove_log)
 {
 	uint32_t num_removed, removed_once, r;
 	uint32_t existing_mirrors = lv_mirror_count(lv);
@@ -788,7 +846,7 @@ static int replace_mirror_images(struct lv_segment *mirrored_seg,
 }
 
 int reconfigure_mirror_images(struct lv_segment *mirrored_seg, uint32_t num_mirrors,
-			      struct list *removable_pvs, unsigned remove_log)
+			      struct dm_list *removable_pvs, unsigned remove_log)
 {
 	int r;
 	int in_sync;
@@ -905,7 +963,7 @@ int remove_mirrors_from_segments(struct logical_volume *lv,
 	uint32_t s;
 
 	/* Check the segment params are compatible */
-	list_iterate_items(seg, &lv->segments) {
+	dm_list_iterate_items(seg, &lv->segments) {
 		if (!seg_is_mirrored(seg)) {
 			log_error("Segment is not mirrored: %s:%" PRIu32,
 				  lv->name, seg->le);
@@ -919,7 +977,7 @@ int remove_mirrors_from_segments(struct logical_volume *lv,
 	}
 
 	/* Convert the segments */
-	list_iterate_items(seg, &lv->segments) {
+	dm_list_iterate_items(seg, &lv->segments) {
 		if (!new_mirrors && seg->extents_copied == seg->area_len) {
 			if (!move_lv_segment_area(seg, 0, seg, 1))
 				return_0;
@@ -942,7 +1000,7 @@ const char *get_pvmove_pvname_from_lv_mirr(struct logical_volume *lv_mirr)
 {
 	struct lv_segment *seg;
 
-	list_iterate_items(seg, &lv_mirr->segments) {
+	dm_list_iterate_items(seg, &lv_mirr->segments) {
 		if (!seg_is_mirrored(seg))
 			continue;
 		if (seg_type(seg, 0) != AREA_PV)
@@ -958,7 +1016,7 @@ const char *get_pvmove_pvname_from_lv(struct logical_volume *lv)
 	struct lv_segment *seg;
 	uint32_t s;
 
-	list_iterate_items(seg, &lv->segments) {
+	dm_list_iterate_items(seg, &lv->segments) {
 		for (s = 0; s < seg->area_count; s++) {
 			if (seg_type(seg, s) != AREA_LV)
 				continue;
@@ -978,14 +1036,14 @@ struct logical_volume *find_pvmove_lv(struct volume_group *vg,
 	struct lv_segment *seg;
 
 	/* Loop through all LVs */
-	list_iterate_items(lvl, &vg->lvs) {
+	dm_list_iterate_items(lvl, &vg->lvs) {
 		lv = lvl->lv;
 
 		if (!(lv->status & lv_type))
 			continue;
 
 		/* Check segment origins point to pvname */
-		list_iterate_items(seg, &lv->segments) {
+		dm_list_iterate_items(seg, &lv->segments) {
 			if (seg_type(seg, 0) != AREA_PV)
 				continue;
 			if (seg_dev(seg, 0) != dev)
@@ -1010,10 +1068,10 @@ struct logical_volume *find_pvmove_lv_from_pvname(struct cmd_context *cmd,
 	return find_pvmove_lv(vg, pv->dev, lv_type);
 }
 
-struct list *lvs_using_lv(struct cmd_context *cmd, struct volume_group *vg,
+struct dm_list *lvs_using_lv(struct cmd_context *cmd, struct volume_group *vg,
 			  struct logical_volume *lv)
 {
-	struct list *lvs;
+	struct dm_list *lvs;
 	struct logical_volume *lv1;
 	struct lv_list *lvl, *lvl1;
 	struct lv_segment *seg;
@@ -1024,16 +1082,16 @@ struct list *lvs_using_lv(struct cmd_context *cmd, struct volume_group *vg,
 		return NULL;
 	}
 
-	list_init(lvs);
+	dm_list_init(lvs);
 
 	/* Loop through all LVs except the one supplied */
-	list_iterate_items(lvl1, &vg->lvs) {
+	dm_list_iterate_items(lvl1, &vg->lvs) {
 		lv1 = lvl1->lv;
 		if (lv1 == lv)
 			continue;
 
 		/* Find whether any segment points at the supplied LV */
-		list_iterate_items(seg, &lv1->segments) {
+		dm_list_iterate_items(seg, &lv1->segments) {
 			for (s = 0; s < seg->area_count; s++) {
 				if (seg_type(seg, s) != AREA_LV ||
 				    seg_lv(seg, s) != lv)
@@ -1043,7 +1101,7 @@ struct list *lvs_using_lv(struct cmd_context *cmd, struct volume_group *vg,
 					return NULL;
 				}
 				lvl->lv = lv1;
-				list_add(lvs, &lvl->list);
+				dm_list_add(lvs, &lvl->list);
 				goto next_lv;
 			}
 		}
@@ -1059,7 +1117,7 @@ float copy_percent(struct logical_volume *lv_mirr)
 	uint32_t numerator = 0u, denominator = 0u;
 	struct lv_segment *seg;
 
-	list_iterate_items(seg, &lv_mirr->segments) {
+	dm_list_iterate_items(seg, &lv_mirr->segments) {
 		denominator += seg->area_len;
 
 		if (seg_is_mirrored(seg) && seg->area_count > 1)
@@ -1079,8 +1137,8 @@ int fixup_imported_mirrors(struct volume_group *vg)
 	struct lv_list *lvl;
 	struct lv_segment *seg;
 
-	list_iterate_items(lvl, &vg->lvs) {
-		list_iterate_items(seg, &lvl->lv->segments) {
+	dm_list_iterate_items(lvl, &vg->lvs) {
+		dm_list_iterate_items(seg, &lvl->lv->segments) {
 			if (seg->segtype !=
 			    get_segtype_from_string(vg->cmd, "mirror"))
 				continue;
@@ -1098,11 +1156,11 @@ int fixup_imported_mirrors(struct volume_group *vg)
  */
 int add_mirrors_to_segments(struct cmd_context *cmd, struct logical_volume *lv,
 			    uint32_t mirrors, uint32_t region_size,
-			    struct list *allocatable_pvs, alloc_policy_t alloc)
+			    struct dm_list *allocatable_pvs, alloc_policy_t alloc)
 {
 	struct alloc_handle *ah;
 	const struct segment_type *segtype;
-	struct list *parallel_areas;
+	struct dm_list *parallel_areas;
 	uint32_t adjusted_region_size;
 
 	if (!(parallel_areas = build_parallel_areas_from_lv(cmd, lv)))
@@ -1137,14 +1195,14 @@ int add_mirrors_to_segments(struct cmd_context *cmd, struct logical_volume *lv,
  */
 int remove_mirror_log(struct cmd_context *cmd,
 		      struct logical_volume *lv,
-		      struct list *removable_pvs)
+		      struct dm_list *removable_pvs)
 {
 	float sync_percent;
 	struct lvinfo info;
 	struct volume_group *vg = lv->vg;
 
 	/* Unimplemented features */
-	if (list_size(&lv->segments) != 1) {
+	if (dm_list_size(&lv->segments) != 1) {
 		log_error("Multiple-segment mirror is not supported");
 		return 0;
 	}
@@ -1284,11 +1342,11 @@ int attach_mirror_log(struct lv_segment *seg, struct logical_volume *log_lv)
 
 int add_mirror_log(struct cmd_context *cmd, struct logical_volume *lv,
 		   uint32_t log_count, uint32_t region_size,
-		   struct list *allocatable_pvs, alloc_policy_t alloc)
+		   struct dm_list *allocatable_pvs, alloc_policy_t alloc)
 {
 	struct alloc_handle *ah;
 	const struct segment_type *segtype;
-	struct list *parallel_areas;
+	struct dm_list *parallel_areas;
 	float sync_percent;
 	int in_sync;
 	struct logical_volume *log_lv;
@@ -1300,7 +1358,7 @@ int add_mirror_log(struct cmd_context *cmd, struct logical_volume *lv,
 		return 0;
 	}
 
-	if (list_size(&lv->segments) != 1) {
+	if (dm_list_size(&lv->segments) != 1) {
 		log_error("Multiple-segment mirror is not supported");
 		return 0;
 	}
@@ -1362,12 +1420,12 @@ int add_mirror_log(struct cmd_context *cmd, struct logical_volume *lv,
  */
 int add_mirror_images(struct cmd_context *cmd, struct logical_volume *lv,
 		      uint32_t mirrors, uint32_t stripes, uint32_t region_size,
-		      struct list *allocatable_pvs, alloc_policy_t alloc,
+		      struct dm_list *allocatable_pvs, alloc_policy_t alloc,
 		      uint32_t log_count)
 {
 	struct alloc_handle *ah;
 	const struct segment_type *segtype;
-	struct list *parallel_areas;
+	struct dm_list *parallel_areas;
 	struct logical_volume **img_lvs;
 	struct logical_volume *log_lv = NULL;
 
@@ -1409,7 +1467,7 @@ int add_mirror_images(struct cmd_context *cmd, struct logical_volume *lv,
 	/*
 	 * insert a mirror layer
 	 */
-	if (list_size(&lv->segments) != 1 ||
+	if (dm_list_size(&lv->segments) != 1 ||
 	    seg_type(first_seg(lv), 0) != AREA_LV)
 		if (!insert_layer_for_lv(cmd, lv, 0, "_mimage_%d"))
 			goto out_remove_log;
@@ -1458,7 +1516,7 @@ int add_mirror_images(struct cmd_context *cmd, struct logical_volume *lv,
 int lv_add_mirrors(struct cmd_context *cmd, struct logical_volume *lv,
 		   uint32_t mirrors, uint32_t stripes,
 		   uint32_t region_size, uint32_t log_count,
-		   struct list *pvs, alloc_policy_t alloc, uint32_t flags)
+		   struct dm_list *pvs, alloc_policy_t alloc, uint32_t flags)
 {
 	if (!mirrors && !log_count) {
 		log_error("No conversion is requested");
@@ -1509,7 +1567,7 @@ int lv_add_mirrors(struct cmd_context *cmd, struct logical_volume *lv,
  */
 int lv_remove_mirrors(struct cmd_context *cmd __attribute((unused)),
 		      struct logical_volume *lv,
-		      uint32_t mirrors, uint32_t log_count, struct list *pvs,
+		      uint32_t mirrors, uint32_t log_count, struct dm_list *pvs,
 		      uint32_t status_mask)
 {
 	uint32_t new_mirrors;

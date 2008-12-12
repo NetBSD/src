@@ -26,6 +26,7 @@ SOURCES =\
 	vg_number.c
 
 LIB_SHARED = liblvm2format1.so
+LIB_VERSION = $(LIB_VERSION_LVM)
 
 include $(top_srcdir)/make.tmpl
 
