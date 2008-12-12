@@ -756,7 +756,7 @@ main(int argc, char *argv[])
 #endif
 
     /* initialization */
-    gstate = (globalstate *)calloc(1, sizeof(globalstate));
+    gstate = ecalloc(1, sizeof(globalstate));
     gstate->statics = &statics;
     time_mark(NULL);
 
@@ -890,7 +890,7 @@ main(int argc, char *argv[])
     /* initialize display */
     if ((gstate->max_topn = display_init(&statics, gstate->percpustates)) == -1)
     {
-	fprintf(stderr, "%s: can't allocate sufficient memory\n", myname);
+	fprintf(stderr, "%s: display too small\n", myname);
 	exit(EX_OSERR);
     }
 
