@@ -1,4 +1,4 @@
-/*	$NetBSD: lstConcat.c,v 1.15 2006/10/27 21:37:25 dsl Exp $	*/
+/*	$NetBSD: lstConcat.c,v 1.16 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstConcat.c,v 1.15 2006/10/27 21:37:25 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstConcat.c,v 1.16 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstConcat.c,v 1.15 2006/10/27 21:37:25 dsl Exp $");
+__RCSID("$NetBSD: lstConcat.c,v 1.16 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -90,7 +90,7 @@ Lst_Concat(Lst l1, Lst l2, int flags)
     }
 
     if (flags == LST_CONCLINK) {
-	if (list2->firstPtr != NilListNode) {
+	if (list2->firstPtr != NULL) {
 	    /*
 	     * We set the nextPtr of the
 	     * last element of list two to be NIL to make the loop easier and
@@ -99,7 +99,7 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	     * to NIL space and the first element will be untouched if it
 	     * existed before and will also point to NIL space if it didn't.
 	     */
-	    list2->lastPtr->nextPtr = NilListNode;
+	    list2->lastPtr->nextPtr = NULL;
 	    /*
 	     * So long as the second list isn't empty, we just link the
 	     * first element of the second list to the last element of the
@@ -109,14 +109,14 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	     * the last element of the first list.
 	     */
 	    list2->firstPtr->prevPtr = list1->lastPtr;
-	    if (list1->lastPtr != NilListNode) {
+	    if (list1->lastPtr != NULL) {
  		list1->lastPtr->nextPtr = list2->firstPtr;
 	    } else {
 		list1->firstPtr = list2->firstPtr;
 	    }
 	    list1->lastPtr = list2->lastPtr;
 	}
-	if (list1->isCirc && list1->firstPtr != NilListNode) {
+	if (list1->isCirc && list1->firstPtr != NULL) {
 	    /*
 	     * If the first list is supposed to be circular and it is (now)
 	     * non-empty, we must make sure it's circular by linking the
@@ -126,7 +126,7 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	    list1->lastPtr->nextPtr = list1->firstPtr;
 	}
 	free(l2);
-    } else if (list2->firstPtr != NilListNode) {
+    } else if (list2->firstPtr != NULL) {
 	/*
 	 * We set the nextPtr of the last element of list 2 to be nil to make
 	 * the loop less difficult. The loop simply goes through the entire
@@ -139,14 +139,14 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	 * the first list must have been empty so the newly-created node is
 	 * made the first node of the list.
 	 */
-	list2->lastPtr->nextPtr = NilListNode;
+	list2->lastPtr->nextPtr = NULL;
 	for (last = list1->lastPtr, ln = list2->firstPtr;
-	     ln != NilListNode;
+	     ln != NULL;
 	     ln = ln->nextPtr)
 	{
 	    PAlloc (nln, ListNode);
 	    nln->datum = ln->datum;
-	    if (last != NilListNode) {
+	    if (last != NULL) {
 		last->nextPtr = nln;
 	    } else {
 		list1->firstPtr = nln;
@@ -172,7 +172,7 @@ Lst_Concat(Lst l1, Lst l2, int flags)
 	    list1->lastPtr->nextPtr = list1->firstPtr;
 	    list1->firstPtr->prevPtr = list1->lastPtr;
 	} else {
-	    last->nextPtr = NilListNode;
+	    last->nextPtr = NULL;
 	}
 
 	if (list2->isCirc) {

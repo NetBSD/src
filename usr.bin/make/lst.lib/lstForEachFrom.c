@@ -1,4 +1,4 @@
-/*	$NetBSD: lstForEachFrom.c,v 1.15 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: lstForEachFrom.c,v 1.16 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstForEachFrom.c,v 1.15 2008/02/15 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: lstForEachFrom.c,v 1.16 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstForEachFrom.c,v 1.15 2008/02/15 21:29:50 christos Exp $");
+__RCSID("$NetBSD: lstForEachFrom.c,v 1.16 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -98,7 +98,7 @@ Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(ClientData, ClientData),
 	 *  - nothing's been added after the current node (check this
 	 *    after proc() has been called).
 	 */
-	done = (next == NilListNode || next == list->firstPtr);
+	done = (next == NULL || next == list->firstPtr);
 
 	(void) tln->useCount++;
 	result = (*proc) (tln->datum, d);

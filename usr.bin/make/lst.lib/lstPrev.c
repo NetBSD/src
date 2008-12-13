@@ -1,4 +1,4 @@
-/*	$NetBSD: lstPrev.c,v 1.2 2006/10/27 21:37:25 dsl Exp $	*/
+/*	$NetBSD: lstPrev.c,v 1.3 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstPrev.c,v 1.2 2006/10/27 21:37:25 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstPrev.c,v 1.3 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstSucc.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstPrev.c,v 1.2 2006/10/27 21:37:25 dsl Exp $");
+__RCSID("$NetBSD: lstPrev.c,v 1.3 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -70,8 +70,8 @@ __RCSID("$NetBSD: lstPrev.c,v 1.2 2006/10/27 21:37:25 dsl Exp $");
 LstNode
 Lst_Prev(LstNode ln)
 {
-    if (ln == NILLNODE) {
-	return (NILLNODE);
+    if (ln == NULL) {
+	return NULL;
     } else {
 	return (ln->prevPtr);
     }
