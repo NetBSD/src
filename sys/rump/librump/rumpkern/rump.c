@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.76 2008/11/21 06:09:51 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.77 2008/12/13 15:37:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -60,7 +60,7 @@ struct proclist allproc;
 char machine[] = "rump";
 static kauth_cred_t rump_susercred;
 
-kmutex_t rump_giantlock;
+struct rumpuser_mtx *rump_giantlock;
 
 sigset_t sigcantmask;
 
@@ -134,7 +134,7 @@ _rump_init(int rump_version)
 		rump_threads = *buf != '0';
 	}
 
-	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
+	rumpuser_mutex_recursive_init(&rump_giantlock);
 
 	rumpvm_init();
 	rump_sleepers_init();
