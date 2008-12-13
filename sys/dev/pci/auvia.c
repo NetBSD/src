@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.67.6.2 2008/12/11 19:49:30 ad Exp $	*/
+/*	$NetBSD: auvia.c,v 1.67.6.3 2008/12/13 13:38:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.67.6.2 2008/12/11 19:49:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.67.6.3 2008/12/13 13:38:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -476,6 +476,7 @@ auvia_attach(device_t parent, device_t self, void *aux)
 
 	/* setup audio_format */
 	memcpy(sc->sc_formats, auvia_formats, sizeof(auvia_formats));
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_play.sc_base != VIA8233_MP_BASE || !AC97_IS_4CH(sc->codec_if)) {
 		AUFMT_INVALIDATE(&sc->sc_formats[AUVIA_FORMATS_4CH_8]);
 		AUFMT_INVALIDATE(&sc->sc_formats[AUVIA_FORMATS_4CH_16]);
@@ -490,10 +491,13 @@ auvia_attach(device_t parent, device_t self, void *aux)
 			sc->sc_formats[r].frequency[0] = 48000;
 		}
 	}
+	mutex_exit(&sc->sc_lock);
 
 	if (0 != auconv_create_encodings(sc->sc_formats, AUVIA_NFORMATS,
 					 &sc->sc_encodings)) {
+		mutex_enter(&sc->sc_lock);
 		sc->codec_if->vtbl->detach(sc->codec_if);
+		mutex_exit(&sc->sc_lock);
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		mutex_destroy(&sc->sc_lock);
@@ -503,7 +507,9 @@ auvia_attach(device_t parent, device_t self, void *aux)
 	}
 	if (0 != auconv_create_encodings(auvia_spdif_formats,
 	    AUVIA_SPDIF_NFORMATS, &sc->sc_spdif_encodings)) {
+		mutex_enter(&sc->sc_lock);
 		sc->codec_if->vtbl->detach(sc->codec_if);
+		mutex_exit(&sc->sc_lock);
 		pci_intr_disestablish(pc, sc->sc_ih);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		mutex_destroy(&sc->sc_lock);
@@ -516,7 +522,9 @@ auvia_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	audio_attach_mi(&auvia_hw_if, sc, &sc->sc_dev);
+	mutex_enter(&sc->sc_lock);
 	sc->codec_if->vtbl->unlock(sc->codec_if);
+	mutex_exit(&sc->sc_lock);
 	return;
 }
 
@@ -646,7 +654,9 @@ auvia_open(void *addr, int flags)
 	struct auvia_softc *sc;
 
 	sc = (struct auvia_softc *)addr;
+	mutex_spin_exit(&sc->sc_intr_lock);
 	sc->codec_if->vtbl->lock(sc->codec_if);
+	mutex_spin_enter(&sc->sc_intr_lock);
 	return 0;
 }
 
@@ -656,7 +666,9 @@ auvia_close(void *addr)
 	struct auvia_softc *sc;
 
 	sc = (struct auvia_softc *)addr;
+	mutex_spin_exit(&sc->sc_intr_lock);
 	sc->codec_if->vtbl->unlock(sc->codec_if);
+	mutex_spin_enter(&sc->sc_intr_lock);
 }
 
 static int

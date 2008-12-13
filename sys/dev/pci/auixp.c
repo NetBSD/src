@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.28.16.2 2008/12/12 23:06:57 ad Exp $ */
+/* $NetBSD: auixp.c,v 1.28.16.3 2008/12/13 13:38:00 ad Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.28.16.2 2008/12/12 23:06:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.28.16.3 2008/12/13 13:38:00 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1233,10 +1233,12 @@ auixp_post_config(device_t self)
 
 	/* copy formats and invalidate entries not suitable for codec0 */
 	memcpy(sc->sc_formats, auixp_formats, sizeof(auixp_formats));
+	mutex_enter(&sc->sc_lock);
 	sc->has_4ch   = AC97_IS_4CH(codec->codec_if);
 	sc->has_6ch   = AC97_IS_6CH(codec->codec_if);
 	sc->is_fixed  = AC97_IS_FIXED_RATE(codec->codec_if);
 	sc->has_spdif = AC97_HAS_SPDIF(codec->codec_if);
+	mutex_exit(&sc->sc_lock);
 
 	for (i = 0; i < AUIXP_NFORMATS; i++) {
 		if (sc->is_fixed) {
@@ -1779,9 +1781,11 @@ auixp_resume(device_t dv PMF_FN_ARGS)
 {
 	struct auixp_softc *sc = device_private(dv);
 
+	mutex_enter(&sc->sc_lock);
 	auixp_reset_codec(sc);
 	delay(1000);
 	(sc->sc_codec[0].codec_if->vtbl->restore_ports)(sc->sc_codec[0].codec_if);
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }

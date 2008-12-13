@@ -1,4 +1,4 @@
-/*	$NetBSD: auacer.c,v 1.21.12.2 2008/12/12 23:06:57 ad Exp $	*/
+/*	$NetBSD: auacer.c,v 1.21.12.3 2008/12/13 13:38:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.21.12.2 2008/12/12 23:06:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auacer.c,v 1.21.12.3 2008/12/13 13:38:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -336,6 +336,7 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 
 	/* setup audio_format */
 	memcpy(sc->sc_formats, auacer_formats, sizeof(auacer_formats));
+	mutex_enter(&sc->sc_lock);
 	if (!AC97_IS_4CH(sc->codec_if))
 		AUFMT_INVALIDATE(&sc->sc_formats[AUACER_FORMATS_4CH]);
 	if (!AC97_IS_6CH(sc->codec_if))
@@ -346,6 +347,7 @@ auacer_attach(struct device *parent, struct device *self, void *aux)
 			sc->sc_formats[i].frequency[0] = 48000;
 		}
 	}
+	mutex_exit(&sc->sc_lock);
 
 	if (0 != auconv_create_encodings(sc->sc_formats, AUACER_NFORMATS,
 					 &sc->sc_encodings)) {

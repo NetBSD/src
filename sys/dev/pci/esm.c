@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.47.16.2 2008/12/12 23:06:58 ad Exp $      */
+/*      $NetBSD: esm.c,v 1.47.16.3 2008/12/13 13:38:00 ad Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.47.16.2 2008/12/12 23:06:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.47.16.3 2008/12/13 13:38:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1766,8 +1766,11 @@ esm_detach(device_t self, int flags)
 	/* free our DMA region */
 	esm_freemem(ess, &ess->sc_dma);
 
-	if (ess->codec_if != NULL)
+	if (ess->codec_if != NULL) {
+		mutex_enter(&ess->sc_lock);
 		ess->codec_if->vtbl->detach(ess->codec_if);
+		mutex_exit(&ess->sc_lock);
+	}
 
 	/* XXX Restore CONF_MAESTRO? */
 	/* XXX Restore legacy emulations? */
