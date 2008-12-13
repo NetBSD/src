@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.23 2008/05/21 13:36:45 ad Exp $	 */
+/*	$NetBSD: pcio.c,v 1.24 2008/12/13 23:30:54 christos Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -85,6 +85,16 @@ getcomaddr(int idx)
 	return addr;
 }
 #endif
+
+void
+clear_pc_screen(void)
+{
+#ifdef SUPPORT_SERIAL
+	/* Clear the screen if we are on a glass tty. */
+	if (iodev == CONSDEV_PC)
+		conclr();
+#endif
+}
 
 void
 initio(int dev)
@@ -201,10 +211,6 @@ nocom:
 	conputc('\n');
 	strncpy(btinfo_console.devname, iodev == CONSDEV_PC ? "pc" : "com", 16);
 
-	if (iodev == CONSDEV_PC) {
-		/* Clear screen if on a glass tty. */
-		conclr();
-	}
 #else /* !SUPPORT_SERIAL */
 	btinfo_console.devname[0] = 'p';
 	btinfo_console.devname[1] = 'c';
