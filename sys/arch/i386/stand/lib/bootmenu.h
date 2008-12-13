@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.h,v 1.1 2008/11/25 13:23:54 ad Exp $	*/
+/*	$NetBSD: bootmenu.h,v 1.2 2008/12/13 23:30:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ struct bootconf_def {
 	int nummenu;			/* Number of menu items */
 	int timeout;		 	/* Timeout in seconds */
 	int menuformat;			/* Print letters instead of numbers? */
+	int clear;			/* Clear the screen? */
 } extern bootconf;
 
 #endif /* !_BOOTMENU_H */

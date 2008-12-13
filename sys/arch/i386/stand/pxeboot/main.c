@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 2008/11/25 13:23:54 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.17 2008/12/13 23:30:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -90,6 +90,9 @@ print_banner(void)
 {
 	int base = getbasemem();
 	int ext = getextmem();
+
+	if (bootconf.clear)
+		clear_pc_screen();
 
 	printf("\n"
 	       ">> NetBSD/x86 PXE boot, Revision %s (from NetBSD %s)\n"

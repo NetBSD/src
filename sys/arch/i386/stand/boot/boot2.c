@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.40 2008/11/25 13:23:54 ad Exp $	*/
+/*	$NetBSD: boot2.c,v 1.41 2008/12/13 23:30:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -239,6 +239,9 @@ bootit(const char *filename, int howto, int tell)
 void
 print_banner(void)
 {
+	if (bootconf.clear)
+		clear_pc_screen();
+
 #ifndef SMALL
 	int n;
 	if (bootconf.banner[0]) {
@@ -271,7 +274,6 @@ boot2(int biosdev, u_int biossector)
 	char c;
 
 	twiddle_toggle = 1;	/* no twiddling until we're ready */
-	printf("\f");		/* clear screen (hopefully) */
 
 	initio(boot_params.bp_consdev);
 
