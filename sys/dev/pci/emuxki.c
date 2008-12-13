@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.54.6.2 2008/12/12 23:06:58 ad Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.54.6.3 2008/12/13 13:38:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.54.6.2 2008/12/12 23:06:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.54.6.3 2008/12/13 13:38:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -482,10 +482,12 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 #if 0
+	mutex_enter(&sc->lock);
 	sc->rsourcectl.dev =
 	    sc->codecif->vtbl->get_portnum_by_name(sc->codec_if, AudioCrecord,
 						   AudioNsource, NULL);
 	sc->rsourcectl.cp = AUDIO_MIXER_ENUM;
+	mutex_exit(&sc->lock);
 #endif
 }
 
