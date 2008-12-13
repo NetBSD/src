@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.291 2008/11/25 15:05:38 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.292 2008/12/13 18:55:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.291 2008/11/25 15:05:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.292 2008/12/13 18:55:01 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -1685,15 +1685,15 @@ sigchecktrace(sigpend_t **spp)
 
 	KASSERT(mutex_owned(p->p_lock));
 
+	/* If there's a pending SIGKILL, process it immediately. */
+	if (sigismember(&p->p_sigpend.sp_set, SIGKILL))
+		return 0;
+
 	/*
 	 * If we are no longer being traced, or the parent didn't
 	 * give us a signal, look for more signals.
 	 */
 	if ((p->p_slflag & PSL_TRACED) == 0 || p->p_xstat == 0)
-		return 0;
-
-	/* If there's a pending SIGKILL, process it immediately. */
-	if (sigismember(&p->p_sigpend.sp_set, SIGKILL))
 		return 0;
 
 	/*
