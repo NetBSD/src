@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.159 2008/12/01 00:09:47 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.160 2008/12/13 20:48:10 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.159 2008/12/01 00:09:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.160 2008/12/13 20:48:10 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -629,7 +629,9 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_name = sbuf;
 		ma.ma_node = node;
 		if (OF_getprop(node, "upa-portid", &portid, sizeof(portid)) !=
-		    sizeof(portid)) 
+		    sizeof(portid) && 
+		    OF_getprop(node, "portid", &portid, sizeof(portid)) !=
+		    sizeof(portid))
 			portid = -1;
 		ma.ma_upaid = portid;
 
