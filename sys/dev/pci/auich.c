@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.128.2.2 2008/12/12 23:06:57 ad Exp $	*/
+/*	$NetBSD: auich.c,v 1.128.2.3 2008/12/13 13:38:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.128.2.2 2008/12/12 23:06:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.128.2.3 2008/12/13 13:38:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,6 +183,7 @@ struct auich_softc {
 	struct ac97_host_if host_if;
 	int sc_codecnum;
 	int sc_codectype;
+	int sc_fixedrate;
 	enum ac97_host_flags sc_codecflags;
 	bool sc_spdif;
 
@@ -608,7 +609,10 @@ auich_attach(device_t parent, device_t self, void *aux)
 	if (ac97_attach_type(&sc->host_if, self, sc->sc_codectype,
 	    &sc->sc_lock) != 0)
 		return;
+
+	mutex_enter(&sc->sc_lock);
 	sc->codec_if->vtbl->unlock(sc->codec_if);
+	sc->sc_fixedrate = AC97_IS_FIXED_RATE(sc->codec_if);
 
 	/* setup audio_format */
 	if (sc->sc_codectype == AC97_CODEC_TYPE_AUDIO) {
@@ -623,6 +627,7 @@ auich_attach(device_t parent, device_t self, void *aux)
 				sc->sc_audio_formats[i].frequency[0] = 48000;
 			}
 		}
+		mutex_exit(&sc->sc_lock);
 		if (0 != auconv_create_encodings(sc->sc_audio_formats, AUICH_AUDIO_NFORMATS,
 						 &sc->sc_encodings))
 			return;
@@ -630,6 +635,7 @@ auich_attach(device_t parent, device_t self, void *aux)
 						 &sc->sc_spdif_encodings))
 			return;
 	} else {
+		mutex_exit(&sc->sc_lock);
 		memcpy(sc->sc_modem_formats, auich_modem_formats, sizeof(auich_modem_formats));
 		if (0 != auconv_create_encodings(sc->sc_modem_formats, AUICH_MODEM_NFORMATS,
 						 &sc->sc_encodings))
@@ -643,8 +649,7 @@ auich_attach(device_t parent, device_t self, void *aux)
 	config_interrupts(self, auich_finish_attach);
 
 	/* sysctl setup */
-	if (AC97_IS_FIXED_RATE(sc->codec_if) &&
-	    sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
+	if (sc->sc_fixedrate && sc->sc_codectype == AC97_CODEC_TYPE_AUDIO)
 		return;
 
 	err = sysctl_createv(&sc->sc_log, 0, NULL, NULL, 0,
@@ -659,7 +664,7 @@ auich_attach(device_t parent, device_t self, void *aux)
 		goto sysctl_err;
 	node_mib = node->sysctl_num;
 
-	if (!AC97_IS_FIXED_RATE(sc->codec_if)) {
+	if (!sc->sc_fixedrate) {
 		/* passing the sc address instead of &sc->sc_ac97_clock */
 		err = sysctl_createv(&sc->sc_log, 0, NULL, &node_ac97clock,
 				     CTLFLAG_READWRITE,
@@ -765,8 +770,10 @@ auich_finish_attach(device_t self)
 {
 	struct auich_softc *sc = device_private(self);
 
+	mutex_enter(&sc->sc_lock);
 	if (!AC97_IS_FIXED_RATE(sc->codec_if))
 		auich_calibrate(sc);
+	mutex_exit(&sc->sc_lock);
 
 	sc->sc_audiodev = audio_attach_mi(&auich_hw_if, sc, sc->sc_dev);
 
@@ -916,7 +923,9 @@ auich_open(void *addr, int flags)
 	struct auich_softc *sc;
 
 	sc = (struct auich_softc *)addr;
+	mutex_spin_exit(&sc->sc_intr_lock);
 	sc->codec_if->vtbl->lock(sc->codec_if);
+	mutex_spin_enter(&sc->sc_intr_lock);
 	return 0;
 }
 
@@ -926,7 +935,9 @@ auich_close(void *addr)
 	struct auich_softc *sc;
 
 	sc = (struct auich_softc *)addr;
+	mutex_spin_exit(&sc->sc_intr_lock);
 	sc->codec_if->vtbl->unlock(sc->codec_if);
+	mutex_spin_enter(&sc->sc_intr_lock);
 }
 
 static int
@@ -1669,6 +1680,7 @@ auich_calibrate(struct auich_softc *sc)
 			  (0 - 1) & ICH_LVI_MASK);
 
 	/* start */
+	kpreempt_disable();
 	microtime(&t1);
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL, ICH_RPBM);
 
@@ -1685,6 +1697,7 @@ auich_calibrate(struct auich_softc *sc)
 
 	/* stop */
 	bus_space_write_1(sc->iot, sc->aud_ioh, ICH_PCMI + ICH_CTRL, 0);
+	kpreempt_enable();
 
 	/* reset */
 	DELAY(100);
@@ -1727,13 +1740,12 @@ auich_clear_cas(struct auich_softc *sc)
 	return;
 }
 
-
 static void
-auich_get_locks(void *addr, kmutex_t **intr, kmutex_t **proc)
+auich_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
 {
 	struct auich_softc *sc;
 
 	sc = addr;
 	*intr = &sc->sc_intr_lock;
-	*proc = &sc->sc_lock;
+	*thread = &sc->sc_lock;
 }
