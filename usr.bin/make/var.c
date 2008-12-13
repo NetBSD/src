@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.134 2008/10/06 22:09:21 joerg Exp $	*/
+/*	$NetBSD: var.c,v 1.135 2008/12/13 14:26:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.134 2008/10/06 22:09:21 joerg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.135 2008/12/13 14:26:10 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.134 2008/10/06 22:09:21 joerg Exp $");
+__RCSID("$NetBSD: var.c,v 1.135 2008/12/13 14:26:10 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2284,6 +2284,9 @@ ApplyModifiers(char *nstr, const char *tstr,
 		    char *sv_name;
 		    VarPattern	pattern;
 		    int	how;
+
+		    if (v->name[0] == 0)
+			goto bad_modifier;
 
 		    v_ctxt = ctxt;
 		    sv_name = NULL;
