@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.102 2008/12/01 10:54:57 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.103 2008/12/13 11:34:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -128,7 +128,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.102 2008/12/01 10:54:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.103 2008/12/13 11:34:43 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -589,7 +589,9 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	loopva = kva;
 	loopsize = size;
 
-	pgaflags = UVM_PGA_USERESERVE;
+	pgaflags = 0;
+	if (flags & UVM_KMF_NOWAIT)
+		pgaflags |= UVM_PGA_USERESERVE;
 	if (flags & UVM_KMF_ZERO)
 		pgaflags |= UVM_PGA_ZERO;
 	prot = VM_PROT_READ | VM_PROT_WRITE;
@@ -698,7 +700,7 @@ uvm_km_alloc_poolpage_cache(struct vm_map *map, bool waitok)
 		return 0;
 	KASSERT(!pmap_extract(pmap_kernel(), va, NULL));
 again:
-	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	pg = uvm_pagealloc(NULL, 0, NULL, waitok ? 0 : UVM_PGA_USERESERVE);
 	if (__predict_false(pg == NULL)) {
 		if (waitok) {
 			uvm_wait("plpg");
@@ -724,7 +726,7 @@ uvm_km_alloc_poolpage(struct vm_map *map, bool waitok)
 	vaddr_t va;
 
  again:
-	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+	pg = uvm_pagealloc(NULL, 0, NULL, waitok ? 0 : UVM_PGA_USERESERVE);
 	if (__predict_false(pg == NULL)) {
 		if (waitok) {
 			uvm_wait("plpg");
