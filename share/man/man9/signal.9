@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.17 2008/05/31 16:24:59 enami Exp $
+.\"	$NetBSD: signal.9,v 1.17.2.1 2008/12/13 21:30:57 bouyer Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,7 +64,7 @@
 .Ft void
 .Fn sigactsinit "struct proc *np" "struct proc *pp" "int share"
 .Ft void
-.Fn sigactsunsuare "struct proc *p"
+.Fn sigactsunshare "struct proc *p"
 .Ft void
 .Fn sigactsfree "struct proc *p"
 .Ft void
@@ -289,7 +289,7 @@ expects.
 .It void Fn psignal "struct proc *p" "int signum"
 .Pp
 This is a wrapper function for
-.Fn kpgsignal
+.Fn kpsignal
 which is described below.
 .It void Fn kpsignal "struct proc *p" "ksiginfo_t *ks" "void *data"
 .Pp
