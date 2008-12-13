@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5210_reset.c,v 1.2 2008/12/11 05:30:29 alc Exp $
+ * $Id: ar5210_reset.c,v 1.3 2008/12/13 05:16:28 alc Exp $
  */
 #include "opt_ah.h"
 
@@ -531,11 +531,10 @@ ar5210PerCalibrationN(struct ath_hal *ah,  HAL_CHANNEL *chan, u_int chainMask,
 	/* AGC calibration (this was added to make the NF threshold check work) */
 	OS_REG_WRITE(ah, AR_PHY_AGCCTL,
 		 OS_REG_READ(ah, AR_PHY_AGCCTL) | AR_PHY_AGC_CAL);
-#ifdef AH_DEBUG
-	if (!ath_hal_wait(ah, AR_PHY_AGCCTL, AR_PHY_AGC_CAL, 0))
+	if (!ath_hal_wait(ah, AR_PHY_AGCCTL, AR_PHY_AGC_CAL, 0)) {
 		HALDEBUG(ah, HAL_DEBUG_ANY, "%s: AGC calibration timeout\n",
 		    __func__);
-#endif
+	}
 
 	/* Rewrite our AGC values we stored off earlier (return AGC to normal operation) */
 	OS_REG_WRITE(ah, 0x9858, reg9858);
