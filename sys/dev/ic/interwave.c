@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.33.12.1 2008/12/12 23:06:57 ad Exp $	*/
+/*	$NetBSD: interwave.c,v 1.33.12.2 2008/12/13 12:33:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.33.12.1 2008/12/12 23:06:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interwave.c,v 1.33.12.2 2008/12/13 12:33:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1551,4 +1551,14 @@ iw_get_props(void *addr)
 	sc = addr;
 	return AUDIO_PROP_MMAP |
 		(sc->sc_fullduplex ? AUDIO_PROP_FULLDUPLEX : 0);
+}
+
+void
+iw_get_locks(void *addr, kmutex_t **intr, kmutex_t **thread)
+{
+	struct iw_softc *sc;
+
+	sc = addr;
+	*intr = &sc->sc_intr_lock;
+	*thread = &sc->sc_lock;
 }
