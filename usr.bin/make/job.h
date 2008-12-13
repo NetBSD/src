@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.37 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: job.h,v 1.38 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -118,7 +118,7 @@ emul_poll(struct pollfd *fd, int nfd, int timeout);
  *	1) The process id of the child shell
  *	2) The graph node describing the target being made by this job
  *	3) A LstNode for the first command to be saved after the job
- *	   completes. This is NILLNODE if there was no "..." in the job's
+ *	   completes. This is NULL if there was no "..." in the job's
  *	   commands.
  *	4) An FILE* for writing out the commands. This is only
  *	   used before the job is actually started.

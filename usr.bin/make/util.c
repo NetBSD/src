@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.46 2008/10/31 17:42:14 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.47 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.46 2008/10/31 17:42:14 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.47 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.46 2008/10/31 17:42:14 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.47 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif
 
@@ -286,7 +286,7 @@ getwd(char *pathname)
     if (stat("/", &st_root) == -1) {
 	(void)sprintf(pathname,
 			"getwd: Cannot stat \"/\" (%s)", strerror(errno));
-	return (NULL);
+	return NULL;
     }
     pathbuf[MAXPATHLEN - 1] = '\0';
     pathptr = &pathbuf[MAXPATHLEN - 1];
@@ -297,7 +297,7 @@ getwd(char *pathname)
     if (lstat(".", &st_cur) == -1) {
 	(void)sprintf(pathname,
 			"getwd: Cannot stat \".\" (%s)", strerror(errno));
-	return (NULL);
+	return NULL;
     }
     nextpathptr = strrcpy(nextpathptr, "../");
 
@@ -316,13 +316,13 @@ getwd(char *pathname)
 	    (void)sprintf(pathname,
 			    "getwd: Cannot stat directory \"%s\" (%s)",
 			    nextpathptr, strerror(errno));
-	    return (NULL);
+	    return NULL;
 	}
 	if ((dp = opendir(nextpathptr)) == NULL) {
 	    (void)sprintf(pathname,
 			    "getwd: Cannot open directory \"%s\" (%s)",
 			    nextpathptr, strerror(errno));
-	    return (NULL);
+	    return NULL;
 	}
 
 	/* look in the parent for the entry with the same inode */
@@ -346,7 +346,7 @@ getwd(char *pathname)
 			"getwd: Cannot stat \"%s\" (%s)",
 			d->d_name, strerror(errno));
 		    (void)closedir(dp);
-		    return (NULL);
+		    return NULL;
 		}
 		/* check if we found it yet */
 		if (st_next.st_ino == st_cur.st_ino &&
@@ -358,7 +358,7 @@ getwd(char *pathname)
 	    (void)sprintf(pathname,
 		"getwd: Cannot find \".\" in \"..\"");
 	    (void)closedir(dp);
-	    return (NULL);
+	    return NULL;
 	}
 	st_cur = st_dotdot;
 	pathptr = strrcpy(pathptr, d->d_name);

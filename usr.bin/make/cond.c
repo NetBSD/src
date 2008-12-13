@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.48 2008/11/29 14:42:21 dsl Exp $	*/
+/*	$NetBSD: cond.c,v 1.49 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.48 2008/11/29 14:42:21 dsl Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.49 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.48 2008/11/29 14:42:21 dsl Exp $");
+__RCSID("$NetBSD: cond.c,v 1.49 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -377,7 +377,7 @@ CondDoMake(int argLen, char *arg)
     Boolean result;
 
     arg[argLen] = '\0';
-    if (Lst_Find(create, arg, CondStrMatch) == NILLNODE) {
+    if (Lst_Find(create, arg, CondStrMatch) == NULL) {
 	result = FALSE;
     } else {
 	result = TRUE;
@@ -444,7 +444,7 @@ CondDoTarget(int argLen, char *arg)
 
     arg[argLen] = '\0';
     gn = Targ_FindNode(arg, TARG_NOCREATE);
-    if ((gn != NILGNODE) && !OP_NOP(gn->type)) {
+    if ((gn != NULL) && !OP_NOP(gn->type)) {
 	result = TRUE;
     } else {
 	result = FALSE;
@@ -477,7 +477,7 @@ CondDoCommands(int argLen, char *arg)
 
     arg[argLen] = '\0';
     gn = Targ_FindNode(arg, TARG_NOCREATE);
-    if ((gn != NILGNODE) && !OP_NOP(gn->type) && !Lst_IsEmpty(gn->commands)) {
+    if ((gn != NULL) && !OP_NOP(gn->type) && !Lst_IsEmpty(gn->commands)) {
 	result = TRUE;
     } else {
 	result = FALSE;

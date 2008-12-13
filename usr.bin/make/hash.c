@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.17 2008/10/06 22:09:21 joerg Exp $	*/
+/*	$NetBSD: hash.c,v 1.18 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: hash.c,v 1.17 2008/10/06 22:09:21 joerg Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.18 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)hash.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: hash.c,v 1.17 2008/10/06 22:09:21 joerg Exp $");
+__RCSID("$NetBSD: hash.c,v 1.18 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -227,7 +227,7 @@ Hash_FindEntry(Hash_Table *t, const char *key)
 	for (e = t->bucketPtr[h & t->mask]; e != NULL; e = e->next)
 		if (e->namehash == h && strcmp(e->name, p) == 0)
 			return (e);
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -411,7 +411,7 @@ Hash_EnumNext(Hash_Search *searchPtr)
 	 */
 	while (e == NULL) {
 		if (searchPtr->nextIndex >= t->size)
-			return (NULL);
+			return NULL;
 		e = t->bucketPtr[searchPtr->nextIndex++];
 	}
 	searchPtr->hashEntryPtr = e;
