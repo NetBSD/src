@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.3 2008/12/10 12:17:02 nakayama Exp $	*/
+/*	$NetBSD: schizo.c,v 1.4 2008/12/13 04:56:32 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -104,6 +104,8 @@ static void *schizo_intr_establish(bus_space_tag_t, int, int, int (*)(void *),
 static void *schizo_pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
                                        int, int (*)(void *), void *);
 static int schizo_pci_find_ino(struct pci_attach_args *, pci_intr_handle_t *);
+static int schizo_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	bus_size_t, int, bus_dmamap_t *);
 
 int
 schizo_match(struct device *parent, struct cfdata *match, void *aux)
@@ -154,14 +156,12 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	else
 		busa = 0;
 
-printf("bustag->type = %d\n", sc->sc_bustag->type);
 	if (bus_space_map(sc->sc_bustag, sc->sc_ctrl,
 	    sizeof(struct schizo_regs), 0,
 	    &sc->sc_ctrlh)) {
 		printf(": failed to map registers\n");
 		return;
 	}
-printf("mapped regs len %zx, sc_ctrl = %lx sc_ctrlh._ptr = %lx ._asi = %x ._sasi = %x\n", sizeof(struct schizo_regs), (uint64_t)sc->sc_ctrl, sc->sc_ctrlh._ptr, sc->sc_ctrlh._asi, sc->sc_ctrlh._sasi);
 
 	/* enable schizo ecc error interrupts */
 	eccctrl = schizo_read(sc, SCZ_ECCCTRL);
@@ -209,7 +209,6 @@ schizo_init(struct schizo_softc *sc, int busa, struct mainbus_attach_args *ma)
 	    &pbm->sp_regh)) {
 		panic("schizo: unable to create PBM handle");
 	}
-printf("mapped regs, sp_regh._ptr = %lx ._asi = %x ._sasi = %x\n", pbm->sp_regh._ptr, pbm->sp_regh._asi, pbm->sp_regh._sasi);
 
 	printf("%s: ", sc->sc_dv.dv_xname);
 	schizo_init_iommu(sc, pbm);
@@ -223,7 +222,6 @@ printf("mapped regs, sp_regh._ptr = %lx ._asi = %x ._sasi = %x\n", pbm->sp_regh.
 
 	if (bus_space_map(pbm->sp_cfgt, 0, 0x1000000, 0, &pbm->sp_cfgh))
 		panic("schizo: could not map config space");
-printf("mapped regs, sp_cfgh._ptr = %lx ._asi = %x ._sasi = %x\n", pbm->sp_cfgh._ptr, pbm->sp_cfgh._asi, pbm->sp_cfgh._sasi);
 
 	pbm->sp_pc = schizo_alloc_chipset(pbm, sc->sc_node,
 	    &_sparc_pci_chipset);
@@ -241,9 +239,6 @@ printf("mapped regs, sp_cfgh._ptr = %lx ._asi = %x ._sasi = %x\n", pbm->sp_cfgh.
 	pba.pba_dmat64 = NULL;	/* XXX */
 	pba.pba_memt = pbm->sp_memt;
 	pba.pba_iot = pbm->sp_iot;
-#if 0
-	pba.pba_pc->intr_map = schizo_intr_map;
-#endif
 
 	free(busranges, M_DEVBUF);
 
@@ -389,34 +384,24 @@ schizo_init_iommu(struct schizo_softc *sc, struct schizo_pbm *pbm)
 
 	va = (vaddr_t)pbm->sp_flush[0x40];
 
+	/* punch in our copies */
 	is->is_bustag = pbm->sp_regt;
-
 	if (bus_space_subregion(is->is_bustag, pbm->sp_regh,
 	    offsetof(struct schizo_pbm_regs, iommu),
-	    sizeof(struct iommureg), &is->is_iommu)) {
-		panic("schizo: unable to create iommu handle");
+	    sizeof(struct schizo_iommureg), &is->is_iommu)) {
+		printf("schizo: unable to create streaming buffer handle\n");
+		is->is_sb[0]->sb_flush = NULL;
 	} 
 
+	/* initialize our strbuf_ctl */
 	is->is_sb[0] = &pbm->sp_sb;
-	// XXXSCHIZO?
-	//is->is_sb[0]->sb_bustag = is->is_bustag;
+	pbm->sp_sb.sb_is = is;
 	is->is_sb[0]->sb_flush = (void *)(va & ~0x3f);
 
 	if (bus_space_subregion(is->is_bustag, pbm->sp_regh,
 	    offsetof(struct schizo_pbm_regs, strbuf),
 	    sizeof(struct iommu_strbuf), &is->is_sb[0]->sb_sb)) {
-		panic("schizo: unable to create streaming buffer handle");
-		is->is_sb[0]->sb_flush = NULL;
 	} 
-
-#if 1
-	/* XXX disable the streaming buffers for now */
-	bus_space_write_8(is->is_bustag, is->is_sb[0]->sb_sb,
-	    STRBUFREG(strbuf_ctl),
-	    bus_space_read_8(is->is_bustag, is->is_sb[0]->sb_sb,
-		STRBUFREG(strbuf_ctl)) & ~STRBUF_EN);
-	is->is_sb[0]->sb_flush = NULL;
-#endif
 
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
 	if (name == NULL)
@@ -484,58 +469,13 @@ schizo_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 	DPRINTF(SDB_CONF, (" .. done\n"));
 }
 
-#if 0
-/*
- * Bus-specific interrupt mapping
- */
-int
-schizo_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
-{
-	struct schizo_pbm *sp = pa->pa_pc->cookie;
-	struct schizo_softc *sc = sp->sp_sc;
-	u_int dev;
-
-	if (*ihp != (pci_intr_handle_t)-1) {
-		*ihp |= sc->sc_ign;
-		return (0);
-	}
-
-	/*
-	 * We didn't find a PROM mapping for this interrupt.  Try to
-	 * construct one ourselves based on the swizzled interrupt pin
-	 * and the interrupt mapping for PCI slots documented in the
-	 * UltraSPARC-IIi User's Manual.
-	 */
-
-	if (pa->pa_intrpin == 0)
-		return (-1);
-
-	/*
-	 * This deserves some documentation.  Should anyone
-	 * have anything official looking, please speak up.
-	 */
-	dev = pa->pa_device - 1;
-
-	*ihp = (pa->pa_intrpin - 1) & INTMAP_PCIINT;
-	*ihp |= (dev << 2) & INTMAP_PCISLOT;
-	*ihp |= sc->sc_ign;
-
-	return (0);
-}
-#endif
-
 void
 schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
     int (*handler)(void *), void *arg, int ino, const char *what)
 {
 	struct intrhand *ih;
-	//volatile u_int64_t *map, *clr;
-	//struct schizo_pbm_regs *pbmreg;
 	u_int64_t mapoff, clroff;
 
-	//pbmreg = bus_space_vaddr(pbm->sp_regt, pbm->sp_regh);
-	//map = &pbmreg->imap[ino];
-	//clr = &pbmreg->iclr[ino];
 	mapoff = offsetof(struct schizo_pbm_regs, imap[ino]);
 	clroff = offsetof(struct schizo_pbm_regs, iclr[ino]);
 	ino |= sc->sc_ign;
@@ -545,8 +485,6 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 	if (ih == NULL)
 		return;
 	ih->ih_arg = arg;
-	//ih->ih_map = map;
-	//ih->ih_clr = clr;
 	ih->ih_map = (uint64_t *)mapoff;        // XXX FIXME
 	ih->ih_clr = (uint64_t *)clroff;        // XXX FIXME
 	ih->ih_fun = handler;
@@ -556,7 +494,6 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 
 	schizo_pbm_write(pbm, mapoff,
 	    ih->ih_number | INTMAP_V | (CPU_UPAID << INTMAP_TID_SHIFT));
-
 }
 
 bus_space_tag_t
@@ -613,7 +550,7 @@ schizo_alloc_dma_tag(struct schizo_pbm *pbm)
 	dt->_cookie = pbm;
 	dt->_parent = pdt;
 #define PCOPY(x)	dt->x = pdt->x
-	PCOPY(_dmamap_create);
+	dt->_dmamap_create = schizo_dmamap_create;
 	PCOPY(_dmamap_destroy);
 	dt->_dmamap_load = iommu_dvmamap_load;
 	PCOPY(_dmamap_load_mbuf);
@@ -648,18 +585,20 @@ schizo_alloc_chipset(struct schizo_pbm *pbm, int node, pci_chipset_tag_t pc)
 	return (npc);
 }
 
-#if 0
 int
 schizo_dmamap_create(bus_dma_tag_t t, bus_size_t size,
     int nsegments, bus_size_t maxsegsz, bus_size_t boundary, int flags,
     bus_dmamap_t *dmamp)
 {
 	struct schizo_pbm *pbm = t->_cookie;
+	int error;
 
-	return (iommu_dvmamap_create(t, &pbm->sp_sb, size, nsegments,
-	    maxsegsz, boundary, flags, dmamp));
+	error = bus_dmamap_create(t->_parent, size, nsegments, maxsegsz,
+				  boundary, flags, dmamp);
+	if (error == 0)
+		(*dmamp)->_dm_cookie = &pbm->sp_sb;
+	return error;
 }
-#endif
 
 static struct schizo_range *
 get_schizorange(struct schizo_pbm *pbm, int ss)
