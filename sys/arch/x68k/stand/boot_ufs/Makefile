@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2007/03/03 07:10:30 isaki Exp $
+#	$NetBSD: Makefile,v 1.21.50.1 2008/12/13 01:13:38 haad Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,8 @@ NOMAN=		# defined
 
 BOOT=	boot_ufs
 VERSIONFILE=	${.CURDIR}/version
-VERSION!=	awk -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } END { print it }' ${VERSIONFILE}
+VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
+			END { print it }' ${VERSIONFILE}
 NEWVERSWHAT=	"${BOOT}"
 
 # text and bss addresses in hex
@@ -69,7 +70,7 @@ $(PROG): $(OBJS)
 	$(LD) $(LINKFLAGS) -o $(PROG).x $(OBJS) $(LDADD) >$(PROG).map
 	@grep first_kbyte $(PROG).map
 	@if [ `(echo ibase=16;						\
-		sed -n	-e '/[ 	]first_kbyte/{'				\
+		${TOOL_SED} -n	-e '/[ 	]first_kbyte/{'			\
 			-e 's/.*0x\([0-9a-fA-F]*\).*/\1-$(TEXT)-400/p'	\
 			-e '}' $(PROG).map |				\
 		tr a-f A-F) | bc` -gt 0 ];				\

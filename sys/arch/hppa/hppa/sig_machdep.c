@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.21 2008/04/28 20:23:23 martin Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.21.6.1 2008/12/13 01:13:12 haad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21 2008/04/28 20:23:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.21.6.1 2008/12/13 01:13:12 haad Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -153,7 +153,7 @@ struct sigframe_siginfo {
 };
 
 void
-sendsig(const struct ksiginfo *ksi, const sigset_t *mask)
+sendsig_siginfo(const struct ksiginfo *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;

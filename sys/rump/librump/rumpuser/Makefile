@@ -1,9 +1,7 @@
-#	$NetBSD: Makefile,v 1.7.4.1 2008/10/19 22:18:07 haad Exp $
+#	$NetBSD: Makefile,v 1.7.4.2 2008/12/13 01:15:34 haad Exp $
 #
 
 LIB=		rumpuser
-INCS=		rumpuser.h
-INCSDIR=	/usr/include/rump
 WARNS=		4
 
 SRCS=		rumpuser.c rumpuser_net.c rumpuser_pth.c

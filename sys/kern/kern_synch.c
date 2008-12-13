@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.250.2.1 2008/10/19 22:17:28 haad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.250.2.2 2008/12/13 01:15:08 haad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.250.2.1 2008/10/19 22:17:28 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.250.2.2 2008/12/13 01:15:08 haad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -165,8 +165,8 @@ sched_init(void)
 /*
  * OBSOLETE INTERFACE
  *
- * General sleep call.  Suspends the current process until a wakeup is
- * performed on the specified identifier.  The process will then be made
+ * General sleep call.  Suspends the current LWP until a wakeup is
+ * performed on the specified identifier.  The LWP will then be made
  * runnable with the specified priority.  Sleeps at most timo/hz seconds (0
  * means no timeout).  If pri includes PCATCH flag, signals are checked
  * before and after sleeping, else signals are not checked.  Returns 0 if
@@ -296,7 +296,7 @@ sa_awaken(struct lwp *l)
 /*
  * OBSOLETE INTERFACE
  *
- * Make all processes sleeping on the specified identifier runnable.
+ * Make all LWPs sleeping on the specified identifier runnable.
  */
 void
 wakeup(wchan_t ident)
@@ -314,7 +314,7 @@ wakeup(wchan_t ident)
 /*
  * OBSOLETE INTERFACE
  *
- * Make the highest priority process first in line on the specified
+ * Make the highest priority LWP first in line on the specified
  * identifier runnable.
  */
 void 
@@ -332,9 +332,9 @@ wakeup_one(wchan_t ident)
 
 
 /*
- * General yield call.  Puts the current process back on its run queue and
+ * General yield call.  Puts the current LWP back on its run queue and
  * performs a voluntary context switch.  Should only be called when the
- * current process explicitly requests it (eg sched_yield(2)).
+ * current LWP explicitly requests it (eg sched_yield(2)).
  */
 void
 yield(void)
@@ -351,7 +351,7 @@ yield(void)
 }
 
 /*
- * General preemption call.  Puts the current process back on its run queue
+ * General preemption call.  Puts the current LWP back on its run queue
  * and performs an involuntary context switch.
  */
 void
@@ -723,7 +723,7 @@ mi_switch(lwp_t *l)
 		}
 
 		/*
-		 * Mark that context switch is going to be perfomed
+		 * Mark that context switch is going to be performed
 		 * for this LWP, to protect it from being switched
 		 * to on another CPU.
 		 */
@@ -915,7 +915,7 @@ lwp_exit_switchaway(lwp_t *l)
 }
 
 /*
- * Change process state to be runnable, placing it on the run queue if it is
+ * Change LWP state to be runnable, placing it on the run queue if it is
  * in memory, and awakening the swapper if it isn't in memory.
  *
  * Call with the process and LWP locked.  Will return with the LWP unlocked.

@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.3.20.1 2008/10/19 22:16:12 haad Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.3.20.2 2008/12/13 01:13:39 haad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -149,6 +149,7 @@ HYPERVISOR_set_callbacks(
     return ret;
 }
 
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 static __inline int
 HYPERVISOR_dom0_op(dom0_op_t *dom0_op)
 {
@@ -161,6 +162,7 @@ HYPERVISOR_dom0_op(dom0_op_t *dom0_op)
 
     return ret;
 }
+#endif	/* __XEN_INTERFACE_VERSION__ */
 
 static __inline int
 HYPERVISOR_set_debugreg(int reg, unsigned long value)
@@ -198,6 +200,18 @@ HYPERVISOR_machine_check(struct xen_mc *mc)
 	  _harg("=a" (ret), "=b" (ign1)));
   
      return ret;
+}
+
+static __inline int
+HYPERVISOR_hvm_op(int cmd, void *arg)
+{
+    int ret;
+    unsigned long ign1, ign2;
+
+    _hypercall(__HYPERVISOR_hvm_op, _harg("1" (cmd), "2" (arg)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+
+    return ret;
 }
 
 static __inline int
@@ -408,6 +422,19 @@ HYPERVISOR_shutdown(void)
 }
 
 static __inline long
+HYPERVISOR_crash(void)
+{
+    long ret;
+    unsigned long ign1, ign2;
+
+    _hypercall(__HYPERVISOR_sched_op,
+	_harg("1" (SCHEDOP_shutdown), "2" (SHUTDOWN_crash)),
+	_harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+
+    return ret;
+}
+
+static __inline long
 HYPERVISOR_reboot(void)
 {
     long ret;
@@ -444,6 +471,19 @@ HYPERVISOR_set_timer_op(uint64_t timeout)
     _hypercall(__HYPERVISOR_set_timer_op,
 	 _harg("1" (timeout_lo), "2" (timeout_hi)),
 	 _harg("=a" (ret), "=b" (ign1), "=c" (ign2)));
+
+    return ret;
+}
+
+static __inline int
+HYPERVISOR_platform_op(struct xen_platform_op *platform_op)
+{
+    int ret;
+    unsigned long ign1;
+
+    platform_op->interface_version = XENPF_INTERFACE_VERSION;
+    _hypercall(__HYPERVISOR_platform_op, _harg("1" (platform_op)),
+	_harg("=a" (ret), "=b" (ign1)));
 
     return ret;
 }

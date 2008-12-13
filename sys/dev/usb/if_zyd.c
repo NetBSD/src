@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.13.4.1 2008/10/19 22:17:09 haad Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.13.4.2 2008/12/13 01:14:53 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -22,7 +22,7 @@
  * ZyDAS ZD1211/ZD1211B USB WLAN driver.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.13.4.1 2008/10/19 22:17:09 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.13.4.2 2008/12/13 01:14:53 haad Exp $");
 
 #include "bpfilter.h"
 
@@ -2419,18 +2419,24 @@ zyd_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if (!(ifp->if_flags & IFF_RUNNING))
-				zyd_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				zyd_stop(ifp, 1);
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP:
+			zyd_init(ifp);
+			break;
+		case IFF_RUNNING:
+			zyd_stop(ifp, 1);
+			break;
+		default:
+			break;
 		}
 		break;
 
 	default:
 		if (!sc->attached)
-			error = ENOTTY;
+			error = ENXIO;
 		else
 			error = ieee80211_ioctl(ic, cmd, data);
 	}

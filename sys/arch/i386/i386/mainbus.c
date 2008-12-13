@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.77 2008/05/18 02:06:14 jmcneill Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.77.4.1 2008/12/13 01:13:14 haad Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.77 2008/05/18 02:06:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.77.4.1 2008/12/13 01:13:14 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,9 +194,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #ifdef MPBIOS
 	int mpbios_present = 0;
 #endif
-#if NACPI > 0 || defined(MPBIOS)
-	int numioapics = 0;
-#endif
 #if defined(PCI_BUS_FIXUP)
 	int pci_maxbus = 0;
 #endif
@@ -218,7 +215,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 #if defined(PCI_BUS_FIXUP)
 	if (pci_mode != 0) {
 		pci_maxbus = pci_bus_fixup(NULL, 0);
-		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n", pci_maxbus);
+		aprint_debug("PCI bus max, after pci_bus_fixup: %i\n",
+		    pci_maxbus);
 #if defined(PCI_ADDR_FIXUP)
 		pciaddr.extent_port = NULL;
 		pciaddr.extent_mem = NULL;
@@ -237,13 +235,13 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 * be done later (via a callback).
 	 */
 	if (acpi_present)
-		mpacpi_active = mpacpi_scan_apics(self, &numcpus, &numioapics);
+		mpacpi_active = mpacpi_scan_apics(self, &numcpus);
 #endif
 
 	if (!mpacpi_active) {
 #ifdef MPBIOS
 		if (mpbios_present)
-			mpbios_scan(self, &numcpus, &numioapics);
+			mpbios_scan(self, &numcpus);
 		else
 #endif
 		if (numcpus == 0) {

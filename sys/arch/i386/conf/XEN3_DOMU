@@ -1,8 +1,9 @@
-# $NetBSD: XEN3_DOMU,v 1.10 2006/11/11 20:00:39 bouyer Exp $
+# $NetBSD: XEN3_DOMU,v 1.10.62.1 2008/12/13 01:13:13 haad Exp $
 
 include "arch/i386/conf/XEN2_DOMU"
 
 options 	XEN3	#Xen 3.x support
+#options         __XEN_INTERFACE_VERSION__=0x00030205 # Xen 3.1 interface
 options 	XEN_COMPAT_030001  #compatible with Xen3 before 3.0.2
 options 	MAXPHYS=32768   #xbd doesn't handle 64k transfers
 

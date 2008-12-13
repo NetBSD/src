@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69.4.1 2008/10/19 22:15:52 haad Exp $
+# $NetBSD: GENERIC,v 1.69.4.2 2008/12/13 01:13:18 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -32,7 +32,6 @@ options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
-#options 	LKM			# loadable kernel modules
 #options 	NTP			# network time protocol
 options 	HZ=25
 options 	USERCONF		# userconf(4) support

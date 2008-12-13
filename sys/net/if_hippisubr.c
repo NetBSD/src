@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.34 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.34.16.1 2008/12/13 01:15:25 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.34 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.34.16.1 2008/12/13 01:15:25 haad Exp $");
 
 #include "opt_inet.h"
 
@@ -339,7 +339,7 @@ hippi_ifattach(struct ifnet *ifp, void *lla)
 	ifp->if_input = hippi_input;
 	ifp->if_baudrate = IF_Mbps(800);	/* XXX double-check */
 
-	if_set_sadl(ifp, lla, 6);
+	if_set_sadl(ifp, lla, 6, true);
 
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_HIPPI, sizeof(struct hippi_header));

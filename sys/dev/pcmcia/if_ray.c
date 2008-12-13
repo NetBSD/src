@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.70 2008/04/05 21:31:23 cegger Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.70.10.1 2008/12/13 01:14:48 haad Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.70 2008/04/05 21:31:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.70.10.1 2008/12/13 01:14:48 haad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -870,10 +870,7 @@ ray_reset_resetloop(arg)
 }
 
 static int
-ray_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+ray_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ieee80211_nwid nwid;
 	struct ray_param_req pr;
@@ -892,8 +889,8 @@ ray_ioctl(ifp, cmd, data)
 	RAY_DPRINTF(("%s: ioctl: cmd 0x%lx data 0x%lx\n", ifp->if_xname,
 	    cmd, (long)data));
 	switch (cmd) {
-	case SIOCSIFADDR:
-		RAY_DPRINTF(("%s: ioctl: cmd SIOCSIFADDR\n", ifp->if_xname));
+	case SIOCINITIFADDR:
+		RAY_DPRINTF(("%s: ioctl: cmd SIOCINITIFADDR\n", ifp->if_xname));
 		if ((ifp->if_flags & IFF_RUNNING) == 0)
 			if ((error = ray_enable(sc)))
 				break;
@@ -911,6 +908,8 @@ ray_ioctl(ifp, cmd, data)
 		break;
 	case SIOCSIFFLAGS:
 		RAY_DPRINTF(("%s: ioctl: cmd SIOCSIFFLAGS\n", ifp->if_xname));
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if ((ifp->if_flags & IFF_RUNNING) == 0) {
 				if ((error = ray_enable(sc)))
@@ -1001,7 +1000,7 @@ ray_ioctl(ifp, cmd, data)
 #endif
 	default:
 		RAY_DPRINTF(("%s: ioctl: unknown\n", ifp->if_xname));
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.114.1 2008/12/13 01:13:10 haad Exp $
 
 # Makefile for evbsh3 tags file and boot blocks
 
@@ -16,7 +16,8 @@ DEVBSH3=	evbsh3 include
 tags:
 	-ctags -wdtf ${TEVBSH3} ${SEVBSH3} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AEVBSH3} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TEVBSH3}
 	sort -o ${TEVBSH3} ${TEVBSH3}
 

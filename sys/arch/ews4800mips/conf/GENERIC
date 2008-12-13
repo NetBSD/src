@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.23.16.1 2008/10/19 22:15:45 haad Exp $
+# $NetBSD: GENERIC,v 1.23.16.2 2008/12/13 01:13:10 haad Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.23.16.1 $"
+#ident		"GENERIC-$Revision: 1.23.16.2 $"
 
 maxusers	16
 
@@ -53,7 +53,6 @@ options 	SEMMNI=10		# number of semaphore identifiers
 options 	SYSVSHM			# System V shared memory
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM			# loadable kernel modules
 
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
@@ -117,7 +116,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Indpendent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.59 2008/02/20 17:05:52 matt Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.59.16.1 2008/12/13 01:15:25 haad Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.59 2008/02/20 17:05:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.59.16.1 2008/12/13 01:15:25 haad Exp $");
 
 #include "opt_inet.h"
 
@@ -645,7 +645,7 @@ arc_ifattach(struct ifnet *ifp, uint8_t lla)
 		   ifp->if_xname, ifp->if_xname);
 	}
 	if_attach(ifp);
-	if_set_sadl(ifp, &lla, sizeof(lla));
+	if_set_sadl(ifp, &lla, sizeof(lla), true);
 
 	ifp->if_broadcastaddr = &arcbroadcastaddr;
 

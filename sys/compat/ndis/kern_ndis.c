@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.14 2008/01/18 09:38:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.14.16.1 2008/12/13 01:13:57 haad Exp $");
 #endif
 
 #include <sys/param.h>
@@ -56,17 +56,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.14 2008/01/18 09:38:06 skrll Exp $")
 #include <sys/conf.h>
 
 #include <sys/kernel.h>
-#ifdef __FreeBSD__
 #include <sys/module.h>
-#else
-#include <sys/lkm.h>
 #include <sys/mbuf.h>
-#endif
 #include <sys/kthread.h>
 #include <sys/bus.h>
 #ifdef __FreeBSD__
 #include <machine/resource.h>
-#include <sys/bus.h>
 #include <sys/rman.h>
 #endif
 
@@ -97,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.14 2008/01/18 09:38:06 skrll Exp $")
 #include <compat/ndis/usbd_var.h>
 #include <dev/if_ndis/if_ndisvar.h>
 
+MODULE(MODULE_CLASS_MISC, ndis, NULL);
+
 #define NDIS_DUMMY_PATH "\\\\some\\bogus\\path"
 
 __stdcall static void ndis_status_func(ndis_handle, ndis_status,
@@ -109,10 +106,6 @@ __stdcall static void ndis_sendrsrcavail_func(ndis_handle);
 __stdcall static void ndis_intrhand(kdpc *, device_object *,
 	irp *, struct ndis_softc *);
 
-#ifdef __NetBSD__
-extern int ndis_lkmentry(struct lkm_table *lkmtp, int cmd, int ver);
-#endif
-	
 static image_patch_table kernndis_functbl[] = {
 	IMPORT_FUNC(ndis_status_func),
 	IMPORT_FUNC(ndis_statusdone_func),
@@ -258,21 +251,15 @@ ndis_modevent(module_t mod, int cmd, void *arg)
 DEV_MODULE(ndisapi, ndis_modevent, NULL);
 MODULE_VERSION(ndisapi, 1);
 #endif
-#ifdef __NetBSD__
-MOD_MISC( "ndisapi");
 
-#ifndef NDIS_LKM
-int ndis_lkm_handle(struct lkm_table *lkmtp, int cmd);
-#endif
-
-/*static*/ int
-ndis_lkm_handle(struct lkm_table *lkmtp, int cmd)
+static int
+ndis_modcmd(modcmd_t cmd, void *arg)
 {
 	int			error = 0;
 	image_patch_table	*patch;
 
 	switch (cmd) {
-	case LKM_E_LOAD:
+	case MODULE_CMD_INIT:
 		/* Initialize subsystems */
 		windrv_libinit();
 		hal_libinit();
@@ -293,7 +280,8 @@ ndis_lkm_handle(struct lkm_table *lkmtp, int cmd)
 
 		ndis_create_kthreads();
 		break;
-	case LKM_E_UNLOAD:
+
+	case MODULE_CMD_FINI:
 		/* stop kthreads */
 		ndis_destroy_kthreads();
 
@@ -313,23 +301,14 @@ ndis_lkm_handle(struct lkm_table *lkmtp, int cmd)
 		}
 
 		break;
-	case LKM_E_STAT:
-		break;
+
 	default:
-		error = EINVAL;
+		error = ENOTTY;
 		break;
 	}
 
 	return(error);
 }
-
-int
-ndis_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
-{
-	DISPATCH(lkmtp, cmd, ver, 
-		 ndis_lkm_handle, ndis_lkm_handle, ndis_lkm_handle);
-}
-#endif /* __NetBSD__ */
 
 /*
  * We create two kthreads for the NDIS subsystem. One of them is a task

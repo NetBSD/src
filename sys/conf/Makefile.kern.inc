@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.113.2.1 2008/10/19 22:16:18 haad Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.113.2.2 2008/12/13 01:14:07 haad Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -196,14 +196,14 @@ ${_cfile:T:R}.o: ${_cfile}
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
+SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS:O} ${SYSLIBCOMPAT} ${LIBKERN}
 SYSTEM_DEP?=	Makefile ${SYSTEM_OBJ:O} .gdbinit
 SYSTEM_LD_HEAD?=@rm -f $@
 SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
 		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
-SYSTEM_LD_TAIL?=@sed '/const char sccs/!d;s/.*@(.)//;s/\\.*//' vers.c; \
+SYSTEM_LD_TAIL?=@${TOOL_SED} '/const char sccs/!d;s/.*@(.)//;s/\\.*//' vers.c; \
 		${SIZE} $@; chmod 755 $@
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
@@ -346,7 +346,7 @@ assym.d: assym.h
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
 	    ${CFLAGS} ${CPPFLAGS}
-	sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
+	${TOOL_SED} -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
 	rm -f assym.dep
 
 DEPS+=	assym.d
@@ -369,7 +369,7 @@ LOBJS?= ${_lsrc:T:S/.c$/.ln/g} ${LIBKERNLN} ${SYSLIBCOMPATLN}
 LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
 	${_MKTARGET_COMPILE}
 	${CC} -E -C ${AFLAGS} ${CPPFLAGS} ${_sfile} | \
-	      awk -f $S/kern/genlintstub.awk >${.TARGET}
+	      ${TOOL_AWK} -f $S/kern/genlintstub.awk >${.TARGET}
 .endfor
 
 .for _cfile in ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
@@ -419,14 +419,16 @@ EXTRA_CLEAN+= cscope.out cscope.tmp
 .if !target(cscope.out)
 cscope.out: Makefile depend
 	${_MKTARGET_CREATE}
-	@sed 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/kern/.depend | \
-	tr -s ' ' '\n' | sed 's|^\([^.\\]\)|lib/kern/\1|;s|^../../||;' > \
-	cscope.tmp
-	@sed 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/compat/.depend | \
-	tr -s ' ' '\n' | sed 's|^\([^.\\]\)|lib/compat/\1|;s|^../../||;' >> \
-	cscope.tmp
+	@${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/kern/.depend \
+	    | tr -s ' ' '\n' \
+	    | ${TOOL_SED} 's|^\([^.\\]\)|lib/kern/\1|;s|^../../||;' \
+	    > cscope.tmp
+	@${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/compat/.depend \
+	    | tr -s ' ' '\n' \
+	    | ${TOOL_SED} 's|^\([^.\\]\)|lib/compat/\1|;s|^../../||;' \
+	    >> cscope.tmp
 	@echo ${SRCS} | cat - cscope.tmp | tr -s ' ' '\n' | sort -u | \
-	${CSCOPE} -k -i - -b `echo ${INCLUDES} | sed s/-nostdinc//`
+	    ${CSCOPE} -k -i - -b `echo ${INCLUDES} | ${TOOL_SED} s/-nostdinc//`
 #	cscope doesn't write cscope.out if it's uptodate, so ensure
 #	make doesn't keep calling cscope when not needed.
 	@rm -f cscope.tmp; touch cscope.out
@@ -444,10 +446,16 @@ mkid: ID
 
 ID: Makefile depend
 	${_MKTARGET_CREATE}
-	@${MKID} `sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' lib/kern/.depend \
-	lib/compat/.depend | tr ' ' '\n' | sed "s|^../../||" | sort -u` \
-	`sed 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' .depend | tr ' ' '\n' \
-	| sort -u`
+	@${MKID} \
+	    `${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' \
+			lib/kern/.depend lib/compat/.depend \
+		    | tr ' ' '\n' \
+		    | ${TOOL_SED} "s|^../../||" \
+		    | sort -u` \
+	    `${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' \
+			.depend \
+		    | tr ' ' '\n' \
+		    | sort -u`
 
 .endif
 

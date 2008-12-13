@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.21 2008/04/18 14:56:40 cegger Exp $ */
+/* $NetBSD: if_plip.c,v 1.21.10.1 2008/12/13 01:14:48 haad Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.21 2008/04/18 14:56:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.21.10.1 2008/12/13 01:14:48 haad Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -345,7 +345,7 @@ lpfreetables (void)
 
 /* Process an ioctl request. */
 static int
-lpioctl (struct ifnet *ifp, u_long cmd, void *data)
+lpioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct lp_softc * sc = ifp->if_softc;
 	device_t dev = sc->ppbus_dev.sc_dev;
@@ -372,7 +372,7 @@ lpioctl (struct ifnet *ifp, u_long cmd, void *data)
 			error = EAFNOSUPPORT;
 		break;
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if (ifa->ifa_addr->sa_family != AF_INET) {
 			error = EAFNOSUPPORT;
 			break;
@@ -380,6 +380,8 @@ lpioctl (struct ifnet *ifp, u_long cmd, void *data)
 		ifp->if_flags |= IFF_UP;
 	/* FALLTHROUGH */
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
 			if((error = ppbus_request_bus(ppbus, dev, 0, 0)))
 				break;
@@ -459,7 +461,7 @@ lpioctl (struct ifnet *ifp, u_long cmd, void *data)
 		 */
 	default:
 		LP_PRINTF("LP:ioctl(0x%lx)\n", cmd);
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 	}
 
 end:

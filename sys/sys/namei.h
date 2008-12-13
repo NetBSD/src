@@ -1,10 +1,10 @@
-/*	$NetBSD: namei.h,v 1.60 2008/04/11 15:51:38 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.60.10.1 2008/12/13 01:15:35 haad Exp $	*/
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei)
- *   by:   NetBSD: gennameih.awk,v 1.1 2007/08/15 14:08:11 pooka Exp 
- *   from: NetBSD: namei.src,v 1.8 2008/04/11 15:51:25 ad Exp 
+ *   by:   NetBSD: gennameih.awk,v 1.2 2008/04/30 13:11:00 martin Exp 
+ *   from: NetBSD: namei.src,v 1.9 2008/11/17 07:20:37 pooka Exp 
  */
 
 /*
@@ -109,6 +109,7 @@ struct nameidata {
  */
 #define	LOCKLEAF	0x0004	/* lock inode on return */
 #define	LOCKPARENT	0x0008	/* want parent vnode returned locked */
+#define	NOCHROOT	0x0010	/* no chroot on abs path lookups */
 #define	NOCACHE		0x0020	/* name must not be left in cache */
 #define	FOLLOW		0x0040	/* follow symbolic links */
 #define	NOFOLLOW	0x0000	/* do not follow symbolic links (pseudo) */
@@ -250,6 +251,7 @@ extern struct nchstats nchstats;
 #define NAMEI_OPMASK	3
 #define NAMEI_LOCKLEAF	0x0004
 #define NAMEI_LOCKPARENT	0x0008
+#define NAMEI_NOCHROOT	0x0010
 #define NAMEI_NOCACHE	0x0020
 #define NAMEI_FOLLOW	0x0040
 #define NAMEI_NOFOLLOW	0x0000

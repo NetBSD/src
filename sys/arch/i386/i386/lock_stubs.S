@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.21 2008/06/27 18:16:02 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.21.2.1 2008/12/13 01:13:13 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,26 +30,18 @@
  */
 
 /*
- * The sizes listed against each function are for a kernel compiled
- * with options MULTIPROCESSOR && DIAGNOSTIC.  Where possible we make
- * each routine fit into an assumed 64-byte cache line.  Please check
- * alignment with 'objdump -d' after making changes.
+ * Where possible we make * each routine fit into an assumed 64-byte cache
+ * line.  Please check * alignment with 'objdump -d' after making changes. 
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.21 2008/06/27 18:16:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.21.2.1 2008/12/13 01:13:13 haad Exp $");
 
-#include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
-#include "opt_ddb.h"
 
 #include <machine/cputypes.h>
 
 #include "assym.h"
-
-#if defined(DIAGNOSTIC) || defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
-#define	FULL
-#endif
 
 #define	ALIGN64		.align	64
 #define	ALIGN32		.align	32
@@ -70,7 +62,7 @@ ENTRY(mutex_enter)
 	movl	CPUVAR(CURLWP), %ecx
 	xorl	%eax, %eax
 	LOCK(1)
-	cmpxchgl %ecx, MTX_OWNER(%edx)
+	cmpxchgl %ecx, (%edx)
 	jnz	1f
 	ret
 1:
@@ -90,7 +82,7 @@ ENTRY(mutex_exit)
 	movl	4(%esp), %edx
 	movl	CPUVAR(CURLWP), %eax
 	xorl	%ecx, %ecx
-	cmpxchgl %ecx, MTX_OWNER(%edx)
+	cmpxchgl %ecx, (%edx)
 	jnz	1f
 	ret
 1:
@@ -110,14 +102,17 @@ ENTRY(rw_enter)
 	/*
 	 * Reader
 	 */
-1:	movl	RW_OWNER(%edx), %eax
+	movl	(%edx), %eax
+0:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
-	leal	RW_READ_INCR(%eax), %ecx
 	jnz	3f
+	leal	RW_READ_INCR(%eax), %ecx
 	LOCK(2)
-	cmpxchgl %ecx, RW_OWNER(%edx)
-	jnz,pn	1b
+	cmpxchgl %ecx, (%edx)
+	jnz	1f
 	ret
+1:
+	jmp	0b
 
 	/*
 	 * Writer
@@ -126,7 +121,7 @@ ENTRY(rw_enter)
 	xorl	%eax, %eax
 	orl	$RW_WRITE_LOCKED, %ecx
 	LOCK(3)
-	cmpxchgl %ecx, RW_OWNER(%edx)
+	cmpxchgl %ecx, (%edx)
 	jnz	3f
 	ret
 3:
@@ -140,22 +135,24 @@ END(rw_enter)
  */
 ENTRY(rw_exit)
 	movl	4(%esp), %edx
-	movl	RW_OWNER(%edx), %eax
+	movl	(%edx), %eax
 	testb	$RW_WRITE_LOCKED, %al
 	jnz	2f
 
 	/*
 	 * Reader
 	 */
-1:	testb	$RW_HAS_WAITERS, %al
+0:	testb	$RW_HAS_WAITERS, %al
 	jnz	3f
 	cmpl	$RW_READ_INCR, %eax
-	leal	-RW_READ_INCR(%eax), %ecx
 	jb	3f
+	leal	-RW_READ_INCR(%eax), %ecx
 	LOCK(4)
-	cmpxchgl %ecx, RW_OWNER(%edx)
-	jnz,pn	1b
+	cmpxchgl %ecx, (%edx)
+	jnz	1f
 	ret
+1:
+	jmp	0b
 
 	/*
 	 * Writer
@@ -164,7 +161,7 @@ ENTRY(rw_exit)
 	subl	CPUVAR(CURLWP), %ecx
 	jnz	3f
 	LOCK(5)
-	cmpxchgl %ecx, RW_OWNER(%edx)
+	cmpxchgl %ecx, (%edx)
 	jnz	3f
 	ret
 
@@ -187,16 +184,18 @@ ENTRY(rw_tryenter)
 	/*
 	 * Reader
 	 */
-	movl	RW_OWNER(%edx), %eax
-1:
-	leal	RW_READ_INCR(%eax), %ecx
+	movl	(%edx), %eax
+0:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	jnz	3f
+	leal	RW_READ_INCR(%eax), %ecx
 	LOCK(12)
-	cmpxchgl %ecx, RW_OWNER(%edx)
-	jnz	1b
+	cmpxchgl %ecx, (%edx)
+	jnz	1f
 	movl	%edx, %eax			/* nonzero */
 	ret
+1:
+	jmp	0b
 
 	/*
 	 * Writer
@@ -206,7 +205,7 @@ ENTRY(rw_tryenter)
 	orl	$RW_WRITE_LOCKED, %ecx
 	xorl	%eax, %eax
 	LOCK(13)
-	cmpxchgl %ecx, RW_OWNER(%edx)
+	cmpxchgl %ecx, (%edx)
 	movl	$0, %eax
 	setz	%al
 	ret
@@ -235,11 +234,9 @@ ENTRY(mutex_spin_enter)
 	jnc	2f
 	movb	%cl, CPUVAR(MTX_OLDSPL)
 2:
-#ifdef FULL
 	xchgb	%al, MTX_LOCK(%edx)		/* lock it */
 	testb	%al, %al
 	jnz	3f
-#endif
 	ret
 3:
 	jmp	_C_LABEL(mutex_spin_retry)
@@ -284,12 +281,8 @@ ENTRY(i686_mutex_spin_exit)
 0:
 	movl	CPUVAR(IPENDING), %eax
 	testl	%eax, %fs:CPU_INFO_IUNMASK(,%ecx,4)
-	movl	%eax, %ebx
-	/*
-	 * On a P4 this jump is cheaper than patching in junk using
-	 * cmovnz.  Is cmpxchg expensive if it fails?
-	 */
 	jnz	2f
+	movl	%eax, %ebx
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
 	jnz	0b
 	popl	%ebx

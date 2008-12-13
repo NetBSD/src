@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.17.6.1 2008/10/19 22:15:42 haad Exp $	*/
+/*	$NetBSD: frame.h,v 1.17.6.2 2008/12/13 01:13:02 haad Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -106,7 +106,7 @@ struct frame {
 };
 
 #ifdef _KERNEL
-void validate_trapframe __P((trapframe_t *, int));
+void validate_trapframe(trapframe_t *, int);
 #endif /* _KERNEL */
 
 #else /* _LOCORE */
@@ -127,13 +127,11 @@ void validate_trapframe __P((trapframe_t *, int));
 #define	DO_PENDING_SOFTINTS						\
 	ldr	r0, [r4, #CI_INTR_DEPTH]/* Get current intr depth */	;\
 	teq	r0, #0			/* Test for 0. */		;\
-	beq	10f			/*   skip softints if != 0 */	;\
-	ldr	r0, [r4, #CI_CPL]	/* Get current priority level */;\
+	bne	10f			/*   skip softints if != 0 */	;\
 	ldr	r0, [r4, #CI_CPL]	/* Get current priority level */;\
 	ldr	r1, [r4, #CI_SOFTINTS]	/* Get pending softint mask */	;\
-	mov	r0, r1, lsr r0		/* shift mask by cpl */		;\
-	beq	10f							;\
-	bl	_C_LABEL(dosoftints)	/* dosoftints(void) */		;\
+	movs	r0, r1, lsr r0		/* shift mask by cpl */		;\
+	blne	_C_LABEL(dosoftints)	/* dosoftints(void) */		;\
 10:
 #else
 #define	DO_PENDING_SOFTINTS		/* nothing */

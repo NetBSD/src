@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.105 2008/04/28 20:23:49 martin Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.105.6.1 2008/12/13 01:14:14 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.105 2008/04/28 20:23:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.105.6.1 2008/12/13 01:14:14 haad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -83,6 +83,8 @@ int exdebug = 0;
 /* ifmedia callbacks */
 int ex_media_chg(struct ifnet *ifp);
 void ex_media_stat(struct ifnet *ifp, struct ifmediareq *req);
+
+static int ex_ifflags_cb(struct ethercom *);
 
 void ex_probe_media(struct ex_softc *);
 void ex_set_filter(struct ex_softc *);
@@ -432,6 +434,7 @@ ex_config(struct ex_softc *sc)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, macaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, ex_ifflags_cb);
 
 	GO_WINDOW(1);
 
@@ -1130,7 +1133,7 @@ ex_start(struct ifnet *ifp)
 			 *
 			 * XXX Should we still consider if such short
 			 *     (36 bytes or less) packets might already
-			 *     occupy EX_NTFRAG (== 32) fragements here?
+			 *     occupy EX_NTFRAG (== 32) fragments here?
 			 */
 			KASSERT(segment < EX_NTFRAGS);
 			fr->fr_addr = htole32(DPDMEMPAD_DMADDR(sc));
@@ -1437,6 +1440,20 @@ ex_intr(void *arg)
 	return ret;
 }
 
+static int
+ex_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct ex_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+	 
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	else if ((change & IFF_PROMISC) != 0)
+		ex_set_mc(sc);
+	return 0;
+}
+
 int
 ex_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
@@ -1451,22 +1468,6 @@ ex_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->ex_mii.mii_media, cmd);
 		break;
-	case SIOCSIFFLAGS:
-		/* If the interface is up and running, only modify the receive
-		 * filter when setting promiscuous or debug mode.  Otherwise
-		 * fall through to ether_ioctl, which will reset the chip.
-		 */
-#define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
-		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))
-		    == (IFF_UP|IFF_RUNNING))
-		    && ((ifp->if_flags & (~RESETIGN))
-		    == (sc->sc_if_flags & (~RESETIGN)))) {
-			ex_set_mc(sc);
-			error = 0;
-			break;
-#undef RESETIGN
-		}
-		/* FALLTHROUGH */
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;

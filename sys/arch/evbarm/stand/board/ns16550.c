@@ -1,4 +1,4 @@
-/*	$NetBSD: ns16550.c,v 1.3 2005/12/24 20:07:03 perry Exp $	*/
+/*	$NetBSD: ns16550.c,v 1.3.84.1 2008/12/13 01:13:08 haad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -46,8 +46,13 @@
 
 #include "board.h"
 
+#ifdef NS16550_AX4
+#define	INB(x)		*((volatile uint8_t *) (CONADDR + ((x) * 4)))
+#define	OUTB(x, v)	*((volatile uint8_t *) (CONADDR + ((x) * 4))) = (v)
+#else
 #define	INB(x)		*((volatile uint8_t *) (CONADDR + (x)))
 #define	OUTB(x, v)	*((volatile uint8_t *) (CONADDR + (x))) = (v)
+#endif
 
 #define	ISSET(t,f)	((t) & (f))
 

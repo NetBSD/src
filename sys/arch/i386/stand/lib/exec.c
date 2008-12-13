@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.28.4.1 2008/10/19 22:15:50 haad Exp $	 */
+/*	$NetBSD: exec.c,v 1.28.4.2 2008/12/13 01:13:15 haad Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -135,6 +135,36 @@ static char module_base[64] = "/";
 
 static void	module_init(void);
 
+void
+module_add(char *name)
+{
+	boot_module_t *bm, *bmp;
+	size_t len;
+	char *str;
+
+	while (*name == ' ' || *name == '\t')
+		++name;
+
+	bm = alloc(sizeof(boot_module_t));
+	len = strlen(name) + 1;
+	str = alloc(len);
+	if (bm == NULL || str == NULL) {
+		printf("couldn't allocate module\n");
+		return;
+	}
+	memcpy(str, name, len);
+	bm->bm_path = str;
+	bm->bm_next = NULL;
+	if (boot_modules == NULL)
+		boot_modules = bm;
+	else {
+		for (bmp = boot_modules; bmp->bm_next;
+		    bmp = bmp->bm_next)
+			;
+		bmp->bm_next = bm;
+	}
+}
+
 static int
 common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
     physaddr_t loadaddr, int floppy, u_long marks[MARK_MAX])
@@ -183,6 +213,11 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 		return EIO;
 
 	close(fd);
+
+	/* Now we know the root fs type, load modules for it. */
+	module_add(fsmod);
+	if (fsmod2 != NULL && strcmp(fsmod, fsmod2) != 0)
+		module_add(fsmod2);
 
 	/*
 	 * Gather some information for the kernel. Do this after the

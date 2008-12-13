@@ -1,3 +1,5 @@
+/*	$NetBSD: rgephyreg.h,v 1.3.10.1 2008/12/13 01:14:27 haad Exp $	*/
+
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.17 2007/12/20 23:02:47 dsl Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.17.16.1 2008/12/13 01:13:47 haad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,11 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.17 2007/12/20 23:02:47 dsl Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ptrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.17.16.1 2008/12/13 01:13:47 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.17 2007/12/20 23:02:47 dsl Exp 
 #include <sys/uio.h>
 #include <sys/user.h>
 #include <sys/mount.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
 #include <compat/sys/signal.h>
@@ -103,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_ptrace.c,v 1.17 2007/12/20 23:02:47 dsl Exp 
 int
 freebsd_sys_ptrace(struct lwp *l, const struct freebsd_sys_ptrace_args *uap, register_t *retval)
 {
-#if defined(PTRACE) || defined(_LKM)
 	/* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
@@ -111,9 +107,7 @@ freebsd_sys_ptrace(struct lwp *l, const struct freebsd_sys_ptrace_args *uap, reg
 		syscallarg(int) data;
 	} */
 	struct sys_ptrace_args npa;
-#ifdef _LKM
-	sy_call_t sys_ptrace = sysent[SYS_ptrace].sy_call;
-#endif
+	sy_call_t *fn = sysent[SYS_ptrace].sy_call;
 
 	switch (SCARG(uap, req)) {
 #ifdef PT_STEP
@@ -122,7 +116,7 @@ freebsd_sys_ptrace(struct lwp *l, const struct freebsd_sys_ptrace_args *uap, reg
 		SCARG(&npa, pid) = SCARG(uap, pid);
 		SCARG(&npa, addr) = SCARG(uap, addr);
 		SCARG(&npa, data) = SCARG(uap, data);
-		return sys_ptrace(l, &npa, retval);
+		return (*fn)(l, &npa, retval);
 #endif
 	case FREEBSD_PT_TRACE_ME:
 	case FREEBSD_PT_READ_I:
@@ -132,7 +126,7 @@ freebsd_sys_ptrace(struct lwp *l, const struct freebsd_sys_ptrace_args *uap, reg
 	case FREEBSD_PT_CONTINUE:
 	case FREEBSD_PT_KILL:
 		/* These requests are compatible with NetBSD */
-		return sys_ptrace(l, (const void *)uap, retval);
+		return (*fn)(l, (const void *)uap, retval);
 
 #if 0
 /*
@@ -161,14 +155,14 @@ freebsd_sys_ptrace(struct lwp *l, const struct freebsd_sys_ptrace_args *uap, reg
 		SCARG(&npa, req) = PT_GETREGS;
 		SCARG(&npa, pid) = SCARG(uap, pid);
 		SCARG(&npa, addr) = (void *)&nrp->regs;
-		if ((error = sys_ptrace(l, &npa, retval)) != 0)
+		if ((error = (*fn)(l, &npa, retval)) != 0)
 			return error;
 #endif
 #ifdef PT_GETFPREGS
 		SCARG(&npa, req) = PT_GETFPREGS;
 		SCARG(&npa, pid) = SCARG(uap, pid);
 		SCARG(&npa, addr) = (void *)&nrp->fpregs;
-		if ((error = sys_ptrace(l, &npa, retval)) != 0)
+		if ((error = (*fn)(l, &npa, retval)) != 0)
 			return error;
 #endif
 		netbsd_to_freebsd_ptrace_regs(&nrp->regs, &nrp->fpregs, &fr);
@@ -188,14 +182,14 @@ freebsd_sys_ptrace(struct lwp *l, const struct freebsd_sys_ptrace_args *uap, reg
 			SCARG(&npa, req) = PT_SETREGS;
 			SCARG(&npa, pid) = SCARG(uap, pid);
 			SCARG(&npa, addr) = (void *)&nrp->regs;
-			if ((error = sys_ptrace(l, &npa, retval)) != 0)
+			if ((error = (*fn)(l, &npa, retval)) != 0)
 				return error;
 #endif
 #ifdef PT_SETFPREGS
 			SCARG(&npa, req) = PT_SETFPREGS;
 			SCARG(&npa, pid) = SCARG(uap, pid);
 			SCARG(&npa, addr) = (void *)&nrp->fpregs;
-			if ((error = sys_ptrace(l, &npa, retval)) != 0)
+			if ((error = (*fn)(l, &npa, retval)) != 0)
 				return error;
 #endif
 			return 0;
@@ -210,7 +204,4 @@ freebsd_sys_ptrace(struct lwp *l, const struct freebsd_sys_ptrace_args *uap, reg
 #ifdef DIAGNOSTIC
 	panic("freebsd_ptrace: impossible");
 #endif
-#else
-	return (ENOSYS);
-#endif /* PTRACE || _LKM */
 }

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.942.4.1 2008/10/19 22:16:40 haad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.942.4.2 2008/12/13 01:14:36 haad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962 2008/10/15 18:30:29 bouyer Exp
+ *	NetBSD: pcidevs,v 1.967 2008/11/29 23:48:12 christos Exp
  */
 
 /*
@@ -38,14474 +38,10110 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-static const struct pci_vendor pci_vendors[] = {
-	{
-	    PCI_VENDOR_PEAK,
-	    "Peak System Technik",
-	},
-	{
-	    PCI_VENDOR_MARTINMARIETTA,
-	    "Martin-Marietta",
-	},
-	{
-	    PCI_VENDOR_HAUPPAUGE,
-	    "Hauppauge Computer Works",
-	},
-	{
-	    PCI_VENDOR_DYNALINK,
-	    "Dynalink",
-	},
-	{
-	    PCI_VENDOR_COMPAQ,
-	    "Compaq",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS,
-	    "Symbios Logic",
-	},
-	{
-	    PCI_VENDOR_ATI,
-	    "ATI Technologies",
-	},
-	{
-	    PCI_VENDOR_ULSI,
-	    "ULSI Systems",
-	},
-	{
-	    PCI_VENDOR_VLSI,
-	    "VLSI Technology",
-	},
-	{
-	    PCI_VENDOR_AVANCE,
-	    "Avance Logic",
-	},
-	{
-	    PCI_VENDOR_REPLY,
-	    "Reply Group",
-	},
-	{
-	    PCI_VENDOR_NETFRAME,
-	    "NetFrame Systems",
-	},
-	{
-	    PCI_VENDOR_EPSON,
-	    "Epson",
-	},
-	{
-	    PCI_VENDOR_PHOENIX,
-	    "Phoenix Technologies",
-	},
-	{
-	    PCI_VENDOR_NS,
-	    "National Semiconductor",
-	},
-	{
-	    PCI_VENDOR_TSENG,
-	    "Tseng Labs",
-	},
-	{
-	    PCI_VENDOR_AST,
-	    "AST Research",
-	},
-	{
-	    PCI_VENDOR_WEITEK,
-	    "Weitek",
-	},
-	{
-	    PCI_VENDOR_VIDEOLOGIC,
-	    "Video Logic",
-	},
-	{
-	    PCI_VENDOR_DEC,
-	    "Digital Equipment",
-	},
-	{
-	    PCI_VENDOR_MICRONICS,
-	    "Micronics Computers",
-	},
-	{
-	    PCI_VENDOR_CIRRUS,
-	    "Cirrus Logic",
-	},
-	{
-	    PCI_VENDOR_IBM,
-	    "IBM",
-	},
-	{
-	    PCI_VENDOR_LSIL,
-	    "LSI Logic of Canada",
-	},
-	{
-	    PCI_VENDOR_ICLPERSONAL,
-	    "ICL Personal Systems",
-	},
-	{
-	    PCI_VENDOR_SPEA,
-	    "SPEA Software",
-	},
-	{
-	    PCI_VENDOR_UNISYS,
-	    "Unisys Systems",
-	},
-	{
-	    PCI_VENDOR_ELITEGROUP,
-	    "Elitegroup Computer Systems",
-	},
-	{
-	    PCI_VENDOR_NCR,
-	    "AT&T Global Information Systems",
-	},
-	{
-	    PCI_VENDOR_VITESSE,
-	    "Vitesse Semiconductor",
-	},
-	{
-	    PCI_VENDOR_WD,
-	    "Western Digital",
-	},
-	{
-	    PCI_VENDOR_AMI,
-	    "American Megatrends",
-	},
-	{
-	    PCI_VENDOR_PICTURETEL,
-	    "PictureTel",
-	},
-	{
-	    PCI_VENDOR_HITACHICOMP,
-	    "Hitachi Computer Products",
-	},
-	{
-	    PCI_VENDOR_OKI,
-	    "OKI Electric Industry",
-	},
-	{
-	    PCI_VENDOR_AMD,
-	    "Advanced Micro Devices",
-	},
-	{
-	    PCI_VENDOR_TRIDENT,
-	    "Trident Microsystems",
-	},
-	{
-	    PCI_VENDOR_ZENITH,
-	    "Zenith Data Systems",
-	},
-	{
-	    PCI_VENDOR_ACER,
-	    "Acer",
-	},
-	{
-	    PCI_VENDOR_DELL,
-	    "Dell Computer",
-	},
-	{
-	    PCI_VENDOR_SNI,
-	    "Siemens Nixdorf AG",
-	},
-	{
-	    PCI_VENDOR_LSILOGIC,
-	    "LSI Logic, Headland div.",
-	},
-	{
-	    PCI_VENDOR_MATROX,
-	    "Matrox",
-	},
-	{
-	    PCI_VENDOR_CHIPS,
-	    "Chips and Technologies",
-	},
-	{
-	    PCI_VENDOR_WYSE,
-	    "WYSE Technology",
-	},
-	{
-	    PCI_VENDOR_OLIVETTI,
-	    "Olivetti Advanced Technology",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA,
-	    "Toshiba America",
-	},
-	{
-	    PCI_VENDOR_TMCRESEARCH,
-	    "TMC Research",
-	},
-	{
-	    PCI_VENDOR_MIRO,
-	    "Miro Computer Products",
-	},
-	{
-	    PCI_VENDOR_COMPAQ2,
-	    "Compaq (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_NEC,
-	    "NEC",
-	},
-	{
-	    PCI_VENDOR_BURNDY,
-	    "Burndy",
-	},
-	{
-	    PCI_VENDOR_COMPCOMM,
-	    "Comp. & Comm. Research Lab",
-	},
-	{
-	    PCI_VENDOR_FUTUREDOMAIN,
-	    "Future Domain",
-	},
-	{
-	    PCI_VENDOR_HITACHIMICRO,
-	    "Hitach Microsystems",
-	},
-	{
-	    PCI_VENDOR_AMP,
-	    "AMP",
-	},
-	{
-	    PCI_VENDOR_SIS,
-	    "Silicon Integrated System",
-	},
-	{
-	    PCI_VENDOR_SEIKOEPSON,
-	    "Seiko Epson",
-	},
-	{
-	    PCI_VENDOR_TATUNGAMERICA,
-	    "Tatung of America",
-	},
-	{
-	    PCI_VENDOR_HP,
-	    "Hewlett-Packard",
-	},
-	{
-	    PCI_VENDOR_SOLLIDAY,
-	    "Solliday Engineering",
-	},
-	{
-	    PCI_VENDOR_LOGICMODELLING,
-	    "Logic Modeling",
-	},
-	{
-	    PCI_VENDOR_KPC,
-	    "Kubota Pacific",
-	},
-	{
-	    PCI_VENDOR_COMPUTREND,
-	    "Computrend",
-	},
-	{
-	    PCI_VENDOR_PCTECH,
-	    "PC Technology",
-	},
-	{
-	    PCI_VENDOR_ASUSTEK,
-	    "Asustek Computer",
-	},
-	{
-	    PCI_VENDOR_DPT,
-	    "Distributed Processing Technology",
-	},
-	{
-	    PCI_VENDOR_OPTI,
-	    "Opti",
-	},
-	{
-	    PCI_VENDOR_IPCCORP,
-	    "IPC",
-	},
-	{
-	    PCI_VENDOR_GENOA,
-	    "Genoa Systems",
-	},
-	{
-	    PCI_VENDOR_ELSA,
-	    "Elsa",
-	},
-	{
-	    PCI_VENDOR_FOUNTAINTECH,
-	    "Fountain Technology",
-	},
-	{
-	    PCI_VENDOR_SGSTHOMSON,
-	    "SGS-Thomson Microelectronics",
-	},
-	{
-	    PCI_VENDOR_BUSLOGIC,
-	    "BusLogic",
-	},
-	{
-	    PCI_VENDOR_TI,
-	    "Texas Instruments",
-	},
-	{
-	    PCI_VENDOR_SONY,
-	    "Sony",
-	},
-	{
-	    PCI_VENDOR_OAKTECH,
-	    "Oak Technology",
-	},
-	{
-	    PCI_VENDOR_COTIME,
-	    "Co-time Computer",
-	},
-	{
-	    PCI_VENDOR_WINBOND,
-	    "Winbond Electronics",
-	},
-	{
-	    PCI_VENDOR_ANIGMA,
-	    "Anigma",
-	},
-	{
-	    PCI_VENDOR_YOUNGMICRO,
-	    "Young Micro Systems",
-	},
-	{
-	    PCI_VENDOR_HITACHI,
-	    "Hitachi",
-	},
-	{
-	    PCI_VENDOR_EFARMICRO,
-	    "Efar Microsystems",
-	},
-	{
-	    PCI_VENDOR_ICL,
-	    "ICL",
-	},
-	{
-	    PCI_VENDOR_MOT,
-	    "Motorola",
-	},
-	{
-	    PCI_VENDOR_ETR,
-	    "Electronics & Telec. RSH",
-	},
-	{
-	    PCI_VENDOR_TEKNOR,
-	    "Teknor Microsystems",
-	},
-	{
-	    PCI_VENDOR_PROMISE,
-	    "Promise Technology",
-	},
-	{
-	    PCI_VENDOR_FOXCONN,
-	    "Foxconn International",
-	},
-	{
-	    PCI_VENDOR_WIPRO,
-	    "Wipro Infotech",
-	},
-	{
-	    PCI_VENDOR_NUMBER9,
-	    "Number 9 Computer Company",
-	},
-	{
-	    PCI_VENDOR_VTECH,
-	    "Vtech Computers",
-	},
-	{
-	    PCI_VENDOR_INFOTRONIC,
-	    "Infotronic America",
-	},
-	{
-	    PCI_VENDOR_UMC,
-	    "United Microelectronics",
-	},
-	{
-	    PCI_VENDOR_ITT,
-	    "I. T. T.",
-	},
-	{
-	    PCI_VENDOR_MASPAR,
-	    "MasPar Computer",
-	},
-	{
-	    PCI_VENDOR_OCEANOA,
-	    "Ocean Office Automation",
-	},
-	{
-	    PCI_VENDOR_ALCATEL,
-	    "Alcatel CIT",
-	},
-	{
-	    PCI_VENDOR_TEXASMICRO,
-	    "Texas Microsystems",
-	},
-	{
-	    PCI_VENDOR_PICOPOWER,
-	    "Picopower Technology",
-	},
-	{
-	    PCI_VENDOR_MITSUBISHI,
-	    "Mitsubishi Electronics",
-	},
-	{
-	    PCI_VENDOR_DIVERSIFIED,
-	    "Diversified Technology",
-	},
-	{
-	    PCI_VENDOR_MYLEX,
-	    "Mylex",
-	},
-	{
-	    PCI_VENDOR_ATEN,
-	    "Aten Research",
-	},
-	{
-	    PCI_VENDOR_APPLE,
-	    "Apple Computer",
-	},
-	{
-	    PCI_VENDOR_HYUNDAI,
-	    "Hyundai Electronics America",
-	},
-	{
-	    PCI_VENDOR_SEQUENT,
-	    "Sequent",
-	},
-	{
-	    PCI_VENDOR_DFI,
-	    "DFI",
-	},
-	{
-	    PCI_VENDOR_CITYGATE,
-	    "City Gate Development",
-	},
-	{
-	    PCI_VENDOR_DAEWOO,
-	    "Daewoo Telecom",
-	},
-	{
-	    PCI_VENDOR_MITAC,
-	    "Mitac",
-	},
-	{
-	    PCI_VENDOR_GIT,
-	    "GIT",
-	},
-	{
-	    PCI_VENDOR_YAMAHA,
-	    "Yamaha",
-	},
-	{
-	    PCI_VENDOR_NEXGEN,
-	    "NexGen Microsystems",
-	},
-	{
-	    PCI_VENDOR_AIR,
-	    "Advanced Integration Research",
-	},
-	{
-	    PCI_VENDOR_CHAINTECH,
-	    "Chaintech Computer",
-	},
-	{
-	    PCI_VENDOR_QLOGIC,
-	    "QLogic",
-	},
-	{
-	    PCI_VENDOR_CYRIX,
-	    "Cyrix",
-	},
-	{
-	    PCI_VENDOR_IBUS,
-	    "I-Bus",
-	},
-	{
-	    PCI_VENDOR_NETWORTH,
-	    "NetWorth",
-	},
-	{
-	    PCI_VENDOR_GATEWAY,
-	    "Gateway 2000",
-	},
-	{
-	    PCI_VENDOR_GOLDSTART,
-	    "Goldstar",
-	},
-	{
-	    PCI_VENDOR_LEADTEK,
-	    "LeadTek Research",
-	},
-	{
-	    PCI_VENDOR_INTERPHASE,
-	    "Interphase",
-	},
-	{
-	    PCI_VENDOR_DATATECH,
-	    "Data Technology",
-	},
-	{
-	    PCI_VENDOR_CONTAQ,
-	    "Contaq Microsystems",
-	},
-	{
-	    PCI_VENDOR_SUPERMAC,
-	    "Supermac Technology",
-	},
-	{
-	    PCI_VENDOR_EFA,
-	    "EFA of America",
-	},
-	{
-	    PCI_VENDOR_FOREX,
-	    "Forex Computer",
-	},
-	{
-	    PCI_VENDOR_PARADOR,
-	    "Parador",
-	},
-	{
-	    PCI_VENDOR_TULIP,
-	    "Tulip Computers",
-	},
-	{
-	    PCI_VENDOR_JBOND,
-	    "J. Bond Computer Systems",
-	},
-	{
-	    PCI_VENDOR_CACHECOMP,
-	    "Cache Computer",
-	},
-	{
-	    PCI_VENDOR_MICROCOMP,
-	    "Microcomputer Systems",
-	},
-	{
-	    PCI_VENDOR_DG,
-	    "Data General",
-	},
-	{
-	    PCI_VENDOR_BIT3,
-	    "Bit3 Computer",
-	},
-	{
-	    PCI_VENDOR_ELONEX,
-	    "Elonex PLC c/o Oakleigh Systems",
-	},
-	{
-	    PCI_VENDOR_OLICOM,
-	    "Olicom",
-	},
-	{
-	    PCI_VENDOR_SUN,
-	    "Sun Microsystems",
-	},
-	{
-	    PCI_VENDOR_SYSTEMSOFT,
-	    "Systemsoft",
-	},
-	{
-	    PCI_VENDOR_ENCORE,
-	    "Encore Computer",
-	},
-	{
-	    PCI_VENDOR_INTERGRAPH,
-	    "Intergraph",
-	},
-	{
-	    PCI_VENDOR_DIAMOND,
-	    "Diamond Computer Systems",
-	},
-	{
-	    PCI_VENDOR_NATIONALINST,
-	    "National Instruments",
-	},
-	{
-	    PCI_VENDOR_FICOMP,
-	    "First Int'l Computers",
-	},
-	{
-	    PCI_VENDOR_CMDTECH,
-	    "CMD Technology",
-	},
-	{
-	    PCI_VENDOR_ALACRON,
-	    "Alacron",
-	},
-	{
-	    PCI_VENDOR_APPIAN,
-	    "Appian Technology",
-	},
-	{
-	    PCI_VENDOR_QUANTUMDESIGNS,
-	    "Quantum Designs",
-	},
-	{
-	    PCI_VENDOR_SAMSUNGELEC,
-	    "Samsung Electronics",
-	},
-	{
-	    PCI_VENDOR_PACKARDBELL,
-	    "Packard Bell",
-	},
-	{
-	    PCI_VENDOR_GEMLIGHT,
-	    "Gemlight Computer",
-	},
-	{
-	    PCI_VENDOR_MEGACHIPS,
-	    "Megachips",
-	},
-	{
-	    PCI_VENDOR_ZIDA,
-	    "Zida Technologies",
-	},
-	{
-	    PCI_VENDOR_BROOKTREE,
-	    "Brooktree",
-	},
-	{
-	    PCI_VENDOR_TRIGEM,
-	    "Trigem Computer",
-	},
-	{
-	    PCI_VENDOR_MEIDENSHA,
-	    "Meidensha",
-	},
-	{
-	    PCI_VENDOR_JUKO,
-	    "Juko Electronics",
-	},
-	{
-	    PCI_VENDOR_QUANTUM,
-	    "Quantum",
-	},
-	{
-	    PCI_VENDOR_EVEREX,
-	    "Everex Systems",
-	},
-	{
-	    PCI_VENDOR_GLOBE,
-	    "Globe Manufacturing Sales",
-	},
-	{
-	    PCI_VENDOR_RACAL,
-	    "Racal Interlan",
-	},
-	{
-	    PCI_VENDOR_INFORMTECH,
-	    "Informtech Industrial",
-	},
-	{
-	    PCI_VENDOR_BENCHMARQ,
-	    "Benchmarq Microelectronics",
-	},
-	{
-	    PCI_VENDOR_SIERRA,
-	    "Sierra Semiconductor",
-	},
-	{
-	    PCI_VENDOR_SGI,
-	    "Silicon Graphics",
-	},
-	{
-	    PCI_VENDOR_ACC,
-	    "ACC Microelectronics",
-	},
-	{
-	    PCI_VENDOR_DIGICOM,
-	    "Digicom",
-	},
-	{
-	    PCI_VENDOR_HONEYWELL,
-	    "Honeywell IASD",
-	},
-	{
-	    PCI_VENDOR_SYMPHONY,
-	    "Symphony Labs",
-	},
-	{
-	    PCI_VENDOR_CORNERSTONE,
-	    "Cornerstone Technology",
-	},
-	{
-	    PCI_VENDOR_MICROCOMPSON,
-	    "Micro Computer Sysytems (M) SON",
-	},
-	{
-	    PCI_VENDOR_CARDEXPER,
-	    "CardExpert Technology",
-	},
-	{
-	    PCI_VENDOR_CABLETRON,
-	    "Cabletron Systems",
-	},
-	{
-	    PCI_VENDOR_RAYETHON,
-	    "Raytheon",
-	},
-	{
-	    PCI_VENDOR_DATABOOK,
-	    "Databook",
-	},
-	{
-	    PCI_VENDOR_STB,
-	    "STB Systems",
-	},
-	{
-	    PCI_VENDOR_PLX,
-	    "PLX Technology",
-	},
-	{
-	    PCI_VENDOR_MADGE,
-	    "Madge Networks",
-	},
-	{
-	    PCI_VENDOR_3COM,
-	    "3Com",
-	},
-	{
-	    PCI_VENDOR_SMC,
-	    "Standard Microsystems",
-	},
-	{
-	    PCI_VENDOR_ALI,
-	    "Acer Labs",
-	},
-	{
-	    PCI_VENDOR_MITSUBISHIELEC,
-	    "Mitsubishi Electronics",
-	},
-	{
-	    PCI_VENDOR_DAPHA,
-	    "Dapha Electronics",
-	},
-	{
-	    PCI_VENDOR_ALR,
-	    "Advanced Logic Research",
-	},
-	{
-	    PCI_VENDOR_SURECOM,
-	    "Surecom Technology",
-	},
-	{
-	    PCI_VENDOR_TSENGLABS,
-	    "Tseng Labs International",
-	},
-	{
-	    PCI_VENDOR_MOST,
-	    "Most",
-	},
-	{
-	    PCI_VENDOR_BOCA,
-	    "Boca Research",
-	},
-	{
-	    PCI_VENDOR_ICM,
-	    "ICM",
-	},
-	{
-	    PCI_VENDOR_AUSPEX,
-	    "Auspex Systems",
-	},
-	{
-	    PCI_VENDOR_SAMSUNGSEMI,
-	    "Samsung Semiconductors",
-	},
-	{
-	    PCI_VENDOR_AWARD,
-	    "Award Software Int'l",
-	},
-	{
-	    PCI_VENDOR_XEROX,
-	    "Xerox",
-	},
-	{
-	    PCI_VENDOR_RAMBUS,
-	    "Rambus",
-	},
-	{
-	    PCI_VENDOR_MEDIAVIS,
-	    "Media Vision",
-	},
-	{
-	    PCI_VENDOR_NEOMAGIC,
-	    "Neomagic",
-	},
-	{
-	    PCI_VENDOR_DATAEXPERT,
-	    "Dataexpert",
-	},
-	{
-	    PCI_VENDOR_FUJITSU,
-	    "Fujitsu",
-	},
-	{
-	    PCI_VENDOR_OMRON,
-	    "Omron",
-	},
-	{
-	    PCI_VENDOR_MENTOR,
-	    "Mentor ARC",
-	},
-	{
-	    PCI_VENDOR_ADVSYS,
-	    "Advanced System Products",
-	},
-	{
-	    PCI_VENDOR_RADIUS,
-	    "Radius",
-	},
-	{
-	    PCI_VENDOR_CITICORP,
-	    "Citicorp TTI",
-	},
-	{
-	    PCI_VENDOR_FUJITSU2,
-	    "Fujitsu Limited (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_FUTUREPLUS,
-	    "Future+ Systems",
-	},
-	{
-	    PCI_VENDOR_MOLEX,
-	    "Molex",
-	},
-	{
-	    PCI_VENDOR_JABIL,
-	    "Jabil Circuit",
-	},
-	{
-	    PCI_VENDOR_HAULON,
-	    "Hualon Microelectronics",
-	},
-	{
-	    PCI_VENDOR_AUTOLOGIC,
-	    "Autologic",
-	},
-	{
-	    PCI_VENDOR_CETIA,
-	    "Cetia",
-	},
-	{
-	    PCI_VENDOR_BCM,
-	    "BCM Advanced",
-	},
-	{
-	    PCI_VENDOR_APL,
-	    "Advanced Peripherals Labs",
-	},
-	{
-	    PCI_VENDOR_MACRONIX,
-	    "Macronix",
-	},
-	{
-	    PCI_VENDOR_THOMASCONRAD,
-	    "Thomas-Conrad",
-	},
-	{
-	    PCI_VENDOR_ROHM,
-	    "Rohm Research",
-	},
-	{
-	    PCI_VENDOR_CERN,
-	    "CERN/ECP/EDU",
-	},
-	{
-	    PCI_VENDOR_ES,
-	    "Evans & Sutherland",
-	},
-	{
-	    PCI_VENDOR_NVIDIA,
-	    "NVIDIA",
-	},
-	{
-	    PCI_VENDOR_EMULEX,
-	    "Emulex",
-	},
-	{
-	    PCI_VENDOR_IMS,
-	    "Integrated Micro Solutions",
-	},
-	{
-	    PCI_VENDOR_TEKRAM,
-	    "Tekram Technology (1st PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_APTIX,
-	    "Aptix",
-	},
-	{
-	    PCI_VENDOR_NEWBRIDGE,
-	    "Newbridge Microsystems / Tundra Semiconductor",
-	},
-	{
-	    PCI_VENDOR_TANDEM,
-	    "Tandem Computers",
-	},
-	{
-	    PCI_VENDOR_MICROINDUSTRIES,
-	    "Micro Industries",
-	},
-	{
-	    PCI_VENDOR_GAINBERY,
-	    "Gainbery Computer Products",
-	},
-	{
-	    PCI_VENDOR_VADEM,
-	    "Vadem",
-	},
-	{
-	    PCI_VENDOR_AMCIRCUITS,
-	    "Applied Micro Circuits",
-	},
-	{
-	    PCI_VENDOR_ALPSELECTIC,
-	    "Alps Electric",
-	},
-	{
-	    PCI_VENDOR_INTEGRAPHICS,
-	    "Integraphics Systems",
-	},
-	{
-	    PCI_VENDOR_ARTISTSGRAPHICS,
-	    "Artists Graphics",
-	},
-	{
-	    PCI_VENDOR_REALTEK,
-	    "Realtek Semiconductor",
-	},
-	{
-	    PCI_VENDOR_ASCIICORP,
-	    "ASCII",
-	},
-	{
-	    PCI_VENDOR_XILINX,
-	    "Xilinx",
-	},
-	{
-	    PCI_VENDOR_RACORE,
-	    "Racore Computer Products",
-	},
-	{
-	    PCI_VENDOR_PERITEK,
-	    "Peritek",
-	},
-	{
-	    PCI_VENDOR_TYAN,
-	    "Tyan Computer",
-	},
-	{
-	    PCI_VENDOR_ACHME,
-	    "Achme Computer",
-	},
-	{
-	    PCI_VENDOR_ALARIS,
-	    "Alaris",
-	},
-	{
-	    PCI_VENDOR_SMOS,
-	    "S-MOS Systems",
-	},
-	{
-	    PCI_VENDOR_NKK,
-	    "NKK",
-	},
-	{
-	    PCI_VENDOR_CREATIVE,
-	    "Creative Electronic Systems",
-	},
-	{
-	    PCI_VENDOR_MATSUSHITA,
-	    "Matsushita",
-	},
-	{
-	    PCI_VENDOR_ALTOS,
-	    "Altos India",
-	},
-	{
-	    PCI_VENDOR_PCDIRECT,
-	    "PC Direct",
-	},
-	{
-	    PCI_VENDOR_TRUEVISIO,
-	    "Truevision",
-	},
-	{
-	    PCI_VENDOR_THESYS,
-	    "Thesys Ges. F. Mikroelektronik",
-	},
-	{
-	    PCI_VENDOR_IODATA,
-	    "I-O Data Device",
-	},
-	{
-	    PCI_VENDOR_SOYO,
-	    "Soyo Technology",
-	},
-	{
-	    PCI_VENDOR_FAST,
-	    "Fast Electronic",
-	},
-	{
-	    PCI_VENDOR_NCUBE,
-	    "NCube",
-	},
-	{
-	    PCI_VENDOR_JAZZ,
-	    "Jazz Multimedia",
-	},
-	{
-	    PCI_VENDOR_INITIO,
-	    "Initio",
-	},
-	{
-	    PCI_VENDOR_CREATIVELABS,
-	    "Creative Labs",
-	},
-	{
-	    PCI_VENDOR_TRIONES,
-	    "Triones Technologies",
-	},
-	{
-	    PCI_VENDOR_RASTEROPS,
-	    "RasterOps",
-	},
-	{
-	    PCI_VENDOR_SIGMA,
-	    "Sigma Designs",
-	},
-	{
-	    PCI_VENDOR_VIATECH,
-	    "VIA Technologies",
-	},
-	{
-	    PCI_VENDOR_STRATIS,
-	    "Stratus Computer",
-	},
-	{
-	    PCI_VENDOR_PROTEON,
-	    "Proteon",
-	},
-	{
-	    PCI_VENDOR_COGENT,
-	    "Cogent Data Technologies",
-	},
-	{
-	    PCI_VENDOR_SIEMENS,
-	    "Siemens AG / Siemens Nixdorf AG",
-	},
-	{
-	    PCI_VENDOR_XENON,
-	    "Xenon Microsystems",
-	},
-	{
-	    PCI_VENDOR_MINIMAX,
-	    "Mini-Max Technology",
-	},
-	{
-	    PCI_VENDOR_ZNYX,
-	    "Znyx Advanced Systems",
-	},
-	{
-	    PCI_VENDOR_CPUTECH,
-	    "CPU Technology",
-	},
-	{
-	    PCI_VENDOR_ROSS,
-	    "Ross Technology",
-	},
-	{
-	    PCI_VENDOR_POWERHOUSE,
-	    "Powerhouse Systems",
-	},
-	{
-	    PCI_VENDOR_SCO,
-	    "Santa Cruz Operation",
-	},
-	{
-	    PCI_VENDOR_RNS,
-	    "RNS",
-	},
-	{
-	    PCI_VENDOR_ACCTON,
-	    "Accton Technology",
-	},
-	{
-	    PCI_VENDOR_ATMEL,
-	    "Atmel",
-	},
-	{
-	    PCI_VENDOR_DUPONT,
-	    "DuPont Pixel Systems",
-	},
-	{
-	    PCI_VENDOR_DATATRANSLATION,
-	    "Data Translation",
-	},
-	{
-	    PCI_VENDOR_DATACUBE,
-	    "Datacube",
-	},
-	{
-	    PCI_VENDOR_BERG,
-	    "Berg Electronics",
-	},
-	{
-	    PCI_VENDOR_VORTEX,
-	    "Vortex Computer Systems",
-	},
-	{
-	    PCI_VENDOR_EFFICIENTNETS,
-	    "Efficent Networks",
-	},
-	{
-	    PCI_VENDOR_TELEDYNE,
-	    "Teledyne Electronic Systems",
-	},
-	{
-	    PCI_VENDOR_TRICORD,
-	    "Tricord Systems",
-	},
-	{
-	    PCI_VENDOR_IDT,
-	    "IDT",
-	},
-	{
-	    PCI_VENDOR_ELDEC,
-	    "Eldec",
-	},
-	{
-	    PCI_VENDOR_PDI,
-	    "Prescision Digital Images",
-	},
-	{
-	    PCI_VENDOR_EMC,
-	    "Emc",
-	},
-	{
-	    PCI_VENDOR_ZILOG,
-	    "Zilog",
-	},
-	{
-	    PCI_VENDOR_MULTITECH,
-	    "Multi-tech Systems",
-	},
-	{
-	    PCI_VENDOR_LEUTRON,
-	    "Leutron Vision",
-	},
-	{
-	    PCI_VENDOR_EUROCORE,
-	    "Eurocore/Vigra",
-	},
-	{
-	    PCI_VENDOR_VIGRA,
-	    "Vigra",
-	},
-	{
-	    PCI_VENDOR_FORE,
-	    "FORE Systems",
-	},
-	{
-	    PCI_VENDOR_FIRMWORKS,
-	    "Firmworks",
-	},
-	{
-	    PCI_VENDOR_HERMES,
-	    "Hermes Electronics",
-	},
-	{
-	    PCI_VENDOR_LINOTYPE,
-	    "Linotype",
-	},
-	{
-	    PCI_VENDOR_RAVICAD,
-	    "Ravicad",
-	},
-	{
-	    PCI_VENDOR_INFOMEDIA,
-	    "Infomedia Microelectronics",
-	},
-	{
-	    PCI_VENDOR_IMAGINGTECH,
-	    "Imaging Technlogy",
-	},
-	{
-	    PCI_VENDOR_COMPUTERVISION,
-	    "Computervision",
-	},
-	{
-	    PCI_VENDOR_PHILIPS,
-	    "Philips",
-	},
-	{
-	    PCI_VENDOR_MITEL,
-	    "Mitel",
-	},
-	{
-	    PCI_VENDOR_EICON,
-	    "Eicon Technology",
-	},
-	{
-	    PCI_VENDOR_MCS,
-	    "Mercury Computer Systems",
-	},
-	{
-	    PCI_VENDOR_FUJIXEROX,
-	    "Fuji Xerox",
-	},
-	{
-	    PCI_VENDOR_MOMENTUM,
-	    "Momentum Data Systems",
-	},
-	{
-	    PCI_VENDOR_CISCO,
-	    "Cisco Systems",
-	},
-	{
-	    PCI_VENDOR_ZIATECH,
-	    "Ziatech",
-	},
-	{
-	    PCI_VENDOR_DYNPIC,
-	    "Dynamic Pictures",
-	},
-	{
-	    PCI_VENDOR_FWB,
-	    "FWB",
-	},
-	{
-	    PCI_VENDOR_CYCLONE,
-	    "Cyclone Micro",
-	},
-	{
-	    PCI_VENDOR_LEADINGEDGE,
-	    "Leading Edge",
-	},
-	{
-	    PCI_VENDOR_SANYO,
-	    "Sanyo Electric",
-	},
-	{
-	    PCI_VENDOR_EQUINOX,
-	    "Equinox Systems",
-	},
-	{
-	    PCI_VENDOR_INTERVOICE,
-	    "Intervoice",
-	},
-	{
-	    PCI_VENDOR_CREST,
-	    "Crest Microsystem",
-	},
-	{
-	    PCI_VENDOR_ALLIANCE,
-	    "Alliance Semiconductor",
-	},
-	{
-	    PCI_VENDOR_NETPOWER,
-	    "NetPower",
-	},
-	{
-	    PCI_VENDOR_CINMILACRON,
-	    "Cincinnati Milacron",
-	},
-	{
-	    PCI_VENDOR_WORKBIT,
-	    "Workbit",
-	},
-	{
-	    PCI_VENDOR_FORCE,
-	    "Force Computers",
-	},
-	{
-	    PCI_VENDOR_INTERFACE,
-	    "Interface",
-	},
-	{
-	    PCI_VENDOR_SCHNEIDERKOCH,
-	    "Schneider & Koch",
-	},
-	{
-	    PCI_VENDOR_WINSYSTEM,
-	    "Win System",
-	},
-	{
-	    PCI_VENDOR_VMIC,
-	    "VMIC",
-	},
-	{
-	    PCI_VENDOR_CANOPUS,
-	    "Canopus",
-	},
-	{
-	    PCI_VENDOR_ANNABOOKS,
-	    "Annabooks",
-	},
-	{
-	    PCI_VENDOR_IC,
-	    "IC",
-	},
-	{
-	    PCI_VENDOR_NIKON,
-	    "Nikon Systems",
-	},
-	{
-	    PCI_VENDOR_DIGI,
-	    "Digi International",
-	},
-	{
-	    PCI_VENDOR_TMC,
-	    "Thinking Machines",
-	},
-	{
-	    PCI_VENDOR_JAE,
-	    "JAE Electronics",
-	},
-	{
-	    PCI_VENDOR_MEGATEK,
-	    "Megatek",
-	},
-	{
-	    PCI_VENDOR_LANDWIN,
-	    "Land Win Electronic",
-	},
-	{
-	    PCI_VENDOR_MELCO,
-	    "Melco",
-	},
-	{
-	    PCI_VENDOR_PINETECH,
-	    "Pine Technology",
-	},
-	{
-	    PCI_VENDOR_PERISCOPE,
-	    "Periscope Engineering",
-	},
-	{
-	    PCI_VENDOR_AVSYS,
-	    "Avsys",
-	},
-	{
-	    PCI_VENDOR_VOARX,
-	    "Voarx R & D",
-	},
-	{
-	    PCI_VENDOR_MUTECH,
-	    "Mutech",
-	},
-	{
-	    PCI_VENDOR_HARLEQUIN,
-	    "Harlequin",
-	},
-	{
-	    PCI_VENDOR_PARALLAX,
-	    "Parallax Graphics",
-	},
-	{
-	    PCI_VENDOR_XIRCOM,
-	    "Xircom",
-	},
-	{
-	    PCI_VENDOR_PEERPROTO,
-	    "Peer Protocols",
-	},
-	{
-	    PCI_VENDOR_MAXTOR,
-	    "Maxtor",
-	},
-	{
-	    PCI_VENDOR_MEGASOFT,
-	    "Megasoft",
-	},
-	{
-	    PCI_VENDOR_PFU,
-	    "PFU Limited",
-	},
-	{
-	    PCI_VENDOR_OALAB,
-	    "OA Laboratory",
-	},
-	{
-	    PCI_VENDOR_RENDITION,
-	    "Rendition",
-	},
-	{
-	    PCI_VENDOR_APT,
-	    "Advanced Peripherals Technologies",
-	},
-	{
-	    PCI_VENDOR_IMAGRAPH,
-	    "Imagraph",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS,
-	    "ServerWorks",
-	},
-	{
-	    PCI_VENDOR_MUTOH,
-	    "Mutoh Industries",
-	},
-	{
-	    PCI_VENDOR_THINE,
-	    "Thine Electronics",
-	},
-	{
-	    PCI_VENDOR_CDAC,
-	    "Centre for Dev. of Advanced Computing",
-	},
-	{
-	    PCI_VENDOR_POLARIS,
-	    "Polaris Communications",
-	},
-	{
-	    PCI_VENDOR_CONNECTWARE,
-	    "Connectware",
-	},
-	{
-	    PCI_VENDOR_WSTECH,
-	    "Workstation Technology",
-	},
-	{
-	    PCI_VENDOR_INVENTEC,
-	    "Inventec",
-	},
-	{
-	    PCI_VENDOR_LOUGHSOUND,
-	    "Loughborough Sound Images",
-	},
-	{
-	    PCI_VENDOR_ALTERA,
-	    "Altera",
-	},
-	{
-	    PCI_VENDOR_ADOBE,
-	    "Adobe Systems",
-	},
-	{
-	    PCI_VENDOR_BRIDGEPORT,
-	    "Bridgeport Machines",
-	},
-	{
-	    PCI_VENDOR_MIRTRON,
-	    "Mitron Computer",
-	},
-	{
-	    PCI_VENDOR_SBE,
-	    "SBE",
-	},
-	{
-	    PCI_VENDOR_SILICONENG,
-	    "Silicon Engineering",
-	},
-	{
-	    PCI_VENDOR_ALFA,
-	    "Alfa",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2,
-	    "Toshiba",
-	},
-	{
-	    PCI_VENDOR_ATREND,
-	    "A-Trend Technology",
-	},
-	{
-	    PCI_VENDOR_ATTO,
-	    "Atto Technology",
-	},
-	{
-	    PCI_VENDOR_TR,
-	    "T/R Systems",
-	},
-	{
-	    PCI_VENDOR_RICOH,
-	    "Ricoh",
-	},
-	{
-	    PCI_VENDOR_TELEMATICS,
-	    "Telematics International",
-	},
-	{
-	    PCI_VENDOR_FUJIKURA,
-	    "Fujikura",
-	},
-	{
-	    PCI_VENDOR_FORKS,
-	    "Forks",
-	},
-	{
-	    PCI_VENDOR_DATAWORLD,
-	    "Dataworld",
-	},
-	{
-	    PCI_VENDOR_DLINK,
-	    "D-Link Systems",
-	},
-	{
-	    PCI_VENDOR_ATL,
-	    "Advanced Techonoloy Labratories",
-	},
-	{
-	    PCI_VENDOR_SHIMA,
-	    "Shima Seiki Manufacturing",
-	},
-	{
-	    PCI_VENDOR_MATSUSHITA2,
-	    "Matsushita Electronics (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_HILEVEL,
-	    "HiLevel Technology",
-	},
-	{
-	    PCI_VENDOR_COROLLARY,
-	    "Corrollary",
-	},
-	{
-	    PCI_VENDOR_BITFLOW,
-	    "BitFlow",
-	},
-	{
-	    PCI_VENDOR_HERMSTEDT,
-	    "Hermstedt",
-	},
-	{
-	    PCI_VENDOR_ACARD,
-	    "Acard",
-	},
-	{
-	    PCI_VENDOR_DENSAN,
-	    "Densan",
-	},
-	{
-	    PCI_VENDOR_ZEINET,
-	    "Zeinet",
-	},
-	{
-	    PCI_VENDOR_TOUCAN,
-	    "Toucan Technology",
-	},
-	{
-	    PCI_VENDOR_RATOC,
-	    "Ratoc Systems",
-	},
-	{
-	    PCI_VENDOR_HYTEC,
-	    "Hytec Electronic",
-	},
-	{
-	    PCI_VENDOR_GAGE,
-	    "Gage Applied Sciences",
-	},
-	{
-	    PCI_VENDOR_LAMBDA,
-	    "Lambda Systems",
-	},
-	{
-	    PCI_VENDOR_DCA,
-	    "Digital Communications Associates",
-	},
-	{
-	    PCI_VENDOR_MINDSHARE,
-	    "Mind Share",
-	},
-	{
-	    PCI_VENDOR_OMEGA,
-	    "Omega Micro",
-	},
-	{
-	    PCI_VENDOR_ITI,
-	    "Information Technology Institute",
-	},
-	{
-	    PCI_VENDOR_BUG,
-	    "Bug Sapporo",
-	},
-	{
-	    PCI_VENDOR_FUJITSU3,
-	    "Fujitsu (3th PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_BULL,
-	    "Bull Hn Information Systems",
-	},
-	{
-	    PCI_VENDOR_CONVEX,
-	    "Convex Computer",
-	},
-	{
-	    PCI_VENDOR_HAMAMATSU,
-	    "Hamamatsu Photonics",
-	},
-	{
-	    PCI_VENDOR_SIERRA2,
-	    "Sierra Research & Technology (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_BARCO,
-	    "Barco",
-	},
-	{
-	    PCI_VENDOR_MICROUNITY,
-	    "MicroUnity Systems Engineering",
-	},
-	{
-	    PCI_VENDOR_PUREDATA,
-	    "Pure Data",
-	},
-	{
-	    PCI_VENDOR_POWERCC,
-	    "Power Computing",
-	},
-	{
-	    PCI_VENDOR_INNOSYS,
-	    "InnoSys",
-	},
-	{
-	    PCI_VENDOR_ACTEL,
-	    "Actel",
-	},
-	{
-	    PCI_VENDOR_MARVELL,
-	    "Marvell",
-	},
-	{
-	    PCI_VENDOR_CANNON,
-	    "Cannon IS",
-	},
-	{
-	    PCI_VENDOR_LITEON,
-	    "Lite-On Communications",
-	},
-	{
-	    PCI_VENDOR_SCITEX,
-	    "Scitex",
-	},
-	{
-	    PCI_VENDOR_AVID,
-	    "Avid Technology",
-	},
-	{
-	    PCI_VENDOR_V3,
-	    "V3 Semiconductor",
-	},
-	{
-	    PCI_VENDOR_APRICOT,
-	    "Apricot Computer",
-	},
-	{
-	    PCI_VENDOR_KODAK,
-	    "Eastman Kodak",
-	},
-	{
-	    PCI_VENDOR_BARR,
-	    "Barr Systems",
-	},
-	{
-	    PCI_VENDOR_LEITECH,
-	    "Leitch Technology",
-	},
-	{
-	    PCI_VENDOR_RADSTONE,
-	    "Radstone Technology",
-	},
-	{
-	    PCI_VENDOR_UNITEDVIDEO,
-	    "United Video",
-	},
-	{
-	    PCI_VENDOR_MOT2,
-	    "Motorola (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_XPOINT,
-	    "Xpoint Technologies",
-	},
-	{
-	    PCI_VENDOR_PATHLIGHT,
-	    "Pathlight Technology",
-	},
-	{
-	    PCI_VENDOR_VIDEOTRON,
-	    "VideoTron",
-	},
-	{
-	    PCI_VENDOR_PYRAMID,
-	    "Pyramid Technologies",
-	},
-	{
-	    PCI_VENDOR_NETPERIPH,
-	    "Network Peripherals",
-	},
-	{
-	    PCI_VENDOR_PINNACLE,
-	    "Pinnacle Systems",
-	},
-	{
-	    PCI_VENDOR_IMI,
-	    "International Microcircuts",
-	},
-	{
-	    PCI_VENDOR_LUCENT,
-	    "Lucent Technologies",
-	},
-	{
-	    PCI_VENDOR_NEC2,
-	    "NEC (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_DOCTECH,
-	    "Document Technologies",
-	},
-	{
-	    PCI_VENDOR_SHIVA,
-	    "Shiva",
-	},
-	{
-	    PCI_VENDOR_DCMDATA,
-	    "DCM Data Systems",
-	},
-	{
-	    PCI_VENDOR_DOLPHIN,
-	    "Dolphin Interconnect Solutions",
-	},
-	{
-	    PCI_VENDOR_MAGMA,
-	    "Mesa Ridge Technologies (MAGMA)",
-	},
-	{
-	    PCI_VENDOR_LSISYS,
-	    "LSI Systems",
-	},
-	{
-	    PCI_VENDOR_SPECIALIX,
-	    "Specialix Research",
-	},
-	{
-	    PCI_VENDOR_MKC,
-	    "Michels & Kleberhoff Computer",
-	},
-	{
-	    PCI_VENDOR_HAL,
-	    "HAL Computer Systems",
-	},
-	{
-	    PCI_VENDOR_AURAVISION,
-	    "Auravision",
-	},
-	{
-	    PCI_VENDOR_ANALOG,
-	    "Analog Devices",
-	},
-	{
-	    PCI_VENDOR_SEGA,
-	    "SEGA Enterprises",
-	},
-	{
-	    PCI_VENDOR_ZORAN,
-	    "Zoran",
-	},
-	{
-	    PCI_VENDOR_QUICKLOGIC,
-	    "QuickLogic",
-	},
-	{
-	    PCI_VENDOR_COMPEX,
-	    "Compex",
-	},
-	{
-	    PCI_VENDOR_PMCSIERRA,
-	    "PMC-Sierra",
-	},
-	{
-	    PCI_VENDOR_COMTROL,
-	    "Comtrol",
-	},
-	{
-	    PCI_VENDOR_CYCLADES,
-	    "Cyclades",
-	},
-	{
-	    PCI_VENDOR_ESSENTIAL,
-	    "Essential Communications",
-	},
-	{
-	    PCI_VENDOR_O2MICRO,
-	    "O2 Micro",
-	},
-	{
-	    PCI_VENDOR_3DFX,
-	    "3Dfx Interactive",
-	},
-	{
-	    PCI_VENDOR_ARIEL,
-	    "Ariel",
-	},
-	{
-	    PCI_VENDOR_HEURICON,
-	    "Heurikon/Computer Products",
-	},
-	{
-	    PCI_VENDOR_AZTECH,
-	    "Aztech",
-	},
-	{
-	    PCI_VENDOR_3DO,
-	    "The 3D0 Company",
-	},
-	{
-	    PCI_VENDOR_CCUBE,
-	    "C-Cube Microsystems",
-	},
-	{
-	    PCI_VENDOR_JNI,
-	    "JNI",
-	},
-	{
-	    PCI_VENDOR_AVM,
-	    "AVM",
-	},
-	{
-	    PCI_VENDOR_SAMSUNGELEC2,
-	    "Samsung Electronics (2nd vendor ID)",
-	},
-	{
-	    PCI_VENDOR_STALLION,
-	    "Stallion Technologies",
-	},
-	{
-	    PCI_VENDOR_LINEARSYS,
-	    "Linear Systems",
-	},
-	{
-	    PCI_VENDOR_COREGA,
-	    "Corega",
-	},
-	{
-	    PCI_VENDOR_ASIX,
-	    "ASIX Electronics",
-	},
-	{
-	    PCI_VENDOR_AURORA,
-	    "Aurora Technologies",
-	},
-	{
-	    PCI_VENDOR_ESSTECH,
-	    "ESS Technology",
-	},
-	{
-	    PCI_VENDOR_INTERSIL,
-	    "Intersil",
-	},
-	{
-	    PCI_VENDOR_NORTEL,
-	    "Nortel Networks (Northern Telecom)",
-	},
-	{
-	    PCI_VENDOR_SILMOTION,
-	    "Silicon Motion",
-	},
-	{
-	    PCI_VENDOR_ENSONIQ,
-	    "Ensoniq",
-	},
-	{
-	    PCI_VENDOR_NETAPP,
-	    "Network Appliance",
-	},
-	{
-	    PCI_VENDOR_TRANSMETA,
-	    "Transmeta",
-	},
-	{
-	    PCI_VENDOR_ROCKWELL,
-	    "Rockwell Semiconductor Systems",
-	},
-	{
-	    PCI_VENDOR_DAVICOM,
-	    "Davicom Semiconductor",
-	},
-	{
-	    PCI_VENDOR_ITE,
-	    "Integrated Technology Express",
-	},
-	{
-	    PCI_VENDOR_ESSTECH2,
-	    "ESS Technology",
-	},
-	{
-	    PCI_VENDOR_TRITECH,
-	    "TriTech Microelectronics",
-	},
-	{
-	    PCI_VENDOR_KOFAX,
-	    "Kofax Image Products",
-	},
-	{
-	    PCI_VENDOR_ALTEON,
-	    "Alteon",
-	},
-	{
-	    PCI_VENDOR_RISCOM,
-	    "RISCom",
-	},
-	{
-	    PCI_VENDOR_USR,
-	    "US Robotics (3Com)",
-	},
-	{
-	    PCI_VENDOR_USR2,
-	    "US Robotics",
-	},
-	{
-	    PCI_VENDOR_PICTUREEL,
-	    "Picture Elements",
-	},
-	{
-	    PCI_VENDOR_NVIDIA_SGS,
-	    "Nvidia & SGS-Thomson Microelectronics",
-	},
-	{
-	    PCI_VENDOR_RAINBOW,
-	    "Rainbow Technologies",
-	},
-	{
-	    PCI_VENDOR_AUREAL,
-	    "Aureal Semiconductor",
-	},
-	{
-	    PCI_VENDOR_ADMTEK,
-	    "ADMtek",
-	},
-	{
-	    PCI_VENDOR_PACKETENGINES,
-	    "Packet Engines",
-	},
-	{
-	    PCI_VENDOR_FORTEMEDIA,
-	    "Forte Media",
-	},
-	{
-	    PCI_VENDOR_SIIG,
-	    "Siig",
-	},
-	{
-	    PCI_VENDOR_DOMEX,
-	    "Domex",
-	},
-	{
-	    PCI_VENDOR_LMC,
-	    "LAN Media",
-	},
-	{
-	    PCI_VENDOR_NETGEAR,
-	    "Netgear",
-	},
-	{
-	    PCI_VENDOR_MOXA,
-	    "Moxa Technologies",
-	},
-	{
-	    PCI_VENDOR_LEVELONE,
-	    "Level One",
-	},
-	{
-	    PCI_VENDOR_COLOGNECHIP,
-	    "Cologne Chip Designs",
-	},
-	{
-	    PCI_VENDOR_HIFN,
-	    "Hifn",
-	},
-	{
-	    PCI_VENDOR_EXAR,
-	    "EXAR",
-	},
-	{
-	    PCI_VENDOR_3WARE,
-	    "3ware",
-	},
-	{
-	    PCI_VENDOR_ABOCOM,
-	    "AboCom Systems",
-	},
-	{
-	    PCI_VENDOR_NETBOOST,
-	    "NetBoost",
-	},
-	{
-	    PCI_VENDOR_SUNDANCETI,
-	    "Sundance Technology",
-	},
-	{
-	    PCI_VENDOR_CMEDIA,
-	    "C-Media Electronics",
-	},
-	{
-	    PCI_VENDOR_LAVA,
-	    "Lava Semiconductor Manufacturing",
-	},
-	{
-	    PCI_VENDOR_ETIMEDIA,
-	    "eTIMedia Technology",
-	},
-	{
-	    PCI_VENDOR_ICENSEMBLE,
-	    "IC Ensemble / VIA Technologies",
-	},
-	{
-	    PCI_VENDOR_MICROSOFT,
-	    "Microsoft",
-	},
-	{
-	    PCI_VENDOR_OXFORDSEMI,
-	    "Oxford Semiconductor",
-	},
-	{
-	    PCI_VENDOR_CHELSIO,
-	    "Chelsio Communications",
-	},
-	{
-	    PCI_VENDOR_TAMARACK,
-	    "Tamarack Microelectronics",
-	},
-	{
-	    PCI_VENDOR_SAMSUNGELEC3,
-	    "Samsung Electronics (3rd vendor ID)",
-	},
-	{
-	    PCI_VENDOR_ASKEY,
-	    "Askey Computer",
-	},
-	{
-	    PCI_VENDOR_AVERMEDIA,
-	    "Avermedia Technologies",
-	},
-	{
-	    PCI_VENDOR_AIRONET,
-	    "Aironet Wireless Communications",
-	},
-	{
-	    PCI_VENDOR_COMPAL,
-	    "COMPAL Electronics",
-	},
-	{
-	    PCI_VENDOR_MYRICOM,
-	    "Myricom",
-	},
-	{
-	    PCI_VENDOR_TITAN,
-	    "Titan Electronics",
-	},
-	{
-	    PCI_VENDOR_AVLAB,
-	    "Avlab Technology",
-	},
-	{
-	    PCI_VENDOR_INVERTEX,
-	    "Invertex",
-	},
-	{
-	    PCI_VENDOR_BROADCOM,
-	    "Broadcom",
-	},
-	{
-	    PCI_VENDOR_PLANEX,
-	    "Planex Communications",
-	},
-	{
-	    PCI_VENDOR_CONEXANT,
-	    "Conexant Systems",
-	},
-	{
-	    PCI_VENDOR_DELTA,
-	    "Delta Electronics",
-	},
-	{
-	    PCI_VENDOR_ENE,
-	    "ENE Technology",
-	},
-	{
-	    PCI_VENDOR_TERRATEC,
-	    "TerraTec Electronic",
-	},
-	{
-	    PCI_VENDOR_SOLIDUM,
-	    "Solidum Systems",
-	},
-	{
-	    PCI_VENDOR_FARADAY,
-	    "Faraday Technology",
-	},
-	{
-	    PCI_VENDOR_GEOCAST,
-	    "Geocast Network Systems",
-	},
-	{
-	    PCI_VENDOR_BLUESTEEL,
-	    "Bluesteel Networks",
-	},
-	{
-	    PCI_VENDOR_VMWARE,
-	    "VMware",
-	},
-	{
-	    PCI_VENDOR_AGILENT,
-	    "Agilent Technologies",
-	},
-	{
-	    PCI_VENDOR_EUMITCOM,
-	    "Eumitcom",
-	},
-	{
-	    PCI_VENDOR_NETSEC,
-	    "NetSec",
-	},
-	{
-	    PCI_VENDOR_SIBYTE,
-	    "Broadcom (SiByte)",
-	},
-	{
-	    PCI_VENDOR_MYSON,
-	    "Myson-Century Technology",
-	},
-	{
-	    PCI_VENDOR_NDC,
-	    "National Datacomm",
-	},
-	{
-	    PCI_VENDOR_ACTIONTEC,
-	    "Action Tec Electronics",
-	},
-	{
-	    PCI_VENDOR_ATHEROS,
-	    "Atheros Communications",
-	},
-	{
-	    PCI_VENDOR_GLOBALSUN,
-	    "Global Sun Tech",
-	},
-	{
-	    PCI_VENDOR_SAFENET,
-	    "SafeNet",
-	},
-	{
-	    PCI_VENDOR_MICREL,
-	    "Micrel",
-	},
-	{
-	    PCI_VENDOR_LINKSYS,
-	    "Linksys",
-	},
-	{
-	    PCI_VENDOR_ALTIMA,
-	    "Altima",
-	},
-	{
-	    PCI_VENDOR_ANTARES,
-	    "Antares Microsystems",
-	},
-	{
-	    PCI_VENDOR_CAVIUM,
-	    "Cavium",
-	},
-	{
-	    PCI_VENDOR_FZJZEL,
-	    "FZ Juelich / ZEL",
-	},
-	{
-	    PCI_VENDOR_BELKIN,
-	    "Belkin",
-	},
-	{
-	    PCI_VENDOR_HAWKING,
-	    "Hawking Technology",
-	},
-	{
-	    PCI_VENDOR_SANDBURST,
-	    "Sandburst",
-	},
-	{
-	    PCI_VENDOR_I4,
-	    "I4",
-	},
-	{
-	    PCI_VENDOR_ARECA,
-	    "Areca",
-	},
-	{
-	    PCI_VENDOR_S2IO,
-	    "S2io Technologies",
-	},
-	{
-	    PCI_VENDOR_LINKSYS2,
-	    "Linksys",
-	},
-	{
-	    PCI_VENDOR_RALINK,
-	    "Ralink Technologies",
-	},
-	{
-	    PCI_VENDOR_BBELEC,
-	    "B & B Electronics",
-	},
-	{
-	    PCI_VENDOR_ATTANSIC,
-	    "Attansic Technologies",
-	},
-	{
-	    PCI_VENDOR_EVE,
-	    "EVE",
-	},
-	{
-	    PCI_VENDOR_SYMPHONY2,
-	    "Symphony Labs (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_TEKRAM2,
-	    "Tekram Technology (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_DATUM,
-	    "Datum Inc. Bancomm-Timing Division",
-	},
-	{
-	    PCI_VENDOR_JMICRON,
-	    "JMicron Technology",
-	},
-	{
-	    PCI_VENDOR_HINT,
-	    "HiNT",
-	},
-	{
-	    PCI_VENDOR_3DLABS,
-	    "3D Labs",
-	},
-	{
-	    PCI_VENDOR_AVANCE2,
-	    "Avance Logic (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_ADDTRON,
-	    "Addtron Technology",
-	},
-	{
-	    PCI_VENDOR_ICOMPRESSION,
-	    "Conexant (iCompression)",
-	},
-	{
-	    PCI_VENDOR_INDCOMPSRC,
-	    "Industrial Computer Source",
-	},
-	{
-	    PCI_VENDOR_NETVIN,
-	    "NetVin",
-	},
-	{
-	    PCI_VENDOR_BUSLOGIC2,
-	    "Buslogic (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_MEDIAQ,
-	    "MediaQ",
-	},
-	{
-	    PCI_VENDOR_GUILLEMOT,
-	    "Guillemot",
-	},
-	{
-	    PCI_VENDOR_TURTLE_BEACH,
-	    "Turtle Beach",
-	},
-	{
-	    PCI_VENDOR_S3,
-	    "S3",
-	},
-	{
-	    PCI_VENDOR_NETPOWER2,
-	    "NetPower (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_XENSOURCE,
-	    "XenSource, Inc.",
-	},
-	{
-	    PCI_VENDOR_C4T,
-	    "c't Magazin",
-	},
-	{
-	    PCI_VENDOR_KURUSUGAWA,
-	    "Kurusugawa Electronics",
-	},
-	{
-	    PCI_VENDOR_PCHDTV,
-	    "pcHDTV",
-	},
-	{
-	    PCI_VENDOR_QUANCM,
-	    "Quancm Electronic GmbH",
-	},
-	{
-	    PCI_VENDOR_INTEL,
-	    "Intel",
-	},
-	{
-	    PCI_VENDOR_TRIGEM2,
-	    "Trigem Computer (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_PROLAN,
-	    "ProLAN",
-	},
-	{
-	    PCI_VENDOR_COMPUTONE,
-	    "Computone",
-	},
-	{
-	    PCI_VENDOR_KTI,
-	    "KTI",
-	},
-	{
-	    PCI_VENDOR_ADP,
-	    "Adaptec",
-	},
-	{
-	    PCI_VENDOR_ADP2,
-	    "Adaptec (2nd PCI Vendor ID)",
-	},
-	{
-	    PCI_VENDOR_ATRONICS,
-	    "Atronics",
-	},
-	{
-	    PCI_VENDOR_NETMOS,
-	    "Netmos",
-	},
-	{
-	    PCI_VENDOR_PARALLELS,
-	    "Parallels",
-	},
-	{
-	    PCI_VENDOR_CHRYSALIS,
-	    "Chrysalis-ITS",
-	},
-	{
-	    PCI_VENDOR_MIDDLE_DIGITAL,
-	    "Middle Digital",
-	},
-	{
-	    PCI_VENDOR_ARC,
-	    "ARC Logic",
-	},
-	{
-	    PCI_VENDOR_INVALID,
-	    "INVALID VENDOR ID",
-	},
+static const uint16_t pci_vendors[] = {
+	    PCI_VENDOR_PEAK, 1, 6, 13, 0,
+	    PCI_VENDOR_MARTINMARIETTA, 21, 0,
+	    PCI_VENDOR_HAUPPAUGE, 37, 47, 56, 0,
+	    PCI_VENDOR_DYNALINK, 62, 0,
+	    PCI_VENDOR_COMPAQ, 71, 0,
+	    PCI_VENDOR_SYMBIOS, 78, 86, 0,
+	    PCI_VENDOR_ATI, 92, 96, 0,
+	    PCI_VENDOR_ULSI, 109, 114, 0,
+	    PCI_VENDOR_VLSI, 122, 127, 0,
+	    PCI_VENDOR_AVANCE, 138, 86, 0,
+	    PCI_VENDOR_REPLY, 145, 151, 0,
+	    PCI_VENDOR_NETFRAME, 157, 114, 0,
+	    PCI_VENDOR_EPSON, 166, 0,
+	    PCI_VENDOR_PHOENIX, 172, 96, 0,
+	    PCI_VENDOR_NS, 180, 189, 0,
+	    PCI_VENDOR_TSENG, 203, 209, 0,
+	    PCI_VENDOR_AST, 214, 218, 0,
+	    PCI_VENDOR_WEITEK, 227, 0,
+	    PCI_VENDOR_VIDEOLOGIC, 234, 86, 0,
+	    PCI_VENDOR_DEC, 240, 248, 0,
+	    PCI_VENDOR_MICRONICS, 258, 268, 0,
+	    PCI_VENDOR_CIRRUS, 278, 86, 0,
+	    PCI_VENDOR_IBM, 285, 0,
+	    PCI_VENDOR_LSIL, 289, 86, 293, 296, 0,
+	    PCI_VENDOR_ICLPERSONAL, 303, 307, 114, 0,
+	    PCI_VENDOR_SPEA, 316, 321, 0,
+	    PCI_VENDOR_UNISYS, 330, 114, 0,
+	    PCI_VENDOR_ELITEGROUP, 337, 47, 114, 0,
+	    PCI_VENDOR_NCR, 348, 353, 360, 114, 0,
+	    PCI_VENDOR_VITESSE, 372, 189, 0,
+	    PCI_VENDOR_WD, 380, 240, 0,
+	    PCI_VENDOR_AMI, 388, 397, 0,
+	    PCI_VENDOR_PICTURETEL, 408, 0,
+	    PCI_VENDOR_HITACHICOMP, 419, 47, 427, 0,
+	    PCI_VENDOR_OKI, 436, 440, 449, 0,
+	    PCI_VENDOR_AMD, 458, 467, 473, 0,
+	    PCI_VENDOR_TRIDENT, 481, 489, 0,
+	    PCI_VENDOR_ZENITH, 502, 509, 114, 0,
+	    PCI_VENDOR_ACER, 514, 0,
+	    PCI_VENDOR_DELL, 519, 47, 0,
+	    PCI_VENDOR_SNI, 524, 532, 540, 0,
+	    PCI_VENDOR_LSILOGIC, 289, 543, 550, 559, 0,
+	    PCI_VENDOR_MATROX, 564, 0,
+	    PCI_VENDOR_CHIPS, 571, 577, 96, 0,
+	    PCI_VENDOR_WYSE, 581, 127, 0,
+	    PCI_VENDOR_OLIVETTI, 586, 458, 127, 0,
+	    PCI_VENDOR_TOSHIBA, 595, 603, 0,
+	    PCI_VENDOR_TMCRESEARCH, 611, 218, 0,
+	    PCI_VENDOR_MIRO, 615, 47, 427, 0,
+	    PCI_VENDOR_COMPAQ2, 71, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_NEC, 640, 0,
+	    PCI_VENDOR_BURNDY, 644, 0,
+	    PCI_VENDOR_COMPCOMM, 651, 657, 659, 218, 665, 0,
+	    PCI_VENDOR_FUTUREDOMAIN, 669, 676, 0,
+	    PCI_VENDOR_HITACHIMICRO, 683, 489, 0,
+	    PCI_VENDOR_AMP, 690, 0,
+	    PCI_VENDOR_SIS, 694, 702, 6, 0,
+	    PCI_VENDOR_SEIKOEPSON, 713, 166, 0,
+	    PCI_VENDOR_TATUNGAMERICA, 719, 293, 603, 0,
+	    PCI_VENDOR_HP, 726, 0,
+	    PCI_VENDOR_SOLLIDAY, 742, 751, 0,
+	    PCI_VENDOR_LOGICMODELLING, 86, 763, 0,
+	    PCI_VENDOR_KPC, 772, 779, 0,
+	    PCI_VENDOR_COMPUTREND, 787, 0,
+	    PCI_VENDOR_PCTECH, 798, 127, 0,
+	    PCI_VENDOR_ASUSTEK, 801, 47, 0,
+	    PCI_VENDOR_DPT, 809, 821, 127, 0,
+	    PCI_VENDOR_OPTI, 832, 0,
+	    PCI_VENDOR_IPCCORP, 837, 0,
+	    PCI_VENDOR_GENOA, 841, 114, 0,
+	    PCI_VENDOR_ELSA, 847, 0,
+	    PCI_VENDOR_FOUNTAINTECH, 852, 127, 0,
+	    PCI_VENDOR_SGSTHOMSON, 861, 873, 0,
+	    PCI_VENDOR_BUSLOGIC, 890, 0,
+	    PCI_VENDOR_TI, 899, 905, 0,
+	    PCI_VENDOR_SONY, 917, 0,
+	    PCI_VENDOR_OAKTECH, 922, 127, 0,
+	    PCI_VENDOR_COTIME, 926, 47, 0,
+	    PCI_VENDOR_WINBOND, 934, 942, 0,
+	    PCI_VENDOR_ANIGMA, 954, 0,
+	    PCI_VENDOR_YOUNGMICRO, 961, 467, 114, 0,
+	    PCI_VENDOR_HITACHI, 419, 0,
+	    PCI_VENDOR_EFARMICRO, 967, 489, 0,
+	    PCI_VENDOR_ICL, 303, 0,
+	    PCI_VENDOR_MOT, 972, 0,
+	    PCI_VENDOR_ETR, 942, 657, 981, 988, 0,
+	    PCI_VENDOR_TEKNOR, 992, 489, 0,
+	    PCI_VENDOR_PROMISE, 999, 127, 0,
+	    PCI_VENDOR_FOXCONN, 1007, 1015, 0,
+	    PCI_VENDOR_WIPRO, 1029, 1035, 0,
+	    PCI_VENDOR_NUMBER9, 1044, 1051, 47, 1053, 0,
+	    PCI_VENDOR_VTECH, 1061, 268, 0,
+	    PCI_VENDOR_INFOTRONIC, 1067, 603, 0,
+	    PCI_VENDOR_UMC, 1078, 873, 0,
+	    PCI_VENDOR_ITT, 1085, 1088, 1088, 0,
+	    PCI_VENDOR_MASPAR, 1091, 47, 0,
+	    PCI_VENDOR_OCEANOA, 1098, 1104, 1111, 0,
+	    PCI_VENDOR_ALCATEL, 1122, 1130, 0,
+	    PCI_VENDOR_TEXASMICRO, 899, 489, 0,
+	    PCI_VENDOR_PICOPOWER, 1134, 127, 0,
+	    PCI_VENDOR_MITSUBISHI, 1144, 942, 0,
+	    PCI_VENDOR_DIVERSIFIED, 1155, 127, 0,
+	    PCI_VENDOR_MYLEX, 1167, 0,
+	    PCI_VENDOR_ATEN, 1173, 218, 0,
+	    PCI_VENDOR_APPLE, 1178, 47, 0,
+	    PCI_VENDOR_HYUNDAI, 1184, 942, 603, 0,
+	    PCI_VENDOR_SEQUENT, 1192, 0,
+	    PCI_VENDOR_DFI, 1200, 0,
+	    PCI_VENDOR_CITYGATE, 1204, 1209, 1214, 0,
+	    PCI_VENDOR_DAEWOO, 1226, 1233, 0,
+	    PCI_VENDOR_MITAC, 1241, 0,
+	    PCI_VENDOR_GIT, 1247, 0,
+	    PCI_VENDOR_YAMAHA, 1251, 0,
+	    PCI_VENDOR_NEXGEN, 1258, 489, 0,
+	    PCI_VENDOR_AIR, 458, 1265, 218, 0,
+	    PCI_VENDOR_CHAINTECH, 1277, 47, 0,
+	    PCI_VENDOR_QLOGIC, 1287, 0,
+	    PCI_VENDOR_CYRIX, 1294, 0,
+	    PCI_VENDOR_IBUS, 1300, 0,
+	    PCI_VENDOR_NETWORTH, 1306, 0,
+	    PCI_VENDOR_GATEWAY, 1315, 1323, 0,
+	    PCI_VENDOR_GOLDSTART, 1328, 0,
+	    PCI_VENDOR_LEADTEK, 1337, 218, 0,
+	    PCI_VENDOR_INTERPHASE, 1345, 0,
+	    PCI_VENDOR_DATATECH, 509, 127, 0,
+	    PCI_VENDOR_CONTAQ, 1356, 489, 0,
+	    PCI_VENDOR_SUPERMAC, 1363, 127, 0,
+	    PCI_VENDOR_EFA, 1372, 293, 603, 0,
+	    PCI_VENDOR_FOREX, 1376, 47, 0,
+	    PCI_VENDOR_PARADOR, 1382, 0,
+	    PCI_VENDOR_TULIP, 1390, 268, 0,
+	    PCI_VENDOR_JBOND, 1396, 1399, 47, 114, 0,
+	    PCI_VENDOR_CACHECOMP, 1404, 47, 0,
+	    PCI_VENDOR_MICROCOMP, 1410, 114, 0,
+	    PCI_VENDOR_DG, 509, 1424, 0,
+	    PCI_VENDOR_BIT3, 1432, 47, 0,
+	    PCI_VENDOR_ELONEX, 1437, 1444, 1448, 1452, 114, 0,
+	    PCI_VENDOR_OLICOM, 1461, 0,
+	    PCI_VENDOR_SUN, 1468, 489, 0,
+	    PCI_VENDOR_SYSTEMSOFT, 1472, 0,
+	    PCI_VENDOR_ENCORE, 1483, 47, 0,
+	    PCI_VENDOR_INTERGRAPH, 1490, 0,
+	    PCI_VENDOR_DIAMOND, 1501, 47, 114, 0,
+	    PCI_VENDOR_NATIONALINST, 180, 905, 0,
+	    PCI_VENDOR_FICOMP, 1509, 1515, 268, 0,
+	    PCI_VENDOR_CMDTECH, 1521, 127, 0,
+	    PCI_VENDOR_ALACRON, 1525, 0,
+	    PCI_VENDOR_APPIAN, 1533, 127, 0,
+	    PCI_VENDOR_QUANTUMDESIGNS, 1540, 1548, 0,
+	    PCI_VENDOR_SAMSUNGELEC, 1556, 942, 0,
+	    PCI_VENDOR_PACKARDBELL, 1564, 1572, 0,
+	    PCI_VENDOR_GEMLIGHT, 1577, 47, 0,
+	    PCI_VENDOR_MEGACHIPS, 1586, 0,
+	    PCI_VENDOR_ZIDA, 1596, 96, 0,
+	    PCI_VENDOR_BROOKTREE, 1601, 0,
+	    PCI_VENDOR_TRIGEM, 1611, 47, 0,
+	    PCI_VENDOR_MEIDENSHA, 1618, 0,
+	    PCI_VENDOR_JUKO, 1628, 942, 0,
+	    PCI_VENDOR_QUANTUM, 1540, 0,
+	    PCI_VENDOR_EVEREX, 1633, 114, 0,
+	    PCI_VENDOR_GLOBE, 1640, 1646, 1660, 0,
+	    PCI_VENDOR_RACAL, 1666, 1672, 0,
+	    PCI_VENDOR_INFORMTECH, 1681, 1692, 0,
+	    PCI_VENDOR_BENCHMARQ, 1703, 873, 0,
+	    PCI_VENDOR_SIERRA, 1713, 189, 0,
+	    PCI_VENDOR_SGI, 694, 1720, 0,
+	    PCI_VENDOR_ACC, 1729, 873, 0,
+	    PCI_VENDOR_DIGICOM, 1733, 0,
+	    PCI_VENDOR_HONEYWELL, 1741, 1751, 0,
+	    PCI_VENDOR_SYMPHONY, 1756, 209, 0,
+	    PCI_VENDOR_CORNERSTONE, 1765, 127, 0,
+	    PCI_VENDOR_MICROCOMPSON, 467, 47, 1777, 1786, 1790, 0,
+	    PCI_VENDOR_CARDEXPER, 1794, 127, 0,
+	    PCI_VENDOR_CABLETRON, 1805, 114, 0,
+	    PCI_VENDOR_RAYETHON, 1815, 0,
+	    PCI_VENDOR_DATABOOK, 1824, 0,
+	    PCI_VENDOR_STB, 1833, 114, 0,
+	    PCI_VENDOR_PLX, 1837, 127, 0,
+	    PCI_VENDOR_MADGE, 1841, 1847, 0,
+	    PCI_VENDOR_3COM, 1856, 0,
+	    PCI_VENDOR_SMC, 1861, 489, 0,
+	    PCI_VENDOR_ALI, 514, 209, 0,
+	    PCI_VENDOR_MITSUBISHIELEC, 1144, 942, 0,
+	    PCI_VENDOR_DAPHA, 1870, 942, 0,
+	    PCI_VENDOR_ALR, 458, 86, 218, 0,
+	    PCI_VENDOR_SURECOM, 1876, 127, 0,
+	    PCI_VENDOR_TSENGLABS, 203, 209, 1015, 0,
+	    PCI_VENDOR_MOST, 1884, 0,
+	    PCI_VENDOR_BOCA, 1889, 218, 0,
+	    PCI_VENDOR_ICM, 1894, 0,
+	    PCI_VENDOR_AUSPEX, 1898, 114, 0,
+	    PCI_VENDOR_SAMSUNGSEMI, 1556, 1905, 0,
+	    PCI_VENDOR_AWARD, 1920, 321, 1515, 0,
+	    PCI_VENDOR_XEROX, 1926, 0,
+	    PCI_VENDOR_RAMBUS, 1932, 0,
+	    PCI_VENDOR_MEDIAVIS, 1939, 1945, 0,
+	    PCI_VENDOR_NEOMAGIC, 1952, 0,
+	    PCI_VENDOR_DATAEXPERT, 1961, 0,
+	    PCI_VENDOR_FUJITSU, 1972, 0,
+	    PCI_VENDOR_OMRON, 1980, 0,
+	    PCI_VENDOR_MENTOR, 1986, 1993, 0,
+	    PCI_VENDOR_ADVSYS, 458, 6, 427, 0,
+	    PCI_VENDOR_RADIUS, 1997, 0,
+	    PCI_VENDOR_CITICORP, 2004, 2013, 0,
+	    PCI_VENDOR_FUJITSU2, 1972, 2017, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_FUTUREPLUS, 2025, 114, 0,
+	    PCI_VENDOR_MOLEX, 2033, 0,
+	    PCI_VENDOR_JABIL, 2039, 2045, 0,
+	    PCI_VENDOR_HAULON, 2053, 873, 0,
+	    PCI_VENDOR_AUTOLOGIC, 2060, 0,
+	    PCI_VENDOR_CETIA, 2070, 0,
+	    PCI_VENDOR_BCM, 2076, 458, 0,
+	    PCI_VENDOR_APL, 458, 2080, 209, 0,
+	    PCI_VENDOR_MACRONIX, 2092, 0,
+	    PCI_VENDOR_THOMASCONRAD, 2101, 0,
+	    PCI_VENDOR_ROHM, 2115, 218, 0,
+	    PCI_VENDOR_CERN, 2120, 0,
+	    PCI_VENDOR_ES, 2133, 657, 2139, 0,
+	    PCI_VENDOR_NVIDIA, 2150, 0,
+	    PCI_VENDOR_EMULEX, 2157, 0,
+	    PCI_VENDOR_IMS, 702, 467, 2164, 0,
+	    PCI_VENDOR_TEKRAM, 2174, 127, 2181, 625, 629, 636, 0,
+	    PCI_VENDOR_APTIX, 2186, 0,
+	    PCI_VENDOR_NEWBRIDGE, 2192, 489, 2202, 2204, 189, 0,
+	    PCI_VENDOR_TANDEM, 2211, 268, 0,
+	    PCI_VENDOR_MICROINDUSTRIES, 467, 2218, 0,
+	    PCI_VENDOR_GAINBERY, 2229, 47, 427, 0,
+	    PCI_VENDOR_VADEM, 2238, 0,
+	    PCI_VENDOR_AMCIRCUITS, 2244, 467, 2252, 0,
+	    PCI_VENDOR_ALPSELECTIC, 2261, 440, 0,
+	    PCI_VENDOR_INTEGRAPHICS, 2266, 114, 0,
+	    PCI_VENDOR_ARTISTSGRAPHICS, 2279, 1720, 0,
+	    PCI_VENDOR_REALTEK, 2287, 189, 0,
+	    PCI_VENDOR_ASCIICORP, 2295, 0,
+	    PCI_VENDOR_XILINX, 2301, 0,
+	    PCI_VENDOR_RACORE, 2308, 47, 427, 0,
+	    PCI_VENDOR_PERITEK, 2315, 0,
+	    PCI_VENDOR_TYAN, 2323, 47, 0,
+	    PCI_VENDOR_ACHME, 2328, 47, 0,
+	    PCI_VENDOR_ALARIS, 2334, 0,
+	    PCI_VENDOR_SMOS, 2341, 114, 0,
+	    PCI_VENDOR_NKK, 2347, 0,
+	    PCI_VENDOR_CREATIVE, 2351, 2360, 114, 0,
+	    PCI_VENDOR_MATSUSHITA, 2371, 0,
+	    PCI_VENDOR_ALTOS, 2382, 2388, 0,
+	    PCI_VENDOR_PCDIRECT, 798, 2394, 0,
+	    PCI_VENDOR_TRUEVISIO, 2401, 0,
+	    PCI_VENDOR_THESYS, 2412, 2419, 2424, 2427, 0,
+	    PCI_VENDOR_IODATA, 2443, 509, 2447, 0,
+	    PCI_VENDOR_SOYO, 2454, 127, 0,
+	    PCI_VENDOR_FAST, 2459, 2360, 0,
+	    PCI_VENDOR_NCUBE, 2464, 0,
+	    PCI_VENDOR_JAZZ, 2470, 2475, 0,
+	    PCI_VENDOR_INITIO, 2486, 0,
+	    PCI_VENDOR_CREATIVELABS, 2351, 209, 0,
+	    PCI_VENDOR_TRIONES, 2493, 96, 0,
+	    PCI_VENDOR_RASTEROPS, 2501, 0,
+	    PCI_VENDOR_SIGMA, 2511, 1548, 0,
+	    PCI_VENDOR_VIATECH, 2517, 96, 0,
+	    PCI_VENDOR_STRATIS, 2521, 47, 0,
+	    PCI_VENDOR_PROTEON, 2529, 0,
+	    PCI_VENDOR_COGENT, 2537, 509, 96, 0,
+	    PCI_VENDOR_SIEMENS, 524, 540, 2202, 524, 532, 540, 0,
+	    PCI_VENDOR_XENON, 2544, 489, 0,
+	    PCI_VENDOR_MINIMAX, 2550, 127, 0,
+	    PCI_VENDOR_ZNYX, 2559, 458, 114, 0,
+	    PCI_VENDOR_CPUTECH, 2564, 127, 0,
+	    PCI_VENDOR_ROSS, 2568, 127, 0,
+	    PCI_VENDOR_POWERHOUSE, 2573, 114, 0,
+	    PCI_VENDOR_SCO, 2584, 2590, 2595, 0,
+	    PCI_VENDOR_RNS, 2605, 0,
+	    PCI_VENDOR_ACCTON, 2609, 127, 0,
+	    PCI_VENDOR_ATMEL, 2616, 0,
+	    PCI_VENDOR_DUPONT, 2622, 2629, 114, 0,
+	    PCI_VENDOR_DATATRANSLATION, 509, 2635, 0,
+	    PCI_VENDOR_DATACUBE, 2647, 0,
+	    PCI_VENDOR_BERG, 2656, 942, 0,
+	    PCI_VENDOR_VORTEX, 2661, 47, 114, 0,
+	    PCI_VENDOR_EFFICIENTNETS, 2668, 1847, 0,
+	    PCI_VENDOR_TELEDYNE, 2677, 2360, 114, 0,
+	    PCI_VENDOR_TRICORD, 2686, 114, 0,
+	    PCI_VENDOR_IDT, 2694, 0,
+	    PCI_VENDOR_ELDEC, 2698, 0,
+	    PCI_VENDOR_PDI, 2704, 240, 2715, 0,
+	    PCI_VENDOR_EMC, 2722, 0,
+	    PCI_VENDOR_ZILOG, 2726, 0,
+	    PCI_VENDOR_MULTITECH, 2732, 114, 0,
+	    PCI_VENDOR_LEUTRON, 2743, 1945, 0,
+	    PCI_VENDOR_EUROCORE, 2751, 0,
+	    PCI_VENDOR_VIGRA, 2766, 0,
+	    PCI_VENDOR_FORE, 2772, 114, 0,
+	    PCI_VENDOR_FIRMWORKS, 2777, 0,
+	    PCI_VENDOR_HERMES, 2787, 942, 0,
+	    PCI_VENDOR_LINOTYPE, 2794, 0,
+	    PCI_VENDOR_RAVICAD, 2803, 0,
+	    PCI_VENDOR_INFOMEDIA, 2811, 873, 0,
+	    PCI_VENDOR_IMAGINGTECH, 2821, 2829, 0,
+	    PCI_VENDOR_COMPUTERVISION, 2839, 0,
+	    PCI_VENDOR_PHILIPS, 2854, 0,
+	    PCI_VENDOR_MITEL, 2862, 0,
+	    PCI_VENDOR_EICON, 2868, 127, 0,
+	    PCI_VENDOR_MCS, 2874, 47, 114, 0,
+	    PCI_VENDOR_FUJIXEROX, 2882, 1926, 0,
+	    PCI_VENDOR_MOMENTUM, 2887, 509, 114, 0,
+	    PCI_VENDOR_CISCO, 2896, 114, 0,
+	    PCI_VENDOR_ZIATECH, 2902, 0,
+	    PCI_VENDOR_DYNPIC, 2910, 2918, 0,
+	    PCI_VENDOR_FWB, 2927, 0,
+	    PCI_VENDOR_CYCLONE, 2931, 467, 0,
+	    PCI_VENDOR_LEADINGEDGE, 2939, 2947, 0,
+	    PCI_VENDOR_SANYO, 2952, 440, 0,
+	    PCI_VENDOR_EQUINOX, 2958, 114, 0,
+	    PCI_VENDOR_INTERVOICE, 2966, 0,
+	    PCI_VENDOR_CREST, 2977, 2983, 0,
+	    PCI_VENDOR_ALLIANCE, 2995, 189, 0,
+	    PCI_VENDOR_NETPOWER, 3004, 0,
+	    PCI_VENDOR_CINMILACRON, 3013, 3024, 0,
+	    PCI_VENDOR_WORKBIT, 3033, 0,
+	    PCI_VENDOR_FORCE, 3041, 268, 0,
+	    PCI_VENDOR_INTERFACE, 3047, 0,
+	    PCI_VENDOR_SCHNEIDERKOCH, 3057, 657, 3067, 0,
+	    PCI_VENDOR_WINSYSTEM, 3072, 6, 0,
+	    PCI_VENDOR_VMIC, 3076, 0,
+	    PCI_VENDOR_CANOPUS, 3081, 0,
+	    PCI_VENDOR_ANNABOOKS, 3089, 0,
+	    PCI_VENDOR_IC, 3099, 0,
+	    PCI_VENDOR_NIKON, 3102, 114, 0,
+	    PCI_VENDOR_DIGI, 3108, 1015, 0,
+	    PCI_VENDOR_TMC, 3113, 3122, 0,
+	    PCI_VENDOR_JAE, 3131, 942, 0,
+	    PCI_VENDOR_MEGATEK, 3135, 0,
+	    PCI_VENDOR_LANDWIN, 3143, 3072, 2360, 0,
+	    PCI_VENDOR_MELCO, 3148, 0,
+	    PCI_VENDOR_PINETECH, 3154, 127, 0,
+	    PCI_VENDOR_PERISCOPE, 3159, 751, 0,
+	    PCI_VENDOR_AVSYS, 3169, 0,
+	    PCI_VENDOR_VOARX, 3175, 3181, 657, 3183, 0,
+	    PCI_VENDOR_MUTECH, 3185, 0,
+	    PCI_VENDOR_HARLEQUIN, 3192, 0,
+	    PCI_VENDOR_PARALLAX, 3202, 1720, 0,
+	    PCI_VENDOR_XIRCOM, 3211, 0,
+	    PCI_VENDOR_PEERPROTO, 3218, 3223, 0,
+	    PCI_VENDOR_MAXTOR, 3233, 0,
+	    PCI_VENDOR_MEGASOFT, 3240, 0,
+	    PCI_VENDOR_PFU, 3249, 2017, 0,
+	    PCI_VENDOR_OALAB, 3253, 3256, 0,
+	    PCI_VENDOR_RENDITION, 3267, 0,
+	    PCI_VENDOR_APT, 458, 2080, 96, 0,
+	    PCI_VENDOR_IMAGRAPH, 3277, 0,
+	    PCI_VENDOR_SERVERWORKS, 3286, 0,
+	    PCI_VENDOR_MUTOH, 3298, 2218, 0,
+	    PCI_VENDOR_THINE, 3304, 942, 0,
+	    PCI_VENDOR_CDAC, 3310, 3317, 3321, 293, 458, 3326, 0,
+	    PCI_VENDOR_POLARIS, 3336, 3344, 0,
+	    PCI_VENDOR_CONNECTWARE, 3359, 0,
+	    PCI_VENDOR_WSTECH, 3371, 127, 0,
+	    PCI_VENDOR_INVENTEC, 3383, 0,
+	    PCI_VENDOR_LOUGHSOUND, 3392, 3405, 2715, 0,
+	    PCI_VENDOR_ALTERA, 3411, 0,
+	    PCI_VENDOR_ADOBE, 3418, 114, 0,
+	    PCI_VENDOR_BRIDGEPORT, 3424, 3122, 0,
+	    PCI_VENDOR_MIRTRON, 3435, 47, 0,
+	    PCI_VENDOR_SBE, 3442, 0,
+	    PCI_VENDOR_SILICONENG, 694, 751, 0,
+	    PCI_VENDOR_ALFA, 3446, 0,
+	    PCI_VENDOR_TOSHIBA2, 595, 0,
+	    PCI_VENDOR_ATREND, 3451, 127, 0,
+	    PCI_VENDOR_ATTO, 3459, 127, 0,
+	    PCI_VENDOR_TR, 3464, 114, 0,
+	    PCI_VENDOR_RICOH, 3468, 0,
+	    PCI_VENDOR_TELEMATICS, 3474, 1015, 0,
+	    PCI_VENDOR_FUJIKURA, 3485, 0,
+	    PCI_VENDOR_FORKS, 3494, 0,
+	    PCI_VENDOR_DATAWORLD, 3500, 0,
+	    PCI_VENDOR_DLINK, 3510, 114, 0,
+	    PCI_VENDOR_ATL, 458, 3517, 3528, 0,
+	    PCI_VENDOR_SHIMA, 3540, 3546, 1646, 0,
+	    PCI_VENDOR_MATSUSHITA2, 2371, 942, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_HILEVEL, 3552, 127, 0,
+	    PCI_VENDOR_COROLLARY, 3560, 0,
+	    PCI_VENDOR_BITFLOW, 3571, 0,
+	    PCI_VENDOR_HERMSTEDT, 3579, 0,
+	    PCI_VENDOR_ACARD, 3589, 0,
+	    PCI_VENDOR_DENSAN, 3595, 0,
+	    PCI_VENDOR_ZEINET, 3602, 0,
+	    PCI_VENDOR_TOUCAN, 3609, 127, 0,
+	    PCI_VENDOR_RATOC, 3616, 114, 0,
+	    PCI_VENDOR_HYTEC, 3622, 2360, 0,
+	    PCI_VENDOR_GAGE, 3628, 2244, 3633, 0,
+	    PCI_VENDOR_LAMBDA, 3642, 114, 0,
+	    PCI_VENDOR_DCA, 240, 3344, 3649, 0,
+	    PCI_VENDOR_MINDSHARE, 3660, 3665, 0,
+	    PCI_VENDOR_OMEGA, 3671, 467, 0,
+	    PCI_VENDOR_ITI, 360, 127, 3677, 0,
+	    PCI_VENDOR_BUG, 3687, 3691, 0,
+	    PCI_VENDOR_FUJITSU3, 1972, 3699, 625, 629, 636, 0,
+	    PCI_VENDOR_BULL, 3704, 3709, 360, 114, 0,
+	    PCI_VENDOR_CONVEX, 3712, 47, 0,
+	    PCI_VENDOR_HAMAMATSU, 3719, 3729, 0,
+	    PCI_VENDOR_SIERRA2, 1713, 218, 657, 127, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_BARCO, 3739, 0,
+	    PCI_VENDOR_MICROUNITY, 3745, 114, 751, 0,
+	    PCI_VENDOR_PUREDATA, 3756, 509, 0,
+	    PCI_VENDOR_POWERCC, 3761, 3326, 0,
+	    PCI_VENDOR_INNOSYS, 3767, 0,
+	    PCI_VENDOR_ACTEL, 3775, 0,
+	    PCI_VENDOR_MARVELL, 3781, 0,
+	    PCI_VENDOR_CANNON, 3789, 3796, 0,
+	    PCI_VENDOR_LITEON, 3799, 3344, 0,
+	    PCI_VENDOR_SCITEX, 3807, 0,
+	    PCI_VENDOR_AVID, 3814, 127, 0,
+	    PCI_VENDOR_V3, 3819, 189, 0,
+	    PCI_VENDOR_APRICOT, 3822, 47, 0,
+	    PCI_VENDOR_KODAK, 3830, 3838, 0,
+	    PCI_VENDOR_BARR, 3844, 114, 0,
+	    PCI_VENDOR_LEITECH, 3849, 127, 0,
+	    PCI_VENDOR_RADSTONE, 3856, 127, 0,
+	    PCI_VENDOR_UNITEDVIDEO, 1078, 234, 0,
+	    PCI_VENDOR_MOT2, 972, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_XPOINT, 3865, 96, 0,
+	    PCI_VENDOR_PATHLIGHT, 3872, 127, 0,
+	    PCI_VENDOR_VIDEOTRON, 3882, 0,
+	    PCI_VENDOR_PYRAMID, 3892, 96, 0,
+	    PCI_VENDOR_NETPERIPH, 3900, 2080, 0,
+	    PCI_VENDOR_PINNACLE, 3908, 114, 0,
+	    PCI_VENDOR_IMI, 1015, 3917, 0,
+	    PCI_VENDOR_LUCENT, 3930, 96, 0,
+	    PCI_VENDOR_NEC2, 640, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_DOCTECH, 3937, 96, 0,
+	    PCI_VENDOR_SHIVA, 3946, 0,
+	    PCI_VENDOR_DCMDATA, 3952, 509, 114, 0,
+	    PCI_VENDOR_DOLPHIN, 3956, 3964, 2164, 0,
+	    PCI_VENDOR_MAGMA, 3977, 3982, 96, 3988, 0,
+	    PCI_VENDOR_LSISYS, 289, 114, 0,
+	    PCI_VENDOR_SPECIALIX, 3996, 218, 0,
+	    PCI_VENDOR_MKC, 4006, 657, 4014, 47, 0,
+	    PCI_VENDOR_HAL, 4025, 47, 114, 0,
+	    PCI_VENDOR_AURAVISION, 4029, 0,
+	    PCI_VENDOR_ANALOG, 4040, 473, 0,
+	    PCI_VENDOR_SEGA, 4047, 4052, 0,
+	    PCI_VENDOR_ZORAN, 4064, 0,
+	    PCI_VENDOR_QUICKLOGIC, 4070, 0,
+	    PCI_VENDOR_COMPEX, 4081, 0,
+	    PCI_VENDOR_PMCSIERRA, 4088, 0,
+	    PCI_VENDOR_COMTROL, 4099, 0,
+	    PCI_VENDOR_CYCLADES, 4107, 0,
+	    PCI_VENDOR_ESSENTIAL, 4116, 3344, 0,
+	    PCI_VENDOR_O2MICRO, 4126, 467, 0,
+	    PCI_VENDOR_3DFX, 4129, 4134, 0,
+	    PCI_VENDOR_ARIEL, 4146, 0,
+	    PCI_VENDOR_HEURICON, 4152, 427, 0,
+	    PCI_VENDOR_AZTECH, 4170, 0,
+	    PCI_VENDOR_3DO, 4177, 4181, 1053, 0,
+	    PCI_VENDOR_CCUBE, 4185, 489, 0,
+	    PCI_VENDOR_JNI, 4192, 0,
+	    PCI_VENDOR_AVM, 4196, 0,
+	    PCI_VENDOR_SAMSUNGELEC2, 1556, 942, 620, 4200, 636, 0,
+	    PCI_VENDOR_STALLION, 4207, 96, 0,
+	    PCI_VENDOR_LINEARSYS, 4216, 114, 0,
+	    PCI_VENDOR_COREGA, 4223, 0,
+	    PCI_VENDOR_ASIX, 4230, 942, 0,
+	    PCI_VENDOR_AURORA, 4235, 96, 0,
+	    PCI_VENDOR_ESSTECH, 4242, 127, 0,
+	    PCI_VENDOR_INTERSIL, 4246, 0,
+	    PCI_VENDOR_NORTEL, 4255, 1847, 4262, 4272, 0,
+	    PCI_VENDOR_SILMOTION, 694, 4281, 0,
+	    PCI_VENDOR_ENSONIQ, 4288, 0,
+	    PCI_VENDOR_NETAPP, 3900, 4296, 0,
+	    PCI_VENDOR_TRANSMETA, 4306, 0,
+	    PCI_VENDOR_ROCKWELL, 4316, 189, 114, 0,
+	    PCI_VENDOR_DAVICOM, 4325, 189, 0,
+	    PCI_VENDOR_ITE, 702, 127, 4333, 0,
+	    PCI_VENDOR_ESSTECH2, 4242, 127, 0,
+	    PCI_VENDOR_TRITECH, 4341, 873, 0,
+	    PCI_VENDOR_KOFAX, 4349, 4355, 427, 0,
+	    PCI_VENDOR_ALTEON, 4361, 0,
+	    PCI_VENDOR_RISCOM, 4368, 0,
+	    PCI_VENDOR_USR, 4375, 4378, 4387, 0,
+	    PCI_VENDOR_USR2, 4375, 4378, 0,
+	    PCI_VENDOR_PICTUREEL, 4394, 4402, 0,
+	    PCI_VENDOR_NVIDIA_SGS, 4411, 657, 861, 873, 0,
+	    PCI_VENDOR_RAINBOW, 4418, 96, 0,
+	    PCI_VENDOR_AUREAL, 4426, 189, 0,
+	    PCI_VENDOR_ADMTEK, 4433, 0,
+	    PCI_VENDOR_PACKETENGINES, 4440, 4447, 0,
+	    PCI_VENDOR_FORTEMEDIA, 4455, 1939, 0,
+	    PCI_VENDOR_SIIG, 4461, 0,
+	    PCI_VENDOR_DOMEX, 4466, 0,
+	    PCI_VENDOR_LMC, 4472, 1939, 0,
+	    PCI_VENDOR_NETGEAR, 4476, 0,
+	    PCI_VENDOR_MOXA, 4484, 96, 0,
+	    PCI_VENDOR_LEVELONE, 4489, 4495, 0,
+	    PCI_VENDOR_COLOGNECHIP, 4499, 4507, 1548, 0,
+	    PCI_VENDOR_HIFN, 4512, 0,
+	    PCI_VENDOR_EXAR, 4517, 0,
+	    PCI_VENDOR_3WARE, 4522, 0,
+	    PCI_VENDOR_ABOCOM, 4528, 114, 0,
+	    PCI_VENDOR_NETBOOST, 4535, 0,
+	    PCI_VENDOR_SUNDANCETI, 4544, 127, 0,
+	    PCI_VENDOR_CMEDIA, 4553, 942, 0,
+	    PCI_VENDOR_LAVA, 4561, 189, 1646, 0,
+	    PCI_VENDOR_ETIMEDIA, 4566, 127, 0,
+	    PCI_VENDOR_ICENSEMBLE, 3099, 4575, 2202, 2517, 96, 0,
+	    PCI_VENDOR_MICROSOFT, 4584, 0,
+	    PCI_VENDOR_OXFORDSEMI, 4594, 189, 0,
+	    PCI_VENDOR_CHELSIO, 4601, 3344, 0,
+	    PCI_VENDOR_TAMARACK, 4609, 873, 0,
+	    PCI_VENDOR_SAMSUNGELEC3, 1556, 942, 4618, 4200, 636, 0,
+	    PCI_VENDOR_ASKEY, 4623, 47, 0,
+	    PCI_VENDOR_AVERMEDIA, 4629, 96, 0,
+	    PCI_VENDOR_AIRONET, 4639, 4647, 3344, 0,
+	    PCI_VENDOR_COMPAL, 4656, 942, 0,
+	    PCI_VENDOR_MYRICOM, 4663, 0,
+	    PCI_VENDOR_TITAN, 4671, 942, 0,
+	    PCI_VENDOR_AVLAB, 4677, 127, 0,
+	    PCI_VENDOR_INVERTEX, 4683, 0,
+	    PCI_VENDOR_BROADCOM, 4692, 0,
+	    PCI_VENDOR_PLANEX, 4701, 3344, 0,
+	    PCI_VENDOR_CONEXANT, 4708, 114, 0,
+	    PCI_VENDOR_DELTA, 4717, 942, 0,
+	    PCI_VENDOR_ENE, 4723, 127, 0,
+	    PCI_VENDOR_TERRATEC, 4727, 2360, 0,
+	    PCI_VENDOR_SOLIDUM, 4736, 114, 0,
+	    PCI_VENDOR_FARADAY, 4744, 127, 0,
+	    PCI_VENDOR_GEOCAST, 4752, 3900, 114, 0,
+	    PCI_VENDOR_BLUESTEEL, 4760, 1847, 0,
+	    PCI_VENDOR_VMWARE, 4770, 0,
+	    PCI_VENDOR_AGILENT, 4777, 96, 0,
+	    PCI_VENDOR_EUMITCOM, 4785, 0,
+	    PCI_VENDOR_NETSEC, 4794, 0,
+	    PCI_VENDOR_SIBYTE, 4692, 4801, 0,
+	    PCI_VENDOR_MYSON, 4810, 127, 0,
+	    PCI_VENDOR_NDC, 180, 4824, 0,
+	    PCI_VENDOR_ACTIONTEC, 4833, 4840, 942, 0,
+	    PCI_VENDOR_ATHEROS, 4844, 3344, 0,
+	    PCI_VENDOR_GLOBALSUN, 353, 1468, 4852, 0,
+	    PCI_VENDOR_SAFENET, 4857, 0,
+	    PCI_VENDOR_MICREL, 4865, 0,
+	    PCI_VENDOR_LINKSYS, 4872, 0,
+	    PCI_VENDOR_ALTIMA, 4880, 0,
+	    PCI_VENDOR_ANTARES, 4887, 489, 0,
+	    PCI_VENDOR_CAVIUM, 4895, 0,
+	    PCI_VENDOR_FZJZEL, 4902, 4905, 2202, 4913, 0,
+	    PCI_VENDOR_BELKIN, 4917, 0,
+	    PCI_VENDOR_HAWKING, 4924, 127, 0,
+	    PCI_VENDOR_SANDBURST, 4932, 0,
+	    PCI_VENDOR_I4, 4942, 0,
+	    PCI_VENDOR_ARECA, 4945, 0,
+	    PCI_VENDOR_S2IO, 4951, 96, 0,
+	    PCI_VENDOR_LINKSYS2, 4872, 0,
+	    PCI_VENDOR_RALINK, 4956, 96, 0,
+	    PCI_VENDOR_BBELEC, 4963, 657, 4963, 942, 0,
+	    PCI_VENDOR_ATTANSIC, 4965, 96, 0,
+	    PCI_VENDOR_EVE, 4974, 0,
+	    PCI_VENDOR_SYMPHONY2, 1756, 209, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_TEKRAM2, 2174, 127, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_DATUM, 4978, 4984, 4989, 5004, 0,
+	    PCI_VENDOR_JMICRON, 5013, 127, 0,
+	    PCI_VENDOR_HINT, 5021, 0,
+	    PCI_VENDOR_3DLABS, 5026, 209, 0,
+	    PCI_VENDOR_AVANCE2, 138, 86, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_ADDTRON, 5029, 127, 0,
+	    PCI_VENDOR_ICOMPRESSION, 4708, 5037, 0,
+	    PCI_VENDOR_INDCOMPSRC, 1692, 47, 5052, 0,
+	    PCI_VENDOR_NETVIN, 5059, 0,
+	    PCI_VENDOR_BUSLOGIC2, 5066, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_MEDIAQ, 5075, 0,
+	    PCI_VENDOR_GUILLEMOT, 5082, 0,
+	    PCI_VENDOR_TURTLE_BEACH, 5092, 5099, 0,
+	    PCI_VENDOR_S3, 5105, 0,
+	    PCI_VENDOR_NETPOWER2, 3004, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_XENSOURCE, 5108, 4984, 0,
+	    PCI_VENDOR_C4T, 5119, 5123, 0,
+	    PCI_VENDOR_KURUSUGAWA, 5131, 942, 0,
+	    PCI_VENDOR_PCHDTV, 5142, 0,
+	    PCI_VENDOR_QUANCM, 5149, 2360, 5156, 0,
+	    PCI_VENDOR_INTEL, 5161, 0,
+	    PCI_VENDOR_TRIGEM2, 1611, 47, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_PROLAN, 5167, 0,
+	    PCI_VENDOR_COMPUTONE, 5174, 0,
+	    PCI_VENDOR_KTI, 5184, 0,
+	    PCI_VENDOR_ADP, 5188, 0,
+	    PCI_VENDOR_ADP2, 5188, 620, 625, 629, 636, 0,
+	    PCI_VENDOR_ATRONICS, 5196, 0,
+	    PCI_VENDOR_NETMOS, 5205, 0,
+	    PCI_VENDOR_PARALLELS, 5212, 0,
+	    PCI_VENDOR_CHRYSALIS, 5222, 0,
+	    PCI_VENDOR_MIDDLE_DIGITAL, 5236, 240, 0,
+	    PCI_VENDOR_ARC, 1993, 86, 0,
+	    PCI_VENDOR_INVALID, 5243, 5251, 5258, 0,
 };
-const int pci_nvendors = 590;
 
-static const struct pci_product pci_products[] = {
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985,
-	    "3c985 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C996,
-	    "3c996 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556MODEM,
-	    "3c556 V.90 Mini-PCI Modem",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940,
-	    "3c940 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C339,
-	    "3c339 TokenLink Velocity",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C359,
-	    "3c359 TokenLink Velocity XL",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C450TX,
-	    "3c450-TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C575TX,
-	    "3c575-TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C575BTX,
-	    "3CCFE575BT 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C575CTX,
-	    "3CCFE575CT 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590,
-	    "3c590 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595TX,
-	    "3c595-TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595T4,
-	    "3c595-T4 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595MII,
-	    "3c595-MII 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C555,
-	    "3c555 10/100 Mini-PCI Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C154G72,
-	    "3CRWE154G72 Wireless LAN adapter",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556,
-	    "3c556 10/100 Mini-PCI Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556B,
-	    "3c556B 10/100 Mini-PCI Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_E,
-	    "3CCFEM656 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_M,
-	    "3CCFEM656 56k Modem",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656B_E,
-	    "3CCFEM656B 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656B_M,
-	    "3CCFEM656B 56k Modem",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656C_E,
-	    "3CXFEM656C 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656C_M,
-	    "3CXFEM656C 56k Modem",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CSOHO100TX,
-	    "3cSOHO100-TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE777A,
-	    "3crwe777a AirConnect",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C804,
-	    "3c804 FDDILink SAS",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_TOKEN,
-	    "Token Ring",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900TPO,
-	    "3c900-TPO Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900COMBO,
-	    "3c900-COMBO Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905TX,
-	    "3c905-TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905T4,
-	    "3c905-T4 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900BTPO,
-	    "3c900B-TPO Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900BCOMBO,
-	    "3c900B-COMBO Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900BTPC,
-	    "3c900B-TPC Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BTX,
-	    "3c905B-TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BT4,
-	    "3c905B-T4 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BCOMBO,
-	    "3c905B-COMBO 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BFX,
-	    "3c905B-FX 100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905CTX,
-	    "3c905C-TX 10/100 Ethernet with mngmt",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905CXTX,
-	    "3c905CX-TX 10/100 Ethernet with mngmt",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C920BEMBW,
-	    "3c920B-EMB-WNM Integrated Fast Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C910SOHOB,
-	    "3c910 OfficeConnect 10/100B Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C980SRV,
-	    "3c980 Server Adapter 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C980CTXM,
-	    "3c980C-TXM 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990,
-	    "3c990-TX 10/100 Ethernet with 3XP",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX95,
-	    "3CR990-TX-95 10/100 Ethernet with 3XP",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX97,
-	    "3CR990-TX-97 10/100 Ethernet with 3XP",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C990B,
-	    "3c990B 10/100 Ethernet with 3XP",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990FX,
-	    "3CR990-FX 100 Ethernet with 3XP",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR95,
-	    "3CR990-SVR-95 10/100 Ethernet with 3XP",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR97,
-	    "3CR990-SVR-97 10/100 Ethernet with 3XP",
-	},
-	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C990BSVR,
-	    "3c990BSVR 10/100 Ethernet with 3XP",
-	},
-	{
-	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO,
-	    "Voodoo",
-	},
-	{
-	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO2,
-	    "Voodoo2",
-	},
-	{
-	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_BANSHEE,
-	    "Banshee",
-	},
-	{
-	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO3,
-	    "Voodoo3",
-	},
-	{
-	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO5,
-	    "Voodoo 4/5",
-	},
-	{
-	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX,
-	    "GLINT 300SX",
-	},
-	{
-	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_500TX,
-	    "GLINT 500TX",
-	},
-	{
-	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_DELTA,
-	    "GLINT DELTA",
-	},
-	{
-	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA,
-	    "GLINT Permedia",
-	},
-	{
-	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_500MX,
-	    "GLINT 500MX",
-	},
-	{
-	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA2,
-	    "GLINT Permedia 2",
-	},
-	{
-	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_GAMMA,
-	    "GLINT GAMMA",
-	},
-	{
-	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA2V,
-	    "GLINT Permedia 2V",
-	},
-	{
-	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA3,
-	    "GLINT Permedia 3",
-	},
-	{
-	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE,
-	    "Escalade ATA RAID Controller",
-	},
-	{
-	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_ASIC,
-	    "Escalade ATA RAID 7000/8000 series Controller",
-	},
-	{
-	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9000,
-	    "9000-series RAID",
-	},
-	{
-	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9550,
-	    "9550-series RAID",
-	},
-	{
-	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9650,
-	    "9650-series RAID",
-	},
-	{
-	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9690,
-	    "9690-series RAID",
-	},
-	{
-	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500,
-	    "FE2500 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_PCM200,
-	    "PCM200 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2000VX,
-	    "FE2000VX 10/100 Ethernet (OEM)",
-	},
-	{
-	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500MX,
-	    "FE2500MX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188,
-	    "ACCM 2188 VL-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2051_HB,
-	    "2051 PCI Single Chip Solution (host bridge)",
-	},
-	{
-	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2051_ISA,
-	    "2051 PCI Single Chip Solution (ISA bridge)",
-	},
-	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP850U,
-	    "ATP850U/UF UDMA IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP860,
-	    "ATP860 UDMA IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP860A,
-	    "ATP860-A UDMA IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP865,
-	    "ATP865 UDMA IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP865A,
-	    "ATP865-A UDMA IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710,
-	    "AEC6710 SCSI",
-	},
-	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712UW,
-	    "AEC6712UW SCSI",
-	},
-	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712U,
-	    "AEC6712U SCSI",
-	},
-	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712S,
-	    "AEC6712S SCSI",
-	},
-	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710D,
-	    "AEC6710D SCSI",
-	},
-	{
-	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6715UW,
-	    "AEC6715UW SCSI",
-	},
-	{
-	    PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_MPX5030,
-	    "MPX 5030/5038 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN2242,
-	    "EN2242 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
-	    "M1435 VL-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1445,
-	    "M1445 VL-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1449,
-	    "M1449 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1451,
-	    "M1451 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1461,
-	    "M1461 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1531,
-	    "M1531 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1533,
-	    "M1533 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541,
-	    "M1541 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1543,
-	    "M1543 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1563,
-	    "M1563 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1689,
-	    "M1689 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M3309,
-	    "M3309 MPEG Decoder",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M4803,
-	    "M4803",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5257,
-	    "M5257 PCI Software Modem",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5229,
-	    "M5229 UDMA IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5237,
-	    "M5237 USB 1.1 Host Controller",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5239,
-	    "M5239 USB 2.0 Host Controller",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5243,
-	    "M5243 PCI-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5249,
-	    "M5249 Hypertransport to PCI bridge",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5261,
-	    "M5261 Tulip Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451,
-	    "M5451 AC-Link Controller Audio Device",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5453,
-	    "M5453 AC-Link Controller Modem Device",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5455,
-	    "M5455 AC-Link Controller Audio Device",
-	},
-	{
-	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101,
-	    "M7101 Power Management Controller",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7850,
-	    "AIC-7850",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7855,
-	    "AIC-7855",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC5900,
-	    "AIC-5900 ATM",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC5905,
-	    "AIC-5905 ATM",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC6915,
-	    "AIC-6915 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7860,
-	    "AIC-7860",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_APA1480,
-	    "APA-1480 Ultra",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940AU,
-	    "AHA-2940A Ultra",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7870,
-	    "AIC-7870",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940,
-	    "AHA-2940",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_3940,
-	    "AHA-3940",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_3985,
-	    "AHA-3985",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2944,
-	    "AHA-2944",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7895,
-	    "AIC-7895 Ultra",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7880,
-	    "AIC-7880 Ultra",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940U,
-	    "AHA-2940 Ultra",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_3940U,
-	    "AHA-3940 Ultra",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_389XU,
-	    "AHA-389X Ultra",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2944U,
-	    "AHA-2944 Ultra",
-	},
-	{
-	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940UP,
-	    "AHA-2940 Ultra Pro",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2940U2,
-	    "AHA-2940U2 U2",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2930U2,
-	    "AHA-2930U2 U2",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7890,
-	    "AIC-7890/1 U2",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2B,
-	    "AHA-3950U2B U2",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2D,
-	    "AHA-3950U2D U2",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7896,
-	    "AIC-7896/7 U2",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892A,
-	    "AIC-7892A U160",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892B,
-	    "AIC-7892B U160",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892D,
-	    "AIC-7892D U160",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892P,
-	    "AIC-7892P U160",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899A,
-	    "AIC-7899A U160",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899B,
-	    "AIC-7899B U160",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899D,
-	    "AIC-7899D U160",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899F,
-	    "AIC-7899F RAID",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899P,
-	    "AIC-7899P U160",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC2622,
-	    "AAC-2622",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S,
-	    "ASR-2200S",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2120S,
-	    "ASR-2120S",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S_SUB2M,
-	    "ASR-2200S",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2410SA,
-	    "ASR-2410SA",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAR2810SA,
-	    "AAR-2810SA",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC364,
-	    "AAC-364",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR5400S,
-	    "ASR-5400S",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_2QC,
-	    "Dell PERC 2/QC",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_3QC,
-	    "Dell PERC 3/QC",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_HP_M110_G2,
-	    "HP M110 G2 / ASR-2610SA",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_SERVERAID,
-	    "ServeRAID 6/7 (marco)",
-	},
-	{
-	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
-	    "8139 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII,
-	    "Rhine II 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981,
-	    "AL981 (Comet) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN983,
-	    "AN983 (Centaur-P) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985,
-	    "AN985 (Centaur-C) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM5120,
-	    "Infineon ADM5120 PCI host bridge",
-	},
-	{
-	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM8211,
-	    "ADM8211 11Mbps 802.11b WLAN",
-	},
-	{
-	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM9511,
-	    "ADM9511 (Centaur-II) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM9513,
-	    "ADM9513 (Centaur-II) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
-	    "",
-	},
-	{
-	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200B,
-	    "",
-	},
-	{
-	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_ULTRA,
-	    "ABP-930/40UA",
-	},
-	{
-	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_WIDE,
-	    "ABP-940UW",
-	},
-	{
-	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_U2W,
-	    "ASB-3940U2W",
-	},
-	{
-	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_U3W,
-	    "ASB-3940U3W",
-	},
-	{
-	    PCI_VENDOR_AGILENT, PCI_PRODUCT_AGILENT_TACHYON_DX2,
-	    "Tachyon DX2 FC controller",
-	},
-	{
-	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4xxx,
-	    "PC4500/PC4800 Wireless LAN Adapter",
-	},
-	{
-	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PCI350,
-	    "PCI350 Wireless LAN Adapter",
-	},
-	{
-	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_MPI350,
-	    "MPI350 Mini-PCI Wireless LAN Adapter",
-	},
-	{
-	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500,
-	    "PC4500 Wireless LAN Adapter",
-	},
-	{
-	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4800,
-	    "PC4800 Wireless LAN Adapter",
-	},
-	{
-	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
-	    "AT24",
-	},
-	{
-	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT25,
-	    "AT25",
-	},
-	{
-	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC,
-	    "ACEnic 1000baseSX Ethernet",
-	},
-	{
-	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC_COPPER,
-	    "ACEnic 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5700,
-	    "ACEnic BCM5700 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5701,
-	    "ACEnic BCM5701 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1000,
-	    "AC1000 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1001,
-	    "AC1001 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC9100,
-	    "AC9100 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_HT,
-	    "K8 AMD64 HyperTransport configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_ADDR,
-	    "K8 AMD64 Address Map configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_DRAM,
-	    "K8 AMD64 DRAM configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_MISC,
-	    "K8 AMD64 Miscellaneous configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F10_HT,
-	    "AMD64 Family10h HyperTransport configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F10_ADDR,
-	    "AMD64 Family10h Address Map configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F10_DRAM,
-	    "AMD64 Family10h DRAM configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F10_MISC,
-	    "AMD64 Family10h Miscellaneous configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F10_LINK,
-	    "AMD64 Family10h Link configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F11_HT,
-	    "AMD64 Family11h HyperTransport configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F11_ADDR,
-	    "AMD64 Family11h Address Map configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F11_DRAM,
-	    "AMD64 Family11h DRAM configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F11_MISC,
-	    "AMD64 Family11h Miscellaneous configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F11_LINK,
-	    "AMD64 Family11h Link configuration",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI,
-	    "PCnet-PCI Ethernet",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_HOME,
-	    "PCnet-Home HomePNA Ethernet",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AM_1771_MBW,
-	    "Alchemy AM 1771 MBW",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCSCSI_PCI,
-	    "PCscsi-PCI SCSI",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_PCHB,
-	    "Geode LX Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_VGA,
-	    "Geode LX VGA Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_AES,
-	    "Geode LX AES Security Block",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_PCISB,
-	    "CS5536 GeodeLink PCI South Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_PCIB,
-	    "CS5536 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_FLASH,
-	    "CS5536 Flash",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_AUDIO,
-	    "CS5536 Audio",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_OHCI,
-	    "CS5536 OHCI USB Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_EHCI,
-	    "CS5536 EHCI USB Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_UDC,
-	    "CS5536 UDC",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_UOC,
-	    "CS5536 UOC",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_IDE,
-	    "CS5536 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC520_SC,
-	    "Elan SC520 System Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC,
-	    "AMD751 System Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_PPB,
-	    "AMD751 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_IGR4_AGP,
-	    "AMD IGR4 AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_IGR4_PPB,
-	    "AMD IGR4 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_NB,
-	    "AMD762 Northbridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_PPB,
-	    "AMD762 AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_SC,
-	    "AMD761 System Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_PPB,
-	    "AMD761 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC755_ISA,
-	    "AMD755 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC755_IDE,
-	    "AMD755 IDE controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC755_PMC,
-	    "AMD755 ACPI controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC755_USB,
-	    "AMD755 USB Host controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_ISA,
-	    "AMD756 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_IDE,
-	    "AMD756 IDE controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_PMC,
-	    "AMD756 Power Management Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_USB,
-	    "AMD756 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_ISA,
-	    "AMD766 Southbridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_IDE,
-	    "AMD766 IDE controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_PMC,
-	    "AMD766 Power Management Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_USB,
-	    "AMD766 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_ISA,
-	    "AMD768 PCI-ISA/LPC Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_IDE,
-	    "AMD768 EIDE Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PMC,
-	    "AMD768 Power Management Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_AC,
-	    "AMD768 AC97 Audio",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_MD,
-	    "AMD768 AC97 Modem",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PPB,
-	    "AMD768 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_USB,
-	    "AMD768 USB Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCIX8131_PPB,
-	    "AMD8131 PCI-X Tunnel",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCIX8131_APIC,
-	    "AMD8131 IO Apic",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AGP8151_DEV,
-	    "AMD8151 AGP Device",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AGP8151_PPB,
-	    "AMD8151 AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCIX_PPB,
-	    "AMD8123 PCI-X Bridge",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCIX_APIC,
-	    "AMD8132 PCI-X IOAPIC",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111,
-	    "AMD8111 I/O Hub",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_USB_7461,
-	    "AMD8111 7461 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_ETHER,
-	    "AMD8111 Ethernet",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_USB,
-	    "AMD8111 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_LPC,
-	    "AMD8111 LPC Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_IDE,
-	    "AMD8111 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_SMB,
-	    "AMD8111 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_ACPI,
-	    "AMD8111 ACPI Controller",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC,
-	    "AMD8111 AC97 Audio",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_MC97,
-	    "AMD8111 MC97 Modem",
-	},
-	{
-	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC_756b,
-	    "AMD8111 756b ACPI Controller",
-	},
-	{
-	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
-	    "MegaRAID",
-	},
-	{
-	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID2,
-	    "MegaRAID 2",
-	},
-	{
-	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID3,
-	    "MegaRAID 3",
-	},
-	{
-	    PCI_VENDOR_ANALOG, PCI_PRODUCT_ANALOG_SAFENET,
-	    "SafeNet Crypto Accelerator ADSP-2141",
-	},
-	{
-	    PCI_VENDOR_ANTARES, PCI_PRODUCT_ANTARES_TC9021,
-	    "Antares Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
-	    "Bandit Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GC,
-	    "Grand Central I/O Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_CONTROL,
-	    "Control",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PLANB,
-	    "PlanB",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_OHARE,
-	    "OHare I/O Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT2,
-	    "Bandit Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_HEATHROW,
-	    "Heathrow I/O Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PADDINGTON,
-	    "Paddington I/O Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO_USB,
-	    "KeyLargo USB Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH1,
-	    "UniNorth Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH2,
-	    "UniNorth Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP,
-	    "UniNorth AGP Interface",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC,
-	    "GMAC Ethernet",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO,
-	    "KeyLargo I/O Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC2,
-	    "GMAC Ethernet",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_MACIO,
-	    "Pangea I/O Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_USB,
-	    "Pangea USB Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_AGP,
-	    "Pangea AGP Interface",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI1,
-	    "Pangea Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI2,
-	    "Pangea Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP2,
-	    "UniNorth AGP Interface",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH3,
-	    "UniNorth Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH4,
-	    "UniNorth Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_FW,
-	    "Pangea Firewire",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_FW,
-	    "UniNorth Firewire",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC3,
-	    "GMAC Ethernet",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_ATA,
-	    "UniNorth ATA/100 Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP3,
-	    "UniNorth AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH5,
-	    "UniNorth Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH6,
-	    "UniNorth Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KAUAI,
-	    "Kauai ATA Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID,
-	    "Intrepid I/O Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID_USB,
-	    "Intrepid USB Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_USB,
-	    "K2 USB Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2,
-	    "K2 MAC-IO Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_FW,
-	    "K2 Firewire",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_UATA,
-	    "K2 UATA Controller",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB1,
-	    "U3 PCI-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB2,
-	    "U3 PCI-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB3,
-	    "U3 PCI-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB4,
-	    "U3 PCI-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB5,
-	    "U3 PCI-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_AGP,
-	    "U3 AGP Interface",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_GMAC,
-	    "GMAC Ethernet",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA,
-	    "Shasta",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_ATA,
-	    "Shasta ATA",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_GMAC,
-	    "Shasta GMAC",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_FW,
-	    "Shasta Firewire",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_PCI1,
-	    "Shasta PCI",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_PCI2,
-	    "Shasta PCI",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_PCI3,
-	    "Shasta PCI",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_HT,
-	    "Shasta HyperTransport",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_AGP,
-	    "Intrepid 2 AGP",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_PCI1,
-	    "Intrepid 2 PCI",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_PCI2,
-	    "Intrepid 2 PCI",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_ATA,
-	    "Intrepid 2 ATA",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_FW,
-	    "Intrepid 2 FireWire",
-	},
-	{
-	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_GMAC,
-	    "Intrepid 2 GMAC",
-	},
-	{
-	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
-	    "1000PV",
-	},
-	{
-	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_2000PV,
-	    "2000PV",
-	},
-	{
-	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_2000MT,
-	    "2000MT",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1110,
-	    "ARC-1110",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1120,
-	    "ARC-1120",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1130,
-	    "ARC-1130",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1160,
-	    "ARC-1160",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1170,
-	    "ARC-1170",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1200,
-	    "ARC-1200",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1200_B,
-	    "ARC-1200 rev B",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1202,
-	    "ARC-1202",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1210,
-	    "ARC-1210",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1220,
-	    "ARC-1220",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1230,
-	    "ARC-1230",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1260,
-	    "ARC-1260",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1270,
-	    "ARC-1270",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1280,
-	    "ARC-1280",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1380,
-	    "ARC-1380",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1381,
-	    "ARC-1381",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1680,
-	    "ARC-1680",
-	},
-	{
-	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1681,
-	    "ARC-1681",
-	},
-	{
-	    PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A,
-	    "AX88140A 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI,
-	    "ISDN",
-	},
-	{
-	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA,
-	    "L1 Gigabit Ethernet Adapter",
-	},
-	{
-	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_ETHERNET_100,
-	    "L2 100 Mbit Ethernet Adapter",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_3150,
-	    "Radeon Mobility X600 (M24) 3150",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_3154,
-	    "FireGL M24 GL 3154",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_3E50,
-	    "Radeon X600 (RV380) 3E50",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_3E54,
-	    "FireGL V3200 (RV380) 3E54",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS100_4136,
-	    "Radeon IGP320 (A3) 4136",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS200_A7,
-	    "Radeon IGP330/340/350 (A4) 4137",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_AD,
-	    "Radeon 9500 AD",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_AE,
-	    "Radeon 9500 AE",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_AF,
-	    "Radeon 9600TX AF",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_AG,
-	    "FireGL Z1 AG",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_AH,
-	    "Radeon 9800SE AH",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_AI,
-	    "Radeon 9800 AI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_AJ,
-	    "Radeon 9800 AJ",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_AK,
-	    "FireGL X2 AK",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_AP,
-	    "Radeon 9600 AP",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_AQ,
-	    "Radeon 9600SE AQ",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV360_AR,
-	    "Radeon 9600XT AR",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_AS,
-	    "Radeon 9600 AS",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_AT,
-	    "FireGL T2 AT",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_AV,
-	    "FireGL RV360 AV",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
-	    "Mach32",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_LE_S,
-	    "Radeon 9600 LE Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_XT_S,
-	    "Radeon 9600 XT Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS250_B7,
-	    "Radeon 7000 IGP (A4+)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R200_BB,
-	    "Radeon 8500 AIW BB",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R200_BC,
-	    "Radeon 8500 AIW BC",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS100_4336,
-	    "Radeon IGP320M (U1) 4336",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS200_4337,
-	    "Radeon IGP330M/340M/350M (U2) 4337",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_200,
-	    "IXP AC'97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_PPB,
-	    "SB200 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_EHCI,
-	    "SB200 USB2 Host Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_OHCI_1,
-	    "SB200 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_OHCI_2,
-	    "SB200 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_200,
-	    "SB200 IXP IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_ISA,
-	    "SB200 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_MODEM,
-	    "SB200 Modem",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_SMB,
-	    "SB200 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_300,
-	    "IXP AC'97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB300_SMB,
-	    "SB300 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_300,
-	    "SB300 IXP IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_400,
-	    "IXP AC'97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_PPB,
-	    "SB400 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_SMB,
-	    "SB400 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_EHCI,
-	    "SB400 USB2 Host Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_OHCI_1,
-	    "SB400 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_OHCI_2,
-	    "SB400 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_400,
-	    "SB400 IXP IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_ISA,
-	    "SB400 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_MODEM,
-	    "SB400 Modem",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_SATA_1,
-	    "SB400 SATA Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_SATA_2,
-	    "SB400 SATA Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SATA_1,
-	    "SB600 SATA Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SATA_2,
-	    "SB600 SATA Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AC97_AUDIO,
-	    "SB600 AC97 Audio",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AZALIA,
-	    "SB600 Azalia",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_PPB_4384,
-	    "SB600 PCI to PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SMB,
-	    "SB600/SB700/SB800 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_EHCI,
-	    "SB600 USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI0,
-	    "SB600 USB OHCI0 Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI1,
-	    "SB600 USB OHCI1 Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI2,
-	    "SB600 USB OHCI2 Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI3,
-	    "SB600 USB OHCI3 Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI4,
-	    "SB600 USB OHCI4 Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AC97_MODEM,
-	    "SB600 AC97 Modem",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_600,
-	    "SB600 IXP IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_PLB_438D,
-	    "SB600 PCI to LPC Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_IDE,
-	    "SB700/SB800 SATA Controller (IDE mode)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_AHCI,
-	    "SB700/SB800 SATA Controller (AHCI mode)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_RAID,
-	    "SB700/SB800 RAID SATA Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_RAID5,
-	    "SB700/SB800 RAID5 SATA Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_FC,
-	    "SB700/SB800 FC SATA Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_EHCI,
-	    "SB700/SB800 USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB800_SATA,
-	    "SB800 SATA Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI0,
-	    "SB700/SB800 USB OHCI Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI1,
-	    "SB700/SB800 USB OHCI Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI2,
-	    "SB700/SB800 USB OHCI Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_IDE,
-	    "SB700/SB800 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_LPC,
-	    "SB700/SB800 LPC Host Controller",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT,
-	    "Mach64 CT",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CX,
-	    "Mach64 CX",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS250_D7,
-	    "Radeon Mobility 7000 IGP",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_AGP,
-	    "3D Rage Pro (AGP)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_AGP1X,
-	    "3D Rage Pro (AGP 1x)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_B,
-	    "3D Rage Pro Turbo",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XC_PCI66,
-	    "Rage XC (PCI66)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_AGP,
-	    "Rage XL (AGP)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XC_AGP,
-	    "Rage XC (AGP)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_PCI66,
-	    "Rage XL (PCI66)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_P,
-	    "3D Rage Pro",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_L,
-	    "3D Rage Pro (limited 3D)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_PCI,
-	    "Rage XL",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XC_PCI,
-	    "Rage XC",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_II,
-	    "3D Rage I/II",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIP,
-	    "3D Rage II+",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC_PCI,
-	    "3D Rage IIC",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC_AGP_B,
-	    "3D Rage IIC (AGP)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GX,
-	    "Mach64 GX",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC,
-	    "3D Rage IIC",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC_AGP_P,
-	    "3D Rage IIC (AGP)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV250_4966,
-	    "Radeon 9000/PRO If",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV250_4967,
-	    "Radeon 9000 Ig",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JH,
-	    "Radeon X800 (R420) JH",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JI,
-	    "Radeon X800PRO (R420) JI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JJ,
-	    "Radeon X800SE (R420) JJ",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JK,
-	    "Radeon X800 (R420) JK",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JL,
-	    "Radeon X800 (R420) JL",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JM,
-	    "FireGL X3 (R420) JM",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JN,
-	    "Radeon Mobility 9800 (M18) JN",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JP,
-	    "Radeon X800XT (R420) JP",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP,
-	    "3D Rage LT Pro (AGP 133MHz)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP66,
-	    "3D Rage LT Pro (AGP 66MHz)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOB_M3_PCI,
-	    "Rage Mobility M3",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP,
-	    "Rage Mobility M3 (AGP)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT,
-	    "3D Rage LT",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI,
-	    "3D Rage LT Pro",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOBILITY,
-	    "Rage Mobility",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_L_MOBILITY,
-	    "Rage L Mobility",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO,
-	    "3D Rage LT Pro",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO2,
-	    "3D Rage LT Pro",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOB_M1_PCI,
-	    "Rage Mobility M1 (PCI)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_L_MOB_M1_PCI,
-	    "Rage L Mobility (PCI)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV200_LW,
-	    "Radeon Mobility M7 LW",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV200_LX,
-	    "FireGL Mobility 7800 M7 LX",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV100_LY,
-	    "Radeon Mobility M6 LY",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV100_LZ,
-	    "Radeon Mobility M6 LZ",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV250_4C64,
-	    "FireGL Mobility 9000 (M9) Ld",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV250_4C66,
-	    "Radeon Mobility 9000 (M9) Lf",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV250_4C67,
-	    "Radeon Mobility 9000 (M9) Lg",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_128_AGP4X,
-	    "Radeon Mobility 128 AGP 4x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_128_AGP2X,
-	    "Radeon Mobility 128 AGP 2x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_ND,
-	    "Radeon 9700 ND",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_NE,
-	    "Radeon 9700/9500Pro NE",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_NF,
-	    "Radeon 9700 NF",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_NG,
-	    "FireGL X1 NG",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_NH,
-	    "Radeon 9800PRO NH",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_NI,
-	    "Radeon 9800 NI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R360_NJ,
-	    "Radeon 9800XT NJ",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_NK,
-	    "FireGL X2 NK",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NP,
-	    "Radeon Mobility 9600/9700 (M10/11) NP",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NQ,
-	    "Radeon Mobility 9600 (M10) NQ",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NR,
-	    "Radeon Mobility 9600 (M11) NR",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NS,
-	    "Radeon Mobility 9600 (M10) NS",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NT,
-	    "FireGL Mobility T2 (M10) NT",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NV,
-	    "FireGL Mobility T2e (M11) NV",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9700_9500_S,
-	    "Radeon 9700/9500 Series Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9700_9500_S2,
-	    "Radeon 9700/9500 Series Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_2,
-	    "Radeon 9600TX Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9800_PRO_2,
-	    "Radeon 9800 Pro Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCI,
-	    "Rage 128 Pro PCI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP2X,
-	    "Rage 128 Pro AGP 2x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP4X,
-	    "Rage 128 Pro AGP 4x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCIT,
-	    "Rage 128 Pro PCI (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP2XT,
-	    "Rage 128 Pro AGP 2x (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP4XT,
-	    "Rage Fury MAXX AGP 4x (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2PCI,
-	    "Rage 128 Pro PCI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP2X,
-	    "Rage 128 Pro AGP 2x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP4X,
-	    "Rage 128 Pro AGP 4x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2PCIT,
-	    "Rage 128 Pro PCI (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP2XT,
-	    "Rage 128 Pro AGP 2x (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP4XT,
-	    "Rage 128 Pro AGP 4x (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3PCI,
-	    "Rage 128 Pro PCI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP2X,
-	    "Rage 128 Pro AGP 2x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP4X,
-	    "Rage 128 Pro AGP 4x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3PCIT,
-	    "Rage 128 Pro PCI (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP2XT,
-	    "Rage 128 Pro AGP 2x (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP4XT,
-	    "Rage 128 Pro AGP 4x (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4PCI,
-	    "Rage 128 Pro PCI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP2X,
-	    "Rage 128 Pro AGP 2x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP4X,
-	    "Rage 128 Pro AGP 4x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4PCIT,
-	    "Rage 128 Pro PCI (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP2XT,
-	    "Rage 128 Pro AGP 2x (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP4XT,
-	    "Rage 128 Pro AGP 4x (TMDS)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R100_QD,
-	    "Radeon QD",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R100_QE,
-	    "Radeon QE",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R100_QF,
-	    "Radeon QF",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R100_QG,
-	    "Radeon QG",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R200_QH,
-	    "FireGL 8700/8800 QH",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R200_QL,
-	    "Radeon 8500 QL",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R200_QM,
-	    "Radeon 9100 QM",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV200_QW,
-	    "Radeon 7500 QW",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV200_QX,
-	    "Radeon 7500 QX",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV100_QY,
-	    "Radeon 7000/VE QY",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV100_QZ,
-	    "Radeon 7000/VE QZ",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ES1000,
-	    "ES1000",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9100_S,
-	    "Radeon 9100 Series Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEGLPCI,
-	    "Rage 128 GL PCI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEGLAGP,
-	    "Rage 128 GL AGP 2x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEVRPCI,
-	    "Rage 128 VR PCI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEVRAGP,
-	    "Rage 128 VR AGP 2x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4XPCI,
-	    "Rage 128 4x PCI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4XA2X,
-	    "Rage 128 4x AGP 2x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4XA4X,
-	    "Rage 128 4x AGP 4x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4X,
-	    "Rage 128 4x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24XPCI,
-	    "Rage 128 4x PCI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24XA2X,
-	    "Rage 128 4x AGP 2x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24XA4X,
-	    "Rage 128 4x AGP 4x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24X,
-	    "Rage 128 4x",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5460,
-	    "Radeon Mobility M300 (M22) 5460",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5464,
-	    "FireGL M22 GL 5464",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UH,
-	    "Radeon X800 (R423) UH",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UI,
-	    "Radeon X800PRO (R423) UI",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UJ,
-	    "Radeon X800LE (R423) UJ",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UK,
-	    "Radeon X800SE (R423) UK",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R430_554F,
-	    "Radeon X800 GTO (R430) 554F",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UQ,
-	    "FireGL V7200 (R423) UQ",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UR,
-	    "FireGL V5100 (R423) UR",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UT,
-	    "FireGL V7100 (R423) UT",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R430_556F,
-	    "Radeon X800 GTO (R430) Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT,
-	    "Mach64 VT",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VTB,
-	    "Mach64 VTB",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT4,
-	    "Mach64 VT4",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_HB,
-	    "RS300 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_X4,
-	    "Radeon 9100 IGP (A4)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_X5,
-	    "Radeon Mobility 9100 IGP (U3)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_AGP,
-	    "RS300 AGP Interface",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200_PRO_S,
-	    "Radeon 9200 Pro Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200_S,
-	    "Radeon 9200 Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_HB,
-	    "RS480 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD580,
-	    "RD580 CrossFire Xpress 3200 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5954,
-	    "Radeon Xpress 200G Series",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_NB,
-	    "RD790 Northbridge (dual slot)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5960,
-	    "Radeon 9200PRO 5960",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5961,
-	    "Radeon 9200 5961",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5962,
-	    "Radeon 9200 5962",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5963,
-	    "Radeon 9200 5963",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5964,
-	    "Radeon 9200SE 5964",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS482M,
-	    "Radeon Xpress Series (RS482M)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_XRP,
-	    "RS480 PCI Express Root Port",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A36,
-	    "RS480 PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A37,
-	    "RS480 PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A38,
-	    "RS480 PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A3F,
-	    "RS480 PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B60,
-	    "Radeon X300 (RV370) 5B60",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_5B62,
-	    "Radeon X600 PCI Express",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B63,
-	    "Radeon Sapphire X550 Silent",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B64,
-	    "FireGL V3100 (RV370) 5B64",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B65,
-	    "FireGL D1100 (RV370) 5B65",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300_S,
-	    "Radeon X300 Series Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B73,
-	    "Radeon RV370 secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5C61,
-	    "Radeon Mobility 9200 (M9+)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5C63,
-	    "Radeon Mobility 9200 (M9+)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200SE_S,
-	    "Radeon 9200SE Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850XT,
-	    "Radeon X850 XT",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_5D57,
-	    "Radeon X800XT (R423) 5D57",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850XT_S,
-	    "Radeon X850 XT Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700,
-	    "Radeon X700 Pro",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_S,
-	    "Radeon X700 Pro Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300,
-	    "Radeon X1300 Series (RV515)",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_S,
-	    "Radeon X1300 Series (RV515) Secondary",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_7834,
-	    "Radeon 9100 PRO IGP",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_7835,
-	    "Radeon 9200 IGP",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_HB,
-	    "RS690 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7912,
-	    "RS690 PCI to PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7913,
-	    "RS690 PCI to PCI-Express Port 0 Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7915,
-	    "RS690 PCI to PCI-Express Port 1 Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7916,
-	    "RS690 PCI to PCI-Express Port 2 Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7917,
-	    "RS690 PCI to PCI-Express Port 3 Bridge",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_XT,
-	    "Radeon HD2600 XT GDDR3",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_HD,
-	    "Radeon HD2600 HD Audio Controller",
-	},
-	{
-	    PCI_VENDOR_AURAVISION, PCI_PRODUCT_AURAVISION_VXP524,
-	    "VxP524 PCI Video Processor",
-	},
-	{
-	    PCI_VENDOR_AUREAL, PCI_PRODUCT_AUREAL_AU8820,
-	    "AU8820 Vortex Digital Audio Processor",
-	},
-	{
-	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933,
-	    "S5933 PCI Matchmaker",
-	},
-	{
-	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_LANAI,
-	    "Myrinet LANai Interface",
-	},
-	{
-	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_CAMAC,
-	    "FZJ/ZEL CAMAC controller",
-	},
-	{
-	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_VICBUS,
-	    "FZJ/ZEL VICBUS interface",
-	},
-	{
-	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_PCISYNC,
-	    "FZJ/ZEL Synchronisation module",
-	},
-	{
-	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_ADDI7800,
-	    "ADDI-DATA APCI-7800 8-port serial",
-	},
-	{
-	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5920,
-	    "S5920 PCI Target",
-	},
-	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5201,
-	    "AR5201 Wireless LAN",
-	},
-	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5311,
-	    "AR5211 Wireless LAN",
-	},
-	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211,
-	    "AR5211 Wireless LAN",
-	},
-	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212,
-	    "AR5212 Wireless LAN",
-	},
-	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5201_AP,
-	    "AR5201 Wireless LAN Reference Card (Early AP11)",
-	},
-	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5201_DEFAULT,
-	    "AR5201 Wireless LAN (no eeprom)",
-	},
-	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_DEFAULT,
-	    "AR5212 Wireless LAN (no eeprom)",
-	},
-	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_DEFAULT,
-	    "AR5211 Wireless LAN (no eeprom)",
-	},
-	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_FPGA,
-	    "AR5212 Wireless LAN Reference Card (emulation board)",
-	},
-	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_FPGA11B,
-	    "AR5211 Wireless LAN Reference Card (11b emulation board)",
-	},
-	{
-	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_LEGACY,
-	    "AR5211 Wireless LAN Reference Card (original emulation board)",
-	},
-	{
-	    PCI_VENDOR_ATRONICS, PCI_PRODUCT_ATRONICS_IDE_2015PL,
-	    "IDE-2015PL",
-	},
-	{
-	    PCI_VENDOR_AVANCE, PCI_PRODUCT_AVANCE_AVL2301,
-	    "AVL2301",
-	},
-	{
-	    PCI_VENDOR_AVANCE, PCI_PRODUCT_AVANCE_AVG2302,
-	    "AVG2302",
-	},
-	{
-	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALG2301,
-	    "ALG2301",
-	},
-	{
-	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALG2302,
-	    "ALG2302",
-	},
-	{
-	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALS4000,
-	    "ALS4000 Audio",
-	},
-	{
-	    PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_LPPCI4S,
-	    "Low Profile PCI 4 Serial",
-	},
-	{
-	    PCI_VENDOR_CCUBE, PCI_PRODUCT_CCUBE_CINEMASTER,
-	    "Cinemaster C 3.0 DVD Decoder",
-	},
-	{
-	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_CARD,
-	    "Fritz! Card ISDN Interface",
-	},
-	{
-	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN,
-	    "Fritz!PCI v2.0 ISDN Interface",
-	},
-	{
-	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_B1,
-	    "Basic Rate B1 ISDN Interface",
-	},
-	{
-	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1,
-	    "Primary Rate T1 ISDN Interface",
-	},
-	{
-	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_1_PORT,
-	    "single-channel RS-485 PCI UART",
-	},
-	{
-	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_2_PORT,
-	    "dual-channel RS-485 PCI UART",
-	},
-	{
-	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_4_PORT,
-	    "quad-channel RS-485 PCI UART",
-	},
-	{
-	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_8_PORT,
-	    "octal-channel RS-485 PCI UART",
-	},
-	{
-	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_1_PORT,
-	    "single-channel Isolated RS-485 PCI UART",
-	},
-	{
-	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_2_PORT,
-	    "dual-channel Isolated RS-485 PCI UART",
-	},
-	{
-	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_4_PORT,
-	    "quad-channel Isolated RS-485 PCI UART",
-	},
-	{
-	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_8_PORT,
-	    "octal-channel Isolated RS-485 PCI UART",
-	},
-	{
-	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6001,
-	    "F5D6001",
-	},
-	{
-	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6020V3,
-	    "F5D6020v3 802.11b",
-	},
-	{
-	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EC8_32,
-	    "EC8/32",
-	},
-	{
-	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EC8_64,
-	    "EC8/64",
-	},
-	{
-	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EASYIO,
-	    "EasyIO",
-	},
-	{
-	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617,
-	    "PCI-VME Interface Mod. 617",
-	},
-	{
-	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME618,
-	    "PCI-VME Interface Mod. 618",
-	},
-	{
-	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME2706,
-	    "PCI-VME Interface Mod. 2706",
-	},
-	{
-	    PCI_VENDOR_BLUESTEEL, PCI_PRODUCT_BLUESTEEL_5501,
-	    "5501",
-	},
-	{
-	    PCI_VENDOR_BLUESTEEL, PCI_PRODUCT_BLUESTEEL_5601,
-	    "5601",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5752,
-	    "BCM5752 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5752M,
-	    "BCM5752M 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709,
-	    "BCM5709 NetXtreme II 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5700,
-	    "BCM5700 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5701,
-	    "BCM5701 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702,
-	    "BCM5702 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703,
-	    "BCM5703 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704C,
-	    "BCM5704C 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704S_ALT,
-	    "BCM5704S 1000baseSX Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5706,
-	    "BCM5706 NetXtreme II 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708,
-	    "BCM5708 NetXtreme II 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702FE,
-	    "BCM5702FE 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705,
-	    "BCM5705 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705K,
-	    "BCM5705K 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5720,
-	    "BCM5720 NetXtreme 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5721,
-	    "BCM5721 NetXtreme 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5722,
-	    "BCM5722 NetXtreme 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705M,
-	    "BCM5705M 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705M_ALT,
-	    "BCM5705M 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5714,
-	    "BCM5714 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5714S,
-	    "BCM5714S 1000baseSX Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5780,
-	    "BCM5780 NetXtreme 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5780S,
-	    "BCM5780S NetXtreme 1000baseSX Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705F,
-	    "BCM5705F 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5754M,
-	    "BCM5754M NetXtreme 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5755M,
-	    "BCM5755M NetXtreme 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5756,
-	    "BCM5756 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750,
-	    "BCM5750 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5751,
-	    "BCM5751 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5715,
-	    "BCM5715 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5715S,
-	    "BCM5715S 1000baseSX Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5754,
-	    "BCM5754 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5755,
-	    "BCM5755 NetXtreme 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750M,
-	    "BCM5750M 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5751M,
-	    "BCM5751M 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5751F,
-	    "BCM5751F 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5787M,
-	    "BCM5787M 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5782,
-	    "BCM5782 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5786,
-	    "BCM5786 NetLink 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5787,
-	    "BCM5787 NetLink 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5788,
-	    "BCM5788 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5789,
-	    "BCM5789 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702X,
-	    "BCM5702X 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703X,
-	    "BCM5703X 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704S,
-	    "BCM5704S 1000baseSX Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5706S,
-	    "BCM5706 NetXtreme II 1000baseSX",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708S,
-	    "BCM5708 NetXtreme II 1000baseSX",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702_ALT,
-	    "BCM5702 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703_ALT,
-	    "BCM5703 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5781,
-	    "BCM5781 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5753,
-	    "BCM5753 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5753M,
-	    "BCM5753M 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5753F,
-	    "BCM5753F 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5903M,
-	    "BCM5903M 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401_B0,
-	    "BCM4401-B0 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5901,
-	    "BCM5901 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5901A2,
-	    "BCM5901A 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5906,
-	    "BCM5906 NetLink Fast Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5906M,
-	    "BCM5906M NetLink Fast Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4303,
-	    "BCM4303",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4307,
-	    "BCM4307",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4311,
-	    "BCM4311",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4312,
-	    "BCM4312",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4318,
-	    "BCM4318 AirForce One 54g",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4319,
-	    "BCM4319",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4306,
-	    "BCM4306",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4306_2,
-	    "BCM4306",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4322,
-	    "BCM4322",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4309,
-	    "BCM4309",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43XG,
-	    "BCM43XG",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4328,
-	    "BCM4328 802.11a/b/g/n",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
-	    "BCM4401 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5801,
-	    "5801 Security processor",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5802,
-	    "5802 Security processor",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5805,
-	    "5805 Security processor",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5820,
-	    "5820 Security processor",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5821,
-	    "5821 Security processor",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5822,
-	    "5822 Security processor",
-	},
-	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5823,
-	    "5823 Security processor",
-	},
-	{
-	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
-	    "Bt848 Video Capture",
-	},
-	{
-	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT849,
-	    "Bt849 Video Capture",
-	},
-	{
-	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT878,
-	    "Bt878 Video Capture",
-	},
-	{
-	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT879,
-	    "Bt879 Video Capture",
-	},
-	{
-	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT880,
-	    "Bt880 Video Capture",
-	},
-	{
-	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT878A,
-	    "Bt878 Video Capture (Audio Section)",
-	},
-	{
-	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT879A,
-	    "Bt879 Video Capture (Audio Section)",
-	},
-	{
-	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT880A,
-	    "Bt880 Video Capture (Audio Section)",
-	},
-	{
-	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT8474,
-	    "Bt8474 Multichannel HDLC Controller",
-	},
-	{
-	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC,
-	    "MultiMaster NC",
-	},
-	{
-	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_MULTIMASTER,
-	    "MultiMaster",
-	},
-	{
-	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_FLASHPOINT,
-	    "FlashPoint",
-	},
-	{
-	    PCI_VENDOR_C4T, PCI_PRODUCT_C4T_GPPCI,
-	    "GPPCI",
-	},
-	{
-	    PCI_VENDOR_CAVIUM, PCI_PRODUCT_CAVIUM_NITROX,
-	    "Nitrox XL",
-	},
-	{
-	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T302E,
-	    "T302e",
-	},
-	{
-	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T310E,
-	    "T310e",
-	},
-	{
-	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T320X,
-	    "T320x",
-	},
-	{
-	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T302X,
-	    "T302x",
-	},
-	{
-	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T320E,
-	    "T320e",
-	},
-	{
-	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T310X,
-	    "T310x",
-	},
-	{
-	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B10,
-	    "T3B10",
-	},
-	{
-	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B20,
-	    "T3B20",
-	},
-	{
-	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B02,
-	    "T3B02",
-	},
-	{
-	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_64310,
-	    "64310",
-	},
-	{
-	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_69000,
-	    "69000",
-	},
-	{
-	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65545,
-	    "65545",
-	},
-	{
-	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65548,
-	    "65548",
-	},
-	{
-	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65550,
-	    "65550",
-	},
-	{
-	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65554,
-	    "65554",
-	},
-	{
-	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_69030,
-	    "69030",
-	},
-	{
-	    PCI_VENDOR_CHRYSALIS, PCI_PRODUCT_CHRYSALIS_LUNAVPN,
-	    "LunaVPN",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7548,
-	    "CL-GD7548",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5430,
-	    "CL-GD5430",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5434_4,
-	    "CL-GD5434-4",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5434_8,
-	    "CL-GD5434-8",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5436,
-	    "CL-GD5436",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5446,
-	    "CL-GD5446",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5480,
-	    "CL-GD5480",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6729,
-	    "CL-PD6729",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6832,
-	    "CL-PD6832 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6833,
-	    "CL-PD6833 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7542,
-	    "CL-GD7542",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7543,
-	    "CL-GD7543",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7541,
-	    "CL-GD7541",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_CD4400,
-	    "CL-CD4400 Communications Controller",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4610,
-	    "CS4610 SoundFusion Audio Accelerator",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4280,
-	    "CS4280 CrystalClear Audio Interface",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4615,
-	    "CS4615",
-	},
-	{
-	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4281,
-	    "CS4281 CrystalClear Audio Interface",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_AAR_1210SA,
-	    "AAR-1210SA serial ATA RAID controller",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640,
-	    "PCI0640",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_642,
-	    "PCI0642",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_643,
-	    "PCI0643",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_646,
-	    "PCI0646",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_647,
-	    "PCI0647",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_648,
-	    "PCI0648",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_649,
-	    "PCI0649",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_650A,
-	    "PCI0650A",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_670,
-	    "USB0670",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_673,
-	    "USB0673",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_680,
-	    "SiI0680",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3112,
-	    "SiI3112 SATALink",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3114,
-	    "SiI3114 SATALink",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3124,
-	    "SiI3124 SATALink",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3132,
-	    "SiI3132 SATALink",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3512,
-	    "SiI3512 SATALink",
-	},
-	{
-	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3531,
-	    "SiI3531 SATALink",
-	},
-	{
-	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8338A,
-	    "CMI8338A PCI Audio Device",
-	},
-	{
-	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8338B,
-	    "CMI8338B PCI Audio Device",
-	},
-	{
-	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8738,
-	    "CMI8738/C3DX PCI Audio Device",
-	},
-	{
-	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8738B,
-	    "CMI8738B PCI Audio Device",
-	},
-	{
-	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_HSP56,
-	    "HSP56 Audiomodem Riser",
-	},
-	{
-	    PCI_VENDOR_COGENT, PCI_PRODUCT_COGENT_EM110TX,
-	    "EX110TX PCI Fast Ethernet Adapter",
-	},
-	{
-	    PCI_VENDOR_COLOGNECHIP, PCI_PRODUCT_COLOGNECHIP_HFC,
-	    "HFC-S",
-	},
-	{
-	    PCI_VENDOR_COMPAL, PCI_PRODUCT_COMPAL_38W2,
-	    "38W2 OEM Notebook",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE,
-	    "PCI-EISA Bridge",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE,
-	    "PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX1,
-	    "Triflex Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX2,
-	    "Triflex Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_QVISION_V0,
-	    "QVision",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_QVISION_1280P,
-	    "QVision 1280/p",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_QVISION_V2,
-	    "QVision",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX4,
-	    "Triflex Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5300,
-	    "Smart Array 5300",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5i,
-	    "Smart Array 5i",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA532,
-	    "Smart Array 532",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5312,
-	    "Smart Array 5312",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6i,
-	    "Smart Array 6i",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA641,
-	    "Smart Array 641",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA642,
-	    "Smart Array 642",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6400,
-	    "Smart Array 6400",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6400EM,
-	    "Smart Array 6400 EM",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6422,
-	    "Smart Array 6422",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA64XX,
-	    "Smart Array 64xx",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB,
-	    "USB Controller",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_ASMC,
-	    "Advanced Systems Management Controller",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB_MEDIAGX,
-	    "USB Controller",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMART2P,
-	    "SMART2P RAID",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N100TX,
-	    "Netelligent 10/100 TX",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N10T2,
-	    "Netelligent 10 T/2 UTP/Coax",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_INT100TX,
-	    "Integrated Netelligent 10/100 TX",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N10T,
-	    "Netelligent 10 T",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_IntNF3P,
-	    "Integrated NetFlex 3/P",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_DPNet100TX,
-	    "Dual Port Netelligent 10/100 TX",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_IntPL100TX,
-	    "ProLiant Integrated Netelligent 10/100 TX",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_DP4000,
-	    "Deskpro 4000 5233MMX",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5300_2,
-	    "Smart Array 5300 rev.2",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PRESARIO56XX,
-	    "Presario 56xx",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_M700,
-	    "Armada M700",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5i_2,
-	    "Smart Array 5i/532 rev.2",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P_BNC,
-	    "NetFlex 3/P w/ BNC",
-	},
-	{
-	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P,
-	    "NetFlex 3/P",
-	},
-	{
-	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_NE2KETHER,
-	    "Ethernet",
-	},
-	{
-	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_RL100ATX,
-	    "RL100-ATX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_RL100TX,
-	    "RL100-TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT32EXT,
-	    "RocketPort 32 port external",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT8EXT,
-	    "RocketPort 8 port external",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT16EXT,
-	    "RocketPort 16 port external",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT4QUAD,
-	    "RocketPort 4 port w/ quad cable",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT8OCTA,
-	    "RocketPort 8 port w/ octa cable",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT8RJ,
-	    "RocketPort 8 port w/ RJ11s",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT4RJ,
-	    "RocketPort 4 port w/ RJ11s",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT8DB,
-	    "RocketPort 8 port w/ DB78",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT16DB,
-	    "RocketPort 16 port w/ DB78",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORTP4,
-	    "RocketPort Plus 4 port",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORTP8,
-	    "RocketPort Plus 8 port",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETMODEM6,
-	    "RocketModem 6 port",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETMODEM4,
-	    "RocketModem 4 port",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORTP232,
-	    "RocketPort 2 port RS232",
-	},
-	{
-	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORTP422,
-	    "RocketPort 2 port RS422",
-	},
-	{
-	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_SOFTK56,
-	    "SoftK56 PCI Software Modem",
-	},
-	{
-	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_56KFAXMODEM,
-	    "HW 56K Fax Modem",
-	},
-	{
-	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_LANFINITY,
-	    "LANfinity MiniPCI 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388X,
-	    "CX23880/1/2/3 PCI Video/Audio Decoder",
-	},
-	{
-	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XAUDIO,
-	    "CX23880/1/2/3 PCI Audio Port",
-	},
-	{
-	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XMPEG,
-	    "CX23880/1/2/3 PCI MPEG Port",
-	},
-	{
-	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XIR,
-	    "CX23880/1/2/3 PCI IR Port",
-	},
-	{
-	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
-	    "82C599 PCI-VLB Bridge",
-	},
-	{
-	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C693,
-	    "82C693 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CB_TXD,
-	    "FEther CB-TXD 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_2CB_TXD,
-	    "FEther II CB-TXD 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_LAPCIGT,
-	    "CG-LAPCIGT",
-	},
-	{
-	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB,
-	    "\"C-Bus II\"-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE,
-	    "SBLive! EMU 10000",
-	},
-	{
-	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_AUDIGY,
-	    "SB Audigy EMU 10000",
-	},
-	{
-	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE2,
-	    "SBLive! EMU 10000",
-	},
-	{
-	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBAUDIGYLS,
-	    "SB Audigy LS",
-	},
-	{
-	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBAUDIGY4,
-	    "SB Audigy 4",
-	},
-	{
-	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBJOY,
-	    "PCI Gameport Joystick",
-	},
-	{
-	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBJOY2,
-	    "PCI Gameport Joystick",
-	},
-	{
-	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_EV1938,
-	    "Ectiva 1938",
-	},
-	{
-	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1,
-	    "Cyclom-Y below 1M",
-	},
-	{
-	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_2,
-	    "Cyclom-Y above 1M",
-	},
-	{
-	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM4Y_1,
-	    "Cyclom-4Y below 1M",
-	},
-	{
-	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM4Y_2,
-	    "Cyclom-4Y above 1M",
-	},
-	{
-	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM8Y_1,
-	    "Cyclom-8Y below 1M",
-	},
-	{
-	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM8Y_2,
-	    "Cyclom-8Y above 1M",
-	},
-	{
-	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMZ_1,
-	    "Cyclom-Z below 1M",
-	},
-	{
-	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMZ_2,
-	    "Cyclom-Z above 1M",
-	},
-	{
-	    PCI_VENDOR_CYCLONE, PCI_PRODUCT_CYCLONE_PCI_700,
-	    "IQ80310 (PCI-700)",
-	},
-	{
-	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_MEDIAGX_PCHB,
-	    "MediaGX Built-in PCI Host Controller",
-	},
-	{
-	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5520_PCIB,
-	    "Cx5520 I/O Companion",
-	},
-	{
-	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_PCIB,
-	    "Cx5530 I/O Companion Multi-Function Southbridge",
-	},
-	{
-	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_SMI,
-	    "Cx5530 I/O Companion (SMI Status and ACPI Timer)",
-	},
-	{
-	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_IDE,
-	    "Cx5530 I/O Companion (IDE Controller)",
-	},
-	{
-	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_AUDIO,
-	    "Cx5530 I/O Companion (XpressAUDIO)",
-	},
-	{
-	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_VIDEO,
-	    "Cx5530 I/O Companion (Video Controller)",
-	},
-	{
-	    PCI_VENDOR_DATUM, PCI_PRODUCT_DATUM_BC635PCI_U,
-	    "BC635PCI-U TC & FREQ. Processor",
-	},
-	{
-	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102,
-	    "DM9102 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21050,
-	    "DC21050 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21040,
-	    "DC21040 (\"Tulip\") Ethernet",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21030,
-	    "DC21030 (\"TGA\")",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_NVRAM,
-	    "Zephyr NV-RAM",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_KZPSA,
-	    "KZPSA",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21140,
-	    "DC21140 (\"FasterNet\") 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PBXGB,
-	    "TGA2",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_DEFPA,
-	    "DEFPA",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21041,
-	    "DC21041 (\"Tulip Plus\") Ethernet",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_DGLPB,
-	    "DGLPB (\"OPPO\")",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142,
-	    "DC21142/21143 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21052,
-	    "DC21052 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21150,
-	    "DC21150 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21152,
-	    "DC21152 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21153,
-	    "DC21153 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21154,
-	    "DC21154 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21554,
-	    "DC21554 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_SWXCR,
-	    "SWXCR RAID",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_2SI,
-	    "PERC 2/Si",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI,
-	    "PERC 3/Si",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2,
-	    "PERC 3/Si",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI,
-	    "PERC 4/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI_2,
-	    "PERC 4/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4ESI,
-	    "PERC 4e/Si",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5,
-	    "PERC 5",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_6,
-	    "PERC 6",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2_SUB,
-	    "PERC 3/Si",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB2,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB3,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB2,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB3,
-	    "PERC 3/Di",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5_1,
-	    "PERC 5/e",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5_2,
-	    "PERC 5/i",
-	},
-	{
-	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_CERC_1_5,
-	    "CERC SATA RAID 1.5/6ch",
-	},
-	{
-	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139,
-	    "8139 Ethernet",
-	},
-	{
-	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII,
-	    "Rhine II 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_VIPER,
-	    "Viper/PCI",
-	},
-	{
-	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO4,
-	    "Neo 4-port",
-	},
-	{
-	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8,
-	    "Neo 8-port",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DL1002,
-	    "DL-1002 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS,
-	    "DFE-530TXPLUS 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE690TXD,
-	    "DFE-690TXD 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DWL610,
-	    "DWL-610 802.11b WLAN",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DL4000,
-	    "DL-4000 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE550SX,
-	    "DGE-550SX",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T,
-	    "DGE-528T Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T,
-	    "DGE-560T Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T_2,
-	    "DGE-560T_2 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560SX,
-	    "DGE-560SX",
-	},
-	{
-	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T,
-	    "DGE-530T Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
-	    "SmartCache/SmartRAID (EATA)",
-	},
-	{
-	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_I960_PPB,
-	    "PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_I2O,
-	    "SmartRAID (I2O)",
-	},
-	{
-	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_2005S,
-	    "Zero Channel SmartRAID (I2O)",
-	},
-	{
-	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_MEMCTLR,
-	    "Memory Controller",
-	},
-	{
-	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI32,
-	    "PCI-SCI Bridge (32-bit, 33 MHz)",
-	},
-	{
-	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI64,
-	    "PCI-SCI Bridge (64-bit, 33 MHz)",
-	},
-	{
-	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI66,
-	    "PCI-SCI Bridge (64-bit, 66 MHz)",
-	},
-	{
-	    PCI_VENDOR_DOMEX, PCI_PRODUCT_DOMEX_PCISCSI,
-	    "DMX-3191D",
-	},
-	{
-	    PCI_VENDOR_DYNALINK, PCI_PRODUCT_DYNALINK_IS64PH,
-	    "IS64PH ISDN Adapter",
-	},
-	{
-	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI,
-	    "QuickStep 1000 ISDN card",
-	},
-	{
-	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_GLORIAXL,
-	    "Gloria XL 1624",
-	},
-	{
-	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP6000,
-	    "LP6000 FibreChannel adapter",
-	},
-	{
-	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP982,
-	    "LP982 FibreChannel adapter",
-	},
-	{
-	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP7000,
-	    "LP7000 FibreChannel adapter",
-	},
-	{
-	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP8000,
-	    "LP8000 FibreChannel adapter",
-	},
-	{
-	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP9000,
-	    "LP9000 FibreChannel adapter",
-	},
-	{
-	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP9802,
-	    "LP9802 FibreChannel adapter",
-	},
-	{
-	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_MCR510,
-	    "MCR510 PCI Memory Card Reader Controller",
-	},
-	{
-	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1211,
-	    "CB1211 CardBus Controller",
-	},
-	{
-	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1225,
-	    "CB1225 CardBus Controller",
-	},
-	{
-	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1410,
-	    "CB1410 CardBus Controller",
-	},
-	{
-	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710,
-	    "CB710 CardBus Controller",
-	},
-	{
-	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1420,
-	    "CB1420 CardBus Controller",
-	},
-	{
-	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB720,
-	    "CB720 CardBus Controller",
-	},
-	{
-	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI,
-	    "AudioPCI",
-	},
-	{
-	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI97,
-	    "AudioPCI 97",
-	},
-	{
-	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_CT5880,
-	    "CT5880",
-	},
-	{
-	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST64P,
-	    "SST-64P adapter",
-	},
-	{
-	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST128P,
-	    "SST-128P adapter",
-	},
-	{
-	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST16P_1,
-	    "SST-16P adapter",
-	},
-	{
-	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST16P_2,
-	    "SST-16P adapter",
-	},
-	{
-	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST16P_3,
-	    "SST-16P adapter",
-	},
-	{
-	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST4P,
-	    "SST-4P adapter",
-	},
-	{
-	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST8P,
-	    "SST-8P adapter",
-	},
-	{
-	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_HIPPI,
-	    "RoadRunner HIPPI Interface",
-	},
-	{
-	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_GIGE,
-	    "RoadRunner Gig-E Interface",
-	},
-	{
-	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO1,
-	    "Maestro 1 PCI Audio Accelerator",
-	},
-	{
-	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2,
-	    "Maestro 2 PCI Audio Accelerator",
-	},
-	{
-	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SOLO1,
-	    "Solo-1 PCI AudioDrive",
-	},
-	{
-	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2E,
-	    "Maestro 2E PCI Audio Accelerator",
-	},
-	{
-	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_ALLEGRO1,
-	    "Allegro-1 PCI Audio Accelerator",
-	},
-	{
-	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3,
-	    "Maestro 3 PCI Audio Accelerator",
-	},
-	{
-	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3MODEM,
-	    "Maestro 3 Modem",
-	},
-	{
-	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3_2,
-	    "Maestro 3 PCI Audio Accelerator",
-	},
-	{
-	    PCI_VENDOR_ESSTECH2, PCI_PRODUCT_ESSTECH2_MAESTRO1,
-	    "Maestro 1 PCI Audio Accelerator",
-	},
-	{
-	    PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P,
-	    "WL11000P PCI WaveLAN/IEEE 802.11",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_00F7,
-	    "Integrated OHCI IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729,
-	    "OZ6729 PCI-PCMCIA Bridge",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6730,
-	    "OZ6730 PCI-PCMCIA Bridge",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832,
-	    "OZ6832/OZ6833 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6836,
-	    "OZ6836/OZ6860 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6872,
-	    "OZ6812/OZ6872 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6922,
-	    "OZ6922 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6933,
-	    "OZ6933 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972,
-	    "OZ6912/OZ6972 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7120,
-	    "Integrated MMC/SD Controller",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7130,
-	    "Integrated MS/xD/SM Controller",
-	},
-	{
-	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7223,
-	    "OZ711E0 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM,
-	    "Freedom PCI-GBus Interface",
-	},
-	{
-	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17D152,
-	    "dual-channel Universal PCI UART",
-	},
-	{
-	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17D154,
-	    "quad-channel Universal PCI UART",
-	},
-	{
-	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17D158,
-	    "octal-channel Universal PCI UART",
-	},
-	{
-	    PCI_VENDOR_FORE, PCI_PRODUCT_FORE_PCA200,
-	    "ATM PCA-200",
-	},
-	{
-	    PCI_VENDOR_FORE, PCI_PRODUCT_FORE_PCA200E,
-	    "ATM PCA-200e",
-	},
-	{
-	    PCI_VENDOR_FORTEMEDIA, PCI_PRODUCT_FORTEMEDIA_FM801,
-	    "801 Sound",
-	},
-	{
-	    PCI_VENDOR_FORTEMEDIA, PCI_PRODUCT_FORTEMEDIA_PCIJOY,
-	    "PCI Gameport Joystick",
-	},
-	{
-	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
-	    "TMC-18C30 (36C70)",
-	},
-	{
-	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_GIGALINK,
-	    "Gigabit link / STR1100",
-	},
-	{
-	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PLXHOTLINK,
-	    "HOTlink interface",
-	},
-	{
-	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_COUNTTIME,
-	    "Counter / Timer",
-	},
-	{
-	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PLXCAMAC,
-	    "CAMAC controller",
-	},
-	{
-	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PROFIBUS,
-	    "PROFIBUS interface",
-	},
-	{
-	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_AMCCHOTLINK,
-	    "old HOTlink interface",
-	},
-	{
-	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155PF,
-	    "155P-MF1 ATM (FPGA)",
-	},
-	{
-	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155PA,
-	    "155P-MF1 ATM (ASIC)",
-	},
-	{
-	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI25P,
-	    "SpeedStream ENI-25p",
-	},
-	{
-	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_SS3000,
-	    "SpeedStream 3000",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64010A,
-	    "GT-64010A System Controller",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8300_1,
-	    "Libertas 88W8300",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8310,
-	    "Libertas 88W8310",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_1,
-	    "Libertas 88W8335",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_2,
-	    "Libertas 88W8335",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8300_2,
-	    "Libertas 88W8300",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64115,
-	    "GT-64115 System Controller",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64011,
-	    "GT-64011 System Controller",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SKNET,
-	    "SK-NET Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8021CU,
-	    "Yukon-II 88E8021CU",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8022CU,
-	    "Yukon-II 88E8022CU",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8061CU,
-	    "Yukon-II 88E8061CU",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8062CU,
-	    "Yukon-II 88E8062CU",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8021X,
-	    "Yukon-II 88E8021X",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8022X,
-	    "Yukon-II 88E8022X",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8061X,
-	    "Yukon-II 88E8061X",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8062X,
-	    "Yukon-II 88E8062X",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8035,
-	    "Yukon 88E8035",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8036,
-	    "Yukon 88E8036",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8038,
-	    "Yukon 88E8038",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8039,
-	    "Yukon 88E8039",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C033,
-	    "Yukon 88EC033",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8052,
-	    "Yukon 88E8052",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8050,
-	    "Yukon 88E8050",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8053,
-	    "Yukon 88E8053",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8055,
-	    "Yukon 88E8055",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8056,
-	    "Yukon 88E8056",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_1,
-	    "Yukon",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C036,
-	    "Yukon 88EC036",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C032,
-	    "Yukon 88EC032",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C034,
-	    "Yukon 88EC034",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C042,
-	    "Yukon 88EC042",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C055,
-	    "Yukon 88EC055",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120,
-	    "GT-64120 System Controller",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_BELKIN,
-	    "Belkin Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5040,
-	    "88SX5040 SATA",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5041,
-	    "88SX5041 SATA",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5080,
-	    "88SX5080 SATA",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5081,
-	    "88SX5081 SATA",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX6041,
-	    "88SX6041 SATA",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX6081,
-	    "88SX6041 SATA",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE6101,
-	    "88SE6101 single-port PATA133 Controller",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE6121,
-	    "88SE6121 SATA II Controller",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE614X,
-	    "88SE614X SATA II PCI-E Controller",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE6145,
-	    "88SE6145 SATA II PCI-E Controller",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64130,
-	    "GT-64130 System Controller",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64260,
-	    "GT-64260 System Controller",
-	},
-	{
-	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64360,
-	    "MV6436x System Controller",
-	},
-	{
-	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P,
-	    "GL24110P PCI IEEE 802.11b",
-	},
-	{
-	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02,
-	    "GL24110P PCI IEEE 802.11b",
-	},
-	{
-	    PCI_VENDOR_GUILLEMOT, PCI_PRODUCT_GUILLEMOT_MAXIRADIO,
-	    "MAXIRADIO",
-	},
-	{
-	    PCI_VENDOR_HAWKING, PCI_PRODUCT_HAWKING_PN672TX,
-	    "PN672TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_HEURICON, PCI_PRODUCT_HEURICON_PMPPC,
-	    "PM/PPC",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_A4977A,
-	    "A4977A Visualize EG",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACHYON_TL,
-	    "Tachyon TL FC controller",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACHYON_TS,
-	    "Tachyon TS FC controller",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACHYON_XL2,
-	    "Tachyon XL2 FC controller",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A,
-	    "J2585A",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585B,
-	    "J2585B",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_82557B,
-	    "82557B 10/100 NIC",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_NETRAID_4M,
-	    "NetRaid-4M",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAV100,
-	    "Smart Array V100",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_1,
-	    "Smart Array E200i",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200,
-	    "Smart Array E200",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_2,
-	    "Smart Array E200i",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_3,
-	    "Smart Array E200i",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_4,
-	    "Smart Array E200i",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_1,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_2,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP800,
-	    "Smart Array P600",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP600,
-	    "Smart Array P600",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_3,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_4,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_5,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_6,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP400,
-	    "Smart Array P400",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP400I,
-	    "Smart Array P400i",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_7,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_8,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_9,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_10,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_11,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_12,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_13,
-	    "Smart Array",
-	},
-	{
-	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751,
-	    "7751",
-	},
-	{
-	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_6500,
-	    "6500",
-	},
-	{
-	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7811,
-	    "7811",
-	},
-	{
-	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7951,
-	    "7951",
-	},
-	{
-	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7955,
-	    "7954/7955",
-	},
-	{
-	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7956,
-	    "7956",
-	},
-	{
-	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_78XX,
-	    "7814/7851/7854",
-	},
-	{
-	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_8065,
-	    "8065",
-	},
-	{
-	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_8165,
-	    "8165",
-	},
-	{
-	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_8154,
-	    "8154",
-	},
-	{
-	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB1,
-	    "HB1 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB4,
-	    "HB4 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SWC,
-	    "MSVCC01/02/03/04 Video Capture Cards",
-	},
-	{
-	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SH7751,
-	    "SH7751 PCI Controller",
-	},
-	{
-	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SH7751R,
-	    "SH7751R PCI Controller",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE,
-	    "MCA Bridge",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_ALTALITE,
-	    "CPU Bridge - Alta Lite",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_ALTAMP,
-	    "CPU Bridge - Alta MP",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_ISABRIDGE,
-	    "Fire Coral ISA Bridge w/PnP",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_POWERWAVE,
-	    "PowerWave Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_IDAHO,
-	    "Idaho PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CPUBRIDGE,
-	    "CPU Bridge",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_LANSTREAMER,
-	    "Auto LANStreamer",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT150P,
-	    "GXT-150P 2D Accelerator",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CARRERA,
-	    "Carrera PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_82G2675,
-	    "82G2675 SCSI-2 Fast Controller",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE2,
-	    "MCA Bridge",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_82351,
-	    "82351 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MONNAV,
-	    "Montana/Nevada PCI Bridge and Memory Controller",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_PYTHON,
-	    "Python PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID,
-	    "ServeRAID (copperhead)",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT250P,
-	    "GXT-250P Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC,
-	    "16/4 Token Ring",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MIAMI,
-	    "Miami/PCI",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_82660,
-	    "82660 PowerPC to PCI Bridge and Memory Controller",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC,
-	    "MPIC",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_TURBOWAYS25,
-	    "Turboways 25 ATM",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT500P,
-	    "GXT-500P/GXT550P Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_I82557B,
-	    "i82557B 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT800P,
-	    "GXT-800P Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_EADSPCI,
-	    "EADS PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT3000P,
-	    "GXT-3000P Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT3000P2,
-	    "GXT-3000P Graphics Adapter(2)",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT2000P,
-	    "GXT-2000P Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC2,
-	    "Olympic 2 Token Ring",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CPC71064,
-	    "CPC710 Dual Bridge and Memory Controller (PCI64)",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CPC71032,
-	    "CPC710 Dual Bridge and Memory Controller (PCI32)",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_TPAUDIO,
-	    "ThinkPad 600X/A20/T20/T22 Audio",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_405GP,
-	    "PPC 405GP PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT4000P,
-	    "GXT-4000P Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT6000P,
-	    "GXT-6000P Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT300P,
-	    "GXT-300P Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_133PCIX,
-	    "133 PCI-X Bridge",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID4,
-	    "ServeRAID 4/5 (morpheus)",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_440GP,
-	    "PPC 440GP PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_IBMETHER,
-	    "10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT6500P,
-	    "GXT-6500P Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT4500P,
-	    "GXT-4500P Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT135P,
-	    "GXT-135P Graphics Adapter",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID8K,
-	    "ServeRAID 8k",
-	},
-	{
-	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
-	    "MPIC-II",
-	},
-	{
-	    PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_ICE1712,
-	    "Envy24 Multichannel Audio Controller",
-	},
-	{
-	    PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_VT1720,
-	    "Envy24PT/HT Multi-Channel Audio Controller",
-	},
-	{
-	    PCI_VENDOR_ICOMPRESSION, PCI_PRODUCT_ICOMPRESSION_ITVC15,
-	    "iTVC15 MPEG2 codec",
-	},
-	{
-	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201,
-	    "77201/77211 ATM (\"NICStAR\")",
-	},
-	{
-	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_RC32334,
-	    "RC32334 System Controller",
-	},
-	{
-	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_RC32332,
-	    "RC32332 System Controller",
-	},
-	{
-	    PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50x,
-	    "PCI-WDT50x Watchdog Timer",
-	},
-	{
-	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I920,
-	    "INIC-920 SCSI",
-	},
-	{
-	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I850,
-	    "INIC-850 SCSI",
-	},
-	{
-	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I1060,
-	    "INIC-1060 SCSI",
-	},
-	{
-	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I940,
-	    "INIC-940 SCSI",
-	},
-	{
-	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I935,
-	    "INIC-935 SCSI",
-	},
-	{
-	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I950,
-	    "INIC-950 SCSI",
-	},
-	{
-	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_IGA1680,
-	    "IGA 1680",
-	},
-	{
-	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_IGA1682,
-	    "IGA 1682",
-	},
-	{
-	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2000,
-	    "CyberPro 2000",
-	},
-	{
-	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2010,
-	    "CyberPro 2010",
-	},
-	{
-	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849,
-	    "8849",
-	},
-	{
-	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_TT128M,
-	    "TwinTurbo 128M",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312,
-	    "80312 I/O Companion Chip",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80321,
-	    "80321 I/O Processor",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP333_A,
-	    "IOP333 PCI Express-to-PCI Bridge #0",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP333_B,
-	    "IOP333 PCI Express-to-PCI Bridge #1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6700PXH_PCIE0,
-	    "6700PXH PCI Express-to-PCI Bridge #0",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6700PXH_PCIE1,
-	    "6700PXH PCI Express-to-PCI Bridge #1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SRCZCRX,
-	    "RAID controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SRCU42E,
-	    "SCSI RAID controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SRCS28X,
-	    "SATA RAID controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
-	    "82375EB/SB PCI-EISA Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CDC,
-	    "82424ZX Cache and DRAM controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SIO,
-	    "82378ZB System I/O",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82426EX,
-	    "82426EX PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCMC,
-	    "82434LX/NX PCI, Cache and Memory Controller (PCMC)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GDT_RAID1,
-	    "GDT RAID",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GDT_RAID2,
-	    "GDT RAID",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RM,
-	    "i960 RM PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RN,
-	    "i960 RN PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82542,
-	    "i82542 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_FIBER,
-	    "i82453GC 1000baseX Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MODEM56,
-	    "56k Modem",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_COPPER,
-	    "i82543GC 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_COPPER,
-	    "i82544EI 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_FIBER,
-	    "i82544EI 1000baseX Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_COPPER,
-	    "i82544GC 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_LOM,
-	    "i82544GC (LOM) Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM,
-	    "i82540EM 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_COPPER,
-	    "i82545EM 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_COPPER,
-	    "i82546EB 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_FIBER,
-	    "i82545EM 1000baseX Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_FIBER,
-	    "i82546EB 1000baseX Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541EI,
-	    "i82541EI Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541ER_LOM,
-	    "i82541ER (LOM) Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM_LOM,
-	    "i82540EM (LOM) Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP_LOM,
-	    "i82540EP (LOM) Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP,
-	    "i82540EP Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541EI_MOBILE,
-	    "i82541EI Mobile Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI,
-	    "i82547EI Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI_MOBILE,
-	    "i82547EI Mobile GigE",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_QUAD,
-	    "i82546EB 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP_LP,
-	    "i82540EP Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_COPPER,
-	    "i82545GM 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_FIBER,
-	    "i82545GM 1000baseX Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_SERDES,
-	    "i82545GM Gigabit Ethernet (SERDES)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS,
-	    "InBusiness Fast Ethernet LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_0,
-	    "PRO/100 VE Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_1,
-	    "PRO/100 VE Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_0,
-	    "PRO/100 VM Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_1,
-	    "PRO/100 VM Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_0,
-	    "82562EH HomePNA Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_1,
-	    "82562EH HomePNA Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_2,
-	    "82562EH HomePNA Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_2,
-	    "PRO/100 VM Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_2,
-	    "PRO/100 VE Network Controller with 82562ET/EZ PHY",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_3,
-	    "PRO/100 VE Network Controller with 82562ET/EZ (CNR) PHY",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_3,
-	    "PRO/100 VM Network Controller with 82562EM/EX PHY",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_4,
-	    "PRO/100 VM Network Controller with 82562EM/EX (CNR) PHY",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_4,
-	    "PRO/100 VE (MOB) Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_5,
-	    "PRO/100 VM (MOB) Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2100,
-	    "PRO/Wireless LAN 2100 3B Mini-PCI Adapter",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82597EX,
-	    "PRO/10GbE LR Server Adapter",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_M_AMT,
-	    "i82801H (M_AMT) LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_AMT,
-	    "i82801H (AMT) LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_LAN,
-	    "i82801H LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_LAN,
-	    "i82801H (IFE) LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_M_LAN,
-	    "i82801H (M) LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_6,
-	    "PRO/100 VM Network Controller with 82562ET/EZ PHY",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LAN,
-	    "82801EB/ER 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_M,
-	    "PRO/100 M Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_COPPER,
-	    "i82571EB 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_FIBER,
-	    "i82571EB 1000baseX Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_SERDES,
-	    "i82571EB Gigabit Ethernet (SERDES)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LAN,
-	    "82801FB 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_5,
-	    "PRO/100 VE (LOM) Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_LAN,
-	    "82801GB 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI,
-	    "i82547GI Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541GI,
-	    "i82541GI Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541GI_MOBILE,
-	    "i82541GI Mobile Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541ER,
-	    "i82541ER Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_COPPER,
-	    "i82546GB 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_FIBER,
-	    "i82546GB 1000baseX Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_SERDES,
-	    "i82546GB Gigabit Ethernet (SERDES)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541PI,
-	    "i82541PI Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_COPPER,
-	    "i82572EI 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_FIBER,
-	    "i82572EI 1000baseX Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_SERDES,
-	    "i82572EI Gigabit Ethernet (SERDES)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_PCIE,
-	    "PRO/1000MT (82546GB)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E,
-	    "i82573E Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E_IAMT,
-	    "i82573E Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_6,
-	    "PRO/100 VE Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_8,
-	    "PRO/100 VE Network Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_7,
-	    "PRO/100 VE Network Controller with 82562G PHY",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_CPR_DPT,
-	    "i80003 dual 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_FIB_DPT,
-	    "i80003 dual 1000baseX Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_DPT,
-	    "i80003 dual Gigabit Ethernet (SERDES)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER,
-	    "i82546GB quad-port Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L,
-	    "i82573L Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_QUAD_COPPER,
-	    "i82571EB quad-1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3,
-	    "i82546GB quad-port Gigabit Ethernet (KSP3)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI,
-	    "i82572EI 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_CPR_SPT,
-	    "i80003 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT,
-	    "i80003 Gigabit Ethernet (SERDES)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
-	    "i82571GB quad 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_AMT,
-	    "82801I (AMT) LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_M,
-	    "82801I mobile LAN controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE,
-	    "82801I LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE_G,
-	    "82801I (G) LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE_GT,
-	    "82801I (GT) LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_GT,
-	    "i82801H IFE (GT) LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_G,
-	    "i82801H IFE (G) LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IGP_M_V,
-	    "i82801H IGP (MV) LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82567V,
-	    "i82567V LAN controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_M_AMT,
-	    "82801I mobile (AMT) LAN controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB,
-	    "82815 Hub",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_AGP,
-	    "82815 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_GRAPH,
-	    "82815 Graphics",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOAGP_HUB,
-	    "82815 Hub",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOAGP_GRAPH,
-	    "82815 Graphics",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOGRAPH_HUB,
-	    "82815 Hub",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOGRAPH_AGP,
-	    "82815 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_HUB,
-	    "82815 Hub",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_AGP,
-	    "82815 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_GRAPH,
-	    "82815 Graphics",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA,
-	    "82806AA PCI64 Hub Advanced Programmable Interrupt Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADI_BECC,
-	    "ADI i80200 Big Endian Companion Chip",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IXP1200,
-	    "IXP1200 Network Processor",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER,
-	    "82559ER Fast Ethernet LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82092AA,
-	    "82092AA IDE controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SAA7116,
-	    "SAA7116",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452_PB,
-	    "82452KX/GX Orion Extended Express Processor to PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82596,
-	    "82596 LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EEPRO100,
-	    "EE Pro 100 10/100 Fast Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EEPRO100S,
-	    "EE Pro 100 Smart 10/100 Fast Ethernet",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82557,
-	    "82557 Fast Ethernet LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX,
-	    "82437FX (TSC) System Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371FB_ISA,
-	    "82371FB (PIIX) PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371FB_IDE,
-	    "82371FB (PIIX) IDE controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371MX,
-	    "82371MX (MPIIX) Mobile PCI I/O IDE Xcelerator",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437MX,
-	    "82437MX (MTSC) Mobile System Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82441FX,
-	    "82441FX (PMC) PCI and Memory Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82380AB,
-	    "82380AB (MISA) Mobile PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82380FB,
-	    "82380FB (MPCI2) Mobile PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439HX,
-	    "82439HX (TXC) System Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_PPB,
-	    "82870P2 P64H2 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_IOxAPIC,
-	    "82870P2 P64H2 IOxAPIC",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_HPLUG,
-	    "82870P2 P64H2 Hot Plug Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP,
-	    "ROB-in i960RP Microprocessor",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RM_2,
-	    "i960 RM PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_HB,
-	    "82840 Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_AGP,
-	    "82840 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_PCI,
-	    "82840 PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845_HB,
-	    "82845 Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845_AGP,
-	    "82845 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC,
-	    "82801AA LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_IDE,
-	    "82801AA IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_USB,
-	    "82801AA USB Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_SMB,
-	    "82801AA SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACA,
-	    "82801AA AC-97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACM,
-	    "82801AA AC-97 PCI Modem",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_HPB,
-	    "82801AA Hub-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_LPC,
-	    "82801AB LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_IDE,
-	    "82801AB IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_USB,
-	    "82801AB USB Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_SMB,
-	    "82801AB SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACA,
-	    "82801AB AC-97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACM,
-	    "82801AB AC-97 PCI Modem",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_HPB,
-	    "82801AB Hub-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LPC,
-	    "82801BA LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB1,
-	    "82801BA USB Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_SMB,
-	    "82801BA SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB2,
-	    "82801BA USB Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACA,
-	    "82801BA AC-97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACM,
-	    "82801BA AC-97 PCI Modem",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_HPB,
-	    "82801BAM Hub-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LAN,
-	    "82801BA LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_IDE,
-	    "82801BAM IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_IDE,
-	    "82801BA IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_LPC,
-	    "82801BAM LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_HPB,
-	    "82801BA Hub-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_SMB,
-	    "82801E SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_1,
-	    "82801E LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_2,
-	    "82801E LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC,
-	    "82801CA LPC Interface",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB_1,
-	    "82801CA USB Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_SMB,
-	    "82801CA SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB_2,
-	    "82801CA USB Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_AC,
-	    "82801CA AC'97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_MOD,
-	    "82801CA AC'97 Modem Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USBC,
-	    "82801CA USB Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_IDE_1,
-	    "82801CA IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_IDE_2,
-	    "82801CA IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CAM_LPC,
-	    "82801CAM LPC Interface",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC,
-	    "82801DB LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_1,
-	    "82801DB USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_SMB,
-	    "82801DB SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_2,
-	    "82801DB USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_AC,
-	    "82801DB AC97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_MOD,
-	    "82801DB AC97 Modem Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_3,
-	    "82801DB USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBM_IDE,
-	    "82801DBM IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_IDE,
-	    "82801DB IDE Controller (UltraATA/100)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_ISA,
-	    "82801DB ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USBC,
-	    "82801DB USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LPC,
-	    "82801EB LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_SATA,
-	    "82801EB Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_0,
-	    "82801EB/ER USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_SMB,
-	    "82801EB/ER SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_1,
-	    "82801EB/ER USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_AC,
-	    "82801EB/ER AC'97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_MOD,
-	    "82801EB/ER AC'97 Modem Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_2,
-	    "82801EB/ER USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_IDE,
-	    "82801EB/ER IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_EHCI,
-	    "82801EB/ER USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_3,
-	    "82801EB/ER USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801ER_SATA,
-	    "82801ER Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH,
-	    "82820 MCH (Camino)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_AGP,
-	    "82820 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_HB,
-	    "82850 Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_HB,
-	    "82860 Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_AGP,
-	    "82850/82860 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI1,
-	    "82860 PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI2,
-	    "82860 PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI3,
-	    "82860 PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI4,
-	    "82860 PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HB,
-	    "E7500 MCH Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_DRAM,
-	    "E7500 MCH DRAM Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_B1,
-	    "E7500 MCH HI_B vppb 1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_B2,
-	    "E7500 MCH HI_B vppb 2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_C1,
-	    "E7500 MCH HI_C vppb 1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_C2,
-	    "E7500 MCH HI_C vppb 2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D1,
-	    "E7500 MCH HI_D vppb 1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D2,
-	    "E7500 MCH HI_D vppb 2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7501_HB,
-	    "E7501 MCH Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HB,
-	    "E7505 MCH Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_RAS,
-	    "E7505 MCH RAS Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_AGP,
-	    "E7505 MCH Host-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HI_B1,
-	    "E7505 MCH HI_B PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HI_B2,
-	    "E7505 MCH HI_B PCI-PCI Error Reporting",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_DRAM,
-	    "82845G/GL DRAM Controller / Host-Hub I/F Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_AGP,
-	    "82845G/GL Host-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_IGD,
-	    "82845G/GL Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_HB,
-	    "82865 Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_AGP,
-	    "82865 AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_IGD,
-	    "82865G Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_HPB,
-	    "82801EB Hub-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_HB,
-	    "82875P Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_AGP,
-	    "82875P AGP",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_CSA,
-	    "82875P PCI-CSA Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_HB,
-	    "82915P/G/GL Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_EX,
-	    "82915P/G/GL PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGD,
-	    "82915G/GL Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_HB,
-	    "82925X Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_EX,
-	    "82925X PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_HB,
-	    "82915PM/GM/GMS,82910GML Host Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_EX,
-	    "82915PM/GM PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGD,
-	    "82915GM/GMS,82910GML Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_LPC,
-	    "6300ESB LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_IDE,
-	    "6300ESB IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SATA,
-	    "6300ESB SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SMB,
-	    "6300ESB SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_ACA,
-	    "6300ESB AC'97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_ACM,
-	    "6300ESB AC'97 Modem Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB_0,
-	    "6300ESB USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB_1,
-	    "6300ESB USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_WDT,
-	    "6300ESB Watchdog Timer",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_APIC,
-	    "6300ESB Advanced Interrupt Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_EHCI,
-	    "6300ESB USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_PCIX,
-	    "6300ESB PCI-X Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_RAID,
-	    "6300ESB SATA RAID Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000X_MCH,
-	    "5000X Memory Controller Hub",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_1,
-	    "5000 Series Chipset PCI Express x4 Port 2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_2,
-	    "5000 Series Chipset PCI Express x4 Port 3",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_3,
-	    "5000 Series Chipset PCI Express x4 Port 4",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_4,
-	    "5000 Series Chipset PCI Express x4 Port 5",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_5,
-	    "5000 Series Chipset PCI Express x4 Port 6",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_6,
-	    "5000 Series Chipset PCI Express x4 Port 7",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FSB_REG,
-	    "5000 Series Chipset FSB Registers",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_RESERVED_1,
-	    "5000 Series Chipset Reserved Registers",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_RESERVED_2,
-	    "5000 Series Chipset Reserved Registers",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FBD_1,
-	    "5000 Series Chipset FBD Registers",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FBD_2,
-	    "5000 Series Chipset FBD Registers",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_7,
-	    "5000 Series Chipset PCI Express x8 Port 2-3",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_8,
-	    "5000 Series Chipset PCI Express x8 Port 4-5",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_9,
-	    "5000 Series Chipset PCI Express x8 Port 6-7",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000X_PCIE,
-	    "5000X PCI Express x16 Port 4-7",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC,
-	    "82801FB LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_LPC,
-	    "82801FBM ICH6M LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SATA,
-	    "82801FB Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FR_SATA,
-	    "82801FR Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_SATA,
-	    "82801FBM Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_0,
-	    "82801FB/FR USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_1,
-	    "82801FB/FR USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_2,
-	    "82801FB/FR USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_3,
-	    "82801FB/FR USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EHCI,
-	    "82801FB/FR USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_0,
-	    "82801FB/FR PCI Express Port #0",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_1,
-	    "82801FB/FR PCI Express Port #1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_2,
-	    "82801FB/FR PCI Express Port #2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_HDA,
-	    "82801FB/FR High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SMB,
-	    "82801FB/FR SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_ACM,
-	    "82801FB/FR AC'97 Modem Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_AC,
-	    "82801FB/FR AC'97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_IDE,
-	    "82801FB/FR IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_LPC,
-	    "63xxESB LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_SATA,
-	    "63xxESB Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_SATA_AHCI,
-	    "63xxESB AHCI Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_0,
-	    "63xxESB USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_1,
-	    "63xxESB USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_2,
-	    "63xxESB USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_3,
-	    "63xxESB USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EHCI,
-	    "63xxESB USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_1,
-	    "63xxESB PCI Express Port #1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_2,
-	    "63xxESB PCI Express Port #2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_3,
-	    "63xxESB PCI Express Port #3",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_4,
-	    "63xxESB PCI Express Port #4",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_HDA,
-	    "63xxESB High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_SMB,
-	    "63xxESB SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_IDE,
-	    "63xxESB IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945P_MCH,
-	    "82945G/P Memory Controller Hub",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945P_EXP,
-	    "82945G/P PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945P_IGD,
-	    "82945G/P Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955X_HB,
-	    "82955X Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955X_EXP,
-	    "82955X PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7230_HB,
-	    "E7230 Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7230_EXP,
-	    "E7230 PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82975X_EXP_2,
-	    "82975X PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82975X_HB,
-	    "82975X Host",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82975X_EXP,
-	    "82975X PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGDC,
-	    "82915G/GL IGD Companion",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGDC,
-	    "82915GM/GMS IGD Companion",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GM_HB,
-	    "82945GM/PM/GMS Host Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GM_IGD,
-	    "82945GM/PM/GMS Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GM_IGD_1,
-	    "82945GM/PM/GMS Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GME_HB,
-	    "82945GME Host Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GME_IGD,
-	    "82945GME Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_LPC,
-	    "82801GB/GR LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GBM_LPC,
-	    "82801GBM LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GHM_LPC,
-	    "82801GHM LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SATA,
-	    "82801GB/GR SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SATA_AHCI,
-	    "82801GB/GR AHCI SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SATA_RAID,
-	    "82801GB/GR RAID SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GBM_SATA,
-	    "82801GBM/GHM SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GBM_AHCI,
-	    "82801GBM AHCI SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GHM_RAID,
-	    "82801GHM SATA RAID Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_1,
-	    "82801GB/GR USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_2,
-	    "82801GB/GR USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_3,
-	    "82801GB/GR USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_4,
-	    "82801GB/GR USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EHCI,
-	    "82801GB/GR USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_1,
-	    "82801GB/GR PCI Express Port #1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_2,
-	    "82801GB/GR PCI Express Port #2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_3,
-	    "82801GB/GR PCI Express Port #3",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_4,
-	    "82801GB/GR PCI Express Port #4",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_HDA,
-	    "82801GB/GR High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SMB,
-	    "82801GB/GR SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_LAN,
-	    "82801GB/GR LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_ACM,
-	    "82801GB/GR AC'97 Modem Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_ACA,
-	    "82801GB/GR AC'97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_IDE,
-	    "82801GB/GR IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_5,
-	    "82801GB/GR PCI Express Port #5",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_6,
-	    "82801GB/GR PCI Express Port #6",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_LPC,
-	    "82801H LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HEM_LPC,
-	    "82801HEM LPC",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HH_LPC,
-	    "82801HH LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HO_LPC,
-	    "82801HO LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_LPC,
-	    "82801HBM LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_1,
-	    "82801H SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_AHCI6,
-	    "82801H AHCI SATA Controller with 6 ports",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_RAID,
-	    "82801H RAID SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_AHCI4,
-	    "82801H AHCI SATA Controller with 4 ports",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_2,
-	    "82801H SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HEM_SATA,
-	    "82801HEM SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_SATA_1,
-	    "82801HBM SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_SATA_2,
-	    "82081HBM SATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_USB_1,
-	    "82801H USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_USB_2,
-	    "82801H USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_USB_3,
-	    "82801H USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_USB_4,
-	    "82801H USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_USB_5,
-	    "82801H USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EHCI_1,
-	    "82801H USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EHCI_2,
-	    "82801H USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SMB,
-	    "82801H SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_1,
-	    "82801H PCI Express Port #1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_2,
-	    "82801H PCI Express Port #2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_3,
-	    "82801H PCI Express Port #3",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_4,
-	    "82801H PCI Express Port #4",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_5,
-	    "82801H PCI Express Port #5",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_6,
-	    "82801H PCI Express Port #6",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_IDE,
-	    "82801H IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_HDA,
-	    "82801H High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_THERMAL,
-	    "82801H Thermal Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IH_LPC,
-	    "82801IH LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IO_LPC,
-	    "82801IO LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IR_LPC,
-	    "82801IR LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IB_LPC,
-	    "82801IB LPC Interface Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_1,
-	    "82801I SATA Controller with 4 ports",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_2,
-	    "82801I SATA Controller with 2 ports",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_AHCI6,
-	    "82801I AHCI SATA Controller with 6 ports",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_AHCI4,
-	    "82801I AHCI SATA Controller with 4 ports",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_3,
-	    "82801I SATA Controller with 2 ports",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SMB,
-	    "82801I SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_THERMAL,
-	    "82801I Thermal Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_1,
-	    "82801I USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_2,
-	    "82801I USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_3,
-	    "82801I USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_4,
-	    "82801I USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_5,
-	    "82801I USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_6,
-	    "82801I USB UHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EHCI_1,
-	    "82801I USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EHCI_2,
-	    "82801I USB EHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_HDA,
-	    "82801I High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_1,
-	    "82801I PCI Express Port #1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_2,
-	    "82801I PCI Express Port #2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_3,
-	    "82801I PCI Express Port #3",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_4,
-	    "82801I PCI Express Port #4",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_5,
-	    "82801I PCI Express Port #5",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_6,
-	    "82801I PCI Express Port #6",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_C,
-	    "82801I (C) LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_HB,
-	    "82946GZ Host Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_IGD,
-	    "82946GZ Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_HB,
-	    "82965Q Host Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_EXP,
-	    "82965Q PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_IGD,
-	    "82965Q Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_IGD_1,
-	    "82965Q Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965G_HB,
-	    "82965G Host Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965G_EXP,
-	    "82965G PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965G_IGD,
-	    "82965G Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965G_IGD_1,
-	    "82965G Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_HB,
-	    "82Q35 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_EXP,
-	    "82Q35 PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_IGD,
-	    "82Q35 Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_IGD_1,
-	    "82Q35 Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_HB,
-	    "82G33/P35 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_EXP,
-	    "82G33 PCI Express Port",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_IGD,
-	    "82G33 Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_IGD_1,
-	    "82G33 Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_LAN,
-	    "82801I LAN Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_HB,
-	    "82Q35 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_EXP,
-	    "82Q35 PCI Express Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_IGD,
-	    "82Q35 Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_IGD_1,
-	    "82Q35 Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_HB,
-	    "82965PM Host Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80862A01,
-	    "80862A01 Mobile PCI Express Root Port",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IGD,
-	    "82965PM Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IGD_1,
-	    "82965PM Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_MEI,
-	    "82965PM MEI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IDE,
-	    "82965PM IDE Interface",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_KT,
-	    "82965PM Serial Interface",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
-	    "31244 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_DDR,
-	    "82855PM MCH Host Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_AGP,
-	    "82855PM Host-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_PM,
-	    "82855PM Power Management Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_UP,
-	    "63xxESB PCI Express Upstream Port",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_PCIX,
-	    "63xxESB PCI Express to PCI-X Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_DN_1,
-	    "63xxESB PCI Express Downstream Port #1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_DN_2,
-	    "63xxESB PCI Express Downstream Port #2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_DN_3,
-	    "63xxESB PCI Express Downstream Port #3",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1,
-	    "82830MP CPU to I/O Bridge 1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_AGP,
-	    "82830MP CPU to AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IV,
-	    "82830MP Integrated Video",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_2,
-	    "82830MP CPU to I/O Bridge 2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MCH,
-	    "82855GM Host-Hub Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_IGD,
-	    "82855GM GMCH Integrated Graphics Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MC,
-	    "82855GM GMCH Memory Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_CP,
-	    "82855GM GMCH Configuration Process",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_MCH,
-	    "E7525 Memory Controller Hub",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_MCHER,
-	    "E7525 Error Reporting Device",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_PCIE_A,
-	    "E7525 PCI Express Port A",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_PCIE_A1,
-	    "E7525 PCI Express Port A1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_PCIE_B,
-	    "E7525 PCI Express Port B",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_4x1,
-	    "ICH10 SATA2(4port1)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_2x1,
-	    "ICH10 SATA2(2port1)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10DO_TIMER,
-	    "ICH10DO Watchdog timer",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10R_TIMER,
-	    "ICH10R Watchdog timer",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_TIMER,
-	    "ICH10 Watchdog timer",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10D_TIMER,
-	    "ICH10D Watchdog timer",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_4x2,
-	    "ICH10 SATA2(4port2)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10R_AHCI,
-	    "ICH10R AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_2x2,
-	    "ICH10 SATA2(2port2)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SMB1,
-	    "ICH10 SMBus Serial Bus 1",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SMB2,
-	    "ICH10 SMBus Serial Bus 2",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2200BG,
-	    "PRO/Wireless LAN 2200BG Mini-PCI Adapter",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2225BG,
-	    "PRO/Wireless LAN 2225BG Mini-PCI Adapter",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_1,
-	    "PRO/Wireless LAN 3945ABG Mini-PCI Adapter",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1,
-	    "PRO/Wireless LAN 2915ABG Mini-PCI Adapter",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2,
-	    "PRO/Wireless LAN 2915ABG Mini-PCI Adapter",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_2,
-	    "PRO/Wireless LAN 3945ABG Mini-PCI Adapter",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_4965AGN_1,
-	    "PRO/Wireless LAN 4965AGN Mini-PCI Adapter",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_4965AGN_2,
-	    "PRO/Wireless LAN 4965AGN Mini-PCI Adapter",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU,
-	    "80310 ATU",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
-	    "82371SB (PIIX3) PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_IDE,
-	    "82371SB (PIIX3) IDE Interface",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_USB,
-	    "82371SB (PIIX3) USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437VX,
-	    "82437VX (TVX) System Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439TX,
-	    "82439TX (MTXC) System Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_ISA,
-	    "82371AB (PIIX4) PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_IDE,
-	    "82371AB (PIIX4) IDE controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_USB,
-	    "82371AB (PIIX4) USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_PMC,
-	    "82371AB (PIIX4) Power Management Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_MCH,
-	    "82810 Memory Controller Hub",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_GC,
-	    "82810 Graphics Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_DC100_MCH,
-	    "82810-DC100 Memory Controller Hub",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_DC100_GC,
-	    "82810-DC100 Graphics Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810E_MCH,
-	    "82810E Memory Controller Hub",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810E_GC,
-	    "82810E Graphics Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX,
-	    "82443LX PCI AGP Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX_AGP,
-	    "82443LX AGP Interface",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX,
-	    "82443BX Host Bridge/Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_AGP,
-	    "82443BX AGP Interface",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP,
-	    "82443BX Host Bridge/Controller (AGP disabled)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX,
-	    "82443MX Host Bridge/Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ACA,
-	    "82443MX AC-97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ISA,
-	    "82443MX PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_IDE,
-	    "82443MX IDE Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_USB,
-	    "82443MX USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_PMC,
-	    "82443MX Power Management Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX,
-	    "82443GX Host Bridge/Controller",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX_AGP,
-	    "82443GX AGP Interface",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX_NOAGP,
-	    "82443GX Host Bridge/Controller (AGP disabled)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I740,
-	    "i740 Graphics Accelerator",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB,
-	    "82454KX/GX PCI Bridge (PB)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_MC,
-	    "82451KX/GX Memory Controller (MC)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82451NX_MIOC,
-	    "82451NX Memory & I/O Controller (MIOC)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82451NX_PXB,
-	    "82451NX PCI Expander Bridge (PXB)",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21152,
-	    "S21152BB PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21154,
-	    "S21152BA,S21154AE/BE PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21555,
-	    "21555 Non-Transparent PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T,
-	    "Powerstorm 4D50T",
-	},
-	{
-	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D60T,
-	    "Powerstorm 4D60T",
-	},
-	{
-	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN,
-	    "PRISM2.5 Mini-PCI WLAN",
-	},
-	{
-	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_3877,
-	    "PRISM Indigo Mini-PCI WLAN",
-	},
-	{
-	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_3890,
-	    "PRISM Duette Mini-PCI WLAN",
-	},
-	{
-	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON,
-	    "AEON",
-	},
-	{
-	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_CBIDE2,
-	    "CBIDE2/CI-iCN NinjaATA-32Bi IDE",
-	},
-	{
-	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_CBSCII,
-	    "CBSCII NinjaSCSI-32Bi SCSI",
-	},
-	{
-	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_RSAPCI,
-	    "RSA-PCI 2-port serial",
-	},
-	{
-	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8152,
-	    "IT8152 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8211,
-	    "IT8211 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8212,
-	    "IT8212 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016,
-	    "AGX016",
-	},
-	{
-	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_ITT3204,
-	    "ITT3204 MPEG Decoder",
-	},
-	{
-	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB360,
-	    "JMB360 SATA controller",
-	},
-	{
-	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB361,
-	    "JMB361 SATA/PATA controller",
-	},
-	{
-	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB363,
-	    "JMB363 SATA/PATA controller",
-	},
-	{
-	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB365,
-	    "JMB365 SATA/PATA controller",
-	},
-	{
-	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB366,
-	    "JMB366 SATA/PATA controller",
-	},
-	{
-	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB368,
-	    "JMB368 PATA controller",
-	},
-	{
-	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMC250,
-	    "JMC250 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMC260,
-	    "JMC260 Fast Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1460,
-	    "JNIC-1460 Fibre-Channel adapter",
-	},
-	{
-	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1560,
-	    "JNIC-1560 dual Fibre-Channel adapter",
-	},
-	{
-	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_FCI1063,
-	    "FCI-1063 Fibre-Channel adapter",
-	},
-	{
-	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_FCX26562,
-	    "FCX2-6562 dual Fibre-Channel adapter",
-	},
-	{
-	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_FCX6562,
-	    "FCX-6562 Fibre-Channel adapter",
-	},
-	{
-	    PCI_VENDOR_KTI, PCI_PRODUCT_KTI_NE2KETHER,
-	    "Ethernet",
-	},
-	{
-	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_HSSI,
-	    "HSSI Interface",
-	},
-	{
-	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_DS3,
-	    "DS3 Interface",
-	},
-	{
-	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_SSI,
-	    "SSI",
-	},
-	{
-	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_DS1,
-	    "DS1",
-	},
-	{
-	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
-	    "S3 805",
-	},
-	{
-	    PCI_VENDOR_LEVELONE, PCI_PRODUCT_LEVELONE_LXT1001,
-	    "LXT-1001 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_LINEARSYS, PCI_PRODUCT_LINEARSYS_DVB_TX,
-	    "DVB Transmitter",
-	},
-	{
-	    PCI_VENDOR_LINEARSYS, PCI_PRODUCT_LINEARSYS_DVB_RX,
-	    "DVB Receiver",
-	},
-	{
-	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032,
-	    "EG1032 v2 Instant Gigabit Network Adapter",
-	},
-	{
-	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064,
-	    "EG1064 v2 Instant Gigabit Network Adapter",
-	},
-	{
-	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCMPC200,
-	    "PCMPC200",
-	},
-	{
-	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCM200,
-	    "PCM200",
-	},
-	{
-	    PCI_VENDOR_LINKSYS2, PCI_PRODUCT_LINKSYS2_IPN2220,
-	    "IPN 2220 Wireless LAN Adapter (rev 01)",
-	},
-	{
-	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C168,
-	    "82C168/82C169 (PNIC) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C115,
-	    "82C115 (PNIC II) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0440,
-	    "K56flex DSVD LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0441,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0442,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0443,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0444,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0445,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0446,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0447,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0448,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0449,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044a,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044b,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044c,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044d,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044e,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0450,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0451,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0452,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0453,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0454,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0455,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0456,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0457,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0458,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0459,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_045a,
-	    "LTMODEM",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_OR3LP26,
-	    "ORCA FPGA w/32-bit PCI ASIC core",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_OR3TP12,
-	    "ORCA FPGA w/64-bit PCI ASIC core",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC,
-	    "USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_EVDO,
-	    "Sierra Wireless AirCard 580",
-	},
-	{
-	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_FW322_323,
-	    "FW322/323 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
-	    "MX98713 (PMAC) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX987x5,
-	    "MX987x5 (PMAC) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_SMARTRN2,
-	    "Smart 16/4 PCI Ringnode Mk2",
-	},
-	{
-	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_COLLAGE25,
-	    "Collage 25 ATM adapter",
-	},
-	{
-	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_COLLAGE155,
-	    "Collage 155 ATM adapter",
-	},
-	{
-	    PCI_VENDOR_MAGMA, PCI_PRODUCT_MAGMA_SERIAL16,
-	    "16 DMA PCI-SLRS",
-	},
-	{
-	    PCI_VENDOR_MAGMA, PCI_PRODUCT_MAGMA_SERIAL4,
-	    "4 DMA PCI-SLRS",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS,
-	    "MGA PX2085 (\"Atlas\")",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM,
-	    "MGA Millennium 2064W (\"Storm\")",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MYSTIQUE,
-	    "MGA Mystique 1064SG",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM2,
-	    "MGA Millennium II 2164W",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM2_AGP,
-	    "MGA Millennium II 2164WA-B AGP",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200_PCI,
-	    "MGA G200 PCI",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200_AGP,
-	    "MGA G200 AGP",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200E_SE,
-	    "MGA G200e (ServerEngines)",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G400_AGP,
-	    "MGA G400 AGP",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION,
-	    "MGA Impression",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G100_PCI,
-	    "MGA G100 PCI",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G100_AGP,
-	    "MGA G100 AGP",
-	},
-	{
-	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G550_AGP,
-	    "MGA G550 AGP",
-	},
-	{
-	    PCI_VENDOR_MEDIAQ, PCI_PRODUCT_MEDIAQ_MQ200,
-	    "MQ200",
-	},
-	{
-	    PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN120,
-	    "MN-120 10/100 Ethernet Notebook Adapter",
-	},
-	{
-	    PCI_VENDOR_MICREL, PCI_PRODUCT_MICREL_KSZ8841,
-	    "10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_MICREL, PCI_PRODUCT_MICREL_KSZ8842,
-	    "Switched 2-port 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_VGA,
-	    "Weasel Virtual VGA",
-	},
-	{
-	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_SERIAL,
-	    "Weasel Serial Port",
-	},
-	{
-	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_CONTROL,
-	    "Weasel Control",
-	},
-	{
-	    PCI_VENDOR_MITSUBISHIELEC, PCI_PRODUCT_MITSUBISHIELEC_TORNADO,
-	    "Tornado 3000 AGP",
-	},
-	{
-	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC105,
-	    "MPC105 \"Eagle\" Host Bridge",
-	},
-	{
-	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC106,
-	    "MPC106 \"Grackle\" Host Bridge",
-	},
-	{
-	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC8240,
-	    "MPC8240 \"Kahlua\" Host Bridge",
-	},
-	{
-	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC107,
-	    "MPC107 \"Chaparral\" Host Bridge",
-	},
-	{
-	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC8245,
-	    "MPC8245 \"Kahlua II\" Host Bridge",
-	},
-	{
-	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_RAVEN,
-	    "Raven Host Bridge & Multi-Processor Interrupt Controller",
-	},
-	{
-	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_FALCON,
-	    "Falcon ECC Memory Controller Chip Set",
-	},
-	{
-	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_HAWK,
-	    "Hawk System Memory Controller & PCI Host Bridge",
-	},
-	{
-	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC5200B,
-	    "MPC5200B Host Bridge",
-	},
-	{
-	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C104H,
-	    "C104H",
-	},
-	{
-	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP104,
-	    "CP104UL",
-	},
-	{
-	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP114,
-	    "CP114",
-	},
-	{
-	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C168H,
-	    "C168H",
-	},
-	{
-	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000,
-	    "MV1000",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V2,
-	    "DAC960 RAID (v2 interface)",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V3,
-	    "DAC960 RAID (v3 interface)",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V4,
-	    "DAC960 RAID (v4 interface)",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V5,
-	    "DAC960 RAID (v5 interface)",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_3000,
-	    "eXtremeRAID 3000",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_2000,
-	    "eXtremeRAID 2000",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID,
-	    "AcceleRAID 352",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_170,
-	    "AcceleRAID 170",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_160,
-	    "AcceleRAID 160",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID1100,
-	    "eXtremeRAID 1100",
-	},
-	{
-	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID,
-	    "eXtremeRAID 2000/3000",
-	},
-	{
-	    PCI_VENDOR_MYRICOM, PCI_PRODUCT_MYRICOM_MYRINET,
-	    "Myrinet",
-	},
-	{
-	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD803,
-	    "MTD803 3-in-1 Fast Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130,
-	    "NCP130 Wireless NIC",
-	},
-	{
-	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130A2,
-	    "NCP130 rev A2 Wireless NIC",
-	},
-	{
-	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_5000,
-	    "5000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NETBOOST, PCI_PRODUCT_NETBOOST_POLICY,
-	    "Policy Accelerator",
-	},
-	{
-	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91CX42,
-	    "Universe VME bridge",
-	},
-	{
-	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91L826A,
-	    "QSpan II PCI bridge",
-	},
-	{
-	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91L8260,
-	    "PowerSpan PCI bridge",
-	},
-	{
-	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91L8261,
-	    "PowerSpan II PCI bridge",
-	},
-	{
-	    PCI_VENDOR_NATIONALINST, PCI_PRODUCT_NATIONALINST_MXI3,
-	    "MXI-3 PCI extender",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83810,
-	    "DP83810 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83815,
-	    "DP83815 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83820,
-	    "DP83820 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_HB,
-	    "CS5535 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_ISA,
-	    "CS5535 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_IDE,
-	    "CS5535 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_AUDIO,
-	    "CS5535 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_USB,
-	    "CS5535 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_VIDEO,
-	    "CS5535 Video Controller",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_NS87410,
-	    "NS87410",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_IDE,
-	    "SC1100 PCI IDE",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_AUDIO,
-	    "SC1100 XpressAUDIO",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_ISA,
-	    "SC1100 PCI-ISA bridge",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_ACPI,
-	    "SC1100 SMI/ACPI",
-	},
-	{
-	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_XBUS,
-	    "SC1100 X-Bus",
-	},
-	{
-	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7130HL,
-	    "SAA7130HL PCI video broadcast decoder",
-	},
-	{
-	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7133HL,
-	    "SAA7133HL PCI A/V broadcast decoder",
-	},
-	{
-	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7134HL,
-	    "SAA7134HL PCI A/V broadcast decoder",
-	},
-	{
-	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7135HL,
-	    "SAA7135HL PCI A/V broadcast decoder",
-	},
-	{
-	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7146AH,
-	    "SAA7146AH PCI Multimedia bridge",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810,
-	    "53c810",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_820,
-	    "53c820",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_825,
-	    "53c825",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_815,
-	    "53c815",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810AP,
-	    "53c810AP",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_860,
-	    "53c860",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1510D,
-	    "53c1510D",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_896,
-	    "53c896",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_895,
-	    "53c895",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_885,
-	    "53c885",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875,
-	    "53c875/876",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1510,
-	    "53c1510",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_895A,
-	    "53c895A",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875A,
-	    "53c875A",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1010,
-	    "53c1010",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1010_2,
-	    "53c1010 (66MHz)",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030,
-	    "53c1020/53c1030",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030R,
-	    "53c1030R",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030ZC,
-	    "53c1030ZC",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1035,
-	    "53c1035",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1035ZC,
-	    "53c1035ZC",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064,
-	    "SAS1064",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068,
-	    "SAS1068",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068_2,
-	    "SAS1068",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064E,
-	    "SAS1064E",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064E_2,
-	    "SAS1064E",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068E,
-	    "SAS1068E",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068E_2,
-	    "SAS1068E",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1066E,
-	    "SAS1066E",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064A,
-	    "SAS1064A",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1066,
-	    "SAS1066",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1078,
-	    "SAS1078 PCI",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1078_PCIE,
-	    "SAS1078 PCI Express",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J,
-	    "53c875J",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC909,
-	    "FC909",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC909A,
-	    "FC909A",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929,
-	    "FC929",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929_1,
-	    "FC929",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC919,
-	    "FC919",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC919_1,
-	    "FC919",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929X,
-	    "FC929X",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC919X,
-	    "FC919X",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC949X,
-	    "FC949X",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC939X,
-	    "FC939X",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC949E,
-	    "FC949E",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PERC_4SC,
-	    "PERC 4/SC",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_320X,
-	    "LSI Megaraid SCSI 320-X",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_320E,
-	    "LSI Megaraid SCSI 320-E",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_300X,
-	    "LSI Megaraid SATA (300-6X/300-8X)",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_SAS,
-	    "MegaRAID SAS",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_VERDE_ZCR,
-	    "MegaRAID Verde ZCR",
-	},
-	{
-	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
-	    "Packet Engines G-NIC Ethernet",
-	},
-	{
-	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_TOOLS,
-	    "Tools",
-	},
-	{
-	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO,
-	    "Video",
-	},
-	{
-	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO2,
-	    "Video II",
-	},
-	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB,
-	    "USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_CARDU,
-	    "VRC4173 PC-Card Unit",
-	},
-	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_POWERVR2,
-	    "PowerVR PCX2",
-	},
-	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72872,
-	    "uPD72872 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_BCU,
-	    "VRC4173 Bus Control Unit",
-	},
-	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_AC97U,
-	    "VRC4173 AC97 Unit",
-	},
-	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72870,
-	    "uPD72870 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72871,
-	    "uPD72871 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD720100A,
-	    "USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D,
-	    "Versa Pro LX VA26D",
-	},
-	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSALX,
-	    "Versa LX",
-	},
-	{
-	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG2070,
-	    "MagicGraph NM2070",
-	},
-	{
-	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128V,
-	    "MagicGraph 128V",
-	},
-	{
-	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128ZV,
-	    "MagicGraph 128ZV",
-	},
-	{
-	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG2160,
-	    "MagicGraph 128XD",
-	},
-	{
-	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_VGA,
-	    "MagicMedia 256AV VGA",
-	},
-	{
-	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256ZX_VGA,
-	    "MagicMedia 256ZX VGA",
-	},
-	{
-	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256XLP_AU,
-	    "MagicMedia 256XL+ Audio",
-	},
-	{
-	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU,
-	    "MagicMedia 256AV Audio",
-	},
-	{
-	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256ZX_AU,
-	    "MagicMedia 256ZX Audio",
-	},
-	{
-	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620,
-	    "GA620 1000baseSX Ethernet",
-	},
-	{
-	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T,
-	    "GA620 1000baseT Ethernet",
-	},
-	{
-	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301,
-	    "MA301 PCI IEEE 802.11b",
-	},
-	{
-	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9805,
-	    "1284 Printer port",
-	},
-	{
-	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9815,
-	    "Dual 1284 Printer port",
-	},
-	{
-	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9820,
-	    "Single UART",
-	},
-	{
-	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835,
-	    "Dual UART and 1284 Printer port",
-	},
-	{
-	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845,
-	    "Quad UART and 1284 Printer port",
-	},
-	{
-	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9855,
-	    "9855 Quad UART and 1284 Printer port",
-	},
-	{
-	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751,
-	    "7751",
-	},
-	{
-	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501,
-	    "NX82C501 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NKK, PCI_PRODUCT_NKK_NDR4600,
-	    "NDR4600 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NORTEL, PCI_PRODUCT_NORTEL_BAYSTACK_21,
-	    "Baystack 21 (Accton MPX EN5038)",
-	},
-	{
-	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128,
-	    "Imagine-128",
-	},
-	{
-	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128_2,
-	    "Imagine-128 II",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT,
-	    "RIVA TNT",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT2,
-	    "RIVA TNT2",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT2U,
-	    "RIVA TNT2 Ultra",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_VANTA,
-	    "Vanta",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT2M64,
-	    "RIVA TNT2 Model 64",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_PCIB,
-	    "MCP04 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SMBUS,
-	    "MCP04 SMBus",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_IDE,
-	    "MCP04 IDE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SATA,
-	    "MCP04 SATA",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_LAN1,
-	    "MCP04 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_LAN2,
-	    "MCP04 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SATA2,
-	    "MCP04 SATA",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800U,
-	    "GeForce 6800 Ultra",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800,
-	    "GeForce 6800",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800LE,
-	    "GeForce 6800 LE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800GT,
-	    "GeForce 6800 GT",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_PCIB1,
-	    "nForce4 PCI-ISA bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_PCIB2,
-	    "nForce4 PCI-ISA bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SMBUS,
-	    "nForce4 SMBus",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_ATA133,
-	    "nForce4 ATA133 IDE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SATA1,
-	    "nForce4 Serial ATA 1",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SATA2,
-	    "nForce4 Serial ATA 2",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_LAN1,
-	    "nForce4 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_LAN2,
-	    "nForce4 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_AC,
-	    "nForce4 AC-97",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_USB,
-	    "nForce4 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_USB2,
-	    "nForce4 USB2 Host Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_PCI,
-	    "nForce4 PCI Host Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_PCIE,
-	    "nForce4 PCIe Host Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_MEM,
-	    "nForce4 Memory Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCIB,
-	    "nForce2 PCI-ISA bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_SMBUS,
-	    "nForce2 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_ATA133,
-	    "nForce2 ATA133 IDE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_LAN,
-	    "nForce2 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_OHCI,
-	    "nForce2 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_EHCI,
-	    "nForce2 USB2 Host Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC,
-	    "nForce2 MCP-T AC-97",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AP,
-	    "nForce2 MCP-T Audio Processing Unit",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PPB,
-	    "nForce2 PCI-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_FW,
-	    "nForce2 Firewire Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_PCIB,
-	    "nForce2 Ultra 400 PCI-ISA bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_SMBUS,
-	    "nForce2 Ultra 400 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_ATA133,
-	    "nForce2 Ultra 400 ATA133 IDE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_LAN1,
-	    "nForce2 Ultra 400 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_OHCI,
-	    "nForce2 Ultra 400 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_EHCI,
-	    "nForce2 Ultra 400 USB2 Host Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_MCPT_AC,
-	    "nForce2 Ultra 400 AC-97",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_PPB,
-	    "nForce2 Ultra 400 PCI-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_LAN2,
-	    "nForce2 Ultra 400 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA,
-	    "nForce2 Ultra 400 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PCIB,
-	    "nForce3 PCI-ISA bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PCHB,
-	    "nForce3 Host-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PPB2,
-	    "nForce3 PCI-PCI",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_SMBUS,
-	    "nForce3 SMBus controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_ATA133,
-	    "nForce3 ATA133 IDE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_LAN1,
-	    "nForce3 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_OHCI,
-	    "nForce3 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_EHCI,
-	    "nForce3 USB2 Host Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_MCPT_AC,
-	    "nForce3 MCP-T AC-97",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PPB,
-	    "nForce3 PCI-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_LAN4,
-	    "nForce3 ethernet #4",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_PCIB,
-	    "nForce3 250 PCI-ISA bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB,
-	    "nForce3 250 Host-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_AGP,
-	    "nForce3 250 AGP",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA,
-	    "nForce3 250 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_SMBUS,
-	    "nForce3 250 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_ATA133,
-	    "nForce3 250 ATA133 IDE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_LAN,
-	    "nForce3 250 Ethernet",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_OHCI,
-	    "nForce3 250 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_EHCI,
-	    "nForce3 250 USB2 Host Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_MCPT_AC,
-	    "nForce3 250 MCP-T AC-97",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_PPB,
-	    "nForce3 250 PCI-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2,
-	    "nForce3 250 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOX_SMBUS,
-	    "Xbox nForce SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOX_PCHB,
-	    "Xbox nForce Host-PCI bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ALADDINTNT2,
-	    "Aladdin TNT2",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_280NVS2,
-	    "Quadro4 280 NVS",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADROFX3400SLI,
-	    "Quadro FX 3400 SLI",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE256,
-	    "GeForce 256",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEDDR,
-	    "GeForce DDR",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO,
-	    "Quadro",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2MX,
-	    "GeForce2 MX",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2MX200,
-	    "GeForce2 MX 100/200",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2GO,
-	    "GeForce2 Go",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO2_MXR,
-	    "Quadro2 MXR/EX",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2,
-	    "GeForce2 GTS",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2DDR,
-	    "GeForce2 GTS (DDR)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2BR,
-	    "GeForce2 GTS",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO2,
-	    "Quadro2",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6200,
-	    "GeForce 6200TC",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6200LE,
-	    "GeForce 6200LE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_MX460,
-	    "GeForce4 MX 460",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_MX440,
-	    "GeForce4 MX 440",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_MX420,
-	    "GeForce4 MX 420",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX440_SE,
-	    "GeForce4 MX 440 SE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_500XGL,
-	    "Quadro4 500XGL",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_200NVS,
-	    "Quadro4 200/400NVS",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX440_8X,
-	    "GeForce4 MX 440 (AGP8X)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX440_SE_8X,
-	    "GeForce4 MX 440 SE (AGP8X)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX420_8X,
-	    "GeForce4 MX 420 (AGP8X)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_580XGL,
-	    "Quadro4 580 XGL",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_280NVS,
-	    "Quadro4 280 NVS",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_380XGL,
-	    "Quadro4 380 XGL",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2_IGP,
-	    "GeForce2 Integrated GPU",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC,
-	    "nForce MCP AC-97",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_ATA100,
-	    "nForce ATA100 IDE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_USB,
-	    "nForce USB",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_LAN,
-	    "nForce Ethernet",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_7300LE,
-	    "GeForce 7300 LE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCHB,
-	    "nForce2 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PPB2,
-	    "nForce2 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM1,
-	    "nForce2 Memory Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM2,
-	    "nForce2 Memory Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM3,
-	    "nForce2 Memory Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM4,
-	    "nForce2 Memory Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM5,
-	    "nForce2 Memory Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX_IGP,
-	    "GeForce4 MX Integrated GPU",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3,
-	    "GeForce3",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3_TI200,
-	    "GeForce3 Ti 200",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3_TI500,
-	    "GeForce3 Ti 500",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_DCC,
-	    "Quadro DCC",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6150,
-	    "GeForce 6150",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6150LE,
-	    "GeForce 6150 LE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_TI4600,
-	    "GeForce4 Ti 4600",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_TI4400,
-	    "GeForce4 Ti 4400",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_TI4200,
-	    "GeForce4 Ti 4200",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_900XGL,
-	    "Quadro4 900XGL",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_750XGL,
-	    "Quadro4 750XGL",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_700XGL,
-	    "Quadro4 700XGL",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_PCIB,
-	    "nForce430 PCI-ISA bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SMBUS,
-	    "nForce430 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_ATA133,
-	    "nForce430 ATA133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SATA1,
-	    "nForce430 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SATA2,
-	    "nForce430 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_LAN1,
-	    "nForce430 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_LAN2,
-	    "nForce430 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_AC,
-	    "nForce430 AC-97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_HDA,
-	    "nForce430 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_OHCI,
-	    "nForce430 USB Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_EHCI,
-	    "nForce430 USB2 Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4800,
-	    "GeForce4 Ti 4800",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4200_8X,
-	    "GeForce4 Ti 4200 (AGP8X)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4800_SE,
-	    "GeForce4 Ti 4800 SE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4200_GO,
-	    "GeForce4 Ti 4200 Go AGP 8x",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_980_XGL,
-	    "Quadro4 980 XGL",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_780_XGL,
-	    "Quadro4 780 XGL",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F0,
-	    "C51 Host Bridge (0x02f0)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F1,
-	    "C51 Host Bridge (0x02f1)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F2,
-	    "C51 Host Bridge (0x02f2)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F3,
-	    "C51 Host Bridge (0x02f3)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F4,
-	    "C51 Host Bridge (0x02f4)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F5,
-	    "C51 Host Bridge (0x02f5)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F6,
-	    "C51 Host Bridge (0x02f6)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F7,
-	    "C51 Host Bridge (0x02f7)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC5,
-	    "C51 Memory Controller 5",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC4,
-	    "C51 Memory Controller 4",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC0,
-	    "C51 Memory Controller 0",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FB,
-	    "C51 PCI Express Bridge (0x02fb)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FC,
-	    "C51 PCI Express Bridge (0x02fc)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FD,
-	    "C51 PCI Express Bridge (0x02fd)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC1,
-	    "C51 Memory Controller 1",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02FF,
-	    "C51 Host Bridge (0x02ff)",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_FX5800U,
-	    "GeForce FX 5800 Ultra",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOXFB,
-	    "Xbox Frame Buffer",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_FX5800,
-	    "GeForce FX 5800",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_2000,
-	    "Quadro FX 2000",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_1000,
-	    "Quadro FX 1000",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5600U,
-	    "GeForce FX 5600 Ultra",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5600,
-	    "GeForce FX 5600",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5600_SE,
-	    "GeForce FX 5600 SE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5200U,
-	    "GeForce FX 5200 Ultra",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5200,
-	    "GeForce FX 5200",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5200SE,
-	    "GeForce FX 5200SE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_500,
-	    "Quadro FX 500",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5900U,
-	    "GeForce FX 5900 Ultra",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5900,
-	    "GeForce FX 5900",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5900XT,
-	    "GeForce FX 5900XT",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5950U,
-	    "GeForce FX 5950 Ultra",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_3000,
-	    "Quadro FX 3000",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5700_LE,
-	    "GeForce FX 5700 LE",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_ISA,
-	    "nForce MCP55 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SMB,
-	    "nForce MCP55 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM,
-	    "nForce MCP55 Memory Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM2,
-	    "nForce MCP55 Memory Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_IDE,
-	    "nForce MCP55 ATA133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_OHCI,
-	    "nForce MCP55 OHCI USB Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_EHCI,
-	    "nForce MCP55 EHCI USB Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_PPB,
-	    "nForce MCP55 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_HDA,
-	    "nForce MCP55 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN1,
-	    "nForce MCP55 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN2,
-	    "nForce MCP55 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_PCIE,
-	    "nForce MCP55 PCI-Express 16x Port",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA,
-	    "nForce MCP55 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA2,
-	    "nForce MCP55 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_GO_7600,
-	    "GeForce Go 7600",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_ISA,
-	    "nForce MCP61 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_HDA,
-	    "nForce MCP61 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN1,
-	    "nForce MCP61 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN2,
-	    "nForce MCP61 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA,
-	    "nForce MCP61 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_PPB_1,
-	    "nForce MCP61 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_PPB_2,
-	    "nForce MCP61 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SMB,
-	    "nForce MCP61 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_IDE,
-	    "nForce MCP61 ATA133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA2,
-	    "nForce MCP61 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA3,
-	    "nForce MCP61 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN3,
-	    "nForce MCP61 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN4,
-	    "nForce MCP61 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_8400M_GS,
-	    "GeForce 8400M GS",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_NVS140M,
-	    "Quadro NVS 140M",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA,
-	    "nForce MCP65 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LPC1,
-	    "nForce MCP65 PCI-LPC Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LPC2,
-	    "nForce MCP65 PCI-LPC Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LPC3,
-	    "nForce MCP65 PCI-LPC Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_MEM,
-	    "nForce MCP65 Memory Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_MEM2,
-	    "nForce MCP65 Memory Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SMB,
-	    "nForce MCP65 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SMU,
-	    "nForce MCP65 System Management Unit",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_IDE,
-	    "nForce MCP65 ATA133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PCI,
-	    "nForce MCP65 PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_HDA_1,
-	    "nForce MCP65 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_HDA_2,
-	    "nForce MCP65 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_1,
-	    "nForce MCP65 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_2,
-	    "nForce MCP65 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_3,
-	    "nForce MCP65 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_4,
-	    "nForce MCP65 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN1,
-	    "nForce MCP65 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN2,
-	    "nForce MCP65 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN3,
-	    "nForce MCP65 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN4,
-	    "nForce MCP65 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_1,
-	    "nForce MCP65 USB Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_2,
-	    "nForce MCP65 USB Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_3,
-	    "nForce MCP65 USB Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_4,
-	    "nForce MCP65 USB Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_1,
-	    "nForce MCP65 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_2,
-	    "nForce MCP65 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_3,
-	    "nForce MCP65 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA,
-	    "nForce MCP65 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA2,
-	    "nForce MCP65 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA3,
-	    "nForce MCP65 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA4,
-	    "nForce MCP65 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SMB,
-	    "nForce MCP67 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN1,
-	    "nForce MCP67 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN2,
-	    "nForce MCP67 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN3,
-	    "nForce MCP67 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN4,
-	    "nForce MCP67 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA,
-	    "nForce MCP67 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA2,
-	    "nForce MCP67 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA3,
-	    "nForce MCP67 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA4,
-	    "nForce MCP67 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_1,
-	    "nForce MCP67 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_2,
-	    "nForce MCP67 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_3,
-	    "nForce MCP67 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_4,
-	    "nForce MCP67 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_5,
-	    "nForce MCP67 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_6,
-	    "nForce MCP67 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_7,
-	    "nForce MCP67 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_8,
-	    "nForce MCP67 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_HDA_1,
-	    "nForce MCP67 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_HDA_2,
-	    "nForce MCP67 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_IDE,
-	    "nForce MCP67 ATA133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_IDE,
-	    "nForce MCP73 ATA133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_IDE,
-	    "nForce MCP77 ATA133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN1,
-	    "nForce MCP77 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN2,
-	    "nForce MCP77 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN3,
-	    "nForce MCP77 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN4,
-	    "nForce MCP77 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_HDA_1,
-	    "nForce MCP77 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_HDA_2,
-	    "nForce MCP77 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_HDA_3,
-	    "nForce MCP77 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_HDA_4,
-	    "nForce MCP77 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_SMB,
-	    "nForce MCP73 SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN1,
-	    "nForce MCP73 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN2,
-	    "nForce MCP73 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN3,
-	    "nForce MCP73 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN4,
-	    "nForce MCP73 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_1,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_2,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_3,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_4,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_5,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_6,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_7,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_8,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_9,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_10,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_11,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_12,
-	    "nForce MCP73 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_HDA_1,
-	    "nForce MCP73 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_HDA_2,
-	    "nForce MCP73 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN1,
-	    "nForce MCP79 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN2,
-	    "nForce MCP79 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN3,
-	    "nForce MCP79 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN4,
-	    "nForce MCP79 Gigabit Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_1,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_2,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_3,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_4,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_5,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_6,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_7,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_8,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_9,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_10,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_11,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_12,
-	    "nForce MCP77 AHCI Controller",
-	},
-	{
-	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
-	    "Riva 128",
-	},
-	{
-	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
-	    "OTI107",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3136,
-	    "OC-3136/3137 Token-Ring 16/4",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3139,
-	    "OC-3139f Fastload 16/4 Token Ring",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3140,
-	    "OC-3139/3140 RapidFire Token Ring 16/4",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3250,
-	    "OC-3250 GoCard Token Ring 16/4",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3530,
-	    "OC-3530 RapidFire Token Ring 100",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3141,
-	    "OC-3141 RapidFire Token Ring 16/4",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3540,
-	    "OC-3540 RapidFire HSTR 100/16/4",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3150,
-	    "OC-3150 RapidFire Token-Ring 16/4",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2805,
-	    "OC-2805 Ethernet",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2325,
-	    "OC-2325 Ethernet 10/100",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2183,
-	    "OC-2183/2185 Ethernet",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2326,
-	    "OC-2326 10/100-TX Ethernet",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2327,
-	    "OC-2327/2350 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC6151,
-	    "OC-6151/6152 155 Mbit ATM",
-	},
-	{
-	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OCATM,
-	    "ATM",
-	},
-	{
-	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C557,
-	    "82C557",
-	},
-	{
-	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C558,
-	    "82C558",
-	},
-	{
-	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C568,
-	    "82C568",
-	},
-	{
-	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82D568,
-	    "82D568",
-	},
-	{
-	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C621,
-	    "82C621",
-	},
-	{
-	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C822,
-	    "82C822",
-	},
-	{
-	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C861,
-	    "82C861",
-	},
-	{
-	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C700,
-	    "82C700",
-	},
-	{
-	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C701,
-	    "82C701",
-	},
-	{
-	    PCI_VENDOR_PACKETENGINES, PCI_PRODUCT_PACKETENGINES_GNICII,
-	    "G-NIC II Ethernet",
-	},
-	{
-	    PCI_VENDOR_PCHDTV, PCI_PRODUCT_PCHDTV_HD2000,
-	    "HD-2000 HDTV video capture",
-	},
-	{
-	    PCI_VENDOR_PCHDTV, PCI_PRODUCT_PCHDTV_HD5500,
-	    "HD-5500 HDTV video capture",
-	},
-	{
-	    PCI_VENDOR_PCTECH, PCI_PRODUCT_PCTECH_RZ1000,
-	    "RZ1000",
-	},
-	{
-	    PCI_VENDOR_PEAK, PCI_PRODUCT_PEAK_PCAN,
-	    "PCAN CAN controller",
-	},
-	{
-	    PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3603_TX,
-	    "FNW-3603-TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3800_TX,
-	    "FNW-3800-TX 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9030,
-	    "9030 I/O Accelrator",
-	},
-	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050,
-	    "9050 I/O Accelrator",
-	},
-	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9054,
-	    "9054 I/O Accelerator",
-	},
-	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9060ES,
-	    "9060ES PCI bus controller",
-	},
-	{
-	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9656,
-	    "9656 I/O Accelerator",
-	},
-	{
-	    PCI_VENDOR_POWERHOUSE, PCI_PRODUCT_POWERHOUSE_POWERTOP,
-	    "PowerTop PowerPC system controller",
-	},
-	{
-	    PCI_VENDOR_POWERHOUSE, PCI_PRODUCT_POWERHOUSE_POWERPRO,
-	    "PowerPro PowerPC system controller",
-	},
-	{
-	    PCI_VENDOR_PROLAN, PCI_PRODUCT_PROLAN_NE2KETHER,
-	    "Ethernet",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20265,
-	    "PDC20265 Ultra/66 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20263,
-	    "PDC20263 Ultra/66 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20275,
-	    "PDC20275 Ultra/133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20318,
-	    "PDC20318 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20319,
-	    "PDC20319 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20371,
-	    "PDC20371 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20379,
-	    "PDC20379 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20378,
-	    "PDC20378 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20375,
-	    "PDC20375 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20376,
-	    "PDC20376 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20377,
-	    "PDC20377 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40719,
-	    "PDC40719 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40519,
-	    "PDC40519 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20771,
-	    "PDC20771 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20571,
-	    "PDC20571 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20579,
-	    "PDC20579 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40779,
-	    "PDC40779 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40718,
-	    "PDC40718 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40518,
-	    "PDC40518 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20775,
-	    "PDC20775 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20575,
-	    "PDC20575 Serial ATA Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20267,
-	    "PDC20267 Ultra/100 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20246,
-	    "PDC20246 Ultra/33 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20262,
-	    "PDC20262 Ultra/66 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20268,
-	    "PDC20268 Ultra/100 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20269,
-	    "PDC20269 Ultra/133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20276,
-	    "PDC20276 Ultra/133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030,
-	    "DC5030 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20270,
-	    "PDC20270 Ultra/100 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20271,
-	    "PDC20271 Ultra/133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20617,
-	    "PDC20617 Dual Ultra/133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20620,
-	    "PDC20620 Dual Ultra/133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20621,
-	    "PDC20621 Dual Ultra/133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20618,
-	    "PDC20618 Dual Ultra/133 IDE Controler",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20619,
-	    "PDC20619 Dual Ultra/133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20277,
-	    "PDC20277 Ultra/133 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020,
-	    "ISP1020",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1022,
-	    "ISP1022",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1080,
-	    "ISP1080",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1240,
-	    "ISP1240",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2100,
-	    "ISP2100",
-	},
-	{
-	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_QLA200,
-	    "QLA200",
-	},
-	{
-	    PCI_VENDOR_QUANTUMDESIGNS, PCI_PRODUCT_QUANTUMDESIGNS_8500,
-	    "8500",
-	},
-	{
-	    PCI_VENDOR_QUANTUMDESIGNS, PCI_PRODUCT_QUANTUMDESIGNS_8580,
-	    "8580",
-	},
-	{
-	    PCI_VENDOR_QUICKLOGIC, PCI_PRODUCT_QUICKLOGIC_PCWATCHDOG,
-	    "PC Watchdog",
-	},
-	{
-	    PCI_VENDOR_RAINBOW, PCI_PRODUCT_RAINBOW_CS200,
-	    "CryptoSwift 200 PKI Accelerator",
-	},
-	{
-	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2460A,
-	    "RT2460A 802.11b",
-	},
-	{
-	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560,
-	    "RT2560 802.11b/g",
-	},
-	{
-	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561S,
-	    "RT2561S 802.11b/g",
-	},
-	{
-	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561,
-	    "RT2561 802.11b/g",
-	},
-	{
-	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2661,
-	    "RT2661 802.11b/g/n",
-	},
-	{
-	    PCI_VENDOR_RATOC, PCI_PRODUCT_RATOC_REXPCI31,
-	    "REX PCI-31/33 SCSI",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029,
-	    "8029 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139D,
-	    "8139D 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8100,
-	    "8100 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129,
-	    "8129 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E,
-	    "8101E 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138,
-	    "8138 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
-	    "8139 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169SC,
-	    "8169SC/8110SC 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
-	    "8168B/8111B 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
-	    "8169/S/SB 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8180,
-	    "8180 802.11b",
-	},
-	{
-	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8185,
-	    "8185 802.11a/b/g",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C465,
-	    "5C465 PCI-CardBus bridge",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C466,
-	    "5C466 PCI-CardBus bridge",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C475,
-	    "5C475 PCI-CardBus bridge",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RL5C476,
-	    "5C476 PCI-CardBus bridge",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C477,
-	    "5C477 PCI-CardBus bridge",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C478,
-	    "5C478 PCI-CardBus bridge",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C551,
-	    "5C551 PCI-CardBus bridge/Firewire",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C552,
-	    "5C552 PCI-CardBus bridge/Firewire",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C592,
-	    "5C592 PCI-CardBus bridge/MS/SD/Firewire",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C593,
-	    "5C593 PCI-CardBus bridge/MS/SD/Firewire",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C821,
-	    "5C821 PCI-CardBus bridge/MS/SD/MMC/SC",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C822,
-	    "5C822 PCI-CardBus bridge/MS/SD/MMC/SC",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C832,
-	    "5C832 PCI-SD/MMC/MMC+/MS/xD/Firewire",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C843,
-	    "5C843 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/Firewire",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C847,
-	    "5C847 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/Firewire",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RxDPCC,
-	    "xD-Picture Card Controller",
-	},
-	{
-	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C853,
-	    "5C853 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/SC/Firewire",
-	},
-	{
-	    PCI_VENDOR_RISCOM, PCI_PRODUCT_RISCOM_N2,
-	    "N2",
-	},
-	{
-	    PCI_VENDOR_RNS, PCI_PRODUCT_RNS_FDDI,
-	    "2200 FDDI",
-	},
-	{
-	    PCI_VENDOR_S2IO, PCI_PRODUCT_S2IO_XFRAME,
-	    "Xframe 10 Gigabit ethernet adapter",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE,
-	    "ViRGE",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO32,
-	    "Trio32",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO64,
-	    "Trio32/64",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_AURORA64P,
-	    "Aurora64V+",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO64UVP,
-	    "Trio64UV+",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_VX,
-	    "ViRGE/VX",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_868,
-	    "868",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_928,
-	    "86C928",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_864_0,
-	    "86C864-0 (\"Vision864\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_864_1,
-	    "86C864-1 (\"Vision864\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_864_2,
-	    "86C864-2 (\"Vision864\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_864_3,
-	    "86C864-3 (\"Vision864\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_964_0,
-	    "86C964-0 (\"Vision964\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_964_1,
-	    "86C964-1 (\"Vision964\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_964_2,
-	    "86C964-2 (\"Vision964\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_964_3,
-	    "86C964-3 (\"Vision964\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_968_0,
-	    "86C968-0 (\"Vision968\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_968_1,
-	    "86C968-1 (\"Vision968\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_968_2,
-	    "86C968-2 (\"Vision968\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_968_3,
-	    "86C968-3 (\"Vision968\")",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO64V2_DX,
-	    "Trio64V2/DX",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PLATO_PX,
-	    "Plato/PX",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO3D,
-	    "86C365 Trio3D",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_DX,
-	    "ViRGE/DX",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_GX2,
-	    "ViRGE/GX2",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO3D2X,
-	    "Trio3D/2X",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE3D,
-	    "Savage3D",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE3D_MV,
-	    "Savage3D+MV",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE4,
-	    "Savage4",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PROSAVAGE_KM133,
-	    "ProSavage KM133",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MX,
-	    "ViRGE/MX",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MXP,
-	    "ViRGE/MXP",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_MX_MV,
-	    "Savage/MX+MV",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_MX,
-	    "Savage/MX",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_IX_MV,
-	    "Savage/IX+MV",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_IX,
-	    "Savage/IX",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_IXC,
-	    "Savage/IXC",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE2000,
-	    "Savage2000",
-	},
-	{
-	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SONICVIBES,
-	    "SonicVibes",
-	},
-	{
-	    PCI_VENDOR_SAFENET, PCI_PRODUCT_SAFENET_SAFEXCEL,
-	    "SafeXcel",
-	},
-	{
-	    PCI_VENDOR_SAMSUNGSEMI, PCI_PRODUCT_SAMSUNGSEMI_KS8920,
-	    "KS8920 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_SANDBURST, PCI_PRODUCT_SANDBURST_QE1000,
-	    "QE1000",
-	},
-	{
-	    PCI_VENDOR_SANDBURST, PCI_PRODUCT_SANDBURST_FE1000,
-	    "FE1000",
-	},
-	{
-	    PCI_VENDOR_SEGA, PCI_PRODUCT_SEGA_BROADBAND,
-	    "Broadband Adapter",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_LE_AGP,
-	    "CNB20-LE PCI/AGP bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB30_LE_PCI,
-	    "CNB30-LE PCI bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_LE_PCI,
-	    "CNB20-LE PCI bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_HE_PCI,
-	    "CNB20-HE PCI bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_HE_AGP,
-	    "CNB20-HE PCI/AGP bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_X,
-	    "CIOB-X PCI-X bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_HE,
-	    "CMIC-HE PCI/AGP bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB30_HE,
-	    "CNB30-HE PCI bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_HE_PCI2,
-	    "CNB20-HE PCI/AGP bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_LE,
-	    "CMIC-LE PCI/AGP bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_SL,
-	    "CMIC-SL PCI/AGP bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_PPB0,
-	    "HT1000 PCI/PCI-X bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_X2,
-	    "CIOB-X2 PCI-X bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_BCM5714,
-	    "bcm5714/bcm5715 integral PCI-E to PCI-X bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_PPB1,
-	    "HT1000 PCI/PCI-X bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_E,
-	    "CIOB-E PCI-X bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB0,
-	    "HT2100 PCI-Express Bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB1,
-	    "HT2100 PCI-Express Bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB2,
-	    "HT2100 PCI-Express Bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB3,
-	    "HT2100 PCI-Express Bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4,
-	    "OSB4 southbridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5,
-	    "CSB5 southbridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6,
-	    "CSB6 southbridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000SB,
-	    "HT1000SB southbridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_IDE,
-	    "OSB4 IDE",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5_IDE,
-	    "CSB5 IDE",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_IDE,
-	    "HT-1000 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_RAID,
-	    "CSB6 IDE/RAID",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_IDE,
-	    "CSB6 IDE/RAID",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_USB,
-	    "OSB4/CSB5 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_USB,
-	    "CSB6 USB Host Controller",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_USB,
-	    "HT1000 USB",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5_LPC,
-	    "CSB5 ISA/LPC bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_LPC,
-	    "CSB6 ISA/LPC bridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_LPC,
-	    "HT1000 LPC",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_XIOAPIC,
-	    "HT1000 XIOAPIC",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_WDTIMER,
-	    "HT1000 Watchdog Timer",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_K2_SATA,
-	    "K2 SATA",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_FRODO4_SATA,
-	    "Frodo4 SATA",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_FRODO8_SATA,
-	    "Frodo8 SATA",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_SATA_1,
-	    "HT-1000 SATA",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_SATA_2,
-	    "HT-1000 SATA",
-	},
-	{
-	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
-	    "IOC3",
-	},
-	{
-	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_RAD1,
-	    "PsiTech RAD1",
-	},
-	{
-	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
-	    "Tigon Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_2000,
-	    "STG 2000X",
-	},
-	{
-	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_1764,
-	    "STG 1764X",
-	},
-	{
-	    PCI_VENDOR_SIBYTE, PCI_PRODUCT_SIBYTE_BCM1250_PCIHB,
-	    "BCM1250 PCI Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIBYTE, PCI_PRODUCT_SIBYTE_BCM1250_LDTHB,
-	    "BCM1250 LDT Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIGMA, PCI_PRODUCT_SIGMA_HOLLYWOODPLUS,
-	    "REALmagic Hollywood-Plus MPEG-2 Decoder",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_S550,
-	    "Cyber10x Serial 16550 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_S650,
-	    "Cyber10x Serial 16650 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_S850,
-	    "Cyber10x Serial 16850 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_IO550,
-	    "Cyber10x I/O 16550 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_IO650,
-	    "Cyber10x I/O 16650 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_IO850,
-	    "Cyber10x I/O 16850 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_P,
-	    "Cyber10x Parallel PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2P,
-	    "Cyber10x Parallel Dual PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S550,
-	    "Cyber10x Serial Dual 16550 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S650,
-	    "Cyber10x Serial Dual 16650 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S850,
-	    "Cyber10x Serial Dual 16850 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S1P550,
-	    "Cyber10x 2S1P 16550 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S1P650,
-	    "Cyber10x 2S1P 16650 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S1P850,
-	    "Cyber10x 2S1P 16850 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_4S550,
-	    "Cyber10x 4S 16550 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_4S650,
-	    "Cyber10x 4S 16650 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_4S850,
-	    "Cyber10x 4S 16850 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_S550,
-	    "Cyber20x Serial 16550 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_S650,
-	    "Cyber20x Serial 16650 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_S850,
-	    "Cyber20x Serial 16850 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_IO550,
-	    "Cyber20x I/O 16550 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_IO650,
-	    "Cyber20x I/O 16650 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_IO850,
-	    "Cyber20x I/O 16850 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_P,
-	    "Cyber20x Parallel PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P,
-	    "Cyber20x Parallel Dual PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S550,
-	    "Cyber20x Serial Dual 16550 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S650,
-	    "Cyber20x Serial Dual 16650 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S850,
-	    "Cyber20x Serial Dual 16850 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P1S550,
-	    "Cyber20x 2P1S 16550 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P1S650,
-	    "Cyber20x 2P1S 16650 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P1S850,
-	    "Cyber20x 2P1S 16850 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_4S550,
-	    "Cyber20x 4S 16550 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_4S650,
-	    "Cyber20x 4S 16650 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_4S850,
-	    "Cyber20x 4S 16850 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S1P550,
-	    "Cyber20x 2S1P 16550 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S1P650,
-	    "Cyber20x 2S1P 16650 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S1P850,
-	    "Cyber20x 2S1P 16850 PCI",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_PS8000P650,
-	    "PCI Serial 8000 Plus 16650",
-	},
-	{
-	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_PS8000P850,
-	    "PCI Serial 8000 Plus 16850",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C201,
-	    "86C201",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C202,
-	    "86C202",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C205,
-	    "86C205",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C503,
-	    "85C503 or 5597/5598 ISA bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_600PMC,
-	    "600 Power Mngmt Controller",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_180_SATA,
-	    "180 SATA controller",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_181_SATA,
-	    "181 SATA controller",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_182_SATA,
-	    "182 SATA controller",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_190,
-	    "190 Ethernet",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_VGA,
-	    "5597/5598 integrated VGA",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_300,
-	    "300/305 AGP VGA",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C501,
-	    "85C501",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C496,
-	    "85C496",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_530HB,
-	    "530 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_540HB,
-	    "540 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_550HB,
-	    "550 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C601,
-	    "85C601",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_620,
-	    "620 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_630,
-	    "630 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_633,
-	    "633 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_635,
-	    "635 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_640,
-	    "640 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_645,
-	    "645 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_646,
-	    "646 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_648,
-	    "648 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_650,
-	    "650 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_651,
-	    "651 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_652,
-	    "652 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_655,
-	    "655 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_658,
-	    "658 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_661,
-	    "661 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_730,
-	    "730 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_733,
-	    "733 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_735,
-	    "735 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_740,
-	    "740 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741,
-	    "741 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_745,
-	    "745 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_746,
-	    "746 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_748,
-	    "748 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_750,
-	    "750 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_751,
-	    "751 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_752,
-	    "752 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_755,
-	    "755 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_756,
-	    "756 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_760,
-	    "760 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_761,
-	    "761 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900,
-	    "900 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_961,
-	    "961 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_962,
-	    "962 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_963,
-	    "963 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_964,
-	    "964 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_965,
-	    "965 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE,
-	    "5597/5598 IDE controller",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_HB,
-	    "5597/5598 host bridge",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_530VGA,
-	    "530 GUI Accelerator+3D",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6325,
-	    "6325 AGP VGA",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6326,
-	    "6326 AGP VGA",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_USB,
-	    "5597/5598 USB host controller",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7002,
-	    "7002 USB 2.0 host controller",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC,
-	    "7012 AC-97 Sound",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016,
-	    "7016 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7018,
-	    "7018 Sound",
-	},
-	{
-	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM710,
-	    "LynxEM",
-	},
-	{
-	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM712,
-	    "LynxEM+",
-	},
-	{
-	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM720,
-	    "Lynx3DM",
-	},
-	{
-	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM810,
-	    "LynxE",
-	},
-	{
-	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM811,
-	    "LynxE",
-	},
-	{
-	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM820,
-	    "Lynx3D",
-	},
-	{
-	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM910,
-	    "Lynx",
-	},
-	{
-	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665,
-	    "FDC37C665",
-	},
-	{
-	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C922,
-	    "FDC37C922",
-	},
-	{
-	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
-	    "83C170 (\"EPIC/100\") Fast Ethernet",
-	},
-	{
-	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C175,
-	    "83C175 (\"EPIC/100\") Fast Ethernet",
-	},
-	{
-	    PCI_VENDOR_SOLIDUM, PCI_PRODUCT_SOLIDUM_AMD971,
-	    "SNP8023: AMD 971",
-	},
-	{
-	    PCI_VENDOR_SOLIDUM, PCI_PRODUCT_SOLIDUM_CLASS802,
-	    "SNP8023: Classifier Engine",
-	},
-	{
-	    PCI_VENDOR_SOLIDUM, PCI_PRODUCT_SOLIDUM_PAXWARE1100,
-	    "PAX.ware 1100 dual Gb Classifier Engine",
-	},
-	{
-	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD1947A,
-	    "CXD1947A IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD3222,
-	    "CXD3222 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_MEMSTICK,
-	    "Memory Stick I/F Controller",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUS,
-	    "PCIO Ebus2",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HMENETWORK,
-	    "PCIO Happy Meal Ethernet",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUSIII,
-	    "PCIO Ebus2 (US III)",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_ERINETWORK,
-	    "ERI Ethernet",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_FIREWIRE,
-	    "FireWire controller",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_USB,
-	    "USB controller",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_GEMNETWORK,
-	    "GEM Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA,
-	    "Simba PCI bridge",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_5821,
-	    "BCM5821",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SCA1K,
-	    "Crypto Accelerator 1000",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_PSYCHO,
-	    "psycho PCI controller",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_MS_IIep,
-	    "microSPARC IIep PCI",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIi,
-	    "UltraSPARC IIi PCI",
-	},
-	{
-	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIe,
-	    "UltraSPARC IIe PCI",
-	},
-	{
-	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_IP100A,
-	    "IP100A 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST201,
-	    "ST201 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST1023,
-	    "ST1023 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST2021,
-	    "ST2021 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
-	    "NE-34 Ethernet",
-	},
-	{
-	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C101,
-	    "82C101",
-	},
-	{
-	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C103,
-	    "82C103",
-	},
-	{
-	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C105,
-	    "82C105",
-	},
-	{
-	    PCI_VENDOR_SYMPHONY2, PCI_PRODUCT_SYMPHONY2_82C101,
-	    "82C101",
-	},
-	{
-	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_83C553,
-	    "83C553 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_FDDI,
-	    "SK-NET FDDI-xP",
-	},
-	{
-	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE,
-	    "SK-NET GE",
-	},
-	{
-	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2,
-	    "SK-9821 v2.0",
-	},
-	{
-	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
-	    "SK-NET SK-9DX1 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9D21,
-	    "SK-9D21 1000BASE-T",
-	},
-	{
-	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9D41,
-	    "SK-9D41 1000BASE-X",
-	},
-	{
-	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9SXX,
-	    "SK-9Sxx Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9E21,
-	    "SK-9E21D/SK-9E22 1000base-T",
-	},
-	{
-	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021,
-	    "TC9021 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021_ALT,
-	    "TC9021 Gigabit Ethernet (alt ID)",
-	},
-	{
-	    PCI_VENDOR_TANDEM, PCI_PRODUCT_TANDEM_SERVERNETII,
-	    "ServerNet II VIA adapter",
-	},
-	{
-	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290,
-	    "DC-290(M)",
-	},
-	{
-	    PCI_VENDOR_TEKRAM2, PCI_PRODUCT_TEKRAM2_DC690C,
-	    "DC-690C",
-	},
-	{
-	    PCI_VENDOR_TEKRAM2, PCI_PRODUCT_TEKRAM2_DC315,
-	    "DC-315/DC-395",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TLAN,
-	    "TLAN",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TVP4020,
-	    "TVP4020 Permedia 2",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV21,
-	    "TSB12LV21 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV22,
-	    "TSB12LV22 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450LYNX,
-	    "PCI4450 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410LYNX,
-	    "PCI4410 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23,
-	    "TSB12LV23 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV26,
-	    "TSB12LV26 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA22,
-	    "TSB43AA22 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA22A,
-	    "TSB43AA22/A IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA23,
-	    "TSB43AA23 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AB21,
-	    "TSB43AA21 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451LYNX,
-	    "PCI4451 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510LYNX,
-	    "PCI4510 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520LYNX,
-	    "PCI4520 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410LYNX,
-	    "PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111CB,
-	    "PCI7x21/7x11 Cardbus Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111FW,
-	    "PCI7x21/7x11 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111FM,
-	    "PCI7x21/7x11 Integrated FlashMedia Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515A,
-	    "PCI6515A Cardbus Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515ASM,
-	    "PCI6515A Cardbus Controller (Smart Card mode)",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A,
-	    "ACX100A 802.11b",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100B,
-	    "ACX100B 802.11b",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX111,
-	    "ACX111 802.11b/g",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
-	    "PCI1130 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1031,
-	    "PCI1031 PCI-PCMCIA Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1131,
-	    "PCI1131 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1250,
-	    "PCI1250 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1220,
-	    "PCI1220 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1221,
-	    "PCI1221 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1210,
-	    "PCI1210 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450,
-	    "PCI1450 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1225,
-	    "PCI1225 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251,
-	    "PCI1251 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1211,
-	    "PCI1211 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251B,
-	    "PCI1251B PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030,
-	    "PCI2030 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2050,
-	    "PCI2050 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450YENTA,
-	    "PCI4450 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410YENTA,
-	    "PCI4410 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451YENTA,
-	    "PCI4451 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510YENTA,
-	    "PCI4510 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520YENTA,
-	    "PCI4520 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7510YENTA,
-	    "PCI7510 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610YENTA,
-	    "PCI7610 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410YENTA,
-	    "PCI7410 PCI-CardBus Bridge w/ IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610SM,
-	    "PCI7610 PCI-CardBus Bridge (Smart Card mode)",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410SD,
-	    "PCI7[46]10 PCI-CardBus Bridge (SD/MMC mode)",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410MS,
-	    "PCI7[46]10 PCI-CardBus Bridge (Memory stick mode)",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1410,
-	    "PCI1410 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420,
-	    "PCI1420 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1451,
-	    "PCI1451 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1421,
-	    "PCI1421 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1620,
-	    "PCI1620 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1520,
-	    "PCI1520 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1510,
-	    "PCI1510 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1530,
-	    "PCI1530 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1515,
-	    "PCI1515 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2040,
-	    "PCI2040 PCI-DSP Bridge",
-	},
-	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7420YENTA,
-	    "PCI7420 PCI-Cardbus Bridge w/ IEEE 1394 Host controller",
-	},
-	{
-	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800L,
-	    "PCI-800L",
-	},
-	{
-	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800H,
-	    "PCI-800H",
-	},
-	{
-	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI100H,
-	    "PCI-100H",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
-	    "R4x00 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_TC35856F,
-	    "TC35856F ATM (\"Meteor\")",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_PORTEGE,
-	    "Portege Notebook",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_HOST,
-	    "Host Bridge/Controller",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ISA,
-	    "PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95,
-	    "ToPIC95 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95B,
-	    "ToPIC95B PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC97,
-	    "ToPIC97 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_SMCARD,
-	    "Smart Media Controller",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_SDCARD,
-	    "Secure Digital Card Controller Type-A",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC100,
-	    "ToPIC100 PCI-CardBus Bridge",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_OBOE,
-	    "Fast Infrared Type O",
-	},
-	{
-	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_DONAUOBOE,
-	    "Fast Infrared Type DO",
-	},
-	{
-	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_TM8000NB,
-	    "TM8000 Integrated Northbridge",
-	},
-	{
-	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_NORTHBRIDGE,
-	    "Virtual Northbridge",
-	},
-	{
-	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_LONGRUN,
-	    "LongRun Northbridge",
-	},
-	{
-	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_SDRAM,
-	    "SDRAM Controller",
-	},
-	{
-	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_BIOS_SCRATCH,
-	    "BIOS Scratchpad",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_DX,
-	    "4DWAVE DX",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_NX,
-	    "4DWAVE NX",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE_I7,
-	    "CyberBlade i7",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320,
-	    "TGUI 9320",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9350,
-	    "TGUI 9350",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9360,
-	    "TGUI 9360",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9397,
-	    "CYBER 9397",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9397DVD,
-	    "CYBER 9397DVD",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9525,
-	    "CYBER 9525",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9420,
-	    "TGUI 9420",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9440,
-	    "TGUI 9440",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9660,
-	    "TGUI 9660",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9680,
-	    "TGUI 9680",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9682,
-	    "TGUI 9682",
-	},
-	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE,
-	    "CyberBlade",
-	},
-	{
-	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT343,
-	    "HPT343/345 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT366,
-	    "HPT366/370/372 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT372A,
-	    "HPT372A IDE Controller",
-	},
-	{
-	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT302,
-	    "HPT302 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT371,
-	    "HPT371 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT374,
-	    "HPT374 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT372N,
-	    "HPT372N IDE Controller",
-	},
-	{
-	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202,
-	    "Pyramid3D TR25202",
-	},
-	{
-	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET4000_W32P_A,
-	    "ET4000w32p rev A",
-	},
-	{
-	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET4000_W32P_B,
-	    "ET4000w32p rev B",
-	},
-	{
-	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET4000_W32P_C,
-	    "ET4000w32p rev C",
-	},
-	{
-	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET4000_W32P_D,
-	    "ET4000w32p rev D",
-	},
-	{
-	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET6000,
-	    "ET6000",
-	},
-	{
-	    PCI_VENDOR_TURTLE_BEACH, PCI_PRODUCT_TURTLE_BEACH_SANTA_CRUZ,
-	    "Santa Cruz",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C881,
-	    "UM82C881 486 Chipset",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C886,
-	    "UM82C886 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8673F,
-	    "UM8673F EIDE Controller",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8881,
-	    "UM8881 HB4 486 PCI Chipset",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C891,
-	    "UM82C891",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM886A,
-	    "UM886A",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886BF,
-	    "UM8886BF",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8710,
-	    "UM8710",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886,
-	    "UM8886",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8881F,
-	    "UM8881F PCI-Host bridge",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886F,
-	    "UM8886F PCI-ISA bridge",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886A,
-	    "UM8886A",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8891A,
-	    "UM8891A",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM9017F,
-	    "UM9017F",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886N,
-	    "UM8886N",
-	},
-	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8891N,
-	    "UM8891N",
-	},
-	{
-	    PCI_VENDOR_ULSI, PCI_PRODUCT_ULSI_US201,
-	    "US201",
-	},
-	{
-	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3C2884A,
-	    "56K Voice Internal PCI Modem (WinModem)",
-	},
-	{
-	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5609,
-	    "3CP5609 PCI 16550 Modem",
-	},
-	{
-	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902,
-	    "USR997902 Gigabit Ethernet",
-	},
-	{
-	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_2415,
-	    "Wireless PCI-PCMCIA adapter",
-	},
-	{
-	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V292PBC,
-	    "V292PBC AMD290x0 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V960PBC,
-	    "V960PBC i960 Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V96DPC,
-	    "V96DPC i960 (Dual) Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6305,
-	    "VT6305 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8M800_0,
-	    "K8M800 Host",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_0,
-	    "K8T890 Host",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880,
-	    "KT880 CPU to PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_0,
-	    "K8HTB Host",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB,
-	    "VT8363 (Apollo KT133) Host Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_0351,
-	    "VT3351 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB,
-	    "VT8371 (Apollo KX133) Host Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501_MVP4,
-	    "VT8501 (Apollo MVP4) Host Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505,
-	    "VT82C505 (Pluto)",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C561,
-	    "VT82C561",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586A_IDE,
-	    "VT82C586A IDE Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C576,
-	    "VT82C576 3V",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700_IDE,
-	    "CX700 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C580VP,
-	    "VT82C580 (Apollo VP) Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_ISA,
-	    "VT82C586 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_SATA,
-	    "VT8237A Integrated SATA Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595,
-	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596A,
-	    "VT82C596A PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597,
-	    "VT82C597 (Apollo VP3) Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598PCI,
-	    "VT82C598 (Apollo MVP3) Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8605PCI,
-	    "VT8605 (Apollo ProMedia 133) Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ISA,
-	    "VT82C686A PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C691,
-	    "VT82C691 (Apollo Pro) Host-PCI",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C693,
-	    "VT82C693 (Apollo Pro Plus) Host-PCI",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926,
-	    "VT86C926 Amazon PCI-Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570M,
-	    "VT82C570M (Apollo) Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570MV,
-	    "VT82C570M (Apollo) PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_1,
-	    "KT880 CPU to PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_1351,
-	    "VT3351 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE,
-	    "VT82C586 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595_2,
-	    "VT82C595 (Apollo VP2) Host-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_2,
-	    "KT880 CPU to PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_2351,
-	    "VT3351 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_PPB_287A,
-	    "VT8251 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_PCIE1,
-	    "VT8251 PCIE Root Port1",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_PCIE2,
-	    "VT8251 PCIE Root Port2",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_VLINK,
-	    "VT8251 Ultra VLINK Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT83C572,
-	    "VT83C572 USB Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR,
-	    "VT82C586 Power Management Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043,
-	    "VT3043 (Rhine) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6306,
-	    "VT6306 IEEE 1394 Host Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M,
-	    "VT6105M (Rhine III) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB,
-	    "VT82C686A SMBus Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AC97,
-	    "VT82C686A AC-97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233_AC97,
-	    "VT8233/VT8235 AC-97 Audio Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102,
-	    "VT6102 (Rhine II) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97,
-	    "VT82C686A MC-97 Modem Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233,
-	    "VT8233 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366,
-	    "VT8366 (Apollo KT266) CPU-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8653,
-	    "VT8653 (Apollo Pro 266T) CPU-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_EHCI,
-	    "VT8237 EHCI USB Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105,
-	    "VT6105 (Rhine III) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT612X,
-	    "VT612X (Velocity) 10/100/1000 Ethernet",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8623_VGA,
-	    "VT8623 (Apollo CLE266) VGA Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8623,
-	    "VT8623 (Apollo CLE266) CPU-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233A,
-	    "VT8233A PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_SATA,
-	    "VT8237 Integrated SATA Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB,
-	    "K8HTB Host",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_PCIB,
-	    "VT8237 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6421_RAID,
-	    "VT6421 Serial RAID Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3314_IG,
-	    "VT3314 CN900 UniChrome Integrated Graphics",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237R_SATA,
-	    "VT8237R Integrated SATA Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_3351,
-	    "VT3351 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_3,
-	    "KT880 CPU to PCI bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235,
-	    "VT8235 (Apollo KT400) PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377,
-	    "VT8377 Apollo KT400 CPU to PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378,
-	    "VT8378 Apollo KM400 CPU to PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237,
-	    "VT8237 (Apollo KT600) PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_HDA,
-	    "VT8237A/VT8251 High Definition Audio Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_ISA,
-	    "VT8237A/VT82C586A PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237S_ISA,
-	    "VT8237S PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_PPB,
-	    "VT8237A PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_HB,
-	    "VT8237A Host Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_4,
-	    "KT880 CPU to PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_4351,
-	    "VT3351 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700M2_IDE,
-	    "CX700M2/VX700 IDE Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_IOAPIC,
-	    "VT3351 I/O APIC Interrupt Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
-	    "VT86C100A (Rhine-II) 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378_IG,
-	    "VT8378 KM400 UniChrome Integrated Graphics",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_5,
-	    "KT880 CPU to PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_7351,
-	    "VT3351 Host Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231,
-	    "VT8231 PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231_PWR,
-	    "VT8231 Power Management Controller",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_PPB,
-	    "VT8363 (Apollo KT133) PCI to AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB,
-	    "VT8371 (Apollo KX133) PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501AGP,
-	    "VT8501 (Apollo MVP4) CPU-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP,
-	    "VT82C597 (Apollo VP3) CPU-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598AGP,
-	    "VT82C598 (Apollo MVP3) CPU-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8605AGP,
-	    "VT8605 (Apollo ProMedia 133) Host-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_A238,
-	    "K8T890 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8633AGP,
-	    "VT8633 (Apollo Pro 266) CPU-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366AGP,
-	    "VT8366 (Apollo KT266) CPU-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377AGP,
-	    "VT8377 CPU-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_AGP,
-	    "K8HTB AGP",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377CEAGP,
-	    "VT8377CE CPU-AGP Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3237_PPB,
-	    "K8T890 North / VT8237 South PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_C238,
-	    "K8T890 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_D238,
-	    "K8T890 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_E238,
-	    "K8T890 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_F238,
-	    "K8T890 PCI-PCI Bridge",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
-	    "GDT6000/6020/6050",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B,
-	    "GDT6000B/6010",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x10,
-	    "GDT6110/6510",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x20,
-	    "GDT6120/6520",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6530,
-	    "GDT6530",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6550,
-	    "GDT6550",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17,
-	    "GDT6117/6517",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27,
-	    "GDT6127/6527",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537,
-	    "GDT6537",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557,
-	    "GDT6557/6557-ECC",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x15,
-	    "GDT6115/6515",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x25,
-	    "GDT6125/6525",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6535,
-	    "GDT6535",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6555,
-	    "GDT6555/6555-ECC",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RP,
-	    "GDT6[15]17RP",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RP,
-	    "GDT6[15]27RP",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RP,
-	    "GDT6537RP",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557RP,
-	    "GDT6557RP",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RP,
-	    "GDT6[15]11RP",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RP,
-	    "GDT6[15]21RP",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RD,
-	    "GDT6[15]17RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RD,
-	    "GDT6[5]127RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RD,
-	    "GDT6537RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557RD,
-	    "GDT6557RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RD,
-	    "GDT6[15]11RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RD,
-	    "GDT6[15]21RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x18RD,
-	    "GDT6[156]18RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x28RD,
-	    "GDT6[156]28RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x38RD,
-	    "GDT6[56]38RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x58RD,
-	    "GDT6[56]58RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RP2,
-	    "GDT6[15]17RP2",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RP2,
-	    "GDT6[15]27RP2",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RP2,
-	    "GDT6537RP2",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RP2,
-	    "GDT6[15]11RP2",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RP2,
-	    "GDT6[15]21RP2",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x13RS,
-	    "GDT6513RS",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x23RS,
-	    "GDT6523RS",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6518RS,
-	    "GDT6518RS",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x28RS,
-	    "GDT6x28RS",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x38RS,
-	    "GDT6x38RS",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x58RS,
-	    "GDT6x58RS",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x33RS,
-	    "GDT6x33RS",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x43RS,
-	    "GDT6x43RS",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x53RS,
-	    "GDT6x53RS",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x63RS,
-	    "GDT6x63RS",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x13RN,
-	    "GDT7x13RN",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x23RN,
-	    "GDT7x23RN",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x18RN,
-	    "GDT7[156]18RN",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x28RN,
-	    "GDT7[156]28RN",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x38RN,
-	    "GDT7[56]38RN",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x58RN,
-	    "GDT7[56]58RN",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x43RN,
-	    "GDT7[56]43RN",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x53RN,
-	    "GDT7x53RN",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x63RN,
-	    "GDT7x63RN",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_4x13RZ,
-	    "GDT4x13RZ",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_4x23RZ,
-	    "GDT4x23RZ",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x13RZ,
-	    "GDT8x13RZ",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x23RZ,
-	    "GDT8x23RZ",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x33RZ,
-	    "GDT8x33RZ",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x43RZ,
-	    "GDT8x43RZ",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x53RZ,
-	    "GDT8x53RZ",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x63RZ,
-	    "GDT8x63RZ",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x19RD,
-	    "GDT6[56]19RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x29RD,
-	    "GDT6[56]29RD",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x19RN,
-	    "GDT7[56]19RN",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x29RN,
-	    "GDT7[56]29RN",
-	},
-	{
-	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_ICP,
-	    "ICP",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C592,
-	    "82C592 CPU Bridge",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C593,
-	    "82C593 ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C594,
-	    "82C594 Wildcat System Controller",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C596597,
-	    "82C596/597 Wildcat ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C541,
-	    "82C541",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C543,
-	    "82C543",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C532,
-	    "82C532",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C534,
-	    "82C534",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C535,
-	    "82C535",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C147,
-	    "82C147",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C975,
-	    "82C975",
-	},
-	{
-	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C925,
-	    "82C925",
-	},
-	{
-	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL,
-	    "Virtual SVGA",
-	},
-	{
-	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL2,
-	    "Virtual SVGA II",
-	},
-	{
-	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000,
-	    "P9000",
-	},
-	{
-	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9100,
-	    "P9100",
-	},
-	{
-	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C193A,
-	    "WD33C193A",
-	},
-	{
-	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C196A,
-	    "WD33C196A",
-	},
-	{
-	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C197A,
-	    "WD33C197A",
-	},
-	{
-	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD7193,
-	    "WD7193",
-	},
-	{
-	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD7197,
-	    "WD7197",
-	},
-	{
-	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C296A,
-	    "WD33C296A",
-	},
-	{
-	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD34C296,
-	    "WD34C296",
-	},
-	{
-	    PCI_VENDOR_WD, PCI_PRODUCT_WD_90C,
-	    "90C",
-	},
-	{
-	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83769F,
-	    "W83769F",
-	},
-	{
-	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_0,
-	    "W83C553F PCI-ISA Bridge",
-	},
-	{
-	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_1,
-	    "W83C553F IDE Controller",
-	},
-	{
-	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C840F,
-	    "W89C840F 10/100 Ethernet",
-	},
-	{
-	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F,
-	    "W89C940F Ethernet",
-	},
-	{
-	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F_1,
-	    "W89C940F Ethernet",
-	},
-	{
-	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W6692,
-	    "W6692 ISDN",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI,
-	    "NinjaSCSI-32Bi SCSI",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJATA32BI,
-	    "NinjaATA-32Bi IDE",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE,
-	    "NinjaSCSI-32UDE SCSI",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI_KME,
-	    "NinjaSCSI-32Bi SCSI (KME)",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJATA32BI_KME,
-	    "NinjaATA-32Bi IDE (KME)",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_IODATA,
-	    "NinjaSCSI-32UDE SCSI (IODATA)",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC,
-	    "NinjaSCSI-32UDE SCSI (LOGITEC)",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC2,
-	    "NinjaSCSI-32UDE SCSI (LOGITEC2)",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_BUFFALO,
-	    "NinjaSCSI-32UDE SCSI (BUFFALO)",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_CF32A,
-	    "CF32A CompactFlash Adapter",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_CF32A_BUFFALO,
-	    "CF32A CF Adapter (BUFFALO)",
-	},
-	{
-	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_KME,
-	    "NPATA-32 IDE (KME)",
-	},
-	{
-	    PCI_VENDOR_XENSOURCE, PCI_PRODUCT_XENSOURCE_XENPLATFORM,
-	    "Xen Platform Device",
-	},
-	{
-	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3,
-	    "X3201-3 Fast Ethernet Controller",
-	},
-	{
-	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143,
-	    "X3201-3 Fast Ethernet Controller (21143)",
-	},
-	{
-	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_WINGLOBAL,
-	    "WinGlobal Modem",
-	},
-	{
-	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56,
-	    "56k Modem",
-	},
-	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724,
-	    "724 Audio",
-	},
-	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740,
-	    "740 Audio",
-	},
-	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740C,
-	    "740C (DS-1) Audio",
-	},
-	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724F,
-	    "724F (DS-1) Audio",
-	},
-	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744B,
-	    "744 (DS-1S) Audio",
-	},
-	{
-	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF754,
-	    "754 (DS-1E) Audio",
-	},
-	{
-	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221,
-	    "1221",
-	},
-	{
-	    PCI_VENDOR_ZIATECH, PCI_PRODUCT_ZIATECH_ZT8905,
-	    "PCI-ST32 Bridge",
-	},
-	{
-	    PCI_VENDOR_ZORAN, PCI_PRODUCT_ZORAN_ZR36120,
-	    "Video Controller",
-	},
+static const uint16_t pci_products[] = {
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C985, 
+	    5261, 5267, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C996, 
+	    5284, 5290, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556MODEM, 
+	    5302, 5308, 5313, 5322, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C940, 
+	    5328, 5267, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C339, 
+	    5334, 5340, 5350, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C359, 
+	    5359, 5340, 5350, 5365, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C450TX, 
+	    5368, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C575TX, 
+	    5384, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C575BTX, 
+	    5393, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C575CTX, 
+	    5404, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590, 
+	    5415, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595TX, 
+	    5421, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595T4, 
+	    5430, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595MII, 
+	    5439, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C555, 
+	    5449, 5377, 5313, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C154G72, 
+	    5455, 4647, 4472, 5467, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556, 
+	    5302, 5377, 5313, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556B, 
+	    5475, 5377, 5313, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_E, 
+	    5482, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656_M, 
+	    5482, 5492, 5322, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656B_E, 
+	    5496, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656B_M, 
+	    5496, 5492, 5322, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656C_E, 
+	    5507, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C656C_M, 
+	    5507, 5492, 5322, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CSOHO100TX, 
+	    5518, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CRWE777A, 
+	    5531, 5541, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C804, 
+	    5552, 5558, 5567, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_TOKEN, 
+	    5571, 5577, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900TPO, 
+	    5582, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900COMBO, 
+	    5592, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905TX, 
+	    5604, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905T4, 
+	    5613, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900BTPO, 
+	    5622, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900BCOMBO, 
+	    5633, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900BTPC, 
+	    5646, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BTX, 
+	    5657, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BT4, 
+	    5667, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BCOMBO, 
+	    5677, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905BFX, 
+	    5690, 5700, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905CTX, 
+	    5704, 5377, 5275, 5714, 5717, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905CXTX, 
+	    5723, 5377, 5275, 5714, 5717, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C920BEMBW, 
+	    5734, 702, 2459, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C910SOHOB, 
+	    5749, 5755, 5769, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C980SRV, 
+	    5777, 5783, 5467, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C980CTXM, 
+	    5790, 5377, 5275, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990, 
+	    5801, 5377, 5275, 5714, 5810, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX95, 
+	    5814, 5377, 5275, 5714, 5810, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990TX97, 
+	    5827, 5377, 5275, 5714, 5810, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C990B, 
+	    5840, 5377, 5275, 5714, 5810, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990FX, 
+	    5847, 5700, 5275, 5714, 5810, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR95, 
+	    5857, 5377, 5275, 5714, 5810, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CR990SVR97, 
+	    5871, 5377, 5275, 5714, 5810, 0,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C990BSVR, 
+	    5885, 5377, 5275, 5714, 5810, 0,
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO, 
+	    5895, 0,
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO2, 
+	    5902, 0,
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_BANSHEE, 
+	    5910, 0,
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO3, 
+	    5918, 0,
+	    PCI_VENDOR_3DFX, PCI_PRODUCT_3DFX_VOODOO5, 
+	    5895, 5926, 0,
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_300SX, 
+	    5930, 5936, 0,
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_500TX, 
+	    5930, 5942, 0,
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_DELTA, 
+	    5930, 5948, 0,
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA, 
+	    5930, 5954, 0,
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_500MX, 
+	    5930, 5963, 0,
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA2, 
+	    5930, 5954, 5969, 0,
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_GAMMA, 
+	    5930, 5971, 0,
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA2V, 
+	    5930, 5954, 5977, 0,
+	    PCI_VENDOR_3DLABS, PCI_PRODUCT_3DLABS_PERMEDIA3, 
+	    5930, 5954, 5980, 0,
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE, 
+	    5982, 5991, 5995, 6000, 0,
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_ESCALADE_ASIC, 
+	    5982, 5991, 5995, 6011, 6021, 6000, 0,
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9000, 
+	    6028, 6021, 5995, 0,
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9550, 
+	    6033, 6021, 5995, 0,
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9650, 
+	    6038, 6021, 5995, 0,
+	    PCI_VENDOR_3WARE, PCI_PRODUCT_3WARE_9690, 
+	    6043, 6021, 5995, 0,
+	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500, 
+	    6048, 5377, 5275, 0,
+	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_PCM200, 
+	    6055, 5377, 5275, 0,
+	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2000VX, 
+	    6062, 5377, 5275, 6071, 0,
+	    PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500MX, 
+	    6077, 5377, 5275, 0,
+	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2188, 
+	    6086, 6091, 6096, 6103, 0,
+	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2051_HB, 
+	    6110, 625, 6115, 4507, 6122, 6131, 6137, 0,
+	    PCI_VENDOR_ACC, PCI_PRODUCT_ACC_2051_ISA, 
+	    6110, 625, 6115, 4507, 6122, 6145, 6137, 0,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP850U, 
+	    6150, 6161, 6166, 6000, 0,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP860, 
+	    6170, 6161, 6166, 6000, 0,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP860A, 
+	    6177, 6161, 6166, 6000, 0,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP865, 
+	    6186, 6161, 6166, 6000, 0,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_ATP865A, 
+	    6193, 6161, 6166, 6000, 0,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710, 
+	    6202, 6210, 0,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712UW, 
+	    6215, 6210, 0,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712U, 
+	    6225, 6210, 0,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6712S, 
+	    6234, 6210, 0,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6710D, 
+	    6243, 6210, 0,
+	    PCI_VENDOR_ACARD, PCI_PRODUCT_ACARD_AEC6715UW, 
+	    6252, 6210, 0,
+	    PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_MPX5030, 
+	    6262, 6266, 5275, 0,
+	    PCI_VENDOR_ACCTON, PCI_PRODUCT_ACCTON_EN2242, 
+	    6276, 5377, 5275, 0,
+	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435, 
+	    6283, 6096, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1445, 
+	    6289, 6096, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1449, 
+	    6295, 6301, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1451, 
+	    6309, 6315, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1461, 
+	    6324, 6315, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1531, 
+	    6330, 6315, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1533, 
+	    6336, 6301, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1541, 
+	    6342, 6315, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1543, 
+	    6348, 6301, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1563, 
+	    6354, 6301, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M1689, 
+	    6360, 6315, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M3309, 
+	    6366, 6372, 6377, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M4803, 
+	    6385, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5257, 
+	    6391, 625, 321, 5322, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5229, 
+	    6397, 6161, 6166, 6000, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5237, 
+	    6403, 6409, 6413, 6417, 6000, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5239, 
+	    6422, 6409, 6428, 6417, 6000, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5243, 
+	    6432, 6438, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5249, 
+	    6446, 6452, 6467, 625, 6103, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5261, 
+	    6470, 1390, 5275, 6000, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5451, 
+	    6476, 6482, 6000, 6490, 2447, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5453, 
+	    6496, 6482, 6000, 5322, 2447, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5455, 
+	    6502, 6482, 6000, 6490, 2447, 0,
+	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M7101, 
+	    6508, 3761, 6514, 6000, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7850, 
+	    6525, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7855, 
+	    6534, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC5900, 
+	    6543, 6552, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC5905, 
+	    6556, 6552, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC6915, 
+	    6565, 5377, 5275, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7860, 
+	    6574, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_APA1480, 
+	    6583, 6592, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940AU, 
+	    6598, 6592, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7870, 
+	    6608, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940, 
+	    6617, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_3940, 
+	    6626, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_3985, 
+	    6635, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2944, 
+	    6644, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7895, 
+	    6653, 6592, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_AIC7880, 
+	    6662, 6592, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940U, 
+	    6617, 6592, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_3940U, 
+	    6626, 6592, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_389XU, 
+	    6671, 6592, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2944U, 
+	    6644, 6592, 0,
+	    PCI_VENDOR_ADP, PCI_PRODUCT_ADP_2940UP, 
+	    6617, 6592, 6680, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2940U2, 
+	    6684, 6695, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2930U2, 
+	    6698, 6695, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7890, 
+	    6709, 6695, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2B, 
+	    6720, 6695, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2D, 
+	    6732, 6695, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7896, 
+	    6744, 6695, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892A, 
+	    6755, 6765, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892B, 
+	    6770, 6765, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892D, 
+	    6780, 6765, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892P, 
+	    6790, 6765, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899A, 
+	    6800, 6765, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899B, 
+	    6810, 6765, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899D, 
+	    6820, 6765, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899F, 
+	    6830, 5995, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899P, 
+	    6840, 6765, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC2622, 
+	    6850, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S, 
+	    6859, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2120S, 
+	    6869, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S_SUB2M, 
+	    6859, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2410SA, 
+	    6879, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAR2810SA, 
+	    6890, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC364, 
+	    6901, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR5400S, 
+	    6909, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_2QC, 
+	    519, 6919, 6924, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_3QC, 
+	    519, 6919, 6929, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_HP_M110_G2, 
+	    6934, 6937, 6942, 2202, 6945, 0,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_SERVERAID, 
+	    6956, 6966, 6970, 0,
+	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139, 
+	    6978, 5275, 0,
+	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_RHINEII, 
+	    6983, 6989, 5377, 5275, 0,
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981, 
+	    6992, 6998, 5377, 5275, 0,
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN983, 
+	    7006, 7012, 5377, 5275, 0,
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985, 
+	    7024, 7030, 5377, 5275, 0,
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM5120, 
+	    7042, 7051, 625, 6417, 6103, 0,
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM8211, 
+	    7059, 7067, 7074, 7082, 0,
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM9511, 
+	    7087, 7095, 5377, 5275, 0,
+	    PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_ADM9513, 
+	    7108, 7095, 5377, 5275, 0,
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A, 
+	    0,
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200B, 
+	    0,
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_ULTRA, 
+	    7116, 0,
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_WIDE, 
+	    7129, 0,
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_U2W, 
+	    7139, 0,
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_U3W, 
+	    7151, 0,
+	    PCI_VENDOR_AGILENT, PCI_PRODUCT_AGILENT_TACHYON_DX2, 
+	    7163, 7171, 7175, 6000, 0,
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4xxx, 
+	    7178, 4647, 4472, 5467, 0,
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PCI350, 
+	    7192, 4647, 4472, 5467, 0,
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_MPI350, 
+	    7199, 5313, 4647, 4472, 5467, 0,
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4500, 
+	    7206, 4647, 4472, 5467, 0,
+	    PCI_VENDOR_AIRONET, PCI_PRODUCT_AIRONET_PC4800, 
+	    7213, 4647, 4472, 5467, 0,
+	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24, 
+	    7220, 0,
+	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT25, 
+	    7225, 0,
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC, 
+	    7230, 7237, 5275, 0,
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_ACENIC_COPPER, 
+	    7230, 7248, 5275, 0,
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5700, 
+	    7230, 7258, 5290, 5275, 0,
+	    PCI_VENDOR_ALTEON, PCI_PRODUCT_ALTEON_BCM5701, 
+	    7230, 7266, 5290, 5275, 0,
+	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1000, 
+	    7274, 5267, 5275, 0,
+	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1001, 
+	    7281, 5267, 5275, 0,
+	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC9100, 
+	    7288, 5267, 5275, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_HT, 
+	    7295, 7298, 7304, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_ADDR, 
+	    7295, 7298, 7333, 7341, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_DRAM, 
+	    7295, 7298, 7345, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_MISC, 
+	    7295, 7298, 7350, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F10_HT, 
+	    7298, 7364, 7304, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F10_ADDR, 
+	    7298, 7364, 7333, 7341, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F10_DRAM, 
+	    7298, 7364, 7345, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F10_MISC, 
+	    7298, 7364, 7350, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F10_LINK, 
+	    7298, 7364, 7374, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F11_HT, 
+	    7298, 7379, 7304, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F11_ADDR, 
+	    7298, 7379, 7333, 7341, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F11_DRAM, 
+	    7298, 7379, 7345, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F11_MISC, 
+	    7298, 7379, 7350, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_F11_LINK, 
+	    7298, 7379, 7374, 7319, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_PCI, 
+	    7389, 5275, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCNET_HOME, 
+	    7399, 7410, 5275, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AM_1771_MBW, 
+	    7418, 7426, 7429, 7434, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCSCSI_PCI, 
+	    7438, 6210, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_PCHB, 
+	    7449, 7455, 6315, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_VGA, 
+	    7449, 7455, 7458, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_GEODELX_AES, 
+	    7449, 7455, 7462, 7466, 7475, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_PCISB, 
+	    7481, 7488, 625, 7498, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_PCIB, 
+	    7481, 6301, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_FLASH, 
+	    7481, 7504, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_AUDIO, 
+	    7481, 6490, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_OHCI, 
+	    7481, 7510, 6409, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_EHCI, 
+	    7481, 7515, 6409, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_UDC, 
+	    7481, 7520, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_UOC, 
+	    7481, 7524, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_CS5536_IDE, 
+	    7481, 6166, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC520_SC, 
+	    7528, 7533, 6, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_SC, 
+	    7539, 6, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC751_PPB, 
+	    7539, 7546, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_IGR4_AGP, 
+	    7554, 7558, 7563, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_IGR4_PPB, 
+	    7554, 7558, 7546, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_NB, 
+	    7567, 7574, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC762_PPB, 
+	    7567, 7563, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_SC, 
+	    7580, 6, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_SC761_PPB, 
+	    7580, 7546, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC755_ISA, 
+	    7587, 6301, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC755_IDE, 
+	    7587, 6166, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC755_PMC, 
+	    7587, 7594, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC755_USB, 
+	    7587, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_ISA, 
+	    7599, 6301, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_IDE, 
+	    7599, 6166, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_PMC, 
+	    7599, 3761, 6514, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC756_USB, 
+	    7599, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_ISA, 
+	    7606, 7498, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_IDE, 
+	    7606, 6166, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_PMC, 
+	    7606, 3761, 6514, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_USB, 
+	    7606, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_ISA, 
+	    7613, 7620, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_IDE, 
+	    7613, 7632, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PMC, 
+	    7613, 3761, 6514, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_AC, 
+	    7613, 7637, 6490, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_MD, 
+	    7613, 7637, 5322, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_PPB, 
+	    7613, 7546, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC768_USB, 
+	    7613, 6409, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCIX8131_PPB, 
+	    7642, 7650, 7656, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCIX8131_APIC, 
+	    7642, 7663, 7666, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AGP8151_DEV, 
+	    7671, 7563, 2447, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AGP8151_PPB, 
+	    7671, 7563, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCIX_PPB, 
+	    7679, 7650, 6103, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PCIX_APIC, 
+	    7687, 7650, 7695, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111, 
+	    7702, 7710, 7714, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_USB_7461, 
+	    7702, 7718, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_ETHER, 
+	    7702, 5275, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_USB, 
+	    7702, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_LPC, 
+	    7702, 7723, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_IDE, 
+	    7702, 6166, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_SMB, 
+	    7702, 7727, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_ACPI, 
+	    7702, 7594, 6000, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC, 
+	    7702, 7637, 6490, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_MC97, 
+	    7702, 7733, 5322, 0,
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_AC_756b, 
+	    7702, 7738, 7594, 6000, 0,
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID, 
+	    7743, 0,
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID2, 
+	    7743, 5969, 0,
+	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID3, 
+	    7743, 5980, 0,
+	    PCI_VENDOR_ANALOG, PCI_PRODUCT_ANALOG_SAFENET, 
+	    4857, 7752, 7759, 7771, 0,
+	    PCI_VENDOR_ANTARES, PCI_PRODUCT_ANTARES_TC9021, 
+	    4887, 5267, 5275, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT, 
+	    7781, 6315, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GC, 
+	    7788, 7794, 7710, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_CONTROL, 
+	    7802, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PLANB, 
+	    7810, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_OHARE, 
+	    7816, 7710, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT2, 
+	    7781, 6315, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_HEATHROW, 
+	    7822, 7710, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PADDINGTON, 
+	    7831, 7710, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO_USB, 
+	    7842, 6409, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH1, 
+	    7851, 6315, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH2, 
+	    7851, 6315, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP, 
+	    7851, 7563, 3047, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC, 
+	    7860, 5275, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KEYLARGO, 
+	    7842, 7710, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC2, 
+	    7860, 5275, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_MACIO, 
+	    7865, 7710, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_USB, 
+	    7865, 6409, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_AGP, 
+	    7865, 7563, 3047, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI1, 
+	    7865, 6315, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_PCI2, 
+	    7865, 6315, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP2, 
+	    7851, 7563, 3047, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH3, 
+	    7851, 6315, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH4, 
+	    7851, 6315, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_PANGEA_FW, 
+	    7865, 7872, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_FW, 
+	    7851, 7872, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_GMAC3, 
+	    7860, 5275, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_ATA, 
+	    7851, 7881, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH_AGP3, 
+	    7851, 7563, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH5, 
+	    7851, 6315, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_UNINORTH6, 
+	    7851, 6315, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_KAUAI, 
+	    7889, 5991, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID, 
+	    7895, 7710, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID_USB, 
+	    7895, 6409, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_USB, 
+	    7904, 6409, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2, 
+	    7904, 7907, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_FW, 
+	    7904, 7872, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_UATA, 
+	    7904, 7914, 6000, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB1, 
+	    7919, 7546, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB2, 
+	    7919, 7546, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB3, 
+	    7919, 7546, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB4, 
+	    7919, 7546, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_PPB5, 
+	    7919, 7546, 6103, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_U3_AGP, 
+	    7919, 7563, 3047, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_GMAC, 
+	    7860, 5275, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA, 
+	    7922, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_ATA, 
+	    7922, 5991, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_GMAC, 
+	    7922, 7860, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_FW, 
+	    7922, 7872, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_PCI1, 
+	    7922, 625, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_PCI2, 
+	    7922, 625, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_PCI3, 
+	    7922, 625, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_HT, 
+	    7922, 7304, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_AGP, 
+	    7895, 5969, 7563, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_PCI1, 
+	    7895, 5969, 625, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_PCI2, 
+	    7895, 5969, 625, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_ATA, 
+	    7895, 5969, 5991, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_FW, 
+	    7895, 5969, 7929, 0,
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_GMAC, 
+	    7895, 5969, 7860, 0,
+	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV, 
+	    7938, 0,
+	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_2000PV, 
+	    7945, 0,
+	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_2000MT, 
+	    7952, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1110, 
+	    7959, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1120, 
+	    7968, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1130, 
+	    7977, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1160, 
+	    7986, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1170, 
+	    7995, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1200, 
+	    8004, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1200_B, 
+	    8004, 8013, 4963, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1202, 
+	    8017, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1210, 
+	    8026, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1220, 
+	    8035, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1230, 
+	    8044, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1260, 
+	    8053, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1270, 
+	    8062, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1280, 
+	    8071, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1380, 
+	    8080, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1381, 
+	    8089, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1680, 
+	    8098, 0,
+	    PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1681, 
+	    8107, 0,
+	    PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A, 
+	    8116, 5377, 5275, 0,
+	    PCI_VENDOR_ASUSTEK, PCI_PRODUCT_ASUSTEK_HFCPCI, 
+	    8125, 0,
+	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_ETHERNET_GIGA, 
+	    8130, 5267, 5275, 5467, 0,
+	    PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_ETHERNET_100, 
+	    8133, 5700, 8136, 5275, 5467, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_3150, 
+	    8141, 8148, 8157, 8162, 8168, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_3154, 
+	    8173, 8180, 8184, 8187, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_3E50, 
+	    8141, 8157, 8192, 8200, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_3E54, 
+	    8173, 8205, 8192, 8211, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS100_4136, 
+	    8141, 8216, 8223, 8228, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS200_A7, 
+	    8141, 8233, 8248, 8253, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_AD, 
+	    8141, 8258, 8263, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_AE, 
+	    8141, 8258, 8266, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_AF, 
+	    8141, 8269, 8276, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_AG, 
+	    8173, 8279, 540, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_AH, 
+	    8141, 8282, 8289, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_AI, 
+	    8141, 8292, 8297, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_AJ, 
+	    8141, 8292, 8300, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_AK, 
+	    8173, 8303, 8306, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_AP, 
+	    8141, 8309, 8314, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_AQ, 
+	    8141, 8317, 8324, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV360_AR, 
+	    8141, 8327, 8334, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_AS, 
+	    8141, 8309, 8337, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_AT, 
+	    8173, 8340, 8343, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_AV, 
+	    8173, 8346, 8352, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32, 
+	    8355, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_LE_S, 
+	    8141, 8309, 8362, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_XT_S, 
+	    8141, 8309, 8375, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS250_B7, 
+	    8141, 8378, 8383, 8387, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R200_BB, 
+	    8141, 8393, 8398, 8402, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R200_BC, 
+	    8141, 8393, 8398, 8405, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS100_4336, 
+	    8141, 8408, 8416, 8421, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS200_4337, 
+	    8141, 8426, 8444, 8449, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_200, 
+	    8454, 8458, 6490, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_PPB, 
+	    8464, 7546, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_EHCI, 
+	    8464, 8470, 6417, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_OHCI_1, 
+	    8464, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_OHCI_2, 
+	    8464, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_200, 
+	    8464, 8454, 6166, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_ISA, 
+	    8464, 6301, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_MODEM, 
+	    8464, 5322, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB200_SMB, 
+	    8464, 7727, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_300, 
+	    8454, 8458, 6490, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB300_SMB, 
+	    8475, 7727, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_300, 
+	    8475, 8454, 6166, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_400, 
+	    8454, 8458, 6490, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_PPB, 
+	    8481, 7546, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_SMB, 
+	    8481, 7727, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_EHCI, 
+	    8481, 8470, 6417, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_OHCI_1, 
+	    8481, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_OHCI_2, 
+	    8481, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_400, 
+	    8481, 8454, 6166, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_ISA, 
+	    8481, 6301, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_MODEM, 
+	    8481, 5322, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_SATA_1, 
+	    8481, 8487, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB400_SATA_2, 
+	    8481, 8487, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SATA_1, 
+	    8492, 8487, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SATA_2, 
+	    8492, 8487, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AC97_AUDIO, 
+	    8492, 7637, 6490, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AZALIA, 
+	    8492, 8498, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_PPB_4384, 
+	    8492, 625, 6467, 625, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_SMB, 
+	    8505, 7727, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_EHCI, 
+	    8492, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI0, 
+	    8492, 6409, 8523, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI1, 
+	    8492, 6409, 8529, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI2, 
+	    8492, 6409, 8535, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI3, 
+	    8492, 6409, 8541, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_USB_OHCI4, 
+	    8492, 6409, 8547, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_AC97_MODEM, 
+	    8492, 7637, 5322, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE_600, 
+	    8492, 8454, 6166, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB600_PLB_438D, 
+	    8492, 625, 6467, 7723, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_IDE, 
+	    8553, 8487, 6000, 8565, 8570, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_AHCI, 
+	    8553, 8487, 6000, 8576, 8570, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_RAID, 
+	    8553, 5995, 8487, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_RAID5, 
+	    8553, 8582, 8487, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_FC, 
+	    8553, 7175, 8487, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_EHCI, 
+	    8553, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB800_SATA, 
+	    8588, 8487, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI0, 
+	    8553, 6409, 7510, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI1, 
+	    8553, 6409, 7510, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_USB_OHCI2, 
+	    8553, 6409, 7510, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_IDE, 
+	    8553, 6166, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_LPC, 
+	    8553, 7723, 6417, 6000, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CT, 
+	    8594, 8601, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_CX, 
+	    8594, 8604, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS250_D7, 
+	    8141, 8148, 8378, 8383, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_AGP, 
+	    5026, 8607, 6680, 8612, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_AGP1X, 
+	    5026, 8607, 6680, 8618, 8623, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_B, 
+	    5026, 8607, 6680, 8627, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XC_PCI66, 
+	    8607, 8633, 8636, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_AGP, 
+	    8607, 5365, 8612, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XC_AGP, 
+	    8607, 8633, 8612, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_PCI66, 
+	    8607, 5365, 8636, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_P, 
+	    5026, 8607, 6680, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_PRO_PCI_L, 
+	    5026, 8607, 6680, 8644, 8653, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XL_PCI, 
+	    8607, 5365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_XC_PCI, 
+	    8607, 8633, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_II, 
+	    5026, 8607, 8657, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIP, 
+	    5026, 8607, 8662, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC_PCI, 
+	    5026, 8607, 8666, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC_AGP_B, 
+	    5026, 8607, 8666, 8612, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GX, 
+	    8594, 8670, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC, 
+	    5026, 8607, 8666, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_IIC_AGP_P, 
+	    5026, 8607, 8666, 8612, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV250_4966, 
+	    8141, 8673, 8682, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV250_4967, 
+	    8141, 6028, 8685, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JH, 
+	    8141, 8688, 8693, 8700, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JI, 
+	    8141, 8703, 8693, 8711, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JJ, 
+	    8141, 8714, 8693, 8721, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JK, 
+	    8141, 8688, 8693, 8724, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JL, 
+	    8141, 8688, 8693, 8727, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JM, 
+	    8173, 8730, 8693, 8733, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JN, 
+	    8141, 8148, 8292, 8736, 8742, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R420_JP, 
+	    8141, 8745, 8693, 8752, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP, 
+	    5026, 8607, 8755, 6680, 8618, 8758, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO_AGP66, 
+	    5026, 8607, 8755, 6680, 8618, 8766, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOB_M3_PCI, 
+	    8607, 8148, 8773, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP, 
+	    8607, 8148, 8773, 8612, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT, 
+	    5026, 8607, 8755, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO_PCI, 
+	    5026, 8607, 8755, 6680, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOBILITY, 
+	    8607, 8148, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_L_MOBILITY, 
+	    8607, 8776, 8148, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO, 
+	    5026, 8607, 8755, 6680, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_LT_PRO2, 
+	    5026, 8607, 8755, 6680, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_MOB_M1_PCI, 
+	    8607, 8148, 8778, 8781, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE_L_MOB_M1_PCI, 
+	    8607, 8776, 8148, 8781, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV200_LW, 
+	    8141, 8148, 8787, 8790, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV200_LX, 
+	    8173, 8148, 8793, 8787, 7455, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV100_LY, 
+	    8141, 8148, 8798, 8801, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV100_LZ, 
+	    8141, 8148, 8798, 8804, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV250_4C64, 
+	    8173, 8148, 6028, 8807, 8812, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV250_4C66, 
+	    8141, 8148, 6028, 8807, 8815, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV250_4C67, 
+	    8141, 8148, 6028, 8807, 8818, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_128_AGP4X, 
+	    8141, 8148, 8821, 7563, 8825, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_128_AGP2X, 
+	    8141, 8148, 8821, 7563, 8828, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_ND, 
+	    8141, 8831, 8836, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_NE, 
+	    8141, 8839, 8852, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_NF, 
+	    8141, 8831, 8855, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R300_NG, 
+	    8173, 8858, 8861, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_NH, 
+	    8141, 8864, 8872, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_NI, 
+	    8141, 8292, 8875, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R360_NJ, 
+	    8141, 8878, 8885, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R350_NK, 
+	    8173, 8303, 8888, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NP, 
+	    8141, 8148, 8891, 8901, 8910, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NQ, 
+	    8141, 8148, 8309, 8913, 8919, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NR, 
+	    8141, 8148, 8309, 8922, 8928, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NS, 
+	    8141, 8148, 8309, 8913, 8931, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NT, 
+	    8173, 8148, 8340, 8913, 8934, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV350_NV, 
+	    8173, 8148, 8937, 8922, 8941, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9700_9500_S, 
+	    8141, 8944, 6021, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9700_9500_S2, 
+	    8141, 8944, 6021, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_2, 
+	    8141, 8269, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9800_PRO_2, 
+	    8141, 8292, 6680, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCI, 
+	    8607, 8821, 6680, 625, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP2X, 
+	    8607, 8821, 6680, 7563, 8828, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP4X, 
+	    8607, 8821, 6680, 7563, 8825, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1PCIT, 
+	    8607, 8821, 6680, 625, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP2XT, 
+	    8607, 8821, 6680, 7563, 8828, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE1AGP4XT, 
+	    8607, 8961, 8966, 7563, 8825, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2PCI, 
+	    8607, 8821, 6680, 625, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP2X, 
+	    8607, 8821, 6680, 7563, 8828, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP4X, 
+	    8607, 8821, 6680, 7563, 8825, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2PCIT, 
+	    8607, 8821, 6680, 625, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP2XT, 
+	    8607, 8821, 6680, 7563, 8828, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE2AGP4XT, 
+	    8607, 8821, 6680, 7563, 8825, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3PCI, 
+	    8607, 8821, 6680, 625, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP2X, 
+	    8607, 8821, 6680, 7563, 8828, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP4X, 
+	    8607, 8821, 6680, 7563, 8825, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3PCIT, 
+	    8607, 8821, 6680, 625, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP2XT, 
+	    8607, 8821, 6680, 7563, 8828, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE3AGP4XT, 
+	    8607, 8821, 6680, 7563, 8825, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4PCI, 
+	    8607, 8821, 6680, 625, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP2X, 
+	    8607, 8821, 6680, 7563, 8828, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP4X, 
+	    8607, 8821, 6680, 7563, 8825, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4PCIT, 
+	    8607, 8821, 6680, 625, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP2XT, 
+	    8607, 8821, 6680, 7563, 8828, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4AGP4XT, 
+	    8607, 8821, 6680, 7563, 8825, 8954, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R100_QD, 
+	    8141, 8971, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R100_QE, 
+	    8141, 8974, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R100_QF, 
+	    8141, 8977, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R100_QG, 
+	    8141, 8980, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R200_QH, 
+	    8173, 8983, 8993, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R200_QL, 
+	    8141, 8393, 8996, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R200_QM, 
+	    8141, 8999, 9004, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV200_QW, 
+	    8141, 9007, 9012, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV200_QX, 
+	    8141, 9007, 9015, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV100_QY, 
+	    8141, 9018, 9026, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV100_QZ, 
+	    8141, 9018, 9029, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_ES1000, 
+	    9032, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9100_S, 
+	    8141, 8999, 6021, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEGLPCI, 
+	    8607, 8821, 8184, 625, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEGLAGP, 
+	    8607, 8821, 8184, 7563, 8828, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEVRPCI, 
+	    8607, 8821, 9039, 625, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEVRAGP, 
+	    8607, 8821, 9039, 7563, 8828, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4XPCI, 
+	    8607, 8821, 8825, 625, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4XA2X, 
+	    8607, 8821, 8825, 7563, 8828, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4XA4X, 
+	    8607, 8821, 8825, 7563, 8825, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE4X, 
+	    8607, 8821, 8825, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24XPCI, 
+	    8607, 8821, 8825, 625, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24XA2X, 
+	    8607, 8821, 8825, 7563, 8828, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24XA4X, 
+	    8607, 8821, 8825, 7563, 8825, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGE24X, 
+	    8607, 8821, 8825, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5460, 
+	    8141, 8148, 9042, 9047, 9053, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5464, 
+	    8173, 9058, 8184, 9062, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UH, 
+	    8141, 8688, 9067, 9074, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UI, 
+	    8141, 8703, 9067, 9077, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UJ, 
+	    8141, 9080, 9067, 9087, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UK, 
+	    8141, 8714, 9067, 9090, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R430_554F, 
+	    8141, 8688, 9093, 9097, 9104, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UQ, 
+	    8173, 9109, 9067, 9115, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UR, 
+	    8173, 9118, 9067, 9124, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_UT, 
+	    8173, 9127, 9067, 9133, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R430_556F, 
+	    8141, 8688, 9093, 9097, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT, 
+	    8594, 9136, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VTB, 
+	    8594, 9139, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_VT4, 
+	    8594, 9143, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_HB, 
+	    9147, 6417, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_X4, 
+	    8141, 8999, 8383, 8248, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_X5, 
+	    8141, 8148, 8999, 8383, 9153, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS300_AGP, 
+	    9147, 7563, 3047, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200_PRO_S, 
+	    8141, 9158, 6680, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200_S, 
+	    8141, 9158, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_HB, 
+	    9163, 6417, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD580, 
+	    9169, 9175, 9185, 9192, 6417, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5954, 
+	    8141, 9185, 9197, 6021, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_NB, 
+	    9202, 7574, 6103, 9208, 9214, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5960, 
+	    8141, 9220, 9228, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5961, 
+	    8141, 9158, 9233, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5962, 
+	    8141, 9158, 9238, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5963, 
+	    8141, 9158, 9243, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5964, 
+	    8141, 9248, 9255, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS482M, 
+	    8141, 9185, 6021, 9260, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GFX0_A, 
+	    9202, 625, 6103, 9269, 9274, 9279, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GFX0_B, 
+	    9202, 625, 6103, 9269, 9274, 4963, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_A, 
+	    9202, 625, 4333, 6103, 9281, 9274, 9279, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_B, 
+	    9202, 625, 4333, 6103, 9281, 9274, 4963, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_C, 
+	    9202, 625, 4333, 6103, 9281, 9274, 9285, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_D, 
+	    9202, 625, 4333, 6103, 9281, 9274, 3183, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_E, 
+	    9202, 625, 4333, 6103, 9281, 9274, 9287, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GPP_F, 
+	    9202, 625, 4333, 6103, 9281, 9274, 9289, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GFX1_A, 
+	    9202, 625, 6103, 9291, 9274, 9279, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_GFX1_B, 
+	    9202, 625, 6103, 9291, 9274, 4963, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD790_PPB_NBSB, 
+	    9202, 625, 6103, 9296, 9303, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_NB_DS16, 
+	    9309, 7574, 6103, 9315, 9320, 9325, 9330, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_NB_SS, 
+	    9309, 7574, 6103, 6115, 9320, 9330, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_NB_DS8, 
+	    9309, 7574, 6103, 9315, 9320, 9334, 9330, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GFX0_A, 
+	    9309, 625, 6103, 9269, 9274, 9279, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GFX0_B, 
+	    9309, 625, 6103, 9269, 9274, 4963, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_A, 
+	    9309, 625, 4333, 6103, 9281, 9274, 9279, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_B, 
+	    9309, 625, 4333, 6103, 9281, 9274, 4963, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_C, 
+	    9309, 625, 4333, 6103, 9281, 9274, 9285, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_D, 
+	    9309, 625, 4333, 6103, 9281, 9274, 3183, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_E, 
+	    9309, 625, 4333, 6103, 9281, 9274, 9287, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_F, 
+	    9309, 625, 4333, 6103, 9281, 9274, 9289, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_G, 
+	    9309, 625, 4333, 6103, 9281, 9274, 9338, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GPP_H, 
+	    9309, 625, 4333, 6103, 9281, 9274, 9340, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GFX1_A, 
+	    9309, 625, 6103, 9291, 9274, 9279, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_GFX1_B, 
+	    9309, 625, 6103, 9291, 9274, 4963, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_PPB_NBSB, 
+	    9309, 625, 6103, 9296, 9303, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RD890_IOMMU, 
+	    9309, 9342, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_XPRESS_200, 
+	    8141, 9185, 9348, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_XRP, 
+	    9163, 625, 4333, 9352, 9274, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A36, 
+	    9163, 625, 4333, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A37, 
+	    9163, 625, 4333, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A38, 
+	    9163, 625, 4333, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS480_PPB_5A3F, 
+	    9163, 625, 4333, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B60, 
+	    8141, 9357, 9362, 9370, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV380_5B62, 
+	    8141, 8157, 625, 4333, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B63, 
+	    8141, 9375, 9384, 9389, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B64, 
+	    8173, 9396, 9362, 9402, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B65, 
+	    8173, 9407, 9362, 9413, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X300_S, 
+	    8141, 9357, 6021, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV370_5B73, 
+	    8141, 9418, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5C61, 
+	    8141, 8148, 9158, 9424, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RV280_5C63, 
+	    8141, 8148, 9158, 9424, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9200SE_S, 
+	    8141, 9248, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850XT, 
+	    8141, 9430, 8375, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_R423_5D57, 
+	    8141, 8745, 9067, 9435, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X850XT_S, 
+	    8141, 9430, 8375, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700, 
+	    8141, 9440, 6680, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X700_S, 
+	    8141, 9440, 6680, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300, 
+	    8141, 9445, 6021, 9451, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_X1300_S, 
+	    8141, 9445, 6021, 9451, 8365, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_7834, 
+	    8141, 8999, 9459, 8383, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_RS300_7835, 
+	    8141, 9158, 8383, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_HB, 
+	    9463, 6417, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7912, 
+	    9463, 625, 6467, 625, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7913, 
+	    9463, 625, 6467, 9469, 9274, 9481, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7915, 
+	    9463, 625, 6467, 9469, 9274, 9483, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7916, 
+	    9463, 625, 6467, 9469, 9274, 5969, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RS690_PPB_7917, 
+	    9463, 625, 6467, 9469, 9274, 5980, 6103, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_XT, 
+	    8141, 9485, 8375, 9492, 0,
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_HD2600_HD, 
+	    8141, 9485, 9498, 6490, 6000, 0,
+	    PCI_VENDOR_AURAVISION, PCI_PRODUCT_AURAVISION_VXP524, 
+	    9501, 625, 234, 9508, 0,
+	    PCI_VENDOR_AUREAL, PCI_PRODUCT_AUREAL_AU8820, 
+	    9518, 2661, 240, 6490, 9508, 0,
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5933, 
+	    9525, 625, 9531, 0,
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_LANAI, 
+	    9542, 9550, 3047, 0,
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_CAMAC, 
+	    9556, 9564, 6000, 0,
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_VICBUS, 
+	    9556, 9570, 3047, 0,
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_PCISYNC, 
+	    9556, 9577, 9593, 0,
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_ADDI7800, 
+	    9600, 9610, 9620, 9627, 0,
+	    PCI_VENDOR_AMCIRCUITS, PCI_PRODUCT_AMCIRCUITS_S5920, 
+	    9634, 625, 9640, 0,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5201, 
+	    9647, 4647, 4472, 0,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5311, 
+	    9654, 4647, 4472, 0,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211, 
+	    9654, 4647, 4472, 0,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212, 
+	    9661, 4647, 4472, 0,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5201_AP, 
+	    9647, 4647, 4472, 9668, 9678, 9683, 9690, 0,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5201_DEFAULT, 
+	    9647, 4647, 4472, 9696, 9700, 0,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_DEFAULT, 
+	    9661, 4647, 4472, 9696, 9700, 0,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_DEFAULT, 
+	    9654, 4647, 4472, 9696, 9700, 0,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5212_FPGA, 
+	    9661, 4647, 4472, 9668, 9678, 9708, 9719, 0,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_FPGA11B, 
+	    9654, 4647, 4472, 9668, 9678, 9726, 9731, 9719, 0,
+	    PCI_VENDOR_ATHEROS, PCI_PRODUCT_ATHEROS_AR5211_LEGACY, 
+	    9654, 4647, 4472, 9668, 9678, 9741, 9731, 9719, 0,
+	    PCI_VENDOR_ATRONICS, PCI_PRODUCT_ATRONICS_IDE_2015PL, 
+	    9751, 0,
+	    PCI_VENDOR_AVANCE, PCI_PRODUCT_AVANCE_AVL2301, 
+	    9762, 0,
+	    PCI_VENDOR_AVANCE, PCI_PRODUCT_AVANCE_AVG2302, 
+	    9770, 0,
+	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALG2301, 
+	    9778, 0,
+	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALG2302, 
+	    9786, 0,
+	    PCI_VENDOR_AVANCE2, PCI_PRODUCT_AVANCE2_ALS4000, 
+	    9794, 6490, 0,
+	    PCI_VENDOR_AVLAB, PCI_PRODUCT_AVLAB_LPPCI4S, 
+	    9802, 9806, 625, 9814, 9627, 0,
+	    PCI_VENDOR_CCUBE, PCI_PRODUCT_CCUBE_CINEMASTER, 
+	    9816, 9285, 9827, 9831, 6377, 0,
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_CARD, 
+	    9835, 9678, 8125, 3047, 0,
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_FRITZ_PCI_V2_ISDN, 
+	    9842, 9852, 8125, 3047, 0,
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_B1, 
+	    9857, 9863, 9868, 8125, 3047, 0,
+	    PCI_VENDOR_AVM, PCI_PRODUCT_AVM_T1, 
+	    9871, 9863, 9879, 8125, 3047, 0,
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_1_PORT, 
+	    9882, 9897, 625, 9904, 0,
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_2_PORT, 
+	    9909, 9897, 625, 9904, 0,
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_4_PORT, 
+	    9922, 9897, 625, 9904, 0,
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_NON_ISOLATED_8_PORT, 
+	    9935, 9897, 625, 9904, 0,
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_1_PORT, 
+	    9882, 9949, 9897, 625, 9904, 0,
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_2_PORT, 
+	    9909, 9949, 9897, 625, 9904, 0,
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_4_PORT, 
+	    9922, 9949, 9897, 625, 9904, 0,
+	    PCI_VENDOR_BBELEC, PCI_PRODUCT_BBELEC_ISOLATED_8_PORT, 
+	    9935, 9949, 9897, 625, 9904, 0,
+	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6001, 
+	    9958, 0,
+	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6020V3, 
+	    9966, 7074, 0,
+	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EC8_32, 
+	    9976, 0,
+	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EC8_64, 
+	    9983, 0,
+	    PCI_VENDOR_STALLION, PCI_PRODUCT_STALLION_EASYIO, 
+	    9990, 0,
+	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME617, 
+	    9997, 3047, 10005, 10010, 0,
+	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME618, 
+	    9997, 3047, 10005, 10014, 0,
+	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME2706, 
+	    9997, 3047, 10005, 10018, 0,
+	    PCI_VENDOR_BLUESTEEL, PCI_PRODUCT_BLUESTEEL_5501, 
+	    10023, 0,
+	    PCI_VENDOR_BLUESTEEL, PCI_PRODUCT_BLUESTEEL_5601, 
+	    10028, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5752, 
+	    10033, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5752M, 
+	    10041, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5709, 
+	    10050, 10058, 6989, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5700, 
+	    7258, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5701, 
+	    7266, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702, 
+	    10068, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703, 
+	    10076, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704C, 
+	    10084, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704S_ALT, 
+	    10093, 7237, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5706, 
+	    10102, 10058, 6989, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708, 
+	    10110, 10058, 6989, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702FE, 
+	    10118, 5377, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705, 
+	    10128, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705K, 
+	    10136, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5720, 
+	    10145, 10058, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5721, 
+	    10153, 10058, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5722, 
+	    10161, 10058, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705M, 
+	    10169, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705M_ALT, 
+	    10169, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5714, 
+	    10178, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5714S, 
+	    10186, 7237, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5780, 
+	    10195, 10058, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5780S, 
+	    10203, 10058, 7237, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705F, 
+	    10212, 5377, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5754M, 
+	    10221, 10058, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5755M, 
+	    10230, 10058, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5756, 
+	    10239, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750, 
+	    10247, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5751, 
+	    10255, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5715, 
+	    10263, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5715S, 
+	    10271, 7237, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5754, 
+	    10280, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5755, 
+	    10288, 10058, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750M, 
+	    10296, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5751M, 
+	    10305, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5751F, 
+	    10314, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5787M, 
+	    10323, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5782, 
+	    10332, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5786, 
+	    10340, 10348, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5787, 
+	    10356, 10348, 7248, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5788, 
+	    10364, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5789, 
+	    10372, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702X, 
+	    10380, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703X, 
+	    10389, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704S, 
+	    10093, 7237, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5706S, 
+	    10102, 10058, 6989, 7237, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5708S, 
+	    10110, 10058, 6989, 7237, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702_ALT, 
+	    10068, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703_ALT, 
+	    10076, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5781, 
+	    10398, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5753, 
+	    10406, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5753M, 
+	    10414, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5753F, 
+	    10423, 5377, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5903M, 
+	    10432, 5290, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401_B0, 
+	    10441, 5377, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5901, 
+	    10452, 5377, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5901A2, 
+	    10460, 5377, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5906, 
+	    10469, 10348, 2459, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5906M, 
+	    10477, 10348, 2459, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4303, 
+	    10486, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4307, 
+	    10494, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4311, 
+	    10502, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4312, 
+	    10510, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4318, 
+	    10518, 10526, 4495, 10535, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4319, 
+	    10539, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4306, 
+	    10547, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4306_2, 
+	    10547, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4322, 
+	    10555, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4309, 
+	    10563, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM43XG, 
+	    10571, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4328, 
+	    10579, 10587, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401, 
+	    10601, 5377, 5275, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5801, 
+	    10609, 7466, 9508, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5802, 
+	    10614, 7466, 9508, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5805, 
+	    10619, 7466, 9508, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5820, 
+	    10624, 7466, 9508, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5821, 
+	    10629, 7466, 9508, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5822, 
+	    10634, 7466, 9508, 0,
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_5823, 
+	    10639, 7466, 9508, 0,
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848, 
+	    10644, 234, 10650, 0,
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT849, 
+	    10658, 234, 10650, 0,
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT878, 
+	    10664, 234, 10650, 0,
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT879, 
+	    10670, 234, 10650, 0,
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT880, 
+	    10676, 234, 10650, 0,
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT878A, 
+	    10664, 234, 10650, 10682, 10689, 0,
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT879A, 
+	    10670, 234, 10650, 10682, 10689, 0,
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT880A, 
+	    10676, 234, 10650, 10682, 10689, 0,
+	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT8474, 
+	    10698, 10705, 10718, 6000, 0,
+	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_MULTIMASTER_NC, 
+	    10723, 10735, 0,
+	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_MULTIMASTER, 
+	    10723, 0,
+	    PCI_VENDOR_BUSLOGIC, PCI_PRODUCT_BUSLOGIC_FLASHPOINT, 
+	    10738, 0,
+	    PCI_VENDOR_C4T, PCI_PRODUCT_C4T_GPPCI, 
+	    10749, 0,
+	    PCI_VENDOR_CAVIUM, PCI_PRODUCT_CAVIUM_NITROX, 
+	    10755, 5365, 0,
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T302E, 
+	    10762, 0,
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T310E, 
+	    10768, 0,
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T320X, 
+	    10774, 0,
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T302X, 
+	    10780, 0,
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T320E, 
+	    10786, 0,
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T310X, 
+	    10792, 0,
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B10, 
+	    10798, 0,
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B20, 
+	    10804, 0,
+	    PCI_VENDOR_CHELSIO, PCI_PRODUCT_CHELSIO_T3B02, 
+	    10810, 0,
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_64310, 
+	    10816, 0,
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_69000, 
+	    10822, 0,
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65545, 
+	    10828, 0,
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65548, 
+	    10834, 0,
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65550, 
+	    10840, 0,
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65554, 
+	    10846, 0,
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_69030, 
+	    10852, 0,
+	    PCI_VENDOR_CHRYSALIS, PCI_PRODUCT_CHRYSALIS_LUNAVPN, 
+	    10858, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7548, 
+	    10866, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5430, 
+	    10876, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5434_4, 
+	    10886, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5434_8, 
+	    10898, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5436, 
+	    10910, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5446, 
+	    10920, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD5480, 
+	    10930, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6729, 
+	    10940, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6832, 
+	    10950, 10960, 6103, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_PD6833, 
+	    10972, 10960, 6103, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7542, 
+	    10982, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7543, 
+	    10992, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7541, 
+	    11002, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_CD4400, 
+	    11012, 3344, 6000, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4610, 
+	    11022, 11029, 6490, 7759, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4280, 
+	    11041, 11048, 6490, 3047, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4615, 
+	    11061, 0,
+	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CS4281, 
+	    11068, 11048, 6490, 3047, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_AAR_1210SA, 
+	    11075, 8487, 5995, 6000, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_640, 
+	    11086, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_642, 
+	    11094, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_643, 
+	    11102, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_646, 
+	    11110, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_647, 
+	    11118, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_648, 
+	    11126, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_649, 
+	    11134, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_650A, 
+	    11142, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_670, 
+	    11151, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_673, 
+	    11159, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_680, 
+	    11167, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3112, 
+	    11175, 11183, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3114, 
+	    11192, 11183, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3124, 
+	    11200, 11183, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3132, 
+	    11208, 11183, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3512, 
+	    11216, 11183, 0,
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_3531, 
+	    11224, 11183, 0,
+	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8338A, 
+	    11232, 625, 6490, 2447, 0,
+	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8338B, 
+	    11241, 625, 6490, 2447, 0,
+	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8738, 
+	    11250, 625, 6490, 2447, 0,
+	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_CMI8738B, 
+	    11263, 625, 6490, 2447, 0,
+	    PCI_VENDOR_CMEDIA, PCI_PRODUCT_CMEDIA_HSP56, 
+	    11272, 11278, 11289, 0,
+	    PCI_VENDOR_COGENT, PCI_PRODUCT_COGENT_EM110TX, 
+	    11295, 625, 2459, 5275, 5467, 0,
+	    PCI_VENDOR_COLOGNECHIP, PCI_PRODUCT_COLOGNECHIP_HFC, 
+	    11303, 0,
+	    PCI_VENDOR_COMPAL, PCI_PRODUCT_COMPAL_38W2, 
+	    11309, 11314, 11318, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_EISA_BRIDGE, 
+	    11327, 6103, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PCI_ISA_BRIDGE, 
+	    6301, 6103, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX1, 
+	    11336, 6315, 6103, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX2, 
+	    11336, 6315, 6103, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_QVISION_V0, 
+	    11344, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_QVISION_1280P, 
+	    11344, 11352, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_QVISION_V2, 
+	    11344, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX4, 
+	    11336, 6315, 6103, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5300, 
+	    11359, 11365, 11371, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5i, 
+	    11359, 11365, 11376, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA532, 
+	    11359, 11365, 11379, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5312, 
+	    11359, 11365, 11383, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6i, 
+	    11359, 11365, 11388, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA641, 
+	    11359, 11365, 11391, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA642, 
+	    11359, 11365, 11395, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6400, 
+	    11359, 11365, 11399, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6400EM, 
+	    11359, 11365, 11399, 11404, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA6422, 
+	    11359, 11365, 11407, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA64XX, 
+	    11359, 11365, 11412, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB, 
+	    6409, 6000, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_ASMC, 
+	    458, 114, 6514, 6000, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_USB_MEDIAGX, 
+	    6409, 6000, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_SMART2P, 
+	    11417, 5995, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N100TX, 
+	    11425, 5377, 11437, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N10T2, 
+	    11425, 11440, 11443, 11447, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_INT100TX, 
+	    702, 11425, 5377, 11437, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_N10T, 
+	    11425, 11440, 11456, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_IntNF3P, 
+	    702, 11458, 11466, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_DPNet100TX, 
+	    9315, 9274, 11425, 5377, 11437, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_IntPL100TX, 
+	    11470, 702, 11425, 5377, 11437, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_DP4000, 
+	    11479, 11487, 11492, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5300_2, 
+	    11359, 11365, 11371, 11500, 5969, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_PRESARIO56XX, 
+	    11505, 11514, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_M700, 
+	    11519, 11526, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_CSA5i_2, 
+	    11359, 11365, 11531, 11500, 5969, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P_BNC, 
+	    11458, 11466, 5714, 11538, 0,
+	    PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_NF3P, 
+	    11458, 11466, 0,
+	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_NE2KETHER, 
+	    5275, 0,
+	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_RL100ATX, 
+	    11542, 5377, 5275, 0,
+	    PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_RL100TX, 
+	    11552, 5377, 5275, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT32EXT, 
+	    11561, 11572, 9274, 11575, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT8EXT, 
+	    11561, 11584, 9274, 11575, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT16EXT, 
+	    11561, 11586, 9274, 11575, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT4QUAD, 
+	    11561, 9814, 9274, 5714, 11589, 11594, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT8OCTA, 
+	    11561, 11584, 9274, 5714, 11600, 11594, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT8RJ, 
+	    11561, 11584, 9274, 5714, 11605, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT4RJ, 
+	    11561, 9814, 9274, 5714, 11605, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT8DB, 
+	    11561, 11584, 9274, 5714, 11611, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORT16DB, 
+	    11561, 11586, 9274, 5714, 11611, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORTP4, 
+	    11561, 11616, 9814, 9274, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORTP8, 
+	    11561, 11616, 11584, 9274, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETMODEM6, 
+	    11621, 11633, 9274, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETMODEM4, 
+	    11621, 9814, 9274, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORTP232, 
+	    11561, 5969, 9274, 11635, 0,
+	    PCI_VENDOR_COMTROL, PCI_PRODUCT_COMTROL_ROCKETPORTP422, 
+	    11561, 5969, 9274, 11641, 0,
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_SOFTK56, 
+	    11647, 625, 321, 5322, 0,
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_56KFAXMODEM, 
+	    11655, 11658, 11662, 5322, 0,
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_LANFINITY, 
+	    11666, 11676, 5377, 5275, 0,
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388X, 
+	    11684, 625, 11698, 6377, 0,
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XAUDIO, 
+	    11684, 625, 6490, 9274, 0,
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XMPEG, 
+	    11684, 625, 6372, 9274, 0,
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_CX2388XIR, 
+	    11684, 625, 11710, 9274, 0,
+	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599, 
+	    11713, 11720, 6103, 0,
+	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C693, 
+	    11728, 6301, 6103, 0,
+	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_CB_TXD, 
+	    11735, 11742, 5377, 5275, 0,
+	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_2CB_TXD, 
+	    11735, 6989, 11742, 5377, 5275, 0,
+	    PCI_VENDOR_COREGA, PCI_PRODUCT_COREGA_LAPCIGT, 
+	    11749, 0,
+	    PCI_VENDOR_COROLLARY, PCI_PRODUCT_COROLLARY_CBUSII_PCIB, 
+	    11760, 11767, 6103, 0,
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE, 
+	    11775, 11783, 11787, 0,
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_AUDIGY, 
+	    11793, 11796, 11783, 11787, 0,
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBLIVE2, 
+	    11775, 11783, 11787, 0,
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBAUDIGYLS, 
+	    11793, 11796, 11803, 0,
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBAUDIGY4, 
+	    11793, 11796, 9814, 0,
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBJOY, 
+	    625, 11806, 11815, 0,
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_SBJOY2, 
+	    625, 11806, 11815, 0,
+	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_EV1938, 
+	    11824, 11831, 0,
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1, 
+	    11836, 11845, 11851, 0,
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_2, 
+	    11836, 11854, 11851, 0,
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM4Y_1, 
+	    11860, 11845, 11851, 0,
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM4Y_2, 
+	    11860, 11854, 11851, 0,
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM8Y_1, 
+	    11870, 11845, 11851, 0,
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOM8Y_2, 
+	    11870, 11854, 11851, 0,
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMZ_1, 
+	    11880, 11845, 11851, 0,
+	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMZ_2, 
+	    11880, 11854, 11851, 0,
+	    PCI_VENDOR_CYCLONE, PCI_PRODUCT_CYCLONE_PCI_700, 
+	    11889, 11897, 0,
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_MEDIAGX_PCHB, 
+	    11907, 11915, 625, 6417, 6000, 0,
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5520_PCIB, 
+	    11924, 7710, 11931, 0,
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_PCIB, 
+	    11941, 7710, 11931, 11948, 7498, 6103, 0,
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_SMI, 
+	    11941, 7710, 11931, 11963, 11968, 577, 7594, 11975, 0,
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_IDE, 
+	    11941, 7710, 11931, 8565, 11982, 0,
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_AUDIO, 
+	    11941, 7710, 11931, 11994, 0,
+	    PCI_VENDOR_CYRIX, PCI_PRODUCT_CYRIX_CX5530_VIDEO, 
+	    11941, 7710, 11931, 12008, 11982, 0,
+	    PCI_VENDOR_DATUM, PCI_PRODUCT_DATUM_BC635PCI_U, 
+	    12015, 12026, 657, 12029, 9508, 0,
+	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102, 
+	    12035, 5377, 5275, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21050, 
+	    12042, 7546, 6103, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21040, 
+	    12050, 12058, 5275, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21030, 
+	    12068, 12076, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_NVRAM, 
+	    12084, 12091, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_KZPSA, 
+	    12098, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21140, 
+	    12104, 12112, 5377, 5275, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PBXGB, 
+	    12126, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_DEFPA, 
+	    12131, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21041, 
+	    12137, 12145, 12153, 5275, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_DGLPB, 
+	    12160, 12166, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142, 
+	    12175, 5377, 5275, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21052, 
+	    12189, 7546, 6103, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21150, 
+	    12197, 7546, 6103, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21152, 
+	    12205, 7546, 6103, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21153, 
+	    12213, 7546, 6103, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21154, 
+	    12221, 7546, 6103, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21554, 
+	    12229, 7546, 6103, 0,
+	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_SWXCR, 
+	    12237, 5995, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_2SI, 
+	    6919, 12243, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI, 
+	    6919, 12248, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI, 
+	    6919, 12253, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2, 
+	    6919, 12253, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2, 
+	    6919, 12248, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3, 
+	    6919, 12248, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI, 
+	    6919, 12258, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4DI_2, 
+	    6919, 12258, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_4ESI, 
+	    6919, 12263, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5, 
+	    6919, 12269, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_6, 
+	    6919, 11633, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB, 
+	    6919, 12248, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI_2_SUB, 
+	    6919, 12253, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB2, 
+	    6919, 12248, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_SUB3, 
+	    6919, 12248, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB, 
+	    6919, 12248, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB2, 
+	    6919, 12248, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_3_SUB3, 
+	    6919, 12248, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5_1, 
+	    6919, 12271, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5_2, 
+	    6919, 12275, 0,
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_CERC_1_5, 
+	    12279, 8487, 5995, 12284, 0,
+	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_8139, 
+	    6978, 5275, 0,
+	    PCI_VENDOR_DELTA, PCI_PRODUCT_DELTA_RHINEII, 
+	    6983, 6989, 5377, 5275, 0,
+	    PCI_VENDOR_DIAMOND, PCI_PRODUCT_DIAMOND_VIPER, 
+	    12292, 0,
+	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO4, 
+	    12302, 12306, 0,
+	    PCI_VENDOR_DIGI, PCI_PRODUCT_DIGI_NEO8, 
+	    12302, 9620, 0,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DL1002, 
+	    12313, 5377, 5275, 0,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE530TXPLUS, 
+	    12321, 5377, 5275, 0,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE690TXD, 
+	    12335, 5377, 5275, 0,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DWL610, 
+	    12346, 7074, 7082, 0,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DL4000, 
+	    12354, 5267, 5275, 0,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE550SX, 
+	    12362, 0,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T, 
+	    12372, 5267, 5275, 0,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T, 
+	    12381, 5267, 5275, 0,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560T_2, 
+	    12390, 5267, 5275, 0,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE560SX, 
+	    12401, 0,
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T, 
+	    12411, 5267, 5275, 0,
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID, 
+	    12420, 12441, 0,
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_I960_PPB, 
+	    7546, 6103, 0,
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_I2O, 
+	    12448, 12458, 0,
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_RAID_2005S, 
+	    12464, 12469, 12448, 12458, 0,
+	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_MEMCTLR, 
+	    12477, 6000, 0,
+	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI32, 
+	    12484, 6103, 12492, 12501, 12504, 0,
+	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI64, 
+	    12484, 6103, 12509, 12501, 12504, 0,
+	    PCI_VENDOR_DOLPHIN, PCI_PRODUCT_DOLPHIN_PCISCI66, 
+	    12484, 6103, 12509, 12518, 12504, 0,
+	    PCI_VENDOR_DOMEX, PCI_PRODUCT_DOMEX_PCISCSI, 
+	    12521, 0,
+	    PCI_VENDOR_DYNALINK, PCI_PRODUCT_DYNALINK_IS64PH, 
+	    12531, 8125, 5467, 0,
+	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_QS1PCI, 
+	    12538, 12548, 8125, 9678, 0,
+	    PCI_VENDOR_ELSA, PCI_PRODUCT_ELSA_GLORIAXL, 
+	    12553, 5365, 12560, 0,
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP6000, 
+	    12565, 12572, 5467, 0,
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP982, 
+	    12585, 12572, 5467, 0,
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP7000, 
+	    12591, 12572, 5467, 0,
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP8000, 
+	    12598, 12572, 5467, 0,
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP9000, 
+	    12605, 12572, 5467, 0,
+	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP9802, 
+	    12612, 12572, 5467, 0,
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_MCR510, 
+	    12619, 625, 12477, 9678, 12626, 6000, 0,
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1211, 
+	    12633, 12640, 6000, 0,
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1225, 
+	    12648, 12640, 6000, 0,
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1410, 
+	    12655, 12640, 6000, 0,
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710, 
+	    12662, 12640, 6000, 0,
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1420, 
+	    12668, 12640, 6000, 0,
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB720, 
+	    12675, 12640, 6000, 0,
+	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI, 
+	    12681, 0,
+	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI97, 
+	    12681, 12690, 0,
+	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_CT5880, 
+	    12693, 0,
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST64P, 
+	    12700, 5467, 0,
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST128P, 
+	    12708, 5467, 0,
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST16P_1, 
+	    12717, 5467, 0,
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST16P_2, 
+	    12717, 5467, 0,
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST16P_3, 
+	    12717, 5467, 0,
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST4P, 
+	    12725, 5467, 0,
+	    PCI_VENDOR_EQUINOX, PCI_PRODUCT_EQUINOX_SST8P, 
+	    12732, 5467, 0,
+	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_HIPPI, 
+	    12739, 12750, 3047, 0,
+	    PCI_VENDOR_ESSENTIAL, PCI_PRODUCT_ESSENTIAL_RR_GIGE, 
+	    12739, 12756, 3047, 0,
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO1, 
+	    12762, 9483, 625, 6490, 7759, 0,
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2, 
+	    12762, 5969, 625, 6490, 7759, 0,
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SOLO1, 
+	    12770, 625, 12777, 0,
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2E, 
+	    12762, 12788, 625, 6490, 7759, 0,
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_ALLEGRO1, 
+	    12791, 625, 6490, 7759, 0,
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3, 
+	    12762, 5980, 625, 6490, 7759, 0,
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3MODEM, 
+	    12762, 5980, 5322, 0,
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO3_2, 
+	    12762, 5980, 625, 6490, 7759, 0,
+	    PCI_VENDOR_ESSTECH2, PCI_PRODUCT_ESSTECH2_MAESTRO1, 
+	    12762, 9483, 625, 6490, 7759, 0,
+	    PCI_VENDOR_EUMITCOM, PCI_PRODUCT_EUMITCOM_WL11000P, 
+	    12801, 625, 12810, 12823, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_00F7, 
+	    702, 7510, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6729, 
+	    12840, 12847, 6103, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6730, 
+	    12858, 12847, 6103, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832, 
+	    12865, 10960, 6103, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6836, 
+	    12879, 10960, 6103, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6872, 
+	    12893, 10960, 6103, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6922, 
+	    12907, 10960, 6103, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6933, 
+	    12914, 10960, 6103, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6972, 
+	    12921, 10960, 6103, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7120, 
+	    702, 12935, 6000, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7130, 
+	    702, 12942, 6000, 0,
+	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_7223, 
+	    12951, 10960, 6103, 0,
+	    PCI_VENDOR_ES, PCI_PRODUCT_ES_FREEDOM, 
+	    12959, 12967, 3047, 0,
+	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17D152, 
+	    9909, 12976, 625, 9904, 0,
+	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17D154, 
+	    9922, 12976, 625, 9904, 0,
+	    PCI_VENDOR_EXAR, PCI_PRODUCT_EXAR_XR17D158, 
+	    9935, 12976, 625, 9904, 0,
+	    PCI_VENDOR_FORE, PCI_PRODUCT_FORE_PCA200, 
+	    6552, 12986, 0,
+	    PCI_VENDOR_FORE, PCI_PRODUCT_FORE_PCA200E, 
+	    6552, 12994, 0,
+	    PCI_VENDOR_FORTEMEDIA, PCI_PRODUCT_FORTEMEDIA_FM801, 
+	    13003, 3405, 0,
+	    PCI_VENDOR_FORTEMEDIA, PCI_PRODUCT_FORTEMEDIA_PCIJOY, 
+	    625, 11806, 11815, 0,
+	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30, 
+	    13007, 13017, 0,
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_GIGALINK, 
+	    5267, 7374, 2202, 13025, 0,
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PLXHOTLINK, 
+	    13033, 3047, 0,
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_COUNTTIME, 
+	    13041, 2202, 13049, 0,
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PLXCAMAC, 
+	    9564, 6000, 0,
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_PROFIBUS, 
+	    13055, 3047, 0,
+	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_AMCCHOTLINK, 
+	    13064, 13033, 3047, 0,
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155PF, 
+	    13068, 6552, 13077, 0,
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155PA, 
+	    13068, 6552, 13084, 0,
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI25P, 
+	    13091, 13103, 0,
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_SS3000, 
+	    13091, 13111, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64010A, 
+	    13116, 6, 6000, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8300_1, 
+	    13126, 13135, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8310, 
+	    13126, 13143, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_1, 
+	    13126, 13151, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8335_2, 
+	    13126, 13151, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88W8300_2, 
+	    13126, 13135, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64115, 
+	    13159, 6, 6000, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64011, 
+	    13168, 6, 6000, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_SKNET, 
+	    13177, 5267, 5275, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8021CU, 
+	    13184, 13193, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8022CU, 
+	    13184, 13203, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8061CU, 
+	    13184, 13213, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8062CU, 
+	    13184, 13223, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8021X, 
+	    13184, 13233, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8022X, 
+	    13184, 13242, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8061X, 
+	    13184, 13251, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKONII_8062X, 
+	    13184, 13260, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8035, 
+	    13269, 13275, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8036, 
+	    13269, 13283, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8038, 
+	    13269, 13291, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8039, 
+	    13269, 13299, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C033, 
+	    13269, 13307, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8052, 
+	    13269, 13315, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8050, 
+	    13269, 13323, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8053, 
+	    13269, 13331, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8055, 
+	    13269, 13339, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_8056, 
+	    13269, 13347, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_1, 
+	    13269, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C036, 
+	    13269, 13355, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C032, 
+	    13269, 13363, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C034, 
+	    13269, 13371, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C042, 
+	    13269, 13379, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_YUKON_C055, 
+	    13269, 13387, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64120, 
+	    13395, 6, 6000, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_BELKIN, 
+	    4917, 5267, 5275, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5040, 
+	    13404, 8487, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5041, 
+	    13413, 8487, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5080, 
+	    13422, 8487, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX5081, 
+	    13431, 8487, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX6041, 
+	    13440, 8487, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SX6081, 
+	    13440, 8487, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE6101, 
+	    13449, 6115, 9274, 13458, 6000, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE6121, 
+	    13466, 8487, 6989, 6000, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE614X, 
+	    13475, 8487, 6989, 13484, 6000, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_88SE6145, 
+	    13490, 8487, 6989, 13484, 6000, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64130, 
+	    13499, 6, 6000, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64260, 
+	    13508, 6, 6000, 0,
+	    PCI_VENDOR_MARVELL, PCI_PRODUCT_MARVELL_GT64360, 
+	    13517, 6, 6000, 0,
+	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P, 
+	    13525, 625, 12830, 7074, 0,
+	    PCI_VENDOR_GLOBALSUN, PCI_PRODUCT_GLOBALSUN_GL24110P02, 
+	    13525, 625, 12830, 7074, 0,
+	    PCI_VENDOR_GUILLEMOT, PCI_PRODUCT_GUILLEMOT_MAXIRADIO, 
+	    13534, 0,
+	    PCI_VENDOR_HAWKING, PCI_PRODUCT_HAWKING_PN672TX, 
+	    13544, 5377, 5275, 0,
+	    PCI_VENDOR_HEURICON, PCI_PRODUCT_HEURICON_PMPPC, 
+	    13552, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_A4977A, 
+	    13559, 13566, 13576, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACHYON_TL, 
+	    7163, 13579, 7175, 6000, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACHYON_TS, 
+	    7163, 13582, 7175, 6000, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_TACHYON_XL2, 
+	    7163, 13585, 7175, 6000, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585A, 
+	    13589, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_J2585B, 
+	    13596, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_82557B, 
+	    13603, 5377, 13610, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_NETRAID_4M, 
+	    13614, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAV100, 
+	    11359, 11365, 13625, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_1, 
+	    11359, 11365, 13630, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200, 
+	    11359, 11365, 13636, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_2, 
+	    11359, 11365, 13630, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_3, 
+	    11359, 11365, 13630, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAE200I_4, 
+	    11359, 11365, 13630, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_1, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_2, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP800, 
+	    11359, 11365, 13641, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP600, 
+	    11359, 11365, 13641, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_3, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_4, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_5, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_6, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP400, 
+	    11359, 11365, 13646, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSAP400I, 
+	    11359, 11365, 13651, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_7, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_8, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_9, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_10, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_11, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_12, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HP, PCI_PRODUCT_HP_HPSA_13, 
+	    11359, 11365, 0,
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7751, 
+	    13657, 0,
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_6500, 
+	    13662, 0,
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7811, 
+	    13667, 0,
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7951, 
+	    13672, 0,
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7955, 
+	    13677, 0,
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_7956, 
+	    13687, 0,
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_78XX, 
+	    13692, 0,
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_8065, 
+	    13707, 0,
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_8165, 
+	    13712, 0,
+	    PCI_VENDOR_HIFN, PCI_PRODUCT_HIFN_8154, 
+	    13717, 0,
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB1, 
+	    13722, 7546, 6103, 0,
+	    PCI_VENDOR_HINT, PCI_PRODUCT_HINT_HB4, 
+	    13726, 7546, 6103, 0,
+	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SWC, 
+	    13730, 234, 10650, 13747, 0,
+	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SH7751, 
+	    13753, 625, 6000, 0,
+	    PCI_VENDOR_HITACHI, PCI_PRODUCT_HITACHI_SH7751R, 
+	    13760, 625, 6000, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE, 
+	    13768, 6103, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_ALTALITE, 
+	    2564, 6103, 13772, 13774, 13779, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_ALTAMP, 
+	    2564, 6103, 13772, 13774, 13784, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_ISABRIDGE, 
+	    13787, 13792, 13798, 6103, 5714, 13802, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_POWERWAVE, 
+	    13806, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_IDAHO, 
+	    13816, 625, 6103, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CPUBRIDGE, 
+	    2564, 6103, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_LANSTREAMER, 
+	    13822, 13827, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT150P, 
+	    13839, 13848, 7759, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CARRERA, 
+	    13851, 625, 6103, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_82G2675, 
+	    13859, 13867, 2459, 6000, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MCABRIDGE2, 
+	    13768, 6103, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_82351, 
+	    13874, 7546, 6103, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MONNAV, 
+	    13880, 625, 6103, 577, 12477, 6000, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_PYTHON, 
+	    13895, 7546, 6103, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID, 
+	    6956, 13902, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT250P, 
+	    13915, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC, 
+	    13924, 5571, 5577, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MIAMI, 
+	    13929, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_82660, 
+	    13939, 13945, 6467, 625, 6103, 577, 12477, 6000, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC, 
+	    13953, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_TURBOWAYS25, 
+	    13958, 13968, 6552, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT500P, 
+	    13971, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_I82557B, 
+	    13988, 5377, 5275, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT800P, 
+	    13996, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_EADSPCI, 
+	    14005, 7546, 6103, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT3000P, 
+	    14010, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT3000P2, 
+	    14010, 1720, 14020, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT2000P, 
+	    14031, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_OLYMPIC2, 
+	    14041, 5969, 5571, 5577, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CPC71064, 
+	    14049, 9315, 6103, 577, 12477, 6000, 14056, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_CPC71032, 
+	    14049, 9315, 6103, 577, 12477, 6000, 14064, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_TPAUDIO, 
+	    14072, 14081, 6490, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_405GP, 
+	    14098, 14102, 625, 6103, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT4000P, 
+	    14108, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT6000P, 
+	    14118, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT300P, 
+	    14128, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_133PCIX, 
+	    14137, 7650, 6103, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID4, 
+	    6956, 5926, 14141, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_440GP, 
+	    14098, 14152, 625, 6103, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_IBMETHER, 
+	    5377, 5275, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT6500P, 
+	    14158, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT4500P, 
+	    14168, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT135P, 
+	    14178, 1720, 5467, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID8K, 
+	    6956, 14187, 0,
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2, 
+	    14190, 0,
+	    PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_ICE1712, 
+	    14198, 10705, 6490, 6000, 0,
+	    PCI_VENDOR_ICENSEMBLE, PCI_PRODUCT_ICENSEMBLE_VT1720, 
+	    14205, 14217, 6490, 6000, 0,
+	    PCI_VENDOR_ICOMPRESSION, PCI_PRODUCT_ICOMPRESSION_ITVC15, 
+	    14231, 14238, 14244, 0,
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_77201, 
+	    14250, 6552, 14262, 0,
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_RC32334, 
+	    14274, 6, 6000, 0,
+	    PCI_VENDOR_IDT, PCI_PRODUCT_IDT_RC32332, 
+	    14282, 6, 6000, 0,
+	    PCI_VENDOR_INDCOMPSRC, PCI_PRODUCT_INDCOMPSRC_WDT50x, 
+	    14290, 14301, 13049, 0,
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I920, 
+	    14310, 6210, 0,
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I850, 
+	    14319, 6210, 0,
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I1060, 
+	    14328, 6210, 0,
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I940, 
+	    14338, 6210, 0,
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I935, 
+	    14347, 6210, 0,
+	    PCI_VENDOR_INITIO, PCI_PRODUCT_INITIO_I950, 
+	    14356, 6210, 0,
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_IGA1680, 
+	    14365, 14369, 0,
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_IGA1682, 
+	    14365, 14374, 0,
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2000, 
+	    14379, 1323, 0,
+	    PCI_VENDOR_INTEGRAPHICS, PCI_PRODUCT_INTEGRAPHICS_CYBERPRO2010, 
+	    14379, 14388, 0,
+	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_8849, 
+	    14393, 0,
+	    PCI_VENDOR_IMS, PCI_PRODUCT_IMS_TT128M, 
+	    14398, 14408, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312, 
+	    14413, 7710, 11931, 4507, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80321, 
+	    14419, 7710, 9508, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP333_A, 
+	    14425, 625, 14432, 6103, 14447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IOP333_B, 
+	    14425, 625, 14432, 6103, 14450, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6700PXH_PCIE0, 
+	    14453, 625, 14432, 6103, 14447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6700PXH_PCIE1, 
+	    14453, 625, 14432, 6103, 14450, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SRCZCRX, 
+	    5995, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SRCU42E, 
+	    6210, 5995, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SRCS28X, 
+	    8487, 5995, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB, 
+	    14461, 11327, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CDC, 
+	    14472, 1404, 577, 7345, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SIO, 
+	    14480, 6, 7710, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82426EX, 
+	    14488, 6301, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCMC, 
+	    14496, 14507, 1404, 577, 12477, 6000, 14512, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GDT_RAID1, 
+	    14519, 5995, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_GDT_RAID2, 
+	    14519, 5995, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RM, 
+	    14523, 14528, 7546, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RN, 
+	    14523, 14531, 7546, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82542, 
+	    14534, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_FIBER, 
+	    14541, 14550, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_MODEM56, 
+	    5492, 5322, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82543GC_COPPER, 
+	    14560, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_COPPER, 
+	    14569, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544EI_FIBER, 
+	    14569, 14550, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_COPPER, 
+	    14578, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82544GC_LOM, 
+	    14578, 14587, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM, 
+	    14593, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_COPPER, 
+	    14602, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_COPPER, 
+	    14611, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545EM_FIBER, 
+	    14602, 14550, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_FIBER, 
+	    14611, 14550, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541EI, 
+	    14620, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541ER_LOM, 
+	    14629, 14587, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EM_LOM, 
+	    14593, 14587, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP_LOM, 
+	    14638, 14587, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP, 
+	    14638, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541EI_MOBILE, 
+	    14620, 14647, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI, 
+	    14654, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547EI_MOBILE, 
+	    14654, 14647, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546EB_QUAD, 
+	    14611, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82540EP_LP, 
+	    14638, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_COPPER, 
+	    14663, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_FIBER, 
+	    14663, 14550, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82545GM_SERDES, 
+	    14663, 5267, 5275, 14672, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IN_BUSINESS, 
+	    14681, 2459, 5275, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_0, 
+	    14692, 14700, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_1, 
+	    14692, 14700, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_0, 
+	    14692, 14703, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_1, 
+	    14692, 14703, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_0, 
+	    14706, 7410, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_1, 
+	    14706, 7410, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82562EH_HPNA_2, 
+	    14706, 7410, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_2, 
+	    14692, 14703, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_2, 
+	    14692, 14700, 3900, 6000, 5714, 14714, 14725, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_3, 
+	    14692, 14700, 3900, 6000, 5714, 14714, 14729, 14725, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_3, 
+	    14692, 14703, 3900, 6000, 5714, 14735, 14725, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_4, 
+	    14692, 14703, 3900, 6000, 5714, 14735, 14729, 14725, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_4, 
+	    14692, 14700, 14746, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_5, 
+	    14692, 14703, 14746, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2100, 
+	    14752, 4472, 14765, 14770, 5313, 5467, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82597EX, 
+	    14773, 14783, 5783, 5467, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_M_AMT, 
+	    14786, 14794, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_AMT, 
+	    14786, 14802, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_LAN, 
+	    14786, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_LAN, 
+	    14786, 14808, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_M_LAN, 
+	    14786, 1786, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VM_6, 
+	    14692, 14703, 3900, 6000, 5714, 14714, 14725, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LAN, 
+	    14814, 5377, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_M, 
+	    14692, 14825, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_COPPER, 
+	    14827, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_FIBER, 
+	    14827, 14550, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_SERDES, 
+	    14827, 5267, 5275, 14672, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LAN, 
+	    14836, 5377, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_5, 
+	    14692, 14700, 14587, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_LAN, 
+	    14844, 5377, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI, 
+	    14852, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541GI, 
+	    14861, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541GI_MOBILE, 
+	    14861, 14647, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541ER, 
+	    14629, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_COPPER, 
+	    14870, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_FIBER, 
+	    14870, 14550, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_SERDES, 
+	    14870, 5267, 5275, 14672, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82541PI, 
+	    14879, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_COPPER, 
+	    14888, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_FIBER, 
+	    14888, 14550, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI_SERDES, 
+	    14888, 5267, 5275, 14672, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_PCIE, 
+	    14897, 14908, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E, 
+	    14918, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573E_IAMT, 
+	    14918, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_6, 
+	    14692, 14700, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_8, 
+	    14692, 14700, 3900, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_100_VE_7, 
+	    14692, 14700, 3900, 6000, 5714, 14926, 14725, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_CPR_DPT, 
+	    14933, 9315, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_FIB_DPT, 
+	    14933, 9315, 14550, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_DPT, 
+	    14933, 9315, 5267, 5275, 14672, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER, 
+	    14870, 11589, 9274, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82573L, 
+	    14940, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571EB_QUAD_COPPER, 
+	    14827, 11589, 9274, 5267, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82546GB_QUAD_COPPER_KSP3, 
+	    14870, 11589, 9274, 5267, 5275, 14948, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82572EI, 
+	    14888, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_CPR_SPT, 
+	    14933, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT, 
+	    14933, 5267, 5275, 14672, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER, 
+	    14955, 11589, 7248, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_AMT, 
+	    14964, 14802, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_M, 
+	    14964, 14647, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE, 
+	    14964, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE_G, 
+	    14964, 14971, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IFE_GT, 
+	    14964, 14975, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_GT, 
+	    14786, 14980, 14975, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IFE_G, 
+	    14786, 14980, 14971, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_IGP_M_V, 
+	    14786, 8383, 14984, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82567V, 
+	    14989, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_M_AMT, 
+	    14964, 14647, 14802, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_HUB, 
+	    14997, 7714, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_AGP, 
+	    14997, 7563, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_DC100_GRAPH, 
+	    14997, 1720, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOAGP_HUB, 
+	    14997, 7714, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOAGP_GRAPH, 
+	    14997, 1720, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOGRAPH_HUB, 
+	    14997, 7714, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_NOGRAPH_AGP, 
+	    14997, 7563, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_HUB, 
+	    14997, 7714, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_AGP, 
+	    14997, 7563, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82815_FULL_GRAPH, 
+	    14997, 1720, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82806AA, 
+	    15003, 15011, 7714, 458, 15017, 15030, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ADI_BECC, 
+	    15040, 15044, 15051, 15055, 11931, 4507, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_IXP1200, 
+	    15062, 3900, 9508, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER, 
+	    15070, 2459, 5275, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82092AA, 
+	    15078, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_SAA7116, 
+	    15086, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82452_PB, 
+	    15094, 15105, 15111, 4333, 9508, 6467, 625, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82596, 
+	    15120, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EEPRO100, 
+	    15126, 6680, 5700, 5377, 2459, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_EEPRO100S, 
+	    15126, 6680, 5700, 11359, 5377, 2459, 5275, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82557, 
+	    15129, 2459, 5275, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX, 
+	    15135, 15143, 6, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371FB_ISA, 
+	    15149, 15157, 6301, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371FB_IDE, 
+	    15149, 15157, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371MX, 
+	    15164, 15172, 14647, 625, 7710, 6166, 15180, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437MX, 
+	    15191, 15199, 14647, 6, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82441FX, 
+	    15206, 15214, 625, 577, 12477, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82380AB, 
+	    15220, 15228, 14647, 6301, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82380FB, 
+	    15235, 15243, 14647, 7546, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439HX, 
+	    15251, 15259, 6, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_PPB, 
+	    15265, 15273, 7546, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_IOxAPIC, 
+	    15265, 15273, 15279, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82870P2_HPLUG, 
+	    15265, 15273, 15287, 15291, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960_RP, 
+	    15296, 15303, 15310, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RM_2, 
+	    14523, 14528, 7546, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_HB, 
+	    15325, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_AGP, 
+	    15325, 7563, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82840_PCI, 
+	    15325, 625, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845_HB, 
+	    15331, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845_AGP, 
+	    15331, 7563, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC, 
+	    15337, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_IDE, 
+	    15337, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_USB, 
+	    15337, 6409, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_SMB, 
+	    15337, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACA, 
+	    15337, 15345, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_ACM, 
+	    15337, 15345, 625, 5322, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_HPB, 
+	    15337, 15351, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_LPC, 
+	    15359, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_IDE, 
+	    15359, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_USB, 
+	    15359, 6409, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_SMB, 
+	    15359, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACA, 
+	    15359, 15345, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_ACM, 
+	    15359, 15345, 625, 5322, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AB_HPB, 
+	    15359, 15351, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LPC, 
+	    15367, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB1, 
+	    15367, 6409, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_SMB, 
+	    15367, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_USB2, 
+	    15367, 6409, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACA, 
+	    15367, 15345, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_ACM, 
+	    15367, 15345, 625, 5322, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_HPB, 
+	    15375, 15351, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LAN, 
+	    15367, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_IDE, 
+	    15375, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_IDE, 
+	    15367, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_LPC, 
+	    15375, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_HPB, 
+	    15367, 15351, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_SMB, 
+	    15384, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_1, 
+	    15384, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801E_LAN_2, 
+	    15384, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC, 
+	    15391, 7723, 3047, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB_1, 
+	    15391, 6409, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_SMB, 
+	    15391, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USB_2, 
+	    15391, 6409, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_AC, 
+	    15391, 8458, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_MOD, 
+	    15391, 8458, 5322, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_USBC, 
+	    15391, 6409, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_IDE_1, 
+	    15391, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_IDE_2, 
+	    15391, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CAM_LPC, 
+	    15399, 7723, 3047, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC, 
+	    15408, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_1, 
+	    15408, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_SMB, 
+	    15408, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_2, 
+	    15408, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_AC, 
+	    15408, 7637, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_MOD, 
+	    15408, 7637, 5322, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USB_3, 
+	    15408, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DBM_IDE, 
+	    15421, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_IDE, 
+	    15408, 6166, 6000, 15430, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_ISA, 
+	    15408, 13798, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_USBC, 
+	    15408, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LPC, 
+	    15445, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_SATA, 
+	    15445, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_0, 
+	    14814, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_SMB, 
+	    14814, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_1, 
+	    14814, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_AC, 
+	    14814, 8458, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_MOD, 
+	    14814, 8458, 5322, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_2, 
+	    14814, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_IDE, 
+	    14814, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_EHCI, 
+	    14814, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_USB_3, 
+	    14814, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801ER_SATA, 
+	    15453, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_MCH, 
+	    15461, 15467, 15471, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82820_AGP, 
+	    15461, 7563, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_HB, 
+	    15480, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_HB, 
+	    15486, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82850_AGP, 
+	    15492, 7563, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI1, 
+	    15486, 7546, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI2, 
+	    15486, 7546, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI3, 
+	    15486, 7546, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82860_PCI4, 
+	    15486, 7546, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HB, 
+	    15504, 15467, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_DRAM, 
+	    15504, 15467, 7345, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_B1, 
+	    15504, 15467, 15510, 15515, 9483, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_B2, 
+	    15504, 15467, 15510, 15515, 5969, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_C1, 
+	    15504, 15467, 15520, 15515, 9483, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_C2, 
+	    15504, 15467, 15520, 15515, 5969, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D1, 
+	    15504, 15467, 15525, 15515, 9483, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7500_HI_D2, 
+	    15504, 15467, 15525, 15515, 5969, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7501_HB, 
+	    15530, 15467, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HB, 
+	    15536, 15467, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_RAS, 
+	    15536, 15467, 15542, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_AGP, 
+	    15536, 15467, 15546, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HI_B1, 
+	    15536, 15467, 15510, 7546, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7505_HI_B2, 
+	    15536, 15467, 15510, 7546, 15555, 15561, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_DRAM, 
+	    15571, 7345, 6000, 2202, 15581, 15590, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_AGP, 
+	    15571, 15546, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82845G_IGD, 
+	    15571, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_HB, 
+	    15594, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_AGP, 
+	    15594, 7563, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82865_IGD, 
+	    15600, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_HPB, 
+	    15445, 15351, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_HB, 
+	    15607, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_AGP, 
+	    15607, 7563, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82875P_CSA, 
+	    15607, 15614, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_HB, 
+	    15622, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_EX, 
+	    15622, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGD, 
+	    15634, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_HB, 
+	    15644, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82925X_EX, 
+	    15644, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_HB, 
+	    15651, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_EX, 
+	    15675, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGD, 
+	    15686, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_LPC, 
+	    15707, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_IDE, 
+	    15707, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SATA, 
+	    15707, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_SMB, 
+	    15707, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_ACA, 
+	    15707, 8458, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_ACM, 
+	    15707, 8458, 5322, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB_0, 
+	    15707, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_USB_1, 
+	    15707, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_WDT, 
+	    15707, 14301, 13049, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_APIC, 
+	    15707, 458, 15030, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_EHCI, 
+	    15707, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_PCIX, 
+	    15707, 7650, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_6300ESB_RAID, 
+	    15707, 8487, 5995, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000X_MCH, 
+	    15715, 12477, 6000, 7714, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_1, 
+	    15721, 6021, 15726, 625, 4333, 15734, 9274, 5969, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_2, 
+	    15721, 6021, 15726, 625, 4333, 15734, 9274, 5980, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_3, 
+	    15721, 6021, 15726, 625, 4333, 15734, 9274, 9814, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_4, 
+	    15721, 6021, 15726, 625, 4333, 15734, 9274, 12269, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_5, 
+	    15721, 6021, 15726, 625, 4333, 15734, 9274, 11633, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_6, 
+	    15721, 6021, 15726, 625, 4333, 15734, 9274, 15737, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FSB_REG, 
+	    15721, 6021, 15726, 15739, 15743, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_RESERVED_1, 
+	    15721, 6021, 15726, 15753, 15743, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_RESERVED_2, 
+	    15721, 6021, 15726, 15753, 15743, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FBD_1, 
+	    15721, 6021, 15726, 15762, 15743, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_FBD_2, 
+	    15721, 6021, 15726, 15762, 15743, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_7, 
+	    15721, 6021, 15726, 625, 4333, 15766, 9274, 15769, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_8, 
+	    15721, 6021, 15726, 625, 4333, 15766, 9274, 15773, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000_PCIE_9, 
+	    15721, 6021, 15726, 625, 4333, 15766, 9274, 15777, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5000X_PCIE, 
+	    15715, 625, 4333, 15781, 9274, 15785, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC, 
+	    14836, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_LPC, 
+	    15789, 15798, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SATA, 
+	    14836, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FR_SATA, 
+	    15804, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_SATA, 
+	    15789, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_0, 
+	    15812, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_1, 
+	    15812, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_2, 
+	    15812, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_USB_3, 
+	    15812, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EHCI, 
+	    15812, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_0, 
+	    15812, 625, 4333, 9274, 14447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_1, 
+	    15812, 625, 4333, 9274, 14450, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_EXP_2, 
+	    15812, 625, 4333, 9274, 15823, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_HDA, 
+	    15812, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_SMB, 
+	    15812, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_ACM, 
+	    15812, 8458, 5322, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_AC, 
+	    15812, 8458, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_IDE, 
+	    15812, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_LPC, 
+	    15842, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_SATA, 
+	    15842, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_SATA_AHCI, 
+	    15842, 15850, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_0, 
+	    15842, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_1, 
+	    15842, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_2, 
+	    15842, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_USB_3, 
+	    15842, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EHCI, 
+	    15842, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_1, 
+	    15842, 625, 4333, 9274, 14450, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_2, 
+	    15842, 625, 4333, 9274, 15823, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_3, 
+	    15842, 625, 4333, 9274, 15855, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_4, 
+	    15842, 625, 4333, 9274, 15858, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_HDA, 
+	    15842, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_SMB, 
+	    15842, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_IDE, 
+	    15842, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945P_MCH, 
+	    15861, 12477, 6000, 7714, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945P_EXP, 
+	    15861, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945P_IGD, 
+	    15861, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955X_HB, 
+	    15870, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82955X_EXP, 
+	    15870, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7230_HB, 
+	    15877, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7230_EXP, 
+	    15877, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82975X_EXP_2, 
+	    15883, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82975X_HB, 
+	    15883, 6417, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82975X_EXP, 
+	    15883, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGDC, 
+	    15634, 15890, 11931, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915GM_IGDC, 
+	    15894, 15890, 11931, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GM_HB, 
+	    15906, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GM_IGD, 
+	    15906, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GM_IGD_1, 
+	    15906, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GME_HB, 
+	    15921, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82945GME_IGD, 
+	    15921, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_LPC, 
+	    15930, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GBM_LPC, 
+	    15941, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GHM_LPC, 
+	    15950, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SATA, 
+	    15930, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SATA_AHCI, 
+	    15930, 15850, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SATA_RAID, 
+	    15930, 5995, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GBM_SATA, 
+	    15959, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GBM_AHCI, 
+	    15941, 15850, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GHM_RAID, 
+	    15950, 8487, 5995, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_1, 
+	    15930, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_2, 
+	    15930, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_3, 
+	    15930, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_USB_4, 
+	    15930, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EHCI, 
+	    15930, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_1, 
+	    15930, 625, 4333, 9274, 14450, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_2, 
+	    15930, 625, 4333, 9274, 15823, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_3, 
+	    15930, 625, 4333, 9274, 15855, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_4, 
+	    15930, 625, 4333, 9274, 15858, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_HDA, 
+	    15930, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_SMB, 
+	    15930, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_LAN, 
+	    15930, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_ACM, 
+	    15930, 8458, 5322, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_ACA, 
+	    15930, 8458, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_IDE, 
+	    15930, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_5, 
+	    15930, 625, 4333, 9274, 15972, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_EXP_6, 
+	    15930, 625, 4333, 9274, 15975, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_LPC, 
+	    15978, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HEM_LPC, 
+	    15985, 7723, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HH_LPC, 
+	    15994, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HO_LPC, 
+	    16002, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_LPC, 
+	    16010, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_1, 
+	    15978, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_AHCI6, 
+	    15978, 15850, 8487, 6000, 5714, 11633, 16019, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_RAID, 
+	    15978, 5995, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_AHCI4, 
+	    15978, 15850, 8487, 6000, 5714, 9814, 16019, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SATA_2, 
+	    15978, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HEM_SATA, 
+	    15985, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_SATA_1, 
+	    16010, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_SATA_2, 
+	    16025, 8487, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_USB_1, 
+	    15978, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_USB_2, 
+	    15978, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_USB_3, 
+	    15978, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_USB_4, 
+	    15978, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_USB_5, 
+	    15978, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EHCI_1, 
+	    15978, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EHCI_2, 
+	    15978, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_SMB, 
+	    15978, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_1, 
+	    15978, 625, 4333, 9274, 14450, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_2, 
+	    15978, 625, 4333, 9274, 15823, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_3, 
+	    15978, 625, 4333, 9274, 15855, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_4, 
+	    15978, 625, 4333, 9274, 15858, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_5, 
+	    15978, 625, 4333, 9274, 15972, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_EXP_6, 
+	    15978, 625, 4333, 9274, 15975, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_IDE, 
+	    15978, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_HDA, 
+	    15978, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_THERMAL, 
+	    15978, 16034, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IH_LPC, 
+	    16042, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IO_LPC, 
+	    16050, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IR_LPC, 
+	    16058, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IEM_LPC, 
+	    16066, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IB_LPC, 
+	    16075, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IM_LPC, 
+	    16083, 7723, 3047, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_1, 
+	    14964, 8487, 6000, 5714, 9814, 16019, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_2, 
+	    14964, 8487, 6000, 5714, 5969, 16019, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_AHCI6, 
+	    14964, 15850, 8487, 6000, 5714, 11633, 16019, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_AHCI4, 
+	    14964, 15850, 8487, 6000, 5714, 9814, 16019, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_3, 
+	    14964, 8487, 6000, 5714, 5969, 16019, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_4, 
+	    14964, 14647, 15850, 8487, 6000, 16091, 5969, 16019, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_5, 
+	    14964, 14647, 15850, 8487, 6000, 16091, 9814, 16019, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SMB, 
+	    14964, 7727, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_THERMAL, 
+	    14964, 16034, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_1, 
+	    14964, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_2, 
+	    14964, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_3, 
+	    14964, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_4, 
+	    14964, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_5, 
+	    14964, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_USB_6, 
+	    14964, 6409, 15416, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EHCI_1, 
+	    14964, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EHCI_2, 
+	    14964, 6409, 7515, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_HDA, 
+	    14964, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_1, 
+	    14964, 625, 4333, 9274, 14450, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_2, 
+	    14964, 625, 4333, 9274, 15823, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_3, 
+	    14964, 625, 4333, 9274, 15855, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_4, 
+	    14964, 625, 4333, 9274, 15858, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_5, 
+	    14964, 625, 4333, 9274, 15972, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_EXP_6, 
+	    14964, 625, 4333, 9274, 15975, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_C, 
+	    14964, 16096, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_HB, 
+	    16100, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82946GZ_IGD, 
+	    16100, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G35_HB, 
+	    16108, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G35_IGD, 
+	    16108, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G35_IGD_1, 
+	    16108, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_HB, 
+	    16114, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_EXP, 
+	    16114, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_IGD, 
+	    16114, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965Q_IGD_1, 
+	    16114, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965G_HB, 
+	    16121, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965G_EXP, 
+	    16121, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965G_IGD, 
+	    16121, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965G_IGD_1, 
+	    16121, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_HB, 
+	    16128, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_EXP, 
+	    16128, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_IGD, 
+	    16128, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q35_IGD_1, 
+	    16128, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_HB, 
+	    16134, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_EXP, 
+	    16144, 625, 4333, 9274, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_IGD, 
+	    16144, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G33_IGD_1, 
+	    16144, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_LAN, 
+	    14964, 4472, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_HB, 
+	    16128, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_EXP, 
+	    16128, 625, 4333, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_IGD, 
+	    16128, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q33_IGD_1, 
+	    16128, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_HB, 
+	    16150, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80862A01, 
+	    16158, 14647, 625, 4333, 9352, 9274, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IGD, 
+	    16150, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IGD_1, 
+	    16150, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_MEI, 
+	    16150, 16167, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IDE, 
+	    16150, 6166, 3047, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_KT, 
+	    16150, 9627, 3047, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_HB, 
+	    16171, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_IGD, 
+	    16171, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82GM45_IGD_1, 
+	    16171, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82IGD_E_HB, 
+	    16178, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82IGD_E_IGD, 
+	    16178, 702, 1720, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_HB, 
+	    16186, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_IGD, 
+	    16186, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G45_HB, 
+	    16192, 6417, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82G45_IGD, 
+	    16192, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244, 
+	    16198, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_DDR, 
+	    16204, 15467, 6417, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_AGP, 
+	    16204, 15546, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855PM_PM, 
+	    16204, 3761, 6514, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_UP, 
+	    15842, 625, 4333, 16212, 9274, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_PCIX, 
+	    15842, 625, 4333, 6467, 7650, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_DN_1, 
+	    15842, 625, 4333, 16221, 9274, 14450, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_DN_2, 
+	    15842, 625, 4333, 16221, 9274, 15823, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_63XXESB_EXP_DN_3, 
+	    15842, 625, 4333, 16221, 9274, 15855, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_1, 
+	    16232, 2564, 6467, 7710, 6103, 9483, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_AGP, 
+	    16232, 2564, 6467, 7563, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IV, 
+	    16232, 702, 234, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82830MP_IO_2, 
+	    16232, 2564, 6467, 7710, 6103, 5969, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MCH, 
+	    16240, 15581, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_IGD, 
+	    16240, 16248, 702, 1720, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_MC, 
+	    16240, 16248, 12477, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82855GM_CP, 
+	    16240, 16248, 7319, 16253, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_MCH, 
+	    16261, 12477, 6000, 7714, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_MCHER, 
+	    16261, 15555, 15561, 2447, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_PCIE_A, 
+	    16261, 625, 4333, 9274, 9279, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_PCIE_A1, 
+	    16261, 625, 4333, 9274, 16267, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7525_PCIE_B, 
+	    16261, 625, 4333, 9274, 4963, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_4x1, 
+	    16270, 16276, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_2x1, 
+	    16270, 16290, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10DO_TIMER, 
+	    16304, 14301, 13049, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10R_TIMER, 
+	    16312, 14301, 13049, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_TIMER, 
+	    16270, 14301, 13049, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10D_TIMER, 
+	    16319, 14301, 13049, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_4x2, 
+	    16270, 16326, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10R_AHCI, 
+	    16312, 15850, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SATA2_2x2, 
+	    16270, 16340, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SMB1, 
+	    16270, 7727, 9627, 16354, 9483, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_ICH10_SMB2, 
+	    16270, 7727, 9627, 16354, 5969, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2200BG, 
+	    14752, 4472, 16358, 5313, 5467, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2225BG, 
+	    14752, 4472, 16365, 5313, 5467, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_1, 
+	    14752, 4472, 16372, 5313, 5467, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1, 
+	    14752, 4472, 16380, 5313, 5467, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2, 
+	    14752, 4472, 16380, 5313, 5467, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_3945ABG_2, 
+	    14752, 4472, 16372, 5313, 5467, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_4965AGN_1, 
+	    14752, 4472, 16388, 5313, 5467, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_4965AGN_2, 
+	    14752, 4472, 16388, 5313, 5467, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU, 
+	    16396, 16402, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA, 
+	    16406, 16414, 6301, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_IDE, 
+	    16406, 16414, 6166, 3047, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_USB, 
+	    16406, 16414, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437VX, 
+	    16422, 16430, 6, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82439TX, 
+	    16436, 16444, 6, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_ISA, 
+	    16451, 16459, 6301, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_IDE, 
+	    16451, 16459, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_USB, 
+	    16451, 16459, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_PMC, 
+	    16451, 16459, 3761, 6514, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_MCH, 
+	    16467, 12477, 6000, 7714, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_GC, 
+	    16467, 1720, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_DC100_MCH, 
+	    16473, 12477, 6000, 7714, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810_DC100_GC, 
+	    16473, 1720, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810E_MCH, 
+	    16485, 12477, 6000, 7714, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810E_GC, 
+	    16485, 1720, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX, 
+	    16492, 625, 7563, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX_AGP, 
+	    16492, 7563, 3047, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX, 
+	    16500, 6417, 16508, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_AGP, 
+	    16500, 7563, 3047, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP, 
+	    16500, 6417, 16508, 8618, 16526, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX, 
+	    16536, 6417, 16508, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ACA, 
+	    16536, 15345, 6490, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_ISA, 
+	    16536, 6301, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_IDE, 
+	    16536, 6166, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_USB, 
+	    16536, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82440MX_PMC, 
+	    16536, 3761, 6514, 6000, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX, 
+	    16544, 6417, 16508, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX_AGP, 
+	    16544, 7563, 3047, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443GX_NOAGP, 
+	    16544, 6417, 16508, 8618, 16526, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_I740, 
+	    16552, 1720, 7759, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_PB, 
+	    16557, 625, 6103, 16568, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCI450_MC, 
+	    16573, 12477, 6000, 16584, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82451NX_MIOC, 
+	    16589, 12477, 657, 7710, 6000, 16597, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82451NX_PXB, 
+	    16589, 625, 16604, 6103, 16613, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21152, 
+	    16619, 7546, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21154, 
+	    16628, 7546, 6103, 0,
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21555, 
+	    16649, 16655, 7546, 6103, 0,
+	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D50T, 
+	    16671, 16682, 0,
+	    PCI_VENDOR_INTERGRAPH, PCI_PRODUCT_INTERGRAPH_4D60T, 
+	    16671, 16688, 0,
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_WLAN, 
+	    16694, 5313, 7082, 0,
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_3877, 
+	    16703, 16709, 5313, 7082, 0,
+	    PCI_VENDOR_INTERSIL, PCI_PRODUCT_INTERSIL_MINI_PCI_3890, 
+	    16703, 16716, 5313, 7082, 0,
+	    PCI_VENDOR_INVERTEX, PCI_PRODUCT_INVERTEX_AEON, 
+	    16723, 0,
+	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_CBIDE2, 
+	    16728, 16742, 6166, 0,
+	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_CBSCII, 
+	    16756, 16763, 6210, 0,
+	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_RSAPCI, 
+	    16778, 16786, 9627, 0,
+	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8152, 
+	    16793, 6417, 6103, 0,
+	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8211, 
+	    16800, 6166, 6000, 0,
+	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8212, 
+	    16807, 6166, 6000, 0,
+	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_AGX016, 
+	    16814, 0,
+	    PCI_VENDOR_ITT, PCI_PRODUCT_ITT_ITT3204, 
+	    16821, 6372, 6377, 0,
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB360, 
+	    16829, 8487, 6000, 0,
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB361, 
+	    16836, 16843, 6000, 0,
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB363, 
+	    16853, 16843, 6000, 0,
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB365, 
+	    16860, 16843, 6000, 0,
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB366, 
+	    16867, 16843, 6000, 0,
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMB368, 
+	    16874, 16881, 6000, 0,
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMC250, 
+	    16886, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_JMICRON, PCI_PRODUCT_JMICRON_JMC260, 
+	    16893, 2459, 5275, 6000, 0,
+	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1460, 
+	    16900, 16910, 5467, 0,
+	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_JNIC1560, 
+	    16924, 9315, 16910, 5467, 0,
+	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_FCI1063, 
+	    16934, 16910, 5467, 0,
+	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_FCX26562, 
+	    16943, 9315, 16910, 5467, 0,
+	    PCI_VENDOR_JNI, PCI_PRODUCT_JNI_FCX6562, 
+	    16953, 16910, 5467, 0,
+	    PCI_VENDOR_KTI, PCI_PRODUCT_KTI_NE2KETHER, 
+	    5275, 0,
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_HSSI, 
+	    16962, 3047, 0,
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_DS3, 
+	    16967, 3047, 0,
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_SSI, 
+	    16971, 0,
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_DS1, 
+	    16975, 0,
+	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805, 
+	    5105, 16979, 0,
+	    PCI_VENDOR_LEVELONE, PCI_PRODUCT_LEVELONE_LXT1001, 
+	    16983, 5290, 5275, 0,
+	    PCI_VENDOR_LINEARSYS, PCI_PRODUCT_LINEARSYS_DVB_TX, 
+	    16992, 16996, 0,
+	    PCI_VENDOR_LINEARSYS, PCI_PRODUCT_LINEARSYS_DVB_RX, 
+	    16992, 17008, 0,
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1032, 
+	    17017, 17024, 17027, 5267, 3900, 5467, 0,
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_EG1064, 
+	    17035, 17024, 17027, 5267, 3900, 5467, 0,
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCMPC200, 
+	    17042, 0,
+	    PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCM200, 
+	    6055, 0,
+	    PCI_VENDOR_LINKSYS2, PCI_PRODUCT_LINKSYS2_IPN2220, 
+	    17051, 17055, 4647, 4472, 5467, 17060, 17065, 0,
+	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C168, 
+	    17069, 17083, 5377, 5275, 0,
+	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_82C115, 
+	    17090, 17097, 17103, 5377, 5275, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0440, 
+	    17107, 17115, 17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0441, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0442, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0443, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0444, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0445, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0446, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0447, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0448, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0449, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044a, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044b, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044c, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044d, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_044e, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0450, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0451, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0452, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0453, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0454, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0455, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0456, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0457, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0458, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_0459, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_LTMODEM_045a, 
+	    17120, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_OR3LP26, 
+	    17128, 17133, 5714, 17138, 625, 17145, 17150, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_OR3TP12, 
+	    17128, 17133, 5714, 17155, 625, 17145, 17150, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_USBHC, 
+	    6409, 6417, 6000, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_EVDO, 
+	    1713, 4647, 17162, 17170, 0,
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_FW322_323, 
+	    17174, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713, 
+	    17184, 17192, 5377, 5275, 0,
+	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX987x5, 
+	    17199, 17192, 5377, 5275, 0,
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_SMARTRN2, 
+	    11359, 13924, 625, 17207, 17216, 0,
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_COLLAGE25, 
+	    17220, 13968, 6552, 5467, 0,
+	    PCI_VENDOR_MADGE, PCI_PRODUCT_MADGE_COLLAGE155, 
+	    17220, 17228, 6552, 5467, 0,
+	    PCI_VENDOR_MAGMA, PCI_PRODUCT_MAGMA_SERIAL16, 
+	    11586, 17232, 17236, 0,
+	    PCI_VENDOR_MAGMA, PCI_PRODUCT_MAGMA_SERIAL4, 
+	    9814, 17232, 17236, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_ATLAS, 
+	    17245, 17249, 17256, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM, 
+	    17245, 17266, 17277, 17283, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MYSTIQUE, 
+	    17245, 17293, 17302, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM2, 
+	    17245, 17266, 6989, 17309, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_MILLENNIUM2_AGP, 
+	    17245, 17266, 6989, 17315, 7563, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200_PCI, 
+	    17245, 17324, 625, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200_AGP, 
+	    17245, 17324, 7563, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200E_SE, 
+	    17245, 17329, 17335, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G400_AGP, 
+	    17245, 17351, 7563, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_IMPRESSION, 
+	    17245, 17356, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G100_PCI, 
+	    17245, 17367, 625, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G100_AGP, 
+	    17245, 17367, 7563, 0,
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G550_AGP, 
+	    17245, 17372, 7563, 0,
+	    PCI_VENDOR_MEDIAQ, PCI_PRODUCT_MEDIAQ_MQ200, 
+	    17377, 0,
+	    PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN120, 
+	    17383, 5377, 5275, 11318, 5467, 0,
+	    PCI_VENDOR_MICREL, PCI_PRODUCT_MICREL_KSZ8841, 
+	    5377, 5275, 0,
+	    PCI_VENDOR_MICREL, PCI_PRODUCT_MICREL_KSZ8842, 
+	    17390, 5969, 9274, 5377, 5275, 0,
+	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_VGA, 
+	    17399, 17406, 7458, 0,
+	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_SERIAL, 
+	    17399, 9627, 9274, 0,
+	    PCI_VENDOR_MIDDLE_DIGITAL, PCI_PRODUCT_MIDDLE_DIGITAL_WEASEL_CONTROL, 
+	    17399, 7802, 0,
+	    PCI_VENDOR_MITSUBISHIELEC, PCI_PRODUCT_MITSUBISHIELEC_TORNADO, 
+	    17414, 13111, 7563, 0,
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC105, 
+	    17422, 17429, 6417, 6103, 0,
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC106, 
+	    17437, 17444, 6417, 6103, 0,
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC8240, 
+	    17454, 17462, 6417, 6103, 0,
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC107, 
+	    17471, 17478, 6417, 6103, 0,
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC8245, 
+	    17490, 17498, 17506, 6417, 6103, 0,
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_RAVEN, 
+	    17510, 6417, 6103, 657, 17516, 15030, 6000, 0,
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_FALCON, 
+	    17532, 17539, 12477, 6000, 4507, 17543, 0,
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_HAWK, 
+	    17547, 6, 12477, 6000, 657, 625, 6417, 6103, 0,
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC5200B, 
+	    17552, 6417, 6103, 0,
+	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C104H, 
+	    17561, 0,
+	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP104, 
+	    17567, 0,
+	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_CP114, 
+	    17575, 0,
+	    PCI_VENDOR_MOXA, PCI_PRODUCT_MOXA_C168H, 
+	    17581, 0,
+	    PCI_VENDOR_MUTECH, PCI_PRODUCT_MUTECH_MV1000, 
+	    17587, 0,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V2, 
+	    17594, 5995, 17601, 17605, 0,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V3, 
+	    17594, 5995, 17616, 17605, 0,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V4, 
+	    17594, 5995, 17620, 17605, 0,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_RAID_V5, 
+	    17594, 5995, 17624, 17605, 0,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_3000, 
+	    17628, 13111, 0,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID_2000, 
+	    17628, 1323, 0,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID, 
+	    17640, 17651, 0,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_170, 
+	    17640, 17655, 0,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_ACCELERAID_160, 
+	    17640, 17659, 0,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID1100, 
+	    17628, 17663, 0,
+	    PCI_VENDOR_MYLEX, PCI_PRODUCT_MYLEX_EXTREMERAID, 
+	    17628, 17668, 0,
+	    PCI_VENDOR_MYRICOM, PCI_PRODUCT_MYRICOM_MYRINET, 
+	    9542, 0,
+	    PCI_VENDOR_MYSON, PCI_PRODUCT_MYSON_MTD803, 
+	    17678, 17685, 2459, 5275, 6000, 0,
+	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130, 
+	    17692, 4647, 13610, 0,
+	    PCI_VENDOR_NDC, PCI_PRODUCT_NDC_NCP130A2, 
+	    17692, 8013, 17699, 4647, 13610, 0,
+	    PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_5000, 
+	    15721, 5275, 0,
+	    PCI_VENDOR_NETBOOST, PCI_PRODUCT_NETBOOST_POLICY, 
+	    17702, 7759, 0,
+	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91CX42, 
+	    17709, 17718, 6103, 0,
+	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91L826A, 
+	    17722, 6989, 625, 6103, 0,
+	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91L8260, 
+	    17728, 625, 6103, 0,
+	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91L8261, 
+	    17728, 6989, 625, 6103, 0,
+	    PCI_VENDOR_NATIONALINST, PCI_PRODUCT_NATIONALINST_MXI3, 
+	    17738, 625, 17744, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83810, 
+	    17753, 5377, 5275, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83815, 
+	    17761, 5377, 5275, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83820, 
+	    17769, 5290, 5275, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_HB, 
+	    17777, 6315, 6103, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_ISA, 
+	    17777, 6301, 6103, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_IDE, 
+	    17777, 6166, 6000, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_AUDIO, 
+	    17777, 6490, 6000, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_USB, 
+	    17777, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_CS5535_VIDEO, 
+	    17777, 234, 6000, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_NS87410, 
+	    17784, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_IDE, 
+	    17792, 625, 6166, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_AUDIO, 
+	    17792, 17799, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_ISA, 
+	    17792, 6301, 6103, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_ACPI, 
+	    17792, 17811, 0,
+	    PCI_VENDOR_NS, PCI_PRODUCT_NS_SC1100_XBUS, 
+	    17792, 17820, 0,
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7130HL, 
+	    17826, 625, 234, 17836, 6377, 0,
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7133HL, 
+	    17846, 625, 17856, 17836, 6377, 0,
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7134HL, 
+	    17860, 625, 17856, 17836, 6377, 0,
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7135HL, 
+	    17870, 625, 17856, 17836, 6377, 0,
+	    PCI_VENDOR_PHILIPS, PCI_PRODUCT_PHILIPS_SAA7146AH, 
+	    17880, 625, 2475, 6103, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810, 
+	    17890, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_820, 
+	    17897, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_825, 
+	    17904, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_815, 
+	    17911, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_810AP, 
+	    17918, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_860, 
+	    17927, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1510D, 
+	    17934, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_896, 
+	    17943, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_895, 
+	    17950, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_885, 
+	    17957, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875, 
+	    17964, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1510, 
+	    17975, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_895A, 
+	    17983, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875A, 
+	    17991, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1010, 
+	    17999, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1010_2, 
+	    17999, 18007, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030, 
+	    18015, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030R, 
+	    18031, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030ZC, 
+	    18040, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1035, 
+	    18050, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1035ZC, 
+	    18058, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064, 
+	    18068, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068, 
+	    18076, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068_2, 
+	    18076, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064E, 
+	    18084, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064E_2, 
+	    18084, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068E, 
+	    18093, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1068E_2, 
+	    18093, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1066E, 
+	    18102, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1064A, 
+	    18111, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1066, 
+	    18120, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1078, 
+	    18128, 625, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_SAS1078_PCIE, 
+	    18128, 625, 4333, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_875J, 
+	    18136, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC909, 
+	    18144, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC909A, 
+	    18150, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929, 
+	    18157, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929_1, 
+	    18157, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC919, 
+	    18163, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC919_1, 
+	    18163, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929X, 
+	    18169, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC919X, 
+	    18176, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC949X, 
+	    18183, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC939X, 
+	    18190, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC949E, 
+	    18197, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PERC_4SC, 
+	    6919, 18204, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_320X, 
+	    289, 18209, 6210, 18218, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_320E, 
+	    289, 18209, 6210, 18224, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_300X, 
+	    289, 18209, 8487, 18230, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_SAS, 
+	    7743, 5567, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_MEGARAID_VERDE_ZCR, 
+	    7743, 18246, 18252, 0,
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC, 
+	    4440, 4447, 18256, 5275, 0,
+	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_TOOLS, 
+	    18262, 0,
+	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO, 
+	    234, 0,
+	    PCI_VENDOR_PARALLELS, PCI_PRODUCT_PARALLELS_VIDEO2, 
+	    234, 6989, 0,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_USB, 
+	    6409, 6417, 6000, 0,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_CARDU, 
+	    18268, 18276, 18284, 0,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_POWERVR2, 
+	    18289, 18297, 0,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72872, 
+	    18302, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_BCU, 
+	    18268, 16354, 7802, 18284, 0,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VRC4173_AC97U, 
+	    18268, 7637, 18284, 0,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72870, 
+	    18311, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD72871, 
+	    18320, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_PD720100A, 
+	    6409, 6417, 6000, 0,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VA26D, 
+	    18329, 6680, 7455, 18335, 0,
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_VERSALX, 
+	    18329, 7455, 0,
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG2070, 
+	    18341, 18352, 0,
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128V, 
+	    18341, 18359, 0,
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG128ZV, 
+	    18341, 18364, 0,
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMG2160, 
+	    18341, 18370, 0,
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_VGA, 
+	    18376, 18387, 7458, 0,
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256ZX_VGA, 
+	    18376, 18393, 7458, 0,
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256XLP_AU, 
+	    18376, 18399, 6490, 0,
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256AV_AU, 
+	    18376, 18387, 6490, 0,
+	    PCI_VENDOR_NEOMAGIC, PCI_PRODUCT_NEOMAGIC_NMMM256ZX_AU, 
+	    18376, 18393, 6490, 0,
+	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620, 
+	    18406, 7237, 5275, 0,
+	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_GA620T, 
+	    18406, 7248, 5275, 0,
+	    PCI_VENDOR_NETGEAR, PCI_PRODUCT_NETGEAR_MA301, 
+	    18412, 625, 12830, 7074, 0,
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9805, 
+	    18418, 18423, 9274, 0,
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9815, 
+	    9315, 18418, 18423, 9274, 0,
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9820, 
+	    6115, 9904, 0,
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9835, 
+	    9315, 9904, 577, 18418, 18423, 9274, 0,
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9845, 
+	    11589, 9904, 577, 18418, 18423, 9274, 0,
+	    PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9855, 
+	    18431, 11589, 9904, 577, 18418, 18423, 9274, 0,
+	    PCI_VENDOR_NETSEC, PCI_PRODUCT_NETSEC_7751, 
+	    13657, 0,
+	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501, 
+	    18436, 6315, 6103, 0,
+	    PCI_VENDOR_NKK, PCI_PRODUCT_NKK_NDR4600, 
+	    18445, 6315, 6103, 0,
+	    PCI_VENDOR_NORTEL, PCI_PRODUCT_NORTEL_BAYSTACK_21, 
+	    18453, 18462, 18465, 6262, 18473, 0,
+	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128, 
+	    18481, 0,
+	    PCI_VENDOR_NUMBER9, PCI_PRODUCT_NUMBER9_I128_2, 
+	    18481, 6989, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT, 
+	    18493, 18498, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT2, 
+	    18493, 18502, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT2U, 
+	    18493, 18502, 6592, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_VANTA, 
+	    18507, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVATNT2M64, 
+	    18493, 18502, 18513, 18519, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_PCIB, 
+	    18522, 6301, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SMBUS, 
+	    18522, 7727, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_IDE, 
+	    18522, 6166, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SATA, 
+	    18522, 8487, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_LAN1, 
+	    18522, 5275, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_LAN2, 
+	    18522, 5275, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP04_SATA2, 
+	    18522, 8487, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800U, 
+	    18528, 18536, 6592, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800, 
+	    18528, 18536, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800LE, 
+	    18528, 18536, 8362, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800GT, 
+	    18528, 18536, 18541, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_PCIB1, 
+	    18544, 6301, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_PCIB2, 
+	    18544, 6301, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SMBUS, 
+	    18544, 7727, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_ATA133, 
+	    18544, 18552, 6166, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SATA1, 
+	    18544, 9627, 5991, 9483, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_SATA2, 
+	    18544, 9627, 5991, 5969, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_LAN1, 
+	    18544, 5275, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_LAN2, 
+	    18544, 5275, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_AC, 
+	    18544, 15345, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_USB, 
+	    18544, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_USB2, 
+	    18544, 8470, 6417, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_PCI, 
+	    18544, 625, 6417, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_PCIE, 
+	    18544, 18559, 6417, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE4_MEM, 
+	    18544, 12477, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCIB, 
+	    18564, 6301, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_SMBUS, 
+	    18564, 7727, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_ATA133, 
+	    18564, 18552, 6166, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_LAN, 
+	    18564, 5275, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_OHCI, 
+	    18564, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_EHCI, 
+	    18564, 8470, 6417, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AC, 
+	    18564, 18572, 15345, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MCPT_AP, 
+	    18564, 18572, 6490, 821, 18284, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PPB, 
+	    18564, 7546, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_FW, 
+	    18564, 7872, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_PCIB, 
+	    18564, 6592, 18578, 6301, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_SMBUS, 
+	    18564, 6592, 18578, 7727, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_ATA133, 
+	    18564, 6592, 18578, 18552, 6166, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_LAN1, 
+	    18564, 6592, 18578, 5275, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_OHCI, 
+	    18564, 6592, 18578, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_EHCI, 
+	    18564, 6592, 18578, 8470, 6417, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_MCPT_AC, 
+	    18564, 6592, 18578, 15345, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_PPB, 
+	    18564, 6592, 18578, 7546, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_LAN2, 
+	    18564, 6592, 18578, 5275, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA, 
+	    18564, 6592, 18578, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PCIB, 
+	    18582, 6301, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PCHB, 
+	    18582, 6315, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PPB2, 
+	    18582, 7546, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_SMBUS, 
+	    18582, 7727, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_ATA133, 
+	    18582, 18552, 6166, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_LAN1, 
+	    18582, 5275, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_OHCI, 
+	    18582, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_EHCI, 
+	    18582, 8470, 6417, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_MCPT_AC, 
+	    18582, 18572, 15345, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PPB, 
+	    18582, 7546, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_LAN4, 
+	    18582, 5275, 15858, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_PCIB, 
+	    18582, 18590, 6301, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB, 
+	    18582, 18590, 6315, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_AGP, 
+	    18582, 18590, 7563, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA, 
+	    18582, 18590, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_SMBUS, 
+	    18582, 18590, 7727, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_ATA133, 
+	    18582, 18590, 18552, 6166, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_LAN, 
+	    18582, 18590, 5275, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_OHCI, 
+	    18582, 18590, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_EHCI, 
+	    18582, 18590, 8470, 6417, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_MCPT_AC, 
+	    18582, 18590, 18572, 15345, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_PPB, 
+	    18582, 18590, 7546, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_250_SATA2, 
+	    18582, 18590, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOX_SMBUS, 
+	    18594, 18599, 7727, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOX_PCHB, 
+	    18594, 18599, 6315, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_ALADDINTNT2, 
+	    18606, 18502, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_280NVS2, 
+	    18614, 18622, 18626, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADROFX3400SLI, 
+	    18630, 18637, 18640, 18645, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE256, 
+	    18528, 18649, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCEDDR, 
+	    18528, 18653, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO, 
+	    18630, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2MX, 
+	    18657, 18666, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2MX200, 
+	    18657, 18666, 18669, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2GO, 
+	    18657, 18677, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO2_MXR, 
+	    18680, 18688, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2, 
+	    18657, 18695, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2DDR, 
+	    18657, 18695, 18699, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2BR, 
+	    18657, 18695, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO2, 
+	    18680, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6200, 
+	    18528, 18705, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE6200LE, 
+	    18528, 18712, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_MX460, 
+	    18719, 18666, 18728, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_MX440, 
+	    18719, 18666, 18732, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_MX420, 
+	    18719, 18666, 18736, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX440_SE, 
+	    18719, 18666, 18732, 18740, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_500XGL, 
+	    18614, 18743, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_200NVS, 
+	    18614, 18750, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX440_8X, 
+	    18719, 18666, 18732, 18761, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX440_SE_8X, 
+	    18719, 18666, 18732, 18740, 18761, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX420_8X, 
+	    18719, 18666, 18736, 18761, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_580XGL, 
+	    18614, 17170, 18769, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_280NVS, 
+	    18614, 18622, 18626, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_380XGL, 
+	    18614, 18773, 18769, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE2_IGP, 
+	    18657, 702, 18777, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_MCP_AC, 
+	    18599, 18781, 15345, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_ATA100, 
+	    18599, 18785, 6166, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_USB, 
+	    18599, 6409, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE_LAN, 
+	    18599, 5275, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_7300LE, 
+	    18528, 18792, 8362, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCHB, 
+	    18564, 6315, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PPB2, 
+	    18564, 7546, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM1, 
+	    18564, 12477, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM2, 
+	    18564, 12477, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM3, 
+	    18564, 12477, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM4, 
+	    18564, 12477, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_MEM5, 
+	    18564, 12477, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_MX_IGP, 
+	    18719, 18666, 702, 18777, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3, 
+	    18797, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3_TI200, 
+	    18797, 18806, 9348, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE3_TI500, 
+	    18797, 18806, 18809, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_DCC, 
+	    18630, 18813, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6150, 
+	    18528, 18817, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6150LE, 
+	    18528, 18817, 8362, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_TI4600, 
+	    18719, 18806, 18822, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_TI4400, 
+	    18719, 18806, 18827, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE4_TI4200, 
+	    18719, 18806, 18832, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_900XGL, 
+	    18614, 18837, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_750XGL, 
+	    18614, 18844, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_700XGL, 
+	    18614, 18851, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_PCIB, 
+	    18858, 6301, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SMBUS, 
+	    18858, 7727, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_ATA133, 
+	    18858, 18552, 6166, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SATA1, 
+	    18858, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_SATA2, 
+	    18858, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_LAN1, 
+	    18858, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_LAN2, 
+	    18858, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_AC, 
+	    18858, 15345, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_HDA, 
+	    18858, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_OHCI, 
+	    18858, 6409, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE430_EHCI, 
+	    18858, 8470, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4800, 
+	    18719, 18806, 18868, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4200_8X, 
+	    18719, 18806, 18832, 18761, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4800_SE, 
+	    18719, 18806, 18868, 18740, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF4_TI_4200_GO, 
+	    18719, 18806, 18832, 18677, 7563, 18873, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_980_XGL, 
+	    18614, 18876, 18769, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO4_780_XGL, 
+	    18614, 18880, 18769, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F0, 
+	    18884, 6417, 6103, 18888, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F1, 
+	    18884, 6417, 6103, 18897, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F2, 
+	    18884, 6417, 6103, 18906, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F3, 
+	    18884, 6417, 6103, 18915, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F4, 
+	    18884, 6417, 6103, 18924, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F5, 
+	    18884, 6417, 6103, 18933, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F6, 
+	    18884, 6417, 6103, 18942, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02F7, 
+	    18884, 6417, 6103, 18951, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC5, 
+	    18884, 12477, 6000, 12269, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC4, 
+	    18884, 12477, 6000, 9814, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC0, 
+	    18884, 12477, 6000, 9481, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FB, 
+	    18884, 625, 4333, 6103, 18960, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FC, 
+	    18884, 625, 4333, 6103, 18969, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_PPB_02FD, 
+	    18884, 625, 4333, 6103, 18978, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_MC1, 
+	    18884, 12477, 6000, 9483, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_C51_HB_02FF, 
+	    18884, 6417, 6103, 18987, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_FX5800U, 
+	    18528, 18637, 18996, 6592, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_XBOXFB, 
+	    18594, 19001, 19007, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_FX5800, 
+	    18528, 18637, 18996, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_2000, 
+	    18630, 18637, 1323, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_1000, 
+	    18630, 18637, 12548, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5600U, 
+	    18528, 18637, 19014, 6592, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5600, 
+	    18528, 18637, 19014, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5600_SE, 
+	    18528, 18637, 19014, 18740, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5200U, 
+	    18528, 18637, 19019, 6592, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5200, 
+	    18528, 18637, 19019, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5200SE, 
+	    18528, 18637, 19024, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_500, 
+	    18630, 18637, 18809, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5900U, 
+	    18528, 18637, 19031, 6592, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5900, 
+	    18528, 18637, 19031, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5900XT, 
+	    18528, 18637, 19036, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5950U, 
+	    18528, 18637, 19043, 6592, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_FX_3000, 
+	    18630, 18637, 13111, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5700_LE, 
+	    18528, 18637, 19048, 8362, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_ISA, 
+	    18599, 19053, 6301, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SMB, 
+	    18599, 19053, 7727, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM, 
+	    18599, 19053, 12477, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_MEM2, 
+	    18599, 19053, 12477, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_IDE, 
+	    18599, 19053, 18552, 6166, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_OHCI, 
+	    18599, 19053, 7510, 6409, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_EHCI, 
+	    18599, 19053, 7515, 6409, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_PPB, 
+	    18599, 19053, 7546, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_HDA, 
+	    18599, 19053, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN1, 
+	    18599, 19053, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_LAN2, 
+	    18599, 19053, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_PCIE, 
+	    18599, 19053, 9469, 19059, 9274, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA, 
+	    18599, 19053, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP55_SATA2, 
+	    18599, 19053, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_GO_7600, 
+	    18528, 18677, 19063, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_ISA, 
+	    18599, 19068, 6301, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_HDA, 
+	    18599, 19068, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN1, 
+	    18599, 19068, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN2, 
+	    18599, 19068, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA, 
+	    18599, 19068, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_PPB_1, 
+	    18599, 19068, 7546, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_PPB_2, 
+	    18599, 19068, 7546, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SMB, 
+	    18599, 19068, 7727, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_IDE, 
+	    18599, 19068, 18552, 6166, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA2, 
+	    18599, 19068, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_SATA3, 
+	    18599, 19068, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN3, 
+	    18599, 19068, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP61_LAN4, 
+	    18599, 19068, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_8400M_GS, 
+	    18528, 19074, 19080, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_QUADRO_NVS140M, 
+	    18630, 18626, 19083, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_ISA, 
+	    18599, 19088, 6301, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LPC1, 
+	    18599, 19088, 19094, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LPC2, 
+	    18599, 19088, 19094, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LPC3, 
+	    18599, 19088, 19094, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_MEM, 
+	    18599, 19088, 12477, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_MEM2, 
+	    18599, 19088, 12477, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SMB, 
+	    18599, 19088, 7727, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SMU, 
+	    18599, 19088, 6, 6514, 18284, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_IDE, 
+	    18599, 19088, 18552, 6166, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PCI, 
+	    18599, 19088, 625, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_HDA_1, 
+	    18599, 19088, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_HDA_2, 
+	    18599, 19088, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_1, 
+	    18599, 19088, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_2, 
+	    18599, 19088, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_3, 
+	    18599, 19088, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_AHCI_4, 
+	    18599, 19088, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN1, 
+	    18599, 19088, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN2, 
+	    18599, 19088, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN3, 
+	    18599, 19088, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_LAN4, 
+	    18599, 19088, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_1, 
+	    18599, 19088, 6409, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_2, 
+	    18599, 19088, 6409, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_3, 
+	    18599, 19088, 6409, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_USB_4, 
+	    18599, 19088, 6409, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_1, 
+	    18599, 19088, 7546, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_2, 
+	    18599, 19088, 7546, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PPB_3, 
+	    18599, 19088, 7546, 6103, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA, 
+	    18599, 19088, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA2, 
+	    18599, 19088, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA3, 
+	    18599, 19088, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_SATA4, 
+	    18599, 19088, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SMB, 
+	    18599, 19102, 7727, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN1, 
+	    18599, 19102, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN2, 
+	    18599, 19102, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN3, 
+	    18599, 19102, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_LAN4, 
+	    18599, 19102, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA, 
+	    18599, 19102, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA2, 
+	    18599, 19102, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA3, 
+	    18599, 19102, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_SATA4, 
+	    18599, 19102, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_1, 
+	    18599, 19102, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_2, 
+	    18599, 19102, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_3, 
+	    18599, 19102, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_4, 
+	    18599, 19102, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_5, 
+	    18599, 19102, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_6, 
+	    18599, 19102, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_7, 
+	    18599, 19102, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_AHCI_8, 
+	    18599, 19102, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_HDA_1, 
+	    18599, 19102, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_HDA_2, 
+	    18599, 19102, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP67_IDE, 
+	    18599, 19102, 18552, 6166, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_IDE, 
+	    18599, 19108, 18552, 6166, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_IDE, 
+	    18599, 19114, 18552, 6166, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN1, 
+	    18599, 19114, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN2, 
+	    18599, 19114, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN3, 
+	    18599, 19114, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_LAN4, 
+	    18599, 19114, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_HDA_1, 
+	    18599, 19114, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_HDA_2, 
+	    18599, 19114, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_HDA_3, 
+	    18599, 19114, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_HDA_4, 
+	    18599, 19114, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_SMB, 
+	    18599, 19108, 7727, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN1, 
+	    18599, 19108, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN2, 
+	    18599, 19108, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN3, 
+	    18599, 19108, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN4, 
+	    18599, 19108, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_1, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_2, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_3, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_4, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_5, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_6, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_7, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_8, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_9, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_10, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_11, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_AHCI_12, 
+	    18599, 19108, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_HDA_1, 
+	    18599, 19108, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_HDA_2, 
+	    18599, 19108, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN1, 
+	    18599, 19120, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN2, 
+	    18599, 19120, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN3, 
+	    18599, 19120, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP79_LAN4, 
+	    18599, 19120, 5267, 5275, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_1, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_2, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_3, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_4, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_5, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_6, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_7, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_8, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_9, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_10, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_11, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP77_AHCI_12, 
+	    18599, 19114, 15850, 6000, 0,
+	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128, 
+	    19126, 8821, 0,
+	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007, 
+	    19131, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3136, 
+	    19138, 19151, 13924, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3139, 
+	    19162, 19171, 13924, 5571, 5577, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3140, 
+	    19180, 19193, 5571, 5577, 13924, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3250, 
+	    19203, 19211, 5571, 5577, 13924, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3530, 
+	    19218, 19193, 5571, 5577, 5700, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3141, 
+	    19226, 19193, 5571, 5577, 13924, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3540, 
+	    19234, 19193, 19242, 19247, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC3150, 
+	    19256, 19193, 19151, 13924, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2805, 
+	    19264, 5275, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2325, 
+	    19272, 5275, 5377, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2183, 
+	    19280, 5275, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2326, 
+	    19293, 19301, 5275, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC2327, 
+	    19311, 5377, 5275, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OC6151, 
+	    19324, 17228, 8136, 6552, 0,
+	    PCI_VENDOR_OLICOM, PCI_PRODUCT_OLICOM_OCATM, 
+	    6552, 0,
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C557, 
+	    19337, 0,
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C558, 
+	    19344, 0,
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C568, 
+	    19351, 0,
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82D568, 
+	    19358, 0,
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C621, 
+	    19365, 0,
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C822, 
+	    19372, 0,
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C861, 
+	    19379, 0,
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C700, 
+	    19386, 0,
+	    PCI_VENDOR_OPTI, PCI_PRODUCT_OPTI_82C701, 
+	    19393, 0,
+	    PCI_VENDOR_PACKETENGINES, PCI_PRODUCT_PACKETENGINES_GNICII, 
+	    18256, 6989, 5275, 0,
+	    PCI_VENDOR_PCHDTV, PCI_PRODUCT_PCHDTV_HD2000, 
+	    19400, 19408, 234, 10650, 0,
+	    PCI_VENDOR_PCHDTV, PCI_PRODUCT_PCHDTV_HD5500, 
+	    19413, 19408, 234, 10650, 0,
+	    PCI_VENDOR_PCTECH, PCI_PRODUCT_PCTECH_RZ1000, 
+	    19421, 0,
+	    PCI_VENDOR_PEAK, PCI_PRODUCT_PEAK_PCAN, 
+	    19428, 19433, 6000, 0,
+	    PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3603_TX, 
+	    19437, 5377, 5275, 0,
+	    PCI_VENDOR_PLANEX, PCI_PRODUCT_PLANEX_FNW_3800_TX, 
+	    19449, 5377, 5275, 0,
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9030, 
+	    19461, 7710, 19466, 0,
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9050, 
+	    19477, 7710, 19466, 0,
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9054, 
+	    19482, 7710, 7759, 0,
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9060ES, 
+	    19487, 625, 16354, 6000, 0,
+	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_9656, 
+	    19494, 7710, 7759, 0,
+	    PCI_VENDOR_POWERHOUSE, PCI_PRODUCT_POWERHOUSE_POWERTOP, 
+	    19499, 13945, 6, 6000, 0,
+	    PCI_VENDOR_POWERHOUSE, PCI_PRODUCT_POWERHOUSE_POWERPRO, 
+	    19508, 13945, 6, 6000, 0,
+	    PCI_VENDOR_PROLAN, PCI_PRODUCT_PROLAN_NE2KETHER, 
+	    5275, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20265, 
+	    19517, 19526, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20263, 
+	    19535, 19526, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20275, 
+	    19544, 19553, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20318, 
+	    19563, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20319, 
+	    19572, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20371, 
+	    19581, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20379, 
+	    19590, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20378, 
+	    19599, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20375, 
+	    19608, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20376, 
+	    19617, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20377, 
+	    19626, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40719, 
+	    19635, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40519, 
+	    19644, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20771, 
+	    19653, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20571, 
+	    19662, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20579, 
+	    19671, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40779, 
+	    19680, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40718, 
+	    19689, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC40518, 
+	    19698, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20775, 
+	    19707, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20575, 
+	    19716, 9627, 5991, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20267, 
+	    19725, 19734, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20246, 
+	    19744, 19753, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20262, 
+	    19762, 19526, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20268, 
+	    19771, 19734, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20269, 
+	    19780, 19553, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20276, 
+	    19789, 19553, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030, 
+	    19798, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20270, 
+	    19805, 19734, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20271, 
+	    19814, 19553, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20617, 
+	    19823, 9315, 19553, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20620, 
+	    19832, 9315, 19553, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20621, 
+	    19841, 9315, 19553, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20618, 
+	    19850, 9315, 19553, 6166, 19859, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20619, 
+	    19869, 9315, 19553, 6166, 6000, 0,
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_PDC20277, 
+	    19878, 19553, 6166, 6000, 0,
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1020, 
+	    19887, 0,
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1022, 
+	    19895, 0,
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1080, 
+	    19903, 0,
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP1240, 
+	    19911, 0,
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_ISP2100, 
+	    19919, 0,
+	    PCI_VENDOR_QLOGIC, PCI_PRODUCT_QLOGIC_QLA200, 
+	    19927, 0,
+	    PCI_VENDOR_QUANTUMDESIGNS, PCI_PRODUCT_QUANTUMDESIGNS_8500, 
+	    8393, 0,
+	    PCI_VENDOR_QUANTUMDESIGNS, PCI_PRODUCT_QUANTUMDESIGNS_8580, 
+	    19934, 0,
+	    PCI_VENDOR_QUICKLOGIC, PCI_PRODUCT_QUICKLOGIC_PCWATCHDOG, 
+	    798, 14301, 0,
+	    PCI_VENDOR_RAINBOW, PCI_PRODUCT_RAINBOW_CS200, 
+	    19939, 9348, 19951, 7759, 0,
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2460A, 
+	    19955, 7074, 0,
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2560, 
+	    19963, 19970, 0,
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561S, 
+	    19980, 19970, 0,
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2561, 
+	    19988, 19970, 0,
+	    PCI_VENDOR_RALINK, PCI_PRODUCT_RALINK_RT2661, 
+	    19995, 20002, 0,
+	    PCI_VENDOR_RATOC, PCI_PRODUCT_RATOC_REXPCI31, 
+	    20014, 20018, 6210, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029, 
+	    20028, 5275, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139D, 
+	    20033, 5377, 5275, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8100, 
+	    20039, 5377, 5275, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129, 
+	    20044, 5377, 5275, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8101E, 
+	    20049, 5377, 5275, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8138, 
+	    20055, 5377, 5275, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139, 
+	    6978, 5377, 5275, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169SC, 
+	    20060, 5290, 5275, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168, 
+	    20074, 5290, 5275, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169, 
+	    20086, 5290, 5275, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8180, 
+	    20096, 7074, 0,
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8185, 
+	    20101, 20106, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C465, 
+	    20118, 10960, 6103, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C466, 
+	    20124, 10960, 6103, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C475, 
+	    20130, 10960, 6103, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RL5C476, 
+	    20136, 10960, 6103, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C477, 
+	    20142, 10960, 6103, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C478, 
+	    20148, 10960, 6103, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C551, 
+	    20154, 10960, 20160, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C552, 
+	    20176, 10960, 20160, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C592, 
+	    20182, 10960, 20188, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C593, 
+	    20210, 10960, 20188, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C821, 
+	    20216, 10960, 20222, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C822, 
+	    20242, 10960, 20222, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C832, 
+	    20248, 20254, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C843, 
+	    20285, 10960, 20291, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C847, 
+	    20325, 10960, 20291, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_RxDPCC, 
+	    20331, 9678, 6000, 0,
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C853, 
+	    20342, 10960, 20348, 0,
+	    PCI_VENDOR_RISCOM, PCI_PRODUCT_RISCOM_N2, 
+	    20385, 0,
+	    PCI_VENDOR_RNS, PCI_PRODUCT_RNS_FDDI, 
+	    20388, 20393, 0,
+	    PCI_VENDOR_S2IO, PCI_PRODUCT_S2IO_XFRAME, 
+	    20398, 11440, 5267, 5275, 5467, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE, 
+	    20405, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO32, 
+	    20411, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO64, 
+	    20418, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_AURORA64P, 
+	    20428, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO64UVP, 
+	    20439, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_VX, 
+	    20449, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_868, 
+	    20458, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_928, 
+	    20462, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_864_0, 
+	    20469, 20478, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_864_1, 
+	    20492, 20478, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_864_2, 
+	    20501, 20478, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_864_3, 
+	    20510, 20478, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_964_0, 
+	    20519, 20528, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_964_1, 
+	    20542, 20528, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_964_2, 
+	    20551, 20528, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_964_3, 
+	    20560, 20528, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_968_0, 
+	    20569, 20578, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_968_1, 
+	    20592, 20578, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_968_2, 
+	    20601, 20578, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_968_3, 
+	    20610, 20578, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO64V2_DX, 
+	    20619, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PLATO_PX, 
+	    20631, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO3D, 
+	    20640, 20647, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_DX, 
+	    20654, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_GX2, 
+	    20663, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TRIO3D2X, 
+	    20673, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE3D, 
+	    20683, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE3D_MV, 
+	    20692, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE4, 
+	    20704, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PROSAVAGE_KM133, 
+	    20712, 20722, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MX, 
+	    20728, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MXP, 
+	    20737, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_MX_MV, 
+	    20747, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_MX, 
+	    20760, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_IX_MV, 
+	    20770, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_IX, 
+	    20783, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE_IXC, 
+	    20793, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SAVAGE2000, 
+	    20804, 0,
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SONICVIBES, 
+	    20815, 0,
+	    PCI_VENDOR_SAFENET, PCI_PRODUCT_SAFENET_SAFEXCEL, 
+	    20826, 0,
+	    PCI_VENDOR_SAMSUNGSEMI, PCI_PRODUCT_SAMSUNGSEMI_KS8920, 
+	    20835, 5377, 5275, 0,
+	    PCI_VENDOR_SANDBURST, PCI_PRODUCT_SANDBURST_QE1000, 
+	    20842, 0,
+	    PCI_VENDOR_SANDBURST, PCI_PRODUCT_SANDBURST_FE1000, 
+	    20849, 0,
+	    PCI_VENDOR_SEGA, PCI_PRODUCT_SEGA_BROADBAND, 
+	    20856, 5467, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_LE_AGP, 
+	    20866, 20875, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB30_LE_PCI, 
+	    20883, 625, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_LE_PCI, 
+	    20866, 625, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_HE_PCI, 
+	    20892, 625, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_HE_AGP, 
+	    20892, 20875, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_X, 
+	    20901, 7650, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_HE, 
+	    20908, 20875, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB30_HE, 
+	    20916, 625, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CNB20_HE_PCI2, 
+	    20892, 20875, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_LE, 
+	    20925, 20875, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_SL, 
+	    20933, 20875, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_PPB0, 
+	    20941, 20948, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_X2, 
+	    20958, 7650, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_BCM5714, 
+	    20966, 20982, 13484, 6467, 7650, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_PPB1, 
+	    20941, 20948, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOB_E, 
+	    20991, 7650, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB0, 
+	    20998, 9469, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB1, 
+	    20998, 9469, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB2, 
+	    20998, 9469, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT2100_PPB3, 
+	    20998, 9469, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4, 
+	    21005, 7498, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5, 
+	    21010, 7498, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6, 
+	    21015, 7498, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000SB, 
+	    21020, 7498, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_IDE, 
+	    21005, 6166, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5_IDE, 
+	    21010, 6166, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_IDE, 
+	    21029, 6166, 6000, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_RAID, 
+	    21015, 21037, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_IDE, 
+	    21015, 21037, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_USB, 
+	    21046, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_USB, 
+	    21015, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_USB, 
+	    20941, 6409, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5_LPC, 
+	    21010, 21056, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_LPC, 
+	    21015, 21056, 6103, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_LPC, 
+	    20941, 7723, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_XIOAPIC, 
+	    20941, 21064, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_WDTIMER, 
+	    20941, 14301, 13049, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_K2_SATA, 
+	    7904, 8487, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_FRODO4_SATA, 
+	    21072, 8487, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_FRODO8_SATA, 
+	    21079, 8487, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_SATA_1, 
+	    21029, 8487, 0,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_HT1000_SATA_2, 
+	    21029, 8487, 0,
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3, 
+	    21086, 0,
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_RAD1, 
+	    21091, 21099, 0,
+	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON, 
+	    21104, 5267, 5275, 0,
+	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_2000, 
+	    21110, 21114, 0,
+	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_1764, 
+	    21110, 21120, 0,
+	    PCI_VENDOR_SIBYTE, PCI_PRODUCT_SIBYTE_BCM1250_PCIHB, 
+	    21126, 625, 6417, 6103, 0,
+	    PCI_VENDOR_SIBYTE, PCI_PRODUCT_SIBYTE_BCM1250_LDTHB, 
+	    21126, 21134, 6417, 6103, 0,
+	    PCI_VENDOR_SIGMA, PCI_PRODUCT_SIGMA_HOLLYWOODPLUS, 
+	    21138, 21148, 21163, 6377, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_S550, 
+	    21170, 9627, 21179, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_S650, 
+	    21170, 9627, 21185, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_S850, 
+	    21170, 9627, 21191, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_IO550, 
+	    21170, 7710, 21179, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_IO650, 
+	    21170, 7710, 21185, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_IO850, 
+	    21170, 7710, 21191, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_P, 
+	    21170, 21197, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2P, 
+	    21170, 21197, 9315, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S550, 
+	    21170, 9627, 9315, 21179, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S650, 
+	    21170, 9627, 9315, 21185, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S850, 
+	    21170, 9627, 9315, 21191, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S1P550, 
+	    21170, 21206, 21179, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S1P650, 
+	    21170, 21206, 21185, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S1P850, 
+	    21170, 21206, 21191, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_4S550, 
+	    21170, 21211, 21179, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_4S650, 
+	    21170, 21211, 21185, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_4S850, 
+	    21170, 21211, 21191, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_S550, 
+	    21214, 9627, 21179, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_S650, 
+	    21214, 9627, 21185, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_S850, 
+	    21214, 9627, 21191, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_IO550, 
+	    21214, 7710, 21179, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_IO650, 
+	    21214, 7710, 21185, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_IO850, 
+	    21214, 7710, 21191, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_P, 
+	    21214, 21197, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P, 
+	    21214, 21197, 9315, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S550, 
+	    21214, 9627, 9315, 21179, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S650, 
+	    21214, 9627, 9315, 21185, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S850, 
+	    21214, 9627, 9315, 21191, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P1S550, 
+	    21214, 21223, 21179, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P1S650, 
+	    21214, 21223, 21185, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P1S850, 
+	    21214, 21223, 21191, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_4S550, 
+	    21214, 21211, 21179, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_4S650, 
+	    21214, 21211, 21185, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_4S850, 
+	    21214, 21211, 21191, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S1P550, 
+	    21214, 21206, 21179, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S1P650, 
+	    21214, 21206, 21185, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S1P850, 
+	    21214, 21206, 21191, 625, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_PS8000P650, 
+	    625, 9627, 21228, 11616, 21185, 0,
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_PS8000P850, 
+	    625, 9627, 21228, 11616, 21191, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C201, 
+	    21233, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C202, 
+	    21240, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C205, 
+	    21247, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C503, 
+	    21254, 21261, 21264, 13798, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_600PMC, 
+	    21274, 3761, 21278, 6000, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_180_SATA, 
+	    21284, 8487, 6000, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_181_SATA, 
+	    21288, 8487, 6000, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_182_SATA, 
+	    21292, 8487, 6000, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_190, 
+	    21296, 5275, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_VGA, 
+	    21264, 702, 7458, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_300, 
+	    21300, 7563, 7458, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C501, 
+	    21308, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C496, 
+	    21315, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_530HB, 
+	    21322, 6315, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_540HB, 
+	    21326, 6315, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_550HB, 
+	    21330, 6315, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_85C601, 
+	    21334, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_620, 
+	    21341, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_630, 
+	    21345, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_633, 
+	    21349, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_635, 
+	    21353, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_640, 
+	    21357, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_645, 
+	    21361, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_646, 
+	    21365, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_648, 
+	    21369, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_650, 
+	    21373, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_651, 
+	    21377, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_652, 
+	    21381, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_655, 
+	    21385, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_658, 
+	    21389, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_661, 
+	    21393, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_730, 
+	    21397, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_733, 
+	    21401, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_735, 
+	    21405, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_740, 
+	    21409, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_741, 
+	    21413, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_745, 
+	    21417, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_746, 
+	    21421, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_748, 
+	    21425, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_750, 
+	    21429, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_751, 
+	    21433, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_752, 
+	    21437, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_755, 
+	    21441, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_756, 
+	    21445, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_760, 
+	    21449, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_761, 
+	    21453, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_900, 
+	    21457, 5377, 5275, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_961, 
+	    21461, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_962, 
+	    21465, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_963, 
+	    21469, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_964, 
+	    21473, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_965, 
+	    21477, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_IDE, 
+	    21264, 6166, 6000, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_HB, 
+	    21264, 6417, 6103, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_530VGA, 
+	    21322, 21481, 21485, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6325, 
+	    21500, 7563, 7458, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_6326, 
+	    21505, 7563, 7458, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_5597_USB, 
+	    21264, 6409, 6417, 6000, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7002, 
+	    21510, 6409, 6428, 6417, 6000, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7012_AC, 
+	    21515, 15345, 3405, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7016, 
+	    21520, 5377, 5275, 0,
+	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_7018, 
+	    21525, 3405, 0,
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM710, 
+	    21530, 0,
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM712, 
+	    21537, 0,
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM720, 
+	    21545, 0,
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM810, 
+	    21553, 0,
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM811, 
+	    21553, 0,
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM820, 
+	    21559, 0,
+	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM910, 
+	    21566, 0,
+	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C665, 
+	    21571, 0,
+	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_37C922, 
+	    21581, 0,
+	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170, 
+	    21591, 21598, 2459, 5275, 0,
+	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C175, 
+	    21611, 21598, 2459, 5275, 0,
+	    PCI_VENDOR_SOLIDUM, PCI_PRODUCT_SOLIDUM_AMD971, 
+	    21618, 7554, 21627, 0,
+	    PCI_VENDOR_SOLIDUM, PCI_PRODUCT_SOLIDUM_CLASS802, 
+	    21618, 21631, 21642, 0,
+	    PCI_VENDOR_SOLIDUM, PCI_PRODUCT_SOLIDUM_PAXWARE1100, 
+	    21649, 17663, 9315, 21658, 21631, 21642, 0,
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD1947A, 
+	    21661, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD3222, 
+	    21670, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_MEMSTICK, 
+	    12477, 21678, 15590, 6000, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUS, 
+	    21684, 21689, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_HMENETWORK, 
+	    21684, 21695, 21701, 5275, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_EBUSIII, 
+	    21684, 21689, 21706, 21710, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_ERINETWORK, 
+	    21715, 5275, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_FIREWIRE, 
+	    7929, 6000, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_USB, 
+	    6409, 6000, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_GEMNETWORK, 
+	    21719, 5267, 5275, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SIMBA, 
+	    21723, 625, 6103, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_5821, 
+	    21729, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_SCA1K, 
+	    7752, 7759, 12548, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_PSYCHO, 
+	    21737, 625, 6000, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_MS_IIep, 
+	    21744, 21755, 625, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIi, 
+	    21760, 21771, 625, 0,
+	    PCI_VENDOR_SUN, PCI_PRODUCT_SUN_US_IIe, 
+	    21760, 21775, 625, 0,
+	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_IP100A, 
+	    21779, 5377, 5275, 0,
+	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST201, 
+	    21786, 5377, 5275, 0,
+	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST1023, 
+	    21792, 5267, 5275, 0,
+	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST2021, 
+	    21799, 5267, 5275, 0,
+	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34, 
+	    21806, 5275, 0,
+	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C101, 
+	    21812, 0,
+	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C103, 
+	    21819, 0,
+	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C105, 
+	    21826, 0,
+	    PCI_VENDOR_SYMPHONY2, PCI_PRODUCT_SYMPHONY2_82C101, 
+	    21812, 0,
+	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_83C553, 
+	    21833, 6301, 6103, 0,
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_FDDI, 
+	    13177, 21840, 0,
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SKNET_GE, 
+	    13177, 21848, 0,
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK9821v2, 
+	    21851, 9852, 0,
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1, 
+	    13177, 21859, 5267, 5275, 0,
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9D21, 
+	    21867, 21875, 0,
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9D41, 
+	    21886, 21894, 0,
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9SXX, 
+	    21905, 5267, 5275, 0,
+	    PCI_VENDOR_SCHNEIDERKOCH, PCI_PRODUCT_SCHNEIDERKOCH_SK_9E21, 
+	    21913, 21930, 0,
+	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021, 
+	    21941, 5267, 5275, 0,
+	    PCI_VENDOR_TAMARACK, PCI_PRODUCT_TAMARACK_TC9021_ALT, 
+	    21941, 5267, 5275, 21948, 636, 0,
+	    PCI_VENDOR_TANDEM, PCI_PRODUCT_TANDEM_SERVERNETII, 
+	    21953, 6989, 2517, 5467, 0,
+	    PCI_VENDOR_TEKRAM, PCI_PRODUCT_TEKRAM_DC290, 
+	    21963, 0,
+	    PCI_VENDOR_TEKRAM2, PCI_PRODUCT_TEKRAM2_DC690C, 
+	    21973, 0,
+	    PCI_VENDOR_TEKRAM2, PCI_PRODUCT_TEKRAM2_DC315, 
+	    21981, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TLAN, 
+	    21995, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TVP4020, 
+	    22000, 5954, 5969, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV21, 
+	    22008, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV22, 
+	    22018, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450LYNX, 
+	    22028, 12830, 12835, 6417, 6000, 5714, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410LYNX, 
+	    22036, 12830, 12835, 6417, 6000, 5714, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV23, 
+	    22044, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB12LV26, 
+	    22054, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA22, 
+	    22064, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA22A, 
+	    22074, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AA23, 
+	    22086, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_TSB43AB21, 
+	    22096, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451LYNX, 
+	    22106, 12830, 12835, 6417, 6000, 5714, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510LYNX, 
+	    22114, 12830, 12835, 6417, 6000, 5714, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520LYNX, 
+	    22122, 12830, 12835, 6417, 6000, 5714, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410LYNX, 
+	    22130, 12830, 12835, 6417, 6000, 5714, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111CB, 
+	    22142, 22155, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111FW, 
+	    22142, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI72111FM, 
+	    22142, 702, 22163, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515A, 
+	    22174, 22155, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI6515ASM, 
+	    22174, 22155, 6000, 22183, 9678, 8570, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100A, 
+	    22190, 7074, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100B, 
+	    22198, 7074, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX111, 
+	    22206, 19970, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130, 
+	    22213, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1031, 
+	    22221, 12847, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1131, 
+	    22229, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1250, 
+	    22237, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1220, 
+	    22245, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1221, 
+	    22253, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1210, 
+	    22261, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450, 
+	    22269, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1225, 
+	    22277, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251, 
+	    22285, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1211, 
+	    22293, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251B, 
+	    22301, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2030, 
+	    22310, 7546, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2050, 
+	    22318, 7546, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4450YENTA, 
+	    22028, 10960, 6103, 5714, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410YENTA, 
+	    22036, 10960, 6103, 5714, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4451YENTA, 
+	    22106, 10960, 6103, 5714, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4510YENTA, 
+	    22114, 10960, 6103, 5714, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4520YENTA, 
+	    22122, 10960, 6103, 5714, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7510YENTA, 
+	    22326, 10960, 6103, 5714, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610YENTA, 
+	    22334, 10960, 6103, 5714, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410YENTA, 
+	    22342, 10960, 6103, 5714, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7610SM, 
+	    22334, 10960, 6103, 22183, 9678, 22350, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410SD, 
+	    22356, 10960, 6103, 22367, 22350, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7410MS, 
+	    22356, 10960, 6103, 22375, 21678, 22350, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1410, 
+	    22383, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1420, 
+	    22391, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1451, 
+	    22399, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1421, 
+	    22407, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1620, 
+	    22415, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1520, 
+	    22423, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1510, 
+	    22431, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1530, 
+	    22439, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1515, 
+	    22447, 10960, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI2040, 
+	    22455, 22463, 6103, 0,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI7420YENTA, 
+	    22471, 22479, 6103, 5714, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800L, 
+	    22491, 0,
+	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800H, 
+	    22500, 0,
+	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI100H, 
+	    22509, 0,
+	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00, 
+	    22518, 6315, 6103, 0,
+	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_TC35856F, 
+	    22524, 6552, 22533, 0,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_PORTEGE, 
+	    22544, 11318, 0,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_HOST, 
+	    6417, 16508, 0,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ISA, 
+	    6301, 6103, 0,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95, 
+	    22552, 10960, 6103, 0,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95B, 
+	    22560, 10960, 6103, 0,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC97, 
+	    22569, 10960, 6103, 0,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_SMCARD, 
+	    11359, 1939, 6000, 0,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_SDCARD, 
+	    22577, 240, 9678, 6000, 22584, 0,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC100, 
+	    22591, 10960, 6103, 0,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_OBOE, 
+	    2459, 22600, 22609, 22614, 0,
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_DONAUOBOE, 
+	    2459, 22600, 22609, 22616, 0,
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_TM8000NB, 
+	    22619, 702, 7574, 6103, 0,
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_NORTHBRIDGE, 
+	    17406, 7574, 6103, 0,
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_LONGRUN, 
+	    22626, 7574, 6103, 0,
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_SDRAM, 
+	    22634, 6000, 0,
+	    PCI_VENDOR_TRANSMETA, PCI_PRODUCT_TRANSMETA_BIOS_SCRATCH, 
+	    22640, 22645, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_DX, 
+	    22656, 22663, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_4DWAVE_NX, 
+	    22656, 22666, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE_I7, 
+	    22669, 22680, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9320, 
+	    22683, 22688, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9350, 
+	    22683, 22693, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9360, 
+	    22683, 22698, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9397, 
+	    22703, 22709, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9397DVD, 
+	    22703, 22714, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9525, 
+	    22703, 22722, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9420, 
+	    22683, 22727, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9440, 
+	    22683, 22732, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9660, 
+	    22683, 22737, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9680, 
+	    22683, 22742, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9682, 
+	    22683, 22747, 0,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBERBLADE, 
+	    22669, 0,
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT343, 
+	    22752, 6166, 6000, 0,
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT366, 
+	    22763, 6166, 6000, 0,
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT372A, 
+	    22778, 6166, 6000, 0,
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT302, 
+	    22786, 6166, 6000, 0,
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT371, 
+	    22793, 6166, 6000, 0,
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT374, 
+	    22800, 6166, 6000, 0,
+	    PCI_VENDOR_TRIONES, PCI_PRODUCT_TRIONES_HPT372N, 
+	    22807, 6166, 6000, 0,
+	    PCI_VENDOR_TRITECH, PCI_PRODUCT_TRITECH_TR25202, 
+	    22815, 22825, 0,
+	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET4000_W32P_A, 
+	    22833, 8013, 9279, 0,
+	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET4000_W32P_B, 
+	    22833, 8013, 4963, 0,
+	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET4000_W32P_C, 
+	    22833, 8013, 9285, 0,
+	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET4000_W32P_D, 
+	    22833, 8013, 3183, 0,
+	    PCI_VENDOR_TSENG, PCI_PRODUCT_TSENG_ET6000, 
+	    22844, 0,
+	    PCI_VENDOR_TURTLE_BEACH, PCI_PRODUCT_TURTLE_BEACH_SANTA_CRUZ, 
+	    2584, 2590, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C881, 
+	    22851, 22860, 15726, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C886, 
+	    22864, 6301, 6103, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8673F, 
+	    22873, 7632, 6000, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8881, 
+	    22881, 13726, 22860, 625, 15726, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM82C891, 
+	    22888, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM886A, 
+	    22897, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886BF, 
+	    22904, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8710, 
+	    22913, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886, 
+	    22920, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8881F, 
+	    22927, 22935, 6103, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886F, 
+	    22944, 6301, 6103, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886A, 
+	    22952, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8891A, 
+	    22960, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM9017F, 
+	    22968, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886N, 
+	    22976, 0,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8891N, 
+	    22984, 0,
+	    PCI_VENDOR_ULSI, PCI_PRODUCT_ULSI_US201, 
+	    22992, 0,
+	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3C2884A, 
+	    11658, 22998, 23004, 625, 5322, 23013, 0,
+	    PCI_VENDOR_USR, PCI_PRODUCT_USR_3CP5609, 
+	    23024, 625, 21179, 5322, 0,
+	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902, 
+	    23032, 5267, 5275, 0,
+	    PCI_VENDOR_USR2, PCI_PRODUCT_USR2_2415, 
+	    4647, 12847, 5467, 0,
+	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V292PBC, 
+	    23042, 23050, 6315, 6103, 0,
+	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V960PBC, 
+	    23059, 14523, 6315, 6103, 0,
+	    PCI_VENDOR_V3, PCI_PRODUCT_V3_V96DPC, 
+	    23067, 14523, 23074, 6315, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6305, 
+	    23081, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8M800_0, 
+	    23088, 6417, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_0, 
+	    23095, 6417, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880, 
+	    23102, 2564, 6467, 625, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_0, 
+	    23108, 6417, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_HB, 
+	    23114, 23121, 23129, 6417, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_0351, 
+	    23136, 6417, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_HB, 
+	    23143, 23121, 23150, 6417, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501_MVP4, 
+	    23157, 23121, 23164, 6417, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C505, 
+	    23170, 23179, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C561, 
+	    23187, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586A_IDE, 
+	    23196, 6166, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C576, 
+	    23206, 23215, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700_IDE, 
+	    23218, 6166, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C580VP, 
+	    23224, 23121, 23233, 6315, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_ISA, 
+	    23237, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_SATA, 
+	    23246, 702, 8487, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595, 
+	    23254, 23121, 23263, 6315, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C596A, 
+	    23268, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597, 
+	    23278, 23121, 23287, 6315, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598PCI, 
+	    23292, 23121, 23301, 6315, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8605PCI, 
+	    23307, 23121, 23314, 23323, 6315, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_ISA, 
+	    23328, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C691, 
+	    23338, 23121, 23347, 6315, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C693, 
+	    23352, 23121, 6680, 23361, 6315, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926, 
+	    23367, 23376, 23383, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570M, 
+	    23396, 23406, 6315, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C570MV, 
+	    23396, 23406, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_1, 
+	    23102, 2564, 6467, 625, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_1351, 
+	    23136, 6417, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_IDE, 
+	    23237, 6166, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C595_2, 
+	    23254, 23121, 23263, 6315, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_2, 
+	    23102, 2564, 6467, 625, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_2351, 
+	    23136, 6417, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_PPB_287A, 
+	    23415, 7546, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_PCIE1, 
+	    23415, 23422, 9352, 23427, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_PCIE2, 
+	    23415, 23422, 9352, 23433, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_VLINK, 
+	    23415, 6592, 23439, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT83C572, 
+	    23445, 6409, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C586_PWR, 
+	    23237, 3761, 6514, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3043, 
+	    23454, 23461, 5377, 5275, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6306, 
+	    23469, 12830, 12835, 6417, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105M, 
+	    23476, 23484, 21710, 5377, 5275, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_SMB, 
+	    23328, 7727, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_AC97, 
+	    23328, 15345, 6490, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233_AC97, 
+	    23491, 15345, 6490, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6102, 
+	    23505, 23484, 17103, 5377, 5275, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97, 
+	    23328, 23512, 5322, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233, 
+	    23518, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366, 
+	    23525, 23121, 23532, 23539, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8653, 
+	    23547, 23121, 6680, 23554, 23539, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_EHCI, 
+	    23560, 7515, 6409, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6105, 
+	    23567, 23484, 21710, 5377, 5275, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT612X, 
+	    23574, 23581, 5290, 5275, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8623_VGA, 
+	    23592, 23121, 23599, 7458, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8623, 
+	    23592, 23121, 23599, 23539, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233A, 
+	    23607, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_SATA, 
+	    23560, 702, 8487, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB, 
+	    23108, 6417, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237_PCIB, 
+	    23560, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6421_RAID, 
+	    23615, 9627, 5995, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3314_IG, 
+	    23622, 23629, 23635, 702, 1720, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237R_SATA, 
+	    23645, 702, 8487, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_3351, 
+	    23136, 6417, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_3, 
+	    23102, 2564, 6467, 625, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235, 
+	    23653, 23121, 23660, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377, 
+	    23667, 23674, 23681, 2564, 6467, 625, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378, 
+	    23687, 23674, 23694, 2564, 6467, 625, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237, 
+	    23560, 23121, 23700, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_HDA, 
+	    23707, 15826, 15831, 6490, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_ISA, 
+	    23722, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237S_ISA, 
+	    23740, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_PPB, 
+	    23246, 7546, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8237A_HB, 
+	    23246, 6417, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_4, 
+	    23102, 2564, 6467, 625, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_4351, 
+	    23136, 6417, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_CX700M2_IDE, 
+	    23748, 6166, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_IOAPIC, 
+	    23136, 7710, 23762, 15030, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A, 
+	    23767, 23777, 5377, 5275, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8378_IG, 
+	    23687, 23694, 23635, 702, 1720, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_KT880_5, 
+	    23102, 2564, 6467, 625, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3351_HB_7351, 
+	    23136, 6417, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231, 
+	    23788, 6301, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231_PWR, 
+	    23788, 3761, 6514, 6000, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_PPB, 
+	    23114, 23121, 23129, 625, 6467, 7563, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8371_PPB, 
+	    23143, 23121, 23150, 7546, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8501AGP, 
+	    23157, 23121, 23164, 23795, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C597AGP, 
+	    23278, 23121, 23287, 23795, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C598AGP, 
+	    23292, 23121, 23301, 23795, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8605AGP, 
+	    23307, 23121, 23314, 23323, 15546, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_A238, 
+	    23095, 7546, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8633AGP, 
+	    23803, 23121, 6680, 23810, 23795, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366AGP, 
+	    23525, 23121, 23532, 23795, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377AGP, 
+	    23667, 23795, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8HTB_AGP, 
+	    23108, 7563, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8377CEAGP, 
+	    23815, 23795, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT3237_PPB, 
+	    23095, 7574, 2202, 23560, 7498, 7546, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_C238, 
+	    23095, 7546, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_D238, 
+	    23095, 7546, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_E238, 
+	    23095, 7546, 6103, 0,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_K8T890_PPB_F238, 
+	    23095, 7546, 6103, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0, 
+	    23824, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B, 
+	    23842, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x10, 
+	    23856, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x20, 
+	    23869, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6530, 
+	    23882, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6550, 
+	    23890, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17, 
+	    23898, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27, 
+	    23911, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537, 
+	    23924, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557, 
+	    23932, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x15, 
+	    23949, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x25, 
+	    23962, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6535, 
+	    23975, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6555, 
+	    23983, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RP, 
+	    24000, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RP, 
+	    24013, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RP, 
+	    24026, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557RP, 
+	    24036, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RP, 
+	    24046, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RP, 
+	    24059, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RD, 
+	    24072, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RD, 
+	    24085, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RD, 
+	    24098, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557RD, 
+	    24108, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RD, 
+	    24118, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RD, 
+	    24131, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x18RD, 
+	    24144, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x28RD, 
+	    24158, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x38RD, 
+	    24172, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x58RD, 
+	    24185, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RP2, 
+	    24198, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RP2, 
+	    24212, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RP2, 
+	    24226, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RP2, 
+	    24237, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RP2, 
+	    24251, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x13RS, 
+	    24265, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x23RS, 
+	    24275, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6518RS, 
+	    24285, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x28RS, 
+	    24295, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x38RS, 
+	    24305, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x58RS, 
+	    24315, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x33RS, 
+	    24325, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x43RS, 
+	    24335, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x53RS, 
+	    24345, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x63RS, 
+	    24355, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x13RN, 
+	    24365, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x23RN, 
+	    24375, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x18RN, 
+	    24385, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x28RN, 
+	    24399, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x38RN, 
+	    24413, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x58RN, 
+	    24426, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x43RN, 
+	    24439, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x53RN, 
+	    24452, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x63RN, 
+	    24462, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_4x13RZ, 
+	    24472, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_4x23RZ, 
+	    24482, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x13RZ, 
+	    24492, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x23RZ, 
+	    24502, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x33RZ, 
+	    24512, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x43RZ, 
+	    24522, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x53RZ, 
+	    24532, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_8x63RZ, 
+	    24542, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x19RD, 
+	    24552, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x29RD, 
+	    24565, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x19RN, 
+	    24578, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x29RN, 
+	    24591, 0,
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_ICP, 
+	    24604, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C592, 
+	    24608, 2564, 6103, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C593, 
+	    24615, 13798, 6103, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C594, 
+	    24622, 24629, 6, 6000, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C596597, 
+	    24637, 24629, 13798, 6103, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C541, 
+	    24648, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C543, 
+	    24655, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C532, 
+	    24662, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C534, 
+	    24669, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C535, 
+	    24676, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C147, 
+	    24683, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C975, 
+	    24690, 0,
+	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C925, 
+	    24697, 0,
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL, 
+	    17406, 24704, 0,
+	    PCI_VENDOR_VMWARE, PCI_PRODUCT_VMWARE_VIRTUAL2, 
+	    17406, 24704, 6989, 0,
+	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9000, 
+	    24709, 0,
+	    PCI_VENDOR_WEITEK, PCI_PRODUCT_WEITEK_P9100, 
+	    24715, 0,
+	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C193A, 
+	    24721, 0,
+	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C196A, 
+	    24731, 0,
+	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C197A, 
+	    24741, 0,
+	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD7193, 
+	    24751, 0,
+	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD7197, 
+	    24758, 0,
+	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C296A, 
+	    24765, 0,
+	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD34C296, 
+	    24775, 0,
+	    PCI_VENDOR_WD, PCI_PRODUCT_WD_90C, 
+	    24784, 0,
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83769F, 
+	    24788, 0,
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_0, 
+	    24796, 6301, 6103, 0,
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W83C553F_1, 
+	    24796, 6166, 6000, 0,
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C840F, 
+	    24805, 5377, 5275, 0,
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F, 
+	    24814, 5275, 0,
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F_1, 
+	    24814, 5275, 0,
+	    PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W6692, 
+	    24823, 8125, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI, 
+	    16763, 6210, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJATA32BI, 
+	    16742, 6166, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE, 
+	    24829, 6210, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32BI_KME, 
+	    16763, 6210, 24845, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJATA32BI_KME, 
+	    16742, 6166, 24845, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_IODATA, 
+	    24829, 6210, 24851, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC, 
+	    24829, 6210, 24860, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_LOGITEC2, 
+	    24829, 6210, 24870, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NJSC32UDE_BUFFALO, 
+	    24829, 6210, 24881, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_CF32A, 
+	    24891, 24897, 5467, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_CF32A_BUFFALO, 
+	    24891, 24910, 5467, 24881, 0,
+	    PCI_VENDOR_WORKBIT, PCI_PRODUCT_WORKBIT_NPATA32_KME, 
+	    24913, 6166, 24845, 0,
+	    PCI_VENDOR_XENSOURCE, PCI_PRODUCT_XENSOURCE_XENPLATFORM, 
+	    24922, 24926, 2447, 0,
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3, 
+	    24935, 2459, 5275, 6000, 0,
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_X3201_3_21143, 
+	    24935, 2459, 5275, 6000, 24943, 0,
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_WINGLOBAL, 
+	    24951, 5322, 0,
+	    PCI_VENDOR_XIRCOM, PCI_PRODUCT_XIRCOM_MODEM56, 
+	    5492, 5322, 0,
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724, 
+	    24961, 6490, 0,
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740, 
+	    21409, 6490, 0,
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF740C, 
+	    24965, 24970, 6490, 0,
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF724F, 
+	    24977, 24970, 6490, 0,
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF744B, 
+	    24982, 24986, 6490, 0,
+	    PCI_VENDOR_YAMAHA, PCI_PRODUCT_YAMAHA_YMF754, 
+	    24994, 24998, 6490, 0,
+	    PCI_VENDOR_ZEINET, PCI_PRODUCT_ZEINET_1221, 
+	    25006, 0,
+	    PCI_VENDOR_ZIATECH, PCI_PRODUCT_ZIATECH_ZT8905, 
+	    25011, 6103, 0,
+	    PCI_VENDOR_ZORAN, PCI_PRODUCT_ZORAN_ZR36120, 
+	    234, 6000, 0,
 };
-const int pci_nproducts = 3026;
+static const char pci_words[] = { "." 
+	    "Peak\0" /* 1 refs @ 1 */
+	    "System\0" /* 27 refs @ 6 */
+	    "Technik\0" /* 1 refs @ 13 */
+	    "Martin-Marietta\0" /* 1 refs @ 21 */
+	    "Hauppauge\0" /* 1 refs @ 37 */
+	    "Computer\0" /* 35 refs @ 47 */
+	    "Works\0" /* 1 refs @ 56 */
+	    "Dynalink\0" /* 1 refs @ 62 */
+	    "Compaq\0" /* 2 refs @ 71 */
+	    "Symbios\0" /* 1 refs @ 78 */
+	    "Logic\0" /* 9 refs @ 86 */
+	    "ATI\0" /* 1 refs @ 92 */
+	    "Technologies\0" /* 23 refs @ 96 */
+	    "ULSI\0" /* 1 refs @ 109 */
+	    "Systems\0" /* 53 refs @ 114 */
+	    "VLSI\0" /* 1 refs @ 122 */
+	    "Technology\0" /* 50 refs @ 127 */
+	    "Avance\0" /* 2 refs @ 138 */
+	    "Reply\0" /* 1 refs @ 145 */
+	    "Group\0" /* 1 refs @ 151 */
+	    "NetFrame\0" /* 1 refs @ 157 */
+	    "Epson\0" /* 2 refs @ 166 */
+	    "Phoenix\0" /* 1 refs @ 172 */
+	    "National\0" /* 3 refs @ 180 */
+	    "Semiconductor\0" /* 12 refs @ 189 */
+	    "Tseng\0" /* 2 refs @ 203 */
+	    "Labs\0" /* 8 refs @ 209 */
+	    "AST\0" /* 1 refs @ 214 */
+	    "Research\0" /* 11 refs @ 218 */
+	    "Weitek\0" /* 1 refs @ 227 */
+	    "Video\0" /* 20 refs @ 234 */
+	    "Digital\0" /* 7 refs @ 240 */
+	    "Equipment\0" /* 1 refs @ 248 */
+	    "Micronics\0" /* 1 refs @ 258 */
+	    "Computers\0" /* 6 refs @ 268 */
+	    "Cirrus\0" /* 1 refs @ 278 */
+	    "IBM\0" /* 1 refs @ 285 */
+	    "LSI\0" /* 6 refs @ 289 */
+	    "of\0" /* 4 refs @ 293 */
+	    "Canada\0" /* 1 refs @ 296 */
+	    "ICL\0" /* 2 refs @ 303 */
+	    "Personal\0" /* 1 refs @ 307 */
+	    "SPEA\0" /* 1 refs @ 316 */
+	    "Software\0" /* 4 refs @ 321 */
+	    "Unisys\0" /* 1 refs @ 330 */
+	    "Elitegroup\0" /* 1 refs @ 337 */
+	    "AT&T\0" /* 1 refs @ 348 */
+	    "Global\0" /* 2 refs @ 353 */
+	    "Information\0" /* 3 refs @ 360 */
+	    "Vitesse\0" /* 1 refs @ 372 */
+	    "Western\0" /* 1 refs @ 380 */
+	    "American\0" /* 1 refs @ 388 */
+	    "Megatrends\0" /* 1 refs @ 397 */
+	    "PictureTel\0" /* 1 refs @ 408 */
+	    "Hitachi\0" /* 2 refs @ 419 */
+	    "Products\0" /* 7 refs @ 427 */
+	    "OKI\0" /* 1 refs @ 436 */
+	    "Electric\0" /* 3 refs @ 440 */
+	    "Industry\0" /* 1 refs @ 449 */
+	    "Advanced\0" /* 14 refs @ 458 */
+	    "Micro\0" /* 9 refs @ 467 */
+	    "Devices\0" /* 2 refs @ 473 */
+	    "Trident\0" /* 1 refs @ 481 */
+	    "Microsystems\0" /* 13 refs @ 489 */
+	    "Zenith\0" /* 1 refs @ 502 */
+	    "Data\0" /* 9 refs @ 509 */
+	    "Acer\0" /* 2 refs @ 514 */
+	    "Dell\0" /* 3 refs @ 519 */
+	    "Siemens\0" /* 3 refs @ 524 */
+	    "Nixdorf\0" /* 2 refs @ 532 */
+	    "AG\0" /* 4 refs @ 540 */
+	    "Logic,\0" /* 1 refs @ 543 */
+	    "Headland\0" /* 1 refs @ 550 */
+	    "div.\0" /* 1 refs @ 559 */
+	    "Matrox\0" /* 1 refs @ 564 */
+	    "Chips\0" /* 1 refs @ 571 */
+	    "and\0" /* 12 refs @ 577 */
+	    "WYSE\0" /* 1 refs @ 581 */
+	    "Olivetti\0" /* 1 refs @ 586 */
+	    "Toshiba\0" /* 2 refs @ 595 */
+	    "America\0" /* 5 refs @ 603 */
+	    "TMC\0" /* 1 refs @ 611 */
+	    "Miro\0" /* 1 refs @ 615 */
+	    "(2nd\0" /* 14 refs @ 620 */
+	    "PCI\0" /* 283 refs @ 625 */
+	    "Vendor\0" /* 15 refs @ 629 */
+	    "ID)\0" /* 18 refs @ 636 */
+	    "NEC\0" /* 2 refs @ 640 */
+	    "Burndy\0" /* 1 refs @ 644 */
+	    "Comp.\0" /* 1 refs @ 651 */
+	    "&\0" /* 13 refs @ 657 */
+	    "Comm.\0" /* 1 refs @ 659 */
+	    "Lab\0" /* 1 refs @ 665 */
+	    "Future\0" /* 1 refs @ 669 */
+	    "Domain\0" /* 1 refs @ 676 */
+	    "Hitach\0" /* 1 refs @ 683 */
+	    "AMP\0" /* 1 refs @ 690 */
+	    "Silicon\0" /* 4 refs @ 694 */
+	    "Integrated\0" /* 50 refs @ 702 */
+	    "Seiko\0" /* 1 refs @ 713 */
+	    "Tatung\0" /* 1 refs @ 719 */
+	    "Hewlett-Packard\0" /* 1 refs @ 726 */
+	    "Solliday\0" /* 1 refs @ 742 */
+	    "Engineering\0" /* 4 refs @ 751 */
+	    "Modeling\0" /* 1 refs @ 763 */
+	    "Kubota\0" /* 1 refs @ 772 */
+	    "Pacific\0" /* 1 refs @ 779 */
+	    "Computrend\0" /* 1 refs @ 787 */
+	    "PC\0" /* 3 refs @ 798 */
+	    "Asustek\0" /* 1 refs @ 801 */
+	    "Distributed\0" /* 1 refs @ 809 */
+	    "Processing\0" /* 2 refs @ 821 */
+	    "Opti\0" /* 1 refs @ 832 */
+	    "IPC\0" /* 1 refs @ 837 */
+	    "Genoa\0" /* 1 refs @ 841 */
+	    "Elsa\0" /* 1 refs @ 847 */
+	    "Fountain\0" /* 1 refs @ 852 */
+	    "SGS-Thomson\0" /* 2 refs @ 861 */
+	    "Microelectronics\0" /* 9 refs @ 873 */
+	    "BusLogic\0" /* 1 refs @ 890 */
+	    "Texas\0" /* 2 refs @ 899 */
+	    "Instruments\0" /* 2 refs @ 905 */
+	    "Sony\0" /* 1 refs @ 917 */
+	    "Oak\0" /* 1 refs @ 922 */
+	    "Co-time\0" /* 1 refs @ 926 */
+	    "Winbond\0" /* 1 refs @ 934 */
+	    "Electronics\0" /* 23 refs @ 942 */
+	    "Anigma\0" /* 1 refs @ 954 */
+	    "Young\0" /* 1 refs @ 961 */
+	    "Efar\0" /* 1 refs @ 967 */
+	    "Motorola\0" /* 2 refs @ 972 */
+	    "Telec.\0" /* 1 refs @ 981 */
+	    "RSH\0" /* 1 refs @ 988 */
+	    "Teknor\0" /* 1 refs @ 992 */
+	    "Promise\0" /* 1 refs @ 999 */
+	    "Foxconn\0" /* 1 refs @ 1007 */
+	    "International\0" /* 5 refs @ 1015 */
+	    "Wipro\0" /* 1 refs @ 1029 */
+	    "Infotech\0" /* 1 refs @ 1035 */
+	    "Number\0" /* 1 refs @ 1044 */
+	    "9\0" /* 1 refs @ 1051 */
+	    "Company\0" /* 2 refs @ 1053 */
+	    "Vtech\0" /* 1 refs @ 1061 */
+	    "Infotronic\0" /* 1 refs @ 1067 */
+	    "United\0" /* 2 refs @ 1078 */
+	    "I.\0" /* 1 refs @ 1085 */
+	    "T.\0" /* 2 refs @ 1088 */
+	    "MasPar\0" /* 1 refs @ 1091 */
+	    "Ocean\0" /* 1 refs @ 1098 */
+	    "Office\0" /* 1 refs @ 1104 */
+	    "Automation\0" /* 1 refs @ 1111 */
+	    "Alcatel\0" /* 1 refs @ 1122 */
+	    "CIT\0" /* 1 refs @ 1130 */
+	    "Picopower\0" /* 1 refs @ 1134 */
+	    "Mitsubishi\0" /* 2 refs @ 1144 */
+	    "Diversified\0" /* 1 refs @ 1155 */
+	    "Mylex\0" /* 1 refs @ 1167 */
+	    "Aten\0" /* 1 refs @ 1173 */
+	    "Apple\0" /* 1 refs @ 1178 */
+	    "Hyundai\0" /* 1 refs @ 1184 */
+	    "Sequent\0" /* 1 refs @ 1192 */
+	    "DFI\0" /* 1 refs @ 1200 */
+	    "City\0" /* 1 refs @ 1204 */
+	    "Gate\0" /* 1 refs @ 1209 */
+	    "Development\0" /* 1 refs @ 1214 */
+	    "Daewoo\0" /* 1 refs @ 1226 */
+	    "Telecom\0" /* 1 refs @ 1233 */
+	    "Mitac\0" /* 1 refs @ 1241 */
+	    "GIT\0" /* 1 refs @ 1247 */
+	    "Yamaha\0" /* 1 refs @ 1251 */
+	    "NexGen\0" /* 1 refs @ 1258 */
+	    "Integration\0" /* 1 refs @ 1265 */
+	    "Chaintech\0" /* 1 refs @ 1277 */
+	    "QLogic\0" /* 1 refs @ 1287 */
+	    "Cyrix\0" /* 1 refs @ 1294 */
+	    "I-Bus\0" /* 1 refs @ 1300 */
+	    "NetWorth\0" /* 1 refs @ 1306 */
+	    "Gateway\0" /* 1 refs @ 1315 */
+	    "2000\0" /* 4 refs @ 1323 */
+	    "Goldstar\0" /* 1 refs @ 1328 */
+	    "LeadTek\0" /* 1 refs @ 1337 */
+	    "Interphase\0" /* 1 refs @ 1345 */
+	    "Contaq\0" /* 1 refs @ 1356 */
+	    "Supermac\0" /* 1 refs @ 1363 */
+	    "EFA\0" /* 1 refs @ 1372 */
+	    "Forex\0" /* 1 refs @ 1376 */
+	    "Parador\0" /* 1 refs @ 1382 */
+	    "Tulip\0" /* 2 refs @ 1390 */
+	    "J.\0" /* 1 refs @ 1396 */
+	    "Bond\0" /* 1 refs @ 1399 */
+	    "Cache\0" /* 3 refs @ 1404 */
+	    "Microcomputer\0" /* 1 refs @ 1410 */
+	    "General\0" /* 1 refs @ 1424 */
+	    "Bit3\0" /* 1 refs @ 1432 */
+	    "Elonex\0" /* 1 refs @ 1437 */
+	    "PLC\0" /* 1 refs @ 1444 */
+	    "c/o\0" /* 1 refs @ 1448 */
+	    "Oakleigh\0" /* 1 refs @ 1452 */
+	    "Olicom\0" /* 1 refs @ 1461 */
+	    "Sun\0" /* 2 refs @ 1468 */
+	    "Systemsoft\0" /* 1 refs @ 1472 */
+	    "Encore\0" /* 1 refs @ 1483 */
+	    "Intergraph\0" /* 1 refs @ 1490 */
+	    "Diamond\0" /* 1 refs @ 1501 */
+	    "First\0" /* 1 refs @ 1509 */
+	    "Int'l\0" /* 2 refs @ 1515 */
+	    "CMD\0" /* 1 refs @ 1521 */
+	    "Alacron\0" /* 1 refs @ 1525 */
+	    "Appian\0" /* 1 refs @ 1533 */
+	    "Quantum\0" /* 2 refs @ 1540 */
+	    "Designs\0" /* 3 refs @ 1548 */
+	    "Samsung\0" /* 4 refs @ 1556 */
+	    "Packard\0" /* 1 refs @ 1564 */
+	    "Bell\0" /* 1 refs @ 1572 */
+	    "Gemlight\0" /* 1 refs @ 1577 */
+	    "Megachips\0" /* 1 refs @ 1586 */
+	    "Zida\0" /* 1 refs @ 1596 */
+	    "Brooktree\0" /* 1 refs @ 1601 */
+	    "Trigem\0" /* 2 refs @ 1611 */
+	    "Meidensha\0" /* 1 refs @ 1618 */
+	    "Juko\0" /* 1 refs @ 1628 */
+	    "Everex\0" /* 1 refs @ 1633 */
+	    "Globe\0" /* 1 refs @ 1640 */
+	    "Manufacturing\0" /* 3 refs @ 1646 */
+	    "Sales\0" /* 1 refs @ 1660 */
+	    "Racal\0" /* 1 refs @ 1666 */
+	    "Interlan\0" /* 1 refs @ 1672 */
+	    "Informtech\0" /* 1 refs @ 1681 */
+	    "Industrial\0" /* 2 refs @ 1692 */
+	    "Benchmarq\0" /* 1 refs @ 1703 */
+	    "Sierra\0" /* 3 refs @ 1713 */
+	    "Graphics\0" /* 54 refs @ 1720 */
+	    "ACC\0" /* 1 refs @ 1729 */
+	    "Digicom\0" /* 1 refs @ 1733 */
+	    "Honeywell\0" /* 1 refs @ 1741 */
+	    "IASD\0" /* 1 refs @ 1751 */
+	    "Symphony\0" /* 2 refs @ 1756 */
+	    "Cornerstone\0" /* 1 refs @ 1765 */
+	    "Sysytems\0" /* 1 refs @ 1777 */
+	    "(M)\0" /* 2 refs @ 1786 */
+	    "SON\0" /* 1 refs @ 1790 */
+	    "CardExpert\0" /* 1 refs @ 1794 */
+	    "Cabletron\0" /* 1 refs @ 1805 */
+	    "Raytheon\0" /* 1 refs @ 1815 */
+	    "Databook\0" /* 1 refs @ 1824 */
+	    "STB\0" /* 1 refs @ 1833 */
+	    "PLX\0" /* 1 refs @ 1837 */
+	    "Madge\0" /* 1 refs @ 1841 */
+	    "Networks\0" /* 4 refs @ 1847 */
+	    "3Com\0" /* 1 refs @ 1856 */
+	    "Standard\0" /* 1 refs @ 1861 */
+	    "Dapha\0" /* 1 refs @ 1870 */
+	    "Surecom\0" /* 1 refs @ 1876 */
+	    "Most\0" /* 1 refs @ 1884 */
+	    "Boca\0" /* 1 refs @ 1889 */
+	    "ICM\0" /* 1 refs @ 1894 */
+	    "Auspex\0" /* 1 refs @ 1898 */
+	    "Semiconductors\0" /* 1 refs @ 1905 */
+	    "Award\0" /* 1 refs @ 1920 */
+	    "Xerox\0" /* 2 refs @ 1926 */
+	    "Rambus\0" /* 1 refs @ 1932 */
+	    "Media\0" /* 4 refs @ 1939 */
+	    "Vision\0" /* 2 refs @ 1945 */
+	    "Neomagic\0" /* 1 refs @ 1952 */
+	    "Dataexpert\0" /* 1 refs @ 1961 */
+	    "Fujitsu\0" /* 3 refs @ 1972 */
+	    "Omron\0" /* 1 refs @ 1980 */
+	    "Mentor\0" /* 1 refs @ 1986 */
+	    "ARC\0" /* 2 refs @ 1993 */
+	    "Radius\0" /* 1 refs @ 1997 */
+	    "Citicorp\0" /* 1 refs @ 2004 */
+	    "TTI\0" /* 1 refs @ 2013 */
+	    "Limited\0" /* 2 refs @ 2017 */
+	    "Future+\0" /* 1 refs @ 2025 */
+	    "Molex\0" /* 1 refs @ 2033 */
+	    "Jabil\0" /* 1 refs @ 2039 */
+	    "Circuit\0" /* 1 refs @ 2045 */
+	    "Hualon\0" /* 1 refs @ 2053 */
+	    "Autologic\0" /* 1 refs @ 2060 */
+	    "Cetia\0" /* 1 refs @ 2070 */
+	    "BCM\0" /* 1 refs @ 2076 */
+	    "Peripherals\0" /* 3 refs @ 2080 */
+	    "Macronix\0" /* 1 refs @ 2092 */
+	    "Thomas-Conrad\0" /* 1 refs @ 2101 */
+	    "Rohm\0" /* 1 refs @ 2115 */
+	    "CERN/ECP/EDU\0" /* 1 refs @ 2120 */
+	    "Evans\0" /* 1 refs @ 2133 */
+	    "Sutherland\0" /* 1 refs @ 2139 */
+	    "NVIDIA\0" /* 1 refs @ 2150 */
+	    "Emulex\0" /* 1 refs @ 2157 */
+	    "Solutions\0" /* 2 refs @ 2164 */
+	    "Tekram\0" /* 2 refs @ 2174 */
+	    "(1st\0" /* 1 refs @ 2181 */
+	    "Aptix\0" /* 1 refs @ 2186 */
+	    "Newbridge\0" /* 1 refs @ 2192 */
+	    "/\0" /* 9 refs @ 2202 */
+	    "Tundra\0" /* 1 refs @ 2204 */
+	    "Tandem\0" /* 1 refs @ 2211 */
+	    "Industries\0" /* 2 refs @ 2218 */
+	    "Gainbery\0" /* 1 refs @ 2229 */
+	    "Vadem\0" /* 1 refs @ 2238 */
+	    "Applied\0" /* 2 refs @ 2244 */
+	    "Circuits\0" /* 1 refs @ 2252 */
+	    "Alps\0" /* 1 refs @ 2261 */
+	    "Integraphics\0" /* 1 refs @ 2266 */
+	    "Artists\0" /* 1 refs @ 2279 */
+	    "Realtek\0" /* 1 refs @ 2287 */
+	    "ASCII\0" /* 1 refs @ 2295 */
+	    "Xilinx\0" /* 1 refs @ 2301 */
+	    "Racore\0" /* 1 refs @ 2308 */
+	    "Peritek\0" /* 1 refs @ 2315 */
+	    "Tyan\0" /* 1 refs @ 2323 */
+	    "Achme\0" /* 1 refs @ 2328 */
+	    "Alaris\0" /* 1 refs @ 2334 */
+	    "S-MOS\0" /* 1 refs @ 2341 */
+	    "NKK\0" /* 1 refs @ 2347 */
+	    "Creative\0" /* 2 refs @ 2351 */
+	    "Electronic\0" /* 7 refs @ 2360 */
+	    "Matsushita\0" /* 2 refs @ 2371 */
+	    "Altos\0" /* 1 refs @ 2382 */
+	    "India\0" /* 1 refs @ 2388 */
+	    "Direct\0" /* 1 refs @ 2394 */
+	    "Truevision\0" /* 1 refs @ 2401 */
+	    "Thesys\0" /* 1 refs @ 2412 */
+	    "Ges.\0" /* 1 refs @ 2419 */
+	    "F.\0" /* 1 refs @ 2424 */
+	    "Mikroelektronik\0" /* 1 refs @ 2427 */
+	    "I-O\0" /* 1 refs @ 2443 */
+	    "Device\0" /* 39 refs @ 2447 */
+	    "Soyo\0" /* 1 refs @ 2454 */
+	    "Fast\0" /* 19 refs @ 2459 */
+	    "NCube\0" /* 1 refs @ 2464 */
+	    "Jazz\0" /* 1 refs @ 2470 */
+	    "Multimedia\0" /* 2 refs @ 2475 */
+	    "Initio\0" /* 1 refs @ 2486 */
+	    "Triones\0" /* 1 refs @ 2493 */
+	    "RasterOps\0" /* 1 refs @ 2501 */
+	    "Sigma\0" /* 1 refs @ 2511 */
+	    "VIA\0" /* 3 refs @ 2517 */
+	    "Stratus\0" /* 1 refs @ 2521 */
+	    "Proteon\0" /* 1 refs @ 2529 */
+	    "Cogent\0" /* 1 refs @ 2537 */
+	    "Xenon\0" /* 1 refs @ 2544 */
+	    "Mini-Max\0" /* 1 refs @ 2550 */
+	    "Znyx\0" /* 1 refs @ 2559 */
+	    "CPU\0" /* 16 refs @ 2564 */
+	    "Ross\0" /* 1 refs @ 2568 */
+	    "Powerhouse\0" /* 1 refs @ 2573 */
+	    "Santa\0" /* 2 refs @ 2584 */
+	    "Cruz\0" /* 2 refs @ 2590 */
+	    "Operation\0" /* 1 refs @ 2595 */
+	    "RNS\0" /* 1 refs @ 2605 */
+	    "Accton\0" /* 1 refs @ 2609 */
+	    "Atmel\0" /* 1 refs @ 2616 */
+	    "DuPont\0" /* 1 refs @ 2622 */
+	    "Pixel\0" /* 1 refs @ 2629 */
+	    "Translation\0" /* 1 refs @ 2635 */
+	    "Datacube\0" /* 1 refs @ 2647 */
+	    "Berg\0" /* 1 refs @ 2656 */
+	    "Vortex\0" /* 2 refs @ 2661 */
+	    "Efficent\0" /* 1 refs @ 2668 */
+	    "Teledyne\0" /* 1 refs @ 2677 */
+	    "Tricord\0" /* 1 refs @ 2686 */
+	    "IDT\0" /* 1 refs @ 2694 */
+	    "Eldec\0" /* 1 refs @ 2698 */
+	    "Prescision\0" /* 1 refs @ 2704 */
+	    "Images\0" /* 2 refs @ 2715 */
+	    "Emc\0" /* 1 refs @ 2722 */
+	    "Zilog\0" /* 1 refs @ 2726 */
+	    "Multi-tech\0" /* 1 refs @ 2732 */
+	    "Leutron\0" /* 1 refs @ 2743 */
+	    "Eurocore/Vigra\0" /* 1 refs @ 2751 */
+	    "Vigra\0" /* 1 refs @ 2766 */
+	    "FORE\0" /* 1 refs @ 2772 */
+	    "Firmworks\0" /* 1 refs @ 2777 */
+	    "Hermes\0" /* 1 refs @ 2787 */
+	    "Linotype\0" /* 1 refs @ 2794 */
+	    "Ravicad\0" /* 1 refs @ 2803 */
+	    "Infomedia\0" /* 1 refs @ 2811 */
+	    "Imaging\0" /* 1 refs @ 2821 */
+	    "Technlogy\0" /* 1 refs @ 2829 */
+	    "Computervision\0" /* 1 refs @ 2839 */
+	    "Philips\0" /* 1 refs @ 2854 */
+	    "Mitel\0" /* 1 refs @ 2862 */
+	    "Eicon\0" /* 1 refs @ 2868 */
+	    "Mercury\0" /* 1 refs @ 2874 */
+	    "Fuji\0" /* 1 refs @ 2882 */
+	    "Momentum\0" /* 1 refs @ 2887 */
+	    "Cisco\0" /* 1 refs @ 2896 */
+	    "Ziatech\0" /* 1 refs @ 2902 */
+	    "Dynamic\0" /* 1 refs @ 2910 */
+	    "Pictures\0" /* 1 refs @ 2918 */
+	    "FWB\0" /* 1 refs @ 2927 */
+	    "Cyclone\0" /* 1 refs @ 2931 */
+	    "Leading\0" /* 1 refs @ 2939 */
+	    "Edge\0" /* 1 refs @ 2947 */
+	    "Sanyo\0" /* 1 refs @ 2952 */
+	    "Equinox\0" /* 1 refs @ 2958 */
+	    "Intervoice\0" /* 1 refs @ 2966 */
+	    "Crest\0" /* 1 refs @ 2977 */
+	    "Microsystem\0" /* 1 refs @ 2983 */
+	    "Alliance\0" /* 1 refs @ 2995 */
+	    "NetPower\0" /* 2 refs @ 3004 */
+	    "Cincinnati\0" /* 1 refs @ 3013 */
+	    "Milacron\0" /* 1 refs @ 3024 */
+	    "Workbit\0" /* 1 refs @ 3033 */
+	    "Force\0" /* 1 refs @ 3041 */
+	    "Interface\0" /* 56 refs @ 3047 */
+	    "Schneider\0" /* 1 refs @ 3057 */
+	    "Koch\0" /* 1 refs @ 3067 */
+	    "Win\0" /* 2 refs @ 3072 */
+	    "VMIC\0" /* 1 refs @ 3076 */
+	    "Canopus\0" /* 1 refs @ 3081 */
+	    "Annabooks\0" /* 1 refs @ 3089 */
+	    "IC\0" /* 2 refs @ 3099 */
+	    "Nikon\0" /* 1 refs @ 3102 */
+	    "Digi\0" /* 1 refs @ 3108 */
+	    "Thinking\0" /* 1 refs @ 3113 */
+	    "Machines\0" /* 2 refs @ 3122 */
+	    "JAE\0" /* 1 refs @ 3131 */
+	    "Megatek\0" /* 1 refs @ 3135 */
+	    "Land\0" /* 1 refs @ 3143 */
+	    "Melco\0" /* 1 refs @ 3148 */
+	    "Pine\0" /* 1 refs @ 3154 */
+	    "Periscope\0" /* 1 refs @ 3159 */
+	    "Avsys\0" /* 1 refs @ 3169 */
+	    "Voarx\0" /* 1 refs @ 3175 */
+	    "R\0" /* 1 refs @ 3181 */
+	    "D\0" /* 4 refs @ 3183 */
+	    "Mutech\0" /* 1 refs @ 3185 */
+	    "Harlequin\0" /* 1 refs @ 3192 */
+	    "Parallax\0" /* 1 refs @ 3202 */
+	    "Xircom\0" /* 1 refs @ 3211 */
+	    "Peer\0" /* 1 refs @ 3218 */
+	    "Protocols\0" /* 1 refs @ 3223 */
+	    "Maxtor\0" /* 1 refs @ 3233 */
+	    "Megasoft\0" /* 1 refs @ 3240 */
+	    "PFU\0" /* 1 refs @ 3249 */
+	    "OA\0" /* 1 refs @ 3253 */
+	    "Laboratory\0" /* 1 refs @ 3256 */
+	    "Rendition\0" /* 1 refs @ 3267 */
+	    "Imagraph\0" /* 1 refs @ 3277 */
+	    "ServerWorks\0" /* 1 refs @ 3286 */
+	    "Mutoh\0" /* 1 refs @ 3298 */
+	    "Thine\0" /* 1 refs @ 3304 */
+	    "Centre\0" /* 1 refs @ 3310 */
+	    "for\0" /* 1 refs @ 3317 */
+	    "Dev.\0" /* 1 refs @ 3321 */
+	    "Computing\0" /* 2 refs @ 3326 */
+	    "Polaris\0" /* 1 refs @ 3336 */
+	    "Communications\0" /* 9 refs @ 3344 */
+	    "Connectware\0" /* 1 refs @ 3359 */
+	    "Workstation\0" /* 1 refs @ 3371 */
+	    "Inventec\0" /* 1 refs @ 3383 */
+	    "Loughborough\0" /* 1 refs @ 3392 */
+	    "Sound\0" /* 4 refs @ 3405 */
+	    "Altera\0" /* 1 refs @ 3411 */
+	    "Adobe\0" /* 1 refs @ 3418 */
+	    "Bridgeport\0" /* 1 refs @ 3424 */
+	    "Mitron\0" /* 1 refs @ 3435 */
+	    "SBE\0" /* 1 refs @ 3442 */
+	    "Alfa\0" /* 1 refs @ 3446 */
+	    "A-Trend\0" /* 1 refs @ 3451 */
+	    "Atto\0" /* 1 refs @ 3459 */
+	    "T/R\0" /* 1 refs @ 3464 */
+	    "Ricoh\0" /* 1 refs @ 3468 */
+	    "Telematics\0" /* 1 refs @ 3474 */
+	    "Fujikura\0" /* 1 refs @ 3485 */
+	    "Forks\0" /* 1 refs @ 3494 */
+	    "Dataworld\0" /* 1 refs @ 3500 */
+	    "D-Link\0" /* 1 refs @ 3510 */
+	    "Techonoloy\0" /* 1 refs @ 3517 */
+	    "Labratories\0" /* 1 refs @ 3528 */
+	    "Shima\0" /* 1 refs @ 3540 */
+	    "Seiki\0" /* 1 refs @ 3546 */
+	    "HiLevel\0" /* 1 refs @ 3552 */
+	    "Corrollary\0" /* 1 refs @ 3560 */
+	    "BitFlow\0" /* 1 refs @ 3571 */
+	    "Hermstedt\0" /* 1 refs @ 3579 */
+	    "Acard\0" /* 1 refs @ 3589 */
+	    "Densan\0" /* 1 refs @ 3595 */
+	    "Zeinet\0" /* 1 refs @ 3602 */
+	    "Toucan\0" /* 1 refs @ 3609 */
+	    "Ratoc\0" /* 1 refs @ 3616 */
+	    "Hytec\0" /* 1 refs @ 3622 */
+	    "Gage\0" /* 1 refs @ 3628 */
+	    "Sciences\0" /* 1 refs @ 3633 */
+	    "Lambda\0" /* 1 refs @ 3642 */
+	    "Associates\0" /* 1 refs @ 3649 */
+	    "Mind\0" /* 1 refs @ 3660 */
+	    "Share\0" /* 1 refs @ 3665 */
+	    "Omega\0" /* 1 refs @ 3671 */
+	    "Institute\0" /* 1 refs @ 3677 */
+	    "Bug\0" /* 1 refs @ 3687 */
+	    "Sapporo\0" /* 1 refs @ 3691 */
+	    "(3th\0" /* 1 refs @ 3699 */
+	    "Bull\0" /* 1 refs @ 3704 */
+	    "Hn\0" /* 1 refs @ 3709 */
+	    "Convex\0" /* 1 refs @ 3712 */
+	    "Hamamatsu\0" /* 1 refs @ 3719 */
+	    "Photonics\0" /* 1 refs @ 3729 */
+	    "Barco\0" /* 1 refs @ 3739 */
+	    "MicroUnity\0" /* 1 refs @ 3745 */
+	    "Pure\0" /* 1 refs @ 3756 */
+	    "Power\0" /* 11 refs @ 3761 */
+	    "InnoSys\0" /* 1 refs @ 3767 */
+	    "Actel\0" /* 1 refs @ 3775 */
+	    "Marvell\0" /* 1 refs @ 3781 */
+	    "Cannon\0" /* 1 refs @ 3789 */
+	    "IS\0" /* 1 refs @ 3796 */
+	    "Lite-On\0" /* 1 refs @ 3799 */
+	    "Scitex\0" /* 1 refs @ 3807 */
+	    "Avid\0" /* 1 refs @ 3814 */
+	    "V3\0" /* 1 refs @ 3819 */
+	    "Apricot\0" /* 1 refs @ 3822 */
+	    "Eastman\0" /* 1 refs @ 3830 */
+	    "Kodak\0" /* 1 refs @ 3838 */
+	    "Barr\0" /* 1 refs @ 3844 */
+	    "Leitch\0" /* 1 refs @ 3849 */
+	    "Radstone\0" /* 1 refs @ 3856 */
+	    "Xpoint\0" /* 1 refs @ 3865 */
+	    "Pathlight\0" /* 1 refs @ 3872 */
+	    "VideoTron\0" /* 1 refs @ 3882 */
+	    "Pyramid\0" /* 1 refs @ 3892 */
+	    "Network\0" /* 26 refs @ 3900 */
+	    "Pinnacle\0" /* 1 refs @ 3908 */
+	    "Microcircuts\0" /* 1 refs @ 3917 */
+	    "Lucent\0" /* 1 refs @ 3930 */
+	    "Document\0" /* 1 refs @ 3937 */
+	    "Shiva\0" /* 1 refs @ 3946 */
+	    "DCM\0" /* 1 refs @ 3952 */
+	    "Dolphin\0" /* 1 refs @ 3956 */
+	    "Interconnect\0" /* 1 refs @ 3964 */
+	    "Mesa\0" /* 1 refs @ 3977 */
+	    "Ridge\0" /* 1 refs @ 3982 */
+	    "(MAGMA)\0" /* 1 refs @ 3988 */
+	    "Specialix\0" /* 1 refs @ 3996 */
+	    "Michels\0" /* 1 refs @ 4006 */
+	    "Kleberhoff\0" /* 1 refs @ 4014 */
+	    "HAL\0" /* 1 refs @ 4025 */
+	    "Auravision\0" /* 1 refs @ 4029 */
+	    "Analog\0" /* 1 refs @ 4040 */
+	    "SEGA\0" /* 1 refs @ 4047 */
+	    "Enterprises\0" /* 1 refs @ 4052 */
+	    "Zoran\0" /* 1 refs @ 4064 */
+	    "QuickLogic\0" /* 1 refs @ 4070 */
+	    "Compex\0" /* 1 refs @ 4081 */
+	    "PMC-Sierra\0" /* 1 refs @ 4088 */
+	    "Comtrol\0" /* 1 refs @ 4099 */
+	    "Cyclades\0" /* 1 refs @ 4107 */
+	    "Essential\0" /* 1 refs @ 4116 */
+	    "O2\0" /* 1 refs @ 4126 */
+	    "3Dfx\0" /* 1 refs @ 4129 */
+	    "Interactive\0" /* 1 refs @ 4134 */
+	    "Ariel\0" /* 1 refs @ 4146 */
+	    "Heurikon/Computer\0" /* 1 refs @ 4152 */
+	    "Aztech\0" /* 1 refs @ 4170 */
+	    "The\0" /* 1 refs @ 4177 */
+	    "3D0\0" /* 1 refs @ 4181 */
+	    "C-Cube\0" /* 1 refs @ 4185 */
+	    "JNI\0" /* 1 refs @ 4192 */
+	    "AVM\0" /* 1 refs @ 4196 */
+	    "vendor\0" /* 2 refs @ 4200 */
+	    "Stallion\0" /* 1 refs @ 4207 */
+	    "Linear\0" /* 1 refs @ 4216 */
+	    "Corega\0" /* 1 refs @ 4223 */
+	    "ASIX\0" /* 1 refs @ 4230 */
+	    "Aurora\0" /* 1 refs @ 4235 */
+	    "ESS\0" /* 2 refs @ 4242 */
+	    "Intersil\0" /* 1 refs @ 4246 */
+	    "Nortel\0" /* 1 refs @ 4255 */
+	    "(Northern\0" /* 1 refs @ 4262 */
+	    "Telecom)\0" /* 1 refs @ 4272 */
+	    "Motion\0" /* 1 refs @ 4281 */
+	    "Ensoniq\0" /* 1 refs @ 4288 */
+	    "Appliance\0" /* 1 refs @ 4296 */
+	    "Transmeta\0" /* 1 refs @ 4306 */
+	    "Rockwell\0" /* 1 refs @ 4316 */
+	    "Davicom\0" /* 1 refs @ 4325 */
+	    "Express\0" /* 83 refs @ 4333 */
+	    "TriTech\0" /* 1 refs @ 4341 */
+	    "Kofax\0" /* 1 refs @ 4349 */
+	    "Image\0" /* 1 refs @ 4355 */
+	    "Alteon\0" /* 1 refs @ 4361 */
+	    "RISCom\0" /* 1 refs @ 4368 */
+	    "US\0" /* 2 refs @ 4375 */
+	    "Robotics\0" /* 2 refs @ 4378 */
+	    "(3Com)\0" /* 1 refs @ 4387 */
+	    "Picture\0" /* 1 refs @ 4394 */
+	    "Elements\0" /* 1 refs @ 4402 */
+	    "Nvidia\0" /* 1 refs @ 4411 */
+	    "Rainbow\0" /* 1 refs @ 4418 */
+	    "Aureal\0" /* 1 refs @ 4426 */
+	    "ADMtek\0" /* 1 refs @ 4433 */
+	    "Packet\0" /* 2 refs @ 4440 */
+	    "Engines\0" /* 2 refs @ 4447 */
+	    "Forte\0" /* 1 refs @ 4455 */
+	    "Siig\0" /* 1 refs @ 4461 */
+	    "Domex\0" /* 1 refs @ 4466 */
+	    "LAN\0" /* 53 refs @ 4472 */
+	    "Netgear\0" /* 1 refs @ 4476 */
+	    "Moxa\0" /* 1 refs @ 4484 */
+	    "Level\0" /* 1 refs @ 4489 */
+	    "One\0" /* 2 refs @ 4495 */
+	    "Cologne\0" /* 1 refs @ 4499 */
+	    "Chip\0" /* 6 refs @ 4507 */
+	    "Hifn\0" /* 1 refs @ 4512 */
+	    "EXAR\0" /* 1 refs @ 4517 */
+	    "3ware\0" /* 1 refs @ 4522 */
+	    "AboCom\0" /* 1 refs @ 4528 */
+	    "NetBoost\0" /* 1 refs @ 4535 */
+	    "Sundance\0" /* 1 refs @ 4544 */
+	    "C-Media\0" /* 1 refs @ 4553 */
+	    "Lava\0" /* 1 refs @ 4561 */
+	    "eTIMedia\0" /* 1 refs @ 4566 */
+	    "Ensemble\0" /* 1 refs @ 4575 */
+	    "Microsoft\0" /* 1 refs @ 4584 */
+	    "Oxford\0" /* 1 refs @ 4594 */
+	    "Chelsio\0" /* 1 refs @ 4601 */
+	    "Tamarack\0" /* 1 refs @ 4609 */
+	    "(3rd\0" /* 1 refs @ 4618 */
+	    "Askey\0" /* 1 refs @ 4623 */
+	    "Avermedia\0" /* 1 refs @ 4629 */
+	    "Aironet\0" /* 1 refs @ 4639 */
+	    "Wireless\0" /* 23 refs @ 4647 */
+	    "COMPAL\0" /* 1 refs @ 4656 */
+	    "Myricom\0" /* 1 refs @ 4663 */
+	    "Titan\0" /* 1 refs @ 4671 */
+	    "Avlab\0" /* 1 refs @ 4677 */
+	    "Invertex\0" /* 1 refs @ 4683 */
+	    "Broadcom\0" /* 2 refs @ 4692 */
+	    "Planex\0" /* 1 refs @ 4701 */
+	    "Conexant\0" /* 2 refs @ 4708 */
+	    "Delta\0" /* 1 refs @ 4717 */
+	    "ENE\0" /* 1 refs @ 4723 */
+	    "TerraTec\0" /* 1 refs @ 4727 */
+	    "Solidum\0" /* 1 refs @ 4736 */
+	    "Faraday\0" /* 1 refs @ 4744 */
+	    "Geocast\0" /* 1 refs @ 4752 */
+	    "Bluesteel\0" /* 1 refs @ 4760 */
+	    "VMware\0" /* 1 refs @ 4770 */
+	    "Agilent\0" /* 1 refs @ 4777 */
+	    "Eumitcom\0" /* 1 refs @ 4785 */
+	    "NetSec\0" /* 1 refs @ 4794 */
+	    "(SiByte)\0" /* 1 refs @ 4801 */
+	    "Myson-Century\0" /* 1 refs @ 4810 */
+	    "Datacomm\0" /* 1 refs @ 4824 */
+	    "Action\0" /* 1 refs @ 4833 */
+	    "Tec\0" /* 1 refs @ 4840 */
+	    "Atheros\0" /* 1 refs @ 4844 */
+	    "Tech\0" /* 1 refs @ 4852 */
+	    "SafeNet\0" /* 2 refs @ 4857 */
+	    "Micrel\0" /* 1 refs @ 4865 */
+	    "Linksys\0" /* 2 refs @ 4872 */
+	    "Altima\0" /* 1 refs @ 4880 */
+	    "Antares\0" /* 2 refs @ 4887 */
+	    "Cavium\0" /* 1 refs @ 4895 */
+	    "FZ\0" /* 1 refs @ 4902 */
+	    "Juelich\0" /* 1 refs @ 4905 */
+	    "ZEL\0" /* 1 refs @ 4913 */
+	    "Belkin\0" /* 2 refs @ 4917 */
+	    "Hawking\0" /* 1 refs @ 4924 */
+	    "Sandburst\0" /* 1 refs @ 4932 */
+	    "I4\0" /* 1 refs @ 4942 */
+	    "Areca\0" /* 1 refs @ 4945 */
+	    "S2io\0" /* 1 refs @ 4951 */
+	    "Ralink\0" /* 1 refs @ 4956 */
+	    "B\0" /* 11 refs @ 4963 */
+	    "Attansic\0" /* 1 refs @ 4965 */
+	    "EVE\0" /* 1 refs @ 4974 */
+	    "Datum\0" /* 1 refs @ 4978 */
+	    "Inc.\0" /* 2 refs @ 4984 */
+	    "Bancomm-Timing\0" /* 1 refs @ 4989 */
+	    "Division\0" /* 1 refs @ 5004 */
+	    "JMicron\0" /* 1 refs @ 5013 */
+	    "HiNT\0" /* 1 refs @ 5021 */
+	    "3D\0" /* 18 refs @ 5026 */
+	    "Addtron\0" /* 1 refs @ 5029 */
+	    "(iCompression)\0" /* 1 refs @ 5037 */
+	    "Source\0" /* 1 refs @ 5052 */
+	    "NetVin\0" /* 1 refs @ 5059 */
+	    "Buslogic\0" /* 1 refs @ 5066 */
+	    "MediaQ\0" /* 1 refs @ 5075 */
+	    "Guillemot\0" /* 1 refs @ 5082 */
+	    "Turtle\0" /* 1 refs @ 5092 */
+	    "Beach\0" /* 1 refs @ 5099 */
+	    "S3\0" /* 2 refs @ 5105 */
+	    "XenSource,\0" /* 1 refs @ 5108 */
+	    "c't\0" /* 1 refs @ 5119 */
+	    "Magazin\0" /* 1 refs @ 5123 */
+	    "Kurusugawa\0" /* 1 refs @ 5131 */
+	    "pcHDTV\0" /* 1 refs @ 5142 */
+	    "Quancm\0" /* 1 refs @ 5149 */
+	    "GmbH\0" /* 1 refs @ 5156 */
+	    "Intel\0" /* 1 refs @ 5161 */
+	    "ProLAN\0" /* 1 refs @ 5167 */
+	    "Computone\0" /* 1 refs @ 5174 */
+	    "KTI\0" /* 1 refs @ 5184 */
+	    "Adaptec\0" /* 2 refs @ 5188 */
+	    "Atronics\0" /* 1 refs @ 5196 */
+	    "Netmos\0" /* 1 refs @ 5205 */
+	    "Parallels\0" /* 1 refs @ 5212 */
+	    "Chrysalis-ITS\0" /* 1 refs @ 5222 */
+	    "Middle\0" /* 1 refs @ 5236 */
+	    "INVALID\0" /* 1 refs @ 5243 */
+	    "VENDOR\0" /* 1 refs @ 5251 */
+	    "ID\0" /* 1 refs @ 5258 */
+	    "3c985\0" /* 1 refs @ 5261 */
+	    "Gigabit\0" /* 84 refs @ 5267 */
+	    "Ethernet\0" /* 330 refs @ 5275 */
+	    "3c996\0" /* 1 refs @ 5284 */
+	    "10/100/1000\0" /* 38 refs @ 5290 */
+	    "3c556\0" /* 2 refs @ 5302 */
+	    "V.90\0" /* 1 refs @ 5308 */
+	    "Mini-PCI\0" /* 17 refs @ 5313 */
+	    "Modem\0" /* 29 refs @ 5322 */
+	    "3c940\0" /* 1 refs @ 5328 */
+	    "3c339\0" /* 1 refs @ 5334 */
+	    "TokenLink\0" /* 2 refs @ 5340 */
+	    "Velocity\0" /* 2 refs @ 5350 */
+	    "3c359\0" /* 1 refs @ 5359 */
+	    "XL\0" /* 6 refs @ 5365 */
+	    "3c450-TX\0" /* 1 refs @ 5368 */
+	    "10/100\0" /* 105 refs @ 5377 */
+	    "3c575-TX\0" /* 1 refs @ 5384 */
+	    "3CCFE575BT\0" /* 1 refs @ 5393 */
+	    "3CCFE575CT\0" /* 1 refs @ 5404 */
+	    "3c590\0" /* 1 refs @ 5415 */
+	    "3c595-TX\0" /* 1 refs @ 5421 */
+	    "3c595-T4\0" /* 1 refs @ 5430 */
+	    "3c595-MII\0" /* 1 refs @ 5439 */
+	    "3c555\0" /* 1 refs @ 5449 */
+	    "3CRWE154G72\0" /* 1 refs @ 5455 */
+	    "Adapter\0" /* 63 refs @ 5467 */
+	    "3c556B\0" /* 1 refs @ 5475 */
+	    "3CCFEM656\0" /* 2 refs @ 5482 */
+	    "56k\0" /* 5 refs @ 5492 */
+	    "3CCFEM656B\0" /* 2 refs @ 5496 */
+	    "3CXFEM656C\0" /* 2 refs @ 5507 */
+	    "3cSOHO100-TX\0" /* 1 refs @ 5518 */
+	    "3crwe777a\0" /* 1 refs @ 5531 */
+	    "AirConnect\0" /* 1 refs @ 5541 */
+	    "3c804\0" /* 1 refs @ 5552 */
+	    "FDDILink\0" /* 1 refs @ 5558 */
+	    "SAS\0" /* 2 refs @ 5567 */
+	    "Token\0" /* 8 refs @ 5571 */
+	    "Ring\0" /* 8 refs @ 5577 */
+	    "3c900-TPO\0" /* 1 refs @ 5582 */
+	    "3c900-COMBO\0" /* 1 refs @ 5592 */
+	    "3c905-TX\0" /* 1 refs @ 5604 */
+	    "3c905-T4\0" /* 1 refs @ 5613 */
+	    "3c900B-TPO\0" /* 1 refs @ 5622 */
+	    "3c900B-COMBO\0" /* 1 refs @ 5633 */
+	    "3c900B-TPC\0" /* 1 refs @ 5646 */
+	    "3c905B-TX\0" /* 1 refs @ 5657 */
+	    "3c905B-T4\0" /* 1 refs @ 5667 */
+	    "3c905B-COMBO\0" /* 1 refs @ 5677 */
+	    "3c905B-FX\0" /* 1 refs @ 5690 */
+	    "100\0" /* 6 refs @ 5700 */
+	    "3c905C-TX\0" /* 1 refs @ 5704 */
+	    "w/\0" /* 48 refs @ 5714 */
+	    "mngmt\0" /* 2 refs @ 5717 */
+	    "3c905CX-TX\0" /* 1 refs @ 5723 */
+	    "3c920B-EMB-WNM\0" /* 1 refs @ 5734 */
+	    "3c910\0" /* 1 refs @ 5749 */
+	    "OfficeConnect\0" /* 1 refs @ 5755 */
+	    "10/100B\0" /* 1 refs @ 5769 */
+	    "3c980\0" /* 1 refs @ 5777 */
+	    "Server\0" /* 2 refs @ 5783 */
+	    "3c980C-TXM\0" /* 1 refs @ 5790 */
+	    "3c990-TX\0" /* 1 refs @ 5801 */
+	    "3XP\0" /* 8 refs @ 5810 */
+	    "3CR990-TX-95\0" /* 1 refs @ 5814 */
+	    "3CR990-TX-97\0" /* 1 refs @ 5827 */
+	    "3c990B\0" /* 1 refs @ 5840 */
+	    "3CR990-FX\0" /* 1 refs @ 5847 */
+	    "3CR990-SVR-95\0" /* 1 refs @ 5857 */
+	    "3CR990-SVR-97\0" /* 1 refs @ 5871 */
+	    "3c990BSVR\0" /* 1 refs @ 5885 */
+	    "Voodoo\0" /* 2 refs @ 5895 */
+	    "Voodoo2\0" /* 1 refs @ 5902 */
+	    "Banshee\0" /* 1 refs @ 5910 */
+	    "Voodoo3\0" /* 1 refs @ 5918 */
+	    "4/5\0" /* 2 refs @ 5926 */
+	    "GLINT\0" /* 9 refs @ 5930 */
+	    "300SX\0" /* 1 refs @ 5936 */
+	    "500TX\0" /* 1 refs @ 5942 */
+	    "DELTA\0" /* 1 refs @ 5948 */
+	    "Permedia\0" /* 5 refs @ 5954 */
+	    "500MX\0" /* 1 refs @ 5963 */
+	    "2\0" /* 27 refs @ 5969 */
+	    "GAMMA\0" /* 1 refs @ 5971 */
+	    "2V\0" /* 1 refs @ 5977 */
+	    "3\0" /* 7 refs @ 5980 */
+	    "Escalade\0" /* 2 refs @ 5982 */
+	    "ATA\0" /* 51 refs @ 5991 */
+	    "RAID\0" /* 26 refs @ 5995 */
+	    "Controller\0" /* 656 refs @ 6000 */
+	    "7000/8000\0" /* 1 refs @ 6011 */
+	    "Series\0" /* 27 refs @ 6021 */
+	    "9000\0" /* 5 refs @ 6028 */
+	    "9550\0" /* 1 refs @ 6033 */
+	    "9650\0" /* 1 refs @ 6038 */
+	    "9690\0" /* 1 refs @ 6043 */
+	    "FE2500\0" /* 1 refs @ 6048 */
+	    "PCM200\0" /* 2 refs @ 6055 */
+	    "FE2000VX\0" /* 1 refs @ 6062 */
+	    "(OEM)\0" /* 1 refs @ 6071 */
+	    "FE2500MX\0" /* 1 refs @ 6077 */
+	    "ACCM\0" /* 1 refs @ 6086 */
+	    "2188\0" /* 1 refs @ 6091 */
+	    "VL-PCI\0" /* 3 refs @ 6096 */
+	    "Bridge\0" /* 489 refs @ 6103 */
+	    "2051\0" /* 2 refs @ 6110 */
+	    "Single\0" /* 5 refs @ 6115 */
+	    "Solution\0" /* 2 refs @ 6122 */
+	    "(host\0" /* 1 refs @ 6131 */
+	    "Bridge)\0" /* 2 refs @ 6137 */
+	    "(ISA\0" /* 1 refs @ 6145 */
+	    "ATP850U/UF\0" /* 1 refs @ 6150 */
+	    "UDMA\0" /* 6 refs @ 6161 */
+	    "IDE\0" /* 93 refs @ 6166 */
+	    "ATP860\0" /* 1 refs @ 6170 */
+	    "ATP860-A\0" /* 1 refs @ 6177 */
+	    "ATP865\0" /* 1 refs @ 6186 */
+	    "ATP865-A\0" /* 1 refs @ 6193 */
+	    "AEC6710\0" /* 1 refs @ 6202 */
+	    "SCSI\0" /* 25 refs @ 6210 */
+	    "AEC6712UW\0" /* 1 refs @ 6215 */
+	    "AEC6712U\0" /* 1 refs @ 6225 */
+	    "AEC6712S\0" /* 1 refs @ 6234 */
+	    "AEC6710D\0" /* 1 refs @ 6243 */
+	    "AEC6715UW\0" /* 1 refs @ 6252 */
+	    "MPX\0" /* 2 refs @ 6262 */
+	    "5030/5038\0" /* 1 refs @ 6266 */
+	    "EN2242\0" /* 1 refs @ 6276 */
+	    "M1435\0" /* 1 refs @ 6283 */
+	    "M1445\0" /* 1 refs @ 6289 */
+	    "M1449\0" /* 1 refs @ 6295 */
+	    "PCI-ISA\0" /* 47 refs @ 6301 */
+	    "M1451\0" /* 1 refs @ 6309 */
+	    "Host-PCI\0" /* 42 refs @ 6315 */
+	    "M1461\0" /* 1 refs @ 6324 */
+	    "M1531\0" /* 1 refs @ 6330 */
+	    "M1533\0" /* 1 refs @ 6336 */
+	    "M1541\0" /* 1 refs @ 6342 */
+	    "M1543\0" /* 1 refs @ 6348 */
+	    "M1563\0" /* 1 refs @ 6354 */
+	    "M1689\0" /* 1 refs @ 6360 */
+	    "M3309\0" /* 1 refs @ 6366 */
+	    "MPEG\0" /* 3 refs @ 6372 */
+	    "Decoder\0" /* 9 refs @ 6377 */
+	    "M4803\0" /* 1 refs @ 6385 */
+	    "M5257\0" /* 1 refs @ 6391 */
+	    "M5229\0" /* 1 refs @ 6397 */
+	    "M5237\0" /* 1 refs @ 6403 */
+	    "USB\0" /* 107 refs @ 6409 */
+	    "1.1\0" /* 1 refs @ 6413 */
+	    "Host\0" /* 181 refs @ 6417 */
+	    "M5239\0" /* 1 refs @ 6422 */
+	    "2.0\0" /* 2 refs @ 6428 */
+	    "M5243\0" /* 1 refs @ 6432 */
+	    "PCI-AGP\0" /* 1 refs @ 6438 */
+	    "M5249\0" /* 1 refs @ 6446 */
+	    "Hypertransport\0" /* 1 refs @ 6452 */
+	    "to\0" /* 24 refs @ 6467 */
+	    "M5261\0" /* 1 refs @ 6470 */
+	    "M5451\0" /* 1 refs @ 6476 */
+	    "AC-Link\0" /* 3 refs @ 6482 */
+	    "Audio\0" /* 73 refs @ 6490 */
+	    "M5453\0" /* 1 refs @ 6496 */
+	    "M5455\0" /* 1 refs @ 6502 */
+	    "M7101\0" /* 1 refs @ 6508 */
+	    "Management\0" /* 11 refs @ 6514 */
+	    "AIC-7850\0" /* 1 refs @ 6525 */
+	    "AIC-7855\0" /* 1 refs @ 6534 */
+	    "AIC-5900\0" /* 1 refs @ 6543 */
+	    "ATM\0" /* 13 refs @ 6552 */
+	    "AIC-5905\0" /* 1 refs @ 6556 */
+	    "AIC-6915\0" /* 1 refs @ 6565 */
+	    "AIC-7860\0" /* 1 refs @ 6574 */
+	    "APA-1480\0" /* 1 refs @ 6583 */
+	    "Ultra\0" /* 27 refs @ 6592 */
+	    "AHA-2940A\0" /* 1 refs @ 6598 */
+	    "AIC-7870\0" /* 1 refs @ 6608 */
+	    "AHA-2940\0" /* 3 refs @ 6617 */
+	    "AHA-3940\0" /* 2 refs @ 6626 */
+	    "AHA-3985\0" /* 1 refs @ 6635 */
+	    "AHA-2944\0" /* 2 refs @ 6644 */
+	    "AIC-7895\0" /* 1 refs @ 6653 */
+	    "AIC-7880\0" /* 1 refs @ 6662 */
+	    "AHA-389X\0" /* 1 refs @ 6671 */
+	    "Pro\0" /* 44 refs @ 6680 */
+	    "AHA-2940U2\0" /* 1 refs @ 6684 */
+	    "U2\0" /* 6 refs @ 6695 */
+	    "AHA-2930U2\0" /* 1 refs @ 6698 */
+	    "AIC-7890/1\0" /* 1 refs @ 6709 */
+	    "AHA-3950U2B\0" /* 1 refs @ 6720 */
+	    "AHA-3950U2D\0" /* 1 refs @ 6732 */
+	    "AIC-7896/7\0" /* 1 refs @ 6744 */
+	    "AIC-7892A\0" /* 1 refs @ 6755 */
+	    "U160\0" /* 8 refs @ 6765 */
+	    "AIC-7892B\0" /* 1 refs @ 6770 */
+	    "AIC-7892D\0" /* 1 refs @ 6780 */
+	    "AIC-7892P\0" /* 1 refs @ 6790 */
+	    "AIC-7899A\0" /* 1 refs @ 6800 */
+	    "AIC-7899B\0" /* 1 refs @ 6810 */
+	    "AIC-7899D\0" /* 1 refs @ 6820 */
+	    "AIC-7899F\0" /* 1 refs @ 6830 */
+	    "AIC-7899P\0" /* 1 refs @ 6840 */
+	    "AAC-2622\0" /* 1 refs @ 6850 */
+	    "ASR-2200S\0" /* 2 refs @ 6859 */
+	    "ASR-2120S\0" /* 1 refs @ 6869 */
+	    "ASR-2410SA\0" /* 1 refs @ 6879 */
+	    "AAR-2810SA\0" /* 1 refs @ 6890 */
+	    "AAC-364\0" /* 1 refs @ 6901 */
+	    "ASR-5400S\0" /* 1 refs @ 6909 */
+	    "PERC\0" /* 23 refs @ 6919 */
+	    "2/QC\0" /* 1 refs @ 6924 */
+	    "3/QC\0" /* 1 refs @ 6929 */
+	    "HP\0" /* 1 refs @ 6934 */
+	    "M110\0" /* 1 refs @ 6937 */
+	    "G2\0" /* 1 refs @ 6942 */
+	    "ASR-2610SA\0" /* 1 refs @ 6945 */
+	    "ServeRAID\0" /* 4 refs @ 6956 */
+	    "6/7\0" /* 1 refs @ 6966 */
+	    "(marco)\0" /* 1 refs @ 6970 */
+	    "8139\0" /* 3 refs @ 6978 */
+	    "Rhine\0" /* 2 refs @ 6983 */
+	    "II\0" /* 20 refs @ 6989 */
+	    "AL981\0" /* 1 refs @ 6992 */
+	    "(Comet)\0" /* 1 refs @ 6998 */
+	    "AN983\0" /* 1 refs @ 7006 */
+	    "(Centaur-P)\0" /* 1 refs @ 7012 */
+	    "AN985\0" /* 1 refs @ 7024 */
+	    "(Centaur-C)\0" /* 1 refs @ 7030 */
+	    "Infineon\0" /* 1 refs @ 7042 */
+	    "ADM5120\0" /* 1 refs @ 7051 */
+	    "ADM8211\0" /* 1 refs @ 7059 */
+	    "11Mbps\0" /* 1 refs @ 7067 */
+	    "802.11b\0" /* 10 refs @ 7074 */
+	    "WLAN\0" /* 5 refs @ 7082 */
+	    "ADM9511\0" /* 1 refs @ 7087 */
+	    "(Centaur-II)\0" /* 2 refs @ 7095 */
+	    "ADM9513\0" /* 1 refs @ 7108 */
+	    "ABP-930/40UA\0" /* 1 refs @ 7116 */
+	    "ABP-940UW\0" /* 1 refs @ 7129 */
+	    "ASB-3940U2W\0" /* 1 refs @ 7139 */
+	    "ASB-3940U3W\0" /* 1 refs @ 7151 */
+	    "Tachyon\0" /* 4 refs @ 7163 */
+	    "DX2\0" /* 1 refs @ 7171 */
+	    "FC\0" /* 5 refs @ 7175 */
+	    "PC4500/PC4800\0" /* 1 refs @ 7178 */
+	    "PCI350\0" /* 1 refs @ 7192 */
+	    "MPI350\0" /* 1 refs @ 7199 */
+	    "PC4500\0" /* 1 refs @ 7206 */
+	    "PC4800\0" /* 1 refs @ 7213 */
+	    "AT24\0" /* 1 refs @ 7220 */
+	    "AT25\0" /* 1 refs @ 7225 */
+	    "ACEnic\0" /* 4 refs @ 7230 */
+	    "1000baseSX\0" /* 9 refs @ 7237 */
+	    "1000baseT\0" /* 32 refs @ 7248 */
+	    "BCM5700\0" /* 2 refs @ 7258 */
+	    "BCM5701\0" /* 2 refs @ 7266 */
+	    "AC1000\0" /* 1 refs @ 7274 */
+	    "AC1001\0" /* 1 refs @ 7281 */
+	    "AC9100\0" /* 1 refs @ 7288 */
+	    "K8\0" /* 4 refs @ 7295 */
+	    "AMD64\0" /* 14 refs @ 7298 */
+	    "HyperTransport\0" /* 4 refs @ 7304 */
+	    "Configuration\0" /* 15 refs @ 7319 */
+	    "Address\0" /* 3 refs @ 7333 */
+	    "Map\0" /* 3 refs @ 7341 */
+	    "DRAM\0" /* 6 refs @ 7345 */
+	    "Miscellaneous\0" /* 3 refs @ 7350 */
+	    "Family10h\0" /* 5 refs @ 7364 */
+	    "Link\0" /* 3 refs @ 7374 */
+	    "Family11h\0" /* 5 refs @ 7379 */
+	    "PCnet-PCI\0" /* 1 refs @ 7389 */
+	    "PCnet-Home\0" /* 1 refs @ 7399 */
+	    "HomePNA\0" /* 4 refs @ 7410 */
+	    "Alchemy\0" /* 1 refs @ 7418 */
+	    "AM\0" /* 1 refs @ 7426 */
+	    "1771\0" /* 1 refs @ 7429 */
+	    "MBW\0" /* 1 refs @ 7434 */
+	    "PCscsi-PCI\0" /* 1 refs @ 7438 */
+	    "Geode\0" /* 3 refs @ 7449 */
+	    "LX\0" /* 6 refs @ 7455 */
+	    "VGA\0" /* 9 refs @ 7458 */
+	    "AES\0" /* 1 refs @ 7462 */
+	    "Security\0" /* 8 refs @ 7466 */
+	    "Block\0" /* 1 refs @ 7475 */
+	    "CS5536\0" /* 9 refs @ 7481 */
+	    "GeodeLink\0" /* 1 refs @ 7488 */
+	    "South\0" /* 8 refs @ 7498 */
+	    "Flash\0" /* 1 refs @ 7504 */
+	    "OHCI\0" /* 6 refs @ 7510 */
+	    "EHCI\0" /* 15 refs @ 7515 */
+	    "UDC\0" /* 1 refs @ 7520 */
+	    "UOC\0" /* 1 refs @ 7524 */
+	    "Elan\0" /* 1 refs @ 7528 */
+	    "SC520\0" /* 1 refs @ 7533 */
+	    "AMD751\0" /* 2 refs @ 7539 */
+	    "PCI-PCI\0" /* 61 refs @ 7546 */
+	    "AMD\0" /* 3 refs @ 7554 */
+	    "IGR4\0" /* 2 refs @ 7558 */
+	    "AGP\0" /* 62 refs @ 7563 */
+	    "AMD762\0" /* 2 refs @ 7567 */
+	    "North\0" /* 9 refs @ 7574 */
+	    "AMD761\0" /* 2 refs @ 7580 */
+	    "AMD755\0" /* 4 refs @ 7587 */
+	    "ACPI\0" /* 4 refs @ 7594 */
+	    "AMD756\0" /* 4 refs @ 7599 */
+	    "AMD766\0" /* 4 refs @ 7606 */
+	    "AMD768\0" /* 7 refs @ 7613 */
+	    "PCI-ISA/LPC\0" /* 1 refs @ 7620 */
+	    "EIDE\0" /* 2 refs @ 7632 */
+	    "AC97\0" /* 8 refs @ 7637 */
+	    "AMD8131\0" /* 2 refs @ 7642 */
+	    "PCI-X\0" /* 10 refs @ 7650 */
+	    "Tunnel\0" /* 1 refs @ 7656 */
+	    "IO\0" /* 1 refs @ 7663 */
+	    "Apic\0" /* 1 refs @ 7666 */
+	    "AMD8151\0" /* 2 refs @ 7671 */
+	    "AMD8123\0" /* 1 refs @ 7679 */
+	    "AMD8132\0" /* 1 refs @ 7687 */
+	    "IOAPIC\0" /* 1 refs @ 7695 */
+	    "AMD8111\0" /* 11 refs @ 7702 */
+	    "I/O\0" /* 32 refs @ 7710 */
+	    "Hub\0" /* 12 refs @ 7714 */
+	    "7461\0" /* 1 refs @ 7718 */
+	    "LPC\0" /* 30 refs @ 7723 */
+	    "SMBus\0" /* 34 refs @ 7727 */
+	    "MC97\0" /* 1 refs @ 7733 */
+	    "756b\0" /* 1 refs @ 7738 */
+	    "MegaRAID\0" /* 5 refs @ 7743 */
+	    "Crypto\0" /* 2 refs @ 7752 */
+	    "Accelerator\0" /* 16 refs @ 7759 */
+	    "ADSP-2141\0" /* 1 refs @ 7771 */
+	    "Bandit\0" /* 2 refs @ 7781 */
+	    "Grand\0" /* 1 refs @ 7788 */
+	    "Central\0" /* 1 refs @ 7794 */
+	    "Control\0" /* 3 refs @ 7802 */
+	    "PlanB\0" /* 1 refs @ 7810 */
+	    "OHare\0" /* 1 refs @ 7816 */
+	    "Heathrow\0" /* 1 refs @ 7822 */
+	    "Paddington\0" /* 1 refs @ 7831 */
+	    "KeyLargo\0" /* 2 refs @ 7842 */
+	    "UniNorth\0" /* 11 refs @ 7851 */
+	    "GMAC\0" /* 6 refs @ 7860 */
+	    "Pangea\0" /* 6 refs @ 7865 */
+	    "Firewire\0" /* 5 refs @ 7872 */
+	    "ATA/100\0" /* 1 refs @ 7881 */
+	    "Kauai\0" /* 1 refs @ 7889 */
+	    "Intrepid\0" /* 8 refs @ 7895 */
+	    "K2\0" /* 5 refs @ 7904 */
+	    "MAC-IO\0" /* 1 refs @ 7907 */
+	    "UATA\0" /* 1 refs @ 7914 */
+	    "U3\0" /* 6 refs @ 7919 */
+	    "Shasta\0" /* 8 refs @ 7922 */
+	    "FireWire\0" /* 2 refs @ 7929 */
+	    "1000PV\0" /* 1 refs @ 7938 */
+	    "2000PV\0" /* 1 refs @ 7945 */
+	    "2000MT\0" /* 1 refs @ 7952 */
+	    "ARC-1110\0" /* 1 refs @ 7959 */
+	    "ARC-1120\0" /* 1 refs @ 7968 */
+	    "ARC-1130\0" /* 1 refs @ 7977 */
+	    "ARC-1160\0" /* 1 refs @ 7986 */
+	    "ARC-1170\0" /* 1 refs @ 7995 */
+	    "ARC-1200\0" /* 2 refs @ 8004 */
+	    "rev\0" /* 6 refs @ 8013 */
+	    "ARC-1202\0" /* 1 refs @ 8017 */
+	    "ARC-1210\0" /* 1 refs @ 8026 */
+	    "ARC-1220\0" /* 1 refs @ 8035 */
+	    "ARC-1230\0" /* 1 refs @ 8044 */
+	    "ARC-1260\0" /* 1 refs @ 8053 */
+	    "ARC-1270\0" /* 1 refs @ 8062 */
+	    "ARC-1280\0" /* 1 refs @ 8071 */
+	    "ARC-1380\0" /* 1 refs @ 8080 */
+	    "ARC-1381\0" /* 1 refs @ 8089 */
+	    "ARC-1680\0" /* 1 refs @ 8098 */
+	    "ARC-1681\0" /* 1 refs @ 8107 */
+	    "AX88140A\0" /* 1 refs @ 8116 */
+	    "ISDN\0" /* 8 refs @ 8125 */
+	    "L1\0" /* 1 refs @ 8130 */
+	    "L2\0" /* 1 refs @ 8133 */
+	    "Mbit\0" /* 2 refs @ 8136 */
+	    "Radeon\0" /* 101 refs @ 8141 */
+	    "Mobility\0" /* 28 refs @ 8148 */
+	    "X600\0" /* 3 refs @ 8157 */
+	    "(M24)\0" /* 1 refs @ 8162 */
+	    "3150\0" /* 1 refs @ 8168 */
+	    "FireGL\0" /* 20 refs @ 8173 */
+	    "M24\0" /* 1 refs @ 8180 */
+	    "GL\0" /* 4 refs @ 8184 */
+	    "3154\0" /* 1 refs @ 8187 */
+	    "(RV380)\0" /* 2 refs @ 8192 */
+	    "3E50\0" /* 1 refs @ 8200 */
+	    "V3200\0" /* 1 refs @ 8205 */
+	    "3E54\0" /* 1 refs @ 8211 */
+	    "IGP320\0" /* 1 refs @ 8216 */
+	    "(A3)\0" /* 1 refs @ 8223 */
+	    "4136\0" /* 1 refs @ 8228 */
+	    "IGP330/340/350\0" /* 1 refs @ 8233 */
+	    "(A4)\0" /* 2 refs @ 8248 */
+	    "4137\0" /* 1 refs @ 8253 */
+	    "9500\0" /* 2 refs @ 8258 */
+	    "AD\0" /* 1 refs @ 8263 */
+	    "AE\0" /* 1 refs @ 8266 */
+	    "9600TX\0" /* 2 refs @ 8269 */
+	    "AF\0" /* 1 refs @ 8276 */
+	    "Z1\0" /* 1 refs @ 8279 */
+	    "9800SE\0" /* 1 refs @ 8282 */
+	    "AH\0" /* 1 refs @ 8289 */
+	    "9800\0" /* 5 refs @ 8292 */
+	    "AI\0" /* 1 refs @ 8297 */
+	    "AJ\0" /* 1 refs @ 8300 */
+	    "X2\0" /* 2 refs @ 8303 */
+	    "AK\0" /* 1 refs @ 8306 */
+	    "9600\0" /* 7 refs @ 8309 */
+	    "AP\0" /* 1 refs @ 8314 */
+	    "9600SE\0" /* 1 refs @ 8317 */
+	    "AQ\0" /* 1 refs @ 8324 */
+	    "9600XT\0" /* 1 refs @ 8327 */
+	    "AR\0" /* 1 refs @ 8334 */
+	    "AS\0" /* 1 refs @ 8337 */
+	    "T2\0" /* 2 refs @ 8340 */
+	    "AT\0" /* 1 refs @ 8343 */
+	    "RV360\0" /* 1 refs @ 8346 */
+	    "AV\0" /* 1 refs @ 8352 */
+	    "Mach32\0" /* 1 refs @ 8355 */
+	    "LE\0" /* 5 refs @ 8362 */
+	    "Secondary\0" /* 16 refs @ 8365 */
+	    "XT\0" /* 4 refs @ 8375 */
+	    "7000\0" /* 2 refs @ 8378 */
+	    "IGP\0" /* 7 refs @ 8383 */
+	    "(A4+)\0" /* 1 refs @ 8387 */
+	    "8500\0" /* 4 refs @ 8393 */
+	    "AIW\0" /* 2 refs @ 8398 */
+	    "BB\0" /* 1 refs @ 8402 */
+	    "BC\0" /* 1 refs @ 8405 */
+	    "IGP320M\0" /* 1 refs @ 8408 */
+	    "(U1)\0" /* 1 refs @ 8416 */
+	    "4336\0" /* 1 refs @ 8421 */
+	    "IGP330M/340M/350M\0" /* 1 refs @ 8426 */
+	    "(U2)\0" /* 1 refs @ 8444 */
+	    "4337\0" /* 1 refs @ 8449 */
+	    "IXP\0" /* 7 refs @ 8454 */
+	    "AC'97\0" /* 13 refs @ 8458 */
+	    "SB200\0" /* 8 refs @ 8464 */
+	    "USB2\0" /* 8 refs @ 8470 */
+	    "SB300\0" /* 2 refs @ 8475 */
+	    "SB400\0" /* 10 refs @ 8481 */
+	    "SATA\0" /* 60 refs @ 8487 */
+	    "SB600\0" /* 14 refs @ 8492 */
+	    "Azalia\0" /* 1 refs @ 8498 */
+	    "SB600/SB700/SB800\0" /* 1 refs @ 8505 */
+	    "OHCI0\0" /* 1 refs @ 8523 */
+	    "OHCI1\0" /* 1 refs @ 8529 */
+	    "OHCI2\0" /* 1 refs @ 8535 */
+	    "OHCI3\0" /* 1 refs @ 8541 */
+	    "OHCI4\0" /* 1 refs @ 8547 */
+	    "SB700/SB800\0" /* 11 refs @ 8553 */
+	    "(IDE\0" /* 2 refs @ 8565 */
+	    "mode)\0" /* 3 refs @ 8570 */
+	    "(AHCI\0" /* 1 refs @ 8576 */
+	    "RAID5\0" /* 1 refs @ 8582 */
+	    "SB800\0" /* 1 refs @ 8588 */
+	    "Mach64\0" /* 6 refs @ 8594 */
+	    "CT\0" /* 1 refs @ 8601 */
+	    "CX\0" /* 1 refs @ 8604 */
+	    "Rage\0" /* 65 refs @ 8607 */
+	    "(AGP)\0" /* 6 refs @ 8612 */
+	    "(AGP\0" /* 5 refs @ 8618 */
+	    "1x)\0" /* 1 refs @ 8623 */
+	    "Turbo\0" /* 1 refs @ 8627 */
+	    "XC\0" /* 3 refs @ 8633 */
+	    "(PCI66)\0" /* 2 refs @ 8636 */
+	    "(limited\0" /* 1 refs @ 8644 */
+	    "3D)\0" /* 1 refs @ 8653 */
+	    "I/II\0" /* 1 refs @ 8657 */
+	    "II+\0" /* 1 refs @ 8662 */
+	    "IIC\0" /* 4 refs @ 8666 */
+	    "GX\0" /* 1 refs @ 8670 */
+	    "9000/PRO\0" /* 1 refs @ 8673 */
+	    "If\0" /* 1 refs @ 8682 */
+	    "Ig\0" /* 1 refs @ 8685 */
+	    "X800\0" /* 6 refs @ 8688 */
+	    "(R420)\0" /* 7 refs @ 8693 */
+	    "JH\0" /* 1 refs @ 8700 */
+	    "X800PRO\0" /* 2 refs @ 8703 */
+	    "JI\0" /* 1 refs @ 8711 */
+	    "X800SE\0" /* 2 refs @ 8714 */
+	    "JJ\0" /* 1 refs @ 8721 */
+	    "JK\0" /* 1 refs @ 8724 */
+	    "JL\0" /* 1 refs @ 8727 */
+	    "X3\0" /* 1 refs @ 8730 */
+	    "JM\0" /* 1 refs @ 8733 */
+	    "(M18)\0" /* 1 refs @ 8736 */
+	    "JN\0" /* 1 refs @ 8742 */
+	    "X800XT\0" /* 2 refs @ 8745 */
+	    "JP\0" /* 1 refs @ 8752 */
+	    "LT\0" /* 6 refs @ 8755 */
+	    "133MHz)\0" /* 1 refs @ 8758 */
+	    "66MHz)\0" /* 1 refs @ 8766 */
+	    "M3\0" /* 2 refs @ 8773 */
+	    "L\0" /* 2 refs @ 8776 */
+	    "M1\0" /* 1 refs @ 8778 */
+	    "(PCI)\0" /* 2 refs @ 8781 */
+	    "M7\0" /* 2 refs @ 8787 */
+	    "LW\0" /* 1 refs @ 8790 */
+	    "7800\0" /* 1 refs @ 8793 */
+	    "M6\0" /* 2 refs @ 8798 */
+	    "LY\0" /* 1 refs @ 8801 */
+	    "LZ\0" /* 1 refs @ 8804 */
+	    "(M9)\0" /* 3 refs @ 8807 */
+	    "Ld\0" /* 1 refs @ 8812 */
+	    "Lf\0" /* 1 refs @ 8815 */
+	    "Lg\0" /* 1 refs @ 8818 */
+	    "128\0" /* 38 refs @ 8821 */
+	    "4x\0" /* 19 refs @ 8825 */
+	    "2x\0" /* 13 refs @ 8828 */
+	    "9700\0" /* 2 refs @ 8831 */
+	    "ND\0" /* 1 refs @ 8836 */
+	    "9700/9500Pro\0" /* 1 refs @ 8839 */
+	    "NE\0" /* 1 refs @ 8852 */
+	    "NF\0" /* 1 refs @ 8855 */
+	    "X1\0" /* 1 refs @ 8858 */
+	    "NG\0" /* 1 refs @ 8861 */
+	    "9800PRO\0" /* 1 refs @ 8864 */
+	    "NH\0" /* 1 refs @ 8872 */
+	    "NI\0" /* 1 refs @ 8875 */
+	    "9800XT\0" /* 1 refs @ 8878 */
+	    "NJ\0" /* 1 refs @ 8885 */
+	    "NK\0" /* 1 refs @ 8888 */
+	    "9600/9700\0" /* 1 refs @ 8891 */
+	    "(M10/11)\0" /* 1 refs @ 8901 */
+	    "NP\0" /* 1 refs @ 8910 */
+	    "(M10)\0" /* 3 refs @ 8913 */
+	    "NQ\0" /* 1 refs @ 8919 */
+	    "(M11)\0" /* 2 refs @ 8922 */
+	    "NR\0" /* 1 refs @ 8928 */
+	    "NS\0" /* 1 refs @ 8931 */
+	    "NT\0" /* 1 refs @ 8934 */
+	    "T2e\0" /* 1 refs @ 8937 */
+	    "NV\0" /* 1 refs @ 8941 */
+	    "9700/9500\0" /* 2 refs @ 8944 */
+	    "(TMDS)\0" /* 12 refs @ 8954 */
+	    "Fury\0" /* 1 refs @ 8961 */
+	    "MAXX\0" /* 1 refs @ 8966 */
+	    "QD\0" /* 1 refs @ 8971 */
+	    "QE\0" /* 1 refs @ 8974 */
+	    "QF\0" /* 1 refs @ 8977 */
+	    "QG\0" /* 1 refs @ 8980 */
+	    "8700/8800\0" /* 1 refs @ 8983 */
+	    "QH\0" /* 1 refs @ 8993 */
+	    "QL\0" /* 1 refs @ 8996 */
+	    "9100\0" /* 5 refs @ 8999 */
+	    "QM\0" /* 1 refs @ 9004 */
+	    "7500\0" /* 2 refs @ 9007 */
+	    "QW\0" /* 1 refs @ 9012 */
+	    "QX\0" /* 1 refs @ 9015 */
+	    "7000/VE\0" /* 2 refs @ 9018 */
+	    "QY\0" /* 1 refs @ 9026 */
+	    "QZ\0" /* 1 refs @ 9029 */
+	    "ES1000\0" /* 1 refs @ 9032 */
+	    "VR\0" /* 2 refs @ 9039 */
+	    "M300\0" /* 1 refs @ 9042 */
+	    "(M22)\0" /* 1 refs @ 9047 */
+	    "5460\0" /* 1 refs @ 9053 */
+	    "M22\0" /* 1 refs @ 9058 */
+	    "5464\0" /* 1 refs @ 9062 */
+	    "(R423)\0" /* 8 refs @ 9067 */
+	    "UH\0" /* 1 refs @ 9074 */
+	    "UI\0" /* 1 refs @ 9077 */
+	    "X800LE\0" /* 1 refs @ 9080 */
+	    "UJ\0" /* 1 refs @ 9087 */
+	    "UK\0" /* 1 refs @ 9090 */
+	    "GTO\0" /* 2 refs @ 9093 */
+	    "(R430)\0" /* 2 refs @ 9097 */
+	    "554F\0" /* 1 refs @ 9104 */
+	    "V7200\0" /* 1 refs @ 9109 */
+	    "UQ\0" /* 1 refs @ 9115 */
+	    "V5100\0" /* 1 refs @ 9118 */
+	    "UR\0" /* 1 refs @ 9124 */
+	    "V7100\0" /* 1 refs @ 9127 */
+	    "UT\0" /* 1 refs @ 9133 */
+	    "VT\0" /* 1 refs @ 9136 */
+	    "VTB\0" /* 1 refs @ 9139 */
+	    "VT4\0" /* 1 refs @ 9143 */
+	    "RS300\0" /* 2 refs @ 9147 */
+	    "(U3)\0" /* 1 refs @ 9153 */
+	    "9200\0" /* 8 refs @ 9158 */
+	    "RS480\0" /* 6 refs @ 9163 */
+	    "RD580\0" /* 1 refs @ 9169 */
+	    "CrossFire\0" /* 1 refs @ 9175 */
+	    "Xpress\0" /* 4 refs @ 9185 */
+	    "3200\0" /* 1 refs @ 9192 */
+	    "200G\0" /* 1 refs @ 9197 */
+	    "RD790\0" /* 12 refs @ 9202 */
+	    "(Dual\0" /* 1 refs @ 9208 */
+	    "Slot)\0" /* 1 refs @ 9214 */
+	    "9200PRO\0" /* 1 refs @ 9220 */
+	    "5960\0" /* 1 refs @ 9228 */
+	    "5961\0" /* 1 refs @ 9233 */
+	    "5962\0" /* 1 refs @ 9238 */
+	    "5963\0" /* 1 refs @ 9243 */
+	    "9200SE\0" /* 2 refs @ 9248 */
+	    "5964\0" /* 1 refs @ 9255 */
+	    "(RS482M)\0" /* 1 refs @ 9260 */
+	    "GFX0\0" /* 4 refs @ 9269 */
+	    "Port\0" /* 102 refs @ 9274 */
+	    "A\0" /* 8 refs @ 9279 */
+	    "GPP\0" /* 14 refs @ 9281 */
+	    "C\0" /* 4 refs @ 9285 */
+	    "E\0" /* 2 refs @ 9287 */
+	    "F\0" /* 2 refs @ 9289 */
+	    "GFX1\0" /* 4 refs @ 9291 */
+	    "(NB-SB\0" /* 2 refs @ 9296 */
+	    "Link)\0" /* 2 refs @ 9303 */
+	    "RD890\0" /* 17 refs @ 9309 */
+	    "Dual\0" /* 26 refs @ 9315 */
+	    "Slot\0" /* 3 refs @ 9320 */
+	    "2x16\0" /* 1 refs @ 9325 */
+	    "GFX\0" /* 3 refs @ 9330 */
+	    "2x8\0" /* 1 refs @ 9334 */
+	    "G\0" /* 1 refs @ 9338 */
+	    "H\0" /* 1 refs @ 9340 */
+	    "IOMMU\0" /* 1 refs @ 9342 */
+	    "200\0" /* 3 refs @ 9348 */
+	    "Root\0" /* 4 refs @ 9352 */
+	    "X300\0" /* 2 refs @ 9357 */
+	    "(RV370)\0" /* 3 refs @ 9362 */
+	    "5B60\0" /* 1 refs @ 9370 */
+	    "Sapphire\0" /* 1 refs @ 9375 */
+	    "X550\0" /* 1 refs @ 9384 */
+	    "Silent\0" /* 1 refs @ 9389 */
+	    "V3100\0" /* 1 refs @ 9396 */
+	    "5B64\0" /* 1 refs @ 9402 */
+	    "D1100\0" /* 1 refs @ 9407 */
+	    "5B65\0" /* 1 refs @ 9413 */
+	    "RV370\0" /* 1 refs @ 9418 */
+	    "(M9+)\0" /* 2 refs @ 9424 */
+	    "X850\0" /* 2 refs @ 9430 */
+	    "5D57\0" /* 1 refs @ 9435 */
+	    "X700\0" /* 2 refs @ 9440 */
+	    "X1300\0" /* 2 refs @ 9445 */
+	    "(RV515)\0" /* 2 refs @ 9451 */
+	    "PRO\0" /* 1 refs @ 9459 */
+	    "RS690\0" /* 6 refs @ 9463 */
+	    "PCI-Express\0" /* 9 refs @ 9469 */
+	    "0\0" /* 2 refs @ 9481 */
+	    "1\0" /* 10 refs @ 9483 */
+	    "HD2600\0" /* 2 refs @ 9485 */
+	    "GDDR3\0" /* 1 refs @ 9492 */
+	    "HD\0" /* 1 refs @ 9498 */
+	    "VxP524\0" /* 1 refs @ 9501 */
+	    "Processor\0" /* 13 refs @ 9508 */
+	    "AU8820\0" /* 1 refs @ 9518 */
+	    "S5933\0" /* 1 refs @ 9525 */
+	    "Matchmaker\0" /* 1 refs @ 9531 */
+	    "Myrinet\0" /* 2 refs @ 9542 */
+	    "LANai\0" /* 1 refs @ 9550 */
+	    "FZJ/ZEL\0" /* 3 refs @ 9556 */
+	    "CAMAC\0" /* 2 refs @ 9564 */
+	    "VICBUS\0" /* 1 refs @ 9570 */
+	    "Synchronisation\0" /* 1 refs @ 9577 */
+	    "Module\0" /* 1 refs @ 9593 */
+	    "ADDI-DATA\0" /* 1 refs @ 9600 */
+	    "APCI-7800\0" /* 1 refs @ 9610 */
+	    "8-port\0" /* 2 refs @ 9620 */
+	    "Serial\0" /* 68 refs @ 9627 */
+	    "S5920\0" /* 1 refs @ 9634 */
+	    "Target\0" /* 1 refs @ 9640 */
+	    "AR5201\0" /* 3 refs @ 9647 */
+	    "AR5211\0" /* 5 refs @ 9654 */
+	    "AR5212\0" /* 3 refs @ 9661 */
+	    "Reference\0" /* 4 refs @ 9668 */
+	    "Card\0" /* 11 refs @ 9678 */
+	    "(Early\0" /* 1 refs @ 9683 */
+	    "AP11)\0" /* 1 refs @ 9690 */
+	    "(no\0" /* 3 refs @ 9696 */
+	    "eeprom)\0" /* 3 refs @ 9700 */
+	    "(emulation\0" /* 1 refs @ 9708 */
+	    "board)\0" /* 3 refs @ 9719 */
+	    "(11b\0" /* 1 refs @ 9726 */
+	    "emulation\0" /* 2 refs @ 9731 */
+	    "(original\0" /* 1 refs @ 9741 */
+	    "IDE-2015PL\0" /* 1 refs @ 9751 */
+	    "AVL2301\0" /* 1 refs @ 9762 */
+	    "AVG2302\0" /* 1 refs @ 9770 */
+	    "ALG2301\0" /* 1 refs @ 9778 */
+	    "ALG2302\0" /* 1 refs @ 9786 */
+	    "ALS4000\0" /* 1 refs @ 9794 */
+	    "Low\0" /* 1 refs @ 9802 */
+	    "Profile\0" /* 1 refs @ 9806 */
+	    "4\0" /* 13 refs @ 9814 */
+	    "Cinemaster\0" /* 1 refs @ 9816 */
+	    "3.0\0" /* 1 refs @ 9827 */
+	    "DVD\0" /* 1 refs @ 9831 */
+	    "Fritz!\0" /* 1 refs @ 9835 */
+	    "Fritz!PCI\0" /* 1 refs @ 9842 */
+	    "v2.0\0" /* 2 refs @ 9852 */
+	    "Basic\0" /* 1 refs @ 9857 */
+	    "Rate\0" /* 2 refs @ 9863 */
+	    "B1\0" /* 1 refs @ 9868 */
+	    "Primary\0" /* 1 refs @ 9871 */
+	    "T1\0" /* 1 refs @ 9879 */
+	    "single-channel\0" /* 2 refs @ 9882 */
+	    "RS-485\0" /* 8 refs @ 9897 */
+	    "UART\0" /* 15 refs @ 9904 */
+	    "dual-channel\0" /* 3 refs @ 9909 */
+	    "quad-channel\0" /* 3 refs @ 9922 */
+	    "octal-channel\0" /* 3 refs @ 9935 */
+	    "Isolated\0" /* 4 refs @ 9949 */
+	    "F5D6001\0" /* 1 refs @ 9958 */
+	    "F5D6020v3\0" /* 1 refs @ 9966 */
+	    "EC8/32\0" /* 1 refs @ 9976 */
+	    "EC8/64\0" /* 1 refs @ 9983 */
+	    "EasyIO\0" /* 1 refs @ 9990 */
+	    "PCI-VME\0" /* 3 refs @ 9997 */
+	    "Mod.\0" /* 3 refs @ 10005 */
+	    "617\0" /* 1 refs @ 10010 */
+	    "618\0" /* 1 refs @ 10014 */
+	    "2706\0" /* 1 refs @ 10018 */
+	    "5501\0" /* 1 refs @ 10023 */
+	    "5601\0" /* 1 refs @ 10028 */
+	    "BCM5752\0" /* 1 refs @ 10033 */
+	    "BCM5752M\0" /* 1 refs @ 10041 */
+	    "BCM5709\0" /* 1 refs @ 10050 */
+	    "NetXtreme\0" /* 13 refs @ 10058 */
+	    "BCM5702\0" /* 2 refs @ 10068 */
+	    "BCM5703\0" /* 2 refs @ 10076 */
+	    "BCM5704C\0" /* 1 refs @ 10084 */
+	    "BCM5704S\0" /* 2 refs @ 10093 */
+	    "BCM5706\0" /* 2 refs @ 10102 */
+	    "BCM5708\0" /* 2 refs @ 10110 */
+	    "BCM5702FE\0" /* 1 refs @ 10118 */
+	    "BCM5705\0" /* 1 refs @ 10128 */
+	    "BCM5705K\0" /* 1 refs @ 10136 */
+	    "BCM5720\0" /* 1 refs @ 10145 */
+	    "BCM5721\0" /* 1 refs @ 10153 */
+	    "BCM5722\0" /* 1 refs @ 10161 */
+	    "BCM5705M\0" /* 2 refs @ 10169 */
+	    "BCM5714\0" /* 1 refs @ 10178 */
+	    "BCM5714S\0" /* 1 refs @ 10186 */
+	    "BCM5780\0" /* 1 refs @ 10195 */
+	    "BCM5780S\0" /* 1 refs @ 10203 */
+	    "BCM5705F\0" /* 1 refs @ 10212 */
+	    "BCM5754M\0" /* 1 refs @ 10221 */
+	    "BCM5755M\0" /* 1 refs @ 10230 */
+	    "BCM5756\0" /* 1 refs @ 10239 */
+	    "BCM5750\0" /* 1 refs @ 10247 */
+	    "BCM5751\0" /* 1 refs @ 10255 */
+	    "BCM5715\0" /* 1 refs @ 10263 */
+	    "BCM5715S\0" /* 1 refs @ 10271 */
+	    "BCM5754\0" /* 1 refs @ 10280 */
+	    "BCM5755\0" /* 1 refs @ 10288 */
+	    "BCM5750M\0" /* 1 refs @ 10296 */
+	    "BCM5751M\0" /* 1 refs @ 10305 */
+	    "BCM5751F\0" /* 1 refs @ 10314 */
+	    "BCM5787M\0" /* 1 refs @ 10323 */
+	    "BCM5782\0" /* 1 refs @ 10332 */
+	    "BCM5786\0" /* 1 refs @ 10340 */
+	    "NetLink\0" /* 4 refs @ 10348 */
+	    "BCM5787\0" /* 1 refs @ 10356 */
+	    "BCM5788\0" /* 1 refs @ 10364 */
+	    "BCM5789\0" /* 1 refs @ 10372 */
+	    "BCM5702X\0" /* 1 refs @ 10380 */
+	    "BCM5703X\0" /* 1 refs @ 10389 */
+	    "BCM5781\0" /* 1 refs @ 10398 */
+	    "BCM5753\0" /* 1 refs @ 10406 */
+	    "BCM5753M\0" /* 1 refs @ 10414 */
+	    "BCM5753F\0" /* 1 refs @ 10423 */
+	    "BCM5903M\0" /* 1 refs @ 10432 */
+	    "BCM4401-B0\0" /* 1 refs @ 10441 */
+	    "BCM5901\0" /* 1 refs @ 10452 */
+	    "BCM5901A\0" /* 1 refs @ 10460 */
+	    "BCM5906\0" /* 1 refs @ 10469 */
+	    "BCM5906M\0" /* 1 refs @ 10477 */
+	    "BCM4303\0" /* 1 refs @ 10486 */
+	    "BCM4307\0" /* 1 refs @ 10494 */
+	    "BCM4311\0" /* 1 refs @ 10502 */
+	    "BCM4312\0" /* 1 refs @ 10510 */
+	    "BCM4318\0" /* 1 refs @ 10518 */
+	    "AirForce\0" /* 1 refs @ 10526 */
+	    "54g\0" /* 1 refs @ 10535 */
+	    "BCM4319\0" /* 1 refs @ 10539 */
+	    "BCM4306\0" /* 2 refs @ 10547 */
+	    "BCM4322\0" /* 1 refs @ 10555 */
+	    "BCM4309\0" /* 1 refs @ 10563 */
+	    "BCM43XG\0" /* 1 refs @ 10571 */
+	    "BCM4328\0" /* 1 refs @ 10579 */
+	    "802.11a/b/g/n\0" /* 1 refs @ 10587 */
+	    "BCM4401\0" /* 1 refs @ 10601 */
+	    "5801\0" /* 1 refs @ 10609 */
+	    "5802\0" /* 1 refs @ 10614 */
+	    "5805\0" /* 1 refs @ 10619 */
+	    "5820\0" /* 1 refs @ 10624 */
+	    "5821\0" /* 1 refs @ 10629 */
+	    "5822\0" /* 1 refs @ 10634 */
+	    "5823\0" /* 1 refs @ 10639 */
+	    "Bt848\0" /* 1 refs @ 10644 */
+	    "Capture\0" /* 11 refs @ 10650 */
+	    "Bt849\0" /* 1 refs @ 10658 */
+	    "Bt878\0" /* 2 refs @ 10664 */
+	    "Bt879\0" /* 2 refs @ 10670 */
+	    "Bt880\0" /* 2 refs @ 10676 */
+	    "(Audio\0" /* 3 refs @ 10682 */
+	    "Section)\0" /* 3 refs @ 10689 */
+	    "Bt8474\0" /* 1 refs @ 10698 */
+	    "Multichannel\0" /* 2 refs @ 10705 */
+	    "HDLC\0" /* 1 refs @ 10718 */
+	    "MultiMaster\0" /* 2 refs @ 10723 */
+	    "NC\0" /* 1 refs @ 10735 */
+	    "FlashPoint\0" /* 1 refs @ 10738 */
+	    "GPPCI\0" /* 1 refs @ 10749 */
+	    "Nitrox\0" /* 1 refs @ 10755 */
+	    "T302e\0" /* 1 refs @ 10762 */
+	    "T310e\0" /* 1 refs @ 10768 */
+	    "T320x\0" /* 1 refs @ 10774 */
+	    "T302x\0" /* 1 refs @ 10780 */
+	    "T320e\0" /* 1 refs @ 10786 */
+	    "T310x\0" /* 1 refs @ 10792 */
+	    "T3B10\0" /* 1 refs @ 10798 */
+	    "T3B20\0" /* 1 refs @ 10804 */
+	    "T3B02\0" /* 1 refs @ 10810 */
+	    "64310\0" /* 1 refs @ 10816 */
+	    "69000\0" /* 1 refs @ 10822 */
+	    "65545\0" /* 1 refs @ 10828 */
+	    "65548\0" /* 1 refs @ 10834 */
+	    "65550\0" /* 1 refs @ 10840 */
+	    "65554\0" /* 1 refs @ 10846 */
+	    "69030\0" /* 1 refs @ 10852 */
+	    "LunaVPN\0" /* 1 refs @ 10858 */
+	    "CL-GD7548\0" /* 1 refs @ 10866 */
+	    "CL-GD5430\0" /* 1 refs @ 10876 */
+	    "CL-GD5434-4\0" /* 1 refs @ 10886 */
+	    "CL-GD5434-8\0" /* 1 refs @ 10898 */
+	    "CL-GD5436\0" /* 1 refs @ 10910 */
+	    "CL-GD5446\0" /* 1 refs @ 10920 */
+	    "CL-GD5480\0" /* 1 refs @ 10930 */
+	    "CL-PD6729\0" /* 1 refs @ 10940 */
+	    "CL-PD6832\0" /* 1 refs @ 10950 */
+	    "PCI-CardBus\0" /* 65 refs @ 10960 */
+	    "CL-PD6833\0" /* 1 refs @ 10972 */
+	    "CL-GD7542\0" /* 1 refs @ 10982 */
+	    "CL-GD7543\0" /* 1 refs @ 10992 */
+	    "CL-GD7541\0" /* 1 refs @ 11002 */
+	    "CL-CD4400\0" /* 1 refs @ 11012 */
+	    "CS4610\0" /* 1 refs @ 11022 */
+	    "SoundFusion\0" /* 1 refs @ 11029 */
+	    "CS4280\0" /* 1 refs @ 11041 */
+	    "CrystalClear\0" /* 2 refs @ 11048 */
+	    "CS4615\0" /* 1 refs @ 11061 */
+	    "CS4281\0" /* 1 refs @ 11068 */
+	    "AAR-1210SA\0" /* 1 refs @ 11075 */
+	    "PCI0640\0" /* 1 refs @ 11086 */
+	    "PCI0642\0" /* 1 refs @ 11094 */
+	    "PCI0643\0" /* 1 refs @ 11102 */
+	    "PCI0646\0" /* 1 refs @ 11110 */
+	    "PCI0647\0" /* 1 refs @ 11118 */
+	    "PCI0648\0" /* 1 refs @ 11126 */
+	    "PCI0649\0" /* 1 refs @ 11134 */
+	    "PCI0650A\0" /* 1 refs @ 11142 */
+	    "USB0670\0" /* 1 refs @ 11151 */
+	    "USB0673\0" /* 1 refs @ 11159 */
+	    "SiI0680\0" /* 1 refs @ 11167 */
+	    "SiI3112\0" /* 1 refs @ 11175 */
+	    "SATALink\0" /* 6 refs @ 11183 */
+	    "SiI3114\0" /* 1 refs @ 11192 */
+	    "SiI3124\0" /* 1 refs @ 11200 */
+	    "SiI3132\0" /* 1 refs @ 11208 */
+	    "SiI3512\0" /* 1 refs @ 11216 */
+	    "SiI3531\0" /* 1 refs @ 11224 */
+	    "CMI8338A\0" /* 1 refs @ 11232 */
+	    "CMI8338B\0" /* 1 refs @ 11241 */
+	    "CMI8738/C3DX\0" /* 1 refs @ 11250 */
+	    "CMI8738B\0" /* 1 refs @ 11263 */
+	    "HSP56\0" /* 1 refs @ 11272 */
+	    "Audiomodem\0" /* 1 refs @ 11278 */
+	    "Riser\0" /* 1 refs @ 11289 */
+	    "EX110TX\0" /* 1 refs @ 11295 */
+	    "HFC-S\0" /* 1 refs @ 11303 */
+	    "38W2\0" /* 1 refs @ 11309 */
+	    "OEM\0" /* 1 refs @ 11314 */
+	    "Notebook\0" /* 3 refs @ 11318 */
+	    "PCI-EISA\0" /* 2 refs @ 11327 */
+	    "Triflex\0" /* 3 refs @ 11336 */
+	    "QVision\0" /* 3 refs @ 11344 */
+	    "1280/p\0" /* 1 refs @ 11352 */
+	    "Smart\0" /* 39 refs @ 11359 */
+	    "Array\0" /* 36 refs @ 11365 */
+	    "5300\0" /* 2 refs @ 11371 */
+	    "5i\0" /* 1 refs @ 11376 */
+	    "532\0" /* 1 refs @ 11379 */
+	    "5312\0" /* 1 refs @ 11383 */
+	    "6i\0" /* 1 refs @ 11388 */
+	    "641\0" /* 1 refs @ 11391 */
+	    "642\0" /* 1 refs @ 11395 */
+	    "6400\0" /* 2 refs @ 11399 */
+	    "EM\0" /* 1 refs @ 11404 */
+	    "6422\0" /* 1 refs @ 11407 */
+	    "64xx\0" /* 1 refs @ 11412 */
+	    "SMART2P\0" /* 1 refs @ 11417 */
+	    "Netelligent\0" /* 6 refs @ 11425 */
+	    "TX\0" /* 4 refs @ 11437 */
+	    "10\0" /* 3 refs @ 11440 */
+	    "T/2\0" /* 1 refs @ 11443 */
+	    "UTP/Coax\0" /* 1 refs @ 11447 */
+	    "T\0" /* 1 refs @ 11456 */
+	    "NetFlex\0" /* 3 refs @ 11458 */
+	    "3/P\0" /* 3 refs @ 11466 */
+	    "ProLiant\0" /* 1 refs @ 11470 */
+	    "Deskpro\0" /* 1 refs @ 11479 */
+	    "4000\0" /* 1 refs @ 11487 */
+	    "5233MMX\0" /* 1 refs @ 11492 */
+	    "rev.\0" /* 2 refs @ 11500 */
+	    "Presario\0" /* 1 refs @ 11505 */
+	    "56xx\0" /* 1 refs @ 11514 */
+	    "Armada\0" /* 1 refs @ 11519 */
+	    "M700\0" /* 1 refs @ 11526 */
+	    "5i/532\0" /* 1 refs @ 11531 */
+	    "BNC\0" /* 1 refs @ 11538 */
+	    "RL100-ATX\0" /* 1 refs @ 11542 */
+	    "RL100-TX\0" /* 1 refs @ 11552 */
+	    "RocketPort\0" /* 13 refs @ 11561 */
+	    "32\0" /* 1 refs @ 11572 */
+	    "External\0" /* 3 refs @ 11575 */
+	    "8\0" /* 5 refs @ 11584 */
+	    "16\0" /* 3 refs @ 11586 */
+	    "Quad\0" /* 7 refs @ 11589 */
+	    "Cable\0" /* 2 refs @ 11594 */
+	    "Octa\0" /* 1 refs @ 11600 */
+	    "RJ11s\0" /* 2 refs @ 11605 */
+	    "DB78\0" /* 2 refs @ 11611 */
+	    "Plus\0" /* 4 refs @ 11616 */
+	    "RocketModem\0" /* 2 refs @ 11621 */
+	    "6\0" /* 5 refs @ 11633 */
+	    "RS232\0" /* 1 refs @ 11635 */
+	    "RS422\0" /* 1 refs @ 11641 */
+	    "SoftK56\0" /* 1 refs @ 11647 */
+	    "HW\0" /* 1 refs @ 11655 */
+	    "56K\0" /* 2 refs @ 11658 */
+	    "Fax\0" /* 1 refs @ 11662 */
+	    "LANfinity\0" /* 1 refs @ 11666 */
+	    "MiniPCI\0" /* 1 refs @ 11676 */
+	    "CX23880/1/2/3\0" /* 4 refs @ 11684 */
+	    "Video/Audio\0" /* 1 refs @ 11698 */
+	    "IR\0" /* 1 refs @ 11710 */
+	    "82C599\0" /* 1 refs @ 11713 */
+	    "PCI-VLB\0" /* 1 refs @ 11720 */
+	    "82C693\0" /* 1 refs @ 11728 */
+	    "FEther\0" /* 2 refs @ 11735 */
+	    "CB-TXD\0" /* 2 refs @ 11742 */
+	    "CG-LAPCIGT\0" /* 1 refs @ 11749 */
+	    "\"C-Bus\0" /* 1 refs @ 11760 */
+	    "II\"-PCI\0" /* 1 refs @ 11767 */
+	    "SBLive!\0" /* 2 refs @ 11775 */
+	    "EMU\0" /* 3 refs @ 11783 */
+	    "10000\0" /* 3 refs @ 11787 */
+	    "SB\0" /* 3 refs @ 11793 */
+	    "Audigy\0" /* 3 refs @ 11796 */
+	    "LS\0" /* 1 refs @ 11803 */
+	    "Gameport\0" /* 3 refs @ 11806 */
+	    "Joystick\0" /* 3 refs @ 11815 */
+	    "Ectiva\0" /* 1 refs @ 11824 */
+	    "1938\0" /* 1 refs @ 11831 */
+	    "Cyclom-Y\0" /* 2 refs @ 11836 */
+	    "below\0" /* 4 refs @ 11845 */
+	    "1M\0" /* 8 refs @ 11851 */
+	    "above\0" /* 4 refs @ 11854 */
+	    "Cyclom-4Y\0" /* 2 refs @ 11860 */
+	    "Cyclom-8Y\0" /* 2 refs @ 11870 */
+	    "Cyclom-Z\0" /* 2 refs @ 11880 */
+	    "IQ80310\0" /* 1 refs @ 11889 */
+	    "(PCI-700)\0" /* 1 refs @ 11897 */
+	    "MediaGX\0" /* 1 refs @ 11907 */
+	    "Built-in\0" /* 1 refs @ 11915 */
+	    "Cx5520\0" /* 1 refs @ 11924 */
+	    "Companion\0" /* 10 refs @ 11931 */
+	    "Cx5530\0" /* 5 refs @ 11941 */
+	    "Multi-Function\0" /* 1 refs @ 11948 */
+	    "(SMI\0" /* 1 refs @ 11963 */
+	    "Status\0" /* 1 refs @ 11968 */
+	    "Timer)\0" /* 1 refs @ 11975 */
+	    "Controller)\0" /* 2 refs @ 11982 */
+	    "(XpressAUDIO)\0" /* 1 refs @ 11994 */
+	    "(Video\0" /* 1 refs @ 12008 */
+	    "BC635PCI-U\0" /* 1 refs @ 12015 */
+	    "TC\0" /* 1 refs @ 12026 */
+	    "FREQ.\0" /* 1 refs @ 12029 */
+	    "DM9102\0" /* 1 refs @ 12035 */
+	    "DC21050\0" /* 1 refs @ 12042 */
+	    "DC21040\0" /* 1 refs @ 12050 */
+	    "(\"Tulip\")\0" /* 1 refs @ 12058 */
+	    "DC21030\0" /* 1 refs @ 12068 */
+	    "(\"TGA\")\0" /* 1 refs @ 12076 */
+	    "Zephyr\0" /* 1 refs @ 12084 */
+	    "NV-RAM\0" /* 1 refs @ 12091 */
+	    "KZPSA\0" /* 1 refs @ 12098 */
+	    "DC21140\0" /* 1 refs @ 12104 */
+	    "(\"FasterNet\")\0" /* 1 refs @ 12112 */
+	    "TGA2\0" /* 1 refs @ 12126 */
+	    "DEFPA\0" /* 1 refs @ 12131 */
+	    "DC21041\0" /* 1 refs @ 12137 */
+	    "(\"Tulip\0" /* 1 refs @ 12145 */
+	    "Plus\")\0" /* 1 refs @ 12153 */
+	    "DGLPB\0" /* 1 refs @ 12160 */
+	    "(\"OPPO\")\0" /* 1 refs @ 12166 */
+	    "DC21142/21143\0" /* 1 refs @ 12175 */
+	    "DC21052\0" /* 1 refs @ 12189 */
+	    "DC21150\0" /* 1 refs @ 12197 */
+	    "DC21152\0" /* 1 refs @ 12205 */
+	    "DC21153\0" /* 1 refs @ 12213 */
+	    "DC21154\0" /* 1 refs @ 12221 */
+	    "DC21554\0" /* 1 refs @ 12229 */
+	    "SWXCR\0" /* 1 refs @ 12237 */
+	    "2/Si\0" /* 1 refs @ 12243 */
+	    "3/Di\0" /* 9 refs @ 12248 */
+	    "3/Si\0" /* 3 refs @ 12253 */
+	    "4/Di\0" /* 2 refs @ 12258 */
+	    "4e/Si\0" /* 1 refs @ 12263 */
+	    "5\0" /* 3 refs @ 12269 */
+	    "5/e\0" /* 1 refs @ 12271 */
+	    "5/i\0" /* 1 refs @ 12275 */
+	    "CERC\0" /* 1 refs @ 12279 */
+	    "1.5/6ch\0" /* 1 refs @ 12284 */
+	    "Viper/PCI\0" /* 1 refs @ 12292 */
+	    "Neo\0" /* 2 refs @ 12302 */
+	    "4-port\0" /* 1 refs @ 12306 */
+	    "DL-1002\0" /* 1 refs @ 12313 */
+	    "DFE-530TXPLUS\0" /* 1 refs @ 12321 */
+	    "DFE-690TXD\0" /* 1 refs @ 12335 */
+	    "DWL-610\0" /* 1 refs @ 12346 */
+	    "DL-4000\0" /* 1 refs @ 12354 */
+	    "DGE-550SX\0" /* 1 refs @ 12362 */
+	    "DGE-528T\0" /* 1 refs @ 12372 */
+	    "DGE-560T\0" /* 1 refs @ 12381 */
+	    "DGE-560T_2\0" /* 1 refs @ 12390 */
+	    "DGE-560SX\0" /* 1 refs @ 12401 */
+	    "DGE-530T\0" /* 1 refs @ 12411 */
+	    "SmartCache/SmartRAID\0" /* 1 refs @ 12420 */
+	    "(EATA)\0" /* 1 refs @ 12441 */
+	    "SmartRAID\0" /* 2 refs @ 12448 */
+	    "(I2O)\0" /* 2 refs @ 12458 */
+	    "Zero\0" /* 1 refs @ 12464 */
+	    "Channel\0" /* 1 refs @ 12469 */
+	    "Memory\0" /* 34 refs @ 12477 */
+	    "PCI-SCI\0" /* 3 refs @ 12484 */
+	    "(32-bit,\0" /* 1 refs @ 12492 */
+	    "33\0" /* 2 refs @ 12501 */
+	    "MHz)\0" /* 3 refs @ 12504 */
+	    "(64-bit,\0" /* 2 refs @ 12509 */
+	    "66\0" /* 1 refs @ 12518 */
+	    "DMX-3191D\0" /* 1 refs @ 12521 */
+	    "IS64PH\0" /* 1 refs @ 12531 */
+	    "QuickStep\0" /* 1 refs @ 12538 */
+	    "1000\0" /* 3 refs @ 12548 */
+	    "Gloria\0" /* 1 refs @ 12553 */
+	    "1624\0" /* 1 refs @ 12560 */
+	    "LP6000\0" /* 1 refs @ 12565 */
+	    "FibreChannel\0" /* 6 refs @ 12572 */
+	    "LP982\0" /* 1 refs @ 12585 */
+	    "LP7000\0" /* 1 refs @ 12591 */
+	    "LP8000\0" /* 1 refs @ 12598 */
+	    "LP9000\0" /* 1 refs @ 12605 */
+	    "LP9802\0" /* 1 refs @ 12612 */
+	    "MCR510\0" /* 1 refs @ 12619 */
+	    "Reader\0" /* 1 refs @ 12626 */
+	    "CB1211\0" /* 1 refs @ 12633 */
+	    "CardBus\0" /* 6 refs @ 12640 */
+	    "CB1225\0" /* 1 refs @ 12648 */
+	    "CB1410\0" /* 1 refs @ 12655 */
+	    "CB710\0" /* 1 refs @ 12662 */
+	    "CB1420\0" /* 1 refs @ 12668 */
+	    "CB720\0" /* 1 refs @ 12675 */
+	    "AudioPCI\0" /* 2 refs @ 12681 */
+	    "97\0" /* 1 refs @ 12690 */
+	    "CT5880\0" /* 1 refs @ 12693 */
+	    "SST-64P\0" /* 1 refs @ 12700 */
+	    "SST-128P\0" /* 1 refs @ 12708 */
+	    "SST-16P\0" /* 3 refs @ 12717 */
+	    "SST-4P\0" /* 1 refs @ 12725 */
+	    "SST-8P\0" /* 1 refs @ 12732 */
+	    "RoadRunner\0" /* 2 refs @ 12739 */
+	    "HIPPI\0" /* 1 refs @ 12750 */
+	    "Gig-E\0" /* 1 refs @ 12756 */
+	    "Maestro\0" /* 7 refs @ 12762 */
+	    "Solo-1\0" /* 1 refs @ 12770 */
+	    "AudioDrive\0" /* 1 refs @ 12777 */
+	    "2E\0" /* 1 refs @ 12788 */
+	    "Allegro-1\0" /* 1 refs @ 12791 */
+	    "WL11000P\0" /* 1 refs @ 12801 */
+	    "WaveLAN/IEEE\0" /* 1 refs @ 12810 */
+	    "802.11\0" /* 1 refs @ 12823 */
+	    "IEEE\0" /* 36 refs @ 12830 */
+	    "1394\0" /* 33 refs @ 12835 */
+	    "OZ6729\0" /* 1 refs @ 12840 */
+	    "PCI-PCMCIA\0" /* 4 refs @ 12847 */
+	    "OZ6730\0" /* 1 refs @ 12858 */
+	    "OZ6832/OZ6833\0" /* 1 refs @ 12865 */
+	    "OZ6836/OZ6860\0" /* 1 refs @ 12879 */
+	    "OZ6812/OZ6872\0" /* 1 refs @ 12893 */
+	    "OZ6922\0" /* 1 refs @ 12907 */
+	    "OZ6933\0" /* 1 refs @ 12914 */
+	    "OZ6912/OZ6972\0" /* 1 refs @ 12921 */
+	    "MMC/SD\0" /* 1 refs @ 12935 */
+	    "MS/xD/SM\0" /* 1 refs @ 12942 */
+	    "OZ711E0\0" /* 1 refs @ 12951 */
+	    "Freedom\0" /* 1 refs @ 12959 */
+	    "PCI-GBus\0" /* 1 refs @ 12967 */
+	    "Universal\0" /* 3 refs @ 12976 */
+	    "PCA-200\0" /* 1 refs @ 12986 */
+	    "PCA-200e\0" /* 1 refs @ 12994 */
+	    "801\0" /* 1 refs @ 13003 */
+	    "TMC-18C30\0" /* 1 refs @ 13007 */
+	    "(36C70)\0" /* 1 refs @ 13017 */
+	    "STR1100\0" /* 1 refs @ 13025 */
+	    "HOTlink\0" /* 2 refs @ 13033 */
+	    "Counter\0" /* 1 refs @ 13041 */
+	    "Timer\0" /* 8 refs @ 13049 */
+	    "PROFIBUS\0" /* 1 refs @ 13055 */
+	    "old\0" /* 1 refs @ 13064 */
+	    "155P-MF1\0" /* 2 refs @ 13068 */
+	    "(FPGA)\0" /* 1 refs @ 13077 */
+	    "(ASIC)\0" /* 1 refs @ 13084 */
+	    "SpeedStream\0" /* 2 refs @ 13091 */
+	    "ENI-25p\0" /* 1 refs @ 13103 */
+	    "3000\0" /* 4 refs @ 13111 */
+	    "GT-64010A\0" /* 1 refs @ 13116 */
+	    "Libertas\0" /* 5 refs @ 13126 */
+	    "88W8300\0" /* 2 refs @ 13135 */
+	    "88W8310\0" /* 1 refs @ 13143 */
+	    "88W8335\0" /* 2 refs @ 13151 */
+	    "GT-64115\0" /* 1 refs @ 13159 */
+	    "GT-64011\0" /* 1 refs @ 13168 */
+	    "SK-NET\0" /* 4 refs @ 13177 */
+	    "Yukon-II\0" /* 8 refs @ 13184 */
+	    "88E8021CU\0" /* 1 refs @ 13193 */
+	    "88E8022CU\0" /* 1 refs @ 13203 */
+	    "88E8061CU\0" /* 1 refs @ 13213 */
+	    "88E8062CU\0" /* 1 refs @ 13223 */
+	    "88E8021X\0" /* 1 refs @ 13233 */
+	    "88E8022X\0" /* 1 refs @ 13242 */
+	    "88E8061X\0" /* 1 refs @ 13251 */
+	    "88E8062X\0" /* 1 refs @ 13260 */
+	    "Yukon\0" /* 16 refs @ 13269 */
+	    "88E8035\0" /* 1 refs @ 13275 */
+	    "88E8036\0" /* 1 refs @ 13283 */
+	    "88E8038\0" /* 1 refs @ 13291 */
+	    "88E8039\0" /* 1 refs @ 13299 */
+	    "88EC033\0" /* 1 refs @ 13307 */
+	    "88E8052\0" /* 1 refs @ 13315 */
+	    "88E8050\0" /* 1 refs @ 13323 */
+	    "88E8053\0" /* 1 refs @ 13331 */
+	    "88E8055\0" /* 1 refs @ 13339 */
+	    "88E8056\0" /* 1 refs @ 13347 */
+	    "88EC036\0" /* 1 refs @ 13355 */
+	    "88EC032\0" /* 1 refs @ 13363 */
+	    "88EC034\0" /* 1 refs @ 13371 */
+	    "88EC042\0" /* 1 refs @ 13379 */
+	    "88EC055\0" /* 1 refs @ 13387 */
+	    "GT-64120\0" /* 1 refs @ 13395 */
+	    "88SX5040\0" /* 1 refs @ 13404 */
+	    "88SX5041\0" /* 1 refs @ 13413 */
+	    "88SX5080\0" /* 1 refs @ 13422 */
+	    "88SX5081\0" /* 1 refs @ 13431 */
+	    "88SX6041\0" /* 2 refs @ 13440 */
+	    "88SE6101\0" /* 1 refs @ 13449 */
+	    "PATA133\0" /* 1 refs @ 13458 */
+	    "88SE6121\0" /* 1 refs @ 13466 */
+	    "88SE614X\0" /* 1 refs @ 13475 */
+	    "PCI-E\0" /* 3 refs @ 13484 */
+	    "88SE6145\0" /* 1 refs @ 13490 */
+	    "GT-64130\0" /* 1 refs @ 13499 */
+	    "GT-64260\0" /* 1 refs @ 13508 */
+	    "MV6436x\0" /* 1 refs @ 13517 */
+	    "GL24110P\0" /* 2 refs @ 13525 */
+	    "MAXIRADIO\0" /* 1 refs @ 13534 */
+	    "PN672TX\0" /* 1 refs @ 13544 */
+	    "PM/PPC\0" /* 1 refs @ 13552 */
+	    "A4977A\0" /* 1 refs @ 13559 */
+	    "Visualize\0" /* 1 refs @ 13566 */
+	    "EG\0" /* 1 refs @ 13576 */
+	    "TL\0" /* 1 refs @ 13579 */
+	    "TS\0" /* 1 refs @ 13582 */
+	    "XL2\0" /* 1 refs @ 13585 */
+	    "J2585A\0" /* 1 refs @ 13589 */
+	    "J2585B\0" /* 1 refs @ 13596 */
+	    "82557B\0" /* 1 refs @ 13603 */
+	    "NIC\0" /* 3 refs @ 13610 */
+	    "NetRaid-4M\0" /* 1 refs @ 13614 */
+	    "V100\0" /* 1 refs @ 13625 */
+	    "E200i\0" /* 4 refs @ 13630 */
+	    "E200\0" /* 1 refs @ 13636 */
+	    "P600\0" /* 2 refs @ 13641 */
+	    "P400\0" /* 1 refs @ 13646 */
+	    "P400i\0" /* 1 refs @ 13651 */
+	    "7751\0" /* 2 refs @ 13657 */
+	    "6500\0" /* 1 refs @ 13662 */
+	    "7811\0" /* 1 refs @ 13667 */
+	    "7951\0" /* 1 refs @ 13672 */
+	    "7954/7955\0" /* 1 refs @ 13677 */
+	    "7956\0" /* 1 refs @ 13687 */
+	    "7814/7851/7854\0" /* 1 refs @ 13692 */
+	    "8065\0" /* 1 refs @ 13707 */
+	    "8165\0" /* 1 refs @ 13712 */
+	    "8154\0" /* 1 refs @ 13717 */
+	    "HB1\0" /* 1 refs @ 13722 */
+	    "HB4\0" /* 2 refs @ 13726 */
+	    "MSVCC01/02/03/04\0" /* 1 refs @ 13730 */
+	    "Cards\0" /* 1 refs @ 13747 */
+	    "SH7751\0" /* 1 refs @ 13753 */
+	    "SH7751R\0" /* 1 refs @ 13760 */
+	    "MCA\0" /* 2 refs @ 13768 */
+	    "-\0" /* 2 refs @ 13772 */
+	    "Alta\0" /* 2 refs @ 13774 */
+	    "Lite\0" /* 1 refs @ 13779 */
+	    "MP\0" /* 1 refs @ 13784 */
+	    "Fire\0" /* 1 refs @ 13787 */
+	    "Coral\0" /* 1 refs @ 13792 */
+	    "ISA\0" /* 5 refs @ 13798 */
+	    "PnP\0" /* 1 refs @ 13802 */
+	    "PowerWave\0" /* 1 refs @ 13806 */
+	    "Idaho\0" /* 1 refs @ 13816 */
+	    "Auto\0" /* 1 refs @ 13822 */
+	    "LANStreamer\0" /* 1 refs @ 13827 */
+	    "GXT-150P\0" /* 1 refs @ 13839 */
+	    "2D\0" /* 1 refs @ 13848 */
+	    "Carrera\0" /* 1 refs @ 13851 */
+	    "82G2675\0" /* 1 refs @ 13859 */
+	    "SCSI-2\0" /* 1 refs @ 13867 */
+	    "82351\0" /* 1 refs @ 13874 */
+	    "Montana/Nevada\0" /* 1 refs @ 13880 */
+	    "Python\0" /* 1 refs @ 13895 */
+	    "(copperhead)\0" /* 1 refs @ 13902 */
+	    "GXT-250P\0" /* 1 refs @ 13915 */
+	    "16/4\0" /* 8 refs @ 13924 */
+	    "Miami/PCI\0" /* 1 refs @ 13929 */
+	    "82660\0" /* 1 refs @ 13939 */
+	    "PowerPC\0" /* 3 refs @ 13945 */
+	    "MPIC\0" /* 1 refs @ 13953 */
+	    "Turboways\0" /* 1 refs @ 13958 */
+	    "25\0" /* 2 refs @ 13968 */
+	    "GXT-500P/GXT550P\0" /* 1 refs @ 13971 */
+	    "i82557B\0" /* 1 refs @ 13988 */
+	    "GXT-800P\0" /* 1 refs @ 13996 */
+	    "EADS\0" /* 1 refs @ 14005 */
+	    "GXT-3000P\0" /* 2 refs @ 14010 */
+	    "Adapter(2)\0" /* 1 refs @ 14020 */
+	    "GXT-2000P\0" /* 1 refs @ 14031 */
+	    "Olympic\0" /* 1 refs @ 14041 */
+	    "CPC710\0" /* 2 refs @ 14049 */
+	    "(PCI64)\0" /* 1 refs @ 14056 */
+	    "(PCI32)\0" /* 1 refs @ 14064 */
+	    "ThinkPad\0" /* 1 refs @ 14072 */
+	    "600X/A20/T20/T22\0" /* 1 refs @ 14081 */
+	    "PPC\0" /* 2 refs @ 14098 */
+	    "405GP\0" /* 1 refs @ 14102 */
+	    "GXT-4000P\0" /* 1 refs @ 14108 */
+	    "GXT-6000P\0" /* 1 refs @ 14118 */
+	    "GXT-300P\0" /* 1 refs @ 14128 */
+	    "133\0" /* 1 refs @ 14137 */
+	    "(morpheus)\0" /* 1 refs @ 14141 */
+	    "440GP\0" /* 1 refs @ 14152 */
+	    "GXT-6500P\0" /* 1 refs @ 14158 */
+	    "GXT-4500P\0" /* 1 refs @ 14168 */
+	    "GXT-135P\0" /* 1 refs @ 14178 */
+	    "8k\0" /* 1 refs @ 14187 */
+	    "MPIC-II\0" /* 1 refs @ 14190 */
+	    "Envy24\0" /* 1 refs @ 14198 */
+	    "Envy24PT/HT\0" /* 1 refs @ 14205 */
+	    "Multi-Channel\0" /* 1 refs @ 14217 */
+	    "iTVC15\0" /* 1 refs @ 14231 */
+	    "MPEG2\0" /* 1 refs @ 14238 */
+	    "Codec\0" /* 1 refs @ 14244 */
+	    "77201/77211\0" /* 1 refs @ 14250 */
+	    "(\"NICStAR\")\0" /* 1 refs @ 14262 */
+	    "RC32334\0" /* 1 refs @ 14274 */
+	    "RC32332\0" /* 1 refs @ 14282 */
+	    "PCI-WDT50x\0" /* 1 refs @ 14290 */
+	    "Watchdog\0" /* 8 refs @ 14301 */
+	    "INIC-920\0" /* 1 refs @ 14310 */
+	    "INIC-850\0" /* 1 refs @ 14319 */
+	    "INIC-1060\0" /* 1 refs @ 14328 */
+	    "INIC-940\0" /* 1 refs @ 14338 */
+	    "INIC-935\0" /* 1 refs @ 14347 */
+	    "INIC-950\0" /* 1 refs @ 14356 */
+	    "IGA\0" /* 2 refs @ 14365 */
+	    "1680\0" /* 1 refs @ 14369 */
+	    "1682\0" /* 1 refs @ 14374 */
+	    "CyberPro\0" /* 2 refs @ 14379 */
+	    "2010\0" /* 1 refs @ 14388 */
+	    "8849\0" /* 1 refs @ 14393 */
+	    "TwinTurbo\0" /* 1 refs @ 14398 */
+	    "128M\0" /* 1 refs @ 14408 */
+	    "80312\0" /* 1 refs @ 14413 */
+	    "80321\0" /* 1 refs @ 14419 */
+	    "IOP333\0" /* 2 refs @ 14425 */
+	    "Express-to-PCI\0" /* 4 refs @ 14432 */
+	    "#0\0" /* 3 refs @ 14447 */
+	    "#1\0" /* 8 refs @ 14450 */
+	    "6700PXH\0" /* 2 refs @ 14453 */
+	    "82375EB/SB\0" /* 1 refs @ 14461 */
+	    "82424ZX\0" /* 1 refs @ 14472 */
+	    "82378ZB\0" /* 1 refs @ 14480 */
+	    "82426EX\0" /* 1 refs @ 14488 */
+	    "82434LX/NX\0" /* 1 refs @ 14496 */
+	    "PCI,\0" /* 1 refs @ 14507 */
+	    "(PCMC)\0" /* 1 refs @ 14512 */
+	    "GDT\0" /* 2 refs @ 14519 */
+	    "i960\0" /* 5 refs @ 14523 */
+	    "RM\0" /* 2 refs @ 14528 */
+	    "RN\0" /* 1 refs @ 14531 */
+	    "i82542\0" /* 1 refs @ 14534 */
+	    "i82453GC\0" /* 1 refs @ 14541 */
+	    "1000baseX\0" /* 9 refs @ 14550 */
+	    "i82543GC\0" /* 1 refs @ 14560 */
+	    "i82544EI\0" /* 2 refs @ 14569 */
+	    "i82544GC\0" /* 2 refs @ 14578 */
+	    "(LOM)\0" /* 5 refs @ 14587 */
+	    "i82540EM\0" /* 2 refs @ 14593 */
+	    "i82545EM\0" /* 2 refs @ 14602 */
+	    "i82546EB\0" /* 3 refs @ 14611 */
+	    "i82541EI\0" /* 2 refs @ 14620 */
+	    "i82541ER\0" /* 2 refs @ 14629 */
+	    "i82540EP\0" /* 3 refs @ 14638 */
+	    "Mobile\0" /* 12 refs @ 14647 */
+	    "i82547EI\0" /* 2 refs @ 14654 */
+	    "i82545GM\0" /* 3 refs @ 14663 */
+	    "(SERDES)\0" /* 6 refs @ 14672 */
+	    "InBusiness\0" /* 1 refs @ 14681 */
+	    "PRO/100\0" /* 17 refs @ 14692 */
+	    "VE\0" /* 9 refs @ 14700 */
+	    "VM\0" /* 7 refs @ 14703 */
+	    "82562EH\0" /* 3 refs @ 14706 */
+	    "82562ET/EZ\0" /* 3 refs @ 14714 */
+	    "PHY\0" /* 6 refs @ 14725 */
+	    "(CNR)\0" /* 2 refs @ 14729 */
+	    "82562EM/EX\0" /* 2 refs @ 14735 */
+	    "(MOB)\0" /* 2 refs @ 14746 */
+	    "PRO/Wireless\0" /* 9 refs @ 14752 */
+	    "2100\0" /* 1 refs @ 14765 */
+	    "3B\0" /* 1 refs @ 14770 */
+	    "PRO/10GbE\0" /* 1 refs @ 14773 */
+	    "LR\0" /* 1 refs @ 14783 */
+	    "i82801H\0" /* 8 refs @ 14786 */
+	    "(M_AMT)\0" /* 1 refs @ 14794 */
+	    "(AMT)\0" /* 3 refs @ 14802 */
+	    "(IFE)\0" /* 1 refs @ 14808 */
+	    "82801EB/ER\0" /* 10 refs @ 14814 */
+	    "M\0" /* 1 refs @ 14825 */
+	    "i82571EB\0" /* 4 refs @ 14827 */
+	    "82801FB\0" /* 3 refs @ 14836 */
+	    "82801GB\0" /* 1 refs @ 14844 */
+	    "i82547GI\0" /* 1 refs @ 14852 */
+	    "i82541GI\0" /* 2 refs @ 14861 */
+	    "i82546GB\0" /* 5 refs @ 14870 */
+	    "i82541PI\0" /* 1 refs @ 14879 */
+	    "i82572EI\0" /* 4 refs @ 14888 */
+	    "PRO/1000MT\0" /* 1 refs @ 14897 */
+	    "(82546GB)\0" /* 1 refs @ 14908 */
+	    "i82573E\0" /* 2 refs @ 14918 */
+	    "82562G\0" /* 1 refs @ 14926 */
+	    "i80003\0" /* 5 refs @ 14933 */
+	    "i82573L\0" /* 1 refs @ 14940 */
+	    "(KSP3)\0" /* 1 refs @ 14948 */
+	    "i82571GB\0" /* 1 refs @ 14955 */
+	    "82801I\0" /* 32 refs @ 14964 */
+	    "(G)\0" /* 2 refs @ 14971 */
+	    "(GT)\0" /* 2 refs @ 14975 */
+	    "IFE\0" /* 2 refs @ 14980 */
+	    "(MV)\0" /* 1 refs @ 14984 */
+	    "i82567V\0" /* 1 refs @ 14989 */
+	    "82815\0" /* 10 refs @ 14997 */
+	    "82806AA\0" /* 1 refs @ 15003 */
+	    "PCI64\0" /* 1 refs @ 15011 */
+	    "Programmable\0" /* 1 refs @ 15017 */
+	    "Interrupt\0" /* 4 refs @ 15030 */
+	    "ADI\0" /* 1 refs @ 15040 */
+	    "i80200\0" /* 1 refs @ 15044 */
+	    "Big\0" /* 1 refs @ 15051 */
+	    "Endian\0" /* 1 refs @ 15055 */
+	    "IXP1200\0" /* 1 refs @ 15062 */
+	    "82559ER\0" /* 1 refs @ 15070 */
+	    "82092AA\0" /* 1 refs @ 15078 */
+	    "SAA7116\0" /* 1 refs @ 15086 */
+	    "82452KX/GX\0" /* 1 refs @ 15094 */
+	    "Orion\0" /* 1 refs @ 15105 */
+	    "Extended\0" /* 1 refs @ 15111 */
+	    "82596\0" /* 1 refs @ 15120 */
+	    "EE\0" /* 2 refs @ 15126 */
+	    "82557\0" /* 1 refs @ 15129 */
+	    "82437FX\0" /* 1 refs @ 15135 */
+	    "(TSC)\0" /* 1 refs @ 15143 */
+	    "82371FB\0" /* 2 refs @ 15149 */
+	    "(PIIX)\0" /* 2 refs @ 15157 */
+	    "82371MX\0" /* 1 refs @ 15164 */
+	    "(MPIIX)\0" /* 1 refs @ 15172 */
+	    "Xcelerator\0" /* 1 refs @ 15180 */
+	    "82437MX\0" /* 1 refs @ 15191 */
+	    "(MTSC)\0" /* 1 refs @ 15199 */
+	    "82441FX\0" /* 1 refs @ 15206 */
+	    "(PMC)\0" /* 1 refs @ 15214 */
+	    "82380AB\0" /* 1 refs @ 15220 */
+	    "(MISA)\0" /* 1 refs @ 15228 */
+	    "82380FB\0" /* 1 refs @ 15235 */
+	    "(MPCI2)\0" /* 1 refs @ 15243 */
+	    "82439HX\0" /* 1 refs @ 15251 */
+	    "(TXC)\0" /* 1 refs @ 15259 */
+	    "82870P2\0" /* 3 refs @ 15265 */
+	    "P64H2\0" /* 3 refs @ 15273 */
+	    "IOxAPIC\0" /* 1 refs @ 15279 */
+	    "Hot\0" /* 1 refs @ 15287 */
+	    "Plug\0" /* 1 refs @ 15291 */
+	    "ROB-in\0" /* 1 refs @ 15296 */
+	    "i960RP\0" /* 1 refs @ 15303 */
+	    "Microprocessor\0" /* 1 refs @ 15310 */
+	    "82840\0" /* 3 refs @ 15325 */
+	    "82845\0" /* 2 refs @ 15331 */
+	    "82801AA\0" /* 7 refs @ 15337 */
+	    "AC-97\0" /* 17 refs @ 15345 */
+	    "Hub-PCI\0" /* 5 refs @ 15351 */
+	    "82801AB\0" /* 7 refs @ 15359 */
+	    "82801BA\0" /* 9 refs @ 15367 */
+	    "82801BAM\0" /* 3 refs @ 15375 */
+	    "82801E\0" /* 3 refs @ 15384 */
+	    "82801CA\0" /* 9 refs @ 15391 */
+	    "82801CAM\0" /* 1 refs @ 15399 */
+	    "82801DB\0" /* 10 refs @ 15408 */
+	    "UHCI\0" /* 32 refs @ 15416 */
+	    "82801DBM\0" /* 1 refs @ 15421 */
+	    "(UltraATA/100)\0" /* 1 refs @ 15430 */
+	    "82801EB\0" /* 3 refs @ 15445 */
+	    "82801ER\0" /* 1 refs @ 15453 */
+	    "82820\0" /* 2 refs @ 15461 */
+	    "MCH\0" /* 16 refs @ 15467 */
+	    "(Camino)\0" /* 1 refs @ 15471 */
+	    "82850\0" /* 1 refs @ 15480 */
+	    "82860\0" /* 5 refs @ 15486 */
+	    "82850/82860\0" /* 1 refs @ 15492 */
+	    "E7500\0" /* 8 refs @ 15504 */
+	    "HI_B\0" /* 4 refs @ 15510 */
+	    "vppb\0" /* 6 refs @ 15515 */
+	    "HI_C\0" /* 2 refs @ 15520 */
+	    "HI_D\0" /* 2 refs @ 15525 */
+	    "E7501\0" /* 1 refs @ 15530 */
+	    "E7505\0" /* 5 refs @ 15536 */
+	    "RAS\0" /* 1 refs @ 15542 */
+	    "Host-AGP\0" /* 4 refs @ 15546 */
+	    "Error\0" /* 2 refs @ 15555 */
+	    "Reporting\0" /* 2 refs @ 15561 */
+	    "82845G/GL\0" /* 3 refs @ 15571 */
+	    "Host-Hub\0" /* 2 refs @ 15581 */
+	    "I/F\0" /* 2 refs @ 15590 */
+	    "82865\0" /* 2 refs @ 15594 */
+	    "82865G\0" /* 1 refs @ 15600 */
+	    "82875P\0" /* 3 refs @ 15607 */
+	    "PCI-CSA\0" /* 1 refs @ 15614 */
+	    "82915P/G/GL\0" /* 2 refs @ 15622 */
+	    "82915G/GL\0" /* 2 refs @ 15634 */
+	    "82925X\0" /* 2 refs @ 15644 */
+	    "82915PM/GM/GMS,82910GML\0" /* 1 refs @ 15651 */
+	    "82915PM/GM\0" /* 1 refs @ 15675 */
+	    "82915GM/GMS,82910GML\0" /* 1 refs @ 15686 */
+	    "6300ESB\0" /* 13 refs @ 15707 */
+	    "5000X\0" /* 2 refs @ 15715 */
+	    "5000\0" /* 15 refs @ 15721 */
+	    "Chipset\0" /* 16 refs @ 15726 */
+	    "x4\0" /* 6 refs @ 15734 */
+	    "7\0" /* 1 refs @ 15737 */
+	    "FSB\0" /* 1 refs @ 15739 */
+	    "Registers\0" /* 5 refs @ 15743 */
+	    "Reserved\0" /* 2 refs @ 15753 */
+	    "FBD\0" /* 2 refs @ 15762 */
+	    "x8\0" /* 3 refs @ 15766 */
+	    "2-3\0" /* 1 refs @ 15769 */
+	    "4-5\0" /* 1 refs @ 15773 */
+	    "6-7\0" /* 1 refs @ 15777 */
+	    "x16\0" /* 1 refs @ 15781 */
+	    "4-7\0" /* 1 refs @ 15785 */
+	    "82801FBM\0" /* 2 refs @ 15789 */
+	    "ICH6M\0" /* 1 refs @ 15798 */
+	    "82801FR\0" /* 1 refs @ 15804 */
+	    "82801FB/FR\0" /* 13 refs @ 15812 */
+	    "#2\0" /* 6 refs @ 15823 */
+	    "High\0" /* 19 refs @ 15826 */
+	    "Definition\0" /* 19 refs @ 15831 */
+	    "63xxESB\0" /* 20 refs @ 15842 */
+	    "AHCI\0" /* 46 refs @ 15850 */
+	    "#3\0" /* 5 refs @ 15855 */
+	    "#4\0" /* 5 refs @ 15858 */
+	    "82945G/P\0" /* 3 refs @ 15861 */
+	    "82955X\0" /* 2 refs @ 15870 */
+	    "E7230\0" /* 2 refs @ 15877 */
+	    "82975X\0" /* 3 refs @ 15883 */
+	    "IGD\0" /* 2 refs @ 15890 */
+	    "82915GM/GMS\0" /* 1 refs @ 15894 */
+	    "82945GM/PM/GMS\0" /* 3 refs @ 15906 */
+	    "82945GME\0" /* 2 refs @ 15921 */
+	    "82801GB/GR\0" /* 21 refs @ 15930 */
+	    "82801GBM\0" /* 2 refs @ 15941 */
+	    "82801GHM\0" /* 2 refs @ 15950 */
+	    "82801GBM/GHM\0" /* 1 refs @ 15959 */
+	    "#5\0" /* 3 refs @ 15972 */
+	    "#6\0" /* 3 refs @ 15975 */
+	    "82801H\0" /* 23 refs @ 15978 */
+	    "82801HEM\0" /* 2 refs @ 15985 */
+	    "82801HH\0" /* 1 refs @ 15994 */
+	    "82801HO\0" /* 1 refs @ 16002 */
+	    "82801HBM\0" /* 2 refs @ 16010 */
+	    "ports\0" /* 9 refs @ 16019 */
+	    "82081HBM\0" /* 1 refs @ 16025 */
+	    "Thermal\0" /* 2 refs @ 16034 */
+	    "82801IH\0" /* 1 refs @ 16042 */
+	    "82801IO\0" /* 1 refs @ 16050 */
+	    "82801IR\0" /* 1 refs @ 16058 */
+	    "82801IEM\0" /* 1 refs @ 16066 */
+	    "82801IB\0" /* 1 refs @ 16075 */
+	    "82801IM\0" /* 1 refs @ 16083 */
+	    "with\0" /* 2 refs @ 16091 */
+	    "(C)\0" /* 1 refs @ 16096 */
+	    "82946GZ\0" /* 2 refs @ 16100 */
+	    "82G35\0" /* 3 refs @ 16108 */
+	    "82965Q\0" /* 4 refs @ 16114 */
+	    "82965G\0" /* 4 refs @ 16121 */
+	    "82Q35\0" /* 8 refs @ 16128 */
+	    "82G33/P35\0" /* 1 refs @ 16134 */
+	    "82G33\0" /* 3 refs @ 16144 */
+	    "82965PM\0" /* 6 refs @ 16150 */
+	    "80862A01\0" /* 1 refs @ 16158 */
+	    "MEI\0" /* 1 refs @ 16167 */
+	    "82GM45\0" /* 3 refs @ 16171 */
+	    "82IGD_E\0" /* 2 refs @ 16178 */
+	    "82Q45\0" /* 2 refs @ 16186 */
+	    "82G45\0" /* 2 refs @ 16192 */
+	    "31244\0" /* 1 refs @ 16198 */
+	    "82855PM\0" /* 3 refs @ 16204 */
+	    "Upstream\0" /* 1 refs @ 16212 */
+	    "Downstream\0" /* 3 refs @ 16221 */
+	    "82830MP\0" /* 4 refs @ 16232 */
+	    "82855GM\0" /* 4 refs @ 16240 */
+	    "GMCH\0" /* 3 refs @ 16248 */
+	    "Process\0" /* 1 refs @ 16253 */
+	    "E7525\0" /* 5 refs @ 16261 */
+	    "A1\0" /* 1 refs @ 16267 */
+	    "ICH10\0" /* 7 refs @ 16270 */
+	    "SATA2(4port1)\0" /* 1 refs @ 16276 */
+	    "SATA2(2port1)\0" /* 1 refs @ 16290 */
+	    "ICH10DO\0" /* 1 refs @ 16304 */
+	    "ICH10R\0" /* 2 refs @ 16312 */
+	    "ICH10D\0" /* 1 refs @ 16319 */
+	    "SATA2(4port2)\0" /* 1 refs @ 16326 */
+	    "SATA2(2port2)\0" /* 1 refs @ 16340 */
+	    "Bus\0" /* 4 refs @ 16354 */
+	    "2200BG\0" /* 1 refs @ 16358 */
+	    "2225BG\0" /* 1 refs @ 16365 */
+	    "3945ABG\0" /* 2 refs @ 16372 */
+	    "2915ABG\0" /* 2 refs @ 16380 */
+	    "4965AGN\0" /* 2 refs @ 16388 */
+	    "80310\0" /* 1 refs @ 16396 */
+	    "ATU\0" /* 1 refs @ 16402 */
+	    "82371SB\0" /* 3 refs @ 16406 */
+	    "(PIIX3)\0" /* 3 refs @ 16414 */
+	    "82437VX\0" /* 1 refs @ 16422 */
+	    "(TVX)\0" /* 1 refs @ 16430 */
+	    "82439TX\0" /* 1 refs @ 16436 */
+	    "(MTXC)\0" /* 1 refs @ 16444 */
+	    "82371AB\0" /* 4 refs @ 16451 */
+	    "(PIIX4)\0" /* 4 refs @ 16459 */
+	    "82810\0" /* 2 refs @ 16467 */
+	    "82810-DC100\0" /* 2 refs @ 16473 */
+	    "82810E\0" /* 2 refs @ 16485 */
+	    "82443LX\0" /* 2 refs @ 16492 */
+	    "82443BX\0" /* 3 refs @ 16500 */
+	    "Bridge/Controller\0" /* 6 refs @ 16508 */
+	    "disabled)\0" /* 2 refs @ 16526 */
+	    "82443MX\0" /* 6 refs @ 16536 */
+	    "82443GX\0" /* 3 refs @ 16544 */
+	    "i740\0" /* 1 refs @ 16552 */
+	    "82454KX/GX\0" /* 1 refs @ 16557 */
+	    "(PB)\0" /* 1 refs @ 16568 */
+	    "82451KX/GX\0" /* 1 refs @ 16573 */
+	    "(MC)\0" /* 1 refs @ 16584 */
+	    "82451NX\0" /* 2 refs @ 16589 */
+	    "(MIOC)\0" /* 1 refs @ 16597 */
+	    "Expander\0" /* 1 refs @ 16604 */
+	    "(PXB)\0" /* 1 refs @ 16613 */
+	    "S21152BB\0" /* 1 refs @ 16619 */
+	    "S21152BA,S21154AE/BE\0" /* 1 refs @ 16628 */
+	    "21555\0" /* 1 refs @ 16649 */
+	    "Non-Transparent\0" /* 1 refs @ 16655 */
+	    "Powerstorm\0" /* 2 refs @ 16671 */
+	    "4D50T\0" /* 1 refs @ 16682 */
+	    "4D60T\0" /* 1 refs @ 16688 */
+	    "PRISM2.5\0" /* 1 refs @ 16694 */
+	    "PRISM\0" /* 2 refs @ 16703 */
+	    "Indigo\0" /* 1 refs @ 16709 */
+	    "Duette\0" /* 1 refs @ 16716 */
+	    "AEON\0" /* 1 refs @ 16723 */
+	    "CBIDE2/CI-iCN\0" /* 1 refs @ 16728 */
+	    "NinjaATA-32Bi\0" /* 3 refs @ 16742 */
+	    "CBSCII\0" /* 1 refs @ 16756 */
+	    "NinjaSCSI-32Bi\0" /* 3 refs @ 16763 */
+	    "RSA-PCI\0" /* 1 refs @ 16778 */
+	    "2-port\0" /* 1 refs @ 16786 */
+	    "IT8152\0" /* 1 refs @ 16793 */
+	    "IT8211\0" /* 1 refs @ 16800 */
+	    "IT8212\0" /* 1 refs @ 16807 */
+	    "AGX016\0" /* 1 refs @ 16814 */
+	    "ITT3204\0" /* 1 refs @ 16821 */
+	    "JMB360\0" /* 1 refs @ 16829 */
+	    "JMB361\0" /* 1 refs @ 16836 */
+	    "SATA/PATA\0" /* 4 refs @ 16843 */
+	    "JMB363\0" /* 1 refs @ 16853 */
+	    "JMB365\0" /* 1 refs @ 16860 */
+	    "JMB366\0" /* 1 refs @ 16867 */
+	    "JMB368\0" /* 1 refs @ 16874 */
+	    "PATA\0" /* 1 refs @ 16881 */
+	    "JMC250\0" /* 1 refs @ 16886 */
+	    "JMC260\0" /* 1 refs @ 16893 */
+	    "JNIC-1460\0" /* 1 refs @ 16900 */
+	    "Fibre-Channel\0" /* 5 refs @ 16910 */
+	    "JNIC-1560\0" /* 1 refs @ 16924 */
+	    "FCI-1063\0" /* 1 refs @ 16934 */
+	    "FCX2-6562\0" /* 1 refs @ 16943 */
+	    "FCX-6562\0" /* 1 refs @ 16953 */
+	    "HSSI\0" /* 1 refs @ 16962 */
+	    "DS3\0" /* 1 refs @ 16967 */
+	    "SSI\0" /* 1 refs @ 16971 */
+	    "DS1\0" /* 1 refs @ 16975 */
+	    "805\0" /* 1 refs @ 16979 */
+	    "LXT-1001\0" /* 1 refs @ 16983 */
+	    "DVB\0" /* 2 refs @ 16992 */
+	    "Transmitter\0" /* 1 refs @ 16996 */
+	    "Receiver\0" /* 1 refs @ 17008 */
+	    "EG1032\0" /* 1 refs @ 17017 */
+	    "v2\0" /* 2 refs @ 17024 */
+	    "Instant\0" /* 2 refs @ 17027 */
+	    "EG1064\0" /* 1 refs @ 17035 */
+	    "PCMPC200\0" /* 1 refs @ 17042 */
+	    "IPN\0" /* 1 refs @ 17051 */
+	    "2220\0" /* 1 refs @ 17055 */
+	    "(rev\0" /* 1 refs @ 17060 */
+	    "01)\0" /* 1 refs @ 17065 */
+	    "82C168/82C169\0" /* 1 refs @ 17069 */
+	    "(PNIC)\0" /* 1 refs @ 17083 */
+	    "82C115\0" /* 1 refs @ 17090 */
+	    "(PNIC\0" /* 1 refs @ 17097 */
+	    "II)\0" /* 2 refs @ 17103 */
+	    "K56flex\0" /* 1 refs @ 17107 */
+	    "DSVD\0" /* 1 refs @ 17115 */
+	    "LTMODEM\0" /* 26 refs @ 17120 */
+	    "ORCA\0" /* 2 refs @ 17128 */
+	    "FPGA\0" /* 2 refs @ 17133 */
+	    "32-bit\0" /* 1 refs @ 17138 */
+	    "ASIC\0" /* 2 refs @ 17145 */
+	    "Core\0" /* 2 refs @ 17150 */
+	    "64-bit\0" /* 1 refs @ 17155 */
+	    "AirCard\0" /* 1 refs @ 17162 */
+	    "580\0" /* 2 refs @ 17170 */
+	    "FW322/323\0" /* 1 refs @ 17174 */
+	    "MX98713\0" /* 1 refs @ 17184 */
+	    "(PMAC)\0" /* 2 refs @ 17192 */
+	    "MX987x5\0" /* 1 refs @ 17199 */
+	    "Ringnode\0" /* 1 refs @ 17207 */
+	    "Mk2\0" /* 1 refs @ 17216 */
+	    "Collage\0" /* 2 refs @ 17220 */
+	    "155\0" /* 2 refs @ 17228 */
+	    "DMA\0" /* 2 refs @ 17232 */
+	    "PCI-SLRS\0" /* 2 refs @ 17236 */
+	    "MGA\0" /* 13 refs @ 17245 */
+	    "PX2085\0" /* 1 refs @ 17249 */
+	    "(\"Atlas\")\0" /* 1 refs @ 17256 */
+	    "Millennium\0" /* 3 refs @ 17266 */
+	    "2064W\0" /* 1 refs @ 17277 */
+	    "(\"Storm\")\0" /* 1 refs @ 17283 */
+	    "Mystique\0" /* 1 refs @ 17293 */
+	    "1064SG\0" /* 1 refs @ 17302 */
+	    "2164W\0" /* 1 refs @ 17309 */
+	    "2164WA-B\0" /* 1 refs @ 17315 */
+	    "G200\0" /* 2 refs @ 17324 */
+	    "G200e\0" /* 1 refs @ 17329 */
+	    "(ServerEngines)\0" /* 1 refs @ 17335 */
+	    "G400\0" /* 1 refs @ 17351 */
+	    "Impression\0" /* 1 refs @ 17356 */
+	    "G100\0" /* 2 refs @ 17367 */
+	    "G550\0" /* 1 refs @ 17372 */
+	    "MQ200\0" /* 1 refs @ 17377 */
+	    "MN-120\0" /* 1 refs @ 17383 */
+	    "Switched\0" /* 1 refs @ 17390 */
+	    "Weasel\0" /* 3 refs @ 17399 */
+	    "Virtual\0" /* 4 refs @ 17406 */
+	    "Tornado\0" /* 1 refs @ 17414 */
+	    "MPC105\0" /* 1 refs @ 17422 */
+	    "\"Eagle\"\0" /* 1 refs @ 17429 */
+	    "MPC106\0" /* 1 refs @ 17437 */
+	    "\"Grackle\"\0" /* 1 refs @ 17444 */
+	    "MPC8240\0" /* 1 refs @ 17454 */
+	    "\"Kahlua\"\0" /* 1 refs @ 17462 */
+	    "MPC107\0" /* 1 refs @ 17471 */
+	    "\"Chaparral\"\0" /* 1 refs @ 17478 */
+	    "MPC8245\0" /* 1 refs @ 17490 */
+	    "\"Kahlua\0" /* 1 refs @ 17498 */
+	    "II\"\0" /* 1 refs @ 17506 */
+	    "Raven\0" /* 1 refs @ 17510 */
+	    "Multi-Processor\0" /* 1 refs @ 17516 */
+	    "Falcon\0" /* 1 refs @ 17532 */
+	    "ECC\0" /* 1 refs @ 17539 */
+	    "Set\0" /* 1 refs @ 17543 */
+	    "Hawk\0" /* 1 refs @ 17547 */
+	    "MPC5200B\0" /* 1 refs @ 17552 */
+	    "C104H\0" /* 1 refs @ 17561 */
+	    "CP104UL\0" /* 1 refs @ 17567 */
+	    "CP114\0" /* 1 refs @ 17575 */
+	    "C168H\0" /* 1 refs @ 17581 */
+	    "MV1000\0" /* 1 refs @ 17587 */
+	    "DAC960\0" /* 4 refs @ 17594 */
+	    "(v2\0" /* 1 refs @ 17601 */
+	    "Interface)\0" /* 4 refs @ 17605 */
+	    "(v3\0" /* 1 refs @ 17616 */
+	    "(v4\0" /* 1 refs @ 17620 */
+	    "(v5\0" /* 1 refs @ 17624 */
+	    "eXtremeRAID\0" /* 4 refs @ 17628 */
+	    "AcceleRAID\0" /* 3 refs @ 17640 */
+	    "352\0" /* 1 refs @ 17651 */
+	    "170\0" /* 1 refs @ 17655 */
+	    "160\0" /* 1 refs @ 17659 */
+	    "1100\0" /* 2 refs @ 17663 */
+	    "2000/3000\0" /* 1 refs @ 17668 */
+	    "MTD803\0" /* 1 refs @ 17678 */
+	    "3-in-1\0" /* 1 refs @ 17685 */
+	    "NCP130\0" /* 2 refs @ 17692 */
+	    "A2\0" /* 1 refs @ 17699 */
+	    "Policy\0" /* 1 refs @ 17702 */
+	    "Universe\0" /* 1 refs @ 17709 */
+	    "VME\0" /* 1 refs @ 17718 */
+	    "QSpan\0" /* 1 refs @ 17722 */
+	    "PowerSpan\0" /* 2 refs @ 17728 */
+	    "MXI-3\0" /* 1 refs @ 17738 */
+	    "Extender\0" /* 1 refs @ 17744 */
+	    "DP83810\0" /* 1 refs @ 17753 */
+	    "DP83815\0" /* 1 refs @ 17761 */
+	    "DP83820\0" /* 1 refs @ 17769 */
+	    "CS5535\0" /* 6 refs @ 17777 */
+	    "NS87410\0" /* 1 refs @ 17784 */
+	    "SC1100\0" /* 5 refs @ 17792 */
+	    "XpressAUDIO\0" /* 1 refs @ 17799 */
+	    "SMI/ACPI\0" /* 1 refs @ 17811 */
+	    "X-Bus\0" /* 1 refs @ 17820 */
+	    "SAA7130HL\0" /* 1 refs @ 17826 */
+	    "Broadcast\0" /* 4 refs @ 17836 */
+	    "SAA7133HL\0" /* 1 refs @ 17846 */
+	    "A/V\0" /* 3 refs @ 17856 */
+	    "SAA7134HL\0" /* 1 refs @ 17860 */
+	    "SAA7135HL\0" /* 1 refs @ 17870 */
+	    "SAA7146AH\0" /* 1 refs @ 17880 */
+	    "53c810\0" /* 1 refs @ 17890 */
+	    "53c820\0" /* 1 refs @ 17897 */
+	    "53c825\0" /* 1 refs @ 17904 */
+	    "53c815\0" /* 1 refs @ 17911 */
+	    "53c810AP\0" /* 1 refs @ 17918 */
+	    "53c860\0" /* 1 refs @ 17927 */
+	    "53c1510D\0" /* 1 refs @ 17934 */
+	    "53c896\0" /* 1 refs @ 17943 */
+	    "53c895\0" /* 1 refs @ 17950 */
+	    "53c885\0" /* 1 refs @ 17957 */
+	    "53c875/876\0" /* 1 refs @ 17964 */
+	    "53c1510\0" /* 1 refs @ 17975 */
+	    "53c895A\0" /* 1 refs @ 17983 */
+	    "53c875A\0" /* 1 refs @ 17991 */
+	    "53c1010\0" /* 2 refs @ 17999 */
+	    "(66MHz)\0" /* 1 refs @ 18007 */
+	    "53c1020/53c1030\0" /* 1 refs @ 18015 */
+	    "53c1030R\0" /* 1 refs @ 18031 */
+	    "53c1030ZC\0" /* 1 refs @ 18040 */
+	    "53c1035\0" /* 1 refs @ 18050 */
+	    "53c1035ZC\0" /* 1 refs @ 18058 */
+	    "SAS1064\0" /* 1 refs @ 18068 */
+	    "SAS1068\0" /* 2 refs @ 18076 */
+	    "SAS1064E\0" /* 2 refs @ 18084 */
+	    "SAS1068E\0" /* 2 refs @ 18093 */
+	    "SAS1066E\0" /* 1 refs @ 18102 */
+	    "SAS1064A\0" /* 1 refs @ 18111 */
+	    "SAS1066\0" /* 1 refs @ 18120 */
+	    "SAS1078\0" /* 2 refs @ 18128 */
+	    "53c875J\0" /* 1 refs @ 18136 */
+	    "FC909\0" /* 1 refs @ 18144 */
+	    "FC909A\0" /* 1 refs @ 18150 */
+	    "FC929\0" /* 2 refs @ 18157 */
+	    "FC919\0" /* 2 refs @ 18163 */
+	    "FC929X\0" /* 1 refs @ 18169 */
+	    "FC919X\0" /* 1 refs @ 18176 */
+	    "FC949X\0" /* 1 refs @ 18183 */
+	    "FC939X\0" /* 1 refs @ 18190 */
+	    "FC949E\0" /* 1 refs @ 18197 */
+	    "4/SC\0" /* 1 refs @ 18204 */
+	    "Megaraid\0" /* 3 refs @ 18209 */
+	    "320-X\0" /* 1 refs @ 18218 */
+	    "320-E\0" /* 1 refs @ 18224 */
+	    "(300-6X/300-8X)\0" /* 1 refs @ 18230 */
+	    "Verde\0" /* 1 refs @ 18246 */
+	    "ZCR\0" /* 1 refs @ 18252 */
+	    "G-NIC\0" /* 2 refs @ 18256 */
+	    "Tools\0" /* 1 refs @ 18262 */
+	    "VRC4173\0" /* 3 refs @ 18268 */
+	    "PC-Card\0" /* 1 refs @ 18276 */
+	    "Unit\0" /* 5 refs @ 18284 */
+	    "PowerVR\0" /* 1 refs @ 18289 */
+	    "PCX2\0" /* 1 refs @ 18297 */
+	    "uPD72872\0" /* 1 refs @ 18302 */
+	    "uPD72870\0" /* 1 refs @ 18311 */
+	    "uPD72871\0" /* 1 refs @ 18320 */
+	    "Versa\0" /* 2 refs @ 18329 */
+	    "VA26D\0" /* 1 refs @ 18335 */
+	    "MagicGraph\0" /* 4 refs @ 18341 */
+	    "NM2070\0" /* 1 refs @ 18352 */
+	    "128V\0" /* 1 refs @ 18359 */
+	    "128ZV\0" /* 1 refs @ 18364 */
+	    "128XD\0" /* 1 refs @ 18370 */
+	    "MagicMedia\0" /* 5 refs @ 18376 */
+	    "256AV\0" /* 2 refs @ 18387 */
+	    "256ZX\0" /* 2 refs @ 18393 */
+	    "256XL+\0" /* 1 refs @ 18399 */
+	    "GA620\0" /* 2 refs @ 18406 */
+	    "MA301\0" /* 1 refs @ 18412 */
+	    "1284\0" /* 5 refs @ 18418 */
+	    "Printer\0" /* 5 refs @ 18423 */
+	    "9855\0" /* 1 refs @ 18431 */
+	    "NX82C501\0" /* 1 refs @ 18436 */
+	    "NDR4600\0" /* 1 refs @ 18445 */
+	    "Baystack\0" /* 1 refs @ 18453 */
+	    "21\0" /* 1 refs @ 18462 */
+	    "(Accton\0" /* 1 refs @ 18465 */
+	    "EN5038)\0" /* 1 refs @ 18473 */
+	    "Imagine-128\0" /* 2 refs @ 18481 */
+	    "RIVA\0" /* 4 refs @ 18493 */
+	    "TNT\0" /* 1 refs @ 18498 */
+	    "TNT2\0" /* 4 refs @ 18502 */
+	    "Vanta\0" /* 1 refs @ 18507 */
+	    "Model\0" /* 1 refs @ 18513 */
+	    "64\0" /* 1 refs @ 18519 */
+	    "MCP04\0" /* 7 refs @ 18522 */
+	    "GeForce\0" /* 26 refs @ 18528 */
+	    "6800\0" /* 4 refs @ 18536 */
+	    "GT\0" /* 1 refs @ 18541 */
+	    "nForce4\0" /* 14 refs @ 18544 */
+	    "ATA133\0" /* 12 refs @ 18552 */
+	    "PCIe\0" /* 1 refs @ 18559 */
+	    "nForce2\0" /* 27 refs @ 18564 */
+	    "MCP-T\0" /* 4 refs @ 18572 */
+	    "400\0" /* 10 refs @ 18578 */
+	    "nForce3\0" /* 23 refs @ 18582 */
+	    "250\0" /* 12 refs @ 18590 */
+	    "Xbox\0" /* 3 refs @ 18594 */
+	    "nForce\0" /* 129 refs @ 18599 */
+	    "Aladdin\0" /* 1 refs @ 18606 */
+	    "Quadro4\0" /* 11 refs @ 18614 */
+	    "280\0" /* 2 refs @ 18622 */
+	    "NVS\0" /* 3 refs @ 18626 */
+	    "Quadro\0" /* 8 refs @ 18630 */
+	    "FX\0" /* 18 refs @ 18637 */
+	    "3400\0" /* 1 refs @ 18640 */
+	    "SLI\0" /* 1 refs @ 18645 */
+	    "256\0" /* 1 refs @ 18649 */
+	    "DDR\0" /* 1 refs @ 18653 */
+	    "GeForce2\0" /* 7 refs @ 18657 */
+	    "MX\0" /* 10 refs @ 18666 */
+	    "100/200\0" /* 1 refs @ 18669 */
+	    "Go\0" /* 3 refs @ 18677 */
+	    "Quadro2\0" /* 2 refs @ 18680 */
+	    "MXR/EX\0" /* 1 refs @ 18688 */
+	    "GTS\0" /* 3 refs @ 18695 */
+	    "(DDR)\0" /* 1 refs @ 18699 */
+	    "6200TC\0" /* 1 refs @ 18705 */
+	    "6200LE\0" /* 1 refs @ 18712 */
+	    "GeForce4\0" /* 15 refs @ 18719 */
+	    "460\0" /* 1 refs @ 18728 */
+	    "440\0" /* 4 refs @ 18732 */
+	    "420\0" /* 2 refs @ 18736 */
+	    "SE\0" /* 4 refs @ 18740 */
+	    "500XGL\0" /* 1 refs @ 18743 */
+	    "200/400NVS\0" /* 1 refs @ 18750 */
+	    "(AGP8X)\0" /* 4 refs @ 18761 */
+	    "XGL\0" /* 4 refs @ 18769 */
+	    "380\0" /* 1 refs @ 18773 */
+	    "GPU\0" /* 2 refs @ 18777 */
+	    "MCP\0" /* 1 refs @ 18781 */
+	    "ATA100\0" /* 1 refs @ 18785 */
+	    "7300\0" /* 1 refs @ 18792 */
+	    "GeForce3\0" /* 3 refs @ 18797 */
+	    "Ti\0" /* 9 refs @ 18806 */
+	    "500\0" /* 2 refs @ 18809 */
+	    "DCC\0" /* 1 refs @ 18813 */
+	    "6150\0" /* 2 refs @ 18817 */
+	    "4600\0" /* 1 refs @ 18822 */
+	    "4400\0" /* 1 refs @ 18827 */
+	    "4200\0" /* 3 refs @ 18832 */
+	    "900XGL\0" /* 1 refs @ 18837 */
+	    "750XGL\0" /* 1 refs @ 18844 */
+	    "700XGL\0" /* 1 refs @ 18851 */
+	    "nForce430\0" /* 11 refs @ 18858 */
+	    "4800\0" /* 2 refs @ 18868 */
+	    "8x\0" /* 1 refs @ 18873 */
+	    "980\0" /* 1 refs @ 18876 */
+	    "780\0" /* 1 refs @ 18880 */
+	    "C51\0" /* 16 refs @ 18884 */
+	    "(0x02f0)\0" /* 1 refs @ 18888 */
+	    "(0x02f1)\0" /* 1 refs @ 18897 */
+	    "(0x02f2)\0" /* 1 refs @ 18906 */
+	    "(0x02f3)\0" /* 1 refs @ 18915 */
+	    "(0x02f4)\0" /* 1 refs @ 18924 */
+	    "(0x02f5)\0" /* 1 refs @ 18933 */
+	    "(0x02f6)\0" /* 1 refs @ 18942 */
+	    "(0x02f7)\0" /* 1 refs @ 18951 */
+	    "(0x02fb)\0" /* 1 refs @ 18960 */
+	    "(0x02fc)\0" /* 1 refs @ 18969 */
+	    "(0x02fd)\0" /* 1 refs @ 18978 */
+	    "(0x02ff)\0" /* 1 refs @ 18987 */
+	    "5800\0" /* 2 refs @ 18996 */
+	    "Frame\0" /* 1 refs @ 19001 */
+	    "Buffer\0" /* 1 refs @ 19007 */
+	    "5600\0" /* 3 refs @ 19014 */
+	    "5200\0" /* 2 refs @ 19019 */
+	    "5200SE\0" /* 1 refs @ 19024 */
+	    "5900\0" /* 2 refs @ 19031 */
+	    "5900XT\0" /* 1 refs @ 19036 */
+	    "5950\0" /* 1 refs @ 19043 */
+	    "5700\0" /* 1 refs @ 19048 */
+	    "MCP55\0" /* 14 refs @ 19053 */
+	    "16x\0" /* 1 refs @ 19059 */
+	    "7600\0" /* 1 refs @ 19063 */
+	    "MCP61\0" /* 13 refs @ 19068 */
+	    "8400M\0" /* 1 refs @ 19074 */
+	    "GS\0" /* 1 refs @ 19080 */
+	    "140M\0" /* 1 refs @ 19083 */
+	    "MCP65\0" /* 31 refs @ 19088 */
+	    "PCI-LPC\0" /* 3 refs @ 19094 */
+	    "MCP67\0" /* 20 refs @ 19102 */
+	    "MCP73\0" /* 20 refs @ 19108 */
+	    "MCP77\0" /* 21 refs @ 19114 */
+	    "MCP79\0" /* 4 refs @ 19120 */
+	    "Riva\0" /* 1 refs @ 19126 */
+	    "OTI107\0" /* 1 refs @ 19131 */
+	    "OC-3136/3137\0" /* 1 refs @ 19138 */
+	    "Token-Ring\0" /* 2 refs @ 19151 */
+	    "OC-3139f\0" /* 1 refs @ 19162 */
+	    "Fastload\0" /* 1 refs @ 19171 */
+	    "OC-3139/3140\0" /* 1 refs @ 19180 */
+	    "RapidFire\0" /* 5 refs @ 19193 */
+	    "OC-3250\0" /* 1 refs @ 19203 */
+	    "GoCard\0" /* 1 refs @ 19211 */
+	    "OC-3530\0" /* 1 refs @ 19218 */
+	    "OC-3141\0" /* 1 refs @ 19226 */
+	    "OC-3540\0" /* 1 refs @ 19234 */
+	    "HSTR\0" /* 1 refs @ 19242 */
+	    "100/16/4\0" /* 1 refs @ 19247 */
+	    "OC-3150\0" /* 1 refs @ 19256 */
+	    "OC-2805\0" /* 1 refs @ 19264 */
+	    "OC-2325\0" /* 1 refs @ 19272 */
+	    "OC-2183/2185\0" /* 1 refs @ 19280 */
+	    "OC-2326\0" /* 1 refs @ 19293 */
+	    "10/100-TX\0" /* 1 refs @ 19301 */
+	    "OC-2327/2350\0" /* 1 refs @ 19311 */
+	    "OC-6151/6152\0" /* 1 refs @ 19324 */
+	    "82C557\0" /* 1 refs @ 19337 */
+	    "82C558\0" /* 1 refs @ 19344 */
+	    "82C568\0" /* 1 refs @ 19351 */
+	    "82D568\0" /* 1 refs @ 19358 */
+	    "82C621\0" /* 1 refs @ 19365 */
+	    "82C822\0" /* 1 refs @ 19372 */
+	    "82C861\0" /* 1 refs @ 19379 */
+	    "82C700\0" /* 1 refs @ 19386 */
+	    "82C701\0" /* 1 refs @ 19393 */
+	    "HD-2000\0" /* 1 refs @ 19400 */
+	    "HDTV\0" /* 2 refs @ 19408 */
+	    "HD-5500\0" /* 1 refs @ 19413 */
+	    "RZ1000\0" /* 1 refs @ 19421 */
+	    "PCAN\0" /* 1 refs @ 19428 */
+	    "CAN\0" /* 1 refs @ 19433 */
+	    "FNW-3603-TX\0" /* 1 refs @ 19437 */
+	    "FNW-3800-TX\0" /* 1 refs @ 19449 */
+	    "9030\0" /* 1 refs @ 19461 */
+	    "Accelrator\0" /* 2 refs @ 19466 */
+	    "9050\0" /* 1 refs @ 19477 */
+	    "9054\0" /* 1 refs @ 19482 */
+	    "9060ES\0" /* 1 refs @ 19487 */
+	    "9656\0" /* 1 refs @ 19494 */
+	    "PowerTop\0" /* 1 refs @ 19499 */
+	    "PowerPro\0" /* 1 refs @ 19508 */
+	    "PDC20265\0" /* 1 refs @ 19517 */
+	    "Ultra/66\0" /* 3 refs @ 19526 */
+	    "PDC20263\0" /* 1 refs @ 19535 */
+	    "PDC20275\0" /* 1 refs @ 19544 */
+	    "Ultra/133\0" /* 10 refs @ 19553 */
+	    "PDC20318\0" /* 1 refs @ 19563 */
+	    "PDC20319\0" /* 1 refs @ 19572 */
+	    "PDC20371\0" /* 1 refs @ 19581 */
+	    "PDC20379\0" /* 1 refs @ 19590 */
+	    "PDC20378\0" /* 1 refs @ 19599 */
+	    "PDC20375\0" /* 1 refs @ 19608 */
+	    "PDC20376\0" /* 1 refs @ 19617 */
+	    "PDC20377\0" /* 1 refs @ 19626 */
+	    "PDC40719\0" /* 1 refs @ 19635 */
+	    "PDC40519\0" /* 1 refs @ 19644 */
+	    "PDC20771\0" /* 1 refs @ 19653 */
+	    "PDC20571\0" /* 1 refs @ 19662 */
+	    "PDC20579\0" /* 1 refs @ 19671 */
+	    "PDC40779\0" /* 1 refs @ 19680 */
+	    "PDC40718\0" /* 1 refs @ 19689 */
+	    "PDC40518\0" /* 1 refs @ 19698 */
+	    "PDC20775\0" /* 1 refs @ 19707 */
+	    "PDC20575\0" /* 1 refs @ 19716 */
+	    "PDC20267\0" /* 1 refs @ 19725 */
+	    "Ultra/100\0" /* 3 refs @ 19734 */
+	    "PDC20246\0" /* 1 refs @ 19744 */
+	    "Ultra/33\0" /* 1 refs @ 19753 */
+	    "PDC20262\0" /* 1 refs @ 19762 */
+	    "PDC20268\0" /* 1 refs @ 19771 */
+	    "PDC20269\0" /* 1 refs @ 19780 */
+	    "PDC20276\0" /* 1 refs @ 19789 */
+	    "DC5030\0" /* 1 refs @ 19798 */
+	    "PDC20270\0" /* 1 refs @ 19805 */
+	    "PDC20271\0" /* 1 refs @ 19814 */
+	    "PDC20617\0" /* 1 refs @ 19823 */
+	    "PDC20620\0" /* 1 refs @ 19832 */
+	    "PDC20621\0" /* 1 refs @ 19841 */
+	    "PDC20618\0" /* 1 refs @ 19850 */
+	    "Controler\0" /* 1 refs @ 19859 */
+	    "PDC20619\0" /* 1 refs @ 19869 */
+	    "PDC20277\0" /* 1 refs @ 19878 */
+	    "ISP1020\0" /* 1 refs @ 19887 */
+	    "ISP1022\0" /* 1 refs @ 19895 */
+	    "ISP1080\0" /* 1 refs @ 19903 */
+	    "ISP1240\0" /* 1 refs @ 19911 */
+	    "ISP2100\0" /* 1 refs @ 19919 */
+	    "QLA200\0" /* 1 refs @ 19927 */
+	    "8580\0" /* 1 refs @ 19934 */
+	    "CryptoSwift\0" /* 1 refs @ 19939 */
+	    "PKI\0" /* 1 refs @ 19951 */
+	    "RT2460A\0" /* 1 refs @ 19955 */
+	    "RT2560\0" /* 1 refs @ 19963 */
+	    "802.11b/g\0" /* 4 refs @ 19970 */
+	    "RT2561S\0" /* 1 refs @ 19980 */
+	    "RT2561\0" /* 1 refs @ 19988 */
+	    "RT2661\0" /* 1 refs @ 19995 */
+	    "802.11b/g/n\0" /* 1 refs @ 20002 */
+	    "REX\0" /* 1 refs @ 20014 */
+	    "PCI-31/33\0" /* 1 refs @ 20018 */
+	    "8029\0" /* 1 refs @ 20028 */
+	    "8139D\0" /* 1 refs @ 20033 */
+	    "8100\0" /* 1 refs @ 20039 */
+	    "8129\0" /* 1 refs @ 20044 */
+	    "8101E\0" /* 1 refs @ 20049 */
+	    "8138\0" /* 1 refs @ 20055 */
+	    "8169SC/8110SC\0" /* 1 refs @ 20060 */
+	    "8168B/8111B\0" /* 1 refs @ 20074 */
+	    "8169/S/SB\0" /* 1 refs @ 20086 */
+	    "8180\0" /* 1 refs @ 20096 */
+	    "8185\0" /* 1 refs @ 20101 */
+	    "802.11a/b/g\0" /* 1 refs @ 20106 */
+	    "5C465\0" /* 1 refs @ 20118 */
+	    "5C466\0" /* 1 refs @ 20124 */
+	    "5C475\0" /* 1 refs @ 20130 */
+	    "5C476\0" /* 1 refs @ 20136 */
+	    "5C477\0" /* 1 refs @ 20142 */
+	    "5C478\0" /* 1 refs @ 20148 */
+	    "5C551\0" /* 1 refs @ 20154 */
+	    "Bridge/Firewire\0" /* 2 refs @ 20160 */
+	    "5C552\0" /* 1 refs @ 20176 */
+	    "5C592\0" /* 1 refs @ 20182 */
+	    "Bridge/MS/SD/Firewire\0" /* 2 refs @ 20188 */
+	    "5C593\0" /* 1 refs @ 20210 */
+	    "5C821\0" /* 1 refs @ 20216 */
+	    "Bridge/MS/SD/MMC/SC\0" /* 2 refs @ 20222 */
+	    "5C822\0" /* 1 refs @ 20242 */
+	    "5C832\0" /* 1 refs @ 20248 */
+	    "PCI-SD/MMC/MMC+/MS/xD/Firewire\0" /* 1 refs @ 20254 */
+	    "5C843\0" /* 1 refs @ 20285 */
+	    "Bridge/SD/MMC/MMC+/MS/xD/Firewire\0" /* 2 refs @ 20291 */
+	    "5C847\0" /* 1 refs @ 20325 */
+	    "xD-Picture\0" /* 1 refs @ 20331 */
+	    "5C853\0" /* 1 refs @ 20342 */
+	    "Bridge/SD/MMC/MMC+/MS/xD/SC/Firewire\0" /* 1 refs @ 20348 */
+	    "N2\0" /* 1 refs @ 20385 */
+	    "2200\0" /* 1 refs @ 20388 */
+	    "FDDI\0" /* 1 refs @ 20393 */
+	    "Xframe\0" /* 1 refs @ 20398 */
+	    "ViRGE\0" /* 1 refs @ 20405 */
+	    "Trio32\0" /* 1 refs @ 20411 */
+	    "Trio32/64\0" /* 1 refs @ 20418 */
+	    "Aurora64V+\0" /* 1 refs @ 20428 */
+	    "Trio64UV+\0" /* 1 refs @ 20439 */
+	    "ViRGE/VX\0" /* 1 refs @ 20449 */
+	    "868\0" /* 1 refs @ 20458 */
+	    "86C928\0" /* 1 refs @ 20462 */
+	    "86C864-0\0" /* 1 refs @ 20469 */
+	    "(\"Vision864\")\0" /* 4 refs @ 20478 */
+	    "86C864-1\0" /* 1 refs @ 20492 */
+	    "86C864-2\0" /* 1 refs @ 20501 */
+	    "86C864-3\0" /* 1 refs @ 20510 */
+	    "86C964-0\0" /* 1 refs @ 20519 */
+	    "(\"Vision964\")\0" /* 4 refs @ 20528 */
+	    "86C964-1\0" /* 1 refs @ 20542 */
+	    "86C964-2\0" /* 1 refs @ 20551 */
+	    "86C964-3\0" /* 1 refs @ 20560 */
+	    "86C968-0\0" /* 1 refs @ 20569 */
+	    "(\"Vision968\")\0" /* 4 refs @ 20578 */
+	    "86C968-1\0" /* 1 refs @ 20592 */
+	    "86C968-2\0" /* 1 refs @ 20601 */
+	    "86C968-3\0" /* 1 refs @ 20610 */
+	    "Trio64V2/DX\0" /* 1 refs @ 20619 */
+	    "Plato/PX\0" /* 1 refs @ 20631 */
+	    "86C365\0" /* 1 refs @ 20640 */
+	    "Trio3D\0" /* 1 refs @ 20647 */
+	    "ViRGE/DX\0" /* 1 refs @ 20654 */
+	    "ViRGE/GX2\0" /* 1 refs @ 20663 */
+	    "Trio3D/2X\0" /* 1 refs @ 20673 */
+	    "Savage3D\0" /* 1 refs @ 20683 */
+	    "Savage3D+MV\0" /* 1 refs @ 20692 */
+	    "Savage4\0" /* 1 refs @ 20704 */
+	    "ProSavage\0" /* 1 refs @ 20712 */
+	    "KM133\0" /* 1 refs @ 20722 */
+	    "ViRGE/MX\0" /* 1 refs @ 20728 */
+	    "ViRGE/MXP\0" /* 1 refs @ 20737 */
+	    "Savage/MX+MV\0" /* 1 refs @ 20747 */
+	    "Savage/MX\0" /* 1 refs @ 20760 */
+	    "Savage/IX+MV\0" /* 1 refs @ 20770 */
+	    "Savage/IX\0" /* 1 refs @ 20783 */
+	    "Savage/IXC\0" /* 1 refs @ 20793 */
+	    "Savage2000\0" /* 1 refs @ 20804 */
+	    "SonicVibes\0" /* 1 refs @ 20815 */
+	    "SafeXcel\0" /* 1 refs @ 20826 */
+	    "KS8920\0" /* 1 refs @ 20835 */
+	    "QE1000\0" /* 1 refs @ 20842 */
+	    "FE1000\0" /* 1 refs @ 20849 */
+	    "Broadband\0" /* 1 refs @ 20856 */
+	    "CNB20-LE\0" /* 2 refs @ 20866 */
+	    "PCI/AGP\0" /* 6 refs @ 20875 */
+	    "CNB30-LE\0" /* 1 refs @ 20883 */
+	    "CNB20-HE\0" /* 3 refs @ 20892 */
+	    "CIOB-X\0" /* 1 refs @ 20901 */
+	    "CMIC-HE\0" /* 1 refs @ 20908 */
+	    "CNB30-HE\0" /* 1 refs @ 20916 */
+	    "CMIC-LE\0" /* 1 refs @ 20925 */
+	    "CMIC-SL\0" /* 1 refs @ 20933 */
+	    "HT1000\0" /* 6 refs @ 20941 */
+	    "PCI/PCI-X\0" /* 2 refs @ 20948 */
+	    "CIOB-X2\0" /* 1 refs @ 20958 */
+	    "BCM5714/BCM5715\0" /* 1 refs @ 20966 */
+	    "Integral\0" /* 1 refs @ 20982 */
+	    "CIOB-E\0" /* 1 refs @ 20991 */
+	    "HT2100\0" /* 4 refs @ 20998 */
+	    "OSB4\0" /* 2 refs @ 21005 */
+	    "CSB5\0" /* 3 refs @ 21010 */
+	    "CSB6\0" /* 5 refs @ 21015 */
+	    "HT1000SB\0" /* 1 refs @ 21020 */
+	    "HT-1000\0" /* 3 refs @ 21029 */
+	    "IDE/RAID\0" /* 2 refs @ 21037 */
+	    "OSB4/CSB5\0" /* 1 refs @ 21046 */
+	    "ISA/LPC\0" /* 2 refs @ 21056 */
+	    "XIOAPIC\0" /* 1 refs @ 21064 */
+	    "Frodo4\0" /* 1 refs @ 21072 */
+	    "Frodo8\0" /* 1 refs @ 21079 */
+	    "IOC3\0" /* 1 refs @ 21086 */
+	    "PsiTech\0" /* 1 refs @ 21091 */
+	    "RAD1\0" /* 1 refs @ 21099 */
+	    "Tigon\0" /* 1 refs @ 21104 */
+	    "STG\0" /* 2 refs @ 21110 */
+	    "2000X\0" /* 1 refs @ 21114 */
+	    "1764X\0" /* 1 refs @ 21120 */
+	    "BCM1250\0" /* 2 refs @ 21126 */
+	    "LDT\0" /* 1 refs @ 21134 */
+	    "REALmagic\0" /* 1 refs @ 21138 */
+	    "Hollywood-Plus\0" /* 1 refs @ 21148 */
+	    "MPEG-2\0" /* 1 refs @ 21163 */
+	    "Cyber10x\0" /* 17 refs @ 21170 */
+	    "16550\0" /* 12 refs @ 21179 */
+	    "16650\0" /* 12 refs @ 21185 */
+	    "16850\0" /* 12 refs @ 21191 */
+	    "Parallel\0" /* 4 refs @ 21197 */
+	    "2S1P\0" /* 6 refs @ 21206 */
+	    "4S\0" /* 6 refs @ 21211 */
+	    "Cyber20x\0" /* 20 refs @ 21214 */
+	    "2P1S\0" /* 3 refs @ 21223 */
+	    "8000\0" /* 2 refs @ 21228 */
+	    "86C201\0" /* 1 refs @ 21233 */
+	    "86C202\0" /* 1 refs @ 21240 */
+	    "86C205\0" /* 1 refs @ 21247 */
+	    "85C503\0" /* 1 refs @ 21254 */
+	    "or\0" /* 1 refs @ 21261 */
+	    "5597/5598\0" /* 5 refs @ 21264 */
+	    "600\0" /* 1 refs @ 21274 */
+	    "Mngmt\0" /* 1 refs @ 21278 */
+	    "180\0" /* 1 refs @ 21284 */
+	    "181\0" /* 1 refs @ 21288 */
+	    "182\0" /* 1 refs @ 21292 */
+	    "190\0" /* 1 refs @ 21296 */
+	    "300/305\0" /* 1 refs @ 21300 */
+	    "85C501\0" /* 1 refs @ 21308 */
+	    "85C496\0" /* 1 refs @ 21315 */
+	    "530\0" /* 2 refs @ 21322 */
+	    "540\0" /* 1 refs @ 21326 */
+	    "550\0" /* 1 refs @ 21330 */
+	    "85C601\0" /* 1 refs @ 21334 */
+	    "620\0" /* 1 refs @ 21341 */
+	    "630\0" /* 1 refs @ 21345 */
+	    "633\0" /* 1 refs @ 21349 */
+	    "635\0" /* 1 refs @ 21353 */
+	    "640\0" /* 1 refs @ 21357 */
+	    "645\0" /* 1 refs @ 21361 */
+	    "646\0" /* 1 refs @ 21365 */
+	    "648\0" /* 1 refs @ 21369 */
+	    "650\0" /* 1 refs @ 21373 */
+	    "651\0" /* 1 refs @ 21377 */
+	    "652\0" /* 1 refs @ 21381 */
+	    "655\0" /* 1 refs @ 21385 */
+	    "658\0" /* 1 refs @ 21389 */
+	    "661\0" /* 1 refs @ 21393 */
+	    "730\0" /* 1 refs @ 21397 */
+	    "733\0" /* 1 refs @ 21401 */
+	    "735\0" /* 1 refs @ 21405 */
+	    "740\0" /* 2 refs @ 21409 */
+	    "741\0" /* 1 refs @ 21413 */
+	    "745\0" /* 1 refs @ 21417 */
+	    "746\0" /* 1 refs @ 21421 */
+	    "748\0" /* 1 refs @ 21425 */
+	    "750\0" /* 1 refs @ 21429 */
+	    "751\0" /* 1 refs @ 21433 */
+	    "752\0" /* 1 refs @ 21437 */
+	    "755\0" /* 1 refs @ 21441 */
+	    "756\0" /* 1 refs @ 21445 */
+	    "760\0" /* 1 refs @ 21449 */
+	    "761\0" /* 1 refs @ 21453 */
+	    "900\0" /* 1 refs @ 21457 */
+	    "961\0" /* 1 refs @ 21461 */
+	    "962\0" /* 1 refs @ 21465 */
+	    "963\0" /* 1 refs @ 21469 */
+	    "964\0" /* 1 refs @ 21473 */
+	    "965\0" /* 1 refs @ 21477 */
+	    "GUI\0" /* 1 refs @ 21481 */
+	    "Accelerator+3D\0" /* 1 refs @ 21485 */
+	    "6325\0" /* 1 refs @ 21500 */
+	    "6326\0" /* 1 refs @ 21505 */
+	    "7002\0" /* 1 refs @ 21510 */
+	    "7012\0" /* 1 refs @ 21515 */
+	    "7016\0" /* 1 refs @ 21520 */
+	    "7018\0" /* 1 refs @ 21525 */
+	    "LynxEM\0" /* 1 refs @ 21530 */
+	    "LynxEM+\0" /* 1 refs @ 21537 */
+	    "Lynx3DM\0" /* 1 refs @ 21545 */
+	    "LynxE\0" /* 2 refs @ 21553 */
+	    "Lynx3D\0" /* 1 refs @ 21559 */
+	    "Lynx\0" /* 1 refs @ 21566 */
+	    "FDC37C665\0" /* 1 refs @ 21571 */
+	    "FDC37C922\0" /* 1 refs @ 21581 */
+	    "83C170\0" /* 1 refs @ 21591 */
+	    "(\"EPIC/100\")\0" /* 2 refs @ 21598 */
+	    "83C175\0" /* 1 refs @ 21611 */
+	    "SNP8023:\0" /* 2 refs @ 21618 */
+	    "971\0" /* 1 refs @ 21627 */
+	    "Classifier\0" /* 2 refs @ 21631 */
+	    "Engine\0" /* 2 refs @ 21642 */
+	    "PAX.ware\0" /* 1 refs @ 21649 */
+	    "Gb\0" /* 1 refs @ 21658 */
+	    "CXD1947A\0" /* 1 refs @ 21661 */
+	    "CXD3222\0" /* 1 refs @ 21670 */
+	    "Stick\0" /* 2 refs @ 21678 */
+	    "PCIO\0" /* 3 refs @ 21684 */
+	    "Ebus2\0" /* 2 refs @ 21689 */
+	    "Happy\0" /* 1 refs @ 21695 */
+	    "Meal\0" /* 1 refs @ 21701 */
+	    "(US\0" /* 1 refs @ 21706 */
+	    "III)\0" /* 3 refs @ 21710 */
+	    "ERI\0" /* 1 refs @ 21715 */
+	    "GEM\0" /* 1 refs @ 21719 */
+	    "Simba\0" /* 1 refs @ 21723 */
+	    "BCM5821\0" /* 1 refs @ 21729 */
+	    "psycho\0" /* 1 refs @ 21737 */
+	    "microSPARC\0" /* 1 refs @ 21744 */
+	    "IIep\0" /* 1 refs @ 21755 */
+	    "UltraSPARC\0" /* 2 refs @ 21760 */
+	    "IIi\0" /* 1 refs @ 21771 */
+	    "IIe\0" /* 1 refs @ 21775 */
+	    "IP100A\0" /* 1 refs @ 21779 */
+	    "ST201\0" /* 1 refs @ 21786 */
+	    "ST1023\0" /* 1 refs @ 21792 */
+	    "ST2021\0" /* 1 refs @ 21799 */
+	    "NE-34\0" /* 1 refs @ 21806 */
+	    "82C101\0" /* 2 refs @ 21812 */
+	    "82C103\0" /* 1 refs @ 21819 */
+	    "82C105\0" /* 1 refs @ 21826 */
+	    "83C553\0" /* 1 refs @ 21833 */
+	    "FDDI-xP\0" /* 1 refs @ 21840 */
+	    "GE\0" /* 1 refs @ 21848 */
+	    "SK-9821\0" /* 1 refs @ 21851 */
+	    "SK-9DX1\0" /* 1 refs @ 21859 */
+	    "SK-9D21\0" /* 1 refs @ 21867 */
+	    "1000BASE-T\0" /* 1 refs @ 21875 */
+	    "SK-9D41\0" /* 1 refs @ 21886 */
+	    "1000BASE-X\0" /* 1 refs @ 21894 */
+	    "SK-9Sxx\0" /* 1 refs @ 21905 */
+	    "SK-9E21D/SK-9E22\0" /* 1 refs @ 21913 */
+	    "1000base-T\0" /* 1 refs @ 21930 */
+	    "TC9021\0" /* 2 refs @ 21941 */
+	    "(alt\0" /* 1 refs @ 21948 */
+	    "ServerNet\0" /* 1 refs @ 21953 */
+	    "DC-290(M)\0" /* 1 refs @ 21963 */
+	    "DC-690C\0" /* 1 refs @ 21973 */
+	    "DC-315/DC-395\0" /* 1 refs @ 21981 */
+	    "TLAN\0" /* 1 refs @ 21995 */
+	    "TVP4020\0" /* 1 refs @ 22000 */
+	    "TSB12LV21\0" /* 1 refs @ 22008 */
+	    "TSB12LV22\0" /* 1 refs @ 22018 */
+	    "PCI4450\0" /* 2 refs @ 22028 */
+	    "PCI4410\0" /* 2 refs @ 22036 */
+	    "TSB12LV23\0" /* 1 refs @ 22044 */
+	    "TSB12LV26\0" /* 1 refs @ 22054 */
+	    "TSB43AA22\0" /* 1 refs @ 22064 */
+	    "TSB43AA22/A\0" /* 1 refs @ 22074 */
+	    "TSB43AA23\0" /* 1 refs @ 22086 */
+	    "TSB43AA21\0" /* 1 refs @ 22096 */
+	    "PCI4451\0" /* 2 refs @ 22106 */
+	    "PCI4510\0" /* 2 refs @ 22114 */
+	    "PCI4520\0" /* 2 refs @ 22122 */
+	    "PCI7[4-6]10\0" /* 1 refs @ 22130 */
+	    "PCI7x21/7x11\0" /* 3 refs @ 22142 */
+	    "Cardbus\0" /* 3 refs @ 22155 */
+	    "FlashMedia\0" /* 1 refs @ 22163 */
+	    "PCI6515A\0" /* 2 refs @ 22174 */
+	    "(Smart\0" /* 2 refs @ 22183 */
+	    "ACX100A\0" /* 1 refs @ 22190 */
+	    "ACX100B\0" /* 1 refs @ 22198 */
+	    "ACX111\0" /* 1 refs @ 22206 */
+	    "PCI1130\0" /* 1 refs @ 22213 */
+	    "PCI1031\0" /* 1 refs @ 22221 */
+	    "PCI1131\0" /* 1 refs @ 22229 */
+	    "PCI1250\0" /* 1 refs @ 22237 */
+	    "PCI1220\0" /* 1 refs @ 22245 */
+	    "PCI1221\0" /* 1 refs @ 22253 */
+	    "PCI1210\0" /* 1 refs @ 22261 */
+	    "PCI1450\0" /* 1 refs @ 22269 */
+	    "PCI1225\0" /* 1 refs @ 22277 */
+	    "PCI1251\0" /* 1 refs @ 22285 */
+	    "PCI1211\0" /* 1 refs @ 22293 */
+	    "PCI1251B\0" /* 1 refs @ 22301 */
+	    "PCI2030\0" /* 1 refs @ 22310 */
+	    "PCI2050\0" /* 1 refs @ 22318 */
+	    "PCI7510\0" /* 1 refs @ 22326 */
+	    "PCI7610\0" /* 2 refs @ 22334 */
+	    "PCI7410\0" /* 1 refs @ 22342 */
+	    "Mode)\0" /* 3 refs @ 22350 */
+	    "PCI7[46]10\0" /* 2 refs @ 22356 */
+	    "(SD/MMC\0" /* 1 refs @ 22367 */
+	    "(Memory\0" /* 1 refs @ 22375 */
+	    "PCI1410\0" /* 1 refs @ 22383 */
+	    "PCI1420\0" /* 1 refs @ 22391 */
+	    "PCI1451\0" /* 1 refs @ 22399 */
+	    "PCI1421\0" /* 1 refs @ 22407 */
+	    "PCI1620\0" /* 1 refs @ 22415 */
+	    "PCI1520\0" /* 1 refs @ 22423 */
+	    "PCI1510\0" /* 1 refs @ 22431 */
+	    "PCI1530\0" /* 1 refs @ 22439 */
+	    "PCI1515\0" /* 1 refs @ 22447 */
+	    "PCI2040\0" /* 1 refs @ 22455 */
+	    "PCI-DSP\0" /* 1 refs @ 22463 */
+	    "PCI7420\0" /* 1 refs @ 22471 */
+	    "PCI-Cardbus\0" /* 1 refs @ 22479 */
+	    "PCI-800L\0" /* 1 refs @ 22491 */
+	    "PCI-800H\0" /* 1 refs @ 22500 */
+	    "PCI-100H\0" /* 1 refs @ 22509 */
+	    "R4x00\0" /* 1 refs @ 22518 */
+	    "TC35856F\0" /* 1 refs @ 22524 */
+	    "(\"Meteor\")\0" /* 1 refs @ 22533 */
+	    "Portege\0" /* 1 refs @ 22544 */
+	    "ToPIC95\0" /* 1 refs @ 22552 */
+	    "ToPIC95B\0" /* 1 refs @ 22560 */
+	    "ToPIC97\0" /* 1 refs @ 22569 */
+	    "Secure\0" /* 1 refs @ 22577 */
+	    "Type-A\0" /* 1 refs @ 22584 */
+	    "ToPIC100\0" /* 1 refs @ 22591 */
+	    "Infrared\0" /* 2 refs @ 22600 */
+	    "Type\0" /* 2 refs @ 22609 */
+	    "O\0" /* 1 refs @ 22614 */
+	    "DO\0" /* 1 refs @ 22616 */
+	    "TM8000\0" /* 1 refs @ 22619 */
+	    "LongRun\0" /* 1 refs @ 22626 */
+	    "SDRAM\0" /* 1 refs @ 22634 */
+	    "BIOS\0" /* 1 refs @ 22640 */
+	    "Scratchpad\0" /* 1 refs @ 22645 */
+	    "4DWAVE\0" /* 2 refs @ 22656 */
+	    "DX\0" /* 1 refs @ 22663 */
+	    "NX\0" /* 1 refs @ 22666 */
+	    "CyberBlade\0" /* 2 refs @ 22669 */
+	    "i7\0" /* 1 refs @ 22680 */
+	    "TGUI\0" /* 8 refs @ 22683 */
+	    "9320\0" /* 1 refs @ 22688 */
+	    "9350\0" /* 1 refs @ 22693 */
+	    "9360\0" /* 1 refs @ 22698 */
+	    "CYBER\0" /* 3 refs @ 22703 */
+	    "9397\0" /* 1 refs @ 22709 */
+	    "9397DVD\0" /* 1 refs @ 22714 */
+	    "9525\0" /* 1 refs @ 22722 */
+	    "9420\0" /* 1 refs @ 22727 */
+	    "9440\0" /* 1 refs @ 22732 */
+	    "9660\0" /* 1 refs @ 22737 */
+	    "9680\0" /* 1 refs @ 22742 */
+	    "9682\0" /* 1 refs @ 22747 */
+	    "HPT343/345\0" /* 1 refs @ 22752 */
+	    "HPT366/370/372\0" /* 1 refs @ 22763 */
+	    "HPT372A\0" /* 1 refs @ 22778 */
+	    "HPT302\0" /* 1 refs @ 22786 */
+	    "HPT371\0" /* 1 refs @ 22793 */
+	    "HPT374\0" /* 1 refs @ 22800 */
+	    "HPT372N\0" /* 1 refs @ 22807 */
+	    "Pyramid3D\0" /* 1 refs @ 22815 */
+	    "TR25202\0" /* 1 refs @ 22825 */
+	    "ET4000w32p\0" /* 4 refs @ 22833 */
+	    "ET6000\0" /* 1 refs @ 22844 */
+	    "UM82C881\0" /* 1 refs @ 22851 */
+	    "486\0" /* 2 refs @ 22860 */
+	    "UM82C886\0" /* 1 refs @ 22864 */
+	    "UM8673F\0" /* 1 refs @ 22873 */
+	    "UM8881\0" /* 1 refs @ 22881 */
+	    "UM82C891\0" /* 1 refs @ 22888 */
+	    "UM886A\0" /* 1 refs @ 22897 */
+	    "UM8886BF\0" /* 1 refs @ 22904 */
+	    "UM8710\0" /* 1 refs @ 22913 */
+	    "UM8886\0" /* 1 refs @ 22920 */
+	    "UM8881F\0" /* 1 refs @ 22927 */
+	    "PCI-Host\0" /* 1 refs @ 22935 */
+	    "UM8886F\0" /* 1 refs @ 22944 */
+	    "UM8886A\0" /* 1 refs @ 22952 */
+	    "UM8891A\0" /* 1 refs @ 22960 */
+	    "UM9017F\0" /* 1 refs @ 22968 */
+	    "UM8886N\0" /* 1 refs @ 22976 */
+	    "UM8891N\0" /* 1 refs @ 22984 */
+	    "US201\0" /* 1 refs @ 22992 */
+	    "Voice\0" /* 1 refs @ 22998 */
+	    "Internal\0" /* 1 refs @ 23004 */
+	    "(WinModem)\0" /* 1 refs @ 23013 */
+	    "3CP5609\0" /* 1 refs @ 23024 */
+	    "USR997902\0" /* 1 refs @ 23032 */
+	    "V292PBC\0" /* 1 refs @ 23042 */
+	    "AMD290x0\0" /* 1 refs @ 23050 */
+	    "V960PBC\0" /* 1 refs @ 23059 */
+	    "V96DPC\0" /* 1 refs @ 23067 */
+	    "(Dual)\0" /* 1 refs @ 23074 */
+	    "VT6305\0" /* 1 refs @ 23081 */
+	    "K8M800\0" /* 1 refs @ 23088 */
+	    "K8T890\0" /* 7 refs @ 23095 */
+	    "KT880\0" /* 6 refs @ 23102 */
+	    "K8HTB\0" /* 3 refs @ 23108 */
+	    "VT8363\0" /* 2 refs @ 23114 */
+	    "(Apollo\0" /* 25 refs @ 23121 */
+	    "KT133)\0" /* 2 refs @ 23129 */
+	    "VT3351\0" /* 7 refs @ 23136 */
+	    "VT8371\0" /* 2 refs @ 23143 */
+	    "KX133)\0" /* 2 refs @ 23150 */
+	    "VT8501\0" /* 2 refs @ 23157 */
+	    "MVP4)\0" /* 2 refs @ 23164 */
+	    "VT82C505\0" /* 1 refs @ 23170 */
+	    "(Pluto)\0" /* 1 refs @ 23179 */
+	    "VT82C561\0" /* 1 refs @ 23187 */
+	    "VT82C586A\0" /* 1 refs @ 23196 */
+	    "VT82C576\0" /* 1 refs @ 23206 */
+	    "3V\0" /* 1 refs @ 23215 */
+	    "CX700\0" /* 1 refs @ 23218 */
+	    "VT82C580\0" /* 1 refs @ 23224 */
+	    "VP)\0" /* 1 refs @ 23233 */
+	    "VT82C586\0" /* 3 refs @ 23237 */
+	    "VT8237A\0" /* 3 refs @ 23246 */
+	    "VT82C595\0" /* 2 refs @ 23254 */
+	    "VP2)\0" /* 2 refs @ 23263 */
+	    "VT82C596A\0" /* 1 refs @ 23268 */
+	    "VT82C597\0" /* 2 refs @ 23278 */
+	    "VP3)\0" /* 2 refs @ 23287 */
+	    "VT82C598\0" /* 2 refs @ 23292 */
+	    "MVP3)\0" /* 2 refs @ 23301 */
+	    "VT8605\0" /* 2 refs @ 23307 */
+	    "ProMedia\0" /* 2 refs @ 23314 */
+	    "133)\0" /* 2 refs @ 23323 */
+	    "VT82C686A\0" /* 4 refs @ 23328 */
+	    "VT82C691\0" /* 1 refs @ 23338 */
+	    "Pro)\0" /* 1 refs @ 23347 */
+	    "VT82C693\0" /* 1 refs @ 23352 */
+	    "Plus)\0" /* 1 refs @ 23361 */
+	    "VT86C926\0" /* 1 refs @ 23367 */
+	    "Amazon\0" /* 1 refs @ 23376 */
+	    "PCI-Ethernet\0" /* 1 refs @ 23383 */
+	    "VT82C570M\0" /* 2 refs @ 23396 */
+	    "(Apollo)\0" /* 2 refs @ 23406 */
+	    "VT8251\0" /* 4 refs @ 23415 */
+	    "PCIE\0" /* 2 refs @ 23422 */
+	    "Port1\0" /* 1 refs @ 23427 */
+	    "Port2\0" /* 1 refs @ 23433 */
+	    "VLINK\0" /* 1 refs @ 23439 */
+	    "VT83C572\0" /* 1 refs @ 23445 */
+	    "VT3043\0" /* 1 refs @ 23454 */
+	    "(Rhine)\0" /* 1 refs @ 23461 */
+	    "VT6306\0" /* 1 refs @ 23469 */
+	    "VT6105M\0" /* 1 refs @ 23476 */
+	    "(Rhine\0" /* 3 refs @ 23484 */
+	    "VT8233/VT8235\0" /* 1 refs @ 23491 */
+	    "VT6102\0" /* 1 refs @ 23505 */
+	    "MC-97\0" /* 1 refs @ 23512 */
+	    "VT8233\0" /* 1 refs @ 23518 */
+	    "VT8366\0" /* 2 refs @ 23525 */
+	    "KT266)\0" /* 2 refs @ 23532 */
+	    "CPU-PCI\0" /* 3 refs @ 23539 */
+	    "VT8653\0" /* 1 refs @ 23547 */
+	    "266T)\0" /* 1 refs @ 23554 */
+	    "VT8237\0" /* 5 refs @ 23560 */
+	    "VT6105\0" /* 1 refs @ 23567 */
+	    "VT612X\0" /* 1 refs @ 23574 */
+	    "(Velocity)\0" /* 1 refs @ 23581 */
+	    "VT8623\0" /* 2 refs @ 23592 */
+	    "CLE266)\0" /* 2 refs @ 23599 */
+	    "VT8233A\0" /* 1 refs @ 23607 */
+	    "VT6421\0" /* 1 refs @ 23615 */
+	    "VT3314\0" /* 1 refs @ 23622 */
+	    "CN900\0" /* 1 refs @ 23629 */
+	    "UniChrome\0" /* 2 refs @ 23635 */
+	    "VT8237R\0" /* 1 refs @ 23645 */
+	    "VT8235\0" /* 1 refs @ 23653 */
+	    "KT400)\0" /* 1 refs @ 23660 */
+	    "VT8377\0" /* 2 refs @ 23667 */
+	    "Apollo\0" /* 2 refs @ 23674 */
+	    "KT400\0" /* 1 refs @ 23681 */
+	    "VT8378\0" /* 2 refs @ 23687 */
+	    "KM400\0" /* 2 refs @ 23694 */
+	    "KT600)\0" /* 1 refs @ 23700 */
+	    "VT8237A/VT8251\0" /* 1 refs @ 23707 */
+	    "VT8237A/VT82C586A\0" /* 1 refs @ 23722 */
+	    "VT8237S\0" /* 1 refs @ 23740 */
+	    "CX700M2/VX700\0" /* 1 refs @ 23748 */
+	    "APIC\0" /* 1 refs @ 23762 */
+	    "VT86C100A\0" /* 1 refs @ 23767 */
+	    "(Rhine-II)\0" /* 1 refs @ 23777 */
+	    "VT8231\0" /* 2 refs @ 23788 */
+	    "CPU-AGP\0" /* 7 refs @ 23795 */
+	    "VT8633\0" /* 1 refs @ 23803 */
+	    "266)\0" /* 1 refs @ 23810 */
+	    "VT8377CE\0" /* 1 refs @ 23815 */
+	    "GDT6000/6020/6050\0" /* 1 refs @ 23824 */
+	    "GDT6000B/6010\0" /* 1 refs @ 23842 */
+	    "GDT6110/6510\0" /* 1 refs @ 23856 */
+	    "GDT6120/6520\0" /* 1 refs @ 23869 */
+	    "GDT6530\0" /* 1 refs @ 23882 */
+	    "GDT6550\0" /* 1 refs @ 23890 */
+	    "GDT6117/6517\0" /* 1 refs @ 23898 */
+	    "GDT6127/6527\0" /* 1 refs @ 23911 */
+	    "GDT6537\0" /* 1 refs @ 23924 */
+	    "GDT6557/6557-ECC\0" /* 1 refs @ 23932 */
+	    "GDT6115/6515\0" /* 1 refs @ 23949 */
+	    "GDT6125/6525\0" /* 1 refs @ 23962 */
+	    "GDT6535\0" /* 1 refs @ 23975 */
+	    "GDT6555/6555-ECC\0" /* 1 refs @ 23983 */
+	    "GDT6[15]17RP\0" /* 1 refs @ 24000 */
+	    "GDT6[15]27RP\0" /* 1 refs @ 24013 */
+	    "GDT6537RP\0" /* 1 refs @ 24026 */
+	    "GDT6557RP\0" /* 1 refs @ 24036 */
+	    "GDT6[15]11RP\0" /* 1 refs @ 24046 */
+	    "GDT6[15]21RP\0" /* 1 refs @ 24059 */
+	    "GDT6[15]17RD\0" /* 1 refs @ 24072 */
+	    "GDT6[5]127RD\0" /* 1 refs @ 24085 */
+	    "GDT6537RD\0" /* 1 refs @ 24098 */
+	    "GDT6557RD\0" /* 1 refs @ 24108 */
+	    "GDT6[15]11RD\0" /* 1 refs @ 24118 */
+	    "GDT6[15]21RD\0" /* 1 refs @ 24131 */
+	    "GDT6[156]18RD\0" /* 1 refs @ 24144 */
+	    "GDT6[156]28RD\0" /* 1 refs @ 24158 */
+	    "GDT6[56]38RD\0" /* 1 refs @ 24172 */
+	    "GDT6[56]58RD\0" /* 1 refs @ 24185 */
+	    "GDT6[15]17RP2\0" /* 1 refs @ 24198 */
+	    "GDT6[15]27RP2\0" /* 1 refs @ 24212 */
+	    "GDT6537RP2\0" /* 1 refs @ 24226 */
+	    "GDT6[15]11RP2\0" /* 1 refs @ 24237 */
+	    "GDT6[15]21RP2\0" /* 1 refs @ 24251 */
+	    "GDT6513RS\0" /* 1 refs @ 24265 */
+	    "GDT6523RS\0" /* 1 refs @ 24275 */
+	    "GDT6518RS\0" /* 1 refs @ 24285 */
+	    "GDT6x28RS\0" /* 1 refs @ 24295 */
+	    "GDT6x38RS\0" /* 1 refs @ 24305 */
+	    "GDT6x58RS\0" /* 1 refs @ 24315 */
+	    "GDT6x33RS\0" /* 1 refs @ 24325 */
+	    "GDT6x43RS\0" /* 1 refs @ 24335 */
+	    "GDT6x53RS\0" /* 1 refs @ 24345 */
+	    "GDT6x63RS\0" /* 1 refs @ 24355 */
+	    "GDT7x13RN\0" /* 1 refs @ 24365 */
+	    "GDT7x23RN\0" /* 1 refs @ 24375 */
+	    "GDT7[156]18RN\0" /* 1 refs @ 24385 */
+	    "GDT7[156]28RN\0" /* 1 refs @ 24399 */
+	    "GDT7[56]38RN\0" /* 1 refs @ 24413 */
+	    "GDT7[56]58RN\0" /* 1 refs @ 24426 */
+	    "GDT7[56]43RN\0" /* 1 refs @ 24439 */
+	    "GDT7x53RN\0" /* 1 refs @ 24452 */
+	    "GDT7x63RN\0" /* 1 refs @ 24462 */
+	    "GDT4x13RZ\0" /* 1 refs @ 24472 */
+	    "GDT4x23RZ\0" /* 1 refs @ 24482 */
+	    "GDT8x13RZ\0" /* 1 refs @ 24492 */
+	    "GDT8x23RZ\0" /* 1 refs @ 24502 */
+	    "GDT8x33RZ\0" /* 1 refs @ 24512 */
+	    "GDT8x43RZ\0" /* 1 refs @ 24522 */
+	    "GDT8x53RZ\0" /* 1 refs @ 24532 */
+	    "GDT8x63RZ\0" /* 1 refs @ 24542 */
+	    "GDT6[56]19RD\0" /* 1 refs @ 24552 */
+	    "GDT6[56]29RD\0" /* 1 refs @ 24565 */
+	    "GDT7[56]19RN\0" /* 1 refs @ 24578 */
+	    "GDT7[56]29RN\0" /* 1 refs @ 24591 */
+	    "ICP\0" /* 1 refs @ 24604 */
+	    "82C592\0" /* 1 refs @ 24608 */
+	    "82C593\0" /* 1 refs @ 24615 */
+	    "82C594\0" /* 1 refs @ 24622 */
+	    "Wildcat\0" /* 2 refs @ 24629 */
+	    "82C596/597\0" /* 1 refs @ 24637 */
+	    "82C541\0" /* 1 refs @ 24648 */
+	    "82C543\0" /* 1 refs @ 24655 */
+	    "82C532\0" /* 1 refs @ 24662 */
+	    "82C534\0" /* 1 refs @ 24669 */
+	    "82C535\0" /* 1 refs @ 24676 */
+	    "82C147\0" /* 1 refs @ 24683 */
+	    "82C975\0" /* 1 refs @ 24690 */
+	    "82C925\0" /* 1 refs @ 24697 */
+	    "SVGA\0" /* 2 refs @ 24704 */
+	    "P9000\0" /* 1 refs @ 24709 */
+	    "P9100\0" /* 1 refs @ 24715 */
+	    "WD33C193A\0" /* 1 refs @ 24721 */
+	    "WD33C196A\0" /* 1 refs @ 24731 */
+	    "WD33C197A\0" /* 1 refs @ 24741 */
+	    "WD7193\0" /* 1 refs @ 24751 */
+	    "WD7197\0" /* 1 refs @ 24758 */
+	    "WD33C296A\0" /* 1 refs @ 24765 */
+	    "WD34C296\0" /* 1 refs @ 24775 */
+	    "90C\0" /* 1 refs @ 24784 */
+	    "W83769F\0" /* 1 refs @ 24788 */
+	    "W83C553F\0" /* 2 refs @ 24796 */
+	    "W89C840F\0" /* 1 refs @ 24805 */
+	    "W89C940F\0" /* 2 refs @ 24814 */
+	    "W6692\0" /* 1 refs @ 24823 */
+	    "NinjaSCSI-32UDE\0" /* 5 refs @ 24829 */
+	    "(KME)\0" /* 3 refs @ 24845 */
+	    "(IODATA)\0" /* 1 refs @ 24851 */
+	    "(LOGITEC)\0" /* 1 refs @ 24860 */
+	    "(LOGITEC2)\0" /* 1 refs @ 24870 */
+	    "(BUFFALO)\0" /* 2 refs @ 24881 */
+	    "CF32A\0" /* 2 refs @ 24891 */
+	    "CompactFlash\0" /* 1 refs @ 24897 */
+	    "CF\0" /* 1 refs @ 24910 */
+	    "NPATA-32\0" /* 1 refs @ 24913 */
+	    "Xen\0" /* 1 refs @ 24922 */
+	    "Platform\0" /* 1 refs @ 24926 */
+	    "X3201-3\0" /* 2 refs @ 24935 */
+	    "(21143)\0" /* 1 refs @ 24943 */
+	    "WinGlobal\0" /* 1 refs @ 24951 */
+	    "724\0" /* 1 refs @ 24961 */
+	    "740C\0" /* 1 refs @ 24965 */
+	    "(DS-1)\0" /* 2 refs @ 24970 */
+	    "724F\0" /* 1 refs @ 24977 */
+	    "744\0" /* 1 refs @ 24982 */
+	    "(DS-1S)\0" /* 1 refs @ 24986 */
+	    "754\0" /* 1 refs @ 24994 */
+	    "(DS-1E)\0" /* 1 refs @ 24998 */
+	    "1221\0" /* 1 refs @ 25006 */
+	    "PCI-ST32\0" /* 1 refs @ 25011 */
+};
+const int pci_nwords = 3366;
+

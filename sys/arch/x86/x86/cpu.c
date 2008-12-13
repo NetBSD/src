@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.56.4.1 2008/10/19 22:16:07 haad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.56.4.2 2008/12/13 01:13:38 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.4.1 2008/10/19 22:16:07 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.56.4.2 2008/12/13 01:13:38 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -399,9 +399,14 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		pmap_cpu_init_late(ci);
 		cpu_start_secondary(ci);
 		if (ci->ci_flags & CPUF_PRESENT) {
+			struct cpu_info *tmp;
+
 			cpu_identify(ci);
-			ci->ci_next = cpu_info_list->ci_next;
-			cpu_info_list->ci_next = ci;
+			tmp = cpu_info_list;
+			while (tmp->ci_next)
+				tmp = tmp->ci_next;
+
+			tmp->ci_next = ci;
 		}
 		break;
 
@@ -1002,7 +1007,7 @@ cpu_suspend(device_t dv PMF_FN_ARGS)
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
-		err = cpu_setonline(ci, false);
+		err = cpu_setstate(ci, false);
 		mutex_exit(&cpu_lock);
 	
 		if (err)
@@ -1028,7 +1033,7 @@ cpu_resume(device_t dv PMF_FN_ARGS)
 
 	if (sc->sc_wasonline) {
 		mutex_enter(&cpu_lock);
-		err = cpu_setonline(ci, true);
+		err = cpu_setstate(ci, true);
 		mutex_exit(&cpu_lock);
 	}
 

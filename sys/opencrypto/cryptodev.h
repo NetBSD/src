@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.14 2008/04/28 20:24:10 martin Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.14.6.1 2008/12/13 01:15:33 haad Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -441,7 +441,7 @@ struct cryptop {
 					 * should always check and use the new
 					 * value on future requests.
 					 */
-	int		crp_flags;
+	int		crp_flags;	/* Note: must hold mutext to modify */
 
 #define CRYPTO_F_IMBUF		0x0001	/* Input/output are mbuf chains */
 #define CRYPTO_F_IOV		0x0002	/* Input/output are uio */
@@ -451,6 +451,7 @@ struct cryptop {
 #define	CRYPTO_F_DONE		0x0020	/* Operation completed */
 #define	CRYPTO_F_CBIFSYNC	0x0040	/* Do CBIMM if op is synchronous */
 #define	CRYPTO_F_ONRETQ		0x0080	/* Request is on return queue */
+#define	CRYPTO_F_USER		0x0100	/* Request is in user context */
 
 	void *		crp_buf;	/* Data to be processed */
 	void *		crp_opaque;	/* Opaque pointer, passed along */
@@ -590,7 +591,7 @@ extern	int crypto_devallowsoft;	/* only use hardware crypto */
  * Asymmetric operations are allocated in cryptodev.c but can be
  * freed in crypto.c.
  */
-extern	struct pool	cryptkop_pool;
+extern struct pool	cryptkop_pool;
 
 /*
  * Mutual exclusion and its unwelcome friends.

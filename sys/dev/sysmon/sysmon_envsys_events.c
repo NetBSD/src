@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.55.2.1 2008/10/19 22:17:04 haad Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.55.2.2 2008/12/13 01:14:53 haad Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.55.2.1 2008/10/19 22:17:04 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.55.2.2 2008/12/13 01:14:53 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -251,23 +251,27 @@ sme_event_register(prop_dictionary_t sdict, envsys_data_t *edata,
 	/* Initialize sensor type and previously-sent state */
 
 	see->see_pes.pes_type = powertype;
-	switch (powertype) {
-	case PENVSYS_TYPE_BATTERY:
-		see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
-		break;
-	case PENVSYS_TYPE_DRIVE:
-		see->see_evsent = ENVSYS_DRIVE_EMPTY;
-		break;
-	case PENVSYS_TYPE_FAN:
-	case PENVSYS_TYPE_INDICATOR:
-	case PENVSYS_TYPE_TEMP:
-	case PENVSYS_TYPE_POWER:
-	case PENVSYS_TYPE_RESISTANCE:
-	case PENVSYS_TYPE_VOLTAGE:
+	switch (real_crittype) {
+	case PENVSYS_EVENT_HW_LIMITS:
+	case PENVSYS_EVENT_USER_LIMITS:
+	case PENVSYS_EVENT_BATT_USER_LIMITS:
 		see->see_evsent = ENVSYS_SVALID;
 		break;
+	case PENVSYS_EVENT_STATE_CHANGED:
+		if (edata->units == ENVSYS_BATTERY_CAPACITY)
+			see->see_evsent = ENVSYS_BATTERY_CAPACITY_NORMAL;
+		else if (edata->units == ENVSYS_DRIVE)
+			see->see_evsent = ENVSYS_DRIVE_EMPTY;
+#ifdef DIAGNOSTIC
+		else
+			panic("%s: bad units for "
+			      "PENVSYS_EVENT_STATE_CHANGED", __func__);
+#endif
+		break;
+	case PENVSYS_EVENT_CRITICAL:
 	default:
 		see->see_evsent = 0;
+		break;
 	}
 
 	(void)strlcpy(see->see_pes.pes_dvname, sme->sme_name,
@@ -627,22 +631,22 @@ sme_events_worker(struct work *wk, void *arg)
 		break;
 
 	/*
-	 * For critical state monitoring, only two event values are valid:
-	 *	ENVSYS_SVALID or ENVSYS_SCRITICAL
-	 * Send corresponding event if state has changed.
+	 * Send PENVSYS_EVENT_CRITICAL event if:
+	 *	State has gone from non-CRITICAL to CRITICAL,
+	 *	State remains CRITICAL and value has changed, or
+	 *	State has returned from CRITICAL to non-CRITICAL
 	 */
 	case PENVSYS_EVENT_CRITICAL:
-		if (edata->state == see->see_evsent)
-			break;
-
-		if (edata->state == ENVSYS_SVALID) {
+		if (edata->state == ENVSYS_SVALID &&
+		    see->see_evsent != 0) {
 			sysmon_penvsys_event(&see->see_pes,
 					     PENVSYS_EVENT_NORMAL);
-			see->see_evsent = edata->state;
-		} else if (edata->state == ENVSYS_SCRITICAL) {
+			see->see_evsent = 0;
+		} else if (edata->state == ENVSYS_SCRITICAL &&
+		    see->see_evsent != edata->value_cur) {
 			sysmon_penvsys_event(&see->see_pes,
 					     PENVSYS_EVENT_CRITICAL);
-			see->see_evsent = edata->state;
+			see->see_evsent = edata->value_cur;
 		}
 		break;
 

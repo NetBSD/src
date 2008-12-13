@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.36 2008/01/11 14:03:47 he Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36.16.1 2008/12/13 01:13:04 haad Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -93,8 +93,6 @@ struct pmap {
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
 
-typedef struct pmap *pmap_t;
-
 /*
  * On the 040 we keep track of which level 2 blocks are already in use
  * with the pm_stfree mask.  Bits are arranged from LSB (block 0) to MSB
@@ -182,9 +180,7 @@ struct memseg	usable_segs[NMEM_SEGS];
 pv_entry_t	pv_table;	/* array of entries, one per page */
 u_int		*Sysmap;
 char		*vmmap;		/* map for mem, dumps, etc. */
-struct pmap	kernel_pmap_store;
 
-#define	pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
@@ -200,7 +196,7 @@ pmap_remove_all(struct pmap *pmap)
 	(curproc && \
 	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
 
-void	pmap_bootstrap __P((psize_t, u_int, u_int));
+void	pmap_bootstrap __P((psize_t, u_int));
 void	pmap_changebit __P((paddr_t, int, bool));
 
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, int));

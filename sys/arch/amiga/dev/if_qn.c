@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.31 2007/10/17 19:53:16 garbled Exp $ */
+/*	$NetBSD: if_qn.c,v 1.31.26.1 2008/12/13 01:13:00 haad Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.31 2007/10/17 19:53:16 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.31.26.1 2008/12/13 01:13:00 haad Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -830,7 +830,7 @@ qnioctl(register struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
 		switch (ifa->ifa_addr->sa_family) {
@@ -866,6 +866,9 @@ qnioctl(register struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX see the comment in ed_ioctl() about code re-use */
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -913,8 +916,7 @@ qnioctl(register struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		log(LOG_INFO, "qnioctl: default\n");
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 	}
 
 	splx(s);

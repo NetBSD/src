@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.20 2007/10/17 19:54:57 garbled Exp $	*/
+/*	$NetBSD: limits.h,v 1.20.26.1 2008/12/13 01:13:14 haad Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,8 +31,8 @@
  *	@(#)limits.h	7.2 (Berkeley) 6/28/90
  */
 
-#ifndef	_MACHINE_LIMITS_H_
-#define	_MACHINE_LIMITS_H_
+#ifndef	_I386_LIMITS_H_
+#define	_I386_LIMITS_H_
 
 #include <sys/featuretest.h>
 
@@ -92,4 +92,4 @@
 #define FLT_MIN		1.17549435E-38F
 #endif
 
-#endif /* _MACHINE_LIMITS_H_ */
+#endif /* _I386_LIMITS_H_ */

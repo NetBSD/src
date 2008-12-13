@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.73 2008/02/19 12:24:34 yamt Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.73.18.1 2008/12/13 01:15:35 haad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -127,7 +127,6 @@ struct vnode;
 /*
  * Machine-independent functions:
  */
-int	coredump(struct lwp *, const char *);
 int	coredump_netbsd(struct lwp *, void *);
 void	execsigs(struct proc *);
 void	gsignal(int, int);
@@ -170,6 +169,7 @@ void	sigactsfree(struct sigacts *);
 
 void	kpsendsig(struct lwp *, const struct ksiginfo *, const sigset_t *);
 void	sendsig_reset(struct lwp *, int);
+void	sendsig(const struct ksiginfo *, const sigset_t *);
 
 siginfo_t *siginfo_alloc(int);
 void	siginfo_free(void *);
@@ -188,9 +188,17 @@ int	sigispending(struct lwp *, int);
 /*
  * Machine-dependent functions:
  */
-void	sendsig(const struct ksiginfo *, const sigset_t *);
+void	sendsig_sigcontext(const struct ksiginfo *, const sigset_t *);
+void	sendsig_siginfo(const struct ksiginfo *, const sigset_t *);
 
 extern	struct pool ksiginfo_pool;
+
+/*
+ * Modularity / compatibility.
+ */
+extern void	(*sendsig_sigcontext_vec)(const struct ksiginfo *,
+					  const sigset_t *);
+extern int	(*coredump_vec)(struct lwp *, const char *);
 
 /*
  * firstsig:

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.46 2008/06/19 12:28:12 hans Exp $
+	$NetBSD: syscalls.master,v 1.46.2.1 2008/12/13 01:14:07 haad Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -32,7 +32,6 @@
 ; #include's are copied to the syscall names and switch definition files only.
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "fs_nfs.h"
 #endif
 
@@ -250,11 +249,7 @@
 155	UNIMPL		atomic_op
 156	UNIMPL
 157	UNIMPL
-#ifdef NFSSERVER
 158	STD		{ int ultrix_sys_nfssvc(int fd); }
-#else
-158	UNIMPL
-#endif
 159	NOARGS		{ int compat_43_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 160	STD		{ int ultrix_sys_statfs(const char *path, \

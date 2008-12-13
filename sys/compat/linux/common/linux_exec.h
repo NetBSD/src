@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.43 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.43.6.1 2008/12/13 01:13:56 haad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-extern const struct emul emul_linux;
+extern struct emul emul_linux;
 
 int linux_sysctl(int *, u_int, void *, size_t *, void *, size_t,
     struct lwp *);
@@ -134,6 +134,7 @@ int linux_usertrap(struct lwp *, vaddr_t, void *);
 void linux_nptl_proc_fork(struct proc *, struct proc *, void (luserret)(void));
 void linux_nptl_proc_exit(struct proc *);      
 void linux_nptl_proc_init(struct proc *, struct proc *);
+int  linux_init_thread_area(struct lwp *, struct lwp *);
 #endif
 
 #ifdef EXEC_ELF32

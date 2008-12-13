@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.112 2008/06/11 15:56:11 drochner Exp $ */
+/* $NetBSD: device.h,v 1.112.2.1 2008/12/13 01:15:35 haad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -120,6 +120,7 @@ typedef struct cfdata *cfdata_t;
 typedef struct cfdriver *cfdriver_t;
 typedef struct cfattach *cfattach_t;
 
+#ifdef _KERNEL
 struct device {
 	devclass_t	dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
@@ -187,6 +188,7 @@ struct deviter {
 };
 
 typedef struct deviter deviter_t;
+#endif
 
 /*
  * Description of a locator, as part of interface attribute definitions.
@@ -221,7 +223,7 @@ struct cfparent {
 	const char *cfp_iattr;		/* interface attribute */
 	const char *cfp_parent;		/* optional specific parent */
 	int cfp_unit;			/* optional specific unit
-					   (-1 to wildcard) */
+					   (DVUNIT_ANY to wildcard) */
 };
 
 /*
@@ -350,7 +352,7 @@ struct cfattachinit {
 };
 /*
  * the same, but with a non-constant list so it can be modified
- * for LKM bookkeeping
+ * for module bookkeeping
  */
 struct cfattachlkminit {
 	const char *cfai_name;		/* driver name */

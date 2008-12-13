@@ -1,4 +1,4 @@
-/*	$NetBSD: ath_netbsd.c,v 1.14.10.1 2008/10/19 22:16:25 haad Exp $ */
+/*	$NetBSD: ath_netbsd.c,v 1.14.10.2 2008/12/13 01:14:13 haad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004 David Young
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.14.10.1 2008/10/19 22:16:25 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath_netbsd.c,v 1.14.10.2 2008/12/13 01:14:13 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -74,7 +74,7 @@ device_printf(device_t dev, const char *fmt, ...)
 /*
  * Setup sysctl(3) MIB, hw.ath.*.
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_ath, "sysctl ath subtree setup")
 {

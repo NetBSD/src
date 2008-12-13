@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.55 2008/07/02 17:28:56 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.55.2.1 2008/12/13 01:13:16 haad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55.2.1 2008/12/13 01:13:16 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -214,12 +214,12 @@ consinit()
 		ws_cnattach();
 	}
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern char end[];
 		extern int *esym;
 
-		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
 	}
 #endif
 #ifdef DDB
@@ -403,6 +403,8 @@ cpu_reboot(howto, bootstr)
 haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Finally, halt/reboot the system. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {

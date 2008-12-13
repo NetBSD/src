@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2006/06/06 15:41:50 christos Exp $
+#	$NetBSD: Makefile,v 1.17.70.1 2008/12/13 01:13:12 haad Exp $
 
 CPPFLAGS=	${APMCPPFLAGS}
 KSRC=${.CURDIR}/../../..
@@ -35,7 +35,7 @@ biostramp.bin: biostramp.obj
 	cp $? $@
 	@${STRIP} $@
 	@${HOST_SH} ${.CURDIR}/rmaouthdr $@ $@.tmp
-	@if [ `ls -l $@.tmp |awk '{print $$5}'` -gt 4096 ]; then \
+	@if [ `ls -l $@.tmp | ${TOOL_AWK} '{print $$5}'` -gt 4096 ]; then \
 		echo "$@ too big"; \
 		exit 1; \
 	fi

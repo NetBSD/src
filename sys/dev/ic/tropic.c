@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.34 2008/04/08 12:07:27 cegger Exp $	*/
+/*	$NetBSD: tropic.c,v 1.34.10.1 2008/12/13 01:14:14 haad Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.34 2008/04/08 12:07:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.34.10.1 2008/12/13 01:14:14 haad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1525,10 +1525,7 @@ struct ifnet *ifp;
  *  tr_ioctl - process an ioctl request
  */
 int
-tr_ioctl(ifp, cmd, data)
-struct ifnet *ifp;
-u_long cmd;
-void *data;
+tr_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct tr_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
@@ -1539,68 +1536,65 @@ void *data;
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if ((error = tr_enable(sc)) != 0)
 			break;
 
+		/* XXX if not running  */
+		if ((ifp->if_flags & IFF_RUNNING) == 0) {
+			tr_init(sc);   /* before arp_ifinit/arpwhohas */
+			tr_sleep(sc);
+		}
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-		/* XXX if not running  */
-			if ((ifp->if_flags & IFF_RUNNING) == 0) {
-				tr_init(sc);   /* before arp_ifinit */
-				tr_sleep(sc);
-			}
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /*INET*/
 		default:
-			/* XXX if not running */
-			if ((ifp->if_flags & IFF_RUNNING) == 0) {
-				tr_init(sc);   /* before arpwhohas */
-				tr_sleep(sc);
-			}
 			break;
 		}
 		break;
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		/*
 		 * 1- If the adapter is DOWN , turn the device off
 		 *       ie. adapter down but still running
 		 * 2- If the adapter is UP, turn the device on
 		 *       ie. adapter up but not running yet
 		 */
-		if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == IFF_RUNNING) {
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			tr_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 			tr_disable(sc);
-		}
-		else if ((ifp->if_flags & (IFF_RUNNING | IFF_UP)) == IFF_UP) {
+			break;
+		case IFF_UP:
 			if ((error = tr_enable(sc)) != 0)
 				break;
 			tr_init(sc);
 			tr_sleep(sc);
-		}
-		else {
-/*
- * XXX handle other flag changes
- */
+			break;
+		default:
+			/*
+			 * XXX handle other flag changes
+			 */
+			break;
 		}
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
-#ifdef SIOCSIFMTU
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > sc->sc_maxmtu)
 			error = EINVAL;
 		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
 			error = 0;
 		break;
-#endif
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 	}
 	splx(s);
 	return (error);

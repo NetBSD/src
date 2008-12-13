@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.4 2007/08/20 04:49:41 skd Exp $	*/
+/*	$NetBSD: sockio.h,v 1.4.34.1 2008/12/13 01:14:07 haad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -39,7 +39,7 @@
 #if defined(COMPAT_09) || defined(COMPAT_10) || defined(COMPAT_11) || \
     defined(COMPAT_12) || defined(COMPAT_13) || defined(COMPAT_14) || \
     defined(COMPAT_15) || defined(COMPAT_16) || defined(COMPAT_20) || \
-    defined(COMPAT_30) || defined(COMPAT_40)
+    defined(COMPAT_30) || defined(COMPAT_40) || defined(MODULAR)
 #define COMPAT_OIFREQ
 #endif
 

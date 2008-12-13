@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.7 2008/04/16 18:41:48 cegger Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.7.10.1 2008/12/13 01:13:43 haad Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.7 2008/04/16 18:41:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.7.10.1 2008/12/13 01:13:43 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.7 2008/04/16 18:41:48 cegger Exp 
 #include <sys/proc.h>
 #include <sys/systm.h>
 
+#include <xen/xen.h>	/* for xendomain_is_dom0() */
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
 #include <xen/xenbus.h>
@@ -75,8 +76,7 @@ xenstore_domain_interface(void)
 static int
 wake_waiting(void *arg)
 {
-	if (__predict_false(xenstored_ready == 0 &&
-	    xen_start_info.flags & SIF_INITDOMAIN)) {
+	if (__predict_false(xenstored_ready == 0 && xendomain_is_dom0())) {
 		xenstored_ready = 1; 
 		wakeup(&xenstored_ready);
 	} 
@@ -215,7 +215,7 @@ xb_read(void *data, unsigned len)
 	return 0;
 }
 
-/* Set up interrupt handler off store event channel. */
+/* Set up interrupt handler of store event channel. */
 int
 xb_init_comms(device_t dev)
 {
@@ -227,11 +227,11 @@ xb_init_comms(device_t dev)
 	err = event_set_handler(xen_start_info.store_evtchn, wake_waiting,
 	    NULL, IPL_TTY, "xenbus");
 	if (err) {
-		printf("XENBUS request irq failed %i\n", err);
+		aprint_error_dev(dev, "request irq failed %i\n", err);
 		return err;
 	}
 	xenbus_irq = xen_start_info.store_evtchn;
-	printf("%s: using event channel %d\n", device_xname(dev), xenbus_irq);
+	aprint_verbose_dev(dev, "using event channel %d\n", xenbus_irq);
 	hypervisor_enable_event(xenbus_irq);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.185 2008/07/02 17:28:56 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.185.2.1 2008/12/13 01:13:33 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 2008/07/02 17:28:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185.2.1 2008/12/13 01:13:33 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -179,12 +179,12 @@ consinit(void)
 	 */
 	cninit();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern int nsym;
 		extern char *ssym, *esym;
 
-		ksyms_init(nsym, ssym, esym);
+		ksyms_addsyms_elf(nsym, ssym, esym);
 	}
 #endif /* DDB */
 
@@ -458,6 +458,8 @@ cpu_reboot(int howto, char *user_boot_string)
 	/* run any shutdown hooks */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	if (howto & RB_HALT) {
 	haltsys:
 		printf("halted.\n");
@@ -672,7 +674,7 @@ dumpsys(void)
 		chunk = todo;
 	do {
 		if ((todo & 0xf) == 0)
-			printf("\r%4d", todo);
+			printf_nolog("\r%4d", todo);
 		vaddr = (char*)(paddr + KERNBASE);
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, PAGE_SIZE);
 		if (error)
@@ -686,7 +688,7 @@ dumpsys(void)
 	vaddr = (char*)vmmap;	/* Borrow /dev/mem VA */
 	do {
 		if ((todo & 0xf) == 0)
-			printf("\r%4d", todo);
+			printf_nolog("\r%4d", todo);
 		pmap_kenter_pa(vmmap, paddr | PMAP_NC, VM_PROT_READ);
 		pmap_update(pmap_kernel());
 		error = (*dsw->d_dump)(dumpdev, blkno, vaddr, PAGE_SIZE);

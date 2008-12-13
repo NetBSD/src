@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.96.2.1 2008/10/19 22:17:29 haad Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.96.2.2 2008/12/13 01:15:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.96.2.1 2008/10/19 22:17:29 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.96.2.2 2008/12/13 01:15:09 haad Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -252,10 +252,10 @@ sonewconn(struct socket *head, int connstatus)
 		connstatus = 0;
 	soqueue = connstatus ? 1 : 0;
 	if (head->so_qlen + head->so_q0len > 3 * head->so_qlimit / 2)
-		return ((struct socket *)0);
+		return NULL;
 	so = soget(false);
 	if (so == NULL)
-		return (NULL);
+		return NULL;
 	mutex_obj_hold(head->so_lock);
 	so->so_lock = head->so_lock;
 	so->so_type = head->so_type;
@@ -296,14 +296,14 @@ sonewconn(struct socket *head, int connstatus)
 		if (so->so_accf != NULL)
 			(void)accept_filt_clear(so);
 		soput(so);
-		return (NULL);
+		return NULL;
 	}
 	if (connstatus) {
 		sorwakeup(head);
 		cv_broadcast(&head->so_cv);
 		so->so_state |= connstatus;
 	}
-	return (so);
+	return so;
 }
 
 struct socket *

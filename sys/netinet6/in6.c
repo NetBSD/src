@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.140.10.1 2008/10/19 22:17:52 haad Exp $	*/
+/*	$NetBSD: in6.c,v 1.140.10.2 2008/12/13 01:15:27 haad Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.140.10.1 2008/10/19 22:17:52 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.140.10.2 2008/12/13 01:15:27 haad Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -736,10 +736,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 	}
 
 	default:
-		if (ifp == NULL || ifp->if_ioctl == 0)
-			return EOPNOTSUPP;
-		error = ((*ifp->if_ioctl)(ifp, cmd, data));
-		return error;
+		return ENOTTY;
 	}
 
 	return 0;
@@ -1705,8 +1702,8 @@ in6_ifinit(struct ifnet *ifp, struct in6_ifaddr *ia,
 
 	ia->ia_addr = *sin6;
 
-	if (ifacount <= 1 && ifp->if_ioctl &&
-	    (error = (*ifp->if_ioctl)(ifp, SIOCSIFADDR, (void *)ia))) {
+	if (ifacount <= 1 && 
+	    (error = (*ifp->if_ioctl)(ifp, SIOCINITIFADDR, ia)) != 0) {
 		splx(s);
 		return error;
 	}

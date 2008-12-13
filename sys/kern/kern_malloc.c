@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.119.10.1 2008/10/19 22:17:27 haad Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.119.10.2 2008/12/13 01:15:08 haad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.119.10.1 2008/10/19 22:17:27 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.119.10.2 2008/12/13 01:15:08 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -192,6 +192,13 @@ struct malloclog {
 
 long	malloclogptr;
 
+/*
+ * Fuzz factor for neighbour address match this must be a mask of the lower
+ * bits we wish to ignore when comparing addresses
+ */
+__uintptr_t malloclog_fuzz = 0x7FL;
+
+
 static void
 domlog(void *a, long size, struct malloc_type *type, int action,
     const char *file, long line)
@@ -227,11 +234,41 @@ hitmlog(void *a)
 	} \
 } while (/* CONSTCOND */0)
 
-	for (l = malloclogptr; l < MALLOCLOGSIZE; l++)
-		PRT;
+/*
+ * Print fuzzy matched "neighbour" - look for the memory block that has
+ * been allocated below the address we are interested in.  We look for a
+ * base address + size that is within malloclog_fuzz of our target
+ * address. If the base address and target address are the same then it is
+ * likely we have found a free (size is 0 in this case) so we won't report
+ * those, they will get reported by PRT anyway.
+ */
+#define	NPRT do { \
+	__uintptr_t fuzz_mask = ~(malloclog_fuzz); \
+	lp = &malloclog[l]; \
+	if ((__uintptr_t)lp->addr != (__uintptr_t)a && \
+	    (((__uintptr_t)lp->addr + lp->size + malloclog_fuzz) & fuzz_mask) \
+	    == ((__uintptr_t)a & fuzz_mask) && lp->action) {		\
+		printf("neighbour malloc log entry %ld:\n", l); \
+		printf("\taddr = %p\n", lp->addr); \
+		printf("\tsize = %ld\n", lp->size); \
+		printf("\ttype = %s\n", lp->type->ks_shortdesc); \
+		printf("\taction = %s\n", lp->action == 1 ? "alloc" : "free"); \
+		printf("\tfile = %s\n", lp->file); \
+		printf("\tline = %ld\n", lp->line); \
+	} \
+} while (/* CONSTCOND */0)
 
-	for (l = 0; l < malloclogptr; l++)
+	for (l = malloclogptr; l < MALLOCLOGSIZE; l++) {
 		PRT;
+		NPRT;
+	}
+
+
+	for (l = 0; l < malloclogptr; l++) {
+		PRT;
+		NPRT;
+	}
+
 #undef PRT
 }
 #endif /* MALLOCLOG */
@@ -311,8 +348,9 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 #endif
 #ifdef MALLOC_DEBUG
 	if (debug_malloc(size, ksp, flags, (void *) &va)) {
-		if (va != 0)
+		if (va != 0) {
 			FREECHECK_OUT(&malloc_freecheck, (void *)va);
+		}
 		return ((void *) va);
 	}
 #endif

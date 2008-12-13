@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.19.2.1 2008/10/19 22:16:00 haad Exp $ */
+/*	$NetBSD: syscall.c,v 1.19.2.2 2008/12/13 01:13:26 haad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19.2.1 2008/10/19 22:16:00 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19.2.2 2008/12/13 01:13:26 haad Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19.2.1 2008/10/19 22:16:00 haad Exp $"
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/ktrace.h>
 
 #include <uvm/uvm_extern.h>
@@ -240,7 +241,7 @@ syscall_plain(register_t code, struct trapframe *tf, register_t pc)
 		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
 #endif
 
-	error = (*callp->sy_call)(l, &args, rval.o);
+	error = sy_call(callp, l, &args, rval.o);
 
 	switch (error) {
 	case 0:
@@ -324,7 +325,7 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 		l->l_savp->savp_pflags &= ~SAVP_FLAG_DELIVERING;
 #endif
 
-	error = (*callp->sy_call)(l, &args, rval.o);
+	error = sy_call(callp, l, &args, rval.o);
 
 out:
 	switch (error) {

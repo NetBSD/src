@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.24.8.1 2008/10/19 22:15:39 haad Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.24.8.2 2008/12/13 01:12:58 haad Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.24.8.1 2008/10/19 22:15:39 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.24.8.2 2008/12/13 01:12:58 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -9,12 +9,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.24.8.1 2008/10/19 22:15:39 haa
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/psl.h>
-#define SA_NO_USERRET
 #include <machine/userret.h>
 
 #include <compat/linux32/linux32_syscall.h>
@@ -81,7 +81,7 @@ linux32_syscall(frame)
 	rval[0] = 0;
 	rval[1] = 0;
 
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:

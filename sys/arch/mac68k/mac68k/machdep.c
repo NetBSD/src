@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.321.2.1 2008/10/19 22:15:51 haad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.321.2.2 2008/12/13 01:13:17 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.321.2.1 2008/10/19 22:15:51 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.321.2.2 2008/12/13 01:13:17 haad Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -146,6 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.321.2.1 2008/10/19 22:15:51 haad Exp $
 #endif
 #define ELFSIZE 32
 #include <sys/exec_elf.h>
+#include <sys/device.h>
 
 #include <m68k/cacheops.h>
 
@@ -376,12 +377,12 @@ consinit(void)
 #if NZSC > 0 && defined(KGDB)
 		zs_kgdb_init();
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 		/*
 		 * Initialize kernel debugger, if compiled in.
 		 */
 
-		ksyms_init(symsize, ssym, esym);
+		ksyms_addsyms_elf(symsize, ssym, esym);
 #endif
 
 		if (boothowto & RB_KDB) {
@@ -546,6 +547,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		/* First try to power down under VIA control. */

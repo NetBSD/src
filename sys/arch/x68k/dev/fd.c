@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.85 2008/06/29 09:44:11 isaki Exp $	*/
+/*	$NetBSD: fd.c,v 1.85.2.1 2008/12/13 01:13:38 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.85 2008/06/29 09:44:11 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.85.2.1 2008/12/13 01:13:38 haad Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -699,7 +699,7 @@ void
 fdstart(struct fd_softc *fd)
 {
 	struct fdc_softc *fdc = device_private(device_parent(fd->sc_dev));
-	int active = fdc->sc_drives.tqh_first != 0;
+	int active = !TAILQ_EMPTY(&fdc->sc_drives);
 
 	/* Link into controller queue. */
 	fd->sc_active = 1;
@@ -722,7 +722,7 @@ fdfinish(struct fd_softc *fd, struct buf *bp)
 	 * startup delay whenever we switch.
 	 */
 	(void)BUFQ_GET(fd->sc_q);
-	if (fd->sc_drivechain.tqe_next && ++fd->sc_ops >= 8) {
+	if (TAILQ_NEXT(fd, sc_drivechain) && ++fd->sc_ops >= 8) {
 		fd->sc_ops = 0;
 		TAILQ_REMOVE(&fdc->sc_drives, fd, sc_drivechain);
 		if (BUFQ_PEEK(fd->sc_q) != NULL) {
@@ -801,7 +801,7 @@ fd_motor_on(void *arg)
 
 	s = splbio();
 	fd->sc_flags &= ~FD_MOTOR_WAIT;
-	if ((fdc->sc_drives.tqh_first == fd) && (fdc->sc_state == MOTORWAIT))
+	if ((TAILQ_FIRST(&fdc->sc_drives) == fd) && (fdc->sc_state == MOTORWAIT))
 		(void) fdcintr(fdc);
 	splx(s);
 }
@@ -981,7 +981,7 @@ void
 fdctimeout(void *arg)
 {
 	struct fdc_softc *fdc = arg;
-	struct fd_softc *fd = fdc->sc_drives.tqh_first;
+	struct fd_softc *fd = TAILQ_FIRST(&fdc->sc_drives);
 	int s;
 
 	s = splbio();
@@ -1025,7 +1025,7 @@ fdcintr(void *arg)
 	struct fd_type *type;
 
 loop:
-	fd = fdc->sc_drives.tqh_first;
+	fd = TAILQ_FIRST(&fdc->sc_drives);
 	if (fd == NULL) {
 		DPRINTF(("fdcintr: set DEVIDLE\n"));
 		if (fdc->sc_state == DEVIDLE) {
@@ -1457,7 +1457,7 @@ fdcretry(struct fdc_softc *fdc)
 	char bits[64];
 
 	DPRINTF(("fdcretry:\n"));
-	fd = fdc->sc_drives.tqh_first;
+	fd = TAILQ_FIRST(&fdc->sc_drives);
 	bp = BUFQ_PEEK(fd->sc_q);
 
 	switch (fdc->sc_errors) {

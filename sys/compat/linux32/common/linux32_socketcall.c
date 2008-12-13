@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socketcall.c,v 1.6 2007/12/20 23:02:58 dsl Exp $ */
+/*	$NetBSD: linux32_socketcall.c,v 1.6.16.1 2008/12/13 01:13:57 haad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,9 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.6 2007/12/20 23:02:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.6.16.1 2008/12/13 01:13:57 haad Exp $");
 
-#include "opt_ktrace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -46,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.6 2007/12/20 23:02:58 dsl E
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>

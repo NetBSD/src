@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.146.6.1 2008/10/19 22:17:46 haad Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.146.6.2 2008/12/13 01:15:27 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.146.6.1 2008/10/19 22:17:46 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.146.6.2 2008/12/13 01:15:27 haad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -362,15 +362,14 @@ tcp_usrreq(struct socket *so, int req,
 	case PRU_LISTEN:
 #ifdef INET
 		if (inp && inp->inp_lport == 0) {
-			error = in_pcbbind(inp, (struct mbuf *)0, l);
+			error = in_pcbbind(inp, NULL, l);
 			if (error)
 				break;
 		}
 #endif
 #ifdef INET6
 		if (in6p && in6p->in6p_lport == 0) {
-			error = in6_pcbbind(in6p, (struct mbuf *)0,
-			    (struct lwp *)0);
+			error = in6_pcbbind(in6p, NULL, NULL);
 			if (error)
 				break;
 		}
@@ -389,7 +388,7 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET
 		if (inp) {
 			if (inp->inp_lport == 0) {
-				error = in_pcbbind(inp, (struct mbuf *)0, l);
+				error = in_pcbbind(inp, NULL, l);
 				if (error)
 					break;
 			}
@@ -399,8 +398,7 @@ tcp_usrreq(struct socket *so, int req,
 #ifdef INET6
 		if (in6p) {
 			if (in6p->in6p_lport == 0) {
-				error = in6_pcbbind(in6p, (struct mbuf *)0,
-				    (struct lwp *)0);
+				error = in6_pcbbind(in6p, NULL, NULL);
 				if (error)
 					break;
 			}

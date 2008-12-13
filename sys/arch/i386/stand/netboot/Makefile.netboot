@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile.netboot,v 1.6 2005/12/11 12:17:49 christos Exp $
+#	$NetBSD: Makefile.netboot,v 1.6.84.1 2008/12/13 01:13:15 haad Exp $
 
 NOMAN=	# defined
 
+PIE_CFLAGS=
+PIE_LDFLAGS=
+PIE_AFLAGS=
 .include "../Makefile.inc"
 
 S=	${.CURDIR}/../../../../../

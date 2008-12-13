@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.33 2007/07/21 19:21:53 ad Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.33.36.1 2008/12/13 01:15:41 haad Exp $	*/
 
 /*
  *
@@ -202,10 +202,10 @@ struct vm_amap {
  */
 
 /*
- * defines for handling of large sparce amaps:
+ * defines for handling of large, sparse amaps:
  *
  * one of the problems of array-based amaps is that if you allocate a
- * large sparcely-used area of virtual memory you end up allocating
+ * large, sparsely-used area of virtual memory you end up allocating
  * large arrays that, for the most part, don't get used.  this is a
  * problem for BSD in that the kernel likes to make these types of
  * allocations to "reserve" memory for possible future use.

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.165.2.1 2008/10/19 22:16:06 haad Exp $	 */
+/* $NetBSD: machdep.c,v 1.165.2.2 2008/12/13 01:13:34 haad Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.1 2008/10/19 22:16:06 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.165.2.2 2008/12/13 01:13:34 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -173,7 +173,9 @@ int iospace_inited = 0;
 void
 cpu_startup(void)
 {
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	vaddr_t		minaddr, maxaddr;
+#endif
 	extern paddr_t avail_end;
 	char pbuf[9];
 
@@ -197,9 +199,9 @@ cpu_startup(void)
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
 
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	minaddr = 0;
 
-#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
 	/*
 	 * Allocate a submap for physio.  This map effectively limits the
 	 * number of processes doing physio at any one time.
@@ -320,9 +322,9 @@ consinit(void)
 	iospace_inited = 1;
 #endif
 	cninit();
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (symtab_start != NULL && symtab_nsyms != 0 && symtab_end != NULL) {
-		ksyms_init(symtab_nsyms, symtab_start, symtab_end);
+		ksyms_addsyms_elf(symtab_nsyms, symtab_start, symtab_end);
 	}
 #endif
 #ifdef DEBUG
@@ -349,6 +351,7 @@ cpu_reboot(int howto, char *b)
 	splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		if (dep_call->cpu_halt)
 			(*dep_call->cpu_halt) ();
 		printf("halting (in tight loop); hit\n\t^P\n\tHALT\n\n");

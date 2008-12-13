@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.24 2008/04/29 22:21:45 scw Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.24.6.1 2008/12/13 01:14:14 haad Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.24 2008/04/29 22:21:45 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.24.6.1 2008/12/13 01:14:14 haad Exp $");
 
 #include "bpfilter.h"
 
@@ -1931,6 +1931,8 @@ rt2661_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING)
 				rt2661_update_promisc(sc);

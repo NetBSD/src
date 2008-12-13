@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.54 2007/12/26 16:01:34 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.54.16.1 2008/12/13 01:13:17 haad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -113,14 +113,14 @@ struct segtab {
 /*
  * Machine dependent pmap structure.
  */
-typedef struct pmap {
+struct pmap {
 	int			pm_count;	/* pmap reference count */
 	kmutex_t		pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	unsigned		pm_asid;	/* TLB address space tag */
 	unsigned		pm_asidgen;	/* its generation number */
 	struct segtab		*pm_segtab;	/* pointers to pages of PTEs */
-} *pmap_t;
+};
 
 /*
  * For each struct vm_page, there is a list of all currently valid virtual
@@ -142,9 +142,7 @@ typedef struct pv_entry {
 #ifdef	_KERNEL
 
 extern char *pmap_attributes;		/* reference and modify bits */
-extern struct pmap kernel_pmap_store;
 
-#define pmap_kernel()		(&kernel_pmap_store)
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap) ((pmap)->pm_stats.resident_count)
 

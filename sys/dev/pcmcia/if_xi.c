@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.64 2008/04/05 21:31:23 cegger Exp $ */
+/*	$NetBSD: if_xi.c,v 1.64.10.1 2008/12/13 01:14:48 haad Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.64 2008/04/05 21:31:23 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.64.10.1 2008/12/13 01:14:48 haad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -914,23 +914,22 @@ xi_ether_ioctl(ifp, cmd, data)
 	DPRINTF(XID_CONFIG, ("xi_ether_ioctl()\n"));
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if ((error = xi_enable(sc)) != 0)
 			break;
 
 		ifp->if_flags |= IFF_UP;
 
+		xi_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			xi_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif	/* INET */
 
 
 		default:
-			xi_init(sc);
 			break;
 		}
 		break;
@@ -943,10 +942,7 @@ xi_ether_ioctl(ifp, cmd, data)
 }
 
 STATIC int
-xi_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+xi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct xi_softc *sc = ifp->if_softc;
 	int s, error = 0;
@@ -956,13 +952,16 @@ xi_ioctl(ifp, cmd, data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		error = xi_ether_ioctl(ifp, cmd, data);
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
 			 * stop it.
@@ -970,8 +969,8 @@ xi_ioctl(ifp, cmd, data)
 			xi_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 			xi_disable(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped,
 			 * start it.
@@ -979,12 +978,16 @@ xi_ioctl(ifp, cmd, data)
 			if ((error = xi_enable(sc)) != 0)
 				break;
 			xi_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			break;
+		case IFF_UP|IFF_RUNNING:
 			/*
 			 * Reset the interface to pick up changes in any
 			 * other flags that affect hardware registers.
 			 */
 			xi_set_address(sc);
+			break;
+		case 0:
+			break;
 		}
 		break;
 
@@ -1009,7 +1012,7 @@ xi_ioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 

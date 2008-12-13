@@ -1,4 +1,4 @@
-/*	com.c,v 1.262.2.3 2008/01/09 01:52:50 matt Exp	*/
+/* $NetBSD: com.c,v 1.281.6.2 2008/12/13 01:14:14 haad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "com.c,v 1.262.2.3 2008/01/09 01:52:50 matt Exp");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.281.6.2 2008/12/13 01:14:14 haad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -404,6 +404,12 @@ com_attach_subr(struct com_softc *sc)
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		goto fifodelay;
  
+	case COM_TYPE_16550_NOERS:
+		sc->sc_fifolen = 16;
+		fifo_msg = "ns16650, no ERS, working fifo";
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		goto fifodelay;
+
  	case COM_TYPE_OMAP:
  		sc->sc_fifolen = 64;
  		fifo_msg = "OMAP UART, working fifo";
@@ -1454,10 +1460,11 @@ com_loadchannelregs(struct com_softc *sc)
 	}
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FLOW)) {
-		if (sc->sc_type != COM_TYPE_AU1x00) {	/* no EFR on alchemy */
-			CSR_WRITE_1(regsp, COM_REG_EFR, sc->sc_efr);
-			CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
-		}
+		KASSERT(sc->sc_type != COM_TYPE_AU1x00);
+		KASSERT(sc->sc_type != COM_TYPE_16550_NOERS);
+		/* no EFR on alchemy */
+		CSR_WRITE_1(regsp, COM_REG_EFR, sc->sc_efr);
+		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
 	}
 	if (sc->sc_type == COM_TYPE_AU1x00) {
 		/* alchemy has single separate 16-bit clock divisor register */
@@ -2146,9 +2153,11 @@ cominit(struct com_regs *regsp, int rate, int frequency, int type,
 
 	rate = comspeed(rate, frequency, type);
 	if (type != COM_TYPE_AU1x00) {
-		/* no EFR on alchemy */
-		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
-		CSR_WRITE_1(regsp, COM_REG_EFR, 0);
+		/* no EFR on alchemy */ 
+		if (type != COM_TYPE_16550_NOERS) {
+			CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
+			CSR_WRITE_1(regsp, COM_REG_EFR, 0);
+		}
 		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_DLAB);
 		CSR_WRITE_1(regsp, COM_REG_DLBL, rate & 0xff);
 		CSR_WRITE_1(regsp, COM_REG_DLBH, rate >> 8);

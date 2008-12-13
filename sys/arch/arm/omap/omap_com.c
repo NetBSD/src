@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_com.c,v 1.2 2008/03/14 15:09:09 cube Exp $	*/
+/*	$NetBSD: omap_com.c,v 1.2.10.1 2008/12/13 01:13:03 haad Exp $	*/
 
 /*
  * Based on arch/arm/xscale/pxa2x0_com.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_com.c,v 1.2 2008/03/14 15:09:09 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_com.c,v 1.2.10.1 2008/12/13 01:13:03 haad Exp $");
 
 #include "opt_com.h"
 
@@ -127,6 +127,6 @@ omapuart_attach(device_t parent, device_t self, void *aux)
 	com_attach_subr(sc);
 	aprint_naive("\n");
 
-	omap_intr_establish(tipb->tipb_intr, IPL_SERIAL, sc->sc_dev.dv_xname,
-			    comintr, sc);
+	omap_intr_establish(tipb->tipb_intr, IPL_SERIAL,
+	    device_xname(sc->sc_dev), comintr, sc);
 }

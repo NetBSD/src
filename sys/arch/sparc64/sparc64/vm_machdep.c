@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.80.10.1 2008/10/19 22:16:01 haad Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.80.10.2 2008/12/13 01:13:29 haad Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,10 +50,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.10.1 2008/10/19 22:16:01 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.80.10.2 2008/12/13 01:13:29 haad Exp $");
 
 #include "opt_multiprocessor.h"
-#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +161,21 @@ cpu_proc_fork(struct proc *p1, struct proc *p2)
 char cpu_forkname[] = "cpu_lwp_fork()";
 #endif
 
+inline void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	struct pcb *npcb = &l->l_addr->u_pcb;
+	struct rwindow *rp;
+
+	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (long)func;		/* Function to call */
+	rp->rw_local[1] = (long)arg;		/* and its argument */
+	rp->rw_local[2] = (long)l;		/* new lwp */
+
+	npcb->pcb_pc = (long)lwp_trampoline - 8;
+	npcb->pcb_sp = (long)rp - STACK_OFFSET;
+}
+
 /*
  * Finish a fork operation, with lwp l2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
@@ -263,33 +277,8 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	/* Construct kernel frame to return to in cpu_switch() */
 	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
 	*rp = *(struct rwindow *)((u_long)opcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (long)func;		/* Function to call */
-	rp->rw_local[1] = (long)arg;		/* and its argument */
-	rp->rw_local[2] = (long)l2;		/* newlwp */
 
-	npcb->pcb_pc = (long)lwp_trampoline - 8;
-	npcb->pcb_sp = (long)rp - STACK_OFFSET;
-
-#ifdef NOTDEF_DEBUG
-    {
-	char sbuf[sizeof(TSTATE_BITS) + 64];
-
-	bitmask_snprintf(tf2->tf_tstate, TSTATE_BITS, sbuf, sizeof(sbuf));
-
-	printf("cpu_lwp_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 
-	       (struct trapframe *)((u_long)opcb + USPACE - sizeof(*tf2)), tf2, rp, opcb, npcb);
-	printf("cpu_lwp_fork: tstate=%s pc=%x:%x npc=%x:%x rsp=%lx\n",
-	       sbuf,
-	       (uint)(tf2->tf_pc>>32), (uint)tf2->tf_pc,
-	       (uint)(tf2->tf_npc>>32), (uint)tf2->tf_npc, 
-	       (long)(tf2->tf_out[6]));
-	printf("cpu_lwp_fork: npcb_pc=%x:%x npcb_sp=%x:%x\n",
-	       (uint)(npcb->pcb_pc>>32), (uint)npcb->pcb_pc, 
-	       (uint)(npcb->pcb_sp>>32), (uint)npcb->pcb_sp);
-
-	Debugger();
-    }
-#endif
+	cpu_setfunc(l2, func, arg);
 }
 
 static inline void
@@ -364,106 +353,3 @@ cpu_lwp_free2(struct lwp *l)
 	if ((fs = l->l_md.md_fpstate) != NULL)
 		pool_cache_put(fpstate_cache, fs);
 }
-
-void
-cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
-{
-	struct pcb *npcb = &l->l_addr->u_pcb;
-	struct rwindow *rp;
-
-	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
-	rp->rw_local[0] = (long)func;		/* Function to call */
-	rp->rw_local[1] = (long)arg;		/* and its argument */
-	rp->rw_local[2] = (long)l;		/* new lwp */
-
-	npcb->pcb_pc = (long)lwp_trampoline - 8;
-	npcb->pcb_sp = (long)rp - STACK_OFFSET;
-}
-
-#ifdef COREDUMP
-/*
- * cpu_coredump is called to write a core dump header.
- * (should this be defined elsewhere?  machdep.c?)
- */
-int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
-{
-	int error;
-	struct md_coredump md_core;
-	struct coreseg cseg;
-
-	if (iocookie == NULL) {
-		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-		chdr->c_hdrsize = ALIGN(sizeof(*chdr));
-		chdr->c_seghdrsize = ALIGN(sizeof(cseg));
-		chdr->c_cpusize = sizeof(md_core);
-		chdr->c_nseg++;
-		return 0;
-	}
-
-	/* Copy important fields over. */
-	md_core.md_tf.tf_tstate = l->l_md.md_tf->tf_tstate;
-	md_core.md_tf.tf_pc = l->l_md.md_tf->tf_pc;
-	md_core.md_tf.tf_npc = l->l_md.md_tf->tf_npc;
-	md_core.md_tf.tf_y = l->l_md.md_tf->tf_y;
-	md_core.md_tf.tf_tt = l->l_md.md_tf->tf_tt;
-	md_core.md_tf.tf_pil = l->l_md.md_tf->tf_pil;
-	md_core.md_tf.tf_oldpil = l->l_md.md_tf->tf_oldpil;
-
-	md_core.md_tf.tf_global[0] = l->l_md.md_tf->tf_global[0];
-	md_core.md_tf.tf_global[1] = l->l_md.md_tf->tf_global[1];
-	md_core.md_tf.tf_global[2] = l->l_md.md_tf->tf_global[2];
-	md_core.md_tf.tf_global[3] = l->l_md.md_tf->tf_global[3];
-	md_core.md_tf.tf_global[4] = l->l_md.md_tf->tf_global[4];
-	md_core.md_tf.tf_global[5] = l->l_md.md_tf->tf_global[5];
-	md_core.md_tf.tf_global[6] = l->l_md.md_tf->tf_global[6];
-	md_core.md_tf.tf_global[7] = l->l_md.md_tf->tf_global[7];
-
-	md_core.md_tf.tf_out[0] = l->l_md.md_tf->tf_out[0];
-	md_core.md_tf.tf_out[1] = l->l_md.md_tf->tf_out[1];
-	md_core.md_tf.tf_out[2] = l->l_md.md_tf->tf_out[2];
-	md_core.md_tf.tf_out[3] = l->l_md.md_tf->tf_out[3];
-	md_core.md_tf.tf_out[4] = l->l_md.md_tf->tf_out[4];
-	md_core.md_tf.tf_out[5] = l->l_md.md_tf->tf_out[5];
-	md_core.md_tf.tf_out[6] = l->l_md.md_tf->tf_out[6];
-	md_core.md_tf.tf_out[7] = l->l_md.md_tf->tf_out[7];
-
-#ifdef DEBUG
-	md_core.md_tf.tf_local[0] = l->l_md.md_tf->tf_local[0];
-	md_core.md_tf.tf_local[1] = l->l_md.md_tf->tf_local[1];
-	md_core.md_tf.tf_local[2] = l->l_md.md_tf->tf_local[2];
-	md_core.md_tf.tf_local[3] = l->l_md.md_tf->tf_local[3];
-	md_core.md_tf.tf_local[4] = l->l_md.md_tf->tf_local[4];
-	md_core.md_tf.tf_local[5] = l->l_md.md_tf->tf_local[5];
-	md_core.md_tf.tf_local[6] = l->l_md.md_tf->tf_local[6];
-	md_core.md_tf.tf_local[7] = l->l_md.md_tf->tf_local[7];
-
-	md_core.md_tf.tf_in[0] = l->l_md.md_tf->tf_in[0];
-	md_core.md_tf.tf_in[1] = l->l_md.md_tf->tf_in[1];
-	md_core.md_tf.tf_in[2] = l->l_md.md_tf->tf_in[2];
-	md_core.md_tf.tf_in[3] = l->l_md.md_tf->tf_in[3];
-	md_core.md_tf.tf_in[4] = l->l_md.md_tf->tf_in[4];
-	md_core.md_tf.tf_in[5] = l->l_md.md_tf->tf_in[5];
-	md_core.md_tf.tf_in[6] = l->l_md.md_tf->tf_in[6];
-	md_core.md_tf.tf_in[7] = l->l_md.md_tf->tf_in[7];
-#endif
-	if (l->l_md.md_fpstate) {
-		fpusave_lwp(l, true);
-		md_core.md_fpstate = *l->l_md.md_fpstate;
-	} else
-		memset(&md_core.md_fpstate, 0,
-		      sizeof(md_core.md_fpstate));
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
-	if (error)
-		return error;
-
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
-}
-#endif

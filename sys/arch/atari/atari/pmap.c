@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105 2008/06/29 09:04:19 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105.2.1 2008/12/13 01:13:03 haad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2008/06/29 09:04:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105.2.1 2008/12/13 01:13:03 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,7 +269,8 @@ u_int		*Sysmap, *Sysptmap;
 u_int		*Segtabzero, *Segtabzeropa;
 vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
-struct pmap	kernel_pmap_store;
+static struct pmap	kernel_pmap_store;
+struct pmap		*const kernel_pmap_ptr = &kernel_pmap_store;
 struct vm_map	*pt_map;
 struct vm_map_kernel pt_map_store;
 
@@ -343,7 +344,6 @@ pa_to_attribute(paddr_t pa)
  * values are passed to pmap_bootstrap().
  */
 static u_int	atarihwaddr;
-static u_int	atarihwpg;
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -357,9 +357,9 @@ static u_int	atarihwpg;
  *	address of 0xFFxxxxxx.]
  */
 void
-pmap_bootstrap(kernel_size, hw_addr, hw_pages)
+pmap_bootstrap(kernel_size, hw_addr)
 psize_t	kernel_size;
-u_int	hw_addr, hw_pages;
+u_int	hw_addr;
 {
 	vaddr_t	va;
 	u_int	*pte;
@@ -368,8 +368,8 @@ u_int	hw_addr, hw_pages;
 	/*
 	 * Record start & size of I/O area for use by pmap_init()
 	 */
+
 	atarihwaddr = hw_addr;
-	atarihwpg   = hw_pages;
 
 	/*
 	 * Announce page-size to the VM-system
@@ -464,38 +464,8 @@ pmap_init()
 #endif
 
 #ifdef DEBUG
-	if (pmapdebug & PDB_FOLLOW)
+	if (pmapdebug & PDB_FOLLOW) {
 		printf("pmap_init()\n");
-#endif
-	/*
-	 * Now that kernel map has been allocated, we can mark as
-	 * unavailable regions which we have mapped in atari_init.c.
-	 */
-	addr = atarihwaddr;
-	if (uvm_map(kernel_map, &addr,
-		    ptoa(atarihwpg),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != 0)
-		goto bogons;
-	addr = (vaddr_t) Sysmap;
-	if (uvm_map(kernel_map, &addr, ATARI_KPTSIZE,
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
-				UVM_INH_NONE, UVM_ADV_RANDOM,
-				UVM_FLAG_FIXED)) != 0) {
-		/*
-		 * If this fails, it is probably because the static
-		 * portion of the kernel page table isn't big enough
-		 * and we overran the page table map.
-		 */
- bogons:
-		panic("pmap_init: bogons in the VM system!");
-	}
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_INIT) {
 		printf("pmap_init: Sysseg %p, Sysmap %p, Sysptmap %p\n",
 		       Sysseg, Sysmap, Sysptmap);
 		printf(" vstart %lx, vend %lx\n", virtual_avail, virtual_end);

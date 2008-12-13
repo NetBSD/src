@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.41.2.1 2008/10/19 22:18:06 haad Exp $	*/
+/*	$NetBSD: emul.c,v 1.41.2.2 2008/12/13 01:15:34 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -72,6 +72,7 @@ const int schedppq = 1;
 int hardclock_ticks;
 bool mp_online = false;
 struct vm_map *mb_map;
+struct timeval boottime;
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
@@ -236,18 +237,9 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	struct iovec *iov;
 	uint8_t *b = buf;
 	size_t cnt;
-	int rv;
 
 	if (uio->uio_vmspace != UIO_VMSPACE_SYS)
 		panic("%s: vmspace != UIO_VMSPACE_SYS", __func__);
-
-	/*
-	 * See if rump ubc code claims the offset.  This is of course
-	 * a blatant violation of abstraction levels, but let's keep
-	 * me simple & stupid for now.
-	 */
-	if (rump_ubc_magic_uiomove(buf, n, uio, &rv, NULL))
-		return rv;
 
 	while (n && uio->uio_resid) {
 		iov = uio->uio_iov;
@@ -386,6 +378,7 @@ struct kthdesc {
 	void (*f)(void *);
 	void *arg;
 	struct lwp *mylwp;
+	bool mpsafe;
 };
 
 static void *
@@ -400,6 +393,8 @@ threadbouncer(void *arg)
 	rumpuser_set_curlwp(k->mylwp);
 	kmem_free(k, sizeof(struct kthdesc));
 
+	if (!k->mpsafe)
+		KERNEL_LOCK(1, NULL);
 	f(thrarg);
 	panic("unreachable, should kthread_exit()");
 }
@@ -411,6 +406,16 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct kthdesc *k;
 	struct lwp *l;
 	int rv;
+
+	/*
+	 * We don't want a module unload thread.
+	 * (XXX: yes, this is a kludge too, and the kernel should
+	 * have a more flexible method for configuring which threads
+	 * we want).
+	 */
+	if (strcmp(fmt, "modunload") == 0) {
+		return 0;
+	}
 
 	if (!rump_threads) {
 		/* fake them */
@@ -434,6 +439,7 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k->f = func;
 	k->arg = arg;
 	k->mylwp = l = rump_setup_curlwp(0, rump_nextlid(), 0);
+	k->mpsafe = flags & KTHREAD_MPSAFE;
 	rv = rumpuser_thread_create(threadbouncer, k);
 	if (rv)
 		return rv;
@@ -447,6 +453,7 @@ void
 kthread_exit(int ecode)
 {
 
+	panic("FIXME: kthread_exit() does not support mpsafe locking");
 	rumpuser_thread_exit();
 }
 

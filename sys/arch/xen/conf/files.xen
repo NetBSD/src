@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.87.4.1 2008/10/19 22:16:12 haad Exp $
+#	$NetBSD: files.xen,v 1.87.4.2 2008/12/13 01:13:39 haad Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -33,7 +33,9 @@ defparam		PCI_CONF_MODE
 
 file	arch/xen/x86/autoconf.c
 ifdef i386
+file	arch/i386/i386/aout_machdep.c	exec_aout
 file	arch/i386/i386/busfunc.S
+file	arch/i386/i386/core_machdep.c	coredump
 file	arch/i386/i386/cpufunc.S
 file	arch/i386/i386/cpu_in_cksum.S   (inet | inet6) & cpu_in_cksum
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.164.4.1 2008/10/19 22:16:06 haad Exp $
+# $NetBSD: GENERIC,v 1.164.4.2 2008/12/13 01:13:33 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.164.4.1 $"
+#ident 		"GENERIC-$Revision: 1.164.4.2 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -116,7 +116,6 @@ file-system	PTYFS		# /dev/pts/N support
 
 options 	QUOTA
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER
@@ -157,7 +156,6 @@ options 	COMPAT_IBCS2	# DEC SVR.3 compatilibity
 #options 	NO_INSN_EMULATE	# CPU does not lack some hardware instructions.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
-options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

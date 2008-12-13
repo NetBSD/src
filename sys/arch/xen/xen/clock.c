@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.46 2008/04/21 15:15:34 cegger Exp $	*/
+/*	$NetBSD: clock.c,v 1.46.8.1 2008/12/13 01:13:43 haad Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46 2008/04/21 15:15:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.46.8.1 2008/12/13 01:13:43 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,11 +308,19 @@ static int
 xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 {
 #ifdef DOM0OPS
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 	dom0_op_t op;
+#else
+	xen_platform_op_t op;
+#endif
 	int s;
 
-	if (xen_start_info.flags & SIF_PRIVILEGED) {
+	if (xendomain_is_privileged()) {
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 		op.cmd = DOM0_SETTIME;
+#else
+		op.cmd = XENPF_settime;
+#endif
 		/* XXX is rtc_offset handled correctly everywhere? */
 		op.u.settime.secs	 = tvp->tv_sec;
 #ifdef XEN3
@@ -323,7 +331,11 @@ xen_rtc_set(todr_chip_handle_t todr, volatile struct timeval *tvp)
 		s = splhigh();
 		op.u.settime.system_time = get_system_time();
 		splx(s);
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 		HYPERVISOR_dom0_op(&op);
+#else
+		HYPERVISOR_platform_op(&op);
+#endif
 	}
 #endif
 
@@ -462,7 +474,7 @@ xen_initclocks(void)
 
 #ifdef DOM0OPS
 	xen_timepush_ticks = 53 * hz + 3; /* avoid exact # of min/sec */
-	if (xen_start_info.flags & SIF_PRIVILEGED) {
+	if (xendomain_is_privileged()) {
 		sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
 		    CTLTYPE_INT, "xen_timepush_ticks", SYSCTL_DESCR("How often"
 		    " to update the hypervisor's time-of-day; 0 to disable"),

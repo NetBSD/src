@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69 2008/06/21 13:20:46 tsutsui Exp $
+	$NetBSD: syscalls.master,v 1.69.2.1 2008/12/13 01:14:04 haad Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -32,10 +32,7 @@
 ; #include's are copied to the syscall names and switch definition files only.
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "opt_sysv.h"
-
-#include "fs_nfs.h"
 #endif
 
 #include <sys/param.h>
@@ -249,11 +246,7 @@
 153	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
 154	UNIMPL
-#ifdef NFSSERVER
 155	STD		{ int sunos_sys_nfssvc(int fd); }
-#else
-155	UNIMPL
-#endif
 156	NOARGS		{ int compat_12_sys_getdirentries(int fd, char *buf, \
 			    u_int count, long *basep); }
 157	STD		{ int sunos_sys_statfs(const char *path, \
@@ -261,13 +254,8 @@
 158	STD		{ int sunos_sys_fstatfs(int fd, \
 			    struct sunos_statfs *buf); }
 159	STD		{ int sunos_sys_unmount(char *path); }
-#ifdef NFS
 160	NOARGS		{ int async_daemon(void); }
 161	NOARGS		{ int compat_30_sys_getfh(char *fname, fhandle_t *fhp); }
-#else
-160	UNIMPL
-161	UNIMPL
-#endif
 162	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
 			    int len); }
 163	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.199.2.1 2008/10/19 22:15:45 haad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.199.2.2 2008/12/13 01:13:11 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199.2.1 2008/10/19 22:15:45 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199.2.2 2008/12/13 01:13:11 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -289,12 +289,12 @@ consinit(void)
 	if (bootinfo_va == 0)
 		printf("WARNING: boot loader did not provide bootinfo\n");
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern int end;
 		extern int *esym;
 
-		ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
 	}
 #endif
@@ -664,6 +664,8 @@ cpu_reboot(int howto, char *bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {

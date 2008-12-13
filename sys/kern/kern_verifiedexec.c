@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_verifiedexec.c,v 1.108.10.1 2008/10/19 22:17:28 haad Exp $	*/
+/*	$NetBSD: kern_verifiedexec.c,v 1.108.10.2 2008/12/13 01:15:08 haad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.108.10.1 2008/10/19 22:17:28 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_verifiedexec.c,v 1.108.10.2 2008/12/13 01:15:08 haad Exp $");
 
 #include "opt_veriexec.h"
 
@@ -726,7 +726,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	struct veriexec_file_entry *vfe;
 	int r;
 
-	if (veriexec_bypass)
+	if (veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
 		return 0;
 
 	r = veriexec_file_verify(l, vp, name, flag, VERIEXEC_UNLOCKED, &vfe);
@@ -823,7 +823,7 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 	struct veriexec_file_entry *vfe;
 	int error;
 
-	if (veriexec_bypass)
+	if (veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
 		return 0;
 
 	rw_enter(&veriexec_op_lock, RW_READER);
@@ -865,7 +865,7 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 {
 	struct veriexec_file_entry *vfe, *tvfe;
 
-	if (veriexec_bypass)
+	if (veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
 		return 0;
 
 	rw_enter(&veriexec_op_lock, RW_READER);
@@ -1416,7 +1416,8 @@ veriexec_unmountchk(struct mount *mp)
 {
 	int error;
 
-	if (veriexec_bypass || doing_shutdown)
+	if ((veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
+	    || doing_shutdown)
 		return (0);
 
 	rw_enter(&veriexec_op_lock, RW_READER);
@@ -1468,7 +1469,7 @@ veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 	struct veriexec_file_entry *vfe = NULL;
 	int error = 0;
 
-	if (veriexec_bypass)
+	if (veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
 		return 0;
 
 	if (vp == NULL) {
