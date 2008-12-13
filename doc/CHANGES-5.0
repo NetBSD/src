@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.52 2008/12/10 22:31:48 snj Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.53 2008/12/13 21:47:41 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1513,4 +1513,79 @@ sys/fs/udf/udf_strat_rmw.c			1.15, 1.15
 	Remove ancient IPL_BIO reference from the time it was called from
 	interrupt context instead of the current soft interrupt.
 	[reinoud, ticket #174]
+
+sys/arch/amiga/dev/siop.c			1.59
+sys/arch/amiga/dev/siop2.c			1.31
+
+	Deal with unrecognized SCSI message byte - restart script to
+	clear the ACK.  No longer hangs the driver when an unhandled
+	message byte is seen.
+	[mhitch, ticket #175]
+
+sys/Makefile					1.73 via patch
+
+	Traverse rump for a make cleandir.
+	[veego, ticket #176]
+
+external/mit/xorg/Makefile			1.5
+
+	Do not enter all the lib/* directories here, only enter lib, because
+	lib/Makefile has the correct order and .WAIT stop points.
+	[tron, ticket #177]
+
+external/mit/xorg/lib/Makefile			1.8
+
+	Move the build of libXi back to a point where libXext is definitely
+	built (i.e. behind the next .WAIT).
+	[hubertf, ticket #178]
+
+share/man/man9/signal.9				1.18
+
+	Fix two typos in function name.
+	[isaki, ticket #179]
+
+lib/libc/stdio/vswscanf.c			1.4
+
+	Initialize wcio for wide char i/o.
+	[tsutsui, ticket #180]
+
+sys/arch/macppc/dev/cuda.c			1.9
+sys/arch/macppc/dev/zs.c			1.48
+sys/arch/macppc/macppc/memory.c			1.2
+
+	Fix attach messages. (extra colons, misplaced newline etc.)
+	[tsutsui, ticket #182]
+
+sys/dev/ic/osiop.c				1.37
+
+	Sync with src/sys/arch/amiga/dev/siop.c rev 1.59:
+	Deal with unrecognized SCSI message byte - restart script to clear the
+	ACK.  No longer hangs the driver when an unhandled message byte is seen.
+	[tsutsui, ticket #183]
+
+sys/dev/ic/mc146818.c				1.17, 1.18
+
+	Fix possible 1 second spin on reading/updating clock.
+	Revert part of previous that reverted part of rev 1.14
+	which didn't affect the bug. (use __func__ to print function names)
+	[tsutsui, ticket #184]
+
+sys/dev/usb/umass.c				1.130
+sys/dev/usb/usbdi.c				1.125
+sys/dev/usb/usbdi.h				1.77
+
+	Fix PR#39651: two problems in umass:
+	 * usb xfers being freed before being removed from pipe,
+	 leading to null deref
+	 * config_activate requests not supported, which leads to
+	config_deactivate requests not being passed through.
+	  Spotted by jmcneill@=
+	Added mechanism to usbdi allowing the default pipe to be aborted
+	[jmorse, ticket #185]
+
+sys/dev/ic/ld_cac.c				1.23
+
+	PR kern/40099 device_t/softc split broke cac(4)/ld(4):
+	panic: iostat_unbusy
+	[mhitch, ticket #186]
 
