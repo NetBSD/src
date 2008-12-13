@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.100.2.11 2008/11/10 17:02:41 snj Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.100.2.12 2008/12/13 20:49:50 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.11 2008/11/10 17:02:41 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.100.2.12 2008/12/13 20:49:50 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1095,7 +1095,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		}
 	} else if (sc->sc_type >= WM_T_82571) {
 		sc->sc_flags |= WM_F_PCIE;
-		if ((sc->sc_type != WM_T_ICH8) || (sc->sc_type != WM_T_ICH9))
+		if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9))
 			sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
 		aprint_verbose("%s: PCI-Express bus\n", sc->sc_dev.dv_xname);
 	} else {
