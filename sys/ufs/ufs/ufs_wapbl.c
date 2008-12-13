@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.3 2008/12/08 11:37:37 pooka Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.4 2008/12/13 04:45:28 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.3 2008/12/08 11:37:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.4 2008/12/13 04:45:28 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -343,6 +343,11 @@ wapbl_ufs_rename(void *v)
 	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
 	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
 	if (newparent) {
+		/* Check for the rename("foo/foo", "foo") case. */
+		if (fdvp == tvp) {
+			error = doingdirectory ? ENOTEMPTY : EISDIR;
+			goto out;
+		}
 		vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 		if ((error = relookup(fdvp, &fvp, fcnp))) {
 			vput(fdvp);
