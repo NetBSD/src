@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.364 2008/12/05 18:20:19 dyoung Exp $ */
+/*	$NetBSD: wd.c,v 1.365 2008/12/13 19:38:20 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.364 2008/12/05 18:20:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.365 2008/12/13 19:38:20 christos Exp $");
 
 #include "opt_ata.h"
 
@@ -1644,7 +1644,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	wd->sc_wdc_bio.bcount = nblks * lp->d_secsize;
 	wd->sc_wdc_bio.databuf = va;
 #ifndef WD_DUMP_NOT_TRUSTED
-	switch (wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
+	switch (err = wd->atabus->ata_bio(wd->drvp, &wd->sc_wdc_bio)) {
 	case ATACMD_TRY_AGAIN:
 		panic("wddump: try again");
 		break;
@@ -1653,8 +1653,10 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		break;
 	case ATACMD_COMPLETE:
 		break;
+	default:
+		panic("wddump: unknown atacmd code %d", err);
 	}
-	switch(wd->sc_wdc_bio.error) {
+	switch(err = wd->sc_wdc_bio.error) {
 	case TIMEOUT:
 		printf("wddump: device timed out");
 		err = EIO;
@@ -1676,7 +1678,7 @@ wddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		err = 0;
 		break;
 	default:
-		panic("wddump: unknown error type");
+		panic("wddump: unknown error type %d", err); 
 	}
 	if (err != 0) {
 		printf("\n");
