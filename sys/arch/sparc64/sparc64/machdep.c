@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.231 2008/12/10 03:36:22 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.232 2008/12/13 04:53:09 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.231 2008/12/10 03:36:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.232 2008/12/13 04:53:09 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1681,9 +1681,9 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t	addr, bus_size_t size,
 	if (!(flags&BUS_SPACE_MAP_READONLY))
 		pm_prot |= VM_PROT_WRITE;
 
-	DPRINTF(BSDB_MAP, ("\n%s: type %x flags %x addr %016llx size "
-		"%016llx virt %llx paddr %016llx\n", __func__,
-		(int)t->type, (int) flags, (unsigned long long)addr,
+	DPRINTF(BSDB_MAP, ("\n%s: type %x flags %x addr %016llx prot %02x "
+		"size %016llx virt %llx paddr %016llx\n", __func__,
+		(int)t->type, (int)flags, (unsigned long long)addr, pm_prot,
 		(unsigned long long)size, (unsigned long long)hp->_ptr,
 		(unsigned long long)pa));
 
