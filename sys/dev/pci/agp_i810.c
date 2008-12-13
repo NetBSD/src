@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.60 2008/12/10 15:48:49 christos Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.61 2008/12/13 20:12:13 sketch Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.60 2008/12/10 15:48:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.61 2008/12/13 20:12:13 sketch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,10 +500,10 @@ static int agp_i810_init(struct agp_softc *sc)
 				gtt_size = 1024;
 				break;
 			case AGP_I965_PGTBL_SIZE_2MB:
-				gtt_size = 1024;
+				gtt_size = 2048;
 				break;
 			case AGP_I965_PGTBL_SIZE_1_5MB:
-				gtt_size = 1024;
+				gtt_size = 1024 + 512;
 				break;
 			default:
 				aprint_error("Bad PGTBL size\n");
