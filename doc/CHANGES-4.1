@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.116 2008/12/01 00:07:19 snj Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.117 2008/12/13 21:04:57 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -2516,4 +2516,24 @@ share/man/man7/symlink.7			1.13, 1.15 via patch
 	Remove description of ST_MAGICLINKS; it went away a long time
 	ago.  Fixes PR 36947.
 	[dholland, ticket #1244]
+
+sys/dev/pci/if_wm.c				1.163
+
+	Fixes nasty EEPROM-trashing bug on ich8 and ich9 chipsets
+	as described in
+	  http://mail-index.netbsd.org/current-users/2008/12/02/msg006435.html
+	[sketch, ticket #1246]
+
+sys/arch/amiga/dev/siop.c			1.59
+sys/arch/amiga/dev/siop2.c			1.31
+
+	Deal with unrecognized SCSI message byte - restart script to
+	clear the ACK.  No longer hangs the driver when an unhandled
+	message byte is seen.
+	[mhitch, ticket #1247]
+
+sys/dev/ic/mc146818.c				1.17 via patch
+
+	Fix possible 1 second spin on reading/updating clock.
+	[tsutsui, ticket #1248]
 
