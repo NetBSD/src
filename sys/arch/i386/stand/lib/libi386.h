@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.27 2008/11/19 12:36:41 ad Exp $	*/
+/*	$NetBSD: libi386.h,v 1.28 2008/12/13 23:30:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -55,6 +55,7 @@ void printmemlist(void);
 void reboot(void);
 void gateA20(void);
 
+void clear_pc_screen(void);
 void initio(int);
 #define CONSDEV_PC 0
 #define CONSDEV_COM0 1

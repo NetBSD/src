@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.1 2008/11/25 13:23:54 ad Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.2 2008/12/13 23:30:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ atoi(const char *in)
  * default: the default menu option to use if Return is pressed
  * consdev: the console device to use
  * format: how menu choices are displayed: (a)utomatic, (n)umbers or (l)etters
+ * clear: whether to clear the screen or not
  *
  * Example boot.cfg file:
  * banner=Welcome to NetBSD
@@ -214,6 +215,8 @@ parsebootconf(const char *conf)
 				bootconf.menuformat = MENUFORMAT_LETTER;
 				break;
 			}
+		} else if (!strncmp(key, "clear", 5)) {
+			bootconf.clear = !!atoi(value);
 		}
 	}
 	switch (bootconf.menuformat) {
