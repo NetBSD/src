@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.5 2008/12/13 08:07:23 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.6 2008/12/13 21:00:09 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -136,10 +136,10 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct schizo_softc *sc = (struct schizo_softc *)self;
 	struct mainbus_attach_args *ma = aux;
-	uint64_t eccctrl;
+	uint64_t eccctrl, csr;
 	char *str;
 
-	printf(": addr %lx ", ma->ma_reg[0].ur_paddr);
+	printf(": addr %lx", ma->ma_reg[0].ur_paddr);
 	str = prom_getpropstring(ma->ma_node, "compatible");
 	if (strcmp(str, "pci108e,a801") == 0)
 		sc->sc_tomatillo = 1;
@@ -148,7 +148,6 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = ma->ma_dmatag;
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_ctrl = ma->ma_reg[1].ur_paddr - 0x10000UL;
-	sc->sc_ign = INTIGN(ma->ma_upaid << INTMAP_IGN_SHIFT);
 	sc->sc_reg0 = ma->ma_reg[0];
 
 	if (bus_space_map(sc->sc_bustag, sc->sc_ctrl,
@@ -157,6 +156,10 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 		printf(": failed to map registers\n");
 		return;
 	}
+
+	csr = schizo_read(sc, SCZ_CONTROL_STATUS);
+	sc->sc_ign = ((csr & SCZ_CONTROL_STATUS_AID_MASK) >>
+		       SCZ_CONTROL_STATUS_AID_SHIFT);
 
 	/* enable schizo ecc error interrupts */
 	eccctrl = schizo_read(sc, SCZ_ECCCTRL);
@@ -475,9 +478,14 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 	struct intrhand *ih;
 	u_int64_t mapoff, clroff;
 
+	DPRINTF(SDB_INTR, ("%s: ino %x ign %x fn %p arg %p", __func__,
+	    ino, sc->sc_ign, handler, arg));
+
 	mapoff = offsetof(struct schizo_pbm_regs, imap[ino]);
 	clroff = offsetof(struct schizo_pbm_regs, iclr[ino]);
 	ino |= sc->sc_ign;
+
+	DPRINTF(SDB_INTR, (" mapoff %lx clroff %lx\n", mapoff, clroff));
 
 	ih = (struct intrhand *)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
@@ -693,7 +701,7 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	if (ih == NULL)
 		return (NULL);
 
-	DPRINTF(SDB_INTR, ("%s: ihandle %d level %d fn %p arg %p\n", __func__,
+	DPRINTF(SDB_INTR, ("\n%s: ihandle %d level %d fn %p arg %p\n", __func__,
 	    ihandle, level, handler, arg));
 
 	if (level == IPL_NONE)
@@ -703,14 +711,15 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 		level = 2;
 	}
 
-	DPRINTF(SDB_INTR, ("\n%s: intr %lx: %p\nHunting for IRQ...\n",
-	    __func__, (long)ino, intrlev[ino]));
-
 	mapoff = offsetof(struct schizo_pbm_regs, imap[ino]);
 	clroff = offsetof(struct schizo_pbm_regs, iclr[ino]);
 
+	DPRINTF(SDB_INTR, ("%s: intr %x: %p mapoff %lx clroff %lx\n",
+	    __func__, ino, intrlev[ino], mapoff, clroff));
+
 	intrmapptr = (uint64_t *)sc->sc_reg0.ur_paddr + mapoff;
 	intrclrptr = (uint64_t *)sc->sc_reg0.ur_paddr + clroff;
+
 	if (INTIGN(vec) == 0)
 		ino |= schizo_pbm_read(pbm, mapoff) & INTMAP_IGN;
 	else
@@ -723,11 +732,11 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
-	ih->ih_number = ino | pbm->sp_sc->sc_ign;
+	ih->ih_number = ino;
 
 	DPRINTF(SDB_INTR, (
-	    "; installing handler %p arg %p with ino %u pil %u\n",
-	    handler, arg, (u_int)ino, (u_int)ih->ih_pil));
+	    "; installing handler %p arg %p with inr %x pil %u\n",
+	    handler, arg, ino, (u_int)ih->ih_pil));
 
 	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
