@@ -1,4 +1,4 @@
-/*	$NetBSD: lstAppend.c,v 1.12 2006/10/27 21:37:25 dsl Exp $	*/
+/*	$NetBSD: lstAppend.c,v 1.13 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstAppend.c,v 1.12 2006/10/27 21:37:25 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstAppend.c,v 1.13 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstAppend.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstAppend.c,v 1.12 2006/10/27 21:37:25 dsl Exp $");
+__RCSID("$NetBSD: lstAppend.c,v 1.13 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: lstAppend.c,v 1.12 2006/10/27 21:37:25 dsl Exp $");
  *	A new ListNode is created and linked in to the List. The lastPtr
  *	field of the List will be altered if ln is the last node in the
  *	list. lastPtr and firstPtr will alter if the list was empty and
- *	ln was NILLNODE.
+ *	ln was NULL.
  *
  *-----------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ Lst_InsertAfter(Lst l, LstNode ln, ClientData d)
     ListNode	lNode;
     ListNode	nLNode;
 
-    if (LstValid (l) && (ln == NILLNODE && LstIsEmpty (l))) {
+    if (LstValid (l) && (ln == NULL && LstIsEmpty (l))) {
 	goto ok;
     }
 
@@ -96,11 +96,11 @@ Lst_InsertAfter(Lst l, LstNode ln, ClientData d)
     nLNode->datum = d;
     nLNode->useCount = nLNode->flags = 0;
 
-    if (lNode == NilListNode) {
+    if (lNode == NULL) {
 	if (list->isCirc) {
 	    nLNode->nextPtr = nLNode->prevPtr = nLNode;
 	} else {
-	    nLNode->nextPtr = nLNode->prevPtr = NilListNode;
+	    nLNode->nextPtr = nLNode->prevPtr = NULL;
 	}
 	list->firstPtr = list->lastPtr = nLNode;
     } else {
@@ -108,7 +108,7 @@ Lst_InsertAfter(Lst l, LstNode ln, ClientData d)
 	nLNode->nextPtr = lNode->nextPtr;
 
 	lNode->nextPtr = nLNode;
-	if (nLNode->nextPtr != NilListNode) {
+	if (nLNode->nextPtr != NULL) {
 	    nLNode->nextPtr->prevPtr = nLNode;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lstInt.h,v 1.16 2008/10/06 22:09:21 joerg Exp $	*/
+/*	$NetBSD: lstInt.h,v 1.17 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -58,8 +58,6 @@ typedef struct ListNode {
  */
 #define LN_DELETED  	0x0001      /* List node should be removed when done */
 
-#define NilListNode	((ListNode)-1)
-
 typedef enum {
     Head, Middle, Tail, Unknown
 } Where;
@@ -74,13 +72,11 @@ typedef struct	List {
  */
 	Where	  	atEnd;	  /* Where in the list the last access was */
 	Boolean	  	isOpen;	  /* true if list has been Lst_Open'ed */
-	ListNode  	curPtr;	  /* current node, if open. NilListNode if
+	ListNode  	curPtr;	  /* current node, if open. NULL if
 				   * *just* opened */
 	ListNode  	prevPtr;  /* Previous node, if open. Used by
 				   * Lst_Remove */
 } *List;
-
-#define NilList	  	((List)-1)
 
 /*
  * PAlloc (var, ptype) --
@@ -92,18 +88,18 @@ typedef struct	List {
  * LstValid (l) --
  *	Return TRUE if the list l is valid
  */
-#define LstValid(l)	((Lst)(l) != NILLST)
+#define LstValid(l)	((Lst)(l) != NULL)
 
 /*
  * LstNodeValid (ln, l) --
  *	Return TRUE if the LstNode ln is valid with respect to l
  */
-#define LstNodeValid(ln, l)	((ln) != NILLNODE)
+#define LstNodeValid(ln, l)	((ln) != NULL)
 
 /*
  * LstIsEmpty (l) --
  *	TRUE if the list l is empty.
  */
-#define LstIsEmpty(l)	(((List)(l))->firstPtr == NilListNode)
+#define LstIsEmpty(l)	(((List)(l))->firstPtr == NULL)
 
 #endif /* _LSTINT_H_ */

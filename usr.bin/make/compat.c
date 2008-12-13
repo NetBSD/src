@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.71 2008/02/15 21:29:50 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.72 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.71 2008/02/15 21:29:50 christos Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.72 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.71 2008/02/15 21:29:50 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.72 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -119,7 +119,7 @@ __RCSID("$NetBSD: compat.c,v 1.71 2008/02/15 21:29:50 christos Exp $");
 
 static char 	    meta[256];
 
-static GNode	    *curTarg = NILGNODE;
+static GNode	    *curTarg = NULL;
 static GNode	    *ENDNode;
 static void CompatInterrupt(int);
 
@@ -159,7 +159,7 @@ CompatInterrupt(int signo)
 {
     GNode   *gn;
 
-    if ((curTarg != NILGNODE) && !Targ_Precious (curTarg)) {
+    if ((curTarg != NULL) && !Targ_Precious (curTarg)) {
 	char	  *p1;
 	char 	  *file = Var_Value(TARGET, curTarg, &p1);
 
@@ -174,7 +174,7 @@ CompatInterrupt(int signo)
 	 */
 	if (signo == SIGINT) {
 	    gn = Targ_FindNode(".INTERRUPT", TARG_NOCREATE);
-	    if (gn != NILGNODE) {
+	    if (gn != NULL) {
 		Compat_Make(gn, gn);
 	    }
 	}
@@ -483,7 +483,7 @@ Compat_Make(ClientData gnp, ClientData pgnp)
 	    goto cohorts;
 	}
 
-	if (Lst_Member(gn->iParents, pgn) != NILLNODE) {
+	if (Lst_Member(gn->iParents, pgn) != NULL) {
 	    char *p1;
 	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
 	    if (p1)
@@ -543,7 +543,7 @@ Compat_Make(ClientData gnp, ClientData pgnp)
 	    if (!touchFlag || (gn->type & OP_MAKE)) {
 		curTarg = gn;
 		Lst_ForEach(gn->commands, CompatRunCommand, gn);
-		curTarg = NILGNODE;
+		curTarg = NULL;
 	    } else {
 		Job_Touch(gn, gn->type & OP_SILENT);
 	    }
@@ -577,7 +577,7 @@ Compat_Make(ClientData gnp, ClientData pgnp)
 	 */
 	pgn->flags &= ~REMAKE;
     } else {
-	if (Lst_Member(gn->iParents, pgn) != NILLNODE) {
+	if (Lst_Member(gn->iParents, pgn) != NULL) {
 	    char *p1;
 	    Var_Set(IMPSRC, Var_Value(TARGET, gn, &p1), pgn, 0);
 	    if (p1)
@@ -655,7 +655,7 @@ Compat_Run(Lst targs)
      */
     if (!queryFlag) {
 	gn = Targ_FindNode(".BEGIN", TARG_NOCREATE);
-	if (gn != NILGNODE) {
+	if (gn != NULL) {
 	    Compat_Make(gn, gn);
             if (gn->made == ERROR) {
                 PrintOnError("\n\nStop.");

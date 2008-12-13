@@ -1,4 +1,4 @@
-/*	$NetBSD: lstIsEmpty.c,v 1.10 2004/05/07 00:04:41 ross Exp $	*/
+/*	$NetBSD: lstIsEmpty.c,v 1.11 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstIsEmpty.c,v 1.10 2004/05/07 00:04:41 ross Exp $";
+static char rcsid[] = "$NetBSD: lstIsEmpty.c,v 1.11 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstIsEmpty.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstIsEmpty.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
+__RCSID("$NetBSD: lstIsEmpty.c,v 1.11 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -63,8 +63,8 @@ __RCSID("$NetBSD: lstIsEmpty.c,v 1.10 2004/05/07 00:04:41 ross Exp $");
  * Side Effects:
  *	None.
  *
- *	A list is considered empty if its firstPtr == NilListNode (or if
- *	the list itself is NILLIST).
+ *	A list is considered empty if its firstPtr == NULL (or if
+ *	the list itself is NULL).
  *-----------------------------------------------------------------------
  */
 Boolean

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.156 2008/12/13 14:26:10 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.157 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.156 2008/12/13 14:26:10 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.157 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.156 2008/12/13 14:26:10 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.157 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -921,7 +921,7 @@ main(int argc, char **argv)
 	Suff_Init();
 	Trace_Init(tracefile);
 
-	DEFAULT = NILGNODE;
+	DEFAULT = NULL;
 	(void)time(&now);
 
 	Trace_Log(MAKESTART, NULL);
@@ -934,7 +934,7 @@ main(int argc, char **argv)
 	if (!Lst_IsEmpty(create)) {
 		LstNode ln;
 
-		for (ln = Lst_First(create); ln != NILLNODE;
+		for (ln = Lst_First(create); ln != NULL;
 		    ln = Lst_Succ(ln)) {
 			char *name = (char *)Lst_Datum(ln);
 
@@ -989,7 +989,7 @@ main(int argc, char **argv)
 			Fatal("%s: no system rules (%s).", progname,
 			    _PATH_DEFSYSMK);
 		ln = Lst_Find(sysMkPath, NULL, ReadMakefile);
-		if (ln == NILLNODE)
+		if (ln == NULL)
 			Fatal("%s: cannot open %s.", progname,
 			    (char *)Lst_Datum(ln));
 	}
@@ -998,7 +998,7 @@ main(int argc, char **argv)
 		LstNode ln;
 
 		ln = Lst_Find(makefiles, NULL, ReadAllMakefiles);
-		if (ln != NILLNODE)
+		if (ln != NULL)
 			Fatal("%s: cannot open %s.", progname, 
 			    (char *)Lst_Datum(ln));
 	} else if (ReadMakefile(UNCONST("makefile"), NULL) != 0)
@@ -1077,7 +1077,7 @@ main(int argc, char **argv)
 	if (printVars) {
 		LstNode ln;
 
-		for (ln = Lst_First(variables); ln != NILLNODE;
+		for (ln = Lst_First(variables); ln != NULL;
 		    ln = Lst_Succ(ln)) {
 			char *var = (char *)Lst_Datum(ln);
 			char *value;
@@ -1128,9 +1128,9 @@ main(int argc, char **argv)
 	}
 
 #ifdef CLEANUP
-	Lst_Destroy(targs, NOFREE);
-	Lst_Destroy(variables, NOFREE);
-	Lst_Destroy(makefiles, NOFREE);
+	Lst_Destroy(targs, NULL);
+	Lst_Destroy(variables, NULL);
+	Lst_Destroy(makefiles, NULL);
 	Lst_Destroy(create, (FreeProc *)free);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.151 2008/11/29 17:50:11 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.152 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.151 2008/11/29 17:50:11 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.152 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.151 2008/11/29 17:50:11 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.152 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -222,7 +222,7 @@ static ParseSpecial specType;
 #define	LPAREN	'('
 #define	RPAREN	')'
 /*
- * Predecessor node for handling .ORDER. Initialized to NILGNODE when .ORDER
+ * Predecessor node for handling .ORDER. Initialized to NULL when .ORDER
  * seen, then set to each successive source on the line.
  */
 static GNode	*predecessor;
@@ -474,7 +474,7 @@ Parse_Error(int type, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	if (curFile == (IFile *)NIL) {
+	if (curFile == NULL) {
 		/* avoid segfault */
 		static IFile intFile = {
 		    NULL, 0, /* fd */ -1, 0, NULL, NULL, NULL, 0
@@ -496,7 +496,7 @@ Parse_Error(int type, const char *fmt, ...)
 	 * pointing to our dummy one.
 	 */
 	if (curFile->fname == NULL) {
-		curFile = (IFile *)NIL;
+		curFile = NULL;
 	}
 }
 
@@ -698,7 +698,7 @@ ParseDoSrc(int tOp, const char *src)
 	 * source and the current one.
 	 */
 	gn = Targ_FindNode(src, TARG_CREATE);
-	if (predecessor != NILGNODE) {
+	if (predecessor != NULL) {
 	    (void)Lst_AtEnd(predecessor->order_succ, gn);
 	    (void)Lst_AtEnd(gn->order_pred, predecessor);
 	    if (DEBUG(PARSE)) {
@@ -979,7 +979,7 @@ ParseDoDependency(char *line)
 		 *			main target.
 		 *  	.NOTPARALLEL	Make only one target at a time.
 		 *  	.SINGLESHELL	Create a shell for each command.
-		 *  	.ORDER	    	Must set initial predecessor to NIL
+		 *  	.ORDER	    	Must set initial predecessor to NULL
 		 */
 		switch (specType) {
 		    case ExPath:
@@ -1013,7 +1013,7 @@ ParseDoDependency(char *line)
 			compatMake = TRUE;
 			break;
 		    case Order:
-			predecessor = NILGNODE;
+			predecessor = NULL;
 			break;
 		    default:
 			break;
@@ -1028,7 +1028,7 @@ ParseDoDependency(char *line)
 
 		specType = ExPath;
 		path = Suff_GetPath(&line[5]);
-		if (path == NILLST) {
+		if (path == NULL) {
 		    Parse_Error(PARSE_FATAL,
 				 "Suffix '%s' not defined (yet)",
 				 &line[5]);
@@ -1113,7 +1113,7 @@ ParseDoDependency(char *line)
     /*
      * Don't need the list of target names anymore...
      */
-    Lst_Destroy(curTargs, NOFREE);
+    Lst_Destroy(curTargs, NULL);
     curTargs = NULL;
 
     if (!Lst_IsEmpty(targets)) {
@@ -1292,7 +1292,7 @@ ParseDoDependency(char *line)
 	    line = cp;
 	}
 	if (paths) {
-	    Lst_Destroy(paths, NOFREE);
+	    Lst_Destroy(paths, NULL);
 	}
 	if (specType == ExPath)
 	    Dir_SetPATH();
@@ -1327,7 +1327,7 @@ ParseDoDependency(char *line)
 		    gn = (GNode *)Lst_DeQueue(sources);
 		    ParseDoSrc(tOp, gn->name);
 		}
-		Lst_Destroy(sources, NOFREE);
+		Lst_Destroy(sources, NULL);
 		cp = line;
 	    } else {
 		if (*cp) {
@@ -1344,7 +1344,7 @@ ParseDoDependency(char *line)
 	}
     }
 
-    if (mainNode == NILGNODE) {
+    if (mainNode == NULL) {
 	/*
 	 * If we have yet to decide on a main target to make, in the
 	 * absence of any user input, we want the first target on
@@ -1356,7 +1356,7 @@ ParseDoDependency(char *line)
 
 out:
     if (curTargs)
-	    Lst_Destroy(curTargs, NOFREE);
+	    Lst_Destroy(curTargs, NULL);
 }
 
 /*-
@@ -1810,11 +1810,11 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
 	     * If we have a suffix specific path we should use that.
 	     */
 	    char *suff;
-	    Lst	suffPath = NILLST;
+	    Lst	suffPath = NULL;
 
 	    if ((suff = strrchr(file, '.'))) {
 		suffPath = Suff_GetPath(suff);
-		if (suffPath != NILLST) {
+		if (suffPath != NULL) {
 		    fullname = Dir_FindFile(file, suffPath);
 		}
 	    }
@@ -2138,7 +2138,7 @@ ParseEOF(void)
 
     curFile = Lst_DeQueue(includes);
 
-    if (curFile == (IFile *)NIL) {
+    if (curFile == NULL) {
 	/* We've run out of input */
 	Var_Delete(".PARSEDIR", VAR_GLOBAL);
 	Var_Delete(".PARSEFILE", VAR_GLOBAL);
@@ -2624,7 +2624,7 @@ Parse_File(const char *name, int fd)
 	     * Need a non-circular list for the target nodes
 	     */
 	    if (targets)
-		Lst_Destroy(targets, NOFREE);
+		Lst_Destroy(targets, NULL);
 
 	    targets = Lst_Init(FALSE);
 	    inLine = TRUE;
@@ -2666,7 +2666,7 @@ Parse_File(const char *name, int fd)
 void
 Parse_Init(void)
 {
-    mainNode = NILGNODE;
+    mainNode = NULL;
     parseIncPath = Lst_Init(FALSE);
     sysIncPath = Lst_Init(FALSE);
     defIncPath = Lst_Init(FALSE);
@@ -2682,11 +2682,11 @@ Parse_End(void)
 #ifdef CLEANUP
     Lst_Destroy(targCmds, (FreeProc *)free);
     if (targets)
-	Lst_Destroy(targets, NOFREE);
+	Lst_Destroy(targets, NULL);
     Lst_Destroy(defIncPath, Dir_Destroy);
     Lst_Destroy(sysIncPath, Dir_Destroy);
     Lst_Destroy(parseIncPath, Dir_Destroy);
-    Lst_Destroy(includes, NOFREE);	/* Should be empty now */
+    Lst_Destroy(includes, NULL);	/* Should be empty now */
 #endif
 }
 
@@ -2712,7 +2712,7 @@ Parse_MainName(void)
 
     mainList = Lst_Init(FALSE);
 
-    if (mainNode == NILGNODE) {
+    if (mainNode == NULL) {
 	Punt("no target to make.");
     	/*NOTREACHED*/
     } else if (mainNode->type & OP_DOUBLEDEP) {

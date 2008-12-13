@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.135 2008/12/13 14:26:10 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.136 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.135 2008/12/13 14:26:10 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.136 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.135 2008/12/13 14:26:10 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.136 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -331,7 +331,7 @@ static void VarPrintVar(ClientData);
  *
  * Results:
  *	A pointer to the structure describing the desired variable or
- *	NIL if the variable does not exist.
+ *	NULL if the variable does not exist.
  *
  * Side Effects:
  *	None
@@ -414,15 +414,15 @@ VarFind(const char *name, GNode *ctxt, int flags)
 	{
 	    var = Hash_FindEntry(&VAR_GLOBAL->context, name);
 	    if (var == NULL) {
-		return ((Var *)NIL);
+		return NULL;
 	    } else {
 		return ((Var *)Hash_GetValue(var));
 	    }
 	} else {
-	    return((Var *)NIL);
+	    return NULL;
 	}
     } else if (var == NULL) {
-	return ((Var *)NIL);
+	return NULL;
     } else {
 	return ((Var *)Hash_GetValue(var));
     }
@@ -568,7 +568,7 @@ Var_Export1(const char *name, int force)
 	}
     }
     v = VarFind(name, VAR_GLOBAL, 0);
-    if (v == (Var *)NIL) {
+    if (v == NULL) {
 	return 0;
     }
     if (!force &&
@@ -751,7 +751,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 	name = cp;
     if (ctxt == VAR_GLOBAL) {
 	v = VarFind(name, VAR_CMD, 0);
-	if (v != (Var *)NIL) {
+	if (v != NULL) {
 	    if ((v->flags & VAR_FROM_CMD)) {
 		if (DEBUG(VAR)) {
 		    fprintf(debug_file, "%s:%s = %s ignored!\n", ctxt->name, name, val);
@@ -762,7 +762,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 	}
     }
     v = VarFind(name, ctxt, 0);
-    if (v == (Var *)NIL) {
+    if (v == NULL) {
 	VarAdd(name, val, ctxt);
     } else {
 	Buf_Discard(v->val, Buf_Size(v->val));
@@ -780,7 +780,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
      * to the environment (as per POSIX standard)
      */
     if (ctxt == VAR_CMD && (flags & VAR_NO_EXPORT) == 0) {
-	if (v == (Var *)NIL) {
+	if (v == NULL) {
 	    /* we just added it */
 	    v = VarFind(name, ctxt, 0);
 	}
@@ -799,7 +799,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
  out:
     if (name != cp)
 	free(UNCONST(name));
-    if (v != (Var *)NIL)
+    if (v != NULL)
 	VarFreeEnv(v, TRUE);
 }
 
@@ -844,7 +844,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
     
     v = VarFind(name, ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
-    if (v == (Var *)NIL) {
+    if (v == NULL) {
 	VarAdd(name, val, ctxt);
     } else {
 	Buf_AddByte(v->val, (Byte)' ');
@@ -901,7 +901,7 @@ Var_Exists(const char *name, GNode *ctxt)
     if (cp != NULL) {
 	free(cp);
     }
-    if (v == (Var *)NIL) {
+    if (v == NULL) {
 	return(FALSE);
     } else {
 	(void)VarFreeEnv(v, TRUE);
@@ -932,13 +932,13 @@ Var_Value(const char *name, GNode *ctxt, char **frp)
 
     v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
     *frp = NULL;
-    if (v != (Var *)NIL) {
+    if (v != NULL) {
 	char *p = ((char *)Buf_GetAll(v->val, NULL));
 	if (VarFreeEnv(v, FALSE))
 	    *frp = p;
 	return p;
     } else {
-	return (NULL);
+	return NULL;
     }
 }
 
@@ -2300,7 +2300,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 			v->name = bmake_strdup(v->name);
 		    } else if (ctxt != VAR_GLOBAL) {
 			Var *gv = VarFind(v->name, ctxt, 0);
-			if (gv == (Var *)NIL)
+			if (gv == NULL)
 			    v_ctxt = VAR_GLOBAL;
 			else
 			    VarFreeEnv(gv, TRUE);
@@ -2469,7 +2469,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		if ((v->flags & VAR_JUNK) != 0)
 		    v->flags |= VAR_KEEP;
 		gn = Targ_FindNode(v->name, TARG_NOCREATE);
-		if (gn == NILGNODE || gn->type & OP_NOPATH) {
+		if (gn == NULL || gn->type & OP_NOPATH) {
 		    newStr = NULL;
 		} else if (gn->path) {
 		    newStr = bmake_strdup(gn->path);
@@ -3288,7 +3288,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	name[1] = '\0';
 
 	v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
-	if (v == (Var *)NIL) {
+	if (v == NULL) {
 	    *lengthPtr = 2;
 
 	    if ((ctxt == VAR_CMD) || (ctxt == VAR_GLOBAL)) {
@@ -3385,7 +3385,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	 */
 
 	v = VarFind(str, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
-	if ((v == (Var *)NIL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
+	if ((v == NULL) && (ctxt != VAR_CMD) && (ctxt != VAR_GLOBAL) &&
 	    (vlen == 2) && (str[1] == 'F' || str[1] == 'D'))
 	{
 	    /*
@@ -3410,7 +3410,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		    vname[1] = '\0';
 		    v = VarFind(vname, ctxt, 0);
 
-		    if (v != (Var *)NIL) {
+		    if (v != NULL) {
 			/*
 			 * No need for nested expansion or anything, as we're
 			 * the only one who sets these things and we sure don't
@@ -3440,7 +3440,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	    }
 	}
 
-	if (v == (Var *)NIL) {
+	if (v == NULL) {
 	    if (((vlen == 1) ||
 		 (((vlen == 2) && (str[1] == 'F' ||
 					 str[1] == 'D')))) &&

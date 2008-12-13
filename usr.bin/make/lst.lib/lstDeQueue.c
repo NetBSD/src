@@ -1,4 +1,4 @@
-/*	$NetBSD: lstDeQueue.c,v 1.12 2006/10/27 21:37:25 dsl Exp $	*/
+/*	$NetBSD: lstDeQueue.c,v 1.13 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstDeQueue.c,v 1.12 2006/10/27 21:37:25 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstDeQueue.c,v 1.13 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstDeQueue.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstDeQueue.c,v 1.12 2006/10/27 21:37:25 dsl Exp $");
+__RCSID("$NetBSD: lstDeQueue.c,v 1.13 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: lstDeQueue.c,v 1.12 2006/10/27 21:37:25 dsl Exp $");
  *	Remove and return the datum at the head of the given list.
  *
  * Results:
- *	The datum in the node at the head or (ick) NIL if the list
+ *	The datum in the node at the head or NULL if the list
  *	is empty.
  *
  * Side Effects:
@@ -73,13 +73,13 @@ Lst_DeQueue(Lst l)
     ListNode	tln;
 
     tln = Lst_First(l);
-    if (tln == NilListNode) {
-	return ((ClientData) NIL);
+    if (tln == NULL) {
+	return NULL;
     }
 
     rd = tln->datum;
     if (Lst_Remove(l, tln) == FAILURE) {
-	return ((ClientData) NIL);
+	return NULL;
     } else {
 	return (rd);
     }

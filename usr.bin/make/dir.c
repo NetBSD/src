@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.56 2008/10/06 22:09:21 joerg Exp $	*/
+/*	$NetBSD: dir.c,v 1.57 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.56 2008/10/06 22:09:21 joerg Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.57 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.56 2008/10/06 22:09:21 joerg Exp $");
+__RCSID("$NetBSD: dir.c,v 1.57 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -373,9 +373,9 @@ Dir_End(void)
     Dir_Destroy(dotLast);
     Dir_Destroy(dot);
     Dir_ClearPath(dirSearchPath);
-    Lst_Destroy(dirSearchPath, NOFREE);
+    Lst_Destroy(dirSearchPath, NULL);
     Dir_ClearPath(openDirectories);
-    Lst_Destroy(openDirectories, NOFREE);
+    Lst_Destroy(openDirectories, NULL);
     Hash_DeleteTable(&mtimes);
 #endif
 }
@@ -395,7 +395,7 @@ Dir_SetPATH(void)
     Var_Delete(".PATH", VAR_GLOBAL);
     
     if (Lst_Open(dirSearchPath) == SUCCESS) {
-	if ((ln = Lst_First(dirSearchPath)) != NILLNODE) {
+	if ((ln = Lst_First(dirSearchPath)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
 	    if (p == dotLast) {
 		hasLastDot = TRUE;
@@ -410,7 +410,7 @@ Dir_SetPATH(void)
 		Var_Append(".PATH", cur->name, VAR_GLOBAL);
 	}
 
-	while ((ln = Lst_Next(dirSearchPath)) != NILLNODE) {
+	while ((ln = Lst_Next(dirSearchPath)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
 	    if (p == dotLast)
 		continue;
@@ -701,7 +701,7 @@ DirExpandInt(const char *word, Lst path, Lst expansions)
     Path	  *p;	    	/* Directory in the node */
 
     if (Lst_Open(path) == SUCCESS) {
-	while ((ln = Lst_Next(path)) != NILLNODE) {
+	while ((ln = Lst_Next(path)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
 	    DirMatchFiles(word, p, expansions);
 	}
@@ -814,7 +814,7 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
 			path = Lst_Init(FALSE);
 			(void)Dir_AddDir(path, dirpath);
 			DirExpandInt(cp+1, path, expansions);
-			Lst_Destroy(path, NOFREE);
+			Lst_Destroy(path, NULL);
 		    }
 		} else {
 		    /*
@@ -1082,10 +1082,10 @@ Dir_FindFile(const char *name, Lst path)
 	    fprintf(debug_file, "couldn't open path, file not found\n");
 	}
 	misses += 1;
-	return (NULL);
+	return NULL;
     }
 
-    if ((ln = Lst_First(path)) != NILLNODE) {
+    if ((ln = Lst_First(path)) != NULL) {
 	p = (Path *)Lst_Datum(ln);
 	if (p == dotLast) {
 	    hasLastDot = TRUE;
@@ -1123,7 +1123,7 @@ Dir_FindFile(const char *name, Lst path)
 		    return file;
 	    }
 
-	    while ((ln = Lst_Next(path)) != NILLNODE) {
+	    while ((ln = Lst_Next(path)) != NULL) {
 		p = (Path *)Lst_Datum(ln);
 		if (p == dotLast)
 		    continue;
@@ -1160,7 +1160,7 @@ Dir_FindFile(const char *name, Lst path)
 	    fprintf(debug_file, "   failed.\n");
 	}
 	misses += 1;
-	return (NULL);
+	return NULL;
     }
 
     if (name[0] != '/') {
@@ -1181,7 +1181,7 @@ Dir_FindFile(const char *name, Lst path)
 	}
 
 	(void)Lst_Open(path);
-	while ((ln = Lst_Next(path)) != NILLNODE) {
+	while ((ln = Lst_Next(path)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
 	    if (p == dotLast)
 		continue;
@@ -1215,7 +1215,7 @@ Dir_FindFile(const char *name, Lst path)
 	    if (DEBUG(DIR)) {
 		fprintf(debug_file, "   Checked . already, returning NULL\n");
 	    }
-	    return(NULL);
+	    return NULL;
 	}
 
     } else { /* name[0] == '/' */
@@ -1237,7 +1237,7 @@ Dir_FindFile(const char *name, Lst path)
 	    return *file?file:NULL;
 
 	(void)Lst_Open(path);
-	while ((ln = Lst_Next(path)) != NILLNODE) {
+	while ((ln = Lst_Next(path)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
 	    if (p == dotLast)
 		continue;
@@ -1276,8 +1276,8 @@ Dir_FindFile(const char *name, Lst path)
 
     bigmisses += 1;
     ln = Lst_Last(path);
-    if (ln == NILLNODE) {
-	return (NULL);
+    if (ln == NULL) {
+	return NULL;
     } else {
 	p = (Path *)Lst_Datum(ln);
     }
@@ -1285,7 +1285,7 @@ Dir_FindFile(const char *name, Lst path)
     if (Hash_FindEntry(&p->files, cp) != NULL) {
 	return (bmake_strdup(name));
     } else {
-	return (NULL);
+	return NULL;
     }
 #else /* !notdef */
     if (DEBUG(DIR)) {
@@ -1311,7 +1311,7 @@ Dir_FindFile(const char *name, Lst path)
 	if (DEBUG(DIR)) {
 	    fprintf(debug_file, "   failed. Returning NULL\n");
 	}
-	return (NULL);
+	return NULL;
     }
 #endif /* notdef */
 }
@@ -1495,14 +1495,14 @@ Dir_MTime(GNode *gn)
 Path *
 Dir_AddDir(Lst path, const char *name)
 {
-    LstNode       ln = NILLNODE; /* node in case Path structure is found */
+    LstNode       ln = NULL; /* node in case Path structure is found */
     Path	  *p = NULL;  /* pointer to new Path structure */
     DIR     	  *d;	      /* for reading directory */
     struct dirent *dp;	      /* entry in directory */
 
     if (strcmp(name, ".DOTLAST") == 0) {
 	ln = Lst_Find(path, UNCONST(name), DirFindName);
-	if (ln != NILLNODE)
+	if (ln != NULL)
 	    return (Path *)Lst_Datum(ln);
 	else {
 	    dotLast->refCount += 1;
@@ -1512,9 +1512,9 @@ Dir_AddDir(Lst path, const char *name)
 
     if (path)
 	ln = Lst_Find(openDirectories, UNCONST(name), DirFindName);
-    if (ln != NILLNODE) {
+    if (ln != NULL) {
 	p = (Path *)Lst_Datum(ln);
-	if (path && Lst_Member(path, p) == NILLNODE) {
+	if (path && Lst_Member(path, p) == NULL) {
 	    p->refCount += 1;
 	    (void)Lst_AtEnd(path, p);
 	}
@@ -1609,7 +1609,7 @@ Dir_MakeFlags(const char *flag, Lst path)
     str = bmake_strdup("");
 
     if (Lst_Open(path) == SUCCESS) {
-	while ((ln = Lst_Next(path)) != NILLNODE) {
+	while ((ln = Lst_Next(path)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
 	    s2 = str_concat(flag, p->name, 0);
 	    str = str_concat(s1 = str, s2, STR_ADDSPACE);
@@ -1710,9 +1710,9 @@ Dir_Concat(Lst path1, Lst path2)
     LstNode ln;
     Path    *p;
 
-    for (ln = Lst_First(path2); ln != NILLNODE; ln = Lst_Succ(ln)) {
+    for (ln = Lst_First(path2); ln != NULL; ln = Lst_Succ(ln)) {
 	p = (Path *)Lst_Datum(ln);
-	if (Lst_Member(path1, p) == NILLNODE) {
+	if (Lst_Member(path1, p) == NULL) {
 	    p->refCount += 1;
 	    (void)Lst_AtEnd(path1, p);
 	}
@@ -1733,7 +1733,7 @@ Dir_PrintDirectories(void)
 	       hits * 100 / (hits + bigmisses + nearmisses) : 0));
     fprintf(debug_file, "# %-20s referenced\thits\n", "directory");
     if (Lst_Open(openDirectories) == SUCCESS) {
-	while ((ln = Lst_Next(openDirectories)) != NILLNODE) {
+	while ((ln = Lst_Next(openDirectories)) != NULL) {
 	    p = (Path *)Lst_Datum(ln);
 	    fprintf(debug_file, "# %-20s %10d\t%4d\n", p->name, p->refCount, p->hits);
 	}

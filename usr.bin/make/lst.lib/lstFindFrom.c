@@ -1,4 +1,4 @@
-/*	$NetBSD: lstFindFrom.c,v 1.12 2006/10/27 21:37:25 dsl Exp $	*/
+/*	$NetBSD: lstFindFrom.c,v 1.13 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstFindFrom.c,v 1.12 2006/10/27 21:37:25 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstFindFrom.c,v 1.13 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstFindFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstFindFrom.c,v 1.12 2006/10/27 21:37:25 dsl Exp $");
+__RCSID("$NetBSD: lstFindFrom.c,v 1.13 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: lstFindFrom.c,v 1.12 2006/10/27 21:37:25 dsl Exp $");
  *	determine when it has been found.
  *
  * Results:
- *	The found node or NILLNODE
+ *	The found node or NULL
  *
  * Side Effects:
  *	None.
@@ -75,7 +75,7 @@ Lst_FindFrom(Lst l, LstNode ln, ClientData d,
     Boolean		found = FALSE;
 
     if (!LstValid (l) || LstIsEmpty (l) || !LstNodeValid (ln, l)) {
-	return (NILLNODE);
+	return NULL;
     }
 
     tln = ln;
@@ -87,12 +87,12 @@ Lst_FindFrom(Lst l, LstNode ln, ClientData d,
 	} else {
 	    tln = tln->nextPtr;
 	}
-    } while (tln != ln && tln != NilListNode);
+    } while (tln != ln && tln != NULL);
 
     if (found) {
 	return (tln);
     } else {
-	return (NILLNODE);
+	return NULL;
     }
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.53 2008/10/06 22:09:21 joerg Exp $	*/
+/*	$NetBSD: targ.c,v 1.54 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.53 2008/10/06 22:09:21 joerg Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.54 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.53 2008/10/06 22:09:21 joerg Exp $");
+__RCSID("$NetBSD: targ.c,v 1.54 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -187,7 +187,7 @@ void
 Targ_End(void)
 {
 #ifdef CLEANUP
-    Lst_Destroy(allTargets, NOFREE);
+    Lst_Destroy(allTargets, NULL);
     if (allGNs)
 	Lst_Destroy(allGNs, TargFreeGN);
     Hash_DeleteTable(&targets);
@@ -297,14 +297,14 @@ TargFreeGN(ClientData gnp)
 	free(gn->path);
     /* gn->fname points to name allocated when file was opened, don't free */
 
-    Lst_Destroy(gn->iParents, NOFREE);
-    Lst_Destroy(gn->cohorts, NOFREE);
-    Lst_Destroy(gn->parents, NOFREE);
-    Lst_Destroy(gn->children, NOFREE);
-    Lst_Destroy(gn->order_succ, NOFREE);
-    Lst_Destroy(gn->order_pred, NOFREE);
+    Lst_Destroy(gn->iParents, NULL);
+    Lst_Destroy(gn->cohorts, NULL);
+    Lst_Destroy(gn->parents, NULL);
+    Lst_Destroy(gn->children, NULL);
+    Lst_Destroy(gn->order_succ, NULL);
+    Lst_Destroy(gn->order_pred, NULL);
     Hash_DeleteTable(&gn->context);
-    Lst_Destroy(gn->commands, NOFREE);
+    Lst_Destroy(gn->commands, NULL);
     free(gn);
 }
 #endif
@@ -321,7 +321,7 @@ TargFreeGN(ClientData gnp)
  *			found
  *
  * Results:
- *	The node in the list if it was. If it wasn't, return NILGNODE of
+ *	The node in the list if it was. If it wasn't, return NULL of
  *	flags was TARG_NOCREATE or the newly created and initialized node
  *	if it was TARG_CREATE
  *
@@ -340,7 +340,7 @@ Targ_FindNode(const char *name, int flags)
     if (!(flags & (TARG_CREATE | TARG_NOHASH))) {
 	he = Hash_FindEntry(&targets, name);
 	if (he == NULL)
-	    return (NILGNODE);
+	    return NULL;
 	return (GNode *)Hash_GetValue(he);
     }
 
@@ -392,10 +392,10 @@ Targ_FindList(Lst names, int flags)
     if (Lst_Open(names) == FAILURE) {
 	return (nodes);
     }
-    while ((ln = Lst_Next(names)) != NILLNODE) {
+    while ((ln = Lst_Next(names)) != NULL) {
 	name = (char *)Lst_Datum(ln);
 	gn = Targ_FindNode(name, flags);
-	if (gn != NILGNODE) {
+	if (gn != NULL) {
 	    /*
 	     * Note: Lst_AtEnd must come before the Lst_Concat so the nodes
 	     * are added to the list in the order in which they were

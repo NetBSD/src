@@ -1,4 +1,4 @@
-/*	$NetBSD: lstDestroy.c,v 1.15 2006/10/27 21:37:25 dsl Exp $	*/
+/*	$NetBSD: lstDestroy.c,v 1.16 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstDestroy.c,v 1.15 2006/10/27 21:37:25 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstDestroy.c,v 1.16 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstDestroy.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstDestroy.c,v 1.15 2006/10/27 21:37:25 dsl Exp $");
+__RCSID("$NetBSD: lstDestroy.c,v 1.16 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -68,40 +68,34 @@ __RCSID("$NetBSD: lstDestroy.c,v 1.15 2006/10/27 21:37:25 dsl Exp $");
  *-----------------------------------------------------------------------
  */
 void
-Lst_Destroy(Lst l, FreeProc *freeProc)
+Lst_Destroy(Lst list, FreeProc *freeProc)
 {
     ListNode	ln;
-    ListNode	tln = NilListNode;
-    List 	list = l;
+    ListNode	tln = NULL;
 
-    if (l == NILLST || ! l) {
-	/*
-	 * Note the check for l == (Lst)0 to catch uninitialized static Lst's.
-	 * Gross, but useful.
-	 */
+    if (list == NULL)
 	return;
-    }
 
     /* To ease scanning */
-    if (list->lastPtr != NilListNode)
-	list->lastPtr->nextPtr = NilListNode;
+    if (list->lastPtr != NULL)
+	list->lastPtr->nextPtr = NULL;
     else {
-	free(l);
+	free(list);
 	return;
     }
 
     if (freeProc) {
-	for (ln = list->firstPtr; ln != NilListNode; ln = tln) {
+	for (ln = list->firstPtr; ln != NULL; ln = tln) {
 	     tln = ln->nextPtr;
 	     freeProc(ln->datum);
 	     free(ln);
 	}
     } else {
-	for (ln = list->firstPtr; ln != NilListNode; ln = tln) {
+	for (ln = list->firstPtr; ln != NULL; ln = tln) {
 	     tln = ln->nextPtr;
 	     free(ln);
 	}
     }
 
-    free(l);
+    free(list);
 }
