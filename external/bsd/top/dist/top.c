@@ -468,7 +468,8 @@ do_arguments(globalstate *gstate, int ac, char **av)
 	default:
 	    fprintf(stderr, "\
 Top version %s\n\
-Usage: %s [-1ISTabcinqu] [-d x] [-s x] [-o field] [-U username] [-p pid] [number]\n",
+Usage: %s [-1CISTabcinqtuv] [-d count] [-m mode] [-o field] [-p pid]\n\
+           [-s time] [-U username] [number]\n",
 		    version_string(), myname);
 	    exit(EX_USAGE);
 	}
