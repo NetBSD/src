@@ -1,4 +1,4 @@
-/*	$NetBSD: schizoreg.h,v 1.3 2008/12/10 07:12:09 mrg Exp $	*/
+/*	$NetBSD: schizoreg.h,v 1.4 2008/12/13 04:56:32 mrg Exp $	*/
 /*	$OpenBSD: schizoreg.h,v 1.20 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
@@ -26,9 +26,23 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* XXX merge with iommureg.h */
+/* iommmu registers */
+struct schizo_iommureg {
+	volatile u_int64_t	iommu_cr;	/* IOMMU control register */
+	volatile u_int64_t	iommu_tsb;	/* IOMMU TSB base register */
+	volatile u_int64_t	iommu_flush;	/* IOMMU flush register */
+	volatile u_int64_t	iommu_ctxflush;
+	volatile u_int64_t	iommu_reserved[28];
+	volatile u_int64_t	iommu_cache_flush;
+	volatile u_int64_t	iommu_cache_invalidate;
+	volatile u_int64_t	iommu_reserved2[30];
+};
+
 struct schizo_pbm_regs {
 	volatile u_int64_t	_unused1[64];		/* 0x0000 - 0x01ff */
-	struct iommureg		iommu;			/* 0x0200 - 0x03ff */
+	struct schizo_iommureg	iommu;			/* 0x0200 - 0x03ff */
 	volatile u_int64_t	_unused2[384];
 	volatile u_int64_t	imap[64];
 	volatile u_int64_t	_unused3[64];
