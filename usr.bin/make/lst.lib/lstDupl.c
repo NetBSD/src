@@ -1,4 +1,4 @@
-/*	$NetBSD: lstDupl.c,v 1.14 2006/10/27 21:37:25 dsl Exp $	*/
+/*	$NetBSD: lstDupl.c,v 1.15 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstDupl.c,v 1.14 2006/10/27 21:37:25 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstDupl.c,v 1.15 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstDupl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstDupl.c,v 1.14 2006/10/27 21:37:25 dsl Exp $");
+__RCSID("$NetBSD: lstDupl.c,v 1.15 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -64,7 +64,7 @@ __RCSID("$NetBSD: lstDupl.c,v 1.14 2006/10/27 21:37:25 dsl Exp $");
  *	copyProc	A function to duplicate each ClientData
  *
  * Results:
- *	The new Lst structure or NILLST if failure.
+ *	The new Lst structure or NULL if failure.
  *
  * Side Effects:
  *	A new list is created.
@@ -78,26 +78,26 @@ Lst_Duplicate(Lst l, DuplicateProc *copyProc)
     List 	list = l;
 
     if (!LstValid (l)) {
-	return (NILLST);
+	return NULL;
     }
 
     nl = Lst_Init(list->isCirc);
-    if (nl == NILLST) {
-	return (NILLST);
+    if (nl == NULL) {
+	return NULL;
     }
 
     ln = list->firstPtr;
-    while (ln != NilListNode) {
-	if (copyProc != NOCOPY) {
+    while (ln != NULL) {
+	if (copyProc != NULL) {
 	    if (Lst_AtEnd(nl, copyProc(ln->datum)) == FAILURE) {
-		return (NILLST);
+		return NULL;
 	    }
 	} else if (Lst_AtEnd(nl, ln->datum) == FAILURE) {
-	    return (NILLST);
+	    return NULL;
 	}
 
 	if (list->isCirc && ln == list->lastPtr) {
-	    ln = NilListNode;
+	    ln = NULL;
 	} else {
 	    ln = ln->nextPtr;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.15 2006/11/11 21:23:36 dsl Exp $	*/
+/*	$NetBSD: lst.h,v 1.16 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -94,17 +94,6 @@ typedef	struct ListNode	*LstNode;
 
 typedef ClientData	DuplicateProc(ClientData);
 typedef void		FreeProc(ClientData);
-
-#define	NILLST		((Lst)NIL)
-#define	NILLNODE	((LstNode)NIL)
-
-/*
- * NOFREE can be used as the freeProc to Lst_Destroy when the elements are
- *	not to be freed.
- * NOCOPY performs similarly when given as the copyProc to Lst_Duplicate.
- */
-#define NOFREE		((FreeProc *)NULL)
-#define NOCOPY		((DuplicateProc *)NULL)
 
 #define LST_CONCNEW	0   /* create new LstNode's when using Lst_Concat */
 #define LST_CONCLINK	1   /* relink LstNode's when using Lst_Concat */

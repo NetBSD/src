@@ -1,4 +1,4 @@
-/*	$NetBSD: lstFirst.c,v 1.11 2006/10/27 21:37:25 dsl Exp $	*/
+/*	$NetBSD: lstFirst.c,v 1.12 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstFirst.c,v 1.11 2006/10/27 21:37:25 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstFirst.c,v 1.12 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstFirst.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstFirst.c,v 1.11 2006/10/27 21:37:25 dsl Exp $");
+__RCSID("$NetBSD: lstFirst.c,v 1.12 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: lstFirst.c,v 1.11 2006/10/27 21:37:25 dsl Exp $");
  *	Return the first node on the given list.
  *
  * Results:
- *	The first node or NILLNODE if the list is empty.
+ *	The first node or NULL if the list is empty.
  *
  * Side Effects:
  *	None.
@@ -69,7 +69,7 @@ LstNode
 Lst_First(Lst l)
 {
     if (!LstValid (l) || LstIsEmpty (l)) {
-	return (NILLNODE);
+	return NULL;
     } else {
 	return (l->firstPtr);
     }

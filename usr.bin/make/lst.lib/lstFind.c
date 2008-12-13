@@ -1,4 +1,4 @@
-/*	$NetBSD: lstFind.c,v 1.12 2005/02/16 15:11:53 christos Exp $	*/
+/*	$NetBSD: lstFind.c,v 1.13 2008/12/13 15:19:29 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstFind.c,v 1.12 2005/02/16 15:11:53 christos Exp $";
+static char rcsid[] = "$NetBSD: lstFind.c,v 1.13 2008/12/13 15:19:29 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstFind.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstFind.c,v 1.12 2005/02/16 15:11:53 christos Exp $");
+__RCSID("$NetBSD: lstFind.c,v 1.13 2008/12/13 15:19:29 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: lstFind.c,v 1.12 2005/02/16 15:11:53 christos Exp $");
  *	and the given datum.
  *
  * Results:
- *	The found node or NILLNODE if none matches.
+ *	The found node or NULL if none matches.
  *
  * Side Effects:
  *	None.
