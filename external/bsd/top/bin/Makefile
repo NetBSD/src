@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/10/19 22:05:20 apb Exp $
+#	$NetBSD: Makefile,v 1.3 2008/12/13 12:21:50 chris Exp $
 
 .include <bsd.own.mk>
 
@@ -15,8 +15,8 @@ SRCS=	color.c commands.c display.c hash.c screen.c \
 	top.c username.c utils.c version.c m_netbsd.c
 DPSRCS+=sigdesc.h config.h
 
-LDADD+=	-ltermcap -lm -lkvm
-DPADD+=	${LIBTERMCAP} ${LIBM} ${LIBKVM}
+LDADD+=	-ltermcap -lm -lkvm -lutil
+DPADD+=	${LIBTERMCAP} ${LIBM} ${LIBKVM} ${LIBUTIL}
 
 sigdesc.h: ${TOPDIR}/sigconv.awk ${DESTDIR}/usr/include/sys/signal.h
 	${_MKTARGET_CREATE}
