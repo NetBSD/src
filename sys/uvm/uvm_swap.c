@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.140 2008/09/23 08:56:15 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.141 2008/12/13 11:22:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.140 2008/09/23 08:56:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.141 2008/12/13 11:22:09 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -202,6 +202,9 @@ static krwlock_t swap_syscall_lock;
 /* workqueue and use counter for swap to regular files */
 static int sw_reg_count = 0;
 static struct workqueue *sw_reg_workqueue;
+
+/* tuneables */
+u_int uvm_swapisfull_factor = 99;
 
 /*
  * prototypes
@@ -1552,14 +1555,23 @@ ReTry:	/* XXXMRG */
 	return 0;
 }
 
+/*
+ * uvm_swapisfull: return true if most of available swap is allocated
+ * and in use.  we don't count some small portion as it may be inaccessible
+ * to us at any given moment, for example if there is lock contention or if
+ * pages are busy.
+ */
 bool
 uvm_swapisfull(void)
 {
+	int swpgonly;
 	bool rv;
 
 	mutex_enter(&uvm_swap_data_lock);
 	KASSERT(uvmexp.swpgonly <= uvmexp.swpages);
-	rv = (uvmexp.swpgonly >= uvmexp.swpgavail);
+	swpgonly = (int)((uint64_t)uvmexp.swpgonly * 100 /
+	    uvm_swapisfull_factor);
+	rv = (swpgonly >= uvmexp.swpgavail);
 	mutex_exit(&uvm_swap_data_lock);
 
 	return (rv);
