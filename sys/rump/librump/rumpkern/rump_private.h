@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.16 2008/11/27 08:05:27 pooka Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.17 2008/12/13 15:34:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -43,6 +43,7 @@
 #include <uvm/uvm_page.h>
 
 #include <rump/rump.h>
+#include <rump/rumpuser.h>
 
 #if 0
 #define DPRINTF(x) printf x
@@ -54,7 +55,7 @@ struct lwp;
 extern kauth_cred_t rump_cred;
 extern struct vmspace rump_vmspace;
 
-extern kmutex_t rump_giantlock;
+extern struct rumpuser_mtx *rump_giantlock;
 
 #define UIO_VMSPACE_SYS (&rump_vmspace)
 
