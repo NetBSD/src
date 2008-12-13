@@ -1,4 +1,4 @@
-/*	$NetBSD: toolcontext.c,v 1.1.1.1.2.4 2008/12/12 16:32:59 haad Exp $	*/
+/*	$NetBSD: toolcontext.c,v 1.1.1.1.2.5 2008/12/13 14:39:33 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -228,15 +228,12 @@ static int _process_config(struct cmd_context *cmd)
 		log_error("Device directory given in config file too long");
 		return 0;
 	}
-#ifdef linux
+
 	if (*cmd->proc_dir && !dir_exists(cmd->proc_dir)) {
 		log_error("WARNING: proc dir %s not found - some checks will be bypassed",
 			  cmd->proc_dir);
 		cmd->proc_dir[0] = '\0';
 	}
-#else
-	cmd->proc_dir[0] = '\0';
-#endif
 
 	_get_sysfs_dir(cmd);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: freeseg.c,v 1.1.1.1.2.2 2008/12/12 16:33:00 haad Exp $	*/
+/*	$NetBSD: freeseg.c,v 1.1.1.1.2.3 2008/12/13 14:39:34 haad Exp $	*/
 
 /*
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.

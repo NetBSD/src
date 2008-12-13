@@ -1,3 +1,5 @@
+/*	$NetBSD: uuid.h,v 1.1.2.2 2008/12/13 14:39:32 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -34,6 +36,7 @@ union lvid {
 
 int lvid_from_lvnum(union lvid *lvid, struct id *vgid, uint32_t lv_num);
 int lvnum_from_lvid(union lvid *lvid);
+int lvid_in_restricted_range(union lvid *lvid);
 
 void uuid_from_num(char *uuid, uint32_t num);
 

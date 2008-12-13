@@ -1,4 +1,4 @@
-/*	$NetBSD: dev-cache.h,v 1.1.1.1.2.2 2008/12/12 16:32:59 haad Exp $	*/
+/*	$NetBSD: dev-cache.h,v 1.1.1.1.2.3 2008/12/13 14:39:33 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  

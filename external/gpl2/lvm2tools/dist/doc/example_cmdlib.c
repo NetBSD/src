@@ -1,4 +1,4 @@
-/*	$NetBSD: example_cmdlib.c,v 1.1.1.1.2.2 2008/12/12 16:32:58 haad Exp $	*/
+/*	$NetBSD: example_cmdlib.c,v 1.1.1.1.2.3 2008/12/13 14:39:32 haad Exp $	*/
 
 /*
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.

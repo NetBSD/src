@@ -15,11 +15,20 @@
 /* Define to 1 if using `alloca.c'. */
 /* #undef C_ALLOCA */
 
-/* Define to 1 to enable device-mapper interaction. */
+/* Define to 1 to enable LVM2 device-mapper interaction. */
 #define DEVMAPPER_SUPPORT 1
 
 /* Define to 1 to enable the device-mapper event daemon. */
 /* #undef DMEVENTD */
+
+/* Path to dmeventd binary. */
+/* #undef DMEVENTD_PATH */
+
+/* Path to dmeventd pidfile. */
+/* #undef DMEVENTD_PIDFILE */
+
+/* Library version */
+#define DM_LIB_VERSION "1.02.29 (2008-11-10)"
 
 /* Define to 1 if you have `alloca', as a function or macro. */
 #define HAVE_ALLOCA 1
@@ -33,6 +42,9 @@
 
 /* Define to 1 if you have the <assert.h> header file. */
 #define HAVE_ASSERT_H 1
+
+/* Define to 1 if canonicalize_file_name is available. */
+/* #undef HAVE_CANONICALIZE_FILE_NAME */
 
 /* Define to 1 if you have the <ctype.h> header file. */
 #define HAVE_CTYPE_H 1
@@ -61,6 +73,9 @@
 /* Define to 1 if you have the `gethostname' function. */
 #define HAVE_GETHOSTNAME 1
 
+/* Define to 1 if getline is available. */
+/* #undef HAVE_GETLINE */
+
 /* Define to 1 if you have the `getmntent' function. */
 /* #undef HAVE_GETMNTENT */
 
@@ -75,9 +90,6 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
-
-/* Define to 1 if you have the <libdevmapper.h> header file. */
-#define HAVE_LIBDEVMAPPER_H 1
 
 /* Define to 1 if dynamic libraries are available. */
 /* #undef HAVE_LIBDL */
@@ -156,7 +168,7 @@
 /* Define to 1 to include support for realtime clock. */
 /* #undef HAVE_REALTIME */
 
-/* Define to 1 if rl_completion_matches() is available. */
+/* Define to 1 if you have the `rl_completion_matches' function. */
 /* #undef HAVE_RL_COMPLETION_MATCHES */
 
 /* Define to 1 if you have the `rmdir' function. */
@@ -342,7 +354,7 @@
 /* #undef LVM1_FALLBACK */
 
 /* Define to 1 to include built-in support for LVM1 metadata. */
-#define LVM1_INTERNAL 1
+/* #undef LVM1_INTERNAL */
 
 /* Define to 1 to include built-in support for mirrors. */
 #define MIRRORED_INTERNAL 1

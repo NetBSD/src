@@ -1,3 +1,5 @@
+/*	$NetBSD: lib.h,v 1.1.2.2 2008/12/13 14:39:32 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -25,12 +27,24 @@
 #define _GNU_SOURCE
 #define _FILE_OFFSET_BITS 64
 
-#include "log.h"
 #include "intl.h"
-#include "lvm-types.h"
+#include "libdevmapper.h"
+#include "lvm-globals.h"
 #include "lvm-wrappers.h"
+#include "lvm-types.h"
 #include "util.h"
 
-#include <libdevmapper.h>
+#ifdef DM
+#  include "dm-logging.h"
+#else
+#  include "lvm-logging.h"
+#endif
+
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 #endif

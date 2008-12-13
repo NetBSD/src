@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.h,v 1.1.1.1.2.2 2008/12/12 16:33:04 haad Exp $	*/
+/*	$NetBSD: commands.h,v 1.1.1.1.2.3 2008/12/13 14:39:37 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
