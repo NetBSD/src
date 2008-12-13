@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.39 2008/12/12 18:39:55 macallan Exp $ */
+/*	$NetBSD: cgsix.c,v 1.40 2008/12/13 05:54:57 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.39 2008/12/12 18:39:55 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.40 2008/12/13 05:54:57 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -548,7 +548,6 @@ cg6attach(struct cgsix_softc *sc, const char *name, int isconsole)
 	struct rasops_info *ri = &cg6_console_screen.scr_ri;
 	unsigned long defattr;
 #endif
-	volatile struct cg6_fbc *fbc = sc->sc_fbc;
 	
 	fb->fb_driver = &cg6_fbdriver;
 
