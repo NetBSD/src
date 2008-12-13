@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.157 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.158 2008/12/13 18:11:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.157 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.158 2008/12/13 18:11:53 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.157 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.158 2008/12/13 18:11:53 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -703,7 +703,7 @@ main(int argc, char **argv)
 	debug_file = stderr;
 
 	/*
-	 * Set the seed to produce a different random sequences
+	 * Set the seed to produce a different random sequence
 	 * on each program execution.
 	 */
 	gettimeofday(&rightnow, NULL);
