@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.114.1 2008/12/13 01:12:56 haad Exp $
 
 # Makefile for algor tags file and boot blocks
 
@@ -18,7 +18,7 @@ DALGOR= algor include isa pci
 tags:
 	-ctags -wdtf ${TALGOR} ${SALGOR} ${SMIPS} ${COMM}
 	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${AALGOR} ${AMIPS} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TARC}
 	sort -o ${TALGOR} ${TALGOR}
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.boot,v 1.32.10.1 2008/10/19 22:15:49 haad Exp $
+# $NetBSD: Makefile.boot,v 1.32.10.2 2008/12/13 01:13:14 haad Exp $
 
 S=	${.CURDIR}/../../../../../
 
@@ -14,6 +14,10 @@ SRCS= ${SOURCES}
 .if !make(depend)
 SRCS+= vers.c
 .endif
+
+PIE_CFLAGS=
+PIE_AFLAGS=
+PIE_LDFLAGS=
 
 .include <bsd.own.mk>
 
@@ -140,7 +144,7 @@ vers.c: ${VERSIONFILE} ${SOURCES} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 
 # Anything that calls 'real_to_prot' must have a %pc < 0x10000.
 # We link the program, find the callers (all in libi386), then
-# explicitely pull in the required objects before any other library code.
+# explicitly pull in the required objects before any other library code.
 ${PROG}: ${OBJS} ${LIBLIST} ${.CURDIR}/../Makefile.boot
 	${_MKTARGET_LINK}
 	bb="$$( ${CC} -o ${PROG}.tmp ${LDFLAGS} -Wl,-Ttext,0 -Wl,-cref \

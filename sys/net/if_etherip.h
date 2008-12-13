@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.h,v 1.7.16.1 2008/10/19 22:17:41 haad Exp $        */
+/*      $NetBSD: if_etherip.h,v 1.7.16.2 2008/12/13 01:15:25 haad Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -34,7 +34,7 @@
 
 #include <sys/queue.h>
 
-#if defined(_KERNEL) && !defined(_LKM)
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
 
@@ -42,6 +42,7 @@
 
 struct etherip_softc {
 	struct ifmedia  sc_im;
+	device_t	sc_dev;
 	struct ethercom sc_ec;
 	struct sockaddr *sc_src;                /* tunnel source address      */
 	struct sockaddr *sc_dst;                /* tunnel destination address */

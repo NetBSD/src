@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.139 2008/06/18 09:06:28 yamt Exp $	*/
+/*	$NetBSD: if.h,v 1.139.2.1 2008/12/13 01:15:25 haad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -268,7 +268,17 @@ struct ifnet {				/* and the entries */
 		    (struct ifnet *);
 	struct ifaltq if_snd;		/* output queue (includes altq) */
 	struct ifaddr	*if_dl;		/* identity of this interface. */
-	const struct	sockaddr_dl *if_sadl;	/* pointer to our sockaddr_dl */
+	const struct	sockaddr_dl *if_sadl;	/* pointer to sockaddr_dl
+						 * of if_dl
+						 */
+	/* if_hwdl: h/w identity
+	 *
+	 * May be NULL.  If not NULL, it is the address assigned
+	 * to the interface by the manufacturer, so it very likely
+	 * to be unique.  It MUST NOT be deleted.  It is highly
+	 * suitable for deriving the EUI64 for the interface.
+	 */
+	struct ifaddr	*if_hwdl;
 	const uint8_t *if_broadcastaddr;/* linklevel broadcast bytestring */
 	void	*if_bridge;		/* bridge glue */
 	int	if_dlt;			/* data link type (<net/dlt.h>) */
@@ -460,7 +470,7 @@ struct ifaddr {
 	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
 	struct	ifaddr_data	ifa_data;	/* statistics on the address */
 	void	(*ifa_rtrequest)	/* check or clean routes (+ or -)'d */
-		        (int, struct rtentry *, struct rt_addrinfo *);
+		        (int, struct rtentry *, const struct rt_addrinfo *);
 	u_int	ifa_flags;		/* mostly rt_flags for cloning */
 	int	ifa_refcnt;		/* count of references */
 	int	ifa_metric;		/* cost of going out this interface */
@@ -643,6 +653,7 @@ struct if_laddrreq {
 	unsigned int flags;
 #define IFLR_PREFIX	0x8000	/* in: prefix given  out: kernel fills id */
 #define IFLR_ACTIVE	0x4000	/* in/out: link-layer address activation */
+#define IFLR_FACTORY	0x2000	/* in/out: factory link-layer address */
 	unsigned int prefixlen;		/* in/out */
 	struct sockaddr_storage addr;	/* in/out */
 	struct sockaddr_storage dstaddr; /* out */
@@ -826,7 +837,7 @@ void if_initname(struct ifnet *, const char *, int);
 struct ifaddr *if_dl_create(const struct ifnet *, const struct sockaddr_dl **);
 void if_activate_sadl(struct ifnet *, struct ifaddr *,
     const struct sockaddr_dl *);
-void	if_set_sadl(struct ifnet *, const void *, u_char);
+void	if_set_sadl(struct ifnet *, const void *, u_char, bool);
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);
 void	if_attach(struct ifnet *);
@@ -859,7 +870,7 @@ struct	ifaddr *ifa_ifwithroute(int, const struct sockaddr *,
 					const struct sockaddr *);
 struct	ifaddr *ifaof_ifpforaddr(const struct sockaddr *, struct ifnet *);
 void	ifafree(struct ifaddr *);
-void	link_rtrequest(int, struct rtentry *, struct rt_addrinfo *);
+void	link_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);
@@ -876,7 +887,7 @@ int	loioctl(struct ifnet *, u_long, void *);
 void	loopattach(int);
 int	looutput(struct ifnet *,
 	   struct mbuf *, const struct sockaddr *, struct rtentry *);
-void	lortrequest(int, struct rtentry *, struct rt_addrinfo *);
+void	lortrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
 /*
  * These are exported because they're an easy way to tell if

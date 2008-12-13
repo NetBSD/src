@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.27.10.1 2008/10/19 22:16:13 haad Exp $	*/
+/*	$NetBSD: xencons.c,v 1.27.10.2 2008/12/13 01:13:43 haad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.27.10.1 2008/10/19 22:16:13 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.27.10.2 2008/12/13 01:13:43 haad Exp $");
 
 #include "opt_xen.h"
 
@@ -211,7 +211,7 @@ xencons_attach(device_t parent, device_t self, void *aux)
 		db_max_line = 0x7fffffff;
 #endif
 
-		if (xen_start_info.flags & SIF_INITDOMAIN) {
+		if (xendomain_is_dom0()) {
 			int evtch = bind_virq_to_evtch(VIRQ_CONSOLE);
 			aprint_verbose_dev(self, "using event channel %d\n",
 			    evtch);
@@ -223,10 +223,10 @@ xencons_attach(device_t parent, device_t self, void *aux)
 		} else {
 #ifdef XEN3
 			printf("%s: using event channel %d\n",
-			    device_xname(self), xen_start_info.console_evtchn);
-			event_set_handler(xen_start_info.console_evtchn,
+			    device_xname(self), xen_start_info.console.domU.evtchn);
+			event_set_handler(xen_start_info.console.domU.evtchn,
 			    xencons_handler, sc, IPL_TTY, "xencons");
-			hypervisor_enable_event(xen_start_info.console_evtchn);
+			hypervisor_enable_event(xen_start_info.console.domU.evtchn);
 #else
 			(void)ctrl_if_register_receiver(CMSG_CONSOLE,
 			    xencons_rx, 0);
@@ -368,7 +368,7 @@ xencons_start(struct tty *tp)
 	 * expensive and we don't want our serial ports to overflow.
 	 */
 	cl = &tp->t_outq;
-	if (xen_start_info.flags & SIF_INITDOMAIN) {
+	if (xendomain_is_dom0()) {
 		int len, r;
 		u_char buf[XENCONS_BURST+1];
 
@@ -405,7 +405,7 @@ xencons_start(struct tty *tp)
 		x86_sfence();
 		xencons_interface->out_prod = prod;
 		x86_sfence();
-		hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+		hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 #undef XNC_OUT
 #else /* XEN3 */
 		ctrl_msg_t msg;
@@ -482,7 +482,7 @@ xencons_handler(void *arg)
 			x86_sfence();
 		}
 	}
-	hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+	hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 	splx(s);
 	return 1;
 #undef XNC_IN
@@ -603,7 +603,7 @@ xenconscn_getc(dev_t dev)
 		splx(s);
 		return 0;
 	}
-	if (xen_start_info.flags & SIF_INITDOMAIN) {
+	if (xendomain_is_dom0()) {
 		while (HYPERVISOR_console_io(CONSOLEIO_read, 1, &c) == 0)
 			;
 		cn_check_magic(dev, c, xencons_cnm_state);
@@ -661,11 +661,10 @@ xenconscn_putc(dev_t dev, int c)
 	int s = spltty();
 #ifdef XEN3
 	XENCONS_RING_IDX cons, prod;
-	if (xen_start_info.flags & SIF_INITDOMAIN) {
+	if (xendomain_is_dom0()) {
 #else
 	extern int ctrl_if_evtchn;
-	if (xen_start_info.flags & SIF_INITDOMAIN ||
-		ctrl_if_evtchn == -1) {
+	if (xendomain_is_dom0() || ctrl_if_evtchn == -1) {
 #endif
 		u_char buf[1];
 
@@ -687,7 +686,7 @@ xenconscn_putc(dev_t dev, int c)
 		x86_lfence();
 		xencons_interface->out_prod++;
 		x86_lfence();
-		hypervisor_notify_via_evtchn(xen_start_info.console_evtchn);
+		hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 #else
 		ctrl_msg_t msg;
 

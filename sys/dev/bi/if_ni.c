@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.35.10.1 2008/10/19 22:16:24 haad Exp $ */
+/*	$NetBSD: if_ni.c,v 1.35.10.2 2008/12/13 01:14:13 haad Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.35.10.1 2008/10/19 22:16:24 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.35.10.2 2008/12/13 01:14:13 haad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -697,7 +697,7 @@ niioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		switch(ifa->ifa_addr->sa_family) {
 #ifdef INET
@@ -710,27 +710,33 @@ niioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running,
 			 * stop it.
 			 */
 			ifp->if_flags &= ~IFF_RUNNING;
 			ni_setup(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface it marked up and it is stopped, then
 			 * start it.
 			 */
 			niinit(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			break;
+		case IFF_UP|IFF_RUNNING:
 			/*
 			 * Send a new setup packet to match any new changes.
 			 * (Like IFF_PROMISC etc)
 			 */
 			ni_setup(sc);
+			break;
+		default:
+			break;
 		}
 		break;
 
@@ -751,8 +757,8 @@ niioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
-
+		error = ether_ioctl(ifp, cmd, data);
+		break;
 	}
 	splx(s);
 	return (error);

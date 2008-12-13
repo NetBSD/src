@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.42.6.1 2008/10/19 22:15:39 haad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.42.6.2 2008/12/13 01:12:58 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42.6.1 2008/10/19 22:15:39 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42.6.2 2008/12/13 01:12:58 haad Exp $");
 
 #include "opt_sa.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.42.6.1 2008/10/19 22:15:39 haad Exp $"
 #include <sys/savar.h>
 #include <sys/ktrace.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscall_stats.h>
 
 #include <uvm/uvm_extern.h>
@@ -129,7 +130,7 @@ syscall(struct trapframe *frame)
 	    || (error = trace_enter(code, args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
-		error = (*callp->sy_call)(l, args, rval);
+		error = sy_call(callp, l, args, rval);
 	}
 
 	if (__predict_false(p->p_trace_enabled)

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.10.2.1 2008/10/19 22:18:06 haad Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.10.2.2 2008/12/13 01:15:34 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/syscallvar.h>
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
 
@@ -82,4 +83,24 @@ evcnt_attach_dynamic(struct evcnt *ev, int type, const struct evcnt *parent,
     const char *group, const char *name)
 {
 
+}
+
+void
+evcnt_detach(struct evcnt *ev)
+{
+
+}
+
+int
+syscall_establish(const struct emul *em, const struct syscall_package *sp)
+{
+
+	return 0;
+}
+
+int
+syscall_disestablish(const struct emul *em, const struct syscall_package *sp)
+{
+
+	return 0;
 }

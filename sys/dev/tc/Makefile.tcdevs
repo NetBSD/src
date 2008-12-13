@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.tcdevs,v 1.1 1998/06/12 23:22:59 cgd Exp $
+#	$NetBSD: Makefile.tcdevs,v 1.1.156.1 2008/12/13 01:14:53 haad Exp $
 
-AWK=	awk
+.include <bsd.own.mk>
 
 tcdevs.h tcdevs_data.h: tcdevs devlist2h.awk
 	/bin/rm -f tcdevs.h tcdevs_data.h
-	${AWK} -f devlist2h.awk tcdevs
+	${TOOL_AWK} -f devlist2h.awk tcdevs

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp24xx_machdep.c,v 1.3.2.1 2008/10/19 22:15:44 haad Exp $ */
+/*	$NetBSD: sdp24xx_machdep.c,v 1.3.2.2 2008/12/13 01:13:08 haad Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.3.2.1 2008/10/19 22:15:44 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdp24xx_machdep.c,v 1.3.2.2 2008/12/13 01:13:08 haad Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -295,6 +295,7 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	if (cold) {
 		doshutdownhooks();
+		pmf_system_shutdown(boothowto);
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
 		cngetc();
@@ -328,6 +329,8 @@ cpu_reboot(int howto, char *bootstr)
 
 	/* Run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	/* Make sure IRQ's are disabled */
 	IRQdisable;

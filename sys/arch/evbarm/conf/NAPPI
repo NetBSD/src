@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.28.4.1 2008/10/19 22:15:44 haad Exp $
+#	$NetBSD: NAPPI,v 1.28.4.2 2008/12/13 01:13:07 haad Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -48,7 +48,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
-options 	SOFTDEP
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -110,7 +109,6 @@ options 	SHMMAXPGS=1024	# 1024 pages is the default
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions

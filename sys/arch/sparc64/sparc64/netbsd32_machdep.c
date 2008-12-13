@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.82.2.1 2008/10/19 22:16:01 haad Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.82.2.2 2008/12/13 01:13:29 haad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.82.2.1 2008/10/19 22:16:01 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.82.2.2 2008/12/13 01:13:29 haad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -215,7 +215,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	sf.sf_signo = sig;
 	sf.sf_code = (u_int)ksi->ksi_trap;
-#if defined(COMPAT_SUNOS) || defined(LKM)
+#if defined(COMPAT_SUNOS) || defined(MODULAR)
 	sf.sf_scp = (u_long)&fp->sf_sc;
 #endif
 	sf.sf_addr = 0;			/* XXX */

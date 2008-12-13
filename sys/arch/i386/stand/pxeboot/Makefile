@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2007/02/27 18:17:28 he Exp $
+#	$NetBSD: Makefile,v 1.14.50.1 2008/12/13 01:13:15 haad Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -18,6 +18,10 @@ SRCS= main.c dev_net.c devopen.c conf.c exec.c pxe.c pxe_call.S
 # use our own nfs implementation
 .PATH: ${.CURDIR}/../libsa
 SRCS+= nfs.c
+
+PIE_CFLAGS=
+PIE_AFLAGS=
+PIE_LDFLAGS=
 
 .include <bsd.own.mk>
 

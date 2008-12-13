@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.19.2.1 2008/10/19 22:17:27 haad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.19.2.2 2008/12/13 01:15:08 haad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.19.2.1 2008/10/19 22:17:27 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.19.2.2 2008/12/13 01:15:08 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -261,7 +261,7 @@ sched_enqueue(struct lwp *l, bool swtch)
 		else if (eprio >= sched_upreempt_pri)
 			type = RESCHED_IMMED;
 		else
-			type = 0;
+			type = RESCHED_LAZY;
 		cpu_need_resched(ci, type);
 	}
 }

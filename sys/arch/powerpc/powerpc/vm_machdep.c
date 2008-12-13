@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.73 2007/10/17 19:56:48 garbled Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.73.26.1 2008/12/13 01:13:24 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73 2007/10/17 19:56:48 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73.26.1 2008/12/13 01:13:24 haad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
 #include "opt_ppcarch.h"
-#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/core.h>
@@ -46,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73 2007/10/17 19:56:48 garbled Exp 
 #include <sys/systm.h>
 #include <sys/user.h>
 #include <sys/vnode.h>
+#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.73 2007/10/17 19:56:48 garbled Exp 
 vaddr_t vmaprange(struct proc *, vaddr_t, vsize_t, int);
 void vunmaprange(vaddr_t, vsize_t);
 #endif
+
+void cpu_lwp_bootstrap(void);
 
 /*
  * Finish a fork operation, with execution context l2 nearly set up.
@@ -86,7 +88,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct callframe *cf;
 	struct switchframe *sf;
 	char *stktop1, *stktop2;
-	void cpu_lwp_bootstrap(void);
 	struct pcb *pcb = &l2->l_addr->u_pcb;
 
 #ifdef DIAGNOSTIC
@@ -183,60 +184,6 @@ cpu_lwp_free(struct lwp *l, int proc)
 #endif
 
 }
-
-#ifdef COREDUMP
-/*
- * Write the machine-dependent part of a core dump.
- */
-int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
-{
-	struct coreseg cseg;
-	struct md_coredump md_core;
-	struct pcb *pcb = &l->l_addr->u_pcb;
-	int error;
-
-	if (iocookie == NULL) {
-		CORE_SETMAGIC(*chdr, COREMAGIC, MID_POWERPC, 0);
-		chdr->c_hdrsize = ALIGN(sizeof *chdr);
-		chdr->c_seghdrsize = ALIGN(sizeof cseg);
-		chdr->c_cpusize = sizeof md_core;
-		chdr->c_nseg++;
-		return 0;
-	}
-
-	md_core.frame = *trapframe(l);
-	if (pcb->pcb_flags & PCB_FPU) {
-#ifdef PPC_HAVE_FPU
-		if (pcb->pcb_fpcpu)
-			save_fpu_lwp(l, FPU_SAVE);
-#endif
-		md_core.fpstate = pcb->pcb_fpu;
-	} else
-		memset(&md_core.fpstate, 0, sizeof(md_core.fpstate));
-
-#ifdef ALTIVEC
-	if (pcb->pcb_flags & PCB_ALTIVEC) {
-		if (pcb->pcb_veccpu)
-			save_vec_lwp(l, ALTIVEC_SAVE);
-		md_core.vstate = pcb->pcb_vr;
-	} else
-#endif
-		memset(&md_core.vstate, 0, sizeof(md_core.vstate));
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-		    chdr->c_seghdrsize);
-	if (error)
-		return error;
-
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
-}
-#endif
 
 #ifdef PPC_IBM4XX
 /*
@@ -345,4 +292,34 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	uvm_km_free(phys_map, addr, len, UVM_KMF_VAONLY);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
+}
+
+void
+cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
+{
+	extern void fork_trampoline(void);
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf;
+	struct callframe *cf;
+	struct switchframe *sf;
+
+	tf = trapframe(l);
+	cf = (struct callframe *) ((uintptr_t)tf & ~(CALLFRAMELEN-1));
+	cf->lr = (register_t)cpu_lwp_bootstrap;
+	cf--;
+	cf->sp = (register_t) (cf+1);
+	cf->r31 = (register_t) func;
+	cf->r30 = (register_t) arg;
+	sf = (struct switchframe *) ((uintptr_t) cf - SFRAMELEN);
+	memset((void *)sf, 0, sizeof *sf);		/* just in case */
+	sf->sp = (register_t) cf;
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
+#endif
+	pcb->pcb_sp = (register_t)sf;
+	pcb->pcb_kmapsr = 0;
+	pcb->pcb_umapsr = 0;
+#ifdef PPC_HAVE_FPU
+	pcb->pcb_flags = PSL_FE_DFLT;
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.75 2008/03/11 05:34:02 matt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.75.10.1 2008/12/13 01:13:33 haad Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -98,7 +98,7 @@
  *  pm_stack holds lowest allocated memory for the process stack.
  */
 
-typedef struct pmap {
+struct pmap {
 	struct pte	*pm_p1ap;	/* Base of alloced p1 pte space */
 	int		 pm_count;	/* reference count */
 	struct pcb	*pm_pcbs;	/* PCBs using this pmap */
@@ -108,7 +108,7 @@ typedef struct pmap {
 	long		 pm_p1lr;	/* page 1 length register */
 	struct simplelock pm_lock;	/* Lock entry in MP environment */
 	struct pmap_statistics	 pm_stats;	/* Some statistics */
-} *pmap_t;
+};
 
 /*
  * For each struct vm_page, there is a list of all currently valid virtual
@@ -132,14 +132,6 @@ extern	struct  pv_entry *pv_table;
 #define MAPPHYS(ptr, count, perm)			\
 	ptr = avail_start + KERNBASE;	\
 	avail_start += (count) * VAX_NBPG;
-
-#ifdef	_KERNEL
-
-extern	struct pmap kernel_pmap_store;
-
-#define pmap_kernel()			(&kernel_pmap_store)
-
-#endif	/* _KERNEL */
 
 
 /*

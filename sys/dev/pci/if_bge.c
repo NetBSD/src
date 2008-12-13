@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.148.2.1 2008/10/19 22:16:38 haad Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.148.2.2 2008/12/13 01:14:35 haad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.148.2.1 2008/10/19 22:16:38 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.148.2.2 2008/12/13 01:14:35 haad Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1568,22 +1568,22 @@ bge_blockinit(struct bge_softc *sc)
 	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 24);
 	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 48);
 #else
+
 	/* new broadcom docs strongly recommend these: */
 	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0) {
 		if (ifp->if_mtu > ETHER_MAX_LEN) {
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
-		} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x04);
-			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x10);
 		} else {
-			/* Values from Linux driver... */
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 304);
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 152);
 			CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 380);
 		}
+	} else if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x04);
+		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x10);
 	} else {
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x0);
 		CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x10);
@@ -4290,6 +4290,8 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	switch(command) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			/*
 			 * If only the state of the PROMISC flag changed,

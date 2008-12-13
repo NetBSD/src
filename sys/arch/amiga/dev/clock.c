@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.47 2008/01/06 18:50:31 mhitch Exp $ */
+/*	$NetBSD: clock.c,v 1.47.16.1 2008/12/13 01:13:00 haad Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47 2008/01/06 18:50:31 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.47.16.1 2008/12/13 01:13:00 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -112,7 +112,7 @@ static u_int clk_getcounter(struct timecounter *);
 static struct timecounter clk_timecounter = {
 	clk_getcounter,	/* get_timecount */
 	0,		/* no poll_pps */
-	~0u,		/* counter_mask */
+	0x0fffu,	/* counter_mask */
 	0,		/* frequency */
 	"clock",	/* name, overriden later */
 	100,		/* quality */
@@ -159,6 +159,7 @@ void
 clockattach(struct device *pdp, struct device *dp, void *auxp)
 {
 	const char *clockchip;
+	u_int counter_mask;
 	unsigned short interval;
 #ifdef DRACO
 	u_char dracorev;
@@ -188,8 +189,14 @@ clockattach(struct device *pdp, struct device *dp, void *auxp)
 
 	amiga_clk_interval = (eclockfreq / hz);
 
+	counter_mask = 0x8000;
+	while (counter_mask != 0 && (counter_mask & amiga_clk_interval) == 0)
+		counter_mask >>= 1;
+	counter_mask -= 1;
+
 	clk_timecounter.tc_name = clockchip;
 	clk_timecounter.tc_frequency = eclockfreq;
+	clk_timecounter.tc_counter_mask = counter_mask;
 
 	fast_delay_limit = UINT_MAX / amiga_clk_interval;
 

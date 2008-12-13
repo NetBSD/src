@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.21.4.1 2008/10/19 22:17:09 haad Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.21.4.2 2008/12/13 01:14:53 haad Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.21.4.1 2008/10/19 22:17:09 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.21.4.2 2008/12/13 01:14:53 haad Exp $");
 
 #include "bpfilter.h"
 
@@ -102,6 +102,7 @@ static const struct usb_devno rum_devs[] = {
 	{ USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_WUSB54GR },
 	{ USB_VENDOR_CONCEPTRONIC,	USB_PRODUCT_CONCEPTRONIC_C54RU2 },
 	{ USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_CGWLUSB2GL },
+	{ USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_CGWLUSB2GPX },
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_CWD854F },
 	{ USB_VENDOR_DICKSMITH,		USB_PRODUCT_DICKSMITH_RT2573 },
 	{ USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DWLG122C1 },
@@ -1372,14 +1373,21 @@ rum_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING)
-				rum_update_promisc(sc);
-			else
-				rum_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				rum_stop(ifp, 1);
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP|IFF_RUNNING:
+			rum_update_promisc(sc);
+			break;
+		case IFF_UP:
+			rum_init(ifp);
+			break;
+		case IFF_RUNNING:
+			rum_stop(ifp, 1);
+			break;
+		case 0:
+			break;
 		}
 		break;
 

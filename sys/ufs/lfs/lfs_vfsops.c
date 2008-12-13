@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.267 2008/06/28 15:50:20 rumble Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.267.2.1 2008/12/13 01:15:41 haad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.267 2008/06/28 15:50:20 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.267.2.1 2008/12/13 01:15:41 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -111,7 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.267 2008/06/28 15:50:20 rumble Exp 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/genfs/genfs_node.h>
 
-MODULE(MODULE_CLASS_VFS, lfs, NULL);
+MODULE(MODULE_CLASS_VFS, lfs, "ffs");
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
 static bool lfs_issequential_hole(const struct ufsmount *,
@@ -181,6 +181,7 @@ static const struct ufs_ops lfs_ufsops = {
 	.uo_valloc = lfs_valloc,
 	.uo_vfree = lfs_vfree,
 	.uo_balloc = lfs_balloc,
+	.uo_unmark_vnode = lfs_unmark_vnode,
 };
 
 struct shortlong {

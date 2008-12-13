@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.126 2008/02/11 21:43:46 dyoung Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.126.16.1 2008/12/13 01:14:13 haad Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.126 2008/02/11 21:43:46 dyoung Exp $
+ * $Id: aic7xxx.c,v 1.126.16.1 2008/12/13 01:14:13 haad Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.126 2008/02/11 21:43:46 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.126.16.1 2008/12/13 01:14:13 haad Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -6614,7 +6614,6 @@ ahc_dump_card_state(struct ahc_softc *ahc)
 
 	saved_scbptr = ahc_inb(ahc, SCBPTR);
 	last_phase = ahc_inb(ahc, LASTPHASE);
-	printf(">>>>>>>>>>>>>>>>>> Dump Card State Begins <<<<<<<<<<<<<<<<<\n"
 	       "%s: Dumping Card State %s, at SEQADDR 0x%x\n",
 	       ahc_name(ahc), ahc_lookup_phase_entry(last_phase)->phasemsg,
 	       ahc_inb(ahc, SEQADDR0) | (ahc_inb(ahc, SEQADDR1) << 8));
@@ -6765,7 +6764,6 @@ ahc_dump_card_state(struct ahc_softc *ahc)
 	}
 
 	ahc_platform_dump_card_state(ahc);
-	printf("\n<<<<<<<<<<<<<<<<< Dump Card State Ends >>>>>>>>>>>>>>>>>>\n");
 	ahc_outb(ahc, SCBPTR, saved_scbptr);
 	if (paused == 0)
 		ahc_unpause(ahc);

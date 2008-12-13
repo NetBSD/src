@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 2008/01/06 13:27:20 dsl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.16.1 2008/12/13 01:13:12 haad Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -85,7 +85,6 @@
 #include <sys/simplelock.h>
 #include <machine/pte.h>
 
-typedef
 struct pmap {
 	TAILQ_ENTRY(pmap)	pmap_list;	/* pmap free list */
 	struct simplelock	pmap_lock;	/* lock on map */
@@ -93,8 +92,7 @@ struct pmap {
 	pa_space_t		pmap_space;	/* space for this pmap */
 	u_int			pmap_pid;	/* protection id for pmap */
 	struct pmap_statistics	pmap_stats;	/* statistics */
-} *pmap_t;
-extern pmap_t	kernel_pmap;			/* The kernel's map */
+};
 
 #ifdef _KERNEL
 
@@ -120,7 +118,6 @@ extern int dcache_line_mask;
 #define pmap_kernel_va(VA)	\
 	(((VA) >= VM_MIN_KERNEL_ADDRESS) && ((VA) <= VM_MAX_KERNEL_ADDRESS))
 
-#define pmap_kernel()			(kernel_pmap)
 #define	pmap_resident_count(pmap)	((pmap)->pmap_stats.resident_count)
 #define pmap_wired_count(pmap)		((pmap)->pmap_stats.wired_count)
 #define pmap_reference(pmap) \
@@ -154,7 +151,7 @@ pmap_prot(struct pmap *pmap, vm_prot_t prot)
 {
 	extern u_int kern_prot[], user_prot[];
 
-	return (pmap == kernel_pmap ? kern_prot : user_prot)[prot];
+	return (pmap == pmap_kernel() ? kern_prot : user_prot)[prot];
 }
 
 #define	pmap_sid(pmap, va) \

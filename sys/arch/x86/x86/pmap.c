@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.71.2.1 2008/10/19 22:16:08 haad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71.2.2 2008/12/13 01:13:39 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71.2.1 2008/10/19 22:16:08 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71.2.2 2008/12/13 01:13:39 haad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -382,7 +382,8 @@ union {
  * global data structures
  */
 
-struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
+static struct pmap kernel_pmap_store;	/* the kernel's pmap (proc0) */
+struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 
 /*
  * pmap_pg_g: if our processor supports PG_G in the PTE then we
@@ -3600,7 +3601,7 @@ startover:
 	pp_lock(pp);
 	while ((pvpte = pv_pte_first(pp)) != NULL) {
 		struct pmap *pmap;
-		struct pv_entry *pve = NULL;
+		struct pv_entry *pve;
 		pt_entry_t opte;
 		vaddr_t va;
 		int error;

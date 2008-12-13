@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.19 2008/06/24 10:24:21 gmcgarry Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.19.2.1 2008/12/13 01:15:08 haad Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.19 2008/06/24 10:24:21 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.19.2.1 2008/12/13 01:15:08 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.19 2008/06/24 10:24:21 gmcgarry Ex
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/select.h>
+#include <sys/poll.h>
 #include <sys/drvctlio.h>
 #include <sys/devmon.h>
 
@@ -55,6 +57,7 @@ static struct drvctl_queue	drvctl_eventq;		/* FIFO */
 static kcondvar_t		drvctl_cond;
 static kmutex_t			drvctl_lock;
 static int			drvctl_nopen = 0, drvctl_eventcnt = 0;
+static struct selinfo		drvctl_rdsel;
 
 #define DRVCTL_EVENTQ_DEPTH	64	/* arbitrary queue limit */
 
@@ -72,6 +75,7 @@ static int	drvctl_read(struct file *, off_t *, struct uio *,
 static int	drvctl_write(struct file *, off_t *, struct uio *,
 			     kauth_cred_t, int);
 static int	drvctl_ioctl(struct file *, u_long, void *);
+static int	drvctl_poll(struct file *, int);
 static int	drvctl_close(struct file *);
 
 static const struct fileops drvctl_fileops = {
@@ -79,7 +83,7 @@ static const struct fileops drvctl_fileops = {
 	drvctl_write,
 	drvctl_ioctl,
 	fnullop_fcntl,
-	fnullop_poll,
+	drvctl_poll,
 	fbadop_stat,
 	drvctl_close,
 	fnullop_kqfilter
@@ -96,6 +100,7 @@ drvctl_init(void)
 	TAILQ_INIT(&drvctl_eventq);
 	mutex_init(&drvctl_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&drvctl_cond, "devmon");
+	selinit(&drvctl_rdsel);
 }
 
 void
@@ -136,6 +141,7 @@ devmon_insert(const char *event, prop_dictionary_t ev)
 	TAILQ_INSERT_TAIL(&drvctl_eventq, dce, dce_link);
 	++drvctl_eventcnt;
 	cv_broadcast(&drvctl_cond);
+	selnotify(&drvctl_rdsel, 0, 0);
 
 	mutex_exit(&drvctl_lock);
 }
@@ -357,6 +363,19 @@ drvctl_ioctl(struct file *fp, u_long cmd, void *data)
 		return (EPASSTHROUGH);
 	}
 	return (res);
+}
+
+static int
+drvctl_poll(struct file *fp, int events)
+{
+	int revents = 0;
+
+	if (!TAILQ_EMPTY(&drvctl_eventq))
+		revents |= events & (POLLIN | POLLRDNORM);
+	else
+		selrecord(curlwp, &drvctl_rdsel);
+
+	return revents;
 }
 
 static int

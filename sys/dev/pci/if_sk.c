@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.50.2.1 2008/10/19 22:16:39 haad Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.50.2.2 2008/12/13 01:14:35 haad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.50.2.1 2008/10/19 22:16:39 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.50.2.2 2008/12/13 01:14:35 haad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1003,6 +1003,8 @@ sk_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	case SIOCSIFFLAGS:
 	        DPRINTFN(2, ("sk_ioctl IFFLAGS\n"));
+		if ((error = ifioctl_common(ifp, command, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (ifp->if_flags & IFF_RUNNING &&
 			    ifp->if_flags & IFF_PROMISC &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.158.4.1 2008/10/19 22:17:29 haad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.158.4.2 2008/12/13 01:15:10 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.158.4.1 2008/10/19 22:17:29 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.158.4.2 2008/12/13 01:15:10 haad Exp $");
 
-#include "fs_union.h"
 #include "veriexec.h"
 
 #include <sys/param.h>
@@ -72,9 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.158.4.1 2008/10/19 22:17:29 haad Exp
 #include <fs/union/union.h>
 #endif
 
-#if defined(LKM) || defined(UNION)
 int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
-#endif
 
 #include <sys/verified_exec.h>
 
@@ -403,7 +400,6 @@ unionread:
 	if (error)
 		return (error);
 
-#if defined(UNION) || defined(LKM)
 	if (count == auio.uio_resid && vn_union_readdir_hook) {
 		struct vnode *ovp = vp;
 
@@ -413,7 +409,6 @@ unionread:
 		if (vp != ovp)
 			goto unionread;
 	}
-#endif /* UNION || LKM */
 
 	if (count == auio.uio_resid && (vp->v_vflag & VV_ROOT) &&
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {

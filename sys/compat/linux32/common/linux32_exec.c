@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.c,v 1.13.6.1 2008/10/19 22:16:16 haad Exp $ */
+/*	$NetBSD: linux32_exec.c,v 1.13.6.2 2008/12/13 01:13:57 haad Exp $ */
 
 /*-
  * Copyright (c) 1994-2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.13.6.1 2008/10/19 22:16:16 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec.c,v 1.13.6.2 2008/12/13 01:13:57 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ void linux_nptl_proc_init(struct proc *, struct proc *);
 
 struct uvm_object *emul_linux32_object;
 
-const struct emul emul_linux32 = {
+struct emul emul_linux32 = {
 	"linux32",
 	"/emul/linux32",
 #ifndef __HAVE_MINIMAL_EMUL

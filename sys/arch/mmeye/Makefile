@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.114.1 2008/12/13 01:13:18 haad Exp $
 
 # Makefile for mmeye tags file and boot blocks
 
@@ -16,7 +16,8 @@ DMMEYE=	mmeye include
 tags:
 	-ctags -wdtf ${TMMEYE} ${SMMEYE} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AMMEYE} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TMMEYE}
 	sort -o ${TMMEYE} ${TMMEYE}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.89.6.1 2008/10/19 22:16:19 haad Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.89.6.2 2008/12/13 01:14:13 haad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.89.6.1 2008/10/19 22:16:19 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.89.6.2 2008/12/13 01:14:13 haad Exp $");
 
 #include "opt_ata.h"
 
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.89.6.1 2008/10/19 22:16:19 haad Exp $"
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
-#include <sys/cpu.h>
 
 #include <sys/intr.h>
 #include <sys/bus.h>
@@ -199,7 +198,8 @@ wdc_ata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		 * that we never get to this point if that's the case.
 		 */
 		/* If it's not a polled command, we need the kernel thread */
-		if ((xfer->c_flags & C_POLL) == 0 && cpu_intr_p()) {
+		if ((xfer->c_flags & C_POLL) == 0 &&
+		    (chp->ch_flags & ATACH_TH_RUN) == 0) {
 			chp->ch_queue->queue_freeze++;
 			wakeup(&chp->ch_thread);
 			return;

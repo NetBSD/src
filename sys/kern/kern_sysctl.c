@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.216 2008/04/28 20:24:03 martin Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.216.6.1 2008/12/13 01:15:08 haad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.216 2008/04/28 20:24:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.216.6.1 2008/12/13 01:15:08 haad Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -1994,7 +1994,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	 * initialize lock state -- we need locks if the main tree has
 	 * been marked as complete, but since we could be called from
 	 * either there, or from a device driver (say, at device
-	 * insertion), or from an lkm (at lkm load time, say), we
+	 * insertion), or from a module (at module load time, say), we
 	 * don't really want to "wait"...
 	 */
 	sysctl_lock(true);

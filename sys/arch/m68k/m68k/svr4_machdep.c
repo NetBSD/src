@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.29 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.29.6.1 2008/12/13 01:13:16 haad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.29 2008/04/28 20:23:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.29.6.1 2008/12/13 01:13:16 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,4 +305,16 @@ svr4_sys_sysarch(struct lwp *l, const struct svr4_sys_sysarch_args *uap, registe
 	}
 
 	return error;
+}
+
+void
+svr4_md_init(void)
+{
+
+}
+
+void
+svr4_md_fini(void)
+{
+
 }

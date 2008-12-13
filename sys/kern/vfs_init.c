@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.40.4.1 2008/10/19 22:17:29 haad Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.40.4.2 2008/12/13 01:15:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.40.4.1 2008/10/19 22:17:29 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.40.4.2 2008/12/13 01:15:09 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.40.4.1 2008/10/19 22:17:29 haad Exp $
 #include <sys/systm.h>
 #include <sys/module.h>
 #include <sys/dirhash.h>
+#include <sys/sysctl.h>
 
 /*
  * Sigh, such primitive tools are these...
@@ -137,6 +138,50 @@ vn_default_error(void *v)
 
 	return (EOPNOTSUPP);
 }
+
+static struct sysctllog *vfs_sysctllog;
+
+/*
+ * Top level filesystem related information gathering.
+ */
+static void
+sysctl_vfs_setup(void)
+{
+	extern int dovfsusermount;
+	extern int vfs_magiclinks;
+
+	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "vfs", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, CTL_EOL);
+	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "generic",
+		       SYSCTL_DESCR("Non-specific vfs related information"),
+		       NULL, 0, NULL, 0,
+		       CTL_VFS, VFS_GENERIC, CTL_EOL);
+	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "usermount",
+		       SYSCTL_DESCR("Whether unprivileged users may mount "
+				    "filesystems"),
+		       NULL, 0, &dovfsusermount, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
+	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "fstypes",
+		       SYSCTL_DESCR("List of file systems present"),
+		       sysctl_vfs_generic_fstypes, 0, NULL, 0,
+		       CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
+	sysctl_createv(&vfs_sysctllog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "magiclinks",
+		       SYSCTL_DESCR("Whether \"magic\" symlinks are expanded"),
+		       NULL, 0, &vfs_magiclinks, 0,
+		       CTL_VFS, VFS_GENERIC, VFS_MAGICLINKS, CTL_EOL);
+}
+
 
 /*
  * vfs_init.c
@@ -301,6 +346,11 @@ vfs_op_check(void)
 void
 vfsinit(void)
 {
+
+	/*
+	 * Attach sysctl nodes
+	 */
+	sysctl_vfs_setup();
 
 	/*
 	 * Initialize the namei pathname buffer pool and cache.

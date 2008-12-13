@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.66 2008/04/28 20:23:36 martin Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.66.6.1 2008/12/13 01:13:26 haad Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.66 2008/04/28 20:23:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.66.6.1 2008/12/13 01:13:26 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -621,4 +621,16 @@ svr4_sys_sysarch(struct lwp *l, const struct svr4_sys_sysarch_args *uap, registe
 		printf("(sparc) svr4_sysarch(%d)\n", SCARG(uap, op));
 		return EINVAL;
 	}
+}
+
+void
+svr4_md_init(void)
+{
+
+}
+
+void
+svr4_md_fini(void)
+{
+
 }

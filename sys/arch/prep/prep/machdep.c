@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2007/10/17 19:56:53 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.67.26.1 2008/12/13 01:13:24 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2007/10/17 19:56:53 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67.26.1 2008/12/13 01:13:24 haad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -274,6 +274,8 @@ cpu_reboot(int howto, char *what)
 
 halt_sys:
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if (howto & RB_HALT) {
                 printf("\n");

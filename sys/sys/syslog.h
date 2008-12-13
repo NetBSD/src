@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.30.58.1 2008/10/19 22:18:09 haad Exp $	*/
+/*	$NetBSD: syslog.h,v 1.30.58.2 2008/12/13 01:15:35 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -212,6 +212,16 @@ void	syslog_r(int, struct syslog_data *, const char *, ...)
     __attribute__((__format__(__printf__,3,4)));
 void	vsyslog_r(int, struct syslog_data *, const char *, _BSD_VA_LIST_)
     __attribute__((__format__(__printf__,3,0)));
+void syslogp(int, const char *, const char *, const char *, ...)
+    __attribute__((__format__(__printf__,4,5)));
+void vsyslogp(int, const char *, const char *, const char *, _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__,4,0)));
+void syslogp_r(int, struct syslog_data *, const char *, const char *,
+    const char *, ...)
+    __attribute__((__format__(__printf__,5,6)));
+void vsyslogp_r(int, struct syslog_data *, const char *, const char *,
+    const char *, _BSD_VA_LIST_)
+    __attribute__((__format__(__printf__,5,0)));
 #endif
 __END_DECLS
 

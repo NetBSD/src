@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.111.2.1 2008/10/19 22:18:09 haad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.111.2.2 2008/12/13 01:15:35 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,9 +65,6 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-#ifdef ACCEPT_FILTER_MOD
-#include <sys/lkm.h>
-#endif
 
 #if !defined(_KERNEL)
 struct uio;
@@ -543,7 +540,6 @@ struct	accept_filter *accept_filt_get(char *);
 SYSCTL_DECL(_net_inet_accf);
 #endif
 void	accept_filter_init(void);
-int	accept_filt_generic_mod_event(struct lkm_table *lkmtp, int event, void *data);
 #endif
 
 #endif /* _KERNEL */

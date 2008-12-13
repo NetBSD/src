@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.66 2008/06/28 12:15:43 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.66.2.1 2008/12/13 01:13:33 haad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.66 2008/06/28 12:15:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.66.2.1 2008/12/13 01:13:33 haad Exp $");
 
 #include "opt_ddb.h"
 
@@ -217,7 +217,7 @@ struct fd_type {
 
 /* The order of entries in the following table is important -- BEWARE! */
 struct fd_type fd_types[] = {
-	{ 18, 2, 36, 2, 0xff, 0xcf, 0x1b, 0x6c, 80, 2880, 1,
+	{ 18, 2, 36, 2, 0xff, 0xcf, 0x18, 0x50, 80, 2880, 1,
 	    FDC_500KBPS, 0xf6, 1, "1.44MB"    }, /* 1.44MB diskette */
 	{ 15, 2, 30, 2, 0xff, 0xdf, 0x1b, 0x54, 80, 2400, 1,
 	    FDC_500KBPS, 0xf6, 1, "1.2MB"    }, /* 1.2 MB AT-diskettes */
@@ -1267,7 +1267,8 @@ fdcstate(struct fdc_softc *fdc)
 			type->sectrac + sec;
 			if (block != fd->sc_blkno) {
 				printf("%s: block %d != blkno %" PRIu64 "\n",
-				    block, fd->sc_blkno);
+				    device_xname(fdc->sc_dev), block,
+				    fd->sc_blkno);
 #ifdef DDB
 				Debugger();
 #endif

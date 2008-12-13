@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.34.6.1 2008/10/19 22:15:52 haad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.34.6.2 2008/12/13 01:13:18 haad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,9 +107,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.34.6.1 2008/10/19 22:15:52 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.34.6.2 2008/12/13 01:13:18 haad Exp $");
 
+#if defined(_KERNEL_OPT)
 #include "opt_sa.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.34.6.1 2008/10/19 22:15:52 haad Exp $"
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 
@@ -285,7 +288,7 @@ EMULNAME(syscall_plain)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	rval[1] = frame->f_regs[_R_V1];
 #endif
 
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -436,7 +439,7 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 	rval[1] = frame->f_regs[_R_V1];
 #endif
 
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:

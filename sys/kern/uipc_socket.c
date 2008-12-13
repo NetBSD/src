@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.168.2.1 2008/10/19 22:17:29 haad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.168.2.2 2008/12/13 01:15:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.168.2.1 2008/10/19 22:17:29 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.168.2.2 2008/12/13 01:15:09 haad Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -149,6 +149,9 @@ static kcondvar_t socurkva_cv;
 
 static size_t sodopendfree(void);
 static size_t sodopendfreel(void);
+
+static void sysctl_kern_somaxkva_setup(void);
+static struct sysctllog *socket_sysctllog;
 
 static vsize_t
 sokvareserve(struct socket *so, vsize_t len)
@@ -422,6 +425,8 @@ getsombuf(struct socket *so, int type)
 void
 soinit(void)
 {
+
+	sysctl_kern_somaxkva_setup();
 
 	mutex_init(&so_pendfree_lock, MUTEX_DEFAULT, IPL_VM);
 	softnet_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
@@ -2260,16 +2265,18 @@ sysctl_kern_somaxkva(SYSCTLFN_ARGS)
 	return (error);
 }
 
-SYSCTL_SETUP(sysctl_kern_somaxkva_setup, "sysctl kern.somaxkva setup")
+static void
+sysctl_kern_somaxkva_setup()
 {
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	KASSERT(socket_sysctllog == NULL);
+	sysctl_createv(&socket_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "kern", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_KERN, CTL_EOL);
 
-	sysctl_createv(clog, 0, NULL, NULL,
+	sysctl_createv(&socket_sysctllog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "somaxkva",
 		       SYSCTL_DESCR("Maximum amount of kernel memory to be "

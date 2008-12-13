@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.40.1 2008/10/19 22:18:05 haad Exp $
+#	$NetBSD: Makefile,v 1.2.40.2 2008/12/13 01:15:34 haad Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../nfs
@@ -6,12 +6,13 @@
 LIB=	rumpfs_nfs
 
 SRCS=	krpc_subr.c nfs_bio.c nfs_boot.c nfs_kq.c nfs_node.c		\
-	nfs_socket.c nfs_subs.c nfs_syscalls.c nfs_vfsops.c nfs_vnops.c
+	nfs_socket.c nfs_subs.c nfs_iod.c nfs_vfsops.c nfs_vnops.c
 
 SRCS+=	stubs.c
 
 CPPFLAGS+=	-I${.CURDIR}/../../../net/lib/libnet/opt
 CPPFLAGS+=	-I${.CURDIR}/../../../net/lib/libnetinet/opt
+CPPFLAGS+=	-DNFS
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: accf_http.c,v 1.2.2.2 2008/10/19 22:17:46 haad Exp $	*/
+/*	$NetBSD: accf_http.c,v 1.2.2.3 2008/12/13 01:15:26 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Paycounter, Inc.
@@ -28,20 +28,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.2.2.2 2008/10/19 22:17:46 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.2.2.3 2008/12/13 01:15:26 haad Exp $");
 
 #define ACCEPT_FILTER_MOD
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/lkm.h>
+#include <sys/module.h>
 #include <sys/signalvar.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 
 #include <netinet/accept_filter.h>
+
+MODULE(MODULE_CLASS_MISC, accf_httpready, NULL);
 
 /* check for GET/HEAD */
 static void sohashttpget(struct socket *so, void *arg, int waitflag);
@@ -70,30 +72,49 @@ static struct accept_filter accf_http_filter = {
 
 static int parse_http_version = 1;
 
-SYSCTL_SETUP(sysctl_net_inet_accf__http_setup, "sysctl net.inet.accf.http subtree setup")
+/* XXX pseudo-device */
+void	accf_httpattach(int);
+
+void
+accf_httpattach(int junk)
 {
-	sysctl_createv(clog, 0, NULL, NULL,
+
+}
+
+static int
+accf_httpready_modcmd(modcmd_t cmd, void *arg)
+{
+	static struct sysctllog *clog;
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = accept_filt_add(&accf_http_filter);
+		if (error != 0) {
+			return error;
+		}
+		sysctl_createv(&clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "net", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+		sysctl_createv(&clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "inet", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+		sysctl_createv(&clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "accf", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, SO_ACCEPTFILTER, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+		sysctl_createv(&clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "http",
 		       SYSCTL_DESCR("HTTP accept filter"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, SO_ACCEPTFILTER, ACCF_HTTP, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
+		sysctl_createv(&clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "parsehttpversion",
 		       SYSCTL_DESCR("Parse http version so that non "
@@ -101,43 +122,20 @@ SYSCTL_SETUP(sysctl_net_inet_accf__http_setup, "sysctl net.inet.accf.http subtre
 		       NULL, 0, &parse_http_version, 0,
 		       CTL_NET, PF_INET, SO_ACCEPTFILTER, ACCF_HTTP,
 		       ACCFCTL_PARSEVER, CTL_EOL);
+		return 0;
+
+	case MODULE_CMD_FINI:
+		error = accept_filt_del(&accf_http_filter);
+		if (error != 0) {
+			return error;
+		}
+		sysctl_teardown(&clog);
+		return 0;
+
+	default:
+		return ENOTTY;
+	}
 }
-
-void accf_httpattach(int);
-void accf_httpattach(int num)
-{
-	accept_filt_generic_mod_event(NULL, LKM_E_LOAD, &accf_http_filter);
-}
-
-/*
- * This code is to make HTTP ready accept filer as LKM.
- * To compile as LKM we need to move this set of code into
- * another file and include this file for compilation when
- * making LKM
- */
-
-#ifdef _LKM
-static int accf_http_handle(struct lkm_table * lkmtp, int cmd);
-int accf_http_lkmentry(struct lkm_table * lkmtp, int cmd, int ver);
-
-MOD_MISC("accf_http");
-
-static int accf_http_handle(struct lkm_table * lkmtp, int cmd)
-{
-
-	return accept_filt_generic_mod_event(lkmtp, cmd, &accf_http_filter);
-}
-
-/*
- * the module entry point.
- */
-int
-accf_http_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
-{
-	DISPATCH(lkmtp, cmd, ver, accf_http_handle, accf_http_handle,
-	    accf_http_handle)
-}
-#endif
 
 #ifdef ACCF_HTTP_DEBUG
 #define DPRINT(fmt, args...)						\
@@ -325,10 +323,10 @@ soparsehttpvers(struct socket *so, void *arg, int waitflag)
 					} else if (
 					    mbufstrcmp(m, n, i, "HTTP/1.0") ||
 					    mbufstrcmp(m, n, i, "HTTP/1.1")) {
-							DPRINT("ok");
-							soishttpconnected(so,
-							    arg, waitflag);
-							return;
+						DPRINT("ok");
+						soishttpconnected(so,
+						    arg, waitflag);
+						return;
 					} else {
 						DPRINT("bad");
 						goto fallout;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.38 2008/03/21 08:17:30 dyoung Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.38.10.1 2008/12/13 01:14:13 haad Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.38 2008/03/21 08:17:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.38.10.1 2008/12/13 01:14:13 haad Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -8647,7 +8647,6 @@ ahd_dump_card_state(struct ahd_softc *ahd)
 	}
 	saved_modes = ahd_save_modes(ahd);
 	ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
-	printf(">>>>>>>>>>>>>>>>>> Dump Card State Begins <<<<<<<<<<<<<<<<<\n"
 	       "%s: Dumping Card State at program address 0x%x Mode 0x%x\n",
 	       ahd_name(ahd),
 	       ahd_inb(ahd, CURADDR) | (ahd_inb(ahd, CURADDR+1) << 8),
@@ -8855,7 +8854,6 @@ ahd_dump_card_state(struct ahd_softc *ahd)
 		ahd_outb(ahd, STACK, ahd->saved_stack[i] & 0xFF);
 		ahd_outb(ahd, STACK, (ahd->saved_stack[i] >> 8) & 0xFF);
 	}
-	printf("\n<<<<<<<<<<<<<<<<< Dump Card State Ends >>>>>>>>>>>>>>>>>>\n");
 	ahd_platform_dump_card_state(ahd);
 	ahd_restore_modes(ahd, saved_modes);
 	if (paused == 0)

@@ -1,4 +1,4 @@
-/* $NetBSD: svr4_sysent.c,v 1.82 2008/06/18 02:09:19 dogcow Exp $ */
+/* $NetBSD: svr4_sysent.c,v 1.82.2.1 2008/12/13 01:14:06 haad Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_sysent.c,v 1.82 2008/06/18 02:09:19 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_sysent.c,v 1.82.2.1 2008/12/13 01:14:06 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.36 2008/05/13 17:53:52 dyoung Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.36.4.1 2008/12/13 01:15:27 haad Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.36 2008/05/13 17:53:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.36.4.1 2008/12/13 01:15:27 haad Exp $");
 
 #include "opt_inet.h"
 
@@ -255,16 +255,13 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 			 */
 			if (IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr)) {
 				struct sockaddr_in *sinp, sin_dst;
+				struct in_addr ina;
 
-				memset(&sin_dst, 0, sizeof(sin_dst));
-				sin_dst.sin_family = AF_INET;
-				sin_dst.sin_len = sizeof(sin_dst);
-				memcpy(&sin_dst.sin_addr, &faddr->s6_addr[12],
-				      sizeof(sin_dst.sin_addr));
-				sinp = in_selectsrc(&sin_dst,
-						    &in6p->in6p_route,
-						    in6p->in6p_socket->so_options,
-						    NULL, &error);
+				memcpy(&ina, &faddr->s6_addr[12], sizeof(ina));
+				sockaddr_in_init(&sin_dst, &ina, 0);
+				sinp = in_selectsrc(&sin_dst, &in6p->in6p_route,
+				    in6p->in6p_socket->so_options, NULL,
+				    &error);
 				if (sinp == NULL) {
 					if (error == 0)
 						error = EADDRNOTAVAIL;

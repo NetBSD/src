@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2008/05/05 04:40:53 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60.6.1 2008/12/13 01:13:24 haad Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2008/05/05 04:40:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60.6.1 2008/12/13 01:13:24 haad Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -3280,7 +3280,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 	}
 
 	/*
-	 * (Bubble)sort them into asecnding order.
+	 * (Bubble)sort them into ascending order.
 	 */
 	for (i = 0; i < avail_cnt; i++) {
 		for (j = i + 1; j < avail_cnt; j++) {

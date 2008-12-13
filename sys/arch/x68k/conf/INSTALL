@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.79.4.1 2008/10/19 22:16:07 haad Exp $
+#	$NetBSD: INSTALL,v 1.79.4.2 2008/12/13 01:13:37 haad Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.79.4.1 $"
+#ident 		"INSTALL-$Revision: 1.79.4.2 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -73,7 +73,6 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support
-#options 	LKM
 
 options 	USERCONF		# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
@@ -177,7 +176,6 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

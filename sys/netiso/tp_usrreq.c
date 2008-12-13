@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_usrreq.c,v 1.36.6.1 2008/10/19 22:17:53 haad Exp $	*/
+/*	$NetBSD: tp_usrreq.c,v 1.36.6.2 2008/12/13 01:15:28 haad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -65,7 +65,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.36.6.1 2008/10/19 22:17:53 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_usrreq.c,v 1.36.6.2 2008/12/13 01:15:28 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -799,8 +799,9 @@ tp_snd_control(struct mbuf *m, struct socket *so, struct mbuf **data)
 		m->m_data += sizeof(*ch);
 
 		sockopt_init(&sopt, ch->cmsg_level, ch->cmsg_type, 0);
-		sockopt_setmbuf(&sopt, m);
-		error = tp_ctloutput(PRCO_SETOPT, so, &sopt);
+		error = sockopt_setmbuf(&sopt, m);
+		if (error == 0)
+			error = tp_ctloutput(PRCO_SETOPT, so, &sopt);
 		sockopt_destroy(&sopt);
 		m = NULL;
 

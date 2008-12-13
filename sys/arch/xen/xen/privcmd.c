@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.25.16.1 2008/10/19 22:16:13 haad Exp $ */
+/* $NetBSD: privcmd.c,v 1.25.16.2 2008/12/13 01:13:43 haad Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -32,9 +32,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.25.16.1 2008/10/19 22:16:13 haad Exp $");
-
-#include "opt_compat_netbsd.h"
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.25.16.2 2008/12/13 01:13:43 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,12 +272,10 @@ privcmd_ioctl(void *v)
 
 	switch (ap->a_command) {
 	case IOCTL_PRIVCMD_HYPERCALL:
-#ifdef COMPAT_40
 	case IOCTL_PRIVCMD_HYPERCALL_OLD:
 	/*
 	 * oprivcmd_hypercall_t is privcmd_hypercall_t without the last entry
 	 */
-#endif
 	{
 		privcmd_hypercall_t *hc = ap->a_data;
 		if (hc->op >= (PAGE_SIZE >> 5))
@@ -340,14 +336,12 @@ privcmd_ioctl(void *v)
 		break;
 	}
 #ifndef XEN3
-#if defined(COMPAT_30)
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN_OLD:
 		{
 		extern int initdom_ctrlif_domcontroller_port;
 		error = initdom_ctrlif_domcontroller_port;
 		}
 		break;
-#endif /* defined(COMPAT_30) */
 	case IOCTL_PRIVCMD_INITDOMAIN_EVTCHN:
 		{
 		extern int initdom_ctrlif_domcontroller_port;
@@ -458,15 +452,12 @@ privcmd_ioctl(void *v)
 				maddr[i] = ma;
 			}
 		}
-		error  = privcmd_map_obj(vmm, va0, maddr, pmb->num, pmb->dom);
-		if (error) {
-			uvm_km_free(kernel_map, trymap, PAGE_SIZE,
-			    UVM_KMF_VAONLY);
+		error = privcmd_map_obj(vmm, va0, maddr, pmb->num, pmb->dom);
+		uvm_km_free(kernel_map, trymap, PAGE_SIZE, UVM_KMF_VAONLY);
+
+		if (error != 0)
 			return error;
-		}
-		uvm_km_free(kernel_map, trymap, PAGE_SIZE,
-		    UVM_KMF_VAONLY);
-		error = 0;
+
 		break;
 	}
 #ifndef XEN3
@@ -627,7 +618,7 @@ xenprivcmd_init()
 	kernfs_entry_t *dkt;
 	kfstype kfst;
 
-	if ((xen_start_info.flags & SIF_PRIVILEGED) == 0)
+	if (!xendomain_is_privileged())
 		return;
 
 	kfst = KERNFS_ALLOCTYPE(privcmd_fileops);

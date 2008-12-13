@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.44 2008/04/08 20:08:50 cegger Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.44.10.1 2008/12/13 01:14:26 haad Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.44 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.44.10.1 2008/12/13 01:14:26 haad Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -963,10 +963,7 @@ hpget(buf, totlen, off0, ifp)
 /*
  * Process an ioctl request.
  */
-hpioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long	cmd;
-	void *data;
+hpioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct hp_softc *ns = &hp_softc[ifp->if_unit];
@@ -976,38 +973,43 @@ hpioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
+		hpinit(ifp->if_unit);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			hpinit(ifp->if_unit);	/* before arpwhohas */
 			((struct arpcom *) ifp)->ac_ipaddr =
 			    IA_SIN(ifa)->sin_addr;
 			arpwhohas((struct arpcom *) ifp, &IA_SIN(ifa)->sin_addr);
 			break;
 #endif
 		default:
-			hpinit(ifp->if_unit);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 #ifdef HP_DEBUG
 		printf("hp: setting flags, up: %s, running: %s\n",
 		    ifp->if_flags & IFF_UP ? "yes" : "no",
 		    ifp->if_flags & IFF_RUNNING ? "yes" : "no");
 #endif
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    ifp->if_flags & IFF_RUNNING) {
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			ifp->if_flags &= ~IFF_RUNNING;
 			outb(ns->ns_port + ds_cmd, DSCM_STOP | DSCM_NODMA);
-		} else
-			if (ifp->if_flags & IFF_UP &&
-			    (ifp->if_flags & IFF_RUNNING) == 0)
-				hpinit(ifp->if_unit);
+			break;
+		case IFF_UP:
+			hpinit(ifp->if_unit);
+			break;
+		default:
+			break;
+		}
 		break;
 
 #ifdef notdef
@@ -1018,7 +1020,7 @@ hpioctl(ifp, cmd, data)
 #endif
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 	}
 	splx(s);
 	return (error);

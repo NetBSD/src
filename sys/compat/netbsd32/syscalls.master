@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69.8.1 2008/10/19 22:16:17 haad Exp $
+	$NetBSD: syscalls.master,v 1.69.8.2 2008/12/13 01:14:03 haad Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -37,7 +37,6 @@
 ; #include's are copied to the syscall names and switch definition files only.
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ntp.h"
 #include "opt_sysv.h"
@@ -228,11 +227,7 @@
 152	UNIMPL
 153	UNIMPL
 154	UNIMPL
-#if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 155	STD		{ int netbsd32_nfssvc(int flag, netbsd32_voidp argp); }
-#else
-155	EXCL		netbsd32_nfssvc
-#endif
 156	COMPAT_43	{ int netbsd32_ogetdirentries(int fd, netbsd32_charp buf, u_int count, netbsd32_longp basep); }
 157	COMPAT_20	{ int netbsd32_statfs(netbsd32_charp path, netbsd32_statfsp_t buf); }
 158	COMPAT_20	{ int netbsd32_fstatfs(int fd, netbsd32_statfsp_t buf); }
@@ -309,32 +304,16 @@
 207	STD		{ int netbsd32_getpgid(pid_t pid); }
 208	STD		{ int netbsd32_reboot(int opt, netbsd32_charp bootstr); }
 209	STD		{ int netbsd32_poll(netbsd32_pollfdp_t fds, u_int nfds, int timeout); }
-;
-; Syscalls 210-219 are reserved for dynamically loaded syscalls
-;
-#if defined(LKM) || !defined(_KERNEL)
-210	NODEF		{ int sys_lkmnosys(void); }
-211	NODEF		{ int sys_lkmnosys(void); }
-212	NODEF		{ int sys_lkmnosys(void); }
-213	NODEF		{ int sys_lkmnosys(void); }
-214	NODEF		{ int sys_lkmnosys(void); }
-215	NODEF		{ int sys_lkmnosys(void); }
-216	NODEF		{ int sys_lkmnosys(void); }
-217	NODEF		{ int sys_lkmnosys(void); }
-218	NODEF		{ int sys_lkmnosys(void); }
-219	NODEF		{ int sys_lkmnosys(void); }
-#else	/* !LKM || !_KERNEL */
-210	EXCL		lkmnosys
-211	EXCL		lkmnosys
-212	EXCL		lkmnosys
-213	EXCL		lkmnosys
-214	EXCL		lkmnosys
-215	EXCL		lkmnosys
-216	EXCL		lkmnosys
-217	EXCL		lkmnosys
-218	EXCL		lkmnosys
-219	EXCL		lkmnosys
-#endif	/* !LKM || !_KERNEL */
+210	UNIMPL
+211	UNIMPL
+212	UNIMPL
+213	UNIMPL
+214	UNIMPL
+215	UNIMPL
+216	UNIMPL
+217	UNIMPL
+218	UNIMPL
+219	UNIMPL
 ; System calls 220-300 are reserved for use by NetBSD
 #if defined(SYSVSEM) || !defined(_KERNEL)
 220	COMPAT_14	{ int netbsd32___semctl(int semid, int semnum, int cmd, netbsd32_semunu_t arg); }
@@ -397,13 +376,13 @@
 248	STD		{ int netbsd32__ksem_open(netbsd32_charp name, int oflag, \
 			    mode_t mode, unsigned int value, netbsd32_semidp_t idp); }
 249	STD		{ int netbsd32__ksem_unlink(netbsd32_charp name); }
-250	STD		{ int netbsd32__ksem_close(netbsd32_semid_t id); }
-251	STD		{ int netbsd32__ksem_post(netbsd32_semid_t id); }
-252	STD		{ int netbsd32__ksem_wait(netbsd32_semid_t id); }
-253	STD		{ int netbsd32__ksem_trywait(netbsd32_semid_t id); }
-254	STD		{ int netbsd32__ksem_getvalue(netbsd32_semid_t id, \
+250	STD		{ int netbsd32__ksem_close(netbsd32_intptr_t id); }
+251	STD		{ int netbsd32__ksem_post(netbsd32_intptr_t id); }
+252	STD		{ int netbsd32__ksem_wait(netbsd32_intptr_t id); }
+253	STD		{ int netbsd32__ksem_trywait(netbsd32_intptr_t id); }
+254	STD		{ int netbsd32__ksem_getvalue(netbsd32_intptr_t id, \
 			    netbsd32_intp value); }
-255	STD		{ int netbsd32__ksem_destroy(netbsd32_semid_t id); }
+255	STD		{ int netbsd32__ksem_destroy(netbsd32_intptr_t id); }
 256	UNIMPL		sys__ksem_timedwait
 #else
 247	EXCL		sys__ksem_init
@@ -547,10 +526,15 @@
 			    netbsd32_keventp_t changelist, netbsd32_size_t nchanges, \
 			    netbsd32_keventp_t eventlist, netbsd32_size_t nevents, \
 			    netbsd32_timespecp_t timeout); }
-346	UNIMPL
-347	UNIMPL
-348	UNIMPL
-349	UNIMPL
+; Scheduling system calls.
+346	STD 		{ int netbsd32__sched_setparam(pid_t pid, lwpid_t lid, \
+			    int policy, const netbsd32_sched_paramp_t params); }
+347	STD 		{ int netbsd32__sched_getparam(pid_t pid, lwpid_t lid, \
+			    netbsd32_intp policy, netbsd32_sched_paramp_t params); }
+348	STD 		{ int netbsd32__sched_setaffinity(pid_t pid, lwpid_t lid, \
+			    netbsd32_size_t size, const netbsd32_cpusetp_t cpuset); }
+349	STD 		{ int netbsd32__sched_getaffinity(pid_t pid, lwpid_t lid, \
+			    netbsd32_size_t size, netbsd32_cpusetp_t cpuset); }
 350	NOARGS 		{ int sys_sched_yield(void); }
 351	UNIMPL
 352	UNIMPL

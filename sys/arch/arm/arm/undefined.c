@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.34 2008/05/21 14:12:06 ad Exp $	*/
+/*	$NetBSD: undefined.c,v 1.34.4.1 2008/12/13 01:13:01 haad Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.34 2008/05/21 14:12:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.34.4.1 2008/12/13 01:13:01 haad Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -203,8 +203,7 @@ undefinedinstruction(trapframe_t *frame)
 	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 #else
-	if (!(frame->tf_spsr & I32_bit))
-		enable_interrupts(I32_bit);
+	restore_interrupts(frame->tf_spsr & IF32_bits);
 #endif
 
 #ifndef acorn26

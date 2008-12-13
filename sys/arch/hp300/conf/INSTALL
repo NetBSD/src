@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.35.26.1 2008/10/19 22:15:45 haad Exp $
+# $NetBSD: INSTALL,v 1.35.26.2 2008/12/13 01:13:11 haad Exp $
 #
 # INSTALL machine description file
 #
@@ -66,7 +66,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	SEMMNU=30	# number of undo structures in system
 #options 	SYSVMSG		# System V-style message queues
 #options 	KTRACE		# system call tracing support
-#options 	LKM		# Loadable kernel modules
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 
 # Filesystems
@@ -83,7 +82,6 @@ file-system	MFS		# Memory-based filesystem
 # Filesystem options
 #options 	QUOTA		# User and group quotas in FFS
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network filesystem server
 #options 	NFS_BOOT_BOOTP	# use bootp for NFS boot

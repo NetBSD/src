@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.87 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.87.2.1 2008/12/13 01:15:26 haad Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.87 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.87.2.1 2008/12/13 01:15:26 haad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1277,7 +1277,7 @@ stripioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			ifp->if_flags |= IFF_UP;
 		else
@@ -1310,7 +1310,7 @@ stripioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 	}
 	splx(s);
 	return (error);

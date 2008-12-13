@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.43.8.1 2008/10/19 22:15:53 haad Exp $
+# 	$NetBSD: NEWS1200,v 1.43.8.2 2008/12/13 01:13:19 haad Exp $
 
 #	news1200 config file
 #
@@ -18,7 +18,6 @@ options 	KTRACE			# system call tracing support
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory
-options 	LKM			# loadable kernel modules
 options 	USERCONF		# userconf(4) support
 #options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -74,7 +73,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independent support
-#options 	SOFTDEP		# ffs soft updates support
 options 	WAPBL		# File system journaling support - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 

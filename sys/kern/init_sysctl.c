@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.143.2.1 2008/10/19 22:17:27 haad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.143.2.2 2008/12/13 01:15:07 haad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.143.2.1 2008/10/19 22:17:27 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.143.2.2 2008/12/13 01:15:07 haad Exp $");
 
 #include "opt_sysv.h"
-#include "opt_posix.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_sa.h"
+#include "opt_posix.h"
 #include "pty.h"
 #include "rnd.h"
 
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.143.2.1 2008/10/19 22:17:27 haad E
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
+#include <sys/ksem.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -80,7 +81,12 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.143.2.1 2008/10/19 22:17:27 haad E
 
 #include <sys/cpu.h>
 
-/* XXX this should not be here */
+#if defined(MODULAR) || defined(P1003_1B_SEMAPHORE)
+int posix_semaphores = 200112;
+#else
+int posix_semaphores;
+#endif
+
 int security_setidcore_dump;
 char security_setidcore_path[MAXPATHLEN] = "/var/crash/%n.core";
 uid_t security_setidcore_owner = 0;
@@ -701,17 +707,13 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, _POSIX_THREADS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_THREADS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "posix_semaphores",
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 				    "Semaphores option to which the system "
 				    "attempts to conform"), NULL,
-#ifdef P1003_1B_SEMAPHORE
-		       200112,
-#else /* P1003_1B_SEMAPHORE */
-		       0,
-#endif /* P1003_1B_SEMAPHORE */
-		       NULL, 0, CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
+		       0, &posix_semaphores,
+		       0, CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "posix_barriers",
@@ -850,6 +852,20 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       NULL, 1, NULL, 0,
 		       CTL_KERN, CTL_CREATE, CTL_EOL);
 #endif
+
+	/* kern.posix. */
+	sysctl_createv(clog, 0, NULL, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "posix",
+			SYSCTL_DESCR("POSIX options"),
+			NULL, 0, NULL, 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, NULL,
+			CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+			CTLTYPE_INT, "semmax",
+			SYSCTL_DESCR("Maximal number of semaphores"),
+			NULL, 0, &ksem_max, 0,
+			CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_kern_proc_setup,
@@ -2042,6 +2058,11 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			    NULL, NULL);
 			mutex_exit(p->p_lock);
 			if (error != 0) {
+				/*
+				 * Don't leak kauth retval if we're silently
+				 * skipping this entry.
+				 */
+				error = 0;
 				continue;
 			}
 

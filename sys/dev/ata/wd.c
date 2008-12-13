@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.363 2008/06/08 18:34:06 tsutsui Exp $ */
+/*	$NetBSD: wd.c,v 1.363.4.1 2008/12/13 01:14:13 haad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.363 2008/06/08 18:34:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.363.4.1 2008/12/13 01:14:13 haad Exp $");
 
 #include "opt_ata.h"
 
@@ -503,6 +503,8 @@ wddetach(struct device *self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
+
+	callout_destroy(&sc->sc_restart_ch);
 
 	sc->drvp->drive_flags = 0; /* no drive any more here */
 

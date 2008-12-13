@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.248.2.1 2008/10/19 22:17:04 haad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.248.2.2 2008/12/13 01:14:48 haad Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -139,7 +139,12 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.248.2.1 2008/10/19 22:17:04 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.248.2.2 2008/12/13 01:14:48 haad Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_raid_autoconfig.h"
+#include "raid.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -165,8 +170,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.248.2.1 2008/10/19 22:17:04 haa
 
 #include <dev/raidframe/raidframevar.h>
 #include <dev/raidframe/raidframeio.h>
-#include "raid.h"
-#include "opt_raid_autoconfig.h"
+
 #include "rf_raid.h"
 #include "rf_copyback.h"
 #include "rf_dag.h"

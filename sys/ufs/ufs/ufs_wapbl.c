@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.1.4.1 2008/10/19 22:18:10 haad Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.1.4.2 2008/12/13 01:15:41 haad Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.1.4.1 2008/10/19 22:18:10 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.1.4.2 2008/12/13 01:15:41 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -723,6 +723,7 @@ wapbl_ufs_rename(void *v)
 }
 
 #ifdef WAPBL_DEBUG_INODES
+#error WAPBL_DEBUG_INODES: not functional before ufs_wapbl.c is updated
 void
 ufs_wapbl_verify_inodes(struct mount *mp, const char *str)
 {

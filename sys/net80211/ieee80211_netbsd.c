@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.16 2008/01/31 22:07:22 christos Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.16.16.1 2008/12/13 01:15:26 haad Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.16 2008/01/31 22:07:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.16.16.1 2008/12/13 01:15:26 haad Exp $");
 #endif
 
 /*
@@ -458,7 +458,7 @@ cleanup:
 /*
  * Setup sysctl(3) MIB, net.ieee80211.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_ieee80211, "sysctl ieee80211 subtree setup")
 {

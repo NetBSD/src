@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.30 2008/05/24 16:40:58 cube Exp $ */
+/*	$NetBSD: if_ural.c,v 1.30.4.1 2008/12/13 01:14:53 haad Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.30 2008/05/24 16:40:58 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.30.4.1 2008/12/13 01:14:53 haad Exp $");
 
 #include "bpfilter.h"
 
@@ -1505,14 +1505,21 @@ ural_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING)
-				ural_update_promisc(sc);
-			else
-				ural_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				ural_stop(ifp, 1);
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_UP|IFF_RUNNING:
+			ural_update_promisc(sc);
+			break;
+		case IFF_UP:
+			ural_init(ifp);
+			break;
+		case IFF_RUNNING:
+			ural_stop(ifp, 1);
+			break;
+		case 0:
+			break;
 		}
 		break;
 

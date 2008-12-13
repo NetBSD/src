@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.22 2008/02/14 00:35:56 joerg Exp $
+#	$NetBSD: Makefile.acorn32,v 1.22.16.1 2008/12/13 01:12:56 haad Exp $
 
 # Makefile for NetBSD
 #
@@ -61,11 +61,12 @@ MD_CFILES+=	modedefs.c
 .ifdef MONITOR
 modedefs.c: ${ARM}/iomd/makemodes.awk ${ACORN32}/conf/monitors/${MONITOR} Makefile
 	${_MKTARGET_CREATE}
-	awk -f ${ARM}/iomd/makemodes.awk ${ACORN32}/conf/monitors/${MONITOR} ${MODES} >modedefs.c
+	${TOOL_AWK} -f ${ARM}/iomd/makemodes.awk \
+		${ACORN32}/conf/monitors/${MONITOR} ${MODES} >modedefs.c
 .else
 modedefs.c: ${ARM}/iomd/makemodes.awk Makefile
 	${_MKTARGET_CREATE}
-	awk -f ${ARM}/iomd/makemodes.awk </dev/null >modedefs.c
+	${TOOL_AWK} -f ${ARM}/iomd/makemodes.awk </dev/null >modedefs.c
 .endif
 
 modedefs.o: modedefs.c

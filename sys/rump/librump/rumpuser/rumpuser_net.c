@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_net.c,v 1.3.2.2 2008/10/19 22:18:07 haad Exp $	*/
+/*	$NetBSD: rumpuser_net.c,v 1.3.2.3 2008/12/13 01:15:34 haad Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -60,4 +60,25 @@ rumpuser_net_connect(int s, const struct sockaddr *name, int len, int *error)
 {
 
 	DOCALL_KLOCK(int, (connect(s, name, (socklen_t)len)));
+}
+
+int
+rumpuser_net_bind(int s, const struct sockaddr *name, int len, int *error)
+{
+
+	DOCALL_KLOCK(int, (bind(s, name, (socklen_t)len)));
+}
+
+int
+rumpuser_net_accept(int s, struct sockaddr *name, int *lenp, int *error)
+{
+
+	DOCALL_KLOCK(int, (accept(s, name, (socklen_t *)lenp)));
+}
+
+int
+rumpuser_net_listen(int s, int backlog, int *error)
+{
+
+	DOCALL_KLOCK(int, (listen(s, backlog)));
 }

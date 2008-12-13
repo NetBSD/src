@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.69.8.1 2008/10/19 22:17:28 haad Exp $
+#	$NetBSD: makesyscalls.sh,v 1.69.8.2 2008/12/13 01:15:08 haad Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -213,7 +213,7 @@ NR == 1 {
 	printf "#include <sys/param.h>\n" > rumpcalls
 	printf "#include <sys/proc.h>\n" > rumpcalls
 	printf "#include <sys/syscallargs.h>\n" > rumpcalls
-	printf "#include \"rump_syscalls.h\"\n" > rumpcalls
+	printf "#include <rump/rump_syscalls.h>\n" > rumpcalls
 	printf "#include \"rump_private.h\"\n\n" > rumpcalls
 	printf "#if\tBYTE_ORDER == BIG_ENDIAN\n" > rumpcalls
 	printf "#define SPARG(p,k)\t((p)->k.be.datum)\n" > rumpcalls
@@ -344,6 +344,12 @@ function parseline() {
 	if ($f == "INDIR") {		# allow for "NOARG INDIR"
 		sycall_flags = "SYCALL_INDIRECT | " sycall_flags
 		f++
+	}
+	if ($f == "MODULAR") {		# registered at runtime
+		modular = 1
+		f++
+	} else {
+		modular =  0;
 	}
 	if ($f == "RUMP") {
 		rumpable = 1
@@ -497,7 +503,9 @@ function putent(type, compatwrap) {
 	} else {
 		printf("ns(struct %s%s_args), ", compatwrap_, funcname) > sysent
 	}
-	if (compatwrap == "")
+	if (modular) 
+		wfn = "(sy_call_t *)sys_nomodule";
+	else if (compatwrap == "")
 		wfn = "(sy_call_t *)" funcname;
 	else
 		wfn = "(sy_call_t *)" compatwrap "(" funcname ")";

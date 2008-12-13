@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.226.4.1 2008/10/19 22:18:09 haad Exp $	*/
+/*	$NetBSD: systm.h,v 1.226.4.2 2008/12/13 01:15:36 haad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -157,6 +157,7 @@ void	*hashinit(u_int, enum hashtype, bool, u_long *);
 void	hashdone(void *, enum hashtype, u_long);
 int	seltrue(dev_t, int, struct lwp *);
 int	sys_nosys(struct lwp *, const void *, register_t *);
+int	sys_nomodule(struct lwp *, const void *, register_t *);
 
 void	aprint_normal(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
@@ -466,7 +467,7 @@ void	kernel_lock_init(void);
 void	_kernel_lock(int);
 void	_kernel_unlock(int, int *);
 
-#if defined(MULTIPROCESSOR) || defined(_LKM)
+#if defined(MULTIPROCESSOR) || defined(_MODULE)
 #define	KERNEL_LOCK(count, lwp)			\
 do {						\
 	if ((count) != 0)			\

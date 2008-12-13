@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.26 2008/04/29 18:08:03 ad Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.26.6.1 2008/12/13 01:14:13 haad Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.26 2008/04/29 18:08:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.26.6.1 2008/12/13 01:14:13 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ int
 cs4231_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct ebus_attach_args *ea;
+	char *compat;
 
 	ea = aux;
 	if (strcmp(ea->ea_name, AUDIOCS_PROM_NAME) == 0)
@@ -151,6 +152,10 @@ cs4231_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 	if (strcmp(ea->ea_name, "sound") == 0)
 		return 1;
 #endif
+
+	compat = prom_getpropstring(ea->ea_node, "compatible");
+	if (compat && strcmp(compat, AUDIOCS_PROM_NAME) == 0)
+		return 1;
 
 	return 0;
 }

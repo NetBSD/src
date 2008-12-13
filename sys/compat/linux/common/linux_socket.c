@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.97.2.1 2008/10/19 22:16:14 haad Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.97.2.2 2008/12/13 01:13:56 haad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.97.2.1 2008/10/19 22:16:14 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.97.2.2 2008/12/13 01:13:56 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -73,10 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.97.2.1 2008/10/19 22:16:14 haad E
 
 #include <lib/libkern/libkern.h>
 
-#ifdef INET6
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#endif
 
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
@@ -1399,7 +1397,6 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
 	}
 
-#ifdef INET6
 	/*
 	 * Older Linux IPv6 code uses obsolete RFC2133 struct sockaddr_in6,
 	 * which lacks the scope id compared with RFC2553 one. If we detect
@@ -1428,7 +1425,6 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp,
 		salen = sizeof (struct sockaddr_in6);
 		sin6->sin6_scope_id = 0;
 	}
-#endif
 
 	if (bdom == AF_INET)
 		salen = sizeof(struct sockaddr_in);

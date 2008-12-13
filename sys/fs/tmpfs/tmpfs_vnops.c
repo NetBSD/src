@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.51 2008/06/19 19:03:44 christos Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.51.2.1 2008/12/13 01:14:59 haad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51 2008/06/19 19:03:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.51.2.1 2008/12/13 01:14:59 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -496,9 +496,9 @@ tmpfs_read(void *v)
 {
 	struct vnode *vp = ((struct vop_read_args *)v)->a_vp;
 	struct uio *uio = ((struct vop_read_args *)v)->a_uio;
+	int ioflag = ((struct vop_read_args *)v)->a_ioflag;
 
 	int error;
-	int flags;
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
 
@@ -519,11 +519,9 @@ tmpfs_read(void *v)
 	node->tn_status |= TMPFS_NODE_ACCESSED;
 
 	uobj = node->tn_spec.tn_reg.tn_aobj;
-	flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 	error = 0;
 	while (error == 0 && uio->uio_resid > 0) {
 		vsize_t len;
-		void *win;
 
 		if (node->tn_size <= uio->uio_offset)
 			break;
@@ -532,10 +530,8 @@ tmpfs_read(void *v)
 		if (len == 0)
 			break;
 
-		win = ubc_alloc(uobj, uio->uio_offset, &len, UVM_ADV_NORMAL,
-		    UBC_READ);
-		error = uiomove(win, len, uio);
-		ubc_release(win, flags);
+		error = ubc_uiomove(uobj, uio, len, IO_ADV_DECODE(ioflag),
+		    UBC_READ | UBC_PARTIALOK | UBC_UNMAP_FLAG(vp));
 	}
 
 out:
@@ -555,7 +551,6 @@ tmpfs_write(void *v)
 
 	bool extended;
 	int error;
-	int flags;
 	off_t oldsize;
 	struct tmpfs_node *node;
 	struct uvm_object *uobj;
@@ -586,20 +581,16 @@ tmpfs_write(void *v)
 	}
 
 	uobj = node->tn_spec.tn_reg.tn_aobj;
-	flags = UBC_WANT_UNMAP(vp) ? UBC_UNMAP : 0;
 	error = 0;
 	while (error == 0 && uio->uio_resid > 0) {
 		vsize_t len;
-		void *win;
 
 		len = MIN(node->tn_size - uio->uio_offset, uio->uio_resid);
 		if (len == 0)
 			break;
 
-		win = ubc_alloc(uobj, uio->uio_offset, &len, UVM_ADV_NORMAL,
-		    UBC_WRITE);
-		error = uiomove(win, len, uio);
-		ubc_release(win, flags);
+		error = ubc_uiomove(uobj, uio, len, IO_ADV_DECODE(ioflag),
+		    UBC_WRITE | UBC_UNMAP_FLAG(vp));
 	}
 
 	node->tn_status |= TMPFS_NODE_ACCESSED | TMPFS_NODE_MODIFIED |

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.114.1 2008/12/13 01:12:55 haad Exp $
 
 # Makefile for acorn26 tags file and boot blocks
 
@@ -16,7 +16,8 @@ DACORN26=	acorn26 include iobus ioc mainbus vidc
 tags: TAGS
 	-ctags -wdtf ${TACORN26} ${SACORN26} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AACORN26} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TACORN26}
 	sort -o ${TACORN26} ${TACORN26}
 

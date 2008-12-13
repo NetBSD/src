@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.23 2008/07/02 17:28:54 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.23.2.1 2008/12/13 01:12:55 haad Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2008/07/02 17:28:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23.2.1 2008/12/13 01:12:55 haad Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2008/07/02 17:28:54 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/pcf8583var.h>
@@ -106,6 +107,8 @@ cpu_reboot(howto, b)
 
 	/* run any shutdown hooks */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 haltsys:
 	if (howto & RB_HALT) {

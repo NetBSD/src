@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.6 2008/01/05 12:08:51 dsl Exp $	*/
+/*	$NetBSD: reg.h,v 1.6.16.1 2008/12/13 01:12:59 haad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,6 +37,8 @@
 #ifndef _AMD64_REG_H_
 #define _AMD64_REG_H_
 
+#ifdef __x86_64__
+
 #include <machine/fpu.h>
 #include <machine/mcontext.h>
 
@@ -70,5 +72,11 @@ struct fpreg {
 #define fp_mxcsr_mask	fxstate.fx_mxcsr_mask
 #define fp_st		fxstate.fx_st
 #define fp_xmm		fxstate.fx_xmm
+
+#else	/*	__x86_64__	*/
+
+#include <i386/reg.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* !_AMD64_REG_H_ */

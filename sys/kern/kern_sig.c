@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.286.2.1 2008/10/19 22:17:27 haad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.286.2.2 2008/12/13 01:15:08 haad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.286.2.1 2008/10/19 22:17:27 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.286.2.2 2008/12/13 01:15:08 haad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_sunos.h"
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.286.2.1 2008/10/19 22:17:27 haad Exp 
 #include <sys/callout.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 #ifdef PAX_SEGVGUARD
 #include <sys/pax.h>
@@ -121,6 +122,10 @@ static void	*sigacts_poolpage_alloc(struct pool *, int);
 static callout_t proc_stop_ch;
 static pool_cache_t siginfo_cache;
 static pool_cache_t ksiginfo_cache;
+
+void (*sendsig_sigcontext_vec)(const struct ksiginfo *, const sigset_t *);
+int (*coredump_vec)(struct lwp *, const char *) =
+    (int (*)(struct lwp *, const char *))enosys;
 
 static struct pool_allocator sigactspool_allocator = {
         .pa_alloc = sigacts_poolpage_alloc,
@@ -1055,6 +1060,15 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig, int idlecheck)
 	lwp_lock(l);
 
 	/*
+	 * When sending signals to SA processes, we first try to find an
+	 * idle VP to take it.
+	 */
+	if (idlecheck && (l->l_flag & (LW_SA_IDLE | LW_SA_YIELD)) == 0) {
+		lwp_unlock(l);
+		return 0;
+	}
+
+	/*
 	 * Have the LWP check for signals.  This ensures that even if no LWP
 	 * is found to take the signal immediately, it should be taken soon.
 	 */
@@ -1444,26 +1458,28 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * Try to find an LWP that can take the signal.
 	 */
 #if KERN_SA
-	if (p->p_sa != NULL) {
+	if ((p->p_sa != NULL) && !toall) {
 		/*
+		 * If we're in this delivery path, we are delivering a
+		 * signal that needs to go to one thread in the process.
+		 *
 		 * In the SA case, we try to find an idle LWP that can take
 		 * the signal.  If that fails, only then do we consider
-		 * interrupting active LWPs.
+		 * interrupting active LWPs. Since the signal's going to
+		 * just one thread, we need only look at "blessed" lwps,
+		 * so scan the vps for them.
 		 */
 		l = NULL;
-		if (!toall) {
-			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
-				l = vp->savp_lwp;
-				if (sigpost(l, action, prop, kp->ksi_signo, 1))
-					break;
-			}
+		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
+			l = vp->savp_lwp;
+			if (sigpost(l, action, prop, kp->ksi_signo, 1))
+				break;
 		}
 
 		if (l == NULL) {
 			SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 				l = vp->savp_lwp;
-				if (sigpost(l, action, prop, kp->ksi_signo, 0)
-				    && !toall)
+				if (sigpost(l, action, prop, kp->ksi_signo, 0))
 					break;
 			}
 		}
@@ -1956,6 +1972,41 @@ postsig(int signo)
 }
 
 /*
+ * sendsig:
+ *
+ *	Default signal delivery method for NetBSD.
+ */
+void
+sendsig(const struct ksiginfo *ksi, const sigset_t *mask)
+{
+	struct sigacts *sa;
+	int sig;
+
+	sig = ksi->ksi_signo;
+	sa = curproc->p_sigacts;
+
+	switch (sa->sa_sigdesc[sig].sd_vers)  {
+	case 0:
+	case 1:
+		/* Compat for 1.6 and earlier. */
+		if (sendsig_sigcontext_vec == NULL) {
+			break;
+		}
+		(*sendsig_sigcontext_vec)(ksi, mask);
+		return;
+	case 2:
+	case 3:
+		sendsig_siginfo(ksi, mask);
+		return;
+	default:
+		break;
+	}
+
+	printf("sendsig: bad version %d\n", sa->sa_sigdesc[sig].sd_vers);
+	sigexit(curlwp, SIGILL);
+}
+
+/*
  * sendsig_reset:
  *
  *	Reset the signal action.  Called from emulation specific sendsig()
@@ -2083,7 +2134,7 @@ sigexit(struct lwp *l, int signo)
 
 	if (docore) {
 		mutex_exit(p->p_lock);
-		if ((error = coredump(l, NULL)) == 0)
+		if ((error = (*coredump_vec)(l, NULL)) == 0)
 			exitsig |= WCOREFLAG;
 
 		if (kern_logsigexit) {

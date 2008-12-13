@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.36.10.1 2008/10/19 22:16:19 haad Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.36.10.2 2008/12/13 01:14:12 haad Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.36.10.1 2008/10/19 22:16:19 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.36.10.2 2008/12/13 01:14:12 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,13 +279,13 @@ acpitz_get_status(void *opaque)
 			int changed = (sc->sc_flags ^ flags) & flags;
 			sc->sc_flags = flags;
 			if (changed & ATZ_F_CRITICAL) {
-				sc->sc_sensor.state = ENVSYS_SCRITICAL;
-				aprint_normal_dev(dv,
+				sc->sc_sensor.state = ENVSYS_SCRITOVER;
+				aprint_debug_dev(dv,
 				    "zone went critical at temp %sC\n",
 				    acpitz_celcius_string(tmp));
 			} else if (changed & ATZ_F_HOT) {
 				sc->sc_sensor.state = ENVSYS_SWARNOVER;
-				aprint_normal_dev(dv,
+				aprint_debug_dev(dv,
 				    "zone went hot at temp %sC\n",
 				    acpitz_celcius_string(tmp));
 			}
@@ -585,7 +585,7 @@ acpitz_init_envsys(device_t dv)
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor.monitor = true;
-	sc->sc_sensor.flags = (ENVSYS_FMONCRITICAL|ENVSYS_FMONWARNOVER);
+	sc->sc_sensor.flags = (ENVSYS_FMONCRITOVER|ENVSYS_FMONWARNOVER);
 	strlcpy(sc->sc_sensor.desc, "temperature", sizeof(sc->sc_sensor.desc));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
 		sysmon_envsys_destroy(sc->sc_sme);

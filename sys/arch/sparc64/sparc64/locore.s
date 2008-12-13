@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.282.2.1 2008/10/19 22:16:01 haad Exp $	*/
+/*	$NetBSD: locore.s,v 1.282.2.2 2008/12/13 01:13:29 haad Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -349,7 +349,6 @@
 	STPTR	%l0, [%l5 + L_FPSTATE];		/* Insert new fpstate */		     \
 	STPTR	%l5, [%l1 + %lo(FPLWP)];	/* Set new fplwp */			     \
 	wr	%g0, FPRS_FEF, %fprs		/* Enable FPU */
-#endif
 
 /*
  * Weve saved our possible fpstate, now disable the fpu
@@ -376,6 +375,7 @@
 1: \
 	 membar	#Sync;				/* Finish all FP ops */
 
+#endif	/* USE_BLOCK_STORE_LOAD */
 	
 
 	.data
@@ -5242,24 +5242,6 @@ cpu_mp_startup_end:
 ENTRY(get_romtba)
 	retl
 	 rdpr	%tba, %o0
-/*
- * int get_maxctx(void)
- *
- * Get number of available contexts.
- *
- */
-	.align 8
-ENTRY(get_maxctx)
-	set	CTX_SECONDARY, %o1		! Store -1 in the context register
-	mov	-1, %o2
-	stxa	%o2, [%o1] ASI_DMMU
-	membar	#Sync
-	ldxa	[%o1] ASI_DMMU, %o0		! then read it back
-	membar	#Sync
-	stxa	%g0, [%o1] ASI_DMMU
-	membar	#Sync
-	retl
-	 inc	%o0
 
 /*
  * openfirmware(cell* param);
@@ -7449,7 +7431,7 @@ ENTRY(pseg_set)
 9:	retl
 	 or	%g1, 1, %o0			! spare needed, return flags + 1
 
-
+#ifdef USE_BLOCK_STORE_LOAD
 /*
  * Use block_disable to turn off block insns for
  * memcpy/memset
@@ -7465,6 +7447,7 @@ block_disable:	.xword	1
 #else
 #define ASI_STORE	ASI_BLK_P
 #endif
+#endif	/* USE_BLOCK_STORE_LOAD */
 	
 #if 1
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.51.4.1 2008/10/19 22:15:40 haad Exp $	*/
+/*	$NetBSD: trap.c,v 1.51.4.2 2008/12/13 01:12:58 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,14 +68,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51.4.1 2008/10/19 22:15:40 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51.4.2 2008/12/13 01:12:58 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_lockdebug.h"
-#include "opt_multiprocessor.h"
-#include "opt_compat_netbsd.h"
-#include "opt_compat_ibcs2.h"
 #include "opt_xen.h"
 #if !defined(XEN)
 #include "tprof.h"
@@ -180,9 +176,7 @@ trap(struct trapframe *frame)
 	struct pcb *pcb;
 	extern char fusuintrfailure[], kcopy_fault[],
 		    resume_iret[];
-#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 	extern char IDTVEC(oosyscall)[];
-#endif
 #if 0
 	extern char resume_pop_ds[], resume_pop_es[];
 #endif
@@ -576,7 +570,6 @@ faultcommon:
 	}
 
 	case T_TRCTRAP:
-#if defined(COMPAT_10) || defined(COMPAT_IBCS2)
 		/* Check whether they single-stepped into a lcall. */
 		if (frame->tf_rip == (int)IDTVEC(oosyscall))
 			return;
@@ -584,7 +577,6 @@ faultcommon:
 			frame->tf_rflags &= ~PSL_T;
 			return;
 		}
-#endif
 		goto we_re_toast;
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */

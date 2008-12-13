@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.104.6.1 2008/10/19 22:16:27 haad Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.104.6.2 2008/12/13 01:14:14 haad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.104.6.1 2008/10/19 22:16:27 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.104.6.2 2008/12/13 01:14:14 haad Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -523,22 +523,17 @@ re_diag(struct rtk_softc *sc)
 	if (memcmp((char *)&eh->ether_dhost, (char *)&dst, ETHER_ADDR_LEN) ||
 	    memcmp((char *)&eh->ether_shost, (char *)&src, ETHER_ADDR_LEN) ||
 	    ntohs(eh->ether_type) != ETHERTYPE_IP) {
-		aprint_error_dev(sc->sc_dev, "WARNING, DMA FAILURE!\n");
-		aprint_error_dev(sc->sc_dev, "expected TX data: %s",
-		    ether_sprintf(dst));
-		aprint_error("/%s/0x%x\n", ether_sprintf(src), ETHERTYPE_IP);
-		aprint_error_dev(sc->sc_dev, "received RX data: %s",
-		    ether_sprintf(eh->ether_dhost));
-		aprint_error("/%s/0x%x\n", ether_sprintf(eh->ether_shost),
-		    ntohs(eh->ether_type));
-		aprint_error_dev(sc->sc_dev,
+		aprint_error_dev(sc->sc_dev, "WARNING, DMA FAILURE!\n"
+		    "expected TX data: %s/%s/0x%x\n"
+		    "received RX data: %s/%s/0x%x\n"
 		    "You may have a defective 32-bit NIC plugged "
-		    "into a 64-bit PCI slot.\n");
-		aprint_error_dev(sc->sc_dev,
+		    "into a 64-bit PCI slot.\n"
 		    "Please re-install the NIC in a 32-bit slot "
-		    "for proper operation.\n");
-		aprint_error_dev(sc->sc_dev,
-		    "Read the re(4) man page for more details.\n");
+		    "for proper operation.\n"
+		    "Read the re(4) man page for more details.\n" ,
+		    ether_sprintf(dst),  ether_sprintf(src), ETHERTYPE_IP,
+		    ether_sprintf(eh->ether_dhost),
+		    ether_sprintf(eh->ether_shost), ntohs(eh->ether_type));
 		error = EIO;
 	}
 
@@ -605,6 +600,7 @@ re_attach(struct rtk_softc *sc)
 			sc->sc_rev = 23;
 			break;
 		case RTK_HWREV_8168C:
+		case RTK_HWREV_8168C_SPIN2:
 			sc->sc_rev = 24;
 			break;
 		case RTK_HWREV_8102E:
@@ -1861,9 +1857,14 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCSIFMTU:
 		/*
 		 * According to FreeBSD, 8102E/8102EL use a different DMA
-		 * descriptor format. Disable jumbo frames for those parts.
+		 * descriptor format. 8168C/8111C requires touching additional
+		 * magic registers. Depending on MAC revisions some controllers
+		 * need to disable checksum offload.
+		 *
+		 * Disable jumbo frames for those parts.
 		 */
-		if (sc->sc_rev == 25 && ifr->ifr_mtu > ETHERMTU) {
+		if ((sc->sc_rev == 24 || sc->sc_rev == 25) &&
+		    ifr->ifr_mtu > ETHERMTU) {
 			error = EINVAL;
 			break;
 		}

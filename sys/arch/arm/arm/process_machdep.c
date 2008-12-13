@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18 2007/03/04 05:59:36 christos Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.18.52.1 2008/12/13 01:13:01 haad Exp $	*/
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -133,7 +133,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18 2007/03/04 05:59:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.18.52.1 2008/12/13 01:13:01 haad Exp $");
 
 #include <sys/proc.h>
 #include <sys/ptrace.h>
@@ -168,8 +168,8 @@ process_read_regs(struct lwp *l, struct reg *regs)
 #endif
 #ifdef DIAGNOSTIC
 	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
-	    && tf->tf_spsr & I32_bit)
-		panic("process_read_regs: Interrupts blocked in user process");
+	     && (tf->tf_spsr & IF32_bits))
+		panic("process_read_regs: IRQs/FIQs blocked in user process");
 #endif
 
 	return(0);
@@ -207,8 +207,8 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 #endif
 #ifdef DIAGNOSTIC
 	if ((tf->tf_spsr & PSR_MODE) == PSR_USR32_MODE
-	    && tf->tf_spsr & I32_bit)
-		panic("process_write_regs: Interrupts blocked in user process");
+	     && (tf->tf_spsr & IF32_bits))
+		panic("process_read_regs: IRQs/FIQs blocked in user process");
 #endif
 #else /* __PROG26 */
 	if ((regs->r_pc & (R15_MODE | R15_IRQ_DISABLE | R15_FIQ_DISABLE)) != 0)

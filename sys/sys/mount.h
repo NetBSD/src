@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.179.4.1 2008/10/19 22:18:09 haad Exp $	*/
+/*	$NetBSD: mount.h,v 1.179.4.2 2008/12/13 01:15:35 haad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -291,6 +291,7 @@ int	fsname##_suspendctl(struct mount *, int)
 struct wapbl_ops {
 	void (*wo_wapbl_discard)(struct wapbl *);
 	int (*wo_wapbl_replay_isopen)(struct wapbl_replay *);
+	int (*wo_wapbl_replay_can_read)(struct wapbl_replay *, daddr_t, long);
 	int (*wo_wapbl_replay_read)(struct wapbl_replay *, void *, daddr_t, long);
 	void (*wo_wapbl_add_buf)(struct wapbl *, struct buf *);
 	void (*wo_wapbl_remove_buf)(struct wapbl *, struct buf *);
@@ -304,6 +305,9 @@ struct wapbl_ops {
     (*(MP)->mnt_wapbl_op->wo_wapbl_discard)((MP)->mnt_wapbl)
 #define WAPBL_REPLAY_ISOPEN(MP)						\
     (*(MP)->mnt_wapbl_op->wo_wapbl_replay_isopen)((MP)->mnt_wapbl_replay)
+#define WAPBL_REPLAY_CAN_READ(MP, BLK, LEN)				\
+    (*(MP)->mnt_wapbl_op->wo_wapbl_replay_can_read)((MP)->mnt_wapbl_replay, \
+    (BLK), (LEN))
 #define WAPBL_REPLAY_READ(MP, DATA, BLK, LEN)				\
     (*(MP)->mnt_wapbl_op->wo_wapbl_replay_read)((MP)->mnt_wapbl_replay,	\
     (DATA), (BLK), (LEN))
@@ -323,14 +327,21 @@ struct wapbl_ops {
     (*(MP)->mnt_wapbl_op->wo_wapbl_junlock_assert)((MP)->mnt_wapbl)
 
 struct vfs_hooks {
-	void	(*vh_unmount)(struct mount *);
 	LIST_ENTRY(vfs_hooks) vfs_hooks_list;
+	void	(*vh_unmount)(struct mount *);
+	int	(*vh_reexport)(struct mount *, const char *, void *);
+	void	(*vh_future_expansion_1)(void);
+	void	(*vh_future_expansion_2)(void);
+	void	(*vh_future_expansion_3)(void);
+	void	(*vh_future_expansion_4)(void);
+	void	(*vh_future_expansion_5)(void);
 };
 
 void	vfs_hooks_init(void);
 int	vfs_hooks_attach(struct vfs_hooks *);
 int	vfs_hooks_detach(struct vfs_hooks *);
 void	vfs_hooks_unmount(struct mount *);
+int	vfs_hooks_reexport(struct mount *, const char *, void *);
 
 #endif /* _KERNEL */
 

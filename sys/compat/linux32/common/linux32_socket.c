@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.8.2.1 2008/10/19 22:16:16 haad Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.8.2.2 2008/12/13 01:13:57 haad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.8.2.1 2008/10/19 22:16:16 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.8.2.2 2008/12/13 01:13:57 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -78,6 +78,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.8.2.1 2008/10/19 22:16:16 haad 
 #include <compat/linux/common/linux_oldolduname.h>
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_sockio.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: if_skreg.h,v 1.12 2008/04/28 20:23:55 martin Exp $ */
+/* $NetBSD: if_skreg.h,v 1.12.6.1 2008/12/13 01:14:35 haad Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -204,6 +204,8 @@
 #define SK_CSR_BUSCLOCK			0x0200 /* 1 == 33/66 MHz, = 33 */
 #define SK_CSR_ASF_OFF			0x1000
 #define SK_CSR_ASF_ON			0x2000
+#define SK_CSR_WOL_OFF			__BIT(14)
+#define SK_CSR_WOL_ON			__BIT(15)
 
 /* SK_LED register */
 #define SK_LED_GREEN_OFF		0x01
@@ -1504,9 +1506,24 @@
 #define SK_PCI_VPD_NEXTPTR	0x0051
 #define SK_PCI_VPD_ADDR		0x0052
 #define SK_PCI_VPD_DATA		0x0054
+#define SK_PCI_OURREG3		0x0080 /* Yukon EC U */
+#define SK_PCI_OURREG4		0x0084
+#define SK_PCI_OURREG5		0x0088
 
 #define SK_Y2_REG1_PHY1_COMA	0x10000000
 #define SK_Y2_REG1_PHY2_COMA	0x20000000
+
+/* SK_PCI_OURREG4 32bits (Yukon-ECU only) */
+#define SK_Y2_REG4_TIMER_VALUE_MSK	(0xff << 16)
+#define SK_Y2_REG4_FORCE_ASPM_REQUEST	__BIT(15)	
+#define SK_Y2_REG4_ASPM_GPHY_LINK_DOWN	__BIT(14)
+#define SK_Y2_REG4_ASPM_INT_FIFO_EMPTY	__BIT(13)
+#define SK_Y2_REG4_ASPM_CLKRUN_REQUEST	__BIT(12)
+#define SK_Y2_REG4_ASPM_FORCE_CLKREQ_ENA	__BIT(4)
+#define SK_Y2_REG4_ASPM_CLKREQ_PAD	__BIT(3)
+#define SK_Y2_REG4_ASPM_A1_MODE_SELECT	__BIT(2)
+#define SK_Y2_REG4_CLK_GATE_PEX_UNIT_ENA	__BIT(1)
+#define SK_Y2_REG4_CLK_GATE_ROOT_COR_ENA	__BIT(0)
 
 #define SK_PSTATE_MASK		0x0003
 #define SK_PSTATE_D0		0x0000

@@ -1,0 +1,8 @@
+#	$NetBSD: GEMINI_INSTALL,v 1.1.6.2 2008/12/13 01:13:06 haad Exp $
+#
+#	GEMINI_INSTALL -- GEMINI kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/GEMINI"
+include "arch/evbarm/conf/INSTALL"

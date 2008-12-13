@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.20 2007/12/31 15:32:05 ad Exp $
+#	$NetBSD: majors.sgimips,v 1.20.16.1 2008/12/13 01:13:25 haad Exp $
 #
 # Device majors for sgimips
 #
@@ -22,7 +22,6 @@ device-major	ctty		char 21
 device-major	pts		char 22			pty
 device-major	ptc		char 23			pty
 device-major	log		char 24
-device-major	lkm		char 25			lkm
 device-major	filedesc	char 26
 device-major	bpf		char 27			bpfilter
 device-major	tun		char 28			tun

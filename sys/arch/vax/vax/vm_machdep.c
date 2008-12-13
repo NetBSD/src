@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.102 2008/03/11 05:34:03 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.102.10.1 2008/12/13 01:13:34 haad Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,11 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102.10.1 2008/12/13 01:13:34 haad Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
-#include "opt_coredump.h"
+#include "opt_sa.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102 2008/03/11 05:34:03 matt Exp $"
 #include <sys/core.h>
 #include <sys/mount.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -172,6 +173,32 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	tf->psl = PSL_U|PSL_PREVU;
 }
 
+#if KERN_SA > 0
+void
+cpu_setfunc(struct lwp *l, void (*func) __P((void *)), void *arg)
+{
+	struct pcb *pcb = &l->l_addr->u_pcb;
+	struct trapframe *tf = (struct trapframe *)((u_int)l->l_addr + USPACE) - 1;
+	struct callsframe *cf;
+	extern int sret;
+
+	panic("cpu_setfunc() called\n");
+
+	cf = (struct callsframe *)tf - 1;
+	cf->ca_cond = 0;
+	cf->ca_maskpsw = 0x20000000;
+	cf->ca_pc = (unsigned)&sret;
+	cf->ca_argno = 1;
+	cf->ca_arg1 = (long)arg;
+
+	pcb->framep = tf;
+	pcb->KSP = (long)cf;
+	pcb->FP = (long)cf;
+	pcb->AP = (long)&cf->ca_argno;
+	pcb->PC = (long)func + 2;
+}
+#endif
+
 int
 cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
@@ -183,44 +210,6 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 {
 	return (ENOSYS);
 }
-
-#ifdef COREDUMP
-/*
- * Dump the machine specific header information at the start of a core dump.
- * First put all regs in PCB for debugging purposes. This is not an good
- * way to do this, but good for my purposes so far.
- */
-int
-cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
-{
-	struct md_coredump md_core;
-	struct coreseg cseg;
-	int error;
-
-	if (iocookie == NULL) {
-		CORE_SETMAGIC(*chdr, COREMAGIC, MID_MACHINE, 0);
-		chdr->c_hdrsize = sizeof(struct core);
-		chdr->c_seghdrsize = sizeof(struct coreseg);
-		chdr->c_cpusize = sizeof(struct md_coredump);
-		chdr->c_nseg++;
-		return 0;
-	}
-
-	md_core.md_tf = *(struct trapframe *)l->l_addr->u_pcb.framep; /*XXX*/
-
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
-	cseg.c_addr = 0;
-	cseg.c_size = chdr->c_cpusize;
-
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
-	if (error)
-		return error;
-
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
-}
-#endif
 
 /*
  * Map in a bunch of pages read/writable for the kernel.

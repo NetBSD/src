@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.25 2008/04/16 18:41:48 cegger Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.25.10.1 2008/12/13 01:13:43 haad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.25 2008/04/16 18:41:48 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.25.10.1 2008/12/13 01:13:43 haad Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -104,9 +104,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.25 2008/04/16 18:41:48 cegger
 
 #include <uvm/uvm.h>
 
-#include <xen/xen3-public/io/ring.h>
-
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
 #include <xen/granttables.h>
+#include <xen/xen3-public/io/netif.h>
+#include <xen/xenpmap.h>
+
 #include <xen/xenbus.h>
 #include "locators.h"
 
@@ -134,14 +137,14 @@ int xennet_debug = 0xff;
 
 struct xennet_txreq {
 	SLIST_ENTRY(xennet_txreq) txreq_next;
-	uint16_t txreq_id; /* ID passed to backed */
+	uint16_t txreq_id; /* ID passed to backend */
 	grant_ref_t txreq_gntref; /* grant ref of this request */
 	struct mbuf *txreq_m; /* mbuf being transmitted */
 };
 
 struct xennet_rxreq {
 	SLIST_ENTRY(xennet_rxreq) rxreq_next;
-	uint16_t rxreq_id; /* ID passed to backed */
+	uint16_t rxreq_id; /* ID passed to backend */
 	grant_ref_t rxreq_gntref; /* grant ref of this request */
 /* va/pa for this receive buf. ma will be provided by backend */
 	paddr_t rxreq_pa;
@@ -174,6 +177,7 @@ struct xennet_xenbus_softc {
 #define BEST_CLOSED		0
 #define BEST_DISCONNECTED	1
 #define BEST_CONNECTED		2
+#define BEST_SUSPENDED		3
 #if NRND > 0
 	rndsource_element_t     sc_rnd_source;
 #endif
@@ -289,7 +293,7 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 			break;
 		if (!pmap_extract(pmap_kernel(), rxreq->rxreq_va,
 		    &rxreq->rxreq_pa))
-			panic("xennet: no pa for mapped va ?");
+			panic("%s: no pa for mapped va ?", device_xname(self));
 		rxreq->rxreq_gntref = GRANT_INVALID_REF;
 		SLIST_INSERT_HEAD(&sc->sc_rxreq_head, rxreq, rxreq_next);
 	}
@@ -336,7 +340,8 @@ xennet_xenbus_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, sc->sc_enaddr);
 	sc->sc_softintr = softint_establish(SOFTINT_NET, xennet_softstart, sc);
 	if (sc->sc_softintr == NULL)
-		panic(" xennet: can't establish soft interrupt");
+		panic("%s: can't establish soft interrupt",
+			device_xname(self));
 
 	/* initialise shared structures and tell backend that we are ready */
 	xennet_xenbus_resume(sc);
@@ -553,7 +558,7 @@ xennet_alloc_rx_buffer(struct xennet_xenbus_softc *sc)
 	xpq_flush_queue();
 	splx(s2);
 	/* now decrease reservation */
-	reservation.extent_start = xennet_pages;
+	xenguest_handle(reservation.extent_start) = xennet_pages;
 	reservation.nr_extents = i;
 	reservation.extent_order = 0;
 	reservation.address_bits = 0;
@@ -613,7 +618,7 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 				 * transfer not complete, we lost the page.
 				 * Get one from hypervisor
 				 */
-				xenres.extent_start = &pfn;
+				xenguest_handle(xenres.extent_start) = &pfn;
 				xenres.nr_extents = 1;
 				xenres.extent_order = 0;
 				xenres.address_bits = 31;
@@ -690,8 +695,8 @@ again:
 		KASSERT(req->txreq_id ==
 		    RING_GET_RESPONSE(&sc->sc_tx_ring, i)->id);
 		if (__predict_false(xengnt_status(req->txreq_gntref))) {
-			printf("%s: grant still used by backend\n",
-			    device_xname(sc->sc_dev));
+			aprint_verbose_dev(sc->sc_dev,
+					   "grant still used by backend\n");
 			sc->sc_tx_ring.rsp_cons = i;
 			goto end;
 		}
@@ -706,7 +711,7 @@ again:
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, req, txreq_next);
 	}
 	sc->sc_tx_ring.rsp_cons = resp_prod;
-	/* set new event and check fopr race with rsp_cons update */
+	/* set new event and check for race with rsp_cons update */
 	sc->sc_tx_ring.sring->rsp_event = 
 	    resp_prod + ((sc->sc_tx_ring.sring->req_prod - resp_prod) >> 1) + 1;
 	ifp->if_timer = 0;
@@ -1103,9 +1108,7 @@ xennet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 void
 xennet_watchdog(struct ifnet *ifp)
 {
-	struct xennet_xenbus_softc *sc = ifp->if_softc;
-
-	printf("%s: xennet_watchdog\n", device_xname(sc->sc_dev));
+	aprint_verbose_ifnet(ifp, "xennet_watchdog\n");
 }
 
 int
@@ -1158,6 +1161,7 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	struct xennet_xenbus_softc *sc =
 	    (struct xennet_xenbus_softc *)ifp->if_softc;
 #endif
+	int flags = 0;
 	union xen_cmdline_parseinfo xcp;
 	struct sockaddr_in *sin;
 
@@ -1165,6 +1169,12 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	xcp.xcp_netinfo.xi_ifno = /* XXX sc->sc_ifno */ 0;
 	xcp.xcp_netinfo.xi_root = nd->nd_root.ndm_host;
 	xen_parse_cmdline(XEN_PARSE_NETINFO, &xcp);
+
+	if (xcp.xcp_netinfo.xi_root[0] != '\0') {
+		flags |= NFS_BOOT_HAS_SERVER;
+		if (strchr(xcp.xcp_netinfo.xi_root, ':') != NULL)
+			flags |= NFS_BOOT_HAS_ROOTPATH;
+	}
 
 	nd->nd_myip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[0]);
 	nd->nd_gwip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[2]);
@@ -1175,12 +1185,17 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
-	if (nd->nd_myip.s_addr == 0)
-		return NFS_BOOTSTATIC_NOSTATIC;
-	else
-		return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
-		    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
-		    NFS_BOOTSTATIC_HAS_SERVER);
+
+	if (nd->nd_myip.s_addr)
+		flags |= NFS_BOOT_HAS_MYIP;
+	if (nd->nd_gwip.s_addr)
+		flags |= NFS_BOOT_HAS_GWIP;
+	if (nd->nd_mask.s_addr)
+		flags |= NFS_BOOT_HAS_MASK;
+	if (sin->sin_addr.s_addr)
+		flags |= NFS_BOOT_HAS_SERVADDR;
+
+	return flags;
 }
 #endif /* defined(NFS_BOOT_BOOTSTATIC) */
 

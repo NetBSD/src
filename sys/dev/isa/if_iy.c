@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.80 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.80.6.1 2008/12/13 01:14:26 haad Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.80 2008/04/28 20:23:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.80.6.1 2008/12/13 01:14:26 haad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1186,10 +1186,7 @@ struct iy_softc *sc;
 }
 
 int
-iyioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+iyioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct iy_softc *sc;
 	struct ifaddr *ifa;
@@ -1209,46 +1206,50 @@ iyioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 
+		iyinit(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			iyinit(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			iyinit(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		sc->promisc = ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI);
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
 			 */
 			iystop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-			   (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
 			iyinit(sc);
-		} else {
+			break;
+		default:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
 			iystop(sc);
 			iyinit(sc);
+			break;
 		}
 #ifdef IYDEBUGX
 		if (ifp->if_flags & IFF_DEBUG)
@@ -1279,7 +1280,7 @@ iyioctl(ifp, cmd, data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->iy_ifmedia, cmd);
 		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 	}
 	splx(s);
 	return error;

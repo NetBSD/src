@@ -1,4 +1,4 @@
-#	$NetBSD: majors.next68k,v 1.20 2007/12/31 15:32:02 ad Exp $
+#	$NetBSD: majors.next68k,v 1.20.16.1 2008/12/13 01:13:19 haad Exp $
 #
 # Device majors for next68k
 #
@@ -24,7 +24,6 @@ device-major	filedesc	char 21
 device-major	bpf		char 22			bpfilter
 
 device-major	tun		char 24			tun
-device-major	lkm		char 25			lkm
 
 device-major	md		char 32  block 13	md
 device-major	ss		char 33			ss

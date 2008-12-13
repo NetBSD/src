@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.77.4.1 2008/10/19 22:17:29 haad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.77.4.2 2008/12/13 01:15:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.77.4.1 2008/10/19 22:17:29 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.77.4.2 2008/12/13 01:15:09 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -341,6 +341,7 @@ cache_lookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
 		/*
 		 * Restore the ISWHITEOUT flag saved earlier.
 		 */
+		KASSERT((ncp->nc_flags & ~ISWHITEOUT) == 0);
 		cnp->cn_flags |= ncp->nc_flags;
 		if (__predict_true(cnp->cn_nameiop != CREATE ||
 		    (cnp->cn_flags & ISLASTCN) == 0)) {
@@ -456,6 +457,7 @@ cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
 		/*
 		 * Restore the ISWHITEOUT flag saved earlier.
 		 */
+		KASSERT((ncp->nc_flags & ~ISWHITEOUT) == 0);
 		cnp->cn_flags |= ncp->nc_flags;
 		COUNT(cpup->cpu_stats, ncs_neghits);
 		mutex_exit(&ncp->nc_lock);
@@ -482,6 +484,8 @@ cache_lookup_raw(struct vnode *dvp, struct vnode **vpp,
 		}
 	}
 
+	/* Unlocked, but only for stats. */
+	COUNT(cpup->cpu_stats, ncs_goodhits); /* XXX can be "badhits" */
 	*vpp = vp;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.113.2.1 2008/10/19 22:16:18 haad Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.113.2.2 2008/12/13 01:14:07 haad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,10 +76,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.113.2.1 2008/10/19 22:16:18 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.113.2.2 2008/12/13 01:14:07 haad Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #endif
 
@@ -162,7 +161,7 @@ struct uvm_object *emul_ultrix_object;
 void	syscall(void);
 #endif
 
-const struct emul emul_ultrix = {
+struct emul emul_ultrix = {
 	"ultrix",
 	"/emul/ultrix",
 #ifndef __HAVE_MINIMAL_EMUL
@@ -466,7 +465,6 @@ ultrix_sys_setpgrp(struct lwp *l, const struct ultrix_sys_setpgrp_args *uap, reg
 		return sys_setpgid(l, &ap, retval);
 }
 
-#if defined (NFSSERVER)
 int
 ultrix_sys_nfssvc(struct lwp *l, const struct ultrix_sys_nfssvc_args *uap,
     register_t *retval)
@@ -497,7 +495,6 @@ ultrix_sys_nfssvc(struct lwp *l, const struct ultrix_sys_nfssvc_args *uap,
 	return ENOSYS;
 #endif
 }
-#endif /* NFSSERVER */
 
 struct ultrix_ustat {
 	daddr_t	f_tfree;	/* total free */

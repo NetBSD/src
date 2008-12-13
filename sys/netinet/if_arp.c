@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.140.4.1 2008/10/19 22:17:46 haad Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.140.4.2 2008/12/13 01:15:26 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.140.4.1 2008/10/19 22:17:46 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.140.4.2 2008/12/13 01:15:26 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -340,7 +340,6 @@ arp_drain(void)
 	KERNEL_LOCK(1, NULL);
 
 	if (arp_lock_try(0) == 0) {
-		printf("arp_drain: locked; punting\n");
 		KERNEL_UNLOCK_ONE(NULL);
 		return;
 	}
@@ -450,7 +449,7 @@ arp_setgate(struct rtentry *rt, struct sockaddr *gate,
  * Parallel to llc_rtrequest.
  */
 void
-arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
+arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 {
 	struct sockaddr *gate = rt->rt_gateway;
 	struct llinfo_arp *la = (struct llinfo_arp *)rt->rt_llinfo;
@@ -477,6 +476,19 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		}
 		callout_init(&arptimer_ch, CALLOUT_MPSAFE);
 		callout_reset(&arptimer_ch, hz, arptimer, NULL);
+	}
+
+	if (req == RTM_LLINFO_UPD) {
+		struct in_addr *in;
+
+		if ((ifa = info->rti_ifa) == NULL)
+			return;
+
+		in = &ifatoia(ifa)->ia_addr.sin_addr;
+
+		arprequest(ifa->ifa_ifp, in, in,
+		    CLLADDR(ifa->ifa_ifp->if_sadl));
+		return;
 	}
 
 	if ((rt->rt_flags & RTF_GATEWAY) != 0) {
@@ -514,7 +526,6 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 	ARP_LOCK(1);		/* we may already be locked here. */
 
 	switch (req) {
-
 	case RTM_SETGATE:
 		gate = arp_setgate(rt, gate, info->rti_info[RTAX_NETMASK]);
 		break;

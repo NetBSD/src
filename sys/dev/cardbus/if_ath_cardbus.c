@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.29.2.1 2008/10/19 22:16:24 haad Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.29.2.2 2008/12/13 01:14:13 haad Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.29.2.1 2008/10/19 22:16:24 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.29.2.2 2008/12/13 01:14:13 haad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -79,7 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.29.2.1 2008/10/19 22:16:24 haad
 
 #include <dev/ic/ath_netbsd.h>
 #include <dev/ic/athvar.h>
-#include <contrib/dev/ath/ah.h>
+
+#include <external/isc/atheros_hal/dist/ah.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

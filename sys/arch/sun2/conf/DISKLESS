@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS,v 1.38 2008/04/26 02:43:07 tsutsui Exp $
+# $NetBSD: DISKLESS,v 1.38.8.1 2008/12/13 01:13:32 haad Exp $
 
 # DISKLESS Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, ec0
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DISKLESS-$Revision: 1.38 $"
+#ident 		"DISKLESS-$Revision: 1.38.8.1 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -22,7 +22,6 @@ options 	KTRACE		# system call tracing
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
-#options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -72,7 +71,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-#options 	SOFTDEP		# FFS soft updates support.
 #options 	NFS_V2_ONLY	# Exclude NFS3 code to save space
 
 # Networking options

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3.6.1 2008/10/19 22:18:06 haad Exp $	*/
+/*	$NetBSD: intr.c,v 1.3.6.2 2008/12/13 01:15:34 haad Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -159,7 +159,7 @@ softint_schedule(void *arg)
 }
 
 bool
-cpu_intr_p()
+cpu_intr_p(void)
 {
 
 	return false;

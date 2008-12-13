@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS200,v 1.18.62.1 2008/10/19 22:15:44 haad Exp $
+#	$NetBSD: OPENBLOCKS200,v 1.18.62.2 2008/12/13 01:13:09 haad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -30,7 +30,6 @@ options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
-#options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -81,7 +80,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

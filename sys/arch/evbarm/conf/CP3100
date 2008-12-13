@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100,v 1.8.2.1 2008/10/19 22:15:44 haad Exp $
+#	$NetBSD: CP3100,v 1.8.2.2 2008/12/13 01:13:06 haad Exp $
 #
 #	CP3100 -- Certance CP3100 Kernel
 #
@@ -50,7 +50,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	NFSSERVER
-options 	SOFTDEP
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -124,7 +123,6 @@ options 	CONSPEED=115200		# Console speed
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	PCIVERBOSE	# Verbose PCI descriptions

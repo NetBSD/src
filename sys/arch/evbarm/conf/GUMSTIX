@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.27.2.1 2008/10/19 22:15:44 haad Exp $
+#	$NetBSD: GUMSTIX,v 1.27.2.2 2008/12/13 01:13:06 haad Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -54,7 +54,6 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
@@ -135,7 +134,6 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages

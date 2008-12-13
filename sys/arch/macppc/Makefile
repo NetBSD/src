@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2007/12/31 10:45:22 dyoung Exp $
+#	$NetBSD: Makefile,v 1.7.16.1 2008/12/13 01:13:17 haad Exp $
 
 # Makefile for macppc tags file
 
@@ -25,7 +25,8 @@ tags:
 	-echo ${SIMACPPC} | xargs ctags -wadtf ${TIMACPPC}
 	-${FINDCOMM} | xargs ctags -wadtf ${TIMACPPC}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AIMACPPC} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+	"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3	\1	/^\2(\3\4$$/;" \
 		>> ${TIMACPPC}
 	sort -o ${TIMACPPC} ${TIMACPPC}
 

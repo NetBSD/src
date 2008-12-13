@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10.16.1 2008/10/19 22:15:56 haad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.16.2 2008/12/13 01:13:25 haad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -86,6 +86,7 @@
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <sh3/userret.h>
 
@@ -217,7 +218,7 @@ syscall_plain(struct lwp *l, struct trapframe *tf)
 
 	rval[0] = 0;
 	rval[1] = tf->tf_r1;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -359,7 +360,7 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 
 	rval[0] = 0;
 	rval[1] = tf->tf_r1;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:

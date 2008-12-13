@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.156.2.1 2008/10/19 22:17:28 haad Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.156.2.2 2008/12/13 01:15:08 haad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.156.2.1 2008/10/19 22:17:28 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.156.2.2 2008/12/13 01:15:08 haad Exp $");
 
 #include "opt_ddb.h"
 #include "drvctl.h"
@@ -800,7 +800,7 @@ rescan_with_cfdata(const struct cfdata *cf)
   
 
 	/*
-	 * "alldevs" is likely longer than an LKM's cfdata, so make it
+	 * "alldevs" is likely longer than a modules's cfdata, so make it
 	 * the outer loop.
 	 */
 	for (d = deviter_first(&di, 0); d != NULL; d = deviter_next(&di)) {
@@ -2454,7 +2454,7 @@ device_active_register(device_t dev, void (*handler)(device_t, devactive_t))
 	splx(s);
 
 	if (old_handlers != NULL)
-		kmem_free(old_handlers, sizeof(int [old_size]));
+		kmem_free(old_handlers, sizeof(void * [old_size]));
 
 	return true;
 }

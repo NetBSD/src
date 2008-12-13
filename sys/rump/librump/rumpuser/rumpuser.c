@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.17.2.1 2008/10/19 22:18:07 haad Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.17.2.2 2008/12/13 01:15:34 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -190,7 +190,7 @@ rumpuser_readv(int fd, const struct iovec *iov, int iovcnt, int *error)
 
 void
 rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
-	void *biodonecookie)
+	rump_biodone_fn biodone, void *biodonecookie)
 {
 	ssize_t rv;
 	int error = 0;
@@ -201,7 +201,7 @@ rumpuser_read_bio(int fd, void *data, size_t size, off_t offset,
 		rv = 0;
 		
 	/* LINTED: see above */
-	rump_biodone(biodonecookie, rv, error);
+	biodone(biodonecookie, rv, error);
 }
 
 ssize_t
@@ -242,7 +242,7 @@ rumpuser_writev(int fd, const struct iovec *iov, int iovcnt, int *error)
 
 void
 rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
-	void *biodonecookie)
+	rump_biodone_fn biodone, void *biodonecookie)
 {
 	ssize_t rv;
 	int error = 0;
@@ -253,7 +253,7 @@ rumpuser_write_bio(int fd, const void *data, size_t size, off_t offset,
 		rv = 0;
 
 	/* LINTED: see above */
-	rump_biodone(biodonecookie, rv, error);
+	biodone(biodonecookie, rv, error);
 }
 
 int

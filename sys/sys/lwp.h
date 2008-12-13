@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.105.2.1 2008/10/19 22:18:09 haad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.105.2.2 2008/12/13 01:15:35 haad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
  */
 struct lockdebug;
 struct sadata_vp;
+struct sysent;
 
 struct lwp {
 	/* Scheduling and overall state */
@@ -169,6 +170,7 @@ struct lwp {
 	u_int		l_dopreempt;	/* s: kernel preemption pending */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
+	const struct sysent * volatile l_sysent;/* !: currently active syscall */
 	struct rusage	l_ru;		/* !: accounting information */
 	uint64_t	l_pfailtime;	/* !: for kernel preemption */
 	uintptr_t	l_pfailaddr;	/* !: for kernel preemption */
@@ -244,7 +246,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
  * user.
  */
 #define	LW_USERRET (LW_WEXIT|LW_PENDSIG|LW_WREBOOT|LW_WSUSPEND|LW_WCORE|\
-		    LW_WUSERRET)
+		    LW_WUSERRET|LW_SA_BLOCKING|LW_SA_UPCALL)
 
 /*
  * Status values.
@@ -325,7 +327,7 @@ void lwp_whatis(uintptr_t, void (*)(const char *, ...));
 
 
 /*
- * Lock an LWP. XXXLKM
+ * Lock an LWP. XXX _MODULE
  */
 static inline void
 lwp_lock(lwp_t *l)
@@ -343,7 +345,7 @@ lwp_lock(lwp_t *l)
 }
 
 /*
- * Unlock an LWP. XXXLKM
+ * Unlock an LWP. XXX _MODULE
  */
 static inline void
 lwp_unlock(lwp_t *l)
@@ -385,7 +387,8 @@ int lwp_create(lwp_t *, struct proc *, vaddr_t, bool, int,
     void *, size_t, void (*)(void *), void *, lwp_t **, int);
 
 /*
- * We should provide real stubs for the below that LKMs can use.
+ * XXX _MODULE
+ * We should provide real stubs for the below that modules can use.
  */
 
 static inline void

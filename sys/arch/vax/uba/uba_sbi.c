@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.24 2008/03/11 05:34:02 matt Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.24.10.1 2008/12/13 01:13:34 haad Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.24 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.24.10.1 2008/12/13 01:13:34 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -126,7 +126,11 @@ static	void	dw780_init(struct uba_softc*);
 static	void    dw780_beforescan(struct uba_softc *);
 static	void    dw780_afterscan(struct uba_softc *);
 static	int     dw780_errchk(struct uba_softc *);
-static	void    uba_dw780int(void *);
+static	inline	void uba_dw780int_common(void *, int);
+static	void    uba_dw780int_0x14(void *);
+static	void    uba_dw780int_0x15(void *);
+static	void    uba_dw780int_0x16(void *);
+static	void    uba_dw780int_0x17(void *);
 static  void	ubaerror(struct uba_softc *, int *, int *);
 #ifdef notyet
 static	void	dw780_purge(struct uba_softc *, int);
@@ -164,7 +168,6 @@ dw780_attach(device_t parent, device_t self, void *aux)
 	struct uba_vsoftc * const sc = device_private(self);
 	struct sbi_attach_args * const sa = aux;
 	int ubaddr = sa->sa_type & 3;
-	int i;
 
 	aprint_normal(": DW780\n");
 
@@ -193,9 +196,15 @@ dw780_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Set up dispatch vectors for DW780.
 	 */
-	for (i = 0x14; i < 0x18; i++)
-		scb_vecalloc(vecnum(0, i, sa->sa_nexnum), uba_dw780int,
-		    sc, SCB_ISTACK, &sc->uv_sc.uh_intrcnt);
+#define SCB_VECALLOC_DW780(br)						\
+	scb_vecalloc(vecnum(0, br, sa->sa_nexnum), uba_dw780int_ ## br,	\
+		     sc, SCB_ISTACK, &sc->uv_sc.uh_intrcnt)		\
+
+	SCB_VECALLOC_DW780(0x14);
+	SCB_VECALLOC_DW780(0x15);
+	SCB_VECALLOC_DW780(0x16);
+	SCB_VECALLOC_DW780(0x17);
+
 	evcnt_attach_dynamic(&sc->uv_sc.uh_intrcnt, EVCNT_TYPE_INTR, NULL,
 		device_xname(sc->uv_sc.uh_dev), "intr");
 
@@ -243,17 +252,16 @@ dw780_errchk(struct uba_softc *sc)
 	return 0;
 }
 
-void
-uba_dw780int(void *arg)
+static inline void
+uba_dw780int_common(void *arg, int br)
 {
 	extern	void scb_stray(void *);
 	struct	uba_vsoftc *vc = arg;
 	struct	uba_regs *ur = vc->uv_uba;
 	struct	ivec_dsp *ivec;
 	struct  evcnt *uvec;
-	int	br, vec;
+	int	vec;
 
-	br = mfpr(PR_IPL);
 	uvec = &vc->uv_sc.uh_intrcnt;
 	vec = ur->uba_brrvr[br - 0x14];
 	if (vec <= 0) {
@@ -275,6 +283,18 @@ uba_dw780int(void *arg)
 		(*ivec->hoppaddr)(ivec->pushlarg);
 	}
 }
+
+#define UBA_DW780INT(br)		\
+void					\
+uba_dw780int_ ## br(void *arg)		\
+{					\
+	uba_dw780int_common(arg, br);	\
+}					\
+
+UBA_DW780INT(0x14);
+UBA_DW780INT(0x15);
+UBA_DW780INT(0x16);
+UBA_DW780INT(0x17);
 
 void
 dw780_init(struct uba_softc *sc)

@@ -130,7 +130,6 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8775_2 },
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8780 },
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8781 },
-	{ 0, 0 }
 };
 
 #ifdef U3G_DEBUG
@@ -263,6 +262,32 @@ u3g_huawei_reinit(usbd_device_handle dev)
 }
 
 static int
+u3g_sierra_reinit(usbd_device_handle dev)
+{
+	/* Some Sierra devices presents themselves as a umass device with
+	 * Windows drivers on it. After installation of the driver, it
+	 * reinits into a * 3G serial device.
+	 */
+	usb_device_request_t req;
+	usb_config_descriptor_t *cdesc;
+
+	/* Get the config descriptor */
+	cdesc = usbd_get_config_descriptor(dev);
+	if (cdesc == NULL)
+		return (UMATCH_NONE);
+
+	req.bmRequestType = UT_VENDOR;
+	req.bRequest = UR_SET_INTERFACE;
+	USETW(req.wValue, UF_DEVICE_REMOTE_WAKEUP);
+	USETW(req.wIndex, UHF_PORT_CONNECTION);
+	USETW(req.wLength, 0);
+
+	(void) usbd_do_request(dev, &req, 0);
+
+	return (UMATCH_HIGHEST); /* Match to prevent umass from attaching */
+}
+
+static int
 u3g_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -273,6 +298,10 @@ u3g_match(device_t parent, cfdata_t match, void *aux)
 	if (uaa->vendor == USB_VENDOR_NOVATEL2 &&
 	    uaa->product == USB_PRODUCT_NOVATEL2_MC950D_DRIVER)
 		return u3g_novatel_reinit(uaa);
+
+	if (uaa->vendor == USB_VENDOR_SIERRA &&
+	    uaa->product == USB_PRODUCT_SIERRA_INSTALLER)
+		return u3g_sierra_reinit(uaa->device);
 
 	if (usb_lookup(u3g_devs, uaa->vendor, uaa->product))
 		return UMATCH_VENDOR_PRODUCT;
@@ -325,6 +354,13 @@ u3g_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (uaa->vendor == USB_VENDOR_HUAWEI && cdesc->bNumInterface > 1) {
+		/* About to disappear... */
+		sc->sc_pseudodev = true;
+		return;
+	}
+
+	if (uaa->vendor == USB_VENDOR_SIERRA &&
+	    uaa->product == USB_PRODUCT_SIERRA_INSTALLER) {
 		/* About to disappear... */
 		sc->sc_pseudodev = true;
 		return;

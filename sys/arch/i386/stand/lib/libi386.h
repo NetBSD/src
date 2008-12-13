@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.24.4.1 2008/10/19 22:15:50 haad Exp $	*/
+/*	$NetBSD: libi386.h,v 1.24.4.2 2008/12/13 01:13:15 haad Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -135,3 +135,5 @@ int dosopen(char *);
 int dosread(int, char *, int);
 int dosseek(int, int, int);
 extern int doserrno;	/* in dos_file.S */
+
+void module_add(char *);

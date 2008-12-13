@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.23 2008/06/04 12:41:42 ad Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.23.4.1 2008/12/13 01:13:43 haad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -307,7 +307,7 @@ xennetback_xenbus_create(struct xenbus_device *xbusd)
 	/* create pseudo-interface */
 	snprintf(xneti->xni_if.if_xname, IFNAMSIZ, "xvif%d.%d",
 	    (int)domid, (int)handle);
-	printf("%s: Ethernet address %s\n", ifp->if_xname,
+	aprint_verbose_ifnet(ifp, "Ethernet address %s\n",
 	    ether_sprintf(xneti->xni_enaddr));
 	ifp->if_flags =
 	    IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
@@ -357,7 +357,7 @@ xennetback_xenbus_destroy(void *arg)
 		return EBUSY;
 	}
 #endif
-	printf("%s: disconnecting\n", xneti->xni_if.if_xname);
+	aprint_verbose_ifnet(&xneti->xni_if, "disconnecting\n");
 	hypervisor_mask_event(xneti->xni_evtchn);
 	event_remove_handler(xneti->xni_evtchn, xennetback_evthandler, xneti);
 	softint_disestablish(xneti->xni_softintr);
@@ -375,8 +375,8 @@ xennetback_xenbus_destroy(void *arg)
 		err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
 		    &op, 1);
 		if (err)
-			printf("%s: unmap_grant_ref failed: %d\n",
-			    xneti->xni_if.if_xname, err);
+			aprint_error_ifnet(&xneti->xni_if,
+					"unmap_grant_ref failed: %d\n", err);
 	}
 	if (xneti->xni_rxring.sring) {
 		op.host_addr = xneti->xni_rx_ring_va;
@@ -385,8 +385,8 @@ xennetback_xenbus_destroy(void *arg)
 		err = HYPERVISOR_grant_table_op(GNTTABOP_unmap_grant_ref,
 		    &op, 1);
 		if (err)
-			printf("%s: unmap_grant_ref failed: %d\n",
-			    xneti->xni_if.if_xname, err);
+			aprint_error_ifnet(&xneti->xni_if,
+					"unmap_grant_ref failed: %d\n", err);
 	}
 	uvm_km_free(kernel_map, xneti->xni_tx_ring_va,
 	    PAGE_SIZE, UVM_KMF_VAONLY);
@@ -566,7 +566,7 @@ xennetback_get_new_mcl_pages(void)
 	struct xen_memory_reservation res;
 
 	/* get some new pages. */
-	res.extent_start = mcl_pages;
+	xenguest_handle(res.extent_start) = mcl_pages;
 	res.nr_extents = NB_XMIT_PAGES_BATCH;
 	res.extent_order = 0;
 	res.address_bits = 0;

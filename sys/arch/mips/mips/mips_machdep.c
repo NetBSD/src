@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.201.6.1 2008/10/19 22:15:52 haad Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.201.6.2 2008/12/13 01:13:18 haad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.201.6.1 2008/10/19 22:15:52 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.201.6.2 2008/12/13 01:13:18 haad Exp $");
 
 #include "opt_cputype.h"
 
@@ -1423,7 +1423,8 @@ dumpsys(void)
 		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
 			/* Print out how many MBs we have left to go. */
 			if ((totalbytesleft % (1024*1024)) == 0)
-				printf("%ld ", totalbytesleft / (1024 * 1024));
+				printf_nolog("%ld ",
+				    totalbytesleft / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 			n = bytes - i;

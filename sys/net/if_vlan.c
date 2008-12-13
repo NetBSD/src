@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.59.2.1 2008/10/19 22:17:41 haad Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.59.2.2 2008/12/13 01:15:26 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.59.2.1 2008/10/19 22:17:41 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.59.2.2 2008/12/13 01:15:26 haad Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -464,13 +464,12 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifnet *pr;
 	struct ifcapreq *ifcr;
 	struct vlanreq vlr;
-	struct sockaddr *sa;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if (ifv->ifv_p != NULL) {
 			ifp->if_flags |= IFF_UP;
 
@@ -486,11 +485,6 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		} else {
 			error = EINVAL;
 		}
-		break;
-
-	case SIOCGIFADDR:
-		sa = (struct sockaddr *)&ifr->ifr_data;
-		memcpy(sa->sa_data, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
 		break;
 
 	case SIOCSIFMTU:
@@ -544,6 +538,8 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		/*
 		 * For promiscuous mode, we enable promiscuous mode on
 		 * the parent if we need promiscuous on the VLAN interface.
@@ -574,7 +570,7 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		break;
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 	}
 
 	splx(s);

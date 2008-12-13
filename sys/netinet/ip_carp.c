@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.26 2008/05/04 07:22:14 thorpej Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.26.6.1 2008/12/13 01:15:26 haad Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.26 2008/05/04 07:22:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.26.6.1 2008/12/13 01:15:26 haad Exp $");
 
 /*
  * TODO:
@@ -1610,7 +1610,7 @@ carp_set_enaddr(struct carp_softc *sc)
 		enaddr[4] = 1;
 		enaddr[5] = sc->sc_vhid;
 	}
-	if_set_sadl(&sc->sc_if, enaddr, sizeof(enaddr));
+	if_set_sadl(&sc->sc_if, enaddr, sizeof(enaddr), false);
 }
 
 void
@@ -1861,7 +1861,7 @@ carp_join_multicast6(struct carp_softc *sc)
 #endif /* INET6 */
 
 int
-carp_ioctl(struct ifnet *ifp, u_long cmd, void *addr)
+carp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct lwp *l = curlwp;		/* XXX */
 	struct carp_softc *sc = ifp->if_softc, *vr;
@@ -1871,11 +1871,11 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, void *addr)
 	struct ifnet *cdev = NULL;
 	int error = 0;
 
-	ifa = (struct ifaddr *)addr;
-	ifr = (struct ifreq *)addr;
+	ifa = (struct ifaddr *)data;
+	ifr = (struct ifreq *)data;
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
@@ -1898,6 +1898,8 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, void *addr)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (sc->sc_state != INIT && !(ifr->ifr_flags & IFF_UP)) {
 			callout_stop(&sc->sc_ad_tmo);
 			callout_stop(&sc->sc_md_tmo);
@@ -2016,7 +2018,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, void *addr)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 	}
 
 	carp_hmac_prepare(sc);
@@ -2147,7 +2149,7 @@ carp_ether_addmulti(struct carp_softc *sc, struct ifreq *ifr)
 	memcpy(&mc->mc_addr, sa, sa->sa_len);
 	LIST_INSERT_HEAD(&sc->carp_mc_listhead, mc, mc_entries);
 
-	error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (void *)ifr);
+	error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, ifr);
 	if (error != 0)
 		goto ioctl_failed;
 
@@ -2199,7 +2201,7 @@ carp_ether_delmulti(struct carp_softc *sc, struct ifreq *ifr)
 		return (error);
 
 	/* We no longer use this multicast address.  Tell parent so. */
-	error = (*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)ifr);
+	error = (*ifp->if_ioctl)(ifp, SIOCDELMULTI, ifr);
 	if (error == 0) {
 		/* And forget about this address. */
 		LIST_REMOVE(mc, mc_entries);
@@ -2233,7 +2235,7 @@ carp_ether_purgemulti(struct carp_softc *sc)
 	memcpy(ifr->ifr_name, ifp->if_xname, IFNAMSIZ);
 	while ((mc = LIST_FIRST(&sc->carp_mc_listhead)) != NULL) {
 		memcpy(&ifr->ifr_addr, &mc->mc_addr, mc->mc_addr.ss_len);
-		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)ifr);
+		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, ifr);
 		LIST_REMOVE(mc, mc_entries);
 		FREE(mc, M_DEVBUF);
 	}

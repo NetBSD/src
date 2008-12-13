@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.39 2008/06/28 13:22:14 tsutsui Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.39.2.1 2008/12/13 01:13:16 haad Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.39 2008/06/28 13:22:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.39.2.1 2008/12/13 01:13:16 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,6 +237,7 @@ st_entry_t	*Segtabzero, *Segtabzeropa;
 vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 struct pmap	kernel_pmap_store;
+struct pmap	*const kernel_pmap_ptr = &kernel_pmap_store;
 struct vm_map	*st_map, *pt_map;
 struct vm_map_kernel st_map_store, pt_map_store;
 

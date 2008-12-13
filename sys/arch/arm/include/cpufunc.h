@@ -595,7 +595,7 @@ static inline register_t cpsid(register_t psw) __attribute__((__unused__));
 static inline void
 cpsie(register_t psw)
 {
-#if _ARM_ARCH_6
+#ifdef _ARM_ARCH_6
 	if (!__builtin_constant_p(psw)) {
 		enable_interrupts(psw);
 		return;
@@ -613,7 +613,7 @@ cpsie(register_t psw)
 static inline register_t
 cpsid(register_t psw)
 {
-#if _ARM_ARCH_6
+#ifdef _ARM_ARCH_6
 	register_t oldpsw;
 	if (!__builtin_constant_p(psw))
 		return disable_interrupts(psw);

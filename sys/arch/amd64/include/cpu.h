@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57 2008/05/22 13:55:51 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57.4.1 2008/12/13 01:12:59 haad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,8 @@
 
 #ifndef _AMD64_CPU_H_
 #define _AMD64_CPU_H_
+
+#ifdef __x86_64__
 
 #include <x86/cpu.h>
 
@@ -88,5 +90,11 @@ cpu_set_curpri(int pri)
 #define LWP_PC(l)		((l)->l_md.md_regs->tf_rip)
 
 #endif	/* _KERNEL */
+
+#else	/*	__x86_64__	*/
+
+#include <i386/cpu.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* !_AMD64_CPU_H_ */

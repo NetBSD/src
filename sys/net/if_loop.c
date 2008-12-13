@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.68 2008/06/15 16:37:21 christos Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.68.2.1 2008/12/13 01:15:25 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.68 2008/06/15 16:37:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.68.2.1 2008/12/13 01:15:25 haad Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -397,7 +397,7 @@ lostart(struct ifnet *ifp)
 /* ARGSUSED */
 void
 lortrequest(int cmd, struct rtentry *rt,
-    struct rt_addrinfo *info)
+    const struct rt_addrinfo *info)
 {
 
 	if (rt)
@@ -417,7 +417,7 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		ifa = (struct ifaddr *)data;
 		if (ifa != NULL /*&& ifa->ifa_addr->sa_family == AF_ISO*/)
@@ -460,7 +460,7 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 	}
 	return (error);
 }

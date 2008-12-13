@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_subr.c,v 1.25 2008/05/10 15:11:10 ad Exp $	*/
+/*	$NetBSD: altq_subr.c,v 1.25.4.1 2008/12/13 01:12:55 haad Exp $	*/
 /*	$KAME: altq_subr.c,v 1.24 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.25 2008/05/10 15:11:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.25.4.1 2008/12/13 01:12:55 haad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -68,11 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: altq_subr.c,v 1.25 2008/05/10 15:11:10 ad Exp $");
 #include <altq/altq.h>
 #ifdef ALTQ3_COMPAT
 #include <altq/altq_conf.h>
-#endif
-
-/* machine dependent clock related includes */
-#ifdef __HAVE_CPU_COUNTER
-#include <machine/cpu_counter.h>		/* for pentium tsc */
 #endif
 
 /*
@@ -373,20 +368,6 @@ tbr_timeout(void *arg)
 		CALLOUT_RESET(&tbr_callout, 1, tbr_timeout, (void *)0);
 	else
 		tbr_timer = 0;	/* don't need tbr_timer anymore */
-#if defined(__alpha__) && !defined(ALTQ_NOPCC)
-	{
-		/*
-		 * XXX read out the machine dependent clock once a second
-		 * to detect counter wrap-around.
-		 */
-		static u_int cnt;
-
-		if (++cnt >= hz) {
-			(void)read_machclk();
-			cnt = 0;
-		}
-	}
-#endif /* __alpha__ && !ALTQ_NOPCC */
 }
 
 /*
@@ -747,28 +728,10 @@ write_dsfield(struct mbuf *m, struct altq_pktattr *pktattr, u_int8_t dsfield)
 	return;
 }
 
+#define BINTIME_SHIFT	2
 
-/*
- * high resolution clock support taking advantage of a machine dependent
- * high resolution time counter (e.g., timestamp counter of intel pentium).
- * we assume
- *  - 64-bit-long monotonically-increasing counter
- *  - frequency range is 100M-4GHz (CPU speed)
- */
-/* if pcc is not available or disabled, emulate 256MHz using microtime() */
-#define	MACHCLK_SHIFT	8
-
-int machclk_usepcc;
 u_int32_t machclk_freq = 0;
 u_int32_t machclk_per_tick = 0;
-
-#ifdef __alpha__
-#ifdef __FreeBSD__
-extern u_int32_t cycles_per_sec;	/* alpha cpu clock frequency */
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-extern u_int64_t cycles_per_usec;	/* alpha cpu clock frequency */
-#endif
-#endif /* __alpha__ */
 
 void
 init_machclk(void)
@@ -776,66 +739,27 @@ init_machclk(void)
 
 	callout_init(&tbr_callout, 0);
 
-#ifdef __HAVE_CPU_COUNTER
-	/* check if TSC is available */
-	machclk_usepcc = cpu_hascounter();
-	machclk_freq = cpu_frequency(curcpu());
-#endif
-
-	if (machclk_usepcc == 0) {
-		/* emulate 256MHz using microtime() */
-		machclk_freq = 1000000 << MACHCLK_SHIFT;
-		machclk_per_tick = machclk_freq / hz;
-#ifdef ALTQ_DEBUG
-		printf("altq: emulate %uHz CPU clock\n", machclk_freq);
-#endif
-		return;
-	}
-
 	/*
-	 * if we don't know the clock frequency, measure it.
+	 * Always emulate 1GiHz counter using bintime(9)
+	 * since it has enough resolution via timecounter(9).
+	 * Using machine dependent cpu_counter() is not MP safe
+	 * and it won't work even on UP with Speedstep etc.
 	 */
-	if (machclk_freq == 0) {
-		static int	wait;
-		struct timeval	tv_start, tv_end;
-		u_int64_t	start, end, diff;
-		int		timo;
-
-		microtime(&tv_start);
-		start = read_machclk();
-		timo = hz;	/* 1 sec */
-		(void)tsleep(&wait, PWAIT | PCATCH, "init_machclk", timo);
-		microtime(&tv_end);
-		end = read_machclk();
-		diff = (u_int64_t)(tv_end.tv_sec - tv_start.tv_sec) * 1000000
-		    + tv_end.tv_usec - tv_start.tv_usec;
-		if (diff != 0)
-			machclk_freq = (u_int)((end - start) * 1000000 / diff);
-	}
-
+	machclk_freq = 1024 * 1024 * 1024;	/* 2^30 to emulate ~1GHz */
 	machclk_per_tick = machclk_freq / hz;
-
 #ifdef ALTQ_DEBUG
-	printf("altq: CPU clock: %uHz\n", machclk_freq);
+	printf("altq: emulate %uHz CPU clock\n", machclk_freq);
 #endif
 }
 
 u_int64_t
 read_machclk(void)
 {
+	struct bintime bt;
 	u_int64_t val;
 
-	if (machclk_usepcc) {
-#ifdef __HAVE_CPU_COUNTER
-		return cpu_counter();
-#endif
-	} else {
-		struct timeval tv;
-
-		microtime(&tv);
-		val = (((u_int64_t)(tv.tv_sec - boottime.tv_sec) * 1000000
-		    + tv.tv_usec) << MACHCLK_SHIFT);
-	}
+	binuptime(&bt);
+	val = (((u_int64_t)bt.sec << 32) + (bt.frac >> 32)) >> BINTIME_SHIFT;
 	return (val);
 }
 

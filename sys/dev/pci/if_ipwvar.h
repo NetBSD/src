@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.13 2008/05/27 21:42:08 dyoung Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.13.4.1 2008/12/13 01:14:35 haad Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -89,7 +89,7 @@ struct ipw_softc {
 					    enum ieee80211_state, int);
 
 	struct ipw_firmware		fw;
-	char				sc_fwname[24];
+	const char			*sc_fwname;
 	uint32_t			flags;
 #define IPW_FLAG_FW_CACHED		(1 << 0)
 #define IPW_FLAG_FW_INITED		(1 << 1)

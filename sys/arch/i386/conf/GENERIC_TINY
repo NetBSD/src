@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.114 2008/05/13 13:43:47 ad Exp $
+#	$NetBSD: GENERIC_TINY,v 1.114.4.1 2008/12/13 01:13:13 haad Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -48,7 +48,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	NMBCLUSTERS=256
 
-#options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

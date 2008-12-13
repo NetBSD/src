@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.24 2008/03/10 22:03:40 ad Exp $
+#	$NetBSD: Makefile.amd64,v 1.24.10.1 2008/12/13 01:12:59 haad Exp $
 
 # Makefile for NetBSD
 #
@@ -77,8 +77,9 @@ LINKFORMAT=	-T ${AMD64}/conf/${KERN_LDSCRIPT}
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-acpi_wakeup_low.o amd64func.o busfunc.o cpufunc.o cpu_in_cksum.o lock_stubs.o: assym.h
-linux32_sigcode.o mptramp.o netbsd32_sigcode.o: assym.h
+acpi_wakeup_low.o amd64func.o busfunc.o cpufunc.o cpu_in_cksum.o: assym.h
+linux_support.o linux32_sigcode.o lock_stubs.o mptramp.o: assym.h
+netbsd32_sigcode.o: assym.h
 
 ##
 ## (7) misc settings
@@ -98,31 +99,9 @@ linux32_sigcode.o mptramp.o netbsd32_sigcode.o: assym.h
 %LOAD
 
 %RULES
-## Include rules for Atheros WLAN
-.include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
+
+## Include rules for ACPI wakecode
 .include "$S/arch/x86/acpi/Makefile.wakecode.inc"
-
-# XXX -	Ugly, but make doesn't easily handle .o.uu (assumes it's a suffix)
-# XXX -	Also, config has no simple was to just add foo.o to the Makefile.
-#	It needs a pathname of some sort for "object"
-.if !empty(OBJS:M\/athhal.o)
-OBJS:=${OBJS:C/\/athhal.o/athhal.o/}
-
-.PATH: $S/contrib/dev/ath/public
-ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
-		${_MKSHECHO}\
-		${UUDECODE} -p $> \> ${.TARGET}; \
-		rm -f ${.TARGET}; \
-		${UUDECODE} -p $> > ${.TARGET}
-
-athhal.o: x86_64-elf.hal.o.uu
-	${ATH_UUDEC}
-.if defined(COPTS) && !empty(COPTS:M-fno-asynchronous-unwind-tables)
-	${_MKSHECHO}\
-	${OBJCOPY} -R .eh_frame $@
-	${OBJCOPY} -R .eh_frame $@
-.endif
-.endif
 
 ##
 ## (9) port independent kernel machinery

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2007/11/11 05:33:12 isaki Exp $
+#	$NetBSD: Makefile,v 1.14.24.1 2008/12/13 01:13:38 haad Exp $
 
 NOMAN=		# defined
 
@@ -6,7 +6,8 @@ NOMAN=		# defined
 
 BOOT=		Multi-boot
 VERSIONFILE=	${.CURDIR}/version
-VERSION!=	awk -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } END { print it }' ${VERSIONFILE}
+VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
+			END { print it }' ${VERSIONFILE}
 NEWVERSWHAT=	"${BOOT}"
 
 # text address

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.230.2.1 2008/10/19 22:18:10 haad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.230.2.2 2008/12/13 01:15:41 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.230.2.1 2008/10/19 22:18:10 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.230.2.2 2008/12/13 01:15:41 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -171,6 +171,7 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_valloc = ffs_valloc,
 	.uo_vfree = ffs_vfree,
 	.uo_balloc = ffs_balloc,
+	.uo_unmark_vnode = (void (*)(vnode_t *))nullop,
 };
 
 static int
@@ -1325,8 +1326,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 out:
 #ifdef WAPBL
 	if (mp->mnt_wapbl_replay) {
-		if (wapbl_replay_isopen(mp->mnt_wapbl_replay))
-			wapbl_replay_stop(mp->mnt_wapbl_replay);
+		wapbl_replay_stop(mp->mnt_wapbl_replay);
 		wapbl_replay_free(mp->mnt_wapbl_replay);
 		mp->mnt_wapbl_replay = 0;
 	}
@@ -1778,7 +1778,7 @@ loop:
 		else {
 			if ((error = ffs_cgupdate(ump, waitfor)))
 				allerror = error;
-				UFS_WAPBL_END(mp);
+			UFS_WAPBL_END(mp);
 		}
 	}
 

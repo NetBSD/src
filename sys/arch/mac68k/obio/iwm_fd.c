@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.43 2008/06/15 10:46:14 tsutsui Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.43.2.1 2008/12/13 01:13:17 haad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,9 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.43 2008/06/15 10:46:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.43.2.1 2008/12/13 01:13:17 haad Exp $");
 
-#ifdef _LKM
+#ifdef _MODULE
 #define IWMCF_DRIVE 0
 #else
 #include "locators.h"
@@ -97,7 +97,7 @@ static int checkTrack(diskPosition_t *, int);
 static int initCylinderCache(fd_softc_t *);
 static void invalidateCylinderCache(fd_softc_t *);
 
-#ifdef _LKM
+#ifdef _MODULE
 static int probe_fd(void);
 int fd_mod_init(void);
 void fd_mod_free(void);
@@ -223,12 +223,12 @@ enum {
  * {device}_cd
  * references all found devices of a type.
  */
-#ifndef _LKM
+#ifndef _MODULE
 
 extern struct cfdriver iwm_cd;
 extern struct cfdriver fd_cd;
 
-#endif /* defined _LKM */
+#endif /* defined _MODULE */
 
 /* IWM floppy disk controller */
 CFATTACH_DECL(iwm, sizeof(iwm_softc_t),
@@ -274,7 +274,7 @@ int
 iwm_match(struct device *parent, struct cfdata *match, void *auxp)
 {
 	int matched;
-#ifdef _LKM
+#ifdef _MODULE
 	int iwmErr;
 #endif
 	extern u_long IOBase;		/* from mac68k/machdep.c */
@@ -296,7 +296,7 @@ iwm_match(struct device *parent, struct cfdata *match, void *auxp)
 			printf("iwm: IWMBase mapped to 0x%lx in VM.\n", 
 			    IWMBase);
 		}
-#ifdef _LKM
+#ifdef _MODULE
 		iwmErr = iwmInit();
 		if (TRACE_CONFIG)
 			printf("initIWM() says %d.\n", iwmErr);
@@ -511,7 +511,7 @@ fd_print(void *auxp, const char *controller)
 }
 
 
-#ifdef _LKM
+#ifdef _MODULE
 
 static iwm_softc_t *iwm;
 
@@ -614,7 +614,7 @@ probe_fd(void)
 	return err;
 }
 
-#endif /* defined _LKM */
+#endif /* defined _MODULE */
 
 
 /**
@@ -640,7 +640,7 @@ fdopen(dev_t dev, int flags, int devType, struct lwp *l)
 	int partitionMask;
 	int fdType, fdUnit;
 	int ierr, err;
-#ifndef _LKM
+#ifndef _MODULE
 	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0); /* XXX */
 #endif
 	info = NULL;		/* XXX shut up egcs */
@@ -774,7 +774,7 @@ fdclose(dev_t dev, int flags, int devType, struct lwp *l)
 {
 	fd_softc_t *fd;
 	int partitionMask, fdUnit, fdType;
-#ifndef _LKM
+#ifndef _MODULE
 	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0);
 #endif
 
@@ -818,7 +818,7 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 {
 	int result, fdUnit, fdType;
 	fd_softc_t *fd;
-#ifndef _LKM
+#ifndef _MODULE
 	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0);
 #endif
 
@@ -981,7 +981,7 @@ fdstrategy(struct buf *bp)
 	int sectSize, transferSize;
 	diskPosition_t physDiskLoc;
 	fd_softc_t *fd;
-#ifndef _LKM
+#ifndef _MODULE
 	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0);
 #endif
 
@@ -1274,7 +1274,7 @@ fdstart_Read(fd_softc_t *fd)
 	int i;
 	diskPosition_t *pos;
 	sectorHdr_t *shdr;
-#ifndef _LKM
+#ifndef _MODULE
 	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0); /* XXX */
 #endif
 	
@@ -1390,7 +1390,7 @@ fdstart_Flush(fd_softc_t *fd)
 	int i, dcnt;
 	diskPosition_t *pos;
 	sectorHdr_t *shdr;
-#ifndef _LKM
+#ifndef _MODULE
 	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0); /* XXX */
 #endif
 	dcnt = 0;
@@ -1520,7 +1520,7 @@ static int
 fdstart_IOErr(fd_softc_t *fd)
 {
 	int state;
-#ifndef _LKM
+#ifndef _MODULE
 	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0); /* XXX */
 #endif
 	
@@ -1886,7 +1886,7 @@ seek(fd_softc_t *fd, int style)
 	diskPosition_t *loc;
 	sectorHdr_t hdr;
 	char action[32];
-#ifndef _LKM
+#ifndef _MODULE
 	iwm_softc_t *iwm = device_lookup_private(&iwm_cd, 0); /* XXX */
 #endif
 

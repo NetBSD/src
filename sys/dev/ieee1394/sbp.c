@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.21 2008/03/29 16:22:53 kiyohara Exp $	*/
+/*	$NetBSD: sbp.c,v 1.21.10.1 2008/12/13 01:14:26 haad Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.21 2008/03/29 16:22:53 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.21.10.1 2008/12/13 01:14:26 haad Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -201,7 +201,7 @@ static int sysctl_sbp_verify_tags(SYSCTLFN_PROTO);
 /*
  * Setup sysctl(3) MIB, hw.sbp.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_sbp, "sysctl sbp(4) subtree setup")
 {

@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.17.2.1 2008/10/19 22:16:13 haad Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.17.2.2 2008/12/13 01:13:43 haad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.17.2.1 2008/10/19 22:16:13 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.17.2.2 2008/12/13 01:13:43 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.17.2.1 2008/10/19 22:16:13 haad
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/workqueue.h>
+#include <sys/buf.h>
 
 #include <xen/xen.h>
 #include <xen/xen_shm.h>
@@ -546,7 +547,8 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 		evop.u.bind_interdomain.remote_port = revtchn;
 		err = HYPERVISOR_event_channel_op(&evop);
 		if (err) {
-			printf("blkback %s: can't get event channel: %d\n",
+			aprint_error("blkback %s: "
+			    "can't get event channel: %d\n",
 			    xbusd->xbusd_otherend, err);
 			xenbus_dev_fatal(xbusd, err,
 			    "can't bind event channel", xbusd->xbusd_otherend);
@@ -557,7 +559,7 @@ xbdback_frontend_changed(void *arg, XenbusState new_state)
 		    xbdi->xbdi_domid, xbdi->xbdi_handle);
 		event_set_handler(xbdi->xbdi_evtchn, xbdback_evthandler,
 		    xbdi, IPL_BIO, evname);
-		printf("xbd backend 0x%x for domain %d "
+		aprint_verbose("xbd backend 0x%x for domain %d "
 		    "using event channel %d, protocol %s\n", xbdi->xbdi_handle,
 		    xbdi->xbdi_domid, xbdi->xbdi_evtchn, proto);
 		hypervisor_enable_event(xbdi->xbdi_evtchn);

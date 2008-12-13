@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.41 2008/04/10 19:13:37 cegger Exp $ */
+/* $NetBSD: if_vge.c,v 1.41.10.1 2008/12/13 01:14:35 haad Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.41 2008/04/10 19:13:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.41.10.1 2008/12/13 01:14:35 haad Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -114,8 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.41 2008/04/10 19:13:37 cegger Exp $");
 #include <dev/pci/pcidevs.h>
 
 #include <dev/pci/if_vgereg.h>
-
-#define VGE_JUMBO_MTU		9000
 
 #define VGE_IFQ_MAXLEN		64
 
@@ -295,6 +293,8 @@ struct vge_softc {
 static inline void vge_set_txaddr(struct vge_txfrag *, bus_addr_t);
 static inline void vge_set_rxaddr(struct vge_rxdesc *, bus_addr_t);
 
+static int vge_ifflags_cb(struct ethercom *);
+
 static int vge_match(struct device *, struct cfdata *, void *);
 static void vge_attach(struct device *, struct device *, void *);
 
@@ -312,7 +312,7 @@ static void vge_tick(void *);
 static void vge_start(struct ifnet *);
 static int vge_ioctl(struct ifnet *, u_long, void *);
 static int vge_init(struct ifnet *);
-static void vge_stop(struct vge_softc *);
+static void vge_stop(struct ifnet *, int);
 static void vge_watchdog(struct ifnet *);
 #if VGE_POWER_MANAGEMENT
 static int vge_suspend(struct device *);
@@ -1004,6 +1004,8 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl = vge_ioctl;
 	ifp->if_start = vge_start;
+	ifp->if_init = vge_init;
+	ifp->if_stop = vge_stop;
 
 	/*
 	 * We can support 802.1Q VLAN-sized frames and jumbo
@@ -1027,8 +1029,8 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 #endif
 #endif
 	ifp->if_watchdog = vge_watchdog;
-	ifp->if_init = vge_init;
 	IFQ_SET_MAXLEN(&ifp->if_snd, max(VGE_IFQ_MAXLEN, IFQ_MAXLEN));
+	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
 	 * Initialize our media structures and probe the MII.
@@ -1054,6 +1056,7 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
+	ether_set_ifflags_cb(&sc->sc_ethercom, vge_ifflags_cb);
 
 	callout_init(&sc->sc_timeout, 0);
 	callout_setfunc(&sc->sc_timeout, vge_tick, sc);
@@ -1772,7 +1775,7 @@ vge_init(struct ifnet *ifp)
 	/*
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
-	vge_stop(sc);
+	vge_stop(ifp, 0);
 	vge_reset(sc);
 
 	/* Initialize the RX descriptors and mbufs. */
@@ -1996,6 +1999,26 @@ vge_miibus_statchg(struct device *self)
 }
 
 static int
+vge_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct vge_softc *sc = ifp->if_softc;
+	int change = ifp->if_flags ^ sc->sc_if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE|IFF_DEBUG)) != 0)
+		return ENETRESET;
+	else if ((change & IFF_PROMISC) == 0)
+		return 0;
+
+	if ((ifp->if_flags & IFF_PROMISC) == 0)
+		CSR_CLRBIT_1(sc, VGE_RXCTL, VGE_RXCTL_RX_PROMISC);
+	else
+		CSR_SETBIT_1(sc, VGE_RXCTL, VGE_RXCTL_RX_PROMISC);
+	vge_setmulti(sc);
+	return 0;
+}
+
+static int
 vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct vge_softc *sc;
@@ -2008,41 +2031,8 @@ vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch (command) {
-	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > VGE_JUMBO_MTU)
-			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
-			error = 0;
-		break;
-	case SIOCSIFFLAGS:
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING &&
-			    ifp->if_flags & IFF_PROMISC &&
-			    (sc->sc_if_flags & IFF_PROMISC) == 0) {
-				CSR_SETBIT_1(sc, VGE_RXCTL,
-				    VGE_RXCTL_RX_PROMISC);
-				vge_setmulti(sc);
-			} else if (ifp->if_flags & IFF_RUNNING &&
-			    (ifp->if_flags & IFF_PROMISC) == 0 &&
-			    sc->sc_if_flags & IFF_PROMISC) {
-				CSR_CLRBIT_1(sc, VGE_RXCTL,
-				    VGE_RXCTL_RX_PROMISC);
-				vge_setmulti(sc);
-                        } else
-				vge_init(ifp);
-		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				vge_stop(sc);
-		}
-		sc->sc_if_flags = ifp->if_flags;
-		break;
-	default:
-		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
-			break;
-
+	if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 		error = 0;
-
 		if (command != SIOCADDMULTI && command != SIOCDELMULTI)
 			;
 		else if (ifp->if_flags & IFF_RUNNING) {
@@ -2052,8 +2042,8 @@ vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 			 */
 			vge_setmulti(sc);
 		}
-		break;
 	}
+	sc->sc_if_flags = ifp->if_flags;
 
 	splx(s);
 	return error;
@@ -2083,14 +2073,12 @@ vge_watchdog(struct ifnet *ifp)
  * RX and TX lists.
  */
 static void
-vge_stop(struct vge_softc *sc)
+vge_stop(struct ifnet *ifp, int disable)
 {
-	struct ifnet *ifp;
+	struct vge_softc *sc = ifp->if_softc;
 	struct vge_txsoft *txs;
 	struct vge_rxsoft *rxs;
 	int i, s;
-
-	ifp = &sc->sc_ethercom.ec_if;
 
 	s = splnet();
 	ifp->if_timer = 0;
@@ -2214,5 +2202,5 @@ vge_shutdown(void *arg)
 	struct vge_softc *sc;
 
 	sc = arg;
-	vge_stop(sc);
+	vge_stop(&sc->sc_ethercom.ec_if, 1);
 }

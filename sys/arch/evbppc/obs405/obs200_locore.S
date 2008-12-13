@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_locore.S,v 1.4 2006/10/16 18:14:36 kiyohara Exp $	*/
+/*	$NetBSD: obs200_locore.S,v 1.4.62.1 2008/12/13 01:13:10 haad Exp $	*/
 /*	Original Tag: locore.S,v 1.1 2003/09/23 15:21:58 shige Exp	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
@@ -180,7 +180,7 @@ __start_cpu0:
 	cmpw	%r3,%r8
 	bne+	2b
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	/* If we had symbol table location we'd store it here and would've adjusted r8 here */
 	lis	%r7,_C_LABEL(startsym)@ha
 	addi	%r7,%r7,_C_LABEL(startsym)@l

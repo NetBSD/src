@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.54.2.1 2008/10/19 22:17:18 haad Exp $ */
+/* $NetBSD: udf_subr.c,v 1.54.2.2 2008/12/13 01:14:59 haad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.54.2.1 2008/10/19 22:17:18 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.54.2.2 2008/12/13 01:14:59 haad Exp $");
 #endif /* not lint */
 
 
@@ -1990,6 +1990,12 @@ udf_process_vds(struct udf_mount *ump) {
 			ump->strategy = &udf_strat_direct;
 	if (n_spar)
 		ump->strategy = &udf_strat_rmw;
+
+#if 0
+	/* read-only access won't benefit from the other shedulers */
+	if (ump->vfs_mountp->mnt_flag & MNT_RDONLY)
+		ump->strategy = &udf_strat_direct;
+#endif
 
 	/* print results */
 	DPRINTF(VOLUMES, ("\tdata partition    %d\n", ump->data_part));
@@ -3965,10 +3971,11 @@ udf_getownership(struct udf_node *udf_node, uid_t *uidp, gid_t *gidp)
 	}
 	
 	/* do the uid/gid translation game */
-	if ((uid == (uid_t) -1) && (gid == (gid_t) -1)) {
+	if (uid == (uid_t) -1)
 		uid = ump->mount_args.anon_uid;
+	if (gid == (gid_t) -1)
 		gid = ump->mount_args.anon_gid;
-	}
+
 	*uidp = uid;
 	*gidp = gid;
 
@@ -3990,10 +3997,10 @@ udf_setownership(struct udf_node *udf_node, uid_t uid, gid_t gid)
 	/* do the uid/gid translation game */
 	nobody_uid = ump->mount_args.nobody_uid;
 	nobody_gid = ump->mount_args.nobody_gid;
-	if ((uid == nobody_uid) && (gid == nobody_gid)) {
+	if (uid == nobody_uid)
 		uid = (uid_t) -1;
+	if (gid == nobody_gid)
 		gid = (gid_t) -1;
-	}
 
 	if (fe) {
 		fe->uid  = udf_rw32((uint32_t) uid);
@@ -4088,9 +4095,6 @@ dirhash_fill(struct udf_node *dir_node)
 /*
  * Directory read and manipulation functions.
  *
- * Note that if the file is found, the cached diroffset position *before* the
- * advance is remembered. Thus if the same filename is lookup again just after
- * this lookup its immediately found.
  */
 
 int 
@@ -4483,7 +4487,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 	struct icb_tag       *icbtag;
 	struct charspec osta_charspec;
 	struct dirent   dirent;
-	uint64_t unique_id, dir_size, diroffset;
+	uint64_t unique_id, dir_size;
 	uint64_t fid_pos, end_fid_pos, chosen_fid_pos;
 	uint32_t chosen_size, chosen_size_diff;
 	int lb_size, lb_rest, fidsize, this_fidsize, size_diff;
@@ -4624,7 +4628,6 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 		}
 	}
 	chosen_size_diff = chosen_size - fidsize;
-	diroffset = chosen_fid_pos + chosen_size;
 
 	/* populate the FID */
 	memset(fid, 0, lb_size);

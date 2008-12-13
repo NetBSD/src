@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.13 2008/01/07 16:12:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.13.16.1 2008/12/13 01:13:57 haad Exp $");
 #endif
 
 /*
@@ -63,9 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.13 2008/01/07 16:12:53 ad Exp $");
 #include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
-#ifdef __NetBSD__
-#include <sys/lkm.h>
-#endif
 #include <sys/malloc.h>
 #include <sys/lock.h>
 #ifdef __FreeBSD__

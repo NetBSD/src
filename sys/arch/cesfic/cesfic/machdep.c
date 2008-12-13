@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41.2.1 2008/10/19 22:15:43 haad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41.2.2 2008/12/13 01:13:05 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.2.1 2008/10/19 22:15:43 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.2.2 2008/12/13 01:13:05 haad Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -272,9 +272,6 @@ consinit()
 		zscons.cn_getc = zs_kgdb_cngetc;
 	}
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(0, 0, 0);
-#endif
 #ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
@@ -436,6 +433,8 @@ cpu_reboot(howto, bootstr)
  haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 2008/07/02 17:28:57 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.2.1 2008/12/13 01:13:38 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2008/07/02 17:28:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.2.1 2008/12/13 01:13:38 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2008/07/02 17:28:57 ad Exp $");
 
 #include "ksyms.h"
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 #include <sys/exec_elf.h>
 #endif
 
@@ -227,8 +227,8 @@ consinit(void)
 #ifdef KGDB
 	zs_kgdb_init();			/* XXX */
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+	ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		 (void *)&end, esym);
 #endif
 #ifdef DDB
@@ -495,6 +495,8 @@ cpu_reboot(int howto, char *bootstr)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {
 		printf("hit any key to reboot...\n");
@@ -742,7 +744,7 @@ dumpsys(void)
 #define NPGMB	(1024*1024/PAGE_SIZE)
 		/* print out how many MBs we have dumped */
 		if (pg && (pg % NPGMB) == 0)
-			printf("%d ", pg / NPGMB);
+			printf_nolog("%d ", pg / NPGMB);
 #undef NPGMB
 		if (maddr == 0) {
 			/* Skip first page */

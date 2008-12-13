@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.16 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.16.4.1 2008/12/13 01:14:14 haad Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.16 2008/05/14 13:29:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.16.4.1 2008/12/13 01:14:14 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +89,10 @@ mc146818_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 
 	timeout = 1000000;	/* XXX how long should we wait? */
 	for (;;) {
-		if ((*sc->sc_mcread)(sc, MC_REGA) & MC_REGA_UIP)
+		if (((*sc->sc_mcread)(sc, MC_REGA) & MC_REGA_UIP) == 0)
 			break;
 		if (--timeout < 0) {
-			printf("%s: timeout\n", __func__);
+			printf("mc146818_settime: timeout\n");
 			return EBUSY;
 		}
 	}
@@ -135,7 +135,7 @@ int
 mc146818_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
 	struct mc146818_softc *sc;
-	int s, timeout, cent, year;
+	int s, cent, year;
 
 	sc = handle->cookie;
 
@@ -143,15 +143,12 @@ mc146818_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 
 	todr_wenable(handle, 1);
 
-	timeout = 1000000;	/* XXX how long should we wait? */
-	for (;;) {
-		if ((*sc->sc_mcread)(sc, MC_REGA) & MC_REGA_UIP)
-			break;
-		if (--timeout < 0) {
-			printf("%s: timeout\n", __func__);
-			return EBUSY;
-		}
-	}
+	/*
+	 * Disable RTC updates during clock updates
+	 */
+
+	(*sc->sc_mcwrite)(sc, MC_REGB,
+	    (*sc->sc_mcread)(sc, MC_REGB) | MC_REGB_SET);
 
 #define	TOREG(x)	((sc->sc_flag & MC146818_BCD) ? TOBCD(x) : (x))
 
@@ -174,6 +171,13 @@ mc146818_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	(*sc->sc_mcwrite)(sc, MC_YEAR, TOREG(year));
 
 #undef TOREG
+
+	/*
+	 * Re-enable RTC updates
+	 */
+
+	(*sc->sc_mcwrite)(sc, MC_REGB,
+	    (*sc->sc_mcread)(sc, MC_REGB) & ~MC_REGB_SET);
 
 	todr_wenable(handle, 0);
 

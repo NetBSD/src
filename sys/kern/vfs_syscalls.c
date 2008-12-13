@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.369.2.1 2008/10/19 22:17:29 haad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.369.2.2 2008/12/13 01:15:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,12 +63,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.369.2.1 2008/10/19 22:17:29 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.369.2.2 2008/12/13 01:15:09 haad Exp $");
 
-#include "opt_compat_netbsd.h"
-#include "opt_compat_43.h"
+#ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
 #include "veriexec.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,20 +95,16 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.369.2.1 2008/10/19 22:17:29 haad 
 #include <sys/kauth.h>
 #include <sys/atomic.h>
 #include <sys/module.h>
+#include <sys/buf.h>
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 #include <miscfs/specfs/specdev.h>
 
-#ifdef COMPAT_30
-#include "opt_nfsserver.h"
 #include <nfs/rpcv2.h>
-#endif
 #include <nfs/nfsproto.h>
-#ifdef COMPAT_30
 #include <nfs/nfs.h>
 #include <nfs/nfs_var.h>
-#endif
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 
@@ -129,10 +125,10 @@ int dovfsusermount = 0;
  * Mount a file system.
  */
 
-#if defined(COMPAT_09) || defined(COMPAT_43)
 /*
  * This table is used to maintain compatibility with 4.3BSD
- * and NetBSD 0.9 mount syscalls.  Note, the order is important!
+ * and NetBSD 0.9 mount syscalls - and possibly other systems.
+ * Note, the order is important!
  *
  * Do not modify this table. It should only contain filesystems
  * supported by NetBSD 0.9 and 4.3BSD.
@@ -151,7 +147,6 @@ const char * const mountcompatnames[] = {
 };
 const int nmountcompatnames = sizeof(mountcompatnames) /
     sizeof(mountcompatnames[0]);
-#endif /* COMPAT_09 || COMPAT_43 */
 
 static int
 mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
@@ -215,21 +210,24 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 
 	error = VFS_MOUNT(mp, path, data, data_len);
 
-#if defined(COMPAT_30) && defined(NFSSERVER)
 	if (error && data != NULL) {
 		int error2;
 
-		/* Update failed; let's try and see if it was an
-		 * export request. */
-		error2 = nfs_update_exports_30(mp, path, data, l);
+		/*
+		 * Update failed; let's try and see if it was an
+		 * export request.  For compat with 3.0 and earlier.
+		 */
+		error2 = vfs_hooks_reexport(mp, path, data);
 
-		/* Only update error code if the export request was
+		/*
+		 * Only update error code if the export request was
 		 * understood but some problem occurred while
-		 * processing it. */
+		 * processing it.
+		 */
 		if (error2 != EJUSTRETURN)
 			error = error2;
 	}
-#endif
+
 	if (mp->mnt_iflag & IMNT_WANTRDWR)
 		mp->mnt_flag &= ~MNT_RDONLY;
 	if (error)
@@ -259,7 +257,6 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 	/* Copy file-system type from userspace.  */
 	error = copyinstr(fstype, fstypename, sizeof(fstypename), NULL);
 	if (error) {
-#if defined(COMPAT_09) || defined(COMPAT_43)
 		/*
 		 * Historically, filesystem types were identified by numbers.
 		 * If we get an integer for the filesystem type instead of a
@@ -272,22 +269,19 @@ mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
 			return ENODEV;
 		strlcpy(fstypename, mountcompatnames[fsindex],
 		    sizeof(fstypename));
-#else
-		return error;
-#endif
 	}
 
-#ifdef	COMPAT_10
-	/* Accept `ufs' as an alias for `ffs'. */
+	/* Accept `ufs' as an alias for `ffs', for compatibility. */
 	if (strcmp(fstypename, "ufs") == 0)
 		fstypename[0] = 'f';
-#endif
 
 	if ((*vfsops = vfs_getopsbyname(fstypename)) != NULL)
 		return 0;
 
 	/* If we can autoload a vfs module, try again */
-	(void)module_load(fstype, 0, NULL, MODULE_CLASS_VFS, true);
+	mutex_enter(&module_lock);
+	(void)module_autoload(fstype, MODULE_CLASS_VFS);
+	mutex_exit(&module_lock);
 
 	if ((*vfsops = vfs_getopsbyname(fstypename)) != NULL)
 		return 0;
@@ -441,24 +435,6 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	return (error);
 }
 
-#ifdef COMPAT_40
-/* ARGSUSED */
-int
-compat_40_sys_mount(struct lwp *l, const struct compat_40_sys_mount_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const char *) type;
-		syscallarg(const char *) path;
-		syscallarg(int) flags;
-		syscallarg(void *) data;
-	} */
-	register_t dummy;
-
-	return do_sys_mount(l, NULL, SCARG(uap, type), SCARG(uap, path),
-	    SCARG(uap, flags), SCARG(uap, data), UIO_USERSPACE, 0, &dummy);
-}
-#endif
-
 int
 sys___mount50(struct lwp *l, const struct sys___mount50_args *uap, register_t *retval)
 {
@@ -521,16 +497,16 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 			/* No length supplied, use default for filesystem */
 			data_len = vfsops->vfs_min_mount_data;
 			if (data_len > VFS_MAX_MOUNT_DATA) {
-				/* maybe a force loaded old LKM */
 				error = EINVAL;
 				goto done;
 			}
-#ifdef COMPAT_30
-			/* Hopefully a longer buffer won't make copyin() fail */
+			/*
+			 * Hopefully a longer buffer won't make copyin() fail.
+			 * For compatibility with 3.0 and earlier.
+			 */
 			if (flags & MNT_UPDATE
 			    && data_len < sizeof (struct mnt_export_args30))
 				data_len = sizeof (struct mnt_export_args30);
-#endif
 		}
 		data_buf = malloc(data_len, M_TEMP, M_WAITOK);
 

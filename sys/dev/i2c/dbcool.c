@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.5.2.2 2008/10/19 22:16:24 haad Exp $ */
+/*	$NetBSD: dbcool.c,v 1.5.2.3 2008/12/13 01:14:13 haad Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.5.2.2 2008/10/19 22:16:24 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.5.2.3 2008/12/13 01:14:13 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -639,7 +639,6 @@ dbcool_detach(device_t self, int flags)
 	struct dbcool_softc *sc = device_private(self);
 
 	sysmon_envsys_unregister(sc->sc_sme);
-	sysmon_envsys_destroy(sc->sc_sme);
 	sc->sc_sme = NULL;
 	return 0;
 }

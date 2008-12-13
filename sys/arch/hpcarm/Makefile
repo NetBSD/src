@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.114.1 2008/12/13 01:13:11 haad Exp $
 
 # Makefile for hpcarm tags file and boot blocks
 
@@ -16,7 +16,8 @@ DHPCARM=	dev mainbus include sa
 tags:
 	-ctags -wdtf ${THPCARM} ${SHPCARM} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AHPCARM} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${THPCARM}
 	sort -o ${THPCARM} ${THPCARM}
 

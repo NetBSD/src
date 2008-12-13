@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.30 2007/10/17 19:53:17 garbled Exp $ */
+/*	$NetBSD: siop2.c,v 1.30.26.1 2008/12/13 01:13:00 haad Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,7 +70,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.30 2007/10/17 19:53:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop2.c,v 1.30.26.1 2008/12/13 01:13:00 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1474,7 +1474,7 @@ siopng_dump(sc);
 			sc->sc_dev.dv_xname, rp->siop_sfbr, acb->msg[1], rp->siop_sbcl);
 		/* what should be done here? */
 		DCIAS(kvtop(&acb->msg[1]));
-		rp->siop_dsp = sc->sc_scriptspa + Ent_switch;
+		rp->siop_dsp = sc->sc_scriptspa + Ent_clear_ack;
 		return (0);
 	}
 	if (dstat & SIOP_DSTAT_SIR && rp->siop_dsps == 0xff0a) {

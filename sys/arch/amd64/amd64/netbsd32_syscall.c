@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.28 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.28.6.1 2008/12/13 01:12:58 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.28 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.28.6.1 2008/12/13 01:12:58 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.28 2008/04/28 20:23:12 martin
 #include <sys/signal.h>
 /* XXX this file ought to include the netbsd32 version of these 2 headers */
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
 #include <sys/syscall_stats.h>
 
@@ -104,7 +105,7 @@ netbsd32_syscall(struct trapframe *frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 out:
 	if (__predict_false(p->p_trace_enabled)

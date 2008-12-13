@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.17.4.1 2008/10/19 22:15:55 haad Exp $	*/
+/*	$NetBSD: frame.h,v 1.17.4.2 2008/12/13 01:13:25 haad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -173,5 +173,9 @@ struct saframe {
 #endif
 	void *		sa_arg;
 };
+
+#ifdef _KERNEL
+void *getframe(const struct lwp *, int, int *);
+#endif
 
 #endif /* !_SH3_FRAME_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.12 2008/06/18 22:58:21 njoly Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.12.2.1 2008/12/13 01:13:57 haad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,11 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.12 2008/06/18 22:58:21 njoly Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_ptrace.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.12.2.1 2008/12/13 01:13:57 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.12 2008/06/18 22:58:21 njoly Exp 
 #include <sys/fstypes.h>
 #include <sys/vfs_syscalls.h>
 #include <sys/ptrace.h>
+#include <sys/syscall.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -59,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.12 2008/06/18 22:58:21 njoly Exp 
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_statfs.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 extern const struct linux_mnttypes linux_fstypes[];
@@ -103,7 +102,6 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 		syscallarg(T) addr;
 		syscallarg(T) data;
 	} */
-#if defined(PTRACE) || defined(_LKM)
 	const int *ptr;
 	int request;
 	int error;
@@ -128,7 +126,7 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 			if (request == LINUX_PTRACE_CONT && SCARG(uap, addr)==0)
 				SCARG(&pta, addr) = (void *) 1;
 
-			error = sys_ptrace(l, &pta, retval);
+			error = sysent[SYS_ptrace].sy_call(l, &pta, retval);
 			if (error)
 				return error;
 			switch (request) {
@@ -148,7 +146,4 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 			ptr++;
 
 	return EIO;
-#else
-	return ENOSYS;
-#endif /* PTRACE || _LKM */
 }

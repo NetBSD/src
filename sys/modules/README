@@ -1,0 +1,5 @@
+$NetBSD: README,v 1.1.4.2 2008/12/13 01:15:25 haad Exp $
+
+Do not automatically install modules that would fundamentally alter system
+behaviour or create a security hole, as the system may automatically load
+modules.

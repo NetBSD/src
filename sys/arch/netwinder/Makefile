@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/01/06 17:40:40 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.114.1 2008/12/13 01:13:19 haad Exp $
 
 # Makefile for netwinder tags file and boot blocks
 
@@ -15,7 +15,8 @@ DNETWINDER=	isa pci include
 tags:
 	-ctags -wdtf ${TNETWINDER} ${SNETWINDER} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ANETWINDER} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TNETWINDER}
 	sort -o ${TNETWINDER} ${TNETWINDER}
 

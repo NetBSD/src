@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.48.2.1 2008/10/19 22:16:18 haad Exp $	*/
+/*	$NetBSD: fss.c,v 1.48.2.2 2008/12/13 01:14:12 haad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.48.2.1 2008/10/19 22:16:18 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.48.2.2 2008/12/13 01:14:12 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1132,6 +1132,8 @@ fss_bs_thread(void *arg)
 		off = FSS_CLOFF(sc, dbtob(bp->b_blkno));
 		ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
 		error = 0;
+		bp->b_resid = 0;
+		bp->b_error = 0;
 		for (c = cl; c <= ch; c++) {
 			if (isset(sc->sc_copied, c))
 				continue;

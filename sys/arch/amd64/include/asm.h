@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11.16.1 2008/10/19 22:15:40 haad Exp $	*/
+/*	$NetBSD: asm.h,v 1.11.16.2 2008/12/13 01:12:59 haad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,8 @@
 
 #ifndef _AMD64_ASM_H_
 #define _AMD64_ASM_H_
+
+#ifdef __x86_64__
 
 #ifdef PIC
 #define PIC_PLT(x)	x@PLT
@@ -127,5 +129,11 @@
 	.stabs msg,30,0,0,0 ;						\
 	.stabs __STRING(sym),1,0,0,0
 #endif /* __STDC__ */
+
+#else	/*	__x86_64__	*/
+
+#include <i386/asm.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* !_AMD64_ASM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.127 2008/05/04 15:58:51 xtraeme Exp $	*/
+/*	$NetBSD: auich.c,v 1.127.6.1 2008/12/13 01:14:34 haad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.127 2008/05/04 15:58:51 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.127.6.1 2008/12/13 01:14:34 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -674,12 +674,11 @@ auich_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-auich_activate(struct device *self, enum devact act)
+auich_activate(device_t self, enum devact act)
 {
-	struct auich_softc *sc;
+	struct auich_softc *sc = device_private(self);
 	int ret;
 
-	sc = (struct auich_softc *)self;
 	ret = 0;
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -693,11 +692,9 @@ auich_activate(struct device *self, enum devact act)
 }
 
 static int
-auich_detach(struct device *self, int flags)
+auich_detach(device_t self, int flags)
 {
-	struct auich_softc *sc;
-
-	sc = (struct auich_softc *)self;
+	struct auich_softc *sc = device_private(self);
 
 	/* audio */
 	if (sc->sc_audiodev != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.160.2.1 2008/10/19 22:16:17 haad Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.160.2.2 2008/12/13 01:14:03 haad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,13 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.160.2.1 2008/10/19 22:16:17 haad Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_nfsserver.h"
-#include "opt_ptrace.h"
-#include "fs_nfs.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.160.2.2 2008/12/13 01:14:03 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,18 +292,12 @@ sunos_sys_mount(struct lwp *l, const struct sunos_sys_mount_args *uap, register_
 	    UIO_USERSPACE, 0, &dummy);
 }
 
-#if defined(NFS)
 int
 async_daemon(struct lwp *l, const void *v, register_t *retval)
 {
-	struct sys_nfssvc_args ouap;
 
-	SCARG(&ouap, flag) = NFSSVC_BIOD;
-	SCARG(&ouap, argp) = NULL;
-
-	return (sys_nfssvc(l, &ouap, retval));
+	return kpause("fakeniod", false, 0, NULL);
 }
-#endif /* NFS */
 
 void	native_to_sunos_sigset(const sigset_t *, int *);
 void	sunos_to_native_sigset(const int, sigset_t *);
@@ -726,7 +714,6 @@ sunos_sys_open(struct lwp *l, const struct sunos_sys_open_args *uap, register_t 
 	return ret;
 }
 
-#if defined (NFSSERVER)
 int
 sunos_sys_nfssvc(struct lwp *l, const struct sunos_sys_nfssvc_args *uap, register_t *retval)
 {
@@ -756,7 +743,6 @@ sunos_sys_nfssvc(struct lwp *l, const struct sunos_sys_nfssvc_args *uap, registe
 	return (ENOSYS);
 #endif
 }
-#endif /* NFSSERVER */
 
 int
 sunos_sys_ustat(struct lwp *l, const struct sunos_sys_ustat_args *uap, register_t *retval)
@@ -974,7 +960,6 @@ sunos_sys_setrlimit(struct lwp *l, const struct sunos_sys_setrlimit_args *uap, r
 	return compat_43_sys_setrlimit(l, &ua_43, retval);
 }
 
-#if defined(PTRACE) || defined(_LKM)
 /* for the m68k machines */
 #ifndef PT_GETFPREGS
 #define PT_GETFPREGS -1
@@ -990,20 +975,16 @@ static const int sreq2breq[] = {
 	PT_GETREGS,     PT_SETREGS,     PT_GETFPREGS,   PT_SETFPREGS
 };
 static const int nreqs = sizeof(sreq2breq) / sizeof(sreq2breq[0]);
-#endif /* PTRACE || _LKM */
 
 int
 sunos_sys_ptrace(struct lwp *l, const struct sunos_sys_ptrace_args *uap, register_t *retval)
 {
-#if defined(PTRACE) || defined(_LKM)
 	struct sys_ptrace_args pa;
 	int req;
 
-#ifdef _LKM
 #define	sys_ptrace sysent[SYS_ptrace].sy_call 
 	if (sys_ptrace == sys_nosys)
 		return ENOSYS;
-#endif
 
 	req = SCARG(uap, req);
 
@@ -1020,9 +1001,6 @@ sunos_sys_ptrace(struct lwp *l, const struct sunos_sys_ptrace_args *uap, registe
 	SCARG(&pa, data) = SCARG(uap, data);
 
 	return sys_ptrace(l, &pa, retval);
-#else
-	return ENOSYS;
-#endif /* PTRACE || _LKM */
 }
 
 /*

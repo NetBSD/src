@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.61.2.1 2008/10/19 22:15:56 haad Exp $
+#	$NetBSD: INSTALL,v 1.61.2.2 2008/12/13 01:13:26 haad Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -71,7 +71,6 @@ config		netbsd	root on ? type ?
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 ## Loadable kernel module support; still under development.
-#options 	LKM
 
 options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.10 2007/03/05 16:39:21 he Exp $	*/
+/*	$NetBSD: mem.c,v 1.10.50.1 2008/12/13 01:12:55 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -72,10 +72,8 @@
  * Memory special file
  */
 
-#include "opt_compat_netbsd.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10 2007/03/05 16:39:21 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10.50.1 2008/12/13 01:12:55 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -164,9 +162,7 @@ mmrw(dev, uio, flags)
 				uio->uio_resid = 0;
 			return (0);
 
-#ifdef COMPAT_16
 		case _DEV_ZERO_oARM:
-#endif
 		case DEV_ZERO:
 			if (uio->uio_rw == UIO_WRITE) {
 				uio->uio_resid = 0;

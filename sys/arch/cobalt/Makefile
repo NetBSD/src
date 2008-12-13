@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/01/06 17:40:26 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.114.1 2008/12/13 01:13:05 haad Exp $
 
 # Makefile for cobalt tags file
 
@@ -18,7 +18,8 @@ DCOBALT=	pci include
 tags:
 	-ctags -wdtf ${TCOBALT} ${SCOBALT} ${SMIPS} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ACOBALT} ${AMIPS} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> ${TCOBALT}
 	sort -o ${TCOBALT} ${TCOBALT}
 

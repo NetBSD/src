@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48.2.1 2008/12/13 01:13:11 haad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48.2.1 2008/12/13 01:13:11 haad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2008/07/02 17:28:55 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/module.h>
 #include <sys/extent.h>
 #include <sys/ksyms.h>
 #include <sys/mount.h>
@@ -815,14 +816,14 @@ do {									\
 #endif /* NCOM > 0 */
 #endif /* KGDB */
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL)
-                ksyms_init(bi_sym->nsym, (int *)bi_sym->ssym,
+                ksyms_addsyms_elf(bi_sym->nsym, (int *)bi_sym->ssym,
                     (int *)bi_sym->esym);
         else {
 		extern int end;
 
-		ksyms_init(esym - (int)&end, &end, (int*)esym);
+		ksyms_addsyms_elf(esym - (int)&end, &end, (int*)esym);
 	}
 #endif
 
@@ -1365,6 +1366,8 @@ cpu_reboot(int howto, char *user_boot_string)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 #ifdef POWER_SWITCH
 	if (pwr_sw_state == 0 &&
 	    (howto & RB_POWERDOWN) == RB_POWERDOWN) {
@@ -1630,7 +1633,7 @@ dumpsys(void)
 			/* Print out how many MBs we are to go. */
 			n = bytes - i;
 			if (n && (n % (1024*1024)) == 0)
-				printf("%d ", n / (1024 * 1024));
+				printf_nolog("%d ", n / (1024 * 1024));
 
 			/* Limit size for next transfer. */
 
@@ -1806,3 +1809,14 @@ consinit(void)
 		cninit();
 	}
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */
+

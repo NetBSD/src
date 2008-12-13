@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.28.6.1 2008/10/19 22:15:39 haad Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.28.6.2 2008/12/13 01:12:57 haad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.28.6.1 2008/10/19 22:15:39 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.28.6.2 2008/12/13 01:12:57 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,13 +97,13 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.28.6.1 2008/10/19 22:15:39 haad E
 #include <sys/user.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/alpha.h>
-#define SA_NO_USERRET
 #include <machine/userret.h>
 
 #include <compat/osf1/osf1.h>
@@ -197,7 +197,7 @@ osf1_syscall_plain(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 
 	switch (error) {
 	case 0:
@@ -286,7 +286,7 @@ osf1_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:

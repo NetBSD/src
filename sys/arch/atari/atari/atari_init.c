@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.67 2007/03/04 05:59:39 christos Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.67.50.1 2008/12/13 01:13:03 haad Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67 2007/03/04 05:59:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.67.50.1 2008/12/13 01:13:03 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -494,7 +494,7 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	/*
 	 * get the pmap module in sync with reality.
 	 */
-	pmap_bootstrap(vstart, stio_addr, ptextra);
+	pmap_bootstrap(vstart, stio_addr);
 
 	/*
 	 * Prepare to enable the MMU.

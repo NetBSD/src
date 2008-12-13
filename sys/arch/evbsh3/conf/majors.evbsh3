@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbsh3,v 1.17 2007/12/31 15:31:53 ad Exp $
+#	$NetBSD: majors.evbsh3,v 1.17.16.1 2008/12/13 01:13:10 haad Exp $
 #
 # Device majors for evbsh3
 #
@@ -29,7 +29,6 @@ device-major	filedesc	char 22
 device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
-device-major	lkm		char 28			lkm
 
 device-major	tun		char 40			tun
 device-major	vnd		char 41  block 14	vnd

@@ -1,4 +1,4 @@
-/*	$NetBSD: r300_cmdbuf.c,v 1.5.18.1 2008/10/19 22:16:58 haad Exp $	*/
+/*	$NetBSD: r300_cmdbuf.c,v 1.5.18.2 2008/12/13 01:14:47 haad Exp $	*/
 
 /* r300_cmdbuf.c -- Command buffer emission for R300 -*- linux-c -*-
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r300_cmdbuf.c,v 1.5.18.1 2008/10/19 22:16:58 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r300_cmdbuf.c,v 1.5.18.2 2008/12/13 01:14:47 haad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r300_cmdbuf.c,v 1.5 2006/05/17 06:36:28 anholt Exp $");
 */
@@ -164,6 +164,7 @@ void r300_init_reg_flags(void)
 	ADD_RANGE(0x21DC, 1);
 	ADD_RANGE(0x221C, 1);
 	ADD_RANGE(0x2220, 4);
+	ADD_RANGE(R300_VAP_PVS_WAITIDLE, 1);
 	ADD_RANGE(0x2288, 1);
 	ADD_RANGE(R300_VAP_OUTPUT_VTX_FMT_0, 2);
 	ADD_RANGE(R300_VAP_PVS_CNTL_1, 3);

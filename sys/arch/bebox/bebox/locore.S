@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.16 2008/02/05 22:31:48 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.16.16.1 2008/12/13 01:13:05 haad Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -153,7 +153,7 @@ __start_cpu1_loop:
 __start_cpu0:
 
 /* compute end of kernel memory */
-#if defined(DDB) || defined(KERNFS) || NKSYMS || defined(LKM)
+#if defined(DDB) || defined(KERNFS) || NKSYMS || defined(MODULAR)
 	lis	7,_C_LABEL(startsym)@ha
 	addi	7,7,_C_LABEL(startsym)@l
 	stw	3,0(7)

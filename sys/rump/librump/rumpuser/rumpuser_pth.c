@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.13.2.1 2008/10/19 22:18:07 haad Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.13.2.2 2008/12/13 01:15:34 haad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -80,9 +80,11 @@ struct rumpuser_aio *rua_aios[N_AIOS];
 struct rumpuser_rw rumpspl;
 
 static void *
+/*ARGSUSED*/
 iothread(void *arg)
 {
 	struct rumpuser_aio *rua;
+	rump_biodone_fn biodone = arg;
 
 	NOFAIL_ERRNO(pthread_mutex_lock(&rua_mtx.pthmtx));
 	for (;;) {
@@ -97,10 +99,10 @@ iothread(void *arg)
 
 		if (rua->rua_op)
 			rumpuser_read_bio(rua->rua_fd, rua->rua_data,
-			    rua->rua_dlen, rua->rua_off, rua->rua_bp);
+			    rua->rua_dlen, rua->rua_off, biodone, rua->rua_bp);
 		else
 			rumpuser_write_bio(rua->rua_fd, rua->rua_data,
-			    rua->rua_dlen, rua->rua_off, rua->rua_bp);
+			    rua->rua_dlen, rua->rua_off, biodone, rua->rua_bp);
 
 		free(rua);
 		NOFAIL_ERRNO(pthread_mutex_lock(&rua_mtx.pthmtx));
@@ -110,8 +112,6 @@ iothread(void *arg)
 int
 rumpuser_thrinit()
 {
-	extern int rump_threads;
-	pthread_t iothr;
 
 	pthread_mutex_init(&rua_mtx.pthmtx, NULL);
 	pthread_cond_init(&rua_cv.pthcv, NULL);
@@ -120,8 +120,17 @@ rumpuser_thrinit()
 	pthread_key_create(&curlwpkey, NULL);
 	pthread_key_create(&isintr, NULL);
 
+	return 0;
+}
+
+int
+rumpuser_bioinit(rump_biodone_fn biodone)
+{
+	extern int rump_threads;
+	pthread_t iothr;
+
 	if (rump_threads)
-		pthread_create(&iothr, NULL, iothread, NULL);
+		pthread_create(&iothr, NULL, iothread, biodone);
 
 	return 0;
 }

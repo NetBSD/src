@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.31 2008/06/24 11:18:15 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.31.2.1 2008/12/13 01:13:47 haad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.31 2008/06/24 11:18:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.31.2.1 2008/12/13 01:13:47 haad Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.31 2008/06/24 11:18:15 ad Exp 
 
 #include <compat/sys/mount.h>
 
-#ifdef COMPAT_09
 #define MOUNTNO_NONE	0
 #define MOUNTNO_UFS	1		/* UNIX "Fast" Filesystem */
 #define MOUNTNO_NFS	2		/* Network Filesystem */
@@ -84,13 +85,11 @@ static const struct {
 	{ MOUNT_KERNFS, MOUNTNO_KERNFS },
 	{ MOUNT_AFS, MOUNTNO_AFS },
 };
-#endif
 
 static int
 vfs2fs(struct statfs12 *bfs, const struct statvfs *fs)
 {
 	struct statfs12 ofs;
-#ifdef COMPAT_09
 	int i = 0;
 	ofs.f_type = 0;
 	ofs.f_oflags = (short)fs->f_flag;
@@ -101,9 +100,6 @@ vfs2fs(struct statfs12 *bfs, const struct statvfs *fs)
 			break;
 		}
 	}
-#else
-	ofs.f_type = 0;
-#endif
 #define CLAMP(a)	(long)(((a) & ~LONG_MAX) ? LONG_MAX : (a))
 	ofs.f_bsize = CLAMP(fs->f_frsize);
 	ofs.f_iosize = CLAMP(fs->f_iosize);

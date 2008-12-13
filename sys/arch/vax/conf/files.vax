@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.111.10.1 2008/10/19 22:16:06 haad Exp $
+#	$NetBSD: files.vax,v 1.111.10.2 2008/12/13 01:13:33 haad Exp $
 #
 # new style config file for vax architecture
 #
@@ -308,6 +308,7 @@ file	dev/cninit.c
 file	arch/vax/vax/locore.c
 file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c
+file	arch/vax/vax/core_machdep.c	coredump
 file	arch/vax/vax/gencons.c		vax8600 | vax780 | vax750 | vax630 |
 					vax8200 | vax680 | vax650 | vax660 |
 					vax670  | vaxany

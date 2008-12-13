@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.19 2007/12/08 18:36:13 dsl Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.19.22.1 2008/12/13 01:13:57 haad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.19 2007/12/08 18:36:13 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.19.22.1 2008/12/13 01:13:57 haad Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -51,11 +51,51 @@ __KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.19 2007/12/08 18:36:13 dsl Exp $")
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/module.h>
 #include <sys/vnode.h>
 #include <sys/exec.h>
 #include <sys/resourcevar.h>
 
 #include <compat/m68k4k/m68k4k_exec.h>
+
+#ifdef COREDUMP
+#define	DEP	"coredump"
+#else
+#define	DEP	NULL
+#endif
+
+MODULE(MODULE_CLASS_MISC, exec_m68k4k, DEP);
+
+static struct execsw exec_m68k4k_execsw[] = {
+	{ sizeof(struct exec),
+	  exec_m68k4k_makecmds,
+	  { NULL },
+	  &emul_netbsd,
+	  EXECSW_PRIO_ANY,
+	  0,
+	  copyargs,
+	  NULL,
+	  coredump_netbsd,
+	  exec_setup_stack },
+};
+
+static int
+exec_m68k4k_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return exec_add(exec_m68k4k_execsw,
+		    __arraycount(exec_m68k4k_execsw));
+
+	case MODULE_CMD_FINI:
+		return exec_remove(exec_m68k4k_execsw,
+		    __arraycount(exec_m68k4k_execsw));
+
+	default:
+		return ENOTTY;
+        }
+}
 
 int	exec_m68k4k_prep_zmagic(struct lwp *, struct exec_package *);
 int	exec_m68k4k_prep_nmagic(struct lwp *, struct exec_package *);

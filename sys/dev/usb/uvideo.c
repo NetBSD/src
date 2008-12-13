@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.21.6.2 2008/10/19 22:17:10 haad Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.21.6.3 2008/12/13 01:14:53 haad Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.21.6.2 2008/10/19 22:17:10 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.21.6.3 2008/12/13 01:14:53 haad Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1160,9 +1160,15 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 				alt->interval =
 				    GET(usb_endpoint_descriptor_t,
 					desc, bInterval);
-				alt->max_packet_size =
-				    UGETW(GET(usb_endpoint_descriptor_t,
-					      desc, wMaxPacketSize));
+
+				alt->max_packet_size = 
+				UE_GET_SIZE(UGETW(GET(usb_endpoint_descriptor_t,
+					desc, wMaxPacketSize)));
+				alt->max_packet_size *=
+					(UE_GET_TRANS(UGETW(GET(
+						usb_endpoint_descriptor_t, desc,
+						wMaxPacketSize)))) + 1;
+
 				SLIST_INSERT_HEAD(&ix->ix_altlist,
 						  alt, entries);
 			}
@@ -1476,6 +1482,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 
 		DPRINTF(("uvideo: allocating %u byte buffer\n", bx->bx_buflen));
 		bx->bx_buffer = usbd_alloc_buffer(bx->bx_xfer, bx->bx_buflen);
+
 		if (bx->bx_buffer == NULL) {
 			DPRINTF(("uvideo: couldn't allocate buffer\n"));
 			return ENOMEM;
@@ -1531,8 +1538,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 			 * call into question this method of selecting an
 			 * alternate interface... */
 
-			/* XXXJDM don't allow packet size > 1024 for now */
-			if (alt_maybe->max_packet_size > 1024)
+			if (alt_maybe->max_packet_size > vs->vs_max_payload_size)
 				continue;
 
 			if (alt == NULL ||
@@ -1600,6 +1606,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 
 			isoc->i_buf = usbd_alloc_buffer(isoc->i_xfer,
 					       nframes * uframe_len);
+
 			if (isoc->i_xfer == NULL) {
 				DPRINTF(("uvideo: failed to alloc buf: %s"
 				 " (%d)\n",
@@ -1823,6 +1830,7 @@ uvideo_stream_recv_isoc_complete(usbd_xfer_handle xfer,
 	}
 
 next:
+	memset(isoc->i_buf, 0x41, ix->ix_nframes * ix->ix_uframe_len);
 	uvideo_stream_recv_isoc_start1(isoc);
 }
 

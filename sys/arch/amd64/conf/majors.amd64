@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.19.16.1 2008/10/19 22:15:40 haad Exp $
+#	$NetBSD: majors.amd64,v 1.19.16.2 2008/12/13 01:12:59 haad Exp $
 #
 # Device majors for amd64
 #
@@ -30,7 +30,6 @@ device-major	bpf		char 23			bpfilter
 device-major	md		char 24  block 17	md
 
 device-major	spkr		char 27			spkr
-device-major	lkm		char 28			lkm
 
 device-major	cy		char 38			cy
 device-major	mcd		char 39  block 7	mcd

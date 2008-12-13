@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84.2.1 2008/10/19 22:15:54 haad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84.2.2 2008/12/13 01:13:19 haad Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84.2.1 2008/10/19 22:15:54 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84.2.2 2008/12/13 01:13:19 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -286,9 +286,9 @@ consinit(void)
 #if defined(KGDB) && (NZSC > 0)
 		zs_kgdb_init();
 #endif
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 		/* Initialize kernel symbol table, if compiled in. */
-		ksyms_init(nsym, ssym, esym);
+		ksyms_addsyms_elf(nsym, ssym, esym);
 #endif
 		if (boothowto & RB_KDB) {
 #if defined(KGDB)
@@ -552,6 +552,8 @@ cpu_reboot(int howto, char *bootstr)
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {
 		printf("hit any key to reboot...\n");
@@ -780,7 +782,7 @@ dumpsys(void)
 #define NPGMB	(1024*1024/PAGE_SIZE)
 		/* print out how many MBs we have dumped */
 		if (pg && (pg % NPGMB) == 0)
-			printf("%d ", pg / NPGMB);
+			printf_nolog("%d ", pg / NPGMB);
 #undef NPGMB
 		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);

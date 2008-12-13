@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.19 2008/06/02 14:12:08 njoly Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.19.4.1 2008/12/13 01:14:03 haad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -32,7 +32,7 @@
 /*
  * Though COMPAT_OLDSOCK is needed only for COMPAT_43, SunOS, Linux,
  * HP-UX, FreeBSD, Ultrix, OSF1, we define it unconditionally so that
- * this would be LKM-safe.
+ * this would be module-safe.
  */
 #define COMPAT_OLDSOCK /* used by <sys/socket.h> */
 

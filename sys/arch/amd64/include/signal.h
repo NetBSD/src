@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.9 2007/02/18 01:45:37 pavel Exp $	*/
+/*	$NetBSD: signal.h,v 1.9.52.1 2008/12/13 01:12:59 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -34,6 +34,8 @@
 #ifndef _AMD64_SIGNAL_H_
 #define _AMD64_SIGNAL_H_
 
+#ifdef __x86_64__
+
 #include <sys/featuretest.h>
 
 typedef int sig_atomic_t;
@@ -46,17 +48,17 @@ typedef int sig_atomic_t;
 #include <machine/fpu.h>
 #include <machine/mcontext.h>
 
-#ifdef _KERNEL
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
 #endif
-#if defined(COMPAT_16) && defined(COMPAT_NETBSD32)
-#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
-#else
-#define SIGTRAMP_VALID(vers)	((vers) == 2)
-#endif
-#endif
 
 #endif	/* _NETBSD_SOURCE */
+
+#else	/*	__x86_64__	*/
+
+#include <i386/signal.h>
+
+#endif	/*	__x86_64__	*/
+
 #endif	/* !_AMD64_SIGNAL_H_ */

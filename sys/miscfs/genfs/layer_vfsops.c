@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.29 2008/01/28 14:31:18 dholland Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.29.16.1 2008/12/13 01:15:24 haad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.29 2008/01/28 14:31:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.29.16.1 2008/12/13 01:15:24 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -85,9 +85,28 @@ __KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.29 2008/01/28 14:31:18 dholland E
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <miscfs/genfs/layer.h>
 #include <miscfs/genfs/layer_extern.h>
+
+MODULE(MODULE_CLASS_MISC, layerfs, NULL);
+
+static int
+layerfs_modcmd(modcmd_t cmd, void *arg)
+{
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		return 0;
+	case MODULE_CMD_FINI:
+		return 0;
+	default:
+		return ENOTTY;
+	}
+
+	return 0;
+}
 
 /*
  * VFS start.  Nothing needed here - the start routine

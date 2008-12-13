@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.264.4.1 2008/10/19 22:15:51 haad Exp $
+# $NetBSD: GENERIC,v 1.264.4.2 2008/12/13 01:13:17 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.264.4.1 $"
+#ident 		"GENERIC-$Revision: 1.264.4.2 $"
 
 maxusers	32
 
@@ -40,7 +40,6 @@ options 	SYSVSEM		# System V semaphores
 options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -111,7 +110,6 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
@@ -173,8 +171,6 @@ options 	WS_DEFAULT_FG=WSCOL_BLACK
 options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
 options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-
-#options 	FONT_GALLANT12x22
 
 #options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	FONT_GALLANT12x22

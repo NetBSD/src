@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.31 2007/12/31 15:31:49 ad Exp $
+# $NetBSD: RPC44,v 1.31.16.1 2008/12/13 01:13:01 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.31 $"
+#ident		"GENERIC-$Revision: 1.31.16.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -45,7 +45,6 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
-options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -110,7 +109,6 @@ file-system	PTYFS		# /dev/pts/N support
 # File system options
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

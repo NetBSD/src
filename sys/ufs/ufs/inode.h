@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.51.16.1 2008/10/19 22:18:10 haad Exp $	*/
+/*	$NetBSD: inode.h,v 1.51.16.2 2008/12/13 01:15:41 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -210,6 +210,8 @@ struct inode {
 #define	i_e2fs_nfrag		i_din.e2fs_din->e2di_nfrag
 #define	i_e2fs_fsize		i_din.e2fs_din->e2di_fsize
 #define	i_e2fs_rdev		i_din.e2fs_din->e2di_rdev
+#define	i_e2fs_uid_high		i_din.e2fs_din->e2di_uid_high
+#define	i_e2fs_gid_high		i_din.e2fs_din->e2di_gid_high
 
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */

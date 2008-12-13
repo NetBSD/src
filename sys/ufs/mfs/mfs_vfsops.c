@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.98 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.98.2.1 2008/12/13 01:15:41 haad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.98 2008/06/28 01:34:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.98.2.1 2008/12/13 01:15:41 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.98 2008/06/28 01:34:05 rumble Exp $
 #include <ufs/mfs/mfsnode.h>
 #include <ufs/mfs/mfs_extern.h>
 
-MODULE(MODULE_CLASS_VFS, mfs, NULL);
+MODULE(MODULE_CLASS_VFS, mfs, "ffs");
 
 void *	mfs_rootbase;	/* address of mini-root in kernel virtual memory */
 u_long	mfs_rootsize;	/* size of mini-root in bytes */

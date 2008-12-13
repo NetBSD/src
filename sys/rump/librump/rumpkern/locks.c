@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.16.4.1 2008/10/19 22:18:06 haad Exp $	*/
+/*	$NetBSD: locks.c,v 1.16.4.2 2008/12/13 01:15:34 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -269,7 +269,7 @@ cv_has_waiters(kcondvar_t *cv)
  * giant lock
  */
 
-static int lockcnt;
+static volatile int lockcnt;
 void
 _kernel_lock(int nlocks)
 {

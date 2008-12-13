@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55.6.1 2008/10/19 22:15:47 haad Exp $	*/
+/*	$NetBSD: trap.c,v 1.55.6.2 2008/12/13 01:13:12 haad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55.6.1 2008/10/19 22:15:47 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55.6.2 2008/12/13 01:13:12 haad Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.55.6.1 2008/10/19 22:15:47 haad Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/mutex.h>
@@ -1305,7 +1306,7 @@ syscall(struct trapframe *frame, int *args)
 
 	rval[0] = 0;
 	rval[1] = 0;
-	error = (*callp->sy_call)(l, args, rval);
+	error = sy_call(callp, l, args, rval);
 out:
 	switch (error) {
 	case 0:

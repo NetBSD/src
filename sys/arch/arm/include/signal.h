@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.10 2005/12/11 12:16:47 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.10.86.1 2008/12/13 01:13:02 haad Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -53,14 +53,6 @@ typedef int sig_atomic_t;
 #endif
 
 #if defined(_NETBSD_SOURCE)
-
-#ifdef _KERNEL
-#ifdef COMPAT_16
-#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
-#else
-#define SIGTRAMP_VALID(vers)	((vers) == 2)
-#endif
-#endif
 
 #ifndef _LOCORE
 /*

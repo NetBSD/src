@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.175.8.1 2008/10/19 22:17:59 haad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.175.8.2 2008/12/13 01:15:28 haad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,10 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.175.8.1 2008/10/19 22:17:59 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.175.8.2 2008/12/13 01:15:28 haad Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_nfs.h"
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -921,7 +923,7 @@ nfs_doio_write(struct buf *bp, struct uio *uiop)
 	int iomode;
 	bool stalewriteverf = false;
 	int i, npages = (bp->b_bcount + PAGE_SIZE - 1) >> PAGE_SHIFT;
-	struct vm_page **pgs, *spgs[64];
+	struct vm_page **pgs, *spgs[UBC_MAX_PAGES];
 #ifndef NFS_V2_ONLY
 	bool needcommit = true; /* need only COMMIT RPC */
 #else
@@ -1224,7 +1226,7 @@ nfs_getpages(void *v)
 	struct uvm_object *uobj = &vp->v_uobj;
 	struct nfsnode *np = VTONFS(vp);
 	const int npages = *ap->a_count;
-	struct vm_page *pg, **pgs, **opgs, *spgs[64];
+	struct vm_page *pg, **pgs, **opgs, *spgs[UBC_MAX_PAGES];
 	off_t origoffset, len;
 	int i, error;
 	bool v3 = NFS_ISV3(vp);

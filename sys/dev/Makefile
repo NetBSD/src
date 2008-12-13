@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.27.24.1 2008/07/07 14:45:53 haad Exp $
+#	$NetBSD: Makefile,v 1.27.24.2 2008/12/13 01:14:12 haad Exp $
 
-SUBDIR=	apm ata bluetooth dec dmover hpc i2o ic ieee1394 ir isa microcode ofw \
-	pci pckbport pcmcia pud putter raidframe sbus scsipi sun tc usb vme \
-	wscons dm
+SUBDIR=	apm ata bluetooth dec dmover hpc i2o ic ieee1394 ir isa microcode \
+	ofw pci pckbport pcmcia pud putter raidframe sbus scsipi sun \
+	tc usb vme wscons
 
 INCSDIR= /usr/include/dev
 
