@@ -1,4 +1,4 @@
-/*	$NetBSD: schizoreg.h,v 1.4 2008/12/13 04:56:32 mrg Exp $	*/
+/*	$NetBSD: schizoreg.h,v 1.5 2008/12/13 21:00:09 mrg Exp $	*/
 /*	$OpenBSD: schizoreg.h,v 1.20 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
@@ -94,15 +94,18 @@ struct schizo_regs {
 	struct schizo_pbm_regs pbm_b;
 };
 
-//#define	SCZ_PCIA_MEM_MATCH		0x00040
-//#define	SCZ_PCIA_MEM_MASK		0x00048
-//#define	SCZ_PCIA_IO_MATCH		0x00050
-//#define	SCZ_PCIA_IO_MASK		0x00058
-//#define	SCZ_PCIB_MEM_MATCH		0x00060
-//#define	SCZ_PCIB_MEM_MASK		0x00068
-//#define	SCZ_PCIB_IO_MATCH		0x00070
-//#define	SCZ_PCIB_IO_MASK		0x00078
+#define	SCZ_PCIA_MEM_MATCH		0x00040
+#define	SCZ_PCIA_MEM_MASK		0x00048
+#define	SCZ_PCIA_IO_MATCH		0x00050
+#define	SCZ_PCIA_IO_MASK		0x00058
+#define	SCZ_PCIB_MEM_MATCH		0x00060
+#define	SCZ_PCIB_MEM_MASK		0x00068
+#define	SCZ_PCIB_IO_MATCH		0x00070
+#define	SCZ_PCIB_IO_MASK		0x00078
+
 #define	SCZ_CONTROL_STATUS		0x10000
+# define SCZ_CONTROL_STATUS_AID_MASK	0x1f00000
+# define SCZ_CONTROL_STATUS_AID_SHIFT	20
 #define	SCZ_SAFARI_INTCTRL		0x10010
 #define	SCZ_SAFARI_ERRLOG		0x10018
 #define	SCZ_ECCCTRL			0x10020
