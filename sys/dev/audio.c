@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.243.8.8 2008/12/12 12:47:02 ad Exp $	*/
+/*	$NetBSD: audio.c,v 1.243.8.9 2008/12/13 12:32:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -86,7 +86,10 @@
 /*
  * Locking: there are three locks.
  *
- * - sc_lock, provided by the underlying driver.  This is an adaptive lock. 
+ * - sc_lock, provided by the underlying driver.  This is an adaptive lock,
+ *   returned in the second parameter to hw_if->get_locks().  It is known
+ *   as the "thread lock".
+ *
  *   It serializes access to state in all places except the 
  *   driver's interrupt service routine.  This lock is taken from process
  *   context (example: access to /dev/audio).  It is also taken from soft
@@ -96,8 +99,11 @@
  *   LONG TERM SLEEPS MUST NOT OCCUR WITH THIS LOCK HELD.
  *
  * - sc_intr_lock, provided by the underlying driver.  This may be either a
- *   spinlock (at IPL_SCHED or IPL_VM) or an adaptive lock (IPL_NONE). It
- *   provides atomic access to the device's hardware state, and to audio
+ *   spinlock (at IPL_SCHED or IPL_VM) or an adaptive lock (IPL_NONE),
+ *   returned in the first parameter to hw_if->get_locks().  It is known as
+ *   the "interrupt lock".
+ *
+ *   It provides atomic access to the device's hardware state, and to audio
  *   channel data that may be accessed by the hardware driver's ISR.
  *   In all places outside the ISR, sc_lock must be held before taking
  *   sc_intr_lock.  This is to ensure that groups of hardware operations are
@@ -112,10 +118,44 @@
  *   circumstances, for example when opening /dev/audio or changing audio
  *   parameters.  Long term sleeps and copy to/from user space may be done
  *   with this lock held.
+ *
+ * List of hardware interface methods, and which locks are held when each
+ * is called by this module:
+ *
+ *	METHOD			INTR	THREAD  NOTES
+ *	----------------------- ------- -------	-------------------------
+ *	open 			x	x
+ *	close 			x	x
+ *	drain 			x	x
+ *	query_encoding		-	x
+ *	set_params 		-	x
+ *	round_blocksize		-	x
+ *	commit_settings		-	x 
+ *	init_output 		x	x
+ *	init_input 		x	x
+ *	start_output 		x	x
+ *	start_input 		x	x
+ *	halt_output 		x	x
+ *	halt_input 		x	x
+ *	speaker_ctl 		x	x
+ *	getdev 			-	x
+ *	setfd 			-	x
+ *	set_port 		-	x
+ *	get_port 		-	x
+ *	query_devinfo 		-	x
+ *	allocm 			-	-	Called at attach time
+ *	freem 			-	-	Called at attach time
+ *	round_buffersize 	-	x
+ *	mappage 		-	-	Mem. unchanged after attach
+ *	get_props 		-	x
+ *	trigger_output 		x	x
+ *	trigger_input 		x	x
+ *	dev_ioctl 		-	x
+ *	get_locks 		-	-	Called at attach time
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.8 2008/12/12 12:47:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.243.8.9 2008/12/13 12:32:10 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -380,7 +420,9 @@ audioattach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
+	mutex_enter(sc->sc_lock);
 	props = hwp->get_props(hdlp);
+	mutex_exit(sc->sc_lock);
 
 	aprint_naive("\n");
 
@@ -1578,7 +1620,9 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		return EBUSY;
 
 	if (hw->open != NULL) {
+		mutex_enter(sc->sc_intr_lock);
 		error = hw->open(sc->hw_hdl, flags);
+		mutex_exit(sc->sc_intr_lock);
 		if (error)
 			return error;
 	}
