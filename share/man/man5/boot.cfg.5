@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.cfg.5,v 1.14 2008/12/13 23:32:24 christos Exp $
+.\"	$NetBSD: boot.cfg.5,v 1.15 2008/12/13 23:36:21 christos Exp $
 .\"
 .\" Copyright (c) 2007 Stephen Borrill
 .\" All rights reserved.
@@ -63,6 +63,38 @@ by the boot loader.
 Up to 10 lines can be defined.
 No special character sequences are recognised, so to specify a blank line, a
 banner line with no value should be given.
+.It Sy clear
+If nonzero, clear the screen before printing the banner.
+If zero, do not clear the screen (the default).
+.It Sy consdev
+Changes the console device to that specified in the value.
+Valid values are any of those that could be specified at the normal boot
+prompt with the consdev command.
+.It Sy default
+Used to specify the default menu item  which will be chosen in the case of
+Return being pressed or the timeout timer reaching zero.
+The value is the number of the menu item as displayed.
+As described above, the menu items are counted from 1 in the order listed in
+.Nm .
+If not specified, the default value will be option 1, i.e. the first item.
+.It Sy format
+Changes how the menu options are displayed.
+Should be set to one of
+.Sq a
+for automatic,
+.Sq l
+for letters and
+.Sq n
+for numbers.
+If set to automatic (the default), menu options will be displayed numerically
+unless there are more than 9 options and the timeout is greater than zero.
+If there are more than 9 options with a timeout greater than zero and
+the format is set to number, only the first 9 options will be available.
+.It Sy load
+Used to load kernel modules, which will be passed on to the kernel for
+initialization during early boot.
+The argument is the complete path and file name of the module to be loaded.
+May be used as many times as needed.
 .It Sy menu
 (may be present multiple times)
 Used to define a menu item to be displayed to the end-user at boot time
@@ -105,38 +137,6 @@ If the timeout value is set to zero, the default option will be booted
 immediately.
 If the timeout value is negative or is not a number, there will be no
 time limit for the user to choose an option.
-.It Sy default
-Used to specify the default menu item  which will be chosen in the case of
-Return being pressed or the timeout timer reaching zero.
-The value is the number of the menu item as displayed.
-As described above, the menu items are counted from 1 in the order listed in
-.Nm .
-If not specified, the default value will be option 1, i.e. the first item.
-.It Sy consdev
-Changes the console device to that specified in the value.
-Valid values are any of those that could be specified at the normal boot
-prompt with the consdev command.
-.It Sy load
-Used to load kernel modules, which will be passed on to the kernel for
-initialization during early boot.
-The argument is the complete path and file name of the module to be loaded.
-May be used as many times as needed.
-.It Sy format
-Changes how the menu options are displayed.
-Should be set to one of
-.Sq a
-for automatic,
-.Sq l
-for letters and
-.Sq n
-for numbers.
-If set to automatic (the default), menu options will be displayed numerically
-unless there are more than 9 options and the timeout is greater than zero.
-If there are more than 9 options with a timeout greater than zero and
-the format is set to number, only the first 9 options will be available.
-.It Sy clear
-If nonzero, clear the screen before printing the banner.
-If zero, do not clear the screen (the default).
 .El
 .Sh EXAMPLES
 Here is an example
