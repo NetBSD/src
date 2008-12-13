@@ -1,3 +1,5 @@
+/*	$NetBSD: util.h,v 1.1.2.2 2008/12/13 14:39:32 haad Exp $	*/
+
 /*
  * Copyright (C) 2007 Red Hat, Inc. All rights reserved.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: lv_manip.c,v 1.1.1.1.2.3 2008/12/12 16:33:00 haad Exp $	*/
+/*	$NetBSD: lv_manip.c,v 1.1.1.1.2.4 2008/12/13 14:39:34 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -2656,13 +2656,19 @@ int set_lv(struct cmd_context *cmd, struct logical_volume *lv,
 		log_error("Name allocation failed - device not cleared");
 		return 0;
 	}
-
+#ifdef __NetBSD__
 	if (dm_snprintf(name, PATH_MAX, "%s%s/r%s", cmd->dev_dir,
 			lv->vg->name, lv->name) < 0) {
 		log_error("Name too long - device not cleared (%s)", lv->name);
 		return 0;
 	}
-
+#else
+	if (dm_snprintf(name, PATH_MAX, "%s%s/%s", cmd->dev_dir,
+			lv->vg->name, lv->name) < 0) {
+		log_error("Name too long - device not cleared (%s)", lv->name);
+		return 0;
+	}
+#endif
 	log_verbose("Clearing start of logical volume \"%s\"", lv->name);
 
 	if (!(dev = dev_cache_get(name, NULL))) {

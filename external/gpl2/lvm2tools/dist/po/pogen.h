@@ -1,4 +1,4 @@
-/*	$NetBSD: pogen.h,v 1.1.1.1.2.2 2008/12/12 16:33:03 haad Exp $	*/
+/*	$NetBSD: pogen.h,v 1.1.1.1.2.3 2008/12/13 14:39:37 haad Exp $	*/
 
 /*
  * Copyright (C) 2004 Red Hat, Inc. All rights reserved.

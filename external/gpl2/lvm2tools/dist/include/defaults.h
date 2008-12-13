@@ -1,3 +1,5 @@
+/*	$NetBSD: defaults.h,v 1.1.2.2 2008/12/13 14:39:32 haad Exp $	*/
+
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
@@ -32,6 +34,7 @@
 #define DEFAULT_PROC_DIR "/proc"
 #define DEFAULT_SYSFS_SCAN 1
 #define DEFAULT_MD_COMPONENT_DETECTION 1
+#define DEFAULT_MD_CHUNK_ALIGNMENT 1
 #define DEFAULT_IGNORE_SUSPENDED_DEVICES 1
 
 #define DEFAULT_LOCK_DIR "/var/lock/lvm"
@@ -91,7 +94,7 @@
 #  define DEFAULT_ACTIVATION 0
 #endif
 
-#define DEFAULT_STRIPE_FILLER "/dev/ioerror"
+#define DEFAULT_STRIPE_FILLER "error"
 #define DEFAULT_MIRROR_REGION_SIZE 512	/* KB */
 #define DEFAULT_INTERVAL 15
 
