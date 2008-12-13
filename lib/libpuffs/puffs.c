@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.96 2008/12/13 11:48:46 dsl Exp $	*/
+/*	$NetBSD: puffs.c,v 1.97 2008/12/13 11:53:25 dsl Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.96 2008/12/13 11:48:46 dsl Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.97 2008/12/13 11:53:25 dsl Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -409,7 +409,7 @@ puffs_setback(struct puffs_cc *pcc, int whatback)
 int
 puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 {
-	int n;
+	long int n;
 	int parent, value, fd;
 
 	if (pipe(pu->pu_dpipe) == -1)
@@ -433,7 +433,7 @@ puffs_daemon(struct puffs_usermount *pu, int nochdir, int noclose)
 		if (n == -1)
 			err(1, "puffs_daemon");
 		if (n != sizeof(value))
-			errx(1, "puffs_daemon got %d bytes", n);
+			errx(1, "puffs_daemon got %ld bytes", n);
 		if (value) {
 			errno = value;
 			err(1, "puffs_daemon");
