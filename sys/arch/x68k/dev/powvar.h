@@ -1,4 +1,4 @@
-/*	$NetBSD: powvar.h,v 1.2 1998/01/05 07:03:44 perry Exp $	*/
+/*	$NetBSD: powvar.h,v 1.3 2008/12/13 02:49:10 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -43,4 +43,5 @@ struct pow_softc {
 	pid_t pid;
 	struct proc *proc;
 	int signum;
+	void *softintr_cookie;
 };

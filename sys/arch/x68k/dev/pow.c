@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.17 2007/03/11 08:09:25 isaki Exp $	*/
+/*	$NetBSD: pow.c,v 1.18 2008/12/13 02:49:10 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.17 2007/03/11 08:09:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.18 2008/12/13 02:49:10 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.17 2007/03/11 08:09:25 isaki Exp $");
 #include <sys/signalvar.h>
 #include <sys/conf.h>
 
+#include <machine/intr.h>
 #include <machine/powioctl.h>
 #include <x68k/dev/powvar.h>
 #include <x68k/x68k/iodevice.h>
@@ -62,6 +63,7 @@ struct pow_softc pows[NPOW];
 
 void powattach(int);
 void powintr(void);
+void pow_softintr(void *);
 static int setalarm(struct x68k_alarminfo *);
 
 static void pow_check_switch(void *);
@@ -116,6 +118,11 @@ powattach(int num)
 			printf("RTC alarm.\n");
 #endif
 	}
+
+	pows[0].softintr_cookie = softint_establish(SOFTINT_SERIAL,
+		pow_softintr, &pows[0]);
+	if (pows[0].softintr_cookie == NULL)
+		panic("softint_establish");
 
 	shutdownhook_establish(pow_check_switch, 0);
 }
@@ -296,9 +303,17 @@ powintr(void)
 	mfp.ierb |= sw;
 
 	if (pows[0].status == POW_BUSY && pows[0].pid != 0)
-		psignal(pows[0].proc, pows[0].signum);
+		softint_schedule(pows[0].softintr_cookie);
 
 	splx(s);
+}
+
+void
+pow_softintr(void *arg)
+{
+	struct pow_softc *sc = arg;
+
+	psignal(sc->proc, sc->signum);
 }
 
 static void
