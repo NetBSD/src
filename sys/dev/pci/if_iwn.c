@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.10.4.1 2008/10/19 22:16:38 haad Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.10.4.2 2008/12/13 01:14:35 haad Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.10.4.1 2008/10/19 22:16:38 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.10.4.2 2008/12/13 01:14:35 haad Exp $");
 
 
 /*
@@ -377,6 +377,9 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 
 	/* IBSS channel undefined for now */
 	ic->ic_ibss_chan = &ic->ic_channels[0];
+
+	memset(ic->ic_des_essid, 0, IEEE80211_NWID_LEN);
+	ic->ic_des_esslen = 0;
 
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -1032,7 +1035,7 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		/* FALLTHROUGH */
 	case IEEE80211_S_AUTH:
 		/* cancel any active scan - it apparently breaks auth */
-		(void)iwn_cmd(sc, IWN_CMD_SCAN_ABORT, NULL, 0, 1);
+		/*(void)iwn_cmd(sc, IWN_CMD_SCAN_ABORT, NULL, 0, 1);*/
 
 		if ((error = iwn_auth(sc)) != 0) {
 			aprint_error_dev(sc->sc_dev,
@@ -1230,7 +1233,7 @@ iwn_load_firmware(struct iwn_softc *sc)
 	int error;
 
 	/* load firmware image from disk */
-	if ((error = firmware_open("if_iwn","iwlwifi-4965.ucode", &fw)) != 0) {
+	if ((error = firmware_open("if_iwn","iwlwifi-4965-1.ucode", &fw)) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not read firmware file\n");
 		goto fail1;
 	}
@@ -1501,9 +1504,8 @@ iwn_rx_intr(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	rssi = iwn_get_rssi(stat);
 
-	if ((ic->ic_state == IEEE80211_S_SCAN) && (false))
+	if (ic->ic_state == IEEE80211_S_SCAN)
 		iwn_fix_channel(ic, m);
-	ic->ic_curchan = &ic->ic_channels[11];
 
 #if NBPFILTER > 0
 	if (sc->sc_drvbpf != NULL) {
@@ -2294,6 +2296,8 @@ iwn_ioctl(struct ifnet *ifp, u_long cmd, void * data)
 
 	switch (cmd) {
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if (ifp->if_flags & IFF_UP) {
 			if (!(ifp->if_flags & IFF_RUNNING))
 				iwn_init(ifp);
@@ -3190,27 +3194,24 @@ iwn_auth(struct iwn_softc *sc)
 	/* update adapter's configuration */
 	sc->config.associd = 0;
 	IEEE80211_ADDR_COPY(sc->config.bssid, ni->ni_bssid);
-	sc->config.chan = ieee80211_chan2ieee(ic, ni->ni_chan);
+	sc->config.chan = htole16(ieee80211_chan2ieee(ic, ni->ni_chan));
 	sc->config.flags = htole32(IWN_CONFIG_TSF);
 	if (IEEE80211_IS_CHAN_2GHZ(ni->ni_chan)) {
 		sc->config.flags |= htole32(IWN_CONFIG_AUTO |
 		    IWN_CONFIG_24GHZ);
 	}
-	switch (ic->ic_curmode) {
-	case IEEE80211_MODE_11A:
+	if (IEEE80211_IS_CHAN_A(ni->ni_chan)) {
 		sc->config.cck_mask  = 0;
 		sc->config.ofdm_mask = 0x15;
-		break;
-	case IEEE80211_MODE_11B:
+	} else if (IEEE80211_IS_CHAN_B(ni->ni_chan)) {
 		sc->config.cck_mask  = 0x03;
 		sc->config.ofdm_mask = 0;
-		break;
-	default:	/* assume 802.11b/g */
+	} else {
+		/* assume 802.11b/g */
 		sc->config.cck_mask  = 0xf;
 		sc->config.ofdm_mask = 0x15;
 	}
 
-/*	iwn_enable_tsf(sc, ni);*/
 	if (ic->ic_flags & IEEE80211_F_SHSLOT)
 		sc->config.flags |= htole32(IWN_CONFIG_SHSLOT);
 	if (ic->ic_flags & IEEE80211_F_SHPREAMBLE)
@@ -3357,7 +3358,6 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	struct iwn_tx_cmd *cmd;
 	struct iwn_cmd_data *tx;
 	struct iwn_scan_hdr *hdr;
-	struct iwn_scan_essid *essid;
 	struct iwn_scan_chan *chan;
 	struct ieee80211_frame *wh;
 	struct ieee80211_rateset *rs;
@@ -3416,8 +3416,7 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	/* select Ant B and Ant C for scanning */
 	hdr->rxchain = htole16(0x3e1 | 7 << IWN_RXCHAIN_ANTMSK_SHIFT);
 
-	tx = (struct iwn_cmd_data *)(hdr + 1);
-	memset(tx, 0, sizeof (struct iwn_cmd_data));
+	tx = &(hdr->tx_cmd);
 	/*
 	 * linux
 	 * flags = IWN_TX_AUTO_SEQ
@@ -3442,17 +3441,15 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 		tx->rflags |= IWN_RFLAG_CCK;
 	}
 
-	essid = (struct iwn_scan_essid *)(tx + 1);
-	memset(essid, 0, 4 * sizeof (struct iwn_scan_essid));
-	essid[0].id  = IEEE80211_ELEMID_SSID;
-	essid[0].len = ic->ic_des_esslen;
-	memcpy(essid[0].data, ic->ic_des_essid, ic->ic_des_esslen);
+	hdr->scan_essid[0].id  = IEEE80211_ELEMID_SSID;
+	hdr->scan_essid[0].len = ic->ic_des_esslen;
+	memcpy(hdr->scan_essid[0].data, ic->ic_des_essid, ic->ic_des_esslen);
 
 	/*
 	 * Build a probe request frame.	 Most of the following code is a
 	 * copy & paste of what is done in net80211.
 	 */
-	wh = (struct ieee80211_frame *)&essid[4];
+	wh = &(hdr->wh);
 	wh->i_fc[0] = IEEE80211_FC0_VERSION_0 | IEEE80211_FC0_TYPE_MGT |
 	    IEEE80211_FC0_SUBTYPE_PROBE_REQ;
 	wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
@@ -3462,11 +3459,13 @@ iwn_scan(struct iwn_softc *sc, uint16_t flags)
 	*(u_int16_t *)&wh->i_dur[0] = 0;	/* filled by h/w */
 	*(u_int16_t *)&wh->i_seq[0] = 0;	/* filled by h/w */
 
-	frm = (uint8_t *)(wh + 1);
+	frm = &(hdr->data[0]);
 
-	/* add empty SSID IE (firmware generates it for directed scans) */
+	/* add empty SSID IE */
 	*frm++ = IEEE80211_ELEMID_SSID;
-	*frm++ = 0;
+	*frm++ = ic->ic_des_esslen;
+	memcpy(frm, ic->ic_des_essid, ic->ic_des_esslen);
+	frm += ic->ic_des_esslen;
 
 	mode = ieee80211_chan2mode(ic, ic->ic_ibss_chan);
 	rs = &ic->ic_sup_rates[mode];
@@ -3592,7 +3591,7 @@ iwn_config(struct iwn_softc *sc)
 	IEEE80211_ADDR_COPY(sc->config.myaddr, ic->ic_myaddr);
 	IEEE80211_ADDR_COPY(sc->config.wlap, ic->ic_myaddr);
 	/* set default channel */
-	sc->config.chan = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
+	sc->config.chan = htole16(ieee80211_chan2ieee(ic, ic->ic_ibss_chan));
 	sc->config.flags = htole32(IWN_CONFIG_TSF);
 	if (IEEE80211_IS_CHAN_2GHZ(ic->ic_ibss_chan)) {
 		sc->config.flags |= htole32(IWN_CONFIG_AUTO |

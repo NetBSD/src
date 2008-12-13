@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.18 2008/04/19 12:10:08 cegger Exp $	*/
+/*	$NetBSD: segments.h,v 1.18.8.1 2008/12/13 01:12:59 haad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -84,6 +84,9 @@
 
 #ifndef _AMD64_SEGMENTS_H_
 #define _AMD64_SEGMENTS_H_
+
+#ifdef __x86_64__
+
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
 #endif
@@ -388,5 +391,11 @@ int valid_user_selector(struct lwp *, uint64_t, char *, int);
     ((s) == GSEL(GUCODE_SEL, SEL_UPL) || (s) == LSEL(LUCODE_SEL, SEL_UPL))
 #define VALID_USER_DSEL(s) \
     ((s) == GSEL(GUDATA_SEL, SEL_UPL) || (s) == LSEL(LUDATA_SEL, SEL_UPL))
+
+#else	/*	__x86_64__	*/
+
+#include <i386/segments.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* _AMD64_SEGMENTS_H_ */

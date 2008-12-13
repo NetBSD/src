@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.9.4.1 2008/10/19 22:17:18 haad Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.9.4.2 2008/12/13 01:14:59 haad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.9.4.1 2008/10/19 22:17:18 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.9.4.2 2008/12/13 01:14:59 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.9.4.1 2008/10/19 22:17:18 haad Exp $"
 #include <sys/disklabel.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/buf.h>
 
 #include <fs/hfs/hfs.h>
 

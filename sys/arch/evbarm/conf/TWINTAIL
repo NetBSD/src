@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.24.4.1 2008/10/19 22:15:44 haad Exp $
+#	$NetBSD: TWINTAIL,v 1.24.4.2 2008/12/13 01:13:07 haad Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -53,7 +53,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
-options 	SOFTDEP
 options 	WAPBL		# File system journaling support - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 
@@ -117,7 +116,6 @@ options 	COMPAT_16	# NetBSD 1.6 compatibility.
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages

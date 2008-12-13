@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.13.2.1 2008/10/19 22:16:39 haad Exp $
+ * $NetBSD: if_lmc.h,v 1.13.2.2 2008/12/13 01:14:35 haad Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -1680,18 +1680,13 @@ static void fbsd_dmamap_load(void *, bus_dma_segment_t *, int, int);
 static int nbsd_match(struct device *, struct cfdata *, void *);
 static void nbsd_attach(struct device *, struct device *, void *);
 static int nbsd_detach(struct device *, int);
-# if defined(LKM)
-int if_lmc_lkmentry(struct lkm_table *, int, int);
-# endif
 #endif /* __NetBSD__ */
 
 #if defined(__OpenBSD__)
 static int obsd_match(struct device *, void *, void *);
 static void obsd_attach(struct device *, struct device *, void *);
 static int obsd_detach(struct device *, int);
-# if defined(LKM)
 int if_lmc_lkmentry(struct lkm_table *, int, int);
-# endif
 #endif /* __OpenBSD__ */
 
 #if defined(__bsdi__)

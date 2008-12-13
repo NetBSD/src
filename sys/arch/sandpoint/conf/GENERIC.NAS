@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.NAS,v 1.6.10.1 2008/10/19 22:15:55 haad Exp $
+# $NetBSD: GENERIC.NAS,v 1.6.10.2 2008/12/13 01:13:24 haad Exp $
 #
 # machine description file for GENERIC.NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC.NAS-$Revision: 1.6.10.1 $"
+#ident 		"GENERIC.NAS-$Revision: 1.6.10.2 $"
 
 maxusers	32
 
@@ -96,7 +96,6 @@ file-system	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

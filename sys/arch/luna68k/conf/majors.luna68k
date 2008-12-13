@@ -1,4 +1,4 @@
-#	$NetBSD: majors.luna68k,v 1.18 2007/12/31 15:31:58 ad Exp $
+#	$NetBSD: majors.luna68k,v 1.18.16.1 2008/12/13 01:13:16 haad Exp $
 #
 # Device majors for luna68k
 #
@@ -27,7 +27,6 @@ device-major	filedesc	char 20
 device-major	bpf		char 21			bpfilter
 device-major	tun		char 22			tun
 device-major	ipl		char 23			ipfilter
-device-major	lkm		char 24			lkm
 
 device-major	scsibus		char 31			scsibus
 device-major	raid		char 32  block 14	raid

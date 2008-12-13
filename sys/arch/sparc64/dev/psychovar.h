@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.15 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.15.4.1 2008/12/13 01:13:29 haad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -69,12 +69,6 @@ struct psycho_pbm {
 	bus_space_tag_t			pp_iot;
 	bus_dma_tag_t			pp_dmat;
 	int				pp_bus;
-	int				pp_busmax;
-	struct pp_busnode {
-		int	node;
-		int	(*valid)(void *);
-		void	*arg;
-	}				(*pp_busnode)[256];
 	int				pp_flags;
 
 	/* and pointers into the psycho regs for our bits */

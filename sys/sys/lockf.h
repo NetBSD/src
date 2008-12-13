@@ -1,4 +1,4 @@
-/*	$NetBSD: lockf.h,v 1.19 2008/05/28 13:35:32 ad Exp $	*/
+/*	$NetBSD: lockf.h,v 1.19.4.1 2008/12/13 01:15:35 haad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,6 +38,9 @@
 #define _SYS_LOCKF_H_
 
 #ifdef _KERNEL
+
+#include <sys/vnode.h>
+
 struct lockf;
 
 int lf_advlock(struct vop_advlock_args *, struct lockf **, off_t);

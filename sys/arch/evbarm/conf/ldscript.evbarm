@@ -1,4 +1,4 @@
-/*	$NetBSD: ldscript.evbarm,v 1.4 2008/04/27 18:58:46 matt Exp $	*/
+/*	$NetBSD: ldscript.evbarm,v 1.4.6.1 2008/12/13 01:13:07 haad Exp $	*/
 
 OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
@@ -47,6 +47,7 @@ SECTIONS
   __bss_start = .;
   __bss_start__ = .;
   .sbss      :
+  AT (LOADADDR(.sdata) + (ADDR(.sbss) - ADDR(.sdata)))
   {
     PROVIDE (__sbss_start = .);
     PROVIDE (___sbss_start = .);
@@ -58,6 +59,7 @@ SECTIONS
     PROVIDE (___sbss_end = .);
   }
   .bss       :
+  AT (LOADADDR(.sbss) + (ADDR(.bss) - ADDR(.sbss)))
   {
    *(.dynbss)
    *(.bss)

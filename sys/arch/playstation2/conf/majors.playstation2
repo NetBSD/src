@@ -1,4 +1,4 @@
-#	$NetBSD: majors.playstation2,v 1.19 2007/12/31 15:32:03 ad Exp $
+#	$NetBSD: majors.playstation2,v 1.19.16.1 2008/12/13 01:13:20 haad Exp $
 #
 # Device majors for playstation2
 #
@@ -11,7 +11,6 @@ device-major	filedesc	char 4
 device-major	log		char 5
 device-major	ptc		char 6			pty
 device-major	pts		char 7			pty
-device-major	lkm		char 8			lkm
 
 device-major	wd		char 10  block 1	wd
 

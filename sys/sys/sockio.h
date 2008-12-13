@@ -1,4 +1,4 @@
-/*	$NetBSD: sockio.h,v 1.26 2007/05/29 21:32:31 christos Exp $	*/
+/*	$NetBSD: sockio.h,v 1.26.38.1 2008/12/13 01:15:35 haad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -124,5 +124,6 @@
 
 #define	SIOCSVH		_IOWR('i', 130, struct ifreq)	/* set carp param */
 #define	SIOCGVH		_IOWR('i', 131, struct ifreq)	/* get carp param */
+#define	SIOCINITIFADDR	_IOWR('i', 132, struct ifaddr)
 
 #endif /* !_SYS_SOCKIO_H_ */

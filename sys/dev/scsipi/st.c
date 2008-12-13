@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.205.4.1 2008/10/19 22:17:04 haad Exp $ */
+/*	$NetBSD: st.c,v 1.205.4.2 2008/12/13 01:14:48 haad Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.205.4.1 2008/10/19 22:17:04 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.205.4.2 2008/12/13 01:14:48 haad Exp $");
 
 #include "opt_scsi.h"
 
@@ -2199,6 +2199,12 @@ st_interpret_sense(struct scsipi_xfer *xs)
 				retval = 0;
 			} else {
 				retval = EIO;
+				/*
+				 * If we return an error we can't claim to
+				 * have transfered all data.
+				 */
+				if (xs->resid == 0)
+					xs->resid = xs->datalen;
 			}
 
 			/*
@@ -2237,7 +2243,7 @@ st_interpret_sense(struct scsipi_xfer *xs)
 			}
 		}
 		if (bp)
-			bp->b_resid = info;
+			bp->b_resid = xs->resid;
 	}
 
 #ifndef SCSIPI_DEBUG

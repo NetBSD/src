@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.185.2.1 2008/10/19 22:16:19 haad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.185.2.2 2008/12/13 01:14:12 haad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.185.2.1 2008/10/19 22:16:19 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.185.2.2 2008/12/13 01:14:12 haad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -194,7 +194,7 @@ struct vndxfer {
 #define VNDLABELDEV(dev) \
     (MAKEDISKDEV(major((dev)), vndunit((dev)), RAW_PART))
 
-/* called by main() at boot time (XXX: and the LKM driver) */
+/* called by main() at boot time */
 void	vndattach(int);
 
 static void	vndclear(struct vnd_softc *, int);
@@ -448,9 +448,15 @@ vndstrategy(struct buf *bp)
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd =
 	    device_lookup_private(&vnd_cd, unit);
-	struct disklabel *lp = vnd->sc_dkdev.dk_label;
+	struct disklabel *lp;
 	daddr_t blkno;
 	int s = splbio();
+
+	if (vnd == NULL) {
+		bp->b_error = ENXIO;
+		goto done;
+	}
+	lp = vnd->sc_dkdev.dk_label;
 
 	if ((vnd->sc_flags & VNF_INITED) == 0) {
 		bp->b_error = ENXIO;

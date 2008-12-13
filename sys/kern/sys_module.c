@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.7 2008/05/20 19:20:38 ad Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.7.4.1 2008/12/13 01:15:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.7 2008/05/20 19:20:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.7.4.1 2008/12/13 01:15:09 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ handle_modctl_load(void *arg)
 		goto out3;
 	}
 
-	error = module_load(path, ml->ml_flags, dict, MODULE_CLASS_ANY, false);
+	error = module_load(path, ml->ml_flags, dict, MODULE_CLASS_ANY);
 
 	prop_object_release(dict);
 

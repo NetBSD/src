@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.58 2008/04/27 18:58:43 matt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.58.6.1 2008/12/13 01:13:01 haad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -90,7 +90,7 @@
 #include <machine/asm.h>
 #include <machine/cpu.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.58 2008/04/27 18:58:43 matt Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.58.6.1 2008/12/13 01:13:01 haad Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 	
@@ -156,7 +156,9 @@ ENTRY(cpu_switchto)
 	/* rem: r6 = new lwp */
 	/* rem: r7 = curcpu() */
 	
+#ifndef __HAVE_UNNESTED_INTRS
 	IRQdisable
+#endif
 
 #ifdef MULTIPROCESSOR
 	str	r7, [r6, #(L_CPU)]
@@ -178,7 +180,9 @@ ENTRY(cpu_switchto)
 	mov	r7, r0
 
 	/* At this point we can allow IRQ's again. */
+#ifndef __HAVE_UNNESTED_INTRS
 	IRQenable
+#endif
 
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
@@ -348,7 +352,7 @@ ENTRY(lwp_trampoline)
 
 	/* Kill irq's */
         mrs     r0, cpsr
-        orr     r0, r0, #(I32_bit)
+        orr     r0, r0, #(IF32_bits)
         msr     cpsr_c, r0
 
 	PULLFRAME
@@ -397,7 +401,9 @@ ENTRY_NP(softint_switch)
 	/* this is an invariant so load before disabling intrs */
 	ldr	r2, [r5, #(L_ADDR)]	/* get new lwp's pcb */
 
+#ifndef __HAVE_UNNESTED_INTRS
 	IRQdisable
+#endif
 	/*
 	 * We're switching to a bound LWP so its l_cpu is already correct.
 	 */
@@ -419,7 +425,9 @@ ENTRY_NP(softint_switch)
 	ldr	sp, [r2, #(PCB_TF)]	/* get new lwp's stack ptr */
 
 	/* At this point we can allow IRQ's again. */
+#ifndef __HAVE_UNNESTED_INTRS
 	IRQenable
+#endif
 
 					/* r1 still has ipl */
 	mov	r0, r4			/* r0 has pinned (old) lwp */
@@ -429,7 +437,9 @@ ENTRY_NP(softint_switch)
 	 */
 	ldr	r2, [r4, #(L_ADDR)]	/* get pinned lwp's pcb */
 
+#ifndef __HAVE_UNNESTED_INTRS
 	IRQdisable
+#endif
 	/*
 	 * We don't need to restore all the registers since another lwp was
 	 * never executed.  But we do need the SP from the formerly pinned lwp.

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.91 2008/04/23 14:07:50 ad Exp $
+	$NetBSD: syscalls.master,v 1.91.8.1 2008/12/13 01:13:54 haad Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -32,10 +32,6 @@
 ;
 ; #ifdef's, etc. may be included, and are copied to the output files.
 ; #include's are copied to the syscall names and switch definition files only.
-
-#if defined(_KERNEL_OPT)
-#include "opt_compat_43.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -284,8 +280,9 @@
 159	STD		{ int linux_sys_sched_get_priority_max(int policy); }
 160	STD		{ int linux_sys_sched_get_priority_min(int policy); }
 161	UNIMPL		sys_sched_rr_get_interval
-162	NOARGS		{ int sys_nanosleep(const struct timespec *rqtp, \
-				struct timespec *rmtp); }
+162	STD		{ int linux_sys_nanosleep( \
+			    const struct linux_timespec *rqtp, \
+			    struct linux_timespec *rmtp); }
 163	STD		{ void *linux_sys_mremap(void *old_address, \
 			    size_t old_size, size_t new_size, u_long flags); }
 164	STD		{ int linux_sys_setresuid16(linux_uid16_t ruid, \
@@ -422,7 +419,7 @@
 #endif
 239	UNIMPL		sendfile64
 240	STD		{ int linux_sys_futex(int *uaddr, int op, int val, \
-			    const struct timespec *timeout, int *uaddr2, \
+			    const struct linux_timespec *timeout, int *uaddr2, \
 			    int val3); }
 #ifdef LINUX_NPTL
 241	STD		{ int linux_sys_sched_setaffinity(pid_t pid, \
@@ -433,8 +430,15 @@
 241	UNIMPL		setaffinity
 242	UNIMPL		getaffinity
 #endif
+#ifdef LINUX_NPTL
+243	STD		{ int linux_sys_set_thread_area( \
+			    struct linux_user_desc *desc); }
+244	STD		{ int linux_sys_get_thread_area( \
+			    struct linux_user_desc *desc); }
+#else
 243	UNIMPL		set_thread_area
 244	UNIMPL		get_thread_area
+#endif
 245	UNIMPL		io_setup
 246	UNIMPL		io_destroy
 247	UNIMPL		io_getevents
@@ -489,3 +493,39 @@
 281	UNIMPL		mq_notify
 282	UNIMPL		mq_getsetattr
 283	UNIMPL		sys_kexec_load
+284	UNIMPL		waitid
+285	OBSOL		/* XXXJDM really? */
+286	UNIMPL		add_key
+287	UNIMPL		request_key
+288	UNIMPL		keyctl
+289	UNIMPL		ioprio_set
+290	UNIMPL		ioprio_get
+291	UNIMPL		inotify_init
+292	UNIMPL		inotify_add_watch
+293	UNIMPL		inotify_rm_watch
+294	UNIMPL		migrate_pages
+295	UNIMPL		openat
+296	UNIMPL		mkdirat
+297	UNIMPL		mknodat
+298	UNIMPL		fchownat
+299	UNIMPL		futimesat
+300	UNIMPL		fstatat64
+301	UNIMPL		unlinkat
+302	UNIMPL		renameat
+303	UNIMPL		linkat
+304	UNIMPL		symlinkat
+305	UNIMPL		readlinkat
+306	UNIMPL		fchmodat
+307	UNIMPL		faccessat
+308	UNIMPL		pselect6
+309	UNIMPL		ppoll
+310	UNIMPL		unshare
+311	STD		{ int linux_sys_set_robust_list( \
+			    struct linux_robust_list_head *head, size_t len); }
+312	STD		{ int linux_sys_get_robust_list(int pid, \
+			    struct linux_robust_list_head **head, \
+			    size_t *len); }
+313	UNIMPL		splice
+314	UNIMPL		sync_file_range
+315	UNIMPL		tee
+316	UNIMPL		vmsplice

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.77 2008/06/27 00:41:39 gmcgarry Exp $	*/
+/*	$NetBSD: locore.S,v 1.77.2.1 2008/12/13 01:13:13 haad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -134,10 +134,11 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.77 2008/06/27 00:41:39 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.77.2.1 2008/12/13 01:13:13 haad Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
+#include "opt_multiboot.h"
 #include "opt_realmem.h"
 #include "opt_vm86.h"
 #include "opt_xen.h"
@@ -192,7 +193,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.77 2008/06/27 00:41:39 gmcgarry Exp $")
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"
 #endif /* XEN3 */
 	.ascii	",LOADER=generic"
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte	0
@@ -516,7 +517,7 @@ try586:	/* Use the `cpuid' instruction. */
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
 
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
@@ -909,7 +910,7 @@ ENTRY(dumpsys)
 END(dumpsys)
 
 /*
- * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp,
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct *newlwp,
  *			    bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
@@ -1007,15 +1008,14 @@ ENTRY(cpu_switchto)
 2:
 #ifndef XEN
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
-	movl	PCB_CR0(%ebx),%ecx
+	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
 	movl	%cr0,%edx
 
 	/*
 	 * If our floating point registers are on a different CPU,
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
-	movl	PCB_FPCPU(%ebx),%eax
-	cmpl	CPUVAR(SELF),%eax
+	cmpl	CPUVAR(FPCURLWP),%edi
 	je	3f
 	orl	$CR0_TS,%ecx
 
@@ -1176,6 +1176,38 @@ syscall1:
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 IDTVEC_END(syscall)
 
+IDTVEC(svr4_fasttrap)
+	pushl	$2		# size of instruction for restart
+	pushl	$T_ASTFLT	# trap # for doing ASTs
+	INTRENTRY
+	pushl	$RW_READER
+	pushl	$_C_LABEL(svr4_fasttrap_lock)
+	call	_C_LABEL(rw_enter)
+	addl	$8,%esp
+	call	*_C_LABEL(svr4_fasttrap_vec)
+	pushl	$_C_LABEL(svr4_fasttrap_lock)
+	call	_C_LABEL(rw_exit)
+	addl	$4,%esp
+2:	/* Check for ASTs on exit to user mode. */
+	cli
+	CHECK_ASTPENDING(%eax)		
+	je	1f
+	/* Always returning to user mode here. */
+	CLEAR_ASTPENDING(%eax)
+	sti
+	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
+	call	_C_LABEL(trap)
+	addl	$4,%esp
+	jmp	2b
+1:	CHECK_DEFERRED_SWITCH
+	jnz	9f
+	INTRFASTEXIT
+9:	sti
+	call	_C_LABEL(pmap_load)
+	cli
+	jmp	2b
+
 #if NNPX > 0
 /*
  * Special interrupt handlers.  Someday intr0-intr15 will be used to count
@@ -1240,7 +1272,7 @@ ENTRY(sse2_idlezero_page)
 	xorl	%eax, %eax
 	.align	16
 1:
-	cmpl	$0, CPUVAR(RESCHED)
+	testl	$RESCHED_KPREEMPT, CPUVAR(RESCHED)
 	jnz	2f
 	movnti	%eax, 0(%edx)
 	movnti	%eax, 4(%edx)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/01/06 17:40:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.4.114.1 2008/12/13 01:13:19 haad Exp $
 
 # Makefile for newsmips tags file
 
@@ -18,7 +18,8 @@ DNEWSMIPS=	dev include
 tags:
 	-ctags -wdtf ${TNEWSMIPS} ${SNEWSMIPS} ${SMIPS} ${COMM}
 	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${ANEWSMIPS} ${AMIPS} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
+	    ${TOOL_SED} -e \
+		"s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TNEWSMIPS}
 	sort -o ${TNEWSMIPS} ${TNEWSMIPS}
 

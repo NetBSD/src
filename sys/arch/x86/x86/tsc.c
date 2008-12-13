@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.19.4.1 2008/10/19 22:16:08 haad Exp $	*/
+/*	$NetBSD: tsc.c,v 1.19.4.2 2008/12/13 01:13:39 haad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.19.4.1 2008/10/19 22:16:08 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.19.4.2 2008/12/13 01:13:39 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,8 +209,8 @@ tsc_sync_ap(struct cpu_info *ci)
 	atomic_and_uint(&ci->ci_flags, ~CPUF_SYNCTSC);
 	tsc += (rdmsr(MSR_TSC) >> 1);
 
-	/* Finally, post back our result. */
-	ci->ci_data.cpu_cc_skew = tsc;
+	/* Post result.  Ensure the whole value goes out atomically. */
+	(void)atomic_swap_64(&ci->ci_data.cpu_cc_skew, tsc);
 }
 
 uint64_t

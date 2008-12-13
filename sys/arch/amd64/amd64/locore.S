@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.47 2008/06/02 14:41:41 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.47.4.1 2008/12/13 01:12:58 haad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -206,7 +206,7 @@
 	.ascii	",ELF_PADDR_OFFSET=0xffffffff80000000"
 	.ascii	",VIRT_ENTRY=0xffffffff80100000"
 	.ascii	",HYPERCALL_PAGE=0x00000101" /*  (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
-#if NKSYMS > 0 || defined(DDB) || defined(LKM)
+#if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	.ascii	",BSD_SYMTAB=yes"
 #endif
 	.byte   0
@@ -476,7 +476,7 @@ start:	movw	$0x1234,0x472			# warm boot
 
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
-#if (NKSYMS || defined(DDB) || defined(LKM)) && !defined(SYMTAB_SPACE)
+#if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(esym),%eax
 	testl	%eax,%eax
@@ -959,15 +959,14 @@ ENTRY(cpu_switchto)
 2:
 #ifndef XEN
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
-	movl	PCB_CR0(%r14),%ecx
+	movl	PCB_CR0(%r14),%ecx	/* has CR0_TS clear */
 	movq	%cr0,%rdx
 
 	/*
 	 * If our floating point registers are on a different CPU,
 	 * set CR0_TS so we'll trap rather than reuse bogus state.
 	 */
-	movq	PCB_FPCPU(%r14),%rax
-	cmpq	CPUVAR(SELF),%rax
+	cmpq	CPUVAR(FPCURLWP),%r12
 	je	3f
 	orq	$CR0_TS,%rcx
 
@@ -1261,7 +1260,7 @@ ENTRY(sse2_idlezero_page)
 	xorq	%rax, %rax
 	.align	16
 1:
-	cmpl	$0, CPUVAR(RESCHED)
+	testl	$RESCHED_KPREEMPT, CPUVAR(RESCHED)
 	jnz	2f
 	movnti	%rax, 0(%rdi)
 	movnti	%rax, 8(%rdi)

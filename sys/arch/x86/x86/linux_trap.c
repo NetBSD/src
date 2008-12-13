@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_trap.c,v 1.5.6.1 2008/10/19 22:16:08 haad Exp $	*/
+/*	$NetBSD: linux_trap.c,v 1.5.6.2 2008/12/13 01:13:38 haad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.5.6.1 2008/10/19 22:16:08 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.5.6.2 2008/12/13 01:13:38 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_trap.c,v 1.5.6.1 2008/10/19 22:16:08 haad Exp 
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
-#define SA_NO_USERRET
 #include <machine/userret.h>
 
 #include <compat/linux/common/linux_exec.h>

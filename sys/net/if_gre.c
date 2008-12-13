@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.137.2.1 2008/10/19 22:17:41 haad Exp $ */
+/*	$NetBSD: if_gre.c,v 1.137.2.2 2008/12/13 01:15:25 haad Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.137.2.1 2008/10/19 22:17:41 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.137.2.2 2008/12/13 01:15:25 haad Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -1305,7 +1305,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	GRE_DPRINTF(sc, "\n");
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		GRE_DPRINTF(sc, "\n");
 		if ((ifp->if_flags & IFF_UP) != 0)
 			break;
@@ -1315,6 +1315,8 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	case SIOCSIFDSTADDR:
 		break;
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		oproto = sp->sp_proto;
 		otype = sp->sp_type;
 		switch (ifr->ifr_flags & (IFF_LINK0|IFF_LINK2)) {
@@ -1525,7 +1527,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 		GRE_DPRINTF(sc, "\n");
 		break;
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 		break;
 	}
 out:

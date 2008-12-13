@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.114 2008/05/10 13:56:54 jmcneill Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.114.4.1 2008/12/13 01:14:26 haad Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.114 2008/05/10 13:56:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.114.4.1 2008/12/13 01:14:26 haad Exp $");
 
 #define ATRQ_CH 0
 #define ATRS_CH 1
@@ -123,7 +123,7 @@ TUNABLE_INT("hw.firewire.phydma_enable", &firewire_phydma_enable);
 /*
  * Setup sysctl(3) MIB, hw.fwohci.*
  *
- * TBD condition CTLFLAG_PERMANENT on being an LKM or not
+ * TBD condition CTLFLAG_PERMANENT on being a module or not
  */
 SYSCTL_SETUP(sysctl_fwohci, "sysctl fwohci(4) subtree setup")
 {

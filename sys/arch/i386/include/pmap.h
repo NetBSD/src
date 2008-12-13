@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.102 2008/01/23 19:46:44 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.102.16.1 2008/12/13 01:13:14 haad Exp $	*/
 
 /*
  *
@@ -77,7 +77,7 @@
 
 #include <sys/atomic.h>
 
-#include <machine/pte.h>
+#include <i386/pte.h>
 #include <machine/segments.h>
 #if defined(_KERNEL)
 #include <machine/cpufunc.h>

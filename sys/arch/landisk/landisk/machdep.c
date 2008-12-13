@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6.6.1 2008/12/13 01:13:16 haad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2008/04/28 20:23:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6.6.1 2008/12/13 01:13:16 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2008/04/28 20:23:26 martin Exp $");
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
 #include <sys/ksyms.h>
+#include <sys/device.h>
+#include <sys/module.h>
 
 #include <uvm/uvm_extern.h>
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
@@ -114,7 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2008/04/28 20:23:26 martin Exp $");
 #include <sh3/dev/scifvar.h>
 #endif
 
-#if NKSYMS || defined(LKM) || defined(DDB)
+#if NKSYMS || defined(MODULAR) || defined(DDB)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -226,9 +228,9 @@ landisk_startup(int howto, void *bi)
 	pmap_bootstrap();
 
 	/* Debugger. */
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	if (symbolsize != 0) {
-		ksyms_init(symbolsize, &end, end + symbolsize);
+		ksyms_addsyms_elf(symbolsize, &end, end + symbolsize);
 	}
 #endif
 #if defined(DDB)
@@ -335,6 +337,8 @@ cpu_reboot(int howto, char *bootstr)
 
 haltsys:
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		_reg_write_1(LANDISK_PWRMNG, PWRMNG_POWEROFF);
@@ -502,3 +506,14 @@ InitializeBsc(void)
 	_reg_write_2(SH4_FRQCR, FRQCR_VAL);
 }
 #endif /* !DONT_INIT_BSC */
+
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the boot loader.
+ */
+void
+module_init_md(void)
+{
+}
+#endif /* MODULAR */

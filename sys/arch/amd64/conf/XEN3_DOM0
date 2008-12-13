@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.20.4.1 2008/10/19 22:15:40 haad Exp $
+# $NetBSD: XEN3_DOM0,v 1.20.4.2 2008/12/13 01:12:59 haad Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -35,7 +35,6 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -94,7 +93,6 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
@@ -192,17 +190,20 @@ xenbus*		at hypervisor?		# Xen virtual bus
 xencons*	at hypervisor?		# Xen virtual console
 
 acpi0 		at hypervisor?
-options 	MPBIOS
-options 	MPDEBUG
-options 	MPVERBOSE
-options 	ACPIVERBOSE
+#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
+#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+options 	ACPIVERBOSE		# verbose ACPI configuration messages
+#options	MIIVERBOSE		# verbose PHY autoconfig messages
+options 	MPBIOS			# configure CPUs and APICs using MPBIOS
+options 	MPDEBUG			# MPBIOS configures PCI roots
+options 	MPVERBOSE		# verbose MPBIOS autoconfig messages
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 #options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
-#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
-#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+#options	PCIVERBOSE		# verbose PCI device autoconfig messages
+#options	USBVERBOSE		# verbose USB device autoconfig messages
 
 ioapic*		at mainbus? apid ?
 

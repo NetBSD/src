@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.22.10.1 2008/10/19 22:16:16 haad Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.22.10.2 2008/12/13 01:13:57 haad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.22.10.1 2008/10/19 22:16:16 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.22.10.2 2008/12/13 01:13:57 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.22.10.1 2008/10/19 22:16:16 haa
 #include <sys/proc.h>
 #include <sys/ucred.h>
 #include <sys/swap.h>
+#include <sys/kauth.h>
 
 #include <machine/types.h>
 
@@ -59,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.22.10.1 2008/10/19 22:16:16 haa
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_oldolduname.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
@@ -90,7 +93,7 @@ linux32_sys_llseek(struct lwp *l, const struct linux32_sys_llseek_args *uap, reg
 		syscallcarg(int) fd;
                 syscallarg(u_int32_t) ohigh;
                 syscallarg(u_int32_t) olow;
-		syscallarg(netbsd32_caddr_t) res;
+		syscallarg(netbsd32_voidp) res;
 		syscallcarg(int) whence;
 	} */
 	struct linux_sys_llseek_args ua;
@@ -98,7 +101,7 @@ linux32_sys_llseek(struct lwp *l, const struct linux32_sys_llseek_args *uap, reg
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TO64_UAP(ohigh);
 	NETBSD32TO64_UAP(olow);
-	NETBSD32TOP_UAP(res, char);
+	NETBSD32TOP_UAP(res, void);
 	NETBSD32TO64_UAP(whence);
 
 	return linux_sys_llseek(l, &ua, retval);
@@ -361,11 +364,35 @@ linux32_sys_setresuid(struct lwp *l, const struct linux32_sys_setresuid_args *ua
 	} */
 	struct linux_sys_setresuid_args ua;
 
-	SCARG(&ua, ruid) = (SCARG(uap, ruid) == -1) ? -1 : SCARG(uap, ruid);
-	SCARG(&ua, euid) = (SCARG(uap, euid) == -1) ? -1 : SCARG(uap, euid);
-	SCARG(&ua, suid) = (SCARG(uap, suid) == -1) ? -1 : SCARG(uap, suid);
+	NETBSD32TO64_UAP(ruid);
+	NETBSD32TO64_UAP(euid);
+	NETBSD32TO64_UAP(suid);
 
 	return linux_sys_setresuid(l, &ua, retval);
+}
+
+int
+linux32_sys_getresuid(struct lwp *l, const struct linux32_sys_getresuid_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_uidp_t) ruid;
+		syscallarg(linux32_uidp_t) euid;
+		syscallarg(linux32_uidp_t) suid;
+	} */
+	kauth_cred_t pc = l->l_cred;
+	int error;
+	uid_t uid;
+
+	uid = kauth_cred_getuid(pc);
+	if ((error = copyout(&uid, SCARG_P32(uap, ruid), sizeof(uid_t))) != 0)
+		return error;
+
+	uid = kauth_cred_geteuid(pc);
+	if ((error = copyout(&uid, SCARG_P32(uap, euid), sizeof(uid_t))) != 0)
+		return error;
+
+	uid = kauth_cred_getsvuid(pc);
+	return copyout(&uid, SCARG_P32(uap, suid), sizeof(uid_t));
 }
 
 int
@@ -378,11 +405,35 @@ linux32_sys_setresgid(struct lwp *l, const struct linux32_sys_setresgid_args *ua
 	} */
 	struct linux_sys_setresgid_args ua;
 
-	SCARG(&ua, rgid) = (SCARG(uap, rgid) == -1) ? -1 : SCARG(uap, rgid);
-	SCARG(&ua, egid) = (SCARG(uap, egid) == -1) ? -1 : SCARG(uap, egid);
-	SCARG(&ua, sgid) = (SCARG(uap, sgid) == -1) ? -1 : SCARG(uap, sgid);
+	NETBSD32TO64_UAP(rgid);
+	NETBSD32TO64_UAP(egid);
+	NETBSD32TO64_UAP(sgid);
 
 	return linux_sys_setresgid(l, &ua, retval);
+}
+
+int
+linux32_sys_getresgid(struct lwp *l, const struct linux32_sys_getresgid_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_gidp_t) rgid;
+		syscallarg(linux32_gidp_t) egid;
+		syscallarg(linux32_gidp_t) sgid;
+	} */
+	kauth_cred_t pc = l->l_cred;
+	int error;
+	gid_t gid;
+
+	gid = kauth_cred_getgid(pc);
+	if ((error = copyout(&gid, SCARG_P32(uap, rgid), sizeof(gid_t))) != 0)
+		return error;
+
+	gid = kauth_cred_getegid(pc);
+	if ((error = copyout(&gid, SCARG_P32(uap, egid), sizeof(gid_t))) != 0)
+		return error;
+
+	gid = kauth_cred_getsvgid(pc);
+	return copyout(&gid, SCARG_P32(uap, sgid), sizeof(gid_t));
 }
 
 int

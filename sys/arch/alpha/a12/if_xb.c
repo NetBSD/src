@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.18 2007/10/17 19:52:54 garbled Exp $ */
+/* $NetBSD: if_xb.c,v 1.18.26.1 2008/12/13 01:12:57 haad Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.18 2007/10/17 19:52:54 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.18.26.1 2008/12/13 01:12:57 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,7 +231,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %lu\n", "$Revision: 1.18 $", xbi.if_mtu);
+	printf(": driver %s mtu %lu\n", "$Revision: 1.18.26.1 $", xbi.if_mtu);
 }
 
 static void
@@ -419,29 +419,20 @@ xb_stop()
 }
 
 static int
-xb_ioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	void *data;
+xb_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	int s, error = 0;
 
 	s = splnet();
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		xbi.if_flags |= IFF_UP;
-		switch (ifa->ifa_addr->sa_family) {
-#ifdef INET
-		case AF_INET:
-			xb_init(ifp);
-			break;
-#endif
-		default:
-			xb_init(ifp);
-		}
+		xb_init(ifp);
 		break;
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			xb_stop();
@@ -455,7 +446,7 @@ xb_ioctl(ifp, cmd, data)
 			xb_debug = 1;
 		break;
 	default:
-		error = EINVAL;
+		error = ifioctl_common(ifp, cmd, data);
 		break;
 	}
 	splx(s);

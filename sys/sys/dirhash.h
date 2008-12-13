@@ -1,4 +1,4 @@
-/* $NetBSD: dirhash.h,v 1.1.6.2 2008/10/19 22:18:09 haad Exp $ */
+/* $NetBSD: dirhash.h,v 1.1.6.3 2008/12/13 01:15:35 haad Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -23,27 +23,21 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
  */
 
-
-#include <sys/cdefs.h>
-#ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: dirhash.h,v 1.1.6.2 2008/10/19 22:18:09 haad Exp $");
-#endif /* not lint */
+#ifndef	_SYS_DIRHASH_H_
+#define	_SYS_DIRHASH_H_
 
 #include <sys/queue.h>
 #include <sys/dirent.h>
 
-
 #ifndef DIRHASH_SIZE
-#	define DIRHASH_SIZE	(1024*1024)
+#define	DIRHASH_SIZE	(1024*1024)
 #endif
 
-#define DIRHASH_HASHBITS	5
-#define DIRHASH_HASHSIZE	(1<<DIRHASH_HASHBITS)
-#define DIRHASH_HASHMASK	(DIRHASH_HASHSIZE -1)
-
+#define	DIRHASH_HASHBITS	5
+#define	DIRHASH_HASHSIZE	(1 << DIRHASH_HASHBITS)
+#define	DIRHASH_HASHMASK	(DIRHASH_HASHSIZE - 1)
 
 /* dirent's d_namlen is to avoid useless costly fid->dirent translations */
 struct dirhash_entry {
@@ -54,7 +48,6 @@ struct dirhash_entry {
 	LIST_ENTRY(dirhash_entry) next;
 };
 
-
 struct dirhash {
 	uint32_t		 flags;
 	uint32_t		 size;			/* in bytes */
@@ -64,31 +57,26 @@ struct dirhash {
 	TAILQ_ENTRY(dirhash) next;
 };
 
-#define DIRH_PURGED	0x0001	/* dirhash has been purged */
+#define	DIRH_PURGED	0x0001	/* dirhash has been purged */
 #define	DIRH_COMPLETE	0x0002	/* dirhash is complete */
 #define	DIRH_BROKEN	0x0004	/* dirhash is broken on readin */
-#define DIRH_FLAGBITS \
-	"\10\1DIRH_PURGED\2DIRH_COMPLETE\3DIRH_BROKEN"
+#define	DIRH_FLAGBITS	"\10\1DIRH_PURGED\2DIRH_COMPLETE\3DIRH_BROKEN"
 
+void	dirhash_init(void);
+/* void	dirhash_finish(void); */
 
-extern uint32_t maxdirhashsize;
-extern uint32_t dirhashsize;
+void	dirhash_purge(struct dirhash **);
+void	dirhash_purge_entries(struct dirhash *);
+void	dirhash_get(struct dirhash **);
+void	dirhash_put(struct dirhash *);
+void	dirhash_enter(struct dirhash *, struct dirent *, uint64_t,
+	    uint32_t, int);
+void	dirhash_enter_freed(struct dirhash *, uint64_t, uint32_t);
+void	dirhash_remove(struct dirhash *, struct dirent *dirent,
+	    uint64_t, uint32_t);
+int	dirhash_lookup(struct dirhash *, const char *, int,
+	    struct dirhash_entry **);
+int	dirhash_lookup_freed(struct dirhash *, uint32_t,
+	    struct dirhash_entry **);
 
-void dirhash_init(void);
-/* void dirhash_finish(void); */
-
-void dirhash_purge(struct dirhash **dirh);
-void dirhash_purge_entries(struct dirhash *dirh);
-void dirhash_get(struct dirhash **dirhp);
-void dirhash_put(struct dirhash *dirh);
-void dirhash_enter(struct dirhash *dirh,
-	struct dirent *dirent, uint64_t offset, uint32_t entry_size, int new);
-void dirhash_enter_freed(struct dirhash *dirh, uint64_t offset,
-	uint32_t entry_size);
-void dirhash_remove(struct dirhash *dirh, struct dirent *dirent,
-	uint64_t offset, uint32_t entry_size);
-int dirhash_lookup(struct dirhash *dirh, const char *d_name, int d_namlen,
-	struct dirhash_entry **result);
-int dirhash_lookup_freed(struct dirhash *dirh, uint32_t min_entrysize,
-	struct dirhash_entry **result);
-
+#endif /* _SYS_DIRHASH_H_ */

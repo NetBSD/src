@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.19 2008/05/29 14:51:26 mrg Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.19.4.1 2008/12/13 01:13:29 haad Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -38,14 +38,6 @@ struct pci_attach_args;
  * define some bits used to glue into the common PCI code.
  */
 
-typedef struct sparc_pci_chipset *pci_chipset_tag_t;
-typedef u_int pci_intr_handle_t;
-
-struct sparc_pci_chipset {
-	void			*cookie;	/* psycho_pbm, but sssh! */
-	int			rootnode;	/* PCI controller */
-};
-
 /* 
  * The stuuuuuuupid allegedly MI PCI code expects pcitag_t to be a
  * scalar type.  But we really need to store both the OFW node and
@@ -64,6 +56,30 @@ struct sparc_pci_chipset {
 #define	PCITAG_SETNODE(t,n)	((t)&0xffffffff)|(((n)<<32)
 typedef uint64_t pcitag_t; 
 
+typedef struct sparc_pci_chipset *pci_chipset_tag_t;
+typedef u_int pci_intr_handle_t;
+
+struct sparc_pci_chipset {
+	void		*cookie;	/* psycho_pbm/, but sssh! */
+	int		rootnode;	/* PCI controller */
+
+	/* pci(9) interfaces */
+	pcireg_t	(*spc_conf_read)(pci_chipset_tag_t, pcitag_t, int);
+	void		(*spc_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+
+	void		*(*spc_intr_establish)(pci_chipset_tag_t, pci_intr_handle_t, int, int (*)(void *), void *);
+
+	/* private interfaces */
+	int		(*spc_find_ino)(struct pci_attach_args *, pci_intr_handle_t *);
+
+	int		spc_busmax;
+	struct spc_busnode {
+		int	node;
+		int	(*valid)(void *);
+		void	*arg;
+	}		(*spc_busnode)[256];
+};
+
 
 void		pci_attach_hook(struct device *, struct device *,
 				     struct pcibus_attach_args *);
@@ -71,19 +87,24 @@ int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
 void		pci_decompose_tag(pci_chipset_tag_t, pcitag_t, int *, int *,
 		    int *);
-pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
-void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
-				    pcireg_t);
 int		pci_intr_map(struct pci_attach_args *, pci_intr_handle_t *);
 const char	*pci_intr_string(pci_chipset_tag_t, pci_intr_handle_t);
 const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
-void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
-					 int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
 int		sparc64_pci_enumerate_bus(struct pci_softc *, const int *,
 		    int (*)(struct pci_attach_args *),
 		    struct pci_attach_args *);
 #define PCI_MACHDEP_ENUMERATE_BUS sparc64_pci_enumerate_bus
+
+#define	pci_conf_read(pc, tag, reg) \
+		((pc)->spc_conf_read(pc, tag, reg))
+#define	pci_conf_write(pc, tag, reg, val) \
+		((pc)->spc_conf_write(pc, tag, reg, val))
+#define	pci_intr_establish(pc, handle, level, func, arg) \
+		((pc)->spc_intr_establish(pc, handle, level, func, arg))
+
+/* SPARC specific PCI interfaces */
+int		sparc_pci_childspace(int);
 
 #endif /* _MACHINE_PCI_MACHDEP_H_ */

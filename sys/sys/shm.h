@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.45 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: shm.h,v 1.45.6.1 2008/12/13 01:15:35 haad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 #endif
 
 /* Segment low boundry address multiple */
-#if defined(_KERNEL) || defined(_STANDALONE) || defined(_LKM)
+#if defined(_KERNEL) || defined(_STANDALONE) || defined(_MODULE)
 #define	SHMLBA		PAGE_SIZE
 #else
 /*

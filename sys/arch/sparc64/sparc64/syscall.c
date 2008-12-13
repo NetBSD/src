@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.32.2.1 2008/10/19 22:16:01 haad Exp $ */
+/*	$NetBSD: syscall.c,v 1.32.2.2 2008/12/13 01:13:29 haad Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32.2.1 2008/10/19 22:16:01 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32.2.2 2008/12/13 01:13:29 haad Exp $");
 
 #include "opt_sa.h"
 
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32.2.1 2008/10/19 22:16:01 haad Exp $"
 #include <sys/signal.h>
 #include <sys/ktrace.h>
 #include <sys/syscall.h>
+#include <sys/syscallvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -314,7 +315,7 @@ syscall_plain(struct trapframe64 *tf, register_t code, register_t pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
-	error = (*callp->sy_call)(l, &args, rval);
+	error = sy_call(callp, l, &args, rval);
 
 	switch (error) {
 	case 0:
@@ -417,7 +418,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
 
-	error = (*callp->sy_call)(l, &args, rval);
+	error = sy_call(callp, l, &args, rval);
 out:
 	switch (error) {
 	case 0:

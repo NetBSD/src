@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.203.16.1 2008/10/19 22:15:56 haad Exp $
+# $NetBSD: GENERIC,v 1.203.16.2 2008/12/13 01:13:26 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.203.16.1 $"
+#ident 		"GENERIC-$Revision: 1.203.16.2 $"
 
 maxusers	32
 
@@ -77,7 +77,6 @@ options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 
 ## Loadable kernel module support; still under development.
-options 	LKM
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -192,7 +191,6 @@ file-system	PTYFS		# /dev/pts/N support
 options 	NFSSERVER	# Sun NFS-compatible filesystem server
 options 	QUOTA		# FFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

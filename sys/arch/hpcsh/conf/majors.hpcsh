@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcsh,v 1.21 2007/12/31 15:31:55 ad Exp $
+#	$NetBSD: majors.hpcsh,v 1.21.16.1 2008/12/13 01:13:12 haad Exp $
 #
 # Device majors for hpcsh
 #
@@ -40,7 +40,6 @@ device-major	biconsdev	char 33			biconsdev
 device-major	clockctl	char 34			clockctl
 device-major	cgd		char 36  block 10	cgd
 device-major	ksyms		char 37			ksyms
-device-major	lkm		char 38			lkm
 device-major	wsfont		char 39			wsfont
 device-major	apmdev		char 40			apmdev
 device-major	audio		char 42			audio

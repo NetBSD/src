@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.11 2008/02/07 01:21:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.11.16.1 2008/12/13 01:14:34 haad Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_main.c,v 1.36 2007/09/11 23:49:27 kmacy Exp $");
@@ -2356,10 +2356,8 @@ cxgb_ioctl(struct ifnet *ifp, unsigned long command, void *data)
         error = cxgb_set_mtu(p, ifr->ifr_mtu);
 	printf("SIOCSIFMTU: error=%d\n", error);
         break;
-    case SIOCSIFADDR:
-	printf("SIOCSIFADDR:\n");
-    case SIOCGIFADDR:
-	printf("SIOCGIFADDR:\n");
+    case SIOCINITIFADDR:
+	printf("SIOCINITIFADDR:\n");
         PORT_LOCK(p);
         if (ifa->ifa_addr->sa_family == AF_INET) {
             ifp->if_flags |= IFF_UP;
@@ -2372,6 +2370,8 @@ cxgb_ioctl(struct ifnet *ifp, unsigned long command, void *data)
         break;
     case SIOCSIFFLAGS:
 	printf("SIOCSIFFLAGS:\n");
+	if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+		break;
         callout_drain(&p->adapter->cxgb_tick_ch);
         PORT_LOCK(p);
         if (ifp->if_flags & IFF_UP) {

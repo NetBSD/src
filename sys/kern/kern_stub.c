@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.9.6.1 2008/10/19 22:17:28 haad Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.9.6.2 2008/12/13 01:15:08 haad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,20 +62,28 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.9.6.1 2008/10/19 22:17:28 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.9.6.2 2008/12/13 01:15:08 haad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
 #include "opt_sa.h"
 
+/* XXX To get syscall prototypes. */
+#define SYSVSHM
+#define SYSVSEM
+#define SYSVMSG
+
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
+#include <sys/syscall.h>
 #include <sys/syscallargs.h>
+#include <sys/syscallvar.h>
 #include <sys/ktrace.h>
 #include <sys/intr.h>
 #include <sys/cpu.h>
+#include <sys/module.h>
 
 /*
  * Nonexistent system call-- signal process (may want to handle it).  Flag
@@ -117,11 +125,11 @@ __weak_alias(ktruser,enosys);
 __weak_alias(ktr_point,nullop);
 #endif	/* KTRACE */
 
+#if !defined(KERN_SA)
 /*
  * Scheduler activations system calls.  These need to remain, even when
  * KERN_SA isn't defined, until libc's major version is bumped.
  */
-#if !defined(KERN_SA)
 __strong_alias(sys_sa_register,sys_nosys);
 __strong_alias(sys_sa_stacks,sys_nosys);
 __strong_alias(sys_sa_enable,sys_nosys);
@@ -129,6 +137,12 @@ __strong_alias(sys_sa_setconcurrency,sys_nosys);
 __strong_alias(sys_sa_yield,sys_nosys);
 __strong_alias(sys_sa_preempt,sys_nosys);
 __strong_alias(sys_sa_unblockyield,sys_nosys);
+
+/*
+ * Stubs for compat_netbsd32.
+ */
+__strong_alias(dosa_register,sys_nosys);
+__strong_alias(sa_stacks1,sys_nosys);
 #endif
 
 /*
@@ -160,7 +174,6 @@ cpu_kpreempt_disabled(void)
 # endif
 #endif	/* !__HAVE_PREEMPTION */
 
-/* ARGSUSED */
 int
 sys_nosys(struct lwp *l, const void *v, register_t *retval)
 {
@@ -169,6 +182,148 @@ sys_nosys(struct lwp *l, const void *v, register_t *retval)
 	psignal(l->l_proc, SIGSYS);
 	mutex_exit(proc_lock);
 	return ENOSYS;
+}
+
+int
+sys_nomodule(struct lwp *l, const void *v, register_t *retval)
+{
+#ifdef MODULAR
+	static struct {
+		u_int		al_code;
+		const char	*al_module;
+	} const autoload[] = {
+	    { SYS_aio_cancel, "aio" },
+	    { SYS_aio_error, "aio" },
+	    { SYS_aio_fsync, "aio" },
+	    { SYS_aio_read, "aio" },
+	    { SYS_aio_return, "aio" },
+	    { SYS_aio_suspend, "aio" },
+	    { SYS_aio_write, "aio" },
+	    { SYS_lio_listio, "aio" },
+	    { SYS_compat_43_fstat43, "compat" },
+	    { SYS_compat_43_lstat43, "compat" },
+	    { SYS_compat_43_oaccept, "compat" },
+	    { SYS_compat_43_ocreat, "compat" },
+	    { SYS_compat_43_oftruncate, "compat" },
+	    { SYS_compat_43_ogetdirentries, "compat" },
+	    { SYS_compat_43_ogetdtablesize, "compat" },
+	    { SYS_compat_43_ogethostid, "compat" },
+	    { SYS_compat_43_ogethostname, "compat" },
+	    { SYS_compat_43_ogetkerninfo, "compat" },
+	    { SYS_compat_43_ogetpagesize, "compat" },
+	    { SYS_compat_43_ogetpeername, "compat" },
+	    { SYS_compat_43_ogetrlimit, "compat" },
+	    { SYS_compat_43_ogetsockname, "compat" },
+	    { SYS_compat_43_okillpg, "compat" },
+	    { SYS_compat_43_olseek, "compat" },
+	    { SYS_compat_43_ommap, "compat" },
+	    { SYS_compat_43_oquota, "compat" },
+	    { SYS_compat_43_orecv, "compat" },
+	    { SYS_compat_43_orecvfrom, "compat" },
+	    { SYS_compat_43_orecvmsg, "compat" },
+	    { SYS_compat_43_osend, "compat" },
+	    { SYS_compat_43_osendmsg, "compat" },
+	    { SYS_compat_43_osethostid, "compat" },
+	    { SYS_compat_43_osethostname, "compat" },
+	    { SYS_compat_43_osetrlimit, "compat" },
+	    { SYS_compat_43_osigblock, "compat" },
+	    { SYS_compat_43_osigsetmask, "compat" },
+	    { SYS_compat_43_osigstack, "compat" },
+	    { SYS_compat_43_osigvec, "compat" },
+	    { SYS_compat_43_otruncate, "compat" },
+	    { SYS_compat_43_owait, "compat" },
+	    { SYS_compat_43_stat43, "compat" },
+	    { SYS_compat_09_ogetdomainname, "compat" },
+	    { SYS_compat_09_osetdomainname, "compat" },
+	    { SYS_compat_09_ouname, "compat" },
+#ifndef _LP64
+	    { SYS_compat_10_omsgsys, "compat" },
+	    { SYS_compat_10_osemsys, "compat" },
+	    { SYS_compat_10_oshmsys, "compat" },
+#endif
+	    { SYS_compat_12_fstat12, "compat" },
+	    { SYS_compat_12_getdirentries, "compat" },
+	    { SYS_compat_12_lstat12, "compat" },
+	    { SYS_compat_12_msync, "compat" },
+	    { SYS_compat_12_oreboot, "compat" },
+	    { SYS_compat_12_oswapon, "compat" },
+	    { SYS_compat_12_stat12, "compat" },
+	    { SYS_compat_13_sigaction13, "compat" },
+	    { SYS_compat_13_sigaltstack13, "compat" },
+	    { SYS_compat_13_sigpending13, "compat" },
+	    { SYS_compat_13_sigprocmask13, "compat" },
+	    { SYS_compat_13_sigreturn13, "compat" },
+	    { SYS_compat_13_sigsuspend13, "compat" },
+	    { SYS_compat_14___semctl, "compat" },
+	    { SYS_compat_14_msgctl, "compat" },
+	    { SYS_compat_14_shmctl, "compat" },
+	    { SYS_compat_16___sigaction14, "compat" },
+	    { SYS_compat_16___sigreturn14, "compat" },
+	    { SYS_compat_20_fhstatfs, "compat" },
+	    { SYS_compat_20_fstatfs, "compat" },
+	    { SYS_compat_20_getfsstat, "compat" },
+	    { SYS_compat_20_statfs, "compat" },
+	    { SYS_compat_30___fhstat30, "compat" },
+	    { SYS_compat_30___fstat13, "compat" },
+	    { SYS_compat_30___lstat13, "compat" },
+	    { SYS_compat_30___stat13, "compat" },
+	    { SYS_compat_30_fhopen, "compat" },
+	    { SYS_compat_30_fhstat, "compat" },
+	    { SYS_compat_30_fhstatvfs1, "compat" },
+	    { SYS_compat_30_getdents, "compat" },
+	    { SYS_compat_30_getfh, "compat" },
+	    { SYS_compat_30_socket, "compat" },
+	    { SYS_compat_40_mount, "compat" },
+	    { SYS__ksem_init, "ksem" },
+	    { SYS__ksem_open, "ksem" },
+	    { SYS__ksem_unlink, "ksem" },
+	    { SYS__ksem_close, "ksem" },
+	    { SYS__ksem_post, "ksem" },
+	    { SYS__ksem_wait, "ksem" },
+	    { SYS__ksem_trywait, "ksem" },
+	    { SYS__ksem_getvalue, "ksem" },
+	    { SYS__ksem_destroy, "ksem" },
+	    { SYS_nfssvc, "nfsserver" },
+	};
+	const struct sysent *sy;
+	const struct emul *em;
+	int code, i;
+
+	/*
+	 * Restart the syscall if we interrupted a module unload that
+	 * failed.  Acquiring module_lock delays us until any unload
+	 * has been completed or rolled back.
+	 */
+	mutex_enter(&module_lock);
+	sy = l->l_sysent;
+	if (sy->sy_call != sys_nomodule) {
+		mutex_exit(&module_lock);
+		return ERESTART;
+	}
+	/*
+	 * Try to autoload a module to satisfy the request.  If it 
+	 * works, retry the request.
+	 */
+	em = l->l_proc->p_emul;
+	if (em == &emul_netbsd) {
+		code = sy - em->e_sysent;
+		for (i = 0; i < __arraycount(autoload); i++) {
+			if (autoload[i].al_code != code) {
+				continue;
+			}
+			if (module_autoload(autoload[i].al_module,
+			    MODULE_CLASS_ANY) != 0 ||
+			    sy->sy_call == sys_nomodule) {
+			    	break;
+			}
+			mutex_exit(&module_lock);
+			return ERESTART;
+		}
+	}
+	mutex_exit(&module_lock);
+#endif	/* MODULAR */
+
+	return sys_nosys(l, v, retval);
 }
 
 /*

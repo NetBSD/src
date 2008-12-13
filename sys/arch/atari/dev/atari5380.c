@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.42.50.1 2008/10/19 22:15:43 haad Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.42.50.2 2008/12/13 01:13:04 haad Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.42.50.1 2008/10/19 22:15:43 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.42.50.2 2008/12/13 01:13:04 haad Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -279,10 +279,10 @@ scsi_tt_init(struct ncr_softc *sc)
 	MFP2->mf_imra |= IA_SCSI;
 
 	/*
-	 * LWP: DMA transfers to TT-ram causes data to be garbeled
-	 * without notice on some revisons of the TT-mainboard.
-	 * When program's generate misterious Segmentations faults,
-	 * try turning on NO_TTRAM_DMA.
+	 * LWP: DMA transfers to TT-ram causes data to be garbled
+	 * without notice on some TT-mainboard revisions.
+	 * If programs generate mysterious Segmentations faults,
+	 * try enabling NO_TTRAM_DMA.
 	 */
 #ifdef NO_TTRAM_DMA
 	printf(": DMA to TT-RAM is disabled!");

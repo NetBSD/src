@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.67 2008/06/08 12:43:51 tsutsui Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.67.4.1 2008/12/13 01:14:14 haad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.67 2008/06/08 12:43:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.67.4.1 2008/12/13 01:14:14 haad Exp $");
 
 #include "opt_inet.h"
 
@@ -2939,7 +2939,7 @@ eshioctl(ifp, cmd, data)
 
 	switch (cmd) {
 
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
 		if ((sc->sc_flags & ESH_FL_INITIALIZED) == 0) {
 			eshinit(sc);
@@ -2973,6 +2973,8 @@ eshioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
 			/*
@@ -3021,7 +3023,7 @@ eshioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 

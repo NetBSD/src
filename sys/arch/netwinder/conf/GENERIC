@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91.16.1 2008/10/19 22:15:53 haad Exp $
+# $NetBSD: GENERIC,v 1.91.16.2 2008/12/13 01:13:19 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -77,7 +77,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	NFSSERVER
-options 	SOFTDEP
 options 	WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 
@@ -154,7 +153,6 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions

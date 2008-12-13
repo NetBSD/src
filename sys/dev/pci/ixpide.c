@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpide.c,v 1.12.6.1 2008/10/19 22:16:39 haad Exp $	*/
+/*	$NetBSD: ixpide.c,v 1.12.6.2 2008/12/13 01:14:36 haad Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.12.6.1 2008/10/19 22:16:39 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.12.6.2 2008/12/13 01:14:36 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixpide.c,v 1.12.6.1 2008/10/19 22:16:39 haad Exp $")
 #include <dev/pci/pciidevar.h>
 #include <dev/pci/pciide_ixp_reg.h>
 
+static bool	ixpide_resume(device_t PMF_FN_PROTO);
+static bool	ixpide_suspend(device_t PMF_FN_PROTO);
 static int	ixpide_match(device_t, cfdata_t, void *);
 static void	ixpide_attach(device_t, device_t, void *);
 
@@ -86,6 +88,9 @@ ixpide_attach(device_t parent, device_t self, void *aux)
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_ixpide_products));
+
+	if (!pmf_device_register(self, ixpide_suspend, ixpide_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static void
@@ -139,6 +144,32 @@ static const uint8_t ixp_pio_timings[] = {
 static const uint8_t ixp_mdma_timings[] = {
 	0x77, 0x21, 0x20
 };
+
+static bool
+ixpide_resume(device_t dv PMF_FN_ARGS)
+{
+	struct pciide_softc *sc = device_private(dv);
+
+	pci_conf_write(sc->sc_pc, sc->sc_tag, IXP_MDMA_TIMING,
+	    sc->sc_pm_reg[0]);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, IXP_PIO_TIMING,
+	    sc->sc_pm_reg[1]);
+
+	return true;
+}
+
+static bool
+ixpide_suspend(device_t dv PMF_FN_ARGS)
+{
+	struct pciide_softc *sc = device_private(dv);
+
+	sc->sc_pm_reg[0] = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    IXP_MDMA_TIMING);
+	sc->sc_pm_reg[1] = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    IXP_PIO_TIMING);
+
+	return true;
+}
 
 static void
 ixp_setup_channel(struct ata_channel *chp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.16.6.1 2008/10/19 22:15:48 haad Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.16.6.2 2008/12/13 01:13:14 haad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.16.6.1 2008/10/19 22:15:48 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.16.6.2 2008/12/13 01:13:14 haad Exp $");
 
 #include "opt_multiboot.h"
 
@@ -704,7 +704,7 @@ multiboot_ksyms_init(void)
 		ehdr.e_version = 1;
 		ehdr.e_ehsize = sizeof(ehdr);
 
-		ksyms_init_explicit((void *)&ehdr,
+		ksyms_addsyms_explicit((void *)&ehdr,
 		    ms->s_symstart, ms->s_symsize,
 		    ms->s_strstart, ms->s_strsize);
 	}

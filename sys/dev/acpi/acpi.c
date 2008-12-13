@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.117.4.1 2008/10/19 22:16:19 haad Exp $	*/
+/*	$NetBSD: acpi.c,v 1.117.4.2 2008/12/13 01:14:12 haad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.117.4.1 2008/10/19 22:16:19 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.117.4.2 2008/12/13 01:14:12 haad Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -808,15 +808,29 @@ acpi_print(void *aux, const char *pnp)
 		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
 			char *pnpstr =
 			    aa->aa_node->ad_devinfo->HardwareId.Value;
-			char *str;
+			ACPI_BUFFER buf;
 
 			aprint_normal("%s (%s) ", aa->aa_node->ad_name,
 			    pnpstr);
-			rv = acpi_eval_string(aa->aa_node->ad_handle,
-			    "_STR", &str);
+
+			buf.Pointer = NULL;
+			buf.Length = ACPI_ALLOCATE_BUFFER;
+			rv = AcpiEvaluateObject(aa->aa_node->ad_handle,
+			    "_STR", NULL, &buf);
 			if (ACPI_SUCCESS(rv)) {
-				aprint_normal("[%s] ", str);
-				AcpiOsFree(str);
+				ACPI_OBJECT *obj = buf.Pointer;
+				switch (obj->Type) {
+				case ACPI_TYPE_STRING:
+					aprint_normal("[%s] ", obj->String.Pointer);
+					break;
+				case ACPI_TYPE_BUFFER:
+					aprint_normal("buffer %p ", obj->Buffer.Pointer);
+					break;
+				default:
+					aprint_normal("type %d ",obj->Type);
+					break;
+				}
+				AcpiOsFree(buf.Pointer);
 			}
 #ifdef ACPIVERBOSE
 			else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.81.2.1 2008/10/19 22:16:26 haad Exp $	*/
+/*	$NetBSD: midway.c,v 1.81.2.2 2008/12/13 01:14:14 haad Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.81.2.1 2008/10/19 22:16:26 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.81.2.2 2008/12/13 01:14:14 haad Exp $");
 
 #include "opt_natm.h"
 
@@ -1199,39 +1199,30 @@ void *data;
 #endif
 		break;
 #endif
-	case SIOCSIFADDR:
-#ifdef INET6
-	case SIOCSIFADDR_IN6:
-#endif
+	case SIOCINITIFADDR:
 		ifp->if_flags |= IFF_UP;
+		en_reset(sc);
+		en_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			en_reset(sc);
-			en_init(sc);
 			ifa->ifa_rtrequest = atm_rtrequest; /* ??? */
 			break;
 #endif
 #ifdef INET6
 		case AF_INET6:
-			en_reset(sc);
-			en_init(sc);
 			ifa->ifa_rtrequest = atm_rtrequest; /* ??? */
 			break;
 #endif
 		default:
 			/* what to do if not INET? */
-			en_reset(sc);
-			en_init(sc);
 			break;
 		}
 		break;
 
-	case SIOCGIFADDR:
-		error = EINVAL;
-		break;
-
 	case SIOCSIFFLAGS:
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
 #ifdef ATM_PVCEXT
 	  	/* point-2-point pvc is allowed to change if_flags */
 		if (((ifp->if_flags & IFF_UP) && !(ifp->if_flags & IFF_RUNNING))
@@ -1344,7 +1335,7 @@ void *data;
 #endif /* ATM_PVCEXT */
 
 	default:
-	    error = EINVAL;
+	    error = ifioctl_common(ifp, cmd, data);
 	    break;
     }
     splx(s);

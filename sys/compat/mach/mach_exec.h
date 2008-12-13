@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.32 2008/04/28 20:23:44 martin Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.32.6.1 2008/12/13 01:13:57 haad Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,6 @@ void mach_e_proc_fork1(struct proc *, struct proc *, int);
 void mach_e_lwp_fork(struct lwp *, struct lwp *);
 void mach_e_lwp_exit(struct lwp *);
 
-extern const struct emul emul_mach;
+extern struct emul emul_mach;
 
 #endif /* !_MACH_EXEC_H_ */

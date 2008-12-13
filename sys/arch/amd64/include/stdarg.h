@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.5 2005/12/11 12:16:25 christos Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.5.84.1 2008/12/13 01:12:59 haad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,6 +34,8 @@
 #ifndef _AMD64_STDARG_H_
 #define	_AMD64_STDARG_H_
 
+#ifdef __x86_64__
+
 #include <machine/ansi.h>
 #include <sys/featuretest.h>
 
@@ -57,5 +59,11 @@ typedef _BSD_VA_LIST_	va_list;
      defined(_NETBSD_SOURCE))
 #define	va_copy(dest, src)	__va_copy((dest), (src))
 #endif
+
+#else	/*	__x86_64__	*/
+
+#include <i386/stdarg.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* !_AMD64_STDARG_H_ */

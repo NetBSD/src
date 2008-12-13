@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.25.10.1 2008/10/19 22:16:12 haad Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.25.10.2 2008/12/13 01:13:39 haad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -87,7 +87,10 @@ struct xen_npx_attach_args {
 #ifdef XEN3
 #include <xen/xen3-public/xen.h>
 #include <xen/xen3-public/sched.h>
+#include <xen/xen3-public/platform.h>
+#if __XEN_INTERFACE_VERSION__ < 0x00030204
 #include <xen/xen3-public/dom0_ops.h>
+#endif
 #include <xen/xen3-public/event_channel.h>
 #include <xen/xen3-public/physdev.h>
 #include <xen/xen3-public/memory.h>
@@ -129,6 +132,14 @@ extern union start_info_union start_info_union;
 
 /* For use in guest OSes. */
 extern volatile shared_info_t *HYPERVISOR_shared_info;
+
+
+/* Structural guest handles introduced in 0x00030201. */
+#if __XEN_INTERFACE_VERSION__ >= 0x00030201
+#define xenguest_handle(hnd)	(hnd).p
+#else
+#define xenguest_handle(hnd)	hnd
+#endif
 
 /* hypervisor.c */
 struct intrframe;

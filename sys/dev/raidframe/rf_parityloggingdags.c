@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityloggingdags.c,v 1.18 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_parityloggingdags.c,v 1.18.58.1 2008/12/13 01:14:48 haad Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,10 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.18 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityloggingdags.c,v 1.18.58.1 2008/12/13 01:14:48 haad Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_raid_diagnostic.h"
+#endif
 
 #include "rf_archs.h"
-#include "opt_raid_diagnostic.h"
 
 #if RF_INCLUDE_PARITYLOGGING > 0
 

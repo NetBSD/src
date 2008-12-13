@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.3.28.1 2008/10/19 22:15:53 haad Exp $
+# $NetBSD: GENERIC,v 1.3.28.2 2008/12/13 01:13:18 haad Exp $
 #
 
 include 	"arch/mvmeppc/conf/std.mvmeppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"MVME1600-$Revision: 1.3.28.1 $"
+#ident		"MVME1600-$Revision: 1.3.28.2 $"
 
 maxusers	8
 
@@ -60,7 +60,6 @@ file-system	PTYFS		# /dev/pts/N support
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
-options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and

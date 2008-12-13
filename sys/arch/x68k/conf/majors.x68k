@@ -1,4 +1,4 @@
-#	$NetBSD: majors.x68k,v 1.19 2007/12/31 15:32:08 ad Exp $
+#	$NetBSD: majors.x68k,v 1.19.16.1 2008/12/13 01:13:37 haad Exp $
 #
 # Device majors for x68k
 #
@@ -27,7 +27,6 @@ device-major	st		char 20  block 5	st
 device-major	filedesc	char 21
 device-major	bpf		char 22			bpfilter
 device-major	sram		char 23			sram
-device-major	lkm		char 24			lkm
 
 device-major	tun		char 31			tun
 device-major	pow		char 32			pow

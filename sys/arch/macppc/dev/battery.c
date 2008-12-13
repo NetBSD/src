@@ -1,4 +1,4 @@
-/*	$NetBSD: battery.c,v 1.10 2008/04/29 06:53:02 martin Exp $ */
+/*	$NetBSD: battery.c,v 1.10.6.1 2008/12/13 01:13:17 haad Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.10 2008/04/29 06:53:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: battery.c,v 1.10.6.1 2008/12/13 01:13:17 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,11 +244,11 @@ battery_setup_envsys(struct battery_softc *sc)
 	INITDATA(BAT_AC_PRESENT, ENVSYS_INDICATOR, "AC present");
 	INITDATA(BAT_PRESENT, ENVSYS_INDICATOR, "Battery present");
 	INITDATA(BAT_VOLTAGE, ENVSYS_SVOLTS_DC, "Battery voltage");
-	INITDATA(BAT_CHARGE, ENVSYS_INTEGER, "Battery charge");
-	INITDATA(BAT_MAX_CHARGE, ENVSYS_INTEGER, "Battery design cap");
+	INITDATA(BAT_CHARGE, ENVSYS_SAMPHOUR, "Battery charge");
+	INITDATA(BAT_MAX_CHARGE, ENVSYS_SAMPHOUR, "Battery design cap");
 	INITDATA(BAT_CURRENT, ENVSYS_SAMPS, "Battery current");
 	INITDATA(BAT_TEMPERATURE, ENVSYS_STEMP, "Battery temperature");
-	INITDATA(BAT_CHARGING, ENVSYS_INDICATOR, "Battery charging");
+	INITDATA(BAT_CHARGING, ENVSYS_BATTERY_CHARGE, "Battery charging");
 	INITDATA(BAT_FULL, ENVSYS_INDICATOR, "Battery full");
 #undef INITDATA
 

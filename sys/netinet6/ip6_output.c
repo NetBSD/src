@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.129.8.1 2008/10/19 22:17:52 haad Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.129.8.2 2008/12/13 01:15:27 haad Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.129.8.1 2008/10/19 22:17:52 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.129.8.2 2008/12/13 01:15:27 haad Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2154,6 +2154,11 @@ ip6_pcbopts(struct ip6_pktopts **pktopt, struct socket *so,
 		priv = 1;
 
 	m = sockopt_getmbuf(sopt);
+	if (m == NULL) {
+		free(opt, M_IP6OPT);
+		return (ENOBUFS);
+	}
+
 	error = ip6_setpktopts(m, opt, NULL, priv, so->so_proto->pr_protocol);
 	m_freem(m);
 	if (error != 0) {

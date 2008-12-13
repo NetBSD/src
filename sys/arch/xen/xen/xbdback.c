@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.32.10.1 2008/10/19 22:16:13 haad Exp $      */
+/*      $NetBSD: xbdback.c,v 1.32.10.2 2008/12/13 01:13:43 haad Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.32.10.1 2008/10/19 22:16:13 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.32.10.2 2008/12/13 01:13:43 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.32.10.1 2008/10/19 22:16:13 haad Exp $
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/workqueue.h>
+#include <sys/buf.h>
 
 #include <machine/pmap.h>
 #include <xen/hypervisor.h>
@@ -271,7 +272,7 @@ xbdback_init(void)
 	ctrl_msg_t cmsg;
 	blkif_be_driver_status_t st;
 
-	if ( !(xen_start_info.flags & SIF_INITDOMAIN) &&
+	if ( !xendomain_is_dom0() &&
 	     !(xen_start_info.flags & SIF_BLK_BE_DOMAIN) )
 		return;
 

@@ -1,0 +1,8 @@
+#	$NetBSD: TISDP2420_INSTALL,v 1.1.8.2 2008/12/13 01:13:07 haad Exp $
+#
+#	TISDP2420_INSTALL -- TISDP2420 kernel with installation-sized
+#	ramdisk
+#
+
+include "arch/evbarm/conf/TISDP2420"
+include "arch/evbarm/conf/INSTALL"

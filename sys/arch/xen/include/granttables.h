@@ -1,4 +1,4 @@
-/* $NetBSD: granttables.h,v 1.4 2007/11/22 16:16:56 bouyer Exp $ */
+/* $NetBSD: granttables.h,v 1.4.24.1 2008/12/13 01:13:39 haad Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -30,6 +30,7 @@
  */
 
 /* Interface to the Xen Grant tables */
+#include <xen/xen3-public/xen.h>
 #include <xen/xen3-public/grant_table.h>
 
 void xengnt_init(void);
@@ -54,6 +55,6 @@ paddr_t xengnt_revoke_transfer(grant_ref_t);
 
 /*
  * Query grant status (i.e. if remote has a valid mapping to this grant).
- * Returns GTF_reading | GTF_writing.
+ * Returns GTF_reading | GTF_writing (0 if remote does not use it anymore).
  */
 int xengnt_status(grant_ref_t);

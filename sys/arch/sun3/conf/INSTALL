@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.41.26.1 2008/10/19 22:16:01 haad Exp $
+# $NetBSD: INSTALL,v 1.41.26.2 2008/12/13 01:13:33 haad Exp $
 #
 # INSTALL - Installation kernel for the Sun3
 #
@@ -26,7 +26,6 @@ maxusers	2
 #options 	SYSVSEM		# System V semaphores
 #options 	SYSVSHM		# System V shared memory
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
-#options 	LKM		# loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)

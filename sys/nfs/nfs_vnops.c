@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.266.16.1 2008/10/19 22:17:59 haad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.266.16.2 2008/12/13 01:15:28 haad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,10 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.16.1 2008/10/19 22:17:59 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266.16.2 2008/12/13 01:15:28 haad Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>

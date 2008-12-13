@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.44.4.1 2008/10/19 22:15:48 haad Exp $
+# $NetBSD: XEN2_DOM0,v 1.44.4.2 2008/12/13 01:13:13 haad Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -44,7 +44,6 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=2048	# 2048 pages is the default
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
-options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -113,7 +112,6 @@ file-system 	TMPFS		# Efficient memory file-system
 # File system options
 options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
-options 	SOFTDEP		# FFS soft updates support.
 options		WAPBL		# File system journaling support - Experimental
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
@@ -209,7 +207,7 @@ pci*		at hypervisor? bus ?
 pci*		at pchb? bus ?
 
 # PCI bridges
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
+ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ timecounter,
 					# watchdog and SpeedStep support
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -220,7 +218,7 @@ puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 agp* 	at pchb?
 
 # ISA bus support
-#isa0	at ichlpcib?
+isa0	at ichlpcib?
 isa0	at pcib?
 isa0	at hypervisor?
 

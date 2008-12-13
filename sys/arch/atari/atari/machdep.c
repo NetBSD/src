@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150 2008/07/02 17:28:55 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.2.1 2008/12/13 01:13:03 haad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150 2008/07/02 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.2.1 2008/12/13 01:13:03 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -198,15 +198,15 @@ consinit(void)
 	 */
 	cninit();
 
-#if NKSYMS || defined(DDB) || defined(LKM)
+#if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern int end;
 		extern int *esym;
 
 #ifndef __ELF__
-		ksyms_init(*(int *)&end, ((int *)&end) + 1, esym);
+		ksyms_addsyms_elf(*(int *)&end, ((int *)&end) + 1, esym);
 #else
-		ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		ksyms_addsyms_elf((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 			(void *)&end, esym);
 #endif
 	}
@@ -427,6 +427,8 @@ cpu_reboot(int howto, char *bootstr)
 	 */
 	doshutdownhooks();
 
+	pmf_system_shutdown(boothowto);
+
 	splhigh();			/* extreme priority */
 	if(howto & RB_HALT) {
 		printf("halted\n\n");
@@ -573,7 +575,7 @@ dumpsys(void)
 		 */
 		n = nbytes - i;
 		if (n && (n % (1024*1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
+			printf_nolog("%d ", n / (1024 * 1024));
 
 		/*
 		 * Limit transfer to BYTES_PER_DUMP

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.21 2008/01/23 19:46:43 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.21.16.1 2008/12/13 01:12:59 haad Exp $	*/
 
 /*
  *
@@ -69,6 +69,8 @@
 
 #ifndef	_AMD64_PMAP_H_
 #define	_AMD64_PMAP_H_
+
+#ifdef __x86_64__
 
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
@@ -340,5 +342,11 @@ pmap_pte_flush(void)
 
 void pmap_prealloc_lowmem_ptps(void);
 void pmap_changeprot_local(vaddr_t, vm_prot_t);
+
+#else	/*	__x86_64__	*/
+
+#include <i386/pmap.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif	/* _AMD64_PMAP_H_ */

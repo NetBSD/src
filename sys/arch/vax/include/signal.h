@@ -1,4 +1,4 @@
-/*      $NetBSD: signal.h,v 1.13 2005/12/11 12:19:34 christos Exp $   */
+/*      $NetBSD: signal.h,v 1.13.84.1 2008/12/13 01:13:33 haad Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -73,13 +73,6 @@ struct sigcontext {
 
 #ifdef _KERNEL
 void sendsig_context(int, const sigset_t *, u_long);
-
-#ifdef COMPAT_16
-#define	SIGTRAMP_VALID(vers)	((vers) <= 3 && (vers) != 1)
-#else
-#define	SIGTRAMP_VALID(vers)	((vers) == 3)
-#endif
-
 #endif	/* _KERNEL */
 
 #endif	/* _NETBSD_SOURCE */

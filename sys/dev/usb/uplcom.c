@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.65.4.1 2008/10/19 22:17:10 haad Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.65.4.2 2008/12/13 01:14:53 haad Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.65.4.1 2008/10/19 22:17:10 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.65.4.2 2008/12/13 01:14:53 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,6 +189,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303X },
 	/* Willcom WS002IN (DD) */
 	{ USB_VENDOR_NETINDEX, USB_PRODUCT_NETINDEX_WS002IN },
+	/* COREGA CG-USBRS232R */
+	{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_CGUSBRS232R },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 

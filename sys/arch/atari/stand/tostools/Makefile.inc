@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2001/10/11 07:07:41 leo Exp $
+#	$NetBSD: Makefile.inc,v 1.2.132.1 2008/12/13 01:13:04 haad Exp $
 
 #
 # Configurable stuff.
@@ -61,4 +61,5 @@ ${OBJS}: ${HEADERS}
 	${CC} ${CFLAGS} ${CPPFLAGS} -o $@ -c $<
 
 .s.o:
-	${CPP} ${CPPFLAGS} $< | sed -e 's/%//g' | ${AS} ${ASFLAGS} -o $@
+	${CPP} ${CPPFLAGS} $< | ${TOOL_SED} -e 's/%//g' \
+		| ${AS} ${ASFLAGS} -o $@

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.19.8.1 2008/10/19 22:16:16 haad Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.19.8.2 2008/12/13 01:13:57 haad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.19.8.1 2008/10/19 22:16:16 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.19.8.2 2008/12/13 01:13:57 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.19.8.1 2008/10/19 22:16:16 haad E
 #include <compat/linux/common/linux_misc.h>
 #include <compat/linux/common/linux_oldolduname.h>
 #include <compat/linux/common/linux_sched.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
@@ -149,12 +151,6 @@ linux32_sys_time(struct lwp *l, const struct linux32_sys_time_args *uap, registe
         return 0;
 }
 
-
-static inline linux32_clock_t
-timeval_to_clock_t(struct timeval *tv)
-{
-	return tv->tv_sec * hz + tv->tv_usec / (1000000 / hz);
-}
 
 #define	CONVTCK(r)	(r.tv_sec * hz + r.tv_usec / (1000000 / hz))
 
@@ -252,6 +248,32 @@ linux32_to_native_timespec(struct timespec *ntp, struct linux32_timespec *ltp)
 {
 	ntp->tv_sec = ltp->tv_sec;
 	ntp->tv_nsec = ltp->tv_nsec;
+}
+
+int
+linux32_sys_nanosleep(struct lwp *l,
+    const struct linux32_sys_nanosleep_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(linux32_timespecp_t) rqtp;
+		syscallarg(linux32_timespecp_t) rmtp;
+	} */
+	struct timespec rqts, rmts;
+	struct linux32_timespec lrqts, lrmts;
+	int error, error1;
+
+	error = copyin(SCARG_P32(uap, rqtp), &lrqts, sizeof(lrqts));
+	if (error != 0)
+		return error;
+	linux32_to_native_timespec(&rqts, &lrqts);
+
+	error = nanosleep1(l, &rqts, SCARG_P32(uap, rmtp) ? &rmts : NULL);
+	if (SCARG_P32(uap, rmtp) == NULL || (error != 0 && error != EINTR))
+		return error;
+
+	native_to_linux32_timespec(&lrmts, &rmts);
+	error1 = copyout(&lrmts, SCARG_P32(uap, rmtp), sizeof(lrmts));
+	return error1 ? error1 : error;
 }
 
 int

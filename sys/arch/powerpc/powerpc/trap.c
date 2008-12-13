@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.126.4.1 2008/10/19 22:15:54 haad Exp $	*/
+/*	$NetBSD: trap.c,v 1.126.4.2 2008/12/13 01:13:24 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126.4.1 2008/10/19 22:15:54 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.126.4.2 2008/12/13 01:13:24 haad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -906,5 +906,14 @@ startlwp(void *arg)
 	}
 #endif
 	pool_put(&lwp_uc_pool, uc);
+	userret(l, frame);
+}
+
+void
+upcallret(struct lwp *l)
+{
+        struct trapframe *frame = trapframe(l);
+
+	KERNEL_UNLOCK_LAST(l);
 	userret(l, frame);
 }

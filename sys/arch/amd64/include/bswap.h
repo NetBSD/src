@@ -1,13 +1,21 @@
-/*      $NetBSD: bswap.h,v 1.2 2006/01/31 07:49:18 dsl Exp $      */
+/*      $NetBSD: bswap.h,v 1.2.82.1 2008/12/13 01:12:59 haad Exp $      */
 
 /* Written by Manuel Bouyer. Public domain */
 
-#ifndef _MACHINE_BSWAP_H_
-#define	_MACHINE_BSWAP_H_
+#ifndef _X86_64_BSWAP_H_
+#define	_X86_64_BSWAP_H_
+
+#ifdef __x86_64__
 
 #include <machine/byte_swap.h>
 
 #define __BSWAP_RENAME
 #include <sys/bswap.h>
 
-#endif /* !_MACHINE_BSWAP_H_ */
+#else	/*	__x86_64__	*/
+
+#include <i386/bswap.h>
+
+#endif	/*	__x86_64__	*/
+
+#endif /* !_X86_64_BSWAP_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcarm,v 1.8 2007/12/31 15:31:54 ad Exp $
+#	$NetBSD: majors.hpcarm,v 1.8.16.1 2008/12/13 01:13:11 haad Exp $
 #
 # Device majors for hpcarm
 #
@@ -37,7 +37,6 @@ device-major	ses		char 30			ses
 device-major	bpf		char 32			bpfilter
 device-major	tun		char 33			tun
 device-major	filedesc	char 34
-device-major	lkm		char 35			lkm
 device-major	audio		char 36			audio
 device-major	vidcconsole	char 37			vidcconsole
 

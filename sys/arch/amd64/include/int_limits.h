@@ -1,4 +1,4 @@
-/*	$NetBSD: int_limits.h,v 1.6 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: int_limits.h,v 1.6.6.1 2008/12/13 01:12:59 haad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _AMD64_INT_LIMITS_H_
 #define _AMD64_INT_LIMITS_H_
+
+#ifdef __x86_64__
 
 /*
  * 7.18.2 Limits of specified-width integer types
@@ -123,5 +125,11 @@
 
 /* limit of size_t */
 #define	SIZE_MAX	0xffffffffffffffffUL		/* size_t	  */
+
+#else	/*	__x86_64__	*/
+
+#include <i386/int_limits.h>
+
+#endif	/*	__x86_64__	*/
 
 #endif /* !_AMD64_INT_LIMITS_H_ */

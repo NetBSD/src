@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.111.4.1 2008/10/19 22:15:53 haad Exp $
+# $NetBSD: GENERIC,v 1.111.4.2 2008/12/13 01:13:19 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.111.4.1 $"
+#ident 		"GENERIC-$Revision: 1.111.4.2 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
@@ -39,7 +39,6 @@ options 	SYSVSHM		# System V shared memory
 options 	P1003_1B_SEMAPHORE	# POSIX semaphore support
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
-options 	LKM		# loadable kernel modules
 options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -118,7 +117,6 @@ file-system	PTYFS		# /dev/pts/N support
 
 options 	NFSSERVER	# nfs server support
 #options 	QUOTA		# FFS quotas
-#options 	SOFTDEP		# FFS soft updates support.
 options 	WAPBL		# File system journaling support - Experimental
 #options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

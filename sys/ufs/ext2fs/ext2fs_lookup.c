@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.55 2007/12/08 19:29:53 pooka Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.55.22.1 2008/12/13 01:15:40 haad Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.55 2007/12/08 19:29:53 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.55.22.1 2008/12/13 01:15:40 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -603,8 +603,8 @@ found:
 		 */
 		if ((dp->i_e2fs_mode & ISVTX) &&
 		    kauth_authorize_generic(cred, KAUTH_GENERIC_ISSUSER, NULL) &&
-		    kauth_cred_geteuid(cred) != dp->i_e2fs_uid &&
-		    VTOI(tdp)->i_e2fs_uid != kauth_cred_geteuid(cred)) {
+		    kauth_cred_geteuid(cred) != dp->i_uid &&
+		    VTOI(tdp)->i_uid != kauth_cred_geteuid(cred)) {
 			vput(tdp);
 			return (EPERM);
 		}
@@ -768,7 +768,7 @@ ext2fs_direnter(struct inode *ip, struct vnode *dvp, struct componentname *cnp)
 		newdir.e2d_type = inot2ext2dt(IFTODT(ip->i_e2fs_mode));
 	} else {
 		newdir.e2d_type = 0;
-	};
+	}
 	memcpy(newdir.e2d_name, cnp->cn_nameptr, (unsigned)cnp->cn_namelen + 1);
 	newentrysize = EXT2FS_DIRSIZ(cnp->cn_namelen);
 	if (dp->i_count == 0) {

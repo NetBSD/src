@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.58 2008/04/16 20:50:27 cegger Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.58.10.1 2008/12/13 01:13:43 haad Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.58 2008/04/16 20:50:27 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.58.10.1 2008/12/13 01:13:43 haad Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -242,7 +242,7 @@ xennet_scan(device_t self, struct xennet_attach_args *xneta,
 	ctrl_msg_t cmsg;
 	netif_fe_driver_status_t st;
 
-	if ((xen_start_info.flags & SIF_INITDOMAIN) ||
+	if (xendomain_is_dom0() ||
 	    (xen_start_info.flags & SIF_NET_BE_DOMAIN))
 		return 0;
 
@@ -1287,6 +1287,7 @@ xennet_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 int
 xennet_bootstatic_callback(struct nfs_diskless *nd)
 {
+	int flags = 0;
 	struct ifnet *ifp = nd->nd_ifp;
 	struct xennet_softc *sc = ifp->if_softc;
 	union xen_cmdline_parseinfo xcp;
@@ -1296,6 +1297,12 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	xcp.xcp_netinfo.xi_ifno = sc->sc_ifno;
 	xcp.xcp_netinfo.xi_root = nd->nd_root.ndm_host;
 	xen_parse_cmdline(XEN_PARSE_NETINFO, &xcp);
+
+	if (xcp.xcp_netinfo.xi_root[0] != '\0') {
+		flags |= NFS_BOOT_HAS_SERVER;
+		if (strchr(xcp.xcp_netinfo.xi_root, ':') != NULL)
+			flags |= NFS_BOOT_HAS_ROOTPATH;
+	}
 
 	nd->nd_myip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[0]);
 	nd->nd_gwip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[2]);
@@ -1307,12 +1314,16 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
 
-	if (nd->nd_myip.s_addr == 0)
-		return NFS_BOOTSTATIC_NOSTATIC;
-	else
-		return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
-		    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|
-		    NFS_BOOTSTATIC_HAS_SERVER);
+	if (nd->nd_myip.s_addr)
+		flags |= NFS_BOOT_HAS_MYIP;
+	if (nd->nd_gwip.s_addr)
+		flags |= NFS_BOOT_HAS_GWIP;
+	if (nd->nd_mask.s_addr)
+		flags |= NFS_BOOT_HAS_MASK;
+	if (sin->sin_addr.s_addr)
+		flags |= NFS_BOOT_HAS_SERVADDR;
+
+	return flags;
 }
 #endif /* defined(NFS_BOOT_BOOTSTATIC) */
 

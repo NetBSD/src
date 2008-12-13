@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.49.4.1 2008/10/19 22:15:43 haad Exp $
+# $NetBSD: GENERIC,v 1.49.4.2 2008/12/13 01:13:05 haad Exp $
 #
 # GENERIC machine description file
 # 
@@ -59,7 +59,6 @@ options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	KTRACE		# system call tracing support
 #options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
-#options 	LKM		# Loadable kernel modules
 options 	COMPAT_SUNOS
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 

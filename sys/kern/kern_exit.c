@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.211.2.1 2008/10/19 22:17:27 haad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.211.2.2 2008/12/13 01:15:08 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.211.2.1 2008/10/19 22:17:27 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.211.2.2 2008/12/13 01:15:08 haad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.211.2.1 2008/10/19 22:17:27 haad Exp
 #include "opt_sysv.h"
 
 #include <sys/param.h>
-#include <sys/aio.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
@@ -260,9 +259,6 @@ exit1(struct lwp *l, int rv)
 	if (p->p_lwpctl != NULL)
 		lwp_ctl_exit();
 
-	/* Destroy all AIO works */
-	aio_exit(p, p->p_aio);
-
 	/*
 	 * Drain all remaining references that procfs, ptrace and others may
 	 * have on the process.
@@ -332,7 +328,7 @@ exit1(struct lwp *l, int rv)
 	}
 
 	/*
-	 * If parent is waiting for us to exit or exec, P_PPWAIT is set; we
+	 * If parent is waiting for us to exit or exec, PL_PPWAIT is set; we
 	 * wake up the parent early to avoid deadlock.  We can do this once
 	 * the VM resources are released.
 	 */
@@ -595,33 +591,34 @@ exit_lwps(struct lwp *l)
 	p = l->l_proc;
 	KASSERT(mutex_owned(p->p_lock));
 
-#if 0
+#ifdef KERN_SA
 	if (p->p_sa != NULL) {
+		struct sadata_vp *vp;
 		SLIST_FOREACH(vp, &p->p_sa->sa_vps, savp_next) {
 			/*
-			 * Make SA-cached LWPs normal process runnable
-			 * LWPs so that they'll also self-destruct.
+			 * Make SA-cached LWPs normal process interruptable
+			 * so that the exit code can wake them. Locking
+			 * savp_mutex locks all the lwps on this vp that
+			 * we need to adjust.
 			 */
+			mutex_enter(&vp->savp_mutex);
 			DPRINTF(("exit_lwps: Making cached LWPs of %d on "
-			    "VP %d runnable: ", p->p_pid, vp->savp_id));
-			while ((l2 = sa_getcachelwp(p, vp)) != 0) {
-				lwp_lock(l2);
-				l2->l_flag = (l2->l_flag & ~LW_SA) | LW_WEXIT;
-				l2->l_priority = MAXPRI_USER; /* XXX WRS needs thought */
-
-				/* setrunnable() will release the mutex. */
-				setrunnable(l2);
+			    "VP %d interruptable: ", p->p_pid, vp->savp_id));
+			TAILQ_FOREACH(l2, &vp->savp_lwpcache, l_sleepchain) {
+				l2->l_flag |= LW_SINTR;
 				DPRINTF(("%d ", l2->l_lid));
 			}
 			DPRINTF(("\n"));
 
-			/*
-			 * Clear wokenq, the LWPs on the queue will
-			 * run below. Workes as these threads are still
-			 * on the p_lwps list (even though they are no longer
-			 * counted).
-			 */
-			TAILQ_INIT(&vp->savp_woken);
+			DPRINTF(("exit_lwps: Making unblocking LWPs of %d on "
+			    "VP %d interruptable: ", p->p_pid, vp->savp_id));
+			TAILQ_FOREACH(l2, &vp->savp_woken, l_sleepchain) {
+				vp->savp_woken_count--;
+				l2->l_flag |= LW_SINTR;
+				DPRINTF(("%d ", l2->l_lid));
+			}
+			DPRINTF(("\n"));
+			mutex_exit(&vp->savp_mutex);
 		}
 	}
 #endif

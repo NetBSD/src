@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.254.6.1 2008/10/19 22:16:27 haad Exp $ */
+/*	$NetBSD: wdc.c,v 1.254.6.2 2008/12/13 01:14:15 haad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.254.6.1 2008/10/19 22:16:27 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.254.6.2 2008/12/13 01:14:15 haad Exp $");
 
 #include "opt_ata.h"
 
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.254.6.1 2008/10/19 22:16:27 haad Exp $");
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
-#include <sys/cpu.h>
 
 #include <sys/intr.h>
 #include <sys/bus.h>
@@ -281,7 +280,7 @@ wdc_sataprobe(struct ata_channel *chp)
 void
 wdc_drvprobe(struct ata_channel *chp)
 {
-	struct ataparams params;
+	struct ataparams params; /* XXX: large struct */
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
@@ -1258,7 +1257,8 @@ wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int flags)
 	else {
 		error = __wdcwait(chp, mask, bits, WDCDELAY_POLL);
 		if (error != 0) {
-			if (!cpu_intr_p()) {
+			if ((chp->ch_flags & ATACH_TH_RUN) ||
+			    (flags & AT_WAIT)) {
 				/*
 				 * we're running in the channel thread
 				 * or some userland thread context
@@ -1273,7 +1273,7 @@ wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int flags)
 				}
 			} else {
 				/*
-				 * we're in interrupt context,
+				 * we're probably in interrupt context,
 				 * ask the thread to come back here
 				 */
 #ifdef DIAGNOSTIC

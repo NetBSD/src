@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.70 2008/04/12 06:37:51 tsutsui Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.70.10.1 2008/12/13 01:14:14 haad Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70 2008/04/12 06:37:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.70.10.1 2008/12/13 01:14:14 haad Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -1188,27 +1188,29 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFADDR:
+	case SIOCINITIFADDR:
 		if ((error = mb86960_enable(sc)) != 0)
 			break;
 		ifp->if_flags |= IFF_UP;
 
+		mb86960_init(sc);
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			mb86960_init(sc);
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
-			mb86960_init(sc);
 			break;
 		}
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
+			break;
+		/* XXX re-use ether_ioctl() */
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
@@ -1216,8 +1218,8 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			mb86960_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 			mb86960_disable(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
@@ -1225,12 +1227,16 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			if ((error = mb86960_enable(sc)) != 0)
 				break;
 			mb86960_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			break;
+		case IFF_UP|IFF_RUNNING:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
 			mb86960_setmode(sc);
+			break;
+		case 0:
+			break;
 		}
 #if FE_DEBUG >= 1
 		/* "ifconfig fe0 debug" to print register dump. */
@@ -1267,7 +1273,7 @@ mb86960_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
 

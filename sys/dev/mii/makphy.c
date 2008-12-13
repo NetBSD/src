@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.28 2008/05/04 17:06:09 xtraeme Exp $	*/
+/*	$NetBSD: makphy.c,v 1.28.6.1 2008/12/13 01:14:27 haad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.28 2008/05/04 17:06:09 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.28.6.1 2008/12/13 01:14:27 haad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,9 +161,6 @@ makphyattach(device_t parent, device_t self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static void

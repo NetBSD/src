@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.76 2008/05/11 20:13:30 dyoung Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.76.4.1 2008/12/13 01:15:25 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.76 2008/05/11 20:13:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.76.4.1 2008/12/13 01:15:25 haad Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -521,7 +521,8 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 
 #if NCARP > 0
 	if (ifp0 != ifp && ifp0->if_type == IFT_CARP) {
-		if_set_sadl(ifp0, fh->fddi_shost, sizeof(fh->fddi_shost));
+		if_set_sadl(ifp0, fh->fddi_shost, sizeof(fh->fddi_shost),
+		    false);
 	}
 
 	if (ifp != ifp0)
@@ -786,7 +787,7 @@ fddi_ifattach(struct ifnet *ifp, void *lla)
 		max_linkhdr = ALIGN(ifp->if_hdrlen);
 
 	LIST_INIT(&ec->ec_multiaddrs);
-	if_set_sadl(ifp, lla, 6);
+	if_set_sadl(ifp, lla, 6, true);
 
 	ifp->if_broadcastaddr = fddibroadcastaddr;
 #if NBPFILTER > 0

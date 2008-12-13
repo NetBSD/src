@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.351.2.1 2008/10/19 22:17:29 haad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.351.2.2 2008/12/13 01:15:09 haad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.351.2.1 2008/10/19 22:17:29 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.351.2.2 2008/12/13 01:15:09 haad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -137,9 +137,6 @@ const int	vttoif_tab[9] = {
 
 int doforce = 1;		/* 1 => permit forcible unmounting */
 int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
-
-extern int dovfsusermount;	/* 1 => permit any user to mount filesystems */
-extern int vfs_magiclinks;	/* 1 => expand "magic" symlinks */
 
 static vnodelst_t vnode_free_list = TAILQ_HEAD_INITIALIZER(vnode_free_list);
 static vnodelst_t vnode_hold_list = TAILQ_HEAD_INITIALIZER(vnode_hold_list);
@@ -2025,7 +2022,7 @@ vrevoke(vnode_t *vp)
 /*
  * sysctl helper routine to return list of supported fstypes
  */
-static int
+int
 sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 {
 	char bf[sizeof(((struct statvfs *)NULL)->f_fstypename)];
@@ -2079,43 +2076,6 @@ sysctl_vfs_generic_fstypes(SYSCTLFN_ARGS)
 	sysctl_relock();
 	*oldlenp = needed;
 	return (error);
-}
-
-/*
- * Top level filesystem related information gathering.
- */
-SYSCTL_SETUP(sysctl_vfs_setup, "sysctl vfs subtree setup")
-{
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "vfs", NULL,
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "generic",
-		       SYSCTL_DESCR("Non-specific vfs related information"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, VFS_GENERIC, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "usermount",
-		       SYSCTL_DESCR("Whether unprivileged users may mount "
-				    "filesystems"),
-		       NULL, 0, &dovfsusermount, 0,
-		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRING, "fstypes",
-		       SYSCTL_DESCR("List of file systems present"),
-		       sysctl_vfs_generic_fstypes, 0, NULL, 0,
-		       CTL_VFS, VFS_GENERIC, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "magiclinks",
-		       SYSCTL_DESCR("Whether \"magic\" symlinks are expanded"),
-		       NULL, 0, &vfs_magiclinks, 0,
-		       CTL_VFS, VFS_GENERIC, VFS_MAGICLINKS, CTL_EOL);
 }
 
 

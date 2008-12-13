@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.158.10.1 2008/10/19 22:16:39 haad Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.158.10.2 2008/12/13 01:14:36 haad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.158.10.1 2008/10/19 22:16:39 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.158.10.2 2008/12/13 01:14:36 haad Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1092,7 +1092,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 		}
 	} else if (sc->sc_type >= WM_T_82571) {
 		sc->sc_flags |= WM_F_PCIE;
-		if ((sc->sc_type != WM_T_ICH8) || (sc->sc_type != WM_T_ICH9))
+		if ((sc->sc_type != WM_T_ICH8) && (sc->sc_type != WM_T_ICH9))
 			sc->sc_flags |= WM_F_EEPROM_SEMAPHORE;
 		aprint_verbose_dev(sc->sc_dev, "PCI-Express bus\n");
 	} else {

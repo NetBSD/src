@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.34.2.1 2008/10/19 22:16:00 haad Exp $	*/
+/*	$NetBSD: ffb.c,v 1.34.2.2 2008/12/13 01:13:29 haad Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.34.2.1 2008/10/19 22:16:00 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.34.2.2 2008/12/13 01:13:29 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -624,7 +624,8 @@ ffbfb_unblank(struct device *dev)
 		redraw = 1;
 	}
 	
-	ffb_blank((struct ffb_softc*)dev, WSDISPLAYIO_SVIDEO, &on);
+	ffb_blank(sc, WSDISPLAYIO_SVIDEO, &on);
+#if 0
 	if ((sc->vd.active != &ffb_console_screen) &&
 	    (ffb_console_screen.scr_flags & VCONS_SCREEN_IS_STATIC)) {
 		/* 
@@ -639,7 +640,7 @@ ffbfb_unblank(struct device *dev)
 		ms = sc->vd.active;
 		redraw = 1;
 	}
-	
+#endif	
 	if (redraw) {
 		vcons_redraw_screen(ms);
 	}
@@ -789,6 +790,9 @@ ffb_cursor(void *cookie, int on, int row, int col)
 				/* remove cursor */
 				coffset = ri->ri_ccol + (ri->ri_crow *
 				    ri->ri_cols);
+#ifdef WSDISPLAY_SCROLLSUPPORT
+				coffset += scr->scr_offset_to_zero;
+#endif
 				ffb_ras_wait(sc);
 				sc->putchar(cookie, ri->ri_crow, 
 				    ri->ri_ccol, scr->scr_chars[coffset], 
@@ -803,6 +807,9 @@ ffb_cursor(void *cookie, int on, int row, int col)
 				x = ri->ri_ccol * wi + ri->ri_xorigin;
 				y = ri->ri_crow * he + ri->ri_yorigin;
 				coffset = col + (row * ri->ri_cols);
+#ifdef WSDISPLAY_SCROLLSUPPORT
+				coffset += scr->scr_offset_to_zero;
+#endif
 				attr = scr->scr_attrs[coffset];
 #ifdef FFB_CURSOR_SWAP_COLOURS
 				revattr=((attr >> 8 ) & 0x000f0000) | ((attr & 

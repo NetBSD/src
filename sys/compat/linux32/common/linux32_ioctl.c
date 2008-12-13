@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.11 2008/06/19 16:09:25 christos Exp $ */
+/*	$NetBSD: linux32_ioctl.c,v 1.11.2.1 2008/12/13 01:13:57 haad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.11 2008/06/19 16:09:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.11.2.1 2008/12/13 01:13:57 haad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.11 2008/06/19 16:09:25 christos 
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>

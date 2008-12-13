@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.150.24.1 2008/10/19 22:15:52 haad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.150.24.2 2008/12/13 01:13:17 haad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.24.1 2008/10/19 22:15:52 haad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.24.2 2008/12/13 01:13:17 haad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.150.24.1 2008/10/19 22:15:52 haad Exp 
 #include <sys/boot_flag.h>
 #include <sys/ksyms.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -183,6 +184,8 @@ cpu_reboot(int howto, char *what)
 		dumpsys();
 
 	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
 
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		delay(1000000);
