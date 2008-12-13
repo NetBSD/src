@@ -1,4 +1,4 @@
-/*	$NetBSD: schizovar.h,v 1.2 2008/12/10 05:56:22 mrg Exp $	*/
+/*	$NetBSD: schizovar.h,v 1.3 2008/12/13 08:07:23 mrg Exp $	*/
 /*	$OpenBSD: schizovar.h,v 1.10 2007/01/14 16:19:49 kettenis Exp $	*/
 
 /*
@@ -60,6 +60,7 @@ struct schizo_softc {
 	bus_addr_t sc_ctrl;
 	bus_space_handle_t sc_ctrlh;
 	bus_space_handle_t sc_confh;
+	struct upa_reg sc_reg0;
 
 	int sc_busa;
 	int sc_tomatillo;

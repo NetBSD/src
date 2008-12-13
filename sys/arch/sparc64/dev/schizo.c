@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.4 2008/12/13 04:56:32 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.5 2008/12/13 08:07:23 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 #define SDB_INTR        0x04
 #define SDB_INTMAP      0x08
 #define SDB_CONF        0x10
-int schizo_debug = 0x0f;
+int schizo_debug = 0x4;
 #define DPRINTF(l, s)   do { if (schizo_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -72,7 +72,7 @@ static	int	schizo_print(void *aux, const char *p);
 CFATTACH_DECL(schizo, sizeof(struct schizo_softc),
     schizo_match, schizo_attach, NULL, NULL);
 
-void schizo_init(struct schizo_softc *, int, struct mainbus_attach_args *);
+void schizo_init(struct schizo_softc *);
 void schizo_init_iommu(struct schizo_softc *, struct schizo_pbm *);
 
 void schizo_set_intr(struct schizo_softc *, struct schizo_pbm *, int,
@@ -137,7 +137,6 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	struct schizo_softc *sc = (struct schizo_softc *)self;
 	struct mainbus_attach_args *ma = aux;
 	uint64_t eccctrl;
-	int busa;
 	char *str;
 
 	printf(": addr %lx ", ma->ma_reg[0].ur_paddr);
@@ -150,11 +149,7 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bustag = ma->ma_bustag;
 	sc->sc_ctrl = ma->ma_reg[1].ur_paddr - 0x10000UL;
 	sc->sc_ign = INTIGN(ma->ma_upaid << INTMAP_IGN_SHIFT);
-
-	if ((ma->ma_reg[0].ur_paddr & 0x00700000) == 0x00600000)
-		busa = 1;
-	else
-		busa = 0;
+	sc->sc_reg0 = ma->ma_reg[0];
 
 	if (bus_space_map(sc->sc_bustag, sc->sc_ctrl,
 	    sizeof(struct schizo_regs), 0,
@@ -170,11 +165,11 @@ schizo_attach(struct device *parent, struct device *self, void *aux)
 		   SCZ_ECCCTRL_CE_INTEN;
 	schizo_write(sc, SCZ_ECCCTRL, eccctrl);
 
-	schizo_init(sc, busa, ma);
+	schizo_init(sc);
 }
 
 void
-schizo_init(struct schizo_softc *sc, int busa, struct mainbus_attach_args *ma)
+schizo_init(struct schizo_softc *sc)
 {
 	struct schizo_pbm *pbm;
 	struct pcibus_attach_args pba;
@@ -186,8 +181,12 @@ schizo_init(struct schizo_softc *sc, int busa, struct mainbus_attach_args *ma)
 		panic("schizo: can't alloc schizo pbm");
 
 	pbm->sp_sc = sc;
-	pbm->sp_bus_a = busa;
 	pbm->sp_regt = sc->sc_bustag;
+
+	if ((sc->sc_reg0.ur_paddr & 0x00700000) == 0x00600000)
+		pbm->sp_bus_a = 1;
+	else
+		pbm->sp_bus_a = 0;
 
 	if (prom_getprop(sc->sc_node, "ranges", sizeof(struct schizo_range),
 	    &pbm->sp_nrange, (void **)&pbm->sp_range))
@@ -485,8 +484,8 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 	if (ih == NULL)
 		return;
 	ih->ih_arg = arg;
-	ih->ih_map = (uint64_t *)mapoff;        // XXX FIXME
-	ih->ih_clr = (uint64_t *)clroff;        // XXX FIXME
+	ih->ih_map = (uint64_t *)sc->sc_reg0.ur_paddr + mapoff;
+	ih->ih_clr = (uint64_t *)sc->sc_reg0.ur_paddr + clroff;
 	ih->ih_fun = handler;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(schizo_pbm_read(pbm, mapoff));
@@ -680,13 +679,19 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	int (*handler)(void *), void *arg, void (*fastvec)(void) /* ignored */)
 {
 	struct schizo_pbm *pbm = t->cookie;
+	struct schizo_softc *sc = pbm->sp_sc;
 	struct intrhand *ih = NULL;
+	u_int64_t mapoff, clroff;
 	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
 	int ino;
-	long vec = INTVEC(ihandle);
+	long vec;
 
 	vec = INTVEC(ihandle);
 	ino = INTINO(vec);
+
+	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
+	if (ih == NULL)
+		return (NULL);
 
 	DPRINTF(SDB_INTR, ("%s: ihandle %d level %d fn %p arg %p\n", __func__,
 	    ihandle, level, handler, arg));
@@ -698,26 +703,20 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 		level = 2;
 	}
 
-#if 0
-	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) == 0) {
-		struct schizo_pbm_regs *pbmreg;
+	DPRINTF(SDB_INTR, ("\n%s: intr %lx: %p\nHunting for IRQ...\n",
+	    __func__, (long)ino, intrlev[ino]));
 
-		pbmreg = bus_space_vaddr(pbm->sp_regt, pbm->sp_regh);
-		intrmapptr = &pbmreg->imap[ino];
-		intrclrptr = &pbmreg->iclr[ino];
-		if (INTIGN(vec) == 0)
-			ino |= (*intrmapptr) & INTMAP_IGN;
-		else
-			ino |= vec & INTMAP_IGN;
-	}
+	mapoff = offsetof(struct schizo_pbm_regs, imap[ino]);
+	clroff = offsetof(struct schizo_pbm_regs, iclr[ino]);
 
-	ih = bus_intr_allocate(t, handler, arg, ino, level, intrmapptr,
-	    intrclrptr, what);
-#endif
-	ih = malloc(sizeof *ih, M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
+	intrmapptr = (uint64_t *)sc->sc_reg0.ur_paddr + mapoff;
+	intrclrptr = (uint64_t *)sc->sc_reg0.ur_paddr + clroff;
+	if (INTIGN(vec) == 0)
+		ino |= schizo_pbm_read(pbm, mapoff) & INTMAP_IGN;
+	else
+		ino |= vec & INTMAP_IGN;
 
+	/* Register the map and clear intr registers */
 	ih->ih_map = intrmapptr;
 	ih->ih_clr = intrclrptr;
 
@@ -726,17 +725,37 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	ih->ih_pil = level;
 	ih->ih_number = ino | pbm->sp_sc->sc_ign;
 
+	DPRINTF(SDB_INTR, (
+	    "; installing handler %p arg %p with ino %u pil %u\n",
+	    handler, arg, (u_int)ino, (u_int)ih->ih_pil));
+
 	intr_establish(ih->ih_pil, level != IPL_VM, ih);
 
-	if (intrmapptr != NULL) {
+	/*
+	 * Enable the interrupt now we have the handler installed.
+	 * Read the current value as we can't change it besides the
+	 * valid bit so so make sure only this bit is changed.
+	 */
+	if (intrmapptr) {
 		u_int64_t imap;
 
-		imap = *intrmapptr;
+		imap = schizo_pbm_read(pbm, mapoff);
+		DPRINTF(SDB_INTR, ("; read intrmap = %016qx",
+			(unsigned long long)imap));
 		imap |= INTMAP_V;
-		*intrmapptr = imap;
-		imap = *intrmapptr;
+		DPRINTF(SDB_INTR, ("; addr of intrmapptr = %p", intrmapptr));
+		DPRINTF(SDB_INTR, ("; writing intrmap = %016qx\n",
+			(unsigned long long)imap));
+		schizo_pbm_write(pbm, mapoff, imap);
+		imap = schizo_pbm_read(pbm, mapoff);
+		DPRINTF(SDB_INTR, ("; reread intrmap = %016qx",
+			(unsigned long long)imap));
 		ih->ih_number |= imap & INTMAP_INR;
 	}
+ 	if (intrclrptr) {
+ 		/* set state to IDLE */
+		schizo_pbm_write(pbm, clroff, 0);
+ 	}
 
 	return (ih);
 }
