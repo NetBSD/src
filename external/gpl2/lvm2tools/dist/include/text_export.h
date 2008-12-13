@@ -1,3 +1,5 @@
+/*	$NetBSD: text_export.h,v 1.1.2.2 2008/12/13 14:39:32 haad Exp $	*/
+
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2005 Red Hat, Inc. All rights reserved.

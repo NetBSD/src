@@ -1,3 +1,5 @@
+/*	$NetBSD: lv_alloc.h,v 1.1.2.2 2008/12/13 14:39:32 haad Exp $	*/
+
 /*
  * Copyright (C) 2003-2004 Sistina Software, Inc. All rights reserved.  
  * Copyright (C) 2004-2006 Red Hat, Inc. All rights reserved.
@@ -48,9 +50,9 @@ struct alloc_handle *allocate_extents(struct volume_group *vg,
                                       uint32_t stripes,
                                       uint32_t mirrors, uint32_t log_count,
 				      uint32_t extents,
-                                      struct list *allocatable_pvs,
+                                      struct dm_list *allocatable_pvs,
 				      alloc_policy_t alloc,
-				      struct list *parallel_areas);
+				      struct dm_list *parallel_areas);
 
 int lv_add_segment(struct alloc_handle *ah,
 		   uint32_t first_area, uint32_t num_areas,
@@ -75,7 +77,7 @@ int lv_add_virtual_segment(struct logical_volume *lv, uint32_t status,
 
 void alloc_destroy(struct alloc_handle *ah);
 
-struct list *build_parallel_areas_from_lv(struct cmd_context *cmd,
+struct dm_list *build_parallel_areas_from_lv(struct cmd_context *cmd,
 					  struct logical_volume *lv);
 
 #endif
