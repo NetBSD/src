@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.154 2008/11/23 17:58:25 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.155 2008/12/13 20:50:14 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -5112,4 +5112,11 @@ usr.bin/fsplit/fsplit.c				1.26 via patch
 	   (2) don't accidentally try to generate files with names
 	       containing '/'.
 	[dholland, ticket #1982]
+
+sys/dev/pci/if_wm.c				1.163
+
+	Fixes nasty EEPROM-trashing bug on ich8 and ich9 chipsets as
+	described in
+	  http://mail-index.netbsd.org/current-users/2008/12/02/msg006435.html
+	[sketch, ticket #1983]
 
