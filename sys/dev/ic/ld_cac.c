@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_cac.c,v 1.22 2008/09/09 12:45:39 tron Exp $	*/
+/*	$NetBSD: ld_cac.c,v 1.22.4.1 2008/12/13 21:45:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.22 2008/09/09 12:45:39 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_cac.c,v 1.22.4.1 2008/12/13 21:45:36 bouyer Exp $");
 
 #include "rnd.h"
 
@@ -216,6 +216,6 @@ ld_cac_done(struct device *dv, void *context, int error)
 		bp->b_resid = 0;
 
 	mutex_exit(sc->sc_mutex);
-	lddone((struct ld_softc *)dv, bp);
+	lddone(&sc->sc_ld, bp);
 	mutex_enter(sc->sc_mutex);
 }
