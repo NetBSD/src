@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.155 2008/12/07 04:50:15 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.156 2008/12/13 14:26:10 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.155 2008/12/07 04:50:15 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.156 2008/12/13 14:26:10 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.155 2008/12/07 04:50:15 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.156 2008/12/13 14:26:10 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -385,7 +385,7 @@ rearg:
 			Var_Append(MAKEFLAGS, "-B", VAR_GLOBAL);
 			break;
 		case 'D':
-			if (argvalue == NULL) goto noarg;
+			if (argvalue == NULL || argvalue[0] == 0) goto noarg;
 			Var_Set(argvalue, "1", VAR_GLOBAL, 0);
 			Var_Append(MAKEFLAGS, "-D", VAR_GLOBAL);
 			Var_Append(MAKEFLAGS, argvalue, VAR_GLOBAL);
