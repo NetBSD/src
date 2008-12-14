@@ -1,4 +1,4 @@
-#	$NetBSD: files.gemini,v 1.9 2008/12/06 05:22:39 cliff Exp $
+#	$NetBSD: files.gemini,v 1.10 2008/12/14 01:57:02 matt Exp $
 #
 # Configuration info for GEMINI CPU support
 # Based on omap/files.omap2
@@ -115,10 +115,10 @@ attach	gemini_pci at obio
 file	arch/arm/gemini/gemini_pci.c		pci needs-flag
 
 # GEMINI MAC controller
-device	geminigmac { port, intr, phy }: mii
+device	geminigmac { port, intr, phy }: mii, mii_bitbang
 attach	geminigmac at obio with geminigmac
 file	arch/arm/gemini/gemini_gmac.c		geminigmac needs-flag
 
-device	gmc: ifnet, mii
+device	gmc: ifnet, ether, arp, mii
 attach	gmc at geminigmac
 file	arch/arm/gemini/if_gmc.c		gmc
