@@ -1,4 +1,4 @@
-/*	$NetBSD: pcio.c,v 1.24 2008/12/13 23:30:54 christos Exp $	 */
+/*	$NetBSD: pcio.c,v 1.25 2008/12/14 18:46:33 christos Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -110,10 +110,10 @@ initio(int dev)
 
 	switch (dev) {
 	case CONSDEV_AUTO:
-		for(i = 0; i < 3; i++) {
+		for (i = 0; i < 3; i++) {
 			iodev = CONSDEV_COM0 + i;
 			btinfo_console.addr = getcomaddr(i);
-			if(!btinfo_console.addr)
+			if (!btinfo_console.addr)
 				break;
 			conputc('0' + i); /* to tell user what happens */
 			cominit_x();
@@ -157,7 +157,7 @@ ok:
 	case CONSDEV_COM3:
 		iodev = dev;
 		btinfo_console.addr = getcomaddr(iodev - CONSDEV_COM0);
-		if(!btinfo_console.addr)
+		if (!btinfo_console.addr)
 			goto nocom;
 		cominit_x();
 		break;
@@ -168,7 +168,7 @@ ok:
 		iodev = dev - CONSDEV_COM0KBD + CONSDEV_COM0;
 		i = iodev - CONSDEV_COM0;
 		btinfo_console.addr = getcomaddr(i);
-		if(!btinfo_console.addr)
+		if (!btinfo_console.addr)
 			goto nocom;
 		conputc('0' + i); /* to tell user what happens */
 		cominit_x();

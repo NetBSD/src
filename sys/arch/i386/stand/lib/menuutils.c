@@ -1,4 +1,4 @@
-/*	$NetBSD: menuutils.c,v 1.2 2008/12/14 17:03:43 christos Exp $	*/
+/*	$NetBSD: menuutils.c,v 1.3 2008/12/14 18:46:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997
@@ -76,8 +76,9 @@ bootmenu(void)
 		/*
 		 * Skip leading whitespace.
 		 */
-		while(*c == ' ') c++;
-		if(*c)
+		while (*c == ' ')
+			c++;
+		if (*c)
 			docommand(c);
 	}
 }
