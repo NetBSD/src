@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.28 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: clock.c,v 1.29 2008/12/14 02:05:54 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.28 2008/06/25 08:14:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2008/12/14 02:05:54 isaki Exp $");
 
 #include "clock.h"
 
@@ -232,9 +232,9 @@ DELAY(mic)
 	 */
 	n = mic/32 + 2;
 	do {
-		while ((mfp.gpip & MFP_GPIP_HSYNC) != 0)
+		while ((mfp_get_gpip() & MFP_GPIP_HSYNC) != 0)
 			__asm("nop");
-		while ((mfp.gpip & MFP_GPIP_HSYNC) == 0)
+		while ((mfp_get_gpip() & MFP_GPIP_HSYNC) == 0)
 			__asm("nop");
 	} while (n--);
 }

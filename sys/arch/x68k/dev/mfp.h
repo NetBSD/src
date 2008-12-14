@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.h,v 1.5 2005/12/11 12:19:37 christos Exp $	*/
+/*	$NetBSD: mfp.h,v 1.6 2008/12/14 02:05:54 isaki Exp $	*/
 
 /*
  *
@@ -205,6 +205,8 @@ struct mfp_softc {
 
 #define mfp_bit_set_gpip(bits) mfp_bit_set(MFP_GPIP, (bits))
 #define mfp_bit_clear_gpip(bits) mfp_bit_clear(MFP_GPIP, (bits))
+#define mfp_bit_set_aer(bits) mfp_bit_set(MFP_AER, (bits))
+#define mfp_bit_clear_aer(bits) mfp_bit_clear(MFP_AER, (bits))
 #define mfp_bit_set_iera(bits) mfp_bit_set(MFP_IERA, (bits))
 #define mfp_bit_clear_iera(bits) mfp_bit_clear(MFP_IERA, (bits))
 #define mfp_bit_set_ierb(bits) mfp_bit_set(MFP_IERB, (bits))
