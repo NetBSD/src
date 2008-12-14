@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1142.2.1 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1142.2.2 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -1149,3 +1149,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Technologies, ported from vendor FreeBSD SDK and integrated
 		with opencrypto by CoyotePoint Systems.
 		[darran 20081030]
+	fxp(4): Add a workaround for hardware ip4csum-tx bug.
+		[tsutsui 20081203]
