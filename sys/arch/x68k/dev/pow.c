@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.18 2008/12/13 02:49:10 isaki Exp $	*/
+/*	$NetBSD: pow.c,v 1.19 2008/12/14 02:05:54 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.18 2008/12/13 02:49:10 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.19 2008/12/14 02:05:54 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +49,12 @@ __KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.18 2008/12/13 02:49:10 isaki Exp $");
 #include <sys/fcntl.h>
 #include <sys/signalvar.h>
 #include <sys/conf.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 
 #include <machine/intr.h>
 #include <machine/powioctl.h>
+#include <x68k/dev/mfp.h>
 #include <x68k/dev/powvar.h>
 #include <x68k/x68k/iodevice.h>
 #include "pow.h"
@@ -84,10 +87,11 @@ powattach(int num)
 	int minor;
 	int sw;
 
-	sw = ~mfp.gpip & 7;
+	sw = ~mfp_get_gpip() & 7;
 
-	mfp.ierb &= ~7;		/* disable mfp power switch interrupt */
-	mfp.aer &= ~7;
+	/* disable mfp power switch interrupt */
+	mfp_bit_clear_ierb(7);
+	mfp_bit_clear_aer(7);
 
 	for (minor = 0; minor < num; minor++) {
 		if (minor == 0)
@@ -98,8 +102,8 @@ powattach(int num)
 		pows[minor].sw = sw;
 
 		if (sw) {
-			mfp.aer |= sw;
-			mfp.ierb |= sw;
+			mfp_bit_set_aer(sw);
+			mfp_bit_set_ierb(sw);
 		}
 
 		printf("pow%d: started by ", minor);
@@ -243,7 +247,7 @@ powioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			if (!(sc->rw & FREAD))
 				return EBADF;
 			bp->pow_switch_boottime = sc->sw;
-			bp->pow_switch_current = ~mfp.gpip & 7;
+			bp->pow_switch_current = ~mfp_get_gpip() & 7;
 			bp->pow_boottime = boottime.tv_sec;
 			bp->pow_bootcount = SRAMINT(0x44);
 			bp->pow_usedtotal = SRAMINT(0x40) * 60;
@@ -298,9 +302,9 @@ powintr(void)
 
 	s = spl6();
 
-	sw = ~mfp.gpip & 6;
-	mfp.aer &= ~sw;
-	mfp.ierb |= sw;
+	sw = ~mfp_get_gpip() & 6;
+	mfp_bit_clear_aer(sw);
+	mfp_bit_set_ierb(sw);
 
 	if (pows[0].status == POW_BUSY && pows[0].pid != 0)
 		softint_schedule(pows[0].softintr_cookie);
@@ -321,6 +325,6 @@ pow_check_switch(void *dummy)
 {
 	extern int power_switch_is_off;
 
-	if ((~mfp.gpip & (POW_FRONTSW | POW_EXTERNALSW)) == 0)
+	if ((~mfp_get_gpip() & (POW_FRONTSW | POW_EXTERNALSW)) == 0)
 		power_switch_is_off = 1;
 }
