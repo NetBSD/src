@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.115 2008/07/31 12:28:28 ws Exp $	*/
+/*	$NetBSD: i82557.c,v 1.115.4.1 2008/12/14 11:52:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.115 2008/07/31 12:28:28 ws Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.115.4.1 2008/12/14 11:52:40 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -386,12 +386,16 @@ fxp_attach(struct fxp_softc *sc)
 		/*
 		 * IFCAP_CSUM_IPv4_Tx seems to have a problem,
 		 * at least, on i82550 rev.12.
-		 * specifically, it doesn't calculate ipv4 checksum correctly
-		 * when sending 20 byte ipv4 header + 1 or 2 byte data.
+		 * specifically, it doesn't set ipv4 checksum properly
+		 * when sending UDP (and probably TCP) packets with
+		 * 20 byte ipv4 header + 1 or 2 byte data,
+		 * though ICMP packets seem working.
 		 * FreeBSD driver has related comments.
+		 * We've added a workaround to handle the bug by padding
+		 * such packets manually.
 		 */
 		ifp->if_capabilities =
-		    IFCAP_CSUM_IPv4_Rx |
+		    IFCAP_CSUM_IPv4_Tx  | IFCAP_CSUM_IPv4_Rx  |
 		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
@@ -800,7 +804,7 @@ fxp_start(struct ifnet *ifp)
 	struct fxp_txdesc *txd;
 	struct fxp_txsoft *txs;
 	bus_dmamap_t dmamap;
-	int error, lasttx, nexttx, opending, seg;
+	int error, lasttx, nexttx, opending, seg, nsegs, len;
 
 	/*
 	 * If we want a re-init, bail out now.
@@ -894,13 +898,30 @@ fxp_start(struct ifnet *ifp)
 
 		/* Initialize the fraglist. */
 		tbdp = txd->txd_tbd;
+		len = m0->m_pkthdr.len;
+		nsegs = dmamap->dm_nsegs;
 		if (sc->sc_flags & FXPF_IPCB)
 			tbdp++;
-		for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
+		for (seg = 0; seg < nsegs; seg++) {
 			tbdp[seg].tb_addr =
 			    htole32(dmamap->dm_segs[seg].ds_addr);
 			tbdp[seg].tb_size =
 			    htole32(dmamap->dm_segs[seg].ds_len);
+		}
+		if (__predict_false(len <= FXP_IP4CSUMTX_PADLEN &&
+		    (csum_flags & M_CSUM_IPv4) != 0)) {
+			/*
+			 * Pad short packets to avoid ip4csum-tx bug.
+			 *
+			 * XXX Should we still consider if such short
+			 *     (36 bytes or less) packets might already
+			 *     occupy FXP_IPCB_NTXSEG (15) fragments here?
+			 */
+			KASSERT(nsegs < FXP_IPCB_NTXSEG);
+			nsegs++;
+			tbdp[seg].tb_addr = htole32(FXP_CDTXPADADDR(sc));
+			tbdp[seg].tb_size =
+			    htole32(FXP_IP4CSUMTX_PADLEN + 1 - len);
 		}
 
 		/* Sync the DMA map. */
@@ -920,7 +941,7 @@ fxp_start(struct ifnet *ifp)
 		txd->txd_txcb.cb_command =
 		    sc->sc_txcmd | htole16(FXP_CB_COMMAND_SF);
 		txd->txd_txcb.tx_threshold = tx_threshold;
-		txd->txd_txcb.tbd_number = dmamap->dm_nsegs;
+		txd->txd_txcb.tbd_number = nsegs;
 
 		KASSERT((csum_flags & (M_CSUM_TCPv6 | M_CSUM_UDPv6)) == 0);
 		if (sc->sc_flags & FXPF_IPCB) {
@@ -1191,8 +1212,8 @@ fxp_txintr(struct fxp_softc *sc)
 int
 fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 {
-	u_int16_t rxparsestat;
-	u_int16_t csum_stat;
+	u_int8_t rxparsestat;
+	u_int8_t csum_stat;
 	u_int32_t csum_data;
 	int csum_flags;
 
@@ -1214,8 +1235,8 @@ fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 	 * check H/W Checksumming.
 	 */
 
-	csum_stat = le16toh(rfa->cksum_stat);
-	rxparsestat = le16toh(rfa->rx_parse_stat);
+	csum_stat = rfa->cksum_stat;
+	rxparsestat = rfa->rx_parse_stat;
 	if (!(rfa->rfa_status & htole16(FXP_RFA_STATUS_PARSE)))
 		return 0;
 
@@ -1582,6 +1603,7 @@ fxp_init(struct ifnet *ifp)
 	struct fxp_txdesc *txd;
 	bus_dmamap_t rxmap;
 	int i, prm, save_bf, lrxen, vlan_drop, allm, error = 0;
+	uint16_t status;
 
 	if ((error = fxp_enable(sc)) != 0)
 		goto out;
@@ -1767,12 +1789,15 @@ fxp_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDCONFIGOFF);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	i = 1000;
-	do {
+	for (i = 1000; i > 0; i--) {
 		FXP_CDCONFIGSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		status = le16toh(cbp->cb_status);
+		FXP_CDCONFIGSYNC(sc, BUS_DMASYNC_PREREAD);
+		if ((status & FXP_CB_STATUS_C) != 0)
+			break;
 		DELAY(1);
-	} while ((le16toh(cbp->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
+	} 
 	if (i == 0) {
 		log(LOG_WARNING, "%s: line %d: dmasync timeout\n",
 		    device_xname(sc->sc_dev), __LINE__);
@@ -1799,12 +1824,15 @@ fxp_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDIASOFF);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	i = 1000;
-	do {
+	for (i = 1000; i > 0; i++) {
 		FXP_CDIASSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		status = le16toh(cb_ias->cb_status);
+		FXP_CDIASSYNC(sc, BUS_DMASYNC_PREREAD);
+		if ((status & FXP_CB_STATUS_C) != 0)
+			break;
 		DELAY(1);
-	} while ((le16toh(cb_ias->cb_status) & FXP_CB_STATUS_C) == 0 && --i);
+	}
 	if (i == 0) {
 		log(LOG_WARNING, "%s: line %d: dmasync timeout\n",
 		    device_xname(sc->sc_dev), __LINE__);
@@ -2119,6 +2147,7 @@ fxp_mc_setup(struct fxp_softc *sc)
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	int count, nmcasts;
+	uint16_t status;
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_txpending)
@@ -2189,12 +2218,15 @@ fxp_mc_setup(struct fxp_softc *sc)
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 
 	/* ...and wait for it to complete. */
-	count = 1000;
-	do {
+	for (count = 1000; count > 0; count--) {
 		FXP_CDMCSSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		status = le16toh(mcsp->cb_status);
+		FXP_CDMCSSYNC(sc, BUS_DMASYNC_PREREAD);
+		if ((status & FXP_CB_STATUS_C) != 0)
+			break;
 		DELAY(1);
-	} while ((le16toh(mcsp->cb_status) & FXP_CB_STATUS_C) == 0 && --count);
+	}
 	if (count == 0) {
 		log(LOG_WARNING, "%s: line %d: dmasync timeout\n",
 		    device_xname(sc->sc_dev), __LINE__);
@@ -2245,6 +2277,7 @@ fxp_load_ucode(struct fxp_softc *sc)
 	const struct ucode *uc;
 	struct fxp_cb_ucode *cbp = &sc->sc_control_data->fcd_ucode;
 	int count, i;
+	uint16_t status;
 
 	if (sc->sc_flags & FXPF_UCODE_LOADED)
 		return;
@@ -2291,12 +2324,15 @@ fxp_load_ucode(struct fxp_softc *sc)
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 
 	/* ...and wait for it to complete. */
-	count = 10000;
-	do {
+	for (count = 10000; count > 0; count--) {
 		FXP_CDUCODESYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		status = le16toh(cbp->cb_status);
+		FXP_CDUCODESYNC(sc, BUS_DMASYNC_PREREAD);
+		if ((status & FXP_CB_STATUS_C) != 0)
+			break;
 		DELAY(2);
-	} while ((le16toh(cbp->cb_status) & FXP_CB_STATUS_C) == 0 && --count);
+	}
 	if (count == 0) {
 		sc->sc_int_delay = 0;
 		sc->sc_bundle_max = 0;
