@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.5 2008/03/29 05:42:46 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.6 2008/12/14 23:13:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.5 2008/03/29 05:42:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.6 2008/12/14 23:13:18 mrg Exp $");
 
 /*
  * Clock driver for 'rtc' - mc146818 driver.
@@ -144,8 +144,7 @@ rtc_ebus_attach(device_t parent, device_t self, void *aux)
 
 	if (bus_space_map(sc->sc_bst,
 			 EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
-			 sz,
-			 BUS_SPACE_MAP_LINEAR,
+			 sz, 0,
 			 &sc->sc_bsh) != 0) {
 		aprint_error(": can't map register\n");
 		return;
