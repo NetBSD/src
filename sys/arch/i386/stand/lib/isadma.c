@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.1.1.1 1997/03/14 02:40:32 perry Exp $	*/
+/*	$NetBSD: isadma.c,v 1.2 2008/12/14 17:03:43 christos Exp $	*/
 
 /* from: NetBSD:dev/isa/isadma.c */
 
@@ -22,13 +22,12 @@
  * external dma control by a board.
  */
 void
-isa_dmacascade(chan)
-	int chan;
+isa_dmacascade(int chan)
 {
 
 #ifdef ISADMA_DEBUG
 	if (chan < 0 || chan > 7)
-		panic("isa_dmacascade: impossible request"); 
+		panic("isa_dmacascade: impossible request");
 #endif
 
 	/* set dma channel mode, and set dma channel mode */
