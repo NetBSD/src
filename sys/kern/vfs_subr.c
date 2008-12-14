@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.359 2008/12/14 11:13:36 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.360 2008/12/14 11:15:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.359 2008/12/14 11:13:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.360 2008/12/14 11:15:59 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1841,9 +1841,9 @@ vclean(vnode_t *vp, int flags)
 	cache_purge(vp);
 
 	/* Done with purge, notify sleepers of the grim news. */
+	mutex_enter(&vp->v_interlock);
 	vp->v_op = dead_vnodeop_p;
 	vp->v_tag = VT_NON;
-	mutex_enter(&vp->v_interlock);
 	vp->v_vnlock = &vp->v_lock;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
 	vp->v_iflag &= ~(VI_XLOCK | VI_FREEING);
