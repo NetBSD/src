@@ -1,4 +1,4 @@
-/*	$NetBSD: comio_direct.c,v 1.8 2005/11/11 22:25:09 dsl Exp $	*/
+/*	$NetBSD: comio_direct.c,v 1.9 2008/12/14 17:03:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -103,7 +103,7 @@ comspeed(long speed)
 		err = -err;
 	if (err > COM_TOLERANCE)
 		return RATE_9600;
-	return (x);
+	return x;
 }
 
 /*
@@ -132,7 +132,7 @@ comgetc_d(int combase)
 		}
 		stopped = 1;
 	}
-	return (c);
+	return c;
 }
 
 /*

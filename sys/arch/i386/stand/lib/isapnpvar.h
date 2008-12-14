@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.3 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.4 2008/12/14 17:03:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -26,4 +26,4 @@
  *
  */
 
-int isapnp_finddev __P((int, int*, int*));
+int isapnp_finddev(int, int*, int*);
