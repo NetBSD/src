@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k_init.c,v 1.10 2005/12/24 22:45:40 perry Exp $	*/
+/*	$NetBSD: x68k_init.c,v 1.11 2008/12/14 02:16:51 isaki Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.10 2005/12/24 22:45:40 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.11 2008/12/14 02:16:51 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,7 +56,7 @@ void
 intr_reset(void)
 {
 	/* I/O Controller */
-	ioctlr.intr = 0;
+	intio_set_sicilian_intr(0);
 
 	/* Internal RS-232C port */
 	zsdev.zs_chan_a.zc_csr = 1;
