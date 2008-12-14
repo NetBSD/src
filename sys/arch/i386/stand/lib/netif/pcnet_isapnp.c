@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnet_isapnp.c,v 1.7 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: pcnet_isapnp.c,v 1.8 2008/12/14 18:46:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -49,41 +49,41 @@ int lance_rap, lance_rdp;
 
 u_char eth_myaddr[6];
 
-extern void am7990_init __P((void));
-extern void am7990_stop __P((void));
+extern void am7990_init(void);
+extern void am7990_stop(void);
 
 static struct btinfo_netif bi_netif;
 
-int EtherInit(myadr)
-	unsigned char *myadr;
+int
+EtherInit(unsigned char *myadr)
 {
-  int iobase, dmachan, i;
+	int iobase, dmachan, i;
 
-  if(isapnp_finddev(ISAPNPID, &iobase, &dmachan)) {
-    printf("cannot find PCNET\n");
-    return(0);
-  }
+	if (isapnp_finddev(ISAPNPID, &iobase, &dmachan)) {
+		printf("cannot find PCNET\n");
+		return 0;
+	}
 
-  printf("printf using PCNET @ %x\n", iobase);
+	printf("printf using PCNET @ %x\n", iobase);
 
-  lance_rap = iobase + 0x12;
-  lance_rdp = iobase + 0x10;
+	lance_rap = iobase + 0x12;
+	lance_rdp = iobase + 0x10;
 
-  /* make sure it's stopped */
-  am7990_stop();
+	/* make sure it's stopped */
+	am7990_stop();
 
-  for(i=0; i<6; i++)
-	  myadr[i] = eth_myaddr[i] = inb(iobase + i);
+	for (i = 0; i < 6; i++)
+		myadr[i] = eth_myaddr[i] = inb(iobase + i);
 
-  isa_dmacascade(dmachan);
+	isa_dmacascade(dmachan);
 
-  am7990_init();
+	am7990_init();
 
-  strncpy(bi_netif.ifname, "le", sizeof(bi_netif.ifname));
-  bi_netif.bus = BI_BUS_ISA;
-  bi_netif.addr.iobase = iobase;
+	strncpy(bi_netif.ifname, "le", sizeof(bi_netif.ifname));
+	bi_netif.bus = BI_BUS_ISA;
+	bi_netif.addr.iobase = iobase;
 
-  BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
+	BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
 
-  return(1);
+	return 1;
 }

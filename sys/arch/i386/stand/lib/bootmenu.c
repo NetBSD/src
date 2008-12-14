@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.3 2008/12/14 17:03:43 christos Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.4 2008/12/14 18:46:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ parsebootconf(const char *conf)
 
 	cmenu = 0;
 	cbanner = 0;
-	for(c = bc; *c; c++) {
+	for (c = bc; *c; c++) {
 		key = c;
 		/* Look for = separator between key and value */
 		for (; *c && *c != '='; c++)
@@ -169,7 +169,7 @@ parsebootconf(const char *conf)
 			if (cmenu >= MAXMENU)
 				continue;
 			bootconf.desc[cmenu] = value;
-			for (v2=value; *v2 && *v2 != ':'; v2++)
+			for (v2 = value; *v2 && *v2 != ':'; v2++)
 				continue;
 			if (*v2) {
 				*v2++ = 0;
@@ -283,7 +283,7 @@ doboottypemenu(void)
 			    bootconf.desc[choice]);
 	}
 	choice = -1;
-	for(;;) {
+	for (;;) {
 		input[0] = '\0';
 
 		if (bootconf.timeout < 0) {
@@ -333,7 +333,7 @@ doboottypemenu(void)
 					continue;
 				/* Strip out any trailing spaces */
 				oc--;
-				for (; *oc ==' ' && oc > input; oc--);
+				for (; *oc == ' ' && oc > input; oc--);
 				*++oc = '\0';
 				if (*ic == COMMAND_SEPARATOR)
 					ic++;
