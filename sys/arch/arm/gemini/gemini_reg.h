@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_reg.h,v 1.6 2008/11/20 22:36:36 cliff Exp $	*/
+/*	$NetBSD: gemini_reg.h,v 1.7 2008/12/14 01:57:02 matt Exp $	*/
 
 #ifndef _ARM_GEMINI_REG_H_
 #define _ARM_GEMINI_REG_H_
@@ -51,7 +51,8 @@
 #define GEMINI_PCIIO_SIZE	0x0007f000 	/* PCI IO     space size */
 #define GEMINI_PCIMEM_BASE	0x58000000 	/* PCI Memory space      */
 #define GEMINI_PCIMEM_SIZE	0x08000000 	/* PCI Memory space size */
-#define GEMINI_NGC_BASE		0x60000000 	/* NetEngine & GMAC Configuration registers */
+#define GEMINI_GMAC_BASE	0x60000000 	/* NetEngine & GMAC Configuration registers */
+#define GEMINI_GMAC_SIZE	0x00010000 	/* NetEngine & GMAC Configuration size */
 #define GEMINI_SDC_BASE		0x62000000 	/* Security DMA and Configure registers */
 #define GEMINI_MIDE_BASE	0x63000000 	/* Multi IDE registers */
 #define GEMINI_RXDC_BASE	0x64000000 	/* RAID XOR DMA Configuration registers */
