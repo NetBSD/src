@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.2 2008/12/13 23:30:54 christos Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.3 2008/12/14 17:03:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ atoi(const char *in)
 /*
  * This function parses a boot.cfg file in the root of the filesystem
  * (if present) and populates the global boot configuration.
- * 
+ *
  * The file consists of a number of lines each terminated by \n
  * The lines are in the format keyword=value. There should not be spaces
  * around the = sign.
@@ -105,7 +105,7 @@ parsebootconf(const char *conf)
 
 	/* Clear bootconf structure */
 	bzero((void *)&bootconf, sizeof(bootconf));
-	
+
 	/* Set timeout to configured */
 	bootconf.timeout = boot_params.bp_timeout;
 
@@ -115,7 +115,7 @@ parsebootconf(const char *conf)
 	fd = open(BOOTCONF, 0);
 	if (fd < 0)
 		return;
-	
+
 	err = fstat(fd, &st);
 	if (err == -1) {
 		close(fd);
@@ -127,7 +127,7 @@ parsebootconf(const char *conf)
 		printf("Could not allocate memory for boot configuration\n");
 		return;
 	}
-	
+
 	off = 0;
 	do {
 		len = read(fd, bc + off, 1024);
@@ -136,10 +136,10 @@ parsebootconf(const char *conf)
 		off += len;
 	} while (len > 0);
 	bc[off] = '\0';
-	
+
 	close(fd);
 	/* bc now contains the whole boot.cfg file */
-	
+
 	cmenu = 0;
 	cbanner = 0;
 	for(c = bc; *c; c++) {
@@ -149,7 +149,7 @@ parsebootconf(const char *conf)
 			continue;
 		if (*c == '\0')
 			break; /* break if at end of data */
-		
+
 		/* zero terminate key which points to keyword */
 		*c++ = 0;
 		value = c;
@@ -157,7 +157,7 @@ parsebootconf(const char *conf)
 		for (; *c && *c != '\n'; c++)
 			continue;
 		*c = 0;
-		
+
 		if (!strncmp(key, "menu", 4)) {
 			/*
 			 * Parse "menu=<description>:<command>".  If the
@@ -226,13 +226,13 @@ parsebootconf(const char *conf)
 		else
 			bootconf.menuformat = MENUFORMAT_NUMBER;
 		break;
-	
+
 	case MENUFORMAT_NUMBER:
 		if (cmenu > 9 && bootconf.timeout > 0)
 			cmenu = 9;
 		break;
 	}
-	 
+
 	bootconf.nummenu = cmenu;
 	if (bootconf.def < 0)
 		bootconf.def = 0;
@@ -267,7 +267,7 @@ doboottypemenu(void)
 {
 	int choice;
 	char input[80], *ic, *oc;
-		
+
 	printf("\n");
 	/* Display menu */
 	if (bootconf.menuformat == MENUFORMAT_LETTER) {
@@ -281,11 +281,11 @@ doboottypemenu(void)
 			    (choice < 9) ?  " " : "",
 			    choice + 1,
 			    bootconf.desc[choice]);
-	}		
+	}
 	choice = -1;
 	for(;;) {
 		input[0] = '\0';
-		
+
 		if (bootconf.timeout < 0) {
 			if (bootconf.menuformat == MENUFORMAT_LETTER)
 				printf("\nOption: [%c]:",
@@ -293,7 +293,7 @@ doboottypemenu(void)
 			else
 				printf("\nOption: [%d]:",
 				    bootconf.def + 1);
-				
+
 			gets(input);
 			choice = getchoicefrominput(input, bootconf.def);
 		} else if (bootconf.timeout == 0)
@@ -316,7 +316,7 @@ doboottypemenu(void)
 		}
 		if (choice < 0)
 			continue;
-		if (!strcmp(bootconf.command[choice], "prompt") && 
+		if (!strcmp(bootconf.command[choice], "prompt") &&
 		    ((boot_params.bp_flags & X86_BP_FLAGS_PASSWORD) == 0 ||
 		    check_password((char *)boot_params.bp_password))) {
 			printf("type \"?\" or \"help\" for help.\n");
@@ -344,7 +344,7 @@ doboottypemenu(void)
 				for (; *ic == ' '; ic++);
 			} while (*ic);
 		}
-			
+
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo_memmap.c,v 1.4 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: bootinfo_memmap.c,v 1.5 2008/12/14 17:03:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1999
@@ -30,10 +30,10 @@
 #include "libi386.h"
 #include "bootinfo.h"
 
-extern int getmementry __P((int *, int *));
+extern int getmementry(int *, int *);
 
 void
-bi_getmemmap()
+bi_getmemmap(void)
 {
 	int buf[5], i, nranges, n;
 	struct btinfo_memmap *bimm;
