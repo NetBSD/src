@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.12 2008/12/14 02:05:54 isaki Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.13 2008/12/14 02:16:51 isaki Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -362,11 +362,9 @@ extern volatile struct IODEVICE *IODEVbase;
 #endif
 
 #define	printer	(IODEVbase->io_printer)
-#define sysport (IODEVbase->io_sysport)
 #define OPM     (IODEVbase->io_opm)
 #define adpcm   (IODEVbase->io_adpcm)
 #define PPI	(IODEVbase->io_joyport)
-#define	ioctlr	(IODEVbase->io_ctlr)
 #endif
 
 #if 0

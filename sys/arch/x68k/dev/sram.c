@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.16 2007/03/11 08:09:25 isaki Exp $	*/
+/*	$NetBSD: sram.c,v 1.17 2008/12/14 02:16:51 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.16 2007/03/11 08:09:25 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.17 2008/12/14 02:16:51 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -40,8 +40,11 @@ __KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.16 2007/03/11 08:09:25 isaki Exp $");
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 
 #include <machine/sram.h>
+#include <x68k/dev/intiovar.h>
 #include <x68k/dev/sramvar.h>
 #include <x68k/x68k/iodevice.h>
 
@@ -177,10 +180,10 @@ sramioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			break;
 		}
 #endif
-		sysport.sramwp = 0x31;
+		intio_set_sysport_sramwp(0x31);
 		memcpy(sramtop + sram_io->offset, &(sram_io->sram),
 		    SRAM_IO_SIZE);
-		sysport.sramwp = 0x00;
+		intio_set_sysport_sramwp(0x00);
 		break;
 	default:
 		error = EINVAL;
