@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.23 2008/12/14 00:56:14 jmcneill Exp $
+.\" $NetBSD: pms.4,v 1.24 2008/12/14 13:51:33 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -51,7 +51,8 @@ The
 .Nm
 driver provides an interface to PS/2 auxiliary port mice within the
 .Xr wscons 4
-framework. Parent device in terms of the autoconfiguration framework is
+framework.
+Parent device in terms of the autoconfiguration framework is
 .Xr pckbc 4 ,
 the PC keyboard controller.
 .Dq pms
@@ -180,7 +181,7 @@ insight into how to identify bogus mouse data.
 The changes to add
 .Dq Synaptics
 pad support were by Ales Krenek, Kentaro A. Kurahone, and Steve C. Woodford.
-The changes to add 
+The changes to add
 .Dq Elantech
 pad support were by Jared D. McNeill.
 .Sh BUGS
