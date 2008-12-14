@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1153 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1154 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -78,3 +78,4 @@ Changes from NetBSD 5.0 to NetBSD 6.0:
 	ath(4): Switch from the binary HAL to the open-source HAL released by
 		Sam Leffler. [alc 20081211]
 	nvi(1): Added "expandtab" option.  [lukem 20081212]
+	pms(4): Add Elantech multi-touch trackpad support [jmcneill 20081213]
