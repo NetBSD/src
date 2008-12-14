@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.19 2008/12/14 02:05:54 isaki Exp $	*/
+/*	$NetBSD: pow.c,v 1.20 2008/12/14 02:16:51 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.19 2008/12/14 02:05:54 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.20 2008/12/14 02:16:51 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ setalarm(struct x68k_alarminfo *bp)
 
 	s = splclock();
 
-	sysport.sramwp = 0x31;
+	intio_set_sysport_sramwp(0x31);
 	if (bp->al_enable) {
 		SRAMINT(0x1e) = bp->al_dowhat;
 		SRAMINT(0x22) = bp->al_ontime;
@@ -184,7 +184,7 @@ setalarm(struct x68k_alarminfo *bp)
 	} else {
 		sramtop[0x26] = 7;
 	}
-	sysport.sramwp = 0;
+	intio_set_sysport_sramwp(0);
 
 	rtc.bank0.mode = 9;
 	RTCWAIT;
