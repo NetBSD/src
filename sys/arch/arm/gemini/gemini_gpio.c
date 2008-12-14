@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_gpio.c,v 1.1 2008/11/20 22:36:36 cliff Exp $	*/
+/*	$NetBSD: gemini_gpio.c,v 1.2 2008/12/14 01:55:15 matt Exp $	*/
 
 /* adapted from
  *	$NetBSD: omap2_gpio.c,v 1.6 2008/11/19 06:26:27 matt Exp
@@ -33,12 +33,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_gpio.c,v 1.1 2008/11/20 22:36:36 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gpio.c,v 1.2 2008/12/14 01:55:15 matt Exp $");
 
 #define _INTR_PRIVATE
 
 #include "locators.h"
 #include "gpio.h"
+#include "geminigmac.h"
 #include "opt_gemini.h"
  
 #include <sys/param.h>
@@ -57,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: gemini_gpio.c,v 1.1 2008/11/20 22:36:36 cliff Exp $"
 
 #include <arm/gemini/gemini_reg.h>
 #include <arm/gemini/gemini_obiovar.h>
+#include <arm/gemini/gemini_gpiovar.h>
 #include <arm/pic/picvar.h>
 
 #if NGPIO > 0
@@ -77,7 +79,7 @@ const struct pic_ops gpio_pic_ops = {
 };
 
 struct gpio_softc {
-	struct device gpio_dev;
+	device_t gpio_dev;
 	struct pic_softc gpio_pic;
 	struct intrsource *gpio_is;
 	bus_space_tag_t gpio_memt;
@@ -242,37 +244,32 @@ CFATTACH_DECL_NEW(geminigpio,
 	gpio_match, gpio_attach,
 	NULL, NULL);
 
-#if NGPIO > 0
+#if NGPIO > 0 || NGEMINIGMAC > 0
 
-static int
+int
 geminigpio_pin_read(void *arg, int pin)
 {
-	struct gpio_softc * const gpio = arg;
+	struct gpio_softc * const gpio = device_private(arg);
 
 	return (GPIO_READ(gpio, GEMINI_GPIO_DATAIN) >> pin) & 1;
 }
 
-static void
+void
 geminigpio_pin_write(void *arg, int pin, int value)
 {
-	struct gpio_softc * const gpio = arg;
+	struct gpio_softc * const gpio = device_private(arg);
 	uint32_t mask = 1 << pin;
-	uint32_t old, new;
 
-	old = GPIO_READ(gpio, GEMINI_GPIO_DATAOUT);
 	if (value)
-		new = old | mask; 
+		GPIO_WRITE(gpio, GEMINI_GPIO_DATASET, mask);
 	else
-		new = old & ~mask;
-
-	if (old != new)
-		GPIO_WRITE(gpio, GEMINI_GPIO_DATAOUT, new);
+		GPIO_WRITE(gpio, GEMINI_GPIO_DATACLR, mask);
 }
 
-static void
+void
 geminigpio_pin_ctl(void *arg, int pin, int flags)
 {
-	struct gpio_softc * const gpio = arg;
+	struct gpio_softc * const gpio = device_private(arg);
 	uint32_t mask = 1 << pin;
 	uint32_t old, new;
 
@@ -297,7 +294,7 @@ gpio_defer(device_t self)
 	uint32_t mask, dir, valueout, valuein;
 	int pin;
 
-	gp->gp_cookie = gpio;
+	gp->gp_cookie = gpio->gpio_dev;
 	gp->gp_pin_read = geminigpio_pin_read;
 	gp->gp_pin_write = geminigpio_pin_write;
 	gp->gp_pin_ctl = geminigpio_pin_ctl;
@@ -307,8 +304,8 @@ gpio_defer(device_t self)
 	gba.gba_npins = __arraycount(gpio->gpio_pins);
 
 	dir = GPIO_READ(gpio, GEMINI_GPIO_PINDIR);
-	valueout = GPIO_READ(gpio, GPIO_DATAOUT);
-	valuein = GPIO_READ(gpio, GPIO_DATAIN);
+	valueout = GPIO_READ(gpio, GEMINI_GPIO_DATAOUT);
+	valuein = GPIO_READ(gpio, GEMINI_GPIO_DATAIN);
 	for (pin = 0, mask = 1, pins = gpio->gpio_pins;
 	     pin < 32; pin++, mask <<= 1, pins++) {
 		pins->pin_num = pin;
@@ -354,6 +351,7 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	if (oa->obio_size == OBIOCF_SIZE_DEFAULT)
 		oa->obio_size = GEMINI_GPIO_SIZE;
 
+	gpio->gpio_dev = self;
 	gpio->gpio_memt = oa->obio_iot;
 	error = bus_space_map(oa->obio_iot, oa->obio_addr, oa->obio_size,
 	    0, &gpio->gpio_memh);
@@ -366,7 +364,7 @@ gpio_attach(device_t parent, device_t self, void *aux)
 
 	if (oa->obio_intrbase != OBIOCF_INTRBASE_DEFAULT) {
 		gpio->gpio_pic.pic_ops = &gpio_pic_ops;
-		strlcpy(gpio->gpio_pic.pic_name, self->dv_xname,
+		strlcpy(gpio->gpio_pic.pic_name, device_xname(self),
 		    sizeof(gpio->gpio_pic.pic_name));
 		gpio->gpio_pic.pic_maxsources = 32;
 		pic_add(&gpio->gpio_pic, oa->obio_intrbase);
