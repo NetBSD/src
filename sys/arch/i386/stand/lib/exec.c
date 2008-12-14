@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.35 2008/11/25 13:23:54 ad Exp $	 */
+/*	$NetBSD: exec.c,v 1.36 2008/12/14 17:03:43 christos Exp $	 */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -336,12 +336,12 @@ module_path(boot_module_t *bm)
 	return buf;
 }
 
-static int 
+static int
 module_open(boot_module_t *bm, int mode)
 {
 	int fd;
 	const char *path;
-		
+
 	/* check the expanded path first */
 	path = module_path(bm);
 	fd = open(path, mode);

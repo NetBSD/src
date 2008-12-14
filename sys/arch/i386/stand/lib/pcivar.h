@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.3 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.4 2008/12/14 17:03:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -29,7 +29,7 @@
 
 typedef unsigned int pcihdl_t;
 
-int pcicheck __P((void));
-int pcifinddev __P((int, int, pcihdl_t*));
-int pcicfgread __P((pcihdl_t*, int, int*));
-int pcicfgwrite __P((pcihdl_t*, int, int));
+int pcicheck(void);
+int pcifinddev(int, int, pcihdl_t*);
+int pcicfgread(pcihdl_t*, int, int*);
+int pcicfgwrite(pcihdl_t*, int, int);

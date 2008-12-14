@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.13 2006/05/10 06:24:02 skrll Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.14 2008/12/14 17:03:43 christos Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -37,10 +37,10 @@
 #include "diskbuf.h"
 #include "dosfile.h"
 
-extern int dosopen __P((const char *));
-extern void dosclose __P((int));
-extern int dosread __P((int, char *, int));
-extern int dosseek __P((int, int, int));
+extern int dosopen(const char *);
+extern void dosclose(int);
+extern int dosread(int, char *, int);
+extern int dosseek(int, int, int);
 
 struct dosfile {
 	int doshandle, off;
@@ -48,10 +48,10 @@ struct dosfile {
 
 extern int doserrno;	/* in dos_file.S */
 
-static int dos2errno __P((void));
+static int dos2errno(void);
 
 static int
-dos2errno()
+dos2errno(void)
 {
 	int err;
 
@@ -69,19 +69,17 @@ dos2errno()
 	    case 6:
 		err = EINVAL;
 	}
-	return (err);
+	return err;
 }
 
-int 
-dos_open(path, f)
-	const char           *path;
-	struct open_file *f;
+int
+dos_open(const char *path, struct open_file *f)
 {
 	struct dosfile *df;
 
 	df = (struct dosfile *) alloc(sizeof(*df));
 	if (!df)
-		return (-1);
+		return -1;
 
 	df->off = 0;
 	df->doshandle = dosopen(path);
@@ -90,18 +88,14 @@ dos_open(path, f)
 		printf("DOS error %d\n", doserrno);
 #endif
 		dealloc(df, sizeof(*df));
-		return (dos2errno());
+		return dos2errno();
 	}
 	f->f_fsdata = (void *) df;
-	return (0);
+	return 0;
 }
 
-int 
-dos_read(f, addr, size, resid)
-	struct open_file *f;
-	void           *addr;
-	size_t         size;
-	size_t         *resid;	/* out */
+int
+dos_read(struct open_file *f, void *addr, size_t size, size_t *resid)
 {
 	struct dosfile *df;
 	int             got;
@@ -132,7 +126,7 @@ dos_read(f, addr, size, resid)
 #ifdef DEBUG
 				printf("DOS error %d\n", doserrno);
 #endif
-				return (dos2errno());
+				return dos2errno();
 			}
 			memcpy(p, diskbufp, tgot);
 
@@ -150,7 +144,7 @@ dos_read(f, addr, size, resid)
 #ifdef DEBUG
 			printf("DOS error %d\n", doserrno);
 #endif
-			return (dos2errno());
+			return dos2errno();
 		}
 	}
 
@@ -159,12 +153,11 @@ dos_read(f, addr, size, resid)
 
 	if (resid)
 		*resid = size;
-	return (0);
+	return 0;
 }
 
-int 
-dos_close(f)
-	struct open_file *f;
+int
+dos_close(struct open_file *f)
 {
 	struct dosfile *df;
 	df = (struct dosfile *) f->f_fsdata;
@@ -173,23 +166,17 @@ dos_close(f)
 
 	if (df)
 		dealloc(df, sizeof(*df));
-	return (0);
+	return 0;
 }
 
-int 
-dos_write(f, start, size, resid)
-	struct open_file *f;
-	void           *start;
-	size_t          size;
-	size_t         *resid;	/* out */
+int
+dos_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
-	return (EROFS);
+	return EROFS;
 }
 
-int 
-dos_stat(f, sb)
-	struct open_file *f;
-	struct stat    *sb;
+int
+dos_stat(struct open_file *f, struct stat *sb)
 {
 	struct dosfile *df;
 	df = (struct dosfile *) f->f_fsdata;
@@ -199,14 +186,11 @@ dos_stat(f, sb)
 	sb->st_uid = 0;
 	sb->st_gid = 0;
 	sb->st_size = -1;
-	return (0);
+	return 0;
 }
 
-off_t 
-dos_seek(f, offset, where)
-	struct open_file *f;
-	off_t           offset;
-	int             where;
+off_t
+dos_seek(struct open_file *f, off_t offset, int where)
 {
 	struct dosfile *df;
 	int             doswhence, res;
@@ -236,21 +220,21 @@ dos_seek(f, offset, where)
 		break;
 	default:
 		errno = EOFFSET;
-		return (-1);
+		return -1;
 	}
 	res = dosseek(df->doshandle, offset, doswhence);
 	if (res == -1) {
 		errno = dos2errno();
-		return (-1);
+		return -1;
 	}
 #ifdef DOS_CHECK
 	if ((checkoffs != -1) && (res != checkoffs)) {
 		printf("dosfile: unexpected seek result (%d+%d(%d)=%d)\n",
 		       df->off, offset, where, res);
 		errno = EOFFSET;
-		return (-1);
+		return -1;
 	}
 #endif
 	df->off = res;
-	return (res);
+	return res;
 }

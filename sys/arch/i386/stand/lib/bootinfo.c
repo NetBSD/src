@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.3 2005/12/11 12:17:48 christos Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.4 2008/12/14 17:03:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -34,9 +34,8 @@
 
 struct bootinfo *bootinfo;
 
-void bi_add(what, type, size)
-struct btinfo_common *what;
-int type, size;
+void
+bi_add(struct btinfo_common *what, int type, int size)
 {
 	what->len = size;
 	what->type = type;
