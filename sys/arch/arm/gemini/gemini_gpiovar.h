@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_gpio.h,v 1.1 2008/11/20 22:36:36 cliff Exp $	*/
+/*	$NetBSD: gemini_gpiovar.h,v 1.1 2008/12/14 01:55:15 matt Exp $	*/
 
 /* adapted from omap_gpio.h */
 
@@ -42,35 +42,11 @@
 #ifndef _ARM_GEMINI_GEMINI_GPIO_H_
 #define _ARM_GEMINI_GEMINI_GPIO_H_
 
-#define	GPIO_IN		0x00
-#define	GPIO_OUT	0x01
-#define	GPIO_IS_IN(n)	(((n) & GPIO_OUT) == GPIO_IN)
-#define	GPIO_IS_OUT(n)	(((n) & GPIO_OUT) == GPIO_OUT)
-
 /*
- * GPIO pin function query/manipulation functions
+ * Read/write/change pin data
  */
-extern u_int gemini_gpio_get_direction(u_int);
-extern void  gemini_gpio_set_direction(u_int, u_int);
-
-/*
- * Establish/Disestablish interrupt handlers for GPIO pins
- */
-extern void *gemini_gpio_intr_establish(u_int, int, int,
-     const char *, int (*)(void *), void *);
-extern void gemini_gpio_intr_disestablish(void *);
-
-/* Mask/unmask GPIO interrupt, enable/disable sleep wakeups */
-
-extern void gemini_gpio_intr_mask(void *);
-extern void gemini_gpio_intr_unmask(void *);
-extern void gemini_gpio_intr_wakeup(void *cookie, int enable);
-
-/*
- * Read/write
- */
-
-extern u_int gemini_gpio_read(u_int gpio);
-extern void gemini_gpio_write(u_int, u_int);
+int geminigpio_pin_read(void *, int);
+void geminigpio_pin_write(void *, int, int);
+void geminigpio_pin_ctl(void *, int, int);
 
 #endif /* _ARM_GEMINI_GEMINI_GPIO_H_ */
