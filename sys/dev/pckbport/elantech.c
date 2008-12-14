@@ -1,4 +1,4 @@
-/* $NetBSD: elantech.c,v 1.1 2008/12/14 00:42:33 jmcneill Exp $ */
+/* $NetBSD: elantech.c,v 1.2 2008/12/14 00:53:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elantech.c,v 1.1 2008/12/14 00:42:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elantech.c,v 1.2 2008/12/14 00:53:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,29 +355,21 @@ pms_elantech_probe_init(void *opaque)
 
 	cmd[0] = PMS_SET_SCALE11;
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
-	    cmd, 1, 0, NULL, 0)) != 0) {
-		printf("PMS_SET_SCALE11(1) failed\n");
+	    cmd, 1, 0, NULL, 0)) != 0)
 		goto doreset;
-	}
 	cmd[0] = PMS_SET_SCALE11;
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
-	    cmd, 1, 0, NULL, 0)) != 0) {
-		printf("PMS_SET_SCALE11(2) failed\n");
+	    cmd, 1, 0, NULL, 0)) != 0)
 		goto doreset;
-	}
 	cmd[0] = PMS_SET_SCALE11;
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
-	    cmd, 1, 0, NULL, 0)) != 0) {
-		printf("PMS_SET_SCALE11(3) failed\n");
+	    cmd, 1, 0, NULL, 0)) != 0)
 		goto doreset;
-	}
 
 	cmd[0] = PMS_SEND_DEV_STATUS;
 	if ((res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot,
-	    cmd, 1, 3, resp, 0)) != 0) {
-		printf("PMS_SEND_DEV_STATUS failed\n");
+	    cmd, 1, 3, resp, 0)) != 0)
 		goto doreset;
-	}
 
 	if (!ELANTECH_MAGIC(resp)) {
 		aprint_error_dev(psc->sc_dev,
@@ -423,7 +415,6 @@ pms_elantech_probe_init(void *opaque)
 	return 0;
 
 doreset:
-	printf("elantech probe failed, resetting device\n");
 	cmd[0] = PMS_RESET;
 	(void)pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd,
 	    1, 2, resp, 1);
