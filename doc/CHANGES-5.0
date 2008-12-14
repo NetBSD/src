@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.53 2008/12/13 21:47:41 bouyer Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.54 2008/12/14 11:56:33 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1588,4 +1588,22 @@ sys/dev/ic/ld_cac.c				1.23
 	PR kern/40099 device_t/softc split broke cac(4)/ld(4):
 	panic: iostat_unbusy
 	[mhitch, ticket #186]
+
+sys/dev/ic/i82557.c				1.116-120
+sys/dev/ic/i82557reg.h				1.21
+sys/dev/ic/i82557var.h				1.41
+doc/CHANGES					patch
+
+	Call BUS_DMASYNC_PREREAD more strictly on polling DMA descriptors.
+	Add a workaround for hardware ip4csum-tx bug and enable it.
+	Don't pass uint8_t values to le16toh() in fxp_rx_hwcksum().
+	fxp(4)'s RX hwcksum results weren't used at all on big endian machines.
+	[tsutsui, ticket #181]
+
+sys/ufs/ufs/ufs_wapbl.c				1.4
+
+	Don't deadlock on rename("foo/foo", "foo") in the case where
+	foo/foo is a directory on a wapbl-enabled filesystem.
+	PR 40163 from Lloyd Parkes.
+	[dholland, ticket #187]
 
