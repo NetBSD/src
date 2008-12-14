@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.14 2008/12/14 02:19:58 isaki Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.15 2008/12/14 02:21:34 isaki Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -356,10 +356,8 @@ struct IODEVICE
 	char inscsirom[0x2000];		/* 0x00fc0000 */
 };
 
-#ifdef _KERNEL
-#ifndef LOCORE
+#if defined(_KERNEL) && !defined(LOCORE)
 extern volatile struct IODEVICE *IODEVbase;
-#endif
 #endif
 
 #if 0
