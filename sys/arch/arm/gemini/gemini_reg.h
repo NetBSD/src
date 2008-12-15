@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_reg.h,v 1.7 2008/12/14 01:57:02 matt Exp $	*/
+/*	$NetBSD: gemini_reg.h,v 1.8 2008/12/15 04:44:27 matt Exp $	*/
 
 #ifndef _ARM_GEMINI_REG_H_
 #define _ARM_GEMINI_REG_H_
@@ -73,6 +73,8 @@
 #define GEMINI_GLOBAL_RESET_CTL	0xc		/* Global Soft Reset Control */		/* rw */
 #define GLOBAL_RESET_GLOBAL	__BIT(31)	/* Global Soft Reset */
 #define GLOBAL_RESET_CPU1	__BIT(30)	/* CPU#1 reset hold */
+#define GLOBAL_RESET_GMAC1	__BIT(6)	/* GMAC1 reset hold */
+#define GLOBAL_RESET_GMAC0	__BIT(5)	/* CGMAC reset hold */
 #define GEMINI_GLOBAL_MISC_CTL	0x30		/* Miscellaneous Control */		/* rw */
 #define GEMINI_GLOBAL_CPU0	0x38		/* CPU #0 Status and Control */		/* rw */
 #define  GLOBAL_CPU0_IPICPU1	__BIT(31)	/* IPI to CPU#1 */
