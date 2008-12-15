@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.26 2008/12/03 11:40:17 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.27 2008/12/15 22:20:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.26 2008/12/03 11:40:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.27 2008/12/15 22:20:52 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -359,11 +359,13 @@ x86_cpu_idle_init(void)
 
 extern paddr_t avail_start, avail_end;
 
-static void
-add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
+static int
+add_mem_cluster(phys_ram_seg_t *seg_clusters, int seg_cluster_cnt,
+	struct extent *iomem_ex,
+	uint64_t seg_start, uint64_t seg_end, uint32_t type)
 {
-	extern struct extent *iomem_ex;
-	uint64_t io_end, new_physmem;
+	uint64_t new_physmem = 0;
+	phys_ram_seg_t *cluster;
 	int i;
 
 #ifdef i386
@@ -373,13 +375,12 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 #endif
 
 	if (seg_end > TOPLIMIT) {
-		printf("WARNING: skipping large "
-		    "memory map entry: "
+		printf("WARNING: skipping large memory map entry: "
 		    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n",
 		    seg_start,
 		    (seg_end - seg_start),
 		    type);
-		return;
+		return seg_cluster_cnt;
 	}
 
 	/*
@@ -390,17 +391,17 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 		seg_end -= PAGE_SIZE;
 
 	if (seg_end <= seg_start)
-		return;
+		return seg_cluster_cnt;
 
-	for (i = 0; i < mem_cluster_cnt; i++) {
-		if ((mem_clusters[i].start == round_page(seg_start))
-		    && (mem_clusters[i].size
-			== trunc_page(seg_end) - mem_clusters[i].start))
+	for (i = 0; i < seg_cluster_cnt; i++) {
+		cluster = &seg_clusters[i];
+		if ((cluster->start == round_page(seg_start))
+		    && (cluster->size == trunc_page(seg_end) - cluster->start))
 		{
 #ifdef DEBUG_MEMLOAD
 			printf("WARNING: skipping duplicate segment entry\n");
 #endif
-			return;
+			return seg_cluster_cnt;
 		}
 	}
 
@@ -411,19 +412,21 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 	 * sure we get them all.
 	 */
 	if (seg_start < 0x100000000ULL) {
+		uint64_t io_end;
+
 		if (seg_end > 0x100000000ULL)
 			io_end = 0x100000000ULL;
 		else
 			io_end = seg_end;
 
-		if (extent_alloc_region(iomem_ex, seg_start,
+		if (iomem_ex != NULL && extent_alloc_region(iomem_ex, seg_start,
 		    io_end - seg_start, EX_NOWAIT)) {
 			/* XXX What should we do? */
 			printf("WARNING: CAN't ALLOCATE MEMORY SEGMENT "
 			    "(0x%"PRIx64"/0x%"PRIx64"/0x%x) FROM "
 			    "IOMEM EXTENT MAP!\n",
 			    seg_start, seg_end - seg_start, type);
-			return;
+			return seg_cluster_cnt;
 		}
 	}
 
@@ -431,16 +434,16 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 	 * If it's not free memory, skip it.
 	 */
 	if (type != BIM_Memory)
-		return;
+		return seg_cluster_cnt;
 
 	/* XXX XXX XXX */
-	if (mem_cluster_cnt >= VM_PHYSSEG_MAX)
+	if (seg_cluster_cnt >= VM_PHYSSEG_MAX)
 		panic("%s: too many memory segments (increase VM_PHYSSEG_MAX)",
 			__func__);
 
 #ifdef PHYSMEM_MAX_ADDR
 	if (seg_start >= MBTOB(PHYSMEM_MAX_ADDR))
-		return;
+		return seg_cluster_cnt;
 	if (seg_end > MBTOB(PHYSMEM_MAX_ADDR))
 		seg_end = MBTOB(PHYSMEM_MAX_ADDR);
 #endif  
@@ -449,30 +452,38 @@ add_mem_cluster(uint64_t seg_start, uint64_t seg_end, uint32_t type)
 	seg_end = trunc_page(seg_end);
 
 	if (seg_start == seg_end)
-		return;
+		return seg_cluster_cnt;
 
-	mem_clusters[mem_cluster_cnt].start = seg_start;
-	new_physmem = physmem + atop(seg_end - seg_start);
+	cluster = &seg_clusters[seg_cluster_cnt];
+	cluster->start = seg_start;
+	if (iomem_ex != NULL)
+		new_physmem = physmem + atop(seg_end - seg_start);
 
 #ifdef PHYSMEM_MAX_SIZE
-	if (physmem >= atop(MBTOB(PHYSMEM_MAX_SIZE)))
-		return;
-	if (new_physmem > atop(MBTOB(PHYSMEM_MAX_SIZE))) {
-		seg_end = seg_start + MBTOB(PHYSMEM_MAX_SIZE) - ptoa(physmem);
-		new_physmem = atop(MBTOB(PHYSMEM_MAX_SIZE));
+	if (iomem_ex != NULL) {
+		if (physmem >= atop(MBTOB(PHYSMEM_MAX_SIZE)))
+			return seg_cluster_cnt;
+		if (new_physmem > atop(MBTOB(PHYSMEM_MAX_SIZE))) {
+			seg_end = seg_start + MBTOB(PHYSMEM_MAX_SIZE) - ptoa(physmem);
+			new_physmem = atop(MBTOB(PHYSMEM_MAX_SIZE));
+		}
 	}
 #endif  
 
-	mem_clusters[mem_cluster_cnt].size = seg_end - seg_start;
+	cluster->size = seg_end - seg_start;
 
-	if (avail_end < seg_end)
-		avail_end = seg_end;
-	physmem = new_physmem;
-	mem_cluster_cnt++;
+	if (iomem_ex != NULL) {
+		if (avail_end < seg_end)
+			avail_end = seg_end;
+		physmem = new_physmem;
+	}
+	seg_cluster_cnt++;
+
+	return seg_cluster_cnt;
 }
 
 int
-initx86_parse_memmap(struct btinfo_memmap *bim)
+initx86_parse_memmap(struct btinfo_memmap *bim, struct extent *iomem_ex)
 {
 	uint64_t seg_start, seg_end;
 	uint64_t addr, size;
@@ -531,10 +542,16 @@ initx86_parse_memmap(struct btinfo_memmap *bim)
 			    "with ``Compatibility Holes'': "
 			    "0x%"PRIx64"/0x%"PRIx64"/0x%x\n", seg_start,
 			    seg_end - seg_start, type);
-			add_mem_cluster(seg_start, 0xa0000, type);
-			add_mem_cluster(0x100000, seg_end, type);
+			mem_cluster_cnt = add_mem_cluster(
+				mem_clusters, mem_cluster_cnt, iomem_ex,
+				seg_start, 0xa0000, type);
+			mem_cluster_cnt = add_mem_cluster(
+				mem_clusters, mem_cluster_cnt, iomem_ex,
+				0x100000, seg_end, type);
 		} else
-			add_mem_cluster(seg_start, seg_end, type);
+			mem_cluster_cnt = add_mem_cluster(
+				mem_clusters, mem_cluster_cnt, iomem_ex,
+				seg_start, seg_end, type);
 	}
 
 	return 0;
@@ -543,6 +560,7 @@ initx86_parse_memmap(struct btinfo_memmap *bim)
 int
 initx86_fake_memmap(struct extent *iomem_ex)
 {
+	phys_ram_seg_t *cluster;
 	KASSERT(mem_cluster_cnt == 0);
 
 	/*
@@ -558,9 +576,10 @@ initx86_fake_memmap(struct extent *iomem_ex)
 		    "IOMEM EXTENT MAP!\n");
 	}
 
-	mem_clusters[0].start = 0;
-	mem_clusters[0].size = trunc_page(KBTOB(biosbasemem));
-	physmem += atop(mem_clusters[0].size);
+	cluster = &mem_clusters[0];
+	cluster->start = 0;
+	cluster->size = trunc_page(KBTOB(biosbasemem));
+	physmem += atop(cluster->size);
 
 	if (extent_alloc_region(iomem_ex, IOM_END, KBTOB(biosextmem),
 	    EX_NOWAIT))
@@ -592,9 +611,10 @@ initx86_fake_memmap(struct extent *iomem_ex)
 		biosextmem = (15*1024);
 	}
 #endif
-	mem_clusters[1].start = IOM_END;
-	mem_clusters[1].size = trunc_page(KBTOB(biosextmem));
-	physmem += atop(mem_clusters[1].size);
+	cluster = &mem_clusters[1];
+	cluster->start = IOM_END;
+	cluster->size = trunc_page(KBTOB(biosextmem));
+	physmem += atop(cluster->size);
 
 	mem_cluster_cnt = 2;
 
@@ -644,8 +664,10 @@ initx86_load_memmap(paddr_t first_avail)
 	 * IS LOADED AT IOM_END (1M).
 	 */
 	for (x = 0; x < mem_cluster_cnt; x++) {
-		seg_start = mem_clusters[x].start;
-		seg_end = mem_clusters[x].start + mem_clusters[x].size;
+		const phys_ram_seg_t *cluster = &mem_clusters[x];
+
+		seg_start = cluster->start;
+		seg_end = cluster->start + cluster->size;
 		seg_start1 = 0;
 		seg_end1 = 0;
 
@@ -671,6 +693,7 @@ initx86_load_memmap(paddr_t first_avail)
 			seg_start1 = first_avail;
 			seg_end1 = seg_end;
 			seg_end = IOM_END;
+			KASSERT(seg_end < seg_end1);
 		}
 
 		/* First hunk */

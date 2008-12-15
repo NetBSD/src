@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2008/11/30 18:21:32 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 2008/12/15 22:20:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2008/11/30 18:21:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2008/12/15 22:20:52 cegger Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -328,7 +328,7 @@ cpu_startup(void)
 				       msgbuf_p_seg[y].paddr + x * PAGE_SIZE,
 				       VM_PROT_READ | UVM_PROT_WRITE);
 	}
-			  
+
 	pmap_update(pmap_kernel());
 
 	initmsgbuf((void *)msgbuf_vaddr, round_page(sz));
@@ -1326,7 +1326,7 @@ init_x86_64(paddr_t first_avail)
 	 */
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if (bim != NULL && bim->num > 0)
-		initx86_parse_memmap(bim);
+		initx86_parse_memmap(bim, iomem_ex);
 
 #endif	/* ! REALBASEMEM && ! REALEXTMEM */
 
