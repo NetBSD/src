@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.653 2008/11/30 18:21:34 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.654 2008/12/15 22:20:52 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.653 2008/11/30 18:21:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.654 2008/12/15 22:20:52 cegger Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1424,7 +1424,7 @@ init386(paddr_t first_avail)
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if ((biosmem_implicit || (biosbasemem == 0 && biosextmem == 0)) &&
 	    bim != NULL && bim->num > 0)
-		initx86_parse_memmap(bim);
+		initx86_parse_memmap(bim, iomem_ex);
 
 	/*
 	 * If the loop above didn't find any valid segment, fall back to
