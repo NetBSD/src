@@ -1,4 +1,4 @@
-/*	$NetBSD: hpt.h,v 1.3.8.1 2008/10/27 08:02:41 skrll Exp $	*/
+/*	$NetBSD: hpt.h,v 1.3.8.2 2008/12/15 18:03:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -143,36 +143,5 @@ struct hpt_entry {
 	u_int	hpt_tlbpage;	/* physical page (<<5 for TLB load) */
 	struct pv_entry	*hpt_entry;	/* Pointer to associated hash list */
 };
-
-#if 0
-/*
- * This structure contains information for a single physical page.
- */
-struct pv_head {
-
-	/* The struct pv_entry chain for this physical page. */
-	struct pv_entry	*pv_head_pvs;
-
-	/*
-	 * This word has three fields:
-	 *
-	 * The least significant bit is a page-referenced bit.
-	 *
-	 * The next least significant bit is a page-dirty bit.
-	 *
-	 * The remaining bits are the struct pv_entry * of any
-	 * mapping currently in the TLB/cache as writable.
-	 * This address is shifted to the right by two bits.
-	 * (I.e., mask off the referenced and dirty bits to
-	 * recover the pointer.)
-	 */
-	u_int	pv_head_writable_dirty_ref;
-#define PV_HEAD_DIRTY_POS	30
-#define PV_HEAD_DIRTY		(1 << (31 - PV_HEAD_DIRTY_POS))
-#define PV_HEAD_REF_POS		31
-#define PV_HEAD_REF		(1 << (31 - PV_HEAD_REF_POS))
-#define PV_HEAD_WRITABLE_POS	29
-};
-#endif
 
 #define	KERNEL_ACCESS_ID 1
