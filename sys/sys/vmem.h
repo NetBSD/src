@@ -1,4 +1,4 @@
-/*	$NetBSD: vmem.h,v 1.9 2008/12/07 00:51:15 cegger Exp $	*/
+/*	$NetBSD: vmem.h,v 1.10 2008/12/15 11:29:49 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -41,7 +41,7 @@ typedef unsigned int vm_flag_t;
 
 typedef	uintptr_t vmem_addr_t;
 typedef size_t vmem_size_t;
-#define	VMEM_ADDR_NULL	0
+#define	VMEM_ADDR_NULL	UINTPTR_MAX
 
 vmem_t *vmem_create(const char *, vmem_addr_t, vmem_size_t, vmem_size_t,
     vmem_addr_t (*)(vmem_t *, vmem_size_t, vmem_size_t *, vm_flag_t),
