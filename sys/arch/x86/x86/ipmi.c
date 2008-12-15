@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.26 2008/11/19 13:12:05 ad Exp $ */
+/*	$NetBSD: ipmi.c,v 1.27 2008/12/15 12:13:46 tron Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.26 2008/11/19 13:12:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.27 2008/12/15 12:13:46 tron Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1754,7 +1754,7 @@ ipmi_attach2(device_t self)
 	/* setup ticker */
 	sc->sc_retries = 0;
 	sc->sc_wakeup = 0;
-	sc->sc_max_retries = hz / 2; /* 0.5 seconds max */
+	sc->sc_max_retries = hz * 5; /* 5 seconds max */
 	callout_init(&sc->sc_callout, 0);
 	callout_setfunc(&sc->sc_callout, _bmc_io_wait, sc);
 
