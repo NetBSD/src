@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.1 2008/11/14 00:41:36 cegger Exp $ */
+/* $NetBSD: machdep.h,v 1.2 2008/12/15 22:20:52 cegger Exp $ */
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@ extern int mem_cluster_cnt;
 struct btinfo_memmap;
 struct extent;
 
-int initx86_parse_memmap(struct btinfo_memmap *);
+int initx86_parse_memmap(struct btinfo_memmap *, struct extent *);
 int initx86_fake_memmap(struct extent *);
 int initx86_load_memmap(paddr_t first_avail);
 
