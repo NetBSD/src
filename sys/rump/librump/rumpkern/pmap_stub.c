@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.6 2008/12/13 17:11:34 pooka Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.7 2008/12/15 00:10:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -194,5 +194,5 @@ bool     (*pmap_is_modified_p)(struct vm_page *) = pmap_is_modified;
 void     (*pmap_kenter_pa_p)(vaddr_t, paddr_t, vm_prot_t) = pmap_kenter_pa;
 void     (*pmap_kremove_p)(vaddr_t, vsize_t) = pmap_kremove;
 void     (*pmap_page_protect_p)(struct vm_page *, vm_prot_t)=pmap_page_protect;
-void     (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
+bool     (*pmap_extract_p)(pmap_t, vaddr_t, paddr_t *);
 #endif
