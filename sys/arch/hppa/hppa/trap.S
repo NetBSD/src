@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.26.2.4 2008/11/07 11:26:23 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.26.2.5 2008/12/15 18:13:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -203,7 +203,7 @@ $syscall:
 	 * %ret0:	process protection id
 	 * %t1:		syscall number
 	 * %sr0, %r31:	return address
-	 * %sp:		user stack              XXX this is for sure.
+	 * %sp:		user stack
 	 *
 	 * N.B. we are trying to rely on the fact that bottom of kernel
 	 *	stack contains a print of some past trapframe, so
@@ -349,7 +349,6 @@ $syscall:
 	stw	%arg0, TF_IISQH-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%arg0, TF_IISQT-TRAPFRAME_SIZEOF(%sr1, %t3)
 
-	/* XXXNH: Why CR20/CR21? */
 	stw	%arg0, TF_CR20-TRAPFRAME_SIZEOF(%sr1, %t3)
 	stw	%r31, TF_CR21-TRAPFRAME_SIZEOF(%sr1, %t3)
 
@@ -1911,16 +1910,15 @@ EXIT(pbtlb_u)
 	.align	64
 	.export	TLABEL(all), entry
 ENTRY_NOPROFILE(TLABEL(all),0)
-	/* r1 still has trap type */
-
 	/*
 	 * at this point we have:
-	 *	psw copied into ipsw
-	 *	psw = E(default), M(1 if HPMC, else 0)
-	 *	PL = 0
-	 *	r1, r8, r9, r16, r17, r24, r25 shadowed (maybe)
-	 *	r1:	trap number
-	 *	tr7:	old r1
+	 *  - psw copied into ipsw
+	 *  - psw	E(default), M(1 if HPMC, else 0), all others 0, i.e.
+	 *		interrupts masked, absolute accesses are enabled, etc.
+	 *  - PL	0 (highest privilege)
+	 *  - r1, r8, r9, r16, r17, r24, r25 shadowed (maybe)
+	 *  - r1:	trap number
+	 *  - tr7:	old r1
 	 */
 
 	/* do not overwrite %tr4(%cr28) it contains the contents of r24 */
@@ -1974,19 +1972,16 @@ ENTRY_NOPROFILE(TLABEL(all),0)
 	mtctl	%r0, %pcsq
 
 	/*
-	 * Set up the kernel stack pointer.  If the trap happened 
-	 * while we were in unprivileged code, or in privileged
-	 * code in the SYSCALLGATE page, move to the kernel stack
-	 * in curlwp's PCB; otherwise, start a new stack frame
-	 * on whatever kernel stack we're already on.
+	 * Set up the kernel stack pointer.  If the trap happened while we were
+	 * in unprivileged code, or in privileged code in the SYSCALLGATE page,
+	 * move to the kernel stack in curlwp's PCB; otherwise, start a new
+	 * stack frame on whatever kernel stack we're already on.
 	 *
-	 * This used to check only for a trap while we were in 
-	 * unprivileged code, but this ignored the possibility 
-	 * that a trap could come in during the period between 
-	 * a gateway instruction to raise privilege and the 
-	 * disabling of interrupts.  During this period we're 
-	 * still on the user's stack, and we must move to the
-	 * kernel stack.
+	 * This used to check only for a trap while we were in unprivileged
+	 * code, but this ignored the possibility that a trap could come in
+	 * during the period between a gateway instruction to raise privilege
+	 * and the disabling of interrupts.  During this period we're still on
+	 * the user's stack, and we must move to the kernel stack.
 	 */
 	mfctl	%pcoq, %t1
 	ldil	L%SYSCALLGATE, %t2
@@ -2159,19 +2154,16 @@ $trapnowvirt:
 	ldw 56(%t2), %r1 ! ldw 60(%t2), %t1 ! stw %r1, 56(%t3) ! stw %t1, 60(%t3)
 
 	/*
-	 * Normally, we'd only have to save and restore the 
-	 * caller-save registers, because the callee-save 
-	 * registers will be saved and restored automatically 
-	 * by our callee(s).
+	 * Normally, we'd only have to save and restore the caller-save
+	 * registers, because the callee-save registers will be saved and
+	 * restored automatically by our callee(s).
 	 *
-	 * However, in two cases we need to save and restore 
-	 * all of the general registers in the trapframe.  One, 
-	 * if we're running a debugger, we want the debugging 
-	 * person to be able to see and change any and all 
-	 * general register values at the trap site.  Two, 
-	 * if we have an FPU emulator, this trap may be to 
-	 * emulate an instruction that needs to read and write
-	 * any and all general registers (for example, a load 
+	 * However, in two cases we need to save and restore all of the general
+	 * registers in the trapframe.  One, if we're running a debugger, we
+	 * want the debugging person to be able to see and change any and all
+	 * general register values at the trap site.  Two, if we have an FPU
+	 * emulator, this trap may be to emulate an instruction that needs to
+	 * read and write any and all general registers (for example, a load
 	 * or store instruction with a modify completer).
 	 *
 	 * See similar #ifdefs in the syscall entry and exit code.
