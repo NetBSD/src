@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.6 2008/12/13 21:00:09 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.7 2008/12/15 06:30:59 mrg Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -57,7 +57,7 @@
 #define SDB_INTR        0x04
 #define SDB_INTMAP      0x08
 #define SDB_CONF        0x10
-int schizo_debug = 0x4;
+int schizo_debug = 0x0;
 #define DPRINTF(l, s)   do { if (schizo_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -483,7 +483,7 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 
 	mapoff = offsetof(struct schizo_pbm_regs, imap[ino]);
 	clroff = offsetof(struct schizo_pbm_regs, iclr[ino]);
-	ino |= sc->sc_ign;
+	ino |= (sc->sc_ign << INTMAP_IGN_SHIFT);
 
 	DPRINTF(SDB_INTR, (" mapoff %lx clroff %lx\n", mapoff, clroff));
 
@@ -492,8 +492,8 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 	if (ih == NULL)
 		return;
 	ih->ih_arg = arg;
-	ih->ih_map = (uint64_t *)sc->sc_reg0.ur_paddr + mapoff;
-	ih->ih_clr = (uint64_t *)sc->sc_reg0.ur_paddr + clroff;
+	ih->ih_map = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + mapoff);
+	ih->ih_clr = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + clroff);
 	ih->ih_fun = handler;
 	ih->ih_pil = (1<<ipl);
 	ih->ih_number = INTVEC(schizo_pbm_read(pbm, mapoff));
@@ -689,8 +689,8 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	struct schizo_pbm *pbm = t->cookie;
 	struct schizo_softc *sc = pbm->sp_sc;
 	struct intrhand *ih = NULL;
-	u_int64_t mapoff, clroff;
-	volatile u_int64_t *intrmapptr = NULL, *intrclrptr = NULL;
+	uint64_t mapoff, clroff;
+	volatile uint64_t *intrmapptr = NULL, *intrclrptr = NULL;
 	int ino;
 	long vec;
 
@@ -717,8 +717,8 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	DPRINTF(SDB_INTR, ("%s: intr %x: %p mapoff %lx clroff %lx\n",
 	    __func__, ino, intrlev[ino], mapoff, clroff));
 
-	intrmapptr = (uint64_t *)sc->sc_reg0.ur_paddr + mapoff;
-	intrclrptr = (uint64_t *)sc->sc_reg0.ur_paddr + clroff;
+	intrmapptr = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + mapoff);
+	intrclrptr = (uint64_t *)((char *)sc->sc_reg0.ur_paddr + clroff);
 
 	if (INTIGN(vec) == 0)
 		ino |= schizo_pbm_read(pbm, mapoff) & INTMAP_IGN;
