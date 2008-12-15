@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.83.2.2 2008/11/27 21:59:25 skrll Exp $
+# $NetBSD: GENERIC,v 1.83.2.3 2008/12/15 18:04:51 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.83.2.2 $"
+#ident 		"GENERIC-$Revision: 1.83.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -74,7 +74,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDBADDR=0xf0822000,KGDBRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g -fno-omit-frame-pointer"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_20	# compatability with NetBSD 2.0,
