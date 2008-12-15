@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.232 2008/12/13 04:53:09 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.233 2008/12/15 06:30:00 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.232 2008/12/13 04:53:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2008/12/15 06:30:00 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1596,7 +1596,7 @@ bus_space_translate_address_generic(struct openprom_range *ranges, int nranges,
 }
 
 int
-sparc_bus_map(bus_space_tag_t t, bus_addr_t	addr, bus_size_t size,
+sparc_bus_map(bus_space_tag_t t, bus_addr_t addr, bus_size_t size,
 	int flags, vaddr_t unused, bus_space_handle_t *hp)
 {
 	vaddr_t v;
@@ -1628,7 +1628,8 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t	addr, bus_size_t size,
 		 * out of IO mappings, config space will not be mapped in,
 		 * rather it will be accessed through MMU bypass ASI accesses.
 		 */
-		if (flags & BUS_SPACE_MAP_LINEAR) return (-1);
+		if (flags & BUS_SPACE_MAP_LINEAR)
+			return (-1);
 		hp->_ptr = addr;
 		hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
 		hp->_sasi = ASI_PHYS_NON_CACHED;
@@ -1663,7 +1664,8 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t	addr, bus_size_t size,
 	}
 #endif
 
-	if (!(flags & BUS_SPACE_MAP_CACHEABLE)) pm_flags |= PMAP_NC;
+	if (!(flags & BUS_SPACE_MAP_CACHEABLE))
+		pm_flags |= PMAP_NC;
 
 	if ((err = extent_alloc(io_space, size, PAGE_SIZE,
 		0, EX_NOWAIT|EX_BOUNDZERO, (u_long *)&v)))
@@ -1682,10 +1684,10 @@ sparc_bus_map(bus_space_tag_t t, bus_addr_t	addr, bus_size_t size,
 		pm_prot |= VM_PROT_WRITE;
 
 	DPRINTF(BSDB_MAP, ("\n%s: type %x flags %x addr %016llx prot %02x "
-		"size %016llx virt %llx paddr %016llx\n", __func__,
+		"pm_flags %x size %016llx virt %llx paddr %016llx\n", __func__,
 		(int)t->type, (int)flags, (unsigned long long)addr, pm_prot,
-		(unsigned long long)size, (unsigned long long)hp->_ptr,
-		(unsigned long long)pa));
+		(int)pm_flags, (unsigned long long)size,
+		(unsigned long long)hp->_ptr, (unsigned long long)pa));
 
 	do {
 		DPRINTF(BSDB_MAP, ("%s: phys %llx virt %p hp %llx\n",
