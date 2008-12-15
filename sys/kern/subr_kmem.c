@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.21 2008/12/15 11:33:13 ad Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.22 2008/12/15 11:42:34 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.21 2008/12/15 11:33:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.22 2008/12/15 11:42:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -108,16 +108,16 @@ kmf_to_vmf(km_flag_t kmflags)
 void *
 kmem_alloc(size_t size, km_flag_t kmflags)
 {
-	vmem_addr_t p;
+	void *p;
 
 	size += REDZONE_SIZE;
-	p = vmem_alloc(kmem_arena, size, kmf_to_vmf(kmflags) | VM_INSTANTFIT);
-	if (__predict_true(p != VMEM_ADDR_NULL)) {
-		kmem_poison_check((void *)p, kmem_roundup_size(size));
-		FREECHECK_OUT(&kmem_freecheck, (void *)p);
-		return (void *)p;
+	p = (void *)vmem_alloc(kmem_arena, size,
+	    kmf_to_vmf(kmflags) | VM_INSTANTFIT);
+	if (p != NULL) {
+		kmem_poison_check(p, kmem_roundup_size(size));
+		FREECHECK_OUT(&kmem_freecheck, p);
 	}
-	return NULL;
+	return p;
 }
 
 /*
@@ -198,9 +198,8 @@ kmem_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
 	    uflags | UVM_KMF_WIRED | UVM_KMF_CANFAIL);
 	if (va != 0) {
 		kmem_poison_fill((void *)va, size);
-		return (vmem_addr_t)va;
 	}
-	return VMEM_ADDR_NULL;
+	return (vmem_addr_t)va;
 }
 
 static void
