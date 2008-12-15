@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.20 2008/12/15 11:29:49 ad Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.21 2008/12/15 11:33:13 ad Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.20 2008/12/15 11:29:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.21 2008/12/15 11:33:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -108,16 +108,16 @@ kmf_to_vmf(km_flag_t kmflags)
 void *
 kmem_alloc(size_t size, km_flag_t kmflags)
 {
-	void *p;
+	vmem_addr_t p;
 
 	size += REDZONE_SIZE;
-	p = (void *)vmem_alloc(kmem_arena, size,
-	    kmf_to_vmf(kmflags) | VM_INSTANTFIT);
-	if (p != NULL) {
-		kmem_poison_check(p, kmem_roundup_size(size));
-		FREECHECK_OUT(&kmem_freecheck, p);
+	p = vmem_alloc(kmem_arena, size, kmf_to_vmf(kmflags) | VM_INSTANTFIT);
+	if (__predict_true(p != VMEM_ADDR_NULL)) {
+		kmem_poison_check((void *)p, kmem_roundup_size(size));
+		FREECHECK_OUT(&kmem_freecheck, (void *)p);
+		return (void *)p;
 	}
-	return p;
+	return NULL;
 }
 
 /*
