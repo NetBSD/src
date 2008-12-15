@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.287 2008/12/09 21:01:02 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.288 2008/12/15 06:44:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3666,6 +3666,31 @@ setup_sparcintr:
 	bne,pn	CCCR, 1b		! No, try again
 	 EMPTY
 2:
+#ifdef NOT_DEBUG
+	set	_C_LABEL(intrdebug), %g7
+	ld	[%g7], %g7
+	btst	INTRDEBUG_VECTOR, %g7
+	bz,pt	%icc, 97f
+	 nop
+
+	cmp	%g6, 0xa		! ignore clock interrupts?
+	bz,pt	%icc, 97f
+	 nop
+
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0,\
+	    "interrupt_vector: number %lx softint mask %lx pil %lu slot %p\r\n")
+	mov	%g2, %o1
+	rdpr	%pil, %o3
+	mov	%g1, %o4
+	GLOBTOLOC
+	clr	%g4
+	call	prom_printf
+	 mov	%g6, %o2
+	LOCTOGLOB
+	restore
+97:
+#endif
 	mov	1, %g7
 	sll	%g7, %g6, %g6
 	wr	%g6, 0, SET_SOFTINT	! Invoke a softint
@@ -3686,7 +3711,7 @@ ret_from_intr_vector:
 	NOTREACHED
 
 3:
-#ifdef NOT_DEBUG
+#ifdef NOT_DEBUG	/* always do this */
 	set	_C_LABEL(intrdebug), %g6
 	ld	[%g6], %g6
 	btst	INTRDEBUG_SPUR, %g6
@@ -4130,6 +4155,7 @@ sparc_intr_retry:
 	bne,pn	CCCR, 1b
 	 EMPTY
 2:
+
 	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
 	LDPTR	[%l2 + IH_PEND], %l7	! save ih->ih_pending
 	membar	#LoadStore
@@ -4137,6 +4163,29 @@ sparc_intr_retry:
 	membar	#Sync
 	LDPTR	[%l2 + IH_FUN], %o4	! ih->ih_fun
 	LDPTR	[%l2 + IH_ARG], %o0	! ih->ih_arg
+
+#ifdef NOT_DEBUG
+	set	_C_LABEL(intrdebug), %o3
+	ld	[%o2], %o3
+	btst	INTRDEBUG_FUNC, %o3
+	bz,a,pt	%icc, 97f
+	 nop
+
+	cmp	%l6, 0xa		! ignore clock interrupts?
+	bz,pt	%icc, 97f
+	 nop
+
+	STACKFRAME(-CC64FSZ)		! Get a clean register window
+	LOAD_ASCIZ(%o0, "sparc_interrupt: func %p arg %p\r\n")
+	mov	%i0, %o2		! arg
+	GLOBTOLOC
+	call	prom_printf
+	 mov	%i4, %o1		! func
+	LOCTOGLOB
+	restore
+97:
+	mov	%l4, %o1
+#endif
 
 	wrpr	%g0, PSTATE_INTR, %pstate	! Reenable interrupts
 	jmpl	%o4, %o7		! handled = (*ih->ih_fun)(...)
@@ -4147,7 +4196,11 @@ sparc_intr_retry:
 
 	brz,pn	%l1, 0f
 	 add	%l5, %o0, %l5
+#ifdef SCHIZO_BUS_SPACE_BROKEN 
+	stxa	%g0, [%l1] ASI_PHYS_NON_CACHED		! Clear intr source
+#else
 	stx	%g0, [%l1]		! Clear intr source
+#endif
 	membar	#Sync			! Should not be needed
 0:
 	cmp	%l7, -1
@@ -4172,11 +4225,15 @@ intrcmplt:
 	dec	%l5
 	st	%l5, [%l4 + %lo(CPUINFO_VA+CI_IDEPTH)]
 
-#ifdef DEBUG
+#ifdef NOT_DEBUG
 	set	_C_LABEL(intrdebug), %o2
 	ld	[%o2], %o2
 	btst	INTRDEBUG_FUNC, %o2
 	bz,a,pt	%icc, 97f
+	 nop
+
+	cmp	%l6, 0xa		! ignore clock interrupts?
+	bz,pt	%icc, 97f
 	 nop
 
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
