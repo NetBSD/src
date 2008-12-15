@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43.8.12 2008/12/04 20:57:15 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43.8.13 2008/12/15 19:41:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.12 2008/12/04 20:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43.8.13 2008/12/15 19:41:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,12 +148,6 @@ static kmutex_t	pmaps_lock;
 
 u_int	hppa_prot[8];
 u_int	sid_counter;
-
-static void *pmap_bootstrap_pv_page_alloc(struct pool *, int);
-static void pmap_bootstrap_pv_page_free(struct pool *, void *);
-static struct pool_allocator pmap_bootstrap_pv_allocator = {
-	pmap_bootstrap_pv_page_alloc, pmap_bootstrap_pv_page_free
-};
 
 /*
  * Page 3-6 of the "PA-RISC 1.1 Architecture and Instruction Set 
@@ -983,7 +977,7 @@ pmap_init(void)
 	pool_init(&pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr, IPL_NONE);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pmappv",
-	    &pmap_bootstrap_pv_allocator, IPL_NONE);
+	    &pool_allocator_nointr, IPL_NONE);
 
 	pool_setlowat(&pmap_pv_pool, pmap_pvlowat);
 	pool_sethiwat(&pmap_pv_pool, pmap_pvlowat * 32);
@@ -1006,53 +1000,6 @@ pmap_init(void)
 
 	DPRINTF(PDB_FOLLOW|PDB_INIT, ("pmap_init(): done\n"));
 }
-
-
-static vaddr_t last_bootstrap_page = 0;
-static void *free_bootstrap_pages = NULL;
-
-static void *
-pmap_bootstrap_pv_page_alloc(struct pool *pp, int flags)
-{
-	extern void *pool_page_alloc(struct pool *, int);
-	vaddr_t new_page;
-	void *rv;
-
-	if (pmap_initialized)
-		return (pool_page_alloc(pp, flags));
-
-	if (free_bootstrap_pages) {
-		rv = free_bootstrap_pages;
-		free_bootstrap_pages = *((void **)rv);
-		return (rv);
-	}
-
-	new_page = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-	    UVM_KMF_WIRED | ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT));
-
-	KASSERT(new_page > last_bootstrap_page);
-	last_bootstrap_page = new_page;
-	return ((void *)new_page);
-}
-
-static void
-pmap_bootstrap_pv_page_free(struct pool *pp, void *v)
-{
-	extern void pool_page_free(struct pool *, void *);
-
-	if ((vaddr_t)v <= last_bootstrap_page) {
-		*((void **)v) = free_bootstrap_pages;
-		free_bootstrap_pages = v;
-		return;
-	}
-
-	if (pmap_initialized) {
-		pool_page_free(pp, v);
-		return;
-	}
-}
-
-
 
 /* 
  * How much virtual space does this kernel have?
