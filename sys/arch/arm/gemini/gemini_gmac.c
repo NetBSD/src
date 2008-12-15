@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.1 2008/12/14 01:57:02 matt Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.2 2008/12/15 04:44:27 matt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.1 2008/12/14 01:57:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.2 2008/12/15 04:44:27 matt Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -89,13 +89,42 @@ gmac_intr_update(struct gmac_softc *sc)
 	    ~sc->sc_int_enabled[3]);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_MASK,
 	    ~sc->sc_int_enabled[4]);
-
 }
 
 static void
 gmac_init(struct gmac_softc *sc)
 {
 	gmac_hwqmem_t *hqm;
+
+	/*
+	 * This shouldn't be needed.
+	 */
+	for (bus_size_t i = 0; i < GMAC_TOE_QH_SIZE; i += 4) {
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+		    GMAC_TOE_QH_OFFSET + i, 0);
+	}
+#if 0
+	{
+	bus_space_handle_t global_ioh;
+	int error;
+	uint32_t v;
+
+	error = bus_space_map(sc->sc_iot, GEMINI_GLOBAL_BASE, 4, 0,
+	    &global_ioh);
+	KASSERT(error == 0);
+	aprint_normal_dev(sc->sc_dev, "gmac_init: global_ioh=%#zx\n", global_ioh);
+	bus_space_write_4(sc->sc_iot, global_ioh, GEMINI_GLOBAL_RESET_CTL, 
+	    GLOBAL_RESET_GMAC0|GLOBAL_RESET_GMAC1);
+	do {
+		v = bus_space_read_4(sc->sc_iot, global_ioh,
+		    GEMINI_GLOBAL_RESET_CTL);
+	} while (v & (GLOBAL_RESET_GMAC0|GLOBAL_RESET_GMAC1));
+	bus_space_unmap(sc->sc_iot, global_ioh, 4);
+	DELAY(1000);
+	}
+#endif
+
+	sc->sc_swfree_min = MIN_RXMAPS;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_SKBSIZE,
 	    SKB_SIZE_SET(PAGE_SIZE, MCLBYTES));
@@ -112,8 +141,36 @@ gmac_init(struct gmac_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT3_SELECT, INT3_GMAC1);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_SELECT, INT4_GMAC1);
 
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT0_STATUS, ~0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT1_STATUS, ~0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT2_STATUS, ~0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT3_STATUS, ~0);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_STATUS, ~0);
+
 	gmac_intr_update(sc);
 
+	aprint_normal_dev(sc->sc_dev, "gmac_init: sts=%#x/%#x/%#x/%#x/%#x\n",
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT0_STATUS),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT1_STATUS),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT2_STATUS),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT3_STATUS),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_STATUS));
+
+	aprint_normal_dev(sc->sc_dev, "gmac_init: mask=%#x/%#x/%#x/%#x/%#x\n",
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT0_MASK),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT1_MASK),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT2_MASK),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT3_MASK),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_MASK));
+
+	aprint_normal_dev(sc->sc_dev, "gmac_init: select=%#x/%#x/%#x/%#x/%#x\n",
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT0_SELECT),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT1_SELECT),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT2_SELECT),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT3_SELECT),
+	    bus_space_read_4(sc->sc_iot, sc->sc_ioh, GMAC_INT4_SELECT));
+
+	aprint_normal_dev(sc->sc_dev, "gmac_init: create rx dmamap cache\n");
 	/*
 	 * Allocate the cache for receive dmamaps.
 	 */
@@ -121,6 +178,15 @@ gmac_init(struct gmac_softc *sc)
 	    MCLBYTES, 1);
 	KASSERT(sc->sc_rxmaps != NULL);
 
+	aprint_normal_dev(sc->sc_dev, "gmac_init: create tx dmamap cache\n");
+	/*
+	 * Allocate the cache for transmit dmamaps.
+	 */
+	sc->sc_txmaps = gmac_mapcache_create(sc->sc_dmat, MAX_TXMAPS,
+	    ETHERMTU_JUMBO + ETHER_HDR_LEN, 16);
+	KASSERT(sc->sc_txmaps != NULL);
+
+	aprint_normal_dev(sc->sc_dev, "gmac_init: create sw freeq\n");
 	/*
 	 * Allocate the memory for sw (receive) free queue
 	 */
@@ -130,21 +196,17 @@ gmac_init(struct gmac_softc *sc)
 	    GMAC_SWFREEQ_RWPTR, GMAC_SWFREEQ_BASE, 0);
 	KASSERT(sc->sc_swfreeq != NULL);
 
-	/*
-	 * Allocate the cache for transmit dmamaps.
-	 */
-	sc->sc_txmaps = gmac_mapcache_create(sc->sc_dmat, MAX_TXMAPS,
-	    ETHERMTU_JUMBO + ETHER_HDR_LEN, 16);
-	KASSERT(sc->sc_txmaps != NULL);
-
+	aprint_normal_dev(sc->sc_dev, "gmac_init: create hw freeq\n");
 	/*
 	 * Allocate the memory for hw (transmit) free queue
 	 */
-	hqm = gmac_hwqmem_create(sc->sc_rxmaps, HWFREEQ_DESCS, 1,
+	hqm = gmac_hwqmem_create(sc->sc_txmaps, HWFREEQ_DESCS, 1,
 	    HQM_CONSUMER|HQM_TX);
 	sc->sc_hwfreeq = gmac_hwqueue_create(hqm, sc->sc_iot, sc->sc_ioh,
 	    GMAC_HWFREEQ_RWPTR, GMAC_HWFREEQ_BASE, 0);
 	KASSERT(sc->sc_hwfreeq != NULL);
+
+	aprint_normal_dev(sc->sc_dev, "gmac_init: done\n");
 }
 
 int
@@ -317,6 +379,8 @@ geminigmac_mii_readreg(device_t dv, int phy, int reg)
 	rv = mii_bitbang_readreg(parent, &geminigmac_mii_bitbang_ops, phy, reg);
 	mutex_exit(&sc->sc_mdiolock);
 
+	//aprint_normal_dev(dv, "mii_readreg(%d, %d): %#x\n", phy, reg, rv);
+
 	return rv;
 }
 
@@ -325,6 +389,8 @@ geminigmac_mii_writereg(device_t dv, int phy, int reg, int val)
 {
 	device_t parent = device_parent(dv);
 	struct gmac_softc * const sc = device_private(parent);
+
+	//aprint_normal_dev(dv, "mii_writereg(%d, %d, %#x)\n", phy, reg, val);
 
 	mutex_enter(&sc->sc_mdiolock);
 	mii_bitbang_writereg(parent, &geminigmac_mii_bitbang_ops, phy, reg, val);
@@ -441,36 +507,79 @@ gmac_hwqueue_desc(gmac_hwqueue_t *hwq, size_t i)
 	return hwq->hwq_base + i; 
 }
 
+static void
+gmac_hwqueue_txconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
+{
+	gmac_hwqmem_t * const hqm = hwq->hwq_hqm;
+	struct ifnet *ifp;
+	bus_dmamap_t map;
+	struct mbuf *m;
+
+	IF_DEQUEUE(&hwq->hwq_ifq, m);
+	KASSERT(m != NULL);
+	map = M_GETCTX(m, bus_dmamap_t);
+
+	bus_dmamap_sync(hqm->hqm_dmat, map, 0, map->dm_mapsize,
+	    BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(hqm->hqm_dmat, map);
+	M_SETCTX(m, NULL);
+	gmac_mapcache_put(hqm->hqm_mc, map);
+
+	ifp = hwq->hwq_ifp;
+	ifp->if_opackets++;
+	ifp->if_obytes += m->m_pkthdr.len;
+
+	printf("gmac_hwqueue_txconsume(%p): %zu@%p: %s m=%p\n",
+	    hwq, d - hwq->hwq_base, d, ifp->if_xname, m);
+
+#if NBPFILTER > 0
+	if (ifp->if_bpf)
+		bpf_mtap(ifp, m);
+#endif
+	m_freem(m);
+}
+
 void
 gmac_hwqueue_sync(gmac_hwqueue_t *hwq)
 {
 	gmac_hwqmem_t * const hqm = hwq->hwq_hqm;
-	uint32_t v = bus_space_read_4(hwq->hwq_iot, hwq->hwq_qrwptr_ioh, 0);
-	uint16_t old_rptr = hwq->hwq_rptr;
+	uint32_t v;
+	uint16_t old_rptr;
+	size_t rptr;
 
 	KASSERT(hqm->hqm_flags & HQM_PRODUCER);
+	KASSERT(hqm->hqm_flags & HQM_TX);
 
-	hwq->hwq_rptr = (uint16_t)(v >>  4) & 0xfff;
-	hwq->hwq_wptr = (uint16_t)(v >> 20) & 0xfff;
+	old_rptr = hwq->hwq_rptr;
+	v = bus_space_read_4(hwq->hwq_iot, hwq->hwq_qrwptr_ioh, 0);
+	hwq->hwq_rptr = (v >>  0) & 0xffff;
+	hwq->hwq_wptr = (v >> 16) & 0xffff;
 
 	if (old_rptr == hwq->hwq_rptr)
 		return;
 
-	hwq->hwq_free += hwq->hwq_rptr - old_rptr;
-	if (__predict_false(old_rptr > hwq->hwq_rptr)) {
+	hwq->hwq_free += (hwq->hwq_rptr - old_rptr) & (hwq->hwq_size - 1);
+	for (rptr = old_rptr;
+	     rptr != hwq->hwq_rptr;
+	     rptr = (rptr + 1) % (hwq->hwq_size - 1)) {
+		const gmac_desc_t * const d = hwq->hwq_base + rptr;
 		bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap, 
-		    sizeof(gmac_desc_t [hwq->hwq_qoff + old_rptr]),
-		    sizeof(gmac_desc_t [hwq->hwq_size - old_rptr]),
-		    BUS_DMASYNC_POSTREAD);
-		hwq->hwq_free += hwq->hwq_size;
-		old_rptr = 0;
+		    sizeof(gmac_desc_t [hwq->hwq_qoff + rptr]),
+		    sizeof(gmac_desc_t),
+		    BUS_DMASYNC_POSTWRITE);
+#if 0
+		printf("%s: gmac_hwqueue_sync(%p): %zu@%p=%#x/%#x/%#x/%#x\n",
+		    hwq->hwq_ifp->if_xname, hwq, rptr, d,
+		    d->d_desc0, d->d_desc1, d->d_bufaddr, d->d_desc3);
+#endif
+		if ((hqm->hqm_flags & HQM_TX)
+		    && (d->d_desc3 & htole32(DESC3_EOF))) {
+			gmac_hwqueue_txconsume(hwq, d);
+		}
 	}
-	if (old_rptr < hwq->hwq_rptr) {
-		bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap, 
-		    sizeof(gmac_desc_t [hwq->hwq_qoff + old_rptr]),
-		    sizeof(gmac_desc_t [hwq->hwq_qoff + hwq->hwq_rptr]),
-		    BUS_DMASYNC_POSTREAD);
-	}
+
+	printf("gmac_hwqueue_sync(%p): rptr old=%u new=%u\n",
+	    hwq, old_rptr, hwq->hwq_rptr);
 }
 
 void
@@ -481,28 +590,34 @@ gmac_hwqueue_produce(gmac_hwqueue_t *hwq, size_t count)
 	KASSERT(count < hwq->hwq_free);
 	KASSERT(hqm->hqm_flags & HQM_PRODUCER);
 
+	printf("gmac_hwqueue_produce(%p, %zu): rptr=%u wptr old=%u", hwq, count,
+	    hwq->hwq_rptr, hwq->hwq_wptr);
+
 	hwq->hwq_free -= count;
 	if (hwq->hwq_wptr + count >= hwq->hwq_size) {
 		bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap, 
 		    sizeof(gmac_desc_t [hwq->hwq_qoff + hwq->hwq_wptr]),
 		    sizeof(gmac_desc_t [hwq->hwq_size - hwq->hwq_wptr]),
-		    BUS_DMASYNC_PREREAD);
+		    BUS_DMASYNC_PREWRITE);
 		count -= hwq->hwq_size - hwq->hwq_wptr;
 		hwq->hwq_wptr = 0;
 	}
 	if (count > 0) {
 		bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap, 
 		    sizeof(gmac_desc_t [hwq->hwq_qoff + hwq->hwq_wptr]),
-		    sizeof(gmac_desc_t [hwq->hwq_wptr + count]),
-		    BUS_DMASYNC_PREREAD);
-		hwq->hwq_wptr += sizeof(gmac_desc_t [count]);
+		    sizeof(gmac_desc_t [count]),
+		    BUS_DMASYNC_PREWRITE);
+		hwq->hwq_wptr += count;
 	}
 
 	/*
 	 * Tell the h/w we've produced a few more descriptors.
+	 * (don't bother writing the rptr since it's RO).
 	 */
 	bus_space_write_4(hwq->hwq_iot, hwq->hwq_qrwptr_ioh, 0,
-	    (hwq->hwq_wptr << 20) | (hwq->hwq_rptr << 4));
+	    hwq->hwq_wptr << 16);
+
+	printf(" new=%u\n", hwq->hwq_wptr);
 }
 
 static void
@@ -516,6 +631,8 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 
 	KASSERT(ifp != NULL);
 
+	gmac_hwqueue_sync(hwq->hwq_producer);
+
 	/*
 	 * First we have to find this mbuf in the software free queue
 	 * (the producer of the mbufs) and remove it.
@@ -524,6 +641,7 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	     (m = *mp) != NULL;
 	     last_m = m, mp = &m->m_nextpkt) {
 		map = M_GETCTX(m, bus_dmamap_t);
+		KASSERT(map != NULL);
 		KASSERT(map->dm_nsegs == 1);
 		if (d->d_bufaddr == map->dm_segs->ds_addr) {
 			*mp = m->m_nextpkt;
@@ -547,7 +665,7 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	/*
 	 * Sync the buffer contents, unload the dmamap, and save it away.
 	 */
-	bus_dmamap_sync(hqm->hqm_dmat, map, 0, buflen, BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_sync(hqm->hqm_dmat, map, 0, buflen, BUS_DMASYNC_POSTREAD);
 	bus_dmamap_unload(hqm->hqm_dmat, map);
 	M_SETCTX(m, NULL);
 	gmac_mapcache_put(hqm->hqm_mc, map);
@@ -597,47 +715,6 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	hwq->hwq_mp = &hwq->hwq_rxmbuf;
 }
 
-static void
-gmac_hwqueue_txconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
-{
-	gmac_hwqmem_t *hqm;
-	gmac_hwqueue_t *txhwq;
-	struct ifnet *ifp;
-	bus_dmamap_t map = NULL;
-	struct mbuf *m = NULL;
-
-	SLIST_FOREACH(txhwq, &hwq->hwq_producers, hwq_link) {
-		if ((m = txhwq->hwq_ifq.ifq_head) == NULL)
-			continue;
-		map = M_GETCTX(m, bus_dmamap_t);
-		if (d->d_bufaddr == map->dm_segs[map->dm_nsegs-1].ds_addr) {
-			if ((txhwq->hwq_ifq.ifq_head = m->m_nextpkt) == NULL)
-				txhwq->hwq_ifq.ifq_tail = NULL;
-			txhwq->hwq_ifq.ifq_len--;
-			break;	
-		}
-	}
-	KASSERT(txhwq != NULL);
-	KASSERT(m != NULL);
-
-	hqm = txhwq->hwq_hqm;
-	bus_dmamap_sync(hqm->hqm_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD);
-	bus_dmamap_unload(hqm->hqm_dmat, map);
-	M_SETCTX(m, NULL);
-	gmac_mapcache_put(hqm->hqm_mc, map);
-
-	ifp = txhwq->hwq_ifp;
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
-
-#if NBPFILTER > 0
-	if (ifp->if_bpf)
-		bpf_mtap(ifp, m);
-#endif
-	m_freem(m);
-}
-
 void
 gmac_hwqueue_consume(gmac_hwqueue_t *hwq)
 {
@@ -645,20 +722,25 @@ gmac_hwqueue_consume(gmac_hwqueue_t *hwq)
 
 	KASSERT((hqm->hqm_flags & HQM_PRODUCER) == 0);
 
-	for (;;) {
+	printf("gmac_hwqueue_consume(%p): entry\n", hwq);
+
+	do {
 		gmac_desc_t d;
 		uint32_t v;
 		uint16_t rptr, wptr;
 
 		v = bus_space_read_4(hwq->hwq_iot, hwq->hwq_qrwptr_ioh, 0);
-		rptr = (v >>  4) & 0xfff; 
-		wptr = (v >> 20) & 0xfff; 
-		for (; rptr != ((wptr - 1) & (hwq->hwq_size - 1));
-		     rptr = (rptr + 1) & (hwq->hwq_size - 1)) {
+		rptr = (v >>  0) & 0xffff; 
+		wptr = (v >> 16) & 0xffff; 
+		KASSERT(rptr == hwq->hwq_rptr);
+		if (rptr == wptr)
+			break;
+
+		for (; rptr != wptr; rptr = (rptr + 1) & (hwq->hwq_size - 1)) {
 			bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap,
 			    sizeof(gmac_desc_t [hwq->hwq_qoff + rptr]),
 			    sizeof(gmac_desc_t),
-			    BUS_DMASYNC_POSTWRITE);
+			    BUS_DMASYNC_POSTREAD);
 			d.d_desc0   = le32toh(hwq->hwq_base[rptr].d_desc0);
 			d.d_desc1   = le32toh(hwq->hwq_base[rptr].d_desc1);
 			d.d_bufaddr = le32toh(hwq->hwq_base[rptr].d_bufaddr);
@@ -666,17 +748,26 @@ gmac_hwqueue_consume(gmac_hwqueue_t *hwq)
 			bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap,
 			    sizeof(gmac_desc_t [hwq->hwq_qoff + rptr]),
 			    sizeof(gmac_desc_t),
-			    BUS_DMASYNC_PREWRITE);
+			    BUS_DMASYNC_PREREAD);
 
-			if ((hqm->hqm_flags & HQM_TX) == 0) {
-				gmac_hwqueue_rxconsume(hwq, &d);
-			} else if (d.d_desc3 & DESC3_EOF) {
-				gmac_hwqueue_txconsume(hwq, &d);
-			}
+			printf("gmac_hwqueue_consume(%p): rptr=%u\n",
+			    hwq, rptr);
+			gmac_hwqueue_rxconsume(hwq, &d);
 		}
+
+		/*
+		 * Update hardware's copy of rptr.  (wptr is RO).
+		 */
+		printf("gmac_hwqueue_consume(%p): rptr old=%u new=%u wptr=%u\n",
+		    hwq, rptr, hwq->hwq_rptr, hwq->hwq_wptr);
+		bus_space_write_4(hwq->hwq_iot, hwq->hwq_qrwptr_ioh, 0, rptr);
+
 		hwq->hwq_rptr = rptr;
-		hwq->hwq_wptr = wptr;
-	}
+		hwq->hwq_wptr = wptr;	/* not used */
+	} while (hwq->hwq_rptr != hwq->hwq_wptr);
+
+	printf("gmac_hwqueue_consume(%p): exit\n", hwq);
+
 }
 
 void
@@ -723,22 +814,39 @@ gmac_hwqmem_create(gmac_mapcache_t *mc, size_t ndesc, size_t nqueue, int flags)
 
 	error = bus_dmamem_alloc(hqm->hqm_dmat, hqm->hqm_memsize, 0, 0,
 	    hqm->hqm_segs, 1, &hqm->hqm_nsegs, BUS_DMA_WAITOK);
-	if (error)
+	if (error) {
+		KASSERT(error == 0);
 		goto failed;
+	}
+	KASSERT(hqm->hqm_nsegs == 1);
 	error = bus_dmamem_map(hqm->hqm_dmat, hqm->hqm_segs, hqm->hqm_nsegs,
 	    hqm->hqm_memsize, (void **)&hqm->hqm_base, BUS_DMA_WAITOK);
-	if (error)
+	if (error) {
+		KASSERT(error == 0);
 		goto failed;
+	}
 	error = bus_dmamap_create(hqm->hqm_dmat, hqm->hqm_memsize,
-	    hqm->hqm_nsegs, 0, 0, BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW,
-	    &hqm->hqm_dmamap);
-	if (error)
+	    hqm->hqm_nsegs, hqm->hqm_memsize, 0,
+	    BUS_DMA_WAITOK|BUS_DMA_ALLOCNOW, &hqm->hqm_dmamap);
+	if (error) {
+		KASSERT(error == 0);
 		goto failed;
+	}
 	error = bus_dmamap_load(hqm->hqm_dmat, hqm->hqm_dmamap, hqm->hqm_base,
 	    hqm->hqm_memsize, NULL, BUS_DMA_WAITOK
-		| (flags & HQM_PRODUCER ? BUS_DMA_READ: BUS_DMA_WRITE)); 
-	if (error)
+		| (flags & HQM_PRODUCER ? BUS_DMA_WRITE: BUS_DMA_READ)); 
+	if (error) {
+		printf("gmac_hwqmem_create: ds_addr=%zu ds_len=%zu\n",
+		    hqm->hqm_segs->ds_addr, hqm->hqm_segs->ds_len);
+		printf("gmac_hwqmem_create: bus_dmamap_load: %d\n", error);
+		KASSERT(error == 0);
 		goto failed;
+	}
+
+	memset(hqm->hqm_base, 0, hqm->hqm_memsize);
+	if ((flags & HQM_PRODUCER) == 0)
+		bus_dmamap_sync(hqm->hqm_dmat, hqm->hqm_dmamap, 0,
+		    hqm->hqm_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	return hqm;
 
@@ -773,7 +881,7 @@ gmac_hwqueue_create(gmac_hwqmem_t *hqm,
     bus_size_t qrwptr, bus_size_t qbase,
     size_t qno)
 {
-	const size_t log2_memsize = ffs(hqm->hqm_ndesc) + 3;
+	const size_t log2_memsize = ffs(hqm->hqm_ndesc) - 1;
 	gmac_hwqueue_t *hwq;
 	uint32_t v;
 
@@ -796,14 +904,21 @@ gmac_hwqueue_create(gmac_hwqmem_t *hqm,
 	hwq->hwq_qoff = hqm->hqm_ndesc * qno;
 	hwq->hwq_base = hqm->hqm_base + hwq->hwq_qoff;
 
-	v = bus_space_read_4(hwq->hwq_iot, hwq->hwq_qrwptr_ioh, 0);
-	hwq->hwq_rptr = (v >>  4) & 0xfff;
-	hwq->hwq_wptr = (v >> 20) & 0xfff;
-
 	if (qno == 0) {
 		bus_space_write_4(hwq->hwq_iot, ioh, qbase,
 		     hqm->hqm_dmamap->dm_segs[0].ds_addr | (log2_memsize));
 	}
+
+	v = bus_space_read_4(hwq->hwq_iot, hwq->hwq_qrwptr_ioh, 0);
+	hwq->hwq_rptr = (v >>  0) & 0xffff;
+	hwq->hwq_wptr = (v >> 16) & 0xffff;
+
+	printf("gmac_hwqueue_create: %p: qrwptr=%zu(%#zx) wptr=%u rptr=%u"
+	    " base=%p@%#zx(%#x) qno=%zu\n",
+	    hwq, qrwptr, hwq->hwq_qrwptr_ioh, hwq->hwq_wptr, hwq->hwq_rptr,
+	    hwq->hwq_base,
+	    hqm->hqm_segs->ds_addr + sizeof(gmac_desc_t [hwq->hwq_qoff]),
+	    bus_space_read_4(hwq->hwq_iot, ioh, qbase), qno);
 
 	hwq->hwq_free = hwq->hwq_size - 1;
 	hwq->hwq_ifq.ifq_maxlen = hwq->hwq_free;
