@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmacvar.h,v 1.1 2008/12/14 01:57:02 matt Exp $ */
+/* $NetBSD: gemini_gmacvar.h,v 1.2 2008/12/15 04:44:27 matt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -92,6 +92,8 @@ struct gmac_softc {
 	gmac_hwqueue_t *sc_hwfreeq;
 	gmac_mapcache_t *sc_rxmaps;
 	gmac_mapcache_t *sc_txmaps;
+	size_t sc_swfree_min;		/* min mbufs to keep on swfreeq */
+	size_t sc_rxpkts_per_sec; 
 
 	/*
 	 * What interrupts are enabled for both ports?
