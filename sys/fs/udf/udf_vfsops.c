@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.52 2008/10/29 18:09:47 reinoud Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.53 2008/12/16 16:18:25 pooka Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,12 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.52 2008/10/29 18:09:47 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.53 2008/12/16 16:18:25 pooka Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 

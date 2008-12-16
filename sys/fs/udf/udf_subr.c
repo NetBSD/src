@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.77 2008/12/16 10:30:19 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.78 2008/12/16 16:18:25 pooka Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,12 +29,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.77 2008/12/16 10:30:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.78 2008/12/16 16:18:25 pooka Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 

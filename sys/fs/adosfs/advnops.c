@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.30 2008/11/26 20:17:33 pooka Exp $	*/
+/*	$NetBSD: advnops.c,v 1.31 2008/12/16 16:18:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,11 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.30 2008/11/26 20:17:33 pooka Exp $");
-
-#if defined(_KERNEL_OPT)
-#include "opt_quota.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.31 2008/12/16 16:18:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -800,8 +796,6 @@ adosfs_access(v)
 			break;
 		}
 	}
-#ifdef QUOTA
-#endif
 	error = vaccess(sp->a_vp->v_type, adunixprot(ap->adprot) & ap->amp->mask,
 	    ap->uid, ap->gid, sp->a_mode, sp->a_cred);
 #ifdef ADOSFS_DIAGNOSTIC
