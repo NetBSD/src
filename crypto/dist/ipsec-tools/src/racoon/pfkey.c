@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.39 2008/12/08 06:00:53 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.40 2008/12/16 06:08:46 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.39 2008/12/08 06:00:53 tteras Exp $ */
+/* $Id: pfkey.c,v 1.40 2008/12/16 06:08:46 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1776,7 +1776,7 @@ pk_recvacquire(mhp)
 	 * - if SP from SPD image contains local and remote hints, we
 	 *   use them (provided by MIGRATE).
 	 * - otherwise, we use the ones from the ipsecrequest, which means:
-	 *   - the addresses from the selector for transport mode
+	 *   - the addresses from the request for transport mode
 	 *   - the endpoints addresses for tunnel mode
 	 *
 	 * Note that:
@@ -1789,27 +1789,21 @@ pk_recvacquire(mhp)
 	 *
 	 * --arno
 	 */
+	if (sp_out->req && sp_out->req->saidx.mode == IPSEC_MODE_TUNNEL) {
+		/* For Tunnel mode, SA addresses are the endpoints */
+		src = (struct sockaddr *) &sp_out->req->saidx.src;
+		dst = (struct sockaddr *) &sp_out->req->saidx.dst;
+	} else {
+		/* Otherwise use requested addresses */
+		src = sp_src;
+		dst = sp_dst;
+	}
 	if (sp_out->local && sp_out->remote) {
 		/* hints available, let's use them */
-		src = (struct sockaddr *)sp_out->local;
-		dst = (struct sockaddr *)sp_out->remote;
-		if (sp_out->req && sp_out->req->saidx.mode == IPSEC_MODE_TUNNEL) {
-			/* For Tunnel mode, SA addresses are the endpoints */
-			sa_src = (struct sockaddr *)&sp_out->req->saidx.src;
-			sa_dst = (struct sockaddr *)&sp_out->req->saidx.dst;
-		} else {
-			/* Otherwise, use selectors */
-			sa_src = (struct sockaddr *)&sp_out->spidx.src;
-			sa_dst = (struct sockaddr *)&sp_out->spidx.dst;
-		}
-	} else if (sp_out->req && sp_out->req->saidx.mode == IPSEC_MODE_TUNNEL) {
-		/* Tunnel mode and no hint, use endpoints */
-		src = (struct sockaddr *)&sp_out->req->saidx.src;
-		dst = (struct sockaddr *)&sp_out->req->saidx.dst;
-	} else {
-		/* default, use selectors as fallback */
-		src = (struct sockaddr *)&sp_out->spidx.src;
-		dst = (struct sockaddr *)&sp_out->spidx.dst;
+		sa_src = src;
+		sa_dst = dst;
+		src = (struct sockaddr *) sp_out->local;
+		dst = (struct sockaddr *) sp_out->remote;
 	}
 
 	/*
