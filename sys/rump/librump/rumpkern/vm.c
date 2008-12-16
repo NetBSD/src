@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.46 2008/12/16 14:07:25 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.47 2008/12/16 14:48:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -150,6 +150,7 @@ rumpvm_flushva(struct uvm_object *uobj)
 		rva_next = LIST_NEXT(rva, entries);
 		if (rva->pg->uobject == uobj) {
 			LIST_REMOVE(rva, entries);
+			rva->pg->flags &= ~PG_BUSY;
 			kmem_free(rva, sizeof(*rva));
 		}
 	}

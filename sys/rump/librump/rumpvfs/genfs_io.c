@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.3 2008/12/16 14:07:25 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.4 2008/12/16 14:48:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -349,7 +349,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		memcpy(curva, (void *)pg->uanon, PAGE_SIZE);
 		rumpvm_enterva((vaddr_t)curva, pg);
 
-		pg->flags |= PG_CLEAN;
+		pg->flags |= PG_CLEAN | PG_BUSY;
 	}
 	KASSERT(curoff > smallest);
 
