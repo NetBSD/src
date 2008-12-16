@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.14 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: ka670.c,v 1.15 2008/12/16 22:35:28 christos Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.14 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.15 2008/12/16 22:35:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -172,10 +172,10 @@ ka670_memerr(void)
 
 	printf("memory error!\n");
 
-	bitmask_snprintf(mfpr(PR_PCSTS), KA670_PCSTS_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), KA670_PCSTS_BITS, mfpr(PR_PCSTS));
 	printf("primary cache status: %s\n", sbuf);
 
-	bitmask_snprintf(mfpr(PR_BCSTS), KA670_BCSTS_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), KA670_BCSTS_BITS, mfpr(PR_BCSTS));
 	printf("secondary cache status: %s\n", sbuf);
 }
 
@@ -198,10 +198,10 @@ ka670_cache_init(void)
 	mtpr(KA670_PCS_ENABLE | KA670_PCS_REFRESH, PR_PCSTS);	/* flush primary cache */
 
 #ifdef DEBUG
-	bitmask_snprintf(mfpr(PR_PCSTS), KA670_PCSTS_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), KA670_PCSTS_BITS, mfpr(PR_PCSTS));
 	printf("primary cache status: %s\n", sbuf);
 
-	bitmask_snprintf(mfpr(PR_BCSTS), KA670_BCSTS_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), KA670_BCSTS_BITS, mfpr(PR_BCSTS));
 	printf("secondary cache status: %s\n", sbuf);
 #endif
 

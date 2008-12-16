@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.6 2008/04/22 14:02:04 cegger Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.7 2008/12/16 22:35:25 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.6 2008/04/22 14:02:04 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.7 2008/12/16 22:35:25 christos Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -216,8 +216,8 @@ pi1ppc_sc_attach(struct pi1ppc_softc *lsc)
 	lsc->sc_has = PI1PPC_HAS_PS2;
 	   
         /* Print out chipset capabilities */
-	bitmask_snprintf(lsc->sc_has, "\20\1INTR\2DMA\3FIFO\4PS2\5ECP\6EPP",
-		buf, sizeof(buf));
+	snprintb(buf, sizeof(buf), "\20\1INTR\2DMA\3FIFO\4PS2\5ECP\6EPP",
+	    lsc->sc_has);
 	printf("\n%s: capabilities=%s\n", device_xname(lsc->sc_dev), buf);
 
 	/* Initialize device's buffer pointers */

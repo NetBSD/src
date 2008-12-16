@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.155 2008/11/28 17:18:21 jmorse Exp $ */
+/*	$NetBSD: ehci.c,v 1.156 2008/12/16 22:35:35 christos Exp $ */
 
 /*
  * Copyright (c) 2004-2008 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.155 2008/11/28 17:18:21 jmorse Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.156 2008/12/16 22:35:35 christos Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.155 2008/11/28 17:18:21 jmorse Exp $");
 #define DPRINTFN(n,x)	do { if (ehcidebug>(n)) printf x; } while (0)
 int ehcidebug = 0;
 #ifndef __NetBSD__
-#define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
+#define snprintb((q), (f), "%b", q,f,b,l) snprintf((b), (l))
 #endif
 #else
 #define DPRINTF(x)
@@ -966,9 +966,9 @@ ehci_idone(struct ehci_xfer *ex)
 #ifdef EHCI_DEBUG
 		char sbuf[128];
 
-		bitmask_snprintf((u_int32_t)status,
-				 "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR"
-				 "\3MISSED\1PINGSTATE", sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf),
+		    "\20\7HALTED\6BUFERR\5BABBLE\4XACTERR\3MISSED\1PINGSTATE",
+		    (u_int32_t)status);
 
 		DPRINTFN(2, ("ehci_idone: error, addr=%d, endpt=0x%02x, "
 			  "status 0x%s\n",
@@ -1437,9 +1437,9 @@ ehci_dump_qtd(ehci_qtd_t *qtd)
 	printf(" altnext="); ehci_dump_link(qtd->qtd_altnext, 0);
 	printf("\n");
 	s = le32toh(qtd->qtd_status);
-	bitmask_snprintf(EHCI_QTD_GET_STATUS(s),
-			 "\20\10ACTIVE\7HALTED\6BUFERR\5BABBLE\4XACTERR"
-			 "\3MISSED\2SPLIT\1PING", sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf),
+	    "\20\10ACTIVE\7HALTED\6BUFERR\5BABBLE\4XACTERR"
+	    "\3MISSED\2SPLIT\1PING", EHCI_QTD_GET_STATUS(s));
 	printf("  status=0x%08x: toggle=%d bytes=0x%x ioc=%d c_page=0x%x\n",
 	       s, EHCI_QTD_GET_TOGGLE(s), EHCI_QTD_GET_BYTES(s),
 	       EHCI_QTD_GET_IOC(s), EHCI_QTD_GET_C_PAGE(s));

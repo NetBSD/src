@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.37 2008/07/05 08:46:25 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.38 2008/12/16 22:35:22 christos Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.37 2008/07/05 08:46:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.38 2008/12/16 22:35:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -669,11 +669,41 @@ fdcstart(struct fdc_softc *fdc)
 	(void)fdcintr(fdc);
 }
 
+static void
+fdcpstatus(int n, struct fdc_softc *fdc)
+{
+	char bits[64];
+
+	switch (n) {
+	case 0:
+		printf("\n");
+		break;
+	case 2:
+		snprintb(bits, sizeof(bits), NE7_ST0BITS, fdc->sc_status[0]);
+		printf(" (st0 %s cyl %d)\n", bits, fdc->sc_status[1]);
+		break;
+	case 7:
+		snprintb(bits, sizeof(bits), NE7_ST0BITS, fdc->sc_status[0]);
+		printf(" (st0 %s", bits);
+		snprintb(bits, sizeof(bits), NE7_ST1BITS, fdc->sc_status[1]);
+		printf(" st1 %s", bits);
+		snprintb(bits, sizeof(bits), NE7_ST2BITS, fdc->sc_status[2]);
+		printf(" st2 %s", bits);
+		printf(" cyl %d head %d sec %d)\n",
+		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
+		break;
+#ifdef DIAGNOSTIC
+	default:
+		printf("\nfdcstatus: weird size");
+		break;
+#endif
+	}
+}
+
 void
 fdcstatus(device_t dev, int n, const char *s)
 {
 	struct fdc_softc *fdc = device_private(device_parent(dev));
-	char bits[64];
 
 	if (n == 0) {
 		out_fdc(fdc->sc_iot, fdc->sc_ioh, NE7CMD_SENSEI);
@@ -682,32 +712,7 @@ fdcstatus(device_t dev, int n, const char *s)
 	}
 
 	printf("%s: %s", device_xname(dev), s);
-
-	switch (n) {
-	case 0:
-		printf("\n");
-		break;
-	case 2:
-		printf(" (st0 %s cyl %d)\n",
-		    bitmask_snprintf(fdc->sc_status[0], NE7_ST0BITS,
-		    bits, sizeof(bits)), fdc->sc_status[1]);
-		break;
-	case 7:
-		printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
-		    NE7_ST0BITS, bits, sizeof(bits)));
-		printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
-		    NE7_ST1BITS, bits, sizeof(bits)));
-		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
-		    NE7_ST2BITS, bits, sizeof(bits)));
-		printf(" cyl %d head %d sec %d)\n",
-		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
-		break;
-#ifdef DIAGNOSTIC
-	default:
-		printf("\n%s: weird size", __func__);
-		break;
-#endif
-	}
+	fdcpstatus(n, fdc);
 }
 
 void
@@ -1011,7 +1016,6 @@ fdcretry(struct fdc_softc *fdc)
 {
 	struct fd_softc *fd;
 	struct buf *bp;
-	char bits[64];
 
 	fd = TAILQ_FIRST(&fdc->sc_drives);
 	bp = BUFQ_PEEK(fd->sc_q);
@@ -1038,15 +1042,7 @@ fdcretry(struct fdc_softc *fdc)
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
 		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
 
-		printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
-		    NE7_ST0BITS, bits, sizeof(bits)));
-		printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
-		    NE7_ST1BITS, bits, sizeof(bits)));
-		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
-		    NE7_ST2BITS, bits, sizeof(bits)));
-		printf(" cyl %d head %d sec %d)\n",
-		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
-
+		fdcpstatus(7, fdc);
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
 	}

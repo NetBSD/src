@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.120 2008/10/15 06:51:17 wrstuden Exp $	*/
+/*	$NetBSD: trap.c,v 1.121 2008/12/16 22:35:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.120 2008/10/15 06:51:17 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121 2008/12/16 22:35:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,10 +360,9 @@ trapmmufault(type, code, v, fp, l, sticks)
 		if (machineid & AMIGA_68060) {
 			if (--donomore == 0 || mmudebug & 1) {
 				char bits[64];
+				snprintb(bits, sizeof(bits), FSLW_STRING, code);
 				printf ("68060 access error: pc %x, code %s,"
-				     " ea %x\n", fp->f_pc,
-				     bitmask_snprintf(code, FSLW_STRING,
-				     bits, sizeof(bits)), v);
+				     " ea %x\n", fp->f_pc, bits, v);
 			}
 			if (p == oldp && v == oldv && code == oldcode)
 				panic("Identical fault backtoback!");

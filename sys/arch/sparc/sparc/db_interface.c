@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.79 2008/08/08 17:09:28 skrll Exp $ */
+/*	$NetBSD: db_interface.c,v 1.80 2008/12/16 22:35:26 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.79 2008/08/08 17:09:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80 2008/12/16 22:35:26 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -396,10 +396,10 @@ db_dump_pcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	else
 		pcb = curcpu()->curpcb;
 
+	snprintb(bits, sizeof(bits), PSR_BITS, pcb->pcb_psr);
 	db_printf("pcb@%p sp:%p pc:%p psr:%s onfault:%p\nfull windows:\n",
 		  pcb, (void *)(long)pcb->pcb_sp, (void *)(long)pcb->pcb_pc,
-		  bitmask_snprintf(pcb->pcb_psr, PSR_BITS, bits, sizeof(bits)),
-		  (void *)pcb->pcb_onfault);
+		  bits, (void *)pcb->pcb_onfault);
 
 	for (i=0; i<pcb->pcb_nsaved; i++) {
 		db_printf("win %d: at %llx local, in\n", i,

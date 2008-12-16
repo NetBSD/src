@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.94 2008/12/10 03:31:51 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.95 2008/12/16 22:35:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.94 2008/12/10 03:31:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.95 2008/12/16 22:35:26 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -877,11 +877,10 @@ psycho_ue(void *arg)
 	/*
 	 * It's uncorrectable.  Dump the regs and panic.
 	 */
+	snprintb(bits, sizeof(bits), PSYCHO_UE_AFSR_BITS, afsr);
 	printf("%s: uncorrectable DMA error AFAR %llx pa %llx AFSR %llx:\n%s\n",
 		device_xname(&sc->sc_dev), afar, 
-		(long long)iommu_extract(is, (vaddr_t)afar), afsr,
-		bitmask_snprintf(afsr, PSYCHO_UE_AFSR_BITS,
-			bits, sizeof(bits)));
+		(long long)iommu_extract(is, (vaddr_t)afar), afsr, bits);
 	
 	/* Sometimes the AFAR points to an IOTSB entry */
 	if (afar >= is->is_ptsb && afar < is->is_ptsb + size) {

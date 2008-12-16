@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.37 2008/11/07 00:20:07 dyoung Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.38 2008/12/16 22:35:33 christos Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.37 2008/11/07 00:20:07 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.38 2008/12/16 22:35:33 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -956,9 +956,9 @@ nfe_txeof(struct nfe_softc *sc)
 				continue;
 
 			if ((flags & NFE_TX_ERROR_V1) != 0) {
+				snprintb(buf, sizeof(buf), NFE_V1_TXERR, flags);
 				aprint_error_dev(sc->sc_dev, "tx v1 error %s\n",
-				    bitmask_snprintf(flags, NFE_V1_TXERR,
-				    buf, sizeof(buf)));
+				    buf);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
@@ -968,9 +968,9 @@ nfe_txeof(struct nfe_softc *sc)
 				continue;
 
 			if ((flags & NFE_TX_ERROR_V2) != 0) {
+				snprintb(buf, sizeof(buf), NFE_V2_TXERR, flags);
 				aprint_error_dev(sc->sc_dev, "tx v2 error %s\n",
-				    bitmask_snprintf(flags, NFE_V2_TXERR,
-				    buf, sizeof(buf)));
+				    buf);
 				ifp->if_oerrors++;
 			} else
 				ifp->if_opackets++;
