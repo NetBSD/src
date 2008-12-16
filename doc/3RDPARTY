@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.654 2008/12/09 19:48:50 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.655 2008/12/16 13:03:29 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -944,7 +944,7 @@ See /usr/src/dist/wpa/NetBSD-upgrade for update instructions.
 
 Package:	XFree86
 Version:	4.5.0
-Current Vers:	4.7.0
+Current Vers:	4.8.0
 Maintainer:	XFree86 Project, Inc.
 Archive Site:	ftp://ftp.xfree86.org/pub/XFree86/
 Home Page:	http://www.xfree86.org/
