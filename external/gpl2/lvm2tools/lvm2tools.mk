@@ -1,4 +1,4 @@
-#	$NetBSD: lvm2tools.mk,v 1.1.2.2 2008/07/23 13:44:02 lukem Exp $
+#	$NetBSD: lvm2tools.mk,v 1.1.2.3 2008/12/16 00:43:53 haad Exp $
 
 .include <bsd.own.mk>
 
@@ -7,8 +7,8 @@ LVM2TOOLS_DISTDIR=	${NETBSDSRCDIR}/external/gpl2/lvm2tools/dist
 
 LVM2TOOLS_PREFIX=	/
 
-LIBDM_SRCDIR=		${NETBSDSRCDIR}/external/gpl2/libdevmapper
-LIBDM_INCLUDE=		${LIBDM_SRCDIR}/dist/include
+LIBDM_SRCDIR=		${NETBSDSRCDIR}/external/gpl2/lvm2tools/dist/libdm
+LIBDM_INCLUDE=		${NETBSDSRCDIR}/external/gpl2/lvm2tools/dist/include
 
 #
 #LIBDM_OBJDIR.libdevmapper=${LIBDM_SRCDIR}/lib/libdevmapper/
