@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.33 2008/12/16 10:30:19 reinoud Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.34 2008/12/16 14:28:34 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.33 2008/12/16 10:30:19 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.34 2008/12/16 14:28:34 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -546,8 +546,7 @@ udf_readdir(void *v)
 
 	/* we are called just as long as we keep on pushing data in */
 	error = 0;
-	if ((uio->uio_offset < file_size) &&
-	    (uio->uio_resid >= sizeof(struct dirent))) {
+	if (uio->uio_offset < file_size) {
 		/* allocate temporary space for fid */
 		lb_size = udf_rw32(udf_node->ump->logical_vol->lb_size);
 		fid = malloc(lb_size, M_UDFTEMP, M_WAITOK);
@@ -597,7 +596,7 @@ udf_readdir(void *v)
 	}
 
 	if (ap->a_eofflag)
-		*ap->a_eofflag = (uio->uio_offset == file_size);
+		*ap->a_eofflag = (uio->uio_offset >= file_size);
 
 #ifdef DEBUG
 	if (udf_verbose & UDF_DEBUG_READDIR) {
