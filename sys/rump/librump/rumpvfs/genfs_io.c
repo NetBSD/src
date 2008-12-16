@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.2 2008/11/21 18:02:17 pooka Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.3 2008/12/16 14:07:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -415,7 +415,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 		if (!async)
 			putiobuf(bp);
 	}
-	rumpvm_flushva();
+	rumpvm_flushva(uobj);
 
 	mutex_enter(&uobj->vmobjlock);
 	goto restart;
