@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2008/05/05 17:54:14 ad Exp $
+#	$NetBSD: Makefile,v 1.3 2008/12/16 22:44:50 christos Exp $
 
 .PATH:	${.CURDIR}/arch
 
 PROG=	cpuctl
 MAN=	cpuctl.8
-SRCS=	cpuctl.c bitmask.c
+SRCS=	cpuctl.c
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.c)
 SRCS+=	${MACHINE_ARCH}.c
@@ -14,5 +14,8 @@ SRCS+=	${MACHINE_ARCH}-asm.S
 .else
 SRCS+=	noarch.c
 .endif
+
+LDADD+=-lutil
+DPADD+=${LIBUTIL}
 
 .include <bsd.prog.mk>
