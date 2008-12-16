@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.45 2008/11/27 08:13:15 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.46 2008/12/16 14:07:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -141,14 +141,17 @@ rumpvm_enterva(vaddr_t addr, struct vm_page *pg)
 }
 
 void
-rumpvm_flushva()
+rumpvm_flushva(struct uvm_object *uobj)
 {
-	struct rumpva *rva;
+	struct rumpva *rva, *rva_next;
 
 	mutex_enter(&rvamtx);
-	while ((rva = LIST_FIRST(&rvahead)) != NULL) {
-		LIST_REMOVE(rva, entries);
-		kmem_free(rva, sizeof(*rva));
+	for (rva = LIST_FIRST(&rvahead); rva; rva = rva_next) {
+		rva_next = LIST_NEXT(rva, entries);
+		if (rva->pg->uobject == uobj) {
+			LIST_REMOVE(rva, entries);
+			kmem_free(rva, sizeof(*rva));
+		}
 	}
 	mutex_exit(&rvamtx);
 }
