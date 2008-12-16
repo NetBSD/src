@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.24 2008/07/25 07:33:57 manu Exp $
+.\"     $NetBSD: kprintf.9,v 1.25 2008/12/16 22:50:32 christos Exp $
 .\"
 .\" Copyright (c) 1998, 2002, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -246,7 +246,7 @@ if no terminal handle could be acquired.
 .Xr printf 3 ,
 .Xr autoconf 4 ,
 .Xr boot 8 ,
-.Xr bitmask_snprintf 9
+.Xr snprintb 3
 .Sh CODE REFERENCES
 .Pa sys/kern/subr_prf.c
 .Sh HISTORY
@@ -272,7 +272,7 @@ These nonstandard format strings are no longer supported.
 For the functionality provided by the former
 .Li %b
 format string, see
-.Xr bitmask_snprintf 9 .
+.Xr snprintb 3 .
 .Pp
 The
 .Fn aprint_normal ,
