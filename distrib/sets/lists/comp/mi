@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1218 2008/12/12 23:49:28 njoly Exp $
+#	$NetBSD: mi,v 1.1219 2008/12/16 22:54:36 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -8029,7 +8029,7 @@
 ./usr/share/man/cat9/binuptime.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/biodone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/biowait.0			comp-sys-catman		.cat
-./usr/share/man/cat9/bitmask_snprintf.0		comp-sys-catman		.cat
+./usr/share/man/cat9/bitmask_snprintf.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/bluetooth.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/boottime.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/bounds_check_with_label.0	comp-sys-catman		.cat
@@ -13245,7 +13245,7 @@
 ./usr/share/man/html9/binuptime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/biodone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/biowait.html		comp-sys-htmlman	html
-./usr/share/man/html9/bitmask_snprintf.html	comp-sys-htmlman	html
+./usr/share/man/html9/bitmask_snprintf.html	comp-obsolete		obsolete
 ./usr/share/man/html9/bluetooth.html		comp-sys-htmlman	html
 ./usr/share/man/html9/boottime.html		comp-sys-htmlman	html
 ./usr/share/man/html9/bounds_check_with_label.html	comp-sys-htmlman	html
@@ -18573,7 +18573,7 @@
 ./usr/share/man/man9/binuptime.9		comp-sys-man		.man
 ./usr/share/man/man9/biodone.9			comp-sys-man		.man
 ./usr/share/man/man9/biowait.9			comp-sys-man		.man
-./usr/share/man/man9/bitmask_snprintf.9		comp-sys-man		.man
+./usr/share/man/man9/bitmask_snprintf.9		comp-obsolete		obsolete
 ./usr/share/man/man9/bluetooth.9		comp-sys-man		.man
 ./usr/share/man/man9/boottime.9			comp-sys-man		.man
 ./usr/share/man/man9/bounds_check_with_label.9	comp-sys-man		.man
