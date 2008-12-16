@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.56 2007/09/25 01:13:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.57 2008/12/16 22:34:40 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
 
 .include <bsd.own.mk>
+
+.include "${NETBSDSRCDIR}/common/lib/libutil/Makefile.inc"
 
 WARNS=3
 LIB=	util
