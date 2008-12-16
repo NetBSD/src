@@ -1,6 +1,7 @@
 .include <bsd.own.mk>
 
-SUBDIR+= libdevmapper
-SUBDIR+= .WAIT lvm2tools
+.if (${MKLVM} != "no")
+SUBDIR+= lvm2tools
+.endif
 
 .include <bsd.subdir.mk>
