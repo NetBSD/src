@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.223 2008/06/28 17:42:53 bouyer Exp $	*/
+/*	$NetBSD: uhci.c,v 1.224 2008/12/16 22:35:36 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.223 2008/06/28 17:42:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.224 2008/12/16 22:35:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ uhci_softc_t *thesc;
 int uhcidebug = 0;
 int uhcinoloop = 0;
 #ifndef __NetBSD__
-#define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
+#define snprintb((q), (f), "%b", q,f,b,l) snprintf((b), (l))
 #endif
 #else
 #define DPRINTF(x)
@@ -847,12 +847,12 @@ uhci_dump_td(uhci_soft_td_t *p)
 		     (long)le32toh(p->td.td_token),
 		     (long)le32toh(p->td.td_buffer)));
 
-	bitmask_snprintf((u_int32_t)le32toh(p->td.td_link), "\20\1T\2Q\3VF",
-			 sbuf, sizeof(sbuf));
-	bitmask_snprintf((u_int32_t)le32toh(p->td.td_status),
-			 "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
-			 "STALLED\30ACTIVE\31IOC\32ISO\33LS\36SPD",
-			 sbuf2, sizeof(sbuf2));
+	snprintb(sbuf, sizeof(sbuf), "\20\1T\2Q\3VF",
+	    (u_int32_t)le32toh(p->td.td_link));
+	snprintb(sbuf2, sizeof(sbuf2),
+	    "\20\22BITSTUFF\23CRCTO\24NAK\25BABBLE\26DBUFFER\27"
+	    "STALLED\30ACTIVE\31IOC\32ISO\33LS\36SPD",
+	    (u_int32_t)le32toh(p->td.td_status));
 
 	DPRINTFN(-1,("  %s %s,errcnt=%d,actlen=%d pid=%02x,addr=%d,endpt=%d,"
 		     "D=%d,maxlen=%d\n", sbuf, sbuf2,
@@ -1612,10 +1612,9 @@ uhci_idone(uhci_intr_info_t *ii)
 #ifdef UHCI_DEBUG
 		char sbuf[128];
 
-		bitmask_snprintf((u_int32_t)status,
-				 "\20\22BITSTUFF\23CRCTO\24NAK\25"
-				 "BABBLE\26DBUFFER\27STALLED\30ACTIVE",
-				 sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf),
+		    "\20\22BITSTUFF\23CRCTO\24NAK\25"
+		    "BABBLE\26DBUFFER\27STALLED\30ACTIVE",(u_int32_t)status);
 
 		DPRINTFN((status == UHCI_TD_STALLED)*10,
 			 ("uhci_idone: error, addr=%d, endpt=0x%02x, "

@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.7 2008/12/15 06:30:59 mrg Exp $	*/
+/*	$NetBSD: schizo.c,v 1.8 2008/12/16 22:35:26 christos Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -316,14 +316,14 @@ schizo_pci_error(void *vpbm)
 	printf("%s: pci bus %c error\n", sc->sc_dv.dv_xname,
 	    sp->sp_bus_a ? 'A' : 'B');
 
-	printf("PCIAFSR=%s\n", bitmask_snprintf(afsr, SCZ_PCIAFSR_BITS,
-						bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), SCZ_PCIAFSR_BITS, afsr);
+	printf("PCIAFSR=%s\n", bits);
 	printf("PCIAFAR=%lx\n", afar);
-	printf("PCICTRL=%s\n", bitmask_snprintf(ctrl, SCZ_PCICTRL_BITS,
-						bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), SCZ_PCICTRL_BITS, ctrl);
+	printf("PCICTRL=%s\n", bits);
 #ifdef PCI_COMMAND_STATUS_BITS
-	printf("PCICSR=%s\n", bitmask_snprintf(csr, PCI_COMMAND_STATUS_BITS,
-					       bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), PCI_COMMAND_STATUS_BITS, csr);
+	printf("PCICSR=%s\n", bits);
 #endif
 
 	if (ctrl & SCZ_PCICTRL_MMU_ERR) {

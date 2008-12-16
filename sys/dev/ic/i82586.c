@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.63 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: i82586.c,v 1.64 2008/12/16 22:35:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.63 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.64 2008/12/16 22:35:31 christos Exp $");
 
 #include "bpfilter.h"
 
@@ -441,9 +441,10 @@ i82586_rx_errors(sc, fn, status)
 	int status;
 {
 	char bits[128];
-
-	log(LOG_ERR, "%s: rx error (frame# %d): %s\n", device_xname(&sc->sc_dev), fn,
-	    bitmask_snprintf(status, IE_FD_STATUSBITS, bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), IE_FD_STATUSBITS, status);
+	log(LOG_ERR, "%s: rx error (frame# %d): %s\n",
+	    device_xname(&sc->sc_dev), fn, bits);
+	    
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.25 2008/06/20 20:23:01 jnemeth Exp $	*/
+/*	$NetBSD: fdc.c,v 1.26 2008/12/16 22:35:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.25 2008/06/20 20:23:01 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.26 2008/12/16 22:35:26 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1358,6 +1358,21 @@ fdcstart(struct fdc_softc *fdc)
 	(void)fdcstate(fdc);
 }
 
+static void
+fdcpstatus(struct fdc_softc *fdc)
+{
+	char bits[64];
+
+	snprintb(bits, sizeof(bits), NE7_ST0BITS, fdc->sc_status[0]);
+	printf(" (st0 %s", bits);
+	snprintb(bits, sizeof(bits), NE7_ST1BITS, fdc->sc_status[1]);
+	printf(" st1 %s", bits);
+	snprintb(bits, sizeof(bits), NE7_ST2BITS, fdc->sc_status[2]);
+	printf(" st2 %s", bits);
+	printf(" cyl %d head %d sec %d)\n",
+	    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
+}
+
 void
 fdcstatus(struct fdc_softc *fdc, const char *s)
 {
@@ -1388,19 +1403,11 @@ fdcstatus(struct fdc_softc *fdc, const char *s)
 		printf("\n");
 		break;
 	case 2:
-		printf(" (st0 %s cyl %d)\n",
-		    bitmask_snprintf(fdc->sc_status[0], NE7_ST0BITS,
-		    bits, sizeof(bits)), fdc->sc_status[1]);
+		snprintb(bits, sizeof(bits), NE7_ST0BITS, fdc->sc_status[0]);
+		printf(" (st0 %s cyl %d)\n", bits, fdc->sc_status[1]);
 		break;
 	case 7:
-		printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
-		    NE7_ST0BITS, bits, sizeof(bits)));
-		printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
-		    NE7_ST1BITS, bits, sizeof(bits)));
-		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
-		    NE7_ST2BITS, bits, sizeof(bits)));
-		printf(" cyl %d head %d sec %d)\n",
-		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
+		fscpstatus(fsc);
 		break;
 #ifdef DIAGNOSTIC
 	default:
