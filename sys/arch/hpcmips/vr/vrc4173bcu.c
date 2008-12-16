@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.19 2005/12/11 12:17:34 christos Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.20 2008/12/16 22:35:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.19 2005/12/11 12:17:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4173bcu.c,v 1.20 2008/12/16 22:35:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -339,24 +339,21 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 
 #ifdef DEBUG
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_SYSINT1);
-	bitmask_snprintf(reg,
+	snprintb(buf, sizeof(buf),
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
-	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15",
-	    buf, sizeof(buf));
+	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
 	printf("%s: SYSINT1 = 0x%s\n", sc->sc_dev.dv_xname, buf);
 
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MKIUINT);
-	bitmask_snprintf(reg,
+	snprintb(buf, sizeof(buf),
 	    "\20\1SCANINT\2KDATRDY\3KDATLOST\4B3\5B4\6B5\7B6\10B7"
-	    "\11B8\12B9\13B10\14B11\15B12\16B13\17B14\20B15",
-	    buf, sizeof(buf));
+	    "\11B8\12B9\13B10\14B11\15B12\16B13\17B14\20B15", reg);
 	printf("%s: MKIUINT = 0x%s\n", sc->sc_dev.dv_xname, buf);
 
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MSYSINT1);
-	bitmask_snprintf(reg,
+	snprintb(buf, sizeof(buf),
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
-	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15",
-	    buf, sizeof(buf));
+	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
 	printf("%s: MSYSINT1 = 0x%s\n", sc->sc_dev.dv_xname, buf);
 
 #if 1
@@ -365,10 +362,9 @@ vrc4173bcu_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MSYSINT1, reg);
 
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_icuh, VRC4173ICU_MSYSINT1);
-	bitmask_snprintf(reg,
+	snprintb(buf, sizeof(buf)
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
-	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15",
-	    buf, sizeof(buf));
+	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
 	printf("%s: MSYSINT1 = 0x%s\n", sc->sc_dev.dv_xname, buf);
 #endif
 #endif
@@ -492,10 +488,9 @@ vrc4173bcu_intr(void *arg)
 #if 0
     {
 	char buf[80];
-	bitmask_snprintf(reg,
+	snprintb(buf, sizeof(buf),
 	    "\20\1USB\2PCMCIA2\3PCMCIA1\4PS2CH2\5PS2CH1\6PIU\7AIU\10KIU"
-	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15",
-	    buf, sizeof(buf));
+	    "\11GIU\12AC97\13AC97-1\14B11\15B12\16DOZEPIU\17B14\20B15", reg);
 	printf("%s: %s\n", sc->sc_dev.dv_xname, buf);
     }
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 2008/12/10 11:10:18 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 2008/12/16 22:35:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -164,7 +164,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2008/12/10 11:10:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2008/12/16 22:35:23 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1392,14 +1392,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 			/* We are just changing the protection.  */
 #ifdef PMAPDEBUG
 			if (pmapdebug & PDB_ENTER) {
-				char buffer1[64];
-				char buffer2[64];
-				bitmask_snprintf(pv->pv_tlbprot, TLB_BITS, 
-						 buffer1, sizeof(buffer1));
-				bitmask_snprintf(tlbprot, TLB_BITS, 
-						 buffer2, sizeof(buffer2));
-				printf("pmap_enter: changing %s->%s\n",
-				    buffer1, buffer2);
+				char b1[64];
+				char b2[64];
+				snprintb(b1, sizeof(b1), TLB_BITS,
+				    pv->pv_tlbprot);
+				snprintb(b2, sizeof(b2), TLB_BITS, tlbprot);
+				printf("pmap_enter: changing %s->%s\n", b1, b2);
 			}
 #endif
 			pmap_pv_update(pv, TLB_AR_MASK|TLB_PID_MASK|TLB_WIRED, 
@@ -1509,8 +1507,9 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 #ifdef PMAPDEBUG
 			if (pmapdebug & PDB_PROTECT) {
 				char buffer[64];
-				bitmask_snprintf(pv->pv_tlbprot, TLB_BITS,
-						 buffer, sizeof(buffer));
+				snprintb(buffer, sizeof(buffer), TLB_BITS,
+				    pv->pv_tlbprot);
+	
 				printf("pv={%p,%x:%x,%s,%x}->%p\n",
 				    pv->pv_pmap, pv->pv_space, pv->pv_va,
 				    buffer,
@@ -1949,16 +1948,16 @@ pmap_hptdump(void)
 		if (hpt->hpt_valid || hpt->hpt_entry) {
 			char buf[128];
 
-			bitmask_snprintf(hpt->hpt_tlbprot, TLB_BITS, buf,
-			    sizeof(buf));
+			snprintb(buf, sizeof(buf), TLB_BITS, hpt->hpt_tlbprot);
+	
 			db_printf("hpt@%p: %x{%sv=%x:%x},%s,%x\n",
 			    hpt, *(int *)hpt, (hpt->hpt_valid?"ok,":""),
 			    hpt->hpt_space, hpt->hpt_vpn << 9,
 			    buf, tlbptob(hpt->hpt_tlbpage));
 
 			for (pv = hpt->hpt_entry; pv; pv = pv->pv_hash) {
-				bitmask_snprintf(hpt->hpt_tlbprot, TLB_BITS, buf,
-				    sizeof(buf));
+				snprintb(buf, sizeof(buf), TLB_BITS,
+				    hpt->hpt_tlbprot);
 				db_printf("    pv={%p,%x:%x,%s,%x}->%p\n",
 				    pv->pv_pmap, pv->pv_space, pv->pv_va,
 				    buf, tlbptob(pv->pv_tlbpage), pv->pv_hash);

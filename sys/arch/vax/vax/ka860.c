@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.31 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: ka860.c,v 1.32 2008/12/16 22:35:28 christos Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.31 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka860.c,v 1.32 2008/12/16 22:35:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -160,8 +160,8 @@ ka86_memerr(void)
 			printf("mcr0: ecc error, addr %x (array %d) syn %x\n",
 				M8600_ADDR(mear), array, M8600_SYN(mdecc));
 
-			bitmask_snprintf(mstat1, M8600_MSTAT1_BITS, sbuf, sizeof(sbuf));
-			bitmask_snprintf(mstat2, M8600_MSTAT2_BITS, sbuf2, sizeof(sbuf2));
+			snprintb(sbuf, sizeof(sbuf), M8600_MSTAT1_BITS, mstat1);
+			snprintb(sbuf2, sizeof(sbuf2), M8600_MSTAT2_BITS, mstat2);
 			printf("\tMSTAT1 = %s\n\tMSTAT2 = %s\n", sbuf, sbuf2);
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.62 2008/06/13 08:50:12 cegger Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.63 2008/12/16 22:35:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.62 2008/06/13 08:50:12 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.63 2008/12/16 22:35:22 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -871,6 +871,21 @@ fdcstart(fdc)
 	(void) fdcintr(fdc);
 }
 
+static void
+fdcpstatus(struct fdc_softc *fdc)
+{
+	char bits[64];
+
+	snprintb(bits, sizeof(bits), NE7_ST0BITS, fdc->sc_status[0]);
+	printf(" (st0 %s", bits);
+	snprintb(bits, sizeof(bits), NE7_ST1BITS, fdc->sc_status[1]);
+	printf(" st1 %s", bits);
+	snprintb(bits, sizeof(bits), NE7_ST2BITS, fdc->sc_status[2]);
+	printf(" st2 %s", bits);
+	printf(" cyl %d head %d sec %d)\n",
+	    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
+}
+
 void
 fdcstatus(dv, n, s)
 	struct device *dv;
@@ -893,19 +908,11 @@ fdcstatus(dv, n, s)
 		printf("\n");
 		break;
 	case 2:
-		printf(" (st0 %s cyl %d)\n",
-		    bitmask_snprintf(fdc->sc_status[0], NE7_ST0BITS,
-		    bits, sizeof(bits)), fdc->sc_status[1]);
+		snprintb(bits, sizeof(bits), NE7_ST0BITS, fdc->sc_status[0]);
+		printf(" (st0 %s cyl %d)\n", bits, fdc->sc_status[1]);
 		break;
 	case 7:
-		printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
-		    NE7_ST0BITS, bits, sizeof(bits)));
-		printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
-		    NE7_ST1BITS, bits, sizeof(bits)));
-		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
-		    NE7_ST2BITS, bits, sizeof(bits)));
-		printf(" cyl %d head %d sec %d)\n",
-		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
+		fscpstatus(fsc);
 		break;
 #ifdef DIAGNOSTIC
 	default:
@@ -1288,23 +1295,7 @@ fdcretry(fdc)
 			diskerr(bp, "fd", "hard error", LOG_PRINTF,
 				fd->sc_skip / FDC_BSIZE,
 				(struct disklabel *)NULL);
-
-			printf(" (st0 %s",
-			       bitmask_snprintf(fdc->sc_status[0],
-						NE7_ST0BITS, bits,
-						sizeof(bits)));
-			printf(" st1 %s",
-			       bitmask_snprintf(fdc->sc_status[1],
-						NE7_ST1BITS, bits,
-						sizeof(bits)));
-			printf(" st2 %s",
-			       bitmask_snprintf(fdc->sc_status[2],
-						NE7_ST2BITS, bits,
-						sizeof(bits)));
-			printf(" cyl %d head %d sec %d)\n",
-			       fdc->sc_status[3],
-			       fdc->sc_status[4],
-			       fdc->sc_status[5]);
+			fscpstatus(fsc);
 		}
 		bp->b_error = EIO;
 		fdfinish(fd, bp);

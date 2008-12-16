@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.14 2008/03/11 05:34:01 matt Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.15 2008/12/16 22:35:34 christos Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.14 2008/03/11 05:34:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.15 2008/12/16 22:35:34 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -535,7 +535,7 @@ qttint(struct qt_softc *sc)
 			{
 #ifdef QTDEBUG
 			char buf[100];
-			bitmask_snprintf(rp->tmd2, TMD2_BITS, buf, 100);
+			snprintb(buf, sizeof(buf), TMD2_BITS, rp->tmd2);
 			printf("%s: tmd2 %s\n", device_xname(sc->sc_dev), buf);
 #endif
 			sc->is_if.if_oerrors++;
@@ -576,9 +576,9 @@ qtrint(struct qt_softc *sc)
 			{
 #ifdef QTDEBUG
 			char buf[100];
-			bitmask_snprintf(rp->rmd0, RMD0_BITS, buf, 100);
+			snprintb(buf, sizeof(buf), RMD0_BITS, rp->rmd0);
 			printf("%s: rmd0 %s\n", device_xname(sc->sc_dev), buf);
-			bitmask_snprintf(rp->rmd2, RMD2_BITS, buf, 100);
+			snprintb(buf, sizeof(buf), RMD2_BITS, rp->rmd2);
 			printf("%s: rmd2 %s\n", device_xname(sc->sc_dev), buf);
 #endif
 			sc->is_if.if_ierrors++;
@@ -627,7 +627,7 @@ void
 qtsrr(struct qt_softc *sc, int srrbits)
 {
 	char buf[100];
-	bitmask_snprintf(srrbits, SRR_BITS, buf, sizeof buf);
+	snprintb(buf, sizeof(buf), SRR_BITS, srrbits);
 	printf("%s: srr=%s\n", device_xname(sc->sc_dev), buf);
 }
 

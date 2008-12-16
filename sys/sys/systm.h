@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.230 2008/11/12 14:29:31 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.231 2008/12/16 22:35:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -226,8 +226,6 @@ void	uprintf_locked(const char *, ...)
     __attribute__((__format__(__printf__,1,2)));
 void	ttyprintf(struct tty *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
-
-char	*bitmask_snprintf(u_quad_t, const char *, char *, size_t);
 
 int	format_bytes(char *, size_t, uint64_t);
 

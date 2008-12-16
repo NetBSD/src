@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.176 2008/10/15 06:51:18 wrstuden Exp $ */
+/*	$NetBSD: trap.c,v 1.177 2008/12/16 22:35:26 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.176 2008/10/15 06:51:18 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.177 2008/12/16 22:35:26 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -293,9 +293,9 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 			return;
 		}
 	dopanic:
+	        snprintb(bits, sizeof(bits), PSR_BITS, psr);
 		printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%s\n",
-		       type, pc, tf->tf_npc, bitmask_snprintf(psr,
-		       PSR_BITS, bits, sizeof(bits)));
+		       type, pc, tf->tf_npc,
 #ifdef DDB
 		write_all_windows();
 		(void) kdb_trap(type, tf);
@@ -332,9 +332,9 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 		if (type < 0x80) {
 			if (!ignore_bogus_traps)
 				goto dopanic;
+		        snprintb(bits, sizeof(bits), PSR_BITS, psr);
 			printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%s\n",
-			       type, pc, tf->tf_npc, bitmask_snprintf(psr,
-			       PSR_BITS, bits, sizeof(bits)));
+			       type, pc, tf->tf_npc,
 			sig = SIGILL;
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_trap = type;
@@ -838,8 +838,8 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		extern char Lfsbail[];
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
-			printf("text fault: pc=0x%x ser=%s\n", pc,
-			  bitmask_snprintf(ser, SER_BITS, bits, sizeof(bits)));
+		        snprintb(bits, sizeof(bits)), SER_BITS, ser);
+			printf("text fault: pc=0x%x ser=%s\n", pc, bits);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -938,9 +938,9 @@ kfault:
 			    (int)l->l_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
+				snprintb(bits, sizeof(bits), SER_BITS, ser);
 				printf("data fault: pc=0x%x addr=0x%x ser=%s\n",
-				    pc, v, bitmask_snprintf(ser, SER_BITS,
-				    bits, sizeof(bits)));
+				    pc, v, bits);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}
@@ -1155,9 +1155,9 @@ mem_access_fault4m(unsigned type, u_int sfsr, u_int sfva, struct trapframe *tf)
 		extern char Lfsbail[];
 		if (sfsr & SFSR_AT_TEXT || type == T_TEXTFAULT) {
 			(void) splhigh();
+			snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
 			printf("text fault: pc=0x%x sfsr=%s sfva=0x%x\n", pc,
-			    bitmask_snprintf(sfsr, SFSR_BITS, bits,
-			    sizeof(bits)), sfva);
+			    bits, sfva);
 			panic("kernel fault");
 			/* NOTREACHED */
 		}
@@ -1223,9 +1223,9 @@ kfault:
 			    (int)l->l_addr->u_pcb.pcb_onfault : 0;
 			if (!onfault) {
 				(void) splhigh();
+				snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
 				printf("data fault: pc=0x%x addr=0x%x sfsr=%s\n",
-				    pc, sfva, bitmask_snprintf(sfsr, SFSR_BITS,
-				    bits, sizeof(bits)));
+				    pc, sfva, bits);
 				panic("kernel fault");
 				/* NOTREACHED */
 			}

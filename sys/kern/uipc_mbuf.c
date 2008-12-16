@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.129 2008/12/07 20:58:46 pooka Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.130 2008/12/16 22:35:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.129 2008/12/07 20:58:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.130 2008/12/16 22:35:37 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1606,7 +1606,7 @@ m_print(const struct mbuf *m, const char *modif, void (*pr)(const char *, ...))
 
 nextchain:
 	(*pr)("MBUF %p\n", m);
-	bitmask_snprintf((u_int)m->m_flags, M_FLAGS_BITS, buf, sizeof(buf));
+	snprintb(buf, sizeof(buf), M_FLAGS_BITS, (u_int)m->m_flags);
 	(*pr)("  data=%p, len=%d, type=%d, flags=0x%s\n",
 	    m->m_data, m->m_len, m->m_type, buf);
 	(*pr)("  owner=%p, next=%p, nextpkt=%p\n", m->m_owner, m->m_next,
@@ -1615,8 +1615,7 @@ nextchain:
 	    (int)M_LEADINGSPACE(m), (int)M_TRAILINGSPACE(m),
 	    (int)M_READONLY(m));
 	if ((m->m_flags & M_PKTHDR) != 0) {
-		bitmask_snprintf(m->m_pkthdr.csum_flags, M_CSUM_BITS, buf,
-		    sizeof(buf));
+		snprintb(buf, sizeof(buf), M_CSUM_BITS, m->m_pkthdr.csum_flags);
 		(*pr)("  pktlen=%d, rcvif=%p, csum_flags=0x%s, csum_data=0x%"
 		    PRIx32 ", segsz=%u\n",
 		    m->m_pkthdr.len, m->m_pkthdr.rcvif,

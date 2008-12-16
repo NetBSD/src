@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.360 2008/12/14 11:15:59 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.361 2008/12/16 22:35:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.360 2008/12/14 11:15:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.361 2008/12/16 22:35:37 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2492,7 +2492,7 @@ vprint(const char *label, struct vnode *vp)
 
 	vl = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
 	flag = vp->v_iflag | vp->v_vflag | vp->v_uflag;
-	bitmask_snprintf(flag, vnode_flagbits, bf, sizeof(bf));
+	snprintb(bf, sizeof(bf), vnode_flagbits, flag);
 
 	if (label != NULL)
 		printf("%s: ", label);
@@ -3053,8 +3053,8 @@ vfs_buf_print(struct buf *bp, int full, void (*pr)(const char *, ...))
 	    PRIx64 " dev 0x%x\n",
 	    bp->b_vp, bp->b_lblkno, bp->b_blkno, bp->b_rawblkno, bp->b_dev);
 
-	bitmask_snprintf(bp->b_flags | bp->b_oflags | bp->b_cflags,
-	    buf_flagbits, bf, sizeof(bf));
+	snprintb(bf, sizeof(bf),
+	    buf_flagbits, bp->b_flags | bp->b_oflags | bp->b_cflags);
 	(*pr)("  error %d flags 0x%s\n", bp->b_error, bf);
 
 	(*pr)("  bufsize 0x%lx bcount 0x%lx resid 0x%lx\n",
@@ -3071,8 +3071,8 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 	char bf[256];
 
 	uvm_object_printit(&vp->v_uobj, full, pr);
-	bitmask_snprintf(vp->v_iflag | vp->v_vflag | vp->v_uflag,
-	    vnode_flagbits, bf, sizeof(bf));
+	snprintb(bf, sizeof(bf),
+	    vnode_flagbits, vp->v_iflag | vp->v_vflag | vp->v_uflag);
 	(*pr)("\nVNODE flags %s\n", bf);
 	(*pr)("mp %p numoutput %d size 0x%llx writesize 0x%llx\n",
 	      vp->v_mount, vp->v_numoutput, vp->v_size, vp->v_writesize);
@@ -3115,10 +3115,10 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("fs_bshift %d dev_bshift = %d\n",
 			mp->mnt_fs_bshift,mp->mnt_dev_bshift);
 
-	bitmask_snprintf(mp->mnt_flag, __MNT_FLAG_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), __MNT_FLAG_BITS, mp->mnt_flag);
 	(*pr)("flag = %s\n", sbuf);
 
-	bitmask_snprintf(mp->mnt_iflag, __IMNT_FLAG_BITS, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), __IMNT_FLAG_BITS, mp->mnt_iflag);
 	(*pr)("iflag = %s\n", sbuf);
 
 	(*pr)("refcnt = %d unmounting @ %p updating @ %p\n", mp->mnt_refcnt,
@@ -3146,8 +3146,8 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("\towner = %"PRIu32"\n",mp->mnt_stat.f_owner);
 	(*pr)("\tnamemax = %lu\n",mp->mnt_stat.f_namemax);
 
-	bitmask_snprintf(mp->mnt_stat.f_flag, __MNT_FLAG_BITS, sbuf,
-	    sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), __MNT_FLAG_BITS, mp->mnt_stat.f_flag);
+
 	(*pr)("\tflag = %s\n",sbuf);
 	(*pr)("\tsyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_syncwrites);
 	(*pr)("\tasyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_asyncwrites);

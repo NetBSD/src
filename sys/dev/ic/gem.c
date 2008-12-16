@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.79 2008/11/07 00:20:02 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.80 2008/12/16 22:35:30 christos Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.79 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.80 2008/12/16 22:35:30 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2005,9 +2005,9 @@ gem_eint(struct gem_softc *sc, u_int status)
 		    v);
 		return (1);
 	}
-
-	printf("%s: status=%s\n", device_xname(&sc->sc_dev),
-		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), GEM_INTR_BITS, status);
+	printf("%s: status=%s\n", device_xname(&sc->sc_dev), bits);
+		
 	return (1);
 }
 
@@ -2115,9 +2115,12 @@ gem_intr(v)
 	sc->sc_ev_intr.ev_count++;
 
 	status = bus_space_read_4(t, h, GEM_STATUS);
+#ifdef GEM_DEBUG
+	snprintb(bits, sizeof(bits), GEM_INTR_BITS, status);
+#endif
 	DPRINTF(sc, ("%s: gem_intr: cplt 0x%x status %s\n",
-		device_xname(&sc->sc_dev), (status >> 19),
-		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits))));
+		device_xname(&sc->sc_dev), (status >> 19), bits));
+		
 
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
 		r |= gem_eint(sc, status);

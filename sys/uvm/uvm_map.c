@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.265 2008/12/13 11:34:43 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.266 2008/12/16 22:35:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.265 2008/12/13 11:34:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.266 2008/12/16 22:35:38 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -5025,8 +5025,8 @@ uvm_page_printit(struct vm_page *pg, bool full,
 	char pqbuf[128];
 
 	(*pr)("PAGE %p:\n", pg);
-	bitmask_snprintf(pg->flags, page_flagbits, pgbuf, sizeof(pgbuf));
-	bitmask_snprintf(pg->pqflags, page_pqflagbits, pqbuf, sizeof(pqbuf));
+	snprintb(pgbuf, sizeof(pgbuf), page_flagbits, pg->flags);
+	snprintb(pqbuf, sizeof(pqbuf), page_pqflagbits, pg->pqflags);
 	(*pr)("  flags=%s, pqflags=%s, wire_count=%d, pa=0x%lx\n",
 	    pgbuf, pqbuf, pg->wire_count, (long)VM_PAGE_TO_PHYS(pg));
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",

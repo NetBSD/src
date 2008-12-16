@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.49 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: ka820.c,v 1.50 2008/12/16 22:35:28 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.49 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.50 2008/12/16 22:35:28 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -351,8 +351,8 @@ static const char b2[] = "\20\40RDS\37HIERR\36CRD\35ADRS";
 			continue;
 		csr1 = MEMRD(MSREG_CSR1);
 		csr2 = MEMRD(MSREG_CSR2);
-		bitmask_snprintf(csr1, b1, sbuf, sizeof(sbuf));
-		bitmask_snprintf(csr2, b2, sbuf2, sizeof(sbuf2));
+		snprintb(sbuf, sizeof(sbuf), b1, csr1);
+		snprintb(sbuf2, sizeof(sbuf2), b2, csr2);
 		aprint_error_dev(sc->sc_dev, "csr1=%s csr2=%s\n", sbuf, sbuf2);
 		if ((csr1 & MS1_ERRSUM) == 0)
 			continue;

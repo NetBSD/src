@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.23 2008/04/04 16:00:57 tsutsui Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.24 2008/12/16 22:35:23 christos Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.23 2008/04/04 16:00:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc_obio.c,v 1.24 2008/12/16 22:35:23 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -215,9 +215,10 @@ sbc_obio_attach(device_t parent, device_t self, void *aux)
 	if ((sc->sc_options & SBC_RESELECT) == 0)
 		ncr_sc->sc_no_disconnect = 0xff;
 
-	if (sc->sc_options)
-		aprint_normal(": options=%s", bitmask_snprintf(sc->sc_options,
-		    SBC_OPTIONS_BITS, bits, sizeof(bits)));
+	if (sc->sc_options) {
+		snprintb(bits, sizeof(bits), SBC_OPTIONS_BITS, sc->sc_options);
+		aprint_normal(": options=%s", bits);
+	}
 	aprint_normal("\n");
 
 	if (sc->sc_options & (SBC_INTR|SBC_RESELECT)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.27 2008/12/11 07:09:00 mrg Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.28 2008/12/16 22:35:29 christos Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.27 2008/12/11 07:09:00 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.28 2008/12/16 22:35:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,10 +272,8 @@ cs4231_ebus_dma_reset(bus_space_tag_t dt, bus_space_handle_t dh)
 
 	if (timo == 0) {
 		char bits[128];
-
-		printf("cs4231_ebus_dma_reset: timed out: csr=%s\n",
-		       bitmask_snprintf(csr, EBUS_DCSR_BITS,
-					bits, sizeof(bits)));
+		snprintb(bits, sizeof(bits), EBUS_DCSR_BITS, csr);
+		printf("cs4231_ebus_dma_reset: timed out: csr=%s\n", bits);
 		return ETIMEDOUT;
 	}
 
@@ -464,8 +462,9 @@ cs4231_ebus_dma_intr(struct cs_transfer *t, bus_space_tag_t dt,
 	/* read DMA status, clear TC bit by writing it back */
 	csr = bus_space_read_4(dt, dh, EBUS_DMAC_DCSR);
 	bus_space_write_4(dt, dh, EBUS_DMAC_DCSR, csr);
-	DPRINTF(("audiocs: %s dcsr=%s\n", t->t_name,
-		 bitmask_snprintf(csr, EBUS_DCSR_BITS, bits, sizeof(bits))));
+#ifdef AUDIO_DEBUG
+	snprintb(bits, sizeof(bits), EBUS_DCSR_BITS, csr);
+	DPRINTF(("audiocs: %s dcsr=%s\n", t->t_name, bits));
 
 	if (csr & EBDMA_ERR_PEND) {
 		++t->t_ierrcnt.ev_count;
@@ -516,8 +515,9 @@ cs4231_ebus_intr(void *arg)
 	if (cs4231_ebus_debug > 1)
 		cs4231_ebus_regdump("audiointr", ebsc);
 
+	snprintb(bits, sizeof(bits), AD_R2_BITS, status);
 	DPRINTF(("%s: status: %s\n", device_xname(&sc->sc_ad1848.sc_dev),
-		 bitmask_snprintf(status, AD_R2_BITS, bits, sizeof(bits))));
+	    bits));
 #endif
 
 	if (status & INTERRUPT_STATUS) {
@@ -525,8 +525,9 @@ cs4231_ebus_intr(void *arg)
 		int reason;
 
 		reason = ad_read(&sc->sc_ad1848, CS_IRQ_STATUS);
+	        snprintb(bits, sizeof(bits), CS_I24_BITS, reason);
 		DPRINTF(("%s: i24: %s\n", device_xname(&sc->sc_ad1848.sc_dev),
-		  bitmask_snprintf(reason, CS_I24_BITS, bits, sizeof(bits))));
+		    bits));
 #endif
 		/* clear interrupt from ad1848 */
 		ADWRITE(&sc->sc_ad1848, AD1848_STATUS, 0);

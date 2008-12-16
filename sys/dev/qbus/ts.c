@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.25 2008/04/05 19:16:49 cegger Exp $ */
+/*	$NetBSD: ts.c,v 1.26 2008/12/16 22:35:35 christos Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.25 2008/04/05 19:16:49 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.26 2008/12/16 22:35:35 christos Exp $");
 
 #undef	TSDEBUG
 
@@ -540,9 +540,9 @@ prtstat(struct ts_softc *sc, int sr)
 {
 	char buf[100];
 
-	bitmask_snprintf(sr, TS_TSSR_BITS, buf, sizeof(buf));
+	snprintb(buf, sizeof(buf), TS_TSSR_BITS, sr);
 	aprint_normal_dev(sc->sc_dev, "TSSR=%s\n", buf);
-	bitmask_snprintf(sc->sc_vts->status.xst0,TS_XST0_BITS,buf,sizeof(buf));
+	snprintb(buf, sizeof(buf), TS_XST0_BITS, sc->sc_vts->status.xst0);
 	aprint_normal_dev(sc->sc_dev, "XST0=%s\n", buf);
 }
 
@@ -565,7 +565,7 @@ tsintr(void *arg)
 #ifdef TSDEBUG
 	{
 		char buf[100];
-		bitmask_snprintf(sr, TS_TSSR_BITS, buf, sizeof(buf));
+		snprintb(buf, sizeof(buf), TS_TSSR_BITS, sr);
 		printf("tsintr: sr %x mh %x\n", sr, mh);
 		printf("srbits: %s\n", buf);
 	}
@@ -658,8 +658,8 @@ tsintr(void *arg)
 #ifdef TSDEBUG
 		{
 			char buf[100];
-			bitmask_snprintf(sc->sc_vts->status.xst0,
-			    TS_XST0_BITS, buf, sizeof(buf));
+			snprintb(buf, sizeof(buf),
+			    TS_XST0_BITS, sc->sc_vts->status.xst0);
 			printf("TSA: sr %x bits %s\n",
 			    sc->sc_vts->status.xst0, buf);
 		}
@@ -685,8 +685,8 @@ tsintr(void *arg)
 #ifndef TSDEBUG
 		{
 			char buf[100];
-			bitmask_snprintf(sc->sc_vts->status.xst0,
-			    TS_XST0_BITS, buf, sizeof(buf));
+			snprintb(buf, sizeof(buf),
+			    TS_XST0_BITS, sc->sc_vts->status.xst0);
 			printf("TSA: sr %x bits %s\n",
 			    sc->sc_vts->status.xst0, buf);
 		}
@@ -704,8 +704,8 @@ tsintr(void *arg)
 #ifdef TSDEBUG
 		{
 			char buf[100];
-			bitmask_snprintf(sc->sc_vts->status.xst0,
-			    TS_XST0_BITS, buf, sizeof(buf));
+			snprintb(buf, sizeof(buf),
+			    TS_XST0_BITS, sc->sc_vts->status.xst0);
 			printf("FR: sr %x bits %s\n",
 			    sc->sc_vts->status.xst0, buf);
 		}
@@ -848,8 +848,8 @@ tsopen(dev_t dev, int flag, int type, struct lwp *l)
 #ifdef TSDEBUG
 	{
 		char buf[100];
-		bitmask_snprintf(sc->sc_vts->status.xst0,
-		    TS_XST0_BITS, buf, sizeof(buf));
+		snprintb(buf, sizeof(buf),
+		    TS_XST0_BITS, sc->sc_vts->status.xst0);
 		printf("tsopen: xst0 %s\n", buf);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_sbi.c,v 1.25 2008/11/20 17:08:03 hans Exp $	   */
+/*	$NetBSD: uba_sbi.c,v 1.26 2008/12/16 22:35:27 christos Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.25 2008/11/20 17:08:03 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_sbi.c,v 1.26 2008/12/16 22:35:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -356,15 +356,14 @@ ubaerror(struct uba_softc *uh, int *ipl, int *uvec)
 			    "too many zero vectors (%d in <%d sec)\n",
 			    vc->uh_zvcnt, (int)dt + 1);
 
-			bitmask_snprintf(uba->uba_cnfgr&(~0xff), UBACNFGR_BITS,
-			    sbuf, sizeof(sbuf));
+			snprintb(sbuf, sizeof(sbuf), UBACNFGR_BITS,
+			    uba->uba_cnfgr & ~0xff);
 			aprint_error(
 			    "\tIPL 0x%x\n"
 			    "\tcnfgr: %s\tAdapter Code: 0x%x\n",
 			    *ipl, sbuf, uba->uba_cnfgr&0xff);
 
-			bitmask_snprintf(uba->uba_sr, ubasr_bits,
-			    sbuf, sizeof(sbuf));
+			snprintb(sbuf, sizeof(sbuf), ubasr_bits, uba->uba_sr);
 			aprint_error(
 			    "\tsr: %s\n"
 			    "\tdcr: %x (MIC %sOK)\n",
@@ -376,8 +375,8 @@ ubaerror(struct uba_softc *uh, int *ipl, int *uvec)
 		return;
 	}
 	if (uba->uba_cnfgr & NEX_CFGFLT) {
-		bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
-		bitmask_snprintf(uba->uba_cnfgr, NEXFLT_BITS, sbuf2, sizeof(sbuf2));
+		snprintb(sbuf, sizeof(sbuf), ubasr_bits, uba->uba_sr);
+		snprintb(sbuf2, sizeof(sbuf2), NEXFLT_BITS, uba->uba_cnfgr);
 		aprint_error_dev(vc->uv_sc.uh_dev,
 		    "sbi fault sr=%s cnfgr=%s\n", sbuf, sbuf2);
 		ubareset(&vc->uv_sc);
@@ -386,7 +385,7 @@ ubaerror(struct uba_softc *uh, int *ipl, int *uvec)
 	}
 	sr = uba->uba_sr;
 	s = spluba();
-	bitmask_snprintf(uba->uba_sr, ubasr_bits, sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf), ubasr_bits, uba->uba_sr);
 	aprint_error_dev(vc->uv_sc.uh_dev,
 	    "uba error sr=%s fmer=%x fubar=%o\n",
 	    sbuf, uba->uba_fmer, 4*uba->uba_fubar);

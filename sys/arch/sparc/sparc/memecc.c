@@ -1,4 +1,4 @@
-/*	$NetBSD: memecc.c,v 1.10 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: memecc.c,v 1.11 2008/12/16 22:35:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.10 2008/04/28 20:23:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memecc.c,v 1.11 2008/12/16 22:35:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,10 +124,10 @@ memecc_error(void)
 	efsr = bus_space_read_4(memecc_sc->sc_bt, bh, ECC_FSR_REG);
 	efar0 = bus_space_read_4(memecc_sc->sc_bt, bh, ECC_AFR0_REG);
 	efar1 = bus_space_read_4(memecc_sc->sc_bt, bh, ECC_AFR1_REG);
-	printf("memory error:\n\tEFSR: %s\n",
-		bitmask_snprintf(efsr, ECC_FSR_BITS, bits, sizeof(bits)));
-	printf("\tMBus transaction: %s\n",
-		bitmask_snprintf(efar0, ECC_AFR_BITS, bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), ECC_FSR_BITS, efsr);
+	printf("memory error:\n\tEFSR: %s\n", bits);
+	snprintb(bits, sizeof(bits), ECC_AFR_BITS, efar0);
+	printf("\tMBus transaction: %s\n", bits);
 	printf("\taddress: 0x%x%x\n", efar0 & ECC_AFR_PAH, efar1);
 	printf("\tmodule location: %s\n",
 		prom_pa_location(efar1, efar0 & ECC_AFR_PAH));

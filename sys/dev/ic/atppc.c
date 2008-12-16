@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.27 2008/04/18 14:56:40 cegger Exp $ */
+/* $NetBSD: atppc.c,v 1.28 2008/12/16 22:35:30 christos Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.27 2008/04/18 14:56:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.28 2008/12/16 22:35:30 christos Exp $");
 
 #include "opt_atppc.h"
 
@@ -166,8 +166,8 @@ atppc_sc_attach(struct atppc_softc *lsc)
 	}
 
         /* Print out chipset capabilities */
-	bitmask_snprintf(lsc->sc_has, "\20\1INTR\2DMA\3FIFO\4PS2\5ECP\6EPP",
-		buf, sizeof(buf));
+	snprintb(buf, sizeof(buf), "\20\1INTR\2DMA\3FIFO\4PS2\5ECP\6EPP",
+	    lsc->sc_has);
 	printf("%s: capabilities=%s\n", device_xname(lsc->sc_dev), buf);
 
 	/* Initialize device's buffer pointers */

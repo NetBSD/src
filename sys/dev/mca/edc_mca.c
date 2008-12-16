@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.40 2008/05/04 13:11:14 martin Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.41 2008/12/16 22:35:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.40 2008/05/04 13:11:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.41 2008/12/16 22:35:32 christos Exp $");
 
 #include "rnd.h"
 
@@ -772,7 +772,7 @@ edc_dump_status_block(struct edc_mca_softc *sc, u_int16_t *status_block,
 		printf("%s: Device Error Code: %s\n",
 			device_xname(&sc->sc_dev),
 			edc_dev_errors[status_block[2] & 0xff]);
-		bitmask_snprintf((status_block[2] & 0xff00) >> 8,
+		snprintb(buf, sizeof(buf),
 			"\20"
 			"\01SeekOrCmdComplete"
 			"\02Track0Flag"
@@ -781,8 +781,8 @@ edc_dump_status_block(struct edc_mca_softc *sc, u_int16_t *status_block,
 			"\05Ready"
 			"\06Reserved0"
 			"\07STANDBY"
-			"\010Reserved0",
-			buf, sizeof(buf));
+			"\010Reserved0", (status_block[2] & 0xff00) >> 8);
+
 		printf("%s: Device Status: %s\n",
 			device_xname(&sc->sc_dev), buf);
 #else

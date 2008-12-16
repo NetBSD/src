@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.71 2008/11/09 15:34:14 cegger Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.72 2008/12/16 22:35:28 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.71 2008/11/09 15:34:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.72 2008/12/16 22:35:28 christos Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -1041,12 +1041,12 @@ mpacpi_print_intr(struct mp_intr_map *mpi)
 			printf("%d", mpi->bus->mb_idx);
 		(*(mpi->bus->mb_intr_print))(mpi->bus_pin);
 	}
+	snprintb(buf, sizeof(buf), inttype_fmt, mpi->type);
+	printf(" (type %s", buf);
+	    
+	snprintb(buf, sizeof(buf), flagtype_fmt, mpi->flags);
+	printf(" flags %s)\n", buf);
 
-	printf(" (type %s",
-	    bitmask_snprintf(mpi->type, inttype_fmt, buf, sizeof(buf)));
-
-	printf(" flags %s)\n",
-	    bitmask_snprintf(mpi->flags, flagtype_fmt, buf, sizeof(buf)));
 }
 
 

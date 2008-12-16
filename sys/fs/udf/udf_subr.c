@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.79 2008/12/16 16:27:05 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.80 2008/12/16 22:35:36 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.79 2008/12/16 16:27:05 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.80 2008/12/16 22:35:36 christos Exp $");
 #endif /* not lint */
 
 
@@ -138,8 +138,7 @@ udf_dump_discinfo(struct udf_mount *ump)
 	printf("\tfst on last ses    %d\n", di->first_track_last_session);
 	printf("\tlst on last ses    %d\n", di->last_track_last_session);
 	printf("\tlink block penalty %d\n", di->link_block_penalty);
-	bitmask_snprintf(di->disc_flags, MMC_DFLAGS_FLAGBITS, bits,
-		sizeof(bits));
+	snprintb(bits, sizeof(bits), MMC_DFLAGS_FLAGBITS, di->disc_flags);
 	printf("\tdisc flags         %s\n", bits);
 	printf("\tdisc id            %x\n", di->disc_id);
 	printf("\tdisc barcode       %"PRIx64"\n", di->disc_barcode);
@@ -147,9 +146,9 @@ udf_dump_discinfo(struct udf_mount *ump)
 	printf("\tnum sessions       %d\n", di->num_sessions);
 	printf("\tnum tracks         %d\n", di->num_tracks);
 
-	bitmask_snprintf(di->mmc_cur, MMC_CAP_FLAGBITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), MMC_CAP_FLAGBITS, di->mmc_cur);
 	printf("\tcapabilities cur   %s\n", bits);
-	bitmask_snprintf(di->mmc_cap, MMC_CAP_FLAGBITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), MMC_CAP_FLAGBITS, di->mmc_cap);
 	printf("\tcapabilities cap   %s\n", bits);
 }
 #else
@@ -2004,11 +2003,11 @@ udf_process_vds(struct udf_mount *ump) {
 	DPRINTF(VOLUMES, ("\tfids partition    %d\n", ump->fids_part));
 	DPRINTF(VOLUMES, ("\t\talloc scheme %d\n", ump->vtop_alloc[ump->fids_part]));
 
-	bitmask_snprintf(ump->lvopen,  UDFLOGVOL_BITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), UDFLOGVOL_BITS, ump->lvopen);
 	DPRINTF(VOLUMES, ("\tactions on logvol open  %s\n", bits));
-	bitmask_snprintf(ump->lvclose, UDFLOGVOL_BITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), UDFLOGVOL_BITS, ump->lvclose);
 	DPRINTF(VOLUMES, ("\tactions on logvol close %s\n", bits));
-	bitmask_snprintf(ump->lvreadwrite, UDFONERROR_BITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), UDFONERROR_BITS, ump->lvreadwrite);
 	DPRINTF(VOLUMES, ("\tactions on logvol errors %s\n", bits));
 
 	DPRINTF(VOLUMES, ("\tselected sheduler `%s`\n", 
@@ -5621,7 +5620,7 @@ udf_update(struct vnode *vp, struct timespec *acc,
 	char bits[128];
 	DPRINTF(CALL, ("udf_update(node, %p, %p, %p, %d)\n", acc, mod, birth,
 		updflags));
-	bitmask_snprintf(udf_node->i_flags, IN_FLAGBITS, bits, sizeof(bits));
+	snprintb(bits, sizeof(bits), IN_FLAGBITS, udf_node->i_flags);
 	DPRINTF(CALL, ("\tnode flags %s\n", bits));
 	DPRINTF(CALL, ("\t\tmnt_async = %d\n", mnt_async));
 #endif

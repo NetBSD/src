@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.67 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: hme.c,v 1.68 2008/12/16 22:35:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.67 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.68 2008/12/16 22:35:31 christos Exp $");
 
 /* #define HMEDEBUG */
 
@@ -1104,9 +1104,9 @@ hme_eint(sc, status)
 			device_xname(&sc->sc_dev), cf, st, sm);
 		return (1);
 	}
-
-	printf("%s: status=%s\n", device_xname(&sc->sc_dev),
-		bitmask_snprintf(status, HME_SEB_STAT_BITS, bits,sizeof(bits)));
+	snprintb(bits, sizeof(bits), HME_SEB_STAT_BITS, status);
+	printf("%s: status=%s\n", device_xname(&sc->sc_dev), bits);
+		
 	return (1);
 }
 

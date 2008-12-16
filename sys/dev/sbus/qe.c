@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.46 2008/11/07 00:20:12 dyoung Exp $	*/
+/*	$NetBSD: qe.c,v 1.47 2008/12/16 22:35:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.46 2008/11/07 00:20:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.47 2008/12/16 22:35:35 christos Exp $");
 
 #define QEDEBUG
 
@@ -610,8 +610,8 @@ qeintr(arg)
 		bus_space_tag_t t1 = sc->sc_bustag;
 		bus_space_handle_t mr = sc->sc_mr;
 
-		printf("qe%d: intr: qestat=%s\n", sc->sc_channel,
-		bitmask_snprintf(qestat, QE_CR_STAT_BITS, bits, sizeof(bits)));
+		snprintb(bits, sizeof(bits), QE_CR_STAT_BITS, qestat);
+		printf("qe%d: intr: qestat=%s\n", sc->sc_channel, bits);
 
 		printf("MACE registers:\n");
 		for (i = 0 ; i < 32; i++) {
@@ -626,9 +626,8 @@ qeintr(arg)
 #ifdef QEDEBUG
 		if (sc->sc_debug) {
 			char bits[64];
-			printf("qe%d: eint: qestat=%s\n", sc->sc_channel,
-			    bitmask_snprintf(qestat, QE_CR_STAT_BITS, bits,
-			    sizeof(bits)));
+			snprintb(bits, sizeof(bits), QE_CR_STAT_BITS, qestat);
+			printf("qe%d: eint: qestat=%s\n", sc->sc_channel, bits);
 		}
 #endif
 		r |= qe_eint(sc, qestat);

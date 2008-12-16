@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eca.c,v 1.8 2007/10/17 19:52:52 garbled Exp $	*/
+/*	$NetBSD: if_eca.c,v 1.9 2008/12/16 22:35:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.8 2007/10/17 19:52:52 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eca.c,v 1.9 2008/12/16 22:35:21 christos Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -272,7 +272,7 @@ eca_tx_downgrade(void)
 		else {
 			log(LOG_ERR, "%s: incomplete transmission\n",
 			    sc->sc_dev.dv_xname);
-			bitmask_snprintf(sr1, MC6854_SR1_BITS, buf, 128);
+			snprintb(buf, 128, MC6854_SR1_BITS, sr1);
 			log(LOG_ERR, "%s: SR1 = %s\n",
 			    sc->sc_dev.dv_xname, buf);
 		}

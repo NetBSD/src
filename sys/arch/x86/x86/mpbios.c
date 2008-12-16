@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.49 2008/11/09 15:34:14 cegger Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.50 2008/12/16 22:35:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.49 2008/11/09 15:34:14 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.50 2008/12/16 22:35:29 christos Exp $");
 
 #include "acpi.h"
 #include "lapic.h"
@@ -1158,11 +1158,11 @@ mpbios_int(const uint8_t *ent, int enttype, struct mp_intr_map *mpi)
 
 		(*(mpb->mb_intr_print))(dev);
 
-		printf(" (type %s",
-		    bitmask_snprintf(type, inttype_fmt, buf, sizeof(buf)));
+		snprintb(buf, sizeof(buf), inttype_fmt, type);
+		printf(" (type %s", buf);
 
-		printf(" flags %s)\n",
-		    bitmask_snprintf(flags, flagtype_fmt, buf, sizeof(buf)));
+		snprintb(buf, sizeof(buf), flagtype_fmt, flags);
+		printf(" flags %s)\n", buf);
 	}
 }
 

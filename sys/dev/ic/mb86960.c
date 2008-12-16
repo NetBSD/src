@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.71 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.72 2008/12/16 22:35:31 christos Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.71 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.72 2008/12/16 22:35:31 christos Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -957,7 +957,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 #if FE_DEBUG >= 3
 		char sbuf[sizeof(FE_D1_ERRBITS) + 64];
 
-		bitmask_snprintf(rstat, FE_D1_ERRBITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), FE_D1_ERRBITS, rstat);
 		log(LOG_WARNING, "%s: receive error: %s\n",
 		    device_xname(sc->sc_dev), sbuf);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.196 2008/08/13 09:43:56 drochner Exp $	*/
+/*	$NetBSD: ohci.c,v 1.197 2008/12/16 22:35:36 christos Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.196 2008/08/13 09:43:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.197 2008/12/16 22:35:36 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ struct cfdriver ohci_cd = {
 #define DPRINTFN(n,x)	if (ohcidebug>(n)) logprintf x
 int ohcidebug = 0;
 #ifndef __NetBSD__
-#define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
+#define snprintb((q), (f), "%b", q,f,b,l) snprintf((b), (l))
 #endif
 #else
 #define DPRINTF(x)
@@ -2018,9 +2018,9 @@ ohci_dump_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
 	char sbuf[128];
 
-	bitmask_snprintf((u_int32_t)O32TOH(std->td.td_flags),
-			 "\20\23R\24OUT\25IN\31TOG1\32SETTOGGLE",
-			 sbuf, sizeof(sbuf));
+	snprintb(sbuf, sizeof(sbuf),
+	    "\20\23R\24OUT\25IN\31TOG1\32SETTOGGLE",
+	    (u_int32_t)O32TOH(std->td.td_flags));
 
 	usb_syncmem(&std->dma, std->offs, sizeof(std->td),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
@@ -2072,11 +2072,11 @@ ohci_dump_ed(ohci_softc_t *sc, ohci_soft_ed_t *sed)
 
 	usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-	bitmask_snprintf((u_int32_t)O32TOH(sed->ed.ed_flags),
-			 "\20\14OUT\15IN\16LOWSPEED\17SKIP\20ISO",
-			 sbuf, sizeof(sbuf));
-	bitmask_snprintf((u_int32_t)O32TOH(sed->ed.ed_headp),
-			 "\20\1HALT\2CARRY", sbuf2, sizeof(sbuf2));
+	snprintb(sbuf, sizeof(sbuf),
+	    "\20\14OUT\15IN\16LOWSPEED\17SKIP\20ISO",
+	    (u_int32_t)O32TOH(sed->ed.ed_flags));
+	snprintb(sbuf2, sizeof(sbuf2), "\20\1HALT\2CARRY",
+	    (u_int32_t)O32TOH(sed->ed.ed_headp));
 
 	printf("ED(%p) at 0x%08lx: addr=%d endpt=%d maxp=%d flags=%s\ntailp=0x%08lx "
 		 "headflags=%s headp=0x%08lx nexted=0x%08lx\n",
