@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.969 2008/11/29 23:48:58 christos Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.970 2008/12/16 19:55:22 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.967 2008/11/29 23:48:12 christos Exp
+ *	NetBSD: pcidevs,v 1.968 2008/12/16 19:54:52 christos Exp
  */
 
 /*
@@ -2639,6 +2639,12 @@
 #define	PCI_PRODUCT_INTEL_PRO_WL_3945ABG_2	0x4227		/* PRO/Wireless LAN 3945ABG Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_4965AGN_1	0x4229		/* PRO/Wireless LAN 4965AGN Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_PRO_WL_4965AGN_2	0x4230		/* PRO/Wireless LAN 4965AGN Mini-PCI Adapter */
+#define	PCI_PRODUCT_INTEL_PRO_WL_5100AGN_1	0x4232		/* Pro/Wireless LAN 5100AGN Mini-PCI Adapter */
+#define	PCI_PRODUCT_INTEL_PRO_WL_5300AGN_1	0x4235		/* Pro/Wireless LAN 5300AGN Mini-PCI Adapter */
+#define	PCI_PRODUCT_INTEL_PRO_WL_5300AGN_2	0x4236		/* Pro/Wireless LAN 5300AGN Mini-PCI Adapter */
+#define	PCI_PRODUCT_INTEL_PRO_WL_5100AGN_2	0x4237		/* Pro/Wireless LAN 5100AGN Mini-PCI Adapter */
+#define	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_1	0x423a		/* Pro/Wireless LAN 5350AGN Mini-PCI Adapter */
+#define	PCI_PRODUCT_INTEL_PRO_WL_5350AGN_2	0x423b		/* Pro/Wireless LAN 5350AGN Mini-PCI Adapter */
 #define	PCI_PRODUCT_INTEL_80312_ATU	0x530d		/* 80310 ATU */
 #define	PCI_PRODUCT_INTEL_82371SB_ISA	0x7000		/* 82371SB (PIIX3) PCI-ISA Bridge */
 #define	PCI_PRODUCT_INTEL_82371SB_IDE	0x7010		/* 82371SB (PIIX3) IDE Interface */
