@@ -25,7 +25,7 @@ SRCS=		dumpconfig.c formats.c lvchange.c lvconvert.c lvcreate.c \
 CFLAGS+= 	-fno-inline
 
 CPPFLAGS+=	-I${LVM2TOOLS_DISTDIR}/lib -I${LVM2TOOLS_DISTDIR}/include \
-		-I. -I${LIBDM_INCLUDE}
+		-I. -I${LIBDM_INCLUDE} -I${LVM2TOOLS_DISTDIR}/tools -I${LVM2TOOLS_DISTDIR}/libdm
 
 CPPFLAGS+=	-DLVM_SHARED_PATH=\"$(BINDIR)/lvm\"
 
@@ -85,18 +85,18 @@ MKLINKS+=	lvchange.8 lvchange.1 \
                 vgscan.8 vgscan.1 \
                 vgsplit.8 vgsplit.1
 
+LIBLVM_OBJDIR!= cd ${LVM2TOOLS_SRCDIR}/lib/liblvm && ${PRINTOBJDIR}
+LDADD+=         -L${LIBLVM_OBJDIR} -llvm
+DPADD+=         ${LIBLVM_OBJDIR}/liblvm.a
 
-LIBLVM_OBJDIR!=	cd ${LVM2TOOLS_SRCDIR}/lib/liblvm && ${PRINTOBJDIR}
-LDADD+=		-L${LIBLVM_OBJDIR} -llvm
-DPADD+=		${LIBLVM_OBJDIR}/liblvm.a
-
-LIBDM_OBJDIR!=	cd ${LIBDM_SRCDIR}/lib/libdevmapper && ${PRINTOBJDIR}
-LDADD+=		-L${LIBDM_OBJDIR} -ldevmapper
-DPADD+=		${LIBDM_OBJDIR}/libdevmapper.a
+LIBDM_OBJDIR!=  cd ${LVM2TOOLS_SRCDIR}/lib/libdevmapper && ${PRINTOBJDIR}
+LDADD+=         -L${LIBDM_OBJDIR} -ldevmapper
+DPADD+=         ${LIBDM_OBJDIR}/libdevmapper.a
 
 LDADD+=		-lprop
 
 
 .PATH:	${LVM2TOOLS_DISTDIR}/tools
+
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2008/07/23 13:54:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2008/12/16 01:17:12 haad Exp $
 
 LIBISPRIVATE=	yes
 
@@ -10,11 +10,12 @@ NOLINT=		#defined
 LIB=		lvm
 
 CPPFLAGS+=	-I${LVM2TOOLS_DISTDIR}/lib -I${LVM2TOOLS_DISTDIR}/include \
-		-I. -I${LIBDM_INCLUDE}
+		-I. 
 
 SRCS+=		activate.c lvmcache.c toolcontext.c config.c btree.c \
-		list.c str_list.c dev-cache.c dev-io.c dev-md.c device.c \
-		display.c errseg.c filter-composite.c filter-persistent.c \
+		str_list.c dev-cache.c dev-io.c dev-md.c device.c \
+		display.c errseg.c filter-composite.c \
+		filter-persistent.c \
 		filter-regex.c filter-sysfs.c filter-md.c archive.c \
 		archiver.c export.c flags.c format-text.c import.c \
 		import_vsn1.c tags.c text_label.c freeseg.c label.c \
@@ -25,7 +26,8 @@ SRCS+=		activate.c lvmcache.c toolcontext.c config.c btree.c \
 		striped.c uuid.c zero.c disk-rep.c format1.c import-export.c \
 		import-extents.c layout.c lvm1-label.c vg_number.c \
 		disk_rep.c format_pool.c import_export.c pool_label.c \
-		filter_netbsd.c snapshot.c mirrored.c dev_manager.c fs.c dev.c
+		filter_netbsd.c snapshot.c mirrored.c dev_manager.c fs.c dev.c \
+		lvm-globals.c
 
 LDADD+=		-lprop
 
