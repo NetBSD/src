@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_bootstrap.c,v 1.2 2008/08/29 15:04:18 reinoud Exp $ */
+/* $NetBSD: udf_strat_bootstrap.c,v 1.3 2008/12/16 16:18:25 pooka Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,12 +28,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.2 2008/08/29 15:04:18 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_bootstrap.c,v 1.3 2008/12/16 16:18:25 pooka Exp $");
 #endif /* not lint */
 
 
 #if defined(_KERNEL_OPT)
-#include "opt_quota.h"
 #include "opt_compat_netbsd.h"
 #endif
 

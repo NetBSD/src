@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.85 2008/09/07 13:13:04 tron Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.86 2008/12/16 16:18:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,11 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.85 2008/09/07 13:13:04 tron Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_quota.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.86 2008/12/16 16:18:25 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,8 +238,6 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	flags = 0;
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
-#ifdef QUOTA
-#endif
 	/* Drop the extra reference to root vnode. */
 	if (smp->sm_root) {
 		vrele(SMBTOV(smp->sm_root));
