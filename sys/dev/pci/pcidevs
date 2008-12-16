@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.967 2008/11/29 23:48:12 christos Exp $
+$NetBSD: pcidevs,v 1.968 2008/12/16 19:54:52 christos Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2632,6 +2632,12 @@ product INTEL PRO_WL_2915ABG_2	0x4224	PRO/Wireless LAN 2915ABG Mini-PCI Adapter
 product INTEL PRO_WL_3945ABG_2	0x4227	PRO/Wireless LAN 3945ABG Mini-PCI Adapter
 product INTEL PRO_WL_4965AGN_1	0x4229  PRO/Wireless LAN 4965AGN Mini-PCI Adapter
 product INTEL PRO_WL_4965AGN_2	0x4230  PRO/Wireless LAN 4965AGN Mini-PCI Adapter
+product INTEL PRO_WL_5100AGN_1	0x4232	Pro/Wireless LAN 5100AGN Mini-PCI Adapter
+product INTEL PRO_WL_5300AGN_1	0x4235	Pro/Wireless LAN 5300AGN Mini-PCI Adapter
+product INTEL PRO_WL_5300AGN_2	0x4236	Pro/Wireless LAN 5300AGN Mini-PCI Adapter
+product INTEL PRO_WL_5100AGN_2	0x4237	Pro/Wireless LAN 5100AGN Mini-PCI Adapter
+product INTEL PRO_WL_5350AGN_1	0x423a	Pro/Wireless LAN 5350AGN Mini-PCI Adapter
+product INTEL PRO_WL_5350AGN_2	0x423b	Pro/Wireless LAN 5350AGN Mini-PCI Adapter
 product INTEL 80312_ATU		0x530d	80310 ATU
 product INTEL 82371SB_ISA	0x7000	82371SB (PIIX3) PCI-ISA Bridge
 product INTEL 82371SB_IDE	0x7010	82371SB (PIIX3) IDE Interface
