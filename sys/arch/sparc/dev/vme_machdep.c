@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.57 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.58 2008/12/16 22:35:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.57 2008/04/28 20:23:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.58 2008/12/16 22:35:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -448,8 +448,8 @@ sparc_vme_error(void)
 
 	afsr = sc->sc_reg->vmebus_afsr;
 	afpa = sc->sc_reg->vmebus_afar;
-	printf("VME error:\n\tAFSR %s\n",
-		bitmask_snprintf(afsr, VMEBUS_AFSR_BITS, bits, sizeof(bits)));
+	snprintb(bits, sizeof(bits), VMEBUS_AFSR_BITS, afsr);
+	printf("VME error:\n\tAFSR %s\n", bits);
 	printf("\taddress: 0x%x%x\n", afsr, afpa);
 	return (0);
 }

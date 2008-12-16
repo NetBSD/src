@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.43 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.44 2008/12/16 22:35:24 christos Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.43 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb8795.c,v 1.44 2008/12/16 22:35:24 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -359,20 +359,21 @@ mb8795_rint(struct mb8795_softc *sc)
 	if (mb8795_debug) {
 		char sbuf[256];
 
-		bitmask_snprintf(rxstat, MB8795_RXSTAT_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), MB8795_RXSTAT_BITS, rxstat);
 		printf("%s: rx interrupt, rxstat = %s\n",
 		       sc->sc_dev.dv_xname, sbuf);
 
-		bitmask_snprintf(MB_READ_REG(sc, MB8795_RXSTAT),
-				 MB8795_RXSTAT_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), MB8795_RXSTAT_BITS,
+		    MB_READ_REG(sc, MB8795_RXSTAT));
+				
 		printf("rxstat = 0x%s\n", sbuf);
 
-		bitmask_snprintf(MB_READ_REG(sc, MB8795_RXMASK),
-				 MB8795_RXMASK_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), MB8795_RXMASK_BITS,
+		    MB_READ_REG(sc, MB8795_RXMASK));
 		printf("rxmask = 0x%s\n", sbuf);
 
-		bitmask_snprintf(MB_READ_REG(sc, MB8795_RXMODE),
-				 MB8795_RXMODE_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), MB8795_RXMODE_BITS,
+		    MB_READ_REG(sc, MB8795_RXMODE));
 		printf("rxmode = 0x%s\n", sbuf);
 	}
 #endif
@@ -431,7 +432,7 @@ mb8795_tint(struct mb8795_softc *sc)
 	if (txstat & MB8795_TXSTAT_READY) {
 		char sbuf[256];
 
-		bitmask_snprintf(txstat, MB8795_TXSTAT_BITS, sbuf, sizeof(sbuf));
+		snprintb(sbuf, sizeof(sbuf), MB8795_TXSTAT_BITS, txstat);
 		panic("%s: unexpected tx interrupt %s",
 				sc->sc_dev.dv_xname, sbuf);
 

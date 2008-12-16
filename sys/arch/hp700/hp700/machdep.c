@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54 2008/11/30 18:21:34 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.55 2008/12/16 22:35:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54 2008/11/30 18:21:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.55 2008/12/16 22:35:23 christos Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -1442,8 +1442,8 @@ hppa_machine_check(int check_type)
 	int error;
 #define	PIM_WORD(name, word, bits)			\
 do {							\
-	bitmask_snprintf(word, bits, bitmask_buffer,	\
-		sizeof(bitmask_buffer));		\
+	snprintb(bitmask_buffer, sizeof(bitmask_buffer),\
+	    bits, word);				\
 	printf("%s %s", name, bitmask_buffer);		\
 } while (/* CONSTCOND */ 0)
 

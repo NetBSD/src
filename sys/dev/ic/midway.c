@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.83 2008/11/07 00:20:02 dyoung Exp $	*/
+/*	$NetBSD: midway.c,v 1.84 2008/12/16 22:35:31 christos Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.83 2008/11/07 00:20:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.84 2008/12/16 22:35:31 christos Exp $");
 
 #include "opt_natm.h"
 
@@ -140,7 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.83 2008/11/07 00:20:02 dyoung Exp $");
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #else
-#define bitmask_snprintf(q,f,b,l) snprintf((b), (l), "%b", (q), (f))
+#define snprintb((q), (f), "%b", q,f,b,l) snprintf((b), (l))
 #endif
 
 #if NEN > 0 || !defined(__FreeBSD__)
@@ -2685,7 +2685,7 @@ void *arg;
   {
     char sbuf[256];
 
-    bitmask_snprintf(reg, MID_INTBITS, sbuf, sizeof(sbuf));
+    snprintb(sbuf, sizeof(sbuf), MID_INTBITS, reg);
     printf("%s: interrupt=0x%s\n", device_xname(&sc->sc_dev), sbuf);
   }
 #endif
@@ -2697,7 +2697,7 @@ void *arg;
   if ((reg & (MID_INT_IDENT|MID_INT_LERR|MID_INT_DMA_ERR|MID_INT_SUNI)) != 0) {
     char sbuf[256];
 
-    bitmask_snprintf(reg, MID_INTBITS, sbuf, sizeof(sbuf));
+    snprintb(sbuf, sizeof(sbuf), MID_INTBITS, reg);
     printf("%s: unexpected interrupt=0x%s, resetting card\n",
            device_xname(&sc->sc_dev), sbuf);
 #ifdef EN_DEBUG
@@ -3420,7 +3420,7 @@ int unit, level;
     if (unit != -1 && unit != lcv)
       continue;
 
-    bitmask_snprintf(level, END_BITS, sbuf, sizeof(sbuf));
+    snprintb(sbuf, sizeof(sbuf), END_BITS, level);
     printf("dumping device %s at level 0x%s\n", device_xname(&sc->sc_dev), sbuf);
 
     if (sc->dtq_us == 0) {
@@ -3468,13 +3468,13 @@ int unit, level;
       printf("mregs:\n");
       printf("resid = 0x%x\n", EN_READ(sc, MID_RESID));
 
-      bitmask_snprintf(EN_READ(sc, MID_INTSTAT), MID_INTBITS, ybuf, sizeof(ybuf));
+      snprintb(ybuf, sizeof(ybuf), MID_INTBITS, EN_READ(sc, MID_INTSTAT));
       printf("interrupt status = 0x%s\n", ybuf);
 
-      bitmask_snprintf(EN_READ(sc, MID_INTENA), MID_INTBITS, ybuf, sizeof(ybuf));
+      snprintb(ybuf, sizeof(ybuf), MID_INTBITS, EN_READ(sc, MID_INTENA));
       printf("interrupt enable = 0x%s\n", ybuf);
 
-      bitmask_snprintf(EN_READ(sc, MID_MAST_CSR), MID_MCSRBITS, ybuf, sizeof(ybuf));
+      snprintb(ybuf, sizeof(ybuf), MID_MCSRBITS, EN_READ(sc, MID_MAST_CSR));
       printf("mcsr = 0x%s\n", ybuf);
 
       printf("serv_write = [chip=%d] [us=%d]\n", EN_READ(sc, MID_SERV_WRITE),

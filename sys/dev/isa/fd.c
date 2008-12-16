@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.87 2008/05/03 08:23:41 plunky Exp $	*/
+/*	$NetBSD: fd.c,v 1.88 2008/12/16 22:35:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.87 2008/05/03 08:23:41 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.88 2008/12/16 22:35:31 christos Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -961,36 +961,26 @@ fdcstart(struct fdc_softc *fdc)
 	(void)fdcintr1(fdc);
 }
 
-void
-fdcstatus(device_t dv, int n, const char *s)
+static void
+fdcpstatus(int n, struct fdc_softc *fdc)
 {
-	struct fdc_softc *fdc = device_private(device_parent(dv));
 	char bits[64];
-
-	if (n == 0) {
-		out_fdc(fdc->sc_iot, fdc->sc_ioh, NE7CMD_SENSEI);
-		(void) fdcresult(fdc);
-		n = 2;
-	}
-
-	aprint_normal_dev(dv, "%s", s);
 
 	switch (n) {
 	case 0:
 		printf("\n");
 		break;
 	case 2:
-		printf(" (st0 %s cyl %d)\n",
-		    bitmask_snprintf(fdc->sc_status[0], NE7_ST0BITS,
-		    bits, sizeof(bits)), fdc->sc_status[1]);
+		snprintb(bits, sizeof(bits), NE7_ST0BITS, fdc->sc_status[0]);
+		printf(" (st0 %s cyl %d)\n", bits, fdc->sc_status[1]);
 		break;
 	case 7:
-		printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
-		    NE7_ST0BITS, bits, sizeof(bits)));
-		printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
-		    NE7_ST1BITS, bits, sizeof(bits)));
-		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
-		    NE7_ST2BITS, bits, sizeof(bits)));
+		snprintb(bits, sizeof(bits), NE7_ST0BITS, fdc->sc_status[0]);
+		printf(" (st0 %s", bits);
+		snprintb(bits, sizeof(bits), NE7_ST1BITS, fdc->sc_status[1]);
+		printf(" st1 %s", bits);
+		snprintb(bits, sizeof(bits), NE7_ST2BITS, fdc->sc_status[2]);
+		printf(" st2 %s", bits);
 		printf(" cyl %d head %d sec %d)\n",
 		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
 		break;
@@ -1000,6 +990,22 @@ fdcstatus(device_t dv, int n, const char *s)
 		break;
 #endif
 	}
+}
+
+void
+fdcstatus(device_t dv, int n, const char *s)
+{
+	struct fdc_softc *fdc = device_private(device_parent(dv));
+
+	if (n == 0) {
+		out_fdc(fdc->sc_iot, fdc->sc_ioh, NE7CMD_SENSEI);
+		(void) fdcresult(fdc);
+		n = 2;
+	}
+	fdcpstatus(n, fdc);
+
+	aprint_normal_dev(dv, "%s", s);
+
 }
 
 void
@@ -1337,7 +1343,6 @@ fdcintr(void *arg)
 void
 fdcretry(struct fdc_softc *fdc)
 {
-	char bits[64];
 	struct fd_softc *fd;
 	struct buf *bp;
 
@@ -1367,23 +1372,7 @@ fdcretry(struct fdc_softc *fdc)
 		if ((fd->sc_opts & FDOPT_SILENT) == 0) {
 			diskerr(bp, "fd", "hard error", LOG_PRINTF,
 				fd->sc_skip / FDC_BSIZE, NULL);
-
-			printf(" (st0 %s",
-			       bitmask_snprintf(fdc->sc_status[0],
-						NE7_ST0BITS, bits,
-						sizeof(bits)));
-			printf(" st1 %s",
-			       bitmask_snprintf(fdc->sc_status[1],
-						NE7_ST1BITS, bits,
-						sizeof(bits)));
-			printf(" st2 %s",
-			       bitmask_snprintf(fdc->sc_status[2],
-						NE7_ST2BITS, bits,
-						sizeof(bits)));
-			printf(" cyl %d head %d sec %d)\n",
-			       fdc->sc_status[3],
-			       fdc->sc_status[4],
-			       fdc->sc_status[5]);
+			fdcpstatus(7, fdc);
 		}
 
 		bp->b_error = EIO;

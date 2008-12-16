@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.141 2008/06/11 21:25:31 drochner Exp $	*/
+/*	$NetBSD: fd.c,v 1.142 2008/12/16 22:35:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.141 2008/06/11 21:25:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.142 2008/12/16 22:35:25 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1173,12 +1173,42 @@ fdcstart(struct fdc_softc *fdc)
 	(void) fdcstate(fdc);
 }
 
+static void
+fdcpstatus(int n, struct fdc_softc *fdc)
+{
+	char bits[64];
+
+	switch (n) {
+	case 0:
+		printf("\n");
+		break;
+	case 2:
+		snprintb(bits, sizeof(bits), NE7_ST0BITS, fdc->sc_status[0]);
+		printf(" (st0 %s cyl %d)\n", bits, fdc->sc_status[1]);
+		break;
+	case 7:
+		snprintb(bits, sizeof(bits), NE7_ST0BITS, fdc->sc_status[0]);
+		printf(" (st0 %s", bits);
+		snprintb(bits, sizeof(bits), NE7_ST1BITS, fdc->sc_status[1]);
+		printf(" st1 %s", bits);
+		snprintb(bits, sizeof(bits), NE7_ST2BITS, fdc->sc_status[2]);
+		printf(" st2 %s", bits);
+		printf(" cyl %d head %d sec %d)\n",
+		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
+		break;
+#ifdef DIAGNOSTIC
+	default:
+		printf("\nfdcstatus: weird size");
+		break;
+#endif
+	}
+}
+
 void
 fdcstatus(struct fdc_softc *fdc, const char *s)
 {
 	struct fd_softc *fd = fdc->sc_drives.tqh_first;
 	int n;
-	char bits[64];
 
 	/* Just print last status */
 	n = fdc->sc_nstat;
@@ -1198,31 +1228,7 @@ fdcstatus(struct fdc_softc *fdc, const char *s)
 	printf("%s: %s: state %d",
 		fd ? fd->sc_dv.dv_xname : "fdc", s, fdc->sc_state);
 
-	switch (n) {
-	case 0:
-		printf("\n");
-		break;
-	case 2:
-		printf(" (st0 %s cyl %d)\n",
-		    bitmask_snprintf(fdc->sc_status[0], NE7_ST0BITS,
-		    bits, sizeof(bits)), fdc->sc_status[1]);
-		break;
-	case 7:
-		printf(" (st0 %s", bitmask_snprintf(fdc->sc_status[0],
-		    NE7_ST0BITS, bits, sizeof(bits)));
-		printf(" st1 %s", bitmask_snprintf(fdc->sc_status[1],
-		    NE7_ST1BITS, bits, sizeof(bits)));
-		printf(" st2 %s", bitmask_snprintf(fdc->sc_status[2],
-		    NE7_ST2BITS, bits, sizeof(bits)));
-		printf(" cyl %d head %d sec %d)\n",
-		    fdc->sc_status[3], fdc->sc_status[4], fdc->sc_status[5]);
-		break;
-#ifdef DIAGNOSTIC
-	default:
-		printf(" fdcstatus: weird size: %d\n", n);
-		break;
-#endif
-	}
+	fdcpstatus(n, fdc);
 }
 
 void
