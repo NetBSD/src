@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.14 2008/12/16 23:16:46 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.15 2008/12/16 23:17:17 pooka Exp $
 #
 
 WARNS?=		4
@@ -7,7 +7,7 @@ NOLINT=		# kernel code
 CFLAGS+=	-ffreestanding
 CPPFLAGS+=	-D_KERNEL -D_RUMPKERNEL -DMULTIPROCESSOR -DDIAGNOSTIC
 CPPFLAGS:=	-I${RUMPTOP}/include ${CPPFLAGS}
-CPPFLAGS+=	-I${.CURDIR} -I. 
+CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include -I${RUMPTOP}/../arch
 CPPFLAGS+=	-nostdinc -I${RUMPTOP}/..
 #CPPFLAGS+=	-DDEBUG
