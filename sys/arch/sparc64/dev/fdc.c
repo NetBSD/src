@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.26 2008/12/16 22:35:26 christos Exp $	*/
+/*	$NetBSD: fdc.c,v 1.27 2008/12/17 19:51:06 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.26 2008/12/16 22:35:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.27 2008/12/17 19:51:06 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1407,7 +1407,7 @@ fdcstatus(struct fdc_softc *fdc, const char *s)
 		printf(" (st0 %s cyl %d)\n", bits, fdc->sc_status[1]);
 		break;
 	case 7:
-		fscpstatus(fsc);
+		fdcpstatus(fdc);
 		break;
 #ifdef DIAGNOSTIC
 	default:
