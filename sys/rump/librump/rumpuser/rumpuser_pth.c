@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.19 2008/11/18 12:39:35 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.20 2008/12/17 20:16:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -143,11 +143,18 @@ rumpuser_thrdestroy()
 }
 
 int
-rumpuser_thread_create(void *(*f)(void *), void *arg)
+rumpuser_thread_create(void *(*f)(void *), void *arg, const char *thrname)
 {
 	pthread_t ptid;
+	int rv;
 
-	return pthread_create(&ptid, NULL, f, arg);
+	rv = pthread_create(&ptid, NULL, f, arg);
+#ifdef __NetBSD__
+	if (rv == 0 && thrname)
+		pthread_setname_np(ptid, thrname, NULL);
+#endif
+
+	return rv;
 }
 
 void
