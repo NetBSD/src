@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.65 2008/12/16 22:35:33 christos Exp $	*/
+/*	$NetBSD: azalia.c,v 1.66 2008/12/17 15:35:17 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.65 2008/12/16 22:35:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.66 2008/12/17 15:35:17 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1801,7 +1801,6 @@ azalia_widget_print_audio(const widget_t *this, const char *lead, int channels)
 	    "\x09""96kHz\x08""88.2kHz\x07""48kHz\x06""44.1kHz\x05""32kHz\x04"
 	    "22.05kHz\x03""16kHz\x02""11.025kHz\x01""8kHz",
 	    this->d.audio.bits_rates);
-	    flagbuf, FLAGBUFLEN);
 	aprint_normal("%sPCM formats=%s\n", lead, flagbuf);
 	return 0;
 }
