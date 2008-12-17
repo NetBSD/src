@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.22 2008/12/16 22:35:36 christos Exp $	*/
+/*	$NetBSD: si.c,v 1.23 2008/12/17 19:13:02 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996,2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.22 2008/12/16 22:35:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.23 2008/12/17 19:13:02 cegger Exp $");
 
 #include "opt_ddb.h"
 
@@ -332,7 +332,7 @@ si_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (sc->sc_options) {
-		snprintb(bits, sizeof(bits), sc->sc_options, SI_OPTIONS_BITS);
+		snprintb(bits, sizeof(bits), SI_OPTIONS_BITS, sc->sc_options);
 		aprint_normal_dev(self, "options=%s\n", bits);
 	}
 

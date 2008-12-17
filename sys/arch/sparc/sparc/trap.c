@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.177 2008/12/16 22:35:26 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.178 2008/12/17 19:16:56 cegger Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.177 2008/12/16 22:35:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.178 2008/12/17 19:16:56 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -295,7 +295,7 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 	dopanic:
 	        snprintb(bits, sizeof(bits), PSR_BITS, psr);
 		printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%s\n",
-		       type, pc, tf->tf_npc,
+		       type, pc, tf->tf_npc, bits);
 #ifdef DDB
 		write_all_windows();
 		(void) kdb_trap(type, tf);
@@ -334,7 +334,7 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 				goto dopanic;
 		        snprintb(bits, sizeof(bits), PSR_BITS, psr);
 			printf("trap type 0x%x: pc=0x%x npc=0x%x psr=%s\n",
-			       type, pc, tf->tf_npc,
+			       type, pc, tf->tf_npc, bits);
 			sig = SIGILL;
 			KSI_INIT_TRAP(&ksi);
 			ksi.ksi_trap = type;
@@ -838,7 +838,7 @@ mem_access_fault(unsigned type, int ser, u_int v, int pc, int psr,
 		extern char Lfsbail[];
 		if (type == T_TEXTFAULT) {
 			(void) splhigh();
-		        snprintb(bits, sizeof(bits)), SER_BITS, ser);
+		        snprintb(bits, sizeof(bits), SER_BITS, ser);
 			printf("text fault: pc=0x%x ser=%s\n", pc, bits);
 			panic("kernel fault");
 			/* NOTREACHED */

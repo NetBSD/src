@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.42 2008/12/16 22:35:26 christos Exp $ */
+/*	$NetBSD: memreg.c,v 1.43 2008/12/17 19:09:56 cegger Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.42 2008/12/16 22:35:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memreg.c,v 1.43 2008/12/17 19:09:56 cegger Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -215,15 +215,15 @@ memerr4_4c(unsigned int issync,
 static void
 hardmemerr4m(unsigned type, u_int sfsr, u_int sfva, u_int afsr, u_int afva)
 {
-	char *s, bits[64];
+	char bits[64];
 
 	printf("memory fault: type %d", type);
-	s = snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
-	printf("sfsr=%s sfva=0x%x\n", s, sfva);
+	snprintb(bits, sizeof(bits), SFSR_BITS, sfsr);
+	printf("sfsr=%s sfva=0x%x\n", bits, sfva);
 
 	if (afsr != 0) {
-		s = snprintb(bits, sizeof(bits), AFSR_BITS, afsr);
-		printf("; afsr=%s afva=0x%x%x\n", s,
+		snprintb(bits, sizeof(bits), AFSR_BITS, afsr);
+		printf("; afsr=%s afva=0x%x%x\n", bits,
 			(afsr & AFSR_AFA) >> AFSR_AFA_RSHIFT, afva);
 	}
 
