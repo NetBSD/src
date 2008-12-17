@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.43 2008/12/16 22:35:24 christos Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.44 2008/12/17 17:12:52 cegger Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.43 2008/12/16 22:35:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdma.c,v 1.44 2008/12/17 17:12:52 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -901,7 +901,7 @@ nextdma_print(struct nextdma_softc *nsc)
 	printf("NDMAP: dd->dd_stop         = 0x%08lx\n", dd_stop);
 
 	snprintb(sbuf, sizeof(sbuf), NEXT_INTR_BITS,
-	    (NEXT_I_BIT(nsc->sc_chan->nd_intr));
+	    (NEXT_I_BIT(nsc->sc_chan->nd_intr)));
 	printf("NDMAP: interrupt ipl (%ld) intr(0x%s)\n",
 			NEXT_I_IPL(nsc->sc_chan->nd_intr), sbuf);
 }
