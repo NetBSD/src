@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <netbsd/netbsd-dm.h>
+#include <netbsd-dm.h>
 
 #include <dm-ioctl.h>
 
