@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.84 2008/12/16 22:35:31 christos Exp $	*/
+/*	$NetBSD: midway.c,v 1.85 2008/12/17 20:51:34 cegger Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.84 2008/12/16 22:35:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.85 2008/12/17 20:51:34 cegger Exp $");
 
 #include "opt_natm.h"
 
@@ -3633,7 +3633,7 @@ static void rrp_add(sc, ifp)
 	}
 
 	/* create a new entry */
-	MALLOC(new, struct rrp *, sizeof(struct rrp), M_DEVBUF, M_WAITOK);
+	new = malloc(sizeof(struct rrp), M_DEVBUF, M_WAITOK);
 	if (new == NULL) {
 		printf("en_rrp_add: malloc failed!\n");
 		return;
@@ -3685,7 +3685,7 @@ static void rrp_delete(sc, ifp)
 				if (head == p)
 					sc->txrrp = p->next;
 			}
-			FREE(p, M_DEVBUF);
+			free(p, M_DEVBUF);
 		}
 		prev = p;
 		p = prev->next;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.266 2008/12/16 22:35:38 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.267 2008/12/17 20:51:39 cegger Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.266 2008/12/16 22:35:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.267 2008/12/17 20:51:39 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -5133,8 +5133,7 @@ uvm_map_create(pmap_t pmap, vaddr_t vmin, vaddr_t vmax, int flags)
 {
 	struct vm_map *result;
 
-	MALLOC(result, struct vm_map *, sizeof(struct vm_map),
-	    M_VMMAP, M_WAITOK);
+	result = malloc(sizeof(struct vm_map), M_VMMAP, M_WAITOK);
 	uvm_map_setup(result, vmin, vmax, flags);
 	result->pmap = pmap;
 	return(result);

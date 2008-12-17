@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.141 2008/12/13 11:22:09 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.142 2008/12/17 20:51:39 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.141 2008/12/13 11:22:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.142 2008/12/17 20:51:39 cegger Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -338,7 +338,7 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 			LIST_INSERT_HEAD(&swap_priority, spp, spi_swappri);
 	} else {
 	  	/* we don't need a new priority structure, free it */
-		FREE(newspp, M_VMSWAP);
+		free(newspp, M_VMSWAP);
 	}
 
 	/*

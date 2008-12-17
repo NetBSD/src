@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.c,v 1.62 2007/03/07 13:54:49 tsutsui Exp $	*/
+/*	$NetBSD: nubus.c,v 1.63 2008/12/17 20:51:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.62 2007/03/07 13:54:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nubus.c,v 1.63 2008/12/17 20:51:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,7 +724,7 @@ nubus_get_smem_addr_rangelist(bus_space_tag_t bst, bus_space_handle_t bsh,
 	 * malloc a block of (blocklen) bytes
 	 * caller must recycle block after use  
 	 */
-	MALLOC(blocklist,void *,blocklen,M_TEMP,M_WAITOK);
+	blocklist = malloc(blocklen,M_TEMP,M_WAITOK);
 	
 	/* read ((blocklen - 4) / 8) (length,offset) pairs into block */
 	nubus_get_ind_data(bst, bsh, fmt, dirent, blocklist, blocklen);

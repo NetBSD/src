@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.8 2007/12/03 15:33:00 ad Exp $ */
+/* $NetBSD: irq.c,v 1.9 2008/12/17 20:51:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.8 2007/12/03 15:33:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irq.c,v 1.9 2008/12/17 20:51:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -222,9 +222,8 @@ irq_establish(int irqnum, int ipl, int (*func)(void *), void *arg,
 	if (irqnum >= NIRQ)
 		panic("irq_register: bad irq: %d", irqnum);
 #endif
-	MALLOC(new, struct irq_handler *, sizeof(struct irq_handler),
-	       M_DEVBUF, M_WAITOK);
-	bzero(new, sizeof(*new));
+	new = (struct irq_handler *)malloc(sizeof(struct irq_handler),
+	       M_DEVBUF, M_WAITOK | M_ZERO);
 	new->irqnum = irqnum;
 	new->mask = 1 << irqnum;
 #if NUNIXBP > 0

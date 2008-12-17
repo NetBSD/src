@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.61 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.62 2008/12/17 20:51:37 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.61 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.62 2008/12/17 20:51:37 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -598,8 +598,7 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	 * about it.  Also, remember this multicast address so that
 	 * we can delete them on unconfigure.
 	 */
-	MALLOC(mc, struct vlan_mc_entry *, sizeof(struct vlan_mc_entry),
-	    M_DEVBUF, M_NOWAIT);
+	mc = malloc(sizeof(struct vlan_mc_entry), M_DEVBUF, M_NOWAIT);
 	if (mc == NULL) {
 		error = ENOMEM;
 		goto alloc_failed;
@@ -622,7 +621,7 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 
  ioctl_failed:
 	LIST_REMOVE(mc, mc_entries);
-	FREE(mc, M_DEVBUF);
+	free(mc, M_DEVBUF);
  alloc_failed:
 	(void)ether_delmulti(sa, &ifv->ifv_ec);
 	return (error);
@@ -658,7 +657,7 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 		    mc = LIST_NEXT(mc, mc_entries)) {
 			if (mc->mc_enm == enm) {
 				LIST_REMOVE(mc, mc_entries);
-				FREE(mc, M_DEVBUF);
+				free(mc, M_DEVBUF);
 				break;
 			}
 		}
@@ -692,7 +691,7 @@ vlan_ether_purgemulti(struct ifvlan *ifv)
 		    (const struct sockaddr *)&mc->mc_addr);
 		(void)(*ifp->if_ioctl)(ifp, SIOCDELMULTI, (void *)ifr);
 		LIST_REMOVE(mc, mc_entries);
-		FREE(mc, M_DEVBUF);
+		free(mc, M_DEVBUF);
 	}
 }
 

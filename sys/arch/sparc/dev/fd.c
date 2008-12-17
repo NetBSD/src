@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.142 2008/12/16 22:35:25 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.143 2008/12/17 20:51:32 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.142 2008/12/16 22:35:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.143 2008/12/17 20:51:32 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2306,7 +2306,7 @@ fd_read_md_image(size_t	*sizep, void *	*addrp)
 
 	dev = makedev(54,0);	/* XXX */
 
-	MALLOC(addr, void *, FDMICROROOTSIZE, M_DEVBUF, M_WAITOK);
+	addr = malloc(FDMICROROOTSIZE, M_DEVBUF, M_WAITOK);
 	*addrp = addr;
 
 	if (fdopen(dev, 0, S_IFCHR, NULL))

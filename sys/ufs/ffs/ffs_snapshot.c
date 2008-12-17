@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.87 2008/12/07 19:51:07 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.88 2008/12/17 20:51:39 cegger Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.87 2008/12/07 19:51:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.88 2008/12/17 20:51:39 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1118,8 +1118,7 @@ indiracct(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	last = howmany(remblks, blksperindir);
 	if (last > NINDIR(fs))
 		last = NINDIR(fs);
-	bap = malloc(fs->fs_bsize, M_DEVBUF, M_WAITOK);
-	bcopy(bp->b_data, (void *)bap, fs->fs_bsize);
+	bap = malloc(fs->fs_bsize, M_DEVBUF, M_WAITOK | M_ZERO);
 	brelse(bp, 0);
 	error = (*acctfunc)(snapvp, bap, 0, last,
 	    fs, level == 0 ? rlbn : -1, expungetype);
@@ -1141,7 +1140,7 @@ indiracct(struct vnode *snapvp, struct vnode *cancelvp, int level,
 		remblks -= blksperindir;
 	}
 out:
-	FREE(bap, M_DEVBUF);
+	free(bap, M_DEVBUF);
 	return (error);
 }
 
@@ -1730,7 +1729,7 @@ ffs_snapshot_unmount(struct mount *mp)
 		xp->i_nextsnap.tqe_prev = 0;
 		if (xp->i_snapblklist == si->si_snapblklist)
 			si->si_snapblklist = NULL;
-		FREE(xp->i_snapblklist, M_UFSMNT);
+		free(xp->i_snapblklist, M_UFSMNT);
 		if (xp->i_ffs_effnlink > 0) {
 			si->si_gen++;
 			mutex_exit(&si->si_lock);

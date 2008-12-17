@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.25 2008/11/07 00:20:13 dyoung Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.26 2008/12/17 20:51:36 cegger Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.25 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.26 2008/12/17 20:51:36 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -611,7 +611,7 @@ etherip_clone_create(struct if_clone *ifc, int unit)
 {
 	cfdata_t cf;
 
-	MALLOC(cf, cfdata_t, sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
+	cf = malloc(sizeof(struct cfdata), M_DEVBUF, M_WAITOK);
 	cf->cf_name   = etherip_cd.cd_name;
 	cf->cf_atname = etherip_ca.ca_name;
 	cf->cf_unit   = unit;
@@ -635,7 +635,7 @@ etherip_clone_destroy(struct ifnet *ifp)
 
 	if ((error = config_detach(sc->sc_dev, 0)) != 0)
 		aprint_error_dev(sc->sc_dev, "unable to detach instance\n");
-	FREE(cf, M_DEVBUF);
+	free(cf, M_DEVBUF);
 
 	return error;
 }

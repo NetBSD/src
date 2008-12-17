@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.21 2008/12/10 11:10:17 pooka Exp $ */
+/* $NetBSD: pmap.c,v 1.22 2008/12/17 20:51:31 cegger Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.21 2008/12/10 11:10:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.22 2008/12/17 20:51:31 cegger Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -378,9 +378,9 @@ pmap_create()
 		pmap_init2();
 	pmap = pool_get(&pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
-	MALLOC(pmap->pm_entries, struct pv_entry **,
-	    sizeof(struct pv_entry *) * PM_NENTRIES, M_VMPMAP, M_WAITOK);
-	bzero(pmap->pm_entries, sizeof(struct pv_entry *) * PM_NENTRIES);
+	pmap->pm_entries = (struct pv_entry **)malloc(
+		sizeof(struct pv_entry *) * PM_NENTRIES, M_VMPMAP,
+		M_WAITOK | M_ZERO);
 	pmap->pm_count = 1;
 	return pmap;
 }
@@ -404,7 +404,7 @@ pmap_destroy(pmap_t pmap)
 		if (pmap->pm_entries[i] != NULL)
 			panic("pmap_destroy: pmap isn't empty");
 #endif
-	FREE(pmap->pm_entries, M_VMPMAP);
+	free((void *)pmap->pm_entries, M_VMPMAP);
 	pool_put(&pmap_pool, pmap);
 }
 
@@ -540,21 +540,16 @@ pv_update(struct pv_entry *pv)
 
 
 static struct pv_entry *
-pv_alloc()
+pv_alloc(void)
 {
-	struct pv_entry *pv;
-
-	MALLOC(pv, struct pv_entry *, sizeof(*pv), M_VMPMAP, M_NOWAIT);
-	if (pv != NULL)
-		bzero(pv, sizeof(*pv));
-	return pv;
+	return malloc(sizeof(struct pv_entry), M_VMPMAP, M_NOWAIT | M_ZERO);
 }
 
 static void
 pv_free(struct pv_entry *pv)
 {
 
-	FREE(pv, M_VMPMAP);
+	free(pv, M_VMPMAP);
 }
 
 static struct pv_entry *
