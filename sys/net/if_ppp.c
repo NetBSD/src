@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.126 2008/11/29 23:15:20 cube Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.127 2008/12/17 20:51:36 cegger Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.126 2008/11/29 23:15:20 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.127 2008/12/17 20:51:36 cegger Exp $");
 
 #include "ppp.h"
 
@@ -247,7 +247,7 @@ ppp_create(const char *name, int unit)
 {
     struct ppp_softc *sc, *sci, *scl = NULL;
 
-    MALLOC(sc, struct ppp_softc *, sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
+    sc = malloc(sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
 
     simple_lock(&ppp_list_mutex);
     if (unit == -1) {
@@ -272,7 +272,7 @@ ppp_create(const char *name, int unit)
 	    if (unit < sci->sc_unit)
 		break;
 	    else if (unit == sci->sc_unit) {
-		FREE(sc, M_DEVBUF);
+		free(sc, M_DEVBUF);
 		return NULL;
 	    }
 	}
@@ -338,7 +338,7 @@ ppp_clone_destroy(struct ifnet *ifp)
 #endif
     if_detach(ifp);
 
-    FREE(sc, M_DEVBUF);
+    free(sc, M_DEVBUF);
     return 0;
 }
 
@@ -377,8 +377,7 @@ pppalloc(pid_t pid)
     sc->sc_relinq = NULL;
     (void)memset(&sc->sc_stats, 0, sizeof(sc->sc_stats));
 #ifdef VJC
-    MALLOC(sc->sc_comp, struct slcompress *, sizeof(struct slcompress),
-	   M_DEVBUF, M_NOWAIT);
+    sc->sc_comp = malloc(sizeof(struct slcompress), M_DEVBUF, M_NOWAIT);
     if (sc->sc_comp)
 	sl_compress_init(sc->sc_comp);
 #endif
@@ -441,29 +440,29 @@ pppdealloc(struct ppp_softc *sc)
 #endif /* PPP_COMPRESS */
 #ifdef PPP_FILTER
     if (sc->sc_pass_filt_in.bf_insns != 0) {
-	FREE(sc->sc_pass_filt_in.bf_insns, M_DEVBUF);
+	free(sc->sc_pass_filt_in.bf_insns, M_DEVBUF);
 	sc->sc_pass_filt_in.bf_insns = 0;
 	sc->sc_pass_filt_in.bf_len = 0;
     }
     if (sc->sc_pass_filt_out.bf_insns != 0) {
-	FREE(sc->sc_pass_filt_out.bf_insns, M_DEVBUF);
+	free(sc->sc_pass_filt_out.bf_insns, M_DEVBUF);
 	sc->sc_pass_filt_out.bf_insns = 0;
 	sc->sc_pass_filt_out.bf_len = 0;
     }
     if (sc->sc_active_filt_in.bf_insns != 0) {
-	FREE(sc->sc_active_filt_in.bf_insns, M_DEVBUF);
+	free(sc->sc_active_filt_in.bf_insns, M_DEVBUF);
 	sc->sc_active_filt_in.bf_insns = 0;
 	sc->sc_active_filt_in.bf_len = 0;
     }
     if (sc->sc_active_filt_out.bf_insns != 0) {
-	FREE(sc->sc_active_filt_out.bf_insns, M_DEVBUF);
+	free(sc->sc_active_filt_out.bf_insns, M_DEVBUF);
 	sc->sc_active_filt_out.bf_insns = 0;
 	sc->sc_active_filt_out.bf_len = 0;
     }
 #endif /* PPP_FILTER */
 #ifdef VJC
     if (sc->sc_comp != 0) {
-	FREE(sc->sc_comp, M_DEVBUF);
+	free(sc->sc_comp, M_DEVBUF);
 	sc->sc_comp = 0;
     }
 #endif

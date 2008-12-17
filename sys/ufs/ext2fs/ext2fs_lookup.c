@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.57 2008/11/24 17:11:43 tsutsui Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.58 2008/12/17 20:51:38 cegger Exp $	*/
 
 /*
  * Modified for NetBSD 1.2E
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.57 2008/11/24 17:11:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.58 2008/12/17 20:51:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,8 +209,8 @@ ext2fs_readdir(void *v)
 		/* we need to correct uio_offset */
 		uio->uio_offset = off;
 	}
-	FREE(dirbuf, M_TEMP);
-	FREE(dstd, M_TEMP);
+	free(dirbuf, M_TEMP);
+	free(dstd, M_TEMP);
 	*ap->a_eofflag = ext2fs_size(VTOI(ap->a_vp)) <= uio->uio_offset;
 	if (ap->a_ncookies) {
 		if (error) {

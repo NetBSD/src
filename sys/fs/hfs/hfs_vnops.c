@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.12 2008/11/26 20:17:33 pooka Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.13 2008/12/17 20:51:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.12 2008/11/26 20:17:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.13 2008/12/17 20:51:35 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1013,7 +1013,7 @@ hfs_vop_reclaim(void *v)
 	}
 	
 	genfs_node_destroy(vp);
-	FREE(vp->v_data, M_TEMP);
+	free(vp->v_data, M_TEMP);
 	vp->v_data = 0;
 
 	return 0;

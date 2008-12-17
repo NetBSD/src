@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.163 2008/12/10 11:10:20 pooka Exp $	   */
+/*	$NetBSD: pmap.c,v 1.164 2008/12/17 20:51:32 cegger Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.163 2008/12/10 11:10:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164 2008/12/17 20:51:32 cegger Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -890,7 +890,7 @@ pmap_create(void)
 {
 	struct pmap *pmap;
 
-	MALLOC(pmap, struct pmap *, sizeof(*pmap), M_VMPMAP, M_WAITOK|M_ZERO);
+	pmap = malloc(sizeof(*pmap), M_VMPMAP, M_WAITOK|M_ZERO);
 	pmap_pinit(pmap);
 	simple_lock_init(&pmap->pm_lock);
 	return (pmap);
@@ -964,7 +964,7 @@ pmap_destroy(pmap_t pmap)
 			panic("pmap_destroy used pmap");
 #endif
 		pmap_release(pmap);
-		FREE(pmap, M_VMPMAP);
+		free(pmap, M_VMPMAP);
 	}
 }
 
