@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.28 2008/12/16 22:35:29 christos Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.29 2008/12/17 19:35:09 cegger Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.28 2008/12/16 22:35:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.29 2008/12/17 19:35:09 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -465,6 +465,7 @@ cs4231_ebus_dma_intr(struct cs_transfer *t, bus_space_tag_t dt,
 #ifdef AUDIO_DEBUG
 	snprintb(bits, sizeof(bits), EBUS_DCSR_BITS, csr);
 	DPRINTF(("audiocs: %s dcsr=%s\n", t->t_name, bits));
+#endif
 
 	if (csr & EBDMA_ERR_PEND) {
 		++t->t_ierrcnt.ev_count;
