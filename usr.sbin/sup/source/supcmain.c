@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.24 2008/12/17 17:54:51 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.25 2008/12/17 18:28:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -587,8 +587,10 @@ doswitch(int *argc, char ***argv, TREE ** collTp, int *oflagsp, int *aflagsp,
 	*oflagsp &= ~aflags;
 	*aflagsp |= aflags;
 	*aflagsp &= ~oflags;
+	printf("%d %s\n", *argc, **argv);
 	*argc -= optind;
 	*argv += optind;
+	printf("%d %s\n", *argc, **argv);
 }
 
 static char *
@@ -641,15 +643,15 @@ init(int argc, char **argv)
 		    timeflag ? FILESUPTDEFAULT : FILESUPDEFAULT,
 		    DEFDIR);
 	else {
-		supfname = argv[1];
+		supfname = *argv;
 		if (strcmp(supfname, "-") == 0)
 			supfname = "";
 		--argc;
 		argv++;
 	}
-	cwant = argc > 1;
-	while (argc > 1) {
-		t = Tinsert(&collT, argv[1], TRUE);
+	cwant = argc > 0;
+	while (argc > 0) {
+		t = Tinsert(&collT, *argv, TRUE);
 		t->Twant = TRUE;
 		--argc;
 		argv++;
