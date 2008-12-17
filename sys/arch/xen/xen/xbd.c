@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.46 2008/12/17 20:51:33 cegger Exp $ */
+/* $NetBSD: xbd.c,v 1.47 2008/12/17 22:49:13 cegger Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.46 2008/12/17 20:51:33 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.47 2008/12/17 22:49:13 cegger Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -691,7 +691,7 @@ connect_interface(blkif_fe_interface_status_t *status)
 
 		/* Probe for discs attached to the interface. */
 		// xlvbd_init();
-		vbd_info = malloc(vdisk_t *, MAX_VBDS * sizeof(vdisk_t),
+		vbd_info = malloc(MAX_VBDS * sizeof(vdisk_t),
 		    M_DEVBUF, M_WAITOK | M_ZERO);
 		nr_vbds  = get_vbd_info(vbd_info);
 		if (nr_vbds <= 0)
