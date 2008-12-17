@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.3 2008/11/25 20:39:57 pooka Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.4 2008/12/17 20:16:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -84,7 +84,7 @@ int  rumpuser_thrinit(void);
 int  rumpuser_bioinit(rump_biodone_fn);
 void rumpuser_thrdestroy(void);
 
-int  rumpuser_thread_create(void *(*f)(void *), void *);
+int  rumpuser_thread_create(void *(*f)(void *), void *, const char *);
 void rumpuser_thread_exit(void);
 
 struct rumpuser_mtx;
