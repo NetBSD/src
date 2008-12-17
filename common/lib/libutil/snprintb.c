@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.1 2008/12/16 22:33:11 christos Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.2 2008/12/17 16:02:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -26,36 +26,37 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _KERNEL
-
-# if HAVE_NBTOOL_CONFIG_H
-#  include "nbtool_config.h"
-# endif
-
-# include <sys/cdefs.h>
-# if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.1 2008/12/16 22:33:11 christos Exp $");
-# endif
-
 /*
  * snprintb: print an interpreted bitmask to a buffer
  *
- * => returns the length of the buffer that would require to print the string.
+ * => returns the length of the buffer that would be required to print the
+ *    string minus the terminating NUL.
  */
+#ifndef _STANDALONE
+# ifndef _KERNEL
 
-# include <sys/types.h>
-# include <sys/inttypes.h>
-# include <stdio.h>
-# include <util.h>
-# include <errno.h>
+#  if HAVE_NBTOOL_CONFIG_H
+#   include "nbtool_config.h"
+#  endif
+
+#  include <sys/cdefs.h>
+#  if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: snprintb.c,v 1.2 2008/12/17 16:02:27 christos Exp $");
+#  endif
+
+#  include <sys/types.h>
+#  include <sys/inttypes.h>
+#  include <stdio.h>
+#  include <util.h>
+#  include <errno.h>
 # else
-# include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.1 2008/12/16 22:33:11 christos Exp $");
-# include <sys/types.h>
-# include <sys/inttypes.h>
-# include <sys/systm.h>
-# include <lib/libkern/libkern.h>
-#endif
+#  include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.2 2008/12/17 16:02:27 christos Exp $");
+#  include <sys/types.h>
+#  include <sys/inttypes.h>
+#  include <sys/systm.h>
+#  include <lib/libkern/libkern.h>
+# endif
 
 int
 snprintb(char *buf, size_t buflen, const char *bitfmt, uint64_t val)
@@ -189,3 +190,4 @@ internal:
 #endif
 	return -1;
 }
+#endif
