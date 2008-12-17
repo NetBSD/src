@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.23 2007/07/20 18:58:14 christos Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.24 2008/12/17 17:54:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -155,6 +155,8 @@
  *			"notify" supfile option, that contains messages
  *			printed by Sup.
  *
+ *	-M	"mailto" flag
+ *			Like -m, but send mail to the specified user.
  *	-o	"old files" flag
  *			Sup will normally only upgrade files that have
  *			changed on the repository since the last time an
@@ -348,7 +350,7 @@ int portdebug;			/* network debugging ports */
 
 int main(int, char **);
 static int checkcoll(TREE *, void *);
-static void doswitch(char *, TREE **, int *, int *);
+static void doswitch(int *, char ***, TREE **, int *, int *, char *, size_t);
 static char *init(int, char **);
 
 /*************************************
@@ -458,27 +460,25 @@ main(int argc, char **argv)
 #define Tcount	Tgid
 
 static void 
-doswitch(char *argp, TREE ** collTp, int *oflagsp, int *aflagsp)
+doswitch(int *argc, char ***argv, TREE ** collTp, int *oflagsp, int *aflagsp,
+    char *username, size_t ulen)
 {
 	TREE *t;
-	char *coll;
+	char *coll, *argp;
 	int oflags, aflags;
+	int c;
+
+#define SUPOPTIONS "abBdDeEfkKlmM:NoOPRsStuvXzZ=:"
 
 	oflags = aflags = 0;
-	for (;;) {
-		switch (*argp) {
+	while ((c = getopt(*argc, *argv, SUPOPTIONS)) != -1)
+		switch (c) {
 		default:
-			logerr("Invalid flag '%c' ignored", *argp);
+			logerr("Invalid flag '%c' ignored", c);
 			break;
 		case '\0':
 		case '=':
-			if (*argp++ == '\0' || *argp == '\0') {
-				*oflagsp |= oflags;
-				*oflagsp &= ~aflags;
-				*aflagsp |= aflags;
-				*aflagsp &= ~oflags;
-				return;
-			}
+			argp = optarg;
 			do {
 				coll = nxtarg(&argp, ", \t");
 				t = Tinsert(collTp, coll, TRUE);
@@ -488,29 +488,6 @@ doswitch(char *argp, TREE ** collTp, int *oflagsp, int *aflagsp)
 				t->Taflags &= ~oflags;
 				argp = skipover(argp, ", \t");
 			} while (*argp);
-			return;
-		case 'N':
-			scmdebug++;
-			break;
-		case 'P':
-			portdebug = TRUE;
-			break;
-		case 'R':
-#if	MACH
-			rpauseflag = TRUE;
-#endif				/* MACH */
-			break;
-		case 'X':
-			xpatchflag = TRUE;
-			break;
-		case 'S':
-			silent = TRUE;
-			break;
-		case 's':
-			sysflag = TRUE;
-			break;
-		case 't':
-			timeflag = TRUE;
 			break;
 		case 'a':
 			oflags |= CFALL;
@@ -556,6 +533,14 @@ doswitch(char *argp, TREE ** collTp, int *oflagsp, int *aflagsp)
 		case 'm':
 			oflags |= CFMAIL;
 			break;
+		case 'M':
+			oflags |= CFMAIL;
+			strncpy(username, optarg, ulen);
+			username[ulen - 1] = '\0';
+			break;
+		case 'N':
+			scmdebug++;
+			break;
 		case 'o':
 			oflags |= CFOLD;
 			aflags &= ~CFOLD;
@@ -564,11 +549,31 @@ doswitch(char *argp, TREE ** collTp, int *oflagsp, int *aflagsp)
 			oflags &= ~CFOLD;
 			aflags |= CFOLD;
 			break;
+		case 'P':
+			portdebug = TRUE;
+			break;
+		case 'R':
+#if	MACH
+			rpauseflag = TRUE;
+#endif				/* MACH */
+			break;
+		case 's':
+			sysflag = TRUE;
+			break;
+		case 'S':
+			silent = TRUE;
+			break;
+		case 't':
+			timeflag = TRUE;
+			break;
 		case 'u':
 			noutime = TRUE;
 			break;
 		case 'v':
 			oflags |= CFVERBOSE;
+			break;
+		case 'X':
+			xpatchflag = TRUE;
 			break;
 		case 'z':
 			oflags |= CFCOMPRESS;
@@ -577,8 +582,13 @@ doswitch(char *argp, TREE ** collTp, int *oflagsp, int *aflagsp)
 			oflags &= ~CFCOMPRESS;
 			break;
 		}
-		argp++;
-	}
+
+	*oflagsp |= oflags;
+	*oflagsp &= ~aflags;
+	*aflagsp |= aflags;
+	*aflagsp &= ~oflags;
+	*argc -= optind;
+	*argv += optind;
 }
 
 static char *
@@ -601,6 +611,7 @@ init(int argc, char **argv)
 	void (*oldsigsys) ();
 #endif				/* MACH */
 
+	username[0] = '\0';
 	sysflag = FALSE;	/* not system upgrade */
 	timeflag = FALSE;	/* don't print times */
 #if	MACH
@@ -612,11 +623,10 @@ init(int argc, char **argv)
 
 	collT = NULL;
 	oflags = aflags = 0;
-	while (argc > 1 && argv[1][0] == '-' && argv[1][1] != '\0') {
-		doswitch(&argv[1][1], &collT, &oflags, &aflags);
-		--argc;
-		argv++;
-	}
+
+	doswitch(&argc, &argv, &collT, &oflags, &aflags, username,
+	    sizeof(username));
+
 	if (argc == 1 && !sysflag)
 		logquit(1, "Need either -s or supfile");
 #if	MACH
@@ -627,7 +637,7 @@ init(int argc, char **argv)
 	(void) signal(SIGSYS, oldsigsys);
 #endif				/* MACH */
 	if (sysflag)
-		(void) sprintf(supfname = buf,
+		(void) snprintf(supfname = buf, sizeof(buf),
 		    timeflag ? FILESUPTDEFAULT : FILESUPDEFAULT,
 		    DEFDIR);
 	else {
@@ -644,11 +654,11 @@ init(int argc, char **argv)
 		--argc;
 		argv++;
 	}
-	if ((u = getlogin()) ||
-	    ((pw = getpwuid((int) getuid())) && (u = pw->pw_name)))
-		(void) strcpy(username, u);
-	else
-		*username = '\0';
+	if (*username == '\0' && ((u = getlogin()) ||
+	    ((pw = getpwuid((int) getuid())) && (u = pw->pw_name)))) {
+		(void)strncpy(username, u, sizeof(username));
+		username[sizeof(username) - 1] = '\0';
+	} 
 	if (*supfname) {
 		f = fopen(supfname, "r");
 		if (f == NULL)
