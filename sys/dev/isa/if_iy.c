@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.82 2008/12/16 22:35:32 christos Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.83 2008/12/17 15:41:24 cegger Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.82 2008/12/16 22:35:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.83 2008/12/17 15:41:24 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -510,7 +510,8 @@ struct iy_softc *sc;
 		char sbuf[128];
 
 		snprintb(sbuf, sizeof(sbuf),
-		    "\020\1LnkInDis\2PolCor\3TPE\4JabberDis\5NoAport\6BNC");
+		    "\020\1LnkInDis\2PolCor\3TPE\4JabberDis\5NoAport\6BNC",
+		    temp);
 		printf("%s: media select was 0x%s ", device_xname(&sc->sc_dev), sbuf);
 	}
 #endif
@@ -1174,7 +1175,7 @@ struct iy_softc *sc;
 			snprintb(sbuf, sizeof(sbuf),
 			    "\020\6MAX_COL\7HRT_BEAT\010TX_DEF"
 			    "\011UND_RUN\012JERR\013LST_CRS"
-			    "\014LTCOL\016TX_OK\020COLL", txstat2)
+			    "\014LTCOL\016TX_OK\020COLL", txstat2);
 
 			printf("txstat 0x%x stat2 0x%s next 0x%x len 0x%x\n",
 			       txstatus, sbuf, txnext, txlen);
