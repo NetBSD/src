@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.5 2007/03/04 06:01:41 christos Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.6 2008/12/17 20:51:34 cegger Exp $	*/
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -31,7 +31,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.5 2007/03/04 06:01:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.6 2008/12/17 20:51:34 cegger Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -117,7 +117,7 @@ audiobell_synthesize(uint8_t *buf, u_int pitch, u_int period, u_int volume)
 	uint8_t *wave;
 	uint16_t phase;
 
-	MALLOC(wave, uint8_t *, 256, M_TEMP, M_WAITOK);
+	wave = malloc(256, M_TEMP, M_WAITOK);
 	if (wave == NULL) return -1;
 	audiobell_expandwave(wave, volume);
 	pitch = pitch * 65536 / 8000;
@@ -129,7 +129,7 @@ audiobell_synthesize(uint8_t *buf, u_int pitch, u_int period, u_int volume)
 		phase += pitch;
 	}
 
-	FREE(wave, M_TEMP);
+	free(wave, M_TEMP);
 	return 0;
 }
 

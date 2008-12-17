@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.72 2008/06/28 01:34:05 rumble Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.73 2008/12/17 20:51:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.72 2008/06/28 01:34:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.73 2008/12/17 20:51:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,7 +559,7 @@ ntfs_unmount(
 	mp->mnt_data = NULL;
 	mp->mnt_flag &= ~MNT_LOCAL;
 	free(ntmp->ntm_ad, M_NTFSMNT);
-	FREE(ntmp, M_NTFSMNT);
+	free(ntmp, M_NTFSMNT);
 	return (0);
 }
 

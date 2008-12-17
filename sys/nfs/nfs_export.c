@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.43 2008/11/28 07:23:22 pooka Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.44 2008/12/17 20:51:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.43 2008/11/28 07:23:22 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.44 2008/12/17 20:51:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -696,7 +696,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 				nfs_pub.np_handle = NULL;
 			}
 			if (nfs_pub.np_index != NULL) {
-				FREE(nfs_pub.np_index, M_TEMP);
+				free(nfs_pub.np_index, M_TEMP);
 				nfs_pub.np_index = NULL;
 			}
 		}
@@ -733,8 +733,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	 * If an indexfile was specified, pull it in.
 	 */
 	if (argp->ex_indexfile != NULL) {
-		MALLOC(nfs_pub.np_index, char *, MAXNAMLEN + 1, M_TEMP,
-		    M_WAITOK);
+		nfs_pub.np_index = malloc(MAXNAMLEN + 1, M_TEMP, M_WAITOK);
 		error = copyinstr(argp->ex_indexfile, nfs_pub.np_index,
 		    MAXNAMLEN, (size_t *)0);
 		if (!error) {
@@ -749,7 +748,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 			}
 		}
 		if (error) {
-			FREE(nfs_pub.np_index, M_TEMP);
+			free(nfs_pub.np_index, M_TEMP);
 			return error;
 		}
 	}

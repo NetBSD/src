@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.15 2006/09/30 16:30:10 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.16 2008/12/17 20:51:31 cegger Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.15 2006/09/30 16:30:10 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.16 2008/12/17 20:51:31 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -175,11 +175,11 @@ podulebus_probe_podule(struct device *self, int slotnum)
 		config_found_sm_loc(self, "podulebus", NULL, &pa,
 				podulebus_print, podulebus_submatch);
 		if (pa.pa_chunks)
-			FREE(pa.pa_chunks, M_DEVBUF);
+			free(pa.pa_chunks, M_DEVBUF);
 		if (pa.pa_descr)
-			FREE(pa.pa_descr, M_DEVBUF);
+			free(pa.pa_descr, M_DEVBUF);
 		if (pa.pa_loader)
-			FREE(pa.pa_loader, M_DEVBUF);
+			free(pa.pa_loader, M_DEVBUF);
 	} else
 		printf("%s:%d: non-extended podule ignored.\n",
 		       self->dv_xname, slotnum);
@@ -264,7 +264,7 @@ podulebus_initloader(struct podulebus_attach_args *pa)
 		return -1;
 	podulebus_read_chunks(pa, 1);
 	if (pa->pa_descr)
-		FREE(pa->pa_descr, M_DEVBUF);
+		free(pa->pa_descr, M_DEVBUF);
 	pa->pa_descr = podulebus_get_chunk(pa, CHUNK_DEV_DESCR);
 	return 0;
 }

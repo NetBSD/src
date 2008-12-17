@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.45 2008/05/03 08:23:41 plunky Exp $ */
+/* $NetBSD: xbd.c,v 1.46 2008/12/17 20:51:33 cegger Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.45 2008/05/03 08:23:41 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.46 2008/12/17 20:51:33 cegger Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -691,7 +691,7 @@ connect_interface(blkif_fe_interface_status_t *status)
 
 		/* Probe for discs attached to the interface. */
 		// xlvbd_init();
-		MALLOC(vbd_info, vdisk_t *, MAX_VBDS * sizeof(vdisk_t),
+		vbd_info = malloc(vdisk_t *, MAX_VBDS * sizeof(vdisk_t),
 		    M_DEVBUF, M_WAITOK | M_ZERO);
 		nr_vbds  = get_vbd_info(vbd_info);
 		if (nr_vbds <= 0)
@@ -722,7 +722,7 @@ connect_interface(blkif_fe_interface_status_t *status)
 	return;
 
  out:
-	FREE(vbd_info, M_DEVBUF);
+	free(vbd_info, M_DEVBUF);
 	vbd_info = NULL;
 	if (in_autoconf) {
 		in_autoconf = 0;
@@ -757,14 +757,14 @@ vbd_update(void)
 	int i, j, new_nr_vbds;
 	extern int hypervisor_print(void *, const char *);
 
-	MALLOC(vbd_info_update, vdisk_t *, MAX_VBDS *
+	vbd_info_update = malloc(MAX_VBDS *
 	    sizeof(vdisk_t), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	new_nr_vbds  = get_vbd_info(vbd_info_update);
 
 	if (memcmp(vbd_info, vbd_info_update, MAX_VBDS *
 	    sizeof(vdisk_t)) == 0) {
-		FREE(vbd_info_update, M_DEVBUF);
+		free(vbd_info_update, M_DEVBUF);
 		return;
 	}
 
@@ -829,7 +829,7 @@ vbd_update(void)
 
 	vbd_info_old = vbd_info;
 	vbd_info = vbd_info_update;
-	FREE(vbd_info_old, M_DEVBUF);
+	free(vbd_info_old, M_DEVBUF);
 }
 
 static void
@@ -1071,7 +1071,7 @@ xbd_scan(device_t self, struct xbd_attach_args *mainbus_xbda,
 	xbd_cd_cdev_major = major(devsw_blk2chr(makedev(xbd_cd_major, 0)));
 #endif
 
-	MALLOC(xr, struct xbdreq *, BLKIF_RING_SIZE * sizeof(struct xbdreq),
+	xr = malloc(BLKIF_RING_SIZE * sizeof(struct xbdreq),
 	    M_DEVBUF, M_WAITOK | M_ZERO);
 #ifdef DEBUG
 	xbd_allxr = xr;

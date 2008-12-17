@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.86 2008/12/16 16:18:25 pooka Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.87 2008/12/17 20:51:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.86 2008/12/16 16:18:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.87 2008/12/17 20:51:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,8 +200,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mp->mnt_stat.f_namemax =
 	    (vcp->vc_hflags2 & SMB_FLAGS2_KNOWS_LONG_NAMES) ? 255 : 12;
 
-	MALLOC(smp, struct smbmount *, sizeof(*smp), M_SMBFSDATA, M_WAITOK);
-	memset(smp, 0, sizeof(*smp));
+	smp = malloc(sizeof(*smp), M_SMBFSDATA, M_WAITOK|M_ZERO);
 	mp->mnt_data = smp;
 
 	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST, true,
@@ -263,7 +262,7 @@ smbfs_unmount(struct mount *mp, int mntflags)
 
 	hashdone(smp->sm_hash, HASH_LIST, smp->sm_hashlen);
 	mutex_destroy(&smp->sm_hashlock);
-	FREE(smp, M_SMBFSDATA);
+	free(smp, M_SMBFSDATA);
 	return error;
 }
 

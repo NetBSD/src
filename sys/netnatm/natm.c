@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.17 2008/11/07 00:20:18 dyoung Exp $	*/
+/*	$NetBSD: natm.c,v 1.18 2008/12/17 20:51:38 cegger Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.17 2008/11/07 00:20:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.18 2008/12/17 20:51:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ next:
   if (npcb->npcb_flags & NPCB_DRAIN) {
     m_freem(m);
     if (npcb->npcb_inq == 0)
-      FREE(npcb, M_PCB);			/* done! */
+      free(npcb, M_PCB);			/* done! */
     goto next;
   }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.10 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.11 2008/12/17 20:51:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.10 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.11 2008/12/17 20:51:35 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -791,11 +791,11 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		int j = epp->ep_vmcmds.evs_used;
 		u_long interp_offset;
 
-		MALLOC(ap, struct elf_args *, sizeof(struct elf_args),
+		ap = (struct elf_args *)malloc(sizeof(struct elf_args),
 		    M_TEMP, M_WAITOK);
 		if ((error = elf_load_file(l, epp, interp,
 		    &epp->ep_vmcmds, &interp_offset, ap, &pos)) != 0) {
-			FREE(ap, M_TEMP);
+			free(ap, M_TEMP);
 			goto bad;
 		}
 		ap->arg_interp = epp->ep_vmcmds.evs_cmds[j].ev_addr;

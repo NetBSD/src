@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.205 2008/11/19 18:36:10 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.206 2008/12/17 20:51:38 cegger Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.205 2008/11/19 18:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.206 2008/12/17 20:51:38 cegger Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -668,16 +668,16 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	}
 	if (args->fhsize < 0 || args->fhsize > NFSX_V3FHMAX)
 		return (EINVAL);
-	MALLOC(nfh, u_char *, NFSX_V3FHMAX, M_TEMP, M_WAITOK);
+	nfh = malloc(NFSX_V3FHMAX, M_TEMP, M_WAITOK);
 	error = copyin(args->fh, nfh, args->fhsize);
 	if (error)
 		goto free_nfh;
-	MALLOC(pth, char *, MNAMELEN, M_TEMP, M_WAITOK);
+	pth = malloc(MNAMELEN, M_TEMP, M_WAITOK);
 	error = copyinstr(path, pth, MNAMELEN - 1, &len);
 	if (error)
 		goto free_pth;
 	memset(&pth[len], 0, MNAMELEN - len);
-	MALLOC(hst, char *, MNAMELEN, M_TEMP, M_WAITOK);
+	hst = malloc(MNAMELEN, M_TEMP, M_WAITOK);
 	error = copyinstr(args->hostname, hst, MNAMELEN - 1, &len);
 	if (error)
 		goto free_hst;
@@ -691,11 +691,11 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	error = mountnfs(args, mp, nam, pth, hst, &vp, l);
 
 free_hst:
-	FREE(hst, M_TEMP);
+	free(hst, M_TEMP);
 free_pth:
-	FREE(pth, M_TEMP);
+	free(pth, M_TEMP);
 free_nfh:
-	FREE(nfh, M_TEMP);
+	free(nfh, M_TEMP);
 
 	return (error);
 }
@@ -808,7 +808,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	if (error)
 		goto bad;
 	vp = NFSTOV(np);
-	MALLOC(attrs, struct vattr *, sizeof(struct vattr), M_TEMP, M_WAITOK);
+	attrs = malloc(sizeof(struct vattr), M_TEMP, M_WAITOK);
 	VOP_GETATTR(vp, attrs, l->l_cred);
 	if ((nmp->nm_flag & NFSMNT_NFSV3) && (vp->v_type == VDIR)) {
 		cr = kauth_cred_alloc();
@@ -821,7 +821,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 		nfs_cookieheuristic(vp, &nmp->nm_iflag, l, cr);
 		kauth_cred_free(cr);
 	}
-	FREE(attrs, M_TEMP);
+	free(attrs, M_TEMP);
 
 	/*
 	 * A reference count is needed on the nfsnode representing the

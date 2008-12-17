@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_compat.h,v 1.23 2008/11/06 09:51:57 darrenr Exp $	*/
+/*	$NetBSD: ip_compat.h,v 1.24 2008/12/17 20:51:35 cegger Exp $	*/
 
 /*
  * Copyright (C) 1993-2001, 2003 by Darren Reed.
@@ -1704,10 +1704,10 @@ MALLOC_DECLARE(M_IPFILTER);
 #    endif /* M_IPFILTER */
 #   endif /* M_PFIL */
 #  endif /* IPFILTER_M_IPFILTER */
-#  define	KMALLOC(a, b)	MALLOC((a), b, sizeof(*(a)), _M_IPF, M_NOWAIT)
+#  define	KMALLOC(a, b)	(a) = (b)malloc(sizeof(*(a)), _M_IPF, M_NOWAIT)
 #  define	KMALLOCS(a, b, c)	(a) = (b)malloc((c), _M_IPF, M_NOWAIT)
-#  define	KFREE(x)	FREE((x), _M_IPF)
-#  define	KFREES(x,s)	FREE((x), _M_IPF)
+#  define	KFREE(x)	free((x), _M_IPF)
+#  define	KFREES(x,s)	free((x), _M_IPF)
 #  define	UIOMOVE(a,b,c,d)	uiomove((caddr_t)a,b,d)
 #  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
 #  define	WAKEUP(id,x)	wakeup(id+x)

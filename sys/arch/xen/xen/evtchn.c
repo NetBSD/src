@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.41 2008/11/13 21:39:29 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.42 2008/12/17 20:51:33 cegger Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.41 2008/11/13 21:39:29 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.42 2008/12/17 20:51:33 cegger Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -526,7 +526,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	printf("event_set_handler evtch %d handler %p level %d\n", evtch,
 	       handler, level);
 #endif
-	MALLOC(ih, struct intrhand *, sizeof (struct intrhand), M_DEVBUF,
+	ih = malloc(sizeof (struct intrhand), M_DEVBUF,
 	    M_WAITOK|M_ZERO);
 	if (ih == NULL)
 		panic("can't allocate fixed interrupt source");
@@ -551,7 +551,7 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 
 	/* register handler for event channel */
 	if (evtsource[evtch] == NULL) {
-		MALLOC(evts, struct evtsource *, sizeof (struct evtsource),
+		evts = malloc(sizeof (struct evtsource),
 		    M_DEVBUF, M_WAITOK|M_ZERO);
 		if (evts == NULL)
 			panic("can't allocate fixed interrupt source");
@@ -595,7 +595,7 @@ event_set_iplhandler(struct intrhand *ih, int level)
 	struct iplsource *ipls;
 
 	if (ci->ci_isources[level] == NULL) {
-		MALLOC(ipls, struct iplsource *, sizeof (struct iplsource),
+		ipls = malloc(sizeof (struct iplsource),
 		    M_DEVBUF, M_WAITOK|M_ZERO);
 		if (ipls == NULL)
 			panic("can't allocate fixed interrupt source");
@@ -643,10 +643,10 @@ event_remove_handler(int evtch, int (*func)(void *), void *arg)
 	if (ih == NULL)
 		panic("event_remove_handler");
 	*ihp = ih->ih_ipl_next;
-	FREE(ih, M_DEVBUF);
+	free(ih, M_DEVBUF);
 	if (evts->ev_handlers == NULL) {
 		evcnt_detach(&evts->ev_evcnt);
-		FREE(evts, M_DEVBUF);
+		free(evts, M_DEVBUF);
 		evtsource[evtch] = NULL;
 	} else {
 		intr_calculatemasks(evts);

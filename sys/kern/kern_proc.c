@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.145 2008/11/19 18:36:06 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.146 2008/12/17 20:51:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.145 2008/11/19 18:36:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.146 2008/12/17 20:51:36 cegger Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -495,7 +495,7 @@ expand_pid_table(void)
 	if (pt_size != pid_tbl_mask + 1) {
 		/* Another process beat us to it... */
 		mutex_exit(proc_lock);
-		FREE(new_pt, M_PROC);
+		free(new_pt, M_PROC);
 		return;
 	}
 
@@ -554,7 +554,7 @@ expand_pid_table(void)
 		pid_alloc_lim <<= 1;	/* doubles number of free slots... */
 
 	mutex_exit(proc_lock);
-	FREE(n_pt, M_PROC);
+	free(n_pt, M_PROC);
 }
 
 struct proc *

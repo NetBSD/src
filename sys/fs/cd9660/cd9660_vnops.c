@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.35 2008/11/26 20:17:33 pooka Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.36 2008/12/17 20:51:35 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.35 2008/11/26 20:17:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.36 2008/12/17 20:51:35 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ cd9660_getattr(void *v)
 		struct uio auio;
 		char *cp;
 
-		MALLOC(cp, char *, MAXPATHLEN, M_TEMP, M_WAITOK);
+		cp = (char *)malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
 		aiov.iov_base = cp;
 		aiov.iov_len = MAXPATHLEN;
 		auio.uio_iov = &aiov;
@@ -165,7 +165,7 @@ cd9660_getattr(void *v)
 		rdlnk.a_cred = ap->a_cred;
 		if (cd9660_readlink(&rdlnk) == 0)
 			vap->va_size = MAXPATHLEN - auio.uio_resid;
-		FREE(cp, M_TEMP);
+		free(cp, M_TEMP);
 	}
 	vap->va_flags	= 0;
 	vap->va_gen = 1;
@@ -375,7 +375,7 @@ cd9660_readdir(void *v)
 	imp = dp->i_mnt;
 	bmask = imp->im_bmask;
 
-	MALLOC(idp, struct isoreaddir *, sizeof(*idp), M_TEMP, M_WAITOK);
+	idp = (struct isoreaddir *)malloc(sizeof(*idp), M_TEMP, M_WAITOK);
 	idp->saveent.d_namlen = idp->assocent.d_namlen = 0;
 	/*
 	 * XXX
@@ -397,7 +397,7 @@ cd9660_readdir(void *v)
 
 	if ((entryoffsetinblock = idp->curroff & bmask) &&
 	    (error = cd9660_blkatoff(vdp, (off_t)idp->curroff, NULL, &bp))) {
-		FREE(idp, M_TEMP);
+		free(idp, M_TEMP);
 		return (error);
 	}
 	endsearch = dp->i_size;
@@ -531,7 +531,7 @@ cd9660_readdir(void *v)
 	uio->uio_offset = idp->uio_off;
 	*ap->a_eofflag = idp->eofflag;
 
-	FREE(idp, M_TEMP);
+	free(idp, M_TEMP);
 
 	return (error);
 }

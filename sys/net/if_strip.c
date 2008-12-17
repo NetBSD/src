@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.88 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.89 2008/12/17 20:51:36 cegger Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.88 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.89 2008/12/17 20:51:36 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -364,7 +364,7 @@ strip_clone_create(struct if_clone *ifc, int unit)
 {
 	struct strip_softc *sc;
 
-	MALLOC(sc, struct strip_softc *, sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
 	sc->sc_unit = unit;
 	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 	callout_init(&sc->sc_timo_ch, 0);
@@ -407,7 +407,7 @@ strip_clone_destroy(struct ifnet *ifp)
 #endif
 	if_detach(ifp);
 
-	FREE(sc, M_DEVBUF);
+	free(sc, M_DEVBUF);
 	return 0;
 }
 

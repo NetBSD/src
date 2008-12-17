@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.50 2008/11/07 00:20:18 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.51 2008/12/17 20:51:37 cegger Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.50 2008/11/07 00:20:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.51 2008/12/17 20:51:37 cegger Exp $");
 #endif
 
 /*
@@ -1237,7 +1237,7 @@ ieee80211_ioctl_getstainfo(struct ieee80211com *ic, struct ieee80211req *ireq)
 		ieee80211_iterate_nodes(&ic->ic_sta, get_sta_info, &req);
 		ireq->i_len = space - req.space;
 		error = copyout(p, ireq->i_data, ireq->i_len);
-		FREE(p, M_TEMP);
+		free(p, M_TEMP);
 	} else
 		ireq->i_len = 0;
 
@@ -1611,7 +1611,7 @@ ieee80211_ioctl_setoptie(struct ieee80211com *ic, struct ieee80211req *ireq)
 	error = copyin(ireq->i_data, ie, ireq->i_len);
 	/* XXX sanity check data? */
 	if (ic->ic_opt_ie != NULL)
-		FREE(ic->ic_opt_ie, M_DEVBUF);
+		free(ic->ic_opt_ie, M_DEVBUF);
 	ic->ic_opt_ie = ie;
 	ic->ic_opt_ie_len = ireq->i_len;
 	return 0;

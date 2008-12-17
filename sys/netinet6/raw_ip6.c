@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.100 2008/08/06 15:01:23 plunky Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.101 2008/12/17 20:51:37 cegger Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.100 2008/08/06 15:01:23 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.101 2008/12/17 20:51:37 cegger Exp $");
 
 #include "opt_ipsec.h"
 
@@ -663,8 +663,8 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
 
-		MALLOC(in6p->in6p_icmp6filt, struct icmp6_filter *,
-		    sizeof(struct icmp6_filter), M_PCB, M_NOWAIT);
+		in6p->in6p_icmp6filt = malloc(sizeof(struct icmp6_filter),
+			M_PCB, M_NOWAIT);
 		if (in6p->in6p_icmp6filt == NULL) {
 			in6_pcbdetach(in6p);
 			error = ENOMEM;
@@ -692,7 +692,7 @@ rip6_usrreq(struct socket *so, int req, struct mbuf *m,
 			ip6_mrouter_done();
 		/* xxx: RSVP */
 		if (in6p->in6p_icmp6filt != NULL) {
-			FREE(in6p->in6p_icmp6filt, M_PCB);
+			free(in6p->in6p_icmp6filt, M_PCB);
 			in6p->in6p_icmp6filt = NULL;
 		}
 		in6_pcbdetach(in6p);
