@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.16 2007/04/29 20:23:37 msaitoh Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.17 2008/12/17 17:56:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -67,6 +67,7 @@ static LIST *uidL[LISTSIZE];	/* uid and gid lists */
 static LIST *gidL[LISTSIZE];
 
 extern COLLECTION *thisC;	/* collection list pointer */
+extern int silent;
 
 static int Lhash(char *);
 static void Linsert(LIST **, char *, int);
@@ -257,30 +258,58 @@ notify(char *fmt, ...)
 	time_t tloc;
 	static FILE *noteF = NULL;	/* mail program on pipe */
 	va_list ap;
+	int shouldMail = (thisC->Cflags & CFMAIL) && thisC->Cnotify;
+	int needFile = shouldMail || silent;
 
 	va_start(ap, fmt);
-	if (fmt == NULL) {
-		if (noteF && noteF != stdout)
-			(void) pclose(noteF);
-		noteF = NULL;
-		va_end(ap);
-		return;
-	}
+
 	if ((thisC->Cflags & CFURELSUF) && thisC->Crelease)
 		(void) sprintf(collrelname, "%s-%s", collname, thisC->Crelease);
 	else
 		(void) strcpy(collrelname, collname);
 
+	if (fmt == NULL) {
+		if (noteF && noteF != stdout && (!silent || thisC->Cnogood)) {
+			int nr;
+			FILE *outF;
+
+			if (shouldMail) {
+				(void) snprintf(buf, sizeof(buf),
+				    "mail -s \"SUP Upgrade of %s\" %s >"
+				    " /dev/null", collrelname, thisC->Cnotify);
+				outF = popen(buf, "w");
+				if (outF == NULL) {
+					logerr("Can't send mail to %s for %s",
+					    thisC->Cnotify, collrelname);
+					outF = stdout;
+				}
+			} else
+				outF = stdout;
+
+			(void)rewind(noteF);
+			while ((nr = fread(buf, 1, sizeof(buf), noteF)) > 0)
+				(void)fwrite(buf, 1, nr, outF);
+			(void)fflush(outF);
+			if (outF != stdout)
+				(void)pclose(outF);
+			(void)fclose(noteF);
+		}
+		noteF = NULL;
+		va_end(ap);
+		return;
+	}
+
 	if (noteF == NULL) {
-		if ((thisC->Cflags & CFMAIL) && thisC->Cnotify) {
-			(void) sprintf(buf, "mail -s \"SUP Upgrade of %s\" %s >/dev/null",
-			    collrelname, thisC->Cnotify);
-			noteF = popen(buf, "w");
-			if (noteF == NULL) {
-				logerr("Can't send mail to %s for %s",
-				    thisC->Cnotify, collrelname);
+		if (needFile) {
+			char template[] = "/tmp/sup.XXXXXX";
+			int fd = mkstemp(template);
+			if (fd == -1 || (noteF = fdopen(fd, "r+")) == NULL) {
+				logerr("Can't open temporary file for %s",
+				    collrelname);
+				silent = 0;
 				noteF = stdout;
 			}
+			(void)unlink(template);
 		} else
 			noteF = stdout;
 		tloc = time((time_t *) NULL);
@@ -319,7 +348,6 @@ fmttime(time_t time)
 
 	(void) strcpy(buf, ctime(&time));
 	len = strlen(buf + 4) - 6;
-	(void) strncpy(buf, buf + 4, len);
 	buf[len] = '\0';
-	return (buf);
+	return buf + 4;
 }
