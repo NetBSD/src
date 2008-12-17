@@ -25,7 +25,7 @@
 #include <dirent.h>
 #include <limits.h>
 
-#include <netbsd/netbsd-dm.h>
+#include <netbsd-dm.h>
 
 #include <dm-ioctl.h>
 
@@ -873,6 +873,11 @@ static int _create_and_load_v4(struct dm_task *dmt)
 	return r;
 }
 
+uint64_t dm_task_get_existing_table_size(struct dm_task *dmt)
+{
+	return dmt->existing_table_size;
+}
+
 static int _reload_with_suppression_v4(struct dm_task *dmt)
 {
 	struct dm_task *task;
@@ -906,6 +911,12 @@ static int _reload_with_suppression_v4(struct dm_task *dmt)
 		return r;
 	}
 
+	/* Store existing table size */
+	t2 = task->head;
+	while (t2 && t2->next)
+		t2 = t2->next;
+	dmt->existing_table_size = t2 ? t2->start + t2->length : 0;
+	
 	if ((task->dmi.v4->flags & DM_READONLY_FLAG) ? 1 : 0 != dmt->read_only)
 		goto no_match;
 

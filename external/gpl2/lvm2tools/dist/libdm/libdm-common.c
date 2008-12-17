@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-common.c,v 1.1.1.1.2.3 2008/12/16 00:39:17 haad Exp $	*/
+/*	$NetBSD: libdm-common.c,v 1.1.1.1.2.4 2008/12/17 00:48:49 haad Exp $	*/
 
 /*
  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
@@ -37,7 +37,7 @@
 #endif
 
 #ifdef __NetBSD__
-#include <netbsd/netbsd-dm.h>
+#include <netbsd-dm.h>
 #endif
 
 #define DEV_DIR "/dev/"
