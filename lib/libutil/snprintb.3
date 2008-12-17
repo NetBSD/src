@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.7 2008/12/16 23:19:16 christos Exp $
+.\"     $NetBSD: snprintb.3,v 1.8 2008/12/17 10:39:22 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Sh SYNOPSIS
 .In util.h
 .Ft int
-.Fn "snprintb"  "char *buf" "size_t buflen" "const char *fmt" "u_quad_t val"
+.Fn "snprintb" "char *buf" "size_t buflen" "const char *fmt" "u_quad_t val"
 .Sh DESCRIPTION
 The
 .Fn snprintb
@@ -183,7 +183,7 @@ pair.
 The
 .Fn snprintb
 function returns the number of bytes that would have written to the buffer
-if there was adequate space, excluding the terminating NUL, or -1 in case
+if there was adequate space, excluding the terminating NUL, or \-1 in case
 an error occurred.
 .Sh EXAMPLES
 Two examples of the old formatting style:
@@ -208,7 +208,6 @@ snprintb(0x800f0701,
         buf, buflen)
 \(rA "800f0701\*[Lt]LSB,NIBBLE2=0,BURST=f=SIXTEEN,MSB\*[Gt]"
 .Ed
-.Pp
 .Sh ERRORS
 .Fn snprintb
 will fail if:
@@ -220,7 +219,7 @@ or
 failed.
 .El
 .Sh SEE ALSO
-.Xr printf 3
+.Xr printf 3 ,
 .Xr snprintf 3
 .Sh HISTORY
 The
