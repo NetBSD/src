@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.51 2008/11/07 00:20:18 dyoung Exp $	*/
+/*	$NetBSD: iso.c,v 1.52 2008/12/17 20:51:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.51 2008/11/07 00:20:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.52 2008/12/17 20:51:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,7 +511,7 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		if (ifp == 0)
 			panic("iso_control");
 		if (ia == 0) {
-			MALLOC(ia, struct iso_ifaddr *, sizeof(*ia),
+			ia = malloc(sizeof(*ia),
 			       M_IFADDR, M_WAITOK|M_ZERO);
 			if (ia == 0)
 				return (ENOBUFS);

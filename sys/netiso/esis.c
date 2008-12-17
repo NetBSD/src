@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.52 2008/05/11 20:20:27 dyoung Exp $	*/
+/*	$NetBSD: esis.c,v 1.53 2008/12/17 20:51:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.52 2008/05/11 20:20:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.53 2008/12/17 20:51:38 cegger Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -210,7 +210,7 @@ esis_usrreq(struct socket *so, int req, struct mbuf *m, struct mbuf *nam,
 			if (error)
 				break;
 		}
-		MALLOC(rp, struct rawcb *, sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
+		rp = malloc(sizeof(*rp), M_PCB, M_WAITOK|M_ZERO);
 		if (rp == 0) {
 			error = ENOBUFS;
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.92 2008/09/05 14:01:11 skrll Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.93 2008/12/17 20:51:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.92 2008/09/05 14:01:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.93 2008/12/17 20:51:36 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,13 +179,13 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 		*vpp = NULL;
 		return (error);
 	}
-	MALLOC(pfs, void *, sizeof(struct pfsnode), M_TEMP, M_WAITOK);
+	pfs = malloc(sizeof(struct pfsnode), M_TEMP, M_WAITOK);
 
 	mutex_enter(&pfs_hashlock);
 	if ((*vpp = procfs_hashget(pid, pfs_type, fd, mp, 0)) != NULL) {
 		mutex_exit(&pfs_hashlock);
 		ungetnewvnode(vp);
-		FREE(pfs, M_TEMP);
+		free(pfs, M_TEMP);
 		goto retry;
 	}
 
@@ -315,7 +315,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd, p)
 
  bad:
 	mutex_exit(&pfs_hashlock);
-	FREE(pfs, M_TEMP);
+	free(pfs, M_TEMP);
 	vp->v_data = NULL;
 	ungetnewvnode(vp);
 	return (error);
@@ -329,8 +329,8 @@ procfs_freevp(vp)
 
 	procfs_hashrem(pfs);
 
-	FREE(vp->v_data, M_TEMP);
-	vp->v_data = 0;
+	free(vp->v_data, M_TEMP);
+	vp->v_data = NULL;
 	return (0);
 }
 

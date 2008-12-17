@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.99 2007/11/11 23:22:25 matt Exp $	*/
+/*	$NetBSD: malloc.h,v 1.100 2008/12/17 20:51:38 cegger Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -90,10 +90,6 @@ struct kmembuckets {
 };
 
 #ifdef _KERNEL
-#define	MALLOC(space, cast, size, type, flags) \
-	(space) = (cast)malloc((u_long)(size), (type), (flags))
-#define	FREE(addr, type) free((void *)(addr), (type))
-
 #ifdef MALLOCLOG
 void	*_malloc(unsigned long, struct malloc_type *, int, const char *, long);
 void	_free(void *, struct malloc_type *, const char *, long);

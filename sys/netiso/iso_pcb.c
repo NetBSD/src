@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_pcb.c,v 1.44 2008/04/24 11:38:38 ad Exp $	*/
+/*	$NetBSD: iso_pcb.c,v 1.45 2008/12/17 20:51:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.44 2008/04/24 11:38:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso_pcb.c,v 1.45 2008/12/17 20:51:38 cegger Exp $");
 
 #include "opt_iso.h"
 
@@ -113,7 +113,7 @@ iso_pcballoc(struct socket *so, void *v)
 		printf("iso_pcballoc(so %p)\n", so);
 	}
 #endif
-	MALLOC(isop, struct isopcb *, sizeof(*isop), M_PCB, M_NOWAIT|M_ZERO);
+	isop = malloc(sizeof(*isop), M_PCB, M_NOWAIT|M_ZERO);
 	if (isop == NULL)
 		return ENOBUFS;
 	isop->isop_head = head;

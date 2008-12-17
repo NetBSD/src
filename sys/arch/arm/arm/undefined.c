@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.35 2008/11/19 06:29:48 matt Exp $	*/
+/*	$NetBSD: undefined.c,v 1.36 2008/12/17 20:51:32 cegger Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.35 2008/11/19 06:29:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.36 2008/12/17 20:51:32 cegger Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -101,7 +101,7 @@ install_coproc_handler(int coproc, undef_handler_t handler)
 	KASSERT(handler != NULL); /* Used to be legal. */
 
 	/* XXX: M_TEMP??? */
-	MALLOC(uh, struct undefined_handler *, sizeof(*uh), M_TEMP, M_WAITOK);
+	uh = malloc(sizeof(*uh), M_TEMP, M_WAITOK);
 	uh->uh_handler = handler;
 	install_coproc_handler_static(coproc, uh);
 	return uh;
@@ -120,7 +120,7 @@ remove_coproc_handler(void *cookie)
 	struct undefined_handler *uh = cookie;
 
 	LIST_REMOVE(uh, uh_link);
-	FREE(uh, M_TEMP);
+	free(uh, M_TEMP);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.29 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.30 2008/12/17 20:51:36 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.29 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.30 2008/12/17 20:51:36 cegger Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -833,7 +833,7 @@ eco_defer(struct ifnet *ifp, struct mbuf *m, int retry_delay)
 	struct eco_retry *er;
 	int s;
 
-	MALLOC(er, struct eco_retry *, sizeof(*er), M_TEMP, M_NOWAIT);
+	er = malloc(sizeof(*er), M_TEMP, M_NOWAIT);
 	if (er == NULL) {
 		m_freem(m);
 		return;
@@ -858,7 +858,7 @@ eco_retry_free(struct eco_retry *er)
 	LIST_REMOVE(er, er_link);
 	splx(s);
 	callout_destroy(&er->er_callout);
-	FREE(er, M_TEMP);
+	free(er, M_TEMP);
 }
 
 static void
@@ -872,5 +872,5 @@ eco_retry(void *arg)
 	m = er->er_packet;
 	LIST_REMOVE(er, er_link);
 	(void)ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(NULL));
-	FREE(er, M_TEMP);
+	free(er, M_TEMP);
 }

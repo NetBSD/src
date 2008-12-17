@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.113 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.114 2008/12/17 20:51:36 cegger Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.113 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.114 2008/12/17 20:51:36 cegger Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -231,7 +231,7 @@ sl_clone_create(struct if_clone *ifc, int unit)
 {
 	struct sl_softc *sc;
 
-	MALLOC(sc, struct sl_softc *, sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAIT|M_ZERO);
 	sc->sc_unit = unit;
 	if_initname(&sc->sc_if, ifc->ifc_name, unit);
 	sc->sc_if.if_softc = sc;
@@ -267,7 +267,7 @@ sl_clone_destroy(struct ifnet *ifp)
 #endif
 	if_detach(ifp);
 
-	FREE(sc, M_DEVBUF);
+	free(sc, M_DEVBUF);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_gpio.c,v 1.4 2008/12/12 17:36:14 matt Exp $ */
+/*	$NetBSD: omap_gpio.c,v 1.5 2008/12/17 20:51:32 cegger Exp $ */
 
 /*
  * The OMAP GPIO Controller interface is inspired by pxa2x0_gpio.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.4 2008/12/12 17:36:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_gpio.c,v 1.5 2008/12/17 20:51:32 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,9 +275,7 @@ omap_gpio_intr_establish(u_int gpio, int level, int spl,
 		panic("omapgpio: Illegal shared interrupt on pin %d", gpio);
 	}
 
-	MALLOC(gh, struct gpio_irq_handler *, sizeof(struct gpio_irq_handler),
-	    M_DEVBUF, M_NOWAIT);
-
+	gh = malloc(sizeof(struct gpio_irq_handler), M_DEVBUF, M_NOWAIT);
 	if (gh == NULL)
 		return gh;
 
@@ -373,7 +371,7 @@ omap_gpio_intr_disestablish(void *cookie)
 	sc->sc_handlers[relnum] = NULL;
 
 
-	FREE(gh, M_DEVBUF);
+	free(gh, M_DEVBUF);
 }
 
 void
