@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.59 2008/12/14 19:58:29 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.60 2008/12/17 20:16:28 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -404,6 +404,9 @@ int
 kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	void (*func)(void *), void *arg, lwp_t **newlp, const char *fmt, ...)
 {
+	char thrstore[MAXCOMLEN];
+	const char *thrname = NULL;
+	va_list ap;
 	struct kthdesc *k;
 	struct lwp *l;
 	int rv;
@@ -441,7 +444,13 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	k->arg = arg;
 	k->mylwp = l = rump_setup_curlwp(0, rump_nextlid(), 0);
 	k->mpsafe = flags & KTHREAD_MPSAFE;
-	rv = rumpuser_thread_create(threadbouncer, k);
+	if (fmt) {
+		va_start(ap, fmt);
+		vsnprintf(thrstore, sizeof(thrname), fmt, ap);
+		va_end(ap);
+		thrname = thrstore;
+	}
+	rv = rumpuser_thread_create(threadbouncer, k, thrname);
 	if (rv)
 		return rv;
 
