@@ -14,7 +14,7 @@
  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#include "lib.h"
+#include "dmlib.h"
 #include "libdm-targets.h"
 #include "libdm-common.h"
 
