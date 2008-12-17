@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.44 2008/12/16 22:35:34 christos Exp $	*/
+/*	$NetBSD: yds.c,v 1.45 2008/12/17 15:47:35 cegger Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.44 2008/12/16 22:35:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.45 2008/12/17 15:47:35 cegger Exp $");
 
 #include "mpu.h"
 
@@ -776,7 +776,7 @@ yds_attach(device_t parent, device_t self, void *aux)
 	if (ydsdebug) {
 		char bits[80];
 
-		snprintb(bits, sizeof*bifs), YDS_CAP_BITS, sc->sc_flags);
+		snprintb(bits, sizeof(bits), YDS_CAP_BITS, sc->sc_flags);
 		printf("%s: chip has %s\n", device_xname(self), bits);
 	}
 #endif
