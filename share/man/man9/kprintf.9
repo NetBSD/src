@@ -1,4 +1,4 @@
-.\"     $NetBSD: kprintf.9,v 1.25 2008/12/16 22:50:32 christos Exp $
+.\"     $NetBSD: kprintf.9,v 1.26 2008/12/17 10:33:35 wiz Exp $
 .\"
 .\" Copyright (c) 1998, 2002, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -139,9 +139,9 @@ The functions
 and
 .Fn aprint_error
 are intended to be used to print
-.Xr autoconf 4
-messages. Their
-verbosity depends on flags set in the
+.Xr autoconf 9
+messages.
+Their verbosity depends on flags set in the
 .Dq boothowto
 variable, through options passed during bootstrap; see
 .Sx Interactive mode
@@ -153,7 +153,7 @@ silent mode, enabled by
 .Ic boot
 .Fl z .
 .It Dv AB_QUIET
-quiet mode, enabled by 
+quiet mode, enabled by
 .Ic boot
 .Fl q .
 .It Dv AB_VERBOSE
@@ -170,7 +170,7 @@ The
 .Fn aprint_*
 functions have the following behaviour, based on the above
 mentioned flags:
-.Bl -tag -width "aprint_verbose()"
+.Bl -tag -width Xaprint_verboseXXX
 .It Fn aprint_normal
 Sends to the console unless
 .Dv AB_QUIET
@@ -244,9 +244,9 @@ if no terminal handle could be acquired.
 .Sh SEE ALSO
 .Xr printf 1 ,
 .Xr printf 3 ,
-.Xr autoconf 4 ,
+.Xr snprintb 3 ,
 .Xr boot 8 ,
-.Xr snprintb 3
+.Xr autoconf 9
 .Sh CODE REFERENCES
 .Pa sys/kern/subr_prf.c
 .Sh HISTORY
