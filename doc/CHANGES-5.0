@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.0,v 1.1.2.54 2008/12/14 11:56:33 bouyer Exp $
+# $NetBSD: CHANGES-5.0,v 1.1.2.55 2008/12/18 01:15:43 snj Exp $
 
 A complete list of changes from the initial NetBSD 5.0 branch on October 2008
 until the 5.0 release:
@@ -1606,4 +1606,36 @@ sys/ufs/ufs/ufs_wapbl.c				1.4
 	foo/foo is a directory on a wapbl-enabled filesystem.
 	PR 40163 from Lloyd Parkes.
 	[dholland, ticket #187]
+
+sys/kern/vfs_syscalls.c				1.382
+
+	Fix length passed to strlcpy(): we used to get names one character
+	shorter than reality.
+	[elad, ticket #188]
+
+sys/dev/verified_exec.c				1.64
+sys/kern/kern_verifiedexec.c			1.112
+
+	PR/39559: Juan RP: veriexec(4): too easy to cause a NULL
+	dereference through it in kernel.
+	[elad, ticket #189]
+
+sys/dev/i2o/ld_iop.c				1.33
+
+	Fix device_t/softc split fallout in iop(4).
+	[mhitch, ticket #190]
+
+sys/arch/x86/x86/ipmi.c				1.27
+
+	Keep trying to attach ipmi(4) in the background for five seconds.
+	NetBSD now detects the IPMI support in a HP Proliant ML110 G4 again.
+	Fixes PR kern/40065.
+	[tron, ticket #191]
+
+sys/fs/udf/udf_subr.c				1.77, 1.79
+sys/fs/udf/udf_vnops.c				1.33, 1.34
+sys/fs/udf/udf_vfsops.c				1.54
+
+	Fix a panic and some endless loops.
+	[reinoud, ticket #192]
 
