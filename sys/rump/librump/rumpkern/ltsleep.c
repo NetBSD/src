@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.8 2008/10/09 13:39:59 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.9 2008/12/18 00:24:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.9 2008/12/18 00:24:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
