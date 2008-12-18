@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.63 2007/12/11 12:16:14 lukem Exp $	*/
+/*	$NetBSD: verified_exec.c,v 1.63.22.1 2008/12/18 00:56:27 snj Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.63 2007/12/11 12:16:14 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.63.22.1 2008/12/18 00:56:27 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -128,10 +128,13 @@ static int
 veriexec_delete(prop_dictionary_t dict, struct lwp *l)
 {
 	struct nameidata nid;
+	const char *file;
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE,
-	    prop_string_cstring_nocopy(prop_dictionary_get(dict, "file")));
+	if (!prop_dictionary_get_cstring_nocopy(dict, "file", &file))
+		return (EINVAL);
+
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, file);
 	error = namei(&nid);
 	if (error)
 		return (error);
@@ -151,10 +154,13 @@ static int
 veriexec_query(prop_dictionary_t dict, prop_dictionary_t rdict, struct lwp *l)
 {
 	struct nameidata nid;
+	const char *file;
 	int error;
 
-	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE,
-	    prop_string_cstring_nocopy(prop_dictionary_get(dict, "file")));
+	if (!prop_dictionary_get_cstring_nocopy(dict, "file", &file))
+		return (EINVAL);
+
+	NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, file);
 	error = namei(&nid);
 	if (error)
 		return (error);
@@ -180,6 +186,9 @@ veriexecioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	case VERIEXEC_LOAD:
 	case VERIEXEC_DELETE:
 	case VERIEXEC_FLUSH:
+		if (!(flags & FWRITE))
+			return (EPERM);
+
 		if (veriexec_strict > VERIEXEC_LEARNING) {
 			log(LOG_WARNING, "Veriexec: Strict mode, modifying "
 			    "tables not permitted.\n");
@@ -191,6 +200,9 @@ veriexecioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 
 	case VERIEXEC_QUERY:
 	case VERIEXEC_DUMP:
+		if (!(flags & FREAD))
+			return (EPERM);
+
 		break;
 
 	default:
