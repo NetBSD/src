@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.87 2008/12/16 22:35:28 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.88 2008/12/18 03:18:27 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.87 2008/12/16 22:35:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.88 2008/12/18 03:18:27 isaki Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -940,6 +940,7 @@ fdcstart(struct fdc_softc *fdc)
 static void
 fdcpstatus(int n, struct fdc_softc *fdc)
 {
+	char bits[64];
 
 	switch (n) {
 	case 0:
