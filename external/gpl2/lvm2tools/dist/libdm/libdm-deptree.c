@@ -1,4 +1,4 @@
-/*	$NetBSD: libdm-deptree.c,v 1.1.1.1.2.2 2008/12/13 14:39:35 haad Exp $	*/
+/*	$NetBSD: libdm-deptree.c,v 1.1.1.1.2.3 2008/12/18 01:19:29 haad Exp $	*/
 
 /*
  * Copyright (C) 2005-2007 Red Hat, Inc. All rights reserved.
@@ -1830,12 +1830,17 @@ int dm_tree_node_add_target_area(struct dm_tree_node *node,
 			log_error("Device %s not found.", dev_name);
 			return 0;
 		}
-
+#ifndef __NetBSD__
         	if (!S_ISBLK(info.st_mode)) {
 			log_error("Device %s is not a block device.", dev_name);
 			return 0;
 		}
-
+#else
+		if (S_ISBLK(info.st_mode)) {
+			log_error("Device %s is a block device. Use raw devices on NetBSD.", dev_name);
+			return 0;
+		}
+#endif		
 		/* FIXME Check correct macro use */
 		if (!(dev_node = _add_dev(node->dtree, node, MAJOR(info.st_rdev), MINOR(info.st_rdev))))
 			return_0;
