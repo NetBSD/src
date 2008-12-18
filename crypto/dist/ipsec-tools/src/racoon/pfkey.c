@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.40 2008/12/16 06:08:46 tteras Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.41 2008/12/18 07:20:25 tteras Exp $	*/
 
-/* $Id: pfkey.c,v 1.40 2008/12/16 06:08:46 tteras Exp $ */
+/* $Id: pfkey.c,v 1.41 2008/12/18 07:20:25 tteras Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1625,36 +1625,44 @@ pk_recvexpire(mhp)
 			    sa_mode));
 		return 0;
 	}
-	if (iph2->status != PHASE2ST_ESTABLISHED) {
+
+	/* resent expiry message? */
+	if (iph2->status > PHASE2ST_ESTABLISHED)
+		return 0;
+
+	/* still negotiating? */
+	if (iph2->status < PHASE2ST_ESTABLISHED) {
+		/* not a hard timeout? */
+		if (mhp[SADB_EXT_LIFETIME_HARD] == NULL)
+			return 0;
+
 		/*
-		 * If the status is not equal to PHASE2ST_ESTABLISHED,
-		 * racoon ignores this expire message.  There are two reason.
-		 * One is that the phase 2 probably starts because there is
-		 * a potential that racoon receives the acquire message
-		 * without receiving a expire message.  Another is that racoon
-		 * may receive the multiple expire messages from the kernel.
+		 * We were negotiating for that SA (w/o much success
+		 * from current status) and kernel has decided our time
+		 * is over trying (xfrm_larval_drop controls that and
+		 * is enabled by default on Linux >= 2.6.28 kernels).
 		 */
 		plog(LLV_WARNING, LOCATION, NULL,
-			"the expire message is received "
-			"but the handler has not been established.\n");
-		return 0;
+		     "PF_KEY EXPIRE message received from kernel for SA"
+		     " being negotiated. Stopping negotiation.\n");
 	}
 
 	/* turn off the timer for calling isakmp_ph2expire() */ 
 	sched_cancel(&iph2->sce);
 
-	iph2->status = PHASE2ST_EXPIRED;
-
-	/* INITIATOR, begin phase 2 exchange. */
-	/* allocate buffer for status management of pfkey message */
-	if (iph2->side == INITIATOR) {
-
-		initph2(iph2);
+	if (iph2->status == PHASE2ST_ESTABLISHED &&
+	    iph2->side == INITIATOR) {
+		/*
+		 * Active phase 2 expired and we were initiator.
+		 * Begin new phase 2 exchange, so we can keep on sending
+		 * traffic.
+		 */
 
 		/* update status for re-use */
+		initph2(iph2);
 		iph2->status = PHASE2ST_STATUS2;
 
-		/* start isakmp initiation by using ident exchange */
+		/* start quick exchange */
 		if (isakmp_post_acquire(iph2) < 0) {
 			plog(LLV_ERROR, LOCATION, iph2->dst,
 				"failed to begin ipsec sa "
@@ -1665,12 +1673,13 @@ pk_recvexpire(mhp)
 		}
 
 		return 0;
-		/*NOTREACHED*/
 	}
 
-	/* If not received SADB_EXPIRE, INITIATOR delete ph2handle. */
-	/* RESPONDER always delete ph2handle, keep silent.  RESPONDER doesn't
-	 * manage IPsec SA, so delete the list */
+	/*
+	 * We are responder or the phase 2 was not established.
+	 * Just remove the ph2handle to reflect SADB.
+	 */
+	iph2->status = PHASE2ST_EXPIRED;
 	remph2(iph2);
 	delph2(iph2);
 
