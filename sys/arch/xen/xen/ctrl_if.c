@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.19 2008/10/21 15:46:32 cegger Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.20 2008/12/18 12:19:03 cegger Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,13 +9,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.19 2008/10/21 15:46:32 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.20 2008/12/18 12:19:03 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/malloc.h>
 #include <sys/simplelock.h>
 
 #include <xen/xen.h>
