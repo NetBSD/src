@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.80 2008/12/16 22:35:36 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.81 2008/12/18 13:03:49 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.80 2008/12/16 22:35:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.81 2008/12/18 13:03:49 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -4802,8 +4802,11 @@ udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
 	udf_node->outstanding_bufs = 0;
 	udf_node->outstanding_nodedscr = 0;
 
-	if (memcmp(&udf_node->loc, &ump->fileset_desc->rootdir_icb, sizeof(struct long_ad)) == 0)
-		nvp->v_vflag |= VV_ROOT;
+	/* check if we're fetching the root */
+	if (ump->fileset_desc)
+		if (memcmp(&udf_node->loc, &ump->fileset_desc->rootdir_icb,
+		    sizeof(struct long_ad)) == 0)
+			nvp->v_vflag |= VV_ROOT;
 
 	/* insert into the hash lookup */
 	udf_register_node(udf_node);
