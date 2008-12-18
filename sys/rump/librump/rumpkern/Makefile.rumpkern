@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.21 2008/12/18 11:09:34 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.22 2008/12/18 11:16:36 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -8,7 +8,8 @@ LDFLAGS+=	-Wl,--wrap=malloc
 
 .PATH:	${RUMPTOP}/librump/rumpkern				\
 	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern		\
-	${RUMPTOP}/../conf ${RUMPTOP}/../dev
+	${RUMPTOP}/../conf ${RUMPTOP}/../dev			\
+	${RUMPTOP}/../../common/lib/libutil
 
 #
 # Source modules, first the ones specifically implemented for librump.
@@ -44,8 +45,11 @@ SRCS+=	vnode_if.c
 # sys/dev
 SRCS+=	clock_subr.c
 
-# src/lib/libkern
+# sys/lib/libkern
 SRCS+=	__assert.c scanc.c skpc.c
+
+# src/common
+SRCS+=	snprintb.c
 
 # uncomment these lines if you want to use the real kmem code
 #CPPFLAGS+=	-DRUMP_USE_REAL_KMEM
