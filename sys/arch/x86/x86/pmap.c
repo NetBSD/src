@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 2008/12/10 11:10:20 pooka Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77 2008/12/18 12:18:20 cegger Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2008/12/10 11:10:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2008/12/18 12:18:20 cegger Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -167,7 +167,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2008/12/10 11:10:20 pooka Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/user.h>
 #include <sys/kernel.h>
