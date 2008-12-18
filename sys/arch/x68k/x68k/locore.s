@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.85 2008/12/18 02:27:41 isaki Exp $	*/
+/*	$NetBSD: locore.s,v 1.86 2008/12/18 05:24:03 isaki Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1284,6 +1284,9 @@ GLOBAL(protorp)
 
 GLOBAL(proc0paddr)
 	.long	0		| KVA of lwp0 u-area
+
+GLOBAL(intiobase)
+	.long	0		| KVA of base of internal IO space
 
 GLOBAL(intiolimit)
 	.long	0		| KVA of end of internal IO space
