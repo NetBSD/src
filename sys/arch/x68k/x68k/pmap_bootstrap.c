@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.36 2007/10/17 19:58:04 garbled Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.37 2008/12/18 02:43:45 isaki Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.36 2007/10/17 19:58:04 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.37 2008/12/18 02:43:45 isaki Exp $");
 
 #include "opt_m680x0.h"
 
@@ -329,8 +329,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 	protopte = INTIOBASE | PG_RW | PG_CI | PG_V;
 	epte = &pte[IIOMAPSIZE];
-	RELOC(IODEVbase, char *) = (char *)PTE2VA(pte);
-	RELOC(intiobase, u_int8_t *) = RELOC(IODEVbase, u_int8_t *); /* XXX */
+	RELOC(intiobase, u_int8_t *) = (char *)PTE2VA(pte);
+	RELOC(IODEVbase, u_int8_t *) = RELOC(intiobase, u_int8_t *); /* XXX */
 	RELOC(intiolimit, char *) = (char *)PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
