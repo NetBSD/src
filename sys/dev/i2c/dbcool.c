@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.6 2008/11/18 10:49:45 jnemeth Exp $ */
+/*	$NetBSD: dbcool.c,v 1.7 2008/12/18 20:41:35 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.6 2008/11/18 10:49:45 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.7 2008/12/18 20:41:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -594,7 +594,9 @@ dbcool_match(device_t parent, cfdata_t cf, void *aux)
 	sc.sc_readreg = dbcool_readreg;
 	sc.sc_writereg = dbcool_writereg;
 
-	/* no probing if we attach to iic, but verify chip id */
+	/* no probing if we attach to iic, but verify chip id  and address */
+	if ((ia->ia_addr & DBCOOL_ADDRMASK) != DBCOOL_ADDR)
+		return 0;
 	if (dbcool_chip_ident(&sc) >= 0)
 		return 1;
 
