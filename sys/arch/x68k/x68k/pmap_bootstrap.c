@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.38 2008/12/18 05:19:52 isaki Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.39 2008/12/18 05:24:03 isaki Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.38 2008/12/18 05:19:52 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.39 2008/12/18 05:24:03 isaki Exp $");
 
 #include "opt_m680x0.h"
 
@@ -61,8 +61,6 @@ extern paddr_t avail_start, avail_end;
 extern vaddr_t virtual_avail, virtual_end;
 extern psize_t mem_size;
 extern int protection_codes[];
-
-u_int8_t *intiobase;
 
 void	pmap_bootstrap(paddr_t, paddr_t);
 

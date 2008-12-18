@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2008/02/27 18:26:16 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46 2008/12/18 05:24:03 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -185,6 +185,7 @@ extern int astpending;		/* need to trap before returning to user mode */
 
 #ifdef _KERNEL
 extern int machineid;
+extern char *intiobase;
 extern char *intiolimit;
 
 /* autoconf.c functions */
