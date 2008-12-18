@@ -1,3 +1,8 @@
+2008-12-18  Timo Teras  <timo.teras@iki.fi>
+	From Arnaud Ebalard <arno@natisbad.org>:
+	* src/racoon/pfkey.c: delete larval ph2handles when expire
+	  with hard lifetime received
+
 2008-12-16  Timo Teras  <timo.teras@iki.fi>
 	* src/racoon/pfkey.c: Fix transport mode address selection
 	  in acquire handling (broke on 2008-12-05 commit)
