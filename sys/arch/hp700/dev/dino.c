@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.6 2008/08/28 08:25:46 skrll Exp $ */
+/*	$NetBSD: dino.c,v 1.6.2.1 2008/12/18 10:12:42 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.6 2008/08/28 08:25:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.6.2.1 2008/12/18 10:12:42 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -1581,7 +1581,7 @@ void
 dinoattach(struct device *parent, struct device *self, void *aux)
 {
 	struct dino_softc *sc = (struct dino_softc *)self;
-	struct confargs *ca = (struct confargs *)aux;
+	struct confargs *ca = (struct confargs *)aux, nca;
 	struct pcibus_attach_args pba;
 	volatile struct dino_regs *r;
 	const char *p;
@@ -1682,11 +1682,12 @@ dinoattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmatag = dino_dmat;
 	sc->sc_dmatag._cookie = sc;
 
-#ifdef no_hardware_to_test_so_leave_it_for_now
 	/* scan for ps2 kbd/ms, serial, and flying toasters */
-	ca->ca_hpamask = -1;
-	pdc_scanbus(self, ca, MAXMODBUS);
-#endif
+	nca = *ca;
+
+	nca.ca_hpabase = 0;
+	nca.ca_nmodules = MAXMODBUS;
+	pdc_scanbus(self, &nca, dino_callback);
 
 	pba.pba_iot = &sc->sc_iot;
 	pba.pba_memt = &sc->sc_memt;
@@ -1696,4 +1697,11 @@ dinoattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
+}
+
+static void
+dino_callback(struct device *self, struct confargs *ca)
+{
+
+	config_found_sm_loc(self, "dino", NULL, ca, mbprint, mbsubmatch);
 }
