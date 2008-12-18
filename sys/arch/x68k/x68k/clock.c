@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29 2008/12/14 02:05:54 isaki Exp $	*/
+/*	$NetBSD: clock.c,v 1.30 2008/12/18 02:09:20 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29 2008/12/14 02:05:54 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.30 2008/12/18 02:09:20 isaki Exp $");
 
 #include "clock.h"
 
@@ -106,7 +106,7 @@ CFATTACH_DECL_NEW(clock, 0,
 
 static int clock_attached;
 
-static unsigned mfp_get_timecount(struct timecounter *);
+static unsigned int mfp_get_timecount(struct timecounter *);
 
 static int
 clock_match(device_t parent, cfdata_t cf, void *aux)
@@ -202,7 +202,7 @@ setstatclockrate(int newhz)
  * Returns number of usec since last recorded clock "tick"
  * (i.e. clock interrupt).
  */
-unsigned
+unsigned int
 mfp_get_timecount(struct timecounter *tc)
 {
 	uint8_t	val;
