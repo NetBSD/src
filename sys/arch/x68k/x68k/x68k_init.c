@@ -1,4 +1,4 @@
-/*	$NetBSD: x68k_init.c,v 1.12 2008/12/18 02:27:41 isaki Exp $	*/
+/*	$NetBSD: x68k_init.c,v 1.13 2008/12/18 05:19:52 isaki Exp $	*/
 
 /*
  * Copyright (c) 1996 Masaru Oki.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.12 2008/12/18 02:27:41 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.13 2008/12/18 05:19:52 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -41,4 +41,4 @@ __KERNEL_RCSID(0, "$NetBSD: x68k_init.c,v 1.12 2008/12/18 02:27:41 isaki Exp $")
 #include <arch/x68k/dev/intiovar.h>
 #include <x68k/x68k/iodevice.h>
 
-volatile struct IODEVICE *IODEVbase = (volatile struct IODEVICE *) PHYS_IODEV;
+volatile struct IODEVICE *IODEVbase;
