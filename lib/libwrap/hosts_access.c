@@ -1,4 +1,4 @@
-/*	$NetBSD: hosts_access.c,v 1.18 2006/01/08 17:20:28 jdc Exp $	*/
+/*	$NetBSD: hosts_access.c,v 1.19 2008/12/18 20:16:52 christos Exp $	*/
 
  /*
   * This module implements a simple access control language that is based on
@@ -24,7 +24,7 @@
 #if 0
 static char sccsid[] = "@(#) hosts_access.c 1.21 97/02/12 02:13:22";
 #else
-__RCSID("$NetBSD: hosts_access.c,v 1.18 2006/01/08 17:20:28 jdc Exp $");
+__RCSID("$NetBSD: hosts_access.c,v 1.19 2008/12/18 20:16:52 christos Exp $");
 #endif
 #endif
 
@@ -90,6 +90,7 @@ static int list_match __P((char *, struct request_info *,
 static int server_match __P((char *, struct request_info *));
 static int client_match __P((char *, struct request_info *));
 static int host_match __P((char *, struct host_info *));
+static int hostfile_match __P((char *, struct host_info *));
 static int rbl_match __P((char *, char *));
 static int string_match __P((char *, char *));
 static int masked_match __P((char *, char *, char *));
@@ -290,6 +291,8 @@ struct host_info *host;
 	tcpd_warn("netgroup support is disabled");	/* not tcpd_jump() */
 	return (NO);
 #endif
+    } else if (tok[0] == '/') {			/* /file hack */
+	return (hostfile_match(tok, host));
     } else if (STR_EQ(tok, "KNOWN")) {		/* check address and name */
 	char   *name = eval_hostname(host);
 	return (STR_NE(eval_hostaddr(host), unknown) && HOSTNAME_KNOWN(name));
@@ -304,6 +307,26 @@ struct host_info *host;
 	return (string_match(tok, eval_hostaddr(host))
 	    || (NOT_INADDR(tok) && string_match(tok, eval_hostname(host))));
     }
+}
+
+/* hostfile_match - look up host patterns from file */
+
+static int hostfile_match(path, host)
+char   *path;
+struct host_info *host;
+{
+    char    tok[BUFSIZ];
+    int     match = NO;
+    FILE   *fp;
+
+    if ((fp = fopen(path, "r")) != 0) {
+	while (fscanf(fp, "%s", tok) == 1 && !(match = host_match(tok, host)))
+	     /* void */ ;
+	fclose(fp);
+    } else if (errno != ENOENT) {
+	tcpd_warn("open %s: %m", path);
+    }
+    return (match);
 }
 
 /* rbl_match() - match host by looking up in RBL domain */
