@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.50 2008/12/05 13:14:42 isaki Exp $	*/
+/*	$NetBSD: mha.c,v 1.51 2008/12/18 05:56:42 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.50 2008/12/05 13:14:42 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mha.c,v 1.51 2008/12/18 05:56:42 isaki Exp $");
 
 #include "opt_ddb.h"
 
@@ -291,7 +291,7 @@ mhamatch(device_t parent, cfdata_t cf, void *aux)
 	if (bus_space_map(iot, ia->ia_addr, 0x20, BUS_SPACE_MAP_SHIFTED,
 			  &ioh) < 0)
 		return 0;
-	if (!badaddr(INTIO_ADDR(ia->ia_addr + 0)))
+	if (!badaddr((void *)IIOV(ia->ia_addr + 0)))
 		return 0;
 	bus_space_unmap(iot, ioh, 0x20);
 
@@ -316,7 +316,7 @@ mhaattach(device_t parent, device_t self, void *aux)
 
 	SPC_TRACE(("mhaattach  "));
 	sc->sc_state = SPC_INIT;
-	sc->sc_iobase = INTIO_ADDR(ia->ia_addr + 0x80); /* XXX */
+	sc->sc_iobase = (void *)IIOV(ia->ia_addr + 0x80); /* XXX */
 	intio_map_allocate_region(device_parent(parent), ia, INTIO_MAP_ALLOCATE);
 				/* XXX: FAKE  */
 	sc->sc_dmat = ia->ia_dmat;

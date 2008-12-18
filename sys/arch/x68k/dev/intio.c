@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.37 2008/06/25 08:14:59 isaki Exp $	*/
+/*	$NetBSD: intio.c,v 1.38 2008/12/18 05:56:42 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.37 2008/06/25 08:14:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.38 2008/12/18 05:56:42 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,8 +188,8 @@ intio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(" mapped at %8p\n", intiobase);
 
 	sc->sc_map = extent_create("intiomap",
-				  PHYS_INTIODEV,
-				  PHYS_INTIODEV + 0x400000,
+				  INTIOBASE,
+				  INTIOBASE + 0x400000,
 				  M_DEVBUF, NULL, 0, EX_NOWAIT);
 	intio_alloc_system_ports(sc);
 
@@ -303,8 +303,8 @@ intio_bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size,
 	/*
 	 * Intio bus is mapped permanently.
 	 */
-	*bshp = (bus_space_handle_t)
-	  ((u_int) bpa - PHYS_INTIODEV + intiobase);
+	*bshp = (bus_space_handle_t)IIOV(bpa);
+
 	/*
 	 * Some devices are mapped on odd or even addresses only.
 	 */
