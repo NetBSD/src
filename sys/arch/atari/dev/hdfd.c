@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.63 2008/12/16 22:35:22 christos Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.64 2008/12/18 10:58:17 he Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.63 2008/12/16 22:35:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.64 2008/12/18 10:58:17 he Exp $");
 
 #include "opt_ddb.h"
 
@@ -912,7 +912,7 @@ fdcstatus(dv, n, s)
 		printf(" (st0 %s cyl %d)\n", bits, fdc->sc_status[1]);
 		break;
 	case 7:
-		fscpstatus(fsc);
+		fdcpstatus(fdc);
 		break;
 #ifdef DIAGNOSTIC
 	default:
@@ -1263,7 +1263,6 @@ void
 fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
-	char bits[64];
 	struct fd_softc *fd;
 	struct buf *bp;
 
@@ -1295,7 +1294,7 @@ fdcretry(fdc)
 			diskerr(bp, "fd", "hard error", LOG_PRINTF,
 				fd->sc_skip / FDC_BSIZE,
 				(struct disklabel *)NULL);
-			fscpstatus(fsc);
+			fdcpstatus(fdc);
 		}
 		bp->b_error = EIO;
 		fdfinish(fd, bp);
