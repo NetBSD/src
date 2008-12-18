@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.19 2007/03/11 08:09:24 isaki Exp $	*/
+/*	$NetBSD: mfp.c,v 1.20 2008/12/18 02:27:41 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.19 2007/03/11 08:09:24 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.20 2008/12/18 02:27:41 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,13 +130,14 @@ mfp_attach(struct device *parent, struct device *self, void *aux)
 static void
 mfp_init(void)
 {
-#if 0				/* done in x68k_init.c::intr_reset() */
 	mfp_set_vr(MFP_INTR);
 
 	/* stop all interrupts */
 	mfp_set_iera(0);
 	mfp_set_ierb(0);
-#endif
+
+	/* make MSCTRL 'High', XXX where should I do it? */
+	mfp_send_usart(0x41);
 
 	/* Timer A settings */
 	mfp_set_tacr(MFP_TIMERA_RESET | MFP_TIMERA_STOP);
