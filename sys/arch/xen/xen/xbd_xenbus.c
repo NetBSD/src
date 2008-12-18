@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.34 2008/10/30 10:12:59 cegger Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.35 2008/12/18 12:19:03 cegger Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.34 2008/10/30 10:12:59 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.35 2008/12/18 12:19:03 cegger Exp $");
 
 #include "opt_xen.h"
 #include "rnd.h"
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.34 2008/10/30 10:12:59 cegger Exp $
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/stat.h>

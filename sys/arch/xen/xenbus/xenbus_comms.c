@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.10 2008/10/29 13:53:15 cegger Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.11 2008/12/18 12:19:03 cegger Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,12 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.10 2008/10/29 13:53:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.11 2008/12/18 12:19:03 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
 #include <sys/errno.h> 
-#include <sys/malloc.h>
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.10 2008/10/18 09:08:34 cegger Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.11 2008/12/18 12:18:20 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.10 2008/10/18 09:08:34 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.11 2008/12/18 12:18:20 cegger Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.10 2008/10/18 09:08:34 cegger Exp $")
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
 #include <sys/bitops.h>
 
 #include <uvm/uvm_extern.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_bus_dma.c,v 1.12 2008/11/13 18:44:51 cegger Exp $	*/
+/*	$NetBSD: xen_bus_dma.c,v 1.13 2008/12/18 12:19:02 cegger Exp $	*/
 /*	NetBSD bus_dma.c,v 1.21 2005/04/16 07:53:35 yamt Exp */
 
 /*-
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.12 2008/11/13 18:44:51 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_bus_dma.c,v 1.13 2008/12/18 12:19:02 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 
