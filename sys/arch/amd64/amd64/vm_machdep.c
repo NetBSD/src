@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.35 2008/11/19 18:35:58 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36 2008/12/18 11:45:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,14 +80,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.35 2008/11/19 18:35:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36 2008/12/18 11:45:40 cegger Exp $");
 
 #include "opt_user_ldt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 #include <sys/user.h>

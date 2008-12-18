@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.13 2008/04/28 20:23:12 martin Exp $	*/
+/*	$NetBSD: bios32.c,v 1.14 2008/12/18 11:45:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,12 +60,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.13 2008/04/28 20:23:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.14 2008/12/18 11:45:40 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h> 
-#include <sys/malloc.h>
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
