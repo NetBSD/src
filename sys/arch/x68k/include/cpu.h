@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2008/12/18 05:24:03 isaki Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47 2008/12/18 05:56:42 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -223,6 +223,8 @@ int	badbaddr(volatile void*);
  * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
  * conversion between physical and kernel virtual addresses is easy.
  */
+#define	IIOV(pa)	((u_int)(pa) - INTIOBASE + (u_int)intiobase)
+#define	IIOP(va)	((u_int)(va) - (u_int)intiobase + INTIOBASE)
 #define	IIOPOFF(pa)	((int)(pa)-INTIOBASE)
 #define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 4mb */
 

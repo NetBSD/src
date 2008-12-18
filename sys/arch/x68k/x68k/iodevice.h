@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.15 2008/12/14 02:21:34 isaki Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.16 2008/12/18 05:56:42 isaki Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -297,8 +297,6 @@ struct midi {
 	char pad6; unsigned char rn6;
 	char pad7; unsigned char rn7;
 };
-
-#define PHYS_IODEV 0x00C00000
 
 struct IODEVICE
 {
