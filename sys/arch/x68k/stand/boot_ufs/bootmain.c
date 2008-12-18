@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.8 2005/12/11 12:19:44 christos Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.9 2008/12/18 05:56:42 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -40,6 +40,7 @@
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 #include <ufs/ufs/dir.h>
+#include <machine/cpu.h>
 #include <machine/bootinfo.h>
 #ifdef SCSI_ADHOC_BOOTPART
 #include <machine/disklabel.h>
@@ -50,7 +51,7 @@
 #include "readufs.h"
 #include "exec_image.h"
 #include "../../x68k/iodevice.h"
-#define IODEVbase ((volatile struct IODEVICE *)PHYS_IODEV)
+#define IODEVbase ((volatile struct IODEVICE *)INTIOBASE)
 
 /* for debug; 起動時のレジスタが入っている */
 unsigned int startregs[16];

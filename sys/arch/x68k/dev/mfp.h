@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.h,v 1.6 2008/12/14 02:05:54 isaki Exp $	*/
+/*	$NetBSD: mfp.h,v 1.7 2008/12/18 05:56:42 isaki Exp $	*/
 
 /*
  *
@@ -130,7 +130,7 @@ struct mfp_softc {
 
 /* XXX */
 #include <arch/x68k/dev/intiovar.h>
-#define mfp_base	INTIO_ADDR(MFP_ADDR)
+#define mfp_base	((volatile uint8_t *)IIOV(MFP_ADDR))
 #define mfp_set_aer(a) \
 	mfp_base[MFP_AER] = ((u_int8_t) (a))
 #define mfp_set_ddr(a) \
