@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.30.4.1 2008/12/06 21:44:05 snj Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.30.4.2 2008/12/18 01:07:49 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.4.1 2008/12/06 21:44:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.30.4.2 2008/12/18 01:07:49 snj Exp $");
 #endif /* not lint */
 
 
@@ -2083,7 +2083,8 @@ udf_fsync(void *v)
 	struct udf_node *udf_node = VTOI(vp);
 	int error, flags, wait;
 
-	DPRINTF(STRATEGY, ("udf_fsync called : %s, %s\n",
+	DPRINTF(SYNC, ("udf_fsync called on %p : %s, %s\n",
+		udf_node,
 		(ap->a_flags & FSYNC_WAIT)     ? "wait":"no wait",
 		(ap->a_flags & FSYNC_DATAONLY) ? "data_only":"complete"));
 
@@ -2119,31 +2120,33 @@ udf_fsync(void *v)
 	/* if we don't have to wait, check for IO pending */
 	if (!wait) {
 		if (vp->v_numoutput > 0) {
-			DPRINTF(NODE, ("udf_fsync: rejecting on v_numoutput\n"));
+			DPRINTF(SYNC, ("udf_fsync %p, rejecting on v_numoutput\n", udf_node));
 			return 0;
 		}
 		if (udf_node->outstanding_bufs > 0) {
-			DPRINTF(NODE, ("udf_fsync: rejecting on outstanding_bufs\n"));
+			DPRINTF(SYNC, ("udf_fsync %p, rejecting on outstanding_bufs\n", udf_node));
 			return 0;
 		}
 		if (udf_node->outstanding_nodedscr > 0) {
-			DPRINTF(NODE, ("udf_fsync: rejecting on outstanding_nodedscr\n"));
+			DPRINTF(SYNC, ("udf_fsync %p, rejecting on outstanding_nodedscr\n", udf_node));
 			return 0;
 		}
 	}
 
 	/* wait until vp->v_numoutput reaches zero i.e. is finished */
 	if (wait) {
-		DPRINTF(SYNC, ("udf_fsync, waiting\n"));
+		DPRINTF(SYNC, ("udf_fsync %p, waiting\n", udf_node));
 		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput) {
+			DPRINTF(SYNC, ("udf_fsync %p, v_numoutput %d\n", udf_node, vp->v_numoutput));
 			cv_timedwait(&vp->v_cv, &vp->v_interlock, hz/8);
 		}
 		mutex_exit(&vp->v_interlock);
-		DPRINTF(SYNC, ("udf_fsync: fin wait\n"));
+		DPRINTF(SYNC, ("udf_fsync %p, fin wait\n", udf_node));
 	}
 
 	/* write out node and wait for it if requested */
+	DPRINTF(SYNC, ("udf_fsync %p, writeout node\n", udf_node));
 	error = udf_writeout_node(udf_node, wait);
 	if (error)
 		return error;
