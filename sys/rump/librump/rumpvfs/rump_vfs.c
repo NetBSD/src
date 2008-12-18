@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.4 2008/11/27 16:40:40 pooka Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.5 2008/12/18 00:24:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD");
 
 #include <sys/param.h>
 #include <sys/buf.h>

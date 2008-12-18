@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 2008/12/18 00:12:00 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.11 2008/12/18 00:24:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.11 2008/12/18 00:24:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>

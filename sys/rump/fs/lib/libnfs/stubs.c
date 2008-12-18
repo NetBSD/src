@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.1 2008/10/15 22:25:26 pooka Exp $	*/
+/*	$NetBSD: stubs.c,v 1.2 2008/12/18 00:24:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,8 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: stubs.c,v 1.2 2008/12/18 00:24:12 pooka Exp $");
+
 #include <sys/param.h>
 
 void __nfsboot_stub(void);

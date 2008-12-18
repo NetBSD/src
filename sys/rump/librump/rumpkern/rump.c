@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.77 2008/12/13 15:37:13 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.78 2008/12/18 00:24:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.78 2008/12/18 00:24:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.2 2008/11/27 08:13:15 pooka Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.3 2008/12/18 00:24:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.3 2008/12/18 00:24:13 pooka Exp $");
 
 #include <sys/param.h>
 

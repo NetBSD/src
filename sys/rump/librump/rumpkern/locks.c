@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.22 2008/12/13 15:34:48 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.23 2008/12/18 00:24:12 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.23 2008/12/18 00:24:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
