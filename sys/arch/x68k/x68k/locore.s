@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.84 2008/06/23 08:33:38 isaki Exp $	*/
+/*	$NetBSD: locore.s,v 1.85 2008/12/18 02:27:41 isaki Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -791,9 +791,6 @@ ASENTRY_NOPROFILE(start)
 #endif
 	RELOC(lowram, %a0)
 	movl	%a5,%a0@		| store start of physical memory
-
-	RELOC(intr_reset, %a0)
-	jbsr	%a0@			| XXX
 
 	movl	#CACHE_OFF,%d0
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
