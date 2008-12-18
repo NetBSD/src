@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2008/12/15 22:20:52 cegger Exp $	*/
+/*	$NetBSD: machdep.c,v 1.115 2008/12/18 11:45:40 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2008/12/15 22:20:52 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.115 2008/12/18 11:45:40 cegger Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -137,7 +137,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2008/12/15 22:20:52 cegger Exp $")
 #include <sys/exec.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/mount.h>
