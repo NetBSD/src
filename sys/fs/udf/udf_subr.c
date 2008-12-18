@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.73.4.3 2008/12/06 21:44:05 snj Exp $ */
+/* $NetBSD: udf_subr.c,v 1.73.4.4 2008/12/18 01:07:49 snj Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.3 2008/12/06 21:44:05 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.73.4.4 2008/12/18 01:07:49 snj Exp $");
 #endif /* not lint */
 
 
@@ -5905,10 +5905,10 @@ recount:
 
 	if (waitfor == MNT_WAIT) {
 		ndirty = ump->devvp->v_numoutput;
-		DPRINTF(NODE, ("counting pending blocks: on devvp %d\n",
+		DPRINTF(SYNC, ("counting pending blocks: on devvp %d\n",
 			ndirty));
 		udf_sync_pass(ump, cred, waitfor, 3, &ndirty);
-		DPRINTF(NODE, ("counted num dirty pending blocks %d\n",
+		DPRINTF(SYNC, ("counted num dirty pending blocks %d\n",
 			ndirty));
 	
 		if (ndirty) {
