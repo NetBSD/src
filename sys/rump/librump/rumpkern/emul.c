@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.60 2008/12/17 20:16:28 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.61 2008/12/18 00:24:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.61 2008/12/18 00:24:12 pooka Exp $");
 
 #define malloc(a,b,c) __wrap_malloc(a,b,c)
 

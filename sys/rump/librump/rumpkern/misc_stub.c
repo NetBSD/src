@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.15 2008/11/26 15:04:02 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.16 2008/12/18 00:24:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: misc_stub.c,v 1.16 2008/12/18 00:24:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/event.h>

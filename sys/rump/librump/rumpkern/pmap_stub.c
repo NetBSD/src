@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_stub.c,v 1.8 2008/12/15 00:12:54 pooka Exp $	*/
+/*	$NetBSD: pmap_stub.c,v 1.9 2008/12/18 00:24:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap_stub.c,v 1.9 2008/12/18 00:24:12 pooka Exp $");
 
 #include <sys/param.h>
 
