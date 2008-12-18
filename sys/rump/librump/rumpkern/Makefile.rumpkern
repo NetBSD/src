@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.20 2008/11/19 14:10:49 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.21 2008/12/18 11:09:34 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -8,8 +8,7 @@ LDFLAGS+=	-Wl,--wrap=malloc
 
 .PATH:	${RUMPTOP}/librump/rumpkern				\
 	${RUMPTOP}/../kern ${RUMPTOP}/../lib/libkern		\
-	${RUMPTOP}/../conf ${RUMPTOP}/../dev			\
-	${RUMPTOP}/../miscfs/genfs ${RUMPTOP}/../miscfs/syncfs
+	${RUMPTOP}/../conf ${RUMPTOP}/../dev
 
 #
 # Source modules, first the ones specifically implemented for librump.
