@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.47 2008/12/16 14:48:31 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.48 2008/12/18 00:24:12 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,6 +40,9 @@
  * except that it will create unnecessary lossage on some platforms
  * due to not being a pointer type.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.48 2008/12/18 00:24:12 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>

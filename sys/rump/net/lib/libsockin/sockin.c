@@ -1,4 +1,4 @@
-/*	$NetBSD: sockin.c,v 1.7 2008/11/26 07:19:48 pooka Exp $	*/
+/*	$NetBSD: sockin.c,v 1.8 2008/12/18 00:24:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -24,6 +24,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sockin.c,v 1.8 2008/12/18 00:24:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.1 2008/11/19 14:10:49 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.2 2008/12/18 00:24:13 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -26,6 +26,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: specfs.c,v 1.2 2008/12/18 00:24:13 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
