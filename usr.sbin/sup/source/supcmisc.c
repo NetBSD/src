@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.17 2008/12/17 17:56:32 christos Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.18 2008/12/18 18:11:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -255,6 +255,7 @@ notify(char *fmt, ...)
 {				/* record error message */
 	char buf[STRINGLENGTH];
 	char collrelname[STRINGLENGTH];
+	char hostname[STRINGLENGTH];
 	time_t tloc;
 	static FILE *noteF = NULL;	/* mail program on pipe */
 	va_list ap;
@@ -274,9 +275,11 @@ notify(char *fmt, ...)
 			FILE *outF;
 
 			if (shouldMail) {
+				(void)gethostname(hostname, sizeof(hostname));
 				(void) snprintf(buf, sizeof(buf),
-				    "mail -s \"SUP Upgrade of %s\" %s >"
-				    " /dev/null", collrelname, thisC->Cnotify);
+				    "mail -s \"SUP Upgrade of %s on %s\" %s >"
+				    " /dev/null", collrelname, hostname,
+				    thisC->Cnotify);
 				outF = popen(buf, "w");
 				if (outF == NULL) {
 					logerr("Can't send mail to %s for %s",
