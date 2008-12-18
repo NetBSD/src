@@ -117,6 +117,13 @@ An expression of the form `ipv6-addr/prefixlen\' is interpreted as
 masked IPv6 address match (with mask specified by numeric prefixlen),
 just like masked IPv4 address match (see above).
 Note that `prefixlen\' portion must always be specified.
+.IP \(bu
+A string that begins with a `/\' character is treated as a file
+name. A host name or address is matched if it matches any host name
+or address pattern listed in the named file. The file format is
+zero or more lines with zero or more host name or address patterns
+separated by whitespace.  A file name pattern can be used anywhere
+a host name or address pattern can be used.
 .SH WILDCARDS
 The access control language supports explicit wildcards:
 .IP ALL
@@ -414,4 +421,4 @@ Eindhoven University of Technology
 Den Dolech 2, P.O. Box 513,
 5600 MB Eindhoven, The Netherlands
 .\" @(#) hosts_access.5 1.20 95/01/30 19:51:46
-.\"	$NetBSD: hosts_access.5,v 1.15 2003/09/07 16:22:22 wiz Exp $
+.\"	$NetBSD: hosts_access.5,v 1.16 2008/12/18 20:16:52 christos Exp $
