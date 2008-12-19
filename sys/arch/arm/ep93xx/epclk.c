@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.15 2008/05/27 14:31:36 hamajima Exp $	*/
+/*	$NetBSD: epclk.c,v 1.16 2008/12/19 04:26:35 kenh Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.15 2008/05/27 14:31:36 hamajima Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.16 2008/12/19 04:26:35 kenh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,6 +107,17 @@ static struct epclk_softc *epclk_sc = NULL;
 
 CFATTACH_DECL(epclk, sizeof(struct epclk_softc),
     epclk_match, epclk_attach, NULL, NULL);
+
+/* This is a quick ARM way to multiply by 983040/1000000 (w/o overflow) */
+#define US_TO_TIMER4VAL(x, y) { \
+	u_int32_t hi, lo, scalar = 4222124650UL; \
+	__asm volatile ( \
+		"umull %0, %1, %2, %3;" \
+		: "=&r"(lo), "=&r"(hi) \
+		: "r"((x)), "r"(scalar) \
+	); \
+	(y) = hi; \
+}
 
 #define TIMER4VAL()	(*(volatile u_int32_t *)(EP93XX_APB_VBASE + \
 	EP93XX_APB_TIMERS + EP93XX_TIMERS_Timer4ValueLow))
@@ -254,7 +265,7 @@ delay(unsigned int n)
 	 */
 	initial_tick = TIMER4VAL();
 
-	remaining = n * TIMER_FREQ / 1000000;
+	US_TO_TIMER4VAL(n, remaining);
 
 	while (remaining > 0) {
 		cur_tick = TIMER4VAL();
