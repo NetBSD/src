@@ -1,6 +1,16 @@
-#	$NetBSD: TS7200,v 1.35 2008/11/24 11:41:10 ad Exp $
+#	$NetBSD: TS7200,v 1.36 2008/12/19 04:23:52 kenh Exp $
 #
-#	GENERIC -- Generic kernel
+#	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
+#
+#	Note - the kernel size for this hardware has two limitations:
+#
+#	1) The total size of the kernel (text, data, and bss) must fit
+#	   within 8MB.  This is mainly an issue for the INSTALL kernel
+#	   (TS7200_INSTALL)
+#	2) If you wish to install this kernel in flash, the compressed size
+#	   (including the gunzip booter) must fit within 1441792 bytes.
+#
+#	If you add new devices to this kernel, please check these limitations.
 #
 
 include	"arch/evbarm/conf/std.tsarm"
@@ -34,11 +44,11 @@ file-system	MSDOSFS		# MS-DOS file system
 #file-system	FDESC		# /dev/fd
 #file-system    FILECORE        # Acorn filecore file system
 file-system	KERNFS		# /kern
-file-system	NULLFS		# loopback file system
+#file-system	NULLFS		# loopback file system
 #file-system	PORTAL		# portal filesystem (still experimental)
 file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
-file-system	UNION		# union file system
+#file-system	UNION		# union file system
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
@@ -139,7 +149,7 @@ options 	SYMTAB_SPACE=450000
 config		netbsd		root on ? type ?
 config		netbsd-epe0	root on epe0 type nfs
 config		netbsd-wd0	root on wd0 type ffs
-config		netbsd-sd0	root on sd0 type ffs
+#config		netbsd-sd0	root on sd0 type ffs
 
 # The main bus device
 mainbus0	at root
@@ -195,13 +205,13 @@ tsdio2  at isa? port 0x110
 tsdio3  at isa? port 0x118
 
 # PCMCIA bus support
-pcmcia* at pcic? controller ? socket ?
+#pcmcia* at pcic? controller ? socket ?
 
-options PCIC_ISA_INTR_ALLOC_MASK=0xe0
+#options PCIC_ISA_INTR_ALLOC_MASK=0xe0
 # ISA PCMCIA controllers
-pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
-pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
-pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
+#pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+#pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
+#pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
 
 # ATA (IDE) bus support
 atabus* at ata?
@@ -269,7 +279,7 @@ uhub*	at usb?
 uhub*	at uhub? port ?
 
 # USB HID device
-uhidev*	at uhub? port ? configuration ? interface ?
+#uhidev*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
 # ums*	at uhidev? reportid ?
@@ -280,27 +290,27 @@ uhidev*	at uhub? port ? configuration ? interface ?
 # wsmouse* at uep? mux 0
 
 # USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
+#ukbd*	at uhidev? reportid ?
+#wskbd*	at ukbd? console ? mux 1
 
 # USB serial adapter
-ucycom*	at uhidev? reportid ?
+#ucycom*	at uhidev? reportid ?
 
 # USB Generic HID devices
-uhid*	at uhidev? reportid ?
+#uhid*	at uhidev? reportid ?
 
 # USB Printer
-ulpt*	at uhub? port ? configuration ? interface ?
+#ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Modem
-umodem*	at uhub? port ? configuration ?
-ucom*	at umodem?
+#umodem*	at uhub? port ? configuration ?
+#ucom*	at umodem?
 
 # USB Mass Storage
-umass*	at uhub? port ? configuration ? interface ?
-scsibus* at umass?
+#umass*	at uhub? port ? configuration ? interface ?
+#scsibus* at umass?
 # SCSI devices
-sd*     at scsibus? target ? lun ?      # SCSI disk drives
+#sd*     at scsibus? target ? lun ?      # SCSI disk drives
 #st*     at scsibus? target ? lun ?      # SCSI tape drives
 #cd*     at scsibus? target ? lun ?      # SCSI CD-ROM drives
 #ch*     at scsibus? target ? lun ?      # SCSI autochangers
@@ -311,47 +321,47 @@ sd*     at scsibus? target ? lun ?      # SCSI disk drives
 # wd*	at umass?
 
 # USB audio
-uaudio*	at uhub? port ? configuration ?
+#uaudio*	at uhub? port ? configuration ?
 
 # USB MIDI
-umidi* at uhub? port ? configuration ?
+#umidi* at uhub? port ? configuration ?
 
 # USB IrDA
 # USB-IrDA bridge spec
-uirda* at uhub? port ? configuration ? interface ?
-irframe* at uirda?
+#uirda* at uhub? port ? configuration ? interface ?
+#irframe* at uirda?
 
 # SigmaTel STIr4200 USB/IrDA Bridge
-ustir* at uhub? port ?
-irframe* at ustir?
+#ustir* at uhub? port ?
+#irframe* at ustir?
 
 # USB Ethernet adapters
-aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
-axe*	at uhub? port ?		# ASIX AX88172 based adapters
-cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
-kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
-udav*	at uhub? port ?		# Davicom DM9601 based adapters
-url*	at uhub? port ?		# Realtek RTL8150L based adapters
+#aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+#axe*	at uhub? port ?		# ASIX AX88172 based adapters
+#cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
+#kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+#udav*	at uhub? port ?		# Davicom DM9601 based adapters
+#url*	at uhub? port ?		# Realtek RTL8150L based adapters
 
 # Prolific PL2301/PL2302 host-to-host adapter
-upl*	at uhub? port ?
+#upl*	at uhub? port ?
 
 # Serial adapters
-ubsa*	at uhub? port ?		# Belkin serial adapter
-ucom*	at ubsa? portno ?
+#ubsa*	at uhub? port ?		# Belkin serial adapter
+#ucom*	at ubsa? portno ?
 
-uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
-ucom*	at uftdi? portno ?
+#uftdi*	at uhub? port ?		# FTDI FT8U100AX serial adapter
+#ucom*	at uftdi? portno ?
 
-umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
-ucom*	at umct? portno ?
+#umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
+#ucom*	at umct? portno ?
 
-uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
-ucom*	at uplcom? portno ?
+#uplcom* at uhub? port ? 	# I/O DATA USB-RSAQ2 serial adapter
+#ucom*	at uplcom? portno ?
 
-uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
-ucom*	at uvscom? portno ?
-atu*	at uhub? port ?		# Atmel AT76C50XX 802.11b adapter
+#uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
+#ucom*	at uvscom? portno ?
+#atu*	at uhub? port ?		# Atmel AT76C50XX 802.11b adapter
 
 # Diamond Multimedia Rio 500
 # urio*	at uhub? port ?
@@ -406,7 +416,7 @@ ugen*	at uhub? port ?
 #opl*	at yds?
 
 # Audio support
-audio*	at audiobus?
+#audio*	at audiobus?
 
 # MPU 401 UARTs
 #mpu*	at cmpci?
@@ -445,7 +455,7 @@ pseudo-device	ksyms			# /dev/ksyms
 #
 # builtin terminal emulations
 #options 	WSEMUL_SUN		# sun terminal emulation
-options 	WSEMUL_VT100		# VT100 / VT220 emulation
+#options 	WSEMUL_VT100		# VT100 / VT220 emulation
 # customization of console and kernel output - see dev/wscons/wsdisplayvar.h
 #options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
 #options 	WS_DEFAULT_FG=WSCOL_WHITE
@@ -480,6 +490,6 @@ options 	WSEMUL_VT100		# VT100 / VT220 emulation
 #options 	VGA_RASTERCONSOLE
 
 # wscons pseudo-devices
-pseudo-device	wsmux			# mouse & keyboard multiplexor
+#pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 
