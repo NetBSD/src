@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.16 2008/11/19 06:29:48 matt Exp $	*/
+/*	$NetBSD: ast.c,v 1.17 2008/12/19 15:20:10 njoly Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.16 2008/11/19 06:29:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.17 2008/12/19 15:20:10 njoly Exp $");
 
 #include "opt_ddb.h"
 
@@ -123,7 +123,7 @@ ast(struct trapframe *tf)
 
 	if (l->l_pflag & LP_OWEUPC) {
 		l->l_pflag &= ~LP_OWEUPC;
-		ADDUPROF(p);
+		ADDUPROF(l);
 	}
 
 	/* Allow a forced task switch. */
