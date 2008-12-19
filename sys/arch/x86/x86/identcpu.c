@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.12 2008/12/19 11:21:24 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.13 2008/12/19 15:11:55 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.12 2008/12/19 11:21:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.13 2008/12/19 15:11:55 cegger Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -702,7 +702,9 @@ cpu_probe(struct cpu_info *ci)
 		cpu_feature = ci->ci_feature_flags;
 		cpu_feature2 = ci->ci_feature2_flags;
 		/* Early patch of text segment. */
+#ifndef XEN
 		x86_patch(true);
+#endif
 	} else {
 		/* If not first. */
 		cpu_feature &= ci->ci_feature_flags;
