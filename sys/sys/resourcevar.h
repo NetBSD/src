@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.46 2008/10/11 13:40:58 pooka Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.47 2008/12/19 15:16:15 njoly Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -83,13 +83,13 @@ struct plimit {
 };
 
 /* add user profiling from AST XXXSMP */
-#define	ADDUPROF(p)							\
+#define	ADDUPROF(l)							\
 	do {								\
-		struct proc *_p = l->l_proc;				\
-		addupc_task(l,						\
-		    (_p)->p_stats->p_prof.pr_addr,			\
-		    (_p)->p_stats->p_prof.pr_ticks);			\
-		(_p)->p_stats->p_prof.pr_ticks = 0;			\
+		struct proc *_p = (l)->l_proc;				\
+		addupc_task((l),					\
+		    _p->p_stats->p_prof.pr_addr,			\
+		    _p->p_stats->p_prof.pr_ticks);			\
+		_p->p_stats->p_prof.pr_ticks = 0;			\
 	} while (/* CONSTCOND */ 0)
 
 #ifdef _KERNEL
