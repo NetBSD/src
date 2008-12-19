@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.99 2008/11/13 11:10:41 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.100 2008/12/19 17:11:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.99 2008/11/13 11:10:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.100 2008/12/19 17:11:57 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -253,7 +253,7 @@ mfs_initminiroot(void *base)
 	if (fs->fs_magic != FS_UFS1_MAGIC || fs->fs_bsize > MAXBSIZE ||
 	    fs->fs_bsize < sizeof(struct fs))
 		return (0);
-	mountroot = mfs_mountroot;
+	rootfstype = MOUNT_MFS;
 	mfs_rootbase = base;
 	mfs_rootsize = fs->fs_fsize * fs->fs_size;
 	rootdev = makedev(255, mfs_minor);

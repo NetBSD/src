@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.231 2008/12/16 22:35:38 christos Exp $	*/
+/*	$NetBSD: systm.h,v 1.232 2008/12/19 17:11:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -331,7 +331,10 @@ void	dopowerhooks(int);
  * these to be executed just before (*mountroot)() if the passed device is
  * selected as the root device.
  */
-extern int (*mountroot)(void);
+
+#define	ROOT_FSTYPE_ANY	"?"
+
+extern const char *rootfstype;
 void	*mountroothook_establish(void (*)(struct device *), struct device *);
 void	mountroothook_disestablish(void *);
 void	mountroothook_destroy(void);

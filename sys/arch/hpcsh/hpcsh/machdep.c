@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2008/11/30 18:21:34 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 2008/12/19 17:11:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2008/11/30 18:21:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2008/12/19 17:11:57 pgoyette Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -243,7 +243,7 @@ machine_startup(int argc, char *argv[], struct bootinfo *bi)
 			p = cp + 2;
 #ifdef NFS
 			if (strcmp(p, "nfs") == 0)
-				mountroot = nfs_mountroot;
+				rootfstype = MOUNT_NFS;
 			else
 				makebootdev(p);
 #else /* NFS */

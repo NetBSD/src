@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.89 2008/11/30 18:21:34 martin Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.90 2008/12/19 17:11:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.89 2008/11/30 18:21:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc_machdep.c,v 1.90 2008/12/19 17:11:57 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -363,8 +363,8 @@ initarm(int argc, char **argv, struct bootinfo *bi)
 			/* boot device: -b=sd0 etc. */
 			cp = cp + 2;
 #ifdef NFS
-			if (strcmp(cp, "nfs") == 0)
-				mountroot = nfs_mountroot;
+			if (strcmp(cp, MOUNT_NFS) == 0)
+				rootfstype = MOUNT_NFS;
 			else
 				strncpy(boot_file, cp, sizeof(boot_file));
 #else /* !NFS */
