@@ -1,4 +1,4 @@
-/*	$NetBSD: vfsops_stub.c,v 1.3 2008/12/19 00:57:24 pooka Exp $	*/
+/*	$NetBSD: vfsops_stub.c,v 1.4 2008/12/19 17:11:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.3 2008/12/19 00:57:24 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.4 2008/12/19 17:11:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.3 2008/12/19 00:57:24 pooka Exp $"
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/syncfs/syncfs.h>
 
-int (*mountroot)(void);
+const char *rootfstype;
 
 #define VFSSTUB(name)							\
     int name(void *arg) {panic("%s: unimplemented vfs stub", __func__);}
