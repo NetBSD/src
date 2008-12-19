@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.29 2008/10/06 22:09:21 joerg Exp $	*/
+/*	$NetBSD: str.c,v 1.30 2008/12/19 21:34:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.29 2008/10/06 22:09:21 joerg Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.30 2008/12/19 21:34:14 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.29 2008/10/06 22:09:21 joerg Exp $");
+__RCSID("$NetBSD: str.c,v 1.30 2008/12/19 21:34:14 christos Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -175,7 +175,11 @@ brk_string(const char *str, int *store_argc, Boolean expand, char **buffer)
 				inquote = (char) ch;
 				/* Don't miss "" or '' */
 				if (start == NULL && p[1] == inquote) {
-					start = t + 1;
+					if (!expand) {
+						start = t;
+						*t++ = ch;
+					} else
+						start = t + 1;
 					p++;
 					inquote = '\0';
 					break;
