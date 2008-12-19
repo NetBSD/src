@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.142 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: job.c,v 1.143 2008/12/19 22:03:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.142 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.143 2008/12/19 22:03:41 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.142 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: job.c,v 1.143 2008/12/19 22:03:41 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2330,6 +2330,10 @@ Job_ParseShell(char *line)
      * Parse the specification by keyword
      */
     words = brk_string(line, &argc, TRUE, &path);
+    if (words == NULL) {
+	Error("Unterminated quoted string [%s]", line);
+	return FAILURE;
+    }
     shellArgv = path;
 
     for (path = NULL, argv = words; argc != 0; argc--, argv++) {
