@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.182 2008/12/07 10:29:39 tsutsui Exp $
+$NetBSD: UPDATING,v 1.183 2008/12/19 20:37:45 pgoyette Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,13 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20081219:
+	config(1) has been updated, and one of the files it creates -
+	swapnetbsd.o - has changed format.  You need to rebuild config
+	(done automatically by build.sh) and then you need to rerun
+	config on all kernel configuration files before rebuilding those
+	kernels.
 
 20081205:
 	If you build with MKX11=no, you should remove /etc/rc.d/xdm and
