@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.23 2008/12/18 00:24:12 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.24 2008/12/19 09:33:40 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.23 2008/12/18 00:24:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.24 2008/12/19 09:33:40 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -212,14 +212,13 @@ rw_lock_held(krwlock_t *rw)
 
 /* curriculum vitaes */
 
-/* forgive me for I have sinned */
-#define RUMPCV(a) ((struct rumpuser_cv *)(__UNCONST((a)->cv_wmesg)))
+#define RUMPCV(cv) (*(struct rumpuser_cv **)(cv))
 
 void
 cv_init(kcondvar_t *cv, const char *msg)
 {
 
-	rumpuser_cv_init((struct rumpuser_cv **)__UNCONST(&cv->cv_wmesg));
+	rumpuser_cv_init((struct rumpuser_cv **)cv);
 }
 
 void
