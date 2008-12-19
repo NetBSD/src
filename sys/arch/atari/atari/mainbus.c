@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2008/12/19 18:49:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2008/04/28 20:23:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.7 2008/12/19 18:49:38 cegger Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,9 +168,9 @@ mb_alloc_bus_space_tag()
 	bus_space_tag_t	mb_t;
 
 	/* Not really M_TEMP, is it.. */
-	if ((mb_t = malloc(sizeof(*mb_t), M_TEMP, M_NOWAIT)) == NULL)
-		return(NULL);
-	bzero(mb_t, sizeof(*mb_t));
+	mb_t = malloc(sizeof(*mb_t), M_TEMP, M_NOWAIT|M_ZERO);
+	if (mb_t == NULL)
+		return NULL;
 	
 	mb_t->abs_p_1   = mb_bus_space_peek_1;
 	mb_t->abs_p_2   = mb_bus_space_peek_2;

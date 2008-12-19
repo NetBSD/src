@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.17 2008/12/19 14:07:37 cegger Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.18 2008/12/19 18:49:38 cegger Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.47 2007/07/13 09:17:48 markus Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.17 2008/12/19 14:07:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.18 2008/12/19 18:49:38 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -181,10 +181,9 @@ pfi_kif_get(const char *kif_name)
 		return (kif);
 
 	/* create new one */
-	if ((kif = malloc(sizeof(*kif), PFI_MTYPE, M_NOWAIT)) == NULL)
+	if ((kif = malloc(sizeof(*kif), PFI_MTYPE, M_NOWAIT|M_ZERO)) == NULL)
 		return (NULL);
 
-	bzero(kif, sizeof(*kif));
 	strlcpy(kif->pfik_name, kif_name, sizeof(kif->pfik_name));
 #ifdef __NetBSD__
 	/* time_second is not valid yet */

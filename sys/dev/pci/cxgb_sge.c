@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.9 2008/01/17 06:03:21 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_sge.c,v 1.10 2008/12/19 18:49:38 cegger Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_sge.c,v 1.30 2007/09/09 04:34:03 kmacy Exp $");
@@ -797,8 +797,7 @@ alloc_ring(adapter_t *sc, size_t nelem, size_t elem_size, size_t sw_size,
 
     if (sw_size) {
         len = nelem * sw_size;
-        s = malloc(len, M_DEVBUF, M_WAITOK);
-        bzero(s, len);
+        s = malloc(len, M_DEVBUF, M_WAITOK|M_ZERO);
         *(void **)sdesc = s;
     }
     if (parent_entry_tag == NULL)
@@ -844,8 +843,7 @@ alloc_ring(adapter_t *sc, size_t nelem, size_t elem_size, size_t sw_size,
     if (sw_size)
     {
         len = nelem * sw_size;
-        s = malloc(len, M_DEVBUF, M_WAITOK);
-        bzero(s, len);
+        s = malloc(len, M_DEVBUF, M_WAITOK|M_ZERO);
         *(void **)sdesc = s;
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.13 2008/11/07 00:20:13 dyoung Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.14 2008/12/19 18:49:38 cegger Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.24 2007/05/26 17:13:30 jason Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.13 2008/11/07 00:20:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.14 2008/12/19 18:49:38 cegger Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -134,9 +134,8 @@ pflog_clone_create(struct if_clone *ifc, int unit)
 	if (unit >= PFLOGIFS_MAX)
 		return (EINVAL);
 
-	if ((pflogif = malloc(sizeof(*pflogif), M_DEVBUF, M_NOWAIT)) == NULL)
+	if ((pflogif = malloc(sizeof(*pflogif), M_DEVBUF, M_NOWAIT|M_ZERO)) == NULL)
 		return (ENOMEM);
-	bzero(pflogif, sizeof(*pflogif));
 
 	pflogif->sc_unit = unit;
 	ifp = &pflogif->sc_if;

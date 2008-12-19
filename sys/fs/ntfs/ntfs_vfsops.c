@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.73 2008/12/17 20:51:35 cegger Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.74 2008/12/19 18:49:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.73 2008/12/17 20:51:35 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.74 2008/12/19 18:49:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,8 +334,7 @@ ntfs_mountfs(devvp, mp, argsp, l)
 	error = bread(devvp, BBLOCK, BBSIZE, NOCRED, 0, &bp);
 	if (error)
 		goto out;
-	ntmp = malloc( sizeof *ntmp, M_NTFSMNT, M_WAITOK );
-	bzero( ntmp, sizeof *ntmp );
+	ntmp = malloc( sizeof *ntmp, M_NTFSMNT, M_WAITOK|M_ZERO);
 	bcopy( bp->b_data, &ntmp->ntm_bootfile, sizeof(struct bootfile) );
 	brelse( bp , 0 );
 	bp = NULL;

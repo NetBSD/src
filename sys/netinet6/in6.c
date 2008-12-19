@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.142 2008/11/07 00:20:18 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.143 2008/12/19 18:49:39 cegger Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.142 2008/11/07 00:20:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.143 2008/12/19 18:49:39 cegger Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -2186,17 +2186,13 @@ in6_domifattach(struct ifnet *ifp)
 {
 	struct in6_ifextra *ext;
 
-	ext = (struct in6_ifextra *)malloc(sizeof(*ext), M_IFADDR, M_WAITOK);
-	bzero(ext, sizeof(*ext));
+	ext = malloc(sizeof(*ext), M_IFADDR, M_WAITOK|M_ZERO);
 
-	ext->in6_ifstat = (struct in6_ifstat *)malloc(sizeof(struct in6_ifstat),
-	    M_IFADDR, M_WAITOK);
-	bzero(ext->in6_ifstat, sizeof(*ext->in6_ifstat));
+	ext->in6_ifstat = malloc(sizeof(struct in6_ifstat),
+	    M_IFADDR, M_WAITOK|M_ZERO);
 
-	ext->icmp6_ifstat =
-	    (struct icmp6_ifstat *)malloc(sizeof(struct icmp6_ifstat),
-	    M_IFADDR, M_WAITOK);
-	bzero(ext->icmp6_ifstat, sizeof(*ext->icmp6_ifstat));
+	ext->icmp6_ifstat = malloc(sizeof(struct icmp6_ifstat),
+	    M_IFADDR, M_WAITOK|M_ZERO);
 
 	ext->nd_ifinfo = nd6_ifattach(ifp);
 	ext->scope6_id = scope6_ifattach(ifp);

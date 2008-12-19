@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.58 2008/12/16 22:35:26 christos Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.59 2008/12/19 18:49:38 cegger Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.58 2008/12/16 22:35:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.59 2008/12/19 18:49:38 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -766,11 +766,9 @@ sparc_vme_intr_establish(void *cookie, vme_intr_handle_t vih, int level,
 			break;
 
 	if (ih == NULL) {
-		ih = (struct intrhand *)
-			malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
+		ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT|M_ZERO);
 		if (ih == NULL)
 			panic("vme_addirq");
-		bzero(ih, sizeof *ih);
 		ih->ih_fun = sc->sc_vmeintr;
 		ih->ih_arg = vih;
 		intr_establish(pil, 0, ih, NULL);
