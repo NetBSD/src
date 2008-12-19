@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.2 2008/12/19 15:24:03 haad Exp $      */
+/*        $NetBSD: dm.h,v 1.3 2008/12/19 16:30:41 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -213,6 +213,7 @@ typedef struct dm_target {
 	int (*upcall)(dm_table_entry_t *, struct buf *);
 	
 	uint32_t version[3];
+	int ref_cnt;
 	
 	TAILQ_ENTRY(dm_target) dm_target_next;
 } dm_target_t;
@@ -255,8 +256,10 @@ int dm_table_status_ioctl(prop_dictionary_t);
 int dm_target_destroy(void);
 int dm_target_insert(dm_target_t *);
 prop_array_t dm_target_prop_list(void);
-dm_target_t* dm_target_lookup_name(const char *);
+dm_target_t* dm_target_lookup(const char *);
 int dm_target_rem(char *);
+void dm_target_unbusy(dm_target_t *);
+void dm_target_busy(dm_target_t *);
 
 /* XXX temporally add */
 int dm_target_init(void);

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.2 2008/12/19 15:24:03 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.3 2008/12/19 16:30:41 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -727,10 +727,10 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		 * If we want to deny table with 2 or more different
 		 * target we should do it here
 		 */
-		if ((target = dm_target_lookup_name(type)) == NULL)
+		if ((target = dm_target_lookup(type)) == NULL)
 			return ENOENT;
 		
-		if ((table_en=kmem_alloc(sizeof(dm_table_entry_t),
+		if ((table_en = kmem_alloc(sizeof(dm_table_entry_t),
 			    KM_NOSLEEP)) == NULL)
 			return ENOMEM;
 		
