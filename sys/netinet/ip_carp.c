@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.28 2008/12/17 20:51:37 cegger Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.29 2008/12/19 18:49:39 cegger Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.28 2008/12/17 20:51:37 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.29 2008/12/19 18:49:39 cegger Exp $");
 
 /*
  * TODO:
@@ -755,10 +755,9 @@ carp_clone_create(struct if_clone *ifc, int unit)
 	struct carp_softc *sc;
 	struct ifnet *ifp;
 
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
 	if (!sc)
 		return (ENOMEM);
-	bzero(sc, sizeof(*sc));
 
 	sc->sc_suppress = 0;
 	sc->sc_advbase = CARP_DFLTINTV;
