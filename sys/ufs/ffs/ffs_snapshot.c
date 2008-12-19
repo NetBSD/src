@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.88 2008/12/17 20:51:39 cegger Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.89 2008/12/19 11:36:10 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.88 2008/12/17 20:51:39 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.89 2008/12/19 11:36:10 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1119,6 +1119,7 @@ indiracct(struct vnode *snapvp, struct vnode *cancelvp, int level,
 	if (last > NINDIR(fs))
 		last = NINDIR(fs);
 	bap = malloc(fs->fs_bsize, M_DEVBUF, M_WAITOK | M_ZERO);
+	bcopy(bp->b_data, (void *)bap, fs->fs_bsize);
 	brelse(bp, 0);
 	error = (*acctfunc)(snapvp, bap, 0, last,
 	    fs, level == 0 ? rlbn : -1, expungetype);
