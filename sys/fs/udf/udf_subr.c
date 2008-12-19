@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.82 2008/12/18 15:41:44 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.83 2008/12/19 18:49:39 cegger Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.82 2008/12/18 15:41:44 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.83 2008/12/19 18:49:39 cegger Exp $");
 #endif /* not lint */
 
 
@@ -3643,8 +3643,7 @@ udf_write_terminator(struct udf_mount *ump, uint32_t sector)
 	union dscrptr *dscr;
 	int error;
 
-	dscr = malloc(ump->discinfo.sector_size, M_TEMP, M_WAITOK);
-	bzero(dscr, ump->discinfo.sector_size);
+	dscr = malloc(ump->discinfo.sector_size, M_TEMP, M_WAITOK|M_ZERO);
 	udf_inittag(ump, &dscr->tag, TAGID_TERM, sector);
 
 	/* CRC length for an anchor is 512 - tag length; defined in Ecma 167 */
@@ -4556,8 +4555,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 		file_char = UDF_FILE_CHAR_DIR;
 
 	/* malloc scrap buffer */
-	fid = malloc(lb_size, M_TEMP, M_WAITOK);
-	bzero(fid, lb_size);
+	fid = malloc(lb_size, M_TEMP, M_WAITOK|M_ZERO);
 
 	/* calculate _minimum_ fid size */
 	unix_to_udf_name((char *) fid->data, &fid->l_fi,
