@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.655 2008/12/16 13:03:29 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.656 2008/12/19 15:24:19 haad Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -507,6 +507,33 @@ Notes:
 Distribution is stripped down to the relevant part. cpio is currently
 not usable, so it was left out.
 
+Package:	libcdk
+Version:	4.9.9-20000407-myc3
+Current Vers:	cdk-4.9.10-20000923
+Maintainer:	mike@vexus.ca
+Archive Site:	http://www.vexus.ca/products/CDK/
+Home Page:	http://www.vexus.ca/products/CDK/
+Responsible:	garbled
+License:	BSD (4-clause)
+Notes:
+Initial port to netbsd curses was done by mycroft.  This is a heavily
+modified version of the released CDK 4.9.9.  The current version has been
+taken over by the Ncurses people, and has a number of changes to it.  It
+might be worthwhile to import at some future date, but for now we should
+leave it alone.  (garbled 1/4/2001)
+
+Package:        libdevmapper
+Version:        1.02.29
+Current Vers:   1.02.29
+Maintainer:     lvm-devel@redhat.com
+Archive Site:   ftp://sources.redhat.com/pub/lvm2/
+Home Page:      http://sources.redhat.com/lvm2/
+Responsible:    haad
+License:        LGPLv2.1
+Notes:
+The lvm2tools and the libdevmapper are now distributed as one source 
+repository. See the lvm2tools Notes for more informations.
+
 Package:	libevent
 Version:	1.4.4-stable
 Current Vers:	1.4.4-stable
@@ -516,6 +543,20 @@ Home Page:	http://www.monkey.org/~provos/libevent/
 Responsible:	provos
 License:	BSD (3/4-clause)
 Notes:
+
+Package:        lvm2tools
+Version:        2.02.43
+Current Vers:   2.02.43
+Maintainer:     lvm-devel@redhat.com
+Archive Site:   ftp://sources.redhat.com/pub/lvm2/
+Home Page:      http://sources.redhat.com/lvm2/
+Responsible:    haad
+License:        GPLv2
+Notes: 
+Use the src/external/gpl2/lvm2tools/dist/lvm2netbsd script to prepare source tree 
+for import. Keep eye on dist/include/configure.h it migh change over the releases.
+We maintain our own version of libdevmapper ioctl protocol code, therefore we 
+should test it before import. Talk to haad before importing new version.
 
 Package:	libpcap
 Version:	0.9.4
