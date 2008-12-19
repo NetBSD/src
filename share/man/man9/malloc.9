@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.9,v 1.43 2008/11/12 12:35:54 ad Exp $
+.\"	$NetBSD: malloc.9,v 1.44 2008/12/19 13:41:03 cegger Exp $
 .\"
 .\" Copyright (c) 1996, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 12, 2008
+.Dd December 19, 2008
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -48,14 +48,11 @@
 .In sys/malloc.h
 .Ft void *
 .Fn malloc "unsigned long size" "struct malloc_type *type" "int flags"
-.Fn MALLOC "space" "cast" "unsigned long size" "struct malloc_type *type" \
-    "int flags"
 .Ft void *
 .Fn realloc "void *addr" "unsigned long newsize" "struct malloc_type *type" \
     "int flags"
 .Ft void
 .Fn free "void *addr" "struct malloc_type *type"
-.Fn FREE "void *addr" "struct malloc_type *type"
 .Ft unsigned long
 .Fn malloc_roundup "unsigned long size"
 .Ft void
@@ -132,38 +129,6 @@ If the new size is 0, then
 .Fn realloc
 behaves exactly as
 .Fn free .
-.Pp
-The
-.Fn MALLOC
-macro variant is functionally equivalent to
-.Bd -literal -offset indent
-(space) = (cast)malloc((u_long)(size), type, flags)
-.Ed
-.Pp
-and the
-.Fn FREE
-macro variant is equivalent to
-.Bd -literal -offset indent
-free((void *)(addr), type)
-.Ed
-.Pp
-The
-.Fn MALLOC
-macro is intended to be used with a compile-time constant
-.Fa size
-so that the compiler can do constant folding.
-In the comparison to
-.Fn malloc
-and
-.Fn free
-functions, the
-.Fn MALLOC
-and
-.Fn FREE
-macros may be faster, at the cost of increased code size.
-There is no difference between the memory allocated with MALLOC and malloc.
-i.e., no matter which MALLOC or malloc is used to allocate the memory,
-either FREE or free can be used to free it.
 .Pp
 Unlike its standard C library counterpart
 .Pq Xr malloc 3 ,
