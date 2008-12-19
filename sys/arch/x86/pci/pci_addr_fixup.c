@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.2 2008/12/18 12:18:20 cegger Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.3 2008/12/19 12:58:43 cegger Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.2 2008/12/18 12:18:20 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_addr_fixup.c,v 1.3 2008/12/19 12:58:43 cegger Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/extent.h>
