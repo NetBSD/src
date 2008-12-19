@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_error.c,v 1.2 2008/12/19 15:24:03 haad Exp $      */
+/*        $NetBSD: dm_target_error.c,v 1.3 2008/12/19 16:30:41 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -81,6 +81,9 @@ dm_target_error_destroy(dm_table_entry_t *table_en)
 {
 	table_en->target_config = NULL;
 
+	/* Unbusy target so we can unload it */
+	dm_target_unbusy(table_en->target);
+	
 	return 0;
 }
 

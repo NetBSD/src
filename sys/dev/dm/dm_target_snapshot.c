@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.2 2008/12/19 15:24:03 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.3 2008/12/19 16:30:41 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -220,6 +220,9 @@ dm_target_snapshot_destroy(dm_table_entry_t *table_en)
 		
 	if (tsc->tsc_persistent_dev)
 		dm_pdev_decr(tsc->tsc_cow_dev);
+
+        /* Unbusy target so we can unload it */
+	dm_target_unbusy(table_en->target);
 	
 	kmem_free(table_en->target_config, sizeof(dm_target_snapshot_config_t));
 
@@ -385,6 +388,9 @@ dm_target_snapshot_orig_destroy(dm_table_entry_t *table_en)
 	
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tsoc->tsoc_real_dev);
+
+	/* Unbusy target so we can unload it */
+	dm_target_unbusy(table_en->target);
 	
 	kmem_free(table_en->target_config, sizeof(dm_target_snapshot_origin_config_t));
 
