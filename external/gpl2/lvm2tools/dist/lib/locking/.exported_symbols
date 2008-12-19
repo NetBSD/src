@@ -2,3 +2,7 @@ locking_init
 locking_end
 lock_resource
 reset_locking
+locking_init
+locking_end
+lock_resource
+reset_locking
