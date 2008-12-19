@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.550 2008/11/15 11:27:49 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.551 2008/12/19 15:24:18 haad Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -657,7 +657,7 @@ ${var}?=	yes
 	MKMANZ MKOBJDIRS \
 	MKPCC MKPCCCMDS \
 	MKSOFTFLOAT MKSTRIPIDENT \
-	MKUNPRIVED MKUPDATE MKX11
+	MKUNPRIVED MKUPDATE MKX11 MKLVM
 ${var}?=no
 .endfor
 

@@ -1,0 +1,18 @@
+Important unimplemented features in current device-mapper implementation
+
+* implement dm_dev_event_ioctl and dm_target_msg_ioctl functions
+
+* write more targets mirror, stripe.
+
+* snapshot target, there is some code in repository already
+
+* enable dynamically loadable targets
+
+			Pain in the sky tasks
+
+* implement multipath target for network attached storage devices.
+
+* Cluster lvm extension, NetBSD needs Distributed Lock Manager for this.
+
+* write GPL free libdevmapper and lvm2tools.
+	
