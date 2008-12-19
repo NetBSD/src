@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.25 2008/06/16 12:03:01 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.26 2008/12/19 07:57:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.25 2008/06/16 12:03:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.26 2008/12/19 07:57:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -47,8 +47,25 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.25 2008/06/16 12:03:01 ad Exp $")
 
 #include <uvm/uvm_extern.h>
 
-#define	CV_SLEEPQ(cv)	((sleepq_t *)(cv)->cv_opaque)
-#define	CV_DEBUG_P(cv)	((cv)->cv_wmesg != nodebug)
+/*
+ * Accessors for the private contents of the kcondvar_t data type.
+ *
+ *	cv_opaque[0]	sleepq...
+ *	cv_opaque[1]	...pointers
+ *	cv_opaque[2]	description for ps(1)
+ *
+ * cv_opaque[0..1] is protected by the interlock passed to cv_wait() (enqueue
+ * only), and the sleep queue lock acquired with sleeptab_lookup() (enqueue
+ * and dequeue).
+ *
+ * cv_opaque[2] (the wmesg) is static and does not change throughout the life
+ * of the CV.
+ */
+#define	CV_SLEEPQ(cv)		((sleepq_t *)(cv)->cv_opaque)
+#define	CV_WMESG(cv)		((const char *)(cv)->cv_opaque[2])
+#define	CV_SET_WMESG(cv, v) 	(cv)->cv_opaque[2] = __UNCONST(v)
+
+#define	CV_DEBUG_P(cv)	(CV_WMESG(cv) != nodebug)
 #define	CV_RA		((uintptr_t)__builtin_return_address(0))
 
 static u_int	cv_unsleep(lwp_t *, bool);
@@ -91,7 +108,7 @@ cv_init(kcondvar_t *cv, const char *wmesg)
 	}
 #endif
 	KASSERT(wmesg != NULL);
-	cv->cv_wmesg = wmesg;
+	CV_SET_WMESG(cv, wmesg);
 	sleepq_init(CV_SLEEPQ(cv));
 }
 
@@ -107,7 +124,7 @@ cv_destroy(kcondvar_t *cv)
 	LOCKDEBUG_FREE(CV_DEBUG_P(cv), cv);
 #ifdef DIAGNOSTIC
 	KASSERT(cv_is_valid(cv));
-	cv->cv_wmesg = deadcv;
+	CV_SET_WMESG(cv, deadcv);
 #endif
 }
 
@@ -133,7 +150,7 @@ cv_enter(kcondvar_t *cv, kmutex_t *mtx, lwp_t *l)
 	mp = sleepq_hashlock(cv);
 	sq = CV_SLEEPQ(cv);
 	sleepq_enter(sq, l, mp);
-	sleepq_enqueue(sq, cv, cv->cv_wmesg, &cv_syncobj);
+	sleepq_enqueue(sq, cv, CV_WMESG(cv), &cv_syncobj);
 	mutex_exit(mtx);
 	KASSERT(cv_has_waiters(cv));
 }
@@ -402,5 +419,5 @@ bool
 cv_is_valid(kcondvar_t *cv)
 {
 
-	return cv->cv_wmesg != deadcv && cv->cv_wmesg != NULL;
+	return CV_WMESG(cv) != deadcv && CV_WMESG(cv) != NULL;
 }
