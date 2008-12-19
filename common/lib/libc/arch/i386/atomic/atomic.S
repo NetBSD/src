@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.13 2008/05/25 15:56:11 chs Exp $	*/
+/*	$NetBSD: atomic.S,v 1.14 2008/12/19 11:21:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -69,14 +69,16 @@ ENTRY(_atomic_and_32)
 ENTRY(_atomic_and_32_nv)
 	movl	4(%esp), %edx
 	movl	(%edx), %eax
-1:
+0:
 	movl	%eax, %ecx
 	andl	8(%esp), %ecx
 	LOCK(4)
 	cmpxchgl %ecx, (%edx)
-	jnz	1b
+	jnz	1f
 	movl	%ecx, %eax
 	ret
+1:
+	jmp	0b
 
 ENTRY(_atomic_dec_32)
 	movl	4(%esp), %edx
@@ -116,14 +118,16 @@ ENTRY(_atomic_or_32)
 ENTRY(_atomic_or_32_nv)
 	movl	4(%esp), %edx
 	movl	(%edx), %eax
-1:
+0:
 	movl	%eax, %ecx
 	orl	8(%esp), %ecx
 	LOCK(10)
 	cmpxchgl %ecx, (%edx)
-	jnz	1b
+	jnz	1f
 	movl	%ecx, %eax
 	ret
+1:
+	jmp	0b
 
 ENTRY(_atomic_swap_32)
 	movl	4(%esp), %edx
@@ -168,6 +172,7 @@ ENDLABEL(membar_sync_end)
 
 #ifdef _KERNEL
 ENTRY(_atomic_cas_64)
+	pushf
 	cli
 	pushl	%edi
 	pushl	%ebx
@@ -185,7 +190,7 @@ ENTRY(_atomic_cas_64)
 1:
 	popl	%ebx
 	popl	%edi
-	sti
+	popf
 	ret
 2:
 	movl	0(%edi), %eax
