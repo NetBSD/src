@@ -1,4 +1,4 @@
-/*	$NetBSD: vfsops_stub.c,v 1.2 2008/12/18 00:24:13 pooka Exp $	*/
+/*	$NetBSD: vfsops_stub.c,v 1.3 2008/12/19 00:57:24 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.2 2008/12/18 00:24:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfsops_stub.c,v 1.3 2008/12/19 00:57:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -106,14 +106,4 @@ fifo_printinfo(struct vnode *vp)
 {
 
 	return;
-}
-
-int
-vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
-	int attrnamespace, const char *attrname)
-{
-
-	if (vp != NULL)
-		VOP_UNLOCK(vp, 0);
-	return EOPNOTSUPP;
 }
