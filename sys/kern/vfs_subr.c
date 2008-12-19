@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.361 2008/12/16 22:35:37 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.362 2008/12/19 17:11:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.361 2008/12/16 22:35:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.362 2008/12/19 17:11:57 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2345,10 +2345,18 @@ vfs_mountroot(void)
 	}
 
 	/*
-	 * If user specified a file system, use it.
+	 * If user specified a root fs type, use it.  Make sure the
+	 * specified type exists and has a mount_root()
 	 */
-	if (mountroot != NULL) {
-		error = (*mountroot)();
+	if (strcmp(rootfstype, ROOT_FSTYPE_ANY) != 0) {
+		v = vfs_getopsbyname(rootfstype);
+		error = EFTYPE;
+		if (v != NULL) {
+			if (v->vfs_mountroot != NULL) {
+				error = (v->vfs_mountroot)();
+			}
+			v->vfs_refcount--;
+		}
 		goto done;
 	}
 
