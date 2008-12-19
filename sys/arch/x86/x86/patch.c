@@ -1,7 +1,7 @@
-/*	$NetBSD: patch.c,v 1.14 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: patch.c,v 1.15 2008/12/19 11:21:24 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.14 2008/09/08 23:36:54 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: patch.c,v 1.15 2008/12/19 11:21:24 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -118,9 +118,8 @@ patchbytes(void *addr, const int byte1, const int byte2)
 }
 
 void
-x86_patch(void)
+x86_patch(bool early)
 {
-#if !defined(GPROF)
 	static int again;
 	u_long psl;
 	u_long cr0;
@@ -137,7 +136,8 @@ x86_patch(void)
 	cr0 = rcr0();
 	lcr0(cr0 & ~CR0_WP);
 
-	if (ncpu == 1) {
+#if !defined(GPROF)
+	if (!early && ncpu == 1) {
 #ifndef LOCKDEBUG
 		int i;
 
@@ -146,8 +146,9 @@ x86_patch(void)
 			patchbytes(x86_lockpatch[i], X86_NOP, -1);	
 		for (i = 0; atomic_lockpatch[i] != 0; i++)
 			patchbytes(atomic_lockpatch[i], X86_NOP, -1);
-#endif
-	} else if ((cpu_feature & CPUID_SSE2) != 0) {
+#endif	/* !LOCKDEBUG */
+	}
+	if (!early && (cpu_feature & CPUID_SSE2) != 0) {
 		/* Faster memory barriers. */
 		patchfunc(
 		    sse2_lfence, sse2_lfence_end,
@@ -160,28 +161,36 @@ x86_patch(void)
 		    NULL
 		);
 	}
+#endif	/* GPROF */
 
+#ifdef i386
+	/*
+	 * Patch early and late.  Second time around the 'lock' prefix
+	 * may be gone.
+	 */
 	if ((cpu_feature & CPUID_CX8) != 0) {
+		patchfunc(
+		    _atomic_cas_cx8, _atomic_cas_cx8_end,
+		    _atomic_cas_64, _atomic_cas_64_end,
+		    NULL
+		);
+	}
+#endif	/* i386 */
+
+	if (!early && (cpu_feature & CPUID_CX8) != 0) {
 		/* Faster splx(), mutex_spin_exit(). */
 		patchfunc(
 		    cx8_spllower, cx8_spllower_end,
 		    spllower, spllower_end,
 		    cx8_spllower_patch
 		);
-#if defined(i386)
-#ifndef LOCKDEBUG
+#if defined(i386) && !defined(LOCKDEBUG)
 		patchfunc(
 		    i686_mutex_spin_exit, i686_mutex_spin_exit_end,
 		    mutex_spin_exit, mutex_spin_exit_end,
 		    i686_mutex_spin_exit_patch
 		);
-#endif
-		patchfunc(
-		    _atomic_cas_cx8, _atomic_cas_cx8_end,
-		    _atomic_cas_64, _atomic_cas_64_end,
-		    NULL
-		);
-#endif
+#endif	/* !LOCKDEBUG */
 	}
 
 	/* Write back and invalidate cache, flush pipelines. */
@@ -191,5 +200,4 @@ x86_patch(void)
 
 	/* Re-enable write protection. */
 	lcr0(cr0);
-#endif	/* GPROF */
 }
