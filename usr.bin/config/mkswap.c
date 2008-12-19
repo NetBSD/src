@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.4 2007/12/12 00:03:34 lukem Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.5 2008/12/19 17:11:57 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,14 +133,8 @@ mkoneswap(struct config *cf)
 	/*
 	 * Emit the root file system.
 	 */
-	if (cf->cf_fstype == NULL)
-		strlcpy(specinfo, "NULL", sizeof(specinfo));
-	else {
-		snprintf(specinfo, sizeof(specinfo), "%s_mountroot",
-		    cf->cf_fstype);
-		fprintf(fp, "int %s(void);\n", specinfo);
-	}
-	fprintf(fp, "int (*mountroot)(void) = %s;\n", specinfo);
+	fprintf(fp, "const char *rootfstype = \"%s\";\n",
+		cf->cf_fstype ? cf->cf_fstype : "?");
 
 	fflush(fp);
 	if (ferror(fp))

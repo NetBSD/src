@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.99 2008/11/30 18:21:34 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.100 2008/12/19 17:11:57 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2008/11/30 18:21:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2008/12/19 17:11:57 pgoyette Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -418,7 +418,7 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 				/* boot device: -b=sd0 etc. */
 #ifdef NFS
 				if (strcmp(cp+2, "nfs") == 0)
-					mountroot = nfs_mountroot;
+					rootfstype = MOUNT_NFS;
 				else
 					makebootdev(cp+2);
 #else /* NFS */
