@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.2 2008/12/19 15:24:03 haad Exp $      */
+/*        $NetBSD: dm_target.c,v 1.3 2008/12/19 16:30:41 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -38,31 +38,70 @@
 #include "dm.h"
 
 static dm_target_t* dm_target_alloc(const char *);
+static dm_target_t* dm_target_lookup_name(const char *);
 
 TAILQ_HEAD(dm_target_head, dm_target);
 
 static struct dm_target_head dm_target_list =
 TAILQ_HEAD_INITIALIZER(dm_target_list);
 
+kmutex_t dm_target_mutex;
+
+/*
+ * Called indirectly from dm_table_load_ioct to mark target as used.
+ */
+void
+dm_target_busy(dm_target_t *target)
+{
+	target->ref_cnt++;	
+}
+
+void
+dm_target_unbusy(dm_target_t *target)
+{
+	target->ref_cnt--;
+}
+
+dm_target_t *
+dm_target_lookup(const char *dm_target_name)
+{
+	dm_target_t *dmt;
+
+	dmt = NULL;
+
+	mutex_enter(&dm_target_mutex);
+
+	if (dm_target_name != NULL)
+		dmt = dm_target_lookup_name(dm_target_name);
+
+	if (dmt != NULL)
+		dm_target_busy(dmt);
+	
+	mutex_exit(&dm_target_mutex);
+	
+	return dmt;	
+}
+	
 /*
  * Search for name in TAIL and return apropriate pointer.
  */
-dm_target_t*
+static dm_target_t*
 dm_target_lookup_name(const char *dm_target_name)
 {
 	dm_target_t *dm_target;
         int dlen; int slen;
 
-	slen = strlen(dm_target_name)+1;
+	slen = strlen(dm_target_name) + 1;
 
-	TAILQ_FOREACH (dm_target, &dm_target_list, dm_target_next) {
-		dlen = strlen(dm_target->name)+1;
+	TAILQ_FOREACH(dm_target, &dm_target_list, dm_target_next) {
+		dlen = strlen(dm_target->name) + 1;
 
 		if (dlen != slen)
 			continue;
 		
-		if (strncmp(dm_target_name, dm_target->name, slen) == 0)
-					return dm_target;
+		if (strncmp(dm_target_name, dm_target->name, slen) == 0){
+			return dm_target;
+		}
 	}
 
 	return NULL;
@@ -77,13 +116,18 @@ int
 dm_target_insert(dm_target_t *dm_target)
 {
 	dm_target_t *dmt;
+	
+	mutex_enter(&dm_target_mutex);
 
 	dmt = dm_target_lookup_name(dm_target->name);
-
-	if (dmt != NULL)
+	if (dmt != NULL) {
+		mutex_exit(&dm_target_mutex);
 		return EEXIST;
-	
+	}
+		
 	TAILQ_INSERT_TAIL(&dm_target_list, dm_target, dm_target_next);
+
+	mutex_exit(&dm_target_mutex);
 	
 	return 0;
 }
@@ -95,18 +139,29 @@ dm_target_insert(dm_target_t *dm_target)
 int
 dm_target_rem(char *dm_target_name)
 {
-	dm_target_t *dm_target;
+	dm_target_t *dmt;
 	
 	KASSERT(dm_target_name != NULL);
-		    
-	dm_target = dm_target_lookup_name(dm_target_name);
-	if (dm_target == NULL)
+
+	mutex_enter(&dm_target_mutex);
+	
+	dmt = dm_target_lookup_name(dm_target_name);
+	if (dmt == NULL) {
+		mutex_exit(&dm_target_mutex);
 		return ENOENT;
+	}
+		
+	if (dmt->ref_cnt > 0) {
+		mutex_exit(&dm_target_mutex);
+		return EBUSY;
+	}
 	
 	TAILQ_REMOVE(&dm_target_list,
-	    dm_target, dm_target_next);
+	    dmt, dm_target_next);
+
+	mutex_exit(&dm_target_mutex);
 	
-	(void)kmem_free(dm_target, sizeof(dm_target_t));
+	(void)kmem_free(dmt, sizeof(dm_target_t));
 
 	return 0;
 }
@@ -122,6 +177,7 @@ dm_target_destroy(void)
 {
 	dm_target_t *dm_target;
 
+	mutex_enter(&dm_target_mutex);
 	while (TAILQ_FIRST(&dm_target_list) != NULL){
 
 		dm_target = TAILQ_FIRST(&dm_target_list);
@@ -131,6 +187,7 @@ dm_target_destroy(void)
 		
 		(void)kmem_free(dm_target, sizeof(dm_target_t));
 	}
+	mutex_exit(&dm_target_mutex);
 	
 	return 0;
 }
@@ -157,6 +214,8 @@ dm_target_prop_list(void)
 	size_t i;
 
 	target_array = prop_array_create();
+
+	mutex_enter(&dm_target_mutex);
 	
 	TAILQ_FOREACH (dm_target, &dm_target_list, dm_target_next){
 
@@ -175,6 +234,8 @@ dm_target_prop_list(void)
 		prop_object_release(target_dict);
 	}
 
+	mutex_exit(&dm_target_mutex);
+	
 	return target_array;
 }
 
@@ -186,6 +247,8 @@ dm_target_init(void)
 	int r;
 
 	r = 0;
+
+	mutex_init(&dm_target_mutex, MUTEX_DEFAULT, IPL_NONE);
 	
 	dmt = dm_target_alloc("linear");
 	dmt1 = dm_target_alloc("zero");
