@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.72 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: compat.c,v 1.73 2008/12/19 22:01:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.72 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.73 2008/12/19 22:01:19 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.72 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: compat.c,v 1.73 2008/12/19 22:01:19 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -313,6 +313,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	return (0);
     }
 
+again:
     if (useShell) {
 	/*
 	 * We need to pass the command off to the shell, typically
@@ -339,7 +340,11 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
 	 * No meta-characters, so no need to exec a shell. Break the command
 	 * into words to form an argument vector we can execute.
 	 */
-	mav =  brk_string(cmd, &argc, TRUE, &bp);
+	mav = brk_string(cmd, &argc, TRUE, &bp);
+	if (mav == NULL) {
+		useShell = 1;
+		goto again;
+	}
 	av = (const char **)mav;
     }
 
