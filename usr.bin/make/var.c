@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.136 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.137 2008/12/19 21:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.136 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.137 2008/12/19 21:33:10 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.136 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.137 2008/12/19 21:33:10 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1143,6 +1143,8 @@ VarMatch(GNode *ctx __unused, Var_Parse_State *vpstate,
 	 char *word, Boolean addSpace, Buffer buf,
 	 ClientData pattern)
 {
+    if (DEBUG(VAR))
+	fprintf(debug_file, "VarMatch [%s] [%s]\n", word, (char *)pattern);
     if (Str_Match(word, (char *)pattern)) {
 	if (addSpace && vpstate->varSpace) {
 	    Buf_AddByte(buf, vpstate->varSpace);
@@ -2078,6 +2080,8 @@ VarQuote(char *str)
     Buf_AddByte(buf, (Byte)'\0');
     str = (char *)Buf_GetAll(buf, NULL);
     Buf_Destroy(buf, FALSE);
+    if (DEBUG(VAR))
+	fprintf(debug_file, "QuoteMeta: [%s]\n", str);
     return str;
 }
 
@@ -2829,6 +2833,9 @@ ApplyModifiers(char *nstr, const char *tstr,
 			free(cp2);
 		    copy = TRUE;
 		}
+		if (DEBUG(VAR))
+		    fprintf(debug_file, "Pattern for [%s] is [%s]\n", nstr,
+			pattern);
 		if (*tstr == 'M' || *tstr == 'm') {
 		    newStr = VarModify(ctxt, &parsestate, nstr, VarMatch,
 				       pattern);
