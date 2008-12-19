@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.219 2008/11/12 12:36:16 ad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.220 2008/12/19 17:28:59 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.219 2008/11/12 12:36:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.220 2008/12/19 17:28:59 pgoyette Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -729,11 +729,11 @@ sysctl_create(SYSCTLFN_ARGS)
 
 	/*
 	 * nothing can add a node if:
-	 * we've finished initial set up and
-	 * the tree itself is not writeable or
-	 * the entire sysctl system is not writeable
+	 * we've finished initial set up of this tree and
+	 * (the tree itself is not writeable or
+	 * the entire sysctl system is not writeable)
 	 */
-	if ((sysctl_root.sysctl_flags & CTLFLAG_PERMANENT) &&
+	if ((sysctl_rootof(rnode)->sysctl_flags & CTLFLAG_PERMANENT) &&
 	    (!(sysctl_rootof(rnode)->sysctl_flags & CTLFLAG_READWRITE) ||
 	     !(sysctl_root.sysctl_flags & CTLFLAG_READWRITE)))
 		return (EPERM);
