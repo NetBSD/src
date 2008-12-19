@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.52 2008/10/21 04:16:59 wrstuden Exp $	*/
+/*	$NetBSD: exception.c,v 1.53 2008/12/19 15:20:10 njoly Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.52 2008/10/21 04:16:59 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.53 2008/12/19 15:20:10 njoly Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -459,7 +459,7 @@ ast(struct lwp *l, struct trapframe *tf)
 
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(p);
+			ADDUPROF(l);
 		}
 
 		if (l->l_cpu->ci_want_resched) {
