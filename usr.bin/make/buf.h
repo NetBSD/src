@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.13 2008/11/22 17:33:57 dsl Exp $	*/
+/*	$NetBSD: buf.h,v 1.14 2008/12/20 18:08:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -89,7 +89,6 @@ typedef struct Buffer {
     int     left;	/* Space left (== size - (inPtr - buffer)) */
     Byte    *buffer;	/* The buffer itself */
     Byte    *inPtr;	/* Place to write to */
-    Byte    *outPtr;	/* Place to read from */
 } *Buffer;
 
 /* Buf_AddByte adds a single byte to a buffer. */
@@ -107,7 +106,7 @@ typedef struct Buffer {
 void Buf_OvAddByte(Buffer, int);
 void Buf_AddBytes(Buffer, int, const Byte *);
 Byte *Buf_GetAll(Buffer, int *);
-void Buf_Discard(Buffer, int);
+void Buf_Empty(Buffer);
 int Buf_Size(Buffer);
 Buffer Buf_Init(int);
 void Buf_Destroy(Buffer, Boolean);
