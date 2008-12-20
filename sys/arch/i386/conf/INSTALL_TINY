@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.121 2008/11/12 12:36:02 ad Exp $
+#	$NetBSD: INSTALL_TINY,v 1.122 2008/12/20 12:41:19 ad Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -29,9 +29,6 @@ maxusers	2		# estimated number of users
 # This option allows you to force a serial console at the specified
 # I/O address.
 #options 	CONSDEVNAME="\"com\"",CONADDR=0x3f8,CONSPEED=9600
-
-# Save a physical page per process by not setting a kernel stack red zone.
-options 	NOREDZONE
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.340 2008/11/20 10:53:08 ad Exp $
+#	$NetBSD: files.i386,v 1.341 2008/12/20 12:41:19 ad Exp $
 #
 # new style config file for i386 architecture
 #
@@ -43,9 +43,6 @@ defflag			COMPAT_OLDBOOT
 defflag	opt_pcibios.h	PCIBIOS PCIBIOSVERBOSE
 			PCIBIOS_INTR_GUESS PCIINTR_DEBUG
 defparam opt_pcibios.h	PCIBIOS_IRQS_HINT
-
-# No unmapped page below kernel stack
-defflag			NOREDZONE
 
 # kernel stack debug
 defflag	opt_kstack_dr0.h		KSTACK_CHECK_DR0
