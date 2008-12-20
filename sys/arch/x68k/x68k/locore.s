@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.86 2008/12/18 05:24:03 isaki Exp $	*/
+/*	$NetBSD: locore.s,v 1.87 2008/12/20 01:05:46 isaki Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -553,17 +553,6 @@ ENTRY_NOPROFILE(spurintr)	/* level 0 */
 ENTRY_NOPROFILE(kbdtimer)
 	rte
 
-ENTRY_NOPROFILE(powtrap)
-#include "pow.h"
-#if NPOW > 0
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(powintr)
-	INTERRUPT_RESTOREREG
-#endif
-	addql	#1,_C_LABEL(intrcnt)+36
-	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
-	jra	rei
-
 ENTRY_NOPROFILE(com0trap)
 #include "com.h"
 #if NXCOM > 0
@@ -573,7 +562,7 @@ ENTRY_NOPROFILE(com0trap)
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+40
+	addql	#1,_C_LABEL(intrcnt)+36
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -585,7 +574,7 @@ ENTRY_NOPROFILE(com1trap)
 	addql	#4,%sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_C_LABEL(intrcnt)+40
+	addql	#1,_C_LABEL(intrcnt)+36
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
 	jra	rei
 
@@ -1313,11 +1302,10 @@ GLOBAL(intrnames)
 	.asciz	"lev6"
 	.asciz	"nmi"
 	.asciz	"clock"
-	.asciz	"pow"
 	.asciz	"com"
 GLOBAL(eintrnames)
 	.even
 
 GLOBAL(intrcnt)
-	.long	0,0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0,0
 GLOBAL(eintrcnt)
