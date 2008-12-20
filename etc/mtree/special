@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.123 2008/12/11 13:55:17 mishka Exp $
+#	$NetBSD: special,v 1.124 2008/12/20 13:20:58 isaki Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -242,7 +242,6 @@
 ./etc/rc.d/pf			type=file mode=0555
 ./etc/rc.d/pf_boot		type=file mode=0555
 ./etc/rc.d/pflogd		type=file mode=0555
-./etc/rc.d/poffd		type=file mode=0555
 ./etc/rc.d/postfix		type=file mode=0555
 ./etc/rc.d/powerd		type=file mode=0555
 ./etc/rc.d/ppp			type=file mode=0555
