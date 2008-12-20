@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.137 2008/12/19 21:33:10 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.138 2008/12/20 16:03:59 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.137 2008/12/19 21:33:10 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.138 2008/12/20 16:03:59 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.137 2008/12/19 21:33:10 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.138 2008/12/20 16:03:59 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -86,31 +86,31 @@ __RCSID("$NetBSD: var.c,v 1.137 2008/12/19 21:33:10 christos Exp $");
  *	Variable-handling functions
  *
  * Interface:
- *	Var_Set	  	    Set the value of a variable in the given
- *	    	  	    context. The variable is created if it doesn't
- *	    	  	    yet exist. The value and variable name need not
- *	    	  	    be preserved.
+ *	Var_Set		    Set the value of a variable in the given
+ *			    context. The variable is created if it doesn't
+ *			    yet exist. The value and variable name need not
+ *			    be preserved.
  *
  *	Var_Append	    Append more characters to an existing variable
- *	    	  	    in the given context. The variable needn't
- *	    	  	    exist already -- it will be created if it doesn't.
- *	    	  	    A space is placed between the old value and the
- *	    	  	    new one.
+ *			    in the given context. The variable needn't
+ *			    exist already -- it will be created if it doesn't.
+ *			    A space is placed between the old value and the
+ *			    new one.
  *
  *	Var_Exists	    See if a variable exists.
  *
  *	Var_Value 	    Return the value of a variable in a context or
- *	    	  	    NULL if the variable is undefined.
+ *			    NULL if the variable is undefined.
  *
  *	Var_Subst 	    Substitute named variable, or all variables if
  *			    NULL in a string using
- *	    	  	    the given context as the top-most one. If the
- *	    	  	    third argument is non-zero, Parse_Error is
- *	    	  	    called if any variables are undefined.
+ *			    the given context as the top-most one. If the
+ *			    third argument is non-zero, Parse_Error is
+ *			    called if any variables are undefined.
  *
  *	Var_Parse 	    Parse a variable expansion from a string and
- *	    	  	    return the result and the number of characters
- *	    	  	    consumed.
+ *			    return the result and the number of characters
+ *			    consumed.
  *
  *	Var_Delete	    Delete a variable in a context.
  *
@@ -118,7 +118,7 @@ __RCSID("$NetBSD: var.c,v 1.137 2008/12/19 21:33:10 christos Exp $");
  *
  * Debugging:
  *	Var_Dump  	    Print out all variables defined in the given
- *	    	  	    context.
+ *			    context.
  *
  * XXX: There's a lot of duplication in these functions.
  */
@@ -175,8 +175,8 @@ GNode          *VAR_CMD;      /* variables defined on the command-line */
 
 typedef struct Var {
     char          *name;	/* the variable's name */
-    Buffer	  val;	    	/* its value */
-    int	    	  flags;    	/* miscellaneous status flags */
+    Buffer	  val;		/* its value */
+    int		  flags;    	/* miscellaneous status flags */
 #define VAR_IN_USE	1   	    /* Variable's value currently being used.
 				     * Used to avoid recursion */
 #define VAR_FROM_ENV	2   	    /* Variable comes from the environment */
@@ -236,10 +236,10 @@ typedef struct {
  * to VarSYSVMatch() for ":lhs=rhs". */
 typedef struct {
     const char   *lhs;	    /* String to match */
-    int	    	  leftLen; /* Length of string */
+    int		  leftLen; /* Length of string */
     const char   *rhs;	    /* Replacement string (w/ &'s removed) */
-    int	    	  rightLen; /* Length of replacement */
-    int	    	  flags;
+    int		  rightLen; /* Length of replacement */
+    int		  flags;
 } VarPattern;
 
 /* struct passed as ClientData to VarLoopExpand() for ":@tvar@str@" */
@@ -341,7 +341,7 @@ static Var *
 VarFind(const char *name, GNode *ctxt, int flags)
 {
     Hash_Entry         	*var;
-    Var		  	*v;
+    Var			*v;
 
 	/*
 	 * If the variable name begins with a '.', it could very well be one of
@@ -397,7 +397,7 @@ VarFind(const char *name, GNode *ctxt, int flags)
 	char *env;
 
 	if ((env = getenv(name)) != NULL) {
-	    int	  	len;
+	    int		len;
 
 	    v = bmake_malloc(sizeof(Var));
 	    v->name = bmake_strdup(name);
@@ -478,7 +478,7 @@ static void
 VarAdd(const char *name, const char *val, GNode *ctxt)
 {
     Var   	  *v;
-    int	    	  len;
+    int		  len;
     Hash_Entry    *h;
 
     v = bmake_malloc(sizeof(Var));
@@ -891,7 +891,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 Boolean
 Var_Exists(const char *name, GNode *ctxt)
 {
-    Var	    	  *v;
+    Var		  *v;
     char          *cp;
 
     if ((cp = strchr(name, '$')) != NULL) {
@@ -1653,7 +1653,7 @@ static char *
 VarSelectWords(GNode *ctx __unused, Var_Parse_State *vpstate,
 	       const char *str, VarSelectWords_t *seldata)
 {
-    Buffer  	  buf;	    	    /* Buffer for the new string */
+    Buffer  	  buf;		    /* Buffer for the new string */
     Boolean 	  addSpace; 	    /* TRUE if need to add a space to the
 				     * buffer before adding the trimmed
 				     * word */
@@ -1747,7 +1747,7 @@ VarModify(GNode *ctx, Var_Parse_State *vpstate,
 		       Boolean, Buffer, ClientData),
     ClientData datum)
 {
-    Buffer  	  buf;	    	    /* Buffer for the new string */
+    Buffer  	  buf;		    /* Buffer for the new string */
     Boolean 	  addSpace; 	    /* TRUE if need to add a space to the
 				     * buffer before adding the trimmed
 				     * word */
@@ -1810,7 +1810,7 @@ VarWordCompare(const void *a, const void *b)
 static char *
 VarOrder(const char *str, const char otype)
 {
-    Buffer  	  buf;	    	    /* Buffer for the new string */
+    Buffer  	  buf;		    /* Buffer for the new string */
     char **av;			    /* word list [first word does not count] */
     char *as;			    /* word list memory */
     int ac, i;
@@ -1881,7 +1881,7 @@ VarOrder(const char *str, const char otype)
 static char *
 VarUniq(const char *str)
 {
-    Buffer	  buf;	    	    /* Buffer for new string */
+    Buffer	  buf;		    /* Buffer for new string */
     char 	**av;		    /* List of words to affect */
     char 	 *as;		    /* Word list memory */
     int 	  ac, i, j;
@@ -2123,66 +2123,66 @@ VarChangeCase(char *str, int upper)
  * Now we need to apply any modifiers the user wants applied.
  * These are:
  *  	  :M<pattern>	words which match the given <pattern>.
- *  	  	    	<pattern> is of the standard file
- *  	  	    	wildcarding form.
+ *  			<pattern> is of the standard file
+ *  			wildcarding form.
  *  	  :N<pattern>	words which do not match the given <pattern>.
  *  	  :S<d><pat1><d><pat2><d>[1gW]
- *  	  	    	Substitute <pat2> for <pat1> in the value
+ *  			Substitute <pat2> for <pat1> in the value
  *  	  :C<d><pat1><d><pat2><d>[1gW]
- *  	  	    	Substitute <pat2> for regex <pat1> in the value
- *  	  :H	    	Substitute the head of each word
- *  	  :T	    	Substitute the tail of each word
- *  	  :E	    	Substitute the extension (minus '.') of
- *  	  	    	each word
- *  	  :R	    	Substitute the root of each word
- *  	  	    	(pathname minus the suffix).
- *		  :O		("Order") Alphabeticaly sort words in variable.
- *		  :Ox		("intermiX") Randomize words in variable.
- *		  :u		("uniq") Remove adjacent duplicate words.
- *		  :tu		Converts the variable contents to uppercase.
- *		  :tl		Converts the variable contents to lowercase.
- *		  :ts[c]	Sets varSpace - the char used to
- *				separate words to 'c'. If 'c' is
- *				omitted then no separation is used.
- *		  :tW		Treat the variable contents as a single
- *				word, even if it contains spaces.
- *				(Mnemonic: one big 'W'ord.)
- *		  :tw		Treat the variable contents as multiple
- *				space-separated words.
- *				(Mnemonic: many small 'w'ords.)
- *		  :[index]	Select a single word from the value.
- *		  :[start..end]	Select multiple words from the value.
- *		  :[*] or :[0]	Select the entire value, as a single
- *				word.  Equivalent to :tW.
- *		  :[@]		Select the entire value, as multiple
- *				words.	Undoes the effect of :[*].
- *				Equivalent to :tw.
- *		  :[#]		Returns the number of words in the value.
+ *  			Substitute <pat2> for regex <pat1> in the value
+ *  	  :H		Substitute the head of each word
+ *  	  :T		Substitute the tail of each word
+ *  	  :E		Substitute the extension (minus '.') of
+ *  			each word
+ *  	  :R		Substitute the root of each word
+ *  			(pathname minus the suffix).
+ *	  :O		("Order") Alphabeticaly sort words in variable.
+ *	  :Ox		("intermiX") Randomize words in variable.
+ *	  :u		("uniq") Remove adjacent duplicate words.
+ *	  :tu		Converts the variable contents to uppercase.
+ *	  :tl		Converts the variable contents to lowercase.
+ *	  :ts[c]	Sets varSpace - the char used to
+ *			separate words to 'c'. If 'c' is
+ *			omitted then no separation is used.
+ *	  :tW		Treat the variable contents as a single
+ *			word, even if it contains spaces.
+ *			(Mnemonic: one big 'W'ord.)
+ *	  :tw		Treat the variable contents as multiple
+ *			space-separated words.
+ *			(Mnemonic: many small 'w'ords.)
+ *	  :[index]	Select a single word from the value.
+ *	  :[start..end]	Select multiple words from the value.
+ *	  :[*] or :[0]	Select the entire value, as a single
+ *			word.  Equivalent to :tW.
+ *	  :[@]		Select the entire value, as multiple
+ *			words.	Undoes the effect of :[*].
+ *			Equivalent to :tw.
+ *	  :[#]		Returns the number of words in the value.
  *
- *		  :?<true-value>:<false-value>
- *				If the variable evaluates to true, return
- *				true value, else return the second value.
- *	    	  :lhs=rhs  	Like :S, but the rhs goes to the end of
- *	    	    	    	the invocation.
- *		  :sh		Treat the current value as a command
- *				to be run, new value is its output.
+ *	  :?<true-value>:<false-value>
+ *			If the variable evaluates to true, return
+ *			true value, else return the second value.
+ *    	  :lhs=rhs  	Like :S, but the rhs goes to the end of
+ *    			the invocation.
+ *	  :sh		Treat the current value as a command
+ *			to be run, new value is its output.
  * The following added so we can handle ODE makefiles.
- *		  :@<tmpvar>@<newval>@
- *				Assign a temporary local variable <tmpvar>
- *				to the current value of each word in turn
- *				and replace each word with the result of
- *				evaluating <newval>
- *		  :D<newval>	Use <newval> as value if variable defined
- *		  :U<newval>	Use <newval> as value if variable undefined
- *		  :L		Use the name of the variable as the value.
- *		  :P		Use the path of the node that has the same
- *				name as the variable as the value.  This
- *				basically includes an implied :L so that
- *				the common method of refering to the path
- *				of your dependent 'x' in a rule is to use
- *				the form '${x:P}'.
- *		  :!<cmd>!	Run cmd much the same as :sh run's the
- *				current value of the variable.
+ *	  :@<tmpvar>@<newval>@
+ *			Assign a temporary local variable <tmpvar>
+ *			to the current value of each word in turn
+ *			and replace each word with the result of
+ *			evaluating <newval>
+ *	  :D<newval>	Use <newval> as value if variable defined
+ *	  :U<newval>	Use <newval> as value if variable undefined
+ *	  :L		Use the name of the variable as the value.
+ *	  :P		Use the path of the node that has the same
+ *			name as the variable as the value.  This
+ *			basically includes an implied :L so that
+ *			the common method of refering to the path
+ *			of your dependent 'x' in a rule is to use
+ *			the form '${x:P}'.
+ *	  :!<cmd>!	Run cmd much the same as :sh run's the
+ *			current value of the variable.
  * The ::= modifiers, actually assign a value to the variable.
  * Their main purpose is in supporting modifiers of .for loop
  * iterators and other obscure uses.  They always expand to
@@ -2192,16 +2192,16 @@ VarChangeCase(char *str, int upper)
  * 
  * foo:	.USE
  * .for i in ${.TARGET} ${.TARGET:R}.gz
- * 		@: ${t::=$i}
- *		@echo blah ${t:T}
+ * 	@: ${t::=$i}
+ *	@echo blah ${t:T}
  * .endfor
  * 
- *		  ::=<str>	Assigns <str> as the new value of variable.
- *		  ::?=<str>	Assigns <str> as value of variable if
- *				it was not already set.
- *		  ::+=<str>	Appends <str> to variable.
- *		  ::!=<cmd>	Assigns output of <cmd> as the new value of
- *				variable.
+ *	  ::=<str>	Assigns <str> as the new value of variable.
+ *	  ::?=<str>	Assigns <str> as value of variable if
+ *			it was not already set.
+ *	  ::+=<str>	Appends <str> to variable.
+ *	  ::!=<cmd>	Assigns output of <cmd> as the new value of
+ *			variable.
  */
 
 static char *
@@ -3262,7 +3262,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 	  void **freePtr)
 {
     const char	   *tstr;    	/* Pointer into str */
-    Var	    	   *v;	    	/* Variable in invocation */
+    Var		   *v;		/* Variable in invocation */
     Boolean 	    haveModifier;/* TRUE if have modifiers for the variable */
     char	    endc;    	/* Ending character when variable in parens
 				 * or braces */
@@ -3618,9 +3618,9 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 char *
 Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 {
-    Buffer  	  buf;	    	    /* Buffer for forming things */
+    Buffer  	  buf;		    /* Buffer for forming things */
     char    	  *val;		    /* Value to substitute for a variable */
-    int	    	  length;   	    /* Length of the variable invocation */
+    int		  length;   	    /* Length of the variable invocation */
     Boolean	  trailingBslash;   /* variable ends in \ */
     void 	  *freeIt = NULL;    /* Set if it should be freed */
     static Boolean errorReported;   /* Set true if an error has already
