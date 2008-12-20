@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36 2008/12/18 11:45:40 cegger Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.37 2008/12/20 12:42:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36 2008/12/18 11:45:40 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37 2008/12/20 12:42:36 ad Exp $");
 
 #include "opt_user_ldt.h"
 
@@ -257,11 +257,13 @@ cpu_lwp_free2(struct lwp *l)
 static void
 setredzone(struct lwp *l)
 {
+#ifdef DIAGNOSTIC
 	vaddr_t addr;
 
 	addr = USER_TO_UAREA(l->l_addr);
 	pmap_remove(pmap_kernel(), addr, addr + PAGE_SIZE);
 	pmap_update(pmap_kernel());
+#endif
 }
 
 /*
