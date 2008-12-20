@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.90 2008/11/20 10:53:09 ad Exp $
+#	$NetBSD: files.xen,v 1.91 2008/12/20 12:41:19 ad Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -15,9 +15,6 @@ defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
 
 # delay before cpu_reset() for reboot.
 defparam		CPURESET_DELAY
-
-# No unmapped page below kernel stack
-defflag			NOREDZONE
 
 # Beep on halt
 defflag opt_beep.h		BEEP_ONHALT

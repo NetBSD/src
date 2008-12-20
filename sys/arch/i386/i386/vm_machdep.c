@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.141 2008/11/19 18:35:59 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.142 2008/12/20 12:41:19 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.141 2008/11/19 18:35:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.142 2008/12/20 12:41:19 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_mtrr.h"
@@ -108,9 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.141 2008/11/19 18:35:59 ad Exp $");
 
 #include "npx.h"
 
-#ifndef NOREDZONE
 static void setredzone(struct lwp *l);
-#endif
 
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
@@ -186,9 +184,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	*tf = *l1->l_md.md_regs;
 	tf->tf_trapno = T_ASTFLT;
 
-#ifndef NOREDZONE
 	setredzone(l2);
-#endif
+
 	/*
 	 * If specified, give the child a different stack.
 	 */
@@ -215,9 +212,8 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
 void
 cpu_swapin(struct lwp *l)
 {
-#ifndef NOREDZONE
+
 	setredzone(l);
-#endif
 }
 
 void
@@ -264,20 +260,20 @@ cpu_lwp_free2(struct lwp *l)
 	/* nothing */
 }
 
-#ifndef NOREDZONE
 /*
  * Set a red zone in the kernel stack after the u. area.
  */
 static void
 setredzone(struct lwp *l)
 {
+#ifdef DIAGNOSTIC
 	vaddr_t addr;
 
 	addr = USER_TO_UAREA(l->l_addr);
 	pmap_remove(pmap_kernel(), addr, addr + PAGE_SIZE);
 	pmap_update(pmap_kernel());
+#endif	/* DIAGNOSTIC */
 }
-#endif
 
 /*
  * Convert kernel VA to physical address
