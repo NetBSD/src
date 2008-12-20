@@ -1,4 +1,4 @@
-.\"	$NetBSD: pow.4,v 1.11 2008/12/20 13:20:58 isaki Exp $
+.\"	$NetBSD: pow.4,v 1.12 2008/12/20 16:53:56 wiz Exp $
 .\"
 .\" Copyright (c) 1995 MINOURA Makoto.
 .\" All rights reserved.
@@ -38,7 +38,8 @@
 File
 .Pa /dev/pow0
 is a device used to access the x68k power switch / bootstrap information and
-the RTC alarm timer. The following operations are allowed using
+the RTC alarm timer.
+The following operations are allowed using
 .Xr ioctl 2
 system call:
 .Pp
@@ -90,7 +91,8 @@ True if the front power switch is on
 .Pp
 EXPWON-related information is not tested.
 .It pow_switch_current :
-Current power switch status. See above.
+Current power switch status.
+See above.
 .It pow_boottime :
 The time when
 .Nx
@@ -123,7 +125,9 @@ Each of the members means:
 .It al_enable :
 True if the alarm timer is enable.
 .It al_ontime :
-Internal expression of the alarm timer. See `C Compiler PRO-68K Programmers' Manual'
+Internal expression of the alarm timer.
+See
+.Dq C Compiler PRO-68K Programmers' Manual
 Chapter 3 Section ALARMSET.
 .It al_dowhat :
 What to do when started by the alarm timer.
@@ -131,8 +135,10 @@ See `Programmers' manual'.
 .It al_offtime :
 Display the time in seconds since the alarm is activated until
 the power is turned off (though the resolution
-is resolved to minutes). Be cautious when using IOCS
-and the like as these require minute time units. 0 indicates an infinity.
+is resolved to minutes).
+Be cautious when using IOCS and the like as these require minute
+time units.
+0 indicates an infinity.
 .El
 .Pp
 .Bd -literal
