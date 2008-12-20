@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.boot,v 1.17 2004/05/07 00:04:38 ross Exp $
+#	$NetBSD: Makefile.boot,v 1.18 2008/12/20 22:41:53 dsl Exp $
 #
 # a very simple makefile...
 #
@@ -22,7 +22,7 @@ CFLAGS= -DTARGET_MACHINE=\"${MACHINE}\" \
 LIBS=
 
 OBJ=arch.o buf.o compat.o cond.o dir.o for.o hash.o job.o main.o make.o \
-    parse.o str.o suff.o targ.o trace.o var.o util.o
+    parse.o str.o strlist.o suff.o targ.o trace.o var.o util.o
 
 LIBOBJ= lst.lib/lstAppend.o lst.lib/lstAtEnd.o lst.lib/lstAtFront.o \
 	lst.lib/lstClose.o lst.lib/lstConcat.o lst.lib/lstDatum.o \
