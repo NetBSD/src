@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.159 2008/12/19 22:03:41 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.160 2008/12/20 09:42:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.159 2008/12/19 22:03:41 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.160 2008/12/20 09:42:02 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.159 2008/12/19 22:03:41 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.160 2008/12/20 09:42:02 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -603,7 +603,6 @@ Main_ParseArgLine(char *line)
 		free(p1);
 
 	argv = brk_string(buf, &argc, TRUE, &args);
-		free(buf);
 	if (argv == NULL) {
 		Error("Unterminated quoted string [%s]", buf);
 		free(buf);
