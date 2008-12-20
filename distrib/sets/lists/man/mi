@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1114 2008/12/11 11:14:36 roy Exp $
+# $NetBSD: mi,v 1.1115 2008/12/20 13:20:58 isaki Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2631,7 +2631,7 @@
 ./usr/share/man/cat8/x68k/makedev.0		man-obsolete		obsolete
 ./usr/share/man/cat8/x68k/memswitch.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/x68k/newdisk.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/x68k/poffd.0		man-sysutil-catman	.cat
+./usr/share/man/cat8/x68k/poffd.0		man-obsolete		obsolete
 ./usr/share/man/cat8/x68k/rtcalarm.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/x86_64/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/x86_64/makedev.0		man-obsolete		obsolete
@@ -4863,7 +4863,7 @@
 ./usr/share/man/html8/x68k/loadbsd.x.html	man-sys-htmlman		html
 ./usr/share/man/html8/x68k/memswitch.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/x68k/newdisk.html		man-sysutil-htmlman	html
-./usr/share/man/html8/x68k/poffd.html		man-sysutil-htmlman	html
+./usr/share/man/html8/x68k/poffd.html		man-obsolete		obsolete
 ./usr/share/man/html8/x68k/rtcalarm.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/yp.html			man-nis-htmlman		html
 ./usr/share/man/html8/ypbind.html		man-nis-htmlman		yp,html
@@ -7471,7 +7471,7 @@
 ./usr/share/man/man8/x68k/makedev.8		man-obsolete		obsolete
 ./usr/share/man/man8/x68k/memswitch.8		man-sysutil-man		.man
 ./usr/share/man/man8/x68k/newdisk.8		man-sysutil-man		.man
-./usr/share/man/man8/x68k/poffd.8		man-sysutil-man		.man
+./usr/share/man/man8/x68k/poffd.8		man-obsolete		obsolete
 ./usr/share/man/man8/x68k/rtcalarm.8		man-sysutil-man		.man
 ./usr/share/man/man8/x86_64/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/x86_64/makedev.8		man-obsolete		obsolete
