@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.36 2008/12/13 15:19:29 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.37 2008/12/20 17:38:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.36 2008/12/13 15:19:29 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.37 2008/12/20 17:38:37 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.36 2008/12/13 15:19:29 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.37 2008/12/20 17:38:37 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -291,7 +291,6 @@ For_Run(int lineno)
 {
     For arg;
     LstNode ln;
-    char **values;
     int i, done = 0, len;
     char *guy, *orig_guy, *old_guy;
 
@@ -308,8 +307,6 @@ For_Run(int lineno)
     if (Lst_Open(arg.lst) != SUCCESS)
 	return;
 
-    values = bmake_malloc(arg.nvars * sizeof(char *));
-    
     while (!done) {
 	/* 
 	 * due to the dumb way this is set up, this loop must run
@@ -320,19 +317,14 @@ For_Run(int lineno)
 	    if (ln == NULL) {
 		done = 1;
 		break;
-	    } else {
-		values[i] = (char *)Lst_Datum(ln);
 	    }
+	    Var_Set(arg.vars[i], Lst_Datum(ln), VAR_GLOBAL, 0);
+	    if (DEBUG(FOR))
+		(void)fprintf(debug_file, "--- %s = %s\n", arg.vars[i], 
+		    (char *)Lst_Datum(ln));
 	}
 	if (done)
 	    break;
-
-	for (i = 0; i < arg.nvars; i++) {
-	    Var_Set(arg.vars[i], values[i], VAR_GLOBAL, 0);
-	    if (DEBUG(FOR))
-		(void)fprintf(debug_file, "--- %s = %s\n", arg.vars[i], 
-		    values[i]);
-	}
 
 	/*
 	 * Hack, hack, kludge.
@@ -356,8 +348,6 @@ For_Run(int lineno)
 	for (i = 0; i < arg.nvars; i++)
 	    Var_Delete(arg.vars[i], VAR_GLOBAL);
     }
-
-    free(values);
 
     Lst_Close(arg.lst);
 
