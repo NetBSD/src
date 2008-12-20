@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.203 2008/12/11 13:55:16 mishka Exp $
+# $NetBSD: mi,v 1.204 2008/12/20 13:20:58 isaki Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -233,7 +233,7 @@
 ./etc/rc.d/pf					etc-net-rc
 ./etc/rc.d/pf_boot				etc-net-rc
 ./etc/rc.d/pflogd				etc-net-rc
-./etc/rc.d/poffd				etc-sys-rc
+./etc/rc.d/poffd				etc-obsolete		obsolete
 ./etc/rc.d/postfix				etc-postfix-rc
 ./etc/rc.d/powerd				etc-sysutil-rc
 ./etc/rc.d/ppp					etc-ppp-rc

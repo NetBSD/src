@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.21 2008/12/20 01:05:46 isaki Exp $	*/
+/*	$NetBSD: pow.c,v 1.22 2008/12/20 13:20:59 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,12 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.21 2008/12/20 01:05:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.22 2008/12/20 13:20:59 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -53,7 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.21 2008/12/20 01:05:46 isaki Exp $");
 #include <sys/bus.h>
 #include <sys/device.h>
 
-#include <machine/intr.h>
+#include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
+
+#include <machine/cpu.h>
 #include <machine/powioctl.h>
 #include <x68k/dev/intiovar.h>
 #include <x68k/dev/mfp.h>
@@ -68,9 +70,8 @@ extern struct cfdriver pow_cd;
 static int  pow_match(device_t, cfdata_t, void *);
 static void pow_attach(device_t, device_t, void *);
 static int  powintr(void *);
-void pow_softintr(void *);
 static int setalarm(struct x68k_alarminfo *);
-
+static void pow_pressed_event(void *);
 static void pow_check_switch(void *);
 
 CFATTACH_DECL_NEW(pow, sizeof(struct pow_softc),
@@ -114,10 +115,11 @@ pow_attach(device_t parent, device_t self, void *aux)
 		mfp_bit_set_ierb(sc->sw);
 	}
 
-	sc->softintr_cookie = softint_establish(SOFTINT_SERIAL,
-		pow_softintr, sc);
-	if (sc->softintr_cookie == NULL)
-		panic("softint_establish");
+	sysmon_task_queue_init();
+	sc->smpsw.smpsw_name = device_xname(self);
+	sc->smpsw.smpsw_type = PSWITCH_TYPE_POWER;
+	if (sysmon_pswitch_register(&sc->smpsw) != 0)
+		panic("can't register with sysmon");
 
 	/* MFP interrupt #1 for ext, #2 for front power switch */
 	if (intio_intr_establish(mfp->sc_intr + 1, "powext", powintr, sc) < 0)
@@ -161,7 +163,6 @@ powopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (sc->status == POW_BUSY)
 		return EBUSY;
 
-	sc->pid = 0;
 	if (sc->status == POW_FREE)
 		sc->status = POW_BUSY;
 
@@ -182,7 +183,6 @@ powclose(dev_t dev, int flags, int mode, struct lwp *l)
 
 	if (sc->status == POW_BUSY)
 		sc->status = POW_FREE;
-	sc->pid = 0;
 
 	return 0;
 }
@@ -297,22 +297,6 @@ powioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return EBADF;
 		return setalarm ((void *) addr);
 
-	case POWIOCSSIGNAL:
-		if (minor(dev) != 0)
-			return EOPNOTSUPP;
-		if (!(sc->rw & FWRITE))
-			return EBADF;
-		{
-			int signum = *(int *) addr;
-			if (signum <= 0 || signum > 31)
-				return EINVAL;
-
-			sc->signum = signum;
-			sc->proc = l->l_proc;
-			sc->pid = l->l_proc->p_pid;
-		}
-
-		break;
 	default:
 		return EINVAL;
 	}
@@ -333,19 +317,18 @@ powintr(void *arg)
 	mfp_bit_clear_aer(sw);
 	mfp_bit_set_ierb(sw);
 
-	if (sc->status == POW_BUSY && sc->pid != 0)
-		softint_schedule(sc->softintr_cookie);
+	sysmon_task_queue_sched(0, pow_pressed_event, sc);
 
 	splx(s);
 	return 0;
 }
 
-void
-pow_softintr(void *arg)
+static void
+pow_pressed_event(void *arg)
 {
 	struct pow_softc *sc = arg;
 
-	psignal(sc->proc, sc->signum);
+	sysmon_pswitch_event(&sc->smpsw, PSWITCH_EVENT_PRESSED);
 }
 
 static void

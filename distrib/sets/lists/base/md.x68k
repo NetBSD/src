@@ -1,4 +1,5 @@
-# $NetBSD: md.x68k,v 1.41 2008/11/29 17:57:34 tsutsui Exp $
+# $NetBSD: md.x68k,v 1.42 2008/12/20 13:20:58 isaki Exp $
+./dev/pow1					base-obsolete		obsolete
 ./usr/bin/bellctrl				base-util-bin
 ./usr/bin/loadfont				base-util-bin
 ./usr/bin/loadkmap				base-util-bin
@@ -17,6 +18,6 @@
 ./usr/mdec/xxboot				base-obsolete		obsolete
 ./usr/mdec/xxboot_ufs				base-sysutil-bin
 ./usr/sbin/memswitch				base-sysutil-bin
-./usr/sbin/poffd				base-sysutil-bin
+./usr/sbin/poffd				base-obsolete		obsolete
 ./usr/share/keymaps/x68k/ascii_kmap		base-sys-share
 ./usr/share/keymaps/x68k/jis_kmap		base-sys-share
