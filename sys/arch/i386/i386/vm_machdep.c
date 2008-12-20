@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.142 2008/12/20 12:41:19 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.143 2008/12/20 13:09:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,11 +80,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.142 2008/12/20 12:41:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.143 2008/12/20 13:09:44 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_mtrr.h"
-#include "opt_noredzone.h"
 #include "opt_execfmt.h"
 
 #include <sys/param.h>
