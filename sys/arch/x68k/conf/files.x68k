@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.66 2008/12/20 01:05:46 isaki Exp $
+#	$NetBSD: files.x68k,v 1.67 2008/12/20 13:20:59 isaki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -97,7 +97,7 @@ device kbd: event
 attach	kbd at mfp
 file	arch/x68k/dev/kbd.c		kbd needs-flag
 
-device pow
+device pow: sysmon_power, sysmon_taskq
 attach	pow at mfp
 file	arch/x68k/dev/pow.c		pow
 

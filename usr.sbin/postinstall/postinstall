@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.80 2008/12/11 13:55:17 mishka Exp $
+# $NetBSD: postinstall,v 1.81 2008/12/20 13:20:59 isaki Exp $
 #
 # Copyright (c) 2002-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -961,7 +961,7 @@ do_rc()
 		mixerctl mopd motd mountall mountcritlocal mountcritremote \
 		mountd moused mrouted \
 		named ndbootd network newsyslog nfsd nfslocking ntpd ntpdate \
-		perusertmp pf pf_boot pflogd poffd postfix powerd ppp pwcheck \
+		perusertmp pf pf_boot pflogd postfix powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity rarpd rbootd root \
 		route6d routed rtadvd rtclocaltime rtsold rwho \
@@ -989,7 +989,7 @@ do_rc()
 
 		# check for obsolete rc.d files
 	for f in NETWORK btcontrol btuartd fsck.sh kerberos nfsiod servers \
-	    systemfs daemon gated login portmap sunndd xntpd; do
+	    systemfs daemon gated login poffd portmap sunndd xntpd; do
 		fd="/etc/rc.d/${f}"
 		[ -e "${DEST_DIR}${fd}" ] && echo "${fd}"
 	done | obsolete_paths "${op}"

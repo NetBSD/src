@@ -1,4 +1,4 @@
-.\"	$NetBSD: pow.4,v 1.10 2003/04/16 13:35:22 wiz Exp $
+.\"	$NetBSD: pow.4,v 1.11 2008/12/20 13:20:58 isaki Exp $
 .\"
 .\" Copyright (c) 1995 MINOURA Makoto.
 .\" All rights reserved.
@@ -35,11 +35,9 @@
 .Nm pow
 .Nd X68k power switch device
 .Sh DESCRIPTION
-Files
-.Pa /dev/pow
-and
-.Pa /dev/pow1
-are devices used to access the x68k power switch / bootstrap information and
+File
+.Pa /dev/pow0
+is a device used to access the x68k power switch / bootstrap information and
 the RTC alarm timer. The following operations are allowed using
 .Xr ioctl 2
 system call:
@@ -51,9 +49,10 @@ Getting power switch status
 Getting RTC alarm timer status
 .It POWIOSALARMINFO
 Setting RTC alarm timer
-.It POWIOSSIGNAL
-Setting signal number which is sent at changing the power status
 .El
+.Pp
+The power switch event is notified to
+.Xr powerd 8 .
 .Sh GETTING POWER SWITCH STATUS
 .Bd -literal
 .In sys/ioctl.h
@@ -144,26 +143,9 @@ and the like as these require minute time units. 0 indicates an infinity.
 Sets the alarm timer according to the argument
 .Ar alarminfo
 (see above).
-.Sh SIGNAL
-.Bd -literal
-.In sys/ioctl.h
-.In machine/powioctl.h
-
-.Fd ioctl (fd, POWIOCSSIGNAL, \*[Am]signum);
-.Fd int signum;
-.Ed
-.Pp
-Signal
-.Ar signum
-is sent when the state of the power switch
-(front or external) changes. It becomes invalid when
-.Xr close 2
-is called.
-Note that this function is not provided with
-.Pa /dev/pow1 .
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr poffd 8 ,
+.Xr powerd 8 ,
 .Xr rtcalarm 8
 .Rs
 `C Compiler PRO-68K Programmers' Manual', Chapter 3 IOCS Calls, Section ALARMSET, Sharp
@@ -174,5 +156,5 @@ Note that this function is not provided with
 Liam Hahne Minn \*[Lt]hahne@sail.t.u-tokyo.ac.jp\*[Gt].
 .Sh BUGS
 The file
-.Pa /dev/pow
+.Pa /dev/pow0
 can only be opened by one process at a time.
