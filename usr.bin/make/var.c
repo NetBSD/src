@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.138 2008/12/20 16:03:59 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.139 2008/12/20 17:14:04 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.138 2008/12/20 16:03:59 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.139 2008/12/20 17:14:04 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.138 2008/12/20 16:03:59 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.139 2008/12/20 17:14:04 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -738,17 +738,26 @@ void
 Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 {
     Var   *v;
-    const char *cp = name;
+    char *expanded_name = NULL;
     
     /*
      * We only look for a variable in the given context since anything set
      * here will override anything in a lower context, so there's not much
      * point in searching them all just to save a bit of memory...
      */
-    if ((name = strchr(cp, '$'))) {
-	name = Var_Subst(NULL, cp, ctxt, 0);
-    } else
-	name = cp;
+    if (strchr(name, '$') != NULL) {
+	expanded_name = Var_Subst(NULL, name, ctxt, 0);
+	if (expanded_name[0] == 0) {
+	    if (DEBUG(VAR)) {
+		fprintf(debug_file, "Var_Set(\"%s\", \"%s\", ...) "
+			"name expands to empty string - ignored\n",
+			name, val);
+	    }
+	    free(expanded_name);
+	    return;
+	}
+	name = expanded_name;
+    }
     if (ctxt == VAR_GLOBAL) {
 	v = VarFind(name, VAR_CMD, 0);
 	if (v != NULL) {
@@ -797,8 +806,8 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
 	Var_Append(MAKEOVERRIDES, name, VAR_GLOBAL);
     }
  out:
-    if (name != cp)
-	free(UNCONST(name));
+    if (expanded_name != NULL)
+	free(expanded_name);
     if (v != NULL)
 	VarFreeEnv(v, TRUE);
 }
@@ -835,12 +844,21 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 {
     Var		   *v;
     Hash_Entry	   *h;
-    const char *cp = name;
+    char *expanded_name = NULL;
 
-    if ((name = strchr(cp, '$'))) {
-	name = Var_Subst(NULL, cp, ctxt, 0);
-    } else
-	name = cp;
+    if (strchr(name, '$') != NULL) {
+	expanded_name = Var_Subst(NULL, name, ctxt, 0);
+	if (expanded_name[0] == 0) {
+	    if (DEBUG(VAR)) {
+		fprintf(debug_file, "Var_Append(\"%s\", \"%s\", ...) "
+			"name expands to empty string - ignored\n",
+			name, val);
+	    }
+	    free(expanded_name);
+	    return;
+	}
+	name = expanded_name;
+    }
     
     v = VarFind(name, ctxt, (ctxt == VAR_GLOBAL) ? FIND_ENV : 0);
 
@@ -867,8 +885,8 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	    Hash_SetValue(h, v);
 	}
     }
-    if (name != cp)
-	free(UNCONST(name));
+    if (expanded_name != NULL)
+	free(expanded_name);
 }
 
 /*-
