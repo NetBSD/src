@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.20 2008/12/14 02:16:51 isaki Exp $	*/
+/*	$NetBSD: pow.c,v 1.21 2008/12/20 01:05:46 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -38,10 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.20 2008/12/14 02:16:51 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.21 2008/12/20 01:05:46 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
@@ -54,22 +55,28 @@ __KERNEL_RCSID(0, "$NetBSD: pow.c,v 1.20 2008/12/14 02:16:51 isaki Exp $");
 
 #include <machine/intr.h>
 #include <machine/powioctl.h>
+#include <x68k/dev/intiovar.h>
 #include <x68k/dev/mfp.h>
 #include <x68k/dev/powvar.h>
 #include <x68k/x68k/iodevice.h>
-#include "pow.h"
 
 #define sramtop (IODEVbase->io_sram)
 #define rtc (IODEVbase->io_rtc)
 
-struct pow_softc pows[NPOW];
+extern struct cfdriver pow_cd;
 
-void powattach(int);
-void powintr(void);
+static int  pow_match(device_t, cfdata_t, void *);
+static void pow_attach(device_t, device_t, void *);
+static int  powintr(void *);
 void pow_softintr(void *);
 static int setalarm(struct x68k_alarminfo *);
 
 static void pow_check_switch(void *);
+
+CFATTACH_DECL_NEW(pow, sizeof(struct pow_softc),
+    pow_match, pow_attach, NULL, NULL);
+
+static int pow_attached;
 
 dev_type_open(powopen);
 dev_type_close(powclose);
@@ -80,65 +87,76 @@ const struct cdevsw pow_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
-/* ARGSUSED */
-void
-powattach(int num)
+static int
+pow_match(device_t parent, cfdata_t cf, void *aux)
 {
-	int minor;
-	int sw;
+	if (pow_attached)
+		return 0;
 
-	sw = ~mfp_get_gpip() & 7;
+	return 1;
+}
 
+static void
+pow_attach(device_t parent, device_t self, void *aux)
+{
+	struct pow_softc *sc = device_private(self);
+	struct mfp_softc *mfp = device_private(parent);
+
+	sc->sw = ~mfp_get_gpip() & 7;
 	/* disable mfp power switch interrupt */
 	mfp_bit_clear_ierb(7);
 	mfp_bit_clear_aer(7);
 
-	for (minor = 0; minor < num; minor++) {
-		if (minor == 0)
-			pows[minor].status = POW_FREE;
-		else
-			pows[minor].status = POW_ANY;
+	sc->status = POW_FREE;
 
-		pows[minor].sw = sw;
-
-		if (sw) {
-			mfp_bit_set_aer(sw);
-			mfp_bit_set_ierb(sw);
-		}
-
-		printf("pow%d: started by ", minor);
-		if (sw & POW_EXTERNALSW)
-			printf("external power switch.\n");
-		else if (sw & POW_FRONTSW)
-			printf("front power switch.\n");
-		/* XXX: I don't know why POW_ALARMSW should not be checked */
-#if 0
-		else if ((sw & POW_ALARMSW) && sramtop[0x26] == 0)
-			printf("RTC alarm.\n");
-		else
-			printf("???.\n");
-#else
-		else
-			printf("RTC alarm.\n");
-#endif
+	if (sc->sw) {
+		mfp_bit_set_aer(sc->sw);
+		mfp_bit_set_ierb(sc->sw);
 	}
 
-	pows[0].softintr_cookie = softint_establish(SOFTINT_SERIAL,
-		pow_softintr, &pows[0]);
-	if (pows[0].softintr_cookie == NULL)
+	sc->softintr_cookie = softint_establish(SOFTINT_SERIAL,
+		pow_softintr, sc);
+	if (sc->softintr_cookie == NULL)
 		panic("softint_establish");
 
+	/* MFP interrupt #1 for ext, #2 for front power switch */
+	if (intio_intr_establish(mfp->sc_intr + 1, "powext", powintr, sc) < 0)
+		panic("%s: can't establish interrupt", device_xname(self));
+	if (intio_intr_establish(mfp->sc_intr + 2, "powfrt", powintr, sc) < 0)
+		panic("%s: can't establish interrupt", device_xname(self));
+
 	shutdownhook_establish(pow_check_switch, 0);
+
+	printf("\n");
+	printf("%s: started by ", device_xname(self));
+	if (sc->sw & POW_EXTERNALSW)
+		printf("external power switch.\n");
+	else if (sc->sw & POW_FRONTSW)
+		printf("front power switch.\n");
+	/* XXX: I don't know why POW_ALARMSW should not be checked */
+#if 0
+	else if ((sc->sw & POW_ALARMSW) && sramtop[0x26] == 0)
+		printf("RTC alarm.\n");
+	else
+		printf("???.\n");
+#else
+	else
+		printf("RTC alarm.\n");
+#endif
+
+	pow_attached = 1;
 }
+
 
 /*ARGSUSED*/
 int
 powopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct pow_softc *sc = &pows[minor(dev)];
-
-	if (minor(dev) >= NPOW)
-		return EXDEV;
+	struct pow_softc *sc;
+  
+	sc = device_lookup_private(&pow_cd, minor(dev));
+	if (sc == NULL)
+		return ENXIO;
 
 	if (sc->status == POW_BUSY)
 		return EBUSY;
@@ -156,7 +174,11 @@ powopen(dev_t dev, int flags, int mode, struct lwp *l)
 int
 powclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct pow_softc *sc = &pows[minor(dev)];
+	struct pow_softc *sc;
+
+	sc = device_lookup_private(&pow_cd, minor(dev));
+	if (sc == NULL)
+		return ENXIO;
 
 	if (sc->status == POW_BUSY)
 		sc->status = POW_FREE;
@@ -238,7 +260,11 @@ setalarm(struct x68k_alarminfo *bp)
 int
 powioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct pow_softc *sc = &pows[minor(dev)];
+	struct pow_softc *sc;
+
+	sc = device_lookup_private(&pow_cd, minor(dev));
+	if (sc == NULL)
+		return ENXIO;
 
 	switch (cmd) {
 	case POWIOCGPOWERINFO:
@@ -294,9 +320,10 @@ powioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	return 0;
 }
 
-void
-powintr(void)
+static int
+powintr(void *arg)
 {
+	struct pow_softc *sc = arg;
 	int sw;
 	int s;
 
@@ -306,10 +333,11 @@ powintr(void)
 	mfp_bit_clear_aer(sw);
 	mfp_bit_set_ierb(sw);
 
-	if (pows[0].status == POW_BUSY && pows[0].pid != 0)
-		softint_schedule(pows[0].softintr_cookie);
+	if (sc->status == POW_BUSY && sc->pid != 0)
+		softint_schedule(sc->softintr_cookie);
 
 	splx(s);
+	return 0;
 }
 
 void
