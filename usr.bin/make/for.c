@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.37 2008/12/20 17:38:37 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.38 2008/12/20 22:41:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.37 2008/12/20 17:38:37 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.38 2008/12/20 22:41:53 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.37 2008/12/20 17:38:37 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.38 2008/12/20 22:41:53 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: for.c,v 1.37 2008/12/20 17:38:37 dsl Exp $");
 #include    "hash.h"
 #include    "dir.h"
 #include    "buf.h"
+#include    "strlist.h"
 
 /*
  * For statements are of the form:
@@ -85,16 +86,11 @@ static int  	  forLevel = 0;  	/* Nesting level	*/
  */
 typedef struct _For {
     Buffer	  buf;			/* Body of loop		*/
-    char	**vars;			/* Iteration variables	*/
-    int           nvars;		/* # of iteration vars	*/
-    int           nitem;		/* # of substitution items */
-    Lst  	  lst;			/* List of items	*/
+    strlist_t     vars;			/* Iteration variables	*/
+    strlist_t     items;		/* Substitution items */
 } For;
 
 static For        accumFor;             /* Loop being accumulated */
-
-static void ForAddVar(const char *, size_t);
-
 
 
 
@@ -107,27 +103,6 @@ make_str(const char *ptr, int len)
 	memcpy(new_ptr, ptr, len);
 	new_ptr[len] = 0;
 	return new_ptr;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * ForAddVar --
- *	Add an iteration variable to the currently accumulating for.
- *
- * Results: none
- * Side effects: no additional side effects.
- *-----------------------------------------------------------------------
- */
-static void
-ForAddVar(const char *data, size_t len)
-{
-	int nvars;
-
-	nvars = accumFor.nvars;
-	accumFor.nvars = nvars + 1;
-	accumFor.vars = bmake_realloc(accumFor.vars,
-	    accumFor.nvars * sizeof(*accumFor.vars));
-	accumFor.vars[nvars] = make_str(data, len);
 }
 
 /*-
@@ -194,10 +169,10 @@ For_Eval(char *line)
 	    ptr += 2;
 	    break;
 	}
-	ForAddVar(ptr, len);
+	strlist_add_str(&accumFor.vars, make_str(ptr, len));
     }
 
-    if (accumFor.nvars == 0) {
+    if (strlist_num(&accumFor.vars) == 0) {
 	Parse_Error(PARSE_FATAL, "no iteration variables in for");
 	return -1;
     }
@@ -208,25 +183,24 @@ For_Eval(char *line)
     /*
      * Make a list with the remaining words
      */
-    accumFor.lst = Lst_Init(FALSE);
     sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
 
-    for (ptr = sub;; ptr += len, accumFor.nitem++) {
+    for (ptr = sub;; ptr += len) {
 	while (*ptr && isspace((unsigned char)*ptr))
 	    ptr++;
 	if (*ptr == 0)
 	    break;
 	for (len = 1; ptr[len] && !isspace((unsigned char)ptr[len]); len++)
 	    continue;
-	Lst_AtFront(accumFor.lst, make_str(ptr, len));
+	strlist_add_str(&accumFor.items, make_str(ptr, len));
     }
 
     free(sub);
 
-    if (accumFor.nitem % accumFor.nvars) {
+    if (strlist_num(&accumFor.items) % strlist_num(&accumFor.vars)) {
 	Parse_Error(PARSE_FATAL,
 		"Wrong number of words in .for substitution list %d %d",
-		accumFor.nitem, accumFor.nvars);
+		strlist_num(&accumFor.items), strlist_num(&accumFor.vars));
 	/*
 	 * Return 'success' so that the body of the .for loop is accumulated.
 	 * The loop will have zero iterations expanded due a later test.
@@ -290,42 +264,20 @@ void
 For_Run(int lineno)
 {
     For arg;
-    LstNode ln;
-    int i, done = 0, len;
+    int i, len;
+    unsigned int item_no;
     char *guy, *orig_guy, *old_guy;
+    char *var, *item;
 
     arg = accumFor;
-    accumFor.buf = NULL;
-    accumFor.vars = NULL;
-    accumFor.nvars = 0;
-    accumFor.lst = NULL;
+    memset(&accumFor, 0, sizeof accumFor);
 
-    if (arg.nitem % arg.nvars)
+    item_no = strlist_num(&arg.items);
+    if (item_no % strlist_num(&arg.vars))
 	/* Error message already printed */
-	return;
+	goto out;
 
-    if (Lst_Open(arg.lst) != SUCCESS)
-	return;
-
-    while (!done) {
-	/* 
-	 * due to the dumb way this is set up, this loop must run
-	 * backwards.
-	 */
-	for (i = arg.nvars - 1; i >= 0; i--) {
-	    ln = Lst_Next(arg.lst);
-	    if (ln == NULL) {
-		done = 1;
-		break;
-	    }
-	    Var_Set(arg.vars[i], Lst_Datum(ln), VAR_GLOBAL, 0);
-	    if (DEBUG(FOR))
-		(void)fprintf(debug_file, "--- %s = %s\n", arg.vars[i], 
-		    (char *)Lst_Datum(ln));
-	}
-	if (done)
-	    break;
-
+    while (item_no != 0) {
 	/*
 	 * Hack, hack, kludge.
 	 * This is really ugly, but to do it any better way would require
@@ -334,28 +286,28 @@ For_Run(int lineno)
 	 * for expanding a single variable. That should be corrected, but
 	 * not right away. (XXX)
 	 */
-	
 	guy = (char *)Buf_GetAll(arg.buf, &len);
 	orig_guy = guy;
-	for (i = 0; i < arg.nvars; i++) {
+	item_no -= strlist_num(&arg.vars);
+	STRLIST_FOREACH(var, &arg.vars, i) {
+	    item = strlist_str(&arg.items, item_no + i);
+	    if (DEBUG(FOR))
+		(void)fprintf(debug_file, "--- %s = %s\n", var, item);
+	    Var_Set(var, item, VAR_GLOBAL, 0);
 	    old_guy = guy;
-	    guy = Var_Subst(arg.vars[i], guy, VAR_GLOBAL, FALSE);
+	    guy = Var_Subst(var, guy, VAR_GLOBAL, FALSE);
 	    if (old_guy != orig_guy)
 		free(old_guy);
 	}
 	Parse_SetInput(NULL, lineno, -1, guy);
-
-	for (i = 0; i < arg.nvars; i++)
-	    Var_Delete(arg.vars[i], VAR_GLOBAL);
     }
 
-    Lst_Close(arg.lst);
+    STRLIST_FOREACH(var, &arg.vars, i)
+	Var_Delete(var, VAR_GLOBAL);
 
-    for (i=0; i<arg.nvars; i++) {
-	free(arg.vars[i]);
-    }
-    free(arg.vars);
+  out:
+    strlist_clean(&arg.vars);
+    strlist_clean(&arg.items);
 
-    Lst_Destroy(arg.lst, (FreeProc *)free);
     Buf_Destroy(arg.buf, TRUE);
 }
