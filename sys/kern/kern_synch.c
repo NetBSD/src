@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.256 2008/12/13 20:43:38 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.257 2008/12/20 23:06:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.256 2008/12/13 20:43:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.257 2008/12/20 23:06:14 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -398,6 +398,15 @@ kpreempt(uintptr_t where)
 			 * context switch.
 			 */
 			l->l_dopreempt = 0;
+			return true;
+		}
+		if (cpu_intr_p()) {
+			/*
+			 * Don't record a failure event if handling
+			 * a hardware interrupt.  We're probably
+			 * here from _kernel_unlock().  The
+			 * preemption will be processed at EOI.
+			 */
 			return true;
 		}
 		if (__predict_false((l->l_flag & LW_IDLE) != 0)) {
