@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.22 2008/10/06 22:09:21 joerg Exp $	*/
+/*	$NetBSD: buf.c,v 1.23 2008/12/20 18:08:24 dsl Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.22 2008/10/06 22:09:21 joerg Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.23 2008/12/20 18:08:24 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.22 2008/10/06 22:09:21 joerg Exp $");
+__RCSID("$NetBSD: buf.c,v 1.23 2008/12/20 18:08:24 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -108,7 +108,6 @@ __RCSID("$NetBSD: buf.c,v 1.22 2008/10/06 22:09:21 joerg Exp $");
 	    Byte  *newBuf = (Byte *)bmake_realloc((bp)->buffer, newSize); \
 	    \
 	    (bp)->inPtr = newBuf + ((bp)->inPtr - (bp)->buffer); \
-	    (bp)->outPtr = newBuf + ((bp)->outPtr - (bp)->buffer);\
 	    (bp)->buffer = newBuf;\
 	    (bp)->size = newSize;\
 	    (bp)->left = newSize - ((bp)->inPtr - (bp)->buffer);\
@@ -192,15 +191,15 @@ Buf_GetAll(Buffer bp, int *numBytesPtr)
 {
 
     if (numBytesPtr != NULL) {
-	*numBytesPtr = bp->inPtr - bp->outPtr;
+	*numBytesPtr = bp->inPtr - bp->buffer;
     }
 
-    return (bp->outPtr);
+    return (bp->buffer);
 }
 
 /*-
  *-----------------------------------------------------------------------
- * Buf_Discard --
+ * Buf_Empty --
  *	Throw away bytes in a buffer.
  *
  * Results:
@@ -212,16 +211,12 @@ Buf_GetAll(Buffer bp, int *numBytesPtr)
  *-----------------------------------------------------------------------
  */
 void
-Buf_Discard(Buffer bp, int numBytes)
+Buf_Empty(Buffer bp)
 {
 
-    if (bp->inPtr - bp->outPtr <= numBytes) {
-	bp->inPtr = bp->outPtr = bp->buffer;
-	bp->left = bp->size;
-	*bp->inPtr = 0;
-    } else {
-	bp->outPtr += numBytes;
-    }
+    bp->inPtr = bp->buffer;
+    bp->left = bp->size;
+    *bp->inPtr = 0;
 }
 
 /*-
@@ -241,7 +236,7 @@ Buf_Discard(Buffer bp, int numBytes)
 int
 Buf_Size(Buffer buf)
 {
-    return (buf->inPtr - buf->outPtr);
+    return (buf->inPtr - buf->buffer);
 }
 
 /*-
@@ -274,7 +269,7 @@ Buf_Init(int size)
     }
     bp->left = bp->size = size;
     bp->buffer = bmake_malloc(size);
-    bp->inPtr = bp->outPtr = bp->buffer;
+    bp->inPtr = bp->buffer;
     *bp->inPtr = 0;
 
     return (bp);
@@ -328,7 +323,7 @@ Buf_Destroy(Buffer buf, Boolean freeData)
 void
 Buf_ReplaceLastByte(Buffer buf, int byte)
 {
-    if (buf->inPtr == buf->outPtr)
+    if (buf->inPtr == buf->buffer)
         Buf_AddByte(buf, byte);
     else
         *(buf->inPtr - 1) = byte;
