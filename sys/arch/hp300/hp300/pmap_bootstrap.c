@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.34 2007/12/29 16:48:03 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.35 2008/12/20 14:35:53 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.34 2007/12/29 16:48:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.35 2008/12/20 14:35:53 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -158,10 +158,11 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * each mapping 256kb.  Note that there may be additional "segment
 	 * table" pages depending on how large MAXKL2SIZE is.
 	 *
-	 * Portions of the last segment of KVA space (0xFFF00000 -
-	 * 0xFFFFFFFF) are mapped for a couple of purposes.  0xFFF00000
-	 * for UPAGES is used for mapping the current process u-area
-	 * (u + kernel stack).  The very last page (0xFFFFF000) is mapped
+	 * Portions of the last two segment of KVA space (0xFF800000 -
+	 * 0xFFFFFFFF) are mapped for a couple of purposes.
+	 * The first segment (0xFF800000 - 0xFFBFFFFF) is mapped
+	 * for the kernel page tables.
+	 * The very last page (0xFFFFF000) in the second segment is mapped
 	 * to the last physical page of RAM to give us a region in which
 	 * PA == VA.  We use the first part of this page for enabling
 	 * and disabling mapping.  The last part of this page also contains
