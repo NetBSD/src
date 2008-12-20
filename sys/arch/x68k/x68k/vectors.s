@@ -1,4 +1,4 @@
-|	$NetBSD: vectors.s,v 1.14 2007/10/17 19:58:05 garbled Exp $
+|	$NetBSD: vectors.s,v 1.15 2008/12/20 01:05:46 isaki Exp $
 
 | Copyright (c) 1988 University of Utah
 | Copyright (c) 1990, 1993
@@ -121,8 +121,8 @@ GLOBAL(vectab)
 	VECTOR(intiotrap)	/* 62: unassigned, reserved */
 	VECTOR(intiotrap)	/* 63: unassigned, reserved */
 	VECTOR(intiotrap)	/* 64: MFP GPIP0 RTC alarm */
-	VECTOR(powtrap)		/* 65: MFP GPIP1 ext. power switch */
-	VECTOR(powtrap)		/* 66: MFP GPIP2 front power switch */
+	VECTOR(intiotrap)	/* 65: MFP GPIP1 ext. power switch */
+	VECTOR(intiotrap)	/* 66: MFP GPIP2 front power switch */
 	VECTOR(intiotrap)	/* 67: MFP GPIP3 FM sound generator */
 	VECTOR(intiotrap)	/* 68: MFP timer-D */
 	VECTOR(timertrap)	/* 69: MFP timer-C */

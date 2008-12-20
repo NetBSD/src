@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.65 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.x68k,v 1.66 2008/12/20 01:05:46 isaki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -97,6 +97,10 @@ device kbd: event
 attach	kbd at mfp
 file	arch/x68k/dev/kbd.c		kbd needs-flag
 
+device pow
+attach	pow at mfp
+file	arch/x68k/dev/pow.c		pow
+
 device rtc
 attach	rtc at intio
 file	arch/x68k/dev/rtclock.c		rtc
@@ -167,8 +171,6 @@ file	arch/x68k/dev/opmbell.c		bell needs-flag
 
 defpseudo sram
 file	arch/x68k/dev/sram.c		sram needs-flag
-defpseudo pow
-file	arch/x68k/dev/pow.c		pow needs-count
 
 # Nereid Ethernet
 attach	ne at intio with ne_intio: rtl80x9
