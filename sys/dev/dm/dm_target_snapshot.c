@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.3 2008/12/19 16:30:41 haad Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.4 2008/12/21 00:59:39 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,6 +71,84 @@
 #include <sys/vnode.h>
 
 #include "dm.h"
+
+#ifdef DM_TARGET_MODULE
+/*
+ * Every target can be compiled directly to dm driver or as a
+ * separate module this part of target is used for loading targets
+ * to dm driver.
+ * Target can be unloaded from kernel only if there are no users of
+ * it e.g. there are no devices which uses that target.
+ */
+#include <sys/kernel.h>
+#include <sys/module.h>
+
+MODULE(MODULE_CLASS_MISC, dm_target_snapshot, NULL);
+
+static int
+dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
+{
+	dm_target_t *dmt, *dmt1;
+	int r;
+	dmt = NULL;
+	
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		if (((dmt = dm_target_lookup("snapshot")) != NULL) ||
+		    (((dmt = dm_target_lookup("snapshot-origin")) != NULL)))
+			return EEXIST;
+		
+		dmt = dm_target_alloc("snapshot");
+		dmt1 = dm_target_alloc("snapshot-origin");
+
+		dmt->version[0] = 1;
+		dmt->version[1] = 0;
+		dmt->version[2] = 5;
+		strlcpy(dmt->name, "snapshot", DM_MAX_TYPE_NAME);
+		dmt->init = &dm_target_snapshot_init;
+		dmt->status = &dm_target_snapshot_status;
+		dmt->strategy = &dm_target_snapshot_strategy;
+		dmt->deps = &dm_target_snapshot_deps;
+		dmt->destroy = &dm_target_snapshot_destroy;
+		dmt->upcall = &dm_target_snapshot_upcall;
+
+		r = dm_target_insert(dmt);
+
+		dmt1->version[0] = 1;
+		dmt1->version[1] = 0;
+		dmt1->version[2] = 5;
+		strlcpy(dmt1->name, "snapshot-origin", DM_MAX_TYPE_NAME);
+		dmt1->init = &dm_target_snapshot_orig_init;
+		dmt1->status = &dm_target_snapshot_orig_status;
+		dmt1->strategy = &dm_target_snapshot_orig_strategy;
+		dmt1->deps = &dm_target_snapshot_orig_deps;
+		dmt1->destroy = &dm_target_snapshot_orig_destroy;
+		dmt1->upcall = &dm_target_snapshot_orig_upcall;
+
+		r = dm_target_insert(dmt1);
+		break;
+
+	case MODULE_CMD_FINI:
+		/*
+		 * Try to remove snapshot target if it works remove snap-origin
+		 * it is not possible to remove snapshot and do not remove
+		 * snap-origin because they are used together.
+		 */
+		if ((r = dm_target_rem("snapshot")) == 0)
+			r = dm_target_rem("snapshot-origin");
+		break;
+
+	case MODULE_CMD_STAT:
+		return ENOTTY;
+
+	default:
+		return ENOTTY;
+	}
+
+	return r;
+}
+
+#endif
 
 /*
  * Init function called from dm_table_load_ioctl.
