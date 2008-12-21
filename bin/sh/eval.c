@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.94 2008/10/31 14:38:42 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.95 2008/12/21 03:15:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.94 2008/10/31 14:38:42 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.95 2008/12/21 03:15:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -821,7 +821,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 
 	/* Fork off a child process if necessary. */
 	if (cmd->ncmd.backgnd
-	 || (cmdentry.cmdtype == CMDNORMAL && (flags & EV_EXIT) == 0)
+	 || cmdentry.cmdtype == CMDNORMAL 
 	 || ((flags & EV_BACKCMD) != 0
 	    && ((cmdentry.cmdtype != CMDBUILTIN && cmdentry.cmdtype != CMDSPLBLTIN)
 		 || cmdentry.u.bltin == dotcmd
