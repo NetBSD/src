@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.66 2008/10/16 15:36:23 dholland Exp $	*/
+/*	$NetBSD: jobs.c,v 1.67 2008/12/21 00:19:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.66 2008/10/16 15:36:23 dholland Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.67 2008/12/21 00:19:59 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -615,7 +615,7 @@ waitcmd(int argc, char **argv)
 				jp++;
 				continue;
 			}
-			if (dowait(1, (struct job *)NULL) == -1)
+			if (dowait(1, NULL) == -1)
 			       return 128 + SIGINT;
 			jp = jobtab;
 		}
@@ -630,10 +630,10 @@ waitcmd(int argc, char **argv)
 		}
 		/* loop until process terminated or stopped */
 		while (job->state == JOBRUNNING) {
-			if (dowait(1, (struct job *)NULL) == -1)
+			if (dowait(1, job) == -1)
 			       return 128 + SIGINT;
 		}
-		status = job->ps[job->nprocs].status;
+		status = job->ps[job->nprocs - 1].status;
 		if (WIFEXITED(status))
 			retval = WEXITSTATUS(status);
 #if JOBS
@@ -1085,7 +1085,7 @@ dowait(int block, struct job *job)
 		int mode = 0;
 		if (!rootshell || !iflag)
 			mode = SHOW_SIGNALLED;
-		if (job == thisjob)
+		if (job != thisjob)
 			mode = SHOW_SIGNALLED | SHOW_NO_FREE;
 		if (mode)
 			showjob(out2, thisjob, mode);
