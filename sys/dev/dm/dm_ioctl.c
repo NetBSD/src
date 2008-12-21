@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_ioctl.c,v 1.3 2008/12/19 16:30:41 haad Exp $      */
+/*        $NetBSD: dm_ioctl.c,v 1.4 2008/12/21 00:53:27 haad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -768,9 +768,11 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		if ((ret = target->init(dmv, &table_en->target_config,
 			    str)) != 0) {
 
+			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
 			dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
 			free(str, M_TEMP);
-			
+
+			dm_dev_unbusy(dmv);
 			return ret;
 		}
 		
