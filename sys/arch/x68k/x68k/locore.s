@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.89 2008/12/21 06:13:06 isaki Exp $	*/
+/*	$NetBSD: locore.s,v 1.90 2008/12/21 06:16:06 isaki Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -527,19 +527,7 @@ Lbrkpt3:
 #include <m68k/m68k/sigreturn.s>
 
 /*
- * Interrupt handlers. (auto vector.... not used)
- * original(amiga) routines:
- *	Level 0:	Spurious: ignored.
- *	Level 1:	builtin-RS232 TBE, softint (not used yet)
- *	Level 2:	keyboard (CIA-A) + DMA + SCSI
- *	Level 3:	VBL
- *	Level 4:	not used
- *	Level 5:	builtin-RS232 RBF
- *	Level 6:	Clock (CIA-B-Timers)
- *	Level 7:	Non-maskable: shouldn't be possible. ignore.
- */
-
-/* Provide a generic interrupt dispatcher, only handle hardclock (int6)
+ * Provide a generic interrupt dispatcher, only handle hardclock (int6)
  * specially, to improve performance
  */
 
