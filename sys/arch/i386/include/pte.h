@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.17 2008/01/23 19:46:44 bouyer Exp $	*/
+/*	$NetBSD: pte.h,v 1.18 2008/12/21 11:18:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -152,8 +152,6 @@
  *   0		P	present (valid)
  *
  * notes: 
- *  - on the i386 the R/W bit is ignored if processor is in supervisor
- *    state (bug!)
  *  - PS is only supported on newer processors
  *  - PTEs with the G bit are global in the sense that they are not 
  *    flushed from the TLB when %cr3 is written (to flush, use the 
