@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.58 2008/12/21 09:20:40 isaki Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.59 2008/12/21 09:35:49 isaki Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2008/12/21 09:20:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.59 2008/12/21 09:35:49 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -44,14 +44,12 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.58 2008/12/21 09:20:40 isaki Exp $");
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <machine/cpu.h>
-#include <x68k/x68k/iodevice.h>
 #include <machine/bootinfo.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
 
-void configure(void);
 static void findroot(void);
 int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
 
