@@ -1,0 +1,7 @@
+#!/bin/sh
+x=`( trap 'echo exiting' EXIT; /usr/bin/true )`
+if [ -z "$x" ]
+then
+	echo failed
+	exit 1
+fi
