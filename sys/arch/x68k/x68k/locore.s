@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.87 2008/12/20 01:05:46 isaki Exp $	*/
+/*	$NetBSD: locore.s,v 1.88 2008/12/21 06:04:49 isaki Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1280,8 +1280,6 @@ GLOBAL(intiobase)
 GLOBAL(intiolimit)
 	.long	0		| KVA of end of internal IO space
 
-GLOBAL(extiobase)
-	.long	0		| KVA of base of external IO space
 #ifdef DEBUG
 ASGLOBAL(fulltflush)
 	.long	0
