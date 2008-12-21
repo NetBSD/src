@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.57 2008/09/06 22:42:59 rmind Exp $	*/
+/*	$NetBSD: viaide.c,v 1.58 2008/12/21 16:27:57 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.57 2008/09/06 22:42:59 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.58 2008/12/21 16:27:57 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,6 +333,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  0,
 	  "VIA Technologies VT8237R SATA Controller",
 	  via_sata_chip_map_0,
+	},
+	{ PCI_PRODUCT_VIATECH_VT8237S_SATA,
+	  0,
+	  "VIA Technologies VT8237S SATA Controller",
+	  via_sata_chip_map_7,
 	},
 	{ 0,
 	  0,
