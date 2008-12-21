@@ -1,0 +1,8 @@
+#!/bin/sh
+sleep 3 &
+sleep 1 &
+
+wait %1
+[ $? = 0 ] || echo fail1
+wait %2
+[ $? = 0 ] || echo fail2
