@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.17 2008/12/14 02:16:51 isaki Exp $	*/
+/*	$NetBSD: sram.c,v 1.18 2008/12/21 09:01:19 isaki Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -31,14 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.17 2008/12/14 02:16:51 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.18 2008/12/21 09:01:19 isaki Exp $");
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/device.h>
@@ -46,9 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: sram.c,v 1.17 2008/12/14 02:16:51 isaki Exp $");
 #include <machine/sram.h>
 #include <x68k/dev/intiovar.h>
 #include <x68k/dev/sramvar.h>
-#include <x68k/x68k/iodevice.h>
 
-struct sram_softc sram_softc;
+#define SRAM_ADDR	(0xed0000)
 
 #ifdef DEBUG
 #define SRAM_DEBUG_OPEN		0x01
@@ -56,79 +54,123 @@ struct sram_softc sram_softc;
 #define SRAM_DEBUG_IOCTL	0x04
 #define SRAM_DEBUG_DONTDOIT	0x08
 int sramdebug = SRAM_DEBUG_IOCTL;
+#define DPRINTF(flag, msg)	do {	\
+	if ((sramdebug & (flag)))	\
+		printf msg;		\
+} while (0)
+#else
+#define DPRINTF(flag, msg)	/* nothing */
 #endif
 
-void sramattach(int);
+int  srammatch(device_t, cfdata_t, void *);
+void sramattach(device_t, device_t, void *);
+
+extern struct cfdriver sram_cd;
 
 dev_type_open(sramopen);
 dev_type_close(sramclose);
 dev_type_ioctl(sramioctl);
+
+CFATTACH_DECL_NEW(sram, sizeof(struct sram_softc),
+	srammatch, sramattach, NULL, NULL);
 
 const struct cdevsw sram_cdevsw = {
 	sramopen, sramclose, noread, nowrite, sramioctl,
 	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
+static int sram_attached;
+
 /*
  *  functions for probeing.
  */
-/* ARGSUSED */
-void
-sramattach(int num)
+int
+srammatch(device_t parent, cfdata_t cf, void *aux)
 {
-	sram_softc.flags = 0;
-	printf("sram0: 16k bytes accessible\n");
+	struct intio_attach_args *ia = aux;
+
+	if (sram_attached)
+		return 0;
+
+	if (ia->ia_addr == INTIOCF_ADDR_DEFAULT)
+		ia->ia_addr = SRAM_ADDR;
+
+	/* Fixed parameter */
+	if (ia->ia_addr != SRAM_ADDR)
+		return 0;
+
+	return 1;
 }
 
+void
+sramattach(device_t parent, device_t self, void *aux)
+{
+	struct sram_softc *sc = device_private(self);
+	struct intio_attach_args *ia = aux;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
 
-/*
- *  functions made available by conf.c
- */
+	/* Map I/O space */
+	iot = ia->ia_bst;
+	if (bus_space_map(iot, ia->ia_addr, SRAM_SIZE, 0, &ioh))
+		goto out;
+
+	/* Initialize sc */
+	sc->sc_iot = iot;
+	sc->sc_ioh = ioh;
+
+	sc->sc_flags = 0;
+	aprint_normal(": 16k bytes accessible\n");
+	sram_attached = 1;
+	return;
+
+ out:
+	aprint_normal(": not accessible\n");
+}
+
 
 /*ARGSUSED*/
 int
 sramopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct sram_softc *su = &sram_softc;
+	struct sram_softc *sc;
 
-#ifdef DEBUG
-	if (sramdebug & SRAM_DEBUG_OPEN)
-		printf ("Sram open\n");
-#endif
+	DPRINTF(SRAM_DEBUG_OPEN, ("Sram open\n"));
 
-	if (minor(dev) >= 1)
-		return EXDEV;
+	sc = device_lookup_private(&sram_cd, minor(dev));
+	if (sc == NULL)
+		return ENXIO;
 
-	if (su->flags & SRF_OPEN) {
-		return (EBUSY);
-	}
+	if (sc->sc_flags & SRF_OPEN)
+		return EBUSY;
 
-	su->flags |= SRF_OPEN;
+	sc->sc_flags |= SRF_OPEN;
 	if (flags & FREAD)
-		su->flags |= SRF_READ;
+		sc->sc_flags |= SRF_READ;
 	if (flags & FWRITE)
-		su->flags |= SRF_WRITE;
+		sc->sc_flags |= SRF_WRITE;
 
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/
 int
 sramclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct sram_softc *su = &sram_softc;
+	struct sram_softc *sc;
 
-#ifdef DEBUG
-	if (sramdebug & SRAM_DEBUG_CLOSE)
-		printf ("Sram close\n");
-#endif
+	DPRINTF(SRAM_DEBUG_CLOSE, ("Sram close\n"));
 
-	if (su->flags & SRF_OPEN) {
-		su->flags = 0;
+	sc = device_lookup_private(&sram_cd, minor(dev));
+	if (sc == NULL)
+		return ENXIO;
+
+	if (sc->sc_flags & SRF_OPEN) {
+		sc->sc_flags = 0;
 	}
-	su->flags &= ~(SRF_READ|SRF_WRITE);
+	sc->sc_flags &= ~(SRF_READ|SRF_WRITE);
 
-	return (0);
+	return 0;
 }
 
 /*ARGSUSED*/
@@ -137,43 +179,40 @@ sramioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error = 0;
 	struct sram_io *sram_io;
-	char *sramtop = __UNVOLATILE(IODEVbase->io_sram);
-	struct sram_softc *su = &sram_softc;
+	struct sram_softc *sc;
 
-#ifdef DEBUG
-	if (sramdebug & SRAM_DEBUG_IOCTL)
-		printf("Sram ioctl cmd=%lx\n", cmd);
-#endif
+	DPRINTF(SRAM_DEBUG_IOCTL, ("Sram ioctl cmd=%lx\n", cmd));
+
+	sc = device_lookup_private(&sram_cd, minor(dev));
+	if (sc == NULL)
+		return ENXIO;
+
 	sram_io = (struct sram_io *)data;
+	if (sram_io == NULL)
+		return EFAULT;
 
 	switch (cmd) {
 	case SIOGSRAM:
-		if ((su->flags & SRF_READ) == 0)
-			return(EPERM);
-#ifdef DEBUG
-		if (sramdebug & SRAM_DEBUG_IOCTL) {
-			printf("Sram ioctl SIOGSRAM address=%p\n", data);
-			printf("Sram ioctl SIOGSRAM offset=%x\n", sram_io->offset);
-		}
-#endif
-		if (sram_io == NULL ||
-		    sram_io->offset + SRAM_IO_SIZE > SRAM_SIZE)
-			return(EFAULT);
-		memcpy(&(sram_io->sram), sramtop + sram_io->offset,
-		    SRAM_IO_SIZE);
+		if ((sc->sc_flags & SRF_READ) == 0)
+			return EPERM;
+		DPRINTF(SRAM_DEBUG_IOCTL,
+			("Sram ioctl SIOGSRAM address=%p\n", data));
+		DPRINTF(SRAM_DEBUG_IOCTL,
+			("Sram ioctl SIOGSRAM offset=%x\n", sram_io->offset));
+		if (sram_io->offset + SRAM_IO_SIZE > SRAM_SIZE)
+			return EFAULT;
+		bus_space_read_region_1(sc->sc_iot, sc->sc_ioh, sram_io->offset,
+			(uint8_t *)&sram_io->sram, SRAM_IO_SIZE);
 		break;
 	case SIOPSRAM:
-		if ((su->flags & SRF_WRITE) == 0)
-			return(EPERM);
-#ifdef DEBUG
-		if (sramdebug & SRAM_DEBUG_IOCTL) {
-			printf("Sram ioctl SIOPSRAM address=%p\n", data);
-			printf("Sram ioctl SIOPSRAM offset=%x\n", sram_io->offset);
-		}
-#endif
-		if (sram_io == NULL ||
-		    sram_io->offset + SRAM_IO_SIZE > SRAM_SIZE)
-			return(EFAULT);
+		if ((sc->sc_flags & SRF_WRITE) == 0)
+			return EPERM;
+		DPRINTF(SRAM_DEBUG_IOCTL,
+    			("Sram ioctl SIOPSRAM address=%p\n", data));
+		DPRINTF(SRAM_DEBUG_IOCTL,
+    			("Sram ioctl SIOPSRAM offset=%x\n", sram_io->offset));
+		if (sram_io->offset + SRAM_IO_SIZE > SRAM_SIZE)
+			return EFAULT;
 #ifdef DEBUG
 		if (sramdebug & SRAM_DEBUG_DONTDOIT) {
 			printf("Sram ioctl SIOPSRAM: skipping actual write\n");
@@ -181,13 +220,14 @@ sramioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 #endif
 		intio_set_sysport_sramwp(0x31);
-		memcpy(sramtop + sram_io->offset, &(sram_io->sram),
-		    SRAM_IO_SIZE);
+		bus_space_write_region_1(sc->sc_iot, sc->sc_ioh,
+			sram_io->offset, (uint8_t *)&sram_io->sram,
+			SRAM_IO_SIZE);
 		intio_set_sysport_sramwp(0x00);
 		break;
 	default:
 		error = EINVAL;
 		break;
 	}
-	return (error);
+	return error;
 }

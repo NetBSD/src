@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.67 2008/12/20 13:20:59 isaki Exp $
+#	$NetBSD: files.x68k,v 1.68 2008/12/21 09:01:19 isaki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -166,11 +166,12 @@ device	mha: scsi
 attach	mha at scsirom
 file	arch/x68k/dev/mha.c		mha needs-flag
 
+device	sram
+attach	sram at intio
+file	arch/x68k/dev/sram.c		sram
+
 defpseudo bell
 file	arch/x68k/dev/opmbell.c		bell needs-flag
-
-defpseudo sram
-file	arch/x68k/dev/sram.c		sram needs-flag
 
 # Nereid Ethernet
 attach	ne at intio with ne_intio: rtl80x9
