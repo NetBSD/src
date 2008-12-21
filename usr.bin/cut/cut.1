@@ -1,4 +1,4 @@
-.\"	$NetBSD: cut.1,v 1.14 2006/07/31 09:39:59 jnemeth Exp $
+.\"	$NetBSD: cut.1,v 1.15 2008/12/21 18:13:07 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)cut.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd July 31, 2006
+.Dd December 21, 2008
 .Dt CUT 1
 .Os
 .Sh NAME
@@ -70,7 +70,8 @@ arguments were specified, lines are read from the standard input.
 The items specified by
 .Ar list
 can be in terms of column position or in terms of fields delimited
-by a special character. Column numbering starts from 1.
+by a special character.
+Column numbering starts from 1.
 .Pp
 .Ar List
 is a comma or whitespace separated set of increasing numbers and/or
@@ -101,12 +102,16 @@ specifies character positions.
 .It Fl d Ar string
 Use the first character of
 .Ar string
-as the field delimiter character instead of the tab character.
+as the field delimiter character.
+The default is the
+.Aq TAB
+character.
 .It Fl f Ar list
 The
 .Ar list
-specifies fields, delimited in the input by a single tab character.
-Output fields are separated by a single tab character.
+specifies fields, separated by the field delimiter character.
+The selected fields are output,
+separated by the field delimiter character.
 .It Fl n
 Do not split multi-byte characters.
 .It Fl s
