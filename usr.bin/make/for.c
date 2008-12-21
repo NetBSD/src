@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.39 2008/12/21 18:06:53 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.40 2008/12/21 19:19:55 dsl Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.39 2008/12/21 18:06:53 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.40 2008/12/21 19:19:55 dsl Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.39 2008/12/21 18:06:53 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.40 2008/12/21 19:19:55 dsl Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -132,6 +132,8 @@ For_Eval(char *line)
     int len;
     int i;
     int escapes;
+    int depth;
+    char ch;
 
     /* Forget anything we previously knew about - it cannot be useful */
     memset(&accumFor, 0, sizeof accumFor);
@@ -203,10 +205,16 @@ For_Eval(char *line)
 	else {
 	    char *item = bmake_malloc(len + escapes + 1);
 	    strlist_add_str(&accumFor.items, item);
-	    for (i = 0; i < len; i++) {
-		if (ptr[i] == ':')
+	    for (depth= 0, i = 0; i < len; i++) {
+		ch = ptr[i];
+		/* Loose determination of nested variable definitions. */
+		if (ch == '(' || ch == '{')
+		    depth++;
+		else if (ch == ')' || ch == '}')
+		    depth--;
+		else if (ch == ':' && depth == 0)
 		    *item++ = '\\';
-		*item++ = ptr[i];
+		*item++ = ch;
 	    }
 	    *item = 0;
 	}
